@@ -2,6 +2,7 @@
 // Browser implementations live in src/audio and src/speech; fakes in src/game/fakes.ts.
 
 import type { NoteEvent } from '../engine/lesson';
+import type { SungFrame } from '../engine/sing';
 
 export type CueKind = 'ready' | 'correct' | 'wrong' | 'complete';
 
@@ -76,6 +77,27 @@ export interface SpeechTranscriber {
   abort(): void;
 }
 
+export interface SingOptions {
+  signal: AbortSignal;
+  /** Hard cap on capture length. */
+  maxMs?: number;
+  /** Give up (silence) when no voiced frame arrives within this time. */
+  silenceMs?: number;
+  onCapturing?: () => void;
+  onFrame?: (f: SungFrame) => void;
+}
+
+export type SingCaptureResult =
+  | { kind: 'frames'; frames: SungFrame[] }
+  | { kind: 'silence' }
+  | { kind: 'aborted' }
+  | { kind: 'error'; error: AccessError };
+
+/** Monophonic pitch capture for singing tasks (mic only during the capture window). */
+export interface PitchCapture {
+  sing(opts: SingOptions): Promise<SingCaptureResult>;
+}
+
 export interface Clock {
   sleep(ms: number, signal: AbortSignal): Promise<void>;
 }
@@ -85,6 +107,7 @@ export interface Adapters {
   tts: PromptPlayer;
   stt: SpeechTranscriber;
   mic: MicAccess;
+  pitch: PitchCapture;
   clock: Clock;
   simulated: boolean;
 }

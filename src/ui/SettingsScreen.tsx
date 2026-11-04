@@ -12,6 +12,7 @@ interface Props {
   settings: Settings;
   onChange: (p: Partial<Settings>) => void;
   onBack: () => void;
+  account?: ReactNode;
 }
 
 function Seg<T extends string>({
@@ -48,7 +49,7 @@ const GenderGlyph = ({ g }: { g: Gender }) => (
   </span>
 );
 
-export function SettingsScreen({ t, settings: s, onChange, onBack }: Props) {
+export function SettingsScreen({ t, settings: s, onChange, onBack, account }: Props) {
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>(listVoices());
   useEffect(() => {
     void voicesReady().then(setVoices);
@@ -98,6 +99,11 @@ export function SettingsScreen({ t, settings: s, onChange, onBack }: Props) {
         </button>
         <h1>{t.settings}</h1>
       </header>
+
+      <section className="set-card">
+        <h2>☁ {t.account}</h2>
+        {account}
+      </section>
 
       <section className="set-card">
         <h2>🌐 {t.secLanguage}</h2>

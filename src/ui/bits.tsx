@@ -158,3 +158,15 @@ export function PermissionPanel({
     </div>
   );
 }
+
+/** Celebration burst on a correct answer (pure CSS; disabled by reduced motion). */
+export function Burst({ on }: { on: boolean }) {
+  if (!on) return null;
+  return (
+    <div className="burst" aria-hidden="true">
+      {Array.from({ length: 14 }).map((_, i) => (
+        <span key={i} style={{ ['--a' as string]: `${(i / 14) * 360}deg`, ['--d' as string]: `${60 + (i % 3) * 22}px` }} />
+      ))}
+    </div>
+  );
+}

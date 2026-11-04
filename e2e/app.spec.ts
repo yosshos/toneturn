@@ -42,7 +42,7 @@ test.describe('lesson', () => {
     for (let i = 0; i < 3; i++) {
       await expect(page.locator('.pill').nth(i)).toHaveClass(/current/);
       const d = await correctDegree(page);
-      const btn = page.locator(`.answer.deg-${d}`);
+      const btn = page.locator(`.answer[data-answer="${d}"]`);
       await expect(btn).toBeEnabled();
       await btn.click();
       await btn.click({ force: true, trial: false }).catch(() => {}); // a double tap must not double-score
@@ -53,7 +53,7 @@ test.describe('lesson', () => {
     await expect(page.locator('.star.won')).toHaveCount(3);
     await expect(page.getByRole('button', { name: /Replay 1/ })).toBeVisible();
     await page.getByRole('button', { name: 'Home' }).click();
-    await expect(page.locator('.chip.xp')).toContainText('30');
+    await expect(page.locator('.goal-strip')).toContainText('30/30');
   });
 
   test('Voice mode (simulator): hands-free after one Start', async ({ page }) => {
@@ -68,7 +68,7 @@ test.describe('lesson', () => {
     await expect(page.locator('.recap-row').nth(1)).toHaveClass(/correct-retry/);
     // Simulator writes no progress.
     await page.getByRole('button', { name: 'Home' }).click();
-    await expect(page.locator('.chip.xp')).toContainText('0');
+    await expect(page.locator('.goal-strip')).toContainText('0/30');
   });
 
   test('Buttons → Voice mid-question keeps the attempt history', async ({ page }) => {
@@ -77,7 +77,7 @@ test.describe('lesson', () => {
     await page.getByRole('button', { name: /Practice/ }).click();
     await page.getByRole('button', { name: 'Skip intro' }).click();
     const d = await correctDegree(page);
-    const wrong = page.locator(`.answer.deg-${d === 1 ? 5 : 1}`);
+    const wrong = page.locator(`.answer[data-answer="${d === 1 ? 5 : 1}"]`);
     await expect(wrong).toBeEnabled();
     await wrong.click();
     await expect(page.locator('.feedback')).toContainText('Not quite');
@@ -142,5 +142,49 @@ test.describe('settings', () => {
     await expect(voiceGroup.getByRole('radio', { name: /Male/ }).last()).toHaveAttribute('aria-checked', 'true');
     // Either a voice list or the "no voices" notice — headless browsers often have none.
     await expect(page.locator('.voice-list, .field-hint.warn').first()).toBeVisible();
+  });
+});
+
+test.describe('more lessons', () => {
+  test('completing lesson 1 unlocks lesson 2 on the path', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.getByRole('button', { name: /2\. Home, third, fifth/ })).toBeDisabled();
+    await page.getByRole('radio', { name: 'Buttons' }).click();
+    await page.getByRole('button', { name: /Practice/ }).click();
+    await page.getByRole('button', { name: 'Skip intro' }).click();
+    for (let i = 0; i < 3; i++) {
+      await expect(page.locator('.pill').nth(i)).toHaveClass(/current/);
+      const d = await correctDegree(page);
+      const btn = page.locator(`.answer[data-answer="${d}"]`);
+      await expect(btn).toBeEnabled();
+      await btn.click();
+      await expect.poll(() => pill(page, i), { timeout: 60_000 }).toMatch(/correct/);
+    }
+    await expect(page.getByRole('button', { name: /Next lesson/ })).toBeVisible({ timeout: 30_000 });
+    await page.getByRole('button', { name: 'Home' }).click();
+    await expect(page.getByRole('button', { name: /2\. Home, third, fifth/ })).toBeEnabled();
+    await expect(page.locator('.node.done .mini-stars .won')).toHaveCount(3);
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Home, third, fifth');
+  });
+
+  test('Major or minor (simulator, hands-free)', async ({ page }) => {
+    await page.goto('/?sim=1&unlock=all');
+    await page.getByRole('button', { name: /3\. Major or minor/ }).click();
+    await page.getByRole('button', { name: 'Use my voice & start' }).click();
+    await expect(page.locator('.intro-card')).toHaveCount(2);
+    await expect(page.getByRole('heading', { name: 'Lesson complete' })).toBeVisible({ timeout: 140_000 });
+    await expect(page.locator('.score-line')).toContainText('4/5');
+  });
+
+  test('Sing home & five (simulator): live tuner and per-attempt pitch feedback', async ({ page }) => {
+    await page.goto('/?sim=1&unlock=all');
+    await page.getByRole('button', { name: /5\. Sing home & five/ }).click();
+    await page.getByRole('button', { name: 'Use my voice & start' }).click();
+    await page.getByRole('button', { name: 'Skip intro' }).click();
+    await expect(page.locator('.tuner')).toBeVisible();
+    await expect(page.locator('.feedback')).toContainText(/Spot on|A little low/, { timeout: 60_000 });
+    await expect(page.getByRole('heading', { name: 'Lesson complete' })).toBeVisible({ timeout: 120_000 });
+    await expect(page.locator('.score-line')).toContainText('2/3');
+    await expect(page.locator('.recap-row').nth(1)).toContainText('low');
   });
 });

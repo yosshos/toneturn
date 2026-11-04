@@ -57,7 +57,7 @@ describe('lesson', () => {
   });
   it('the target is always the same B♭ pitch', () => {
     const l = bflatTwoHomes(7);
-    expect(new Set(l.questions.map((q) => q.targetMidi))).toEqual(new Set([70]));
+    expect(new Set(l.questions.map((q) => (q.kind === 'degree' ? q.targetMidi : -1)))).toEqual(new Set([70]));
     const { events } = renderStimulus(l.questions[0].stimulus);
     expect(events.at(-1)!.midi).toBe(70);
   });

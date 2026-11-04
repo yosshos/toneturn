@@ -1,7 +1,7 @@
 // Pure lesson-session state. All scoring happens here, guarded by turn tokens
 // so a late recognizer callback or a double click can never score twice.
 
-import type { LessonDef } from './lesson';
+import type { Answer, LessonDef } from './lesson';
 
 export type Phase =
   | 'idle'
@@ -19,7 +19,7 @@ export type InputMode = 'voice' | 'buttons';
 export type Outcome = 'pending' | 'correct' | 'correct-retry' | 'revealed' | 'skipped';
 
 export interface Attempt {
-  answer: number;
+  answer: Answer;
   correct: boolean;
   via: InputMode;
 }
@@ -84,7 +84,7 @@ export function grade(
   s: SessionState,
   turn: number,
   questionIndex: number,
-  answer: number,
+  answer: Answer,
   via: InputMode,
 ): [SessionState, GradeResult] {
   if (turn !== s.turn || questionIndex !== s.index || s.phase === 'complete' || s.phase === 'paused') {

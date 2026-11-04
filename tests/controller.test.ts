@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { LessonController } from '../src/game/controller';
-import { FakeAudio, FakeMic, FakeTTS, ScriptedTranscriber, immediateClock, type ScriptStep } from '../src/game/fakes';
+import { FakeAudio, FakeMic, FakeTTS, ScriptedPitch, ScriptedTranscriber, immediateClock, type ScriptStep } from '../src/game/fakes';
 import { bflatTwoHomes } from '../src/engine/lesson';
 import type { AccessError } from '../src/game/adapters';
 import type { InputMode } from '../src/engine/session';
@@ -22,7 +22,7 @@ function setup(script: ScriptStep[], opts: { mode?: InputMode; micError?: Access
   const mic = new FakeMic(opts.micError ?? null);
   const c = new LessonController(
     lesson,
-    { audio, tts, stt, mic, clock: immediateClock, simulated: true },
+    { audio, tts, stt, mic, pitch: new ScriptedPitch([]), clock: immediateClock, simulated: true },
     { inputLang: 'en', outputLang: 'en', naming: 'letter' },
     opts.mode ?? 'voice',
   );

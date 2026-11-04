@@ -1,6 +1,7 @@
 // Deterministic adapters for tests and the clearly-labelled simulator mode.
 
-import type { NoteEvent } from '../engine/lesson';
+import type { Answer, NoteEvent } from '../engine/lesson';
+import { syntheticFrames } from '../engine/sing';
 import {
   Cancelled,
   type AccessError,
@@ -10,6 +11,9 @@ import {
   type ListenOptions,
   type ListenResult,
   type MicAccess,
+  type PitchCapture,
+  type SingCaptureResult,
+  type SingOptions,
   type PromptPlayer,
   type SpeechTranscriber,
 } from './adapters';
@@ -72,14 +76,14 @@ export type ScriptStep =
   | { silence: true }
   | { error: AccessError }
   | { hang: true } // never resolves until aborted (to test switching while listening)
-  | ((expected: number) => string);
+  | ((expected: Answer) => string);
 
 export class ScriptedTranscriber implements SpeechTranscriber {
   readonly name = 'scripted';
   listens = 0;
   aborts = 0;
   /** Set by the host so function steps can answer "correctly" in demo mode. */
-  expected: () => number = () => 1;
+  expected: () => Answer = () => 1;
   constructor(
     public script: ScriptStep[],
     private delayMs = 0,
@@ -125,3 +129,47 @@ export const immediateClock: Clock = {
     if (signal.aborted) throw new Cancelled();
   },
 };
+
+/** Script step for singing: cents off target, or silence / an access error / hang until aborted. */
+export type SingStep = number | { silence: true } | { error: AccessError } | { hang: true } | { noise: true };
+
+export class ScriptedPitch implements PitchCapture {
+  calls = 0;
+  /** MIDI of the current target (set by the host). */
+  target: () => number = () => 60;
+  constructor(
+    public script: SingStep[],
+    private delayMs = 0,
+  ) {}
+  async sing(opts: SingOptions): Promise<SingCaptureResult> {
+    this.calls++;
+    if (opts.signal.aborted) return { kind: 'aborted' };
+    opts.onCapturing?.();
+    const step = this.script.shift() ?? { silence: true };
+    if (typeof step === 'object' && 'hang' in step) {
+      await new Promise<void>((r) => opts.signal.addEventListener('abort', () => r(), { once: true }));
+      return { kind: 'aborted' };
+    }
+    if (this.delayMs) {
+      const ok = await new Promise<boolean>((resolve) => {
+        const t = setTimeout(() => resolve(true), this.delayMs);
+        opts.signal.addEventListener('abort', () => {
+          clearTimeout(t);
+          resolve(false);
+        }, { once: true });
+      });
+      if (!ok) return { kind: 'aborted' };
+    } else await Promise.resolve();
+    if (opts.signal.aborted) return { kind: 'aborted' };
+    if (typeof step === 'object' && 'silence' in step) return { kind: 'silence' };
+    if (typeof step === 'object' && 'error' in step) return { kind: 'error', error: step.error };
+    if (typeof step === 'object' && 'noise' in step) {
+      // unstable glide → unclear
+      const frames = syntheticFrames(this.target(), 0, 1.5).map((f, i) => ({ ...f, hz: f.hz! * Math.pow(2, ((i % 10) - 5) / 4) }));
+      return { kind: 'frames', frames };
+    }
+    const frames = syntheticFrames(this.target(), step as number, 1.5, 30, -1);
+    frames.forEach((f) => opts.onFrame?.(f));
+    return { kind: 'frames', frames };
+  }
+}

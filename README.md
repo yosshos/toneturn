@@ -35,6 +35,22 @@ Useful URLs
 - Procedural piano (no samples): stiff-string partials, two-stage decay, hammer noise, closing low-pass, room reverb, limiter. Distinct bell cues for ready / correct / wrong / complete.
 - Local progress in IndexedDB, idempotent completion, review queue, local-midnight streaks. App-shell service worker.
 
+## Lessons (path unlocks in order)
+
+| # | Lesson | Skill | Answer |
+| --- | --- | --- | --- |
+| 1 | Same B♭, two homes | degrees | “one” / “five” |
+| 2 | Home, third, fifth (changing keys) | degrees | “one” / “three” / “five” |
+| 3 | Major or minor? | chord quality | “major” / “minor” (also “happy/sad”, מז'ור/מינור) |
+| 4 | Cadence detective (V–I vs ending on V) | cadences | “resolved” / “open” (נפתר / פתוח, “not resolved”) |
+| 5 | Sing home & five | sung pitch | sing; live tuner, ±35 ¢, octave-insensitive, spoken high/low feedback |
+
+`?unlock=all` opens every lesson (testing). Singing uses the microphone in both modes; in Buttons mode it waits for a **Sing now** tap.
+
+## Cloud save (optional)
+
+Supabase + Google sign-in. Copy `.env.example` to `.env.local` and fill `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY`; apply `supabase/migrations/*.sql`. Without these the app is fully local. Results sync idempotently by session id (upsert on `(user_id, session_id)`), tables are owner-only via RLS, and the database rejects implausible XP.
+
 ## Languages, note names and voices
 
 - **English is the default**; Hebrew is fully supported (RTL, Hebrew narration, Hebrew spoken answers). Quick toggle on the home screen, fine-grained in Settings: app language, answer language and narration language are independent.

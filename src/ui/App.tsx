@@ -1,7 +1,10 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { LESSON_ORDER, type LessonId } from '../engine/lesson';
 import { STRINGS } from '../i18n/strings';
-import { visibleStreak, type Progress, type Settings, DEFAULT_SETTINGS, emptyProgress } from '../storage/progress';
-import { Home } from './Home';
+import { visibleStreak, type Progress, type Settings, DEFAULT_SETTINGS, emptyProgress, migrateSettings } from '../storage/progress';
+import { cloudConfigured, currentUser, onAuthChange, pullSettings, pushSettings, syncProgress, type CloudUser } from '../cloud/cloud';
+import { AccountCard, type SyncState } from './Account';
+import { Home, lessonStates } from './Home';
 import { LessonScreen } from './Lesson';
 import { SettingsScreen } from './SettingsScreen';
 import { Diagnostics } from './Diagnostics';
@@ -18,7 +21,12 @@ export function App() {
   const [progress, setProgress] = useState<Progress>(emptyProgress());
   const [route, setRoute] = useState<Route>(routeFromHash());
   const [lessonKey, setLessonKey] = useState(0);
+  const [lessonId, setLessonId] = useState<LessonId>('bflat-two-homes');
   const [autoStart, setAutoStart] = useState(false);
+  const [user, setUser] = useState<CloudUser | null>(null);
+  const [sync, setSync] = useState<SyncState>('idle');
+  const progressRef = useRef(progress);
+  progressRef.current = progress;
 
   useEffect(() => {
     void store.loadSettings().then(setSettings).catch(() => setSettings(DEFAULT_SETTINGS));
@@ -27,6 +35,37 @@ export function App() {
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
+
+  // ---- cloud: optional sign-in + sync (never blocks local play) ----
+  const runSync = useCallback(async () => {
+    if (!cloudConfigured || SIMULATED) return;
+    setSync('syncing');
+    try {
+      const local = await store.loadProgress();
+      const merged = await syncProgress(local);
+      await store.saveProgress(merged);
+      setProgress(merged);
+      setSync('synced');
+    } catch (e) {
+      console.warn('[toneturn] sync failed', e);
+      setSync('error');
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!cloudConfigured || SIMULATED) return;
+    void currentUser().then(setUser);
+    return onAuthChange(setUser);
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    void (async () => {
+      const remote = await pullSettings(user.id).catch(() => null);
+      if (remote) setSettings((prev) => migrateSettings({ ...(prev ?? DEFAULT_SETTINGS), ...remote, voiceConsent: prev?.voiceConsent ?? false }));
+      await runSync();
+    })();
+  }, [user, runSync]);
 
   const s = settings ?? DEFAULT_SETTINGS;
   const t = STRINGS[s.uiLang];
@@ -48,10 +87,11 @@ export function App() {
       setSettings((prev) => {
         const next = { ...(prev ?? DEFAULT_SETTINGS), ...patch };
         void store.saveSettings(next);
+        if (user) void pushSettings(user.id, next).catch(() => {});
         return next;
       });
     },
-    [],
+    [user],
   );
 
   const go = (r: Route) => {
@@ -59,7 +99,20 @@ export function App() {
     setRoute(r);
   };
 
+  const openLesson = (id: LessonId) => {
+    void piano.unlock(); // inside the Start gesture
+    setLessonId(id);
+    setLessonKey((k) => k + 1);
+    setAutoStart(true);
+    setRoute('lesson');
+  };
+
   if (!settings) return <div className="boot" />;
+
+  const states = lessonStates(progress);
+  const idx = LESSON_ORDER.indexOf(lessonId);
+  const nextId = LESSON_ORDER[idx + 1];
+  const canNext = nextId && states[nextId] !== 'locked';
 
   return (
     <div className="app">
@@ -70,22 +123,17 @@ export function App() {
           settings={s}
           progress={progress}
           streak={visibleStreak(progress.streak, new Date())}
+          account={<AccountCard t={t} user={user} sync={sync} compact />}
           onSettings={() => go('settings')}
           onMode={(mode) => updateSettings({ mode })}
           onLang={(l) => updateSettings({ uiLang: l, inputLang: l, outputLang: l })}
-          onPractice={(consented) => {
-            void piano.unlock(); // inside the Start gesture
+          onPractice={(id, consented) => {
             if (consented) updateSettings({ voiceConsent: true });
-            setLessonKey((k) => k + 1);
-            setAutoStart(true);
-            setRoute('lesson');
+            openLesson(id);
           }}
-          onButtonsInstead={() => {
-            void piano.unlock();
+          onButtonsInstead={(id) => {
             updateSettings({ mode: 'buttons' });
-            setLessonKey((k) => k + 1);
-            setAutoStart(true);
-            setRoute('lesson');
+            openLesson(id);
           }}
         />
       )}
@@ -93,18 +141,22 @@ export function App() {
         <LessonScreen
           key={lessonKey}
           t={t}
+          lessonId={lessonId}
           settings={s}
           autoStart={autoStart}
           onMode={(mode) => updateSettings({ mode })}
           onExit={() => go('home')}
-          onAgain={() => {
-            setLessonKey((k) => k + 1);
-            setAutoStart(true);
+          onAgain={() => openLesson(lessonId)}
+          onNext={canNext ? () => openLesson(nextId) : null}
+          onProgress={(p) => {
+            setProgress(p);
+            if (user) void runSync();
           }}
-          onProgress={setProgress}
         />
       )}
-      {route === 'settings' && <SettingsScreen t={t} settings={s} onChange={updateSettings} onBack={() => go('home')} />}
+      {route === 'settings' && (
+        <SettingsScreen t={t} settings={s} onChange={updateSettings} onBack={() => go('home')} account={<AccountCard t={t} user={user} sync={sync} />} />
+      )}
       {route === 'diagnostics' && <Diagnostics t={t} settings={s} onBack={() => go('home')} />}
     </div>
   );

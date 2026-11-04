@@ -2,6 +2,7 @@
 // so a repeated callback or an app resume can never award points twice.
 
 import type { InputMode, SessionState } from '../engine/session';
+import { questionTag, type Answer } from '../engine/lesson';
 import type { Naming } from '../engine/pitch';
 import type { KV } from './kv';
 
@@ -16,7 +17,7 @@ export interface LessonResult {
   total: number;
   xp: number;
   /** Question keys that were missed / revealed — feeds the review queue. */
-  missed: { questionId: string; key: string; answer: number; given: number[] }[];
+  missed: { questionId: string; key: string; answer: Answer; given: Answer[] }[];
 }
 
 export interface Progress {
@@ -27,7 +28,7 @@ export interface Progress {
   lessons: Record<string, { best: number; completions: number; lastAt: string }>;
   history: LessonResult[];
   streak: { count: number; lastDay: string | null };
-  review: { questionId: string; key: string; answer: number; addedAt: string }[];
+  review: { lessonId?: string; questionId: string; key: string; answer: Answer; addedAt: string }[];
 }
 
 export type NamingPref = 'auto' | Naming;
@@ -122,7 +123,7 @@ export function resultFromSession(s: SessionState, sessionId: string, now: Date)
   const missed = s.records
     .map((r, i) => ({ r, q: s.lesson.questions[i] }))
     .filter(({ r }) => r.outcome === 'revealed' || r.outcome === 'correct-retry')
-    .map(({ r, q }) => ({ questionId: q.id, key: `${q.key.letter}${q.key.acc}`, answer: q.answer, given: r.attempts.map((a) => a.answer) }));
+    .map(({ r, q }) => ({ questionId: q.id, key: questionTag(q), answer: q.answer, given: r.attempts.map((a) => a.answer) }));
   return {
     lessonId: s.lesson.id,
     lessonVersion: s.lesson.version,
@@ -156,7 +157,7 @@ export function applyResult(p: Progress, r: LessonResult, now: Date): Progress {
     streak: bumpStreak(p.streak, now),
     review: [
       ...p.review.filter((x) => !r.missed.some((m) => m.key === x.key && m.answer === x.answer)),
-      ...r.missed.map((m) => ({ questionId: m.questionId, key: m.key, answer: m.answer, addedAt: r.completedAt })),
+      ...r.missed.map((m) => ({ lessonId: r.lessonId, questionId: m.questionId, key: m.key, answer: m.answer, addedAt: r.completedAt })),
     ].slice(-50),
   };
 }
@@ -171,6 +172,10 @@ export class ProgressStore {
 
   async loadSettings(): Promise<Settings> {
     return migrateSettings(await this.kv.get<Partial<Settings>>('settings'));
+  }
+
+  async saveProgress(p: Progress) {
+    await this.kv.set('progress', p);
   }
 
   async saveSettings(s: Settings) {

@@ -8,14 +8,16 @@ let captureSucceeded = false;
 /** Whether capture has opened successfully on this page load (used to split recognizer errors). */
 export const captureOk = () => captureSucceeded;
 
-export async function openCapture(): Promise<{ ok: true; stream: MediaStream } | { ok: false; error: AccessError }> {
+export async function openCapture(
+  constraints: MediaTrackConstraints = { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+): Promise<{ ok: true; stream: MediaStream } | { ok: false; error: AccessError }> {
   const env = await gatherEnv();
   if (!navigator.mediaDevices?.getUserMedia) {
     return { ok: false, error: { stage: 'capture', code: env.secure ? 'unsupported' : 'insecure-context', raw: 'navigator.mediaDevices.getUserMedia is unavailable' } };
   }
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+      audio: constraints,
     });
     captureSucceeded = true;
     return { ok: true, stream };

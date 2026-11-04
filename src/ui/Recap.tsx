@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { displayNote } from '../engine/pitch';
 import { summary } from '../engine/session';
 import type { LessonView } from '../game/controller';
+import { answerWord, choiceLabel, giveText, LESSON_META, questionBadge } from '../game/content';
 import type { Strings } from '../i18n/strings';
 import { namingFor, type Settings } from '../storage/progress';
 import { Note, withNote } from './bits';
@@ -13,9 +14,10 @@ interface Props {
   onReplay: (i: number) => void;
   onAgain: () => void;
   onHome: () => void;
+  onNext: (() => void) | null;
 }
 
-export function Recap({ t, view, settings, onReplay, onAgain, onHome }: Props) {
+export function Recap({ t, view, settings, onReplay, onAgain, onHome, onNext }: Props) {
   const s = view.session;
   const sm = summary(s);
   const [xp, setXp] = useState(0);
@@ -34,19 +36,38 @@ export function Recap({ t, view, settings, onReplay, onAgain, onHome }: Props) {
 
   const lang = settings.uiLang;
   const nm = namingFor(settings.naming, lang);
-  // One concrete review target: the first missed question, else the next step.
+  const meta = LESSON_META[s.lesson.id];
+  const bb = displayNote({ letter: 'B', acc: -1 }, nm, lang);
+  const eb = displayNote({ letter: 'E', acc: -1 }, nm, lang);
+  // One concrete review target: the first question not answered right on the first try.
   const missed = s.records.findIndex((r) => r.outcome !== 'correct');
-  const recT = missed < 0 ? t.recNext : s.lesson.questions[missed].answer === 5 ? t.recReview : t.recReviewBb;
-  const q0 = s.lesson.questions[0];
-  const fifthKey = s.lesson.intro.find((x) => x.degree === 5)?.key ?? q0.key;
-  const rec = withNote(recT, displayNote(q0.target, nm, lang), displayNote(fifthKey, nm, lang));
+  let rec: React.ReactNode;
+  if (missed < 0) rec = withNote(meta.tip[lang], bb, eb);
+  else {
+    const q = s.lesson.questions[missed];
+    const b = questionBadge(q, lang, nm);
+    rec = (
+      <>
+        {t.review}: {b.key && <Note>{displayNote(b.key, nm, lang)}</Note>} {b.text} → <b>{q.kind === 'sing' ? `${t.round} ${missed + 1}` : answerWord(q, q.answer, lang)}</b>
+        {s.lesson.id === 'bflat-two-homes' && (
+          <>
+            <br />
+            {withNote(q.kind === 'degree' && q.answer === 5 ? t.recReview : t.recReviewBb, bb, eb)}
+          </>
+        )}
+      </>
+    );
+  }
+  const ratio = sm.firstTry / sm.total;
+  const stars = ratio >= 1 ? 3 : ratio >= 0.6 ? 2 : ratio > 0 ? 1 : 0;
 
   return (
     <main className="recap">
+      <p className="eyebrow">{withNote(meta.title[lang], bb)}</p>
       <h1>{t.recapTitle}</h1>
-      <div className="stars" aria-label={`${sm.firstTry} ${t.of} ${sm.total} ${t.recapScore}`}>
-        {Array.from({ length: sm.total }).map((_, i) => (
-          <span key={i} className={`star ${i < sm.firstTry ? 'won' : ''}`} style={{ ['--i' as string]: i }} aria-hidden="true">
+      <div className="stars" aria-label={`${stars} ${t.stars}`}>
+        {[0, 1, 2].map((i) => (
+          <span key={i} className={`star ${i < stars ? 'won' : ''}`} style={{ ['--i' as string]: i }} aria-hidden="true">
             ★
           </span>
         ))}
@@ -55,25 +76,30 @@ export function Recap({ t, view, settings, onReplay, onAgain, onHome }: Props) {
         <b>
           {sm.firstTry}/{sm.total}
         </b>{' '}
-        {t.recapScore} · <bdi className="xp-count" dir="ltr">+{xp} {t.xp}</bdi>
+        {t.recapScore} ·{' '}
+        <bdi className="xp-count" dir="ltr">
+          +{xp} {t.xp}
+        </bdi>
       </p>
 
       <ol className="recap-list">
         {s.lesson.questions.map((q, i) => {
           const r = s.records[i];
           const ok = r.outcome === 'correct' || r.outcome === 'correct-retry';
+          const b = questionBadge(q, lang, nm);
+          const ans = q.kind === 'sing' ? `${t.singNow} ${q.degree}` : typeof q.answer === 'number' ? String(q.answer) : choiceLabel(q, q.answer, lang).small;
           return (
             <li key={q.id} className={`recap-row ${r.outcome}`}>
               <span className="recap-mark" aria-hidden="true">
                 {r.outcome === 'correct' ? '★' : ok ? '✓' : r.outcome === 'skipped' ? '–' : '✗'}
               </span>
               <span className="recap-q">
-                <Note>{displayNote(q.key, nm, lang)}</Note> {t.major} · {t.answer} <b>{q.answer}</b>
+                {b.key && <Note>{displayNote(b.key, nm, lang)}</Note>} {b.text} · <b>{ans}</b>
               </span>
               <span className="recap-given">
                 {r.attempts.length > 0 && (
                   <>
-                    {t.yourAnswer}: {r.attempts.map((a) => a.answer).join(', ')}
+                    {t.yourAnswer}: {r.attempts.map((a) => giveText(q, a.answer, lang)).join(', ')}
                   </>
                 )}
               </span>
@@ -90,8 +116,13 @@ export function Recap({ t, view, settings, onReplay, onAgain, onHome }: Props) {
         <p>{rec}</p>
       </section>
 
-      <div className="row center">
-        <button className="btn mega" onClick={onAgain}>
+      <div className="recap-actions">
+        {onNext && (
+          <button className="btn mega" onClick={onNext}>
+            {t.nextLesson} <span className="flip-rtl">→</span>
+          </button>
+        )}
+        <button className={onNext ? 'btn' : 'btn mega'} onClick={onAgain}>
           {t.again}
         </button>
         <button className="btn ghost" onClick={onHome}>

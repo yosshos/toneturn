@@ -1,41 +1,78 @@
 import { useState } from 'react';
-import type { InputMode } from '../engine/session';
-import type { Strings } from '../i18n/strings';
-import type { Progress, Settings } from '../storage/progress';
-import { Logo, MicIcon, ModeSwitch, withNote } from './bits';
+import { LESSON_ORDER, type LessonId } from '../engine/lesson';
 import { displayNote, pc } from '../engine/pitch';
-import { namingFor } from '../storage/progress';
+import type { InputMode } from '../engine/session';
+import { LESSON_META } from '../game/content';
+import type { Strings } from '../i18n/strings';
+import { localDay, namingFor, type Progress, type Settings } from '../storage/progress';
+import { Logo, MicIcon, ModeSwitch, withNote } from './bits';
+import { UNLOCK_ALL } from './services';
 
 interface Props {
   t: Strings;
   settings: Settings;
   progress: Progress;
   streak: number;
-  onPractice: (consented: boolean) => void;
-  onButtonsInstead: () => void;
+  account: React.ReactNode;
+  onPractice: (id: LessonId, consented: boolean) => void;
+  onButtonsInstead: (id: LessonId) => void;
   onMode: (m: InputMode) => void;
   onSettings: () => void;
   onLang: (l: 'he' | 'en') => void;
 }
 
-export function Home({ t, settings, progress, streak, onPractice, onButtonsInstead, onMode, onSettings, onLang }: Props) {
-  const nm = namingFor(settings.naming, settings.uiLang);
-  const bb = displayNote(pc('Bb'), nm, settings.uiLang);
-  const eb = displayNote(pc('Eb'), nm, settings.uiLang);
-  const [consent, setConsent] = useState(false);
-  const done1 = (progress.lessons['bflat-two-homes']?.completions ?? 0) > 0;
+export const DAILY_GOAL_XP = 30;
 
-  const practice = () => {
-    if (settings.mode === 'voice' && !settings.voiceConsent) return setConsent(true);
-    onPractice(false);
+export type NodeState = 'done' | 'current' | 'open' | 'locked';
+
+/** Lesson i unlocks when lesson i-1 has been completed at least once. */
+export function lessonStates(progress: Progress): Record<LessonId, NodeState> {
+  const out = {} as Record<LessonId, NodeState>;
+  let currentSet = false;
+  LESSON_ORDER.forEach((id, i) => {
+    const done = (progress.lessons[id]?.completions ?? 0) > 0;
+    const prevDone = i === 0 || (progress.lessons[LESSON_ORDER[i - 1]]?.completions ?? 0) > 0;
+    if (done) out[id] = 'done';
+    else if (prevDone || UNLOCK_ALL) {
+      out[id] = currentSet ? 'open' : 'current';
+      currentSet = true;
+    } else out[id] = 'locked';
+  });
+  return out;
+}
+
+export function nextLessonId(progress: Progress): LessonId {
+  const st = lessonStates(progress);
+  return LESSON_ORDER.find((id) => st[id] === 'current') ?? LESSON_ORDER[LESSON_ORDER.length - 1];
+}
+
+export function starsFor(best: number, total: number) {
+  const r = total ? best / total : 0;
+  return r >= 1 ? 3 : r >= 0.6 ? 2 : r > 0 ? 1 : 0;
+}
+
+const TOTALS: Record<LessonId, number> = { 'bflat-two-homes': 3, 'degrees-135': 5, 'major-minor': 5, cadences: 4, 'sing-home-five': 3 };
+
+export function Home({ t, settings, progress, streak, account, onPractice, onButtonsInstead, onMode, onSettings, onLang }: Props) {
+  const [consentFor, setConsentFor] = useState<LessonId | null>(null);
+  const lang = settings.uiLang;
+  const nm = namingFor(settings.naming, lang);
+  const bb = displayNote(pc('Bb'), nm, lang);
+  const eb = displayNote(pc('Eb'), nm, lang);
+  const states = lessonStates(progress);
+  const next = nextLessonId(progress);
+  const meta = LESSON_META[next];
+  const anyDone = LESSON_ORDER.some((id) => states[id] === 'done');
+  const doneCount = LESSON_ORDER.filter((id) => states[id] === 'done').length;
+
+  const today = localDay(new Date());
+  const todayXp = progress.history.filter((h) => localDay(new Date(h.completedAt)) === today).reduce((a, h) => a + h.xp, 0);
+  const goal = Math.min(1, todayXp / DAILY_GOAL_XP);
+
+  const start = (id: LessonId) => {
+    if (settings.mode === 'voice' && !settings.voiceConsent) return setConsentFor(id);
+    onPractice(id, false);
   };
-
-  const nodes = [
-    { id: 1, title: withNote(t.lesson1Title, bb), state: done1 ? 'done' : 'current', icon: 'ear' },
-    { id: 2, title: t.lesson2Title, state: done1 ? 'next' : 'locked', icon: 'mic' },
-    { id: 3, title: t.lesson3Title, state: 'locked', icon: 'note' },
-    { id: 4, title: t.lesson4Title, state: 'locked', icon: 'cadence' },
-  ] as const;
 
   return (
     <main className="home">
@@ -47,36 +84,50 @@ export function Home({ t, settings, progress, streak, onPractice, onButtonsInste
         <div className="stats">
           <button
             className="chip lang-toggle"
-            onClick={() => onLang(settings.uiLang === 'he' ? 'en' : 'he')}
-            aria-label={settings.uiLang === 'he' ? 'Switch to English' : 'החלפה לעברית'}
+            onClick={() => onLang(lang === 'he' ? 'en' : 'he')}
+            aria-label={lang === 'he' ? 'Switch to English' : 'החלפה לעברית'}
           >
-            {settings.uiLang === 'he' ? 'EN' : 'עב'}
+            {lang === 'he' ? 'EN' : 'עב'}
           </button>
-          <span className="chip xp" title={t.xp}>
-            <b>{progress.xp}</b> {t.xp}
-          </span>
           <span className="chip streak" title={t.streak}>
             <span aria-hidden="true">🔥</span> <b>{streak}</b>
             <span className="sr-only"> {t.streak}</span>
           </span>
           <button className="icon-btn" onClick={onSettings} aria-label={t.settings}>
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">
-              <path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Zm9 3.5-.02-.6 2-1.6-2-3.4-2.4.9a8 8 0 0 0-1-.6L17 3.8h-4l-.6 2.5a8 8 0 0 0-1 .6L9 6l-2 3.4 2 1.6a8 8 0 0 0 0 1.2l-2 1.6L9 17l2.4-.9c.3.2.7.4 1 .6l.6 2.5h4l.6-2.5c.3-.2.7-.4 1-.6l2.4.9 2-3.4-2-1.6.02-.6Z" transform="translate(-3 0)" />
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
+              <circle cx="12" cy="12" r="3.2" />
+              <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z" />
             </svg>
           </button>
         </div>
       </header>
 
+      <section className="goal-strip" aria-label={t.dailyGoal}>
+        <GoalRing value={goal} />
+        <div className="goal-text">
+          <b>{t.dailyGoal}</b>
+          <small dir="ltr">
+            {todayXp}/{DAILY_GOAL_XP} {t.xp} · {progress.xp} {t.xp}
+          </small>
+        </div>
+        <div className="goal-done">
+          <b>
+            {doneCount}/{LESSON_ORDER.length}
+          </b>
+          <small>{t.lessonsDone}</small>
+        </div>
+      </section>
+
       <section className="hero">
         <HeroArt bb={bb} eb={eb} />
         <div className="hero-copy">
           <p className="tagline">{t.appTagline}</p>
-          <h1>{withNote(t.lesson1Title, bb)}</h1>
-          <p className="blurb">{t.lesson1Blurb}</p>
+          <h1>{withNote(meta.title[lang], bb)}</h1>
+          <p className="blurb">{meta.blurb[lang]}</p>
           <ModeSwitch mode={settings.mode} onChange={onMode} t={t} />
-          <button className="btn mega" onClick={practice}>
+          <button className="btn mega" onClick={() => start(next)}>
             {settings.mode === 'voice' && <MicIcon />}
-            {done1 ? t.continue : t.practice}
+            {anyDone ? t.continue : t.practice}
           </button>
         </div>
       </section>
@@ -84,21 +135,49 @@ export function Home({ t, settings, progress, streak, onPractice, onButtonsInste
       <section className="path" aria-label={t.lessonPath}>
         <h2>{t.lessonPath}</h2>
         <ol className="path-list">
-          {nodes.map((n, i) => (
-            <li key={n.id} className={`node ${n.state}`} style={{ ['--i' as string]: i }}>
-              <span className="node-disc" aria-hidden="true">
-                <NodeIcon kind={n.icon} />
-              </span>
-              <span className="node-text">
-                <b>{n.title}</b>
-                <small>
-                  {n.state === 'current' ? t.practice : n.state === 'done' ? '✓' : n.state === 'next' ? `${t.nextUnlock} · ${t.comingSoon}` : t.locked}
-                </small>
-              </span>
-            </li>
-          ))}
+          {LESSON_ORDER.map((id, i) => {
+            const st = states[id];
+            const m = LESSON_META[id];
+            const best = progress.lessons[id]?.best ?? 0;
+            const stars = st === 'done' ? starsFor(best, TOTALS[id]) : 0;
+            const playable = st !== 'locked';
+            return (
+              <li key={id} className={`node ${st} ${i % 2 ? 'alt' : ''}`}>
+                <button className="node-btn" disabled={!playable} onClick={() => start(id)} aria-label={`${i + 1}. ${m.title[lang].replace('{n}', bb)}`}>
+                  <span className="node-disc" aria-hidden="true">
+                    <NodeIcon kind={m.icon} />
+                    {st === 'locked' && <span className="lock">🔒</span>}
+                  </span>
+                  <span className="node-text">
+                    <b>{withNote(m.title[lang], bb)}</b>
+                    <small>
+                      {st === 'done' ? (
+                        <span className="mini-stars" aria-label={`${stars} ${t.stars}`}>
+                          {[0, 1, 2].map((k) => (
+                            <span key={k} className={k < stars ? 'won' : ''}>
+                              ★
+                            </span>
+                          ))}
+                        </span>
+                      ) : st === 'current' ? (
+                        <>
+                          {t.start} <span className="flip-rtl">→</span>
+                        </>
+                      ) : st === 'open' ? (
+                        t.start
+                      ) : (
+                        t.locked
+                      )}
+                    </small>
+                  </span>
+                </button>
+              </li>
+            );
+          })}
         </ol>
       </section>
+
+      {account}
 
       <footer className="home-foot">
         <a className="link" href="#/diagnostics">
@@ -106,17 +185,17 @@ export function Home({ t, settings, progress, streak, onPractice, onButtonsInste
         </a>
       </footer>
 
-      {consent && (
-        <div className="sheet-backdrop" onClick={() => setConsent(false)}>
+      {consentFor && (
+        <div className="sheet-backdrop" onClick={() => setConsentFor(null)}>
           <div className="sheet" role="dialog" aria-modal="true" aria-labelledby="consent-title" onClick={(e) => e.stopPropagation()}>
             <h2 id="consent-title">
               <MicIcon /> {t.consentTitle}
             </h2>
             <p>{t.consentBody}</p>
-            <button className="btn mega" autoFocus onClick={() => onPractice(true)}>
+            <button className="btn mega" autoFocus onClick={() => onPractice(consentFor, true)}>
               {t.consentAllow}
             </button>
-            <button className="btn ghost" onClick={onButtonsInstead}>
+            <button className="btn ghost" onClick={() => onButtonsInstead(consentFor)}>
               {t.consentButtons}
             </button>
           </div>
@@ -126,7 +205,21 @@ export function Home({ t, settings, progress, streak, onPractice, onButtonsInste
   );
 }
 
-function NodeIcon({ kind }: { kind: 'ear' | 'mic' | 'note' | 'cadence' }) {
+function GoalRing({ value }: { value: number }) {
+  const r = 20;
+  const c = 2 * Math.PI * r;
+  return (
+    <svg className="goal-ring" viewBox="0 0 52 52" width="52" height="52" aria-hidden="true">
+      <circle cx="26" cy="26" r={r} className="ring-bg" />
+      <circle cx="26" cy="26" r={r} className="ring-fg" strokeDasharray={c} strokeDashoffset={c * (1 - value)} transform="rotate(-90 26 26)" />
+      <text x="26" y="31" textAnchor="middle" className="ring-text">
+        {value >= 1 ? '✓' : `${Math.round(value * 100)}`}
+      </text>
+    </svg>
+  );
+}
+
+function NodeIcon({ kind }: { kind: 'ear' | 'steps' | 'chord' | 'cadence' | 'mic' }) {
   switch (kind) {
     case 'ear':
       return (
@@ -135,27 +228,35 @@ function NodeIcon({ kind }: { kind: 'ear' | 'mic' | 'note' | 'cadence' }) {
           <path d="M14 13.5a3 3 0 1 1 5 2" />
         </svg>
       );
+    case 'steps':
+      return (
+        <svg viewBox="0 0 32 32" width="30" height="30" fill="currentColor">
+          <circle cx="7" cy="24" r="4" />
+          <circle cx="16" cy="16" r="4" />
+          <circle cx="25" cy="8" r="4" />
+        </svg>
+      );
+    case 'chord':
+      return (
+        <svg viewBox="0 0 32 32" width="30" height="30" fill="currentColor">
+          <ellipse cx="12" cy="24" rx="5" ry="3.6" transform="rotate(-20 12 24)" />
+          <ellipse cx="12" cy="16" rx="5" ry="3.6" transform="rotate(-20 12 16)" />
+          <ellipse cx="12" cy="8" rx="5" ry="3.6" transform="rotate(-20 12 8)" />
+          <rect x="16" y="5" width="2.6" height="20" rx="1.3" />
+        </svg>
+      );
+    case 'cadence':
+      return (
+        <svg viewBox="0 0 32 32" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M4 22l7-8 6 5 9-11" />
+          <path d="M20 8h6v6" />
+        </svg>
+      );
     case 'mic':
       return (
         <svg viewBox="0 0 32 32" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
           <rect x="12" y="4" width="8" height="15" rx="4" fill="currentColor" />
           <path d="M8 15a8 8 0 0 0 16 0M16 23v5" />
-        </svg>
-      );
-    case 'note':
-      return (
-        <svg viewBox="0 0 32 32" width="30" height="30" fill="currentColor">
-          <ellipse cx="11" cy="23" rx="6" ry="4.5" transform="rotate(-20 11 23)" />
-          <path d="M16 22V5l9 3v4l-6-2v12z" />
-        </svg>
-      );
-    default:
-      return (
-        <svg viewBox="0 0 32 32" width="30" height="30" fill="currentColor">
-          <rect x="4" y="16" width="5" height="12" rx="2" />
-          <rect x="11" y="10" width="5" height="18" rx="2" />
-          <rect x="18" y="5" width="5" height="23" rx="2" />
-          <rect x="25" y="16" width="4" height="12" rx="2" opacity=".7" />
         </svg>
       );
   }
@@ -176,27 +277,39 @@ function HeroArt({ bb, eb }: { bb: string; eb: string }) {
         </linearGradient>
       </defs>
       <circle cx="180" cy="90" r="120" fill="url(#glow)" />
-      {/* two houses */}
+      <g className="sparkles">
+        <circle cx="40" cy="40" r="2.5" fill="#FFF6EA" />
+        <circle cx="320" cy="30" r="2" fill="#FFF6EA" />
+        <circle cx="300" cy="70" r="1.6" fill="#FFC94D" />
+        <circle cx="70" cy="80" r="1.6" fill="#A98BFF" />
+      </g>
       <g className="house left">
         <path d="M40 120l40-34 40 34v50H40z" fill="#4BE3B5" />
         <rect x="68" y="138" width="24" height="32" rx="4" fill="#1E1236" />
-        <text x="80" y="112" textAnchor="middle" className="house-label" direction="ltr">{bb}</text>
+        <text x="80" y="112" textAnchor="middle" className="house-label" direction="ltr">
+          {bb}
+        </text>
       </g>
       <g className="house right">
         <path d="M240 120l40-34 40 34v50h-80z" fill="#A98BFF" />
         <rect x="268" y="138" width="24" height="32" rx="4" fill="#1E1236" />
-        <text x="280" y="112" textAnchor="middle" className="house-label" direction="ltr">{eb}</text>
+        <text x="280" y="112" textAnchor="middle" className="house-label" direction="ltr">
+          {eb}
+        </text>
       </g>
-      {/* arcs */}
       <path d="M95 84Q180 10 265 84" fill="none" stroke="#FFC94D" strokeWidth="3" strokeDasharray="2 9" strokeLinecap="round" className="arc" />
-      {/* floating B♭ */}
       <g className="float-coin">
         <circle cx="180" cy="62" r="30" fill="url(#coin)" stroke="#2A1747" strokeWidth="4" />
-        <text x="180" y="73" textAnchor="middle" className={`coin-label ${bb.length > 3 ? 'small' : ''}`} direction="ltr">{bb}</text>
-        <text x="132" y="54" className="deg-badge" direction="ltr">1</text>
-        <text x="220" y="54" className="deg-badge" direction="ltr">5</text>
+        <text x="180" y="73" textAnchor="middle" className={`coin-label ${bb.length > 3 ? 'small' : ''}`} direction="ltr">
+          {bb}
+        </text>
+        <text x="132" y="54" className="deg-badge" direction="ltr">
+          1
+        </text>
+        <text x="220" y="54" className="deg-badge" direction="ltr">
+          5
+        </text>
       </g>
-      {/* piano horizon */}
       <g transform="translate(0 176)">
         {Array.from({ length: 15 }).map((_, i) => (
           <rect key={i} x={i * 24} y="0" width="23" height="44" rx="3" fill="#FFF6EA" />

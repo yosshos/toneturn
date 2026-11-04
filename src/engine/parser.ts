@@ -196,3 +196,65 @@ export function parseNoteName(transcript: string, vocab: NamingVocab): ParseResu
   if (uniq.length > 1 || (uniq.length === 1 && commands.length)) return { kind: 'ambiguous', candidates: uniq, heard };
   return { kind: 'unrecognized', heard };
 }
+
+// ---------- Chord quality / cadence answers ----------
+function parseChoiceTable<T extends string>(
+  transcript: string,
+  table: Map<string, T>,
+  negations: [string[], T][] = [],
+): ParseResult<T> {
+  const heard = transcript.trim();
+  const tokens = normalize(transcript);
+  if (!tokens.length) return { kind: 'unrecognized', heard };
+  const found = new Set<T>();
+  const used = new Set<number>();
+  for (const [phrase, v] of negations) {
+    const idx = phraseCovers(tokens, phrase);
+    if (idx.length) {
+      found.add(v);
+      idx.forEach((i) => used.add(i));
+    }
+  }
+  tokens.forEach((t, i) => {
+    if (used.has(i)) return;
+    const v = lookup(table, t);
+    if (v) found.add(v);
+  });
+  const commands = findCommands(tokens);
+  if (found.size === 1 && commands.length === 0) return { kind: 'answer', value: [...found][0], heard };
+  if (found.size === 0 && commands.length === 1) return { kind: 'command', command: commands[0], heard };
+  if (found.size > 1 || (found.size === 1 && commands.length)) return { kind: 'ambiguous', candidates: [...found], heard };
+  return { kind: 'unrecognized', heard };
+}
+
+const QUALITY_TOKENS = new Map<string, 'maj' | 'min'>([
+  ['major', 'maj'], ['maj', 'maj'], ['majors', 'maj'], ['happy', 'maj'], ['bright', 'maj'],
+  ["מז'ור", 'maj'], ['מז׳ור', 'maj'], ['מזור', 'maj'], ["מייג'ור", 'maj'], ['מייג׳ור', 'maj'], ['מייגור', 'maj'], ['שמח', 'maj'],
+  ['minor', 'min'], ['min', 'min'], ['miner', 'min'], ['sad', 'min'], ['dark', 'min'],
+  ['מינור', 'min'], ['מיינור', 'min'], ['עצוב', 'min'],
+]);
+
+/** "major" / "minor" in English or Hebrew (incl. "happy"/"sad" beginner words). */
+export function parseQuality(transcript: string): ParseResult<'maj' | 'min'> {
+  return parseChoiceTable(transcript.replace(/[׳’]/g, "'"), QUALITY_TOKENS);
+}
+
+const CADENCE_TOKENS = new Map<string, 'resolved' | 'open'>([
+  ['resolved', 'resolved'], ['resolve', 'resolved'], ['closed', 'resolved'], ['close', 'resolved'], ['home', 'resolved'],
+  ['finished', 'resolved'], ['complete', 'resolved'], ['full', 'resolved'], ['authentic', 'resolved'], ['done', 'resolved'],
+  ['נפתר', 'resolved'], ['נפתרה', 'resolved'], ['סגור', 'resolved'], ['סגורה', 'resolved'], ['בית', 'resolved'], ['הביתה', 'resolved'],
+  ['גמור', 'resolved'], ['שלם', 'resolved'], ['מלא', 'resolved'], ['סיום', 'resolved'],
+  ['open', 'open'], ['half', 'open'], ['unresolved', 'open'], ['hanging', 'open'], ['away', 'open'], ['unfinished', 'open'],
+  ['פתוח', 'open'], ['פתוחה', 'open'], ['חצי', 'open'], ['תלוי', 'open'], ['תלויה', 'open'], ['באוויר', 'open'],
+]);
+
+/** "resolved" vs "open" cadence answers; "not resolved" / "לא נפתר" count as open. */
+export function parseCadence(transcript: string): ParseResult<'resolved' | 'open'> {
+  return parseChoiceTable(transcript, CADENCE_TOKENS, [
+    [['not', 'resolved'], 'open'],
+    [['not', 'finished'], 'open'],
+    [['לא', 'נפתר'], 'open'],
+    [['לא', 'נפתרה'], 'open'],
+    [['לא', 'סגור'], 'open'],
+  ]);
+}
