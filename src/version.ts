@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.19.0',
+    date: '2026-11-05',
+    en: ['Class mode: teachers create a class, students join with a code, the teacher assigns lessons and sees each student’s progress', 'Race your ghost: your best run comes back as an opponent that answers exactly when you did'],
+    he: ['מצב כיתה: מורים פותחים כיתה, תלמידים מצטרפים עם קוד, המורה מקצה שיעורים ורואה את ההתקדמות של כל תלמיד', 'מרוץ נגד הרוח: הריצה הכי טובה שלכם חוזרת כיריב שעונה בדיוק מתי שאתם עניתם'],
+  },
+  {
     version: '0.18.0',
     date: '2026-11-05',
     en: ['Jazz 1 (lesson 21): major 7, dominant 7, minor 7 and half-diminished chords, and the ii–V–I family, voiced like a jazz pianist', 'Songs you know (lesson 22): famous public-domain openings — name the degrees, then find out which song it was'],

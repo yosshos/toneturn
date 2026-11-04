@@ -387,3 +387,17 @@ Item difficulty (rating scale) = 900 + weighted sum of the factor levels (weight
 **Status (0.14.0)**: built — `src/engine/runs.ts` (8-level curriculum, factor levels and difficulty, speed-scaled tolerance, 20 ms hop for fast runs, smear detection by pitch slope in the note middle, clarity, evenness, a = 0.6/0.25/0.15), lesson 14 *Riffs & runs* (2 recognition + 3 sung, echo and told), *Runs workshop* (60/80/100 %), Skill Map axis *Vocal agility*, review tags. Simplifications: echo runs feed only Vocal agility (not melodic memory); diagnosis by weakest factor and the visual pitch trace are not built yet; weights not yet calibrated with real singers.
 
 Slow-down practice (the same run at 60 % → 80 % → 100 % tempo, unlocking the faster version on success), loop a single turn, hear the model at half speed, and a visual pitch trace over the target notes after each attempt.
+
+## Status of the accepted extra ideas (2026-11-05)
+
+| Idea | Status |
+| --- | --- |
+| Daily challenge (Wordle-style) + server leaderboard | ✓ 0.11 / 0.13 |
+| Same-device duel, online rooms | ✓ 0.11 / 0.12 |
+| Ghost race | ✓ 0.19 |
+| Spaced repetition for review | ✓ 0.17 |
+| Drone singing | ✓ 0.17 (drone practice screen) |
+| MIDI keyboard / instrument input | ✓ 0.17 (Web MIDI keyboards; acoustic instruments still go through the microphone pitch detector) |
+| Teacher / class mode | ✓ 0.19 |
+| Jazz track | ✓ 0.18 (Jazz 1: sevenths, ii–V–I family) — licks and swing-feel melodies are a later Jazz 2 |
+| Real public-domain melodies | ✓ 0.18 (Songs you know) |

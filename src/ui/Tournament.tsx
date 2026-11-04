@@ -6,7 +6,7 @@ import type { Question } from '../engine/lesson';
 import { TournamentController, type TournamentView } from '../game/tournamentController';
 import { askTemplate, choiceLabel } from '../game/content';
 import type { Strings } from '../i18n/strings';
-import { localDay, namingFor, type Progress, type Settings } from '../storage/progress';
+import { localDay, namingFor, type GhostRun, type Progress, type Settings } from '../storage/progress';
 import { displayNote } from '../engine/pitch';
 import { withNote } from './bits';
 import { piano, store, tts } from './services';
@@ -257,6 +257,100 @@ export function DuelScreen({ t, settings, names, kind, rounds, onExit, onRematch
   return <TournamentPlay t={t} settings={settings} items={items} players={names} onExit={onExit} onRematch={onRematch} />;
 }
 
+// ======================================================================= Ghost race
+
+const ghostKey = (kind: SetKind, rounds: number) => `${kind}:${rounds}`;
+
+export function GhostScreen({ t, settings, progress, onBack, onProgress }: { t: Strings; settings: Settings; progress: Progress; onBack: () => void; onProgress: (p: Progress) => void }) {
+  const [kind, setKind] = useState<SetKind>('mixed');
+  const [rounds, setRounds] = useState(5);
+  const [run, setRun] = useState<{ key: number; seed: number; ghost?: GhostRun } | null>(null);
+  const [note, setNote] = useState<string | null>(null);
+  const ghost = progress.ghosts?.[ghostKey(kind, rounds)];
+  const kinds: [SetKind, string][] = [
+    ['mixed', t.setMixed],
+    ['degrees', t.skillNames.degrees],
+    ['chords', t.skillNames.chords],
+    ['intervals', t.skillNames.intervals],
+  ];
+  if (run) {
+    const items = tournamentSet(kind, rounds, run.seed);
+    return (
+      <TournamentPlay
+        key={run.key}
+        t={t}
+        settings={settings}
+        items={items}
+        players={run.ghost ? [t.you, t.ghostName] : [t.you]}
+        ghost={run.ghost}
+        overNote={note}
+        onExit={() => {
+          setRun(null);
+          setNote(null);
+        }}
+        onRematch={() => {
+          setNote(null);
+          const g = progress.ghosts?.[ghostKey(kind, rounds)];
+          setRun({ key: run.key + 1, seed: g?.seed ?? run.seed, ghost: g });
+        }}
+        onOver={(v) => {
+          const me = v.standings.find((s) => s.player === 0)!;
+          const answers = v.results.map((r) => ({ answer: r.answers[0].answer, timeMs: r.answers[0].timeMs }));
+          void store.recordGhost(ghostKey(kind, rounds), { seed: run.seed, points: me.points, answers, at: new Date().toISOString() }).then(({ progress: p, kept }) => {
+            onProgress(p);
+            setNote(!run.ghost ? t.ghostSet : kept ? t.ghostBeaten : t.ghostNotBeaten);
+          });
+        }}
+      />
+    );
+  }
+  return (
+    <main className="panel-screen">
+      <header className="screen-head">
+        <button className="icon-btn" onClick={onBack} aria-label={t.back}>
+          <span className="flip-rtl">←</span>
+        </button>
+        <h1>{t.ghostRace}</h1>
+      </header>
+      <p className="field-hint">{t.ghostHint}</p>
+      <section className="set-card">
+        <fieldset className="seg-field">
+          <legend>{t.questionsOn}</legend>
+          <div className="seg" role="radiogroup" aria-label={t.questionsOn}>
+            {kinds.map(([v, l]) => (
+              <button key={v} type="button" role="radio" aria-checked={kind === v} className={kind === v ? 'on' : ''} onClick={() => setKind(v)}>
+                {l}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+        <fieldset className="seg-field">
+          <legend>{t.roundsLabel}</legend>
+          <div className="seg" role="radiogroup" aria-label={t.roundsLabel}>
+            {[5, 10].map((n) => (
+              <button key={n} type="button" role="radio" aria-checked={rounds === n} className={rounds === n ? 'on' : ''} onClick={() => setRounds(n)}>
+                {n}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+        <p className="ghost-best" dir="auto">
+          {ghost ? `👻 ${t.ghostBest}: ${ghost.points.toLocaleString(settings.uiLang)} ${t.points}` : t.ghostNone}
+        </p>
+      </section>
+      <button
+        className="btn mega"
+        onClick={() => {
+          void piano.unlock();
+          setRun({ key: 1, seed: ghost?.seed ?? (Date.now() ^ (Math.random() * 1e9)) >>> 0, ghost });
+        }}
+      >
+        ▶ {ghost ? t.raceGhost : t.setGhost}
+      </button>
+    </main>
+  );
+}
+
 // ======================================================================= Play (1 or 2 players)
 
 function TournamentPlay({
@@ -268,6 +362,8 @@ function TournamentPlay({
   onOver,
   onRematch,
   shareDay,
+  ghost,
+  overNote,
 }: {
   t: Strings;
   settings: Settings;
@@ -277,6 +373,9 @@ function TournamentPlay({
   onOver?: (v: TournamentView) => void;
   onRematch?: () => void;
   shareDay?: string;
+  /** Ghost race: player 2 replays these answers at their recorded times. */
+  ghost?: GhostRun;
+  overNote?: string | null;
 }) {
   const ref = useRef<TournamentController | null>(null);
   if (!ref.current) {
@@ -291,9 +390,19 @@ function TournamentPlay({
     return () => c.dispose();
   }, [c]);
 
+  // The ghost answers each round at its recorded time after the sound ends.
+  useEffect(() => {
+    if (!ghost || v.stage !== 'answering') return;
+    const g = ghost.answers[v.round];
+    if (!g || g.timeMs === null || g.answer === null) return;
+    const timer = setTimeout(() => c.answer(1, g.answer as string | number), g.timeMs);
+    return () => clearTimeout(timer);
+  }, [ghost, v.stage, v.round, c]);
+
   const lang = settings.uiLang;
   const nm = namingFor(settings.naming, lang);
   const duel = players.length === 2;
+  const split = duel && !ghost;
   const q = v.item;
   const target = q.kind === 'degree' ? displayNote(q.target, nm, lang) : '';
 
@@ -303,8 +412,9 @@ function TournamentPlay({
     const text = shareDay ? shareText(shareDay, v.results, winner.points, lang) : '';
     return (
       <main className="recap scoreboard">
-        <p className="eyebrow">{duel ? t.duel : t.dailyChallenge}</p>
+        <p className="eyebrow">{ghost ? t.ghostRace : duel ? t.duel : t.dailyChallenge}</p>
         <h1>{duel ? (tie ? t.tie : `🏆 ${players[winner.player]}`) : t.gameOver}</h1>
+        {overNote && <p className="ghost-note">{overNote}</p>}
         {duel ? (
           <ol className="board">
             {v.standings.map((s, k) => (
@@ -355,7 +465,7 @@ function TournamentPlay({
     const res = v.last?.answers.find((a) => a.player === p);
     const st = v.standings.find((s) => s.player === p)!;
     return (
-      <section className={`duel-half p${p} ${duel && p === 0 ? 'flip' : ''}`} style={{ ['--pc' as string]: PLAYER_COLORS[p] }}>
+      <section className={`duel-half p${p} ${split && p === 0 ? 'flip' : ''}`} style={{ ['--pc' as string]: PLAYER_COLORS[p] }}>
         <div className="half-head">
           <span className="dot" aria-hidden="true" />
           <b>{players[p]}</b>
@@ -363,7 +473,7 @@ function TournamentPlay({
             {st.points.toLocaleString(lang)}
           </span>
         </div>
-        {duel && v.stage !== 'countdown' && <p className="half-ask">{withNote(askTemplate(q, lang, nm), target)}</p>}
+        {split && v.stage !== 'countdown' && <p className="half-ask">{withNote(askTemplate(q, lang, nm), target)}</p>}
         <div className={`answers n-${q.choices.length}`}>
           {q.choices.map((ch) => {
             const lb = choiceLabel(q, ch, lang, nm);
@@ -400,8 +510,8 @@ function TournamentPlay({
   };
 
   return (
-    <main className={`tournament ${duel ? 'duel' : 'single'} stage-${v.stage}`}>
-      {duel && half(0)}
+    <main className={`tournament ${split ? 'duel' : 'single'} stage-${v.stage}`}>
+      {split && half(0)}
       <section className="t-center">
         <div className="t-top">
           <button className="icon-btn" onClick={onExit} aria-label={t.exit}>
@@ -420,7 +530,17 @@ function TournamentPlay({
         )}
         <TimeBar endsAt={v.stage === 'answering' ? v.windowEndsAt : null} />
       </section>
-      {half(duel ? 1 : 0)}
+      {ghost && (
+        <div className={`ghost-bar ${v.locked[1] !== undefined ? 'in' : ''}`} dir="ltr">
+          <span>👻 {players[1]}</span>
+          <b>{(v.standings.find((s) => s.player === 1)?.points ?? 0).toLocaleString(lang)}</b>
+          <span className="ghost-state">{v.locked[1] !== undefined ? '✓' : '…'}</span>
+          <span className="ghost-me">
+            {t.you}: <b>{(v.standings.find((s) => s.player === 0)?.points ?? 0).toLocaleString(lang)}</b>
+          </span>
+        </div>
+      )}
+      {half(split ? 1 : 0)}
     </main>
   );
 }

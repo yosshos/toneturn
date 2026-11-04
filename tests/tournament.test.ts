@@ -154,3 +154,17 @@ describe('daily leaderboard parity with the server', () => {
     expect(p.daily?.['2026-11-05']).toMatchObject({ submitted: true, answers: ['1', null, '5', 'maj', 'P5'] });
   });
 });
+
+describe('ghost race storage', () => {
+  it('the first run becomes the ghost; only a better run replaces it', async () => {
+    const { ProgressStore } = await import('../src/storage/progress');
+    const { memoryKV } = await import('../src/storage/kv');
+    const store = new ProgressStore(memoryKV());
+    const run = (points: number) => ({ seed: 7, points, answers: [{ answer: 1, timeMs: 900 }], at: '2026-11-05' });
+    expect((await store.recordGhost('mixed:5', run(2000))).kept).toBe(true);
+    expect((await store.recordGhost('mixed:5', run(1500))).kept).toBe(false);
+    const r = await store.recordGhost('mixed:5', run(2600));
+    expect(r.kept).toBe(true);
+    expect(r.progress.ghosts?.['mixed:5'].points).toBe(2600);
+  });
+});

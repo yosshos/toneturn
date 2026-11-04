@@ -12,7 +12,7 @@ interface Props {
   settings: Settings;
   user: CloudUser | null;
   onClose: () => void;
-  onNavigate: (r: 'friends' | 'settings' | 'diagnostics' | 'games') => void;
+  onNavigate: (r: 'friends' | 'settings' | 'diagnostics' | 'games' | 'classes') => void;
   onSettings: (p: Partial<Settings>) => void;
 }
 
@@ -54,6 +54,9 @@ export function MenuSheet({ t, settings, user, onClose, onNavigate, onSettings }
         <nav className="menu-links">
           <button className="menu-link" onClick={() => onNavigate('friends')}>
             <span aria-hidden="true">👥</span> {t.friends}
+          </button>
+          <button className="menu-link" onClick={() => onNavigate('classes')}>
+            <span aria-hidden="true">🏫</span> {t.classes}
           </button>
           <button className="menu-link" onClick={() => onNavigate('games')}>
             <span aria-hidden="true">🎮</span> {t.games}

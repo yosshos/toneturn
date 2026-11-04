@@ -1,5 +1,12 @@
 # Milestone report — 2026-11-04
 
+## Update 19 — v0.19.0 (2026-11-05): class mode and ghost race
+
+- Migration 12 `toneturn_classes` (applied): classes, members, assignments; functions create / join / leave / delete / assign / unassign / my_classes. Verified live with simulated teacher, student and outsider (rolled back): student cannot assign, roster stats and per-skill accuracy, assignment done count, outsider sees nothing, leave works, bad code refused.
+- Client: Class screen (join, my classes with assignments, teach: roster table, assign with due date, delete), Home "Assigned to you" card, menu link.
+- Ghost race: best run per set stored locally (seed, answers, times); replayed as player 2 at the recorded times; single-player layout with a ghost bar.
+- Tests: 385 unit + class and ghost E2E.
+
 ## Update 18 — v0.18.0 (2026-11-05): jazz track and songs you know
 
 - `engine/jazz.ts`: seventh-chord shell voicings (root + 3 + 7 + colour), progressions (ii–V–I, V–I, I–vi–ii–V, iii–vi–ii–V) with voice leading; question kinds `seventh` and `progression`; parsers for spoken chord names and progressions (numbers, Roman numerals, Hebrew, "turnaround"). Lesson 21.

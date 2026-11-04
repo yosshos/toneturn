@@ -22,6 +22,7 @@ export function rebuildProgress(results: LessonResult[], local?: Progress): Prog
     ...rebuilt,
     games: local.games,
     daily: local.daily,
+    ghosts: local.ghosts,
     ratingEvents: [...(rebuilt.ratingEvents ?? []), ...localLesson, ...gameEvents],
     puzzles: { ...(local.puzzles ?? {}), ...(rebuilt.puzzles ?? {}) },
     snapshots: local.snapshots && (local.snapshots.length > (rebuilt.snapshots?.length ?? 0)) ? local.snapshots : rebuilt.snapshots,

@@ -46,6 +46,15 @@ export interface Progress {
   puzzles?: Record<string, { band: string; medal: Medal; completedAt: string }>;
   /** Daily challenge: the first play of each local day (later plays are practice). */
   daily?: Record<string, DailyRecord>;
+  /** Ghost race: your best run per set ("kind:rounds"), replayed as an opponent. */
+  ghosts?: Record<string, GhostRun>;
+}
+
+export interface GhostRun {
+  seed: number;
+  points: number;
+  answers: { answer: string | number | null; timeMs: number | null }[];
+  at: string;
 }
 
 export const ratingsOf = (p: Progress): Ratings => foldRatings(p.ratingEvents ?? []);
@@ -367,6 +376,16 @@ export class ProgressStore {
     const next = { ...p, daily };
     await this.kv.set('progress', next);
     return next;
+  }
+
+  /** Keep a ghost run if it is the first or beats the stored one. Returns whether it was kept. */
+  async recordGhost(key: string, run: GhostRun): Promise<{ progress: Progress; kept: boolean }> {
+    const p = await this.loadProgress();
+    const old = p.ghosts?.[key];
+    if (old && run.points <= old.points) return { progress: p, kept: false };
+    const next = { ...p, ghosts: { ...(p.ghosts ?? {}), [key]: run } };
+    await this.kv.set('progress', next);
+    return { progress: next, kept: true };
   }
 
   /** Mark a day's result as uploaded to the leaderboard. */

@@ -618,3 +618,104 @@
   font-weight: 900;
   color: var(--mint);
 }
+
+/* ---------------------------------------------------------------- classes */
+.class-card {
+  display: grid;
+  gap: 10px;
+}
+.class-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+}
+.class-head h2,
+.class-card h3 {
+  margin: 0;
+}
+.class-card h3 {
+  font-size: 1rem;
+  color: var(--ink-soft);
+}
+.class-code {
+  color: var(--gold);
+  letter-spacing: 0.15em;
+  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+}
+.assign-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.assign-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.assign-list li small {
+  color: var(--ink-dim);
+}
+.assign-list li.done .link {
+  color: var(--mint);
+}
+.assign-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.assign-form select,
+.assign-form input,
+.name-input {
+  min-height: 44px;
+  border-radius: 12px;
+  border: 2px solid transparent;
+  background: var(--card-2);
+  color: var(--ink);
+  font: inherit;
+  padding: 0 10px;
+}
+.name-input {
+  letter-spacing: normal !important;
+  text-align: start !important;
+  font-size: 1rem !important;
+}
+.roster-wrap {
+  overflow-x: auto;
+}
+.roster {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.9rem;
+}
+.roster th,
+.roster td {
+  padding: 6px 8px;
+  text-align: start;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+.roster th {
+  color: var(--ink-dim);
+  font-weight: 800;
+}
+.btn.danger {
+  color: var(--red);
+}
+.assigned-card {
+  padding: 14px 16px;
+  border-radius: 22px;
+  background: linear-gradient(160deg, #23516b, #2b1a4a);
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.assigned-card h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}

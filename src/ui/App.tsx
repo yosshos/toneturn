@@ -14,9 +14,11 @@ import { LessonScreen } from './Lesson';
 import { SettingsScreen } from './SettingsScreen';
 import { Diagnostics } from './Diagnostics';
 import { GameScreen, GameSetup, type GameSetupValue } from './Games';
-import { DailyScreen, DuelScreen, DuelSetup } from './Tournament';
+import { DailyScreen, DuelScreen, DuelSetup, GhostScreen } from './Tournament';
 import { OnlineScreen, PENDING_ONLINE_KEY } from './Online';
 import { DroneScreen } from './Drone';
+import { AssignedCard, ClassesScreen } from './Classes';
+import { myClasses, openAssignments } from '../cloud/classes';
 import type { SetKind } from '../engine/tournament';
 import type { GameKind } from '../game/memoryGame';
 import { MenuSheet, Changelog } from './Menu';
@@ -27,12 +29,12 @@ import { pwa } from '../pwa';
 import { piano, setMidiEnabled, SIMULATED, store, tts } from './services';
 import { midi } from '../speech/midi';
 
-type Route = 'home' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone';
+type Route = 'home' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost';
 /** Invite links: #/online/CODE */
 const onlineCodeFromHash = () => (/^#\/?online\/(\w+)/.exec(location.hash)?.[1] ?? '');
 const routeFromHash = (): Route => {
   const h = location.hash.replace(/^#\/?/, '').replace(/^online\/.*$/, 'online');
-  return (['settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
+  return (['settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
 };
 
 export function App() {
@@ -61,6 +63,14 @@ export function App() {
     setMidiEnabled(!!settings?.midiInput);
     if (settings?.midiInput && midi.supported) void midi.enable().catch(() => {});
   }, [settings?.midiInput]);
+  // Class assignments for the Home card (signed in only).
+  const [assigned, setAssigned] = useState<ReturnType<typeof openAssignments>>([]);
+  useEffect(() => {
+    if (!user || route !== 'home') return;
+    void myClasses()
+      .then((c) => setAssigned(openAssignments(c)))
+      .catch(() => {});
+  }, [user, route]);
   const progressRef = useRef(progress);
   progressRef.current = progress;
 
@@ -238,7 +248,7 @@ export function App() {
           streak={visibleStreak(progress.streak, new Date())}
           account={<AccountCard t={t} user={user} sync={sync} compact />}
           onMenu={() => setMenuOpen(true)}
-          tools={<PracticeTools t={t} progress={progress} onSkills={() => go('skills')} onPlacement={openPlacement} onReview={openReview} onPuzzle={openPuzzle} onDaily={() => go('daily')} onRuns={openRuns} onDrone={() => go('drone')} />}
+          tools={<>{user && <AssignedCard t={t} items={assigned} lang={s.uiLang} onOpen={(id) => openLesson(id)} />}<PracticeTools t={t} progress={progress} onSkills={() => go('skills')} onPlacement={openPlacement} onReview={openReview} onPuzzle={openPuzzle} onDaily={() => go('daily')} onRuns={openRuns} onDrone={() => go('drone')} /></>}
           updateReady={pwaState.updateReady}
           news={
             news.length > 0 ? (
@@ -255,6 +265,7 @@ export function App() {
           }
           onSettings={() => go('settings')}
           onDuel={() => go('duel')}
+          onGhost={() => go('ghost')}
           onOnline={() => {
             setOnlineCode('');
             setOnlineKey((k) => k + 1);
@@ -365,6 +376,8 @@ export function App() {
           }}
         />
       )}
+      {route === 'ghost' && <GhostScreen t={t} settings={s} progress={progress} onBack={() => go('home')} onProgress={setProgress} />}
+      {route === 'classes' && <ClassesScreen t={t} settings={s} user={user} onBack={() => go('home')} onOpenLesson={(id) => openLesson(id)} />}
       {route === 'drone' && <DroneScreen t={t} settings={s} onBack={() => go('home')} />}
       {route === 'online' && (
         <OnlineScreen key={`${onlineKey}-${user?.id ?? ''}`} t={t} settings={s} user={user} initialCode={onlineCode} onBack={() => go('home')} />
