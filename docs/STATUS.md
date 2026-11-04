@@ -1,5 +1,12 @@
 # Milestone report — 2026-11-04
 
+## Update 12 — v0.12.0: online rooms (spec I, part 2)
+
+- Migration 8 `toneturn_rooms`: rooms, players, answers, and a key table with no grants; security-definer functions create / join / state / start_round / answer / close; RLS lets members read only their room row (for Realtime). Verified on the live project with three simulated users in a rolled-back transaction: host-only start, hidden key, hidden results while open, outsider and late-join refused, points 960 / 900 / 950 / 1045 (streak).
+- Client: `RoomBackend` (Supabase + in-memory fake with the same rules), `RoomController` (server-driven rounds, local timing from end of playback, reveal, host fallbacks), screens for create/join, lobby with invite, play, reveal board with movement arrows, podium. Sign-in returns to the room screen.
+- Tests: 323 unit (rules, two controllers in sync, absent player) + 3 online E2E (signed-out prompt, full game vs bots, unknown code).
+- Not verified: two real accounts on two phones over Realtime.
+
 ## Update 11 — v0.11.0: daily challenge and same-device duel (spec I, part 1)
 
 - `src/engine/tournament.ts`: button-answerable items (≤ 4 choices: degrees 1/3/5, chord qualities, intervals, cadences), seeded sets, a daily set per calendar day (versioned seed), round scoring with spec-J tournament points (500 + speed × streak), plausibility (≥ 150 ms, inside the window), standings with time tie-break, spoiler-free share text.

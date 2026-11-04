@@ -69,6 +69,12 @@ Useful URLs
 
 Two players, one phone or tablet, split screen: player 1's half is rotated to face them across the table. Same sound for both; each player's first tap counts; time runs from the end of the sound; 10 s window; standings with tie-break by total response time; rematch. Buttons only (voice can't tell two speakers apart).
 
+## Online rooms (0.12, needs sign-in)
+
+Host creates a room (question set, 5/10/15 rounds) → 6-character code or invite link `#/online/CODE` → lobby (up to 20 players) → host starts. Every device gets the round from the server (Realtime + 1.5 s polling fallback), plays the sound itself and times the answer from the end of its own playback, so network lag doesn't count. The server holds the answer key, checks plausibility (≥ 150 ms, inside the window), computes points (same formula as the duel, with streaks) and reveals a round only when it is closed. Leaderboard with movement arrows after every round; podium at the end. If someone never answers, the host closes the round after the window; if the host disappears, anyone can continue after 20 s.
+
+Dev only: `?fakeRooms` runs an in-page room server with two bot players (used by the E2E test).
+
 ## Menu, versions, updates
 
 ☰ on the home screen: version / build / commit and **What's new**, **Install app** (browser prompt, or iOS instructions), **Check for updates / Update now** (a new service worker waits until the player chooses; first-time activation never reloads the page), notifications, friends. The service worker is generated at build time (`src/sw-template.js`) with the version and the exact asset list. Bump `package.json` and add a `src/version.ts` changelog entry for each release (a unit test keeps them in sync).

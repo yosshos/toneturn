@@ -173,3 +173,124 @@
   font-size: 1rem;
   color: var(--ink-dim);
 }
+
+/* ---------------------------------------------------------------- online rooms */
+.game-card.online {
+  background: linear-gradient(160deg, #23516b, #2b1a4a);
+}
+.online .set-card {
+  display: grid;
+  gap: 12px;
+}
+.online .set-card h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+.join-row {
+  display: flex;
+  gap: 10px;
+}
+.join-row .code-input {
+  flex: 1;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  text-align: center;
+  font-size: 1.3rem;
+}
+.form-error {
+  margin: 0;
+  color: var(--red);
+  font-weight: 800;
+}
+.room-code-card {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  text-align: center;
+}
+.room-code {
+  font-size: 2.6rem;
+  letter-spacing: 0.2em;
+  color: var(--gold);
+  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+}
+.room-players {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.room-players li {
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--card-2);
+  font-weight: 800;
+}
+.room-players li.me {
+  outline: 2px solid var(--gold);
+}
+.host-tag {
+  margin-inline-start: 6px;
+  color: var(--gold);
+  font-weight: 700;
+}
+.t-answered {
+  font-weight: 800;
+  color: var(--ink-dim);
+}
+.offline-chip {
+  margin: 0;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(255, 94, 122, 0.18);
+  color: var(--red);
+  font-weight: 800;
+}
+.room-board li.me {
+  outline: 2px solid var(--gold);
+}
+.move {
+  width: 1.2em;
+  font-size: 0.8rem;
+  text-align: center;
+}
+.move.up {
+  color: var(--mint);
+}
+.move.down {
+  color: var(--red);
+}
+.podium {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 8px;
+  margin: 8px 0 16px;
+}
+.podium .step {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  min-width: 90px;
+  padding: 10px 8px 0;
+  border-radius: 16px 16px 0 0;
+  background: var(--card-2);
+}
+.podium .step i {
+  font-style: normal;
+  font-weight: 900;
+  font-size: 1.6rem;
+  padding-bottom: 8px;
+}
+.podium .s1 {
+  min-height: 150px;
+  background: linear-gradient(180deg, rgba(255, 201, 77, 0.35), var(--card-2));
+}
+.podium .s2 {
+  min-height: 115px;
+}
+.podium .s3 {
+  min-height: 90px;
+}

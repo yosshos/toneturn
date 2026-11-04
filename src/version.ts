@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.12.0',
+    date: '2026-11-04',
+    en: ['Online rooms: create a room, share the code or link, and play friends on their own phones — same sound at the same moment, live leaderboard after every round, podium at the end', 'The server keeps the answers and does the scoring'],
+    he: ['חדרי אונליין: פותחים חדר, משתפים קוד או קישור ומשחקים עם חברים, כל אחד בטלפון שלו — אותו צליל באותו רגע, טבלה חיה אחרי כל סיבוב ופודיום בסוף', 'השרת שומר את התשובות ומחשב את הניקוד'],
+  },
+  {
     version: '0.11.0',
     date: '2026-11-04',
     en: ['Daily challenge: 5 questions, the same for everyone today, scored on speed and accuracy, with a spoiler-free share card', 'Duel on this device: two players face to face on a split screen, same sound, fastest right answer wins'],

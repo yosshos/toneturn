@@ -15,6 +15,7 @@ import { SettingsScreen } from './SettingsScreen';
 import { Diagnostics } from './Diagnostics';
 import { GameScreen, GameSetup, type GameSetupValue } from './Games';
 import { DailyScreen, DuelScreen, DuelSetup } from './Tournament';
+import { OnlineScreen, PENDING_ONLINE_KEY } from './Online';
 import type { SetKind } from '../engine/tournament';
 import type { GameKind } from '../game/memoryGame';
 import { MenuSheet, Changelog } from './Menu';
@@ -24,10 +25,12 @@ import { APP_VERSION, unseenChanges } from '../version';
 import { pwa } from '../pwa';
 import { piano, SIMULATED, store, tts } from './services';
 
-type Route = 'home' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay';
+type Route = 'home' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online';
+/** Invite links: #/online/CODE */
+const onlineCodeFromHash = () => (/^#\/?online\/(\w+)/.exec(location.hash)?.[1] ?? '');
 const routeFromHash = (): Route => {
-  const h = location.hash.replace(/^#\/?/, '');
-  return (['settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
+  const h = location.hash.replace(/^#\/?/, '').replace(/^online\/.*$/, 'online');
+  return (['settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
 };
 
 export function App() {
@@ -41,6 +44,8 @@ export function App() {
   const [gameKind, setGameKind] = useState<GameKind>('melody');
   const [gameSetup, setGameSetup] = useState<GameSetupValue | null>(null);
   const [gameKey, setGameKey] = useState(0);
+  const [onlineCode, setOnlineCode] = useState(onlineCodeFromHash);
+  const [onlineKey, setOnlineKey] = useState(0);
   const [duel, setDuel] = useState<{ names: string[]; kind: SetKind; rounds: number } | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   /** Generated session in progress (placement / review / weekly puzzle). */
@@ -55,9 +60,28 @@ export function App() {
   useEffect(() => {
     void store.loadSettings().then(setSettings).catch(() => setSettings(DEFAULT_SETTINGS));
     void store.loadProgress().then(setProgress);
-    const onHash = () => setRoute((r) => ((r === 'lesson' || r === 'game' || r === 'duelplay') && routeFromHash() === 'home' ? r : routeFromHash()));
+    // Back from Google sign-in that started on the online screen.
+    try {
+      const pending = sessionStorage.getItem(PENDING_ONLINE_KEY);
+      if (pending) {
+        sessionStorage.removeItem(PENDING_ONLINE_KEY);
+        setOnlineCode(pending === '-' ? '' : pending);
+        location.hash = pending === '-' ? '/online' : `/online/${pending}`;
+        setRoute('online');
+      }
+    } catch {
+      /* storage unavailable */
+    }
+    const onHash = () => {
+      if (routeFromHash() === 'online') setOnlineCode(onlineCodeFromHash());
+    };
     window.addEventListener('hashchange', onHash);
-    return () => window.removeEventListener('hashchange', onHash);
+    const onHashRoute = () => setRoute((r) => ((r === 'lesson' || r === 'game' || r === 'duelplay') && routeFromHash() === 'home' ? r : routeFromHash()));
+    window.addEventListener('hashchange', onHashRoute);
+    return () => {
+      window.removeEventListener('hashchange', onHash);
+      window.removeEventListener('hashchange', onHashRoute);
+    };
   }, []);
 
   // ---- cloud: optional sign-in + sync (never blocks local play) ----
@@ -219,6 +243,11 @@ export function App() {
           }
           onSettings={() => go('settings')}
           onDuel={() => go('duel')}
+          onOnline={() => {
+            setOnlineCode('');
+            setOnlineKey((k) => k + 1);
+            go('online');
+          }}
           onGame={(k) => {
             setGameKind(k);
             go('games');
@@ -323,6 +352,9 @@ export function App() {
             setRoute('game');
           }}
         />
+      )}
+      {route === 'online' && (
+        <OnlineScreen key={`${onlineKey}-${user?.id ?? ''}`} t={t} settings={s} user={user} initialCode={onlineCode} onBack={() => go('home')} />
       )}
       {route === 'daily' && <DailyScreen t={t} settings={s} progress={progress} onBack={() => go('home')} onProgress={setProgress} />}
       {route === 'duel' && (

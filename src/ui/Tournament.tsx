@@ -346,7 +346,7 @@ function TournamentPlay({
   );
 }
 
-function TimeBar({ endsAt }: { endsAt: number | null }) {
+export function TimeBar({ endsAt }: { endsAt: number | null }) {
   const [, force] = useState(0);
   useEffect(() => {
     if (endsAt === null) return;
