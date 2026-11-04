@@ -302,3 +302,23 @@ export function rhythmTimeline(p: RhythmPattern, countIn = 4): RhythmTimeline {
   const responseAt = secondIn + countIn * b;
   return { clicks, wood, responseAt, responseEnd: responseAt + p.beats * b + b * 0.6 };
 }
+
+/**
+ * Tap-latency calibration: taps against a click track starting at `firstMs` (perf clock, as heard).
+ * Ignores the first `skip` clicks (settling in), matches each tap to its nearest click and returns
+ * the median offset in ms, or null when fewer than 4 usable taps.
+ */
+export function calibrationOffset(firstMs: number, tapsMs: number[], bpm: number, skip = 4): number | null {
+  const beat = (60 / bpm) * 1000;
+  const offs: number[] = [];
+  for (const t of tapsMs) {
+    const rel = t - firstMs;
+    const k = Math.round(rel / beat);
+    if (k < skip) continue;
+    const off = rel - k * beat;
+    if (Math.abs(off) < beat * 0.4) offs.push(off);
+  }
+  if (offs.length < 4) return null;
+  offs.sort((a, b) => a - b);
+  return Math.round(offs[Math.floor(offs.length / 2)]);
+}

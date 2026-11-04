@@ -39,6 +39,8 @@ Record each run with the **Voice check → Copy JSON report** output attached. P
 | Reminder function auth (no/wrong secret → 403) | ✓ |
 | Hourly job → function | ✓ `200 {"due":0}` |
 | Real streak notification on a phone / desktop | ☐ pending |
+| Live site https://yosshos.github.io/toneturn/ loads, SW controls, offline reload | ✓ (Chrome, scripted) |
+| Google sign-in from the live site returns to it | ✓ redirect verified; full sign-in ☐ by owner |
 | Two real accounts become friends in the app | ☐ pending |
 
 ## Voice & language checks (manual)

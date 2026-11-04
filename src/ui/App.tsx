@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { LESSON_ORDER, type LessonId } from '../engine/lesson';
+import { LESSON_ORDER, type LessonDef, type LessonId, type Question, type SkillId } from '../engine/lesson';
+import type { SessionState } from '../engine/session';
+import { adaptPlacement, placementLesson, puzzleBand, reviewLesson, weekId, weeklyPuzzle } from '../engine/adaptive';
+import { SkillMap } from './SkillMap';
+import { PracticeTools } from './Tools';
+import { MicIcon } from './bits';
 import { STRINGS } from '../i18n/strings';
-import { visibleStreak, type Progress, type Settings, DEFAULT_SETTINGS, emptyProgress, migrateSettings } from '../storage/progress';
+import { ratingsOf, visibleStreak, type Progress, type Settings, DEFAULT_SETTINGS, emptyProgress, migrateSettings } from '../storage/progress';
 import { cloudConfigured, currentUser, onAuthChange, pullSettings, pushSettings, syncProgress, type CloudUser } from '../cloud/cloud';
 import { AccountCard, type SyncState } from './Account';
 import { Home, lessonStates } from './Home';
@@ -17,10 +22,10 @@ import { APP_VERSION, unseenChanges } from '../version';
 import { pwa } from '../pwa';
 import { piano, SIMULATED, store, tts } from './services';
 
-type Route = 'home' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends';
+type Route = 'home' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills';
 const routeFromHash = (): Route => {
   const h = location.hash.replace(/^#\/?/, '');
-  return (['settings', 'diagnostics', 'games', 'friends'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
+  return (['settings', 'diagnostics', 'games', 'friends', 'skills'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
 };
 
 export function App() {
@@ -35,6 +40,10 @@ export function App() {
   const [gameSetup, setGameSetup] = useState<GameSetupValue | null>(null);
   const [gameKey, setGameKey] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
+  /** Generated session in progress (placement / review / weekly puzzle). */
+  /** Voice-consent gate for sessions started outside the Practice button. */
+  const [consentThen, setConsentThen] = useState<null | (() => void)>(null);
+  const [generated, setGenerated] = useState<{ def: LessonDef; adapt?: (s: SessionState) => Question[] | null } | null>(null);
   const pwaState = useSyncExternalStore(pwa.subscribe, pwa.get);
   const [sync, setSync] = useState<SyncState>('idle');
   const progressRef = useRef(progress);
@@ -111,8 +120,50 @@ export function App() {
     setRoute(r);
   };
 
+  const openGenerated = (def: LessonDef, adapt?: (s: SessionState) => Question[] | null, consented = false) => {
+    if (!consented && s.mode === 'voice' && !s.voiceConsent) {
+      setConsentThen(() => () => openGenerated(def, adapt, true));
+      return;
+    }
+    void piano.unlock();
+    setGenerated({ def, adapt });
+    setLessonId(def.id);
+    setLessonKey((k) => k + 1);
+    setAutoStart(true);
+    location.hash = '';
+    setRoute('lesson');
+  };
+  const openPlacement = () => {
+    const seed = (Date.now() ^ (Math.random() * 1e9)) >>> 0;
+    openGenerated(placementLesson(seed), (st) => adaptPlacement(st, seed));
+  };
+  const openReview = () => {
+    const def = reviewLesson(progress.review, Date.now() >>> 0);
+    if (def) openGenerated(def);
+  };
+  const openPuzzle = () => {
+    const week = weekId(new Date());
+    const fixed = progress.puzzles?.[week]?.band as Parameters<typeof weeklyPuzzle>[1] | undefined;
+    openGenerated(weeklyPuzzle(week, fixed ?? puzzleBand(ratingsOf(progress))));
+  };
+  const practiceSkill = (k: SkillId) => {
+    const map: Partial<Record<SkillId, LessonId>> = {
+      degrees: (progress.lessons['bflat-two-homes']?.completions ?? 0) > 0 ? 'degrees-135' : 'bflat-two-homes',
+      chords: 'major-minor',
+      cadences: 'cadences',
+      singing: 'sing-home-five',
+    };
+    if (k === 'sequences') return openPuzzle();
+    if (k === 'rhythm') {
+      setGameKind('rhythm');
+      return go('games');
+    }
+    openLesson(map[k] ?? 'bflat-two-homes');
+  };
+
   const openLesson = (id: LessonId) => {
     void piano.unlock(); // inside the Start gesture
+    setGenerated(null);
     setLessonId(id);
     setLessonKey((k) => k + 1);
     setAutoStart(true);
@@ -143,6 +194,7 @@ export function App() {
           streak={visibleStreak(progress.streak, new Date())}
           account={<AccountCard t={t} user={user} sync={sync} compact />}
           onMenu={() => setMenuOpen(true)}
+          tools={<PracticeTools t={t} progress={progress} onSkills={() => go('skills')} onPlacement={openPlacement} onReview={openReview} onPuzzle={openPuzzle} />}
           updateReady={pwaState.updateReady}
           news={
             news.length > 0 ? (
@@ -183,8 +235,11 @@ export function App() {
           autoStart={autoStart}
           onMode={(mode) => updateSettings({ mode })}
           onExit={() => go('home')}
-          onAgain={() => openLesson(lessonId)}
-          onNext={canNext ? () => openLesson(nextId) : null}
+          onAgain={() => (generated?.def.id === 'placement' ? openPlacement() : generated?.def.id === 'review' ? openReview() : generated ? openPuzzle() : openLesson(lessonId))}
+          lessonDef={generated?.def}
+          adapt={generated?.adapt}
+          nextLabel={generated ? t.seeSkillMap : undefined}
+          onNext={generated ? () => go('skills') : canNext ? () => openLesson(nextId) : null}
           onProgress={(p) => {
             setProgress(p);
             if (user) void runSync();
@@ -196,6 +251,40 @@ export function App() {
       )}
       {route === 'diagnostics' && <Diagnostics t={t} settings={s} onBack={() => go('home')} />}
       {route === 'friends' && <FriendsScreen t={t} user={user} sync={sync} onBack={() => go('home')} />}
+      {route === 'skills' && <SkillMap t={t} progress={progress} onBack={() => go('home')} onPractice={practiceSkill} onPlacement={openPlacement} />}
+      {consentThen && (
+        <div className="sheet-backdrop" onClick={() => setConsentThen(null)}>
+          <div className="sheet" role="dialog" aria-modal="true" aria-labelledby="consent2-title" onClick={(e) => e.stopPropagation()}>
+            <h2 id="consent2-title">
+              <MicIcon /> {t.consentTitle}
+            </h2>
+            <p>{t.consentBody}</p>
+            <button
+              className="btn mega"
+              autoFocus
+              onClick={() => {
+                const go2 = consentThen;
+                setConsentThen(null);
+                updateSettings({ voiceConsent: true });
+                go2();
+              }}
+            >
+              {t.consentAllow}
+            </button>
+            <button
+              className="btn ghost"
+              onClick={() => {
+                const go2 = consentThen;
+                setConsentThen(null);
+                updateSettings({ mode: 'buttons' });
+                go2();
+              }}
+            >
+              {t.consentButtons}
+            </button>
+          </div>
+        </div>
+      )}
       {menuOpen && (
         <MenuSheet
           t={t}
@@ -214,6 +303,8 @@ export function App() {
           t={t}
           initialKind={gameSetup?.kind ?? gameKind}
           progress={progress}
+          settings={s}
+          onSettings={updateSettings}
           onBack={() => go('home')}
           onStart={(v) => {
             void piano.unlock(); // the Start gesture

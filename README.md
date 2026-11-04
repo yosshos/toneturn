@@ -47,6 +47,17 @@ Useful URLs
 
 `?unlock=all` opens every lesson (testing). Singing uses the microphone in both modes; in Buttons mode it waits for a **Sing now** tap.
 
+## Live
+
+**https://yosshos.github.io/toneturn/** — deployed by GitHub Actions on every push to `main` (typecheck + unit tests + build with `BASE_PATH=/toneturn/`).
+
+## Practice tools (0.6)
+
+- **Find my level** — optional 9-question adaptive placement → **Skill Map** (radar: unmeasured / provisional / measured, text list, diagnosis, one recommendation, 4-week comparison).
+- **Review my mistakes** — fresh items from your misses; hear your answer next to the right one.
+- **Weekly puzzle** — same degree-sequence puzzle for everyone in your band; gold / silver.
+- **Beat Echo calibration** — tap along to 12 clicks; the median offset corrects your device's tap delay.
+
 ## Menu, versions, updates
 
 ☰ on the home screen: version / build / commit and **What's new**, **Install app** (browser prompt, or iOS instructions), **Check for updates / Update now** (a new service worker waits until the player chooses; first-time activation never reloads the page), notifications, friends. The service worker is generated at build time (`src/sw-template.js`) with the version and the exact asset list. Bump `package.json` and add a `src/version.ts` changelog entry for each release (a unit test keeps them in sync).

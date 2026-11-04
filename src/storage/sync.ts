@@ -10,8 +10,21 @@ export function mergeResults(local: LessonResult[], remote: LessonResult[]): Les
 }
 
 /** Rebuild progress from results; streaks follow each result's own completion time. */
-export function rebuildProgress(results: LessonResult[]): Progress {
-  return results.reduce((p, r) => applyResult(p, r, new Date(r.completedAt)), emptyProgress());
+export function rebuildProgress(results: LessonResult[], local?: Progress): Progress {
+  const rebuilt = results.reduce((p, r) => applyResult(p, r, new Date(r.completedAt)), emptyProgress());
+  if (!local) return rebuilt;
+  // Local-only data survives a rebuild: game bests, game-round ratings, puzzle medals, older snapshots.
+  const gameEvents = (local.ratingEvents ?? []).filter((e) => e.id.startsWith('g:'));
+  const have = new Set((rebuilt.ratingEvents ?? []).map((e) => e.id));
+  // Lesson events that only exist locally (results synced before the server stored items).
+  const localLesson = (local.ratingEvents ?? []).filter((e) => !e.id.startsWith('g:') && !have.has(e.id));
+  return {
+    ...rebuilt,
+    games: local.games,
+    ratingEvents: [...(rebuilt.ratingEvents ?? []), ...localLesson, ...gameEvents],
+    puzzles: { ...(local.puzzles ?? {}), ...(rebuilt.puzzles ?? {}) },
+    snapshots: local.snapshots && (local.snapshots.length > (rebuilt.snapshots?.length ?? 0)) ? local.snapshots : rebuilt.snapshots,
+  };
 }
 
 /** Local results the server does not have yet. */

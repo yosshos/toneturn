@@ -6,8 +6,9 @@ import { majorScale, pc, pcValue, voiceChord, type ChordQuality, type PitchClass
 export const CONTENT_SCHEMA_VERSION = 2;
 
 export type Answer = number | string;
-export type SkillId = 'degrees' | 'chords' | 'cadences' | 'singing';
-export type Roman = 'I' | 'ii' | 'IV' | 'V' | 'V7' | 'vi';
+export type SkillId = 'degrees' | 'chords' | 'cadences' | 'singing' | 'sequences' | 'rhythm';
+export type Quality = 'maj' | 'min' | 'dim' | 'aug';
+export type Roman = 'I' | 'ii' | 'iii' | 'IV' | 'V' | 'V7' | 'vi';
 
 export type Stimulus =
   | { kind: 'cadence'; key: PitchClass }
@@ -41,7 +42,7 @@ export interface QualityQuestion extends QBase {
   kind: 'quality';
   rootMidi: number;
   root: PitchClass;
-  answer: 'maj' | 'min';
+  answer: Quality;
 }
 
 export interface CadenceQuestion extends QBase {
@@ -60,7 +61,33 @@ export interface SingQuestion extends QBase {
   answer: 'accurate';
 }
 
-export type Question = DegreeQuestion | QualityQuestion | CadenceQuestion | SingQuestion;
+/** Hear the key, then a short melody; name its degrees in order ("one three five"). */
+export interface DegreeSeqQuestion extends QBase {
+  kind: 'degree-seq';
+  key: PitchClass;
+  degrees: number[];
+  midis: number[];
+  /** Canonical answer: degrees joined with '-', e.g. "1-3-5". */
+  answer: string;
+}
+
+export type Question = DegreeQuestion | QualityQuestion | CadenceQuestion | SingQuestion | DegreeSeqQuestion;
+
+/** Which skill a question measures (for ratings). */
+export function questionSkill(q: Question): SkillId {
+  switch (q.kind) {
+    case 'degree':
+      return 'degrees';
+    case 'quality':
+      return 'chords';
+    case 'cadence':
+      return 'cadences';
+    case 'sing':
+      return 'singing';
+    case 'degree-seq':
+      return 'sequences';
+  }
+}
 
 export interface ScoringPolicy {
   xpPerCorrect: number; // awarded only for a first-attempt correct answer
@@ -89,7 +116,7 @@ export interface LessonDef {
   questions: Question[];
 }
 
-export type LessonId = 'bflat-two-homes' | 'degrees-135' | 'major-minor' | 'cadences' | 'sing-home-five';
+export type LessonId = 'bflat-two-homes' | 'degrees-135' | 'major-minor' | 'cadences' | 'sing-home-five' | 'placement' | 'review' | 'weekly-puzzle';
 
 /** Small deterministic PRNG for seeded generation in tests and replays. */
 export function mulberry32(seed: number): () => number {
@@ -102,8 +129,8 @@ export function mulberry32(seed: number): () => number {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
-const pick = <T,>(rnd: () => number, xs: readonly T[]): T => xs[Math.floor(rnd() * xs.length)];
-function shuffle<T>(rnd: () => number, xs: T[]): T[] {
+export const pick = <T,>(rnd: () => number, xs: readonly T[]): T => xs[Math.floor(rnd() * xs.length)];
+export function shuffle<T>(rnd: () => number, xs: T[]): T[] {
   const a = xs.slice();
   for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(rnd() * (i + 1));
@@ -183,9 +210,9 @@ export function bflatTwoHomes(seed = Date.now()): LessonDef {
 }
 
 // ---------------------------------------------------------------- Lesson 2
-const DEGREE_KEYS = ['C', 'F', 'G', 'D', 'Bb', 'Eb', 'A'].map(pc);
+export const DEGREE_KEYS = ['C', 'F', 'G', 'D', 'Bb', 'Eb', 'A'].map(pc);
 
-export function degreeQuestion(id: string, key: PitchClass, degree: number, choices: number[]): DegreeQuestion {
+export function degreeQuestion(id: string, key: PitchClass, degree: number, choices: number[], difficulty = 1000): DegreeQuestion {
   const target = majorScale(key)[degree - 1];
   const targetMidi = placeInRange(pcValue(target), 62, 73);
   return {
@@ -198,7 +225,7 @@ export function degreeQuestion(id: string, key: PitchClass, degree: number, choi
     choices,
     answer: degree,
     stimulus: [{ kind: 'cadence', key }, { kind: 'note', midi: targetMidi, duration: 1.5 }],
-    difficulty: 1000,
+    difficulty,
   };
 }
 
@@ -225,24 +252,24 @@ export function degrees135(seed = Date.now()): LessonDef {
 }
 
 // ---------------------------------------------------------------- Lesson 3
-const ROOT_NAMES = ['C', 'D', 'Eb', 'E', 'F', 'G', 'A', 'Bb'];
+export const ROOT_NAMES = ['C', 'D', 'Eb', 'E', 'F', 'G', 'A', 'Bb'];
 
-function qualityQuestion(id: string, root: PitchClass, quality: 'maj' | 'min'): QualityQuestion {
+const QUALITY_STEPS: Record<Quality, [number, number]> = { maj: [4, 7], min: [3, 7], dim: [3, 6], aug: [4, 8] };
+
+export function qualityQuestion(id: string, root: PitchClass, quality: Quality, choices: Quality[] = ['maj', 'min'], arpeggio = true, difficulty = 1000): QualityQuestion {
   const rootMidi = placeInRange(pcValue(root), 55, 66);
-  const chord = [rootMidi, rootMidi + (quality === 'maj' ? 4 : 3), rootMidi + 7];
+  const [third, fifth] = QUALITY_STEPS[quality];
+  const chord = [rootMidi, rootMidi + third, rootMidi + fifth];
+  const block: Stimulus = { kind: 'chord', midis: [rootMidi - 12, ...chord], duration: 1.6 };
   return {
     id,
     kind: 'quality',
     root,
     rootMidi,
-    choices: ['maj', 'min'],
+    choices,
     answer: quality,
-    stimulus: [
-      { kind: 'chord', midis: chord, duration: 1.6, arpeggio: true },
-      { kind: 'rest', duration: 0.2 },
-      { kind: 'chord', midis: [rootMidi - 12, ...chord], duration: 1.6 },
-    ],
-    difficulty: 1000,
+    stimulus: arpeggio ? [{ kind: 'chord', midis: chord, duration: 1.6, arpeggio: true }, { kind: 'rest', duration: 0.2 }, block] : [block],
+    difficulty,
   };
 }
 
@@ -266,20 +293,38 @@ export function majorMinor(seed = Date.now()): LessonDef {
 }
 
 // ---------------------------------------------------------------- Lesson 4
-const PHRASES: Record<'resolved' | 'open', Roman[]> = {
+export const PHRASES: Record<'resolved' | 'open', Roman[]> = {
   resolved: ['I', 'IV', 'V7', 'I'],
   open: ['I', 'vi', 'IV', 'V'],
 };
 
-function cadenceQuestion(id: string, key: PitchClass, ending: 'resolved' | 'open'): CadenceQuestion {
+export function cadenceQuestion(id: string, key: PitchClass, ending: 'resolved' | 'open', phrases = PHRASES, difficulty = 1050): CadenceQuestion {
   return {
     id,
     kind: 'cadence',
     key,
     choices: ['resolved', 'open'],
     answer: ending,
-    stimulus: [{ kind: 'phrase', key, chords: PHRASES[ending] }],
-    difficulty: 1050,
+    stimulus: [{ kind: 'phrase', key, chords: phrases[ending] }],
+    difficulty,
+  };
+}
+
+/** Degree-sequence item: notes of `degrees` in `key`, kept within an octave above the tonic. */
+export function degreeSeqQuestion(id: string, key: PitchClass, degrees: number[], difficulty = 1150): DegreeSeqQuestion {
+  const tonic = placeInRange(pcValue(key), 57, 68);
+  const steps = [0, 2, 4, 5, 7, 9, 11];
+  const midis = degrees.map((d) => tonic + steps[d - 1]);
+  return {
+    id,
+    kind: 'degree-seq',
+    key,
+    degrees,
+    midis,
+    choices: [1, 2, 3, 4, 5, 6, 7],
+    answer: degrees.join('-'),
+    stimulus: [{ kind: 'cadence', key }, { kind: 'notes', midis, each: 0.7 }],
+    difficulty,
   };
 }
 
@@ -345,6 +390,10 @@ export const LESSON_ORDER: LessonId[] = ['bflat-two-homes', 'degrees-135', 'majo
 
 export function makeLesson(id: LessonId, seed = Date.now()): LessonDef {
   switch (id) {
+    case 'placement':
+    case 'review':
+    case 'weekly-puzzle':
+      throw new Error(`${id} is built by src/engine/adaptive.ts`);
     case 'bflat-two-homes':
       return bflatTwoHomes(seed);
     case 'degrees-135':
@@ -372,6 +421,50 @@ export function explainStimulus(q: Question): Stimulus[] {
       return q.stimulus.slice(-1);
     case 'sing':
       return [{ kind: 'note', midi: q.targetMidi, duration: 1.6 }];
+    case 'degree-seq':
+      return [{ kind: 'notes', midis: q.midis, each: 0.7 }];
+  }
+}
+
+/**
+ * "Hear your answer next to the correct one": the player's choice, a breath, then the right answer.
+ * Null when the given answer can't be played back meaningfully.
+ */
+export function compareStimulus(q: Question, given: Answer): Stimulus[] | null {
+  switch (q.kind) {
+    case 'degree': {
+      if (typeof given !== 'number' || given < 1 || given > 7) return null;
+      const steps = [0, 2, 4, 5, 7, 9, 11];
+      const tonic = q.targetMidi - steps[q.answer - 1];
+      return [
+        { kind: 'note', midi: tonic + steps[given - 1], duration: 1.0 },
+        { kind: 'rest', duration: 0.35 },
+        { kind: 'note', midi: q.targetMidi, duration: 1.2 },
+      ];
+    }
+    case 'quality': {
+      if (typeof given !== 'string' || !(given in QUALITY_STEPS)) return null;
+      const chord = (k: Quality) => [q.rootMidi - 12, q.rootMidi, q.rootMidi + QUALITY_STEPS[k][0], q.rootMidi + QUALITY_STEPS[k][1]];
+      return [
+        { kind: 'chord', midis: chord(given as Quality), duration: 1.2 },
+        { kind: 'rest', duration: 0.35 },
+        { kind: 'chord', midis: chord(q.answer), duration: 1.4 },
+      ];
+    }
+    case 'cadence': {
+      if (given !== 'resolved' && given !== 'open') return null;
+      return [{ kind: 'phrase', key: q.key, chords: PHRASES[given] }, { kind: 'rest', duration: 0.4 }, { kind: 'phrase', key: q.key, chords: PHRASES[q.answer] }];
+    }
+    case 'degree-seq': {
+      if (typeof given !== 'string') return null;
+      const ds = given.split('-').map(Number).filter((d) => d >= 1 && d <= 7);
+      if (!ds.length) return null;
+      const steps = [0, 2, 4, 5, 7, 9, 11];
+      const tonic = q.midis[0] - steps[q.degrees[0] - 1];
+      return [{ kind: 'notes', midis: ds.map((d) => tonic + steps[d - 1]), each: 0.6 }, { kind: 'rest', duration: 0.4 }, { kind: 'notes', midis: q.midis, each: 0.6 }];
+    }
+    case 'sing':
+      return null;
   }
 }
 
@@ -385,6 +478,7 @@ export interface NoteEvent {
 const ROMAN: Record<Roman, { deg: number; q: ChordQuality }> = {
   I: { deg: 0, q: 'maj' },
   ii: { deg: 2, q: 'min' },
+  iii: { deg: 4, q: 'min' },
   IV: { deg: 5, q: 'maj' },
   V: { deg: 7, q: 'maj' },
   V7: { deg: 7, q: 'dom7' },
@@ -455,5 +549,7 @@ export function questionTag(q: Question): string {
       return `cadence:${q.answer}`;
     case 'sing':
       return `sing:${q.degree}`;
+    case 'degree-seq':
+      return `seq:${k(q.key)}:${q.answer}`;
   }
 }

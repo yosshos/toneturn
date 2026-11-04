@@ -15,9 +15,10 @@ interface Props {
   onAgain: () => void;
   onHome: () => void;
   onNext: (() => void) | null;
+  nextLabel?: string;
 }
 
-export function Recap({ t, view, settings, onReplay, onAgain, onHome, onNext }: Props) {
+export function Recap({ t, view, settings, onReplay, onAgain, onHome, onNext, nextLabel }: Props) {
   const s = view.session;
   const sm = summary(s);
   const [xp, setXp] = useState(0);
@@ -87,7 +88,14 @@ export function Recap({ t, view, settings, onReplay, onAgain, onHome, onNext }: 
           const r = s.records[i];
           const ok = r.outcome === 'correct' || r.outcome === 'correct-retry';
           const b = questionBadge(q, lang, nm);
-          const ans = q.kind === 'sing' ? `${t.singNow} ${q.degree}` : typeof q.answer === 'number' ? String(q.answer) : choiceLabel(q, q.answer, lang).small;
+          const ans =
+            q.kind === 'sing'
+              ? `${t.singNow} ${q.degree}`
+              : q.kind === 'degree-seq'
+                ? q.answer.split('-').join(' ')
+                : typeof q.answer === 'number'
+                  ? String(q.answer)
+                  : choiceLabel(q, q.answer, lang).small;
           return (
             <li key={q.id} className={`recap-row ${r.outcome}`}>
               <span className="recap-mark" aria-hidden="true">
@@ -119,7 +127,7 @@ export function Recap({ t, view, settings, onReplay, onAgain, onHome, onNext }: 
       <div className="recap-actions">
         {onNext && (
           <button className="btn mega" onClick={onNext}>
-            {t.nextLesson} <span className="flip-rtl">→</span>
+            {nextLabel ?? t.nextLesson} <span className="flip-rtl">→</span>
           </button>
         )}
         <button className={onNext ? 'btn' : 'btn mega'} onClick={onAgain}>

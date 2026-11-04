@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
-import { makeLesson, type IntroCard, type LessonId, type Question } from '../engine/lesson';
+import { makeLesson, type IntroCard, type LessonDef, type LessonId, type Question } from '../engine/lesson';
+import type { SessionState } from '../engine/session';
 import { displayNote, type Naming } from '../engine/pitch';
 import type { InputMode } from '../engine/session';
 import { LessonController, type LessonView } from '../game/controller';
@@ -20,15 +21,19 @@ interface Props {
   onAgain: () => void;
   onNext: (() => void) | null;
   onProgress: (p: Progress) => void;
+  /** Generated session (placement / review / puzzle) instead of a path lesson. */
+  lessonDef?: LessonDef;
+  adapt?: (s: SessionState) => Question[] | null;
+  nextLabel?: string;
 }
 
 const targetMidiOf = (q: Question) => (q.kind === 'degree' || q.kind === 'sing' ? q.targetMidi : 60);
 
-export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit, onAgain, onNext, onProgress }: Props) {
+export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit, onAgain, onNext, onProgress, lessonDef, adapt, nextLabel }: Props) {
   const ctrlRef = useRef<LessonController | null>(null);
   const sessionId = useMemo(() => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`, []);
   if (!ctrlRef.current) {
-    const lesson = makeLesson(lessonId);
+    const lesson = lessonDef ?? makeLesson(lessonId);
     let c: LessonController | null = null;
     const adapters = makeAdapters(
       () => c?.getView().question.answer ?? 1,
@@ -47,6 +52,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
         onEvent: (e) => {
           if (import.meta.env.DEV) console.debug('[toneturn]', e.type, e.detail ?? '');
         },
+        adapt,
       },
     );
     ctrlRef.current = c;
@@ -71,12 +77,14 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
   const bb = displayNote({ letter: 'B', acc: -1 }, nm, lang);
 
   if (v.stage === 'complete') {
-    return <Recap t={t} view={v} settings={settings} onReplay={(i) => ctrl.replayQuestion(i)} onAgain={onAgain} onHome={onExit} onNext={onNext} />;
+    return <Recap t={t} view={v} settings={settings} onReplay={(i) => ctrl.replayQuestion(i)} onAgain={onAgain} onHome={onExit} onNext={onNext} nextLabel={nextLabel} />;
   }
 
   const paused = v.phase === 'paused';
   const isSing = q.kind === 'sing';
-  const showButtons = v.stage === 'question' && !paused && !v.error && !isSing && (v.mode === 'buttons' || v.needsListenTap);
+  const isSeq = q.kind === 'degree-seq';
+  const showButtons = v.stage === 'question' && !paused && !v.error && !isSing && !isSeq && (v.mode === 'buttons' || v.needsListenTap);
+  const showKeypad = v.stage === 'question' && !paused && !v.error && isSeq && (v.mode === 'buttons' || v.needsListenTap);
   const showRecord = v.stage === 'question' && !paused && !v.error && isSing && (v.mode === 'buttons' || v.needsListenTap);
   const awaiting = v.phase === 'listening';
   const badge = questionBadge(q, lang, nm);
@@ -158,7 +166,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
             )}
           </div>
           <div className="hero-slot">
-            {isSing ? <Tuner v={v} /> : <Orb v={v} label={q.kind === 'degree' ? target : q.kind === 'quality' ? '♪♪♪' : '♪ ?'} />}
+            {isSing ? <Tuner v={v} /> : <Orb v={v} label={q.kind === 'degree' ? target : q.kind === 'quality' ? '♪♪♪' : q.kind === 'degree-seq' ? `${q.degrees.length}♪` : '♪ ?'} />}
             <Burst on={celebrate} />
           </div>
           <Keyboard mark={q.kind === 'degree' ? q.targetMidi : undefined} />
@@ -184,6 +192,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
               })}
             </div>
           )}
+          {showKeypad && q.kind === 'degree-seq' && <SeqKeypad key={`${v.index}-${v.session.turn}`} t={t} length={q.degrees.length} disabled={!awaiting} onSubmit={(a) => ctrl.answer(a)} />}
           {showRecord && (
             <button className="btn record" disabled={!awaiting} onClick={() => ctrl.record()}>
               <MicIcon /> {t.singNow}
@@ -381,7 +390,7 @@ function FeedbackBanner({ v, t, lang }: { v: LessonView; t: Strings; lang: 'he' 
   if (!f) return <div className="feedback empty" aria-live="polite" />;
   const q = v.question;
   const ans = f.answer !== undefined && q.kind !== 'sing' ? choiceLabel(q, f.answer, lang) : null;
-  const ansText = ans ? (typeof f.answer === 'number' ? String(f.answer) : ans.small) : '';
+  const ansText = q.kind === 'degree-seq' && f.answer !== undefined ? String(f.answer).split('-').join(' ') : ans ? (typeof f.answer === 'number' ? String(f.answer) : ans.small) : '';
   const sungText = !f.sung
     ? ''
     : { accurate: t.singAccurate, sharp: t.singSharp, flat: t.singFlat, wrong: t.singWrong, unclear: t.unclear }[f.sung.status];
@@ -429,5 +438,43 @@ function Caption({ text }: { text: string | null }) {
     <p className="caption" aria-live="polite">
       {text ?? ' '}
     </p>
+  );
+}
+
+/** Build an ordered degree answer by tapping 1–7, then submit. */
+function SeqKeypad({ t, length, disabled, onSubmit }: { t: Strings; length: number; disabled: boolean; onSubmit: (a: string) => void }) {
+  const [seq, setSeq] = useState<number[]>([]);
+  return (
+    <div className="seq-pad">
+      <div className="seq-slots" dir="ltr" aria-live="polite">
+        {Array.from({ length }).map((_, i) => (
+          <span key={i} className={`slot ${seq[i] ? 'filled' : ''}`}>
+            {seq[i] ?? ''}
+          </span>
+        ))}
+      </div>
+      <div className="seq-keys" dir="ltr">
+        {[1, 2, 3, 4, 5, 6, 7].map((d) => (
+          <button key={d} className="seq-key" disabled={disabled || seq.length >= length} onClick={() => setSeq((s) => [...s, d])} data-degree={d}>
+            {d}
+          </button>
+        ))}
+      </div>
+      <div className="row center">
+        <button className="btn small" disabled={!seq.length} onClick={() => setSeq((s) => s.slice(0, -1))}>
+          ⌫ {t.backspace}
+        </button>
+        <button
+          className="btn primary"
+          disabled={disabled || seq.length !== length}
+          onClick={() => {
+            onSubmit(seq.join('-'));
+            setSeq([]);
+          }}
+        >
+          {t.submit}
+        </button>
+      </div>
+    </div>
   );
 }

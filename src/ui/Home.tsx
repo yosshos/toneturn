@@ -25,6 +25,7 @@ interface Props {
   onMenu: () => void;
   updateReady: boolean;
   news: React.ReactNode;
+  tools: React.ReactNode;
 }
 
 export const DAILY_GOAL_XP = 30;
@@ -57,9 +58,9 @@ export function starsFor(best: number, total: number) {
   return r >= 1 ? 3 : r >= 0.6 ? 2 : r > 0 ? 1 : 0;
 }
 
-const TOTALS: Record<LessonId, number> = { 'bflat-two-homes': 3, 'degrees-135': 5, 'major-minor': 5, cadences: 4, 'sing-home-five': 3 };
+const TOTALS: Partial<Record<LessonId, number>> = { 'bflat-two-homes': 3, 'degrees-135': 5, 'major-minor': 5, cadences: 4, 'sing-home-five': 3 };
 
-export function Home({ t, settings, progress, streak, account, onPractice, onButtonsInstead, onMode, onSettings, onLang, onGame, onMenu, updateReady, news }: Props) {
+export function Home({ t, settings, progress, streak, account, onPractice, onButtonsInstead, onMode, onSettings, onLang, onGame, onMenu, updateReady, news, tools }: Props) {
   const [consentFor, setConsentFor] = useState<LessonId | null>(null);
   const lang = settings.uiLang;
   const nm = namingFor(settings.naming, lang);
@@ -153,7 +154,7 @@ export function Home({ t, settings, progress, streak, account, onPractice, onBut
             const st = states[id];
             const m = LESSON_META[id];
             const best = progress.lessons[id]?.best ?? 0;
-            const stars = st === 'done' ? starsFor(best, TOTALS[id]) : 0;
+            const stars = st === 'done' ? starsFor(best, TOTALS[id] ?? 1) : 0;
             const playable = st !== 'locked';
             return (
               <li key={id} className={`node ${st} ${i % 2 ? 'alt' : ''}`}>
@@ -190,6 +191,8 @@ export function Home({ t, settings, progress, streak, account, onPractice, onBut
           })}
         </ol>
       </section>
+
+      {tools}
 
       <section className="games-row" aria-label={t.games}>
         <h2>{t.games}</h2>
@@ -252,7 +255,7 @@ function GoalRing({ value }: { value: number }) {
   );
 }
 
-function NodeIcon({ kind }: { kind: 'ear' | 'steps' | 'chord' | 'cadence' | 'mic' }) {
+export function NodeIcon({ kind }: { kind: 'ear' | 'steps' | 'chord' | 'cadence' | 'mic' | 'map' | 'review' | 'puzzle' }) {
   switch (kind) {
     case 'ear':
       return (
@@ -290,6 +293,27 @@ function NodeIcon({ kind }: { kind: 'ear' | 'steps' | 'chord' | 'cadence' | 'mic
         <svg viewBox="0 0 32 32" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
           <rect x="12" y="4" width="8" height="15" rx="4" fill="currentColor" />
           <path d="M8 15a8 8 0 0 0 16 0M16 23v5" />
+        </svg>
+      );
+    case 'map':
+      return (
+        <svg viewBox="0 0 32 32" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinejoin="round">
+          <polygon points="16,3 28,11 24,27 8,27 4,11" opacity=".45" />
+          <polygon points="16,9 23,13 21,22 11,23 9,14" fill="currentColor" />
+        </svg>
+      );
+    case 'review':
+      return (
+        <svg viewBox="0 0 32 32" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M6 16a10 10 0 1 0 3-7" />
+          <path d="M5 4v6h6" />
+          <path d="M16 11v6l4 2" />
+        </svg>
+      );
+    case 'puzzle':
+      return (
+        <svg viewBox="0 0 32 32" width="30" height="30" fill="currentColor">
+          <path d="M6 6h8a3 3 0 1 1 4 0h8v8a3 3 0 1 0 0 4v8h-8a3 3 0 1 0-4 0H6v-8a3 3 0 1 1 0-4z" />
         </svg>
       );
   }

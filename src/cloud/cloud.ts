@@ -71,6 +71,7 @@ interface ResultRow {
   xp: number;
   missed: LessonResult['missed'];
   completed_at: string;
+  items?: LessonResult['items'];
 }
 
 const toRow = (r: LessonResult): ResultRow => ({
@@ -82,6 +83,7 @@ const toRow = (r: LessonResult): ResultRow => ({
   xp: r.xp,
   missed: r.missed,
   completed_at: r.completedAt,
+  items: r.items ?? [],
 });
 const fromRow = (x: ResultRow): LessonResult => ({
   sessionId: x.session_id,
@@ -91,6 +93,7 @@ const fromRow = (x: ResultRow): LessonResult => ({
   total: x.total,
   xp: x.xp,
   missed: x.missed ?? [],
+  items: x.items ?? [],
   completedAt: new Date(x.completed_at).toISOString(),
 });
 
@@ -101,7 +104,7 @@ const fromRow = (x: ResultRow): LessonResult => ({
 export async function syncProgress(local: Progress): Promise<Progress> {
   const sb = supabase();
   if (!sb) return local;
-  const { data, error } = await sb.from('toneturn_lesson_results').select('session_id,lesson_id,lesson_version,first_try,total,xp,missed,completed_at').order('completed_at');
+  const { data, error } = await sb.from('toneturn_lesson_results').select('session_id,lesson_id,lesson_version,first_try,total,xp,missed,items,completed_at').order('completed_at');
   if (error) throw error;
   const remote = (data as ResultRow[]).map(fromRow);
   const up = pendingUploads(local.history, remote);
@@ -109,8 +112,7 @@ export async function syncProgress(local: Progress): Promise<Progress> {
     const { error: e2 } = await sb.from('toneturn_lesson_results').upsert(up.map(toRow), { onConflict: 'user_id,session_id', ignoreDuplicates: true });
     if (e2) throw e2;
   }
-  // Game bests are local-only; keep them across a rebuild.
-  return { ...rebuildProgress(mergeResults(local.history, remote)), games: local.games };
+  return rebuildProgress(mergeResults(local.history, remote), local);
 }
 
 export async function pushSettings(userId: string, s: Settings) {

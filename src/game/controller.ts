@@ -7,7 +7,7 @@
 //  - The microphone/recognizer is only active in the `listening` phase.
 //  - Permission / recognition failures, silence and unclear speech never count as wrong answers.
 
-import { explainStimulus, renderStimulus, type Answer, type LessonDef, type Question, type SingQuestion, type Stimulus } from '../engine/lesson';
+import { compareStimulus, explainStimulus, renderStimulus, type Answer, type LessonDef, type Question, type SingQuestion, type Stimulus } from '../engine/lesson';
 import { evaluateSung, type SungResult } from '../engine/sing';
 import type { Naming } from '../engine/pitch';
 import {
@@ -84,6 +84,8 @@ export interface ControllerHooks {
   onComplete?: (s: SessionState) => void;
   onModeChange?: (m: InputMode) => void;
   onEvent?: (e: { type: string; detail?: unknown }) => void;
+  /** Called after each resolved question; may return regenerated questions (adaptive placement). */
+  adapt?: (s: SessionState) => Question[] | null;
 }
 
 type Waiter = { resolve: (v: WaitResult) => void; turn: number };
@@ -195,7 +197,7 @@ export class LessonController {
     await this.ad.audio.unlock();
     this.ad.tts.unlock();
     if (this.view.mode === 'voice' && !(await this.ensureMic())) return;
-    this.patch({ stage: 'intro', introStep: 0 });
+    this.patch({ stage: this.s.lesson.intro.length ? 'intro' : 'question', introStep: 0 });
     this.restart((sig) => this.runAll(sig));
   }
 
@@ -291,7 +293,7 @@ export class LessonController {
     this.cancelAll();
     if (!(await this.ensureMic())) return;
     if (this.view.stage === 'starting') {
-      this.patch({ stage: 'intro', introStep: 0 });
+      this.patch({ stage: this.s.lesson.intro.length ? 'intro' : 'question', introStep: 0 });
       return this.restart((sig) => this.runAll(sig));
     }
     this.restart((sig) => this.runAll(sig, { resumeIntro: this.view.stage === 'intro' }));
@@ -361,6 +363,10 @@ export class LessonController {
       }
       first = false;
       throwIfAborted(signal);
+      const adapted = this.hooks.adapt?.(this.s);
+      if (adapted && adapted.length === this.s.lesson.questions.length) {
+        this.s = { ...this.s, lesson: { ...this.s.lesson, questions: adapted } };
+      }
       this.setSession(advance(this.s), { feedback: null, heard: null, interim: '' });
       this.silentCount = 0;
       if (this.s.phase === 'complete') {
@@ -447,7 +453,8 @@ export class LessonController {
     }
     this.patch({ feedback: { kind: 'reveal', answer: q.answer, given: answer, sung } });
     await this.say(revealText(q, l, this.cfg.naming), signal);
-    await this.playStim(explainStimulus(q), signal);
+    // Hear your answer next to the right one (when it can be played), else the teaching gesture.
+    await this.playStim(compareStimulus(q, answer) ?? explainStimulus(q), signal);
     await this.ad.clock.sleep(400, signal);
     return true;
   }

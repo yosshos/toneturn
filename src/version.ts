@@ -18,6 +18,24 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.6.0',
+    date: '2026-11-04',
+    en: [
+      'Find my level: 9 questions that adapt to you',
+      'Skill Map: your ear, skill by skill, with a recommended next step',
+      'Review your mistakes and hear your answer next to the right one',
+      'Weekly puzzle with gold and silver medals',
+      'Beat Echo: calibrate tap timing for your device',
+    ],
+    he: [
+      'מציאת הרמה: 9 שאלות שמתאימות את עצמן אליכם',
+      'מפת מיומנויות: האוזן שלכם לפי מיומנות, עם הצעד הבא המומלץ',
+      'חזרה על טעויות — שומעים את התשובה שלכם ליד הנכונה',
+      'חידה שבועית עם מדליות זהב וכסף',
+      'הד קצב: כיול תזמון ההקשה למכשיר שלכם',
+    ],
+  },
+  {
     version: '0.5.0',
     date: '2026-11-04',
     en: ['Menu with version, install and update', 'Daily streak reminders (push)', 'Friends: add by code and compare weekly XP'],

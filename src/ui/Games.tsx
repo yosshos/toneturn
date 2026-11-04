@@ -5,7 +5,8 @@ import { MemoryGameController, type GameInput, type GameKind, type GameView } fr
 import type { Strings } from '../i18n/strings';
 import { namingFor, type Progress, type Settings } from '../storage/progress';
 import { MicIcon, Note, PermissionPanel } from './bits';
-import { makeGameAdapters, store } from './services';
+import { makeGameAdapters, piano, store } from './services';
+import { calibrationOffset } from '../engine/memory';
 
 export interface GameSetupValue {
   kind: GameKind;
@@ -22,12 +23,16 @@ export function GameSetup({
   progress,
   onBack,
   onStart,
+  settings,
+  onSettings,
 }: {
   t: Strings;
   initialKind: GameKind;
   progress: Progress;
   onBack: () => void;
   onStart: (v: GameSetupValue) => void;
+  settings: Settings;
+  onSettings: (p: Partial<Settings>) => void;
 }) {
   const [kind, setKind] = useState<GameKind>(initialKind);
   const [input, setInput] = useState<GameInput>(initialKind === 'melody' ? 'pads' : 'tap');
@@ -85,6 +90,7 @@ export function GameSetup({
             ))}
           </div>
           {input === 'knock' && <p className="field-hint">{t.knockHint}</p>}
+          {kind === 'rhythm' && input === 'tap' && <Calibrate t={t} latency={settings.tapLatencyMs} onDone={(ms) => onSettings({ tapLatencyMs: ms })} />}
           {input === 'sing' && <p className="field-hint">{t.singHint}</p>}
         </fieldset>
 
@@ -209,12 +215,18 @@ export function GameScreen({
         lang: settings.outputLang,
         naming: namingFor(settings.naming, settings.outputLang),
         bpm: setup.bpm,
+        latencyMs: settings.tapLatencyMs,
       },
       makeGameAdapters(),
       {
         onOver: (m, kind) => {
           const best = Math.max(...m.players.map((p) => p.best));
-          void store.recordGameBest(kind, best).then(onProgress);
+          void (async () => {
+            let p = await store.recordGameBest(kind, best);
+            // Solo games rate the player's skill; shared-device games don't know who "you" are.
+            if (m.players.length === 1) p = await store.recordGameRounds(kind, seed, m.log);
+            onProgress(p);
+          })();
         },
       },
     );
@@ -502,5 +514,87 @@ function Scoreboard({ t, v, onRematch, onChangePlayers, onHome }: { t: Strings; 
         </button>
       </div>
     </main>
+  );
+}
+
+/** Tap along with 12 clicks; the median offset of taps 5–12 becomes the device's tap delay. */
+function Calibrate({ t, latency, onDone }: { t: Strings; latency: number; onDone: (ms: number) => void }) {
+  const [state, setState] = useState<'idle' | 'run' | 'done' | 'fail'>('idle');
+  const [beat, setBeat] = useState(-1);
+  const [result, setResult] = useState<number | null>(null);
+  const taps = useRef<number[]>([]);
+  const start = useRef<number | null>(null);
+  const BPM = 100;
+  const N = 12;
+
+  const tap = (ms: number) => {
+    if (state === 'run') taps.current.push(ms);
+  };
+  useEffect(() => {
+    if (state !== 'run') return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.code === 'Space' || e.code === 'Enter') {
+        e.preventDefault();
+        tap(e.timeStamp);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  });
+
+  const run = async () => {
+    await piano.unlock();
+    taps.current = [];
+    setState('run');
+    const b = 60 / BPM;
+    const tl = { clicks: Array.from({ length: N }, (_, i) => ({ t: i * b, accent: i % 4 === 0 })), wood: [], responseAt: 0, responseEnd: N * b };
+    const ac = new AbortController();
+    try {
+      const first = await piano.playTimeline(tl, ac.signal, (i) => setBeat(i), (perf) => (start.current = perf));
+      const off = calibrationOffset(first, taps.current, BPM, 4);
+      if (off === null) setState('fail');
+      else {
+        setResult(off);
+        onDone(off);
+        setState('done');
+      }
+    } catch {
+      setState('fail');
+    }
+    setBeat(-1);
+  };
+
+  return (
+    <div className="calibrate">
+      <div className="row">
+        <button className="btn small" onClick={() => void run()} disabled={state === 'run'}>
+          ⏱ {t.calibrate}
+        </button>
+        <span className="field-hint" dir="ltr">
+          {t.latency}: {result ?? latency} ms
+        </span>
+      </div>
+      {state === 'run' && (
+        <>
+          <p className="field-hint">{t.calibrating}</p>
+          <button
+            className={`tap-pad small live ${beat % 2 ? 'odd' : ''}`}
+            onPointerDown={(e) => {
+              e.preventDefault();
+              tap(e.timeStamp);
+            }}
+          >
+            {beat >= 0 ? beat + 1 : '·'}
+          </button>
+        </>
+      )}
+      {state === 'idle' && <p className="field-hint">{t.calibrateHint}</p>}
+      {state === 'done' && (
+        <p className="field-hint good">
+          ✓ {t.calibrateDone} {result} ms
+        </p>
+      )}
+      {state === 'fail' && <p className="field-hint warn">{t.calibrateFail}</p>}
+    </div>
   );
 }

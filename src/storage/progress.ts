@@ -2,7 +2,9 @@
 // so a repeated callback or an app resume can never award points twice.
 
 import type { InputMode, SessionState } from '../engine/session';
-import { questionTag, type Answer } from '../engine/lesson';
+import { questionSkill, questionTag, type Answer } from '../engine/lesson';
+import { foldRatings, SKILLS, type RatingEvent, type Ratings } from '../engine/rating';
+import { medalFor, weekId, type Medal } from '../engine/adaptive';
 import type { Naming } from '../engine/pitch';
 import type { KV } from './kv';
 
@@ -18,6 +20,10 @@ export interface LessonResult {
   xp: number;
   /** Question keys that were missed / revealed — feeds the review queue. */
   missed: { questionId: string; key: string; answer: Answer; given: Answer[] }[];
+  /** First-attempt results per rated item (ratings + review clearing). Absent on old results. */
+  items?: { id: string; skill: RatingEvent['skill']; difficulty: number; correct: boolean; tag: string }[];
+  /** Weekly puzzle outcome (only for lessonId "weekly-puzzle"). */
+  puzzle?: { week: string; band: string; medal: Medal };
 }
 
 export interface Progress {
@@ -31,6 +37,23 @@ export interface Progress {
   review: { lessonId?: string; questionId: string; key: string; answer: Answer; addedAt: string }[];
   /** Longest chains on this device in the memory games. */
   games?: { melody: number; rhythm: number };
+  /** Rated first attempts (lessons) and solo game rounds (ids starting "g:"). */
+  ratingEvents?: RatingEvent[];
+  /** One Skill Map snapshot per week (normalised later), newest last. */
+  snapshots?: { week: string; ratings: Partial<Record<RatingEvent['skill'], number>> }[];
+  /** Weekly puzzle results, separate from lesson retries and XP. */
+  puzzles?: Record<string, { band: string; medal: Medal; completedAt: string }>;
+}
+
+export const ratingsOf = (p: Progress): Ratings => foldRatings(p.ratingEvents ?? []);
+
+function snapshot(p: Progress, now: Date): Progress['snapshots'] {
+  const r = ratingsOf(p);
+  const week = weekId(now);
+  const ratings: Partial<Record<RatingEvent['skill'], number>> = {};
+  for (const k of SKILLS) if (r[k]?.n) ratings[k] = r[k]!.r;
+  const rest = (p.snapshots ?? []).filter((s) => s.week !== week);
+  return [...rest, { week, ratings }].slice(-26);
 }
 
 export type NamingPref = 'auto' | Naming;
@@ -54,6 +77,8 @@ export interface Settings {
   reminderHour: number;
   /** Last app version whose changelog the player has seen. */
   seenVersion: string | null;
+  /** Measured tap delay for Beat Echo, ms (positive = taps land late). */
+  tapLatencyMs: number;
 }
 
 export const SETTINGS_VERSION = 2;
@@ -71,6 +96,7 @@ export const DEFAULT_SETTINGS: Settings = {
   voiceConsent: false,
   reminderHour: 19,
   seenVersion: null,
+  tapLatencyMs: 0,
 };
 
 /** Effective note naming for a channel in a given language. */
@@ -132,7 +158,11 @@ export function resultFromSession(s: SessionState, sessionId: string, now: Date)
     .map((r, i) => ({ r, q: s.lesson.questions[i] }))
     .filter(({ r }) => r.outcome === 'revealed' || r.outcome === 'correct-retry')
     .map(({ r, q }) => ({ questionId: q.id, key: questionTag(q), answer: q.answer, given: r.attempts.map((a) => a.answer) }));
-  return {
+  const items = s.records
+    .map((r, i) => ({ r, q: s.lesson.questions[i] }))
+    .filter(({ r }) => r.attempts.length > 0) // skipped / never answered → not rated
+    .map(({ r, q }) => ({ id: `${sessionId}:${q.id}`, skill: questionSkill(q), difficulty: q.difficulty, correct: r.attempts[0].correct, tag: questionTag(q) }));
+  const result: LessonResult = {
     lessonId: s.lesson.id,
     lessonVersion: s.lesson.version,
     sessionId,
@@ -141,7 +171,14 @@ export function resultFromSession(s: SessionState, sessionId: string, now: Date)
     total: s.records.length,
     xp: s.xp,
     missed,
+    items,
   };
+  if (s.lesson.id === 'weekly-puzzle') {
+    const qid = s.lesson.questions[0].id; // "<week>-<band>"
+    const cut = qid.lastIndexOf('-');
+    result.puzzle = { week: qid.slice(0, cut), band: qid.slice(cut + 1), medal: medalFor(s.records[0].outcome) };
+  }
+  return result;
 }
 
 /** Pure, idempotent application of a completed lesson. */
@@ -149,8 +186,16 @@ export function applyResult(p: Progress, r: LessonResult, now: Date): Progress {
   const eventId = `complete:${r.sessionId}`;
   if (p.applied.includes(eventId)) return p;
   const prev = p.lessons[r.lessonId];
+  const at = r.completedAt;
+  const newEvents: RatingEvent[] = (r.items ?? []).map((it) => ({ id: it.id, skill: it.skill, difficulty: it.difficulty, correct: it.correct, at }));
+  const cleared = new Set((r.items ?? []).filter((it) => it.correct).map((it) => it.tag));
+  const puzzles = { ...(p.puzzles ?? {}) };
+  // Only the first scored try at a week's puzzle counts; later plays are practice.
+  if (r.puzzle && !puzzles[r.puzzle.week]) puzzles[r.puzzle.week] = { band: r.puzzle.band, medal: r.puzzle.medal, completedAt: at };
+  const withEvents: Progress = { ...p, ratingEvents: [...(p.ratingEvents ?? []), ...newEvents].slice(-3000), puzzles };
   return {
-    ...p,
+    ...withEvents,
+    snapshots: snapshot(withEvents, now),
     xp: p.xp + r.xp,
     applied: [...p.applied, eventId].slice(-500),
     lessons: {
@@ -164,7 +209,8 @@ export function applyResult(p: Progress, r: LessonResult, now: Date): Progress {
     history: [...p.history, r].slice(-100),
     streak: bumpStreak(p.streak, now),
     review: [
-      ...p.review.filter((x) => !r.missed.some((m) => m.key === x.key && m.answer === x.answer)),
+      // A tag answered right on the first try leaves the queue; a new miss replaces the old entry.
+      ...p.review.filter((x) => !cleared.has(x.key) && !r.missed.some((m) => m.key === x.key && m.answer === x.answer)),
       ...r.missed.map((m) => ({ lessonId: r.lessonId, questionId: m.questionId, key: m.key, answer: m.answer, addedAt: r.completedAt })),
     ].slice(-50),
   };
@@ -180,6 +226,26 @@ export class ProgressStore {
 
   async loadSettings(): Promise<Settings> {
     return migrateSettings(await this.kv.get<Partial<Settings>>('settings'));
+  }
+
+  /** Rate solo memory-game rounds (local; ids "g:<seed>:<turn>" so each round counts once). */
+  async recordGameRounds(kind: 'melody' | 'rhythm', seed: number, log: { length: number; pass: boolean }[], now = new Date()): Promise<Progress> {
+    const p = await this.loadProgress();
+    const at = now.toISOString();
+    const events: RatingEvent[] = log.map((x, i) => ({
+      id: `g:${kind}:${seed}:${i}`,
+      skill: kind === 'melody' ? 'sequences' : 'rhythm',
+      difficulty: 760 + 70 * x.length,
+      correct: x.pass,
+      at,
+    }));
+    const have = new Set((p.ratingEvents ?? []).map((e) => e.id));
+    const fresh = events.filter((e) => !have.has(e.id));
+    if (!fresh.length) return p;
+    const next: Progress = { ...p, ratingEvents: [...(p.ratingEvents ?? []), ...fresh].slice(-3000) };
+    next.snapshots = snapshot(next, now);
+    await this.kv.set('progress', next);
+    return next;
   }
 
   /** Keep the longest chain per game (local only). */

@@ -4,7 +4,7 @@
 import type { Answer, IntroStep, LessonDef, LessonId, Question } from '../engine/lesson';
 import { displayNote, spokenMajorKey, spokenNote, type Naming, type PitchClass } from '../engine/pitch';
 import type { SungResult } from '../engine/sing';
-import { parseAlternatives, parseCadence, parseDegree, parseQuality, type ParseResult } from '../engine/parser';
+import { parseAlternatives, parseCadence, parseDegree, parseDegreeSequence, parseQuality, type ParseResult } from '../engine/parser';
 import { narration, type Lang } from './narration';
 
 const NUM: Record<Lang, Record<number, string>> = {
@@ -25,7 +25,7 @@ const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 export interface LessonMeta {
   title: Record<Lang, string>; // may contain {n}/{k}
   blurb: Record<Lang, string>;
-  icon: 'ear' | 'steps' | 'chord' | 'cadence' | 'mic';
+  icon: 'ear' | 'steps' | 'chord' | 'cadence' | 'mic' | 'map' | 'review' | 'puzzle';
   /** Recommendation after a perfect run. */
   tip: Record<Lang, string>;
 }
@@ -57,6 +57,24 @@ export const LESSON_META: Record<LessonId, LessonMeta> = {
     blurb: { en: 'Does the phrase come home, or stop on a question?', he: 'האם המשפט חוזר הביתה, או נעצר בשאלה?' },
     icon: 'cadence',
     tip: { en: 'In songs you know, notice the phrase endings that sound like a question.', he: 'בשירים שאתם מכירים, שימו לב לסופי משפטים שנשמעים כמו שאלה.' },
+  },
+  placement: {
+    title: { en: 'Find my level', he: 'מציאת הרמה שלי' },
+    blurb: { en: 'Nine quick questions that adapt to you.', he: 'תשע שאלות קצרות שמתאימות את עצמן אליכם.' },
+    icon: 'map',
+    tip: { en: 'Open your Skill Map to see what to practise next.', he: 'פתחו את מפת המיומנויות כדי לראות מה לתרגל עכשיו.' },
+  },
+  review: {
+    title: { en: 'Review my mistakes', he: 'חזרה על הטעויות שלי' },
+    blurb: { en: 'Fresh versions of what you missed — hear your answer next to the right one.', he: 'גרסאות חדשות של מה שפספסתם — שומעים את התשובה שלכם ליד הנכונה.' },
+    icon: 'review',
+    tip: { en: 'Nice clean-up. Mistakes you fixed leave the review list.', he: 'ניקוי יפה. טעויות שתיקנתם יוצאות מרשימת החזרה.' },
+  },
+  'weekly-puzzle': {
+    title: { en: 'Weekly puzzle', he: 'החידה השבועית' },
+    blurb: { en: 'One melody, the same for everyone at your level this week. Gold on the first try.', he: 'מנגינה אחת, זהה לכל מי שברמה שלכם השבוע. זהב בניסיון הראשון.' },
+    icon: 'puzzle',
+    tip: { en: 'A new puzzle arrives every Monday.', he: 'חידה חדשה מגיעה בכל יום שני.' },
   },
   'sing-home-five': {
     title: { en: 'Sing home & five', he: 'לשיר את הבית ואת החמש' },
@@ -117,12 +135,17 @@ export function answerWord(_q: Question, a: Answer, l: Lang): string {
     min: { en: 'minor', he: 'מינור' },
     resolved: { en: 'resolved', he: 'נפתר' },
     open: { en: 'open', he: 'פתוח' },
+    dim: { en: 'diminished', he: 'מוקטן' },
+    aug: { en: 'augmented', he: 'מוגדל' },
     accurate: { en: 'in tune', he: 'מדויק' },
   };
+  if (/^\d(-\d)+$/.test(String(a))) return String(a).split('-').map((d) => deg(Number(d), l)).join(', ');
   return words[a]?.[l] ?? String(a);
 }
 
 export function sayChoices(q: Question, l: Lang): string {
+  if (q.kind === 'degree-seq') return l === 'en' ? 'the degrees in order' : 'את הדרגות לפי הסדר';
+  if (q.choices.length > 4) return l === 'en' ? 'a degree, one to seven' : 'דרגה, מאחת עד שבע';
   return orList(q.choices.map((c) => answerWord(q, c, l)), l);
 }
 
@@ -132,7 +155,17 @@ export function roundPrompt(q: Question, l: Lang, nm: Naming, n: number): string
     case 'degree':
       return narration.roundPrompt(l, nm, n, q.key);
     case 'quality':
-      return l === 'en' ? `Round ${n}. Major or minor?` : `סיבוב ${n}. מז'ור או מינור?`;
+      return q.choices.length > 2
+        ? l === 'en'
+          ? `Round ${n}. Major, minor, diminished, or augmented?`
+          : `סיבוב ${n}. מז'ור, מינור, מוקטן, או מוגדל?`
+        : l === 'en'
+          ? `Round ${n}. Major or minor?`
+          : `סיבוב ${n}. מז'ור או מינור?`;
+    case 'degree-seq':
+      return l === 'en'
+        ? `${cap(spokenMajorKey(q.key, nm, l))}. ${q.degrees.length} notes. Name the degrees in order.`
+        : `${spokenMajorKey(q.key, nm, l)}. ${q.degrees.length} צלילים. אמרו את הדרגות לפי הסדר.`;
     case 'cadence':
       return l === 'en' ? `Round ${n}. ${cap(spokenMajorKey(q.key, nm, l))}. Resolved, or open?` : `סיבוב ${n}. ${spokenMajorKey(q.key, nm, l)}. נפתר, או פתוח?`;
     case 'sing':
@@ -152,6 +185,8 @@ export function parseAnswer(q: Question, alternatives: string[]): ParseResult<An
       return parseAlternatives(alternatives, parseCadence);
     case 'sing':
       return { kind: 'unrecognized', heard: alternatives[0] ?? '' };
+    case 'degree-seq':
+      return parseAlternatives(alternatives, parseDegreeSequence);
   }
 }
 
@@ -190,6 +225,8 @@ export function revealText(q: Question, l: Lang, nm: Naming): string {
         : l === 'en'
           ? 'It was open: it stopped on five.'
           : 'הוא פתוח: הוא נעצר על חמש.';
+    case 'degree-seq':
+      return l === 'en' ? `It was ${answerWord(q, q.answer, l)}. Listen again.` : `זה היה ${answerWord(q, q.answer, l)}. הקשיבו שוב.`;
     case 'sing':
       return l === 'en' ? `Here is the note to sing: ${spokenNote(q.target, nm, l)}.` : `זה הצליל לשיר: ${spokenNote(q.target, nm, l)}.`;
   }
@@ -250,7 +287,7 @@ export function choiceLabel(_q: Question, a: Answer, l: Lang): ChoiceLabel {
       3: { en: 'Third', he: 'שלישית' },
       5: { en: 'Five', he: 'חמש' },
     };
-    const tone = a === 1 ? 'mint' : a === 3 ? 'gold' : 'lilac';
+    const tone = a === 1 ? 'mint' : a === 3 ? 'gold' : a === 5 ? 'lilac' : 'coral';
     return { big: String(a), small: small[a]?.[l] ?? '', tone };
   }
   const map: Record<string, ChoiceLabel & { he: string; heSmall: string }> = {
@@ -258,6 +295,8 @@ export function choiceLabel(_q: Question, a: Answer, l: Lang): ChoiceLabel {
     min: { big: '☾', small: 'Minor', he: '☾', heSmall: 'מינור', tone: 'lilac' },
     resolved: { big: '⌂', small: 'Resolved', he: '⌂', heSmall: 'נפתר', tone: 'mint' },
     open: { big: '?', small: 'Open', he: '?', heSmall: 'פתוח', tone: 'coral' },
+    dim: { big: '°', small: 'Diminished', he: '°', heSmall: 'מוקטן', tone: 'coral' },
+    aug: { big: '+', small: 'Augmented', he: '+', heSmall: 'מוגדל', tone: 'mint' },
   };
   const m = map[a];
   if (!m) return { big: String(a), small: '', tone: 'gold' };
@@ -270,7 +309,9 @@ export function askTemplate(q: Question, l: Lang): string {
     case 'degree':
       return l === 'en' ? 'Which degree is {n}?' : 'איזו דרגה זה {n}?';
     case 'quality':
-      return l === 'en' ? 'Major or minor?' : "מז'ור או מינור?";
+      return q.choices.length > 2 ? (l === 'en' ? 'Which chord quality?' : 'איזה סוג אקורד?') : l === 'en' ? 'Major or minor?' : "מז'ור או מינור?";
+    case 'degree-seq':
+      return l === 'en' ? 'Which degrees, in order?' : 'אילו דרגות, לפי הסדר?';
     case 'cadence':
       return l === 'en' ? 'Resolved or open?' : 'נפתר או פתוח?';
     case 'sing':
@@ -280,7 +321,9 @@ export function askTemplate(q: Question, l: Lang): string {
 
 export function hintText(q: Question, l: Lang, voice: boolean): string {
   if (q.kind === 'sing') return voice ? (l === 'en' ? 'Sing after the chime' : 'שירו אחרי הצליל') : l === 'en' ? 'Tap the mic, then sing' : 'לחצו על המיקרופון ושירו';
+  if (q.kind === 'degree-seq') return voice ? (l === 'en' ? 'Say them in order, e.g. “one three five”' : 'אמרו לפי הסדר, למשל "אחת שלוש חמש"') : l === 'en' ? 'Tap the degrees in order, then Done' : 'לחצו על הדרגות לפי הסדר, ואז סיום';
   if (!voice) return l === 'en' ? 'Tap your answer' : 'בחרו תשובה';
+  if (q.choices.length > 4) return l === 'en' ? 'Say a degree, “one” to “seven”' : 'אמרו דרגה, מ"אחת" עד "שבע"';
   const ws = q.choices.map((c) => `“${answerWord(q, c, l)}”`);
   return `${l === 'en' ? 'Say' : 'אמרו'} ${orList(ws, l)}`;
 }
@@ -292,6 +335,7 @@ export function questionBadge(q: Question, l: Lang, nm: Naming): { key?: PitchCl
     case 'degree':
     case 'cadence':
     case 'sing':
+    case 'degree-seq':
       return { key: q.key, text: major };
     case 'quality':
       return { text: `${l === 'en' ? 'Chord on' : 'אקורד על'} ${displayNote(q.root, nm, l)}` };
@@ -308,5 +352,6 @@ export function giveText(q: Question, a: Answer, l: Lang): string {
     };
     return m[String(a)]?.[l] ?? String(a);
   }
+  if (q.kind === 'degree-seq') return String(a).split('-').join(' ');
   return typeof a === 'number' ? String(a) : choiceLabel(q, a, l).small;
 }

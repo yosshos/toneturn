@@ -3,6 +3,7 @@ import '@fontsource-variable/rubik';
 import './styles.css';
 import './games.css';
 import './menu.css';
+import './features.css';
 import { App } from './ui/App';
 import { initPwa } from './pwa';
 

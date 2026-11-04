@@ -87,11 +87,12 @@ export function spokenMajorKey(tonic: PitchClass, naming: Naming, lang: Lang): s
 
 // ---------- Chords & voicing ----------
 
-export type ChordQuality = 'maj' | 'min' | 'dim' | 'dom7';
+export type ChordQuality = 'maj' | 'min' | 'dim' | 'aug' | 'dom7';
 const QUALITY_INTERVALS: Record<ChordQuality, number[]> = {
   maj: [0, 4, 7],
   min: [0, 3, 7],
   dim: [0, 3, 6],
+  aug: [0, 4, 8],
   dom7: [0, 4, 7, 10],
 };
 

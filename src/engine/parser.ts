@@ -227,7 +227,9 @@ function parseChoiceTable<T extends string>(
   return { kind: 'unrecognized', heard };
 }
 
-const QUALITY_TOKENS = new Map<string, 'maj' | 'min'>([
+const QUALITY_TOKENS = new Map<string, 'maj' | 'min' | 'dim' | 'aug'>([
+  ['diminished', 'dim'], ['dim', 'dim'], ['diminish', 'dim'], ['מוקטן', 'dim'], ['דימיניש', 'dim'], ['דים', 'dim'],
+  ['augmented', 'aug'], ['aug', 'aug'], ['augment', 'aug'], ['מוגדל', 'aug'], ['אוגמנט', 'aug'], ['אוגמנטד', 'aug'],
   ['major', 'maj'], ['maj', 'maj'], ['majors', 'maj'], ['happy', 'maj'], ['bright', 'maj'],
   ["מז'ור", 'maj'], ['מז׳ור', 'maj'], ['מזור', 'maj'], ["מייג'ור", 'maj'], ['מייג׳ור', 'maj'], ['מייגור', 'maj'], ['שמח', 'maj'],
   ['minor', 'min'], ['min', 'min'], ['miner', 'min'], ['sad', 'min'], ['dark', 'min'],
@@ -235,7 +237,7 @@ const QUALITY_TOKENS = new Map<string, 'maj' | 'min'>([
 ]);
 
 /** "major" / "minor" in English or Hebrew (incl. "happy"/"sad" beginner words). */
-export function parseQuality(transcript: string): ParseResult<'maj' | 'min'> {
+export function parseQuality(transcript: string): ParseResult<'maj' | 'min' | 'dim' | 'aug'> {
   return parseChoiceTable(transcript.replace(/[׳’]/g, "'"), QUALITY_TOKENS);
 }
 
@@ -257,4 +259,30 @@ export function parseCadence(transcript: string): ParseResult<'resolved' | 'open
     [['לא', 'נפתרה'], 'open'],
     [['לא', 'סגור'], 'open'],
   ]);
+}
+
+/**
+ * Ordered scale degrees from speech: "one three five", "1 3 5", "135", "אחת שלוש חמש".
+ * Returns the canonical "1-3-5". Commands win only when no degree is present.
+ */
+export function parseDegreeSequence(transcript: string): ParseResult<string> {
+  const heard = transcript.trim();
+  // Glued digits ("135") → separate digits.
+  const spaced = transcript.replace(/\b([1-7]{2,})\b/g, (m) => m.split('').join(' '));
+  const tokens = normalize(spaced);
+  const phraseIdx = new Set<number>();
+  for (const [phrase] of COMMAND_PHRASES) phraseCovers(tokens, phrase).forEach((i) => phraseIdx.add(i));
+  const seq: number[] = [];
+  tokens.forEach((t, i) => {
+    if (phraseIdx.has(i)) return;
+    if (t === 'i' && tokens.length > 1) return;
+    // "to"/"too"/"for" are common mishearings of 2/4 only inside a sequence of numbers.
+    const alias: Record<string, number> = { to: 2, too: 2, for: 4 };
+    const d = lookup(DEGREE_TOKENS, t) ?? alias[t];
+    if (d !== undefined) seq.push(d);
+  });
+  if (seq.length) return { kind: 'answer', value: seq.join('-'), heard };
+  const commands = findCommands(tokens);
+  if (commands.length === 1) return { kind: 'command', command: commands[0], heard };
+  return { kind: 'unrecognized', heard };
 }

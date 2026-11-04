@@ -37,3 +37,16 @@ No sample pack with a clearly compatible licence is bundled yet, so milestone 1 
 ## Speech privacy
 
 Browser `SpeechRecognition` in Chrome/Edge sends audio to the vendor's service unless on-device processing is available. The app discloses this before first voice use (consent sheet) and stores no audio. The Voice check probes `SpeechRecognition.available({processLocally:true})` where exposed.
+
+## Skill ratings (0.6)
+
+`src/engine/rating.ts` — explainable Elo-style model per skill:
+
+- Expected score `E = 1 / (1 + 10^((D − R) / 400))`, update `R' = R + K·(S − E)`, bounded to ±60 per item.
+- `K = 64` while provisional (< 8 rated items), then `24`. Start rating 1000.
+- Only the **first musical attempt** of an item is rated (`S = 1` correct, else `0`). Silence, unclear speech, permission failures and skipped items are never rated. Each item has an event id (`<session>:<question>` / `g:<game>:<seed>:<turn>`), so replays and double callbacks can't farm rating.
+- Item difficulty comes from the content: e.g. degrees with 2 / 3 / 7 choices = 900 / 1050 / 1250; chords maj/min arpeggio / block / four qualities = 950 / 1100 / 1300; memory-game rounds `760 + 70·length`.
+- **Skill Map normalisation:** ratings are mapped linearly from the band 600–1600 to 0–1. Evidence: 0 items = *unmeasured* (hollow dotted marker at the centre, never plotted as zero), 1–7 = *provisional* (dashed), ≥ 8 = *measured*. Bands: < 900 beginner, < 1100 developing, < 1300 solid, else advanced. A weekly snapshot is kept for "4 weeks ago" comparison.
+- **Placement** (`src/engine/adaptive.ts`): 9 items (degrees, chords, cadences × 3); each skill starts at the middle level and moves up after a first-try correct, down after a miss (`adapt` hook in the controller regenerates only unanswered items).
+- **Review**: question tags from past misses are rebuilt as fresh items; a first-try correct answer anywhere clears that tag. On a revealed answer the player hears their answer, then the correct one (`compareStimulus`).
+- **Weekly puzzle**: ISO week + band + version seed → the same degree-sequence puzzle for everyone in a band; gold on the first try, silver on the second; no XP (kept apart from league XP); only the first scored try of a week counts.

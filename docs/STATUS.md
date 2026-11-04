@@ -1,5 +1,13 @@
 # Milestone report — 2026-11-04
 
+## Update 5 — v0.6.0: hosting, placement, Skill Map, review, weekly puzzle
+
+- **Live at https://yosshos.github.io/toneturn/** (repo public by owner's decision; history scanned — no secrets ever committed). Actions: typecheck → unit tests → build → Pages. Supabase site URL + redirect allow-list updated; live check: loads, service worker controls the page, offline reload, Google sign-in redirects back to the Pages URL.
+- Milestone 3 core: per-skill Elo ratings, adaptive placement, radar Skill Map with evidence levels + text equivalent + diagnosis + recommendation + snapshots, review session with your-answer-vs-correct playback, weekly puzzle (gold/silver, attempts separate from XP), tap-latency calibration, new item types (degrees 1–7, diminished/augmented, spoken degree sequences).
+- Fixed during testing: practice tools skipped the voice-consent notice; stray control characters from a patch script inside a regex.
+- Cloud: migration 3 applied (per-item results, new session types, path-only lesson count) and verified with a rolled-back insert as a signed-in user.
+- Tests: **213 unit** + **28 E2E** (incl. adaptive placement → Skill Map, puzzle by voice and keypad).
+
 ## Update 4 — v0.5.0: menu, versions, install/update, push reminders, friends
 
 - Versioning: `package.json` version + git commit + build time in the app and service worker; player-facing changelog; "What's new" card once per new version.
