@@ -1,0 +1,506 @@
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { displayNote } from '../engine/pitch';
+import { PLAYER_COLORS } from '../engine/match';
+import { MemoryGameController, type GameInput, type GameKind, type GameView } from '../game/memoryGame';
+import type { Strings } from '../i18n/strings';
+import { namingFor, type Progress, type Settings } from '../storage/progress';
+import { MicIcon, Note, PermissionPanel } from './bits';
+import { makeGameAdapters, store } from './services';
+
+export interface GameSetupValue {
+  kind: GameKind;
+  input: GameInput;
+  players: string[];
+  bpm: number;
+}
+
+// ======================================================================= setup
+
+export function GameSetup({
+  t,
+  initialKind,
+  progress,
+  onBack,
+  onStart,
+}: {
+  t: Strings;
+  initialKind: GameKind;
+  progress: Progress;
+  onBack: () => void;
+  onStart: (v: GameSetupValue) => void;
+}) {
+  const [kind, setKind] = useState<GameKind>(initialKind);
+  const [input, setInput] = useState<GameInput>(initialKind === 'melody' ? 'pads' : 'tap');
+  const [count, setCount] = useState(1);
+  const [names, setNames] = useState<string[]>(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('toneturn.players') ?? 'null') as string[] | null;
+      if (saved?.length === 4) return saved;
+    } catch {
+      /* ignore */
+    }
+    return [1, 2, 3, 4].map((i) => `${t.playerN} ${i}`);
+  });
+  const [bpm, setBpm] = useState(90);
+  const best = progress.games?.[kind] ?? 0;
+
+  const pickKind = (k: GameKind) => {
+    setKind(k);
+    setInput(k === 'melody' ? 'pads' : 'tap');
+  };
+  const inputs: [GameInput, string][] = kind === 'melody' ? [['pads', t.inPads], ['sing', t.inSing]] : [['tap', t.inTap], ['knock', t.inKnock]];
+
+  return (
+    <main className="panel-screen game-setup">
+      <header className="screen-head">
+        <button className="icon-btn" onClick={onBack} aria-label={t.back}>
+          <span className="flip-rtl">←</span>
+        </button>
+        <h1>{t.games}</h1>
+      </header>
+
+      <div className="game-cards" role="radiogroup" aria-label={t.games}>
+        {(['melody', 'rhythm'] as const).map((k) => (
+          <button key={k} role="radio" aria-checked={kind === k} className={`game-card ${k} ${kind === k ? 'on' : ''}`} onClick={() => pickKind(k)}>
+            <GameIcon kind={k} />
+            <b>{k === 'melody' ? t.echoChain : t.beatEcho}</b>
+            <small>{k === 'melody' ? t.echoChainBlurb : t.beatEchoBlurb}</small>
+            {(progress.games?.[k] ?? 0) > 0 && (
+              <span className="best-chip">
+                {t.personalBest}: {progress.games?.[k]}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      <section className="set-card">
+        <fieldset className="seg-field">
+          <legend>{t.answerWith}</legend>
+          <div className="seg" role="radiogroup" aria-label={t.answerWith}>
+            {inputs.map(([v, l]) => (
+              <button key={v} type="button" role="radio" aria-checked={input === v} className={input === v ? 'on' : ''} onClick={() => setInput(v)}>
+                {(v === 'sing' || v === 'knock') && <MicIcon />} {l}
+              </button>
+            ))}
+          </div>
+          {input === 'knock' && <p className="field-hint">{t.knockHint}</p>}
+          {input === 'sing' && <p className="field-hint">{t.singHint}</p>}
+        </fieldset>
+
+        {kind === 'rhythm' && (
+          <fieldset className="seg-field">
+            <legend>{t.tempo}</legend>
+            <div className="seg" role="radiogroup" aria-label={t.tempo}>
+              {(
+                [
+                  [75, t.slow],
+                  [90, t.medium],
+                  [110, t.fast],
+                ] as const
+              ).map(([v, l]) => (
+                <button key={v} type="button" role="radio" aria-checked={bpm === v} className={bpm === v ? 'on' : ''} onClick={() => setBpm(v)}>
+                  {l} <small dir="ltr">{v}</small>
+                </button>
+              ))}
+            </div>
+          </fieldset>
+        )}
+
+        <fieldset className="seg-field">
+          <legend>{t.players}</legend>
+          <div className="seg" role="radiogroup" aria-label={t.players}>
+            {[1, 2, 3, 4].map((n) => (
+              <button key={n} type="button" role="radio" aria-checked={count === n} className={count === n ? 'on' : ''} onClick={() => setCount(n)}>
+                {n}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+        {count > 1 && (
+          <div className="name-list">
+            {names.slice(0, count).map((n, i) => (
+              <label key={i} className="name-row" style={{ ['--pc' as string]: PLAYER_COLORS[i] }}>
+                <span className="dot" aria-hidden="true" />
+                <input
+                  value={n}
+                  maxLength={16}
+                  aria-label={`${t.playerN} ${i + 1}`}
+                  onChange={(e) => setNames((xs) => xs.map((x, j) => (j === i ? e.target.value : x)))}
+                />
+              </label>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {best > 0 && count === 1 && (
+        <p className="field-hint">
+          {t.personalBest}: {best} {kind === 'melody' ? t.notes : t.beats}
+        </p>
+      )}
+      <button
+        className="btn mega"
+        onClick={() => {
+          const ps = names.slice(0, count).map((n, i) => n.trim() || `${t.playerN} ${i + 1}`);
+          try {
+            localStorage.setItem('toneturn.players', JSON.stringify(names));
+          } catch {
+            /* ignore */
+          }
+          onStart({ kind, input, players: count === 1 ? [ps[0] || t.playerN] : ps, bpm });
+        }}
+      >
+        ▶ {t.play}
+      </button>
+    </main>
+  );
+}
+
+export function GameIcon({ kind }: { kind: GameKind }) {
+  return kind === 'melody' ? (
+    <svg viewBox="0 0 48 48" width="44" height="44" aria-hidden="true">
+      <circle cx="12" cy="30" r="7" fill="#4BE3B5" />
+      <circle cx="24" cy="20" r="7" fill="#FFC94D" />
+      <circle cx="36" cy="12" r="7" fill="#A98BFF" />
+      <path d="M12 30 24 20 36 12" stroke="#FFF6EA" strokeWidth="2.5" strokeDasharray="3 4" fill="none" />
+      <circle cx="38" cy="36" r="6" fill="none" stroke="#FF6A4D" strokeWidth="3" />
+    </svg>
+  ) : (
+    <svg viewBox="0 0 48 48" width="44" height="44" aria-hidden="true">
+      {[6, 16, 26, 36].map((x, i) => (
+        <rect key={x} x={x} y={i === 0 ? 10 : 18} width="6" height={i === 0 ? 28 : 20} rx="3" fill={i === 0 ? '#FF6A4D' : '#FFF6EA'} />
+      ))}
+      <circle cx="12" cy="42" r="3" fill="#FFC94D" />
+      <circle cx="29" cy="42" r="3" fill="#FFC94D" />
+      <circle cx="34" cy="42" r="3" fill="#FFC94D" />
+    </svg>
+  );
+}
+
+// ======================================================================= play
+
+const PAD_COLORS = ['#4BE3B5', '#FFC94D', '#A98BFF', '#FF6A4D'];
+
+export function GameScreen({
+  t,
+  settings,
+  setup,
+  onExit,
+  onChangePlayers,
+  onProgress,
+}: {
+  t: Strings;
+  settings: Settings;
+  setup: GameSetupValue;
+  onExit: () => void;
+  onChangePlayers: () => void;
+  onProgress: (p: Progress) => void;
+}) {
+  const ref = useRef<MemoryGameController | null>(null);
+  const seed = useMemo(() => (Date.now() ^ (Math.random() * 1e9)) >>> 0, []);
+  if (!ref.current) {
+    ref.current = new MemoryGameController(
+      {
+        kind: setup.kind,
+        input: setup.input,
+        players: setup.players,
+        seed,
+        lang: settings.outputLang,
+        naming: namingFor(settings.naming, settings.outputLang),
+        bpm: setup.bpm,
+      },
+      makeGameAdapters(),
+      {
+        onOver: (m, kind) => {
+          const best = Math.max(...m.players.map((p) => p.best));
+          void store.recordGameBest(kind, best).then(onProgress);
+        },
+      },
+    );
+  }
+  const c = ref.current;
+  const v = useSyncExternalStore(c.subscribe, c.getView);
+  useEffect(() => {
+    void c.start();
+    return () => c.dispose();
+  }, [c]);
+
+  // Keyboard: Space / Enter tap the beat; 1–4 tap pads.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.repeat) return;
+      if (v.kind === 'rhythm' && (e.code === 'Space' || e.code === 'Enter')) {
+        e.preventDefault();
+        c.tapBeat(e.timeStamp);
+      }
+      if (v.kind === 'melody' && /^Digit[1-4]$/.test(e.code)) c.tapPad(Number(e.code.slice(5)) - 1);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [c, v.kind]);
+
+  const lang = settings.uiLang;
+  const nm = namingFor(settings.naming, lang);
+  const m = v.match;
+  const cur = m.players[m.turn];
+  const multi = m.players.length > 1;
+
+  if (v.stage === 'over') return <Scoreboard t={t} v={v} onRematch={() => c.rematch()} onChangePlayers={onChangePlayers} onHome={onExit} />;
+
+  return (
+    <main className={`game kind-${v.kind} stage-${v.stage}`} style={{ ['--pc' as string]: cur.color }}>
+      <header className="lesson-top">
+        <button className="icon-btn" onClick={() => (v.stage === 'paused' ? onExit() : c.pause())} aria-label={v.stage === 'paused' ? t.exit : t.pause}>
+          {v.stage === 'paused' ? '✕' : '❚❚'}
+        </button>
+        <div className="chain-count" aria-live="polite">
+          <small>{t.chain}</small>
+          <b>{m.length}</b>
+        </div>
+        <span className="game-name">{v.kind === 'melody' ? t.echoChain : t.beatEcho}</span>
+      </header>
+
+      {multi && (
+        <ol className="player-chips">
+          {m.players.map((p, i) => (
+            <li key={i} className={`${i === m.turn ? 'now' : ''} ${p.alive ? '' : 'out'}`} style={{ ['--pc' as string]: p.color }}>
+              <span className="dot" aria-hidden="true" />
+              <span className="pname">{p.name}</span>
+              <span className="ppts">
+                {p.alive ? `${p.points} ${t.points}` : t.out}
+              </span>
+            </li>
+          ))}
+        </ol>
+      )}
+
+      {v.error ? (
+        <PermissionPanel
+          error={v.error}
+          t={t}
+          lang={lang}
+          onRetry={() => c.retry()}
+          onButtons={() => c.setInput(v.kind === 'melody' ? 'pads' : 'tap')}
+        />
+      ) : v.stage === 'paused' ? (
+        <section className="paused-card">
+          <h2>{t.paused}</h2>
+          <button className="btn mega" onClick={() => c.resume()}>
+            {t.resume}
+          </button>
+          <button className="btn ghost" onClick={onExit}>
+            {t.exit}
+          </button>
+        </section>
+      ) : (
+        <section className="game-stage">
+          <div className={`turn-banner ${v.stage}`} aria-live="assertive">
+            {v.stage === 'turn' && multi ? (
+              <>
+                <span className="dot" aria-hidden="true" /> {cur.name} · {t.yourTurnOf}
+              </>
+            ) : v.stage === 'demo' ? (
+              t.listenNow
+            ) : v.stage === 'respond' ? (
+              t.goNow
+            ) : (
+              ' '
+            )}
+          </div>
+
+          {v.kind === 'melody' && v.melody && (
+            <>
+              <div className="key-badge">
+                <span className="house-dot" aria-hidden="true" /> <Note>{displayNote(v.melody.key, nm, lang)}</Note> {t.major}
+              </div>
+              <div className="pads">
+                {v.melody.pads.map((p, i) => (
+                  <button
+                    key={i}
+                    className={`pad ${v.litPad === i ? 'lit' : ''}`}
+                    style={{ ['--padc' as string]: PAD_COLORS[i] }}
+                    disabled={!(v.stage === 'respond' && v.input === 'pads')}
+                    onPointerDown={(e) => {
+                      e.preventDefault();
+                      c.tapPad(i);
+                    }}
+                    aria-label={`${p.degree} ${displayNote(p.note, nm, lang)}`}
+                  >
+                    <b>{p.degree}</b>
+                    <small>
+                      <Note>{displayNote(p.note, nm, lang)}</Note>
+                    </small>
+                  </button>
+                ))}
+              </div>
+              {v.input === 'sing' && v.stage === 'respond' && (
+                <div className="listen mic-speech">
+                  <span className="listen-ring" aria-hidden="true">
+                    <MicIcon />
+                  </span>
+                  <span className="listen-text">
+                    <b>{t.singing}</b>
+                    <small>{t.singHint}</small>
+                  </span>
+                </div>
+              )}
+              <ChainStrip v={v} />
+            </>
+          )}
+
+          {v.kind === 'rhythm' && (
+            <>
+              <div className={`beat-light ${v.beat?.accent ? 'accent' : ''}`} key={v.beat?.n ?? -1} aria-hidden="true" />
+              <BeatGrid v={v} t={t} />
+              {v.input === 'tap' ? (
+                <button
+                  className={`tap-pad ${v.stage === 'respond' ? 'live' : ''}`}
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    c.tapBeat(e.timeStamp);
+                  }}
+                  aria-label={t.tapHere}
+                >
+                  {t.tapHere}
+                </button>
+              ) : (
+                <div className={`listen ${v.stage === 'respond' ? 'mic-speech' : 'mic-capturing'}`}>
+                  <span className="listen-ring" aria-hidden="true">
+                    <MicIcon />
+                  </span>
+                  <span className="listen-text">
+                    <b>{t.inKnock}</b>
+                    <small>{t.knockHint}</small>
+                  </span>
+                </div>
+              )}
+              {v.input === 'tap' && <p className="hint">{t.tapKeyHint}</p>}
+            </>
+          )}
+
+          <ResultLine v={v} t={t} />
+          <p className="caption" aria-live="polite">
+            {v.caption ?? ' '}
+          </p>
+        </section>
+      )}
+    </main>
+  );
+}
+
+/** Melody progress: one dot per note; after a result, ✓ / ✗ / missed per note. */
+function ChainStrip({ v }: { v: GameView }) {
+  const r = v.result?.melody;
+  return (
+    <ol className="chain-strip" aria-label="sequence">
+      {v.seq.map((p, i) => {
+        const st = r ? r.notes[i]?.status : i < v.entered.length ? 'entered' : 'todo';
+        return (
+          <li key={i} className={`cs ${st}`} style={{ ['--padc' as string]: PAD_COLORS[p] }}>
+            {r ? (st === 'ok' ? '✓' : st === 'wrong' ? '✗' : '·') : ''}
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+/** Beat grid: the pattern's onsets on beats (shown during the demo and after the result). */
+function BeatGrid({ v, t }: { v: GameView; t: Strings }) {
+  const p = v.pattern;
+  if (!p) return null;
+  const show = v.stage === 'demo' || v.stage === 'result';
+  const r = v.result?.rhythm;
+  const beatMs = (60 / p.bpm) * 1000;
+  return (
+    <div className="beat-grid" style={{ ['--beats' as string]: p.beats }} dir="ltr" aria-hidden={!show}>
+      {Array.from({ length: p.beats }).map((_, b) => (
+        <span key={b} className="beat-cell" />
+      ))}
+      {show &&
+        p.onsets.map((o, i) => {
+          const h = r?.hits[i];
+          const cls = !r ? '' : h?.offsetMs === null ? 'miss' : Math.abs(h!.offsetMs!) < 50 ? 'good' : 'ok';
+          return <span key={`o${i}`} className={`onset ${cls}`} style={{ left: `${(o / p.beats) * 100}%` }} />;
+        })}
+      {v.stage === 'result' &&
+        v.taps.map((ms, i) => <span key={`t${i}`} className="tapmark" style={{ left: `${(ms / beatMs / p.beats) * 100}%` }} />)}
+      {r && (
+        <p className="grid-note">
+          {r.meanOffsetMs !== null && Math.abs(r.meanOffsetMs) >= 25 && (
+            <>
+              {Math.abs(r.meanOffsetMs)} ms {r.meanOffsetMs < 0 ? t.early : t.late}
+            </>
+          )}
+          {r.extra > 0 && (
+            <>
+              {' '}
+              · {r.extra} {t.extraTaps}
+            </>
+          )}
+          {r.hits.some((h) => h.offsetMs === null) && (
+            <>
+              {' '}
+              · {r.hits.filter((h) => h.offsetMs === null).length} {t.missed}
+            </>
+          )}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function ResultLine({ v, t }: { v: GameView; t: Strings }) {
+  if (v.stage !== 'result' || !v.result) return <div className="feedback empty" />;
+  const r = v.result;
+  return (
+    <div className={`feedback ${r.unclear ? 'unclear' : r.pass ? 'correct' : 'retry'}`} aria-live="assertive">
+      <b>{r.unclear ? t.unclear : r.pass ? t.correct : t.notQuite.split('—')[0].trim()}</b>
+    </div>
+  );
+}
+
+function Scoreboard({ t, v, onRematch, onChangePlayers, onHome }: { t: Strings; v: GameView; onRematch: () => void; onChangePlayers: () => void; onHome: () => void }) {
+  const m = v.match;
+  const solo = m.players.length === 1;
+  const ranked = m.players.map((p, i) => ({ ...p, i })).sort((a, b) => b.best - a.best || b.points - a.points);
+  return (
+    <main className="recap scoreboard">
+      <p className="eyebrow">{v.kind === 'melody' ? t.echoChain : t.beatEcho}</p>
+      <h1>{solo ? t.gameOver : m.winners.length > 1 ? t.tie : `🏆 ${m.players[m.winners[0]].name}`}</h1>
+      {solo ? (
+        <p className="big-score">
+          <small>{t.longest}</small>
+          <b>{m.players[0].best}</b>
+          <small>{v.kind === 'melody' ? t.notes : t.beats}</small>
+        </p>
+      ) : (
+        <ol className="board">
+          {ranked.map((p, k) => (
+            <li key={p.i} className={m.winners.includes(p.i) ? 'win' : ''} style={{ ['--pc' as string]: p.color }}>
+              <span className="rank">{k + 1}</span>
+              <span className="dot" aria-hidden="true" />
+              <span className="pname">{p.name}</span>
+              <span className="pbest">
+                {p.best} <small>{v.kind === 'melody' ? t.notes : t.beats}</small>
+              </span>
+              {m.winners.includes(p.i) && <span className="crown">{m.winners.length > 1 ? '=' : '★'}</span>}
+            </li>
+          ))}
+        </ol>
+      )}
+      <div className="recap-actions">
+        <button className="btn mega" onClick={onRematch}>
+          ↻ {t.rematch}
+        </button>
+        <button className="btn" onClick={onChangePlayers}>
+          {t.changePlayers}
+        </button>
+        <button className="btn ghost" onClick={onHome}>
+          {t.home}
+        </button>
+      </div>
+    </main>
+  );
+}

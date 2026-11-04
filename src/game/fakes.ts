@@ -1,7 +1,8 @@
 // Deterministic adapters for tests and the clearly-labelled simulator mode.
 
 import type { Answer, NoteEvent } from '../engine/lesson';
-import { syntheticFrames } from '../engine/sing';
+import { syntheticFrames, type SungFrame } from '../engine/sing';
+import { midiToHz } from '../engine/pitch';
 import {
   Cancelled,
   type AccessError,
@@ -11,15 +12,20 @@ import {
   type ListenOptions,
   type ListenResult,
   type MicAccess,
+  type KnockInput,
   type PitchCapture,
+  type RhythmAudio,
+  type RhythmTimelineLike,
   type SingCaptureResult,
   type SingOptions,
   type PromptPlayer,
   type SpeechTranscriber,
 } from './adapters';
 
-export class FakeAudio implements AudioEngine {
+export class FakeAudio implements AudioEngine, RhythmAudio {
   log: string[] = [];
+  /** Called inside playTimeline once the response window opens (tests tap here). */
+  respond: (responsePerfMs: number) => void = () => {};
   unlocked = false;
   async unlock() {
     this.unlocked = true;
@@ -35,6 +41,17 @@ export class FakeAudio implements AudioEngine {
   }
   stopAll() {
     this.log.push('stop');
+  }
+  async playTimeline(tl: RhythmTimelineLike, signal: AbortSignal, onBeat?: (i: number, accent: boolean) => void, onResponseStart?: (perf: number) => void) {
+    if (signal.aborted) throw new Cancelled();
+    this.log.push(`timeline:${tl.wood.length}`);
+    tl.clicks.forEach((c, i) => onBeat?.(i, c.accent));
+    const start = 1000;
+    onResponseStart?.(start);
+    this.respond(start);
+    await Promise.resolve();
+    if (signal.aborted) throw new Cancelled();
+    return start;
   }
   onNotes() {
     return () => {};
@@ -131,7 +148,7 @@ export const immediateClock: Clock = {
 };
 
 /** Script step for singing: cents off target, or silence / an access error / hang until aborted. */
-export type SingStep = number | { silence: true } | { error: AccessError } | { hang: true } | { noise: true };
+export type SingStep = number | { silence: true } | { error: AccessError } | { hang: true } | { noise: true } | { midis: number[] };
 
 export class ScriptedPitch implements PitchCapture {
   calls = 0;
@@ -163,6 +180,9 @@ export class ScriptedPitch implements PitchCapture {
     if (opts.signal.aborted) return { kind: 'aborted' };
     if (typeof step === 'object' && 'silence' in step) return { kind: 'silence' };
     if (typeof step === 'object' && 'error' in step) return { kind: 'error', error: step.error };
+    if (typeof step === 'object' && 'midis' in step) {
+      return { kind: 'frames', frames: sungSequence(step.midis) };
+    }
     if (typeof step === 'object' && 'noise' in step) {
       // unstable glide → unclear
       const frames = syntheticFrames(this.target(), 0, 1.5).map((f, i) => ({ ...f, hz: f.hz! * Math.pow(2, ((i % 10) - 5) / 4) }));
@@ -171,5 +191,29 @@ export class ScriptedPitch implements PitchCapture {
     const frames = syntheticFrames(this.target(), step as number, 1.5, 30, -1);
     frames.forEach((f) => opts.onFrame?.(f));
     return { kind: 'frames', frames };
+  }
+}
+
+/** Synthetic sung melody: 0.45 s per note, 0.12 s gaps, 30 fps. */
+export function sungSequence(midis: number[], fps = 30): SungFrame[] {
+  const out: SungFrame[] = [];
+  let t = 0;
+  for (const m of midis) {
+    for (let i = 0; i < 0.45 * fps; i++, t += 1 / fps) out.push({ t, hz: midiToHz(m), confidence: 0.95, rms: 0.1 });
+    for (let i = 0; i < 0.12 * fps; i++, t += 1 / fps) out.push({ t, hz: null, confidence: 0, rms: 0.001 });
+  }
+  return out;
+}
+
+export class FakeKnock implements KnockInput {
+  onKnock: ((perf: number) => void) | null = null;
+  constructor(public error: AccessError | null = null) {}
+  async listen(opts: Parameters<KnockInput['listen']>[0]) {
+    if (this.error) return { ok: false as const, error: this.error };
+    this.onKnock = opts.onKnock;
+    opts.onReady?.();
+    await new Promise<void>((r) => (opts.signal.aborted ? r() : opts.signal.addEventListener('abort', () => r(), { once: true })));
+    this.onKnock = null;
+    return { ok: true as const };
   }
 }

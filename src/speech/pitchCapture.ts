@@ -6,7 +6,7 @@ import { yin } from '../engine/yin';
 import { openCapture, stopStream } from './mic';
 
 export class BrowserPitchCapture implements PitchCapture {
-  async sing({ signal, maxMs = 4500, silenceMs = 4000, onCapturing, onFrame }: SingOptions): Promise<SingCaptureResult> {
+  async sing({ signal, maxMs = 4500, silenceMs = 4000, endSilenceMs, onCapturing, onFrame }: SingOptions): Promise<SingCaptureResult> {
     if (signal.aborted) return { kind: 'aborted' };
     const r = await openCapture({ echoCancellation: false, noiseSuppression: false, autoGainControl: false });
     if (!r.ok) return { kind: 'error', error: r.error };
@@ -48,9 +48,14 @@ export class BrowserPitchCapture implements PitchCapture {
           if (firstVoiced < 0) firstVoiced = t;
           lastVoiced = t;
         }
-        // Done: ~1.6 s of singing, then a short pause (or the hard cap).
-        if (firstVoiced >= 0 && lastVoiced - firstVoiced > 1.6 && t - lastVoiced > 0.25) return finish({ kind: 'frames', frames });
-        if (firstVoiced >= 0 && t - firstVoiced > 2.6) return finish({ kind: 'frames', frames });
+        if (endSilenceMs !== undefined) {
+          // Sequence: keep listening until the singer stops.
+          if (firstVoiced >= 0 && (t - lastVoiced) * 1000 > endSilenceMs) return finish({ kind: 'frames', frames });
+        } else {
+          // Single note: ~1.6 s of singing, then a short pause (or 2.6 s total).
+          if (firstVoiced >= 0 && lastVoiced - firstVoiced > 1.6 && t - lastVoiced > 0.25) return finish({ kind: 'frames', frames });
+          if (firstVoiced >= 0 && t - firstVoiced > 2.6) return finish({ kind: 'frames', frames });
+        }
         if (firstVoiced < 0 && t * 1000 > silenceMs) return finish({ kind: 'silence' });
         if (t * 1000 > maxMs) return finish(firstVoiced >= 0 ? { kind: 'frames', frames } : { kind: 'silence' });
       }, 33);

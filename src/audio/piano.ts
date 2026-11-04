@@ -11,7 +11,7 @@
 
 import { midiToHz } from '../engine/pitch';
 import type { NoteEvent } from '../engine/lesson';
-import { Cancelled, type AudioEngine, type CueKind } from '../game/adapters';
+import { Cancelled, type AudioEngine, type CueKind, type RhythmAudio, type RhythmTimelineLike } from '../game/adapters';
 
 interface Voice {
   out: GainNode;
@@ -19,7 +19,7 @@ interface Voice {
   end: number;
 }
 
-export class PianoEngine implements AudioEngine {
+export class PianoEngine implements AudioEngine, RhythmAudio {
   private ctx: AudioContext | null = null;
   private pianoBus!: GainNode;
   private cueBus!: GainNode;
@@ -267,6 +267,103 @@ export class PianoEngine implements AudioEngine {
         [72, 76, 79, 84, 88].forEach((m, i) => bell(m, t + i * 0.1, 0.9, 0.55));
         break;
     }
+  }
+
+  /** Percussion for the rhythm game: metronome click (accented on 1) and woodblock. */
+  private perc(kind: 'click' | 'accent' | 'wood', at: number) {
+    const ctx = this.ctx!;
+    const g = ctx.createGain();
+    g.connect(this.cueBus);
+    if (kind === 'wood') {
+      // two resonant noise bands + a falling sine tick → hollow "tok"
+      const bands: [number, number, number][] = [
+        [880, 18, 1.4],
+        [1320, 12, 0.6],
+      ];
+      for (const [f, q, a] of bands) {
+        const src = ctx.createBufferSource();
+        src.buffer = this.noise;
+        const bp = ctx.createBiquadFilter();
+        bp.type = 'bandpass';
+        bp.frequency.value = f;
+        bp.Q.value = q;
+        const eg = ctx.createGain();
+        eg.gain.setValueAtTime(0, at);
+        eg.gain.linearRampToValueAtTime(a * 3, at + 0.002);
+        eg.gain.setTargetAtTime(0, at + 0.003, 0.035);
+        src.connect(bp).connect(eg).connect(g);
+        src.start(at);
+        src.stop(at + 0.25);
+      }
+      const o = ctx.createOscillator();
+      o.frequency.setValueAtTime(1050, at);
+      o.frequency.exponentialRampToValueAtTime(700, at + 0.05);
+      const og = ctx.createGain();
+      og.gain.setValueAtTime(0, at);
+      og.gain.linearRampToValueAtTime(0.9, at + 0.002);
+      og.gain.setTargetAtTime(0, at + 0.004, 0.025);
+      o.connect(og).connect(g);
+      o.start(at);
+      o.stop(at + 0.2);
+      return;
+    }
+    const o = ctx.createOscillator();
+    o.type = 'square';
+    o.frequency.value = kind === 'accent' ? 1760 : 1320;
+    const hp = ctx.createBiquadFilter();
+    hp.type = 'highpass';
+    hp.frequency.value = 900;
+    g.gain.setValueAtTime(0, at);
+    g.gain.linearRampToValueAtTime(kind === 'accent' ? 0.55 : 0.32, at + 0.001);
+    g.gain.setTargetAtTime(0, at + 0.002, 0.012);
+    o.connect(hp).connect(g);
+    o.start(at);
+    o.stop(at + 0.08);
+  }
+
+  /** performance.now() time at which audio scheduled for context time `t` is heard. */
+  private heardAt(t: number): number {
+    const ctx = this.ctx!;
+    const ts = ctx.getOutputTimestamp?.();
+    if (ts && ts.contextTime !== undefined && ts.performanceTime !== undefined && ts.performanceTime > 0) {
+      return ts.performanceTime + (t - ts.contextTime) * 1000;
+    }
+    const lat = (ctx.baseLatency ?? 0) + ((ctx as AudioContext & { outputLatency?: number }).outputLatency ?? 0);
+    return performance.now() + (t - ctx.currentTime + lat) * 1000;
+  }
+
+  playTimeline(
+    tl: RhythmTimelineLike,
+    signal: AbortSignal,
+    onBeat?: (i: number, accent: boolean) => void,
+    onResponseStart?: (perfMs: number) => void,
+  ): Promise<number> {
+    const ctx = this.ctx;
+    if (!ctx) return Promise.reject(new Error('Audio not unlocked'));
+    if (signal.aborted) return Promise.reject(new Cancelled());
+    const t0 = ctx.currentTime + 0.12;
+    tl.clicks.forEach((c) => this.perc(c.accent ? 'accent' : 'click', t0 + c.t));
+    tl.wood.forEach((w) => this.perc('wood', t0 + w));
+    const responsePerf = this.heardAt(t0 + tl.responseAt);
+    const nowPerf = performance.now();
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    tl.clicks.forEach((c, i) => {
+      timers.push(setTimeout(() => onBeat?.(i, c.accent), Math.max(0, this.heardAt(t0 + c.t) - nowPerf)));
+    });
+    timers.push(setTimeout(() => onResponseStart?.(responsePerf), Math.max(0, responsePerf - nowPerf - 60)));
+    return new Promise((resolve, reject) => {
+      const end = setTimeout(() => {
+        signal.removeEventListener('abort', onAbort);
+        resolve(responsePerf);
+      }, Math.max(0, this.heardAt(t0 + tl.responseEnd) - nowPerf));
+      const onAbort = () => {
+        clearTimeout(end);
+        timers.forEach(clearTimeout);
+        this.stopAll();
+        reject(new Cancelled());
+      };
+      signal.addEventListener('abort', onAbort, { once: true });
+    });
   }
 
   onNotes(cb: (active: number[]) => void) {

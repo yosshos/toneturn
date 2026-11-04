@@ -4,6 +4,8 @@ import { PianoEngine } from '../audio/piano';
 import { realClock, type Adapters } from '../game/adapters';
 import { FakeMic, ScriptedPitch, ScriptedTranscriber, type ScriptStep } from '../game/fakes';
 import { BrowserPitchCapture } from '../speech/pitchCapture';
+import { BrowserKnockInput } from '../speech/knock';
+import type { GameAdapters } from '../game/memoryGame';
 import type { Answer } from '../engine/lesson';
 import { BrowserMicAccess } from '../speech/mic';
 import { BrowserPromptPlayer } from '../speech/tts';
@@ -48,4 +50,8 @@ export function makeAdapters(expected: () => Answer, targetMidi: () => number): 
     clock: realClock,
     simulated: false,
   };
+}
+
+export function makeGameAdapters(): GameAdapters {
+  return { audio: piano, tts, pitch: new BrowserPitchCapture(), knock: new BrowserKnockInput(), clock: realClock, simulated: SIMULATED };
 }

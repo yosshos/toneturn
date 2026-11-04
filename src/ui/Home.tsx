@@ -7,6 +7,8 @@ import type { Strings } from '../i18n/strings';
 import { localDay, namingFor, type Progress, type Settings } from '../storage/progress';
 import { Logo, MicIcon, ModeSwitch, withNote } from './bits';
 import { UNLOCK_ALL } from './services';
+import { GameIcon } from './Games';
+import type { GameKind } from '../game/memoryGame';
 
 interface Props {
   t: Strings;
@@ -19,6 +21,7 @@ interface Props {
   onMode: (m: InputMode) => void;
   onSettings: () => void;
   onLang: (l: 'he' | 'en') => void;
+  onGame: (k: GameKind) => void;
 }
 
 export const DAILY_GOAL_XP = 30;
@@ -53,7 +56,7 @@ export function starsFor(best: number, total: number) {
 
 const TOTALS: Record<LessonId, number> = { 'bflat-two-homes': 3, 'degrees-135': 5, 'major-minor': 5, cadences: 4, 'sing-home-five': 3 };
 
-export function Home({ t, settings, progress, streak, account, onPractice, onButtonsInstead, onMode, onSettings, onLang }: Props) {
+export function Home({ t, settings, progress, streak, account, onPractice, onButtonsInstead, onMode, onSettings, onLang, onGame }: Props) {
   const [consentFor, setConsentFor] = useState<LessonId | null>(null);
   const lang = settings.uiLang;
   const nm = namingFor(settings.naming, lang);
@@ -175,6 +178,25 @@ export function Home({ t, settings, progress, streak, account, onPractice, onBut
             );
           })}
         </ol>
+      </section>
+
+      <section className="games-row" aria-label={t.games}>
+        <h2>{t.games}</h2>
+        <p className="field-hint">{t.gamesHint}</p>
+        <div className="game-cards">
+          {(['melody', 'rhythm'] as const).map((k) => (
+            <button key={k} className={`game-card ${k}`} onClick={() => onGame(k)}>
+              <GameIcon kind={k} />
+              <b>{k === 'melody' ? t.echoChain : t.beatEcho}</b>
+              <small>{k === 'melody' ? t.echoChainBlurb : t.beatEchoBlurb}</small>
+              {(progress.games?.[k] ?? 0) > 0 && (
+                <span className="best-chip">
+                  {t.personalBest}: {progress.games?.[k]}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
       </section>
 
       {account}

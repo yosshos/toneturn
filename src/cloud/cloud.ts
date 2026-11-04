@@ -109,7 +109,8 @@ export async function syncProgress(local: Progress): Promise<Progress> {
     const { error: e2 } = await sb.from('toneturn_lesson_results').upsert(up.map(toRow), { onConflict: 'user_id,session_id', ignoreDuplicates: true });
     if (e2) throw e2;
   }
-  return rebuildProgress(mergeResults(local.history, remote));
+  // Game bests are local-only; keep them across a rebuild.
+  return { ...rebuildProgress(mergeResults(local.history, remote)), games: local.games };
 }
 
 export async function pushSettings(userId: string, s: Settings) {

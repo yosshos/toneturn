@@ -83,6 +83,8 @@ export interface SingOptions {
   maxMs?: number;
   /** Give up (silence) when no voiced frame arrives within this time. */
   silenceMs?: number;
+  /** Sequence mode: stop this long after the last voiced frame (instead of after one held note). */
+  endSilenceMs?: number;
   onCapturing?: () => void;
   onFrame?: (f: SungFrame) => void;
 }
@@ -96,6 +98,36 @@ export type SingCaptureResult =
 /** Monophonic pitch capture for singing tasks (mic only during the capture window). */
 export interface PitchCapture {
   sing(opts: SingOptions): Promise<SingCaptureResult>;
+}
+
+export interface RhythmTimelineLike {
+  clicks: { t: number; accent: boolean }[];
+  wood: number[];
+  responseAt: number;
+  responseEnd: number;
+}
+
+/** Sample-accurate rhythm playback mapped to the performance.now() clock used by input events. */
+export interface RhythmAudio {
+  /**
+   * Schedule the timeline. Resolves when the response window has ended, with the
+   * performance.now() time at which the response's beat 1 is heard (output latency included).
+   */
+  playTimeline(
+    tl: RhythmTimelineLike,
+    signal: AbortSignal,
+    onBeat?: (i: number, accent: boolean) => void,
+    onResponseStart?: (perfMs: number) => void,
+  ): Promise<number>;
+}
+
+/** Microphone onset detection for knocking on a table. */
+export interface KnockInput {
+  listen(opts: {
+    signal: AbortSignal;
+    onKnock: (perfMs: number) => void;
+    onReady?: () => void;
+  }): Promise<{ ok: true } | { ok: false; error: AccessError }>;
 }
 
 export interface Clock {

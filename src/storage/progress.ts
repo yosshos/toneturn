@@ -29,6 +29,8 @@ export interface Progress {
   history: LessonResult[];
   streak: { count: number; lastDay: string | null };
   review: { lessonId?: string; questionId: string; key: string; answer: Answer; addedAt: string }[];
+  /** Longest chains on this device in the memory games. */
+  games?: { melody: number; rhythm: number };
 }
 
 export type NamingPref = 'auto' | Naming;
@@ -172,6 +174,16 @@ export class ProgressStore {
 
   async loadSettings(): Promise<Settings> {
     return migrateSettings(await this.kv.get<Partial<Settings>>('settings'));
+  }
+
+  /** Keep the longest chain per game (local only). */
+  async recordGameBest(kind: 'melody' | 'rhythm', best: number): Promise<Progress> {
+    const p = await this.loadProgress();
+    const games = { melody: 0, rhythm: 0, ...(p.games ?? {}) };
+    if (best <= games[kind]) return p;
+    const next = { ...p, games: { ...games, [kind]: best } };
+    await this.kv.set('progress', next);
+    return next;
   }
 
   async saveProgress(p: Progress) {

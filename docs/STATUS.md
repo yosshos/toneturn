@@ -1,5 +1,12 @@
 # Milestone report — 2026-11-04
 
+## Update 3 — memory games (spec addendum C)
+
+- **Echo Chain** (melodic memory): degrees 1-2-3-5 pads in a stated key, grows by one note per round; answer by tapping pads or **singing** (note segmentation + edit-distance alignment, per-note ✓/✗/missed strip, octave-insensitive).
+- **Beat Echo** (rhythmic memory): count-in, woodblock demo over a pulse, second count-in, player taps (screen / Space) or **knocks** (mic onset detection); timing on the audio output clock, ±100 ms-ish tolerance, early/late report. Tempo slow/medium/fast.
+- **Local challenge**: 1–4 players on one device, named + coloured turns, different sequence of the same length per player, eliminations after the full round, ties, rematch, scoreboard; device bests saved locally.
+- Tests: +32 unit/controller tests (176 total) and +5 E2E (19 total) incl. a real-timing tap round in Chrome. **Not yet measured:** real singing segmentation and knock detection on a person's device.
+
 ## Update 2 — more content, singing, cloud save code
 
 - Generic question kinds (degree / chord quality / cadence / singing) through one controller; 4 new lessons; path with unlocks, stars, daily XP goal; celebration burst; per-kind answer buttons; next-lesson flow.

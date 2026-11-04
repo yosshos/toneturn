@@ -8,12 +8,14 @@ import { Home, lessonStates } from './Home';
 import { LessonScreen } from './Lesson';
 import { SettingsScreen } from './SettingsScreen';
 import { Diagnostics } from './Diagnostics';
+import { GameScreen, GameSetup, type GameSetupValue } from './Games';
+import type { GameKind } from '../game/memoryGame';
 import { piano, SIMULATED, store, tts } from './services';
 
-type Route = 'home' | 'lesson' | 'settings' | 'diagnostics';
+type Route = 'home' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game';
 const routeFromHash = (): Route => {
   const h = location.hash.replace(/^#\/?/, '');
-  return (['settings', 'diagnostics'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
+  return (['settings', 'diagnostics', 'games'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
 };
 
 export function App() {
@@ -24,6 +26,9 @@ export function App() {
   const [lessonId, setLessonId] = useState<LessonId>('bflat-two-homes');
   const [autoStart, setAutoStart] = useState(false);
   const [user, setUser] = useState<CloudUser | null>(null);
+  const [gameKind, setGameKind] = useState<GameKind>('melody');
+  const [gameSetup, setGameSetup] = useState<GameSetupValue | null>(null);
+  const [gameKey, setGameKey] = useState(0);
   const [sync, setSync] = useState<SyncState>('idle');
   const progressRef = useRef(progress);
   progressRef.current = progress;
@@ -31,7 +36,7 @@ export function App() {
   useEffect(() => {
     void store.loadSettings().then(setSettings).catch(() => setSettings(DEFAULT_SETTINGS));
     void store.loadProgress().then(setProgress);
-    const onHash = () => setRoute((r) => (r === 'lesson' && routeFromHash() === 'home' ? 'lesson' : routeFromHash()));
+    const onHash = () => setRoute((r) => ((r === 'lesson' || r === 'game') && routeFromHash() === 'home' ? r : routeFromHash()));
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
@@ -95,7 +100,7 @@ export function App() {
   );
 
   const go = (r: Route) => {
-    location.hash = r === 'home' || r === 'lesson' ? '' : `/${r}`;
+    location.hash = r === 'home' || r === 'lesson' || r === 'game' ? '' : `/${r}`;
     setRoute(r);
   };
 
@@ -125,6 +130,10 @@ export function App() {
           streak={visibleStreak(progress.streak, new Date())}
           account={<AccountCard t={t} user={user} sync={sync} compact />}
           onSettings={() => go('settings')}
+          onGame={(k) => {
+            setGameKind(k);
+            go('games');
+          }}
           onMode={(mode) => updateSettings({ mode })}
           onLang={(l) => updateSettings({ uiLang: l, inputLang: l, outputLang: l })}
           onPractice={(id, consented) => {
@@ -158,6 +167,24 @@ export function App() {
         <SettingsScreen t={t} settings={s} onChange={updateSettings} onBack={() => go('home')} account={<AccountCard t={t} user={user} sync={sync} />} />
       )}
       {route === 'diagnostics' && <Diagnostics t={t} settings={s} onBack={() => go('home')} />}
+      {route === 'games' && (
+        <GameSetup
+          t={t}
+          initialKind={gameSetup?.kind ?? gameKind}
+          progress={progress}
+          onBack={() => go('home')}
+          onStart={(v) => {
+            void piano.unlock(); // the Start gesture
+            setGameSetup(v);
+            setGameKey((k) => k + 1);
+            location.hash = '';
+            setRoute('game');
+          }}
+        />
+      )}
+      {route === 'game' && gameSetup && (
+        <GameScreen key={gameKey} t={t} settings={s} setup={gameSetup} onExit={() => go('home')} onChangePlayers={() => go('games')} onProgress={setProgress} />
+      )}
     </div>
   );
 }

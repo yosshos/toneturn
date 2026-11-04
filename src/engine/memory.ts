@@ -1,0 +1,304 @@
+// Memory games: growing melodic (Echo Chain) and rhythmic (Beat Echo) sequences + grading. Pure.
+
+import type { NoteEvent } from './lesson';
+import { majorScale, pc, pcValue, type PitchClass } from './pitch';
+import { mulberry32, placeInRange } from './lesson';
+import type { SungFrame } from './sing';
+import { hzToMidi } from './pitch';
+
+// ======================================================================= melody
+
+export interface Pad {
+  degree: number;
+  midi: number;
+  note: PitchClass;
+}
+
+export interface MelodyGame {
+  key: PitchClass;
+  pads: Pad[];
+  /** Seconds per note during playback. */
+  noteSec: number;
+}
+
+const MELODY_KEYS = ['C', 'D', 'Eb', 'F', 'G'].map(pc);
+
+/** Pads for a key: degrees 1, 2, 3, 5 placed in a singable register (tonic 55–66). */
+export function melodyGame(seed: number, degrees = [1, 2, 3, 5]): MelodyGame {
+  const rnd = mulberry32(seed);
+  const key = MELODY_KEYS[Math.floor(rnd() * MELODY_KEYS.length)];
+  const tonic = placeInRange(pcValue(key), 55, 66);
+  const scale = majorScale(key);
+  const steps = [0, 2, 4, 5, 7, 9, 11];
+  return {
+    key,
+    pads: degrees.map((d) => ({ degree: d, midi: tonic + steps[d - 1], note: scale[d - 1] })),
+    noteSec: 0.6,
+  };
+}
+
+/**
+ * A sequence of `length` pad indices from `seed`. Different seeds → different sequences of
+ * the same length (comparable difficulty for every player). No three identical notes in a row.
+ */
+export function melodySequence(seed: number, length: number, padCount: number): number[] {
+  const rnd = mulberry32(seed);
+  const out: number[] = [];
+  while (out.length < length) {
+    const p = Math.floor(rnd() * padCount);
+    if (out.length >= 2 && out[out.length - 1] === p && out[out.length - 2] === p) continue;
+    out.push(p);
+  }
+  return out;
+}
+
+export function melodyEvents(game: MelodyGame, seq: number[]): { events: NoteEvent[]; length: number } {
+  const events = seq.map((p, i) => ({ midi: game.pads[p].midi, start: i * game.noteSec, duration: game.noteSec * 0.88, velocity: 0.7 }));
+  return { events, length: seq.length * game.noteSec + 0.3 };
+}
+
+// ---------- note segmentation of a sung capture ----------
+
+export interface SungNote {
+  start: number;
+  end: number;
+  midi: number; // median fractional MIDI
+}
+
+/**
+ * Split voiced frames into notes. A new note starts after an unvoiced gap, or when the pitch
+ * moves more than `jump` semitones from the current note for `hold` consecutive frames (legato).
+ * Very short fragments (scoops, consonants) are dropped; each note ignores its first frames (attack).
+ */
+export function segmentNotes(
+  frames: SungFrame[],
+  { minConfidence = 0.8, jump = 0.7, hold = 3, minSec = 0.14, gapFrames = 2 } = {},
+): SungNote[] {
+  const med = (xs: number[]) => {
+    const s = xs.slice().sort((a, b) => a - b);
+    const m = s.length >> 1;
+    return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+  };
+  const notes: SungNote[] = [];
+  let cur: { start: number; end: number; midis: number[] } | null = null;
+  let pending: { t: number; m: number }[] = [];
+  let gap = 0;
+  const close = () => {
+    if (cur && cur.end - cur.start >= minSec) {
+      const body = cur.midis.length > 4 ? cur.midis.slice(2) : cur.midis;
+      notes.push({ start: cur.start, end: cur.end, midi: med(body) });
+    }
+    cur = null;
+    pending = [];
+  };
+  for (const f of frames) {
+    const voiced = !!f.hz && f.confidence >= minConfidence && f.hz > 60 && f.hz < 1200;
+    if (!voiced) {
+      gap++;
+      if (gap >= gapFrames) close();
+      continue;
+    }
+    gap = 0;
+    const m = hzToMidi(f.hz!);
+    if (!cur) {
+      cur = { start: f.t, end: f.t, midis: [m] };
+      continue;
+    }
+    const center = med(cur.midis.length > 4 ? cur.midis.slice(2) : cur.midis);
+    if (Math.abs(m - center) > jump) {
+      pending.push({ t: f.t, m });
+      if (pending.length >= hold) {
+        const p = pending;
+        close();
+        cur = { start: p[0].t, end: f.t, midis: p.map((x) => x.m) };
+      }
+      continue;
+    }
+    if (pending.length) {
+      cur.midis.push(...pending.map((x) => x.m));
+      pending = [];
+    }
+    cur.midis.push(m);
+    cur.end = f.t;
+  }
+  close();
+  return notes;
+}
+
+/** Nearest pad (octave-insensitive) within `tolCents`, else null. */
+export function nearestPad(game: MelodyGame, midi: number, tolCents = 50): number | null {
+  let best: number | null = null;
+  let bestD = Infinity;
+  game.pads.forEach((p, i) => {
+    const c = (((midi - p.midi) * 100 + 600) % 1200 + 1200) % 1200 - 600;
+    if (Math.abs(c) < bestD) {
+      bestD = Math.abs(c);
+      best = i;
+    }
+  });
+  return bestD <= tolCents ? best : null;
+}
+
+export type NoteStatus = 'ok' | 'wrong' | 'missed';
+
+export interface MelodyGrade {
+  pass: boolean;
+  /** One entry per target note. */
+  notes: { target: number; given: number | null; status: NoteStatus }[];
+  extra: number;
+  /** Nothing usable was captured → reopen the turn, no penalty. */
+  unclear: boolean;
+}
+
+/**
+ * Align the player's notes with the target (edit-distance alignment) so one missed or extra
+ * note doesn't shift every later result. `given` uses pad indices, null = unmatched pitch.
+ */
+export function gradeMelody(target: number[], given: (number | null)[]): MelodyGrade {
+  if (given.length === 0) return { pass: false, notes: target.map((t) => ({ target: t, given: null, status: 'missed' })), extra: 0, unclear: true };
+  const n = target.length;
+  const m = given.length;
+  const D: number[][] = Array.from({ length: n + 1 }, (_, i) => Array.from({ length: m + 1 }, (_, j) => (i === 0 ? j : j === 0 ? i : 0)));
+  for (let i = 1; i <= n; i++)
+    for (let j = 1; j <= m; j++) {
+      const sub = D[i - 1][j - 1] + (target[i - 1] === given[j - 1] ? 0 : 1);
+      D[i][j] = Math.min(sub, D[i - 1][j] + 1, D[i][j - 1] + 1);
+    }
+  const notes: MelodyGrade['notes'] = [];
+  let extra = 0;
+  let i = n;
+  let j = m;
+  while (i > 0 || j > 0) {
+    if (i > 0 && j > 0 && D[i][j] === D[i - 1][j - 1] + (target[i - 1] === given[j - 1] ? 0 : 1)) {
+      notes.unshift({ target: target[i - 1], given: given[j - 1], status: target[i - 1] === given[j - 1] ? 'ok' : 'wrong' });
+      i--;
+      j--;
+    } else if (i > 0 && D[i][j] === D[i - 1][j] + 1) {
+      notes.unshift({ target: target[i - 1], given: null, status: 'missed' });
+      i--;
+    } else {
+      extra++;
+      j--;
+    }
+  }
+  return { pass: extra === 0 && notes.every((x) => x.status === 'ok'), notes, extra, unclear: false };
+}
+
+/** Sung capture → pad indices, merging re-attacks of the same pad separated by tiny gaps. */
+export function sungToPads(game: MelodyGame, frames: SungFrame[], tolCents = 50): (number | null)[] {
+  const notes = segmentNotes(frames);
+  const out: { pad: number | null; end: number }[] = [];
+  for (const nt of notes) {
+    const pad = nearestPad(game, nt.midi, tolCents);
+    const prev = out[out.length - 1];
+    if (prev && prev.pad === pad && nt.start - prev.end < 0.1) {
+      prev.end = nt.end;
+      continue;
+    }
+    out.push({ pad, end: nt.end });
+  }
+  return out.map((x) => x.pad);
+}
+
+// ======================================================================= rhythm
+
+/** One beat's content: onsets as fractions of a beat. */
+export type Cell = number[];
+const CELLS_EASY: Cell[] = [[0], [0], [0, 0.5]];
+const CELLS_MORE: Cell[] = [[0], [0, 0.5], [], [0, 0.5], [0.5]];
+
+export interface RhythmPattern {
+  bpm: number;
+  beats: number;
+  /** Onset times in beats from the start of the pattern. */
+  onsets: number[];
+}
+
+/**
+ * Pattern of `beats` beats. The first beat always has a downbeat onset; rests and
+ * syncopation appear from 4 beats on. Different seeds → different patterns of equal length.
+ */
+export function rhythmPattern(seed: number, beats: number, bpm = 90): RhythmPattern {
+  const rnd = mulberry32(seed);
+  const pool = beats >= 4 ? CELLS_MORE : CELLS_EASY;
+  const onsets: number[] = [];
+  for (let b = 0; b < beats; b++) {
+    const cell = b === 0 ? (rnd() < 0.5 ? [0] : [0, 0.5]) : pool[Math.floor(rnd() * pool.length)];
+    cell.forEach((f) => onsets.push(b + f));
+  }
+  return { bpm, beats, onsets };
+}
+
+export const beatSec = (bpm: number) => 60 / bpm;
+
+export interface RhythmGrade {
+  pass: boolean;
+  /** Per target onset: signed ms offset (+late / -early), or null if missed. */
+  hits: { targetMs: number; offsetMs: number | null }[];
+  extra: number;
+  /** No taps at all: treat as a miss in games (it's the player's action), but report it. */
+  silent: boolean;
+  meanOffsetMs: number | null;
+}
+
+/**
+ * Grade taps (ms from the response start = first beat of the pattern) against target onsets.
+ * Greedy nearest matching within tolerance; each target and tap used once.
+ */
+export function gradeRhythm(p: RhythmPattern, tapsMs: number[], toleranceMs?: number): RhythmGrade {
+  const beatMs = beatSec(p.bpm) * 1000;
+  const tol = toleranceMs ?? Math.max(80, Math.min(140, beatMs * 0.15));
+  const targets = p.onsets.map((o) => o * beatMs);
+  const taps = tapsMs.slice().sort((a, b) => a - b);
+  const used = new Set<number>();
+  const hits = targets.map((tm) => {
+    let best = -1;
+    let bestD = Infinity;
+    taps.forEach((x, k) => {
+      if (used.has(k)) return;
+      const d = Math.abs(x - tm);
+      if (d < bestD) {
+        bestD = d;
+        best = k;
+      }
+    });
+    if (best >= 0 && bestD <= tol) {
+      used.add(best);
+      return { targetMs: tm, offsetMs: Math.round(taps[best] - tm) };
+    }
+    return { targetMs: tm, offsetMs: null };
+  });
+  const extra = taps.length - used.size;
+  const offs = hits.filter((h) => h.offsetMs !== null).map((h) => h.offsetMs!);
+  return {
+    pass: extra === 0 && hits.every((h) => h.offsetMs !== null),
+    hits,
+    extra,
+    silent: taps.length === 0,
+    meanOffsetMs: offs.length ? Math.round(offs.reduce((a, b) => a + b, 0) / offs.length) : null,
+  };
+}
+
+/** Audio events: count-in clicks (accent on 1), the pattern on woodblock, and a second count-in. */
+export interface RhythmTimeline {
+  clicks: { t: number; accent: boolean }[];
+  wood: number[];
+  /** Seconds from timeline start where the response (pattern beat 1) begins. */
+  responseAt: number;
+  /** Seconds at which the response window ends. */
+  responseEnd: number;
+}
+
+export function rhythmTimeline(p: RhythmPattern, countIn = 4): RhythmTimeline {
+  const b = beatSec(p.bpm);
+  const clicks: RhythmTimeline['clicks'] = [];
+  for (let i = 0; i < countIn; i++) clicks.push({ t: i * b, accent: i === 0 });
+  const patStart = countIn * b;
+  // keep a soft pulse under the demonstration
+  for (let i = 0; i < p.beats; i++) clicks.push({ t: patStart + i * b, accent: false });
+  const wood = p.onsets.map((o) => patStart + o * b);
+  const secondIn = patStart + p.beats * b;
+  for (let i = 0; i < countIn; i++) clicks.push({ t: secondIn + i * b, accent: i === 0 });
+  const responseAt = secondIn + countIn * b;
+  return { clicks, wood, responseAt, responseEnd: responseAt + p.beats * b + b * 0.6 };
+}

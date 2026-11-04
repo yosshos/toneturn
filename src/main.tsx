@@ -1,6 +1,7 @@
 import { createRoot } from 'react-dom/client';
 import '@fontsource-variable/rubik';
 import './styles.css';
+import './games.css';
 import { App } from './ui/App';
 
 createRoot(document.getElementById('root')!).render(<App />);
