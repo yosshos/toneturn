@@ -1,5 +1,5 @@
 -- Run once in the SQL Editor AFTER deploying the toneturn-streak-reminder Edge Function.
--- Replace <CRON_SECRET> with the same value you set as the function secret CRON_SECRET.
+-- Replace the CRON_SECRET placeholder in the vault line below with the same value as the function secret.
 create extension if not exists pg_cron;
 create extension if not exists pg_net;
 
