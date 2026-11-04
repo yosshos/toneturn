@@ -21,7 +21,7 @@ export const BAND_MAX = 1600;
 
 /** Skill Map axis order: listening skills, then performance/memory pairs (pitch: in tune + memory; rhythm: memory + precision). */
 /** Grouped as in spec G.8: listening → performance → memory → precision. */
-export const SKILLS: SkillId[] = ['degrees', 'notes', 'intervals', 'chords', 'cadences', 'rhythm-dictation', 'singing', 'rhythm-reading', 'sequences', 'rhythm', 'timing'];
+export const SKILLS: SkillId[] = ['degrees', 'notes', 'intervals', 'chords', 'cadences', 'rhythm-dictation', 'singing', 'rhythm-reading', 'sequences', 'agility', 'rhythm', 'timing'];
 /** Axes on the Skill Map that have no content yet — always shown as unmeasured. */
 export const PLANNED_SKILLS = [] as const;
 

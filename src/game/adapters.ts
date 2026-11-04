@@ -85,6 +85,8 @@ export interface SingOptions {
   silenceMs?: number;
   /** Sequence mode: stop this long after the last voiced frame (instead of after one held note). */
   endSilenceMs?: number;
+  /** Analysis hop in ms (shorter for fast runs, spec K.3). Default 33. */
+  hopMs?: number;
   onCapturing?: () => void;
   onFrame?: (f: SungFrame) => void;
 }

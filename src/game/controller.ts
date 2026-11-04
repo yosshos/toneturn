@@ -7,6 +7,7 @@
 //  - The microphone/recognizer is only active in the `listening` phase.
 //  - Permission / recognition failures, silence and unclear speech never count as wrong answers.
 
+import { gradeRun, runHopMs, runSummary } from '../engine/runs';
 import {
   compareStimulus,
   explainStimulus,
@@ -17,10 +18,11 @@ import {
   type RhythmReadQuestion,
   type SingQuestion,
   type SingSeqQuestion,
+  type SingRunQuestion,
   type Stimulus,
 } from '../engine/lesson';
 import { evaluateSung, type SungResult } from '../engine/sing';
-import { gradeSungSequence, type NoteStatus } from '../engine/memory';
+import { gradeSungSequence } from '../engine/memory';
 import { gradeReading, readTimeline } from '../engine/rhythm';
 import { accuracyFor, type Modality } from '../engine/scoring';
 import type { Naming } from '../engine/pitch';
@@ -85,7 +87,7 @@ export interface LessonView {
     xp?: number;
     accuracy?: number;
     /** Per-note result for sung sequences. */
-    seqNotes?: NoteStatus[];
+    seqNotes?: string[];
     /** Rhythm reading: per-onset offset in ms (null = missed) and extra taps. */
     readHits?: (number | null)[];
     readExtra?: number;
@@ -389,7 +391,7 @@ export class LessonController {
       this.emit('access-error', r.error);
       return false;
     }
-    const needsSpeech = this.s.lesson.questions.some((q) => q.kind !== 'sing' && q.kind !== 'sing-seq' && q.kind !== 'rhythm-read');
+    const needsSpeech = this.s.lesson.questions.some((q) => q.kind !== 'sing' && q.kind !== 'sing-seq' && q.kind !== 'sing-run' && q.kind !== 'rhythm-read');
     if (needsSpeech && !this.ad.stt.isSupported()) {
       const error: AccessError = { stage: 'recognition', code: 'unsupported', raw: 'SpeechRecognition is not available' };
       this.patch({ mic: 'off', error });
@@ -488,7 +490,7 @@ export class LessonController {
       await this.playStim(q.stimulus, signal);
     }
     if (q.kind === 'sing') return this.singLoop(q, signal);
-    if (q.kind === 'sing-seq') return this.singSeqLoop(q, signal);
+    if (q.kind === 'sing-seq' || q.kind === 'sing-run') return this.singSeqLoop(q, signal);
     if (q.kind === 'rhythm-read') return this.readLoop(q, signal);
     await this.answerLoop(signal);
   }
@@ -517,7 +519,7 @@ export class LessonController {
       timeMs: number | null;
       modality: Modality;
       accuracy?: number;
-      seqNotes?: NoteStatus[];
+      seqNotes?: string[];
       precision?: number;
       readHits?: (number | null)[];
       readExtra?: number;
@@ -632,7 +634,7 @@ export class LessonController {
   }
 
   /** Sing a sequence of degrees: capture until the singer stops, segment, align, partial credit. */
-  private async singSeqLoop(q: SingSeqQuestion, signal: AbortSignal) {
+  private async singSeqLoop(q: SingSeqQuestion | SingRunQuestion, signal: AbortSignal) {
     const l = this.cfg.outputLang;
     const maxSilent = this.cfg.maxSilentRetries ?? 2;
     for (;;) {
@@ -655,9 +657,10 @@ export class LessonController {
       let voicedAt: number | null = null;
       const res = await this.ad.pitch.sing({
         signal,
-        maxMs: q.degrees.length * 1200 + 3500,
+        maxMs: q.kind === 'sing-run' ? (q.midis.length / q.run.nps) * 1000 * 2 + 4000 : q.degrees.length * 1200 + 3500,
         silenceMs: 4500,
-        endSilenceMs: 1100,
+        endSilenceMs: q.kind === 'sing-run' ? 900 : 1100,
+        hopMs: q.kind === 'sing-run' ? runHopMs(q.run.nps) : undefined,
         onCapturing: () => {
           if (this.s.turn !== turn) return;
           this.ad.audio.cue('ready');
@@ -681,7 +684,7 @@ export class LessonController {
         await this.waitFor(signal);
         continue;
       }
-      const g = res.kind === 'frames' ? gradeSungSequence(res.frames, q.midis) : null;
+      const g = res.kind !== 'frames' ? null : q.kind === 'sing-run' ? gradeRun(res.frames, q.midis, q.run.nps) : gradeSungSequence(res.frames, q.midis);
       if (!g || g.unclear) {
         this.s = noteUnclear(this.s, turn);
         this.silentCount++;
@@ -695,6 +698,10 @@ export class LessonController {
         continue;
       }
       const statuses = g.notes.map((n) => n.status);
+      if (q.kind === 'sing-run' && !g.pass && 'clarity' in g) {
+        const summary = runSummary(g, l);
+        if (summary) this.patch({ caption: summary });
+      }
       if (await this.evaluate(g.pass ? 'accurate' : 'wrong', signal, undefined, { timeMs: this.elapsed(voicedAt), modality: 'sing', accuracy: g.accuracy, seqNotes: statuses })) return;
     }
   }

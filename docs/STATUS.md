@@ -1,5 +1,12 @@
 # Milestone report — 2026-11-04
 
+## Update 14 — v0.14.0: riffs & runs (spec K)
+
+- Engine `runs.ts`; question kinds `sing-run` and `run-id`; lesson 14; Runs workshop tool; skill `agility`; voice parsing of "blues / pentatonic / up and down" (en/he); per-note contour UI with statuses ✓ ↑ ↓ ~ ✗ and a spoken-style summary ("notes 4 and 5 were flat").
+- Server: lesson ids validated by pattern (migration 10, applied) so new lessons need no migration; friends' "lessons done" excludes generated sessions.
+- Tests: 342 unit (grading incl. octave-free, tolerance by speed, smear, hands-free lesson) + 2 runs E2E (simulator).
+- Not verified: real fast singing through the microphone (20 ms hop, segmentation of 120 ms notes).
+
 ## Update 13 — v0.13.0: daily challenge leaderboard
 
 - Migration 9 `toneturn_daily`: key table (no grants) seeded with 792 days (2026-11-01 → 2028-12-31) from `scripts/daily-keys.ts`; results table; `toneturn_daily_submit` grades (plausibility 150 ms–10 s, streaks, squares) and keeps the first play; `toneturn_daily_board` returns count, rank, top %, friends. Verified live with three simulated users (rolled back): 5700 / 2845 points as computed locally, replay ignored, old day refused, non-friend hidden.

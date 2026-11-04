@@ -1,6 +1,7 @@
 // Versioned lesson content. Prompts, stimulus, scoring policy and explanations are kept separate.
 // Pure: no browser APIs. Text for narration / UI lives in src/game/content.ts.
 
+import { atTempo, buildRun, MAX_RUN_LEVEL, runAt, runDifficulty, type RunMaterial, type RunShape, type RunSpec } from './runs';
 import { majorScale, pc, pcValue, voiceChord, type ChordQuality, type PitchClass } from './pitch';
 import { options as rhythmOptions, rhythmAt, rhythmFromKey, rhythmKey, rhythmSound, type Rhythm } from './rhythm';
 
@@ -19,7 +20,8 @@ export type SkillId =
   | 'timing'
   | 'intervals'
   | 'rhythm-reading'
-  | 'rhythm-dictation';
+  | 'rhythm-dictation'
+  | 'agility';
 export type IntervalName = 'M3' | 'P5' | 'P8';
 export type BassRole = 'root' | 'third' | 'fifth';
 export type Quality = 'maj' | 'min' | 'dim' | 'aug';
@@ -144,7 +146,29 @@ export interface RhythmDictQuestion extends QBase {
   answer: string;
 }
 
+/** Sing a run / riff back after hearing it, or from a description (spec K). */
+export interface SingRunQuestion extends QBase {
+  kind: 'sing-run';
+  key: PitchClass;
+  run: RunSpec;
+  midis: number[];
+  prompt: 'echo' | 'told';
+  answer: 'accurate';
+}
+
+/** Hear a run and name its scale material or its shape (spec K.1, recognition). */
+export interface RunIdQuestion extends QBase {
+  kind: 'run-id';
+  key: PitchClass;
+  run: RunSpec;
+  midis: number[];
+  aspect: 'material' | 'shape';
+  answer: string;
+}
+
 export type Question =
+  | SingRunQuestion
+  | RunIdQuestion
   | RhythmReadQuestion
   | RhythmDictQuestion
   | DegreeQuestion
@@ -191,6 +215,9 @@ export function questionSkill(q: Question): SkillId {
       return 'rhythm-reading';
     case 'rhythm-dict':
       return 'rhythm-dictation';
+    case 'sing-run':
+    case 'run-id':
+      return 'agility';
   }
 }
 
@@ -238,6 +265,8 @@ export type LessonId =
   | 'rhythm-r1'
   | 'rhythm-r2'
   | 'rhythm-r3'
+  | 'runs'
+  | 'runs-workshop'
   | 'placement'
   | 'review'
   | 'weekly-puzzle';
@@ -762,6 +791,99 @@ export function rhythmLesson(level: 1 | 2 | 3, seed = Date.now()): LessonDef {
   };
 }
 
+// ---------------------------------------------------------------- Riffs & runs (spec K)
+const RUN_KEYS = ['C', 'D', 'F', 'G', 'A'] as const;
+
+function runMidis(key: PitchClass, run: RunSpec): number[] {
+  // Keep the whole run in a comfortable range (it is graded octave-free).
+  const lo = Math.min(...run.offsets);
+  const hi = Math.max(...run.offsets);
+  const tonic = placeInRange(pcValue(key), 57 - lo, Math.max(57 - lo, 74 - hi));
+  return run.offsets.map((o) => tonic + o);
+}
+
+export function singRunQuestion(id: string, key: PitchClass, run: RunSpec, prompt: 'echo' | 'told'): SingRunQuestion {
+  const midis = runMidis(key, run);
+  const tonic = midis[0] - run.offsets[0];
+  return {
+    id,
+    kind: 'sing-run',
+    key,
+    run,
+    midis,
+    prompt,
+    choices: [],
+    answer: 'accurate',
+    stimulus:
+      prompt === 'echo'
+        ? [{ kind: 'cadence', key }, { kind: 'rest', duration: 0.3 }, { kind: 'notes', midis, each: 1 / run.nps }]
+        : [{ kind: 'cadence', key }, { kind: 'note', midi: tonic, duration: 1.0 }],
+    difficulty: runDifficulty(run) + (prompt === 'told' ? 80 : 0),
+  };
+}
+
+export function runIdQuestion(id: string, key: PitchClass, run: RunSpec, aspect: 'material' | 'shape'): RunIdQuestion {
+  const midis = runMidis(key, run);
+  const choices = aspect === 'material' ? ['major', 'min-penta', 'blues'] : ['up', 'down', 'turn'];
+  return {
+    id,
+    kind: 'run-id',
+    key,
+    run,
+    midis,
+    aspect,
+    choices,
+    answer: aspect === 'material' ? run.material : run.shape,
+    stimulus: [{ kind: 'cadence', key }, { kind: 'rest', duration: 0.3 }, { kind: 'notes', midis, each: 1 / run.nps }],
+    difficulty: 1000 + (aspect === 'material' ? 120 : 0),
+  };
+}
+
+/** Lesson 14 — "Riffs & runs": name what you hear, then sing short runs back (spec K). */
+export function runsLesson(seed = Date.now()): LessonDef {
+  const rnd = mulberry32(seed);
+  const keys = shuffle(rnd, [...RUN_KEYS]).map((k) => pc(k));
+  const mat = pick(rnd, ['major', 'min-penta', 'blues'] as const);
+  const matRun: RunSpec = { offsets: buildRun(mat, 'up', 6, 'tonic'), nps: 3, material: mat, shape: 'up', level: 3 };
+  const shape = pick(rnd, ['up', 'down', 'turn'] as const);
+  const shapeRun: RunSpec = { offsets: buildRun('major', shape, 5, shape === 'down' ? 'fifth' : 'tonic'), nps: 2.7, material: 'major', shape, level: 2 };
+  return {
+    id: 'runs',
+    version: 1,
+    skill: 'agility',
+    scoring: { xpPerCorrect: 15, attemptLimit: 3 },
+    intro: [
+      {
+        id: 'intro-runs',
+        card: { kind: 'degrees', key: pc('C'), degrees: [1, 2, 3, 4, 5] },
+        stimulus: [{ kind: 'cadence', key: pc('C') }, { kind: 'notes', midis: [60, 62, 64, 65, 67], each: 0.3 }],
+      },
+    ],
+    questions: [
+      runIdQuestion('q1', keys[0], matRun, 'material'),
+      runIdQuestion('q2', keys[1], shapeRun, 'shape'),
+      singRunQuestion('q3', keys[2], runAt(1, Math.floor(rnd() * 1e9)), 'echo'),
+      singRunQuestion('q4', keys[3], runAt(2, Math.floor(rnd() * 1e9)), 'echo'),
+      singRunQuestion('q5', keys[4], runAt(2, Math.floor(rnd() * 1e9)), 'told'),
+    ],
+  };
+}
+
+/** Runs workshop (practice tool): two runs at a level, each at 60 % → 80 % → 100 % tempo (spec K.6). */
+export function runsWorkshop(level: number, seed = Date.now()): LessonDef {
+  const rnd = mulberry32(seed);
+  const keys = shuffle(rnd, [...RUN_KEYS]).map((k) => pc(k));
+  const qs: Question[] = [];
+  for (let r = 0; r < 2; r++) {
+    const run = runAt(level, Math.floor(rnd() * 1e9));
+    [0.6, 0.8, 1].forEach((f, i) => qs.push(singRunQuestion(`q${r * 3 + i + 1}`, keys[r], f === 1 ? run : atTempo(run, f), 'echo')));
+  }
+  return { id: 'runs-workshop', version: 1, skill: 'agility', scoring: { xpPerCorrect: 12, attemptLimit: 3 }, intro: [], questions: qs };
+}
+
+/** Agility rating → workshop level 1–8. */
+export const runLevelFor = (rating: number | null) => (rating === null ? 1 : Math.max(1, Math.min(MAX_RUN_LEVEL, Math.round((rating - 900) / 80) + 1)));
+
 // ---------------------------------------------------------------- Registry
 export const LESSON_ORDER: LessonId[] = [
   'bflat-two-homes',
@@ -777,10 +899,15 @@ export const LESSON_ORDER: LessonId[] = [
   'rhythm-r1',
   'rhythm-r2',
   'rhythm-r3',
+  'runs',
 ];
 
 export function makeLesson(id: LessonId, seed = Date.now()): LessonDef {
   switch (id) {
+    case 'runs':
+      return runsLesson(seed);
+    case 'runs-workshop':
+      return runsWorkshop(3, seed);
     case 'placement':
     case 'review':
     case 'weekly-puzzle':
@@ -841,6 +968,14 @@ export function explainStimulus(q: Question): Stimulus[] {
       return [{ kind: 'rhythm', rhythm: rhythmKey(q.rhythm), bars: q.rhythm.bars, bpm: q.bpm }];
     case 'rhythm-dict':
       return q.stimulus;
+    case 'sing-run':
+    case 'run-id':
+      // The model at half speed, then at tempo (spec K.6).
+      return [
+        { kind: 'notes', midis: q.midis, each: 2 / q.run.nps },
+        { kind: 'rest', duration: 0.4 },
+        { kind: 'notes', midis: q.midis, each: 1 / q.run.nps },
+      ];
   }
 }
 
@@ -901,8 +1036,16 @@ export function compareStimulus(q: Question, given: Answer): Stimulus[] | null {
       const g = rhythmFromKey(given, q.rhythm.bars);
       return [{ kind: 'rhythm', rhythm: rhythmKey(g), bars: g.bars, bpm: q.bpm }, { kind: 'rest', duration: 0.5 }, ...q.stimulus];
     }
+    case 'run-id': {
+      if (typeof given !== 'string' || given === q.answer) return null;
+      const other = q.aspect === 'material' ? { ...q.run, material: given as RunMaterial } : { ...q.run, shape: given as RunShape };
+      const offs = buildRun(other.material, other.shape, q.run.offsets.length, q.run.offsets[0] === 0 ? 'tonic' : q.run.offsets[0] === 7 ? 'fifth' : 'top');
+      const tonic = q.midis[0] - q.run.offsets[0];
+      return [{ kind: 'notes', midis: offs.map((o) => tonic + o), each: 1 / q.run.nps }, { kind: 'rest', duration: 0.5 }, { kind: 'notes', midis: q.midis, each: 1 / q.run.nps }];
+    }
     case 'sing':
     case 'sing-seq':
+    case 'sing-run':
     case 'rhythm-read':
       return null;
   }
@@ -1011,5 +1154,9 @@ export function questionTag(q: Question): string {
       return `rread:${q.level}:${q.rhythm.bars}:${q.show}:${rhythmKey(q.rhythm)}`;
     case 'rhythm-dict':
       return `rdict:${q.level}:${q.rhythm.bars}:${q.answer}`;
+    case 'sing-run':
+      return `srun:${k(q.key)}:${q.run.level}:${q.run.material}:${q.run.shape}:${q.run.nps}:${q.prompt}`;
+    case 'run-id':
+      return `runid:${k(q.key)}:${q.run.level}:${q.run.material}:${q.run.shape}:${q.aspect}`;
   }
 }

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { LESSON_ORDER, type LessonDef, type LessonId, type Question, type SkillId } from '../engine/lesson';
+import { LESSON_ORDER, runLevelFor, runsWorkshop, type LessonDef, type LessonId, type Question, type SkillId } from '../engine/lesson';
 import type { SessionState } from '../engine/session';
 import { adaptPlacement, placementLesson, puzzleBand, reviewLesson, weekId, weeklyPuzzle } from '../engine/adaptive';
 import { SkillMap } from './SkillMap';
@@ -173,6 +173,10 @@ export function App() {
     const fixed = progress.puzzles?.[week]?.band as Parameters<typeof weeklyPuzzle>[1] | undefined;
     openGenerated(weeklyPuzzle(week, fixed ?? puzzleBand(ratingsOf(progress))));
   };
+  const openRuns = () => {
+    const r = ratingsOf(progress).agility;
+    openGenerated(runsWorkshop(runLevelFor(r?.n ? r.r : null)));
+  };
   const practiceSkill = (k: SkillId) => {
     const map: Partial<Record<SkillId, LessonId>> = {
       degrees: (progress.lessons['bflat-two-homes']?.completions ?? 0) > 0 ? 'degrees-135' : 'bflat-two-homes',
@@ -185,6 +189,7 @@ export function App() {
       'rhythm-dictation': 'rhythm-r1',
     };
     if (k === 'sequences') return openPuzzle();
+    if (k === 'agility') return (progress.lessons.runs?.completions ?? 0) > 0 ? openRuns() : openLesson('runs');
     if (k === 'rhythm' || k === 'timing') {
       setGameKind('rhythm');
       return go('games');
@@ -226,7 +231,7 @@ export function App() {
           streak={visibleStreak(progress.streak, new Date())}
           account={<AccountCard t={t} user={user} sync={sync} compact />}
           onMenu={() => setMenuOpen(true)}
-          tools={<PracticeTools t={t} progress={progress} onSkills={() => go('skills')} onPlacement={openPlacement} onReview={openReview} onPuzzle={openPuzzle} onDaily={() => go('daily')} />}
+          tools={<PracticeTools t={t} progress={progress} onSkills={() => go('skills')} onPlacement={openPlacement} onReview={openReview} onPuzzle={openPuzzle} onDaily={() => go('daily')} onRuns={openRuns} />}
           updateReady={pwaState.updateReady}
           news={
             news.length > 0 ? (

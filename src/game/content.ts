@@ -4,7 +4,8 @@
 import { pcFromKey, type Answer, type IntroStep, type LessonDef, type LessonId, type Question } from '../engine/lesson';
 import { displayNote, spokenMajorKey, spokenNote, type Naming, type PitchClass } from '../engine/pitch';
 import type { SungResult } from '../engine/sing';
-import { parseAlternatives, parseCadence, parseDegree, parseDegreeSequence, parseInterval, parseInversion, parseNoteName, parseQuality, type ParseResult } from '../engine/parser';
+import { parseAlternatives, parseCadence, parseDegree, parseDegreeSequence, parseInterval, parseInversion, parseNoteName, parseQuality, parseRunMaterial, parseRunShape, type ParseResult } from '../engine/parser';
+import { describeRun } from '../engine/runs';
 import { narration, type Lang } from './narration';
 import { describe as describeRhythm, parseRhythmWords, rhythmFromKey, rhythmKey, sameRhythm, type CellId } from '../engine/rhythm';
 
@@ -125,6 +126,18 @@ export const LESSON_META: Record<LessonId, LessonMeta> = {
     icon: 'puzzle',
     tip: { en: 'A new puzzle arrives every Monday.', he: 'חידה חדשה מגיעה בכל יום שני.' },
   },
+  runs: {
+    title: { en: 'Riffs & runs', he: 'ריפים וראנים' },
+    blurb: { en: 'Hear a fast run, name it, then sing it back.', he: 'שומעים ראן מהיר, מזהים אותו, ושרים אותו בחזרה.' },
+    icon: 'mic',
+    tip: { en: 'Practise a run slowly on “ah”, then speed it up — the Runs workshop does this for you.', he: 'תרגלו ראן לאט על "אה", ואז האיצו — סדנת הראנים עושה את זה בשבילכם.' },
+  },
+  'runs-workshop': {
+    title: { en: 'Runs workshop', he: 'סדנת ראנים' },
+    blurb: { en: 'Each run at 60 %, 80 %, then full speed.', he: 'כל ראן ב־60%, ב־80% ואז במהירות מלאה.' },
+    icon: 'mic',
+    tip: { en: 'Clean, separate notes beat speed: slow down when notes smear.', he: 'צלילים נקיים ונפרדים חשובים ממהירות: האטו כשהצלילים נמרחים.' },
+  },
   'sing-home-five': {
     title: { en: 'Sing home & five', he: 'לשיר את הבית ואת החמש' },
     blurb: { en: 'Hear the key, then sing the note.', he: 'שומעים את הסולם, ושרים את הצליל.' },
@@ -212,6 +225,12 @@ export function answerWord(_q: Question, a: Answer, l: Lang, nm: Naming = 'lette
     fifth: { en: 'the fifth', he: 'הקווינטה' },
     aug: { en: 'augmented', he: 'מוגדל' },
     accurate: { en: 'in tune', he: 'מדויק' },
+    major: { en: 'major scale', he: "סולם מז'ור" },
+    'min-penta': { en: 'pentatonic', he: 'פנטטוני' },
+    blues: { en: 'blues', he: 'בלוז' },
+    up: { en: 'up', he: 'עולה' },
+    down: { en: 'down', he: 'יורד' },
+    turn: { en: 'up and back', he: 'עולה וחוזר' },
   };
   if (/^\d(-\d)+$/.test(String(a))) return String(a).split('-').map((d) => deg(Number(d), l)).join(', ');
   return words[a]?.[l] ?? String(a);
@@ -252,6 +271,22 @@ export function roundPrompt(q: Question, l: Lang, nm: Naming, n: number): string
           : `סיבוב ${n}. קוראים ומקישים. ספירה, ואז מתחילים.`;
     case 'rhythm-dict':
       return l === 'en' ? `Round ${n}. Listen to the rhythm.` : `סיבוב ${n}. הקשיבו לקצב.`;
+    case 'sing-run':
+      return q.prompt === 'echo'
+        ? l === 'en'
+          ? `Round ${n}. Listen to the run, then sing it back on “ah”.`
+          : `סיבוב ${n}. הקשיבו לראן, ושירו אותו בחזרה על "אה".`
+        : l === 'en'
+          ? `Round ${n}. From home: ${describeRun(q.run, l)}. Sing it after the chime.`
+          : `סיבוב ${n}. מהבית: ${describeRun(q.run, l)}. שירו אחרי הצליל.`;
+    case 'run-id':
+      return q.aspect === 'material'
+        ? l === 'en'
+          ? `Round ${n}. Major scale, pentatonic, or blues?`
+          : `סיבוב ${n}. סולם מז'ור, פנטטוני, או בלוז?`
+        : l === 'en'
+          ? `Round ${n}. Does the run go up, down, or up and back?`
+          : `סיבוב ${n}. הראן עולה, יורד, או עולה וחוזר?`;
     case 'sing-seq':
       return l === 'en'
         ? `Round ${n}. ${cap(spokenMajorKey(q.key, nm, l))}. Sing ${q.degrees.map((d) => deg(d, l)).join(', ')}.`
@@ -314,7 +349,10 @@ export function parseAnswer(q: Question, alternatives: string[], inputNaming: Na
       if (r.kind === 'ambiguous') return { ...r, candidates: r.candidates.map((c) => `${c.letter}${c.acc}`) };
       return r;
     }
+    case 'run-id':
+      return q.aspect === 'material' ? parseAlternatives(alternatives, parseRunMaterial) : parseAlternatives(alternatives, parseRunShape);
     case 'sing-seq':
+    case 'sing-run':
     case 'rhythm-read':
       return { kind: 'unrecognized', heard: alternatives[0] ?? '' };
     case 'rhythm-dict': {
@@ -354,6 +392,10 @@ export function revealText(q: Question, l: Lang, nm: Naming): string {
         : `זה ${spokenNote(q.target, nm, l)}: דרגה ${deg(q.degree, l)} ב${spokenMajorKey(q.key, nm, l)}.`;
     case 'sing-seq':
       return l === 'en' ? 'Here are the notes.' : 'אלה הצלילים.';
+    case 'sing-run':
+      return l === 'en' ? 'Here is the run: half speed, then at tempo.' : 'הנה הראן: בחצי מהירות, ואז בקצב.';
+    case 'run-id':
+      return l === 'en' ? `It was ${answerWord(q, q.answer, l)}. Your answer, then the right one.` : `זה היה ${answerWord(q, q.answer, l)}. התשובה שלכם, ואז הנכונה.`;
     case 'rhythm-read':
       return l === 'en' ? `Here is how it goes: ${describeRhythm(q.rhythm, 'syllables', l)}.` : `ככה זה נשמע: ${describeRhythm(q.rhythm, 'syllables', l)}.`;
     case 'rhythm-dict':
@@ -391,7 +433,7 @@ export function revealText(q: Question, l: Lang, nm: Naming): string {
 }
 
 export function silenceText(q: Question, l: Lang): string {
-  if (q.kind === 'sing') return l === 'en' ? "I didn't hear singing. Try again after the chime." : 'לא שמעתי שירה. נסו שוב אחרי הצליל.';
+  if (q.kind === 'sing' || q.kind === 'sing-run' || q.kind === 'sing-seq') return l === 'en' ? "I didn't hear singing. Try again after the chime." : 'לא שמעתי שירה. נסו שוב אחרי הצליל.';
   if (q.kind === 'degree' && q.choices.length === 2) return narration.silence(l);
   return l === 'en' ? `I didn't hear you. ${cap(sayChoices(q, l))}?` : `לא שמעתי. ${sayChoices(q, l)}?`;
 }
@@ -467,6 +509,12 @@ export function choiceLabel(_q: Question, a: Answer, l: Lang, nm: Naming = 'lett
     M3: { big: '3', small: 'Third', he: '3', heSmall: 'טרצה', tone: 'gold' },
     P5: { big: '5', small: 'Fifth', he: '5', heSmall: 'קווינטה', tone: 'lilac' },
     P8: { big: '8', small: 'Octave', he: '8', heSmall: 'אוקטבה', tone: 'mint' },
+    major: { big: '♪', small: 'Major scale', he: '♪', heSmall: "סולם מז'ור", tone: 'gold' },
+    'min-penta': { big: '⁵', small: 'Pentatonic', he: '⁵', heSmall: 'פנטטוני', tone: 'mint' },
+    blues: { big: '♭', small: 'Blues', he: '♭', heSmall: 'בלוז', tone: 'lilac' },
+    up: { big: '↗', small: 'Up', he: '↗', heSmall: 'עולה', tone: 'mint' },
+    down: { big: '↘', small: 'Down', he: '↘', heSmall: 'יורד', tone: 'lilac' },
+    turn: { big: '⤻', small: 'Up & back', he: '⤻', heSmall: 'עולה וחוזר', tone: 'gold' },
     root: { big: '1', small: 'Root', he: '1', heSmall: 'שורש', tone: 'mint' },
     third: { big: '3', small: 'Third', he: '3', heSmall: 'טרצה', tone: 'gold' },
     fifth: { big: '5', small: 'Fifth', he: '5', heSmall: 'קווינטה', tone: 'lilac' },
@@ -486,6 +534,10 @@ export function askTemplate(q: Question, l: Lang): string {
       return q.direction === 'heard-pitch→name' ? (l === 'en' ? 'Which note is it?' : 'איזה תו זה?') : l === 'en' ? `Which note is degree ${q.degree}?` : `איזה תו הוא דרגה ${q.degree}?`;
     case 'sing-seq':
       return l === 'en' ? `Sing ${q.degrees.join(' – ')}` : `שירו ${q.degrees.join(' – ')}`;
+    case 'sing-run':
+      return q.prompt === 'echo' ? (l === 'en' ? 'Sing the run back' : 'שירו את הראן בחזרה') : l === 'en' ? `Sing: ${describeRun(q.run, l)}` : `שירו: ${describeRun(q.run, l)}`;
+    case 'run-id':
+      return q.aspect === 'material' ? (l === 'en' ? 'Which scale was the run?' : 'מאיזה סולם הראן?') : l === 'en' ? 'Which way did it go?' : 'לאן הוא הלך?';
     case 'rhythm-read':
       return l === 'en' ? 'Tap this rhythm' : 'הקישו את הקצב';
     case 'rhythm-dict':
@@ -508,7 +560,7 @@ export function askTemplate(q: Question, l: Lang): string {
 }
 
 export function hintText(q: Question, l: Lang, voice: boolean): string {
-  if (q.kind === 'sing' || q.kind === 'sing-seq') return voice ? (l === 'en' ? 'Sing after the chime' : 'שירו אחרי הצליל') : l === 'en' ? 'Tap the mic, then sing' : 'לחצו על המיקרופון ושירו';
+  if (q.kind === 'sing' || q.kind === 'sing-seq' || q.kind === 'sing-run') return voice ? (l === 'en' ? 'Sing after the chime' : 'שירו אחרי הצליל') : l === 'en' ? 'Tap the mic, then sing' : 'לחצו על המיקרופון ושירו';
   if (q.kind === 'note-name' && voice) return l === 'en' ? 'Say the note name' : 'אמרו את שם התו';
   if (q.kind === 'rhythm-read') return voice ? (l === 'en' ? 'Say “ta” on each note (or tap)' : 'אמרו "טה" על כל תו (או הקישו)') : l === 'en' ? 'Tap the pad or press Space on each note' : 'הקישו על הכפתור או על רווח בכל תו';
   if (q.kind === 'rhythm-dict' && voice) return l === 'en' ? 'Say it: “ta ti-ti ta” or “quarter, two eighths…”' : 'אמרו: "טה טי-טי טה" או "רבע, שתי שמיניות…"';
@@ -530,6 +582,9 @@ export function questionBadge(q: Question, l: Lang, nm: Naming): { key?: PitchCl
     case 'note-name':
     case 'sing-seq':
       return { key: q.key, text: major };
+    case 'sing-run':
+    case 'run-id':
+      return { key: q.key, text: `${q.run.offsets.length} ${l === 'en' ? 'notes' : 'צלילים'} · ${q.run.nps} ${l === 'en' ? 'n/s' : 'בשנייה'}` };
     case 'quality':
       return { text: `${l === 'en' ? 'Chord on' : 'אקורד על'} ${displayNote(q.root, nm, l)}` };
     case 'interval':
@@ -547,7 +602,7 @@ export function giveText(q: Question, a: Answer, l: Lang, nm: Naming = 'letter')
   if (asPc) return displayNote(asPc, nm, l);
   if (q.kind === 'rhythm-dict') return describeRhythm(rhythmFromKey(String(a), q.rhythm.bars), 'syllables', l);
   if (q.kind === 'rhythm-read') return a === 'accurate' ? (l === 'en' ? 'in time' : 'בזמן') : l === 'en' ? 'off' : 'לא מדויק';
-  if (q.kind === 'sing' || q.kind === 'sing-seq') {
+  if (q.kind === 'sing' || q.kind === 'sing-seq' || q.kind === 'sing-run') {
     const m: Record<string, Record<Lang, string>> = {
       accurate: { en: 'in tune', he: 'מדויק' },
       sharp: { en: 'high', he: 'גבוה' },

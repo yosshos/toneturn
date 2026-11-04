@@ -384,4 +384,6 @@ Item difficulty (rating scale) = 900 + weighted sum of the factor levels (weight
 - Diagnosis names the weakest factor ("leaps", "speed above 5 n/s", "blues ♭5") and recommends the next run at that factor's level.
 
 ### K.6 Practice aids
+**Status (0.14.0)**: built — `src/engine/runs.ts` (8-level curriculum, factor levels and difficulty, speed-scaled tolerance, 20 ms hop for fast runs, smear detection by pitch slope in the note middle, clarity, evenness, a = 0.6/0.25/0.15), lesson 14 *Riffs & runs* (2 recognition + 3 sung, echo and told), *Runs workshop* (60/80/100 %), Skill Map axis *Vocal agility*, review tags. Simplifications: echo runs feed only Vocal agility (not melodic memory); diagnosis by weakest factor and the visual pitch trace are not built yet; weights not yet calibrated with real singers.
+
 Slow-down practice (the same run at 60 % → 80 % → 100 % tempo, unlocking the faster version on success), loop a single turn, hear the model at half speed, and a visual pitch trace over the target notes after each attempt.

@@ -6,7 +6,7 @@ import { yin } from '../engine/yin';
 import { openCapture, stopStream } from './mic';
 
 export class BrowserPitchCapture implements PitchCapture {
-  async sing({ signal, maxMs = 4500, silenceMs = 4000, endSilenceMs, onCapturing, onFrame }: SingOptions): Promise<SingCaptureResult> {
+  async sing({ signal, maxMs = 4500, silenceMs = 4000, endSilenceMs, hopMs, onCapturing, onFrame }: SingOptions): Promise<SingCaptureResult> {
     if (signal.aborted) return { kind: 'aborted' };
     const r = await openCapture({ echoCancellation: false, noiseSuppression: false, autoGainControl: false });
     if (!r.ok) return { kind: 'error', error: r.error };
@@ -58,7 +58,7 @@ export class BrowserPitchCapture implements PitchCapture {
         }
         if (firstVoiced < 0 && t * 1000 > silenceMs) return finish({ kind: 'silence' });
         if (t * 1000 > maxMs) return finish(firstVoiced >= 0 ? { kind: 'frames', frames } : { kind: 'silence' });
-      }, 33);
+      }, hopMs ?? 33);
     });
   }
 }

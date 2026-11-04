@@ -429,3 +429,63 @@
   justify-self: stretch;
   margin: 0 auto;
 }
+
+/* ---------------------------------------------------------------- riffs & runs (spec K) */
+.run-targets {
+  padding-top: 26px;
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  width: 100%;
+}
+.run-contour {
+  list-style: none;
+  margin: 0;
+  padding: 0 8px;
+  height: 120px;
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  max-width: 100%;
+}
+.run-dot {
+  position: relative;
+  width: 22px;
+}
+.run-dot::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  bottom: calc(var(--h) * 96px);
+  background: var(--ink-dim);
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.3);
+}
+.run-dot small {
+  position: absolute;
+  left: 0;
+  width: 22px;
+  text-align: center;
+  bottom: calc(var(--h) * 96px + 22px);
+  font-weight: 900;
+}
+.run-dot.ok::before {
+  background: var(--mint);
+}
+.run-dot.sharp::before,
+.run-dot.flat::before,
+.run-dot.smeared::before {
+  background: var(--gold);
+}
+.run-dot.wrong::before,
+.run-dot.missed::before {
+  background: var(--red);
+}
+.run-summary {
+  margin: 0;
+  color: var(--ink-soft);
+  font-weight: 700;
+  text-align: center;
+}

@@ -102,6 +102,8 @@ export function Recap({ t, view, settings, onReplay, onAgain, onHome, onNext, ne
               ? `${t.singNow} ${q.promptBy === 'name' ? displayNote(q.target, nm, lang) : q.degree}`
               : q.kind === 'sing-seq'
                 ? `${t.singNow} ${q.degrees.join(' ')}`
+                : q.kind === 'sing-run'
+                  ? `${t.singNow} · ${q.run.offsets.length} × ${q.run.nps}/s`
                 : q.kind === 'note-name'
                   ? displayNote(q.target, nm, lang)
                   : q.kind === 'degree-seq'

@@ -250,6 +250,26 @@ const CADENCE_TOKENS = new Map<string, 'resolved' | 'open'>([
   ['פתוח', 'open'], ['פתוחה', 'open'], ['חצי', 'open'], ['תלוי', 'open'], ['תלויה', 'open'], ['באוויר', 'open'],
 ]);
 
+const RUN_MATERIAL_TOKENS = new Map<string, 'major' | 'min-penta' | 'blues'>([
+  ['major', 'major'], ['scale', 'major'], ['מז\'ור', 'major'], ['מזור', 'major'], ['סולם', 'major'],
+  ['pentatonic', 'min-penta'], ['penta', 'min-penta'], ['minor', 'min-penta'], ['פנטטוני', 'min-penta'], ['פנטטונית', 'min-penta'], ['פנטה', 'min-penta'],
+  ['blues', 'blues'], ['bluesy', 'blues'], ['בלוז', 'blues'],
+]);
+const RUN_SHAPE_TOKENS = new Map<string, 'up' | 'down' | 'turn'>([
+  ['up', 'up'], ['upward', 'up'], ['ascending', 'up'], ['rising', 'up'], ['עולה', 'up'], ['למעלה', 'up'], ['עולים', 'up'],
+  ['down', 'down'], ['downward', 'down'], ['descending', 'down'], ['falling', 'down'], ['יורד', 'down'], ['למטה', 'down'], ['יורדים', 'down'],
+  ['turn', 'turn'], ['back', 'turn'], ['both', 'turn'], ['around', 'turn'], ['חוזר', 'turn'], ['הלוך', 'turn'], ['חזור', 'turn'], ['ושוב', 'turn'],
+]);
+/** Run recognition answers (spec K.1): scale material or shape. */
+export const parseRunMaterial = (t: string) => parseChoiceTable(t, RUN_MATERIAL_TOKENS);
+export function parseRunShape(t: string): ParseResult<'up' | 'down' | 'turn'> {
+  // "up and down" / "עולה ויורד" is a turn.
+  const n = normalize(t);
+  const has = (xs: string[]) => n.some((w) => xs.includes(w) || xs.some((x) => w.endsWith(x) && w.length <= x.length + 1));
+  if (has(['up', 'עולה']) && has(['down', 'יורד', 'ויורד'])) return { kind: 'answer', value: 'turn', heard: t.trim() };
+  return parseChoiceTable(t, RUN_SHAPE_TOKENS);
+}
+
 /** "resolved" vs "open" cadence answers; "not resolved" / "לא נפתר" count as open. */
 export function parseCadence(transcript: string): ParseResult<'resolved' | 'open'> {
   return parseChoiceTable(transcript, CADENCE_TOKENS, [

@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.14.0',
+    date: '2026-11-04',
+    en: ['Riffs & runs (lesson 14): name a run’s scale or shape, then sing fast runs back — graded on pitch, clean separate notes and even timing', 'Runs workshop: each run at 60 %, 80 %, then full speed, at your level', 'New Skill Map axis: Vocal agility'],
+    he: ['ריפים וראנים (שיעור 14): מזהים סולם או כיוון של ראן, ושרים ראנים מהירים בחזרה — ניקוד לפי גובה, צלילים נקיים ונפרדים ותזמון אחיד', 'סדנת ראנים: כל ראן ב־60%, ב־80% ואז במהירות מלאה, ברמה שלכם', 'ציר חדש במפת המיומנויות: גמישות קולית'],
+  },
+  {
     version: '0.13.0',
     date: '2026-11-04',
     en: ['Daily challenge leaderboard: see how many played today, your rank and top %, and your friends’ scores', 'Your first play is graded on the server — also when you played before signing in'],

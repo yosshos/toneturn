@@ -4,6 +4,7 @@ import type { Strings } from '../i18n/strings';
 import { ratingsOf, type Progress } from '../storage/progress';
 import { localDay } from '../storage/progress';
 import { NodeIcon } from './Home';
+import { runLevelFor } from '../engine/lesson';
 
 /** Home-screen practice row: Skill Map / placement, review queue, weekly puzzle. */
 export function PracticeTools({
@@ -14,6 +15,7 @@ export function PracticeTools({
   onReview,
   onPuzzle,
   onDaily,
+  onRuns,
 }: {
   t: Strings;
   progress: Progress;
@@ -22,6 +24,7 @@ export function PracticeTools({
   onReview: () => void;
   onPuzzle: () => void;
   onDaily: () => void;
+  onRuns: () => void;
 }) {
   const daily = progress.daily?.[localDay(new Date())];
   const ratings = ratingsOf(progress);
@@ -54,6 +57,13 @@ export function PracticeTools({
           </span>
           <b>{t.weeklyPuzzle}</b>
           <small>{puzzleStatus}</small>
+        </button>
+        <button className="tool-card runs-card" onClick={onRuns}>
+          <span className="tool-icon" aria-hidden="true">
+            <NodeIcon kind="mic" />
+          </span>
+          <b>{t.runsWorkshop}</b>
+          <small>{t.runsWorkshopHint.replace('{n}', String(runLevelFor(ratings.agility?.n ? ratings.agility.r : null)))}</small>
         </button>
         <button className="tool-card daily-card" onClick={onDaily}>
           <span className="tool-icon" aria-hidden="true">

@@ -32,13 +32,14 @@ const SIM_SCRIPT = (): ScriptStep[] => {
   return [right, wrong, ...Array.from({ length: 12 }, () => right)];
 };
 
-export function makeAdapters(expected: () => Answer, targetMidi: () => number): Adapters {
+export function makeAdapters(expected: () => Answer, targetMidi: () => number, targetSeq: () => number[] | null = () => null): Adapters {
   if (SIMULATED) {
     const sim = new ScriptedTranscriber(SIM_SCRIPT(), 1200);
     sim.expected = expected;
     // Sung: in tune, then 60 cents flat → retry, then in tune.
     const pitch = new ScriptedPitch([8, -60, -12, 5, 5, 5], 1500);
     pitch.target = targetMidi;
+    pitch.targets = targetSeq;
     return { audio: piano, tts, stt: sim, mic: new FakeMic(), pitch, clock: realClock, simulated: true };
   }
   return {

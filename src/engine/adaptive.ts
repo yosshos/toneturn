@@ -8,6 +8,8 @@ import {
   inversionQuestion,
   noteNameQuestion,
   singSeqQuestion,
+  singRunQuestion,
+  runIdQuestion,
   DEGREE_KEYS,
   mulberry32,
   pick,
@@ -20,6 +22,7 @@ import {
   type Roman,
 } from './lesson';
 import { pc, type PitchClass } from './pitch';
+import { buildRun, MAX_RUN_LEVEL, RUN_LEVELS, SCALES, type RunMaterial, type RunShape, type RunSpec } from './runs';
 import { band, nextLevel, type Band, type Ratings } from './rating';
 import type { SessionState } from './session';
 
@@ -137,6 +140,22 @@ export function questionFromTag(tag: string, seed: number, id: string): Question
       const key = parsePc(a);
       const ds = (b ?? '').split('-').map(Number);
       return key && ds.length && ds.every((x) => x >= 1 && x <= 7) ? singSeqQuestion(id, key, ds) : null;
+    }
+    case 'srun':
+    case 'runid': {
+      // srun:<key>:<level>:<material>:<shape>:<nps>:<prompt> · runid:<key>:<level>:<material>:<shape>:<aspect>
+      const key = parsePc(a);
+      const parts = tag.split(':');
+      const level = Number(parts[2]);
+      if (!key || !(level >= 1 && level <= MAX_RUN_LEVEL)) return null;
+      const material = parts[3] as RunMaterial;
+      const shape = parts[4] as RunShape;
+      if (!(material in SCALES)) return null;
+      const def = RUN_LEVELS[level - 1];
+      const start = shape === 'down' || shape === 'zigzag' ? (def.len > 6 ? 'top' : 'fifth') : 'tonic';
+      const run: RunSpec = { offsets: buildRun(material, shape, def.len, start), nps: kind === 'srun' ? Number(parts[5]) || def.nps : def.nps, material, shape, level };
+      if (kind === 'srun') return singRunQuestion(id, key, run, parts[6] === 'told' ? 'told' : 'echo');
+      return runIdQuestion(id, key, run, parts[5] === 'shape' ? 'shape' : 'material');
     }
     case 'seq': {
       const key = parsePc(a);

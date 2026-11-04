@@ -154,6 +154,8 @@ export class ScriptedPitch implements PitchCapture {
   calls = 0;
   /** MIDI of the current target (set by the host). */
   target: () => number = () => 60;
+  /** Sequence targets (sung sequences / runs): a cents step then sings every note that far off. */
+  targets: () => number[] | null = () => null;
   constructor(
     public script: SingStep[],
     private delayMs = 0,
@@ -188,6 +190,8 @@ export class ScriptedPitch implements PitchCapture {
       const frames = syntheticFrames(this.target(), 0, 1.5).map((f, i) => ({ ...f, hz: f.hz! * Math.pow(2, ((i % 10) - 5) / 4) }));
       return { kind: 'frames', frames };
     }
+    const seq = this.targets();
+    if (seq && seq.length > 1) return { kind: 'frames', frames: sungSequence(seq.map((m) => m + (step as number) / 100)) };
     const frames = syntheticFrames(this.target(), step as number, 1.5, 30, -1);
     frames.forEach((f) => opts.onFrame?.(f));
     return { kind: 'frames', frames };

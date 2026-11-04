@@ -30,7 +30,7 @@ interface Props {
   nextLabel?: string;
 }
 
-const targetMidiOf = (q: Question) => (q.kind === 'degree' || q.kind === 'sing' || q.kind === 'note-name' ? q.targetMidi : q.kind === 'sing-seq' ? q.midis[0] : 60);
+const targetMidiOf = (q: Question) => (q.kind === 'degree' || q.kind === 'sing' || q.kind === 'note-name' ? q.targetMidi : q.kind === 'sing-seq' || q.kind === 'sing-run' ? q.midis[0] : 60);
 
 export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit, onAgain, onNext, onProgress, lessonDef, adapt, nextLabel }: Props) {
   const ctrlRef = useRef<LessonController | null>(null);
@@ -41,6 +41,10 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
     const adapters = makeAdapters(
       () => c?.getView().question.answer ?? 1,
       () => (c ? targetMidiOf(c.getView().question) : 60),
+      () => {
+        const q = c?.getView().question;
+        return q && (q.kind === 'sing-seq' || q.kind === 'sing-run') ? q.midis : null;
+      },
     );
     c = new LessonController(
       lesson,
@@ -103,7 +107,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
   }
 
   const paused = v.phase === 'paused';
-  const isSing = q.kind === 'sing' || q.kind === 'sing-seq';
+  const isSing = q.kind === 'sing' || q.kind === 'sing-seq' || q.kind === 'sing-run';
   const isSeq = q.kind === 'degree-seq';
   const isRead = q.kind === 'rhythm-read';
   const showButtons = v.stage === 'question' && !paused && !v.error && !isSing && !isSeq && !isRead && (v.mode === 'buttons' || v.needsListenTap);
@@ -215,6 +219,8 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
               <Tuner v={v} />
             ) : q.kind === 'sing-seq' ? (
               <SeqTargets degrees={q.degrees} notes={v.feedback?.seqNotes} />
+            ) : q.kind === 'sing-run' ? (
+              <RunTargets offsets={q.run.offsets} notes={v.feedback?.seqNotes} caption={v.caption} />
             ) : q.kind === 'rhythm-read' ? (
               <ReadPrompt q={q} v={v} lang={lang} onTap={(ms) => ctrl.tapBeat(ms)} t={t} />
             ) : (
@@ -477,7 +483,7 @@ function FeedbackBanner({ v, t, lang, settings }: { v: LessonView; t: Strings; l
   if (!f) return <div className="feedback empty" aria-live="polite" />;
   const q = v.question;
   const nmFb = namingFor(settings.naming, lang);
-  const ans = f.answer !== undefined && q.kind !== 'sing' && q.kind !== 'sing-seq' ? choiceLabel(q, f.answer, lang, nmFb) : null;
+  const ans = f.answer !== undefined && q.kind !== 'sing' && q.kind !== 'sing-seq' && q.kind !== 'sing-run' ? choiceLabel(q, f.answer, lang, nmFb) : null;
   const ansText =
     q.kind === 'degree-seq' && f.answer !== undefined
       ? String(f.answer).split('-').join(' ')
@@ -594,6 +600,29 @@ function AnswerChips({ f, t }: { f: NonNullable<LessonView['feedback']>; t: Stri
 }
 
 /** Degrees to sing, then a per-note result strip (spec H #3). */
+/** A run as a contour of dots (height = pitch); after an attempt each dot shows its status (spec K.3). */
+function RunTargets({ offsets, notes, caption }: { offsets: number[]; notes?: string[]; caption?: string | null }) {
+  const lo = Math.min(...offsets);
+  const hi = Math.max(...offsets);
+  const mark: Record<string, string> = { ok: '✓', sharp: '↑', flat: '↓', smeared: '~', wrong: '✗', missed: '·' };
+  return (
+    <div className="run-targets">
+      <ol className="run-contour" dir="ltr" aria-label="run contour">
+        {offsets.map((o, i) => (
+          <li key={i} className={`run-dot ${notes?.[i] ?? ''}`} style={{ ['--h' as string]: hi === lo ? 0.5 : (o - lo) / (hi - lo) }}>
+            {notes && <small>{mark[notes[i]] ?? '·'}</small>}
+          </li>
+        ))}
+      </ol>
+      {notes && caption && (
+        <p className="run-summary" dir="auto">
+          {caption}
+        </p>
+      )}
+    </div>
+  );
+}
+
 function SeqTargets({ degrees, notes }: { degrees: number[]; notes?: string[] }) {
   return (
     <ol className="seq-targets" dir="ltr" aria-label="degrees to sing">
