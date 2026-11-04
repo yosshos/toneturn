@@ -44,6 +44,8 @@ Useful URLs
 | 3 | Major or minor? | chord quality | “major” / “minor” (also “happy/sad”, מז'ור/מינור) |
 | 4 | Cadence detective (V–I vs ending on V) | cadences | “resolved” / “open” (נפתר / פתוח, “not resolved”) |
 | 5 | Sing home & five | sung pitch | sing; live tuner, ±35 ¢, octave-insensitive, spoken high/low feedback |
+| 6 | Thirds, fifths, octaves (melodic, then harmonic) | intervals | “third” / “fifth” / “octave” (טרצה / קווינטה / אוקטבה) |
+| 7 | Which note is in the bass? (C, C/E, C/G) | chords | “root” / “third” / “fifth”, or “root position / first / second inversion” |
 
 `?unlock=all` opens every lesson (testing). Singing uses the microphone in both modes; in Buttons mode it waits for a **Sing now** tap.
 

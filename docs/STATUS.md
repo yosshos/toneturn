@@ -1,5 +1,13 @@
 # Milestone report — 2026-11-04
 
+## Update 6 — v0.7.0: intervals and inversions
+
+- Lesson 6 *Thirds, fifths, octaves* (melodic then harmonic, interval names in en/he) — the Intervals axis on the Skill Map is now measurable.
+- Lesson 7 *Which note is in the bass?* — major triads with root / third / fifth in the bass; bass played alone first and voiced at least a sixth below the triad so it is audible (spec: "teach C, C/E and C/G with the bass audible"). Non-chord bass (C/D) remains backlog.
+- Wrong answers in both play "your answer, then the right one".
+- Cloud migration 4 applied (new lesson ids; friends' lesson count includes them).
+- Tests: **243 unit** + **28 E2E**, all passing.
+
 ## Update 5 — v0.6.0: hosting, placement, Skill Map, review, weekly puzzle
 
 - **Live at https://yosshos.github.io/toneturn/** (repo public by owner's decision; history scanned — no secrets ever committed). Actions: typecheck → unit tests → build → Pages. Supabase site URL + redirect allow-list updated; live check: loads, service worker controls the page, offline reload, Google sign-in redirects back to the Pages URL.

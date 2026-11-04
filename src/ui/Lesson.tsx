@@ -166,7 +166,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
             )}
           </div>
           <div className="hero-slot">
-            {isSing ? <Tuner v={v} /> : <Orb v={v} label={q.kind === 'degree' ? target : q.kind === 'quality' ? '♪♪♪' : q.kind === 'degree-seq' ? `${q.degrees.length}♪` : '♪ ?'} />}
+            {isSing ? <Tuner v={v} /> : <Orb v={v} label={q.kind === 'degree' ? target : q.kind === 'quality' ? '♪♪♪' : q.kind === 'degree-seq' ? `${q.degrees.length}♪` : q.kind === 'interval' ? '♪ ↔ ♪' : q.kind === 'inversion' ? '𝄢 ?' : '♪ ?'} />}
             <Burst on={celebrate} />
           </div>
           <Keyboard mark={q.kind === 'degree' ? q.targetMidi : undefined} />
@@ -267,6 +267,27 @@ function IntroCardView({ card, state, t, lang, nm }: { card: IntroCard; state: s
           <span className="intro-deg">{card.ending === 'resolved' ? t.resolvedWord : t.openWord}</span>
         </div>
       );
+    case 'interval':
+      return (
+        <div className={`intro-card ${state} iv-${card.name}`}>
+          <span className="intro-key">{{ M3: t.ivThird, P5: t.ivFifth, P8: t.ivOctave }[card.name]}</span>
+          <span className="intro-coin big-glyph">{{ M3: '3', P5: '5', P8: '8' }[card.name]}</span>
+          <span className="intro-deg">♪ → ♪</span>
+        </div>
+      );
+    case 'inversion': {
+      const root = displayNote(card.root, nm, lang);
+      const label = card.bass === 'root' ? root : `${root}/${displayNote({ letter: (['C', 'D', 'E', 'F', 'G', 'A', 'B'] as const)[('CDEFGAB'.indexOf(card.root.letter) + (card.bass === 'third' ? 2 : 4)) % 7], acc: 0 }, nm, lang)}`;
+      return (
+        <div className={`intro-card ${state}`}>
+          <span className="intro-key">{{ root: t.bassRoot, third: t.bassThird, fifth: t.bassFifth }[card.bass]}</span>
+          <span className="intro-coin big-glyph">
+            <Note>{label}</Note>
+          </span>
+          <span className="intro-deg">{t.bassWord}</span>
+        </div>
+      );
+    }
     case 'sing':
       return (
         <div className={`intro-card wide ${state}`}>

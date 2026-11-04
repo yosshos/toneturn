@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.7.0',
+    date: '2026-11-04',
+    en: ['New lesson: thirds, fifths and octaves', 'New lesson: which note is in the bass? (C, C/E, C/G)', 'Intervals now appear on your Skill Map'],
+    he: ['שיעור חדש: טרצות, קווינטות ואוקטבות', 'שיעור חדש: איזה צליל בבס? (C,‏ C/E,‏ C/G)', 'המרווחים מופיעים עכשיו במפת המיומנויות'],
+  },
+  {
     version: '0.6.0',
     date: '2026-11-04',
     en: [

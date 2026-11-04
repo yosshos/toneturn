@@ -4,7 +4,7 @@
 import type { Answer, IntroStep, LessonDef, LessonId, Question } from '../engine/lesson';
 import { displayNote, spokenMajorKey, spokenNote, type Naming, type PitchClass } from '../engine/pitch';
 import type { SungResult } from '../engine/sing';
-import { parseAlternatives, parseCadence, parseDegree, parseDegreeSequence, parseQuality, type ParseResult } from '../engine/parser';
+import { parseAlternatives, parseCadence, parseDegree, parseDegreeSequence, parseInterval, parseInversion, parseQuality, type ParseResult } from '../engine/parser';
 import { narration, type Lang } from './narration';
 
 const NUM: Record<Lang, Record<number, string>> = {
@@ -57,6 +57,18 @@ export const LESSON_META: Record<LessonId, LessonMeta> = {
     blurb: { en: 'Does the phrase come home, or stop on a question?', he: 'האם המשפט חוזר הביתה, או נעצר בשאלה?' },
     icon: 'cadence',
     tip: { en: 'In songs you know, notice the phrase endings that sound like a question.', he: 'בשירים שאתם מכירים, שימו לב לסופי משפטים שנשמעים כמו שאלה.' },
+  },
+  intervals: {
+    title: { en: 'Thirds, fifths, octaves', he: 'טרצות, קווינטות, אוקטבות' },
+    blurb: { en: 'How far apart are two notes? One after the other, then together.', he: 'כמה רחוקים שני צלילים? אחד אחרי השני, ואז ביחד.' },
+    icon: 'steps',
+    tip: { en: 'Hum the first two notes of a song you love — which interval is it?', he: 'זמזמו את שני הצלילים הראשונים של שיר שאתם אוהבים — איזה מרווח זה?' },
+  },
+  inversions: {
+    title: { en: 'Which note is in the bass?', he: 'איזה צליל בבס?' },
+    blurb: { en: 'Same chord, different bass: C, C/E and C/G.', he: 'אותו אקורד, בס אחר: C,‏ C/E ו-C/G.' },
+    icon: 'chord',
+    tip: { en: 'Listen to bass lines today: is the bass on the chord’s root, or somewhere else?', he: 'הקשיבו היום לקווי בס: האם הבס על שורש האקורד, או במקום אחר?' },
   },
   placement: {
     title: { en: 'Find my level', he: 'מציאת הרמה שלי' },
@@ -115,6 +127,18 @@ export function introText(lesson: LessonDef, step: IntroStep, l: Lang, nm: Namin
       return l === 'en'
         ? 'First you hear the key and its home note. Then sing what I ask: home, or five steps up the scale.'
         : 'קודם שומעים את הסולם ואת צליל הבית. אחר כך שרים מה שאבקש: את הבית, או את החמישית.';
+    case 'interval':
+      return {
+        M3: { en: 'A third: close and sweet. Like the start of a major chord.', he: 'טרצה: קרובה ומתוקה. כמו ההתחלה של אקורד מז׳ור.' },
+        P5: { en: 'A fifth: open and strong. Like a horn call.', he: 'קווינטה: פתוחה וחזקה. כמו תרועת קרן.' },
+        P8: { en: 'An octave: the same note, higher. The two almost melt together.', he: 'אוקטבה: אותו צליל, גבוה יותר. השניים כמעט מתמזגים.' },
+      }[c.name][l];
+    case 'inversion':
+      return {
+        root: { en: 'Root in the bass: solid and grounded.', he: 'השורש בבס: יציב ומקורקע.' },
+        third: { en: 'Third in the bass: lighter, it wants to move on.', he: 'הטרצה בבס: קליל יותר, רוצה להמשיך.' },
+        fifth: { en: 'Fifth in the bass: suspended, like it is waiting.', he: 'הקווינטה בבס: תלוי, כאילו מחכה.' },
+      }[c.bass][l];
   }
   void lesson;
 }
@@ -136,6 +160,12 @@ export function answerWord(_q: Question, a: Answer, l: Lang): string {
     resolved: { en: 'resolved', he: 'נפתר' },
     open: { en: 'open', he: 'פתוח' },
     dim: { en: 'diminished', he: 'מוקטן' },
+    M3: { en: 'a third', he: 'טרצה' },
+    P5: { en: 'a fifth', he: 'קווינטה' },
+    P8: { en: 'an octave', he: 'אוקטבה' },
+    root: { en: 'the root', he: 'השורש' },
+    third: { en: 'the third', he: 'הטרצה' },
+    fifth: { en: 'the fifth', he: 'הקווינטה' },
     aug: { en: 'augmented', he: 'מוגדל' },
     accurate: { en: 'in tune', he: 'מדויק' },
   };
@@ -166,6 +196,16 @@ export function roundPrompt(q: Question, l: Lang, nm: Naming, n: number): string
       return l === 'en'
         ? `${cap(spokenMajorKey(q.key, nm, l))}. ${q.degrees.length} notes. Name the degrees in order.`
         : `${spokenMajorKey(q.key, nm, l)}. ${q.degrees.length} צלילים. אמרו את הדרגות לפי הסדר.`;
+    case 'interval':
+      return q.mode === 'melodic'
+        ? l === 'en'
+          ? `Round ${n}. One note, then another. Third, fifth, or octave?`
+          : `סיבוב ${n}. צליל, ואחריו עוד אחד. טרצה, קווינטה, או אוקטבה?`
+        : l === 'en'
+          ? `Round ${n}. Two notes together. Third, fifth, or octave?`
+          : `סיבוב ${n}. שני צלילים ביחד. טרצה, קווינטה, או אוקטבה?`;
+    case 'inversion':
+      return l === 'en' ? `Round ${n}. Listen to the bass. Root, third, or fifth?` : `סיבוב ${n}. הקשיבו לבס. שורש, טרצה, או קווינטה?`;
     case 'cadence':
       return l === 'en' ? `Round ${n}. ${cap(spokenMajorKey(q.key, nm, l))}. Resolved, or open?` : `סיבוב ${n}. ${spokenMajorKey(q.key, nm, l)}. נפתר, או פתוח?`;
     case 'sing':
@@ -187,6 +227,10 @@ export function parseAnswer(q: Question, alternatives: string[]): ParseResult<An
       return { kind: 'unrecognized', heard: alternatives[0] ?? '' };
     case 'degree-seq':
       return parseAlternatives(alternatives, parseDegreeSequence);
+    case 'interval':
+      return parseAlternatives(alternatives, parseInterval);
+    case 'inversion':
+      return parseAlternatives(alternatives, parseInversion);
   }
 }
 
@@ -227,6 +271,10 @@ export function revealText(q: Question, l: Lang, nm: Naming): string {
           : 'הוא פתוח: הוא נעצר על חמש.';
     case 'degree-seq':
       return l === 'en' ? `It was ${answerWord(q, q.answer, l)}. Listen again.` : `זה היה ${answerWord(q, q.answer, l)}. הקשיבו שוב.`;
+    case 'interval':
+      return l === 'en' ? `It was ${answerWord(q, q.answer, l)}. Your answer, then the right one.` : `זו הייתה ${answerWord(q, q.answer, l)}. התשובה שלכם, ואז הנכונה.`;
+    case 'inversion':
+      return l === 'en' ? `The bass was ${answerWord(q, q.answer, l)}. Your answer, then the right one.` : `בבס היה ${answerWord(q, q.answer, l)}. התשובה שלכם, ואז הנכונה.`;
     case 'sing':
       return l === 'en' ? `Here is the note to sing: ${spokenNote(q.target, nm, l)}.` : `זה הצליל לשיר: ${spokenNote(q.target, nm, l)}.`;
   }
@@ -297,6 +345,12 @@ export function choiceLabel(_q: Question, a: Answer, l: Lang): ChoiceLabel {
     open: { big: '?', small: 'Open', he: '?', heSmall: 'פתוח', tone: 'coral' },
     dim: { big: '°', small: 'Diminished', he: '°', heSmall: 'מוקטן', tone: 'coral' },
     aug: { big: '+', small: 'Augmented', he: '+', heSmall: 'מוגדל', tone: 'mint' },
+    M3: { big: '3', small: 'Third', he: '3', heSmall: 'טרצה', tone: 'gold' },
+    P5: { big: '5', small: 'Fifth', he: '5', heSmall: 'קווינטה', tone: 'lilac' },
+    P8: { big: '8', small: 'Octave', he: '8', heSmall: 'אוקטבה', tone: 'mint' },
+    root: { big: '1', small: 'Root', he: '1', heSmall: 'שורש', tone: 'mint' },
+    third: { big: '3', small: 'Third', he: '3', heSmall: 'טרצה', tone: 'gold' },
+    fifth: { big: '5', small: 'Fifth', he: '5', heSmall: 'קווינטה', tone: 'lilac' },
   };
   const m = map[a];
   if (!m) return { big: String(a), small: '', tone: 'gold' };
@@ -312,6 +366,10 @@ export function askTemplate(q: Question, l: Lang): string {
       return q.choices.length > 2 ? (l === 'en' ? 'Which chord quality?' : 'איזה סוג אקורד?') : l === 'en' ? 'Major or minor?' : "מז'ור או מינור?";
     case 'degree-seq':
       return l === 'en' ? 'Which degrees, in order?' : 'אילו דרגות, לפי הסדר?';
+    case 'interval':
+      return l === 'en' ? 'Third, fifth or octave?' : 'טרצה, קווינטה או אוקטבה?';
+    case 'inversion':
+      return l === 'en' ? 'Which note is in the bass?' : 'איזה צליל בבס?';
     case 'cadence':
       return l === 'en' ? 'Resolved or open?' : 'נפתר או פתוח?';
     case 'sing':
@@ -339,6 +397,10 @@ export function questionBadge(q: Question, l: Lang, nm: Naming): { key?: PitchCl
       return { key: q.key, text: major };
     case 'quality':
       return { text: `${l === 'en' ? 'Chord on' : 'אקורד על'} ${displayNote(q.root, nm, l)}` };
+    case 'interval':
+      return { text: q.mode === 'melodic' ? (l === 'en' ? 'One after the other' : 'אחד אחרי השני') : l === 'en' ? 'Together' : 'ביחד' };
+    case 'inversion':
+      return { key: q.root, text: l === 'en' ? 'major chord' : "אקורד מז'ור" };
   }
 }
 

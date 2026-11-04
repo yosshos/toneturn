@@ -19,9 +19,9 @@ export const K_ESTABLISHED = 24;
 export const BAND_MIN = 600;
 export const BAND_MAX = 1600;
 
-export const SKILLS: SkillId[] = ['degrees', 'chords', 'cadences', 'singing', 'sequences', 'rhythm'];
+export const SKILLS: SkillId[] = ['degrees', 'chords', 'cadences', 'singing', 'sequences', 'rhythm', 'intervals'];
 /** Axes on the Skill Map that have no content yet — always shown as unmeasured. */
-export const PLANNED_SKILLS = ['intervals'] as const;
+export const PLANNED_SKILLS = [] as const;
 
 export interface RatingEvent {
   id: string; // unique per rated item, e.g. `${sessionId}:${questionId}`

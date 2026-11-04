@@ -152,6 +152,7 @@ export function App() {
       chords: 'major-minor',
       cadences: 'cadences',
       singing: 'sing-home-five',
+      intervals: 'intervals',
     };
     if (k === 'sequences') return openPuzzle();
     if (k === 'rhythm') {

@@ -6,7 +6,9 @@ import { majorScale, pc, pcValue, voiceChord, type ChordQuality, type PitchClass
 export const CONTENT_SCHEMA_VERSION = 2;
 
 export type Answer = number | string;
-export type SkillId = 'degrees' | 'chords' | 'cadences' | 'singing' | 'sequences' | 'rhythm';
+export type SkillId = 'degrees' | 'chords' | 'cadences' | 'singing' | 'sequences' | 'rhythm' | 'intervals';
+export type IntervalName = 'M3' | 'P5' | 'P8';
+export type BassRole = 'root' | 'third' | 'fifth';
 export type Quality = 'maj' | 'min' | 'dim' | 'aug';
 export type Roman = 'I' | 'ii' | 'iii' | 'IV' | 'V' | 'V7' | 'vi';
 
@@ -71,7 +73,24 @@ export interface DegreeSeqQuestion extends QBase {
   answer: string;
 }
 
-export type Question = DegreeQuestion | QualityQuestion | CadenceQuestion | SingQuestion | DegreeSeqQuestion;
+/** Two notes, one after the other (melodic) or together (harmonic); name the distance. */
+export interface IntervalQuestion extends QBase {
+  kind: 'interval';
+  lowMidi: number;
+  mode: 'melodic' | 'harmonic';
+  answer: IntervalName;
+}
+
+/** A major triad with the root, third or fifth in the bass (C, C/E, C/G). */
+export interface InversionQuestion extends QBase {
+  kind: 'inversion';
+  root: PitchClass;
+  answer: BassRole;
+}
+
+export type Question = DegreeQuestion | QualityQuestion | CadenceQuestion | SingQuestion | DegreeSeqQuestion | IntervalQuestion | InversionQuestion;
+
+export const INTERVAL_SEMITONES: Record<IntervalName, number> = { M3: 4, P5: 7, P8: 12 };
 
 /** Which skill a question measures (for ratings). */
 export function questionSkill(q: Question): SkillId {
@@ -86,6 +105,10 @@ export function questionSkill(q: Question): SkillId {
       return 'singing';
     case 'degree-seq':
       return 'sequences';
+    case 'interval':
+      return 'intervals';
+    case 'inversion':
+      return 'chords';
   }
 }
 
@@ -99,7 +122,9 @@ export type IntroCard =
   | { kind: 'degrees'; key: PitchClass; degrees: number[] }
   | { kind: 'quality'; root: PitchClass; quality: 'maj' | 'min' }
   | { kind: 'cadence'; key: PitchClass; ending: 'resolved' | 'open' }
-  | { kind: 'sing'; key: PitchClass; degree: number };
+  | { kind: 'sing'; key: PitchClass; degree: number }
+  | { kind: 'interval'; name: IntervalName }
+  | { kind: 'inversion'; root: PitchClass; bass: BassRole };
 
 export interface IntroStep {
   id: string;
@@ -116,7 +141,17 @@ export interface LessonDef {
   questions: Question[];
 }
 
-export type LessonId = 'bflat-two-homes' | 'degrees-135' | 'major-minor' | 'cadences' | 'sing-home-five' | 'placement' | 'review' | 'weekly-puzzle';
+export type LessonId =
+  | 'bflat-two-homes'
+  | 'degrees-135'
+  | 'major-minor'
+  | 'cadences'
+  | 'sing-home-five'
+  | 'intervals'
+  | 'inversions'
+  | 'placement'
+  | 'review'
+  | 'weekly-puzzle';
 
 /** Small deterministic PRNG for seeded generation in tests and replays. */
 export function mulberry32(seed: number): () => number {
@@ -385,8 +420,77 @@ export function singHomeFive(seed = Date.now()): LessonDef {
   };
 }
 
+// ---------------------------------------------------------------- Lesson 6
+export function intervalQuestion(id: string, lowMidi: number, name: IntervalName, mode: 'melodic' | 'harmonic', difficulty = mode === 'melodic' ? 1000 : 1100): IntervalQuestion {
+  const hi = lowMidi + INTERVAL_SEMITONES[name];
+  const stimulus: Stimulus[] =
+    mode === 'melodic'
+      ? [{ kind: 'notes', midis: [lowMidi, hi], each: 0.9 }]
+      : [{ kind: 'chord', midis: [lowMidi, hi], duration: 1.8 }];
+  return { id, kind: 'interval', lowMidi, mode, choices: ['M3', 'P5', 'P8'], answer: name, stimulus, difficulty };
+}
+
+/** Lesson 6 — "Thirds, fifths, octaves": first one after the other, then together. */
+export function intervalsLesson(seed = Date.now()): LessonDef {
+  const rnd = mulberry32(seed);
+  const names = covering(rnd, ['M3', 'P5', 'P8'] as const, 6);
+  const c = 60;
+  return {
+    id: 'intervals',
+    version: 1,
+    skill: 'intervals',
+    scoring: { xpPerCorrect: 10, attemptLimit: 2 },
+    intro: (['M3', 'P5', 'P8'] as const).map((n) => ({
+      id: `intro-${n}`,
+      card: { kind: 'interval', name: n },
+      stimulus: [
+        { kind: 'notes', midis: [c, c + INTERVAL_SEMITONES[n]], each: 0.8 },
+        { kind: 'chord', midis: [c, c + INTERVAL_SEMITONES[n]], duration: 1.4 },
+      ],
+    })),
+    questions: names.map((n, i) => intervalQuestion(`q${i + 1}`, 53 + Math.floor(rnd() * 10), n, i < 3 ? 'melodic' : 'harmonic')),
+  };
+}
+
+// ---------------------------------------------------------------- Lesson 7
+const BASS_STEP: Record<BassRole, number> = { root: 0, third: 4, fifth: 7 };
+
+export function inversionQuestion(id: string, root: PitchClass, bass: BassRole, difficulty = 1150): InversionQuestion {
+  const r = placeInRange(pcValue(root), 60, 71);
+  const triad = [r, r + 4, r + 7];
+  const bassMidi = placeInRange((pcValue(root) + BASS_STEP[bass]) % 12, 40, 51);
+  return {
+    id,
+    kind: 'inversion',
+    root,
+    choices: ['root', 'third', 'fifth'],
+    answer: bass,
+    stimulus: [
+      // the bass alone first, so it is clearly audible, then the full chord
+      { kind: 'note', midi: bassMidi, duration: 0.8 },
+      { kind: 'chord', midis: [bassMidi, ...triad], duration: 1.8 },
+    ],
+    difficulty,
+  };
+}
+
+/** Lesson 7 — "Which note is in the bass?": C, C/E and C/G. */
+export function inversionsLesson(seed = Date.now()): LessonDef {
+  const rnd = mulberry32(seed);
+  const roles = covering(rnd, ['root', 'third', 'fifth'] as const, 5);
+  const C = pc('C');
+  return {
+    id: 'inversions',
+    version: 1,
+    skill: 'chords',
+    scoring: { xpPerCorrect: 10, attemptLimit: 2 },
+    intro: (['root', 'third', 'fifth'] as const).map((b) => ({ id: `intro-${b}`, card: { kind: 'inversion', root: C, bass: b }, stimulus: inversionQuestion('x', C, b).stimulus })),
+    questions: roles.map((b, i) => inversionQuestion(`q${i + 1}`, pc(pick(rnd, ['C', 'D', 'F', 'G', 'A', 'Bb'])), b)),
+  };
+}
+
 // ---------------------------------------------------------------- Registry
-export const LESSON_ORDER: LessonId[] = ['bflat-two-homes', 'degrees-135', 'major-minor', 'cadences', 'sing-home-five'];
+export const LESSON_ORDER: LessonId[] = ['bflat-two-homes', 'degrees-135', 'major-minor', 'cadences', 'sing-home-five', 'intervals', 'inversions'];
 
 export function makeLesson(id: LessonId, seed = Date.now()): LessonDef {
   switch (id) {
@@ -404,6 +508,10 @@ export function makeLesson(id: LessonId, seed = Date.now()): LessonDef {
       return cadences(seed);
     case 'sing-home-five':
       return singHomeFive(seed);
+    case 'intervals':
+      return intervalsLesson(seed);
+    case 'inversions':
+      return inversionsLesson(seed);
   }
 }
 
@@ -423,6 +531,9 @@ export function explainStimulus(q: Question): Stimulus[] {
       return [{ kind: 'note', midi: q.targetMidi, duration: 1.6 }];
     case 'degree-seq':
       return [{ kind: 'notes', midis: q.midis, each: 0.7 }];
+    case 'interval':
+    case 'inversion':
+      return q.stimulus;
   }
 }
 
@@ -462,6 +573,15 @@ export function compareStimulus(q: Question, given: Answer): Stimulus[] | null {
       const steps = [0, 2, 4, 5, 7, 9, 11];
       const tonic = q.midis[0] - steps[q.degrees[0] - 1];
       return [{ kind: 'notes', midis: ds.map((d) => tonic + steps[d - 1]), each: 0.6 }, { kind: 'rest', duration: 0.4 }, { kind: 'notes', midis: q.midis, each: 0.6 }];
+    }
+    case 'interval': {
+      if (typeof given !== 'string' || !(given in INTERVAL_SEMITONES)) return null;
+      const two = (n: IntervalName): Stimulus => ({ kind: 'chord', midis: [q.lowMidi, q.lowMidi + INTERVAL_SEMITONES[n]], duration: 1.2 });
+      return [two(given as IntervalName), { kind: 'rest', duration: 0.35 }, two(q.answer)];
+    }
+    case 'inversion': {
+      if (given !== 'root' && given !== 'third' && given !== 'fifth') return null;
+      return [...inversionQuestion('x', q.root, given).stimulus, { kind: 'rest', duration: 0.35 }, ...q.stimulus];
     }
     case 'sing':
       return null;
@@ -551,5 +671,9 @@ export function questionTag(q: Question): string {
       return `sing:${q.degree}`;
     case 'degree-seq':
       return `seq:${k(q.key)}:${q.answer}`;
+    case 'interval':
+      return `interval:${q.answer}:${q.mode}`;
+    case 'inversion':
+      return `inversion:${q.answer}`;
   }
 }

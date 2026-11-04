@@ -286,3 +286,35 @@ export function parseDegreeSequence(transcript: string): ParseResult<string> {
   if (commands.length === 1) return { kind: 'command', command: commands[0], heard };
   return { kind: 'unrecognized', heard };
 }
+
+const INTERVAL_TOKENS = new Map<string, 'M3' | 'P5' | 'P8'>([
+  ['third', 'M3'], ['3rd', 'M3'], ['three', 'M3'], ['3', 'M3'], ['thirds', 'M3'],
+  ['טרצה', 'M3'], ['שלישית', 'M3'], ['שלוש', 'M3'],
+  ['fifth', 'P5'], ['5th', 'P5'], ['five', 'P5'], ['5', 'P5'], ['fifths', 'P5'],
+  ['קווינטה', 'P5'], ['קוינטה', 'P5'], ['חמישית', 'P5'], ['חמש', 'P5'],
+  ['octave', 'P8'], ['octaves', 'P8'], ['eight', 'P8'], ['8', 'P8'], ['8th', 'P8'], ['eighth', 'P8'],
+  ['אוקטבה', 'P8'], ['אוקטבות', 'P8'], ['שמינית', 'P8'],
+]);
+
+/** Interval names: "third" / "fifth" / "octave" (also "major third", "perfect fifth", טרצה / קווינטה / אוקטבה). */
+export function parseInterval(transcript: string): ParseResult<'M3' | 'P5' | 'P8'> {
+  return parseChoiceTable(transcript, INTERVAL_TOKENS);
+}
+
+const BASS_TOKENS = new Map<string, 'root' | 'third' | 'fifth'>([
+  ['root', 'root'], ['bass', 'root'], ['שורש', 'root'], ['יסודי', 'root'], ['בסיס', 'root'],
+  ['third', 'third'], ['3rd', 'third'], ['שלישית', 'third'], ['טרצה', 'third'],
+  ['fifth', 'fifth'], ['5th', 'fifth'], ['חמישית', 'fifth'], ['קווינטה', 'fifth'],
+]);
+
+/** Bass of a triad: "root" / "third" / "fifth", or "root position" / "first inversion" / "second inversion". */
+export function parseInversion(transcript: string): ParseResult<'root' | 'third' | 'fifth'> {
+  return parseChoiceTable(transcript, BASS_TOKENS, [
+    [['first', 'inversion'], 'third'],
+    [['second', 'inversion'], 'fifth'],
+    [['root', 'position'], 'root'],
+    [['היפוך', 'ראשון'], 'third'],
+    [['היפוך', 'שני'], 'fifth'],
+    [['מצב', 'יסודי'], 'root'],
+  ]);
+}
