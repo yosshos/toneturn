@@ -169,3 +169,83 @@ Two growing-sequence memory games, designed first of all for the **local same-de
 - Signed-in players get a public nickname and a short **friend code**. Add a friend by code; the other side accepts or declines. Remove at any time.
 - A Friends screen compares: **this week's XP** (ranked, like a weekly league), current streak, total XP, lessons completed, and Echo Chain / Beat Echo best chains, with "you" highlighted.
 - Stats come from the server (computed from synced lesson results); game bests are self-reported and labelled as such until server validation exists. Only accepted friends can see each other's stats.
+
+## Addendum — 2026-11-04 (product owner + design): G. Rhythm reading & rhythm dictation
+
+### G.1 Why separate skills
+Pitch already separates *recognition* (degrees, intervals, chords — hearing and naming) from *performance* (singing in tune) and *memory* (melodic memory). Rhythm gets the same structure:
+
+| | Pitch | Rhythm |
+| --- | --- | --- |
+| Understand by ear (sound → name) | scale degrees, intervals, chords | **Rhythm dictation** (new) |
+| Perform from symbols (name → sound) | sing a degree / note | **Rhythm reading** (new) |
+| Hold in memory (sound → sound) | Echo Chain (melodic memory) | Beat Echo (rhythmic memory) |
+| Precision of execution | singing in tune (cents) | rhythmic precision (ms) |
+
+Rhythm reading and rhythm dictation are two new Skill Map axes. Performance in rhythm reading also feeds *rhythmic precision* (precision is general), but never rhythmic memory (the rhythm is visible or described, nothing has to be remembered).
+
+### G.2 Three representations, six directions
+Like pitch (heard pitch / note name / degree), every rhythm exists in three forms:
+
+1. **Heard** — played on a woodblock or a single piano pitch, durations audible (long notes ring for their value), over an optional metronome.
+2. **Notation** — a one-line rhythm staff: note heads, stems, beams, flags, dots, ties, rests, tuplet brackets, time signature, bar lines.
+3. **Words** — either *note-value names* or *counting syllables* (player setting, see G.4).
+
+| Prompt → Answer | Example | Skill |
+| --- | --- | --- |
+| Notation → performance | see ♩ ♫ ♩ 𝄽, tap / say it on the metronome | rhythm reading |
+| Words → performance | "eighth-note triplet, dotted quarter, eighth rest…" → perform | rhythm reading |
+| Heard → notation | hear 1–2 bars, choose or build the notation | rhythm dictation |
+| Heard → words | hear it, say "ta ti-ti ta" or "quarter, two eighths, quarter" | rhythm dictation |
+| Notation → words | name what you see | rhythm theory (symbolic, no audio) |
+| Words → notation | build what you are told | rhythm theory (symbolic, no audio) |
+| *Heard → performance* | *(this is Beat Echo = rhythmic memory, already exists)* | *rhythmic memory* |
+
+Symbolic conversions (theory) count toward rhythm dictation at a reduced weight, like symbolic pitch conversions.
+
+### G.3 Canonical model
+- Time grid: **12 ticks per quarter note** (LCM of eighth = 6, sixteenth = 3, eighth-triplet = 4, quarter-triplet = 8, dotted quarter = 18). Meters: 2/4, 3/4, 4/4 first; 6/8 (dotted-quarter beat) and 12/8 later.
+- A rhythm = bars of events `{ start, duration, rest, tieToNext, tuplet? }`. Display labels are separate from scoring (as with pitch).
+- **What is graded is what is heard:** onset positions, plus rests / silence where audible. Notations that sound identical are equivalent (a quarter = two tied eighths; a dotted quarter = quarter tied to an eighth) **unless the item explicitly teaches that spelling** (e.g. a ties lesson) — the same rule as enharmonic spelling for pitch.
+- Durations are graded only where they are audible and taught (long vs short, legato / staccato, a sustained "taaa"). Default grading is onsets only, and the UI says so.
+
+### G.4 Words: names and counting systems (player setting)
+- **Note-value names**: US (whole, half, quarter, eighth, sixteenth, triplet, dotted, rest, tie), UK (semibreve, minim, crotchet, quaver, semiquaver), **Hebrew** (שלם, חצי, רבע, שמינית, שש-עשרית, טריולה, מנוקד, הפסקה, ליגטורה).
+- **Counting syllables**: Kodály (ta, ti-ti, tika-tika, tri-o-la, ta-a; common in Israeli schools as טָה, טִי-טִי), Takadimi (ta, ta-di, ta-ka-di-mi, ta-ki-da), Numbers ("1 & 2 &", "1 e & a", "1 trip-let").
+- Defaults: Hebrew → Kodály syllables + Hebrew names; English → numbers + US names. Overridable, like note naming.
+- Parser: deterministic and exercise-aware, transcript → canonical rhythm per beat; accepts both names and syllables; reports ambiguous / unrecognized instead of guessing (same rules as the pitch parser). Spoken dictation answers are per beat or per bar, and the app repeats back what it understood.
+
+### G.5 Performing (rhythm reading): input and grading
+- **Input**: tap (screen / Space / keys), **voice syllables** ("ta ta ta" — detected as *onsets* from the microphone signal envelope, never through speech recognition, which is too slow and imprecise for timing), or knock (existing). Later: hold-to-sustain for duration lessons.
+- **Metronome**: one-bar count-in; clicks on beats; optional subdivision clicks at early levels; tempo per level (60–72 → 80–100 → 100–120; jazz swing 120–180 later). A visual beat light is always on.
+- **Length**: 1 bar → 2 bars → 4 bars. Longer passages are graded **per bar**, with "retry this bar" and a per-bar strip (✓ / early / late / missed / extra), like the per-note strip for singing.
+- **Tolerance follows the grid that must be distinguished**: it must be less than half the distance between the correct onset and the nearest plausible wrong onset. Straight eighths vs eighth-triplets differ by 1/6 beat → tolerance ≤ 1/12 beat (about 55 ms at 90 BPM). Quarter-only levels can be more lenient. Device tap latency is calibrated first (existing feature).
+- Report early / late per onset and a mean offset. Precision events feed *rhythmic precision*; pattern correctness feeds *rhythm reading*.
+
+### G.6 Dictation (hear → notate / name): answer modes
+- **Choose**: 3–4 notated options that differ minimally (one beat changed — "minimal pairs"), never distractors that sound alike.
+- **Build**: tap rhythm blocks into beat slots (quarter, eighth pair, four sixteenths, triplet, rest, dotted quarter + eighth spanning two beats, tie); length and meter are fixed by the item.
+- **Say**: syllables or names per beat, parsed as above.
+- Playback: count-in, the rhythm twice, then again on request (a replay never costs an attempt). Optional slow replay at early levels.
+
+### G.7 Curriculum (tempo and length grow inside each level)
+| Level | New material | Example (4/4) |
+| --- | --- | --- |
+| R1 | quarter, half, whole, quarter rest | ♩ ♩ 𝅗𝅥 \| ♩ 𝄽 ♩ ♩ |
+| R2 | eighth pairs | ♩ ♫ ♩ ♫ |
+| R3 | dotted quarter + eighth, ties over the beat | ♩. ♪ ♩ ♩ |
+| R4 | sixteenths and eighth/sixteenth combinations | ♫ ♬♬ ♩ 𝄽 |
+| R5 | syncopation (♪ ♩ ♪), eighth rests, pickups | ♪ ♩ ♪ ♩ ♩ |
+| R6 | eighth-note triplets; triplets vs straight eighths | ♩ ³♫♪ ♫ ♩ |
+| R7 | 3/4 and **6/8 / 12/8** (compound beat) | ♩. ♩. \| ♩ ♪ ♩ ♪ |
+| R8 (jazz) | swing eighths (written straight, played long-short), anticipations, quarter-note triplets | swing ratio graded 1.5–2.5 |
+
+Each level has an optional explanation (hear it, see it, count it), guided practice with subdivision clicks, then independent practice. Hints never award challenge credit.
+
+### G.8 Skill Map, ratings, review
+- New axes: **Rhythm reading** and **Rhythm dictation**. Axis order groups the map: listening (degrees, intervals, chords, cadences, rhythm dictation) → performance (singing in tune, rhythm reading) → memory (melodic, rhythmic) → precision (rhythmic precision).
+- Item difficulty from level, tempo, number of bars and density of off-beat onsets; same rating rules (first attempt only, no rating for unclear input, per-bar items for long passages).
+- Mistakes go to the review queue as rhythm tags (level + pattern) and are replayed as "your rhythm, then the right one", both heard and shown.
+
+### G.9 Notation rendering
+Use an established music-notation library rather than hand-drawing (e.g. VexFlow, MIT licence, bundled for offline use); keep the canonical model independent of the renderer. Notation must be readable at phone width, high-contrast in dark mode, and have a text alternative (the words form).
