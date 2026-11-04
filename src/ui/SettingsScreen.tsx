@@ -226,6 +226,17 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account }: Pr
           ]}
           onChange={(mode) => onChange({ mode })}
         />
+        <Seg
+          label={t.timedScoring}
+          hint={t.timedHint}
+          value={s.timedScoring === null ? 'auto' : s.timedScoring ? 'on' : 'off'}
+          options={[
+            ['auto', t.timedAuto],
+            ['on', t.timedOn],
+            ['off', t.timedOff],
+          ]}
+          onChange={(v) => onChange({ timedScoring: v === 'auto' ? null : v === 'on' })}
+        />
         <label className="check">
           <input
             type="checkbox"

@@ -66,8 +66,9 @@ test.describe('lesson', () => {
     // Script: right, wrong→right, right
     await expect(page.locator('.score-line')).toContainText('2/3');
     await expect(page.locator('.recap-row').nth(1)).toHaveClass(/correct-retry/);
-    // Simulator writes no progress.
+    // Simulator keeps progress only in memory: nothing survives a reload.
     await page.getByRole('button', { name: 'Home' }).click();
+    await page.reload();
     await expect(page.locator('.goal-strip')).toContainText('0/30');
   });
 
@@ -131,7 +132,7 @@ test.describe('settings', () => {
     await expect(example).toContainText('Si♭');
     await expect(example).toContainText('Si flat');
     // Narration in Hebrew + Auto naming → סי במול (never "פלאט").
-    await page.getByRole('radio', { name: 'Auto' }).click();
+    await page.getByRole('radio', { name: 'Auto', exact: true }).click();
     await page.getByRole('radiogroup', { name: 'Narration in' }).getByRole('radio', { name: 'עברית' }).click();
     await expect(example).toContainText('סי במול');
     await expect(example).not.toContainText('פלאט');

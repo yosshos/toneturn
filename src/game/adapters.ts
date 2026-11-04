@@ -132,6 +132,8 @@ export interface KnockInput {
 
 export interface Clock {
   sleep(ms: number, signal: AbortSignal): Promise<void>;
+  /** Monotonic ms (performance.now in the browser); used for response times. */
+  now?(): number;
 }
 
 export interface Adapters {
@@ -155,6 +157,7 @@ export function throwIfAborted(signal: AbortSignal) {
 }
 
 export const realClock: Clock = {
+  now: () => performance.now(),
   sleep: (ms, signal) =>
     new Promise((resolve, reject) => {
       if (signal.aborted) return reject(new Cancelled());

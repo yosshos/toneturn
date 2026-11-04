@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.8.0',
+    date: '2026-11-04',
+    en: ['New scoring: accuracy, attempts and response time all count', 'Answer chips show your time, attempts and XP', 'Timed scoring is off during your first week (change it in Settings)'],
+    he: ['ניקוד חדש: דיוק, מספר ניסיונות וזמן תגובה', 'אחרי כל תשובה רואים זמן, ניסיונות ו-XP', 'בשבוע הראשון הניקוד בלי זמן (אפשר לשנות בהגדרות)'],
+  },
+  {
     version: '0.7.1',
     date: '2026-11-04',
     en: ['Skill Map: rhythmic memory and rhythmic precision are now separate, like singing in tune and melodic memory'],

@@ -1,7 +1,8 @@
 // Local progress + settings. XP and completion writes are idempotent by event id,
 // so a repeated callback or an app resume can never award points twice.
 
-import type { InputMode, SessionState } from '../engine/session';
+import { outcomeOf, type InputMode, type SessionState } from '../engine/session';
+import { ratingScore } from '../engine/scoring';
 import { questionSkill, questionTag, type Answer } from '../engine/lesson';
 import { foldRatings, SKILLS, type RatingEvent, type Ratings } from '../engine/rating';
 import { medalFor, weekId, type Medal } from '../engine/adaptive';
@@ -21,7 +22,7 @@ export interface LessonResult {
   /** Question keys that were missed / revealed — feeds the review queue. */
   missed: { questionId: string; key: string; answer: Answer; given: Answer[] }[];
   /** First-attempt results per rated item (ratings + review clearing). Absent on old results. */
-  items?: { id: string; skill: RatingEvent['skill']; difficulty: number; correct: boolean; tag: string }[];
+  items?: { id: string; skill: RatingEvent['skill']; difficulty: number; correct: boolean; tag: string; score?: number; timeMs?: number | null }[];
   /** Weekly puzzle outcome (only for lessonId "weekly-puzzle"). */
   puzzle?: { week: string; band: string; medal: Medal };
 }
@@ -79,6 +80,10 @@ export interface Settings {
   seenVersion: string | null;
   /** Measured tap delay for Beat Echo, ms (positive = taps land late). */
   tapLatencyMs: number;
+  /** Response time affects scores. null = automatic (untimed for the first days). */
+  timedScoring: boolean | null;
+  /** First time the app was used on this device (ISO). */
+  firstUseAt: string | null;
 }
 
 export const SETTINGS_VERSION = 2;
@@ -97,6 +102,8 @@ export const DEFAULT_SETTINGS: Settings = {
   reminderHour: 19,
   seenVersion: null,
   tapLatencyMs: 0,
+  timedScoring: null,
+  firstUseAt: null,
 };
 
 /** Effective note naming for a channel in a given language. */
@@ -161,7 +168,20 @@ export function resultFromSession(s: SessionState, sessionId: string, now: Date)
   const items = s.records
     .map((r, i) => ({ r, q: s.lesson.questions[i] }))
     .filter(({ r }) => r.attempts.length > 0) // skipped / never answered → not rated
-    .map(({ r, q }) => ({ id: `${sessionId}:${q.id}`, skill: questionSkill(q), difficulty: q.difficulty, correct: r.attempts[0].correct, tag: questionTag(q) }));
+    .map(({ r, q }) => {
+      const o = outcomeOf(r, s.timed ?? false);
+      const k = o.correctOn ?? 1;
+      return {
+        id: `${sessionId}:${q.id}`,
+        skill: questionSkill(q),
+        difficulty: q.difficulty,
+        correct: r.attempts[0].correct,
+        tag: questionTag(q),
+        // Graded rating score: accuracy × attempts (guess-corrected) × time × replays (spec J.6).
+        score: Math.round(ratingScore(q, o) * 1000) / 1000,
+        timeMs: o.attempts[k - 1]?.timeMs ?? null,
+      };
+    });
   const result: LessonResult = {
     lessonId: s.lesson.id,
     lessonVersion: s.lesson.version,
@@ -187,7 +207,7 @@ export function applyResult(p: Progress, r: LessonResult, now: Date): Progress {
   if (p.applied.includes(eventId)) return p;
   const prev = p.lessons[r.lessonId];
   const at = r.completedAt;
-  const newEvents: RatingEvent[] = (r.items ?? []).map((it) => ({ id: it.id, skill: it.skill, difficulty: it.difficulty, correct: it.correct, at }));
+  const newEvents: RatingEvent[] = (r.items ?? []).map((it) => ({ id: it.id, skill: it.skill, difficulty: it.difficulty, correct: it.correct, score: it.score, at }));
   const cleared = new Set((r.items ?? []).filter((it) => it.correct).map((it) => it.tag));
   const puzzles = { ...(p.puzzles ?? {}) };
   // Only the first scored try at a week's puzzle counts; later plays are practice.

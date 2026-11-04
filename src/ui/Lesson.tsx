@@ -7,6 +7,7 @@ import { LessonController, type LessonView } from '../game/controller';
 import { askTemplate, choiceLabel, hintText, LESSON_META, questionBadge } from '../game/content';
 import type { Strings } from '../i18n/strings';
 import { namingFor, resultFromSession, type Progress, type Settings } from '../storage/progress';
+import { isTimed } from '../engine/scoring';
 import { Burst, Keyboard, MicIcon, ModeSwitch, Note, PermissionPanel, withNote } from './bits';
 import { Recap } from './Recap';
 import { makeAdapters, piano, store } from './services';
@@ -42,7 +43,12 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
     c = new LessonController(
       lesson,
       adapters,
-      { inputLang: settings.inputLang, outputLang: settings.outputLang, naming: namingFor(settings.naming, settings.outputLang) },
+      {
+        inputLang: settings.inputLang,
+        outputLang: settings.outputLang,
+        naming: namingFor(settings.naming, settings.outputLang),
+        timed: isTimed(settings.timedScoring, settings.firstUseAt, new Date()),
+      },
       settings.mode,
       {
         onModeChange: onMode,
@@ -445,6 +451,7 @@ function FeedbackBanner({ v, t, lang }: { v: LessonView; t: Strings; lang: 'he' 
           {f.sung.cents}¢
         </small>
       )}
+      {(f.kind === 'correct' || f.kind === 'correct-retry' || f.kind === 'reveal' || f.kind === 'retry') && <AnswerChips f={f} t={t} />}
       {v.heard && (f.kind === 'unclear' || f.kind === 'ambiguous' || f.kind === 'retry') && !f.sung && (
         <small>
           {t.heard}: “{v.heard}”
@@ -496,6 +503,23 @@ function SeqKeypad({ t, length, disabled, onSubmit }: { t: Strings; length: numb
           {t.submit}
         </button>
       </div>
+    </div>
+  );
+}
+
+/** Accuracy / time / attempts / XP chips after an answer (spec J.7). */
+function AnswerChips({ f, t }: { f: NonNullable<LessonView['feedback']>; t: Strings }) {
+  const fast = f.timeMs != null && f.timeMs <= 2000;
+  return (
+    <div className="answer-chips" dir="ltr">
+      {f.accuracy !== undefined && f.accuracy > 0 && f.accuracy < 1 && <span className="chip-mini">{Math.round(f.accuracy * 100)}%</span>}
+      {f.timeMs != null && (
+        <span className={`chip-mini ${fast ? 'good' : ''}`} title={t.responseTime}>
+          ⏱ {(f.timeMs / 1000).toFixed(1)}s
+        </span>
+      )}
+      {(f.attempt ?? 1) > 1 && <span className="chip-mini">×{f.attempt}</span>}
+      {(f.kind === 'correct' || f.kind === 'correct-retry' || f.kind === 'reveal') && (f.xp ?? 0) > 0 && <span className="chip-mini xp">+{f.xp} XP</span>}
     </div>
   );
 }

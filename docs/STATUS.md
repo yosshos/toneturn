@@ -1,5 +1,14 @@
 # Milestone report — 2026-11-04
 
+## Update 8 — v0.8.0: scoring model (spec J)
+
+- `src/engine/scoring.ts`: accuracy per item type (partial credit for pitch and sequences), guess-corrected attempt credit, log-scaled relative speed factor, replay factor; three derived scores (graded skill rating, XP, tournament points). All constants in `SCORING`.
+- Controller measures response time from the end of the stimulus as heard: buttons = tap time, voice = speech-start (not the transcript), singing = first stable voiced frame; unclear answers restart the clock at the next listen; replays counted.
+- Untimed by default for a device's first 7 days; Settings → Timed scoring (auto / on / off).
+- Answer chips (accuracy, ⏱ time, attempts, +XP) and median answer time in the recap.
+- Server: XP plausibility relaxed to `xp ≤ total × 20` (migration 5, applied).
+- Tests: 264 unit (scoring properties: time / attempts / accuracy monotonicity, untimed independence, bounds).
+
 ## Update 7 — v0.7.1: rhythm split into memory and precision (owner's request)
 
 - New Skill Map axis *Rhythmic precision* next to *Rhythmic memory*, paired like *Singing in tune* / *Melodic memory*. Memory uses a lenient window; precision is graded 0–1 and only on remembered patterns. Ratings accept graded scores. Tests: 249 unit.

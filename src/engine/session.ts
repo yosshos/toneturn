@@ -2,6 +2,7 @@
 // so a late recognizer callback or a double click can never score twice.
 
 import type { Answer, LessonDef } from './lesson';
+import { xpFor, type ItemOutcome, type Modality } from './scoring';
 
 export type Phase =
   | 'idle'
@@ -22,6 +23,11 @@ export interface Attempt {
   answer: Answer;
   correct: boolean;
   via: InputMode;
+  /** 0..1 (partial credit for graded items). */
+  accuracy?: number;
+  /** Response time from the end of the stimulus; null when not reliably measured. */
+  timeMs?: number | null;
+  modality?: Modality;
 }
 
 export interface QuestionRecord {
@@ -30,6 +36,8 @@ export interface QuestionRecord {
   xp: number;
   /** Non-musical misses (silence, unclear speech, permission errors). Never penalized. */
   unclear: number;
+  /** Stimulus replays requested by the player. */
+  replays?: number;
 }
 
 export interface SessionState {
@@ -40,6 +48,31 @@ export interface SessionState {
   turn: number;
   records: QuestionRecord[];
   xp: number;
+  /** Time affects scores (spec J.5); false = untimed mode. */
+  timed?: boolean;
+}
+
+/** Evidence from the answer channel, beyond the answer itself. */
+export interface AnswerEvidence {
+  accuracy?: number;
+  timeMs?: number | null;
+  modality?: Modality;
+}
+
+/** Build the scoring outcome of a record (for XP / rating). */
+export function outcomeOf(r: QuestionRecord, timed: boolean): ItemOutcome {
+  const k = r.attempts.findIndex((a) => a.correct);
+  return {
+    correctOn: k >= 0 ? k + 1 : null,
+    attempts: r.attempts.map((a) => ({
+      correct: a.correct,
+      accuracy: a.accuracy ?? (a.correct ? 1 : 0),
+      timeMs: a.timeMs ?? null,
+      modality: a.modality ?? (a.via === 'voice' ? 'voice' : 'buttons'),
+    })),
+    replays: r.replays ?? 0,
+    timed,
+  };
 }
 
 export type GradeResult =
@@ -86,6 +119,7 @@ export function grade(
   questionIndex: number,
   answer: Answer,
   via: InputMode,
+  ev: AnswerEvidence = {},
 ): [SessionState, GradeResult] {
   if (turn !== s.turn || questionIndex !== s.index || s.phase === 'complete' || s.phase === 'paused') {
     return [s, { kind: 'stale' }];
@@ -94,19 +128,24 @@ export function grade(
   if (isResolved(rec)) return [s, { kind: 'stale' }];
   const q = s.lesson.questions[questionIndex];
   const correct = answer === q.answer;
-  const attempts = [...rec.attempts, { answer, correct, via }];
+  const accuracy = ev.accuracy ?? (correct ? 1 : 0);
+  const attempts: Attempt[] = [...rec.attempts, { answer, correct, via, accuracy, timeMs: ev.timeMs ?? null, modality: ev.modality ?? (via === 'voice' ? 'voice' : 'buttons') }];
   const { xpPerCorrect, attemptLimit } = s.lesson.scoring;
+  const timed = s.timed ?? false;
   // The turn advances on every grade so a duplicate delivery of the same answer is stale.
   const base: SessionState = { ...s, turn: s.turn + 1, phase: 'feedback' };
   if (correct) {
     const firstTry = attempts.length === 1;
-    const xp = firstTry ? xpPerCorrect : 0;
-    const next = { attempts, outcome: (firstTry ? 'correct' : 'correct-retry') as Outcome, xp, unclear: rec.unclear };
+    const resolved: QuestionRecord = { ...rec, attempts, outcome: firstTry ? 'correct' : 'correct-retry', xp: 0 };
+    const xp = xpFor(q, outcomeOf(resolved, timed), xpPerCorrect);
+    const next = { ...resolved, xp };
     return [{ ...base, records: patchRecord(s, questionIndex, next), xp: s.xp + xp }, { kind: 'correct', firstTry, xp }];
   }
   if (attempts.length >= attemptLimit) {
-    const next = { attempts, outcome: 'revealed' as Outcome, xp: 0, unclear: rec.unclear };
-    return [{ ...base, records: patchRecord(s, questionIndex, next) }, { kind: 'reveal' }];
+    const resolved: QuestionRecord = { ...rec, attempts, outcome: 'revealed', xp: 0 };
+    const xp = xpFor(q, outcomeOf(resolved, timed), xpPerCorrect);
+    const next = { ...resolved, xp };
+    return [{ ...base, records: patchRecord(s, questionIndex, next), xp: s.xp + xp }, { kind: 'reveal' }];
   }
   const next = { ...rec, attempts };
   return [{ ...base, records: patchRecord(s, questionIndex, next) }, { kind: 'retry', attemptsLeft: attemptLimit - attempts.length }];
@@ -117,6 +156,13 @@ export function noteUnclear(s: SessionState, turn: number): SessionState {
   if (turn !== s.turn) return s;
   const rec = s.records[s.index];
   return { ...s, records: patchRecord(s, s.index, { ...rec, unclear: rec.unclear + 1 }) };
+}
+
+/** Count a stimulus replay requested by the player (lowers rating credit slightly, never XP). */
+export function noteReplay(s: SessionState): SessionState {
+  const rec = s.records[s.index];
+  if (!rec || isResolved(rec)) return s;
+  return { ...s, records: patchRecord(s, s.index, { ...rec, replays: (rec.replays ?? 0) + 1 }) };
 }
 
 export function skip(s: SessionState): SessionState {

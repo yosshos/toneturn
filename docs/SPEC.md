@@ -329,7 +329,7 @@ A retry after a wrong answer is worth less, and for items with few options it is
 
 ### J.6 The three scores
 - **Skill rating** — graded Elo score `S = a × g(k) × (0.8 + 0.2 × f(t)) × 0.95^replays` (replay factor floored at 0.8). Time can move S by at most 20 %, so knowledge dominates and fluency still counts. Unreliable timing / untimed → the time term is 1.
-- **XP per item** = `round(10 × a × g(k))` + speed bonus `round(3 × (f(t) − 0.5) × 2)` (0–3, only when timed and a ≥ 0.8) + 1 effort point for any completed item (including revealed). Never negative. Lesson XP keeps the idempotent award rules. *Server plausibility check changes to* `xp ≤ total × 14`.
+- **XP per item** = `max(1, round(base × a × g(k)))` + speed bonus `round(3 × (f(t) − 0.5) × 2)` (0–3, only when timed and a ≥ 0.8). The minimum of 1 is the effort point for any completed item (including revealed); base is 10 (15 for singing, 5 for review, 0 for placement / puzzle). Never negative. Lesson XP keeps the idempotent award rules. *Server plausibility check:* `xp ≤ total × 20` (implemented 0.8.0).
 - **Tournament points** (single attempt, buttons-only rooms optional) = `round(1000 × a × (0.5 + 0.5 × f_T(t)))` with `f_T` linear from 1 at 0 s to 0 at the answer window's end; × streak multiplier 1.0 → 1.5. Ties broken by total response time.
 
 ### J.7 Feedback the player sees
@@ -341,3 +341,45 @@ A retry after a wrong answer is worth less, and for items with few options it is
 - All constants live in one config object with these documented defaults.
 - Unit-tested properties: more time never increases any score; more attempts never increase a score; higher accuracy never decreases a score; untimed mode makes scores independent of time; unclear input never changes a score; tournament points are bounded 0–1500.
 - Changing weights must not rewrite history: records are stored raw, scores are recomputed.
+
+## Addendum — 2026-11-04 (product owner): K. Vocal agility — riffs and runs
+
+Singing in tune on a held note and singing a fast **run** (a quick scale-like passage) or **riff** (a short ornamented figure, e.g. a pentatonic or blues lick) are different abilities. A run is graded on pitch **and** agility, with a difficulty that reflects how hard it is to sing, so a 60 % accurate fast blues run can rate higher than a perfect slow three-note step.
+
+### K.1 Exercise directions
+- **Hear → sing back** (echo the run; feeds melodic memory too, like Echo Chain).
+- **See / be told → sing** ("descending pentatonic run from 5 to 1, sixteenths at 80 BPM"; or shown on a one-line staff / as degrees).
+- **Hear → identify** (which scale or shape was that: major, minor pentatonic, blues; up / down / turn) — a recognition item.
+Always with an audible tonic / drone and a count-in; the run is sung on a vowel ("ah", "oo") or a syllable the player chooses.
+
+### K.2 Difficulty factors (each scored, summed into the item difficulty)
+| Factor | Easier → harder |
+| --- | --- |
+| Speed (notes per second) | 2 → 4 → 6 → 8+ (8th notes at 80 BPM ≈ 2.7 n/s; 16ths at 100 BPM ≈ 6.7 n/s) |
+| Length (notes) | 3 → 5 → 8 → 12+ |
+| Step size | stepwise → thirds → mixed leaps (≥ 4th) |
+| Direction changes | one direction → one turn → zig-zag / turns around a note |
+| Scale material | major / minor scale steps → major / minor pentatonic → blues (♭3, ♭5, ♭7) → chromatic passing tones |
+| Range | within a 5th → an octave → beyond an octave, crossing the register break |
+| Ornaments | none → passing tones → turns / mordents / "fall-offs" |
+| Rhythm | even notes → mixed values / syncopated start → rubato phrase ending |
+
+Item difficulty (rating scale) = 900 + weighted sum of the factor levels (weights in the scoring config, calibrated from player data). Levels map to a curriculum from "three-note step at 2 n/s" up to "R&B / gospel run, 12 notes, blues scale, 7 n/s".
+
+### K.3 Pitch accuracy for fast notes
+- **Segmentation**: per-note segments from the pitch track (as in Echo Chain), aligned to the target with edit-distance alignment; short notes need shorter analysis windows (≈ 20–30 ms hop) — the detector settings adapt to the item's notes-per-second.
+- **What pitch counts**: the stable middle of each note (ignore the first and last ~20 % — scoops and transitions are natural in runs).
+- **Tolerance scales with speed**: ±35 ¢ for held / slow notes, widening to about ±50 ¢ at 6–8 n/s, because nobody centres a 120 ms note like a held one. Wrong-note threshold stays at a semitone.
+- **Per-note statuses** as for melodies: accurate / sharp / flat / wrong / missed / smeared (no stable pitch — glided through), shown on the per-note strip, spoken as a short summary ("notes 4 and 5 were flat").
+
+### K.4 Agility and timing
+- **Note clarity**: fraction of target notes that produced a stable, separate pitch segment (a run that smears into a glide scores low even if start and end are right).
+- **Evenness** (for even runs): spread of note durations; **timing**: onset error against the metronome grid when the item is metered.
+- **Accuracy a** for the scoring model (J.2) = `0.6 × pitch (mean per-note pitch accuracy) + 0.25 × clarity + 0.15 × timing/evenness`, with notes missing or extra counting as 0 pitch.
+
+### K.5 Skill Map
+- A new axis **Vocal agility** (runs and riffs), next to *Singing in tune* (held / slow notes) and *Melodic memory*. A run sung back from hearing also feeds melodic memory (pattern correct), as Beat Echo feeds rhythmic memory.
+- Diagnosis names the weakest factor ("leaps", "speed above 5 n/s", "blues ♭5") and recommends the next run at that factor's level.
+
+### K.6 Practice aids
+Slow-down practice (the same run at 60 % → 80 % → 100 % tempo, unlocking the faster version on success), loop a single turn, hear the model at half speed, and a visual pitch trace over the target notes after each attempt.

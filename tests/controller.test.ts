@@ -54,7 +54,7 @@ describe('LessonController — voice', () => {
     await until(() => c.getView().stage === 'complete');
     const recs = c.getView().session.records;
     expect(recs.map((r) => r.outcome)).toEqual(['correct-retry', 'revealed', 'correct']);
-    expect(c.getView().session.xp).toBe(10);
+    expect(c.getView().session.xp).toBe(12); // 1 (retry on a 2-choice item: guess-corrected credit 0 → minimum 1) + 1 (revealed) + 10
   });
 
   it('silence and unclear speech never consume attempts', async () => {
@@ -173,7 +173,7 @@ describe('LessonController — mode switching', () => {
     expect(tts.spoken.filter((t) => t.startsWith('Round 1')).length).toBe(before + 1);
     expect(r0.attempts.map((a) => a.via)).toEqual(['buttons', 'voice']);
     expect(r0.outcome).toBe('correct-retry');
-    expect(c.getView().session.xp).toBe(20);
+    expect(c.getView().session.xp).toBe(21); // 1 (2-choice retry → minimum 1 XP) + 10 + 10
   });
 
   it('switching during feedback does not double-score and moves on', async () => {

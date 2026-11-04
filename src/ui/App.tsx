@@ -171,9 +171,10 @@ export function App() {
     setRoute('lesson');
   };
 
-  // First run: remember the current version silently; later runs show what's new once.
+  // First run: remember the current version silently and when this device started (untimed first week).
   useEffect(() => {
     if (settings && !settings.seenVersion) updateSettings({ seenVersion: APP_VERSION });
+    if (settings && !settings.firstUseAt) updateSettings({ firstUseAt: new Date().toISOString() });
   }, [settings, updateSettings]);
 
   if (!settings) return <div className="boot" />;

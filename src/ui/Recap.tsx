@@ -6,6 +6,7 @@ import { answerWord, choiceLabel, giveText, LESSON_META, questionBadge } from '.
 import type { Strings } from '../i18n/strings';
 import { namingFor, type Settings } from '../storage/progress';
 import { Note, withNote } from './bits';
+import { median } from '../engine/scoring';
 
 interface Props {
   t: Strings;
@@ -59,6 +60,8 @@ export function Recap({ t, view, settings, onReplay, onAgain, onHome, onNext, ne
       </>
     );
   }
+  const times = s.records.flatMap((r) => r.attempts.filter((a) => a.correct && a.timeMs != null).map((a) => a.timeMs as number));
+  const medianMs = median(times);
   const ratio = sm.firstTry / sm.total;
   const stars = ratio >= 1 ? 3 : ratio >= 0.6 ? 2 : ratio > 0 ? 1 : 0;
 
@@ -81,6 +84,12 @@ export function Recap({ t, view, settings, onReplay, onAgain, onHome, onNext, ne
         <bdi className="xp-count" dir="ltr">
           +{xp} {t.xp}
         </bdi>
+        {medianMs !== null && (
+          <>
+            {' '}
+            · <span dir="ltr">⏱ {(medianMs / 1000).toFixed(1)}s</span> <small>{t.medianTime}</small>
+          </>
+        )}
       </p>
 
       <ol className="recap-list">

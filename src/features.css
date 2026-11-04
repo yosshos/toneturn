@@ -293,3 +293,26 @@
 .tap-pad.odd {
   filter: brightness(1.15);
 }
+
+/* Answer chips (spec J.7) */
+.answer-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  margin-top: 4px;
+}
+.chip-mini {
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.chip-mini.good {
+  color: var(--mint);
+}
+.chip-mini.xp {
+  color: var(--gold);
+}

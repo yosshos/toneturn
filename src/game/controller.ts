@@ -9,6 +9,7 @@
 
 import { compareStimulus, explainStimulus, renderStimulus, type Answer, type LessonDef, type Question, type SingQuestion, type Stimulus } from '../engine/lesson';
 import { evaluateSung, type SungResult } from '../engine/sing';
+import { accuracyFor, type Modality } from '../engine/scoring';
 import type { Naming } from '../engine/pitch';
 import {
   advance,
@@ -18,6 +19,7 @@ import {
   isResolved,
   newTurn,
   noteUnclear,
+  noteReplay,
   skip as skipQuestion,
   summary,
   type InputMode,
@@ -60,7 +62,7 @@ export interface LessonView {
   mic: 'off' | 'opening' | 'capturing' | 'speech';
   interim: string;
   heard: string | null;
-  feedback: { kind: FeedbackKind; answer?: Answer; given?: Answer; sung?: SungResult } | null;
+  feedback: { kind: FeedbackKind; answer?: Answer; given?: Answer; sung?: SungResult; timeMs?: number | null; attempt?: number; xp?: number; accuracy?: number } | null;
   /** Live tuner reading while a singing capture is open. */
   singLive: SingLive | null;
   caption: string | null;
@@ -78,6 +80,8 @@ export interface ControllerSettings {
   settleMs?: number;
   /** Silent/unclear listens before falling back to a tap. */
   maxSilentRetries?: number;
+  /** Response time affects scores (spec J.5). Default false (untimed). */
+  timed?: boolean;
 }
 
 export interface ControllerHooks {
@@ -100,6 +104,11 @@ export class LessonController {
   private waiter: Waiter | null = null;
   private listeners = new Set<() => void>();
   private silentCount = 0;
+  /** When the current answer clock started (end of the stimulus as heard, or the listen after an unclear answer). */
+  private clockStart: number | null = null;
+  private restartClockAtListen = false;
+  private tapAt: number | null = null;
+  private now = () => this.ad.clock.now?.() ?? (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
   constructor(
     lesson: LessonDef,
@@ -108,7 +117,7 @@ export class LessonController {
     mode: InputMode,
     private hooks: ControllerHooks = {},
   ) {
-    this.s = createSession(lesson);
+    this.s = { ...createSession(lesson), timed: cfg.timed ?? false };
     this.view = {
       stage: 'starting',
       phase: 'idle',
@@ -156,6 +165,7 @@ export class LessonController {
   }
   updateSettings(cfg: Partial<ControllerSettings>) {
     this.cfg = { ...this.cfg, ...cfg };
+    if (cfg.timed !== undefined) this.s = { ...this.s, timed: cfg.timed };
   }
 
   // ---------- run management ----------
@@ -231,6 +241,7 @@ export class LessonController {
     const w = this.waiter;
     if (!w || w.turn !== this.s.turn) return;
     this.waiter = null;
+    this.tapAt = this.now();
     w.resolve({ kind: 'answer', answer });
   }
 
@@ -253,6 +264,7 @@ export class LessonController {
   repeat() {
     if (this.view.stage !== 'question' || this.s.phase === 'paused') return;
     if (isResolved(this.s.records[this.s.index])) return;
+    this.s = noteReplay(this.s);
     this.restart((sig) => this.runAll(sig, { replayOnly: true }));
   }
 
@@ -341,6 +353,16 @@ export class LessonController {
     const { events, length } = renderStimulus(stim);
     await this.ad.audio.play(events, length, signal);
     throwIfAborted(signal);
+    // The answer clock starts when the stimulus has finished being heard (spec J.4).
+    this.clockStart = this.now();
+    this.restartClockAtListen = false;
+  }
+
+  /** Response time for an answer given at `at`, or null when the clock isn't reliable. */
+  private elapsed(at: number | null): number | null {
+    if (at === null || this.clockStart === null) return null;
+    const t = at - this.clockStart;
+    return t >= 0 ? Math.round(t) : null;
   }
 
   private async runAll(
@@ -428,30 +450,33 @@ export class LessonController {
   }
 
   /** Grade a musical answer and give feedback. Returns true when the question is resolved. */
-  private async evaluate(answer: Answer, signal: AbortSignal, sung?: SungResult): Promise<boolean> {
+  private async evaluate(answer: Answer, signal: AbortSignal, sung?: SungResult, ev: { timeMs: number | null; modality: Modality } = { timeMs: null, modality: 'buttons' }): Promise<boolean> {
     const l = this.cfg.outputLang;
     this.silentCount = 0;
     const q = currentQuestion(this.s);
-    const [next, g] = grade(this.s, this.s.turn, this.s.index, answer, this.view.mode);
+    const accuracy = accuracyFor(q, answer, sung);
+    const [next, g] = grade(this.s, this.s.turn, this.s.index, answer, this.view.mode, { accuracy, timeMs: ev.timeMs, modality: ev.modality });
     if (g.kind === 'stale') return false;
+    const rec = next.records[next.index];
+    const chips = { timeMs: ev.timeMs, attempt: rec.attempts.length, xp: rec.xp, accuracy };
     this.setSession(next, { needsListenTap: false });
-    this.emit('graded', { answer, result: g });
+    this.emit('graded', { answer, result: g, ...chips });
     if (g.kind === 'correct') {
       this.ad.audio.cue('correct');
-      this.patch({ feedback: { kind: g.firstTry ? 'correct' : 'correct-retry', answer: q.answer, given: answer, sung } });
+      this.patch({ feedback: { kind: g.firstTry ? 'correct' : 'correct-retry', answer: q.answer, given: answer, sung, ...chips } });
       await this.say(sung ? singFeedbackText(sung, l) : correctText(q, l, g.firstTry), signal);
       await this.ad.clock.sleep(500, signal);
       return true;
     }
     this.ad.audio.cue('wrong');
     if (g.kind === 'retry') {
-      this.patch({ feedback: { kind: 'retry', given: answer, sung } });
+      this.patch({ feedback: { kind: 'retry', given: answer, sung, ...chips } });
       await this.say(sung ? singFeedbackText(sung, l) : retryText(q, l), signal);
       this.setSession(newTurn(this.s, 'playback'));
       await this.playStim(q.kind === 'sing' ? q.stimulus.slice(-1) : q.stimulus, signal);
       return false;
     }
-    this.patch({ feedback: { kind: 'reveal', answer: q.answer, given: answer, sung } });
+    this.patch({ feedback: { kind: 'reveal', answer: q.answer, given: answer, sung, ...chips } });
     await this.say(revealText(q, l, this.cfg.naming), signal);
     // Hear your answer next to the right one (when it can be played), else the teaching gesture.
     await this.playStim(compareStimulus(q, answer) ?? explainStimulus(q), signal);
@@ -476,6 +501,11 @@ export class LessonController {
       }
       this.setSession(newTurn(this.s, 'listening'), { mic: 'opening', caption: null, singLive: null });
       const turn = this.s.turn;
+      if (this.restartClockAtListen || this.view.mode === 'buttons') {
+        this.clockStart = this.now();
+        this.restartClockAtListen = false;
+      }
+      let voicedAt: number | null = null;
       const targetHz = 440 * Math.pow(2, (q.targetMidi - 69) / 12);
       const res = await this.ad.pitch.sing({
         signal,
@@ -488,6 +518,7 @@ export class LessonController {
           if (this.s.turn !== turn) return;
           let cents: number | null = null;
           if (f.hz && f.confidence > 0.8) {
+            voicedAt ??= this.now();
             const c = 1200 * Math.log2(f.hz / targetHz);
             cents = ((((c + 600) % 1200) + 1200) % 1200) - 600;
           }
@@ -510,6 +541,7 @@ export class LessonController {
         // Unusable capture is never a musical mistake.
         this.s = noteUnclear(this.s, turn);
         this.silentCount++;
+        this.restartClockAtListen = true;
         this.patch({ feedback: { kind: sung ? 'unclear' : 'silence', sung: sung ?? undefined } });
         if (this.silentCount > maxSilent && this.view.mode === 'voice') {
           this.patch({ needsListenTap: true });
@@ -523,7 +555,7 @@ export class LessonController {
         continue;
       }
       this.emit('sung', sung);
-      if (await this.evaluate(sung.status, signal, sung)) return;
+      if (await this.evaluate(sung.status, signal, sung, { timeMs: this.elapsed(voicedAt), modality: 'sing' })) return;
     }
   }
 
@@ -536,6 +568,7 @@ export class LessonController {
       throwIfAborted(signal);
       const q = currentQuestion(this.s);
       let answer: Answer | null = null;
+      let ev: { timeMs: number | null; modality: Modality } = { timeMs: null, modality: 'buttons' };
 
       if (this.view.mode === 'buttons' || this.view.needsListenTap) {
         this.setSession(newTurn(this.s, 'listening'), { mic: 'off' });
@@ -547,10 +580,16 @@ export class LessonController {
         }
         if (r.kind !== 'answer') continue;
         answer = r.answer;
+        ev = { timeMs: this.elapsed(this.tapAt), modality: 'buttons' };
       } else {
         await this.ad.clock.sleep(settle, signal);
         this.setSession(newTurn(this.s, 'listening'), { mic: 'opening', interim: '', caption: null });
         const turn = this.s.turn;
+        if (this.restartClockAtListen) {
+          this.clockStart = this.now();
+          this.restartClockAtListen = false;
+        }
+        let speechAt: number | null = null;
         const res = await this.ad.stt.listen({
           lang: RECOGNIZER_LANG[this.cfg.inputLang],
           signal,
@@ -559,7 +598,11 @@ export class LessonController {
             this.ad.audio.cue('ready');
             this.patch({ mic: 'capturing' });
           },
-          onSpeech: () => this.s.turn === turn && this.patch({ mic: 'speech' }),
+          onSpeech: () => {
+            if (this.s.turn !== turn) return;
+            speechAt ??= this.now();
+            this.patch({ mic: 'speech' });
+          },
           onInterim: (t) => this.s.turn === turn && this.patch({ interim: t }),
         });
         throwIfAborted(signal);
@@ -578,6 +621,7 @@ export class LessonController {
           this.s = noteUnclear(this.s, turn);
           this.silentCount++;
           this.emit('silence');
+          this.restartClockAtListen = true;
           this.patch({ feedback: { kind: 'silence' }, heard: null });
           if (this.silentCount > maxSilent) {
             this.patch({ needsListenTap: true });
@@ -591,6 +635,7 @@ export class LessonController {
         this.emit('heard', { alternatives: res.alternatives, parsed });
         if (parsed.kind === 'command') {
           if (parsed.command === 'repeat') {
+            this.s = noteReplay(this.s);
             this.setSession(newTurn(this.s, 'playback'), { feedback: null });
             await this.playStim(q.stimulus, signal);
             continue;
@@ -615,6 +660,7 @@ export class LessonController {
         if (parsed.kind === 'ambiguous' || parsed.kind === 'unrecognized') {
           this.s = noteUnclear(this.s, turn);
           this.silentCount++;
+          this.restartClockAtListen = true;
           this.patch({ feedback: { kind: parsed.kind === 'ambiguous' ? 'ambiguous' : 'unclear' } });
           if (this.silentCount > maxSilent) {
             this.patch({ needsListenTap: true });
@@ -625,9 +671,11 @@ export class LessonController {
         }
         if (parsed.kind !== 'answer') continue;
         answer = parsed.value;
+        // Voice time = speech start (the recognizer's own delay is not the player's); unreliable without it.
+        ev = { timeMs: this.elapsed(speechAt), modality: 'voice' };
       }
 
-      if (await this.evaluate(answer, signal)) return;
+      if (await this.evaluate(answer, signal, undefined, ev)) return;
     }
   }
 }
