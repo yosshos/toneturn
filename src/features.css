@@ -316,3 +316,35 @@
 .chip-mini.xp {
   color: var(--gold);
 }
+
+/* Sung sequence targets */
+.seq-targets {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+.seq-target {
+  width: 64px;
+  height: 76px;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  background: var(--card-2);
+  border: 3px solid transparent;
+}
+.seq-target b {
+  font-size: 2rem;
+  font-weight: 900;
+  color: var(--lilac);
+}
+.seq-target.ok {
+  border-color: var(--mint);
+}
+.seq-target.wrong,
+.seq-target.missed {
+  border-color: var(--red);
+}

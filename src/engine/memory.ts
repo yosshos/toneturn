@@ -350,3 +350,47 @@ export function timingDifficulty(p: RhythmPattern): number {
   const eighths = p.onsets.filter((o) => o % 1 !== 0).length;
   return Math.round(880 + (p.bpm - 75) * 5 + eighths * 35 + p.beats * 10);
 }
+
+export interface SungSequenceGrade {
+  pass: boolean;
+  /** Fraction of target notes sung right (extras count against): the item accuracy. */
+  accuracy: number;
+  notes: { status: NoteStatus }[];
+  extra: number;
+  unclear: boolean;
+}
+
+/**
+ * Grade a sung sequence against target MIDI notes (octave-insensitive): segment the capture into
+ * notes, map each to the target pitch class within ±tolCents (else "wrong"), then align in order.
+ */
+export function gradeSungSequence(frames: SungFrame[], targetMidis: number[], tolCents = 50): SungSequenceGrade {
+  const segs = segmentNotes(frames);
+  if (!segs.length) return { pass: false, accuracy: 0, notes: targetMidis.map(() => ({ status: 'missed' })), extra: 0, unclear: true };
+  const ids = [...new Set(targetMidis.map((m) => ((m % 12) + 12) % 12))];
+  const given: (number | null)[] = [];
+  let lastEnd = -1;
+  for (const sg of segs) {
+    let best: number | null = null;
+    let bestD = Infinity;
+    for (const id of ids) {
+      const c = ((((sg.midi - id) * 100 + 600) % 1200) + 1200) % 1200 - 600;
+      if (Math.abs(c) < bestD) {
+        bestD = Math.abs(c);
+        best = id;
+      }
+    }
+    const v = bestD <= tolCents ? best : null;
+    // Merge a re-attack of the same note separated by a tiny gap.
+    if (given.length && given[given.length - 1] === v && v !== null && sg.start - lastEnd < 0.1) {
+      lastEnd = sg.end;
+      continue;
+    }
+    given.push(v);
+    lastEnd = sg.end;
+  }
+  const target = targetMidis.map((m) => ((m % 12) + 12) % 12);
+  const g = gradeMelody(target, given);
+  const ok = g.notes.filter((n) => n.status === 'ok').length;
+  return { pass: g.pass, accuracy: ok / (target.length + g.extra), notes: g.notes.map((n) => ({ status: n.status })), extra: g.extra, unclear: false };
+}

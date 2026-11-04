@@ -117,7 +117,7 @@ const en = {
   puzzleTried: 'Done this week — practice mode',
   puzzleNew: 'New this week',
   seeSkillMap: 'See my Skill Map',
-  skillNames: { degrees: 'Scale degrees', chords: 'Chord quality', cadences: 'Cadences', singing: 'Singing in tune', sequences: 'Melodic memory', rhythm: 'Rhythmic memory', timing: 'Rhythmic precision', intervals: 'Intervals' } as Record<string, string>,
+  skillNames: { notes: 'Note naming', degrees: 'Scale degrees', chords: 'Chord quality', cadences: 'Cadences', singing: 'Singing in tune', sequences: 'Melodic memory', rhythm: 'Rhythmic memory', timing: 'Rhythmic precision', intervals: 'Intervals' } as Record<string, string>,
   evUnmeasured: 'not measured yet',
   evProvisional: 'provisional',
   evMeasured: 'measured',
@@ -133,6 +133,7 @@ const en = {
   now: 'Now',
   skillDiag: {
     degrees: 'Hearing where a note sits in the key. Next: degrees 1–3–5, then the whole scale.',
+    notes: 'Naming the note you hear after a reference, and converting between note names and degrees. Next: Notes and degrees.',
     chords: 'Telling chord colours apart. Next: major vs minor, then diminished and augmented.',
     cadences: 'Hearing whether a phrase comes home. Next: V–I against phrases that stop on V.',
     singing: 'Matching a target pitch with your voice. Next: sing home, then the fifth above it.',
@@ -411,7 +412,7 @@ const he: Strings = {
   puzzleTried: 'נפתרה השבוע — מצב תרגול',
   puzzleNew: 'חדשה השבוע',
   seeSkillMap: 'למפת המיומנויות',
-  skillNames: { degrees: 'דרגות בסולם', chords: 'סוג אקורד', cadences: 'קדנצות', singing: 'שירה מדויקת', sequences: 'זיכרון מלודי', rhythm: 'זיכרון קצבי', timing: 'דיוק קצבי', intervals: 'מרווחים' } as Record<string, string>,
+  skillNames: { notes: 'שמות תווים', degrees: 'דרגות בסולם', chords: 'סוג אקורד', cadences: 'קדנצות', singing: 'שירה מדויקת', sequences: 'זיכרון מלודי', rhythm: 'זיכרון קצבי', timing: 'דיוק קצבי', intervals: 'מרווחים' } as Record<string, string>,
   evUnmeasured: 'עוד לא נמדד',
   evProvisional: 'זמני',
   evMeasured: 'נמדד',
@@ -427,6 +428,7 @@ const he: Strings = {
   now: 'עכשיו',
   skillDiag: {
     degrees: 'לשמוע איפה צליל יושב בסולם. הבא: דרגות 1–3–5, ואז כל הסולם.',
+    notes: 'לתת שם לתו שנשמע אחרי צליל ייחוס, ולהמיר בין שמות תווים לדרגות. הבא: תווים ודרגות.',
     chords: 'להבחין בצבעי אקורדים. הבא: מז׳ור מול מינור, ואז מוקטן ומוגדל.',
     cadences: 'לשמוע אם משפט חוזר הביתה. הבא: V–I מול משפטים שנעצרים על V.',
     singing: 'להתאים את הקול לצליל מטרה. הבא: לשיר את הבית, ואז את החמישית מעליו.',

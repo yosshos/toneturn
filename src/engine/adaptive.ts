@@ -6,6 +6,8 @@ import {
   degreeSeqQuestion,
   intervalQuestion,
   inversionQuestion,
+  noteNameQuestion,
+  singSeqQuestion,
   DEGREE_KEYS,
   mulberry32,
   pick,
@@ -126,6 +128,16 @@ export function questionFromTag(tag: string, seed: number, id: string): Question
       return ['M3', 'P5', 'P8'].includes(a) ? intervalQuestion(id, 53 + Math.floor(rnd() * 10), a as 'M3', b === 'harmonic' ? 'harmonic' : 'melodic') : null;
     case 'inversion':
       return ['root', 'third', 'fifth'].includes(a) ? inversionQuestion(id, pc(pick(rnd, ['C', 'D', 'F', 'G'])), a as 'root') : null;
+    case 'name': {
+      const key = parsePc(a);
+      const [d, how] = [Number(b), tag.split(':')[3]];
+      return key && d >= 1 && d <= 7 ? noteNameQuestion(id, key, d, how === 'heard') : null;
+    }
+    case 'singseq': {
+      const key = parsePc(a);
+      const ds = (b ?? '').split('-').map(Number);
+      return key && ds.length && ds.every((x) => x >= 1 && x <= 7) ? singSeqQuestion(id, key, ds) : null;
+    }
     case 'seq': {
       const key = parsePc(a);
       const ds = (b ?? '').split('-').map(Number);

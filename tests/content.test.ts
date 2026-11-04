@@ -27,19 +27,22 @@ describe('lesson catalogue', () => {
     expect(LESSON_META[id].title.en.length).toBeGreaterThan(3);
     for (const q of a.questions) {
       const { events, length } = renderStimulus(q.stimulus);
-      expect(events.length).toBeGreaterThan(0);
-      expect(length).toBeGreaterThan(1);
+      const symbolic = q.stimulus.length === 0; // name→degree / degree→name: no sound by design
+      if (!symbolic) {
+        expect(events.length).toBeGreaterThan(0);
+        expect(length).toBeGreaterThan(1);
+      }
       for (const e of events) {
         expect(e.midi).toBeGreaterThanOrEqual(36);
         expect(e.midi).toBeLessThanOrEqual(84);
       }
-      if (q.kind !== 'sing') expect(q.choices).toContain(q.answer);
+      if (q.kind !== 'sing' && q.kind !== 'sing-seq') expect(q.choices).toContain(q.answer);
     }
   });
 
   it('every answer choice appears across seeds (no lopsided lessons)', () => {
     for (const id of LESSON_ORDER) {
-      if (id === 'sing-home-five') continue;
+      if (['sing-home-five', 'notes-degrees', 'sing-names', 'sing-degrees'].includes(id)) continue; // mixed / open answer sets
       for (let seed = 0; seed < 30; seed++) {
         const l = makeLesson(id, seed);
         const answers = new Set(l.questions.map((q) => q.answer));

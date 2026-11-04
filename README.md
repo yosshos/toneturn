@@ -46,6 +46,9 @@ Useful URLs
 | 5 | Sing home & five | sung pitch | sing; live tuner, ±35 ¢, octave-insensitive, spoken high/low feedback |
 | 6 | Thirds, fifths, octaves (melodic, then harmonic) | intervals | “third” / “fifth” / “octave” (טרצה / קווינטה / אוקטבה) |
 | 7 | Which note is in the bass? (C, C/E, C/G) | chords | “root” / “third” / “fifth”, or “root position / first / second inversion” |
+| 8 | Notes and degrees (hear → name, name → degree, degree → name) | note naming / degrees | note names in your naming system (“B flat”, “סי במול”) or degrees |
+| 9 | Sing it by name (echo a note; sing a named note after a reference) | singing | sing |
+| 10 | Sing the degrees (“1 3 5” → sing them in order) | singing | sing; per-note strip, partial credit |
 
 `?unlock=all` opens every lesson (testing). Singing uses the microphone in both modes; in Buttons mode it waits for a **Sing now** tap.
 

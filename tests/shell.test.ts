@@ -17,7 +17,7 @@ describe('versions', () => {
   });
   it('shows only entries newer than the last seen version; nothing on first run', () => {
     expect(unseenChanges(null)).toEqual([]);
-    expect(unseenChanges('0.3.0').map((c) => c.version)).toEqual(['0.8.0', '0.7.1', '0.7.0', '0.6.0', '0.5.0', '0.4.0']);
+    expect(unseenChanges('0.3.0').map((c) => c.version)).toEqual(['0.9.0', '0.8.0', '0.7.1', '0.7.0', '0.6.0', '0.5.0', '0.4.0']);
     expect(unseenChanges(pkg.version)).toEqual([]);
   });
   it('settings gain reminder hour + seen version with defaults', () => {

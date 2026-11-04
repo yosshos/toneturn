@@ -99,8 +99,12 @@ export function Recap({ t, view, settings, onReplay, onAgain, onHome, onNext, ne
           const b = questionBadge(q, lang, nm);
           const ans =
             q.kind === 'sing'
-              ? `${t.singNow} ${q.degree}`
-              : q.kind === 'degree-seq'
+              ? `${t.singNow} ${q.promptBy === 'name' ? displayNote(q.target, nm, lang) : q.degree}`
+              : q.kind === 'sing-seq'
+                ? `${t.singNow} ${q.degrees.join(' ')}`
+                : q.kind === 'note-name'
+                  ? displayNote(q.target, nm, lang)
+                  : q.kind === 'degree-seq'
                 ? q.answer.split('-').join(' ')
                 : typeof q.answer === 'number'
                   ? String(q.answer)
@@ -116,7 +120,7 @@ export function Recap({ t, view, settings, onReplay, onAgain, onHome, onNext, ne
               <span className="recap-given">
                 {r.attempts.length > 0 && (
                   <>
-                    {t.yourAnswer}: {r.attempts.map((a) => giveText(q, a.answer, lang)).join(', ')}
+                    {t.yourAnswer}: {r.attempts.map((a) => giveText(q, a.answer, lang, nm)).join(', ')}
                   </>
                 )}
               </span>

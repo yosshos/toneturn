@@ -28,7 +28,7 @@ interface Props {
   nextLabel?: string;
 }
 
-const targetMidiOf = (q: Question) => (q.kind === 'degree' || q.kind === 'sing' ? q.targetMidi : 60);
+const targetMidiOf = (q: Question) => (q.kind === 'degree' || q.kind === 'sing' || q.kind === 'note-name' ? q.targetMidi : q.kind === 'sing-seq' ? q.midis[0] : 60);
 
 export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit, onAgain, onNext, onProgress, lessonDef, adapt, nextLabel }: Props) {
   const ctrlRef = useRef<LessonController | null>(null);
@@ -48,6 +48,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
         outputLang: settings.outputLang,
         naming: namingFor(settings.naming, settings.outputLang),
         timed: isTimed(settings.timedScoring, settings.firstUseAt, new Date()),
+        inputNaming: namingFor(settings.naming, settings.inputLang),
       },
       settings.mode,
       {
@@ -87,14 +88,36 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
   }
 
   const paused = v.phase === 'paused';
-  const isSing = q.kind === 'sing';
+  const isSing = q.kind === 'sing' || q.kind === 'sing-seq';
   const isSeq = q.kind === 'degree-seq';
   const showButtons = v.stage === 'question' && !paused && !v.error && !isSing && !isSeq && (v.mode === 'buttons' || v.needsListenTap);
   const showKeypad = v.stage === 'question' && !paused && !v.error && isSeq && (v.mode === 'buttons' || v.needsListenTap);
   const showRecord = v.stage === 'question' && !paused && !v.error && isSing && (v.mode === 'buttons' || v.needsListenTap);
   const awaiting = v.phase === 'listening';
   const badge = questionBadge(q, lang, nm);
-  const target = q.kind === 'degree' ? displayNote(q.target, nm, lang) : '';
+  // Note shown on screen only when it is *given* (never when it is the answer).
+  const target =
+    (q.kind === 'degree' && q.direction === 'name→degree') || (q.kind === 'sing' && q.promptBy === 'name') || (q.kind === 'degree' && q.direction !== 'name→degree')
+      ? displayNote(q.target, nm, lang)
+      : '';
+  const keyName = 'key' in q && q.key ? displayNote(q.key, nm, lang) : '';
+  const hideKeyboard = (q.kind === 'note-name' && q.direction === 'heard-pitch→name') || (q.kind === 'sing' && q.promptBy === 'echo');
+  const orbLabel =
+    q.kind === 'degree'
+      ? target
+      : q.kind === 'quality'
+        ? '♪♪♪'
+        : q.kind === 'degree-seq'
+          ? `${q.degrees.length}♪`
+          : q.kind === 'interval'
+            ? '♪ ↔ ♪'
+            : q.kind === 'inversion'
+              ? '𝄢 ?'
+              : q.kind === 'note-name'
+                ? q.direction === 'heard-pitch→name'
+                  ? '♪ ?'
+                  : String(q.degree)
+                : '♪ ?';
   const celebrate = v.feedback?.kind === 'correct';
 
   return (
@@ -172,17 +195,17 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
             )}
           </div>
           <div className="hero-slot">
-            {isSing ? <Tuner v={v} /> : <Orb v={v} label={q.kind === 'degree' ? target : q.kind === 'quality' ? '♪♪♪' : q.kind === 'degree-seq' ? `${q.degrees.length}♪` : q.kind === 'interval' ? '♪ ↔ ♪' : q.kind === 'inversion' ? '𝄢 ?' : '♪ ?'} />}
+            {q.kind === 'sing' ? <Tuner v={v} /> : q.kind === 'sing-seq' ? <SeqTargets degrees={q.degrees} notes={v.feedback?.seqNotes} /> : <Orb v={v} label={orbLabel} />}
             <Burst on={celebrate} />
           </div>
-          <Keyboard mark={q.kind === 'degree' ? q.targetMidi : undefined} />
-          <h1 className="ask">{withNote(askTemplate(q, lang), target)}</h1>
+          {!hideKeyboard && <Keyboard mark={q.kind === 'degree' && q.direction !== 'name→degree' ? q.targetMidi : undefined} />}
+          <h1 className="ask">{withNote(askTemplate(q, lang), target, keyName)}</h1>
           <Listening v={v} t={t} hint={hintText(q, lang, v.mode === 'voice' && !v.needsListenTap)} />
-          <FeedbackBanner v={v} t={t} lang={lang} />
+          <FeedbackBanner v={v} t={t} lang={lang} settings={settings} />
           {showButtons && (
             <div className={`answers n-${q.choices.length}`}>
               {q.choices.map((c) => {
-                const lb = choiceLabel(q, c, lang);
+                const lb = choiceLabel(q, c, lang, nm);
                 return (
                   <button
                     key={String(c)}
@@ -412,12 +435,20 @@ function Listening({ v, t, hint }: { v: LessonView; t: Strings; hint: string }) 
   );
 }
 
-function FeedbackBanner({ v, t, lang }: { v: LessonView; t: Strings; lang: 'he' | 'en' }) {
+function FeedbackBanner({ v, t, lang, settings }: { v: LessonView; t: Strings; lang: 'he' | 'en'; settings: Settings }) {
   const f = v.feedback;
   if (!f) return <div className="feedback empty" aria-live="polite" />;
   const q = v.question;
-  const ans = f.answer !== undefined && q.kind !== 'sing' ? choiceLabel(q, f.answer, lang) : null;
-  const ansText = q.kind === 'degree-seq' && f.answer !== undefined ? String(f.answer).split('-').join(' ') : ans ? (typeof f.answer === 'number' ? String(f.answer) : ans.small) : '';
+  const nmFb = namingFor(settings.naming, lang);
+  const ans = f.answer !== undefined && q.kind !== 'sing' && q.kind !== 'sing-seq' ? choiceLabel(q, f.answer, lang, nmFb) : null;
+  const ansText =
+    q.kind === 'degree-seq' && f.answer !== undefined
+      ? String(f.answer).split('-').join(' ')
+      : ans
+        ? typeof f.answer === 'number'
+          ? String(f.answer)
+          : ans.small || ans.big
+        : '';
   const sungText = !f.sung
     ? ''
     : { accurate: t.singAccurate, sharp: t.singSharp, flat: t.singFlat, wrong: t.singWrong, unclear: t.unclear }[f.sung.status];
@@ -521,5 +552,19 @@ function AnswerChips({ f, t }: { f: NonNullable<LessonView['feedback']>; t: Stri
       {(f.attempt ?? 1) > 1 && <span className="chip-mini">×{f.attempt}</span>}
       {(f.kind === 'correct' || f.kind === 'correct-retry' || f.kind === 'reveal') && (f.xp ?? 0) > 0 && <span className="chip-mini xp">+{f.xp} XP</span>}
     </div>
+  );
+}
+
+/** Degrees to sing, then a per-note result strip (spec H #3). */
+function SeqTargets({ degrees, notes }: { degrees: number[]; notes?: string[] }) {
+  return (
+    <ol className="seq-targets" dir="ltr" aria-label="degrees to sing">
+      {degrees.map((d, i) => (
+        <li key={i} className={`seq-target ${notes?.[i] ?? ''}`}>
+          <b>{d}</b>
+          {notes && <small>{notes[i] === 'ok' ? '✓' : notes[i] === 'wrong' ? '✗' : '·'}</small>}
+        </li>
+      ))}
+    </ol>
   );
 }

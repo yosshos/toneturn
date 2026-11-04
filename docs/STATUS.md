@@ -1,5 +1,11 @@
 # Milestone report — 2026-11-04
 
+## Update 9 — v0.9.0: full melodic matrix (spec H)
+
+- Lessons 8–10 cover the missing directions: heard → note name (with a key reference; keyboard hidden so the lit key can't give the answer away), name → degree and degree → name (symbolic, no sound, longer reference time), echo a single note, name → sing, and degrees → sing a sequence (segmentation + alignment + partial credit + per-note strip).
+- New Skill Map axis *Note naming*; symbolic conversions feed *Scale degrees*; the review queue rebuilds every new kind.
+- Server: lesson ids extended (migration 6). Tests: 283 unit.
+
 ## Update 8 — v0.8.0: scoring model (spec J)
 
 - `src/engine/scoring.ts`: accuracy per item type (partial credit for pitch and sequences), guess-corrected attempt credit, log-scaled relative speed factor, replay factor; three derived scores (graded skill rating, XP, tournament points). All constants in `SCORING`.

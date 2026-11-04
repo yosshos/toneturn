@@ -254,15 +254,15 @@ Use an established music-notation library rather than hand-drawing (e.g. VexFlow
 
 Every melodic exercise is defined by a **prompt form** and an **answer form** taken from three representations: **sound** (heard by the player as a prompt, or produced by the player — sung, or later played on an instrument / MIDI keyboard — as an answer), **scale degree** (number, given or answered) and **note name** (given or answered, in the player's naming system). All meaningful combinations exist, each **for a single note and for a sequence** (2–6 notes), each in **every key**, with the key stated and established by ear for relative tasks.
 
-| # | Prompt → Answer | Single note (example in E♭ major) | Sequence | Skill | Status (0.7.1) |
+| # | Prompt → Answer | Single note (example in E♭ major) | Sequence | Skill | Status (0.9.0) |
 | --- | --- | --- | --- | --- | --- |
 | 1 | Heard sound → degree | B♭ → "five" | B♭ F → "five two" | Scale degrees | ✓ single (lessons 1–2) · ✓ sequence (weekly puzzle) |
-| 2 | Heard sound → note name | (after a reference) B♭ → "B-flat" | → "B-flat F" | Note naming | ☐ |
-| 3 | Degree → sung sound | "five" → sing B♭ | "five two" → sing B♭ F | Singing in tune | ✓ single (lesson 5) · ☐ sequence |
-| 4 | Note name → sung sound | "B-flat" → sing B♭ (after a reference) | "B-flat F" → sing | Singing in tune | ☐ |
-| 5 | Note name → degree | "Which degree is B-flat?" → "five" | "B-flat F" → "five two" | Theory (symbolic) | ☐ |
-| 6 | Degree → note name | "Degree five?" → "B-flat" | "five two" → "B-flat F" | Theory (symbolic) | ☐ |
-| 7 | Heard sound → sung sound (echo) | hear B♭ → sing it back | hear B♭ F → sing them back | Pitch matching / melodic memory | ✓ sequence (Echo Chain, sing mode) · ☐ single pitch-matching drill |
+| 2 | Heard sound → note name | (after a reference) B♭ → "B-flat" | → "B-flat F" | Note naming | ✓ single (lesson 8) · ☐ sequence |
+| 3 | Degree → sung sound | "five" → sing B♭ | "five two" → sing B♭ F | Singing in tune | ✓ single (lesson 5) · ✓ sequence (lesson 10) |
+| 4 | Note name → sung sound | "B-flat" → sing B♭ (after a reference) | "B-flat F" → sing | Singing in tune | ✓ single (lesson 9) · ☐ sequence |
+| 5 | Note name → degree | "Which degree is B-flat?" → "five" | "B-flat F" → "five two" | Theory (symbolic) | ✓ single (lesson 8) · ☐ sequence |
+| 6 | Degree → note name | "Degree five?" → "B-flat" | "five two" → "B-flat F" | Theory (symbolic) | ✓ single (lesson 8) · ☐ sequence |
+| 7 | Heard sound → sung sound (echo) | hear B♭ → sing it back | hear B♭ F → sing them back | Pitch matching / melodic memory | ✓ single (lesson 9) · ✓ sequence (Echo Chain, sing mode) |
 
 Rules carried over from the main spec: an audible reference precedes any absolute note-name task (#2, #4) unless an optional absolute-pitch drill is chosen; symbolic conversions (#5, #6) need no playback; sequences are graded note by note with alignment and a per-note strip; octave policy is per exercise; naming follows the player's setting (letters / Do-Re-Mi, Hebrew דיאז/במול).
 

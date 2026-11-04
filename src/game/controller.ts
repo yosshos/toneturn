@@ -7,8 +7,9 @@
 //  - The microphone/recognizer is only active in the `listening` phase.
 //  - Permission / recognition failures, silence and unclear speech never count as wrong answers.
 
-import { compareStimulus, explainStimulus, renderStimulus, type Answer, type LessonDef, type Question, type SingQuestion, type Stimulus } from '../engine/lesson';
+import { compareStimulus, explainStimulus, renderStimulus, type Answer, type LessonDef, type Question, type SingQuestion, type SingSeqQuestion, type Stimulus } from '../engine/lesson';
 import { evaluateSung, type SungResult } from '../engine/sing';
+import { gradeSungSequence, type NoteStatus } from '../engine/memory';
 import { accuracyFor, type Modality } from '../engine/scoring';
 import type { Naming } from '../engine/pitch';
 import {
@@ -62,7 +63,18 @@ export interface LessonView {
   mic: 'off' | 'opening' | 'capturing' | 'speech';
   interim: string;
   heard: string | null;
-  feedback: { kind: FeedbackKind; answer?: Answer; given?: Answer; sung?: SungResult; timeMs?: number | null; attempt?: number; xp?: number; accuracy?: number } | null;
+  feedback: {
+    kind: FeedbackKind;
+    answer?: Answer;
+    given?: Answer;
+    sung?: SungResult;
+    timeMs?: number | null;
+    attempt?: number;
+    xp?: number;
+    accuracy?: number;
+    /** Per-note result for sung sequences. */
+    seqNotes?: NoteStatus[];
+  } | null;
   /** Live tuner reading while a singing capture is open. */
   singLive: SingLive | null;
   caption: string | null;
@@ -82,6 +94,8 @@ export interface ControllerSettings {
   maxSilentRetries?: number;
   /** Response time affects scores (spec J.5). Default false (untimed). */
   timed?: boolean;
+  /** Naming system for spoken note-name answers (input language). Default: same as `naming`. */
+  inputNaming?: Naming;
 }
 
 export interface ControllerHooks {
@@ -332,7 +346,7 @@ export class LessonController {
       this.emit('access-error', r.error);
       return false;
     }
-    const needsSpeech = this.s.lesson.questions.some((q) => q.kind !== 'sing');
+    const needsSpeech = this.s.lesson.questions.some((q) => q.kind !== 'sing' && q.kind !== 'sing-seq');
     if (needsSpeech && !this.ad.stt.isSupported()) {
       const error: AccessError = { stage: 'recognition', code: 'unsupported', raw: 'SpeechRecognition is not available' };
       this.patch({ mic: 'off', error });
@@ -431,6 +445,7 @@ export class LessonController {
       await this.playStim(q.stimulus, signal);
     }
     if (q.kind === 'sing') return this.singLoop(q, signal);
+    if (q.kind === 'sing-seq') return this.singSeqLoop(q, signal);
     await this.answerLoop(signal);
   }
 
@@ -450,21 +465,26 @@ export class LessonController {
   }
 
   /** Grade a musical answer and give feedback. Returns true when the question is resolved. */
-  private async evaluate(answer: Answer, signal: AbortSignal, sung?: SungResult, ev: { timeMs: number | null; modality: Modality } = { timeMs: null, modality: 'buttons' }): Promise<boolean> {
+  private async evaluate(
+    answer: Answer,
+    signal: AbortSignal,
+    sung?: SungResult,
+    ev: { timeMs: number | null; modality: Modality; accuracy?: number; seqNotes?: NoteStatus[] } = { timeMs: null, modality: 'buttons' },
+  ): Promise<boolean> {
     const l = this.cfg.outputLang;
     this.silentCount = 0;
     const q = currentQuestion(this.s);
-    const accuracy = accuracyFor(q, answer, sung);
+    const accuracy = ev.accuracy ?? accuracyFor(q, answer, sung);
     const [next, g] = grade(this.s, this.s.turn, this.s.index, answer, this.view.mode, { accuracy, timeMs: ev.timeMs, modality: ev.modality });
     if (g.kind === 'stale') return false;
     const rec = next.records[next.index];
-    const chips = { timeMs: ev.timeMs, attempt: rec.attempts.length, xp: rec.xp, accuracy };
+    const chips = { timeMs: ev.timeMs, attempt: rec.attempts.length, xp: rec.xp, accuracy, seqNotes: ev.seqNotes };
     this.setSession(next, { needsListenTap: false });
     this.emit('graded', { answer, result: g, ...chips });
     if (g.kind === 'correct') {
       this.ad.audio.cue('correct');
       this.patch({ feedback: { kind: g.firstTry ? 'correct' : 'correct-retry', answer: q.answer, given: answer, sung, ...chips } });
-      await this.say(sung ? singFeedbackText(sung, l) : correctText(q, l, g.firstTry), signal);
+      await this.say(sung ? singFeedbackText(sung, l) : correctText(q, l, g.firstTry, this.cfg.naming), signal);
       await this.ad.clock.sleep(500, signal);
       return true;
     }
@@ -559,6 +579,74 @@ export class LessonController {
     }
   }
 
+  /** Sing a sequence of degrees: capture until the singer stops, segment, align, partial credit. */
+  private async singSeqLoop(q: SingSeqQuestion, signal: AbortSignal) {
+    const l = this.cfg.outputLang;
+    const maxSilent = this.cfg.maxSilentRetries ?? 2;
+    for (;;) {
+      throwIfAborted(signal);
+      if (this.view.mode === 'buttons' || this.view.needsListenTap) {
+        this.setSession(newTurn(this.s, 'listening'), { mic: 'off', singLive: null });
+        const r = await this.waitFor(signal);
+        if (r.kind !== 'record' && r.kind !== 'listen') continue;
+        this.silentCount = 0;
+        this.patch({ needsListenTap: false });
+      } else {
+        await this.ad.clock.sleep(this.cfg.settleMs ?? 250, signal);
+      }
+      this.setSession(newTurn(this.s, 'listening'), { mic: 'opening', caption: null, singLive: null });
+      const turn = this.s.turn;
+      if (this.restartClockAtListen || this.view.mode === 'buttons') {
+        this.clockStart = this.now();
+        this.restartClockAtListen = false;
+      }
+      let voicedAt: number | null = null;
+      const res = await this.ad.pitch.sing({
+        signal,
+        maxMs: q.degrees.length * 1200 + 3500,
+        silenceMs: 4500,
+        endSilenceMs: 1100,
+        onCapturing: () => {
+          if (this.s.turn !== turn) return;
+          this.ad.audio.cue('ready');
+          this.patch({ mic: 'capturing' });
+        },
+        onFrame: (f) => {
+          if (this.s.turn !== turn) return;
+          if (f.hz && f.confidence > 0.8) {
+            voicedAt ??= this.now();
+            this.patch({ mic: 'speech' });
+          }
+        },
+      });
+      throwIfAborted(signal);
+      if (this.s.turn !== turn) return;
+      this.patch({ mic: 'off' });
+      if (res.kind === 'aborted') throw new Cancelled();
+      if (res.kind === 'error') {
+        this.s = noteUnclear(this.s, turn);
+        this.patch({ error: res.error });
+        await this.waitFor(signal);
+        continue;
+      }
+      const g = res.kind === 'frames' ? gradeSungSequence(res.frames, q.midis) : null;
+      if (!g || g.unclear) {
+        this.s = noteUnclear(this.s, turn);
+        this.silentCount++;
+        this.restartClockAtListen = true;
+        this.patch({ feedback: { kind: g ? 'unclear' : 'silence' } });
+        if (this.silentCount > maxSilent && this.view.mode === 'voice') {
+          this.patch({ needsListenTap: true });
+          continue;
+        }
+        await this.say(silenceText(q, l), signal);
+        continue;
+      }
+      const statuses = g.notes.map((n) => n.status);
+      if (await this.evaluate(g.pass ? 'accurate' : 'wrong', signal, undefined, { timeMs: this.elapsed(voicedAt), modality: 'sing', accuracy: g.accuracy, seqNotes: statuses })) return;
+    }
+  }
+
   /** Spoken / button answers. Loops until the current question is resolved. */
   private async answerLoop(signal: AbortSignal) {
     const l = this.cfg.outputLang;
@@ -630,7 +718,7 @@ export class LessonController {
           await this.say(silenceText(q, l), signal);
           continue;
         }
-        const parsed = parseAnswer(q, res.alternatives);
+        const parsed = parseAnswer(q, res.alternatives, this.cfg.inputNaming ?? this.cfg.naming);
         this.patch({ heard: parsed.heard || res.alternatives[0] || '', interim: '' });
         this.emit('heard', { alternatives: res.alternatives, parsed });
         if (parsed.kind === 'command') {
@@ -666,7 +754,7 @@ export class LessonController {
             this.patch({ needsListenTap: true });
             continue;
           }
-          await this.say(parsed.kind === 'ambiguous' ? ambiguousText(q, parsed.candidates, l) : unclearText(q, l), signal);
+          await this.say(parsed.kind === 'ambiguous' ? ambiguousText(q, parsed.candidates, l, this.cfg.naming) : unclearText(q, l), signal);
           continue;
         }
         if (parsed.kind !== 'answer') continue;

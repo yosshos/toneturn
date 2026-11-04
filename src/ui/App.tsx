@@ -153,6 +153,7 @@ export function App() {
       cadences: 'cadences',
       singing: 'sing-home-five',
       intervals: 'intervals',
+      notes: 'notes-degrees',
     };
     if (k === 'sequences') return openPuzzle();
     if (k === 'rhythm' || k === 'timing') {

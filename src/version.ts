@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.9.0',
+    date: '2026-11-04',
+    en: ['New lesson: Notes and degrees (hear and name, name ↔ degree)', 'New lesson: Sing it by name (echo a note, sing a named note)', 'New lesson: Sing the degrees (sing “1 3 5” in order)', 'Note naming joins the Skill Map'],
+    he: ['שיעור חדש: תווים ודרגות (לשמוע ולתת שם, שם ↔ דרגה)', 'שיעור חדש: לשיר לפי שם (לחזור על צליל, לשיר תו לפי שמו)', 'שיעור חדש: לשיר את הדרגות (לשיר "1 3 5" לפי הסדר)', 'שמות תווים נוספו למפת המיומנויות'],
+  },
+  {
     version: '0.8.0',
     date: '2026-11-04',
     en: ['New scoring: accuracy, attempts and response time all count', 'Answer chips show your time, attempts and XP', 'Timed scoring is off during your first week (change it in Settings)'],
