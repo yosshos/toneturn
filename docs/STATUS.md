@@ -5,8 +5,8 @@
 - Versioning: `package.json` version + git commit + build time in the app and service worker; player-facing changelog; "What's new" card once per new version.
 - Menu ☰: install (beforeinstallprompt / iOS instructions), check for updates / update now, notifications, friends, settings, voice check.
 - Fixed during testing: first-time service-worker activation reloaded the page (would interrupt a lesson); update check could hang on "Checking…".
-- Push reminders: permission from a tap, subscription stored per device, hour + language; Edge Function + hourly cron (code ready, **not deployed** — needs the steps in SUPABASE_SETUP part 2).
-- Friends: codes, requests, accept/decline/remove, weekly XP league with streak/total XP/lessons/game bests via security-definer functions (SQL ready, **not yet run on the project**; server SQL is untested until it runs there).
+- Push reminders: permission from a tap, subscription stored per device, hour + language. **Live on 2026-11-04:** Edge Function `toneturn-streak-reminder` deployed (JWT off, secret header), 4 secrets set, hourly pg_cron job with the secret in Vault; a cron-style call returns `200 {"due":0,"sent":0,"removed":0}`; calls without/with a wrong secret get 403. **Not yet seen:** a real notification on a device.
+- Friends: codes, requests, accept/decline/remove, weekly XP league with streak/total XP/lessons/game bests via security-definer functions. **Applied on 2026-11-04** and tested on the project inside a rolled-back transaction with two throwaway users: add by code (case-insensitive), pending shows name only, accept reveals stats, streak 2 / week XP / max game best correct, self-add refused, direct table writes and cross-user result reads blocked, reminder selection picks only the player with a streak who hasn't practised today, and signed-in users can't call it.
 - Tests: 181 unit + 24 E2E (incl. production-build service worker + offline load), all passing.
 
 ## Update 3 — memory games (spec addendum C)

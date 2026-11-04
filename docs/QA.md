@@ -35,6 +35,11 @@ Record each run with the **Voice check → Copy JSON report** output attached. P
 | First sign-in on desktop Chrome, app shows *Synced* | ✓ (reported by owner) |
 | Second device restores progress | ☐ pending |
 | Offline completion uploads after reconnect | ☐ pending |
+| Friends SQL on the project (rolled-back test, 2 test users) | ✓ |
+| Reminder function auth (no/wrong secret → 403) | ✓ |
+| Hourly job → function | ✓ `200 {"due":0}` |
+| Real streak notification on a phone / desktop | ☐ pending |
+| Two real accounts become friends in the app | ☐ pending |
 
 ## Voice & language checks (manual)
 
