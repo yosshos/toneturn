@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.7.1',
+    date: '2026-11-04',
+    en: ['Skill Map: rhythmic memory and rhythmic precision are now separate, like singing in tune and melodic memory'],
+    he: ['מפת המיומנויות: זיכרון קצבי ודיוק קצבי נפרדים עכשיו, כמו שירה מדויקת וזיכרון מלודי'],
+  },
+  {
     version: '0.7.0',
     date: '2026-11-04',
     en: ['New lesson: thirds, fifths and octaves', 'New lesson: which note is in the bass? (C, C/E, C/G)', 'Intervals now appear on your Skill Map'],

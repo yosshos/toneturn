@@ -322,3 +322,31 @@ export function calibrationOffset(firstMs: number, tapsMs: number[], bpm: number
   offs.sort((a, b) => a - b);
   return Math.round(offs[Math.floor(offs.length / 2)]);
 }
+
+export interface RhythmSplit {
+  /** Pattern remembered: right number and order of onsets within a lenient window (a quarter beat). */
+  memoryPass: boolean;
+  /** Precision 0..1 from the mean absolute offset — only when the pattern was remembered. */
+  precision: number | null;
+  meanAbsMs: number | null;
+}
+
+/**
+ * Separate *what* was tapped from *how precisely*. Memory uses a lenient window so sloppy timing
+ * is not counted as forgetting; precision is graded only on remembered patterns so forgetting is not
+ * counted as imprecision. precision = 1 at 0 ms average error, 0 at a quarter beat (or worse).
+ */
+export function splitRhythm(p: RhythmPattern, tapsMs: number[]): RhythmSplit {
+  const beatMs = beatSec(p.bpm) * 1000;
+  const lenient = gradeRhythm(p, tapsMs, beatMs * 0.25);
+  if (!lenient.pass) return { memoryPass: false, precision: null, meanAbsMs: null };
+  const abs = lenient.hits.map((h) => Math.abs(h.offsetMs ?? 0));
+  const meanAbsMs = Math.round(abs.reduce((a, b) => a + b, 0) / abs.length);
+  return { memoryPass: true, precision: Math.max(0, Math.min(1, 1 - meanAbsMs / (beatMs * 0.25))), meanAbsMs };
+}
+
+/** Difficulty of a Beat Echo round for precision: faster tempo and more off-beat eighths are harder. */
+export function timingDifficulty(p: RhythmPattern): number {
+  const eighths = p.onsets.filter((o) => o % 1 !== 0).length;
+  return Math.round(880 + (p.bpm - 75) * 5 + eighths * 35 + p.beats * 10);
+}

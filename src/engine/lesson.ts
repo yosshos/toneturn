@@ -6,7 +6,8 @@ import { majorScale, pc, pcValue, voiceChord, type ChordQuality, type PitchClass
 export const CONTENT_SCHEMA_VERSION = 2;
 
 export type Answer = number | string;
-export type SkillId = 'degrees' | 'chords' | 'cadences' | 'singing' | 'sequences' | 'rhythm' | 'intervals';
+/** 'rhythm' = rhythmic memory, 'timing' = rhythmic precision (mirrors 'sequences' / 'singing' for pitch). */
+export type SkillId = 'degrees' | 'chords' | 'cadences' | 'singing' | 'sequences' | 'rhythm' | 'timing' | 'intervals';
 export type IntervalName = 'M3' | 'P5' | 'P8';
 export type BassRole = 'root' | 'third' | 'fifth';
 export type Quality = 'maj' | 'min' | 'dim' | 'aug';

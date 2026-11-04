@@ -61,7 +61,7 @@ describe('Elo-style ratings', () => {
     expect(weakestSkill(ratings)).toBe('degrees');
     // Everything measured is strong → recommend measuring something new.
     const strong = { degrees: { r: 1200, n: 9, correct: 9, recent: [] } };
-    expect(weakestSkill(strong)).toBe('chords');
+    expect(weakestSkill(strong)).toBe('intervals'); // next unmeasured axis in map order
   });
   it('placement ladder moves up and down within bounds', () => {
     expect(nextLevel(1, true)).toBe(2);

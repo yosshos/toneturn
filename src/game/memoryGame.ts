@@ -9,7 +9,9 @@ import {
   melodySequence,
   rhythmPattern,
   rhythmTimeline,
+  splitRhythm,
   sungToPads,
+  timingDifficulty,
   type MelodyGame,
   type MelodyGrade,
   type RhythmGrade,
@@ -60,6 +62,16 @@ export interface TurnResult {
   unclear: boolean;
   melody?: MelodyGrade;
   rhythm?: RhythmGrade;
+}
+
+/** Per-round data for ratings (solo games). */
+export interface RoundStat {
+  length: number;
+  pass: boolean;
+  /** Rhythm only: pattern remembered (lenient window), and graded precision. */
+  memoryPass?: boolean;
+  precision?: number | null;
+  timingDifficulty?: number;
 }
 
 export interface GameView {
@@ -124,12 +136,13 @@ export class MemoryGameController {
   private waiter: Waiter | null = null;
   private responseStart: number | null = null;
   private passIdx = 0;
+  private rounds: RoundStat[] = [];
   private offNotes: () => void = () => {};
 
   constructor(
     private cfg: GameConfig,
     private ad: GameAdapters,
-    private hooks: { onOver?: (m: Match, kind: GameKind) => void } = {},
+    private hooks: { onOver?: (m: Match, kind: GameKind, rounds: RoundStat[]) => void } = {},
   ) {
     const melody = cfg.kind === 'melody' ? melodyGame(cfg.seed) : null;
     this.view = {
@@ -214,6 +227,7 @@ export class MemoryGameController {
 
   rematch() {
     this.cfg = { ...this.cfg, seed: (this.cfg.seed * 16807 + 11) >>> 0 };
+    this.rounds = [];
     this.patch({
       match: newMatch(this.cfg.players, START_LENGTH[this.cfg.kind]),
       melody: this.cfg.kind === 'melody' ? melodyGame(this.cfg.seed) : null,
@@ -301,12 +315,20 @@ export class MemoryGameController {
         await this.ad.audio.play(events, length, signal);
       }
       await this.ad.clock.sleep(900, signal);
+      const stat: RoundStat = { length: m.length, pass: result.pass };
+      if (this.cfg.kind === 'rhythm' && pattern) {
+        const sp = splitRhythm(pattern, this.view.taps);
+        stat.memoryPass = sp.memoryPass;
+        stat.precision = sp.precision;
+        stat.timingDifficulty = timingDifficulty(pattern);
+      }
+      if (m.turn === 0) this.rounds.push(stat); // player 1's rounds (solo games rate them)
       this.patch({ match: recordTurn(this.view.match, result.pass) });
     }
     const m = this.view.match;
     this.patch({ stage: 'over', caption: null });
     this.ad.audio.cue('complete');
-    this.hooks.onOver?.(m, this.cfg.kind);
+    this.hooks.onOver?.(m, this.cfg.kind, this.rounds);
     const text =
       m.players.length === 1
         ? this.t.solo(m.players[0].best, this.cfg.kind)

@@ -16,7 +16,7 @@ test.describe('placement, Skill Map, review, weekly puzzle', () => {
 
     await expect(page.getByRole('heading', { name: 'Skill Map', level: 1 })).toBeVisible();
     await expect(page.locator('.radar .dot.ev-provisional')).toHaveCount(3); // degrees, chords, cadences
-    await expect(page.locator('.radar .dot.ev-unmeasured')).toHaveCount(4); // singing, melodic memory, rhythm, intervals
+    await expect(page.locator('.radar .dot.ev-unmeasured')).toHaveCount(5); // intervals, singing, melodic memory, rhythmic memory, rhythmic precision
     await expect(page.locator('.radar .area')).toHaveCount(1);
     await expect(page.locator('.skill-list')).toContainText('provisional');
     await expect(page.locator('.skill-list')).toContainText('not measured yet');

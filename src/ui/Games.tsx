@@ -219,12 +219,12 @@ export function GameScreen({
       },
       makeGameAdapters(),
       {
-        onOver: (m, kind) => {
+        onOver: (m, kind, rounds) => {
           const best = Math.max(...m.players.map((p) => p.best));
           void (async () => {
             let p = await store.recordGameBest(kind, best);
             // Solo games rate the player's skill; shared-device games don't know who "you" are.
-            if (m.players.length === 1) p = await store.recordGameRounds(kind, seed, m.log);
+            if (m.players.length === 1) p = await store.recordGameRounds(kind, seed, rounds);
             onProgress(p);
           })();
         },

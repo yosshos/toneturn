@@ -1,5 +1,9 @@
 # Milestone report — 2026-11-04
 
+## Update 7 — v0.7.1: rhythm split into memory and precision (owner's request)
+
+- New Skill Map axis *Rhythmic precision* next to *Rhythmic memory*, paired like *Singing in tune* / *Melodic memory*. Memory uses a lenient window; precision is graded 0–1 and only on remembered patterns. Ratings accept graded scores. Tests: 249 unit.
+
 ## Update 6 — v0.7.0: intervals and inversions
 
 - Lesson 6 *Thirds, fifths, octaves* (melodic then harmonic, interval names in en/he) — the Intervals axis on the Skill Map is now measurable.

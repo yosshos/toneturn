@@ -229,16 +229,29 @@ export class ProgressStore {
   }
 
   /** Rate solo memory-game rounds (local; ids "g:<seed>:<turn>" so each round counts once). */
-  async recordGameRounds(kind: 'melody' | 'rhythm', seed: number, log: { length: number; pass: boolean }[], now = new Date()): Promise<Progress> {
+  async recordGameRounds(
+    kind: 'melody' | 'rhythm',
+    seed: number,
+    log: { length: number; pass: boolean; memoryPass?: boolean; precision?: number | null; timingDifficulty?: number }[],
+    now = new Date(),
+  ): Promise<Progress> {
     const p = await this.loadProgress();
     const at = now.toISOString();
-    const events: RatingEvent[] = log.map((x, i) => ({
-      id: `g:${kind}:${seed}:${i}`,
-      skill: kind === 'melody' ? 'sequences' : 'rhythm',
-      difficulty: 760 + 70 * x.length,
-      correct: x.pass,
-      at,
-    }));
+    const events: RatingEvent[] = [];
+    log.forEach((x, i) => {
+      // Memory: melodic → 'sequences'; rhythmic → 'rhythm' (judged with a lenient timing window).
+      events.push({
+        id: `g:${kind}:${seed}:${i}`,
+        skill: kind === 'melody' ? 'sequences' : 'rhythm',
+        difficulty: 760 + 70 * x.length,
+        correct: kind === 'rhythm' && x.memoryPass !== undefined ? x.memoryPass : x.pass,
+        at,
+      });
+      // Precision: only on rhythm rounds whose pattern was remembered, graded 0..1.
+      if (kind === 'rhythm' && x.precision !== undefined && x.precision !== null) {
+        events.push({ id: `g:timing:${seed}:${i}`, skill: 'timing', difficulty: x.timingDifficulty ?? 1000, correct: x.precision >= 0.5, score: x.precision, at });
+      }
+    });
     const have = new Set((p.ratingEvents ?? []).map((e) => e.id));
     const fresh = events.filter((e) => !have.has(e.id));
     if (!fresh.length) return p;

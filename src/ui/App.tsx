@@ -155,7 +155,7 @@ export function App() {
       intervals: 'intervals',
     };
     if (k === 'sequences') return openPuzzle();
-    if (k === 'rhythm') {
+    if (k === 'rhythm' || k === 'timing') {
       setGameKind('rhythm');
       return go('games');
     }

@@ -19,7 +19,8 @@ export const K_ESTABLISHED = 24;
 export const BAND_MIN = 600;
 export const BAND_MAX = 1600;
 
-export const SKILLS: SkillId[] = ['degrees', 'chords', 'cadences', 'singing', 'sequences', 'rhythm', 'intervals'];
+/** Skill Map axis order: listening skills, then performance/memory pairs (pitch: in tune + memory; rhythm: memory + precision). */
+export const SKILLS: SkillId[] = ['degrees', 'intervals', 'chords', 'cadences', 'singing', 'sequences', 'rhythm', 'timing'];
 /** Axes on the Skill Map that have no content yet — always shown as unmeasured. */
 export const PLANNED_SKILLS = [] as const;
 
@@ -28,6 +29,8 @@ export interface RatingEvent {
   skill: SkillId;
   difficulty: number;
   correct: boolean;
+  /** Graded result 0..1 (e.g. rhythmic precision). Overrides `correct` when present. */
+  score?: number;
   at: string; // ISO
 }
 
@@ -36,23 +39,23 @@ export interface SkillRating {
   n: number; // rated items
   correct: number;
   /** Last few updates, newest last (for the diagnosis panel). */
-  recent: { d: number; s: 0 | 1; delta: number; at: string }[];
+  recent: { d: number; s: number; delta: number; at: string }[];
 }
 
 export type Ratings = Partial<Record<SkillId, SkillRating>>;
 
 export const expected = (rating: number, difficulty: number) => 1 / (1 + Math.pow(10, (difficulty - rating) / 400));
 
-export function rate(cur: SkillRating | undefined, e: Pick<RatingEvent, 'difficulty' | 'correct' | 'at'>): SkillRating {
+export function rate(cur: SkillRating | undefined, e: Pick<RatingEvent, 'difficulty' | 'correct' | 'at' | 'score'>): SkillRating {
   const base = cur ?? { r: START_RATING, n: 0, correct: 0, recent: [] };
   const k = base.n < PROVISIONAL_UNTIL ? K_PROVISIONAL : K_ESTABLISHED;
-  const s: 0 | 1 = e.correct ? 1 : 0;
+  const s = e.score !== undefined ? Math.max(0, Math.min(1, e.score)) : e.correct ? 1 : 0;
   const raw = k * (s - expected(base.r, e.difficulty));
   const delta = Math.round(Math.max(-MAX_STEP, Math.min(MAX_STEP, raw)));
   return {
     r: base.r + delta,
     n: base.n + 1,
-    correct: base.correct + s,
+    correct: base.correct + (s >= 0.5 ? 1 : 0),
     recent: [...base.recent, { d: e.difficulty, s, delta, at: e.at }].slice(-10),
   };
 }
