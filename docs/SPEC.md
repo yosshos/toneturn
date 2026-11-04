@@ -287,3 +287,57 @@ Players get **the same question at the same moment** and are scored on **accurac
 - Same item difficulty for everyone; voice and buttons both allowed but shown in the results (voice is slower, so offer a "buttons only" option for competitive rooms).
 
 **Open decisions**: max players per room (suggest 2–20), whether tournament points feed weekly XP (suggest a separate tournament rating), moderation of nicknames.
+
+## Addendum — 2026-11-04 (product owner): J. Scoring model — accuracy, attempts and response time
+
+Every answer produces one **evidence record**. Three different scores are derived from it, each for a different purpose, so that one weighting never has to serve conflicting goals:
+
+| Score | Purpose | Time matters? | Attempts matter? |
+| --- | --- | --- | --- |
+| **Skill rating** (Elo, per skill) | honest estimate of ability → Skill Map, placement, recommendations | a little (fluency), never in untimed mode | yes, with guessing correction |
+| **XP** (weekly league, streak, daily goal) | motivation and effort | small speed bonus only | yes |
+| **Tournament points** | competition between players on the same item | strongly | single attempt only |
+
+### J.1 Evidence record (logged for every answer)
+`item id, item type, difficulty, input modality (buttons / voice / sing / tap / knock), attempts used k, attempt limit L, number of choices m (categorical items), replays, hints / explain used, reaction time t_r, completion time t_c, accuracy components, untimed flag, timing reliable flag`.
+Unclear speech, silence, permission failures and interruptions are **not attempts** and never enter the record as errors.
+
+### J.2 Accuracy a ∈ [0, 1] — per item type
+- **Categorical** (degree, chord quality, cadence, interval, bass, note name): 1 if correct, else 0.
+- **Sung pitch**: 1 within the item tolerance (default ±35 ¢), falling linearly to 0 at ±100 ¢ (a "near miss" earns partial credit); a different note = 0. Octave policy per item.
+- **Sequences** (degree sequence, sung melody, note-name sequence): from the note-by-note alignment, `a = correct / (target length + extra notes)` — one wrong note in five ≈ 0.8, not 0.
+- **Rhythm performance**: pattern part = fraction of onsets hit in the lenient window minus extras; precision part = `1 − mean|offset| / (¼ beat)` (already used for rhythmic precision). Reading items combine them 70 / 30.
+- **Dictation answers** (rhythm or melody): per-beat / per-note fraction correct.
+
+### J.3 Attempts — g(k), with correction for guessing
+A retry after a wrong answer is worth less, and for items with few options it is worth almost nothing, because elimination makes guessing easy:
+- `g(1) = 1`.
+- For a categorical item with `m` choices, after one wrong answer the chance of guessing right is `1/(m−1)`. Credit for a correct 2nd attempt: `g(2) = 0.5 × (1 − 1/(m−1))` → m = 2: 0 · m = 3: 0.25 · m = 4: 0.33 · m = 7: 0.42.
+- Graded items (pitch, sequences, rhythm): `g(2) = 0.5`, `g(3) = 0.25` (no guessing correction; the answer space is continuous / large).
+- Revealed answers: 0 for rating and tournament; XP gives a small effort credit (see J.6).
+
+### J.4 Response time — measured fairly
+- **Clock start**: when the stimulus *finishes being heard* (audio output clock, latency-corrected), or when a symbolic prompt has finished being shown / spoken. Each replay restarts the clock and is counted.
+- **Clock stop**: buttons → the tap's event timestamp; voice → the recognizer's *speech-start* event (not the transcript, which adds 0.5–2 s of service delay); singing → the first stable voiced frame; sequences → both reaction (first input) and completion; rhythm performance → not applicable (timing *is* the task).
+- **Paused**: pauses, app switches, permission prompts and "explain" stop the clock. After an unclear utterance, the clock for the next utterance starts at that listen's start (the recognizer's failure is not the player's time).
+- **Reliability flag**: false when the timing source is unknown (e.g. no speech-start event); then time is ignored for that answer.
+
+### J.5 Speed factor f(t) — relative, log-scaled, never harsh
+- Reference time `T_ref` depends on item type, modality and size: initial values buttons 1.5 s (+0.3 s per choice beyond 2), voice 2.0 s, singing 1.0 s to stable pitch, sequences +0.6 s per note, symbolic theory items +1 s. Recalibrated later from collected records (median of players at that difficulty).
+- `f(t) = clamp(1 − 0.25 × log2(t / T_ref), 0.5, 1)`: at or below T_ref → 1; twice as slow → 0.75; four times → 0.5; never below 0.5 for a correct answer.
+- **Untimed mode** (player setting, default on for the first week and available always; recommended for young children and for players with motor or speech difficulties): `f ≡ 1` everywhere except tournaments.
+
+### J.6 The three scores
+- **Skill rating** — graded Elo score `S = a × g(k) × (0.8 + 0.2 × f(t)) × 0.95^replays` (replay factor floored at 0.8). Time can move S by at most 20 %, so knowledge dominates and fluency still counts. Unreliable timing / untimed → the time term is 1.
+- **XP per item** = `round(10 × a × g(k))` + speed bonus `round(3 × (f(t) − 0.5) × 2)` (0–3, only when timed and a ≥ 0.8) + 1 effort point for any completed item (including revealed). Never negative. Lesson XP keeps the idempotent award rules. *Server plausibility check changes to* `xp ≤ total × 14`.
+- **Tournament points** (single attempt, buttons-only rooms optional) = `round(1000 × a × (0.5 + 0.5 × f_T(t)))` with `f_T` linear from 1 at 0 s to 0 at the answer window's end; × streak multiplier 1.0 → 1.5. Ties broken by total response time.
+
+### J.7 Feedback the player sees
+- After each answer, small chips: **accuracy** (✓ / 80 % / −12 ¢), **time** (⏱ 1.4 s, green when ≤ T_ref), **attempts** (×2), and the XP earned with its parts on tap.
+- Recap: accuracy, median response time and its trend vs the player's last 10 sessions ("faster than last week"), attempts used.
+- Skill Map diagnosis: fluency trend (median time at the current level) next to the rating.
+
+### J.8 Constraints and tests
+- All constants live in one config object with these documented defaults.
+- Unit-tested properties: more time never increases any score; more attempts never increase a score; higher accuracy never decreases a score; untimed mode makes scores independent of time; unclear input never changes a score; tournament points are bounded 0–1500.
+- Changing weights must not rewrite history: records are stored raw, scores are recomputed.
