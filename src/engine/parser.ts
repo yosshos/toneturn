@@ -1,0 +1,198 @@
+// Deterministic, exercise-aware transcript parser.
+// It never consults the expected answer: ambiguity is reported, not resolved.
+
+import type { PitchClass } from './pitch';
+
+export type Command = 'repeat' | 'skip' | 'stop' | 'explain';
+
+export type ParseResult<T> =
+  | { kind: 'answer'; value: T; heard: string }
+  | { kind: 'command'; command: Command; heard: string }
+  | { kind: 'ambiguous'; candidates: T[]; heard: string }
+  | { kind: 'unrecognized'; heard: string };
+
+/** Lowercase, strip punctuation/niqqud, split into tokens. Hebrew prefix letters are handled per-lookup. */
+export function normalize(text: string): string[] {
+  return text
+    .toLowerCase()
+    .replace(/[֑-ׇ]/g, '') // Hebrew niqqud / cantillation
+    .replace(/[׳']/g, "'")
+    .replace(/[.,!?;:"“”()\-–—]/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean);
+}
+
+const HEB_PREFIXES = ['ו', 'ה', 'ב', 'ל', 'ש'];
+
+/** Look up a token, also trying it without common one-letter Hebrew prefixes (ו/ה/ב/ל/ש). */
+function lookup<V>(table: Map<string, V>, token: string): V | undefined {
+  const direct = table.get(token);
+  if (direct !== undefined) return direct;
+  if (/^[א-ת]/.test(token) && token.length > 2) {
+    for (const p of HEB_PREFIXES) {
+      if (token.startsWith(p)) {
+        const v = table.get(token.slice(1));
+        if (v !== undefined) return v;
+        // two stacked prefixes, e.g. "וה"
+        for (const q of HEB_PREFIXES) {
+          if (token.slice(1).startsWith(q) && token.length > 3) {
+            const v2 = table.get(token.slice(2));
+            if (v2 !== undefined) return v2;
+          }
+        }
+      }
+    }
+  }
+  return undefined;
+}
+
+// ---------- Commands ----------
+const COMMAND_TOKENS = new Map<string, Command>([
+  ['repeat', 'repeat'], ['again', 'repeat'], ['replay', 'repeat'],
+  ['שוב', 'repeat'], ['חזור', 'repeat'], ['חזרה', 'repeat'], ['תחזור', 'repeat'], ['תחזרי', 'repeat'],
+  ['skip', 'skip'], ['next', 'skip'], ['pass', 'skip'],
+  ['דלג', 'skip'], ['תדלג', 'skip'], ['תדלגי', 'skip'], ['הבא', 'skip'],
+  ['stop', 'stop'], ['pause', 'stop'], ['quit', 'stop'],
+  ['עצור', 'stop'], ['תעצור', 'stop'], ['תעצרי', 'stop'], ['הפסק', 'stop'], ['הפסקה', 'stop'],
+  ['explain', 'explain'], ['help', 'explain'], ['הסבר', 'explain'], ['תסביר', 'explain'], ['תסבירי', 'explain'], ['עזרה', 'explain'],
+]);
+const COMMAND_PHRASES: [string[], Command][] = [
+  [['one', 'more', 'time'], 'repeat'],
+  [['עוד', 'פעם'], 'repeat'],
+  [['say', 'again'], 'repeat'],
+];
+
+function findCommands(tokens: string[]): Command[] {
+  const found = new Set<Command>();
+  for (const t of tokens) {
+    const c = lookup(COMMAND_TOKENS, t);
+    if (c) found.add(c);
+  }
+  for (const [phrase, c] of COMMAND_PHRASES) {
+    for (let i = 0; i + phrase.length <= tokens.length; i++) {
+      if (phrase.every((w, j) => tokens[i + j] === w)) found.add(c);
+    }
+  }
+  return [...found];
+}
+
+function phraseCovers(tokens: string[], phrase: string[]): number[] {
+  for (let i = 0; i + phrase.length <= tokens.length; i++) {
+    if (phrase.every((w, j) => tokens[i + j] === w)) return phrase.map((_, j) => i + j);
+  }
+  return [];
+}
+
+// ---------- Scale degrees ----------
+const DEGREE_TOKENS = new Map<string, number>([
+  // English (incl. common recognizer homophones that are unambiguous in this context)
+  ['1', 1], ['one', 1], ['won', 1], ['first', 1], ['i', 1], ['tonic', 1], ['home', 1],
+  ['2', 2], ['two', 2], ['second', 2], ['ii', 2],
+  ['3', 3], ['three', 3], ['third', 3], ['iii', 3],
+  ['4', 4], ['four', 4], ['fourth', 4], ['iv', 4],
+  ['5', 5], ['five', 5], ['fifth', 5], ['v', 5], ['dominant', 5],
+  ['6', 6], ['six', 6], ['sixth', 6], ['vi', 6],
+  ['7', 7], ['seven', 7], ['seventh', 7], ['vii', 7],
+  // Hebrew (masc./fem./ordinal)
+  ['אחת', 1], ['אחד', 1], ['ראשונה', 1], ['ראשון', 1], ['טוניקה', 1], ['בית', 1],
+  ['שתיים', 2], ['שתים', 2], ['שניים', 2], ['שנים', 2], ['שנייה', 2], ['שניה', 2], ['שני', 2],
+  ['שלוש', 3], ['שלושה', 3], ['שלישית', 3], ['שלישי', 3],
+  ['ארבע', 4], ['ארבעה', 4], ['רביעית', 4], ['רביעי', 4],
+  ['חמש', 5], ['חמישה', 5], ['חמישית', 5], ['חמישי', 5], ['דומיננטה', 5],
+  ['שש', 6], ['שישה', 6], ['שישית', 6], ['שישי', 6],
+  ['שבע', 7], ['שבעה', 7], ['שביעית', 7], ['שביעי', 7],
+]);
+
+/**
+ * Parse a scale-degree answer. Degrees outside the exercise choices still
+ * parse (they are valid
+ * musical answers, graded as incorrect).
+ */
+export function parseDegree(transcript: string): ParseResult<number> {
+  const heard = transcript.trim();
+  const tokens = normalize(transcript);
+  if (!tokens.length) return { kind: 'unrecognized', heard };
+
+  // "one more time" must not be read as degree 1.
+  const phraseIdx = new Set<number>();
+  for (const [phrase] of COMMAND_PHRASES) phraseCovers(tokens, phrase).forEach((i) => phraseIdx.add(i));
+
+  const degrees = new Set<number>();
+  tokens.forEach((t, i) => {
+    if (phraseIdx.has(i)) return;
+    // "I" alone is the Roman numeral only when it's the whole answer.
+    if (t === 'i' && tokens.length > 1) return;
+    const d = lookup(DEGREE_TOKENS, t);
+    if (d !== undefined) degrees.add(d);
+  });
+  const commands = findCommands(tokens);
+
+  if (degrees.size === 1 && commands.length === 0) return { kind: 'answer', value: [...degrees][0], heard };
+  if (degrees.size === 0 && commands.length === 1) return { kind: 'command', command: commands[0], heard };
+  if (degrees.size > 1) return { kind: 'ambiguous', candidates: [...degrees].sort(), heard };
+  if (degrees.size === 1 && commands.length) return { kind: 'ambiguous', candidates: [...degrees], heard };
+  return { kind: 'unrecognized', heard };
+}
+
+/** Try recognizer alternatives in order; the first that is not unrecognized wins. */
+export function parseAlternatives<T>(alts: string[], parse: (s: string) => ParseResult<T>): ParseResult<T> {
+  let first: ParseResult<T> | null = null;
+  for (const a of alts) {
+    const r = parse(a);
+    if (!first) first = r;
+    if (r.kind !== 'unrecognized') return r;
+  }
+  return first ?? { kind: 'unrecognized', heard: '' };
+}
+
+// ---------- Note names (used by later lessons; covered by tests now) ----------
+export type NamingVocab = 'letter' | 'solfege';
+type L = PitchClass['letter'];
+
+// Hebrew "סי" is C in letter naming and B (Si) in fixed-do, so vocab is chosen per exercise.
+const NOTE_VOCAB: Record<NamingVocab, Map<string, L>> = {
+  letter: new Map<string, L>([
+    ['c', 'C'], ['see', 'C'], ['sea', 'C'], ['d', 'D'], ['dee', 'D'], ['e', 'E'], ['f', 'F'], ['ef', 'F'],
+    ['g', 'G'], ['gee', 'G'], ['a', 'A'], ['b', 'B'], ['bee', 'B'], ['be', 'B'],
+    ['סי', 'C'], ['די', 'D'], ['אי', 'E'], ['אף', 'F'], ["ג'י", 'G'], ['גי', 'G'], ['איי', 'A'], ['בי', 'B'],
+  ]),
+  solfege: new Map<string, L>([
+    ['do', 'C'], ['doh', 'C'], ['re', 'D'], ['ray', 'D'], ['mi', 'E'], ['me', 'E'], ['fa', 'F'], ['far', 'F'],
+    ['sol', 'G'], ['so', 'G'], ['la', 'A'], ['si', 'B'], ['ti', 'B'], ['tea', 'B'],
+    ['דו', 'C'], ['רה', 'D'], ['רא', 'D'], ['מי', 'E'], ['פה', 'F'], ['פא', 'F'], ['סול', 'G'], ['לה', 'A'], ['לא', 'A'], ['סי', 'B'],
+  ]),
+};
+const ACC_TOKENS = new Map<string, -1 | 1>([
+  ['flat', -1], ['פלאט', -1], ['פלט', -1], ['במול', -1], ['bemol', -1], ['♭', -1],
+  ['sharp', 1], ['שארפ', 1], ['שרפ', 1], ['דיאז', 1], ['diese', 1], ['♯', 1],
+]);
+
+/**
+ * Parse a note name ("B flat", "Bb", "סי במול", "בי פלאט", "si bemol").
+ * `vocab` selects which naming system resolves clashes like "סי" (C vs Si).
+ */
+export function parseNoteName(transcript: string, vocab: NamingVocab): ParseResult<PitchClass> {
+  const heard = transcript.trim();
+  // Split glued forms like "Bb", "Eb", "F#", "B♭" into letter + accidental.
+  const prepped = transcript.replace(/(^|\s)([a-gA-G])(b|#|♭|♯)(?=\s|$)/g, (_, pre, l, a) => `${pre}${l} ${a === 'b' || a === '♭' ? 'flat' : 'sharp'}`);
+  const tokens = normalize(prepped);
+  const commands = findCommands(tokens);
+  const table = NOTE_VOCAB[vocab];
+  const notes: PitchClass[] = [];
+  for (let i = 0; i < tokens.length; i++) {
+    const letter = table.get(tokens[i]);
+    if (!letter) continue;
+    let acc: PitchClass['acc'] = 0;
+    const next = tokens[i + 1];
+    if (next && ACC_TOKENS.has(next)) {
+      acc = ACC_TOKENS.get(next)!;
+      i++;
+    }
+    notes.push({ letter, acc });
+  }
+  const uniq = notes.filter((n, i) => notes.findIndex((m) => m.letter === n.letter && m.acc === n.acc) === i);
+  if (uniq.length === 1 && commands.length === 0) return { kind: 'answer', value: uniq[0], heard };
+  if (uniq.length === 0 && commands.length === 1) return { kind: 'command', command: commands[0], heard };
+  if (uniq.length > 1 || (uniq.length === 1 && commands.length)) return { kind: 'ambiguous', candidates: uniq, heard };
+  return { kind: 'unrecognized', heard };
+}

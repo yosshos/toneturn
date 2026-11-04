@@ -1,0 +1,35 @@
+{
+  "name": "toneturn",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "ToneTurn — voice-first ear-training game",
+  "scripts": {
+    "dev": "vite",
+    "dev:https": "vite --mode https --host",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "preview:https": "vite preview --mode https --host",
+    "typecheck": "tsc -b",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:all": "vitest run && playwright test"
+  },
+  "dependencies": {
+    "@fontsource-variable/rubik": "^5.3.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-basic-ssl": "^2.3.0",
+    "@vitejs/plugin-react": "^6.2.1",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5",
+    "vitest": "^5.1.0"
+  }
+}
