@@ -249,3 +249,41 @@ Each level has an optional explanation (hear it, see it, count it), guided pract
 
 ### G.9 Notation rendering
 Use an established music-notation library rather than hand-drawing (e.g. VexFlow, MIT licence, bundled for offline use); keep the canonical model independent of the renderer. Notation must be readable at phone width, high-contrast in dark mode, and have a text alternative (the words form).
+
+## Addendum — 2026-11-04 (product owner): H. Full melodic matrix — sound × degree × note name
+
+Every melodic exercise is defined by a **prompt form** and an **answer form** taken from three representations: **sound** (heard by the player as a prompt, or produced by the player — sung, or later played on an instrument / MIDI keyboard — as an answer), **scale degree** (number, given or answered) and **note name** (given or answered, in the player's naming system). All meaningful combinations exist, each **for a single note and for a sequence** (2–6 notes), each in **every key**, with the key stated and established by ear for relative tasks.
+
+| # | Prompt → Answer | Single note (example in E♭ major) | Sequence | Skill | Status (0.7.1) |
+| --- | --- | --- | --- | --- | --- |
+| 1 | Heard sound → degree | B♭ → "five" | B♭ F → "five two" | Scale degrees | ✓ single (lessons 1–2) · ✓ sequence (weekly puzzle) |
+| 2 | Heard sound → note name | (after a reference) B♭ → "B-flat" | → "B-flat F" | Note naming | ☐ |
+| 3 | Degree → sung sound | "five" → sing B♭ | "five two" → sing B♭ F | Singing in tune | ✓ single (lesson 5) · ☐ sequence |
+| 4 | Note name → sung sound | "B-flat" → sing B♭ (after a reference) | "B-flat F" → sing | Singing in tune | ☐ |
+| 5 | Note name → degree | "Which degree is B-flat?" → "five" | "B-flat F" → "five two" | Theory (symbolic) | ☐ |
+| 6 | Degree → note name | "Degree five?" → "B-flat" | "five two" → "B-flat F" | Theory (symbolic) | ☐ |
+| 7 | Heard sound → sung sound (echo) | hear B♭ → sing it back | hear B♭ F → sing them back | Pitch matching / melodic memory | ✓ sequence (Echo Chain, sing mode) · ☐ single pitch-matching drill |
+
+Rules carried over from the main spec: an audible reference precedes any absolute note-name task (#2, #4) unless an optional absolute-pitch drill is chosen; symbolic conversions (#5, #6) need no playback; sequences are graded note by note with alignment and a per-note strip; octave policy is per exercise; naming follows the player's setting (letters / Do-Re-Mi, Hebrew דיאז/במול).
+
+The Skill Map gains a **Note naming** axis (#2); #5–#6 feed a small **Theory** weight inside Scale degrees. Rhythm (addendum G) uses the same idea with sound × notation × words.
+
+## Addendum — 2026-11-04 (product owner): I. Live tournament (proposal for review)
+
+Players get **the same question at the same moment** and are scored on **accuracy and speed**.
+
+**Modes**
+- **Online room** (separate devices, sign-in): host creates a room → join code / QR → lobby with nicknames → host picks a set (skill, level, 10 rounds) → start. Uses Supabase Realtime channels for presence and round broadcast.
+- **Same device, 2 players** ("buzzer" split screen): the screen is split into two halves, each with its own answer buttons; the first correct answer scores more. Voice can't tell two speakers apart, so this mode is buttons-only.
+- **Async tournament / daily challenge**: everyone plays the same seeded set within a time window; leaderboard when it closes (works without being online at the same time).
+
+**Round flow**: synced countdown → the same stimulus plays on every device → answer window (e.g. 10 s) → reveal + "your answer vs the right one" → live leaderboard with movement arrows → next round. Podium at the end, rematch.
+
+**Scoring**: wrong or no answer = 0. Correct = 500 + up to 500 for speed (linear over the window), × streak bonus (1.0 → 1.5 for consecutive correct). Ties broken by total response time. Unclear speech re-opens the answer without penalty (the clock keeps running).
+
+**Fairness**
+- Each device measures its own reaction time **from the moment its playback finished** (local audio clock), so network lag and download speed don't count; the server checks plausibility (no faster than ~150 ms, not after the window).
+- The server holds the answer key and grades; clients only receive the stimulus (good enough for friends; ranked play would also need server-rendered audio).
+- Same item difficulty for everyone; voice and buttons both allowed but shown in the results (voice is slower, so offer a "buttons only" option for competitive rooms).
+
+**Open decisions**: max players per room (suggest 2–20), whether tournament points feed weekly XP (suggest a separate tournament rating), moderation of nicknames.
