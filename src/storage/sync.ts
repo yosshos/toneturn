@@ -21,6 +21,7 @@ export function rebuildProgress(results: LessonResult[], local?: Progress): Prog
   return {
     ...rebuilt,
     games: local.games,
+    daily: local.daily,
     ratingEvents: [...(rebuilt.ratingEvents ?? []), ...localLesson, ...gameEvents],
     puzzles: { ...(local.puzzles ?? {}), ...(rebuilt.puzzles ?? {}) },
     snapshots: local.snapshots && (local.snapshots.length > (rebuilt.snapshots?.length ?? 0)) ? local.snapshots : rebuilt.snapshots,

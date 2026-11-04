@@ -2,6 +2,7 @@ import { weekId } from '../engine/adaptive';
 import { SKILLS } from '../engine/rating';
 import type { Strings } from '../i18n/strings';
 import { ratingsOf, type Progress } from '../storage/progress';
+import { localDay } from '../storage/progress';
 import { NodeIcon } from './Home';
 
 /** Home-screen practice row: Skill Map / placement, review queue, weekly puzzle. */
@@ -12,6 +13,7 @@ export function PracticeTools({
   onPlacement,
   onReview,
   onPuzzle,
+  onDaily,
 }: {
   t: Strings;
   progress: Progress;
@@ -19,7 +21,9 @@ export function PracticeTools({
   onPlacement: () => void;
   onReview: () => void;
   onPuzzle: () => void;
+  onDaily: () => void;
 }) {
+  const daily = progress.daily?.[localDay(new Date())];
   const ratings = ratingsOf(progress);
   const measured = SKILLS.filter((k) => (ratings[k]?.n ?? 0) > 0).length;
   const reviewCount = new Set(progress.review.map((r) => r.key)).size;
@@ -50,6 +54,13 @@ export function PracticeTools({
           </span>
           <b>{t.weeklyPuzzle}</b>
           <small>{puzzleStatus}</small>
+        </button>
+        <button className="tool-card daily-card" onClick={onDaily}>
+          <span className="tool-icon" aria-hidden="true">
+            <NodeIcon kind="puzzle" />
+          </span>
+          <b>{t.dailyChallenge}</b>
+          <small>{daily ? `✓ ${t.dailyDone} · ${daily.points.toLocaleString()} ${t.points}` : t.dailyBlurb}</small>
         </button>
       </div>
     </section>

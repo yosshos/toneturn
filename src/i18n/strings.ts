@@ -297,6 +297,19 @@ const en = {
   answerLangHint: 'Spoken answers are recognised in this language',
   noVoiceFor: 'No speech voice for this language — narration uses',
   textOnly: 'text only',
+  dailyChallenge: 'Daily challenge',
+  dailyHint: 'Five questions, the same for everyone today. Answer fast after the sound ends — speed and streaks score. Your first play counts.',
+  practiceAgain: 'Play again (practice)',
+  share: 'Share',
+  duel: 'Duel on this device',
+  duelHint: 'Two players face each other across the phone or tablet. Same sound for both; the first right answer gets the most points.',
+  setMixed: 'Mixed',
+  questionsOn: 'Questions',
+  roundsLabel: 'Rounds',
+  timeUp: 'time up',
+  dailyBlurb: '5 questions · same for everyone',
+  duelBlurb: 'Face to face, split screen',
+  dailyDone: 'Done today',
 };
 
 export type Strings = typeof en;
@@ -594,6 +607,19 @@ const he: Strings = {
   answerLangHint: 'תשובות בקול יזוהו בשפה הזו',
   noVoiceFor: 'אין קול דיבור לשפה הזו — הקריינות ב',
   textOnly: 'טקסט בלבד',
+  dailyChallenge: 'האתגר היומי',
+  dailyHint: 'חמש שאלות, אותן שאלות לכולם היום. ענו מהר אחרי שהצליל נגמר — מהירות ורצף מוסיפים נקודות. המשחק הראשון נחשב.',
+  practiceAgain: 'לשחק שוב (תרגול)',
+  share: 'שיתוף',
+  duel: 'דו־קרב על המכשיר',
+  duelHint: 'שני שחקנים זה מול זה משני צדי הטלפון או הטאבלט. אותו צליל לשניכם; התשובה הנכונה הראשונה מקבלת הכי הרבה נקודות.',
+  setMixed: 'מעורב',
+  questionsOn: 'שאלות',
+  roundsLabel: 'סיבובים',
+  timeUp: 'נגמר הזמן',
+  dailyBlurb: '5 שאלות · זהות לכולם',
+  duelBlurb: 'פנים מול פנים, מסך מפוצל',
+  dailyDone: 'הושלם היום',
 };
 
 export const STRINGS: Record<Lang, Strings> = { en, he };

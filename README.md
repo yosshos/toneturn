@@ -63,6 +63,11 @@ Useful URLs
 - **Review my mistakes** — fresh items from your misses; hear your answer next to the right one.
 - **Weekly puzzle** — same degree-sequence puzzle for everyone in your band; gold / silver.
 - **Beat Echo calibration** — tap along to 12 clicks; the median offset corrects your device's tap delay.
+- **Daily challenge** (0.11) — 5 mixed questions, the same for everyone on a calendar day; points = 500 + up to 500 for speed × streak bonus; first play counts, replays are practice; Wordle-style share card (🟩 fast, 🟨 slow, ⬜ miss — no answers).
+
+## Duel on this device (0.11)
+
+Two players, one phone or tablet, split screen: player 1's half is rotated to face them across the table. Same sound for both; each player's first tap counts; time runs from the end of the sound; 10 s window; standings with tie-break by total response time; rematch. Buttons only (voice can't tell two speakers apart).
 
 ## Menu, versions, updates
 

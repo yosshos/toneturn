@@ -1,5 +1,14 @@
 # Milestone report — 2026-11-04
 
+## Update 11 — v0.11.0: daily challenge and same-device duel (spec I, part 1)
+
+- `src/engine/tournament.ts`: button-answerable items (≤ 4 choices: degrees 1/3/5, chord qualities, intervals, cadences), seeded sets, a daily set per calendar day (versioned seed), round scoring with spec-J tournament points (500 + speed × streak), plausibility (≥ 150 ms, inside the window), standings with time tie-break, spoiler-free share text.
+- `src/game/tournamentController.ts`: countdown → same stimulus → answer window timed from the end of playback → reveal (plays the explanation when nobody was right) → next round; first answer per player counts.
+- UI: Daily challenge card (Practice tools) with share card and "done today"; Duel card (Games) → names, question set, 5/10/15 rounds → split screen with the top half rotated.
+- Storage: `progress.daily[day]` (first play only, kept across cloud rebuilds, local only for now).
+- Tests: 318 unit + 2 tournament E2E (full duel, full daily with reload).
+- Not yet: online rooms (Realtime), server leaderboard for the daily challenge.
+
 ## Update 10 — v0.10.0: rhythm reading & dictation R1–R3 (spec G)
 
 - `src/engine/rhythm.ts`: 12-ticks-per-quarter model, cells (♩ 𝄽 𝅗𝅥 𝅝 ♫ ♩.♪), bar-safe generation per level, sound signature (graded by what is heard), minimal-pair distractors, count-in + metronome timelines, grid-derived tolerance, reading grade (70 % pattern + 30 % precision), names and Kodály syllables in English and Hebrew, spoken-words parser.

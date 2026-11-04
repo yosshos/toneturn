@@ -286,6 +286,8 @@ Players get **the same question at the same moment** and are scored on **accurac
 - The server holds the answer key and grades; clients only receive the stimulus (good enough for friends; ranked play would also need server-rendered audio).
 - Same item difficulty for everyone; voice and buttons both allowed but shown in the results (voice is slower, so offer a "buttons only" option for competitive rooms).
 
+**Status (0.11.0)**: daily challenge (local, share card) and same-device duel are built (`src/engine/tournament.ts`, `src/game/tournamentController.ts`, `src/ui/Tournament.tsx`). Online rooms and the async leaderboard are next (Supabase Realtime, server-held answer key).
+
 **Open decisions**: max players per room (suggest 2–20), whether tournament points feed weekly XP (suggest a separate tournament rating), moderation of nicknames.
 
 ## Addendum — 2026-11-04 (product owner): J. Scoring model — accuracy, attempts and response time

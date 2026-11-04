@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.11.0',
+    date: '2026-11-04',
+    en: ['Daily challenge: 5 questions, the same for everyone today, scored on speed and accuracy, with a spoiler-free share card', 'Duel on this device: two players face to face on a split screen, same sound, fastest right answer wins'],
+    he: ['האתגר היומי: 5 שאלות, אותן שאלות לכולם היום, ניקוד לפי מהירות ודיוק, וכרטיס שיתוף בלי ספוילרים', 'דו־קרב על המכשיר: שני שחקנים פנים מול פנים במסך מפוצל, אותו צליל, התשובה הנכונה המהירה מנצחת'],
+  },
+  {
     version: '0.10.0',
     date: '2026-11-04',
     en: ['Rhythm 1–3: read rhythm notation and tap it on the metronome (or say “ta”)', 'Rhythm dictation: hear a bar and pick its notation, or say it', 'Rhythm reading and rhythm dictation join the Skill Map'],

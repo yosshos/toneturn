@@ -22,6 +22,7 @@ interface Props {
   onSettings: () => void;
   onLang: (l: 'he' | 'en') => void;
   onGame: (k: GameKind) => void;
+  onDuel: () => void;
   onMenu: () => void;
   updateReady: boolean;
   news: React.ReactNode;
@@ -60,7 +61,7 @@ export function starsFor(best: number, total: number) {
 
 const TOTALS: Partial<Record<LessonId, number>> = { 'bflat-two-homes': 3, 'degrees-135': 5, 'major-minor': 5, cadences: 4, 'sing-home-five': 3, intervals: 6, inversions: 5, 'notes-degrees': 6, 'sing-names': 4, 'sing-degrees': 3, 'rhythm-r1': 5, 'rhythm-r2': 5, 'rhythm-r3': 5 };
 
-export function Home({ t, settings, progress, streak, account, onPractice, onButtonsInstead, onMode, onSettings, onLang, onGame, onMenu, updateReady, news, tools }: Props) {
+export function Home({ t, settings, progress, streak, account, onPractice, onButtonsInstead, onMode, onSettings, onLang, onGame, onDuel, onMenu, updateReady, news, tools }: Props) {
   const [consentFor, setConsentFor] = useState<LessonId | null>(null);
   const lang = settings.uiLang;
   const nm = namingFor(settings.naming, lang);
@@ -210,6 +211,13 @@ export function Home({ t, settings, progress, streak, account, onPractice, onBut
               )}
             </button>
           ))}
+          <button className="game-card duel" onClick={onDuel}>
+            <span className="duel-icon" aria-hidden="true">
+              ⚔
+            </span>
+            <b>{t.duel}</b>
+            <small>{t.duelBlurb}</small>
+          </button>
         </div>
       </section>
 

@@ -44,6 +44,8 @@ export interface Progress {
   snapshots?: { week: string; ratings: Partial<Record<RatingEvent['skill'], number>> }[];
   /** Weekly puzzle results, separate from lesson retries and XP. */
   puzzles?: Record<string, { band: string; medal: Medal; completedAt: string }>;
+  /** Daily challenge: the first play of each local day (later plays are practice). */
+  daily?: Record<string, { points: number; text: string }>;
 }
 
 export const ratingsOf = (p: Progress): Ratings => foldRatings(p.ratingEvents ?? []);
@@ -302,6 +304,16 @@ export class ProgressStore {
     const games = { melody: 0, rhythm: 0, ...(p.games ?? {}) };
     if (best <= games[kind]) return p;
     const next = { ...p, games: { ...games, [kind]: best } };
+    await this.kv.set('progress', next);
+    return next;
+  }
+
+  /** Store the daily challenge result; only the first play of a day counts. */
+  async recordDaily(day: string, points: number, text: string): Promise<Progress> {
+    const p = await this.loadProgress();
+    if (p.daily?.[day]) return p;
+    const daily = Object.fromEntries(Object.entries({ ...(p.daily ?? {}), [day]: { points, text } }).slice(-120));
+    const next = { ...p, daily };
     await this.kv.set('progress', next);
     return next;
   }

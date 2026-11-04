@@ -14,6 +14,8 @@ import { LessonScreen } from './Lesson';
 import { SettingsScreen } from './SettingsScreen';
 import { Diagnostics } from './Diagnostics';
 import { GameScreen, GameSetup, type GameSetupValue } from './Games';
+import { DailyScreen, DuelScreen, DuelSetup } from './Tournament';
+import type { SetKind } from '../engine/tournament';
 import type { GameKind } from '../game/memoryGame';
 import { MenuSheet, Changelog } from './Menu';
 import { FriendsScreen } from './Friends';
@@ -22,10 +24,10 @@ import { APP_VERSION, unseenChanges } from '../version';
 import { pwa } from '../pwa';
 import { piano, SIMULATED, store, tts } from './services';
 
-type Route = 'home' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills';
+type Route = 'home' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay';
 const routeFromHash = (): Route => {
   const h = location.hash.replace(/^#\/?/, '');
-  return (['settings', 'diagnostics', 'games', 'friends', 'skills'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
+  return (['settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
 };
 
 export function App() {
@@ -39,6 +41,7 @@ export function App() {
   const [gameKind, setGameKind] = useState<GameKind>('melody');
   const [gameSetup, setGameSetup] = useState<GameSetupValue | null>(null);
   const [gameKey, setGameKey] = useState(0);
+  const [duel, setDuel] = useState<{ names: string[]; kind: SetKind; rounds: number } | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   /** Generated session in progress (placement / review / weekly puzzle). */
   /** Voice-consent gate for sessions started outside the Practice button. */
@@ -52,7 +55,7 @@ export function App() {
   useEffect(() => {
     void store.loadSettings().then(setSettings).catch(() => setSettings(DEFAULT_SETTINGS));
     void store.loadProgress().then(setProgress);
-    const onHash = () => setRoute((r) => ((r === 'lesson' || r === 'game') && routeFromHash() === 'home' ? r : routeFromHash()));
+    const onHash = () => setRoute((r) => ((r === 'lesson' || r === 'game' || r === 'duelplay') && routeFromHash() === 'home' ? r : routeFromHash()));
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
@@ -199,7 +202,7 @@ export function App() {
           streak={visibleStreak(progress.streak, new Date())}
           account={<AccountCard t={t} user={user} sync={sync} compact />}
           onMenu={() => setMenuOpen(true)}
-          tools={<PracticeTools t={t} progress={progress} onSkills={() => go('skills')} onPlacement={openPlacement} onReview={openReview} onPuzzle={openPuzzle} />}
+          tools={<PracticeTools t={t} progress={progress} onSkills={() => go('skills')} onPlacement={openPlacement} onReview={openReview} onPuzzle={openPuzzle} onDaily={() => go('daily')} />}
           updateReady={pwaState.updateReady}
           news={
             news.length > 0 ? (
@@ -215,6 +218,7 @@ export function App() {
             ) : null
           }
           onSettings={() => go('settings')}
+          onDuel={() => go('duel')}
           onGame={(k) => {
             setGameKind(k);
             go('games');
@@ -319,6 +323,22 @@ export function App() {
             setRoute('game');
           }}
         />
+      )}
+      {route === 'daily' && <DailyScreen t={t} settings={s} progress={progress} onBack={() => go('home')} onProgress={setProgress} />}
+      {route === 'duel' && (
+        <DuelSetup
+          t={t}
+          onBack={() => go('home')}
+          onStart={(names, kind, rounds) => {
+            setDuel({ names, kind, rounds });
+            setGameKey((k) => k + 1);
+            location.hash = '';
+            setRoute('duelplay');
+          }}
+        />
+      )}
+      {route === 'duelplay' && duel && (
+        <DuelScreen key={gameKey} t={t} settings={s} {...duel} onExit={() => go('home')} onRematch={() => setGameKey((k) => k + 1)} />
       )}
       {route === 'game' && gameSetup && (
         <GameScreen
