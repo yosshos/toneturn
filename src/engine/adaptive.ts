@@ -9,6 +9,10 @@ import {
   noteNameQuestion,
   singSeqQuestion,
   singRunQuestion,
+  seventhQuestion,
+  progressionQuestion,
+  songDegreesQuestion,
+  singSongQuestion,
   nameSeqQuestion,
   namesToDegreesQuestion,
   singNamesSeqQuestion,
@@ -24,6 +28,8 @@ import {
   type Quality,
   type Roman,
 } from './lesson';
+import { PROGRESSIONS, SEVENTHS, type ProgressionId, type SeventhQuality } from './jazz';
+import { songById } from './songs';
 import { pc, type PitchClass } from './pitch';
 import { buildRun, MAX_RUN_LEVEL, RUN_LEVELS, SCALES, type RunMaterial, type RunShape, type RunSpec } from './runs';
 import { band, nextLevel, type Band, type Ratings } from './rating';
@@ -146,6 +152,25 @@ export function questionFromTag(tag: string, seed: number, id: string): Question
       const ds = (b ?? '').split('-').map(Number);
       if (!key || !ds.length || !ds.every((x) => x >= 1 && x <= 7)) return null;
       return tag.split(':')[3] === 'name' ? singNamesSeqQuestion(id, key, ds) : singSeqQuestion(id, key, ds);
+    }
+    case 'seventh': {
+      if (!SEVENTHS.includes(a as SeventhQuality)) return null;
+      const n = Number(b) || 4;
+      const choices = n === 2 ? (['maj7', '7'] as SeventhQuality[]) : n === 3 ? (['maj7', '7', 'm7'] as SeventhQuality[]) : SEVENTHS;
+      return seventhQuestion(id, pc(pick(rnd, ['C', 'D', 'F', 'G', 'A'])), a as SeventhQuality, choices.includes(a as SeventhQuality) ? choices : SEVENTHS);
+    }
+    case 'prog': {
+      if (!(a in PROGRESSIONS)) return null;
+      const progs: ProgressionId[] = ['ii-V-I', 'V-I', 'I-vi-ii-V'];
+      return progressionQuestion(id, pc(pick(rnd, ['C', 'D', 'F', 'G', 'Bb'])), a as ProgressionId, progs.includes(a as ProgressionId) ? progs : [...progs, a as ProgressionId]);
+    }
+    case 'song':
+    case 'singsong': {
+      const key = parsePc(a);
+      const song = songById(b ?? '');
+      const n = Number(tag.split(':')[3]) || undefined;
+      if (!key || !song) return null;
+      return kind === 'song' ? songDegreesQuestion(id, key, song, n) : singSongQuestion(id, key, song, n);
     }
     case 'nameseq': {
       const key = parsePc(a);

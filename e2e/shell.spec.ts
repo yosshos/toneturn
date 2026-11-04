@@ -48,6 +48,7 @@ test.describe('menu, friends', () => {
     await page.reload();
     const news = page.locator('.news-card');
     await expect(news).toBeVisible();
+    await expect(news).toContainText('0.18.0');
     await expect(news).toContainText('0.17.0');
     await expect(news).toContainText('0.16.0');
     await expect(news).toContainText('0.15.0');

@@ -50,6 +50,8 @@ Useful URLs
 | 9 | Sing it by name (echo a note; sing a named note after a reference) | singing | sing |
 | 10 | Sing the degrees (“1 3 5” → sing them in order) | singing | sing; per-note strip, partial credit |
 | 15–19 | Rhythm 4–8 (sixteenths → syncopation → triplets → 3/4 & 6/8 → swing) | rhythm reading / rhythm dictation | as R1–R3; the last dictation is *built* from rhythm blocks; tolerance follows the grid to distinguish (triplets vs eighths ≈ 1/15 beat) |
+| 21 | Jazz 1: sevenths & ii–V–I | chord quality / cadences | maj7 · 7 · m7 · ø7 by ear (shell voicings); ii–V–I · V–I · I–vi–ii–V by ear; voice: “two five one”, “ii V I”, “half diminished” (en/he) |
+| 22 | Songs you know | melodic memory | public-domain openings (Twinkle, Ode to Joy, Frère Jacques, Yonatan HaKatan…) with their rhythm → degrees; sing one from degrees; the title is revealed after |
 | 20 | Note sequences (matrix #2 #4 #5 #6 as sequences) | note naming / scale degrees / singing | voice (Do-Re-Mi or letters, דיאז/במול) or a note-name keypad |
 | 14 | Riffs & runs (name a run's scale / shape; sing runs back) | vocal agility | run-id by voice or buttons; sing-run graded per note: pitch (tolerance widens with speed), clarity (smears detected), evenness |
 | 11–13 | Rhythm 1–3 (quarters/halves/rests → eighths → dotted quarter) | rhythm reading / rhythm dictation | tap or say “ta” on the metronome; pick the notation you heard, or say it (“ta ti-ti ta”, “quarter, two eighths…”, טה טי-טי) |

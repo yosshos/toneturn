@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.18.0',
+    date: '2026-11-05',
+    en: ['Jazz 1 (lesson 21): major 7, dominant 7, minor 7 and half-diminished chords, and the ii–V–I family, voiced like a jazz pianist', 'Songs you know (lesson 22): famous public-domain openings — name the degrees, then find out which song it was'],
+    he: ['ג׳אז 1 (שיעור 21): אקורדי מז׳ור 7, דומיננט 7, מינור 7 וחצי מוקטן, ומשפחת ii–V–I, בקולות של פסנתרן ג׳אז', 'שירים שאתם מכירים (שיעור 22): פתיחות מפורסמות מנחלת הכלל — אומרים את הדרגות ומגלים איזה שיר זה היה'],
+  },
+  {
     version: '0.17.0',
     date: '2026-11-04',
     en: ['Review with spaced repetition: mistakes come back after 1, 3, 7, 16 and 35 days until they stick', 'Drone practice: sing every scale degree over a held tonic and see how in tune you are', 'MIDI keyboard: play instead of singing, and press a key to answer degree and note questions'],

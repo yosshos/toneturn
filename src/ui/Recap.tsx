@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { displayNote } from '../engine/pitch';
 import { pcFromKey } from '../engine/lesson';
+import { songById } from '../engine/songs';
 import { summary } from '../engine/session';
 import type { LessonView } from '../game/controller';
 import { answerWord, choiceLabel, giveText, LESSON_META, questionBadge } from '../game/content';
@@ -98,7 +99,7 @@ export function Recap({ t, view, settings, onReplay, onAgain, onHome, onNext, ne
           const r = s.records[i];
           const ok = r.outcome === 'correct' || r.outcome === 'correct-retry';
           const b = questionBadge(q, lang, nm);
-          const ans =
+          const ans0 =
             q.kind === 'sing'
               ? `${t.singNow} ${q.promptBy === 'name' ? displayNote(q.target, nm, lang) : q.degree}`
               : q.kind === 'sing-seq'
@@ -113,7 +114,9 @@ export function Recap({ t, view, settings, onReplay, onAgain, onHome, onNext, ne
                 ? q.answer.split('-').join(' ')
                 : typeof q.answer === 'number'
                   ? String(q.answer)
-                  : choiceLabel(q, q.answer, lang).small;
+                  : choiceLabel(q, q.answer, lang).small || choiceLabel(q, q.answer, lang).big;
+          const song = (q.kind === 'degree-seq' || q.kind === 'sing-seq') && q.song ? songById(q.song) : undefined;
+          const ans = song ? `${ans0} · ♪ ${song.title[lang]}` : ans0;
           return (
             <li key={q.id} className={`recap-row ${r.outcome}`}>
               <span className="recap-mark" aria-hidden="true">

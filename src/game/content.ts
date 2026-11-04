@@ -4,7 +4,8 @@
 import { pcFromKey, type Answer, type IntroStep, type LessonDef, type LessonId, type Question } from '../engine/lesson';
 import { displayNote, spokenMajorKey, spokenNote, type Naming, type PitchClass } from '../engine/pitch';
 import type { SungResult } from '../engine/sing';
-import { parseAlternatives, parseCadence, parseDegree, parseDegreeSequence, parseInterval, parseInversion, parseNoteName, parseQuality, parseRunMaterial, parseRunShape, parseNoteNameSequence, type ParseResult } from '../engine/parser';
+import { parseAlternatives, parseCadence, parseDegree, parseDegreeSequence, parseInterval, parseInversion, parseNoteName, parseQuality, parseRunMaterial, parseRunShape, parseNoteNameSequence, parseProgression, parseSeventh, type ParseResult } from '../engine/parser';
+import { songById } from '../engine/songs';
 import { describeRun } from '../engine/runs';
 import { narration, type Lang } from './narration';
 import { describe as describeRhythm, parseRhythmWords, rhythmFromKey, rhythmKey, sameRhythm, type CellId } from '../engine/rhythm';
@@ -156,6 +157,18 @@ export const LESSON_META: Record<LessonId, LessonMeta> = {
     icon: 'puzzle',
     tip: { en: 'A new puzzle arrives every Monday.', he: 'חידה חדשה מגיעה בכל יום שני.' },
   },
+  'jazz-1': {
+    title: { en: 'Jazz 1: sevenths & ii–V–I', he: 'ג׳אז 1: ספטאקורדים ו־ii–V–I' },
+    blurb: { en: 'Major 7, dominant 7, minor 7, half-diminished — and the progressions they make.', he: 'מז׳ור 7, דומיננט 7, מינור 7, חצי מוקטן — והמהלכים שהם יוצרים.' },
+    icon: 'chord',
+    tip: { en: 'Listen for the ♭7 in a dominant chord: it pulls down to the next chord’s 3rd.', he: 'הקשיבו ל־♭7 באקורד הדומיננטי: הוא נמשך למטה אל הטרצה של האקורד הבא.' },
+  },
+  songs: {
+    title: { en: 'Songs you know', he: 'שירים שאתם מכירים' },
+    blurb: { en: 'Famous openings: name the degrees, then find out which song it was.', he: 'פתיחות מפורסמות: אומרים את הדרגות, ואז מגלים איזה שיר זה היה.' },
+    icon: 'steps',
+    tip: { en: 'Pick a song you love and work out its first notes as degrees.', he: 'בחרו שיר שאתם אוהבים ונסו לפענח את הצלילים הראשונים שלו כדרגות.' },
+  },
   'note-sequences': {
     title: { en: 'Note sequences', he: 'רצפי תווים' },
     blurb: { en: 'Hear notes and name them; turn names into degrees and back; sing from names.', he: 'שומעים תווים ונותנים להם שם; ממירים שמות לדרגות ובחזרה; שרים לפי שמות.' },
@@ -223,6 +236,17 @@ export function introText(lesson: LessonDef, step: IntroStep, l: Lang, nm: Namin
       return l === 'en'
         ? `Here is a bar: ${describeRhythm(rhythmFromKey(c.rhythm), 'names', l)}. Count it: ${describeRhythm(rhythmFromKey(c.rhythm), 'syllables', l)}.`
         : `זו תיבה: ${describeRhythm(rhythmFromKey(c.rhythm), 'names', l)}. סופרים: ${describeRhythm(rhythmFromKey(c.rhythm), 'syllables', l)}.`;
+    case 'seventh':
+      return {
+        maj7: { en: 'A major seventh chord: dreamy and settled. Home in jazz.', he: 'אקורד מז׳ור שביעית: חלומי ורגוע. הבית בג׳אז.' },
+        '7': { en: 'A dominant seventh: bluesy, with a pull to move on.', he: 'דומיננט שביעית: בלוזי, עם משיכה להמשיך הלאה.' },
+        m7: { en: 'Minor seven, dominant seven, major seven: two, five, one — the most common move in jazz.', he: 'מינור שביעית, דומיננט שביעית, מז׳ור שביעית: שתיים, חמש, אחת — המהלך הנפוץ ביותר בג׳אז.' },
+        m7b5: { en: 'Half-diminished: dark and restless.', he: 'חצי מוקטן: כהה וחסר מנוחה.' },
+      }[c.quality][l];
+    case 'song':
+      return l === 'en'
+        ? 'You know this one: one, one, five, five, six, six, five. Famous melodies are made of the same degrees you are learning.'
+        : 'את זה אתם מכירים: אחת, אחת, חמש, חמש, שש, שש, חמש. מנגינות מפורסמות בנויות מאותן דרגות שאתם לומדים.';
     case 'inversion':
       return {
         root: { en: 'Root in the bass: solid and grounded.', he: 'השורש בבס: יציב ומקורקע.' },
@@ -266,6 +290,14 @@ export function answerWord(_q: Question, a: Answer, l: Lang, nm: Naming = 'lette
     aug: { en: 'augmented', he: 'מוגדל' },
     accurate: { en: 'in tune', he: 'מדויק' },
     major: { en: 'major scale', he: "סולם מז'ור" },
+    maj7: { en: 'major seven', he: "מז'ור שביעית" },
+    '7': { en: 'dominant seven', he: 'דומיננט שביעית' },
+    m7: { en: 'minor seven', he: 'מינור שביעית' },
+    m7b5: { en: 'half-diminished', he: 'חצי מוקטן' },
+    'ii-V-I': { en: 'two five one', he: 'שתיים חמש אחת' },
+    'V-I': { en: 'five one', he: 'חמש אחת' },
+    'I-vi-ii-V': { en: 'one six two five', he: 'אחת שש שתיים חמש' },
+    'iii-vi-ii-V': { en: 'three six two five', he: 'שלוש שש שתיים חמש' },
     'min-penta': { en: 'pentatonic', he: 'פנטטוני' },
     blues: { en: 'blues', he: 'בלוז' },
     up: { en: 'up', he: 'עולה' },
@@ -312,6 +344,10 @@ export function roundPrompt(q: Question, l: Lang, nm: Naming, n: number): string
           : `סיבוב ${n}. קוראים ומקישים. ספירה, ואז מתחילים.`;
     case 'rhythm-dict':
       return l === 'en' ? `Round ${n}. Listen to the rhythm.` : `סיבוב ${n}. הקשיבו לקצב.`;
+    case 'seventh':
+      return l === 'en' ? `Round ${n}. Which seventh chord? ${cap(sayChoices(q, l))}?` : `סיבוב ${n}. איזה ספטאקורד? ${sayChoices(q, l)}?`;
+    case 'progression':
+      return l === 'en' ? `Round ${n}. ${cap(spokenMajorKey(q.key, nm, l))}. Which progression?` : `סיבוב ${n}. ${spokenMajorKey(q.key, nm, l)}. איזה מהלך?`;
     case 'name-seq':
       return q.given === 'sound'
         ? l === 'en'
@@ -410,6 +446,10 @@ export function parseAnswer(q: Question, alternatives: string[], inputNaming: Na
       return q.aspect === 'material' ? parseAlternatives(alternatives, parseRunMaterial) : parseAlternatives(alternatives, parseRunShape);
     case 'name-seq':
       return parseAlternatives(alternatives, (t) => parseNoteNameSequence(t, inputNaming));
+    case 'seventh':
+      return parseAlternatives(alternatives, parseSeventh);
+    case 'progression':
+      return parseAlternatives(alternatives, parseProgression);
     case 'sing-seq':
     case 'sing-run':
     case 'rhythm-read':
@@ -433,9 +473,9 @@ export function correctText(q: Question, l: Lang, firstTry: boolean, nm: Naming 
     const w = answerWord(q, q.answer, l, nm);
     return l === 'en' ? (firstTry ? `Yes, ${w}!` : `That's it, ${w}.`) : firstTry ? `נכון, ${w}!` : `זהו, ${w}.`;
   }
-  if (q.kind === 'sing' || q.kind === 'sing-seq') return l === 'en' ? (firstTry ? 'Spot on!' : 'There it is!') : firstTry ? 'מדויק!' : 'הנה זה!';
+  if (q.kind === 'sing' || q.kind === 'sing-seq') return (l === 'en' ? (firstTry ? 'Spot on!' : 'There it is!') : firstTry ? 'מדויק!' : 'הנה זה!') + songLine(q, l);
   const w = answerWord(q, q.answer, l);
-  return l === 'en' ? (firstTry ? `Yes, ${w}!` : `That's it, ${w}.`) : firstTry ? `נכון, ${w}!` : `זהו, ${w}.`;
+  return (l === 'en' ? (firstTry ? `Yes, ${w}!` : `That's it, ${w}.`) : firstTry ? `נכון, ${w}!` : `זהו, ${w}.`) + songLine(q, l);
 }
 
 export function retryText(q: Question, l: Lang): string {
@@ -443,7 +483,19 @@ export function retryText(q: Question, l: Lang): string {
   return l === 'en' ? 'Not quite. Listen again.' : 'לא בדיוק. הקשיבו שוב.';
 }
 
+/** "That's the opening of Ode to Joy." — appended after a song item. */
+export function songLine(q: Question, l: Lang): string {
+  const id = (q.kind === 'degree-seq' || q.kind === 'sing-seq') && q.song;
+  const s = id ? songById(id) : undefined;
+  if (!s) return '';
+  return l === 'en' ? ` That’s the opening of “${s.title.en}”.` : ` זו הפתיחה של "${s.title.he}".`;
+}
+
 export function revealText(q: Question, l: Lang, nm: Naming): string {
+  return revealCore(q, l, nm) + songLine(q, l);
+}
+
+function revealCore(q: Question, l: Lang, nm: Naming): string {
   switch (q.kind) {
     case 'note-name':
       return l === 'en'
@@ -453,6 +505,10 @@ export function revealText(q: Question, l: Lang, nm: Naming): string {
       return l === 'en' ? 'Here are the notes.' : 'אלה הצלילים.';
     case 'sing-run':
       return l === 'en' ? 'Here is the run: half speed, then at tempo.' : 'הנה הראן: בחצי מהירות, ואז בקצב.';
+    case 'seventh':
+      return l === 'en' ? `It was ${answerWord(q, q.answer, l)}. Your chord, then the right one.` : `זה היה ${answerWord(q, q.answer, l)}. האקורד שלכם, ואז הנכון.`;
+    case 'progression':
+      return l === 'en' ? `It was ${answerWord(q, q.answer, l)}. Your progression, then the right one.` : `זה היה ${answerWord(q, q.answer, l)}. המהלך שלכם, ואז הנכון.`;
     case 'name-seq':
       return l === 'en' ? `It was ${namesWords(q.names, nm, l)}: degrees ${q.degrees.map((d) => deg(d, l)).join(', ')}.` : `זה היה ${namesWords(q.names, nm, l)}: דרגות ${q.degrees.map((d) => deg(d, l)).join(', ')}.`;
     case 'run-id':
@@ -570,6 +626,14 @@ export function choiceLabel(_q: Question, a: Answer, l: Lang, nm: Naming = 'lett
     M3: { big: '3', small: 'Third', he: '3', heSmall: 'טרצה', tone: 'gold' },
     P5: { big: '5', small: 'Fifth', he: '5', heSmall: 'קווינטה', tone: 'lilac' },
     P8: { big: '8', small: 'Octave', he: '8', heSmall: 'אוקטבה', tone: 'mint' },
+    maj7: { big: 'Δ7', small: 'Major 7', he: 'Δ7', heSmall: "מז'ור 7", tone: 'gold' },
+    '7': { big: '7', small: 'Dominant 7', he: '7', heSmall: 'דומיננט 7', tone: 'coral' },
+    m7: { big: 'm7', small: 'Minor 7', he: 'm7', heSmall: 'מינור 7', tone: 'lilac' },
+    m7b5: { big: 'ø7', small: 'Half-dim.', he: 'ø7', heSmall: 'חצי מוקטן', tone: 'mint' },
+    'ii-V-I': { big: 'ii–V–I', small: '', he: 'ii–V–I', heSmall: '', tone: 'gold' },
+    'V-I': { big: 'V–I', small: '', he: 'V–I', heSmall: '', tone: 'mint' },
+    'I-vi-ii-V': { big: 'I–vi–ii–V', small: 'turnaround', he: 'I–vi–ii–V', heSmall: 'טרנאראונד', tone: 'lilac' },
+    'iii-vi-ii-V': { big: 'iii–vi–ii–V', small: '', he: 'iii–vi–ii–V', heSmall: '', tone: 'coral' },
     major: { big: '♪', small: 'Major scale', he: '♪', heSmall: "סולם מז'ור", tone: 'gold' },
     'min-penta': { big: '⁵', small: 'Pentatonic', he: '⁵', heSmall: 'פנטטוני', tone: 'mint' },
     blues: { big: '♭', small: 'Blues', he: '♭', heSmall: 'בלוז', tone: 'lilac' },
@@ -596,6 +660,10 @@ export function askTemplate(q: Question, l: Lang, nm: Naming = 'letter'): string
     case 'sing-seq':
       if (q.promptBy === 'name' && q.names) return l === 'en' ? `Sing ${namesShown(q.names, nm, l)}` : `שירו ${namesShown(q.names, nm, l)}`;
       return l === 'en' ? `Sing ${q.degrees.join(' – ')}` : `שירו ${q.degrees.join(' – ')}`;
+    case 'seventh':
+      return l === 'en' ? 'Which seventh chord?' : 'איזה ספטאקורד?';
+    case 'progression':
+      return l === 'en' ? 'Which progression?' : 'איזה מהלך?';
     case 'name-seq':
       return q.given === 'sound' ? (l === 'en' ? 'Which notes, in order?' : 'אילו תווים, לפי הסדר?') : l === 'en' ? `Which notes are degrees ${q.degrees.join(' – ')}?` : `אילו תווים הם הדרגות ${q.degrees.join(' – ')}?`;
     case 'sing-run':
@@ -654,6 +722,10 @@ export function questionBadge(q: Question, l: Lang, nm: Naming): { key?: PitchCl
       return { key: q.key, text: `${q.run.offsets.length} ${l === 'en' ? 'notes' : 'צלילים'} · ${q.run.nps} ${l === 'en' ? 'n/s' : 'בשנייה'}` };
     case 'quality':
       return { text: `${l === 'en' ? 'Chord on' : 'אקורד על'} ${displayNote(q.root, nm, l)}` };
+    case 'seventh':
+      return { text: `${l === 'en' ? 'Seventh chord on' : 'ספטאקורד על'} ${displayNote(q.root, nm, l)}` };
+    case 'progression':
+      return { key: q.key, text: l === 'en' ? 'jazz progression' : 'מהלך ג׳אז' };
     case 'interval':
       return { text: q.mode === 'melodic' ? (l === 'en' ? 'One after the other' : 'אחד אחרי השני') : l === 'en' ? 'Together' : 'ביחד' };
     case 'rhythm-read':

@@ -1,6 +1,8 @@
 // Versioned lesson content. Prompts, stimulus, scoring policy and explanations are kept separate.
 // Pure: no browser APIs. Text for narration / UI lives in src/game/content.ts.
 
+import { jazzVoicing, PROGRESSIONS, SEVENTHS, voiceProgression, type JazzChord, type ProgressionId, type SeventhQuality } from './jazz';
+import { opening, SONGS, type SongOpening } from './songs';
 import { atTempo, buildRun, MAX_RUN_LEVEL, runAt, runDifficulty, type RunMaterial, type RunShape, type RunSpec } from './runs';
 import { majorScale, pc, pcValue, voiceChord, type ChordQuality, type PitchClass } from './pitch';
 import { options as rhythmOptions, rhythmAt, rhythmFromKey, rhythmKey, rhythmSound, type Rhythm, type RhythmLevel } from './rhythm';
@@ -35,6 +37,10 @@ export type Stimulus =
   | { kind: 'chord'; midis: number[]; duration: number; arpeggio?: boolean }
   | { kind: 'phrase'; key: PitchClass; chords: Roman[] }
   | { kind: 'rest'; duration: number }
+  /** A melody with its rhythm (song openings). */
+  | { kind: 'melody'; midis: number[]; beats: number[]; bpm: number }
+  /** Jazz seventh chords in a key (shell voicings, smooth voice leading). */
+  | { kind: 'jazz'; key: PitchClass; chords: JazzChord[]; each: number }
   | { kind: 'rhythm'; rhythm: string; bars: number; bpm: number };
 
 interface QBase {
@@ -90,6 +96,8 @@ export interface DegreeSeqQuestion extends QBase {
   midis: number[];
   /** #5 sequence: the prompt is note names (symbolic, no sound) instead of a heard melody. */
   given?: 'names';
+  /** Opening of a known melody (revealed after the answer). */
+  song?: string;
   names?: string[];
   /** Canonical answer: degrees joined with '-', e.g. "1-3-5". */
   answer: string;
@@ -129,6 +137,8 @@ export interface SingSeqQuestion extends QBase {
   midis: number[];
   /** #4 sequence: asked by note names instead of degrees. */
   promptBy?: 'name';
+  /** Opening of a known melody (revealed after the answer). */
+  song?: string;
   names?: string[];
   answer: 'accurate';
 }
@@ -185,7 +195,23 @@ export interface NameSeqQuestion extends QBase {
   answer: string;
 }
 
+/** Jazz: which seventh chord colour (maj7, dominant 7, m7, half-diminished)? */
+export interface SeventhQuestion extends QBase {
+  kind: 'seventh';
+  root: PitchClass;
+  answer: SeventhQuality;
+}
+
+/** Jazz: which progression (ii–V–I, V–I, I–vi–ii–V, iii–vi–ii–V)? */
+export interface ProgressionQuestion extends QBase {
+  kind: 'progression';
+  key: PitchClass;
+  answer: ProgressionId;
+}
+
 export type Question =
+  | SeventhQuestion
+  | ProgressionQuestion
   | NameSeqQuestion
   | SingRunQuestion
   | RunIdQuestion
@@ -240,6 +266,10 @@ export function questionSkill(q: Question): SkillId {
       return 'agility';
     case 'name-seq':
       return q.given === 'sound' ? 'notes' : 'degrees';
+    case 'seventh':
+      return 'chords';
+    case 'progression':
+      return 'cadences';
   }
 }
 
@@ -256,7 +286,9 @@ export type IntroCard =
   | { kind: 'sing'; key: PitchClass; degree: number }
   | { kind: 'interval'; name: IntervalName }
   | { kind: 'inversion'; root: PitchClass; bass: BassRole }
-  | { kind: 'rhythm'; rhythm: string };
+  | { kind: 'rhythm'; rhythm: string }
+  | { kind: 'seventh'; quality: SeventhQuality }
+  | { kind: 'song'; song: string };
 
 export interface IntroStep {
   id: string;
@@ -294,6 +326,8 @@ export type LessonId =
   | 'rhythm-r8'
   | 'runs'
   | 'note-sequences'
+  | 'jazz-1'
+  | 'songs'
   | 'runs-workshop'
   | 'placement'
   | 'review'
@@ -886,6 +920,104 @@ export function noteSequences(seed = Date.now()): LessonDef {
   };
 }
 
+// ---------------------------------------------------------------- Songs you know (public-domain openings)
+const SONG_BPM = 96;
+
+/** Hear the opening of a known melody (with its rhythm) → name the degrees; the title is revealed after. */
+export function songDegreesQuestion(id: string, key: PitchClass, song: SongOpening, n = song.degrees.length): DegreeSeqQuestion {
+  const o = opening(song, n);
+  const q = degreeSeqQuestion(id, key, o.degrees, 1100 + 35 * o.degrees.length);
+  return { ...q, song: song.id, stimulus: [{ kind: 'cadence', key }, { kind: 'melody', midis: q.midis, beats: o.beats, bpm: SONG_BPM }] };
+}
+
+/** Sing the opening of a known melody from its degrees. */
+export function singSongQuestion(id: string, key: PitchClass, song: SongOpening, n = Math.min(5, song.degrees.length)): SingSeqQuestion {
+  const o = opening(song, n);
+  return { ...singSeqQuestion(id, key, o.degrees, 1150 + 40 * o.degrees.length), song: song.id };
+}
+
+/** Lesson 22 — "Songs you know": hear famous openings and name their degrees; sing one from its degrees. */
+export function songsLesson(seed = Date.now()): LessonDef {
+  const rnd = mulberry32(seed);
+  const songs = shuffle(rnd, SONGS.slice());
+  const keys = shuffle(rnd, ['C', 'D', 'F', 'G', 'Bb'].map((k) => pc(k)));
+  const short = (s: SongOpening) => Math.min(s.degrees.length, 5);
+  return {
+    id: 'songs',
+    version: 1,
+    skill: 'sequences',
+    scoring: { xpPerCorrect: 15, attemptLimit: 3 },
+    intro: [
+      {
+        id: 'intro-songs',
+        card: { kind: 'song', song: 'twinkle' },
+        stimulus: [{ kind: 'cadence', key: pc('C') }, { kind: 'melody', midis: [60, 60, 67, 67, 69, 69, 67], beats: [1, 1, 1, 1, 1, 1, 2], bpm: SONG_BPM }],
+      },
+    ],
+    questions: [
+      songDegreesQuestion('q1', keys[0], songs[0], short(songs[0])),
+      songDegreesQuestion('q2', keys[1], songs[1], short(songs[1])),
+      songDegreesQuestion('q3', keys[2], songs[2], short(songs[2])),
+      singSongQuestion('q4', pick(rnd, SING_KEYS), songs[3]),
+      songDegreesQuestion('q5', keys[3], songs[4], songs[4].degrees.length),
+    ],
+  };
+}
+
+// ---------------------------------------------------------------- Jazz 1: sevenths and ii–V–I
+export function seventhQuestion(id: string, root: PitchClass, answer: SeventhQuality, choices: SeventhQuality[] = SEVENTHS): SeventhQuestion {
+  return {
+    id,
+    kind: 'seventh',
+    root,
+    answer,
+    choices,
+    stimulus: [{ kind: 'chord', midis: jazzVoicing(pcValue(root), answer), duration: 1.8 }],
+    difficulty: 1050 + 70 * (choices.length - 2) + (answer === 'm7b5' ? 60 : 0),
+  };
+}
+
+export function progressionQuestion(id: string, key: PitchClass, answer: ProgressionId, choices: ProgressionId[]): ProgressionQuestion {
+  return {
+    id,
+    kind: 'progression',
+    key,
+    answer,
+    choices,
+    stimulus: [{ kind: 'jazz', key, chords: PROGRESSIONS[answer], each: 1 }],
+    difficulty: 1100 + 60 * (choices.length - 2),
+  };
+}
+
+/** Lesson 21 — "Jazz 1": hear seventh-chord colours, then the ii–V–I family. */
+export function jazzLesson(seed = Date.now()): LessonDef {
+  const rnd = mulberry32(seed);
+  const roots = shuffle(rnd, ['C', 'D', 'F', 'G', 'A', 'Bb'].map((k) => pc(k)));
+  const two = covering(rnd, ['maj7', '7'] as const, 2);
+  const three = pick(rnd, ['maj7', '7', 'm7'] as const);
+  const four = pick(rnd, SEVENTHS);
+  const progs: ProgressionId[] = ['ii-V-I', 'V-I', 'I-vi-ii-V'];
+  const p1 = covering(rnd, progs, 2);
+  return {
+    id: 'jazz-1',
+    version: 1,
+    skill: 'chords',
+    scoring: { xpPerCorrect: 15, attemptLimit: 2 },
+    intro: [
+      { id: 'intro-maj7', card: { kind: 'seventh', quality: 'maj7' }, stimulus: [{ kind: 'chord', midis: jazzVoicing(0, 'maj7'), duration: 1.8 }] },
+      { id: 'intro-dom7', card: { kind: 'seventh', quality: '7' }, stimulus: [{ kind: 'chord', midis: jazzVoicing(0, '7'), duration: 1.8 }] },
+      { id: 'intro-251', card: { kind: 'seventh', quality: 'm7' }, stimulus: [{ kind: 'jazz', key: pc('C'), chords: PROGRESSIONS['ii-V-I'], each: 1 }] },
+    ],
+    questions: [
+      seventhQuestion('q1', roots[0], two[0], ['maj7', '7']),
+      seventhQuestion('q2', roots[1], three, ['maj7', '7', 'm7']),
+      progressionQuestion('q3', roots[2], p1[0], progs),
+      seventhQuestion('q4', roots[3], four),
+      progressionQuestion('q5', roots[4], p1[1], progs),
+    ],
+  };
+}
+
 // ---------------------------------------------------------------- Riffs & runs (spec K)
 const RUN_KEYS = ['C', 'D', 'F', 'G', 'A'] as const;
 
@@ -1014,6 +1146,8 @@ export const LESSON_ORDER: LessonId[] = [
   'rhythm-r7',
   'rhythm-r8',
   'note-sequences',
+  'jazz-1',
+  'songs',
 ];
 
 export function makeLesson(id: LessonId, seed = Date.now()): LessonDef {
@@ -1022,6 +1156,10 @@ export function makeLesson(id: LessonId, seed = Date.now()): LessonDef {
       return runsLesson(seed);
     case 'note-sequences':
       return noteSequences(seed);
+    case 'jazz-1':
+      return jazzLesson(seed);
+    case 'songs':
+      return songsLesson(seed);
     case 'runs-workshop':
       return runsWorkshop(3, seed);
     case 'placement':
@@ -1096,6 +1234,12 @@ export function explainStimulus(q: Question): Stimulus[] {
       return q.stimulus;
     case 'name-seq':
       return [{ kind: 'cadence', key: q.key }, { kind: 'notes', midis: q.midis, each: 0.75 }];
+    case 'seventh': {
+      const v = jazzVoicing(pcValue(q.root), q.answer);
+      return [{ kind: 'chord', midis: v, duration: 2.2, arpeggio: true }, { kind: 'chord', midis: v, duration: 1.6 }];
+    }
+    case 'progression':
+      return q.stimulus;
     case 'sing-run':
     case 'run-id':
       // The model at half speed, then at tempo (spec K.6).
@@ -1163,6 +1307,14 @@ export function compareStimulus(q: Question, given: Answer): Stimulus[] | null {
       if (typeof given !== 'string' || given === q.answer) return null;
       const g = rhythmFromKey(given, q.rhythm.bars);
       return [{ kind: 'rhythm', rhythm: rhythmKey(g), bars: g.bars, bpm: q.bpm }, { kind: 'rest', duration: 0.5 }, ...q.stimulus];
+    }
+    case 'seventh': {
+      if (typeof given !== 'string' || given === q.answer || !SEVENTHS.includes(given as SeventhQuality)) return null;
+      return [{ kind: 'chord', midis: jazzVoicing(pcValue(q.root), given as SeventhQuality), duration: 1.4 }, { kind: 'rest', duration: 0.35 }, ...q.stimulus];
+    }
+    case 'progression': {
+      if (typeof given !== 'string' || given === q.answer || !(given in PROGRESSIONS)) return null;
+      return [{ kind: 'jazz', key: q.key, chords: PROGRESSIONS[given as ProgressionId], each: 1 }, { kind: 'rest', duration: 0.5 }, ...q.stimulus];
     }
     case 'name-seq': {
       if (typeof given !== 'string' || given === q.answer) return null;
@@ -1253,6 +1405,26 @@ export function renderStimulus(stimulus: Stimulus[]): { events: NoteEvent[]; len
       case 'rest':
         t += s.duration;
         break;
+      case 'melody': {
+        const beat = 60 / s.bpm;
+        s.midis.forEach((m, i) => {
+          const d = (s.beats[i] ?? 1) * beat;
+          events.push({ midi: m, start: t, duration: d * 0.92, velocity: 0.7 });
+          t += d;
+        });
+        t += 0.2;
+        break;
+      }
+      case 'jazz': {
+        const vs = voiceProgression(pcValue(s.key), s.chords);
+        vs.forEach((v, i) => {
+          const dur = i === vs.length - 1 ? s.each * 1.6 : s.each;
+          block(v, dur);
+          t += dur;
+        });
+        t += 0.2;
+        break;
+      }
       case 'rhythm': {
         const snd = rhythmSound(rhythmFromKey(s.rhythm, s.bars), s.bpm);
         for (const e of snd.events) events.push({ ...e, start: t + e.start });
@@ -1277,6 +1449,7 @@ export function questionTag(q: Question): string {
     case 'sing':
       return `sing:${q.degree}`;
     case 'degree-seq':
+      if (q.song) return `song:${k(q.key)}:${q.song}:${q.degrees.length}`;
       return `seq:${k(q.key)}:${q.answer}${q.given === 'names' ? ':names' : ''}`;
     case 'interval':
       return `interval:${q.answer}:${q.mode}`;
@@ -1285,11 +1458,16 @@ export function questionTag(q: Question): string {
     case 'note-name':
       return `name:${k(q.key)}:${q.degree}:${q.direction === 'heard-pitch→name' ? 'heard' : 'degree'}`;
     case 'sing-seq':
+      if (q.song) return `singsong:${k(q.key)}:${q.song}:${q.degrees.length}`;
       return `singseq:${k(q.key)}:${q.degrees.join('-')}${q.promptBy === 'name' ? ':name' : ''}`;
     case 'rhythm-read':
       return `rread:${q.level}:${q.rhythm.bars}:${q.show}:${rhythmKey(q.rhythm)}`;
     case 'rhythm-dict':
       return `rdict:${q.level}:${q.rhythm.bars}:${q.answer}`;
+    case 'seventh':
+      return `seventh:${q.answer}:${q.choices.length}`;
+    case 'progression':
+      return `prog:${q.answer}:${q.choices.length}`;
     case 'name-seq':
       return `nameseq:${k(q.key)}:${q.degrees.join('-')}:${q.given}`;
     case 'sing-run':

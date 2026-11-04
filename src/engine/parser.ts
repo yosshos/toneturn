@@ -297,6 +297,40 @@ export function parseRunShape(t: string): ParseResult<'up' | 'down' | 'turn'> {
   return parseChoiceTable(t, RUN_SHAPE_TOKENS);
 }
 
+/** Jazz seventh chords: "major seven", "dominant", "minor seven", "half diminished" (en/he). */
+export function parseSeventh(t: string): ParseResult<'maj7' | '7' | 'm7' | 'm7b5'> {
+  const heard = t.trim();
+  const n = normalize(t.replace(/maj7/gi, ' major ').replace(/m7b5|ø/gi, ' half diminished ').replace(/\bm7\b/gi, ' minor seven '));
+  const has = (...ws: string[]) => n.some((w) => ws.includes(w));
+  let v: 'maj7' | '7' | 'm7' | 'm7b5' | null = null;
+  if (has('half', 'diminished', 'חצי', 'מוקטן', 'half-diminished')) v = 'm7b5';
+  else if (has('dominant', 'דומיננטה', 'דומיננטי', 'דומיננט')) v = '7';
+  else if (has('major', "מז'ור", 'מזור', 'מייג׳ור', "מייג'ור")) v = 'maj7';
+  else if (has('minor', 'מינור')) v = 'm7';
+  else if (has('seven', 'seventh', '7', 'שביעית', 'שבע', 'ספטים')) v = '7';
+  if (v) return { kind: 'answer', value: v, heard };
+  const commands = findCommands(n);
+  if (commands.length === 1) return { kind: 'command', command: commands[0], heard };
+  return { kind: 'unrecognized', heard };
+}
+
+const ROMAN_NUM: Record<string, number> = { i: 1, ii: 2, iii: 3, iv: 4, v: 5, vi: 6, vii: 7 };
+const PROG_BY_DEGREES: Record<string, 'ii-V-I' | 'V-I' | 'I-vi-ii-V' | 'iii-vi-ii-V'> = { '2-5-1': 'ii-V-I', '5-1': 'V-I', '1-6-2-5': 'I-vi-ii-V', '3-6-2-5': 'iii-vi-ii-V' };
+/** Progressions spoken as numbers or Roman numerals: "two five one", "ii V I", "1 6 2 5", "שתיים חמש אחת". */
+export function parseProgression(t: string): ParseResult<'ii-V-I' | 'V-I' | 'I-vi-ii-V' | 'iii-vi-ii-V'> {
+  const heard = t.trim();
+  if (/turnaround|טרנאראונד/i.test(t)) return { kind: 'answer', value: 'I-vi-ii-V', heard };
+  const romanised = t.replace(/[–—-]/g, ' ').replace(/\b(vii|vi|v|iv|iii|ii|i)\b/gi, (m) => String(ROMAN_NUM[m.toLowerCase()]));
+  const r = parseDegreeSequence(romanised);
+  if (r.kind === 'answer') {
+    const p = PROG_BY_DEGREES[r.value];
+    if (p) return { kind: 'answer', value: p, heard };
+    return { kind: 'unrecognized', heard };
+  }
+  if (r.kind === 'command') return r;
+  return { kind: 'unrecognized', heard };
+}
+
 /** "resolved" vs "open" cadence answers; "not resolved" / "לא נפתר" count as open. */
 export function parseCadence(transcript: string): ParseResult<'resolved' | 'open'> {
   return parseChoiceTable(transcript, CADENCE_TOKENS, [

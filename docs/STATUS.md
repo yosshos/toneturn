@@ -1,5 +1,11 @@
 # Milestone report — 2026-11-04
 
+## Update 18 — v0.18.0 (2026-11-05): jazz track and songs you know
+
+- `engine/jazz.ts`: seventh-chord shell voicings (root + 3 + 7 + colour), progressions (ii–V–I, V–I, I–vi–ii–V, iii–vi–ii–V) with voice leading; question kinds `seventh` and `progression`; parsers for spoken chord names and progressions (numbers, Roman numerals, Hebrew, "turnaround"). Lesson 21.
+- `engine/songs.ts`: ten public-domain openings (traditional tunes, Beethoven 1824, Mason 1830s, Pierpont 1857) as degrees + rhythm; new `melody` stimulus; degree / sing items carry the song and reveal its title (spoken and in the recap). Lesson 22.
+- Tests: 382 unit + 2 E2E (both lessons hands-free in the simulator).
+
 ## Update 17 — v0.17.0: spaced repetition, drone practice, MIDI keyboard
 
 - Review queue: Leitner boxes (`scheduleReview`, due times from each result's completion time, so a cloud rebuild gives the same schedule); review sessions take due items only; the tool card shows "due now" or "next in n d".

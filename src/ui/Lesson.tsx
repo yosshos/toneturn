@@ -369,6 +369,27 @@ function IntroCardView({ card, state, t, lang, nm }: { card: IntroCard; state: s
         </div>
       );
     }
+    case 'seventh':
+      return (
+        <div className={`intro-card ${state}`}>
+          <span className="intro-key">{choiceLabel({ kind: 'seventh' } as Question, card.quality, lang).small}</span>
+          <span className="intro-coin big-glyph">{{ maj7: 'Δ7', '7': '7', m7: 'ii–V–I', m7b5: 'ø7' }[card.quality]}</span>
+          <span className="intro-deg">{card.quality === 'm7' ? 'm7 → 7 → Δ7' : ''}</span>
+        </div>
+      );
+    case 'song':
+      return (
+        <div className={`intro-card wide ${state}`}>
+          <span className="intro-key">♪</span>
+          <span className="step-row">
+            {[1, 1, 5, 5, 6, 6, 5].map((d, i) => (
+              <span key={i} className={`step-coin d${d}`}>
+                {d}
+              </span>
+            ))}
+          </span>
+        </div>
+      );
     case 'rhythm':
       return (
         <div className={`intro-card wide ${state}`}>
