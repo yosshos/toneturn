@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.13.0',
+    date: '2026-11-04',
+    en: ['Daily challenge leaderboard: see how many played today, your rank and top %, and your friends’ scores', 'Your first play is graded on the server — also when you played before signing in'],
+    he: ['טבלת האתגר היומי: כמה שיחקו היום, המקום שלכם, האחוזון, והניקוד של החברים', 'המשחק הראשון שלכם נבדק בשרת — גם אם שיחקתם לפני שהתחברתם'],
+  },
+  {
     version: '0.12.0',
     date: '2026-11-04',
     en: ['Online rooms: create a room, share the code or link, and play friends on their own phones — same sound at the same moment, live leaderboard after every round, podium at the end', 'The server keeps the answers and does the scoring'],

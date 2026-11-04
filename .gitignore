@@ -8,3 +8,5 @@ playwright-report
 
 # VAPID private key for push (never commit)
 .vapid*
+scripts/.daily-keys.mjs
+scripts/.daily-keys.log

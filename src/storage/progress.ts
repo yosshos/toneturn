@@ -45,7 +45,7 @@ export interface Progress {
   /** Weekly puzzle results, separate from lesson retries and XP. */
   puzzles?: Record<string, { band: string; medal: Medal; completedAt: string }>;
   /** Daily challenge: the first play of each local day (later plays are practice). */
-  daily?: Record<string, { points: number; text: string }>;
+  daily?: Record<string, DailyRecord>;
 }
 
 export const ratingsOf = (p: Progress): Ratings => foldRatings(p.ratingEvents ?? []);
@@ -134,6 +134,15 @@ export const emptyProgress = (): Progress => ({
 });
 
 /** Local calendar day, YYYY-MM-DD (streaks follow the player's local midnight). */
+export interface DailyRecord {
+  points: number;
+  text: string;
+  /** What was answered (for the server leaderboard; uploaded once signed in). */
+  answers?: (string | null)[];
+  times?: (number | null)[];
+  submitted?: boolean;
+}
+
 export function localDay(d: Date): string {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -309,11 +318,21 @@ export class ProgressStore {
   }
 
   /** Store the daily challenge result; only the first play of a day counts. */
-  async recordDaily(day: string, points: number, text: string): Promise<Progress> {
+  async recordDaily(day: string, points: number, text: string, extra: Omit<DailyRecord, 'points' | 'text'> = {}): Promise<Progress> {
     const p = await this.loadProgress();
     if (p.daily?.[day]) return p;
-    const daily = Object.fromEntries(Object.entries({ ...(p.daily ?? {}), [day]: { points, text } }).slice(-120));
+    const daily = Object.fromEntries(Object.entries({ ...(p.daily ?? {}), [day]: { points, text, ...extra } }).slice(-120));
     const next = { ...p, daily };
+    await this.kv.set('progress', next);
+    return next;
+  }
+
+  /** Mark a day's result as uploaded to the leaderboard. */
+  async markDailySubmitted(day: string): Promise<Progress> {
+    const p = await this.loadProgress();
+    const d = p.daily?.[day];
+    if (!d || d.submitted) return p;
+    const next = { ...p, daily: { ...p.daily, [day]: { ...d, submitted: true } } };
     await this.kv.set('progress', next);
     return next;
   }

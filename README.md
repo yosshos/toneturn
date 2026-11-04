@@ -69,6 +69,10 @@ Useful URLs
 
 Two players, one phone or tablet, split screen: player 1's half is rotated to face them across the table. Same sound for both; each player's first tap counts; time runs from the end of the sound; 10 s window; standings with tie-break by total response time; rematch. Buttons only (voice can't tell two speakers apart).
 
+## Daily leaderboard (0.13, needs sign-in)
+
+The server grades the first daily play (answers + times; same points formula) against an answer key seeded for every day through 2028-12-31 (`npm run daily-keys > supabase/seed/daily_keys.sql`; a unit test fails if the generator and the seed drift — bump `DAILY_VERSION` and re-seed). The board shows today's player count, your rank and top %, and your friends (names are never shown to strangers). Played signed out? The result uploads the next time you open the daily screen signed in.
+
 ## Online rooms (0.12, needs sign-in)
 
 Host creates a room (question set, 5/10/15 rounds) → 6-character code or invite link `#/online/CODE` → lobby (up to 20 players) → host starts. Every device gets the round from the server (Realtime + 1.5 s polling fallback), plays the sound itself and times the answer from the end of its own playback, so network lag doesn't count. The server holds the answer key, checks plausibility (≥ 150 ms, inside the window), computes points (same formula as the duel, with streaks) and reveals a round only when it is closed. Leaderboard with movement arrows after every round; podium at the end. If someone never answers, the host closes the round after the window; if the host disappears, anyone can continue after 20 s.

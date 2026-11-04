@@ -1,5 +1,11 @@
 # Milestone report — 2026-11-04
 
+## Update 13 — v0.13.0: daily challenge leaderboard
+
+- Migration 9 `toneturn_daily`: key table (no grants) seeded with 792 days (2026-11-01 → 2028-12-31) from `scripts/daily-keys.ts`; results table; `toneturn_daily_submit` grades (plausibility 150 ms–10 s, streaks, squares) and keeps the first play; `toneturn_daily_board` returns count, rank, top %, friends. Verified live with three simulated users (rolled back): 5700 / 2845 points as computed locally, replay ignored, old day refused, non-friend hidden.
+- Client: answers and times stored with the local result, uploaded when signed in (also later), board card on the daily screen.
+- Tests: 326 unit (incl. seed-vs-generator parity and local-vs-server points) + daily E2E checks the signed-out prompt.
+
 ## Update 12 — v0.12.0: online rooms (spec I, part 2)
 
 - Migration 8 `toneturn_rooms`: rooms, players, answers, and a key table with no grants; security-definer functions create / join / state / start_round / answer / close; RLS lets members read only their room row (for Realtime). Verified on the live project with three simulated users in a rolled-back transaction: host-only start, hidden key, hidden results while open, outsider and late-join refused, points 960 / 900 / 950 / 1045 (streak).

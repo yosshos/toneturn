@@ -356,7 +356,7 @@ export function App() {
       {route === 'online' && (
         <OnlineScreen key={`${onlineKey}-${user?.id ?? ''}`} t={t} settings={s} user={user} initialCode={onlineCode} onBack={() => go('home')} />
       )}
-      {route === 'daily' && <DailyScreen t={t} settings={s} progress={progress} onBack={() => go('home')} onProgress={setProgress} />}
+      {route === 'daily' && <DailyScreen t={t} settings={s} progress={progress} user={user} onBack={() => go('home')} onProgress={setProgress} />}
       {route === 'duel' && (
         <DuelSetup
           t={t}

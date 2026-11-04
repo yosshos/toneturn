@@ -338,6 +338,12 @@ const en = {
   reconnecting: 'Reconnecting…',
   connecting: 'Connecting…',
   leave: 'Leave',
+  todayPlayers: '{n} players today',
+  yourRank: 'You: #{r} · top {p}%',
+  friendsToday: 'Friends today',
+  noFriendsToday: 'None of your friends has played today yet.',
+  signInForBoard: 'Sign in to see how you rank today and compare with friends.',
+  boardError: 'Leaderboard unavailable right now.',
 };
 
 export type Strings = typeof en;
@@ -676,6 +682,12 @@ const he: Strings = {
   reconnecting: 'מתחבר מחדש…',
   connecting: 'מתחבר…',
   leave: 'יציאה',
+  todayPlayers: '{n} שחקנים היום',
+  yourRank: 'אתם: מקום {r} · {p}% העליונים',
+  friendsToday: 'חברים היום',
+  noFriendsToday: 'אף חבר עוד לא שיחק היום.',
+  signInForBoard: 'התחברו כדי לראות את המיקום שלכם היום ולהשוות עם חברים.',
+  boardError: 'הטבלה לא זמינה כרגע.',
 };
 
 export const STRINGS: Record<Lang, Strings> = { en, he };

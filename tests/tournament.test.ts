@@ -123,3 +123,34 @@ describe('daily challenge storage', () => {
     expect(rebuildProgress([], p).daily?.['2026-11-05']?.points).toBe(4200);
   });
 });
+
+describe('daily leaderboard parity with the server', () => {
+  it('the seeded answer keys match the generator (re-run `npm run daily-keys` after changing it)', async () => {
+    const { readFileSync } = await import('node:fs');
+    const sql = readFileSync('supabase/seed/daily_keys.sql', 'utf-8');
+    const { DAILY_VERSION } = await import('../src/engine/tournament');
+    for (const day of ['2026-11-04', '2027-02-28', '2027-12-31', '2028-12-31']) {
+      const m = new RegExp(String.raw`\('${day}', (\d+), array\[(.*?)\]\)`).exec(sql);
+      expect(m, day).not.toBeNull();
+      expect(Number(m![1])).toBe(DAILY_VERSION);
+      expect(m![2].split(',').map((s) => s.replace(/'/g, ''))).toEqual(dailySet(day).map((q) => String(q.answer)));
+    }
+  });
+  it('local points equal the server grading (verified live: 5 right at 1 s = 5700)', () => {
+    const items = dailySet('2026-11-04');
+    const rounds = [] as ReturnType<typeof scoreRound>[];
+    for (const q of items) {
+      const streak = standings(1, rounds)[0].streak;
+      rounds.push(scoreRound(q, [{ player: 0, answer: q.answer, timeMs: 1000 }], [streak]));
+    }
+    expect(standings(1, rounds)[0].points).toBe(5700);
+  });
+  it('stores what was answered and marks the upload once', async () => {
+    const { ProgressStore } = await import('../src/storage/progress');
+    const { memoryKV } = await import('../src/storage/kv');
+    const store = new ProgressStore(memoryKV());
+    await store.recordDaily('2026-11-05', 100, 'x', { answers: ['1', null, '5', 'maj', 'P5'], times: [900, null, 800, 700, 600] });
+    const p = await store.markDailySubmitted('2026-11-05');
+    expect(p.daily?.['2026-11-05']).toMatchObject({ submitted: true, answers: ['1', null, '5', 'maj', 'P5'] });
+  });
+});

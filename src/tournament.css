@@ -175,6 +175,32 @@
 }
 
 /* ---------------------------------------------------------------- online rooms */
+.daily-board {
+  display: grid;
+  gap: 10px;
+}
+.daily-board h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+.daily-stats {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  justify-content: space-between;
+}
+.daily-stats span {
+  color: var(--gold);
+  font-weight: 800;
+}
+.daily-board .board li.me {
+  outline: 2px solid var(--gold);
+}
+.squares {
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+}
 .game-card.online {
   background: linear-gradient(160deg, #23516b, #2b1a4a);
 }

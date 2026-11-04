@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { dailyBoard, submitDaily, type DailyBoard } from '../cloud/daily';
+import type { CloudUser } from '../cloud/cloud';
 import { dailySet, shareText, tournamentSet, type SetKind } from '../engine/tournament';
 import type { Question } from '../engine/lesson';
 import { TournamentController, type TournamentView } from '../game/tournamentController';
@@ -13,12 +15,54 @@ import { PLAYER_COLORS } from '../engine/match';
 
 // ======================================================================= Daily challenge
 
-export function DailyScreen({ t, settings, progress, onBack, onProgress }: { t: Strings; settings: Settings; progress: Progress; onBack: () => void; onProgress: (p: Progress) => void }) {
+export function DailyScreen({
+  t,
+  settings,
+  progress,
+  user,
+  onBack,
+  onProgress,
+}: {
+  t: Strings;
+  settings: Settings;
+  progress: Progress;
+  user: CloudUser | null;
+  onBack: () => void;
+  onProgress: (p: Progress) => void;
+}) {
   const day = localDay(new Date());
   const done = progress.daily?.[day];
   const [playing, setPlaying] = useState(false);
   const [practice, setPractice] = useState(false);
+  const [board, setBoard] = useState<DailyBoard | null>(null);
+  const [boardErr, setBoardErr] = useState(false);
   const items = useMemo(() => dailySet(day), [day]);
+
+  // Upload the first play once signed in (also after playing signed out), then show the board.
+  useEffect(() => {
+    if (!user || playing) return;
+    let live = true;
+    const go = async () => {
+      try {
+        let b: DailyBoard | null;
+        if (done && !done.submitted && done.answers && done.times) {
+          b = await submitDaily(day, done.answers, done.times);
+          onProgress(await store.markDailySubmitted(day));
+        } else b = await dailyBoard(day);
+        if (live) {
+          setBoard(b);
+          setBoardErr(false);
+        }
+      } catch {
+        if (live) setBoardErr(true);
+      }
+    };
+    void go();
+    return () => {
+      live = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, playing, done?.submitted, done?.points, day]);
 
   if (playing) {
     return (
@@ -32,7 +76,9 @@ export function DailyScreen({ t, settings, progress, onBack, onProgress }: { t: 
           const points = v.standings[0].points;
           const text = shareText(day, v.results, points, settings.uiLang);
           // Only the first play of the day counts; later plays are practice.
-          if (!practice) void store.recordDaily(day, points, text).then(onProgress);
+          const answers = v.results.map((r) => (r.answers[0].answer === null ? null : String(r.answers[0].answer)));
+          const times = v.results.map((r) => r.answers[0].timeMs);
+          if (!practice) void store.recordDaily(day, points, text, { answers, times }).then(onProgress);
         }}
         shareDay={day}
       />
@@ -80,7 +126,40 @@ export function DailyScreen({ t, settings, progress, onBack, onProgress }: { t: 
           </button>
         )}
       </section>
+      <DailyBoardCard t={t} board={board} signedIn={!!user} error={boardErr} lang={settings.uiLang} />
     </main>
+  );
+}
+
+const fmtS = (s: string, v: Record<string, string | number>) => s.replace(/\{(\w+)\}/g, (_, k) => String(v[k] ?? ''));
+
+export function DailyBoardCard({ t, board, signedIn, error, lang }: { t: Strings; board: DailyBoard | null; signedIn: boolean; error: boolean; lang: 'he' | 'en' }) {
+  if (!signedIn) return <p className="field-hint daily-board-hint">{t.signInForBoard}</p>;
+  if (error) return <p className="field-hint daily-board-hint">{t.boardError}</p>;
+  if (!board) return null;
+  return (
+    <section className="set-card daily-board" aria-label={t.friendsToday}>
+      <p className="daily-stats">
+        <b>{fmtS(t.todayPlayers, { n: board.players.toLocaleString(lang) })}</b>
+        {board.me && <span>{fmtS(t.yourRank, { r: board.me.rank, p: board.me.topPercent })}</span>}
+      </p>
+      <h2>{t.friendsToday}</h2>
+      {board.friends.filter((f) => !f.me).length === 0 && <p className="field-hint">{t.noFriendsToday}</p>}
+      <ol className="board">
+        {board.friends.map((f, i) => (
+          <li key={i} className={f.me ? 'me' : ''}>
+            <span className="rank">{i + 1}</span>
+            <span className="pname">{f.me ? t.you : f.name}</span>
+            <span className="squares" dir="ltr">
+              {f.squares}
+            </span>
+            <span className="pbest" dir="ltr">
+              {f.points.toLocaleString(lang)} <small>{t.points}</small>
+            </span>
+          </li>
+        ))}
+      </ol>
+    </section>
   );
 }
 

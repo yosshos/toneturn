@@ -54,5 +54,7 @@ test.describe('tournament', () => {
     await page.getByRole('button', { name: /Daily challenge/ }).click();
     await expect(page.locator('.share-card')).toHaveText(text!);
     await expect(page.getByRole('button', { name: /Play again/ })).toBeVisible();
+    // Signed out: the leaderboard invites to sign in.
+    await expect(page.getByText(/Sign in to see how you rank today/)).toBeVisible();
   });
 });
