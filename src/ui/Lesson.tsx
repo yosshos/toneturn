@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
-import { makeLesson, pcFromKey, type IntroCard, type LessonDef, type LessonId, type Question } from '../engine/lesson';
+import { answerFromMidi, makeLesson, pcFromKey, type IntroCard, type LessonDef, type LessonId, type Question } from '../engine/lesson';
 import type { SessionState } from '../engine/session';
 import { displayNote, type Naming } from '../engine/pitch';
+import { midi } from '../speech/midi';
 import type { InputMode } from '../engine/session';
 import { LessonController, type LessonView } from '../game/controller';
 import { askTemplate, choiceLabel, hintText, LESSON_META, questionBadge } from '../game/content';
@@ -82,6 +83,17 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
     if (autoStart) void ctrl.start();
     return () => ctrl.dispose();
   }, [ctrl, autoStart]);
+
+  // MIDI keyboard: a key press answers degree / note-name questions (singing tasks use MidiPitchCapture).
+  useEffect(() => {
+    if (!settings.midiInput) return;
+    return midi.onNote((m, on) => {
+      const view = ctrl.getView();
+      if (!on || view.stage !== 'question' || view.phase !== 'listening') return;
+      const a = answerFromMidi(view.question, m);
+      if (a !== null) ctrl.answer(a);
+    });
+  }, [ctrl, settings.midiInput]);
 
   // Space / Enter tap the beat while a rhythm is being performed.
   useEffect(() => {

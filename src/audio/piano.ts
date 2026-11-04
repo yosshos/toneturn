@@ -24,6 +24,8 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
   private pianoBus!: GainNode;
   private cueBus!: GainNode;
   private noise!: AudioBuffer;
+  private limiter!: DynamicsCompressorNode;
+  private drone: { gain: GainNode; oscs: OscillatorNode[] } | null = null;
   private voices = new Set<Voice>();
   private timers = new Set<ReturnType<typeof setTimeout>>();
   private active = new Map<number, number>(); // midi → count
@@ -54,6 +56,7 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     const master = ctx.createGain();
     master.gain.value = this.volume;
     limiter.connect(master).connect(ctx.destination);
+    this.limiter = limiter;
 
     this.pianoBus = ctx.createGain();
     this.pianoBus.gain.value = 0.2;
@@ -205,6 +208,47 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
       };
       signal.addEventListener('abort', onAbort, { once: true });
     });
+  }
+
+  /** Sustained drone (drone practice): soft sine + triangle per note, slow attack; stays until stopDrone(). */
+  startDrone(midis: number[], level = 0.16) {
+    const ctx = this.ctx;
+    if (!ctx) return;
+    this.stopDrone();
+    const gain = ctx.createGain();
+    gain.gain.value = 0;
+    gain.gain.setTargetAtTime(level, ctx.currentTime, 0.35);
+    gain.connect(this.limiter);
+    const oscs: OscillatorNode[] = [];
+    for (const m of midis) {
+      const f = 440 * 2 ** ((m - 69) / 12);
+      for (const [type, amp, detune] of [['sine', 1, 0], ['triangle', 0.35, 3], ['sine', 0.5, -3]] as const) {
+        const o = ctx.createOscillator();
+        o.type = type;
+        o.frequency.value = f;
+        o.detune.value = detune;
+        const g = ctx.createGain();
+        g.gain.value = amp / midis.length;
+        o.connect(g).connect(gain);
+        o.start();
+        oscs.push(o);
+      }
+    }
+    this.drone = { gain, oscs };
+  }
+
+  stopDrone() {
+    const ctx = this.ctx;
+    const d = this.drone;
+    if (!ctx || !d) return;
+    this.drone = null;
+    d.gain.gain.cancelScheduledValues(ctx.currentTime);
+    d.gain.gain.setTargetAtTime(0, ctx.currentTime, 0.12);
+    for (const o of d.oscs) o.stop(ctx.currentTime + 0.6);
+  }
+
+  get droning() {
+    return this.drone !== null;
   }
 
   stopAll() {

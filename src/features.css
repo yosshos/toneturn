@@ -529,3 +529,92 @@
   color: var(--gold);
   text-align: start;
 }
+
+/* ---------------------------------------------------------------- drone practice */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+}
+.toggle-row input {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--mint);
+}
+.drone-live {
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  padding: 18px;
+  border-radius: 24px;
+  background: var(--bg-2);
+  opacity: 0.6;
+}
+.drone-live.on {
+  opacity: 1;
+}
+.drone-degree {
+  font-size: 4rem;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--gold);
+  min-height: 4rem;
+}
+.drone-meter {
+  position: relative;
+  width: min(320px, 100%);
+  height: 14px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--red), var(--gold) 35%, var(--mint) 45% 55%, var(--gold) 65%, var(--red));
+}
+.drone-meter .mid {
+  position: absolute;
+  left: 50%;
+  top: -4px;
+  bottom: -4px;
+  width: 2px;
+  background: var(--ink);
+}
+.drone-meter .needle {
+  position: absolute;
+  top: -6px;
+  width: 6px;
+  height: 26px;
+  margin-left: -3px;
+  border-radius: 3px;
+  background: var(--ink);
+  transition: left 0.08s linear;
+}
+.drone-cents {
+  margin: 0;
+  font-weight: 800;
+  color: var(--ink-soft);
+  min-height: 1.4em;
+}
+.drone-ladder {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 8px;
+}
+.drone-ladder li {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  background: var(--card-2);
+  color: var(--ink-dim);
+}
+.drone-ladder li.hit {
+  background: var(--mint);
+  color: #1b3a30;
+}
+.drone-done {
+  margin: 0;
+  font-weight: 900;
+  color: var(--mint);
+}

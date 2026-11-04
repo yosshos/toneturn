@@ -1,5 +1,13 @@
 # Milestone report — 2026-11-04
 
+## Update 17 — v0.17.0: spaced repetition, drone practice, MIDI keyboard
+
+- Review queue: Leitner boxes (`scheduleReview`, due times from each result's completion time, so a cloud rebuild gives the same schedule); review sessions take due items only; the tool card shows "due now" or "next in n d".
+- Drone practice screen (`engine/drone.ts`, `PianoEngine.startDrone`): degree/cents reading, hold tracker accepting equal or just intonation, ladder of seven degrees; simulator mode for tests.
+- MIDI (`speech/midi.ts`): Web MIDI input service, `MidiPitchCapture` (same stop rules as the mic, 20 ms hop), key → answer for degree / note-name questions; Settings toggle shows the connected device.
+- Tests: 373 unit + drone E2E (simulator) + MIDI E2E (stub device).
+- Not verified: a real MIDI keyboard; drone + microphone without headphones (the drone may leak into the mic).
+
 ## Update 16 — v0.16.0: melodic matrix complete for sequences (spec H)
 
 - New kind `name-seq` (heard → names #2, degrees → names #6); `degree-seq` given as names (#5); `sing-seq` asked by names (#4). Lesson 20 *Note sequences*; review tags for all variants; note-name sequence parser (letters / Do-Re-Mi, he/en, glued "Bb,"); keypad of the key's seven note names; keyboard hidden when it would give the answer away.

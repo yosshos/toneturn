@@ -65,6 +65,9 @@ Useful URLs
 - **Find my level** — optional 9-question adaptive placement → **Skill Map** (radar: unmeasured / provisional / measured, text list, diagnosis, one recommendation, 4-week comparison).
 - **Review my mistakes** — fresh items from your misses; hear your answer next to the right one.
 - **Weekly puzzle** — same degree-sequence puzzle for everyone in your band; gold / silver.
+- **Review with spaced repetition** (0.17) — Leitner boxes: a miss is due now; each first-try correct recall pushes it to 1 → 3 → 7 → 16 → 35 days, then it leaves the queue; an early correct answer doesn't skip a box.
+- **Drone practice** (0.17) — tonic (+ fifth) drone two octaves low; live degree + cents meter; a degree counts when held in tune (±20 ¢ of equal or just intonation) for 0.8 s; fill all seven. Headphones recommended.
+- **MIDI keyboard** (0.17, Settings) — Web MIDI: held keys become perfectly in-tune "sung" frames for every singing task (incl. runs); a key press answers degree / note-name questions.
 - **Beat Echo calibration** — tap along to 12 clicks; the median offset corrects your device's tap delay.
 - **Daily challenge** (0.11) — 5 mixed questions, the same for everyone on a calendar day; points = 500 + up to 500 for speed × streak bonus; first play counts, replays are practice; Wordle-style share card (🟩 fast, 🟨 slow, ⬜ miss — no answers).
 

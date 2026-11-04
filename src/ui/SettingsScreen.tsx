@@ -6,6 +6,7 @@ import { listVoices, voicesReady } from '../speech/tts';
 import { namingFor, type Settings, type VoiceGender } from '../storage/progress';
 import { fillText, Note } from './bits';
 import { tts } from './services';
+import { midi } from '../speech/midi';
 
 interface Props {
   t: Strings;
@@ -226,6 +227,7 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account }: Pr
           ]}
           onChange={(mode) => onChange({ mode })}
         />
+        <MidiSetting t={t} on={!!s.midiInput} onChange={(midiInput) => onChange({ midiInput })} />
         <Seg
           label={t.timedScoring}
           hint={t.timedHint}
@@ -261,5 +263,34 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account }: Pr
         </button>
       </div>
     </main>
+  );
+}
+
+function MidiSetting({ t, on, onChange }: { t: Strings; on: boolean; onChange: (on: boolean) => void }) {
+  const [status, setStatus] = useState<string | null>(null);
+  const turnOn = async () => {
+    if (!midi.supported) return setStatus(t.midiUnsupported);
+    try {
+      const devs = await midi.enable();
+      setStatus(devs.length ? `${t.midiConnected}: ${devs.join(', ')}` : t.midiNone);
+      onChange(true);
+    } catch {
+      setStatus(t.midiUnsupported);
+    }
+  };
+  return (
+    <div className="midi-setting">
+      <Seg
+        label={t.midiKeyboard}
+        hint={t.midiHint}
+        value={on ? 'on' : 'off'}
+        options={[
+          ['off', t.off],
+          ['on', t.on],
+        ]}
+        onChange={(v) => (v === 'on' ? void turnOn() : onChange(false))}
+      />
+      {status && <p className="field-hint" role="status">{status}</p>}
+    </div>
   );
 }

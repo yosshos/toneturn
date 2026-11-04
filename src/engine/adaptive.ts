@@ -99,6 +99,8 @@ export interface ReviewItem {
   key: string; // question tag
   answer: number | string;
   addedAt: string;
+  box?: number;
+  due?: string;
 }
 
 const parsePc = (s: string): PitchClass | null => {
@@ -178,8 +180,10 @@ export function questionFromTag(tag: string, seed: number, id: string): Question
 }
 
 /** Up to `max` most recent review items as a session; null when there is nothing to review. */
-export function reviewLesson(items: ReviewItem[], seed: number, max = 5): LessonDef | null {
-  const recent = [...items].sort((a, b) => b.addedAt.localeCompare(a.addedAt));
+/** Due items only (spaced repetition); fresh misses (lowest box) first, then the most recent. */
+export function reviewLesson(items: ReviewItem[], seed: number, max = 5, now = new Date()): LessonDef | null {
+  const due = items.filter((it) => new Date(it.due ?? it.addedAt).getTime() <= now.getTime());
+  const recent = [...due].sort((a, b) => (a.box ?? 0) - (b.box ?? 0) || b.addedAt.localeCompare(a.addedAt));
   const qs: Question[] = [];
   const used = new Set<string>();
   for (const it of recent) {

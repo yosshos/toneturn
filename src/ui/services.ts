@@ -1,5 +1,6 @@
 // Composition root: real browser adapters, or the labelled simulator (?sim=1).
 
+import { MidiPitchCapture } from '../speech/midi';
 import { PianoEngine } from '../audio/piano';
 import { realClock, type Adapters } from '../game/adapters';
 import { FakeMic, ScriptedPitch, ScriptedTranscriber, type ScriptStep } from '../game/fakes';
@@ -36,6 +37,13 @@ const SIM_SCRIPT = (): ScriptStep[] => {
   return [right, wrong, ...Array.from({ length: 12 }, () => right)];
 };
 
+/** Set from Settings: singing tasks capture from a MIDI keyboard instead of the microphone. */
+let midiEnabled = false;
+export const setMidiEnabled = (on: boolean) => {
+  midiEnabled = on;
+};
+export const isMidiEnabled = () => midiEnabled;
+
 export function makeAdapters(expected: () => Answer, targetMidi: () => number, targetSeq: () => number[] | null = () => null): Adapters {
   if (SIMULATED) {
     const sim = new ScriptedTranscriber(SIM_SCRIPT(), 1200);
@@ -51,7 +59,7 @@ export function makeAdapters(expected: () => Answer, targetMidi: () => number, t
     tts,
     stt: new WebSpeechTranscriber(),
     mic: new BrowserMicAccess(),
-    pitch: new BrowserPitchCapture(),
+    pitch: midiEnabled ? new MidiPitchCapture() : new BrowserPitchCapture(),
     knock: new BrowserKnockInput(),
     clock: realClock,
     simulated: false,
@@ -59,5 +67,5 @@ export function makeAdapters(expected: () => Answer, targetMidi: () => number, t
 }
 
 export function makeGameAdapters(): GameAdapters {
-  return { audio: piano, tts, pitch: new BrowserPitchCapture(), knock: new BrowserKnockInput(), clock: realClock, simulated: SIMULATED };
+  return { audio: piano, tts, pitch: midiEnabled ? new MidiPitchCapture() : new BrowserPitchCapture(), knock: new BrowserKnockInput(), clock: realClock, simulated: SIMULATED };
 }

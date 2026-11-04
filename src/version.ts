@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.17.0',
+    date: '2026-11-04',
+    en: ['Review with spaced repetition: mistakes come back after 1, 3, 7, 16 and 35 days until they stick', 'Drone practice: sing every scale degree over a held tonic and see how in tune you are', 'MIDI keyboard: play instead of singing, and press a key to answer degree and note questions'],
+    he: ['חזרה מרווחת: טעויות חוזרות אחרי 1, 3, 7, 16 ו־35 ימים עד שהן נקלטות', 'תרגול עם בורדון: שרים כל דרגה מעל טוניקה מתמשכת ורואים כמה מדויק', 'מקלדת MIDI: מנגנים במקום לשיר, ולוחצים על קליד כדי לענות על שאלות דרגות ותווים'],
+  },
+  {
     version: '0.16.0',
     date: '2026-11-04',
     en: ['Note sequences (lesson 20): hear notes and name them, turn names into degrees and back, sing from note names — the whole melodic matrix now works for sequences', 'Note-name keypad in Buttons mode'],

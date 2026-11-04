@@ -979,6 +979,19 @@ export function runsWorkshop(level: number, seed = Date.now()): LessonDef {
 /** Agility rating → workshop level 1–8. */
 export const runLevelFor = (rating: number | null) => (rating === null ? 1 : Math.max(1, Math.min(MAX_RUN_LEVEL, Math.round((rating - 900) / 80) + 1)));
 
+/** The answer a played MIDI note gives for a question, or null when it does not apply. */
+export function answerFromMidi(q: Question, m: number): Answer | null {
+  const pcOfMidi = ((m % 12) + 12) % 12;
+  if (q.kind === 'degree' || q.kind === 'note-name') {
+    const scale = majorScale(q.key);
+    const i = scale.findIndex((p) => pcValue(p) === pcOfMidi);
+    if (i < 0) return null;
+    const a: Answer = q.kind === 'degree' ? i + 1 : pcKey(scale[i]);
+    return q.choices.includes(a) ? a : null;
+  }
+  return null;
+}
+
 // ---------------------------------------------------------------- Registry
 export const LESSON_ORDER: LessonId[] = [
   'bflat-two-homes',

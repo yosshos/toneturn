@@ -16,6 +16,7 @@ import { Diagnostics } from './Diagnostics';
 import { GameScreen, GameSetup, type GameSetupValue } from './Games';
 import { DailyScreen, DuelScreen, DuelSetup } from './Tournament';
 import { OnlineScreen, PENDING_ONLINE_KEY } from './Online';
+import { DroneScreen } from './Drone';
 import type { SetKind } from '../engine/tournament';
 import type { GameKind } from '../game/memoryGame';
 import { MenuSheet, Changelog } from './Menu';
@@ -23,14 +24,15 @@ import { FriendsScreen } from './Friends';
 import { reportGameBest } from '../cloud/social';
 import { APP_VERSION, unseenChanges } from '../version';
 import { pwa } from '../pwa';
-import { piano, SIMULATED, store, tts } from './services';
+import { piano, setMidiEnabled, SIMULATED, store, tts } from './services';
+import { midi } from '../speech/midi';
 
-type Route = 'home' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online';
+type Route = 'home' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone';
 /** Invite links: #/online/CODE */
 const onlineCodeFromHash = () => (/^#\/?online\/(\w+)/.exec(location.hash)?.[1] ?? '');
 const routeFromHash = (): Route => {
   const h = location.hash.replace(/^#\/?/, '').replace(/^online\/.*$/, 'online');
-  return (['settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
+  return (['settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
 };
 
 export function App() {
@@ -54,6 +56,11 @@ export function App() {
   const [generated, setGenerated] = useState<{ def: LessonDef; adapt?: (s: SessionState) => Question[] | null } | null>(null);
   const pwaState = useSyncExternalStore(pwa.subscribe, pwa.get);
   const [sync, setSync] = useState<SyncState>('idle');
+  // MIDI keyboard input (Settings): singing tasks capture from the keyboard.
+  useEffect(() => {
+    setMidiEnabled(!!settings?.midiInput);
+    if (settings?.midiInput && midi.supported) void midi.enable().catch(() => {});
+  }, [settings?.midiInput]);
   const progressRef = useRef(progress);
   progressRef.current = progress;
 
@@ -231,7 +238,7 @@ export function App() {
           streak={visibleStreak(progress.streak, new Date())}
           account={<AccountCard t={t} user={user} sync={sync} compact />}
           onMenu={() => setMenuOpen(true)}
-          tools={<PracticeTools t={t} progress={progress} onSkills={() => go('skills')} onPlacement={openPlacement} onReview={openReview} onPuzzle={openPuzzle} onDaily={() => go('daily')} onRuns={openRuns} />}
+          tools={<PracticeTools t={t} progress={progress} onSkills={() => go('skills')} onPlacement={openPlacement} onReview={openReview} onPuzzle={openPuzzle} onDaily={() => go('daily')} onRuns={openRuns} onDrone={() => go('drone')} />}
           updateReady={pwaState.updateReady}
           news={
             news.length > 0 ? (
@@ -358,6 +365,7 @@ export function App() {
           }}
         />
       )}
+      {route === 'drone' && <DroneScreen t={t} settings={s} onBack={() => go('home')} />}
       {route === 'online' && (
         <OnlineScreen key={`${onlineKey}-${user?.id ?? ''}`} t={t} settings={s} user={user} initialCode={onlineCode} onBack={() => go('home')} />
       )}

@@ -35,7 +35,7 @@ export interface Progress {
   lessons: Record<string, { best: number; completions: number; lastAt: string }>;
   history: LessonResult[];
   streak: { count: number; lastDay: string | null };
-  review: { lessonId?: string; questionId: string; key: string; answer: Answer; addedAt: string }[];
+  review: ReviewEntry[];
   /** Longest chains on this device in the memory games. */
   games?: { melody: number; rhythm: number };
   /** Rated first attempts (lessons) and solo game rounds (ids starting "g:"). */
@@ -86,6 +86,8 @@ export interface Settings {
   timedScoring: boolean | null;
   /** First time the app was used on this device (ISO). */
   firstUseAt: string | null;
+  /** Answer and "sing" with a MIDI keyboard instead of the voice. */
+  midiInput?: boolean;
 }
 
 export const SETTINGS_VERSION = 2;
@@ -141,6 +143,44 @@ export interface DailyRecord {
   answers?: (string | null)[];
   times?: (number | null)[];
   submitted?: boolean;
+}
+
+/** A review-queue item with a Leitner box: due again after 0, 1, 3, 7, 16, 35 days (spaced repetition). */
+export interface ReviewEntry {
+  lessonId?: string;
+  questionId: string;
+  key: string;
+  answer: Answer;
+  addedAt: string;
+  /** 0 = just missed (due now). Absent on old data = 0. */
+  box?: number;
+  /** ISO time it is due again. Absent = addedAt. */
+  due?: string;
+}
+export const REVIEW_INTERVAL_DAYS = [0, 1, 3, 7, 16, 35];
+export const reviewDue = (e: ReviewEntry) => e.due ?? e.addedAt;
+export const dueReviews = (items: ReviewEntry[], now: Date) => items.filter((e) => new Date(reviewDue(e)).getTime() <= now.getTime());
+
+/** Spaced repetition: a first-try correct recall moves a tag up a box (or out of the queue after the last box). */
+export function scheduleReview(items: ReviewEntry[], correctTags: Set<string>, missed: ReviewEntry[], at: string): ReviewEntry[] {
+  const missedKeys = new Set(missed.map((m) => m.key));
+  const out: ReviewEntry[] = [];
+  for (const e of items) {
+    if (missedKeys.has(e.key)) continue; // replaced by the new miss below
+    if (!correctTags.has(e.key)) {
+      out.push(e);
+      continue;
+    }
+    // Only promote when it was due (an early correct answer does not skip a box).
+    if (new Date(reviewDue(e)).getTime() > new Date(at).getTime()) {
+      out.push(e);
+      continue;
+    }
+    const box = (e.box ?? 0) + 1;
+    if (box >= REVIEW_INTERVAL_DAYS.length) continue; // learned
+    out.push({ ...e, box, due: new Date(new Date(at).getTime() + REVIEW_INTERVAL_DAYS[box] * 86400000).toISOString() });
+  }
+  return [...out, ...missed.map((m) => ({ ...m, box: 0, due: at }))].slice(-80);
 }
 
 export function localDay(d: Date): string {
@@ -254,11 +294,13 @@ export function applyResult(p: Progress, r: LessonResult, now: Date): Progress {
     },
     history: [...p.history, r].slice(-100),
     streak: bumpStreak(p.streak, now),
-    review: [
-      // A tag answered right on the first try leaves the queue; a new miss replaces the old entry.
-      ...p.review.filter((x) => !cleared.has(x.key) && !r.missed.some((m) => m.key === x.key && m.answer === x.answer)),
-      ...r.missed.map((m) => ({ lessonId: r.lessonId, questionId: m.questionId, key: m.key, answer: m.answer, addedAt: r.completedAt })),
-    ].slice(-50),
+    // Spaced repetition: right first try → next box; a miss → box 0, due now.
+    review: scheduleReview(
+      p.review,
+      cleared,
+      r.missed.map((m) => ({ lessonId: r.lessonId, questionId: m.questionId, key: m.key, answer: m.answer, addedAt: r.completedAt })),
+      r.completedAt,
+    ),
   };
 }
 

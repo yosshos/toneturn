@@ -222,12 +222,16 @@ describe('progress: ratings, review clearing, puzzles, snapshots', () => {
     // applying twice changes nothing
     expect(applyResult(p, r, new Date())).toBe(p);
   });
-  it('a first-try correct answer clears that tag from the review queue', () => {
+  it('a first-try correct answer moves the tag to the next spaced-repetition box (due again in a day)', () => {
     const p0 = { ...emptyProgress(), review: [{ questionId: 'r1', key: 'cadence:open', answer: 'open', addedAt: '2026-11-01' }] };
     const lesson = reviewLesson(p0.review, 1)!;
     const s = finish(lesson as never, [true]);
-    const p = applyResult(p0, resultFromSession(s, 'R1', new Date()), new Date());
-    expect(p.review).toHaveLength(0);
+    const now = new Date();
+    const p = applyResult(p0, resultFromSession(s, 'R1', now), now);
+    expect(p.review).toHaveLength(1);
+    expect(p.review[0].box).toBe(1);
+    expect(new Date(p.review[0].due!).getTime() - now.getTime()).toBeGreaterThan(23 * 3600e3);
+    expect(reviewLesson(p.review, 1, 5, now)).toBeNull(); // not due today
   });
   it('only the first scored puzzle of the week counts', () => {
     const puzzle = weeklyPuzzle('2026-W45', 'beginner');
