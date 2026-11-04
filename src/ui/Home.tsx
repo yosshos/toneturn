@@ -58,7 +58,7 @@ export function starsFor(best: number, total: number) {
   return r >= 1 ? 3 : r >= 0.6 ? 2 : r > 0 ? 1 : 0;
 }
 
-const TOTALS: Partial<Record<LessonId, number>> = { 'bflat-two-homes': 3, 'degrees-135': 5, 'major-minor': 5, cadences: 4, 'sing-home-five': 3, intervals: 6, inversions: 5, 'notes-degrees': 6, 'sing-names': 4, 'sing-degrees': 3 };
+const TOTALS: Partial<Record<LessonId, number>> = { 'bflat-two-homes': 3, 'degrees-135': 5, 'major-minor': 5, cadences: 4, 'sing-home-five': 3, intervals: 6, inversions: 5, 'notes-degrees': 6, 'sing-names': 4, 'sing-degrees': 3, 'rhythm-r1': 5, 'rhythm-r2': 5, 'rhythm-r3': 5 };
 
 export function Home({ t, settings, progress, streak, account, onPractice, onButtonsInstead, onMode, onSettings, onLang, onGame, onMenu, updateReady, news, tools }: Props) {
   const [consentFor, setConsentFor] = useState<LessonId | null>(null);
@@ -255,7 +255,7 @@ function GoalRing({ value }: { value: number }) {
   );
 }
 
-export function NodeIcon({ kind }: { kind: 'ear' | 'steps' | 'chord' | 'cadence' | 'mic' | 'map' | 'review' | 'puzzle' }) {
+export function NodeIcon({ kind }: { kind: 'ear' | 'steps' | 'chord' | 'cadence' | 'mic' | 'map' | 'review' | 'puzzle' | 'drum' }) {
   switch (kind) {
     case 'ear':
       return (
@@ -308,6 +308,14 @@ export function NodeIcon({ kind }: { kind: 'ear' | 'steps' | 'chord' | 'cadence'
           <path d="M6 16a10 10 0 1 0 3-7" />
           <path d="M5 4v6h6" />
           <path d="M16 11v6l4 2" />
+        </svg>
+      );
+    case 'drum':
+      return (
+        <svg viewBox="0 0 32 32" width="30" height="30" fill="currentColor">
+          <ellipse cx="9" cy="23" rx="4.5" ry="3.4" transform="rotate(-20 9 23)" />
+          <ellipse cx="23" cy="20" rx="4.5" ry="3.4" transform="rotate(-20 23 20)" />
+          <path d="M12.5 22V7l14-3v15h-2.6V8L15 9.8V22z" />
         </svg>
       );
     case 'puzzle':

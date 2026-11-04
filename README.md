@@ -49,6 +49,7 @@ Useful URLs
 | 8 | Notes and degrees (hear → name, name → degree, degree → name) | note naming / degrees | note names in your naming system (“B flat”, “סי במול”) or degrees |
 | 9 | Sing it by name (echo a note; sing a named note after a reference) | singing | sing |
 | 10 | Sing the degrees (“1 3 5” → sing them in order) | singing | sing; per-note strip, partial credit |
+| 11–13 | Rhythm 1–3 (quarters/halves/rests → eighths → dotted quarter) | rhythm reading / rhythm dictation | tap or say “ta” on the metronome; pick the notation you heard, or say it (“ta ti-ti ta”, “quarter, two eighths…”, טה טי-טי) |
 
 `?unlock=all` opens every lesson (testing). Singing uses the microphone in both modes; in Buttons mode it waits for a **Sing now** tap.
 

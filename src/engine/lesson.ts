@@ -2,12 +2,24 @@
 // Pure: no browser APIs. Text for narration / UI lives in src/game/content.ts.
 
 import { majorScale, pc, pcValue, voiceChord, type ChordQuality, type PitchClass } from './pitch';
+import { options as rhythmOptions, rhythmAt, rhythmFromKey, rhythmKey, rhythmSound, type Rhythm } from './rhythm';
 
 export const CONTENT_SCHEMA_VERSION = 2;
 
 export type Answer = number | string;
 /** 'rhythm' = rhythmic memory, 'timing' = rhythmic precision (mirrors 'sequences' / 'singing' for pitch). */
-export type SkillId = 'degrees' | 'notes' | 'chords' | 'cadences' | 'singing' | 'sequences' | 'rhythm' | 'timing' | 'intervals';
+export type SkillId =
+  | 'degrees'
+  | 'notes'
+  | 'chords'
+  | 'cadences'
+  | 'singing'
+  | 'sequences'
+  | 'rhythm'
+  | 'timing'
+  | 'intervals'
+  | 'rhythm-reading'
+  | 'rhythm-dictation';
 export type IntervalName = 'M3' | 'P5' | 'P8';
 export type BassRole = 'root' | 'third' | 'fifth';
 export type Quality = 'maj' | 'min' | 'dim' | 'aug';
@@ -20,7 +32,8 @@ export type Stimulus =
   | { kind: 'resolve'; fromMidi: number; toMidi: number }
   | { kind: 'chord'; midis: number[]; duration: number; arpeggio?: boolean }
   | { kind: 'phrase'; key: PitchClass; chords: Roman[] }
-  | { kind: 'rest'; duration: number };
+  | { kind: 'rest'; duration: number }
+  | { kind: 'rhythm'; rhythm: string; bars: number; bpm: number };
 
 interface QBase {
   id: string;
@@ -112,7 +125,28 @@ export interface SingSeqQuestion extends QBase {
   answer: 'accurate';
 }
 
+/** Perform a rhythm shown as notation or described in words (spec G, rhythm reading). */
+export interface RhythmReadQuestion extends QBase {
+  kind: 'rhythm-read';
+  level: 1 | 2 | 3;
+  rhythm: Rhythm;
+  bpm: number;
+  show: 'notation' | 'words';
+  answer: 'accurate';
+}
+
+/** Hear a rhythm, choose its notation or say it (spec G, rhythm dictation). Answer = rhythm key. */
+export interface RhythmDictQuestion extends QBase {
+  kind: 'rhythm-dict';
+  level: 1 | 2 | 3;
+  rhythm: Rhythm;
+  bpm: number;
+  answer: string;
+}
+
 export type Question =
+  | RhythmReadQuestion
+  | RhythmDictQuestion
   | DegreeQuestion
   | QualityQuestion
   | CadenceQuestion
@@ -153,6 +187,10 @@ export function questionSkill(q: Question): SkillId {
       return q.direction === 'heard-pitch→name' ? 'notes' : 'degrees';
     case 'sing-seq':
       return 'singing';
+    case 'rhythm-read':
+      return 'rhythm-reading';
+    case 'rhythm-dict':
+      return 'rhythm-dictation';
   }
 }
 
@@ -168,7 +206,8 @@ export type IntroCard =
   | { kind: 'cadence'; key: PitchClass; ending: 'resolved' | 'open' }
   | { kind: 'sing'; key: PitchClass; degree: number }
   | { kind: 'interval'; name: IntervalName }
-  | { kind: 'inversion'; root: PitchClass; bass: BassRole };
+  | { kind: 'inversion'; root: PitchClass; bass: BassRole }
+  | { kind: 'rhythm'; rhythm: string };
 
 export interface IntroStep {
   id: string;
@@ -196,6 +235,9 @@ export type LessonId =
   | 'notes-degrees'
   | 'sing-names'
   | 'sing-degrees'
+  | 'rhythm-r1'
+  | 'rhythm-r2'
+  | 'rhythm-r3'
   | 'placement'
   | 'review'
   | 'weekly-puzzle';
@@ -662,6 +704,64 @@ export function singDegrees(seed = Date.now()): LessonDef {
   };
 }
 
+// ---------------------------------------------------------------- Rhythm lessons R1–R3 (spec G)
+const RHYTHM_BPM: Record<1 | 2 | 3, number> = { 1: 70, 2: 76, 3: 80 };
+
+export function rhythmReadQuestion(id: string, level: 1 | 2 | 3, bars: number, seed: number, show: 'notation' | 'words'): RhythmReadQuestion {
+  const rhythm = rhythmAt(level, bars, seed);
+  return {
+    id,
+    kind: 'rhythm-read',
+    level,
+    rhythm,
+    bpm: RHYTHM_BPM[level],
+    show,
+    choices: [],
+    answer: 'accurate',
+    stimulus: [], // the count-in and metronome are played by the performance timeline
+    difficulty: 900 + 110 * (level - 1) + 50 * (bars - 1) + (show === 'words' ? 40 : 0),
+  };
+}
+
+export function rhythmDictQuestion(id: string, level: 1 | 2 | 3, bars: number, seed: number): RhythmDictQuestion {
+  const rhythm = rhythmAt(level, bars, seed);
+  const bpm = RHYTHM_BPM[level];
+  const opts = rhythmOptions(rhythm, level, 4, seed);
+  return {
+    id,
+    kind: 'rhythm-dict',
+    level,
+    rhythm,
+    bpm,
+    choices: opts.map(rhythmKey),
+    answer: rhythmKey(rhythm),
+    stimulus: [{ kind: 'rhythm', rhythm: rhythmKey(rhythm), bars, bpm }],
+    difficulty: 950 + 110 * (level - 1) + 60 * (bars - 1),
+  };
+}
+
+/** Rhythm lesson at a level: read from notation ×2, read from words, dictation ×2. */
+export function rhythmLesson(level: 1 | 2 | 3, seed = Date.now()): LessonDef {
+  const rnd = mulberry32(seed);
+  const s = () => Math.floor(rnd() * 1e9);
+  const bars2 = level >= 2 ? 2 : 1;
+  const example = rhythmAt(level, 1, 11);
+  return {
+    id: (['rhythm-r1', 'rhythm-r2', 'rhythm-r3'] as const)[level - 1],
+    version: 1,
+    skill: 'rhythm-reading',
+    scoring: { xpPerCorrect: 10, attemptLimit: 2 },
+    intro: [{ id: `intro-r${level}`, card: { kind: 'rhythm', rhythm: rhythmKey(example) }, stimulus: [{ kind: 'rhythm', rhythm: rhythmKey(example), bars: 1, bpm: RHYTHM_BPM[level] }] }],
+    questions: [
+      rhythmReadQuestion('q1', level, 1, s(), 'notation'),
+      rhythmDictQuestion('q2', level, 1, s()),
+      rhythmReadQuestion('q3', level, bars2, s(), 'notation'),
+      rhythmReadQuestion('q4', level, 1, s(), 'words'),
+      rhythmDictQuestion('q5', level, bars2, s()),
+    ],
+  };
+}
+
 // ---------------------------------------------------------------- Registry
 export const LESSON_ORDER: LessonId[] = [
   'bflat-two-homes',
@@ -674,6 +774,9 @@ export const LESSON_ORDER: LessonId[] = [
   'notes-degrees',
   'sing-names',
   'sing-degrees',
+  'rhythm-r1',
+  'rhythm-r2',
+  'rhythm-r3',
 ];
 
 export function makeLesson(id: LessonId, seed = Date.now()): LessonDef {
@@ -702,6 +805,12 @@ export function makeLesson(id: LessonId, seed = Date.now()): LessonDef {
       return singNames(seed);
     case 'sing-degrees':
       return singDegrees(seed);
+    case 'rhythm-r1':
+      return rhythmLesson(1, seed);
+    case 'rhythm-r2':
+      return rhythmLesson(2, seed);
+    case 'rhythm-r3':
+      return rhythmLesson(3, seed);
   }
 }
 
@@ -728,6 +837,10 @@ export function explainStimulus(q: Question): Stimulus[] {
       return [{ kind: 'cadence', key: q.key }, { kind: 'note', midi: q.targetMidi, duration: 1.2 }];
     case 'sing-seq':
       return [{ kind: 'notes', midis: q.midis, each: 0.8 }];
+    case 'rhythm-read':
+      return [{ kind: 'rhythm', rhythm: rhythmKey(q.rhythm), bars: q.rhythm.bars, bpm: q.bpm }];
+    case 'rhythm-dict':
+      return q.stimulus;
   }
 }
 
@@ -783,8 +896,14 @@ export function compareStimulus(q: Question, given: Answer): Stimulus[] | null {
       const gm = placeInRange(pcValue(g), 62, 73);
       return [{ kind: 'note', midi: gm, duration: 1.0 }, { kind: 'rest', duration: 0.35 }, { kind: 'note', midi: q.targetMidi, duration: 1.2 }];
     }
+    case 'rhythm-dict': {
+      if (typeof given !== 'string' || given === q.answer) return null;
+      const g = rhythmFromKey(given, q.rhythm.bars);
+      return [{ kind: 'rhythm', rhythm: rhythmKey(g), bars: g.bars, bpm: q.bpm }, { kind: 'rest', duration: 0.5 }, ...q.stimulus];
+    }
     case 'sing':
     case 'sing-seq':
+    case 'rhythm-read':
       return null;
   }
 }
@@ -794,6 +913,8 @@ export interface NoteEvent {
   start: number; // seconds, relative to sequence start
   duration: number;
   velocity: number; // 0..1
+  /** Percussion instead of piano (metronome click / accent / woodblock). */
+  perc?: 'click' | 'accent' | 'wood';
 }
 
 const ROMAN: Record<Roman, { deg: number; q: ChordQuality }> = {
@@ -853,6 +974,12 @@ export function renderStimulus(stimulus: Stimulus[]): { events: NoteEvent[]; len
       case 'rest':
         t += s.duration;
         break;
+      case 'rhythm': {
+        const snd = rhythmSound(rhythmFromKey(s.rhythm, s.bars), s.bpm);
+        for (const e of snd.events) events.push({ ...e, start: t + e.start });
+        t += snd.length;
+        break;
+      }
     }
   }
   return { events, length: t };
@@ -880,5 +1007,9 @@ export function questionTag(q: Question): string {
       return `name:${k(q.key)}:${q.degree}:${q.direction === 'heard-pitch→name' ? 'heard' : 'degree'}`;
     case 'sing-seq':
       return `singseq:${k(q.key)}:${q.degrees.join('-')}`;
+    case 'rhythm-read':
+      return `rread:${q.level}:${q.rhythm.bars}:${q.show}:${rhythmKey(q.rhythm)}`;
+    case 'rhythm-dict':
+      return `rdict:${q.level}:${q.rhythm.bars}:${q.answer}`;
   }
 }

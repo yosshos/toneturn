@@ -7,9 +7,21 @@
 //  - The microphone/recognizer is only active in the `listening` phase.
 //  - Permission / recognition failures, silence and unclear speech never count as wrong answers.
 
-import { compareStimulus, explainStimulus, renderStimulus, type Answer, type LessonDef, type Question, type SingQuestion, type SingSeqQuestion, type Stimulus } from '../engine/lesson';
+import {
+  compareStimulus,
+  explainStimulus,
+  renderStimulus,
+  type Answer,
+  type LessonDef,
+  type Question,
+  type RhythmReadQuestion,
+  type SingQuestion,
+  type SingSeqQuestion,
+  type Stimulus,
+} from '../engine/lesson';
 import { evaluateSung, type SungResult } from '../engine/sing';
 import { gradeSungSequence, type NoteStatus } from '../engine/memory';
+import { gradeReading, readTimeline } from '../engine/rhythm';
 import { accuracyFor, type Modality } from '../engine/scoring';
 import type { Naming } from '../engine/pitch';
 import {
@@ -74,7 +86,16 @@ export interface LessonView {
     accuracy?: number;
     /** Per-note result for sung sequences. */
     seqNotes?: NoteStatus[];
+    /** Rhythm reading: per-onset offset in ms (null = missed) and extra taps. */
+    readHits?: (number | null)[];
+    readExtra?: number;
   } | null;
+  /** Metronome light while a rhythm is being performed. */
+  beat: { i: number; accent: boolean; n: number } | null;
+  /** Taps / "ta" onsets registered so far in the current performance. */
+  readTaps: number;
+  /** performance.now() when beat 1 of the current performance is heard (null outside a performance). */
+  readStartPerf: number | null;
   /** Live tuner reading while a singing capture is open. */
   singLive: SingLive | null;
   caption: string | null;
@@ -96,6 +117,8 @@ export interface ControllerSettings {
   timed?: boolean;
   /** Naming system for spoken note-name answers (input language). Default: same as `naming`. */
   inputNaming?: Naming;
+  /** Calibrated tap delay (ms) subtracted from rhythm taps. */
+  latencyMs?: number;
 }
 
 export interface ControllerHooks {
@@ -122,6 +145,10 @@ export class LessonController {
   private clockStart: number | null = null;
   private restartClockAtListen = false;
   private tapAt: number | null = null;
+  /** Rhythm reading: perf time of beat 1 and the taps collected for the current performance. */
+  private readStart: number | null = null;
+  private readTaps: number[] = [];
+  private readOpen = false;
   private now = () => this.ad.clock.now?.() ?? (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
   constructor(
@@ -149,6 +176,9 @@ export class LessonController {
       error: null,
       needsListenTap: false,
       singLive: null,
+      beat: null,
+      readTaps: 0,
+      readStartPerf: null,
       simulated: ad.simulated,
     };
   }
@@ -259,6 +289,19 @@ export class LessonController {
     w.resolve({ kind: 'answer', answer });
   }
 
+  /** Rhythm reading tap (screen / keyboard); `perfMs` is the event timestamp. */
+  tapBeat(perfMs: number) {
+    this.registerOnset(perfMs);
+  }
+
+  private registerOnset(perfMs: number) {
+    if (!this.readOpen || this.readStart === null) return;
+    const rel = perfMs - this.readStart - (this.cfg.latencyMs ?? 0);
+    if (rel < -400) return; // during the count-in
+    this.readTaps.push(Math.round(rel));
+    this.patch({ readTaps: this.readTaps.length });
+  }
+
   /** Singing in Buttons mode: explicit recording action. */
   record() {
     const w = this.waiter;
@@ -346,7 +389,7 @@ export class LessonController {
       this.emit('access-error', r.error);
       return false;
     }
-    const needsSpeech = this.s.lesson.questions.some((q) => q.kind !== 'sing' && q.kind !== 'sing-seq');
+    const needsSpeech = this.s.lesson.questions.some((q) => q.kind !== 'sing' && q.kind !== 'sing-seq' && q.kind !== 'rhythm-read');
     if (needsSpeech && !this.ad.stt.isSupported()) {
       const error: AccessError = { stage: 'recognition', code: 'unsupported', raw: 'SpeechRecognition is not available' };
       this.patch({ mic: 'off', error });
@@ -446,6 +489,7 @@ export class LessonController {
     }
     if (q.kind === 'sing') return this.singLoop(q, signal);
     if (q.kind === 'sing-seq') return this.singSeqLoop(q, signal);
+    if (q.kind === 'rhythm-read') return this.readLoop(q, signal);
     await this.answerLoop(signal);
   }
 
@@ -469,16 +513,24 @@ export class LessonController {
     answer: Answer,
     signal: AbortSignal,
     sung?: SungResult,
-    ev: { timeMs: number | null; modality: Modality; accuracy?: number; seqNotes?: NoteStatus[] } = { timeMs: null, modality: 'buttons' },
+    ev: {
+      timeMs: number | null;
+      modality: Modality;
+      accuracy?: number;
+      seqNotes?: NoteStatus[];
+      precision?: number;
+      readHits?: (number | null)[];
+      readExtra?: number;
+    } = { timeMs: null, modality: 'buttons' },
   ): Promise<boolean> {
     const l = this.cfg.outputLang;
     this.silentCount = 0;
     const q = currentQuestion(this.s);
     const accuracy = ev.accuracy ?? accuracyFor(q, answer, sung);
-    const [next, g] = grade(this.s, this.s.turn, this.s.index, answer, this.view.mode, { accuracy, timeMs: ev.timeMs, modality: ev.modality });
+    const [next, g] = grade(this.s, this.s.turn, this.s.index, answer, this.view.mode, { accuracy, timeMs: ev.timeMs, modality: ev.modality, precision: ev.precision });
     if (g.kind === 'stale') return false;
     const rec = next.records[next.index];
-    const chips = { timeMs: ev.timeMs, attempt: rec.attempts.length, xp: rec.xp, accuracy, seqNotes: ev.seqNotes };
+    const chips = { timeMs: ev.timeMs, attempt: rec.attempts.length, xp: rec.xp, accuracy, seqNotes: ev.seqNotes, readHits: ev.readHits, readExtra: ev.readExtra };
     this.setSession(next, { needsListenTap: false });
     this.emit('graded', { answer, result: g, ...chips });
     if (g.kind === 'correct') {
@@ -644,6 +696,90 @@ export class LessonController {
       }
       const statuses = g.notes.map((n) => n.status);
       if (await this.evaluate(g.pass ? 'accurate' : 'wrong', signal, undefined, { timeMs: this.elapsed(voicedAt), modality: 'sing', accuracy: g.accuracy, seqNotes: statuses })) return;
+    }
+  }
+
+  /** Rhythm reading: count-in + metronome on the audio clock; taps or "ta" onsets graded per onset. */
+  private async readLoop(q: RhythmReadQuestion, signal: AbortSignal) {
+    const l = this.cfg.outputLang;
+    const maxSilent = this.cfg.maxSilentRetries ?? 2;
+    for (;;) {
+      throwIfAborted(signal);
+      if (this.view.needsListenTap) {
+        this.setSession(newTurn(this.s, 'listening'), { mic: 'off' });
+        const r = await this.waitFor(signal);
+        if (r.kind !== 'listen' && r.kind !== 'record') continue;
+        this.silentCount = 0;
+        this.patch({ needsListenTap: false });
+      }
+      this.setSession(newTurn(this.s, 'listening'), { feedback: null, readTaps: 0, beat: null });
+      this.readTaps = [];
+      this.readStart = null;
+      // Voice mode: listen for "ta" syllables / knocks as onsets (never speech recognition — spec G.5).
+      let mic: AbortController | null = null;
+      let modality: Modality = 'tap';
+      if (this.view.mode === 'voice' && this.ad.knock) {
+        mic = new AbortController();
+        const micSignal = mic.signal;
+        signal.addEventListener('abort', () => mic?.abort(), { once: true });
+        const opened = await new Promise<boolean>((resolve) => {
+          void this.ad.knock!.listen({ signal: micSignal, onReady: () => resolve(true), onKnock: (perf) => this.registerOnset(perf) }).then((r) => {
+            if (!r.ok) {
+              this.patch({ error: r.error });
+              resolve(false);
+            }
+          });
+        });
+        if (!opened) {
+          await this.waitFor(signal);
+          continue;
+        }
+        modality = 'knock';
+        this.patch({ mic: 'capturing' });
+      }
+      let n = 0;
+      this.readOpen = true;
+      try {
+        await this.ad.audio.playTimeline(
+          readTimeline(q.rhythm, q.bpm),
+          signal,
+          (i, accent) => this.patch({ beat: { i, accent, n: n++ } }),
+          (perf) => {
+            this.readStart = perf;
+            this.patch({ readStartPerf: perf });
+          },
+        );
+      } finally {
+        this.readOpen = false;
+        mic?.abort();
+        this.patch({ mic: 'off', beat: null, readStartPerf: null });
+      }
+      throwIfAborted(signal);
+      if (this.readTaps.length === 0) {
+        // Nothing registered: unusable input, never a musical mistake.
+        this.s = noteUnclear(this.s, this.s.turn);
+        this.silentCount++;
+        this.patch({ feedback: { kind: 'silence' } });
+        if (this.silentCount > maxSilent) {
+          this.patch({ needsListenTap: true });
+          continue;
+        }
+        await this.say(l === 'en' ? "I didn't catch any taps. Again, after the count-in." : 'לא קלטתי הקשות. שוב, אחרי הספירה.', signal);
+        continue;
+      }
+      const g = gradeReading(q.rhythm, q.bpm, this.readTaps, q.level);
+      const hits = g.grade.hits.map((h) => h.offsetMs);
+      if (
+        await this.evaluate(g.pass ? 'accurate' : 'wrong', signal, undefined, {
+          timeMs: null,
+          modality,
+          accuracy: g.accuracy,
+          precision: g.precision,
+          readHits: hits,
+          readExtra: g.grade.extra,
+        })
+      )
+        return;
     }
   }
 

@@ -28,6 +28,8 @@ export interface Attempt {
   /** Response time from the end of the stimulus; null when not reliably measured. */
   timeMs?: number | null;
   modality?: Modality;
+  /** Rhythm performance: graded timing precision 0..1 (feeds rhythmic precision). */
+  precision?: number;
 }
 
 export interface QuestionRecord {
@@ -57,6 +59,7 @@ export interface AnswerEvidence {
   accuracy?: number;
   timeMs?: number | null;
   modality?: Modality;
+  precision?: number;
 }
 
 /** Build the scoring outcome of a record (for XP / rating). */
@@ -129,7 +132,10 @@ export function grade(
   const q = s.lesson.questions[questionIndex];
   const correct = answer === q.answer;
   const accuracy = ev.accuracy ?? (correct ? 1 : 0);
-  const attempts: Attempt[] = [...rec.attempts, { answer, correct, via, accuracy, timeMs: ev.timeMs ?? null, modality: ev.modality ?? (via === 'voice' ? 'voice' : 'buttons') }];
+  const attempts: Attempt[] = [
+    ...rec.attempts,
+    { answer, correct, via, accuracy, timeMs: ev.timeMs ?? null, modality: ev.modality ?? (via === 'voice' ? 'voice' : 'buttons'), precision: ev.precision },
+  ];
   const { xpPerCorrect, attemptLimit } = s.lesson.scoring;
   const timed = s.timed ?? false;
   // The turn advances on every grade so a duplicate delivery of the same answer is stale.

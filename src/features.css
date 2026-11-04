@@ -348,3 +348,84 @@
 .seq-target.missed {
   border-color: var(--red);
 }
+
+/* Rhythm notation and reading */
+.rhythm-staff {
+  width: 100%;
+  max-width: 560px;
+  color: var(--ink);
+}
+.rhythm-staff svg * {
+  fill: currentColor;
+  stroke: currentColor;
+}
+.rhythm-staff svg path[fill='none'],
+.rhythm-staff svg rect[fill='none'] {
+  fill: none;
+}
+.rhythm-staff.compact {
+  color: #2a1747;
+}
+.staff-fallback {
+  margin: 0;
+  font-weight: 700;
+}
+.read-prompt {
+  width: 100%;
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+}
+.read-words {
+  margin: 0;
+  padding: 14px 18px;
+  border-radius: 18px;
+  background: var(--card-2);
+  font-size: 1.3rem;
+  font-weight: 800;
+  text-align: center;
+}
+.answer.rhythm-opt {
+  min-height: 0;
+  padding: 8px 8px 10px;
+}
+.answers.n-4 .answer.rhythm-opt small {
+  font-size: 0.78rem;
+  line-height: 1.25;
+}
+.read-strip {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+.rs {
+  min-width: 28px;
+  height: 28px;
+  padding: 0 6px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  background: rgba(0, 0, 0, 0.3);
+}
+.rs.good {
+  color: var(--mint);
+}
+.rs.ok {
+  color: var(--gold);
+}
+.rs.miss {
+  color: var(--red);
+  border: 2px dashed var(--red);
+}
+.rs.extra {
+  color: var(--coral);
+  font-size: 0.8rem;
+}
+
+.read-prompt .rhythm-staff {
+  justify-self: stretch;
+  margin: 0 auto;
+}

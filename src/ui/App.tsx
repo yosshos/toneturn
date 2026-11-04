@@ -154,6 +154,8 @@ export function App() {
       singing: 'sing-home-five',
       intervals: 'intervals',
       notes: 'notes-degrees',
+      'rhythm-reading': 'rhythm-r1',
+      'rhythm-dictation': 'rhythm-r1',
     };
     if (k === 'sequences') return openPuzzle();
     if (k === 'rhythm' || k === 'timing') {

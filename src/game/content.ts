@@ -6,6 +6,7 @@ import { displayNote, spokenMajorKey, spokenNote, type Naming, type PitchClass }
 import type { SungResult } from '../engine/sing';
 import { parseAlternatives, parseCadence, parseDegree, parseDegreeSequence, parseInterval, parseInversion, parseNoteName, parseQuality, type ParseResult } from '../engine/parser';
 import { narration, type Lang } from './narration';
+import { describe as describeRhythm, parseRhythmWords, rhythmFromKey, rhythmKey, sameRhythm, type CellId } from '../engine/rhythm';
 
 const NUM: Record<Lang, Record<number, string>> = {
   en: { 1: 'one', 2: 'two', 3: 'three', 4: 'four', 5: 'five', 6: 'six', 7: 'seven' },
@@ -25,7 +26,7 @@ const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 export interface LessonMeta {
   title: Record<Lang, string>; // may contain {n}/{k}
   blurb: Record<Lang, string>;
-  icon: 'ear' | 'steps' | 'chord' | 'cadence' | 'mic' | 'map' | 'review' | 'puzzle';
+  icon: 'ear' | 'steps' | 'chord' | 'cadence' | 'mic' | 'map' | 'review' | 'puzzle' | 'drum';
   /** Recommendation after a perfect run. */
   tip: Record<Lang, string>;
 }
@@ -87,6 +88,24 @@ export const LESSON_META: Record<LessonId, LessonMeta> = {
     blurb: { en: 'Hear “five three one” — sing those notes in order.', he: 'שומעים "חמש שלוש אחת" — שרים את הצלילים לפי הסדר.' },
     icon: 'mic',
     tip: { en: 'Sing 1–2–3–2–1 in a new key every day.', he: 'שירו 1–2–3–2–1 בסולם חדש כל יום.' },
+  },
+  'rhythm-r1': {
+    title: { en: 'Rhythm 1: quarters and halves', he: 'קצב 1: רבעים וחצאים' },
+    blurb: { en: 'Read and tap ♩ 𝅗𝅥 𝅝 and rests; hear a bar and pick its notation.', he: 'קוראים ומקישים ♩ 𝅗𝅥 𝅝 והפסקות; שומעים תיבה ובוחרים את התווים שלה.' },
+    icon: 'drum',
+    tip: { en: 'Tap along to songs on the radio: one tap per beat, then two per beat.', he: 'הקישו עם שירים ברדיו: הקשה אחת לכל פעמה, ואז שתיים.' },
+  },
+  'rhythm-r2': {
+    title: { en: 'Rhythm 2: eighth notes', he: 'קצב 2: שמיניות' },
+    blurb: { en: 'Two eighths per beat: ti-ti. Read it, tap it, hear it.', he: 'שתי שמיניות בפעמה: טי-טי. קוראים, מקישים, שומעים.' },
+    icon: 'drum',
+    tip: { en: 'Say “ti-ti ta” while walking: steps are the beat.', he: 'אמרו "טי-טי טה" תוך כדי הליכה: הצעדים הם הפעמה.' },
+  },
+  'rhythm-r3': {
+    title: { en: 'Rhythm 3: dotted quarter', he: 'קצב 3: רבע מנוקד' },
+    blurb: { en: 'Long-short across two beats: ta-i ti.', he: 'ארוך-קצר על פני שתי פעמות: טה-אי טי.' },
+    icon: 'drum',
+    tip: { en: 'Many folk songs start with ♩. ♪ — find one you know.', he: 'הרבה שירי עם מתחילים ב-♩. ♪ — מצאו אחד שאתם מכירים.' },
   },
   placement: {
     title: { en: 'Find my level', he: 'מציאת הרמה שלי' },
@@ -151,6 +170,10 @@ export function introText(lesson: LessonDef, step: IntroStep, l: Lang, nm: Namin
         P5: { en: 'A fifth: open and strong. Like a horn call.', he: 'קווינטה: פתוחה וחזקה. כמו תרועת קרן.' },
         P8: { en: 'An octave: the same note, higher. The two almost melt together.', he: 'אוקטבה: אותו צליל, גבוה יותר. השניים כמעט מתמזגים.' },
       }[c.name][l];
+    case 'rhythm':
+      return l === 'en'
+        ? `Here is a bar: ${describeRhythm(rhythmFromKey(c.rhythm), 'names', l)}. Count it: ${describeRhythm(rhythmFromKey(c.rhythm), 'syllables', l)}.`
+        : `זו תיבה: ${describeRhythm(rhythmFromKey(c.rhythm), 'names', l)}. סופרים: ${describeRhythm(rhythmFromKey(c.rhythm), 'syllables', l)}.`;
     case 'inversion':
       return {
         root: { en: 'Root in the bass: solid and grounded.', he: 'השורש בבס: יציב ומקורקע.' },
@@ -174,6 +197,7 @@ export function answerWord(_q: Question, a: Answer, l: Lang, nm: Naming = 'lette
   if (typeof a === 'number') return deg(a, l);
   const asPc = typeof a === 'string' ? pcFromKey(a) : null;
   if (asPc) return spokenNote(asPc, nm, l);
+  if (_q.kind === 'rhythm-dict' && typeof a === 'string') return describeRhythm(rhythmFromKey(a, _q.rhythm.bars), 'names', l);
   const words: Record<string, Record<Lang, string>> = {
     maj: { en: 'major', he: "מז'ור" },
     min: { en: 'minor', he: 'מינור' },
@@ -196,6 +220,7 @@ export function answerWord(_q: Question, a: Answer, l: Lang, nm: Naming = 'lette
 export function sayChoices(q: Question, l: Lang): string {
   if (q.kind === 'degree-seq') return l === 'en' ? 'the degrees in order' : 'את הדרגות לפי הסדר';
   if (q.kind === 'note-name') return l === 'en' ? 'the note name' : 'את שם התו';
+  if (q.kind === 'rhythm-dict') return l === 'en' ? 'the rhythm, like “ta ti-ti ta”' : 'את הקצב, למשל "טה טי-טי טה"';
   if (q.choices.length > 4) return l === 'en' ? 'a degree, one to seven' : 'דרגה, מאחת עד שבע';
   return orList(q.choices.map((c) => answerWord(q, c, l)), l);
 }
@@ -217,6 +242,16 @@ export function roundPrompt(q: Question, l: Lang, nm: Naming, n: number): string
         : l === 'en'
           ? `Round ${n}. In ${spokenMajorKey(q.key, nm, l)}, which note is degree ${deg(q.degree, l)}?`
           : `סיבוב ${n}. ב${spokenMajorKey(q.key, nm, l)}, איזה תו הוא דרגה ${deg(q.degree, l)}?`;
+    case 'rhythm-read':
+      return q.show === 'words'
+        ? l === 'en'
+          ? `Round ${n}. Tap this rhythm: ${describeRhythm(q.rhythm, 'names', l)}. Count-in, then go.`
+          : `סיבוב ${n}. הקישו את הקצב: ${describeRhythm(q.rhythm, 'names', l)}. ספירה, ואז מתחילים.`
+        : l === 'en'
+          ? `Round ${n}. Read and tap. Count-in, then go.`
+          : `סיבוב ${n}. קוראים ומקישים. ספירה, ואז מתחילים.`;
+    case 'rhythm-dict':
+      return l === 'en' ? `Round ${n}. Listen to the rhythm.` : `סיבוב ${n}. הקשיבו לקצב.`;
     case 'sing-seq':
       return l === 'en'
         ? `Round ${n}. ${cap(spokenMajorKey(q.key, nm, l))}. Sing ${q.degrees.map((d) => deg(d, l)).join(', ')}.`
@@ -280,7 +315,18 @@ export function parseAnswer(q: Question, alternatives: string[], inputNaming: Na
       return r;
     }
     case 'sing-seq':
+    case 'rhythm-read':
       return { kind: 'unrecognized', heard: alternatives[0] ?? '' };
+    case 'rhythm-dict': {
+      // What is graded is what is heard: any spelling that sounds the same counts (spec G.3).
+      for (const alt of alternatives) {
+        const cells = parseRhythmWords(alt);
+        if (!cells) continue;
+        const said = { beatsPerBar: 4 as const, bars: q.rhythm.bars, cells: cells as CellId[] };
+        return { kind: 'answer', value: sameRhythm(said, q.rhythm) ? q.answer : rhythmKey(said), heard: alt };
+      }
+      return { kind: 'unrecognized', heard: alternatives[0] ?? '' };
+    }
   }
 }
 
@@ -308,6 +354,10 @@ export function revealText(q: Question, l: Lang, nm: Naming): string {
         : `זה ${spokenNote(q.target, nm, l)}: דרגה ${deg(q.degree, l)} ב${spokenMajorKey(q.key, nm, l)}.`;
     case 'sing-seq':
       return l === 'en' ? 'Here are the notes.' : 'אלה הצלילים.';
+    case 'rhythm-read':
+      return l === 'en' ? `Here is how it goes: ${describeRhythm(q.rhythm, 'syllables', l)}.` : `ככה זה נשמע: ${describeRhythm(q.rhythm, 'syllables', l)}.`;
+    case 'rhythm-dict':
+      return l === 'en' ? `It was: ${describeRhythm(q.rhythm, 'names', l)}. Your rhythm, then the right one.` : `זה היה: ${describeRhythm(q.rhythm, 'names', l)}. הקצב שלכם, ואז הנכון.`;
     case 'degree':
       if (q.choices.length === 2 && q.choices.includes(5) && q.choices.includes(1)) return narration.reveal(l, nm, q.answer, q.key, q.target);
       return l === 'en'
@@ -389,6 +439,10 @@ export interface ChoiceLabel {
 }
 
 export function choiceLabel(_q: Question, a: Answer, l: Lang, nm: Naming = 'letter'): ChoiceLabel {
+  if (_q.kind === 'rhythm-dict' && typeof a === 'string') {
+    const tones: ChoiceLabel['tone'][] = ['mint', 'gold', 'lilac', 'coral'];
+    return { big: '', small: describeRhythm(rhythmFromKey(a, _q.rhythm.bars), 'names', l), tone: tones[_q.choices.indexOf(a) % 4] };
+  }
   const asPc = typeof a === 'string' ? pcFromKey(a) : null;
   if (asPc) {
     const tones: ChoiceLabel['tone'][] = ['mint', 'gold', 'lilac', 'coral'];
@@ -432,6 +486,10 @@ export function askTemplate(q: Question, l: Lang): string {
       return q.direction === 'heard-pitch→name' ? (l === 'en' ? 'Which note is it?' : 'איזה תו זה?') : l === 'en' ? `Which note is degree ${q.degree}?` : `איזה תו הוא דרגה ${q.degree}?`;
     case 'sing-seq':
       return l === 'en' ? `Sing ${q.degrees.join(' – ')}` : `שירו ${q.degrees.join(' – ')}`;
+    case 'rhythm-read':
+      return l === 'en' ? 'Tap this rhythm' : 'הקישו את הקצב';
+    case 'rhythm-dict':
+      return l === 'en' ? 'Which rhythm did you hear?' : 'איזה קצב שמעתם?';
     case 'quality':
       return q.choices.length > 2 ? (l === 'en' ? 'Which chord quality?' : 'איזה סוג אקורד?') : l === 'en' ? 'Major or minor?' : "מז'ור או מינור?";
     case 'degree-seq':
@@ -452,6 +510,8 @@ export function askTemplate(q: Question, l: Lang): string {
 export function hintText(q: Question, l: Lang, voice: boolean): string {
   if (q.kind === 'sing' || q.kind === 'sing-seq') return voice ? (l === 'en' ? 'Sing after the chime' : 'שירו אחרי הצליל') : l === 'en' ? 'Tap the mic, then sing' : 'לחצו על המיקרופון ושירו';
   if (q.kind === 'note-name' && voice) return l === 'en' ? 'Say the note name' : 'אמרו את שם התו';
+  if (q.kind === 'rhythm-read') return voice ? (l === 'en' ? 'Say “ta” on each note (or tap)' : 'אמרו "טה" על כל תו (או הקישו)') : l === 'en' ? 'Tap the pad or press Space on each note' : 'הקישו על הכפתור או על רווח בכל תו';
+  if (q.kind === 'rhythm-dict' && voice) return l === 'en' ? 'Say it: “ta ti-ti ta” or “quarter, two eighths…”' : 'אמרו: "טה טי-טי טה" או "רבע, שתי שמיניות…"';
   if (q.kind === 'degree-seq') return voice ? (l === 'en' ? 'Say them in order, e.g. “one three five”' : 'אמרו לפי הסדר, למשל "אחת שלוש חמש"') : l === 'en' ? 'Tap the degrees in order, then Done' : 'לחצו על הדרגות לפי הסדר, ואז סיום';
   if (!voice) return l === 'en' ? 'Tap your answer' : 'בחרו תשובה';
   if (q.choices.length > 4) return l === 'en' ? 'Say a degree, “one” to “seven”' : 'אמרו דרגה, מ"אחת" עד "שבע"';
@@ -474,6 +534,9 @@ export function questionBadge(q: Question, l: Lang, nm: Naming): { key?: PitchCl
       return { text: `${l === 'en' ? 'Chord on' : 'אקורד על'} ${displayNote(q.root, nm, l)}` };
     case 'interval':
       return { text: q.mode === 'melodic' ? (l === 'en' ? 'One after the other' : 'אחד אחרי השני') : l === 'en' ? 'Together' : 'ביחד' };
+    case 'rhythm-read':
+    case 'rhythm-dict':
+      return { text: `4/4 · ${q.bpm} BPM · ${q.rhythm.bars} ${l === 'en' ? (q.rhythm.bars > 1 ? 'bars' : 'bar') : q.rhythm.bars > 1 ? 'תיבות' : 'תיבה'}` };
     case 'inversion':
       return { key: q.root, text: l === 'en' ? 'major chord' : "אקורד מז'ור" };
   }
@@ -482,6 +545,8 @@ export function questionBadge(q: Question, l: Lang, nm: Naming): { key?: PitchCl
 export function giveText(q: Question, a: Answer, l: Lang, nm: Naming = 'letter'): string {
   const asPc = typeof a === 'string' ? pcFromKey(a) : null;
   if (asPc) return displayNote(asPc, nm, l);
+  if (q.kind === 'rhythm-dict') return describeRhythm(rhythmFromKey(String(a), q.rhythm.bars), 'syllables', l);
+  if (q.kind === 'rhythm-read') return a === 'accurate' ? (l === 'en' ? 'in time' : 'בזמן') : l === 'en' ? 'off' : 'לא מדויק';
   if (q.kind === 'sing' || q.kind === 'sing-seq') {
     const m: Record<string, Record<Lang, string>> = {
       accurate: { en: 'in tune', he: 'מדויק' },

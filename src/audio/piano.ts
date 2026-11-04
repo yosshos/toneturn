@@ -180,6 +180,10 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
       this.timers.add(t);
     };
     for (const e of events) {
+      if (e.perc) {
+        this.perc(e.perc, t0 + e.start);
+        continue;
+      }
       this.voice(e.midi, e.velocity, t0 + e.start, e.duration);
       const lead = (t0 - ctx.currentTime) * 1000;
       later(lead + e.start * 1000, () => this.noteOn(e.midi));

@@ -47,6 +47,7 @@ export function makeAdapters(expected: () => Answer, targetMidi: () => number): 
     stt: new WebSpeechTranscriber(),
     mic: new BrowserMicAccess(),
     pitch: new BrowserPitchCapture(),
+    knock: new BrowserKnockInput(),
     clock: realClock,
     simulated: false,
   };

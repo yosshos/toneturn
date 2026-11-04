@@ -137,7 +137,9 @@ export interface Clock {
 }
 
 export interface Adapters {
-  audio: AudioEngine;
+  audio: AudioEngine & RhythmAudio;
+  /** Microphone onsets ("ta" / knocks) for rhythm reading in Voice mode. Optional. */
+  knock?: KnockInput;
   tts: PromptPlayer;
   stt: SpeechTranscriber;
   mic: MicAccess;

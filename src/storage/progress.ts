@@ -181,7 +181,22 @@ export function resultFromSession(s: SessionState, sessionId: string, now: Date)
         score: Math.round(ratingScore(q, o) * 1000) / 1000,
         timeMs: o.attempts[k - 1]?.timeMs ?? null,
       };
-    });
+    })
+    // Rhythm reading also measures rhythmic precision (spec G.1), on attempts whose pattern was right.
+    .concat(
+      s.records
+        .map((r, i) => ({ r, q: s.lesson.questions[i] }))
+        .filter(({ r, q }) => q.kind === 'rhythm-read' && r.attempts[0]?.correct && r.attempts[0].precision !== undefined)
+        .map(({ r, q }) => ({
+          id: `${sessionId}:${q.id}:timing`,
+          skill: 'timing' as const,
+          difficulty: q.difficulty,
+          correct: (r.attempts[0].precision ?? 0) >= 0.5,
+          tag: questionTag(q),
+          score: Math.round((r.attempts[0].precision ?? 0) * 1000) / 1000,
+          timeMs: null,
+        })),
+    );
   const result: LessonResult = {
     lessonId: s.lesson.id,
     lessonVersion: s.lesson.version,

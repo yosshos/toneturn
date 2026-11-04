@@ -1,5 +1,14 @@
 # Milestone report — 2026-11-04
 
+## Update 10 — v0.10.0: rhythm reading & dictation R1–R3 (spec G)
+
+- `src/engine/rhythm.ts`: 12-ticks-per-quarter model, cells (♩ 𝄽 𝅗𝅥 𝅝 ♫ ♩.♪), bar-safe generation per level, sound signature (graded by what is heard), minimal-pair distractors, count-in + metronome timelines, grid-derived tolerance, reading grade (70 % pattern + 30 % precision), names and Kodály syllables in English and Hebrew, spoken-words parser.
+- Notation with VexFlow 4.2.5 (MIT), lazy-loaded; percussion clef, beams, dots, rests; text alternative.
+- Reading: notation or words → perform on the metronome by tap / Space, or "ta" onsets from the microphone in Voice mode (onset detection, not speech recognition); per-onset early/late strip; no input = unclear, never wrong. Reading feeds *Rhythm reading* and *Rhythmic precision*.
+- Dictation: hear a bar → choose among 4 notated options, or say it; reveal plays "your rhythm, then the right one". Feeds *Rhythm dictation*.
+- Server: lesson ids extended (migration 7). Tests: 310 unit + rhythm E2E with real metronome timing.
+- Not yet: R4–R8 (sixteenths, syncopation, triplets, compound meter, swing), build-a-bar answers, hold-to-sustain durations; real "ta" detection not yet measured with a person.
+
 ## Update 9 — v0.9.0: full melodic matrix (spec H)
 
 - Lessons 8–10 cover the missing directions: heard → note name (with a key reference; keyboard hidden so the lit key can't give the answer away), name → degree and degree → name (symbolic, no sound, longer reference time), echo a single note, name → sing, and degrees → sing a sequence (segmentation + alignment + partial credit + per-note strip).

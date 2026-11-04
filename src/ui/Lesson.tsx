@@ -10,6 +10,8 @@ import { namingFor, resultFromSession, type Progress, type Settings } from '../s
 import { isTimed } from '../engine/scoring';
 import { Burst, Keyboard, MicIcon, ModeSwitch, Note, PermissionPanel, withNote } from './bits';
 import { Recap } from './Recap';
+import { RhythmStaff } from './RhythmStaff';
+import { describe as describeRhythm, onsetBeats, rhythmFromKey } from '../engine/rhythm';
 import { makeAdapters, piano, store } from './services';
 
 interface Props {
@@ -49,6 +51,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
         naming: namingFor(settings.naming, settings.outputLang),
         timed: isTimed(settings.timedScoring, settings.firstUseAt, new Date()),
         inputNaming: namingFor(settings.naming, settings.inputLang),
+        latencyMs: settings.tapLatencyMs,
       },
       settings.mode,
       {
@@ -76,6 +79,18 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
     return () => ctrl.dispose();
   }, [ctrl, autoStart]);
 
+  // Space / Enter tap the beat while a rhythm is being performed.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.repeat || (e.code !== 'Space' && e.code !== 'Enter')) return;
+      if (ctrl.getView().question.kind !== 'rhythm-read' || ctrl.getView().stage !== 'question') return;
+      e.preventDefault();
+      ctrl.tapBeat(e.timeStamp);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [ctrl]);
+
   const lang = settings.uiLang;
   const nm = namingFor(settings.naming, lang);
   const lesson = v.session.lesson;
@@ -90,7 +105,8 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
   const paused = v.phase === 'paused';
   const isSing = q.kind === 'sing' || q.kind === 'sing-seq';
   const isSeq = q.kind === 'degree-seq';
-  const showButtons = v.stage === 'question' && !paused && !v.error && !isSing && !isSeq && (v.mode === 'buttons' || v.needsListenTap);
+  const isRead = q.kind === 'rhythm-read';
+  const showButtons = v.stage === 'question' && !paused && !v.error && !isSing && !isSeq && !isRead && (v.mode === 'buttons' || v.needsListenTap);
   const showKeypad = v.stage === 'question' && !paused && !v.error && isSeq && (v.mode === 'buttons' || v.needsListenTap);
   const showRecord = v.stage === 'question' && !paused && !v.error && isSing && (v.mode === 'buttons' || v.needsListenTap);
   const awaiting = v.phase === 'listening';
@@ -101,7 +117,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
       ? displayNote(q.target, nm, lang)
       : '';
   const keyName = 'key' in q && q.key ? displayNote(q.key, nm, lang) : '';
-  const hideKeyboard = (q.kind === 'note-name' && q.direction === 'heard-pitch→name') || (q.kind === 'sing' && q.promptBy === 'echo');
+  const hideKeyboard = (q.kind === 'note-name' && q.direction === 'heard-pitch→name') || (q.kind === 'sing' && q.promptBy === 'echo') || q.kind === 'rhythm-read' || q.kind === 'rhythm-dict';
   const orbLabel =
     q.kind === 'degree'
       ? target
@@ -195,7 +211,15 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
             )}
           </div>
           <div className="hero-slot">
-            {q.kind === 'sing' ? <Tuner v={v} /> : q.kind === 'sing-seq' ? <SeqTargets degrees={q.degrees} notes={v.feedback?.seqNotes} /> : <Orb v={v} label={orbLabel} />}
+            {q.kind === 'sing' ? (
+              <Tuner v={v} />
+            ) : q.kind === 'sing-seq' ? (
+              <SeqTargets degrees={q.degrees} notes={v.feedback?.seqNotes} />
+            ) : q.kind === 'rhythm-read' ? (
+              <ReadPrompt q={q} v={v} lang={lang} onTap={(ms) => ctrl.tapBeat(ms)} t={t} />
+            ) : (
+              <Orb v={v} label={q.kind === 'rhythm-dict' ? '♩ ?' : orbLabel} />
+            )}
             <Burst on={celebrate} />
           </div>
           {!hideKeyboard && <Keyboard mark={q.kind === 'degree' && q.direction !== 'name→degree' ? q.targetMidi : undefined} />}
@@ -209,12 +233,16 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
                 return (
                   <button
                     key={String(c)}
-                    className={`answer tone-${lb.tone}`}
+                    className={`answer tone-${lb.tone} ${q.kind === 'rhythm-dict' ? 'rhythm-opt' : ''}`}
                     disabled={!awaiting}
                     onClick={() => ctrl.answer(c)}
                     data-answer={String(c)}
                   >
-                    <b>{lb.big}</b>
+                    {q.kind === 'rhythm-dict' ? (
+                      <RhythmStaff rhythm={rhythmFromKey(String(c), q.rhythm.bars)} label={lb.small} compact height={80} />
+                    ) : (
+                      <b>{lb.big}</b>
+                    )}
                     <small>{lb.small}</small>
                   </button>
                 );
@@ -317,6 +345,15 @@ function IntroCardView({ card, state, t, lang, nm }: { card: IntroCard; state: s
         </div>
       );
     }
+    case 'rhythm':
+      return (
+        <div className={`intro-card wide ${state}`}>
+          <RhythmStaff rhythm={rhythmFromKey(card.rhythm)} label={describeRhythm(rhythmFromKey(card.rhythm), 'names', lang)} />
+          <span className="intro-deg" dir="auto">
+            {describeRhythm(rhythmFromKey(card.rhythm), 'syllables', lang)}
+          </span>
+        </div>
+      );
     case 'sing':
       return (
         <div className={`intro-card wide ${state}`}>
@@ -483,6 +520,7 @@ function FeedbackBanner({ v, t, lang, settings }: { v: LessonView; t: Strings; l
         </small>
       )}
       {(f.kind === 'correct' || f.kind === 'correct-retry' || f.kind === 'reveal' || f.kind === 'retry') && <AnswerChips f={f} t={t} />}
+      {f.readHits && <ReadStrip hits={f.readHits} extra={f.readExtra ?? 0} t={t} />}
       {v.heard && (f.kind === 'unclear' || f.kind === 'ambiguous' || f.kind === 'retry') && !f.sung && (
         <small>
           {t.heard}: “{v.heard}”
@@ -566,5 +604,50 @@ function SeqTargets({ degrees, notes }: { degrees: number[]; notes?: string[] })
         </li>
       ))}
     </ol>
+  );
+}
+
+/** What to perform (notation or words), the metronome light and a big tap pad. */
+function ReadPrompt({ q, v, lang, onTap, t }: { q: Extract<Question, { kind: 'rhythm-read' }>; v: LessonView; lang: 'he' | 'en'; onTap: (ms: number) => void; t: Strings }) {
+  const names = describeRhythm(q.rhythm, 'names', lang);
+  return (
+    <div className="read-prompt" data-onsets={onsetBeats(q.rhythm).join(',')} data-bpm={q.bpm} data-start={v.readStartPerf ?? undefined}>
+      {q.show === 'notation' ? (
+        <RhythmStaff rhythm={q.rhythm} label={names} />
+      ) : (
+        <p className="read-words" dir="auto">
+          {names}
+        </p>
+      )}
+      <div className={`beat-light ${v.beat?.accent ? 'accent' : ''}`} key={v.beat?.n ?? -1} aria-hidden="true" />
+      <button
+        className={`tap-pad ${v.phase === 'listening' ? 'live' : ''}`}
+        onPointerDown={(e) => {
+          e.preventDefault();
+          onTap(e.timeStamp);
+        }}
+        aria-label={t.tapHere}
+      >
+        {t.tapHere} <small dir="ltr">{v.readTaps ? `· ${v.readTaps}` : ''}</small>
+      </button>
+    </div>
+  );
+}
+
+/** Per-onset result after performing a rhythm: on time / early / late / missed. */
+function ReadStrip({ hits, extra, t }: { hits: (number | null)[]; extra: number; t: Strings }) {
+  return (
+    <div className="read-strip" dir="ltr">
+      {hits.map((h, i) => (
+        <span key={i} className={`rs ${h === null ? 'miss' : Math.abs(h) <= 40 ? 'good' : 'ok'}`} title={h === null ? t.missed : `${h > 0 ? '+' : ''}${h} ms`}>
+          {h === null ? '·' : Math.abs(h) <= 40 ? '✓' : h < 0 ? '←' : '→'}
+        </span>
+      ))}
+      {extra > 0 && (
+        <span className="rs extra">
+          +{extra} {t.extraTaps}
+        </span>
+      )}
+    </div>
   );
 }

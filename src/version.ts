@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.10.0',
+    date: '2026-11-04',
+    en: ['Rhythm 1–3: read rhythm notation and tap it on the metronome (or say “ta”)', 'Rhythm dictation: hear a bar and pick its notation, or say it', 'Rhythm reading and rhythm dictation join the Skill Map'],
+    he: ['קצב 1–3: קוראים תווי קצב ומקישים על המטרונום (או אומרים "טה")', 'הכתבה קצבית: שומעים תיבה ובוחרים את התווים שלה, או אומרים אותה', 'קריאה והכתבה קצבית נוספו למפת המיומנויות'],
+  },
+  {
     version: '0.9.0',
     date: '2026-11-04',
     en: ['New lesson: Notes and degrees (hear and name, name ↔ degree)', 'New lesson: Sing it by name (echo a note, sing a named note)', 'New lesson: Sing the degrees (sing “1 3 5” in order)', 'Note naming joins the Skill Map'],
