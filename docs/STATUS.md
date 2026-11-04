@@ -4,7 +4,7 @@
 
 - Generic question kinds (degree / chord quality / cadence / singing) through one controller; 4 new lessons; path with unlocks, stars, daily XP goal; celebration burst; per-kind answer buttons; next-lesson flow.
 - Singing (milestone 2 core): raw-mic YIN capture only during the window, attack skipped, median pitch, octave-insensitive ±35 ¢, sharp/flat/wrong/unclear, spoken direction, live tuner; unusable capture never counts as wrong; explicit Sing now in Buttons mode.
-- Cloud: Supabase client, Google OAuth sign-in, idempotent two-way sync, SQL migration with RLS + plausibility checks. **Not live yet** — waits for a Supabase project and the Google OAuth client (see README).
+- Cloud: Supabase client, Google OAuth sign-in, idempotent two-way sync, SQL migration with RLS + plausibility checks. **Live on 2026-11-04** (project `jgmahngenrpqnvbvpztf`, free org, separate account): tables created; signed-out read/insert verified as `permission denied`; Google provider enabled; owner signed in on desktop Chrome and the app reported *Synced*. Server-side contents not inspected (no service key by design).
 - Tests: **144 unit/controller** + **14 E2E** (Chrome, desktop + Pixel 7) passing. Singing verified with synthetic pitch only — **real singing not yet measured.**
 
 ## Update — spec addendum (A: voice choice, B: English default + Hebrew)

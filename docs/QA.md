@@ -25,6 +25,17 @@ Record each run with the **Voice check → Copy JSON report** output attached. P
 | Headless Chrome (Playwright, desktop + Pixel 7 viewport) | http://localhost:5174 | no | fake device ✓ signal + pitch; denied → `permission-denied` ✓ | not tested (no real speech) | simulator ✓ | ✓ | ✓ | `npm run test:e2e`, 11/11 on 2026-11-04 |
 | Firefox desktop | | | ☐ | expected *unsupported* → Buttons | n/a | ☐ | ☐ | pending |
 
+## Cloud save (Supabase)
+
+| Check | Result (2026-11-04) |
+| --- | --- |
+| Tables exist (`toneturn_lesson_results`, `toneturn_profiles`) | ✓ |
+| Signed-out read / insert blocked | ✓ `42501 permission denied` |
+| Google provider → redirect to accounts.google.com | ✓ |
+| First sign-in on desktop Chrome, app shows *Synced* | ✓ (reported by owner) |
+| Second device restores progress | ☐ pending |
+| Offline completion uploads after reconnect | ☐ pending |
+
 ## Voice & language checks (manual)
 
 - Settings → Narration voice: try Female and Male; ▶ preview each listed voice in English and Hebrew; confirm the choice is used in the lesson and survives reload.
