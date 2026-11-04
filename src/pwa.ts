@@ -68,7 +68,7 @@ export function initPwa(register: boolean) {
     reloading = true;
     location.reload();
   });
-  void navigator.serviceWorker.register('/sw.js').then((r) => {
+  void navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`, { scope: import.meta.env.BASE_URL }).then((r) => {
     reg = r;
     const watch = (w: ServiceWorker | null) => {
       if (!w) return;

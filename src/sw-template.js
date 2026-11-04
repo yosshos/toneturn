@@ -6,6 +6,7 @@ const VERSION = '__VERSION__';
 const BUILD = '__BUILD__';
 const CACHE = `toneturn-${VERSION}-${BUILD}`;
 const PRECACHE = __PRECACHE__;
+const BASE = '__BASE__';
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(PRECACHE)));
@@ -32,7 +33,7 @@ self.addEventListener('fetch', (e) => {
   const url = new URL(req.url);
   if (url.origin !== location.origin) return;
   if (req.mode === 'navigate') {
-    e.respondWith(fetch(req).catch(() => caches.match('/index.html')));
+    e.respondWith(fetch(req).catch(() => caches.match(BASE + 'index.html')));
     return;
   }
   e.respondWith(
@@ -40,7 +41,7 @@ self.addEventListener('fetch', (e) => {
       (hit) =>
         hit ||
         fetch(req).then((res) => {
-          if (res.ok && url.pathname.startsWith('/assets/')) {
+          if (res.ok && url.pathname.startsWith(BASE + 'assets/')) {
             const copy = res.clone();
             caches.open(CACHE).then((c) => c.put(req, copy));
           }
@@ -61,17 +62,17 @@ self.addEventListener('push', (e) => {
   e.waitUntil(
     self.registration.showNotification(title, {
       body: data.body || 'Keep your streak alive — one short lesson.',
-      icon: '/icon.svg',
-      badge: '/icon.svg',
+      icon: BASE + 'icon.svg',
+      badge: BASE + 'icon.svg',
       tag: data.tag || 'streak',
-      data: { url: data.url || '/' },
+      data: { url: data.url || BASE },
     }),
   );
 });
 
 self.addEventListener('notificationclick', (e) => {
   e.notification.close();
-  const url = (e.notification.data && e.notification.data.url) || '/';
+  const url = (e.notification.data && e.notification.data.url) || BASE;
   e.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
       for (const c of list) if ('focus' in c) return c.focus();

@@ -1,14 +1,15 @@
 {
+  "id": "./",
   "name": "ToneTurn",
   "short_name": "ToneTurn",
   "description": "Voice-first ear training: hear it, say it, sing it.",
-  "start_url": "/",
-  "scope": "/",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#1E1236",
   "theme_color": "#2B1A4A",
   "icons": [
-    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
   ]
 }
