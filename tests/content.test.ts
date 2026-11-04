@@ -37,13 +37,13 @@ describe('lesson catalogue', () => {
         expect(e.midi).toBeLessThanOrEqual(84);
       }
       // Performance items (singing, rhythm reading) have no answer choices.
-      if (q.kind !== 'sing' && q.kind !== 'sing-seq' && q.kind !== 'sing-run' && q.kind !== 'rhythm-read') expect(q.choices).toContain(q.answer);
+      if (q.kind !== 'sing' && q.kind !== 'sing-seq' && q.kind !== 'sing-run' && q.kind !== 'rhythm-read' && !(q.kind === 'rhythm-dict' && q.mode === 'build')) expect(q.choices).toContain(q.answer);
     }
   });
 
   it('every answer choice appears across seeds (no lopsided lessons)', () => {
     for (const id of LESSON_ORDER) {
-      if (['sing-home-five', 'notes-degrees', 'sing-names', 'sing-degrees', 'rhythm-r1', 'rhythm-r2', 'rhythm-r3', 'runs'].includes(id)) continue; // mixed / open answer sets
+      if (['sing-home-five', 'notes-degrees', 'sing-names', 'sing-degrees', 'rhythm-r1', 'rhythm-r2', 'rhythm-r3', 'runs', 'rhythm-r4', 'rhythm-r5', 'rhythm-r6', 'rhythm-r7', 'rhythm-r8'].includes(id)) continue; // mixed / open answer sets
       for (let seed = 0; seed < 30; seed++) {
         const l = makeLesson(id, seed);
         const answers = new Set(l.questions.map((q) => q.answer));

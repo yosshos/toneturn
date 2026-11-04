@@ -108,6 +108,36 @@ export const LESSON_META: Record<LessonId, LessonMeta> = {
     icon: 'drum',
     tip: { en: 'Many folk songs start with ♩. ♪ — find one you know.', he: 'הרבה שירי עם מתחילים ב-♩. ♪ — מצאו אחד שאתם מכירים.' },
   },
+  'rhythm-r4': {
+    title: { en: 'Rhythm 4: sixteenths', he: 'קצב 4: שש-עשריות' },
+    blurb: { en: 'Four to a beat: tika-tika, ti tika, tika ti.', he: 'ארבע בפעמה: טיקה-טיקה, טי טיקה, טיקה טי.' },
+    icon: 'drum',
+    tip: { en: 'Whisper “tika-tika” while tapping the beat with your foot.', he: 'לחשו "טיקה-טיקה" ותקישו את הפעמה ברגל.' },
+  },
+  'rhythm-r5': {
+    title: { en: 'Rhythm 5: syncopation', he: 'קצב 5: סינקופה' },
+    blurb: { en: 'Off-beat accents: syn-co-pa, and eighth rests.', he: 'הדגשות בין הפעמות: סין-קו-פה, והפסקות שמינית.' },
+    icon: 'drum',
+    tip: { en: 'Clap only the “and”s while counting 1 & 2 & — that is the off-beat.', he: 'מחאו רק על ה"ו" בזמן שאתם סופרים 1 ו 2 ו — זה החלק החלש.' },
+  },
+  'rhythm-r6': {
+    title: { en: 'Rhythm 6: triplets', he: 'קצב 6: טריולות' },
+    blurb: { en: 'Three in a beat: tri-o-la — and how it differs from ti-ti.', he: 'שלוש בפעמה: טרי-או-לה — ובמה זה שונה מטי-טי.' },
+    icon: 'drum',
+    tip: { en: 'Say “straw-ber-ry” for triplets and “ap-ple” for eighths over the same beat.', he: 'אמרו "תות-שָׂ-דה" לטריולה ו"תפּוּ-ח" לשמיניות על אותה פעמה.' },
+  },
+  'rhythm-r7': {
+    title: { en: 'Rhythm 7: 3/4 and 6/8', he: 'קצב 7: 3/4 ו־6/8' },
+    blurb: { en: 'Waltz time and the rocking compound beat.', he: 'משקל ואלס, והפעמה המורכבת שמתנדנדת.' },
+    icon: 'drum',
+    tip: { en: 'In 6/8 feel two big beats, each split in three: ONE-two-three FOUR-five-six.', he: 'ב־6/8 מרגישים שתי פעמות גדולות, כל אחת מחולקת לשלוש: אחת-שתיים-שלוש ארבע-חמש-שש.' },
+  },
+  'rhythm-r8': {
+    title: { en: 'Rhythm 8: swing', he: 'קצב 8: סווינג' },
+    blurb: { en: 'Jazz eighths: written even, played long-short.', he: 'שמיניות של ג׳אז: כתובות שוות, מנוגנות ארוך-קצר.' },
+    icon: 'drum',
+    tip: { en: 'Swing is the triplet feel: “doo-ba doo-ba” with the “ba” on the last third of the beat.', he: 'סווינג הוא תחושת טריולה: "דו-בה דו-בה" כשה"בה" על השליש האחרון של הפעמה.' },
+  },
   placement: {
     title: { en: 'Find my level', he: 'מציאת הרמה שלי' },
     blurb: { en: 'Nine quick questions that adapt to you.', he: 'תשע שאלות קצרות שמתאימות את עצמן אליכם.' },
@@ -358,9 +388,9 @@ export function parseAnswer(q: Question, alternatives: string[], inputNaming: Na
     case 'rhythm-dict': {
       // What is graded is what is heard: any spelling that sounds the same counts (spec G.3).
       for (const alt of alternatives) {
-        const cells = parseRhythmWords(alt);
+        const cells = parseRhythmWords(alt, q.rhythm.meter ?? '4/4');
         if (!cells) continue;
-        const said = { beatsPerBar: 4 as const, bars: q.rhythm.bars, cells: cells as CellId[] };
+        const said = { ...q.rhythm, cells: cells as CellId[] };
         return { kind: 'answer', value: sameRhythm(said, q.rhythm) ? q.answer : rhythmKey(said), heard: alt };
       }
       return { kind: 'unrecognized', heard: alternatives[0] ?? '' };
@@ -591,7 +621,7 @@ export function questionBadge(q: Question, l: Lang, nm: Naming): { key?: PitchCl
       return { text: q.mode === 'melodic' ? (l === 'en' ? 'One after the other' : 'אחד אחרי השני') : l === 'en' ? 'Together' : 'ביחד' };
     case 'rhythm-read':
     case 'rhythm-dict':
-      return { text: `4/4 · ${q.bpm} BPM · ${q.rhythm.bars} ${l === 'en' ? (q.rhythm.bars > 1 ? 'bars' : 'bar') : q.rhythm.bars > 1 ? 'תיבות' : 'תיבה'}` };
+      return { text: `${q.rhythm.meter ?? '4/4'}${q.rhythm.swing ? ' swing' : ''} · ${q.rhythm.meter === '6/8' ? `♩. = ${Math.round(q.bpm / 1.5)}` : `${q.bpm} BPM`} · ${q.rhythm.bars} ${l === 'en' ? (q.rhythm.bars > 1 ? 'bars' : 'bar') : q.rhythm.bars > 1 ? 'תיבות' : 'תיבה'}` };
     case 'inversion':
       return { key: q.root, text: l === 'en' ? 'major chord' : "אקורד מז'ור" };
   }

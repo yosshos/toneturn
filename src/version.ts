@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.15.0',
+    date: '2026-11-04',
+    en: ['Rhythm 4–8: sixteenths, syncopation, triplets, 3/4 and 6/8, and jazz swing', 'Build the bar: in dictation, tap rhythm blocks to write what you heard', 'Stricter timing where it matters: triplets vs eighths are told apart'],
+    he: ['קצב 4–8: שש-עשריות, סינקופה, טריולות, 3/4 ו־6/8, וסווינג של ג׳אז', 'בונים את התיבה: בהכתבה מקישים על קוביות קצב כדי לכתוב את מה ששמעתם', 'תזמון מדויק יותר איפה שזה חשוב: מבחינים בין טריולות לשמיניות'],
+  },
+  {
     version: '0.14.0',
     date: '2026-11-04',
     en: ['Riffs & runs (lesson 14): name a run’s scale or shape, then sing fast runs back — graded on pitch, clean separate notes and even timing', 'Runs workshop: each run at 60 %, 80 %, then full speed, at your level', 'New Skill Map axis: Vocal agility'],

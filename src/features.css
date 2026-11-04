@@ -489,3 +489,43 @@
   font-weight: 700;
   text-align: center;
 }
+
+/* ---------------------------------------------------------------- build-a-bar (spec G.6) */
+.rhythm-builder {
+  display: grid;
+  gap: 12px;
+  width: 100%;
+}
+.builder-bar {
+  position: relative;
+  min-height: 90px;
+  border-radius: 18px;
+  background: var(--bg-2);
+  display: grid;
+  place-items: center;
+  padding: 6px 10px;
+}
+.builder-count {
+  position: absolute;
+  top: 6px;
+  inset-inline-end: 10px;
+  font-weight: 900;
+  color: var(--ink-dim);
+}
+.builder-palette {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 8px;
+}
+.block-btn {
+  padding: 4px;
+  background: var(--card-2);
+  min-height: 72px;
+}
+.swing-mark {
+  display: block;
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: var(--gold);
+  text-align: start;
+}

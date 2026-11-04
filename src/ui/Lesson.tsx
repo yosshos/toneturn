@@ -11,7 +11,7 @@ import { isTimed } from '../engine/scoring';
 import { Burst, Keyboard, MicIcon, ModeSwitch, Note, PermissionPanel, withNote } from './bits';
 import { Recap } from './Recap';
 import { RhythmStaff } from './RhythmStaff';
-import { describe as describeRhythm, onsetBeats, rhythmFromKey } from '../engine/rhythm';
+import { buildPalette, CELLS, describe as describeRhythm, meterOf, onsetBeats, rhythmFromKey, rhythmKey, sameRhythm, totalBeats, type CellId, type Rhythm } from '../engine/rhythm';
 import { makeAdapters, piano, store } from './services';
 
 interface Props {
@@ -232,7 +232,10 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
           <h1 className="ask">{withNote(askTemplate(q, lang), target, keyName)}</h1>
           <Listening v={v} t={t} hint={hintText(q, lang, v.mode === 'voice' && !v.needsListenTap)} />
           <FeedbackBanner v={v} t={t} lang={lang} settings={settings} />
-          {showButtons && (
+          {showButtons && q.kind === 'rhythm-dict' && q.mode === 'build' && (
+            <RhythmBuilder key={`${v.index}-${v.session.turn}`} q={q} lang={lang} t={t} disabled={!awaiting} onSubmit={(a) => ctrl.answer(a)} />
+          )}
+          {showButtons && !(q.kind === 'rhythm-dict' && q.mode === 'build') && (
             <div className={`answers n-${q.choices.length}`}>
               {q.choices.map((c) => {
                 const lb = choiceLabel(q, c, lang, nm);
@@ -619,6 +622,53 @@ function RunTargets({ offsets, notes, caption }: { offsets: number[]; notes?: st
           {caption}
         </p>
       )}
+    </div>
+  );
+}
+
+/** Build-a-bar dictation (spec G.6): tap rhythm blocks into the bar(s), then Done. */
+function RhythmBuilder({ q, lang, t, disabled, onSubmit }: { q: Extract<Question, { kind: 'rhythm-dict' }>; lang: 'he' | 'en'; t: Strings; disabled: boolean; onSubmit: (a: string) => void }) {
+  const [cells, setCells] = useState<CellId[]>([]);
+  const meter = meterOf(q.rhythm);
+  const need = totalBeats(q.rhythm);
+  const built: Rhythm = { ...q.rhythm, cells };
+  const have = totalBeats(built);
+  const palette = buildPalette(q.level, meter);
+  const full = Math.abs(have - need) < 1e-9;
+  return (
+    <div className="rhythm-builder">
+      <div className="builder-bar" data-beats={have} data-need={need}>
+        {cells.length ? <RhythmStaff rhythm={{ ...built, bars: Math.max(1, Math.ceil(have / built.beatsPerBar - 1e-9)) }} label={describeRhythm(built, 'names', lang)} compact height={80} /> : <p className="field-hint">{t.buildHint}</p>}
+        <span className="builder-count" dir="ltr">
+          {Math.round(have * 2) / 2}/{need}
+        </span>
+      </div>
+      <div className="builder-palette">
+        {palette.map((c) => (
+          <button
+            key={c}
+            className="btn small block-btn"
+            data-cell={c}
+            disabled={disabled || have + CELLS[c].beats > need + 1e-9}
+            onClick={() => setCells((xs) => [...xs, c])}
+            aria-label={describeRhythm({ ...q.rhythm, cells: [c], bars: 1 }, 'names', lang).replace(/^[^:]*: /, '')}
+          >
+            <RhythmStaff rhythm={{ ...q.rhythm, cells: [c], bars: 1 }} label="" compact bare height={70} />
+          </button>
+        ))}
+      </div>
+      <div className="controls">
+        <button className="btn small" disabled={!cells.length} onClick={() => setCells((xs) => xs.slice(0, -1))}>
+          ⌫ {t.undo}
+        </button>
+        <button
+          className="btn primary"
+          disabled={disabled || !full}
+          onClick={() => onSubmit(sameRhythm(built, q.rhythm) ? q.answer : rhythmKey(built))}
+        >
+          {t.done}
+        </button>
+      </div>
     </div>
   );
 }

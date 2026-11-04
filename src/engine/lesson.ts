@@ -3,7 +3,7 @@
 
 import { atTempo, buildRun, MAX_RUN_LEVEL, runAt, runDifficulty, type RunMaterial, type RunShape, type RunSpec } from './runs';
 import { majorScale, pc, pcValue, voiceChord, type ChordQuality, type PitchClass } from './pitch';
-import { options as rhythmOptions, rhythmAt, rhythmFromKey, rhythmKey, rhythmSound, type Rhythm } from './rhythm';
+import { options as rhythmOptions, rhythmAt, rhythmFromKey, rhythmKey, rhythmSound, type Rhythm, type RhythmLevel } from './rhythm';
 
 export const CONTENT_SCHEMA_VERSION = 2;
 
@@ -130,7 +130,7 @@ export interface SingSeqQuestion extends QBase {
 /** Perform a rhythm shown as notation or described in words (spec G, rhythm reading). */
 export interface RhythmReadQuestion extends QBase {
   kind: 'rhythm-read';
-  level: 1 | 2 | 3;
+  level: RhythmLevel;
   rhythm: Rhythm;
   bpm: number;
   show: 'notation' | 'words';
@@ -140,9 +140,11 @@ export interface RhythmReadQuestion extends QBase {
 /** Hear a rhythm, choose its notation or say it (spec G, rhythm dictation). Answer = rhythm key. */
 export interface RhythmDictQuestion extends QBase {
   kind: 'rhythm-dict';
-  level: 1 | 2 | 3;
+  level: RhythmLevel;
   rhythm: Rhythm;
   bpm: number;
+  /** Choose among notated options (default) or build the bar from rhythm blocks (spec G.6). */
+  mode?: 'choose' | 'build';
   answer: string;
 }
 
@@ -265,6 +267,11 @@ export type LessonId =
   | 'rhythm-r1'
   | 'rhythm-r2'
   | 'rhythm-r3'
+  | 'rhythm-r4'
+  | 'rhythm-r5'
+  | 'rhythm-r6'
+  | 'rhythm-r7'
+  | 'rhythm-r8'
   | 'runs'
   | 'runs-workshop'
   | 'placement'
@@ -734,9 +741,10 @@ export function singDegrees(seed = Date.now()): LessonDef {
 }
 
 // ---------------------------------------------------------------- Rhythm lessons R1–R3 (spec G)
-const RHYTHM_BPM: Record<1 | 2 | 3, number> = { 1: 70, 2: 76, 3: 80 };
+/** Quarter-note tempo per level (6/8 at R7: dotted-quarter pulse = 2/3 of this; R8 swing). */
+export const RHYTHM_BPM: Record<RhythmLevel, number> = { 1: 70, 2: 76, 3: 80, 4: 66, 5: 84, 6: 72, 7: 84, 8: 116 };
 
-export function rhythmReadQuestion(id: string, level: 1 | 2 | 3, bars: number, seed: number, show: 'notation' | 'words'): RhythmReadQuestion {
+export function rhythmReadQuestion(id: string, level: RhythmLevel, bars: number, seed: number, show: 'notation' | 'words'): RhythmReadQuestion {
   const rhythm = rhythmAt(level, bars, seed);
   return {
     id,
@@ -752,31 +760,32 @@ export function rhythmReadQuestion(id: string, level: 1 | 2 | 3, bars: number, s
   };
 }
 
-export function rhythmDictQuestion(id: string, level: 1 | 2 | 3, bars: number, seed: number): RhythmDictQuestion {
+export function rhythmDictQuestion(id: string, level: RhythmLevel, bars: number, seed: number, mode: 'choose' | 'build' = 'choose'): RhythmDictQuestion {
   const rhythm = rhythmAt(level, bars, seed);
   const bpm = RHYTHM_BPM[level];
-  const opts = rhythmOptions(rhythm, level, 4, seed);
+  const opts = mode === 'build' ? [] : rhythmOptions(rhythm, level, 4, seed);
   return {
     id,
     kind: 'rhythm-dict',
     level,
     rhythm,
     bpm,
+    ...(mode === 'build' ? { mode } : {}),
     choices: opts.map(rhythmKey),
     answer: rhythmKey(rhythm),
     stimulus: [{ kind: 'rhythm', rhythm: rhythmKey(rhythm), bars, bpm }],
-    difficulty: 950 + 110 * (level - 1) + 60 * (bars - 1),
+    difficulty: 950 + 110 * (level - 1) + 60 * (bars - 1) + (mode === 'build' ? 60 : 0),
   };
 }
 
-/** Rhythm lesson at a level: read from notation ×2, read from words, dictation ×2. */
-export function rhythmLesson(level: 1 | 2 | 3, seed = Date.now()): LessonDef {
+/** Rhythm lesson at a level: read from notation ×2, read from words, dictation ×2 (the second one built from blocks from R4 on). */
+export function rhythmLesson(level: RhythmLevel, seed = Date.now()): LessonDef {
   const rnd = mulberry32(seed);
   const s = () => Math.floor(rnd() * 1e9);
   const bars2 = level >= 2 ? 2 : 1;
   const example = rhythmAt(level, 1, 11);
   return {
-    id: (['rhythm-r1', 'rhythm-r2', 'rhythm-r3'] as const)[level - 1],
+    id: `rhythm-r${level}` as LessonId,
     version: 1,
     skill: 'rhythm-reading',
     scoring: { xpPerCorrect: 10, attemptLimit: 2 },
@@ -786,7 +795,7 @@ export function rhythmLesson(level: 1 | 2 | 3, seed = Date.now()): LessonDef {
       rhythmDictQuestion('q2', level, 1, s()),
       rhythmReadQuestion('q3', level, bars2, s(), 'notation'),
       rhythmReadQuestion('q4', level, 1, s(), 'words'),
-      rhythmDictQuestion('q5', level, bars2, s()),
+      rhythmDictQuestion('q5', level, bars2, s(), level >= 4 ? 'build' : 'choose'),
     ],
   };
 }
@@ -900,6 +909,11 @@ export const LESSON_ORDER: LessonId[] = [
   'rhythm-r2',
   'rhythm-r3',
   'runs',
+  'rhythm-r4',
+  'rhythm-r5',
+  'rhythm-r6',
+  'rhythm-r7',
+  'rhythm-r8',
 ];
 
 export function makeLesson(id: LessonId, seed = Date.now()): LessonDef {
@@ -934,6 +948,16 @@ export function makeLesson(id: LessonId, seed = Date.now()): LessonDef {
       return singDegrees(seed);
     case 'rhythm-r1':
       return rhythmLesson(1, seed);
+    case 'rhythm-r4':
+      return rhythmLesson(4, seed);
+    case 'rhythm-r5':
+      return rhythmLesson(5, seed);
+    case 'rhythm-r6':
+      return rhythmLesson(6, seed);
+    case 'rhythm-r7':
+      return rhythmLesson(7, seed);
+    case 'rhythm-r8':
+      return rhythmLesson(8, seed);
     case 'rhythm-r2':
       return rhythmLesson(2, seed);
     case 'rhythm-r3':

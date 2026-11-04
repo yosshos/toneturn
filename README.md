@@ -49,6 +49,7 @@ Useful URLs
 | 8 | Notes and degrees (hear → name, name → degree, degree → name) | note naming / degrees | note names in your naming system (“B flat”, “סי במול”) or degrees |
 | 9 | Sing it by name (echo a note; sing a named note after a reference) | singing | sing |
 | 10 | Sing the degrees (“1 3 5” → sing them in order) | singing | sing; per-note strip, partial credit |
+| 15–19 | Rhythm 4–8 (sixteenths → syncopation → triplets → 3/4 & 6/8 → swing) | rhythm reading / rhythm dictation | as R1–R3; the last dictation is *built* from rhythm blocks; tolerance follows the grid to distinguish (triplets vs eighths ≈ 1/15 beat) |
 | 14 | Riffs & runs (name a run's scale / shape; sing runs back) | vocal agility | run-id by voice or buttons; sing-run graded per note: pitch (tolerance widens with speed), clarity (smears detected), evenness |
 | 11–13 | Rhythm 1–3 (quarters/halves/rests → eighths → dotted quarter) | rhythm reading / rhythm dictation | tap or say “ta” on the metronome; pick the notation you heard, or say it (“ta ti-ti ta”, “quarter, two eighths…”, טה טי-טי) |
 

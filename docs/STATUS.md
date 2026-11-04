@@ -1,5 +1,15 @@
 # Milestone report — 2026-11-04
 
+## Update 15 — v0.15.0: rhythm R4–R8 and build-a-bar (spec G)
+
+- Model: meters 4/4, 3/4, 6/8 (bpm in quarters; clicks on the dotted-quarter pulse in 6/8), swing (off-beat eighths played at 2/3 of the beat), 13 new cells (sixteenth groups, syncopa, eighth rest, eighth triplet, dotted half, 6/8 cells, quarter-note triplet); keys carry meter/swing (`m3:`, `m6:`, `sw:`).
+- Notation: time signatures, tuplets, per-cell beaming, swing marking; bare one-cell blocks for the builder.
+- Tolerance per level from the nearest wrong onset (sixteenths ¼ beat, triplets ⅙ beat), floor 45 ms.
+- Words: names and syllables for every new cell (en/he), parser is meter-aware; every generated rhythm round-trips through names and syllables in both languages (tested).
+- Dictation "Build" mode: palette per level/meter, undo, done when the bar is full; graded by what is heard.
+- Tests: 357 unit + R4 E2E to the end (taps on the metronome, choose, build).
+- Not yet: hold-to-sustain durations; swing ratio is fixed at 2:1 for playback (grading accepts the tolerance window around it).
+
 ## Update 14 — v0.14.0: riffs & runs (spec K)
 
 - Engine `runs.ts`; question kinds `sing-run` and `run-id`; lesson 14; Runs workshop tool; skill `agility`; voice parsing of "blues / pentatonic / up and down" (en/he); per-note contour UI with statuses ✓ ↑ ↓ ~ ✗ and a spoken-style summary ("notes 4 and 5 were flat").
