@@ -18,9 +18,18 @@ export default defineConfig({
     { name: 'desktop-chromium', use: { ...devices['Desktop Chrome'], channel: 'chrome' } }, // installed Google Chrome (headless): real media stack; the downloaded Chromium is blocked by OS policy here
     { name: 'mobile-chromium', use: { ...devices['Pixel 7'], channel: 'chrome' }, grep: /@mobile/ },
   ],
-  webServer: {
-    command: 'npx vite --port 5174 --strictPort',
-    url: 'http://localhost:5174',
-    reuseExistingServer: !process.env.CI,
-  },
+  webServer: [
+    {
+      command: 'npx vite --port 5174 --strictPort',
+      url: 'http://localhost:5174',
+      reuseExistingServer: !process.env.CI,
+    },
+    {
+      // Production build for service-worker / offline tests.
+      command: 'npx vite build && npx vite preview --port 4174 --strictPort',
+      url: 'http://localhost:4174',
+      reuseExistingServer: !process.env.CI,
+      timeout: 180_000,
+    },
+  ],
 });

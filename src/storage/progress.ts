@@ -50,6 +50,10 @@ export interface Settings {
   voices: { he: string | null; en: string | null };
   reducedMotion: boolean | null; // null = follow OS
   voiceConsent: boolean;
+  /** Local hour for the streak reminder push. */
+  reminderHour: number;
+  /** Last app version whose changelog the player has seen. */
+  seenVersion: string | null;
 }
 
 export const SETTINGS_VERSION = 2;
@@ -65,6 +69,8 @@ export const DEFAULT_SETTINGS: Settings = {
   voices: { he: null, en: null },
   reducedMotion: null,
   voiceConsent: false,
+  reminderHour: 19,
+  seenVersion: null,
 };
 
 /** Effective note naming for a channel in a given language. */

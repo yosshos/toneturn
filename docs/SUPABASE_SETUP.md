@@ -36,3 +36,36 @@ VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
 ```
 
 Restart `npm run dev`. A **Sign in with Google** card appears on the home screen and in Settings.
+
+
+---
+
+# Part 2 — Friends and streak reminders (v0.5.0)
+
+## 6. Run the second SQL file
+SQL Editor → New query → paste all of [`supabase/migrations/20261105000000_toneturn_friends_push.sql`](../supabase/migrations/20261105000000_toneturn_friends_push.sql) → **Run**.
+This adds friend codes, friend requests, self-reported game bests, push subscriptions, and the server functions that compute weekly XP and streaks. Friends works as soon as this has run.
+
+## 7. Deploy the reminder function
+1. Supabase → **Edge Functions → Deploy a new function → Via Editor**.
+2. Name it exactly `toneturn-streak-reminder`.
+3. Replace the code with the contents of [`supabase/functions/toneturn-streak-reminder/index.ts`](../supabase/functions/toneturn-streak-reminder/index.ts) and **Deploy**.
+4. In the function's settings turn **off** "Verify JWT" (the hourly job authenticates with a secret header instead).
+
+## 8. Add the function secrets
+Edge Functions → **Secrets** → add:
+
+| Name | Value |
+| --- | --- |
+| `VAPID_PUBLIC_KEY` | `publicKey` from `.vapid.local.json` in the project folder |
+| `VAPID_PRIVATE_KEY` | `privateKey` from `.vapid.local.json` (never share or commit it) |
+| `VAPID_SUBJECT` | `mailto:` + your email, e.g. `mailto:you@example.com` |
+| `CRON_SECRET` | any long random string you make up |
+
+## 9. Schedule it hourly
+SQL Editor → paste [`supabase/cron_streak_reminder.sql`](../supabase/cron_streak_reminder.sql), replace `<CRON_SECRET>` with the same value as above, **Run**.
+Each hour the function sends a reminder to subscribers whose chosen local hour has come, who have a streak and haven't practised yet today.
+
+## 10. Where push works
+- Push needs the **production build** (service worker): `npm run build` then `npm run preview`, or the deployed site — not `npm run dev`.
+- iPhone/iPad: only after installing to the Home Screen.

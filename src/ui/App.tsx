@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { LESSON_ORDER, type LessonId } from '../engine/lesson';
 import { STRINGS } from '../i18n/strings';
 import { visibleStreak, type Progress, type Settings, DEFAULT_SETTINGS, emptyProgress, migrateSettings } from '../storage/progress';
@@ -10,12 +10,17 @@ import { SettingsScreen } from './SettingsScreen';
 import { Diagnostics } from './Diagnostics';
 import { GameScreen, GameSetup, type GameSetupValue } from './Games';
 import type { GameKind } from '../game/memoryGame';
+import { MenuSheet, Changelog } from './Menu';
+import { FriendsScreen } from './Friends';
+import { reportGameBest } from '../cloud/social';
+import { APP_VERSION, unseenChanges } from '../version';
+import { pwa } from '../pwa';
 import { piano, SIMULATED, store, tts } from './services';
 
-type Route = 'home' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game';
+type Route = 'home' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends';
 const routeFromHash = (): Route => {
   const h = location.hash.replace(/^#\/?/, '');
-  return (['settings', 'diagnostics', 'games'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
+  return (['settings', 'diagnostics', 'games', 'friends'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
 };
 
 export function App() {
@@ -29,6 +34,8 @@ export function App() {
   const [gameKind, setGameKind] = useState<GameKind>('melody');
   const [gameSetup, setGameSetup] = useState<GameSetupValue | null>(null);
   const [gameKey, setGameKey] = useState(0);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const pwaState = useSyncExternalStore(pwa.subscribe, pwa.get);
   const [sync, setSync] = useState<SyncState>('idle');
   const progressRef = useRef(progress);
   progressRef.current = progress;
@@ -112,7 +119,13 @@ export function App() {
     setRoute('lesson');
   };
 
+  // First run: remember the current version silently; later runs show what's new once.
+  useEffect(() => {
+    if (settings && !settings.seenVersion) updateSettings({ seenVersion: APP_VERSION });
+  }, [settings, updateSettings]);
+
   if (!settings) return <div className="boot" />;
+  const news = unseenChanges(s.seenVersion);
 
   const states = lessonStates(progress);
   const idx = LESSON_ORDER.indexOf(lessonId);
@@ -129,6 +142,21 @@ export function App() {
           progress={progress}
           streak={visibleStreak(progress.streak, new Date())}
           account={<AccountCard t={t} user={user} sync={sync} compact />}
+          onMenu={() => setMenuOpen(true)}
+          updateReady={pwaState.updateReady}
+          news={
+            news.length > 0 ? (
+              <section className="news-card" role="status">
+                <div className="news-head">
+                  <b>✨ {t.whatsNew}</b>
+                  <button className="icon-btn" aria-label={t.done} onClick={() => updateSettings({ seenVersion: APP_VERSION })}>
+                    ✕
+                  </button>
+                </div>
+                <Changelog lang={s.uiLang} entries={news} />
+              </section>
+            ) : null
+          }
           onSettings={() => go('settings')}
           onGame={(k) => {
             setGameKind(k);
@@ -167,6 +195,20 @@ export function App() {
         <SettingsScreen t={t} settings={s} onChange={updateSettings} onBack={() => go('home')} account={<AccountCard t={t} user={user} sync={sync} />} />
       )}
       {route === 'diagnostics' && <Diagnostics t={t} settings={s} onBack={() => go('home')} />}
+      {route === 'friends' && <FriendsScreen t={t} user={user} sync={sync} onBack={() => go('home')} />}
+      {menuOpen && (
+        <MenuSheet
+          t={t}
+          settings={s}
+          user={user}
+          onClose={() => setMenuOpen(false)}
+          onSettings={updateSettings}
+          onNavigate={(r) => {
+            setMenuOpen(false);
+            go(r);
+          }}
+        />
+      )}
       {route === 'games' && (
         <GameSetup
           t={t}
@@ -183,7 +225,21 @@ export function App() {
         />
       )}
       {route === 'game' && gameSetup && (
-        <GameScreen key={gameKey} t={t} settings={s} setup={gameSetup} onExit={() => go('home')} onChangePlayers={() => go('games')} onProgress={setProgress} />
+        <GameScreen
+          key={gameKey}
+          t={t}
+          settings={s}
+          setup={gameSetup}
+          onExit={() => go('home')}
+          onChangePlayers={() => go('games')}
+          onProgress={(p) => {
+            setProgress(p);
+            if (user && p.games) {
+              void reportGameBest('melody', p.games.melody).catch(() => {});
+              void reportGameBest('rhythm', p.games.rhythm).catch(() => {});
+            }
+          }}
+        />
       )}
     </div>
   );

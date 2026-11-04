@@ -1,0 +1,239 @@
+/* ================= Menu, news, friends ================= */
+.menu-btn {
+  position: relative;
+}
+.badge-dot {
+  position: absolute;
+  top: 6px;
+  inset-inline-end: 6px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--coral);
+  box-shadow: 0 0 0 3px var(--bg);
+}
+.menu-sheet {
+  max-height: 88dvh;
+  overflow: auto;
+}
+.menu-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.menu-links {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.menu-link {
+  min-height: 56px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--card);
+  font-weight: 800;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 0 14px;
+  text-align: start;
+  box-shadow: var(--shadow);
+}
+.menu-card {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 18px;
+  background: var(--card);
+}
+.menu-card h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+.menu-card .field-hint {
+  margin: 0;
+}
+.field-hint.good {
+  color: var(--mint);
+  font-weight: 800;
+}
+.hour-pick {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-weight: 700;
+}
+.version-line {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}
+.changelog {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.changelog small {
+  color: var(--ink-dim);
+}
+.changelog ul {
+  margin: 4px 0 0;
+  padding-inline-start: 20px;
+  color: var(--ink-soft);
+  line-height: 1.45;
+}
+.news-card {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border-radius: 20px;
+  background: linear-gradient(160deg, #4a3a16, #2b1a4a);
+  border: 2px solid rgba(255, 201, 77, 0.45);
+}
+.news-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.news-head .icon-btn {
+  width: 36px;
+  height: 36px;
+  font-size: 0.9rem;
+}
+
+/* friends */
+.code-card .code-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.code-row small,
+.inline-field small {
+  color: var(--ink-dim);
+  display: block;
+}
+.friend-code {
+  font-size: 2rem;
+  letter-spacing: 0.18em;
+  color: var(--gold);
+  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+}
+.inline-field input,
+.code-input {
+  width: 100%;
+  min-height: 48px;
+  border-radius: 12px;
+  border: 2px solid transparent;
+  background: var(--card-2);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  padding: 0 12px;
+}
+.code-input {
+  letter-spacing: 0.2em;
+  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+  font-size: 1.2rem;
+  text-transform: uppercase;
+}
+.inline-field input:focus,
+.code-input:focus {
+  border-color: var(--gold);
+  outline: none;
+}
+.req-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.req-list li {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 14px;
+  background: var(--card);
+}
+.req-list li b {
+  flex: 1;
+}
+.league {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.league li {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border-radius: 18px;
+  background: var(--card);
+  border: 3px solid transparent;
+}
+.league li.me {
+  border-color: var(--gold);
+  background: var(--card-2);
+}
+.league li:first-child .rank {
+  color: var(--gold);
+}
+.league .rank {
+  font-size: 1.4rem;
+  font-weight: 900;
+  width: 1.4em;
+  text-align: center;
+  color: var(--ink-dim);
+}
+.league-main {
+  flex: 1;
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+.league-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.league-top b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.league-top .wk {
+  font-weight: 900;
+  color: var(--gold);
+  white-space: nowrap;
+}
+.league .bar {
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+.league .bar span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--mint), var(--gold));
+}
+.league-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+.small-x {
+  width: 36px;
+  height: 36px;
+  font-size: 0.85rem;
+  flex: none;
+}

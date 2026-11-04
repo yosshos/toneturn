@@ -22,6 +22,9 @@ interface Props {
   onSettings: () => void;
   onLang: (l: 'he' | 'en') => void;
   onGame: (k: GameKind) => void;
+  onMenu: () => void;
+  updateReady: boolean;
+  news: React.ReactNode;
 }
 
 export const DAILY_GOAL_XP = 30;
@@ -56,7 +59,7 @@ export function starsFor(best: number, total: number) {
 
 const TOTALS: Record<LessonId, number> = { 'bflat-two-homes': 3, 'degrees-135': 5, 'major-minor': 5, cadences: 4, 'sing-home-five': 3 };
 
-export function Home({ t, settings, progress, streak, account, onPractice, onButtonsInstead, onMode, onSettings, onLang, onGame }: Props) {
+export function Home({ t, settings, progress, streak, account, onPractice, onButtonsInstead, onMode, onSettings, onLang, onGame, onMenu, updateReady, news }: Props) {
   const [consentFor, setConsentFor] = useState<LessonId | null>(null);
   const lang = settings.uiLang;
   const nm = namingFor(settings.naming, lang);
@@ -96,6 +99,12 @@ export function Home({ t, settings, progress, streak, account, onPractice, onBut
             <span aria-hidden="true">🔥</span> <b>{streak}</b>
             <span className="sr-only"> {t.streak}</span>
           </span>
+          <button className="icon-btn menu-btn" onClick={onMenu} aria-label={updateReady ? `${t.menu} · ${t.updateReady}` : t.menu}>
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" aria-hidden="true">
+              <path d="M4 7h16M4 12h16M4 17h16" />
+            </svg>
+            {updateReady && <span className="badge-dot" aria-hidden="true" />}
+          </button>
           <button className="icon-btn" onClick={onSettings} aria-label={t.settings}>
             <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
               <circle cx="12" cy="12" r="3.2" />
@@ -104,6 +113,8 @@ export function Home({ t, settings, progress, streak, account, onPractice, onBut
           </button>
         </div>
       </header>
+
+      {news}
 
       <section className="goal-strip" aria-label={t.dailyGoal}>
         <GoalRing value={goal} />

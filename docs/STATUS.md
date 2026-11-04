@@ -1,5 +1,14 @@
 # Milestone report — 2026-11-04
 
+## Update 4 — v0.5.0: menu, versions, install/update, push reminders, friends
+
+- Versioning: `package.json` version + git commit + build time in the app and service worker; player-facing changelog; "What's new" card once per new version.
+- Menu ☰: install (beforeinstallprompt / iOS instructions), check for updates / update now, notifications, friends, settings, voice check.
+- Fixed during testing: first-time service-worker activation reloaded the page (would interrupt a lesson); update check could hang on "Checking…".
+- Push reminders: permission from a tap, subscription stored per device, hour + language; Edge Function + hourly cron (code ready, **not deployed** — needs the steps in SUPABASE_SETUP part 2).
+- Friends: codes, requests, accept/decline/remove, weekly XP league with streak/total XP/lessons/game bests via security-definer functions (SQL ready, **not yet run on the project**; server SQL is untested until it runs there).
+- Tests: 181 unit + 24 E2E (incl. production-build service worker + offline load), all passing.
+
 ## Update 3 — memory games (spec addendum C)
 
 - **Echo Chain** (melodic memory): degrees 1-2-3-5 pads in a stated key, grows by one note per round; answer by tapping pads or **singing** (note segmentation + edit-distance alignment, per-note ✓/✗/missed strip, octave-insensitive).

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { cloudConfigured, signInWithGoogle, signOut, type CloudUser } from '../cloud/cloud';
+import { disablePush } from '../cloud/social';
 import type { Strings } from '../i18n/strings';
 
 export type SyncState = 'idle' | 'syncing' | 'synced' | 'error';
@@ -45,7 +46,13 @@ export function AccountCard({ t, user, sync, compact }: { t: Strings; user: Clou
           {sync === 'syncing' ? t.syncing : sync === 'error' ? t.syncError : sync === 'synced' ? `☁ ${t.synced}` : t.cloudSave}
         </small>
       </div>
-      <button className="btn small" onClick={() => void signOut()}>
+      <button
+        className="btn small"
+        onClick={async () => {
+          await disablePush().catch(() => {}); // reminders belong to the signed-in player
+          await signOut();
+        }}
+      >
         {t.signOut}
       </button>
     </section>

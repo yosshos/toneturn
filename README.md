@@ -47,6 +47,14 @@ Useful URLs
 
 `?unlock=all` opens every lesson (testing). Singing uses the microphone in both modes; in Buttons mode it waits for a **Sing now** tap.
 
+## Menu, versions, updates
+
+☰ on the home screen: version / build / commit and **What's new**, **Install app** (browser prompt, or iOS instructions), **Check for updates / Update now** (a new service worker waits until the player chooses; first-time activation never reloads the page), notifications, friends. The service worker is generated at build time (`src/sw-template.js`) with the version and the exact asset list. Bump `package.json` and add a `src/version.ts` changelog entry for each release (a unit test keeps them in sync).
+
+## Friends & streak reminders (optional, needs sign-in)
+
+Friend codes, requests, and a weekly-XP league with streak, total XP, lessons and game bests (game bests are self-reported). Daily streak reminders via Web Push, sent hourly by a Supabase Edge Function to players who have a streak and haven't practised yet. Server setup: [docs/SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md) part 2.
+
 ## Cloud save (optional)
 
 Supabase + Google sign-in. Copy `.env.example` to `.env.local` and fill `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY`; apply `supabase/migrations/*.sql`. Without these the app is fully local. Results sync idempotently by session id (upsert on `(user_id, session_id)`), tables are owner-only via RLS, and the database rejects implausible XP.

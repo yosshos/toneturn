@@ -153,3 +153,19 @@ Two growing-sequence memory games, designed first of all for the **local same-de
    - Grade each onset against the beat grid with a tempo-aware tolerance (default ±100 ms at 90 BPM), compensate measured audio output latency, and report early/late per onset. Extra or missing taps fail the round.
 3. **Local challenge rules.** Each player gets a **different sequence of the same length** each round (comparable difficulty, no advantage from listening to the previous player). Clear spoken + on-screen "whose turn" announcements with a player colour. A failed round eliminates the player; all players finish the round before eliminations take effect. Last player standing wins; if everyone fails in the same round it's a tie at the previous length. Solo mode continues until the first miss. Show a scoreboard (longest chain per player), rematch, and keep personal bests locally. Unclear audio never eliminates anyone.
 4. **Later.** Tempo ladder (speed up every N rounds), call-and-response with swing feel, jazz phrases, online friend duels with the same seeds.
+
+## Addendum — 2026-11-04 (product owner): versions, install/update, push reminders, friends
+
+### D. App shell menu
+- A top menu (☰) on the home screen with: current **version** and a "What's new" changelog, **Install app** (when the browser offers installation; otherwise short platform instructions), **Check for updates / Update now** (a new service worker waits until the player chooses to reload; never interrupt a lesson), **Notifications**, **Friends**, Settings and Voice check.
+- Every build carries a semantic version, build time and git commit, shown in the menu and in the Voice check report.
+
+### E. Streak reminders (push)
+- A Notifications control asks for permission only from an explicit tap, explains why first, and can be turned off. Choose a daily reminder hour (default 19:00 local).
+- Reminders are Web Push sent by the server once a day, only to signed-in players who have a streak and have not practised yet that local day. No reminder content reveals private data. Subscriptions are stored per device and removed on sign-out / turn-off / expiry.
+- iOS requires the app to be installed to the Home Screen before push works; say so in the UI.
+
+### F. Friends (compare achievements)
+- Signed-in players get a public nickname and a short **friend code**. Add a friend by code; the other side accepts or declines. Remove at any time.
+- A Friends screen compares: **this week's XP** (ranked, like a weekly league), current streak, total XP, lessons completed, and Echo Chain / Beat Echo best chains, with "you" highlighted.
+- Stats come from the server (computed from synced lesson results); game bests are self-reported and labelled as such until server validation exists. Only accepted friends can see each other's stats.
