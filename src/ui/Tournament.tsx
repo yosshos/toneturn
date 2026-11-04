@@ -363,7 +363,7 @@ function TournamentPlay({
             {st.points.toLocaleString(lang)}
           </span>
         </div>
-        {duel && v.stage !== 'countdown' && <p className="half-ask">{withNote(askTemplate(q, lang), target)}</p>}
+        {duel && v.stage !== 'countdown' && <p className="half-ask">{withNote(askTemplate(q, lang, nm), target)}</p>}
         <div className={`answers n-${q.choices.length}`}>
           {q.choices.map((ch) => {
             const lb = choiceLabel(q, ch, lang, nm);
@@ -416,7 +416,7 @@ function TournamentPlay({
             {v.countdown}
           </div>
         ) : (
-          <h2 className="ask">{withNote(askTemplate(q, lang), target)}</h2>
+          <h2 className="ask">{withNote(askTemplate(q, lang, nm), target)}</h2>
         )}
         <TimeBar endsAt={v.stage === 'answering' ? v.windowEndsAt : null} />
       </section>

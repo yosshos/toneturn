@@ -331,7 +331,7 @@ function RoomScreen({ t, settings, backend, roomId, onExit }: { t: Strings; sett
             {v.countdown}
           </div>
         ) : (
-          <h2 className="ask">{withNote(askTemplate(q, lang), target)}</h2>
+          <h2 className="ask">{withNote(askTemplate(q, lang, nm), target)}</h2>
         )}
         <TimeBar endsAt={v.phase === 'answering' ? v.windowEndsAt : null} />
       </section>

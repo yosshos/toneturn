@@ -4,7 +4,7 @@
 import { pcFromKey, type Answer, type IntroStep, type LessonDef, type LessonId, type Question } from '../engine/lesson';
 import { displayNote, spokenMajorKey, spokenNote, type Naming, type PitchClass } from '../engine/pitch';
 import type { SungResult } from '../engine/sing';
-import { parseAlternatives, parseCadence, parseDegree, parseDegreeSequence, parseInterval, parseInversion, parseNoteName, parseQuality, parseRunMaterial, parseRunShape, type ParseResult } from '../engine/parser';
+import { parseAlternatives, parseCadence, parseDegree, parseDegreeSequence, parseInterval, parseInversion, parseNoteName, parseQuality, parseRunMaterial, parseRunShape, parseNoteNameSequence, type ParseResult } from '../engine/parser';
 import { describeRun } from '../engine/runs';
 import { narration, type Lang } from './narration';
 import { describe as describeRhythm, parseRhythmWords, rhythmFromKey, rhythmKey, sameRhythm, type CellId } from '../engine/rhythm';
@@ -156,6 +156,12 @@ export const LESSON_META: Record<LessonId, LessonMeta> = {
     icon: 'puzzle',
     tip: { en: 'A new puzzle arrives every Monday.', he: 'חידה חדשה מגיעה בכל יום שני.' },
   },
+  'note-sequences': {
+    title: { en: 'Note sequences', he: 'רצפי תווים' },
+    blurb: { en: 'Hear notes and name them; turn names into degrees and back; sing from names.', he: 'שומעים תווים ונותנים להם שם; ממירים שמות לדרגות ובחזרה; שרים לפי שמות.' },
+    icon: 'steps',
+    tip: { en: 'Read the note names of a song you know and sing them as degrees.', he: 'קראו את שמות התווים של שיר שאתם מכירים ושירו אותם כדרגות.' },
+  },
   runs: {
     title: { en: 'Riffs & runs', he: 'ריפים וראנים' },
     blurb: { en: 'Hear a fast run, name it, then sing it back.', he: 'שומעים ראן מהיר, מזהים אותו, ושרים אותו בחזרה.' },
@@ -236,8 +242,12 @@ export function introGo(lesson: LessonDef, l: Lang): string {
 
 // ---------------------------------------------------------------- per question
 
+const namesWords = (keys: string[], nm: Naming, l: Lang) => keys.map((k) => { const p = pcFromKey(k); return p ? spokenNote(p, nm, l) : k; }).join(', ');
+const namesShown = (keys: string[], nm: Naming, l: Lang) => keys.map((k) => { const p = pcFromKey(k); return p ? displayNote(p, nm, l) : k; }).join(' – ');
+
 export function answerWord(_q: Question, a: Answer, l: Lang, nm: Naming = 'letter'): string {
   if (typeof a === 'number') return deg(a, l);
+  if (typeof a === 'string' && a.includes('.') && a.split('.').every((k) => pcFromKey(k))) return namesWords(a.split('.'), nm, l);
   const asPc = typeof a === 'string' ? pcFromKey(a) : null;
   if (asPc) return spokenNote(asPc, nm, l);
   if (_q.kind === 'rhythm-dict' && typeof a === 'string') return describeRhythm(rhythmFromKey(a, _q.rhythm.bars), 'names', l);
@@ -267,6 +277,7 @@ export function answerWord(_q: Question, a: Answer, l: Lang, nm: Naming = 'lette
 }
 
 export function sayChoices(q: Question, l: Lang): string {
+  if (q.kind === 'name-seq') return l === 'en' ? 'the note names in order' : 'את שמות התווים לפי הסדר';
   if (q.kind === 'degree-seq') return l === 'en' ? 'the degrees in order' : 'את הדרגות לפי הסדר';
   if (q.kind === 'note-name') return l === 'en' ? 'the note name' : 'את שם התו';
   if (q.kind === 'rhythm-dict') return l === 'en' ? 'the rhythm, like “ta ti-ti ta”' : 'את הקצב, למשל "טה טי-טי טה"';
@@ -301,6 +312,14 @@ export function roundPrompt(q: Question, l: Lang, nm: Naming, n: number): string
           : `סיבוב ${n}. קוראים ומקישים. ספירה, ואז מתחילים.`;
     case 'rhythm-dict':
       return l === 'en' ? `Round ${n}. Listen to the rhythm.` : `סיבוב ${n}. הקשיבו לקצב.`;
+    case 'name-seq':
+      return q.given === 'sound'
+        ? l === 'en'
+          ? `Round ${n}. ${cap(spokenMajorKey(q.key, nm, l))}. ${q.degrees.length} notes. Name them in order.`
+          : `סיבוב ${n}. ${spokenMajorKey(q.key, nm, l)}. ${q.degrees.length} צלילים. אמרו את שמות התווים לפי הסדר.`
+        : l === 'en'
+          ? `Round ${n}. In ${spokenMajorKey(q.key, nm, l)}, which notes are degrees ${q.degrees.map((d) => deg(d, l)).join(', ')}?`
+          : `סיבוב ${n}. ב${spokenMajorKey(q.key, nm, l)}, אילו תווים הם הדרגות ${q.degrees.map((d) => deg(d, l)).join(', ')}?`;
     case 'sing-run':
       return q.prompt === 'echo'
         ? l === 'en'
@@ -318,6 +337,10 @@ export function roundPrompt(q: Question, l: Lang, nm: Naming, n: number): string
           ? `Round ${n}. Does the run go up, down, or up and back?`
           : `סיבוב ${n}. הראן עולה, יורד, או עולה וחוזר?`;
     case 'sing-seq':
+      if (q.promptBy === 'name' && q.names)
+        return l === 'en'
+          ? `Round ${n}. ${cap(spokenMajorKey(q.key, nm, l))}. Sing ${namesWords(q.names, nm, l)}.`
+          : `סיבוב ${n}. ${spokenMajorKey(q.key, nm, l)}. שירו ${namesWords(q.names, nm, l)}.`;
       return l === 'en'
         ? `Round ${n}. ${cap(spokenMajorKey(q.key, nm, l))}. Sing ${q.degrees.map((d) => deg(d, l)).join(', ')}.`
         : `סיבוב ${n}. ${spokenMajorKey(q.key, nm, l)}. שירו ${q.degrees.map((d) => deg(d, l)).join(', ')}.`;
@@ -330,6 +353,10 @@ export function roundPrompt(q: Question, l: Lang, nm: Naming, n: number): string
           ? `Round ${n}. Major or minor?`
           : `סיבוב ${n}. מז'ור או מינור?`;
     case 'degree-seq':
+      if (q.given === 'names' && q.names)
+        return l === 'en'
+          ? `In ${spokenMajorKey(q.key, nm, l)}: ${namesWords(q.names, nm, l)}. Which degrees?`
+          : `ב${spokenMajorKey(q.key, nm, l)}: ${namesWords(q.names, nm, l)}. אילו דרגות?`;
       return l === 'en'
         ? `${cap(spokenMajorKey(q.key, nm, l))}. ${q.degrees.length} notes. Name the degrees in order.`
         : `${spokenMajorKey(q.key, nm, l)}. ${q.degrees.length} צלילים. אמרו את הדרגות לפי הסדר.`;
@@ -381,6 +408,8 @@ export function parseAnswer(q: Question, alternatives: string[], inputNaming: Na
     }
     case 'run-id':
       return q.aspect === 'material' ? parseAlternatives(alternatives, parseRunMaterial) : parseAlternatives(alternatives, parseRunShape);
+    case 'name-seq':
+      return parseAlternatives(alternatives, (t) => parseNoteNameSequence(t, inputNaming));
     case 'sing-seq':
     case 'sing-run':
     case 'rhythm-read':
@@ -424,6 +453,8 @@ export function revealText(q: Question, l: Lang, nm: Naming): string {
       return l === 'en' ? 'Here are the notes.' : 'אלה הצלילים.';
     case 'sing-run':
       return l === 'en' ? 'Here is the run: half speed, then at tempo.' : 'הנה הראן: בחצי מהירות, ואז בקצב.';
+    case 'name-seq':
+      return l === 'en' ? `It was ${namesWords(q.names, nm, l)}: degrees ${q.degrees.map((d) => deg(d, l)).join(', ')}.` : `זה היה ${namesWords(q.names, nm, l)}: דרגות ${q.degrees.map((d) => deg(d, l)).join(', ')}.`;
     case 'run-id':
       return l === 'en' ? `It was ${answerWord(q, q.answer, l)}. Your answer, then the right one.` : `זה היה ${answerWord(q, q.answer, l)}. התשובה שלכם, ואז הנכונה.`;
     case 'rhythm-read':
@@ -555,7 +586,7 @@ export function choiceLabel(_q: Question, a: Answer, l: Lang, nm: Naming = 'lett
 }
 
 /** On-screen question line. `{n}` / `{k}` are note placeholders rendered with bidi isolation. */
-export function askTemplate(q: Question, l: Lang): string {
+export function askTemplate(q: Question, l: Lang, nm: Naming = 'letter'): string {
   switch (q.kind) {
     case 'degree':
       if (q.direction === 'name→degree') return l === 'en' ? 'Which degree is {n} in {k} major?' : "איזו דרגה היא {n} ב-{k} מז'ור?";
@@ -563,7 +594,10 @@ export function askTemplate(q: Question, l: Lang): string {
     case 'note-name':
       return q.direction === 'heard-pitch→name' ? (l === 'en' ? 'Which note is it?' : 'איזה תו זה?') : l === 'en' ? `Which note is degree ${q.degree}?` : `איזה תו הוא דרגה ${q.degree}?`;
     case 'sing-seq':
+      if (q.promptBy === 'name' && q.names) return l === 'en' ? `Sing ${namesShown(q.names, nm, l)}` : `שירו ${namesShown(q.names, nm, l)}`;
       return l === 'en' ? `Sing ${q.degrees.join(' – ')}` : `שירו ${q.degrees.join(' – ')}`;
+    case 'name-seq':
+      return q.given === 'sound' ? (l === 'en' ? 'Which notes, in order?' : 'אילו תווים, לפי הסדר?') : l === 'en' ? `Which notes are degrees ${q.degrees.join(' – ')}?` : `אילו תווים הם הדרגות ${q.degrees.join(' – ')}?`;
     case 'sing-run':
       return q.prompt === 'echo' ? (l === 'en' ? 'Sing the run back' : 'שירו את הראן בחזרה') : l === 'en' ? `Sing: ${describeRun(q.run, l)}` : `שירו: ${describeRun(q.run, l)}`;
     case 'run-id':
@@ -575,6 +609,7 @@ export function askTemplate(q: Question, l: Lang): string {
     case 'quality':
       return q.choices.length > 2 ? (l === 'en' ? 'Which chord quality?' : 'איזה סוג אקורד?') : l === 'en' ? 'Major or minor?' : "מז'ור או מינור?";
     case 'degree-seq':
+      if (q.given === 'names' && q.names) return l === 'en' ? `${namesShown(q.names, nm, l)}: which degrees?` : `${namesShown(q.names, nm, l)}: אילו דרגות?`;
       return l === 'en' ? 'Which degrees, in order?' : 'אילו דרגות, לפי הסדר?';
     case 'interval':
       return l === 'en' ? 'Third, fifth or octave?' : 'טרצה, קווינטה או אוקטבה?';
@@ -594,6 +629,7 @@ export function hintText(q: Question, l: Lang, voice: boolean): string {
   if (q.kind === 'note-name' && voice) return l === 'en' ? 'Say the note name' : 'אמרו את שם התו';
   if (q.kind === 'rhythm-read') return voice ? (l === 'en' ? 'Say “ta” on each note (or tap)' : 'אמרו "טה" על כל תו (או הקישו)') : l === 'en' ? 'Tap the pad or press Space on each note' : 'הקישו על הכפתור או על רווח בכל תו';
   if (q.kind === 'rhythm-dict' && voice) return l === 'en' ? 'Say it: “ta ti-ti ta” or “quarter, two eighths…”' : 'אמרו: "טה טי-טי טה" או "רבע, שתי שמיניות…"';
+  if (q.kind === 'name-seq') return voice ? (l === 'en' ? 'Say the note names in order' : 'אמרו את שמות התווים לפי הסדר') : l === 'en' ? 'Tap the notes in order, then Done' : 'לחצו על התווים לפי הסדר, ואז סיום';
   if (q.kind === 'degree-seq') return voice ? (l === 'en' ? 'Say them in order, e.g. “one three five”' : 'אמרו לפי הסדר, למשל "אחת שלוש חמש"') : l === 'en' ? 'Tap the degrees in order, then Done' : 'לחצו על הדרגות לפי הסדר, ואז סיום';
   if (!voice) return l === 'en' ? 'Tap your answer' : 'בחרו תשובה';
   if (q.choices.length > 4) return l === 'en' ? 'Say a degree, “one” to “seven”' : 'אמרו דרגה, מ"אחת" עד "שבע"';
@@ -611,6 +647,7 @@ export function questionBadge(q: Question, l: Lang, nm: Naming): { key?: PitchCl
     case 'degree-seq':
     case 'note-name':
     case 'sing-seq':
+    case 'name-seq':
       return { key: q.key, text: major };
     case 'sing-run':
     case 'run-id':
@@ -642,5 +679,6 @@ export function giveText(q: Question, a: Answer, l: Lang, nm: Naming = 'letter')
     return m[String(a)]?.[l] ?? String(a);
   }
   if (q.kind === 'degree-seq') return String(a).split('-').join(' ');
+  if (q.kind === 'name-seq') return namesShown(String(a).split('.'), nm, l);
   return typeof a === 'number' ? String(a) : choiceLabel(q, a, l).small;
 }

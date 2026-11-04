@@ -9,6 +9,9 @@ import {
   noteNameQuestion,
   singSeqQuestion,
   singRunQuestion,
+  nameSeqQuestion,
+  namesToDegreesQuestion,
+  singNamesSeqQuestion,
   runIdQuestion,
   DEGREE_KEYS,
   mulberry32,
@@ -139,7 +142,14 @@ export function questionFromTag(tag: string, seed: number, id: string): Question
     case 'singseq': {
       const key = parsePc(a);
       const ds = (b ?? '').split('-').map(Number);
-      return key && ds.length && ds.every((x) => x >= 1 && x <= 7) ? singSeqQuestion(id, key, ds) : null;
+      if (!key || !ds.length || !ds.every((x) => x >= 1 && x <= 7)) return null;
+      return tag.split(':')[3] === 'name' ? singNamesSeqQuestion(id, key, ds) : singSeqQuestion(id, key, ds);
+    }
+    case 'nameseq': {
+      const key = parsePc(a);
+      const ds = (b ?? '').split('-').map(Number);
+      if (!key || !ds.length || !ds.every((x) => x >= 1 && x <= 7)) return null;
+      return nameSeqQuestion(id, key, ds, tag.split(':')[3] === 'degrees' ? 'degrees' : 'sound');
     }
     case 'srun':
     case 'runid': {
@@ -160,7 +170,8 @@ export function questionFromTag(tag: string, seed: number, id: string): Question
     case 'seq': {
       const key = parsePc(a);
       const ds = (b ?? '').split('-').map(Number);
-      return key && ds.length && ds.every((d) => d >= 1 && d <= 7) ? degreeSeqQuestion(id, key, ds) : null;
+      if (!key || !ds.length || !ds.every((d) => d >= 1 && d <= 7)) return null;
+      return tag.split(':')[3] === 'names' ? namesToDegreesQuestion(id, key, ds) : degreeSeqQuestion(id, key, ds);
     }
   }
   return null;

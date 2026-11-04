@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
-import { makeLesson, type IntroCard, type LessonDef, type LessonId, type Question } from '../engine/lesson';
+import { makeLesson, pcFromKey, type IntroCard, type LessonDef, type LessonId, type Question } from '../engine/lesson';
 import type { SessionState } from '../engine/session';
 import { displayNote, type Naming } from '../engine/pitch';
 import type { InputMode } from '../engine/session';
@@ -108,7 +108,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
 
   const paused = v.phase === 'paused';
   const isSing = q.kind === 'sing' || q.kind === 'sing-seq' || q.kind === 'sing-run';
-  const isSeq = q.kind === 'degree-seq';
+  const isSeq = q.kind === 'degree-seq' || q.kind === 'name-seq';
   const isRead = q.kind === 'rhythm-read';
   const showButtons = v.stage === 'question' && !paused && !v.error && !isSing && !isSeq && !isRead && (v.mode === 'buttons' || v.needsListenTap);
   const showKeypad = v.stage === 'question' && !paused && !v.error && isSeq && (v.mode === 'buttons' || v.needsListenTap);
@@ -121,7 +121,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
       ? displayNote(q.target, nm, lang)
       : '';
   const keyName = 'key' in q && q.key ? displayNote(q.key, nm, lang) : '';
-  const hideKeyboard = (q.kind === 'note-name' && q.direction === 'heard-pitch→name') || (q.kind === 'sing' && q.promptBy === 'echo') || q.kind === 'rhythm-read' || q.kind === 'rhythm-dict';
+  const hideKeyboard = (q.kind === 'note-name' && q.direction === 'heard-pitch→name') || (q.kind === 'name-seq' && q.given === 'sound') || (q.kind === 'sing' && q.promptBy === 'echo') || q.kind === 'rhythm-read' || q.kind === 'rhythm-dict';
   const orbLabel =
     q.kind === 'degree'
       ? target
@@ -229,7 +229,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
             <Burst on={celebrate} />
           </div>
           {!hideKeyboard && <Keyboard mark={q.kind === 'degree' && q.direction !== 'name→degree' ? q.targetMidi : undefined} />}
-          <h1 className="ask">{withNote(askTemplate(q, lang), target, keyName)}</h1>
+          <h1 className="ask">{withNote(askTemplate(q, lang, nm), target, keyName)}</h1>
           <Listening v={v} t={t} hint={hintText(q, lang, v.mode === 'voice' && !v.needsListenTap)} />
           <FeedbackBanner v={v} t={t} lang={lang} settings={settings} />
           {showButtons && q.kind === 'rhythm-dict' && q.mode === 'build' && (
@@ -257,6 +257,9 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
                 );
               })}
             </div>
+          )}
+          {showKeypad && q.kind === 'name-seq' && (
+            <NameKeypad key={`${v.index}-${v.session.turn}`} t={t} length={q.degrees.length} keys={q.choices.map(String)} lang={lang} nm={nm} disabled={!awaiting} onSubmit={(a) => ctrl.answer(a)} />
           )}
           {showKeypad && q.kind === 'degree-seq' && <SeqKeypad key={`${v.index}-${v.session.turn}`} t={t} length={q.degrees.length} disabled={!awaiting} onSubmit={(a) => ctrl.answer(a)} />}
           {showRecord && (
@@ -548,6 +551,48 @@ function Caption({ text }: { text: string | null }) {
 }
 
 /** Build an ordered degree answer by tapping 1–7, then submit. */
+/** Note names in the key, tapped in order (matrix #2 / #6 sequences). */
+function NameKeypad({ t, length, keys, lang, nm, disabled, onSubmit }: { t: Strings; length: number; keys: string[]; lang: 'he' | 'en'; nm: Naming; disabled: boolean; onSubmit: (a: string) => void }) {
+  const [seq, setSeq] = useState<string[]>([]);
+  const show = (k: string) => {
+    const p = pcFromKey(k);
+    return p ? displayNote(p, nm, lang) : k;
+  };
+  return (
+    <div className="seq-pad">
+      <div className="seq-slots" dir="ltr" aria-live="polite">
+        {Array.from({ length }).map((_, i) => (
+          <span key={i} className={`slot ${seq[i] ? 'filled' : ''}`}>
+            {seq[i] ? show(seq[i]) : ''}
+          </span>
+        ))}
+      </div>
+      <div className="seq-keys" dir="ltr">
+        {keys.map((k) => (
+          <button key={k} className="seq-key" disabled={disabled || seq.length >= length} onClick={() => setSeq((s) => [...s, k])} data-note={k}>
+            {show(k)}
+          </button>
+        ))}
+      </div>
+      <div className="row center">
+        <button className="btn small" disabled={!seq.length} onClick={() => setSeq((s) => s.slice(0, -1))}>
+          ⌫ {t.backspace}
+        </button>
+        <button
+          className="btn primary"
+          disabled={disabled || seq.length !== length}
+          onClick={() => {
+            onSubmit(seq.join('.'));
+            setSeq([]);
+          }}
+        >
+          {t.submit}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function SeqKeypad({ t, length, disabled, onSubmit }: { t: Strings; length: number; disabled: boolean; onSubmit: (a: string) => void }) {
   const [seq, setSeq] = useState<number[]>([]);
   return (

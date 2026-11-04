@@ -35,7 +35,7 @@ export interface AttemptEvidence {
 }
 
 /** Items with a small closed answer set get a guessing correction on retries. */
-export const isCategorical = (q: Question) => q.kind !== 'sing' && q.kind !== 'degree-seq' && q.kind !== 'sing-seq' && q.kind !== 'sing-run';
+export const isCategorical = (q: Question) => q.kind !== 'sing' && q.kind !== 'degree-seq' && q.kind !== 'sing-seq' && q.kind !== 'sing-run' && q.kind !== 'name-seq';
 
 // ---------------------------------------------------------------- accuracy a ∈ [0, 1]
 
@@ -86,7 +86,9 @@ export function referenceTime(q: Question, modality: Modality): number {
   const r = SCORING.tRef;
   let t = modality === 'voice' ? r.voice : modality === 'sing' ? r.sing : r.buttons;
   if (modality === 'buttons') t += Math.max(0, q.choices.length - 2) * r.perExtraChoice;
-  if (q.kind === 'degree-seq' || q.kind === 'sing-seq') t += (q.degrees.length - 1) * r.perExtraNote;
+  if (q.kind === 'degree-seq' || q.kind === 'sing-seq' || q.kind === 'name-seq') t += (q.degrees.length - 1) * r.perExtraNote;
+  if (q.kind === 'name-seq' && q.given === 'degrees') t += r.symbolic;
+  if (q.kind === 'degree-seq' && q.given === 'names') t += r.symbolic;
   if (q.kind === 'sing-run') t += q.midis.length / q.run.nps * 1000;
   // Symbolic conversions (no sound) need a moment of thought.
   if ((q.kind === 'degree' && q.direction === 'name→degree') || (q.kind === 'note-name' && q.direction === 'degree→name')) t += r.symbolic;

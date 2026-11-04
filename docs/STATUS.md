@@ -1,5 +1,10 @@
 # Milestone report — 2026-11-04
 
+## Update 16 — v0.16.0: melodic matrix complete for sequences (spec H)
+
+- New kind `name-seq` (heard → names #2, degrees → names #6); `degree-seq` given as names (#5); `sing-seq` asked by names (#4). Lesson 20 *Note sequences*; review tags for all variants; note-name sequence parser (letters / Do-Re-Mi, he/en, glued "Bb,"); keypad of the key's seven note names; keyboard hidden when it would give the answer away.
+- Tests: 363 unit (incl. a hands-free Hebrew Do-Re-Mi run of lesson 20) + 2 E2E.
+
 ## Update 15 — v0.15.0: rhythm R4–R8 and build-a-bar (spec G)
 
 - Model: meters 4/4, 3/4, 6/8 (bpm in quarters; clicks on the dotted-quarter pulse in 6/8), swing (off-beat eighths played at 2/3 of the beat), 13 new cells (sixteenth groups, syncopa, eighth rest, eighth triplet, dotted half, 6/8 cells, quarter-note triplet); keys carry meter/swing (`m3:`, `m6:`, `sw:`).

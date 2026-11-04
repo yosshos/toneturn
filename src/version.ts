@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.16.0',
+    date: '2026-11-04',
+    en: ['Note sequences (lesson 20): hear notes and name them, turn names into degrees and back, sing from note names — the whole melodic matrix now works for sequences', 'Note-name keypad in Buttons mode'],
+    he: ['רצפי תווים (שיעור 20): שומעים תווים ונותנים שם, ממירים שמות לדרגות ובחזרה, שרים לפי שמות — כל המטריצה המלודית עובדת עכשיו גם ברצפים', 'מקלדת שמות תווים במצב כפתורים'],
+  },
+  {
     version: '0.15.0',
     date: '2026-11-04',
     en: ['Rhythm 4–8: sixteenths, syncopation, triplets, 3/4 and 6/8, and jazz swing', 'Build the bar: in dictation, tap rhythm blocks to write what you heard', 'Stricter timing where it matters: triplets vs eighths are told apart'],

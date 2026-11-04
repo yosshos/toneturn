@@ -174,7 +174,7 @@ const ACC_TOKENS = new Map<string, -1 | 1>([
 export function parseNoteName(transcript: string, vocab: NamingVocab): ParseResult<PitchClass> {
   const heard = transcript.trim();
   // Split glued forms like "Bb", "Eb", "F#", "B♭" into letter + accidental.
-  const prepped = transcript.replace(/(^|\s)([a-gA-G])(b|#|♭|♯)(?=\s|$)/g, (_, pre, l, a) => `${pre}${l} ${a === 'b' || a === '♭' ? 'flat' : 'sharp'}`);
+  const prepped = transcript.replace(/(^|\s)([a-gA-G])(b|#|♭|♯)(?=[\s,.;]|$)/g, (_, pre, l, a) => `${pre}${l} ${a === 'b' || a === '♭' ? 'flat' : 'sharp'}`);
   const tokens = normalize(prepped);
   const commands = findCommands(tokens);
   const table = NOTE_VOCAB[vocab];
@@ -194,6 +194,33 @@ export function parseNoteName(transcript: string, vocab: NamingVocab): ParseResu
   if (uniq.length === 1 && commands.length === 0) return { kind: 'answer', value: uniq[0], heard };
   if (uniq.length === 0 && commands.length === 1) return { kind: 'command', command: commands[0], heard };
   if (uniq.length > 1 || (uniq.length === 1 && commands.length)) return { kind: 'ambiguous', candidates: uniq, heard };
+  return { kind: 'unrecognized', heard };
+}
+
+/**
+ * A sequence of note names, in order ("B flat F", "סי במול פה"). Returns canonical keys joined
+ * with '.', e.g. "B-1.F0". Commands win only when no note is present.
+ */
+export function parseNoteNameSequence(transcript: string, vocab: NamingVocab): ParseResult<string> {
+  const heard = transcript.trim();
+  const prepped = transcript.replace(/(^|\s)([a-gA-G])(b|#|♭|♯)(?=[\s,.;]|$)/g, (_, pre, l, a) => `${pre}${l} ${a === 'b' || a === '♭' ? 'flat' : 'sharp'}`);
+  const tokens = normalize(prepped);
+  const table = NOTE_VOCAB[vocab];
+  const notes: string[] = [];
+  for (let i = 0; i < tokens.length; i++) {
+    const letter = table.get(tokens[i]);
+    if (!letter) continue;
+    let acc: PitchClass['acc'] = 0;
+    const next = tokens[i + 1];
+    if (next && ACC_TOKENS.has(next)) {
+      acc = ACC_TOKENS.get(next)!;
+      i++;
+    }
+    notes.push(`${letter}${acc}`);
+  }
+  if (notes.length) return { kind: 'answer', value: notes.join('.'), heard };
+  const commands = findCommands(tokens);
+  if (commands.length === 1) return { kind: 'command', command: commands[0], heard };
   return { kind: 'unrecognized', heard };
 }
 

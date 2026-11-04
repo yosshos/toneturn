@@ -88,6 +88,9 @@ export interface DegreeSeqQuestion extends QBase {
   key: PitchClass;
   degrees: number[];
   midis: number[];
+  /** #5 sequence: the prompt is note names (symbolic, no sound) instead of a heard melody. */
+  given?: 'names';
+  names?: string[];
   /** Canonical answer: degrees joined with '-', e.g. "1-3-5". */
   answer: string;
 }
@@ -124,6 +127,9 @@ export interface SingSeqQuestion extends QBase {
   key: PitchClass;
   degrees: number[];
   midis: number[];
+  /** #4 sequence: asked by note names instead of degrees. */
+  promptBy?: 'name';
+  names?: string[];
   answer: 'accurate';
 }
 
@@ -168,7 +174,19 @@ export interface RunIdQuestion extends QBase {
   answer: string;
 }
 
+/** Name a sequence of notes: heard after the key (#2) or converted from degrees (#6). Answer "B-1.F0". */
+export interface NameSeqQuestion extends QBase {
+  kind: 'name-seq';
+  key: PitchClass;
+  degrees: number[];
+  names: string[];
+  midis: number[];
+  given: 'sound' | 'degrees';
+  answer: string;
+}
+
 export type Question =
+  | NameSeqQuestion
   | SingRunQuestion
   | RunIdQuestion
   | RhythmReadQuestion
@@ -220,6 +238,8 @@ export function questionSkill(q: Question): SkillId {
     case 'sing-run':
     case 'run-id':
       return 'agility';
+    case 'name-seq':
+      return q.given === 'sound' ? 'notes' : 'degrees';
   }
 }
 
@@ -273,6 +293,7 @@ export type LessonId =
   | 'rhythm-r7'
   | 'rhythm-r8'
   | 'runs'
+  | 'note-sequences'
   | 'runs-workshop'
   | 'placement'
   | 'review'
@@ -800,6 +821,71 @@ export function rhythmLesson(level: RhythmLevel, seed = Date.now()): LessonDef {
   };
 }
 
+// ---------------------------------------------------------------- Melodic matrix, sequences (spec H #2 #4 #5 #6)
+export function nameSeqQuestion(id: string, key: PitchClass, degrees: number[], given: 'sound' | 'degrees'): NameSeqQuestion {
+  const scale = majorScale(key);
+  const names = degrees.map((d) => pcKey(scale[d - 1]));
+  const tonic = placeInRange(pcValue(key), 57, 68);
+  const steps = [0, 2, 4, 5, 7, 9, 11];
+  const midis = degrees.map((d) => tonic + steps[d - 1]);
+  return {
+    id,
+    kind: 'name-seq',
+    key,
+    degrees,
+    names,
+    midis,
+    given,
+    choices: scale.map(pcKey),
+    answer: names.join('.'),
+    stimulus: given === 'sound' ? [{ kind: 'cadence', key }, { kind: 'notes', midis, each: 0.75 }] : [],
+    difficulty: (given === 'sound' ? 1250 : 1050) + 40 * degrees.length,
+  };
+}
+
+/** #5 sequence: "B-flat F" → "five two" (symbolic). */
+export function namesToDegreesQuestion(id: string, key: PitchClass, degrees: number[]): DegreeSeqQuestion {
+  const q = degreeSeqQuestion(id, key, degrees, 1000 + 40 * degrees.length);
+  const scale = majorScale(key);
+  return { ...q, given: 'names', names: degrees.map((d) => pcKey(scale[d - 1])), stimulus: [] };
+}
+
+/** #4 sequence: "B-flat F" → sing them (after the key is heard). */
+export function singNamesSeqQuestion(id: string, key: PitchClass, degrees: number[]): SingSeqQuestion {
+  const q = singSeqQuestion(id, key, degrees, 1200 + 40 * degrees.length);
+  const scale = majorScale(key);
+  return { ...q, promptBy: 'name', names: degrees.map((d) => pcKey(scale[d - 1])) };
+}
+
+/** Lesson 20 — "Note sequences": the matrix in sequences — hear → names, names ↔ degrees, names → sing. */
+export function noteSequences(seed = Date.now()): LessonDef {
+  const rnd = mulberry32(seed);
+  const keys = shuffle(rnd, NAME_KEYS.slice());
+  const shapes2 = [[5, 2], [1, 5], [3, 1], [5, 1], [1, 4], [6, 5]];
+  const shapes3 = [[1, 3, 5], [5, 4, 3], [1, 2, 3], [5, 6, 5], [3, 2, 1], [1, 5, 3], [6, 4, 2]];
+  const singShapes = [[1, 3, 5], [5, 3, 1], [1, 2, 3], [3, 2, 1]];
+  return {
+    id: 'note-sequences',
+    version: 1,
+    skill: 'notes',
+    scoring: { xpPerCorrect: 15, attemptLimit: 3 },
+    intro: [
+      {
+        id: 'intro-note-seq',
+        card: { kind: 'degrees', key: keys[0], degrees: [5, 2] },
+        stimulus: [{ kind: 'cadence', key: keys[0] }, { kind: 'notes', midis: nameSeqQuestion('x', keys[0], [5, 2], 'sound').midis, each: 0.8 }],
+      },
+    ],
+    questions: [
+      nameSeqQuestion('q1', keys[0], pick(rnd, shapes2), 'sound'),
+      namesToDegreesQuestion('q2', keys[1], pick(rnd, shapes3)),
+      nameSeqQuestion('q3', keys[2], pick(rnd, shapes3), 'degrees'),
+      singNamesSeqQuestion('q4', pick(rnd, SING_KEYS), pick(rnd, singShapes)),
+      nameSeqQuestion('q5', keys[3], pick(rnd, shapes3), 'sound'),
+    ],
+  };
+}
+
 // ---------------------------------------------------------------- Riffs & runs (spec K)
 const RUN_KEYS = ['C', 'D', 'F', 'G', 'A'] as const;
 
@@ -914,12 +1000,15 @@ export const LESSON_ORDER: LessonId[] = [
   'rhythm-r6',
   'rhythm-r7',
   'rhythm-r8',
+  'note-sequences',
 ];
 
 export function makeLesson(id: LessonId, seed = Date.now()): LessonDef {
   switch (id) {
     case 'runs':
       return runsLesson(seed);
+    case 'note-sequences':
+      return noteSequences(seed);
     case 'runs-workshop':
       return runsWorkshop(3, seed);
     case 'placement':
@@ -992,6 +1081,8 @@ export function explainStimulus(q: Question): Stimulus[] {
       return [{ kind: 'rhythm', rhythm: rhythmKey(q.rhythm), bars: q.rhythm.bars, bpm: q.bpm }];
     case 'rhythm-dict':
       return q.stimulus;
+    case 'name-seq':
+      return [{ kind: 'cadence', key: q.key }, { kind: 'notes', midis: q.midis, each: 0.75 }];
     case 'sing-run':
     case 'run-id':
       // The model at half speed, then at tempo (spec K.6).
@@ -1059,6 +1150,14 @@ export function compareStimulus(q: Question, given: Answer): Stimulus[] | null {
       if (typeof given !== 'string' || given === q.answer) return null;
       const g = rhythmFromKey(given, q.rhythm.bars);
       return [{ kind: 'rhythm', rhythm: rhythmKey(g), bars: g.bars, bpm: q.bpm }, { kind: 'rest', duration: 0.5 }, ...q.stimulus];
+    }
+    case 'name-seq': {
+      if (typeof given !== 'string' || given === q.answer) return null;
+      const ks = given.split('.').map(pcFromKey);
+      if (ks.some((k) => !k)) return null;
+      const lo = Math.min(...q.midis) - 2;
+      const gm = ks.map((k) => placeInRange(pcValue(k!), lo, lo + 11));
+      return [{ kind: 'notes', midis: gm, each: 0.6 }, { kind: 'rest', duration: 0.4 }, { kind: 'notes', midis: q.midis, each: 0.6 }];
     }
     case 'run-id': {
       if (typeof given !== 'string' || given === q.answer) return null;
@@ -1165,7 +1264,7 @@ export function questionTag(q: Question): string {
     case 'sing':
       return `sing:${q.degree}`;
     case 'degree-seq':
-      return `seq:${k(q.key)}:${q.answer}`;
+      return `seq:${k(q.key)}:${q.answer}${q.given === 'names' ? ':names' : ''}`;
     case 'interval':
       return `interval:${q.answer}:${q.mode}`;
     case 'inversion':
@@ -1173,11 +1272,13 @@ export function questionTag(q: Question): string {
     case 'note-name':
       return `name:${k(q.key)}:${q.degree}:${q.direction === 'heard-pitch→name' ? 'heard' : 'degree'}`;
     case 'sing-seq':
-      return `singseq:${k(q.key)}:${q.degrees.join('-')}`;
+      return `singseq:${k(q.key)}:${q.degrees.join('-')}${q.promptBy === 'name' ? ':name' : ''}`;
     case 'rhythm-read':
       return `rread:${q.level}:${q.rhythm.bars}:${q.show}:${rhythmKey(q.rhythm)}`;
     case 'rhythm-dict':
       return `rdict:${q.level}:${q.rhythm.bars}:${q.answer}`;
+    case 'name-seq':
+      return `nameseq:${k(q.key)}:${q.degrees.join('-')}:${q.given}`;
     case 'sing-run':
       return `srun:${k(q.key)}:${q.run.level}:${q.run.material}:${q.run.shape}:${q.run.nps}:${q.prompt}`;
     case 'run-id':
