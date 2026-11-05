@@ -75,7 +75,23 @@ export function tournamentItem(kind: Exclude<SetKind, 'mixed'> | 'cadences', see
   }
 }
 
+/** Choir rooms (spec V.3) are vocal-hold rooms whose seed is 2^32 or more (no server change needed). */
+export const CHOIR_SEED = 2 ** 32;
+export const isChoirSeed = (seed: number) => seed >= CHOIR_SEED;
+
+/** A choir round: a chord; every player sings one of its notes (their part), all at once. */
+function choirItem(seed: number, id: string, round: number): Question {
+  const rnd = mulberry32(seed);
+  const key = pick(rnd, DEGREE_KEYS);
+  const q = singQuestion(id, key, 1);
+  const r = q.targetMidi;
+  const shapes = round < 2 ? [[0, 4, 7]] : round < 4 ? [[0, 4, 7], [0, 3, 7]] : [[0, 4, 7, 10], [0, 3, 7, 10], [0, 4, 7, 11]];
+  const shape = pick(rnd, shapes);
+  return { ...q, stimulus: [{ kind: 'chord', midis: shape.map((x) => r + x), duration: 2.2 }] };
+}
+
 export function tournamentSet(kind: SetKind, rounds: number, seed: number): Question[] {
+  if (kind === 'vocal-hold' && isChoirSeed(seed)) return Array.from({ length: rounds }, (_, i) => choirItem((seed % 2 ** 31) * 131 + i * 7919, `c${i + 1}`, i));
   const mix = ['degrees', 'chords', 'intervals', 'cadences'] as const;
   return Array.from({ length: rounds }, (_, i) => tournamentItem(kind === 'mixed' ? mix[i % mix.length] : kind, seed * 131 + i * 7919, `t${i + 1}`, i));
 }

@@ -509,7 +509,10 @@ export type MetricKey =
   | 'vibratoShimmer'
   | 'vibratoPlacement'
   | 'vibratoConsistency'
-  | 'references';
+  | 'references'
+  | 'ornament'
+  | 'ornamentSpeed'
+  | 'curve';
 
 export interface MetricScore {
   key: MetricKey;
@@ -521,7 +524,7 @@ export interface MetricScore {
 
 // ------------------------------------------------------------------ the ladder (P.2)
 
-export type VocalKind = 'hold' | 'straight' | 'vibrato-delayed' | 'vibrato-onoff' | 'vibrato-steady' | 'range' | 'messa' | 'glide' | 'melody' | 'leap' | 'rhythmic' | 'staccato' | 'scale' | 'vibrato-rate' | 'vibrato-width' | 'vibrato-alternate' | 'vibrato-notes' | 'vibrato-register' | 'vibrato-messa' | 'harmony-hold' | 'harmony-line' | 'sight';
+export type VocalKind = 'hold' | 'straight' | 'vibrato-delayed' | 'vibrato-onoff' | 'vibrato-steady' | 'range' | 'messa' | 'glide' | 'melody' | 'leap' | 'rhythmic' | 'staccato' | 'scale' | 'vibrato-rate' | 'vibrato-width' | 'vibrato-alternate' | 'vibrato-notes' | 'vibrato-register' | 'vibrato-messa' | 'harmony-hold' | 'harmony-line' | 'sight' | 'ornament' | 'dynamic';
 
 export interface VocalItem {
   id: string;
@@ -550,6 +553,12 @@ export interface VocalItem {
   accompany?: number[];
   /** Harmony line: the melody the app plays (semitones from the same base as `steps`). */
   melody?: number[];
+  /** Ornaments (spec V.2): which one, and the neighbour notes in semitones (upper ↑, lower ↓). */
+  orn?: 'trill' | 'mordent' | 'lower-mordent' | 'turn' | 'grace';
+  upper?: number;
+  lower?: number;
+  /** Dynamics (spec V.2): the loudness shape to follow on one held note. */
+  curve?: 'cresc' | 'decresc' | 'swell';
   /** Sight-singing: the written length of each note, in beats (spec V.1). */
   durs?: number[];
   /** Harmony line: a chord per sung note instead of a melody (semitones from the line's base). */
@@ -887,6 +896,172 @@ export const SIGHT_LEVELS: VocalLevel[] = [
   L(5, 0.55, [SIGHT(5, 51, 80, 1450), SIGHT(5, 52, 84, 1500), SIGHT(5, 53, 88, 1550)]),
 ].map((lv) => ({ ...lv, items: lv.items.map((it) => ({ ...it, id: it.id.replace(/^v/, 'sr') })) }));
 
+/** The notes of an ornament ending on the held main note: [offset in semitones, seconds]. */
+export function ornamentNotes(item: VocalItem): [number, number][] {
+  const up = item.upper ?? 2;
+  const lo = -(item.lower ?? 1);
+  const q = 0.12;
+  const hold = Math.max(1.2, item.seconds - 1.2);
+  switch (item.orn) {
+    case 'trill':
+      return [...Array.from({ length: 14 }, (_, i) => [i % 2 ? up : 0, q] as [number, number]), [0, hold]];
+    case 'mordent':
+      return [[0, q], [up, q], [0, hold]];
+    case 'lower-mordent':
+      return [[0, q], [lo, q], [0, hold]];
+    case 'turn':
+      return [[up, q], [0, q], [lo, q], [0, hold]];
+    case 'grace':
+    default:
+      return [[up, 0.1], [0, hold]];
+  }
+}
+
+interface Run {
+  lv: number;
+  dur: number;
+  c: number[];
+}
+/** Quantise a take to the ornament's levels (main, upper, lower) and collapse it into runs (≥ 40 ms). */
+function ornamentRuns(frames: SungFrame[], target: number, levels: number[]): Run[] {
+  const vs = frames.filter((f) => f.hz && f.confidence >= 0.8);
+  const runs: Run[] = [];
+  let prevT = vs[0]?.t ?? 0;
+  for (const f of vs) {
+    const c = (hzToMidi(f.hz!) - target) * 100;
+    const lv = levels.reduce((b, x) => (Math.abs(c - x * 100) < Math.abs(c - b * 100) ? x : b), levels[0]);
+    const dt = Math.min(0.05, Math.max(0.01, f.t - prevT));
+    prevT = f.t;
+    const last = runs[runs.length - 1];
+    if (last && last.lv === lv) {
+      last.dur += dt;
+      last.c.push(c - lv * 100);
+    } else runs.push({ lv, dur: dt, c: [c - lv * 100] });
+  }
+  // Drop blips shorter than 40 ms (merge them into the neighbours).
+  const out: Run[] = [];
+  for (const r of runs) {
+    const last = out[out.length - 1];
+    if (r.dur < 0.04 && last) last.dur += r.dur;
+    else if (last && last.lv === r.lv) {
+      last.dur += r.dur;
+      last.c.push(...r.c);
+    } else out.push({ ...r, c: r.c.slice() });
+  }
+  return out;
+}
+
+/** Ornaments (spec V.2): the right shape (notes in order), quick ornament notes, in tune, then a steady main note. */
+export function gradeOrnament(item: VocalItem, frames: SungFrame[], target: number): TakeGrade {
+  const want = ornamentNotes(item);
+  const levels = [...new Set(want.map(([x]) => x))];
+  const runs = ornamentRuns(frames, target, levels);
+  if (runs.length < 2 || runs.reduce((a, r) => a + r.dur, 0) < 0.8) return UNCLEAR;
+  const tail = runs[runs.length - 1];
+  const orn = runs.slice(0, -1);
+  let shape: number;
+  if (item.orn === 'trill') {
+    // Alternations between the main and the upper note, then the main note.
+    const alts = orn.filter((r) => r.lv === (item.upper ?? 2)).length;
+    shape = Math.min(1, alts / 5) * (tail.lv === 0 ? 1 : 0.5);
+  } else {
+    const seq = want.map(([x]) => x);
+    const got = runs.map((r) => r.lv);
+    // Allow a sung start on the main note before an upper-note ornament (a common habit) to cost a little.
+    const tryAt = (k: number) => seq.every((x, i) => got[k + i] === x) && got.length === k + seq.length;
+    shape = tryAt(0) ? 1 : tryAt(1) ? 0.8 : 1 - Math.min(1, levenshtein(seq, got) / seq.length);
+  }
+  const ornDur = orn.length ? mean(orn.map((r) => r.dur)) * 1000 : 400;
+  const ornC = orn.flatMap((r) => r.c);
+  const tailC = tail.c;
+  const tune = Math.abs(mean(tailC.length ? tailC : [0])) * 0.6 + Math.abs(mean(ornC.length ? ornC : [0])) * 0.4;
+  const steady = Math.sqrt(mean(tailC.map((c) => (c - mean(tailC)) ** 2)));
+  const g = finish(
+    [
+      M('ornament', shape * 100, '%', shape, 3),
+      M('ornamentSpeed', ornDur, 'ms', bandScore(ornDur, [140, 220, 350]), 1.5),
+      M('intonation', tune, '¢', bandScore(tune, [15, 25, 40]), 1.5),
+      M('stability', steady, '¢', bandScore(steady, BANDS.stability), 1),
+    ],
+    {},
+  );
+  return { ...g, score: Math.round(g.score * (0.4 + 0.6 * shape) * 1000) / 1000 };
+}
+
+function levenshtein(a: number[], b: number[]): number {
+  const d = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
+  for (let j = 1; j <= b.length; j++) d[0][j] = j;
+  for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++) d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+  return d[a.length][b.length];
+}
+
+/** Dynamics (spec V.2): follow a loudness shape on one held note while the pitch stays put. */
+export function gradeDynamic(item: VocalItem, frames: SungFrame[], target: number): TakeGrade {
+  const vs = frames.filter((f) => f.hz && f.confidence >= 0.8 && f.rms > 0);
+  if (vs.length < 30) return UNCLEAR;
+  const t0 = vs[0].t;
+  const span = vs[vs.length - 1].t - t0 || 1;
+  const bins = Array.from({ length: 5 }, () => [] as number[]);
+  for (const f of vs) bins[Math.min(4, Math.floor(((f.t - t0) / span) * 5))].push(20 * Math.log10(f.rms));
+  const db = bins.map((b) => (b.length ? mean(b) : NaN));
+  if (db.some((x) => Number.isNaN(x))) return UNCLEAR;
+  const shape = item.curve ?? 'cresc';
+  let range: number;
+  let mono: number;
+  if (shape === 'swell') {
+    range = Math.min(db[2] - db[0], db[2] - db[4]);
+    mono = ((db[1] >= db[0] - 1 ? 1 : 0) + (db[2] >= db[1] - 1 ? 1 : 0) + (db[3] <= db[2] + 1 ? 1 : 0) + (db[4] <= db[3] + 1 ? 1 : 0)) / 4;
+  } else {
+    const sgn = shape === 'cresc' ? 1 : -1;
+    range = sgn * (db[4] - db[0]);
+    mono = db.slice(1).filter((x, i) => sgn * (x - db[i]) >= -1).length / 4;
+  }
+  const curve = reachScore(range, 8) * (0.5 + 0.5 * mono);
+  const h = holdMetrics(frames, target);
+  const g = finish(
+    [
+      M('curve', range, 'dB', curve, 3),
+      M('intonation', h.unclear ? 99 : h.intonation, '¢', h.unclear ? 0 : bandScore(h.intonation, BANDS.intonation), 1),
+      M('stability', h.unclear ? 99 : h.maxTrendDev, '¢', h.unclear ? 0 : bandScore(h.maxTrendDev, [15, 25, 40]), 2),
+    ],
+    { hold: h.unclear ? undefined : h },
+  );
+  return { ...g, score: Math.round(g.score * (0.4 + 0.6 * curve) * 1000) / 1000 };
+}
+
+/** A synthetic ornament take (simulator, tests). */
+export function synthOrnament(item: VocalItem, target: number, o: { cents?: number; fps?: number } = {}): SungFrame[] {
+  const { cents = 0, fps = 50 } = o;
+  const out: SungFrame[] = [{ t: 0, hz: null, confidence: 0, rms: 0 }];
+  let t = 0.3;
+  for (const [x, d] of ornamentNotes(item))
+    for (let k = 0; k < Math.round(d * fps); k++) {
+      out.push({ t, hz: midiToHz(target + x + cents / 100), confidence: 0.95, rms: 0.08 });
+      t += 1 / fps;
+    }
+  return out;
+}
+
+/** A synthetic dynamics take. */
+export function synthDynamic(curve: 'cresc' | 'decresc' | 'swell', target: number, seconds = 5): SungFrame[] {
+  const n = seconds * 50;
+  return Array.from({ length: n }, (_, i) => {
+    const x = i / (n - 1);
+    const shape = curve === 'cresc' ? x : curve === 'decresc' ? 1 - x : Math.sin(Math.PI * x);
+    return { t: 0.3 + i / 50, hz: midiToHz(target), confidence: 0.95, rms: 0.01 * Math.pow(10, (shape * 20) / 20) };
+  });
+}
+
+const ORN = (orn: VocalItem['orn'], upper: number, lower: number, difficulty: number): Omit<VocalItem, 'id' | 'level'> => ({ kind: 'ornament', seconds: 3, reference: 'before', at: 0.45, orn, upper, lower, difficulty });
+const DYN = (curve: VocalItem['curve'], seconds: number, difficulty: number): Omit<VocalItem, 'id' | 'level'> => ({ kind: 'dynamic', seconds, reference: 'before', at: 0.4, curve, difficulty });
+/** Ornaments & dynamics (spec V.2). */
+export const ORNAMENT_LEVELS: VocalLevel[] = [
+  L(1, 0.58, [ORN('grace', 2, 1, 1150), ORN('grace', 1, 1, 1200), DYN('cresc', 5, 1150), DYN('decresc', 5, 1150)]),
+  L(2, 0.56, [ORN('mordent', 2, 1, 1300), ORN('lower-mordent', 2, 1, 1300), ORN('mordent', 1, 1, 1350), DYN('swell', 6, 1300)]),
+  L(3, 0.55, [ORN('turn', 2, 1, 1450), ORN('turn', 2, 2, 1450), ORN('turn', 1, 2, 1500)]),
+  L(4, 0.55, [ORN('trill', 2, 1, 1550), ORN('trill', 1, 1, 1600), DYN('cresc', 7, 1450), DYN('decresc', 7, 1450)]),
+].map((lv) => ({ ...lv, items: lv.items.map((it) => ({ ...it, id: it.id.replace(/^v/, 'or') })) }));
+
 /** The whole ladder in order (levels 1–11; 12 = Riffs & runs). */
 export const LADDER: VocalLevel[] = [...VOCAL_LEVELS, ...VIBRATO_LEVELS];
 
@@ -1140,6 +1315,10 @@ export function gradeTake(item: VocalItem, frames: SungFrame[], range: VoiceRang
       return gradeMelody({ ...item, kind: 'rhythmic' }, frames, targets);
     case 'sight':
       return gradeSight(item, frames, targets);
+    case 'ornament':
+      return gradeOrnament(item, frames, targets[0]);
+    case 'dynamic':
+      return gradeDynamic(item, frames, targets[0]);
     default:
       return gradeHold(item, frames, targets[0], style);
   }

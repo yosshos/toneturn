@@ -2,7 +2,7 @@ import { RatingBadge } from './Rating';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { cloudConfigured, signInWithGoogle, type CloudUser } from '../cloud/cloud';
 import { normaliseCode, ROOM_CODE_RE, RoomError, supabaseRooms, type RoomBackend } from '../cloud/rooms';
-import { tournamentSet, type SetKind } from '../engine/tournament';
+import { CHOIR_SEED, isChoirSeed, tournamentSet, type SetKind } from '../engine/tournament';
 import { displayNote, type PitchClass } from '../engine/pitch';
 import { createRoom, RoomController, type RoomStanding } from '../game/roomController';
 import { askTemplate, choiceLabel } from '../game/content';
@@ -41,7 +41,7 @@ export function OnlineScreen({ t, settings, user, initialCode, onBack }: { t: St
   const [roomId, setRoomId] = useState<string | null>(null);
   const [nick, setNick] = useState(() => (user?.name ?? '').split(' ')[0].slice(0, 16));
   const [code, setCode] = useState(normaliseCode(initialCode));
-  const [kind, setKind] = useState<SetKind>('mixed');
+  const [kind, setKind] = useState<SetKind | 'choir'>('mixed');
   const [rounds, setRounds] = useState(10);
   const [bigScreen, setBigScreen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -56,7 +56,7 @@ export function OnlineScreen({ t, settings, user, initialCode, onBack }: { t: St
 
   const ready = FAKE_ROOMS || (cloudConfigured && user);
   const name = nick.trim() || t.you;
-  const kinds: [SetKind, string][] = [
+  const kinds: [SetKind | 'choir', string][] = [
     ['mixed', t.setMixed],
     ['degrees', t.skillNames.degrees],
     ['chords', t.skillNames.chords],
@@ -67,6 +67,7 @@ export function OnlineScreen({ t, settings, user, initialCode, onBack }: { t: St
     ['echo', t.echoChain],
     ['beat', t.skillNames['rhythm-dictation']],
     ['vocal-hold', t.vocalHoldGame],
+    ['choir', t.choirGame],
   ];
   const run = async (f: (b: RoomBackend) => Promise<string>) => {
     if (!backend) return;
@@ -168,7 +169,7 @@ export function OnlineScreen({ t, settings, user, initialCode, onBack }: { t: St
               disabled={busy}
               onClick={() =>
                 run(async (b) => {
-                  const r = await createRoom(b, kind, rounds, name, undefined, { hostScreen: bigScreen });
+                  const r = kind === 'choir' ? await createRoom(b, 'vocal-hold', rounds, name, CHOIR_SEED + ((Math.random() * 2 ** 31) >>> 0), { hostScreen: bigScreen }) : await createRoom(b, kind, rounds, name, undefined, { hostScreen: bigScreen });
                   if (FAKE_ROOMS && fakeServer) {
                     const room = fakeServer.rooms.get(r.id)!;
                     const items = tournamentSet(room.kind, room.rounds, room.seed);
@@ -402,7 +403,11 @@ function RoomScreen({ t, settings, backend, roomId, onExit }: { t: Strings; sett
         {s.kind === 'echo' && q.kind === 'degree-seq' ? (
           <SeqInput t={t} disabled={v.phase !== 'answering'} onSubmit={(seq) => c.answer(seq)} />
         ) : s.kind === 'vocal-hold' && q.kind === 'sing' ? (
+          isChoirSeed(s.seed) ? (
+            <ChoirRound t={t} settings={settings} chord={q.stimulus[0]?.kind === 'chord' ? q.stimulus[0].midis : [q.targetMidi]} index={Math.max(0, players.findIndex((p) => p.userId === s.me))} disabled={v.phase !== 'answering'} onScore={(score) => c.answer(`v:${score}`)} />
+          ) : (
           <VocalRound t={t} settings={settings} midi={q.targetMidi} disabled={v.phase !== 'answering'} onScore={(score) => c.answer(`v:${score}`)} />
+          )
         ) : (
         <div className={`answers n-${q.choices.length}`}>
           {q.choices.map((ch) => {
@@ -471,6 +476,39 @@ function SeqInput({ t, disabled, onSubmit }: { t: Strings; disabled: boolean; on
 }
 
 /** Vocal hold together ("who holds steadiest"): sing the note; the score is measured on this device. */
+/** The part a choir singer gets: chord note `index` (round-robin), moved to the octave nearest the middle of their range. */
+export function choirPart(chord: number[], index: number, range: { low: number; high: number }): { midi: number; part: number } {
+  const part = index % chord.length;
+  const mid = (range.low + range.high) / 2;
+  let m = chord[part];
+  while (m - mid > 6) m -= 12;
+  while (mid - m > 6) m += 12;
+  return { midi: m, part };
+}
+
+/** Choir rooms (spec V.3): every phone gets a part of the chord; everyone sings at once; each part is scored on intonation. */
+function ChoirRound({ t, settings, chord, index, disabled, onScore }: { t: Strings; settings: Settings; chord: number[]; index: number; disabled: boolean; onScore: (score: number) => void }) {
+  const range = settings.voiceRange ?? DEFAULT_RANGE;
+  const { midi, part } = choirPart(chord, index, range);
+  const lang = settings.uiLang;
+  const name = displayNote(spellPc(midi), namingFor(settings.naming, lang), lang);
+  return (
+    <div className="choir-round">
+      <p className="choir-part">
+        🎼 {fmt(t.choirYourPart, { part: t.choirParts[part] ?? String(part + 1), note: name })}
+      </p>
+      <button className="btn ghost" onClick={() => void piano.play([{ midi, start: 0, duration: 1.2, velocity: 0.7 }], 1.3, new AbortController().signal)}>
+        🔊 {t.choirHearPart}
+      </button>
+      <button className="btn ghost" onClick={() => void piano.play(chord.map((m) => ({ midi: m, start: 0, duration: 1.6, velocity: 0.5 })), 1.7, new AbortController().signal)}>
+        🎹 {t.choirHearChord}
+      </button>
+      <p className="field-hint">{t.choirHint}</p>
+      <VocalRound t={t} settings={settings} midi={midi} disabled={disabled} onScore={onScore} />
+    </div>
+  );
+}
+
 function VocalRound({ t, settings, midi, disabled, onScore }: { t: Strings; settings: Settings; midi: number; disabled: boolean; onScore: (score: number) => void }) {
   const [state, setState] = useState<'idle' | 'singing' | 'done'>('idle');
   const [score, setScore] = useState<number | null>(null);
@@ -508,3 +546,6 @@ function VocalRound({ t, settings, midi, disabled, onScore }: { t: Strings; sett
     </div>
   );
 }
+
+const SHARP_NAMES: PitchClass[] = (['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'] as const).map((n) => ({ letter: n[0] as PitchClass['letter'], acc: (n[1] === '#' ? 1 : n[1] === 'b' ? -1 : 0) as PitchClass['acc'] }));
+const spellPc = (midi: number): PitchClass => SHARP_NAMES[((Math.round(midi) % 12) + 12) % 12];

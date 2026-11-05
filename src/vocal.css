@@ -719,3 +719,7 @@
 
 /* Sight-singing (spec V.1) */
 .sight-score { display: grid; gap: 4px; justify-items: center; margin: 8px 0; }
+
+/* Choir rooms (spec V.3) */
+.choir-round { display: grid; gap: 8px; justify-items: center; }
+.choir-part { font-size: 1.2rem; font-weight: 700; }
