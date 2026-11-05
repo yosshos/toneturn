@@ -2,6 +2,7 @@
 // messa di voce, glides, melodies, leaps and faster transitions. Pure and deterministic: every metric
 // is a function of YIN frames, unit-tested on synthetic tracks.
 
+import { barryLine } from './barry';
 import { MODE_STEPS, type ModeId } from './modes';
 import { hzToMidi, midiToHz } from './pitch';
 import type { SungFrame } from './sing';
@@ -545,6 +546,12 @@ export interface VocalItem {
   accompany?: number[];
   /** Harmony line: the melody the app plays (semitones from the same base as `steps`). */
   melody?: number[];
+  /** Harmony line: a chord per sung note instead of a melody (semitones from the line's base). */
+  chords?: number[][];
+  /** Played once before the take (semitones from the sung note) — e.g. the whole diminished chord. */
+  pre?: number[];
+  /** Barry Harris instructions (spec T): what the sung note does to the diminished chord. */
+  bh?: { mode: 'name' | 'degree' | 'free' | 'resolve'; kind?: 'dom7' | 'm6' | 'maj6'; rootOffset?: number; degree?: number; dir?: 'up' | 'down'; dim?: number[] };
   /** Scales and modes: sing up in one scale and (optionally) down in another, from a named tonic. */
   scale?: ScaleSpec;
   difficulty: number;
@@ -739,6 +746,82 @@ export function itemAccompaniment(item: VocalItem, range: VoiceRange): number[] 
   return [];
 }
 
+/** Barry Harris track (spec T): scales, the diminished chord changes, free choice, resolution, half-step
+ *  lines and the harmonised 6th-diminished scale. */
+const DIMR = [0, 3, 6, 9];
+function dimMoveItem(i: number, dir: 'up' | 'down', mode: 'name' | 'degree', difficulty: number): Omit<VocalItem, 'id' | 'level'> {
+  const moved = DIMR[i] + (dir === 'down' ? -1 : 1);
+  return {
+    kind: 'harmony-hold',
+    seconds: 4,
+    reference: 'during',
+    at: 0.5,
+    accompany: DIMR.filter((_, k) => k !== i).map((x) => x - moved),
+    pre: DIMR.map((x) => x - moved),
+    bh: { mode, kind: dir === 'down' ? 'dom7' : 'm6', rootOffset: dir === 'down' ? 0 : 5, degree: i + 1, dir },
+    difficulty,
+  };
+}
+const sixChordBelow = (n: number): number[] => {
+  const pc = ((n % 12) + 12) % 12;
+  const set = [0, 4, 7, 9].includes(pc) ? [0, 4, 7, 9] : [11, 2, 5, 8];
+  return set.filter((x) => x !== pc).map((x) => {
+    let m = x + 12 * Math.floor(n / 12);
+    while (m >= n) m -= 12;
+    return m - n;
+  });
+};
+const SIXDIM = [0, 2, 4, 5, 7, 8, 9, 11, 12];
+export const BARRY_LEVELS: VocalLevel[] = [
+  L(1, 0.6, [
+    { kind: 'scale', seconds: 9, reference: 'before', scale: { tonic: 'C', up: 'sixth-dim', hear: 'figure' }, difficulty: 1150 },
+    { kind: 'scale', seconds: 12, reference: 'before', scale: { tonic: 'F', up: 'sixth-dim', down: 'sixth-dim', hear: 'figure' }, difficulty: 1200 },
+  ]),
+  L(2, 0.58, [
+    { kind: 'scale', seconds: 12, reference: 'before', scale: { tonic: 'G', up: 'sixth-dim', down: 'sixth-dim', hear: 'tonic' }, difficulty: 1300 },
+    { kind: 'scale', seconds: 12, reference: 'before', scale: { tonic: 'C', up: 'minor-sixth-dim', down: 'minor-sixth-dim', hear: 'tonic' }, difficulty: 1350 },
+    { kind: 'scale', seconds: 12, reference: 'before', scale: { tonic: 'C', up: 'chromatic', hear: 'tonic' }, difficulty: 1350 },
+  ]),
+  L(3, 0.6, [dimMoveItem(3, 'down', 'name', 1300), dimMoveItem(0, 'down', 'name', 1300), dimMoveItem(2, 'down', 'name', 1350)]),
+  L(4, 0.58, [dimMoveItem(2, 'up', 'name', 1350), dimMoveItem(1, 'up', 'degree', 1400), dimMoveItem(3, 'down', 'degree', 1400)]),
+  L(5, 0.56, [
+    { kind: 'harmony-hold', seconds: 4, reference: 'during', at: 0.5, accompany: DIMR.map((x) => x - 1), pre: DIMR.map((x) => x - 1), bh: { mode: 'free', dim: DIMR.map((x) => x - 1) }, difficulty: 1450 },
+    { kind: 'harmony-hold', seconds: 4, reference: 'during', at: 0.4, accompany: [-5, -1, 2, 5], bh: { mode: 'resolve' }, difficulty: 1400 },
+    { kind: 'harmony-hold', seconds: 4, reference: 'during', at: 0.5, accompany: DIMR.map((x) => x - 4), pre: DIMR.map((x) => x - 4), bh: { mode: 'free', dim: DIMR.map((x) => x - 4) }, difficulty: 1450 },
+  ]),
+  L(6, 0.56, [
+    { kind: 'rhythmic', seconds: 7, reference: 'before', at: 0.2, steps: barryLine(1, 'one'), bpm: 90, perBeat: 2, difficulty: 1400 },
+    { kind: 'rhythmic', seconds: 8, reference: 'before', at: 0.1, steps: barryLine(3, 'one'), bpm: 90, perBeat: 2, difficulty: 1450 },
+    { kind: 'rhythmic', seconds: 8, reference: 'before', at: 0.1, steps: barryLine(3, 'three'), bpm: 84, perBeat: 2, difficulty: 1550 },
+    { kind: 'rhythmic', seconds: 8, reference: 'before', at: 0.1, steps: barryLine(2, 'two'), bpm: 84, perBeat: 2, difficulty: 1500 },
+  ]),
+  L(7, 0.55, [
+    { kind: 'harmony-line', seconds: 9, reference: 'during', at: 0.3, steps: SIXDIM, chords: SIXDIM.map((n) => sixChordBelow(n).map((x) => x + n)), bpm: 66, perBeat: 1, difficulty: 1500 },
+    { kind: 'harmony-line', seconds: 9, reference: 'during', at: 0.35, steps: SIXDIM.slice().reverse(), chords: SIXDIM.slice().reverse().map((n) => sixChordBelow(n).map((x) => x + n)), bpm: 66, perBeat: 1, difficulty: 1550 },
+  ]),
+].map((lv) => ({ ...lv, items: lv.items.map((it) => ({ ...it, id: it.id.replace(/^v/, 'bh') })) }));
+
+/**
+ * Sing → identify (spec T.2): the player chose a note a half step from one of the diminished notes. Which
+ * chord did it make? Null when the sung note is not a half step from any of them.
+ */
+export function dimFreeResult(frames: SungFrame[], dimMidis: number[]): { kind: 'dom7' | 'm6'; root: number; cents: number } | null {
+  const ms = frames.filter((f) => f.hz && f.confidence >= 0.8).map((f) => hzToMidi(f.hz!)).sort((a, b) => a - b);
+  if (ms.length < 10) return null;
+  const med = ms[ms.length >> 1];
+  const pc = (((med % 12) + 12) % 12);
+  for (const d of dimMidis) {
+    const dpc = ((d % 12) + 12) % 12;
+    for (const dir of [-1, 1] as const) {
+      const t = (dpc + dir + 12) % 12;
+      let c = (pc - t) * 100;
+      c = ((((c + 600) % 1200) + 1200) % 1200) - 600;
+      if (Math.abs(c) <= 50) return dir === -1 ? { kind: 'dom7', root: t, cents: c } : { kind: 'm6', root: (t + 5) % 12, cents: c };
+    }
+  }
+  return null;
+}
+
 /** The whole ladder in order (levels 1–11; 12 = Riffs & runs). */
 export const LADDER: VocalLevel[] = [...VOCAL_LEVELS, ...VIBRATO_LEVELS];
 
@@ -773,6 +856,8 @@ export function itemFits(item: VocalItem, range: VoiceRange): boolean {
 
 export interface TakeGrade {
   unclear: boolean;
+  /** Barry Harris free choice: the chord the sung note made of the diminished. */
+  chordMade?: { kind: 'dom7' | 'm6'; root: number; cents: number };
   score: number; // 0..1 (weighted mean of the metric scores)
   metrics: MetricScore[];
   /** The metric with the lowest score (drives the tip). */
@@ -975,8 +1060,17 @@ export function gradeTake(item: VocalItem, frames: SungFrame[], range: VoiceRang
       return gradeHold({ ...item, kind: 'vibrato-steady' }, frames, targets[noteIndex], style);
     case 'vibrato-notes':
       return gradeVibratoNotes(item, frames, targets);
-    case 'harmony-hold':
+    case 'harmony-hold': {
+      if (item.bh?.mode === 'free' && item.bh.dim) {
+        // Free choice: any note a half step from the diminished counts; intonation against that note.
+        const base = targets[0];
+        const r = dimFreeResult(frames, item.bh.dim.map((x) => base + x));
+        if (!r) return { ...UNCLEAR, unclear: false, score: 0, metrics: [M('hit', 0, '%', 0, 1)], weakest: 'hit' };
+        const g = gradeHold({ ...item, kind: 'hold' }, frames, nearestMidi(frames), style); // intonation against the chosen semitone
+        return { ...g, chordMade: r };
+      }
       return gradeHold({ ...item, kind: 'hold' }, frames, targets[0], style);
+    }
     case 'harmony-line':
       return gradeMelody({ ...item, kind: 'rhythmic' }, frames, targets);
     default:
@@ -1143,3 +1237,9 @@ export function synthVibratoPhrase(targets: number[], secs: number[], vib: boole
  * (Vocal technique) is not affected.
  */
 export const memoryFactor = (extraReferences: number) => Math.max(0.4, 1 - 0.15 * Math.max(0, extraReferences));
+
+/** The nearest whole MIDI note of a take (its median pitch). */
+function nearestMidi(frames: SungFrame[]): number {
+  const ms = frames.filter((f) => f.hz && f.confidence >= 0.8).map((f) => hzToMidi(f.hz!)).sort((a, b) => a - b);
+  return Math.round(ms[ms.length >> 1] ?? 60);
+}

@@ -49,7 +49,7 @@ function useSvg(draw: (VF: VF, el: HTMLDivElement) => void, deps: unknown[]) {
   return { ref, failed };
 }
 
-export function NoteStaff({ notes, chord, keyPc, labels }: { notes: number[]; chord: boolean; keyPc: PitchClass | null; labels?: string[] }) {
+export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble' }: { notes: number[]; chord: boolean; keyPc: PitchClass | null; labels?: string[]; clef?: 'treble' | 'bass' | 'alto' }) {
   const { ref, failed } = useSvg(
     (VF, el) => {
       const n = chord ? 1 : notes.length;
@@ -58,12 +58,12 @@ export function NoteStaff({ notes, chord, keyPc, labels }: { notes: number[]; ch
       renderer.resize(width, 120);
       const ctx = renderer.getContext();
       const stave = new VF.Stave(4, 10, width - 8);
-      stave.addClef('treble').addKeySignature(keySpec(keyPc));
+      stave.addClef(clef).addKeySignature(keySpec(keyPc));
       stave.setContext(ctx).draw();
       const sn = chord
-        ? [new VF.StaveNote({ keys: notes.map((m) => vfKey(m, keyPc)), duration: 'w' })]
+        ? [new VF.StaveNote({ keys: notes.map((m) => vfKey(m, keyPc)), duration: 'w', clef })]
         : notes.map((m, i) => {
-            const s = new VF.StaveNote({ keys: [vfKey(m, keyPc)], duration: 'q' });
+            const s = new VF.StaveNote({ keys: [vfKey(m, keyPc)], duration: 'q', clef });
             if (labels?.[i]) s.addModifier(new VF.Annotation(labels[i]).setVerticalJustification(VF.Annotation.VerticalJustify.BOTTOM), 0);
             return s;
           });
@@ -73,7 +73,7 @@ export function NoteStaff({ notes, chord, keyPc, labels }: { notes: number[]; ch
       new VF.Formatter().joinVoices([voice]).format([voice], width - 90);
       voice.draw(ctx, stave);
     },
-    [notes.join(','), chord, keySpec(keyPc), (labels ?? []).join(',')],
+    [notes.join(','), chord, keySpec(keyPc), (labels ?? []).join(','), clef],
   );
   return (
     <div className="note-staff" role="img" aria-label={notes.map((m) => vfKey(m, keyPc)).join(' ')}>

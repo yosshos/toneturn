@@ -1,3 +1,4 @@
+import { NoteStaff } from './NoteViews';
 import { PitchTrace } from './Vocal';
 import { reportPuzzle } from '../cloud/compete';
 import { fitLessonToRange, fitQuestions } from '../engine/voiceFit';
@@ -292,7 +293,14 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
             ) : q.kind === 'rhythm-read' ? (
               <ReadPrompt q={q} v={v} lang={lang} onTap={(ms) => ctrl.tapBeat(ms)} onRelease={(ms) => ctrl.tapRelease(ms)} t={t} />
             ) : (
+              q.kind === 'choice' && (q.text || q.show) ? (
+                <div className="choice-show">
+                  {q.text && <p className="choice-text" dir="ltr">{q.text[lang]}</p>}
+                  {q.show && <NoteStaff notes={q.show.midis} chord={!!q.show.chord} keyPc={q.show.key ?? null} clef={q.show.clef ?? 'treble'} />}
+                </div>
+              ) : (
               <Orb v={v} label={q.kind === 'rhythm-dict' ? '♩ ?' : orbLabel} />
+              )
             )}
             <Burst on={celebrate} />
           </div>

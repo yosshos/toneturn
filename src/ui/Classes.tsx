@@ -285,9 +285,10 @@ const openable = (id: string) => LESSON_ORDER.includes(id as LessonId) || EXTRA_
 
 /** Title of any assignable id (path lesson or generated practice). */
 export function assignmentTitle(id: string, lang: 'he' | 'en', t: Strings): string {
-  const m = /^vocal-(modes-|harmony-)?(\d+)$/.exec(id);
+  const m = /^vocal-(modes-|harmony-|barry-)?(\d+)$/.exec(id);
   if (m) {
     const n = Number(m[2]);
+    if (m[1] === 'barry-') return `${t.barryTitle} · ${t.barryLevelNames[n - 1] ?? n}`;
     if (m[1] === 'modes-') return `${t.modesTitle} · ${t.modesLevelNames[n - 1] ?? n}`;
     if (m[1] === 'harmony-') return `${t.harmonyTitle} · ${t.harmonyLevelNames[n - 1] ?? n}`;
     return `${t.vocalTitle} · ${t.vocalLevelNames[n - 1] ?? n}`;

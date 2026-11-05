@@ -32,6 +32,7 @@ import {
   vibratoConsistency,
   MODE_LEVELS,
   HARMONY_LEVELS,
+  BARRY_LEVELS,
   itemAccompaniment,
   memoryFactor,
   scaleTonic,
@@ -63,7 +64,8 @@ export function noteLabel(midi: number, settings: Settings, key: PitchClass | nu
 /** Levels 1–9: the vocal ladder; 101–108: scales and modes. */
 export const MODES_BASE = 100;
 export const HARMONY_BASE = 200;
-export const levelDef = (level: number) => (level > HARMONY_BASE ? HARMONY_LEVELS[level - HARMONY_BASE - 1] : level > MODES_BASE ? MODE_LEVELS[level - MODES_BASE - 1] : LADDER[level - 1]);
+export const BARRY_BASE = 300;
+export const levelDef = (level: number) => (level > BARRY_BASE ? BARRY_LEVELS[level - BARRY_BASE - 1] : level > HARMONY_BASE ? HARMONY_LEVELS[level - HARMONY_BASE - 1] : level > MODES_BASE ? MODE_LEVELS[level - MODES_BASE - 1] : LADDER[level - 1]);
 
 // ------------------------------------------------------------------ live pitch trace
 
@@ -398,6 +400,29 @@ export function VocalScreen({ t, settings, progress, onSettings, onProgress, onB
       </section>
 
       <section className="set-card">
+        <h2>🎹 {t.barryTitle}</h2>
+        <p className="field-hint">{t.barryBlurb}</p>
+        <ol className="vocal-levels">
+          {BARRY_LEVELS.map((lvDef, i) => {
+            const lv = BARRY_BASE + i + 1;
+            const open = i === 0 || v.passed.includes(lv - 1);
+            const passed = v.passed.includes(lv);
+            return (
+              <li key={lv}>
+                <button className={`vocal-level ${passed ? 'passed' : ''} ${open ? '' : 'locked'}`} disabled={!open} onClick={() => setView({ kind: 'session', level: lv, items: lvDef.items.filter((it) => itemFits(it, range)) })}>
+                  <span className="lv-num">{i + 1}</span>
+                  <span className="lv-text">
+                    <b>{t.barryLevelNames[i]}</b>
+                    <small>{passed ? `✓ ${t.vocalPassed}` : !open ? `🔒 ${t.vocalLocked}` : fill(t.vocalLevel, { n: i + 1 })}</small>
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ol>
+      </section>
+
+      <section className="set-card">
         <h2>🎶 {t.harmonyTitle}</h2>
         <p className="field-hint">{t.harmonyBlurb}</p>
         <ol className="vocal-levels">
@@ -615,6 +640,7 @@ function VocalSession({
     const ref = referenceEvents(item, shownTargets);
     setPhase('listening');
     const acc = itemAccompaniment(item, range);
+    const chordsAbs = item.chords ? item.chords.map((ch) => ch.map((x) => targets[0] - (item.steps?.[0] ?? 0) + x)) : null;
     const melodic = ['melody', 'leap', 'rhythmic', 'staccato', 'glide', 'harmony-line'].includes(item.kind);
     // The app keeps sounding while the player sings (harmony, a held reference): without headphones the
     // microphone hears it too — a bleed gate learns its level first and drops it (spec P.0).
@@ -663,8 +689,9 @@ function VocalSession({
       });
       setPhase('calibrating');
       // The sound plays while the player waits: the drone / chord, or the melody's first note.
+      if (item.pre) await piano.play(item.pre.map((x) => ({ midi: shownTargets[0] + x, start: 0, duration: 1.2, velocity: 0.6 })), 1.4, c.signal).catch(() => {});
       if (item.kind === 'harmony-hold') piano.startDrone(acc, 0.12);
-      else if (item.kind === 'harmony-line') piano.startDrone([acc[0]], 0.12);
+      else if (item.kind === 'harmony-line') piano.startDrone(item.chords ? acc.slice(0, 1) : [acc[0]], 0.12);
       else piano.startDrone([shownTargets[0]], 0.12);
       await new Promise((r) => setTimeout(r, CALIBRATE_SEC * 1000 + 150));
       gate.finishCalibration();
@@ -674,7 +701,7 @@ function VocalSession({
         setPhase('listening');
         const clicks = [0, 1, 2, 3].map((k) => ({ midi: 0, start: k * beat, duration: 0.05, velocity: 0.8, perc: (k === 0 ? 'accent' : 'click') as 'accent' | 'click' }));
         await piano.play(clicks, 4 * beat, c.signal).catch(() => {});
-        void piano.play(acc.map((m, k) => ({ midi: m, start: k * beat, duration: beat * 0.95, velocity: 0.55 })), acc.length * beat + 0.3, c.signal).catch(() => {});
+        void piano.play(lineAccompaniment(acc, chordsAbs, beat), acc.length * beat + 0.3, c.signal).catch(() => {});
       }
       tStart = lastT;
       stage = 'sing';
@@ -690,13 +717,14 @@ function VocalSession({
         return;
       }
     } else {
+      if (item.pre) await piano.play(item.pre.map((x) => ({ midi: shownTargets[0] + x, start: 0, duration: 1.2, velocity: 0.6 })), 1.4, c.signal).catch(() => {});
       if (item.kind === 'harmony-hold') piano.startDrone(acc, 0.12);
       else if (item.kind === 'harmony-line') {
         // Count-in (4 clicks), then the melody plays while the player sings the harmony.
         const beat = 60 / (item.bpm ?? 72);
         const clicks = [0, 1, 2, 3].map((k) => ({ midi: 0, start: k * beat, duration: 0.05, velocity: 0.8, perc: (k === 0 ? 'accent' : 'click') as 'accent' | 'click' }));
         await piano.play(clicks, 4 * beat, c.signal).catch(() => {});
-        void piano.play(acc.map((m, k) => ({ midi: m, start: k * beat, duration: beat * 0.95, velocity: 0.55 })), acc.length * beat + 0.3, c.signal).catch(() => {});
+        void piano.play(lineAccompaniment(acc, chordsAbs, beat), acc.length * beat + 0.3, c.signal).catch(() => {});
       } else if (item.reference === 'during') piano.startDrone([shownTargets[0]], 0.12);
       else await piano.play(ref.events, ref.length, c.signal).catch(() => {});
       if (c.signal.aborted) {
@@ -777,7 +805,7 @@ function VocalSession({
     const rated = perItem.filter((x) => Object.keys(best.current).some((k) => k === x.it.id || k.startsWith(`${x.it.id}#`)));
     const now = new Date().toISOString();
     const r: LessonResult = {
-      lessonId: typeof level === 'number' ? (level > HARMONY_BASE ? `vocal-harmony-${level - HARMONY_BASE}` : level > MODES_BASE ? `vocal-modes-${level - MODES_BASE}` : `vocal-${level}`) : 'vocal-warmup',
+      lessonId: typeof level === 'number' ? (level > BARRY_BASE ? `vocal-barry-${level - BARRY_BASE}` : level > HARMONY_BASE ? `vocal-harmony-${level - HARMONY_BASE}` : level > MODES_BASE ? `vocal-modes-${level - MODES_BASE}` : `vocal-${level}`) : 'vocal-warmup',
       lessonVersion: 1,
       sessionId,
       completedAt: now,
@@ -857,7 +885,7 @@ function VocalSession({
   })();
   // Scales asked by name: only the tonic is shown until the take is graded (the notes are the task).
   const hidden = item.kind === 'scale' && item.scale?.hear === 'tonic' && phase !== 'result';
-  const title = level === 'warmup' ? t.vocalWarmup : level > HARMONY_BASE ? `${t.harmonyTitle} · ${t.harmonyLevelNames[level - HARMONY_BASE - 1]}` : level > MODES_BASE ? `${t.modesTitle} · ${t.modesLevelNames[level - MODES_BASE - 1]}` : `${fill(t.vocalLevel, { n: level })} · ${t.vocalLevelNames[level - 1]}`;
+  const title = level === 'warmup' ? t.vocalWarmup : level > BARRY_BASE ? `${t.barryTitle} · ${t.barryLevelNames[level - BARRY_BASE - 1]}` : level > HARMONY_BASE ? `${t.harmonyTitle} · ${t.harmonyLevelNames[level - HARMONY_BASE - 1]}` : level > MODES_BASE ? `${t.modesTitle} · ${t.modesLevelNames[level - MODES_BASE - 1]}` : `${fill(t.vocalLevel, { n: level })} · ${t.vocalLevelNames[level - 1]}`;
 
   if (phase === 'summary' && summary)
     return (
@@ -900,6 +928,8 @@ function VocalSession({
                 n: item.scale.notes ?? '',
               }) + (item.scale.notes ? ` ${fill(t.scaleFirstN, { n: item.scale.notes })}` : '') + (item.scale.hear === 'tonic' ? ` ${t.scaleTonicOnly}` : '');
             })()
+          : item.bh
+            ? barryInstruction(item, shownTargets[0], t, settings)
           : item.kind === 'harmony-hold' && item.accompany?.length === 1
             ? fill(item.accompany[0] < 0 ? t.holdIntervalAbove : t.holdIntervalBelow, { iv: t.intervalNames[String(Math.abs(item.accompany[0]))] ?? '' })
             : fill(t.vocalInstr[item.kind] ?? '', { s: item.seconds, on: item.cueOn ?? 2, off: item.cueOff ?? 5, rate: item.vibRate ?? '', width: item.vibWidth === 'wide' ? t.vocalWide : t.vocalNarrow })}
@@ -958,6 +988,8 @@ function VocalSession({
                 {t.vocalScore}: <b>{Math.round(grade.score * 100)}%</b>
               </div>
               <MetricBars t={t} g={grade} />
+              {grade.chordMade && <p className="take-remark">🎹 {fill(t.barryMade, { chord: `${pcLabel(grade.chordMade.root)}${grade.chordMade.kind === 'dom7' ? '7' : 'm6'}` })}</p>}
+              {item.bh?.mode === 'free' && !grade.chordMade && <p className="take-remark">{t.barryNotHalfStep}</p>}
               {remarkLine && <p className="take-remark">🎯 {remarkLine}</p>}
               {tipKey && <p className="take-tip">💡 {t.vocalTips[tipKey]}</p>}
               <NotesView midis={shownTargets} keyPc={null} settings={settings} />
@@ -1022,4 +1054,24 @@ function VocalSession({
       </div>
     </main>
   );
+}
+
+const PCN = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'G♭', 'G', 'A♭', 'A', 'B♭', 'B'];
+const pcLabel = (pc: number) => PCN[((pc % 12) + 12) % 12];
+
+/** Barry Harris singing instructions with the real chord names (spec T.2). */
+function barryInstruction(item: VocalItem, target: number, t: Strings, settings: Settings): string {
+  const bh = item.bh!;
+  void settings;
+  if (bh.mode === 'free') return t.barryFree;
+  if (bh.mode === 'resolve') return t.barryResolve;
+  const chord = `${pcLabel(target + (bh.rootOffset ?? 0))}${bh.kind === 'dom7' ? '7' : 'm6'}`;
+  if (bh.mode === 'name') return fill(t.barryMakeIt, { chord });
+  return fill(bh.dir === 'down' ? t.barryLowerDeg : t.barryRaiseDeg, { n: t.ordinals[(bh.degree ?? 1) - 1], chord });
+}
+
+/** What the app plays with a harmony line: the melody, or a chord under each sung note. */
+function lineAccompaniment(acc: number[], chords: number[][] | null, beat: number) {
+  if (chords) return chords.flatMap((ch, k) => ch.map((m) => ({ midi: m, start: k * beat, duration: beat * 0.95, velocity: 0.5 })));
+  return acc.map((m, k) => ({ midi: m, start: k * beat, duration: beat * 0.95, velocity: 0.55 }));
 }

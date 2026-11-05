@@ -1,3 +1,4 @@
+import { topicLesson } from '../engine/topics';
 import { SingAlongScreen } from './SingAlong';
 import { AchievementsScreen } from './Extras';
 import { absoluteLesson, modesLesson, MODE_ID_LEVELS, wrongNotesLesson } from '../engine/lesson';
@@ -245,14 +246,15 @@ export function App() {
   };
   const openModes = (level: number) => openGenerated(modesLesson(level, Date.now() >>> 0));
   const openAbsolute = (level: number) => openGenerated(absoluteLesson(level, Date.now() >>> 0));
+  const openTopic = (topic: string, level: number) => openGenerated(topicLesson(topic, level, Date.now() >>> 0));
   const [vocalLevel, setVocalLevel] = useState<number | null>(null);
   /** Class assignments: path lessons and generated practice (vocal levels, modes, wrong notes). */
   const openAssignment = (id: string) => {
     if ((LESSON_ORDER as string[]).includes(id)) return openLesson(id as LessonId);
-    const m = /^vocal-(modes-|harmony-)?(\d+)$/.exec(id);
+    const m = /^vocal-(modes-|harmony-|barry-)?(\d+)$/.exec(id);
     if (m) {
       setVocalWarmup(false);
-      setVocalLevel((m[1] === 'modes-' ? 100 : m[1] === 'harmony-' ? 200 : 0) + Number(m[2]));
+      setVocalLevel((m[1] === 'modes-' ? 100 : m[1] === 'harmony-' ? 200 : m[1] === 'barry-' ? 300 : 0) + Number(m[2]));
       return go('vocal');
     }
     if (id === 'modes') return openModes(modesLevelFor(ratingsOf(progress).modes?.n ? ratingsOf(progress).modes!.r : null));
@@ -326,7 +328,7 @@ export function App() {
           onStreak={() => setStreakOpen(true)}
           account={<AccountCard t={t} user={user} sync={sync} compact />}
           onMenu={() => setMenuOpen(true)}
-          tools={<>{user && <AssignedCard t={t} items={assigned} lang={s.uiLang} onOpen={(id) => openAssignment(id)} />}<PracticeTools t={t} progress={progress} onSkills={() => go('skills')} onPlacement={openPlacement} onReview={openReview} onPuzzle={openPuzzle} onDaily={() => go('daily')} onRuns={openRuns} onDrone={() => go('drone')} onModes={openModes} onWrongNotes={openWrongNotes} onAbsolute={openAbsolute} /></>}
+          tools={<>{user && <AssignedCard t={t} items={assigned} lang={s.uiLang} onOpen={(id) => openAssignment(id)} />}<PracticeTools t={t} progress={progress} onSkills={() => go('skills')} onPlacement={openPlacement} onReview={openReview} onPuzzle={openPuzzle} onDaily={() => go('daily')} onRuns={openRuns} onDrone={() => go('drone')} onModes={openModes} onWrongNotes={openWrongNotes} onAbsolute={openAbsolute} onTopic={openTopic} lang={s.uiLang} /></>}
           updateReady={pwaState.updateReady}
           news={
             <>

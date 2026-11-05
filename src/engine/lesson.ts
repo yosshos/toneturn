@@ -28,7 +28,8 @@ export type SkillId =
   | 'agility'
   | 'technique'
   | 'modes'
-  | 'absolute';
+  | 'absolute'
+  | 'theory';
 export type IntervalName = 'M3' | 'P5' | 'P8';
 export type BassRole = 'root' | 'third' | 'fifth';
 export type Quality = 'maj' | 'min' | 'dim' | 'aug';
@@ -193,6 +194,29 @@ export interface RunIdQuestion extends QBase {
   answer: string;
 }
 
+/**
+ * A generic multiple-choice item produced by a topic generator (spec T–V): Barry Harris, extensions,
+ * voicings, progressions, form, maqamat, rhythms, written theory … Deterministic from (topic, level, seed),
+ * so review rebuilds it from its tag.
+ */
+export interface ChoiceQuestion extends QBase {
+  kind: 'choice';
+  topic: string;
+  level: number;
+  seed: number;
+  skill: SkillId;
+  ask: { en: string; he: string };
+  names: Record<string, { en: string; he: string; say?: string[] }>;
+  answer: string;
+  choices: string[];
+  /** The sound of each choice (compare: your answer, then the right one). */
+  choiceStim?: Record<string, Stimulus[]>;
+  /** Notes to show (written theory, sight-reading): drawn as notation. */
+  show?: { midis: number[]; clef?: 'treble' | 'bass' | 'alto'; chord?: boolean; key?: PitchClass | null };
+  /** Text to show with the question (written theory). */
+  text?: { en: string; he: string };
+}
+
 /** Absolute pitch (spec S.11, optional): a note with no reference — name it. Answer: the note key. */
 export interface AbsNoteQuestion extends QBase {
   kind: 'abs-note';
@@ -286,6 +310,7 @@ export interface ProgressionQuestion extends QBase {
 
 export type Question =
   | ModeIdQuestion
+  | ChoiceQuestion
   | AbsNoteQuestion
   | SlashQuestion
   | TFQuestion
@@ -353,6 +378,8 @@ export function questionSkill(q: Question): SkillId {
       return 'chords';
     case 'abs-note':
       return 'absolute';
+    case 'choice':
+      return q.skill;
     case 'name-seq':
       return q.given === 'sound' ? 'notes' : 'degrees';
     case 'seventh':
@@ -420,6 +447,7 @@ export type LessonId =
   | 'jazz-1'
   | 'songs'
   | 'runs-workshop'
+  | 'topic'
   | 'absolute-pitch'
   | 'slash-chords'
   | 'dictation'
@@ -1258,6 +1286,8 @@ export function makeLesson(id: LessonId, seed = Date.now()): LessonDef {
       return slashLesson(seed);
     case 'absolute-pitch':
       return absoluteLesson(1, seed);
+    case 'topic':
+      return absoluteLesson(1, seed); // generated lessons are opened with their own generator
     case 'dictation':
       return dictationLesson(seed);
     case 'jazz-2':
@@ -1330,6 +1360,8 @@ export function explainStimulus(q: Question): Stimulus[] {
       return [{ kind: 'note', midi: q.midis[0], duration: 1.0 }, { kind: 'chord', midis: q.midis, duration: 1.6 }];
     case 'abs-note':
       return [{ kind: 'note', midi: q.midi, duration: 1.2 }];
+    case 'choice':
+      return q.choiceStim?.[q.answer] ?? q.stimulus;
     case 'degree': {
       const s: Stimulus[] = [{ kind: 'note', midi: q.targetMidi, duration: 1.0 }];
       if (q.answer !== 1) s.push({ kind: 'resolve', fromMidi: q.targetMidi, toMidi: nearestTonicMidi(q.key, q.targetMidi) });
@@ -1381,6 +1413,12 @@ export function compareStimulus(q: Question, given: Answer): Stimulus[] | null {
   switch (q.kind) {
     case 'tf':
       return null;
+    case 'choice': {
+      if (typeof given !== 'string' || given === q.answer) return null;
+      const a = q.choiceStim?.[given];
+      const b = q.choiceStim?.[q.answer];
+      return a && b ? [...a, { kind: 'rest', duration: 0.6 }, ...b] : null;
+    }
     case 'abs-note': {
       const g = typeof given === 'string' ? pcFromKey(given) : null;
       if (!g || given === q.answer) return null;
@@ -1586,6 +1624,8 @@ export function questionTag(q: Question): string {
   switch (q.kind) {
     case 'abs-note':
       return `abs:${k(q.target)}`;
+    case 'choice':
+      return `choice:${q.topic}:${q.level}:${q.seed}`;
     case 'slash':
       return `slash:${k(q.key)}:${k(q.bass)}`;
     case 'tf':

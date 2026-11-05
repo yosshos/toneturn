@@ -1,3 +1,5 @@
+import { TOPIC_GEN } from '../engine/topics';
+import { TOPIC_GROUPS } from '../engine/topicGroups';
 import { weekId } from '../engine/adaptive';
 import { SKILLS } from '../engine/rating';
 import type { Strings } from '../i18n/strings';
@@ -21,6 +23,8 @@ export function PracticeTools({
   onModes,
   onWrongNotes,
   onAbsolute,
+  onTopic,
+  lang = 'en',
 }: {
   t: Strings;
   progress: Progress;
@@ -34,6 +38,8 @@ export function PracticeTools({
   onModes: (level: number) => void;
   onWrongNotes: (level: number) => void;
   onAbsolute: (level: number) => void;
+  onTopic: (topic: string, level: number) => void;
+  lang?: 'he' | 'en';
 }) {
   const daily = progress.daily?.[localDay(new Date())];
   const ratings = ratingsOf(progress);
@@ -120,6 +126,27 @@ export function PracticeTools({
           })}
         </div>
       </div>
+      {TOPIC_GROUPS.map((g) => (
+        <details key={g.id} className="topic-group">
+          <summary>
+            {g.icon} {g.title[lang]}
+          </summary>
+          {g.topics
+            .filter((id) => TOPIC_GEN[id])
+            .map((id) => (
+              <div key={id} className="modes-row">
+                <b>{TOPIC_GEN[id].title[lang]}</b>
+                <div className="modes-levels" role="group" aria-label={TOPIC_GEN[id].title[lang]}>
+                  {TOPIC_GEN[id].levels.map((lv, i) => (
+                    <button key={i} className="chip" data-topic={id} onClick={() => onTopic(id, i + 1)}>
+                      {i + 1}. {lv[lang]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+        </details>
+      ))}
       <div className="modes-row">
         <b>🎯 {t.skillNames.absolute}</b>
         <small>{t.absoluteHint}</small>

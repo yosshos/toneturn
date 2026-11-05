@@ -455,3 +455,26 @@ export function parseTrueFalse(t: string): ParseResult<'true' | 'false'> {
   if ((n.includes('not') && (n.includes('true') || n.includes('right') || n.includes('correct'))) || (n.includes('לא') && n.includes('נכון'))) return { kind: 'answer', value: 'false', heard: t.trim() };
   return parseChoiceTable(t, TF_TOKENS);
 }
+
+
+/** Any named choice (topic questions): the longest spoken alias of one of the choices wins. */
+export function parseNamedChoice(transcript: string, choices: string[], names: Record<string, { en: string; he: string; say?: string[] }>): ParseResult<string> {
+  const heard = transcript.trim();
+  const text = canonMusic(transcript);
+  if (!text.trim()) return { kind: 'unrecognized', heard };
+  const hits: { id: string; len: number }[] = [];
+  for (const id of choices) {
+    const n = names[id];
+    if (!n) continue;
+    const aliases = [n.en, n.he, ...(n.say ?? [])].map((a) => canonMusic(a.replace(/[()]/g, ' ')));
+    const best = Math.max(0, ...aliases.filter((a) => a.trim() && text.includes(a)).map((a) => a.length));
+    if (best) hits.push({ id, len: best });
+  }
+  if (!hits.length) {
+    const commands = findCommands(normalize(transcript));
+    return commands.length === 1 ? { kind: 'command', command: commands[0], heard } : { kind: 'unrecognized', heard };
+  }
+  hits.sort((a, b) => b.len - a.len);
+  if (hits.length > 1 && hits[0].len === hits[1].len) return { kind: 'ambiguous', candidates: hits.filter((h) => h.len === hits[0].len).map((h) => h.id), heard };
+  return { kind: 'answer', value: hits[0].id, heard };
+}

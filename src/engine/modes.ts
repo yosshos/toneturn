@@ -39,7 +39,11 @@ export type ModeId =
   | 'hungarian-minor'
   | 'hirajoshi'
   | 'in-sen'
-  | 'augmented';
+  | 'augmented'
+  | 'sixth-dim'
+  | 'minor-sixth-dim'
+  | 'harmonic-major'
+  | 'chromatic';
 
 /** Semitones from the tonic up to (and including) the octave. */
 export const MODE_STEPS: Record<ModeId, number[]> = {
@@ -77,6 +81,10 @@ export const MODE_STEPS: Record<ModeId, number[]> = {
   hirajoshi: [0, 2, 3, 7, 8, 12],
   'in-sen': [0, 1, 5, 7, 10, 12],
   augmented: [0, 3, 4, 7, 8, 11, 12],
+  'sixth-dim': [0, 2, 4, 5, 7, 8, 9, 11, 12],
+  'minor-sixth-dim': [0, 2, 3, 5, 7, 8, 9, 11, 12],
+  'harmonic-major': [0, 2, 4, 5, 7, 8, 11, 12],
+  chromatic: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
 };
 
 export const MODE_FAMILY: Record<ModeId, 'major' | 'melodic' | 'harmonic' | 'other'> = {
@@ -114,6 +122,10 @@ export const MODE_FAMILY: Record<ModeId, 'major' | 'melodic' | 'harmonic' | 'oth
   hirajoshi: 'other',
   'in-sen': 'other',
   augmented: 'other',
+  'sixth-dim': 'other',
+  'minor-sixth-dim': 'other',
+  'harmonic-major': 'other',
+  chromatic: 'other',
 };
 
 /** Names (English / Hebrew) and spoken aliases accepted by the voice grammar. */
@@ -151,6 +163,10 @@ export const MODE_NAMES: Record<ModeId, { en: string; he: string; say: { en: str
   'hungarian-minor': { en: 'Hungarian minor', he: 'מינור הונגרי', say: { en: ['hungarian minor', 'gypsy minor', 'double harmonic minor', 'harmonic minor sharp four'], he: ['מינור הונגרי', 'הונגרי'] } },
   hirajoshi: { en: 'Hirajoshi', he: 'הירג׳ושי', say: { en: ['hirajoshi'], he: ['הירג׳ושי', 'הירגושי', 'יפני'] } },
   'in-sen': { en: 'In-sen', he: 'אין־סן', say: { en: ['in sen', 'insen'], he: ['אין סן', 'אינסן'] } },
+  'sixth-dim': { en: 'Major 6th diminished (Barry Harris)', he: 'מז׳ור 6 דימיניש (בארי האריס)', say: { en: ['sixth diminished', 'six diminished', 'barry harris'], he: ['שש דימיניש', 'בארי האריס'] } },
+  'minor-sixth-dim': { en: 'Minor 6th diminished', he: 'מינור 6 דימיניש', say: { en: ['minor sixth diminished', 'minor six diminished'], he: ['מינור שש דימיניש'] } },
+  'harmonic-major': { en: 'Harmonic major', he: 'מז׳ור הרמוני', say: { en: ['harmonic major'], he: ['מז׳ור הרמוני', 'מזור הרמוני'] } },
+  chromatic: { en: 'Chromatic', he: 'כרומטי', say: { en: ['chromatic'], he: ['כרומטי'] } },
   augmented: { en: 'Augmented (hexatonic)', he: 'מוגדל (הקסטוני)', say: { en: ['augmented scale', 'hexatonic', 'augmented'], he: ['סולם מוגדל', 'הקסטוני', 'מוגדל'] } },
 };
 

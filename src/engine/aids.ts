@@ -92,6 +92,8 @@ export function contentNotes(q: Question): { notes: number[]; chord: boolean } |
       return { notes: q.midis, chord: false };
     case 'abs-note':
       return { notes: [q.midi], chord: false };
+    case 'choice':
+      return q.show ? { notes: q.show.midis, chord: !!q.show.chord } : null;
     case 'degree':
     case 'note-name':
     case 'sing':

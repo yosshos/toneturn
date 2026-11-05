@@ -1,5 +1,6 @@
 // Generated sessions: adaptive placement, targeted review from past mistakes, and the weekly puzzle.
 
+import { TOPIC_GEN } from './topics';
 import { MODE_STEPS, type ModeId } from './modes';
 import { pc as pcOf, pcValue } from './pitch';
 import { absNoteQuestion, modeIdQuestion, slashQuestion, tfQuestion, wrongNoteQuestion } from './lesson';
@@ -223,6 +224,12 @@ export function questionFromTag(tag: string, seed: number, id: string): Question
       const ds = (b ?? '').split('-').map(Number);
       if (!key || !ds.length || !ds.every((x) => x >= 1 && x <= 7)) return null;
       return nameSeqQuestion(id, key, ds, tag.split(':')[3] === 'degrees' ? 'degrees' : 'sound');
+    }
+    case 'choice': {
+      // choice:<topic>:<level>:<seed>
+      const [, topic, lv, sd] = tag.split(':');
+      const T = TOPIC_GEN[topic];
+      return T ? T.gen(Number(sd) >>> 0, Number(lv) || 1, id) : null;
     }
     case 'abs': {
       const target = parsePc(a);

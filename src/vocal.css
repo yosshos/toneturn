@@ -683,3 +683,36 @@
   margin: 8px 0 0;
   font-weight: 700;
 }
+.topic-group {
+  margin-top: 12px;
+  border-radius: 18px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  padding: 10px 14px;
+}
+.topic-group summary {
+  cursor: pointer;
+  font-weight: 800;
+}
+.topic-group .modes-row {
+  background: transparent;
+  border: 0;
+  padding: 8px 0 0;
+}
+.choice-show {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+}
+.choice-text {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--gold);
+  margin: 0;
+}
+.choice-show .note-staff {
+  background: #fff;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 360px;
+}

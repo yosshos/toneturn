@@ -8,7 +8,8 @@ import type { Remark } from '../engine/feedback';
 import { parseAlternatives, parseCadence, parseDegree, parseDegreeSequence, parseInterval, parseInversion, parseNoteName, parseQuality, parseRunMaterial, parseRunShape, parseNoteNameSequence, parseProgression, parseSeventh, type ParseResult } from '../engine/parser';
 import { songById } from '../engine/songs';
 import { MODE_NAMES, MODE_STEPS, type ModeId } from '../engine/modes';
-import { parseMode, parseTrueFalse } from '../engine/parser';
+import { parseMode, parseNamedChoice, parseTrueFalse } from '../engine/parser';
+import { TOPIC_GEN } from '../engine/topics';
 import { describeRun } from '../engine/runs';
 import { narration, type Lang } from './narration';
 import { describe as describeRhythm, parseRhythmWords, rhythmFromKey, rhythmKey, sameRhythm, type CellId } from '../engine/rhythm';
@@ -184,6 +185,12 @@ export const LESSON_META: Record<LessonId, LessonMeta> = {
     icon: 'mic',
     tip: { en: 'Practise a run slowly on “ah”, then speed it up — the Runs workshop does this for you.', he: 'תרגלו ראן לאט על "אה", ואז האיצו — סדנת הראנים עושה את זה בשבילכם.' },
   },
+  topic: {
+    title: { en: 'Practice', he: 'תרגול' },
+    blurb: { en: 'Focused practice on one topic.', he: 'תרגול ממוקד בנושא אחד.' },
+    icon: 'ear',
+    tip: { en: 'Listen once more to the ones you missed.', he: 'הקשיבו שוב לאלה שפספסתם.' },
+  },
   'absolute-pitch': {
     title: { en: 'Absolute pitch corner (optional)', he: 'פינת שמיעה מוחלטת (רשות)' },
     blurb: { en: 'A note with no reference — name it. Tracked apart from your relative skills.', he: 'צליל בלי צליל ייחוס — מה שמו? נמדד בנפרד מהמיומנויות היחסיות.' },
@@ -318,6 +325,7 @@ const namesShown = (keys: string[], nm: Naming, l: Lang) => keys.map((k) => { co
 export function answerWord(_q: Question, a: Answer, l: Lang, nm: Naming = 'letter'): string {
   if (typeof a === 'number') return deg(a, l);
   if (_q.kind === 'mode-id' && typeof a === 'string' && a in MODE_STEPS) return MODE_NAMES[a as ModeId][l];
+  if (_q.kind === 'choice' && typeof a === 'string') return _q.names[a]?.[l] ?? a;
   if (_q.kind === 'tf') return a === 'true' ? (l === 'en' ? 'true' : 'נכון') : l === 'en' ? 'false' : 'לא נכון';
   if (typeof a === 'string' && a.includes('.') && a.split('.').every((k) => pcFromKey(k))) return namesWords(a.split('.'), nm, l);
   const asPc = typeof a === 'string' ? pcFromKey(a) : null;
@@ -369,6 +377,8 @@ export function sayChoices(q: Question, l: Lang): string {
 /** Spoken prompt at the start of a round. */
 export function roundPrompt(q: Question, l: Lang, nm: Naming, n: number): string {
   switch (q.kind) {
+    case 'choice':
+      return `${l === 'en' ? 'Round' : 'סיבוב'} ${n}. ${q.ask[l]}`;
     case 'abs-note':
       return l === 'en' ? `Round ${n}. No reference. Which note is this?` : `סיבוב ${n}. בלי צליל ייחוס. איזה צליל זה?`;
     case 'slash':
@@ -481,6 +491,8 @@ export function roundPrompt(q: Question, l: Lang, nm: Naming, n: number): string
 
 export function parseAnswer(q: Question, alternatives: string[], inputNaming: Naming = 'letter'): ParseResult<Answer> {
   switch (q.kind) {
+    case 'choice':
+      return parseAlternatives(alternatives, (t) => parseNamedChoice(t, q.choices, q.names));
     case 'abs-note': {
       const r = parseAlternatives(alternatives, (t) => parseNoteName(t, inputNaming));
       if (r.kind === 'answer') return { ...r, value: `${r.value.letter}${r.value.acc}` };
@@ -574,6 +586,8 @@ export function revealText(q: Question, l: Lang, nm: Naming): string {
 
 function revealCore(q: Question, l: Lang, nm: Naming): string {
   switch (q.kind) {
+    case 'choice':
+      return l === 'en' ? `It was ${q.names[q.answer]?.en ?? q.answer}.` : `זה היה ${q.names[q.answer]?.he ?? q.answer}.`;
     case 'abs-note':
       return l === 'en' ? `It was ${spokenNote(q.target, nm, l)}. Your note, then this one.` : `זה היה ${spokenNote(q.target, nm, l)}. הצליל שלכם, ואז הזה.`;
     case 'slash':
@@ -690,6 +704,7 @@ export interface ChoiceLabel {
 }
 
 export function choiceLabel(_q: Question, a: Answer, l: Lang, nm: Naming = 'letter'): ChoiceLabel {
+  if (_q.kind === 'choice' && typeof a === 'string') return { big: '', small: _q.names[a]?.[l] ?? a, tone: (['mint', 'gold', 'lilac', 'coral'] as ChoiceLabel['tone'][])[_q.choices.indexOf(a) % 4] };
   if (_q.kind === 'slash' && typeof a === 'string') {
     const b = pcFromKey(a);
     const tones: ChoiceLabel['tone'][] = ['mint', 'gold', 'lilac', 'coral'];
@@ -756,6 +771,8 @@ export function choiceLabel(_q: Question, a: Answer, l: Lang, nm: Naming = 'lett
 export function askTemplate(q: Question, l: Lang, nm: Naming = 'letter'): string {
   if (q.kind === 'degree-seq' && q.bassLine) return l === 'en' ? 'Which bass notes, as degrees of {k} major?' : 'אילו צלילי בס, כדרגות ב־{k} מז׳ור?';
   switch (q.kind) {
+    case 'choice':
+      return q.ask[l];
     case 'abs-note':
       return l === 'en' ? 'Which note is this? (no reference)' : 'איזה צליל זה? (בלי ייחוס)';
     case 'slash':
@@ -826,6 +843,8 @@ export function hintText(q: Question, l: Lang, voice: boolean): string {
 export function questionBadge(q: Question, l: Lang, nm: Naming): { key?: PitchClass; text: string } {
   const major = l === 'en' ? 'major' : "מז'ור";
   switch (q.kind) {
+    case 'choice':
+      return { text: TOPIC_GEN[q.topic]?.title[l] ?? q.topic };
     case 'abs-note':
       return { text: l === 'en' ? 'Absolute pitch' : 'שמיעה מוחלטת' };
     case 'slash':
