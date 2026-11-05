@@ -52,7 +52,8 @@ export function SingAlongScreen({ t, settings, onBack }: { t: Strings; settings:
   const [frames, setFrames] = useState<SungFrame[]>([]);
   const [now, setNow] = useState(0);
   const [grade, setGrade] = useState<SingAlongGrade | null>(null);
-  const [guide, setGuide] = useState(true);
+  // Off by default: the guide plays the very notes being sung, so only with headphones can it stay out of the microphone.
+  const [guide, setGuide] = useState(false);
   const ctl = useRef<AbortController | null>(null);
   useEffect(() => () => ctl.current?.abort(), []);
   const range = settings.voiceRange ?? DEFAULT_RANGE;

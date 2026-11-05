@@ -1,3 +1,4 @@
+import { BleedGate, CALIBRATE_SEC } from '../engine/bleed';
 import { useEffect, useRef, useState } from 'react';
 import { droneMidis, HoldTracker, readDegree, type DegreeReading } from '../engine/drone';
 import { displayNote, pc, pcValue, type PitchClass } from '../engine/pitch';
@@ -34,6 +35,7 @@ export function DroneScreen({ t, settings, onBack }: { t: Strings; settings: Set
   const [reading, setReading] = useState<DegreeReading | null>(null);
   const [found, setFound] = useState<number[]>([]);
   const [err, setErr] = useState<string | null>(null);
+  const [calibrating, setCalibrating] = useState(false);
   const ctl = useRef<AbortController | null>(null);
   const key = pc(keyName);
 
@@ -55,7 +57,20 @@ export function DroneScreen({ t, settings, onBack }: { t: Strings; settings: Set
     const c = new AbortController();
     ctl.current = c;
     const tracker = new HoldTracker(key);
-    const onFrame = (f: SungFrame) => {
+    // The drone must never count as the singer: learn its level at the microphone first (the player
+    // stays quiet for a moment), then drop frames that are the drone itself.
+    const gate = new BleedGate(droneMidis(key, fifth));
+    let t0: number | null = null;
+    if (SIMULATED) gate.finishCalibration();
+    else setCalibrating(true);
+    const onFrame = (raw: SungFrame) => {
+      if (!gate.ready) {
+        t0 ??= raw.t;
+        if (raw.t - t0 < CALIBRATE_SEC) return gate.calibrate(raw);
+        gate.finishCalibration();
+        setCalibrating(false);
+      }
+      const f = gate.pass(raw);
       setReading(f.hz && f.confidence >= 0.8 ? readDegree(f.hz, key) : null);
       const d = tracker.push(f);
       if (d) {
@@ -110,6 +125,7 @@ export function DroneScreen({ t, settings, onBack }: { t: Strings; settings: Set
           <span>{t.droneFifth}</span>
         </label>
       </section>
+      {calibrating && <p className="vocal-cue">🤫 {t.droneQuiet}</p>}
       <section className={`drone-live ${on ? 'on' : ''}`} aria-live="polite">
         <div className="drone-degree" data-degree={reading?.degree ?? ''}>
           {reading ? (reading.degree ?? '♯/♭') : '–'}

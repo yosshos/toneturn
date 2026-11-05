@@ -1,6 +1,7 @@
 // Vocal technique (spec addendum P): range calibration, the 10-level ladder, the daily warm-up, a live
 // pitch trace, per-take metric cards with a tip and listen-back, the range map and per-metric trends.
 
+import { BleedGate, CALIBRATE_SEC } from '../engine/bleed';
 import { ThenAndNow } from './Extras';
 import { keepTake } from '../storage/takes';
 import { weekId } from '../engine/adaptive';
@@ -523,7 +524,7 @@ function RangeCalibration({ t, settings, onDone }: { t: Strings; settings: Setti
 
 // ------------------------------------------------------------------ a session (one level or the warm-up)
 
-type Phase = 'ready' | 'listening' | 'singing' | 'result' | 'summary';
+type Phase = 'ready' | 'calibrating' | 'listening' | 'singing' | 'result' | 'summary';
 
 function VocalSession({
   t,
@@ -592,26 +593,21 @@ function VocalSession({
     const ref = referenceEvents(item, shownTargets);
     setPhase('listening');
     const acc = itemAccompaniment(item, range);
-    if (item.kind === 'harmony-hold') piano.startDrone(acc, 0.12);
-    else if (item.kind === 'harmony-line') {
-      // Count-in (4 clicks), then the melody plays while the player sings the harmony.
-      const beat = 60 / (item.bpm ?? 72);
-      const clicks = [0, 1, 2, 3].map((k) => ({ midi: 0, start: k * beat, duration: 0.05, velocity: 0.8, perc: (k === 0 ? 'accent' : 'click') as 'accent' | 'click' }));
-      await piano.play(clicks, 4 * beat, c.signal).catch(() => {});
-      void piano.play(acc.map((m, k) => ({ midi: m, start: k * beat, duration: beat * 0.95, velocity: 0.55 })), acc.length * beat + 0.3, c.signal).catch(() => {});
-    } else if (item.reference === 'during') piano.startDrone([shownTargets[0]], 0.12);
-    else await piano.play(ref.events, ref.length, c.signal).catch(() => {});
-    if (c.signal.aborted) {
-      piano.stopDrone();
-      setPhase('ready');
-      return;
-    }
-    setPhase('singing');
+    const melodic = ['melody', 'leap', 'rhythmic', 'staccato', 'glide', 'harmony-line'].includes(item.kind);
+    // The app keeps sounding while the player sings (harmony, a held reference): without headphones the
+    // microphone hears it too — a bleed gate learns its level first and drops it (spec P.0).
+    const sounding = item.kind === 'harmony-hold' || item.kind === 'harmony-line' || item.reference === 'during';
+    const needGate = sounding && !headphones && !SIMULATED;
     const buf: SungFrame[] = [];
     let onset: number | null = null;
-    const startClock = performance.now();
-    const tick = setInterval(() => setClock((performance.now() - startClock) / 1000), 100);
-    const onFrame = (f: SungFrame) => {
+    let got: SungFrame[] | null = null;
+    let audio: Blob | undefined;
+    let tick: ReturnType<typeof setInterval> | undefined;
+    const startTicking = () => {
+      const startClock = performance.now();
+      tick = setInterval(() => setClock((performance.now() - startClock) / 1000), 100);
+    };
+    const keep = (f: SungFrame) => {
       buf.push(f);
       if (onset === null && f.hz && f.confidence >= 0.8) {
         onset = f.t;
@@ -620,34 +616,99 @@ function VocalSession({
       }
       if (buf.length % 3 === 0) setFrames(buf.slice());
     };
-    let got: SungFrame[] | null = null;
-    let audio: Blob | undefined;
-    const melodic = ['melody', 'leap', 'rhythmic', 'staccato', 'glide', 'harmony-line'].includes(item.kind);
-    if (SIMULATED) {
-      const sim = simulatedFrames(item, targets, noteIdx);
-      for (const f of sim) onFrame(f);
-      await new Promise((r) => setTimeout(r, 300));
-      got = sim;
-    } else {
-      const r = await new BrowserPitchCapture().sing({
+
+    if (needGate) {
+      const gate = new BleedGate(item.kind === 'harmony-line' || item.kind === 'harmony-hold' ? acc : [shownTargets[0]]);
+      let stage: 'cal' | 'pre' | 'sing' = 'cal';
+      let lastT = 0;
+      let tStart = 0;
+      const beat = 60 / (item.bpm ?? 72);
+      const extra = CALIBRATE_SEC + (item.kind === 'harmony-line' ? 4 * beat : 0) + 1;
+      const capture = new BrowserPitchCapture().sing({
         signal: c.signal,
-        maxMs: (item.seconds + 4) * 1000,
-        silenceMs: 6000,
-        endSilenceMs: melodic ? (item.kind === 'staccato' ? 1200 : 900) : 700,
+        maxMs: (item.seconds + 4 + extra) * 1000,
+        silenceMs: 60_000,
+        endSilenceMs: melodic ? 900 : undefined,
         hopMs: 20,
         record: true,
-        onFrame,
+        onFrame: (raw) => {
+          lastT = raw.t;
+          if (stage === 'cal') return gate.calibrate(raw);
+          if (stage === 'pre') return;
+          keep(gate.pass({ ...raw, t: raw.t - tStart }));
+        },
       });
-      if (r.kind === 'frames') {
-        got = r.frames;
-        audio = r.audio;
+      setPhase('calibrating');
+      // The sound plays while the player waits: the drone / chord, or the melody's first note.
+      if (item.kind === 'harmony-hold') piano.startDrone(acc, 0.12);
+      else if (item.kind === 'harmony-line') piano.startDrone([acc[0]], 0.12);
+      else piano.startDrone([shownTargets[0]], 0.12);
+      await new Promise((r) => setTimeout(r, CALIBRATE_SEC * 1000 + 150));
+      gate.finishCalibration();
+      if (item.kind === 'harmony-line') {
+        piano.stopDrone();
+        stage = 'pre';
+        setPhase('listening');
+        const clicks = [0, 1, 2, 3].map((k) => ({ midi: 0, start: k * beat, duration: 0.05, velocity: 0.8, perc: (k === 0 ? 'accent' : 'click') as 'accent' | 'click' }));
+        await piano.play(clicks, 4 * beat, c.signal).catch(() => {});
+        void piano.play(acc.map((m, k) => ({ midi: m, start: k * beat, duration: beat * 0.95, velocity: 0.55 })), acc.length * beat + 0.3, c.signal).catch(() => {});
+      }
+      tStart = lastT;
+      stage = 'sing';
+      setPhase('singing');
+      startTicking();
+      const r = await capture;
+      if (r.kind === 'frames' || (r.kind === 'aborted' && stopped.current)) {
+        got = buf;
+        if (r.kind === 'frames') audio = r.audio;
       } else if (r.kind === 'aborted') {
-        if (!stopped.current) {
-          clearInterval(tick);
-          piano.stopDrone();
-          return;
+        clearInterval(tick);
+        piano.stopDrone();
+        return;
+      }
+    } else {
+      if (item.kind === 'harmony-hold') piano.startDrone(acc, 0.12);
+      else if (item.kind === 'harmony-line') {
+        // Count-in (4 clicks), then the melody plays while the player sings the harmony.
+        const beat = 60 / (item.bpm ?? 72);
+        const clicks = [0, 1, 2, 3].map((k) => ({ midi: 0, start: k * beat, duration: 0.05, velocity: 0.8, perc: (k === 0 ? 'accent' : 'click') as 'accent' | 'click' }));
+        await piano.play(clicks, 4 * beat, c.signal).catch(() => {});
+        void piano.play(acc.map((m, k) => ({ midi: m, start: k * beat, duration: beat * 0.95, velocity: 0.55 })), acc.length * beat + 0.3, c.signal).catch(() => {});
+      } else if (item.reference === 'during') piano.startDrone([shownTargets[0]], 0.12);
+      else await piano.play(ref.events, ref.length, c.signal).catch(() => {});
+      if (c.signal.aborted) {
+        piano.stopDrone();
+        setPhase('ready');
+        return;
+      }
+      setPhase('singing');
+      startTicking();
+      if (SIMULATED) {
+        const sim = simulatedFrames(item, targets, noteIdx);
+        for (const f of sim) keep(f);
+        await new Promise((r) => setTimeout(r, 300));
+        got = sim;
+      } else {
+        const r = await new BrowserPitchCapture().sing({
+          signal: c.signal,
+          maxMs: (item.seconds + 4) * 1000,
+          silenceMs: 6000,
+          endSilenceMs: melodic ? (item.kind === 'staccato' ? 1200 : 900) : 700,
+          hopMs: 20,
+          record: true,
+          onFrame: keep,
+        });
+        if (r.kind === 'frames') {
+          got = r.frames;
+          audio = r.audio;
+        } else if (r.kind === 'aborted') {
+          if (!stopped.current) {
+            clearInterval(tick);
+            piano.stopDrone();
+            return;
+          }
+          got = buf; // "Stop": grade what was sung so far
         }
-        got = buf; // "Stop": grade what was sung so far
       }
     }
     clearInterval(tick);
@@ -864,7 +925,8 @@ function VocalSession({
             🎤 {t.vocalSing}
           </button>
         )}
-        {(phase === 'listening' || phase === 'singing') && (
+        {phase === 'calibrating' && <p className="vocal-cue">🤫 {t.gateWait}</p>}
+        {(phase === 'listening' || phase === 'singing' || phase === 'calibrating') && (
           <button
             className="btn mega ghost"
             onClick={() => {
