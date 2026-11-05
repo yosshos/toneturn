@@ -379,3 +379,49 @@ TOPIC_GEN['bh-pivot'] = {
     });
   },
 };
+
+// Barry Harris: the four "brother" dominants of one diminished chord (roots a minor third apart) share their
+// ♭9 diminished chord, so they substitute for each other. Hear two dominants — same family?
+TOPIC_GEN['bh-brothers'] = {
+  title: { en: 'Barry Harris: brother dominants', he: 'בארי האריס: דומיננטים אחים' },
+  skill: 'chords',
+  levels: [
+    { en: 'Same diminished family?', he: 'מאותה משפחת דימיניש?' },
+    { en: 'Which brother?', he: 'איזה אח?' },
+  ],
+  gen(seed, level, id) {
+    const rnd = rng(seed);
+    const r1 = 55 + Math.floor(rnd() * 6);
+    const dom = (r: number) => {
+      const b = r > 58 ? r - 12 : r;
+      return [b, b + 10, b + 16, b + 19].map((m) => (m < 50 ? m + 12 : m)).sort((a, b2) => a - b2);
+    };
+    const play = (k: number): Stimulus[] => [chordStim(dom(r1), 1.1), { kind: 'rest', duration: 0.25 }, chordStim(dom(r1 + k), 1.4)];
+    if (level === 1) {
+      const fam = [3, 6, 9];
+      const non = [1, 2, 4, 5, 7];
+      const same = rnd() < 0.5;
+      const k = same ? pickR(rnd, fam) : pickR(rnd, non);
+      return choiceQ({
+        id, topic: 'bh-brothers', level, seed, skill: 'chords', difficulty: 1450,
+        ask: { en: 'Two dominants: brothers (same diminished chord) or not?', he: 'שני דומיננטים: אחים (אותו דימיניש) או לא?' },
+        names: { yes: { en: 'Brothers', he: 'אחים', say: ['yes', 'same', 'brothers', 'כן'] }, no: { en: 'Not related', he: 'לא קשורים', say: ['no', 'not', 'different', 'לא'] } },
+        answer: same ? 'yes' : 'no', choices: ['yes', 'no'], stimulus: play(k),
+        choiceStim: { yes: play(same ? k : 3), no: play(same ? 2 : k) },
+      });
+    }
+    const keys = ['up3', 'tritone', 'down3'];
+    const k = pickR(rnd, [3, 6, 9]);
+    const choiceStim: Record<string, Stimulus[]> = { up3: play(3), tritone: play(6), down3: play(9) };
+    return choiceQ({
+      id, topic: 'bh-brothers', level, seed, skill: 'chords', difficulty: 1600,
+      ask: { en: 'The second dominant is a brother of the first — which one?', he: 'הדומיננט השני הוא אח של הראשון — איזה?' },
+      names: {
+        up3: { en: 'A minor third up', he: 'טרצה קטנה למעלה', say: ['minor third up', 'up'] },
+        tritone: { en: 'A tritone away (tritone sub)', he: 'טריטון (תחליף טריטון)', say: ['tritone', 'tritone sub', 'flat five', 'טריטון'] },
+        down3: { en: 'A minor third down', he: 'טרצה קטנה למטה', say: ['minor third down', 'down'] },
+      },
+      answer: keys[[3, 6, 9].indexOf(k)], choices: keys, stimulus: play(k), choiceStim,
+    });
+  },
+};
