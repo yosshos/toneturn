@@ -115,5 +115,5 @@ export function shareText(day: string, round: RoundResult[], points: number, lan
       return (a.timeMs ?? 99999) <= 2000 ? '🟩' : '🟨';
     })
     .join('');
-  return lang === 'en' ? `ToneTurn Daily ${day}\n${squares}  ${points.toLocaleString('en')} pts` : `ToneTurn יומי ${day}\n${squares}  ${points.toLocaleString('he')} נק׳`;
+  return lang === 'en' ? `Ninth Sense Daily ${day}\n${squares}  ${points.toLocaleString('en')} pts` : `Ninth Sense יומי ${day}\n${squares}  ${points.toLocaleString('he')} נק׳`;
 }

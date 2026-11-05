@@ -110,7 +110,7 @@ describe('review & weekly puzzle', () => {
   });
   it('review lesson: most recent first, unique tags, max 5, null when empty', () => {
     const items = Array.from({ length: 8 }, (_, i) => ({ questionId: `q${i}`, key: `cadence:${i % 2 ? 'open' : 'resolved'}`, answer: 'x', addedAt: `2026-11-0${i + 1}` }));
-    const l = reviewLesson(items, 3)!;
+    const l = reviewLesson(items, 3, 5, new Date('2026-12-01'))!; // all due
     expect(l.questions).toHaveLength(2); // two unique tags
     expect(l.questions[0].answer).toBe('open'); // newest (i=7) first
     expect(reviewLesson([], 1)).toBeNull();

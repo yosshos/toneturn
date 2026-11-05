@@ -89,7 +89,9 @@ export function Home({ t, settings, progress, streak, account, onPractice, onBut
       <header className="topbar">
         <div className="brand">
           <Logo />
-          <span className="wordmark">ToneTurn</span>
+          <span className="wordmark" dir="ltr">
+            Ninth <span className="wordmark-accent">Sense</span>
+          </span>
         </div>
         <div className="stats">
           <button

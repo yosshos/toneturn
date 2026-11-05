@@ -1,4 +1,4 @@
-/* ToneTurn — warm night-stage game look. Chunky type, big targets, audio-synced motion. */
+/* Ninth Sense — warm night-stage game look. Chunky type, big targets, audio-synced motion. */
 
 :root {
   --bg: #1e1236;
@@ -196,11 +196,36 @@ code {
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.topbar .logo-mark {
+  flex-shrink: 0;
+  width: clamp(32px, 9vw, 44px);
+  height: auto;
+}
+.topbar .stats {
+  flex-shrink: 0;
 }
 .wordmark {
   font-weight: 900;
   font-size: 1.5rem;
   letter-spacing: -0.01em;
+  white-space: nowrap;
+  font-size: clamp(1.05rem, 5.2vw, 1.5rem);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wordmark-accent {
+  background: linear-gradient(135deg, #ffd66b, #ffb04d 55%, #ff6a4d);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.logo-mark {
+  border-radius: 22%;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.28);
 }
 .stats {
   display: flex;
@@ -1644,4 +1669,31 @@ select {
 .tuner-target {
   position: static;
   margin-top: 2px;
+}
+
+/* Narrow phones: stack the wordmark ("Ninth" / "Sense") instead of truncating it. */
+@media (max-width: 460px) {
+  .wordmark {
+    display: flex;
+    flex-direction: column;
+    font-size: 1.02rem;
+    line-height: 1;
+    overflow: visible;
+  }
+}
+@media (max-width: 400px) {
+  .topbar {
+    gap: 6px;
+  }
+  .topbar .stats {
+    gap: 5px;
+  }
+  .wordmark {
+    font-size: 0.92rem;
+  }
+}
+@media (max-width: 340px) {
+  .wordmark {
+    display: none;
+  }
 }

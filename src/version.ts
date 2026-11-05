@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.20.0',
+    date: '2026-11-05',
+    en: ['ToneTurn is now Ninth Sense — new name, new logo. Your progress, friends and account stay as they are.'],
+    he: ['ToneTurn נקראת עכשיו Ninth Sense — שם חדש ולוגו חדש. ההתקדמות, החברים והחשבון שלכם נשארים כמו שהם.'],
+  },
+  {
     version: '0.19.0',
     date: '2026-11-05',
     en: ['Class mode: teachers create a class, students join with a code, the teacher assigns lessons and sees each student’s progress', 'Race your ghost: your best run comes back as an opponent that answers exactly when you did'],

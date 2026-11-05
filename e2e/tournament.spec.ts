@@ -45,7 +45,7 @@ test.describe('tournament', () => {
 
     await expect(page.getByRole('heading', { name: 'Game over' })).toBeVisible({ timeout: 30_000 });
     const card = page.locator('.share-card');
-    await expect(card).toHaveText(/^ToneTurn Daily \d{4}-\d{2}-\d{2}\n[🟩🟨⬜]{5} {2}[\d,]+ pts$/u);
+    await expect(card).toHaveText(/^Ninth Sense Daily \d{4}-\d{2}-\d{2}\n[🟩🟨⬜]{5} {2}[\d,]+ pts$/u);
     const text = await card.textContent();
     await page.getByRole('button', { name: 'Home' }).click();
 

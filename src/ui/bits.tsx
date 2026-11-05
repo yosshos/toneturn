@@ -28,22 +28,27 @@ export function withNote(template: string, note: string, key = '') {
 /** Plain-text fill for speech. */
 export const fillText = (template: string, note: string, key = '') => template.replaceAll('{n}', note).replaceAll('{k}', key);
 
+/** Ninth Sense mark: a 9 that is also an ear (tail = lobe), a note head in the bowl, sound waves coming in. */
 export function Logo({ size = 44 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true" className="logo-mark">
+    <svg width={size} height={size} viewBox="0 0 512 512" aria-hidden="true" className="logo-mark">
       <defs>
-        <linearGradient id="lg-a" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#FFC94D" />
+        <linearGradient id="ns-bg" x1="0" y1="0" x2="0.6" y2="1">
+          <stop offset="0" stopColor="#4A2A7A" />
+          <stop offset="1" stopColor="#1E1236" />
+        </linearGradient>
+        <linearGradient id="ns-nine" x1="0.2" y1="0" x2="0.8" y2="1">
+          <stop offset="0" stopColor="#FFD66B" />
+          <stop offset="0.55" stopColor="#FFB04D" />
           <stop offset="1" stopColor="#FF6A4D" />
         </linearGradient>
       </defs>
-      <circle cx="32" cy="32" r="30" fill="url(#lg-a)" />
-      {/* turning arrow */}
-      <path d="M14 30a18 18 0 0 1 31-12" fill="none" stroke="#2A1747" strokeWidth="5" strokeLinecap="round" />
-      <path d="M47 10l-1 10-10-2" fill="none" stroke="#2A1747" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
-      {/* note */}
-      <ellipse cx="29" cy="44" rx="8" ry="6" transform="rotate(-20 29 44)" fill="#2A1747" />
-      <path d="M36 42V24l10 4" fill="none" stroke="#2A1747" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round" />
+      <rect width="512" height="512" rx="112" fill="url(#ns-bg)" />
+      <path d="M108 134 A 130 130 0 0 0 108 278" fill="none" stroke="#4BE3B5" strokeWidth="22" strokeLinecap="round" opacity="0.55" />
+      <path d="M156 166 A 80 80 0 0 0 156 246" fill="none" stroke="#4BE3B5" strokeWidth="22" strokeLinecap="round" />
+      <ellipse cx="298" cy="206" rx="96" ry="94" fill="none" stroke="url(#ns-nine)" strokeWidth="58" />
+      <path d="M394 210 V 318 Q 394 426 282 432" fill="none" stroke="url(#ns-nine)" strokeWidth="58" strokeLinecap="round" />
+      <ellipse cx="298" cy="206" rx="34" ry="28" transform="rotate(-22 298 206)" fill="#4BE3B5" />
     </svg>
   );
 }
