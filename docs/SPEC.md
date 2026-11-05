@@ -648,3 +648,29 @@ Whenever the app sounds while the player sings — the drone, a held reference, 
 - **S ideas**: built — 1 workout planner, 2 then-and-now, 3 harmony singing, 4 combined dictation (lesson 24), 5 slash chords & bass lines (lesson 23), 6 hear your answer, 7 weekly leagues, 8 async friend duels (no push notification yet: the duel appears in Friends), 9 achievements, 10 sing-along, 11 absolute pitch corner, 12 instrument mode (written-pitch names in the vocal track and sing-along; lessons stay in concert pitch), 13 teacher tools (assign vocal / modes / wrong-notes, per-student vocal metrics). Leagues, duels, puzzle stats and teacher vocal metrics need migration 18.
 - **Audit gaps**: built — vocal range calibration, slash chords, hear-your-answer, leagues, async duels, weekly puzzle online stats, daily keys through 2031, memory-game tempo ladder / swing / pad sets, rhythm 12/8 and hold-to-sustain, runs diagnosis + trace, Jazz 2 (lesson 25), players-at-your-level (L.5). Still open: room QR code (needs a QR library — awaiting approval), gem-unlocked cosmetics.
 - Voice synonyms: one canonical spoken vocabulary (#11 = ♯4 = ♭5 = tritone; Δ = maj7; ø = m7♭5; mode aliases, Hebrew included).
+
+## Addendum — 2026-11-05 (product owner, approved): T–W. Barry Harris, more ear/theory areas, performance, views, precise feedback
+
+The content proposal (docs/PROPOSAL-T-content.he.md) is approved in full. Every topic runs in the app's matrix where it makes sense — sound → identify, name/degree → sing, sing → the app identifies what was sung — at graded levels.
+
+### T. Barry Harris
+- **T.1 6th diminished scales**: major 6-dim (C6 + Bdim7 = C D E F G A♭ A B) and minor 6-dim (Cm6 + Bdim7). Hear: 6-dim vs major vs harmonic major; is this note from the 6 chord or from the dim chord. Sing: the scale up/down (reference rule P.9); only the 6-chord notes / only the dim notes; harmonised: the app plays the alternating chord under each sung note.
+- **T.2 Diminished conversions**: lowering one note of a dim7 a half step gives one of four dominant 7ths (roots a minor third apart); raising one gives one of four minor-6 chords. Hear → name the chord and which note moved; name → sing the note that must move over the held dim7; degree → sing ("lower the 3rd note"); sing → identify (the player chooses a note, the app names the chord made); resolve (sing the tonic the dominant goes to); the four keys a dim7 can lead to.
+- **T.3 Chromatic scale**: sung in sections with half-step evenness; hear which chromatic note was added.
+- **T.4 Barry Harris chromatic rules / T.5 pivots**: built only after verification against sources (Barry Harris workshops; Alan Kingstone's books). Until then not shown.
+
+### U. Ear and theory
+1 extensions and alterations (9, ♭9, ♯9, ♯11, 13, ♭13, alt, sus4, add9, with the tension audible on top) · 2 voicings (shell, drop-2, rootless, quartal, close vs open) · 3 progressions (secondary dominant, tritone sub, backdoor, modal interchange, blues turnaround, ii–V–I) · 4 form (AABA / ABAB / AABB / ABAC from phrases) · 5 fine pitch (higher/lower and in-tune/sharp/flat down to 10 ¢) · 6 two-voice dictation (top line, then bass line) · 7 post-tonal (trichord set classes 012 015 016 024 027 037 048) · 8 maqamat (Hijaz, Bayati, Rast with quarter tones, Nahawand, Kurd, Saba) and Middle-Eastern rhythms (maqsum, saidi, baladi, malfuf, ayyub) · 9 advanced rhythm (polyrhythm, odd meters 5/4 7/8, swing ratio, internal clock: the metronome drops out) · 10 written theory (key signatures, interval and chord spelling, Roman numerals, circle of fifths, transposition, chord-scale, note reading in treble / bass / alto clef).
+
+### V. Performance
+1 **sight-singing / sight-reading**: a melody with rhythm shown as notation, tab or keyboard (the player's choice), only the tonic as reference; sung (or played) and graded on pitch and timing · 2 ornaments (trill, mordent, turn, grace note) and dynamics (crescendo / decrescendo to a target curve) · 3 **choir rooms**: every phone gets a part of the chord, everyone sings at once, each part scored on intonation · 4 **guided improvisation** over a ii–V–I loop: chord tones on strong beats, ending on a chord tone, rhythmic variety, range, chromatic approaches · 5 MIDI keyboard drills (play a named voicing, even scales, play back a melody, ii–V–I in all keys) · 6 guitar drills from tab through the microphone · 7 play-along backing tracks (ii–V–I, blues; key and tempo).
+
+### Views (product owner)
+Wherever notes are shown — lessons, Echo Chain (answered notes), vocal technique, sight-reading, sing-along — the player chooses keyboard, staff, guitar tab or any combination (Settings → Show notes as), and the views stay hidden while showing them would give the answer away.
+
+### W. Precise singing feedback (product owner)
+Feedback on a sung note says how and where, not only right/wrong, in the player's language:
+- **Average offset**: spot on (< 10 ¢) · a touch flat/sharp (10–25) · a bit flat/sharp (25–50) · quite flat/sharp (> 50).
+- **Where**: "you went flat/sharp at the end" (the last third drifts ≥ 15 ¢ from the first), "you slid up/down into the note" (scoop at the onset ≥ 40 ¢), "a bit unsteady" (wobble ≥ 20 ¢).
+- **Melodies**: the same per note, summarised ("note 3 was a bit flat, note 5 went sharp at the end").
+- Used in lessons (spoken + caption), vocal technique (take card), Echo Chain (sung turns), sing-along and sight-singing. At most two remarks per take, the most important first.
