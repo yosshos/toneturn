@@ -322,3 +322,13 @@ export function runSummary(g: RunGrade, l: 'en' | 'he'): string {
   add(by('missed'), 'not clear', 'לא נשמעו ברור');
   return parts.join(l === 'en' ? '; ' : '; ');
 }
+
+/** Diagnosis by the weakest factor (spec K): what to practise next on this run. */
+export function runDiagnosis(g: RunGrade, l: 'en' | 'he'): string {
+  const f = [
+    { k: 'pitch', v: g.pitch, en: 'Weakest: pitch — slow the run to 60 % and land every note.', he: 'החלש ביותר: גובה — האטו את הראן ל־60% ונחתו על כל צליל.' },
+    { k: 'clarity', v: g.clarity, en: 'Weakest: clarity — the notes blur; give each one a tiny “h” or “da” to separate it.', he: 'החלש ביותר: בהירות — הצלילים נמרחים; תנו לכל אחד "ה" או "דה" קטנים כדי להפריד.' },
+    { k: 'evenness', v: g.evenness, en: 'Weakest: evenness — keep every note the same length; feel the pulse.', he: 'החלש ביותר: אחידות — כל הצלילים באותו אורך; הרגישו את הפעמה.' },
+  ].sort((a, b) => a.v - b.v)[0];
+  return f.v >= 0.9 ? '' : l === 'en' ? f.en : f.he;
+}

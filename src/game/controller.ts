@@ -7,7 +7,8 @@
 //  - The microphone/recognizer is only active in the `listening` phase.
 //  - Permission / recognition failures, silence and unclear speech never count as wrong answers.
 
-import { gradeRun, runHopMs, runSummary } from '../engine/runs';
+import type { SungFrame } from '../engine/sing';
+import { gradeRun, runHopMs, runDiagnosis, runSummary } from '../engine/runs';
 import {
   compareStimulus,
   explainStimulus,
@@ -101,6 +102,8 @@ export interface LessonView {
   /** Live tuner reading while a singing capture is open. */
   singLive: SingLive | null;
   caption: string | null;
+  /** The last sung run (for the pitch trace under the contour). */
+  runFrames?: SungFrame[] | null;
   error: AccessError | null;
   /** Silence retries exhausted: waiting for a tap (Listen) or a button answer. */
   needsListenTap: boolean;
@@ -175,6 +178,7 @@ export class LessonController {
       heard: null,
       feedback: null,
       caption: null,
+      runFrames: null,
       error: null,
       needsListenTap: false,
       singLive: null,
@@ -714,9 +718,10 @@ export class LessonController {
         continue;
       }
       const statuses = g.notes.map((n) => n.status);
-      if (q.kind === 'sing-run' && !g.pass && 'clarity' in g) {
-        const summary = runSummary(g, l);
-        if (summary) this.patch({ caption: summary });
+      if (q.kind === 'sing-run' && 'clarity' in g) {
+        // Per-note summary + the weakest factor (spec K diagnosis); the pitch trace is shown with it.
+        const summary = [g.pass ? '' : runSummary(g, l), runDiagnosis(g, l)].filter(Boolean).join(' · ');
+        this.patch({ caption: summary || null, runFrames: res.kind === 'frames' ? res.frames : null });
       }
       if (await this.evaluate(g.pass ? 'accurate' : 'wrong', signal, undefined, { timeMs: this.elapsed(voicedAt), modality: 'sing', accuracy: g.accuracy, seqNotes: statuses })) return;
     }

@@ -1,3 +1,4 @@
+import { PitchTrace } from './Vocal';
 import { reportPuzzle } from '../cloud/compete';
 import { fitLessonToRange, fitQuestions } from '../engine/voiceFit';
 import { withAids } from '../engine/aids';
@@ -284,7 +285,10 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
             ) : q.kind === 'sing-seq' ? (
               <SeqTargets degrees={q.degrees} notes={v.feedback?.seqNotes} />
             ) : q.kind === 'sing-run' ? (
-              <RunTargets offsets={q.run.offsets} notes={v.feedback?.seqNotes} caption={v.caption} />
+              <>
+                <RunTargets offsets={q.run.offsets} notes={v.feedback?.seqNotes} caption={v.caption} />
+                {v.feedback?.seqNotes && v.runFrames && v.runFrames.length > 0 && <PitchTrace frames={v.runFrames} targets={q.midis} seconds={q.midis.length / q.run.nps + 0.5} label={t.runTrace} />}
+              </>
             ) : q.kind === 'rhythm-read' ? (
               <ReadPrompt q={q} v={v} lang={lang} onTap={(ms) => ctrl.tapBeat(ms)} t={t} />
             ) : (
