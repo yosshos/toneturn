@@ -24,7 +24,8 @@ import {
 } from '../engine/lesson';
 import { evaluateSung, type SungResult } from '../engine/sing';
 import { gradeSungSequence } from '../engine/memory';
-import { gradeReading, readTimeline } from '../engine/rhythm';
+import { gradeReading,
+  gradeHolds, readTimeline } from '../engine/rhythm';
 import { accuracyFor, type Modality } from '../engine/scoring';
 import type { Naming } from '../engine/pitch';
 import {
@@ -153,6 +154,8 @@ export class LessonController {
   /** Rhythm reading: perf time of beat 1 and the taps collected for the current performance. */
   private readStart: number | null = null;
   private readTaps: number[] = [];
+  /** Releases of the tap pad (ms from beat 1), for hold-to-sustain. */
+  private readUps: number[] = [];
   private readOpen = false;
   private now = () => this.ad.clock.now?.() ?? (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
@@ -298,6 +301,12 @@ export class LessonController {
   /** Rhythm reading tap (screen / keyboard); `perfMs` is the event timestamp. */
   tapBeat(perfMs: number) {
     this.registerOnset(perfMs);
+  }
+
+  /** Rhythm reading: the pad is released (hold-to-sustain, spec G.5). */
+  tapRelease(perfMs: number) {
+    if (!this.readOpen || this.readStart === null) return;
+    this.readUps.push(Math.round(perfMs - this.readStart - (this.cfg.latencyMs ?? 0)));
   }
 
   private registerOnset(perfMs: number) {
@@ -742,6 +751,7 @@ export class LessonController {
       }
       this.setSession(newTurn(this.s, 'listening'), { feedback: null, readTaps: 0, beat: null });
       this.readTaps = [];
+      this.readUps = [];
       this.readStart = null;
       // Voice mode: listen for "ta" syllables / knocks as onsets (never speech recognition — spec G.5).
       let mic: AbortController | null = null;
@@ -796,6 +806,13 @@ export class LessonController {
         continue;
       }
       const g = gradeReading(q.rhythm, q.bpm, this.readTaps, q.level);
+      // Hold-to-sustain: only when the pad was pressed and released (not voice / knock onsets).
+      const presses = this.readTaps.map((down) => ({ down, up: this.readUps.find((u) => u > down) ?? null }));
+      const holds = this.readUps.length >= Math.ceil(this.readTaps.length / 2) ? gradeHolds(q.rhythm, q.bpm, presses) : { judged: 0, held: 0 };
+      if (holds.judged > 0) {
+        g.accuracy = Math.round((0.85 * g.accuracy + 0.15 * (holds.held / holds.judged)) * 1000) / 1000;
+        this.patch({ caption: `${holds.held}/${holds.judged} ${this.cfg.outputLang === 'he' ? 'צלילים ארוכים הוחזקו נכון' : 'long notes held right'}` });
+      }
       const hits = g.grade.hits.map((h) => h.offsetMs);
       if (
         await this.evaluate(g.pass ? 'accurate' : 'wrong', signal, undefined, {

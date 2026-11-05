@@ -110,3 +110,16 @@ describe('R4–R8 generation (spec G.7)', () => {
     }
   });
 });
+
+describe('hold-to-sustain (G.5)', () => {
+  it('long notes must be held at least 60 % of their length', async () => {
+    const { gradeHolds } = await import('../src/engine/rhythm');
+    const r = { beatsPerBar: 4, bars: 1, cells: ['h', 'q', 'q'] } as const;
+    const rr = { ...r, cells: [...r.cells] } as Parameters<typeof gradeHolds>[0];
+    // 60 BPM: half note = 2000 ms, quarters 1000 ms each.
+    const good = gradeHolds(rr, 60, [{ down: 0, up: 1800 }, { down: 2000, up: 2700 }, { down: 3000, up: 3800 }]);
+    expect(good).toEqual({ judged: 3, held: 3 });
+    const short = gradeHolds(rr, 60, [{ down: 0, up: 300 }, { down: 2000, up: 2200 }, { down: 3000, up: 3900 }]);
+    expect(short.held).toBe(1);
+  });
+});

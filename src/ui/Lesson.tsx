@@ -290,7 +290,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
                 {v.feedback?.seqNotes && v.runFrames && v.runFrames.length > 0 && <PitchTrace frames={v.runFrames} targets={q.midis} seconds={q.midis.length / q.run.nps + 0.5} label={t.runTrace} />}
               </>
             ) : q.kind === 'rhythm-read' ? (
-              <ReadPrompt q={q} v={v} lang={lang} onTap={(ms) => ctrl.tapBeat(ms)} t={t} />
+              <ReadPrompt q={q} v={v} lang={lang} onTap={(ms) => ctrl.tapBeat(ms)} onRelease={(ms) => ctrl.tapRelease(ms)} t={t} />
             ) : (
               <Orb v={v} label={q.kind === 'rhythm-dict' ? '♩ ?' : orbLabel} />
             )}
@@ -864,7 +864,7 @@ function SeqTargets({ degrees, notes }: { degrees: number[]; notes?: string[] })
 }
 
 /** What to perform (notation or words), the metronome light and a big tap pad. */
-function ReadPrompt({ q, v, lang, onTap, t }: { q: Extract<Question, { kind: 'rhythm-read' }>; v: LessonView; lang: 'he' | 'en'; onTap: (ms: number) => void; t: Strings }) {
+function ReadPrompt({ q, v, lang, onTap, onRelease, t }: { q: Extract<Question, { kind: 'rhythm-read' }>; v: LessonView; lang: 'he' | 'en'; onTap: (ms: number) => void; onRelease?: (ms: number) => void; t: Strings }) {
   const names = describeRhythm(q.rhythm, 'names', lang);
   return (
     <div className="read-prompt" data-onsets={onsetBeats(q.rhythm).join(',')} data-bpm={q.bpm} data-start={v.readStartPerf ?? undefined}>
@@ -882,6 +882,7 @@ function ReadPrompt({ q, v, lang, onTap, t }: { q: Extract<Question, { kind: 'rh
           e.preventDefault();
           onTap(e.timeStamp);
         }}
+        onPointerUp={(e) => onRelease?.(e.timeStamp)}
         aria-label={t.tapHere}
       >
         {t.tapHere} <small dir="ltr">{v.readTaps ? `· ${v.readTaps}` : ''}</small>

@@ -289,6 +289,28 @@ export function gradeReading(r: Rhythm, bpm: number, tapsMs: number[], level: Rh
   return { pass: g.pass, accuracy: 0.7 * pattern + 0.3 * precision, pattern, precision, grade: g };
 }
 
+/**
+ * Hold-to-sustain (spec G.5): for every note of a beat or longer, the press that starts it must last at
+ * least 60 % of the note (and not run on more than a quarter-beat into the next one). Presses are
+ * {down, up} in ms from beat 1. Returns how many long notes were judged and how many were held right.
+ */
+export function gradeHolds(r: Rhythm, bpm: number, presses: { down: number; up: number | null }[]): { judged: number; held: number } {
+  const beatMs = 60_000 / bpm;
+  const evs = events(r).filter((e) => !e.rest && e.dur >= TPQ);
+  let judged = 0;
+  let held = 0;
+  for (const e of evs) {
+    const start = (e.start / TPQ) * beatMs;
+    const len = (e.dur / TPQ) * beatMs;
+    const p = presses.find((x) => Math.abs(x.down - start) <= Math.min(160, beatMs / 3));
+    if (!p || p.up === null) continue;
+    judged++;
+    const d = p.up - p.down;
+    if (d >= 0.6 * len && d <= len + beatMs / 4) held++;
+  }
+  return { judged, held };
+}
+
 // ---------------------------------------------------------------- words (spec G.4)
 
 export type RhythmWords = 'names' | 'syllables';
