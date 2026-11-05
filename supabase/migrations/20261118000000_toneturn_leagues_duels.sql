@@ -231,3 +231,28 @@ revoke execute on function public.toneturn_daily_peers(date) from public, anon;
 grant execute on function public.toneturn_puzzle_submit(text, text, text, int) to authenticated;
 grant execute on function public.toneturn_puzzle_stats(text, text) to authenticated;
 grant execute on function public.toneturn_daily_peers(date) to authenticated;
+
+-- ===================================================================== teacher: vocal technique per student
+-- Average metric values of each student's vocal-technique items over the last 30 days (from result items).
+create or replace function public.toneturn_class_vocal(p_class uuid)
+returns jsonb language sql stable security definer set search_path = '' as $$
+  select coalesce(jsonb_agg(row_to_json(s)::jsonb order by s.name), '[]'::jsonb) from (
+    select coalesce(nullif(p.display_name, ''), 'Player') as name,
+      count(it) as takes,
+      round(avg((it->>'score')::numeric) * 100) as score,
+      round(avg((it->'m'->>'intonation')::numeric), 1) as intonation,
+      round(avg((it->'m'->>'stability')::numeric), 1) as stability,
+      round(avg((it->'m'->>'vibratoRegularity')::numeric), 1) as vibrato_evenness,
+      round(avg((it->'m'->>'transition')::numeric)) as transition_ms,
+      round(avg((it->'m'->>'hit')::numeric)) as right_notes
+    from public.toneturn_class_members m
+    join public.toneturn_classes c on c.id = m.class_id and c.teacher = auth.uid()
+    left join public.toneturn_profiles p on p.id = m.user_id
+    left join public.toneturn_lesson_results x on x.user_id = m.user_id and x.completed_at >= now() - interval '30 days'
+    left join lateral jsonb_array_elements(coalesce(x.items, '[]'::jsonb)) it on it->>'skill' = 'technique'
+    where m.class_id = p_class
+    group by m.user_id, p.display_name
+  ) s;
+$$;
+revoke execute on function public.toneturn_class_vocal(uuid) from public, anon;
+grant execute on function public.toneturn_class_vocal(uuid) to authenticated;

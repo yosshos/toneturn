@@ -4,7 +4,7 @@ import { modesLesson, MODE_ID_LEVELS, wrongNotesLesson } from '../engine/lesson'
 import { TrueFalseScreen } from './TrueFalse';
 import { FreezeToast, StreakSheet } from './Streak';
 import { canBuy, type Purchase } from '../engine/streak';
-import { recommendFor } from '../engine/recommend';
+import { modesLevelFor, recommendFor } from '../engine/recommend';
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, useMemo } from 'react';
 import { LESSON_ORDER, runLevelFor, runsWorkshop, type LessonDef, type LessonId, type Question, type SkillId } from '../engine/lesson';
 import type { SessionState } from '../engine/session';
@@ -244,6 +244,19 @@ export function App() {
     openGenerated(weeklyPuzzle(week, fixed ?? puzzleBand(ratingsOf(progress))));
   };
   const openModes = (level: number) => openGenerated(modesLesson(level, Date.now() >>> 0));
+  const [vocalLevel, setVocalLevel] = useState<number | null>(null);
+  /** Class assignments: path lessons and generated practice (vocal levels, modes, wrong notes). */
+  const openAssignment = (id: string) => {
+    if ((LESSON_ORDER as string[]).includes(id)) return openLesson(id as LessonId);
+    const m = /^vocal-(modes-|harmony-)?(\d+)$/.exec(id);
+    if (m) {
+      setVocalWarmup(false);
+      setVocalLevel((m[1] === 'modes-' ? 100 : m[1] === 'harmony-' ? 200 : 0) + Number(m[2]));
+      return go('vocal');
+    }
+    if (id === 'modes') return openModes(modesLevelFor(ratingsOf(progress).modes?.n ? ratingsOf(progress).modes!.r : null));
+    if (id === 'wrong-notes') return openWrongNotes(1);
+  };
   const [wrongLevel, setWrongLevel] = useState(1);
   const openWrongNotes = (level: number) => {
     setWrongLevel(level);
@@ -311,7 +324,7 @@ export function App() {
           onStreak={() => setStreakOpen(true)}
           account={<AccountCard t={t} user={user} sync={sync} compact />}
           onMenu={() => setMenuOpen(true)}
-          tools={<>{user && <AssignedCard t={t} items={assigned} lang={s.uiLang} onOpen={(id) => openLesson(id)} />}<PracticeTools t={t} progress={progress} onSkills={() => go('skills')} onPlacement={openPlacement} onReview={openReview} onPuzzle={openPuzzle} onDaily={() => go('daily')} onRuns={openRuns} onDrone={() => go('drone')} onModes={openModes} onWrongNotes={openWrongNotes} /></>}
+          tools={<>{user && <AssignedCard t={t} items={assigned} lang={s.uiLang} onOpen={(id) => openAssignment(id)} />}<PracticeTools t={t} progress={progress} onSkills={() => go('skills')} onPlacement={openPlacement} onReview={openReview} onPuzzle={openPuzzle} onDaily={() => go('daily')} onRuns={openRuns} onDrone={() => go('drone')} onModes={openModes} onWrongNotes={openWrongNotes} /></>}
           updateReady={pwaState.updateReady}
           news={
             <>
@@ -469,7 +482,7 @@ export function App() {
       )}
       {route === 'truefalse' && <TrueFalseScreen t={t} settings={s} progress={progress} onBack={() => go('home')} onProgress={setProgress} />}
       {route === 'ghost' && <GhostScreen t={t} settings={s} progress={progress} onBack={() => go('home')} onProgress={setProgress} />}
-      {route === 'classes' && <ClassesScreen t={t} settings={s} user={user} onBack={() => go('home')} onOpenLesson={(id) => openLesson(id)} />}
+      {route === 'classes' && <ClassesScreen t={t} settings={s} user={user} onBack={() => go('home')} onOpenLesson={(id) => openAssignment(id)} />}
       {streakOpen && (
         <StreakSheet t={t} st={gems.streak} gems={gems.balance} today={localDay(new Date())} lang={s.uiLang} onBuy={buy} onClose={() => setStreakOpen(false)} />
       )}
@@ -478,7 +491,8 @@ export function App() {
       {route === 'singalong' && <SingAlongScreen t={t} settings={s} onBack={() => go('vocal')} />}
       {route === 'vocal' && (
         <VocalScreen
-          key={vocalWarmup ? 'warmup' : 'home'}
+          key={vocalWarmup ? 'warmup' : `home-${vocalLevel ?? ''}`}
+          startLevel={vocalLevel}
           t={t}
           settings={s}
           progress={progress}

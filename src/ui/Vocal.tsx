@@ -244,11 +244,13 @@ interface Props {
   onRuns: () => void;
   onSingAlong?: () => void;
   startWarmup?: boolean;
+  /** Open this level directly (class assignment): 1–11, 101–108 modes, 201–205 harmony. */
+  startLevel?: number | null;
 }
 
-export function VocalScreen({ t, settings, progress, onSettings, onProgress, onBack, onRuns, onSingAlong, startWarmup }: Props) {
+export function VocalScreen({ t, settings, progress, onSettings, onProgress, onBack, onRuns, onSingAlong, startWarmup, startLevel }: Props) {
   const v = progress.vocal ?? { best: {}, passed: [], takes: [] };
-  const [view, setView] = useState<View>(() => (startWarmup ? { kind: 'session', level: 'warmup', items: warmupItems(v.passed).filter((it) => itemFits(it, range)) } : { kind: 'home' }));
+  const [view, setView] = useState<View>(() => (startLevel && levelDef(startLevel) ? { kind: 'session', level: startLevel, items: levelDef(startLevel).items.filter((it) => itemFits(it, settings.voiceRange ?? DEFAULT_RANGE)) } : startWarmup ? { kind: 'session', level: 'warmup', items: warmupItems(v.passed).filter((it) => itemFits(it, range)) } : { kind: 'home' }));
   const range = settings.voiceRange ?? DEFAULT_RANGE;
   const style: VibratoStyle = settings.vibratoStyle ?? 'pop';
 
@@ -772,10 +774,11 @@ function VocalSession({
       completedAt: now,
       firstTry: perItem.filter((x) => x.score >= 0.6).length,
       total: perItem.length,
-      xp: Math.round(rated.reduce((a, x) => a + x.score, 0) * 10) + (passed ? 10 : 0),
+      // The server accepts at most 15 XP per item passed on the first try (migration 1): stay inside it.
+      xp: Math.min(15 * perItem.filter((x) => x.score >= 0.6).length, Math.round(rated.reduce((a, x) => a + x.score, 0) * 10) + (passed ? 10 : 0)),
       missed: [],
       items: [
-        ...rated.map((x) => ({ id: `${sessionId}:${x.it.id}`, skill: 'technique' as const, difficulty: x.it.difficulty, correct: x.score >= 0.6, tag: `vocal:${x.it.id}`, score: x.score })),
+        ...rated.map((x) => ({ id: `${sessionId}:${x.it.id}`, skill: 'technique' as const, difficulty: x.it.difficulty, correct: x.score >= 0.6, tag: `vocal:${x.it.id}`, score: x.score, m: best.current[x.it.id]?.take.m })),
         // Melodic memory (spec P.9): the right notes, less for every extra listen to the reference.
         ...rated
           .filter((x) => memoryItem(x.it) && best.current[x.it.id])

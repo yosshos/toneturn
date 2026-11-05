@@ -27,7 +27,7 @@ export interface LessonResult {
   /** Question keys that were missed / revealed — feeds the review queue. */
   missed: { questionId: string; key: string; answer: Answer; given: Answer[] }[];
   /** First-attempt results per rated item (ratings + review clearing). Absent on old results. */
-  items?: { id: string; skill: RatingEvent['skill']; difficulty: number; correct: boolean; tag: string; score?: number; timeMs?: number | null }[];
+  items?: { id: string; skill: RatingEvent['skill']; difficulty: number; correct: boolean; tag: string; score?: number; timeMs?: number | null; /** Vocal technique: the take's metric values (teacher view). */ m?: Partial<Record<MetricKey, number>> }[];
   /** Weekly puzzle outcome (only for lessonId "weekly-puzzle"). */
   puzzle?: { week: string; band: string; medal: Medal };
 }

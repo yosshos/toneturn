@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { assignLesson, createClass, deleteClass, joinClass, leaveClass, myClasses, unassign, type MyClasses, type TeachingClass } from '../cloud/classes';
+import { assignLesson, classVocal, createClass, deleteClass, EXTRA_ASSIGNABLE, joinClass, leaveClass, myClasses, unassign, type MyClasses, type StudentVocal, type TeachingClass } from '../cloud/classes';
 import { cloudConfigured, signInWithGoogle, type CloudUser } from '../cloud/cloud';
 import { normaliseCode, ROOM_CODE_RE } from '../cloud/rooms';
 import { LESSON_ORDER, type LessonId } from '../engine/lesson';
@@ -37,7 +37,7 @@ export function ClassesScreen({ t, settings, user, onBack, onOpenLesson }: { t: 
       setBusy(false);
     }
   };
-  const title = (id: string) => (LESSON_META[id as LessonId]?.title[lang] ?? id).replace(/\{[nk]\}/g, '');
+  const title = (id: string) => assignmentTitle(id, lang, t);
 
   return (
     <main className="panel-screen classes">
@@ -83,7 +83,7 @@ export function ClassesScreen({ t, settings, user, onBack, onOpenLesson }: { t: 
                 <ul className="assign-list">
                   {c.assignments.map((a) => (
                     <li key={a.id} className={a.done ? 'done' : ''}>
-                      <button className="link" disabled={!LESSON_ORDER.includes(a.lessonId as LessonId)} onClick={() => onOpenLesson(a.lessonId as LessonId)}>
+                      <button className="link" disabled={!openable(a.lessonId)} onClick={() => onOpenLesson(a.lessonId as LessonId)}>
                         {a.done ? '✓ ' : ''}
                         {title(a.lessonId)}
                       </button>
@@ -124,7 +124,11 @@ function pct(s: { n: number; correct: number } | undefined) {
 }
 
 function TeacherCard({ t, c, lang, busy, act, title }: { t: Strings; c: TeachingClass; lang: 'he' | 'en'; busy: boolean; act: (f: () => Promise<unknown>) => Promise<void>; title: (id: string) => string }) {
-  const [lesson, setLesson] = useState<LessonId>(LESSON_ORDER[0]);
+  const [lesson, setLesson] = useState<string>(LESSON_ORDER[0]);
+  const [vocal, setVocal] = useState<StudentVocal[] | null>(null);
+  useEffect(() => {
+    void classVocal(c.id).then(setVocal);
+  }, [c.id]);
   const [due, setDue] = useState('');
   const shown = SKILLS.filter((k) => c.students.some((s) => s.skills[k]?.n));
   return (
@@ -176,6 +180,39 @@ function TeacherCard({ t, c, lang, busy, act, title }: { t: Strings; c: Teaching
           </table>
         </div>
       )}
+      {vocal && vocal.some((s) => s.takes > 0) && (
+        <>
+          <h3>🎤 {t.vocalTitle}</h3>
+          <div className="roster-wrap">
+            <table className="roster">
+              <thead>
+                <tr>
+                  <th>{t.nickname}</th>
+                  <th>{t.vocalScore}</th>
+                  <th>{t.metricNames.intonation} (¢)</th>
+                  <th>{t.metricNames.stability} (¢)</th>
+                  <th>{t.metricNames.vibratoRegularity} (%)</th>
+                  <th>{t.metricNames.transition} (ms)</th>
+                  <th>{t.metricNames.hit} (%)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {vocal.map((s) => (
+                  <tr key={s.name}>
+                    <td>{s.name}</td>
+                    <td>{s.score ?? '–'}</td>
+                    <td dir="ltr">{s.intonation ?? '–'}</td>
+                    <td dir="ltr">{s.stability ?? '–'}</td>
+                    <td dir="ltr">{s.vibrato_evenness ?? '–'}</td>
+                    <td dir="ltr">{s.transition_ms ?? '–'}</td>
+                    <td dir="ltr">{s.right_notes ?? '–'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
       <h3>{t.assignments}</h3>
       <ul className="assign-list">
         {c.assignments.map((a) => (
@@ -191,10 +228,15 @@ function TeacherCard({ t, c, lang, busy, act, title }: { t: Strings; c: Teaching
         ))}
       </ul>
       <div className="assign-form">
-        <select value={lesson} onChange={(e) => setLesson(e.target.value as LessonId)} aria-label={t.assignLesson}>
+        <select value={lesson} onChange={(e) => setLesson(e.target.value)} aria-label={t.assignLesson}>
           {LESSON_ORDER.map((id, i) => (
             <option key={id} value={id}>
               {i + 1}. {title(id)}
+            </option>
+          ))}
+          {EXTRA_ASSIGNABLE.map((id) => (
+            <option key={id} value={id}>
+              {title(id)}
             </option>
           ))}
         </select>
@@ -225,8 +267,8 @@ export function AssignedCard({ t, items, lang, onOpen }: { t: Strings; items: { 
       <ul className="assign-list">
         {items.slice(0, 4).map((a) => (
           <li key={a.id}>
-            <button className="link" disabled={!LESSON_ORDER.includes(a.lessonId as LessonId)} onClick={() => onOpen(a.lessonId as LessonId)}>
-              {(LESSON_META[a.lessonId as LessonId]?.title[lang] ?? a.lessonId).replace(/\{[nk]\}/g, '')}
+            <button className="link" disabled={!openable(a.lessonId)} onClick={() => onOpen(a.lessonId as LessonId)}>
+              {assignmentTitle(a.lessonId, lang, t)}
             </button>
             <small>
               {a.className}
@@ -237,4 +279,20 @@ export function AssignedCard({ t, items, lang, onOpen }: { t: Strings; items: { 
       </ul>
     </section>
   );
+}
+
+const openable = (id: string) => LESSON_ORDER.includes(id as LessonId) || EXTRA_ASSIGNABLE.includes(id);
+
+/** Title of any assignable id (path lesson or generated practice). */
+export function assignmentTitle(id: string, lang: 'he' | 'en', t: Strings): string {
+  const m = /^vocal-(modes-|harmony-)?(\d+)$/.exec(id);
+  if (m) {
+    const n = Number(m[2]);
+    if (m[1] === 'modes-') return `${t.modesTitle} · ${t.modesLevelNames[n - 1] ?? n}`;
+    if (m[1] === 'harmony-') return `${t.harmonyTitle} · ${t.harmonyLevelNames[n - 1] ?? n}`;
+    return `${t.vocalTitle} · ${t.vocalLevelNames[n - 1] ?? n}`;
+  }
+  if (id === 'modes') return t.skillNames.modes;
+  if (id === 'wrong-notes') return t.wrongNotesTitle;
+  return (LESSON_META[id as LessonId]?.title[lang] ?? id).replace(/\{[nk]\}/g, '');
 }

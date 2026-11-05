@@ -84,3 +84,33 @@ export function openAssignments(c: MyClasses) {
     .flatMap((m) => m.assignments.filter((a) => !a.done).map((a) => ({ ...a, className: m.name })))
     .sort((a, b) => (a.dueOn ?? '9999').localeCompare(b.dueOn ?? '9999'));
 }
+
+
+export interface StudentVocal {
+  name: string;
+  takes: number;
+  score: number | null;
+  intonation: number | null;
+  stability: number | null;
+  vibrato_evenness: number | null;
+  transition_ms: number | null;
+  right_notes: number | null;
+}
+
+/** Teacher: average vocal-technique metrics per student, last 30 days (migration 18). */
+export async function classVocal(classId: string): Promise<StudentVocal[]> {
+  const sb = supabase();
+  if (!sb) return [];
+  const { data, error } = await sb.rpc('toneturn_class_vocal', { p_class: classId });
+  if (error || !data) return [];
+  return data as StudentVocal[];
+}
+
+/** Everything a teacher can assign: path lessons plus generated practice (vocal levels, modes, wrong notes). */
+export const EXTRA_ASSIGNABLE: string[] = [
+  ...Array.from({ length: 11 }, (_, i) => `vocal-${i + 1}`),
+  ...Array.from({ length: 8 }, (_, i) => `vocal-modes-${i + 1}`),
+  ...Array.from({ length: 5 }, (_, i) => `vocal-harmony-${i + 1}`),
+  'modes',
+  'wrong-notes',
+];
