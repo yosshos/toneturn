@@ -24,7 +24,8 @@ import type { SetKind } from '../engine/tournament';
 import type { GameKind } from '../game/memoryGame';
 import { MenuSheet, Changelog } from './Menu';
 import { FriendsScreen } from './Friends';
-import { reportGameBest } from '../cloud/social';
+import { reportGameBest, reportRating } from '../cloud/social';
+import { overallRating } from '../engine/rating';
 import { APP_VERSION, unseenChanges } from '../version';
 import { pwa } from '../pwa';
 import { piano, setMidiEnabled, SIMULATED, store, tts } from './services';
@@ -72,6 +73,17 @@ export function App() {
       .then((c) => setAssigned(openAssignments(c)))
       .catch(() => {});
   }, [user, route]);
+  // Report the overall rating (spec L.2) whenever it changes while signed in; silent if the server lacks it.
+  const reported = useRef<string>('');
+  useEffect(() => {
+    if (!user) return;
+    const o = overallRating(ratingsOf(progress));
+    if (!o) return;
+    const key = `${user.id}:${o.r}:${o.provisional}`;
+    if (reported.current === key) return;
+    reported.current = key;
+    void reportRating(o.r, o.provisional).catch(() => {});
+  }, [user, progress]);
   const progressRef = useRef(progress);
   progressRef.current = progress;
 
@@ -260,6 +272,8 @@ export function App() {
           onDuel={() => go('duel')}
           onGhost={() => go('ghost')}
           onPlacement={openPlacement}
+          onSkills={() => go('skills')}
+          playerName={user?.name ? user.name.split(' ')[0] : null}
           onOnline={() => {
             setOnlineCode('');
             setOnlineKey((k) => k + 1);

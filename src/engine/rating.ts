@@ -132,3 +132,87 @@ export function weakestSkill(ratings: Ratings, available: SkillId[] = SKILLS): S
 
 /** Placement ladder step: up after a first-try correct, down after a miss, clamped to [0, max]. */
 export const nextLevel = (level: number, correct: boolean, max = 2) => Math.max(0, Math.min(max, level + (correct ? 1 : -1)));
+
+// ======================================================================= overall rating (spec L)
+
+/** Importance per skill in the overall rating; game-only axes count half. */
+export const OVERALL_WEIGHT: Partial<Record<SkillId, number>> = { rhythm: 0.5, timing: 0.5 };
+const CONFIDENT_AT = 12;
+export const OVERALL_PROVISIONAL = { skills: 4, answers: 30 };
+
+export interface Overall {
+  r: number;
+  provisional: boolean;
+  /** Measured skills and rated answers behind the number. */
+  skills: number;
+  n: number;
+}
+
+/**
+ * Overall rating: confidence-weighted mean of the measured skills. A skill's rating is shrunk toward
+ * the start in proportion to how little it is measured, so two lucky answers barely move the overall.
+ */
+export function overallRating(ratings: Ratings): Overall | null {
+  let num = 0;
+  let den = 0;
+  let skills = 0;
+  let n = 0;
+  for (const k of SKILLS) {
+    const s = ratings[k];
+    if (!s || s.n === 0) continue;
+    const c = Math.min(1, s.n / CONFIDENT_AT);
+    const w = (OVERALL_WEIGHT[k] ?? 1) * c;
+    num += w * (START_RATING + c * (s.r - START_RATING));
+    den += w;
+    skills++;
+    n += s.n;
+  }
+  if (!den) return null;
+  return { r: Math.round(num / den), provisional: skills < OVERALL_PROVISIONAL.skills || n < OVERALL_PROVISIONAL.answers, skills, n };
+}
+
+/** Overall rating over time, one point per local day. */
+export function overallHistory(events: RatingEvent[], dayOf: (iso: string) => string = (iso) => iso.slice(0, 10)): TrendPoint[] {
+  const seen = new Set<string>();
+  const cur: Ratings = {};
+  const out: TrendPoint[] = [];
+  for (const e of [...events].sort((a, b) => a.at.localeCompare(b.at) || a.id.localeCompare(b.id))) {
+    if (seen.has(e.id)) continue;
+    seen.add(e.id);
+    cur[e.skill] = rate(cur[e.skill], e);
+    const o = overallRating(cur)!;
+    const day = dayOf(e.at);
+    const last = out[out.length - 1];
+    if (last && last.day === day) {
+      last.r = o.r;
+      last.n = o.n;
+    } else out.push({ day, r: o.r, n: o.n });
+  }
+  return out;
+}
+
+export const peakOf = (h: TrendPoint[]) => (h.length ? Math.max(...h.map((p) => p.r)) : null);
+
+export interface RatingChange {
+  overall: { from: number | null; to: number; provisional: boolean } | null;
+  /** Skills this session rated, with their change. */
+  skills: { skill: SkillId; from: number | null; to: number; answers: number }[];
+  /** Bands reached in this session ("You reached Solid in Chords"). */
+  bandsReached: { skill: SkillId; band: Band }[];
+}
+
+export function ratingChange(before: Ratings, after: Ratings): RatingChange {
+  const skills = SKILLS.filter((k) => (after[k]?.n ?? 0) > (before[k]?.n ?? 0)).map((k) => ({
+    skill: k,
+    from: before[k]?.n ? before[k]!.r : null,
+    to: after[k]!.r,
+    answers: after[k]!.n - (before[k]?.n ?? 0),
+  }));
+  const ob = overallRating(before);
+  const oa = overallRating(after);
+  const order: Band[] = ['beginner', 'developing', 'solid', 'advanced'];
+  const bandsReached = skills
+    .filter((s) => s.from !== null && order.indexOf(band(s.to)) > order.indexOf(band(s.from)))
+    .map((s) => ({ skill: s.skill, band: band(s.to) }));
+  return { overall: oa ? { from: ob ? ob.r : null, to: oa.r, provisional: oa.provisional } : null, skills, bandsReached };
+}

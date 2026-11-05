@@ -11,6 +11,8 @@ export type RoomPhase = 'connecting' | 'lobby' | 'countdown' | 'playing' | 'answ
 export interface RoomStanding {
   userId: string;
   nickname: string;
+  rating?: number | null;
+  ratingProvisional?: boolean;
   points: number;
   correct: number;
   totalTimeMs: number;
@@ -42,7 +44,7 @@ export async function createRoom(backend: RoomBackend, kind: SetKind, rounds: nu
 
 export function roomStandings(players: RoomSnapshot['players'], results: RoomRoundResult[]): RoomStanding[] {
   const table = (rs: RoomRoundResult[]) => {
-    const rows = players.map((p) => ({ userId: p.userId, nickname: p.nickname, points: 0, correct: 0, totalTimeMs: 0 }));
+    const rows = players.map((p) => ({ userId: p.userId, nickname: p.nickname, rating: p.rating, ratingProvisional: p.ratingProvisional, points: 0, correct: 0, totalTimeMs: 0 }));
     for (const r of rs)
       for (const a of r.answers) {
         const row = rows.find((x) => x.userId === a.userId);

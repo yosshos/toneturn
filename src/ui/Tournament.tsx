@@ -1,3 +1,4 @@
+import { RatingBadge } from './Rating';
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { dailyBoard, submitDaily, type DailyBoard } from '../cloud/daily';
 import type { CloudUser } from '../cloud/cloud';
@@ -149,7 +150,9 @@ export function DailyBoardCard({ t, board, signedIn, error, lang }: { t: Strings
         {board.friends.map((f, i) => (
           <li key={i} className={f.me ? 'me' : ''}>
             <span className="rank">{i + 1}</span>
-            <span className="pname">{f.me ? t.you : f.name}</span>
+            <span className="pname">
+              {f.me ? t.you : f.name} <RatingBadge r={f.rating} provisional={!!f.rating_provisional} t={t} size="sm" />
+            </span>
             <span className="squares" dir="ltr">
               {f.squares}
             </span>

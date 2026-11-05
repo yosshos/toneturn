@@ -7,14 +7,14 @@ export interface DailyBoard {
   day: string;
   players: number;
   me: { points: number; correct: number; squares: string; rank: number; topPercent: number } | null;
-  friends: { name: string; points: number; squares: string; me: boolean }[];
+  friends: { name: string; points: number; squares: string; me: boolean; rating?: number | null; rating_provisional?: boolean | null }[];
 }
 
 interface RawBoard {
   day: string;
   players: number;
   me: { points: number; correct: number; squares: string; rank: number; top_percent: number } | null;
-  friends: { name: string; points: number; squares: string; me: boolean }[];
+  friends: { name: string; points: number; squares: string; me: boolean; rating?: number | null; rating_provisional?: boolean | null }[];
 }
 
 export const boardFromRaw = (r: RawBoard): DailyBoard => ({

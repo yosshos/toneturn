@@ -146,6 +146,7 @@ function TeacherCard({ t, c, lang, busy, act, title }: { t: Strings; c: Teaching
             <thead>
               <tr>
                 <th>{t.nickname}</th>
+                <th>{t.overallRating}</th>
                 <th>{t.lessonsDoneShort}</th>
                 <th>XP 7d</th>
                 <th>🔥</th>
@@ -161,6 +162,7 @@ function TeacherCard({ t, c, lang, busy, act, title }: { t: Strings; c: Teaching
               {c.students.map((s) => (
                 <tr key={s.userId}>
                   <td>{s.name}</td>
+                  <td>{s.rating ? `${s.rating}${s.ratingProvisional ? '?' : ''}` : '–'}</td>
                   <td>{s.lessonsDone}</td>
                   <td>{s.weekXp}</td>
                   <td>{s.streak}</td>

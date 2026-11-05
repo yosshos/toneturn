@@ -1,3 +1,5 @@
+import { NameChip } from './Rating';
+import { overallRating } from '../engine/rating';
 import { FIRST_TRIO, randomTrio, type Trio } from '../engine/heroTrio';
 import { applyUpdate, promptInstall, pwa } from '../pwa';
 import { topicProgress } from '../engine/recommend';
@@ -7,7 +9,7 @@ import { displayNote, pc, type Naming } from '../engine/pitch';
 import type { InputMode } from '../engine/session';
 import { LESSON_META } from '../game/content';
 import type { Strings } from '../i18n/strings';
-import { localDay, namingFor, type Progress, type Settings } from '../storage/progress';
+import { localDay, namingFor, ratingsOf, type Progress, type Settings } from '../storage/progress';
 import { Logo, MicIcon, ModeSwitch, withNote } from './bits';
 import { UNLOCK_ALL } from './services';
 import { GameIcon } from './Games';
@@ -29,6 +31,8 @@ interface Props {
   onOnline: () => void;
   onGhost: () => void;
   onPlacement: () => void;
+  onSkills: () => void;
+  playerName: string | null;
   onMenu: () => void;
   updateReady: boolean;
   news: React.ReactNode;
@@ -68,7 +72,7 @@ export function starsFor(best: number, total: number) {
 
 const TOTALS: Partial<Record<LessonId, number>> = { 'bflat-two-homes': 3, 'degrees-135': 5, 'major-minor': 5, cadences: 4, 'sing-home-five': 3, intervals: 6, inversions: 5, 'notes-degrees': 6, 'sing-names': 4, 'sing-degrees': 3, 'rhythm-r1': 5, 'rhythm-r2': 5, 'rhythm-r3': 5, runs: 5, 'rhythm-r4': 5, 'rhythm-r5': 5, 'rhythm-r6': 5, 'rhythm-r7': 5, 'rhythm-r8': 5, 'note-sequences': 5, 'jazz-1': 5, songs: 5 };
 
-export function Home({ t, settings, progress, streak, account, onPractice, onButtonsInstead, onMode, onGame, onDuel, onOnline, onGhost, onPlacement, onMenu, news, tools }: Props) {
+export function Home({ t, settings, progress, streak, account, onPractice, onButtonsInstead, onMode, onGame, onDuel, onOnline, onGhost, onPlacement, onSkills, playerName, onMenu, news, tools }: Props) {
   const [consentFor, setConsentFor] = useState<LessonId | null>(null);
   const lang = settings.uiLang;
   const nm = namingFor(settings.naming, lang);
@@ -100,6 +104,7 @@ export function Home({ t, settings, progress, streak, account, onPractice, onBut
           </span>
         </div>
         <div className="stats">
+          <NameChip t={t} name={playerName} overall={overallRating(ratingsOf(progress))} onClick={onSkills} />
           <span className="chip streak" title={t.streak}>
             <span aria-hidden="true">🔥</span> <b>{streak}</b>
             <span className="sr-only"> {t.streak}</span>

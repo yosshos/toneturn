@@ -17,6 +17,8 @@ export interface StudentRow {
   lastActive: string | null;
   /** Per skill over the last 30 days: rated items and first-try correct. */
   skills: Record<string, { n: number; correct: number }>;
+  rating?: number | null;
+  ratingProvisional?: boolean;
 }
 export interface TeachingClass {
   id: string;
@@ -45,7 +47,7 @@ interface RawA {
 const asA = (a: RawA) => ({ id: a.id, lessonId: a.lesson_id, dueOn: a.due_on, createdAt: a.created_at });
 
 export function classesFromRaw(r: {
-  teaching: { id: string; code: string; name: string; assignments: (RawA & { done: number })[]; students: { user_id: string; name: string; lessons_done: number; week_xp: number; streak: number; last_active: string | null; skills: Record<string, { n: number; correct: number }> }[] }[];
+  teaching: { id: string; code: string; name: string; assignments: (RawA & { done: number })[]; students: { user_id: string; name: string; lessons_done: number; week_xp: number; streak: number; last_active: string | null; skills: Record<string, { n: number; correct: number }>; rating?: number | null; rating_provisional?: boolean | null }[] }[];
   member_of: { id: string; name: string; teacher: string; assignments: (RawA & { done: boolean })[] }[];
 }): MyClasses {
   return {
@@ -54,7 +56,7 @@ export function classesFromRaw(r: {
       code: c.code,
       name: c.name,
       assignments: c.assignments.map((a) => ({ ...asA(a), done: Number(a.done) })),
-      students: c.students.map((s) => ({ userId: s.user_id, name: s.name, lessonsDone: Number(s.lessons_done), weekXp: Number(s.week_xp), streak: Number(s.streak ?? 0), lastActive: s.last_active, skills: s.skills ?? {} })),
+      students: c.students.map((s) => ({ userId: s.user_id, name: s.name, lessonsDone: Number(s.lessons_done), weekXp: Number(s.week_xp), streak: Number(s.streak ?? 0), lastActive: s.last_active, skills: s.skills ?? {}, rating: s.rating ?? null, ratingProvisional: !!s.rating_provisional })),
     })),
     memberOf: r.member_of.map((c) => ({ id: c.id, name: c.name, teacher: c.teacher, assignments: c.assignments.map((a) => ({ ...asA(a), done: !!a.done })) })),
   };

@@ -9,6 +9,9 @@ export interface RoomPlayer {
   nickname: string;
   /** Has answered the current round. */
   answered: boolean;
+  /** Overall rating (spec L), when the server provides it. */
+  rating?: number | null;
+  ratingProvisional?: boolean;
 }
 
 export interface RoomRoundResult {
@@ -76,7 +79,7 @@ interface RawState {
   round_open: boolean;
   answered: number;
   me: string;
-  players: { user_id: string; nickname: string; answered: boolean }[];
+  players: { user_id: string; nickname: string; answered: boolean; rating?: number | null; rating_provisional?: boolean | null }[];
   results: { round: number; key: string; answers: { user_id: string; answer: string | null; time_ms: number | null; correct: boolean; points: number }[] }[];
 }
 
@@ -94,7 +97,7 @@ export function fromRaw(r: RawState): RoomSnapshot {
     roundOpen: r.round_open,
     answered: r.answered,
     me: r.me,
-    players: r.players.map((p) => ({ userId: p.user_id, nickname: p.nickname, answered: p.answered })),
+    players: r.players.map((p) => ({ userId: p.user_id, nickname: p.nickname, answered: p.answered, rating: p.rating ?? null, ratingProvisional: !!p.rating_provisional })),
     results: r.results.map((x) => ({
       round: x.round,
       key: x.key,

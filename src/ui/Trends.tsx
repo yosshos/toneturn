@@ -4,7 +4,7 @@
 
 import { useMemo, useRef, useState } from 'react';
 import type { SkillId } from '../engine/lesson';
-import { band, ratingHistory, trendDelta, type RatingEvent, type TrendPoint } from '../engine/rating';
+import { band, overallHistory, ratingHistory, trendDelta, type RatingEvent, type TrendPoint } from '../engine/rating';
 import type { Strings } from '../i18n/strings';
 import { localDay } from '../storage/progress';
 
@@ -80,6 +80,17 @@ export function TrendTiles({ t, events, skills, sel, onSelect }: { t: Strings; e
 
 export function TrendDetail({ t, events, skill, lang }: { t: Strings; events: RatingEvent[]; skill: SkillId; lang: 'he' | 'en' }) {
   const pts = useMemo(() => ratingHistory(events, skill, dayOfLocal), [events, skill]);
+  return <TrendChart t={t} pts={pts} title={t.skillNames[skill]} lang={lang} />;
+}
+
+/** Overall rating history (spec L.4). */
+export function overallTrend(events: RatingEvent[]) {
+  return overallHistory(events, dayOfLocal);
+}
+
+export { Delta };
+
+export function TrendChart({ t, pts, title, lang, head }: { t: Strings; pts: TrendPoint[]; title: string; lang: 'he' | 'en'; head?: React.ReactNode }) {
   const [hover, setHover] = useState<number | null>(null);
   const ref = useRef<SVGSVGElement>(null);
   if (!pts.length) return null;
@@ -104,19 +115,21 @@ export function TrendDetail({ t, events, skill, lang }: { t: Strings; events: Ra
   };
   const hp = hover !== null ? pts[hover] : null;
   return (
-    <section className="trend-detail set-card" aria-label={`${t.trends}: ${t.skillNames[skill]}`}>
-      <div className="trend-detail-head">
-        <h3>{t.skillNames[skill]}</h3>
-        <span className="trend-now">
-          <b>{pts[pts.length - 1].r}</b> <Delta d={trendDelta(pts)} t={t} />
-        </span>
-      </div>
+    <section className="trend-detail set-card" aria-label={`${t.trends}: ${title}`}>
+      {head ?? (
+        <div className="trend-detail-head">
+          <h3>{title}</h3>
+          <span className="trend-now">
+            <b>{pts[pts.length - 1].r}</b> <Delta d={trendDelta(pts)} t={t} />
+          </span>
+        </div>
+      )}
       <div className="trend-chart" dir="ltr">
         <svg
           ref={ref}
           viewBox={`0 0 ${w} ${h}`}
           role="img"
-          aria-label={`${t.skillNames[skill]}: ${pts[0].r} → ${pts[pts.length - 1].r}`}
+          aria-label={`${title}: ${pts[0].r} → ${pts[pts.length - 1].r}`}
           onPointerMove={(e) => pick(e.clientX)}
           onPointerDown={(e) => pick(e.clientX)}
           onPointerLeave={() => setHover(null)}

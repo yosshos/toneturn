@@ -1,5 +1,13 @@
 # Milestone report — 2026-11-04
 
+## Update 22 — v0.22.0 (2026-11-05): overall rating (spec L)
+
+- `overallRating` (confidence-weighted mean; game axes ×0.5; provisional "?" until 4 skills / 30 answers), `overallHistory`, `peakOf`, `ratingChange` (overall from→to, touched skills, bands reached).
+- UI: header name chip (initial, name, rating badge in band colour → Skill Map); recap rating card (counts up, ▲/▼, per-skill rows, new best, band reached, accuracy); Skill Map overall card (rating, band, best, 30-day change, trend chart); friends sorted by XP or rating; rating badges in room lobby / boards, daily board, class roster.
+- Server: migration 13 `toneturn_rating` written (rating columns, `toneturn_report_rating`, rating returned by friends / rooms / daily / classes) — **not applied yet** (token revoked); the client reports silently and shows ratings only where the server returns them.
+- Radar labels now grow outward with side margins (fixes clipping introduced in 0.21).
+- Tests: 400 unit.
+
 ## Update 21 — v0.21.0 (2026-11-05): user-testing fixes (items 1–6, 8, 10, 12)
 
 - **First visit** starts with Find my level (hero card), with "start from lesson 1" as a link. Find my level stays in Practice tools afterwards ("take it again").

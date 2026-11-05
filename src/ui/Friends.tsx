@@ -1,3 +1,4 @@
+import { RatingBadge } from './Rating';
 import { useCallback, useEffect, useState } from 'react';
 import { addFriend, listFriends, myProfile, removeFriend, respondFriend, weeklyBoard, type FriendRow, type MyProfile } from '../cloud/social';
 import type { CloudUser } from '../cloud/cloud';
@@ -31,7 +32,8 @@ export function FriendsScreen({ t, user, sync, onBack }: { t: Strings; user: Clo
     void load();
   }, [load]);
 
-  const board = weeklyBoard(rows);
+  const [sortBy, setSortBy] = useState<'xp' | 'rating'>('xp');
+  const board = sortBy === 'xp' ? weeklyBoard(rows) : [...weeklyBoard(rows)].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
   const incoming = rows.filter((r) => r.relation === 'incoming');
   const outgoing = rows.filter((r) => r.relation === 'outgoing');
   const maxWeek = Math.max(1, ...board.map((r) => r.week_xp ?? 0));
@@ -151,7 +153,16 @@ export function FriendsScreen({ t, user, sync, onBack }: { t: Strings; user: Clo
           )}
 
           <section className="set-card">
-            <h2>🏆 {t.thisWeek}</h2>
+            <div className="league-head">
+              <h2>🏆 {sortBy === 'xp' ? t.thisWeek : t.overallRating}</h2>
+              <div className="seg small-seg" role="radiogroup" aria-label={t.sortBy}>
+                {(['xp', 'rating'] as const).map((k) => (
+                  <button key={k} type="button" role="radio" aria-checked={sortBy === k} className={sortBy === k ? 'on' : ''} onClick={() => setSortBy(k)}>
+                    {k === 'xp' ? t.xpThisWeek : t.overallRating}
+                  </button>
+                ))}
+              </div>
+            </div>
             {board.length <= 1 && <p className="field-hint">{t.noFriends}</p>}
             <ol className="league">
               {board.map((r, i) => (
@@ -159,7 +170,9 @@ export function FriendsScreen({ t, user, sync, onBack }: { t: Strings; user: Clo
                   <span className="rank">{i + 1}</span>
                   <div className="league-main">
                     <div className="league-top">
-                      <b>{r.relation === 'me' ? `${r.name} (${t.you})` : r.name}</b>
+                      <b>
+                        {r.relation === 'me' ? `${r.name} (${t.you})` : r.name} <RatingBadge r={r.rating} provisional={!!r.rating_provisional} t={t} size="sm" />
+                      </b>
                       <span className="wk" dir="ltr">
                         {r.week_xp ?? 0} XP
                       </span>

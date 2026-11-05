@@ -1,3 +1,5 @@
+import { RatingCard } from './Rating';
+import type { RatingChange } from '../engine/rating';
 import { useEffect, useState } from 'react';
 import { displayNote } from '../engine/pitch';
 import { pcFromKey } from '../engine/lesson';
@@ -19,9 +21,11 @@ interface Props {
   onHome: () => void;
   onNext: (() => void) | null;
   nextLabel?: string;
+  /** Rating change of this session (spec L.3); null until saved. */
+  rating?: { change: RatingChange; peakBefore: number | null } | null;
 }
 
-export function Recap({ t, view, settings, onReplay, onAgain, onHome, onNext, nextLabel }: Props) {
+export function Recap({ t, view, settings, onReplay, onAgain, onHome, onNext, nextLabel, rating }: Props) {
   const s = view.session;
   const sm = summary(s);
   const [xp, setXp] = useState(0);
@@ -93,6 +97,8 @@ export function Recap({ t, view, settings, onReplay, onAgain, onHome, onNext, ne
           </>
         )}
       </p>
+
+      {rating !== undefined && rating !== null && <RatingCard t={t} change={rating.change} peakBefore={rating.peakBefore} accuracy={sm.total ? sm.firstTry / sm.total : 0} />}
 
       <ol className="recap-list">
         {s.lesson.questions.map((q, i) => {

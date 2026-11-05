@@ -7,7 +7,8 @@ import type { InputMode } from '../engine/session';
 import { LessonController, type LessonView } from '../game/controller';
 import { answerWord, askTemplate, choiceLabel, hintText, keysGiveAway, LESSON_META, questionBadge } from '../game/content';
 import type { Strings } from '../i18n/strings';
-import { namingFor, resultFromSession, type Progress, type Settings } from '../storage/progress';
+import { namingFor, ratingsOf, resultFromSession, type Progress, type Settings } from '../storage/progress';
+import { overallHistory, peakOf, ratingChange, type RatingChange } from '../engine/rating';
 import { isTimed } from '../engine/scoring';
 import { Burst, Keyboard, MicIcon, ModeSwitch, Note, PermissionPanel, withNote } from './bits';
 import { Recap } from './Recap';
@@ -35,6 +36,7 @@ const targetMidiOf = (q: Question) => (q.kind === 'degree' || q.kind === 'sing' 
 
 export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit, onAgain, onNext, onProgress, lessonDef, adapt, nextLabel }: Props) {
   const ctrlRef = useRef<LessonController | null>(null);
+  const [change, setChange] = useState<{ change: RatingChange; peakBefore: number | null } | null>(null);
   const sessionId = useMemo(() => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`, []);
   if (!ctrlRef.current) {
     const lesson = lessonDef ?? makeLesson(lessonId);
@@ -67,7 +69,13 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
       {
         onModeChange: onMode,
         onComplete: (s) => {
-          void store.recordCompletion(resultFromSession(s, sessionId, new Date())).then(onProgress);
+          void (async () => {
+            // Rating card (spec L.3): compare ratings before and after this session.
+            const before = await store.loadProgress();
+            const after = await store.recordCompletion(resultFromSession(s, sessionId, new Date()));
+            setChange({ change: ratingChange(ratingsOf(before), ratingsOf(after)), peakBefore: peakOf(overallHistory(before.ratingEvents ?? [])) });
+            onProgress(after);
+          })();
         },
         onEvent: (e) => {
           if (import.meta.env.DEV) console.debug('[toneturn]', e.type, e.detail ?? '');
@@ -120,7 +128,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
   const bb = displayNote({ letter: 'B', acc: -1 }, nm, lang);
 
   if (v.stage === 'complete') {
-    return <Recap t={t} view={v} settings={settings} onReplay={(i) => ctrl.replayQuestion(i)} onAgain={onAgain} onHome={onExit} onNext={onNext} nextLabel={nextLabel} />;
+    return <Recap t={t} view={v} settings={settings} onReplay={(i) => ctrl.replayQuestion(i)} onAgain={onAgain} onHome={onExit} onNext={onNext} nextLabel={nextLabel} rating={change} />;
   }
 
   const paused = v.phase === 'paused';

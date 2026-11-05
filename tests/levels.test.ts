@@ -86,3 +86,38 @@ describe('skill trends', () => {
     expect(ratingHistory(events, 'degrees')).toEqual([]);
   });
 });
+
+describe('overall rating (spec L)', async () => {
+  const { overallRating, ratingChange, overallHistory, peakOf } = await import('../src/engine/rating');
+  const S = (r: number, n: number) => ({ r, n, correct: 0, recent: [] });
+  it('confidence-weighted: a barely measured skill hardly moves it; provisional until 4 skills and 30 answers', () => {
+    const o = overallRating({ chords: S(1300, 12), degrees: S(1300, 12) })!;
+    expect(o.r).toBe(1300);
+    expect(o.provisional).toBe(true);
+    const lucky = overallRating({ chords: S(1300, 12), degrees: S(1300, 12), intervals: S(1500, 1) })!;
+    expect(lucky.r).toBeLessThan(1320);
+    const full = overallRating({ chords: S(1100, 12), degrees: S(1100, 12), notes: S(1100, 12), cadences: S(1100, 12) })!;
+    expect(full.provisional).toBe(false);
+    expect(overallRating({})).toBeNull();
+  });
+  it('game-only axes count half', () => {
+    const a = overallRating({ chords: S(1000, 12), timing: S(1400, 12) })!;
+    const b = overallRating({ chords: S(1000, 12), degrees: S(1400, 12) })!;
+    expect(a.r).toBeLessThan(b.r);
+  });
+  it('session change: overall from → to, touched skills only, bands reached', () => {
+    const before = { chords: S(1080, 10), degrees: S(1000, 5) };
+    const after = { chords: S(1120, 12), degrees: S(1000, 5) };
+    const c = ratingChange(before, after);
+    expect(c.skills.map((s) => s.skill)).toEqual(['chords']);
+    expect(c.skills[0]).toMatchObject({ from: 1080, to: 1120, answers: 2 });
+    expect(c.bandsReached).toEqual([{ skill: 'chords', band: 'solid' }]);
+    expect(c.overall!.to).toBeGreaterThan(c.overall!.from!);
+  });
+  it('history and peak', () => {
+    const ev = (i: number, day: string, ok: boolean) => ({ id: `x${i}`, skill: 'chords' as const, difficulty: 1100, correct: ok, at: `${day}T10:0${i}:00Z` });
+    const h = overallHistory([ev(1, '2026-11-01', true), ev(2, '2026-11-02', true), ev(3, '2026-11-03', false)]);
+    expect(h).toHaveLength(3);
+    expect(peakOf(h)).toBe(h[1].r);
+  });
+});

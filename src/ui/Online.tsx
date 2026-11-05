@@ -1,3 +1,4 @@
+import { RatingBadge } from './Rating';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { cloudConfigured, signInWithGoogle, type CloudUser } from '../cloud/cloud';
 import { normaliseCode, ROOM_CODE_RE, RoomError, supabaseRooms, type RoomBackend } from '../cloud/rooms';
@@ -187,7 +188,9 @@ function Board({ t, standings, me, limit, lang }: { t: Strings; standings: RoomS
         <li key={s.userId} className={`${s.userId === me ? 'me' : ''} ${s.rank === 1 ? 'win' : ''}`}>
           <span className="rank">{s.rank}</span>
           <Arrow s={s} />
-          <span className="pname">{s.nickname}</span>
+          <span className="pname">
+            {s.nickname} <RatingBadge r={s.rating} provisional={s.ratingProvisional} t={t} size="sm" />
+          </span>
           <span className="pbest" dir="ltr">
             {s.points.toLocaleString(lang)} <small>{t.points}</small>
           </span>
@@ -260,7 +263,7 @@ function RoomScreen({ t, settings, backend, roomId, onExit }: { t: Strings; sett
           <ul className="room-players">
             {s.players.map((p) => (
               <li key={p.userId} className={p.userId === s.me ? 'me' : ''}>
-                {p.nickname}
+                {p.nickname} <RatingBadge r={p.rating} provisional={p.ratingProvisional} t={t} size="sm" />
                 {p.userId === s.host && <small className="host-tag">{t.hostTag}</small>}
               </li>
             ))}

@@ -76,7 +76,7 @@
 /* Skill Map */
 .radar {
   width: 100%;
-  max-width: 420px;
+  max-width: 560px;
   margin: 0 auto;
   display: block;
   overflow: visible;
@@ -1050,4 +1050,165 @@
   .swap-badges {
     animation: none;
   }
+}
+
+/* ---------------------------------------------------------------- overall rating (spec L) */
+.rating-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-weight: 900;
+  font-size: 1.15rem;
+  background: rgba(255, 246, 234, 0.08);
+  border: 2px solid var(--ink-dim);
+  color: var(--ink);
+  white-space: nowrap;
+}
+.rating-badge.sm {
+  font-size: 0.85rem;
+  padding: 1px 7px;
+}
+.rating-badge.none {
+  color: var(--ink-dim);
+}
+.rating-badge.band-beginner {
+  border-color: #a893cc;
+}
+.rating-badge.band-developing {
+  border-color: var(--mint);
+}
+.rating-badge.band-solid {
+  border-color: var(--gold);
+}
+.rating-badge.band-advanced {
+  border-color: var(--coral);
+}
+.name-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 8px 0 4px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 246, 234, 0.07);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 800;
+  min-width: 0;
+}
+.name-initial {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, var(--lilac), var(--coral));
+  color: #2a1747;
+  font-weight: 900;
+  flex-shrink: 0;
+}
+.name-text {
+  max-width: 6.5em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 460px) {
+  .name-text {
+    display: none;
+  }
+}
+.overall-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.overall-now {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+.overall-now .rating-badge {
+  font-size: 1.8rem;
+  padding: 2px 14px;
+}
+.overall-band {
+  font-weight: 800;
+  color: var(--ink-soft);
+}
+.overall-facts {
+  display: flex;
+  gap: 18px;
+  margin: 0;
+}
+.overall-facts dt {
+  color: var(--ink-dim);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.overall-facts dd {
+  margin: 0;
+  font-weight: 900;
+  font-size: 1.1rem;
+}
+.rating-card {
+  display: grid;
+  gap: 8px;
+  margin: 4px 0 12px;
+}
+.rating-card.practice {
+  text-align: center;
+}
+.rc-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+.rc-now {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.rc-now .rating-badge {
+  font-size: 1.6rem;
+}
+.rc-acc {
+  text-align: end;
+  display: grid;
+}
+.rc-acc b {
+  font-size: 1.3rem;
+}
+.rc-peak,
+.rc-band {
+  margin: 0;
+  font-weight: 900;
+  color: var(--gold);
+  animation: badges-in 0.5s ease-out both;
+}
+.rc-skills {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+.rc-skills li {
+  display: grid;
+  grid-template-columns: 1fr auto 5.5em;
+  gap: 10px;
+  align-items: baseline;
+}
+.rc-name {
+  color: var(--ink-soft);
+  font-weight: 700;
+}
+.rc-val {
+  font-weight: 900;
 }

@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.22.0',
+    date: '2026-11-05',
+    en: ['Your overall rating: one number for your whole ear, next to your name, with your best and its trend on the Skill Map', 'After every session: how your rating moved — overall and in each skill — and when you reach a new level', 'Ratings next to names for friends (sort by rating), in online rooms, on the daily board and in class rosters'],
+    he: ['הדירוג הכללי שלכם: מספר אחד לכל האוזן, ליד השם שלכם, עם השיא והמגמה במפת המיומנויות', 'אחרי כל סשן: כמה הדירוג השתנה — כללית ובכל מיומנות — ומתי הגעתם לרמה חדשה', 'דירוג ליד השמות של חברים (מיון לפי דירוג), בחדרי אונליין, בטבלה היומית וברשימת הכיתה'],
+  },
+  {
     version: '0.21.0',
     date: '2026-11-05',
     en: [

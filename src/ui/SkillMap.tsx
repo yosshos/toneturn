@@ -5,6 +5,7 @@ import type { Strings } from '../i18n/strings';
 import { lessonMastered, ratingsOf, type Progress } from '../storage/progress';
 import { recommendFor, type Recommendation } from '../engine/recommend';
 import { TrendDetail, TrendTiles } from './Trends';
+import { OverallCard } from './Rating';
 import { LESSON_META } from '../game/content';
 import { LESSON_ORDER } from '../engine/lesson';
 
@@ -41,6 +42,8 @@ export function SkillMap({
         <h1>{t.skillMap}</h1>
       </header>
       <p className="field-hint">{t.skillMapHint}</p>
+
+      <OverallCard t={t} ratings={ratings} events={progress.ratingEvents ?? []} lang={lang} />
 
       <Radar ratings={ratings} old={old?.ratings} sel={sel} onSelect={setSel} t={t} />
       {old && (
@@ -139,7 +142,7 @@ function Radar({
   const measuredCount = vals.filter((v) => v !== null).length;
 
   return (
-    <svg className="radar" viewBox="0 0 320 320" role="img" aria-label={t.skillMap}>
+    <svg className="radar" viewBox="-90 0 500 320" role="img" aria-label={t.skillMap}>
       {[0.25, 0.5, 0.75, 1].map((k) => (
         <polygon key={k} className="ring" points={AXES.map((_, i) => pt(i, k).join(',')).join(' ')} />
       ))}
@@ -152,12 +155,15 @@ function Radar({
       {AXES.map((a, i) => {
         const v = vals[i];
         const ev = PLANNED_SKILLS.includes(a as never) ? 'planned' : evidence(ratings[a as SkillId]);
-        const [lx, ly] = pt(i, 1.24);
+        const [lx, ly] = pt(i, 1.12);
+        // Labels grow outward from the ring, so long names never leave the drawing.
+        const cos = Math.cos(ang(i));
+        const anchor = cos > 0.25 ? 'start' : cos < -0.25 ? 'end' : 'middle';
         const [px, py] = v === null ? pt(i, 0.06) : pt(i, v);
         return (
           <g key={a} className={`axis ${sel === a ? 'sel' : ''}`} onClick={() => onSelect(a)} style={{ cursor: 'pointer' }}>
             <circle className={`dot ev-${ev}`} cx={px} cy={py} r={v === null ? 6 : 8} />
-            <text x={lx} y={ly} textAnchor="middle" dominantBaseline="middle" className="axis-label">
+            <text x={lx} y={ly} textAnchor={anchor} direction="ltr" dominantBaseline="middle" className="axis-label">
               {t.skillNames[a]}
             </text>
           </g>

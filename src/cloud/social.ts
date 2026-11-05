@@ -14,6 +14,9 @@ export interface FriendRow {
   best_melody: number | null;
   best_rhythm: number | null;
   last_active: string | null;
+  /** Overall rating (spec L); absent until the server has the rating migration. */
+  rating?: number | null;
+  rating_provisional?: boolean | null;
 }
 
 export interface MyProfile {
@@ -134,4 +137,11 @@ export async function updatePushPrefs(lang: 'he' | 'en', hour: number) {
   const sub = await swRegistration()?.pushManager.getSubscription();
   if (!sub) return;
   await supabase()?.from('toneturn_push_subscriptions').update({ hour, lang, tz: localTz() }).eq('endpoint', sub.endpoint);
+}
+
+/** Report the overall rating so friends, rooms and classes can show it (spec L.2). Silent if unavailable. */
+export async function reportRating(rating: number, provisional: boolean): Promise<void> {
+  const sb = supabase();
+  if (!sb) return;
+  await sb.rpc('toneturn_report_rating', { p_rating: rating, p_provisional: provisional });
 }
