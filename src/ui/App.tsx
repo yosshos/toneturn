@@ -251,10 +251,10 @@ export function App() {
   /** Class assignments: path lessons and generated practice (vocal levels, modes, wrong notes). */
   const openAssignment = (id: string) => {
     if ((LESSON_ORDER as string[]).includes(id)) return openLesson(id as LessonId);
-    const m = /^vocal-(modes-|harmony-|barry-)?(\d+)$/.exec(id);
+    const m = /^vocal-(modes-|harmony-|barry-|sight-)?(\d+)$/.exec(id);
     if (m) {
       setVocalWarmup(false);
-      setVocalLevel((m[1] === 'modes-' ? 100 : m[1] === 'harmony-' ? 200 : m[1] === 'barry-' ? 300 : 0) + Number(m[2]));
+      setVocalLevel((m[1] === 'modes-' ? 100 : m[1] === 'harmony-' ? 200 : m[1] === 'barry-' ? 300 : m[1] === 'sight-' ? 400 : 0) + Number(m[2]));
       return go('vocal');
     }
     if (id === 'modes') return openModes(modesLevelFor(ratingsOf(progress).modes?.n ? ratingsOf(progress).modes!.r : null));

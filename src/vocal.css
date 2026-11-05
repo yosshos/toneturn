@@ -716,3 +716,6 @@
   width: 100%;
   max-width: 360px;
 }
+
+/* Sight-singing (spec V.1) */
+.sight-score { display: grid; gap: 4px; justify-items: center; margin: 8px 0; }

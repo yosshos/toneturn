@@ -49,7 +49,7 @@ function useSvg(draw: (VF: VF, el: HTMLDivElement) => void, deps: unknown[]) {
   return { ref, failed };
 }
 
-export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble' }: { notes: number[]; chord: boolean; keyPc: PitchClass | null; labels?: string[]; clef?: 'treble' | 'bass' | 'alto' }) {
+export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs }: { notes: number[]; chord: boolean; keyPc: PitchClass | null; labels?: string[]; clef?: 'treble' | 'bass' | 'alto'; durs?: number[] }) {
   const { ref, failed } = useSvg(
     (VF, el) => {
       const n = chord ? 1 : notes.length;
@@ -63,17 +63,20 @@ export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble' }: { no
       const sn = chord
         ? [new VF.StaveNote({ keys: notes.map((m) => vfKey(m, keyPc)), duration: 'w', clef })]
         : notes.map((m, i) => {
-            const s = new VF.StaveNote({ keys: [vfKey(m, keyPc)], duration: 'q', clef });
+            const b = durs?.[i] ?? 1;
+            const s = new VF.StaveNote({ keys: [vfKey(m, keyPc)], duration: b >= 4 ? 'w' : b >= 2 ? 'h' : b >= 1 ? 'q' : '8', clef });
+            if (b === 1.5 || b === 3) VF.Dot.buildAndAttach([s], { all: true });
             if (labels?.[i]) s.addModifier(new VF.Annotation(labels[i]).setVerticalJustification(VF.Annotation.VerticalJustify.BOTTOM), 0);
             return s;
           });
-      const voice = new VF.Voice({ num_beats: chord ? 4 : notes.length, beat_value: 4 }).setMode(VF.Voice.Mode.SOFT);
+      const voice = new VF.Voice({ num_beats: chord ? 4 : durs ? Math.ceil(durs.reduce((a, b) => a + b, 0)) : notes.length, beat_value: 4 }).setMode(VF.Voice.Mode.SOFT);
       voice.addTickables(sn);
       VF.Accidental.applyAccidentals([voice], keySpec(keyPc));
       new VF.Formatter().joinVoices([voice]).format([voice], width - 90);
       voice.draw(ctx, stave);
+      if (durs) VF.Beam.generateBeams(sn).forEach((bm) => bm.setContext(ctx).draw());
     },
-    [notes.join(','), chord, keySpec(keyPc), (labels ?? []).join(','), clef],
+    [notes.join(','), chord, keySpec(keyPc), (labels ?? []).join(','), clef, (durs ?? []).join(',')],
   );
   return (
     <div className="note-staff" role="img" aria-label={notes.map((m) => vfKey(m, keyPc)).join(' ')}>

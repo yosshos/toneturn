@@ -6,7 +6,7 @@ import type { Settings } from '../storage/progress';
 import { Keyboard } from './bits';
 import { GuitarTab, NoteStaff } from './NoteViews';
 
-export function NotesView({ midis, keyPc, settings, chord = false }: { midis: number[]; keyPc: PitchClass | null; settings: Settings; chord?: boolean }) {
+export function NotesView({ midis, keyPc, settings, chord = false, durs }: { midis: number[]; keyPc: PitchClass | null; settings: Settings; chord?: boolean; durs?: number[] }) {
   const views: NoteView[] = settings.noteViews ?? ['keyboard', 'staff'];
   if (!midis.length) return <div className="notes-view empty" aria-hidden="true" />;
   const lo = Math.min(...midis);
@@ -17,7 +17,7 @@ export function NotesView({ midis, keyPc, settings, chord = false }: { midis: nu
   return (
     <div className="notes-view">
       {views.includes('keyboard') && <Keyboard low={low} high={high} live={false} aid={{ notes: midis }} />}
-      {views.includes('staff') && <NoteStaff notes={midis} chord={chord} keyPc={keyPc} />}
+      {views.includes('staff') && <NoteStaff notes={midis} chord={chord} keyPc={keyPc} durs={durs} />}
       {views.includes('tab') && <GuitarTab notes={midis} chord={chord} />}
     </div>
   );

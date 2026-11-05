@@ -370,7 +370,7 @@ export interface MelodyMetrics {
 
 const fold = (c: number) => ((((c + 600) % 1200) + 1200) % 1200) - 600;
 
-export function melodyMetrics(frames: SungFrame[], targets: number[], beatSec?: number): MelodyMetrics {
+export function melodyMetrics(frames: SungFrame[], targets: number[], beatSec?: number, onsets?: number[]): MelodyMetrics {
   const segs = segmentNotes(frames);
   const empty: MelodyMetrics = { unclear: true, notes: targets.map((t) => ({ target: t, cents: null, settleMs: null, overshoot: 0, start: null })), hit: 0, intonation: 0, transitionMs: 0, overshoot: 0, legato: 0, timingMs: null };
   if (!segs.length) return empty;
@@ -423,7 +423,11 @@ export function melodyMetrics(frames: SungFrame[], targets: number[], beatSec?: 
     if (matched[k].seg.start - matched[k - 1].seg.end < 0.08) smooth++;
   }
   let timingMs: number | null = null;
-  if (beatSec && matched.length >= 2) {
+  if (onsets && matched.length >= 2) {
+    // Written rhythm (sight-singing): every onset against the score, aligned on the first sung note.
+    const t0 = matched[0].seg.start - onsets[matched[0].i];
+    timingMs = Math.round(mean(matched.slice(1).map((m) => Math.abs(m.seg.start - (t0 + onsets[m.i])) * 1000)));
+  } else if (beatSec && matched.length >= 2) {
     const t0 = matched[0].seg.start - matched[0].i * beatSec;
     timingMs = Math.round(mean(matched.slice(1).map((m) => Math.abs(m.seg.start - (t0 + m.i * beatSec)) * 1000)));
   }
@@ -517,7 +521,7 @@ export interface MetricScore {
 
 // ------------------------------------------------------------------ the ladder (P.2)
 
-export type VocalKind = 'hold' | 'straight' | 'vibrato-delayed' | 'vibrato-onoff' | 'vibrato-steady' | 'range' | 'messa' | 'glide' | 'melody' | 'leap' | 'rhythmic' | 'staccato' | 'scale' | 'vibrato-rate' | 'vibrato-width' | 'vibrato-alternate' | 'vibrato-notes' | 'vibrato-register' | 'vibrato-messa' | 'harmony-hold' | 'harmony-line';
+export type VocalKind = 'hold' | 'straight' | 'vibrato-delayed' | 'vibrato-onoff' | 'vibrato-steady' | 'range' | 'messa' | 'glide' | 'melody' | 'leap' | 'rhythmic' | 'staccato' | 'scale' | 'vibrato-rate' | 'vibrato-width' | 'vibrato-alternate' | 'vibrato-notes' | 'vibrato-register' | 'vibrato-messa' | 'harmony-hold' | 'harmony-line' | 'sight';
 
 export interface VocalItem {
   id: string;
@@ -546,6 +550,8 @@ export interface VocalItem {
   accompany?: number[];
   /** Harmony line: the melody the app plays (semitones from the same base as `steps`). */
   melody?: number[];
+  /** Sight-singing: the written length of each note, in beats (spec V.1). */
+  durs?: number[];
   /** Harmony line: a chord per sung note instead of a melody (semitones from the line's base). */
   chords?: number[][];
   /** Played once before the take (semitones from the sung note) — e.g. the whole diminished chord. */
@@ -822,6 +828,65 @@ export function dimFreeResult(frames: SungFrame[], dimMidis: number[]): { kind: 
   return null;
 }
 
+/** Sight-singing (spec V.1): pitch and the written rhythm. */
+export function gradeSight(item: VocalItem, frames: SungFrame[], targets: number[]): TakeGrade {
+  const beat = 60 / (item.bpm ?? 72);
+  const durs = item.durs ?? targets.map(() => 1);
+  const onsets = durs.map((_, i) => durs.slice(0, i).reduce((a, b) => a + b, 0) * beat);
+  const m = melodyMetrics(frames, targets, undefined, onsets);
+  if (m.unclear) return { ...UNCLEAR, melody: m };
+  const out: MetricScore[] = [M('hit', m.hit * 100, '%', m.hit, 3), M('intonation', m.intonation, '¢', bandScore(m.intonation, BANDS.intonation), 1.5)];
+  if (m.timingMs !== null) out.push(M('timing', m.timingMs, 'ms', bandScore(m.timingMs, [60, 110, 200]), 2));
+  const g = finish(out, { melody: m });
+  return { ...g, score: Math.round(g.score * (0.4 + 0.6 * m.hit) * 1000) / 1000 };
+}
+
+/** Deterministic sight-singing melodies per level: steps (from the tonic) and note lengths in beats. */
+function sightMelody(seed: number, level: number): { steps: number[]; durs: number[] } {
+  let a = seed >>> 0;
+  const rnd = () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  const major = [0, 2, 4, 5, 7, 9, 11, 12];
+  const minor = [0, 2, 3, 5, 7, 8, 11, 12];
+  const scale = level >= 4 ? minor : major;
+  const n = level === 1 ? 4 : level === 2 ? 6 : 8;
+  const maxLeap = level <= 1 ? 1 : level === 2 ? 2 : 4;
+  let d = 0;
+  const degs = [0];
+  for (let i = 1; i < n; i++) {
+    const step = Math.max(-maxLeap, Math.min(maxLeap, Math.round((rnd() * 2 - 1) * maxLeap) || 1));
+    const prev = d;
+    d = Math.max(0, Math.min(7, d + step));
+    if (d === prev) d = prev === 7 ? 6 : prev + 1; // no repeated notes (each onset must be heard)
+    degs.push(d);
+  }
+  const end = rnd() < 0.5 ? 0 : 4; // end on 1 or 5 (moving into it)
+  degs[degs.length - 1] = degs[degs.length - 2] === end ? (end === 0 ? 4 : 0) : end;
+  const pool = level <= 2 ? [1, 1, 2] : level === 3 ? [0.5, 0.5, 1, 1, 2] : [0.5, 1, 1, 1.5, 2];
+  let durs = degs.map(() => pool[Math.floor(rnd() * pool.length)]);
+  // Dotted quarters are followed by an eighth (stay on the beat grid).
+  durs = durs.map((x, i) => (i > 0 && durs[i - 1] === 1.5 ? 0.5 : x));
+  durs[durs.length - 1] = 2;
+  return { steps: degs.map((k) => scale[k]), durs };
+}
+
+const SIGHT = (level: number, seed: number, bpm: number, difficulty: number): Omit<VocalItem, 'id' | 'level'> => {
+  const m = sightMelody(seed, level);
+  return { kind: 'sight', seconds: 10, reference: 'before', at: 0.3, steps: m.steps, durs: m.durs, bpm, difficulty };
+};
+export const SIGHT_LEVELS: VocalLevel[] = [
+  L(1, 0.6, [SIGHT(1, 11, 72, 1050), SIGHT(1, 12, 72, 1050), SIGHT(1, 13, 72, 1100)]),
+  L(2, 0.6, [SIGHT(2, 21, 72, 1150), SIGHT(2, 22, 72, 1150), SIGHT(2, 23, 76, 1200)]),
+  L(3, 0.58, [SIGHT(3, 31, 76, 1250), SIGHT(3, 32, 76, 1250), SIGHT(3, 33, 80, 1300)]),
+  L(4, 0.56, [SIGHT(4, 41, 72, 1350), SIGHT(4, 42, 76, 1350), SIGHT(4, 43, 80, 1400)]),
+  L(5, 0.55, [SIGHT(5, 51, 80, 1450), SIGHT(5, 52, 84, 1500), SIGHT(5, 53, 88, 1550)]),
+].map((lv) => ({ ...lv, items: lv.items.map((it) => ({ ...it, id: it.id.replace(/^v/, 'sr') })) }));
+
 /** The whole ladder in order (levels 1–11; 12 = Riffs & runs). */
 export const LADDER: VocalLevel[] = [...VOCAL_LEVELS, ...VIBRATO_LEVELS];
 
@@ -1073,6 +1138,8 @@ export function gradeTake(item: VocalItem, frames: SungFrame[], range: VoiceRang
     }
     case 'harmony-line':
       return gradeMelody({ ...item, kind: 'rhythmic' }, frames, targets);
+    case 'sight':
+      return gradeSight(item, frames, targets);
     default:
       return gradeHold(item, frames, targets[0], style);
   }
@@ -1176,12 +1243,12 @@ export function synthHold(targetMidi: number, o: SynthOpts = {}): SungFrame[] {
 }
 
 /** A synthetic melody: each target for `noteSec`, joined legato (or with gaps). */
-export function synthMelody(targets: number[], noteSec = 0.5, o: { fps?: number; cents?: number; gap?: number; overshoot?: number } = {}): SungFrame[] {
+export function synthMelody(targets: number[], noteSec = 0.5, o: { fps?: number; cents?: number; gap?: number; overshoot?: number; noteSecs?: number[] } = {}): SungFrame[] {
   const { fps = 50, cents = 0, gap = 0, overshoot = 0 } = o;
   const out: SungFrame[] = [];
   let t = 0.3;
   targets.forEach((m, i) => {
-    const n = Math.round(noteSec * fps);
+    const n = Math.round((o.noteSecs?.[i] ?? noteSec) * fps);
     const dir = i ? Math.sign(m - targets[i - 1]) : 0;
     for (let k = 0; k < n; k++) {
       const over = dir && overshoot ? overshoot * dir * Math.max(0, 1 - k / (0.1 * fps)) : 0;

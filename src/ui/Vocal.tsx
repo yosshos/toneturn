@@ -33,6 +33,7 @@ import {
   MODE_LEVELS,
   HARMONY_LEVELS,
   BARRY_LEVELS,
+  SIGHT_LEVELS,
   itemAccompaniment,
   memoryFactor,
   scaleTonic,
@@ -65,7 +66,8 @@ export function noteLabel(midi: number, settings: Settings, key: PitchClass | nu
 export const MODES_BASE = 100;
 export const HARMONY_BASE = 200;
 export const BARRY_BASE = 300;
-export const levelDef = (level: number) => (level > BARRY_BASE ? BARRY_LEVELS[level - BARRY_BASE - 1] : level > HARMONY_BASE ? HARMONY_LEVELS[level - HARMONY_BASE - 1] : level > MODES_BASE ? MODE_LEVELS[level - MODES_BASE - 1] : LADDER[level - 1]);
+export const SIGHT_BASE = 400;
+export const levelDef = (level: number) => (level > SIGHT_BASE ? SIGHT_LEVELS[level - SIGHT_BASE - 1] : level > BARRY_BASE ? BARRY_LEVELS[level - BARRY_BASE - 1] : level > HARMONY_BASE ? HARMONY_LEVELS[level - HARMONY_BASE - 1] : level > MODES_BASE ? MODE_LEVELS[level - MODES_BASE - 1] : LADDER[level - 1]);
 
 // ------------------------------------------------------------------ live pitch trace
 
@@ -151,6 +153,8 @@ const isInstrument = (s: Settings) => !!s.instrument && s.instrument !== 'voice'
 
 /** Sung passages from memory: scales, melodies, leaps, rhythmic lines (reference requests count, spec P.9). */
 const memoryItem = (it: VocalItem) => ['scale', 'melody', 'leap', 'rhythmic'].includes(it.kind);
+/** Sight-singing: the melody is read, not heard (spec V.1). */
+const isSight = (it: VocalItem) => it.kind === 'sight';
 
 /** Items sung as several separate holds (one take per note). */
 const multiNote = (it: VocalItem) => it.kind === 'range' || it.kind === 'vibrato-register';
@@ -195,6 +199,8 @@ function simulatedFrames(item: VocalItem, targets: number[], noteIdx: number): S
       return synthHold(targets[0], { seconds: item.seconds + 0.3, jitter: 2 });
     case 'harmony-line':
       return synthMelody(targets, 60 / (item.bpm ?? 72));
+    case 'sight':
+      return synthMelody(targets, 0.5, { noteSecs: (item.durs ?? []).map((d) => (d * 60) / (item.bpm ?? 72)) });
     case 'vibrato-notes':
       return synthVibratoPhrase(targets, item.noteSecs ?? [], item.vibNotes ?? []);
     default:
@@ -208,6 +214,12 @@ function referenceEvents(item: VocalItem, targets: number[]): { events: NoteEven
     const d = item.bpm ? 60 / item.bpm / (item.perBeat ?? 1) : 0.55;
     const events = targets.map((m, i) => ({ midi: m, start: i * d, duration: item.kind === 'staccato' ? d * 0.5 : d * 0.95, velocity: 0.7 }));
     return { events, length: targets.length * d + 0.4 };
+  }
+  if (item.kind === 'sight') {
+    const beat = 60 / (item.bpm ?? 72);
+    const tonic = targets[0] - (item.steps?.[0] ?? 0);
+    const clicks = [0, 1, 2, 3].map((k) => ({ midi: k === 0 ? 96 : 91, start: 1.4 + k * beat, duration: 0.06, velocity: 0.5 }));
+    return { events: [{ midi: tonic, start: 0, duration: 1.2, velocity: 0.75 }, ...clicks], length: 1.4 + 4 * beat };
   }
   if (item.kind === 'vibrato-notes') {
     const secs = item.noteSecs ?? targets.map(() => 0.6);
@@ -391,6 +403,29 @@ export function VocalScreen({ t, settings, progress, onSettings, onProgress, onB
                   <span className="lv-text">
                     <b>{t.modesLevelNames[i]}</b>
                     <small>{passed ? `✓ ${t.vocalPassed}` : !open ? `🔒 ${t.vocalLocked}` : best > 0 ? `${Math.round(best * 100)}%` : fill(t.vocalLevel, { n: i + 1 })}</small>
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ol>
+      </section>
+
+      <section className="set-card">
+        <h2>👁️ {t.sightTitle}</h2>
+        <p className="field-hint">{t.sightBlurb}</p>
+        <ol className="vocal-levels">
+          {SIGHT_LEVELS.map((lvDef, i) => {
+            const lv = SIGHT_BASE + i + 1;
+            const open = i === 0 || v.passed.includes(lv - 1);
+            const passed = v.passed.includes(lv);
+            return (
+              <li key={lv}>
+                <button className={`vocal-level ${passed ? 'passed' : ''} ${open ? '' : 'locked'}`} disabled={!open} data-sight={i + 1} onClick={() => setView({ kind: 'session', level: lv, items: lvDef.items.filter((it) => itemFits(it, range)) })}>
+                  <span className="lv-num">{i + 1}</span>
+                  <span className="lv-text">
+                    <b>{t.sightLevelNames[i]}</b>
+                    <small>{passed ? `✓ ${t.vocalPassed}` : !open ? `🔒 ${t.vocalLocked}` : fill(t.vocalLevel, { n: i + 1 })}</small>
                   </span>
                 </button>
               </li>
@@ -641,7 +676,7 @@ function VocalSession({
     setPhase('listening');
     const acc = itemAccompaniment(item, range);
     const chordsAbs = item.chords ? item.chords.map((ch) => ch.map((x) => targets[0] - (item.steps?.[0] ?? 0) + x)) : null;
-    const melodic = ['melody', 'leap', 'rhythmic', 'staccato', 'glide', 'harmony-line'].includes(item.kind);
+    const melodic = ['melody', 'leap', 'rhythmic', 'staccato', 'glide', 'harmony-line', 'sight'].includes(item.kind);
     // The app keeps sounding while the player sings (harmony, a held reference): without headphones the
     // microphone hears it too — a bleed gate learns its level first and drops it (spec P.0).
     const sounding = item.kind === 'harmony-hold' || item.kind === 'harmony-line' || item.reference === 'during';
@@ -805,7 +840,7 @@ function VocalSession({
     const rated = perItem.filter((x) => Object.keys(best.current).some((k) => k === x.it.id || k.startsWith(`${x.it.id}#`)));
     const now = new Date().toISOString();
     const r: LessonResult = {
-      lessonId: typeof level === 'number' ? (level > BARRY_BASE ? `vocal-barry-${level - BARRY_BASE}` : level > HARMONY_BASE ? `vocal-harmony-${level - HARMONY_BASE}` : level > MODES_BASE ? `vocal-modes-${level - MODES_BASE}` : `vocal-${level}`) : 'vocal-warmup',
+      lessonId: typeof level === 'number' ? (level > SIGHT_BASE ? `vocal-sight-${level - SIGHT_BASE}` : level > BARRY_BASE ? `vocal-barry-${level - BARRY_BASE}` : level > HARMONY_BASE ? `vocal-harmony-${level - HARMONY_BASE}` : level > MODES_BASE ? `vocal-modes-${level - MODES_BASE}` : `vocal-${level}`) : 'vocal-warmup',
       lessonVersion: 1,
       sessionId,
       completedAt: now,
@@ -885,7 +920,7 @@ function VocalSession({
   })();
   // Scales asked by name: only the tonic is shown until the take is graded (the notes are the task).
   const hidden = item.kind === 'scale' && item.scale?.hear === 'tonic' && phase !== 'result';
-  const title = level === 'warmup' ? t.vocalWarmup : level > BARRY_BASE ? `${t.barryTitle} · ${t.barryLevelNames[level - BARRY_BASE - 1]}` : level > HARMONY_BASE ? `${t.harmonyTitle} · ${t.harmonyLevelNames[level - HARMONY_BASE - 1]}` : level > MODES_BASE ? `${t.modesTitle} · ${t.modesLevelNames[level - MODES_BASE - 1]}` : `${fill(t.vocalLevel, { n: level })} · ${t.vocalLevelNames[level - 1]}`;
+  const title = level === 'warmup' ? t.vocalWarmup : level > SIGHT_BASE ? `${t.sightTitle} · ${t.sightLevelNames[level - SIGHT_BASE - 1]}` : level > BARRY_BASE ? `${t.barryTitle} · ${t.barryLevelNames[level - BARRY_BASE - 1]}` : level > HARMONY_BASE ? `${t.harmonyTitle} · ${t.harmonyLevelNames[level - HARMONY_BASE - 1]}` : level > MODES_BASE ? `${t.modesTitle} · ${t.modesLevelNames[level - MODES_BASE - 1]}` : `${fill(t.vocalLevel, { n: level })} · ${t.vocalLevelNames[level - 1]}`;
 
   if (phase === 'summary' && summary)
     return (
@@ -930,6 +965,8 @@ function VocalSession({
             })()
           : item.bh
             ? barryInstruction(item, shownTargets[0], t, settings)
+          : isSight(item)
+            ? t.sightInstr
           : item.kind === 'harmony-hold' && item.accompany?.length === 1
             ? fill(item.accompany[0] < 0 ? t.holdIntervalAbove : t.holdIntervalBelow, { iv: t.intervalNames[String(Math.abs(item.accompany[0]))] ?? '' })
             : fill(t.vocalInstr[item.kind] ?? '', { s: item.seconds, on: item.cueOn ?? 2, off: item.cueOff ?? 5, rate: item.vibRate ?? '', width: item.vibWidth === 'wide' ? t.vocalWide : t.vocalNarrow })}
@@ -945,9 +982,16 @@ function VocalSession({
         </p>
       )}
       {item.kind === 'vibrato-rate' && phase === 'singing' && <div className="vib-pulse" style={{ animationDuration: `${1 / (item.vibRate ?? 5.5)}s` }} aria-hidden="true" />}
+      {isSight(item) ? (
+        <div className="sight-score">
+          <NotesView midis={shownTargets} keyPc={null} settings={settings} durs={item.durs} />
+          <small className="field-hint">♩ = {item.bpm ?? 72}</small>
+        </div>
+      ) : (
       <p className="vocal-targets" dir="ltr">
         {(hidden ? shownTargets.slice(0, 1) : shownTargets).map((m) => noteLabel(m, settings)).join(' – ')}
       </p>
+      )}
       {(item.kind === 'hold' || item.kind === 'straight' || item.kind.startsWith('vibrato') || item.kind === 'messa' || item.kind === 'range') && (
         <div className="hold-meter" aria-hidden="true">
           <span style={{ width: `${Math.min(100, ((sinceOnset ?? (phase === 'result' ? item.seconds : 0)) / item.seconds) * 100)}%` }} />

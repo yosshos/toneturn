@@ -112,6 +112,7 @@ export const EXTRA_ASSIGNABLE: string[] = [
   ...Array.from({ length: 8 }, (_, i) => `vocal-modes-${i + 1}`),
   ...Array.from({ length: 5 }, (_, i) => `vocal-harmony-${i + 1}`),
   ...Array.from({ length: 7 }, (_, i) => `vocal-barry-${i + 1}`),
+  ...Array.from({ length: 5 }, (_, i) => `vocal-sight-${i + 1}`),
   'modes',
   'wrong-notes',
 ];
