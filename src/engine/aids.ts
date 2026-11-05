@@ -90,6 +90,8 @@ export function contentNotes(q: Question): { notes: number[]; chord: boolean } |
     case 'mode-id':
     case 'wrong-note':
       return { notes: q.midis, chord: false };
+    case 'abs-note':
+      return { notes: [q.midi], chord: false };
     case 'degree':
     case 'note-name':
     case 'sing':

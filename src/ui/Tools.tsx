@@ -20,6 +20,7 @@ export function PracticeTools({
   onDrone,
   onModes,
   onWrongNotes,
+  onAbsolute,
 }: {
   t: Strings;
   progress: Progress;
@@ -32,6 +33,7 @@ export function PracticeTools({
   onDrone: () => void;
   onModes: (level: number) => void;
   onWrongNotes: (level: number) => void;
+  onAbsolute: (level: number) => void;
 }) {
   const daily = progress.daily?.[localDay(new Date())];
   const ratings = ratingsOf(progress);
@@ -116,6 +118,17 @@ export function PracticeTools({
               </button>
             );
           })}
+        </div>
+      </div>
+      <div className="modes-row">
+        <b>🎯 {t.skillNames.absolute}</b>
+        <small>{t.absoluteHint}</small>
+        <div className="modes-levels" role="group" aria-label={t.skillNames.absolute}>
+          {[1, 2, 3].map((lv) => (
+            <button key={lv} className="chip" onClick={() => onAbsolute(lv)}>
+              {lv}. {t.absoluteLevels[lv - 1]}
+            </button>
+          ))}
         </div>
       </div>
       <div className="modes-row">

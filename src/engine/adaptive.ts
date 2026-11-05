@@ -1,8 +1,8 @@
 // Generated sessions: adaptive placement, targeted review from past mistakes, and the weekly puzzle.
 
 import { MODE_STEPS, type ModeId } from './modes';
-import { pcValue } from './pitch';
-import { modeIdQuestion, slashQuestion, tfQuestion, wrongNoteQuestion } from './lesson';
+import { pc as pcOf, pcValue } from './pitch';
+import { absNoteQuestion, modeIdQuestion, slashQuestion, tfQuestion, wrongNoteQuestion } from './lesson';
 import { tfTruth } from './truefalse';
 import {
   cadenceQuestion,
@@ -223,6 +223,13 @@ export function questionFromTag(tag: string, seed: number, id: string): Question
       const ds = (b ?? '').split('-').map(Number);
       if (!key || !ds.length || !ds.every((x) => x >= 1 && x <= 7)) return null;
       return nameSeqQuestion(id, key, ds, tag.split(':')[3] === 'degrees' ? 'degrees' : 'sound');
+    }
+    case 'abs': {
+      const target = parsePc(a);
+      if (!target) return null;
+      const names = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
+      const name = names.find((n) => pcValue(pcOf(n)) === pcValue(target)) ?? 'C';
+      return absNoteQuestion(id, name, rnd, names, 1350);
     }
     case 'slash': {
       const root = parsePc(a);

@@ -27,7 +27,8 @@ export type SkillId =
   | 'rhythm-dictation'
   | 'agility'
   | 'technique'
-  | 'modes';
+  | 'modes'
+  | 'absolute';
 export type IntervalName = 'M3' | 'P5' | 'P8';
 export type BassRole = 'root' | 'third' | 'fifth';
 export type Quality = 'maj' | 'min' | 'dim' | 'aug';
@@ -192,6 +193,15 @@ export interface RunIdQuestion extends QBase {
   answer: string;
 }
 
+/** Absolute pitch (spec S.11, optional): a note with no reference — name it. Answer: the note key. */
+export interface AbsNoteQuestion extends QBase {
+  kind: 'abs-note';
+  target: PitchClass;
+  midi: number;
+  answer: string;
+  choices: string[];
+}
+
 /** Slash chords (spec: inversions and slash chords): which note is in the bass under a major triad —
  *  a chord tone (C, C/E, C/G) or a note outside the chord (C/D, C/F, C/B♭). Answer: the bass note key. */
 export interface SlashQuestion extends QBase {
@@ -276,6 +286,7 @@ export interface ProgressionQuestion extends QBase {
 
 export type Question =
   | ModeIdQuestion
+  | AbsNoteQuestion
   | SlashQuestion
   | TFQuestion
   | WrongNoteQuestion
@@ -340,6 +351,8 @@ export function questionSkill(q: Question): SkillId {
       return 'intervals';
     case 'slash':
       return 'chords';
+    case 'abs-note':
+      return 'absolute';
     case 'name-seq':
       return q.given === 'sound' ? 'notes' : 'degrees';
     case 'seventh':
@@ -407,6 +420,7 @@ export type LessonId =
   | 'jazz-1'
   | 'songs'
   | 'runs-workshop'
+  | 'absolute-pitch'
   | 'slash-chords'
   | 'dictation'
   | 'jazz-2'
@@ -1242,6 +1256,8 @@ export function makeLesson(id: LessonId, seed = Date.now()): LessonDef {
       return modesLesson(1, seed);
     case 'slash-chords':
       return slashLesson(seed);
+    case 'absolute-pitch':
+      return absoluteLesson(1, seed);
     case 'dictation':
       return dictationLesson(seed);
     case 'jazz-2':
@@ -1312,6 +1328,8 @@ export function explainStimulus(q: Question): Stimulus[] {
       return [{ kind: 'notes', midis: q.midis, each: 0.6 }];
     case 'slash':
       return [{ kind: 'note', midi: q.midis[0], duration: 1.0 }, { kind: 'chord', midis: q.midis, duration: 1.6 }];
+    case 'abs-note':
+      return [{ kind: 'note', midi: q.midi, duration: 1.2 }];
     case 'degree': {
       const s: Stimulus[] = [{ kind: 'note', midi: q.targetMidi, duration: 1.0 }];
       if (q.answer !== 1) s.push({ kind: 'resolve', fromMidi: q.targetMidi, toMidi: nearestTonicMidi(q.key, q.targetMidi) });
@@ -1363,6 +1381,11 @@ export function compareStimulus(q: Question, given: Answer): Stimulus[] | null {
   switch (q.kind) {
     case 'tf':
       return null;
+    case 'abs-note': {
+      const g = typeof given === 'string' ? pcFromKey(given) : null;
+      if (!g || given === q.answer) return null;
+      return [{ kind: 'note', midi: placeInRange(pcValue(g), q.midi - 6, q.midi + 5), duration: 1.0 }, { kind: 'rest', duration: 0.4 }, { kind: 'note', midi: q.midi, duration: 1.0 }];
+    }
     case 'slash': {
       if (typeof given !== 'string' || given === q.answer) return null;
       const g = pcFromKey(given);
@@ -1561,6 +1584,8 @@ export function renderStimulus(stimulus: Stimulus[]): { events: NoteEvent[]; len
 export function questionTag(q: Question): string {
   const k = (p: PitchClass) => `${p.letter}${p.acc}`;
   switch (q.kind) {
+    case 'abs-note':
+      return `abs:${k(q.target)}`;
     case 'slash':
       return `slash:${k(q.key)}:${k(q.bass)}`;
     case 'tf':
@@ -1945,4 +1970,33 @@ export function jazz2Lesson(seed = Date.now()): LessonDef {
     ],
     questions: qs,
   };
+}
+
+
+// ======================================================================= absolute pitch corner (spec S.11)
+
+const ABS_NATURALS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+const ABS_ALL = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
+
+/** A random cluster that wipes the previous note from short-term memory (no relative cue). */
+function palateCleanser(rnd: () => number): Stimulus[] {
+  const base = 48 + Math.floor(rnd() * 24);
+  return [{ kind: 'chord', midis: [base, base + 1, base + 6, base + 11, base + 13], duration: 0.5 }, { kind: 'rest', duration: 0.9 }];
+}
+
+export function absNoteQuestion(id: string, name: string, rnd: () => number, pool: string[], difficulty: number, wide = false): AbsNoteQuestion {
+  const target = pc(name);
+  const lo = wide ? 40 + Math.floor(rnd() * 30) : 52 + Math.floor(rnd() * 8);
+  const midi = placeInRange(pcValue(target), lo, lo + 11);
+  const others = shuffle(rnd, pool.filter((n) => n !== name)).slice(0, 3);
+  const choices = shuffle(rnd, [name, ...others]).map((n) => pcKey(pc(n)));
+  return { id, kind: 'abs-note', target, midi, answer: pcKey(target), choices, stimulus: [...palateCleanser(rnd), { kind: 'note', midi, duration: 1.3 }], difficulty };
+}
+
+/** Optional absolute-pitch practice: 1 = white keys, 2 = all twelve, 3 = all twelve in any octave, faster. */
+export function absoluteLesson(level: number, seed = Date.now()): LessonDef {
+  const rnd = mulberry32(seed);
+  const pool = level === 1 ? ABS_NATURALS : ABS_ALL;
+  const qs = Array.from({ length: 6 }, (_, i) => absNoteQuestion(`a${i + 1}`, pick(rnd, pool), rnd, pool, 1200 + 150 * level, level >= 3));
+  return { id: 'absolute-pitch', version: 1, skill: 'absolute', scoring: { xpPerCorrect: 10, attemptLimit: 2 }, intro: [], questions: qs };
 }

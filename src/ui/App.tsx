@@ -1,6 +1,6 @@
 import { SingAlongScreen } from './SingAlong';
 import { AchievementsScreen } from './Extras';
-import { modesLesson, MODE_ID_LEVELS, wrongNotesLesson } from '../engine/lesson';
+import { absoluteLesson, modesLesson, MODE_ID_LEVELS, wrongNotesLesson } from '../engine/lesson';
 import { TrueFalseScreen } from './TrueFalse';
 import { FreezeToast, StreakSheet } from './Streak';
 import { canBuy, type Purchase } from '../engine/streak';
@@ -244,6 +244,7 @@ export function App() {
     openGenerated(weeklyPuzzle(week, fixed ?? puzzleBand(ratingsOf(progress))));
   };
   const openModes = (level: number) => openGenerated(modesLesson(level, Date.now() >>> 0));
+  const openAbsolute = (level: number) => openGenerated(absoluteLesson(level, Date.now() >>> 0));
   const [vocalLevel, setVocalLevel] = useState<number | null>(null);
   /** Class assignments: path lessons and generated practice (vocal levels, modes, wrong notes). */
   const openAssignment = (id: string) => {
@@ -272,6 +273,7 @@ export function App() {
     if (rec.kind === 'puzzle') return openPuzzle();
     if (rec.kind === 'runs-workshop') return openRuns();
     if (rec.kind === 'modes') return openModes(rec.level);
+    if (rec.kind === 'absolute') return openAbsolute(1);
     if (rec.kind === 'vocal') {
       setVocalWarmup(false);
       return go('vocal');
@@ -324,7 +326,7 @@ export function App() {
           onStreak={() => setStreakOpen(true)}
           account={<AccountCard t={t} user={user} sync={sync} compact />}
           onMenu={() => setMenuOpen(true)}
-          tools={<>{user && <AssignedCard t={t} items={assigned} lang={s.uiLang} onOpen={(id) => openAssignment(id)} />}<PracticeTools t={t} progress={progress} onSkills={() => go('skills')} onPlacement={openPlacement} onReview={openReview} onPuzzle={openPuzzle} onDaily={() => go('daily')} onRuns={openRuns} onDrone={() => go('drone')} onModes={openModes} onWrongNotes={openWrongNotes} /></>}
+          tools={<>{user && <AssignedCard t={t} items={assigned} lang={s.uiLang} onOpen={(id) => openAssignment(id)} />}<PracticeTools t={t} progress={progress} onSkills={() => go('skills')} onPlacement={openPlacement} onReview={openReview} onPuzzle={openPuzzle} onDaily={() => go('daily')} onRuns={openRuns} onDrone={() => go('drone')} onModes={openModes} onWrongNotes={openWrongNotes} onAbsolute={openAbsolute} /></>}
           updateReady={pwaState.updateReady}
           news={
             <>

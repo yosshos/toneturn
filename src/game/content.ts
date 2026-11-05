@@ -183,6 +183,12 @@ export const LESSON_META: Record<LessonId, LessonMeta> = {
     icon: 'mic',
     tip: { en: 'Practise a run slowly on “ah”, then speed it up — the Runs workshop does this for you.', he: 'תרגלו ראן לאט על "אה", ואז האיצו — סדנת הראנים עושה את זה בשבילכם.' },
   },
+  'absolute-pitch': {
+    title: { en: 'Absolute pitch corner (optional)', he: 'פינת שמיעה מוחלטת (רשות)' },
+    blurb: { en: 'A note with no reference — name it. Tracked apart from your relative skills.', he: 'צליל בלי צליל ייחוס — מה שמו? נמדד בנפרד מהמיומנויות היחסיות.' },
+    icon: 'ear',
+    tip: { en: 'Few adults gain full absolute pitch; this trains a feel for each note’s colour.', he: 'מעט מבוגרים רוכשים שמיעה מוחלטת מלאה; זה מאמן תחושה ל"צבע" של כל צליל.' },
+  },
   'jazz-2': {
     title: { en: 'Jazz 2: licks & melodic minor', he: 'ג׳אז 2: ליקים ומינור מלודי' },
     blurb: { en: 'Melodic minor by ear; swung licks to write down and to sing.', he: 'מינור מלודי בשמיעה; ליקים בסווינג לכתוב ולשיר.' },
@@ -362,6 +368,8 @@ export function sayChoices(q: Question, l: Lang): string {
 /** Spoken prompt at the start of a round. */
 export function roundPrompt(q: Question, l: Lang, nm: Naming, n: number): string {
   switch (q.kind) {
+    case 'abs-note':
+      return l === 'en' ? `Round ${n}. No reference. Which note is this?` : `סיבוב ${n}. בלי צליל ייחוס. איזה צליל זה?`;
     case 'slash':
       return l === 'en' ? `Round ${n}. A ${spokenNote(q.key, nm, l)} major chord. Which note is in the bass?` : `סיבוב ${n}. אקורד ${spokenNote(q.key, nm, l)} מז׳ור. איזה צליל בבס?`;
     case 'tf':
@@ -472,6 +480,12 @@ export function roundPrompt(q: Question, l: Lang, nm: Naming, n: number): string
 
 export function parseAnswer(q: Question, alternatives: string[], inputNaming: Naming = 'letter'): ParseResult<Answer> {
   switch (q.kind) {
+    case 'abs-note': {
+      const r = parseAlternatives(alternatives, (t) => parseNoteName(t, inputNaming));
+      if (r.kind === 'answer') return { ...r, value: `${r.value.letter}${r.value.acc}` };
+      if (r.kind === 'ambiguous') return { ...r, candidates: r.candidates.map((c) => `${c.letter}${c.acc}`) };
+      return r;
+    }
     case 'slash': {
       const r = parseAlternatives(alternatives, (t) => parseNoteName(t.replace(/.*(over|\/|על|בבס)/i, ' '), inputNaming));
       if (r.kind === 'answer') return { ...r, value: `${r.value.letter}${r.value.acc}` };
@@ -559,6 +573,8 @@ export function revealText(q: Question, l: Lang, nm: Naming): string {
 
 function revealCore(q: Question, l: Lang, nm: Naming): string {
   switch (q.kind) {
+    case 'abs-note':
+      return l === 'en' ? `It was ${spokenNote(q.target, nm, l)}. Your note, then this one.` : `זה היה ${spokenNote(q.target, nm, l)}. הצליל שלכם, ואז הזה.`;
     case 'slash':
       return l === 'en' ? `It was ${displayNote(q.key, nm, l)}/${displayNote(q.bass, nm, l)}: ${spokenNote(q.bass, nm, l)} in the bass.` : `זה היה ${displayNote(q.key, nm, l)}/${displayNote(q.bass, nm, l)}: ${spokenNote(q.bass, nm, l)} בבס.`;
     case 'tf':
@@ -734,6 +750,8 @@ export function choiceLabel(_q: Question, a: Answer, l: Lang, nm: Naming = 'lett
 export function askTemplate(q: Question, l: Lang, nm: Naming = 'letter'): string {
   if (q.kind === 'degree-seq' && q.bassLine) return l === 'en' ? 'Which bass notes, as degrees of {k} major?' : 'אילו צלילי בס, כדרגות ב־{k} מז׳ור?';
   switch (q.kind) {
+    case 'abs-note':
+      return l === 'en' ? 'Which note is this? (no reference)' : 'איזה צליל זה? (בלי ייחוס)';
     case 'slash':
       return l === 'en' ? '{k} major — which note is in the bass?' : '{k} מז׳ור — איזה צליל בבס?';
     case 'tf':
@@ -802,6 +820,8 @@ export function hintText(q: Question, l: Lang, voice: boolean): string {
 export function questionBadge(q: Question, l: Lang, nm: Naming): { key?: PitchClass; text: string } {
   const major = l === 'en' ? 'major' : "מז'ור";
   switch (q.kind) {
+    case 'abs-note':
+      return { text: l === 'en' ? 'Absolute pitch' : 'שמיעה מוחלטת' };
     case 'slash':
       return { text: `${displayNote(q.key, nm, l)} ${l === 'en' ? 'major / bass' : 'מז׳ור / בס'}` };
     case 'tf':

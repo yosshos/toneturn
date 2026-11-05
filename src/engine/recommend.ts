@@ -34,6 +34,7 @@ export type Recommendation =
   | { kind: 'puzzle' }
   | { kind: 'runs-workshop' }
   | { kind: 'vocal' }
+  | { kind: 'absolute' }
   | { kind: 'modes'; level: number }
   | { kind: 'rhythm-game' };
 
@@ -44,6 +45,7 @@ export type Recommendation =
 export function recommendFor(skill: SkillId, ratings: Ratings, mastered: (id: LessonId) => boolean): Recommendation {
   if (skill === 'rhythm' || skill === 'timing') return { kind: 'rhythm-game' };
   if (skill === 'technique') return { kind: 'vocal' };
+  if (skill === 'absolute') return { kind: 'absolute' };
   if (skill === 'modes') return { kind: 'modes', level: modesLevelFor(ratings.modes?.n ? ratings.modes.r : null) };
   const ladder = SKILL_LADDER[skill];
   const r = ratings[skill];

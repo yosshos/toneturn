@@ -21,7 +21,7 @@ export const BAND_MAX = 1600;
 
 /** Skill Map axis order: listening skills, then performance/memory pairs (pitch: in tune + memory; rhythm: memory + precision). */
 /** Grouped as in spec G.8: listening → performance → memory → precision. */
-export const SKILLS: SkillId[] = ['degrees', 'notes', 'intervals', 'chords', 'cadences', 'modes', 'rhythm-dictation', 'singing', 'rhythm-reading', 'sequences', 'agility', 'technique', 'rhythm', 'timing'];
+export const SKILLS: SkillId[] = ['degrees', 'notes', 'intervals', 'chords', 'cadences', 'modes', 'absolute', 'rhythm-dictation', 'singing', 'rhythm-reading', 'sequences', 'agility', 'technique', 'rhythm', 'timing'];
 /** Axes on the Skill Map that have no content yet — always shown as unmeasured. */
 export const PLANNED_SKILLS = [] as const;
 
@@ -136,7 +136,7 @@ export const nextLevel = (level: number, correct: boolean, max = 2) => Math.max(
 // ======================================================================= overall rating (spec L)
 
 /** Importance per skill in the overall rating; game-only axes count half. */
-export const OVERALL_WEIGHT: Partial<Record<SkillId, number>> = { rhythm: 0.5, timing: 0.5 };
+export const OVERALL_WEIGHT: Partial<Record<SkillId, number>> = { rhythm: 0.5, timing: 0.5, absolute: 0 };
 const CONFIDENT_AT = 12;
 export const OVERALL_PROVISIONAL = { skills: 4, answers: 30 };
 
@@ -159,7 +159,7 @@ export function overallRating(ratings: Ratings): Overall | null {
   let n = 0;
   for (const k of SKILLS) {
     const s = ratings[k];
-    if (!s || s.n === 0) continue;
+    if (!s || s.n === 0 || OVERALL_WEIGHT[k] === 0) continue; // absolute pitch is tracked apart (spec S.11)
     const c = Math.min(1, s.n / CONFIDENT_AT);
     const w = (OVERALL_WEIGHT[k] ?? 1) * c;
     num += w * (START_RATING + c * (s.r - START_RATING));

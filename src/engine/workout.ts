@@ -32,7 +32,7 @@ const hash = (s: string) => {
 
 /** Skills ordered weakest first: unmeasured ones count as weakest (to measure them). */
 export function weakestSkills(ratings: Ratings, voice: boolean): SkillId[] {
-  const usable = SKILLS.filter((k) => voice || !['singing', 'agility', 'technique'].includes(k));
+  const usable = SKILLS.filter((k) => k !== 'absolute' && (voice || !['singing', 'agility', 'technique'].includes(k)));
   return [...usable].sort((a, b) => (ratings[a]?.n ? ratings[a]!.r : 0) - (ratings[b]?.n ? ratings[b]!.r : 0));
 }
 

@@ -203,7 +203,9 @@ function Diagnosis({
               ? t.vocalTitle
               : next?.kind === 'modes'
                 ? t.skillNames.modes
-                : '';
+                : next?.kind === 'absolute'
+                  ? t.skillNames.absolute
+                  : '';
   const planned = PLANNED_SKILLS.includes(axis as never);
   const r = planned ? undefined : ratings[axis as SkillId];
   const ev = planned ? null : evidence(r);
