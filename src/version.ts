@@ -26,7 +26,7 @@ export const CHANGELOG: ChangeEntry[] = [
       'Advanced vibrato, harmony singing (intervals over a held note, missing chord notes, harmony lines), sing-along with songs you know',
       'Spot the wrong note; blues, pentatonic, bebop and more in Modes by ear and in scales to sing',
       'New lessons: slash chords & bass lines, melodic dictation, Jazz 2 (licks & melodic minor)',
-      'Today's workout (5/10/20 min), achievements, weekly leagues, duels with friends, an optional absolute-pitch corner, instrument mode',
+      'Today’s workout (5/10/20 min), achievements, weekly leagues, duels with friends, an optional absolute-pitch corner, instrument mode',
       'Your answer next to the right one in the recap; synonyms understood (#11 = ♭5 = tritone, Δ = maj7 …); the drone is never mistaken for your voice',
     ],
     he: [
