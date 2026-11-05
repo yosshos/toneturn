@@ -1,3 +1,4 @@
+import { fitLessonToRange, fitQuestions } from '../engine/voiceFit';
 import { withAids } from '../engine/aids';
 import type { Ratings } from '../engine/rating';
 import { NoteViews } from './NoteViews';
@@ -48,7 +49,8 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
   const sessionId = useMemo(() => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`, []);
   if (!ctrlRef.current) {
     // Aids (spec M.3): marked per question from the player's current ratings; aided items count as easier.
-    const lesson = withAids(lessonDef ?? makeLesson(lessonId), settings.aids ?? 'auto', ratings ?? {});
+    // Sung questions sit inside the player's range (spec P.0): moved by octaves, or left out when they cannot fit.
+    const lesson = fitLessonToRange(withAids(lessonDef ?? makeLesson(lessonId), settings.aids ?? 'auto', ratings ?? {}), settings.voiceRange);
     let c: LessonController | null = null;
     const adapters = makeAdapters(
       () => c?.getView().question.answer ?? 1,
@@ -94,7 +96,12 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
         onEvent: (e) => {
           if (import.meta.env.DEV) console.debug('[toneturn]', e.type, e.detail ?? '');
         },
-        adapt,
+        adapt: adapt
+          ? (st) => {
+              const qs = adapt(st);
+              return qs && settings.voiceRange ? fitQuestions(qs, settings.voiceRange) : qs;
+            }
+          : undefined,
       },
     );
     ctrlRef.current = c;

@@ -89,10 +89,12 @@ export interface SingOptions {
   hopMs?: number;
   onCapturing?: () => void;
   onFrame?: (f: SungFrame) => void;
+  /** Also record the take (for "listen back"; kept in memory only). */
+  record?: boolean;
 }
 
 export type SingCaptureResult =
-  | { kind: 'frames'; frames: SungFrame[] }
+  | { kind: 'frames'; frames: SungFrame[]; audio?: Blob }
   | { kind: 'silence' }
   | { kind: 'aborted' }
   | { kind: 'error'; error: AccessError };

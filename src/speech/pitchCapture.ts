@@ -6,7 +6,7 @@ import { yin } from '../engine/yin';
 import { openCapture, stopStream } from './mic';
 
 export class BrowserPitchCapture implements PitchCapture {
-  async sing({ signal, maxMs = 4500, silenceMs = 4000, endSilenceMs, hopMs, onCapturing, onFrame }: SingOptions): Promise<SingCaptureResult> {
+  async sing({ signal, maxMs = 4500, silenceMs = 4000, endSilenceMs, hopMs, onCapturing, onFrame, record }: SingOptions): Promise<SingCaptureResult> {
     if (signal.aborted) return { kind: 'aborted' };
     const r = await openCapture({ echoCancellation: false, noiseSuppression: false, autoGainControl: false });
     if (!r.ok) return { kind: 'error', error: r.error };
@@ -21,6 +21,17 @@ export class BrowserPitchCapture implements PitchCapture {
     src.connect(an);
     const buf = new Float32Array(an.fftSize);
     const frames: SungFrame[] = [];
+    const chunks: Blob[] = [];
+    let rec: MediaRecorder | null = null;
+    if (record && typeof MediaRecorder !== 'undefined') {
+      try {
+        rec = new MediaRecorder(r.stream);
+        rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
+        rec.start();
+      } catch {
+        rec = null;
+      }
+    }
     const t0 = performance.now();
     onCapturing?.();
 
@@ -30,9 +41,15 @@ export class BrowserPitchCapture implements PitchCapture {
       const finish = (res: SingCaptureResult) => {
         clearInterval(timer);
         signal.removeEventListener('abort', onAbort);
-        stopStream(r.stream);
-        void ctx.close();
-        resolve(res);
+        const done = () => {
+          stopStream(r.stream);
+          void ctx.close();
+          resolve(res.kind === 'frames' && chunks.length ? { ...res, audio: new Blob(chunks, { type: chunks[0].type }) } : res);
+        };
+        if (rec && rec.state !== 'inactive') {
+          rec.onstop = done;
+          rec.stop();
+        } else done();
       };
       const onAbort = () => finish({ kind: 'aborted' });
       signal.addEventListener('abort', onAbort, { once: true });

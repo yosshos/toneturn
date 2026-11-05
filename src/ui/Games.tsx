@@ -216,6 +216,7 @@ export function GameScreen({
         naming: namingFor(settings.naming, settings.outputLang),
         bpm: setup.bpm,
         latencyMs: settings.tapLatencyMs,
+        voiceRange: settings.voiceRange,
       },
       makeGameAdapters(),
       {

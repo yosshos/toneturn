@@ -35,6 +35,7 @@ interface Props {
   onOnline: () => void;
   onGhost: () => void;
   onTrueFalse: () => void;
+  onVocal: (warmup: boolean) => void;
   onPlacement: () => void;
   onSkills: () => void;
   playerName: string | null;
@@ -77,7 +78,7 @@ export function starsFor(best: number, total: number) {
 
 const TOTALS: Partial<Record<LessonId, number>> = { 'bflat-two-homes': 3, 'degrees-135': 5, 'major-minor': 5, cadences: 4, 'sing-home-five': 3, intervals: 6, inversions: 5, 'notes-degrees': 6, 'sing-names': 4, 'sing-degrees': 3, 'rhythm-r1': 5, 'rhythm-r2': 5, 'rhythm-r3': 5, runs: 5, 'rhythm-r4': 5, 'rhythm-r5': 5, 'rhythm-r6': 5, 'rhythm-r7': 5, 'rhythm-r8': 5, 'note-sequences': 5, 'jazz-1': 5, songs: 5 };
 
-export function Home({ t, settings, progress, streak, onStreak, account, onPractice, onButtonsInstead, onMode, onGame, onDuel, onOnline, onGhost, onTrueFalse, onPlacement, onSkills, playerName, onMenu, news, tools }: Props) {
+export function Home({ t, settings, progress, streak, onStreak, account, onPractice, onButtonsInstead, onMode, onGame, onDuel, onOnline, onGhost, onTrueFalse, onVocal, onPlacement, onSkills, playerName, onMenu, news, tools }: Props) {
   const [consentFor, setConsentFor] = useState<LessonId | null>(null);
   const lang = settings.uiLang;
   const nm = namingFor(settings.naming, lang);
@@ -173,6 +174,25 @@ export function Home({ t, settings, progress, streak, onStreak, account, onPract
       </section>
 
       <TopicBars t={t} progress={progress} />
+
+      <section className="vocal-strip" aria-label={t.vocalTitle}>
+        <div className="vocal-strip-text">
+          <h2>🎤 {t.vocalTitle}</h2>
+          <p>{t.vocalBlurb}</p>
+        </div>
+        <div className="vocal-strip-actions">
+          <button className="btn" onClick={() => onVocal(false)}>
+            {(() => {
+              const passed = progress.vocal?.passed ?? [];
+              const lv = Math.min(10, (passed.length ? Math.max(...passed) : 0) + 1);
+              return `${t.vocalLevel.replace('{n}', String(lv))} · ${t.vocalLevelNames[lv - 1]}`;
+            })()}
+          </button>
+          <button className="btn ghost small" onClick={() => onVocal(true)}>
+            ☀️ {t.vocalWarmup}
+          </button>
+        </div>
+      </section>
 
       <section className="path" aria-label={t.lessonPath}>
         <h2>{t.lessonPath}</h2>

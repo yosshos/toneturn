@@ -24,10 +24,17 @@ export interface MelodyGame {
 const MELODY_KEYS = ['C', 'D', 'Eb', 'F', 'G'].map(pc);
 
 /** Pads for a key: degrees 1, 2, 3, 5 placed in a singable register (tonic 55–66). */
-export function melodyGame(seed: number, degrees = [1, 2, 3, 5]): MelodyGame {
+export function melodyGame(seed: number, degrees = [1, 2, 3, 5], range?: { low: number; high: number } | null): MelodyGame {
   const rnd = mulberry32(seed);
   const key = MELODY_KEYS[Math.floor(rnd() * MELODY_KEYS.length)];
-  const tonic = placeInRange(pcValue(key), 55, 66);
+  let tonic = placeInRange(pcValue(key), 55, 66);
+  if (range) {
+    // Sung pads sit inside the player's range (spec P.0): the octave of the tonic whose pads fit, nearest the centre.
+    const top = Math.max(...degrees.map((d) => [0, 2, 4, 5, 7, 9, 11][d - 1]));
+    const fits = [-24, -12, 0, 12, 24].map((s) => tonic + s).filter((tn) => tn >= range.low && tn + top <= range.high);
+    const centre = (range.low + range.high - top) / 2;
+    if (fits.length) tonic = fits.reduce((a, b) => (Math.abs(b - centre) < Math.abs(a - centre) ? b : a));
+  }
   const scale = majorScale(key);
   const steps = [0, 2, 4, 5, 7, 9, 11];
   return {

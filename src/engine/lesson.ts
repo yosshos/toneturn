@@ -23,7 +23,8 @@ export type SkillId =
   | 'intervals'
   | 'rhythm-reading'
   | 'rhythm-dictation'
-  | 'agility';
+  | 'agility'
+  | 'technique';
 export type IntervalName = 'M3' | 'P5' | 'P8';
 export type BassRole = 'root' | 'third' | 'fifth';
 export type Quality = 'maj' | 'min' | 'dim' | 'aug';

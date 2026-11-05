@@ -4,6 +4,7 @@ import './styles.css';
 import './games.css';
 import './menu.css';
 import './features.css';
+import './vocal.css';
 import './tournament.css';
 import { App } from './ui/App';
 import { initPwa } from './pwa';

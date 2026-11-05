@@ -1,6 +1,7 @@
 // Local progress + settings. XP and completion writes are idempotent by event id,
 // so a repeated callback or an app resume can never award points twice.
 
+import type { MetricKey, VibratoStyle, VoiceRange } from '../engine/vocal';
 import type { AidMode, NoteView } from '../engine/aids';
 import { gemsEarned, gemsSpent, streakState, type Purchase, type StreakState } from '../engine/streak';
 import { placementUnlocks } from '../engine/recommend';
@@ -57,6 +58,25 @@ export interface Progress {
   tfBest?: Record<string, number>;
   /** Ghost race: your best run per set ("kind:rounds"), replayed as an opponent. */
   ghosts?: Record<string, GhostRun>;
+  /** Vocal technique (spec P): best score per item, passed levels and a short per-metric history (local only). */
+  vocal?: VocalProgress;
+}
+
+export interface VocalTake {
+  at: string;
+  item: string;
+  level: number;
+  score: number;
+  /** Raw metric values of the take (for the per-metric trends). */
+  m: Partial<Record<MetricKey, number>>;
+}
+
+export interface VocalProgress {
+  best: Record<string, number>;
+  passed: number[];
+  takes: VocalTake[];
+  /** Range map: latest score per range note (MIDI → 0..1). */
+  rangeMap?: Record<string, number>;
 }
 
 export interface GhostRun {
@@ -114,6 +134,10 @@ export interface Settings {
   noteViews?: NoteView[];
   /** Visual aids while answering (spec M.3). Default auto. */
   aids?: AidMode;
+  /** Comfortable singing range (spec P.0); null = not calibrated (a conservative default is used). */
+  voiceRange?: VoiceRange | null;
+  /** Vibrato target style (spec P.1). */
+  vibratoStyle?: VibratoStyle;
 }
 
 export const SETTINGS_VERSION = 2;
@@ -422,6 +446,23 @@ export class ProgressStore {
     next.snapshots = snapshot(next, now);
     await this.kv.set('progress', next);
     return { progress: next, best: score > prevBest };
+  }
+
+  /**
+   * Vocal technique session (spec P): the result (XP, streak, Vocal technique ratings) plus the local
+   * per-item bests, passed level and per-metric history. Idempotent per session id.
+   */
+  async recordVocal(r: LessonResult, takes: VocalTake[], opts: { passedLevel?: number | null; rangeMap?: Record<string, number> } = {}, now = new Date()): Promise<Progress> {
+    const p = await this.loadProgress();
+    if (p.applied.includes(`complete:${r.sessionId}`)) return p;
+    const next = applyResult(p, r, now);
+    const v: VocalProgress = next.vocal ?? { best: {}, passed: [], takes: [] };
+    const best = { ...v.best };
+    for (const t of takes) best[t.item] = Math.max(best[t.item] ?? 0, t.score);
+    const passed = opts.passedLevel && !v.passed.includes(opts.passedLevel) ? [...v.passed, opts.passedLevel].sort((a, b) => a - b) : v.passed;
+    next.vocal = { best, passed, takes: [...v.takes, ...takes].slice(-400), rangeMap: opts.rangeMap ? { ...(v.rangeMap ?? {}), ...opts.rangeMap } : v.rangeMap };
+    await this.kv.set('progress', next);
+    return next;
   }
 
   /** Mark a day's result as uploaded to the leaderboard. */

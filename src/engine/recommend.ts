@@ -32,6 +32,7 @@ export type Recommendation =
   | { kind: 'lesson'; lessonId: LessonId }
   | { kind: 'puzzle' }
   | { kind: 'runs-workshop' }
+  | { kind: 'vocal' }
   | { kind: 'rhythm-game' };
 
 /**
@@ -40,6 +41,7 @@ export type Recommendation =
  */
 export function recommendFor(skill: SkillId, ratings: Ratings, mastered: (id: LessonId) => boolean): Recommendation {
   if (skill === 'rhythm' || skill === 'timing') return { kind: 'rhythm-game' };
+  if (skill === 'technique') return { kind: 'vocal' };
   const ladder = SKILL_LADDER[skill];
   const r = ratings[skill];
   const rating = r && r.n > 0 ? r.r : null;

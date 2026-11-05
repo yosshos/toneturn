@@ -44,6 +44,8 @@ export interface GameConfig {
   bpm?: number;
   /** Extra latency correction for tap timing, ms (positive = player hears late). */
   latencyMs?: number;
+  /** Comfortable singing range: sung melodies stay inside it (spec P.0). */
+  voiceRange?: { low: number; high: number } | null;
 }
 
 export interface GameAdapters {
@@ -144,7 +146,7 @@ export class MemoryGameController {
     private ad: GameAdapters,
     private hooks: { onOver?: (m: Match, kind: GameKind, rounds: RoundStat[]) => void } = {},
   ) {
-    const melody = cfg.kind === 'melody' ? melodyGame(cfg.seed) : null;
+    const melody = cfg.kind === 'melody' ? melodyGame(cfg.seed, undefined, cfg.input === 'sing' ? cfg.voiceRange : null) : null;
     this.view = {
       stage: 'ready',
       match: newMatch(cfg.players, START_LENGTH[cfg.kind]),
@@ -230,7 +232,7 @@ export class MemoryGameController {
     this.rounds = [];
     this.patch({
       match: newMatch(this.cfg.players, START_LENGTH[this.cfg.kind]),
-      melody: this.cfg.kind === 'melody' ? melodyGame(this.cfg.seed) : null,
+      melody: this.cfg.kind === 'melody' ? melodyGame(this.cfg.seed, undefined, this.cfg.input === 'sing' ? this.cfg.voiceRange : null) : null,
       result: null,
       stage: 'ready',
     });

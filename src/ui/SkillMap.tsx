@@ -199,7 +199,9 @@ function Diagnosis({
           ? t.runsWorkshop
           : next?.kind === 'rhythm-game'
             ? t.beatEcho
-            : '';
+            : next?.kind === 'vocal'
+              ? t.vocalTitle
+              : '';
   const planned = PLANNED_SKILLS.includes(axis as never);
   const r = planned ? undefined : ratings[axis as SkillId];
   const ev = planned ? null : evidence(r);

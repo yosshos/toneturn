@@ -18,6 +18,7 @@ import { LessonScreen } from './Lesson';
 import { SettingsScreen } from './SettingsScreen';
 import { Diagnostics } from './Diagnostics';
 import { GameScreen, GameSetup, type GameSetupValue } from './Games';
+import { VocalScreen } from './Vocal';
 import { DailyScreen, DuelScreen, DuelSetup, GhostScreen } from './Tournament';
 import { OnlineScreen, PENDING_ONLINE_KEY } from './Online';
 import { DroneScreen } from './Drone';
@@ -34,17 +35,18 @@ import { pwa } from '../pwa';
 import { piano, setMidiEnabled, SIMULATED, store, tts } from './services';
 import { midi } from '../speech/midi';
 
-type Route = 'home' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse';
+type Route = 'home' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal';
 /** Invite links: #/online/CODE */
 const onlineCodeFromHash = () => (/^#\/?online\/(\w+)/.exec(location.hash)?.[1] ?? '');
 const routeFromHash = (): Route => {
   const h = location.hash.replace(/^#\/?/, '').replace(/^online\/.*$/, 'online');
-  return (['settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
+  return (['settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
 };
 
 export function App() {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [progress, setProgress] = useState<Progress>(emptyProgress());
+  const [vocalWarmup, setVocalWarmup] = useState(false);
   const [route, setRoute] = useState<Route>(routeFromHash());
   const [lessonKey, setLessonKey] = useState(0);
   const [lessonId, setLessonId] = useState<LessonId>('bflat-two-homes');
@@ -240,6 +242,10 @@ export function App() {
     const rec = recommendFor(k, ratingsOf(progress), (id) => lessonMastered(progress, id));
     if (rec.kind === 'puzzle') return openPuzzle();
     if (rec.kind === 'runs-workshop') return openRuns();
+    if (rec.kind === 'vocal') {
+      setVocalWarmup(false);
+      return go('vocal');
+    }
     if (rec.kind === 'rhythm-game') {
       setGameKind('rhythm');
       return go('games');
@@ -306,6 +312,10 @@ export function App() {
           onDuel={() => go('duel')}
           onGhost={() => go('ghost')}
           onTrueFalse={() => go('truefalse')}
+          onVocal={(warm) => {
+            setVocalWarmup(warm);
+            go('vocal');
+          }}
           onPlacement={openPlacement}
           onSkills={() => go('skills')}
           playerName={user?.name ? user.name.split(' ')[0] : null}
@@ -428,6 +438,19 @@ export function App() {
         <StreakSheet t={t} st={gems.streak} gems={gems.balance} today={localDay(new Date())} lang={s.uiLang} onBuy={buy} onClose={() => setStreakOpen(false)} />
       )}
       {route === 'drone' && <DroneScreen t={t} settings={s} onBack={() => go('home')} />}
+      {route === 'vocal' && (
+        <VocalScreen
+          key={vocalWarmup ? 'warmup' : 'home'}
+          t={t}
+          settings={s}
+          progress={progress}
+          onSettings={updateSettings}
+          onProgress={setProgress}
+          onBack={() => go('home')}
+          onRuns={openRuns}
+          startWarmup={vocalWarmup}
+        />
+      )}
       {route === 'online' && (
         <OnlineScreen key={`${onlineKey}-${user?.id ?? ''}`} t={t} settings={s} user={user} initialCode={onlineCode} onBack={() => go('home')} />
       )}

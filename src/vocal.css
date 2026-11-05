@@ -1,0 +1,310 @@
+/* Vocal technique (spec P) */
+.vocal-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin: 16px 0;
+  padding: 16px 18px;
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, rgba(75, 227, 181, 0.16), rgba(169, 139, 255, 0.18));
+  border: 1px solid var(--line);
+}
+.vocal-strip h2 {
+  margin: 0 0 4px;
+  font-size: 1.15rem;
+}
+.vocal-strip p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}
+.vocal-strip-text {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+.vocal-strip-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.care-note {
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(169, 139, 255, 0.12);
+  color: var(--ink-soft);
+  font-size: 0.88rem;
+}
+.range-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 8px 0;
+}
+.range-row label {
+  display: grid;
+  gap: 4px;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+.range-row select {
+  min-width: 96px;
+}
+.warmup-card {
+  width: 100%;
+  margin: 12px 0;
+}
+.vocal-levels {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0;
+  display: grid;
+  gap: 8px;
+}
+.vocal-level {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  text-align: start;
+  cursor: pointer;
+}
+.vocal-level.passed {
+  border-color: var(--mint);
+}
+.vocal-level.locked {
+  opacity: 0.55;
+  cursor: default;
+}
+.vocal-level .lv-num {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  background: var(--card-2);
+}
+.vocal-level.passed .lv-num {
+  background: var(--mint);
+  color: var(--bg);
+}
+.vocal-level .lv-text {
+  display: grid;
+  min-width: 0;
+}
+.vocal-level small {
+  color: var(--ink-dim);
+}
+.vocal-instr {
+  font-size: 1.05rem;
+  margin: 4px 0 6px;
+}
+.vocal-targets {
+  margin: 0 0 8px;
+  font-weight: 800;
+  font-size: 1.3rem;
+  color: var(--gold);
+  text-align: center;
+}
+.pitch-trace {
+  margin: 8px 0;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+.pitch-trace svg {
+  display: block;
+  width: 100%;
+  height: 150px;
+}
+.trace-band {
+  fill: rgba(75, 227, 181, 0.16);
+}
+.trace-target {
+  stroke: var(--mint);
+  stroke-width: 1;
+  stroke-dasharray: 4 4;
+  vector-effect: non-scaling-stroke;
+}
+.trace-line {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+.hold-meter {
+  position: relative;
+  height: 22px;
+  border-radius: 11px;
+  background: var(--card-2);
+  overflow: hidden;
+}
+.hold-meter span {
+  display: block;
+  height: 100%;
+  background: var(--mint);
+  transition: width 0.1s linear;
+}
+.hold-meter small {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.vocal-cue {
+  text-align: center;
+  font-weight: 800;
+  font-size: 1.2rem;
+  margin: 8px 0;
+  color: var(--ink-soft);
+}
+.vocal-cue.vib {
+  color: var(--gold);
+  animation: cue-pulse 0.35s ease-out;
+}
+@keyframes cue-pulse {
+  from {
+    transform: scale(1.25);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vocal-cue.vib {
+    animation: none;
+  }
+}
+.take-card {
+  margin: 10px 0;
+  padding: 14px;
+  border-radius: 16px;
+  background: var(--card);
+  border: 1px solid var(--line);
+}
+.take-score {
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+}
+.take-tip {
+  margin: 10px 0 0;
+  color: var(--ink-soft);
+}
+.metric-bars,
+.range-map,
+.vocal-trends {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+.metric-bars li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px 8px;
+  align-items: center;
+}
+.metric-bars .metric-bar {
+  grid-column: 1 / -1;
+}
+.metric-bar {
+  display: block;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--card-2);
+  overflow: hidden;
+}
+.metric-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: var(--mint);
+}
+.fair .metric-bar > span {
+  background: var(--gold);
+}
+.weak .metric-bar > span {
+  background: var(--coral);
+}
+.metric-val {
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+}
+.range-map li,
+.vocal-trends li {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) 48px;
+  gap: 8px;
+  align-items: center;
+  font-size: 0.88rem;
+}
+.vocal-trends li {
+  grid-template-columns: minmax(0, 7em) minmax(0, 1fr) 48px;
+}
+.sparkline {
+  width: 100%;
+  height: 28px;
+}
+.sparkline polyline {
+  fill: none;
+  stroke: var(--lilac);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+.listen-back {
+  display: grid;
+  gap: 4px;
+  margin-top: 10px;
+  font-size: 0.85rem;
+}
+.listen-back audio {
+  width: 100%;
+}
+.vocal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+.vocal-actions .btn.mega {
+  flex: 1 1 200px;
+}
+.range-now {
+  text-align: center;
+  font-size: 2.6rem;
+  font-weight: 800;
+  margin: 12px 0;
+}
+.range-result {
+  text-align: center;
+  font-weight: 700;
+}
+.vocal-summary {
+  text-align: center;
+  margin: 24px 0;
+}
+.big-score {
+  font-size: 3.4rem;
+  font-weight: 800;
+  color: var(--gold);
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
