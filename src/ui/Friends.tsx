@@ -1,3 +1,5 @@
+import { DuelsSection, LeagueCard } from './Compete';
+import type { Settings } from '../storage/progress';
 import { RatingBadge } from './Rating';
 import { useCallback, useEffect, useState } from 'react';
 import { addFriend, listFriends, myProfile, removeFriend, respondFriend, weeklyBoard, type FriendRow, type MyProfile } from '../cloud/social';
@@ -5,7 +7,8 @@ import type { CloudUser } from '../cloud/cloud';
 import type { Strings } from '../i18n/strings';
 import { AccountCard, type SyncState } from './Account';
 
-export function FriendsScreen({ t, user, sync, onBack }: { t: Strings; user: CloudUser | null; sync: SyncState; onBack: () => void }) {
+export function FriendsScreen({ t, user, sync, onBack, settings }: { t: Strings; user: CloudUser | null; sync: SyncState; onBack: () => void; settings: Settings }) {
+  const [duelPlaying, setDuelPlaying] = useState(false);
   const [me, setMe] = useState<MyProfile | null>(null);
   const [rows, setRows] = useState<FriendRow[]>([]);
   const [code, setCode] = useState('');
@@ -133,7 +136,16 @@ export function FriendsScreen({ t, user, sync, onBack }: { t: Strings; user: Clo
             {msg && <p className="field-hint">{msg}</p>}
           </section>
 
-          {incoming.length > 0 && (
+          {user && <LeagueCard t={t} lang={settings.uiLang} />}
+          {user && (
+            <DuelsSection
+              t={t}
+              settings={settings}
+              friends={rows.filter((r) => r.relation === 'friend').map((r) => ({ id: r.user_id, name: r.name }))}
+              onPlaying={setDuelPlaying}
+            />
+          )}
+          {!duelPlaying && incoming.length > 0 && (
             <section className="set-card">
               <h2>📨 {t.requests}</h2>
               <ul className="req-list">

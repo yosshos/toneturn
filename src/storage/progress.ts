@@ -2,6 +2,7 @@
 // so a repeated callback or an app resume can never award points twice.
 
 import type { MetricKey, VibratoStyle, VoiceRange } from '../engine/vocal';
+import { memoryFactor } from '../engine/vocal';
 import type { AidMode, NoteView } from '../engine/aids';
 import { gemsEarned, gemsSpent, streakState, type Purchase, type StreakState } from '../engine/streak';
 import { placementUnlocks } from '../engine/recommend';
@@ -287,6 +288,19 @@ export function resultFromSession(s: SessionState, sessionId: string, now: Date)
         timeMs: o.attempts[k - 1]?.timeMs ?? null,
       };
     })
+    // Sung passages from memory also measure melodic memory (spec P.9): the right notes, less for every
+    // extra listen to the reference (replays).
+    .concat(
+      s.records
+        .map((r, i) => ({ r, q: s.lesson.questions[i] }))
+        .filter(({ r, q }) => (q.kind === 'sing-seq' || q.kind === 'sing-run') && r.attempts.length > 0)
+        .map(({ r, q }) => {
+          const o = outcomeOf(r, s.timed ?? false);
+          const acc = Math.max(0, ...o.attempts.map((a) => a.accuracy));
+          const score = Math.round(acc * memoryFactor(o.replays) * 1000) / 1000;
+          return { id: `${sessionId}:${q.id}:mem`, skill: 'sequences' as const, difficulty: q.difficulty, correct: score >= 0.6, tag: questionTag(q), score, timeMs: null };
+        }),
+    )
     // Rhythm reading also measures rhythmic precision (spec G.1), on attempts whose pattern was right.
     .concat(
       s.records

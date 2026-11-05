@@ -1,3 +1,4 @@
+import { LevelStatsLine } from './LevelStats';
 import { RatingBadge } from './Rating';
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { dailyBoard, submitDaily, type DailyBoard } from '../cloud/daily';
@@ -128,6 +129,7 @@ export function DailyScreen({
         )}
       </section>
       <DailyBoardCard t={t} board={board} signedIn={!!user} error={boardErr} lang={settings.uiLang} />
+      {user && <LevelStatsLine t={t} kind="daily" day={day} />}
     </main>
   );
 }
@@ -364,7 +366,7 @@ export function GhostScreen({ t, settings, progress, onBack, onProgress }: { t: 
 
 // ======================================================================= Play (1 or 2 players)
 
-function TournamentPlay({
+export function TournamentPlay({
   t,
   settings,
   items,

@@ -401,7 +401,7 @@ export function App() {
         <SettingsScreen t={t} settings={s} onChange={updateSettings} onBack={() => go('home')} account={<AccountCard t={t} user={user} sync={sync} />} />
       )}
       {route === 'diagnostics' && <Diagnostics t={t} settings={s} onBack={() => go('home')} />}
-      {route === 'friends' && <FriendsScreen t={t} user={user} sync={sync} onBack={() => go('home')} />}
+      {route === 'friends' && <FriendsScreen settings={s} t={t} user={user} sync={sync} onBack={() => go('home')} />}
       {route === 'skills' && <SkillMap t={t} lang={s.uiLang} progress={progress} onBack={() => go('home')} onPractice={practiceSkill} onPlacement={openPlacement} />}
       {consentThen && (
         <div className="sheet-backdrop" onClick={() => setConsentThen(null)}>

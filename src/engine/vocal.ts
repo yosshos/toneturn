@@ -503,7 +503,8 @@ export type MetricKey =
   | 'vibratoJitter'
   | 'vibratoShimmer'
   | 'vibratoPlacement'
-  | 'vibratoConsistency';
+  | 'vibratoConsistency'
+  | 'references';
 
 export interface MetricScore {
   key: MetricKey;
@@ -717,12 +718,14 @@ const H = (kind: 'harmony-hold' | 'harmony-line', extra: Partial<VocalItem>, dif
   ...extra,
 });
 export const HARMONY_LEVELS: VocalLevel[] = [
-  L(1, 0.6, [H('harmony-hold', { accompany: [-4, 3] }, 1100), H('harmony-hold', { accompany: [-3, 4] }, 1150), H('harmony-hold', { accompany: [-4, 3], at: 0.6 }, 1150)]),
-  L(2, 0.6, [H('harmony-hold', { accompany: [-7, -3] }, 1200), H('harmony-hold', { accompany: [4, 7], at: 0.3 }, 1250), H('harmony-hold', { accompany: [-10, -6, -3] }, 1300)]),
+  // Intervals over one held note: the app holds a note, the player sings the interval above (or below) it.
+  L(1, 0.6, [H('harmony-hold', { accompany: [-7] }, 1050), H('harmony-hold', { accompany: [-4] }, 1100), H('harmony-hold', { accompany: [-3] }, 1100), H('harmony-hold', { accompany: [-9] }, 1150), H('harmony-hold', { accompany: [5], at: 0.35 }, 1150)]),
+  L(2, 0.6, [H('harmony-hold', { accompany: [-4, 3] }, 1100), H('harmony-hold', { accompany: [-3, 4] }, 1150), H('harmony-hold', { accompany: [-4, 3], at: 0.6 }, 1150)]),
+  L(3, 0.6, [H('harmony-hold', { accompany: [-7, -3] }, 1200), H('harmony-hold', { accompany: [4, 7], at: 0.3 }, 1250), H('harmony-hold', { accompany: [-10, -6, -3] }, 1300)]),
   // Melody 1-2-3-2-1 / harmony a third above: 3-4-5-4-3 (major key, base = the tonic).
-  L(3, 0.58, [H('harmony-line', { melody: [0, 2, 4, 2, 0], steps: [4, 5, 7, 5, 4], bpm: 72, perBeat: 1 }, 1300), H('harmony-line', { melody: [0, 4, 7, 4, 0], steps: [4, 7, 11, 7, 4], bpm: 72, perBeat: 1 }, 1350)]),
+  L(4, 0.58, [H('harmony-line', { melody: [0, 2, 4, 2, 0], steps: [4, 5, 7, 5, 4], bpm: 72, perBeat: 1 }, 1300), H('harmony-line', { melody: [0, 4, 7, 4, 0], steps: [4, 7, 11, 7, 4], bpm: 72, perBeat: 1 }, 1350)]),
   // A sixth below / a third below.
-  L(4, 0.56, [H('harmony-line', { melody: [7, 9, 11, 12, 11, 9, 7], steps: [-2, 0, 2, 4, 2, 0, -2], bpm: 76, perBeat: 1 }, 1400), H('harmony-line', { melody: [4, 5, 7, 9, 7, 5, 4], steps: [0, 2, 4, 5, 4, 2, 0], bpm: 80, perBeat: 1 }, 1400)]),
+  L(5, 0.56, [H('harmony-line', { melody: [7, 9, 11, 12, 11, 9, 7], steps: [-2, 0, 2, 4, 2, 0, -2], bpm: 76, perBeat: 1 }, 1400), H('harmony-line', { melody: [4, 5, 7, 9, 7, 5, 4], steps: [0, 2, 4, 5, 4, 2, 0], bpm: 80, perBeat: 1 }, 1400)]),
 ].map((lv) => ({ ...lv, items: lv.items.map((it) => ({ ...it, id: it.id.replace(/^v/, 'h') })) }));
 
 /** What the app plays during a harmony item (MIDI), in the same octave placement as the sung notes. */
@@ -1133,3 +1136,10 @@ export function synthVibratoPhrase(targets: number[], secs: number[], vib: boole
   });
   return out;
 }
+
+/**
+ * Melodic memory and the reference (spec P.9): the first reference is part of the task; every further
+ * request to hear it again costs 15 % of the melodic-memory score (never below 40 %). Pitch quality
+ * (Vocal technique) is not affected.
+ */
+export const memoryFactor = (extraReferences: number) => Math.max(0.4, 1 - 0.15 * Math.max(0, extraReferences));

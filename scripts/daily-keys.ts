@@ -4,7 +4,7 @@
 import { DAILY_VERSION, dailySet } from '../src/engine/tournament';
 
 const from = new Date(Date.UTC(2026, 10, 1));
-const to = new Date(Date.UTC(2028, 11, 31));
+const to = new Date(Date.UTC(2031, 11, 31));
 const rows: string[] = [];
 for (let d = from; d <= to; d = new Date(d.getTime() + 86_400_000)) {
   const day = d.toISOString().slice(0, 10);

@@ -602,3 +602,30 @@
 .sing-notes li.miss {
   background: rgba(255, 106, 77, 0.3);
 }
+.league-board li.zone-up .rank {
+  color: var(--mint);
+}
+.league-board li.zone-down .rank {
+  color: var(--coral);
+}
+.duel-friends,
+.duel-list {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 0;
+  display: grid;
+  gap: 6px;
+}
+.duel-friends li,
+.duel-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: var(--card-2);
+}
+.level-stats {
+  text-align: center;
+}

@@ -29,6 +29,7 @@ import {
   MODE_LEVELS,
   HARMONY_LEVELS,
   itemAccompaniment,
+  memoryFactor,
   scaleTonic,
   VOCAL_TOP_LEVEL,
   type MetricKey,
@@ -136,6 +137,9 @@ function Sparkline({ values }: { values: number[] }) {
 }
 
 const TREND_KEYS: MetricKey[] = ['intonation', 'stability', 'settle', 'duration', 'vibratoRegularity', 'transition', 'timing', 'landing'];
+
+/** Sung passages from memory: scales, melodies, leaps, rhythmic lines (reference requests count, spec P.9). */
+const memoryItem = (it: VocalItem) => ['scale', 'melody', 'leap', 'rhythmic'].includes(it.kind);
 
 /** Items sung as several separate holds (one take per note). */
 const multiNote = (it: VocalItem) => it.kind === 'range' || it.kind === 'vibrato-register';
@@ -565,6 +569,11 @@ function VocalSession({
   const rangeScores = useRef<number[]>([]);
   const ctl = useRef<AbortController | null>(null);
   const stopped = useRef(false);
+  // Reference requests (spec P.9): extra listens cost melodic memory; their sound is cut from the take.
+  const [refs, setRefs] = useState(0);
+  const refsRef = useRef(0);
+  const captureT0 = useRef<number | null>(null);
+  const refWindows = useRef<[number, number][]>([]);
   const sessionId = useMemo(() => `vocal-${level}-${Date.now().toString(36)}`, [level]);
   const item = items[i];
   const targets = useMemo(() => itemTargets(item, range), [item, range]);
@@ -585,6 +594,8 @@ function VocalSession({
     const c = new AbortController();
     ctl.current = c;
     stopped.current = false;
+    refWindows.current = [];
+    captureT0.current = null;
     setGrade(null);
     setFrames([]);
     setOnsetAt(null);
@@ -607,7 +618,8 @@ function VocalSession({
       const startClock = performance.now();
       tick = setInterval(() => setClock((performance.now() - startClock) / 1000), 100);
     };
-    const keep = (f: SungFrame) => {
+    const keep = (raw: SungFrame) => {
+      const f = refWindows.current.some(([a, b]) => raw.t >= a && raw.t <= b) ? { ...raw, hz: null, confidence: 0 } : raw;
       buf.push(f);
       if (onset === null && f.hz && f.confidence >= 0.8) {
         onset = f.t;
@@ -683,6 +695,7 @@ function VocalSession({
       }
       setPhase('singing');
       startTicking();
+      captureT0.current = performance.now();
       if (SIMULATED) {
         const sim = simulatedFrames(item, targets, noteIdx);
         for (const f of sim) keep(f);
@@ -724,6 +737,7 @@ function VocalSession({
       const key = multiNote(item) ? `${item.id}#${noteIdx}` : item.id;
       const m: VocalTake['m'] = {};
       for (const x of g.metrics) if (m[x.key] === undefined) m[x.key] = x.value;
+      if (memoryItem(item)) m.references = refsRef.current;
       const tk: VocalTake = { at: new Date().toISOString(), item: item.id, level: typeof level === 'number' ? level : 0, score: g.score, m };
       if (!best.current[key] || best.current[key].score < g.score) best.current[key] = { score: g.score, take: tk };
     }
@@ -760,7 +774,17 @@ function VocalSession({
       total: perItem.length,
       xp: Math.round(rated.reduce((a, x) => a + x.score, 0) * 10) + (passed ? 10 : 0),
       missed: [],
-      items: rated.map((x) => ({ id: `${sessionId}:${x.it.id}`, skill: 'technique', difficulty: x.it.difficulty, correct: x.score >= 0.6, tag: `vocal:${x.it.id}`, score: x.score })),
+      items: [
+        ...rated.map((x) => ({ id: `${sessionId}:${x.it.id}`, skill: 'technique' as const, difficulty: x.it.difficulty, correct: x.score >= 0.6, tag: `vocal:${x.it.id}`, score: x.score })),
+        // Melodic memory (spec P.9): the right notes, less for every extra listen to the reference.
+        ...rated
+          .filter((x) => memoryItem(x.it) && best.current[x.it.id])
+          .map((x) => {
+            const m = best.current[x.it.id].take.m;
+            const s = Math.round(((m.hit ?? 0) / 100) * memoryFactor(m.references ?? 0) * 1000) / 1000;
+            return { id: `${sessionId}:${x.it.id}:mem`, skill: 'sequences' as const, difficulty: x.it.difficulty, correct: s >= 0.6, tag: `vocal-mem:${x.it.id}`, score: s };
+          }),
+      ],
     };
     const takes = Object.values(best.current).map((b) => b.take);
     const rangeItem = items.find((it) => it.kind === 'range');
@@ -780,6 +804,8 @@ function VocalSession({
       return;
     }
     if (i < items.length - 1) {
+      setRefs(0);
+      refsRef.current = 0;
       setI(i + 1);
       setNoteIdx(0);
       setPhase('ready');
@@ -851,7 +877,9 @@ function VocalSession({
                 n: item.scale.notes ?? '',
               }) + (item.scale.notes ? ` ${fill(t.scaleFirstN, { n: item.scale.notes })}` : '') + (item.scale.hear === 'tonic' ? ` ${t.scaleTonicOnly}` : '');
             })()
-          : fill(t.vocalInstr[item.kind] ?? '', { s: item.seconds, on: item.cueOn ?? 2, off: item.cueOff ?? 5, rate: item.vibRate ?? '', width: item.vibWidth === 'wide' ? t.vocalWide : t.vocalNarrow })}
+          : item.kind === 'harmony-hold' && item.accompany?.length === 1
+            ? fill(item.accompany[0] < 0 ? t.holdIntervalAbove : t.holdIntervalBelow, { iv: t.intervalNames[String(Math.abs(item.accompany[0]))] ?? '' })
+            : fill(t.vocalInstr[item.kind] ?? '', { s: item.seconds, on: item.cueOn ?? 2, off: item.cueOff ?? 5, rate: item.vibRate ?? '', width: item.vibWidth === 'wide' ? t.vocalWide : t.vocalNarrow })}
       </p>
       {item.kind === 'vibrato-notes' && (
         <p className="vib-notes" dir="ltr" aria-label={t.vocalVibMarks}>
@@ -908,6 +936,7 @@ function VocalSession({
               </div>
               <MetricBars t={t} g={grade} />
               {tipKey && <p className="take-tip">💡 {t.vocalTips[tipKey]}</p>}
+              {memoryItem(item) && refs > 0 && <p className="field-hint">🔁 {fill(t.refCost, { n: refs, p: Math.round((1 - memoryFactor(refs)) * 100) })}</p>}
             </>
           )}
           {audioUrl && (
@@ -926,6 +955,24 @@ function VocalSession({
           </button>
         )}
         {phase === 'calibrating' && <p className="vocal-cue">🤫 {t.gateWait}</p>}
+        {memoryItem(item) && phase !== 'calibrating' && (
+          <button
+            className="btn ghost"
+            onClick={() => {
+              const start = shownTargets[0];
+              void piano.play([{ midi: start, start: 0, duration: 1.1, velocity: 0.7 }], 1.3, new AbortController().signal).catch(() => {});
+              if (phase === 'singing' && captureT0.current !== null) {
+                const at = (performance.now() - captureT0.current) / 1000;
+                refWindows.current.push([at - 0.05, at + 1.6]);
+              }
+              refsRef.current += 1;
+              setRefs(refsRef.current);
+            }}
+          >
+            🔁 {t.refAgain}
+            {refs > 0 && ` (${refs})`}
+          </button>
+        )}
         {(phase === 'listening' || phase === 'singing' || phase === 'calibrating') && (
           <button
             className="btn mega ghost"

@@ -246,7 +246,7 @@ describe('harmony singing', () => {
       for (const it of lv.items) {
         const tg = itemTargets(it, range);
         const acc = itemAccompaniment(it, range);
-        expect(acc.length).toBeGreaterThan(1);
+        expect(acc.length).toBeGreaterThanOrEqual(1);
         if (it.kind === 'harmony-hold') {
           const pcs = new Set([...acc, tg[0]].map((m) => ((m % 12) + 12) % 12));
           expect(pcs.size).toBe(acc.length + 1); // the sung note is not already sounding
@@ -276,5 +276,15 @@ describe('sing-along', () => {
       const flat = clean.map((f) => ({ ...f, hz: f.hz * 2 ** (-1 / 12) }));
       expect(gradeSingAlong(flat, notes).total).toBeLessThan(0.2);
     }
+  });
+});
+
+describe('reference requests and melodic memory (P.9)', () => {
+  it('each extra listen costs 15 %, never below 40 %', async () => {
+    const { memoryFactor } = await import('../src/engine/vocal');
+    expect(memoryFactor(0)).toBe(1);
+    expect(memoryFactor(1)).toBeCloseTo(0.85);
+    expect(memoryFactor(2)).toBeCloseTo(0.7);
+    expect(memoryFactor(10)).toBe(0.4);
   });
 });

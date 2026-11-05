@@ -1,3 +1,4 @@
+import { LevelStatsLine } from './LevelStats';
 import { RatingCard } from './Rating';
 import type { RatingChange } from '../engine/rating';
 import { useEffect, useState } from 'react';
@@ -157,6 +158,12 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
           );
         })}
       </ol>
+
+      {s.lesson.id === 'weekly-puzzle' && (() => {
+        const qid = s.lesson.questions[0]?.id ?? '';
+        const cut = qid.lastIndexOf('-');
+        return <LevelStatsLine t={t} kind="puzzle" week={qid.slice(0, cut)} band={qid.slice(cut + 1)} />;
+      })()}
 
       <section className="rec-card">
         <h2>{t.recommendation}</h2>

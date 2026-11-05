@@ -1,3 +1,4 @@
+import { reportPuzzle } from '../cloud/compete';
 import { fitLessonToRange, fitQuestions } from '../engine/voiceFit';
 import { withAids } from '../engine/aids';
 import type { Ratings } from '../engine/rating';
@@ -83,7 +84,12 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
           void (async () => {
             // Rating card (spec L.3): compare ratings before and after this session.
             const before = await store.loadProgress();
-            const after = await store.recordCompletion(resultFromSession(s, sessionId, new Date()));
+            const result = resultFromSession(s, sessionId, new Date());
+            const after = await store.recordCompletion(result);
+            if (result.puzzle && !before.puzzles?.[result.puzzle.week]) {
+              const ms = result.items?.[0]?.timeMs ?? null;
+              void reportPuzzle(result.puzzle.week, result.puzzle.band, result.puzzle.medal === 'gold' || result.puzzle.medal === 'silver' ? result.puzzle.medal : 'none', ms).catch(() => {});
+            }
             setChange({ change: ratingChange(ratingsOf(before), ratingsOf(after)), peakBefore: peakOf(overallHistory(before.ratingEvents ?? [])) });
             // Streak screen (spec N.2): the first qualifying session of the day.
             const purchases = settings.purchases ?? [];
