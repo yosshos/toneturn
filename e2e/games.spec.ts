@@ -67,7 +67,7 @@ test.describe('memory games', () => {
 
   test('Echo Chain, two players on one device: named turns and a winner', async ({ page }) => {
     await page.goto('/#/games');
-    await page.getByRole('radio', { name: '2' }).click();
+    await page.getByRole('radio', { name: '2', exact: true }).click();
     await page.getByLabel('Player 1').fill('Dana');
     await page.getByLabel('Player 2').fill('Omer');
     await page.getByRole('button', { name: /Play/ }).click();
