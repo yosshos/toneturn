@@ -1,6 +1,7 @@
 // Versioned lesson content. Prompts, stimulus, scoring policy and explanations are kept separate.
 // Pure: no browser APIs. Text for narration / UI lives in src/game/content.ts.
 
+import { MODE_FAMILY, MODE_STEPS, modeDistance, type ModeId } from './modes';
 import { jazzVoicing, PROGRESSIONS, SEVENTHS, voiceProgression, type JazzChord, type ProgressionId, type SeventhQuality } from './jazz';
 import { opening, SONGS, type SongOpening } from './songs';
 import { atTempo, buildRun, MAX_RUN_LEVEL, runAt, runDifficulty, type RunMaterial, type RunShape, type RunSpec } from './runs';
@@ -24,7 +25,8 @@ export type SkillId =
   | 'rhythm-reading'
   | 'rhythm-dictation'
   | 'agility'
-  | 'technique';
+  | 'technique'
+  | 'modes';
 export type IntervalName = 'M3' | 'P5' | 'P8';
 export type BassRole = 'root' | 'third' | 'fifth';
 export type Quality = 'maj' | 'min' | 'dim' | 'aug';
@@ -187,6 +189,20 @@ export interface RunIdQuestion extends QBase {
   answer: string;
 }
 
+/** Hear a scale from a tonic and name its mode (major, melodic-minor and harmonic-minor modes, symmetric scales). */
+export interface ModeIdQuestion extends QBase {
+  kind: 'mode-id';
+  key: PitchClass;
+  mode: ModeId;
+  midis: number[];
+  /** Up only, or up and back down. */
+  dir: 'up' | 'updown';
+  /** Seconds per note. */
+  each: number;
+  answer: ModeId;
+  choices: ModeId[];
+}
+
 /** Name a sequence of notes: heard after the key (#2) or converted from degrees (#6). Answer "B-1.F0". */
 export interface NameSeqQuestion extends QBase {
   kind: 'name-seq';
@@ -213,6 +229,7 @@ export interface ProgressionQuestion extends QBase {
 }
 
 export type Question =
+  | ModeIdQuestion
   | SeventhQuestion
   | ProgressionQuestion
   | NameSeqQuestion
@@ -267,6 +284,8 @@ export function questionSkill(q: Question): SkillId {
     case 'sing-run':
     case 'run-id':
       return 'agility';
+    case 'mode-id':
+      return 'modes';
     case 'name-seq':
       return q.given === 'sound' ? 'notes' : 'degrees';
     case 'seventh':
@@ -332,6 +351,7 @@ export type LessonId =
   | 'jazz-1'
   | 'songs'
   | 'runs-workshop'
+  | 'modes'
   | 'placement'
   | 'review'
   | 'weekly-puzzle';
@@ -1155,6 +1175,8 @@ export const LESSON_ORDER: LessonId[] = [
 
 export function makeLesson(id: LessonId, seed = Date.now()): LessonDef {
   switch (id) {
+    case 'modes':
+      return modesLesson(1, seed);
     case 'runs':
       return runsLesson(seed);
     case 'note-sequences':
@@ -1211,6 +1233,8 @@ export function makeLesson(id: LessonId, seed = Date.now()): LessonDef {
 /** Teaching gesture after a revealed answer. */
 export function explainStimulus(q: Question): Stimulus[] {
   switch (q.kind) {
+    case 'mode-id':
+      return [{ kind: 'notes', midis: q.midis, each: q.each * 1.4 }];
     case 'degree': {
       const s: Stimulus[] = [{ kind: 'note', midi: q.targetMidi, duration: 1.0 }];
       if (q.answer !== 1) s.push({ kind: 'resolve', fromMidi: q.targetMidi, toMidi: nearestTonicMidi(q.key, q.targetMidi) });
@@ -1260,6 +1284,11 @@ export function explainStimulus(q: Question): Stimulus[] {
  */
 export function compareStimulus(q: Question, given: Answer): Stimulus[] | null {
   switch (q.kind) {
+    case 'mode-id': {
+      if (typeof given !== 'string' || given === q.answer || !(given in MODE_STEPS)) return null;
+      const other = modeMidis(q.midis[0], given as ModeId, q.dir);
+      return [{ kind: 'notes', midis: other, each: q.each }, { kind: 'rest', duration: 0.6 }, { kind: 'notes', midis: q.midis, each: q.each }];
+    }
     case 'degree': {
       if (typeof given !== 'number' || given < 1 || given > 7) return null;
       const steps = [0, 2, 4, 5, 7, 9, 11];
@@ -1443,6 +1472,8 @@ export function renderStimulus(stimulus: Stimulus[]): { events: NoteEvent[]; len
 export function questionTag(q: Question): string {
   const k = (p: PitchClass) => `${p.letter}${p.acc}`;
   switch (q.kind) {
+    case 'mode-id':
+      return `modeid:${k(q.key)}:${q.mode}:${q.choices.join(',')}:${q.dir}:${q.each}`;
     case 'degree':
       return `degree:${k(q.key)}:${q.answer}`;
     case 'quality':
@@ -1478,4 +1509,63 @@ export function questionTag(q: Question): string {
     case 'run-id':
       return `runid:${k(q.key)}:${q.run.level}:${q.run.material}:${q.run.shape}:${q.aspect}`;
   }
+}
+
+
+// ======================================================================= modes by ear
+
+/** The notes of a mode from a tonic: up to the octave, or up and back down. */
+export function modeMidis(tonicMidi: number, mode: ModeId, dir: 'up' | 'updown'): number[] {
+  const up = MODE_STEPS[mode].map((s) => tonicMidi + s);
+  return dir === 'up' ? up : [...up, ...up.slice(0, -1).reverse()];
+}
+
+export function modeIdQuestion(id: string, key: PitchClass, mode: ModeId, choices: ModeId[], dir: 'up' | 'updown', each: number, difficulty: number): ModeIdQuestion {
+  const tonic = placeInRange(pcValue(key), 55, 66);
+  const midis = modeMidis(tonic, mode, dir);
+  return {
+    id,
+    kind: 'mode-id',
+    key,
+    mode,
+    midis,
+    dir,
+    each,
+    answer: mode,
+    choices,
+    stimulus: [{ kind: 'note', midi: tonic, duration: 0.9 }, { kind: 'rest', duration: 0.3 }, { kind: 'notes', midis, each }],
+    difficulty,
+  };
+}
+
+/** Pools per level: easiest = Ionian vs Aeolian; hardest = every mode of all three families + symmetric scales. */
+export const MODE_ID_LEVELS: { pool: ModeId[]; choices: number; dir: 'up' | 'updown'; each: number; base: number }[] = [
+  { pool: ['ionian', 'aeolian'], choices: 2, dir: 'updown', each: 0.42, base: 900 },
+  { pool: ['ionian', 'dorian', 'mixolydian', 'aeolian'], choices: 3, dir: 'updown', each: 0.4, base: 1050 },
+  { pool: ['ionian', 'dorian', 'phrygian', 'lydian', 'mixolydian', 'aeolian', 'locrian'], choices: 4, dir: 'updown', each: 0.36, base: 1200 },
+  { pool: ['aeolian', 'harmonic-minor', 'melodic-minor', 'dorian', 'phrygian-dominant', 'phrygian', 'lydian-dominant', 'mixolydian'], choices: 4, dir: 'updown', each: 0.34, base: 1300 },
+  { pool: ['melodic-minor', 'dorian-b2', 'lydian-augmented', 'lydian-dominant', 'mixolydian-b6', 'locrian-sharp2', 'altered', 'harmonic-minor', 'locrian-nat6', 'ionian-sharp5', 'dorian-sharp4', 'phrygian-dominant', 'lydian-sharp2', 'ultralocrian'], choices: 4, dir: 'updown', each: 0.32, base: 1450 },
+  { pool: ['ionian', 'dorian', 'phrygian', 'lydian', 'mixolydian', 'aeolian', 'locrian', 'melodic-minor', 'dorian-b2', 'lydian-augmented', 'lydian-dominant', 'mixolydian-b6', 'locrian-sharp2', 'altered', 'harmonic-minor', 'locrian-nat6', 'ionian-sharp5', 'dorian-sharp4', 'phrygian-dominant', 'lydian-sharp2', 'ultralocrian', 'whole-tone', 'diminished'], choices: 4, dir: 'up', each: 0.26, base: 1600 },
+];
+
+const MODE_KEYS = ['C', 'D', 'Eb', 'E', 'F', 'G', 'A', 'Bb'];
+
+/** Choices for a mode: the answer plus its nearest neighbours in the pool (one or two notes apart). */
+export function modeChoices(answer: ModeId, pool: ModeId[], n: number, rnd: () => number): ModeId[] {
+  const others = shuffle(rnd, pool.filter((m) => m !== answer)).sort((a, b) => modeDistance(answer, a) - modeDistance(answer, b));
+  return shuffle(rnd, [answer, ...others.slice(0, n - 1)]);
+}
+
+/** "Modes by ear", level 1–6: 6 questions. */
+export function modesLesson(level: number, seed = Date.now()): LessonDef {
+  const L = MODE_ID_LEVELS[Math.max(0, Math.min(MODE_ID_LEVELS.length - 1, level - 1))];
+  const rnd = mulberry32(seed);
+  const answers = Array.from({ length: 6 }, (_, i) => shuffle(rnd, [...L.pool])[i % L.pool.length]);
+  const questions = answers.map((mode, i) => {
+    const key = pc(MODE_KEYS[Math.floor(rnd() * MODE_KEYS.length)]);
+    const fam = MODE_FAMILY[mode];
+    const difficulty = L.base + (fam === 'harmonic' ? 60 : fam === 'melodic' ? 40 : 0) + (L.choices - 2) * 30;
+    return modeIdQuestion(`mode${i + 1}`, key, mode, modeChoices(mode, L.pool, L.choices, rnd), L.dir, L.each, difficulty);
+  });
+  return { id: 'modes', version: 1, skill: 'modes', scoring: { xpPerCorrect: 10, attemptLimit: 2 }, intro: [], questions };
 }

@@ -4,7 +4,8 @@ import type { Strings } from '../i18n/strings';
 import { ratingsOf, type Progress } from '../storage/progress';
 import { dueReviews, localDay, reviewDue } from '../storage/progress';
 import { NodeIcon } from './Home';
-import { runLevelFor } from '../engine/lesson';
+import { runLevelFor, MODE_ID_LEVELS } from '../engine/lesson';
+import { modesLevelFor } from '../engine/recommend';
 
 /** Home-screen practice row: Skill Map / placement, review queue, weekly puzzle. */
 export function PracticeTools({
@@ -17,6 +18,7 @@ export function PracticeTools({
   onDaily,
   onRuns,
   onDrone,
+  onModes,
 }: {
   t: Strings;
   progress: Progress;
@@ -27,6 +29,7 @@ export function PracticeTools({
   onDaily: () => void;
   onRuns: () => void;
   onDrone: () => void;
+  onModes: (level: number) => void;
 }) {
   const daily = progress.daily?.[localDay(new Date())];
   const ratings = ratingsOf(progress);
@@ -97,6 +100,21 @@ export function PracticeTools({
           <b>{t.dailyChallenge}</b>
           <small>{daily ? `✓ ${t.dailyDone} · ${daily.points.toLocaleString()} ${t.points}` : t.dailyBlurb}</small>
         </button>
+      </div>
+      <div className="modes-row">
+        <b>🎼 {t.skillNames.modes}</b>
+        <small>{t.modesByEarHint}</small>
+        <div className="modes-levels" role="group" aria-label={t.skillNames.modes}>
+          {MODE_ID_LEVELS.map((_, i) => {
+            const rec = modesLevelFor(ratings.modes?.n ? ratings.modes.r : null) === i + 1;
+            return (
+              <button key={i} className={`chip ${rec ? 'on' : ''}`} onClick={() => onModes(i + 1)} title={t.modesByEarLevels[i]}>
+                {i + 1}. {t.modesByEarLevels[i]}
+                {rec && ' ★'}
+              </button>
+            );
+          })}
+        </div>
       </div>
     </section>
   );

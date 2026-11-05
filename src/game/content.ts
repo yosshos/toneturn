@@ -6,6 +6,8 @@ import { displayNote, spokenMajorKey, spokenNote, type Naming, type PitchClass }
 import type { SungResult } from '../engine/sing';
 import { parseAlternatives, parseCadence, parseDegree, parseDegreeSequence, parseInterval, parseInversion, parseNoteName, parseQuality, parseRunMaterial, parseRunShape, parseNoteNameSequence, parseProgression, parseSeventh, type ParseResult } from '../engine/parser';
 import { songById } from '../engine/songs';
+import { MODE_NAMES, MODE_STEPS, type ModeId } from '../engine/modes';
+import { parseMode } from '../engine/parser';
 import { describeRun } from '../engine/runs';
 import { narration, type Lang } from './narration';
 import { describe as describeRhythm, parseRhythmWords, rhythmFromKey, rhythmKey, sameRhythm, type CellId } from '../engine/rhythm';
@@ -181,6 +183,12 @@ export const LESSON_META: Record<LessonId, LessonMeta> = {
     icon: 'mic',
     tip: { en: 'Practise a run slowly on “ah”, then speed it up — the Runs workshop does this for you.', he: 'תרגלו ראן לאט על "אה", ואז האיצו — סדנת הראנים עושה את זה בשבילכם.' },
   },
+  modes: {
+    title: { en: 'Modes by ear', he: 'מודוסים בשמיעה' },
+    blurb: { en: 'Hear a scale and name its mode — major, melodic and harmonic minor modes.', he: 'שומעים סולם ומזהים את המודוס — מודוסים של מז׳ור, מינור מלודי ומינור הרמוני.' },
+    icon: 'ear',
+    tip: { en: 'Listen for the one note that differs: the 4th, the 6th, the 7th or the 2nd.', he: 'הקשיבו לצליל האחד שמשתנה: הרביעית, השישית, השביעית או השנייה.' },
+  },
   'runs-workshop': {
     title: { en: 'Runs workshop', he: 'סדנת ראנים' },
     blurb: { en: 'Each run at 60 %, 80 %, then full speed.', he: 'כל ראן ב־60%, ב־80% ואז במהירות מלאה.' },
@@ -271,6 +279,7 @@ const namesShown = (keys: string[], nm: Naming, l: Lang) => keys.map((k) => { co
 
 export function answerWord(_q: Question, a: Answer, l: Lang, nm: Naming = 'letter'): string {
   if (typeof a === 'number') return deg(a, l);
+  if (_q.kind === 'mode-id' && typeof a === 'string' && a in MODE_STEPS) return MODE_NAMES[a as ModeId][l];
   if (typeof a === 'string' && a.includes('.') && a.split('.').every((k) => pcFromKey(k))) return namesWords(a.split('.'), nm, l);
   const asPc = typeof a === 'string' ? pcFromKey(a) : null;
   if (asPc) return spokenNote(asPc, nm, l);
@@ -320,6 +329,8 @@ export function sayChoices(q: Question, l: Lang): string {
 /** Spoken prompt at the start of a round. */
 export function roundPrompt(q: Question, l: Lang, nm: Naming, n: number): string {
   switch (q.kind) {
+    case 'mode-id':
+      return l === 'en' ? `Round ${n}. Which mode is this? ${sayChoices(q, l)}?` : `סיבוב ${n}. איזה מודוס זה? ${sayChoices(q, l)}?`;
     case 'degree':
       if (q.direction === 'name→degree')
         return l === 'en'
@@ -422,6 +433,8 @@ export function roundPrompt(q: Question, l: Lang, nm: Naming, n: number): string
 
 export function parseAnswer(q: Question, alternatives: string[], inputNaming: Naming = 'letter'): ParseResult<Answer> {
   switch (q.kind) {
+    case 'mode-id':
+      return parseAlternatives(alternatives, (t) => parseMode(t, q.choices));
     case 'degree':
       return parseAlternatives(alternatives, parseDegree);
     case 'quality':
@@ -497,6 +510,8 @@ export function revealText(q: Question, l: Lang, nm: Naming): string {
 
 function revealCore(q: Question, l: Lang, nm: Naming): string {
   switch (q.kind) {
+    case 'mode-id':
+      return l === 'en' ? `It was ${MODE_NAMES[q.answer].en}. Your answer, then the right one.` : `זה היה ${MODE_NAMES[q.answer].he}. התשובה שלכם, ואז הנכונה.`;
     case 'note-name':
       return l === 'en'
         ? `It's ${spokenNote(q.target, nm, l)}: degree ${deg(q.degree, l)} of ${spokenMajorKey(q.key, nm, l)}.`
@@ -598,6 +613,10 @@ export interface ChoiceLabel {
 }
 
 export function choiceLabel(_q: Question, a: Answer, l: Lang, nm: Naming = 'letter'): ChoiceLabel {
+  if (_q.kind === 'mode-id' && typeof a === 'string' && a in MODE_STEPS) {
+    const tones: ChoiceLabel['tone'][] = ['mint', 'gold', 'lilac', 'coral'];
+    return { big: '', small: MODE_NAMES[a as ModeId][l], tone: tones[(_q.choices as string[]).indexOf(a) % 4] };
+  }
   if (_q.kind === 'rhythm-dict' && typeof a === 'string') {
     const tones: ChoiceLabel['tone'][] = ['mint', 'gold', 'lilac', 'coral'];
     return { big: '', small: describeRhythm(rhythmFromKey(a, _q.rhythm.bars), 'names', l), tone: tones[_q.choices.indexOf(a) % 4] };
@@ -652,6 +671,8 @@ export function choiceLabel(_q: Question, a: Answer, l: Lang, nm: Naming = 'lett
 /** On-screen question line. `{n}` / `{k}` are note placeholders rendered with bidi isolation. */
 export function askTemplate(q: Question, l: Lang, nm: Naming = 'letter'): string {
   switch (q.kind) {
+    case 'mode-id':
+      return l === 'en' ? 'Which mode starts on {k}?' : 'איזה מודוס מתחיל ב־{k}?';
     case 'degree':
       if (q.direction === 'name→degree') return l === 'en' ? 'Which degree is {n} in {k} major?' : "איזו דרגה היא {n} ב-{k} מז'ור?";
       return l === 'en' ? 'Which degree is {n}?' : 'איזו דרגה זה {n}?';
@@ -699,6 +720,7 @@ export function hintText(q: Question, l: Lang, voice: boolean): string {
   if (q.kind === 'rhythm-dict' && voice) return l === 'en' ? 'Say it: “ta ti-ti ta” or “quarter, two eighths…”' : 'אמרו: "טה טי-טי טה" או "רבע, שתי שמיניות…"';
   if (q.kind === 'name-seq') return voice ? (l === 'en' ? 'Say the note names in order' : 'אמרו את שמות התווים לפי הסדר') : l === 'en' ? 'Tap the notes in order, then Done' : 'לחצו על התווים לפי הסדר, ואז סיום';
   if (q.kind === 'degree-seq') return voice ? (l === 'en' ? 'Say them in order, e.g. “one three five”' : 'אמרו לפי הסדר, למשל "אחת שלוש חמש"') : l === 'en' ? 'Tap the degrees in order, then Done' : 'לחצו על הדרגות לפי הסדר, ואז סיום';
+  if (q.kind === 'mode-id') return voice ? (l === 'en' ? 'Say the mode name' : 'אמרו את שם המודוס') : l === 'en' ? 'Tap the mode' : 'בחרו מודוס';
   if (!voice) return l === 'en' ? 'Tap your answer' : 'בחרו תשובה';
   if (q.choices.length > 4) return l === 'en' ? 'Say a degree, “one” to “seven”' : 'אמרו דרגה, מ"אחת" עד "שבע"';
   const ws = q.choices.map((c) => `“${answerWord(q, c, l)}”`);
@@ -709,6 +731,8 @@ export function hintText(q: Question, l: Lang, voice: boolean): string {
 export function questionBadge(q: Question, l: Lang, nm: Naming): { key?: PitchClass; text: string } {
   const major = l === 'en' ? 'major' : "מז'ור";
   switch (q.kind) {
+    case 'mode-id':
+      return { text: `${l === 'en' ? 'Scale from' : 'סולם מ־'} ${displayNote(q.key, nm, l)} · ${q.dir === 'up' ? (l === 'en' ? 'up' : 'עולה') : l === 'en' ? 'up & down' : 'עולה ויורד'}` };
     case 'degree':
     case 'cadence':
     case 'sing':

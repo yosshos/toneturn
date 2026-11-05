@@ -1,6 +1,7 @@
 // Deterministic, exercise-aware transcript parser.
 // It never consults the expected answer: ambiguity is reported, not resolved.
 
+import { MODE_NAMES } from './modes';
 import type { PitchClass } from './pitch';
 
 export type Command = 'repeat' | 'skip' | 'stop' | 'explain';
@@ -398,4 +399,31 @@ export function parseInversion(transcript: string): ParseResult<'root' | 'third'
     [['היפוך', 'שני'], 'fifth'],
     [['מצב', 'יסודי'], 'root'],
   ]);
+}
+
+
+/**
+ * Mode names (spoken): the longest alias of one of the question's choices found in the transcript wins
+ * ("dorian flat two" beats "dorian"). Hebrew and English aliases from MODE_NAMES.
+ */
+export function parseMode(transcript: string, choices: string[]): ParseResult<string> {
+  const heard = transcript.trim();
+  const text = ` ${normalize(transcript).join(' ')} `;
+  if (!text.trim()) return { kind: 'unrecognized', heard };
+  const hits: { id: string; len: number }[] = [];
+  for (const id of choices) {
+    const names = MODE_NAMES[id as keyof typeof MODE_NAMES];
+    if (!names) continue;
+    const aliases = [names.en, names.he, ...names.say.en, ...names.say.he].map((a) => ` ${normalize(a.replace(/[()]/g, ' ')).join(' ')} `);
+    const best = Math.max(0, ...aliases.filter((a) => a.trim() && text.includes(a)).map((a) => a.length));
+    if (best) hits.push({ id, len: best });
+  }
+  if (!hits.length) {
+    const commands = findCommands(normalize(transcript));
+    if (commands.length === 1) return { kind: 'command', command: commands[0], heard };
+    return { kind: 'unrecognized', heard };
+  }
+  hits.sort((a, b) => b.len - a.len);
+  if (hits.length > 1 && hits[0].len === hits[1].len) return { kind: 'ambiguous', candidates: hits.filter((h) => h.len === hits[0].len).map((h) => h.id), heard };
+  return { kind: 'answer', value: hits[0].id, heard };
 }

@@ -33,6 +33,7 @@ export type Recommendation =
   | { kind: 'puzzle' }
   | { kind: 'runs-workshop' }
   | { kind: 'vocal' }
+  | { kind: 'modes'; level: number }
   | { kind: 'rhythm-game' };
 
 /**
@@ -42,6 +43,7 @@ export type Recommendation =
 export function recommendFor(skill: SkillId, ratings: Ratings, mastered: (id: LessonId) => boolean): Recommendation {
   if (skill === 'rhythm' || skill === 'timing') return { kind: 'rhythm-game' };
   if (skill === 'technique') return { kind: 'vocal' };
+  if (skill === 'modes') return { kind: 'modes', level: modesLevelFor(ratings.modes?.n ? ratings.modes.r : null) };
   const ladder = SKILL_LADDER[skill];
   const r = ratings[skill];
   const rating = r && r.n > 0 ? r.r : null;
@@ -78,4 +80,10 @@ export const TOPICS: { id: 'degrees' | 'harmony' | 'intervals' | 'singing' | 'rh
 
 export function topicProgress(done: (id: LessonId) => boolean) {
   return TOPICS.map((tp) => ({ id: tp.id, done: tp.lessons.filter(done).length, total: tp.lessons.length }));
+}
+
+/** "Modes by ear" level (1–6) for a rating (null = not measured yet → level 1). */
+export function modesLevelFor(rating: number | null): number {
+  if (rating === null) return 1;
+  return rating < 950 ? 1 : rating < 1100 ? 2 : rating < 1250 ? 3 : rating < 1350 ? 4 : rating < 1500 ? 5 : 6;
 }

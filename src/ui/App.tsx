@@ -1,3 +1,4 @@
+import { modesLesson, MODE_ID_LEVELS } from '../engine/lesson';
 import { TrueFalseScreen } from './TrueFalse';
 import { FreezeToast, StreakSheet } from './Streak';
 import { canBuy, type Purchase } from '../engine/streak';
@@ -41,6 +42,13 @@ const onlineCodeFromHash = () => (/^#\/?online\/(\w+)/.exec(location.hash)?.[1] 
 const routeFromHash = (): Route => {
   const h = location.hash.replace(/^#\/?/, '').replace(/^online\/.*$/, 'online');
   return (['settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
+};
+
+/** The level a generated modes lesson was made at (from its first question's pool size). */
+const modesAgainLevel = (def: { questions: { choices: unknown[]; difficulty: number }[] }) => {
+  const d = def.questions[0]?.difficulty ?? 900;
+  const i = MODE_ID_LEVELS.findIndex((_, k) => d < (MODE_ID_LEVELS[k + 1]?.base ?? Infinity));
+  return Math.max(1, i + 1);
 };
 
 export function App() {
@@ -233,6 +241,7 @@ export function App() {
     const fixed = progress.puzzles?.[week]?.band as Parameters<typeof weeklyPuzzle>[1] | undefined;
     openGenerated(weeklyPuzzle(week, fixed ?? puzzleBand(ratingsOf(progress))));
   };
+  const openModes = (level: number) => openGenerated(modesLesson(level, Date.now() >>> 0));
   const openRuns = () => {
     const r = ratingsOf(progress).agility;
     openGenerated(runsWorkshop(runLevelFor(r?.n ? r.r : null)));
@@ -242,6 +251,7 @@ export function App() {
     const rec = recommendFor(k, ratingsOf(progress), (id) => lessonMastered(progress, id));
     if (rec.kind === 'puzzle') return openPuzzle();
     if (rec.kind === 'runs-workshop') return openRuns();
+    if (rec.kind === 'modes') return openModes(rec.level);
     if (rec.kind === 'vocal') {
       setVocalWarmup(false);
       return go('vocal');
@@ -288,7 +298,7 @@ export function App() {
           onStreak={() => setStreakOpen(true)}
           account={<AccountCard t={t} user={user} sync={sync} compact />}
           onMenu={() => setMenuOpen(true)}
-          tools={<>{user && <AssignedCard t={t} items={assigned} lang={s.uiLang} onOpen={(id) => openLesson(id)} />}<PracticeTools t={t} progress={progress} onSkills={() => go('skills')} onPlacement={openPlacement} onReview={openReview} onPuzzle={openPuzzle} onDaily={() => go('daily')} onRuns={openRuns} onDrone={() => go('drone')} /></>}
+          tools={<>{user && <AssignedCard t={t} items={assigned} lang={s.uiLang} onOpen={(id) => openLesson(id)} />}<PracticeTools t={t} progress={progress} onSkills={() => go('skills')} onPlacement={openPlacement} onReview={openReview} onPuzzle={openPuzzle} onDaily={() => go('daily')} onRuns={openRuns} onDrone={() => go('drone')} onModes={openModes} /></>}
           updateReady={pwaState.updateReady}
           news={
             <>
@@ -349,7 +359,7 @@ export function App() {
           autoStart={autoStart}
           onMode={(mode) => updateSettings({ mode })}
           onExit={() => go('home')}
-          onAgain={() => (generated?.def.id === 'placement' ? openPlacement() : generated?.def.id === 'review' ? openReview() : generated ? openPuzzle() : openLesson(lessonId))}
+          onAgain={() => (generated?.def.id === 'placement' ? openPlacement() : generated?.def.id === 'review' ? openReview() : generated?.def.id === 'modes' ? openModes(modesAgainLevel(generated.def)) : generated ? openPuzzle() : openLesson(lessonId))}
           lessonDef={generated?.def}
           adapt={generated?.adapt}
           nextLabel={generated ? t.seeSkillMap : undefined}

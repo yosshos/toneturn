@@ -308,3 +308,34 @@
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
+.modes-row {
+  display: grid;
+  gap: 6px;
+  margin-top: 14px;
+  padding: 14px;
+  border-radius: 18px;
+  background: var(--card);
+  border: 1px solid var(--line);
+}
+.modes-row small {
+  color: var(--ink-dim);
+}
+.modes-levels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.modes-levels .chip {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--card-2);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.modes-levels .chip.on {
+  border-color: var(--gold);
+  color: var(--gold);
+}

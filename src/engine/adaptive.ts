@@ -1,5 +1,7 @@
 // Generated sessions: adaptive placement, targeted review from past mistakes, and the weekly puzzle.
 
+import { MODE_STEPS, type ModeId } from './modes';
+import { modeIdQuestion } from './lesson';
 import {
   cadenceQuestion,
   degreeQuestion,
@@ -219,6 +221,14 @@ export function questionFromTag(tag: string, seed: number, id: string): Question
       const ds = (b ?? '').split('-').map(Number);
       if (!key || !ds.length || !ds.every((x) => x >= 1 && x <= 7)) return null;
       return nameSeqQuestion(id, key, ds, tag.split(':')[3] === 'degrees' ? 'degrees' : 'sound');
+    }
+    case 'modeid': {
+      // modeid:<key>:<mode>:<choices>:<dir>:<each>
+      const key = parsePc(a);
+      const [, , , choices, dir, each] = tag.split(':');
+      if (!key || !(b in MODE_STEPS)) return null;
+      const cs = (choices ?? '').split(',').filter((c) => c in MODE_STEPS) as ModeId[];
+      return modeIdQuestion(id, key, b as ModeId, cs.length >= 2 ? cs : [b as ModeId, 'ionian'], dir === 'up' ? 'up' : 'updown', Number(each) || 0.38, 1300);
     }
     case 'srun':
     case 'runid': {

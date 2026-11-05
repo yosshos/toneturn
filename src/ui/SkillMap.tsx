@@ -201,7 +201,9 @@ function Diagnosis({
             ? t.beatEcho
             : next?.kind === 'vocal'
               ? t.vocalTitle
-              : '';
+              : next?.kind === 'modes'
+                ? t.skillNames.modes
+                : '';
   const planned = PLANNED_SKILLS.includes(axis as never);
   const r = planned ? undefined : ratings[axis as SkillId];
   const ev = planned ? null : evidence(r);
