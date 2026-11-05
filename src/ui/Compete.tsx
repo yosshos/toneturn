@@ -1,7 +1,8 @@
 // Weekly league card, asynchronous friend duels and "players at your level" lines (spec S.7, S.8, L.5).
 
 import { LeagueBadge, LeagueLadder } from './LeagueBadge';
-import { tierOf, TOP_TIER } from '../engine/league';
+import { LADDER, NINTH_TIER, tierOf, TOP_TIER } from '../engine/league';
+import { piano } from './services';
 import { useCallback, useEffect, useState } from 'react';
 import { createDuel, leagueZone, myDuels, myLeague, submitDuel, type DuelKind, type DuelRow, type League } from '../cloud/compete';
 import { tournamentSet } from '../engine/tournament';
@@ -11,12 +12,16 @@ import { TournamentPlay } from './Tournament';
 
 const fill = (s: string, v: Record<string, string | number>) => Object.entries(v).reduce((a, [k, x]) => a.replaceAll(`{${k}}`, String(x)), s);
 
-export function LeagueCard({ t, lang, onBestTier }: { t: Strings; lang: 'he' | 'en'; onBestTier?: (tier: number) => void }) {
+export function LeagueCard({ t, lang, onBestTier, lastSeen, onSeen }: { t: Strings; lang: 'he' | 'en'; onBestTier?: (tier: number) => void; /** League shown last time (spec Y.5). */ lastSeen?: number; onSeen?: (tier: number) => void }) {
   const [league, setLeague] = useState<League | null>(null);
+  const [move, setMove] = useState<{ from: number; to: number } | null>(null);
   useEffect(() => {
     void myLeague().then((l) => {
       setLeague(l);
-      if (l) onBestTier?.(Math.max(l.tier, l.bestTier ?? 0));
+      if (!l) return;
+      onBestTier?.(Math.max(l.tier, l.bestTier ?? 0));
+      if (lastSeen && lastSeen !== l.tier) setMove({ from: lastSeen, to: l.tier });
+      if (lastSeen !== l.tier) onSeen?.(l.tier);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -24,6 +29,8 @@ export function LeagueCard({ t, lang, onBestTier }: { t: Strings; lang: 'he' | '
   const days = Math.max(0, Math.ceil((new Date(league.endsAt).getTime() - Date.now()) / 86_400_000));
   const n = league.members.length;
   return (
+    <>
+    {move && <LeagueMove t={t} from={move.from} to={move.to} onClose={() => setMove(null)} />}
     <section className={`set-card league-card tier-${league.tier}`} aria-label={t.leagueTitle} style={{ ['--tier-color' as string]: tierOf(league.tier).color }}>
       <div className="league-head">
         <LeagueBadge tier={league.tier} size={78} ghostNext title={t.leagueTiers[league.tier - 1]} />
@@ -53,6 +60,7 @@ export function LeagueCard({ t, lang, onBestTier }: { t: Strings; lang: 'he' | '
       </ol>
       <p className="field-hint">{t.leagueRules}</p>
     </section>
+    </>
   );
 }
 
@@ -154,3 +162,47 @@ export function DuelsSection({ t, settings, friends, onPlaying }: { t: Strings; 
   );
 }
 
+
+/**
+ * A league move (spec Y.5). Up: the new note drops onto the staff while the chord plays up to it.
+ * Down: the top note falls off the staff while it sounds, sliding an octave down.
+ */
+export function LeagueMove({ t, from, to, onClose }: { t: Strings; from: number; to: number; onClose: () => void }) {
+  const up = to > from;
+  useEffect(() => {
+    const c = new AbortController();
+    void piano.unlock().then(() => {
+      const chord = LADDER.slice(0, up ? to : from).map((n) => n.midi);
+      const ev = up
+        ? chord.map((m, i) => ({ midi: m, start: 0.5 + i * 0.16, duration: i === chord.length - 1 ? 1.8 : 1.4, velocity: i === chord.length - 1 ? 0.8 : 0.5 }))
+        : [
+            ...chord.map((m) => ({ midi: m, start: 0, duration: 0.9, velocity: 0.45 })),
+            { midi: tierOf(from).midi, start: 0.8, duration: 0.35, velocity: 0.6 },
+            { midi: tierOf(from).midi - 12, start: 1.3, duration: 0.9, velocity: 0.4 },
+          ];
+      return piano.play(ev, 3, c.signal);
+    }).catch(() => {});
+    return () => c.abort();
+  }, [up, from, to]);
+  const name = t.leagueTiers[to - 1];
+  const title = up ? (to === NINTH_TIER ? t.leagueUpNinth : to === TOP_TIER ? t.leagueUpTop : fill(t.leagueUpTitle, { name })) : fill(t.leagueDownTitle, { name });
+  return (
+    <div className="mini-overlay" role="dialog" aria-modal="true" aria-label={title}>
+      <div className={`mini-celebrate league-move ${up ? 'up' : 'down'}`} data-league-move={up ? 'up' : 'down'} style={{ ['--tier-color' as string]: tierOf(to).color }}>
+        {up && (
+          <div className="mini-confetti" aria-hidden="true">
+            {Array.from({ length: 18 }, (_, k) => (
+              <span key={k} style={{ ['--k' as string]: k }} />
+            ))}
+          </div>
+        )}
+        <LeagueBadge tier={to} size={150} arrive={up} falling={up ? [] : LADDER.slice(to, from).map((n) => n.tier)} title={name} />
+        <h2>{title}</h2>
+        <p className="mini-takeaway">{up ? fill(t.leagueUpHint, { note: tierOf(to).symbol }) : t.leagueDownHint}</p>
+        <button className="btn mega" data-league-move-ok="1" onClick={onClose}>
+          {t.leagueMoveGo}
+        </button>
+      </div>
+    </div>
+  );
+}

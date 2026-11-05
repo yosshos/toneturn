@@ -7,7 +7,7 @@ import { LADDER, NINTH_TIER, TOP_TIER, tierOf } from '../engine/league';
 /** Diatonic step above middle C for each chord note (C E G B♭ D F♯ A are all on lines / ledger lines). */
 const POS = [0, 2, 4, 6, 8, 10, 12];
 
-export function LeagueBadge({ tier, size = 72, ghostNext = false, title }: { tier: number; size?: number; ghostNext?: boolean; title?: string }) {
+export function LeagueBadge({ tier, size = 72, ghostNext = false, title, arrive = false, falling = [] }: { tier: number; size?: number; ghostNext?: boolean; title?: string; /** Promotion (spec Y.5): the newest note drops onto its line. */ arrive?: boolean; /** Relegation: these higher notes fall off the staff. */ falling?: number[] }) {
   const T = tierOf(tier);
   const W = 64;
   const H = 76;
@@ -46,7 +46,7 @@ export function LeagueBadge({ tier, size = 72, ghostNext = false, title }: { tie
         const fillC = ninth ? LADDER[NINTH_TIER - 1].color : newest ? T.color : 'currentColor';
         const cy = y(POS[i]);
         return (
-          <g key={n.tier} className={newest ? 'lb-new' : ''}>
+          <g key={n.tier} className={`${newest ? 'lb-new' : ''} ${newest && arrive ? 'lb-arrive' : ''}`}>
             {newest && <circle cx={x} cy={cy} r="9" fill={`url(#${gid}-glow)`} />}
             {n.acc && (
               <text x={x - 12} y={cy + 3.5} fontSize="9" fill={fillC} textAnchor="middle">
@@ -59,6 +59,20 @@ export function LeagueBadge({ tier, size = 72, ghostNext = false, title }: { tie
                 9
               </text>
             )}
+          </g>
+        );
+      })}
+      {falling.map((ft, k) => {
+        const F = tierOf(ft);
+        const cy = y(POS[ft - 1]);
+        return (
+          <g key={`f${ft}`} className="lb-fall" style={{ animationDelay: `${0.7 + k * 0.25}s` }}>
+            {F.acc && (
+              <text x={x - 12} y={cy + 3.5} fontSize="9" fill={F.color} textAnchor="middle">
+                {F.acc}
+              </text>
+            )}
+            <ellipse cx={x} cy={cy} rx="4.6" ry="3.4" transform={`rotate(-20 ${x} ${cy})`} fill={F.color} />
           </g>
         );
       })}

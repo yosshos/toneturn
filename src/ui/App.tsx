@@ -241,8 +241,9 @@ export function App() {
   const gate = (unit: string | null, start: () => void) => {
     const l = unit ? lessonForUnit(unit) : null;
     const cur = settings;
-    // Test runs (simulator, unlocked) skip them unless asked for with ?mini.
-    const auto = (cur?.miniLessons ?? true) && (!(SIMULATED || params.has('unlock')) || params.has('mini'));
+    // Automated test runs (simulator, unlocked, WebDriver) skip them unless asked for with ?mini.
+    const automated = SIMULATED || params.has('unlock') || (typeof navigator !== 'undefined' && navigator.webdriver);
+    const auto = (cur?.miniLessons ?? true) && (!automated || params.has('mini'));
     if (!l || !auto || cur?.learned?.[l.id]) return start();
     void piano.unlock();
     setMini({ lesson: l, then: start });
@@ -471,7 +472,7 @@ export function App() {
         <SettingsScreen t={t} settings={s} onChange={updateSettings} onBack={() => go('home')} account={<AccountCard t={t} user={user} sync={sync} />} />
       )}
       {route === 'diagnostics' && <Diagnostics t={t} settings={s} onBack={() => go('home')} />}
-      {route === 'friends' && <FriendsScreen settings={s} t={t} user={user} sync={sync} onBack={() => go('home')} onBestTier={(b) => b > (s.bestLeague ?? 0) && updateSettings({ bestLeague: b })} />}
+      {route === 'friends' && <FriendsScreen settings={s} t={t} user={user} sync={sync} onBack={() => go('home')} onBestTier={(b) => b > (s.bestLeague ?? 0) && updateSettings({ bestLeague: b })} onLeagueSeen={(leagueSeen) => updateSettings({ leagueSeen })} />}
       {route === 'skills' && <SkillMap t={t} lang={s.uiLang} progress={progress} bestLeague={s.bestLeague} onBack={() => go('home')} onPractice={practiceSkill} onPlacement={openPlacement} />}
       {consentThen && (
         <div className="sheet-backdrop" onClick={() => setConsentThen(null)}>

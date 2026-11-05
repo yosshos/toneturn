@@ -137,6 +137,8 @@ export interface Settings {
   miniLessons?: boolean;
   /** Highest weekly league ever reached (spec Y), as last seen. */
   bestLeague?: number;
+  /** The league shown last time — a change plays the move animation once (spec Y.5). */
+  leagueSeen?: number;
   /** Which note views to show for non-rhythm exercises (spec M.1). Default keyboard + staff. */
   noteViews?: NoteView[];
   /** Visual aids while answering (spec M.3). Default auto. */
