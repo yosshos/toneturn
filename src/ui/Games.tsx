@@ -1,3 +1,4 @@
+import type { PadSet } from '../engine/memory';
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { displayNote } from '../engine/pitch';
 import { PLAYER_COLORS } from '../engine/match';
@@ -13,6 +14,9 @@ export interface GameSetupValue {
   input: GameInput;
   players: string[];
   bpm: number;
+  ladder?: boolean;
+  swing?: boolean;
+  pads?: PadSet;
 }
 
 // ======================================================================= setup
@@ -37,6 +41,9 @@ export function GameSetup({
   const [kind, setKind] = useState<GameKind>(initialKind);
   const [input, setInput] = useState<GameInput>(initialKind === 'melody' ? 'pads' : 'tap');
   const [count, setCount] = useState(1);
+  const [ladder, setLadder] = useState(false);
+  const [swing, setSwing] = useState(false);
+  const [pads, setPads] = useState<PadSet>('basic');
   const [names, setNames] = useState<string[]>(() => {
     try {
       const saved = JSON.parse(localStorage.getItem('toneturn.players') ?? 'null') as string[] | null;
@@ -140,6 +147,29 @@ export function GameSetup({
         )}
       </section>
 
+      <section className="set-card">
+        <label className="toggle-row">
+          <input type="checkbox" checked={ladder} onChange={(e) => setLadder(e.target.checked)} />
+          <span>⏩ {t.tempoLadder}</span>
+        </label>
+        <label className="toggle-row">
+          <input type="checkbox" checked={swing} onChange={(e) => setSwing(e.target.checked)} />
+          <span>🎷 {t.swingFeel}</span>
+        </label>
+        {kind === 'melody' && (
+          <fieldset className="seg-field">
+            <legend>{t.padSet}</legend>
+            <div className="seg" role="radiogroup" aria-label={t.padSet}>
+              {(['basic', 'penta', 'full'] as const).map((p) => (
+                <button key={p} type="button" role="radio" aria-checked={pads === p} className={pads === p ? 'on' : ''} onClick={() => setPads(p)}>
+                  {t.padSets[p]}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+        )}
+      </section>
+
       {best > 0 && count === 1 && (
         <p className="field-hint">
           {t.personalBest}: {best} {kind === 'melody' ? t.notes : t.beats}
@@ -154,7 +184,7 @@ export function GameSetup({
           } catch {
             /* ignore */
           }
-          onStart({ kind, input, players: count === 1 ? [ps[0] || t.playerN] : ps, bpm });
+          onStart({ kind, input, players: count === 1 ? [ps[0] || t.playerN] : ps, bpm, ladder, swing, pads });
         }}
       >
         ▶ {t.play}
@@ -215,6 +245,9 @@ export function GameScreen({
         lang: settings.outputLang,
         naming: namingFor(settings.naming, settings.outputLang),
         bpm: setup.bpm,
+        ladder: setup.ladder,
+        swing: setup.swing,
+        pads: setup.pads,
         latencyMs: settings.tapLatencyMs,
         voiceRange: settings.voiceRange,
       },

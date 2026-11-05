@@ -31,13 +31,16 @@ describe('R4–R8 generation (spec G.7)', () => {
         const r = rhythmAt(lv, 2, seed);
         expect(totalBeats(r)).toBeCloseTo(2 * r.beatsPerBar);
         expect(r.cells.some((c) => newMat[lv].includes(c))).toBe(true);
-        if (meterOf(r) === '6/8') expect(r.cells.every((c) => CELLS[c].compound)).toBe(true);
+        if (meterOf(r) === '6/8' || meterOf(r) === '12/8') expect(r.cells.every((c) => CELLS[c].compound)).toBe(true);
         else expect(r.cells.some((c) => CELLS[c].compound)).toBe(false);
       }
   });
-  it('R7 uses both 3/4 and 6/8; R8 is swung', () => {
-    const meters = new Set(Array.from({ length: 30 }, (_, s) => meterOf(rhythmAt(7, 1, s))));
-    expect(meters).toEqual(new Set(['3/4', '6/8']));
+  it('R7 uses 3/4, 6/8 and 12/8; R8 is swung', () => {
+    const meters = new Set(Array.from({ length: 40 }, (_, s) => meterOf(rhythmAt(7, 1, s))));
+    expect(meters).toEqual(new Set(['3/4', '6/8', '12/8']));
+    const r12 = Array.from({ length: 40 }, (_, s) => rhythmAt(7, 1, s)).find((r) => meterOf(r) === '12/8')!;
+    expect(r12.beatsPerBar).toBe(6);
+    expect(rhythmFromKey(rhythmKey(r12))).toEqual(r12);
     expect(rhythmAt(8, 1, 3).swing).toBe(true);
   });
   it('swing plays the off-beat eighth a third of a beat late (2:1)', () => {

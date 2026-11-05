@@ -9,7 +9,7 @@ export const TPQ = 12;
 
 export type RhythmLevel = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 export const MAX_RHYTHM_LEVEL = 8;
-export type Meter = '4/4' | '3/4' | '6/8';
+export type Meter = '4/4' | '3/4' | '6/8' | '12/8';
 
 /** A rhythm cell — the unit players build and name. `beats` are in quarter notes. */
 export type CellId =
@@ -92,10 +92,12 @@ export interface Rhythm {
 }
 
 export const meterOf = (r: Rhythm): Meter => r.meter ?? '4/4';
-export const barBeats = (m: Meter) => (m === '4/4' ? 4 : 3);
+export const barBeats = (m: Meter) => (m === '4/4' ? 4 : m === '12/8' ? 6 : 3);
+/** Compound meters: the pulse is a dotted quarter split in three. */
+export const compound = (m: Meter) => m === '6/8' || m === '12/8';
 /** Length of the metronome pulse in quarter notes: a dotted quarter in 6/8. */
-export const pulseBeats = (m: Meter) => (m === '6/8' ? 1.5 : 1);
-export const cellFits = (c: CellId, m: Meter) => (m === '6/8' ? !!CELLS[c].compound : !CELLS[c].compound && CELLS[c].beats <= barBeats(m));
+export const pulseBeats = (m: Meter) => (compound(m) ? 1.5 : 1);
+export const cellFits = (c: CellId, m: Meter) => (compound(m) ? !!CELLS[c].compound : !CELLS[c].compound && CELLS[c].beats <= barBeats(m));
 
 export function events(r: Rhythm): RhythmEvent[] {
   const out: RhythmEvent[] = [];
@@ -155,7 +157,8 @@ const NEW_CELLS: Record<RhythmLevel, CellId[]> = {
 /** R7 alternates 3/4 and 6/8; R8 is swung 4/4. */
 export function meterFor(level: RhythmLevel, seed: number): Meter {
   if (level !== 7) return '4/4';
-  return mulberry32(seed ^ 0x5eed)() < 0.5 ? '3/4' : '6/8';
+  const x = mulberry32(seed ^ 0x5eed)();
+  return x < 0.4 ? '3/4' : x < 0.75 ? '6/8' : '12/8';
 }
 
 /**
@@ -182,7 +185,7 @@ export function rhythmAt(level: RhythmLevel, bars: number, seed: number, meter: 
     if (Math.abs(cells.reduce((a, c) => a + CELLS[c].beats, 0) - per * bars) > 1e-9) continue;
     if (NEW_CELLS[level].some((c) => cells.includes(c))) return base(cells);
   }
-  const fill: CellId = meter === '6/8' ? 'dq' : 'q';
+  const fill: CellId = compound(meter) ? 'dq' : 'q';
   return base(Array.from({ length: Math.round((bars * per) / CELLS[fill].beats) }, () => fill));
 }
 
@@ -407,7 +410,7 @@ export function sameRhythm(a: Rhythm, b: Rhythm) {
 }
 
 /** "q.ee.h" (4/4), "m3:…" (3/4), "m6:…" (6/8), "sw:…" (swing). */
-export const rhythmKey = (r: Rhythm) => `${r.swing ? 'sw:' : ''}${meterOf(r) === '3/4' ? 'm3:' : meterOf(r) === '6/8' ? 'm6:' : ''}${r.cells.join('.')}`;
+export const rhythmKey = (r: Rhythm) => `${r.swing ? 'sw:' : ''}${meterOf(r) === '3/4' ? 'm3:' : meterOf(r) === '6/8' ? 'm6:' : meterOf(r) === '12/8' ? 'm12:' : ''}${r.cells.join('.')}`;
 export function rhythmFromKey(k: string, bars = 1): Rhythm {
   let s = k;
   let swing = false;
@@ -422,6 +425,9 @@ export function rhythmFromKey(k: string, bars = 1): Rhythm {
   } else if (s.startsWith('m6:')) {
     meter = '6/8';
     s = s.slice(3);
+  } else if (s.startsWith('m12:')) {
+    meter = '12/8';
+    s = s.slice(4);
   }
   return { beatsPerBar: barBeats(meter), bars, cells: s.split('.').filter(Boolean) as CellId[], ...(meter !== '4/4' ? { meter } : {}), ...(swing ? { swing } : {}) };
 }

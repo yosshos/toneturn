@@ -184,3 +184,25 @@ describe('local challenge rules', () => {
     expect(recordTurn(m, true)).toBe(m);
   });
 });
+
+describe('memory game options (C.4)', () => {
+  it('tempo ladder speeds up every 3 rounds, capped', async () => {
+    const { ladderFactor } = await import('../src/engine/memory');
+    expect(ladderFactor(2, 2)).toBe(1);
+    expect(ladderFactor(5, 2)).toBeCloseTo(1.08);
+    expect(ladderFactor(40, 2)).toBe(1.6);
+  });
+  it('swing moves off-beat eighths to the triplet position', async () => {
+    const { swingPattern } = await import('../src/engine/memory');
+    expect(swingPattern({ bpm: 90, beats: 2, onsets: [0, 0.5, 1] }).onsets).toEqual([0, 2 / 3, 1]);
+  });
+  it('pad sets and swung melody playback', async () => {
+    const { melodyGame, melodyEvents, PAD_SETS } = await import('../src/engine/memory');
+    const g = melodyGame(3, [...PAD_SETS.full]);
+    expect(g.pads).toHaveLength(7);
+    const straight = melodyEvents(g, [0, 1, 2, 3]).events.map((e) => e.start);
+    const swung = melodyEvents(g, [0, 1, 2, 3], true).events.map((e) => e.start);
+    expect(swung[1] - swung[0]).toBeGreaterThan(straight[1] - straight[0]);
+    expect(swung[2]).toBeCloseTo(straight[2]);
+  });
+});

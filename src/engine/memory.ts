@@ -71,9 +71,11 @@ export function melodySequence(seed: number, length: number, padCount: number): 
   return out;
 }
 
-export function melodyEvents(game: MelodyGame, seq: number[]): { events: NoteEvent[]; length: number } {
-  const events = seq.map((p, i) => ({ midi: game.pads[p].midi, start: i * game.noteSec, duration: game.noteSec * 0.88, velocity: 0.7 }));
-  return { events, length: seq.length * game.noteSec + 0.3 };
+export function melodyEvents(game: MelodyGame, seq: number[], swing = false): { events: NoteEvent[]; length: number } {
+  // Swing: notes in long–short pairs (2:1), like jazz eighths.
+  const at = (i: number) => (swing ? Math.floor(i / 2) * 2 * game.noteSec + (i % 2 ? game.noteSec * (4 / 3) : 0) : i * game.noteSec);
+  const events = seq.map((p, i) => ({ midi: game.pads[p].midi, start: at(i), duration: game.noteSec * (swing && i % 2 === 0 ? 1.2 : 0.88), velocity: i % 2 && swing ? 0.6 : 0.7 }));
+  return { events, length: (seq.length ? at(seq.length - 1) + game.noteSec : 0) + 0.3 };
 }
 
 // ---------- note segmentation of a sung capture ----------
@@ -237,6 +239,18 @@ export interface RhythmPattern {
  * Pattern of `beats` beats. The first beat always has a downbeat onset; rests and
  * syncopation appear from 4 beats on. Different seeds → different patterns of equal length.
  */
+/** Tempo ladder (spec C.4): every 3 rounds past the start, 8 % faster (at most 1.6×). */
+export const ladderFactor = (length: number, start: number) => Math.min(1.6, 1 + 0.08 * Math.floor(Math.max(0, length - start) / 3));
+
+/** Pad sets for Echo Chain (spec C.1): degrees 1 2 3 5 → pentatonic → the full major scale. */
+export const PAD_SETS = { basic: [1, 2, 3, 5], penta: [1, 2, 3, 5, 6], full: [1, 2, 3, 4, 5, 6, 7] } as const;
+export type PadSet = keyof typeof PAD_SETS;
+
+/** Swing (call and response with swing feel): off-beat eighths land a third of a beat late. */
+export function swingPattern(p: RhythmPattern): RhythmPattern {
+  return { ...p, onsets: p.onsets.map((o) => (Math.abs((o % 1) - 0.5) < 1e-6 ? Math.floor(o) + 2 / 3 : o)) };
+}
+
 export function rhythmPattern(seed: number, beats: number, bpm = 90): RhythmPattern {
   const rnd = mulberry32(seed);
   const pool = beats >= 4 ? CELLS_MORE : CELLS_EASY;

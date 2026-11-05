@@ -7,6 +7,10 @@ import {
   melodyEvents,
   melodyGame,
   melodySequence,
+  ladderFactor,
+  PAD_SETS,
+  swingPattern,
+  type PadSet,
   rhythmPattern,
   rhythmTimeline,
   splitRhythm,
@@ -46,6 +50,10 @@ export interface GameConfig {
   latencyMs?: number;
   /** Comfortable singing range: sung melodies stay inside it (spec P.0). */
   voiceRange?: { low: number; high: number } | null;
+  /** Spec C.4: speed up every 3 rounds; swing feel; Echo Chain pad set. */
+  ladder?: boolean;
+  swing?: boolean;
+  pads?: PadSet;
 }
 
 export interface GameAdapters {
@@ -146,7 +154,7 @@ export class MemoryGameController {
     private ad: GameAdapters,
     private hooks: { onOver?: (m: Match, kind: GameKind, rounds: RoundStat[]) => void } = {},
   ) {
-    const melody = cfg.kind === 'melody' ? melodyGame(cfg.seed, undefined, cfg.input === 'sing' ? cfg.voiceRange : null) : null;
+    const melody = cfg.kind === 'melody' ? melodyGame(cfg.seed, [...PAD_SETS[cfg.pads ?? 'basic']], cfg.input === 'sing' ? cfg.voiceRange : null) : null;
     this.view = {
       stage: 'ready',
       match: newMatch(cfg.players, START_LENGTH[cfg.kind]),
@@ -232,7 +240,7 @@ export class MemoryGameController {
     this.rounds = [];
     this.patch({
       match: newMatch(this.cfg.players, START_LENGTH[this.cfg.kind]),
-      melody: this.cfg.kind === 'melody' ? melodyGame(this.cfg.seed, undefined, this.cfg.input === 'sing' ? this.cfg.voiceRange : null) : null,
+      melody: this.cfg.kind === 'melody' ? melodyGame(this.cfg.seed, [...PAD_SETS[this.cfg.pads ?? 'basic']], this.cfg.input === 'sing' ? this.cfg.voiceRange : null) : null,
       result: null,
       stage: 'ready',
     });
@@ -291,7 +299,10 @@ export class MemoryGameController {
       const player = m.players[m.turn];
       const solo = m.players.length === 1;
       const seq = this.cfg.kind === 'melody' ? melodySequence(seed, m.length, this.view.melody!.pads.length) : [];
-      const pattern = this.cfg.kind === 'rhythm' ? rhythmPattern(seed, m.length, this.cfg.bpm ?? 90) : null;
+      const speed = this.cfg.ladder ? ladderFactor(m.length, START_LENGTH[this.cfg.kind]) : 1;
+      const base = this.cfg.kind === 'rhythm' ? rhythmPattern(seed, m.length, Math.min(160, Math.round((this.cfg.bpm ?? 90) * speed))) : null;
+      const pattern = base && this.cfg.swing ? swingPattern(base) : base;
+      if (this.view.melody) this.view.melody.noteSec = Math.max(0.28, 0.6 / speed);
       this.responseStart = null;
       this.patch({ stage: 'turn', seq, pattern, entered: [], taps: [], result: null, beat: null, error: null });
       await this.say(solo ? this.t.soloTurn(m.length, this.cfg.kind) : this.t.turn(player.name, m.length, this.cfg.kind), signal);
@@ -313,7 +324,7 @@ export class MemoryGameController {
       await this.say(result.pass ? this.t.pass[this.passIdx++ % this.t.pass.length] : this.t.fail, signal);
       if (!result.pass && this.cfg.kind === 'melody') {
         // Let them hear the right answer.
-        const { events, length } = melodyEvents(this.view.melody!, seq);
+        const { events, length } = melodyEvents(this.view.melody!, seq, !!this.cfg.swing);
         await this.ad.audio.play(events, length, signal);
       }
       await this.ad.clock.sleep(900, signal);
@@ -345,7 +356,7 @@ export class MemoryGameController {
     this.patch({ stage: 'demo' });
     await this.say(this.t.listen, signal);
     await this.ad.clock.sleep(350, signal);
-    const { events, length } = melodyEvents(g, seq);
+    const { events, length } = melodyEvents(g, seq, !!this.cfg.swing);
     await this.ad.audio.play(events, length, signal);
     throwIfAborted(signal);
     this.patch({ litPad: null });

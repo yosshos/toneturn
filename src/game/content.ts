@@ -130,7 +130,7 @@ export const LESSON_META: Record<LessonId, LessonMeta> = {
     tip: { en: 'Say “straw-ber-ry” for triplets and “ap-ple” for eighths over the same beat.', he: 'אמרו "תות-שָׂ-דה" לטריולה ו"תפּוּ-ח" לשמיניות על אותה פעמה.' },
   },
   'rhythm-r7': {
-    title: { en: 'Rhythm 7: 3/4 and 6/8', he: 'קצב 7: 3/4 ו־6/8' },
+    title: { en: 'Rhythm 7: 3/4, 6/8 and 12/8', he: 'קצב 7: 3/4, 6/8 ו־12/8' },
     blurb: { en: 'Waltz time and the rocking compound beat.', he: 'משקל ואלס, והפעמה המורכבת שמתנדנדת.' },
     icon: 'drum',
     tip: { en: 'In 6/8 feel two big beats, each split in three: ONE-two-three FOUR-five-six.', he: 'ב־6/8 מרגישים שתי פעמות גדולות, כל אחת מחולקת לשלוש: אחת-שתיים-שלוש ארבע-חמש-שש.' },
@@ -818,7 +818,7 @@ export function questionBadge(q: Question, l: Lang, nm: Naming): { key?: PitchCl
       return { text: q.mode === 'melodic' ? (l === 'en' ? 'One after the other' : 'אחד אחרי השני') : l === 'en' ? 'Together' : 'ביחד' };
     case 'rhythm-read':
     case 'rhythm-dict':
-      return { text: `${q.rhythm.meter ?? '4/4'}${q.rhythm.swing ? ' swing' : ''} · ${q.rhythm.meter === '6/8' ? `♩. = ${Math.round(q.bpm / 1.5)}` : `${q.bpm} BPM`} · ${q.rhythm.bars} ${l === 'en' ? (q.rhythm.bars > 1 ? 'bars' : 'bar') : q.rhythm.bars > 1 ? 'תיבות' : 'תיבה'}` };
+      return { text: `${q.rhythm.meter ?? '4/4'}${q.rhythm.swing ? ' swing' : ''} · ${q.rhythm.meter === '6/8' || q.rhythm.meter === '12/8' ? `♩. = ${Math.round(q.bpm / 1.5)}` : `${q.bpm} BPM`} · ${q.rhythm.bars} ${l === 'en' ? (q.rhythm.bars > 1 ? 'bars' : 'bar') : q.rhythm.bars > 1 ? 'תיבות' : 'תיבה'}` };
     case 'inversion':
       return { key: q.root, text: l === 'en' ? 'major chord' : "אקורד מז'ור" };
   }
