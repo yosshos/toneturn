@@ -127,6 +127,16 @@ export function supabaseRooms(): RoomBackend | null {
   };
   return {
     async create(kind, rounds, seed, keys, nick, opts = {}) {
+      const legacy = ['mixed', 'degrees', 'chords', 'intervals'].includes(kind) && !opts.hostScreen;
+      try {
+        return await createV2();
+      } catch (e) {
+        // Server not migrated yet (migration 17): the classic sets still work through the old function.
+        if (!legacy || !(e instanceof RoomError) || !/toneturn_room_create_v2|function|schema cache/i.test(e.message)) throw e;
+        const rows = await rpc<{ id: string; code: string }[]>('toneturn_room_create', { p_kind: kind, p_rounds: rounds, p_seed: seed, p_keys: keys, p_nick: nick });
+        return rows[0];
+      }
+      async function createV2() {
       const rows = await rpc<{ id: string; code: string }[]>('toneturn_room_create_v2', {
         p_kind: kind,
         p_rounds: rounds,
@@ -137,6 +147,7 @@ export function supabaseRooms(): RoomBackend | null {
         p_host_screen: !!opts.hostScreen,
       });
       return rows[0];
+      }
     },
     join: (code, nick) => rpc<string>('toneturn_room_join', { p_code: code, p_nick: nick }),
     state: async (id) => fromRaw(await rpc<RawState>('toneturn_room_state', { p_room: id })),
