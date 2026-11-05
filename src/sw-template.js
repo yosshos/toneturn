@@ -100,7 +100,12 @@ self.addEventListener('notificationclick', (e) => {
   const url = (e.notification.data && e.notification.data.url) || BASE;
   e.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
-      for (const c of list) if ('focus' in c) return c.focus();
+      for (const c of list)
+        if ('focus' in c) {
+          // A duel notification opens Friends in the running app.
+          if (url !== BASE && url.includes('#') && 'navigate' in c) return c.focus().then(() => c.navigate(url));
+          return c.focus();
+        }
       return self.clients.openWindow(url);
     }),
   );

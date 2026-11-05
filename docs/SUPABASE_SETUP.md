@@ -69,3 +69,10 @@ Each hour the function sends a reminder to subscribers whose chosen local hour h
 ## 10. Where push works
 - Push needs the **production build** (service worker): `npm run build` then `npm run preview`, or the deployed site — not `npm run dev`.
 - iPhone/iPad: only after installing to the Home Screen.
+
+
+## Duel notifications (0.28, migration 19)
+
+1. SQL Editor → run [`supabase/migrations/20261119000000_toneturn_duel_push.sql`](../supabase/migrations/20261119000000_toneturn_duel_push.sql). It needs `pg_net` and the Vault secret `toneturn_cron_secret`, both created for the streak reminders.
+2. Edge Functions → `toneturn-streak-reminder` → replace the code with [`supabase/functions/toneturn-streak-reminder/index.ts`](../supabase/functions/toneturn-streak-reminder/index.ts) → **Deploy** (keep "Verify JWT" off; the function checks the cron secret).
+3. Check: a duel where both friends allowed notifications — the friend gets "You were challenged" when you finish your round, and you get the result when they play.

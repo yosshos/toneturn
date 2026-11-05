@@ -28,6 +28,7 @@ export const CHANGELOG: ChangeEntry[] = [
       'Ornaments & dynamics: grace notes, mordents, turns, trills, crescendo, decrescendo, swell',
       'New practice topics: extensions & alterations, voicings, progressions, form, fine pitch, in tune?, two voices, trichords, maqamat with quarter tones, Middle-Eastern rhythms, polyrhythms, odd meters, swing feel, and written theory (key signatures, spelling, Roman numerals, circle of fifths, transposition, chord-scale, three clefs)',
       'Play & improvise: backing tracks (ii–V–I, minor, blues), improvise with feedback, MIDI keyboard drills, guitar from tab; choir rooms where every phone sings its own part',
+      'Inner clock drill (the metronome drops out — keep the beat), sus4 / add9 / alt in extensions, a recorded organ drone, colour themes for gems, a notification when a friend plays your duel',
       'Voice answers understood better: common mishearings of numbers (“to” → 2, “for” → 4, שלש → 3 …), every recognizer guess is checked, and when it misses and you tap the answer, it learns that mishearing',
     ],
     he: [
@@ -38,6 +39,7 @@ export const CHANGELOG: ChangeEntry[] = [
       'קישוטים ודינמיקה: צלילי חן, מורדנטים, טרנים, טרילים, קרשנדו, דקרשנדו, התגברות והחלשה',
       'נושאי תרגול חדשים: הרחבות ואלטרציות, וויסינגים, מהלכים, מבנה, גובה עדין, מכוון?, שני קולות, טריכורדים, מקאמים עם רבעי טונים, מקצבים מזרחיים, פולי־ריתמים, משקלים אי־זוגיים, תחושת סווינג, ותיאוריה כתובה (סימני היתק, כתיבה, ספרות רומיות, מעגל הקווינטות, טרנספוזיציה, אקורד־סולם, שלושה מפתחות)',
       'נגינה ואלתור: פלייבקים (ii–V–I, מינור, בלוז), אלתור עם משוב, תרגילי מקלדת MIDI, גיטרה מטאבים; חדרי מקהלה שבהם כל טלפון שר קול משלו',
+      'תרגיל שעון פנימי (המטרונום נעלם — שמרו על הפעמה), sus4 / add9 / alt בהרחבות, דרון עוגב מוקלט, ערכות צבע ביהלומים, התראה כשחבר משחק את הדו־קרב שלכם',
       'הבנה טובה יותר של תשובות בקול: טעויות שמיעה נפוצות במספרים (״to״ ← 2, ״for״ ← 4, שלש ← 3 …), בדיקה של כל ניחושי המזהה, וכשהוא לא מבין ואתם לוחצים על התשובה — הוא לומד את טעות השמיעה',
     ],
   },
