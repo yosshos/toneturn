@@ -1,6 +1,6 @@
 import { MiniGateContext, MiniLessonPlayer } from './MiniLesson';
 import { LearnedScreen, learnedCount } from './Learned';
-import { lessonForUnit } from '../content/minilessons';
+import { lessonForUnit, MINI_LESSONS } from '../content/minilessons';
 import type { MiniLesson } from '../content/miniTypes';
 import { PerformScreen } from './Perform';
 import { topicLesson } from '../engine/topics';
@@ -471,8 +471,8 @@ export function App() {
         <SettingsScreen t={t} settings={s} onChange={updateSettings} onBack={() => go('home')} account={<AccountCard t={t} user={user} sync={sync} />} />
       )}
       {route === 'diagnostics' && <Diagnostics t={t} settings={s} onBack={() => go('home')} />}
-      {route === 'friends' && <FriendsScreen settings={s} t={t} user={user} sync={sync} onBack={() => go('home')} />}
-      {route === 'skills' && <SkillMap t={t} lang={s.uiLang} progress={progress} onBack={() => go('home')} onPractice={practiceSkill} onPlacement={openPlacement} />}
+      {route === 'friends' && <FriendsScreen settings={s} t={t} user={user} sync={sync} onBack={() => go('home')} onBestTier={(b) => b > (s.bestLeague ?? 0) && updateSettings({ bestLeague: b })} />}
+      {route === 'skills' && <SkillMap t={t} lang={s.uiLang} progress={progress} bestLeague={s.bestLeague} onBack={() => go('home')} onPractice={practiceSkill} onPlacement={openPlacement} />}
       {consentThen && (
         <div className="sheet-backdrop" onClick={() => setConsentThen(null)}>
           <div className="sheet" role="dialog" aria-modal="true" aria-labelledby="consent2-title" onClick={(e) => e.stopPropagation()}>
@@ -547,7 +547,7 @@ export function App() {
       )}
       {route === 'drone' && <DroneScreen t={t} settings={s} onBack={() => go('home')} />}
       {route === 'perform' && <PerformScreen t={t} settings={s} onBack={() => go('home')} />}
-      {route === 'achievements' && <AchievementsScreen t={t} progress={progress} onBack={() => go('home')} />}
+      {route === 'achievements' && <AchievementsScreen t={t} progress={progress} extra={{ bestLeague: s.bestLeague, learned: learnedCount(s), lessonsTotal: Object.keys(MINI_LESSONS).length }} onBack={() => go('home')} />}
       {route === 'singalong' && <SingAlongScreen t={t} settings={s} onBack={() => go('vocal')} />}
       {route === 'vocal' && (
         <VocalScreen

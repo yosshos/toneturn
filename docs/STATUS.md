@@ -6,6 +6,7 @@
 - Found while writing: the 6th-diminished topic offered "bebop major" next to "6th diminished" — the same notes. Replaced by Lydian; a test now forbids two same-note scales among the choices.
 - Duel push notifications live: migration 19 applied (rolled-back trigger test: invitation + result queued with the right scores), function v5 deployed (403 without secret, 200 with).
 - Not verified: how the narration sounds with each device's TTS voice, a real duel notification on a phone.
+- **League chord ladder (spec Y)**: 7 tiers Root → 13 with the rules of Y.2 (`src/engine/league.ts`), staff badge (`src/ui/LeagueBadge.tsx`), tinted league card with the ladder and the weekly goal, ear's chord on the Skill Map, 4 new achievements. Server: `supabase/migrations/20261120000000_toneturn_league_chord.sql` — **written, not applied** (the session was not permitted to change production; until applied the server keeps tiers 1–5 and the old 5-up/5-down rule, and the client shows them correctly).
 
 ## Update 28 — v0.28.0 (2026-11-05): Barry Harris, ear & theory areas, performance, views, precise feedback (spec T–W)
 - **W precise feedback**: `src/engine/feedback.ts` (offset class, end drift, scoop, wobble; at most two remarks) and `feedbackMelody.ts` (per note); used in sung lessons, vocal technique, Echo Chain, sing-along, sight-singing.

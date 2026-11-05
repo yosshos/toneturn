@@ -1,7 +1,7 @@
 // Spec S: the daily workout planner card, the achievements screen and "then vs. now" for vocal takes.
 
 import { useEffect, useMemo, useState } from 'react';
-import { achievements } from '../engine/achievements';
+import { type AchievementExtra, achievements } from '../engine/achievements';
 import { planWorkout, stepKey, type WorkoutStep } from '../engine/workout';
 import { LESSON_META } from '../game/content';
 import type { Strings } from '../i18n/strings';
@@ -137,8 +137,8 @@ export function WorkoutCard({ t, progress, settings, onOpen }: { t: Strings; pro
   );
 }
 
-export function AchievementsScreen({ t, progress, onBack }: { t: Strings; progress: Progress; onBack: () => void }) {
-  const list = achievements(progress);
+export function AchievementsScreen({ t, progress, extra, onBack }: { t: Strings; progress: Progress; extra?: AchievementExtra; onBack: () => void }) {
+  const list = achievements(progress, extra);
   const got = list.filter((a) => a.got).length;
   return (
     <main className="panel-screen achievements">

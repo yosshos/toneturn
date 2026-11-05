@@ -13,29 +13,23 @@ export interface LeagueMember {
 export interface League {
   week: string;
   endsAt: string;
-  tier: number; // 1 Fundamental … 5 The Ninth (the overtone series)
+  tier: number; // 1 Root … 5 Ninth … 7 13 (spec Y)
   cohort: number;
+  /** Highest league ever reached (null on servers before migration 20). */
+  bestTier: number | null;
   members: LeagueMember[];
 }
-/** Places that move up / down at the end of the week. */
-export const PROMOTE = 5;
-export const RELEGATE = 5;
+export { leagueZone } from '../engine/league';
 
 export async function myLeague(): Promise<League | null> {
   const sb = supabase();
   if (!sb) return null;
   const { data, error } = await sb.rpc('toneturn_league');
   if (error || !data) return null;
-  const d = data as { week: string; ends_at: string; tier: number; cohort: number; members: LeagueMember[] };
-  return { week: d.week, endsAt: d.ends_at, tier: d.tier, cohort: d.cohort, members: d.members ?? [] };
+  const d = data as { week: string; ends_at: string; tier: number; cohort: number; best_tier?: number; members: LeagueMember[] };
+  return { week: d.week, endsAt: d.ends_at, tier: d.tier, cohort: d.cohort, bestTier: d.best_tier ?? null, members: d.members ?? [] };
 }
 
-/** Promotion / relegation zone of a place (1-based) in a cohort of n. */
-export function leagueZone(place: number, n: number, tier: number): 'up' | 'down' | 'stay' {
-  if (place <= PROMOTE && tier < 5) return 'up';
-  if (n >= 10 && place > n - RELEGATE && tier > 1) return 'down';
-  return 'stay';
-}
 
 export type DuelKind = Extract<SetKind, 'mixed' | 'degrees' | 'chords' | 'intervals' | 'modes' | 'wrong-notes' | 'truefalse' | 'beat'>;
 export interface DuelRow {

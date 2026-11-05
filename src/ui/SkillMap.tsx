@@ -1,3 +1,6 @@
+import { LeagueBadge } from './LeagueBadge';
+import { chordTierForRating, tierOf } from '../engine/league';
+import { overallRating } from '../engine/rating';
 import { useState } from 'react';
 import type { SkillId } from '../engine/lesson';
 import { band, evidence, normalised, PLANNED_SKILLS, SKILLS, weakestSkill, type Ratings } from '../engine/rating';
@@ -19,6 +22,7 @@ export function SkillMap({
   onPractice,
   onPlacement,
   lang,
+  bestLeague,
 }: {
   t: Strings;
   lang: 'he' | 'en';
@@ -26,6 +30,7 @@ export function SkillMap({
   onBack: () => void;
   onPractice: (skill: SkillId) => void;
   onPlacement: () => void;
+  bestLeague?: number;
 }) {
   const ratings = ratingsOf(progress);
   const [sel, setSel] = useState<Axis>(() => weakestSkill(ratings));
@@ -44,6 +49,25 @@ export function SkillMap({
       <p className="field-hint">{t.skillMapHint}</p>
 
       <OverallCard t={t} ratings={ratings} events={progress.ratingEvents ?? []} lang={lang} />
+      {(() => {
+        // Your ear's chord (spec Y.4): the overall rating in the league's seven steps.
+        const o = overallRating(ratings);
+        if (!o) return null;
+        const ct = chordTierForRating(o.r);
+        return (
+          <section className="set-card ear-chord" data-ear-chord={ct} style={{ ['--tier-color' as string]: tierOf(ct).color }}>
+            <LeagueBadge tier={ct} size={58} ghostNext title={t.leagueTiers[ct - 1]} />
+            <div>
+              <small className="league-kicker">{t.earChord}</small>
+              <div>
+                <b>{t.leagueTiers[ct - 1]}</b>
+                {bestLeague ? <small className="field-hint"> · {t.leagueTitle}: {t.leagueTiers[bestLeague - 1]}</small> : null}
+              </div>
+              <p className="field-hint">{t.earChordHint}</p>
+            </div>
+          </section>
+        );
+      })()}
 
       <Radar ratings={ratings} old={old?.ratings} sel={sel} onSelect={setSel} t={t} />
       {old && (

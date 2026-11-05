@@ -135,6 +135,8 @@ export interface Settings {
   learned?: Record<string, string>;
   /** Start every unit with its mini-lesson until it is learned (default on). */
   miniLessons?: boolean;
+  /** Highest weekly league ever reached (spec Y), as last seen. */
+  bestLeague?: number;
   /** Which note views to show for non-rhythm exercises (spec M.1). Default keyboard + staff. */
   noteViews?: NoteView[];
   /** Visual aids while answering (spec M.3). Default auto. */

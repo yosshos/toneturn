@@ -683,7 +683,7 @@ Feedback on a sung note says how and where, not only right/wrong, in the player'
 
 - **Open items closed (0.28.0)**: gem cosmetics (colour themes), recorded drone sound (organ), duel push notifications (migration 19 + function; to be applied).
 
-- **Leagues (product owner, 2026-11-05)**: the five tiers are named after the overtone series — Fundamental, Octave, Fifth, Seventh, The Ninth (יסוד, אוקטבה, קווינטה, ספטימה, התשיעית).
+- **Leagues (product owner, 2026-11-05)**: superseded by Y below (the chord ladder).
 
 ## Addendum — 2026-11-05 (product owner): X. Quick lessons before every unit, a collection, personal coaching
 
@@ -691,3 +691,21 @@ Feedback on a sung note says how and where, not only right/wrong, in the player'
 - **X.2 When it appears.** Automatically when a unit starts, until the player has heard it to the end; "Skip to practice" always available; pause, back, next, replay the example. A setting turns automatic lessons off. (Test runs with `?sim` or `?unlock` skip them unless `?mini` is given.)
 - **X.3 Collection.** Hearing every step plays a celebration (the topic card flips in, confetti) and files the topic in **Topics I learned**, by area (ear, harmony, rhythm, written theory, jazz & Barry Harris, voice, world music, play & games). Topics still to discover show as silhouettes; any card replays its lesson. Synced with the settings.
 - **X.4 Personal coaching.** After a wrong try, a hint about *your* answer that does not give the right one away ("not 5 — this one is lower than 5", "the first 2 notes were right", "listen to the 6th note — that's where Dorian and Aeolian differ"); after the reveal, what makes the two different; at the end of a session, the pair you mixed up most with a tip, or praise. Spoken and shown. (`src/engine/coach.ts`.)
+
+## Addendum — 2026-11-05 (product owner): Y. The league ladder is a chord
+
+- **Y.1 Seven leagues**, built as a chord stacked in thirds from middle C — every league adds a note: **Root** (C) · **Third** (E) · **Fifth** (G) · **Seventh** (B♭) · **Ninth** (D, the brand league) · **♯11** (F♯) · **13** (A). The full stack is C13♯11, the Lydian-dominant chord — the chord the overtone series spells (partials 7, 9, 11, 13 ≈ ♭7, 9, ♯11, 13). Hebrew: שורש · טרצה · קווינטה · ספטימה · נונה · ♯11 · 13. Tiers 1–5 keep their numbers (no one moves when this ships).
+- **Y.2 Rules** (weekly XP from every saved session; the server caps 20 XP per item; cohorts of up to 30):
+
+  | League | Moves up | Also needs (weekly XP) | Moves down (cohort ≥ 10) |
+  |---|---|---|---|
+  | Root | top 5 | > 0 | — |
+  | Third, Fifth | top 5 | > 0 | bottom 5 |
+  | Seventh | top 4 | > 0 | bottom 5 |
+  | Ninth | top 3 | ≥ 500 | bottom 5 |
+  | ♯11 | 1st place only | ≥ 900 | bottom 6 |
+  | 13 | — | — | bottom 8 (the summit is re-earned weekly) |
+
+  First placement from the overall rating, never above the Seventh: the Ninth and higher are only earned in play. The live table marks ▲ (moving up), △ (in the places but short of the XP), ▼ (moving down). Client and server share the rule (`src/engine/league.ts`, `toneturn_league_move` in migration 20).
+- **Y.3 Look.** The badge is a small staff that fills with the chord: middle C on its ledger line, then E, G, B♭ (with its flat), D, F♯, A (top ledger line); the newest note glows in the league colour and pulses softly, the next note shows as a dashed outline. Colours: Root stone grey, Third turquoise, Fifth sky blue, Seventh violet, **Ninth gold** (its D stays gold with a small "9" in every higher badge, and the badge glows), ♯11 magenta, 13 an aurora frame that slowly shifts colour. The league card is tinted with the league colour and shows the whole ladder (reached / current / ahead) and the goal for this week.
+- **Y.4 Ties.** *Your ear's chord* on the Skill Map: the overall rating in the same seven steps (Root < 850 · Third 850 · Fifth 1000 · Seventh 1150 · Ninth 1300 · ♯11 1450 · 13 1600) — ability, next to the league that measures weekly effort. Achievements: **The Ninth** (reach the Ninth league), **The full chord** (reach 13), plus Ten topics learned / Every quick lesson (spec X).

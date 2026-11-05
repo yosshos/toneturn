@@ -14,7 +14,13 @@ export interface Achievement {
   progress: number;
 }
 
-type Rule = { id: string; icon: string; check: (p: Progress) => number };
+/** Facts that live outside progress: the best league reached and the topics learned (spec X, Y). */
+export interface AchievementExtra {
+  bestLeague?: number;
+  learned?: number;
+  lessonsTotal?: number;
+}
+type Rule = { id: string; icon: string; check: (p: Progress, x: AchievementExtra) => number };
 
 const takes = (p: Progress) => p.vocal?.takes ?? [];
 const frac = (have: number, need: number) => Math.max(0, Math.min(1, have / need));
@@ -36,11 +42,15 @@ const RULES: Rule[] = [
   { id: 'days-30', icon: '🔥', check: (p) => frac((p.stats?.days ?? []).length, 30) },
   { id: 'puzzle-gold', icon: '🥇', check: (p) => (Object.values(p.puzzles ?? {}).some((x) => x.medal === 'gold') ? 1 : 0) },
   { id: 'range-map', icon: '📏', check: (p) => frac(Object.keys(p.vocal?.rangeMap ?? {}).length, 5) },
+  { id: 'league-ninth', icon: '🎼', check: (_, x) => ((x.bestLeague ?? 0) >= 5 ? 1 : frac(x.bestLeague ?? 0, 5)) },
+  { id: 'league-13', icon: '👑', check: (_, x) => ((x.bestLeague ?? 0) >= 7 ? 1 : frac(x.bestLeague ?? 0, 7)) },
+  { id: 'learned-10', icon: '📚', check: (_, x) => frac(x.learned ?? 0, 10) },
+  { id: 'learned-all', icon: '🎓', check: (_, x) => frac(x.learned ?? 0, x.lessonsTotal ?? 999) },
 ];
 
-export function achievements(p: Progress): Achievement[] {
+export function achievements(p: Progress, x: AchievementExtra = {}): Achievement[] {
   return RULES.map((r) => {
-    const v = r.check(p);
+    const v = r.check(p, x);
     return { id: r.id, icon: r.icon, got: v >= 1, progress: v };
   });
 }

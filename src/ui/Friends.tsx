@@ -7,7 +7,7 @@ import type { CloudUser } from '../cloud/cloud';
 import type { Strings } from '../i18n/strings';
 import { AccountCard, type SyncState } from './Account';
 
-export function FriendsScreen({ t, user, sync, onBack, settings }: { t: Strings; user: CloudUser | null; sync: SyncState; onBack: () => void; settings: Settings }) {
+export function FriendsScreen({ t, user, sync, onBack, settings, onBestTier }: { t: Strings; user: CloudUser | null; sync: SyncState; onBack: () => void; settings: Settings; onBestTier?: (tier: number) => void }) {
   const [duelPlaying, setDuelPlaying] = useState(false);
   const [me, setMe] = useState<MyProfile | null>(null);
   const [rows, setRows] = useState<FriendRow[]>([]);
@@ -136,7 +136,7 @@ export function FriendsScreen({ t, user, sync, onBack, settings }: { t: Strings;
             {msg && <p className="field-hint">{msg}</p>}
           </section>
 
-          {user && <LeagueCard t={t} lang={settings.uiLang} />}
+          {user && <LeagueCard t={t} lang={settings.uiLang} onBestTier={onBestTier} />}
           {user && (
             <DuelsSection
               t={t}

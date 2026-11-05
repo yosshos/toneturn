@@ -24,11 +24,13 @@ export const CHANGELOG: ChangeEntry[] = [
       'Every unit now starts with a quick lesson (about a minute): what it is, how it sounds, how to hear it — with examples. Skip any time',
       'Hear a lesson to the end and the topic joins your collection: “Topics I learned”, by area — replay any card',
       'Personal coaching: after a miss you hear what was off in *your* answer (“not 5 — this one is lower”, “the first 2 notes were right”), and the recap names the pair you mixed up most',
+      'Leagues become a chord: Root, Third, Fifth, Seventh, the Ninth, ♯11 and 13 — each league adds a note to your badge; the top ones are hard to reach. Your Skill Map shows your ear’s chord too',
     ],
     he: [
       'כל יחידה מתחילה עכשיו בשיעור קצר (בערך דקה): מה זה, איך זה נשמע, איך שומעים את זה — עם דוגמאות. אפשר לדלג בכל רגע',
       'הקשבתם לשיעור עד הסוף? הנושא מצטרף לאוסף שלכם: ״נושאים שלמדתי״, לפי תחומים — וכל כרטיס אפשר לשמוע שוב',
       'אימון אישי: אחרי טעות שומעים מה לא הסתדר בתשובה *שלכם* (״זה לא 5 — הצליל הזה נמוך יותר״, ״2 הצלילים הראשונים היו נכונים״), והסיכום מראה את הזוג שהכי בלבל אתכם',
+      'הליגות הופכות לאקורד: שורש, טרצה, קווינטה, ספטימה, נונה, ♯11 ו־13 — כל ליגה מוסיפה צליל לתג שלכם; העליונות קשות להשגה. גם במפת הכישורים מופיע האקורד של האוזן שלכם',
     ],
   },
   {

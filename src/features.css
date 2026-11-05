@@ -1622,3 +1622,27 @@
 .coach-insight.flawless { background: linear-gradient(135deg, color-mix(in srgb, var(--gold) 30%, var(--card)), var(--card)); font-weight: 700; }
 
 .feedback .coach-line { display: block; font-size: .95rem; line-height: 1.4; margin-top: 4px; opacity: .95; }
+
+/* League chord ladder (spec Y.3) */
+.league-card { border: 1px solid color-mix(in srgb, var(--tier-color) 45%, transparent); background: linear-gradient(160deg, color-mix(in srgb, var(--tier-color) 16%, var(--bg-2)), var(--bg-2) 60%); }
+.league-head { display: flex; gap: 14px; align-items: center; }
+.league-head h2 { margin: 0; font-size: 1.6rem; color: var(--tier-color); }
+.league-kicker { text-transform: uppercase; letter-spacing: .06em; font-weight: 700; font-size: .72rem; color: var(--ink-dim); }
+.league-goal { margin: 4px 0 0; font-weight: 600; }
+.league-badge { color: var(--ink); flex: none; overflow: visible; }
+.league-badge .lb-new ellipse { animation: lbPulse 2.2s ease-in-out infinite; }
+@keyframes lbPulse { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
+.league-badge .lb-frame.aurora { animation: lbAurora 6s linear infinite; }
+@keyframes lbAurora { 0% { filter: hue-rotate(0deg) drop-shadow(0 0 4px #7af0d0); } 50% { filter: hue-rotate(160deg) drop-shadow(0 0 7px #b18cff); } 100% { filter: hue-rotate(360deg) drop-shadow(0 0 4px #7af0d0); } }
+.league-badge.tier-5 .lb-frame { filter: drop-shadow(0 0 6px #ffc94d88); }
+.league-ladder { list-style: none; display: flex; gap: 4px; padding: 10px 0 4px; margin: 0; overflow-x: auto; justify-content: space-between; }
+.league-ladder li { display: grid; justify-items: center; gap: 2px; min-width: 40px; }
+.league-ladder li small { font-size: .66rem; color: var(--ink-dim); white-space: nowrap; }
+.league-ladder li.ahead { opacity: .38; filter: grayscale(.7); }
+.league-ladder li.now small { color: var(--tier-color); font-weight: 800; }
+.league-ladder li.now .league-badge { transform: scale(1.12); }
+.league-board li.zone-up-needs-xp .pname { opacity: .85; }
+:root[data-motion='reduced'] .league-badge .lb-new ellipse, :root[data-motion='reduced'] .league-badge .lb-frame.aurora { animation: none; }
+/* Skill Map: your ear's chord */
+.ear-chord { display: flex; gap: 12px; align-items: center; }
+.ear-chord b { color: var(--tier-color); font-size: 1.15rem; }
