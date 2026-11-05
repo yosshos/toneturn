@@ -20,7 +20,8 @@ interface Room {
   closedAt: number | null;
   answered: number;
   keys: string[];
-  players: { userId: string; nickname: string }[];
+  players: { userId: string; nickname: string; spectator?: boolean }[];
+  hostScreen: boolean;
   answers: { round: number; userId: string; answer: string | null; timeMs: number | null; correct: boolean; points: number }[];
 }
 
@@ -56,14 +57,15 @@ export class FakeRoomServer {
 
   client(me: string): RoomBackend {
     return {
-      create: async (kind, rounds, seed, keys, name) => {
+      create: async (kind, rounds, seed, keys, name, opts = {}) => {
         if (keys.length !== rounds) fail('answer key does not match rounds');
         const id = `room-${++this.n}`;
         const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
         const code = `TEST${A[Math.floor(this.n / 32) % 32]}${A[this.n % 32]}`;
         this.rooms.set(id, {
-          id, code, host: me, kind, rounds, seed, windowMs: 10_000, state: 'lobby', round: -1, roundOpen: false,
-          startedAt: 0, closedAt: null, answered: 0, keys, players: [{ userId: me, nickname: nick(name) }], answers: [],
+          id, code, host: me, kind, rounds, seed, windowMs: Math.max(3000, Math.min(60_000, opts.windowMs ?? 10_000)), state: 'lobby', round: -1, roundOpen: false,
+          startedAt: 0, closedAt: null, answered: 0, keys, players: [{ userId: me, nickname: nick(name), spectator: !!opts.hostScreen }], answers: [],
+          hostScreen: !!opts.hostScreen,
         });
         return { id, code };
       },
@@ -86,7 +88,7 @@ export class FakeRoomServer {
         const closedUpto = r.roundOpen ? r.round - 1 : r.round;
         return structuredClone({
           id: r.id, code: r.code, host: r.host, kind: r.kind, rounds: r.rounds, seed: r.seed, windowMs: r.windowMs,
-          state: r.state, round: r.round, roundOpen: r.roundOpen, answered: r.answered, me,
+          state: r.state, round: r.round, roundOpen: r.roundOpen, answered: r.answered, me, hostScreen: r.hostScreen,
           players: r.players.map((p) => ({ ...p, answered: r.answers.some((a) => a.round === r.round && a.userId === p.userId) })),
           results: r.keys.slice(0, closedUpto + 1).map((key, round) => ({
             round, key,
@@ -104,7 +106,7 @@ export class FakeRoomServer {
       close: async (id, round, force) => {
         const r = this.member(id, me);
         if (!r.roundOpen || r.round !== round) return;
-        if (r.answered < r.players.length) {
+        if (r.answered < r.players.filter((p) => !p.spectator).length) {
           if (!force) return;
           const age = this.now() - r.startedAt;
           if (me !== r.host && age < r.windowMs + 25_000) return;
@@ -117,13 +119,25 @@ export class FakeRoomServer {
         const r = this.member(id, me);
         if (!r.roundOpen || r.round !== round) return;
         if (r.answers.some((a) => a.round === round && a.userId === me)) return;
-        const ok = answer !== null && answer === r.keys[round] && timeMs !== null && timeMs >= 150 && timeMs <= r.windowMs && this.now() <= r.startedAt + r.windowMs + 18_000;
-        let streak = 0;
-        while (streak < round && r.answers.some((a) => a.userId === me && a.round === round - streak - 1 && a.correct)) streak++;
-        const points = ok ? tournamentPoints(1, timeMs!, r.windowMs, streak) : 0;
+        if (r.players.find((p) => p.userId === me)?.spectator) return;
+        const inTime = timeMs !== null && timeMs >= 150 && timeMs <= r.windowMs && this.now() <= r.startedAt + r.windowMs + 18_000;
+        let ok: boolean;
+        let points: number;
+        if (r.kind === 'vocal-hold') {
+          // "v:<0..100>" measured on the singer's device (same rule as the SQL function).
+          const m = /^v:(\d{1,3})$/.exec(answer ?? '');
+          const vs = m ? Math.min(100, Number(m[1])) : null;
+          ok = vs !== null && vs >= 60 && inTime;
+          points = vs !== null && inTime ? vs * 10 : 0;
+        } else {
+          ok = answer !== null && answer === r.keys[round] && inTime;
+          let streak = 0;
+          while (streak < round && r.answers.some((a) => a.userId === me && a.round === round - streak - 1 && a.correct)) streak++;
+          points = ok ? tournamentPoints(1, timeMs!, r.windowMs, streak) : 0;
+        }
         r.answers.push({ round, userId: me, answer, timeMs, correct: ok, points });
         r.answered++;
-        if (r.answered >= r.players.length) this.closeRound(r);
+        if (r.answered >= r.players.filter((p) => !p.spectator).length) this.closeRound(r);
         this.changed(id);
       },
       subscribe: (id, onChange) => {
@@ -157,7 +171,8 @@ export class FakeRoomServer {
           setTimeout(() => {
             const right = Math.random() < skill;
             const wrong = opts.choices?.(round).find((x) => x !== r.keys[round]) ?? '__';
-            void c.answer(roomId, round, right ? r.keys[round] : wrong, Math.max(200, Math.round(t)));
+            const sung = r.kind === 'vocal-hold' ? (opts.choices?.(round) ?? ['v:70'])[Math.floor(Math.random() * 2)] : null;
+            void c.answer(roomId, round, sung ?? (right ? r.keys[round] : wrong), Math.max(200, Math.round(t)));
           }, 3000 + t);
         });
       });

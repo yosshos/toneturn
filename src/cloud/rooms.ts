@@ -12,6 +12,8 @@ export interface RoomPlayer {
   /** Overall rating (spec L), when the server provides it. */
   rating?: number | null;
   ratingProvisional?: boolean;
+  /** Big-screen host: shows the game, does not play. */
+  spectator?: boolean;
 }
 
 export interface RoomRoundResult {
@@ -36,10 +38,17 @@ export interface RoomSnapshot {
   players: RoomPlayer[];
   /** Closed rounds only, oldest first. */
   results: RoomRoundResult[];
+  /** Big-screen mode (spec R): the host device shows the game and plays the sound; phones answer. */
+  hostScreen?: boolean;
+}
+
+export interface CreateOptions {
+  windowMs?: number;
+  hostScreen?: boolean;
 }
 
 export interface RoomBackend {
-  create(kind: SetKind, rounds: number, seed: number, keys: string[], nick: string): Promise<{ id: string; code: string }>;
+  create(kind: SetKind, rounds: number, seed: number, keys: string[], nick: string, opts?: CreateOptions): Promise<{ id: string; code: string }>;
   join(code: string, nick: string): Promise<string>;
   state(id: string): Promise<RoomSnapshot>;
   startRound(id: string, round: number): Promise<void>;
@@ -79,7 +88,8 @@ interface RawState {
   round_open: boolean;
   answered: number;
   me: string;
-  players: { user_id: string; nickname: string; answered: boolean; rating?: number | null; rating_provisional?: boolean | null }[];
+  players: { user_id: string; nickname: string; answered: boolean; rating?: number | null; rating_provisional?: boolean | null; spectator?: boolean }[];
+  host_screen?: boolean;
   results: { round: number; key: string; answers: { user_id: string; answer: string | null; time_ms: number | null; correct: boolean; points: number }[] }[];
 }
 
@@ -97,7 +107,8 @@ export function fromRaw(r: RawState): RoomSnapshot {
     roundOpen: r.round_open,
     answered: r.answered,
     me: r.me,
-    players: r.players.map((p) => ({ userId: p.user_id, nickname: p.nickname, answered: p.answered, rating: p.rating ?? null, ratingProvisional: !!p.rating_provisional })),
+    players: r.players.map((p) => ({ userId: p.user_id, nickname: p.nickname, answered: p.answered, rating: p.rating ?? null, ratingProvisional: !!p.rating_provisional, spectator: !!p.spectator })),
+    hostScreen: !!r.host_screen,
     results: r.results.map((x) => ({
       round: x.round,
       key: x.key,
@@ -115,8 +126,16 @@ export function supabaseRooms(): RoomBackend | null {
     return data as T;
   };
   return {
-    async create(kind, rounds, seed, keys, nick) {
-      const rows = await rpc<{ id: string; code: string }[]>('toneturn_room_create', { p_kind: kind, p_rounds: rounds, p_seed: seed, p_keys: keys, p_nick: nick });
+    async create(kind, rounds, seed, keys, nick, opts = {}) {
+      const rows = await rpc<{ id: string; code: string }[]>('toneturn_room_create_v2', {
+        p_kind: kind,
+        p_rounds: rounds,
+        p_seed: seed,
+        p_keys: keys,
+        p_nick: nick,
+        p_window_ms: opts.windowMs ?? 10_000,
+        p_host_screen: !!opts.hostScreen,
+      });
       return rows[0];
     },
     join: (code, nick) => rpc<string>('toneturn_room_join', { p_code: code, p_nick: nick }),

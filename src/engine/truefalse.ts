@@ -86,3 +86,10 @@ export const tfDifficulty = (level: TFLevel) => [0, 950, 1100, 1200, 1350][level
 export const TF_RUN_MS = 60_000;
 export const TF_PENALTY_MS = 2_000;
 export const tfPoints = (streak: number) => 1 + Math.floor(streak / 5) * 0.5;
+
+
+/** Are both shown labels right for these three notes (by semitones; ♯4 and ♭5 both mean 6)? */
+export function tfTruth(midis: number[], shownLeft: string, shownRight: string): boolean {
+  const semis = (label: string) => INTERVALS.find(([l]) => l === label)?.[2] ?? -1;
+  return semis(shownLeft) === midis[1] - midis[0] && semis(shownRight) === midis[2] - midis[1];
+}

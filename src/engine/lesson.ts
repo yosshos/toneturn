@@ -189,6 +189,19 @@ export interface RunIdQuestion extends QBase {
   answer: string;
 }
 
+/** "True or false?" as a question (rooms / duels): three notes, two interval labels — both right? */
+export interface TFQuestion extends QBase {
+  kind: 'tf';
+  names: [PitchClass, PitchClass, PitchClass];
+  shownLeft: string;
+  shownRight: string;
+  midis: number[];
+  /** Hear the notes instead of reading their names. */
+  ear: boolean;
+  answer: 'true' | 'false';
+  choices: ['true', 'false'];
+}
+
 /** Hear a scale with one wrong note and say which note (its position, 2 … n−1) was wrong. */
 export interface WrongNoteQuestion extends QBase {
   kind: 'wrong-note';
@@ -247,6 +260,7 @@ export interface ProgressionQuestion extends QBase {
 
 export type Question =
   | ModeIdQuestion
+  | TFQuestion
   | WrongNoteQuestion
   | SeventhQuestion
   | ProgressionQuestion
@@ -305,6 +319,8 @@ export function questionSkill(q: Question): SkillId {
     case 'mode-id':
     case 'wrong-note':
       return 'modes';
+    case 'tf':
+      return 'intervals';
     case 'name-seq':
       return q.given === 'sound' ? 'notes' : 'degrees';
     case 'seventh':
@@ -1259,6 +1275,8 @@ export function explainStimulus(q: Question): Stimulus[] {
       return [{ kind: 'notes', midis: q.midis, each: q.each * 1.4 }];
     case 'wrong-note':
       return [{ kind: 'notes', midis: q.correct, each: q.each * 1.3 }];
+    case 'tf':
+      return [{ kind: 'notes', midis: q.midis, each: 0.6 }];
     case 'degree': {
       const s: Stimulus[] = [{ kind: 'note', midi: q.targetMidi, duration: 1.0 }];
       if (q.answer !== 1) s.push({ kind: 'resolve', fromMidi: q.targetMidi, toMidi: nearestTonicMidi(q.key, q.targetMidi) });
@@ -1308,6 +1326,8 @@ export function explainStimulus(q: Question): Stimulus[] {
  */
 export function compareStimulus(q: Question, given: Answer): Stimulus[] | null {
   switch (q.kind) {
+    case 'tf':
+      return null;
     case 'wrong-note':
       // What you heard, then the scale as it should be.
       return [{ kind: 'notes', midis: q.midis, each: q.each }, { kind: 'rest', duration: 0.6 }, { kind: 'notes', midis: q.correct, each: q.each }];
@@ -1499,6 +1519,8 @@ export function renderStimulus(stimulus: Stimulus[]): { events: NoteEvent[]; len
 export function questionTag(q: Question): string {
   const k = (p: PitchClass) => `${p.letter}${p.acc}`;
   switch (q.kind) {
+    case 'tf':
+      return `tf:${q.names.map(k).join('.')}:${q.shownLeft}:${q.shownRight}:${q.midis.join('.')}:${q.ear ? 1 : 0}`;
     case 'wrong-note':
       return `wrongnote:${k(q.key)}:${q.mode}:${q.position}:${q.alt}:${q.each}`;
     case 'mode-id':
@@ -1662,4 +1684,23 @@ export function wrongNotesLesson(level: number, seed = Date.now()): LessonDef {
     if (q) questions.push(q);
   }
   return { id: 'wrong-notes', version: 1, skill: 'modes', scoring: { xpPerCorrect: 10, attemptLimit: 2 }, intro: [], questions };
+}
+
+
+// ======================================================================= true or false (as a question)
+
+export function tfQuestion(id: string, item: { trio: { left: PitchClass; mid: PitchClass; right: PitchClass }; shownLeft: string; shownRight: string; truth: boolean; midis: [number, number, number] }, ear: boolean, difficulty = 1100): TFQuestion {
+  return {
+    id,
+    kind: 'tf',
+    names: [item.trio.left, item.trio.mid, item.trio.right],
+    shownLeft: item.shownLeft,
+    shownRight: item.shownRight,
+    midis: item.midis,
+    ear,
+    answer: item.truth ? 'true' : 'false',
+    choices: ['true', 'false'],
+    stimulus: ear ? [{ kind: 'notes', midis: item.midis, each: 0.6 }] : [],
+    difficulty,
+  };
 }

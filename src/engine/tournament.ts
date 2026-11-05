@@ -14,17 +14,56 @@ import {
   type Quality,
 } from './lesson';
 import { pc } from './pitch';
+import { degreeSeqQuestion, modeChoices, modeIdQuestion, MODE_ID_LEVELS, rhythmDictQuestion, singQuestion, tfQuestion, wrongNoteQuestion, WRONG_NOTE_LEVELS } from './lesson';
+import type { RhythmLevel } from './rhythm';
+import { MODE_STEPS } from './modes';
+import { tfItem } from './truefalse';
 import { tournamentPoints } from './scoring';
 
 export const ROUND_WINDOW_MS = 10_000;
 export const MIN_HUMAN_MS = 150; // faster than this is not a reaction to the sound
 
-export type SetKind = 'mixed' | 'degrees' | 'chords' | 'intervals';
+export type SetKind = 'mixed' | 'degrees' | 'chords' | 'intervals' | 'modes' | 'wrong-notes' | 'truefalse' | 'echo' | 'beat' | 'vocal-hold';
+
+/** Answer window per kind (memory and vocal rounds need longer). */
+export const WINDOW_MS: Record<SetKind, number> = { mixed: 10_000, degrees: 10_000, chords: 10_000, intervals: 10_000, modes: 12_000, 'wrong-notes': 12_000, truefalse: 8_000, echo: 25_000, beat: 12_000, 'vocal-hold': 15_000 };
+
+/** Kinds that work on one device with two players (split-screen buttons). */
+export const DUEL_KINDS: SetKind[] = ['mixed', 'degrees', 'chords', 'intervals', 'modes', 'wrong-notes', 'truefalse', 'beat'];
 
 /** A tournament item must be answerable by buttons (≤ 4 choices) and fair for everyone. */
-export function tournamentItem(kind: Exclude<SetKind, 'mixed'> | 'cadences', seed: number, id: string): Question {
+export function tournamentItem(kind: Exclude<SetKind, 'mixed'> | 'cadences', seed: number, id: string, round = 0): Question {
   const rnd = mulberry32(seed);
   switch (kind) {
+    case 'modes': {
+      const L = MODE_ID_LEVELS[3]; // the seven modes
+      const mode = pick(rnd, L.pool);
+      return modeIdQuestion(id, pc(pick(rnd, ['C', 'D', 'F', 'G', 'A'])), mode, modeChoices(mode, L.pool, 4, rnd), 'updown', 0.34, 1200);
+    }
+    case 'wrong-notes': {
+      for (let k = 0; k < 50; k++) {
+        const L = WRONG_NOTE_LEVELS[1 + Math.floor(rnd() * 3)];
+        const mode = pick(rnd, L.pool);
+        const n = MODE_STEPS[mode].length;
+        const q = wrongNoteQuestion(id, pc(pick(rnd, ['C', 'D', 'F', 'G', 'A'])), mode, 2 + Math.floor(rnd() * (n - 2)), rnd() < 0.5 ? 1 : -1, 0.36, L.base);
+        if (q) return q;
+      }
+      return wrongNoteQuestion(id, pc('C'), 'ionian', 3, -1, 0.4, 1000)!;
+    }
+    case 'truefalse':
+      return tfQuestion(id, tfItem(2, rnd), false, 1100);
+    case 'echo': {
+      // Echo Chain, together: the melody grows by a note every two rounds.
+      const len = Math.min(8, 3 + Math.floor(round / 2));
+      const degrees = Array.from({ length: len }, () => pick(rnd, [1, 2, 3, 5]));
+      return degreeSeqQuestion(id, pick(rnd, DEGREE_KEYS), degrees, 1100 + 40 * len);
+    }
+    case 'beat':
+      return rhythmDictQuestion(id, Math.min(4, 1 + Math.floor(round / 3)) as RhythmLevel, 1, (seed >>> 0) % 100000);
+    case 'vocal-hold': {
+      const q = singQuestion(id, pick(rnd, DEGREE_KEYS), 1);
+      return { ...q, stimulus: [{ kind: 'note', midi: q.targetMidi, duration: 1.4 }] };
+    }
     case 'degrees':
       return degreeQuestion(id, pick(rnd, DEGREE_KEYS), pick(rnd, [1, 3, 5]), [1, 3, 5], 1050);
     case 'chords':
@@ -38,7 +77,7 @@ export function tournamentItem(kind: Exclude<SetKind, 'mixed'> | 'cadences', see
 
 export function tournamentSet(kind: SetKind, rounds: number, seed: number): Question[] {
   const mix = ['degrees', 'chords', 'intervals', 'cadences'] as const;
-  return Array.from({ length: rounds }, (_, i) => tournamentItem(kind === 'mixed' ? mix[i % mix.length] : kind, seed * 131 + i * 7919, `t${i + 1}`));
+  return Array.from({ length: rounds }, (_, i) => tournamentItem(kind === 'mixed' ? mix[i % mix.length] : kind, seed * 131 + i * 7919, `t${i + 1}`, i));
 }
 
 /** Daily challenge: one set per local calendar day, the same for everyone (versioned). */

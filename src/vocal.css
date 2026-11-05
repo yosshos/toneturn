@@ -406,3 +406,53 @@
 .credits {
   font-size: 0.78rem;
 }
+.big-screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+}
+.big-screen .ask.big {
+  font-size: clamp(1.6rem, 5vw, 3.4rem);
+  text-align: center;
+}
+.big-count,
+.big-key {
+  text-align: center;
+  font-size: clamp(1.2rem, 3vw, 2rem);
+  font-weight: 800;
+}
+.big-key {
+  color: var(--mint);
+}
+.room-code.small {
+  font-size: 1.2rem;
+  letter-spacing: 0.15em;
+}
+.seq-input {
+  display: grid;
+  gap: 10px;
+}
+.seq-shown {
+  text-align: center;
+  font-size: 1.4rem;
+  font-weight: 800;
+  min-height: 1.6em;
+}
+.seq-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+.vocal-round {
+  display: grid;
+  gap: 10px;
+  text-align: center;
+}
+.big-score.small {
+  font-size: 2.4rem;
+}
+.big-hint {
+  text-align: center;
+}

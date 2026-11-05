@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { cloudConfigured, signInWithGoogle, type CloudUser } from '../cloud/cloud';
 import { normaliseCode, ROOM_CODE_RE, RoomError, supabaseRooms, type RoomBackend } from '../cloud/rooms';
 import { tournamentSet, type SetKind } from '../engine/tournament';
-import { displayNote } from '../engine/pitch';
+import { displayNote, type PitchClass } from '../engine/pitch';
 import { createRoom, RoomController, type RoomStanding } from '../game/roomController';
 import { askTemplate, choiceLabel } from '../game/content';
 import { realClock } from '../game/adapters';
@@ -12,6 +12,10 @@ import { namingFor, type Settings } from '../storage/progress';
 import { withNote } from './bits';
 import { params, piano, tts } from './services';
 import { TimeBar } from './Tournament';
+import { BrowserPitchCapture } from '../speech/pitchCapture';
+import { gradeTake, synthHold, VOCAL_LEVELS, DEFAULT_RANGE } from '../engine/vocal';
+import type { SungFrame } from '../engine/sing';
+import { SIMULATED } from './services';
 
 /** Dev/E2E only: an in-page room server with bot opponents (never in production builds). */
 const FAKE_ROOMS = import.meta.env.DEV && params.has('fakeRooms');
@@ -38,6 +42,7 @@ export function OnlineScreen({ t, settings, user, initialCode, onBack }: { t: St
   const [code, setCode] = useState(normaliseCode(initialCode));
   const [kind, setKind] = useState<SetKind>('mixed');
   const [rounds, setRounds] = useState(10);
+  const [bigScreen, setBigScreen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -55,6 +60,12 @@ export function OnlineScreen({ t, settings, user, initialCode, onBack }: { t: St
     ['degrees', t.skillNames.degrees],
     ['chords', t.skillNames.chords],
     ['intervals', t.skillNames.intervals],
+    ['modes', t.skillNames.modes],
+    ['wrong-notes', t.wrongNotesTitle],
+    ['truefalse', t.trueFalse],
+    ['echo', t.echoChain],
+    ['beat', t.skillNames['rhythm-dictation']],
+    ['vocal-hold', t.vocalHoldGame],
   ];
   const run = async (f: (b: RoomBackend) => Promise<string>) => {
     if (!backend) return;
@@ -144,16 +155,26 @@ export function OnlineScreen({ t, settings, user, initialCode, onBack }: { t: St
                 ))}
               </div>
             </fieldset>
+            <label className="toggle-row">
+              <input type="checkbox" checked={bigScreen} onChange={(e) => setBigScreen(e.target.checked)} />
+              <span>
+                📺 {t.bigScreen}
+                <small className="field-hint"> — {t.bigScreenHint}</small>
+              </span>
+            </label>
             <button
               className="btn mega"
               disabled={busy}
               onClick={() =>
                 run(async (b) => {
-                  const r = await createRoom(b, kind, rounds, name);
+                  const r = await createRoom(b, kind, rounds, name, undefined, { hostScreen: bigScreen });
                   if (FAKE_ROOMS && fakeServer) {
                     const room = fakeServer.rooms.get(r.id)!;
                     const items = tournamentSet(room.kind, room.rounds, room.seed);
-                    fakeServer.addBots(r.code, ['Ada', 'Ravi'], { choices: (i) => items[i].choices.map(String), delayMs: [400, 1600] });
+                    fakeServer.addBots(r.code, ['Ada', 'Ravi'], {
+                      choices: (i) => (room.kind === 'vocal-hold' ? ['v:72', 'v:88'] : room.kind === 'echo' ? [String(items[i].answer), '1-1-1'] : items[i].choices.map(String)),
+                      delayMs: [400, 1600],
+                    });
                   }
                   return r.id;
                 })
@@ -264,17 +285,17 @@ function RoomScreen({ t, settings, backend, roomId, onExit }: { t: Strings; sett
             {s.players.map((p) => (
               <li key={p.userId} className={p.userId === s.me ? 'me' : ''}>
                 {p.nickname} <RatingBadge r={p.rating} provisional={p.ratingProvisional} t={t} size="sm" />
-                {p.userId === s.host && <small className="host-tag">{t.hostTag}</small>}
+                {p.userId === s.host && <small className="host-tag">{s.hostScreen ? `📺 ${t.bigScreen}` : t.hostTag}</small>}
               </li>
             ))}
           </ul>
         </section>
         {v.isHost ? (
           <>
-            <button className="btn mega" disabled={s.players.length < 2} onClick={() => void c.startGame()}>
+            <button className="btn mega" disabled={s.players.filter((p) => !p.spectator).length < (s.hostScreen ? 1 : 2)} onClick={() => void c.startGame()}>
               ▶ {t.startGame}
             </button>
-            {s.players.length < 2 && <p className="field-hint">{t.needTwo}</p>}
+            {s.players.filter((p) => !p.spectator).length < (s.hostScreen ? 1 : 2) && <p className="field-hint">{t.needTwo}</p>}
           </>
         ) : (
           <p className="field-hint">{t.waitingForHost}</p>
@@ -314,6 +335,42 @@ function RoomScreen({ t, settings, backend, roomId, onExit }: { t: Strings; sett
   const target = q.kind === 'degree' ? displayNote(q.target, nm, lang) : '';
   const reveal = v.phase === 'reveal';
   const mine = v.last?.answers.find((a) => a.userId === s.me);
+  const players = s.players.filter((p) => !p.spectator);
+
+  // Big screen (spec R): the host device shows the question, the time, the answer count and the board.
+  if (s.hostScreen && v.isHost) {
+    const key = v.last?.key;
+    return (
+      <main className={`tournament big-screen stage-${v.phase}`}>
+        <div className="t-top">
+          <button className="icon-btn" onClick={onExit} aria-label={t.leave}>
+            ✕
+          </button>
+          <span className="room-code small" dir="ltr">
+            {s.code}
+          </span>
+          <span className="t-round" dir="ltr">
+            {v.round + 1}/{s.rounds}
+          </span>
+        </div>
+        {v.phase === 'countdown' ? (
+          <div className="t-countdown" key={v.countdown}>
+            {v.countdown}
+          </div>
+        ) : (
+          <h2 className="ask big">{withNote(askTemplate(q, lang, nm), target, 'key' in q ? displayNote(q.key as PitchClass, nm, lang) : '')}</h2>
+        )}
+        <TimeBar endsAt={v.phase === 'answering' ? v.windowEndsAt : null} />
+        {!reveal && <p className="big-count">{fmt(t.answeredN, { n: s.answered, m: players.length })}</p>}
+        {reveal && key !== undefined && s.kind !== 'vocal-hold' && (
+          <p className="big-key">
+            ✓ {s.kind === 'echo' ? key.split('-').join(' ') : choiceLabel(q, q.choices.find((ch) => String(ch) === key) ?? key, lang, nm).small || key}
+          </p>
+        )}
+        {(reveal || v.phase === 'waiting') && <Board t={t} standings={v.standings} me={s.me} limit={8} lang={lang} />}
+      </main>
+    );
+  }
   return (
     <main className={`tournament single online-play stage-${v.phase}`}>
       <section className="t-center">
@@ -334,11 +391,17 @@ function RoomScreen({ t, settings, backend, roomId, onExit }: { t: Strings; sett
             {v.countdown}
           </div>
         ) : (
-          <h2 className="ask">{withNote(askTemplate(q, lang, nm), target)}</h2>
+          <h2 className="ask">{withNote(askTemplate(q, lang, nm), target, 'key' in q ? displayNote(q.key as PitchClass, nm, lang) : '')}</h2>
         )}
         <TimeBar endsAt={v.phase === 'answering' ? v.windowEndsAt : null} />
       </section>
+      {s.hostScreen && (v.phase === 'playing' || v.phase === 'countdown') && <p className="field-hint big-hint">🔊 {t.listenBigScreen}</p>}
       <section className="duel-half p0">
+        {s.kind === 'echo' && q.kind === 'degree-seq' ? (
+          <SeqInput t={t} disabled={v.phase !== 'answering'} onSubmit={(seq) => c.answer(seq)} />
+        ) : s.kind === 'vocal-hold' && q.kind === 'sing' ? (
+          <VocalRound t={t} settings={settings} midi={q.targetMidi} disabled={v.phase !== 'answering'} onScore={(score) => c.answer(`v:${score}`)} />
+        ) : (
         <div className={`answers n-${q.choices.length}`}>
           {q.choices.map((ch) => {
             const lb = choiceLabel(q, ch, lang, nm);
@@ -361,6 +424,7 @@ function RoomScreen({ t, settings, backend, roomId, onExit }: { t: Strings; sett
             );
           })}
         </div>
+        )}
         {v.phase === 'waiting' && <p className="half-result">{t.waitingOthers}</p>}
         {reveal && (
           <p className={`half-result ${mine?.correct ? 'good' : ''}`} dir="ltr">
@@ -371,5 +435,74 @@ function RoomScreen({ t, settings, backend, roomId, onExit }: { t: Strings; sett
       </section>
       {reveal && <Board t={t} standings={v.standings} me={s.me} limit={5} lang={lang} />}
     </main>
+  );
+}
+
+/** Echo Chain together: tap the degrees you heard in order, then send. */
+function SeqInput({ t, disabled, onSubmit }: { t: Strings; disabled: boolean; onSubmit: (seq: string) => void }) {
+  const [seq, setSeq] = useState<number[]>([]);
+  useEffect(() => {
+    if (disabled) setSeq([]);
+  }, [disabled]);
+  return (
+    <div className="seq-input">
+      <p className="seq-shown" dir="ltr" aria-live="polite">
+        {seq.length ? seq.join(' – ') : '…'}
+      </p>
+      <div className="answers n-4">
+        {[1, 2, 3, 5].map((d) => (
+          <button key={d} className={`answer tone-${['mint', 'gold', 'lilac', 'coral'][[1, 2, 3, 5].indexOf(d)]}`} disabled={disabled} data-answer={d} onPointerDown={(e) => (e.preventDefault(), setSeq((x) => [...x, d]))}>
+            <b>{d}</b>
+          </button>
+        ))}
+      </div>
+      <div className="seq-actions">
+        <button className="btn ghost" disabled={disabled || !seq.length} onClick={() => setSeq((x) => x.slice(0, -1))}>
+          ⌫
+        </button>
+        <button className="btn primary" disabled={disabled || !seq.length} data-send="1" onClick={() => onSubmit(seq.join('-'))}>
+          ✓ {t.send}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** Vocal hold together ("who holds steadiest"): sing the note; the score is measured on this device. */
+function VocalRound({ t, settings, midi, disabled, onScore }: { t: Strings; settings: Settings; midi: number; disabled: boolean; onScore: (score: number) => void }) {
+  const [state, setState] = useState<'idle' | 'singing' | 'done'>('idle');
+  const [score, setScore] = useState<number | null>(null);
+  useEffect(() => {
+    if (disabled) setState('idle');
+  }, [disabled]);
+  const item = VOCAL_LEVELS[0].items[0];
+  const sing = async () => {
+    setState('singing');
+    let frames: SungFrame[] = [];
+    if (SIMULATED) {
+      frames = synthHold(midi, { seconds: 3.3, jitter: 3 });
+      await new Promise((r) => setTimeout(r, 600));
+    } else {
+      const ctl = new AbortController();
+      const r = await new BrowserPitchCapture().sing({ signal: ctl.signal, maxMs: 6500, silenceMs: 5000, endSilenceMs: 700, hopMs: 20 });
+      if (r.kind === 'frames') frames = r.frames;
+    }
+    const g = gradeTake({ ...item, seconds: 3 }, frames, settings.voiceRange ?? DEFAULT_RANGE, settings.vibratoStyle ?? 'pop');
+    const s = g.unclear ? 0 : Math.round(g.score * 100);
+    setScore(s);
+    setState('done');
+    onScore(s);
+  };
+  return (
+    <div className="vocal-round">
+      <p>{t.vocalHoldPrompt}</p>
+      {state === 'done' ? (
+        <p className="big-score small">{score}%</p>
+      ) : (
+        <button className="btn mega" disabled={disabled || state === 'singing'} onClick={() => void sing()}>
+          🎤 {state === 'singing' ? '…' : t.vocalSing}
+        </button>
+      )}
+    </div>
   );
 }

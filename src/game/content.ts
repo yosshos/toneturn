@@ -7,7 +7,7 @@ import type { SungResult } from '../engine/sing';
 import { parseAlternatives, parseCadence, parseDegree, parseDegreeSequence, parseInterval, parseInversion, parseNoteName, parseQuality, parseRunMaterial, parseRunShape, parseNoteNameSequence, parseProgression, parseSeventh, type ParseResult } from '../engine/parser';
 import { songById } from '../engine/songs';
 import { MODE_NAMES, MODE_STEPS, type ModeId } from '../engine/modes';
-import { parseMode } from '../engine/parser';
+import { parseMode, parseTrueFalse } from '../engine/parser';
 import { describeRun } from '../engine/runs';
 import { narration, type Lang } from './narration';
 import { describe as describeRhythm, parseRhythmWords, rhythmFromKey, rhythmKey, sameRhythm, type CellId } from '../engine/rhythm';
@@ -286,6 +286,7 @@ const namesShown = (keys: string[], nm: Naming, l: Lang) => keys.map((k) => { co
 export function answerWord(_q: Question, a: Answer, l: Lang, nm: Naming = 'letter'): string {
   if (typeof a === 'number') return deg(a, l);
   if (_q.kind === 'mode-id' && typeof a === 'string' && a in MODE_STEPS) return MODE_NAMES[a as ModeId][l];
+  if (_q.kind === 'tf') return a === 'true' ? (l === 'en' ? 'true' : 'נכון') : l === 'en' ? 'false' : 'לא נכון';
   if (typeof a === 'string' && a.includes('.') && a.split('.').every((k) => pcFromKey(k))) return namesWords(a.split('.'), nm, l);
   const asPc = typeof a === 'string' ? pcFromKey(a) : null;
   if (asPc) return spokenNote(asPc, nm, l);
@@ -336,6 +337,8 @@ export function sayChoices(q: Question, l: Lang): string {
 /** Spoken prompt at the start of a round. */
 export function roundPrompt(q: Question, l: Lang, nm: Naming, n: number): string {
   switch (q.kind) {
+    case 'tf':
+      return l === 'en' ? `Round ${n}. ${tfLine(q, nm, l)}. True or false?` : `סיבוב ${n}. ${tfLine(q, nm, l)}. נכון או לא?`;
     case 'wrong-note':
       return l === 'en' ? `Round ${n}. ${MODE_NAMES[q.mode].en} from ${spokenNote(q.key, nm, l)}. Which note is wrong? Say its number.` : `סיבוב ${n}. ${MODE_NAMES[q.mode].he} מ־${spokenNote(q.key, nm, l)}. איזה צליל שגוי? אמרו את המספר שלו.`;
     case 'mode-id':
@@ -442,6 +445,8 @@ export function roundPrompt(q: Question, l: Lang, nm: Naming, n: number): string
 
 export function parseAnswer(q: Question, alternatives: string[], inputNaming: Naming = 'letter'): ParseResult<Answer> {
   switch (q.kind) {
+    case 'tf':
+      return parseAlternatives(alternatives, parseTrueFalse);
     case 'wrong-note':
       return parseAlternatives(alternatives, parseDegree);
     case 'mode-id':
@@ -521,6 +526,8 @@ export function revealText(q: Question, l: Lang, nm: Naming): string {
 
 function revealCore(q: Question, l: Lang, nm: Naming): string {
   switch (q.kind) {
+    case 'tf':
+      return l === 'en' ? `It was ${q.answer}: the intervals are ${tfTruthWords(q, 'en')}.` : `זה היה ${q.answer === 'true' ? 'נכון' : 'לא נכון'}: המרווחים הם ${tfTruthWords(q, 'he')}.`;
     case 'wrong-note':
       return l === 'en' ? `Note ${q.position} was ${q.alt > 0 ? 'too high' : 'too low'}. What you heard, then the right scale.` : `צליל ${q.position} היה ${q.alt > 0 ? 'גבוה מדי' : 'נמוך מדי'}. מה ששמעתם, ואז הסולם הנכון.`;
     case 'mode-id':
@@ -626,6 +633,7 @@ export interface ChoiceLabel {
 }
 
 export function choiceLabel(_q: Question, a: Answer, l: Lang, nm: Naming = 'letter'): ChoiceLabel {
+  if (_q.kind === 'tf') return a === 'true' ? { big: '✓', small: l === 'en' ? 'True' : 'נכון', tone: 'mint' } : { big: '✗', small: l === 'en' ? 'False' : 'לא נכון', tone: 'coral' };
   if (_q.kind === 'wrong-note' && typeof a === 'number') return { big: String(a), small: l === 'en' ? 'note' : 'צליל', tone: (['mint', 'gold', 'lilac', 'coral'] as ChoiceLabel['tone'][])[a % 4] };
   if (_q.kind === 'mode-id' && typeof a === 'string' && a in MODE_STEPS) {
     const tones: ChoiceLabel['tone'][] = ['mint', 'gold', 'lilac', 'coral'];
@@ -685,6 +693,8 @@ export function choiceLabel(_q: Question, a: Answer, l: Lang, nm: Naming = 'lett
 /** On-screen question line. `{n}` / `{k}` are note placeholders rendered with bidi isolation. */
 export function askTemplate(q: Question, l: Lang, nm: Naming = 'letter'): string {
   switch (q.kind) {
+    case 'tf':
+      return `${tfLine(q, nm, l)} — ${l === 'en' ? 'true or false?' : 'נכון או לא?'}`;
     case 'wrong-note':
       return l === 'en' ? `${MODE_NAMES[q.mode].en} from {k}: which note is wrong?` : `${MODE_NAMES[q.mode].he} מ־{k}: איזה צליל שגוי?`;
     case 'mode-id':
@@ -736,6 +746,7 @@ export function hintText(q: Question, l: Lang, voice: boolean): string {
   if (q.kind === 'rhythm-dict' && voice) return l === 'en' ? 'Say it: “ta ti-ti ta” or “quarter, two eighths…”' : 'אמרו: "טה טי-טי טה" או "רבע, שתי שמיניות…"';
   if (q.kind === 'name-seq') return voice ? (l === 'en' ? 'Say the note names in order' : 'אמרו את שמות התווים לפי הסדר') : l === 'en' ? 'Tap the notes in order, then Done' : 'לחצו על התווים לפי הסדר, ואז סיום';
   if (q.kind === 'degree-seq') return voice ? (l === 'en' ? 'Say them in order, e.g. “one three five”' : 'אמרו לפי הסדר, למשל "אחת שלוש חמש"') : l === 'en' ? 'Tap the degrees in order, then Done' : 'לחצו על הדרגות לפי הסדר, ואז סיום';
+  if (q.kind === 'tf') return voice ? (l === 'en' ? 'Say “true” or “false”' : 'אמרו "נכון" או "לא"') : l === 'en' ? 'Tap ✓ or ✗' : 'בחרו ✓ או ✗';
   if (q.kind === 'wrong-note') return voice ? (l === 'en' ? 'Say the number of the wrong note (2, 3 …)' : 'אמרו את המספר של הצליל השגוי (2, 3 …)') : l === 'en' ? 'Tap the wrong note' : 'בחרו את הצליל השגוי';
   if (q.kind === 'mode-id') return voice ? (l === 'en' ? 'Say the mode name' : 'אמרו את שם המודוס') : l === 'en' ? 'Tap the mode' : 'בחרו מודוס';
   if (!voice) return l === 'en' ? 'Tap your answer' : 'בחרו תשובה';
@@ -748,6 +759,8 @@ export function hintText(q: Question, l: Lang, voice: boolean): string {
 export function questionBadge(q: Question, l: Lang, nm: Naming): { key?: PitchClass; text: string } {
   const major = l === 'en' ? 'major' : "מז'ור";
   switch (q.kind) {
+    case 'tf':
+      return { text: l === 'en' ? 'True or false?' : 'נכון או לא?' };
     case 'wrong-note':
       return { text: `${MODE_NAMES[q.mode][l]} · ${l === 'en' ? 'from' : 'מ־'} ${displayNote(q.key, nm, l)}` };
     case 'mode-id':
@@ -810,3 +823,14 @@ export function keysGiveAway(q: Question): boolean {
   return true;
 }
 
+
+
+/** "B –m3→ D –♭5→ A♭" in the player's naming (true-or-false questions). */
+function tfLine(q: Extract<Question, { kind: 'tf' }>, nm: Naming, l: Lang): string {
+  const [a, b, c] = q.names.map((p) => displayNote(p, nm, l));
+  return `${a} –${q.shownLeft}→ ${b} –${q.shownRight}→ ${c}`;
+}
+function tfTruthWords(q: Extract<Question, { kind: 'tf' }>, l: Lang): string {
+  const name = (semis: number) => (['', 'm2', 'M2', 'm3', 'M3', 'P4', l === 'en' ? 'tritone' : 'טריטון', 'P5', 'm6', 'M6', 'm7', 'M7', 'P8'][semis] ?? String(semis));
+  return `${name(q.midis[1] - q.midis[0])}, ${name(q.midis[2] - q.midis[1])}`;
+}

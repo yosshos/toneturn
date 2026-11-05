@@ -2,7 +2,7 @@
 // grading; this device plays the stimulus itself and times the answer from the end of its own playback.
 
 import { renderStimulus, type Answer, type Question } from '../engine/lesson';
-import { tournamentSet, type SetKind } from '../engine/tournament';
+import { tournamentSet, WINDOW_MS, type SetKind } from '../engine/tournament';
 import type { RoomBackend, RoomRoundResult, RoomSnapshot } from '../cloud/rooms';
 import { Cancelled, throwIfAborted, type AudioEngine, type Clock, type PromptPlayer } from './adapters';
 
@@ -37,14 +37,14 @@ export interface RoomView {
 }
 
 /** Host side: pick a seed, send only the answers to the server. */
-export async function createRoom(backend: RoomBackend, kind: SetKind, rounds: number, nick: string, seed = (Math.random() * 2 ** 32) >>> 0) {
-  const keys = tournamentSet(kind, rounds, seed).map((q) => String(q.answer));
-  return backend.create(kind, rounds, seed, keys, nick);
+export async function createRoom(backend: RoomBackend, kind: SetKind, rounds: number, nick: string, seed = (Math.random() * 2 ** 32) >>> 0, opts: { hostScreen?: boolean } = {}) {
+  const keys = tournamentSet(kind, rounds, seed).map((q) => (kind === 'vocal-hold' ? 'v' : String(q.answer)));
+  return backend.create(kind, rounds, seed, keys, nick, { windowMs: WINDOW_MS[kind], hostScreen: opts.hostScreen });
 }
 
 export function roomStandings(players: RoomSnapshot['players'], results: RoomRoundResult[]): RoomStanding[] {
   const table = (rs: RoomRoundResult[]) => {
-    const rows = players.map((p) => ({ userId: p.userId, nickname: p.nickname, rating: p.rating, ratingProvisional: p.ratingProvisional, points: 0, correct: 0, totalTimeMs: 0 }));
+    const rows = players.filter((p) => !p.spectator).map((p) => ({ userId: p.userId, nickname: p.nickname, rating: p.rating, ratingProvisional: p.ratingProvisional, points: 0, correct: 0, totalTimeMs: 0 }));
     for (const r of rs)
       for (const a of r.answers) {
         const row = rows.find((x) => x.userId === a.userId);
@@ -204,7 +204,20 @@ export class RoomController {
       }
       this.patch({ phase: 'playing' });
       const { events, length } = renderStimulus(item.stimulus);
-      await this.ad.audio.play(events, length, signal);
+      const snap = this.view.snap;
+      const bigScreen = !!snap?.hostScreen;
+      if (!bigScreen || this.view.isHost) await this.ad.audio.play(events, length, signal);
+      else await this.ad.clock.sleep(length * 1000 + 60, signal); // the sound plays on the big screen
+      if (bigScreen && this.view.isHost) {
+        // Big screen: show the answer window, then close the round (the host does not answer).
+        this.stimEnd = this.now();
+        this.patch({ phase: 'answering', windowEndsAt: this.stimEnd + windowMs });
+        await this.ad.clock.sleep(windowMs + this.opts.hostGraceMs, signal);
+        this.patch({ phase: 'waiting', windowEndsAt: null });
+        await this.backend.close(this.roomId, round, true).catch(() => {});
+        await this.refresh();
+        return;
+      }
       throwIfAborted(signal);
       this.stimEnd = this.now();
       this.patch({ phase: 'answering', windowEndsAt: this.stimEnd + windowMs });

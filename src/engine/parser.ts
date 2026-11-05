@@ -441,3 +441,17 @@ export function parseMode(transcript: string, choices: string[]): ParseResult<st
   if (hits.length > 1 && hits[0].len === hits[1].len) return { kind: 'ambiguous', candidates: hits.filter((h) => h.len === hits[0].len).map((h) => h.id), heard };
   return { kind: 'answer', value: hits[0].id, heard };
 }
+
+
+const TF_TOKENS = new Map<string, 'true' | 'false'>([
+  ['true', 'true'], ['yes', 'true'], ['right', 'true'], ['correct', 'true'], ['both', 'true'],
+  ['נכון', 'true'], ['כן', 'true'], ['צודק', 'true'], ['נכונים', 'true'],
+  ['false', 'false'], ['no', 'false'], ['wrong', 'false'], ['incorrect', 'false'], ['nope', 'false'],
+  ['לא', 'false'], ['שגוי', 'false'], ['טעות', 'false'], ['שקר', 'false'],
+]);
+/** "true" / "false" (yes / no, נכון / לא). "Not true" / "לא נכון" is false. */
+export function parseTrueFalse(t: string): ParseResult<'true' | 'false'> {
+  const n = normalize(t);
+  if ((n.includes('not') && (n.includes('true') || n.includes('right') || n.includes('correct'))) || (n.includes('לא') && n.includes('נכון'))) return { kind: 'answer', value: 'false', heard: t.trim() };
+  return parseChoiceTable(t, TF_TOKENS);
+}

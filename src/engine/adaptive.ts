@@ -1,7 +1,8 @@
 // Generated sessions: adaptive placement, targeted review from past mistakes, and the weekly puzzle.
 
 import { MODE_STEPS, type ModeId } from './modes';
-import { modeIdQuestion, wrongNoteQuestion } from './lesson';
+import { modeIdQuestion, tfQuestion, wrongNoteQuestion } from './lesson';
+import { tfTruth } from './truefalse';
 import {
   cadenceQuestion,
   degreeQuestion,
@@ -221,6 +222,14 @@ export function questionFromTag(tag: string, seed: number, id: string): Question
       const ds = (b ?? '').split('-').map(Number);
       if (!key || !ds.length || !ds.every((x) => x >= 1 && x <= 7)) return null;
       return nameSeqQuestion(id, key, ds, tag.split(':')[3] === 'degrees' ? 'degrees' : 'sound');
+    }
+    case 'tf': {
+      // tf:<l.m.r>:<shownLeft>:<shownRight>:<midis>:<ear>
+      const [, names, sl, sr, ms, ear] = tag.split(':');
+      const ps = (names ?? '').split('.').map(parsePc);
+      const midis = (ms ?? '').split('.').map(Number);
+      if (ps.length !== 3 || ps.some((p) => !p) || midis.length !== 3) return null;
+      return tfQuestion(id, { trio: { left: ps[0]!, mid: ps[1]!, right: ps[2]! }, shownLeft: sl, shownRight: sr, truth: tfTruth(midis, sl, sr), midis: midis as [number, number, number] }, ear === '1');
     }
     case 'wrongnote': {
       // wrongnote:<key>:<mode>:<position>:<alt>:<each>

@@ -8,7 +8,7 @@ import { TournamentController, type TournamentView } from '../game/tournamentCon
 import { askTemplate, choiceLabel } from '../game/content';
 import type { Strings } from '../i18n/strings';
 import { localDay, namingFor, type GhostRun, type Progress, type Settings } from '../storage/progress';
-import { displayNote } from '../engine/pitch';
+import { displayNote, type PitchClass } from '../engine/pitch';
 import { withNote } from './bits';
 import { piano, store, tts } from './services';
 import { realClock } from '../game/adapters';
@@ -197,6 +197,10 @@ export function DuelSetup({ t, onBack, onStart }: { t: Strings; onBack: () => vo
     ['degrees', t.skillNames.degrees],
     ['chords', t.skillNames.chords],
     ['intervals', t.skillNames.intervals],
+    ['modes', t.skillNames.modes],
+    ['wrong-notes', t.wrongNotesTitle],
+    ['truefalse', t.trueFalse],
+    ['beat', t.skillNames['rhythm-dictation']],
   ];
   return (
     <main className="panel-screen">
@@ -275,6 +279,10 @@ export function GhostScreen({ t, settings, progress, onBack, onProgress }: { t: 
     ['degrees', t.skillNames.degrees],
     ['chords', t.skillNames.chords],
     ['intervals', t.skillNames.intervals],
+    ['modes', t.skillNames.modes],
+    ['wrong-notes', t.wrongNotesTitle],
+    ['truefalse', t.trueFalse],
+    ['beat', t.skillNames['rhythm-dictation']],
   ];
   if (run) {
     const items = tournamentSet(kind, rounds, run.seed);
@@ -476,7 +484,7 @@ function TournamentPlay({
             {st.points.toLocaleString(lang)}
           </span>
         </div>
-        {split && v.stage !== 'countdown' && <p className="half-ask">{withNote(askTemplate(q, lang, nm), target)}</p>}
+        {split && v.stage !== 'countdown' && <p className="half-ask">{withNote(askTemplate(q, lang, nm), target, 'key' in q ? displayNote(q.key as PitchClass, nm, lang) : '')}</p>}
         <div className={`answers n-${q.choices.length}`}>
           {q.choices.map((ch) => {
             const lb = choiceLabel(q, ch, lang, nm);
@@ -529,7 +537,7 @@ function TournamentPlay({
             {v.countdown}
           </div>
         ) : (
-          <h2 className="ask">{withNote(askTemplate(q, lang, nm), target)}</h2>
+          <h2 className="ask">{withNote(askTemplate(q, lang, nm), target, 'key' in q ? displayNote(q.key as PitchClass, nm, lang) : '')}</h2>
         )}
         <TimeBar endsAt={v.stage === 'answering' ? v.windowEndsAt : null} />
       </section>
