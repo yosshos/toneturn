@@ -3,7 +3,7 @@ import { ladderIndex, placementUnlocks, recommendFor, SKILL_LADDER, topicProgres
 import { LESSON_ORDER, makeLesson, type LessonId } from '../src/engine/lesson';
 import { ratingHistory, trendDelta, type RatingEvent } from '../src/engine/rating';
 import { keysGiveAway } from '../src/game/content';
-import { placementLesson } from '../src/engine/adaptive';
+import { adaptPlacement, placementLesson } from '../src/engine/adaptive';
 import { createSession, grade, newTurn, advance } from '../src/engine/session';
 import { applyResult, emptyProgress, ratingsOf, resultFromSession } from '../src/storage/progress';
 
@@ -36,14 +36,20 @@ describe('level-matched recommendations (Skill Map → practice)', () => {
   it('a finished placement stores unlocks in progress', () => {
     const l = placementLesson(3);
     let s = newTurn(createSession(l), 'listening');
-    for (let i = 0; i < 14; i++) {
-      [s] = grade(s, s.turn, i, s.lesson.questions[i].answer, 'buttons');
-      s = advance(s);
+    // Right answers all the way: every skill climbs its ladder (rhythm reading by answer key, as tapped).
+    for (let g = 0; g < 200; g++) {
+      [s] = grade(s, s.turn, s.index, s.lesson.questions[s.index].answer, 'buttons');
+      const next = adaptPlacement(s, 3);
+      s = { ...s, lesson: { ...s.lesson, questions: next }, records: next.map((_, i) => s.records[i] ?? { attempts: [], outcome: 'pending', xp: 0, unclear: 0 }) };
+      if (next.length === s.index + 1) break;
+      s = newTurn(advance(s), 'listening');
     }
+    s = advance(s);
     const p = applyResult(emptyProgress(), resultFromSession(s, 'P', new Date()), new Date());
-    expect(Object.keys(ratingsOf(p)).length).toBeGreaterThanOrEqual(7);
+    expect(Object.keys(ratingsOf(p)).length).toBeGreaterThanOrEqual(10);
+    expect(ratingsOf(p).chords!.r).toBeGreaterThan(1600); // set from the top of the ladder, not nudged
     expect(p.placementUnlocks!.length).toBeGreaterThan(3);
-    expect(p.xp).toBe(14 * 5); // placement now gives XP
+    expect(p.xp).toBe(s.lesson.questions.length * 5);
   });
 });
 

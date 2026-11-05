@@ -1,6 +1,7 @@
 // Local progress + settings. XP and completion writes are idempotent by event id,
 // so a repeated callback or an app resume can never award points twice.
 
+import { placementResults } from '../engine/placement';
 import type { MetricKey, VibratoStyle, VoiceRange } from '../engine/vocal';
 import { memoryFactor } from '../engine/vocal';
 import type { AidMode, NoteView } from '../engine/aids';
@@ -27,7 +28,7 @@ export interface LessonResult {
   /** Question keys that were missed / revealed — feeds the review queue. */
   missed: { questionId: string; key: string; answer: Answer; given: Answer[] }[];
   /** First-attempt results per rated item (ratings + review clearing). Absent on old results. */
-  items?: { id: string; skill: RatingEvent['skill']; difficulty: number; correct: boolean; tag: string; score?: number; timeMs?: number | null; /** Vocal technique: the take's metric values (teacher view). */ m?: Partial<Record<MetricKey, number>> }[];
+  items?: { id: string; skill: RatingEvent['skill']; difficulty: number; correct: boolean; tag: string; score?: number; timeMs?: number | null; /** Placement: the measured rating. */ set?: number; /** Vocal technique: the take's metric values (teacher view). */ m?: Partial<Record<MetricKey, number>> }[];
   /** Weekly puzzle outcome (only for lessonId "weekly-puzzle"). */
   puzzle?: { week: string; band: string; medal: Medal };
 }
@@ -139,6 +140,8 @@ export interface Settings {
   bestLeague?: number;
   /** The league shown last time — a change plays the move animation once (spec Y.5). */
   leagueSeen?: number;
+  /** Rhythm reading in voice mode also counts "ta" / knocks from the microphone (default off: the tap pad is more precise). */
+  rhythmByVoice?: boolean;
   /** Which note views to show for non-rhythm exercises (spec M.1). Default keyboard + staff. */
   noteViews?: NoteView[];
   /** Visual aids while answering (spec M.3). Default auto. */
@@ -343,6 +346,11 @@ export function resultFromSession(s: SessionState, sessionId: string, now: Date)
     missed,
     items,
   };
+  // Find my level: each skill's rating is SET from where the player failed (staircase to failure).
+  if (s.lesson.id === 'placement' && s.lesson.version >= 3) {
+    const sets = placementResults(s, !!s.lesson.placementSinging).map((x) => ({ id: `${sessionId}:place:${x.skill}`, skill: x.skill, difficulty: x.rating, correct: x.passed > 0, tag: `place:${x.skill}`, set: x.rating }));
+    result.items = [...(result.items ?? []), ...sets];
+  }
   if (s.lesson.id === 'weekly-puzzle') {
     const qid = s.lesson.questions[0].id; // "<week>-<band>"
     const cut = qid.lastIndexOf('-');
@@ -357,7 +365,8 @@ export function applyResult(p: Progress, r: LessonResult, now: Date): Progress {
   if (p.applied.includes(eventId)) return p;
   const prev = p.lessons[r.lessonId];
   const at = r.completedAt;
-  const newEvents: RatingEvent[] = (r.items ?? []).map((it) => ({ id: it.id, skill: it.skill, difficulty: it.difficulty, correct: it.correct, score: it.score, at }));
+  const setAt = new Date(new Date(at).getTime() + 1).toISOString();
+  const newEvents: RatingEvent[] = (r.items ?? []).map((it) => (it.set !== undefined ? { id: it.id, skill: it.skill, difficulty: it.difficulty, correct: it.correct, set: it.set, at: setAt } : { id: it.id, skill: it.skill, difficulty: it.difficulty, correct: it.correct, score: it.score, at }));
   const cleared = new Set((r.items ?? []).filter((it) => it.correct).map((it) => it.tag));
   const puzzles = { ...(p.puzzles ?? {}) };
   // Only the first scored try at a week's puzzle counts; later plays are practice.
@@ -467,6 +476,18 @@ export class ProgressStore {
   }
 
   /** "True or false?" run: rating events for the Intervals skill (first answers) + best score per level. */
+  /** Rating events from drills outside lessons (inner clock, improvisation, guitar from tab). Idempotent by id. */
+  async recordRatingEvents(events: RatingEvent[], now = new Date()): Promise<Progress> {
+    const p = await this.loadProgress();
+    const have = new Set((p.ratingEvents ?? []).map((e) => e.id));
+    const fresh = events.filter((e) => !have.has(e.id));
+    if (!fresh.length) return p;
+    const next: Progress = { ...p, ratingEvents: [...(p.ratingEvents ?? []), ...fresh].slice(-3000) };
+    next.snapshots = snapshot(next, now);
+    await this.kv.set('progress', next);
+    return next;
+  }
+
   async recordTrueFalse(level: number, score: number, events: RatingEvent[], now = new Date()): Promise<{ progress: Progress; best: boolean }> {
     const p = await this.loadProgress();
     const have = new Set((p.ratingEvents ?? []).map((e) => e.id));

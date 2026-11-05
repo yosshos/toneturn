@@ -13,7 +13,6 @@ import {
   inversionQuestion,
   noteNameQuestion,
   rhythmDictQuestion,
-  rhythmReadQuestion,
   singSeqQuestion,
   singRunQuestion,
   seventhQuestion,
@@ -39,8 +38,7 @@ import { PROGRESSIONS, SEVENTHS, type ProgressionId, type SeventhQuality } from 
 import { songById } from './songs';
 import { pc, type PitchClass } from './pitch';
 import { buildRun, MAX_RUN_LEVEL, RUN_LEVELS, SCALES, type RunMaterial, type RunShape, type RunSpec } from './runs';
-import { band, nextLevel, type Band, type Ratings } from './rating';
-import type { SessionState } from './session';
+import { band, type Band, type Ratings } from './rating';
 
 // ======================================================================= placement
 
@@ -54,7 +52,6 @@ export const PLACEMENT_SKILLS = ['degrees', 'notes', 'intervals', 'chords', 'cad
 export type PlacementSkill = (typeof PLACEMENT_SKILLS)[number];
 export const PLACEMENT_ROUNDS = 2;
 export const PLACEMENT_MAX_LEVEL = 3;
-const START_LEVEL = 1;
 
 const CAD_PHRASES: Record<'resolved' | 'open', Roman[]>[] = [
   { resolved: ['I', 'IV', 'V7', 'I'], open: ['I', 'vi', 'IV', 'V'] },
@@ -113,37 +110,8 @@ export function placementItem(skill: PlacementSkill, level: number, seed: number
   }
 }
 
-const skillOf = (i: number): PlacementSkill | null => (i < PLACEMENT_SKILLS.length * PLACEMENT_ROUNDS ? PLACEMENT_SKILLS[i % PLACEMENT_SKILLS.length] : null);
 
-export function placementLesson(seed: number, opts: { singing?: boolean } = {}): LessonDef {
-  const questions: Question[] = Array.from({ length: PLACEMENT_SKILLS.length * PLACEMENT_ROUNDS }, (_, i) => placementItem(skillOf(i)!, START_LEVEL, seed + i * 97, `p${i + 1}`));
-  // Performance: tap a short rhythm (rhythm reading); sing a degree when the microphone is in use.
-  questions.push(rhythmReadQuestion(`p${questions.length + 1}`, 2, 1, seed + 5003, 'notation'));
-  if (opts.singing) questions.push(singQuestion(`p${questions.length + 1}`, pc(pick(mulberry32(seed + 7), ['C', 'D', 'F', 'G'])), 5));
-  return { id: 'placement', version: 2, skill: 'degrees', scoring: { xpPerCorrect: 5, attemptLimit: 1 }, intro: [], questions };
-}
-
-/** Level the next item of a skill should have, from that skill's resolved items so far. */
-export function placementLevel(s: SessionState, skill: PlacementSkill): number {
-  let level = START_LEVEL;
-  s.records.forEach((r, i) => {
-    if (skillOf(i) !== skill || r.outcome === 'pending' || r.outcome === 'skipped') return;
-    level = nextLevel(level, r.outcome === 'correct', PLACEMENT_MAX_LEVEL);
-  });
-  return level;
-}
-
-/**
- * Adapt after each answer: unresolved items are regenerated at the level implied by results so far
- * (up after a first-try correct, down after a miss). Resolved items and the performance items never change.
- */
-export function adaptPlacement(s: SessionState, seed: number): Question[] {
-  return s.lesson.questions.map((q, i) => {
-    const skill = skillOf(i);
-    if (!skill || s.records[i].outcome !== 'pending' || i <= s.index) return q;
-    return placementItem(skill, placementLevel(s, skill), seed + i * 97, q.id);
-  });
-}
+export { placementLesson, adaptPlacement } from './placement';
 
 // ======================================================================= review
 

@@ -11,7 +11,7 @@ const rest = (duration: number): Stimulus => ({ kind: 'rest', duration });
 
 TOPIC_GEN['fine-pitch'] = {
   title: { en: 'Fine pitch: higher or lower?', he: 'גובה עדין: גבוה או נמוך?' },
-  skill: 'notes',
+  skill: 'pitch',
   levels: [
     { en: 'Half a semitone (50¢)', he: 'רבע טון (50¢)' },
     { en: 'A quarter (25¢)', he: '25¢' },
@@ -24,7 +24,7 @@ TOPIC_GEN['fine-pitch'] = {
     const answer = rnd() < 0.5 ? 'higher' : 'lower';
     const play = (dir: string): Stimulus[] => [note(m), rest(0.25), note(m + ((dir === 'higher' ? 1 : -1) * cents) / 100)];
     return choiceQ({
-      id, topic: 'fine-pitch', level, seed, skill: 'notes', difficulty: 1150 + 200 * level,
+      id, topic: 'fine-pitch', level, seed, skill: 'pitch', difficulty: 1150 + 200 * level,
       ask: { en: 'Is the second note higher or lower?', he: 'הצליל השני גבוה או נמוך יותר?' },
       names: { higher: nm('Higher', 'גבוה יותר', 'up', 'sharp', 'גבוה'), lower: nm('Lower', 'נמוך יותר', 'down', 'flat', 'נמוך') },
       answer, choices: ['higher', 'lower'], stimulus: play(answer), choiceStim: { higher: play('higher'), lower: play('lower') },
@@ -34,22 +34,37 @@ TOPIC_GEN['fine-pitch'] = {
 
 TOPIC_GEN['in-tune'] = {
   title: { en: 'In tune or out of tune?', he: 'מכוון או לא מכוון?' },
-  skill: 'notes',
+  skill: 'pitch',
   levels: [
     { en: 'An interval, clearly out', he: 'מרווח, סטייה ברורה' },
     { en: 'An interval, slightly out', he: 'מרווח, סטייה קלה' },
     { en: 'Which note of the melody?', he: 'איזה צליל במנגינה?' },
+    { en: 'In tune, sharp or flat? (20¢)', he: 'מכוון, גבוה או נמוך? (20¢)' },
+    { en: 'In tune, sharp or flat? (10¢)', he: 'מכוון, גבוה או נמוך? (10¢)' },
   ],
   gen(seed, level, id) {
     const rnd = rng(seed);
     const m = 55 + Math.floor(rnd() * 10);
+    if (level >= 4) {
+      // The top note in tune, a little sharp, or a little flat (spec U.5): down to 10 cents.
+      const iv = pickR(rnd, [4, 7, 12, 3]);
+      const c = level === 4 ? 20 : 10;
+      const answer = pickR(rnd, ['in', 'sharp', 'flat']);
+      const play = (k: string): Stimulus[] => [chordStim([m, m + iv + (k === 'sharp' ? c : k === 'flat' ? -c : 0) / 100], 2.4)];
+      return choiceQ({
+        id, topic: 'in-tune', level, seed, skill: 'pitch', difficulty: level === 4 ? 1750 : 1950,
+        ask: { en: `The top note: in tune, sharp or flat? (${c}¢)`, he: `הצליל העליון: מכוון, גבוה או נמוך? (${c}¢)` },
+        names: { in: nm('In tune', 'מכוון', 'tuned', 'מכוון'), sharp: nm('Sharp', 'גבוה', 'too high', 'high', 'גבוה מדי'), flat: nm('Flat', 'נמוך', 'too low', 'low', 'נמוך מדי') },
+        answer, choices: ['in', 'sharp', 'flat'], stimulus: play(answer), choiceStim: { in: play('in'), sharp: play('sharp'), flat: play('flat') },
+      });
+    }
     if (level <= 2) {
       const iv = pickR(rnd, [4, 7, 12, 3]);
       const off = (level === 1 ? 35 : 15) * (rnd() < 0.5 ? 1 : -1);
       const answer = rnd() < 0.5 ? 'in' : 'out';
       const play = (k: string): Stimulus[] => [chordStim([m, m + iv + (k === 'out' ? off / 100 : 0)], 2.2)];
       return choiceQ({
-        id, topic: 'in-tune', level, seed, skill: 'notes', difficulty: 1250 + 200 * level,
+        id, topic: 'in-tune', level, seed, skill: 'pitch', difficulty: 1250 + 200 * level,
         ask: { en: 'Two notes together — in tune?', he: 'שני צלילים יחד — מכוונים?' },
         names: { in: nm('In tune', 'מכוון', 'tuned', 'yes', 'כן'), out: nm('Out of tune', 'לא מכוון', 'out', 'no', 'beating', 'לא') },
         answer, choices: ['in', 'out'], stimulus: play(answer), choiceStim: { in: play('in'), out: play('out') },
@@ -68,7 +83,7 @@ TOPIC_GEN['in-tune'] = {
       names[k] = nm(`The ${ord[i]} note`, `הצליל ה${ordHe[i]}`, ord[i], ['second', 'third', 'fourth', 'fifth'][i], ordHe[i]);
       choiceStim[k] = play(i + 1);
     });
-    return choiceQ({ id, topic: 'in-tune', level, seed, skill: 'notes', difficulty: 1600, ask: { en: 'One note is out of tune (30¢) — which?', he: 'צליל אחד לא מכוון (30¢) — איזה?' }, names, answer: keys[bad - 1], choices: keys, stimulus: play(bad), choiceStim });
+    return choiceQ({ id, topic: 'in-tune', level, seed, skill: 'pitch', difficulty: 1600, ask: { en: 'One note is out of tune (30¢) — which?', he: 'צליל אחד לא מכוון (30¢) — איזה?' }, names, answer: keys[bad - 1], choices: keys, stimulus: play(bad), choiceStim });
   },
 };
 
@@ -81,8 +96,8 @@ TOPIC_GEN['two-voice'] = {
   skill: 'sequences',
   levels: [
     { en: 'How do the voices move?', he: 'איך הקולות נעים?' },
-    { en: 'The lower voice', he: 'הקול התחתון' },
     { en: 'The upper voice', he: 'הקול העליון' },
+    { en: 'The lower voice', he: 'הקול התחתון' },
   ],
   gen(seed, level, id) {
     const rnd = rng(seed);
@@ -121,10 +136,11 @@ TOPIC_GEN['two-voice'] = {
       for (let i = 1; i < n; i++) out.push(Math.max(lo, Math.min(hi, out[i - 1] + pickR(rnd, [-2, -1, 1, 2]))));
       return out;
     };
-    const target = level === 2 ? line(0, 4) : line(4, 9);
-    const other = level === 2 ? line(5, 9) : line(0, 3);
-    const lower = level === 2 ? target : other;
-    const upper = level === 2 ? other : target;
+    // Level 2: the top line (easier to hear); level 3: the lower line.
+    const target = level === 3 ? line(0, 4) : line(4, 9);
+    const other = level === 3 ? line(5, 9) : line(0, 3);
+    const lower = level === 3 ? target : other;
+    const upper = level === 3 ? other : target;
     const decoys: number[][] = [];
     while (decoys.length < 3) {
       const d = target.slice();
@@ -139,13 +155,13 @@ TOPIC_GEN['two-voice'] = {
     const choiceStim: Record<string, Stimulus[]> = {};
     all.forEach((ds, i) => {
       names[keys[i]] = nm(label(ds), label(ds));
-      choiceStim[keys[i]] = [notesStim(ds.map((x) => key + (level === 2 ? 0 : 12) + MAJ[x]), 0.55)];
+      choiceStim[keys[i]] = [notesStim(ds.map((x) => key + (level === 3 ? 0 : 12) + MAJ[x]), 0.55)];
     });
     if (new Set(all.map(label)).size < all.length) return TOPIC_GEN['two-voice'].gen(seed + 1, level, id);
     const stimulus: Stimulus[] = lower.map((x, i) => chordStim([key + MAJ[x], key + 12 + MAJ[upper[i]]], 0.6));
     return choiceQ({
       id, topic: 'two-voice', level, seed, skill: 'sequences', difficulty: 1450 + 100 * level,
-      ask: level === 2 ? { en: 'Which line did the lower voice sing? (scale degrees)', he: 'איזה קו שר הקול התחתון? (דרגות)' } : { en: 'Which line did the upper voice sing? (scale degrees)', he: 'איזה קו שר הקול העליון? (דרגות)' },
+      ask: level === 3 ? { en: 'Which line did the lower voice sing? (scale degrees)', he: 'איזה קו שר הקול התחתון? (דרגות)' } : { en: 'Which line did the upper voice sing? (scale degrees)', he: 'איזה קו שר הקול העליון? (דרגות)' },
       names, answer: 'l0', choices: shuffleR(rnd, keys), stimulus, choiceStim,
     });
   },
@@ -291,7 +307,7 @@ const IQA: Record<string, { p: string; name: ReturnType<typeof nm> }> = {
 
 TOPIC_GEN['eastern-rhythm'] = {
   title: { en: 'Middle-Eastern rhythms (iqa‘at)', he: 'מקצבים מזרחיים (איקאעאת)' },
-  skill: 'rhythm',
+  skill: 'rhythm-dictation',
   levels: [
     { en: 'Maqsum, Baladi, Saidi, Malfuf', he: 'מקסום, בלדי, סעידי, מלפוף' },
     { en: 'With 10/8 and 9/8', he: 'עם 10/8 ו־9/8' },
@@ -307,7 +323,7 @@ TOPIC_GEN['eastern-rhythm'] = {
       names[k] = IQA[k].name;
       choiceStim[k] = [drum(IQA[k].p, step, 2)];
     }
-    return choiceQ({ id, topic: 'eastern-rhythm', level, seed, skill: 'rhythm', difficulty: 1250 + 200 * level, ask: { en: 'Which rhythm? (low = dum, high = tek)', he: 'איזה מקצב? (נמוך = דום, גבוה = תק)' }, names, answer, choices: shuffleR(rnd, pool), stimulus: [drum(IQA[answer].p, step, 3)], choiceStim });
+    return choiceQ({ id, topic: 'eastern-rhythm', level, seed, skill: 'rhythm-dictation', difficulty: 1250 + 200 * level, ask: { en: 'Which rhythm? (low = dum, high = tek)', he: 'איזה מקצב? (נמוך = דום, גבוה = תק)' }, names, answer, choices: shuffleR(rnd, pool), stimulus: [drum(IQA[answer].p, step, 3)], choiceStim });
   },
 };
 
@@ -331,7 +347,7 @@ const POLY: Record<string, [number, number, ReturnType<typeof nm>]> = {
 
 TOPIC_GEN['polyrhythm'] = {
   title: { en: 'Polyrhythms', he: 'פולי־ריתמים' },
-  skill: 'rhythm',
+  skill: 'rhythm-dictation',
   levels: [
     { en: '2:1, 3:2, 4:3', he: '2:1, 3:2, 4:3' },
     { en: '3:2, 4:3, 5:4, 5:3', he: '3:2, 4:3, 5:4, 5:3' },
@@ -346,7 +362,7 @@ TOPIC_GEN['polyrhythm'] = {
       names[k] = POLY[k][2];
       choiceStim[k] = [poly(POLY[k][0], POLY[k][1], 1.5, 2)];
     }
-    return choiceQ({ id, topic: 'polyrhythm', level, seed, skill: 'rhythm', difficulty: 1300 + 200 * level, ask: { en: 'High against low — which polyrhythm?', he: 'גבוה נגד נמוך — איזה פולי־ריתם?' }, names, answer, choices: pool, stimulus: [poly(POLY[answer][0], POLY[answer][1], 1.5, 3)], choiceStim });
+    return choiceQ({ id, topic: 'polyrhythm', level, seed, skill: 'rhythm-dictation', difficulty: 1300 + 200 * level, ask: { en: 'High against low — which polyrhythm?', he: 'גבוה נגד נמוך — איזה פולי־ריתם?' }, names, answer, choices: pool, stimulus: [poly(POLY[answer][0], POLY[answer][1], 1.5, 3)], choiceStim });
   },
 };
 
@@ -375,28 +391,34 @@ const METERS: Record<string, [number[], ReturnType<typeof nm>]> = {
   g223: [[2, 2, 3], nm('2+2+3', '2+2+3', 'two two three')],
   g322: [[3, 2, 2], nm('3+2+2', '3+2+2', 'three two two')],
   g232: [[2, 3, 2], nm('2+3+2', '2+3+2', 'two three two')],
+  q34: [[3], nm('3/4', '3/4', 'three four', 'waltz')],
+  q44: [[4], nm('4/4', '4/4', 'four four', 'common time')],
+  q54: [[3, 2], nm('5/4', '5/4', 'five four')],
+  q74: [[4, 3], nm('7/4', '7/4', 'seven four')],
 };
 
 TOPIC_GEN['odd-meter'] = {
   title: { en: 'Odd meters', he: 'משקלים אי־זוגיים' },
-  skill: 'rhythm',
+  skill: 'rhythm-dictation',
   levels: [
     { en: '5/8, 6/8 or 7/8?', he: '5/8, 6/8 או 7/8?' },
     { en: 'How is the 7/8 grouped?', he: 'איך מחולק ה־7/8?' },
     { en: '5, 7, 9 or 11?', he: '5, 7, 9 או 11?' },
+    { en: 'In quarters: 3/4, 4/4, 5/4 or 7/4?', he: 'ברבעים: 3/4, 4/4, 5/4 או 7/4?' },
   ],
   gen(seed, level, id) {
     const rnd = rng(seed);
-    const pool = level === 1 ? ['5/8', '6/8', '7/8'] : level === 2 ? ['g223', 'g322', 'g232'] : ['5/8', '7/8', '9/8', '11/8'];
+    const pool = level === 1 ? ['5/8', '6/8', '7/8'] : level === 2 ? ['g223', 'g322', 'g232'] : level === 3 ? ['5/8', '7/8', '9/8', '11/8'] : ['q34', 'q44', 'q54', 'q74'];
     const answer = pickR(rnd, pool);
-    const step = 0.17;
+    // Quarter-note meters move at a walking pulse; eighth-note meters in quick eighths.
+    const step = level === 4 ? 0.5 : 0.17;
     const names: ChoiceQuestion['names'] = {};
     const choiceStim: Record<string, Stimulus[]> = {};
     for (const k of pool) {
       names[k] = METERS[k][1];
       choiceStim[k] = [meter(METERS[k][0], step, 2)];
     }
-    return choiceQ({ id, topic: 'odd-meter', level, seed, skill: 'rhythm', difficulty: 1250 + 150 * level, ask: { en: 'Which meter?', he: 'איזה משקל?' }, names, answer, choices: pool, stimulus: [meter(METERS[answer][0], step, 4)], choiceStim });
+    return choiceQ({ id, topic: 'odd-meter', level, seed, skill: 'rhythm-dictation', difficulty: 1250 + 150 * level, ask: { en: 'Which meter?', he: 'איזה משקל?' }, names, answer, choices: pool, stimulus: [meter(METERS[answer][0], step, 4)], choiceStim });
   },
 };
 
@@ -422,7 +444,7 @@ const SWING: Record<string, [number, ReturnType<typeof nm>]> = {
 
 TOPIC_GEN['swing-ratio'] = {
   title: { en: 'Swing feel', he: 'תחושת סווינג' },
-  skill: 'rhythm',
+  skill: 'rhythm-dictation',
   levels: [
     { en: 'Straight or swing?', he: 'ישר או סווינג?' },
     { en: 'How much swing?', he: 'כמה סווינג?' },
@@ -438,6 +460,6 @@ TOPIC_GEN['swing-ratio'] = {
       names[k] = SWING[k][1];
       choiceStim[k] = [swing(SWING[k][0], beat, 4)];
     }
-    return choiceQ({ id, topic: 'swing-ratio', level, seed, skill: 'rhythm', difficulty: 1150 + 250 * level, ask: { en: 'How are the eighth notes played?', he: 'איך מנוגנות השמיניות?' }, names, answer, choices: pool, stimulus: [swing(SWING[answer][0], beat, 8)], choiceStim });
+    return choiceQ({ id, topic: 'swing-ratio', level, seed, skill: 'rhythm-dictation', difficulty: 1150 + 250 * level, ask: { en: 'How are the eighth notes played?', he: 'איך מנוגנות השמיניות?' }, names, answer, choices: pool, stimulus: [swing(SWING[answer][0], beat, 8)], choiceStim });
   },
 };

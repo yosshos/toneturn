@@ -1,6 +1,7 @@
 // Vocal technique (spec addendum P): range calibration, the 10-level ladder, the daily warm-up, a live
 // pitch trace, per-take metric cards with a tip and listen-back, the range map and per-metric trends.
 
+import type { SkillId } from '../engine/lesson';
 import { useMiniGate } from './MiniLesson';
 import { vocalUnit } from '../content/units';
 import { NotesView } from './NotesView';
@@ -397,7 +398,7 @@ export function VocalScreen({ t, settings, progress, onSettings, onProgress, onB
               <button
                 className={`vocal-level ${passed ? 'passed' : ''} ${open ? '' : 'locked'}`}
                 disabled={!open}
-                onClick={() => (lv === VOCAL_TOP_LEVEL ? onRuns() : setView({ kind: 'session', level: lv, items: LADDER[lv - 1].items.filter((it) => itemFits(it, range)) }))}
+                onClick={() => (lv === VOCAL_TOP_LEVEL ? onRuns() : gate(vocalUnit(lv), () => setView({ kind: 'session', level: lv, items: LADDER[lv - 1].items.filter((it) => itemFits(it, range)) })))}
               >
                 <span className="lv-num">{lv}</span>
                 <span className="lv-text">
@@ -896,7 +897,8 @@ function VocalSession({
       xp: Math.min(20 * perItem.length, Math.round(rated.reduce((a, x) => a + x.score, 0) * 10) + (passed ? 10 : 0)),
       missed: [],
       items: [
-        ...rated.map((x) => ({ id: `${sessionId}:${x.it.id}`, skill: 'technique' as const, difficulty: x.it.difficulty, correct: x.score >= 0.6, tag: `vocal:${x.it.id}`, score: x.score, m: best.current[x.it.id]?.take.m })),
+        // Harmony singing measures singing in tune; sight-singing measures reading; the rest vocal technique.
+        ...rated.map((x) => ({ id: `${sessionId}:${x.it.id}`, skill: (typeof level === 'number' && level > SIGHT_BASE && level < ORNAMENT_BASE ? 'sight' : typeof level === 'number' && level > HARMONY_BASE && level < BARRY_BASE ? 'singing' : 'technique') as SkillId, difficulty: x.it.difficulty, correct: x.score >= 0.6, tag: `vocal:${x.it.id}`, score: x.score, m: best.current[x.it.id]?.take.m })),
         // Melodic memory (spec P.9): the right notes, less for every extra listen to the reference.
         ...rated
           .filter((x) => memoryItem(x.it) && best.current[x.it.id])
@@ -956,12 +958,16 @@ function VocalSession({
   // Precise feedback (spec W): how and where the take was off.
   const remarkLine = (() => {
     if (!grade || grade.unclear || !frames.length) return null;
-    if (['melody', 'leap', 'rhythmic', 'scale', 'staccato', 'harmony-line', 'vibrato-notes'].includes(item.kind)) {
+    if (['melody', 'leap', 'rhythmic', 'scale', 'staccato', 'harmony-line', 'vibrato-notes', 'sight'].includes(item.kind)) {
       const items = sungMelodyRemarks(frames, shownTargets);
       return items.length ? melodyRemarkText(items, settings.uiLang) : null;
     }
-    if (item.kind === 'glide') return null;
-    const rs = remarksFor(frames, shownTargets[0]).filter((r) => !(item.kind.startsWith('vibrato') && r === 'unsteady'));
+    // Glides move on purpose; ornaments are judged by shape and speed (their own metrics), not as one note.
+    if (item.kind === 'glide' || item.kind === 'ornament') return null;
+    // Barry Harris free choice: judge the note the singer chose, not the base note.
+    const target = item.bh?.mode === 'free' ? chosenMidi(frames) : shownTargets[0];
+    if (target === null) return null;
+    const rs = remarksFor(frames, target).filter((r) => !(item.kind.startsWith('vibrato') && r === 'unsteady'));
     return rs.length ? remarkText(rs, settings.uiLang, rs[0] === 'spot') : null;
   })();
   // Scales asked by name: only the tonic is shown until the take is graded (the notes are the task).
@@ -1157,6 +1163,9 @@ const pcLabel = (pc: number) => PCN[((pc % 12) + 12) % 12];
 function barryInstruction(item: VocalItem, target: number, t: Strings, settings: Settings): string {
   const bh = item.bh!;
   void settings;
+  if (bh.mode === 'six') return t.barrySixNotes;
+  if (bh.mode === 'dim') return t.barryDimNotes;
+  if (bh.mode === 'chromatic') return t.barryChromatic;
   if (bh.mode === 'free') return t.barryFree;
   if (bh.mode === 'resolve') return t.barryResolve;
   const chord = `${pcLabel(target + (bh.rootOffset ?? 0))}${bh.kind === 'dom7' ? '7' : 'm6'}`;
@@ -1168,4 +1177,10 @@ function barryInstruction(item: VocalItem, target: number, t: Strings, settings:
 function lineAccompaniment(acc: number[], chords: number[][] | null, beat: number) {
   if (chords) return chords.flatMap((ch, k) => ch.map((m) => ({ midi: m, start: k * beat, duration: beat * 0.95, velocity: 0.5 })));
   return acc.map((m, k) => ({ midi: m, start: k * beat, duration: beat * 0.95, velocity: 0.55 }));
+}
+
+/** The whole semitone a free-choice take settled on (median pitch), or null. */
+function chosenMidi(frames: SungFrame[]): number | null {
+  const ms = frames.filter((f) => f.hz && f.confidence >= 0.8).map((f) => hzToMidi(f.hz!)).sort((a, b) => a - b);
+  return ms.length ? Math.round(ms[ms.length >> 1]) : null;
 }

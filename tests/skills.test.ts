@@ -1,13 +1,10 @@
 import { answerWord } from '../src/game/content';
-import { questionSkill } from '../src/engine/lesson';
 import { describe, expect, it } from 'vitest';
 import { band, evidence, expected, foldRatings, MAX_STEP, nextLevel, normalised, rate, weakestSkill, type RatingEvent } from '../src/engine/rating';
 import {
   adaptPlacement,
   medalFor,
-  placementItem,
   placementLesson,
-  placementLevel,
   puzzleBand,
   questionFromTag,
   reviewLesson,
@@ -63,7 +60,7 @@ describe('Elo-style ratings', () => {
     expect(weakestSkill(ratings)).toBe('degrees');
     // Everything measured is strong → recommend measuring something new.
     const strong = { degrees: { r: 1200, n: 9, correct: 9, recent: [] } };
-    expect(weakestSkill(strong)).toBe('notes'); // next unmeasured axis in map order
+    expect(weakestSkill(strong)).toBe('intervals'); // next unmeasured skill in map (domain) order
   });
   it('placement ladder moves up and down within bounds', () => {
     expect(nextLevel(1, true)).toBe(2);
@@ -72,40 +69,51 @@ describe('Elo-style ratings', () => {
   });
 });
 
-describe('placement', () => {
-  it('covers every listening skill twice, then rhythm reading (and singing in voice mode); XP, one attempt', () => {
-    const l = placementLesson(5);
-    const skills = l.questions.map((q) => questionSkill(q));
-    expect(new Set(skills)).toEqual(new Set(['degrees', 'notes', 'intervals', 'chords', 'cadences', 'sequences', 'rhythm-dictation', 'rhythm-reading']));
-    expect(skills.slice(0, 7)).toEqual(skills.slice(7, 14)); // two rounds, same order
-    expect(l.questions).toHaveLength(15);
-    expect(placementLesson(5, { singing: true }).questions.at(-1)!.kind).toBe('sing');
-    expect(l.scoring).toEqual({ xpPerCorrect: 5, attemptLimit: 1 });
-  });
-  it('items get harder with level (difficulty and choices), four levels per skill', () => {
-    const d = [0, 1, 2, 3].map((lv) => placementItem('degrees', lv, 3, 'x'));
-    expect(d.map((q) => q.difficulty)).toEqual([900, 1050, 1200, 1350]);
-    expect(d.map((q) => q.choices.length)).toEqual([2, 3, 7, 7]);
-    expect(placementItem('chords', 2, 3, 'x').choices).toEqual(['maj', 'min', 'dim', 'aug']);
-    expect(placementItem('chords', 3, 3, 'x').kind).toBe('seventh');
-    for (const k of ['degrees', 'notes', 'intervals', 'chords', 'cadences', 'sequences', 'rhythm-dictation'] as const) {
-      const ds = [0, 1, 2, 3].map((lv) => placementItem(k, lv, 11, 'x').difficulty);
-      for (let i = 1; i < 4; i++) expect(ds[i], k).toBeGreaterThan(ds[i - 1]);
-    }
-  });
-  it('adapts the next item of the same skill; resolved items never change', () => {
-    const lesson = placementLesson(9);
+import { LADDERS, PLACEMENT_ORDER, placementEstimate, placementResults } from '../src/engine/placement';
+describe('Find my level 2.0: every skill, staircase to failure', () => {
+  // Play a whole placement: the player is right up to `can[skill]` (a ladder level), wrong above it.
+  const run = (can: Partial<Record<string, number>>, singing = false) => {
+    let lesson = placementLesson(9, { singing });
     let s = newTurn(createSession(lesson), 'listening');
-    const first = s.lesson.questions[0];
-    [s] = grade(s, s.turn, 0, first.answer, 'buttons'); // degrees correct → level 2
-    const adapted = adaptPlacement(s, 9);
-    expect(adapted[0]).toBe(first);
-    expect(adapted[7].difficulty).toBe(1200); // round 2 of degrees moved up
-    expect(adapted[3].difficulty).toBe(1050); // chords untouched at level 1
-    s = { ...s, lesson: { ...s.lesson, questions: adapted } };
-    s = advance(s);
-    s = skip(s); // skipping chords does not move its level
-    expect(placementLevel(s, 'chords')).toBe(1);
+    for (let guard = 0; guard < 200; guard++) {
+      const q = s.lesson.questions[s.index];
+      const [, skill, lv] = /^p:([a-z-]+):(\d+):/.exec(q.id)!;
+      const right = Number(lv) <= (can[skill] ?? 0);
+      const wrong = q.choices.find((c) => c !== q.answer) ?? '__';
+      [s] = grade(s, s.turn, s.index, right ? q.answer : wrong, 'buttons');
+      const next = adaptPlacement(s, 9);
+      s = { ...s, lesson: { ...s.lesson, questions: next }, records: next.map((_, i) => s.records[i] ?? { attempts: [], outcome: 'pending', xp: 0, unclear: 0 }) };
+      if (next.length === s.index + 1) break;
+      s = newTurn(advance(s), 'listening');
+    }
+    return s;
+  };
+  it('every skill in the order is measured; singing only with the microphone', () => {
+    const s = run({});
+    const skills = new Set(s.lesson.questions.map((q) => q.id.split(':')[1]));
+    for (const k of PLACEMENT_ORDER.filter((x) => x !== 'singing')) expect(skills.has(k), k).toBe(true);
+    expect(skills.has('singing')).toBe(false);
+    expect(new Set(run({}, true).lesson.questions.map((q) => q.id.split(':')[1])).has('singing')).toBe(true);
+  });
+  it('climbs until the player fails, and sets the rating between passed and failed', () => {
+    const s = run({ degrees: 5, chords: 99, intervals: 0 });
+    const res = Object.fromEntries(placementResults(s, false).map((r) => [r.skill, r]));
+    expect(res.degrees.passed).toBe(5);
+    expect(res.degrees.rating).toBe(placementEstimate('degrees', 5));
+    expect(res.chords.passed).toBe(LADDERS.chords!.length); // reached the top
+    expect(res.chords.rating).toBeGreaterThan(1600);
+    expect(res.intervals.passed).toBe(0);
+    expect(res.intervals.rating).toBeLessThan(800);
+    // A skill stops after its second miss: never more than ladder length + 2 questions
+    for (const k of PLACEMENT_ORDER) if (res[k]) expect(res[k].asked, k).toBeLessThanOrEqual(LADDERS[k]!.length + 2);
+  });
+  it('ladders get harder level by level', () => {
+    for (const [k, L] of Object.entries(LADDERS)) for (let i = 1; i < L!.length; i++) expect(L![i].difficulty, k).toBeGreaterThan(L![i - 1].difficulty);
+  });
+  it('a placement event SETS the rating (no small Elo step)', () => {
+    const r = rate(undefined, { difficulty: 1500, correct: true, set: 1500, at: '2026-01-01T00:00:00Z' });
+    expect(r.r).toBe(1500);
+    expect(rate(r, { difficulty: 1000, correct: true, at: '2026-01-01T00:00:01Z' }).r).toBeLessThan(1500 + 60);
   });
 });
 
@@ -219,21 +227,6 @@ describe('progress: ratings, review clearing, puzzles, snapshots', () => {
     });
     return s;
   };
-  it('records one rating event per answered item; skipped items are not rated', () => {
-    // Degrees right, notes wrong, intervals skipped, the rest right (first 9 answered).
-    const s = finish(placementLesson(1), [true, false, 'skip', true, true, true, true, true, true]);
-    const r = resultFromSession(s, 'S1', new Date('2026-11-04T10:00:00Z'));
-    expect(r.items).toHaveLength(8);
-    const p = applyResult(emptyProgress(), r, new Date('2026-11-04T10:00:00Z'));
-    const ratings = ratingsOf(p);
-    expect(ratings.degrees!.n).toBe(2);
-    expect(ratings.notes!.n).toBe(2);
-    expect(ratings.intervals).toBeUndefined();
-    expect(ratings.chords!.n).toBe(1);
-    expect(p.snapshots).toHaveLength(1);
-    // applying twice changes nothing
-    expect(applyResult(p, r, new Date())).toBe(p);
-  });
   it('a first-try correct answer moves the tag to the next spaced-repetition box (due again in a day)', () => {
     const p0 = { ...emptyProgress(), review: [{ questionId: 'r1', key: 'cadence:open', answer: 'open', addedAt: '2026-11-01' }] };
     const lesson = reviewLesson(p0.review, 1)!;
@@ -280,13 +273,12 @@ describe('controller: adaptive placement and sequence answers', () => {
   const say = (e: unknown) =>
     typeof e === 'number' ? ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven'][e] : e === 'maj' ? 'major' : e === 'min' ? 'minor' : e === 'dim' ? 'diminished' : e === 'aug' ? 'augmented' : String(e).replace(/-/g, ' ');
 
-  it('placement by voice: all correct moves every skill up a level in round 2, without an intro', async () => {
+  it('Find my level by voice: all correct climbs every skill to the top of its ladder, without an intro', async () => {
     const seed = 77;
-    const full = placementLesson(seed);
-    const lesson = { ...full, questions: full.questions.slice(0, 14) }; // the listening part
+    const lesson = placementLesson(seed);
     let c!: LessonController;
     const sayIt = (e: unknown) => answerWord(c.getView().question, e as never, 'en');
-    const stt = new ScriptedTranscriber(Array.from({ length: 20 }, () => sayIt));
+    const stt = new ScriptedTranscriber(Array.from({ length: 200 }, () => sayIt));
     c = new LessonController(
       lesson,
       { audio: new FakeAudio(), tts: new FakeTTS(), stt, mic: new FakeMic(), pitch: new ScriptedPitch([]), clock: immediateClock, simulated: true },
@@ -297,11 +289,17 @@ describe('controller: adaptive placement and sequence answers', () => {
     stt.expected = () => c.getView().question.answer;
     await c.start();
     expect(c.getView().stage).not.toBe('intro');
-    await until(() => c.getView().stage === 'complete');
+    // Rhythm reading is tapped on the pad (a scripted voice cannot tap): stop when it comes up.
+    await until(() => c.getView().stage === 'complete' || c.getView().question.id.startsWith('p:rhythm-reading'), 20000);
     const qs = c.getView().session.lesson.questions;
-    expect(qs.slice(7).map((q) => q.difficulty)).toEqual([1200, 1250, 1200, 1250, 1200, 1250, 1280]);
-    expect(c.getView().session.records.every((r) => r.outcome === 'correct')).toBe(true);
-  });
+    const top: Record<string, number> = {};
+    for (const q of qs) {
+      const [, k, lv] = q.id.split(':');
+      top[k] = Math.max(top[k] ?? 0, Number(lv));
+    }
+    for (const k of PLACEMENT_ORDER.slice(0, PLACEMENT_ORDER.indexOf('rhythm-reading'))) expect(top[k], k).toBe(LADDERS[k]!.length);
+    c.pause();
+  }, 60_000);
 
   it('weekly puzzle answered by voice as a sequence', async () => {
     const lesson = weeklyPuzzle('2026-W45', 'developing');

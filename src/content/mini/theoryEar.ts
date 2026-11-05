@@ -416,7 +416,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [63, 67, 70], chord: true, key: 'Eb', text: { en: 'B♭ E♭ A♭ → E♭ major', he: 'סי♭ מי♭ לה♭ ← מי במול מז׳ור' } },
       },
       {
-        say: { en: 'Every signature also fits a minor key, the relative minor: on the sixth degree, a minor third down. Two sharps: D major or B minor.', he: 'כל סימן היתק מתאים גם לסולם מינורי, המינור המקביל: על הדרגה השישית, טרצה קטנה למטה. שני דיאזים: רה מז׳ור או סי מינור.' },
+        say: { en: 'Every signature also fits a minor key, the relative minor: on the sixth degree, a minor third down. Two sharps: D major or B minor.', he: 'כל סימן היתק מתאים גם לסולם מינורי, המינור המקביל: על דרגה 6, טרצה קטנה למטה. שני דיאזים: רה מז׳ור או סי מינור.' },
         play: [ch([62, 66, 69], 1.2), ch([59, 62, 66], 1.6)],
         show: { notes: [59, 62, 66], chord: true, key: 'D', text: { en: 'D major = B minor', he: 'רה מז׳ור = סי מינור' } },
       },

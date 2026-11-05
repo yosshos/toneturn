@@ -136,7 +136,7 @@ const PROGS: Record<number, Record<string, { chords: Ch[]; name: ReturnType<type
     axis: { chords: [[0, 'maj'], [7, 'maj'], [9, 'min'], [5, 'maj']], name: nm('I–V–vi–IV', 'I–V–vi–IV', 'one five six four', 'axis') },
     sad: { chords: [[9, 'min'], [5, 'maj'], [0, 'maj'], [7, 'maj']], name: nm('vi–IV–I–V', 'vi–IV–I–V', 'six four one five') },
     doowop: { chords: [[0, 'maj'], [9, 'min'], [5, 'maj'], [7, 'maj']], name: nm('I–vi–IV–V', 'I–vi–IV–V', 'one six four five', 'doo wop', 'fifties') },
-    blues: { chords: [[0, 'maj'], [5, 'maj'], [7, 'maj'], [0, 'maj']], name: nm('I–IV–V–I', 'I–IV–V–I', 'one four five one') },
+    basic: { chords: [[0, 'maj'], [5, 'maj'], [7, 'maj'], [0, 'maj']], name: nm('I–IV–V–I', 'I–IV–V–I', 'one four five one') },
   },
   2: {
     iiVI: { chords: [[2, 'm7'], [7, 'dom7'], [0, 'maj7']], name: nm('Major ii–V–I', 'ii–V–I מז׳ורי', 'two five one', 'major two five one') },
@@ -149,6 +149,8 @@ const PROGS: Record<number, Record<string, { chords: Ch[]; name: ReturnType<type
     minorIV: { chords: [[0, 'maj'], [5, 'maj'], [5, 'min'], [0, 'maj']], name: nm('I–IV–iv–I', 'I–IV–iv–I', 'minor four', 'minor plagal', 'מינור 4') },
     backdoor: { chords: [[5, 'm7'], [10, 'dom7'], [0, 'maj7']], name: nm('Backdoor iv7–♭VII7–I', 'Backdoor iv7–♭VII7–I', 'backdoor', 'back door', 'בקדור') },
     flatIII: { chords: [[0, 'maj'], [3, 'maj'], [5, 'maj'], [0, 'maj']], name: nm('I–♭III–IV–I', 'I–♭III–IV–I', 'flat three', 'במול 3') },
+    secdom: { chords: [[0, 'maj'], [4, 'dom7'], [9, 'min']], name: nm('Secondary dominant I–III7–vi', 'דומיננטה משנית I–III7–vi', 'secondary dominant', 'five of six', 'דומיננטה משנית') },
+    bluesTurn: { chords: [[0, 'dom7'], [9, 'dom7'], [2, 'm7'], [7, 'dom7']], name: nm('Blues turnaround I7–VI7–ii7–V7', 'טרנאראונד בלוז I7–VI7–ii7–V7', 'blues turnaround', 'טרנאראונד בלוז') },
   },
 };
 
@@ -158,7 +160,7 @@ TOPIC_GEN['progressions'] = {
   levels: [
     { en: 'Pop progressions', he: 'מהלכי פופ' },
     { en: 'Jazz progressions', he: 'מהלכי ג׳אז' },
-    { en: 'Borrowed chords', he: 'אקורדים שאולים' },
+    { en: 'Borrowed chords, secondary dominants, blues', he: 'אקורדים שאולים, דומיננטות משניות, בלוז' },
   ],
   gen(seed, level, id) {
     const rnd = rng(seed);

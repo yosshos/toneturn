@@ -82,7 +82,7 @@ test.describe('lesson', () => {
     // Simulator keeps progress only in memory: nothing survives a reload.
     await page.getByRole('button', { name: 'Home' }).click();
     await page.reload();
-    await expect(page.locator('.goal-strip')).toContainText('0/30');
+    await expect(page.locator('.first-run-cta')).toBeVisible(); // back to the first visit: nothing was kept
   });
 
   test('Buttons → Voice mid-question keeps the attempt history', async ({ page }) => {
@@ -178,7 +178,7 @@ test.describe('more lessons', () => {
     await page.getByRole('button', { name: 'Home' }).click();
     await expect(page.getByRole('button', { name: /2\. Home, third, fifth/ })).toBeEnabled();
     await expect(page.locator('.node.done .mini-stars .won')).toHaveCount(3);
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Home, third, fifth');
+    await expect(page.locator('.continue-card .continue-text b')).toHaveText('Home, third, fifth'); // the compact Continue card
   });
 
   test('Major or minor (simulator, hands-free)', async ({ page }) => {

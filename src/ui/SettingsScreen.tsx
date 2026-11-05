@@ -225,6 +225,15 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account }: Pr
           </span>
         </label>
       </section>
+      <section className="set-card">
+        <label className="toggle-row">
+          <input type="checkbox" checked={s.rhythmByVoice ?? false} onChange={(e) => onChange({ rhythmByVoice: e.target.checked })} data-rhythm-voice="1" />
+          <span>
+            🥁 {t.rhythmVoiceSetting}
+            <small className="field-hint"> — {t.rhythmVoiceHint}</small>
+          </span>
+        </label>
+      </section>
       <SoundSetting t={t} value={s.sound ?? 'classic'} onChange={(sound) => onChange({ sound })} drone={s.droneSound ?? 'soft'} onDrone={(droneSound) => onChange({ droneSound })} />
 
       <section className="set-card">

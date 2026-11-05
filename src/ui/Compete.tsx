@@ -44,7 +44,9 @@ export function LeagueCard({ t, lang, onBestTier, lastSeen, onSeen }: { t: Strin
       <LeagueLadder tier={league.tier} names={t.leagueTiers} />
       <ol className="board league-board">
         {league.members.map((m, i) => {
-          const zone = leagueZone(i + 1, n, league.tier, m.xp);
+          // Ties share a rank, as on the server (1 + players with more XP).
+          const rank = 1 + league.members.filter((x) => x.xp > m.xp).length;
+          const zone = leagueZone(rank, n, league.tier, m.xp);
           return (
             <li key={i} className={`${m.me ? 'me' : ''} zone-${zone}`}>
               <span className="rank">{i + 1}</span>

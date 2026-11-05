@@ -36,7 +36,9 @@ export type Recommendation =
   | { kind: 'vocal' }
   | { kind: 'absolute' }
   | { kind: 'modes'; level: number }
-  | { kind: 'rhythm-game' };
+  | { kind: 'rhythm-game' }
+  | { kind: 'topic'; topic: string; level: number }
+  | { kind: 'perform' };
 
 /**
  * The exercise to suggest for a skill: the lesson at the player's rung, or the next one up if that was
@@ -47,6 +49,15 @@ export function recommendFor(skill: SkillId, ratings: Ratings, mastered: (id: Le
   if (skill === 'technique') return { kind: 'vocal' };
   if (skill === 'absolute') return { kind: 'absolute' };
   if (skill === 'modes') return { kind: 'modes', level: modesLevelFor(ratings.modes?.n ? ratings.modes.r : null) };
+  if (skill === 'improv') return { kind: 'perform' };
+  // Skills practised in their topic, at the level the rating says.
+  const TOPIC_FOR: Partial<Record<SkillId, [string, number]>> = { tempo: ['tempo', 6], pitch: ['fine-pitch', 3], sight: ['sight-read', 3], theory: ['interval-spelling', 3] };
+  const tf = TOPIC_FOR[skill];
+  if (tf) {
+    const r0 = ratings[skill];
+    const lv = r0 && r0.n ? Math.max(1, Math.min(tf[1], 1 + Math.floor((r0.r - 900) / 150))) : 1;
+    return { kind: 'topic', topic: tf[0], level: lv };
+  }
   const ladder = SKILL_LADDER[skill];
   const r = ratings[skill];
   const rating = r && r.n > 0 ? r.r : null;

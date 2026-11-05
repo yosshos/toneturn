@@ -23,7 +23,6 @@ export const UNIT_LESSON: Record<string, string> = {
   'rhythm-r7': 'rhythm-r7',
   'rhythm-r8': 'rhythm-r8',
   runs: 'runs',
-  'runs-workshop': 'runs',
   'note-sequences': 'note-sequences',
   'jazz-1': 'jazz-1',
   songs: 'songs',
@@ -65,6 +64,10 @@ export const UNIT_LESSON: Record<string, string> = {
   'topic:transposition': 'transposition',
   'topic:chord-scale': 'chord-scale',
   'topic:note-reading': 'note-reading',
+  'topic:tempo': 'tempo',
+  'topic:intervals-all': 'intervals-all',
+  'topic:degrees-ext': 'degrees-ext',
+  'topic:sight-read': 'sight-read',
   // Vocal tracks
   'vocal:hold': 'vocal-hold',
   'vocal:vibrato': 'vocal-vibrato',
@@ -75,6 +78,7 @@ export const UNIT_LESSON: Record<string, string> = {
   'vocal:barry': 'vocal-barry',
   'vocal:sight': 'vocal-sight',
   'vocal:ornaments': 'vocal-ornaments',
+  'vocal:singalong': 'songs',
   // Play & improvise
   'perform:backing': 'perform-backing',
   'perform:improv': 'perform-improv',

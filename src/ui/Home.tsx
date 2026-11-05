@@ -126,81 +126,74 @@ export function Home({ t, settings, progress, streak, onStreak, account, onPract
 
       {news}
 
-      <section className="goal-strip" aria-label={t.dailyGoal}>
-        <GoalRing value={goal} />
-        <div className="goal-text">
-          <b>{t.dailyGoal}</b>
-          <small dir="ltr">
-            {todayXp}/{DAILY_GOAL_XP} {t.xp} · {progress.xp} {t.xp}
-          </small>
-        </div>
-        <div className="goal-done">
-          <b>
-            {doneCount}/{LESSON_ORDER.length}
-          </b>
-          <small>{t.lessonsDone}</small>
-        </div>
-      </section>
+      {firstRun ? (
+        <section className="hero first-run">
+          <HeroArt nm={nm} lang={lang} />
+          <div className="hero-copy">
+            <p className="tagline">{t.appTagline}</p>
+            <h1>{t.firstRunTitle}</h1>
+            <p className="blurb">{t.firstRunBlurb}</p>
+            <ModeSwitch mode={settings.mode} onChange={onMode} t={t} />
+            <button className="btn mega first-run-cta" onClick={onPlacement}>
+              {settings.mode === 'voice' && <MicIcon />}
+              {t.findLevel}
+            </button>
+            <button className="link start-from-one" onClick={() => start(next)}>
+              {t.startFromLessonOne}
+            </button>
+          </div>
+        </section>
+      ) : (
+        <>
+          <h1 className="sr-only">Ninth Sense — {t.homeToday}</h1>
+          {/* Today (product owner): the goal and the day's plan, together, first. */}
+          <section className="home-section today" aria-label={t.homeToday}>
+            <h2 className="home-h">☀️ {t.homeToday}</h2>
+            <div className="goal-strip">
+              <GoalRing value={goal} />
+              <div className="goal-text">
+                <b>{t.dailyGoal}</b>
+                <small dir="ltr">
+                  {todayXp}/{DAILY_GOAL_XP} {t.xp} · {progress.xp} {t.xp}
+                </small>
+              </div>
+              <div className="goal-done">
+                <b>
+                  {doneCount}/{LESSON_ORDER.length}
+                </b>
+                <small>{t.lessonsDone}</small>
+              </div>
+            </div>
+            <WorkoutCard t={t} progress={progress} settings={settings} onOpen={onWorkout} />
+          </section>
 
-      <section className="hero">
-        <HeroArt nm={nm} lang={lang} />
-        <div className="hero-copy">
-          <p className="tagline">{t.appTagline}</p>
-          {firstRun ? (
-            <>
-              <h1>{t.firstRunTitle}</h1>
-              <p className="blurb">{t.firstRunBlurb}</p>
-              <ModeSwitch mode={settings.mode} onChange={onMode} t={t} />
-              <button className="btn mega first-run-cta" onClick={onPlacement}>
-                {settings.mode === 'voice' && <MicIcon />}
-                {t.findLevel}
-              </button>
-              <button className="link start-from-one" onClick={() => start(next)}>
-                {t.startFromLessonOne}
-              </button>
-            </>
-          ) : (
-            <>
-              <h1>{withNote(meta.title[lang], bb)}</h1>
-              <p className="blurb">{meta.blurb[lang]}</p>
-              <ModeSwitch mode={settings.mode} onChange={onMode} t={t} />
-              <button className="btn mega" onClick={() => start(next)}>
-                {settings.mode === 'voice' && <MicIcon />}
-                {anyDone ? t.continue : t.practice}
-              </button>
-              <button className="link start-from-one" onClick={onPlacement}>
-                🧭 {t.findLevel}
-              </button>
-            </>
-          )}
-        </div>
-      </section>
+          {/* Continue: the next lesson on the path, compact (no big banner). */}
+          <section className="continue-card" aria-label={t.homeContinue}>
+            <span className="continue-icon" aria-hidden="true">
+              <NodeIcon kind={meta.icon} />
+            </span>
+            <div className="continue-text">
+              <small className="continue-kicker">{t.homeContinue}</small>
+              <b>{withNote(meta.title[lang], bb)}</b>
+              <small>{meta.blurb[lang]}</small>
+            </div>
+            <button className="btn primary continue-go" data-continue="1" onClick={() => start(next)}>
+              {settings.mode === 'voice' && <MicIcon />}
+              {anyDone ? t.continue : t.practice}
+            </button>
+          </section>
+          <div className="home-mode-row">
+            <ModeSwitch mode={settings.mode} onChange={onMode} t={t} />
+            <button className="link start-from-one" onClick={onPlacement}>
+              🧭 {t.findLevel}
+            </button>
+          </div>
+        </>
+      )}
 
-      {!firstRun && <WorkoutCard t={t} progress={progress} settings={settings} onOpen={onWorkout} />}
-
-      <TopicBars t={t} progress={progress} />
-
-      <section className="vocal-strip" aria-label={t.vocalTitle}>
-        <div className="vocal-strip-text">
-          <h2>🎤 {t.vocalTitle}</h2>
-          <p>{t.vocalBlurb}</p>
-        </div>
-        <div className="vocal-strip-actions">
-          <button className="btn" onClick={() => onVocal(false)}>
-            {(() => {
-              const passed = (progress.vocal?.passed ?? []).filter((x) => x < 100);
-              const lv = Math.min(12, (passed.length ? Math.max(...passed) : 0) + 1);
-              return `${t.vocalLevel.replace('{n}', String(lv))} · ${t.vocalLevelNames[lv - 1]}`;
-            })()}
-          </button>
-          <button className="btn ghost small" onClick={() => onVocal(true)}>
-            ☀️ {t.vocalWarmup}
-          </button>
-        </div>
-      </section>
-
-      <section className="path" aria-label={t.lessonPath}>
-        <h2>{t.lessonPath}</h2>
+      <section className="path home-section" aria-label={t.lessonPath}>
+        <h2 className="home-h">🗺️ {t.lessonPath}</h2>
+        <TopicBars t={t} progress={progress} />
         <ol className="path-list">
           {LESSON_ORDER.map((id, i) => {
             const st = states[id];
@@ -244,7 +237,30 @@ export function Home({ t, settings, progress, streak, onStreak, account, onPract
         </ol>
       </section>
 
-      {tools}
+      <section className="home-section practice" aria-label={t.homePractice}>
+        <h2 className="home-h">🎯 {t.homePractice}</h2>
+        {tools}
+      </section>
+
+      <section className="vocal-strip home-section" aria-label={t.vocalTitle}>
+        <div className="vocal-strip-text">
+          <h2>🎤 {t.vocalTitle}</h2>
+          <p>{t.vocalBlurb}</p>
+        </div>
+        <div className="vocal-strip-actions">
+          <button className="btn" onClick={() => onVocal(false)}>
+            {(() => {
+              const passed = (progress.vocal?.passed ?? []).filter((x) => x < 100);
+              const lv = Math.min(12, (passed.length ? Math.max(...passed) : 0) + 1);
+              return `${t.vocalLevel.replace('{n}', String(lv))} · ${t.vocalLevelNames[lv - 1]}`;
+            })()}
+          </button>
+          <button className="btn ghost small" onClick={() => onVocal(true)}>
+            ☀️ {t.vocalWarmup}
+          </button>
+        </div>
+      </section>
+
 
       <section className="games-row" aria-label={t.games}>
         <h2>{t.games}</h2>

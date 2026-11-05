@@ -416,7 +416,7 @@ export function GameScreen({
               <BeatGrid v={v} t={t} />
               {v.input === 'tap' ? (
                 <button
-                  className={`tap-pad ${v.stage === 'respond' ? 'live' : ''}`}
+                  className={`tap-pad big ${v.stage === 'respond' ? 'live' : ''}`}
                   onPointerDown={(e) => {
                     e.preventDefault();
                     c.tapBeat(e.timeStamp);

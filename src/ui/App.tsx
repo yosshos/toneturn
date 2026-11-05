@@ -1,3 +1,4 @@
+import { vocalUnit } from '../content/units';
 import { MiniGateContext, MiniLessonPlayer } from './MiniLesson';
 import { LearnedScreen, learnedCount } from './Learned';
 import { lessonForUnit, MINI_LESSONS } from '../content/minilessons';
@@ -18,7 +19,8 @@ import { adaptPlacement, placementLesson, puzzleBand, reviewLesson, weekId, week
 import { SkillMap } from './SkillMap';
 import { PracticeTools } from './Tools';
 import { MicIcon } from './bits';
-import { STRINGS } from '../i18n/strings';
+import { STRINGS, type Strings } from '../i18n/strings';
+import type { CHANGELOG } from '../version';
 import { gemsOf, lessonMastered, localDay, ratingsOf, type Progress, type Settings, DEFAULT_SETTINGS, emptyProgress, migrateSettings } from '../storage/progress';
 import { cloudConfigured, currentUser, onAuthChange, pullSettings, pushSettings, syncProgress, type CloudUser } from '../cloud/cloud';
 import { AccountCard, type SyncState } from './Account';
@@ -197,7 +199,10 @@ export function App() {
     })();
   }, [user, runSync]);
 
-  const s = settings ?? DEFAULT_SETTINGS;
+  // ?lang=he|en forces the interface language (shared links, tests).
+  const forcedLang = params.get('lang') === 'he' || params.get('lang') === 'en' ? (params.get('lang') as 'he' | 'en') : null;
+  const s0 = settings ?? DEFAULT_SETTINGS;
+  const s = forcedLang ? { ...s0, uiLang: forcedLang, outputLang: forcedLang } : s0;
   const t = STRINGS[s.uiLang];
 
   useEffect(() => {
@@ -283,9 +288,12 @@ export function App() {
     if ((LESSON_ORDER as string[]).includes(id)) return openLesson(id as LessonId);
     const m = /^vocal-(modes-|harmony-|barry-|sight-|orn-)?(\d+)$/.exec(id);
     if (m) {
-      setVocalWarmup(false);
-      setVocalLevel((m[1] === 'modes-' ? 100 : m[1] === 'harmony-' ? 200 : m[1] === 'barry-' ? 300 : m[1] === 'sight-' ? 400 : m[1] === 'orn-' ? 500 : 0) + Number(m[2]));
-      return go('vocal');
+      const lv = (m[1] === 'modes-' ? 100 : m[1] === 'harmony-' ? 200 : m[1] === 'barry-' ? 300 : m[1] === 'sight-' ? 400 : m[1] === 'orn-' ? 500 : 0) + Number(m[2]);
+      return gate(vocalUnit(lv), () => {
+        setVocalWarmup(false);
+        setVocalLevel(lv);
+        go('vocal');
+      });
     }
     if (id === 'modes') return openModes(modesLevelFor(ratingsOf(progress).modes?.n ? ratingsOf(progress).modes!.r : null));
     if (id === 'wrong-notes') return openWrongNotes(1);
@@ -308,6 +316,8 @@ export function App() {
     if (rec.kind === 'runs-workshop') return openRuns();
     if (rec.kind === 'modes') return openModes(rec.level);
     if (rec.kind === 'absolute') return openAbsolute(1);
+    if (rec.kind === 'topic') return openTopic(rec.topic, rec.level);
+    if (rec.kind === 'perform') return gate('perform:improv', () => go('perform'));
     if (rec.kind === 'vocal') {
       setVocalWarmup(false);
       return go('vocal');
@@ -389,15 +399,7 @@ export function App() {
                 <FreezeToast t={t} count={gems.streak.count} onClose={() => updateSettings({ seenFreezeDay: lastFreeze })} />
               )}
               {news.length > 0 ? (
-              <section className="news-card" role="status">
-                <div className="news-head">
-                  <b>✨ {t.whatsNew}</b>
-                  <button className="icon-btn" aria-label={t.done} onClick={() => updateSettings({ seenVersion: APP_VERSION })}>
-                    ✕
-                  </button>
-                </div>
-                <Changelog lang={s.uiLang} entries={news} />
-              </section>
+              <NewsCard t={t} lang={s.uiLang} entries={news} onClose={() => updateSettings({ seenVersion: APP_VERSION })} />
             ) : null}
             </>
           }
@@ -418,7 +420,7 @@ export function App() {
               setVocalWarmup(st.kind === 'vocal-warmup');
               return go('vocal');
             }
-            if (st.game === 'truefalse') return go('truefalse');
+            if (st.game === 'truefalse') return gate('game:truefalse', () => go('truefalse'));
             setGameKind(st.game === 'echo' ? 'melody' : 'rhythm');
             go('games');
           }}
@@ -517,6 +519,7 @@ export function App() {
           onNavigate={(r) => {
             setMenuOpen(false);
             if (r === 'placement') openPlacement();
+            else if (r === 'truefalse') gate('game:truefalse', () => go('truefalse'));
             else go(r);
           }}
         />
@@ -547,7 +550,7 @@ export function App() {
         <StreakSheet t={t} st={gems.streak} gems={gems.balance} today={localDay(new Date())} lang={s.uiLang} onBuy={buy} purchases={s.purchases ?? []} theme={themeId} onBuyCosmetic={buyCosmetic} onTheme={(theme) => updateSettings({ theme })} onClose={() => setStreakOpen(false)} />
       )}
       {route === 'drone' && <DroneScreen t={t} settings={s} onBack={() => go('home')} />}
-      {route === 'perform' && <PerformScreen t={t} settings={s} onBack={() => go('home')} />}
+      {route === 'perform' && <PerformScreen t={t} settings={s} onBack={() => go('home')} onProgress={setProgress} />}
       {route === 'achievements' && <AchievementsScreen t={t} progress={progress} extra={{ bestLeague: s.bestLeague, learned: learnedCount(s), lessonsTotal: Object.keys(MINI_LESSONS).length }} onBack={() => go('home')} />}
       {route === 'singalong' && <SingAlongScreen t={t} settings={s} onBack={() => go('vocal')} />}
       {route === 'vocal' && (
@@ -561,7 +564,7 @@ export function App() {
           onProgress={setProgress}
           onBack={() => go('home')}
           onRuns={openRuns}
-          onSingAlong={() => go('singalong')}
+          onSingAlong={() => gate('vocal:singalong', () => go('singalong'))}
           startWarmup={vocalWarmup}
         />
       )}
@@ -603,5 +606,27 @@ export function App() {
       )}
     </div>
     </MiniGateContext.Provider>
+  );
+}
+
+/** What's new, compact (home polish): the headline of the latest version; the rest on request. */
+function NewsCard({ t, lang, entries, onClose }: { t: Strings; lang: 'he' | 'en'; entries: typeof CHANGELOG; onClose: () => void }) {
+  const [open, setOpen] = useState(false);
+  const head = entries[0];
+  return (
+    <section className={`news-card compact ${open ? 'open' : ''}`} role="status">
+      <div className="news-head">
+        <b>
+          ✨ {t.whatsNew} <small dir="ltr">{head.version}</small>
+        </b>
+        <button className="icon-btn" aria-label={t.done} onClick={onClose}>
+          ✕
+        </button>
+      </div>
+      {open ? <Changelog lang={lang} entries={entries.slice(0, 3)} /> : <p className="news-headline">{head[lang][0]}</p>}
+      <button className="link news-more" onClick={() => setOpen((x) => !x)}>
+        {open ? t.newsLess : t.newsMore}
+      </button>
+    </section>
   );
 }

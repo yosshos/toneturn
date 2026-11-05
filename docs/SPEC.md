@@ -694,7 +694,7 @@ Feedback on a sung note says how and where, not only right/wrong, in the player'
 
 ## Addendum — 2026-11-05 (product owner): Y. The league ladder is a chord
 
-- **Y.1 Seven leagues**, built as a chord stacked in thirds from middle C — every league adds a note: **Root** (C) · **Third** (E) · **Fifth** (G) · **Seventh** (B♭) · **Ninth** (D, the brand league) · **♯11** (F♯) · **13** (A). The full stack is C13♯11, the Lydian-dominant chord — the chord the overtone series spells (partials 7, 9, 11, 13 ≈ ♭7, 9, ♯11, 13). Hebrew: שורש · טרצה · קווינטה · ספטימה · נונה · ♯11 · 13. Tiers 1–5 keep their numbers (no one moves when this ships).
+- **Y.1 Seven leagues**, built as a chord stacked in thirds from middle C — every league adds a note: **Root** (C) · **Third** (E) · **Fifth** (G) · **Seventh** (B♭) · **Ninth** (D, the brand league) · **♯11** (F♯) · **13** (A). The full stack is C13♯11, the Lydian-dominant chord — the chord the overtone series spells (partials 7, 9, 11, 13 ≈ ♭7, 9, ♯11, 13). Hebrew: שורש · טרצה · קווינטה · ספטימה · 9 · ♯11 · 13 (numbers from the 9 up — that is how musicians say them). Tiers 1–5 keep their numbers (no one moves when this ships).
 - **Y.2 Rules** (weekly XP from every saved session; the server caps 20 XP per item; cohorts of up to 30):
 
   | League | Moves up | Also needs (weekly XP) | Moves down (cohort ≥ 10) |
@@ -712,3 +712,40 @@ Feedback on a sung note says how and where, not only right/wrong, in the player'
 - **Y.5 League moves (product owner).** The first time the league is opened after a change, a moment plays once (the last league seen is remembered): **up** — the badge of the old league, then the new note drops from above onto its line with a small bounce, a glow and confetti, while the chord built so far plays up to the new note (the Ninth and 13 have their own titles); **down** — the top note tips, spins and falls off the staff while it sounds and slides an octave down, with an encouraging line ("earn it back this week"). Respects reduced motion.
 
 - **Hebrew terminology rule (product owner, 2026-11-05)**: Hebrew text uses the music terms Israeli musicians actually use (טרצה, קווינטה, ספטימה, מז׳ור, דיאז, סינקופה, …). Where there is none in real use, keep the English term or the number/symbol (9, ♯11, Shell, Backdoor, Drop 2, Upper structure). Transliterations stay as spoken aliases only. Chord tones and scale steps are numbers (דרגה 6, ♭7), not ordinals.
+
+## Addendum — 2026-11-05 (product owner): Z. Find my level 2.0, rhythm by tapping, phones
+
+- **Z.1 Find my level measures every skill to its edge.** Every skill a lesson can measure — scale degrees, intervals, chord quality, cadences & progressions, note names, modes, melodic memory, rhythm dictation, rhythm reading (which also measures rhythmic precision), written theory, and singing in tune in voice mode — gets its own ladder of 6–8 levels (≈ 850 → 1650–1700 on the rating scale; the higher rungs use the new topics: fine pitch, interval true-or-false by ear, trichords, extensions, voicings, jazz and borrowed progressions, key signatures, spelling, chord-scale). Climb: start at level 1; while there is no miss a right answer jumps two levels; the first miss steps back to the skipped level (or repeats the level once); one level at a time after that; a second miss — or passing the top — ends the skill, then the next skill, until all are covered. The skill's rating is then **set** between the last level passed and the one failed (passing the top: above it; failing level 1: below it) — not nudged by Elo steps. Vocal technique, vocal agility, rhythmic memory and absolute pitch are measured in their own areas.
+- **Z.2 While it runs:** a meter at the side shows this skill's level (n / max) in the skill's colour, a step that rises with a bounce and glow at every move up, and dots for the skills done. A changing, personal line says what happens: up one ("Okay, that was easy for you — let's go up a level"), up two ("Wow — let's try a much harder one!"), after a miss ("We found your edge — one more around here"), next skill ("That's your top in intervals. Next: chords").
+- **Z.3 Rhythm is tapped.** Every rhythmic input is a big tap pad (full width, a ripple on every tap, a glow on every metronome beat; Space works; hold for long notes). Saying "ta" / knocking is an opt-in setting (off by default) — syllables are too unreliable for timing.
+- **Z.4 Phones:** no screen scrolls sideways — every screen and state at 320 px, English and Hebrew, is checked by a test (`e2e/overflow.spec.ts`).
+- **League placement (Y.2, server):** no rating → Root; a player who skipped a week keeps their last league (the Ninth and up drop one step).
+
+### Z.5 Skills, domains and weights (product owner)
+
+Four new skills — **Tempo & pulse**, **Fine pitch**, **Sight-reading**, **Improvisation** — and the Skill Map grouped into five domains by how closely the concepts are related. The radar shows the domains (each the confidence-weighted level of its measured skills); tapping one opens its skills.
+
+| Domain | Skill | Measured by | Weight in the overall |
+|---|---|---|---|
+| Pitch & harmony | Scale degrees (major, minor, chromatic ♭3 ♯4 ♭7…) | path lessons, *Degrees in minor & chromatic*, placement | 1 |
+| | Intervals (all twelve, up / together / down; labels) | Intervals lesson, *Every interval by ear*, True or false? | 1 |
+| | Chord quality (triads → 7ths → extensions, voicings, inversions, slash, trichords, Barry Harris) | path lessons + 7 topics | 1 |
+| | Cadences & progressions | Cadences, Jazz 1–2, *Progressions*, Barry Harris keys | 1 |
+| | Modes (church, melodic / harmonic minor, maqamat, 6-dim, wrong note) | Modes by ear, wrong notes, *Maqam* | ¾ |
+| | Fine pitch (cents, in tune / sharp / flat) | *Fine pitch*, *In tune?* | ¾ |
+| | Absolute pitch | its corner | 0 (tracked apart) |
+| Rhythm & time | Rhythm by ear (R1–R8, odd meters, polyrhythm, swing, iqa'at) | rhythm lessons + 4 topics | 1 |
+| | Rhythm reading (tap) | rhythm lessons | 1 |
+| | Rhythmic precision | rhythm reading, Beat Echo | ¾ |
+| | Tempo & pulse (faster/slower to 5 %, drifting, BPM by ear, keeping time alone) | *Tempo* topic, Inner clock | 1 |
+| Memory | Melodic memory | sequences, songs, dictation, Echo Chain, form, two voices, Barry Harris lines | 1 |
+| | Rhythmic memory | Beat Echo | ¾ |
+| Voice | Singing in tune (notes, degrees, sung lines, harmony singing) | path lessons, harmony track | 1 |
+| | Vocal technique | vocal track, ornaments & dynamics | ½ |
+| | Agility (runs) | Runs lesson and workshop | ½ |
+| Reading, theory & creating | Note names | path lessons | ¾ |
+| | Written theory | 9 topics | ¾ |
+| | Sight-reading (sing from notation, guitar from tab, *Sight-reading by ear*) | sight-singing track, guitar, topic | ¾ |
+| | Improvisation | Play & improvise → Improvise | ½ |
+
+Weights count only for measured skills (a non-singer is never pulled down by voice skills). Find my level climbs every skill above except vocal technique, agility, rhythmic memory, absolute pitch and improvisation (measured in their own areas).

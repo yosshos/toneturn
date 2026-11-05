@@ -22,7 +22,18 @@ export const BAND_MAX = 1600;
 
 /** Skill Map axis order: listening skills, then performance/memory pairs (pitch: in tune + memory; rhythm: memory + precision). */
 /** Grouped as in spec G.8: listening → performance → memory → precision. */
-export const SKILLS: SkillId[] = ['degrees', 'notes', 'intervals', 'chords', 'cadences', 'modes', 'theory', 'absolute', 'rhythm-dictation', 'singing', 'rhythm-reading', 'sequences', 'agility', 'technique', 'rhythm', 'timing'];
+export const SKILLS: SkillId[] = ['degrees', 'intervals', 'chords', 'cadences', 'modes', 'pitch', 'absolute', 'rhythm-dictation', 'rhythm-reading', 'timing', 'tempo', 'sequences', 'rhythm', 'singing', 'technique', 'agility', 'notes', 'theory', 'sight', 'improv'];
+
+/** The Skill Map's five domains (product owner): skills grouped by how closely the concepts are related. */
+export type DomainId = 'pitch' | 'time' | 'memory' | 'voice' | 'reading';
+export const DOMAINS: { id: DomainId; skills: SkillId[] }[] = [
+  { id: 'pitch', skills: ['degrees', 'intervals', 'chords', 'cadences', 'modes', 'pitch', 'absolute'] },
+  { id: 'time', skills: ['rhythm-dictation', 'rhythm-reading', 'timing', 'tempo'] },
+  { id: 'memory', skills: ['sequences', 'rhythm'] },
+  { id: 'voice', skills: ['singing', 'technique', 'agility'] },
+  { id: 'reading', skills: ['notes', 'theory', 'sight', 'improv'] },
+];
+export const domainOf = (k: SkillId): DomainId => DOMAINS.find((d) => d.skills.includes(k))?.id ?? 'pitch';
 /** Axes on the Skill Map that have no content yet — always shown as unmeasured. */
 export const PLANNED_SKILLS = [] as const;
 
@@ -33,6 +44,8 @@ export interface RatingEvent {
   correct: boolean;
   /** Graded result 0..1 (e.g. rhythmic precision). Overrides `correct` when present. */
   score?: number;
+  /** Placement (Find my level): set the rating to this value instead of an Elo step. */
+  set?: number;
   at: string; // ISO
 }
 
@@ -48,8 +61,13 @@ export type Ratings = Partial<Record<SkillId, SkillRating>>;
 
 export const expected = (rating: number, difficulty: number) => 1 / (1 + Math.pow(10, (difficulty - rating) / 400));
 
-export function rate(cur: SkillRating | undefined, e: Pick<RatingEvent, 'difficulty' | 'correct' | 'at' | 'score'>): SkillRating {
+export function rate(cur: SkillRating | undefined, e: Pick<RatingEvent, 'difficulty' | 'correct' | 'at' | 'score' | 'set'>): SkillRating {
   const base = cur ?? { r: START_RATING, n: 0, correct: 0, recent: [] };
+  if (e.set !== undefined) {
+    // A staircase to failure measures the skill: set it, and count it as several answers of evidence.
+    const n = Math.max(base.n, PROVISIONAL_UNTIL - 2);
+    return { r: Math.round(e.set), n, correct: base.correct, recent: [...base.recent, { d: e.difficulty, s: 1, delta: Math.round(e.set) - base.r, at: e.at }].slice(-10) };
+  }
   const k = base.n < PROVISIONAL_UNTIL ? K_PROVISIONAL : K_ESTABLISHED;
   const s = e.score !== undefined ? Math.max(0, Math.min(1, e.score)) : e.correct ? 1 : 0;
   const raw = k * (s - expected(base.r, e.difficulty));
@@ -137,7 +155,29 @@ export const nextLevel = (level: number, correct: boolean, max = 2) => Math.max(
 // ======================================================================= overall rating (spec L)
 
 /** Importance per skill in the overall rating; game-only axes count half. */
-export const OVERALL_WEIGHT: Partial<Record<SkillId, number>> = { rhythm: 0.5, timing: 0.5, absolute: 0 };
+// Core listening and musicianship count fully; supporting skills ¾; voice-specific and creative skills ½
+// (they count only once measured, so a non-singer is never pulled down); absolute pitch is tracked apart.
+export const OVERALL_WEIGHT: Partial<Record<SkillId, number>> = {
+  notes: 0.75, modes: 0.75, theory: 0.75, pitch: 0.75, sight: 0.75, timing: 0.75, rhythm: 0.75,
+  technique: 0.5, agility: 0.5, improv: 0.5,
+  absolute: 0,
+};
+
+/** A domain's place on the map: the confidence-weighted mean of its measured skills (null = none measured). */
+export function domainValue(ratings: Ratings, d: DomainId): { v: number; n: number } | null {
+  let num = 0;
+  let den = 0;
+  let n = 0;
+  for (const k of DOMAINS.find((x) => x.id === d)!.skills) {
+    const s = ratings[k];
+    if (!s || s.n === 0 || k === 'absolute') continue;
+    const w = Math.min(1, s.n / CONFIDENT_AT);
+    num += w * Math.max(0, Math.min(1, (s.r - BAND_MIN) / (BAND_MAX - BAND_MIN)));
+    den += w;
+    n += s.n;
+  }
+  return den ? { v: num / den, n } : null;
+}
 const CONFIDENT_AT = 12;
 export const OVERALL_PROVISIONAL = { skills: 4, answers: 30 };
 

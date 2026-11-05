@@ -18,6 +18,24 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.30.0',
+    date: '2026-11-05',
+    en: [
+      'Find my level now measures every skill to your edge: each one gets harder until you miss, then the next — with a level meter at the side and a word of encouragement at every step',
+      'Rhythm is tapped on a big pad everywhere (saying “ta” is optional in Settings)',
+      'More: quick lessons for every vocal track, sight-singing feedback per note, Barry Harris 6-chord and diminished notes and the chromatic scale in sections, secondary dominants and the blues turnaround, “in tune, sharp or flat” down to 10 cents',
+      'Phones: no screen scrolls sideways',
+      'New skills — Tempo & pulse, Fine pitch, Sight-reading, Improvisation — with new topics (every interval by ear, minor & chromatic degrees); the Skill Map shows five domains; a cleaner home screen with today’s plan first',
+    ],
+    he: [
+      'מבחן הרמה מודד עכשיו כל כישור עד הקצה: כל אחד מתקשה עד שטועים, ואז הבא — עם מד רמה בצד ומילה טובה בכל שלב',
+      'קצב מקישים על כפתור גדול בכל מקום (לומר ״טה״ — רשות, בהגדרות)',
+      'ועוד: שיעורים קצרים לכל מסלולי הקול, משוב לכל צליל בקריאה בשירה, צלילי אקורד ה־6 והדימיניש של בארי האריס והסולם הכרומטי בקטעים, דומיננטות משניות וטרנאראונד בלוז, ״מכוון, גבוה או נמוך״ עד 10 סנט',
+      'טלפונים: אף מסך לא גולל הצידה',
+      'כישורים חדשים — טמפו ופעמה, גובה עדין, קריאה מהדף, אלתור — עם נושאים חדשים (כל המרווחים בשמיעה, דרגות במינור וכרומטיות); מפת הכישורים בחמישה תחומים; דף בית נקי יותר עם תוכנית היום בראש',
+    ],
+  },
+  {
     version: '0.29.0',
     date: '2026-11-05',
     en: [

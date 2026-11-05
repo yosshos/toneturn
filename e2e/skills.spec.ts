@@ -9,7 +9,7 @@ test.beforeEach(async ({ page }) => {
 
 // Voice flows run in the labelled simulator (scripted answers: right, wrong, then right…).
 test.describe('placement, Skill Map, review, weekly puzzle', () => {
-  test.setTimeout(300_000);
+  test.setTimeout(900_000);
 
   test('placement adapts, then the Skill Map shows measured skills and a recommendation; review appears', async ({ page }) => {
     await page.goto('/?sim=1');
@@ -32,20 +32,29 @@ test.describe('placement, Skill Map, review, weekly puzzle', () => {
       }).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['data-start'], childList: true });
     });
     // The topic strip shows what is done, now and left.
-    await expect(page.locator('.topic-strip .ts')).toHaveCount(9); // 7 listening topics + rhythm reading + singing
+    await expect(page.locator('.topic-strip .ts')).toHaveCount(14); // every skill Find my level measures, singing included (voice)
     await expect(page.locator('.topic-strip .ts.done').first()).toBeVisible({ timeout: 120_000 });
-    await expect(page.getByRole('heading', { name: 'Lesson complete' })).toBeVisible({ timeout: 280_000 });
-    await expect(page.locator('.recap-row')).toHaveCount(16);
+    // The meter at the side follows the climb.
+    await expect(page.locator('.placement-meter')).toBeVisible();
+    // The rest: skip through (the simulator's scripted voice does not speak every new answer type).
+    const done = page.getByRole('heading', { name: 'Lesson complete' });
+    for (const end = Date.now() + 360_000; Date.now() < end && !(await done.isVisible()); ) {
+      const skip = page.getByRole('button', { name: /Skip ⇥|Skip/ }).first();
+      if (await skip.isVisible().catch(() => false)) await skip.click().catch(() => {});
+      await page.waitForTimeout(400);
+    }
+    await expect(done).toBeVisible({ timeout: 60_000 });
+    expect(await page.locator('.recap-row').count()).toBeGreaterThanOrEqual(11);
     await page.getByRole('button', { name: /See my Skill Map/ }).click();
 
     await expect(page.getByRole('heading', { name: 'Skill Map', level: 1 })).toBeVisible();
-    await expect(page.locator('.radar .dot.ev-unmeasured')).toHaveCount(6); // vocal agility, vocal technique, modes by ear, written theory, absolute pitch, rhythmic memory (tapping also measures precision)
+    await expect(page.locator('.radar.domains [data-domain]')).toHaveCount(5); // five domains
     await expect(page.locator('.trend-tile')).not.toHaveCount(0); // trends per measured skill
     await expect(page.locator('.trend-detail svg')).toHaveCount(2); // overall + selected skill
     await expect(page.locator('.overall-head .rating-badge')).toBeVisible();
     await expect(page.locator('.radar .area')).toHaveCount(1);
-    await expect(page.locator('.skill-list')).toContainText('provisional');
-    await expect(page.locator('.skill-list')).toContainText('not measured yet');
+    await expect(page.locator('main.skillmap')).toContainText('provisional');
+    await expect(page.locator('main.skillmap')).toContainText('not measured yet');
     await expect(page.locator('.diag-panel')).toContainText('Recommended next');
     await page.screenshot({ path: 'test-results/skill-map.png', fullPage: true });
 

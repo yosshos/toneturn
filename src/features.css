@@ -1657,3 +1657,57 @@
 .league-move h2 { margin: 6px 0 0; color: var(--tier-color); font-size: 1.5rem; }
 .league-move.down h2 { color: var(--ink); }
 :root[data-motion='reduced'] .league-badge .lb-arrive, :root[data-motion='reduced'] .league-badge .lb-fall { animation-duration: .01s; }
+
+/* Find my level: the side difficulty meter (product owner) */
+.lesson.with-meter { padding-inline-end: 40px; }
+.placement-meter { position: fixed; inset-inline-end: 6px; top: 50%; transform: translateY(-50%); z-index: 5; display: grid; justify-items: center; gap: 6px; width: 30px; padding: 8px 0; border-radius: 16px; background: color-mix(in srgb, var(--bg-2) 85%, transparent); box-shadow: 0 6px 20px #0006; }
+.pm-top { font-weight: 800; font-size: .72rem; color: var(--pm-color); }
+.pm-track { display: flex; flex-direction: column-reverse; gap: 4px; }
+.pm-step { width: 14px; height: 22px; border-radius: 6px; background: color-mix(in srgb, var(--ink) 12%, transparent); transition: background .3s, transform .3s, box-shadow .3s; }
+.pm-step.on { background: var(--pm-color); }
+.pm-step.now { animation: pmRise .7s cubic-bezier(.2,.9,.3,1.5) both; box-shadow: 0 0 12px var(--pm-color); }
+@keyframes pmRise { 0% { transform: scale(.4) translateY(14px); opacity: .3; } 70% { transform: scale(1.25); opacity: 1; } 100% { transform: scale(1); } }
+.pm-skills { display: grid; gap: 3px; margin-top: 4px; }
+.pm-skills span { width: 6px; height: 6px; border-radius: 50%; background: color-mix(in srgb, var(--ink) 18%, transparent); }
+.pm-skills span.done { background: var(--c); }
+.pm-skills span.now { background: var(--c); box-shadow: 0 0 6px var(--c); }
+.pm-line { margin: 4px auto 0; max-width: 520px; padding: 8px 14px; border-radius: 14px; text-align: center; font-weight: 700; background: var(--card); animation: pmLine .5s ease both; }
+.pm-line.up, .pm-line.up2 { background: linear-gradient(90deg, color-mix(in srgb, var(--gold) 28%, var(--card)), var(--card)); }
+.pm-line.up2 { animation: pmLine .5s ease both, pmWiggle .6s .5s ease; }
+@keyframes pmLine { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+@keyframes pmWiggle { 0%, 100% { transform: none; } 25% { transform: rotate(-2deg) scale(1.03); } 75% { transform: rotate(2deg) scale(1.03); } }
+:root[data-motion='reduced'] .pm-step.now, :root[data-motion='reduced'] .pm-line { animation: none; }
+.rounds-count { margin: 0; font-weight: 800; color: var(--ink-soft); }
+.mini-player, .mini-celebrate { box-sizing: border-box; max-width: 560px; min-width: 0; }
+.mini-stage { min-width: 0; max-width: 100%; overflow: hidden; }
+.mini-stage .notes-view { max-width: 100%; }
+.mini-overlay { overflow-x: hidden; }
+
+/* The placement topic strip wraps instead of scrolling sideways (phones) */
+.topic-strip { overflow-x: visible; }
+.topic-strip ol { flex-wrap: wrap; row-gap: 4px; }
+
+/* Home polish (product owner): Today first, a compact Continue card, clear sections */
+.home-section { margin-top: 18px; }
+.home-h { font-size: 1.05rem; margin: 0 0 8px; letter-spacing: .01em; }
+.today .goal-strip { margin: 0 0 8px; }
+.continue-card { margin-top: 14px; display: grid; grid-template-columns: auto 1fr; grid-template-areas: "icon text" "go go"; gap: 10px 12px; align-items: center; padding: 14px; border-radius: 22px; background: linear-gradient(160deg, var(--bg-2), var(--hero-end, #3a2163)); }
+.continue-icon { grid-area: icon; width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; background: var(--card-2); }
+.continue-icon svg { width: 30px; height: 30px; }
+.continue-text { grid-area: text; display: grid; gap: 2px; min-width: 0; }
+.continue-text b { font-size: 1.1rem; }
+.continue-text small { color: var(--ink-soft); }
+.continue-kicker { text-transform: uppercase; letter-spacing: .06em; font-weight: 700; font-size: .7rem !important; color: var(--gold) !important; }
+.continue-go { grid-area: go; width: 100%; }
+.home-mode-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+.hero.first-run .hero-art, .hero.first-run svg.hero-art { max-height: 150px; }
+.news-card.compact .news-headline { margin: 4px 0 0; }
+.news-card.compact .news-more { margin-top: 6px; font-size: .9rem; }
+.news-card.compact .news-head small { font-weight: 600; opacity: .7; margin-inline-start: 6px; }
+.home-mode-row .start-from-one, .news-card .news-more { background: none; border: 0; padding: 4px 2px; color: var(--ink-soft); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+
+/* Skill Map by domain (product owner) */
+.skill-domain + .skill-domain { margin-top: 12px; }
+.skill-domain-h { display: flex; justify-content: space-between; align-items: baseline; margin: 6px 0; font-size: 1rem; }
+.skill-domain-h small { color: var(--ink-dim); font-weight: 600; }
+.radar.domains .axis-label { font-size: 15px; font-weight: 700; }

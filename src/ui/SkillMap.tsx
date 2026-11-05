@@ -3,7 +3,7 @@ import { chordTierForRating, tierOf } from '../engine/league';
 import { overallRating } from '../engine/rating';
 import { useState } from 'react';
 import type { SkillId } from '../engine/lesson';
-import { band, evidence, normalised, PLANNED_SKILLS, SKILLS, weakestSkill, type Ratings } from '../engine/rating';
+import { band, domainOf, DOMAINS, domainValue, evidence, PLANNED_SKILLS, SKILLS, weakestSkill, type Ratings } from '../engine/rating';
 import type { Strings } from '../i18n/strings';
 import { lessonMastered, ratingsOf, type Progress } from '../storage/progress';
 import { recommendFor, type Recommendation } from '../engine/recommend';
@@ -13,7 +13,6 @@ import { LESSON_META } from '../game/content';
 import { LESSON_ORDER } from '../engine/lesson';
 
 type Axis = SkillId | (typeof PLANNED_SKILLS)[number];
-const AXES: Axis[] = [...SKILLS, ...PLANNED_SKILLS];
 
 export function SkillMap({
   t,
@@ -102,27 +101,32 @@ export function SkillMap({
       {/* Text equivalent of the chart (also the keyboard / screen-reader path). */}
       <section className="set-card">
         <h2>{t.skillMap}</h2>
-        <ul className="skill-list">
-          {AXES.map((a) => {
-            const r = ratings[a as SkillId];
-            const ev = PLANNED_SKILLS.includes(a as never) ? null : evidence(r);
-            return (
-              <li key={a}>
-                <button className={`skill-row ${sel === a ? 'on' : ''}`} onClick={() => setSel(a)} aria-pressed={sel === a}>
-                  <b>{t.skillNames[a]}</b>
-                  <span className={`ev ev-${ev ?? 'planned'}`}>
-                    {ev === null
-                      ? t.comingSoonSkill
-                      : ev === 'unmeasured'
-                        ? t.evUnmeasured
-                        : `${t.bands[band(r!.r)]} · ${r!.r} · ${ev === 'provisional' ? t.evProvisional : t.evMeasured}`}
-                  </span>
-                  {a === rec && <span className="rec-chip">★</span>}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
+        {DOMAINS.map((d) => {
+          const dv = domainValue(ratings, d.id);
+          return (
+            <div key={d.id} className="skill-domain" data-domain-list={d.id}>
+              <h3 className="skill-domain-h">
+                {t.domainNames[d.id]}
+                <small>{dv ? `${Math.round(dv.v * 100)}%` : t.evUnmeasured}</small>
+              </h3>
+              <ul className="skill-list">
+                {d.skills.map((a2) => {
+                  const r = ratings[a2];
+                  const ev = evidence(r);
+                  return (
+                    <li key={a2}>
+                      <button className={`skill-row ${sel === a2 ? 'on' : ''}`} onClick={() => setSel(a2)} aria-pressed={sel === a2}>
+                        <b>{t.skillNames[a2]}</b>
+                        <span className={`ev ev-${ev}`}>{ev === 'unmeasured' ? t.evUnmeasured : `${t.bands[band(r!.r)]} · ${r!.r} · ${ev === 'provisional' ? t.evProvisional : t.evMeasured}`}</span>
+                        {a2 === rec && <span className="rec-chip">★</span>}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          );
+        })}
         {anyMeasured && (
           <button className="btn ghost small" onClick={onPlacement}>
             {t.findLevel}
@@ -133,6 +137,7 @@ export function SkillMap({
   );
 }
 
+/** The radar of the five domains (product owner): each the confidence-weighted level of its measured skills. */
 function Radar({
   ratings,
   old,
@@ -148,47 +153,56 @@ function Radar({
 }) {
   const C = 160;
   const R = 112;
-  const n = AXES.length;
+  const n = DOMAINS.length;
   const ang = (i: number) => -Math.PI / 2 + (i * 2 * Math.PI) / n;
   const pt = (i: number, v: number) => [C + R * v * Math.cos(ang(i)), C + R * v * Math.sin(ang(i))] as const;
-  const vals = AXES.map((a) => (PLANNED_SKILLS.includes(a as never) ? null : normalised(ratings[a as SkillId])));
-  const oldVals = AXES.map((a) => {
-    const r = old?.[a as SkillId];
-    return r === undefined ? null : Math.max(0, Math.min(1, (r - 600) / 1000));
+  const vals = DOMAINS.map((d) => domainValue(ratings, d.id)?.v ?? null);
+  const oldVals = DOMAINS.map((d) => {
+    const rs = d.skills.map((k) => old?.[k]).filter((x): x is number => x !== undefined);
+    return rs.length ? Math.max(0, Math.min(1, (rs.reduce((a2, b2) => a2 + b2, 0) / rs.length - 600) / 1000)) : null;
   });
-  // Polygon only through measured axes, in order — unmeasured axes are gaps, never zero.
   const poly = (vs: (number | null)[]) =>
     vs
       .map((v, i) => (v === null ? null : pt(i, v)))
       .filter((p): p is readonly [number, number] => p !== null)
       .map((p) => p.join(','))
       .join(' ');
-  const measuredCount = vals.filter((v) => v !== null).length;
-
+  const selDomain = domainOf(sel as SkillId);
   return (
-    <svg className="radar" viewBox="-90 0 500 320" role="img" aria-label={t.skillMap}>
+    <svg className="radar domains" viewBox="-100 -14 520 348" role="img" aria-label={t.skillMap}>
       {[0.25, 0.5, 0.75, 1].map((k) => (
-        <polygon key={k} className="ring" points={AXES.map((_, i) => pt(i, k).join(',')).join(' ')} />
+        <polygon key={k} className="ring" points={DOMAINS.map((_, i) => pt(i, k).join(',')).join(' ')} />
       ))}
-      {AXES.map((_, i) => {
+      {DOMAINS.map((_, i) => {
         const [x, y] = pt(i, 1);
         return <line key={i} className="spoke" x1={C} y1={C} x2={x} y2={y} />;
       })}
       {oldVals.filter((v) => v !== null).length >= 3 && <polygon className="area old" points={poly(oldVals)} />}
-      {measuredCount >= 3 && <polygon className="area" points={poly(vals)} />}
-      {AXES.map((a, i) => {
+      {vals.filter((v) => v !== null).length >= 3 && <polygon className="area" points={poly(vals)} />}
+      {DOMAINS.map((d, i) => {
         const v = vals[i];
-        const ev = PLANNED_SKILLS.includes(a as never) ? 'planned' : evidence(ratings[a as SkillId]);
-        const [lx, ly] = pt(i, 1.12);
-        // Labels grow outward from the ring, so long names never leave the drawing.
+        const dv = domainValue(ratings, d.id);
+        const ev = !dv ? 'unmeasured' : dv.n < 8 ? 'provisional' : 'measured';
+        const [lx, ly] = pt(i, 1.16);
         const cos = Math.cos(ang(i));
         const anchor = cos > 0.25 ? 'start' : cos < -0.25 ? 'end' : 'middle';
         const [px, py] = v === null ? pt(i, 0.06) : pt(i, v);
+        const first = d.skills.find((k) => (ratings[k]?.n ?? 0) > 0) ?? d.skills[0];
         return (
-          <g key={a} className={`axis ${sel === a ? 'sel' : ''}`} onClick={() => onSelect(a)} style={{ cursor: 'pointer' }}>
-            <circle className={`dot ev-${ev}`} cx={px} cy={py} r={v === null ? 6 : 8} />
-            <text x={lx} y={ly} textAnchor={anchor} direction="ltr" dominantBaseline="middle" className="axis-label">
-              {t.skillNames[a]}
+          <g key={d.id} className={`axis ${selDomain === d.id ? 'sel' : ''}`} data-domain={d.id} onClick={() => onSelect(first)} style={{ cursor: 'pointer' }}>
+            <circle className={`dot ev-${ev}`} cx={px} cy={py} r={v === null ? 7 : 10} />
+            <text x={lx} y={ly} textAnchor={anchor} dominantBaseline="middle" className="axis-label">
+              {/* Long names on two lines, so they never leave the drawing. */}
+              {(() => {
+                const name = t.domainNames[d.id];
+                const cut = name.length > 14 ? Math.max(name.lastIndexOf(' ', Math.ceil(name.length / 2) + 3), name.indexOf(' ')) : -1;
+                const lines = cut > 0 ? [name.slice(0, cut), name.slice(cut + 1)] : [name];
+                return lines.map((ln, k) => (
+                  <tspan key={k} x={lx} dy={k === 0 ? (lines.length > 1 ? '-0.55em' : 0) : '1.15em'}>
+                    {ln}
+                  </tspan>
+                ));
+              })()}
             </text>
           </g>
         );

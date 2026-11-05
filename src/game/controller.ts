@@ -7,7 +7,7 @@
 //  - The microphone/recognizer is only active in the `listening` phase.
 //  - Permission / recognition failures, silence and unclear speech never count as wrong answers.
 
-import { retryCoach, revealCoach } from '../engine/coach';
+import { retryCoach, revealCoach, sessionInsight } from '../engine/coach';
 import { learnVoiceAlias } from '../engine/learnedVoice';
 import { sungMelodyRemarks } from '../engine/feedbackMelody';
 import type { SungFrame } from '../engine/sing';
@@ -133,6 +133,8 @@ export interface ControllerSettings {
   latencyMs?: number;
   /** The player's first name for personal feedback (spec X.4), when known. */
   playerName?: string | null;
+  /** Rhythm reading: also listen for "ta" / knocks in voice mode (default off — the tap pad is the input). */
+  rhythmByVoice?: boolean;
 }
 
 export interface ControllerHooks {
@@ -219,7 +221,8 @@ export class LessonController {
   }
   private setSession(s: SessionState, p: Partial<LessonView> = {}) {
     this.s = s;
-    this.patch(p);
+    // The number of questions can change (Find my level's staircase): keep the total in step.
+    this.patch(s.lesson.questions.length !== this.view.total ? { ...p, total: s.lesson.questions.length } : p);
   }
   private emit(type: string, detail?: unknown) {
     this.hooks.onEvent?.({ type, detail });
@@ -359,10 +362,12 @@ export class LessonController {
     if (this.view.stage === 'intro') return this.skipIntro();
     if (this.view.stage !== 'question') return;
     this.cancelAll();
-    if (!isResolved(this.s.records[this.s.index])) {
+    // A second Skip during the short beat after the first moves on at once (it must not restart the beat).
+    const already = isResolved(this.s.records[this.s.index]);
+    if (!already) {
       this.setSession(skipQuestion(this.s), { feedback: { kind: 'skipped', answer: currentQuestion(this.s).answer } });
     }
-    this.restart((sig) => this.runAll(sig, { afterResolved: true }));
+    this.restart((sig) => this.runAll(sig, { afterResolved: true, noBeat: already }));
   }
 
   skipIntro() {
@@ -468,7 +473,7 @@ export class LessonController {
 
   private async runAll(
     signal: AbortSignal,
-    opts: { skipPrompt?: boolean; replayOnly?: boolean; resumeIntro?: boolean; afterResolved?: boolean } = {},
+    opts: { skipPrompt?: boolean; replayOnly?: boolean; resumeIntro?: boolean; afterResolved?: boolean; noBeat?: boolean } = {},
   ) {
     if (this.view.stage === 'intro') {
       await this.runIntro(signal, opts.resumeIntro ? this.view.introStep : 0);
@@ -482,13 +487,17 @@ export class LessonController {
         }
       } else {
         // feedback for a skip was already shown; give it a beat
-        await this.ad.clock.sleep(700, signal);
+        if (!opts.noBeat) await this.ad.clock.sleep(700, signal);
       }
       first = false;
       throwIfAborted(signal);
       const adapted = this.hooks.adapt?.(this.s);
       if (adapted && adapted.length === this.s.lesson.questions.length) {
         this.s = { ...this.s, lesson: { ...this.s.lesson, questions: adapted } };
+      } else if (adapted && adapted.length > this.s.index) {
+        // A list that grows or shrinks (Find my level's staircase): keep the answered records.
+        const records = adapted.map((_, i) => this.s.records[i] ?? { attempts: [], outcome: 'pending' as const, xp: 0, unclear: 0 });
+        this.s = { ...this.s, lesson: { ...this.s.lesson, questions: adapted }, records };
       }
       this.setSession(advance(this.s), { feedback: null, heard: null, interim: '' });
       this.silentCount = 0;
@@ -499,6 +508,11 @@ export class LessonController {
         this.hooks.onComplete?.(this.s);
         const sm = summary(this.s);
         await this.say(narration.complete(this.cfg.outputLang, sm.firstTry, sm.total, sm.xp), signal).catch(() => {});
+        // The personal insight (spec X.4): the pair mixed up most, or praise — spoken as well as shown.
+        const misses = this.s.records.flatMap((r, qi) => r.attempts.filter((a) => !a.correct).map((a) => ({ q: qi, given: a.answer })));
+        const answered = this.s.records.filter((r) => r.attempts.length > 0);
+        const ins = sessionInsight(this.s.lesson.questions, misses, answered.filter((r) => r.attempts[0]?.correct).length, answered.length, this.cfg.outputLang, this.cfg.playerName ?? null);
+        if (ins.kind !== 'encourage' || answered.length >= 4) await this.say(ins.text, signal).catch(() => {});
         this.patch({ caption: null });
         return;
       }
@@ -779,10 +793,11 @@ export class LessonController {
       this.readTaps = [];
       this.readUps = [];
       this.readStart = null;
-      // Voice mode: listen for "ta" syllables / knocks as onsets (never speech recognition — spec G.5).
+      // Rhythm is tapped on the pad. Only when the player opted in: also "ta" syllables / knocks from the
+      // microphone (never speech recognition — spec G.5). Syllables are too unreliable for timing to be the default.
       let mic: AbortController | null = null;
       let modality: Modality = 'tap';
-      if (this.view.mode === 'voice' && this.ad.knock) {
+      if (this.view.mode === 'voice' && this.ad.knock && this.cfg.rhythmByVoice) {
         mic = new AbortController();
         const micSignal = mic.signal;
         signal.addEventListener('abort', () => mic?.abort(), { once: true });

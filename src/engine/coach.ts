@@ -153,12 +153,49 @@ export function revealCoach(q: Question, given: Answer, l: Lang): string | null 
       if (!off.length || off.length === want.length) return null;
       return l === 'en' ? `You had ${want.length - off.length} of ${want.length} — the ${off.length === 1 ? 'note' : 'notes'} at ${off.join(', ')} went astray.` : `צדקתם ב־${want.length - off.length} מתוך ${want.length} — ${off.length === 1 ? 'הצליל במקום' : 'הצלילים במקומות'} ${off.join(', ')} התפספסו.`;
     }
+    case 'choice':
+      return choiceContrast(q, String(given), l);
     default:
       return null;
   }
 }
 
-// ---------------------------------------------------------------- after the session
+/** Practice topics (spec X.4): what makes the given answer and the right one different. */
+function choiceContrast(q: Extract<Question, { kind: 'choice' }>, given: string, l: Lang): string | null {
+  const a = q.names[q.answer];
+  const g = q.names[given];
+  if (!a || !g || given === q.answer) return null;
+  // Scales: name the degree where they part ways.
+  if (q.answer in MODE_STEPS && given in MODE_STEPS) {
+    const d = modeDifference(q.answer as ModeId, given as ModeId)[0];
+    if (d) return l === 'en' ? `${a.en} and ${g.en} part ways at the ${ordinal(d.degree, l)} note — in ${a.en} it is ${d.aHigher ? 'higher' : 'lower'}.` : `${a.he} ו${g.he} נפרדים בצליל ${ordinal(d.degree, l)} — ב${a.he} הוא ${d.aHigher ? 'גבוה' : 'נמוך'} יותר.`;
+  }
+  const hint = TOPIC_CONTRAST[q.topic];
+  const tip = hint ? hint[l] : l === 'en' ? 'Your answer plays first, then the right one — listen for what changes.' : 'התשובה שלכם מתנגנת קודם, ואז הנכונה — הקשיבו למה שמשתנה.';
+  return l === 'en' ? `You chose ${g.en}; it was ${a.en}. ${tip}` : `בחרתם ${g.he}; זה היה ${a.he}. ${tip}`;
+}
+
+/** One listening tip per practice topic, said with the contrast. */
+const TOPIC_CONTRAST: Record<string, { en: string; he: string }> = {
+  extensions: { en: 'Listen to the top note only: it carries the colour.', he: 'הקשיבו רק לצליל העליון: הוא נושא את הצבע.' },
+  voicings: { en: 'Listen to the spacing and to the lowest note.', he: 'הקשיבו למרווחים בין הצלילים ולצליל הנמוך ביותר.' },
+  progressions: { en: 'Follow the bass: where it moves tells the progression.', he: 'עקבו אחרי הבס: לאן שהוא זז — זה המהלך.' },
+  form: { en: 'Compare each phrase with the first one: same start? same end?', he: 'השוו כל משפט לראשון: אותה התחלה? אותו סוף?' },
+  'fine-pitch': { en: 'Hum the first note softly and feel which way the second pulls.', he: 'זמזמו בשקט את הצליל הראשון והרגישו לאן השני מושך.' },
+  'in-tune': { en: 'Out of tune, two notes beat — a slow wobble in the sound.', he: 'כשהם לא מכוונים, שני צלילים פועמים — רעד איטי בצליל.' },
+  'two-voice': { en: 'Follow one voice at a time, then the other.', he: 'עקבו אחרי קול אחד בכל פעם, ואז אחרי השני.' },
+  'set-classes': { en: 'Find the ingredients: a semitone crunch, a tritone, an open fifth.', he: 'חפשו את המרכיבים: חיכוך של חצי טון, טריטון, קווינטה פתוחה.' },
+  maqam: { en: 'The first four notes (the jins) give the flavour — listen to their gaps.', he: 'ארבעת הצלילים הראשונים (הג׳ינס) נותנים את הטעם — הקשיבו למרווחים ביניהם.' },
+  'eastern-rhythm': { en: 'Listen for where the low dums fall in the cycle.', he: 'הקשיבו איפה נופלים הדומים הנמוכים במחזור.' },
+  polyrhythm: { en: 'Count the low drum first, then the high clicks between two meeting points.', he: 'ספרו קודם את התוף הנמוך, ואז את הקליקים הגבוהים בין שתי נקודות מפגש.' },
+  'odd-meter': { en: 'Count the groups — short, short, long — not every eighth.', he: 'ספרו קבוצות — קצר, קצר, ארוך — לא כל שמינית.' },
+  'swing-ratio': { en: 'Listen to where the short note lands inside the beat.', he: 'הקשיבו איפה נוחת הצליל הקצר בתוך הפעמה.' },
+  'bh-convert': { en: 'Lowered note = dominant (restless); raised note = minor 6 (dark, at rest).', he: 'צליל שירד = דומיננט (חסר מנוחה); צליל שעלה = מינור 6 (כהה ונח).' },
+  'bh-convert-2': { en: 'Still restless? a dominant. At rest: sunny major 6 or shadowy minor 6?', he: 'עדיין חסר מנוחה? דומיננט. נח: מז׳ור 6 מואר או מינור 6 מוצל?' },
+  'bh-keys': { en: 'Hum the first home note, then compare the new home with it.', he: 'זמזמו את צליל הבית הראשון, ואז השוו אליו את הבית החדש.' },
+  'bh-brothers': { en: 'Brothers have roots three or six semitones apart.', he: 'לאחים יש שורשים במרחק שלושה או שישה חצאי טונים.' },
+  'chromatic-added': { en: 'Sing the plain scale in your head along with it — the extra note sticks out.', he: 'שירו בראש את הסולם הרגיל יחד איתו — הצליל הנוסף בולט.' },
+};
 
 export interface SessionInsight {
   kind: 'flawless' | 'pair' | 'encourage';

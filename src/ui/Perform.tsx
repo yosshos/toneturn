@@ -12,9 +12,9 @@ import { pc } from '../engine/pitch';
 import type { Strings } from '../i18n/strings';
 import { midi } from '../speech/midi';
 import { BrowserPitchCapture } from '../speech/pitchCapture';
-import type { Settings } from '../storage/progress';
+import type { Progress, Settings } from '../storage/progress';
 import { NotesView } from './NotesView';
-import { piano, SIMULATED } from './services';
+import { piano, SIMULATED, store } from './services';
 
 type Tab = 'backing' | 'improv' | 'clock' | 'midi' | 'guitar';
 const KEYS = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'G♭', 'G', 'A♭', 'A', 'B♭', 'B'];
@@ -42,7 +42,7 @@ function useHeadphones(): [boolean, (v: boolean) => void] {
   ];
 }
 
-export function PerformScreen({ t, settings, onBack }: { t: Strings; settings: Settings; onBack: () => void }) {
+export function PerformScreen({ t, settings, onBack, onProgress }: { t: Strings; settings: Settings; onBack: () => void; onProgress?: (p: Progress) => void }) {
   const [tab, setTab] = useState<Tab>('backing');
   const gate = useMiniGate();
   const [chart, setChart] = useState<ChartId>('ii-V-I');
@@ -102,10 +102,10 @@ export function PerformScreen({ t, settings, onBack }: { t: Strings; settings: S
         ))}
       </div>
       {tab === 'backing' && <Backing t={t} chart={chart} keyPc={key} bpm={bpm} controls={chartControls} ctl={ctl} />}
-      {tab === 'improv' && <Improv t={t} chart={chart} keyPc={key} bpm={bpm} controls={chartControls} ctl={ctl} />}
-      {tab === 'clock' && <InnerClock t={t} ctl={ctl} />}
-      {tab === 'midi' && <MidiDrills t={t} />}
-      {tab === 'guitar' && <GuitarTabDrill t={t} settings={settings} ctl={ctl} />}
+      {tab === 'improv' && <Improv t={t} chart={chart} keyPc={key} bpm={bpm} controls={chartControls} ctl={ctl} onProgress={onProgress} />}
+      {tab === 'clock' && <InnerClock t={t} ctl={ctl} onProgress={onProgress} />}
+      {tab === 'midi' && <MidiDrills t={t} settings={settings} onProgress={onProgress} />}
+      {tab === 'guitar' && <GuitarTabDrill t={t} settings={settings} ctl={ctl} onProgress={onProgress} />}
     </main>
   );
 }
@@ -172,7 +172,7 @@ function Backing({ t, chart, keyPc, bpm, controls, ctl }: { t: Strings; chart: C
   );
 }
 
-function Improv({ t, chart, keyPc, bpm, controls, ctl }: { t: Strings; chart: ChartId; keyPc: number; bpm: number; controls: React.ReactNode; ctl: React.MutableRefObject<AbortController | null> }) {
+function Improv({ t, chart, keyPc, bpm, controls, ctl, onProgress }: { t: Strings; chart: ChartId; keyPc: number; bpm: number; controls: React.ReactNode; ctl: React.MutableRefObject<AbortController | null>; onProgress?: (p: Progress) => void }) {
   const [headphones, setHeadphones] = useHeadphones();
   const [phase, setPhase] = useState<'idle' | 'playing' | 'done'>('idle');
   const [report, setReport] = useState<ImprovReport | null>(null);
@@ -212,7 +212,10 @@ function Improv({ t, chart, keyPc, bpm, controls, ctl }: { t: Strings; chart: Ch
     }
     if (c.signal.aborted && !SIMULATED) return setPhase('idle');
     // Analyse against the chart: time 0 = the chart's first beat (the listening bar is chart bar 1).
-    setReport(improvReport(frames.map((f) => ({ ...f, t: f.t - t0 })), chart, keyPc, bpm));
+    const rep = improvReport(frames.map((f) => ({ ...f, t: f.t - t0 })), chart, keyPc, bpm);
+    setReport(rep);
+    // Improvisation skill: the report's score; harder charts and faster tempi are harder.
+    if (rep.notes >= 3) void store.recordRatingEvents([{ id: `improv:${Date.now()}`, skill: 'improv', difficulty: Math.round(1050 + (chart === 'blues' ? 40 : chart === 'minor-ii-V-i' ? 80 : 0) + Math.max(0, bpm - 90) * 2), correct: rep.score >= 0.6, score: rep.score, at: new Date().toISOString() }]).then((p2) => onProgress?.(p2));
     setPhase('done');
   };
   return (
@@ -273,12 +276,17 @@ function Improv({ t, chart, keyPc, bpm, controls, ctl }: { t: Strings; chart: Ch
 
 // ---------------------------------------------------------------- MIDI drills
 
-type Drill = 'voicing' | 'melody' | 'scale' | 'iivi';
+type Drill = 'voicing' | 'melody' | 'scale' | 'read' | 'iivi';
 const Q_ROT: Quality[] = ['maj7', 'm7', 'dom7', 'hd'];
 const SYM: Record<Quality, string> = { maj7: 'maj7', m7: 'm7', dom7: '7', hd: 'ø7', b9: '7♭9', m6: 'm6' };
-const C_MAJOR_UPDOWN = [60, 62, 64, 65, 67, 69, 71, 72, 71, 69, 67, 65, 64, 62, 60];
+/** A major scale up and down (15 notes) from a root that fits the screen keys (C3–C5). */
+const SCALE_ROOTS = [0, 7, 5, 2, 10, 9, 3];
+const majorUpDown = (root: number) => {
+  const up = [0, 2, 4, 5, 7, 9, 11, 12].map((x) => 48 + root + x);
+  return [...up, ...up.slice(0, -1).reverse()];
+};
 
-function MidiDrills({ t }: { t: Strings }) {
+function MidiDrills({ t, settings, onProgress }: { t: Strings; settings: Settings; onProgress?: (p: Progress) => void }) {
   const [devices, setDevices] = useState<string[] | null>(null);
   const [drill, setDrill] = useState<Drill>('voicing');
   const [vk, setVk] = useState<VoicingKind>('any');
@@ -292,7 +300,12 @@ function MidiDrills({ t }: { t: Strings }) {
 
   const task = useMemo(() => {
     const r = (seed * 7919) % 12;
-    return { root: r, q: Q_ROT[seed % 4], melody: Array.from({ length: 5 }, (_, i) => [60, 62, 64, 65, 67, 69, 71, 72][(seed * (i + 3) * 5) % 8]) };
+    const scaleRoot = SCALE_ROOTS[seed % SCALE_ROOTS.length];
+    // Sight-reading on the keys (spec V.1 / Z.5): a written melody from the sight-singing levels.
+    const lvl = SIGHT_LEVELS[seed % 3];
+    const item = lvl.items[seed % lvl.items.length];
+    const readNotes = itemTargets(item, { low: 52, high: 72 });
+    return { root: r, q: Q_ROT[seed % 4], melody: Array.from({ length: 5 }, (_, i) => [60, 62, 64, 65, 67, 69, 71, 72][(seed * (i + 3) * 5) % 8]), scaleRoot, scale: majorUpDown(scaleRoot), read: { item, notes: readNotes } };
   }, [seed]);
   const ivChord = (k: number, step: number): { root: number; q: Quality } => {
     const key = CIRCLE_KEYS[k % 12];
@@ -314,13 +327,18 @@ function MidiDrills({ t }: { t: Strings }) {
     }
   };
   const onNoteOn = (m: number, at: number) => {
-    if (drill === 'melody' || drill === 'scale') {
+    if (drill === 'melody' || drill === 'scale' || drill === 'read') {
       setNotesOn((xs) => {
         const next = [...xs, { m, at }];
-        const want = drill === 'melody' ? task.melody : C_MAJOR_UPDOWN;
+        const want = drill === 'melody' ? task.melody : drill === 'read' ? task.read.notes : task.scale;
         if (next.length >= want.length) {
-          const right = want.filter((w, i) => next[i]?.m === w).length;
-          if (drill === 'melody') setMsg(`${right}/${want.length} ${t.perfNotesRight}`);
+          // Reading counts the pitch class (any octave on the keys).
+          const right = want.filter((w, i) => (drill === 'read' ? next[i] && (next[i].m - w) % 12 === 0 : next[i]?.m === w)).length;
+          if (drill === 'read') {
+            const score = right / want.length;
+            setMsg(`${right}/${want.length} ${t.perfNotesRight}`);
+            void store.recordRatingEvents([{ id: `read:${Date.now()}`, skill: 'sight', difficulty: task.read.item.difficulty, correct: score >= 0.75, score, at: new Date().toISOString() }]).then((p2) => onProgress?.(p2));
+          } else if (drill === 'melody') setMsg(`${right}/${want.length} ${t.perfNotesRight}`);
           else setMsg(`${right}/${want.length} ${t.perfNotesRight} · ${t.perfEvenness}: ${Math.round((1 - Math.min(1, scaleEvenness(next.map((x) => x.at)))) * 100)}%`);
           return [];
         }
@@ -360,7 +378,9 @@ function MidiDrills({ t }: { t: Strings }) {
       : drill === 'melody'
         ? t.perfPlayBack
         : drill === 'scale'
-          ? t.perfPlayScale
+          ? fill(t.perfPlayScale, { key: KEYS[task.scaleRoot] })
+          : drill === 'read'
+            ? t.perfReadPrompt
           : fill(t.perfIiVi, { key: KEYS[CIRCLE_KEYS[iv.k % 12]], chord: name(ivChord(iv.k, iv.step).root, ivChord(iv.k, iv.step).q), n: iv.ok });
   const isChordDrill = drill === 'voicing' || drill === 'iivi';
   return (
@@ -374,7 +394,7 @@ function MidiDrills({ t }: { t: Strings }) {
         <p className="field-hint">{devices.length ? `🎹 ${devices.join(', ')}` : t.perfNoMidi}</p>
       )}
       <div className="seg" role="radiogroup">
-        {(['voicing', 'melody', 'scale', 'iivi'] as Drill[]).map((d) => (
+        {(['voicing', 'melody', 'scale', 'read', 'iivi'] as Drill[]).map((d) => (
           <button key={d} role="radio" aria-checked={drill === d} className={drill === d ? 'on' : ''} data-drill={d} onClick={() => (setDrill(d), setMsg(null), setNotesOn([]), setBuilt([]))}>
             {t.perfDrills[d]}
           </button>
@@ -392,7 +412,8 @@ function MidiDrills({ t }: { t: Strings }) {
       <p className="vocal-instr" data-midi-prompt="1">
         {prompt}
       </p>
-      {(drill === 'melody' || drill === 'scale') && (
+      {drill === 'read' && <NotesView midis={task.read.notes} keyPc={pc(sightKeyName(task.read.item, task.read.notes[0]))} settings={settings} durs={task.read.item.durs} />}
+      {(drill === 'melody' || drill === 'scale' || drill === 'read') && (
         <p className="seq-shown" dir="ltr">
           {notesOn.length ? notesOn.map((x) => KEYS[x.m % 12]).join(' ') : '…'}
         </p>
@@ -444,7 +465,7 @@ function ScreenKeys({ onKey, selected }: { onKey: (m: number) => void; selected:
 
 const GUITAR_RANGE = { low: 52, high: 76 };
 
-function GuitarTabDrill({ t, settings, ctl }: { t: Strings; settings: Settings; ctl: React.MutableRefObject<AbortController | null> }) {
+function GuitarTabDrill({ t, settings, ctl, onProgress }: { t: Strings; settings: Settings; ctl: React.MutableRefObject<AbortController | null>; onProgress?: (p: Progress) => void }) {
   const [level, setLevel] = useState(1);
   const [idx, setIdx] = useState(0);
   const [phase, setPhase] = useState<'idle' | 'count' | 'playing' | 'done'>('idle');
@@ -474,7 +495,10 @@ function GuitarTabDrill({ t, settings, ctl }: { t: Strings; settings: Settings; 
       const r = await new BrowserPitchCapture().sing({ signal: c.signal, maxMs: (total + 3) * 1000, silenceMs: 5000, endSilenceMs: 1200, hopMs: 20 });
       frames = r.kind === 'frames' ? r.frames : [];
     }
-    setGrade(gradeTake(item, frames, GUITAR_RANGE));
+    const g = gradeTake(item, frames, GUITAR_RANGE);
+    setGrade(g);
+    // Reading: playing from tab on the guitar.
+    if (!g.unclear) void store.recordRatingEvents([{ id: `guitar:${Date.now()}`, skill: 'sight', difficulty: item.difficulty, correct: g.score >= 0.6, score: g.score, at: new Date().toISOString() }]).then((p2) => onProgress?.(p2));
     setPhase('done');
   };
   return (
@@ -527,7 +551,7 @@ void chordAt;
 // ---------------------------------------------------------------- internal clock
 
 /** The metronome plays two bars, goes silent, then comes back for one bar: keep tapping the beat throughout. */
-function InnerClock({ t, ctl }: { t: Strings; ctl: React.MutableRefObject<AbortController | null> }) {
+function InnerClock({ t, ctl, onProgress }: { t: Strings; ctl: React.MutableRefObject<AbortController | null>; onProgress?: (p: Progress) => void }) {
   const [bpm, setBpm] = useState(92);
   const [silentBars, setSilentBars] = useState(2);
   const [phase, setPhase] = useState<'idle' | 'running' | 'done'>('idle');
@@ -570,7 +594,10 @@ function InnerClock({ t, ctl }: { t: Strings; ctl: React.MutableRefObject<AbortC
     clearInterval(tick);
     setBeatNow(null);
     if (c.signal.aborted && !SIMULATED) return setPhase('idle');
-    setReport(clockReport(p, taps.current));
+    const rep = clockReport(p, taps.current);
+    setReport(rep);
+    // Tempo & pulse: longer silences and tempi far from the comfortable middle are harder.
+    void store.recordRatingEvents([{ id: `clock:${Date.now()}`, skill: 'tempo', difficulty: Math.round(1000 + silentBars * 70 + Math.abs(bpm - 100) * 1.5), correct: rep.score >= 0.6, score: rep.score, at: new Date().toISOString() }]).then((p2) => onProgress?.(p2));
     setPhase('done');
   };
   const silentNow = beatNow !== null && beatNow >= plan.silent[0] && beatNow < plan.silent[1];

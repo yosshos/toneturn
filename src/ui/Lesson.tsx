@@ -1,3 +1,5 @@
+import { PLACEMENT_ORDER } from '../engine/placement';
+import { PlacementMeter } from './PlacementMeter';
 import { NoteStaff } from './NoteViews';
 import { PitchTrace } from './Vocal';
 import { reportPuzzle } from '../cloud/compete';
@@ -81,6 +83,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
         inputNaming: namingFor(settings.naming, settings.inputLang),
         latencyMs: settings.tapLatencyMs,
         playerName: playerName ?? null,
+        rhythmByVoice: settings.rhythmByVoice ?? false,
       },
       settings.mode,
       {
@@ -207,9 +210,11 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
                   : String(q.degree)
                 : '♪ ?';
   const celebrate = v.feedback?.kind === 'correct';
+  const isStaircase = v.session.lesson.id === 'placement' && v.session.lesson.version >= 3;
 
   return (
-    <main className={`lesson stage-${v.stage} phase-${v.phase} kind-${q.kind}`}>
+    <main className={`lesson stage-${v.stage} phase-${v.phase} kind-${q.kind} ${isStaircase ? 'with-meter' : ''}`}>
+      {isStaircase && <PlacementMeter s={v.session} t={t} singing={!!v.session.lesson.placementSinging} />}
       <header className="lesson-top">
         <button className="icon-btn" onClick={() => (paused ? onExit() : ctrl.pause())} aria-label={paused ? t.exit : t.pause}>
           {paused ? '✕' : '❚❚'}
@@ -501,6 +506,29 @@ function IntroCardView({ card, state, t, lang, nm }: { card: IntroCard; state: s
 /** Find my level: which topics are done, which one is now, which remain. */
 function TopicStrip({ v, t }: { v: LessonView; t: Strings }) {
   const qs = v.session.lesson.questions;
+  const lesson = v.session.lesson;
+  // Find my level 2.0: every skill it will measure, done / now / left by the current skill.
+  if (lesson.id === 'placement' && lesson.version >= 3) {
+    const order = PLACEMENT_ORDER.filter((k) => lesson.placementSinging || k !== 'singing');
+    const cur = /^p:([a-z-]+):/.exec(qs[v.index]?.id ?? '')?.[1] as SkillId | undefined;
+    const ci = cur ? order.indexOf(cur) : -1;
+    const done = v.stage === 'complete' ? order.length : ci;
+    return (
+      <div className="topic-strip" aria-label={`${t.topicsLeft}: ${order.length - Math.max(0, done)}`}>
+        <ol>
+          {order.map((k, i) => {
+            const st = i < done ? 'done' : i === ci ? 'now' : 'left';
+            return (
+              <li key={k} className={`ts ${st}`} data-skill={k}>
+                {st === 'done' ? '✓ ' : ''}
+                {t.skillNames[k]}
+              </li>
+            );
+          })}
+        </ol>
+      </div>
+    );
+  }
   const order: SkillId[] = [];
   qs.forEach((q) => {
     const k = questionSkill(q);
@@ -528,6 +556,13 @@ function TopicStrip({ v, t }: { v: LessonView; t: Strings }) {
 }
 
 function Rounds({ v, t }: { v: LessonView; t: Strings }) {
+  // Long sessions (Find my level's staircase): a counter instead of one pill per question.
+  if (v.session.records.length > 12)
+    return (
+      <p className="rounds-count" dir="ltr" aria-label={`${t.round} ${v.index + 1}`}>
+        #{v.index + 1}
+      </p>
+    );
   return (
     <ol className="rounds" aria-label={`${t.round} ${v.index + 1} ${t.of} ${v.total}`}>
       {v.session.records.map((r, i) => (
@@ -888,17 +923,7 @@ function ReadPrompt({ q, v, lang, onTap, onRelease, t }: { q: Extract<Question, 
         </p>
       )}
       <div className={`beat-light ${v.beat?.accent ? 'accent' : ''}`} key={v.beat?.n ?? -1} aria-hidden="true" />
-      <button
-        className={`tap-pad ${v.phase === 'listening' ? 'live' : ''}`}
-        onPointerDown={(e) => {
-          e.preventDefault();
-          onTap(e.timeStamp);
-        }}
-        onPointerUp={(e) => onRelease?.(e.timeStamp)}
-        aria-label={t.tapHere}
-      >
-        {t.tapHere} <small dir="ltr">{v.readTaps ? `· ${v.readTaps}` : ''}</small>
-      </button>
+      <TapPad live={v.phase === 'listening'} count={v.readTaps ?? 0} label={t.tapHere} hint={t.tapPadHint} beat={v.beat?.n ?? -1} accent={!!v.beat?.accent} onTap={onTap} onRelease={onRelease} />
     </div>
   );
 }
@@ -918,5 +943,37 @@ function ReadStrip({ hits, extra, t }: { hits: (number | null)[]; extra: number;
         </span>
       )}
     </div>
+  );
+}
+
+/**
+ * The big tap pad for rhythmic input (product owner): full width, tall, a ripple on every tap and a glow
+ * on every metronome beat. Pointer and Space both count; hold for long notes.
+ */
+export function TapPad({ live, count, label, hint, beat, accent, onTap, onRelease }: { live: boolean; count: number; label: string; hint?: string; beat: number; accent: boolean; onTap: (ms: number) => void; onRelease?: (ms: number) => void }) {
+  const [ripples, setRipples] = useState<{ id: number; x: number; y: number }[]>([]);
+  return (
+    <button
+      className={`tap-pad big ${live ? 'live' : ''}`}
+      data-tap-pad="1"
+      onPointerDown={(e) => {
+        e.preventDefault();
+        onTap(e.timeStamp);
+        const r = e.currentTarget.getBoundingClientRect();
+        const id = e.timeStamp;
+        setRipples((xs) => [...xs.slice(-4), { id, x: e.clientX - r.left, y: e.clientY - r.top }]);
+        setTimeout(() => setRipples((xs) => xs.filter((p) => p.id !== id)), 600);
+      }}
+      onPointerUp={(e) => onRelease?.(e.timeStamp)}
+      aria-label={label}
+    >
+      <span className={`tap-beat ${accent ? 'accent' : ''}`} key={beat} aria-hidden="true" />
+      {ripples.map((p) => (
+        <span key={p.id} className="tap-ripple" style={{ left: p.x, top: p.y }} aria-hidden="true" />
+      ))}
+      <span className="tap-label">👆 {label}</span>
+      {hint && <small className="tap-hint">{hint}</small>}
+      <small className="tap-count" dir="ltr">{count ? count : ''}</small>
+    </button>
   );
 }

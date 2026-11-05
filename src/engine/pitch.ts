@@ -82,7 +82,7 @@ export function spokenNote(p: PitchClass, naming: Naming, lang: Lang): string {
 }
 
 export function spokenMajorKey(tonic: PitchClass, naming: Naming, lang: Lang): string {
-  return spokenNote(tonic, naming, lang) + (lang === 'en' ? ' major' : " מז'ור");
+  return spokenNote(tonic, naming, lang) + (lang === 'en' ? ' major' : ' מז׳ור');
 }
 
 // ---------- Chords & voicing ----------

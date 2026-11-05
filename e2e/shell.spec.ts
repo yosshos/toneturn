@@ -10,6 +10,10 @@ import { readFileSync } from 'node:fs';
 
 const pkg = JSON.parse(readFileSync('package.json', 'utf-8')) as { version: string };
 
+import { CHANGELOG } from '../src/version';
+const APP_LATEST = CHANGELOG[0].version;
+const RECENT = CHANGELOG.slice(0, 3).map((c) => c.version);
+
 test.describe('menu, friends', () => {
   test('menu shows version, what’s new, notifications and links', async ({ page }) => {
     await page.goto('/');
@@ -35,6 +39,27 @@ test.describe('menu, friends', () => {
 
   test("what's new appears once after an update and can be dismissed", async ({ page }) => {
     await page.goto('/');
+    // A fresh install stores the current version as seen; wait for that write so it cannot land after ours.
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () =>
+            new Promise<string | null>((resolve) => {
+              const req = indexedDB.open('toneturn', 1);
+              // Never create the database before the app does.
+              req.onupgradeneeded = () => req.transaction?.abort();
+              req.onsuccess = () => {
+                const db = req.result;
+                if (!db.objectStoreNames.contains('kv')) return resolve(null);
+                const g = db.transaction('kv').objectStore('kv').get('settings');
+                g.onsuccess = () => resolve(g.result?.seenVersion ?? null);
+                g.onerror = () => resolve(null);
+              };
+              req.onerror = () => resolve(null);
+            }),
+        ),
+      )
+      .not.toBeNull();
     // Pretend the player last saw 0.3.0.
     await page.evaluate(
       () =>
@@ -57,31 +82,12 @@ test.describe('menu, friends', () => {
     await page.reload();
     const news = page.locator('.news-card');
     await expect(news).toBeVisible();
-    await expect(news).toContainText('0.25.0');
-    await expect(news).toContainText('0.24.0');
-    await expect(news).toContainText('0.23.0');
-    await expect(news).toContainText('0.22.0');
-    await expect(news).toContainText('0.21.0');
-    await expect(news).toContainText('0.20.0');
-    await expect(news).toContainText('0.19.0');
-    await expect(news).toContainText('0.18.0');
-    await expect(news).toContainText('0.17.0');
-    await expect(news).toContainText('0.16.0');
-    await expect(news).toContainText('0.15.0');
-    await expect(news).toContainText('0.14.0');
-    await expect(news).toContainText('0.13.0');
-    await expect(news).toContainText('0.12.0');
-    await expect(news).toContainText('0.11.0');
-    await expect(news).toContainText('0.10.0');
-    await expect(news).toContainText('0.9.0');
-    await expect(news).toContainText('0.8.0');
-    await expect(news).toContainText('0.7.1');
-    await expect(news).toContainText('0.7.0');
-    await expect(news).toContainText('0.6.0');
-    await expect(news).toContainText('0.5.0');
-    await expect(news).toContainText('0.4.0');
+    // Compact (home polish): the latest headline; "More" opens the last three versions.
+    await expect(news).toContainText(APP_LATEST);
+    await news.getByRole('button', { name: /More of what's new/ }).click();
+    for (const v of RECENT) await expect(news).toContainText(v);
     await expect(news).not.toContainText('0.3.0');
-    await news.getByRole('button').click();
+    await news.locator('.news-head .icon-btn').click();
     await expect(news).toHaveCount(0);
     await page.reload();
     await expect(page.locator('.news-card')).toHaveCount(0);

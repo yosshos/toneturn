@@ -1730,3 +1730,11 @@ fieldset,
   max-width: 100%;
   height: auto;
 }
+
+/* Phones (product owner): nothing may scroll sideways. Defensive rules for every screen. */
+html, body { max-width: 100%; overflow-x: hidden; }
+.app { overflow-x: clip; }
+svg, img, canvas, video { max-width: 100%; }
+main svg:not(.league-badge) { height: auto; }
+p, h1, h2, h3, li, button, small, b, label { overflow-wrap: anywhere; }
+.answers > *, .seg > *, .perf-controls > *, .modes-levels > *, .theme-grid > *, .learned-grid > * { min-width: 0; }

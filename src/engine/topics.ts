@@ -10,6 +10,7 @@ import { TOPIC_GEN, rng, pickR, shuffleR, pcName, pcNameHe, choiceQ, chordStim, 
 import './topicsHarmony';
 import './topicsEar';
 import './topicsTheory';
+import './topicsSkills';
 
 // ================================================================ T. Barry Harris
 

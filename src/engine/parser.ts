@@ -349,6 +349,8 @@ export function parseRunShape(t: string): ParseResult<'up' | 'down' | 'turn'> {
   const n = normalize(t);
   const has = (xs: string[]) => n.some((w) => xs.includes(w) || xs.some((x) => w.endsWith(x) && w.length <= x.length + 1));
   if (has(['up', 'עולה']) && has(['down', 'יורד', 'ויורד'])) return { kind: 'answer', value: 'turn', heard: t.trim() };
+  // "up and back" (the button's own words) / "down and around" / "עולה וחוזר": a direction plus a turn word is a turn.
+  if (has(['up', 'down', 'עולה', 'יורד']) && has(['back', 'around', 'turn', 'חוזר', 'וחוזר', 'חזור', 'ושוב'])) return { kind: 'answer', value: 'turn', heard: t.trim() };
   return parseChoiceTable(t, RUN_SHAPE_TOKENS);
 }
 

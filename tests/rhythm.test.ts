@@ -207,7 +207,7 @@ describe('rhythm lessons in the controller', () => {
     const c = new LessonController(
       lesson,
       { audio, tts: new FakeTTS(), stt: new ScriptedTranscriber([say, say]), mic: new FakeMic(), pitch: new ScriptedPitch([]), knock, clock: macroClock, simulated: true },
-      { inputLang: 'en', outputLang: 'en', naming: 'letter' },
+      { inputLang: 'en', outputLang: 'en', naming: 'letter', rhythmByVoice: true },
       'voice',
     );
     (c as unknown as { ad: { stt: ScriptedTranscriber } }).ad.stt.expected = () => c.getView().question.answer;

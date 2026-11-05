@@ -202,7 +202,7 @@ export const LESSON_META: Record<LessonId, LessonMeta> = {
     title: { en: 'Jazz 2: licks & melodic minor', he: 'ג׳אז 2: ליקים ומינור מלודי' },
     blurb: { en: 'Melodic minor by ear; swung licks to write down and to sing.', he: 'מינור מלודי בשמיעה; ליקים בסווינג לכתוב ולשיר.' },
     icon: 'chord',
-    tip: { en: 'Melodic minor = minor with a major 6th and 7th: listen for the bright top of the scale.', he: 'מינור מלודי = מינור עם שישית ושביעית גדולות: הקשיבו לחלק העליון הבהיר של הסולם.' },
+    tip: { en: 'Melodic minor = minor with a major 6th and 7th: listen for the bright top of the scale.', he: 'מינור מלודי = מינור עם סקסטה וספטימה גדולות: הקשיבו לחלק העליון הבהיר של הסולם.' },
   },
   dictation: {
     title: { en: 'Melodic dictation', he: 'הכתבה מלודית' },
@@ -238,7 +238,7 @@ export const LESSON_META: Record<LessonId, LessonMeta> = {
     title: { en: 'Sing home & five', he: 'לשיר את הבית ואת החמש' },
     blurb: { en: 'Hear the key, then sing the note.', he: 'שומעים את הסולם, ושרים את הצליל.' },
     icon: 'mic',
-    tip: { en: 'Hum the fifth above any note you hear today: it is the most common jump in music.', he: 'זמזמו חמישית מעל כל צליל שתשמעו היום: זו הקפיצה הנפוצה ביותר במוזיקה.' },
+    tip: { en: 'Hum the fifth above any note you hear today: it is the most common jump in music.', he: 'זמזמו קווינטה מעל כל צליל שתשמעו היום: זו הקפיצה הנפוצה ביותר במוזיקה.' },
   },
 };
 
@@ -739,7 +739,7 @@ export function choiceLabel(_q: Question, a: Answer, l: Lang, nm: Naming = 'lett
   if (typeof a === 'number') {
     const small: Record<number, Record<Lang, string>> = {
       1: { en: 'Home', he: 'בית' },
-      3: { en: 'Third', he: 'שלישית' },
+      3: { en: 'Third', he: 'טרצה' },
       5: { en: 'Five', he: 'חמש' },
     };
     const tone = a === 1 ? 'mint' : a === 3 ? 'gold' : a === 5 ? 'lilac' : 'coral';
@@ -837,7 +837,8 @@ export function askTemplate(q: Question, l: Lang, nm: Naming = 'letter'): string
 export function hintText(q: Question, l: Lang, voice: boolean): string {
   if (q.kind === 'sing' || q.kind === 'sing-seq' || q.kind === 'sing-run') return voice ? (l === 'en' ? 'Sing after the chime' : 'שירו אחרי הצליל') : l === 'en' ? 'Tap the mic, then sing' : 'לחצו על המיקרופון ושירו';
   if (q.kind === 'note-name' && voice) return l === 'en' ? 'Say the note name' : 'אמרו את שם התו';
-  if (q.kind === 'rhythm-read') return voice ? (l === 'en' ? 'Say “ta” on each note (or tap)' : 'אמרו "טה" על כל תו (או הקישו)') : l === 'en' ? 'Tap the pad or press Space on each note' : 'הקישו על הכפתור או על רווח בכל תו';
+  if (q.kind === 'rhythm-read') return l === 'en' ? 'Tap the big pad (or Space) on each note — hold it for long notes' : 'הקישו על הכפתור הגדול (או רווח) בכל תו — החזיקו לתווים ארוכים';
+  void voice;
   if (q.kind === 'rhythm-dict' && voice) return l === 'en' ? 'Say it: “ta ti-ti ta” or “quarter, two eighths…”' : 'אמרו: "טה טי-טי טה" או "רבע, שתי שמיניות…"';
   if (q.kind === 'name-seq') return voice ? (l === 'en' ? 'Say the note names in order' : 'אמרו את שמות התווים לפי הסדר') : l === 'en' ? 'Tap the notes in order, then Done' : 'לחצו על התווים לפי הסדר, ואז סיום';
   if (q.kind === 'degree-seq') return voice ? (l === 'en' ? 'Say them in order, e.g. “one three five”' : 'אמרו לפי הסדר, למשל "אחת שלוש חמש"') : l === 'en' ? 'Tap the degrees in order, then Done' : 'לחצו על הדרגות לפי הסדר, ואז סיום';

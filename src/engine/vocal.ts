@@ -566,7 +566,7 @@ export interface VocalItem {
   /** Played once before the take (semitones from the sung note) — e.g. the whole diminished chord. */
   pre?: number[];
   /** Barry Harris instructions (spec T): what the sung note does to the diminished chord. */
-  bh?: { mode: 'name' | 'degree' | 'free' | 'resolve'; kind?: 'dom7' | 'm6' | 'maj6'; rootOffset?: number; degree?: number; dir?: 'up' | 'down'; dim?: number[] };
+  bh?: { mode: 'name' | 'degree' | 'free' | 'resolve' | 'six' | 'dim' | 'chromatic'; kind?: 'dom7' | 'm6' | 'maj6'; rootOffset?: number; degree?: number; dir?: 'up' | 'down'; dim?: number[] };
   /** Scales and modes: sing up in one scale and (optionally) down in another, from a named tonic. */
   scale?: ScaleSpec;
   difficulty: number;
@@ -791,11 +791,17 @@ export const BARRY_LEVELS: VocalLevel[] = [
   L(1, 0.6, [
     { kind: 'scale', seconds: 9, reference: 'before', scale: { tonic: 'C', up: 'sixth-dim', hear: 'figure' }, difficulty: 1150 },
     { kind: 'scale', seconds: 12, reference: 'before', scale: { tonic: 'F', up: 'sixth-dim', down: 'sixth-dim', hear: 'figure' }, difficulty: 1200 },
+    // Only the 6-chord notes (1 3 5 6), then only the diminished notes (7 2 4 ♭6) — spec T.1.
+    { kind: 'melody', seconds: 8, reference: 'before', at: 0.25, steps: [0, 4, 7, 9, 12, 9, 7, 4, 0], bh: { mode: 'six' }, difficulty: 1150 },
+    { kind: 'melody', seconds: 8, reference: 'before', at: 0.3, steps: [-1, 2, 5, 8, 11, 8, 5, 2, -1], bh: { mode: 'dim' }, difficulty: 1250 },
   ]),
   L(2, 0.58, [
     { kind: 'scale', seconds: 12, reference: 'before', scale: { tonic: 'G', up: 'sixth-dim', down: 'sixth-dim', hear: 'tonic' }, difficulty: 1300 },
     { kind: 'scale', seconds: 12, reference: 'before', scale: { tonic: 'C', up: 'minor-sixth-dim', down: 'minor-sixth-dim', hear: 'tonic' }, difficulty: 1350 },
-    { kind: 'scale', seconds: 12, reference: 'before', scale: { tonic: 'C', up: 'chromatic', hear: 'tonic' }, difficulty: 1350 },
+    // The chromatic scale in sections, every half step even and in tune (spec T.3).
+    { kind: 'rhythmic', seconds: 8, reference: 'before', at: 0.2, steps: [0, 1, 2, 3, 4, 5, 6], bpm: 80, perBeat: 2, bh: { mode: 'chromatic' }, difficulty: 1300 },
+    { kind: 'rhythmic', seconds: 8, reference: 'before', at: 0.2, steps: [6, 7, 8, 9, 10, 11, 12], bpm: 80, perBeat: 2, bh: { mode: 'chromatic' }, difficulty: 1350 },
+    { kind: 'rhythmic', seconds: 10, reference: 'before', at: 0.2, steps: [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0], bpm: 84, perBeat: 2, bh: { mode: 'chromatic' }, difficulty: 1400 },
   ]),
   L(3, 0.6, [dimMoveItem(3, 'down', 'name', 1300), dimMoveItem(0, 'down', 'name', 1300), dimMoveItem(2, 'down', 'name', 1350)]),
   L(4, 0.58, [dimMoveItem(2, 'up', 'name', 1350), dimMoveItem(1, 'up', 'degree', 1400), dimMoveItem(3, 'down', 'degree', 1400)]),

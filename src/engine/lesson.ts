@@ -29,7 +29,15 @@ export type SkillId =
   | 'technique'
   | 'modes'
   | 'absolute'
-  | 'theory';
+  | 'theory'
+  /** Tempo & pulse: estimate tempo by ear, hear it drift, keep it alone (product owner). */
+  | 'tempo'
+  /** Fine pitch perception: cents, in tune or not. */
+  | 'pitch'
+  /** Sight-singing / sight-reading. */
+  | 'sight'
+  /** Improvisation (from the improvisation report). */
+  | 'improv';
 export type IntervalName = 'M3' | 'P5' | 'P8';
 export type BassRole = 'root' | 'third' | 'fifth';
 export type Quality = 'maj' | 'min' | 'dim' | 'aug';
@@ -423,6 +431,8 @@ export interface LessonDef {
   scoring: ScoringPolicy;
   intro: IntroStep[];
   questions: Question[];
+  /** Find my level: also measure singing (voice mode). */
+  placementSinging?: boolean;
 }
 
 export type LessonId =
