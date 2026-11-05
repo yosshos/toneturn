@@ -1,6 +1,7 @@
 // Deterministic, exercise-aware transcript parser.
 // It never consults the expected answer: ambiguity is reported, not resolved.
 
+import { canonMusic, intervalClassOf, seventhOf } from './musicSpeech';
 import { MODE_NAMES } from './modes';
 import type { PitchClass } from './pitch';
 
@@ -268,7 +269,9 @@ const QUALITY_TOKENS = new Map<string, 'maj' | 'min' | 'dim' | 'aug'>([
 
 /** "major" / "minor" in English or Hebrew (incl. "happy"/"sad" beginner words). */
 export function parseQuality(transcript: string): ParseResult<'maj' | 'min' | 'dim' | 'aug'> {
-  return parseChoiceTable(transcript.replace(/[׳’]/g, "'"), QUALITY_TOKENS);
+  // ° → diminished, + → augmented (symbols spelled out); everything else as before.
+  const t = transcript.replace(/°/g, ' diminished ').replace(/[+]/g, ' augmented ');
+  return parseChoiceTable(t.replace(/[׳’]/g, "'"), QUALITY_TOKENS);
 }
 
 const CADENCE_TOKENS = new Map<string, 'resolved' | 'open'>([
@@ -303,6 +306,9 @@ export function parseRunShape(t: string): ParseResult<'up' | 'down' | 'turn'> {
 /** Jazz seventh chords: "major seven", "dominant", "minor seven", "half diminished" (en/he). */
 export function parseSeventh(t: string): ParseResult<'maj7' | '7' | 'm7' | 'm7b5'> {
   const heard = t.trim();
+  // Synonyms first: Δ / maj7 / major seven / triangle, ø / m7b5 / half diminished, −7 / min7 / minor seven …
+  const syn = seventhOf(t);
+  if (syn && syn !== 'dim7') return { kind: 'answer', value: syn, heard };
   const n = normalize(t.replace(/maj7/gi, ' major ').replace(/m7b5|ø/gi, ' half diminished ').replace(/\bm7\b/gi, ' minor seven '));
   const has = (...ws: string[]) => n.some((w) => ws.includes(w));
   let v: 'maj7' | '7' | 'm7' | 'm7b5' | null = null;
@@ -382,6 +388,12 @@ const INTERVAL_TOKENS = new Map<string, 'M3' | 'P5' | 'P8'>([
 
 /** Interval names: "third" / "fifth" / "octave" (also "major third", "perfect fifth", טרצה / קווינטה / אוקטבה). */
 export function parseInterval(transcript: string): ParseResult<'M3' | 'P5' | 'P8'> {
+  // Any common name of the interval counts ("major third", "perfect fifth", "eight", "octave" …); a
+  // different interval named explicitly (e.g. "minor third", "tritone") is not read as one of these.
+  const ic = intervalClassOf(transcript);
+  const byIc: Record<number, 'M3' | 'P5' | 'P8'> = { 4: 'M3', 7: 'P5', 12: 'P8' };
+  if (ic !== null && byIc[ic]) return { kind: 'answer', value: byIc[ic], heard: transcript.trim() };
+  if (ic !== null && / (minor|major|perfect|augmented|diminished|flat|sharp|tritone|semitone|whole) /.test(canonMusic(transcript))) return { kind: 'unrecognized', heard: transcript.trim() };
   return parseChoiceTable(transcript, INTERVAL_TOKENS);
 }
 
@@ -410,13 +422,13 @@ export function parseInversion(transcript: string): ParseResult<'root' | 'third'
  */
 export function parseMode(transcript: string, choices: string[]): ParseResult<string> {
   const heard = transcript.trim();
-  const text = ` ${normalize(transcript).join(' ')} `;
+  const text = canonMusic(transcript);
   if (!text.trim()) return { kind: 'unrecognized', heard };
   const hits: { id: string; len: number }[] = [];
   for (const id of choices) {
     const names = MODE_NAMES[id as keyof typeof MODE_NAMES];
     if (!names) continue;
-    const aliases = [names.en, names.he, ...names.say.en, ...names.say.he].map((a) => ` ${normalize(a.replace(/[()]/g, ' ')).join(' ')} `);
+    const aliases = [names.en, names.he, ...names.say.en, ...names.say.he].map((a) => canonMusic(a.replace(/[()]/g, ' ')));
     const best = Math.max(0, ...aliases.filter((a) => a.trim() && text.includes(a)).map((a) => a.length));
     if (best) hits.push({ id, len: best });
   }
