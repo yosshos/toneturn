@@ -18,6 +18,24 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.26.0',
+    date: '2026-11-05',
+    en: [
+      'New: Vocal technique — 12 measured levels from one steady note to vibrato control, glides, leaps and fast passages: intonation, stability, drift, vibrato rate, width and evenness, transitions, timing. Live pitch trace, one tip per take, listen back',
+      'Your range: calibrate it once (glide on “ah”) — every sung exercise in the app now stays inside it',
+      'Scales & modes to sing: from Ionian up to “G Mixolydian up, altered down”',
+      'Modes by ear: hear a scale and name its mode — including the modes of harmonic and melodic minor',
+      'Daily 3-minute vocal warm-up (counts for your streak)',
+    ],
+    he: [
+      'חדש: טכניקה קולית — 12 רמות מדודות, מצליל יציב אחד ועד שליטה בוויברטו, גלישות, קפיצות ומעברים מהירים: אינטונציה, יציבות, זחילה, קצב, רוחב ואחידות של הוויברטו, מעברים ותזמון. גרף גובה חי, טיפ לכל טייק, האזנה לעצמך',
+      'המנעד שלך: מכיילים פעם אחת (גלישה על "אה") — וכל תרגיל שירה באפליקציה נשאר בתוכו',
+      'סולמות ומודוסים לשירה: מיוני ועד "מ־G למעלה במיקסולידי ולמטה באלטרד"',
+      'מודוסים בשמיעה: שומעים סולם ומזהים את המודוס — כולל המודוסים של מינור הרמוני ומלודי',
+      'חימום קולי יומי של 3 דקות (נחשב לרצף)',
+    ],
+  },
+  {
     version: '0.25.1',
     date: '2026-11-05',
     en: ['Find my level and True or false? are now in the menu, and Find my level sits under the main button on Home'],
