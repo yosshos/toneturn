@@ -7,7 +7,9 @@ import type { InputMode } from '../engine/session';
 import { LessonController, type LessonView } from '../game/controller';
 import { answerWord, askTemplate, choiceLabel, hintText, keysGiveAway, LESSON_META, questionBadge } from '../game/content';
 import type { Strings } from '../i18n/strings';
-import { namingFor, ratingsOf, resultFromSession, type Progress, type Settings } from '../storage/progress';
+import { gemsOf, localDay, namingFor, ratingsOf, resultFromSession, type Progress, type Settings } from '../storage/progress';
+import { StreakCelebration } from './Streak';
+import type { StreakState } from '../engine/streak';
 import { overallHistory, peakOf, ratingChange, type RatingChange } from '../engine/rating';
 import { isTimed } from '../engine/scoring';
 import { Burst, Keyboard, MicIcon, ModeSwitch, Note, PermissionPanel, withNote } from './bits';
@@ -37,6 +39,7 @@ const targetMidiOf = (q: Question) => (q.kind === 'degree' || q.kind === 'sing' 
 export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit, onAgain, onNext, onProgress, lessonDef, adapt, nextLabel }: Props) {
   const ctrlRef = useRef<LessonController | null>(null);
   const [change, setChange] = useState<{ change: RatingChange; peakBefore: number | null } | null>(null);
+  const [streakMoment, setStreakMoment] = useState<{ before: number; after: StreakState; gems: number } | null>(null);
   const sessionId = useMemo(() => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`, []);
   if (!ctrlRef.current) {
     const lesson = lessonDef ?? makeLesson(lessonId);
@@ -74,6 +77,11 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
             const before = await store.loadProgress();
             const after = await store.recordCompletion(resultFromSession(s, sessionId, new Date()));
             setChange({ change: ratingChange(ratingsOf(before), ratingsOf(after)), peakBefore: peakOf(overallHistory(before.ratingEvents ?? [])) });
+            // Streak screen (spec N.2): the first qualifying session of the day.
+            const purchases = settings.purchases ?? [];
+            const g0 = gemsOf(before, purchases);
+            const g1 = gemsOf(after, purchases);
+            if (g1.streak.practicedToday && !g0.streak.practicedToday) setStreakMoment({ before: g0.streak.count, after: g1.streak, gems: g1.earned - g0.earned });
             onProgress(after);
           })();
         },
@@ -128,7 +136,14 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
   const bb = displayNote({ letter: 'B', acc: -1 }, nm, lang);
 
   if (v.stage === 'complete') {
-    return <Recap t={t} view={v} settings={settings} onReplay={(i) => ctrl.replayQuestion(i)} onAgain={onAgain} onHome={onExit} onNext={onNext} nextLabel={nextLabel} rating={change} />;
+    return (
+      <>
+        <Recap t={t} view={v} settings={settings} onReplay={(i) => ctrl.replayQuestion(i)} onAgain={onAgain} onHome={onExit} onNext={onNext} nextLabel={nextLabel} rating={change} />
+        {streakMoment && (
+          <StreakCelebration t={t} before={streakMoment.before} after={streakMoment.after} gemsGained={streakMoment.gems} today={localDay(new Date())} onDone={() => setStreakMoment(null)} />
+        )}
+      </>
+    );
   }
 
   const paused = v.phase === 'paused';

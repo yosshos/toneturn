@@ -145,3 +145,10 @@ export async function reportRating(rating: number, provisional: boolean): Promis
   if (!sb) return;
   await sb.rpc('toneturn_report_rating', { p_rating: rating, p_provisional: provisional });
 }
+
+/** Report freeze / repair days so the server streak (and reminders) count them (spec N.6). Silent if unavailable. */
+export async function reportStreakDays(days: { day: string; kind: 'freeze' | 'repair' }[]): Promise<void> {
+  const sb = supabase();
+  if (!sb || !days.length) return;
+  await sb.rpc('toneturn_report_streak_days', { p_days: days });
+}

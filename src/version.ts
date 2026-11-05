@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.23.0',
+    date: '2026-11-05',
+    en: ['Streak 2.0: a celebration when your streak grows, milestones with confetti, and a streak calendar', 'Streak freezes: one free every Monday, more with gems — a missed day no longer ends your streak', 'Gems: earned for good lessons, your daily goal, puzzles and milestones; spend them on freezes or a streak repair'],
+    he: ['רצף 2.0: חגיגה כשהרצף גדל, אבני דרך עם קונפטי, ולוח שנה של הרצף', 'הקפאות רצף: אחת חינם בכל יום שני, ועוד ביהלומים — יום שפספסתם כבר לא מוחק את הרצף', 'יהלומים: צוברים על שיעורים טובים, יעד יומי, פאזלים ואבני דרך; קונים בהם הקפאות או תיקון רצף'],
+  },
+  {
     version: '0.22.0',
     date: '2026-11-05',
     en: ['Your overall rating: one number for your whole ear, next to your name, with your best and its trend on the Skill Map', 'After every session: how your rating moved — overall and in each skill — and when you reach a new level', 'Ratings next to names for friends (sort by rating), in online rooms, on the daily board and in class rosters'],

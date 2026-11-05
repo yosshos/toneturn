@@ -1,4 +1,11 @@
 import { expect, test } from '@playwright/test';
+
+// The first lesson of the day shows the streak screen over the recap; dismiss it whenever it is in the way.
+test.beforeEach(async ({ page }) => {
+  await page.addLocatorHandler(page.locator('.streak-celebrate'), async () => {
+    await page.locator('.streak-celebrate .btn.mega').click();
+  });
+});
 import { readFileSync } from 'node:fs';
 
 const pkg = JSON.parse(readFileSync('package.json', 'utf-8')) as { version: string };
@@ -50,6 +57,7 @@ test.describe('menu, friends', () => {
     await page.reload();
     const news = page.locator('.news-card');
     await expect(news).toBeVisible();
+    await expect(news).toContainText('0.23.0');
     await expect(news).toContainText('0.22.0');
     await expect(news).toContainText('0.21.0');
     await expect(news).toContainText('0.20.0');

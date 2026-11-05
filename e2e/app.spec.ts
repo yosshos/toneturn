@@ -1,5 +1,12 @@
 import { expect, test, type Page } from '@playwright/test';
 
+// The first lesson of the day shows the streak screen over the recap; dismiss it whenever it is in the way.
+test.beforeEach(async ({ page }) => {
+  await page.addLocatorHandler(page.locator('.streak-celebrate'), async () => {
+    await page.locator('.streak-celebrate .btn.mega').click();
+  });
+});
+
 /** Degree answer for the current question, read from the key badge (B♭ major → 1, otherwise 5). */
 async function correctDegree(page: Page): Promise<1 | 5> {
   const key = await page.locator('.key-badge').innerText();

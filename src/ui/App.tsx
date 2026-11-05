@@ -1,5 +1,7 @@
+import { FreezeToast, StreakSheet } from './Streak';
+import { canBuy, type Purchase } from '../engine/streak';
 import { recommendFor } from '../engine/recommend';
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore, useMemo } from 'react';
 import { LESSON_ORDER, runLevelFor, runsWorkshop, type LessonDef, type LessonId, type Question, type SkillId } from '../engine/lesson';
 import type { SessionState } from '../engine/session';
 import { adaptPlacement, placementLesson, puzzleBand, reviewLesson, weekId, weeklyPuzzle } from '../engine/adaptive';
@@ -7,7 +9,7 @@ import { SkillMap } from './SkillMap';
 import { PracticeTools } from './Tools';
 import { MicIcon } from './bits';
 import { STRINGS } from '../i18n/strings';
-import { lessonMastered, ratingsOf, visibleStreak, type Progress, type Settings, DEFAULT_SETTINGS, emptyProgress, migrateSettings } from '../storage/progress';
+import { gemsOf, lessonMastered, localDay, ratingsOf, type Progress, type Settings, DEFAULT_SETTINGS, emptyProgress, migrateSettings } from '../storage/progress';
 import { cloudConfigured, currentUser, onAuthChange, pullSettings, pushSettings, syncProgress, type CloudUser } from '../cloud/cloud';
 import { AccountCard, type SyncState } from './Account';
 import { Home, lessonStates } from './Home';
@@ -24,7 +26,7 @@ import type { SetKind } from '../engine/tournament';
 import type { GameKind } from '../game/memoryGame';
 import { MenuSheet, Changelog } from './Menu';
 import { FriendsScreen } from './Friends';
-import { reportGameBest, reportRating } from '../cloud/social';
+import { reportGameBest, reportRating, reportStreakDays } from '../cloud/social';
 import { overallRating } from '../engine/rating';
 import { APP_VERSION, unseenChanges } from '../version';
 import { pwa } from '../pwa';
@@ -84,6 +86,25 @@ export function App() {
     reported.current = key;
     void reportRating(o.r, o.provisional).catch(() => {});
   }, [user, progress]);
+  // Streak 2.0 & gems (spec N): derived from progress + the synced purchase list.
+  const [streakOpen, setStreakOpen] = useState(false);
+  const gems = useMemo(() => gemsOf(progress, settings?.purchases ?? []), [progress, settings?.purchases]);
+  const buy = (kind: Purchase['kind']) => {
+    const purchases = settings?.purchases ?? [];
+    if (!canBuy(kind, gems.balance, gems.streak)) return;
+    const id = typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
+    updateSettings({ purchases: [...purchases, { id, kind, day: localDay(new Date()) }] });
+  };
+  const lastFreeze = gems.streak.freezeDays.at(-1) ?? null;
+  const reportedDays = useRef('');
+  useEffect(() => {
+    if (!user) return;
+    const days = [...gems.streak.freezeDays.map((day) => ({ day, kind: 'freeze' as const })), ...gems.streak.repairedDays.map((day) => ({ day, kind: 'repair' as const }))];
+    const key = `${user.id}:${days.map((d) => d.day).join(',')}`;
+    if (!days.length || reportedDays.current === key) return;
+    reportedDays.current = key;
+    void reportStreakDays(days).catch(() => {});
+  }, [user, gems.streak.freezeDays, gems.streak.repairedDays]);
   const progressRef = useRef(progress);
   progressRef.current = progress;
 
@@ -140,7 +161,13 @@ export function App() {
     if (!user) return;
     void (async () => {
       const remote = await pullSettings(user.id).catch(() => null);
-      if (remote) setSettings((prev) => migrateSettings({ ...(prev ?? DEFAULT_SETTINGS), ...remote, voiceConsent: prev?.voiceConsent ?? false }));
+      if (remote)
+        setSettings((prev) => {
+          // Gem purchases are append-only: keep the union of both devices (by id).
+          const all = [...(prev?.purchases ?? []), ...((remote as Partial<Settings>).purchases ?? [])];
+          const purchases = all.filter((x, i) => all.findIndex((y) => y.id === x.id) === i);
+          return migrateSettings({ ...(prev ?? DEFAULT_SETTINGS), ...remote, purchases, voiceConsent: prev?.voiceConsent ?? false });
+        });
       await runSync();
     })();
   }, [user, runSync]);
@@ -250,13 +277,18 @@ export function App() {
           t={t}
           settings={s}
           progress={progress}
-          streak={visibleStreak(progress.streak, new Date())}
+          streak={gems.streak}
+          onStreak={() => setStreakOpen(true)}
           account={<AccountCard t={t} user={user} sync={sync} compact />}
           onMenu={() => setMenuOpen(true)}
           tools={<>{user && <AssignedCard t={t} items={assigned} lang={s.uiLang} onOpen={(id) => openLesson(id)} />}<PracticeTools t={t} progress={progress} onSkills={() => go('skills')} onPlacement={openPlacement} onReview={openReview} onPuzzle={openPuzzle} onDaily={() => go('daily')} onRuns={openRuns} onDrone={() => go('drone')} /></>}
           updateReady={pwaState.updateReady}
           news={
-            news.length > 0 ? (
+            <>
+              {lastFreeze && settings?.seenFreezeDay !== lastFreeze && gems.streak.count > 0 && (
+                <FreezeToast t={t} count={gems.streak.count} onClose={() => updateSettings({ seenFreezeDay: lastFreeze })} />
+              )}
+              {news.length > 0 ? (
               <section className="news-card" role="status">
                 <div className="news-head">
                   <b>✨ {t.whatsNew}</b>
@@ -266,7 +298,8 @@ export function App() {
                 </div>
                 <Changelog lang={s.uiLang} entries={news} />
               </section>
-            ) : null
+            ) : null}
+            </>
           }
           onSettings={() => go('settings')}
           onDuel={() => go('duel')}
@@ -386,6 +419,9 @@ export function App() {
       )}
       {route === 'ghost' && <GhostScreen t={t} settings={s} progress={progress} onBack={() => go('home')} onProgress={setProgress} />}
       {route === 'classes' && <ClassesScreen t={t} settings={s} user={user} onBack={() => go('home')} onOpenLesson={(id) => openLesson(id)} />}
+      {streakOpen && (
+        <StreakSheet t={t} st={gems.streak} gems={gems.balance} today={localDay(new Date())} lang={s.uiLang} onBuy={buy} onClose={() => setStreakOpen(false)} />
+      )}
       {route === 'drone' && <DroneScreen t={t} settings={s} onBack={() => go('home')} />}
       {route === 'online' && (
         <OnlineScreen key={`${onlineKey}-${user?.id ?? ''}`} t={t} settings={s} user={user} initialCode={onlineCode} onBack={() => go('home')} />

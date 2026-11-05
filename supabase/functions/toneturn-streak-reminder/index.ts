@@ -4,10 +4,24 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.45.4';
 import webpush from 'npm:web-push@3.6.7';
 
-const MESSAGES = {
-  en: { title: 'Keep your streak 🔥', body: (n: number) => `${n}-day streak. One short lesson keeps it alive.` },
-  he: { title: 'שמרו על הרצף 🔥', body: (n: number) => `רצף של ${n} ימים. שיעור קצר אחד שומר עליו.` },
-};
+const MILESTONES = [3, 7, 14, 30, 50, 100, 200, 365];
+
+/** Message per kind (spec N.6); the evening one mentions a milestone due tomorrow. */
+function message(kind: string, lang: 'en' | 'he', n: number): { title: string; body: string } {
+  const nextIsMilestone = MILESTONES.includes(n + 1);
+  if (lang === 'he') {
+    if (kind === 'freeze_used') return { title: 'ההקפאה הצילה את הרצף ❄', body: `הרצף של ${n} ימים עדיין חי. שיעור קצר היום ממשיך אותו.` };
+    if (kind === 'at_risk') return { title: 'הרצף בסכנה 🔥', body: `נשארו שעתיים לשמור על רצף של ${n} ימים.` };
+    return nextIsMilestone
+      ? { title: `עוד יום אחד ל־${n + 1} 🔥`, body: `שיעור קצר היום, ומחר מגיעים לרצף של ${n + 1} ימים.` }
+      : { title: 'שמרו על הרצף 🔥', body: `רצף של ${n} ימים. שיעור קצר אחד שומר עליו.` };
+  }
+  if (kind === 'freeze_used') return { title: 'Your freeze saved your streak ❄', body: `Your ${n}-day streak is still alive. A short lesson today keeps it going.` };
+  if (kind === 'at_risk') return { title: 'Your streak is at risk 🔥', body: `Two hours left to keep your ${n}-day streak.` };
+  return nextIsMilestone
+    ? { title: `1 more day to ${n + 1} 🔥`, body: `One short lesson today and tomorrow you reach a ${n + 1}-day streak.` }
+    : { title: 'Keep your streak 🔥', body: `${n}-day streak. One short lesson keeps it alive.` };
+}
 
 Deno.serve(async (req) => {
   if (req.headers.get('x-cron-secret') !== Deno.env.get('CRON_SECRET')) {
@@ -22,11 +36,11 @@ Deno.serve(async (req) => {
   let sent = 0;
   let removed = 0;
   for (const s of due ?? []) {
-    const m = MESSAGES[s.lang === 'he' ? 'he' : 'en'];
+    const m = message(s.kind ?? 'evening', s.lang === 'he' ? 'he' : 'en', s.streak);
     try {
       await webpush.sendNotification(
         { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
-        JSON.stringify({ title: m.title, body: m.body(s.streak), tag: 'streak', url: '/' }),
+        JSON.stringify({ title: m.title, body: m.body, tag: 'streak', url: '/' }),
         { TTL: 60 * 60 * 3 },
       );
       sent++;

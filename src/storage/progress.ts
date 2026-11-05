@@ -1,6 +1,7 @@
 // Local progress + settings. XP and completion writes are idempotent by event id,
 // so a repeated callback or an app resume can never award points twice.
 
+import { gemsEarned, gemsSpent, streakState, type Purchase, type StreakState } from '../engine/streak';
 import { placementUnlocks } from '../engine/recommend';
 import { outcomeOf, type InputMode, type SessionState } from '../engine/session';
 import { ratingScore } from '../engine/scoring';
@@ -47,6 +48,8 @@ export interface Progress {
   puzzles?: Record<string, { band: string; medal: Medal; completedAt: string }>;
   /** Daily challenge: the first play of each local day (later plays are practice). */
   daily?: Record<string, DailyRecord>;
+  /** Streak 2.0 / gems facts kept beyond the 100-result history (spec N). */
+  stats?: { days: string[]; goodSessions: number; xpByDay: Record<string, number> };
   /** Path lessons opened by "Find my level" (everything below the player's level, per skill). */
   placementUnlocks?: string[];
   /** Ghost race: your best run per set ("kind:rounds"), replayed as an opponent. */
@@ -100,6 +103,10 @@ export interface Settings {
   firstUseAt: string | null;
   /** Answer and "sing" with a MIDI keyboard instead of the voice. */
   midiInput?: boolean;
+  /** Gem purchases (streak freezes, repairs) — append-only, synced with the profile settings (spec N.4). */
+  purchases?: Purchase[];
+  /** Last freeze day the player was told about (freeze-used toast). */
+  seenFreezeDay?: string | null;
 }
 
 export const SETTINGS_VERSION = 2;
@@ -308,6 +315,7 @@ export function applyResult(p: Progress, r: LessonResult, now: Date): Progress {
     },
     history: [...p.history, r].slice(-100),
     streak: bumpStreak(p.streak, now),
+    stats: addSessionStats(p.stats, r),
     // Spaced repetition: right first try → next box; a miss → box 0, due now.
     review: scheduleReview(
       p.review,
@@ -426,4 +434,48 @@ export function lessonMastered(p: Progress, id: string): boolean {
   if (!l?.completions) return false;
   const last = [...p.history].reverse().find((h) => h.lessonId === id);
   return !!last && l.best >= Math.ceil(0.8 * last.total);
+}
+
+// ======================================================================= streak 2.0 & gems (spec N)
+
+/** Fold one completed session into the long-lived stats (days practised, ≥80 % sessions, XP per day). */
+export function addSessionStats(stats: Progress['stats'], r: LessonResult): NonNullable<Progress['stats']> {
+  const day = localDay(new Date(r.completedAt));
+  const s = stats ?? { days: [], goodSessions: 0, xpByDay: {} };
+  const good = r.lessonId !== 'weekly-puzzle' && r.total > 0 && r.firstTry / r.total >= 0.8;
+  const xpByDay = { ...s.xpByDay, [day]: (s.xpByDay[day] ?? 0) + r.xp };
+  const keys = Object.keys(xpByDay).sort();
+  if (keys.length > 800) for (const k of keys.slice(0, keys.length - 800)) delete xpByDay[k];
+  return { days: s.days.includes(day) ? s.days : [...s.days, day].slice(-800), goodSessions: s.goodSessions + (good ? 1 : 0), xpByDay };
+}
+
+/** Every local day with qualifying practice: sessions, daily challenge first plays, memory games. */
+export function practiceDays(p: Progress): Set<string> {
+  const out = new Set<string>(p.stats?.days ?? []);
+  for (const h of p.history) out.add(localDay(new Date(h.completedAt)));
+  for (const d of Object.keys(p.daily ?? {})) out.add(d);
+  for (const e of p.ratingEvents ?? []) if (e.id.startsWith('g:')) out.add(localDay(new Date(e.at)));
+  return out;
+}
+
+export function streakOf(p: Progress, purchases: Purchase[], now = new Date()): StreakState {
+  return streakState(practiceDays(p), purchases, localDay(now));
+}
+
+export function gemsOf(p: Progress, purchases: Purchase[], now = new Date()) {
+  const st = streakOf(p, purchases, now);
+  // Older data (before stats existed) still counts from the history.
+  const goodFromHistory = p.history.filter((h) => h.lessonId !== 'weekly-puzzle' && h.total > 0 && h.firstTry / h.total >= 0.8).length;
+  const xpByDay: Record<string, number> = { ...(p.stats?.xpByDay ?? {}) };
+  if (!p.stats) for (const h of p.history) xpByDay[localDay(new Date(h.completedAt))] = (xpByDay[localDay(new Date(h.completedAt))] ?? 0) + h.xp;
+  const medals = Object.values(p.puzzles ?? {});
+  const earned = gemsEarned({
+    goodSessions: Math.max(p.stats?.goodSessions ?? 0, goodFromHistory),
+    goalDays: Object.values(xpByDay).filter((x) => x >= 30).length,
+    puzzleGold: medals.filter((m) => m.medal === 'gold').length,
+    puzzleSilver: medals.filter((m) => m.medal === 'silver').length,
+    dailyPlays: Object.keys(p.daily ?? {}).length,
+    milestones: st.milestones.map((m) => m.days),
+  });
+  return { earned, spent: gemsSpent(purchases), balance: Math.max(0, earned - gemsSpent(purchases)), streak: st };
 }

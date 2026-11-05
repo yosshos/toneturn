@@ -1,5 +1,13 @@
 # Milestone report — 2026-11-04
 
+## Update 23 — v0.23.0 (2026-11-05): streak 2.0 and gems (spec N)
+
+- `engine/streak.ts`: day-by-day walk from the first practice day — weekly free freeze (Monday, max 2), bought freezes, automatic use on missed days, repair within 48 h, milestones, best, next milestone; gems earned from derived facts (≥80 % sessions, goal days, puzzle medals, daily plays, milestones) minus purchases.
+- Long-lived `progress.stats` (practice days, good sessions, XP per day) beyond the 100-result history; purchases in Settings (synced; union by id on pull).
+- UI: flame chip (grey & breathing until today is done), streak screen over the recap after the day's first lesson (flame ignites, number rolls, week strip, milestone confetti, gems gained), streak sheet (calendar with 🔥 / ❄ / repaired days, freezes, gems, milestone bar, shop), freeze-used notice.
+- Server (migration 14 + reminder function, **not applied / not deployed**): streak days table, streak counts freeze / repair / daily days, reminder kinds evening / at risk (22:00) / freeze used (09:00), milestone-tomorrow wording.
+- Tests: 407 unit + streak E2E.
+
 ## Update 22 — v0.22.0 (2026-11-05): overall rating (spec L)
 
 - `overallRating` (confidence-weighted mean; game axes ×0.5; provisional "?" until 4 skills / 30 answers), `overallHistory`, `peakOf`, `ratingChange` (overall from→to, touched skills, bands reached).

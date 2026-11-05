@@ -1,5 +1,12 @@
 import { expect, test } from '@playwright/test';
 
+// The first lesson of the day shows the streak screen over the recap; dismiss it whenever it is in the way.
+test.beforeEach(async ({ page }) => {
+  await page.addLocatorHandler(page.locator('.streak-celebrate'), async () => {
+    await page.locator('.streak-celebrate .btn.mega').click();
+  });
+});
+
 // Voice flows run in the labelled simulator (scripted answers: right, wrong, then right…).
 test.describe('placement, Skill Map, review, weekly puzzle', () => {
   test.setTimeout(300_000);

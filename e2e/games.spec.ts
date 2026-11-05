@@ -1,5 +1,12 @@
 import { expect, test, type Page } from '@playwright/test';
 
+// The first lesson of the day shows the streak screen over the recap; dismiss it whenever it is in the way.
+test.beforeEach(async ({ page }) => {
+  await page.addLocatorHandler(page.locator('.streak-celebrate'), async () => {
+    await page.locator('.streak-celebrate .btn.mega').click();
+  });
+});
+
 /** Record the order in which pads light up during playback (what a player sees and hears). */
 async function watchPads(page: Page) {
   await page.evaluate(() => {
