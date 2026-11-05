@@ -1,6 +1,7 @@
 // Words for every lesson and question kind: narration (spoken) and labels (on screen).
 // Kept apart from the pure musical content in src/engine/lesson.ts.
 
+import { learnedAnswer } from '../engine/learnedVoice';
 import { pcFromKey, type Answer, type IntroStep, type LessonDef, type LessonId, type Question } from '../engine/lesson';
 import { displayNote, spokenMajorKey, spokenNote, type Naming, type PitchClass } from '../engine/pitch';
 import type { SungResult } from '../engine/sing';
@@ -490,9 +491,19 @@ export function roundPrompt(q: Question, l: Lang, nm: Naming, n: number): string
 }
 
 export function parseAnswer(q: Question, alternatives: string[], inputNaming: Naming = 'letter'): ParseResult<Answer> {
+  // Mishearings this player taught the app (learned voice aliases, on this device).
+  if (q.choices.length) {
+    const learned = learnedAnswer(q.kind, alternatives, q.choices as Answer[]);
+    if (learned !== null) return { kind: 'answer', value: learned, heard: alternatives[0] ?? '' };
+  }
+  return parseAnswerRaw(q, alternatives, inputNaming);
+}
+
+function parseAnswerRaw(q: Question, alternatives: string[], inputNaming: Naming = 'letter'): ParseResult<Answer> {
+  const inChoices = (v: unknown) => (q.choices as unknown[]).some((c) => String(c) === String(v));
   switch (q.kind) {
     case 'choice':
-      return parseAlternatives(alternatives, (t) => parseNamedChoice(t, q.choices, q.names));
+      return parseAlternatives(alternatives, (t) => parseNamedChoice(t, q.choices, q.names), inChoices);
     case 'abs-note': {
       const r = parseAlternatives(alternatives, (t) => parseNoteName(t, inputNaming));
       if (r.kind === 'answer') return { ...r, value: `${r.value.letter}${r.value.acc}` };
@@ -508,13 +519,13 @@ export function parseAnswer(q: Question, alternatives: string[], inputNaming: Na
     case 'tf':
       return parseAlternatives(alternatives, parseTrueFalse);
     case 'wrong-note':
-      return parseAlternatives(alternatives, parseDegree);
+      return parseAlternatives(alternatives, parseDegree, inChoices);
     case 'mode-id':
       return parseAlternatives(alternatives, (t) => parseMode(t, q.choices));
     case 'degree':
-      return parseAlternatives(alternatives, parseDegree);
+      return parseAlternatives(alternatives, parseDegree, inChoices);
     case 'quality':
-      return parseAlternatives(alternatives, parseQuality);
+      return parseAlternatives(alternatives, parseQuality, inChoices);
     case 'cadence':
       return parseAlternatives(alternatives, parseCadence);
     case 'sing':

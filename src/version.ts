@@ -18,6 +18,30 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.28.0',
+    date: '2026-11-05',
+    en: [
+      'Barry Harris: the 6th-diminished scales, the diminished chord that becomes dominants and minor/major 6s, 6 chords over every chord, half-step rules, pivots, brother dominants — to hear and to sing (7 singing levels)',
+      'Singing feedback says how and where: “a bit flat”, “went sharp at the end”, “slid up into the note”, note by note in melodies',
+      'Notes shown your way everywhere: keyboard, staff, guitar tab or any mix — also in Echo Chain, vocal technique and sing-along',
+      'Sight-singing: read a melody with its rhythm and sing it from the tonic and a count-in',
+      'Ornaments & dynamics: grace notes, mordents, turns, trills, crescendo, decrescendo, swell',
+      'New practice topics: extensions & alterations, voicings, progressions, form, fine pitch, in tune?, two voices, trichords, maqamat with quarter tones, Middle-Eastern rhythms, polyrhythms, odd meters, swing feel, and written theory (key signatures, spelling, Roman numerals, circle of fifths, transposition, chord-scale, three clefs)',
+      'Play & improvise: backing tracks (ii–V–I, minor, blues), improvise with feedback, MIDI keyboard drills, guitar from tab; choir rooms where every phone sings its own part',
+      'Voice answers understood better: common mishearings of numbers (“to” → 2, “for” → 4, שלש → 3 …), every recognizer guess is checked, and when it misses and you tap the answer, it learns that mishearing',
+    ],
+    he: [
+      'בארי האריס: סולמות 6 דימיניש, הדימיניש שהופך לדומיננטים ולמינור/מז׳ור 6, אקורדי 6 מעל כל אקורד, חוקי חצאי הטונים, פיבוטים, דומיננטים אחים — בשמיעה ובשירה (7 שלבי שירה)',
+      'המשוב על השירה אומר איך ואיפה: ״קצת נמוך״, ״עלית בסוף״, ״החלקת לתוך הצליל״, צליל אחר צליל במנגינות',
+      'תווים בתצוגה שבחרת בכל מקום: מקלדת, חמשה, טאבים לגיטרה או שילוב — גם בשרשרת הד, בטכניקה קולית ובשירה עם שירים',
+      'קריאה בשירה: קוראים מנגינה עם הקצב שלה ושרים אותה מהטוניקה וספירה',
+      'קישוטים ודינמיקה: צלילי חן, מורדנטים, טרנים, טרילים, קרשנדו, דקרשנדו, התגברות והחלשה',
+      'נושאי תרגול חדשים: הרחבות ואלטרציות, וויסינגים, מהלכים, מבנה, גובה עדין, מכוון?, שני קולות, טריכורדים, מקאמים עם רבעי טונים, מקצבים מזרחיים, פולי־ריתמים, משקלים אי־זוגיים, תחושת סווינג, ותיאוריה כתובה (סימני היתק, כתיבה, ספרות רומיות, מעגל הקווינטות, טרנספוזיציה, אקורד־סולם, שלושה מפתחות)',
+      'נגינה ואלתור: פלייבקים (ii–V–I, מינור, בלוז), אלתור עם משוב, תרגילי מקלדת MIDI, גיטרה מטאבים; חדרי מקהלה שבהם כל טלפון שר קול משלו',
+      'הבנה טובה יותר של תשובות בקול: טעויות שמיעה נפוצות במספרים (״to״ ← 2, ״for״ ← 4, שלש ← 3 …), בדיקה של כל ניחושי המזהה, וכשהוא לא מבין ואתם לוחצים על התשובה — הוא לומד את טעות השמיעה',
+    ],
+  },
+  {
     version: '0.27.0',
     date: '2026-11-05',
     en: [

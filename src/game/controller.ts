@@ -7,6 +7,7 @@
 //  - The microphone/recognizer is only active in the `listening` phase.
 //  - Permission / recognition failures, silence and unclear speech never count as wrong answers.
 
+import { learnVoiceAlias } from '../engine/learnedVoice';
 import { sungMelodyRemarks } from '../engine/feedbackMelody';
 import type { SungFrame } from '../engine/sing';
 import { gradeRun, runHopMs, runDiagnosis, runSummary } from '../engine/runs';
@@ -292,10 +293,17 @@ export class LessonController {
   }
 
   /** Button answer. Ignored unless a question is awaiting an answer in this turn. */
+  /** The last misunderstood voice answer in this turn (taught by the next tap). */
+  private unclearHeard: { turn: number; kind: string; heard: string[] } | null = null;
+
   answer(answer: Answer) {
     const w = this.waiter;
     if (!w || w.turn !== this.s.turn) return;
     this.waiter = null;
+    // The recognizer just failed on this question and the player tapped the answer: learn what it heard.
+    const u = this.unclearHeard;
+    if (u && u.turn === this.s.turn) for (const h of u.heard.slice(0, 2)) learnVoiceAlias(u.kind, h, answer);
+    this.unclearHeard = null;
     this.tapAt = this.now();
     w.resolve({ kind: 'answer', answer });
   }
@@ -935,6 +943,7 @@ export class LessonController {
           }
         }
         if (parsed.kind === 'ambiguous' || parsed.kind === 'unrecognized') {
+          this.unclearHeard = { turn: this.s.turn, kind: q.kind, heard: res.alternatives.filter((a) => a.trim()) };
           this.s = noteUnclear(this.s, turn);
           this.silentCount++;
           this.restartClockAtListen = true;

@@ -96,16 +96,51 @@ const DEGREE_TOKENS = new Map<string, number>([
   ['6', 6], ['six', 6], ['sixth', 6], ['vi', 6],
   ['7', 7], ['seven', 7], ['seventh', 7], ['vii', 7],
   ['8', 8], ['eight', 8], ['eighth', 8],
+  // Ordinals the recognizer writes with digits
+  ['1st', 1], ['2nd', 2], ['3rd', 3], ['4th', 4], ['5th', 5], ['6th', 6], ['7th', 7], ['8th', 8],
   // Hebrew (masc./fem./ordinal)
   ['אחת', 1], ['אחד', 1], ['ראשונה', 1], ['ראשון', 1], ['טוניקה', 1], ['בית', 1],
-  ['שתיים', 2], ['שתים', 2], ['שניים', 2], ['שנים', 2], ['שנייה', 2], ['שניה', 2], ['שני', 2],
-  ['שלוש', 3], ['שלושה', 3], ['שלישית', 3], ['שלישי', 3],
-  ['ארבע', 4], ['ארבעה', 4], ['רביעית', 4], ['רביעי', 4],
-  ['חמש', 5], ['חמישה', 5], ['חמישית', 5], ['חמישי', 5], ['דומיננטה', 5],
-  ['שש', 6], ['שישה', 6], ['שישית', 6], ['שישי', 6],
+  ['שתיים', 2], ['שתים', 2], ['שתי', 2], ['שטיים', 2], ['שניים', 2], ['שנים', 2], ['שנייה', 2], ['שניה', 2], ['שני', 2],
+  ['שלוש', 3], ['שלושה', 3], ['שלישית', 3], ['שלישי', 3], ['שלש', 3], ['שלשה', 3],
+  ['ארבע', 4], ['ארבעה', 4], ['ארבה', 4], ['רביעית', 4], ['רביעי', 4],
+  ['חמש', 5], ['חמשה', 5], ['חמישה', 5], ['חמישית', 5], ['חמישי', 5], ['דומיננטה', 5],
+  ['שש', 6], ['ששה', 6], ['שישה', 6], ['שישית', 6], ['שישי', 6],
   ['שבע', 7], ['שבעה', 7], ['שביעית', 7], ['שביעי', 7],
   ['שמונה', 8], ['שמינית', 8], ['שמיני', 8],
 ]);
+
+/** Sound-alikes the recognizer returns for a lone number (short answers only). */
+const DEGREE_SOUNDALIKE = new Map<string, number>([
+  ['juan', 1], ['wan', 1],
+  ['to', 2], ['too', 2], ['tu', 2], ['who', 2],
+  ['tree', 3], ['free', 3], ['through', 3], ['sri', 3],
+  ['for', 4], ['fore', 4], ['far', 4], ['foe', 4], ['floor', 4], ['ford', 4],
+  ['fine', 5], ['fife', 5], ['hive', 5], ['vive', 5], ['fight', 5], ['file', 5],
+  ['sex', 6], ['sick', 6], ['sicks', 6], ['seeks', 6], ['sax', 6], ['sikh', 6],
+  ['heaven', 7], ['kevin', 7],
+  ['ate', 8], ['hate', 8], ['eat', 8],
+  ['את', 1], ['אחר', 1],
+  ['שלום', 3], ['שלוס', 3],
+  ['חמיש', 5], ['חמס', 5],
+  ['שיש', 6],
+  ['שווה', 7], ['שבה', 7], ['שבא', 7],
+]);
+
+function editDistance(a: string, b: string): number {
+  const d = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
+  for (let j = 1; j <= b.length; j++) d[0][j] = j;
+  for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++) d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+  return d[a.length][b.length];
+}
+/** A Hebrew number word one letter off (only when exactly one degree is that close). */
+function fuzzyHebrewDegree(token: string): number | undefined {
+  if (!/^[\u05d0-\u05ea]{3,}$/.test(token)) return undefined;
+  const near = new Set<number>();
+  DEGREE_TOKENS.forEach((d, w) => {
+    if (/^[\u05d0-\u05ea]{3,}$/.test(w) && editDistance(token, w) <= 1) near.add(d);
+  });
+  return near.size === 1 ? [...near][0] : undefined;
+}
 
 /**
  * Parse a scale-degree answer. Degrees outside the exercise choices still
@@ -130,6 +165,14 @@ export function parseDegree(transcript: string): ParseResult<number> {
     if (d !== undefined) degrees.add(d);
   });
   const commands = findCommands(tokens);
+  // A short answer that is only a sound-alike ("to", "for", "fine", "sex" ...) or a Hebrew number word one
+  // letter off: in a degree question these almost always mean the number.
+  if (!degrees.size && !commands.length && tokens.length <= 2) {
+    for (const t of tokens) {
+      const d = DEGREE_SOUNDALIKE.get(t) ?? fuzzyHebrewDegree(t);
+      if (d !== undefined) degrees.add(d);
+    }
+  }
 
   if (degrees.size === 1 && commands.length === 0) return { kind: 'answer', value: [...degrees][0], heard };
   if (degrees.size === 0 && commands.length === 1) return { kind: 'command', command: commands[0], heard };
@@ -138,15 +181,21 @@ export function parseDegree(transcript: string): ParseResult<number> {
   return { kind: 'unrecognized', heard };
 }
 
-/** Try recognizer alternatives in order; the first that is not unrecognized wins. */
-export function parseAlternatives<T>(alts: string[], parse: (s: string) => ParseResult<T>): ParseResult<T> {
-  let first: ParseResult<T> | null = null;
-  for (const a of alts) {
-    const r = parse(a);
-    if (!first) first = r;
-    if (r.kind !== 'unrecognized') return r;
+/**
+ * Use every recognizer alternative: an answer among the choices (`prefer`) wins, then any answer, then the
+ * first other result (command / ambiguous). The recognizer often has the right word as its 2nd-5th guess.
+ */
+export function parseAlternatives<T>(alts: string[], parse: (s: string) => ParseResult<T>, prefer?: (v: T) => boolean): ParseResult<T> {
+  const rs = alts.map(parse);
+  // A command in the top guess beats an answer in a lower one ("again" must never turn into a degree).
+  if (rs[0]?.kind === 'command') return rs[0];
+  const answers = rs.filter((r): r is Extract<ParseResult<T>, { kind: 'answer' }> => r.kind === 'answer');
+  if (prefer) {
+    const good = answers.find((r) => prefer(r.value));
+    if (good) return good;
   }
-  return first ?? { kind: 'unrecognized', heard: '' };
+  if (answers.length) return answers[0];
+  return rs.find((r) => r.kind !== 'unrecognized') ?? rs[0] ?? { kind: 'unrecognized', heard: '' };
 }
 
 // ---------- Note names (used by later lessons; covered by tests now) ----------
