@@ -32,6 +32,82 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
   private listeners = new Set<(active: number[]) => void>();
   /** Master volume (0..1). */
   volume = 0.9;
+  /** Instrument sound (spec Q): 'classic' = the synthesised piano; otherwise a sample set from /samples. */
+  private sound = 'classic';
+  private bank: { id: string; notes: number[]; buffers: Map<number, AudioBuffer> } | null = null;
+  private sampleBus!: GainNode;
+
+  get soundId() {
+    return this.bank ? this.bank.id : 'classic';
+  }
+
+  /**
+   * Choose the instrument. Sample sets download on first use (then the service worker keeps them for
+   * offline use). Resolves false — and keeps the classic piano — when anything fails.
+   */
+  setSound(id: string, onProgress?: (done: number, total: number) => void): Promise<boolean> {
+    this.sound = id;
+    if (id === 'classic') {
+      this.bank = null;
+      return Promise.resolve(true);
+    }
+    if (this.bank?.id === id) return Promise.resolve(true);
+    const load = (async () => {
+      try {
+        const base = import.meta.env.BASE_URL ?? '/';
+        const manifest = (await (await fetch(`${base}samples/manifest.json`)).json()) as { sets: Record<string, { ext: string; notes: number[] }> };
+        const set = manifest.sets[id];
+        if (!set) return false;
+        const decoder = new OfflineAudioContext(1, 1, 22050);
+        const buffers = new Map<number, AudioBuffer>();
+        let done = 0;
+        await Promise.all(
+          set.notes.map(async (m) => {
+            const res = await fetch(`${base}samples/${id}/${m}.${set.ext}`);
+            if (!res.ok) throw new Error(String(res.status));
+            buffers.set(m, await decoder.decodeAudioData(await res.arrayBuffer()));
+            onProgress?.(++done, set.notes.length);
+          }),
+        );
+        if (this.sound !== id) return false; // changed meanwhile
+        this.bank = { id, notes: set.notes, buffers };
+        return true;
+      } catch {
+        if (this.sound === id) this.bank = null;
+        return false;
+      }
+    })();
+    return load;
+  }
+
+  /** Play one note from the sample bank; false when there is no bank (the synth plays instead). */
+  private sample(midi: number, velocity: number, start: number, dur: number): boolean {
+    const ctx = this.ctx;
+    const bank = this.bank;
+    if (!ctx || !bank) return false;
+    const nearest = bank.notes.reduce((a, b) => (Math.abs(b - midi) < Math.abs(a - midi) ? b : a));
+    const buf = bank.buffers.get(nearest);
+    if (!buf) return false;
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.playbackRate.value = Math.pow(2, (midi - nearest) / 12);
+    const out = ctx.createGain();
+    const peak = 0.55 + 0.45 * velocity;
+    out.gain.setValueAtTime(0, start);
+    out.gain.linearRampToValueAtTime(peak, start + 0.006);
+    out.gain.setTargetAtTime(0, start + dur, 0.11);
+    src.connect(out).connect(this.sampleBus);
+    const stopAt = Math.min(start + buf.duration / src.playbackRate.value, start + dur + 0.8);
+    src.start(start);
+    src.stop(stopAt);
+    const v: Voice = { out, oscs: [src], end: stopAt };
+    this.voices.add(v);
+    src.onended = () => {
+      this.voices.delete(v);
+      out.disconnect();
+    };
+    return true;
+  }
 
   get context() {
     return this.ctx;
@@ -66,6 +142,11 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     wet.gain.value = 0.22;
     this.pianoBus.connect(limiter);
     this.pianoBus.connect(reverb).connect(wet).connect(limiter);
+    // Recorded instruments: their own level, the same room.
+    this.sampleBus = ctx.createGain();
+    this.sampleBus.gain.value = 0.75;
+    this.sampleBus.connect(limiter);
+    this.sampleBus.connect(reverb);
 
     this.cueBus = ctx.createGain();
     this.cueBus.gain.value = 0.18;
@@ -187,7 +268,7 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
         this.perc(e.perc, t0 + e.start);
         continue;
       }
-      this.voice(e.midi, e.velocity, t0 + e.start, e.duration);
+      if (!this.sample(e.midi, e.velocity, t0 + e.start, e.duration)) this.voice(e.midi, e.velocity, t0 + e.start, e.duration);
       const lead = (t0 - ctx.currentTime) * 1000;
       later(lead + e.start * 1000, () => this.noteOn(e.midi));
       later(lead + (e.start + e.duration) * 1000, () => this.noteOff(e.midi));

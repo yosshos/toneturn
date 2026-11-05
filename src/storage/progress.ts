@@ -136,6 +136,8 @@ export interface Settings {
   aids?: AidMode;
   /** Comfortable singing range (spec P.0); null = not calibrated (a conservative default is used). */
   voiceRange?: VoiceRange | null;
+  /** Instrument sound for every exercise (spec Q): 'classic' (synth) or a sample set id. */
+  sound?: string;
   /** Vibrato target style (spec P.1). */
   vibratoStyle?: VibratoStyle;
 }

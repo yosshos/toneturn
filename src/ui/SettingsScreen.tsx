@@ -5,7 +5,7 @@ import { catalogue, chooseVoice, type Gender } from '../speech/voices';
 import { listVoices, voicesReady } from '../speech/tts';
 import { namingFor, type Settings, type VoiceGender } from '../storage/progress';
 import { fillText, Note } from './bits';
-import { tts } from './services';
+import { piano, tts } from './services';
 import { midi } from '../speech/midi';
 
 interface Props {
@@ -216,6 +216,8 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account }: Pr
         )}
       </section>
 
+      <SoundSetting t={t} value={s.sound ?? 'classic'} onChange={(sound) => onChange({ sound })} />
+
       <section className="set-card">
         <h2>♿ {t.secAccess}</h2>
         <Seg
@@ -324,5 +326,53 @@ function MidiSetting({ t, on, onChange }: { t: Strings; on: boolean; onChange: (
       />
       {status && <p className="field-hint" role="status">{status}</p>}
     </div>
+  );
+}
+
+/** Instrument sound (spec Q): the classic synth piano or a recorded instrument, downloaded on first use. */
+export const SOUNDS = ['classic', 'grand', 'upright', 'harpsichord', 'harp', 'marimba', 'vibraphone', 'organ'] as const;
+
+function SoundSetting({ t, value, onChange }: { t: Strings; value: string; onChange: (v: string) => void }) {
+  const [busy, setBusy] = useState<{ id: string; done: number; total: number } | null>(null);
+  const [failed, setFailed] = useState(false);
+  const choose = async (id: string) => {
+    setFailed(false);
+    setBusy({ id, done: 0, total: 1 });
+    await piano.unlock();
+    const ok = await piano.setSound(id, (done, total) => setBusy({ id, done, total }));
+    setBusy(null);
+    if (!ok) {
+      setFailed(true);
+      return;
+    }
+    onChange(id);
+    // Preview: a short arpeggio in the new sound.
+    void piano
+      .play(
+        [60, 64, 67, 72].map((m, i) => ({ midi: m, start: i * 0.22, duration: i === 3 ? 0.9 : 0.25, velocity: 0.75 })),
+        1.6,
+        new AbortController().signal,
+      )
+      .catch(() => {});
+  };
+  return (
+    <section className="set-card">
+      <h2>🎹 {t.soundTitle}</h2>
+      <p className="field-hint">{t.soundHint}</p>
+      <div className="sound-grid" role="radiogroup" aria-label={t.soundTitle}>
+        {SOUNDS.map((id) => (
+          <button key={id} type="button" role="radio" aria-checked={value === id} className={`sound-opt ${value === id ? 'on' : ''}`} disabled={!!busy} onClick={() => void choose(id)}>
+            {t.soundNames[id]}
+            {busy?.id === id && <small> {Math.round((busy.done / busy.total) * 100)}%</small>}
+          </button>
+        ))}
+      </div>
+      {failed && (
+        <p className="form-error" role="alert">
+          {t.soundFailed}
+        </p>
+      )}
+      <p className="field-hint credits">{t.soundCredits}</p>
+    </section>
   );
 }

@@ -380,3 +380,29 @@
     animation: none;
   }
 }
+.sound-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 8px;
+  margin: 8px 0;
+}
+.sound-opt {
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--card-2);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.sound-opt.on {
+  border-color: var(--mint);
+  box-shadow: inset 0 0 0 1px var(--mint);
+}
+.sound-opt small {
+  color: var(--ink-dim);
+}
+.credits {
+  font-size: 0.78rem;
+}

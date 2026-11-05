@@ -277,6 +277,12 @@ export function App() {
     setRoute('lesson');
   };
 
+  // Instrument sound (spec Q): load the chosen sample set (falls back to the classic piano on failure).
+  const soundId = settings?.sound ?? 'classic';
+  useEffect(() => {
+    void piano.setSound(soundId);
+  }, [soundId]);
+
   // First run: remember the current version silently and when this device started (untimed first week).
   useEffect(() => {
     if (settings && !settings.seenVersion) updateSettings({ seenVersion: APP_VERSION });

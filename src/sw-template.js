@@ -7,6 +7,8 @@ const BUILD = '__BUILD__';
 const CACHE = `toneturn-${VERSION}-${BUILD}`;
 const PRECACHE = __PRECACHE__;
 const BASE = '__BASE__';
+/** Instrument samples (spec Q): downloaded on first use, kept across app versions. */
+const SAMPLES = 'toneturn-samples-v1';
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(PRECACHE)));
@@ -22,7 +24,7 @@ self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches
       .keys()
-      .then((ks) => Promise.all(ks.filter((k) => k.startsWith('toneturn-') && k !== CACHE).map((k) => caches.delete(k))))
+      .then((ks) => Promise.all(ks.filter((k) => k.startsWith('toneturn-') && k !== CACHE && k !== SAMPLES).map((k) => caches.delete(k))))
       .then(() => self.clients.claim()),
   );
 });
@@ -34,6 +36,29 @@ self.addEventListener('fetch', (e) => {
   if (url.origin !== location.origin) return;
   if (req.mode === 'navigate') {
     e.respondWith(fetch(req).catch(() => caches.match(BASE + 'index.html')));
+    return;
+  }
+  if (url.pathname.startsWith(BASE + 'samples/')) {
+    e.respondWith(
+      caches.open(SAMPLES).then((c) =>
+        // The list of sets is network-first (new instruments appear); the audio files are cache-first.
+        url.pathname.endsWith('manifest.json')
+          ? fetch(req)
+              .then((res) => {
+                if (res.ok) c.put(req, res.clone());
+                return res;
+              })
+              .catch(() => c.match(req))
+          : c.match(req).then(
+          (hit) =>
+            hit ||
+            fetch(req).then((res) => {
+              if (res.ok) c.put(req, res.clone());
+              return res;
+            }),
+        ),
+      ),
+    );
     return;
   }
   e.respondWith(
