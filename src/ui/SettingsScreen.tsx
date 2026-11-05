@@ -219,6 +219,17 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account }: Pr
       <SoundSetting t={t} value={s.sound ?? 'classic'} onChange={(sound) => onChange({ sound })} />
 
       <section className="set-card">
+        <h2>🎷 {t.instrumentTitle}</h2>
+        <p className="field-hint">{t.instrumentHint}</p>
+        <Seg
+          label={t.instrumentTitle}
+          value={s.instrument ?? 'voice'}
+          options={(['voice', 'C', 'Bb', 'Eb', 'F'] as const).map((k) => [k, t.instrumentNames[k]] as [typeof k, string])}
+          onChange={(instrument) => onChange({ instrument })}
+        />
+      </section>
+
+      <section className="set-card">
         <h2>♿ {t.secAccess}</h2>
         <Seg
           label={t.inputMode}

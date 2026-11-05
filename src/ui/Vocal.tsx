@@ -47,8 +47,11 @@ import { piano, SIMULATED, store } from './services';
 
 const fill = (s: string, v: Record<string, string | number>) => Object.entries(v).reduce((a, [k, x]) => a.replaceAll(`{${k}}`, String(x)), s);
 
+/** Written pitch = concert pitch + this (B♭ instruments read a tone higher, E♭ a major sixth, F a fifth). */
+export const TRANSPOSE: Record<NonNullable<Settings['instrument']>, number> = { voice: 0, C: 0, Bb: 2, Eb: 9, F: 7 };
+
 export function noteLabel(midi: number, settings: Settings, key: PitchClass | null = null): string {
-  const s = spellMidi(midi, key);
+  const s = spellMidi(midi + TRANSPOSE[settings.instrument ?? 'voice'], key && TRANSPOSE[settings.instrument ?? 'voice'] ? null : key);
   const p: PitchClass = { letter: s.letter as PitchClass['letter'], acc: s.acc };
   return `${displayNote(p, namingFor(settings.naming, settings.uiLang), settings.uiLang)}${s.octave}`;
 }
@@ -137,6 +140,8 @@ function Sparkline({ values }: { values: number[] }) {
 }
 
 const TREND_KEYS: MetricKey[] = ['intonation', 'stability', 'settle', 'duration', 'vibratoRegularity', 'transition', 'timing', 'landing'];
+
+const isInstrument = (s: Settings) => !!s.instrument && s.instrument !== 'voice';
 
 /** Sung passages from memory: scales, melodies, leaps, rhythmic lines (reference requests count, spec P.9). */
 const memoryItem = (it: VocalItem) => ['scale', 'melody', 'leap', 'rhythmic'].includes(it.kind);
@@ -954,7 +959,7 @@ function VocalSession({
       <div className="vocal-actions">
         {phase === 'ready' && (
           <button className="btn mega" onClick={() => void take()}>
-            🎤 {t.vocalSing}
+            {isInstrument(settings) ? `🎷 ${t.playNow}` : `🎤 ${t.vocalSing}`}
           </button>
         )}
         {phase === 'calibrating' && <p className="vocal-cue">🤫 {t.gateWait}</p>}

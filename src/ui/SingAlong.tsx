@@ -178,7 +178,7 @@ export function SingAlongScreen({ t, settings, onBack }: { t: Strings; settings:
       </label>
       <div className="vocal-actions">
         <button className="btn mega" disabled={phase === 'count' || phase === 'singing'} onClick={() => void run()}>
-          🎤 {phase === 'done' ? t.vocalRetry : t.vocalSing}
+          {settings.instrument && settings.instrument !== 'voice' ? '🎷' : '🎤'} {phase === 'done' ? t.vocalRetry : settings.instrument && settings.instrument !== 'voice' ? t.playNow : t.vocalSing}
         </button>
       </div>
     </main>
