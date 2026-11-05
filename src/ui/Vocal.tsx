@@ -774,8 +774,8 @@ function VocalSession({
       completedAt: now,
       firstTry: perItem.filter((x) => x.score >= 0.6).length,
       total: perItem.length,
-      // The server accepts at most 15 XP per item passed on the first try (migration 1): stay inside it.
-      xp: Math.min(15 * perItem.filter((x) => x.score >= 0.6).length, Math.round(rated.reduce((a, x) => a + x.score, 0) * 10) + (passed ? 10 : 0)),
+      // The server accepts at most 20 XP per item (migration 8): stay inside it.
+      xp: Math.min(20 * perItem.length, Math.round(rated.reduce((a, x) => a + x.score, 0) * 10) + (passed ? 10 : 0)),
       missed: [],
       items: [
         ...rated.map((x) => ({ id: `${sessionId}:${x.it.id}`, skill: 'technique' as const, difficulty: x.it.difficulty, correct: x.score >= 0.6, tag: `vocal:${x.it.id}`, score: x.score, m: best.current[x.it.id]?.take.m })),
