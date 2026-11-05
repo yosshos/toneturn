@@ -519,3 +519,105 @@ Built on the home-screen art: three notes appear (left, middle, right) with two 
 - **Levels**: P5 / P8 / M3 only → all qualities → note names in Do-Re-Mi → ear mode (hear the notes instead of reading the names).
 - Feeds the *Intervals* skill (first taps only, rated like other items; difficulty from level and response time).
 - Wrong labels are near misses (m3 ↔ M3, P4 ↔ ♯4, ♭5 ↔ P5), never absurd ones.
+
+## Audit — 2026-11-05: spec items not built yet
+
+| Item (spec section) | State |
+| --- | --- |
+| Vocal range calibration — sing / choose lowest and highest comfortable notes, fit sung drills into the range ("Vocal range and per-note feedback") | **not built** — sung drills are octave-insensitive instead. Becomes P.0 below. |
+| Slash chords (C/D) — bass modelled apart from root and quality (Progression…) | not built (triad inversions are built) |
+| Review: hear your answer next to the right one (Progression…) | not built (recap shows the text only) |
+| Weekly leagues with cohorts, global scoreboard (Challenge modes 3) | partial — weekly XP among friends, daily-challenge global rank; no cohort leagues |
+| Gems for cosmetic themes / instrument sounds (Challenge modes 3) | not built (gems buy freezes only) → Q below |
+| Asynchronous 3-question friend duels (Challenge modes 4) | not built |
+| Weekly puzzle: the same versioned puzzle for everyone online (Challenge modes 2) | local only |
+| Room QR code, daily keys re-seed before 2029 (I) | not built |
+| Memory games later: tempo ladder, swing call-and-response, jazz phrases, online (C.4) | not built → R below |
+| Rhythm later: 12/8, hold-to-sustain durations (G) | not built |
+| Runs: diagnosis by weakest factor, visual pitch trace (K) | not built → the trace is P.3 |
+| Jazz 2: licks, swing melodies; melodic-minor teaching example (Teaching) | not built |
+| "Players at your level solve this in …" (L.5) | not built (needs server aggregates) |
+
+## Addendum — 2026-11-05 (product owner): P. Vocal technique — a measurable singing track
+
+Singing so far tests *which* note was sung (intervals, degrees, runs). This track trains *how* it is sung, from one steady note up to fast passages, and every step is **measured** from the pitch track (YIN, 20 ms hop) so progress shows on the Skill Map and in trends.
+
+### P.0 Before the first exercise: the voice profile
+- **Range calibration** (the unbuilt spec item): a slow guided glide down and up on "ah", or pick the notes by hand; keep the comfortable low / high (not the extremes) and show them on a keyboard. Retake any time in Settings. Never label the person with a voice type; it is only "your range".
+- Every sung exercise is placed inside this range (transpose the key; never change the intervals).
+- **Headphones advised.** Without them the reference note stops as soon as the voice starts, so the piano never leaks into the measurement; an echo check warns when it does.
+- **Voice care**: a 2-minute warm-up suggestion before the session, no exercise sits at the range edges until the player opts in, a break suggestion after ~15 minutes of singing, and "stop if it hurts" in the intro.
+
+### P.1 Metrics (pure functions over the frames, unit-tested on synthetic tracks)
+| Metric | How | Initial bands (calibrate with real singers) |
+| --- | --- | --- |
+| **Onset / settle** | time from voice onset until the pitch stays within ±25 ¢; scoop size at onset | ≤150 ms excellent · ≤300 good · ≤600 fair |
+| **Intonation** | mean signed cents over the sustained part (centre of the vibrato when there is one) | ≤10 ¢ · ≤20 · ≤35 |
+| **Stability (straight tone)** | standard deviation of cents after removing the slow trend | ≤6 ¢ · ≤12 · ≤20 |
+| **Drift** | slope of the slow trend (¢/s) — going flat at the end of the breath | ≤3 · ≤6 · ≤10 ¢/s |
+| **Vibrato rate** | cycles per second from the detrended curve (≥3 cycles) | 5–6.5 Hz ideal · 4.5–7 good |
+| **Vibrato extent** | mean half peak-to-peak in cents; target by style: *pop / musical* 20–50 ¢, *classical* 40–100 ¢ (player setting) | inside the style band |
+| **Vibrato regularity** | coefficient of variation of cycle lengths and of extents | ≤10 % excellent · ≤20 % good |
+| **Vibrato control** | straight → vibrato on cue (delay error), vibrato → straight (stop error) | ≤300 ms good |
+| **Breath / duration** | longest stretch that keeps intonation and stability inside "good" | per level (3 → 5 → 8 → 12 s) |
+| **Transition** (melodies) | time from leaving one note to settling on the next; overshoot / scoop at landing; legato = no voice break | per tempo |
+| **Timing** (rhythmic passages) | each note's settle moment vs. the beat grid (latency-compensated) | ±60 ms good at 90 BPM |
+
+Unclear frames (low confidence / noise) are left out; a take with too little clean voice is "unclear" and is never penalised.
+
+### P.2 The ladder (each level: 3–5 short items with its own pass bands)
+1. **Match and hold** — one note in the middle of the range, unison with the reference; 3 s, then 5 s, then 8 s. Then *without* the reference sounding while singing.
+2. **Straight tone** — the same with no vibrato allowed (stability scored).
+3. **Vibrato** — *delayed vibrato* (2 s straight, then vibrato), *on / off on cue*, and *steady vibrato* graded on rate, extent and regularity. Optional pulse guide at 5.5 Hz for beginners.
+4. **Across the range** — the same holds on 5 notes spread over the calibrated range. Result: a **range map** showing where stability, intonation or vibrato break down.
+5. **Messa di voce** — hold one note, swell and fade (≥ 6 dB change) while the pitch stays within ±15 ¢.
+6. **Glides (sirens)** — slide between two notes smoothly and land in tune.
+7. **Given melodies, stepwise** — 3–6 notes, seconds only, shown and heard once; per-note intonation + transitions + legato.
+8. **Wider intervals** — thirds → fifths → sixths → octaves; landing accuracy, overshoot, settle time.
+9. **Faster transitions** — the same melodies on a metronome: quarters → eighths → triplets → sixteenths; timing and transitions scored together.
+10. **Agility** — continues into *Riffs & runs* (addendum K), the top of the track.
+
+Side drill at any level: **clean onsets (staccato)** — short notes that start on pitch with no scoop.
+
+### P.3 Feedback
+- **Live pitch trace** (also fills the gap in K): the target band, the sung curve on top, vibrato visible as a wave; text summary for screen readers.
+- **After each take**: the 3 most relevant metrics as bars against their bands, one rule-based tip from the weakest metric (e.g. drifts flat → "keep the air going to the end of the note"), and *listen back* (kept in memory for this screen only, never uploaded).
+- **Trends per metric** (same chart component as the skill trends).
+
+### P.4 Ratings
+- New Skill Map axis **Vocal technique** (sub-scores: intonation, stability, vibrato, range evenness, transitions). *Sung pitch accuracy* and *Vocal agility* stay.
+- Item difficulty from level, duration, register position and tolerance; a take's score a ∈ [0, 1] is the weighted mean of its metric scores (weights per level, documented in code).
+- Placement gets one short hold item for this axis (voice mode only).
+
+### P.5 Where it lives
+A **Vocal technique** section on Home (voice mode), plus a 3-minute **daily vocal warm-up** built from levels 1–6 that also counts for the streak.
+
+## Addendum — 2026-11-05 (product owner): Q. Instrument sounds
+
+- A **Sound** setting used by every exercise: *Classic* (today's synthesised piano — offline, no download, the default), *Grand piano* (Salamander Grand Piano V3, CC BY 3.0 — credit Alexander Holm on the About screen), and more instruments from **VCSL** (CC0): e.g. upright piano, organ, celesta / glockenspiel, plucked strings.
+- Samples **hosted with the app** (no third-party CDN), every 3rd semitone, compressed (~1–3 MB per instrument), downloaded only when chosen, then cached offline; progress bar; fall back to Classic on failure.
+- Rhythm keeps its percussion; the drone gets a matching sustained timbre.
+- Gems may unlock **cosmetic** extras only (themes, extra instruments beyond the base set) — nothing that changes difficulty or scoring.
+
+## Addendum — 2026-11-05 (product owner): R. Every game for groups — same device and live between devices
+
+- **Same device** wherever it fits: 1–4 players (turns, or split screen for speed games). To add: Riffs & runs, daily challenge in practice mode, ghost race against a friend's run.
+- **Live between devices ("Kahoot-style")**: one device hosts (plays the sound, shows a join code + QR); players join from phones with a nickname; everyone answers at once; the server grades and scores accuracy + speed; a live leaderboard with movement after every question; podium; rematch.
+- Games: question sets (built), True or false?, Echo Chain / Beat Echo as simultaneous elimination rounds, vocal holds (P) as "who holds steadiest".
+- Extends the existing room migration with game kinds; reuses grading, nicknames and limits from I.
+
+## Proposals for review — 2026-11-05: S. Further ideas
+
+1. **Daily workout planner** — "I have 5 / 10 / 20 minutes": a plan mixing the weakest skill, due reviews, a vocal warm-up and a game.
+2. **Record and compare** — one short local take per vocal level each week; "you a month ago vs now".
+3. **Harmony singing** — sing a third / sixth above a played melody, or the missing chord tone; scored like P.
+4. **Combined dictation** — a 2-bar melody with rhythm: hear it, write it on the staff.
+5. **Slash chords and bass lines** — finish the spec item.
+6. **Hear your answer** — in the recap and review, play what you answered next to the right one.
+7. **Weekly leagues** — cohorts of ~30 by level, promotion / relegation by weekly XP.
+8. **Async friend duels** — 3 questions, the friend plays later; result as a notification.
+9. **Achievements** — "8-second steady hold", "even vibrato", "first octave leap in tune", "100 true-or-false in a row".
+10. **Song sing-along** — public-domain songs with a scrolling staff and live pitch scoring (own design).
+11. **Absolute pitch corner** (optional, clearly labelled), tracked apart from relative skills.
+12. **Instrument mode** — answer on an acoustic instrument through the microphone, with per-instrument transposition.
+13. **Teacher additions** — assign vocal technique levels and see per-metric results per student.
