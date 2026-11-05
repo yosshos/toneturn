@@ -39,7 +39,12 @@ export function Recap({ t, view, settings, onReplay, onAgain, onHome, onNext, ne
       if (k < 1) raf = requestAnimationFrame(step);
     };
     raf = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(raf);
+    // Animation frames can be paused (background tab, hidden pane): always land on the final value.
+    const done = setTimeout(() => setXp(sm.xp), 1200);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(done);
+    };
   }, [sm.xp]);
 
   const lang = settings.uiLang;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { modeChoices, modeIdQuestion, modesLesson, MODE_ID_LEVELS, mulberry32, questionTag, compareStimulus } from '../src/engine/lesson';
+import { modeChoices, modeIdQuestion, modesLesson, MODE_ID_LEVELS, mulberry32, questionTag, compareStimulus, WRONG_NOTE_LEVELS, wrongNotesLesson, wrongNoteMidis, wrongNoteQuestion } from '../src/engine/lesson';
 import { MODE_NAMES, MODE_STEPS, modeDistance, type ModeId } from '../src/engine/modes';
 import { parseMode } from '../src/engine/parser';
 import { questionFromTag } from '../src/engine/adaptive';
@@ -57,5 +57,35 @@ describe('modes', () => {
     expect(r.choices).toEqual(q.choices);
     const cmp = compareStimulus(q, 'locrian')!;
     expect(cmp[0]).toMatchObject({ kind: 'notes' });
+  });
+});
+
+describe('spot the wrong note', () => {
+  it('never moves a note onto another scale note; positions 2 … n-1', () => {
+    for (let lv = 1; lv <= WRONG_NOTE_LEVELS.length; lv++) {
+      const L = wrongNotesLesson(lv, 100 + lv);
+      expect(L.questions).toHaveLength(6);
+      for (const q of L.questions) {
+        if (q.kind !== 'wrong-note') throw new Error('kind');
+        const diff = q.midis.map((m, i) => m - q.correct[i]);
+        expect(diff.filter((d) => d !== 0)).toHaveLength(1);
+        expect(q.correct).not.toContain(q.midis[q.position - 1]);
+        expect(q.choices).toContain(q.answer);
+        expect(q.choices[0]).toBe(2);
+      }
+    }
+  });
+  it('ambiguous moves are refused (E→F in C major lands on F)', () => {
+    expect(wrongNoteMidis(60, 'ionian', 3, 1)).toBeNull();
+    expect(wrongNoteMidis(60, 'ionian', 3, -1)!.heard[2]).toBe(63);
+  });
+  it('voice: numbers in English and Hebrew, up to 8; review rebuilds it', () => {
+    const q = wrongNoteQuestion('x', pc('G'), 'diminished', 8, 1, 0.3, 1500)!;
+    for (const c of q.choices) {
+      expect(parseAnswer(q, [answerWord(q, c, 'en')])).toMatchObject({ kind: 'answer', value: c });
+      expect(parseAnswer(q, [answerWord(q, c, 'he')])).toMatchObject({ kind: 'answer', value: c });
+    }
+    const r = questionFromTag(questionTag(q), 1, 'r1')!;
+    expect(r).toMatchObject({ kind: 'wrong-note', position: 8, mode: 'diminished' });
   });
 });

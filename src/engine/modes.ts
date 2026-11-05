@@ -31,7 +31,15 @@ export type ModeId =
   | 'diminished'
   | 'major-pentatonic'
   | 'minor-pentatonic'
-  | 'blues';
+  | 'blues'
+  | 'major-blues'
+  | 'bebop-dominant'
+  | 'bebop-major'
+  | 'double-harmonic'
+  | 'hungarian-minor'
+  | 'hirajoshi'
+  | 'in-sen'
+  | 'augmented';
 
 /** Semitones from the tonic up to (and including) the octave. */
 export const MODE_STEPS: Record<ModeId, number[]> = {
@@ -61,6 +69,14 @@ export const MODE_STEPS: Record<ModeId, number[]> = {
   'major-pentatonic': [0, 2, 4, 7, 9, 12],
   'minor-pentatonic': [0, 3, 5, 7, 10, 12],
   blues: [0, 3, 5, 6, 7, 10, 12],
+  'major-blues': [0, 2, 3, 4, 7, 9, 12],
+  'bebop-dominant': [0, 2, 4, 5, 7, 9, 10, 11, 12],
+  'bebop-major': [0, 2, 4, 5, 7, 8, 9, 11, 12],
+  'double-harmonic': [0, 1, 4, 5, 7, 8, 11, 12],
+  'hungarian-minor': [0, 2, 3, 6, 7, 8, 11, 12],
+  hirajoshi: [0, 2, 3, 7, 8, 12],
+  'in-sen': [0, 1, 5, 7, 10, 12],
+  augmented: [0, 3, 4, 7, 8, 11, 12],
 };
 
 export const MODE_FAMILY: Record<ModeId, 'major' | 'melodic' | 'harmonic' | 'other'> = {
@@ -90,6 +106,14 @@ export const MODE_FAMILY: Record<ModeId, 'major' | 'melodic' | 'harmonic' | 'oth
   'major-pentatonic': 'other',
   'minor-pentatonic': 'other',
   blues: 'other',
+  'major-blues': 'other',
+  'bebop-dominant': 'other',
+  'bebop-major': 'other',
+  'double-harmonic': 'other',
+  'hungarian-minor': 'other',
+  hirajoshi: 'other',
+  'in-sen': 'other',
+  augmented: 'other',
 };
 
 /** Names (English / Hebrew) and spoken aliases accepted by the voice grammar. */
@@ -119,7 +143,15 @@ export const MODE_NAMES: Record<ModeId, { en: string; he: string; say: { en: str
   diminished: { en: 'Diminished (half–whole)', he: 'מוקטן (חצי–שלם)', say: { en: ['diminished', 'half whole', 'octatonic'], he: ['מוקטן', 'דימיניש', 'חצי שלם'] } },
   'major-pentatonic': { en: 'Major pentatonic', he: 'פנטטוני מז׳ורי', say: { en: ['major pentatonic'], he: ['פנטטוני מז׳ורי', 'פנטטוני מזורי'] } },
   'minor-pentatonic': { en: 'Minor pentatonic', he: 'פנטטוני מינורי', say: { en: ['minor pentatonic'], he: ['פנטטוני מינורי'] } },
-  blues: { en: 'Blues', he: 'בלוז', say: { en: ['blues'], he: ['בלוז'] } },
+  blues: { en: 'Blues (minor)', he: 'בלוז (מינורי)', say: { en: ['blues', 'minor blues'], he: ['בלוז', 'בלוז מינורי'] } },
+  'major-blues': { en: 'Major blues', he: 'בלוז מז׳ורי', say: { en: ['major blues'], he: ['בלוז מז׳ורי', 'בלוז מזורי'] } },
+  'bebop-dominant': { en: 'Bebop dominant', he: 'ביבופ דומיננטי', say: { en: ['bebop dominant', 'bebop'], he: ['ביבופ דומיננטי', 'ביבופ'] } },
+  'bebop-major': { en: 'Bebop major', he: 'ביבופ מז׳ורי', say: { en: ['bebop major'], he: ['ביבופ מז׳ורי', 'ביבופ מזורי'] } },
+  'double-harmonic': { en: 'Double harmonic (Arabic)', he: 'הרמוני כפול (ערבי)', say: { en: ['double harmonic', 'arabic', 'byzantine'], he: ['הרמוני כפול', 'ערבי', 'חיג׳אז קאר'] } },
+  'hungarian-minor': { en: 'Hungarian minor', he: 'מינור הונגרי', say: { en: ['hungarian minor', 'gypsy minor'], he: ['מינור הונגרי', 'הונגרי'] } },
+  hirajoshi: { en: 'Hirajoshi', he: 'הירג׳ושי', say: { en: ['hirajoshi'], he: ['הירג׳ושי', 'הירגושי', 'יפני'] } },
+  'in-sen': { en: 'In-sen', he: 'אין־סן', say: { en: ['in sen', 'insen'], he: ['אין סן', 'אינסן'] } },
+  augmented: { en: 'Augmented (hexatonic)', he: 'מוגדל (הקסטוני)', say: { en: ['augmented scale', 'hexatonic', 'augmented'], he: ['סולם מוגדל', 'הקסטוני', 'מוגדל'] } },
 };
 
 /**

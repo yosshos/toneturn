@@ -189,6 +189,23 @@ export interface RunIdQuestion extends QBase {
   answer: string;
 }
 
+/** Hear a scale with one wrong note and say which note (its position, 2 … n−1) was wrong. */
+export interface WrongNoteQuestion extends QBase {
+  kind: 'wrong-note';
+  key: PitchClass;
+  mode: ModeId;
+  /** What is played (one note moved by a semitone). */
+  midis: number[];
+  /** The scale as it should be. */
+  correct: number[];
+  /** 1-based position of the wrong note; also the answer. */
+  position: number;
+  alt: 1 | -1;
+  each: number;
+  answer: number;
+  choices: number[];
+}
+
 /** Hear a scale from a tonic and name its mode (major, melodic-minor and harmonic-minor modes, symmetric scales). */
 export interface ModeIdQuestion extends QBase {
   kind: 'mode-id';
@@ -230,6 +247,7 @@ export interface ProgressionQuestion extends QBase {
 
 export type Question =
   | ModeIdQuestion
+  | WrongNoteQuestion
   | SeventhQuestion
   | ProgressionQuestion
   | NameSeqQuestion
@@ -285,6 +303,7 @@ export function questionSkill(q: Question): SkillId {
     case 'run-id':
       return 'agility';
     case 'mode-id':
+    case 'wrong-note':
       return 'modes';
     case 'name-seq':
       return q.given === 'sound' ? 'notes' : 'degrees';
@@ -352,6 +371,7 @@ export type LessonId =
   | 'songs'
   | 'runs-workshop'
   | 'modes'
+  | 'wrong-notes'
   | 'placement'
   | 'review'
   | 'weekly-puzzle';
@@ -1177,6 +1197,8 @@ export function makeLesson(id: LessonId, seed = Date.now()): LessonDef {
   switch (id) {
     case 'modes':
       return modesLesson(1, seed);
+    case 'wrong-notes':
+      return wrongNotesLesson(1, seed);
     case 'runs':
       return runsLesson(seed);
     case 'note-sequences':
@@ -1235,6 +1257,8 @@ export function explainStimulus(q: Question): Stimulus[] {
   switch (q.kind) {
     case 'mode-id':
       return [{ kind: 'notes', midis: q.midis, each: q.each * 1.4 }];
+    case 'wrong-note':
+      return [{ kind: 'notes', midis: q.correct, each: q.each * 1.3 }];
     case 'degree': {
       const s: Stimulus[] = [{ kind: 'note', midi: q.targetMidi, duration: 1.0 }];
       if (q.answer !== 1) s.push({ kind: 'resolve', fromMidi: q.targetMidi, toMidi: nearestTonicMidi(q.key, q.targetMidi) });
@@ -1284,6 +1308,9 @@ export function explainStimulus(q: Question): Stimulus[] {
  */
 export function compareStimulus(q: Question, given: Answer): Stimulus[] | null {
   switch (q.kind) {
+    case 'wrong-note':
+      // What you heard, then the scale as it should be.
+      return [{ kind: 'notes', midis: q.midis, each: q.each }, { kind: 'rest', duration: 0.6 }, { kind: 'notes', midis: q.correct, each: q.each }];
     case 'mode-id': {
       if (typeof given !== 'string' || given === q.answer || !(given in MODE_STEPS)) return null;
       const other = modeMidis(q.midis[0], given as ModeId, q.dir);
@@ -1472,6 +1499,8 @@ export function renderStimulus(stimulus: Stimulus[]): { events: NoteEvent[]; len
 export function questionTag(q: Question): string {
   const k = (p: PitchClass) => `${p.letter}${p.acc}`;
   switch (q.kind) {
+    case 'wrong-note':
+      return `wrongnote:${k(q.key)}:${q.mode}:${q.position}:${q.alt}:${q.each}`;
     case 'mode-id':
       return `modeid:${k(q.key)}:${q.mode}:${q.choices.join(',')}:${q.dir}:${q.each}`;
     case 'degree':
@@ -1542,9 +1571,11 @@ export function modeIdQuestion(id: string, key: PitchClass, mode: ModeId, choice
 export const MODE_ID_LEVELS: { pool: ModeId[]; choices: number; dir: 'up' | 'updown'; each: number; base: number }[] = [
   { pool: ['ionian', 'aeolian'], choices: 2, dir: 'updown', each: 0.42, base: 900 },
   { pool: ['ionian', 'dorian', 'mixolydian', 'aeolian'], choices: 3, dir: 'updown', each: 0.4, base: 1050 },
+  { pool: ['major-pentatonic', 'minor-pentatonic', 'blues', 'major-blues', 'ionian', 'aeolian'], choices: 4, dir: 'updown', each: 0.38, base: 1150 },
   { pool: ['ionian', 'dorian', 'phrygian', 'lydian', 'mixolydian', 'aeolian', 'locrian'], choices: 4, dir: 'updown', each: 0.36, base: 1200 },
   { pool: ['aeolian', 'harmonic-minor', 'melodic-minor', 'dorian', 'phrygian-dominant', 'phrygian', 'lydian-dominant', 'mixolydian'], choices: 4, dir: 'updown', each: 0.34, base: 1300 },
   { pool: ['melodic-minor', 'dorian-b2', 'lydian-augmented', 'lydian-dominant', 'mixolydian-b6', 'locrian-sharp2', 'altered', 'harmonic-minor', 'locrian-nat6', 'ionian-sharp5', 'dorian-sharp4', 'phrygian-dominant', 'lydian-sharp2', 'ultralocrian'], choices: 4, dir: 'updown', each: 0.32, base: 1450 },
+  { pool: ['bebop-dominant', 'bebop-major', 'mixolydian', 'ionian', 'double-harmonic', 'phrygian-dominant', 'hungarian-minor', 'harmonic-minor', 'hirajoshi', 'in-sen', 'augmented', 'whole-tone', 'blues', 'major-blues'], choices: 4, dir: 'updown', each: 0.3, base: 1550 },
   { pool: ['ionian', 'dorian', 'phrygian', 'lydian', 'mixolydian', 'aeolian', 'locrian', 'melodic-minor', 'dorian-b2', 'lydian-augmented', 'lydian-dominant', 'mixolydian-b6', 'locrian-sharp2', 'altered', 'harmonic-minor', 'locrian-nat6', 'ionian-sharp5', 'dorian-sharp4', 'phrygian-dominant', 'lydian-sharp2', 'ultralocrian', 'whole-tone', 'diminished'], choices: 4, dir: 'up', each: 0.26, base: 1600 },
 ];
 
@@ -1568,4 +1599,67 @@ export function modesLesson(level: number, seed = Date.now()): LessonDef {
     return modeIdQuestion(`mode${i + 1}`, key, mode, modeChoices(mode, L.pool, L.choices, rnd), L.dir, L.each, difficulty);
   });
   return { id: 'modes', version: 1, skill: 'modes', scoring: { xpPerCorrect: 10, attemptLimit: 2 }, intro: [], questions };
+}
+
+
+// ======================================================================= spot the wrong note
+
+/** The scale up from the tonic with the note at `position` (1-based) moved by `alt`, or null when that
+ *  would land on another note of the scale (ambiguous). */
+export function wrongNoteMidis(tonicMidi: number, mode: ModeId, position: number, alt: 1 | -1): { heard: number[]; correct: number[] } | null {
+  const correct = MODE_STEPS[mode].map((s) => tonicMidi + s);
+  if (position < 2 || position > correct.length - 1) return null;
+  const moved = correct[position - 1] + alt;
+  if (correct.includes(moved)) return null;
+  const heard = correct.slice();
+  heard[position - 1] = moved;
+  return { heard, correct };
+}
+
+export function wrongNoteQuestion(id: string, key: PitchClass, mode: ModeId, position: number, alt: 1 | -1, each: number, difficulty: number): WrongNoteQuestion | null {
+  const tonic = placeInRange(pcValue(key), 55, 66);
+  const w = wrongNoteMidis(tonic, mode, position, alt);
+  if (!w) return null;
+  const n = w.correct.length;
+  return {
+    id,
+    kind: 'wrong-note',
+    key,
+    mode,
+    midis: w.heard,
+    correct: w.correct,
+    position,
+    alt,
+    each,
+    answer: position,
+    choices: Array.from({ length: n - 2 }, (_, i) => i + 2),
+    stimulus: [{ kind: 'note', midi: tonic, duration: 0.9 }, { kind: 'rest', duration: 0.3 }, { kind: 'notes', midis: w.heard, each }],
+    difficulty,
+  };
+}
+
+export const WRONG_NOTE_LEVELS: { pool: ModeId[]; each: number; base: number }[] = [
+  { pool: ['ionian'], each: 0.5, base: 900 },
+  { pool: ['ionian', 'aeolian', 'major-pentatonic', 'minor-pentatonic'], each: 0.45, base: 1050 },
+  { pool: ['major-pentatonic', 'minor-pentatonic', 'blues', 'major-blues'], each: 0.42, base: 1150 },
+  { pool: ['ionian', 'dorian', 'phrygian', 'lydian', 'mixolydian', 'aeolian', 'locrian'], each: 0.4, base: 1250 },
+  { pool: ['harmonic-minor', 'melodic-minor', 'phrygian-dominant', 'lydian-dominant', 'altered', 'dorian-sharp4', 'mixolydian-b6', 'locrian-sharp2'], each: 0.36, base: 1400 },
+  { pool: ['bebop-dominant', 'bebop-major', 'double-harmonic', 'hungarian-minor', 'hirajoshi', 'in-sen', 'whole-tone', 'diminished', 'lydian-augmented', 'ultralocrian'], each: 0.3, base: 1550 },
+];
+
+/** "Spot the wrong note", level 1–6: 6 questions. */
+export function wrongNotesLesson(level: number, seed = Date.now()): LessonDef {
+  const L = WRONG_NOTE_LEVELS[Math.max(0, Math.min(WRONG_NOTE_LEVELS.length - 1, level - 1))];
+  const rnd = mulberry32(seed);
+  const questions: Question[] = [];
+  for (let tries = 0; questions.length < 6 && tries < 200; tries++) {
+    const mode = L.pool[Math.floor(rnd() * L.pool.length)];
+    const n = MODE_STEPS[mode].length;
+    const position = 2 + Math.floor(rnd() * (n - 2));
+    const alt: 1 | -1 = rnd() < 0.5 ? 1 : -1;
+    const key = pc(MODE_KEYS[Math.floor(rnd() * MODE_KEYS.length)]);
+    const q = wrongNoteQuestion(`wn${questions.length + 1}`, key, mode, position, alt, L.each, L.base + (n > 8 ? 60 : 0));
+    if (q) questions.push(q);
+  }
+  return { id: 'wrong-notes', version: 1, skill: 'modes', scoring: { xpPerCorrect: 10, attemptLimit: 2 }, intro: [], questions };
 }

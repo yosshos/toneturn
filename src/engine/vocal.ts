@@ -640,11 +640,11 @@ export const MODE_LEVELS: VocalLevel[] = [
   L(1, 0.6, [SC('C', 'ionian', undefined, 'figure', 900, 5), SC('F', 'ionian', 'ionian', 'figure', 950, 5), SC('D', 'ionian', undefined, 'figure', 1000)]),
   L(2, 0.6, [SC('G', 'ionian', 'ionian', 'figure', 1000), SC('A', 'aeolian', undefined, 'figure', 1050), SC('C', 'major-pentatonic', 'major-pentatonic', 'tonic', 1050)]),
   L(3, 0.6, [SC('D', 'dorian', 'dorian', 'figure', 1100), SC('G', 'mixolydian', 'mixolydian', 'tonic', 1150), SC('A', 'minor-pentatonic', 'minor-pentatonic', 'tonic', 1100)]),
-  L(4, 0.6, [SC('F', 'lydian', 'lydian', 'tonic', 1200), SC('E', 'phrygian', 'phrygian', 'tonic', 1250), SC('C', 'blues', undefined, 'tonic', 1200)]),
+  L(4, 0.6, [SC('F', 'lydian', 'lydian', 'tonic', 1200), SC('E', 'phrygian', 'phrygian', 'tonic', 1250), SC('C', 'blues', undefined, 'tonic', 1200), SC('G', 'major-blues', 'major-blues', 'tonic', 1200)]),
   L(5, 0.58, [SC('A', 'harmonic-minor', 'harmonic-minor', 'tonic', 1250), SC('C', 'melodic-minor', 'melodic-minor', 'tonic', 1300), SC('B', 'locrian', 'locrian', 'tonic', 1350), SC('E', 'phrygian-dominant', 'phrygian-dominant', 'tonic', 1350)]),
-  L(6, 0.56, [SC('F', 'lydian-dominant', undefined, 'tonic', 1350), SC('C', 'whole-tone', undefined, 'tonic', 1400), SC('G', 'altered', undefined, 'tonic', 1450), SC('D', 'diminished', undefined, 'tonic', 1450)]),
+  L(6, 0.56, [SC('F', 'lydian-dominant', undefined, 'tonic', 1350), SC('C', 'whole-tone', undefined, 'tonic', 1400), SC('G', 'altered', undefined, 'tonic', 1450), SC('D', 'diminished', undefined, 'tonic', 1450), SC('G', 'bebop-dominant', 'bebop-dominant', 'tonic', 1450), SC('E', 'double-harmonic', undefined, 'tonic', 1450)]),
   L(7, 0.56, [SC('C', 'ionian', 'aeolian', 'tonic', 1350), SC('D', 'dorian', 'mixolydian', 'tonic', 1400), SC('F', 'lydian', 'ionian', 'tonic', 1400)]),
-  L(8, 0.54, [SC('G', 'mixolydian', 'altered', 'tonic', 1550), SC('Bb', 'lydian-dominant', 'altered', 'tonic', 1600), SC('A', 'harmonic-minor', 'phrygian', 'tonic', 1550), SC('E', 'diminished', 'whole-tone', 'tonic', 1650), SC('C', 'lydian-augmented', 'altered', 'tonic', 1650)]),
+  L(8, 0.54, [SC('G', 'mixolydian', 'altered', 'tonic', 1550), SC('Bb', 'lydian-dominant', 'altered', 'tonic', 1600), SC('A', 'harmonic-minor', 'phrygian', 'tonic', 1550), SC('E', 'diminished', 'whole-tone', 'tonic', 1650), SC('C', 'lydian-augmented', 'altered', 'tonic', 1650), SC('A', 'hungarian-minor', 'hungarian-minor', 'tonic', 1600)]),
 ].map((lv) => ({ ...lv, items: lv.items.map((it) => ({ ...it, id: it.id.replace(/^v/, 'm') })) }));
 
 const LETTER_PC: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };

@@ -4,7 +4,7 @@ import type { Strings } from '../i18n/strings';
 import { ratingsOf, type Progress } from '../storage/progress';
 import { dueReviews, localDay, reviewDue } from '../storage/progress';
 import { NodeIcon } from './Home';
-import { runLevelFor, MODE_ID_LEVELS } from '../engine/lesson';
+import { runLevelFor, MODE_ID_LEVELS, WRONG_NOTE_LEVELS } from '../engine/lesson';
 import { modesLevelFor } from '../engine/recommend';
 
 /** Home-screen practice row: Skill Map / placement, review queue, weekly puzzle. */
@@ -19,6 +19,7 @@ export function PracticeTools({
   onRuns,
   onDrone,
   onModes,
+  onWrongNotes,
 }: {
   t: Strings;
   progress: Progress;
@@ -30,6 +31,7 @@ export function PracticeTools({
   onRuns: () => void;
   onDrone: () => void;
   onModes: (level: number) => void;
+  onWrongNotes: (level: number) => void;
 }) {
   const daily = progress.daily?.[localDay(new Date())];
   const ratings = ratingsOf(progress);
@@ -114,6 +116,17 @@ export function PracticeTools({
               </button>
             );
           })}
+        </div>
+      </div>
+      <div className="modes-row">
+        <b>🔎 {t.wrongNotesTitle}</b>
+        <small>{t.wrongNotesHint}</small>
+        <div className="modes-levels" role="group" aria-label={t.wrongNotesTitle}>
+          {WRONG_NOTE_LEVELS.map((_, i) => (
+            <button key={i} className="chip" onClick={() => onWrongNotes(i + 1)}>
+              {i + 1}. {t.wrongNotesLevels[i]}
+            </button>
+          ))}
         </div>
       </div>
     </section>

@@ -183,6 +183,12 @@ export const LESSON_META: Record<LessonId, LessonMeta> = {
     icon: 'mic',
     tip: { en: 'Practise a run slowly on “ah”, then speed it up — the Runs workshop does this for you.', he: 'תרגלו ראן לאט על "אה", ואז האיצו — סדנת הראנים עושה את זה בשבילכם.' },
   },
+  'wrong-notes': {
+    title: { en: 'Spot the wrong note', he: 'מצאו את הצליל השגוי' },
+    blurb: { en: 'A scale with one wrong note: which one?', he: 'סולם עם צליל אחד שגוי: איזה?' },
+    icon: 'ear',
+    tip: { en: 'Sing the scale in your head along with it — the wrong note sticks out.', he: 'שירו את הסולם בראש יחד איתו — הצליל השגוי בולט.' },
+  },
   modes: {
     title: { en: 'Modes by ear', he: 'מודוסים בשמיעה' },
     blurb: { en: 'Hear a scale and name its mode — major, melodic and harmonic minor modes.', he: 'שומעים סולם ומזהים את המודוס — מודוסים של מז׳ור, מינור מלודי ומינור הרמוני.' },
@@ -318,6 +324,7 @@ export function answerWord(_q: Question, a: Answer, l: Lang, nm: Naming = 'lette
 }
 
 export function sayChoices(q: Question, l: Lang): string {
+  if (q.kind === 'wrong-note') return l === 'en' ? `a number, two to ${q.choices.length + 1}` : `מספר, משתיים עד ${q.choices.length + 1}`;
   if (q.kind === 'name-seq') return l === 'en' ? 'the note names in order' : 'את שמות התווים לפי הסדר';
   if (q.kind === 'degree-seq') return l === 'en' ? 'the degrees in order' : 'את הדרגות לפי הסדר';
   if (q.kind === 'note-name') return l === 'en' ? 'the note name' : 'את שם התו';
@@ -329,6 +336,8 @@ export function sayChoices(q: Question, l: Lang): string {
 /** Spoken prompt at the start of a round. */
 export function roundPrompt(q: Question, l: Lang, nm: Naming, n: number): string {
   switch (q.kind) {
+    case 'wrong-note':
+      return l === 'en' ? `Round ${n}. ${MODE_NAMES[q.mode].en} from ${spokenNote(q.key, nm, l)}. Which note is wrong? Say its number.` : `סיבוב ${n}. ${MODE_NAMES[q.mode].he} מ־${spokenNote(q.key, nm, l)}. איזה צליל שגוי? אמרו את המספר שלו.`;
     case 'mode-id':
       return l === 'en' ? `Round ${n}. Which mode is this? ${sayChoices(q, l)}?` : `סיבוב ${n}. איזה מודוס זה? ${sayChoices(q, l)}?`;
     case 'degree':
@@ -433,6 +442,8 @@ export function roundPrompt(q: Question, l: Lang, nm: Naming, n: number): string
 
 export function parseAnswer(q: Question, alternatives: string[], inputNaming: Naming = 'letter'): ParseResult<Answer> {
   switch (q.kind) {
+    case 'wrong-note':
+      return parseAlternatives(alternatives, parseDegree);
     case 'mode-id':
       return parseAlternatives(alternatives, (t) => parseMode(t, q.choices));
     case 'degree':
@@ -510,6 +521,8 @@ export function revealText(q: Question, l: Lang, nm: Naming): string {
 
 function revealCore(q: Question, l: Lang, nm: Naming): string {
   switch (q.kind) {
+    case 'wrong-note':
+      return l === 'en' ? `Note ${q.position} was ${q.alt > 0 ? 'too high' : 'too low'}. What you heard, then the right scale.` : `צליל ${q.position} היה ${q.alt > 0 ? 'גבוה מדי' : 'נמוך מדי'}. מה ששמעתם, ואז הסולם הנכון.`;
     case 'mode-id':
       return l === 'en' ? `It was ${MODE_NAMES[q.answer].en}. Your answer, then the right one.` : `זה היה ${MODE_NAMES[q.answer].he}. התשובה שלכם, ואז הנכונה.`;
     case 'note-name':
@@ -613,6 +626,7 @@ export interface ChoiceLabel {
 }
 
 export function choiceLabel(_q: Question, a: Answer, l: Lang, nm: Naming = 'letter'): ChoiceLabel {
+  if (_q.kind === 'wrong-note' && typeof a === 'number') return { big: String(a), small: l === 'en' ? 'note' : 'צליל', tone: (['mint', 'gold', 'lilac', 'coral'] as ChoiceLabel['tone'][])[a % 4] };
   if (_q.kind === 'mode-id' && typeof a === 'string' && a in MODE_STEPS) {
     const tones: ChoiceLabel['tone'][] = ['mint', 'gold', 'lilac', 'coral'];
     return { big: '', small: MODE_NAMES[a as ModeId][l], tone: tones[(_q.choices as string[]).indexOf(a) % 4] };
@@ -671,6 +685,8 @@ export function choiceLabel(_q: Question, a: Answer, l: Lang, nm: Naming = 'lett
 /** On-screen question line. `{n}` / `{k}` are note placeholders rendered with bidi isolation. */
 export function askTemplate(q: Question, l: Lang, nm: Naming = 'letter'): string {
   switch (q.kind) {
+    case 'wrong-note':
+      return l === 'en' ? `${MODE_NAMES[q.mode].en} from {k}: which note is wrong?` : `${MODE_NAMES[q.mode].he} מ־{k}: איזה צליל שגוי?`;
     case 'mode-id':
       return l === 'en' ? 'Which mode starts on {k}?' : 'איזה מודוס מתחיל ב־{k}?';
     case 'degree':
@@ -720,6 +736,7 @@ export function hintText(q: Question, l: Lang, voice: boolean): string {
   if (q.kind === 'rhythm-dict' && voice) return l === 'en' ? 'Say it: “ta ti-ti ta” or “quarter, two eighths…”' : 'אמרו: "טה טי-טי טה" או "רבע, שתי שמיניות…"';
   if (q.kind === 'name-seq') return voice ? (l === 'en' ? 'Say the note names in order' : 'אמרו את שמות התווים לפי הסדר') : l === 'en' ? 'Tap the notes in order, then Done' : 'לחצו על התווים לפי הסדר, ואז סיום';
   if (q.kind === 'degree-seq') return voice ? (l === 'en' ? 'Say them in order, e.g. “one three five”' : 'אמרו לפי הסדר, למשל "אחת שלוש חמש"') : l === 'en' ? 'Tap the degrees in order, then Done' : 'לחצו על הדרגות לפי הסדר, ואז סיום';
+  if (q.kind === 'wrong-note') return voice ? (l === 'en' ? 'Say the number of the wrong note (2, 3 …)' : 'אמרו את המספר של הצליל השגוי (2, 3 …)') : l === 'en' ? 'Tap the wrong note' : 'בחרו את הצליל השגוי';
   if (q.kind === 'mode-id') return voice ? (l === 'en' ? 'Say the mode name' : 'אמרו את שם המודוס') : l === 'en' ? 'Tap the mode' : 'בחרו מודוס';
   if (!voice) return l === 'en' ? 'Tap your answer' : 'בחרו תשובה';
   if (q.choices.length > 4) return l === 'en' ? 'Say a degree, “one” to “seven”' : 'אמרו דרגה, מ"אחת" עד "שבע"';
@@ -731,6 +748,8 @@ export function hintText(q: Question, l: Lang, voice: boolean): string {
 export function questionBadge(q: Question, l: Lang, nm: Naming): { key?: PitchClass; text: string } {
   const major = l === 'en' ? 'major' : "מז'ור";
   switch (q.kind) {
+    case 'wrong-note':
+      return { text: `${MODE_NAMES[q.mode][l]} · ${l === 'en' ? 'from' : 'מ־'} ${displayNote(q.key, nm, l)}` };
     case 'mode-id':
       return { text: `${l === 'en' ? 'Scale from' : 'סולם מ־'} ${displayNote(q.key, nm, l)} · ${q.dir === 'up' ? (l === 'en' ? 'up' : 'עולה') : l === 'en' ? 'up & down' : 'עולה ויורד'}` };
     case 'degree':

@@ -87,6 +87,9 @@ export function withAids(lesson: LessonDef, mode: AidMode, ratings: Ratings): Le
 /** What the views show once the question is answered (the notes that sounded, as content). */
 export function contentNotes(q: Question): { notes: number[]; chord: boolean } | null {
   switch (q.kind) {
+    case 'mode-id':
+    case 'wrong-note':
+      return { notes: q.midis, chord: false };
     case 'degree':
     case 'note-name':
     case 'sing':
