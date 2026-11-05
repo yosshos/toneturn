@@ -164,6 +164,9 @@ export function Home({ t, settings, progress, streak, onStreak, account, onPract
                 {settings.mode === 'voice' && <MicIcon />}
                 {anyDone ? t.continue : t.practice}
               </button>
+              <button className="link start-from-one" onClick={onPlacement}>
+                🧭 {t.findLevel}
+              </button>
             </>
           )}
         </div>
@@ -254,6 +257,7 @@ export function Home({ t, settings, progress, streak, onStreak, account, onPract
             </span>
             <b>{t.trueFalse}</b>
             <small>{t.tfBlurb}</small>
+            {!progress.tfBest && <span className="new-chip">{t.newChip}</span>}
           </button>
           <button className="game-card ghost" onClick={onGhost}>
             <span className="duel-icon" aria-hidden="true">

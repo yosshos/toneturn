@@ -411,3 +411,18 @@
 :root[data-motion='reduced'] .turn-banner.turn {
   animation: none;
 }
+.new-chip {
+  display: inline-block;
+  margin-inline-start: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--coral);
+  color: var(--bg);
+  font-weight: 800;
+  font-size: 0.72rem;
+  vertical-align: middle;
+}
+.game-card .new-chip {
+  margin-top: 4px;
+  margin-inline-start: 0;
+}

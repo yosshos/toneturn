@@ -399,7 +399,8 @@ export function App() {
           onSettings={updateSettings}
           onNavigate={(r) => {
             setMenuOpen(false);
-            go(r);
+            if (r === 'placement') openPlacement();
+            else go(r);
           }}
         />
       )}

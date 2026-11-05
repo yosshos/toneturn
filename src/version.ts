@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.25.1',
+    date: '2026-11-05',
+    en: ['Find my level and True or false? are now in the menu, and Find my level sits under the main button on Home'],
+    he: ['"מציאת הרמה שלי" ו"נכון או לא?" נמצאים עכשיו בתפריט, ו"מציאת הרמה שלי" מופיע גם מתחת לכפתור הראשי במסך הבית'],
+  },
+  {
     version: '0.25.0',
     date: '2026-11-05',
     en: ['New game — True or false?: three notes, two intervals: are both right? Solo 60-second runs or a duel on one device, four levels up to “by ear”'],
