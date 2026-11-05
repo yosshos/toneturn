@@ -6,11 +6,17 @@ export const MILESTONES = [3, 7, 14, 30, 50, 100, 200, 365];
 export const MILESTONE_GEMS: Record<number, number> = { 7: 50, 30: 150, 100: 500, 365: 1500 };
 export const MAX_FREEZES = 2;
 export const PRICES = { freeze: 200, repair: 400 } as const;
+/** Cosmetic extras bought with gems (spec N: cosmetic only — never difficulty or scoring). */
+export const COSMETICS: Record<string, number> = { 'theme-ocean': 300, 'theme-forest': 300, 'theme-sunset': 300, 'theme-midnight': 500, 'theme-rose': 500 };
+export const THEMES = ['violet', 'ocean', 'forest', 'sunset', 'midnight', 'rose'] as const;
+export type ThemeId = (typeof THEMES)[number];
 export const REPAIR_WINDOW_DAYS = 2;
 
 export interface Purchase {
   id: string;
-  kind: 'freeze' | 'repair';
+  kind: 'freeze' | 'repair' | 'cosmetic';
+  /** For a cosmetic: which one (e.g. 'theme-ocean'). */
+  item?: string;
   /** Local day the purchase was made (YYYY-MM-DD). */
   day: string;
 }
@@ -133,10 +139,15 @@ export function gemsEarned(s: GemSources): number {
   return s.goodSessions * 5 + s.goalDays * 10 + s.puzzleGold * 20 + s.puzzleSilver * 10 + s.dailyPlays * 5 + s.milestones.reduce((a, m) => a + (MILESTONE_GEMS[m] ?? 0), 0);
 }
 
-export const gemsSpent = (purchases: Purchase[]) => purchases.reduce((a, p) => a + PRICES[p.kind], 0);
+const priceOf = (p: Purchase) => (p.kind === 'cosmetic' ? (COSMETICS[p.item ?? ''] ?? 0) : PRICES[p.kind]);
+export const gemsSpent = (purchases: Purchase[]) => purchases.reduce((a, p) => a + priceOf(p), 0);
+
+/** Owned cosmetics (the default theme is always owned). */
+export const ownsCosmetic = (purchases: Purchase[], item: string) => item === 'theme-violet' || purchases.some((p) => p.kind === 'cosmetic' && p.item === item);
+export const canBuyCosmetic = (item: string, balance: number, purchases: Purchase[]) => item in COSMETICS && !ownsCosmetic(purchases, item) && balance >= COSMETICS[item];
 
 /** Can this purchase be made now? */
-export function canBuy(kind: Purchase['kind'], balance: number, st: StreakState): boolean {
+export function canBuy(kind: 'freeze' | 'repair', balance: number, st: StreakState): boolean {
   if (balance < PRICES[kind]) return false;
   if (kind === 'freeze') return st.freezes < MAX_FREEZES;
   return st.repairable !== null;

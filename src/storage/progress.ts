@@ -147,6 +147,8 @@ export interface Settings {
   sound?: string;
   /** Drone sound: 'soft' (synthesised, default) or a sustained recorded set ('organ'). */
   droneSound?: string;
+  /** Colour theme (cosmetic, bought with gems). */
+  theme?: string;
   /** Vibrato target style (spec P.1). */
   vibratoStyle?: VibratoStyle;
 }

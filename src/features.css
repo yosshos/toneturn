@@ -1556,3 +1556,20 @@
 .keyboard .bk .key-label {
   color: #fff6ea;
 }
+
+/* Colour themes (cosmetic, bought with gems) */
+:root[data-theme='ocean'] { --bg: #0d1f33; --bg-2: #13304d; --card: #1a3d5e; --card-2: #22496f; --ink-soft: #c9e2f2; --ink-dim: #8fb3cc; --glow: #1f5a85; --hero-end: #1a4266; }
+:root[data-theme='forest'] { --bg: #10241a; --bg-2: #183526; --card: #1f4330; --card-2: #285039; --ink-soft: #cfe9d6; --ink-dim: #93bba0; --glow: #2a6b45; --hero-end: #20482f; }
+:root[data-theme='sunset'] { --bg: #2b1420; --bg-2: #3d1c2b; --card: #4d2436; --card-2: #5a2c40; --ink-soft: #f5d3dc; --ink-dim: #cc9aa9; --glow: #8a3a3f; --hero-end: #52263a; }
+:root[data-theme='midnight'] { --bg: #0b0b12; --bg-2: #15151f; --card: #1d1d2a; --card-2: #262636; --ink-soft: #d8d8e8; --ink-dim: #9a9ab3; --glow: #2c2c4a; --hero-end: #1c1c2c; }
+:root[data-theme='rose'] { --bg: #2a1030; --bg-2: #3b1742; --card: #4a1f53; --card-2: #572763; --ink-soft: #f4d4f2; --ink-dim: #c999c6; --glow: #93407f; --hero-end: #4c1e55; }
+.theme-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+.theme-opt { display: grid; gap: 6px; justify-items: center; padding: 10px; border-radius: 14px; background: color-mix(in srgb, var(--ink) 6%, transparent); }
+.theme-opt.on { outline: 2px solid var(--gold); }
+.theme-swatch { width: 44px; height: 44px; border-radius: 50%; }
+.sw-violet { background: linear-gradient(135deg, #4a2a7a, #1e1236); }
+.sw-ocean { background: linear-gradient(135deg, #1f5a85, #0d1f33); }
+.sw-forest { background: linear-gradient(135deg, #2a6b45, #10241a); }
+.sw-sunset { background: linear-gradient(135deg, #8a3a3f, #2b1420); }
+.sw-midnight { background: linear-gradient(135deg, #2c2c4a, #0b0b12); }
+.sw-rose { background: linear-gradient(135deg, #93407f, #2a1030); }

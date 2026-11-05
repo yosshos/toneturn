@@ -5,7 +5,7 @@ import { AchievementsScreen } from './Extras';
 import { absoluteLesson, modesLesson, MODE_ID_LEVELS, wrongNotesLesson } from '../engine/lesson';
 import { TrueFalseScreen } from './TrueFalse';
 import { FreezeToast, StreakSheet } from './Streak';
-import { canBuy, type Purchase } from '../engine/streak';
+import { canBuy, canBuyCosmetic, ownsCosmetic } from '../engine/streak';
 import { modesLevelFor, recommendFor } from '../engine/recommend';
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, useMemo } from 'react';
 import { LESSON_ORDER, runLevelFor, runsWorkshop, type LessonDef, type LessonId, type Question, type SkillId } from '../engine/lesson';
@@ -104,7 +104,13 @@ export function App() {
   // Streak 2.0 & gems (spec N): derived from progress + the synced purchase list.
   const [streakOpen, setStreakOpen] = useState(false);
   const gems = useMemo(() => gemsOf(progress, settings?.purchases ?? []), [progress, settings?.purchases]);
-  const buy = (kind: Purchase['kind']) => {
+  const buyCosmetic = (item: string) => {
+    const purchases = settings?.purchases ?? [];
+    if (!canBuyCosmetic(item, gems.balance, purchases)) return;
+    const id = typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
+    updateSettings({ purchases: [...purchases, { id, kind: 'cosmetic', item, day: localDay(new Date()) }], theme: item.replace(/^theme-/, '') });
+  };
+  const buy = (kind: 'freeze' | 'repair') => {
     const purchases = settings?.purchases ?? [];
     if (!canBuy(kind, gems.balance, gems.streak)) return;
     const id = typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
@@ -196,6 +202,11 @@ export function App() {
     const osReduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     document.documentElement.dataset.motion = (s.reducedMotion ?? osReduce) ? 'reduced' : 'full';
   }, [s.uiLang, s.reducedMotion]);
+  // Colour theme (cosmetic): only an owned one applies.
+  const themeId = s.theme && ownsCosmetic(s.purchases ?? [], `theme-${s.theme}`) ? s.theme : 'violet';
+  useEffect(() => {
+    document.documentElement.dataset.theme = themeId;
+  }, [themeId]);
 
   // Narration voice preferences apply to the single shared player.
   useEffect(() => {
@@ -493,7 +504,7 @@ export function App() {
       {route === 'ghost' && <GhostScreen t={t} settings={s} progress={progress} onBack={() => go('home')} onProgress={setProgress} />}
       {route === 'classes' && <ClassesScreen t={t} settings={s} user={user} onBack={() => go('home')} onOpenLesson={(id) => openAssignment(id)} />}
       {streakOpen && (
-        <StreakSheet t={t} st={gems.streak} gems={gems.balance} today={localDay(new Date())} lang={s.uiLang} onBuy={buy} onClose={() => setStreakOpen(false)} />
+        <StreakSheet t={t} st={gems.streak} gems={gems.balance} today={localDay(new Date())} lang={s.uiLang} onBuy={buy} purchases={s.purchases ?? []} theme={themeId} onBuyCosmetic={buyCosmetic} onTheme={(theme) => updateSettings({ theme })} onClose={() => setStreakOpen(false)} />
       )}
       {route === 'drone' && <DroneScreen t={t} settings={s} onBack={() => go('home')} />}
       {route === 'perform' && <PerformScreen t={t} settings={s} onBack={() => go('home')} />}

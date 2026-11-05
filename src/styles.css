@@ -27,7 +27,7 @@ html,
 body {
   margin: 0;
   min-height: 100%;
-  background: radial-gradient(120% 80% at 50% -10%, #4a2a7a 0%, var(--bg) 55%) fixed, var(--bg);
+  background: radial-gradient(120% 80% at 50% -10%, var(--glow, #4a2a7a) 0%, var(--bg) 55%) fixed, var(--bg);
   color: var(--ink);
   font-family: var(--font);
   font-size: 18px;
@@ -250,7 +250,7 @@ code {
 }
 .hero {
   margin-top: 14px;
-  background: linear-gradient(180deg, var(--bg-2), #3a2163);
+  background: linear-gradient(180deg, var(--bg-2), var(--hero-end, #3a2163));
   border-radius: 28px;
   padding: 8px 18px 22px;
   box-shadow: 0 10px 0 rgba(0, 0, 0, 0.25);

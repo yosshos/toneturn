@@ -2,7 +2,7 @@
 // the streak sheet (calendar, freezes, gems, shop) and the "freeze used" notice. Reduced motion respected.
 
 import { useEffect, useState } from 'react';
-import { addDays, canBuy, MAX_FREEZES, PRICES, type Purchase, type StreakState } from '../engine/streak';
+import { addDays, canBuy, canBuyCosmetic, COSMETICS, MAX_FREEZES, ownsCosmetic, PRICES, THEMES, type Purchase, type StreakState } from '../engine/streak';
 import type { Strings } from '../i18n/strings';
 
 const fmt = (s: string, v: Record<string, string | number>) => s.replace(/\{(\w+)\}/g, (_, k) => String(v[k] ?? ''));
@@ -127,6 +127,10 @@ export function StreakSheet({
   today,
   lang,
   onBuy,
+  purchases = [],
+  theme = 'violet',
+  onBuyCosmetic,
+  onTheme,
   onClose,
 }: {
   t: Strings;
@@ -134,7 +138,11 @@ export function StreakSheet({
   gems: number;
   today: string;
   lang: 'he' | 'en';
-  onBuy: (kind: Purchase['kind']) => void;
+  onBuy: (kind: 'freeze' | 'repair') => void;
+  purchases?: Purchase[];
+  theme?: string;
+  onBuyCosmetic?: (item: string) => void;
+  onTheme?: (theme: string) => void;
   onClose: () => void;
 }) {
   const [month, setMonth] = useState(today.slice(0, 7));
@@ -231,6 +239,33 @@ export function StreakSheet({
           )}
           <p className="field-hint">{t.gemsHint}</p>
         </section>
+        {onBuyCosmetic && onTheme && (
+          <section className="menu-card shop themes">
+            <h3>🎨 {t.themesTitle}</h3>
+            <div className="theme-grid">
+              {THEMES.map((id) => {
+                const item = `theme-${id}`;
+                const owned = ownsCosmetic(purchases, item);
+                return (
+                  <div key={id} className={`theme-opt ${theme === id ? 'on' : ''}`} data-theme-opt={id}>
+                    <span className={`theme-swatch sw-${id}`} aria-hidden="true" />
+                    <b>{t.themeNames[id]}</b>
+                    {owned ? (
+                      <button className="btn ghost small" disabled={theme === id} onClick={() => onTheme(id)}>
+                        {theme === id ? `✓ ${t.themeInUse}` : t.themeUse}
+                      </button>
+                    ) : (
+                      <button className="btn primary small" disabled={!canBuyCosmetic(item, gems, purchases)} onClick={() => onBuyCosmetic(item)}>
+                        {COSMETICS[item]} 💎
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <p className="field-hint">{t.themesHint}</p>
+          </section>
+        )}
       </div>
     </div>
   );
