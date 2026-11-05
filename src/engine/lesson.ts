@@ -51,6 +51,8 @@ interface QBase {
   choices: Answer[];
   /** Elo-style item difficulty (used by later placement work). */
   difficulty: number;
+  /** A visual aid is shown while answering (spec M.3): difficulty already lowered, XP × 0.8. */
+  aid?: 'keymap' | 'target' | 'lookup';
 }
 
 export interface DegreeQuestion extends QBase {

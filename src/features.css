@@ -1495,3 +1495,64 @@
     animation: none;
   }
 }
+
+/* ---------------------------------------------------------------- note views & aids (spec M) */
+.note-views {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  justify-items: center;
+}
+.note-staff,
+.guitar-tab {
+  width: 100%;
+  max-width: 420px;
+  padding: 4px 8px;
+  border-radius: 14px;
+  background: #fff6ea;
+}
+.note-staff svg,
+.guitar-tab svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+.keyboard .wk.aid {
+  background: #ffe9b0;
+  box-shadow: inset 0 -6px 0 rgba(255, 176, 77, 0.55);
+}
+.keyboard .bk.aid {
+  background: #7a5a2a;
+}
+.keyboard .wk.aid-tonic {
+  background: #b9f5e0;
+  box-shadow: inset 0 -6px 0 var(--mint);
+}
+.keyboard .key-label {
+  position: absolute;
+  bottom: 4px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 0.7rem;
+  font-weight: 900;
+  color: #2a1747;
+}
+.keyboard .wk {
+  position: absolute;
+}
+.aid-chip {
+  margin: 0;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(255, 201, 77, 0.14);
+  color: var(--gold);
+  font-weight: 800;
+  font-size: 0.85rem;
+}
+.keyboard .bk.aid-tonic {
+  background: #1f8f6c;
+}
+.keyboard .bk .key-label {
+  color: #fff6ea;
+}

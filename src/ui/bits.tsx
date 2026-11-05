@@ -89,10 +89,25 @@ export const TapIcon = () => (
 
 /** Audio-synced mini keyboard: keys light up exactly while they sound. */
 /** Piano strip. `live` = light the keys that sound; off while the sound IS the question (see keysGiveAway). */
-export function Keyboard({ low = 48, high = 76, mark, live = true }: { low?: number; high?: number; mark?: number; live?: boolean }) {
+export function Keyboard({
+  low = 48,
+  high = 76,
+  mark,
+  live = true,
+  aid,
+}: {
+  low?: number;
+  high?: number;
+  mark?: number;
+  live?: boolean;
+  /** Visual aid while answering (spec M.3): keys outlined, optional labels, tonic highlighted. */
+  aid?: { notes: number[]; labels?: string[]; tonic?: number };
+}) {
   const [active, setActive] = useState<number[]>([]);
   useEffect(() => piano.onNotes(setActive), []);
   const shown = new Set(live ? active.map((m) => (m < low ? m + 12 * Math.ceil((low - m) / 12) : m)) : []);
+  const aidSet = new Set(aid?.notes ?? []);
+  const aidLabel = new Map((aid?.labels ?? []).map((l, i) => [aid!.notes[i], l] as const));
   const isBlack = (m: number) => [1, 3, 6, 8, 10].includes(m % 12);
   const whites: number[] = [];
   for (let m = low; m <= high; m++) if (!isBlack(m)) whites.push(m);
@@ -100,15 +115,19 @@ export function Keyboard({ low = 48, high = 76, mark, live = true }: { low?: num
   return (
     <div className="keyboard" dir="ltr" aria-hidden="true">
       {whites.map((m, i) => (
-        <div key={m} className={`wk ${shown.has(m) ? 'lit' : ''} ${mark === m ? 'mark' : ''}`} style={{ left: `${i * W}%`, width: `${W}%` }} />
+        <div key={m} className={`wk ${shown.has(m) ? 'lit' : ''} ${mark === m ? 'mark' : ''} ${aidSet.has(m) ? 'aid' : ''} ${aid?.tonic === m ? 'aid-tonic' : ''}`} style={{ left: `${i * W}%`, width: `${W}%` }}>
+          {aidLabel.get(m) && <span className="key-label">{aidLabel.get(m)}</span>}
+        </div>
       ))}
       {whites.map((m, i) =>
         m + 1 <= high && isBlack(m + 1) ? (
           <div
             key={m + 1}
-            className={`bk ${shown.has(m + 1) ? 'lit' : ''} ${mark === m + 1 ? 'mark' : ''}`}
+            className={`bk ${shown.has(m + 1) ? 'lit' : ''} ${mark === m + 1 ? 'mark' : ''} ${aidSet.has(m + 1) ? 'aid' : ''} ${aid?.tonic === m + 1 ? 'aid-tonic' : ''}`}
             style={{ left: `${(i + 1) * W - W * 0.32}%`, width: `${W * 0.64}%` }}
-          />
+          >
+            {aidLabel.get(m + 1) && <span className="key-label">{aidLabel.get(m + 1)}</span>}
+          </div>
         ) : null,
       )}
     </div>

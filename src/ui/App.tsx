@@ -341,6 +341,7 @@ export function App() {
           lessonDef={generated?.def}
           adapt={generated?.adapt}
           nextLabel={generated ? t.seeSkillMap : undefined}
+          ratings={ratingsOf(progress)}
           onNext={generated ? () => go('skills') : canNext ? () => openLesson(nextId) : null}
           onProgress={(p) => {
             setProgress(p);

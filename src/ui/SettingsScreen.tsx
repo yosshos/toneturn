@@ -228,6 +228,38 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account }: Pr
           onChange={(mode) => onChange({ mode })}
         />
         <MidiSetting t={t} on={!!s.midiInput} onChange={(midiInput) => onChange({ midiInput })} />
+        <fieldset className="seg-field views-field">
+          <legend>{t.showNotesAs}</legend>
+          <div className="seg">
+            {(['keyboard', 'staff', 'tab'] as const).map((v) => {
+              const cur = s.noteViews ?? ['keyboard', 'staff'];
+              const on = cur.includes(v);
+              return (
+                <button
+                  key={v}
+                  type="button"
+                  role="checkbox"
+                  aria-checked={on}
+                  className={on ? 'on' : ''}
+                  onClick={() => onChange({ noteViews: on ? cur.filter((x) => x !== v) : [...cur, v] })}
+                >
+                  {{ keyboard: t.viewKeyboard, staff: t.viewStaff, tab: t.viewTab }[v]}
+                </button>
+              );
+            })}
+          </div>
+        </fieldset>
+        <Seg
+          label={t.aidsLabel}
+          hint={t.aidsHint}
+          value={s.aids ?? 'auto'}
+          options={[
+            ['auto', t.aidsAuto],
+            ['always', t.aidsAlways],
+            ['never', t.aidsNever],
+          ]}
+          onChange={(aids) => onChange({ aids })}
+        />
         <Seg
           label={t.timedScoring}
           hint={t.timedHint}

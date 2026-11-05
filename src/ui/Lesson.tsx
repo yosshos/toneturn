@@ -1,3 +1,6 @@
+import { withAids } from '../engine/aids';
+import type { Ratings } from '../engine/rating';
+import { NoteViews } from './NoteViews';
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { answerFromMidi, makeLesson, pcFromKey, questionSkill, type IntroCard, type SkillId, type LessonDef, type LessonId, type Question } from '../engine/lesson';
 import type { SessionState } from '../engine/session';
@@ -32,17 +35,20 @@ interface Props {
   lessonDef?: LessonDef;
   adapt?: (s: SessionState) => Question[] | null;
   nextLabel?: string;
+  /** Current skill ratings (for automatic aids). */
+  ratings?: Ratings;
 }
 
 const targetMidiOf = (q: Question) => (q.kind === 'degree' || q.kind === 'sing' || q.kind === 'note-name' ? q.targetMidi : q.kind === 'sing-seq' || q.kind === 'sing-run' ? q.midis[0] : 60);
 
-export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit, onAgain, onNext, onProgress, lessonDef, adapt, nextLabel }: Props) {
+export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit, onAgain, onNext, onProgress, lessonDef, adapt, nextLabel, ratings }: Props) {
   const ctrlRef = useRef<LessonController | null>(null);
   const [change, setChange] = useState<{ change: RatingChange; peakBefore: number | null } | null>(null);
   const [streakMoment, setStreakMoment] = useState<{ before: number; after: StreakState; gems: number } | null>(null);
   const sessionId = useMemo(() => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`, []);
   if (!ctrlRef.current) {
-    const lesson = lessonDef ?? makeLesson(lessonId);
+    // Aids (spec M.3): marked per question from the player's current ratings; aided items count as easier.
+    const lesson = withAids(lessonDef ?? makeLesson(lessonId), settings.aids ?? 'auto', ratings ?? {});
     let c: LessonController | null = null;
     const adapters = makeAdapters(
       () => c?.getView().question.answer ?? 1,
@@ -164,7 +170,8 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
   // Lit keys would show the answer for listening questions: light them only once the question is answered.
   const answered = !!v.feedback && ['correct', 'correct-retry', 'reveal', 'skipped'].includes(v.feedback.kind);
   const keysLive = answered || !keysGiveAway(q);
-  const hideKeyboard = (q.kind === 'note-name' && q.direction === 'heard-pitch→name') || (q.kind === 'name-seq' && q.given === 'sound') || (q.kind === 'sing' && q.promptBy === 'echo') || q.kind === 'rhythm-read' || q.kind === 'rhythm-dict';
+  // Rhythm exercises have no note views; for everything else keysGiveAway() keeps the answer hidden.
+  const hideKeyboard = q.kind === 'rhythm-read' || q.kind === 'rhythm-dict';
   const orbLabel =
     q.kind === 'degree'
       ? target
@@ -272,7 +279,8 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
             )}
             <Burst on={celebrate} />
           </div>
-          {!hideKeyboard && <Keyboard live={keysLive} mark={keysLive && q.kind === 'degree' && q.direction !== 'name→degree' ? q.targetMidi : undefined} />}
+          {!hideKeyboard && <NoteViews q={q} views={settings.noteViews ?? ['keyboard', 'staff']} answered={answered} keysLive={keysLive} />}
+          {q.aid && !answered && <p className="aid-chip">💡 {t.aidOn}</p>}
           <h1 className="ask">{withNote(askTemplate(q, lang, nm), target, keyName)}</h1>
           <Listening v={v} t={t} hint={hintText(q, lang, v.mode === 'voice' && !v.needsListenTap)} />
           <FeedbackBanner v={v} t={t} lang={lang} settings={settings} />

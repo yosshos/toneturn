@@ -1,5 +1,12 @@
 # Milestone report — 2026-11-04
 
+## Update 24 — v0.24.0 (2026-11-05): visual aids, notation and guitar tab (spec M)
+
+- `engine/aids.ts`: aid per question kind — key map (scale + tonic, never the sounding note), target (singing from degree / name / description), lookup (scale with only the tonic numbered, so the answer is counted, not read). Auto = on below Solid (1100) per skill; Always / Never. Aided items: difficulty −120 / −150, XP × 0.8; placement and the weekly puzzle never aided.
+- Views: keyboard (aid outline + labels, tonic in mint), staff (VexFlow, key signature, spelled in the key), guitar tab (one hand position for a passage, first position when possible; chords one note per string). During the question only the aid; after the answer the notes that sounded.
+- Settings: Show notes as (keyboard / notation / guitar tab, any mix) and Aids (auto / always / never). "💡 Aid on" chip on aided questions.
+- Tests: aids engine (8), every lesson checked that aids never reveal a listening answer.
+
 ## Update 23 — v0.23.0 (2026-11-05): streak 2.0 and gems (spec N)
 
 - `engine/streak.ts`: day-by-day walk from the first practice day — weekly free freeze (Monday, max 2), bought freezes, automatic use on missed days, repair within 48 h, milestones, best, next milestone; gems earned from derived facts (≥80 % sessions, goal days, puzzle medals, daily plays, milestones) minus purchases.

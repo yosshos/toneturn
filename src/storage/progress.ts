@@ -1,6 +1,7 @@
 // Local progress + settings. XP and completion writes are idempotent by event id,
 // so a repeated callback or an app resume can never award points twice.
 
+import type { AidMode, NoteView } from '../engine/aids';
 import { gemsEarned, gemsSpent, streakState, type Purchase, type StreakState } from '../engine/streak';
 import { placementUnlocks } from '../engine/recommend';
 import { outcomeOf, type InputMode, type SessionState } from '../engine/session';
@@ -107,6 +108,10 @@ export interface Settings {
   purchases?: Purchase[];
   /** Last freeze day the player was told about (freeze-used toast). */
   seenFreezeDay?: string | null;
+  /** Which note views to show for non-rhythm exercises (spec M.1). Default keyboard + staff. */
+  noteViews?: NoteView[];
+  /** Visual aids while answering (spec M.3). Default auto. */
+  aids?: AidMode;
 }
 
 export const SETTINGS_VERSION = 2;

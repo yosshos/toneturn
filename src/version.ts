@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.24.0',
+    date: '2026-11-05',
+    en: ['Show notes as keyboard, notation, guitar tab — or any mix (Settings)', 'Aids while answering: the key or the note to sing is shown while a skill is still growing, and fades out as you reach Solid. Aided answers count a little easier, so the rating stays fair', 'After each answer, the notes you heard appear on every view you chose'],
+    he: ['הצגת תווים כמקלדת, תווים, טאבים לגיטרה — או כל שילוב (בהגדרות)', 'עזרה בזמן התשובה: הסולם או הצליל לשירה מוצגים כל עוד המיומנות מתפתחת, ונעלמים כשמגיעים לרמת "יציבים". תשובה עם עזרה נחשבת קצת קלה יותר, כדי שהדירוג יישאר הוגן', 'אחרי כל תשובה, הצלילים ששמעתם מופיעים בכל תצוגה שבחרתם'],
+  },
+  {
     version: '0.23.0',
     date: '2026-11-05',
     en: ['Streak 2.0: a celebration when your streak grows, milestones with confetti, and a streak calendar', 'Streak freezes: one free every Monday, more with gems — a missed day no longer ends your streak', 'Gems: earned for good lessons, your daily goal, puzzles and milestones; spend them on freezes or a streak repair'],

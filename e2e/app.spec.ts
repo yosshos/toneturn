@@ -65,7 +65,8 @@ test.describe('lesson', () => {
     await expect(page.locator('.star.won')).toHaveCount(3);
     await expect(page.getByRole('button', { name: /Replay 1/ })).toBeVisible();
     await page.getByRole('button', { name: 'Home' }).click();
-    await expect(page.locator('.goal-strip')).toContainText('30/30');
+    // Lesson 1 runs with automatic aids (a new player is below Solid): each answer gives 80 % XP.
+    await expect(page.locator('.goal-strip')).toContainText('24/30');
   });
 
   test('Voice mode (simulator): hands-free after one Start', async ({ page }) => {
@@ -144,7 +145,7 @@ test.describe('settings', () => {
     await expect(example).toContainText('Si♭');
     await expect(example).toContainText('Si flat');
     // Narration in Hebrew + Auto naming → סי במול (never "פלאט").
-    await page.getByRole('radio', { name: 'Auto', exact: true }).click();
+    await page.getByRole('radiogroup', { name: 'Note names' }).getByRole('radio', { name: 'Auto', exact: true }).click();
     await page.getByRole('radiogroup', { name: 'Narration in' }).getByRole('radio', { name: 'עברית' }).click();
     await expect(example).toContainText('סי במול');
     await expect(example).not.toContainText('פלאט');

@@ -151,7 +151,7 @@ export function xpFor(q: Question, o: ItemOutcome, baseXp: number): number {
   const cat = isCategorical(q);
   const { a, k } = best(o);
   const g = o.correctOn === null && cat ? 0 : attemptCredit(k, cat, q.choices.length);
-  let xp = Math.max(SCORING.xp.min, Math.round(baseXp * a * g));
+  let xp = Math.max(SCORING.xp.min, Math.round(baseXp * a * g * (q.aid ? 0.8 : 1)));
   if (o.timed && a >= SCORING.xp.bonusMinAccuracy && g > 0) {
     const f = timeTerm(q, o, k);
     xp += Math.round(SCORING.xp.maxSpeedBonus * Math.max(0, (f - 0.5) * 2));
