@@ -1,6 +1,9 @@
 // Sing-along (spec S.10): pick a public-domain song, sing it over a count-in while a note roll scrolls and
 // your pitch is drawn on top; then a score per note. The song sits inside the player's range.
 
+import { NotesView } from './NotesView';
+import { sungMelodyRemarks } from '../engine/feedbackMelody';
+import { melodyRemarkText } from '../game/content';
 import { useEffect, useRef, useState } from 'react';
 import { gradeSingAlong, songTimeline, type RollNote, type SingAlongGrade } from '../engine/singalong';
 import type { SungFrame } from '../engine/sing';
@@ -54,6 +57,7 @@ export function SingAlongScreen({ t, settings, onBack }: { t: Strings; settings:
   const [grade, setGrade] = useState<SingAlongGrade | null>(null);
   // Off by default: the guide plays the very notes being sung, so only with headphones can it stay out of the microphone.
   const [guide, setGuide] = useState(false);
+  const [remark, setRemark] = useState<string | null>(null);
   const ctl = useRef<AbortController | null>(null);
   useEffect(() => () => ctl.current?.abort(), []);
   const range = settings.voiceRange ?? DEFAULT_RANGE;
@@ -103,6 +107,8 @@ export function SingAlongScreen({ t, settings, onBack }: { t: Strings; settings:
     piano.stopAll();
     setNow(end);
     setGrade(gradeSingAlong(got, tl.notes));
+    const items = sungMelodyRemarks(got, tl.notes.map((n) => n.midi));
+    setRemark(items.length ? melodyRemarkText(items, settings.uiLang) : null);
     setPhase('done');
     piano.cue('complete');
   };
@@ -157,12 +163,14 @@ export function SingAlongScreen({ t, settings, onBack }: { t: Strings; settings:
         {noteLabel(tl.tonic, settings, keyPc)} · ♩ = {BPM}
       </p>
       <Roll notes={tl.notes} frames={frames} now={phase === 'pick' || phase === 'ready' ? 0 : now} />
+      <NotesView midis={tl.notes.map((n) => n.midi)} keyPc={keyPc} settings={settings} />
       {phase === 'count' && <p className="vocal-cue vib">1 · 2 · 3 · 4</p>}
       {grade && (
         <section className="take-card" aria-live="polite">
           <div className="take-score">
             {t.vocalScore}: <b>{Math.round(grade.total * 100)}%</b>
           </div>
+          {remark && <p className="take-remark">🎯 {remark}</p>}
           <ol className="sing-notes" dir="ltr">
             {grade.notes.map((g, i) => (
               <li key={i} className={g === null ? 'miss' : g >= 0.7 ? 'good' : g >= 0.4 ? 'fair' : 'weak'}>

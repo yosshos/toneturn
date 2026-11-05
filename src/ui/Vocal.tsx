@@ -1,6 +1,10 @@
 // Vocal technique (spec addendum P): range calibration, the 10-level ladder, the daily warm-up, a live
 // pitch trace, per-take metric cards with a tip and listen-back, the range map and per-metric trends.
 
+import { NotesView } from './NotesView';
+import { remarksFor } from '../engine/feedback';
+import { sungMelodyRemarks } from '../engine/feedbackMelody';
+import { melodyRemarkText, remarkText } from '../game/content';
 import { BleedGate, CALIBRATE_SEC } from '../engine/bleed';
 import { ThenAndNow } from './Extras';
 import { keepTake } from '../storage/takes';
@@ -840,6 +844,17 @@ function VocalSession({
           : t.vocalNowStraight
       : null);
   const tipKey = grade ? tipFor(grade) : null;
+  // Precise feedback (spec W): how and where the take was off.
+  const remarkLine = (() => {
+    if (!grade || grade.unclear || !frames.length) return null;
+    if (['melody', 'leap', 'rhythmic', 'scale', 'staccato', 'harmony-line', 'vibrato-notes'].includes(item.kind)) {
+      const items = sungMelodyRemarks(frames, shownTargets);
+      return items.length ? melodyRemarkText(items, settings.uiLang) : null;
+    }
+    if (item.kind === 'glide') return null;
+    const rs = remarksFor(frames, shownTargets[0]).filter((r) => !(item.kind.startsWith('vibrato') && r === 'unsteady'));
+    return rs.length ? remarkText(rs, settings.uiLang, rs[0] === 'spot') : null;
+  })();
   // Scales asked by name: only the tonic is shown until the take is graded (the notes are the task).
   const hidden = item.kind === 'scale' && item.scale?.hear === 'tonic' && phase !== 'result';
   const title = level === 'warmup' ? t.vocalWarmup : level > HARMONY_BASE ? `${t.harmonyTitle} · ${t.harmonyLevelNames[level - HARMONY_BASE - 1]}` : level > MODES_BASE ? `${t.modesTitle} · ${t.modesLevelNames[level - MODES_BASE - 1]}` : `${fill(t.vocalLevel, { n: level })} · ${t.vocalLevelNames[level - 1]}`;
@@ -943,7 +958,9 @@ function VocalSession({
                 {t.vocalScore}: <b>{Math.round(grade.score * 100)}%</b>
               </div>
               <MetricBars t={t} g={grade} />
+              {remarkLine && <p className="take-remark">🎯 {remarkLine}</p>}
               {tipKey && <p className="take-tip">💡 {t.vocalTips[tipKey]}</p>}
+              <NotesView midis={shownTargets} keyPc={null} settings={settings} />
               {memoryItem(item) && refs > 0 && <p className="field-hint">🔁 {fill(t.refCost, { n: refs, p: Math.round((1 - memoryFactor(refs)) * 100) })}</p>}
             </>
           )}

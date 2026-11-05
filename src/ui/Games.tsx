@@ -1,4 +1,4 @@
-import { NoteStaff } from './NoteViews';
+import { NotesView } from './NotesView';
 import type { PadSet } from '../engine/memory';
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { displayNote } from '../engine/pitch';
@@ -659,11 +659,10 @@ function EchoStaff({ v, settings }: { v: GameView; settings: Settings }) {
     const id = setTimeout(() => setShown((n) => n + 1), 220);
     return () => clearTimeout(id);
   }, [shown, entered.length]);
-  void settings;
   const notes = entered.slice(0, shown);
   return (
-    <div className="echo-staff" aria-live="polite">
-      {notes.length > 0 ? <NoteStaff key={notes.length} notes={notes} chord={false} keyPc={g.key} /> : <div className="echo-staff-empty" aria-hidden="true" />}
+    <div className="echo-staff" aria-live="polite" key={notes.length}>
+      <NotesView midis={notes} keyPc={g.key} settings={settings} />
     </div>
   );
 }

@@ -7,6 +7,7 @@
 //  - The microphone/recognizer is only active in the `listening` phase.
 //  - Permission / recognition failures, silence and unclear speech never count as wrong answers.
 
+import { sungMelodyRemarks } from '../engine/feedbackMelody';
 import type { SungFrame } from '../engine/sing';
 import { gradeRun, runHopMs, runDiagnosis, runSummary } from '../engine/runs';
 import {
@@ -56,6 +57,7 @@ import {
   roundPrompt,
   silenceText,
   singFeedbackText,
+  melodyRemarkText,
   unclearText,
 } from './content';
 
@@ -550,6 +552,8 @@ export class LessonController {
       precision?: number;
       readHits?: (number | null)[];
       readExtra?: number;
+      /** Precise per-note feedback for sung melodies (spec W), said after the result. */
+      remark?: string;
     } = { timeMs: null, modality: 'buttons' },
   ): Promise<boolean> {
     const l = this.cfg.outputLang;
@@ -566,6 +570,7 @@ export class LessonController {
       this.ad.audio.cue('correct');
       this.patch({ feedback: { kind: g.firstTry ? 'correct' : 'correct-retry', answer: q.answer, given: answer, sung, ...chips } });
       await this.say(sung ? singFeedbackText(sung, l) : correctText(q, l, g.firstTry, this.cfg.naming), signal);
+      if (ev.remark) await this.say(ev.remark, signal);
       await this.ad.clock.sleep(500, signal);
       return true;
     }
@@ -573,6 +578,7 @@ export class LessonController {
     if (g.kind === 'retry') {
       this.patch({ feedback: { kind: 'retry', given: answer, sung, ...chips } });
       await this.say(sung ? singFeedbackText(sung, l) : retryText(q, l), signal);
+      if (ev.remark) await this.say(ev.remark, signal);
       this.setSession(newTurn(this.s, 'playback'));
       await this.playStim(q.kind === 'sing' ? q.stimulus.slice(-1) : q.stimulus, signal);
       return false;
@@ -732,7 +738,9 @@ export class LessonController {
         const summary = [g.pass ? '' : runSummary(g, l), runDiagnosis(g, l)].filter(Boolean).join(' · ');
         this.patch({ caption: summary || null, runFrames: res.kind === 'frames' ? res.frames : null });
       }
-      if (await this.evaluate(g.pass ? 'accurate' : 'wrong', signal, undefined, { timeMs: this.elapsed(voicedAt), modality: 'sing', accuracy: g.accuracy, seqNotes: statuses })) return;
+      const items = q.kind === 'sing-seq' && res.kind === 'frames' ? sungMelodyRemarks(res.frames, q.midis) : [];
+      const remark = items.length ? melodyRemarkText(items, l) : undefined;
+      if (await this.evaluate(g.pass ? 'accurate' : 'wrong', signal, undefined, { timeMs: this.elapsed(voicedAt), modality: 'sing', accuracy: g.accuracy, seqNotes: statuses, remark })) return;
     }
   }
 

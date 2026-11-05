@@ -4,6 +4,7 @@
 import { pcFromKey, type Answer, type IntroStep, type LessonDef, type LessonId, type Question } from '../engine/lesson';
 import { displayNote, spokenMajorKey, spokenNote, type Naming, type PitchClass } from '../engine/pitch';
 import type { SungResult } from '../engine/sing';
+import type { Remark } from '../engine/feedback';
 import { parseAlternatives, parseCadence, parseDegree, parseDegreeSequence, parseInterval, parseInversion, parseNoteName, parseQuality, parseRunMaterial, parseRunShape, parseNoteNameSequence, parseProgression, parseSeventh, type ParseResult } from '../engine/parser';
 import { songById } from '../engine/songs';
 import { MODE_NAMES, MODE_STEPS, type ModeId } from '../engine/modes';
@@ -655,6 +656,11 @@ export function ambiguousText(q: Question, cands: Answer[], l: Lang, nm: Naming 
 /** Spoken per-attempt singing feedback: direction of pitch error, never a raw "wrong". */
 export function singFeedbackText(r: SungResult, l: Lang): string {
   const c = Math.abs(r.cents ?? 0);
+  // Precise feedback (spec W) when the take had something specific to say.
+  if (r.remarks?.length && (r.status === 'accurate' || r.status === 'sharp' || r.status === 'flat')) {
+    if (r.status === 'accurate' && r.remarks[0] === 'spot') return l === 'en' ? 'Spot on!' : 'מדויק!';
+    return remarkText(r.remarks, l, r.status === 'accurate');
+  }
   switch (r.status) {
     case 'accurate':
       return l === 'en' ? 'Spot on!' : 'מדויק!';
@@ -898,4 +904,46 @@ function tfLine(q: Extract<Question, { kind: 'tf' }>, nm: Naming, l: Lang): stri
 function tfTruthWords(q: Extract<Question, { kind: 'tf' }>, l: Lang): string {
   const name = (semis: number) => (['', 'm2', 'M2', 'm3', 'M3', 'P4', l === 'en' ? 'tritone' : 'טריטון', 'P5', 'm6', 'M6', 'm7', 'M7', 'P8'][semis] ?? String(semis));
   return `${name(q.midis[1] - q.midis[0])}, ${name(q.midis[2] - q.midis[1])}`;
+}
+
+
+const REMARK_TEXT: Record<Remark, { en: string; he: string }> = {
+  spot: { en: 'Spot on!', he: 'מדויק!' },
+  'touch-flat': { en: 'a touch flat', he: 'טיפה נמוך' },
+  'touch-sharp': { en: 'a touch sharp', he: 'טיפה גבוה' },
+  'bit-flat': { en: 'a bit flat', he: 'קצת נמוך' },
+  'bit-sharp': { en: 'a bit sharp', he: 'קצת גבוה' },
+  'quite-flat': { en: 'quite flat', he: 'נמוך מדי' },
+  'quite-sharp': { en: 'quite sharp', he: 'גבוה מדי' },
+  'end-flat': { en: 'you went flat at the end', he: 'ירדת בסוף' },
+  'end-sharp': { en: 'you went sharp at the end', he: 'עלית בסוף' },
+  'scoop-up': { en: 'you slid up into the note', he: 'החלקת אל הצליל מלמטה' },
+  'scoop-down': { en: 'you came down into the note', he: 'החלקת אל הצליל מלמעלה' },
+  unsteady: { en: 'it was a bit unsteady', he: 'זה היה קצת לא יציב' },
+};
+const isOffset = (r: Remark) => /^(touch|bit|quite)-/.test(r);
+
+/** "That was a bit flat, and you went sharp at the end." / "In tune — but you slid up into the note." */
+export function remarkText(rs: Remark[], l: Lang, inTune = false): string {
+  if (!rs.length || (rs.length === 1 && rs[0] === 'spot')) return REMARK_TEXT.spot[l];
+  const parts = rs.filter((r) => r !== 'spot').map((r) => REMARK_TEXT[r][l]);
+  const first = rs[0];
+  if (l === 'en') {
+    const head = isOffset(first) ? `That was ${parts[0]}` : inTune ? `In tune — but ${parts[0]}` : parts[0][0].toUpperCase() + parts[0].slice(1);
+    return parts.length > 1 ? `${head}, and ${parts[1]}.` : `${head}.`;
+  }
+  const head = isOffset(first) ? `זה היה ${parts[0]}` : inTune ? `מדויק — אבל ${parts[0]}` : parts[0];
+  return parts.length > 1 ? `${head}, ו${parts[1]}.` : `${head}.`;
+}
+
+/** Per-note remarks of a melody: "Note 3 was a bit flat; note 5: you went sharp at the end." */
+export function melodyRemarkText(items: { index: number; remarks: Remark[] }[], l: Lang): string {
+  return items
+    .map((it) => {
+      const r = it.remarks[0];
+      const txt = REMARK_TEXT[r][l];
+      return l === 'en' ? (isOffset(r) ? `note ${it.index + 1} was ${txt}` : `note ${it.index + 1}: ${txt}`) : isOffset(r) ? `צליל ${it.index + 1} היה ${txt}` : `צליל ${it.index + 1}: ${txt}`;
+    })
+    .join(l === 'en' ? '; ' : '; ')
+    .replace(/^./, (c) => c.toUpperCase());
 }

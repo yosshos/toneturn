@@ -1,6 +1,8 @@
 // Echo Chain (melody) and Beat Echo (rhythm): growing-sequence memory games for 1–4 players
 // on one device. Framework-agnostic; the UI subscribes like the lesson controller.
 
+import { sungMelodyRemarks } from '../engine/feedbackMelody';
+import { melodyRemarkText } from './content';
 import {
   gradeMelody,
   gradeRhythm,
@@ -74,6 +76,8 @@ export interface TurnResult {
   unclear: boolean;
   melody?: MelodyGrade;
   rhythm?: RhythmGrade;
+  /** Precise singing feedback (spec W), said after the result. */
+  remark?: string;
 }
 
 /** Per-round data for ratings (solo games). */
@@ -320,6 +324,7 @@ export class MemoryGameController {
       this.ad.audio.cue(result.pass ? 'correct' : 'wrong');
       this.patch({ stage: 'result', result });
       await this.say(result.pass ? this.t.pass[this.passIdx++ % this.t.pass.length] : this.t.fail, signal);
+      if (result.remark) await this.say(result.remark, signal);
       if (!result.pass && this.cfg.kind === 'melody') {
         // Let them hear the right answer.
         const { events, length } = melodyEvents(this.view.melody!, seq, !!this.cfg.swing);
@@ -387,7 +392,9 @@ export class MemoryGameController {
     const given = sungToPads(g, res.frames, this.cfg.tolCents ?? 80);
     this.patch({ entered: given });
     const grade = gradeMelody(seq, given);
-    return { pass: grade.pass, unclear: grade.unclear, melody: grade };
+    // Precise feedback (spec W): which notes were off, and how — memory still counts as right.
+    const items = sungMelodyRemarks(res.frames, seq.map((p) => g.pads[p].midi));
+    return { pass: grade.pass, unclear: grade.unclear, melody: grade, remark: items.length ? melodyRemarkText(items, this.cfg.lang) : undefined };
   }
 
   private async rhythmTurn(p: RhythmPattern, signal: AbortSignal): Promise<TurnResult | null> {

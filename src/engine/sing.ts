@@ -1,5 +1,6 @@
 // Sung-pitch scoring over YIN frames. Pure and deterministic.
 
+import { remarksFor, type Remark } from './feedback';
 import { centsOff, hzToMidi, midiToHz } from './pitch';
 
 export interface SungFrame {
@@ -17,6 +18,8 @@ export interface SungResult {
   cents: number | null;
   detectedMidi: number | null;
   voicedSeconds: number;
+  /** Precise feedback (spec W): how and where it was off, most important first. */
+  remarks?: Remark[];
 }
 
 export interface SungOptions {
@@ -35,6 +38,11 @@ const median = (xs: number[]) => {
 };
 
 export function evaluateSung(frames: SungFrame[], targetMidi: number, opts: SungOptions = {}): SungResult {
+  const r = evaluateSungCore(frames, targetMidi, opts);
+  return r.status === 'unclear' || r.status === 'wrong' ? r : { ...r, remarks: remarksFor(frames, targetMidi) };
+}
+
+function evaluateSungCore(frames: SungFrame[], targetMidi: number, opts: SungOptions = {}): SungResult {
   const { toleranceCents = 35, nearCents = 100, octaveSensitive = false, minConfidence = 0.8, minVoicedSeconds = 0.6, attackSeconds = 0.15 } = opts;
   const voiced = frames.filter((f) => f.hz && f.confidence >= minConfidence && f.hz > 60 && f.hz < 1200);
   if (voiced.length < 2) return { status: 'unclear', cents: null, detectedMidi: null, voicedSeconds: 0 };

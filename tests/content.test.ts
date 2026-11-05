@@ -188,7 +188,7 @@ describe('controller with new lesson kinds', () => {
     expect(recs[2].attempts).toHaveLength(1);
     expect(recs[2].unclear).toBe(2);
     expect(c.getView().session.xp).toBe(38); // 15 + round(15 × 0.5) for the 2nd-try fix + 15 (spec J.6)
-    expect(tts.spoken.some((x) => /little low/.test(x))).toBe(true);
+    expect(tts.spoken.some((x) => /quite flat|bit flat|little low/.test(x))).toBe(true); // precise feedback (spec W)
     expect(pitch.calls).toBe(6);
   });
 

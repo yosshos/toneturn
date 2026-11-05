@@ -669,3 +669,17 @@
   width: 100%;
   height: 100%;
 }
+.notes-view {
+  display: grid;
+  gap: 8px;
+  margin: 8px 0;
+}
+.notes-view .note-staff,
+.notes-view .guitar-tab {
+  background: #fff;
+  border-radius: 12px;
+}
+.take-remark {
+  margin: 8px 0 0;
+  font-weight: 700;
+}
