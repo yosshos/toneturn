@@ -358,6 +358,19 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
 
 function IntroCardView({ card, state, t, lang, nm }: { card: IntroCard; state: string; t: Strings; lang: 'he' | 'en'; nm: Naming }) {
   switch (card.kind) {
+    case 'explain':
+      return (
+        <div className={`intro-card wide ${state}`}>
+          <span className="intro-key">{card.topic === 'melodic-minor' ? '♭3 · 6 · 7' : card.topic === 'swing-lick' ? '♪ ♪' : '♪'}</span>
+          <span className="step-row" dir="ltr">
+            {card.steps.map((d, i) => (
+              <span key={i} className={`step-coin d${d.replace(/\D/g, '')}`}>
+                {d}
+              </span>
+            ))}
+          </span>
+        </div>
+      );
     case 'key-degree':
       return (
         <div className={`intro-card ${state} deg-${card.degree}`}>

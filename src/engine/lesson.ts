@@ -364,7 +364,9 @@ export type IntroCard =
   | { kind: 'inversion'; root: PitchClass; bass: BassRole }
   | { kind: 'rhythm'; rhythm: string }
   | { kind: 'seventh'; quality: SeventhQuality }
-  | { kind: 'song'; song: string };
+  | { kind: 'song'; song: string }
+  /** Lesson-specific explanation (text from content), with a row of scale degrees or step names. */
+  | { kind: 'explain'; topic: 'melodic-minor' | 'bass-line' | 'dictation' | 'swing-lick'; steps: string[] };
 
 export interface IntroStep {
   id: string;
@@ -407,6 +409,7 @@ export type LessonId =
   | 'runs-workshop'
   | 'slash-chords'
   | 'dictation'
+  | 'jazz-2'
   | 'modes'
   | 'wrong-notes'
   | 'placement'
@@ -1230,6 +1233,7 @@ export const LESSON_ORDER: LessonId[] = [
   'songs',
   'slash-chords',
   'dictation',
+  'jazz-2',
 ];
 
 export function makeLesson(id: LessonId, seed = Date.now()): LessonDef {
@@ -1240,6 +1244,8 @@ export function makeLesson(id: LessonId, seed = Date.now()): LessonDef {
       return slashLesson(seed);
     case 'dictation':
       return dictationLesson(seed);
+    case 'jazz-2':
+      return jazz2Lesson(seed);
     case 'wrong-notes':
       return wrongNotesLesson(1, seed);
     case 'runs':
@@ -1828,7 +1834,7 @@ export function slashLesson(seed = Date.now()): LessonDef {
   const C = pc('C');
   const intro: IntroStep[] = [
     ...(['root', 'third', 'fifth'] as const).map((b) => ({ id: `intro-${b}`, card: { kind: 'inversion' as const, root: C, bass: b }, stimulus: inversionQuestion('x', C, b).stimulus })),
-    { id: 'intro-bass-line', card: { kind: 'degrees', key: C, degrees: [1, 7, 6, 5] }, stimulus: bassLineQuestion('x', C, [1, 7, 6, 5]).stimulus },
+    { id: 'intro-bass-line', card: { kind: 'explain', topic: 'bass-line', steps: ['1', '7', '6', '5'] }, stimulus: bassLineQuestion('x', C, [1, 7, 6, 5]).stimulus },
   ];
   return { id: 'slash-chords', version: 1, skill: 'chords', scoring: { xpPerCorrect: 10, attemptLimit: 2 }, intro, questions: qs };
 }
@@ -1878,7 +1884,65 @@ export function dictationLesson(seed = Date.now()): LessonDef {
     version: 1,
     skill: 'sequences',
     scoring: { xpPerCorrect: 10, attemptLimit: 2 },
-    intro: [{ id: 'intro-dictation', card: { kind: 'degrees', key: first.key, degrees: first.degrees }, stimulus: first.stimulus }],
+    intro: [{ id: 'intro-dictation', card: { kind: 'explain', topic: 'dictation', steps: first.degrees.map(String) }, stimulus: first.stimulus }],
+    questions: qs,
+  };
+}
+
+
+// ======================================================================= Jazz 2 (licks, swing, melodic minor)
+
+/** Short jazz licks in scale degrees (diatonic), played swung (long–short eighths). */
+export const LICKS: { id: string; degrees: number[] }[] = [
+  { id: 'scale-up', degrees: [1, 2, 3, 5, 6, 5] },
+  { id: 'arpeggio', degrees: [1, 3, 5, 7, 6, 5] },
+  { id: 'enclosure', degrees: [4, 2, 3, 1] },
+  { id: 'ii-v', degrees: [2, 4, 6, 1, 7, 5] },
+  { id: 'turn', degrees: [5, 6, 5, 4, 3, 2, 1] },
+  { id: 'approach', degrees: [3, 2, 1, 7, 1] },
+];
+
+/** A swung eighth-note line (2:1) as a melody stimulus. */
+export function swingMelody(midis: number[], bpm = 132): Stimulus {
+  const beats = midis.map((_, i) => (i === midis.length - 1 ? 1 : i % 2 === 0 ? 2 / 3 : 1 / 3));
+  return { kind: 'melody', midis, beats, bpm };
+}
+
+/** Lesson 25 — Jazz 2: melodic minor by ear, swung licks to write and to sing back. */
+export function jazz2Lesson(seed = Date.now()): LessonDef {
+  const rnd = mulberry32(seed);
+  const keys = ['C', 'F', 'Bb', 'G'].map(pc);
+  const licks = shuffle(rnd, [...LICKS]);
+  const qs: Question[] = [];
+  // 1–2: melodic minor vs natural minor vs dorian (the raised 6th and 7th).
+  const pool: ModeId[] = ['melodic-minor', 'aeolian', 'dorian'];
+  for (let i = 0; i < 2; i++) {
+    const mode = i === 0 ? 'melodic-minor' : pick(rnd, pool);
+    qs.push(modeIdQuestion(`j${i + 1}`, pick(rnd, keys), mode, shuffle(rnd, [...pool]), 'updown', 0.34, 1300));
+  }
+  // 3–4: write a swung lick in degrees.
+  for (let i = 0; i < 2; i++) {
+    const key = keys[i];
+    const q = degreeSeqQuestion(`j${i + 3}`, key, licks[i].degrees, 1300 + 30 * licks[i].degrees.length);
+    qs.push({ ...q, stimulus: [{ kind: 'cadence', key }, { kind: 'rest', duration: 0.3 }, swingMelody(q.midis)] });
+  }
+  // 5: sing a swung lick back.
+  const key = keys[2];
+  const sq = singSeqQuestion('j5', key, licks[2].degrees.slice(0, 5));
+  qs.push({ ...sq, stimulus: [{ kind: 'cadence', key }, { kind: 'rest', duration: 0.3 }, swingMelody(sq.midis, 112)] });
+  const C = pc('C');
+  const tonic = placeInRange(pcValue(C), 57, 68);
+  const nat = MODE_STEPS.aeolian.map((x) => tonic + x);
+  const mel = MODE_STEPS['melodic-minor'].map((x) => tonic + x);
+  return {
+    id: 'jazz-2',
+    version: 1,
+    skill: 'modes',
+    scoring: { xpPerCorrect: 12, attemptLimit: 2 },
+    intro: [
+      { id: 'intro-mm', card: { kind: 'explain', topic: 'melodic-minor', steps: ['1', '2', '♭3', '4', '5', '6', '7'] }, stimulus: [{ kind: 'notes', midis: nat, each: 0.32 }, { kind: 'rest', duration: 0.5 }, { kind: 'notes', midis: mel, each: 0.32 }] },
+      { id: 'intro-swing', card: { kind: 'explain', topic: 'swing-lick', steps: LICKS[1].degrees.map(String) }, stimulus: [swingMelody(LICKS[1].degrees.map((d) => tonic + [0, 2, 4, 5, 7, 9, 11][d - 1]))] },
+    ],
     questions: qs,
   };
 }

@@ -183,6 +183,12 @@ export const LESSON_META: Record<LessonId, LessonMeta> = {
     icon: 'mic',
     tip: { en: 'Practise a run slowly on “ah”, then speed it up — the Runs workshop does this for you.', he: 'תרגלו ראן לאט על "אה", ואז האיצו — סדנת הראנים עושה את זה בשבילכם.' },
   },
+  'jazz-2': {
+    title: { en: 'Jazz 2: licks & melodic minor', he: 'ג׳אז 2: ליקים ומינור מלודי' },
+    blurb: { en: 'Melodic minor by ear; swung licks to write down and to sing.', he: 'מינור מלודי בשמיעה; ליקים בסווינג לכתוב ולשיר.' },
+    icon: 'chord',
+    tip: { en: 'Melodic minor = minor with a major 6th and 7th: listen for the bright top of the scale.', he: 'מינור מלודי = מינור עם שישית ושביעית גדולות: הקשיבו לחלק העליון הבהיר של הסולם.' },
+  },
   dictation: {
     title: { en: 'Melodic dictation', he: 'הכתבה מלודית' },
     blurb: { en: 'A short melody with its rhythm: write the notes, then the rhythm.', he: 'מנגינה קצרה עם הקצב שלה: כותבים את הצלילים, ואז את הקצב.' },
@@ -226,6 +232,13 @@ export const LESSON_META: Record<LessonId, LessonMeta> = {
 export function introText(lesson: LessonDef, step: IntroStep, l: Lang, nm: Naming): string {
   const c = step.card;
   switch (c.kind) {
+    case 'explain':
+      return {
+        'melodic-minor': { en: 'Natural minor, then melodic minor from the same note. Only the 6th and the 7th change — they go up a half step, so the top of the scale sounds bright.', he: 'מינור טבעי, ואז מינור מלודי מאותו צליל. רק השישית והשביעית משתנות — הן עולות בחצי טון, ולכן החלק העליון של הסולם נשמע בהיר.' },
+        'swing-lick': { en: 'Jazz eighths swing: long–short, long–short. Listen to the lick, then you will write and sing licks like it.', he: 'שמיניות בג׳אז מתנדנדות: ארוך–קצר, ארוך–קצר. הקשיבו לליק, ואחר כך תכתבו ותשירו ליקים כאלה.' },
+        'bass-line': { en: 'Listen to the lowest note of each chord: one, seven, six, five — the bass walks down while the chords change.', he: 'הקשיבו לצליל הנמוך ביותר בכל אקורד: אחת, שבע, שש, חמש — הבס יורד בזמן שהאקורדים מתחלפים.' },
+        dictation: { en: 'A short melody with its rhythm. First write its notes as degrees, then choose its rhythm.', he: 'מנגינה קצרה עם הקצב שלה. קודם כותבים את הצלילים כדרגות, ואז בוחרים את הקצב.' },
+      }[c.topic][l];
     case 'key-degree':
       return c.degree === 1 ? narration.introBb(l, nm, c.key, c.note) : narration.introEb(l, nm, c.key, c.note);
     case 'degrees':
