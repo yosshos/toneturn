@@ -6,17 +6,35 @@ test.describe('placement, Skill Map, review, weekly puzzle', () => {
 
   test('placement adapts, then the Skill Map shows measured skills and a recommendation; review appears', async ({ page }) => {
     await page.goto('/?sim=1');
-    await expect(page.getByRole('button', { name: /Find my level/ })).toBeVisible();
-    await page.getByRole('button', { name: /Find my level/ }).click();
+    // First visit: finding your level is the default step.
+    await expect(page.getByRole('heading', { name: 'Let’s find your level' })).toBeVisible();
+    await page.locator('.first-run-cta').click();
     await page.getByRole('button', { name: 'Use my voice & start' }).click();
     await expect(page.locator('.intro-card')).toHaveCount(0); // no intro for placement
-    await expect(page.getByRole('heading', { name: 'Lesson complete' })).toBeVisible({ timeout: 240_000 });
-    await expect(page.locator('.recap-row')).toHaveCount(9);
+    // Rhythm reading item: tap whatever rhythm is shown, on time (the simulator has no hands).
+    await page.evaluate(() => {
+      new MutationObserver(() => {
+        const prompt = document.querySelector('.read-prompt[data-start]') as HTMLElement | null;
+        if (!prompt || prompt.dataset.done === prompt.dataset.start) return;
+        prompt.dataset.done = prompt.dataset.start;
+        const start = Number(prompt.dataset.start);
+        const beatMs = 60000 / Number(prompt.dataset.bpm);
+        for (const b of (prompt.dataset.onsets ?? '').split(',').map(Number)) {
+          setTimeout(() => window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Space', key: ' ' })), Math.max(0, start + b * beatMs - performance.now()));
+        }
+      }).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['data-start'], childList: true });
+    });
+    // The topic strip shows what is done, now and left.
+    await expect(page.locator('.topic-strip .ts')).toHaveCount(9); // 7 listening topics + rhythm reading + singing
+    await expect(page.locator('.topic-strip .ts.done').first()).toBeVisible({ timeout: 120_000 });
+    await expect(page.getByRole('heading', { name: 'Lesson complete' })).toBeVisible({ timeout: 280_000 });
+    await expect(page.locator('.recap-row')).toHaveCount(16);
     await page.getByRole('button', { name: /See my Skill Map/ }).click();
 
     await expect(page.getByRole('heading', { name: 'Skill Map', level: 1 })).toBeVisible();
-    await expect(page.locator('.radar .dot.ev-provisional')).toHaveCount(3); // degrees, chords, cadences
-    await expect(page.locator('.radar .dot.ev-unmeasured')).toHaveCount(9); // note naming, intervals, rhythm dictation, singing, rhythm reading, melodic memory, vocal agility, rhythmic memory, rhythmic precision
+    await expect(page.locator('.radar .dot.ev-unmeasured')).toHaveCount(2); // vocal agility, rhythmic memory (tapping also measures precision)
+    await expect(page.locator('.trend-tile')).not.toHaveCount(0); // trends per measured skill
+    await expect(page.locator('.trend-detail svg')).toBeVisible();
     await expect(page.locator('.radar .area')).toHaveCount(1);
     await expect(page.locator('.skill-list')).toContainText('provisional');
     await expect(page.locator('.skill-list')).toContainText('not measured yet');
@@ -29,7 +47,9 @@ test.describe('placement, Skill Map, review, weekly puzzle', () => {
 
     // The scripted miss went into the review queue.
     await page.getByRole('button', { name: 'Back' }).click();
-    await expect(page.locator('.tool-card').nth(1)).toContainText('1');
+    await expect(page.getByRole('button', { name: /Review/ }).first()).toBeVisible();
+    // Find my level stays in Practice tools after it was done (re-take).
+    await expect(page.locator('.placement-card')).toContainText('Take it again');
   });
 
   test('weekly puzzle: solve on the first try → gold, shown on the home screen', async ({ page }) => {

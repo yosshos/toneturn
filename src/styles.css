@@ -989,13 +989,15 @@ code {
 }
 .seg {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
   background: rgba(0, 0, 0, 0.3);
   padding: 4px;
   border-radius: 16px;
 }
 .seg button {
-  flex: 1;
+  flex: 1 1 auto;
+  min-width: 0;
   min-height: 48px;
   border: 0;
   border-radius: 12px;
@@ -1696,4 +1698,35 @@ select {
   .wordmark {
     display: none;
   }
+}
+
+/* Phones: nothing may be wider than the screen. <fieldset> defaults to min-width: min-content. */
+fieldset,
+.seg-field {
+  min-width: 0;
+}
+.hero-slot,
+.read-prompt,
+.read-prompt .rhythm-staff,
+.stage.question,
+.panel-screen > * {
+  min-width: 0;
+  max-width: 100%;
+}
+.radar {
+  overflow: hidden;
+}
+.set-card > *,
+.name-row,
+.name-row input {
+  min-width: 0;
+}
+.rhythm-staff,
+.rhythm-staff > div {
+  max-width: 100%;
+  min-width: 0;
+}
+.rhythm-staff svg {
+  max-width: 100%;
+  height: auto;
 }

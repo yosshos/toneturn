@@ -18,6 +18,28 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.21.0',
+    date: '2026-11-05',
+    en: [
+      'Find my level now covers every topic (degrees, notes, intervals, chords, cadences, melodies, rhythm, tapping, singing), adapts per topic, shows which topics are left, gives XP — and is the first step on a first visit',
+      'Your Skill Map sends you to the lesson that fits your level, opens the path up to it, and shows a trend chart for every skill',
+      'Topic progress bars on Home: lessons done out of how many, per topic',
+      'The keyboard no longer lights up the answer while you are still answering',
+      'Cleaner header: install and update buttons up top; language in Settings; “What’s new” in the menu',
+      'New home animation: random notes and the intervals between them',
+      'Fixed screens that were too wide on phones',
+    ],
+    he: [
+      'מציאת הרמה מכסה עכשיו את כל הנושאים (דרגות, תווים, מרווחים, אקורדים, קדנצות, מנגינות, קצב, הקשה, שירה), מותאמת לכל נושא בנפרד, מראה אילו נושאים נשארו, נותנת XP — והיא הצעד הראשון בכניסה הראשונה',
+      'מפת המיומנויות שולחת אתכם לשיעור שמתאים לרמה שלכם, פותחת את המסלול עד אליו, ומציגה גרף מגמה לכל מיומנות',
+      'פסי התקדמות לפי נושא במסך הבית: כמה שיעורים הושלמו מתוך כמה',
+      'המקלדת כבר לא מאירה את התשובה בזמן שאתם עוד עונים',
+      'סרגל עליון נקי יותר: כפתורי התקנה ועדכון למעלה; השפה בהגדרות; "מה חדש" בתפריט',
+      'אנימציה חדשה במסך הבית: תווים אקראיים והמרווחים ביניהם',
+      'תוקנו מסכים שהיו רחבים מדי בטלפון',
+    ],
+  },
+  {
     version: '0.20.0',
     date: '2026-11-05',
     en: ['ToneTurn is now Ninth Sense — new name, new logo. Your progress, friends and account stay as they are.'],

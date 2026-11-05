@@ -7,6 +7,8 @@ import {
   intervalQuestion,
   inversionQuestion,
   noteNameQuestion,
+  rhythmDictQuestion,
+  rhythmReadQuestion,
   singSeqQuestion,
   singRunQuestion,
   seventhQuestion,
@@ -37,63 +39,103 @@ import type { SessionState } from './session';
 
 // ======================================================================= placement
 
-export const PLACEMENT_SKILLS = ['degrees', 'chords', 'cadences'] as const;
+/**
+ * "Find my level": every listening skill twice (round 2 adapts to round 1, per skill), then one
+ * rhythm-reading tap item and — in voice mode — one singing item. Levels 0–3 map to the path:
+ * 0 = first lessons, 3 = the hardest material of that skill. Each item's difficulty is on the rating
+ * scale, so the answers place every skill on the Skill Map.
+ */
+export const PLACEMENT_SKILLS = ['degrees', 'notes', 'intervals', 'chords', 'cadences', 'sequences', 'rhythm-dictation'] as const;
 export type PlacementSkill = (typeof PLACEMENT_SKILLS)[number];
-export const PLACEMENT_ROUNDS = 3;
+export const PLACEMENT_ROUNDS = 2;
+export const PLACEMENT_MAX_LEVEL = 3;
+const START_LEVEL = 1;
 
 const CAD_PHRASES: Record<'resolved' | 'open', Roman[]>[] = [
   { resolved: ['I', 'IV', 'V7', 'I'], open: ['I', 'vi', 'IV', 'V'] },
   { resolved: ['I', 'vi', 'ii', 'V7', 'I'], open: ['I', 'IV', 'ii', 'V'] },
   { resolved: ['vi', 'IV', 'V7', 'I'], open: ['I', 'iii', 'vi', 'V'] },
 ];
+const NAME_LEVEL_KEYS = [['C'], ['G', 'F'], ['D', 'Bb'], ['Eb', 'A', 'E']];
+const RHYTHM_LEVEL: (1 | 2 | 4 | 6)[] = [1, 2, 4, 6];
 
-/** One placement item for a skill at level 0 (easy) … 2 (hard). Difficulty grows with level. */
+/** One placement item for a skill at level 0 (easy) … 3 (hard). Difficulty grows with level. */
 export function placementItem(skill: PlacementSkill, level: number, seed: number, id: string): Question {
   const rnd = mulberry32(seed);
+  const lv = Math.max(0, Math.min(PLACEMENT_MAX_LEVEL, level));
   const key = pick(rnd, DEGREE_KEYS);
   switch (skill) {
     case 'degrees': {
-      if (level === 0) return degreeQuestion(id, key, pick(rnd, [1, 5]), [1, 5], 900);
-      if (level === 1) return degreeQuestion(id, key, pick(rnd, [1, 3, 5]), [1, 3, 5], 1050);
-      return degreeQuestion(id, key, 1 + Math.floor(rnd() * 7), [1, 2, 3, 4, 5, 6, 7], 1250);
+      if (lv === 0) return degreeQuestion(id, key, pick(rnd, [1, 5]), [1, 5], 900);
+      if (lv === 1) return degreeQuestion(id, key, pick(rnd, [1, 3, 5]), [1, 3, 5], 1050);
+      if (lv === 2) return degreeQuestion(id, key, 1 + Math.floor(rnd() * 7), [1, 2, 3, 4, 5, 6, 7], 1200);
+      return degreeQuestion(id, key, pick(rnd, [2, 4, 6, 7]), [1, 2, 3, 4, 5, 6, 7], 1350);
+    }
+    case 'notes': {
+      const k = pc(pick(rnd, NAME_LEVEL_KEYS[lv]));
+      const d = lv === 0 ? pick(rnd, [1, 3, 5]) : 1 + Math.floor(rnd() * 7);
+      return noteNameQuestion(id, k, d, true, [950, 1100, 1250, 1400][lv]);
+    }
+    case 'intervals': {
+      const low = 53 + Math.floor(rnd() * 10);
+      if (lv === 0) return intervalQuestion(id, low, pick(rnd, ['P5', 'P8'] as const), 'melodic', 900);
+      if (lv === 1) return intervalQuestion(id, low, pick(rnd, ['M3', 'P5', 'P8'] as const), 'melodic', 1050);
+      if (lv === 2) return intervalQuestion(id, low, pick(rnd, ['M3', 'P5', 'P8'] as const), 'harmonic', 1200);
+      return intervalQuestion(id, low + 7, pick(rnd, ['M3', 'P5'] as const), 'harmonic', 1350);
     }
     case 'chords': {
       const root = pc(pick(rnd, ROOT_NAMES));
-      if (level === 0) return qualityQuestion(id, root, pick(rnd, ['maj', 'min'] as Quality[]), ['maj', 'min'], true, 950);
-      if (level === 1) return qualityQuestion(id, root, pick(rnd, ['maj', 'min'] as Quality[]), ['maj', 'min'], false, 1100);
-      return qualityQuestion(id, root, pick(rnd, ['maj', 'min', 'dim', 'aug'] as Quality[]), ['maj', 'min', 'dim', 'aug'], false, 1300);
+      if (lv === 0) return qualityQuestion(id, root, pick(rnd, ['maj', 'min'] as Quality[]), ['maj', 'min'], true, 900);
+      if (lv === 1) return qualityQuestion(id, root, pick(rnd, ['maj', 'min'] as Quality[]), ['maj', 'min'], false, 1050);
+      if (lv === 2) return qualityQuestion(id, root, pick(rnd, ['maj', 'min', 'dim', 'aug'] as Quality[]), ['maj', 'min', 'dim', 'aug'], false, 1250);
+      return { ...seventhQuestion(id, root, pick(rnd, SEVENTHS), SEVENTHS), difficulty: 1400 };
     }
     case 'cadences':
-      return cadenceQuestion(id, key, pick(rnd, ['resolved', 'open'] as const), CAD_PHRASES[level], [1000, 1100, 1200][level]);
+      if (lv === 3) return { ...progressionQuestion(id, key, pick(rnd, ['ii-V-I', 'V-I', 'I-vi-ii-V'] as ProgressionId[]), ['ii-V-I', 'V-I', 'I-vi-ii-V']), difficulty: 1350 };
+      return cadenceQuestion(id, key, pick(rnd, ['resolved', 'open'] as const), CAD_PHRASES[lv], [950, 1100, 1200][lv]);
+    case 'sequences': {
+      const pool = lv <= 0 ? [1, 3, 5] : lv === 1 ? [1, 2, 3, 4, 5] : [1, 2, 3, 4, 5, 6, 7];
+      const n = lv <= 1 ? (lv === 0 ? 2 : 3) : lv === 2 ? 3 : 4;
+      const ds: number[] = [];
+      while (ds.length < n) {
+        const d = pick(rnd, pool);
+        if (d !== ds[ds.length - 1]) ds.push(d);
+      }
+      return degreeSeqQuestion(id, key, ds, [950, 1100, 1250, 1400][lv]);
+    }
+    case 'rhythm-dictation':
+      return rhythmDictQuestion(id, RHYTHM_LEVEL[lv], 1, seed);
   }
 }
 
-const skillOf = (i: number): PlacementSkill => PLACEMENT_SKILLS[i % PLACEMENT_SKILLS.length];
+const skillOf = (i: number): PlacementSkill | null => (i < PLACEMENT_SKILLS.length * PLACEMENT_ROUNDS ? PLACEMENT_SKILLS[i % PLACEMENT_SKILLS.length] : null);
 
-/** 9 items: degrees, chords, cadences × 3 rounds, all starting at the middle level. */
-export function placementLesson(seed: number): LessonDef {
-  const questions = Array.from({ length: PLACEMENT_SKILLS.length * PLACEMENT_ROUNDS }, (_, i) => placementItem(skillOf(i), 1, seed + i * 97, `p${i + 1}`));
-  return { id: 'placement', version: 1, skill: 'degrees', scoring: { xpPerCorrect: 0, attemptLimit: 1 }, intro: [], questions };
+export function placementLesson(seed: number, opts: { singing?: boolean } = {}): LessonDef {
+  const questions: Question[] = Array.from({ length: PLACEMENT_SKILLS.length * PLACEMENT_ROUNDS }, (_, i) => placementItem(skillOf(i)!, START_LEVEL, seed + i * 97, `p${i + 1}`));
+  // Performance: tap a short rhythm (rhythm reading); sing a degree when the microphone is in use.
+  questions.push(rhythmReadQuestion(`p${questions.length + 1}`, 2, 1, seed + 5003, 'notation'));
+  if (opts.singing) questions.push(singQuestion(`p${questions.length + 1}`, pc(pick(mulberry32(seed + 7), ['C', 'D', 'F', 'G'])), 5));
+  return { id: 'placement', version: 2, skill: 'degrees', scoring: { xpPerCorrect: 5, attemptLimit: 1 }, intro: [], questions };
 }
 
 /** Level the next item of a skill should have, from that skill's resolved items so far. */
 export function placementLevel(s: SessionState, skill: PlacementSkill): number {
-  let level = 1;
+  let level = START_LEVEL;
   s.records.forEach((r, i) => {
     if (skillOf(i) !== skill || r.outcome === 'pending' || r.outcome === 'skipped') return;
-    level = nextLevel(level, r.outcome === 'correct');
+    level = nextLevel(level, r.outcome === 'correct', PLACEMENT_MAX_LEVEL);
   });
   return level;
 }
 
 /**
  * Adapt after each answer: unresolved items are regenerated at the level implied by results so far
- * (up after a first-try correct, down after a miss). Resolved items are never changed.
+ * (up after a first-try correct, down after a miss). Resolved items and the performance items never change.
  */
 export function adaptPlacement(s: SessionState, seed: number): Question[] {
   return s.lesson.questions.map((q, i) => {
-    if (s.records[i].outcome !== 'pending' || i <= s.index) return q;
     const skill = skillOf(i);
+    if (!skill || s.records[i].outcome !== 'pending' || i <= s.index) return q;
     return placementItem(skill, placementLevel(s, skill), seed + i * 97, q.id);
   });
 }

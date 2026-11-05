@@ -32,6 +32,7 @@ export function PracticeTools({
   const ratings = ratingsOf(progress);
   const measured = SKILLS.filter((k) => (ratings[k]?.n ?? 0) > 0).length;
   const now = new Date();
+  const placed = (progress.lessons.placement?.completions ?? 0) > 0;
   const reviewCount = new Set(dueReviews(progress.review, now).map((r) => r.key)).size;
   const nextDue = progress.review.length ? Math.min(...progress.review.map((r) => new Date(reviewDue(r)).getTime())) : null;
   const nextDays = nextDue !== null && reviewCount === 0 ? Math.max(1, Math.ceil((nextDue - now.getTime()) / 86400000)) : null;
@@ -41,13 +42,25 @@ export function PracticeTools({
     <section className="tools-row" aria-label={t.practiceTools}>
       <h2>{t.practiceTools}</h2>
       <div className="tool-cards">
-        <button className="tool-card" onClick={measured ? onSkills : onPlacement}>
+        {/* Find my level stays available: re-take it any time (e.g. after an old, shorter placement). */}
+        <button className="tool-card placement-card" onClick={onPlacement}>
           <span className="tool-icon" aria-hidden="true">
             <NodeIcon kind="map" />
           </span>
-          <b>{measured ? t.skillMap : t.findLevel}</b>
-          <small>{measured ? `${measured}/${SKILLS.length}` : t.findLevelHint}</small>
+          <b>{t.findLevel}</b>
+          <small>{placed ? t.retakePlacement : t.findLevelHint}</small>
         </button>
+        {measured > 0 && (
+          <button className="tool-card" onClick={onSkills}>
+            <span className="tool-icon" aria-hidden="true">
+              <NodeIcon kind="map" />
+            </span>
+            <b>{t.skillMap}</b>
+            <small>
+              {measured}/{SKILLS.length} {t.measuredShort}
+            </small>
+          </button>
+        )}
         <button className="tool-card" onClick={onReview} disabled={reviewCount === 0}>
           <span className="tool-icon" aria-hidden="true">
             <NodeIcon kind="review" />

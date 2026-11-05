@@ -88,10 +88,11 @@ export const TapIcon = () => (
 );
 
 /** Audio-synced mini keyboard: keys light up exactly while they sound. */
-export function Keyboard({ low = 48, high = 76, mark }: { low?: number; high?: number; mark?: number }) {
+/** Piano strip. `live` = light the keys that sound; off while the sound IS the question (see keysGiveAway). */
+export function Keyboard({ low = 48, high = 76, mark, live = true }: { low?: number; high?: number; mark?: number; live?: boolean }) {
   const [active, setActive] = useState<number[]>([]);
   useEffect(() => piano.onNotes(setActive), []);
-  const shown = new Set(active.map((m) => (m < low ? m + 12 * Math.ceil((low - m) / 12) : m)));
+  const shown = new Set(live ? active.map((m) => (m < low ? m + 12 * Math.ceil((low - m) / 12) : m)) : []);
   const isBlack = (m: number) => [1, 3, 6, 8, 10].includes(m % 12);
   const whites: number[] = [];
   for (let m = low; m <= high; m++) if (!isBlack(m)) whites.push(m);

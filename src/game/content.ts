@@ -754,3 +754,16 @@ export function giveText(q: Question, a: Answer, l: Lang, nm: Naming = 'letter')
   if (q.kind === 'name-seq') return namesShown(String(a).split('.'), nm, l);
   return typeof a === 'number' ? String(a) : choiceLabel(q, a, l).small;
 }
+
+/**
+ * Does lighting the sounding keys during the question reveal the answer? True for every listening task
+ * (degrees, chords, cadences, intervals, inversions, sequences, runs, jazz, songs, echo singing). The
+ * exceptions are singing from a degree / name / description: only the key and tonic sound, as context.
+ */
+export function keysGiveAway(q: Question): boolean {
+  if (q.kind === 'sing') return q.promptBy === 'echo';
+  if (q.kind === 'sing-seq') return false;
+  if (q.kind === 'sing-run') return q.prompt === 'echo';
+  return true;
+}
+

@@ -1,6 +1,7 @@
 // Local progress + settings. XP and completion writes are idempotent by event id,
 // so a repeated callback or an app resume can never award points twice.
 
+import { placementUnlocks } from '../engine/recommend';
 import { outcomeOf, type InputMode, type SessionState } from '../engine/session';
 import { ratingScore } from '../engine/scoring';
 import { questionSkill, questionTag, type Answer } from '../engine/lesson';
@@ -46,6 +47,8 @@ export interface Progress {
   puzzles?: Record<string, { band: string; medal: Medal; completedAt: string }>;
   /** Daily challenge: the first play of each local day (later plays are practice). */
   daily?: Record<string, DailyRecord>;
+  /** Path lessons opened by "Find my level" (everything below the player's level, per skill). */
+  placementUnlocks?: string[];
   /** Ghost race: your best run per set ("kind:rounds"), replayed as an opponent. */
   ghosts?: Record<string, GhostRun>;
 }
@@ -288,8 +291,10 @@ export function applyResult(p: Progress, r: LessonResult, now: Date): Progress {
   // Only the first scored try at a week's puzzle counts; later plays are practice.
   if (r.puzzle && !puzzles[r.puzzle.week]) puzzles[r.puzzle.week] = { band: r.puzzle.band, medal: r.puzzle.medal, completedAt: at };
   const withEvents: Progress = { ...p, ratingEvents: [...(p.ratingEvents ?? []), ...newEvents].slice(-3000), puzzles };
+  const unlocks = r.lessonId === 'placement' ? [...new Set([...(p.placementUnlocks ?? []), ...placementUnlocks(ratingsOf(withEvents))])] : p.placementUnlocks;
   return {
     ...withEvents,
+    ...(unlocks ? { placementUnlocks: unlocks } : {}),
     snapshots: snapshot(withEvents, now),
     xp: p.xp + r.xp,
     applied: [...p.applied, eventId].slice(-500),
@@ -413,4 +418,12 @@ export class ProgressStore {
     if (next !== p) await this.kv.set('progress', next);
     return next;
   }
+}
+
+/** Done at least once with at least 80 % first-try correct (the latest result's total). */
+export function lessonMastered(p: Progress, id: string): boolean {
+  const l = p.lessons[id];
+  if (!l?.completions) return false;
+  const last = [...p.history].reverse().find((h) => h.lessonId === id);
+  return !!last && l.best >= Math.ceil(0.8 * last.total);
 }

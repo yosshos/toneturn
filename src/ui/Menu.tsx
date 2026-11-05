@@ -1,6 +1,6 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { APP_BUILT, APP_COMMIT, APP_VERSION, CHANGELOG } from '../version';
-import { applyUpdate, checkForUpdate, promptInstall, pwa } from '../pwa';
+import { checkForUpdate, pwa } from '../pwa';
 import { disablePush, enablePush, pushStatus, updatePushPrefs, type PushStatus } from '../cloud/social';
 import type { CloudUser } from '../cloud/cloud';
 import { cloudConfigured } from '../cloud/cloud';
@@ -126,66 +126,44 @@ export function MenuSheet({ t, settings, user, onClose, onNavigate, onSettings }
           )}
         </section>
 
-        {/* ---- Install ---- */}
-        <section className="menu-card">
-          <h3>📲 {t.installApp}</h3>
-          {p.installed ? (
-            <p className="field-hint">✓ {t.installed}</p>
-          ) : p.canInstall ? (
-            <button className="btn primary" onClick={() => void promptInstall()}>
-              {t.installApp}
-            </button>
-          ) : (
-            <p className="field-hint">{p.iosManual ? t.installIos : t.installHint}</p>
-          )}
-        </section>
-
-        {/* ---- Version & updates ---- */}
-        <section className="menu-card">
-          <h3>⟳ {t.updates}</h3>
+        {/* ---- What's new (latest version, in the chosen language) ---- */}
+        <section className="menu-card whats-new-card">
+          <h3>
+            ✨ {t.whatsNewIn} <span dir="ltr">{APP_VERSION}</span>
+          </h3>
+          <Changelog lang={lang} entries={CHANGELOG.slice(0, 1)} bare />
           <p className="version-line" dir="ltr">
             {t.version} <b>{APP_VERSION}</b> · {APP_COMMIT}
             {APP_BUILT && <> · {new Date(APP_BUILT).toLocaleDateString(lang === 'he' ? 'he-IL' : 'en-GB')}</>}
           </p>
-          {p.updateReady ? (
-            <>
-              <p className="field-hint good">{t.updateReady}</p>
-              <button className="btn mega" onClick={() => applyUpdate()}>
-                {t.updateNow}
-              </button>
-            </>
-          ) : p.swSupported && import.meta.env.PROD ? (
-            <div className="row">
-              <button
-                className="btn"
-                disabled={p.checking}
-                onClick={async () => {
-                  setChecked(await checkForUpdate());
-                }}
-              >
+          <div className="row">
+            {p.swSupported && import.meta.env.PROD && !p.updateReady && (
+              <button className="btn ghost small" disabled={p.checking} onClick={async () => setChecked(await checkForUpdate())}>
                 {p.checking ? t.checking : t.checkUpdates}
               </button>
-              {checked === false && <span className="field-hint">✓ {t.upToDate}</span>}
-            </div>
-          ) : (
-            <p className="field-hint">{t.updatesDevOnly}</p>
-          )}
-          <button className="btn ghost small" onClick={() => setShowLog((x) => !x)} aria-expanded={showLog}>
-            {t.whatsNew}
-          </button>
-          {showLog && <Changelog lang={lang} />}
+            )}
+            {checked === false && <span className="field-hint">✓ {t.upToDate}</span>}
+            <button className="btn ghost small" onClick={() => setShowLog((x) => !x)} aria-expanded={showLog}>
+              {t.allVersions}
+            </button>
+          </div>
+          {showLog && <Changelog lang={lang} entries={CHANGELOG.slice(1)} />}
         </section>
       </div>
     </div>
   );
 }
 
-export function Changelog({ lang, entries = CHANGELOG }: { lang: 'he' | 'en'; entries?: typeof CHANGELOG }) {
+export function Changelog({ lang, entries = CHANGELOG, bare = false }: { lang: 'he' | 'en'; entries?: typeof CHANGELOG; bare?: boolean }) {
   return (
-    <ol className="changelog">
+    <ol className={`changelog ${bare ? 'bare' : ''}`}>
       {entries.map((c) => (
         <li key={c.version}>
-          <b dir="ltr">{c.version}</b> <small>{c.date}</small>
+          {!bare && (
+            <>
+              <b dir="ltr">{c.version}</b> <small>{c.date}</small>
+            </>
+          )}
           <ul>
             {c[lang].map((x) => (
               <li key={x}>{x}</li>

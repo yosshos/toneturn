@@ -1,6 +1,9 @@
-import { useState } from 'react';
+import { FIRST_TRIO, randomTrio, type Trio } from '../engine/heroTrio';
+import { applyUpdate, promptInstall, pwa } from '../pwa';
+import { topicProgress } from '../engine/recommend';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { LESSON_ORDER, type LessonId } from '../engine/lesson';
-import { displayNote, pc } from '../engine/pitch';
+import { displayNote, pc, type Naming } from '../engine/pitch';
 import type { InputMode } from '../engine/session';
 import { LESSON_META } from '../game/content';
 import type { Strings } from '../i18n/strings';
@@ -25,6 +28,7 @@ interface Props {
   onDuel: () => void;
   onOnline: () => void;
   onGhost: () => void;
+  onPlacement: () => void;
   onMenu: () => void;
   updateReady: boolean;
   news: React.ReactNode;
@@ -42,8 +46,9 @@ export function lessonStates(progress: Progress): Record<LessonId, NodeState> {
   LESSON_ORDER.forEach((id, i) => {
     const done = (progress.lessons[id]?.completions ?? 0) > 0;
     const prevDone = i === 0 || (progress.lessons[LESSON_ORDER[i - 1]]?.completions ?? 0) > 0;
+    const placed = progress.placementUnlocks?.includes(id) ?? false;
     if (done) out[id] = 'done';
-    else if (prevDone || UNLOCK_ALL) {
+    else if (prevDone || placed || UNLOCK_ALL) {
       out[id] = currentSet ? 'open' : 'current';
       currentSet = true;
     } else out[id] = 'locked';
@@ -63,12 +68,11 @@ export function starsFor(best: number, total: number) {
 
 const TOTALS: Partial<Record<LessonId, number>> = { 'bflat-two-homes': 3, 'degrees-135': 5, 'major-minor': 5, cadences: 4, 'sing-home-five': 3, intervals: 6, inversions: 5, 'notes-degrees': 6, 'sing-names': 4, 'sing-degrees': 3, 'rhythm-r1': 5, 'rhythm-r2': 5, 'rhythm-r3': 5, runs: 5, 'rhythm-r4': 5, 'rhythm-r5': 5, 'rhythm-r6': 5, 'rhythm-r7': 5, 'rhythm-r8': 5, 'note-sequences': 5, 'jazz-1': 5, songs: 5 };
 
-export function Home({ t, settings, progress, streak, account, onPractice, onButtonsInstead, onMode, onSettings, onLang, onGame, onDuel, onOnline, onGhost, onMenu, updateReady, news, tools }: Props) {
+export function Home({ t, settings, progress, streak, account, onPractice, onButtonsInstead, onMode, onGame, onDuel, onOnline, onGhost, onPlacement, onMenu, news, tools }: Props) {
   const [consentFor, setConsentFor] = useState<LessonId | null>(null);
   const lang = settings.uiLang;
   const nm = namingFor(settings.naming, lang);
   const bb = displayNote(pc('Bb'), nm, lang);
-  const eb = displayNote(pc('Eb'), nm, lang);
   const states = lessonStates(progress);
   const next = nextLessonId(progress);
   const meta = LESSON_META[next];
@@ -79,6 +83,8 @@ export function Home({ t, settings, progress, streak, account, onPractice, onBut
   const todayXp = progress.history.filter((h) => localDay(new Date(h.completedAt)) === today).reduce((a, h) => a + h.xp, 0);
   const goal = Math.min(1, todayXp / DAILY_GOAL_XP);
 
+  // First visit: finding your level is the default first step (spec addendum, user testing).
+  const firstRun = !(progress.lessons.placement?.completions ?? 0) && !LESSON_ORDER.some((id) => (progress.lessons[id]?.completions ?? 0) > 0);
   const start = (id: LessonId) => {
     if (settings.mode === 'voice' && !settings.voiceConsent) return setConsentFor(id);
     onPractice(id, false);
@@ -94,27 +100,14 @@ export function Home({ t, settings, progress, streak, account, onPractice, onBut
           </span>
         </div>
         <div className="stats">
-          <button
-            className="chip lang-toggle"
-            onClick={() => onLang(lang === 'he' ? 'en' : 'he')}
-            aria-label={lang === 'he' ? 'Switch to English' : 'החלפה לעברית'}
-          >
-            {lang === 'he' ? 'EN' : 'עב'}
-          </button>
           <span className="chip streak" title={t.streak}>
             <span aria-hidden="true">🔥</span> <b>{streak}</b>
             <span className="sr-only"> {t.streak}</span>
           </span>
-          <button className="icon-btn menu-btn" onClick={onMenu} aria-label={updateReady ? `${t.menu} · ${t.updateReady}` : t.menu}>
+          <HeaderPwa t={t} />
+          <button className="icon-btn menu-btn" onClick={onMenu} aria-label={t.menu}>
             <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" aria-hidden="true">
               <path d="M4 7h16M4 12h16M4 17h16" />
-            </svg>
-            {updateReady && <span className="badge-dot" aria-hidden="true" />}
-          </button>
-          <button className="icon-btn" onClick={onSettings} aria-label={t.settings}>
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
-              <circle cx="12" cy="12" r="3.2" />
-              <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z" />
             </svg>
           </button>
         </div>
@@ -139,18 +132,37 @@ export function Home({ t, settings, progress, streak, account, onPractice, onBut
       </section>
 
       <section className="hero">
-        <HeroArt bb={bb} eb={eb} />
+        <HeroArt nm={nm} lang={lang} />
         <div className="hero-copy">
           <p className="tagline">{t.appTagline}</p>
-          <h1>{withNote(meta.title[lang], bb)}</h1>
-          <p className="blurb">{meta.blurb[lang]}</p>
-          <ModeSwitch mode={settings.mode} onChange={onMode} t={t} />
-          <button className="btn mega" onClick={() => start(next)}>
-            {settings.mode === 'voice' && <MicIcon />}
-            {anyDone ? t.continue : t.practice}
-          </button>
+          {firstRun ? (
+            <>
+              <h1>{t.firstRunTitle}</h1>
+              <p className="blurb">{t.firstRunBlurb}</p>
+              <ModeSwitch mode={settings.mode} onChange={onMode} t={t} />
+              <button className="btn mega first-run-cta" onClick={onPlacement}>
+                {settings.mode === 'voice' && <MicIcon />}
+                {t.findLevel}
+              </button>
+              <button className="link start-from-one" onClick={() => start(next)}>
+                {t.startFromLessonOne}
+              </button>
+            </>
+          ) : (
+            <>
+              <h1>{withNote(meta.title[lang], bb)}</h1>
+              <p className="blurb">{meta.blurb[lang]}</p>
+              <ModeSwitch mode={settings.mode} onChange={onMode} t={t} />
+              <button className="btn mega" onClick={() => start(next)}>
+                {settings.mode === 'voice' && <MicIcon />}
+                {anyDone ? t.continue : t.practice}
+              </button>
+            </>
+          )}
         </div>
       </section>
+
+      <TopicBars t={t} progress={progress} />
 
       <section className="path" aria-label={t.lessonPath}>
         <h2>{t.lessonPath}</h2>
@@ -354,9 +366,22 @@ export function NodeIcon({ kind }: { kind: 'ear' | 'steps' | 'chord' | 'cadence'
 }
 
 /** Illustrated hero: a piano horizon, the B♭ token floating between its two homes. */
-function HeroArt({ bb, eb }: { bb: string; eb: string }) {
+/** Three notes on the keyboard and the intervals between them; a new random trio every few seconds. */
+function HeroArt({ nm, lang }: { nm: Naming; lang: 'he' | 'en' }) {
+  const [state, setState] = useState<{ n: number; trio: Trio }>({ n: 0, trio: FIRST_TRIO });
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      if (document.hidden) return;
+      setState((s) => ({ n: s.n + 1, trio: randomTrio() }));
+    }, 4500);
+    return () => window.clearInterval(id);
+  }, []);
+  const { trio, n } = state;
+  const L = displayNote(trio.left, nm, lang);
+  const M = displayNote(trio.mid, nm, lang);
+  const R = displayNote(trio.right, nm, lang);
   return (
-    <svg className="hero-art" viewBox="0 0 360 220" aria-hidden="true">
+    <svg className="hero-art" viewBox="0 0 360 220" role="img" aria-label={`${L} → ${M}: ${trio.intervalLeft} · ${M} → ${R}: ${trio.intervalRight}`}>
       <defs>
         <radialGradient id="glow" cx="50%" cy="40%" r="60%">
           <stop offset="0" stopColor="#FFC94D" stopOpacity=".55" />
@@ -374,32 +399,36 @@ function HeroArt({ bb, eb }: { bb: string; eb: string }) {
         <circle cx="300" cy="70" r="1.6" fill="#FFC94D" />
         <circle cx="70" cy="80" r="1.6" fill="#A98BFF" />
       </g>
-      <g className="house left">
+      <g className="house left swap-house" key={`l${n}`}>
         <path d="M40 120l40-34 40 34v50H40z" fill="#4BE3B5" />
         <rect x="68" y="138" width="24" height="32" rx="4" fill="#1E1236" />
-        <text x="80" y="112" textAnchor="middle" className="house-label" direction="ltr">
-          {bb}
+        <text x="80" y="112" textAnchor="middle" className={`house-label ${L.length > 3 ? 'small' : ''}`} direction="ltr">
+          {L}
         </text>
       </g>
-      <g className="house right">
+      <g className="house right swap-house" key={`r${n}`} style={{ animationDelay: '90ms' }}>
         <path d="M240 120l40-34 40 34v50h-80z" fill="#A98BFF" />
         <rect x="268" y="138" width="24" height="32" rx="4" fill="#1E1236" />
-        <text x="280" y="112" textAnchor="middle" className="house-label" direction="ltr">
-          {eb}
+        <text x="280" y="112" textAnchor="middle" className={`house-label ${R.length > 3 ? 'small' : ''}`} direction="ltr">
+          {R}
         </text>
       </g>
       <path d="M95 84Q180 10 265 84" fill="none" stroke="#FFC94D" strokeWidth="3" strokeDasharray="2 9" strokeLinecap="round" className="arc" />
       <g className="float-coin">
-        <circle cx="180" cy="62" r="30" fill="url(#coin)" stroke="#2A1747" strokeWidth="4" />
-        <text x="180" y="73" textAnchor="middle" className={`coin-label ${bb.length > 3 ? 'small' : ''}`} direction="ltr">
-          {bb}
-        </text>
-        <text x="132" y="54" className="deg-badge" direction="ltr">
-          1
-        </text>
-        <text x="220" y="54" className="deg-badge" direction="ltr">
-          5
-        </text>
+        <g className="swap-coin" key={`c${n}`}>
+          <circle cx="180" cy="62" r="30" fill="url(#coin)" stroke="#2A1747" strokeWidth="4" />
+          <text x="180" y="73" textAnchor="middle" className={`coin-label ${M.length > 3 ? 'small' : ''}`} direction="ltr">
+            {M}
+          </text>
+        </g>
+        <g className="swap-badges" key={`b${n}`}>
+          <text x="128" y="54" textAnchor="middle" className="deg-badge" direction="ltr">
+            {trio.intervalLeft}
+          </text>
+          <text x="232" y="54" textAnchor="middle" className="deg-badge" direction="ltr">
+            {trio.intervalRight}
+          </text>
+        </g>
       </g>
       <g transform="translate(0 176)">
         {Array.from({ length: 15 }).map((_, i) => (
@@ -410,5 +439,64 @@ function HeroArt({ bb, eb }: { bb: string; eb: string }) {
         ))}
       </g>
     </svg>
+  );
+}
+
+/** "Done X of Y" per topic across the whole path. */
+export function TopicBars({ t, progress }: { t: Strings; progress: Progress }) {
+  const rows = topicProgress((id) => (progress.lessons[id]?.completions ?? 0) > 0);
+  return (
+    <section className="topic-bars" aria-label={t.topics}>
+      <h2>{t.topics}</h2>
+      <ul>
+        {rows.map((r) => (
+          <li key={r.id} data-topic={r.id}>
+            <span className="tb-name">{t.topicNames[r.id]}</span>
+            <span className="tb-bar" role="progressbar" aria-valuemin={0} aria-valuemax={r.total} aria-valuenow={r.done} aria-label={t.topicNames[r.id]}>
+              <span style={{ width: `${(100 * r.done) / r.total}%` }} />
+            </span>
+            <span className="tb-count" dir="ltr">
+              {r.done}/{r.total}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+/** Header actions from the PWA state: a gold "update" button when a new version is waiting, an install emoji when not installed. */
+function HeaderPwa({ t }: { t: Strings }) {
+  const p = useSyncExternalStore(pwa.subscribe, pwa.get);
+  const [howTo, setHowTo] = useState(false);
+  return (
+    <>
+      {p.updateReady && (
+        <button className="update-pill" onClick={() => applyUpdate()} title={t.updateReady}>
+          <span aria-hidden="true">⟳</span> {t.updateShort}
+        </button>
+      )}
+      {!p.installed && (p.canInstall || p.iosManual || import.meta.env.PROD) && (
+        <button
+          className="icon-btn install-btn"
+          aria-label={t.installApp}
+          title={t.installApp}
+          onClick={() => (p.canInstall ? void promptInstall() : setHowTo(true))}
+        >
+          <span aria-hidden="true">📲</span>
+        </button>
+      )}
+      {howTo && (
+        <div className="sheet-backdrop" onClick={() => setHowTo(false)}>
+          <div className="sheet install-sheet" role="dialog" aria-modal="true" aria-label={t.installApp} onClick={(e) => e.stopPropagation()}>
+            <h2>📲 {t.installApp}</h2>
+            <p>{p.iosManual ? t.installIos : t.installHint}</p>
+            <button className="btn primary" onClick={() => setHowTo(false)}>
+              {t.done}
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

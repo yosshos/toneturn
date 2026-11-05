@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
-import { answerFromMidi, makeLesson, pcFromKey, type IntroCard, type LessonDef, type LessonId, type Question } from '../engine/lesson';
+import { answerFromMidi, makeLesson, pcFromKey, questionSkill, type IntroCard, type SkillId, type LessonDef, type LessonId, type Question } from '../engine/lesson';
 import type { SessionState } from '../engine/session';
 import { displayNote, type Naming } from '../engine/pitch';
 import { midi } from '../speech/midi';
 import type { InputMode } from '../engine/session';
 import { LessonController, type LessonView } from '../game/controller';
-import { askTemplate, choiceLabel, hintText, LESSON_META, questionBadge } from '../game/content';
+import { answerWord, askTemplate, choiceLabel, hintText, keysGiveAway, LESSON_META, questionBadge } from '../game/content';
 import type { Strings } from '../i18n/strings';
 import { namingFor, resultFromSession, type Progress, type Settings } from '../storage/progress';
 import { isTimed } from '../engine/scoring';
@@ -45,6 +45,11 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
       () => {
         const q = c?.getView().question;
         return q && (q.kind === 'sing-seq' || q.kind === 'sing-run') ? q.midis : null;
+      },
+      // Simulator: say the right answer in the question's own words (letters, English).
+      () => {
+        const q = c?.getView().question;
+        return q ? answerWord(q, q.answer, 'en') : null;
       },
     );
     c = new LessonController(
@@ -133,6 +138,9 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
       ? displayNote(q.target, nm, lang)
       : '';
   const keyName = 'key' in q && q.key ? displayNote(q.key, nm, lang) : '';
+  // Lit keys would show the answer for listening questions: light them only once the question is answered.
+  const answered = !!v.feedback && ['correct', 'correct-retry', 'reveal', 'skipped'].includes(v.feedback.kind);
+  const keysLive = answered || !keysGiveAway(q);
   const hideKeyboard = (q.kind === 'note-name' && q.direction === 'heard-pitch→name') || (q.kind === 'name-seq' && q.given === 'sound') || (q.kind === 'sing' && q.promptBy === 'echo') || q.kind === 'rhythm-read' || q.kind === 'rhythm-dict';
   const orbLabel =
     q.kind === 'degree'
@@ -161,6 +169,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
         <Rounds v={v} t={t} />
         <ModeSwitch mode={v.mode} onChange={(m) => ctrl.setMode(m)} t={t} />
       </header>
+      {lesson.id === 'placement' && <TopicStrip v={v} t={t} />}
 
       {v.error ? (
         <PermissionPanel
@@ -240,7 +249,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
             )}
             <Burst on={celebrate} />
           </div>
-          {!hideKeyboard && <Keyboard mark={q.kind === 'degree' && q.direction !== 'name→degree' ? q.targetMidi : undefined} />}
+          {!hideKeyboard && <Keyboard live={keysLive} mark={keysLive && q.kind === 'degree' && q.direction !== 'name→degree' ? q.targetMidi : undefined} />}
           <h1 className="ask">{withNote(askTemplate(q, lang, nm), target, keyName)}</h1>
           <Listening v={v} t={t} hint={hintText(q, lang, v.mode === 'voice' && !v.needsListenTap)} />
           <FeedbackBanner v={v} t={t} lang={lang} settings={settings} />
@@ -415,6 +424,35 @@ function IntroCardView({ card, state, t, lang, nm }: { card: IntroCard; state: s
         </div>
       );
   }
+}
+
+/** Find my level: which topics are done, which one is now, which remain. */
+function TopicStrip({ v, t }: { v: LessonView; t: Strings }) {
+  const qs = v.session.lesson.questions;
+  const order: SkillId[] = [];
+  qs.forEach((q) => {
+    const k = questionSkill(q);
+    if (!order.includes(k)) order.push(k);
+  });
+  const cur = qs[v.index] ? questionSkill(qs[v.index]) : null;
+  const state = (k: SkillId) => {
+    const idx = qs.map((q, i) => (questionSkill(q) === k ? i : -1)).filter((i) => i >= 0);
+    if (idx.every((i) => v.session.records[i].outcome !== 'pending')) return 'done';
+    return k === cur && v.stage === 'question' ? 'now' : 'left';
+  };
+  const left = order.filter((k) => state(k) !== 'done').length;
+  return (
+    <div className="topic-strip" aria-label={`${t.topicsLeft}: ${left}`}>
+      <ol>
+        {order.map((k) => (
+          <li key={k} className={`ts ${state(k)}`} data-skill={k}>
+            {state(k) === 'done' ? '✓ ' : ''}
+            {t.skillNames[k]}
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
 }
 
 function Rounds({ v, t }: { v: LessonView; t: Strings }) {

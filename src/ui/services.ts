@@ -27,14 +27,14 @@ export const store = new ProgressStore(SIMULATED ? memoryKV() : defaultKV());
 
 
 /** Simulator script: correct, wrong-then-correct, then correct. Deterministic. */
-const SIM_SCRIPT = (): ScriptStep[] => {
+const SIM_SCRIPT = (say: (() => string | null) | null): ScriptStep[] => {
   const names = (e: unknown) =>
     typeof e === 'string' && /^[A-G]-?\d(\.[A-G]-?\d)*$/.test(e)
       ? e.split('.').map((k) => `${k[0]}${k.endsWith('-1') ? ' flat' : k.endsWith('1') ? ' sharp' : ''}`).join(' ')
       : null;
-  const right: ScriptStep = (e) => names(e) ?? (e === 1 ? 'one' : e === 3 ? 'three' : e === 5 ? 'five' : String(e === 'maj' ? 'major' : e === 'min' ? 'minor' : e));
+  const right: ScriptStep = (e) => say?.() || names(e) || (e === 1 ? 'one' : e === 3 ? 'three' : e === 5 ? 'five' : String(e === 'maj' ? 'major' : e === 'min' ? 'minor' : e));
   const wrong: ScriptStep = (e) => (e === 1 ? 'five' : e === 5 ? 'one' : e === 3 ? 'one' : e === 'maj' ? 'minor' : e === 'min' ? 'major' : e === 'open' ? 'resolved' : 'open');
-  return [right, wrong, ...Array.from({ length: 12 }, () => right)];
+  return [right, wrong, ...Array.from({ length: 40 }, () => right)];
 };
 
 /** Set from Settings: singing tasks capture from a MIDI keyboard instead of the microphone. */
@@ -44,9 +44,9 @@ export const setMidiEnabled = (on: boolean) => {
 };
 export const isMidiEnabled = () => midiEnabled;
 
-export function makeAdapters(expected: () => Answer, targetMidi: () => number, targetSeq: () => number[] | null = () => null): Adapters {
+export function makeAdapters(expected: () => Answer, targetMidi: () => number, targetSeq: () => number[] | null = () => null, say: (() => string | null) | null = null): Adapters {
   if (SIMULATED) {
-    const sim = new ScriptedTranscriber(SIM_SCRIPT(), 1200);
+    const sim = new ScriptedTranscriber(SIM_SCRIPT(say), 1200);
     sim.expected = expected;
     // Sung: in tune, then 60 cents flat → retry, then in tune.
     const pitch = new ScriptedPitch([8, -60, -12, 5, 5, 5], 1500);

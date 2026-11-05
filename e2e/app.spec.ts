@@ -15,18 +15,23 @@ test.describe('home & language', () => {
     await page.goto('/');
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
     await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Same B♭, two homes');
+    // First visit: finding your level is the default step; lesson 1 is one tap away.
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Let’s find your level');
+    await expect(page.getByRole('button', { name: 'Or start from lesson 1' })).toBeVisible();
     await expect(page.getByRole('radio', { name: 'Voice' })).toHaveAttribute('aria-checked', 'true');
     // Touch targets on the main actions are at least 44px tall.
-    const box = await page.getByRole('button', { name: /Practice/ }).boundingBox();
+    const box = await page.locator('.first-run-cta').boundingBox();
     expect(box!.height).toBeGreaterThanOrEqual(44);
   });
 
   test('Hebrew toggle → RTL and Do-Re-Mi names', async ({ page }) => {
     await page.goto('/');
-    await page.getByRole('button', { name: 'החלפה לעברית' }).click();
+    // The language picker lives in Settings (menu → Settings).
+    await page.goto('/#/settings');
+    await page.getByRole('radio', { name: 'עברית' }).first().click();
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText('אותו סי♭, שני בתים');
+    await page.goto('/');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('בואו נמצא את הרמה שלכם');
     // persisted
     await page.reload();
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
@@ -37,7 +42,7 @@ test.describe('lesson', () => {
   test('Buttons mode: three rounds to a 3/3 recap @mobile', async ({ page }) => {
     await page.goto('/');
     await page.getByRole('radio', { name: 'Buttons' }).click();
-    await page.getByRole('button', { name: /Practice/ }).click();
+    await page.getByRole('button', { name: 'Or start from lesson 1' }).click();
     await page.getByRole('button', { name: 'Skip intro' }).click();
     for (let i = 0; i < 3; i++) {
       await expect(page.locator('.pill').nth(i)).toHaveClass(/current/);
@@ -59,7 +64,7 @@ test.describe('lesson', () => {
   test('Voice mode (simulator): hands-free after one Start', async ({ page }) => {
     await page.goto('/?sim=1');
     await expect(page.locator('.sim-banner')).toBeVisible();
-    await page.getByRole('button', { name: /Practice/ }).click();
+    await page.getByRole('button', { name: 'Or start from lesson 1' }).click();
     await page.getByRole('button', { name: 'Use my voice & start' }).click();
     // No further interaction.
     await expect(page.getByRole('heading', { name: 'Lesson complete' })).toBeVisible({ timeout: 120_000 });
@@ -75,7 +80,7 @@ test.describe('lesson', () => {
   test('Buttons → Voice mid-question keeps the attempt history', async ({ page }) => {
     await page.goto('/?sim=1');
     await page.getByRole('radio', { name: 'Buttons' }).click();
-    await page.getByRole('button', { name: /Practice/ }).click();
+    await page.getByRole('button', { name: 'Or start from lesson 1' }).click();
     await page.getByRole('button', { name: 'Skip intro' }).click();
     const d = await correctDegree(page);
     const wrong = page.locator(`.answer[data-answer="${d === 1 ? 5 : 1}"]`);
@@ -90,7 +95,7 @@ test.describe('lesson', () => {
 
   test('mic denied: capture error panel, then Switch to buttons continues', async ({ page }) => {
     await page.goto('/');
-    await page.getByRole('button', { name: /Practice/ }).click();
+    await page.getByRole('button', { name: 'Or start from lesson 1' }).click();
     await page.getByRole('button', { name: 'Use my voice & start' }).click();
     const panel = page.locator('.perm-panel');
     await expect(panel).toBeVisible();
@@ -151,7 +156,7 @@ test.describe('more lessons', () => {
     await page.goto('/');
     await expect(page.getByRole('button', { name: /2\. Home, third, fifth/ })).toBeDisabled();
     await page.getByRole('radio', { name: 'Buttons' }).click();
-    await page.getByRole('button', { name: /Practice/ }).click();
+    await page.getByRole('button', { name: 'Or start from lesson 1' }).click();
     await page.getByRole('button', { name: 'Skip intro' }).click();
     for (let i = 0; i < 3; i++) {
       await expect(page.locator('.pill').nth(i)).toHaveClass(/current/);

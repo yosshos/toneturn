@@ -401,3 +401,121 @@ Slow-down practice (the same run at 60 % → 80 % → 100 % tempo, unlocking the
 | Teacher / class mode | ✓ 0.19 |
 | Jazz track | ✓ 0.18 (Jazz 1: sevenths, ii–V–I family) — licks and swing-feel melodies are a later Jazz 2 |
 | Real public-domain melodies | ✓ 0.18 (Songs you know) |
+
+## Addendum — 2026-11-05 (product owner, user testing): L. Overall rating next to every name
+
+Inspired by chess.com: one number that says "how good am I overall", always visible next to the player's name, and an exact account after every session of how it moved — overall and per skill.
+
+### L.1 The number
+- **Ninth Sense rating** (overall), on the same scale as the skill ratings (Elo-like, start 1000; bands: < 900 beginner · 900–1099 developing · 1100–1299 solid · ≥ 1300 advanced).
+- **Formula** — a confidence-weighted mean of the measured skill ratings:
+  - per skill k: confidence `cₖ = min(1, nₖ / 12)` and effective rating `r'ₖ = 1000 + cₖ · (rₖ − 1000)` (a skill measured with 2 answers moves the overall only a little);
+  - importance `wₖ`: listening skills (degrees, notes, intervals, chords, cadences, rhythm dictation, melodic memory) **1.0**; performance (singing in tune, rhythm reading, vocal agility) **1.0**; game-only axes (rhythmic memory, rhythmic precision) **0.5**;
+  - `overall = Σ wₖ·cₖ·r'ₖ / Σ wₖ·cₖ` over measured skills, rounded.
+- **Provisional** (shown with "?", e.g. *1084?*) until at least 4 skills are measured **and** at least 30 rated answers exist in total — like chess.com's provisional rating.
+- **Peak** (highest overall ever) and **change over 7 / 30 days** are kept.
+
+### L.2 Where it appears ("next to every name tag")
+| Place | What is shown |
+| --- | --- |
+| Home header | a name chip: initial + display name (or "You") + rating with a band-coloured ring; tap → Skill Map |
+| Friends list | each friend's rating next to the name; sort by rating or by XP this week |
+| Online room lobby, round board, podium | rating next to every nickname |
+| Daily challenge friends board | rating next to each friend |
+| Class roster (teacher) | rating column |
+| Same-device duel, ghost race | local players have no account → no rating (the ghost shows your rating at the time) |
+
+Server: `toneturn_profiles` gains `rating`, `rating_provisional`, `rating_peak`, `rating_at`; the client reports after every sync through `toneturn_report_rating` (range-checked 100–3000; self-reported, the same trust model as game bests, documented). The friends, rooms, daily and class functions return it.
+
+### L.3 After every session ("how did my rating move?")
+The recap gains a **rating card**:
+- the overall rating counting from the old value to the new one, with **▲ +12 / ▼ −6** (arrow + sign + colour, never colour alone);
+- one row per skill the session touched: name, new rating, change, and a small before→after bar;
+- crossing a band boundary: "You reached **Solid** in Chords" with a short celebration;
+- a new peak: "New best: 1131";
+- first-try accuracy of the session next to the change.
+Sessions that do not rate (practice replays) say so: "Practice — rating unchanged".
+
+### L.4 History
+The Skill Map opens with the overall rating, its trend chart (same component as the per-skill trends of 0.21), peak and 30-day change; the per-skill trends follow.
+
+### L.5 Later (needs server aggregates)
+"Players at your level solve this in …" on the weekly puzzle and the daily challenge.
+
+## Addendum — 2026-11-05 (product owner, user testing): M. Visual aids — keyboard, notation, guitar tab
+
+### M.1 Choice of display (non-rhythm exercises)
+Settings → *Show notes as*: **Keyboard**, **Notation** (treble staff with key signature), **Guitar tab** (6 strings, standard tuning) — any combination; default Keyboard + Notation. The same notes are drawn in each chosen view.
+
+### M.2 When views may show the sounding notes
+Unchanged rule (0.21): for listening tasks the sounding notes stay hidden until the question is answered, in every view; afterwards they light up so "your answer, then the right one" is visible. Exceptions where the sound is only context (singing from a degree / name / description): the views stay live.
+
+### M.3 Aids during the question count as a hint (9a)
+Some views help without giving the answer away. These are **aids**:
+| Aid | On | Example |
+| --- | --- | --- |
+| *Key map*: the key's scale outlined, tonic highlighted, no sounding note | degree / note-name / interval / sequence questions | "Which degree is this?" with the E♭ scale outlined |
+| *Target*: the note(s) to perform | singing from a degree / name, runs from a description | "Sing 5" with B♭ marked on keyboard / staff / tab |
+| *Lookup*: the key's notes with their degree numbers | name ↔ degree conversions | "Which note is degree 6 in E♭?" |
+
+- **Scoring**: an item answered with an aid on counts as easier — difficulty −120 (key map) or −150 (target / lookup) in the rating update, and XP × 0.8. A small "💡 aid" chip on the question makes this visible.
+- **Default (Auto)**: aids are on while that skill is below *Solid* (< 1100) and switch off by themselves once it reaches Solid — they fade as the level rises. Settings → *Aids*: Auto · Always · Never. Placement and the daily challenge never show aids.
+
+### M.4 Guitar tab (9b)
+- Standard tuning E A D G B E. Single notes in the lowest position that fits (frets 0–5, moving up only when the range needs it); chords as one tab column using common shapes; sequences and runs as a tab line left to right.
+- Drawn with VexFlow's TabStave (already bundled), under or instead of the staff; the timing rule (M.2) and the aid rule (M.3) apply.
+
+## Addendum — 2026-11-05 (product owner, user testing): N. Streak 2.0 — freezes, gems, milestones, celebration
+
+Inspired by Duolingo.
+
+### N.1 What keeps a streak
+One completed session in the local day: a path lesson, review, placement, the weekly puzzle, the daily challenge (first play), the runs workshop, or a memory game of at least 3 rounds.
+
+### N.2 The moment the streak grows
+The first qualifying session of the day ends with a **streak screen** before the recap: the flame grows from grey to lit, the number rolls N → N+1, a short rising sound and a haptic tick, and the week strip fills today's dot. "See you tomorrow!" With reduced motion: an instant change, no rolling.
+
+### N.3 Streak freeze
+- **One free freeze per week**, granted on Monday (local) when fewer than 2 are equipped. A freeze is used automatically for a missed day; two missed days need two freezes, otherwise the streak resets.
+- Used freezes show as ❄ days in the streak calendar; the next visit shows "Your freeze kept your 12-day streak" with an ice animation.
+- At most **2 freezes equipped** (free and bought together).
+
+### N.4 Gems
+A soft currency, earned for effort and spent on streak items — never needed for lessons.
+
+| Earn | Gems |
+| --- | --- |
+| Lesson / review / workshop completed with ≥ 80 % first-try | 5 |
+| Daily goal reached (30 XP) | 10 |
+| Weekly puzzle gold / silver | 20 / 10 |
+| Daily challenge, first play | 5 |
+| Streak milestone 7 / 30 / 100 / 365 | 50 / 150 / 500 / 1500 |
+
+| Spend | Gems |
+| --- | --- |
+| Streak freeze (max 2 equipped) | 200 |
+| Streak repair (within 48 h of a broken streak, when no freeze was left) | 400 |
+
+Earnings are **derived from results** (deterministic, so a cloud rebuild gives the same balance); purchases are an append-only list synced with the profile. Balance = earned − spent, never negative.
+
+### N.5 Milestones
+3, 7, 14, 30, 50, 100, 200, 365 days → confetti, a badge on the profile and a share card; the next milestone shows as a progress ring around the flame ("4 days to 30").
+
+### N.6 Notifications (push, opt-in — the existing reminder service)
+- Evening reminder at the chosen hour (exists).
+- **Streak at risk**: 2 hours before local midnight if today is not done and the streak is 3 or more.
+- **Freeze used**: next morning, "Your freeze saved your 12-day streak".
+- **Milestone tomorrow**: "1 more day to 30 🔥".
+At most one push per day. The server counts freeze days as practised (freeze days are stored server-side when used).
+
+### N.7 Animations (all respect reduced motion)
+Home flame: grey and gently breathing while today is not done, lit afterwards; tap → streak calendar (month view, ❄ days, milestones). Gems: a counter that flies from the recap to the header chip.
+
+## Addendum — 2026-11-05 (product owner, user testing): O. "True or false?" — a speed game on intervals
+
+Built on the home-screen art: three notes appear (left, middle, right) with two interval labels. **Are both labels right?** Answer ✓ / ✗ as fast as possible.
+- **Solo**: a 60-second run; +1 per right answer with a streak multiplier; a wrong answer costs 2 seconds; best score kept (and raceable as a ghost).
+- **Duel on one device**: split screen like the duel; the first correct tap wins the round; a wrong tap locks that player out of the round.
+- **Levels**: P5 / P8 / M3 only → all qualities → note names in Do-Re-Mi → ear mode (hear the notes instead of reading the names).
+- Feeds the *Intervals* skill (first taps only, rated like other items; difficulty from level and response time).
+- Wrong labels are near misses (m3 ↔ M3, P4 ↔ ♯4, ♭5 ↔ P5), never absurd ones.

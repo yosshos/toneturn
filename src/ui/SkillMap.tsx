@@ -2,7 +2,11 @@ import { useState } from 'react';
 import type { SkillId } from '../engine/lesson';
 import { band, evidence, normalised, PLANNED_SKILLS, SKILLS, weakestSkill, type Ratings } from '../engine/rating';
 import type { Strings } from '../i18n/strings';
-import { ratingsOf, type Progress } from '../storage/progress';
+import { lessonMastered, ratingsOf, type Progress } from '../storage/progress';
+import { recommendFor, type Recommendation } from '../engine/recommend';
+import { TrendDetail, TrendTiles } from './Trends';
+import { LESSON_META } from '../game/content';
+import { LESSON_ORDER } from '../engine/lesson';
 
 type Axis = SkillId | (typeof PLANNED_SKILLS)[number];
 const AXES: Axis[] = [...SKILLS, ...PLANNED_SKILLS];
@@ -13,8 +17,10 @@ export function SkillMap({
   onBack,
   onPractice,
   onPlacement,
+  lang,
 }: {
   t: Strings;
+  lang: 'he' | 'en';
   progress: Progress;
   onBack: () => void;
   onPractice: (skill: SkillId) => void;
@@ -43,7 +49,18 @@ export function SkillMap({
         </p>
       )}
 
-      <Diagnosis t={t} axis={sel} ratings={ratings} recommended={sel === rec} onPractice={onPractice} />
+      <Diagnosis
+        t={t}
+        axis={sel}
+        ratings={ratings}
+        recommended={sel === rec}
+        onPractice={onPractice}
+        next={PLANNED_SKILLS.includes(sel as never) ? null : recommendFor(sel as SkillId, ratings, (id) => lessonMastered(progress, id))}
+        lang={lang}
+      />
+
+      {!PLANNED_SKILLS.includes(sel as never) && <TrendDetail t={t} events={progress.ratingEvents ?? []} skill={sel as SkillId} lang={lang} />}
+      <TrendTiles t={t} events={progress.ratingEvents ?? []} skills={SKILLS} sel={sel} onSelect={setSel} />
 
       {!anyMeasured && (
         <section className="set-card">
@@ -156,13 +173,27 @@ function Diagnosis({
   ratings,
   recommended,
   onPractice,
+  next,
+  lang,
 }: {
   t: Strings;
   axis: Axis;
   ratings: Ratings;
   recommended: boolean;
   onPractice: (s: SkillId) => void;
+  next: Recommendation | null;
+  lang: 'he' | 'en';
 }) {
+  const nextLabel =
+    next?.kind === 'lesson'
+      ? `${LESSON_ORDER.indexOf(next.lessonId) + 1}. ${LESSON_META[next.lessonId].title[lang].replace(/\{[nk]\}/g, '')}`
+      : next?.kind === 'puzzle'
+        ? t.weeklyPuzzle
+        : next?.kind === 'runs-workshop'
+          ? t.runsWorkshop
+          : next?.kind === 'rhythm-game'
+            ? t.beatEcho
+            : '';
   const planned = PLANNED_SKILLS.includes(axis as never);
   const r = planned ? undefined : ratings[axis as SkillId];
   const ev = planned ? null : evidence(r);
@@ -190,9 +221,16 @@ function Diagnosis({
       )}
       <p>{t.skillDiag[axis]}</p>
       {!planned && (
-        <button className="btn primary" onClick={() => onPractice(axis as SkillId)}>
-          {ev === 'unmeasured' ? t.measureThis : t.practiceThis} →
-        </button>
+        <>
+          {nextLabel && ev !== 'unmeasured' && (
+            <p className="diag-next">
+              {t.forYourLevel}: <b>{nextLabel}</b>
+            </p>
+          )}
+          <button className="btn primary" onClick={() => onPractice(axis as SkillId)}>
+            {ev === 'unmeasured' ? t.measureThis : t.practiceThis} →
+          </button>
+        </>
       )}
     </section>
   );

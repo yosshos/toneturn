@@ -4,16 +4,18 @@ import { readFileSync } from 'node:fs';
 const pkg = JSON.parse(readFileSync('package.json', 'utf-8')) as { version: string };
 
 test.describe('menu, friends', () => {
-  test('menu shows version, install, notifications and links', async ({ page }) => {
+  test('menu shows version, what’s new, notifications and links', async ({ page }) => {
     await page.goto('/');
     await page.getByRole('button', { name: /^Menu/ }).click();
     const sheet = page.getByRole('dialog', { name: 'Menu' });
     await expect(sheet).toBeVisible();
     await expect(sheet.locator('.version-line')).toContainText(pkg.version);
-    await expect(sheet.getByRole('heading', { name: /Install app/ })).toBeVisible();
     await expect(sheet.getByRole('heading', { name: /Notifications/ })).toBeVisible();
-    await sheet.getByRole('button', { name: "What's new" }).click();
-    await expect(sheet.locator('.changelog > li').first()).toContainText(pkg.version);
+    // What's new in the latest version sits in the menu; install / update moved to the header.
+    await expect(sheet.getByRole('heading', { name: /What’s new in/ })).toContainText(pkg.version);
+    await expect(sheet.locator('.changelog.bare > li')).toHaveCount(1);
+    await sheet.getByRole('button', { name: 'All versions' }).click();
+    await expect(sheet.locator('.changelog:not(.bare) > li').first()).toBeVisible();
     await sheet.getByRole('button', { name: /Friends/ }).click();
     await expect(page.getByRole('heading', { name: 'Friends', level: 1 })).toBeVisible();
   });
@@ -48,6 +50,7 @@ test.describe('menu, friends', () => {
     await page.reload();
     const news = page.locator('.news-card');
     await expect(news).toBeVisible();
+    await expect(news).toContainText('0.21.0');
     await expect(news).toContainText('0.20.0');
     await expect(news).toContainText('0.19.0');
     await expect(news).toContainText('0.18.0');

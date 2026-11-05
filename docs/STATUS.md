@@ -1,5 +1,18 @@
 # Milestone report — 2026-11-04
 
+## Update 21 — v0.21.0 (2026-11-05): user-testing fixes (items 1–6, 8, 10, 12)
+
+- **First visit** starts with Find my level (hero card), with "start from lesson 1" as a link. Find my level stays in Practice tools afterwards ("take it again").
+- **Placement v2**: 7 listening skills × 2 rounds on a 4-level scale adapted per skill (degrees, note names, intervals, chord quality incl. sevenths, cadences incl. progressions, melodic memory, rhythm dictation up to triplets), plus a rhythm-reading tap item and (voice mode) a singing item; 5 XP per first-try correct; a topic strip shows done / now / left.
+- **Level-matched practice** (`engine/recommend.ts`): a ladder of lessons per skill; the rating band picks the rung; mastered rungs are skipped; finishing placement unlocks the path up to each skill's rung. The Skill Map names the lesson ("For your level: 16. Rhythm 5").
+- **Trends**: per-skill rating history (one point per day) as small multiples plus a detail chart with level gridlines, tooltip and table view.
+- **Topic bars** on Home (5 topics covering all 22 path lessons).
+- **Keyboard**: lit keys and the target mark hidden until the question is answered for every listening task; stays live for singing from a degree / name / description (audited per kind, tested for every lesson).
+- **Header**: streak, install (📲, or install instructions), a gold Update button when a new version waits, menu. Language and settings via the menu; the menu shows What's new in the current version.
+- **Phones**: every screen and every lesson's first question fit at 320 px (fieldset min-content, wrapping segmented controls, drone ladder, rhythm notation); `scripts/check-overflow.mjs` repeats the audit.
+- **Home art**: random correctly spelled trios with their intervals, animated on each change.
+- Spec addenda L (overall rating), M (visual aids, guitar tab), N (streak 2.0, gems), O (true/false interval game) written for review.
+
 ## Update 19 — v0.19.0 (2026-11-05): class mode and ghost race
 
 - Migration 12 `toneturn_classes` (applied): classes, members, assignments; functions create / join / leave / delete / assign / unassign / my_classes. Verified live with simulated teacher, student and outsider (rolled back): student cannot assign, roster stats and per-skill accuracy, assignment done count, outsider sees nothing, leave works, bad code refused.

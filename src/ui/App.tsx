@@ -1,3 +1,4 @@
+import { recommendFor } from '../engine/recommend';
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { LESSON_ORDER, runLevelFor, runsWorkshop, type LessonDef, type LessonId, type Question, type SkillId } from '../engine/lesson';
 import type { SessionState } from '../engine/session';
@@ -6,7 +7,7 @@ import { SkillMap } from './SkillMap';
 import { PracticeTools } from './Tools';
 import { MicIcon } from './bits';
 import { STRINGS } from '../i18n/strings';
-import { ratingsOf, visibleStreak, type Progress, type Settings, DEFAULT_SETTINGS, emptyProgress, migrateSettings } from '../storage/progress';
+import { lessonMastered, ratingsOf, visibleStreak, type Progress, type Settings, DEFAULT_SETTINGS, emptyProgress, migrateSettings } from '../storage/progress';
 import { cloudConfigured, currentUser, onAuthChange, pullSettings, pushSettings, syncProgress, type CloudUser } from '../cloud/cloud';
 import { AccountCard, type SyncState } from './Account';
 import { Home, lessonStates } from './Home';
@@ -179,7 +180,7 @@ export function App() {
   };
   const openPlacement = () => {
     const seed = (Date.now() ^ (Math.random() * 1e9)) >>> 0;
-    openGenerated(placementLesson(seed), (st) => adaptPlacement(st, seed));
+    openGenerated(placementLesson(seed, { singing: s.mode === 'voice' }), (st) => adaptPlacement(st, seed));
   };
   const openReview = () => {
     const def = reviewLesson(progress.review, Date.now() >>> 0);
@@ -194,24 +195,16 @@ export function App() {
     const r = ratingsOf(progress).agility;
     openGenerated(runsWorkshop(runLevelFor(r?.n ? r.r : null)));
   };
+  // Practise a skill at the player's level: the lesson on that skill's ladder that fits their rating.
   const practiceSkill = (k: SkillId) => {
-    const map: Partial<Record<SkillId, LessonId>> = {
-      degrees: (progress.lessons['bflat-two-homes']?.completions ?? 0) > 0 ? 'degrees-135' : 'bflat-two-homes',
-      chords: 'major-minor',
-      cadences: 'cadences',
-      singing: 'sing-home-five',
-      intervals: 'intervals',
-      notes: 'notes-degrees',
-      'rhythm-reading': 'rhythm-r1',
-      'rhythm-dictation': 'rhythm-r1',
-    };
-    if (k === 'sequences') return openPuzzle();
-    if (k === 'agility') return (progress.lessons.runs?.completions ?? 0) > 0 ? openRuns() : openLesson('runs');
-    if (k === 'rhythm' || k === 'timing') {
+    const rec = recommendFor(k, ratingsOf(progress), (id) => lessonMastered(progress, id));
+    if (rec.kind === 'puzzle') return openPuzzle();
+    if (rec.kind === 'runs-workshop') return openRuns();
+    if (rec.kind === 'rhythm-game') {
       setGameKind('rhythm');
       return go('games');
     }
-    openLesson(map[k] ?? 'bflat-two-homes');
+    openLesson(rec.lessonId);
   };
 
   const openLesson = (id: LessonId) => {
@@ -266,6 +259,7 @@ export function App() {
           onSettings={() => go('settings')}
           onDuel={() => go('duel')}
           onGhost={() => go('ghost')}
+          onPlacement={openPlacement}
           onOnline={() => {
             setOnlineCode('');
             setOnlineKey((k) => k + 1);
@@ -312,7 +306,7 @@ export function App() {
       )}
       {route === 'diagnostics' && <Diagnostics t={t} settings={s} onBack={() => go('home')} />}
       {route === 'friends' && <FriendsScreen t={t} user={user} sync={sync} onBack={() => go('home')} />}
-      {route === 'skills' && <SkillMap t={t} progress={progress} onBack={() => go('home')} onPractice={practiceSkill} onPlacement={openPlacement} />}
+      {route === 'skills' && <SkillMap t={t} lang={s.uiLang} progress={progress} onBack={() => go('home')} onPractice={practiceSkill} onPlacement={openPlacement} />}
       {consentThen && (
         <div className="sheet-backdrop" onClick={() => setConsentThen(null)}>
           <div className="sheet" role="dialog" aria-modal="true" aria-labelledby="consent2-title" onClick={(e) => e.stopPropagation()}>

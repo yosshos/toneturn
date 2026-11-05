@@ -73,6 +73,33 @@ export function foldRatings(events: RatingEvent[]): Ratings {
   return out;
 }
 
+/** A skill's rating over time: one point per local day (the rating after that day's last answer). */
+export interface TrendPoint {
+  day: string; // YYYY-MM-DD (local)
+  r: number;
+  n: number;
+}
+export function ratingHistory(events: RatingEvent[], skill: SkillId, dayOf: (iso: string) => string = (iso) => iso.slice(0, 10)): TrendPoint[] {
+  const seen = new Set<string>();
+  let cur: SkillRating | undefined;
+  const out: TrendPoint[] = [];
+  for (const e of [...events].sort((a, b) => a.at.localeCompare(b.at) || a.id.localeCompare(b.id))) {
+    if (e.skill !== skill || seen.has(e.id)) continue;
+    seen.add(e.id);
+    cur = rate(cur, e);
+    const day = dayOf(e.at);
+    const last = out[out.length - 1];
+    if (last && last.day === day) {
+      last.r = cur.r;
+      last.n = cur.n;
+    } else out.push({ day, r: cur.r, n: cur.n });
+  }
+  return out;
+}
+
+/** Change over a trend: last minus first point (null with fewer than two days). */
+export const trendDelta = (pts: TrendPoint[]) => (pts.length >= 2 ? pts[pts.length - 1].r - pts[0].r : null);
+
 export type Evidence = 'unmeasured' | 'provisional' | 'measured';
 export const evidence = (s: SkillRating | undefined): Evidence => (!s || s.n === 0 ? 'unmeasured' : s.n < PROVISIONAL_UNTIL ? 'provisional' : 'measured');
 
