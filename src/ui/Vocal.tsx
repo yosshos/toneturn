@@ -19,6 +19,9 @@ import {
   synthMelody,
   tipFor,
   VOCAL_LEVELS,
+  LADDER,
+  synthVibratoPhrase,
+  vibratoConsistency,
   MODE_LEVELS,
   scaleTonic,
   VOCAL_TOP_LEVEL,
@@ -45,7 +48,7 @@ export function noteLabel(midi: number, settings: Settings): string {
 
 /** Levels 1–9: the vocal ladder; 101–108: scales and modes. */
 export const MODES_BASE = 100;
-export const levelDef = (level: number) => (level > MODES_BASE ? MODE_LEVELS[level - MODES_BASE - 1] : VOCAL_LEVELS[level - 1]);
+export const levelDef = (level: number) => (level > MODES_BASE ? MODE_LEVELS[level - MODES_BASE - 1] : LADDER[level - 1]);
 
 // ------------------------------------------------------------------ live pitch trace
 
@@ -127,6 +130,9 @@ function Sparkline({ values }: { values: number[] }) {
 
 const TREND_KEYS: MetricKey[] = ['intonation', 'stability', 'settle', 'duration', 'vibratoRegularity', 'transition', 'timing', 'landing'];
 
+/** Items sung as several separate holds (one take per note). */
+const multiNote = (it: VocalItem) => it.kind === 'range' || it.kind === 'vibrato-register';
+
 // ------------------------------------------------------------------ simulator takes
 
 function simulatedFrames(item: VocalItem, targets: number[], noteIdx: number): SungFrame[] {
@@ -149,6 +155,22 @@ function simulatedFrames(item: VocalItem, targets: number[], noteIdx: number): S
       return synthHold(targets[0], { seconds: item.seconds + 0.3, vibRate: 5.6, vibExtent: 32, vibFrom: item.cueOn ?? 2, vibTo: item.cueOff ?? 5 });
     case 'messa':
       return synthHold(targets[0], { seconds: item.seconds + 0.3, jitter: 2, rmsFrom: 0.02, rmsPeak: 0.2 });
+    case 'vibrato-rate':
+      return synthHold(targets[0], { seconds: item.seconds + 0.3, vibRate: item.vibRate ?? 5.5, vibExtent: 32 });
+    case 'vibrato-width':
+      return synthHold(targets[0], { seconds: item.seconds + 0.3, vibRate: 5.6, vibExtent: item.vibWidth === 'wide' ? 70 : 26 });
+    case 'vibrato-alternate': {
+      const c = item.cues ?? [];
+      const wins: [number, number][] = [];
+      for (let k = 0; k < c.length; k += 2) wins.push([c[k], c[k + 1] ?? item.seconds + 1]);
+      return synthHold(targets[0], { seconds: item.seconds + 0.3, vibRate: 5.6, vibExtent: 32, vibWindows: wins });
+    }
+    case 'vibrato-register':
+      return synthHold(targets[noteIdx], { seconds: item.seconds + 0.3, vibRate: 5.6, vibExtent: 32 });
+    case 'vibrato-messa':
+      return synthHold(targets[0], { seconds: item.seconds + 0.3, vibRate: 5.6, vibExtent: 32, rmsFrom: 0.02, rmsPeak: 0.2 });
+    case 'vibrato-notes':
+      return synthVibratoPhrase(targets, item.noteSecs ?? [], item.vibNotes ?? []);
     default:
       return synthHold(targets[0], { seconds: item.seconds + 0.3, jitter: 2 });
   }
@@ -160,6 +182,16 @@ function referenceEvents(item: VocalItem, targets: number[]): { events: NoteEven
     const d = item.bpm ? 60 / item.bpm / (item.perBeat ?? 1) : 0.55;
     const events = targets.map((m, i) => ({ midi: m, start: i * d, duration: item.kind === 'staccato' ? d * 0.5 : d * 0.95, velocity: 0.7 }));
     return { events, length: targets.length * d + 0.4 };
+  }
+  if (item.kind === 'vibrato-notes') {
+    const secs = item.noteSecs ?? targets.map(() => 0.6);
+    let at = 0;
+    const events = targets.map((m, i) => {
+      const e = { midi: m, start: at, duration: secs[i] * 0.95, velocity: 0.7 };
+      at += secs[i];
+      return e;
+    });
+    return { events, length: at + 0.4 };
   }
   if (item.kind === 'scale') {
     if (item.scale?.hear === 'tonic') return { events: [{ midi: targets[0], start: 0, duration: 1.3, velocity: 0.75 }], length: 1.6 };
@@ -222,7 +254,7 @@ export function VocalScreen({ t, settings, progress, onSettings, onProgress, onB
 
   const unlocked = (lv: number) => lv === 1 || v.passed.includes(lv - 1);
   const levelBest = (lv: number) => {
-    const items = VOCAL_LEVELS[lv - 1]?.items ?? [];
+    const items = LADDER[lv - 1]?.items ?? [];
     return items.length ? items.reduce((a, it) => a + (v.best[it.id] ?? 0), 0) / items.length : 0;
   };
   const midis = Array.from({ length: 49 }, (_, i) => 36 + i);
@@ -295,7 +327,7 @@ export function VocalScreen({ t, settings, progress, onSettings, onProgress, onB
               <button
                 className={`vocal-level ${passed ? 'passed' : ''} ${open ? '' : 'locked'}`}
                 disabled={!open}
-                onClick={() => (lv === VOCAL_TOP_LEVEL ? onRuns() : setView({ kind: 'session', level: lv, items: VOCAL_LEVELS[lv - 1].items.filter((it) => itemFits(it, range)) }))}
+                onClick={() => (lv === VOCAL_TOP_LEVEL ? onRuns() : setView({ kind: 'session', level: lv, items: LADDER[lv - 1].items.filter((it) => itemFits(it, range)) }))}
               >
                 <span className="lv-num">{lv}</span>
                 <span className="lv-text">
@@ -486,8 +518,8 @@ function VocalSession({
   const sessionId = useMemo(() => `vocal-${level}-${Date.now().toString(36)}`, [level]);
   const item = items[i];
   const targets = useMemo(() => itemTargets(item, range), [item, range]);
-  const noteCount = item.kind === 'range' ? targets.length : 1;
-  const shownTargets = item.kind === 'range' ? [targets[noteIdx]] : targets;
+  const noteCount = multiNote(item) ? targets.length : 1;
+  const shownTargets = multiNote(item) ? [targets[noteIdx]] : targets;
 
   useEffect(
     () => () => {
@@ -570,7 +602,7 @@ function VocalSession({
     setPhase('result');
     piano.cue(g.unclear ? 'wrong' : g.score >= 0.6 ? 'correct' : 'wrong');
     if (!g.unclear) {
-      const key = item.kind === 'range' ? `${item.id}#${noteIdx}` : item.id;
+      const key = multiNote(item) ? `${item.id}#${noteIdx}` : item.id;
       const m: VocalTake['m'] = {};
       for (const x of g.metrics) if (m[x.key] === undefined) m[x.key] = x.value;
       const tk: VocalTake = { at: new Date().toISOString(), item: item.id, level: typeof level === 'number' ? level : 0, score: g.score, m };
@@ -580,6 +612,13 @@ function VocalSession({
 
   const finishSession = async () => {
     const perItem = items.map((it) => {
+      if (it.kind === 'vibrato-register') {
+        const n = itemTargets(it, range).length;
+        const bs = Array.from({ length: n }, (_, k) => best.current[`${it.id}#${k}`]);
+        const scores = bs.map((b) => b?.score ?? 0);
+        const cons = vibratoConsistency(bs.filter(Boolean).map((b) => ({ rate: b!.take.m.vibratoRate ?? 0, extent: b!.take.m.vibratoExtent ?? 0 })));
+        return { it, score: (scores.reduce((a, b) => a + b, 0) / n) * (0.7 + 0.3 * cons) };
+      }
       if (it.kind === 'range') {
         const n = itemTargets(it, range).length;
         const scores = Array.from({ length: n }, (_, k) => best.current[`${it.id}#${k}`]?.score ?? 0);
@@ -614,7 +653,7 @@ function VocalSession({
   };
 
   const next = () => {
-    if (item.kind === 'range' && noteIdx < noteCount - 1) {
+    if (multiNote(item) && noteIdx < noteCount - 1) {
       setNoteIdx(noteIdx + 1);
       setPhase('ready');
       setGrade(null);
@@ -633,14 +672,20 @@ function VocalSession({
   };
 
   const sinceOnset = onsetAt !== null && phase === 'singing' ? clock - onsetAt : null;
-  const cue =
-    sinceOnset !== null && (item.kind === 'vibrato-delayed' || item.kind === 'vibrato-onoff')
+  const altCue =
+    sinceOnset !== null && item.kind === 'vibrato-alternate'
+      ? (item.cues ?? []).filter((c) => sinceOnset >= c).length % 2 === 1
+        ? t.vocalNowVibrato
+        : t.vocalNowStraight
+      : null;
+  const cue = altCue ??
+    (sinceOnset !== null && (item.kind === 'vibrato-delayed' || item.kind === 'vibrato-onoff')
       ? sinceOnset >= (item.cueOff ?? Infinity)
         ? t.vocalNowStraight
         : sinceOnset >= (item.cueOn ?? 2)
           ? t.vocalNowVibrato
           : t.vocalNowStraight
-      : null;
+      : null);
   const tipKey = grade ? tipFor(grade) : null;
   // Scales asked by name: only the tonic is shown until the take is graded (the notes are the task).
   const hidden = item.kind === 'scale' && item.scale?.hear === 'tonic' && phase !== 'result';
@@ -687,8 +732,19 @@ function VocalSession({
                 n: item.scale.notes ?? '',
               }) + (item.scale.notes ? ` ${fill(t.scaleFirstN, { n: item.scale.notes })}` : '') + (item.scale.hear === 'tonic' ? ` ${t.scaleTonicOnly}` : '');
             })()
-          : fill(t.vocalInstr[item.kind] ?? '', { s: item.seconds, on: item.cueOn ?? 2, off: item.cueOff ?? 5 })}
+          : fill(t.vocalInstr[item.kind] ?? '', { s: item.seconds, on: item.cueOn ?? 2, off: item.cueOff ?? 5, rate: item.vibRate ?? '', width: item.vibWidth === 'wide' ? t.vocalWide : t.vocalNarrow })}
       </p>
+      {item.kind === 'vibrato-notes' && (
+        <p className="vib-notes" dir="ltr" aria-label={t.vocalVibMarks}>
+          {targets.map((m, k) => (
+            <span key={k} className={item.vibNotes?.[k] ? 'vib' : ''}>
+              {noteLabel(m, settings)}
+              {item.vibNotes?.[k] ? ' 〰' : ''}
+            </span>
+          ))}
+        </p>
+      )}
+      {item.kind === 'vibrato-rate' && phase === 'singing' && <div className="vib-pulse" style={{ animationDuration: `${1 / (item.vibRate ?? 5.5)}s` }} aria-hidden="true" />}
       <p className="vocal-targets" dir="ltr">
         {(hidden ? shownTargets.slice(0, 1) : shownTargets).map((m) => noteLabel(m, settings)).join(' – ')}
       </p>

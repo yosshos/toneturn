@@ -136,11 +136,15 @@ export interface Vibrato {
   extent: number; // ± cents (half peak-to-peak)
   regularity: number; // coefficient of variation (0 = perfectly even), max of period and extent CVs
   cycles: number;
+  /** Vibrato jitter: mean cycle-to-cycle change of the period, relative (0.05 = 5 %). */
+  jitter: number;
+  /** Vibrato shimmer: mean cycle-to-cycle change of the extent, relative. */
+  shimmer: number;
 }
 
 /** Vibrato from the detrended residual: cycles between upward zero crossings (with hysteresis). */
 export function vibratoOf(track: TrackPoint[], residual: number[]): Vibrato {
-  const none: Vibrato = { present: false, rate: 0, extent: 0, regularity: 0, cycles: 0 };
+  const none: Vibrato = { present: false, rate: 0, extent: 0, regularity: 0, cycles: 0, jitter: 0, shimmer: 0 };
   if (track.length < 10) return none;
   const hyst = 4;
   const ups: number[] = [];
@@ -165,7 +169,8 @@ export function vibratoOf(track: TrackPoint[], residual: number[]): Vibrato {
   const rate = p ? 1 / p : 0;
   const regularity = Math.max(std(periods) / (p || 1), std(extents) / (e || 1));
   const present = periods.length >= 3 && e >= 15 && rate >= 3.5 && rate <= 8.5;
-  return { present, rate, extent: e, regularity, cycles: periods.length };
+  const c2c = (xs: number[], m: number) => (xs.length > 1 ? mean(xs.slice(1).map((x, i) => Math.abs(x - xs[i]))) / (m || 1) : 0);
+  return { present, rate, extent: e, regularity, cycles: periods.length, jitter: c2c(periods, p), shimmer: c2c(extents, e) };
 }
 
 export interface HoldMetrics {
@@ -183,6 +188,10 @@ export interface HoldMetrics {
   /** Time (s, from onset) the vibrato starts / stops, when it does. */
   vibratoOnSec: number | null;
   vibratoOffSec: number | null;
+  /** Every straight → vibrato / vibrato → straight change (s from the onset). */
+  switches: { at: number; to: 'vib' | 'straight' }[];
+  /** Vibrato in the first and second half of the sustained part (consistency under a swell). */
+  halves: [Vibrato, Vibrato] | null;
 }
 
 const SETTLE_TOL = 25;
@@ -199,7 +208,9 @@ export function holdMetrics(frames: SungFrame[], targetMidi: number): HoldMetric
     intonation: 0,
     stability: 0,
     drift: 0,
-    vibrato: { present: false, rate: 0, extent: 0, regularity: 0, cycles: 0 },
+    vibrato: { present: false, rate: 0, extent: 0, regularity: 0, cycles: 0, jitter: 0, shimmer: 0 },
+    switches: [],
+    halves: null,
     bestStretchSec: 0,
     loudnessRangeDb: 0,
     maxTrendDev: 0,
@@ -255,13 +266,22 @@ export function holdMetrics(frames: SungFrame[], targetMidi: number): HoldMetric
   let vibratoOffSec: number | null = null;
   const fullRes = run.map((p, i) => p.c - tr[i]);
   let wasOn = false;
+  const switches: HoldMetrics['switches'] = [];
+  let lastSwitch = -1;
   for (let i = 0; i < run.length; i++) {
     const w = fullRes.filter((_, k) => run[k].t >= run[i].t - 0.45 && run[k].t <= run[i].t);
     const on = w.length > 5 && (Math.max(...w) - Math.min(...w)) / 2 >= 15;
-    if (on && !wasOn && vibratoOnSec === null && run[i].t - t0 > 0.45) vibratoOnSec = run[i].t - t0 - 0.2;
-    if (!on && wasOn && vibratoOnSec !== null && vibratoOffSec === null) vibratoOffSec = run[i].t - t0 - 0.2;
+    const at = run[i].t - t0 - 0.2;
+    if (on && !wasOn && vibratoOnSec === null && run[i].t - t0 > 0.45) vibratoOnSec = at;
+    if (!on && wasOn && vibratoOnSec !== null && vibratoOffSec === null) vibratoOffSec = at;
+    if (on !== wasOn && run[i].t - t0 > 0.45 && at - lastSwitch > 0.4) {
+      switches.push({ at, to: on ? 'vib' : 'straight' });
+      lastSwitch = at;
+    }
     wasOn = on;
   }
+  const half = Math.floor(body.length / 2);
+  const halves: HoldMetrics['halves'] = body.length > 40 ? [vibratoOf(body.slice(0, half), residual.slice(0, half)), vibratoOf(body.slice(half), residual.slice(half))] : null;
   return {
     unclear: false,
     voicedSec,
@@ -276,7 +296,19 @@ export function holdMetrics(frames: SungFrame[], targetMidi: number): HoldMetric
     maxTrendDev,
     vibratoOnSec,
     vibratoOffSec,
+    switches,
+    halves,
   };
+}
+
+/** Is there vibrato in this stretch of a take (≥ 2 cycles, ≥ 15 ¢)? Used per note in phrases. */
+export function hasVibrato(frames: SungFrame[], targetMidi: number): boolean {
+  const run = longestVoiced(centsTrack(frames, targetMidi));
+  if (run.length < 15) return false;
+  const tr = trend(run, 0.4);
+  const res = run.map((p, i) => p.c - tr[i]);
+  const v = vibratoOf(run, res);
+  return v.cycles >= 2 && v.extent >= 15 && v.rate >= 3.5 && v.rate <= 8.5;
 }
 
 // ------------------------------------------------------------------ glide metrics
@@ -431,7 +463,13 @@ export const BANDS = {
   transitionMs: [120, 220, 400] as [number, number, number],
   overshoot: [15, 35, 60] as [number, number, number],
   timingMs: [40, 60, 110] as [number, number, number],
+  /** Cycle-to-cycle (research: trained operatic rate CV ≈ 10 %; jitter falls with training). */
+  vibratoJitter: [0.05, 0.1, 0.18] as [number, number, number],
+  vibratoShimmer: [0.1, 0.2, 0.35] as [number, number, number],
 };
+
+/** Width targets for the narrow / wide drills (± cents). */
+export const WIDTH_BAND: Record<'narrow' | 'wide', [number, number]> = { narrow: [18, 35], wide: [55, 95] };
 
 export type VibratoStyle = 'pop' | 'classical';
 export const EXTENT_BAND: Record<VibratoStyle, [number, number]> = { pop: [20, 50], classical: [40, 100] };
@@ -461,7 +499,11 @@ export type MetricKey =
   | 'overshoot'
   | 'legato'
   | 'timing'
-  | 'scoop';
+  | 'scoop'
+  | 'vibratoJitter'
+  | 'vibratoShimmer'
+  | 'vibratoPlacement'
+  | 'vibratoConsistency';
 
 export interface MetricScore {
   key: MetricKey;
@@ -473,7 +515,7 @@ export interface MetricScore {
 
 // ------------------------------------------------------------------ the ladder (P.2)
 
-export type VocalKind = 'hold' | 'straight' | 'vibrato-delayed' | 'vibrato-onoff' | 'vibrato-steady' | 'range' | 'messa' | 'glide' | 'melody' | 'leap' | 'rhythmic' | 'staccato' | 'scale';
+export type VocalKind = 'hold' | 'straight' | 'vibrato-delayed' | 'vibrato-onoff' | 'vibrato-steady' | 'range' | 'messa' | 'glide' | 'melody' | 'leap' | 'rhythmic' | 'staccato' | 'scale' | 'vibrato-rate' | 'vibrato-width' | 'vibrato-alternate' | 'vibrato-notes' | 'vibrato-register' | 'vibrato-messa';
 
 export interface VocalItem {
   id: string;
@@ -492,6 +534,12 @@ export interface VocalItem {
   /** Cue for vibrato on / off (seconds from the voice onset). */
   cueOn?: number;
   cueOff?: number;
+  /** Advanced vibrato: the target rate (Hz), the width (narrow / wide), the switch cues (s), the notes that carry vibrato. */
+  vibRate?: number;
+  vibWidth?: 'narrow' | 'wide';
+  cues?: number[];
+  vibNotes?: boolean[];
+  noteSecs?: number[];
   /** Scales and modes: sing up in one scale and (optionally) down in another, from a named tonic. */
   scale?: ScaleSpec;
   difficulty: number;
@@ -633,15 +681,39 @@ export function scaleTonic(sc: ScaleSpec, range: VoiceRange): { midi: number; na
   return { midi: alt, name: PC_NAMES[((alt % 12) + 12) % 12] };
 }
 
-/** Level 10 continues in Riffs & runs (addendum K). */
-export const VOCAL_TOP_LEVEL = 10;
+/** Advanced vibrato (levels 10–11): rate and width on demand, alternating, vibrato only on chosen notes,
+ *  consistency across the range and through a swell. Exercise ideas from voice pedagogy (delayed vibrato,
+ *  straight/vibrato alternation, vibrato on the closing note), measures from voice research (rate, extent,
+ *  cycle-to-cycle jitter and shimmer). */
+export const VIBRATO_LEVELS: VocalLevel[] = [
+  L(10, 0.58, [
+    { kind: 'vibrato-rate', seconds: 6, reference: 'before', at: 0.5, vibRate: 5, difficulty: 1250 },
+    { kind: 'vibrato-rate', seconds: 6, reference: 'before', at: 0.5, vibRate: 6.3, difficulty: 1300 },
+    { kind: 'vibrato-width', seconds: 6, reference: 'before', at: 0.45, vibWidth: 'narrow', difficulty: 1300 },
+    { kind: 'vibrato-width', seconds: 6, reference: 'before', at: 0.55, vibWidth: 'wide', difficulty: 1300 },
+    { kind: 'vibrato-alternate', seconds: 9, reference: 'before', at: 0.5, cues: [1.5, 3, 4.5, 6, 7.5], difficulty: 1350 },
+  ]),
+  L(11, 0.56, [
+    { kind: 'vibrato-notes', seconds: 6, reference: 'before', at: 0.35, steps: [0, 2, 4, 5, 7], noteSecs: [0.6, 0.6, 0.6, 0.6, 2.4], vibNotes: [false, false, false, false, true], difficulty: 1300 },
+    { kind: 'vibrato-notes', seconds: 8, reference: 'before', at: 0.3, steps: [0, 4, 7, 4, 0], noteSecs: [0.6, 0.6, 1.8, 0.6, 1.8], vibNotes: [false, false, true, false, true], difficulty: 1400 },
+    { kind: 'vibrato-notes', seconds: 8, reference: 'before', at: 0.4, steps: [0, 2, 3, 5, 3, 2, 0], noteSecs: [1.6, 0.5, 0.5, 1.6, 0.5, 0.5, 1.6], vibNotes: [true, false, false, true, false, false, true], difficulty: 1450 },
+    { kind: 'vibrato-register', seconds: 4, reference: 'before', at: [0.15, 0.5, 0.85], difficulty: 1400 },
+    { kind: 'vibrato-messa', seconds: 7, reference: 'before', at: 0.5, difficulty: 1450 },
+  ]),
+];
+
+/** The whole ladder in order (levels 1–11; 12 = Riffs & runs). */
+export const LADDER: VocalLevel[] = [...VOCAL_LEVELS, ...VIBRATO_LEVELS];
+
+/** Level 12 continues in Riffs & runs (addendum K). */
+export const VOCAL_TOP_LEVEL = 12;
 
 /** A note at position p (0 = low … 1 = high) in the range. */
 export const atRange = (range: VoiceRange, p: number, margin = 1) => Math.round(range.low + margin + (range.high - range.low - 2 * margin) * Math.max(0, Math.min(1, p)));
 
 /** Target notes for an item in this voice. */
 export function itemTargets(item: VocalItem, range: VoiceRange): number[] {
-  if (item.kind === 'range') return (item.at as number[]).map((p) => atRange(range, p));
+  if (item.kind === 'range' || item.kind === 'vibrato-register') return (item.at as number[]).map((p) => atRange(range, p));
   if (item.kind === 'scale' && item.scale) {
     const t = scaleTonic(item.scale, range) ?? { midi: atRange(range, 0), name: item.scale.tonic };
     return scaleSteps(item.scale).map((st) => t.midi + st);
@@ -684,8 +756,16 @@ function finish(metrics: MetricScore[], extra: Partial<TakeGrade>): TakeGrade {
 
 const UNCLEAR: TakeGrade = { unclear: true, score: 0, metrics: [], weakest: null };
 
-/** Grade one hold-type take (hold, straight, vibrato, messa). */
+/** Grade one hold-type take (hold, straight, vibrato, messa). On-demand rate / width gate the score. */
 export function gradeHold(item: VocalItem, frames: SungFrame[], target: number, style: VibratoStyle = 'pop'): TakeGrade {
+  const g = gradeHoldRaw(item, frames, target, style);
+  if (g.unclear || (item.kind !== 'vibrato-rate' && item.kind !== 'vibrato-width')) return g;
+  const key = item.kind === 'vibrato-rate' ? 'vibratoRate' : 'vibratoExtent';
+  const k = g.metrics.find((m) => m.key === key)?.score ?? 0;
+  return { ...g, score: Math.round(g.score * (0.4 + 0.6 * k) * 1000) / 1000 };
+}
+
+function gradeHoldRaw(item: VocalItem, frames: SungFrame[], target: number, style: VibratoStyle = 'pop'): TakeGrade {
   const h = holdMetrics(frames, target);
   if (h.unclear) return { ...UNCLEAR, hold: h };
   const base: MetricScore[] = [
@@ -708,6 +788,50 @@ export function gradeHold(item: VocalItem, frames: SungFrame[], target: number, 
     case 'vibrato-delayed': {
       const err = h.vibratoOnSec === null ? 9 : Math.abs(h.vibratoOnSec - (item.cueOn ?? 2));
       return finish([...base, ...vibScores(1), M('vibratoCue', err * 1000, 'ms', bandScore(err, BANDS.vibratoCue), 1.5)], { hold: h });
+    }
+    case 'vibrato-rate':
+      return finish(
+        [
+          ...base.slice(1),
+          M('vibratoRate', h.vibrato.rate, 'Hz', h.vibrato.present ? inBandScore(h.vibrato.rate, [(item.vibRate ?? 5.5) - 0.3, (item.vibRate ?? 5.5) + 0.3], 1) : 0, 3),
+          M('vibratoJitter', h.vibrato.jitter * 100, '%', h.vibrato.present ? bandScore(h.vibrato.jitter, BANDS.vibratoJitter) : 0, 1.5),
+        ],
+        { hold: h },
+      );
+    case 'vibrato-width':
+      return finish(
+        [
+          ...base.slice(1),
+          M('vibratoExtent', h.vibrato.extent, '¢', h.vibrato.present ? inBandScore(h.vibrato.extent, WIDTH_BAND[item.vibWidth ?? 'narrow'], 20) : 0, 3),
+          M('vibratoShimmer', h.vibrato.shimmer * 100, '%', h.vibrato.present ? bandScore(h.vibrato.shimmer, BANDS.vibratoShimmer) : 0, 1.5),
+        ],
+        { hold: h },
+      );
+    case 'vibrato-alternate': {
+      // Each cue toggles (straight → vibrato → straight …): the nearest detected change of the right kind.
+      const cues = item.cues ?? [];
+      const errs = cues.map((c, k) => {
+        const want = k % 2 === 0 ? 'vib' : 'straight';
+        const near = h.switches.filter((sw) => sw.to === want).map((sw) => Math.abs(sw.at - c));
+        return near.length ? Math.min(1.5, ...near) : 1.5;
+      });
+      const e = errs.length ? mean(errs) : 1.5;
+      return finish([...base, M('vibratoCue', e * 1000, 'ms', bandScore(e, BANDS.vibratoCue), 3)], { hold: h });
+    }
+    case 'vibrato-messa': {
+      const [a, b] = h.halves ?? [h.vibrato, h.vibrato];
+      const both = a.present && b.present;
+      const dRate = both ? Math.abs(a.rate - b.rate) / ((a.rate + b.rate) / 2) : 1;
+      const dExt = both ? Math.abs(a.extent - b.extent) / ((a.extent + b.extent) / 2) : 1;
+      const cons = Math.max(dRate, dExt);
+      return finish(
+        [
+          ...base,
+          M('dynamics', h.loudnessRangeDb, 'dB', reachScore(h.loudnessRangeDb, 6), 1.5),
+          M('vibratoConsistency', cons * 100, '%', bandScore(cons, [0.1, 0.2, 0.35]), 2.5),
+        ],
+        { hold: h },
+      );
     }
     case 'vibrato-onoff': {
       const eOn = h.vibratoOnSec === null ? 9 : Math.abs(h.vibratoOnSec - (item.cueOn ?? 2));
@@ -761,6 +885,41 @@ export function gradeMelody(item: VocalItem, frames: SungFrame[], targets: numbe
   return { ...g, score: Math.round(g.score * (0.4 + 0.6 * m.hit) * 1000) / 1000 };
 }
 
+/** A phrase where only some notes carry vibrato: right notes + vibrato exactly where asked. */
+export function gradeVibratoNotes(item: VocalItem, frames: SungFrame[], targets: number[]): TakeGrade {
+  const m = melodyMetrics(frames, targets);
+  if (m.unclear) return { ...UNCLEAR, melody: m };
+  const flags = item.vibNotes ?? [];
+  let right = 0;
+  let judged = 0;
+  m.notes.forEach((n, i) => {
+    if (n.start === null) return;
+    const next = m.notes.slice(i + 1).find((x) => x.start !== null)?.start ?? Infinity;
+    const seg = frames.filter((f) => f.t >= n.start! && f.t < next);
+    judged++;
+    if (hasVibrato(seg, n.target) === !!flags[i]) right++;
+  });
+  const placement = judged ? right / targets.length : 0;
+  const g = finish(
+    [
+      M('hit', m.hit * 100, '%', m.hit, 2),
+      M('intonation', m.intonation, '¢', bandScore(m.intonation, BANDS.intonation), 1),
+      M('vibratoPlacement', placement * 100, '%', placement, 3),
+    ],
+    { melody: m },
+  );
+  return { ...g, score: Math.round(g.score * (0.4 + 0.6 * m.hit) * 1000) / 1000 };
+}
+
+/** Consistency of vibrato across several notes (rate and width spread): 1 = identical. */
+export function vibratoConsistency(takes: { rate: number; extent: number }[]): number {
+  if (takes.length < 2) return 1;
+  const rs = takes.map((t) => t.rate);
+  const es = takes.map((t) => t.extent);
+  const spread = Math.max(std(rs) / (mean(rs) || 1), std(es) / (mean(es) || 1));
+  return bandScore(spread, [0.08, 0.16, 0.3]);
+}
+
 /** Grade any item (range items are graded per note by the caller with `gradeHold`). */
 export function gradeTake(item: VocalItem, frames: SungFrame[], range: VoiceRange, style: VibratoStyle = 'pop', noteIndex = 0): TakeGrade {
   const targets = itemTargets(item, range);
@@ -775,6 +934,10 @@ export function gradeTake(item: VocalItem, frames: SungFrame[], range: VoiceRang
       return gradeMelody(item, frames, targets);
     case 'range':
       return gradeHold({ ...item, kind: 'hold' }, frames, targets[noteIndex], style);
+    case 'vibrato-register':
+      return gradeHold({ ...item, kind: 'vibrato-steady' }, frames, targets[noteIndex], style);
+    case 'vibrato-notes':
+      return gradeVibratoNotes(item, frames, targets);
     default:
       return gradeHold(item, frames, targets[0], style);
   }
@@ -820,6 +983,13 @@ export function tipFor(g: TakeGrade): string | null {
       return 'tipLegato';
     case 'timing':
       return 'tipTiming';
+    case 'vibratoJitter':
+    case 'vibratoShimmer':
+      return 'tipVibEven';
+    case 'vibratoPlacement':
+      return 'tipVibPlace';
+    case 'vibratoConsistency':
+      return 'tipVibConsistent';
     default:
       return null;
   }
@@ -847,11 +1017,13 @@ export interface SynthOpts {
   rmsFrom?: number;
   rmsPeak?: number; // messa di voce: rms peaks in the middle
   seed?: number;
+  /** Vibrato only inside these [from, to] windows (s). */
+  vibWindows?: [number, number][];
 }
 
 /** A synthetic sung note around targetMidi (deterministic). */
 export function synthHold(targetMidi: number, o: SynthOpts = {}): SungFrame[] {
-  const { seconds = 4, fps = 50, cents = 0, driftPerSec = 0, vibRate = 0, vibExtent = 0, vibFrom = 0, vibTo = Infinity, jitter = 0, scoop = 0, rmsFrom = 0.08, rmsPeak, seed = 1 } = o;
+  const { seconds = 4, fps = 50, cents = 0, driftPerSec = 0, vibRate = 0, vibExtent = 0, vibFrom = 0, vibTo = Infinity, jitter = 0, scoop = 0, rmsFrom = 0.08, rmsPeak, seed = 1, vibWindows } = o;
   let s = seed;
   const rnd = () => ((s = (s * 16807) % 2147483647) / 2147483647) * 2 - 1;
   const out: SungFrame[] = [];
@@ -859,7 +1031,8 @@ export function synthHold(targetMidi: number, o: SynthOpts = {}): SungFrame[] {
   for (let i = 0; i < n; i++) {
     const t = i / fps;
     let c = cents + driftPerSec * t + jitter * rnd();
-    if (vibExtent && t >= vibFrom && t <= vibTo) c += vibExtent * Math.sin(2 * Math.PI * vibRate * (t - vibFrom));
+    const inWin = vibWindows ? vibWindows.some(([a, b]) => t >= a && t <= b) : t >= vibFrom && t <= vibTo;
+    if (vibExtent && inWin) c += vibExtent * Math.sin(2 * Math.PI * vibRate * (t - vibFrom));
     if (scoop) c += scoop * Math.max(0, 1 - t / 0.12);
     const rms = rmsPeak ? rmsFrom + (rmsPeak - rmsFrom) * Math.sin((Math.PI * i) / n) : rmsFrom;
     out.push({ t: t + 0.3, hz: midiToHz(targetMidi + c / 100), confidence: 0.95, rms });
@@ -903,5 +1076,22 @@ export function synthGlide(from: number, to: number, seconds = 2, o: { fps?: num
     if (p >= 0.8) m = to + landing / 100;
     out.push({ t: 0.3 + i / fps, hz: midiToHz(m), confidence: 0.95, rms: 0.08 });
   }
+  return out;
+}
+
+/** A synthetic phrase: each note for its own length; flagged notes carry vibrato after 0.25 s. */
+export function synthVibratoPhrase(targets: number[], secs: number[], vib: boolean[], o: { fps?: number; rate?: number; extent?: number } = {}): SungFrame[] {
+  const { fps = 50, rate = 5.6, extent = 32 } = o;
+  const out: SungFrame[] = [];
+  let t = 0.3;
+  targets.forEach((m, i) => {
+    const n = Math.round((secs[i] ?? 0.5) * fps);
+    for (let k = 0; k < n; k++) {
+      const local = k / fps;
+      const c = vib[i] && local > 0.25 ? extent * Math.sin(2 * Math.PI * rate * (local - 0.25)) : 0;
+      out.push({ t, hz: midiToHz(m + c / 100), confidence: 0.95, rms: 0.08 });
+      t += 1 / fps;
+    }
+  });
   return out;
 }

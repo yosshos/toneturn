@@ -26,14 +26,26 @@ const MELODY_KEYS = ['C', 'D', 'Eb', 'F', 'G'].map(pc);
 /** Pads for a key: degrees 1, 2, 3, 5 placed in a singable register (tonic 55–66). */
 export function melodyGame(seed: number, degrees = [1, 2, 3, 5], range?: { low: number; high: number } | null): MelodyGame {
   const rnd = mulberry32(seed);
-  const key = MELODY_KEYS[Math.floor(rnd() * MELODY_KEYS.length)];
+  let key = MELODY_KEYS[Math.floor(rnd() * MELODY_KEYS.length)];
   let tonic = placeInRange(pcValue(key), 55, 66);
   if (range) {
-    // Sung pads sit inside the player's range (spec P.0): the octave of the tonic whose pads fit, nearest the centre.
+    // Sung pads sit inside the player's range (spec P.0): the octave of the tonic whose pads fit, nearest the
+    // centre; when this key has no such octave, the first other key that does.
     const top = Math.max(...degrees.map((d) => [0, 2, 4, 5, 7, 9, 11][d - 1]));
-    const fits = [-24, -12, 0, 12, 24].map((s) => tonic + s).filter((tn) => tn >= range.low && tn + top <= range.high);
     const centre = (range.low + range.high - top) / 2;
-    if (fits.length) tonic = fits.reduce((a, b) => (Math.abs(b - centre) < Math.abs(a - centre) ? b : a));
+    const fitFor = (k: PitchClass) => {
+      const t0 = placeInRange(pcValue(k), 55, 66);
+      const fits = [-36, -24, -12, 0, 12, 24].map((s) => t0 + s).filter((tn) => tn >= range.low && tn + top <= range.high);
+      return fits.length ? fits.reduce((a, b) => (Math.abs(b - centre) < Math.abs(a - centre) ? b : a)) : null;
+    };
+    for (const k of [key, ...MELODY_KEYS.filter((x) => x !== key)]) {
+      const f = fitFor(k);
+      if (f !== null) {
+        key = k;
+        tonic = f;
+        break;
+      }
+    }
   }
   const scale = majorScale(key);
   const steps = [0, 2, 4, 5, 7, 9, 11];

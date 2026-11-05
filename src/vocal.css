@@ -339,3 +339,44 @@
   border-color: var(--gold);
   color: var(--gold);
 }
+.vib-notes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin: 4px 0 8px;
+  font-weight: 700;
+}
+.vib-notes span {
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--card-2);
+}
+.vib-notes span.vib {
+  background: rgba(255, 201, 77, 0.2);
+  color: var(--gold);
+}
+.vib-pulse {
+  width: 22px;
+  height: 22px;
+  margin: 6px auto;
+  border-radius: 50%;
+  background: var(--gold);
+  animation: vib-pulse linear infinite;
+}
+@keyframes vib-pulse {
+  0%,
+  100% {
+    transform: scale(0.6);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vib-pulse {
+    animation: none;
+  }
+}

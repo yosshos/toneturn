@@ -17,6 +17,9 @@ import {
   tipFor,
   VOCAL_LEVELS,
   MODE_LEVELS,
+  VIBRATO_LEVELS,
+  synthVibratoPhrase,
+  vibratoConsistency,
   scaleSteps,
   scaleTonic,
   itemFits,
@@ -192,5 +195,44 @@ describe('scales and modes', () => {
     const it = MODE_LEVELS[7].items[0];
     const sungIonian = itemTargets({ ...it, scale: { ...it.scale!, up: 'ionian', down: 'ionian' } }, range);
     expect(gradeTake(it, synthMelody(sungIonian, 0.4), range).score).toBeLessThan(0.8);
+  });
+});
+
+describe('advanced vibrato', () => {
+  const base = (kind: VocalItem['kind'], extra: Partial<VocalItem> = {}): VocalItem => ({ id: 'z', kind, level: 10, seconds: 6, reference: 'before', at: 0.5, difficulty: 1300, ...extra });
+  it('jitter and shimmer are low for an even vibrato', () => {
+    const h = holdMetrics(synthHold(60, { seconds: 6, vibRate: 5.5, vibExtent: 35 }), 60);
+    expect(h.vibrato.jitter).toBeLessThan(0.06);
+    expect(h.vibrato.shimmer).toBeLessThan(0.1);
+  });
+  it('rate on demand: slow and fast targets', () => {
+    const slow = synthHold(60, { seconds: 6.5, vibRate: 5, vibExtent: 35 });
+    const fast = synthHold(60, { seconds: 6.5, vibRate: 6.3, vibExtent: 35 });
+    const it5 = base('vibrato-rate', { vibRate: 5 });
+    expect(gradeHold(it5, slow, 60).score).toBeGreaterThan(gradeHold(it5, fast, 60).score + 0.2);
+  });
+  it('width on demand: narrow vs wide', () => {
+    const narrow = synthHold(60, { seconds: 6.5, vibRate: 5.5, vibExtent: 25 });
+    const wide = synthHold(60, { seconds: 6.5, vibRate: 5.5, vibExtent: 75 });
+    expect(gradeHold(base('vibrato-width', { vibWidth: 'wide' }), wide, 60).score).toBeGreaterThan(gradeHold(base('vibrato-width', { vibWidth: 'wide' }), narrow, 60).score + 0.2);
+  });
+  it('alternating on cue', () => {
+    const cues = [1.5, 3, 4.5, 6, 7.5];
+    const it = base('vibrato-alternate', { seconds: 9, cues });
+    const good = synthHold(60, { seconds: 9.3, vibRate: 5.5, vibExtent: 35, vibWindows: [[1.5, 3], [4.5, 6], [7.5, 9.3]] });
+    const never = synthHold(60, { seconds: 9.3 });
+    expect(gradeHold(it, good, 60).score).toBeGreaterThan(gradeHold(it, never, 60).score + 0.2);
+  });
+  it('vibrato only on the chosen notes', () => {
+    const it = VIBRATO_LEVELS[1].items[0];
+    const tg = itemTargets(it, { low: 50, high: 70 });
+    const right = gradeTake(it, synthVibratoPhrase(tg, it.noteSecs!, it.vibNotes!), { low: 50, high: 70 });
+    const nowhere = gradeTake(it, synthVibratoPhrase(tg, it.noteSecs!, tg.map(() => false)), { low: 50, high: 70 });
+    expect(right.metrics.find((m) => m.key === 'vibratoPlacement')!.score).toBe(1);
+    expect(right.score).toBeGreaterThan(nowhere.score);
+  });
+  it('consistency across notes', () => {
+    expect(vibratoConsistency([{ rate: 5.5, extent: 35 }, { rate: 5.6, extent: 33 }, { rate: 5.4, extent: 36 }])).toBe(1);
+    expect(vibratoConsistency([{ rate: 4.5, extent: 20 }, { rate: 6.5, extent: 60 }])).toBeLessThan(0.5);
   });
 });

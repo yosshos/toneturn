@@ -183,8 +183,8 @@ export function Home({ t, settings, progress, streak, onStreak, account, onPract
         <div className="vocal-strip-actions">
           <button className="btn" onClick={() => onVocal(false)}>
             {(() => {
-              const passed = progress.vocal?.passed ?? [];
-              const lv = Math.min(10, (passed.length ? Math.max(...passed) : 0) + 1);
+              const passed = (progress.vocal?.passed ?? []).filter((x) => x < 100);
+              const lv = Math.min(12, (passed.length ? Math.max(...passed) : 0) + 1);
               return `${t.vocalLevel.replace('{n}', String(lv))} · ${t.vocalLevelNames[lv - 1]}`;
             })()}
           </button>
