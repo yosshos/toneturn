@@ -723,3 +723,17 @@
 /* Choir rooms (spec V.3) */
 .choir-round { display: grid; gap: 8px; justify-items: center; }
 .choir-part { font-size: 1.2rem; font-weight: 700; }
+
+/* Play & improvise (spec V.4–V.7) */
+.perf-tabs { margin: 8px 0; }
+.perf-controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin: 8px 0; }
+.perf-controls label { display: grid; gap: 4px; }
+.chart-line { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; font-weight: 700; margin: 10px 0; }
+.chart-line span { padding: 4px 10px; border-radius: 10px; border: 1px solid color-mix(in srgb, currentColor 25%, transparent); }
+.chart-line span.on { background: var(--accent, #6c5ce7); color: #fff; border-color: transparent; }
+.perf-report { list-style: none; padding: 0; margin: 8px 0; display: grid; gap: 4px; }
+.screen-keys { position: relative; display: flex; height: 110px; margin: 10px 0; overflow-x: auto; }
+.screen-keys .sk { flex: 0 0 auto; border: 1px solid #8884; cursor: pointer; padding: 0; }
+.screen-keys .sk.w { width: 28px; height: 110px; background: #fff; z-index: 1; border-radius: 0 0 6px 6px; }
+.screen-keys .sk.b { width: 18px; height: 68px; background: #222; margin: 0 -9px; z-index: 2; border-radius: 0 0 4px 4px; }
+.screen-keys .sk.sel { background: var(--accent, #6c5ce7); }

@@ -837,6 +837,14 @@ export function dimFreeResult(frames: SungFrame[], dimMidis: number[]): { kind: 
   return null;
 }
 
+const MAJOR_KEY_NAMES = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+/** The key signature a sight melody is written in (minor melodies: the relative major's signature). */
+export function sightKeyName(item: VocalItem, firstTarget: number): string {
+  const tonic = firstTarget - (item.steps?.[0] ?? 0);
+  const minor = (item.steps ?? []).some((s) => ((s % 12) + 12) % 12 === 3);
+  return MAJOR_KEY_NAMES[(((tonic + (minor ? 3 : 0)) % 12) + 12) % 12];
+}
+
 /** Sight-singing (spec V.1): pitch and the written rhythm. */
 export function gradeSight(item: VocalItem, frames: SungFrame[], targets: number[]): TakeGrade {
   const beat = 60 / (item.bpm ?? 72);

@@ -34,6 +34,7 @@ import {
   HARMONY_LEVELS,
   BARRY_LEVELS,
   SIGHT_LEVELS,
+  sightKeyName,
   ORNAMENT_LEVELS,
   ornamentNotes,
   synthOrnament,
@@ -1030,7 +1031,7 @@ function VocalSession({
       {item.kind === 'vibrato-rate' && phase === 'singing' && <div className="vib-pulse" style={{ animationDuration: `${1 / (item.vibRate ?? 5.5)}s` }} aria-hidden="true" />}
       {isSight(item) ? (
         <div className="sight-score">
-          <NotesView midis={shownTargets} keyPc={null} settings={settings} durs={item.durs} />
+          <NotesView midis={shownTargets} keyPc={pc(sightKeyName(item, shownTargets[0]))} settings={settings} durs={item.durs} />
           <small className="field-hint">♩ = {item.bpm ?? 72}</small>
         </div>
       ) : (

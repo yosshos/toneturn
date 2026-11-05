@@ -20,6 +20,7 @@ export function PracticeTools({
   onDaily,
   onRuns,
   onDrone,
+  onPerform,
   onModes,
   onWrongNotes,
   onAbsolute,
@@ -35,6 +36,7 @@ export function PracticeTools({
   onDaily: () => void;
   onRuns: () => void;
   onDrone: () => void;
+  onPerform?: () => void;
   onModes: (level: number) => void;
   onWrongNotes: (level: number) => void;
   onAbsolute: (level: number) => void;
@@ -103,6 +105,15 @@ export function PracticeTools({
           <b>{t.dronePractice}</b>
           <small>{t.droneBlurb}</small>
         </button>
+        {onPerform && (
+          <button className="tool-card perform-card" onClick={onPerform} data-perform="1">
+            <span className="tool-icon" aria-hidden="true">
+              <NodeIcon kind="mic" />
+            </span>
+            <b>{t.perfTitle}</b>
+            <small>{t.perfBlurb}</small>
+          </button>
+        )}
         <button className="tool-card daily-card" onClick={onDaily}>
           <span className="tool-icon" aria-hidden="true">
             <NodeIcon kind="puzzle" />
