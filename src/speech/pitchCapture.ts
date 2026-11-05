@@ -6,7 +6,7 @@ import { yin } from '../engine/yin';
 import { openCapture, stopStream } from './mic';
 
 export class BrowserPitchCapture implements PitchCapture {
-  async sing({ signal, maxMs = 4500, silenceMs = 4000, endSilenceMs, hopMs, onCapturing, onFrame, record }: SingOptions): Promise<SingCaptureResult> {
+  async sing({ signal, maxMs = 4500, silenceMs = 4000, endSilenceMs, hopMs, onCapturing, onFrame, record, ignoreFirstMs = 0 }: SingOptions): Promise<SingCaptureResult> {
     if (signal.aborted) return { kind: 'aborted' };
     const r = await openCapture({ echoCancellation: false, noiseSuppression: false, autoGainControl: false });
     if (!r.ok) return { kind: 'error', error: r.error };
@@ -57,10 +57,11 @@ export class BrowserPitchCapture implements PitchCapture {
         an.getFloatTimeDomainData(buf);
         const t = (performance.now() - t0) / 1000;
         const y = yin(buf, ctx.sampleRate, { minRms: 0.008 });
-        const f: SungFrame = { t, hz: y.hz, confidence: y.confidence, rms: y.rms };
+        const quiet = t * 1000 < ignoreFirstMs;
+        const f: SungFrame = { t, hz: quiet ? null : y.hz, confidence: quiet ? 0 : y.confidence, rms: y.rms };
         frames.push(f);
         onFrame?.(f);
-        const voiced = !!y.hz && y.confidence > 0.8;
+        const voiced = !!f.hz && f.confidence > 0.8;
         if (voiced) {
           if (firstVoiced < 0) firstVoiced = t;
           lastVoiced = t;

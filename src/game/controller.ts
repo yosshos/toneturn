@@ -597,6 +597,7 @@ export class LessonController {
       const targetHz = 440 * Math.pow(2, (q.targetMidi - 69) / 12);
       const res = await this.ad.pitch.sing({
         signal,
+        ignoreFirstMs: 450,
         onCapturing: () => {
           if (this.s.turn !== turn) return;
           this.ad.audio.cue('ready');
@@ -671,6 +672,7 @@ export class LessonController {
       let voicedAt: number | null = null;
       const res = await this.ad.pitch.sing({
         signal,
+        ignoreFirstMs: 450,
         maxMs: q.kind === 'sing-run' ? (q.midis.length / q.run.nps) * 1000 * 2 + 4000 : q.degrees.length * 1200 + 3500,
         silenceMs: 4500,
         endSilenceMs: q.kind === 'sing-run' ? 900 : 1100,

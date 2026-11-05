@@ -91,6 +91,8 @@ export interface SingOptions {
   onFrame?: (f: SungFrame) => void;
   /** Also record the take (for "listen back"; kept in memory only). */
   record?: boolean;
+  /** Treat the first ms after the microphone opens as silence (the reference's tail and the "ready" chime still ring). */
+  ignoreFirstMs?: number;
 }
 
 export type SingCaptureResult =
