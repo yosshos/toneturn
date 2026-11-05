@@ -29,3 +29,44 @@ describe('topic generators (spec T–V)', () => {
     });
   }
 });
+
+import { spellAbove, spEn } from '../src/engine/topicsTheory';
+
+describe('written theory spells correctly (spec U.11)', () => {
+  const S = (l: number, a = 0) => ({ l, a });
+  const C = 0, D = 1, E = 2, F = 3, G = 4, A = 5, B = 6;
+  it('intervals', () => {
+    expect(spEn(spellAbove(S(E, -1), 3, 4)!)).toBe('G'); // M3 above E♭
+    expect(spEn(spellAbove(S(A, -1), 6, 9)!)).toBe('F'); // M6 above A♭
+    expect(spEn(spellAbove(S(F), 4, 6)!)).toBe('B'); // A4 above F
+    expect(spEn(spellAbove(S(B), 5, 6)!)).toBe('F'); // d5 above B
+    expect(spEn(spellAbove(S(C, 1), 3, 4)!)).toBe('E♯'); // M3 above C♯
+    expect(spEn(spellAbove(S(G, 1), 7, 9)!)).toBe('F'); // d7 above G♯
+    expect(spEn(spellAbove(S(D), 2, 3)!)).toBe('E♯'); // A2 above D
+    expect(spEn(spellAbove(S(C), 6, 9)!)).toBe('A'); // alto sax: concert C reads A
+  });
+  it('chord-spelling answers are real chords', () => {
+    const T = TOPIC_GEN['chord-spelling'];
+    for (let seed = 1; seed < 60; seed++) {
+      const q = T.gen(seed * 31, 2, 'x');
+      const notes = q.answer.split(' – ');
+      // Each consecutive chord tone is a third (two letters) apart for seventh chords.
+      const letters = notes.map((n) => 'CDEFGAB'.indexOf(n[0]));
+      for (let i = 1; i < letters.length; i++) expect((letters[i] - letters[i - 1] + 7) % 7).toBe(2);
+    }
+  });
+  it('maqam level 2 really uses quarter tones', () => {
+    const q = TOPIC_GEN['maqam'].gen(5, 2, 'x');
+    const s = q.stimulus[0];
+    expect(s.kind === 'notes' && s.midis.some((m) => m % 1 !== 0)).toBe(true);
+  });
+  it('polyrhythm 3:2 has 3 high and 2 low hits per cycle', () => {
+    const q = TOPIC_GEN['polyrhythm'].gen(1, 1, 'x');
+    const st = q.choiceStim!['3:2'][0];
+    expect(st.kind).toBe('events');
+    if (st.kind === 'events') {
+      expect(st.events.filter((e) => e.midi === 84).length).toBe(6);
+      expect(st.events.filter((e) => e.midi === 45).length).toBe(4);
+    }
+  });
+});

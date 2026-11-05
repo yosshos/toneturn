@@ -1,58 +1,15 @@
 // Topic generators for ChoiceQuestion (spec T–V). Each topic: a title, a skill, levels, and a pure,
 // seeded generator — so a review item can be rebuilt from its tag "choice:<topic>:<level>:<seed>".
 
-import type { ChoiceQuestion, LessonDef, SkillId, Stimulus } from './lesson';
+import type { ChoiceQuestion, Stimulus } from './lesson';
 import { MODE_STEPS, type ModeId } from './modes';
 import { barryLine, DIM7, moveDim, pivot, SIX_OVER, type DimMove, type HalfStepRule } from './barry';
 
-export interface TopicDef {
-  title: { en: string; he: string };
-  skill: SkillId;
-  levels: { en: string; he: string }[];
-  gen: (seed: number, level: number, id: string) => ChoiceQuestion;
-}
-
-export const TOPIC_GEN: Record<string, TopicDef> = {};
-
-// ---------------------------------------------------------------- helpers
-
-export function rng(seed: number): () => number {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-export const pickR = <T,>(rnd: () => number, xs: readonly T[]): T => xs[Math.floor(rnd() * xs.length)];
-export function shuffleR<T>(rnd: () => number, xs: T[]): T[] {
-  const a = xs.slice();
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(rnd() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-const PC_FLAT = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'G♭', 'G', 'A♭', 'A', 'B♭', 'B'];
-const PC_HE = ['דו', 'רה במול', 'רה', 'מי במול', 'מי', 'פה', 'סול במול', 'סול', 'לה במול', 'לה', 'סי במול', 'סי'];
-export const pcName = (pc: number) => PC_FLAT[((pc % 12) + 12) % 12];
-export const pcNameHe = (pc: number) => PC_HE[((pc % 12) + 12) % 12];
-const chordStim = (midis: number[], duration = 1.4): Stimulus => ({ kind: 'chord', midis, duration });
-const notesStim = (midis: number[], each = 0.38): Stimulus => ({ kind: 'notes', midis, each });
-
-export function choiceQ(p: Omit<ChoiceQuestion, 'kind' | 'id' | 'difficulty'> & { id: string; difficulty: number }): ChoiceQuestion {
-  return { kind: 'choice', ...p };
-}
-
-/** A lesson of n items of a topic at a level. */
-export function topicLesson(topic: string, level: number, seed = Date.now(), n = 6): LessonDef {
-  const T = TOPIC_GEN[topic];
-  const rnd = rng(seed);
-  const questions = Array.from({ length: n }, (_, i) => T.gen(Math.floor(rnd() * 2 ** 31), level, `${topic}-${i + 1}`));
-  return { id: 'topic', version: 1, skill: T.skill, scoring: { xpPerCorrect: 10, attemptLimit: 2 }, intro: [], questions };
-}
+export { TOPIC_GEN, rng, pickR, shuffleR, pcName, pcNameHe, choiceQ, topicLesson, type TopicDef } from './topicKit';
+import { TOPIC_GEN, rng, pickR, shuffleR, pcName, pcNameHe, choiceQ, chordStim, notesStim } from './topicKit';
+import './topicsHarmony';
+import './topicsEar';
+import './topicsTheory';
 
 // ================================================================ T. Barry Harris
 

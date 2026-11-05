@@ -47,7 +47,9 @@ export type Stimulus =
   | { kind: 'melody'; midis: number[]; beats: number[]; bpm: number }
   /** Jazz seventh chords in a key (shell voicings, smooth voice leading). */
   | { kind: 'jazz'; key: PitchClass; chords: JazzChord[]; each: number }
-  | { kind: 'rhythm'; rhythm: string; bars: number; bpm: number };
+  | { kind: 'rhythm'; rhythm: string; bars: number; bpm: number }
+  /** Free timed notes (polyrhythms, Middle-Eastern rhythms, quarter tones: midi may be fractional). */
+  | { kind: 'events'; events: NoteEvent[]; length: number };
 
 interface QBase {
   id: string;
@@ -1607,6 +1609,10 @@ export function renderStimulus(stimulus: Stimulus[]): { events: NoteEvent[]; len
         t += 0.2;
         break;
       }
+      case 'events':
+        for (const e of s.events) events.push({ ...e, start: t + e.start });
+        t += s.length;
+        break;
       case 'rhythm': {
         const snd = rhythmSound(rhythmFromKey(s.rhythm, s.bars), s.bpm);
         for (const e of snd.events) events.push({ ...e, start: t + e.start });
