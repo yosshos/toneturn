@@ -1,10 +1,11 @@
 // Per-skill ratings: a simple, explainable Elo-style model (spec: "Progression, placement and Skill Map").
 //
 //   expected  E = 1 / (1 + 10^((D − R) / 400))        D = item difficulty, R = player rating
-//   update    R' = R + K · (S − E),  |ΔR| ≤ MAX_STEP   S = 1 correct on first attempt, 0 otherwise
+//   update    R' = R + K · (S − E),  |ΔR| ≤ MAX_STEP   S = graded score 0..1 (scoring.ts: accuracy × attempt
+//             credit × time × replays), or 1 / 0 for events without a graded score
 //   K         = 64 while provisional (< 8 rated items), then 24
 //
-// Only first musical attempts are rated. Silence, unclear speech, permission failures and skipped
+// Each item is rated once (its best attempt, with guess-corrected retry credit). Silence, unclear speech, permission failures and skipped
 // questions are never rated. Each item can be rated once (event ids) → no replay farming / double updates.
 
 import type { SkillId } from './lesson';
@@ -21,7 +22,7 @@ export const BAND_MAX = 1600;
 
 /** Skill Map axis order: listening skills, then performance/memory pairs (pitch: in tune + memory; rhythm: memory + precision). */
 /** Grouped as in spec G.8: listening → performance → memory → precision. */
-export const SKILLS: SkillId[] = ['degrees', 'notes', 'intervals', 'chords', 'cadences', 'modes', 'absolute', 'rhythm-dictation', 'singing', 'rhythm-reading', 'sequences', 'agility', 'technique', 'rhythm', 'timing'];
+export const SKILLS: SkillId[] = ['degrees', 'notes', 'intervals', 'chords', 'cadences', 'modes', 'theory', 'absolute', 'rhythm-dictation', 'singing', 'rhythm-reading', 'sequences', 'agility', 'technique', 'rhythm', 'timing'];
 /** Axes on the Skill Map that have no content yet — always shown as unmeasured. */
 export const PLANNED_SKILLS = [] as const;
 

@@ -92,6 +92,8 @@ export function referenceTime(q: Question, modality: Modality): number {
   if (q.kind === 'sing-run') t += q.midis.length / q.run.nps * 1000;
   // Symbolic conversions (no sound) need a moment of thought.
   if ((q.kind === 'degree' && q.direction === 'name→degree') || (q.kind === 'note-name' && q.direction === 'degree→name')) t += r.symbolic;
+  // Written theory / notation to read: reading time is not slowness.
+  if (q.kind === 'choice' && (q.text || q.show)) t += r.symbolic * 2;
   return t;
 }
 
@@ -141,7 +143,9 @@ export function ratingScore(q: Question, o: ItemOutcome): number {
   if (o.correctOn === null && cat) return 0;
   const g = attemptCredit(k, cat, q.choices.length);
   const time = SCORING.rating.timeBase + SCORING.rating.timeWeight * timeTerm(q, o, k);
-  const replay = Math.max(SCORING.rating.replayFloor, Math.pow(SCORING.rating.replayFactor, o.replays));
+  // Sung passages: extra listens cost melodic memory only (a separate event, spec P.9), never pitch quality.
+  const memoryTask = q.kind === 'sing-seq' || q.kind === 'sing-run';
+  const replay = memoryTask ? 1 : Math.max(SCORING.rating.replayFloor, Math.pow(SCORING.rating.replayFactor, o.replays));
   return Math.max(0, Math.min(1, a * g * time * replay));
 }
 
