@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.25.0',
+    date: '2026-11-05',
+    en: ['New game — True or false?: three notes, two intervals: are both right? Solo 60-second runs or a duel on one device, four levels up to “by ear”'],
+    he: ['משחק חדש — נכון או לא?: שלושה צלילים, שני מרווחים: שניהם נכונים? ריצה של 60 שניות לבד או דו־קרב על המכשיר, ארבע רמות עד "לפי השמיעה"'],
+  },
+  {
     version: '0.24.0',
     date: '2026-11-05',
     en: ['Show notes as keyboard, notation, guitar tab — or any mix (Settings)', 'Aids while answering: the key or the note to sing is shown while a skill is still growing, and fades out as you reach Solid. Aided answers count a little easier, so the rating stays fair', 'After each answer, the notes you heard appear on every view you chose'],

@@ -1,5 +1,12 @@
 # Milestone report — 2026-11-04
 
+## Update 25 — v0.25.0 (2026-11-05): "True or false?" interval game (spec O)
+
+- `engine/truefalse.ts`: items from correctly spelled trios; half are lies with exactly one near-miss label (m3↔M3, P4↔♯4, ♭5↔P5 …); level 1 M3/P4/P5, level 2 all, level 3 Do-Re-Mi names, level 4 by ear (names hidden, notes played); rating difficulty per level; streak points.
+- UI: setup (solo / duel, level, best), solo 60-second run (time bar, −2 s per mistake, streak multiplier, ← / → keys, shake on a miss with the real intervals shown), duel on one device (split screen, first right answer takes the round, a wrong tap locks that player, 10 rounds). Shared `TrioArt` with the home screen (fast animations in the game).
+- First answers feed the Intervals skill (`g:tf:` rating events, also a practice day); best score per level kept.
+- Tests: 3 unit + 2 E2E.
+
 ## Update 24 — v0.24.0 (2026-11-05): visual aids, notation and guitar tab (spec M)
 
 - `engine/aids.ts`: aid per question kind — key map (scale + tonic, never the sounding note), target (singing from degree / name / description), lookup (scale with only the tonic numbered, so the answer is counted, not read). Auto = on below Solid (1100) per skill; Always / Never. Aided items: difficulty −120 / −150, XP × 0.8; placement and the weekly puzzle never aided.

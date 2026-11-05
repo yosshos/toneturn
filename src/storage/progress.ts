@@ -53,6 +53,8 @@ export interface Progress {
   stats?: { days: string[]; goodSessions: number; xpByDay: Record<string, number> };
   /** Path lessons opened by "Find my level" (everything below the player's level, per skill). */
   placementUnlocks?: string[];
+  /** "True or false?": best solo score per level (spec O). */
+  tfBest?: Record<string, number>;
   /** Ghost race: your best run per set ("kind:rounds"), replayed as an opponent. */
   ghosts?: Record<string, GhostRun>;
 }
@@ -404,6 +406,22 @@ export class ProgressStore {
     const next = { ...p, ghosts: { ...(p.ghosts ?? {}), [key]: run } };
     await this.kv.set('progress', next);
     return { progress: next, kept: true };
+  }
+
+  /** "True or false?" run: rating events for the Intervals skill (first answers) + best score per level. */
+  async recordTrueFalse(level: number, score: number, events: RatingEvent[], now = new Date()): Promise<{ progress: Progress; best: boolean }> {
+    const p = await this.loadProgress();
+    const have = new Set((p.ratingEvents ?? []).map((e) => e.id));
+    const fresh = events.filter((e) => !have.has(e.id));
+    const prevBest = p.tfBest?.[level] ?? 0;
+    const next: Progress = {
+      ...p,
+      ratingEvents: [...(p.ratingEvents ?? []), ...fresh].slice(-3000),
+      tfBest: { ...(p.tfBest ?? {}), [level]: Math.max(prevBest, score) },
+    };
+    next.snapshots = snapshot(next, now);
+    await this.kv.set('progress', next);
+    return { progress: next, best: score > prevBest };
   }
 
   /** Mark a day's result as uploaded to the leaderboard. */

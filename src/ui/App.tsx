@@ -1,3 +1,4 @@
+import { TrueFalseScreen } from './TrueFalse';
 import { FreezeToast, StreakSheet } from './Streak';
 import { canBuy, type Purchase } from '../engine/streak';
 import { recommendFor } from '../engine/recommend';
@@ -33,12 +34,12 @@ import { pwa } from '../pwa';
 import { piano, setMidiEnabled, SIMULATED, store, tts } from './services';
 import { midi } from '../speech/midi';
 
-type Route = 'home' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost';
+type Route = 'home' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse';
 /** Invite links: #/online/CODE */
 const onlineCodeFromHash = () => (/^#\/?online\/(\w+)/.exec(location.hash)?.[1] ?? '');
 const routeFromHash = (): Route => {
   const h = location.hash.replace(/^#\/?/, '').replace(/^online\/.*$/, 'online');
-  return (['settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
+  return (['settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
 };
 
 export function App() {
@@ -304,6 +305,7 @@ export function App() {
           onSettings={() => go('settings')}
           onDuel={() => go('duel')}
           onGhost={() => go('ghost')}
+          onTrueFalse={() => go('truefalse')}
           onPlacement={openPlacement}
           onSkills={() => go('skills')}
           playerName={user?.name ? user.name.split(' ')[0] : null}
@@ -418,6 +420,7 @@ export function App() {
           }}
         />
       )}
+      {route === 'truefalse' && <TrueFalseScreen t={t} settings={s} progress={progress} onBack={() => go('home')} onProgress={setProgress} />}
       {route === 'ghost' && <GhostScreen t={t} settings={s} progress={progress} onBack={() => go('home')} onProgress={setProgress} />}
       {route === 'classes' && <ClassesScreen t={t} settings={s} user={user} onBack={() => go('home')} onOpenLesson={(id) => openLesson(id)} />}
       {streakOpen && (

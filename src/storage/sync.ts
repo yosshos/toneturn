@@ -23,6 +23,7 @@ export function rebuildProgress(results: LessonResult[], local?: Progress): Prog
     games: local.games,
     daily: local.daily,
     ghosts: local.ghosts,
+    tfBest: local.tfBest,
     stats: local.stats && (local.stats.days.length >= (rebuilt.stats?.days.length ?? 0)) ? local.stats : rebuilt.stats,
     ratingEvents: [...(rebuilt.ratingEvents ?? []), ...localLesson, ...gameEvents],
     puzzles: { ...(local.puzzles ?? {}), ...(rebuilt.puzzles ?? {}) },
