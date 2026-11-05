@@ -1,5 +1,12 @@
 # Milestone report — 2026-11-04
 
+## Update 29 — v0.29.0 (2026-11-05): quick lessons before every unit, the collection, personal coaching (spec X)
+- 76 mini-lessons (`src/content/mini/*.ts`) for 80 units: learning path, every practice topic, vocal tracks, Play & improvise tabs, games. Written in parallel per area and reviewed for accuracy (spellings, MIDI vs. note names, Barry Harris conversions and rules, clefs, set classes, iqa'at patterns from the generators). Player (`src/ui/MiniLesson.tsx`): TTS + captions, examples, notes in the player's views (with key and clef), pause / back / next / replay, skip; celebration when every step was heard. Collection `src/ui/Learned.tsx` (route `#/learned`, card on the practice screen). Setting to turn auto-lessons off.
+- Personal coaching (`src/engine/coach.ts`): retry hints about the given answer (no spoilers), reveal contrasts, session insight in the recap; spoken and shown.
+- Found while writing: the 6th-diminished topic offered "bebop major" next to "6th diminished" — the same notes. Replaced by Lydian; a test now forbids two same-note scales among the choices.
+- Duel push notifications live: migration 19 applied (rolled-back trigger test: invitation + result queued with the right scores), function v5 deployed (403 without secret, 200 with).
+- Not verified: how the narration sounds with each device's TTS voice, a real duel notification on a phone.
+
 ## Update 28 — v0.28.0 (2026-11-05): Barry Harris, ear & theory areas, performance, views, precise feedback (spec T–W)
 - **W precise feedback**: `src/engine/feedback.ts` (offset class, end drift, scoop, wobble; at most two remarks) and `feedbackMelody.ts` (per note); used in sung lessons, vocal technique, Echo Chain, sing-along, sight-singing.
 - **Views**: `src/ui/NotesView.tsx` — keyboard / staff (with written durations) / tab per Settings → Show notes as.

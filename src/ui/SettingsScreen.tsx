@@ -216,6 +216,15 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account }: Pr
         )}
       </section>
 
+      <section className="set-card">
+        <label className="toggle-row">
+          <input type="checkbox" checked={s.miniLessons ?? true} onChange={(e) => onChange({ miniLessons: e.target.checked })} data-mini-setting="1" />
+          <span>
+            📚 {t.miniSetting}
+            <small className="field-hint"> — {t.miniSettingHint}</small>
+          </span>
+        </label>
+      </section>
       <SoundSetting t={t} value={s.sound ?? 'classic'} onChange={(sound) => onChange({ sound })} drone={s.droneSound ?? 'soft'} onDrone={(droneSound) => onChange({ droneSound })} />
 
       <section className="set-card">

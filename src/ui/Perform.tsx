@@ -1,6 +1,7 @@
 // Play & improvise (spec V.4–V.7): play-along backing tracks, guided improvisation over a chart, MIDI
 // keyboard drills (with an on-screen keyboard when there is no MIDI device), guitar from tab.
 
+import { useMiniGate } from './MiniLesson';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { clockEvents, clockPlan, clockReport, type ClockReport } from '../engine/perform';
 import { backingPitches, backingTrack, chartBeats, CHARTS, checkVoicing, chordAt, chordSymbol, CIRCLE_KEYS, hasGuideTones, improvReport, QUALITY, scaleEvenness, synthImprov, type ChartId, type ImprovReport, type Quality, type VoicingKind } from '../engine/perform';
@@ -43,6 +44,7 @@ function useHeadphones(): [boolean, (v: boolean) => void] {
 
 export function PerformScreen({ t, settings, onBack }: { t: Strings; settings: Settings; onBack: () => void }) {
   const [tab, setTab] = useState<Tab>('backing');
+  const gate = useMiniGate();
   const [chart, setChart] = useState<ChartId>('ii-V-I');
   const [key, setKey] = useState(0);
   const [bpm, setBpm] = useState(120);
@@ -94,7 +96,7 @@ export function PerformScreen({ t, settings, onBack }: { t: Strings; settings: S
       </header>
       <div className="seg perf-tabs" role="tablist">
         {(['backing', 'improv', 'clock', 'midi', 'guitar'] as Tab[]).map((x) => (
-          <button key={x} role="tab" aria-selected={tab === x} className={tab === x ? 'on' : ''} onClick={() => (stopAll(), setTab(x))}>
+          <button key={x} role="tab" aria-selected={tab === x} className={tab === x ? 'on' : ''} onClick={() => gate(`perform:${x}`, () => (stopAll(), setTab(x)))}>
             {t.perfTabs[x]}
           </button>
         ))}

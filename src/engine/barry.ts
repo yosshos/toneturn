@@ -2,8 +2,8 @@
 //  - the diminished chord moves: lower one note → a dominant 7 (on the lowered note); raise one → a minor 6
 //    (root = the raised note + a fourth); raise two neighbours → a major 6; lower two neighbours → a major 6;
 //  - chords from 6th-diminished scales: m7 → the major 6 a minor third up, m7♭5 → the minor 6 a minor third
-//    up, dominant → the minor 6 on the 5th, altered → the minor 6 a half step up, sus → the major 6 a half
-//    step down, maj7 → the major 6 on the tonic (or on the 5th);
+//    up, dominant → the minor 6 on the 5th, altered → the minor 6 a half step up, sus → the major 6 a whole
+//    step down (F6 over G7sus), maj7 → the major 6 on the tonic (or on the 5th);
 //  - extra half steps on the dominant scale descending (chord tones land on the downbeats): from a chord
 //    tone one half step between 1 and ♭7; from a non-chord tone none; from 3, 5 or 7 three (3–2, 2–1,
 //    1–♭7); from 2, 4 or 6 two (2–1, 1–♭7);

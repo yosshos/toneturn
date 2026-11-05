@@ -7,6 +7,7 @@
 //  - The microphone/recognizer is only active in the `listening` phase.
 //  - Permission / recognition failures, silence and unclear speech never count as wrong answers.
 
+import { retryCoach, revealCoach } from '../engine/coach';
 import { learnVoiceAlias } from '../engine/learnedVoice';
 import { sungMelodyRemarks } from '../engine/feedbackMelody';
 import type { SungFrame } from '../engine/sing';
@@ -96,6 +97,8 @@ export interface LessonView {
     /** Rhythm reading: per-onset offset in ms (null = missed) and extra taps. */
     readHits?: (number | null)[];
     readExtra?: number;
+    /** Personal coaching line about this answer (spec X.4), also spoken. */
+    coach?: string;
   } | null;
   /** Metronome light while a rhythm is being performed. */
   beat: { i: number; accent: boolean; n: number } | null;
@@ -128,6 +131,8 @@ export interface ControllerSettings {
   inputNaming?: Naming;
   /** Calibrated tap delay (ms) subtracted from rhythm taps. */
   latencyMs?: number;
+  /** The player's first name for personal feedback (spec X.4), when known. */
+  playerName?: string | null;
 }
 
 export interface ControllerHooks {
@@ -584,15 +589,20 @@ export class LessonController {
     }
     this.ad.audio.cue('wrong');
     if (g.kind === 'retry') {
-      this.patch({ feedback: { kind: 'retry', given: answer, sung, ...chips } });
-      await this.say(sung ? singFeedbackText(sung, l) : retryText(q, l), signal);
+      // Personal, about *this* wrong answer — without giving the right one away (spec X.4).
+      const coach = sung ? null : retryCoach(q, answer, l, this.s.turn, this.cfg.playerName ?? null);
+      this.patch({ feedback: { kind: 'retry', given: answer, sung, ...chips, ...(coach ? { coach } : {}) } });
+      await this.say(sung ? singFeedbackText(sung, l) : (coach ?? retryText(q, l)), signal);
       if (ev.remark) await this.say(ev.remark, signal);
       this.setSession(newTurn(this.s, 'playback'));
       await this.playStim(q.kind === 'sing' ? q.stimulus.slice(-1) : q.stimulus, signal);
       return false;
     }
-    this.patch({ feedback: { kind: 'reveal', answer: q.answer, given: answer, sung, ...chips } });
+    // What makes your answer and the right one different (spec X.4).
+    const why = sung ? null : revealCoach(q, answer, l);
+    this.patch({ feedback: { kind: 'reveal', answer: q.answer, given: answer, sung, ...chips, ...(why ? { coach: why } : {}) } });
     await this.say(revealText(q, l, this.cfg.naming), signal);
+    if (why) await this.say(why, signal);
     // Hear your answer next to the right one (when it can be played), else the teaching gesture.
     await this.playStim(compareStimulus(q, answer) ?? explainStimulus(q), signal);
     await this.ad.clock.sleep(400, signal);

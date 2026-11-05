@@ -1,3 +1,4 @@
+import { sessionInsight } from '../engine/coach';
 import { LevelStatsLine } from './LevelStats';
 import { RatingCard } from './Rating';
 import type { RatingChange } from '../engine/rating';
@@ -26,9 +27,10 @@ interface Props {
   rating?: { change: RatingChange; peakBefore: number | null } | null;
   /** Play your (wrong) answer, then the right one. */
   onCompare?: (i: number) => void;
+  playerName?: string | null;
 }
 
-export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome, onNext, nextLabel, rating }: Props) {
+export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome, onNext, nextLabel, rating, playerName }: Props) {
   const s = view.session;
   const sm = summary(s);
   const [xp, setXp] = useState(0);
@@ -83,6 +85,18 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
     <main className="recap">
       <p className="eyebrow">{withNote(meta.title[lang], bb)}</p>
       <h1>{t.recapTitle}</h1>
+      {(() => {
+        // Personal insight (spec X.4): the pair you mixed up most, or praise.
+        const misses = s.records.flatMap((r, qi) => r.attempts.filter((a) => !a.correct).map((a) => ({ q: qi, given: a.answer })));
+        const answered = s.records.filter((r) => r.attempts.length > 0);
+        const ins = sessionInsight(s.lesson.questions, misses, answered.filter((r) => r.attempts[0]?.correct).length, answered.length, lang, playerName ?? null);
+        return (
+          <p className={`coach-insight ${ins.kind}`} data-insight={ins.kind}>
+            {ins.kind === 'pair' ? '🎯 ' : ins.kind === 'flawless' ? '' : '💪 '}
+            {ins.text}
+          </p>
+        );
+      })()}
       <div className="stars" aria-label={`${stars} ${t.stars}`}>
         {[0, 1, 2].map((i) => (
           <span key={i} className={`star ${i < stars ? 'won' : ''}`} style={{ ['--i' as string]: i }} aria-hidden="true">

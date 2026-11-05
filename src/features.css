@@ -1573,3 +1573,52 @@
 .sw-sunset { background: linear-gradient(135deg, #8a3a3f, #2b1420); }
 .sw-midnight { background: linear-gradient(135deg, #2c2c4a, #0b0b12); }
 .sw-rose { background: linear-gradient(135deg, #93407f, #2a1030); }
+
+/* Mini-lessons (spec X) */
+.mini-overlay { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px; background: color-mix(in srgb, var(--bg) 86%, transparent); backdrop-filter: blur(6px); overflow-y: auto; }
+.mini-player, .mini-celebrate { width: min(560px, 100%); background: var(--bg-2); border-radius: 28px; padding: 18px 18px 14px; display: grid; gap: 12px; box-shadow: 0 20px 60px #0008; }
+.mini-head { display: flex; gap: 12px; align-items: center; }
+.mini-head h2 { margin: 2px 0 0; font-size: 1.3rem; }
+.mini-head small { color: var(--gold); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; font-size: .72rem; }
+.mini-emoji { font-size: 2.2rem; width: 56px; height: 56px; display: grid; place-items: center; border-radius: 18px; background: var(--card); }
+.mini-progress { display: flex; gap: 6px; }
+.mini-progress span { flex: 1; height: 6px; border-radius: 3px; background: var(--card-2); transition: background .3s; }
+.mini-progress span.now { background: color-mix(in srgb, var(--gold) 55%, var(--card-2)); }
+.mini-progress span.done { background: var(--gold); }
+.mini-stage { display: grid; gap: 10px; justify-items: center; min-height: 190px; align-content: center; animation: miniIn .45s ease both; }
+.mini-text { font-size: 1.6rem; font-weight: 800; margin: 0; text-align: center; color: var(--gold); }
+.mini-caption { font-size: 1.08rem; line-height: 1.5; margin: 0; text-align: center; }
+.mini-controls { display: flex; justify-content: center; gap: 14px; align-items: center; }
+.mini-controls .icon-btn.big { width: 60px; height: 60px; font-size: 1.5rem; }
+.mini-controls .icon-btn.ghost { visibility: hidden; }
+.mini-skip { justify-self: center; }
+@keyframes miniIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.mini-celebrate { text-align: center; justify-items: center; position: relative; overflow: hidden; }
+.mini-celebrate h2 { margin: 4px 0 0; }
+.mini-card-flip { width: 120px; height: 120px; border-radius: 30px; display: grid; place-items: center; background: linear-gradient(135deg, var(--gold), var(--coral)); animation: miniFlip 1s cubic-bezier(.2,.9,.3,1.3) both; box-shadow: 0 10px 40px color-mix(in srgb, var(--gold) 50%, transparent); }
+.mini-big-emoji { font-size: 4rem; animation: miniPop .6s .6s both; }
+.mini-learned-name { font-size: 1.25rem; font-weight: 800; margin: 0; animation: miniIn .5s .5s both; }
+.mini-takeaway { color: var(--ink-soft); margin: 0; animation: miniIn .5s .8s both; }
+@keyframes miniFlip { 0% { transform: perspective(600px) rotateY(180deg) scale(.3); opacity: 0; } 70% { transform: perspective(600px) rotateY(-12deg) scale(1.08); opacity: 1; } 100% { transform: none; } }
+@keyframes miniPop { 0% { transform: scale(0); } 70% { transform: scale(1.3); } 100% { transform: scale(1); } }
+.mini-confetti { position: absolute; inset: 0; pointer-events: none; }
+.mini-confetti span { position: absolute; top: -12px; left: calc(5% + var(--k) * 5.2%); width: 9px; height: 14px; border-radius: 3px; background: hsl(calc(var(--k) * 37), 90%, 65%); animation: miniFall 2.4s calc(var(--k) * 60ms) ease-in both; }
+@keyframes miniFall { 0% { transform: translateY(0) rotate(0); opacity: 1; } 100% { transform: translateY(520px) rotate(calc(var(--k) * 80deg)); opacity: 0; } }
+:root[data-motion='reduced'] .mini-confetti, :root[data-motion='reduced'] .mini-card-flip, :root[data-motion='reduced'] .mini-big-emoji { animation: none; }
+/* Topics I learned */
+.learned-meter { height: 10px; border-radius: 5px; background: var(--card-2); overflow: hidden; }
+.learned-meter span { display: block; height: 100%; background: linear-gradient(90deg, var(--gold), var(--coral)); }
+.learned-area h2 small { color: var(--ink-dim); font-weight: 600; }
+.learned-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.learned-card { display: grid; gap: 4px; text-align: start; padding: 12px; border-radius: 16px; border: none; background: var(--card); color: var(--ink); cursor: pointer; }
+.learned-card.todo { opacity: .55; filter: grayscale(.6); }
+.learned-card.got { background: linear-gradient(160deg, var(--card-2), var(--card)); outline: 1px solid color-mix(in srgb, var(--gold) 45%, transparent); }
+.learned-card small { color: var(--ink-soft); line-height: 1.3; }
+.learned-emoji { font-size: 1.6rem; }
+
+/* Personal session insight (spec X.4) */
+.coach-insight { margin: 6px auto 4px; max-width: 520px; padding: 10px 14px; border-radius: 16px; background: var(--card); line-height: 1.45; text-align: center; }
+.coach-insight.pair { outline: 1px solid color-mix(in srgb, var(--gold) 50%, transparent); }
+.coach-insight.flawless { background: linear-gradient(135deg, color-mix(in srgb, var(--gold) 30%, var(--card)), var(--card)); font-weight: 700; }
+
+.feedback .coach-line { display: block; font-size: .95rem; line-height: 1.4; margin-top: 4px; opacity: .95; }

@@ -70,3 +70,16 @@ describe('written theory spells correctly (spec U.11)', () => {
     }
   });
 });
+
+import { MODE_STEPS } from '../src/engine/modes';
+describe('choices are always distinguishable', () => {
+  it('no topic offers two scales with the same notes', () => {
+    for (const [topic, T] of Object.entries(TOPIC_GEN))
+      for (let level = 1; level <= T.levels.length; level++)
+        for (let seed = 1; seed < 20; seed++) {
+          const q = T.gen(seed * 104729, level, 'x');
+          const scales = q.choices.filter((c) => c in MODE_STEPS).map((c) => MODE_STEPS[c as keyof typeof MODE_STEPS].join(','));
+          expect(new Set(scales).size, `${topic} L${level}`).toBe(scales.length);
+        }
+  });
+});

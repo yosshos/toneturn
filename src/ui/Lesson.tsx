@@ -41,11 +41,13 @@ interface Props {
   nextLabel?: string;
   /** Current skill ratings (for automatic aids). */
   ratings?: Ratings;
+  /** The player's first name, for personal feedback. */
+  playerName?: string | null;
 }
 
 const targetMidiOf = (q: Question) => (q.kind === 'degree' || q.kind === 'sing' || q.kind === 'note-name' ? q.targetMidi : q.kind === 'sing-seq' || q.kind === 'sing-run' ? q.midis[0] : 60);
 
-export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit, onAgain, onNext, onProgress, lessonDef, adapt, nextLabel, ratings }: Props) {
+export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit, onAgain, onNext, onProgress, lessonDef, adapt, nextLabel, ratings, playerName }: Props) {
   const ctrlRef = useRef<LessonController | null>(null);
   const [change, setChange] = useState<{ change: RatingChange; peakBefore: number | null } | null>(null);
   const [streakMoment, setStreakMoment] = useState<{ before: number; after: StreakState; gems: number } | null>(null);
@@ -78,6 +80,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
         timed: isTimed(settings.timedScoring, settings.firstUseAt, new Date()),
         inputNaming: namingFor(settings.naming, settings.inputLang),
         latencyMs: settings.tapLatencyMs,
+        playerName: playerName ?? null,
       },
       settings.mode,
       {
@@ -159,7 +162,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
   if (v.stage === 'complete') {
     return (
       <>
-        <Recap t={t} view={v} settings={settings} onReplay={(i) => ctrl.replayQuestion(i)} onCompare={(i) => ctrl.compareQuestion(i)} onAgain={onAgain} onHome={onExit} onNext={onNext} nextLabel={nextLabel} rating={change} />
+        <Recap t={t} view={v} settings={settings} onReplay={(i) => ctrl.replayQuestion(i)} onCompare={(i) => ctrl.compareQuestion(i)} onAgain={onAgain} onHome={onExit} onNext={onNext} nextLabel={nextLabel} rating={change} playerName={playerName ?? null} />
         {streakMoment && (
           <StreakCelebration t={t} before={streakMoment.before} after={streakMoment.after} gemsGained={streakMoment.gems} today={localDay(new Date())} onDone={() => setStreakMoment(null)} />
         )}
@@ -665,6 +668,7 @@ function FeedbackBanner({ v, t, lang, settings }: { v: LessonView; t: Strings; l
   return (
     <div className={`feedback ${f.kind}`} aria-live="assertive">
       <b>{text}</b>
+      {f.coach && <span className="coach-line">💬 {f.coach}</span>}
       {f.sung && f.sung.cents !== null && (
         <small dir="ltr">
           {f.sung.cents > 0 ? '+' : ''}

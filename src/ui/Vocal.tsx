@@ -1,6 +1,8 @@
 // Vocal technique (spec addendum P): range calibration, the 10-level ladder, the daily warm-up, a live
 // pitch trace, per-take metric cards with a tip and listen-back, the range map and per-metric trends.
 
+import { useMiniGate } from './MiniLesson';
+import { vocalUnit } from '../content/units';
 import { NotesView } from './NotesView';
 import { remarksFor } from '../engine/feedback';
 import { sungMelodyRemarks } from '../engine/feedbackMelody';
@@ -292,6 +294,7 @@ interface Props {
 }
 
 export function VocalScreen({ t, settings, progress, onSettings, onProgress, onBack, onRuns, onSingAlong, startWarmup, startLevel }: Props) {
+  const gate = useMiniGate();
   const v = progress.vocal ?? { best: {}, passed: [], takes: [] };
   const [view, setView] = useState<View>(() => (startLevel && levelDef(startLevel) ? { kind: 'session', level: startLevel, items: levelDef(startLevel).items.filter((it) => itemFits(it, settings.voiceRange ?? DEFAULT_RANGE)) } : startWarmup ? { kind: 'session', level: 'warmup', items: warmupItems(v.passed).filter((it) => itemFits(it, range)) } : { kind: 'home' }));
   const range = settings.voiceRange ?? DEFAULT_RANGE;
@@ -418,7 +421,7 @@ export function VocalScreen({ t, settings, progress, onSettings, onProgress, onB
             const best = lvDef.items.reduce((a, it) => a + (v.best[it.id] ?? 0), 0) / lvDef.items.length;
             return (
               <li key={lv}>
-                <button className={`vocal-level ${passed ? 'passed' : ''} ${open ? '' : 'locked'}`} disabled={!open} onClick={() => setView({ kind: 'session', level: lv, items: lvDef.items.filter((it) => itemFits(it, range)) })}>
+                <button className={`vocal-level ${passed ? 'passed' : ''} ${open ? '' : 'locked'}`} disabled={!open} onClick={() => gate(vocalUnit(lv), () => setView({ kind: 'session', level: lv, items: lvDef.items.filter((it) => itemFits(it, range)) }))}>
                   <span className="lv-num">{i + 1}</span>
                   <span className="lv-text">
                     <b>{t.modesLevelNames[i]}</b>
@@ -441,7 +444,7 @@ export function VocalScreen({ t, settings, progress, onSettings, onProgress, onB
             const passed = v.passed.includes(lv);
             return (
               <li key={lv}>
-                <button className={`vocal-level ${passed ? 'passed' : ''} ${open ? '' : 'locked'}`} disabled={!open} data-orn={i + 1} onClick={() => setView({ kind: 'session', level: lv, items: lvDef.items.filter((it) => itemFits(it, range)) })}>
+                <button className={`vocal-level ${passed ? 'passed' : ''} ${open ? '' : 'locked'}`} disabled={!open} data-orn={i + 1} onClick={() => gate(vocalUnit(lv), () => setView({ kind: 'session', level: lv, items: lvDef.items.filter((it) => itemFits(it, range)) }))}>
                   <span className="lv-num">{i + 1}</span>
                   <span className="lv-text">
                     <b>{t.ornLevelNames[i]}</b>
@@ -464,7 +467,7 @@ export function VocalScreen({ t, settings, progress, onSettings, onProgress, onB
             const passed = v.passed.includes(lv);
             return (
               <li key={lv}>
-                <button className={`vocal-level ${passed ? 'passed' : ''} ${open ? '' : 'locked'}`} disabled={!open} data-sight={i + 1} onClick={() => setView({ kind: 'session', level: lv, items: lvDef.items.filter((it) => itemFits(it, range)) })}>
+                <button className={`vocal-level ${passed ? 'passed' : ''} ${open ? '' : 'locked'}`} disabled={!open} data-sight={i + 1} onClick={() => gate(vocalUnit(lv), () => setView({ kind: 'session', level: lv, items: lvDef.items.filter((it) => itemFits(it, range)) }))}>
                   <span className="lv-num">{i + 1}</span>
                   <span className="lv-text">
                     <b>{t.sightLevelNames[i]}</b>
@@ -487,7 +490,7 @@ export function VocalScreen({ t, settings, progress, onSettings, onProgress, onB
             const passed = v.passed.includes(lv);
             return (
               <li key={lv}>
-                <button className={`vocal-level ${passed ? 'passed' : ''} ${open ? '' : 'locked'}`} disabled={!open} onClick={() => setView({ kind: 'session', level: lv, items: lvDef.items.filter((it) => itemFits(it, range)) })}>
+                <button className={`vocal-level ${passed ? 'passed' : ''} ${open ? '' : 'locked'}`} disabled={!open} onClick={() => gate(vocalUnit(lv), () => setView({ kind: 'session', level: lv, items: lvDef.items.filter((it) => itemFits(it, range)) }))}>
                   <span className="lv-num">{i + 1}</span>
                   <span className="lv-text">
                     <b>{t.barryLevelNames[i]}</b>
@@ -510,7 +513,7 @@ export function VocalScreen({ t, settings, progress, onSettings, onProgress, onB
             const passed = v.passed.includes(lv);
             return (
               <li key={lv}>
-                <button className={`vocal-level ${passed ? 'passed' : ''} ${open ? '' : 'locked'}`} disabled={!open} onClick={() => setView({ kind: 'session', level: lv, items: lvDef.items.filter((it) => itemFits(it, range)) })}>
+                <button className={`vocal-level ${passed ? 'passed' : ''} ${open ? '' : 'locked'}`} disabled={!open} onClick={() => gate(vocalUnit(lv), () => setView({ kind: 'session', level: lv, items: lvDef.items.filter((it) => itemFits(it, range)) }))}>
                   <span className="lv-num">{i + 1}</span>
                   <span className="lv-text">
                     <b>{t.harmonyLevelNames[i]}</b>

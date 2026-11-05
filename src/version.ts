@@ -18,6 +18,20 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.29.0',
+    date: '2026-11-05',
+    en: [
+      'Every unit now starts with a quick lesson (about a minute): what it is, how it sounds, how to hear it — with examples. Skip any time',
+      'Hear a lesson to the end and the topic joins your collection: “Topics I learned”, by area — replay any card',
+      'Personal coaching: after a miss you hear what was off in *your* answer (“not 5 — this one is lower”, “the first 2 notes were right”), and the recap names the pair you mixed up most',
+    ],
+    he: [
+      'כל יחידה מתחילה עכשיו בשיעור קצר (בערך דקה): מה זה, איך זה נשמע, איך שומעים את זה — עם דוגמאות. אפשר לדלג בכל רגע',
+      'הקשבתם לשיעור עד הסוף? הנושא מצטרף לאוסף שלכם: ״נושאים שלמדתי״, לפי תחומים — וכל כרטיס אפשר לשמוע שוב',
+      'אימון אישי: אחרי טעות שומעים מה לא הסתדר בתשובה *שלכם* (״זה לא 5 — הצליל הזה נמוך יותר״, ״2 הצלילים הראשונים היו נכונים״), והסיכום מראה את הזוג שהכי בלבל אתכם',
+    ],
+  },
+  {
     version: '0.28.0',
     date: '2026-11-05',
     en: [

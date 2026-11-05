@@ -131,6 +131,10 @@ export interface Settings {
   purchases?: Purchase[];
   /** Last freeze day the player was told about (freeze-used toast). */
   seenFreezeDay?: string | null;
+  /** Mini-lessons heard to the end (spec X): lesson id → ISO date. */
+  learned?: Record<string, string>;
+  /** Start every unit with its mini-lesson until it is learned (default on). */
+  miniLessons?: boolean;
   /** Which note views to show for non-rhythm exercises (spec M.1). Default keyboard + staff. */
   noteViews?: NoteView[];
   /** Visual aids while answering (spec M.3). Default auto. */

@@ -1,3 +1,7 @@
+import { MiniGateContext, MiniLessonPlayer } from './MiniLesson';
+import { LearnedScreen, learnedCount } from './Learned';
+import { lessonForUnit } from '../content/minilessons';
+import type { MiniLesson } from '../content/miniTypes';
 import { PerformScreen } from './Perform';
 import { topicLesson } from '../engine/topics';
 import { SingAlongScreen } from './SingAlong';
@@ -37,15 +41,15 @@ import { reportGameBest, reportRating, reportStreakDays } from '../cloud/social'
 import { overallRating } from '../engine/rating';
 import { APP_VERSION, unseenChanges } from '../version';
 import { pwa } from '../pwa';
-import { piano, setMidiEnabled, SIMULATED, store, tts } from './services';
+import { params, piano, setMidiEnabled, SIMULATED, store, tts } from './services';
 import { midi } from '../speech/midi';
 
-type Route = 'home' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong' | 'perform';
+type Route = 'home' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong' | 'perform' | 'learned';
 /** Invite links: #/online/CODE */
 const onlineCodeFromHash = () => (/^#\/?online\/(\w+)/.exec(location.hash)?.[1] ?? '');
 const routeFromHash = (): Route => {
   const h = location.hash.replace(/^#\/?/, '').replace(/^online\/.*$/, 'online');
-  return (['settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong', 'perform'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
+  return (['settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong', 'perform', 'learned'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
 };
 
 /** The level a generated modes lesson was made at (from its first question's pool size). */
@@ -230,6 +234,19 @@ export function App() {
     setRoute(r);
   };
 
+  // Mini-lessons (spec X): a unit opens with its short lesson until the player has heard it to the end.
+  const [mini, setMini] = useState<{ lesson: MiniLesson; then: () => void } | null>(null);
+  const playerFirstName = user?.name ? user.name.split(' ')[0] : null;
+  const markLearned = (id: string) => updateSettings({ learned: { ...(settings?.learned ?? {}), [id]: new Date().toISOString() } });
+  const gate = (unit: string | null, start: () => void) => {
+    const l = unit ? lessonForUnit(unit) : null;
+    const cur = settings;
+    // Test runs (simulator, unlocked) skip them unless asked for with ?mini.
+    const auto = (cur?.miniLessons ?? true) && (!(SIMULATED || params.has('unlock')) || params.has('mini'));
+    if (!l || !auto || cur?.learned?.[l.id]) return start();
+    void piano.unlock();
+    setMini({ lesson: l, then: start });
+  };
   const openGenerated = (def: LessonDef, adapt?: (s: SessionState) => Question[] | null, consented = false) => {
     if (!consented && s.mode === 'voice' && !s.voiceConsent) {
       setConsentThen(() => () => openGenerated(def, adapt, true));
@@ -256,9 +273,9 @@ export function App() {
     const fixed = progress.puzzles?.[week]?.band as Parameters<typeof weeklyPuzzle>[1] | undefined;
     openGenerated(weeklyPuzzle(week, fixed ?? puzzleBand(ratingsOf(progress))));
   };
-  const openModes = (level: number) => openGenerated(modesLesson(level, Date.now() >>> 0));
-  const openAbsolute = (level: number) => openGenerated(absoluteLesson(level, Date.now() >>> 0));
-  const openTopic = (topic: string, level: number) => openGenerated(topicLesson(topic, level, Date.now() >>> 0));
+  const openModes = (level: number) => gate('modes', () => openGenerated(modesLesson(level, Date.now() >>> 0)));
+  const openAbsolute = (level: number) => gate('absolute-pitch', () => openGenerated(absoluteLesson(level, Date.now() >>> 0)));
+  const openTopic = (topic: string, level: number) => gate(`topic:${topic}`, () => openGenerated(topicLesson(topic, level, Date.now() >>> 0)));
   const [vocalLevel, setVocalLevel] = useState<number | null>(null);
   /** Class assignments: path lessons and generated practice (vocal levels, modes, wrong notes). */
   const openAssignment = (id: string) => {
@@ -273,14 +290,16 @@ export function App() {
     if (id === 'wrong-notes') return openWrongNotes(1);
   };
   const [wrongLevel, setWrongLevel] = useState(1);
-  const openWrongNotes = (level: number) => {
-    setWrongLevel(level);
-    openGenerated(wrongNotesLesson(level, Date.now() >>> 0));
-  };
-  const openRuns = () => {
-    const r = ratingsOf(progress).agility;
-    openGenerated(runsWorkshop(runLevelFor(r?.n ? r.r : null)));
-  };
+  const openWrongNotes = (level: number) =>
+    gate('wrong-notes', () => {
+      setWrongLevel(level);
+      openGenerated(wrongNotesLesson(level, Date.now() >>> 0));
+    });
+  const openRuns = () =>
+    gate('runs', () => {
+      const r = ratingsOf(progress).agility;
+      openGenerated(runsWorkshop(runLevelFor(r?.n ? r.r : null)));
+    });
   // Practise a skill at the player's level: the lesson on that skill's ladder that fits their rating.
   const practiceSkill = (k: SkillId) => {
     const rec = recommendFor(k, ratingsOf(progress), (id) => lessonMastered(progress, id));
@@ -299,7 +318,8 @@ export function App() {
     openLesson(rec.lessonId);
   };
 
-  const openLesson = (id: LessonId) => {
+  const openLesson = (id: LessonId) => gate(id, () => openLessonNow(id));
+  const openLessonNow = (id: LessonId) => {
     void piano.unlock(); // inside the Start gesture
     setGenerated(null);
     setLessonId(id);
@@ -333,8 +353,24 @@ export function App() {
   const canNext = nextId && states[nextId] !== 'locked';
 
   return (
+    <MiniGateContext.Provider value={gate}>
     <div className="app">
       {SIMULATED && <div className="sim-banner">{t.simulated}</div>}
+      {mini && (
+        <MiniLessonPlayer
+          t={t}
+          settings={s}
+          lesson={mini.lesson}
+          name={playerFirstName}
+          onFinish={(heardAll) => {
+            if (heardAll) markLearned(mini.lesson.id);
+            const then = mini.then;
+            setMini(null);
+            then();
+          }}
+        />
+      )}
+      {route === 'learned' && <LearnedScreen t={t} settings={s} name={playerFirstName} onLearned={markLearned} onBack={() => go('home')} />}
       {route === 'home' && (
         <Home
           t={t}
@@ -344,7 +380,7 @@ export function App() {
           onStreak={() => setStreakOpen(true)}
           account={<AccountCard t={t} user={user} sync={sync} compact />}
           onMenu={() => setMenuOpen(true)}
-          tools={<>{user && <AssignedCard t={t} items={assigned} lang={s.uiLang} onOpen={(id) => openAssignment(id)} />}<PracticeTools t={t} progress={progress} onSkills={() => go('skills')} onPlacement={openPlacement} onReview={openReview} onPuzzle={openPuzzle} onDaily={() => go('daily')} onRuns={openRuns} onDrone={() => go('drone')} onPerform={() => go('perform')} onModes={openModes} onWrongNotes={openWrongNotes} onAbsolute={openAbsolute} onTopic={openTopic} lang={s.uiLang} /></>}
+          tools={<>{user && <AssignedCard t={t} items={assigned} lang={s.uiLang} onOpen={(id) => openAssignment(id)} />}<PracticeTools t={t} progress={progress} onSkills={() => go('skills')} onPlacement={openPlacement} onReview={openReview} onPuzzle={openPuzzle} onDaily={() => go('daily')} onRuns={openRuns} onDrone={() => go('drone')} onPerform={() => gate('perform:backing', () => go('perform'))} onLearned={() => go('learned')} learnedCount={learnedCount(s)} onModes={openModes} onWrongNotes={openWrongNotes} onAbsolute={openAbsolute} onTopic={openTopic} lang={s.uiLang} /></>}
           updateReady={pwaState.updateReady}
           news={
             <>
@@ -367,7 +403,7 @@ export function App() {
           onSettings={() => go('settings')}
           onDuel={() => go('duel')}
           onGhost={() => go('ghost')}
-          onTrueFalse={() => go('truefalse')}
+          onTrueFalse={() => gate('game:truefalse', () => go('truefalse'))}
           onVocal={(warm) => {
             setVocalWarmup(warm);
             go('vocal');
@@ -412,6 +448,7 @@ export function App() {
       {route === 'lesson' && (
         <LessonScreen
           key={lessonKey}
+          playerName={playerFirstName}
           t={t}
           lessonId={lessonId}
           settings={s}
@@ -491,13 +528,15 @@ export function App() {
           settings={s}
           onSettings={updateSettings}
           onBack={() => go('home')}
-          onStart={(v) => {
-            void piano.unlock(); // the Start gesture
-            setGameSetup(v);
-            setGameKey((k) => k + 1);
-            location.hash = '';
-            setRoute('game');
-          }}
+          onStart={(v) =>
+            gate(v.kind === 'melody' ? 'game:echo' : 'game:beat', () => {
+              void piano.unlock(); // the Start gesture
+              setGameSetup(v);
+              setGameKey((k) => k + 1);
+              location.hash = '';
+              setRoute('game');
+            })
+          }
         />
       )}
       {route === 'truefalse' && <TrueFalseScreen t={t} settings={s} progress={progress} onBack={() => go('home')} onProgress={setProgress} />}
@@ -562,5 +601,6 @@ export function App() {
         />
       )}
     </div>
+    </MiniGateContext.Provider>
   );
 }

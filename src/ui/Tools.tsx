@@ -21,6 +21,8 @@ export function PracticeTools({
   onRuns,
   onDrone,
   onPerform,
+  onLearned,
+  learnedCount = 0,
   onModes,
   onWrongNotes,
   onAbsolute,
@@ -37,6 +39,8 @@ export function PracticeTools({
   onRuns: () => void;
   onDrone: () => void;
   onPerform?: () => void;
+  onLearned?: () => void;
+  learnedCount?: number;
   onModes: (level: number) => void;
   onWrongNotes: (level: number) => void;
   onAbsolute: (level: number) => void;
@@ -105,6 +109,15 @@ export function PracticeTools({
           <b>{t.dronePractice}</b>
           <small>{t.droneBlurb}</small>
         </button>
+        {onLearned && (
+          <button className="tool-card learned-card-tool" onClick={onLearned} data-learned="1">
+            <span className="tool-icon" aria-hidden="true">
+              📚
+            </span>
+            <b>{t.learnedTitle}</b>
+            <small>{learnedCount ? `${learnedCount} · ${t.learnedBlurb}` : t.learnedBlurb}</small>
+          </button>
+        )}
         {onPerform && (
           <button className="tool-card perform-card" onClick={onPerform} data-perform="1">
             <span className="tool-icon" aria-hidden="true">

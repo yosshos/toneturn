@@ -122,6 +122,7 @@ const SCALE_NAMES: Partial<Record<ModeId, { en: string; he: string; say?: string
   'melodic-minor': { en: 'Melodic minor', he: 'מינור מלודי', say: ['melodic minor'] },
   'harmonic-minor': { en: 'Harmonic minor', he: 'מינור הרמוני', say: ['harmonic minor'] },
   'bebop-major': { en: 'Bebop major', he: 'ביבופ מז׳ורי', say: ['bebop major'] },
+  lydian: { en: 'Lydian', he: 'לידי', say: ['lydian'] },
 };
 
 TOPIC_GEN['bh-scale'] = {
@@ -134,7 +135,7 @@ TOPIC_GEN['bh-scale'] = {
   ],
   gen(seed, level, id) {
     const rnd = rng(seed);
-    const pool: ModeId[] = level === 1 ? ['sixth-dim', 'ionian'] : level === 2 ? ['sixth-dim', 'ionian', 'harmonic-major', 'bebop-major'] : ['minor-sixth-dim', 'melodic-minor', 'harmonic-minor', 'sixth-dim'];
+    const pool: ModeId[] = level === 1 ? ['sixth-dim', 'ionian'] : level === 2 ? ['sixth-dim', 'ionian', 'harmonic-major', 'lydian'] /* bebop major = the same notes as 6th-diminished: never both */ : ['minor-sixth-dim', 'melodic-minor', 'harmonic-minor', 'sixth-dim'];
     const mode = pickR(rnd, pool);
     const tonic = 57 + Math.floor(rnd() * 8);
     const play = (m: ModeId): Stimulus[] => [notesStim(MODE_STEPS[m].map((s) => tonic + s), 0.3), notesStim(MODE_STEPS[m].map((s) => tonic + s).reverse().slice(1), 0.3)];
