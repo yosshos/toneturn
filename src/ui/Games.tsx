@@ -30,11 +30,13 @@ export function GameSetup({
   onStart,
   settings,
   onSettings,
+  onTrueFalse,
 }: {
   t: Strings;
   initialKind: GameKind;
   progress: Progress;
   onBack: () => void;
+  onTrueFalse?: () => void;
   onStart: (v: GameSetupValue) => void;
   settings: Settings;
   onSettings: (p: Partial<Settings>) => void;
@@ -86,6 +88,15 @@ export function GameSetup({
           </button>
         ))}
       </div>
+      {onTrueFalse && (
+        <button className="game-card truefalse games-tf" onClick={onTrueFalse}>
+          <span className="duel-icon" aria-hidden="true">
+            ✓✗
+          </span>
+          <b>{t.trueFalse}</b>
+          <small>{t.tfBlurb}</small>
+        </button>
+      )}
 
       <section className="set-card">
         <fieldset className="seg-field">

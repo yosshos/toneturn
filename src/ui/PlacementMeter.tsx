@@ -3,7 +3,7 @@
 // ("That was easy for you — let's go up a level", "We found your edge", "Next: chords").
 
 import { useEffect, useRef, useState } from 'react';
-import { LADDERS, PLACEMENT_ORDER } from '../engine/placement';
+import { LADDERS, lessonSections } from '../engine/placement';
 import type { SkillId } from '../engine/lesson';
 import type { SessionState } from '../engine/session';
 import type { Strings } from '../i18n/strings';
@@ -11,6 +11,7 @@ import type { Strings } from '../i18n/strings';
 const SKILL_COLOR: Partial<Record<SkillId, string>> = {
   degrees: '#ffc94d', intervals: '#4ea8de', chords: '#a06cf0', cadences: '#2ec4b6', notes: '#ff8a3d', modes: '#ff4d8d',
   sequences: '#7af0d0', 'rhythm-dictation': '#ff6a4d', 'rhythm-reading': '#ffd166', theory: '#9bb7ff', singing: '#b8f27c', pitch: '#e9a5ff', tempo: '#ffb3c7', sight: '#a0e7ff',
+  absolute: '#f0a35e', rhythm: '#ff9f80', improv: '#c3a6ff', technique: '#8fe3a8', agility: '#6fd3ff',
 };
 const parse = (id: string) => {
   const m = /^p:([a-z-]+):(\d+):(\d+)$/.exec(id);
@@ -19,13 +20,13 @@ const parse = (id: string) => {
 
 type Move = 'start' | 'up' | 'up2' | 'edge' | 'next';
 
-export function PlacementMeter({ s, t, singing }: { s: SessionState; t: Strings; singing: boolean }) {
+export function PlacementMeter({ s, t }: { s: SessionState; t: Strings }) {
   const q = s.lesson.questions[s.index];
   const cur = q ? parse(q.id) : null;
   const prev = s.index > 0 ? parse(s.lesson.questions[s.index - 1].id) : null;
   const [line, setLine] = useState<{ text: string; move: Move; key: number } | null>(null);
   const shown = useRef('');
-  const skills = PLACEMENT_ORDER.filter((k) => singing || k !== 'singing');
+  const skills = lessonSections(s.lesson);
 
   useEffect(() => {
     if (!cur || shown.current === q.id) return;

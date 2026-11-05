@@ -1,3 +1,4 @@
+import { DOMAINS, type DomainId } from '../engine/rating';
 import { TOPIC_GEN } from '../engine/topics';
 import { TOPIC_GROUPS } from '../engine/topicGroups';
 import { weekId } from '../engine/adaptive';
@@ -32,7 +33,7 @@ export function PracticeTools({
   t: Strings;
   progress: Progress;
   onSkills: () => void;
-  onPlacement: () => void;
+  onPlacement: (domain?: DomainId | null) => void;
   onReview: () => void;
   onPuzzle: () => void;
   onDaily: () => void;
@@ -62,13 +63,23 @@ export function PracticeTools({
       <h2>{t.practiceTools}</h2>
       <div className="tool-cards">
         {/* Find my level stays available: re-take it any time (e.g. after an old, shorter placement). */}
-        <button className="tool-card placement-card" onClick={onPlacement}>
+        <button className="tool-card placement-card" onClick={() => onPlacement()}>
           <span className="tool-icon" aria-hidden="true">
             <NodeIcon kind="map" />
           </span>
           <b>{t.findLevel}</b>
           <small>{placed ? t.retakePlacement : t.findLevelHint}</small>
         </button>
+        <div className="tool-card placement-domains" role="group" aria-label={t.placementByDomain}>
+          <small>{t.placementByDomain}</small>
+          <div className="pd-chips">
+            {DOMAINS.map((d) => (
+              <button key={d.id} className="chip" data-domain={d.id} onClick={() => onPlacement(d.id)}>
+                {t.domainNames[d.id]}
+              </button>
+            ))}
+          </div>
+        </div>
         {measured > 0 && (
           <button className="tool-card" onClick={onSkills}>
             <span className="tool-icon" aria-hidden="true">

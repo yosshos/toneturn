@@ -17,6 +17,8 @@ import { BrowserPitchCapture } from '../speech/pitchCapture';
 import { gradeTake, synthHold, VOCAL_LEVELS, DEFAULT_RANGE } from '../engine/vocal';
 import type { SungFrame } from '../engine/sing';
 import { SIMULATED } from './services';
+import { factSeed, SILENT_TOPICS, type FactLevel, type FactTopic } from '../engine/theoryFacts';
+import { FactPicker } from './TrueFalse';
 
 /** Dev/E2E only: an in-page room server with bot opponents (never in production builds). */
 const FAKE_ROOMS = import.meta.env.DEV && params.has('fakeRooms');
@@ -36,12 +38,14 @@ function errorText(t: Strings, e: unknown) {
   return code === 'not-found' ? t.roomNotFound : code === 'started' ? t.roomStarted : code === 'full' ? t.roomFull : code === 'sign-in' ? t.signInToPlay : t.roomError;
 }
 
-export function OnlineScreen({ t, settings, user, initialCode, onBack }: { t: Strings; settings: Settings; user: CloudUser | null; initialCode: string; onBack: () => void }) {
+export function OnlineScreen({ t, settings, user, initialCode, facts, onBack }: { t: Strings; settings: Settings; user: CloudUser | null; initialCode: string; facts?: { topics: FactTopic[]; level: FactLevel } | null; onBack: () => void }) {
   const [backend, setBackend] = useState<RoomBackend | null>(null);
   const [roomId, setRoomId] = useState<string | null>(null);
   const [nick, setNick] = useState(() => (user?.name ?? '').split(' ')[0].slice(0, 16));
   const [code, setCode] = useState(normaliseCode(initialCode));
-  const [kind, setKind] = useState<SetKind | 'choir'>('mixed');
+  const [kind, setKind] = useState<SetKind | 'choir'>(facts ? 'truefalse' : 'mixed');
+  const [factTopics, setFactTopics] = useState<FactTopic[]>(facts?.topics ?? SILENT_TOPICS.filter((x) => x !== 'trio'));
+  const [factLevel, setFactLevel] = useState<FactLevel>(facts?.level ?? 1);
   const [rounds, setRounds] = useState(10);
   const [bigScreen, setBigScreen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -147,6 +151,7 @@ export function OnlineScreen({ t, settings, user, initialCode, onBack }: { t: St
                 ))}
               </div>
             </fieldset>
+            {kind === 'truefalse' && <FactPicker t={t} lang={settings.uiLang} topics={factTopics} onTopics={setFactTopics} level={factLevel} onLevel={setFactLevel} />}
             <fieldset className="seg-field">
               <legend>{t.roundsLabel}</legend>
               <div className="seg" role="radiogroup" aria-label={t.roundsLabel}>
@@ -169,7 +174,7 @@ export function OnlineScreen({ t, settings, user, initialCode, onBack }: { t: St
               disabled={busy}
               onClick={() =>
                 run(async (b) => {
-                  const r = kind === 'choir' ? await createRoom(b, 'vocal-hold', rounds, name, CHOIR_SEED + ((Math.random() * 2 ** 31) >>> 0), { hostScreen: bigScreen }) : await createRoom(b, kind, rounds, name, undefined, { hostScreen: bigScreen });
+                  const r = kind === 'choir' ? await createRoom(b, 'vocal-hold', rounds, name, CHOIR_SEED + ((Math.random() * 2 ** 31) >>> 0), { hostScreen: bigScreen }) : await createRoom(b, kind, rounds, name, kind === 'truefalse' ? factSeed((Math.random() * 2 ** 32) >>> 0, factTopics, factLevel) : undefined, { hostScreen: bigScreen });
                   if (FAKE_ROOMS && fakeServer) {
                     const room = fakeServer.rooms.get(r.id)!;
                     const items = tournamentSet(room.kind, room.rounds, room.seed);

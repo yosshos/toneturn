@@ -69,15 +69,20 @@ describe('Elo-style ratings', () => {
   });
 });
 
-import { LADDERS, PLACEMENT_ORDER, placementEstimate, placementResults } from '../src/engine/placement';
+import { LADDERS, PLACEMENT_ORDER, placementEstimate, placementResults, placementSkills, SUNG_SKILLS } from '../src/engine/placement';
+import { DOMAINS, SKILLS, type DomainId } from '../src/engine/rating';
 describe('Find my level 2.0: every skill, staircase to failure', () => {
   // Play a whole placement: the player is right up to `can[skill]` (a ladder level), wrong above it.
-  const run = (can: Partial<Record<string, number>>, singing = false) => {
-    let lesson = placementLesson(9, { singing });
+  const run = (can: Partial<Record<string, number>>, singing = false, domain: DomainId | null = null, skip: string[] = []) => {
+    let lesson = placementLesson(9, { singing, domain });
     let s = newTurn(createSession(lesson), 'listening');
     for (let guard = 0; guard < 200; guard++) {
       const q = s.lesson.questions[s.index];
       const [, skill, lv] = /^p:([a-z-]+):(\d+):/.exec(q.id)!;
+      if (skip.includes(skill) && !(s.lesson.placementSkipped ?? []).includes(skill as never)) {
+        // "Skip this section": the section leaves the placement, then the question is skipped.
+        s = { ...s, lesson: { ...s.lesson, placementSkipped: [...(s.lesson.placementSkipped ?? []), skill as never] } };
+      }
       const right = Number(lv) <= (can[skill] ?? 0);
       const wrong = q.choices.find((c) => c !== q.answer) ?? '__';
       [s] = grade(s, s.turn, s.index, right ? q.answer : wrong, 'buttons');
@@ -91,13 +96,40 @@ describe('Find my level 2.0: every skill, staircase to failure', () => {
   it('every skill in the order is measured; singing only with the microphone', () => {
     const s = run({});
     const skills = new Set(s.lesson.questions.map((q) => q.id.split(':')[1]));
-    for (const k of PLACEMENT_ORDER.filter((x) => x !== 'singing')) expect(skills.has(k), k).toBe(true);
-    expect(skills.has('singing')).toBe(false);
-    expect(new Set(run({}, true).lesson.questions.map((q) => q.id.split(':')[1])).has('singing')).toBe(true);
+    for (const k of PLACEMENT_ORDER.filter((x) => !SUNG_SKILLS.includes(x))) expect(skills.has(k), k).toBe(true);
+    for (const k of SUNG_SKILLS) expect(skills.has(k), k).toBe(false);
+    const sung = new Set(run({}, true).lesson.questions.map((q) => q.id.split(':')[1]));
+    for (const k of SUNG_SKILLS) expect(sung.has(k), k).toBe(true);
+  });
+  it('by default, every skill on the map is measured (rhythmic precision through rhythm reading)', () => {
+    const measured = new Set([...placementSkills({ singing: true }), 'timing']);
+    for (const k of SKILLS) expect(measured.has(k), k).toBe(true);
+    for (const k of PLACEMENT_ORDER) expect(LADDERS[k]!.length, k).toBeGreaterThanOrEqual(4);
+  });
+  it('a skipped section is not measured and not rated; the rest still are', () => {
+    const s = run({ degrees: 3, chords: 3 }, false, null, ['intervals', 'theory']);
+    const res = Object.fromEntries(placementResults(s).map((r) => [r.skill, r]));
+    expect(res.intervals).toBeUndefined();
+    expect(res.theory).toBeUndefined();
+    expect(res.degrees.passed).toBe(3);
+    expect(res.chords.passed).toBe(3);
+    expect(res.sight).toBeDefined();
+    // Only one question of a skipped section was shown (the one skipped).
+    expect(s.lesson.questions.filter((q) => q.id.startsWith('p:intervals:')).length).toBe(1);
+  });
+  it('by domain: only that domain\'s skills', () => {
+    for (const d of DOMAINS) {
+      const skills = placementSkills({ singing: true, domain: d.id });
+      expect(skills.length, d.id).toBeGreaterThan(0);
+      for (const k of skills) expect(d.skills.includes(k) || (k === 'rhythm-reading' && d.id === 'time'), `${d.id}:${k}`).toBe(true);
+    }
+    const s = run({ sequences: 2, rhythm: 2 }, false, 'memory');
+    expect(new Set(s.lesson.questions.map((q) => q.id.split(':')[1]))).toEqual(new Set(['sequences', 'rhythm']));
+    expect(placementResults(s).map((r) => r.skill).sort()).toEqual(['rhythm', 'sequences']);
   });
   it('climbs until the player fails, and sets the rating between passed and failed', () => {
     const s = run({ degrees: 5, chords: 99, intervals: 0 });
-    const res = Object.fromEntries(placementResults(s, false).map((r) => [r.skill, r]));
+    const res = Object.fromEntries(placementResults(s).map((r) => [r.skill, r]));
     expect(res.degrees.passed).toBe(5);
     expect(res.degrees.rating).toBe(placementEstimate('degrees', 5));
     expect(res.chords.passed).toBe(LADDERS.chords!.length); // reached the top

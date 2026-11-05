@@ -1711,3 +1711,13 @@
 .skill-domain-h { display: flex; justify-content: space-between; align-items: baseline; margin: 6px 0; font-size: 1rem; }
 .skill-domain-h small { color: var(--ink-dim); font-weight: 600; }
 .radar.domains .axis-label { font-size: 15px; font-weight: 700; }
+
+/* Find my level: skip a section, measure one area */
+.skip-section { opacity: .85; }
+.topic-strip .ts.skipped { opacity: .45; text-decoration: line-through; }
+.placement-domains { display: grid; gap: 8px; align-content: start; text-align: start; }
+.placement-domains .pd-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.placement-domains .chip { padding: 6px 10px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--ink) 20%, transparent); background: var(--card); color: var(--ink); font-weight: 700; font-size: .85rem; cursor: pointer; }
+.placement-domains .chip:hover { border-color: var(--gold); }
+.skill-domain-h .measure-domain { margin-inline-start: auto; font-size: .78rem; font-weight: 600; }
+.skill-domain-h small { margin-inline-start: 8px; }

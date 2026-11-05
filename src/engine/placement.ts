@@ -7,12 +7,14 @@
 // A second miss ends the skill. Passing the top level ends it too.
 
 import type { LessonDef, Question, SkillId } from './lesson';
-import { cadenceQuestion, degreeQuestion, degreeSeqQuestion, DEGREE_KEYS, intervalQuestion, modesLesson, noteNameQuestion, progressionQuestion, qualityQuestion, rhythmDictQuestion, rhythmReadQuestion, seventhQuestion, singQuestion, mulberry32, ROOT_NAMES, type Quality, type Roman } from './lesson';
+import { absNoteQuestion, cadenceQuestion, degreeQuestion, singRunQuestion, singSeqQuestion, degreeSeqQuestion, DEGREE_KEYS, intervalQuestion, modesLesson, noteNameQuestion, progressionQuestion, qualityQuestion, rhythmDictQuestion, rhythmReadQuestion, seventhQuestion, singQuestion, mulberry32, ROOT_NAMES, type Quality, type Roman } from './lesson';
 import type { RhythmLevel } from './rhythm';
 import { TOPIC_GEN } from './topics';
 import { pc } from './pitch';
 import { SEVENTHS, type ProgressionId } from './jazz';
 import type { SessionState } from './session';
+import { runAt } from './runs';
+import { DOMAINS, type DomainId } from './rating';
 
 const pick = <T,>(rnd: () => number, xs: readonly T[]): T => xs[Math.floor(rnd() * xs.length)];
 type Make = (seed: number, id: string) => Question;
@@ -133,18 +135,74 @@ export const LADDERS: Partial<Record<SkillId, { difficulty: number; make: Make }
   sight: [
     [1, 1100],
     [2, 1300],
+    [4, 1420],
     [3, 1500],
+    [5, 1560],
+    [6, 1680],
   ].map(([lv, d]) => ({ difficulty: d, make: (s: number, id: string) => at(topic('sight-read', lv)(s, id), d) })),
+  'rhythm': [1, 2, 3, 4, 5].map((lv) => ({
+    difficulty: [1000, 1200, 1380, 1580, 1720][lv - 1],
+    make: (s: number, id: string) => at(topic('rhythm-memory', lv)(s, id), [1000, 1200, 1380, 1580, 1720][lv - 1]),
+  })),
+  improv: [1, 2, 3, 4].map((lv) => ({
+    difficulty: [1050, 1250, 1400, 1560][lv - 1],
+    make: (s: number, id: string) => at(topic('call-response', lv)(s, id), [1050, 1250, 1400, 1560][lv - 1]),
+  })),
+  absolute: [
+    [['C', 'E', 'G', 'A'], false, 1150],
+    [['C', 'D', 'E', 'F', 'G', 'A', 'B'], false, 1300],
+    [['C', 'D', 'E', 'F', 'G', 'A', 'B'], true, 1420],
+    [['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'], false, 1560],
+    [['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'], true, 1700],
+  ].map(([pool, wide, d]) => ({
+    difficulty: d as number,
+    make: (s: number, id: string) => {
+      const rnd = mulberry32(s);
+      return absNoteQuestion(id, pick(rnd, pool as string[]), rnd, pool as string[], d as number, wide as boolean);
+    },
+  })),
   singing: [1, 5, 3, 6, 2, 7, 4].map((d, i) => ({
     difficulty: 900 + i * 110,
     make: (s: number, id: string) => at(singQuestion(id, pick(mulberry32(s), DEGREE_KEYS), d), 900 + i * 110),
   })),
+  // Vocal technique: control across leaps — steps, then thirds, fifths, sixths and sevenths, longer lines.
+  technique: [
+    [[1, 2, 3], 950],
+    [[1, 3, 5, 3], 1080],
+    [[1, 5, 3, 1], 1200],
+    [[1, 6, 4, 2], 1320],
+    [[5, 1, 6, 2, 7], 1450],
+    [[1, 7, 3, 6, 2, 5], 1600],
+  ].map(([ds, d]) => ({
+    difficulty: d as number,
+    make: (s: number, id: string) => singSeqQuestion(id, pick(mulberry32(s), DEGREE_KEYS), ds as number[], d as number),
+  })),
+  // Vocal agility: runs sung back, faster and longer.
+  agility: [1, 2, 3, 4, 6, 8].map((lv, i) => ({
+    difficulty: 950 + i * 130,
+    make: (s: number, id: string) => at(singRunQuestion(id, pick(mulberry32(s), DEGREE_KEYS), runAt(lv, s), 'echo'), 950 + i * 130),
+  })),
 };
 
-/** The order skills are measured in (singing only when the microphone is used). */
-export const PLACEMENT_ORDER: SkillId[] = ['degrees', 'intervals', 'chords', 'cadences', 'modes', 'pitch', 'notes', 'sequences', 'rhythm-dictation', 'rhythm-reading', 'tempo', 'theory', 'sight', 'singing'];
-/** Skills the placement does not measure (measured in their own areas). */
-export const PLACEMENT_ELSEWHERE: SkillId[] = ['technique', 'agility', 'rhythm', 'absolute', 'improv'];
+/** Skills that need the microphone (sung). */
+export const SUNG_SKILLS: SkillId[] = ['singing', 'technique', 'agility'];
+// By domain (pitch, time, memory, reading), the sung skills last. Every skill on the map is measured: rhythmic
+// precision is not a section of its own — it is read from how precisely the rhythm-reading taps landed.
+export const PLACEMENT_ORDER: SkillId[] = [
+  'degrees', 'intervals', 'chords', 'cadences', 'modes', 'pitch', 'absolute',
+  'rhythm-dictation', 'rhythm-reading', 'tempo',
+  'sequences', 'rhythm',
+  'notes', 'theory', 'sight', 'improv',
+  'singing', 'technique', 'agility',
+];
+/** Skills measured inside another section (not a section of their own). */
+export const PLACEMENT_DERIVED: Partial<Record<SkillId, SkillId>> = { timing: 'rhythm-reading' };
+
+/** The sections of a placement: all skills, or one domain's; sung skills only with the microphone. */
+export function placementSkills(opts: { singing?: boolean; domain?: DomainId | null } = {}): SkillId[] {
+  const dom = opts.domain ? DOMAINS.find((d) => d.id === opts.domain)!.skills : null;
+  return PLACEMENT_ORDER.filter((k) => (opts.singing || !SUNG_SKILLS.includes(k)) && (!dom || dom.includes(k) || (k === 'rhythm-reading' && dom.includes('timing'))));
+}
 
 const ID = /^p:([a-z-]+):(\d+):(\d+)$/;
 const parse = (q: Question) => {
@@ -200,7 +258,9 @@ export function placementEstimate(skill: SkillId, passed: number): number {
   return Math.round((L[passed - 1].difficulty + L[passed].difficulty) / 2);
 }
 
-const skillsFor = (singing: boolean) => PLACEMENT_ORDER.filter((k) => singing || k !== 'singing');
+/** The sections this placement measures (as chosen at the start), minus the sections the player skipped. */
+export const lessonSections = (l: LessonDef): SkillId[] => l.placementSkills ?? placementSkills({ singing: !!l.placementSinging });
+const skillsFor = (l: LessonDef): SkillId[] => lessonSections(l).filter((k) => !(l.placementSkipped ?? []).includes(k));
 
 function nextQuestion(s: SessionState, seed: number, skills: SkillId[]): Question | null {
   const st = placementState(s, skills);
@@ -210,23 +270,37 @@ function nextQuestion(s: SessionState, seed: number, skills: SkillId[]): Questio
   return LADDERS[cur.skill]![cur.next - 1].make(seed + n * 7919, `p:${cur.skill}:${cur.next}:${n}`);
 }
 
-export function placementLesson(seed: number, opts: { singing?: boolean } = {}): LessonDef {
-  const skills = skillsFor(!!opts.singing);
+export function placementLesson(seed: number, opts: { singing?: boolean; domain?: DomainId | null } = {}): LessonDef {
+  const skills = placementSkills(opts);
   const first = LADDERS[skills[0]]![0].make(seed, `p:${skills[0]}:1:1`);
-  return { id: 'placement', version: 3, skill: 'degrees', scoring: { xpPerCorrect: 5, attemptLimit: 1 }, intro: [], questions: [first], placementSinging: !!opts.singing };
+  return {
+    id: 'placement', version: 3, skill: 'degrees', scoring: { xpPerCorrect: 5, attemptLimit: 1 }, intro: [], questions: [first],
+    placementSinging: !!opts.singing, placementSkills: skills, ...(opts.domain ? { placementDomain: opts.domain } : {}),
+  };
 }
 
 /** After each answer: the answered questions, plus the next one (none = the placement is over). */
 export function adaptPlacement(s: SessionState, seed: number): Question[] {
-  const skills = skillsFor(!!s.lesson.placementSinging);
+  const skills = skillsFor(s.lesson);
   const answered = s.lesson.questions.slice(0, s.index + 1);
   const next = nextQuestion({ ...s, lesson: { ...s.lesson, questions: answered } }, seed, skills);
   return next ? [...answered, next] : answered;
 }
 
 /** The skills' ratings to set at the end (spec: placement sets, it does not nudge). */
-export function placementResults(s: SessionState, singing: boolean): { skill: SkillId; rating: number; passed: number; asked: number }[] {
-  return placementState(s, skillsFor(singing))
+export function placementResults(s: SessionState): { skill: SkillId; rating: number; passed: number; asked: number }[] {
+  const out = placementState(s, skillsFor(s.lesson))
     .filter((x) => x.asked > 0)
     .map((x) => ({ skill: x.skill, rating: placementEstimate(x.skill, x.passed), passed: x.passed, asked: x.asked }));
+  // Rhythmic precision, from the rhythm-reading taps (patterns played right): a steadier hand at a higher
+  // reading level rates higher.
+  const taps = s.lesson.questions
+    .map((q, i) => ({ q, a: s.records[i]?.attempts[0] }))
+    .filter(({ q, a }) => q.kind === 'rhythm-read' && /^p:rhythm-reading:/.test(q.id) && a?.correct && a.precision !== undefined);
+  if (taps.length && skillsFor(s.lesson).includes('rhythm-reading')) {
+    const p = taps.reduce((acc, x) => acc + (x.a!.precision ?? 0), 0) / taps.length;
+    const top = Math.max(...taps.map((x) => x.q.difficulty));
+    out.push({ skill: 'timing', rating: Math.round(Math.max(800, Math.min(1800, 700 + 700 * p + 0.25 * (top - 900)))), passed: taps.length, asked: taps.length });
+  }
+  return out;
 }

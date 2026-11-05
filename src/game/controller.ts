@@ -370,6 +370,12 @@ export class LessonController {
     this.restart((sig) => this.runAll(sig, { afterResolved: true, noBeat: already }));
   }
 
+  /** Change lesson fields (not questions), e.g. Find my level's skipped sections; the adapt hook sees them. */
+  updateLesson(patch: Partial<Omit<LessonDef, 'questions'>>) {
+    this.s = { ...this.s, lesson: { ...this.s.lesson, ...patch } };
+    this.patch({});
+  }
+
   skipIntro() {
     if (this.view.stage !== 'intro') return;
     this.patch({ stage: 'question', caption: null });

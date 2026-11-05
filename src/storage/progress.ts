@@ -348,7 +348,7 @@ export function resultFromSession(s: SessionState, sessionId: string, now: Date)
   };
   // Find my level: each skill's rating is SET from where the player failed (staircase to failure).
   if (s.lesson.id === 'placement' && s.lesson.version >= 3) {
-    const sets = placementResults(s, !!s.lesson.placementSinging).map((x) => ({ id: `${sessionId}:place:${x.skill}`, skill: x.skill, difficulty: x.rating, correct: x.passed > 0, tag: `place:${x.skill}`, set: x.rating }));
+    const sets = placementResults(s).map((x) => ({ id: `${sessionId}:place:${x.skill}`, skill: x.skill, difficulty: x.rating, correct: x.passed > 0, tag: `place:${x.skill}`, set: x.rating }));
     result.items = [...(result.items ?? []), ...sets];
   }
   if (s.lesson.id === 'weekly-puzzle') {
@@ -488,7 +488,7 @@ export class ProgressStore {
     return next;
   }
 
-  async recordTrueFalse(level: number, score: number, events: RatingEvent[], now = new Date()): Promise<{ progress: Progress; best: boolean }> {
+  async recordTrueFalse(level: number | string, score: number, events: RatingEvent[], now = new Date()): Promise<{ progress: Progress; best: boolean }> {
     const p = await this.loadProgress();
     const have = new Set((p.ratingEvents ?? []).map((e) => e.id));
     const fresh = events.filter((e) => !have.has(e.id));

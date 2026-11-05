@@ -433,6 +433,12 @@ export interface LessonDef {
   questions: Question[];
   /** Find my level: also measure singing (voice mode). */
   placementSinging?: boolean;
+  /** Find my level: the sections to measure (all skills, or one domain's). */
+  placementSkills?: SkillId[];
+  /** Find my level: sections the player chose to skip (not measured, not rated). */
+  placementSkipped?: SkillId[];
+  /** Find my level by domain: which one. */
+  placementDomain?: 'pitch' | 'time' | 'memory' | 'voice' | 'reading';
 }
 
 export type LessonId =

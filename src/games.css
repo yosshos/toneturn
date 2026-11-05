@@ -440,3 +440,17 @@
 .tap-beat.accent { box-shadow: inset 0 0 0 7px rgba(255,255,255,.8); }
 @keyframes tapBeat { from { opacity: 1; } to { opacity: 0; } }
 :root[data-motion='reduced'] .tap-ripple, :root[data-motion='reduced'] .tap-beat { animation-duration: .01s; }
+
+/* Truth or Bluff */
+.tf-topics { display: flex; flex-wrap: wrap; gap: 6px; }
+.tf-topics .chip { padding: 7px 11px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--ink) 22%, transparent); background: var(--card); color: var(--ink); font-weight: 700; font-size: .86rem; cursor: pointer; }
+.tf-topics .chip.on { background: color-mix(in srgb, var(--gold) 30%, var(--card)); border-color: var(--gold); }
+.tf-topics .chip small { font-weight: 500; color: var(--ink-dim); }
+.tf-statement { margin: 18px auto 6px; max-width: 560px; padding: 22px 18px; border-radius: 22px; background: var(--card); box-shadow: 0 10px 30px #0004; text-align: center; animation: tfIn .35s ease both; }
+.tf-statement .tf-text { margin: 8px 0 0; font-size: clamp(1.15rem, 4.6vw, 1.6rem); font-weight: 800; line-height: 1.35; overflow-wrap: anywhere; }
+.tf-topic { color: var(--ink-dim); font-weight: 700; }
+.tf-why { max-width: 560px; margin: 8px auto; text-align: center; overflow-wrap: anywhere; }
+.tf-half-text { font-weight: 700; text-align: center; margin: 6px 8px; overflow-wrap: anywhere; }
+.games-tf { width: 100%; margin-top: 10px; }
+@keyframes tfIn { from { transform: translateY(8px) scale(.97); opacity: 0; } to { transform: none; opacity: 1; } }
+:root[data-motion='reduced'] .tf-statement { animation: none; }

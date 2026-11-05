@@ -39,7 +39,7 @@ interface Props {
   onTrueFalse: () => void;
   onVocal: (warmup: boolean) => void;
   onWorkout: (s: WorkoutStep) => void;
-  onPlacement: () => void;
+  onPlacement: (domain?: import('../engine/rating').DomainId | null) => void;
   onSkills: () => void;
   playerName: string | null;
   onMenu: () => void;
@@ -134,7 +134,7 @@ export function Home({ t, settings, progress, streak, onStreak, account, onPract
             <h1>{t.firstRunTitle}</h1>
             <p className="blurb">{t.firstRunBlurb}</p>
             <ModeSwitch mode={settings.mode} onChange={onMode} t={t} />
-            <button className="btn mega first-run-cta" onClick={onPlacement}>
+            <button className="btn mega first-run-cta" onClick={() => onPlacement()}>
               {settings.mode === 'voice' && <MicIcon />}
               {t.findLevel}
             </button>
@@ -184,7 +184,7 @@ export function Home({ t, settings, progress, streak, onStreak, account, onPract
           </section>
           <div className="home-mode-row">
             <ModeSwitch mode={settings.mode} onChange={onMode} t={t} />
-            <button className="link start-from-one" onClick={onPlacement}>
+            <button className="link start-from-one" onClick={() => onPlacement()}>
               🧭 {t.findLevel}
             </button>
           </div>

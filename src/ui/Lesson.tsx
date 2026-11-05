@@ -1,4 +1,4 @@
-import { PLACEMENT_ORDER } from '../engine/placement';
+import { lessonSections } from '../engine/placement';
 import { PlacementMeter } from './PlacementMeter';
 import { NoteStaff } from './NoteViews';
 import { PitchTrace } from './Vocal';
@@ -211,10 +211,11 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
                 : '♪ ?';
   const celebrate = v.feedback?.kind === 'correct';
   const isStaircase = v.session.lesson.id === 'placement' && v.session.lesson.version >= 3;
+  const placementSkill = isStaircase ? (/^p:([a-z-]+):/.exec(q.id)?.[1] as SkillId | undefined) : undefined;
 
   return (
     <main className={`lesson stage-${v.stage} phase-${v.phase} kind-${q.kind} ${isStaircase ? 'with-meter' : ''}`}>
-      {isStaircase && <PlacementMeter s={v.session} t={t} singing={!!v.session.lesson.placementSinging} />}
+      {isStaircase && <PlacementMeter s={v.session} t={t} />}
       <header className="lesson-top">
         <button className="icon-btn" onClick={() => (paused ? onExit() : ctrl.pause())} aria-label={paused ? t.exit : t.pause}>
           {paused ? '✕' : '❚❚'}
@@ -365,6 +366,17 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
             <button className="btn small" onClick={() => ctrl.skip()}>
               {t.skip} ⇥
             </button>
+            {isStaircase && placementSkill && (
+              <button
+                className="btn small ghost skip-section"
+                onClick={() => {
+                  ctrl.updateLesson({ placementSkipped: [...(v.session.lesson.placementSkipped ?? []), placementSkill] });
+                  ctrl.skip();
+                }}
+              >
+                ⏭ {t.skipSection}
+              </button>
+            )}
           </div>
         </section>
       )}
@@ -509,7 +521,8 @@ function TopicStrip({ v, t }: { v: LessonView; t: Strings }) {
   const lesson = v.session.lesson;
   // Find my level 2.0: every skill it will measure, done / now / left by the current skill.
   if (lesson.id === 'placement' && lesson.version >= 3) {
-    const order = PLACEMENT_ORDER.filter((k) => lesson.placementSinging || k !== 'singing');
+    const order = lessonSections(lesson);
+    const skipped = lesson.placementSkipped ?? [];
     const cur = /^p:([a-z-]+):/.exec(qs[v.index]?.id ?? '')?.[1] as SkillId | undefined;
     const ci = cur ? order.indexOf(cur) : -1;
     const done = v.stage === 'complete' ? order.length : ci;
@@ -517,11 +530,12 @@ function TopicStrip({ v, t }: { v: LessonView; t: Strings }) {
       <div className="topic-strip" aria-label={`${t.topicsLeft}: ${order.length - Math.max(0, done)}`}>
         <ol>
           {order.map((k, i) => {
-            const st = i < done ? 'done' : i === ci ? 'now' : 'left';
+            const st = skipped.includes(k) && i <= Math.max(ci, done - 1) ? 'skipped' : i < done ? 'done' : i === ci ? 'now' : 'left';
             return (
               <li key={k} className={`ts ${st}`} data-skill={k}>
-                {st === 'done' ? '✓ ' : ''}
+                {st === 'done' ? '✓ ' : st === 'skipped' ? '⏭ ' : ''}
                 {t.skillNames[k]}
+                {st === 'skipped' && <span className="sr-only"> · {t.skippedSection}</span>}
               </li>
             );
           })}

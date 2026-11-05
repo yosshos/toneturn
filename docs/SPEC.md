@@ -749,3 +749,27 @@ Four new skills — **Tempo & pulse**, **Fine pitch**, **Sight-reading**, **Impr
 | | Improvisation | Play & improvise → Improvise | ½ |
 
 Weights count only for measured skills (a non-singer is never pulled down by voice skills). Find my level climbs every skill above except vocal technique, agility, rhythmic memory, absolute pitch and improvisation (measured in their own areas).
+
+## Addendum — 2026-11-05 (product owner): AA. Every skill measured deeply; Find my level by area; Truth or Bluff
+
+### AA.1 Skill sub-division (audit and gaps closed)
+The 20 skills, by domain (Z.5), each with its placement ladder and where it is trained:
+- **Pitch & harmony:** degrees (7 levels), intervals (7), chord quality (7), cadences (6), modes (6), fine pitch (7), absolute pitch (5; weight 0, skippable).
+- **Time:** rhythm by ear (8), rhythm reading (8), rhythmic precision (read from the rhythm-reading taps: mean precision × reading level), tempo & pulse (6).
+- **Memory:** melodic memory (6; now also *chord memory* — which chord changed, 3/4/6 chords), rhythmic memory (5; new topic *rhythm memory*: same or different, pick it out of three, four bars).
+- **Voice** (with the microphone): singing in tune (7), vocal technique (6: control across leaps, steps → sevenths, longer lines), vocal agility (6: runs sung back, run levels 1–8).
+- **Reading & making:** note naming (5), written theory (7), sight-reading (6: new levels bass clef, minor keys with leaps, three versions — which is written), improvisation (4; new topic *call & response*: which answer finishes, fits the chord, echoes the call, lands on a chord tone in minor).
+Every new topic has a quick lesson (X).
+
+### AA.2 Find my level: everything by default, skip a section, or one area
+- By default every skill is measured (sung ones with the microphone); order by domain, the sung skills last.
+- **Skip this section** (during the test): that section is left out — not measured and not rated; the strip marks it ⏭.
+- **By area:** Practice tools and each domain on the Skill Map offer "measure this area": a placement of that domain's skills only (the voice domain always sings).
+
+### AA.3 Truth or Bluff (was "True or false?", O)
+- A statement about music: true, or a bluff? **Topics** (choose any): notes & clefs, rhythm & meter, key signatures, intervals, chords, scales & modes, circle of fifths, harmony in a key, jazz chords — all silent — plus interval trios and interval trios by ear.
+- **Three levels in every topic** (easy / medium / hard), chosen at the start. Interval trios: easy = one interval, medium = a trio of clear intervals, hard = a trio of any intervals; by ear: one clear interval → any interval → a trio.
+- Statements are generated (any key, root, interval); a bluff is always a near miss. Every statement has its reason, shown after a wrong answer (the solo clock pauses while it is shown) and after each duel round. An independent test recomputes the truth of thousands of generated statements.
+- **Players:** solo (60 s, best per level), a duel on one device (the statement faces both players), online rooms (the chosen topics and level travel in the room seed's high bits: seed = base + 2³² × (topic mask + 2¹¹ × level); a seed below 2³² is the original trio game, so no server change).
+- In the Games menu, on the home screen and in the menu; as a practice topic ("Truth or Bluff: theory", 3 stages) in Written theory, so silent theory practice appears along the path of topics.
+

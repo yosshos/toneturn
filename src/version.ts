@@ -18,6 +18,20 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.31.0',
+    date: '2026-11-05',
+    en: [
+      'Truth or Bluff (was True or false?): music theory statements — true, or a bluff? Pick topics and a level, play solo, against a friend on one device, or online. Every miss shows you why',
+      'Find my level measures all 20 skills by default; skip any section, or measure just one area',
+      'New practice: rhythm memory, chord memory, call & response (improvisation by ear), and deeper sight-reading (bass clef, minor, three versions)',
+    ],
+    he: [
+      'אמת או בלוף (לשעבר נכון או לא?): משפטים בתיאוריה — אמת, או בלוף? בחרו נושאים ורמה, שחקו לבד, נגד חבר על אותו מכשיר, או אונליין. כל טעות מראה למה',
+      'מבחן הרמה מודד את כל 20 הכישורים כברירת מחדל; אפשר לדלג על כל חלק, או למדוד תחום אחד בלבד',
+      'תרגול חדש: זיכרון ריתמי, זיכרון הרמוני, שאלה ותשובה (אלתור בשמיעה), וקריאה מהדף לעומק (מפתח פה, מינור, שלוש גרסאות)',
+    ],
+  },
+  {
     version: '0.30.0',
     date: '2026-11-05',
     en: [

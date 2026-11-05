@@ -2,6 +2,7 @@
 // chromatic degrees, sight-reading without singing. Pure, seeded.
 
 import type { ChoiceQuestion, NoteEvent, Stimulus } from './lesson';
+import { factItem, factQuestion, SILENT_TOPICS } from './theoryFacts';
 import { TOPIC_GEN, rng, pickR, shuffleR, choiceQ, chordStim, notesStim, eventsStim, nm } from './topicKit';
 
 // ---------------------------------------------------------------- Tempo & pulse
@@ -229,5 +230,297 @@ TOPIC_GEN['sight-read'] = {
       ask: { en: 'Read along — which note was played differently?', he: 'קראו יחד — איזה צליל נוגן אחרת?' },
       names, answer: `n${pos + 1}`, choices: keys, stimulus: [notesStim(changed(pos), 0.55)], choiceStim, show,
     });
+  },
+};
+
+// ---------------------------------------------------------------- Sight-reading, deeper levels (bass clef, minor, three versions)
+
+const MIN_SCALE = [0, 2, 3, 5, 7, 8, 10, 12, 14];
+const MINOR_KEYS: { pc: number; name: string }[] = [
+  { pc: 9, name: 'A' },
+  { pc: 4, name: 'E' },
+  { pc: 2, name: 'D' },
+  { pc: 7, name: 'G' },
+  { pc: 0, name: 'C' },
+];
+const ORD = ['second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth'];
+const ordinal = (k: number) => ({ en: ['First', 'Second', 'Third'][k], he: ['הראשונה', 'השנייה', 'השלישית'][k], say: [['one', 'first', 'אחת', 'ראשונה'], ['two', 'second', 'שתיים', 'שנייה'], ['three', 'third', 'שלוש', 'שלישית']][k] });
+const ordNames = (prefix: string, n: number): ChoiceQuestion['names'] =>
+  Object.fromEntries(Array.from({ length: n }, (_, k) => {
+    const o = ordinal(k);
+    return [`${prefix}${k + 1}`, nm(o.en, o.he, ...o.say)];
+  }));
+/** A short high blip that numbers each version (1, 2, 3). */
+const blip = (i: number): Stimulus => ({ kind: 'note', midi: 84 + i * 2, duration: 0.15 });
+
+const sightBase = TOPIC_GEN['sight-read'];
+TOPIC_GEN['sight-read'] = {
+  ...sightBase,
+  levels: [
+    ...sightBase.levels,
+    { en: 'Bass clef', he: 'מפתח פה' },
+    { en: 'Minor keys, with leaps', he: 'סולמות מינוריים, עם קפיצות' },
+    { en: 'Three versions — which one is written?', he: 'שלוש גרסאות — איזו כתובה?' },
+  ],
+  gen(seed, level, id) {
+    if (level <= 3) return sightBase.gen(seed, level, id);
+    const rnd = rng(seed);
+    const minor = level === 5;
+    const k = minor ? pickR(rnd, MINOR_KEYS) : pickR(rnd, KEYS);
+    const scale = minor ? MIN_SCALE : MAJ;
+    const bass = level === 4;
+    // Tonic around G3 (treble) or G2 (bass), so the line sits on the staff.
+    const base = (bass ? 43 : 55) + ((k.pc - 7 + 12) % 12);
+    const n = level === 4 ? 6 : 8;
+    const degs = melody(rnd, n, level === 4 ? 2 : 3);
+    const written = degs.map((d) => base + scale[d]);
+    const show: ChoiceQuestion['show'] = { midis: written, clef: bass ? 'bass' : 'treble', key: minor ? null : ({ letter: k.name[0], acc: k.name[1] === 'b' ? -1 : 0 } as never) };
+    const changed = (pos: number, dir = 1) => written.map((m, i) => (i === pos ? base + scale[Math.max(0, Math.min(8, degs[i] + (degs[i] >= 7 ? -dir : dir)))] : m));
+    if (level === 6) {
+      // Three versions: the written one and two with one note changed. Hear all three, pick the written one.
+      const p1 = 1 + Math.floor(rnd() * (n - 1));
+      let p2 = 1 + Math.floor(rnd() * (n - 1));
+      if (p2 === p1) p2 = p1 === n - 1 ? 1 : p1 + 1;
+      const versions = shuffleR(rnd, [
+        { key: 'w', midis: written },
+        { key: 'x', midis: changed(p1) },
+        { key: 'y', midis: changed(p2, -1) },
+      ]);
+      const answer = `v${versions.findIndex((v) => v.key === 'w') + 1}`;
+      const stim: Stimulus[] = versions.flatMap((v, i) => [blip(i), rest(0.25), notesStim(v.midis, 0.42), rest(0.8)]);
+      return choiceQ({
+        id, topic: 'sight-read', level, seed, skill: 'sight', difficulty: 1680,
+        ask: { en: 'Read the line. Three versions play — which one is written?', he: 'קראו את השורה. מתנגנות שלוש גרסאות — איזו כתובה?' },
+        names: ordNames('v', 3), answer, choices: ['v1', 'v2', 'v3'], stimulus: stim, show,
+      });
+    }
+    const pos = 1 + Math.floor(rnd() * (n - 1));
+    const keys = Array.from({ length: n - 1 }, (_, i) => `n${i + 2}`);
+    const names: ChoiceQuestion['names'] = {};
+    const choiceStim: Record<string, Stimulus[]> = {};
+    keys.forEach((kk, i) => {
+      names[kk] = nm(`Note ${i + 2}`, `צליל ${i + 2}`, String(i + 2), ORD[i]);
+      choiceStim[kk] = [notesStim(changed(i + 1), 0.5)];
+    });
+    return choiceQ({
+      id, topic: 'sight-read', level, seed, skill: 'sight', difficulty: bass ? 1420 : 1560,
+      ask: minor
+        ? { en: `Read along in ${k.name} minor — which note was played differently?`, he: `קראו יחד ב־${k.name} מינור — איזה צליל נוגן אחרת?` }
+        : { en: 'Bass clef: read along — which note was played differently?', he: 'מפתח פה: קראו יחד — איזה צליל נוגן אחרת?' },
+      names, answer: `n${pos + 1}`, choices: keys, stimulus: [notesStim(changed(pos), 0.5)], choiceStim, show,
+    });
+  },
+};
+
+// ---------------------------------------------------------------- Rhythm memory (memory domain)
+
+/** A rhythm as durations in eighths, filling `bars` bars of 4/4. */
+export function rhythmCells(rnd: () => number, bars: number, busy: boolean): number[] {
+  const out: number[] = [];
+  for (let b = 0; b < bars; b++) {
+    let left = 8;
+    while (left > 0) {
+      const opts = (busy ? [1, 1, 2, 2, 3, 4] : [2, 2, 4, 1, 1]).filter((d) => d <= left);
+      const d = pickR(rnd, opts);
+      out.push(d);
+      left -= d;
+    }
+  }
+  return out;
+}
+function rhythmStim(durs: number[], bpm = 100): Stimulus {
+  const e = 30 / bpm;
+  const ev: NoteEvent[] = [];
+  let t = 0;
+  durs.forEach((d, i) => {
+    ev.push({ midi: 76, start: t, duration: Math.min(0.12, d * e * 0.6), velocity: i === 0 ? 0.7 : 0.55 });
+    t += d * e;
+  });
+  return eventsStim(ev, t + 0.1);
+}
+/** The same rhythm with one onset moved by an eighth (the total stays the same). Always differs. */
+export function nudge(rnd: () => number, durs: number[]): number[] {
+  const idx = durs.map((d, i) => ({ d, i })).filter(({ d, i }) => i < durs.length - 1 && d >= 2).map(({ i }) => i);
+  if (!idx.length) {
+    // All eighths (or one long note): merge the first two, or split the first.
+    return durs.length > 1 ? [durs[0] + durs[1], ...durs.slice(2)] : [1, durs[0] - 1];
+  }
+  const i = pickR(rnd, idx);
+  const out = durs.slice();
+  out[i] -= 1;
+  out[i + 1] += 1;
+  return out;
+}
+export const sameRhythm = (a: number[], b: number[]) => a.length === b.length && a.every((x, i) => x === b[i]);
+
+TOPIC_GEN['rhythm-memory'] = {
+  title: { en: 'Rhythm memory', he: 'זיכרון ריתמי' },
+  skill: 'rhythm',
+  levels: [
+    { en: 'One bar: same or different?', he: 'תיבה אחת: אותו דבר או שונה?' },
+    { en: 'Two bars: same or different?', he: 'שתי תיבות: אותו דבר או שונה?' },
+    { en: 'Remember it through three others', he: 'לזכור אותו דרך שלושה אחרים' },
+    { en: 'Four bars, one note moved', he: 'ארבע תיבות, צליל אחד זז' },
+    { en: 'Four bars through three others', he: 'ארבע תיבות דרך שלושה אחרים' },
+  ],
+  gen(seed, level, id) {
+    const rnd = rng(seed);
+    const bars = level === 1 ? 1 : level >= 4 ? 4 : 2;
+    const a = rhythmCells(rnd, bars, level >= 2);
+    if (level === 3 || level === 5) {
+      // Hear a rhythm, then three candidates: which one was it?
+      const b = nudge(rnd, a);
+      let c = rhythmCells(rnd, bars, true);
+      if (sameRhythm(c, a) || sameRhythm(c, b)) c = nudge(rnd, b);
+      const cands = shuffleR(rnd, [{ k: 'a', d: a }, { k: 'b', d: b }, { k: 'c', d: c }]);
+      return choiceQ({
+        id, topic: 'rhythm-memory', level, seed, skill: 'rhythm', difficulty: level === 5 ? 1720 : 1380,
+        ask: { en: 'Remember the first rhythm. Which of the three that follow is it?', he: 'זכרו את המקצב הראשון. איזה משלושת הבאים הוא?' },
+        names: ordNames('r', 3), answer: `r${cands.findIndex((x) => x.k === 'a') + 1}`, choices: ['r1', 'r2', 'r3'],
+        stimulus: [rhythmStim(a), rest(1.4), ...cands.flatMap((x, i) => [blip(i), rest(0.35), rhythmStim(x.d), rest(0.9)])],
+      });
+    }
+    const isSame = rnd() < 0.5;
+    const b = nudge(rnd, a);
+    const play = (s: boolean): Stimulus[] => [rhythmStim(a), rest(1.1), rhythmStim(s ? a : b)];
+    return choiceQ({
+      id, topic: 'rhythm-memory', level, seed, skill: 'rhythm', difficulty: [1000, 1200, 1380, 1580][level - 1],
+      ask: { en: 'Two rhythms: the same, or different?', he: 'שני מקצבים: אותו דבר, או שונים?' },
+      names: { same: nm('The same', 'אותו דבר', 'same', 'the same', 'זהה', 'אותו'), diff: nm('Different', 'שונים', 'different', 'not the same', 'שונה') },
+      answer: isSame ? 'same' : 'diff', choices: ['same', 'diff'], stimulus: play(isSame), choiceStim: { same: play(true), diff: play(false) },
+    });
+  },
+};
+
+// ---------------------------------------------------------------- Chord memory: which chord changed? (memory domain)
+
+const TRIADS: Record<string, number[]> = { I: [0, 4, 7], ii: [2, 5, 9], iii: [4, 7, 11], IV: [5, 9, 12], V: [7, 11, 14], vi: [9, 12, 16] };
+const triad = (root: number, rn: string) => {
+  const t = TRIADS[rn];
+  return [root - 12 + t[0], root + t[1], root + t[2], root + t[0] + 12];
+};
+
+TOPIC_GEN['chord-memory'] = {
+  title: { en: 'Chord memory', he: 'זיכרון הרמוני' },
+  skill: 'sequences',
+  levels: [
+    { en: 'Three chords: which one changed?', he: 'שלושה אקורדים: איזה השתנה?' },
+    { en: 'Four chords', he: 'ארבעה אקורדים' },
+    { en: 'Six chords', he: 'שישה אקורדים' },
+  ],
+  gen(seed, level, id) {
+    const rnd = rng(seed);
+    const n = level === 1 ? 3 : level === 2 ? 4 : 6;
+    const root = 57 + Math.floor(rnd() * 7);
+    const prog = ['I'];
+    while (prog.length < n) prog.push(pickR(rnd, Object.keys(TRIADS).filter((r) => r !== prog[prog.length - 1])));
+    const pos = 1 + Math.floor(rnd() * (n - 1));
+    const changed = (p: number) => prog.map((r, i) => (i === p ? pickR(rng(seed + p), Object.keys(TRIADS).filter((x) => x !== r && x !== prog[i - 1] && x !== prog[i + 1])) : r));
+    const play = (rs: string[]): Stimulus[] => rs.map((r) => chordStim(triad(root, r), 0.85));
+    const keys = Array.from({ length: n - 1 }, (_, i) => `c${i + 2}`);
+    const names: ChoiceQuestion['names'] = {};
+    const choiceStim: Record<string, Stimulus[]> = {};
+    keys.forEach((k, i) => {
+      names[k] = nm(`Chord ${i + 2}`, `אקורד ${i + 2}`, String(i + 2), ORD[i]);
+      choiceStim[k] = [...play(prog), rest(1), ...play(changed(i + 1))];
+    });
+    return choiceQ({
+      id, topic: 'chord-memory', level, seed, skill: 'sequences', difficulty: [1150, 1350, 1560][level - 1],
+      ask: { en: 'The progression plays twice. Which chord changed the second time?', he: 'המהלך מתנגן פעמיים. איזה אקורד השתנה בפעם השנייה?' },
+      names, answer: `c${pos + 1}`, choices: keys, stimulus: choiceStim[`c${pos + 1}`], choiceStim,
+    });
+  },
+};
+
+// ---------------------------------------------------------------- Call & response (improvisation by ear)
+
+const line = (t: number, ds: number[]) => ds.map((d) => t + MAJ[d]);
+
+TOPIC_GEN['call-response'] = {
+  title: { en: 'Call & response', he: 'שאלה ותשובה' },
+  skill: 'improv',
+  levels: [
+    { en: 'Which answer sounds finished?', he: 'איזו תשובה נשמעת גמורה?' },
+    { en: 'Which answer fits the chord?', he: 'איזו תשובה מתאימה לאקורד?' },
+    { en: 'Which answer echoes the call?', he: 'איזו תשובה מהדהדת את השאלה?' },
+    { en: 'In minor: which answer lands on the chord?', he: 'במינור: איזו תשובה נוחתת על האקורד?' },
+  ],
+  gen(seed, level, id) {
+    const rnd = rng(seed);
+    const t = 60 + Math.floor(rnd() * 5);
+    const call = pickR(rnd, [[0, 1, 2, 4], [2, 4, 5, 4], [4, 2, 3, 1], [0, 2, 4, 5]]);
+    let good: number[];
+    let bad: number[];
+    let ask: { en: string; he: string };
+    let backing: Stimulus | null = null;
+    if (level === 1) {
+      // Finished = lands on the home note; open = stops on 2 or 7.
+      good = pickR(rnd, [[4, 3, 1, 0], [2, 1, 1, 0], [5, 4, 2, 0]]);
+      bad = pickR(rnd, [[4, 3, 2, 1], [2, 3, 5, 6], [0, 2, 3, 1]]);
+      ask = { en: 'A call, then two answers. Which answer sounds finished (lands home)?', he: 'שאלה, ואחריה שתי תשובות. איזו תשובה נשמעת גמורה (נוחתת בבית)?' };
+    } else if (level === 2) {
+      // Over a held IV chord (F A C in C): chord tones vs leaning on 7 and 5-against-4 clashes (B, E… in C).
+      backing = chordStim([t - 7, t + 5, t + 9]);
+      good = pickR(rnd, [[3, 5, 7, 5], [5, 3, 0, 3], [7, 5, 3, 5]]);
+      bad = pickR(rnd, [[6, 6, 2, 6], [2, 6, 2, 2], [6, 2, 6, 6]]);
+      ask = { en: 'Over the chord: which answer fits it best?', he: 'מעל האקורד: איזו תשובה מתאימה לו יותר?' };
+    } else if (level === 4) {
+      // Over the minor i chord (A C E — the relative minor of the key): an answer that lands on a chord tone
+      // vs one that stops on the 2nd, 4th or 6th of the minor key.
+      backing = chordStim([t - 3 - 12, t, t + 4]);
+      // Degree indices of C major: 0 C, 1 D, 2 E, 3 F, 4 G, 5 A, 6 B, 7 C. Good answers end on C or A; open
+      // ones on D, B or F.
+      good = pickR(rnd, [[4, 3, 2, 0], [2, 3, 4, 5], [7, 6, 5, 5]]);
+      bad = pickR(rnd, [[4, 3, 2, 1], [2, 3, 4, 6], [0, 1, 3, 3]]);
+      ask = { en: 'In minor, over the chord: which answer lands on a chord note?', he: 'במינור, מעל האקורד: איזו תשובה נוחתת על צליל של האקורד?' };
+    } else {
+      // Echo: the answer repeats the call's shape a step higher (a sequence) vs an unrelated line.
+      good = call.map((d) => d + 1);
+      bad = [6, 3, 0, 2];
+      ask = { en: 'Which answer echoes the call (the same shape, moved)?', he: 'איזו תשובה מהדהדת את השאלה (אותה צורה, במקום אחר)?' };
+    }
+    const firstGood = rnd() < 0.5;
+    const [a1, a2] = firstGood ? [good, bad] : [bad, good];
+    // The call and the answer as one timed phrase; over a chord, the chord is held under the whole phrase.
+    const phrase = (ans: number[]): Stimulus[] => {
+      const ev: NoteEvent[] = [];
+      const notes = [...line(t, call).map((m, i) => ({ m, at: i * 0.32 })), ...line(t, ans).map((m, i) => ({ m, at: 4 * 0.32 + 0.35 + i * 0.32 }))];
+      for (const x of notes) ev.push({ midi: x.m + 12, start: x.at, duration: 0.3, velocity: 0.7 });
+      const len = notes[notes.length - 1].at + 0.5;
+      if (backing && backing.kind === 'chord') for (const m of backing.midis) ev.push({ midi: m, start: 0, duration: len, velocity: 0.32 });
+      return [eventsStim(ev, len)];
+    };
+    const stim: Stimulus[] = [
+      ...(level === 1 ? [chordStim([t - 12, t + 4, t + 7], 0.9), rest(0.3)] : []),
+      blip(0), rest(0.25),
+      ...phrase(a1),
+      rest(1),
+      blip(1), rest(0.25),
+      ...phrase(a2),
+    ];
+    return choiceQ({
+      id, topic: 'call-response', level, seed, skill: 'improv', difficulty: [1050, 1250, 1400, 1560][level - 1],
+      ask,
+      names: { a1: nm('First answer', 'התשובה הראשונה', 'one', 'first', 'אחת', 'ראשונה'), a2: nm('Second answer', 'התשובה השנייה', 'two', 'second', 'שתיים', 'שנייה') },
+      answer: firstGood ? 'a1' : 'a2', choices: ['a1', 'a2'], stimulus: stim,
+    });
+  },
+};
+
+// ---------------------------------------------------------------- Truth or Bluff as a practice topic (silent theory)
+
+TOPIC_GEN['theory-facts'] = {
+  title: { en: 'Truth or Bluff: theory', he: 'אמת או בלוף: תיאוריה' },
+  skill: 'theory',
+  levels: [
+    { en: 'Basics: notes, rhythm, keys', he: 'יסודות: תווים, מקצב, סולמות' },
+    { en: 'Intervals, chords, scales, the circle', he: 'מרווחים, אקורדים, סולמות, המעגל' },
+    { en: 'Modes, harmony, jazz', he: 'מודוסים, הרמוניה, ג׳אז' },
+  ],
+  gen(seed, level, id) {
+    const rnd = rng(seed);
+    const topics = SILENT_TOPICS.filter((x) => x !== 'trio');
+    const f = factItem(topics, level as 1 | 2 | 3, rnd);
+    return { ...(factQuestion(id, f, seed) as ChoiceQuestion), topic: 'theory-facts', level };
   },
 };

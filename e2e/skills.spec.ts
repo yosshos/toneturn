@@ -32,17 +32,27 @@ test.describe('placement, Skill Map, review, weekly puzzle', () => {
       }).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['data-start'], childList: true });
     });
     // The topic strip shows what is done, now and left.
-    await expect(page.locator('.topic-strip .ts')).toHaveCount(14); // every skill Find my level measures, singing included (voice)
+    await expect(page.locator('.topic-strip .ts')).toHaveCount(19); // every skill (rhythmic precision rides on rhythm reading), sung ones included (voice)
     await expect(page.locator('.topic-strip .ts.done').first()).toBeVisible({ timeout: 120_000 });
     // The meter at the side follows the climb.
     await expect(page.locator('.placement-meter')).toBeVisible();
     // The rest: skip through (the simulator's scripted voice does not speak every new answer type).
     const done = page.getByRole('heading', { name: 'Lesson complete' });
-    for (const end = Date.now() + 360_000; Date.now() < end && !(await done.isVisible()); ) {
-      const skip = page.getByRole('button', { name: /Skip ⇥|Skip/ }).first();
+    // "Skip this section" leaves a whole section out (not measured): try it on Absolute pitch.
+    let skippedSection = false;
+    for (const end = Date.now() + 480_000; Date.now() < end && !(await done.isVisible()); ) {
+      const now = await page.locator('.topic-strip .ts.now').getAttribute('data-skill').catch(() => null);
+      if (now === 'absolute' && !skippedSection) {
+        await page.getByRole('button', { name: /Skip this section/ }).click();
+        skippedSection = true;
+        await expect(page.locator('.topic-strip .ts.skipped[data-skill="absolute"]')).toBeVisible();
+        continue;
+      }
+      const skip = page.getByRole('button', { name: 'Skip ⇥' });
       if (await skip.isVisible().catch(() => false)) await skip.click().catch(() => {});
       await page.waitForTimeout(400);
     }
+    expect(skippedSection).toBe(true);
     await expect(done).toBeVisible({ timeout: 60_000 });
     expect(await page.locator('.recap-row').count()).toBeGreaterThanOrEqual(11);
     await page.getByRole('button', { name: /See my Skill Map/ }).click();
@@ -67,6 +77,15 @@ test.describe('placement, Skill Map, review, weekly puzzle', () => {
     await expect(page.getByRole('button', { name: /Review/ }).first()).toBeVisible();
     // Find my level stays in Practice tools after it was done (re-take).
     await expect(page.locator('.placement-card')).toContainText('Take it again');
+  });
+
+  test('measure one area: Memory runs only its two skills', async ({ page }) => {
+    await page.goto('/?sim=1&unlock=all');
+    await page.locator('.placement-domains [data-domain="memory"]').click();
+    await page.getByRole('button', { name: /Use my voice & start|Buttons instead/ }).first().click();
+    await expect(page.locator('.topic-strip .ts')).toHaveCount(2);
+    await expect(page.locator('.topic-strip .ts').first()).toHaveAttribute('data-skill', 'sequences');
+    await expect(page.locator('.placement-meter')).toBeVisible();
   });
 
   test('weekly puzzle: solve on the first try → gold, shown on the home screen', async ({ page }) => {

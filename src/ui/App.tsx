@@ -15,6 +15,7 @@ import { modesLevelFor, recommendFor } from '../engine/recommend';
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, useMemo } from 'react';
 import { LESSON_ORDER, runLevelFor, runsWorkshop, type LessonDef, type LessonId, type Question, type SkillId } from '../engine/lesson';
 import type { SessionState } from '../engine/session';
+import type { DomainId } from '../engine/rating';
 import { adaptPlacement, placementLesson, puzzleBand, reviewLesson, weekId, weeklyPuzzle } from '../engine/adaptive';
 import { SkillMap } from './SkillMap';
 import { PracticeTools } from './Tools';
@@ -32,6 +33,7 @@ import { GameScreen, GameSetup, type GameSetupValue } from './Games';
 import { VocalScreen } from './Vocal';
 import { DailyScreen, DuelScreen, DuelSetup, GhostScreen } from './Tournament';
 import { OnlineScreen, PENDING_ONLINE_KEY } from './Online';
+import type { FactLevel, FactTopic } from '../engine/theoryFacts';
 import { DroneScreen } from './Drone';
 import { AssignedCard, ClassesScreen } from './Classes';
 import { myClasses, openAssignments } from '../cloud/classes';
@@ -75,6 +77,8 @@ export function App() {
   const [gameKey, setGameKey] = useState(0);
   const [onlineCode, setOnlineCode] = useState(onlineCodeFromHash);
   const [onlineKey, setOnlineKey] = useState(0);
+  /** Truth or Bluff → online: the room starts with these topics and level. */
+  const [onlineFacts, setOnlineFacts] = useState<{ topics: FactTopic[]; level: FactLevel } | null>(null);
   const [duel, setDuel] = useState<{ names: string[]; kind: SetKind; rounds: number } | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   /** Generated session in progress (placement / review / weekly puzzle). */
@@ -266,9 +270,11 @@ export function App() {
     location.hash = '';
     setRoute('lesson');
   };
-  const openPlacement = () => {
+  /** Find my level: every skill, or one domain (the voice domain always sings). */
+  const openPlacement = (domain?: DomainId | null) => {
+    const d = typeof domain === 'string' ? domain : null;
     const seed = (Date.now() ^ (Math.random() * 1e9)) >>> 0;
-    openGenerated(placementLesson(seed, { singing: s.mode === 'voice' }), (st) => adaptPlacement(st, seed));
+    openGenerated(placementLesson(seed, { singing: s.mode === 'voice' || d === 'voice', domain: d }), (st) => adaptPlacement(st, seed));
   };
   const openReview = () => {
     const def = reviewLesson(progress.review, Date.now() >>> 0);
@@ -428,6 +434,7 @@ export function App() {
           onSkills={() => go('skills')}
           playerName={user?.name ? user.name.split(' ')[0] : null}
           onOnline={() => {
+            setOnlineFacts(null);
             setOnlineCode('');
             setOnlineKey((k) => k + 1);
             go('online');
@@ -532,6 +539,7 @@ export function App() {
           settings={s}
           onSettings={updateSettings}
           onBack={() => go('home')}
+          onTrueFalse={() => gate('game:truefalse', () => go('truefalse'))}
           onStart={(v) =>
             gate(v.kind === 'melody' ? 'game:echo' : 'game:beat', () => {
               void piano.unlock(); // the Start gesture
@@ -543,7 +551,21 @@ export function App() {
           }
         />
       )}
-      {route === 'truefalse' && <TrueFalseScreen t={t} settings={s} progress={progress} onBack={() => go('home')} onProgress={setProgress} />}
+      {route === 'truefalse' && (
+        <TrueFalseScreen
+          t={t}
+          settings={s}
+          progress={progress}
+          onBack={() => go('home')}
+          onProgress={setProgress}
+          onOnline={(topics, level) => {
+            setOnlineFacts({ topics, level });
+            setOnlineCode('');
+            setOnlineKey((k) => k + 1);
+            go('online');
+          }}
+        />
+      )}
       {route === 'ghost' && <GhostScreen t={t} settings={s} progress={progress} onBack={() => go('home')} onProgress={setProgress} />}
       {route === 'classes' && <ClassesScreen t={t} settings={s} user={user} onBack={() => go('home')} onOpenLesson={(id) => openAssignment(id)} />}
       {streakOpen && (
@@ -569,7 +591,7 @@ export function App() {
         />
       )}
       {route === 'online' && (
-        <OnlineScreen key={`${onlineKey}-${user?.id ?? ''}`} t={t} settings={s} user={user} initialCode={onlineCode} onBack={() => go('home')} />
+        <OnlineScreen key={`${onlineKey}-${user?.id ?? ''}`} t={t} settings={s} user={user} initialCode={onlineCode} facts={onlineFacts} onBack={() => go('home')} />
       )}
       {route === 'daily' && <DailyScreen t={t} settings={s} progress={progress} user={user} onBack={() => go('home')} onProgress={setProgress} />}
       {route === 'duel' && (

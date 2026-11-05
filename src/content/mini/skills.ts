@@ -167,8 +167,122 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [67, 65, 64, 62, 60], key: 'C' },
       },
       {
-        say: { en: 'Your turn! Read the notes, listen, and say if it matches — then which note was different, in longer lines with leaps.', he: 'תורכם! קראו את התווים, הקשיבו, ותגידו אם זה תואם — ואחר כך איזה צליל היה שונה, בשורות ארוכות עם קפיצות.' },
+        say: { en: 'Your turn! Read, listen and say if it matches; then which note was different — in longer lines, in the bass clef, in minor; and at the top, three versions where only one is the written one.', he: 'תורכם! קראו, הקשיבו ותגידו אם זה תואם; ואז איזה צליל היה שונה — בשורות ארוכות, במפתח פה, במינור; ובראש הסולם, שלוש גרסאות שרק אחת מהן כתובה.' },
         show: { text: { en: 'match? which note?', he: 'תואם? איזה צליל?' } },
+      },
+    ],
+  },
+];
+
+/** A rhythm on one woodblock-like note: durations in eighths at 100 BPM. */
+function beat(durs: number[]): Stimulus {
+  const e = 0.3;
+  const events: NoteEvent[] = [];
+  let t = 0;
+  for (const d of durs) {
+    events.push({ midi: 76, start: t, duration: 0.1, velocity: 0.6 });
+    t += d * e;
+  }
+  return { kind: 'events', events, length: t + 0.1 };
+}
+const tri = (r: number, third: number, fifth: number): Stimulus => ({ kind: 'chord', midis: [r - 12, r + third, r + fifth, r + 12], duration: 0.8 });
+
+export const MEMORY_LESSONS: MiniLesson[] = [
+  {
+    id: 'rhythm-memory',
+    area: 'rhythm',
+    emoji: '🧠',
+    title: { en: 'Rhythm memory', he: 'זיכרון ריתמי' },
+    takeaway: { en: 'Chunk it: hear a rhythm as short words of one or two beats, and say them to yourself. Short words are easy to keep.', he: 'חלקו לחתיכות: שמעו מקצב כמילים קצרות של פעמה או שתיים, ואמרו אותן לעצמכם. מילים קצרות קל לשמור.' },
+    steps: [
+      {
+        say: { en: 'Hey {name}! Remembering a rhythm is a real skill — drummers, dancers and singers use it all the time. Here is one bar.', he: 'היי {name}! לזכור מקצב זו מיומנות אמיתית — מתופפים, רקדנים וזמרים משתמשים בה כל הזמן. הנה תיבה אחת.' },
+        play: [beat([2, 2, 1, 1, 2])],
+        show: { text: { en: 'ta · ta · ti-ti · ta', he: 'טה · טה · טי־טי · טה' } },
+      },
+      {
+        say: { en: 'The trick is chunking. Do not count every note — hear short words: "ta", "ti-ti", "ta-a". Two or three words fill a bar.', he: 'הטריק הוא לחלק לחתיכות. אל תספרו כל תו — שמעו מילים קצרות: "טה", "טי־טי", "טה־א". שתיים־שלוש מילים ממלאות תיבה.' },
+        play: [beat([1, 1, 2, 4])],
+        show: { text: { en: 'ti-ti · ta · ta-a', he: 'טי־טי · טה · טה־א' } },
+      },
+      {
+        say: { en: 'Now the same or different? First the rhythm, then again — but one note moved by half a beat. Hear where it jumped?', he: 'עכשיו, אותו דבר או שונה? קודם המקצב, ואז שוב — אבל צליל אחד זז בחצי פעמה. שמעתם איפה הוא קפץ?' },
+        play: [beat([2, 2, 1, 1, 2]), { kind: 'rest', duration: 1 }, beat([2, 1, 2, 1, 2])],
+        show: { text: { en: 'one note moved', he: 'צליל אחד זז' } },
+      },
+      {
+        say: { en: 'Longer rhythms: say the words to yourself while you listen, then keep them going through what comes next. That is how you hold four bars.', he: 'מקצבים ארוכים: אמרו את המילים לעצמכם בזמן ההאזנה, והמשיכו להחזיק אותן דרך מה שבא אחר כך. כך מחזיקים ארבע תיבות.' },
+        play: [beat([2, 2, 1, 1, 2, 1, 1, 2, 4])],
+      },
+      {
+        say: { en: 'Your turn! Same or different, then pick it out of three, then four bars with one tiny change. Chunk it — you have got this.', he: 'תורכם! אותו דבר או שונה, אחר כך לבחור אותו מתוך שלושה, ואז ארבע תיבות עם שינוי קטנטן. חלקו לחתיכות — אתם יכולים.' },
+        show: { text: { en: 'same? which one?', he: 'אותו דבר? איזה?' } },
+      },
+    ],
+  },
+  {
+    id: 'chord-memory',
+    area: 'harmony',
+    emoji: '🧩',
+    title: { en: 'Chord memory', he: 'זיכרון הרמוני' },
+    takeaway: { en: 'Follow the bass and the mood of each chord, chord by chord: bright, dark, tense. The one whose mood changed is the one that changed.', he: 'עקבו אחרי הבס ואחרי מצב הרוח של כל אקורד, אקורד אחרי אקורד: בהיר, כהה, מתוח. זה שמצב הרוח שלו השתנה — הוא זה שהשתנה.' },
+    steps: [
+      {
+        say: { en: 'Hi {name}! Musicians remember whole chord progressions — that is how they learn songs by ear. Here are three chords.', he: 'היי {name}! מוזיקאים זוכרים מהלכי אקורדים שלמים — כך הם לומדים שירים בשמיעה. הנה שלושה אקורדים.' },
+        play: [tri(60, 4, 7), tri(65, 4, 7), tri(67, 4, 7)],
+        show: { text: { en: 'I · IV · V', he: 'I · IV · V' } },
+      },
+      {
+        say: { en: 'Give each chord a word: major is bright, minor is dark. Follow the bass too — it walks under everything.', he: 'תנו לכל אקורד מילה: מז׳ור בהיר, מינור כהה. עקבו גם אחרי הבס — הוא הולך מתחת לכל השאר.' },
+        play: [tri(60, 4, 7), tri(69, 3, 7)],
+        show: { text: { en: 'bright · dark', he: 'בהיר · כהה' } },
+      },
+      {
+        say: { en: 'Now the same three — but the middle one changed. The bass moved and the colour went dark. That is the one.', he: 'עכשיו אותם שלושה — אבל האמצעי השתנה. הבס זז והצבע נהיה כהה. זה הוא.' },
+        play: [tri(60, 4, 7), tri(65, 4, 7), tri(67, 4, 7), { kind: 'rest', duration: 0.8 }, tri(60, 4, 7), tri(62, 3, 7), tri(67, 4, 7)],
+        show: { text: { en: 'chord 2 changed', he: 'אקורד 2 השתנה' } },
+      },
+      {
+        say: { en: 'For long progressions, number them as you go — one, two, three, four — and keep the bass line humming in your head. When the colour flips, note the number.', he: 'במהלכים ארוכים, מספרו אותם תוך כדי — אחת, שתיים, שלוש, ארבע — ותזמזמו את קו הבס בראש. כשהצבע מתהפך, זכרו את המספר.' },
+        play: [tri(60, 4, 7), tri(69, 3, 7), tri(65, 4, 7), tri(67, 4, 7)],
+        show: { text: { en: '1 · 2 · 3 · 4', he: '1 · 2 · 3 · 4' } },
+      },
+      {
+        say: { en: 'Your turn! The progression plays twice; say which chord changed. Three chords, then four, then six.', he: 'תורכם! המהלך מתנגן פעמיים; אמרו איזה אקורד השתנה. שלושה אקורדים, אחר כך ארבעה, ואז שישה.' },
+        show: { text: { en: 'which chord?', he: 'איזה אקורד?' } },
+      },
+    ],
+  },
+  {
+    id: 'call-response',
+    area: 'play',
+    emoji: '💬',
+    title: { en: 'Call & response', he: 'שאלה ותשובה' },
+    takeaway: { en: 'A good answer lands somewhere that makes sense: home to finish, a chord note to fit, or the call\'s own shape, moved, to echo it.', he: 'תשובה טובה נוחתת במקום הגיוני: בבית כדי לסיים, על צליל של האקורד כדי להתאים, או בצורה של השאלה עצמה, במקום אחר, כדי להדהד אותה.' },
+    steps: [
+      {
+        say: { en: 'Hey {name}! Improvising starts with listening: a phrase asks a question, and your phrase answers. Here is a call — it sounds unfinished.', he: 'היי {name}! אלתור מתחיל בהקשבה: משפט שואל שאלה, והמשפט שלכם עונה. הנה שאלה — היא נשמעת לא גמורה.' },
+        play: [cadenceC, { kind: 'notes', midis: [60, 62, 64, 67], each: 0.32 }],
+        show: { notes: [60, 62, 64, 67], key: 'C', text: { en: 'the call', he: 'השאלה' } },
+      },
+      {
+        say: { en: 'An answer that lands home sounds finished. One that stops on 2 or 7 sounds like another question. Hear both.', he: 'תשובה שנוחתת בבית נשמעת גמורה. תשובה שעוצרת על 2 או 7 נשמעת כמו עוד שאלה. הקשיבו לשתיהן.' },
+        play: [{ kind: 'notes', midis: [67, 65, 62, 60], each: 0.32 }, { kind: 'rest', duration: 0.8 }, { kind: 'notes', midis: [67, 65, 64, 62], each: 0.32 }],
+        show: { text: { en: 'home ✓ · open ?', he: 'בית ✓ · פתוח ?' } },
+      },
+      {
+        say: { en: 'Over a chord, the safest notes are the chord\'s own. Over F major, F, A and C fit; B rubs against it.', he: 'מעל אקורד, הצלילים הבטוחים ביותר הם הצלילים שלו. מעל פה מז׳ור, פה, לה ודו מתאימים; סי מתחכך בו.' },
+        play: [{ kind: 'chord', midis: [53, 65, 69], duration: 1.2 }, { kind: 'notes', midis: [65, 69, 72], each: 0.35 }, { kind: 'chord', midis: [53, 65, 69], duration: 1.2 }, { kind: 'notes', midis: [71, 71], each: 0.4 }],
+        show: { notes: [65, 69, 72, 71], text: { en: 'fits · rubs', he: 'מתאים · מתחכך' } },
+      },
+      {
+        say: { en: 'And the classic trick: echo. Take the call\'s shape and play it again a step higher. The ear loves it.', he: 'והטריק הקלאסי: הד. קחו את הצורה של השאלה ונגנו אותה שוב צעד אחד למעלה. האוזן אוהבת את זה.' },
+        play: [{ kind: 'notes', midis: [60, 62, 64, 67], each: 0.32 }, { kind: 'rest', duration: 0.35 }, { kind: 'notes', midis: [62, 64, 65, 69], each: 0.32 }],
+        show: { notes: [60, 62, 64, 67, 62, 64, 65, 69], key: 'C', text: { en: 'echo, a step up', he: 'הד, צעד למעלה' } },
+      },
+      {
+        say: { en: 'Your turn! A call, two answers: which one finishes, which one fits the chord, which one echoes. Then try your own on the backing tracks.', he: 'תורכם! שאלה ושתי תשובות: איזו מסיימת, איזו מתאימה לאקורד, איזו מהדהדת. ואחר כך נסו תשובה משלכם על ה־Backing tracks.' },
+        show: { text: { en: 'which answer?', he: 'איזו תשובה?' } },
       },
     ],
   },

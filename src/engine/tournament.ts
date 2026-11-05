@@ -18,6 +18,7 @@ import { degreeSeqQuestion, modeChoices, modeIdQuestion, MODE_ID_LEVELS, rhythmD
 import type { RhythmLevel } from './rhythm';
 import { MODE_STEPS } from './modes';
 import { tfItem } from './truefalse';
+import { factItem, factQuestion, factSeedInfo } from './theoryFacts';
 import { tournamentPoints } from './scoring';
 
 export const ROUND_WINDOW_MS = 10_000;
@@ -91,6 +92,9 @@ function choirItem(seed: number, id: string, round: number): Question {
 }
 
 export function tournamentSet(kind: SetKind, rounds: number, seed: number): Question[] {
+  // Truth or Bluff with chosen topics and stage (carried in the seed's high bits).
+  const facts = kind === 'truefalse' ? factSeedInfo(seed) : null;
+  if (facts) return Array.from({ length: rounds }, (_, i) => factQuestion(`t${i + 1}`, factItem(facts.topics, facts.level, mulberry32(facts.base * 131 + i * 7919)), facts.base));
   if (kind === 'vocal-hold' && isChoirSeed(seed)) return Array.from({ length: rounds }, (_, i) => choirItem((seed % 2 ** 31) * 131 + i * 7919, `c${i + 1}`, i));
   const mix = ['degrees', 'chords', 'intervals', 'cadences'] as const;
   return Array.from({ length: rounds }, (_, i) => tournamentItem(kind === 'mixed' ? mix[i % mix.length] : kind, seed * 131 + i * 7919, `t${i + 1}`, i));

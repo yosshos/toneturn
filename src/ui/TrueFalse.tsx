@@ -1,8 +1,11 @@
-// "True or false?" (spec addendum O): are both interval labels right? Solo 60-second run, or a duel on
-// one device. Levels: clear intervals → all → Do-Re-Mi names → by ear (names hidden, the notes play).
+// "Truth or Bluff" (product owner; was "True or false?", spec addendum O): a statement about music appears —
+// true, or a bluff? Pick the topics (theory without sound, or the interval trios, also by ear) and a level
+// (easy / medium / hard) at the start. Solo 60-second run, a duel on one device, or online (a room with the
+// same topics and level). After a wrong answer the reason is shown, so every miss teaches something.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { tfDifficulty, tfItem, tfPoints, TF_PENALTY_MS, TF_RUN_MS, type TFItem, type TFLevel } from '../engine/truefalse';
+import { tfPoints, TF_PENALTY_MS, TF_RUN_MS } from '../engine/truefalse';
+import { factDifficulty, factItem, FACT_TOPICS, SILENT_TOPICS, type Fact, type FactLevel, type FactTopic } from '../engine/theoryFacts';
 import { mulberry32 } from '../engine/lesson';
 import { displayNote, type Naming } from '../engine/pitch';
 import type { RatingEvent } from '../engine/rating';
@@ -12,48 +15,143 @@ import { piano, store } from './services';
 import { TrioArt } from './TrioArt';
 import { PLAYER_COLORS } from '../engine/match';
 
-type Mode = 'solo' | 'duel';
+type Mode = 'solo' | 'duel' | 'online';
+const PICK_KEY = 'toneturn.tfTopics';
 
-function useItems(level: TFLevel, seed: number) {
+function savedTopics(): FactTopic[] {
+  try {
+    const v = JSON.parse(localStorage.getItem(PICK_KEY) ?? 'null') as FactTopic[] | null;
+    if (Array.isArray(v) && v.length && v.every((x) => FACT_TOPICS.some((t) => t.id === x))) return v;
+  } catch {
+    /* private mode */
+  }
+  return SILENT_TOPICS.filter((x) => x !== 'trio');
+}
+
+function useFacts(topics: FactTopic[], level: FactLevel, seed: number) {
   const rnd = useMemo(() => mulberry32(seed), [seed]);
   const [n, setN] = useState(0);
-  const [item, setItem] = useState<TFItem>(() => tfItem(level, rnd));
+  const [fact, setFact] = useState<Fact>(() => factItem(topics, level, rnd));
   const next = () => {
-    setItem(tfItem(level, rnd));
+    setFact(factItem(topics, level, rnd));
     setN((x) => x + 1);
   };
-  return { item, n, next };
+  return { fact, n, next };
 }
 
-function playItem(item: TFItem) {
-  const events = item.midis.map((m, i) => ({ midi: m, start: i * 0.6, duration: 0.55, velocity: 0.7 }));
-  void piano.play(events, 2.1, new AbortController().signal).catch(() => {});
+/** Facts about a sound (by ear) play when they appear, and on Repeat. */
+function playFact(f: Fact) {
+  const midis = f.trio && f.topic === 'trio-ear' ? f.trio.midis : f.midis;
+  if (!midis) return;
+  const events = midis.map((m, i) => ({ midi: m, start: i * 0.6, duration: 0.55, velocity: 0.7 }));
+  void piano.play(events, midis.length * 0.6 + 0.3, new AbortController().signal).catch(() => {});
+}
+const hasSound = (f: Fact) => !!f.midis || (!!f.trio && f.topic === 'trio-ear');
+
+function Statement({ fact, n, nm, lang }: { fact: Fact; n: number; nm: Naming; lang: 'he' | 'en' }) {
+  if (fact.trio) {
+    const item = fact.trio;
+    const ear = fact.topic === 'trio-ear';
+    const name = (p: typeof item.trio.left) => (ear ? '?' : displayNote(p, item.level === 3 ? 'solfege' : nm, lang));
+    return <TrioArt n={n} left={name(item.trio.left)} mid={name(item.trio.mid)} right={name(item.trio.right)} intervalLeft={item.shownLeft} intervalRight={item.shownRight} className="tf-art" />;
+  }
+  const topic = FACT_TOPICS.find((x) => x.id === fact.topic)!;
+  return (
+    <div className="tf-statement" key={n} data-topic={fact.topic}>
+      <small className="tf-topic">
+        <span aria-hidden="true">{topic.emoji}</span> {topic.title[lang]}
+      </small>
+      <p className="tf-text">{fact.text[lang]}</p>
+    </div>
+  );
 }
 
-function Art({ item, n, nm, lang }: { item: TFItem; n: number; nm: Naming; lang: 'he' | 'en' }) {
-  const ear = item.level === 4;
-  const name = (p: TFItem['trio']['left']) => (ear ? '?' : displayNote(p, item.level === 3 ? 'solfege' : nm, lang));
-  return <TrioArt n={n} left={name(item.trio.left)} mid={name(item.trio.mid)} right={name(item.trio.right)} intervalLeft={item.shownLeft} intervalRight={item.shownRight} className="tf-art" />;
+/** Why it was true or a bluff (after a wrong answer, and after each duel round). */
+function Why({ fact, t, lang }: { fact: Fact; t: Strings; lang: 'he' | 'en' }) {
+  if (fact.trio) return <p className="tf-why" dir="ltr">{fact.truth ? t.tfWasTrue : `${t.tfWasFalse}: ${fact.trio.trio.intervalLeft} · ${fact.trio.trio.intervalRight}`}</p>;
+  return (
+    <p className="tf-why">
+      <b>{fact.truth ? t.tfWasTrue : t.tfWasBluff}</b> — {fact.why[lang]}
+    </p>
+  );
 }
 
-export function TrueFalseScreen({ t, settings, progress, onBack, onProgress }: { t: Strings; settings: Settings; progress: Progress; onBack: () => void; onProgress: (p: Progress) => void }) {
+/** Topics (several) and a level: used by the game and by online rooms. */
+export function FactPicker({ t, lang, topics, onTopics, level, onLevel }: { t: Strings; lang: 'he' | 'en'; topics: FactTopic[]; onTopics: (x: FactTopic[]) => void; level: FactLevel; onLevel: (l: FactLevel) => void }) {
+  const toggle = (id: FactTopic) => {
+    const nx = topics.includes(id) ? topics.filter((x) => x !== id) : [...topics, id];
+    if (nx.length) onTopics(nx);
+  };
+  const allSilent = SILENT_TOPICS.filter((x) => x !== 'trio');
+  return (
+    <>
+      <fieldset className="seg-field">
+        <legend>
+          {t.tfTopics}{' '}
+          <button type="button" className="link small" onClick={() => onTopics(allSilent)}>
+            {t.tfAllTheory}
+          </button>
+        </legend>
+        <div className="tf-topics" role="group" aria-label={t.tfTopics}>
+          {FACT_TOPICS.map((x) => (
+            <button key={x.id} type="button" className={`chip ${topics.includes(x.id) ? 'on' : ''}`} aria-pressed={topics.includes(x.id)} data-topic={x.id} onClick={() => toggle(x.id)}>
+              <span aria-hidden="true">{x.emoji}</span> {x.title[lang]}
+              {x.sound && <small> · {t.tfSound}</small>}
+            </button>
+          ))}
+        </div>
+      </fieldset>
+      <fieldset className="seg-field">
+        <legend>{t.tfLevelLabel}</legend>
+        <div className="seg" role="radiogroup" aria-label={t.tfLevelLabel}>
+          {([1, 2, 3] as FactLevel[]).map((v) => (
+            <button key={v} type="button" role="radio" aria-checked={level === v} className={level === v ? 'on' : ''} onClick={() => onLevel(v)}>
+              {[t.tfStage1, t.tfStage2, t.tfStage3][v - 1]}
+            </button>
+          ))}
+        </div>
+      </fieldset>
+    </>
+  );
+}
+
+export function TrueFalseScreen({
+  t,
+  settings,
+  progress,
+  onBack,
+  onProgress,
+  onOnline,
+}: {
+  t: Strings;
+  settings: Settings;
+  progress: Progress;
+  onBack: () => void;
+  onProgress: (p: Progress) => void;
+  onOnline: (topics: FactTopic[], level: FactLevel) => void;
+}) {
+  const lang = settings.uiLang;
   const [mode, setMode] = useState<Mode>('solo');
-  const [level, setLevel] = useState<TFLevel>(1);
+  const [topics, setTopicsRaw] = useState<FactTopic[]>(savedTopics);
+  const [level, setLevel] = useState<FactLevel>(1);
   const [run, setRun] = useState<number | null>(null);
-  const levels: [TFLevel, string][] = [
-    [1, t.tfLevel1],
-    [2, t.tfLevel2],
-    [3, t.tfLevel3],
-    [4, t.tfLevel4],
-  ];
+  const setTopics = (x: FactTopic[]) => {
+    setTopicsRaw(x);
+    try {
+      localStorage.setItem(PICK_KEY, JSON.stringify(x));
+    } catch {
+      /* private mode */
+    }
+  };
+  const bestKey = `s${level}`;
   if (run !== null)
     return mode === 'solo' ? (
-      <SoloRun key={run} t={t} settings={settings} level={level} best={progress.tfBest?.[level] ?? 0} onProgress={onProgress} onExit={() => setRun(null)} onAgain={() => setRun((r) => (r ?? 0) + 1)} />
+      <SoloRun key={run} t={t} settings={settings} topics={topics} level={level} best={progress.tfBest?.[bestKey] ?? 0} bestKey={bestKey} onProgress={onProgress} onExit={() => setRun(null)} onAgain={() => setRun((r) => (r ?? 0) + 1)} />
     ) : (
-      <DuelRun key={run} t={t} settings={settings} level={level} onExit={() => setRun(null)} onAgain={() => setRun((r) => (r ?? 0) + 1)} />
+      <DuelRun key={run} t={t} settings={settings} topics={topics} level={level} onExit={() => setRun(null)} onAgain={() => setRun((r) => (r ?? 0) + 1)} />
     );
   return (
-    <main className="panel-screen">
+    <main className="panel-screen tf-setup">
       <header className="screen-head">
         <button className="icon-btn" onClick={onBack} aria-label={t.back}>
           <span className="flip-rtl">←</span>
@@ -62,33 +160,25 @@ export function TrueFalseScreen({ t, settings, progress, onBack, onProgress }: {
       </header>
       <p className="field-hint">{t.tfHint}</p>
       <section className="set-card">
+        <FactPicker t={t} lang={lang} topics={topics} onTopics={setTopics} level={level} onLevel={setLevel} />
         <fieldset className="seg-field">
           <legend>{t.players}</legend>
           <div className="seg" role="radiogroup" aria-label={t.players}>
-            {(['solo', 'duel'] as const).map((m) => (
+            {(['solo', 'duel', 'online'] as const).map((m) => (
               <button key={m} type="button" role="radio" aria-checked={mode === m} className={mode === m ? 'on' : ''} onClick={() => setMode(m)}>
-                {m === 'solo' ? t.tfSolo : t.tfDuel}
+                {m === 'solo' ? t.tfSolo : m === 'duel' ? t.tfDuel : `🌐 ${t.online}`}
               </button>
             ))}
           </div>
         </fieldset>
-        <fieldset className="seg-field">
-          <legend>{t.tfLevelLabel}</legend>
-          <div className="seg" role="radiogroup" aria-label={t.tfLevelLabel}>
-            {levels.map(([v, l]) => (
-              <button key={v} type="button" role="radio" aria-checked={level === v} className={level === v ? 'on' : ''} onClick={() => setLevel(v)}>
-                {l}
-              </button>
-            ))}
-          </div>
-        </fieldset>
-        {mode === 'solo' && <p className="field-hint">{progress.tfBest?.[level] ? `${t.personalBest}: ${progress.tfBest[level]}` : t.tfNoBest}</p>}
+        {mode === 'solo' && <p className="field-hint">{progress.tfBest?.[bestKey] ? `${t.personalBest}: ${progress.tfBest[bestKey]}` : t.tfNoBest}</p>}
       </section>
       <button
         className="btn mega"
         onClick={() => {
           void piano.unlock();
-          setRun(Date.now());
+          if (mode === 'online') onOnline(topics, level);
+          else setRun(Date.now());
         }}
       >
         ▶ {t.play}
@@ -97,18 +187,17 @@ export function TrueFalseScreen({ t, settings, progress, onBack, onProgress }: {
   );
 }
 
-function SoloRun({ t, settings, level, best, onProgress, onExit, onAgain }: { t: Strings; settings: Settings; level: TFLevel; best: number; onProgress: (p: Progress) => void; onExit: () => void; onAgain: () => void }) {
+function SoloRun({ t, settings, topics, level, best, bestKey, onProgress, onExit, onAgain }: { t: Strings; settings: Settings; topics: FactTopic[]; level: FactLevel; best: number; bestKey: string; onProgress: (p: Progress) => void; onExit: () => void; onAgain: () => void }) {
   const lang = settings.uiLang;
   const nm = namingFor(settings.naming, lang);
   const seed = useMemo(() => (Date.now() ^ (Math.random() * 1e9)) >>> 0, []);
-  const { item, n, next } = useItems(level, seed);
+  const { fact, n, next } = useFacts(topics, level, seed);
   const [deadline, setDeadline] = useState(() => performance.now() + TF_RUN_MS);
   const [now, setNow] = useState(performance.now());
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
-  const [flash, setFlash] = useState<null | { ok: boolean; truth: boolean }>(null);
+  const [flash, setFlash] = useState<null | { ok: boolean }>(null);
   const [over, setOver] = useState<null | { best: boolean }>(null);
-  const shownAt = useRef(performance.now());
   const events = useRef<RatingEvent[]>([]);
   const answered = useRef(0);
 
@@ -123,24 +212,23 @@ function SoloRun({ t, settings, level, best, onProgress, onExit, onAgain }: { t:
     return () => cancelAnimationFrame(raf);
   }, [over]);
   useEffect(() => {
-    shownAt.current = performance.now();
-    if (level === 4) playItem(item);
-  }, [n, item, level]);
+    playFact(fact);
+  }, [n, fact]);
+  // The clock pauses while the reason for a miss is on screen (reading it is part of the game).
   const left = Math.max(0, deadline - now);
   useEffect(() => {
     if (left > 0 || over) return;
-    void store.recordTrueFalse(level, score, events.current).then(({ progress, best: isBest }) => {
+    void store.recordTrueFalse(bestKey, score, events.current).then(({ progress, best: isBest }) => {
       onProgress(progress);
       setOver({ best: isBest });
       piano.cue('complete');
     });
-  }, [left, over, level, score, onProgress]);
+  }, [left, over, bestKey, score, onProgress]);
 
   const answer = (said: boolean) => {
     if (flash || over || left <= 0) return;
-    const ok = said === item.truth;
-    const timeMs = Math.round(performance.now() - shownAt.current);
-    events.current.push({ id: `g:tf:${seed}:${answered.current++}`, skill: 'intervals', difficulty: tfDifficulty(level), correct: ok, at: new Date().toISOString() });
+    const ok = said === fact.truth;
+    events.current.push({ id: `g:tf:${seed}:${answered.current++}`, skill: fact.skill, difficulty: fact.trio ? 1000 + 100 * fact.trio.level : factDifficulty(level), correct: ok, at: new Date().toISOString() });
     if (ok) {
       setScore((s) => s + tfPoints(streak));
       setStreak((s) => s + 1);
@@ -150,21 +238,19 @@ function SoloRun({ t, settings, level, best, onProgress, onExit, onAgain }: { t:
       setDeadline((d) => d - TF_PENALTY_MS);
       piano.cue('wrong');
     }
-    void timeMs;
-    setFlash({ ok, truth: item.truth });
-    window.setTimeout(
-      () => {
-        setFlash(null);
-        next();
-      },
-      ok ? 350 : 1100,
-    );
+    setFlash({ ok });
+    const pause = ok ? 350 : fact.trio ? 1300 : 2600;
+    if (!ok) setDeadline((d) => d + pause);
+    window.setTimeout(() => {
+      setFlash(null);
+      next();
+    }, pause);
   };
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 't') answer(true);
-      if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'f') answer(false);
+      if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'f' || e.key.toLowerCase() === 'b') answer(false);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -205,15 +291,11 @@ function SoloRun({ t, settings, level, best, onProgress, onExit, onAgain }: { t:
         </span>
       </div>
       <div className="time-bar" aria-hidden="true">
-        <span style={{ width: `${(left / TF_RUN_MS) * 100}%` }} />
+        <span style={{ width: `${Math.min(100, (left / TF_RUN_MS) * 100)}%` }} />
       </div>
-      <Art item={item} n={n} nm={nm} lang={lang} />
-      <p className="tf-ask">{t.tfAsk}</p>
-      {flash && !flash.ok && (
-        <p className="tf-why" dir="ltr">
-          {flash.truth ? t.tfWasTrue : `${t.tfWasFalse}: ${item.trio.intervalLeft} · ${item.trio.intervalRight}`}
-        </p>
-      )}
+      <Statement fact={fact} n={n} nm={nm} lang={lang} />
+      <p className="tf-ask">{fact.trio ? t.tfAskTrio : t.tfAsk}</p>
+      {flash && !flash.ok && <Why fact={fact} t={t} lang={lang} />}
       <div className="tf-buttons">
         <button className="answer tone-mint tf-true" onPointerDown={(e) => (e.preventDefault(), answer(true))} disabled={!!flash}>
           <b>✓</b>
@@ -224,8 +306,8 @@ function SoloRun({ t, settings, level, best, onProgress, onExit, onAgain }: { t:
           <small>{t.tfFalse}</small>
         </button>
       </div>
-      {level === 4 && (
-        <button className="btn small" onClick={() => playItem(item)}>
+      {hasSound(fact) && (
+        <button className="btn small" onClick={() => playFact(fact)}>
           ↻ {t.repeat}
         </button>
       )}
@@ -235,29 +317,29 @@ function SoloRun({ t, settings, level, best, onProgress, onExit, onAgain }: { t:
 
 const DUEL_ROUNDS = 10;
 
-function DuelRun({ t, settings, level, onExit, onAgain }: { t: Strings; settings: Settings; level: TFLevel; onExit: () => void; onAgain: () => void }) {
+function DuelRun({ t, settings, topics, level, onExit, onAgain }: { t: Strings; settings: Settings; topics: FactTopic[]; level: FactLevel; onExit: () => void; onAgain: () => void }) {
   const lang = settings.uiLang;
   const nm = namingFor(settings.naming, lang);
   const seed = useMemo(() => (Date.now() ^ (Math.random() * 1e9)) >>> 0, []);
-  const { item, n, next } = useItems(level, seed);
+  const { fact, n, next } = useFacts(topics, level, seed);
   const [scores, setScores] = useState([0, 0]);
   const [locked, setLocked] = useState<[boolean, boolean]>([false, false]);
   const [winner, setWinner] = useState<number | null>(null);
   const [round, setRound] = useState(0);
   useEffect(() => {
-    if (level === 4) playItem(item);
-  }, [n, item, level]);
+    playFact(fact);
+  }, [n, fact]);
   const nextRound = () => {
     window.setTimeout(() => {
       setWinner(null);
       setLocked([false, false]);
       setRound((r) => r + 1);
       next();
-    }, 1300);
+    }, fact.trio ? 1500 : 2600);
   };
   const answer = (p: number, said: boolean) => {
     if (winner !== null || locked[p] || round >= DUEL_ROUNDS) return;
-    if (said === item.truth) {
+    if (said === fact.truth) {
       setWinner(p);
       setScores((s) => s.map((x, i) => (i === p ? x + 1 : x)));
       piano.cue('correct');
@@ -311,6 +393,8 @@ function DuelRun({ t, settings, level, onExit, onAgain }: { t: Strings; settings
           {scores[p]}
         </span>
       </div>
+      {/* The statement faces each player (the top half is turned around). */}
+      {!fact.trio && <p className="half-ask tf-half-text">{fact.text[lang]}</p>}
       <div className="tf-buttons">
         <button className="answer tone-mint" data-player={p} data-answer="true" disabled={locked[p] || winner !== null} onPointerDown={(e) => (e.preventDefault(), answer(p, true))}>
           <b>✓</b>
@@ -334,13 +418,14 @@ function DuelRun({ t, settings, level, onExit, onAgain }: { t: Strings; settings
           <span className="t-round" dir="ltr">
             {round + 1}/{DUEL_ROUNDS}
           </span>
+          {hasSound(fact) && (
+            <button className="icon-btn" onClick={() => playFact(fact)} aria-label={t.repeat}>
+              ↻
+            </button>
+          )}
         </div>
-        <Art item={item} n={n} nm={nm} lang={lang} />
-        {winner !== null && (
-          <p className="tf-why" dir="ltr">
-            {item.truth ? t.tfWasTrue : `${t.tfWasFalse}: ${item.trio.intervalLeft} · ${item.trio.intervalRight}`}
-          </p>
-        )}
+        {fact.trio ? <Statement fact={fact} n={n} nm={nm} lang={lang} /> : <small className="tf-topic">{FACT_TOPICS.find((x) => x.id === fact.topic)?.title[lang]}</small>}
+        {winner !== null && <Why fact={fact} t={t} lang={lang} />}
       </section>
       {half(1)}
     </main>

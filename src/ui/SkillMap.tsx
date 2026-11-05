@@ -3,7 +3,7 @@ import { chordTierForRating, tierOf } from '../engine/league';
 import { overallRating } from '../engine/rating';
 import { useState } from 'react';
 import type { SkillId } from '../engine/lesson';
-import { band, domainOf, DOMAINS, domainValue, evidence, PLANNED_SKILLS, SKILLS, weakestSkill, type Ratings } from '../engine/rating';
+import { band, domainOf, DOMAINS, domainValue, type DomainId, evidence, PLANNED_SKILLS, SKILLS, weakestSkill, type Ratings } from '../engine/rating';
 import type { Strings } from '../i18n/strings';
 import { lessonMastered, ratingsOf, type Progress } from '../storage/progress';
 import { recommendFor, type Recommendation } from '../engine/recommend';
@@ -28,7 +28,7 @@ export function SkillMap({
   progress: Progress;
   onBack: () => void;
   onPractice: (skill: SkillId) => void;
-  onPlacement: () => void;
+  onPlacement: (domain?: DomainId | null) => void;
   bestLeague?: number;
 }) {
   const ratings = ratingsOf(progress);
@@ -92,7 +92,7 @@ export function SkillMap({
         <section className="set-card">
           <h2>🧭 {t.findLevel}</h2>
           <p className="field-hint">{t.findLevelHint}</p>
-          <button className="btn mega" onClick={onPlacement}>
+          <button className="btn mega" onClick={() => onPlacement()}>
             {t.findLevel}
           </button>
         </section>
@@ -108,6 +108,9 @@ export function SkillMap({
               <h3 className="skill-domain-h">
                 {t.domainNames[d.id]}
                 <small>{dv ? `${Math.round(dv.v * 100)}%` : t.evUnmeasured}</small>
+                <button className="link measure-domain" data-measure={d.id} onClick={() => onPlacement(d.id)} aria-label={`${t.measureDomain}: ${t.domainNames[d.id]}`}>
+                  🧭 {t.measureDomain}
+                </button>
               </h3>
               <ul className="skill-list">
                 {d.skills.map((a2) => {
@@ -128,7 +131,7 @@ export function SkillMap({
           );
         })}
         {anyMeasured && (
-          <button className="btn ghost small" onClick={onPlacement}>
+          <button className="btn ghost small" onClick={() => onPlacement()}>
             {t.findLevel}
           </button>
         )}

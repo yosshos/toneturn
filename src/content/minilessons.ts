@@ -7,10 +7,10 @@ import { LESSONS as RHYTHM } from './mini/rhythm';
 import { LESSONS as JAZZ } from './mini/jazz';
 import { LESSONS as THEORY_EAR } from './mini/theoryEar';
 import { LESSONS as VOICE } from './mini/voice';
-import { LESSONS as SKILLS } from './mini/skills';
+import { LESSONS as SKILLS, MEMORY_LESSONS } from './mini/skills';
 import { UNIT_LESSON } from './units';
 
-export const MINI_LESSONS: Record<string, MiniLesson> = Object.fromEntries([...EXAMPLE, ...PATH, ...RHYTHM, ...JAZZ, ...THEORY_EAR, ...VOICE, ...SKILLS].map((l) => [l.id, l]));
+export const MINI_LESSONS: Record<string, MiniLesson> = Object.fromEntries([...EXAMPLE, ...PATH, ...RHYTHM, ...JAZZ, ...THEORY_EAR, ...VOICE, ...SKILLS, ...MEMORY_LESSONS].map((l) => [l.id, l]));
 
 /** The mini-lesson that opens a unit, if there is one. */
 export const lessonForUnit = (unit: string): MiniLesson | null => MINI_LESSONS[UNIT_LESSON[unit] ?? ''] ?? null;

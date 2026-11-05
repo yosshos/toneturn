@@ -68,6 +68,10 @@ export const UNIT_LESSON: Record<string, string> = {
   'topic:intervals-all': 'intervals-all',
   'topic:degrees-ext': 'degrees-ext',
   'topic:sight-read': 'sight-read',
+  'topic:rhythm-memory': 'rhythm-memory',
+  'topic:chord-memory': 'chord-memory',
+  'topic:call-response': 'call-response',
+  'topic:theory-facts': 'game-truefalse',
   // Vocal tracks
   'vocal:hold': 'vocal-hold',
   'vocal:vibrato': 'vocal-vibrato',
