@@ -183,6 +183,12 @@ export const LESSON_META: Record<LessonId, LessonMeta> = {
     icon: 'mic',
     tip: { en: 'Practise a run slowly on “ah”, then speed it up — the Runs workshop does this for you.', he: 'תרגלו ראן לאט על "אה", ואז האיצו — סדנת הראנים עושה את זה בשבילכם.' },
   },
+  'slash-chords': {
+    title: { en: 'Slash chords & bass lines', he: 'אקורדים עם בס ומהלכי בס' },
+    blurb: { en: 'C/E, C/G — or C/D? Then follow the bass under a progression.', he: 'C/E, C/G — או C/D? ואז לעקוב אחרי הבס מתחת למהלך.' },
+    icon: 'chord',
+    tip: { en: 'Hum the lowest note first — then decide whether it belongs to the chord.', he: 'זמזמו קודם את הצליל הנמוך ביותר — ואז החליטו אם הוא שייך לאקורד.' },
+  },
   'wrong-notes': {
     title: { en: 'Spot the wrong note', he: 'מצאו את הצליל השגוי' },
     blurb: { en: 'A scale with one wrong note: which one?', he: 'סולם עם צליל אחד שגוי: איזה?' },
@@ -337,6 +343,8 @@ export function sayChoices(q: Question, l: Lang): string {
 /** Spoken prompt at the start of a round. */
 export function roundPrompt(q: Question, l: Lang, nm: Naming, n: number): string {
   switch (q.kind) {
+    case 'slash':
+      return l === 'en' ? `Round ${n}. A ${spokenNote(q.key, nm, l)} major chord. Which note is in the bass?` : `סיבוב ${n}. אקורד ${spokenNote(q.key, nm, l)} מז׳ור. איזה צליל בבס?`;
     case 'tf':
       return l === 'en' ? `Round ${n}. ${tfLine(q, nm, l)}. True or false?` : `סיבוב ${n}. ${tfLine(q, nm, l)}. נכון או לא?`;
     case 'wrong-note':
@@ -445,6 +453,12 @@ export function roundPrompt(q: Question, l: Lang, nm: Naming, n: number): string
 
 export function parseAnswer(q: Question, alternatives: string[], inputNaming: Naming = 'letter'): ParseResult<Answer> {
   switch (q.kind) {
+    case 'slash': {
+      const r = parseAlternatives(alternatives, (t) => parseNoteName(t.replace(/.*(over|\/|על|בבס)/i, ' '), inputNaming));
+      if (r.kind === 'answer') return { ...r, value: `${r.value.letter}${r.value.acc}` };
+      if (r.kind === 'ambiguous') return { ...r, candidates: r.candidates.map((c) => `${c.letter}${c.acc}`) };
+      return r;
+    }
     case 'tf':
       return parseAlternatives(alternatives, parseTrueFalse);
     case 'wrong-note':
@@ -526,6 +540,8 @@ export function revealText(q: Question, l: Lang, nm: Naming): string {
 
 function revealCore(q: Question, l: Lang, nm: Naming): string {
   switch (q.kind) {
+    case 'slash':
+      return l === 'en' ? `It was ${displayNote(q.key, nm, l)}/${displayNote(q.bass, nm, l)}: ${spokenNote(q.bass, nm, l)} in the bass.` : `זה היה ${displayNote(q.key, nm, l)}/${displayNote(q.bass, nm, l)}: ${spokenNote(q.bass, nm, l)} בבס.`;
     case 'tf':
       return l === 'en' ? `It was ${q.answer}: the intervals are ${tfTruthWords(q, 'en')}.` : `זה היה ${q.answer === 'true' ? 'נכון' : 'לא נכון'}: המרווחים הם ${tfTruthWords(q, 'he')}.`;
     case 'wrong-note':
@@ -633,6 +649,11 @@ export interface ChoiceLabel {
 }
 
 export function choiceLabel(_q: Question, a: Answer, l: Lang, nm: Naming = 'letter'): ChoiceLabel {
+  if (_q.kind === 'slash' && typeof a === 'string') {
+    const b = pcFromKey(a);
+    const tones: ChoiceLabel['tone'][] = ['mint', 'gold', 'lilac', 'coral'];
+    if (b) return { big: `${displayNote(_q.key, nm, l)}/${displayNote(b, nm, l)}`, small: '', tone: tones[_q.choices.indexOf(a) % 4] };
+  }
   if (_q.kind === 'tf') return a === 'true' ? { big: '✓', small: l === 'en' ? 'True' : 'נכון', tone: 'mint' } : { big: '✗', small: l === 'en' ? 'False' : 'לא נכון', tone: 'coral' };
   if (_q.kind === 'wrong-note' && typeof a === 'number') return { big: String(a), small: l === 'en' ? 'note' : 'צליל', tone: (['mint', 'gold', 'lilac', 'coral'] as ChoiceLabel['tone'][])[a % 4] };
   if (_q.kind === 'mode-id' && typeof a === 'string' && a in MODE_STEPS) {
@@ -692,7 +713,10 @@ export function choiceLabel(_q: Question, a: Answer, l: Lang, nm: Naming = 'lett
 
 /** On-screen question line. `{n}` / `{k}` are note placeholders rendered with bidi isolation. */
 export function askTemplate(q: Question, l: Lang, nm: Naming = 'letter'): string {
+  if (q.kind === 'degree-seq' && q.bassLine) return l === 'en' ? 'Which bass notes, as degrees of {k} major?' : 'אילו צלילי בס, כדרגות ב־{k} מז׳ור?';
   switch (q.kind) {
+    case 'slash':
+      return l === 'en' ? '{k} major — which note is in the bass?' : '{k} מז׳ור — איזה צליל בבס?';
     case 'tf':
       return `${tfLine(q, nm, l)} — ${l === 'en' ? 'true or false?' : 'נכון או לא?'}`;
     case 'wrong-note':
@@ -759,6 +783,8 @@ export function hintText(q: Question, l: Lang, voice: boolean): string {
 export function questionBadge(q: Question, l: Lang, nm: Naming): { key?: PitchClass; text: string } {
   const major = l === 'en' ? 'major' : "מז'ור";
   switch (q.kind) {
+    case 'slash':
+      return { text: `${displayNote(q.key, nm, l)} ${l === 'en' ? 'major / bass' : 'מז׳ור / בס'}` };
     case 'tf':
       return { text: l === 'en' ? 'True or false?' : 'נכון או לא?' };
     case 'wrong-note':

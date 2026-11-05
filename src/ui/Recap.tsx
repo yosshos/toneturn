@@ -2,7 +2,7 @@ import { RatingCard } from './Rating';
 import type { RatingChange } from '../engine/rating';
 import { useEffect, useState } from 'react';
 import { displayNote } from '../engine/pitch';
-import { pcFromKey } from '../engine/lesson';
+import { compareStimulus, pcFromKey } from '../engine/lesson';
 import { songById } from '../engine/songs';
 import { summary } from '../engine/session';
 import type { LessonView } from '../game/controller';
@@ -23,9 +23,11 @@ interface Props {
   nextLabel?: string;
   /** Rating change of this session (spec L.3); null until saved. */
   rating?: { change: RatingChange; peakBefore: number | null } | null;
+  /** Play your (wrong) answer, then the right one. */
+  onCompare?: (i: number) => void;
 }
 
-export function Recap({ t, view, settings, onReplay, onAgain, onHome, onNext, nextLabel, rating }: Props) {
+export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome, onNext, nextLabel, rating }: Props) {
   const s = view.session;
   const sm = summary(s);
   const [xp, setXp] = useState(0);
@@ -146,6 +148,11 @@ export function Recap({ t, view, settings, onReplay, onAgain, onHome, onNext, ne
               <button className="btn small" onClick={() => onReplay(i)} aria-label={`${t.replay} ${i + 1}`}>
                 ▶ {t.replay}
               </button>
+              {onCompare && r.attempts.some((a) => !a.correct) && compareStimulus(q, r.attempts.find((a) => !a.correct)!.answer) && (
+                <button className="btn small ghost" onClick={() => onCompare(i)} aria-label={`${t.yoursVsRight} ${i + 1}`}>
+                  ▶ {t.yoursVsRight}
+                </button>
+              )}
             </li>
           );
         })}

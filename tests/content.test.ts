@@ -43,7 +43,7 @@ describe('lesson catalogue', () => {
 
   it('every answer choice appears across seeds (no lopsided lessons)', () => {
     for (const id of LESSON_ORDER) {
-      if (['sing-home-five', 'notes-degrees', 'sing-names', 'sing-degrees', 'rhythm-r1', 'rhythm-r2', 'rhythm-r3', 'runs', 'rhythm-r4', 'rhythm-r5', 'rhythm-r6', 'rhythm-r7', 'rhythm-r8', 'note-sequences', 'jazz-1', 'songs'].includes(id)) continue; // mixed / open answer sets
+      if (['sing-home-five', 'notes-degrees', 'sing-names', 'sing-degrees', 'rhythm-r1', 'rhythm-r2', 'rhythm-r3', 'runs', 'rhythm-r4', 'rhythm-r5', 'rhythm-r6', 'rhythm-r7', 'rhythm-r8', 'note-sequences', 'jazz-1', 'songs', 'slash-chords'].includes(id)) continue; // mixed / open answer sets
       for (let seed = 0; seed < 30; seed++) {
         const l = makeLesson(id, seed);
         const answers = new Set(l.questions.map((q) => q.answer));

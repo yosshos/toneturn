@@ -104,6 +104,8 @@ export interface DegreeSeqQuestion extends QBase {
   /** Opening of a known melody (revealed after the answer). */
   song?: string;
   names?: string[];
+  /** Bass-line dictation: the degrees are the bass notes under a chord progression. */
+  bassLine?: boolean;
   /** Canonical answer: degrees joined with '-', e.g. "1-3-5". */
   answer: string;
 }
@@ -189,6 +191,19 @@ export interface RunIdQuestion extends QBase {
   answer: string;
 }
 
+/** Slash chords (spec: inversions and slash chords): which note is in the bass under a major triad —
+ *  a chord tone (C, C/E, C/G) or a note outside the chord (C/D, C/F, C/B♭). Answer: the bass note key. */
+export interface SlashQuestion extends QBase {
+  kind: 'slash';
+  /** The chord root (named; "key" so the {k} placeholder shows it). */
+  key: PitchClass;
+  bass: PitchClass;
+  role: 'root' | 'third' | 'fifth' | 'other';
+  midis: number[];
+  answer: string;
+  choices: string[];
+}
+
 /** "True or false?" as a question (rooms / duels): three notes, two interval labels — both right? */
 export interface TFQuestion extends QBase {
   kind: 'tf';
@@ -260,6 +275,7 @@ export interface ProgressionQuestion extends QBase {
 
 export type Question =
   | ModeIdQuestion
+  | SlashQuestion
   | TFQuestion
   | WrongNoteQuestion
   | SeventhQuestion
@@ -321,6 +337,8 @@ export function questionSkill(q: Question): SkillId {
       return 'modes';
     case 'tf':
       return 'intervals';
+    case 'slash':
+      return 'chords';
     case 'name-seq':
       return q.given === 'sound' ? 'notes' : 'degrees';
     case 'seventh':
@@ -386,6 +404,7 @@ export type LessonId =
   | 'jazz-1'
   | 'songs'
   | 'runs-workshop'
+  | 'slash-chords'
   | 'modes'
   | 'wrong-notes'
   | 'placement'
@@ -1207,12 +1226,15 @@ export const LESSON_ORDER: LessonId[] = [
   'note-sequences',
   'jazz-1',
   'songs',
+  'slash-chords',
 ];
 
 export function makeLesson(id: LessonId, seed = Date.now()): LessonDef {
   switch (id) {
     case 'modes':
       return modesLesson(1, seed);
+    case 'slash-chords':
+      return slashLesson(seed);
     case 'wrong-notes':
       return wrongNotesLesson(1, seed);
     case 'runs':
@@ -1277,6 +1299,8 @@ export function explainStimulus(q: Question): Stimulus[] {
       return [{ kind: 'notes', midis: q.correct, each: q.each * 1.3 }];
     case 'tf':
       return [{ kind: 'notes', midis: q.midis, each: 0.6 }];
+    case 'slash':
+      return [{ kind: 'note', midi: q.midis[0], duration: 1.0 }, { kind: 'chord', midis: q.midis, duration: 1.6 }];
     case 'degree': {
       const s: Stimulus[] = [{ kind: 'note', midi: q.targetMidi, duration: 1.0 }];
       if (q.answer !== 1) s.push({ kind: 'resolve', fromMidi: q.targetMidi, toMidi: nearestTonicMidi(q.key, q.targetMidi) });
@@ -1328,6 +1352,13 @@ export function compareStimulus(q: Question, given: Answer): Stimulus[] | null {
   switch (q.kind) {
     case 'tf':
       return null;
+    case 'slash': {
+      if (typeof given !== 'string' || given === q.answer) return null;
+      const g = pcFromKey(given);
+      if (!g) return null;
+      const other = [placeInRange(pcValue(g), 40, 51), ...q.midis.slice(1)];
+      return [{ kind: 'chord', midis: other, duration: 1.4 }, { kind: 'rest', duration: 0.5 }, { kind: 'chord', midis: q.midis, duration: 1.4 }];
+    }
     case 'wrong-note':
       // What you heard, then the scale as it should be.
       return [{ kind: 'notes', midis: q.midis, each: q.each }, { kind: 'rest', duration: 0.6 }, { kind: 'notes', midis: q.correct, each: q.each }];
@@ -1519,6 +1550,8 @@ export function renderStimulus(stimulus: Stimulus[]): { events: NoteEvent[]; len
 export function questionTag(q: Question): string {
   const k = (p: PitchClass) => `${p.letter}${p.acc}`;
   switch (q.kind) {
+    case 'slash':
+      return `slash:${k(q.key)}:${k(q.bass)}`;
     case 'tf':
       return `tf:${q.names.map(k).join('.')}:${q.shownLeft}:${q.shownRight}:${q.midis.join('.')}:${q.ear ? 1 : 0}`;
     case 'wrong-note':
@@ -1703,4 +1736,94 @@ export function tfQuestion(id: string, item: { trio: { left: PitchClass; mid: Pi
     stimulus: ear ? [{ kind: 'notes', midis: item.midis, each: 0.6 }] : [],
     difficulty,
   };
+}
+
+
+// ======================================================================= slash chords and bass lines
+
+const SLASH_OTHER = [2, 5, 10]; // D, F, B♭ under C: a 9th, an 11th (sus), a ♭7 in the bass
+
+export function slashQuestion(id: string, root: PitchClass, role: SlashQuestion['role'], otherStep = 2, difficulty = 1200): SlashQuestion {
+  const r = placeInRange(pcValue(root), 60, 71);
+  const triad = [r, r + 4, r + 7];
+  const step = role === 'root' ? 0 : role === 'third' ? 4 : role === 'fifth' ? 7 : otherStep;
+  const bassMidi = placeInRange((pcValue(root) + step) % 12, 40, 51);
+  const spell = (st: number): PitchClass => {
+    // Spell bass notes from the root's major scale (♭7 as a flat).
+    const scale = majorScale(root);
+    const idx = [0, 2, 4, 5, 7, 9, 11].indexOf(st);
+    if (idx >= 0) return scale[idx];
+    const seventh = scale[6];
+    return { letter: seventh.letter, acc: (seventh.acc - 1) as PitchClass['acc'] };
+  };
+  const bass = spell(step);
+  const options = [0, 4, 7, role === 'other' ? otherStep : SLASH_OTHER[pcValue(root) % SLASH_OTHER.length]].map(spell);
+  return {
+    id,
+    kind: 'slash',
+    key: root,
+    bass,
+    role,
+    midis: [bassMidi, ...triad],
+    answer: pcKey(bass),
+    choices: options.map(pcKey),
+    stimulus: [
+      { kind: 'note', midi: bassMidi, duration: 0.8 },
+      { kind: 'chord', midis: [bassMidi, ...triad], duration: 1.8 },
+    ],
+    difficulty: difficulty + (role === 'other' ? 80 : 0),
+  };
+}
+
+/** Bass under a diatonic triad: the chord whose root or third is this bass degree. */
+const BASS_CHORD_ROOT: Record<number, number> = { 1: 1, 2: 5, 3: 1, 4: 4, 5: 5, 6: 6, 7: 5 };
+export const BASS_LINES: number[][] = [
+  [1, 4, 5, 1],
+  [1, 6, 4, 5],
+  [1, 3, 4, 5],
+  [1, 5, 6, 4],
+  [1, 7, 6, 5],
+  [1, 2, 3, 4, 5],
+  [6, 4, 1, 5],
+];
+
+/** Hear a progression; name the bass line as degrees (e.g. 1 7 6 5 = I – V6 – vi – V). */
+export function bassLineQuestion(id: string, key: PitchClass, degrees: number[], difficulty = 1250): DegreeSeqQuestion {
+  const tonic = placeInRange(pcValue(key), 60, 71);
+  const steps = [0, 2, 4, 5, 7, 9, 11];
+  const scaleMidi = (deg: number, base: number) => base + steps[(deg - 1) % 7] + 12 * Math.floor((deg - 1) / 7);
+  const bassBase = tonic - 24;
+  const chords = degrees.map((d) => {
+    const root = BASS_CHORD_ROOT[d];
+    const triad = [root, root + 2, root + 4].map((x) => scaleMidi(x, tonic - 12)).map((m) => (m < tonic - 5 ? m + 12 : m));
+    return [scaleMidi(d, bassBase), ...triad];
+  });
+  return {
+    id,
+    kind: 'degree-seq',
+    key,
+    degrees,
+    midis: degrees.map((d) => scaleMidi(d, bassBase)),
+    bassLine: true,
+    choices: [1, 2, 3, 4, 5, 6, 7],
+    answer: degrees.join('-'),
+    stimulus: [{ kind: 'cadence', key }, ...chords.map((c) => ({ kind: 'chord' as const, midis: c, duration: 1.1 }))],
+    difficulty: difficulty + 30 * degrees.length,
+  };
+}
+
+/** Lesson 23 — slash chords and bass lines: C/E vs C/G vs C/D, then the bass line of a progression. */
+export function slashLesson(seed = Date.now()): LessonDef {
+  const rnd = mulberry32(seed);
+  const roots = ['C', 'F', 'G', 'D', 'Bb'];
+  const roles = shuffle(rnd, ['third', 'fifth', 'other', 'other'] as SlashQuestion['role'][]);
+  const qs: Question[] = roles.map((role, i) => slashQuestion(`s${i + 1}`, pc(roots[Math.floor(rnd() * roots.length)]), role, SLASH_OTHER[Math.floor(rnd() * SLASH_OTHER.length)]));
+  const lines = shuffle(rnd, [...BASS_LINES]).slice(0, 2);
+  lines.forEach((l, i) => qs.push(bassLineQuestion(`b${i + 1}`, pc(['C', 'F', 'G'][i % 3]), l)));
+  const C = pc('C');
+  const intro: IntroStep[] = [
+    ...(['root', 'third', 'fifth'] as const).map((b) => ({ id: `intro-${b}`, card: { kind: 'inversion' as const, root: C, bass: b }, stimulus: inversionQuestion('x', C, b).stimulus })),
+    { id: 'intro-bass-line', card: { kind: 'degrees', key: C, degrees: [1, 7, 6, 5] }, stimulus: bassLineQuestion('x', C, [1, 7, 6, 5]).stimulus },
+  ];
+  return { id: 'slash-chords', version: 1, skill: 'chords', scoring: { xpPerCorrect: 10, attemptLimit: 2 }, intro, questions: qs };
 }

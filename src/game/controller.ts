@@ -381,6 +381,20 @@ export class LessonController {
     this.ad.audio.play(events, length, this.ctl.signal).catch(() => {});
   }
 
+  /** Recap / review: your (first wrong) answer, then the right one — when the item can be compared. */
+  compareQuestion(i: number) {
+    const q = this.s.lesson.questions[i];
+    const wrong = this.s.records[i]?.attempts.find((a) => !a.correct);
+    if (!q || !wrong) return;
+    const stim = compareStimulus(q, wrong.answer);
+    if (!stim) return;
+    this.ctl.abort();
+    this.ad.audio.stopAll();
+    this.ctl = new AbortController();
+    const { events, length } = renderStimulus(stim);
+    this.ad.audio.play(events, length, this.ctl.signal).catch(() => {});
+  }
+
   // ---------- internals ----------
 
   private async ensureMic(): Promise<boolean> {
