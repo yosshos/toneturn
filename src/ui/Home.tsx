@@ -1,3 +1,5 @@
+import { WorkoutCard } from './Extras';
+import type { WorkoutStep } from '../engine/workout';
 import { TrioArt } from './TrioArt';
 import { StreakChip } from './Streak';
 import type { StreakState } from '../engine/streak';
@@ -36,6 +38,7 @@ interface Props {
   onGhost: () => void;
   onTrueFalse: () => void;
   onVocal: (warmup: boolean) => void;
+  onWorkout: (s: WorkoutStep) => void;
   onPlacement: () => void;
   onSkills: () => void;
   playerName: string | null;
@@ -78,7 +81,7 @@ export function starsFor(best: number, total: number) {
 
 const TOTALS: Partial<Record<LessonId, number>> = { 'bflat-two-homes': 3, 'degrees-135': 5, 'major-minor': 5, cadences: 4, 'sing-home-five': 3, intervals: 6, inversions: 5, 'notes-degrees': 6, 'sing-names': 4, 'sing-degrees': 3, 'rhythm-r1': 5, 'rhythm-r2': 5, 'rhythm-r3': 5, runs: 5, 'rhythm-r4': 5, 'rhythm-r5': 5, 'rhythm-r6': 5, 'rhythm-r7': 5, 'rhythm-r8': 5, 'note-sequences': 5, 'jazz-1': 5, songs: 5 };
 
-export function Home({ t, settings, progress, streak, onStreak, account, onPractice, onButtonsInstead, onMode, onGame, onDuel, onOnline, onGhost, onTrueFalse, onVocal, onPlacement, onSkills, playerName, onMenu, news, tools }: Props) {
+export function Home({ t, settings, progress, streak, onStreak, account, onPractice, onButtonsInstead, onMode, onGame, onDuel, onOnline, onGhost, onTrueFalse, onVocal, onWorkout, onPlacement, onSkills, playerName, onMenu, news, tools }: Props) {
   const [consentFor, setConsentFor] = useState<LessonId | null>(null);
   const lang = settings.uiLang;
   const nm = namingFor(settings.naming, lang);
@@ -94,7 +97,7 @@ export function Home({ t, settings, progress, streak, onStreak, account, onPract
   const goal = Math.min(1, todayXp / DAILY_GOAL_XP);
 
   // First visit: finding your level is the default first step (spec addendum, user testing).
-  const firstRun = !(progress.lessons.placement?.completions ?? 0) && !LESSON_ORDER.some((id) => (progress.lessons[id]?.completions ?? 0) > 0);
+  const firstRun = !(progress.lessons.placement?.completions ?? 0) && progress.history.length === 0 && !LESSON_ORDER.some((id) => (progress.lessons[id]?.completions ?? 0) > 0);
   const start = (id: LessonId) => {
     if (settings.mode === 'voice' && !settings.voiceConsent) return setConsentFor(id);
     onPractice(id, false);
@@ -172,6 +175,8 @@ export function Home({ t, settings, progress, streak, onStreak, account, onPract
           )}
         </div>
       </section>
+
+      {!firstRun && <WorkoutCard t={t} progress={progress} settings={settings} onOpen={onWorkout} />}
 
       <TopicBars t={t} progress={progress} />
 

@@ -1,3 +1,4 @@
+import { AchievementsScreen } from './Extras';
 import { modesLesson, MODE_ID_LEVELS, wrongNotesLesson } from '../engine/lesson';
 import { TrueFalseScreen } from './TrueFalse';
 import { FreezeToast, StreakSheet } from './Streak';
@@ -36,12 +37,12 @@ import { pwa } from '../pwa';
 import { piano, setMidiEnabled, SIMULATED, store, tts } from './services';
 import { midi } from '../speech/midi';
 
-type Route = 'home' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal';
+type Route = 'home' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements';
 /** Invite links: #/online/CODE */
 const onlineCodeFromHash = () => (/^#\/?online\/(\w+)/.exec(location.hash)?.[1] ?? '');
 const routeFromHash = (): Route => {
   const h = location.hash.replace(/^#\/?/, '').replace(/^online\/.*$/, 'online');
-  return (['settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
+  return (['settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
 };
 
 /** The level a generated modes lesson was made at (from its first question's pool size). */
@@ -337,6 +338,19 @@ export function App() {
             setVocalWarmup(warm);
             go('vocal');
           }}
+          onWorkout={(st) => {
+            if (st.kind === 'lesson') return openLesson(st.lessonId);
+            if (st.kind === 'review') return openReview();
+            if (st.kind === 'modes') return openModes(st.level);
+            if (st.kind === 'runs') return openRuns();
+            if (st.kind === 'vocal' || st.kind === 'vocal-warmup') {
+              setVocalWarmup(st.kind === 'vocal-warmup');
+              return go('vocal');
+            }
+            if (st.game === 'truefalse') return go('truefalse');
+            setGameKind(st.game === 'echo' ? 'melody' : 'rhythm');
+            go('games');
+          }}
           onPlacement={openPlacement}
           onSkills={() => go('skills')}
           playerName={user?.name ? user.name.split(' ')[0] : null}
@@ -459,6 +473,7 @@ export function App() {
         <StreakSheet t={t} st={gems.streak} gems={gems.balance} today={localDay(new Date())} lang={s.uiLang} onBuy={buy} onClose={() => setStreakOpen(false)} />
       )}
       {route === 'drone' && <DroneScreen t={t} settings={s} onBack={() => go('home')} />}
+      {route === 'achievements' && <AchievementsScreen t={t} progress={progress} onBack={() => go('home')} />}
       {route === 'vocal' && (
         <VocalScreen
           key={vocalWarmup ? 'warmup' : 'home'}

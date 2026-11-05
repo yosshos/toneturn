@@ -1,6 +1,9 @@
 // Vocal technique (spec addendum P): range calibration, the 10-level ladder, the daily warm-up, a live
 // pitch trace, per-take metric cards with a tip and listen-back, the range map and per-metric trends.
 
+import { ThenAndNow } from './Extras';
+import { keepTake } from '../storage/takes';
+import { weekId } from '../engine/adaptive';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { spellMidi } from '../engine/aids';
 import type { NoteEvent } from '../engine/lesson';
@@ -383,6 +386,15 @@ export function VocalScreen({ t, settings, progress, onSettings, onProgress, onB
       )}
 
       <VocalTrends t={t} takes={v.takes} />
+
+      <section className="set-card">
+        <h2>🕰 {t.thenNowTitle}</h2>
+        <label className="toggle-row">
+          <input type="checkbox" checked={!!settings.keepTakes} onChange={(e) => onSettings({ keepTakes: e.target.checked })} />
+          <span>{t.keepTakes}</span>
+        </label>
+        {settings.keepTakes && <ThenAndNow t={t} refresh={v.takes.length} />}
+      </section>
     </main>
   );
 }
@@ -599,6 +611,7 @@ function VocalSession({
     const g = got ? gradeTake(item, got, range, style, noteIdx) : { unclear: true, score: 0, metrics: [], weakest: null };
     setGrade(g);
     if (audio) setAudioUrl(URL.createObjectURL(audio));
+    if (audio && settings.keepTakes && !g.unclear) void keepTake({ item: item.kind === 'range' || item.kind === 'vibrato-register' ? `${item.id}#${noteIdx}` : item.id, week: weekId(new Date()), score: g.score, at: new Date().toISOString(), blob: audio });
     setPhase('result');
     piano.cue(g.unclear ? 'wrong' : g.score >= 0.6 ? 'correct' : 'wrong');
     if (!g.unclear) {

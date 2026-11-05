@@ -12,7 +12,7 @@ interface Props {
   settings: Settings;
   user: CloudUser | null;
   onClose: () => void;
-  onNavigate: (r: 'friends' | 'settings' | 'diagnostics' | 'games' | 'classes' | 'placement' | 'truefalse') => void;
+  onNavigate: (r: 'friends' | 'settings' | 'diagnostics' | 'games' | 'classes' | 'placement' | 'truefalse' | 'achievements') => void;
   onSettings: (p: Partial<Settings>) => void;
 }
 
@@ -63,6 +63,9 @@ export function MenuSheet({ t, settings, user, onClose, onNavigate, onSettings }
           </button>
           <button className="menu-link" onClick={() => onNavigate('truefalse')}>
             <span aria-hidden="true">✓✗</span> {t.trueFalse} <span className="new-chip">{t.newChip}</span>
+          </button>
+          <button className="menu-link" onClick={() => onNavigate('achievements')}>
+            <span aria-hidden="true">🏅</span> {t.achievementsTitle}
           </button>
           <button className="menu-link" onClick={() => onNavigate('games')}>
             <span aria-hidden="true">🎮</span> {t.games}
