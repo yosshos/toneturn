@@ -39,7 +39,7 @@ test.describe('placement, Skill Map, review, weekly puzzle', () => {
     await page.getByRole('button', { name: /See my Skill Map/ }).click();
 
     await expect(page.getByRole('heading', { name: 'Skill Map', level: 1 })).toBeVisible();
-    await expect(page.locator('.radar .dot.ev-unmeasured')).toHaveCount(2); // vocal agility, rhythmic memory (tapping also measures precision)
+    await expect(page.locator('.radar .dot.ev-unmeasured')).toHaveCount(4); // vocal agility, vocal technique, modes by ear, rhythmic memory (tapping also measures precision)
     await expect(page.locator('.trend-tile')).not.toHaveCount(0); // trends per measured skill
     await expect(page.locator('.trend-detail svg')).toHaveCount(2); // overall + selected skill
     await expect(page.locator('.overall-head .rating-badge')).toBeVisible();
