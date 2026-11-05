@@ -13,7 +13,7 @@ export interface LeagueMember {
 export interface League {
   week: string;
   endsAt: string;
-  tier: number; // 1 bronze … 5 diamond
+  tier: number; // 1 Fundamental … 5 The Ninth (the overtone series)
   cohort: number;
   members: LeagueMember[];
 }

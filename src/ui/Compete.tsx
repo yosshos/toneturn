@@ -8,7 +8,7 @@ import type { Settings } from '../storage/progress';
 import { TournamentPlay } from './Tournament';
 
 const fill = (s: string, v: Record<string, string | number>) => Object.entries(v).reduce((a, [k, x]) => a.replaceAll(`{${k}}`, String(x)), s);
-const TIER_ICON = ['', '🥉', '🥈', '🥇', '💎', '👑'];
+const TIER_ICON = ['', '〰️', '🎵', '🎶', '🎼', '👑'];
 
 export function LeagueCard({ t, lang }: { t: Strings; lang: 'he' | 'en' }) {
   const [league, setLeague] = useState<League | null>(null);

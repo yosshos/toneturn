@@ -682,3 +682,5 @@ Feedback on a sung note says how and where, not only right/wrong, in the player'
 - **Views / W**: built as specified.
 
 - **Open items closed (0.28.0)**: gem cosmetics (colour themes), recorded drone sound (organ), duel push notifications (migration 19 + function; to be applied).
+
+- **Leagues (product owner, 2026-11-05)**: the five tiers are named after the overtone series — Fundamental, Octave, Fifth, Seventh, The Ninth (יסוד, אוקטבה, קווינטה, ספטימה, התשיעית).
