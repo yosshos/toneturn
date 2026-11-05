@@ -40,3 +40,17 @@ describe('performance (spec V.4–V.7)', () => {
     expect(scaleEvenness([0, 100, 500, 600, 1000])).toBeGreaterThan(0.5);
   });
 });
+
+import { clockPlan, clockReport } from '../src/engine/perform';
+describe('internal clock', () => {
+  const p = clockPlan(100, 4);
+  it('steady taps score high; a slowly rushing player is told so; no taps = lost', () => {
+    const steady = Array.from({ length: p.totalBeats }, (_, i) => i * p.beat + 0.01);
+    expect(clockReport(p, steady).verdict).toBe('steady');
+    expect(clockReport(p, steady).score).toBeGreaterThan(0.9);
+    const rush = Array.from({ length: p.totalBeats }, (_, i) => i * p.beat * 0.99);
+    expect(clockReport(p, rush).verdict).toBe('rushing');
+    expect(clockReport(p, []).verdict).toBe('lost');
+    expect(p.audible.length).toBe(12);
+  });
+});

@@ -25,7 +25,9 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
   private cueBus!: GainNode;
   private noise!: AudioBuffer;
   private limiter!: DynamicsCompressorNode;
-  private drone: { gain: GainNode; oscs: OscillatorNode[] } | null = null;
+  private drone: { gain: GainNode; oscs: AudioScheduledSourceNode[] } | null = null;
+  /** Drone sound: the soft synth, or a recorded sustained instrument (looped). */
+  private droneBank: { id: string; notes: number[]; buffers: Map<number, AudioBuffer> } | null = null;
   private voices = new Set<Voice>();
   private timers = new Set<ReturnType<typeof setTimeout>>();
   private active = new Map<number, number>(); // midi → count
@@ -54,23 +56,9 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     if (this.bank?.id === id) return Promise.resolve(true);
     const load = (async () => {
       try {
-        const base = import.meta.env.BASE_URL ?? '/';
-        const manifest = (await (await fetch(`${base}samples/manifest.json`)).json()) as { sets: Record<string, { ext: string; notes: number[] }> };
-        const set = manifest.sets[id];
-        if (!set) return false;
-        const decoder = new OfflineAudioContext(1, 1, 22050);
-        const buffers = new Map<number, AudioBuffer>();
-        let done = 0;
-        await Promise.all(
-          set.notes.map(async (m) => {
-            const res = await fetch(`${base}samples/${id}/${m}.${set.ext}`);
-            if (!res.ok) throw new Error(String(res.status));
-            buffers.set(m, await decoder.decodeAudioData(await res.arrayBuffer()));
-            onProgress?.(++done, set.notes.length);
-          }),
-        );
+        const bank = await this.loadSet(id, onProgress);
         if (this.sound !== id) return false; // changed meanwhile
-        this.bank = { id, notes: set.notes, buffers };
+        this.bank = bank;
         return true;
       } catch {
         if (this.sound === id) this.bank = null;
@@ -78,6 +66,59 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
       }
     })();
     return load;
+  }
+
+  /** Load a sample set (shared by instrument sounds and the drone). */
+  private async loadSet(id: string, onProgress?: (done: number, total: number) => void) {
+    const base = import.meta.env.BASE_URL ?? '/';
+    const manifest = (await (await fetch(`${base}samples/manifest.json`)).json()) as { sets: Record<string, { ext: string; notes: number[] }> };
+    const set = manifest.sets[id];
+    if (!set) throw new Error('no set');
+    const decoder = new OfflineAudioContext(1, 1, 22050);
+    const buffers = new Map<number, AudioBuffer>();
+    let done = 0;
+    await Promise.all(
+      set.notes.map(async (m) => {
+        const res = await fetch(`${base}samples/${id}/${m}.${set.ext}`);
+        if (!res.ok) throw new Error(String(res.status));
+        buffers.set(m, await decoder.decodeAudioData(await res.arrayBuffer()));
+        onProgress?.(++done, set.notes.length);
+      }),
+    );
+    return { id, notes: set.notes, buffers };
+  }
+
+  get droneSoundId() {
+    return this.droneBank ? this.droneBank.id : 'soft';
+  }
+
+  /** Choose the drone sound: 'soft' (synthesised) or a sustained sample set such as 'organ'. False on failure. */
+  async setDroneSound(id: string, onProgress?: (done: number, total: number) => void): Promise<boolean> {
+    if (id === 'soft') {
+      this.droneBank = null;
+      return true;
+    }
+    if (this.droneBank?.id === id) return true;
+    try {
+      this.droneBank = this.bank?.id === id ? this.bank : await this.loadSet(id, onProgress);
+      return true;
+    } catch {
+      this.droneBank = null;
+      return false;
+    }
+  }
+
+  /** Loop points on rising zero crossings in the steady middle of a sample (no clicks). */
+  private static loopPoints(buf: AudioBuffer): [number, number] {
+    const d = buf.getChannelData(0);
+    const sr = buf.sampleRate;
+    const rising = (from: number) => {
+      for (let i = Math.max(1, from); i < d.length - 1; i++) if (d[i - 1] < 0 && d[i] >= 0) return i;
+      return from;
+    };
+    const a = rising(Math.floor(buf.duration * 0.3 * sr));
+    const b = rising(Math.floor(buf.duration * 0.85 * sr));
+    return [a / sr, b / sr];
   }
 
   /** Play one note from the sample bank; false when there is no bank (the synth plays instead). */
@@ -300,7 +341,28 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     gain.gain.value = 0;
     gain.gain.setTargetAtTime(level, ctx.currentTime, 0.35);
     gain.connect(this.limiter);
-    const oscs: OscillatorNode[] = [];
+    const oscs: AudioScheduledSourceNode[] = [];
+    const db = this.droneBank;
+    if (db) {
+      // A recorded sustained sound, looped between zero crossings.
+      for (const m of midis) {
+        const nearest = db.notes.reduce((a, b) => (Math.abs(b - m) < Math.abs(a - m) ? b : a));
+        const buf = db.buffers.get(nearest);
+        if (!buf) continue;
+        const src = ctx.createBufferSource();
+        src.buffer = buf;
+        src.playbackRate.value = Math.pow(2, (m - nearest) / 12);
+        [src.loopStart, src.loopEnd] = PianoEngine.loopPoints(buf);
+        src.loop = true;
+        const g = ctx.createGain();
+        g.gain.value = 1.6 / midis.length;
+        src.connect(g).connect(gain);
+        src.start();
+        oscs.push(src);
+      }
+      this.drone = { gain, oscs };
+      return;
+    }
     for (const m of midis) {
       const f = 440 * 2 ** ((m - 69) / 12);
       for (const [type, amp, detune] of [['sine', 1, 0], ['triangle', 0.35, 3], ['sine', 0.5, -3]] as const) {

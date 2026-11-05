@@ -22,6 +22,7 @@ TOPIC_GEN['extensions'] = {
     { en: '7, 9 or 13?', he: '7, 9 או 13?' },
     { en: 'Altered dominants', he: 'דומיננטים אלטרד' },
     { en: 'Major colours', he: 'צבעים של מז׳ור' },
+    { en: 'sus4, 7sus4, add9, alt', he: 'sus4, 7sus4, add9, alt' },
   ],
   gen(seed, level, id) {
     const rnd = rng(seed);
@@ -44,6 +45,15 @@ TOPIC_GEN['extensions'] = {
         b13: nm('♭13', '♭13', 'flat thirteen', 'b13', 'sharp five', '#5', 'augmented fifth', 'במול 13'),
       };
       ask = { en: 'Which alteration is on top of the dominant?', he: 'איזו אלטרציה למעלה בדומיננט?' };
+    } else if (level === 4) {
+      voicing = { sus4: [r - 12, r + 5, r + 7, r + 12], sus7: [r - 12, r + 5, r + 10, r + 14], add9: [r - 12, r + 4, r + 7, r + 14], alt: [r - 12, r + 4, r + 10, r + 15, r + 20] };
+      names = {
+        sus4: nm('sus4', 'sus4', 'suspended four', 'sus', 'סאס'),
+        sus7: nm('7sus4', '7sus4', 'seven sus four', 'seven sus', 'dominant sus'),
+        add9: nm('add9', 'add9', 'add nine', 'added ninth'),
+        alt: nm('7alt (♯9 ♭13)', '7alt (♯9 ♭13)', 'alt', 'altered', 'seven alt', 'אלטרד'),
+      };
+      ask = { en: 'Which chord colour?', he: 'איזה צבע אקורד?' };
     } else {
       voicing = { maj7: [r - 12, r + 4, r + 7, r + 11], maj9: [r - 12, r + 4, r + 11, r + 14], lyd: [r - 12, r + 4, r + 11, r + 18], six9: [r - 12, r + 4, r + 9, r + 14] };
       names = {

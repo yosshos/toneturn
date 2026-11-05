@@ -216,7 +216,7 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account }: Pr
         )}
       </section>
 
-      <SoundSetting t={t} value={s.sound ?? 'classic'} onChange={(sound) => onChange({ sound })} />
+      <SoundSetting t={t} value={s.sound ?? 'classic'} onChange={(sound) => onChange({ sound })} drone={s.droneSound ?? 'soft'} onDrone={(droneSound) => onChange({ droneSound })} />
 
       <section className="set-card">
         <h2>🔗 {t.echoChain}</h2>
@@ -354,7 +354,7 @@ function MidiSetting({ t, on, onChange }: { t: Strings; on: boolean; onChange: (
 /** Instrument sound (spec Q): the classic synth piano or a recorded instrument, downloaded on first use. */
 export const SOUNDS = ['classic', 'grand', 'upright', 'harpsichord', 'harp', 'marimba', 'vibraphone', 'organ'] as const;
 
-function SoundSetting({ t, value, onChange }: { t: Strings; value: string; onChange: (v: string) => void }) {
+function SoundSetting({ t, value, onChange, drone, onDrone }: { t: Strings; value: string; onChange: (v: string) => void; drone: string; onDrone: (v: string) => void }) {
   const [busy, setBusy] = useState<{ id: string; done: number; total: number } | null>(null);
   const [failed, setFailed] = useState(false);
   const choose = async (id: string) => {
@@ -395,6 +395,35 @@ function SoundSetting({ t, value, onChange }: { t: Strings; value: string; onCha
         </p>
       )}
       <p className="field-hint credits">{t.soundCredits}</p>
+      <DroneSoundSetting t={t} value={drone} onChange={onDrone} />
     </section>
   );
 }
+
+/** The drone's sound (held notes under harmony and drone practice). */
+function DroneSoundSetting({ t, value, onChange }: { t: Strings; value: string; onChange: (v: string) => void }) {
+  const [busy, setBusy] = useState(false);
+  const choose = async (id: string) => {
+    setBusy(true);
+    await piano.unlock();
+    const ok = await piano.setDroneSound(id);
+    setBusy(false);
+    if (!ok) return;
+    onChange(id);
+    piano.startDrone([48, 55]);
+    setTimeout(() => piano.stopDrone(), 1800);
+  };
+  return (
+    <fieldset className="seg-field">
+      <legend>{t.droneSoundTitle}</legend>
+      <div className="seg" role="radiogroup" aria-label={t.droneSoundTitle}>
+        {['soft', 'organ'].map((id) => (
+          <button key={id} type="button" role="radio" aria-checked={value === id} className={value === id ? 'on' : ''} disabled={busy} data-drone-sound={id} onClick={() => void choose(id)}>
+            {t.droneSoundNames[id]}
+          </button>
+        ))}
+      </div>
+    </fieldset>
+  );
+}
+

@@ -145,6 +145,8 @@ export interface Settings {
   keepTakes?: boolean;
   /** Instrument sound for every exercise (spec Q): 'classic' (synth) or a sample set id. */
   sound?: string;
+  /** Drone sound: 'soft' (synthesised, default) or a sustained recorded set ('organ'). */
+  droneSound?: string;
   /** Vibrato target style (spec P.1). */
   vibratoStyle?: VibratoStyle;
 }

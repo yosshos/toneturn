@@ -302,6 +302,10 @@ export function App() {
   useEffect(() => {
     void piano.setSound(soundId);
   }, [soundId]);
+  const droneSoundId = settings?.droneSound ?? 'soft';
+  useEffect(() => {
+    void piano.setDroneSound(droneSoundId);
+  }, [droneSoundId]);
 
   // First run: remember the current version silently and when this device started (untimed first week).
   useEffect(() => {

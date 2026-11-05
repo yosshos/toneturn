@@ -192,3 +192,60 @@ export function hasGuideTones(played: number[], root: number, q: Quality): boole
   const iv = QUALITY[q];
   return pcs.has((root + iv[1]) % 12) && pcs.has((root + (iv[3] ?? iv[2])) % 12);
 }
+
+// ---------------------------------------------------------------- internal clock (U.9)
+
+export interface ClockPlan {
+  beat: number;
+  /** Beat indexes that click (lead-in bars and the closing check bar). */
+  audible: number[];
+  /** The silent stretch, in beats [from, to). */
+  silent: [number, number];
+  totalBeats: number;
+}
+/** Two bars with the metronome, `silentBars` without, one bar with it again (4/4). */
+export function clockPlan(bpm: number, silentBars: number): ClockPlan {
+  const lead = 8;
+  const silent: [number, number] = [lead, lead + silentBars * 4];
+  const totalBeats = silent[1] + 4;
+  const audible = Array.from({ length: totalBeats }, (_, i) => i).filter((i) => i < silent[0] || i >= silent[1]);
+  return { beat: 60 / bpm, audible, silent, totalBeats };
+}
+export function clockEvents(p: ClockPlan): { events: NoteEvent[]; length: number } {
+  return { events: p.audible.map((i) => ({ midi: i % 4 === 0 ? 96 : 91, start: i * p.beat, duration: 0.05, velocity: i % 4 === 0 ? 0.6 : 0.45 })), length: p.totalBeats * p.beat + 0.3 };
+}
+
+export interface ClockReport {
+  /** Mean signed error over the silent bars (ms; + = late / dragging, − = early / rushing). */
+  meanMs: number;
+  /** Mean absolute error over the silent bars (ms). */
+  absMs: number;
+  /** Signed error over the last silent bar: where the inner clock ended up. */
+  endMs: number;
+  /** Silent beats with a tap near them. */
+  hits: number;
+  silentBeats: number;
+  score: number;
+  verdict: 'steady' | 'rushing' | 'dragging' | 'lost';
+}
+/** Taps (seconds from the first click) against the beat grid. */
+export function clockReport(p: ClockPlan, taps: number[]): ClockReport {
+  const errs: { i: number; e: number }[] = [];
+  for (let i = p.silent[0]; i < p.silent[1]; i++) {
+    const want = i * p.beat;
+    let best: number | null = null;
+    for (const t of taps) if (Math.abs(t - want) < p.beat / 2 && (best === null || Math.abs(t - want) < Math.abs(best - want))) best = t;
+    if (best !== null) errs.push({ i, e: (best - want) * 1000 });
+  }
+  const silentBeats = p.silent[1] - p.silent[0];
+  const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
+  const meanMs = Math.round(avg(errs.map((x) => x.e)));
+  const absMs = Math.round(avg(errs.map((x) => Math.abs(x.e))));
+  const last = errs.filter((x) => x.i >= p.silent[1] - 4);
+  const endMs = Math.round(avg(last.map((x) => x.e)));
+  const cover = errs.length / silentBeats;
+  const tight = Math.max(0, 1 - Math.max(0, absMs - 25) / 150);
+  const score = Math.round(cover * tight * 1000) / 1000;
+  const verdict = cover < 0.6 ? 'lost' : Math.abs(endMs) <= 40 ? 'steady' : endMs < 0 ? 'rushing' : 'dragging';
+  return { meanMs, absMs, endMs, hits: errs.length, silentBeats, score, verdict };
+}

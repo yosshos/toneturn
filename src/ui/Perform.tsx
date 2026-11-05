@@ -2,6 +2,7 @@
 // keyboard drills (with an on-screen keyboard when there is no MIDI device), guitar from tab.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { clockEvents, clockPlan, clockReport, type ClockReport } from '../engine/perform';
 import { backingPitches, backingTrack, chartBeats, CHARTS, checkVoicing, chordAt, chordSymbol, CIRCLE_KEYS, hasGuideTones, improvReport, QUALITY, scaleEvenness, synthImprov, type ChartId, type ImprovReport, type Quality, type VoicingKind } from '../engine/perform';
 import { BleedGate } from '../engine/bleed';
 import type { SungFrame } from '../engine/sing';
@@ -14,7 +15,7 @@ import type { Settings } from '../storage/progress';
 import { NotesView } from './NotesView';
 import { piano, SIMULATED } from './services';
 
-type Tab = 'backing' | 'improv' | 'midi' | 'guitar';
+type Tab = 'backing' | 'improv' | 'clock' | 'midi' | 'guitar';
 const KEYS = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'G♭', 'G', 'A♭', 'A', 'B♭', 'B'];
 const fill = (s: string, v: Record<string, string | number>) => s.replace(/\{(\w+)\}/g, (_, k) => String(v[k] ?? ''));
 const pct = (x: number) => `${Math.round(x * 100)}%`;
@@ -92,7 +93,7 @@ export function PerformScreen({ t, settings, onBack }: { t: Strings; settings: S
         <h1>{t.perfTitle}</h1>
       </header>
       <div className="seg perf-tabs" role="tablist">
-        {(['backing', 'improv', 'midi', 'guitar'] as Tab[]).map((x) => (
+        {(['backing', 'improv', 'clock', 'midi', 'guitar'] as Tab[]).map((x) => (
           <button key={x} role="tab" aria-selected={tab === x} className={tab === x ? 'on' : ''} onClick={() => (stopAll(), setTab(x))}>
             {t.perfTabs[x]}
           </button>
@@ -100,6 +101,7 @@ export function PerformScreen({ t, settings, onBack }: { t: Strings; settings: S
       </div>
       {tab === 'backing' && <Backing t={t} chart={chart} keyPc={key} bpm={bpm} controls={chartControls} ctl={ctl} />}
       {tab === 'improv' && <Improv t={t} chart={chart} keyPc={key} bpm={bpm} controls={chartControls} ctl={ctl} />}
+      {tab === 'clock' && <InnerClock t={t} ctl={ctl} />}
       {tab === 'midi' && <MidiDrills t={t} />}
       {tab === 'guitar' && <GuitarTabDrill t={t} settings={settings} ctl={ctl} />}
     </main>
@@ -519,3 +521,103 @@ function GuitarTabDrill({ t, settings, ctl }: { t: Strings; settings: Settings; 
 
 void QUALITY;
 void chordAt;
+
+// ---------------------------------------------------------------- internal clock
+
+/** The metronome plays two bars, goes silent, then comes back for one bar: keep tapping the beat throughout. */
+function InnerClock({ t, ctl }: { t: Strings; ctl: React.MutableRefObject<AbortController | null> }) {
+  const [bpm, setBpm] = useState(92);
+  const [silentBars, setSilentBars] = useState(2);
+  const [phase, setPhase] = useState<'idle' | 'running' | 'done'>('idle');
+  const [report, setReport] = useState<ClockReport | null>(null);
+  const [beatNow, setBeatNow] = useState<number | null>(null);
+  const taps = useRef<number[]>([]);
+  const t0 = useRef(0);
+  const plan = clockPlan(bpm, silentBars);
+  const tap = () => {
+    if (phase !== 'running') return;
+    taps.current.push((performance.now() - t0.current) / 1000);
+  };
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.code === 'Space' && phase === 'running') {
+        e.preventDefault();
+        tap();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  });
+  const go = async () => {
+    ctl.current?.abort();
+    const c = new AbortController();
+    ctl.current = c;
+    await piano.unlock();
+    taps.current = [];
+    setReport(null);
+    setPhase('running');
+    const p = clockPlan(bpm, silentBars);
+    const ev = clockEvents(p);
+    t0.current = performance.now();
+    const tick = setInterval(() => setBeatNow(Math.floor((performance.now() - t0.current) / 1000 / p.beat)), 50);
+    if (SIMULATED) {
+      // A slightly dragging player.
+      taps.current = Array.from({ length: p.totalBeats }, (_, i) => i * p.beat * 1.006 + 0.012);
+      await new Promise((r) => setTimeout(r, 600));
+    } else await piano.play(ev.events, ev.length, c.signal).catch(() => {});
+    clearInterval(tick);
+    setBeatNow(null);
+    if (c.signal.aborted && !SIMULATED) return setPhase('idle');
+    setReport(clockReport(p, taps.current));
+    setPhase('done');
+  };
+  const silentNow = beatNow !== null && beatNow >= plan.silent[0] && beatNow < plan.silent[1];
+  return (
+    <section className="set-card">
+      <p className="field-hint">{t.clockHint}</p>
+      <div className="perf-controls">
+        <label>
+          <small>
+            {t.perfTempo} <b dir="ltr">{bpm}</b>
+          </small>
+          <input type="range" min={60} max={180} step={4} value={bpm} onChange={(e) => setBpm(Number(e.target.value))} />
+        </label>
+      </div>
+      <div className="seg" role="radiogroup" aria-label={t.clockSilent}>
+        {[2, 4, 8].map((n) => (
+          <button key={n} role="radio" aria-checked={silentBars === n} className={silentBars === n ? 'on' : ''} onClick={() => setSilentBars(n)}>
+            {fill(t.clockBars, { n })}
+          </button>
+        ))}
+      </div>
+      {phase === 'running' ? (
+        <button className={`clock-pad ${silentNow ? 'silent' : ''}`} data-clock-tap="1" onPointerDown={(e) => (e.preventDefault(), tap())}>
+          {beatNow === null ? '…' : silentNow ? `🤫 ${t.clockKeepGoing}` : beatNow < plan.silent[0] ? `${(beatNow % 4) + 1}` : `👂 ${t.clockBack}`}
+        </button>
+      ) : (
+        <button className="btn mega" data-clock="go" onClick={() => void go()}>
+          ▶ {t.clockStart}
+        </button>
+      )}
+      {report && (
+        <div className="take-card" aria-live="polite" data-clock-score={Math.round(report.score * 100)}>
+          <div className="take-score">
+            {t.vocalScore}: <b>{pct(report.score)}</b>
+          </div>
+          <p className="take-remark">{t.clockVerdicts[report.verdict]}</p>
+          <ul className="perf-report">
+            <li>
+              {t.clockOff}: <b dir="ltr">{report.absMs} ms</b>
+            </li>
+            <li>
+              {t.clockEnd}: <b dir="ltr">{report.endMs > 0 ? '+' : ''}{report.endMs} ms</b>
+            </li>
+            <li>
+              {t.clockHits}: <b dir="ltr">{report.hits}/{report.silentBeats}</b>
+            </li>
+          </ul>
+        </div>
+      )}
+    </section>
+  );
+}
