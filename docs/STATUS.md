@@ -1,5 +1,16 @@
 # Milestone report — 2026-11-04
 
+## Update 27 — v0.27.0 (2026-11-05): sounds, group play, ideas S1–S13, audit gaps (spec Q, R, S)
+- Instrument sounds (Q): 7 sample sets in `public/samples` (built by `scripts/build-samples.mjs`, pitch-checked), sampler in `src/audio/piano.ts`, Sound setting, offline sample cache in the service worker.
+- Group play (R): set kinds modes / wrong-notes / truefalse / echo / beat / vocal-hold in rooms and duels, big-screen mode, `supabase/migrations/20261117000000_toneturn_rooms_v2.sql` (**not applied**; the client falls back to the old create function for the classic sets).
+- Leagues, async duels, puzzle + daily level stats, teacher vocal metrics: `supabase/migrations/20261118000000_toneturn_leagues_duels.sql` (**not applied**; the UI hides these until it is). Daily keys re-seeded through 2031 (`supabase/seed/daily_keys.sql`, existing days unchanged).
+- New lessons 23–25 (slash chords & bass lines, melodic dictation, Jazz 2); absolute pitch corner; workout planner; achievements; then-and-now takes (IndexedDB, opt-in); sing-along; instrument mode; voice synonyms (`src/engine/musicSpeech.ts`); bleed gate (`src/engine/bleed.ts`); reference requests cost melodic memory (P.9); memory games tempo ladder / swing / pad sets; rhythm 12/8 and hold-to-sustain; runs diagnosis + trace.
+- Tests: unit 489 passed. E2E: see below. Not verified on real devices: real microphone runs of the vocal track (metrics are calibrated on synthetic tracks only), bleed gate with real speakers, rooms across phones, big-screen mode on a TV, sample sound quality on phones.
+- Open: room QR code (needs a QR library), gem-unlocked cosmetics, sampled drone timbre, push notification for duels.
+
+## Update 26 — v0.26.0 (2026-11-05): vocal technique (spec P), scales & modes, modes by ear
+- Range calibration and fitting of every sung exercise; 11-level measured vocal ladder; scales & modes to sing; modes by ear (6 → 8 levels); warm-up; spec P.0–P.8.
+
 ## Update 25 — v0.25.0 (2026-11-05): "True or false?" interval game (spec O)
 
 - `engine/truefalse.ts`: items from correctly spelled trios; half are lies with exactly one near-miss label (m3↔M3, P4↔♯4, ♭5↔P5 …); level 1 M3/P4/P5, level 2 all, level 3 Do-Re-Mi names, level 4 by ear (names hidden, notes played); rating difficulty per level; streak points.

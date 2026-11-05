@@ -18,6 +18,28 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.27.0',
+    date: '2026-11-05',
+    en: [
+      'Instrument sounds: grand piano, upright, harpsichord, harp, marimba, vibraphone, organ (Settings → Sound)',
+      'Play together: every game in live rooms — and a big-screen mode (TV or laptop shows the game, phones answer); Echo Chain together, steadiest voice, true-or-false, modes, wrong notes',
+      'Advanced vibrato, harmony singing (intervals over a held note, missing chord notes, harmony lines), sing-along with songs you know',
+      'Spot the wrong note; blues, pentatonic, bebop and more in Modes by ear and in scales to sing',
+      'New lessons: slash chords & bass lines, melodic dictation, Jazz 2 (licks & melodic minor)',
+      'Today's workout (5/10/20 min), achievements, weekly leagues, duels with friends, an optional absolute-pitch corner, instrument mode',
+      'Your answer next to the right one in the recap; synonyms understood (#11 = ♭5 = tritone, Δ = maj7 …); the drone is never mistaken for your voice',
+    ],
+    he: [
+      'צלילי כלים: פסנתר כנף, פסנתר עומד, צ׳מבלו, נבל, מרימבה, ויברפון, עוגב (הגדרות ← צליל)',
+      'לשחק יחד: כל משחק בחדרים חיים — ומצב מסך גדול (טלוויזיה או מחשב מציגים את המשחק, הטלפונים עונים); שרשרת הד יחד, הקול היציב ביותר, נכון או לא, מודוסים, צליל שגוי',
+      'ויברטו מתקדם, שירת הרמוניה (מרווחים מעל צליל מוחזק, צלילים חסרים באקורד, קווי הרמוניה), שירה עם שירים מוכרים',
+      'מצאו את הצליל השגוי; בלוז, פנטטוני, ביבופ ועוד במודוסים בשמיעה ובסולמות לשירה',
+      'שיעורים חדשים: אקורדים עם בס ומהלכי בס, הכתבה מלודית, ג׳אז 2 (ליקים ומינור מלודי)',
+      'האימון של היום (5/10/20 דק׳), הישגים, ליגות שבועיות, דו־קרבות עם חברים, פינת שמיעה מוחלטת (רשות), מצב כלי נגינה',
+      'התשובה שלך לצד הנכונה בסיכום; מילים נרדפות מובנות (#11 = ♭5 = טריטון, Δ = maj7 …); הדרון לעולם לא נחשב כקול שלך',
+    ],
+  },
+  {
     version: '0.26.0',
     date: '2026-11-05',
     en: [
