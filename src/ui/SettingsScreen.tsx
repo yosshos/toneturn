@@ -219,6 +219,17 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account }: Pr
       <SoundSetting t={t} value={s.sound ?? 'classic'} onChange={(sound) => onChange({ sound })} />
 
       <section className="set-card">
+        <h2>🔗 {t.echoChain}</h2>
+        <Seg
+          label={t.echoTolerance}
+          value={String(s.echoTolerance ?? 80)}
+          options={[35, 50, 80, 120].map((c) => [String(c), `±${c}¢ · ${t.toleranceNames[String(c)]}`] as [string, string])}
+          onChange={(v) => onChange({ echoTolerance: Number(v) })}
+        />
+        <p className="field-hint">{t.echoToleranceHint}</p>
+      </section>
+
+      <section className="set-card">
         <h2>🎷 {t.instrumentTitle}</h2>
         <p className="field-hint">{t.instrumentHint}</p>
         <Seg

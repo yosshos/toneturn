@@ -137,6 +137,8 @@ export interface Settings {
   aids?: AidMode;
   /** Comfortable singing range (spec P.0); null = not calibrated (a conservative default is used). */
   voiceRange?: VoiceRange | null;
+  /** Echo Chain: sung-note tolerance in cents (playtest; default 80). */
+  echoTolerance?: number;
   /** Instrument mode (spec S.12): answer on an acoustic instrument; written-pitch names for transposing ones. */
   instrument?: 'voice' | 'C' | 'Bb' | 'Eb' | 'F';
   /** Keep one vocal take per exercise per week on this device for "then vs. now" (spec S.2). */

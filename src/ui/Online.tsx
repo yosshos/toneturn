@@ -12,6 +12,7 @@ import { namingFor, type Settings } from '../storage/progress';
 import { withNote } from './bits';
 import { params, piano, tts } from './services';
 import { TimeBar } from './Tournament';
+import { RoomQr } from './RoomQr';
 import { BrowserPitchCapture } from '../speech/pitchCapture';
 import { gradeTake, synthHold, VOCAL_LEVELS, DEFAULT_RANGE } from '../engine/vocal';
 import type { SungFrame } from '../engine/sing';
@@ -261,6 +262,7 @@ function RoomScreen({ t, settings, backend, roomId, onExit }: { t: Strings; sett
           <b className="room-code" dir="ltr" data-code={s.code}>
             {s.code}
           </b>
+          <RoomQr link={link} label={`${t.roomCode} ${s.code}`} size={s.hostScreen ? 260 : 180} />
           <button
             className="btn primary"
             onClick={async () => {

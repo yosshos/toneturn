@@ -629,3 +629,43 @@
 .level-stats {
   text-align: center;
 }
+.pads.neutral .pad {
+  --padc: var(--lilac);
+  background: var(--card-2);
+  border-color: var(--line);
+}
+.echo-staff {
+  min-height: 120px;
+  margin: 8px 0;
+  border-radius: 16px;
+  background: #fff;
+  overflow: hidden;
+  animation: echo-pop 0.25s ease-out;
+}
+.echo-staff-empty {
+  height: 120px;
+}
+@keyframes echo-pop {
+  from {
+    opacity: 0.6;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .echo-staff {
+    animation: none;
+  }
+}
+.chain-strip .cs {
+  --padc: var(--ink-dim);
+}
+.room-qr {
+  margin: 10px auto;
+  padding: 6px;
+  border-radius: 12px;
+  background: #fff;
+}
+.room-qr svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}

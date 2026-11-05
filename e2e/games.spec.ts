@@ -28,10 +28,12 @@ const resetLit = (page: Page) => page.evaluate(() => ((window as unknown as { __
 const lit = (page: Page) => page.evaluate(() => (window as unknown as { __lit: number[] }).__lit.slice());
 
 async function repeatTurn(page: Page, expectLen: number, mistake = false) {
-  await expect(page.locator('main.game.stage-turn')).toBeVisible({ timeout: 30_000 });
+  await expect(page.locator('main.game.stage-turn, main.game.stage-demo, main.game.stage-respond').first()).toBeVisible({ timeout: 30_000 });
   await resetLit(page);
   await expect(page.locator('.turn-banner')).toHaveText(/Your turn/, { timeout: 30_000 });
-  const seq = await lit(page);
+  // Pads no longer light up (melodic memory, not colours): read the sequence from the strip's data.
+  const seq = await page.locator('.chain-strip .cs').evaluateAll((els) => els.map((e) => Number((e as HTMLElement).dataset.pad)));
+  void lit;
   expect(seq).toHaveLength(expectLen);
   if (mistake) {
     await page.locator('.pad').nth((seq[0] + 1) % 4).dispatchEvent('pointerdown');

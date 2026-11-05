@@ -206,3 +206,14 @@ describe('memory game options (C.4)', () => {
     expect(swung[2]).toBeCloseTo(straight[2]);
   });
 });
+
+describe('Echo Chain pitch tolerance (playtest)', () => {
+  it('a pitchy but right melody counts with the relaxed tolerance, not with the strict one', async () => {
+    const { melodyGame, sungToPads } = await import('../src/engine/memory');
+    const g = melodyGame(1);
+    const seq = [0, 2, 1, 3];
+    const frames = seq.flatMap((p, i) => Array.from({ length: 25 }, (_, k) => ({ t: i * 0.6 + k * 0.02, hz: 440 * 2 ** ((g.pads[p].midi - 0.7 - 69) / 12), confidence: 0.95, rms: 0.1 })));
+    expect(sungToPads(g, frames, 50)).toContain(null);
+    expect(sungToPads(g, frames, 80)).toEqual(seq);
+  });
+});

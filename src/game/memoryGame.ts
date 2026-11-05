@@ -50,6 +50,8 @@ export interface GameConfig {
   latencyMs?: number;
   /** Comfortable singing range: sung melodies stay inside it (spec P.0). */
   voiceRange?: { low: number; high: number } | null;
+  /** Echo Chain, sung: how far (cents) a sung note may be from a pad and still count as it. */
+  tolCents?: number;
   /** Spec C.4: speed up every 3 rounds; swing feel; Echo Chain pad set. */
   ladder?: boolean;
   swing?: boolean;
@@ -172,12 +174,8 @@ export class MemoryGameController {
       error: null,
       simulated: ad.simulated,
     };
-    this.offNotes = this.ad.audio.onNotes((active) => {
-      const g = this.view.melody;
-      if (!g) return;
-      const i = g.pads.findIndex((p) => active.includes(p.midi));
-      if (i !== this.view.litPad) this.patch({ litPad: i >= 0 ? i : null });
-    });
+    // Pads no longer light up with the playback (playtest): the melody must be remembered by ear,
+    // not as a sequence of colours or positions.
   }
 
   subscribe = (fn: () => void) => {
@@ -386,7 +384,7 @@ export class MemoryGameController {
       return null;
     }
     if (res.kind === 'silence') return { pass: false, unclear: true };
-    const given = sungToPads(g, res.frames);
+    const given = sungToPads(g, res.frames, this.cfg.tolCents ?? 80);
     this.patch({ entered: given });
     const grade = gradeMelody(seq, given);
     return { pass: grade.pass, unclear: grade.unclear, melody: grade };

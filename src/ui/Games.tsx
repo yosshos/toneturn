@@ -1,3 +1,4 @@
+import { NoteStaff } from './NoteViews';
 import type { PadSet } from '../engine/memory';
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { displayNote } from '../engine/pitch';
@@ -148,6 +149,18 @@ export function GameSetup({
       </section>
 
       <section className="set-card">
+        {kind === 'melody' && input === 'sing' && (
+          <fieldset className="seg-field">
+            <legend>{t.echoTolerance}</legend>
+            <div className="seg" role="radiogroup" aria-label={t.echoTolerance}>
+              {[35, 50, 80, 120].map((c) => (
+                <button key={c} type="button" role="radio" aria-checked={(settings.echoTolerance ?? 80) === c} className={(settings.echoTolerance ?? 80) === c ? 'on' : ''} onClick={() => onSettings({ echoTolerance: c })}>
+                  ±{c}¢
+                </button>
+              ))}
+            </div>
+          </fieldset>
+        )}
         <label className="toggle-row">
           <input type="checkbox" checked={ladder} onChange={(e) => setLadder(e.target.checked)} />
           <span>⏩ {t.tempoLadder}</span>
@@ -216,7 +229,6 @@ export function GameIcon({ kind }: { kind: GameKind }) {
 
 // ======================================================================= play
 
-const PAD_COLORS = ['#4BE3B5', '#FFC94D', '#A98BFF', '#FF6A4D'];
 
 export function GameScreen({
   t,
@@ -248,6 +260,7 @@ export function GameScreen({
         ladder: setup.ladder,
         swing: setup.swing,
         pads: setup.pads,
+        tolCents: settings.echoTolerance ?? 80,
         latencyMs: settings.tapLatencyMs,
         voiceRange: settings.voiceRange,
       },
@@ -360,12 +373,13 @@ export function GameScreen({
               <div className="key-badge">
                 <span className="house-dot" aria-hidden="true" /> <Note>{displayNote(v.melody.key, nm, lang)}</Note> {t.major}
               </div>
-              <div className="pads">
+              <EchoStaff v={v} settings={settings} />
+              {v.input === 'pads' && (
+              <div className="pads neutral">
                 {v.melody.pads.map((p, i) => (
                   <button
                     key={i}
-                    className={`pad ${v.litPad === i ? 'lit' : ''}`}
-                    style={{ ['--padc' as string]: PAD_COLORS[i] }}
+                    className="pad"
                     disabled={!(v.stage === 'respond' && v.input === 'pads')}
                     onPointerDown={(e) => {
                       e.preventDefault();
@@ -380,6 +394,7 @@ export function GameScreen({
                   </button>
                 ))}
               </div>
+              )}
               {v.input === 'sing' && v.stage === 'respond' && (
                 <div className="listen mic-speech">
                   <span className="listen-ring" aria-hidden="true">
@@ -443,7 +458,7 @@ function ChainStrip({ v }: { v: GameView }) {
       {v.seq.map((p, i) => {
         const st = r ? r.notes[i]?.status : i < v.entered.length ? 'entered' : 'todo';
         return (
-          <li key={i} className={`cs ${st}`} style={{ ['--padc' as string]: PAD_COLORS[p] }}>
+          <li key={i} className={`cs ${st}`} data-pad={p}>
             {r ? (st === 'ok' ? '✓' : st === 'wrong' ? '✗' : '·') : ''}
           </li>
         );
@@ -629,6 +644,26 @@ function Calibrate({ t, latency, onDone }: { t: Strings; latency: number; onDone
         </p>
       )}
       {state === 'fail' && <p className="field-hint warn">{t.calibrateFail}</p>}
+    </div>
+  );
+}
+
+/** The notes answered so far, on a staff, appearing one by one (playtest: no colour cues). */
+function EchoStaff({ v, settings }: { v: GameView; settings: Settings }) {
+  const g = v.melody!;
+  const entered = v.entered.filter((x): x is number => x !== null).map((i) => g.pads[i].midi);
+  const [shown, setShown] = useState(0);
+  useEffect(() => {
+    if (shown > entered.length) setShown(entered.length);
+    if (shown >= entered.length) return;
+    const id = setTimeout(() => setShown((n) => n + 1), 220);
+    return () => clearTimeout(id);
+  }, [shown, entered.length]);
+  void settings;
+  const notes = entered.slice(0, shown);
+  return (
+    <div className="echo-staff" aria-live="polite">
+      {notes.length > 0 ? <NoteStaff key={notes.length} notes={notes} chord={false} keyPc={g.key} /> : <div className="echo-staff-empty" aria-hidden="true" />}
     </div>
   );
 }
