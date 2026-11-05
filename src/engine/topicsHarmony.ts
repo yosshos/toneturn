@@ -76,7 +76,7 @@ TOPIC_GEN['voicings'] = {
   title: { en: 'Voicings and inversions', he: 'וויסינגים והיפוכים' },
   skill: 'chords',
   levels: [
-    { en: 'Close, drop 2 or spread?', he: 'צפוף, דרופ 2 או פרוש?' },
+    { en: 'Close, drop 2 or spread?', he: 'צפוף, Drop 2 או פרוש?' },
     { en: 'Which inversion?', he: 'איזה היפוך?' },
     { en: 'Jazz voicings', he: 'וויסינגים בג׳אז' },
   ],
@@ -89,8 +89,8 @@ TOPIC_GEN['voicings'] = {
     if (level === 1) {
       const q = pickR(rnd, [[0, 4, 7, 11], [0, 3, 7, 10]]);
       voicing = { close: q.map((x) => r + x), drop2: [r + q[2] - 12, r, r + q[1], r + q[3]], spread: [r - 12, r + q[2], r + q[3], r + q[1] + 12] };
-      names = { close: nm('Close', 'צפוף', 'close position', 'closed'), drop2: nm('Drop 2', 'דרופ 2', 'drop two'), spread: nm('Spread', 'פרוש', 'open', 'open position', 'פתוח') };
-      ask = { en: 'How is the seventh chord spread?', he: 'איך פרוש אקורד הספטים?' };
+      names = { close: nm('Close', 'צפוף', 'close position', 'closed'), drop2: nm('Drop 2', 'Drop 2', 'drop two', 'דרופ 2'), spread: nm('Spread', 'פרוש', 'open', 'open position', 'פתוח') };
+      ask = { en: 'How is the seventh chord spread?', he: 'איך פרוש אקורד הספטימה?' };
     } else if (level === 2) {
       voicing = { root: [r, r + 4, r + 7, r + 10], first: [r + 4, r + 7, r + 10, r + 12], second: [r - 5, r - 2, r, r + 4], third: [r - 2, r + 4, r + 7, r + 12] };
       names = {
@@ -103,10 +103,10 @@ TOPIC_GEN['voicings'] = {
     } else {
       voicing = { shell: [r - 12, r - 8, r - 2], rootless: [r - 8, r - 3, r - 2, r + 2], quartal: [r - 12, r - 7, r - 2, r + 3, r + 7], ust: [r - 12, r - 8, r - 2, r + 2, r + 6, r + 9] };
       names = {
-        shell: nm('Shell (1-3-7)', 'שֶל (1-3-7)', 'shell', 'shell voicing', 'של'),
+        shell: nm('Shell (1-3-7)', 'Shell (1-3-7)', 'shell', 'shell voicing', 'של וויסינג'),
         rootless: nm('Rootless', 'בלי שורש', 'rootless voicing', 'without root'),
         quartal: nm('Quartal (fourths)', 'קוורטלי (קוורטות)', 'quartal', 'fourths', 'so what', 'קוורטות'),
-        ust: nm('Upper-structure triad', 'משולש עליון', 'upper structure', 'triad on top', 'upper structure triad'),
+        ust: nm('Upper-structure triad', 'Upper structure', 'אפר סטרקצ׳ר', 'upper structure', 'triad on top', 'upper structure triad'),
       };
       ask = { en: 'Which kind of voicing?', he: 'איזה סוג וויסינג?' };
     }
@@ -147,7 +147,7 @@ const PROGS: Record<number, Record<string, { chords: Ch[]; name: ReturnType<type
   3: {
     mario: { chords: [[0, 'maj'], [8, 'maj'], [10, 'maj'], [0, 'maj']], name: nm('I–♭VI–♭VII–I', 'I–♭VI–♭VII–I', 'flat six flat seven', 'aeolian cadence', 'mario cadence') },
     minorIV: { chords: [[0, 'maj'], [5, 'maj'], [5, 'min'], [0, 'maj']], name: nm('I–IV–iv–I', 'I–IV–iv–I', 'minor four', 'minor plagal', 'מינור 4') },
-    backdoor: { chords: [[5, 'm7'], [10, 'dom7'], [0, 'maj7']], name: nm('Backdoor iv7–♭VII7–I', 'דלת אחורית iv7–♭VII7–I', 'backdoor', 'back door', 'דלת אחורית') },
+    backdoor: { chords: [[5, 'm7'], [10, 'dom7'], [0, 'maj7']], name: nm('Backdoor iv7–♭VII7–I', 'Backdoor iv7–♭VII7–I', 'backdoor', 'back door', 'בקדור') },
     flatIII: { chords: [[0, 'maj'], [3, 'maj'], [5, 'maj'], [0, 'maj']], name: nm('I–♭III–IV–I', 'I–♭III–IV–I', 'flat three', 'במול 3') },
   },
 };

@@ -45,17 +45,17 @@ export const LESSON_META: Record<LessonId, LessonMeta> = {
     icon: 'ear',
     tip: {
       en: 'Keep the fifth in your ear: hum {n} then {k} before your next session.',
-      he: 'שמרו את החמישית באוזן: זמזמו {n} ואז {k} לפני התרגול הבא.',
+      he: 'שמרו את הקווינטה באוזן: זמזמו {n} ואז {k} לפני התרגול הבא.',
     },
   },
   'degrees-135': {
-    title: { en: 'Home, third, fifth', he: 'בית, שלישית, חמישית' },
+    title: { en: 'Home, third, fifth', he: 'טוניקה, טרצה, קווינטה' },
     blurb: { en: 'The three notes of the home chord, in any key.', he: 'שלושת הצלילים של אקורד הבית, בכל סולם.' },
     icon: 'steps',
     tip: { en: 'Sing 1–3–5 up and down in any key you like. Your ear learns the shape.', he: 'שירו 1–3–5 למעלה ולמטה בכל סולם. האוזן לומדת את הצורה.' },
   },
   'major-minor': {
-    title: { en: 'Major or minor?', he: "מז'ור או מינור?" },
+    title: { en: 'Major or minor?', he: "מז׳ור או מינור?" },
     blurb: { en: 'Bright or dark: the middle note decides.', he: 'בהיר או כהה: הצליל האמצעי מחליט.' },
     icon: 'chord',
     tip: { en: 'Listen for the middle note: it moves just one half-step between major and minor.', he: 'הקשיבו לצליל האמצעי: בין מז׳ור למינור הוא זז רק חצי טון.' },
@@ -226,7 +226,7 @@ export const LESSON_META: Record<LessonId, LessonMeta> = {
     title: { en: 'Modes by ear', he: 'מודוסים בשמיעה' },
     blurb: { en: 'Hear a scale and name its mode — major, melodic and harmonic minor modes.', he: 'שומעים סולם ומזהים את המודוס — מודוסים של מז׳ור, מינור מלודי ומינור הרמוני.' },
     icon: 'ear',
-    tip: { en: 'Listen for the one note that differs: the 4th, the 6th, the 7th or the 2nd.', he: 'הקשיבו לצליל האחד שמשתנה: הרביעית, השישית, השביעית או השנייה.' },
+    tip: { en: 'Listen for the one note that differs: the 4th, the 6th, the 7th or the 2nd.', he: 'הקשיבו לצליל האחד שמשתנה: דרגה 4, 6, 7 או 2.' },
   },
   'runs-workshop': {
     title: { en: 'Runs workshop', he: 'סדנת ראנים' },
@@ -249,7 +249,7 @@ export function introText(lesson: LessonDef, step: IntroStep, l: Lang, nm: Namin
   switch (c.kind) {
     case 'explain':
       return {
-        'melodic-minor': { en: 'Natural minor, then melodic minor from the same note. Only the 6th and the 7th change — they go up a half step, so the top of the scale sounds bright.', he: 'מינור טבעי, ואז מינור מלודי מאותו צליל. רק השישית והשביעית משתנות — הן עולות בחצי טון, ולכן החלק העליון של הסולם נשמע בהיר.' },
+        'melodic-minor': { en: 'Natural minor, then melodic minor from the same note. Only the 6th and the 7th change — they go up a half step, so the top of the scale sounds bright.', he: 'מינור טבעי, ואז מינור מלודי מאותו צליל. רק דרגות 6 ו־7 משתנות — הן עולות בחצי טון, ולכן החלק העליון של הסולם נשמע בהיר.' },
         'swing-lick': { en: 'Jazz eighths swing: long–short, long–short. Listen to the lick, then you will write and sing licks like it.', he: 'שמיניות בג׳אז מתנדנדות: ארוך–קצר, ארוך–קצר. הקשיבו לליק, ואחר כך תכתבו ותשירו ליקים כאלה.' },
         'bass-line': { en: 'Listen to the lowest note of each chord: one, seven, six, five — the bass walks down while the chords change.', he: 'הקשיבו לצליל הנמוך ביותר בכל אקורד: אחת, שבע, שש, חמש — הבס יורד בזמן שהאקורדים מתחלפים.' },
         dictation: { en: 'A short melody with its rhythm. First write its notes as degrees, then choose its rhythm.', he: 'מנגינה קצרה עם הקצב שלה. קודם כותבים את הצלילים כדרגות, ואז בוחרים את הקצב.' },
@@ -264,7 +264,7 @@ export function introText(lesson: LessonDef, step: IntroStep, l: Lang, nm: Namin
       return c.quality === 'maj'
         ? l === 'en'
           ? 'This is a major chord. Bright and open.'
-          : "זה אקורד מז'ור. בהיר ופתוח."
+          : "זה אקורד מז׳ור. בהיר ופתוח."
         : l === 'en'
           ? 'Same root, minor chord. The middle note drops, and it turns darker.'
           : 'אותו בס, אקורד מינור. הצליל האמצעי יורד, והצבע נהיה כהה.';
@@ -279,7 +279,7 @@ export function introText(lesson: LessonDef, step: IntroStep, l: Lang, nm: Namin
     case 'sing':
       return l === 'en'
         ? 'First you hear the key and its home note. Then sing what I ask: home, or five steps up the scale.'
-        : 'קודם שומעים את הסולם ואת צליל הבית. אחר כך שרים מה שאבקש: את הבית, או את החמישית.';
+        : 'קודם שומעים את הסולם ואת צליל הבית. אחר כך שרים מה שאבקש: את הבית, או את הקווינטה.';
     case 'interval':
       return {
         M3: { en: 'A third: close and sweet. Like the start of a major chord.', he: 'טרצה: קרובה ומתוקה. כמו ההתחלה של אקורד מז׳ור.' },
@@ -292,9 +292,9 @@ export function introText(lesson: LessonDef, step: IntroStep, l: Lang, nm: Namin
         : `זו תיבה: ${describeRhythm(rhythmFromKey(c.rhythm), 'names', l)}. סופרים: ${describeRhythm(rhythmFromKey(c.rhythm), 'syllables', l)}.`;
     case 'seventh':
       return {
-        maj7: { en: 'A major seventh chord: dreamy and settled. Home in jazz.', he: 'אקורד מז׳ור שביעית: חלומי ורגוע. הבית בג׳אז.' },
-        '7': { en: 'A dominant seventh: bluesy, with a pull to move on.', he: 'דומיננט שביעית: בלוזי, עם משיכה להמשיך הלאה.' },
-        m7: { en: 'Minor seven, dominant seven, major seven: two, five, one — the most common move in jazz.', he: 'מינור שביעית, דומיננט שביעית, מז׳ור שביעית: שתיים, חמש, אחת — המהלך הנפוץ ביותר בג׳אז.' },
+        maj7: { en: 'A major seventh chord: dreamy and settled. Home in jazz.', he: 'אקורד מז׳ור 7: חלומי ורגוע. הבית בג׳אז.' },
+        '7': { en: 'A dominant seventh: bluesy, with a pull to move on.', he: 'דומיננט 7: בלוזי, עם משיכה להמשיך הלאה.' },
+        m7: { en: 'Minor seven, dominant seven, major seven: two, five, one — the most common move in jazz.', he: 'מינור 7, דומיננט 7, מז׳ור 7: שתיים, חמש, אחת — המהלך הנפוץ ביותר בג׳אז.' },
         m7b5: { en: 'Half-diminished: dark and restless.', he: 'חצי מוקטן: כהה וחסר מנוחה.' },
       }[c.quality][l];
     case 'song':
@@ -304,8 +304,8 @@ export function introText(lesson: LessonDef, step: IntroStep, l: Lang, nm: Namin
     case 'inversion':
       return {
         root: { en: 'Root in the bass: solid and grounded.', he: 'השורש בבס: יציב ומקורקע.' },
-        third: { en: 'Third in the bass: lighter, it wants to move on.', he: 'הטרצה בבס: קליל יותר, רוצה להמשיך.' },
-        fifth: { en: 'Fifth in the bass: suspended, like it is waiting.', he: 'הקווינטה בבס: תלוי, כאילו מחכה.' },
+        third: { en: 'Third in the bass: lighter, it wants to move on.', he: 'הטרצה בבס: קלילה יותר, רוצה להמשיך.' },
+        fifth: { en: 'Fifth in the bass: suspended, like it is waiting.', he: 'הקווינטה בבס: תלויה, כאילו מחכה.' },
       }[c.bass][l];
   }
   void lesson;
@@ -333,7 +333,7 @@ export function answerWord(_q: Question, a: Answer, l: Lang, nm: Naming = 'lette
   if (asPc) return spokenNote(asPc, nm, l);
   if (_q.kind === 'rhythm-dict' && typeof a === 'string') return describeRhythm(rhythmFromKey(a, _q.rhythm.bars), 'names', l);
   const words: Record<string, Record<Lang, string>> = {
-    maj: { en: 'major', he: "מז'ור" },
+    maj: { en: 'major', he: "מז׳ור" },
     min: { en: 'minor', he: 'מינור' },
     resolved: { en: 'resolved', he: 'נפתר' },
     open: { en: 'open', he: 'פתוח' },
@@ -346,10 +346,10 @@ export function answerWord(_q: Question, a: Answer, l: Lang, nm: Naming = 'lette
     fifth: { en: 'the fifth', he: 'הקווינטה' },
     aug: { en: 'augmented', he: 'מוגדל' },
     accurate: { en: 'in tune', he: 'מדויק' },
-    major: { en: 'major scale', he: "סולם מז'ור" },
-    maj7: { en: 'major seven', he: "מז'ור שביעית" },
-    '7': { en: 'dominant seven', he: 'דומיננט שביעית' },
-    m7: { en: 'minor seven', he: 'מינור שביעית' },
+    major: { en: 'major scale', he: "סולם מז׳ור" },
+    maj7: { en: 'major seven', he: 'מז׳ור 7' },
+    '7': { en: 'dominant seven', he: 'דומיננט 7' },
+    m7: { en: 'minor seven', he: 'מינור 7' },
     m7b5: { en: 'half-diminished', he: 'חצי מוקטן' },
     'ii-V-I': { en: 'two five one', he: 'שתיים חמש אחת' },
     'V-I': { en: 'five one', he: 'חמש אחת' },
@@ -438,7 +438,7 @@ export function roundPrompt(q: Question, l: Lang, nm: Naming, n: number): string
       return q.aspect === 'material'
         ? l === 'en'
           ? `Round ${n}. Major scale, pentatonic, or blues?`
-          : `סיבוב ${n}. סולם מז'ור, פנטטוני, או בלוז?`
+          : `סיבוב ${n}. סולם מז׳ור, פנטטוני, או בלוז?`
         : l === 'en'
           ? `Round ${n}. Does the run go up, down, or up and back?`
           : `סיבוב ${n}. הראן עולה, יורד, או עולה וחוזר?`;
@@ -454,10 +454,10 @@ export function roundPrompt(q: Question, l: Lang, nm: Naming, n: number): string
       return q.choices.length > 2
         ? l === 'en'
           ? `Round ${n}. Major, minor, diminished, or augmented?`
-          : `סיבוב ${n}. מז'ור, מינור, מוקטן, או מוגדל?`
+          : `סיבוב ${n}. מז׳ור, מינור, מוקטן, או מוגדל?`
         : l === 'en'
           ? `Round ${n}. Major or minor?`
-          : `סיבוב ${n}. מז'ור או מינור?`;
+          : `סיבוב ${n}. מז׳ור או מינור?`;
     case 'degree-seq':
       if (q.given === 'names' && q.names)
         return l === 'en'
@@ -638,7 +638,7 @@ function revealCore(q: Question, l: Lang, nm: Naming): string {
       return q.answer === 'maj'
         ? l === 'en'
           ? "It's major. Hear how bright it is."
-          : "זה מז'ור. שימו לב כמה הוא בהיר."
+          : "זה מז׳ור. שימו לב כמה הוא בהיר."
         : l === 'en'
           ? "It's minor. Hear the darker middle note."
           : 'זה מינור. שימו לב לצליל האמצעי הכהה.';
@@ -746,7 +746,7 @@ export function choiceLabel(_q: Question, a: Answer, l: Lang, nm: Naming = 'lett
     return { big: String(a), small: small[a]?.[l] ?? '', tone };
   }
   const map: Record<string, ChoiceLabel & { he: string; heSmall: string }> = {
-    maj: { big: '☀', small: 'Major', he: '☀', heSmall: "מז'ור", tone: 'gold' },
+    maj: { big: '☀', small: 'Major', he: '☀', heSmall: "מז׳ור", tone: 'gold' },
     min: { big: '☾', small: 'Minor', he: '☾', heSmall: 'מינור', tone: 'lilac' },
     resolved: { big: '⌂', small: 'Resolved', he: '⌂', heSmall: 'נפתר', tone: 'mint' },
     open: { big: '?', small: 'Open', he: '?', heSmall: 'פתוח', tone: 'coral' },
@@ -755,7 +755,7 @@ export function choiceLabel(_q: Question, a: Answer, l: Lang, nm: Naming = 'lett
     M3: { big: '3', small: 'Third', he: '3', heSmall: 'טרצה', tone: 'gold' },
     P5: { big: '5', small: 'Fifth', he: '5', heSmall: 'קווינטה', tone: 'lilac' },
     P8: { big: '8', small: 'Octave', he: '8', heSmall: 'אוקטבה', tone: 'mint' },
-    maj7: { big: 'Δ7', small: 'Major 7', he: 'Δ7', heSmall: "מז'ור 7", tone: 'gold' },
+    maj7: { big: 'Δ7', small: 'Major 7', he: 'Δ7', heSmall: "מז׳ור 7", tone: 'gold' },
     '7': { big: '7', small: 'Dominant 7', he: '7', heSmall: 'דומיננט 7', tone: 'coral' },
     m7: { big: 'm7', small: 'Minor 7', he: 'm7', heSmall: 'מינור 7', tone: 'lilac' },
     m7b5: { big: 'ø7', small: 'Half-dim.', he: 'ø7', heSmall: 'חצי מוקטן', tone: 'mint' },
@@ -763,7 +763,7 @@ export function choiceLabel(_q: Question, a: Answer, l: Lang, nm: Naming = 'lett
     'V-I': { big: 'V–I', small: '', he: 'V–I', heSmall: '', tone: 'mint' },
     'I-vi-ii-V': { big: 'I–vi–ii–V', small: 'turnaround', he: 'I–vi–ii–V', heSmall: 'טרנאראונד', tone: 'lilac' },
     'iii-vi-ii-V': { big: 'iii–vi–ii–V', small: '', he: 'iii–vi–ii–V', heSmall: '', tone: 'coral' },
-    major: { big: '♪', small: 'Major scale', he: '♪', heSmall: "סולם מז'ור", tone: 'gold' },
+    major: { big: '♪', small: 'Major scale', he: '♪', heSmall: "סולם מז׳ור", tone: 'gold' },
     'min-penta': { big: '⁵', small: 'Pentatonic', he: '⁵', heSmall: 'פנטטוני', tone: 'mint' },
     blues: { big: '♭', small: 'Blues', he: '♭', heSmall: 'בלוז', tone: 'lilac' },
     up: { big: '↗', small: 'Up', he: '↗', heSmall: 'עולה', tone: 'mint' },
@@ -795,7 +795,7 @@ export function askTemplate(q: Question, l: Lang, nm: Naming = 'letter'): string
     case 'mode-id':
       return l === 'en' ? 'Which mode starts on {k}?' : 'איזה מודוס מתחיל ב־{k}?';
     case 'degree':
-      if (q.direction === 'name→degree') return l === 'en' ? 'Which degree is {n} in {k} major?' : "איזו דרגה היא {n} ב-{k} מז'ור?";
+      if (q.direction === 'name→degree') return l === 'en' ? 'Which degree is {n} in {k} major?' : "איזו דרגה היא {n} ב-{k} מז׳ור?";
       return l === 'en' ? 'Which degree is {n}?' : 'איזו דרגה זה {n}?';
     case 'note-name':
       return q.direction === 'heard-pitch→name' ? (l === 'en' ? 'Which note is it?' : 'איזה תו זה?') : l === 'en' ? `Which note is degree ${q.degree}?` : `איזה תו הוא דרגה ${q.degree}?`;
@@ -817,7 +817,7 @@ export function askTemplate(q: Question, l: Lang, nm: Naming = 'letter'): string
     case 'rhythm-dict':
       return l === 'en' ? 'Which rhythm did you hear?' : 'איזה קצב שמעתם?';
     case 'quality':
-      return q.choices.length > 2 ? (l === 'en' ? 'Which chord quality?' : 'איזה סוג אקורד?') : l === 'en' ? 'Major or minor?' : "מז'ור או מינור?";
+      return q.choices.length > 2 ? (l === 'en' ? 'Which chord quality?' : 'איזה סוג אקורד?') : l === 'en' ? 'Major or minor?' : "מז׳ור או מינור?";
     case 'degree-seq':
       if (q.given === 'names' && q.names) return l === 'en' ? `${namesShown(q.names, nm, l)}: which degrees?` : `${namesShown(q.names, nm, l)}: אילו דרגות?`;
       return l === 'en' ? 'Which degrees, in order?' : 'אילו דרגות, לפי הסדר?';
@@ -852,7 +852,7 @@ export function hintText(q: Question, l: Lang, voice: boolean): string {
 
 /** Short visual description of a question (badge + recap). */
 export function questionBadge(q: Question, l: Lang, nm: Naming): { key?: PitchClass; text: string } {
-  const major = l === 'en' ? 'major' : "מז'ור";
+  const major = l === 'en' ? 'major' : "מז׳ור";
   switch (q.kind) {
     case 'choice':
       return { text: TOPIC_GEN[q.topic]?.title[l] ?? q.topic };
@@ -889,7 +889,7 @@ export function questionBadge(q: Question, l: Lang, nm: Naming): { key?: PitchCl
     case 'rhythm-dict':
       return { text: `${q.rhythm.meter ?? '4/4'}${q.rhythm.swing ? ' swing' : ''} · ${q.rhythm.meter === '6/8' || q.rhythm.meter === '12/8' ? `♩. = ${Math.round(q.bpm / 1.5)}` : `${q.bpm} BPM`} · ${q.rhythm.bars} ${l === 'en' ? (q.rhythm.bars > 1 ? 'bars' : 'bar') : q.rhythm.bars > 1 ? 'תיבות' : 'תיבה'}` };
     case 'inversion':
-      return { key: q.root, text: l === 'en' ? 'major chord' : "אקורד מז'ור" };
+      return { key: q.root, text: l === 'en' ? 'major chord' : "אקורד מז׳ור" };
   }
 }
 

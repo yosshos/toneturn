@@ -13,8 +13,8 @@ TOPIC_GEN['fine-pitch'] = {
   title: { en: 'Fine pitch: higher or lower?', he: 'גובה עדין: גבוה או נמוך?' },
   skill: 'notes',
   levels: [
-    { en: 'Half a semitone (50¢)', he: 'חצי חצי־טון (50¢)' },
-    { en: 'A quarter (25¢)', he: 'רבע (25¢)' },
+    { en: 'Half a semitone (50¢)', he: 'רבע טון (50¢)' },
+    { en: 'A quarter (25¢)', he: '25¢' },
     { en: 'Ten cents', he: 'עשרה סנט' },
   ],
   gen(seed, level, id) {
@@ -154,7 +154,7 @@ TOPIC_GEN['two-voice'] = {
 // ---------------------------------------------------------------- U.7 post-tonal sets
 
 const SETS: Record<string, { pcs: number[]; name: ReturnType<typeof nm> }> = {
-  '012': { pcs: [0, 1, 2], name: nm('[0,1,2] cluster', '[0,1,2] אשכול', 'zero one two', 'chromatic cluster', 'cluster', 'אשכול') },
+  '012': { pcs: [0, 1, 2], name: nm('[0,1,2] cluster', '[0,1,2] קלאסטר', 'zero one two', 'chromatic cluster', 'cluster', 'קלאסטר') },
   '013': { pcs: [0, 1, 3], name: nm('[0,1,3]', '[0,1,3]', 'zero one three') },
   '014': { pcs: [0, 1, 4], name: nm('[0,1,4]', '[0,1,4]', 'zero one four') },
   '015': { pcs: [0, 1, 5], name: nm('[0,1,5]', '[0,1,5]', 'zero one five') },

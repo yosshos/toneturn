@@ -363,7 +363,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: '♩.  ·  ♩ ♪  ·  ♪ ♩', he: '♩.  ·  ♩ ♪  ·  ♪ ♩' } },
       },
       {
-        say: { en: 'Both 3/4 and 6/8 hold six eighths — but 3/4 is three pairs and 6/8 is two triples. Count the clicks: three, then two.', he: 'גם 3/4 וגם 6/8 מכילים שש שמיניות — אבל 3/4 זה שלושה זוגות ו־6/8 זה שתי שלישיות. ספרו את הקליקים: שלושה, ואז שניים.' },
+        say: { en: 'Both 3/4 and 6/8 hold six eighths — but 3/4 is three pairs and 6/8 is two triples. Count the clicks: three, then two.', he: 'גם 3/4 וגם 6/8 מכילים שש שמיניות — אבל 3/4 זה שלושה זוגות ו־6/8 זה שתי קבוצות של שלוש. ספרו את הקליקים: שלושה, ואז שניים.' },
         play: [R('m3:ee.ee.ee', 84), R('m6:eee.eee', 84)],
         show: { text: { en: '3/4: 12 34 56  ·  6/8: 123 456', he: '3/4: 12 34 56  ·  6/8: 123 456' } },
       },

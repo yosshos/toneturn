@@ -534,9 +534,9 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [60, 64], text: { en: 'C · E', he: 'דו · מי' } },
       },
       {
-        say: { en: 'Before each note you hear a messy cluster. It is no mistake: it wipes the last note from memory, so you cannot sneak in relative pitch.', he: 'לפני כל צליל תשמעו גוש צלילים מבולגן. זו לא טעות: הוא מוחק את הצליל הקודם מהזיכרון, כדי שלא תוכלו להתגנב עם שמיעה יחסית.' },
+        say: { en: 'Before each note you hear a messy cluster. It is no mistake: it wipes the last note from memory, so you cannot sneak in relative pitch.', he: 'לפני כל צליל תשמעו קלאסטר מבולגן. זו לא טעות: הוא מוחק את הצליל הקודם מהזיכרון, כדי שלא תוכלו להתגנב עם שמיעה יחסית.' },
         play: [chord([55, 56, 61, 66, 68], 0.5), rest(0.9), note(62, 1.3)],
-        show: { text: { en: 'cluster → note', he: 'גוש → צליל' } },
+        show: { text: { en: 'cluster → note', he: 'קלאסטר → צליל' } },
       },
       {
         say: { en: 'The first level uses only the white keys: C, D, E, F, G, A, B.', he: 'הרמה הראשונה משתמשת רק בקלידים הלבנים: דו, רה, מי, פה, סול, לה, סי.' },
@@ -556,7 +556,7 @@ export const LESSONS: MiniLesson[] = [
     area: 'ear',
     emoji: '🌈',
     title: { en: 'Modes by ear', he: 'מודוסים בשמיעה' },
-    takeaway: { en: 'Find the third (bright or dark), then the one odd note: Dorian has a raised 6th, Mixolydian a flat 7th.', he: 'מוצאים את הטרצה (בהירה או כהה), ואז את הצליל החריג: בדורי השישית גבוהה, במיקסולידי השביעית נמוכה.' },
+    takeaway: { en: 'Find the third (bright or dark), then the one odd note: Dorian has a raised 6th, Mixolydian a flat 7th.', he: 'מוצאים את הטרצה (בהירה או כהה), ואז את הצליל החריג: בדורי דרגה 6 מוגבהת, במיקסולידי ♭7.' },
     steps: [
       {
         say: { en: 'Hi {name}! A mode is a scale with its own mood. Same home note, a few notes shifted — and the colour changes. Ionian is plain major.', he: 'היי {name}! מודוס הוא סולם עם מצב רוח משלו. אותו צליל בית, כמה צלילים זזים — והצבע משתנה. יוני הוא פשוט מז׳ור.' },
@@ -564,22 +564,22 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: C_IONIAN, text: { en: 'Ionian: 1 2 3 4 5 6 7', he: 'יוני: 1 2 3 4 5 6 7' } },
       },
       {
-        say: { en: 'Aeolian is natural minor: the 3rd, 6th and 7th are all a half step lower. Darker, more serious.', he: 'איאולי הוא המינור הטבעי: השלישית, השישית והשביעית נמוכות כולן בחצי טון. כהה ורציני יותר.' },
+        say: { en: 'Aeolian is natural minor: the 3rd, 6th and 7th are all a half step lower. Darker, more serious.', he: 'איאולי הוא המינור הטבעי: דרגות 3, 6 ו־7 מונמכות כולן בחצי טון. כהה ורציני יותר.' },
         play: [note(60, 0.9), rest(0.3), notes(upDown(C_AEOLIAN), 0.38)],
         show: { notes: C_AEOLIAN, text: { en: 'Aeolian: 1 2 ♭3 4 5 ♭6 ♭7', he: 'איאולי: 1 2 ♭3 4 5 ♭6 ♭7' } },
       },
       {
-        say: { en: 'Dorian is minor with a bright 6th — dark, but with a hopeful lift.', he: 'דורי הוא מינור עם שישית בהירה — כהה, אבל עם הרמה מלאת תקווה.' },
+        say: { en: 'Dorian is minor with a bright 6th — dark, but with a hopeful lift.', he: 'דורי הוא מינור עם דרגה 6 מוגבהת — כהה, אבל עם הרמה מלאת תקווה.' },
         play: [note(60, 0.9), rest(0.3), notes(C_DORIAN, 0.4)],
         show: { notes: C_DORIAN, text: { en: 'Dorian: 1 2 ♭3 4 5 6 ♭7', he: 'דורי: 1 2 ♭3 4 5 6 ♭7' } },
       },
       {
-        say: { en: 'Mixolydian is major with a flat 7th — bluesy, a bit rock and roll.', he: 'מיקסולידי הוא מז׳ור עם שביעית נמוכה — בלוזי, קצת רוקנרול.' },
+        say: { en: 'Mixolydian is major with a flat 7th — bluesy, a bit rock and roll.', he: 'מיקסולידי הוא מז׳ור עם ספטימה קטנה (♭7) — בלוזי, קצת רוקנרול.' },
         play: [note(60, 0.9), rest(0.3), notes(C_MIXO, 0.4)],
         show: { notes: C_MIXO, text: { en: 'Mixolydian: 1 2 3 4 5 6 ♭7', he: 'מיקסולידי: 1 2 3 4 5 6 ♭7' } },
       },
       {
-        say: { en: 'The trick: first the third — bright family or dark family? Then hunt for the odd note. Here: Aeolian top, then Dorian top. Hear the 6th lift?', he: 'הטריק: קודם הטרצה — משפחה בהירה או כהה? ואז מחפשים את הצליל החריג. הנה: החלק העליון באיאולי, ואז בדורי. שומעים את השישית עולה?' },
+        say: { en: 'The trick: first the third — bright family or dark family? Then hunt for the odd note. Here: Aeolian top, then Dorian top. Hear the 6th lift?', he: 'הטריק: קודם הטרצה — משפחה בהירה או כהה? ואז מחפשים את הצליל החריג. הנה: החלק העליון באיאולי, ואז בדורי. שומעים את דרגה 6 עולה?' },
         play: [notes([67, 68, 70, 72], 0.45), rest(0.4), notes([67, 69, 70, 72], 0.45)],
         show: { notes: [68, 69], text: { en: '♭6 → 6', he: '♭6 → 6' } },
       },
@@ -645,7 +645,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [60, 63, 65, 67, 70, 72], text: { en: 'C E♭ F G B♭ C', he: 'דו מי♭ פה סול סי♭ דו' } },
       },
       {
-        say: { en: 'Blues adds one spicy extra: the flat 5, squeezed between 4 and 5. Hear the crunch?', he: 'בלוז מוסיף תבלין אחד: החמישית הנמוכה, דחוסה בין 4 ל־5. שומעים את החריקה?' },
+        say: { en: 'Blues adds one spicy extra: the flat 5, squeezed between 4 and 5. Hear the crunch?', he: 'בלוז מוסיף תבלין אחד: ה־♭5 (הבלו נוט), דחוסה בין 4 ל־5. שומעים את החריקה?' },
         play: [cad(C), rest(0.3), notes([60, 63, 65, 66, 67, 70], 0.33)],
         show: { notes: [60, 63, 65, 66, 67, 70], text: { en: 'C E♭ F G♭ G B♭', he: 'דו מי♭ פה סול♭ סול סי♭' } },
       },

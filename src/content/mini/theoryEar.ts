@@ -34,7 +34,7 @@ export const LESSONS: MiniLesson[] = [
     takeaway: { en: 'Keep stacking thirds past the 7th: 9, 11, 13. Alter them (♭9 ♯9 ♯11 ♭13) for spice, or swap the 3 for a 4 for sus.', he: 'ממשיכים לערום טרצות מעל ה־7: ‏9, 11, 13. משנים אותן (♭9 ♯9 ♯11 ♭13) בשביל תבלין, או מחליפים את ה־3 ב־4 בשביל sus.' },
     steps: [
       {
-        say: { en: 'Hey {name}! A seventh chord is a stack of thirds: 1, 3, 5, 7. Keep stacking thirds and you reach 9, 11 and 13 — the extensions.', he: 'היי {name}! אקורד ספטים בנוי מטרצות זו על גבי זו: 1, 3, 5, 7. ממשיכים להוסיף טרצות ומגיעים ל־9, 11 ו־13 — ההרחבות.' },
+        say: { en: 'Hey {name}! A seventh chord is a stack of thirds: 1, 3, 5, 7. Keep stacking thirds and you reach 9, 11 and 13 — the extensions.', he: 'היי {name}! אקורד ספטימה בנוי מטרצות זו על גבי זו: 1, 3, 5, 7. ממשיכים להוסיף טרצות ומגיעים ל־9, 11 ו־13 — ההרחבות.' },
         play: [arp([43, 59, 62, 65]), ch([43, 59, 62, 65], 1.4)],
         show: { notes: [43, 59, 62, 65], chord: true, key: 'C', text: { en: 'G7 = 1 3 5 7', he: 'G7 = 1 3 5 7' } },
       },
@@ -75,7 +75,7 @@ export const LESSONS: MiniLesson[] = [
     area: 'harmony',
     emoji: '🎹',
     title: { en: 'Voicings and inversions', he: 'וויסינגים והיפוכים' },
-    takeaway: { en: 'Same chord, different arrangement: close, drop 2 or spread; the bass note sets the inversion; jazz voicings leave notes out or add colour on top.', he: 'אותו אקורד, סידור אחר: צפוף, דרופ 2 או פרוש; צליל הבס קובע את ההיפוך; וויסינגים בג׳אז משמיטים צלילים או מוסיפים צבע למעלה.' },
+    takeaway: { en: 'Same chord, different arrangement: close, drop 2 or spread; the bass note sets the inversion; jazz voicings leave notes out or add colour on top.', he: 'אותו אקורד, סידור אחר: צפוף, Drop 2 או פרוש; צליל הבס קובע את ההיפוך; וויסינגים בג׳אז משמיטים צלילים או מוסיפים צבע למעלה.' },
     steps: [
       {
         say: { en: 'Same chord, different outfit: a voicing is how you arrange its notes. Here is Cmaj7 in close position, all four notes packed as tight as they go.', he: 'אותו אקורד, תלבושת אחרת: וויסינג הוא האופן שבו מסדרים את הצלילים. הנה Cmaj7 במצב צפוף — ארבעת הצלילים צמודים ככל האפשר.' },
@@ -83,9 +83,9 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [60, 64, 67, 71], chord: true, key: 'C', text: { en: 'Close', he: 'צפוף' } },
       },
       {
-        say: { en: 'Drop 2: take the second note from the top and drop it an octave. Wider and smoother — a big-band and guitar favourite.', he: 'דרופ 2: לוקחים את הצליל השני מלמעלה ומורידים אותו אוקטבה. רחב וחלק יותר — אהוב על ביג־בנדים ועל גיטריסטים.' },
+        say: { en: 'Drop 2: take the second note from the top and drop it an octave. Wider and smoother — a big-band and guitar favourite.', he: 'Drop 2: לוקחים את הצליל השני מלמעלה ומורידים אותו אוקטבה. רחב וחלק יותר — אהוב על ביג־בנדים ועל גיטריסטים.' },
         play: [ch([55, 60, 64, 71], 1.4), arp([55, 60, 64, 71])],
-        show: { notes: [55, 60, 64, 71], chord: true, key: 'C', text: { en: 'Drop 2', he: 'דרופ 2' } },
+        show: { notes: [55, 60, 64, 71], chord: true, key: 'C', text: { en: 'Drop 2', he: 'Drop 2' } },
       },
       {
         say: { en: 'Spread: the notes fly apart over more than two octaves, with lots of air inside.', he: 'פרוש: הצלילים מתפזרים על פני יותר משתי אוקטבות, עם הרבה אוויר בפנים.' },
@@ -98,19 +98,19 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [58, 64, 67, 72], chord: true, key: 'F', text: { en: 'C7 bass: 1 · 3 · 5 · 7', he: 'C7 בבס: 1 · 3 · 5 · 7' } },
       },
       {
-        say: { en: 'Jazz pianists travel light. A shell is just 1, 3 and 7. A rootless voicing leaves the root to the bass player and adds 9 and 13.', he: 'פסנתרני ג׳אז נוסעים קל. וויסינג של הוא רק 1, 3 ו־7. וויסינג בלי שורש משאיר את השורש לבסיסט ומוסיף 9 ו־13.' },
+        say: { en: 'Jazz pianists travel light. A shell is just 1, 3 and 7. A rootless voicing leaves the root to the bass player and adds 9 and 13.', he: 'פסנתרני ג׳אז נוסעים קל. וויסינג Shell הוא רק 1, 3 ו־7. וויסינג בלי שורש משאיר את השורש לבסיסט ומוסיף 9 ו־13.' },
         play: [ch([48, 52, 58], 1.4), ch([52, 57, 58, 62], 1.6)],
-        show: { notes: [52, 57, 58, 62], chord: true, key: 'F', text: { en: 'Shell 1-3-7 · Rootless', he: 'של 1-3-7 · בלי שורש' } },
+        show: { notes: [52, 57, 58, 62], chord: true, key: 'F', text: { en: 'Shell 1-3-7 · Rootless', he: 'Shell 1-3-7 · בלי שורש' } },
       },
       {
-        say: { en: 'Quartal voicings stack fourths: open and modern. An upper structure puts a bright triad over 3 and 7 — here D major on top of C7.', he: 'וויסינג קוורטלי בנוי מקוורטות: פתוח ומודרני. משולש עליון שם משולש מואר מעל ה־3 וה־7 — כאן רה מז׳ור מעל C7.' },
+        say: { en: 'Quartal voicings stack fourths: open and modern. An upper structure puts a bright triad over 3 and 7 — here D major on top of C7.', he: 'וויסינג קוורטלי בנוי מקוורטות: פתוח ומודרני. Upper structure שם משולש מואר מעל ה־3 וה־7 — כאן רה מז׳ור מעל C7.' },
         play: [ch([48, 53, 58, 63, 67], 1.5), ch([48, 52, 58, 62, 66, 69], 1.8)],
         show: { notes: [48, 52, 58, 62, 66, 69], chord: true, key: 'F', text: { en: 'Quartal · D/C7', he: 'קוורטלי · D/C7' } },
       },
       {
         say: { en: 'Your turn! You hear a chord together, then note by note. Ask yourself: tight or wide? What is in the bass? Then pick the name.', he: 'תורכם! תשמעו אקורד ביחד, ואז צליל אחר צליל. שאלו את עצמכם: צפוף או רחב? מה בבס? ואז בחרו את השם.' },
         play: [ch([55, 60, 64, 71], 1.4), arp([55, 60, 64, 71])],
-        show: { notes: [55, 60, 64, 71], chord: true, key: 'C', text: { en: 'Close? Drop 2? Spread?', he: 'צפוף? דרופ 2? פרוש?' } },
+        show: { notes: [55, 60, 64, 71], chord: true, key: 'C', text: { en: 'Close? Drop 2? Spread?', he: 'צפוף? Drop 2? פרוש?' } },
       },
     ],
   },
@@ -119,7 +119,7 @@ export const LESSONS: MiniLesson[] = [
     area: 'harmony',
     emoji: '🛤️',
     title: { en: 'Chord progressions', he: 'מהלכי אקורדים' },
-    takeaway: { en: 'Roman numerals name a progression in any key. Pop loops I–V–vi–IV; jazz runs on ii–V–I; borrowed chords like ♭VI and ♭VII come from the parallel minor.', he: 'ספרות רומיות נותנות שם למהלך בכל סולם. פופ חוזר על I–V–vi–IV; ג׳אז רץ על ii–V–I; אקורדים שאולים כמו ♭VI ו־♭VII מגיעים מהמינור המקביל.' },
+    takeaway: { en: 'Roman numerals name a progression in any key. Pop loops I–V–vi–IV; jazz runs on ii–V–I; borrowed chords like ♭VI and ♭VII come from the parallel minor.', he: 'ספרות רומיות נותנות שם למהלך בכל סולם. פופ חוזר על I–V–vi–IV; ג׳אז רץ על ii–V–I; אקורדים שאולים כמו ♭VI ו־♭VII מגיעים מהמינור שעל אותה טוניקה (בדו מז׳ור: מדו מינור).' },
     steps: [
       {
         say: { en: 'Hi {name}! Chords travel in familiar routes called progressions. Roman numerals name each chord by its scale step: uppercase major, lowercase minor.', he: 'היי {name}! אקורדים נוסעים במסלולים מוכרים שנקראים מהלכים. ספרות רומיות מסמנות כל אקורד לפי הדרגה שלו: גדולות למז׳ור, קטנות למינור.' },
@@ -147,12 +147,12 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'Dm7 – D♭7 – Cmaj7', he: 'Dm7 – D♭7 – Cmaj7' } },
       },
       {
-        say: { en: 'Borrowed chords sneak in from the parallel minor. ♭VI–♭VII–I is the heroic ending — level complete! I–♭III–IV–I borrows too.', he: 'אקורדים שאולים מתגנבים מהמינור המקביל. ♭VI–♭VII–I הוא הסיום ההרואי — שלב הושלם! גם I–♭III–IV–I שואל.' },
+        say: { en: 'Borrowed chords sneak in from the parallel minor. ♭VI–♭VII–I is the heroic ending — level complete! I–♭III–IV–I borrows too.', he: 'אקורדים שאולים מתגנבים מהמינור שעל אותה טוניקה. ♭VI–♭VII–I הוא הסיום ההרואי — שלב הושלם! גם I–♭III–IV–I שואל.' },
         play: [ch([48, 60, 64, 67], 0.8), ch([44, 60, 63, 68], 0.8), ch([46, 58, 62, 65], 0.8), ch([48, 60, 64, 67], 1.5)],
         show: { text: { en: 'I – ♭VI – ♭VII – I', he: 'I – ♭VI – ♭VII – I' } },
       },
       {
-        say: { en: 'IV turning into minor iv sounds bittersweet. The backdoor, iv7–♭VII7–I, comes home from below instead of from V.', he: 'IV שהופך ל־iv מינורי נשמע מתוק־מריר. הדלת האחורית, iv7–♭VII7–I, מגיעה הביתה מלמטה במקום מ־V.' },
+        say: { en: 'IV turning into minor iv sounds bittersweet. The backdoor, iv7–♭VII7–I, comes home from below instead of from V.', he: 'IV שהופך ל־iv מינורי נשמע מתוק־מריר. ה־Backdoor‏, iv7–♭VII7–I, מגיע הביתה מלמטה במקום מ־V.' },
         play: [ch([41, 57, 60, 65], 0.8), ch([41, 60, 65, 68], 0.8), ch([48, 60, 64, 67], 1.1), rest(0.3), ch([41, 60, 63, 68], 0.8), ch([46, 62, 65, 68], 0.8), ch([48, 59, 64, 67], 1.4)],
         show: { text: { en: 'IV–iv–I · iv7–♭VII7–I', he: 'IV–iv–I · iv7–♭VII7–I' } },
       },
@@ -315,7 +315,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [60, 63, 67], chord: true, key: 'C', text: { en: '[0,3,7]', he: '[0,3,7]' } },
       },
       {
-        say: { en: 'Some families have strong faces. [0,1,2] is a cluster of semitones. [0,2,7] stacks fifths: open and hollow.', he: 'לחלק מהמשפחות יש פרצוף ברור. [0,1,2] הוא אשכול של חצאי טונים. [0,2,7] בנוי מקווינטות: פתוח וחלול.' },
+        say: { en: 'Some families have strong faces. [0,1,2] is a cluster of semitones. [0,2,7] stacks fifths: open and hollow.', he: 'לחלק מהמשפחות יש פרצוף ברור. [0,1,2] הוא קלאסטר של חצאי טונים. [0,2,7] בנוי מקווינטות: פתוח וחלול.' },
         play: [ch([60, 61, 62], 1.4), ch([60, 67, 74], 1.6)],
         show: { notes: [60, 61, 62], chord: true, key: 'C', text: { en: '[0,1,2] · [0,2,7]', he: '[0,1,2] · [0,2,7]' } },
       },
@@ -376,7 +376,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'Rast · Bayati', he: 'ראסט · ביאתי' } },
       },
       {
-        say: { en: 'Saba is Bayati with a lowered fourth, and it sounds heartbroken. Sikah starts on E half-flat itself.', he: 'סבא הוא ביאתי עם רביעית מונמכת, והוא נשמע שבור לב. סיקה מתחיל על מי חצי במול עצמו.' },
+        say: { en: 'Saba is Bayati with a lowered fourth, and it sounds heartbroken. Sikah starts on E half-flat itself.', he: 'סבא הוא ביאתי עם דרגה 4 מונמכת, והוא נשמע שבור לב. סיקה מתחיל על מי חצי במול עצמו.' },
         play: [ns(mq(62, [0, 1.5, 3, 4]), 0.4), rest(0.3), ns(mq(63.5, [0, 1.5, 3.5, 5.5, 7]), 0.4)],
         show: { text: { en: 'Saba · Sikah', he: 'סבא · סיקה' } },
       },
@@ -493,7 +493,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [60, 63, 66], chord: true, key: 'C', text: { en: 'Cm · C° · C+', he: 'Cm · C° · C+' } },
       },
       {
-        say: { en: 'Sevenths add one more letter. G7 is G, B, D, F: a major triad with a minor seventh. Gmaj7 raises it to F♯.', he: 'אקורדי ספטים מוסיפים עוד אות. G7 הוא סול, סי, רה, פה: משולש מז׳ורי עם ספטימה קטנה. ב־Gmaj7 היא עולה לפה דיאז.' },
+        say: { en: 'Sevenths add one more letter. G7 is G, B, D, F: a major triad with a minor seventh. Gmaj7 raises it to F♯.', he: 'אקורדי ספטימה מוסיפים עוד אות. G7 הוא סול, סי, רה, פה: משולש מז׳ורי עם ספטימה קטנה. ב־Gmaj7 היא עולה לפה דיאז.' },
         play: [ch([55, 59, 62, 65], 1.2), ch([55, 59, 62, 66], 1.4)],
         show: { notes: [55, 59, 62, 65], chord: true, key: 'C', text: { en: 'G7 G B D F · Gmaj7 F♯', he: 'G7 סול סי רה פה · Gmaj7 פה♯' } },
       },
@@ -503,7 +503,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [55, 58, 61, 64], chord: true, key: 'C', text: { en: 'G°7 = G B♭ D♭ F♭', he: 'G°7 = סול סי♭ רה♭ פה♭' } },
       },
       {
-        say: { en: 'Ninths keep skipping: the 9 is the letter after the 7, so in G9 it is A. In G7♭9 it is A♭.', he: 'נונות ממשיכות לדלג: ה־9 היא האות שאחרי ה־7, אז ב־G9 זה לה. ב־G7♭9 זה לה במול.' },
+        say: { en: 'Ninths keep skipping: the 9 is the letter after the 7, so in G9 it is A. In G7♭9 it is A♭.', he: 'ה־9 ממשיכה לדלג: היא האות שאחרי ה־7, אז ב־G9 זה לה. ב־G7♭9 זה לה במול.' },
         play: [ch([43, 59, 62, 65, 69], 1.2), ch([43, 59, 62, 65, 68], 1.4)],
         show: { notes: [43, 59, 62, 65, 69], chord: true, key: 'C', text: { en: 'G9: G B D F A', he: 'G9: סול סי רה פה לה' } },
       },
@@ -537,7 +537,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [71, 74, 77], chord: true, key: 'C', text: { en: 'vii° → I', he: 'vii° → I' } },
       },
       {
-        say: { en: 'Minor keys use harmonic minor, with a raised seventh. In A minor: i, ii°, III+, iv, V, VI, vii°. That G♯ makes V major.', he: 'בסולמות מינוריים משתמשים במינור ההרמוני, עם דרגה שביעית מוגבהת. בלה מינור: i, ii°, III+, iv, V, VI, vii°. הסול דיאז הופך את V למז׳ורי.' },
+        say: { en: 'Minor keys use harmonic minor, with a raised seventh. In A minor: i, ii°, III+, iv, V, VI, vii°. That G♯ makes V major.', he: 'בסולמות מינוריים משתמשים במינור ההרמוני, עם דרגה 7 מוגבהת. בלה מינור: i, ii°, III+, iv, V, VI, vii°. הסול דיאז הופך את V למז׳ורי.' },
         play: [ch([57, 60, 64], 1), ch([52, 56, 59], 1), ch([57, 60, 64], 1.4)],
         show: { notes: [52, 56, 59], chord: true, key: 'C', text: { en: 'A minor: V = E G♯ B', he: 'לה מינור: V = מי סול♯ סי' } },
       },
@@ -606,7 +606,7 @@ export const LESSONS: MiniLesson[] = [
     area: 'theory',
     emoji: '🎺',
     title: { en: 'Transposition', he: 'טרנספוזיציה' },
-    takeaway: { en: 'Move every note by the same interval, spelling letters first. B♭ instruments read a major 2nd up, E♭ alto sax a major 6th up, F horn a perfect 5th up.', he: 'מזיזים כל צליל באותו מרווח, ומקפידים קודם על האות. כלים ב־B♭ קוראים סקונדה גדולה למעלה, אלט סקס ב־E♭ סקסטה גדולה למעלה, קרן ב־F קווינטה זכה למעלה.' },
+    takeaway: { en: 'Move every note by the same interval, spelling letters first. B♭ instruments read a major 2nd up, E♭ alto sax a major 6th up, F horn a perfect 5th up.', he: 'מזיזים כל צליל באותו מרווח, ומקפידים קודם על האות. כלים ב־B♭ קוראים סקונדה גדולה למעלה, סקסופון אלט ב־E♭ סקסטה גדולה למעלה, קרן ב־F קווינטה זכה למעלה.' },
     steps: [
       {
         say: { en: 'Hi {name}! Transposing means moving music by a fixed interval. Every note moves the same distance, so the tune stays the same tune.', he: 'היי {name}! טרנספוזיציה פירושה להזיז מוזיקה במרווח קבוע. כל צליל זז אותו מרחק, אז המנגינה נשארת אותה מנגינה.' },
@@ -628,7 +628,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'B♭ instruments: ↑ major 2nd', he: 'כלים ב־B♭: ↑ סקונדה גדולה' } },
       },
       {
-        say: { en: 'The E♭ alto sax reads a major sixth higher: concert C is written A.', he: 'אלט סקס ב־E♭ קורא סקסטה גדולה למעלה: דו אמיתי נכתב לה.' },
+        say: { en: 'The E♭ alto sax reads a major sixth higher: concert C is written A.', he: 'סקסופון אלט ב־E♭ קורא סקסטה גדולה למעלה: דו אמיתי נכתב לה.' },
         play: [ns([60, 69], 0.8)],
         show: { notes: [60, 69], key: 'C', text: { en: 'E♭ alto: ↑ major 6th', he: 'אלט ב־E♭: ↑ סקסטה גדולה' } },
       },
@@ -649,7 +649,7 @@ export const LESSONS: MiniLesson[] = [
     area: 'theory',
     emoji: '🧤',
     title: { en: 'Chord and scale', he: 'אקורד וסולם' },
-    takeaway: { en: 'In a key, play the key\'s notes from the chord\'s root: ii is Dorian, iii Phrygian, V Mixolydian. Jazz tensions pick special scales: 7alt → altered.', he: 'בתוך סולם, מנגנים את צלילי הסולם מהשורש של האקורד: ii דורי, iii פריגי, V מיקסולידי. מתחים בג׳אז בוחרים סולמות מיוחדים: 7alt ← אלטרד.' },
+    takeaway: { en: 'In a key, play the key\'s notes from the chord\'s root: ii is Dorian, iii Phrygian, V Mixolydian. Jazz tensions pick special scales: 7alt → altered.', he: 'בתוך סולם, מנגנים את צלילי הסולם מהשורש של האקורד: ii דורי, iii פריגי, V מיקסולידי. טנשנים בג׳אז בוחרים סולמות מיוחדים: 7alt ← אלטרד.' },
     steps: [
       {
         say: { en: 'Hi {name}! Every chord has a scale that fits it like a glove. Inside a key, play the key\'s notes starting from the chord\'s root.', he: 'היי {name}! לכל אקורד יש סולם שמתאים לו כמו כפפה. בתוך סולם, מנגנים את צלילי הסולם החל מהשורש של האקורד.' },
@@ -657,8 +657,8 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [62, 64, 65, 67, 69, 71, 72, 74], key: 'C', text: { en: 'Dm7 in C → D Dorian', he: 'Dm7 בדו מז׳ור ← רה דורי' } },
       },
       {
-        say: { en: 'In C major that gives seven modes: I Ionian, ii Dorian, iii Phrygian, IV Lydian, V Mixolydian, vi Aeolian, vii Locrian.', he: 'בדו מז׳ור זה נותן שבעה מודוסים: I יוני, ii דורי, iii פריגי, IV לידי, V מיקסולידי, vi אאולי, vii לוקרי.' },
-        show: { key: 'C', text: { en: 'I Ion · ii Dor · iii Phr · IV Lyd · V Mix · vi Aeo · viiø Loc', he: 'I יוני · ii דורי · iii פריגי · IV לידי · V מיקסו · vi אאולי · viiø לוקרי' } },
+        say: { en: 'In C major that gives seven modes: I Ionian, ii Dorian, iii Phrygian, IV Lydian, V Mixolydian, vi Aeolian, vii Locrian.', he: 'בדו מז׳ור זה נותן שבעה מודוסים: I יוני, ii דורי, iii פריגי, IV לידי, V מיקסולידי, vi איאולי, vii לוקרי.' },
+        show: { key: 'C', text: { en: 'I Ion · ii Dor · iii Phr · IV Lyd · V Mix · vi Aeo · viiø Loc', he: 'I יוני · ii דורי · iii פריגי · IV לידי · V מיקסו · vi איאולי · viiø לוקרי' } },
       },
       {
         say: { en: 'Careful: m7 chords sit on ii, iii and vi, so the degree decides. Dm7 is Dorian, but Em7 in C is Phrygian.', he: 'זהירות: אקורדי m7 יושבים על ii, ‏iii ו־vi, אז הדרגה מכריעה. Dm7 הוא דורי, אבל Em7 בדו מז׳ור הוא פריגי.' },
@@ -681,7 +681,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [60, 62, 64, 66, 68, 70, 72], text: { en: '7♯5 → whole tone', he: '7♯5 ← טון שלם' } },
       },
       {
-        say: { en: 'Your turn! I show and play a chord, at first with its key. Find its degree, or its tell-tale tension, and pick the scale.', he: 'תורכם! אני מציג ומנגן אקורד, בהתחלה עם הסולם שלו. מצאו את הדרגה, או את המתח שמסגיר אותו, ובחרו את הסולם.' },
+        say: { en: 'Your turn! I show and play a chord, at first with its key. Find its degree, or its tell-tale tension, and pick the scale.', he: 'תורכם! אני מציג ומנגן אקורד, בהתחלה עם הסולם שלו. מצאו את הדרגה, או את הטנשן שמסגיר אותו, ובחרו את הסולם.' },
         play: [ch([45, 48, 52, 55], 1.6)],
         show: { notes: [45, 48, 52, 55], chord: true, key: 'C', text: { en: 'Am7 in C — which scale?', he: 'Am7 בדו מז׳ור — איזה סולם?' } },
       },

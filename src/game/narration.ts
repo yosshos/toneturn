@@ -26,7 +26,7 @@ export const narration = {
   reveal: (l: Lang, nm: Naming, d: number, key: PitchClass, note: PitchClass) =>
     l === 'en'
       ? `It's ${deg(d, l)}. In ${spokenMajorKey(key, nm, l)}, ${spokenNote(note, nm, l)} is ${d === 1 ? 'home' : 'the fifth'}.`
-      : `זו ${deg(d, l)}. ב${spokenMajorKey(key, nm, l)}, ${spokenNote(note, nm, l)} ${d === 1 ? 'הוא הבית' : 'הוא החמישית'}.`,
+      : `זו ${deg(d, l)}. ב${spokenMajorKey(key, nm, l)}, ${spokenNote(note, nm, l)} ${d === 1 ? 'הוא הבית' : 'הוא דרגה 5'}.`,
   silence: (l: Lang) => (l === 'en' ? "I didn't hear you. One, or five?" : 'לא שמעתי. אחת, או חמש?'),
   unclear: (l: Lang) => (l === 'en' ? 'Sorry? Say one, or five.' : 'סליחה? אמרו אחת, או חמש.'),
   ambiguous: (l: Lang, cands: number[]) =>

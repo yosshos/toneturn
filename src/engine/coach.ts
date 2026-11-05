@@ -31,7 +31,7 @@ const DEGREE_CHAR: Record<number, { en: string; he: string }> = {
 };
 const INTERVAL_SIZE: Record<string, number> = { M3: 4, P5: 7, P8: 12 };
 const INTERVAL_CHAR: Record<string, { en: string; he: string }> = {
-  M3: { en: 'a major third is small and sweet', he: 'טרצה גדולה קטנה ומתוקה' },
+  M3: { en: 'a major third is small and sweet', he: 'טרצה גדולה — קרובה ומתוקה' },
   P5: { en: 'a fifth is wide, open and hollow', he: 'קווינטה רחבה, פתוחה וחלולה' },
   P8: { en: 'an octave is the same note, higher', he: 'אוקטבה היא אותו צליל, גבוה יותר' },
 };

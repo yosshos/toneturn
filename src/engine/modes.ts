@@ -135,7 +135,7 @@ export const MODE_NAMES: Record<ModeId, { en: string; he: string; say: { en: str
   phrygian: { en: 'Phrygian', he: 'פריגי', say: { en: ['phrygian', 'minor flat two', 'minor flat nine'], he: ['פריגי', 'פריגיאן'] } },
   lydian: { en: 'Lydian', he: 'לידי', say: { en: ['lydian', 'major sharp four', 'major sharp eleven'], he: ['לידי', 'לידיאן'] } },
   mixolydian: { en: 'Mixolydian', he: 'מיקסולידי', say: { en: ['mixolydian', 'mixo', 'dominant scale', 'major flat seven'], he: ['מיקסולידי', 'מיקסו'] } },
-  aeolian: { en: 'Aeolian (natural minor)', he: 'איולי (מינור טבעי)', say: { en: ['aeolian', 'natural minor', 'minor'], he: ['איולי', 'מינור טבעי', 'מינור'] } },
+  aeolian: { en: 'Aeolian (natural minor)', he: 'איאולי (מינור טבעי)', say: { en: ['aeolian', 'natural minor', 'minor'], he: ['איאולי', 'איולי', 'אאולי', 'מינור טבעי', 'מינור'] } },
   locrian: { en: 'Locrian', he: 'לוקרי', say: { en: ['locrian'], he: ['לוקרי', 'לוקריאן'] } },
   'melodic-minor': { en: 'Melodic minor', he: 'מינור מלודי', say: { en: ['melodic minor', 'jazz minor'], he: ['מינור מלודי', 'מלודי'] } },
   'dorian-b2': { en: 'Dorian ♭2', he: 'דורי ♭2', say: { en: ['dorian flat two', 'dorian flat 2', 'phrygian natural six', 'phrygian sharp six', 'javanese'], he: ['דורי במול שתיים', 'דורי במול 2'] } },

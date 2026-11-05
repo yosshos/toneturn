@@ -17,7 +17,7 @@ const HE_NUMS: Record<string, string> = {
 };
 
 const HE_WORDS: Record<string, string> = {
-  יוני: 'ionian', דורי: 'dorian', פריגי: 'phrygian', לידי: 'lydian', מיקסולידי: 'mixolydian', איולי: 'aeolian', לוקרי: 'locrian',
+  יוני: 'ionian', דורי: 'dorian', פריגי: 'phrygian', לידי: 'lydian', מיקסולידי: 'mixolydian', איולי: 'aeolian', איאולי: 'aeolian', אאולי: 'aeolian', לוקרי: 'locrian',
   מינור: 'minor', מינורי: 'minor', 'מז׳ור': 'major', "מז'ור": 'major', מזור: 'major', 'מז׳ורי': 'major', "מז'ורי": 'major', מזורי: 'major',
   הרמוני: 'harmonic', מלודי: 'melodic', דומיננטי: 'dominant', דומיננט: 'dominant', מוגדל: 'augmented', מוקטן: 'diminished',
   אלטרד: 'altered', סופר: 'super', פנטטוני: 'pentatonic', בלוז: 'blues', טבעי: 'natural', ביבופ: 'bebop', הונגרי: 'hungarian', כפול: 'double',

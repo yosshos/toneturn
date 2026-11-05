@@ -10,7 +10,7 @@ export const EXAMPLE: MiniLesson[] = [
     id: 'degrees-135',
     area: 'ear',
     emoji: '🏠',
-    title: { en: 'Home, third, fifth', he: 'בית, שלישית, חמישית' },
+    title: { en: 'Home, third, fifth', he: 'טוניקה, טרצה, קווינטה' },
     takeaway: { en: '1, 3 and 5 build the home chord: 1 is rest, 5 is open and strong, 3 is the warm colour in between.', he: '1, 3 ו־5 בונים את אקורד הבית: 1 הוא מנוחה, 5 פתוח וחזק, 3 הוא הצבע החם שביניהם.' },
     steps: [
       {

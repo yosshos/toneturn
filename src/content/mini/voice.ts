@@ -388,9 +388,9 @@ export const LESSONS: MiniLesson[] = [
     takeaway: { en: 'Ornaments are quick, light decorations that return to a steady main note; dynamics change the loudness while the pitch stays put.', he: 'קישוטים הם עיטורים מהירים וקלים שחוזרים לצליל עיקרי יציב; דינמיקה משנה את העוצמה בזמן שהגובה נשאר במקום.' },
     steps: [
       {
-        say: { en: 'Hey {name}! Ornaments are tiny decorations around one main note. Quick and light: the main note is still the star. First, a grace note — a flick from above.', he: 'היי {name}! קישוטים הם עיטורים קטנטנים סביב צליל עיקרי אחד. מהירים וקלים: הצליל העיקרי נשאר הכוכב. קודם צליל חן — נגיעה מהירה מלמעלה.' },
+        say: { en: 'Hey {name}! Ornaments are tiny decorations around one main note. Quick and light: the main note is still the star. First, a grace note — a flick from above.', he: 'היי {name}! קישוטים הם עיטורים קטנטנים סביב צליל עיקרי אחד. מהירים וקלים: הצליל העיקרי נשאר הכוכב. קודם אצ׳קטורה — נגיעה מהירה מלמעלה.' },
         play: [seq([[62, 0.1], [60, 1.5]])],
-        show: { notes: [62, 60], text: { en: 'grace note', he: 'צליל חן' } },
+        show: { notes: [62, 60], text: { en: 'grace note', he: 'אצ׳קטורה' } },
       },
       {
         say: { en: 'A mordent goes main, up, main — fast — then holds. The lower mordent dips below instead.', he: 'מורדנט הולך עיקרי, למעלה, עיקרי — מהר — ואז מחזיק. המורדנט התחתון יורד מתחת במקום.' },
@@ -411,7 +411,7 @@ export const LESSONS: MiniLesson[] = [
         say: { en: 'I check the shape — the right notes in order — the speed, and that the main note lands in tune and stays steady. Think light and loose, not loud.', he: 'אני בודק את הצורה — הצלילים הנכונים בסדר הנכון — את המהירות, ושהצליל העיקרי נוחת מדויק ונשאר יציב. חשבו קל ומשוחרר, לא חזק.' },
       },
       {
-        say: { en: 'The other half is dynamics: a crescendo grows from soft to loud, a decrescendo fades, and the swell does both. The pitch stays exactly where it is.', he: 'החצי השני הוא דינמיקה: קרשנדו מתגבר מחלש לחזק, דקרשנדו דועך, וההתגברות־החלשה עושה את שניהם. הגובה נשאר בדיוק במקומו.' },
+        say: { en: 'The other half is dynamics: a crescendo grows from soft to loud, a decrescendo fades, and the swell does both. The pitch stays exactly where it is.', he: 'החצי השני הוא דינמיקה: קרשנדו מתגבר מחלש לחזק, דקרשנדו דועך, וקרשנדו־דקרשנדו עושה את שניהם. הגובה נשאר בדיוק במקומו.' },
         play: [shape(60, [0.15, 0.25, 0.37, 0.5, 0.63, 0.78], 0.45), rest(0.4), shape(60, [0.78, 0.63, 0.5, 0.37, 0.25, 0.15], 0.45)],
         show: { notes: [60], text: { en: 'cresc. < · decresc. >', he: 'קרשנדו < · דקרשנדו >' } },
       },

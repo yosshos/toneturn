@@ -55,8 +55,8 @@ export const LESSONS: MiniLesson[] = [
     id: 'jazz-1',
     area: 'jazz',
     emoji: '🎷',
-    title: { en: 'Seventh-chord colours', he: 'הצבעים של אקורדי ספטים' },
-    takeaway: { en: 'Four seventh chords — maj7 dreamy, 7 restless, m7 mellow, m7♭5 dark — and ii–V–I chains them home.', he: 'ארבעה אקורדי ספטים — maj7 חולמני, 7 חסר מנוחה, m7 רך, m7♭5 אפל — ו־ii–V–I מחבר אותם הביתה.' },
+    title: { en: 'Seventh-chord colours', he: 'הצבעים של אקורדי ספטימה' },
+    takeaway: { en: 'Four seventh chords — maj7 dreamy, 7 restless, m7 mellow, m7♭5 dark — and ii–V–I chains them home.', he: 'ארבעה אקורדי ספטימה — maj7 חולמני, 7 חסר מנוחה, m7 רך, m7♭5 אפל — ו־ii–V–I מחבר אותם הביתה.' },
     steps: [
       {
         say: { en: 'Hey {name}! Jazz rarely stops at three notes. Add a 7th on top of a chord and it gets a whole new colour.', he: 'היי {name}! ג׳אז כמעט אף פעם לא נעצר בשלושה צלילים. מוסיפים ספטימה מעל האקורד, והוא מקבל צבע חדש לגמרי.' },
@@ -120,12 +120,12 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [60, 62, 63, 65, 67, 68, 70, 72], key: 'C', text: { en: 'natural minor', he: 'מינור טבעי' } },
       },
       {
-        say: { en: 'Raise just the 6th, A♭ to A, and you get Dorian — still minor, but cooler and brighter.', he: 'מעלים רק את השישית, מלה במול ללה, ומקבלים דורי — עדיין מינור, אבל קריר ומואר יותר.' },
+        say: { en: 'Raise just the 6th, A♭ to A, and you get Dorian — still minor, but cooler and brighter.', he: 'מעלים רק את דרגה 6, מלה במול ללה, ומקבלים דורי — עדיין מינור, אבל קריר ומואר יותר.' },
         play: [notes([60, 62, 63, 65, 67, 69, 70, 72])],
         show: { notes: [60, 62, 63, 65, 67, 69, 70, 72], key: 'C', text: { en: 'Dorian: 6', he: 'דורי: 6' } },
       },
       {
-        say: { en: 'Raise the 7th too, and you have melodic minor: minor at the bottom, major at the top. In jazz it stays the same on the way down.', he: 'מעלים גם את השביעית, ויש לכם מינור מלודי: מינור למטה, מז׳ור למעלה. בג׳אז הוא נשאר אותו דבר גם בירידה.' },
+        say: { en: 'Raise the 7th too, and you have melodic minor: minor at the bottom, major at the top. In jazz it stays the same on the way down.', he: 'מעלים גם את דרגה 7, ויש לכם מינור מלודי: מינור למטה, מז׳ור למעלה. בג׳אז הוא נשאר אותו דבר גם בירידה.' },
         play: [notes([60, 62, 63, 65, 67, 69, 71, 72]), notes([71, 69, 67, 65, 63, 62, 60])],
         show: { notes: [60, 62, 63, 65, 67, 69, 71, 72], key: 'C', text: { en: 'melodic minor: 6 + 7', he: 'מינור מלודי: 6 + 7' } },
       },
@@ -157,11 +157,11 @@ export const LESSONS: MiniLesson[] = [
     id: 'slash-chords',
     area: 'harmony',
     emoji: '➗',
-    title: { en: 'Slash chords: a new floor', he: 'אקורדים עם לוכסן: רצפה חדשה' },
+    title: { en: 'Slash chords: a new floor', he: 'אקורדי סלאש: רצפה חדשה' },
     takeaway: { en: 'C/E means a C chord with E in the bass: the bass can be the root, 3rd, 5th — or a note outside the chord.', he: 'C/E פירושו אקורד דו עם מי בבס: הבס יכול להיות השורש, הטרצה, הקווינטה — או צליל מחוץ לאקורד.' },
     steps: [
       {
-        say: { en: 'Hey {name}! A slash chord is a chord over a bass note. C/E means a C chord with E at the bottom. Same chord, new floor.', he: 'היי {name}! אקורד עם לוכסן הוא אקורד מעל צליל בס. C/E פירושו אקורד דו עם מי למטה. אותו אקורד, רצפה חדשה.' },
+        say: { en: 'Hey {name}! A slash chord is a chord over a bass note. C/E means a C chord with E at the bottom. Same chord, new floor.', he: 'היי {name}! אקורד סלאש הוא אקורד מעל צליל בס. C/E פירושו אקורד דו עם מי למטה. אותו אקורד, רצפה חדשה.' },
         play: [{ kind: 'note', midi: 40, duration: 0.8 }, chord([40, 60, 64, 67], 1.8)],
         show: { notes: [40, 60, 64, 67], chord: true, key: 'C', text: { en: 'C/E', he: 'C/E' } },
       },
@@ -411,7 +411,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [50, 65, 69, 72, 74], chord: true, key: 'C', text: { en: 'Dm7 → F6', he: 'Dm7 → F6' } },
       },
       {
-        say: { en: 'Over a dominant 7, play the minor 6 on its 5th. Over G7, D minor 6: D, F, A, B — the 5th, ♭7, 9th and 3rd of G7.', he: 'מעל דומיננט 7 מנגנים מינור 6 על הקווינטה שלו. מעל G7, רה מינור 6: רה, פה, לה, סי — הקווינטה, הספטימה, הנונה והטרצה של G7.' },
+        say: { en: 'Over a dominant 7, play the minor 6 on its 5th. Over G7, D minor 6: D, F, A, B — the 5th, ♭7, 9th and 3rd of G7.', he: 'מעל דומיננט 7 מנגנים מינור 6 על הקווינטה שלו. מעל G7, רה מינור 6: רה, פה, לה, סי — הקווינטה, הספטימה, ה־9 והטרצה של G7.' },
         play: [chord([43, 62, 65, 69, 71], 1.6)],
         show: { notes: [43, 62, 65, 69, 71], chord: true, key: 'C', text: { en: 'G7 → Dm6', he: 'G7 → Dm6' } },
       },
@@ -529,7 +529,7 @@ export const LESSONS: MiniLesson[] = [
     takeaway: { en: 'G7, B♭7, D♭7 and E7 share one diminished chord (their ♭9), so they can stand in for each other; G7 ↔ D♭7 is the tritone sub.', he: 'G7, B♭7, D♭7 ו־E7 חולקים דימיניש אחד (ה־♭9 שלהם), ולכן יכולים להחליף זה את זה; G7 ↔ D♭7 הוא תחליף הטריטון.' },
     steps: [
       {
-        say: { en: 'Hey {name}! Put G in the bass under B diminished, and you get G7♭9 — a dominant with a spicy flat nine.', he: 'היי {name}! שמים סול בבס מתחת לסי דימיניש, ומקבלים G7♭9 — דומיננט עם נונה במול חריפה.' },
+        say: { en: 'Hey {name}! Put G in the bass under B diminished, and you get G7♭9 — a dominant with a spicy flat nine.', he: 'היי {name}! שמים סול בבס מתחת לסי דימיניש, ומקבלים G7♭9 — דומיננט עם ♭9 חריף.' },
         play: [chord(B_DIM, 1), rest(0.2), chord([43, ...B_DIM], 1.6)],
         show: { notes: [43, ...B_DIM], chord: true, key: 'C', text: { en: 'G + B°7 = G7♭9', he: 'G + B°7 = G7♭9' } },
       },
@@ -664,7 +664,7 @@ export const LESSONS: MiniLesson[] = [
     area: 'play',
     emoji: '🥁',
     title: { en: 'Play along with the band', he: 'לנגן עם הלהקה' },
-    takeaway: { en: 'The band: a walking bass (one note a beat), Charleston comping (beat 1 and the "and" of 2) and a swung ride — over ii–V–I, minor ii–V–i or blues.', he: 'הלהקה: בס מהלך (צליל לכל פעמה), ליווי צ׳רלסטון (פעמה 1 וה"ו" של 2) ורייד בסווינג — מעל ii–V–I, ii–V–i במינור או בלוז.' },
+    takeaway: { en: 'The band: a walking bass (one note a beat), Charleston comping (beat 1 and the "and" of 2) and a swung ride — over ii–V–I, minor ii–V–i or blues.', he: 'הלהקה: ווקינג בס (צליל לכל פעמה), ליווי צ׳רלסטון (פעמה 1 וה"ו" של 2) ורייד בסווינג — מעל ii–V–I, ii–V–i במינור או בלוז.' },
     steps: [
       {
         say: { en: 'Hey {name}! Time to play with a band — a tiny one living in your phone. Bass, piano and ride cymbal loop a chord chart while you join in.', he: 'היי {name}! הגיע הזמן לנגן עם להקה — קטנה, שגרה לכם בטלפון. בס, פסנתר ומצילת רייד מנגנים בלופ רצף אקורדים, ואתם מצטרפים.' },
@@ -672,7 +672,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'Dm7 | G7 | Cmaj7 | Cmaj7', he: 'Dm7 | G7 | Cmaj7 | Cmaj7' } },
       },
       {
-        say: { en: 'The bass walks: one note per beat, climbing through the chord, then stepping into the next chord by a half step.', he: 'הבס מהלך: צליל אחד לכל פעמה, מטפס באקורד, ואז נכנס לאקורד הבא בחצי טון.' },
+        say: { en: 'The bass walks: one note per beat, climbing through the chord, then stepping into the next chord by a half step.', he: 'ווקינג בס: צליל אחד לכל פעמה, מטפס באקורד, ואז נכנס לאקורד הבא בחצי טון.' },
         play: [band('ii-V-I', 132, (m) => m < 55)],
         show: { text: { en: '♩ ♩ ♩ ♩', he: '♩ ♩ ♩ ♩' } },
       },
@@ -761,7 +761,7 @@ export const LESSONS: MiniLesson[] = [
     area: 'play',
     emoji: '🎹',
     title: { en: 'Keyboard drills', he: 'תרגילי מקלדת' },
-    takeaway: { en: 'Voicings (any, shell 1-3-7, rootless 3-5-7-9), play it back, an even scale, and ii–V–I with guide tones in all keys.', he: 'וויסינגים (כל וויסינג, של 1-3-7, בלי שורש 3-5-7-9), לנגן בחזרה, סולם אחיד, ו־ii–V–I עם צלילים מנחים בכל הסולמות.' },
+    takeaway: { en: 'Voicings (any, shell 1-3-7, rootless 3-5-7-9), play it back, an even scale, and ii–V–I with guide tones in all keys.', he: 'וויסינגים (כל וויסינג, Shell 1-3-7, בלי שורש 3-5-7-9), לנגן בחזרה, סולם אחיד, ו־ii–V–I עם צלילים מנחים בכל הסולמות.' },
     steps: [
       {
         say: { en: 'Hey {name}! Plug in a MIDI keyboard, or use the keys on screen, and let’s get jazz harmony into your hands. Four short drills.', he: 'היי {name}! חברו מקלדת MIDI, או השתמשו במקשים שעל המסך, ובואו נכניס הרמוניית ג׳אז לידיים. ארבעה תרגילים קצרים.' },
@@ -774,9 +774,9 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [60, 64, 67, 71], chord: true, key: 'C', text: { en: 'Cmaj7 = C E G B', he: 'Cmaj7 = C E G B' } },
       },
       {
-        say: { en: 'A shell is exactly three notes: the root at the bottom, plus the 3rd and the 7th. Cmaj7 shell: C, E, B. Lean, and very jazz.', he: 'של (shell) הוא בדיוק שלושה צלילים: השורש למטה, ועוד הטרצה והספטימה. של של Cmaj7: דו, מי, סי. רזה, וג׳אזי מאוד.' },
+        say: { en: 'A shell is exactly three notes: the root at the bottom, plus the 3rd and the 7th. Cmaj7 shell: C, E, B. Lean, and very jazz.', he: 'Shell הוא בדיוק שלושה צלילים: השורש למטה, ועוד הטרצה והספטימה. ה־Shell של Cmaj7: דו, מי, סי. רזה, וג׳אזי מאוד.' },
         play: [chord([48, 52, 59], 1.6)],
-        show: { notes: [48, 52, 59], chord: true, key: 'C', text: { en: 'shell 1-3-7', he: 'של 1-3-7' } },
+        show: { notes: [48, 52, 59], chord: true, key: 'C', text: { en: 'shell 1-3-7', he: 'Shell 1-3-7' } },
       },
       {
         say: { en: 'Rootless: leave the root to the bass player and play 3, 5, 7 and 9. For Dm7: F, A, C, E.', he: 'בלי שורש: משאירים את השורש לבסיסט ומנגנים 3, 5, 7 ו־9. ל־Dm7: פה, לה, דו, מי.' },

@@ -17,7 +17,7 @@ export interface Sp {
 }
 const ACC_EN: Record<number, string> = { [-2]: '♭♭', [-1]: '♭', 0: '', 1: '♯', 2: '♯♯' };
 const ACC_SAY: Record<number, string> = { [-2]: ' double flat', [-1]: ' flat', 0: '', 1: ' sharp', 2: ' double sharp' };
-const ACC_HE: Record<number, string> = { [-2]: ' דאבל במול', [-1]: ' במול', 0: '', 1: ' דיאז', 2: ' דאבל דיאז' };
+const ACC_HE: Record<number, string> = { [-2]: ' במול כפול', [-1]: ' במול', 0: '', 1: ' דיאז', 2: ' דיאז כפול' };
 export const spEn = (s: Sp) => `${LET[s.l]}${ACC_EN[s.a]}`;
 const spHe = (s: Sp) => `${SOL[s.l]}${ACC_HE[s.a]}`;
 const spSay = (s: Sp) => `${LET[s.l]}${ACC_SAY[s.a]}`;
@@ -185,8 +185,8 @@ TOPIC_GEN['chord-spelling'] = {
   skill: 'theory',
   levels: [
     { en: 'Triads', he: 'משולשים' },
-    { en: 'Seventh chords', he: 'אקורדי ספטים' },
-    { en: 'Ninths and alterations', he: 'נונות ואלטרציות' },
+    { en: 'Seventh chords', he: 'אקורדי ספטימה' },
+    { en: 'Ninths and alterations', he: '9, 11, 13 ואלטרציות' },
   ],
   gen(seed, level, id) {
     const rnd = rng(seed);
@@ -325,8 +325,8 @@ TOPIC_GEN['circle-fifths'] = {
 // ---------------------------------------------------------------- transposition
 
 const INSTR = [
-  { en: 'B♭ trumpet / clarinet / tenor sax', he: 'חצוצרה / קלרינט / טנור סקס ב־B♭', num: 2, semis: 2 },
-  { en: 'E♭ alto sax', he: 'אלט סקס ב־E♭', num: 6, semis: 9 },
+  { en: 'B♭ trumpet / clarinet / tenor sax', he: 'חצוצרה / קלרינט / סקסופון טנור ב־B♭', num: 2, semis: 2 },
+  { en: 'E♭ alto sax', he: 'סקסופון אלט ב־E♭', num: 6, semis: 9 },
   { en: 'F horn', he: 'קרן ב־F', num: 5, semis: 7 },
 ];
 
@@ -375,7 +375,7 @@ const SCALES: Record<string, ReturnType<typeof nm>> = {
   phrygian: nm('Phrygian', 'פריגי', 'phrygian'),
   lydian: nm('Lydian', 'לידי', 'lydian'),
   mixolydian: nm('Mixolydian', 'מיקסולידי', 'mixolydian'),
-  aeolian: nm('Aeolian (natural minor)', 'אאולי (מינור טבעי)', 'aeolian', 'natural minor'),
+  aeolian: nm('Aeolian (natural minor)', 'איאולי (מינור טבעי)', 'aeolian', 'natural minor'),
   locrian: nm('Locrian', 'לוקרי', 'locrian'),
   altered: nm('Altered (super-Locrian)', 'אלטרד (סופר־לוקרי)', 'altered', 'super locrian', 'alt'),
   hw: nm('Half-whole diminished', 'דימיניש חצי־שלם', 'half whole', 'diminished scale', 'octatonic'),
@@ -388,11 +388,11 @@ const DIATONIC = [
   ['maj7', 'ionian'], ['m7', 'dorian'], ['m7', 'phrygian'], ['maj7', 'lydian'], ['dom7', 'mixolydian'], ['m7', 'aeolian'], ['hd', 'locrian'],
 ] as const;
 const JAZZ: { sym: string; quality: number[]; scale: string; hint: { en: string; he: string } }[] = [
-  { sym: '7alt', quality: [0, 4, 10, 15, 20], scale: 'altered', hint: { en: 'all tensions altered', he: 'כל המתחים מאולטרים' } },
+  { sym: '7alt', quality: [0, 4, 10, 15, 20], scale: 'altered', hint: { en: 'all tensions altered', he: 'כל הטנשנים אלטרד' } },
   { sym: '13♭9', quality: [0, 4, 10, 13, 21], scale: 'hw', hint: { en: '♭9 with natural 13', he: '♭9 עם 13 טבעי' } },
   { sym: '7♯11', quality: [0, 4, 10, 14, 18], scale: 'lydom', hint: { en: 'not resolving down a fifth', he: 'לא נפתר קווינטה למטה' } },
   { sym: '7♯5', quality: [0, 4, 8, 10, 14], scale: 'wholetone', hint: { en: 'natural 9, ♯5', he: '9 טבעי, ♯5' } },
-  { sym: 'm(maj7)', quality: [0, 3, 7, 11, 14], scale: 'melmin', hint: { en: 'tonic minor', he: 'מינור טוניקה' } },
+  { sym: 'm(maj7)', quality: [0, 3, 7, 11, 14], scale: 'melmin', hint: { en: 'tonic minor', he: 'טוניקה מינורית' } },
   { sym: 'maj7♯11', quality: [0, 4, 7, 11, 18], scale: 'lydian', hint: { en: '♯11', he: '♯11' } },
   { sym: '7♭9', quality: [0, 4, 7, 10, 13], scale: 'phrygdom', hint: { en: 'going to a minor chord, ♭13', he: 'הולך לאקורד מינורי, ♭13' } },
 ];
