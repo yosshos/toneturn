@@ -183,6 +183,12 @@ export const LESSON_META: Record<LessonId, LessonMeta> = {
     icon: 'mic',
     tip: { en: 'Practise a run slowly on “ah”, then speed it up — the Runs workshop does this for you.', he: 'תרגלו ראן לאט על "אה", ואז האיצו — סדנת הראנים עושה את זה בשבילכם.' },
   },
+  dictation: {
+    title: { en: 'Melodic dictation', he: 'הכתבה מלודית' },
+    blurb: { en: 'A short melody with its rhythm: write the notes, then the rhythm.', he: 'מנגינה קצרה עם הקצב שלה: כותבים את הצלילים, ואז את הקצב.' },
+    icon: 'steps',
+    tip: { en: 'Sing it back in your head first — then write the notes, then tap the rhythm.', he: 'שירו אותה קודם בראש — ואז כתבו את הצלילים, ואז הקישו את הקצב.' },
+  },
   'slash-chords': {
     title: { en: 'Slash chords & bass lines', he: 'אקורדים עם בס ומהלכי בס' },
     blurb: { en: 'C/E, C/G — or C/D? Then follow the bass under a progression.', he: 'C/E, C/G — או C/D? ואז לעקוב אחרי הבס מתחת למהלך.' },

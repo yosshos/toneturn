@@ -26,6 +26,8 @@ import {
   synthVibratoPhrase,
   vibratoConsistency,
   MODE_LEVELS,
+  HARMONY_LEVELS,
+  itemAccompaniment,
   scaleTonic,
   VOCAL_TOP_LEVEL,
   type MetricKey,
@@ -43,15 +45,16 @@ import { piano, SIMULATED, store } from './services';
 
 const fill = (s: string, v: Record<string, string | number>) => Object.entries(v).reduce((a, [k, x]) => a.replaceAll(`{${k}}`, String(x)), s);
 
-export function noteLabel(midi: number, settings: Settings): string {
-  const s = spellMidi(midi, null);
+export function noteLabel(midi: number, settings: Settings, key: PitchClass | null = null): string {
+  const s = spellMidi(midi, key);
   const p: PitchClass = { letter: s.letter as PitchClass['letter'], acc: s.acc };
   return `${displayNote(p, namingFor(settings.naming, settings.uiLang), settings.uiLang)}${s.octave}`;
 }
 
 /** Levels 1–9: the vocal ladder; 101–108: scales and modes. */
 export const MODES_BASE = 100;
-export const levelDef = (level: number) => (level > MODES_BASE ? MODE_LEVELS[level - MODES_BASE - 1] : LADDER[level - 1]);
+export const HARMONY_BASE = 200;
+export const levelDef = (level: number) => (level > HARMONY_BASE ? HARMONY_LEVELS[level - HARMONY_BASE - 1] : level > MODES_BASE ? MODE_LEVELS[level - MODES_BASE - 1] : LADDER[level - 1]);
 
 // ------------------------------------------------------------------ live pitch trace
 
@@ -172,6 +175,10 @@ function simulatedFrames(item: VocalItem, targets: number[], noteIdx: number): S
       return synthHold(targets[noteIdx], { seconds: item.seconds + 0.3, vibRate: 5.6, vibExtent: 32 });
     case 'vibrato-messa':
       return synthHold(targets[0], { seconds: item.seconds + 0.3, vibRate: 5.6, vibExtent: 32, rmsFrom: 0.02, rmsPeak: 0.2 });
+    case 'harmony-hold':
+      return synthHold(targets[0], { seconds: item.seconds + 0.3, jitter: 2 });
+    case 'harmony-line':
+      return synthMelody(targets, 60 / (item.bpm ?? 72));
     case 'vibrato-notes':
       return synthVibratoPhrase(targets, item.noteSecs ?? [], item.vibNotes ?? []);
     default:
@@ -230,10 +237,11 @@ interface Props {
   onProgress: (p: Progress) => void;
   onBack: () => void;
   onRuns: () => void;
+  onSingAlong?: () => void;
   startWarmup?: boolean;
 }
 
-export function VocalScreen({ t, settings, progress, onSettings, onProgress, onBack, onRuns, startWarmup }: Props) {
+export function VocalScreen({ t, settings, progress, onSettings, onProgress, onBack, onRuns, onSingAlong, startWarmup }: Props) {
   const v = progress.vocal ?? { best: {}, passed: [], takes: [] };
   const [view, setView] = useState<View>(() => (startWarmup ? { kind: 'session', level: 'warmup', items: warmupItems(v.passed).filter((it) => itemFits(it, range)) } : { kind: 'home' }));
   const range = settings.voiceRange ?? DEFAULT_RANGE;
@@ -319,6 +327,12 @@ export function VocalScreen({ t, settings, progress, onSettings, onProgress, onB
         <b>☀️ {t.vocalWarmup}</b>
         <small>{t.vocalWarmupHint}</small>
       </button>
+      {onSingAlong && (
+        <button className="tool-card warmup-card" onClick={onSingAlong}>
+          <b>🎶 {t.singAlongTitle}</b>
+          <small>{t.singAlongHint}</small>
+        </button>
+      )}
 
       <ol className="vocal-levels">
         {Array.from({ length: VOCAL_TOP_LEVEL }, (_, i) => i + 1).map((lv) => {
@@ -359,6 +373,29 @@ export function VocalScreen({ t, settings, progress, onSettings, onProgress, onB
                   <span className="lv-text">
                     <b>{t.modesLevelNames[i]}</b>
                     <small>{passed ? `✓ ${t.vocalPassed}` : !open ? `🔒 ${t.vocalLocked}` : best > 0 ? `${Math.round(best * 100)}%` : fill(t.vocalLevel, { n: i + 1 })}</small>
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ol>
+      </section>
+
+      <section className="set-card">
+        <h2>🎶 {t.harmonyTitle}</h2>
+        <p className="field-hint">{t.harmonyBlurb}</p>
+        <ol className="vocal-levels">
+          {HARMONY_LEVELS.map((lvDef, i) => {
+            const lv = HARMONY_BASE + i + 1;
+            const open = i === 0 || v.passed.includes(lv - 1);
+            const passed = v.passed.includes(lv);
+            return (
+              <li key={lv}>
+                <button className={`vocal-level ${passed ? 'passed' : ''} ${open ? '' : 'locked'}`} disabled={!open} onClick={() => setView({ kind: 'session', level: lv, items: lvDef.items.filter((it) => itemFits(it, range)) })}>
+                  <span className="lv-num">{i + 1}</span>
+                  <span className="lv-text">
+                    <b>{t.harmonyLevelNames[i]}</b>
+                    <small>{passed ? `✓ ${t.vocalPassed}` : !open ? `🔒 ${t.vocalLocked}` : `🎧 ${t.headphonesNeeded}`}</small>
                   </span>
                 </button>
               </li>
@@ -554,7 +591,15 @@ function VocalSession({
     await piano.unlock();
     const ref = referenceEvents(item, shownTargets);
     setPhase('listening');
-    if (item.reference === 'during') piano.startDrone([shownTargets[0]], 0.12);
+    const acc = itemAccompaniment(item, range);
+    if (item.kind === 'harmony-hold') piano.startDrone(acc, 0.12);
+    else if (item.kind === 'harmony-line') {
+      // Count-in (4 clicks), then the melody plays while the player sings the harmony.
+      const beat = 60 / (item.bpm ?? 72);
+      const clicks = [0, 1, 2, 3].map((k) => ({ midi: 0, start: k * beat, duration: 0.05, velocity: 0.8, perc: (k === 0 ? 'accent' : 'click') as 'accent' | 'click' }));
+      await piano.play(clicks, 4 * beat, c.signal).catch(() => {});
+      void piano.play(acc.map((m, k) => ({ midi: m, start: k * beat, duration: beat * 0.95, velocity: 0.55 })), acc.length * beat + 0.3, c.signal).catch(() => {});
+    } else if (item.reference === 'during') piano.startDrone([shownTargets[0]], 0.12);
     else await piano.play(ref.events, ref.length, c.signal).catch(() => {});
     if (c.signal.aborted) {
       piano.stopDrone();
@@ -571,13 +616,13 @@ function VocalSession({
       if (onset === null && f.hz && f.confidence >= 0.8) {
         onset = f.t;
         setOnsetAt(f.t);
-        if (item.reference === 'during' && !headphones) piano.stopDrone();
+        if (item.reference === 'during' && !headphones && !item.kind.startsWith('harmony')) piano.stopDrone();
       }
       if (buf.length % 3 === 0) setFrames(buf.slice());
     };
     let got: SungFrame[] | null = null;
     let audio: Blob | undefined;
-    const melodic = ['melody', 'leap', 'rhythmic', 'staccato', 'glide'].includes(item.kind);
+    const melodic = ['melody', 'leap', 'rhythmic', 'staccato', 'glide', 'harmony-line'].includes(item.kind);
     if (SIMULATED) {
       const sim = simulatedFrames(item, targets, noteIdx);
       for (const f of sim) onFrame(f);
@@ -646,7 +691,7 @@ function VocalSession({
     const rated = perItem.filter((x) => Object.keys(best.current).some((k) => k === x.it.id || k.startsWith(`${x.it.id}#`)));
     const now = new Date().toISOString();
     const r: LessonResult = {
-      lessonId: typeof level === 'number' ? (level > MODES_BASE ? `vocal-modes-${level - MODES_BASE}` : `vocal-${level}`) : 'vocal-warmup',
+      lessonId: typeof level === 'number' ? (level > HARMONY_BASE ? `vocal-harmony-${level - HARMONY_BASE}` : level > MODES_BASE ? `vocal-modes-${level - MODES_BASE}` : `vocal-${level}`) : 'vocal-warmup',
       lessonVersion: 1,
       sessionId,
       completedAt: now,
@@ -702,7 +747,7 @@ function VocalSession({
   const tipKey = grade ? tipFor(grade) : null;
   // Scales asked by name: only the tonic is shown until the take is graded (the notes are the task).
   const hidden = item.kind === 'scale' && item.scale?.hear === 'tonic' && phase !== 'result';
-  const title = level === 'warmup' ? t.vocalWarmup : level > MODES_BASE ? `${t.modesTitle} · ${t.modesLevelNames[level - MODES_BASE - 1]}` : `${fill(t.vocalLevel, { n: level })} · ${t.vocalLevelNames[level - 1]}`;
+  const title = level === 'warmup' ? t.vocalWarmup : level > HARMONY_BASE ? `${t.harmonyTitle} · ${t.harmonyLevelNames[level - HARMONY_BASE - 1]}` : level > MODES_BASE ? `${t.modesTitle} · ${t.modesLevelNames[level - MODES_BASE - 1]}` : `${fill(t.vocalLevel, { n: level })} · ${t.vocalLevelNames[level - 1]}`;
 
   if (phase === 'summary' && summary)
     return (

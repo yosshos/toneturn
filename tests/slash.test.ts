@@ -40,3 +40,23 @@ describe('slash chords and bass lines', () => {
     expect(slashLesson(3).questions).toHaveLength(6);
   });
 });
+
+describe('melodic dictation', () => {
+  it('two questions per melody: the degrees and the rhythm of the same melody', async () => {
+    const { dictationLesson } = await import('../src/engine/lesson');
+    const { events } = await import('../src/engine/rhythm');
+    for (let seed = 0; seed < 20; seed++) {
+      const L = dictationLesson(seed);
+      expect(L.questions).toHaveLength(6);
+      for (let i = 0; i < 6; i += 2) {
+        const a = L.questions[i];
+        const b = L.questions[i + 1];
+        if (a.kind !== 'degree-seq' || b.kind !== 'rhythm-dict') throw new Error('kinds');
+        const mel = a.stimulus.find((s) => s.kind === 'melody');
+        expect(mel && mel.kind === 'melody' && mel.midis.length).toBe(a.degrees.length);
+        expect(events(b.rhythm).filter((e) => !e.rest)).toHaveLength(a.degrees.length);
+        expect(b.choices).toContain(b.answer);
+      }
+    }
+  });
+});

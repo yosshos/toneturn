@@ -515,7 +515,7 @@ export interface MetricScore {
 
 // ------------------------------------------------------------------ the ladder (P.2)
 
-export type VocalKind = 'hold' | 'straight' | 'vibrato-delayed' | 'vibrato-onoff' | 'vibrato-steady' | 'range' | 'messa' | 'glide' | 'melody' | 'leap' | 'rhythmic' | 'staccato' | 'scale' | 'vibrato-rate' | 'vibrato-width' | 'vibrato-alternate' | 'vibrato-notes' | 'vibrato-register' | 'vibrato-messa';
+export type VocalKind = 'hold' | 'straight' | 'vibrato-delayed' | 'vibrato-onoff' | 'vibrato-steady' | 'range' | 'messa' | 'glide' | 'melody' | 'leap' | 'rhythmic' | 'staccato' | 'scale' | 'vibrato-rate' | 'vibrato-width' | 'vibrato-alternate' | 'vibrato-notes' | 'vibrato-register' | 'vibrato-messa' | 'harmony-hold' | 'harmony-line';
 
 export interface VocalItem {
   id: string;
@@ -540,6 +540,10 @@ export interface VocalItem {
   cues?: number[];
   vibNotes?: boolean[];
   noteSecs?: number[];
+  /** Harmony singing: notes that keep sounding while the player sings (semitones from the sung note — or, for a line, from the line's base). */
+  accompany?: number[];
+  /** Harmony line: the melody the app plays (semitones from the same base as `steps`). */
+  melody?: number[];
   /** Scales and modes: sing up in one scale and (optionally) down in another, from a named tonic. */
   scale?: ScaleSpec;
   difficulty: number;
@@ -701,6 +705,36 @@ export const VIBRATO_LEVELS: VocalLevel[] = [
     { kind: 'vibrato-messa', seconds: 7, reference: 'before', at: 0.5, difficulty: 1450 },
   ]),
 ];
+
+/** Harmony singing (spec S.3): find the missing chord note over a sounding chord, then sing a line in thirds /
+ *  sixths against a melody. Headphones are needed so the accompaniment stays out of the measurement. */
+const H = (kind: 'harmony-hold' | 'harmony-line', extra: Partial<VocalItem>, difficulty: number): Omit<VocalItem, 'id' | 'level'> => ({
+  kind,
+  seconds: kind === 'harmony-hold' ? 4 : 6,
+  reference: 'during',
+  at: 0.45,
+  difficulty,
+  ...extra,
+});
+export const HARMONY_LEVELS: VocalLevel[] = [
+  L(1, 0.6, [H('harmony-hold', { accompany: [-4, 3] }, 1100), H('harmony-hold', { accompany: [-3, 4] }, 1150), H('harmony-hold', { accompany: [-4, 3], at: 0.6 }, 1150)]),
+  L(2, 0.6, [H('harmony-hold', { accompany: [-7, -3] }, 1200), H('harmony-hold', { accompany: [4, 7], at: 0.3 }, 1250), H('harmony-hold', { accompany: [-10, -6, -3] }, 1300)]),
+  // Melody 1-2-3-2-1 / harmony a third above: 3-4-5-4-3 (major key, base = the tonic).
+  L(3, 0.58, [H('harmony-line', { melody: [0, 2, 4, 2, 0], steps: [4, 5, 7, 5, 4], bpm: 72, perBeat: 1 }, 1300), H('harmony-line', { melody: [0, 4, 7, 4, 0], steps: [4, 7, 11, 7, 4], bpm: 72, perBeat: 1 }, 1350)]),
+  // A sixth below / a third below.
+  L(4, 0.56, [H('harmony-line', { melody: [7, 9, 11, 12, 11, 9, 7], steps: [-2, 0, 2, 4, 2, 0, -2], bpm: 76, perBeat: 1 }, 1400), H('harmony-line', { melody: [4, 5, 7, 9, 7, 5, 4], steps: [0, 2, 4, 5, 4, 2, 0], bpm: 80, perBeat: 1 }, 1400)]),
+].map((lv) => ({ ...lv, items: lv.items.map((it) => ({ ...it, id: it.id.replace(/^v/, 'h') })) }));
+
+/** What the app plays during a harmony item (MIDI), in the same octave placement as the sung notes. */
+export function itemAccompaniment(item: VocalItem, range: VoiceRange): number[] {
+  const tg = itemTargets(item, range);
+  if (item.kind === 'harmony-hold') return (item.accompany ?? []).map((s) => tg[0] + s);
+  if (item.kind === 'harmony-line' && item.steps && item.melody) {
+    const base = tg[0] - item.steps[0];
+    return item.melody.map((s) => base + s);
+  }
+  return [];
+}
 
 /** The whole ladder in order (levels 1–11; 12 = Riffs & runs). */
 export const LADDER: VocalLevel[] = [...VOCAL_LEVELS, ...VIBRATO_LEVELS];
@@ -938,6 +972,10 @@ export function gradeTake(item: VocalItem, frames: SungFrame[], range: VoiceRang
       return gradeHold({ ...item, kind: 'vibrato-steady' }, frames, targets[noteIndex], style);
     case 'vibrato-notes':
       return gradeVibratoNotes(item, frames, targets);
+    case 'harmony-hold':
+      return gradeHold({ ...item, kind: 'hold' }, frames, targets[0], style);
+    case 'harmony-line':
+      return gradeMelody({ ...item, kind: 'rhythmic' }, frames, targets);
     default:
       return gradeHold(item, frames, targets[0], style);
   }

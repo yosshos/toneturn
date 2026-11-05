@@ -549,3 +549,56 @@
 .then-now audio {
   width: 100%;
 }
+.sing-roll {
+  display: block;
+  width: 100%;
+  height: 160px;
+  margin: 8px 0;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid var(--line);
+}
+.roll-note {
+  fill: rgba(169, 139, 255, 0.45);
+}
+.roll-note.on {
+  fill: var(--mint);
+}
+.roll-cursor {
+  stroke: var(--coral);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+.song-list {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px;
+}
+.song-list .tool-card {
+  width: 100%;
+}
+.sing-notes {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.sing-notes li {
+  padding: 4px 10px;
+  border-radius: 10px;
+  font-weight: 800;
+  background: var(--card-2);
+}
+.sing-notes li.good {
+  background: rgba(75, 227, 181, 0.3);
+}
+.sing-notes li.fair {
+  background: rgba(255, 201, 77, 0.3);
+}
+.sing-notes li.weak,
+.sing-notes li.miss {
+  background: rgba(255, 106, 77, 0.3);
+}

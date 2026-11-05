@@ -1,3 +1,4 @@
+import { SingAlongScreen } from './SingAlong';
 import { AchievementsScreen } from './Extras';
 import { modesLesson, MODE_ID_LEVELS, wrongNotesLesson } from '../engine/lesson';
 import { TrueFalseScreen } from './TrueFalse';
@@ -37,12 +38,12 @@ import { pwa } from '../pwa';
 import { piano, setMidiEnabled, SIMULATED, store, tts } from './services';
 import { midi } from '../speech/midi';
 
-type Route = 'home' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements';
+type Route = 'home' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong';
 /** Invite links: #/online/CODE */
 const onlineCodeFromHash = () => (/^#\/?online\/(\w+)/.exec(location.hash)?.[1] ?? '');
 const routeFromHash = (): Route => {
   const h = location.hash.replace(/^#\/?/, '').replace(/^online\/.*$/, 'online');
-  return (['settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
+  return (['settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
 };
 
 /** The level a generated modes lesson was made at (from its first question's pool size). */
@@ -474,6 +475,7 @@ export function App() {
       )}
       {route === 'drone' && <DroneScreen t={t} settings={s} onBack={() => go('home')} />}
       {route === 'achievements' && <AchievementsScreen t={t} progress={progress} onBack={() => go('home')} />}
+      {route === 'singalong' && <SingAlongScreen t={t} settings={s} onBack={() => go('vocal')} />}
       {route === 'vocal' && (
         <VocalScreen
           key={vocalWarmup ? 'warmup' : 'home'}
@@ -484,6 +486,7 @@ export function App() {
           onProgress={setProgress}
           onBack={() => go('home')}
           onRuns={openRuns}
+          onSingAlong={() => go('singalong')}
           startWarmup={vocalWarmup}
         />
       )}

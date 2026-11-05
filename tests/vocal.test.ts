@@ -17,6 +17,8 @@ import {
   tipFor,
   VOCAL_LEVELS,
   MODE_LEVELS,
+  HARMONY_LEVELS,
+  itemAccompaniment,
   VIBRATO_LEVELS,
   synthVibratoPhrase,
   vibratoConsistency,
@@ -234,5 +236,45 @@ describe('advanced vibrato', () => {
   it('consistency across notes', () => {
     expect(vibratoConsistency([{ rate: 5.5, extent: 35 }, { rate: 5.6, extent: 33 }, { rate: 5.4, extent: 36 }])).toBe(1);
     expect(vibratoConsistency([{ rate: 4.5, extent: 20 }, { rate: 6.5, extent: 60 }])).toBeLessThan(0.5);
+  });
+});
+
+describe('harmony singing', () => {
+  it('the hold target completes the chord with the accompaniment', () => {
+    const range = { low: 52, high: 72 };
+    for (const lv of HARMONY_LEVELS)
+      for (const it of lv.items) {
+        const tg = itemTargets(it, range);
+        const acc = itemAccompaniment(it, range);
+        expect(acc.length).toBeGreaterThan(1);
+        if (it.kind === 'harmony-hold') {
+          const pcs = new Set([...acc, tg[0]].map((m) => ((m % 12) + 12) % 12));
+          expect(pcs.size).toBe(acc.length + 1); // the sung note is not already sounding
+        } else {
+          expect(acc).toHaveLength(tg.length);
+          tg.forEach((m, i) => expect(m).not.toBe(acc[i]));
+        }
+        const frames = it.kind === 'harmony-hold' ? synthHold(tg[0], { seconds: 4.5 }) : synthMelody(tg, 60 / (it.bpm ?? 72));
+        expect(gradeTake(it, frames, range).score).toBeGreaterThan(0.75);
+      }
+  });
+});
+
+describe('sing-along', () => {
+  it('the song sits in the range and a clean take scores high, a wrong one low', async () => {
+    const { songTimeline, gradeSingAlong } = await import('../src/engine/singalong');
+    const { SONGS } = await import('../src/engine/songs');
+    const range = { low: 48, high: 62 };
+    for (const s of SONGS) {
+      const { notes } = songTimeline(s, range, 84);
+      for (const n of notes) {
+        expect(n.midi).toBeGreaterThanOrEqual(range.low);
+        expect(n.midi).toBeLessThanOrEqual(range.high);
+      }
+      const clean = notes.flatMap((n) => Array.from({ length: Math.floor(n.dur / 0.02) }, (_, k) => ({ t: n.start + k * 0.02, hz: 440 * 2 ** ((n.midi - 69) / 12), confidence: 0.95, rms: 0.1 })));
+      expect(gradeSingAlong(clean, notes).total).toBeGreaterThan(0.9);
+      const flat = clean.map((f) => ({ ...f, hz: f.hz * 2 ** (-1 / 12) }));
+      expect(gradeSingAlong(flat, notes).total).toBeLessThan(0.2);
+    }
   });
 });

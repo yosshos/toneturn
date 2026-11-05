@@ -1,6 +1,7 @@
 // Versioned lesson content. Prompts, stimulus, scoring policy and explanations are kept separate.
 // Pure: no browser APIs. Text for narration / UI lives in src/game/content.ts.
 
+import { events as rhythmEvents, TPQ as RTPQ } from './rhythm';
 import { MODE_FAMILY, MODE_STEPS, modeDistance, type ModeId } from './modes';
 import { jazzVoicing, PROGRESSIONS, SEVENTHS, voiceProgression, type JazzChord, type ProgressionId, type SeventhQuality } from './jazz';
 import { opening, SONGS, type SongOpening } from './songs';
@@ -405,6 +406,7 @@ export type LessonId =
   | 'songs'
   | 'runs-workshop'
   | 'slash-chords'
+  | 'dictation'
   | 'modes'
   | 'wrong-notes'
   | 'placement'
@@ -1227,6 +1229,7 @@ export const LESSON_ORDER: LessonId[] = [
   'jazz-1',
   'songs',
   'slash-chords',
+  'dictation',
 ];
 
 export function makeLesson(id: LessonId, seed = Date.now()): LessonDef {
@@ -1235,6 +1238,8 @@ export function makeLesson(id: LessonId, seed = Date.now()): LessonDef {
       return modesLesson(1, seed);
     case 'slash-chords':
       return slashLesson(seed);
+    case 'dictation':
+      return dictationLesson(seed);
     case 'wrong-notes':
       return wrongNotesLesson(1, seed);
     case 'runs':
@@ -1826,4 +1831,54 @@ export function slashLesson(seed = Date.now()): LessonDef {
     { id: 'intro-bass-line', card: { kind: 'degrees', key: C, degrees: [1, 7, 6, 5] }, stimulus: bassLineQuestion('x', C, [1, 7, 6, 5]).stimulus },
   ];
   return { id: 'slash-chords', version: 1, skill: 'chords', scoring: { xpPerCorrect: 10, attemptLimit: 2 }, intro, questions: qs };
+}
+
+
+// ======================================================================= combined dictation (spec S.4)
+
+/** A one-bar melody with a rest-free rhythm at a level: degrees by small steps, rhythm from the rhythm track. */
+export function dictationMelody(level: RhythmLevel, seed: number): { degrees: number[]; beats: number[]; rhythmSeed: number } {
+  const rnd = mulberry32(seed);
+  for (let k = 0; k < 60; k++) {
+    const rs = (seed + k * 7919) >>> 0;
+    const r = rhythmAt(level, 1, rs);
+    const ev = rhythmEvents(r);
+    if (ev.some((e) => e.rest) || ev.length < 3 || ev.length > 7) continue;
+    let d = pick(rnd, [1, 3, 5]);
+    const degrees = ev.map((_, i) => {
+      if (i > 0) d = Math.max(1, Math.min(6, d + pick(rnd, [-2, -1, -1, 1, 1, 2])));
+      return d;
+    });
+    const beats = ev.map((e, i) => ((ev[i + 1]?.start ?? r.beatsPerBar * RTPQ) - e.start) / RTPQ);
+    return { degrees, beats, rhythmSeed: rs };
+  }
+  return { degrees: [1, 2, 3, 1], beats: [1, 1, 1, 1], rhythmSeed: seed };
+}
+
+/** Lesson 24 — hear a short melody with its rhythm; write its notes (degrees), then its rhythm. */
+export function dictationLesson(seed = Date.now()): LessonDef {
+  const rnd = mulberry32(seed);
+  const keys = ['C', 'F', 'G'].map(pc);
+  const qs: Question[] = [];
+  ([1, 2, 3] as RhythmLevel[]).forEach((level, i) => {
+    const m = dictationMelody(level, Math.floor(rnd() * 1e9));
+    const key = keys[i % keys.length];
+    const tonic = placeInRange(pcValue(key), 57, 68);
+    const midis = m.degrees.map((d) => tonic + [0, 2, 4, 5, 7, 9, 11][d - 1]);
+    const bpm = RHYTHM_BPM[level];
+    const melody: Stimulus = { kind: 'melody', midis, beats: m.beats, bpm };
+    const pitches = degreeSeqQuestion(`d${i + 1}a`, key, m.degrees, 1150 + 50 * level);
+    qs.push({ ...pitches, stimulus: [{ kind: 'cadence', key }, { kind: 'rest', duration: 0.3 }, melody] });
+    const rhythm = rhythmDictQuestion(`d${i + 1}b`, level, 1, m.rhythmSeed);
+    qs.push({ ...rhythm, stimulus: [melody] });
+  });
+  const first = qs[0] as DegreeSeqQuestion;
+  return {
+    id: 'dictation',
+    version: 1,
+    skill: 'sequences',
+    scoring: { xpPerCorrect: 10, attemptLimit: 2 },
+    intro: [{ id: 'intro-dictation', card: { kind: 'degrees', key: first.key, degrees: first.degrees }, stimulus: first.stimulus }],
+    questions: qs,
+  };
 }

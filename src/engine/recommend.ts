@@ -11,7 +11,7 @@ export const SKILL_LADDER: Partial<Record<SkillId, LessonId[]>> = {
   intervals: ['intervals'],
   chords: ['major-minor', 'inversions', 'slash-chords', 'jazz-1'],
   cadences: ['cadences', 'jazz-1'],
-  sequences: ['degrees-135', 'songs', 'note-sequences'],
+  sequences: ['degrees-135', 'songs', 'note-sequences', 'dictation'],
   singing: ['sing-home-five', 'sing-names', 'sing-degrees'],
   'rhythm-dictation': ['rhythm-r1', 'rhythm-r2', 'rhythm-r3', 'rhythm-r4', 'rhythm-r5', 'rhythm-r6', 'rhythm-r7', 'rhythm-r8'],
   'rhythm-reading': ['rhythm-r1', 'rhythm-r2', 'rhythm-r3', 'rhythm-r4', 'rhythm-r5', 'rhythm-r6', 'rhythm-r7', 'rhythm-r8'],
@@ -71,7 +71,7 @@ export function placementUnlocks(ratings: Ratings): LessonId[] {
 
 /** The path grouped into topics (every path lesson in exactly one) — for "done X of Y" bars. */
 export const TOPICS: { id: 'degrees' | 'harmony' | 'intervals' | 'singing' | 'rhythm'; lessons: LessonId[] }[] = [
-  { id: 'degrees', lessons: ['bflat-two-homes', 'degrees-135', 'notes-degrees', 'note-sequences'] },
+  { id: 'degrees', lessons: ['bflat-two-homes', 'degrees-135', 'notes-degrees', 'note-sequences', 'dictation'] },
   { id: 'harmony', lessons: ['major-minor', 'cadences', 'inversions', 'jazz-1', 'slash-chords'] },
   { id: 'intervals', lessons: ['intervals', 'songs'] },
   { id: 'singing', lessons: ['sing-home-five', 'sing-names', 'sing-degrees', 'runs'] },
