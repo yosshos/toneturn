@@ -14,6 +14,7 @@ import { ThenAndNow } from './Extras';
 import { keepTake } from '../storage/takes';
 import { weekId } from '../engine/adaptive';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { clearSlot, loadSlot, saveSlot } from '../storage/resume';
 import { spellMidi } from '../engine/aids';
 import type { NoteEvent } from '../engine/lesson';
 import { displayNote, hzToMidi, type PitchClass } from '../engine/pitch';
@@ -668,8 +669,14 @@ function VocalSession({
   onExit: () => void;
   onProgress: (p: Progress) => void;
 }) {
-  const [i, setI] = useState(0);
-  const [noteIdx, setNoteIdx] = useState(0);
+  // Left half-way, the level continues at the same exercise with the takes so far (playtesting, 0.35.3).
+  const slotKey = `vocal:${level}`;
+  const [saved] = useState(() => {
+    const v = loadSlot<{ ids: string[]; i: number; noteIdx: number; best: Record<string, { score: number; take: VocalTake }> }>(slotKey);
+    return v && v.data.ids.join() === items.map((it) => it.id).join() && v.data.i < items.length ? v.data : null;
+  });
+  const [i, setI] = useState(saved?.i ?? 0);
+  const [noteIdx, setNoteIdx] = useState(saved?.noteIdx ?? 0);
   const [phase, setPhase] = useState<Phase>('ready');
   const [frames, setFrames] = useState<SungFrame[]>([]);
   const [grade, setGrade] = useState<TakeGrade | null>(null);
@@ -684,7 +691,12 @@ function VocalSession({
       return false;
     }
   });
-  const best = useRef<Record<string, { score: number; take: VocalTake }>>({});
+  const best = useRef<Record<string, { score: number; take: VocalTake }>>(saved?.best ?? {});
+  useEffect(() => {
+    if (i === 0 && noteIdx === 0) return;
+    saveSlot(slotKey, { title: `${t.vocalTitle} · ${typeof level === 'number' ? level : '🔥'}`, route: 'vocal', done: i, total: items.length, data: { ids: items.map((it) => it.id), i, noteIdx, best: best.current } });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [i, noteIdx]);
   const rangeScores = useRef<number[]>([]);
   const ctl = useRef<AbortController | null>(null);
   const stopped = useRef(false);
@@ -866,6 +878,7 @@ function VocalSession({
   };
 
   const finishSession = async () => {
+    clearSlot(slotKey);
     const perItem = items.map((it) => {
       if (it.kind === 'vibrato-register') {
         const n = itemTargets(it, range).length;

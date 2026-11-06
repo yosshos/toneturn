@@ -42,21 +42,24 @@ export class TournamentController {
     private items: Question[],
     players: string[],
     private ad: TournamentAdapters,
-    private hooks: { onOver?: (results: RoundResult[], st: Standing[]) => void } = {},
+    private hooks: { onOver?: (results: RoundResult[], st: Standing[]) => void; onRound?: (results: RoundResult[]) => void } = {},
     private windowMs = ROUND_WINDOW_MS,
+    /** Rounds already played (continuing a saved game after leaving half-way). */
+    resumeResults: RoundResult[] = [],
   ) {
+    const done = resumeResults.length < items.length ? resumeResults : [];
     this.view = {
       stage: 'ready',
-      round: 0,
+      round: done.length,
       rounds: items.length,
-      item: items[0],
+      item: items[done.length],
       players,
       countdown: 3,
       locked: {},
       windowEndsAt: null,
       last: null,
-      results: [],
-      standings: standings(players.length, []),
+      results: done,
+      standings: standings(players.length, done),
     };
   }
 
@@ -101,7 +104,7 @@ export class TournamentController {
   }
 
   private async loop(signal: AbortSignal) {
-    for (let i = 0; i < this.items.length; i++) {
+    for (let i = this.view.results.length; i < this.items.length; i++) {
       const item = this.items[i];
       this.answers.clear();
       this.patch({ round: i, item, locked: {}, last: null, windowEndsAt: null });
@@ -140,6 +143,7 @@ export class TournamentController {
       this.patch({ stage: 'reveal', last: res, results, standings: standings(this.view.players.length, results) });
       this.ad.audio.cue(res.fastest !== null ? 'correct' : 'wrong');
       if (res.fastest === null) await this.play(explainStimulus(item), signal);
+      if (i < this.items.length - 1) this.hooks.onRound?.(results);
       await this.ad.clock.sleep(1400, signal);
     }
     this.patch({ stage: 'over' });

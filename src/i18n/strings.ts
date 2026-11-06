@@ -546,6 +546,10 @@ const en = {
     resume: 'Continue',
     notNow: 'Not now',
   },
+  newGame: 'New game',
+  tfSavedRun: (sec: number, score: number) => `${sec}s left, ${score} points`,
+  continueGame: (who: string) => `Continue the game (${who})`,
+  continueAt: (done: number, all: number) => `Continue (${done} of ${all} done)`,
   resumeSession: {
     title: 'Continue where you stopped',
     untitled: 'Your last exercise',
@@ -1433,6 +1437,10 @@ const he: Strings = {
     resume: 'להמשיך',
     notNow: 'לא עכשיו',
   },
+  newGame: 'משחק חדש',
+  tfSavedRun: (sec: number, score: number) => `נשארו ${sec} שניות, ${score} נקודות`,
+  continueGame: (who: string) => `להמשיך את המשחק (${who})`,
+  continueAt: (done: number, all: number) => `להמשיך (${done} מתוך ${all} בוצעו)`,
   resumeSession: {
     title: 'להמשיך מאיפה שעצרתם',
     untitled: 'התרגיל האחרון שלכם',

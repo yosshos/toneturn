@@ -204,3 +204,30 @@ describe('Beat Echo controller', () => {
     c.dispose();
   });
 });
+
+describe('Echo / Beat: a match left half-way continues', () => {
+  it('saves after each turn; a new controller resumes with the same match and length', async () => {
+    const audio = new FakeAudio();
+    const cfg: GameConfig = { kind: 'melody', input: 'pads', players: ['A'], seed: 7, lang: 'en', naming: 'letter', bpm: 90 };
+    const turns: { len: number; log: number }[] = [];
+    let last: Parameters<NonNullable<ConstructorParameters<typeof MemoryGameController>[2]>['onTurn'] & object>[0] | null = null;
+    const c = new MemoryGameController(cfg, { audio, tts: new FakeTTS(), pitch: new ScriptedPitch([]), knock: new FakeKnock(null), clock: macroClock, simulated: true }, {
+      onTurn: (m) => {
+        last = m;
+        turns.push({ len: m.length, log: m.log.length });
+      },
+    });
+    void c.start();
+    for (let k = 0; k < 2; k++) {
+      await until(() => c.getView().stage === 'respond');
+      c.getView().seq.forEach((p) => c.tapPad(p));
+      await until(() => turns.length > k);
+    }
+    c.dispose();
+    expect(last).not.toBeNull();
+    const m = last!;
+    const d = new MemoryGameController(cfg, { audio, tts: new FakeTTS(), pitch: new ScriptedPitch([]), knock: new FakeKnock(null), clock: macroClock, simulated: true }, {}, { match: m, rounds: [] });
+    expect(d.getView().match.length).toBe(m.length);
+    expect(d.getView().match.log).toHaveLength(2);
+  });
+});

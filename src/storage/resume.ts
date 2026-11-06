@@ -116,3 +116,53 @@ export function placementProgressOf(v: SavedSession): { answered: number; sectio
   const doneSections = [...seen].filter((k) => k !== cur && sections.includes(k as never)).length;
   return { answered, sections: sections.length, doneSections };
 }
+
+// ---- Other screens (daily challenge, duels, games, vocal levels, quick lessons): a small state per screen ----
+const SLOTS_KEY = 'toneturn.slots.v1';
+export interface Slot<T = unknown> {
+  key: string;
+  /** For the home card: what it is, and where to go to continue it. */
+  title: string;
+  route: string;
+  /** "3 of 10". */
+  done: number;
+  total: number;
+  data: T;
+  savedAt: string;
+}
+function readSlots(now = Date.now()): Slot[] {
+  try {
+    const list = JSON.parse(ls()?.getItem(SLOTS_KEY) ?? '[]') as Slot[];
+    return (Array.isArray(list) ? list : []).filter((v) => v?.key && now - new Date(v.savedAt).getTime() <= MAX_AGE_MS);
+  } catch {
+    return [];
+  }
+}
+function writeSlots(list: Slot[]) {
+  try {
+    ls()?.setItem(SLOTS_KEY, JSON.stringify(list.slice(0, MAX_SLOTS)));
+  } catch {
+    try {
+      ls()?.setItem(SLOTS_KEY, JSON.stringify(list.slice(0, 2)));
+    } catch {
+      /* blocked */
+    }
+  }
+}
+export function saveSlot<T>(key: string, v: Omit<Slot<T>, 'key' | 'savedAt'>): void {
+  writeSlots([{ ...v, key, savedAt: new Date().toISOString() } as Slot, ...readSlots().filter((x) => x.key !== key)]);
+}
+export function loadSlot<T>(key: string, now = Date.now()): Slot<T> | null {
+  return (readSlots(now).find((x) => x.key === key) as Slot<T> | undefined) ?? null;
+}
+export function clearSlot(key: string): void {
+  writeSlots(readSlots().filter((x) => x.key !== key));
+}
+/** The latest unfinished thing anywhere (lesson sessions and screens), for the home card. */
+export function latestAnything(except: string[] = []): { kind: 'session'; v: SavedSession } | { kind: 'slot'; v: Slot } | null {
+  const a = latestSession(except);
+  const b = readSlots().find((x) => !except.includes(x.key) && !x.key.startsWith('mini:')) ?? null;
+  if (!a && !b) return null;
+  if (a && (!b || a.savedAt >= b.savedAt)) return { kind: 'session', v: a };
+  return { kind: 'slot', v: b! };
+}

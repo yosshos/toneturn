@@ -158,12 +158,14 @@ export class MemoryGameController {
   constructor(
     private cfg: GameConfig,
     private ad: GameAdapters,
-    private hooks: { onOver?: (m: Match, kind: GameKind, rounds: RoundStat[]) => void } = {},
+    private hooks: { onOver?: (m: Match, kind: GameKind, rounds: RoundStat[]) => void; onTurn?: (m: Match, rounds: RoundStat[]) => void } = {},
+    /** Continue a saved match (left half-way). */
+    resume?: { match: Match; rounds: RoundStat[] },
   ) {
     const melody = cfg.kind === 'melody' ? melodyGame(cfg.seed, [...PAD_SETS[cfg.pads ?? 'basic']], cfg.input === 'sing' ? cfg.voiceRange : null) : null;
     this.view = {
       stage: 'ready',
-      match: newMatch(cfg.players, START_LENGTH[cfg.kind]),
+      match: resume && !resume.match.over ? resume.match : newMatch(cfg.players, START_LENGTH[cfg.kind]),
       kind: cfg.kind,
       input: cfg.input,
       melody,
@@ -178,6 +180,7 @@ export class MemoryGameController {
       error: null,
       simulated: ad.simulated,
     };
+    if (resume && !resume.match.over) this.rounds = resume.rounds;
     // Pads no longer light up with the playback (playtest): the melody must be remembered by ear,
     // not as a sequence of colours or positions.
   }
@@ -340,6 +343,7 @@ export class MemoryGameController {
       }
       if (m.turn === 0) this.rounds.push(stat); // player 1's rounds (solo games rate them)
       this.patch({ match: recordTurn(this.view.match, result.pass) });
+      if (!this.view.match.over) this.hooks.onTurn?.(this.view.match, this.rounds);
     }
     const m = this.view.match;
     this.patch({ stage: 'over', caption: null });

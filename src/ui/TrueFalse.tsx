@@ -4,6 +4,7 @@
 // same topics and level). After a wrong answer the reason is shown, so every miss teaches something.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { clearSlot, loadSlot, saveSlot } from '../storage/resume';
 import { tfPoints, TF_PENALTY_MS, TF_RUN_MS } from '../engine/truefalse';
 import { factDifficulty, factItem, FACT_TOPICS, SILENT_TOPICS, type Fact, type FactLevel, type FactTopic } from '../engine/theoryFacts';
 import { mulberry32 } from '../engine/lesson';
@@ -28,10 +29,17 @@ function savedTopics(): FactTopic[] {
   return SILENT_TOPICS.filter((x) => x !== 'trio');
 }
 
-function useFacts(topics: FactTopic[], level: FactLevel, seed: number) {
+/** `skip`: statements already played (continuing a saved run: the same statements follow). */
+const TF_SOLO = 'tf:solo';
+type SoloSave = { topics: FactTopic[]; level: FactLevel; seed: number; n: number; score: number; streak: number; left: number; events: RatingEvent[] };
+
+function useFacts(topics: FactTopic[], level: FactLevel, seed: number, skip = 0) {
   const rnd = useMemo(() => mulberry32(seed), [seed]);
-  const [n, setN] = useState(0);
-  const [fact, setFact] = useState<Fact>(() => factItem(topics, level, rnd));
+  const [n, setN] = useState(skip);
+  const [fact, setFact] = useState<Fact>(() => {
+    for (let k = 0; k < skip; k++) factItem(topics, level, rnd);
+    return factItem(topics, level, rnd);
+  });
   const next = () => {
     setFact(factItem(topics, level, rnd));
     setN((x) => x + 1);
@@ -144,12 +152,16 @@ export function TrueFalseScreen({
     }
   };
   const bestKey = `s${level}`;
+  // Left half-way, a run continues where it stopped (playtesting, 0.35.3).
+  const [resume, setResume] = useState<boolean>(false);
+  const savedSolo = loadSlot<SoloSave>(TF_SOLO);
   if (run !== null)
     return mode === 'solo' ? (
-      <SoloRun key={run} t={t} settings={settings} topics={topics} level={level} best={progress.tfBest?.[bestKey] ?? 0} bestKey={bestKey} onProgress={onProgress} onExit={() => setRun(null)} onAgain={() => setRun((r) => (r ?? 0) + 1)} />
+      <SoloRun key={run} t={t} settings={settings} topics={topics} level={level} best={progress.tfBest?.[bestKey] ?? 0} bestKey={bestKey} resume={resume ? savedSolo?.data : undefined} onProgress={onProgress} onExit={() => setRun(null)} onAgain={() => (setResume(false), setRun((r) => (r ?? 0) + 1))} />
     ) : (
       <DuelRun key={run} t={t} settings={settings} topics={topics} level={level} onExit={() => setRun(null)} onAgain={() => setRun((r) => (r ?? 0) + 1)} />
     );
+  const cont = mode === 'solo' ? savedSolo : null;
   return (
     <main className="panel-screen tf-setup">
       <header className="screen-head">
@@ -173,33 +185,57 @@ export function TrueFalseScreen({
         </fieldset>
         {mode === 'solo' && <p className="field-hint">{progress.tfBest?.[bestKey] ? `${t.personalBest}: ${progress.tfBest[bestKey]}` : t.tfNoBest}</p>}
       </section>
+      {cont && (
+        <button
+          className="btn mega"
+          data-resume-tf="1"
+          onClick={() => {
+            void piano.unlock();
+            setTopicsRaw(cont.data.topics);
+            setLevel(cont.data.level);
+            setResume(true);
+            setRun(Date.now());
+          }}
+        >
+          ▶ {cont.total > 0 ? t.continueAt(cont.done, cont.total) : `${t.resumeSession.go} · ${t.tfSavedRun(Math.ceil((cont.data as SoloSave).left / 1000), (cont.data as SoloSave).score)}`}
+        </button>
+      )}
       <button
-        className="btn mega"
+        className={`btn ${cont ? 'ghost' : 'mega'}`}
         onClick={() => {
           void piano.unlock();
-          if (mode === 'online') onOnline(topics, level);
-          else setRun(Date.now());
+          if (mode === 'online') return onOnline(topics, level);
+          if (mode === 'solo') clearSlot(TF_SOLO);
+          setResume(false);
+          setRun(Date.now());
         }}
       >
-        ▶ {t.play}
+        ▶ {cont ? t.newGame : t.play}
       </button>
     </main>
   );
 }
 
-function SoloRun({ t, settings, topics, level, best, bestKey, onProgress, onExit, onAgain }: { t: Strings; settings: Settings; topics: FactTopic[]; level: FactLevel; best: number; bestKey: string; onProgress: (p: Progress) => void; onExit: () => void; onAgain: () => void }) {
+function SoloRun({ t, settings, topics, level, best, bestKey, resume, onProgress, onExit, onAgain }: { t: Strings; settings: Settings; topics: FactTopic[]; level: FactLevel; best: number; bestKey: string; resume?: SoloSave; onProgress: (p: Progress) => void; onExit: () => void; onAgain: () => void }) {
   const lang = settings.uiLang;
   const nm = namingFor(settings.naming, lang);
-  const seed = useMemo(() => (Date.now() ^ (Math.random() * 1e9)) >>> 0, []);
-  const { fact, n, next } = useFacts(topics, level, seed);
-  const [deadline, setDeadline] = useState(() => performance.now() + TF_RUN_MS);
+  const seed = useMemo(() => resume?.seed ?? (Date.now() ^ (Math.random() * 1e9)) >>> 0, [resume]);
+  const { fact, n, next } = useFacts(topics, level, seed, resume?.n ?? 0);
+  const [deadline, setDeadline] = useState(() => performance.now() + (resume?.left ?? TF_RUN_MS));
   const [now, setNow] = useState(performance.now());
-  const [score, setScore] = useState(0);
-  const [streak, setStreak] = useState(0);
+  const [score, setScore] = useState(resume?.score ?? 0);
+  const [streak, setStreak] = useState(resume?.streak ?? 0);
   const [flash, setFlash] = useState<null | { ok: boolean }>(null);
   const [over, setOver] = useState<null | { best: boolean }>(null);
-  const events = useRef<RatingEvent[]>([]);
-  const answered = useRef(0);
+  const events = useRef<RatingEvent[]>(resume?.events ?? []);
+  const answered = useRef(resume?.events.length ?? 0);
+  // Saved after each statement: the clock left, the score and streak, where the statements stood.
+  useEffect(() => {
+    if (over || n === 0) return;
+    const leftNow = Math.max(0, deadline - performance.now());
+    if (leftNow > 0) saveSlot<SoloSave>(TF_SOLO, { title: `${t.trueFalse} · ${t.tfSavedRun(Math.ceil(leftNow / 1000), score)}`, route: 'truefalse', done: 0, total: 0, data: { topics, level, seed, n, score, streak, left: leftNow, events: events.current } });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [n]);
 
   useEffect(() => {
     if (over) return;
@@ -218,6 +254,7 @@ function SoloRun({ t, settings, topics, level, best, bestKey, onProgress, onExit
   const left = Math.max(0, deadline - now);
   useEffect(() => {
     if (left > 0 || over) return;
+    clearSlot(TF_SOLO);
     void store.recordTrueFalse(bestKey, score, events.current).then(({ progress, best: isBest }) => {
       onProgress(progress);
       setOver({ best: isBest });
@@ -326,6 +363,7 @@ function DuelRun({ t, settings, topics, level, onExit, onAgain }: { t: Strings; 
   const [locked, setLocked] = useState<[boolean, boolean]>([false, false]);
   const [winner, setWinner] = useState<number | null>(null);
   const [round, setRound] = useState(0);
+  // A duel is not saved: leaving a game against someone means losing it (product owner).
   useEffect(() => {
     playFact(fact);
   }, [n, fact]);

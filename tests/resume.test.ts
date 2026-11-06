@@ -88,3 +88,37 @@ describe('Find my level survives leaving half-way', () => {
     expect(sessionProgressOf(loadSession('path:degrees-1')!)).toEqual({ answered: 1, total: lesson.questions.length });
   });
 });
+
+import { TournamentController } from '../src/game/tournamentController';
+import { FakeAudio as FA, FakeTTS as FT, immediateClock as IC } from '../src/game/fakes';
+import { dailySet } from '../src/engine/tournament';
+import { clearSlot, latestAnything, loadSlot, saveSlot } from '../src/storage/resume';
+
+describe('other screens keep their place', () => {
+  beforeEach(() => mem.clear());
+
+  it('a slot is saved, found by the home card, and cleared', () => {
+    saveSlot('daily:2026-11-06:scored', { title: 'Daily', route: 'daily', done: 2, total: 5, data: { results: [] } });
+    expect(loadSlot('daily:2026-11-06:scored')?.done).toBe(2);
+    expect(latestAnything()?.kind).toBe('slot');
+    saveSlot('mini:degrees', { title: 'Mini', route: 'home', done: 1, total: 4, data: {} });
+    expect(latestAnything()?.v.key).toBe('daily:2026-11-06:scored'); // quick lessons resume by themselves
+    clearSlot('daily:2026-11-06:scored');
+    expect(latestAnything()).toBeNull();
+  });
+
+  it('a tournament (daily, duel, ghost) continues at the next round with the scores kept', async () => {
+    const items = dailySet('2026-11-06');
+    const saved: unknown[] = [];
+    const a = new TournamentController(items, ['me'], { audio: new FA(), tts: new FT(), clock: IC }, { onRound: (r) => saved.push(r) }, 30);
+    await a.start();
+    for (let i = 0; i < 400 && saved.length < 2; i++) await new Promise((r) => setTimeout(r, 0));
+    a.dispose();
+    const results = saved[1] as ReturnType<typeof a.getView>['results'];
+    expect(results).toHaveLength(2);
+    const b = new TournamentController(items, ['me'], { audio: new FA(), tts: new FT(), clock: IC }, {}, 30, results);
+    expect(b.getView().round).toBe(2);
+    expect(b.getView().results).toHaveLength(2);
+    expect(b.getView().item).toBe(items[2]);
+  });
+});

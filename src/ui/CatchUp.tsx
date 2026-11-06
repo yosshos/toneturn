@@ -69,7 +69,8 @@ export function ResumeSessionCard({ t, title, progress, onContinue, onDrop }: { 
         <b>⏸️ {k.title}</b>
       </div>
       <p className="catchup-blurb">
-        <b>{title || k.untitled}</b> · {k.where(progress.answered, progress.total)}
+        <b>{title || k.untitled}</b>
+        {progress.total > 0 && <> · {k.where(progress.answered, progress.total)}</>}
       </p>
       <button className="btn mega resume-placement-go" onClick={onContinue} data-resume-session="1">
         {k.go}

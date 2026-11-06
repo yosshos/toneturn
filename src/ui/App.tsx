@@ -4,7 +4,7 @@ import { personalOrder, type Intake } from '../engine/intake';
 import { catchUp, hasCatchUp } from '../engine/catchup';
 import { CatchUpCard, ResumePlacementCard, ResumeSessionCard } from './CatchUp';
 import { intakeDraftProgress } from './Intake';
-import { clearPlacement, clearSession, latestSession, loadPlacement, loadSession, PLACEMENT_KEY, placementProgressOf, saveSession, sessionProgressOf, type SavedSession } from '../storage/resume';
+import { clearSlot, latestAnything, clearPlacement, clearSession, loadPlacement, loadSession, PLACEMENT_KEY, placementProgressOf, saveSession, sessionProgressOf, type SavedSession } from '../storage/resume';
 import { vocalUnit } from '../content/units';
 const AvatarStudio = lazy(() => import('./AvatarStudio'));
 import { MiniGateContext, MiniLessonPlayer } from './MiniLesson';
@@ -184,8 +184,8 @@ export function App() {
     // app instead of leaving it (playtesting, 0.35.2); Find my level keeps its place and offers to continue.
     const onHashRoute = () =>
       setRoute((r) => {
-        if (location.hash.replace(/^#\/?/, '') === PLAY_HASH) return r === 'lesson' ? r : 'home';
-        return (r === 'game' || r === 'duelplay') && routeFromHash() === 'home' ? r : routeFromHash();
+        if (location.hash.replace(/^#\/?/, '') === PLAY_HASH) return r === 'lesson' || r === 'game' || r === 'duelplay' ? r : 'home';
+        return routeFromHash();
       });
     window.addEventListener('hashchange', onHashRoute);
     return () => {
@@ -267,7 +267,7 @@ export function App() {
   );
 
   const go = (r: Route) => {
-    location.hash = r === 'lesson' ? `/${PLAY_HASH}` : r === 'home' || r === 'game' ? '' : `/${r}`;
+    location.hash = r === 'lesson' || r === 'game' ? `/${PLAY_HASH}` : r === 'home' ? '' : `/${r}`;
     setRoute(r);
   };
 
@@ -324,6 +324,15 @@ export function App() {
   const continueSession = (v: SavedSession) => {
     if (v.key.startsWith('path:')) return openLesson(v.key.slice(5) as LessonId);
     openGenerated(v.lesson, undefined, false, { key: v.key, title: v.title, resume: v });
+  };
+  /** A saved screen: vocal levels open straight at their level; the rest show their own "continue" button. */
+  const continueSlot = (key: string, r: Route) => {
+    const m = /^vocal:(\d+|warmup)$/.exec(key);
+    if (m) {
+      setVocalWarmup(m[1] === 'warmup');
+      setVocalLevel(m[1] === 'warmup' ? null : Number(m[1]));
+    }
+    go(r);
   };
   const openReview = () => {
     const def = reviewLesson(progress.review, Date.now() >>> 0);
@@ -432,7 +441,7 @@ export function App() {
   const pending = catchUp(s, progress);
   const savedPlacement = route === 'home' ? loadPlacement() : null;
   void dropTick;
-  const lastSession = route === 'home' && !automatedRun ? latestSession([PLACEMENT_KEY]) : null;
+  const lastThing = route === 'home' && !automatedRun ? latestAnything([PLACEMENT_KEY]) : null;
   // A questionnaire left half-way shows as partly filled, to continue any time (also before any lesson).
   const intakeDraft = route === 'home' ? intakeDraftProgress() : null;
   const catchUpKey = `${pending.key}${intakeDraft ? '|draft' : ''}`;
@@ -491,14 +500,15 @@ export function App() {
                   }}
                 />
               )}
-              {lastSession && (
+              {lastThing && (
                 <ResumeSessionCard
                   t={t}
-                  title={lastSession.title}
-                  progress={sessionProgressOf(lastSession)}
-                  onContinue={() => continueSession(lastSession)}
+                  title={lastThing.v.title}
+                  progress={lastThing.kind === 'session' ? sessionProgressOf(lastThing.v) : { answered: lastThing.v.done, total: lastThing.v.total }}
+                  onContinue={() => (lastThing.kind === 'session' ? continueSession(lastThing.v) : continueSlot(lastThing.v.key, lastThing.v.route as Route))}
                   onDrop={() => {
-                    clearSession(lastSession.key);
+                    if (lastThing.kind === 'session') clearSession(lastThing.v.key);
+                    else clearSlot(lastThing.v.key);
                     setDropTick((x) => x + 1);
                   }}
                 />
@@ -659,7 +669,7 @@ export function App() {
               void piano.unlock(); // the Start gesture
               setGameSetup(v);
               setGameKey((k) => k + 1);
-              location.hash = '';
+              enterPlay();
               setRoute('game');
             })
           }
@@ -741,13 +751,15 @@ export function App() {
           onStart={(names, kind, rounds) => {
             setDuel({ names, kind, rounds });
             setGameKey((k) => k + 1);
-            location.hash = '';
+            enterPlay();
             setRoute('duelplay');
           }}
         />
       )}
       {route === 'duelplay' && duel && (
-        <DuelScreen key={gameKey} t={t} settings={s} {...duel} onExit={() => go('home')} onRematch={() => setGameKey((k) => k + 1)} />
+        <DuelScreen key={gameKey} t={t} settings={s} {...duel} onExit={() => go('home')} onRematch={() => {
+          setGameKey((k) => k + 1);
+        }} />
       )}
       {route === 'game' && gameSetup && (
         <GameScreen

@@ -6,6 +6,7 @@ import type { CloudUser } from '../cloud/cloud';
 import { dailySet, shareText, tournamentSet, type SetKind } from '../engine/tournament';
 import type { Question } from '../engine/lesson';
 import { TournamentController, type TournamentView } from '../game/tournamentController';
+import { clearSlot, loadSlot, saveSlot } from '../storage/resume';
 import { askTemplate, choiceLabel } from '../game/content';
 import type { Strings } from '../i18n/strings';
 import { localDay, namingFor, type GhostRun, type Progress, type Settings } from '../storage/progress';
@@ -66,7 +67,11 @@ export function DailyScreen({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, playing, done?.submitted, done?.points, day]);
 
+  // Leaving half-way keeps the rounds played (playtesting, 0.35.3).
+  const slotKey = `daily:${day}:${practice ? 'practice' : 'scored'}`;
+  const saved = loadSlot<{ results: TournamentView['results'] }>(`daily:${day}:${done ? 'practice' : 'scored'}`);
   if (playing) {
+    const resume = loadSlot<{ results: TournamentView['results'] }>(slotKey);
     return (
       <TournamentPlay
         t={t}
@@ -74,7 +79,10 @@ export function DailyScreen({
         items={items}
         players={[t.you]}
         onExit={onBack}
+        resumeResults={resume?.data.results}
+        onRound={(results) => saveSlot(slotKey, { title: t.dailyChallenge, route: 'daily', done: results.length, total: items.length, data: { results } })}
         onOver={(v) => {
+          clearSlot(slotKey);
           const points = v.standings[0].points;
           const text = shareText(day, v.results, points, settings.uiLang);
           // Only the first play of the day counts; later plays are practice.
@@ -112,7 +120,7 @@ export function DailyScreen({
                 setPlaying(true);
               }}
             >
-              {t.practiceAgain}
+              {saved ? `▶ ${t.continueAt(saved.done, saved.total)}` : t.practiceAgain}
             </button>
           </>
         ) : (
@@ -124,7 +132,7 @@ export function DailyScreen({
               setPlaying(true);
             }}
           >
-            ▶ {t.play}
+            ▶ {saved ? t.continueAt(saved.done, saved.total) : t.play}
           </button>
         )}
       </section>
@@ -260,6 +268,7 @@ export function DuelSetup({ t, onBack, onStart }: { t: Strings; onBack: () => vo
   );
 }
 
+// A duel on one device is not saved: leaving a game against someone means losing it (product owner).
 export function DuelScreen({ t, settings, names, kind, rounds, onExit, onRematch }: { t: Strings; settings: Settings; names: string[]; kind: SetKind; rounds: number; onExit: () => void; onRematch: () => void }) {
   const seed = useMemo(() => (Date.now() ^ (Math.random() * 1e9)) >>> 0, []);
   const items = useMemo(() => tournamentSet(kind, rounds, seed), [kind, rounds, seed]);
@@ -273,7 +282,8 @@ const ghostKey = (kind: SetKind, rounds: number) => `${kind}:${rounds}`;
 export function GhostScreen({ t, settings, progress, onBack, onProgress }: { t: Strings; settings: Settings; progress: Progress; onBack: () => void; onProgress: (p: Progress) => void }) {
   const [kind, setKind] = useState<SetKind>('mixed');
   const [rounds, setRounds] = useState(5);
-  const [run, setRun] = useState<{ key: number; seed: number; ghost?: GhostRun } | null>(null);
+  const [run, setRun] = useState<{ key: number; seed: number; ghost?: GhostRun; resume?: TournamentView['results'] } | null>(null);
+  const savedRun = loadSlot<{ kind: SetKind; rounds: number; seed: number; ghost?: GhostRun; results: TournamentView['results'] }>('ghost');
   const [note, setNote] = useState<string | null>(null);
   const ghost = progress.ghosts?.[ghostKey(kind, rounds)];
   const kinds: [SetKind, string][] = [
@@ -297,6 +307,8 @@ export function GhostScreen({ t, settings, progress, onBack, onProgress }: { t: 
         players={run.ghost ? [t.you, t.ghostName] : [t.you]}
         ghost={run.ghost}
         overNote={note}
+        resumeResults={run.resume}
+        onRound={(results) => saveSlot('ghost', { title: t.ghostRace, route: 'ghost', done: results.length, total: items.length, data: { kind, rounds, seed: run.seed, ghost: run.ghost, results } })}
         onExit={() => {
           setRun(null);
           setNote(null);
@@ -307,6 +319,7 @@ export function GhostScreen({ t, settings, progress, onBack, onProgress }: { t: 
           setRun({ key: run.key + 1, seed: g?.seed ?? run.seed, ghost: g });
         }}
         onOver={(v) => {
+          clearSlot('ghost');
           const me = v.standings.find((s) => s.player === 0)!;
           const answers = v.results.map((r) => ({ answer: r.answers[0].answer, timeMs: r.answers[0].timeMs }));
           void store.recordGhost(ghostKey(kind, rounds), { seed: run.seed, points: me.points, answers, at: new Date().toISOString() }).then(({ progress: p, kept }) => {
@@ -351,10 +364,25 @@ export function GhostScreen({ t, settings, progress, onBack, onProgress }: { t: 
           {ghost ? `👻 ${t.ghostBest}: ${ghost.points.toLocaleString(settings.uiLang)} ${t.points}` : t.ghostNone}
         </p>
       </section>
+      {savedRun && (
+        <button
+          className="btn mega"
+          data-resume-ghost="1"
+          onClick={() => {
+            void piano.unlock();
+            setKind(savedRun.data.kind);
+            setRounds(savedRun.data.rounds);
+            setRun({ key: 1, seed: savedRun.data.seed, ghost: savedRun.data.ghost, resume: savedRun.data.results });
+          }}
+        >
+          ▶ {t.continueAt(savedRun.done, savedRun.total)}
+        </button>
+      )}
       <button
-        className="btn mega"
+        className={`btn ${savedRun ? 'ghost' : 'mega'}`}
         onClick={() => {
           void piano.unlock();
+          clearSlot('ghost');
           setRun({ key: 1, seed: ghost?.seed ?? (Date.now() ^ (Math.random() * 1e9)) >>> 0, ghost });
         }}
       >
@@ -377,6 +405,8 @@ export function TournamentPlay({
   shareDay,
   ghost,
   overNote,
+  resumeResults,
+  onRound,
 }: {
   t: Strings;
   settings: Settings;
@@ -389,11 +419,15 @@ export function TournamentPlay({
   /** Ghost race: player 2 replays these answers at their recorded times. */
   ghost?: GhostRun;
   overNote?: string | null;
+  /** Continue a saved game: the rounds already played. */
+  resumeResults?: TournamentView['results'];
+  /** After each round but the last (saving the place). */
+  onRound?: (results: TournamentView['results']) => void;
 }) {
   const ref = useRef<TournamentController | null>(null);
   if (!ref.current) {
     let c: TournamentController | null = null;
-    c = new TournamentController(items, players, { audio: piano, tts, clock: realClock }, { onOver: () => c && onOver?.(c.getView()) });
+    c = new TournamentController(items, players, { audio: piano, tts, clock: realClock }, { onOver: () => c && onOver?.(c.getView()), onRound }, undefined, resumeResults);
     ref.current = c;
   }
   const c = ref.current;

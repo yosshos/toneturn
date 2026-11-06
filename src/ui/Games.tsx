@@ -3,7 +3,9 @@ import type { PadSet } from '../engine/memory';
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { displayNote } from '../engine/pitch';
 import { PLAYER_COLORS } from '../engine/match';
-import { MemoryGameController, type GameInput, type GameKind, type GameView } from '../game/memoryGame';
+import { MemoryGameController, type GameInput, type GameKind, type GameView, type RoundStat } from '../game/memoryGame';
+import type { Match } from '../engine/match';
+import { clearSlot, loadSlot, saveSlot } from '../storage/resume';
 import type { Strings } from '../i18n/strings';
 import { namingFor, type Progress, type Settings } from '../storage/progress';
 import { MicIcon, Note, PermissionPanel } from './bits';
@@ -47,6 +49,8 @@ export function GameSetup({
   const [ladder, setLadder] = useState(false);
   const [swing, setSwing] = useState(false);
   const [pads, setPads] = useState<PadSet>('basic');
+  const resumeGame = loadSlot<{ setup: GameSetupValue; match: Match }>(`game:${kind}`);
+  // (solo games only are ever saved)
   const [names, setNames] = useState<string[]>(() => {
     try {
       const saved = JSON.parse(localStorage.getItem('toneturn.players') ?? 'null') as string[] | null;
@@ -199,9 +203,15 @@ export function GameSetup({
           {t.personalBest}: {best} {kind === 'melody' ? t.notes : t.beats}
         </p>
       )}
+      {resumeGame && (
+        <button className="btn mega" data-resume-game="1" onClick={() => onStart(resumeGame.data.setup)}>
+          ▶ {t.continueGame(resumeGame.data.match.players.map((p) => p.name).join(' · '))}
+        </button>
+      )}
       <button
-        className="btn mega"
+        className={`btn ${resumeGame ? 'ghost' : 'mega'}`}
         onClick={() => {
+          clearSlot(`game:${kind}`);
           const ps = names.slice(0, count).map((n, i) => n.trim() || `${t.playerN} ${i + 1}`);
           try {
             localStorage.setItem('toneturn.players', JSON.stringify(names));
@@ -257,7 +267,13 @@ export function GameScreen({
   onProgress: (p: Progress) => void;
 }) {
   const ref = useRef<MemoryGameController | null>(null);
-  const seed = useMemo(() => (Date.now() ^ (Math.random() * 1e9)) >>> 0, []);
+  // Left half-way, the same game (same setup) continues where it stopped (playtesting, 0.35.3).
+  const slotKey = `game:${setup.kind}`;
+  const saved = useMemo(() => {
+    const v = loadSlot<{ setup: GameSetupValue; seed: number; match: Match; rounds: RoundStat[] }>(slotKey);
+    return v && setup.players.length === 1 && JSON.stringify(v.data.setup) === JSON.stringify(setup) ? v : null;
+  }, [slotKey, setup]);
+  const seed = useMemo(() => saved?.data.seed ?? (Date.now() ^ (Math.random() * 1e9)) >>> 0, [saved]);
   if (!ref.current) {
     ref.current = new MemoryGameController(
       {
@@ -277,7 +293,12 @@ export function GameScreen({
       },
       makeGameAdapters(),
       {
+        // Only solo games are saved: leaving a game against others means losing it (product owner).
+        onTurn: (m, rounds) =>
+          m.players.length === 1 &&
+          saveSlot(slotKey, { title: setup.kind === 'melody' ? t.echoChain : t.beatEcho, route: 'games', done: m.log.length, total: 0, data: { setup, seed, match: m, rounds } }),
         onOver: (m, kind, rounds) => {
+          clearSlot(slotKey);
           const best = Math.max(...m.players.map((p) => p.best));
           void (async () => {
             let p = await store.recordGameBest(kind, best);
@@ -287,6 +308,7 @@ export function GameScreen({
           })();
         },
       },
+      saved ? { match: saved.data.match, rounds: saved.data.rounds } : undefined,
     );
   }
   const c = ref.current;

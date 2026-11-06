@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.35.3',
+    date: '2026-11-06',
+    en: ['Everything you play alone keeps your place now: the daily challenge, the ghost race, solo Echo Chain and Beat Echo, Truth or Bluff (time and score included), vocal levels and quick lessons continue where you stopped. Games against others are not saved — leaving one means losing it. Back inside a game returns to the home screen'],
+    he: ['כל מה שמשחקים לבד שומר עכשיו את המקום: האתגר היומי, המרוץ מול הרוח, שרשרת הד והד הקצב ביחידים, אמת או בלוף (כולל הזמן והניקוד), שלבי השירה והשיעורים הקצרים — ממשיכים מאיפה שעצרתם. משחקים מול אחרים לא נשמרים — מי שעוזב מפסיד. כפתור חזרה בתוך משחק מחזיר למסך הבית'],
+  },
+  {
     version: '0.35.2',
     date: '2026-11-06',
     en: [

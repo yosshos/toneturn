@@ -2,6 +2,7 @@
 // celebration when every step was heard — the topic then joins "Topics I learned".
 
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { clearSlot, loadSlot, saveSlot } from '../storage/resume';
 import type { MiniLesson } from '../content/miniTypes';
 import { GLOSSARY, termsIn, type Term } from '../content/glossary';
 import type { Stimulus } from '../engine/lesson';
@@ -23,11 +24,19 @@ type Phase = 'playing' | 'paused' | 'done';
 
 export function MiniLessonPlayer({ t, settings, lesson, name, onFinish }: { t: Strings; settings: Settings; lesson: MiniLesson; name: string | null; onFinish: (heardAll: boolean) => void }) {
   const lang = settings.uiLang;
-  const [i, setI] = useState(0);
+  // Left half-way, a quick lesson continues from its step next time (playtesting, 0.35.3).
+  const slotKey = `mini:${lesson.id}`;
+  const [saved] = useState(() => loadSlot<{ i: number; heard: number[] }>(slotKey));
+  const [i, setI] = useState(() => Math.min(saved?.data.i ?? 0, lesson.steps.length - 1));
   const [phase, setPhase] = useState<Phase>('playing');
   const [celebrate, setCelebrate] = useState(false);
   const [term, setTerm] = useState<Term | null>(null);
-  const heard = useRef(new Set<number>());
+  const heard = useRef(new Set<number>(saved?.data.heard ?? []));
+  useEffect(() => {
+    if (phase === 'done') clearSlot(slotKey);
+    else if (i > 0) saveSlot(slotKey, { title: lesson.title[lang], route: 'home', done: i, total: lesson.steps.length, data: { i, heard: [...heard.current] } });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [i, phase]);
   const ctl = useRef<AbortController | null>(null);
   const step = lesson.steps[i];
 
@@ -104,7 +113,7 @@ export function MiniLessonPlayer({ t, settings, lesson, name, onFinish }: { t: S
             📚 {lesson.title[lang]}
           </p>
           <p className="mini-takeaway">{lesson.takeaway[lang]}</p>
-          <button className="btn mega" data-mini-go="1" onClick={() => onFinish(true)}>
+          <button className="btn mega" data-mini-go="1" onClick={() => (clearSlot(slotKey), onFinish(true))}>
             {t.miniPractise} →
           </button>
         </div>
@@ -168,7 +177,7 @@ export function MiniLessonPlayer({ t, settings, lesson, name, onFinish }: { t: S
           </button>
         </div>
         {phase === 'done' && !heardAll && <p className="field-hint">{t.miniHearAll}</p>}
-        <button className="btn ghost mini-skip" data-mini-skip="1" onClick={() => (ctl.current?.abort(), onFinish(false))}>
+        <button className="btn ghost mini-skip" data-mini-skip="1" onClick={() => (ctl.current?.abort(), clearSlot(slotKey), onFinish(false))}>
           {phase === 'done' ? t.miniPractise : t.miniSkip} →
         </button>
       </div>
