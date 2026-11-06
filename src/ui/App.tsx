@@ -1,6 +1,8 @@
 import { lazy, Suspense } from 'react';
 import { IntakeScreen } from './Intake';
 import { personalOrder, type Intake } from '../engine/intake';
+import { catchUp, hasCatchUp } from '../engine/catchup';
+import { CatchUpCard } from './CatchUp';
 import { vocalUnit } from '../content/units';
 const AvatarStudio = lazy(() => import('./AvatarStudio'));
 import { MiniGateContext, MiniLessonPlayer } from './MiniLesson';
@@ -284,6 +286,11 @@ export function App() {
     const seed = (Date.now() ^ (Math.random() * 1e9)) >>> 0;
     openGenerated(placementLesson(seed, { singing: s.mode === 'voice' || d === 'voice', domain: d, priorities: (s.intake as Intake | null | undefined)?.priorities }), (st) => adaptPlacement(st, seed));
   };
+  /** Catching up: only the sections this player has not been measured on yet. */
+  const openCatchUpPlacement = (only: SkillId[]) => {
+    const seed = (Date.now() ^ (Math.random() * 1e9)) >>> 0;
+    openGenerated(placementLesson(seed, { singing: s.mode === 'voice', priorities: (s.intake as Intake | null | undefined)?.priorities, only }), (st) => adaptPlacement(st, seed));
+  };
   const openReview = () => {
     const def = reviewLesson(progress.review, Date.now() >>> 0);
     if (def) openGenerated(def);
@@ -380,6 +387,11 @@ export function App() {
 
   if (!settings) return <div className="boot" />;
   const news = unseenChanges(s.seenVersion);
+  // Existing players (not the first run): what they have not done yet of today's first-run flow.
+  const automatedRun = (SIMULATED || params.has('unlock') || (typeof navigator !== 'undefined' && navigator.webdriver)) && !params.has('catchup');
+  const started = progress.history.length > 0 || Object.values(progress.lessons).some((l) => (l?.completions ?? 0) > 0);
+  const pending = catchUp(s, progress);
+  const showCatchUp = !automatedRun && started && hasCatchUp(pending) && s.catchUpHidden !== pending.key;
 
   const order = personalOrder((s.intake as Intake | null | undefined)?.priorities, s.track);
   const states = lessonStates(progress, order);
@@ -422,6 +434,16 @@ export function App() {
             <>
               {lastFreeze && settings?.seenFreezeDay !== lastFreeze && gems.streak.count > 0 && (
                 <FreezeToast t={t} count={gems.streak.count} onClose={() => updateSettings({ seenFreezeDay: lastFreeze })} />
+              )}
+              {showCatchUp && (
+                <CatchUpCard
+                  t={t}
+                  c={pending}
+                  onIntake={() => go('intake')}
+                  onMeasure={() => openCatchUpPlacement(pending.unmeasured)}
+                  onFindLevel={() => openPlacement()}
+                  onHide={() => updateSettings({ catchUpHidden: pending.key })}
+                />
               )}
               {news.length > 0 ? (
               <NewsCard t={t} lang={s.uiLang} entries={news} onClose={() => updateSettings({ seenVersion: APP_VERSION })} />

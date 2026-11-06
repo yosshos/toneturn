@@ -294,8 +294,11 @@ function nextQuestion(s: SessionState, seed: number, skills: SkillId[]): Questio
   return LADDERS[cur.skill]![cur.next - 1].make(seed + n * 7919, `p:${cur.skill}:${cur.next}:${n}`);
 }
 
-export function placementLesson(seed: number, opts: { singing?: boolean; domain?: DomainId | null; priorities?: DomainId[] | null } = {}): LessonDef {
-  const skills = placementSkills(opts);
+export function placementLesson(seed: number, opts: { singing?: boolean; domain?: DomainId | null; priorities?: DomainId[] | null; only?: SkillId[] } = {}): LessonDef {
+  // `only`: just these sections (catching up on skills measured since the player's last placement).
+  const all = placementSkills(opts);
+  const only = opts.only?.length ? all.filter((k) => opts.only!.includes(k)) : [];
+  const skills = only.length ? only : all;
   const first = LADDERS[skills[0]]![0].make(seed, `p:${skills[0]}:1:1`);
   return {
     id: 'placement', version: 3, skill: 'degrees', scoring: { xpPerCorrect: 5, attemptLimit: 1 }, intro: [], questions: [first],

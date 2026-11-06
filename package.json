@@ -1,7 +1,7 @@
 {
   "name": "toneturn",
   "private": true,
-  "version": "0.35.0",
+  "version": "0.35.1",
   "type": "module",
   "description": "ToneTurn — voice-first ear-training game",
   "scripts": {

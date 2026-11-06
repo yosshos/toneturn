@@ -168,6 +168,8 @@ export interface Settings {
   theme?: string;
   /** Intake questionnaire answers (src/engine/intake.ts); null/absent = not taken. */
   intake?: import('../engine/intake').Intake | null;
+  /** The catch-up card's key when the player chose "Not now" (it comes back when what it offers changes). */
+  catchUpHidden?: string;
   /** The track the intake chose. */
   track?: import('../engine/intake').Track;
   /** Learning-first players: no reward nudges (avatar card, unlock toasts). */

@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.35.1',
+    date: '2026-11-06',
+    en: ['Started before the latest changes? The home screen now offers what is new for you: the Getting to know you questions, and measuring only the skills you have not been measured on yet'],
+    he: ['התחלתם לפני השינויים האחרונים? במסך הבית מופיע עכשיו מה שחדש בשבילכם: שאלון ההיכרות, ומדידה רק של המיומנויות שעוד לא נמדדו אצלכם'],
+  },
+  {
     version: '0.35.0',
     date: '2026-11-06',
     en: [
