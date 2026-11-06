@@ -1,7 +1,7 @@
 {
   "name": "toneturn",
   "private": true,
-  "version": "0.31.0",
+  "version": "0.32.0",
   "type": "module",
   "description": "ToneTurn — voice-first ear-training game",
   "scripts": {
@@ -23,6 +23,7 @@
     "qrcode": "^1.5.4",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
+    "three": "^0.181.2",
     "vexflow": "^4.2.5"
   },
   "devDependencies": {
@@ -31,6 +32,7 @@
     "@types/qrcode": "^1.5.5",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "@types/three": "^0.181.0",
     "@vitejs/plugin-basic-ssl": "^2.3.0",
     "@vitejs/plugin-react": "^6.2.1",
     "typescript": "^7.0.2",

@@ -1,4 +1,6 @@
+import { lazy, Suspense } from 'react';
 import { vocalUnit } from '../content/units';
+const AvatarStudio = lazy(() => import('./AvatarStudio'));
 import { MiniGateContext, MiniLessonPlayer } from './MiniLesson';
 import { LearnedScreen, learnedCount } from './Learned';
 import { lessonForUnit, MINI_LESSONS } from '../content/minilessons';
@@ -48,12 +50,12 @@ import { pwa } from '../pwa';
 import { params, piano, setMidiEnabled, SIMULATED, store, tts } from './services';
 import { midi } from '../speech/midi';
 
-type Route = 'home' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong' | 'perform' | 'learned';
+type Route = 'studio' | 'home' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong' | 'perform' | 'learned';
 /** Invite links: #/online/CODE */
 const onlineCodeFromHash = () => (/^#\/?online\/(\w+)/.exec(location.hash)?.[1] ?? '');
 const routeFromHash = (): Route => {
   const h = location.hash.replace(/^#\/?/, '').replace(/^online\/.*$/, 'online');
-  return (['settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong', 'perform', 'learned'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
+  return (['settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong', 'perform', 'learned', 'studio'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
 };
 
 /** The level a generated modes lesson was made at (from its first question's pool size). */
@@ -397,7 +399,7 @@ export function App() {
           onStreak={() => setStreakOpen(true)}
           account={<AccountCard t={t} user={user} sync={sync} compact />}
           onMenu={() => setMenuOpen(true)}
-          tools={<>{user && <AssignedCard t={t} items={assigned} lang={s.uiLang} onOpen={(id) => openAssignment(id)} />}<PracticeTools t={t} progress={progress} onSkills={() => go('skills')} onPlacement={openPlacement} onReview={openReview} onPuzzle={openPuzzle} onDaily={() => go('daily')} onRuns={openRuns} onDrone={() => go('drone')} onPerform={() => gate('perform:backing', () => go('perform'))} onLearned={() => go('learned')} learnedCount={learnedCount(s)} onModes={openModes} onWrongNotes={openWrongNotes} onAbsolute={openAbsolute} onTopic={openTopic} lang={s.uiLang} /></>}
+          tools={<>{user && <AssignedCard t={t} items={assigned} lang={s.uiLang} onOpen={(id) => openAssignment(id)} />}<PracticeTools t={t} progress={progress} onSkills={() => go('skills')} onPlacement={openPlacement} onReview={openReview} onPuzzle={openPuzzle} onDaily={() => go('daily')} onRuns={openRuns} onDrone={() => go('drone')} onPerform={() => gate('perform:backing', () => go('perform'))} onLearned={() => go('learned')} onStudio={() => go('studio')} learnedCount={learnedCount(s)} onModes={openModes} onWrongNotes={openWrongNotes} onAbsolute={openAbsolute} onTopic={openTopic} lang={s.uiLang} /></>}
           updateReady={pwaState.updateReady}
           news={
             <>
@@ -565,6 +567,11 @@ export function App() {
             go('online');
           }}
         />
+      )}
+      {route === 'studio' && (
+        <Suspense fallback={<main className="panel-screen"><p className="stage-msg">{t.avatarLoading}</p></main>}>
+          <AvatarStudio t={t} settings={s} onBack={() => go('home')} onSave={(p) => { updateSettings({ avatars: p }); go('home'); }} />
+        </Suspense>
       )}
       {route === 'ghost' && <GhostScreen t={t} settings={s} progress={progress} onBack={() => go('home')} onProgress={setProgress} />}
       {route === 'classes' && <ClassesScreen t={t} settings={s} user={user} onBack={() => go('home')} onOpenLesson={(id) => openAssignment(id)} />}

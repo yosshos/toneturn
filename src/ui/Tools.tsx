@@ -23,6 +23,7 @@ export function PracticeTools({
   onDrone,
   onPerform,
   onLearned,
+  onStudio,
   learnedCount = 0,
   onModes,
   onWrongNotes,
@@ -41,6 +42,7 @@ export function PracticeTools({
   onDrone: () => void;
   onPerform?: () => void;
   onLearned?: () => void;
+  onStudio?: () => void;
   learnedCount?: number;
   onModes: (level: number) => void;
   onWrongNotes: (level: number) => void;
@@ -120,6 +122,16 @@ export function PracticeTools({
           <b>{t.dronePractice}</b>
           <small>{t.droneBlurb}</small>
         </button>
+        {onStudio && (
+          <button className="tool-card studio-card" onClick={onStudio} data-studio="1">
+            <span className="tool-icon" aria-hidden="true">
+              🧑‍🎤
+            </span>
+            <b>{t.avatarStudio}</b>
+            <small>{t.avatarCardBlurb}</small>
+            <span className="new-chip">{t.previewChip}</span>
+          </button>
+        )}
         {onLearned && (
           <button className="tool-card learned-card-tool" onClick={onLearned} data-learned="1">
             <span className="tool-icon" aria-hidden="true">

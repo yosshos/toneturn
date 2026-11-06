@@ -160,6 +160,8 @@ export interface Settings {
   droneSound?: string;
   /** Colour theme (cosmetic, bought with gems). */
   theme?: string;
+  /** Avatar studio (phase 1 showcase): the two avatars' looks. */
+  avatars?: unknown;
   /** Vibrato target style (spec P.1). */
   vibratoStyle?: VibratoStyle;
 }

@@ -42,7 +42,7 @@ async function problems(page: Page): Promise<string[]> {
   }, ALLOWED_SCROLLERS);
 }
 
-const ROUTES = ['', '#/settings', '#/games', '#/friends', '#/skills', '#/daily', '#/online', '#/drone', '#/classes', '#/ghost', '#/truefalse', '#/vocal', '#/achievements', '#/singalong', '#/perform', '#/learned'];
+const ROUTES = ['', '#/settings', '#/games', '#/friends', '#/skills', '#/daily', '#/online', '#/drone', '#/classes', '#/ghost', '#/truefalse', '#/studio', '#/vocal', '#/achievements', '#/singalong', '#/perform', '#/learned'];
 
 async function setup(page: Page) {
   await page.addLocatorHandler(page.locator('.sheet-backdrop .sheet'), async () => {

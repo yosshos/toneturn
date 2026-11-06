@@ -25,7 +25,7 @@ function serviceWorker(): Plugin {
     },
     generateBundle(_opts, bundle) {
       const files = Object.keys(bundle).map((f) => `${base}${f}`);
-      const precache = [base, `${base}index.html`, `${base}icon.svg`, `${base}manifest.webmanifest`, ...files.filter((f) => /\.(js|css|woff2)$/.test(f))];
+      const precache = [base, `${base}index.html`, `${base}icon.svg`, `${base}manifest.webmanifest`, ...files.filter((f) => /\.(js|css|woff2)$/.test(f) && !/AvatarStudio|three/i.test(f))];
       const tpl = readFileSync(new URL('./src/sw-template.js', import.meta.url), 'utf-8');
       this.emitFile({
         type: 'asset',

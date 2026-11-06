@@ -18,6 +18,16 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.32.0',
+    date: '2026-11-06',
+    en: [
+      'Preview: the Avatar studio — two 3D avatars to dress part by part, items to try (headphones, shades, beanie, a legendary guitar) and emotes, including a jam together',
+    ],
+    he: [
+      'תצוגה מקדימה: סטודיו לאוואטר — שני אוואטרים בתלת־ממד להלביש חלק־חלק, פריטים לנסות (אוזניות, משקפי שמש, כובע גרב, גיטרה אגדית) ואימוטים, כולל ג׳אם ביחד',
+    ],
+  },
+  {
     version: '0.31.0',
     date: '2026-11-05',
     en: [
