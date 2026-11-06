@@ -286,10 +286,10 @@ function drum(pattern: string, step: number, times: number): Stimulus {
   for (let r = 0; r < times; r++)
     p.split('').forEach((ch, i) => {
       const t = (r * p.length + i) * step;
-      if (ch === 'D') ev.push({ midi: DUM, start: t, duration: 0.18, velocity: 0.85 });
-      if (ch === 'T') ev.push({ midi: TEK, start: t, duration: 0.06, velocity: 0.55 });
-      if (ch === 'A') ev.push({ midi: TEK, start: t, duration: 0.06, velocity: 0.9 });
-      if (ch === 't') ev.push({ midi: TEK, start: t, duration: 0.05, velocity: 0.3 });
+      if (ch === 'D') ev.push({ midi: DUM, start: t, duration: 0.18, velocity: 0.9, perc: 'kick' });
+      if (ch === 'T') ev.push({ midi: TEK, start: t, duration: 0.06, velocity: 0.7, perc: 'snare-soft' });
+      if (ch === 'A') ev.push({ midi: TEK, start: t, duration: 0.06, velocity: 0.95, perc: 'snare' });
+      if (ch === 't') ev.push({ midi: TEK, start: t, duration: 0.05, velocity: 0.4, perc: 'snare-soft' });
     });
   return eventsStim(ev, p.length * times * step + 0.2);
 }
@@ -332,8 +332,8 @@ TOPIC_GEN['eastern-rhythm'] = {
 function poly(a: number, b: number, cycle: number, times: number): Stimulus {
   const ev: NoteEvent[] = [];
   for (let r = 0; r < times; r++) {
-    for (let i = 0; i < a; i++) ev.push({ midi: 84, start: r * cycle + (i * cycle) / a, duration: 0.05, velocity: i ? 0.5 : 0.7 });
-    for (let i = 0; i < b; i++) ev.push({ midi: 45, start: r * cycle + (i * cycle) / b, duration: 0.12, velocity: i ? 0.6 : 0.8 });
+    for (let i = 0; i < a; i++) ev.push({ midi: 84, start: r * cycle + (i * cycle) / a, duration: 0.05, velocity: i ? 0.55 : 0.8, perc: 'snare-soft' });
+    for (let i = 0; i < b; i++) ev.push({ midi: 45, start: r * cycle + (i * cycle) / b, duration: 0.12, velocity: i ? 0.7 : 0.9, perc: 'kick' });
   }
   return eventsStim(ev, cycle * times + 0.2);
 }
@@ -375,8 +375,8 @@ function meter(groups: number[], step: number, bars: number): Stimulus {
     groups.forEach((g, gi) => {
       for (let k = 0; k < g; k++, i++) {
         const t = (b * len + i) * step;
-        if (k === 0) ev.push({ midi: gi === 0 ? 45 : 50, start: t, duration: 0.12, velocity: gi === 0 ? 0.85 : 0.65 });
-        ev.push({ midi: 84, start: t, duration: 0.04, velocity: k === 0 ? 0.6 : 0.3 });
+        if (k === 0) ev.push({ midi: gi === 0 ? 45 : 50, start: t, duration: 0.12, velocity: gi === 0 ? 0.9 : 0.7, perc: gi === 0 ? 'kick' : 'snare-soft' });
+        ev.push({ midi: 84, start: t, duration: 0.04, velocity: k === 0 ? 0.8 : 0.5, perc: 'hat' });
       }
     });
   }

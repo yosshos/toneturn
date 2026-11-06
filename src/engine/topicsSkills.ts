@@ -250,8 +250,8 @@ const ordNames = (prefix: string, n: number): ChoiceQuestion['names'] =>
     const o = ordinal(k);
     return [`${prefix}${k + 1}`, nm(o.en, o.he, ...o.say)];
   }));
-/** A short high blip that numbers each version (1, 2, 3). */
-const blip = (i: number): Stimulus => ({ kind: 'note', midi: 84 + i * 2, duration: 0.15 });
+/** Numbers each version: a bell struck once, twice, three times — not a piano note, so it isn't heard as music. */
+const blip = (i: number): Stimulus => ({ kind: 'marker', n: i + 1 });
 
 const sightBase = TOPIC_GEN['sight-read'];
 TOPIC_GEN['sight-read'] = {

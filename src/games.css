@@ -454,3 +454,20 @@
 .games-tf { width: 100%; margin-top: 10px; }
 @keyframes tfIn { from { transform: translateY(8px) scale(.97); opacity: 0; } to { transform: none; opacity: 1; } }
 :root[data-motion='reduced'] .tf-statement { animation: none; }
+
+/* ---------------------------------------------------------------- Drum Echo: kick & snare pads */
+.drum-pads { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; width: 100%; max-width: 560px; box-sizing: border-box; margin-inline: auto; }
+.tap-pad.drum-pad { min-width: 0; width: 100%; box-sizing: border-box; aspect-ratio: auto; letter-spacing: 0; }
+.tap-pad.drum-pad { position: relative; display: grid; place-items: center; align-content: center; gap: 4px; min-height: clamp(170px, 30vh, 260px); border-radius: 32px; color: #fff; font-size: clamp(1.4rem, 5vw, 2rem); box-shadow: 0 10px 0 rgba(0,0,0,.4), inset 0 2px 0 rgba(255,255,255,.22); transition: transform .05s, box-shadow .05s, filter .2s; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.tap-pad.drum-pad.kick { background: radial-gradient(120% 100% at 50% 10%, #ff8a3d, #b3301f 70%, #5a1410); }
+.tap-pad.drum-pad.snare { background: radial-gradient(120% 100% at 50% 10%, #5ee7ff, #2a6fdb 70%, #142b66); }
+.tap-pad.drum-pad:not(.live) { filter: saturate(.55) brightness(.8); }
+.tap-pad.drum-pad:active { transform: translateY(7px) scale(.985); box-shadow: 0 3px 0 rgba(0,0,0,.4), inset 0 2px 0 rgba(255,255,255,.18); filter: brightness(1.25); }
+.tap-pad.drum-pad small { font-size: .8rem; opacity: .7; font-weight: 600; }
+.drum-face { width: 64px; height: 64px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, rgba(255,255,255,.85), rgba(255,255,255,.35) 45%, rgba(255,255,255,.08) 70%); box-shadow: 0 0 0 5px rgba(255,255,255,.25), inset 0 -4px 10px rgba(0,0,0,.25); }
+.tap-pad.drum-pad:active .drum-face { animation: drum-hit .18s ease-out; }
+@keyframes drum-hit { 0% { transform: scale(.82); } 100% { transform: scale(1); } }
+.onset.kick:not(.good):not(.miss):not(.ok) { background: #ff7a3a; }
+.onset.snare { border-radius: 3px; }
+.onset.snare:not(.good):not(.miss):not(.ok) { background: #4cc9ff; }
+@media (prefers-reduced-motion: reduce) { .tap-pad.drum-pad:active .drum-face { animation: none; } }

@@ -1,6 +1,7 @@
 // Words for every lesson and question kind: narration (spoken) and labels (on screen).
 // Kept apart from the pure musical content in src/engine/lesson.ts.
 
+import { unspoken } from '../speech/speakable';
 import { learnedAnswer } from '../engine/learnedVoice';
 import { pcFromKey, type Answer, type IntroStep, type LessonDef, type LessonId, type Question } from '../engine/lesson';
 import { displayNote, spokenMajorKey, spokenNote, type Naming, type PitchClass } from '../engine/pitch';
@@ -12,7 +13,7 @@ import { MODE_NAMES, MODE_STEPS, type ModeId } from '../engine/modes';
 import { parseMode, parseNamedChoice, parseTrueFalse } from '../engine/parser';
 import { TOPIC_GEN } from '../engine/topics';
 import { describeRun } from '../engine/runs';
-import { narration, type Lang } from './narration';
+import { narration, vary, type Lang } from './narration';
 import { describe as describeRhythm, parseRhythmWords, rhythmFromKey, rhythmKey, sameRhythm, type CellId } from '../engine/rhythm';
 
 const NUM: Record<Lang, Record<number, string>> = {
@@ -330,8 +331,8 @@ export function introText(lesson: LessonDef, step: IntroStep, l: Lang, nm: Namin
       }[c.name][l];
     case 'rhythm':
       return l === 'en'
-        ? `Here is a bar: ${describeRhythm(rhythmFromKey(c.rhythm), 'names', l)}. Count it: ${describeRhythm(rhythmFromKey(c.rhythm), 'syllables', l)}.`
-        : `זו תיבה: ${describeRhythm(rhythmFromKey(c.rhythm), 'names', l)}. סופרים: ${describeRhythm(rhythmFromKey(c.rhythm), 'syllables', l)}.`;
+        ? `Here is a bar: ${describeRhythm(rhythmFromKey(c.rhythm), 'names', l)}. Count it: ${unspoken(describeRhythm(rhythmFromKey(c.rhythm), 'syllables', l))}.`
+        : `זו תיבה: ${describeRhythm(rhythmFromKey(c.rhythm), 'names', l)}. סופרים: ${unspoken(describeRhythm(rhythmFromKey(c.rhythm), 'syllables', l))}.`;
     case 'seventh':
       return {
         maj7: { en: 'A major seventh chord: dreamy and settled. Home in jazz.', he: 'אקורד מז׳ור 7: חלומי ורגוע. הבית בג׳אז.' },
@@ -616,16 +617,16 @@ export function correctText(q: Question, l: Lang, firstTry: boolean, nm: Naming 
   if (q.kind === 'degree') return firstTry ? narration.correct(l, q.answer) : narration.correctRetry(l, q.answer);
   if (q.kind === 'note-name') {
     const w = answerWord(q, q.answer, l, nm);
-    return l === 'en' ? (firstTry ? `Yes, ${w}!` : `That's it, ${w}.`) : firstTry ? `נכון, ${w}!` : `זהו, ${w}.`;
+    return vary(firstTry ? 'yes' : 'again', l, w);
   }
   if (q.kind === 'sing' || q.kind === 'sing-seq') return (l === 'en' ? (firstTry ? 'Spot on!' : 'There it is!') : firstTry ? 'מדויק!' : 'הנה זה!') + songLine(q, l);
   const w = answerWord(q, q.answer, l);
-  return (l === 'en' ? (firstTry ? `Yes, ${w}!` : `That's it, ${w}.`) : firstTry ? `נכון, ${w}!` : `זהו, ${w}.`) + songLine(q, l);
+  return vary(firstTry ? 'yes' : 'again', l, w) + songLine(q, l);
 }
 
 export function retryText(q: Question, l: Lang): string {
   if (q.kind === 'degree') return narration.retry(l);
-  return l === 'en' ? 'Not quite. Listen again.' : 'לא בדיוק. הקשיבו שוב.';
+  return vary('retry', l);
 }
 
 /** "That's the opening of Ode to Joy." — appended after a song item. */
@@ -671,7 +672,7 @@ function revealCore(q: Question, l: Lang, nm: Naming): string {
     case 'run-id':
       return l === 'en' ? `It was ${answerWord(q, q.answer, l)}. Your answer, then the right one.` : `זה היה ${answerWord(q, q.answer, l)}. התשובה שלכם, ואז הנכונה.`;
     case 'rhythm-read':
-      return l === 'en' ? `Here is how it goes: ${describeRhythm(q.rhythm, 'syllables', l)}.` : `ככה זה נשמע: ${describeRhythm(q.rhythm, 'syllables', l)}.`;
+      return l === 'en' ? `Here is how it goes: ${unspoken(describeRhythm(q.rhythm, 'syllables', l))}.` : `ככה זה נשמע: ${unspoken(describeRhythm(q.rhythm, 'syllables', l))}.`;
     case 'rhythm-dict':
       return l === 'en' ? `It was: ${describeRhythm(q.rhythm, 'names', l)}. Your rhythm, then the right one.` : `זה היה: ${describeRhythm(q.rhythm, 'names', l)}. הקצב שלכם, ואז הנכון.`;
     case 'degree':

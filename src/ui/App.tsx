@@ -32,7 +32,7 @@ import { PracticeTools } from './Tools';
 import { MicIcon } from './bits';
 import { STRINGS, type Strings } from '../i18n/strings';
 import type { CHANGELOG } from '../version';
-import { gemsOf, lessonMastered, localDay, namingFor, ratingsOf, type Progress, type Settings, DEFAULT_SETTINGS, emptyProgress, migrateSettings } from '../storage/progress';
+import { gemsOf, lessonMastered, localDay, namingFor, ratingsOf, type Progress, type Settings, DEFAULT_SETTINGS, DEFAULT_SOUND, emptyProgress, migrateSettings } from '../storage/progress';
 import { cloudConfigured, currentUser, onAuthChange, pullSettings, pushSettings, syncProgress, type CloudUser } from '../cloud/cloud';
 import { AccountCard, type SyncState } from './Account';
 import { Home, lessonStates } from './Home';
@@ -409,7 +409,7 @@ export function App() {
   };
 
   // Instrument sound (spec Q): load the chosen sample set (falls back to the classic piano on failure).
-  const soundId = settings?.sound ?? 'classic';
+  const soundId = settings?.sound ?? DEFAULT_SOUND;
   useEffect(() => {
     void piano.setSound(soundId);
   }, [soundId]);

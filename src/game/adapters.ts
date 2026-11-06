@@ -109,6 +109,8 @@ export interface PitchCapture {
 export interface RhythmTimelineLike {
   clicks: { t: number; accent: boolean }[];
   wood: number[];
+  /** Kick ('k') or snare ('s') for each `wood` hit (Drum Echo); otherwise woodblock. */
+  drums?: ('k' | 's')[];
   responseAt: number;
   responseEnd: number;
 }

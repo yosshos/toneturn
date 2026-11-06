@@ -66,7 +66,12 @@ export type Stimulus =
   | { kind: 'jazz'; key: PitchClass; chords: JazzChord[]; each: number }
   | { kind: 'rhythm'; rhythm: string; bars: number; bpm: number }
   /** Free timed notes (polyrhythms, Middle-Eastern rhythms, quarter tones: midi may be fractional). */
-  | { kind: 'events'; events: NoteEvent[]; length: number };
+  | { kind: 'events'; events: NoteEvent[]; length: number }
+  /** "Option n comes next": a bell struck n times. Never a piano note, so it can't be mistaken for the music. */
+  | { kind: 'marker'; n: number };
+
+/** The option marker before version n (1-based). */
+export const marker = (n: number): Stimulus => ({ kind: 'marker', n });
 
 interface QBase {
   id: string;
@@ -1592,9 +1597,11 @@ export interface NoteEvent {
   start: number; // seconds, relative to sequence start
   duration: number;
   velocity: number; // 0..1
-  /** Percussion instead of piano (metronome click / accent / woodblock). */
-  perc?: 'click' | 'accent' | 'wood';
+  /** Percussion instead of piano (metronome click / accent / woodblock / drum kit / the option bell). */
+  perc?: PercKind;
 }
+
+export type PercKind = 'click' | 'accent' | 'wood' | 'kick' | 'snare' | 'snare-soft' | 'hat' | 'bell';
 
 const ROMAN: Record<Roman, { deg: number; q: ChordQuality }> = {
   I: { deg: 0, q: 'maj' },
@@ -1676,6 +1683,10 @@ export function renderStimulus(stimulus: Stimulus[]): { events: NoteEvent[]; len
       case 'events':
         for (const e of s.events) events.push({ ...e, start: t + e.start });
         t += s.length;
+        break;
+      case 'marker':
+        for (let k = 0; k < s.n; k++) events.push({ midi: 96, start: t + k * 0.2, duration: 0.05, velocity: 0.7, perc: 'bell' });
+        t += 0.2 * (s.n - 1) + 0.6;
         break;
       case 'rhythm': {
         const snd = rhythmSound(rhythmFromKey(s.rhythm, s.bars), s.bpm);

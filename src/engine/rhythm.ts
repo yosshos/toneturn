@@ -241,7 +241,10 @@ export function rhythmSound(r: Rhythm, bpm: number, midi = 67, countIn?: number)
   const t0 = n * pulse;
   for (const e of events(r)) {
     if (e.rest) continue;
-    out.push({ midi, start: t0 + (e.start / TPQ) * beat, duration: Math.max(0.1, (e.dur / TPQ) * beat * 0.92), velocity: 0.7 });
+    // A snare hit marks each note; a soft held tone under it keeps long notes audibly long (a half is not a quarter + rest).
+    const at = t0 + (e.start / TPQ) * beat;
+    out.push({ midi: 38, start: at, duration: 0.05, velocity: 0.85, perc: 'snare' });
+    out.push({ midi, start: at, duration: Math.max(0.1, (e.dur / TPQ) * beat * 0.92), velocity: 0.3 });
   }
   return { events: out, length: t0 + totalBeats(r) * beat + 0.4 };
 }

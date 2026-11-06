@@ -96,12 +96,13 @@ test.describe('memory games', () => {
     await expect(page.locator('.beat-grid .onset').first()).toBeVisible();
     await page.screenshot({ path: 'test-results/beat-echo-demo.png' });
     await expect(page.locator('.turn-banner')).toHaveText(/Your turn/, { timeout: 30_000 });
-    await expect(page.locator('.tap-pad')).toHaveClass(/live/);
+    await expect(page.locator('.tap-pad.kick')).toHaveClass(/live/);
+    await expect(page.locator('.tap-pad.snare')).toHaveClass(/live/);
     await expect(page.getByRole('heading', { name: 'Game over' })).toBeVisible({ timeout: 30_000 });
     await expect(page.locator('.big-score b')).toHaveText('0');
   });
 
-  test('Beat Echo: tapping on the beat grid passes a round', async ({ page }) => {
+  test('Beat Echo (kick & snare): tapping each hit on its drum passes a round', async ({ page }) => {
     await page.goto('/#/games');
     await page.getByRole('radio', { name: /Beat Echo/ }).click();
     await page.getByRole('radio', { name: /Slow/ }).click();
@@ -109,9 +110,11 @@ test.describe('memory games', () => {
     // Read the pattern from the beat grid shown during the demo.
     await expect(page.locator('.beat-grid .onset').first()).toBeVisible({ timeout: 30_000 });
     const lefts = await page.locator('.beat-grid .onset').evaluateAll((els) => els.map((e) => parseFloat((e as HTMLElement).style.left)));
+    const kinds = await page.locator('.beat-grid .onset').evaluateAll((els) => els.map((e) => (e.classList.contains('snare') ? 'KeyJ' : 'KeyF')));
+    expect(kinds).toContain('KeyF');
     const beats = await page.locator('.beat-grid .beat-cell').count();
     const beatMs = 60000 / 75;
-    const onsetsMs = lefts.map((l) => (l / 100) * beats * beatMs);
+    const onsetsMs = lefts.map((l, i) => ({ at: (l / 100) * beats * beatMs, code: kinds[i] }));
     // Tap from inside the page, scheduled from the moment the response opens (stage turns "Your turn").
     await page.evaluate((offsets) => {
       const banner = document.querySelector('.turn-banner')!;
@@ -121,7 +124,7 @@ test.describe('memory games', () => {
         // The banner flips ~60 ms before beat 1 is heard.
         const t0 = performance.now() + 60;
         for (const o of offsets) {
-          setTimeout(() => window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Space', key: ' ' })), Math.max(0, t0 + o - performance.now()));
+          setTimeout(() => window.dispatchEvent(new KeyboardEvent('keydown', { code: o.code, key: o.code.slice(3).toLowerCase() })), Math.max(0, t0 + o.at - performance.now()));
         }
       });
       obs.observe(banner, { childList: true, characterData: true, subtree: true });

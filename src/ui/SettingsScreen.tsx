@@ -3,7 +3,7 @@ import { displayNote, pc, spokenNote } from '../engine/pitch';
 import type { Strings } from '../i18n/strings';
 import { catalogue, chooseVoice, type Gender } from '../speech/voices';
 import { listVoices, voicesReady } from '../speech/tts';
-import { namingFor, type Settings, type VoiceGender } from '../storage/progress';
+import { DEFAULT_SOUND, namingFor, type Settings, type VoiceGender } from '../storage/progress';
 import { fillText, Note } from './bits';
 import { piano, tts } from './services';
 import { midi } from '../speech/midi';
@@ -87,7 +87,10 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
       spokenNote(bb, narrNaming, narr),
       spokenNote(eb, narrNaming, narr),
     );
-    void tts.speak(text, narr, new AbortController().signal).finally(() => {
+    tts.force = true; // a preview speaks even in reading mode
+    const done = tts.speak(text, narr, new AbortController().signal);
+    tts.force = false;
+    void done.finally(() => {
       tts.prefs = prev;
     });
   };
@@ -243,7 +246,7 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
           </span>
         </label>
       </section>
-      <SoundSetting t={t} value={s.sound ?? 'classic'} onChange={(sound) => onChange({ sound })} drone={s.droneSound ?? 'soft'} onDrone={(droneSound) => onChange({ droneSound })} />
+      <SoundSetting t={t} value={s.sound ?? DEFAULT_SOUND} onChange={(sound) => onChange({ sound })} drone={s.droneSound ?? 'soft'} onDrone={(droneSound) => onChange({ droneSound })} />
 
       <section className="set-card">
         <h2>🔗 {t.echoChain}</h2>

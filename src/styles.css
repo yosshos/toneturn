@@ -1738,3 +1738,120 @@ svg, img, canvas, video { max-width: 100%; }
 main svg:not(.league-badge) { height: auto; }
 p, h1, h2, h3, li, button, small, b, label { overflow-wrap: anywhere; }
 .answers > *, .seg > *, .perf-controls > *, .modes-levels > *, .theme-grid > *, .learned-grid > * { min-width: 0; }
+
+/* Fluency (0.36): section score, pace goal, time you can see. */
+.fluency-score {
+  display: grid;
+  justify-items: center;
+  line-height: 1;
+  margin: 4px 0 -4px;
+}
+.fluency-score b {
+  font-size: clamp(3.2rem, 14vw, 4.6rem);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  background: linear-gradient(180deg, #fff 10%, var(--gold));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: scorePop 0.6s cubic-bezier(0.3, 1.6, 0.5, 1) both;
+}
+.fluency-score.s3 b {
+  filter: drop-shadow(0 0 18px rgba(255, 201, 77, 0.55));
+}
+.fluency-score small {
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.75rem;
+  margin-top: 4px;
+}
+@keyframes scorePop {
+  from {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+}
+.pace-line {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+}
+.pace-goal,
+.pace-lacks {
+  display: block;
+}
+.pace-lacks {
+  font-size: 0.85rem;
+  opacity: 0.85;
+  margin-top: 2px;
+}
+.pace-goal b {
+  color: var(--gold);
+}
+.recap-pts {
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  font-size: 0.85rem;
+  min-width: 2.2em;
+  text-align: center;
+  color: var(--ink-soft);
+}
+.recap-row.correct .recap-pts {
+  color: var(--gold);
+}
+.pace-bar {
+  position: relative;
+  width: min(320px, 80%);
+  height: 6px;
+  margin: 6px auto 0;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: visible;
+}
+.pace-bar.idle {
+  opacity: 0.35;
+}
+.pace-bar i {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #ffd166, #ff8a3d);
+  transform-origin: left center;
+}
+[dir='rtl'] .pace-bar i {
+  transform-origin: right center;
+}
+.pace-bar.live i {
+  animation: paceDrain var(--goal) linear forwards;
+}
+.pace-bar span {
+  position: absolute;
+  inset-inline-end: 0;
+  top: 9px;
+  font-size: 0.72rem;
+  color: var(--ink-soft);
+}
+@keyframes paceDrain {
+  0% {
+    transform: scaleX(1);
+  }
+  100% {
+    transform: scaleX(0);
+  }
+}
+.chip-mini.pace-fast {
+  color: #1a1300;
+  background: var(--gold);
+  font-weight: 800;
+  animation: scorePop 0.4s cubic-bezier(0.3, 1.6, 0.5, 1) both;
+}
+.chip-mini.pace-slow {
+  opacity: 0.75;
+}
+.chip-mini small {
+  opacity: 0.7;
+}
+[data-motion='reduced'] .pace-bar.live i {
+  animation: none;
+}

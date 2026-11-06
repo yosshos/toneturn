@@ -182,6 +182,9 @@ export interface Settings {
 
 export const SETTINGS_VERSION = 2;
 
+/** The instrument when the player never chose one: the recorded grand (the synth piano plays until it loads). */
+export const DEFAULT_SOUND = 'grand';
+
 export const DEFAULT_SETTINGS: Settings = {
   version: SETTINGS_VERSION,
   mode: 'voice',

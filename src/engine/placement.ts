@@ -10,6 +10,7 @@ import type { LessonDef, Question, SkillId } from './lesson';
 import { absNoteQuestion, cadenceQuestion, degreeQuestion, singRunQuestion, singSeqQuestion, degreeSeqQuestion, DEGREE_KEYS, intervalQuestion, modesLesson, noteNameQuestion, progressionQuestion, qualityQuestion, rhythmDictQuestion, rhythmReadQuestion, seventhQuestion, singQuestion, mulberry32, ROOT_NAMES, type Quality, type Roman } from './lesson';
 import type { RhythmLevel } from './rhythm';
 import { TOPIC_GEN } from './topics';
+import { genTopic } from './topicKit';
 import { pc } from './pitch';
 import { transposeNamesQuestion } from './basics';
 import { SEVENTHS, type ProgressionId } from './jazz';
@@ -20,7 +21,7 @@ import { DOMAINS, type DomainId } from './rating';
 const pick = <T,>(rnd: () => number, xs: readonly T[]): T => xs[Math.floor(rnd() * xs.length)];
 type Make = (seed: number, id: string) => Question;
 const at = (q: Question, difficulty: number): Question => ({ ...q, difficulty });
-const topic = (t: string, level: number): ((seed: number, id: string) => Question) => (seed, id) => TOPIC_GEN[t].gen(seed, level, id);
+const topic = (t: string, level: number): ((seed: number, id: string) => Question) => (seed, id) => genTopic(t, seed, level, id);
 
 const CAD: Record<'resolved' | 'open', Roman[]>[] = [
   { resolved: ['I', 'IV', 'V7', 'I'], open: ['I', 'vi', 'IV', 'V'] },

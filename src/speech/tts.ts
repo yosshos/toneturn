@@ -2,6 +2,25 @@
 
 import { Cancelled, type PromptPlayer } from '../game/adapters';
 import { chooseVoice, type GenderPref } from './voices';
+import { shown, speakable } from './speakable';
+import { readingMs, talkOn } from './talk';
+
+/** Reading mode: no voice, just a pause long enough to read the line (abortable). */
+function readPause(text: string, signal: AbortSignal): Promise<void> {
+  const ms = readingMs(shown(text));
+  if (!ms) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const t = setTimeout(() => {
+      signal.removeEventListener('abort', onAbort);
+      resolve();
+    }, ms);
+    const onAbort = () => {
+      clearTimeout(t);
+      reject(new Cancelled());
+    };
+    signal.addEventListener('abort', onAbort, { once: true });
+  });
+}
 
 export function listVoices(): SpeechSynthesisVoice[] {
   return typeof speechSynthesis === 'undefined' ? [] : speechSynthesis.getVoices();
@@ -56,9 +75,15 @@ export class BrowserPromptPlayer implements PromptPlayer {
     if (typeof speechSynthesis !== 'undefined') speechSynthesis.cancel();
   }
 
-  speak(text: string, lang: 'he' | 'en', signal: AbortSignal): Promise<void> {
-    if (typeof speechSynthesis === 'undefined' || !text.trim()) return Promise.resolve();
+  /** Speak even in reading mode (the voice preview in Settings). */
+  force = false;
+
+  speak(raw: string, lang: 'he' | 'en', signal: AbortSignal): Promise<void> {
     if (signal.aborted) return Promise.reject(new Cancelled());
+    if (!raw.trim()) return Promise.resolve();
+    if (!talkOn() && !this.force) return readPause(raw, signal);
+    const text = speakable(raw, lang);
+    if (typeof speechSynthesis === 'undefined' || !text.trim()) return Promise.resolve();
     const voice = pickVoice(lang, this.prefs);
     if (!voice) return Promise.resolve(); // caller shows the text; no voice for this language
     return new Promise((resolve, reject) => {

@@ -1,4 +1,5 @@
 import { lessonSections } from '../engine/placement';
+import { TalkToggle } from './TalkToggle';
 import { PlacementMeter } from './PlacementMeter';
 import { NoteStaff } from './NoteViews';
 import { PitchTrace } from './Vocal';
@@ -21,6 +22,8 @@ import { StreakCelebration } from './Streak';
 import type { StreakState } from '../engine/streak';
 import { overallHistory, peakOf, ratingChange, type RatingChange } from '../engine/rating';
 import { isTimed } from '../engine/scoring';
+import { learnPace, loadPace } from '../storage/pace';
+import { paceBand, paceTarget } from '../engine/fluency';
 import { Burst, Keyboard, MicIcon, ModeSwitch, Note, PermissionPanel, withNote } from './bits';
 import { Recap } from './Recap';
 import { RhythmStaff } from './RhythmStaff';
@@ -86,6 +89,8 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
         outputLang: settings.outputLang,
         naming: namingFor(settings.naming, settings.outputLang),
         timed: isTimed(settings.timedScoring, settings.firstUseAt, new Date()),
+        // Pace goals count unless the player turned timed scoring off (the first-week grace is for the rating only).
+        pace: { profile: loadPace(), on: settings.timedScoring !== false },
         inputNaming: namingFor(settings.naming, settings.inputLang),
         latencyMs: settings.tapLatencyMs,
         playerName: playerName ?? null,
@@ -102,6 +107,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
             // Rating card (spec L.3): compare ratings before and after this session.
             const before = await store.loadProgress();
             const result = resultFromSession(s, sessionId, new Date());
+            learnPace(s.lesson.questions, s.records);
             const after = await store.recordCompletion(result);
             if (result.puzzle && !before.puzzles?.[result.puzzle.week]) {
               const ms = result.items?.[0]?.timeMs ?? null;
@@ -230,6 +236,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
           {paused ? '✕' : '❚❚'}
         </button>
         <Rounds v={v} t={t} />
+        <TalkToggle lang={lang} />
         <ModeSwitch mode={v.mode} onChange={(m) => ctrl.setMode(m)} t={t} />
       </header>
       {lesson.id === 'placement' && <TopicStrip v={v} t={t} />}
@@ -325,6 +332,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
           {!hideKeyboard && <NoteViews q={q} views={settings.noteViews ?? ['keyboard', 'staff']} answered={answered} keysLive={keysLive} />}
           {q.aid && !answered && <p className="aid-chip">💡 {t.aidOn}</p>}
           <h1 className="ask">{withNote(askTemplate(q, lang, nm), target, keyName)}</h1>
+          <PaceBar v={v} t={t} />
           <Listening v={v} t={t} hint={hintText(q, lang, v.mode === 'voice' && !v.needsListenTap)} />
           <FeedbackBanner v={v} t={t} lang={lang} settings={settings} />
           {showButtons && q.kind === 'rhythm-dict' && q.mode === 'build' && (
@@ -733,7 +741,7 @@ function FeedbackBanner({ v, t, lang, settings }: { v: LessonView; t: Strings; l
           {f.sung.cents}¢
         </small>
       )}
-      {(f.kind === 'correct' || f.kind === 'correct-retry' || f.kind === 'reveal' || f.kind === 'retry') && <AnswerChips f={f} t={t} />}
+      {(f.kind === 'correct' || f.kind === 'correct-retry' || f.kind === 'reveal' || f.kind === 'retry') && <AnswerChips f={f} t={t} goalMs={goalFor(v)} />}
       {f.readHits && <ReadStrip hits={f.readHits} extra={f.readExtra ?? 0} t={t} />}
       {v.heard && (f.kind === 'unclear' || f.kind === 'ambiguous' || f.kind === 'retry') && !f.sung && (
         <small>
@@ -833,14 +841,40 @@ function SeqKeypad({ t, length, disabled, onSubmit }: { t: Strings; length: numb
 }
 
 /** Accuracy / time / attempts / XP chips after an answer (spec J.7). */
-function AnswerChips({ f, t }: { f: NonNullable<LessonView['feedback']>; t: Strings }) {
-  const fast = f.timeMs != null && f.timeMs <= 2000;
+/** The pace goal (ms) for the current question in the current input mode, or null when pace doesn't count. */
+function goalFor(v: LessonView): number | null {
+  const p = v.session.pace;
+  if (!p?.on) return null;
+  const q = v.question;
+  if (q.kind === 'rhythm-read') return null;
+  const sing = q.kind === 'sing' || q.kind === 'sing-seq' || q.kind === 'sing-run';
+  const m = sing ? 'sing' : v.mode === 'voice' && !v.needsListenTap ? 'voice' : 'buttons';
+  return paceTarget(q, m, p.profile);
+}
+
+/** A bar that drains over your pace goal while the answer is open (first try only): time you can see. */
+function PaceBar({ v, t }: { v: LessonView; t: Strings }) {
+  const goal = goalFor(v);
+  const rec = v.session.records[v.index];
+  if (goal === null || !rec || rec.attempts.length > 0 || rec.outcome !== 'pending') return <div className="pace-bar idle" aria-hidden="true" />;
+  const live = v.phase === 'listening';
+  return (
+    <div className={`pace-bar ${live ? 'live' : 'idle'}`} title={`${t.paceGoal}: ${(goal / 1000).toFixed(1)}s`} data-goal={goal} aria-hidden="true">
+      <i key={`${v.index}-${v.session.turn}-${live}`} style={{ ['--goal' as string]: `${goal}ms` }} />
+      <span dir="ltr">⚡ {(goal / 1000).toFixed(1)}s</span>
+    </div>
+  );
+}
+
+function AnswerChips({ f, t, goalMs }: { f: NonNullable<LessonView['feedback']>; t: Strings; goalMs: number | null }) {
+  const band = goalMs !== null && (f.attempt ?? 1) === 1 ? paceBand(f.timeMs, goalMs) : null;
+  const fast = band === 'fast';
   return (
     <div className="answer-chips" dir="ltr">
       {f.accuracy !== undefined && f.accuracy > 0 && f.accuracy < 1 && <span className="chip-mini">{Math.round(f.accuracy * 100)}%</span>}
       {f.timeMs != null && (
-        <span className={`chip-mini ${fast ? 'good' : ''}`} title={t.responseTime}>
-          ⏱ {(f.timeMs / 1000).toFixed(1)}s
+        <span className={`chip-mini pace-${band ?? 'none'} ${fast ? 'good' : ''}`} title={fast ? t.paceFast : t.responseTime} data-pace={band ?? ''}>
+          {fast ? '⚡' : '⏱'} {(f.timeMs / 1000).toFixed(1)}s{goalMs !== null && !fast && band && <small> / {(goalMs / 1000).toFixed(1)}s</small>}
         </span>
       )}
       {(f.attempt ?? 1) > 1 && <span className="chip-mini">×{f.attempt}</span>}

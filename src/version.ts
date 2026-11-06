@@ -18,6 +18,28 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.36.0',
+    date: '2026-11-07',
+    en: [
+      'Speed now counts — fairly: every answer scores up to 70 for being right the first time and up to 30 for answering within your own speed goal; each replay costs 10. A bar under the question shows the goal running down, ⚡ marks an answer within it, and the recap shows your score out of 100, stars from it, and exactly what was missing for 100. The goal learns from your own answers and tightens about 5% a week at most; your skill rating is still about being right',
+      'Real instruments: a recorded grand piano is the default sound, and every rhythm exercise plays on a recorded snare and kick',
+      'New in Beat Echo: Kick & Snare — hear a drum phrase and play it back on two pads (keys F and J)',
+      'Before each option you hear a bell (1, 2 or 3 strikes) instead of a piano note, so it never sounds like part of the question',
+      'Reading mode: a Voice / Read switch at the top of every lesson and game. The narrator now says chord names and progressions properly, no longer reads rhythm syllables aloud, and varies what it says',
+      'No more answering from memory: every item is played in a different key and at a slightly different tempo each time, and Find my level is different on every run',
+      'Wrong answers no longer repeat the right answer twice',
+    ],
+    he: [
+      'המהירות נספרת עכשיו — בהגינות: כל תשובה שווה עד 70 על תשובה נכונה בניסיון ראשון ועד 30 על תשובה בתוך יעד המהירות האישי שלך; כל השמעה חוזרת מורידה 10. פס מתחת לשאלה מראה את היעד אוזל, ⚡ מסמן תשובה בתוך היעד, ובסיכום רואים ניקוד מתוך 100, כוכבים לפיו ובדיוק מה חסר ל-100. היעד לומד מהתשובות שלך ומתהדק לכל היותר בכ-5% בשבוע; דירוג המיומנות נשאר על נכונות',
+      'כלים אמיתיים: פסנתר כנף מוקלט הוא צליל ברירת המחדל, וכל תרגילי הקצב מתנגנים על סנייר וקיק מוקלטים',
+      'חדש בהד הקצב: קיק וסנייר — שומעים משפט תופים ומקישים אותו על שני לחצנים (במקלדת F ו-J)',
+      'לפני כל אפשרות מצלצל פעמון (1, 2 או 3 מכות) במקום תו פסנתר, כך שזה לא נשמע כחלק מהשאלה',
+      'מצב קריאה: מתג קול / קריאה בראש כל שיעור ומשחק. הקריינית אומרת עכשיו שמות אקורדים ומהלכים כמו שצריך, לא מקריאה הברות קצב, ומגוונת את מה שהיא אומרת',
+      'אין יותר תשובות מהזיכרון: כל תרגיל מתנגן בכל פעם בסולם אחר ובטמפו קצת שונה, ו"מציאת הרמה" שונה בכל הרצה',
+      'תשובה שגויה כבר לא חוזרת על התשובה הנכונה פעמיים',
+    ],
+  },
+  {
     version: '0.35.3',
     date: '2026-11-06',
     en: ['Everything you play alone keeps your place now: the daily challenge, the ghost race, solo Echo Chain and Beat Echo, Truth or Bluff (time and score included), vocal levels and quick lessons continue where you stopped. Games against others are not saved — leaving one means losing it. Back inside a game returns to the home screen'],

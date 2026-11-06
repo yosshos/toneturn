@@ -172,7 +172,8 @@ function choiceContrast(q: Extract<Question, { kind: 'choice' }>, given: string,
   }
   const hint = TOPIC_CONTRAST[q.topic];
   const tip = hint ? hint[l] : l === 'en' ? 'Your answer plays first, then the right one — listen for what changes.' : 'התשובה שלכם מתנגנת קודם, ואז הנכונה — הקשיבו למה שמשתנה.';
-  return l === 'en' ? `You chose ${g.en}; it was ${a.en}. ${tip}` : `בחרתם ${g.he}; זה היה ${a.he}. ${tip}`;
+  // The reveal already names the right answer (and the screen shows it): say only what is new.
+  return l === 'en' ? `Not ${g.en}. ${tip}` : `לא ${g.he}. ${tip}`;
 }
 
 /** One listening tip per practice topic, said with the contrast. */

@@ -7,6 +7,37 @@ export type Lang = 'he' | 'en';
 const NUM = { en: { 1: 'one', 5: 'five' }, he: { 1: 'אחת', 5: 'חמש' } } as Record<Lang, Record<number, string>>;
 const deg = (n: number, l: Lang) => NUM[l][n] ?? String(n);
 
+/** A different phrasing each time, so the narrator doesn't sound like a loop. Pure when `pickAt` is given. */
+const POOLS = {
+  yes: {
+    en: ['Yes, {w}!', 'Nailed it — {w}!', '{w}. Spot on!', 'Exactly: {w}.', 'Nice ear — {w}!', '{w}! You heard it.'],
+    he: ['נכון, {w}!', 'בול — {w}!', '{w}. מדויק!', 'בדיוק: {w}.', 'אוזן טובה — {w}!', '{w}! שמעתם את זה.'],
+  },
+  again: {
+    en: ["That's it, {w}.", 'There you go — {w}.', 'Got it this time: {w}.'],
+    he: ['זהו, {w}.', 'הנה זה — {w}.', 'הפעם זה נכון: {w}.'],
+  },
+  retry: {
+    en: ['Not quite. Listen again.', 'Close — listen once more.', 'Not that one. Again.'],
+    he: ['לא בדיוק. הקשיבו שוב.', 'קרוב — עוד הקשבה אחת.', 'לא זה. עוד פעם.'],
+  },
+};
+/** Is this one of the praise lines (any phrasing)? For tests and captions. */
+export function isPraise(text: string): boolean {
+  return [...POOLS.yes.en, ...POOLS.yes.he, ...POOLS.again.en, ...POOLS.again.he].some((p) => {
+    const [a, b] = p.split('{w}');
+    return text.startsWith(a) && text.includes(b.trim().slice(0, 4));
+  });
+}
+let last = -1;
+export function vary(kind: keyof typeof POOLS, l: Lang, w = '', pickAt?: number): string {
+  const pool = POOLS[kind][l];
+  let i = pickAt ?? Math.floor(Math.random() * pool.length);
+  if (pickAt === undefined && i === last) i = (i + 1) % pool.length;
+  last = i;
+  return pool[i % pool.length].replace('{w}', w);
+}
+
 export const narration = {
   introBb: (l: Lang, nm: Naming, key: PitchClass, note: PitchClass) =>
     l === 'en'
@@ -20,9 +51,9 @@ export const narration = {
   roundPrompt: (l: Lang, nm: Naming, n: number, key: PitchClass) =>
     l === 'en' ? `Round ${n}. ${spokenMajorKey(key, nm, l)}.` : `סיבוב ${n}. ${spokenMajorKey(key, nm, l)}.`,
   repeatPrompt: (l: Lang) => (l === 'en' ? 'Once more.' : 'עוד פעם.'),
-  correct: (l: Lang, d: number) => (l === 'en' ? `Yes, ${deg(d, l)}!` : `נכון, ${deg(d, l)}!`),
-  correctRetry: (l: Lang, d: number) => (l === 'en' ? `That's it, ${deg(d, l)}.` : `זהו, ${deg(d, l)}.`),
-  retry: (l: Lang) => (l === 'en' ? 'Not quite. Listen again.' : 'לא בדיוק. הקשיבו שוב.'),
+  correct: (l: Lang, d: number) => vary('yes', l, deg(d, l)),
+  correctRetry: (l: Lang, d: number) => vary('again', l, deg(d, l)),
+  retry: (l: Lang) => vary('retry', l),
   reveal: (l: Lang, nm: Naming, d: number, key: PitchClass, note: PitchClass) =>
     l === 'en'
       ? `It's ${deg(d, l)}. In ${spokenMajorKey(key, nm, l)}, ${spokenNote(note, nm, l)} is ${d === 1 ? 'home' : 'the fifth'}.`

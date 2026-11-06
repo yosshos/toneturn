@@ -3,6 +3,7 @@
 // clean view, the voice range (sung gently — never strained) and the player's own order of practice areas,
 // which reorders the path (src/engine/intake.ts).
 
+import { setTalk, talkOn } from '../speech/talk';
 import { useEffect, useRef, useState } from 'react';
 import { AREAS, intakeSettings, trackOf, voiceTypeOf, type Intake as IntakeT, type Level4, type Motivation } from '../engine/intake';
 import { personalOrder } from '../engine/intake';
@@ -28,24 +29,9 @@ export interface IntakeResult {
   patch: Partial<Settings>;
 }
 
-const TALK_KEY = 'toneturn.intake.talk';
-/** Talking is the default; automated runs (and the simulator) read, unless the player chose otherwise. */
-function loadTalk(): boolean {
-  try {
-    const v = localStorage.getItem(TALK_KEY);
-    if (v === '1' || v === '0') return v === '1';
-  } catch {
-    /* private mode */
-  }
-  return !(SIMULATED || (typeof navigator !== 'undefined' && navigator.webdriver));
-}
-function saveTalk(on: boolean) {
-  try {
-    localStorage.setItem(TALK_KEY, on ? '1' : '0');
-  } catch {
-    /* private mode */
-  }
-}
+/** One narration switch for the whole app (speech/talk.ts): talking is the default. */
+const loadTalk = talkOn;
+const saveTalk = setTalk;
 
 const DRAFT_KEY = 'toneturn.intake.draft.v1';
 type Draft = { step: Step; a: Partial<IntakeT>; naming: 'solfege' | 'letter' | 'auto'; ranked: DomainId[]; mixed: boolean; range: VoiceRange | null; savedAt: number };

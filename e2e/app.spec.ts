@@ -62,11 +62,14 @@ test.describe('lesson', () => {
     }
     await expect(page.getByRole('heading', { name: 'Lesson complete' })).toBeVisible({ timeout: 30_000 });
     await expect(page.locator('.score-line')).toContainText('3/3');
+    // Quick, right first time, no replays: a full fluency score.
+    await expect(page.locator('.fluency-score')).toHaveAttribute('data-score', '100');
     await expect(page.locator('.star.won')).toHaveCount(3);
     await expect(page.getByRole('button', { name: /Replay 1/ })).toBeVisible();
     await page.getByRole('button', { name: 'Home' }).click();
-    // Lesson 1 runs with automatic aids (a new player is below Solid): each answer gives 80 % XP.
-    await expect(page.locator('.goal-strip')).toContainText('24/30');
+    // Lesson 1 runs with automatic aids (a new player is below Solid): each answer gives 80 % XP (8),
+    // plus the full speed bonus (3) for answering within the pace goal.
+    await expect(page.locator('.goal-strip')).toContainText('33/30');
   });
 
   test('Voice mode (simulator): hands-free after one Start', async ({ page }) => {

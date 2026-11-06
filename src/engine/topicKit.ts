@@ -1,5 +1,6 @@
 // Shared kit for topic generators (spec T–V): the registry, seeded randomness, names, stimuli.
 
+import { surfaceVary } from './surface';
 import type { ChoiceQuestion, LessonDef, SkillId, Stimulus } from './lesson';
 
 export interface TopicDef {
@@ -47,11 +48,16 @@ export function choiceQ(p: Omit<ChoiceQuestion, 'kind' | 'id' | 'difficulty'> & 
   return { kind: 'choice', ...p };
 }
 
+/** One generated item, with its seed's surface variation (transposition and tempo, when they don't change the answer). */
+export function genTopic(topic: string, seed: number, level: number, id: string): ChoiceQuestion {
+  return surfaceVary(TOPIC_GEN[topic].gen(seed, level, id), topic, seed);
+}
+
 /** A lesson of n items of a topic at a level. */
 export function topicLesson(topic: string, level: number, seed = Date.now(), n = 6): LessonDef {
   const T = TOPIC_GEN[topic];
   const rnd = rng(seed);
-  const questions = Array.from({ length: n }, (_, i) => T.gen(Math.floor(rnd() * 2 ** 31), level, `${topic}-${i + 1}`));
+  const questions = Array.from({ length: n }, (_, i) => genTopic(topic, Math.floor(rnd() * 2 ** 31), level, `${topic}-${i + 1}`));
   return { id: 'topic', version: 1, skill: T.skill, scoring: { xpPerCorrect: 10, attemptLimit: 2 }, intro: [], questions };
 }
 

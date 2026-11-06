@@ -14,7 +14,7 @@ import type { CellId, Rhythm, RhythmLevel } from './rhythm';
 import type { PitchClass } from './pitch';
 import { mulberry32, nameSeqQuestion, placeInRange, singQuestion, singSeqQuestion } from './lesson';
 import { displayNote, majorScale, pc, pcValue } from './pitch';
-import { TOPIC_GEN, choiceQ, eventsStim, nm, notesStim, pickR, rng, shuffleR } from './topicKit';
+import { TOPIC_GEN, choiceQ, genTopic, eventsStim, nm, notesStim, pickR, rng, shuffleR } from './topicKit';
 import './topicsSkills'; // 'tempo' (used by the beat lesson)
 
 const rest = (d: number): Stimulus => ({ kind: 'rest', duration: d });
@@ -153,7 +153,7 @@ TOPIC_GEN['basics-beat'] = {
 };
 
 const lesson = (id: LessonDef['id'], skill: LessonDef['skill'], questions: Question[]): LessonDef => ({ id, version: 1, skill, scoring: { xpPerCorrect: 10, attemptLimit: 2 }, intro: [], questions });
-const gen = (topic: string, level: number, seed: number, id: string) => TOPIC_GEN[topic].gen(seed, level, id);
+const gen = (topic: string, level: number, seed: number, id: string) => genTopic(topic, seed, level, id);
 
 export function basicsPitch(seed = Date.now()): LessonDef {
   const r = mulberry32(seed);
@@ -244,7 +244,7 @@ TOPIC_GEN['transpose'] = {
       if (wrong2.every((x, i) => x === degs[i])) wrong2[degs.length - 1] = Math.min(7, degs[degs.length - 1] + 2);
       const vers = shuffleR(rnd, [{ k: 'ok', d: degs }, { k: 'x', d: wrong1 }, { k: 'y', d: wrong2 }]);
       const ans = `v${vers.findIndex((v) => v.k === 'ok') + 1}`;
-      const stim: Stimulus[] = [notesStim(midisIn(pc(from), degs), 0.42), rest(1), ...vers.flatMap((v, i) => [{ kind: 'note' as const, midi: 79 + i * 2, duration: 0.15 }, rest(0.25), notesStim(midisIn(pc(to), v.d), 0.42), rest(0.7)])];
+      const stim: Stimulus[] = [notesStim(midisIn(pc(from), degs), 0.42), rest(1), ...vers.flatMap((v, i) => [{ kind: 'marker' as const, n: i + 1 }, rest(0.25), notesStim(midisIn(pc(to), v.d), 0.42), rest(0.7)])];
       return choiceQ({
         id, topic: 'transpose', level, seed, skill: 'transpose', difficulty: 1300,
         ask: { en: 'A tune — then three versions in another key. Which one is the same tune?', he: 'מנגינה — ואחריה שלוש גרסאות בסולם אחר. איזו מהן היא אותה מנגינה?' },

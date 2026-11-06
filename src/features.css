@@ -1833,3 +1833,15 @@
 .rec-dot { width: 12px; height: 12px; border-radius: 50%; background: #ff4d6d; animation: rec-pulse 1s ease-in-out infinite; }
 @keyframes rec-pulse { 50% { opacity: .35; } }
 @media (prefers-reduced-motion: reduce) { .rec-dot { animation: none; } }
+
+/* 🔊 / 📖 narration switch (0.36): one switch for the whole app */
+.talk-toggle { display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 14px; border-radius: 999px; border: 2px solid color-mix(in srgb, var(--gold, #ffd166) 70%, transparent); background: color-mix(in srgb, var(--gold, #ffd166) 18%, transparent); color: var(--text, #fff); font: inherit; font-weight: 800; font-size: .9rem; cursor: pointer; transition: background .2s, border-color .2s, transform .08s; }
+.talk-toggle.off { border-color: color-mix(in srgb, var(--text, #fff) 35%, transparent); background: transparent; opacity: .9; }
+.talk-toggle:active { transform: scale(.95); }
+.talk-toggle svg { flex: none; }
+.mini-head .talk-toggle { margin-inline-start: auto; }
+/* Narrow phones: the lesson header holds pause, rounds, the talk switch and the mode switch — the talk switch goes icon-only. */
+@media (max-width: 460px) {
+  .talk-toggle { padding: 0 10px; }
+  .talk-toggle span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}

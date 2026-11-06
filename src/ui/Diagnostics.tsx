@@ -151,7 +151,9 @@ export function Diagnostics({ t, settings, onBack }: { t: Strings; settings: Set
     tts.unlock();
     const v = pickVoice(l, tts.prefs);
     add(`tts ${l}: ${v ? `${v.name} (${v.lang})` : 'no voice — text only'}`);
+    tts.force = true;
     void tts.speak(l === 'he' ? 'סי במול הוא דרגה חמש במי במול מז׳ור' : 'B flat is degree five in E flat major', l, new AbortController().signal);
+    tts.force = false;
   };
 
   const report = () =>

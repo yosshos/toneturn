@@ -1,8 +1,9 @@
 // Pure lesson-session state. All scoring happens here, guarded by turn tokens
 // so a late recognizer callback or a double click can never score twice.
 
-import type { Answer, LessonDef } from './lesson';
-import { xpFor, type ItemOutcome, type Modality } from './scoring';
+import type { Answer, LessonDef, Question } from './lesson';
+import { SCORING, xpFor, type ItemOutcome, type Modality } from './scoring';
+import { paceTarget, speedCredit, type PaceProfile } from './fluency';
 
 export type Phase =
   | 'idle'
@@ -52,6 +53,8 @@ export interface SessionState {
   xp: number;
   /** Time affects scores (spec J.5); false = untimed mode. */
   timed?: boolean;
+  /** Personal pace goals (engine/fluency.ts): the XP speed bonus and the section score use them. */
+  pace?: { profile: PaceProfile; on: boolean };
 }
 
 /** Evidence from the answer channel, beyond the answer itself. */
@@ -115,6 +118,20 @@ function patchRecord(s: SessionState, i: number, r: QuestionRecord): QuestionRec
   return records;
 }
 
+/**
+ * XP for a resolved item. With pace goals, the speed bonus is earned against your own goal (fluency.ts),
+ * only on a first try, and each replay takes a point of it away.
+ */
+function itemXp(s: SessionState, q: Question, r: QuestionRecord, baseXp: number, timed: boolean): number {
+  if (!s.pace) return xpFor(q, outcomeOf(r, timed), baseXp);
+  const xp = xpFor(q, outcomeOf(r, false), baseXp);
+  const a = r.attempts[0];
+  if (baseXp <= 0 || r.outcome !== 'correct' || (a.accuracy ?? 1) < SCORING.xp.bonusMinAccuracy) return xp;
+  const m = a.modality ?? (a.via === 'voice' ? 'voice' : 'buttons');
+  const credit = s.pace.on ? speedCredit(a.timeMs, paceTarget(q, m, s.pace.profile)) : 1;
+  return xp + Math.max(0, Math.round(SCORING.xp.maxSpeedBonus * credit) - (r.replays ?? 0));
+}
+
 /** Grade a musical answer for the current question. Idempotent per turn + question. */
 export function grade(
   s: SessionState,
@@ -143,13 +160,13 @@ export function grade(
   if (correct) {
     const firstTry = attempts.length === 1;
     const resolved: QuestionRecord = { ...rec, attempts, outcome: firstTry ? 'correct' : 'correct-retry', xp: 0 };
-    const xp = xpFor(q, outcomeOf(resolved, timed), xpPerCorrect);
+    const xp = itemXp(s, q, resolved, xpPerCorrect, timed);
     const next = { ...resolved, xp };
     return [{ ...base, records: patchRecord(s, questionIndex, next), xp: s.xp + xp }, { kind: 'correct', firstTry, xp }];
   }
   if (attempts.length >= attemptLimit) {
     const resolved: QuestionRecord = { ...rec, attempts, outcome: 'revealed', xp: 0 };
-    const xp = xpFor(q, outcomeOf(resolved, timed), xpPerCorrect);
+    const xp = itemXp(s, q, resolved, xpPerCorrect, timed);
     const next = { ...resolved, xp };
     return [{ ...base, records: patchRecord(s, questionIndex, next), xp: s.xp + xp }, { kind: 'reveal' }];
   }

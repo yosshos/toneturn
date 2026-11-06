@@ -233,6 +233,28 @@ export interface RhythmPattern {
   beats: number;
   /** Onset times in beats from the start of the pattern. */
   onsets: number[];
+  /** Drum Echo: which drum plays each onset (kick or snare); absent = one sound. */
+  drums?: Drum[];
+}
+
+export type Drum = 'k' | 's';
+
+/**
+ * Kick-and-snare phrase on a pattern: a groove, not coin flips — kick on 1 and 3, snare on the backbeat
+ * (2 and 4), off-beat eighths mostly kick (the "and" pickup), with a little variation so phrases differ.
+ */
+export function drumPattern(p: RhythmPattern, seed: number): RhythmPattern {
+  const rnd = mulberry32(seed ^ 0x5eed);
+  const drums = p.onsets.map((o, i): Drum => {
+    if (i === 0) return 'k';
+    const beat = Math.floor(o);
+    const off = o - beat > 1e-6;
+    const groove: Drum = off ? (rnd() < 0.7 ? 'k' : 's') : beat % 2 === 1 ? 's' : 'k';
+    return rnd() < 0.15 ? (groove === 'k' ? 's' : 'k') : groove;
+  });
+  // A phrase needs both drums.
+  if (drums.length > 1 && !drums.includes('s')) drums[drums.length - 1] = 's';
+  return { ...p, drums };
 }
 
 /**
@@ -278,17 +300,21 @@ export interface RhythmGrade {
  * Grade taps (ms from the response start = first beat of the pattern) against target onsets.
  * Greedy nearest matching within tolerance; each target and tap used once.
  */
-export function gradeRhythm(p: RhythmPattern, tapsMs: number[], toleranceMs?: number): RhythmGrade {
+export function gradeRhythm(p: RhythmPattern, tapsMs: number[], toleranceMs?: number, tapDrums?: Drum[]): RhythmGrade {
   const beatMs = beatSec(p.bpm) * 1000;
   const tol = toleranceMs ?? Math.max(80, Math.min(140, beatMs * 0.15));
   const targets = p.onsets.map((o) => o * beatMs);
-  const taps = tapsMs.slice().sort((a, b) => a - b);
+  // Drum Echo: a tap only answers an onset on the same drum.
+  const order = tapsMs.map((_, k) => k).sort((a, b) => tapsMs[a] - tapsMs[b]);
+  const taps = order.map((k) => tapsMs[k]);
+  const drumOf = (k: number) => (tapDrums ? tapDrums[order[k]] : undefined);
   const used = new Set<number>();
-  const hits = targets.map((tm) => {
+  const hits = targets.map((tm, ti) => {
     let best = -1;
     let bestD = Infinity;
     taps.forEach((x, k) => {
       if (used.has(k)) return;
+      if (p.drums && tapDrums && drumOf(k) !== p.drums[ti]) return;
       const d = Math.abs(x - tm);
       if (d < bestD) {
         bestD = d;
@@ -316,6 +342,8 @@ export function gradeRhythm(p: RhythmPattern, tapsMs: number[], toleranceMs?: nu
 export interface RhythmTimeline {
   clicks: { t: number; accent: boolean }[];
   wood: number[];
+  /** Drum Echo: kick or snare for each `wood` hit. */
+  drums?: Drum[];
   /** Seconds from timeline start where the response (pattern beat 1) begins. */
   responseAt: number;
   /** Seconds at which the response window ends. */
@@ -333,7 +361,7 @@ export function rhythmTimeline(p: RhythmPattern, countIn = 4): RhythmTimeline {
   const secondIn = patStart + p.beats * b;
   for (let i = 0; i < countIn; i++) clicks.push({ t: secondIn + i * b, accent: i === 0 });
   const responseAt = secondIn + countIn * b;
-  return { clicks, wood, responseAt, responseEnd: responseAt + p.beats * b + b * 0.6 };
+  return { clicks, wood, ...(p.drums ? { drums: p.drums } : {}), responseAt, responseEnd: responseAt + p.beats * b + b * 0.6 };
 }
 
 /**
@@ -369,9 +397,9 @@ export interface RhythmSplit {
  * is not counted as forgetting; precision is graded only on remembered patterns so forgetting is not
  * counted as imprecision. precision = 1 at 0 ms average error, 0 at a quarter beat (or worse).
  */
-export function splitRhythm(p: RhythmPattern, tapsMs: number[]): RhythmSplit {
+export function splitRhythm(p: RhythmPattern, tapsMs: number[], tapDrums?: Drum[]): RhythmSplit {
   const beatMs = beatSec(p.bpm) * 1000;
-  const lenient = gradeRhythm(p, tapsMs, beatMs * 0.25);
+  const lenient = gradeRhythm(p, tapsMs, beatMs * 0.25, tapDrums);
   if (!lenient.pass) return { memoryPass: false, precision: null, meanAbsMs: null };
   const abs = lenient.hits.map((h) => Math.abs(h.offsetMs ?? 0));
   const meanAbsMs = Math.round(abs.reduce((a, b) => a + b, 0) / abs.length);

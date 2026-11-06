@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { isPraise } from '../src/game/narration';
 import { LessonController } from '../src/game/controller';
 import { FakeAudio, FakeMic, FakeTTS, ScriptedPitch, ScriptedTranscriber, immediateClock, type ScriptStep } from '../src/game/fakes';
 import { bflatTwoHomes } from '../src/engine/lesson';
@@ -178,7 +179,7 @@ describe('LessonController — mode switching', () => {
 
   it('switching during feedback does not double-score and moves on', async () => {
     const { c, tts } = setup([right, right, right]);
-    tts.holdIf = (t) => t.startsWith('Yes');
+    tts.holdIf = (t) => isPraise(t);
     await c.start();
     await until(() => c.getView().phase === 'feedback' && c.getView().feedback?.kind === 'correct');
     tts.holdIf = () => false;

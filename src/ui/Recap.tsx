@@ -13,6 +13,9 @@ import type { Strings } from '../i18n/strings';
 import { namingFor, type Settings } from '../storage/progress';
 import { Note, withNote } from './bits';
 import { median } from '../engine/scoring';
+import { itemPoints, paceTarget, sectionScore } from '../engine/fluency';
+
+const fill = (s: string, v: Record<string, string | number>) => Object.entries(v).reduce((a, [k, x]) => a.replaceAll(`{${k}}`, String(x)), s);
 
 interface Props {
   t: Strings;
@@ -78,8 +81,23 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
   }
   const times = s.records.flatMap((r) => r.attempts.filter((a) => a.correct && a.timeMs != null).map((a) => a.timeMs as number));
   const medianMs = median(times);
-  const ratio = sm.firstTry / sm.total;
-  const stars = ratio >= 1 ? 3 : ratio >= 0.6 ? 2 : ratio > 0 ? 1 : 0;
+  // Fluency score (engine/fluency.ts): right, without replays, within your pace goal.
+  const paced = s.pace?.on ?? true;
+  const fl = sectionScore(s.lesson.questions, s.records, s.pace?.profile, paced);
+  const stars = fl.stars;
+  const goals = s.lesson.questions
+    .map((q, i) => ({ q, a: s.records[i].attempts[0] }))
+    .filter(({ a }) => a)
+    .map(({ q, a }) => paceTarget(q, a.modality ?? (a.via === 'voice' ? 'voice' : 'buttons'), s.pace?.profile));
+  const goalMs = median(goals);
+  const lacks: string[] = [];
+  if (fl.score < 100) {
+    const wrong = s.records.filter((r) => r.outcome !== 'correct' && r.outcome !== 'skipped').length;
+    if (wrong) lacks.push(fill(t.lackWrong, { n: wrong }));
+    if (fl.replays) lacks.push(fill(t.lackReplays, { n: fl.replays }));
+    const slow = s.records.filter((r) => r.outcome === 'correct').length - fl.onPace;
+    if (paced && slow > 0) lacks.push(fill(t.lackSlow, { n: slow }));
+  }
 
   return (
     <main className="recap">
@@ -93,10 +111,14 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
         return (
           <p className={`coach-insight ${ins.kind}`} data-insight={ins.kind}>
             {ins.kind === 'pair' ? '🎯 ' : ins.kind === 'flawless' ? '' : '💪 '}
-            {ins.text}
+            {ins.kind === 'flawless' && fl.score < 100 ? t.flawlessNotFast : ins.text}
           </p>
         );
       })()}
+      <div className={`fluency-score s${stars}`} data-score={fl.score} aria-label={`${t.sectionScore}: ${fl.score}`}>
+        <ScoreCount value={fl.score} />
+        <small>{t.sectionScore}</small>
+      </div>
       <div className="stars" aria-label={`${stars} ${t.stars}`}>
         {[0, 1, 2].map((i) => (
           <span key={i} className={`star ${i < stars ? 'won' : ''}`} style={{ ['--i' as string]: i }} aria-hidden="true">
@@ -117,6 +139,19 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
             {' '}
             · <span dir="ltr">⏱ {(medianMs / 1000).toFixed(1)}s</span> <small>{t.medianTime}</small>
           </>
+        )}
+      </p>
+
+      <p className="pace-line" data-pace-goal={goalMs ?? ''}>
+        {goalMs !== null && paced && (
+          <span className="pace-goal">
+            🎯 {t.paceGoal} <b dir="ltr">{(goalMs / 1000).toFixed(1)}s</b> · ⚡ {fl.onPace}/{fl.total}
+          </span>
+        )}
+        {lacks.length > 0 && (
+          <span className="pace-lacks">
+            {t.lackPrefix} {lacks.join(' · ')}
+          </span>
         )}
       </p>
 
@@ -150,6 +185,11 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
               <span className="recap-mark" aria-hidden="true">
                 {r.outcome === 'correct' ? '★' : ok ? '✓' : r.outcome === 'skipped' ? '–' : '✗'}
               </span>
+              {r.outcome !== 'skipped' && r.attempts.length > 0 && (
+                <span className="recap-pts" dir="ltr" data-pts={itemPoints(q, r, s.pace?.profile, paced)}>
+                  {itemPoints(q, r, s.pace?.profile, paced)}
+                </span>
+              )}
               <span className="recap-q">
                 {b.key && <Note>{displayNote(b.key, nm, lang)}</Note>} {b.text} · <b>{ans}</b>
               </span>
@@ -199,4 +239,26 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
       </div>
     </main>
   );
+}
+
+/** The section score counting up (lands on the final value even if frames are paused). */
+function ScoreCount({ value }: { value: number }) {
+  const [v, setV] = useState(0);
+  useEffect(() => {
+    if (document.documentElement.dataset.motion === 'reduced') return setV(value);
+    let raf = 0;
+    const t0 = performance.now();
+    const step = (now: number) => {
+      const k = Math.min(1, (now - t0) / 1100);
+      setV(Math.round(value * (1 - Math.pow(1 - k, 3))));
+      if (k < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    const done = setTimeout(() => setV(value), 1400);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(done);
+    };
+  }, [value]);
+  return <b dir="ltr">{v}</b>;
 }

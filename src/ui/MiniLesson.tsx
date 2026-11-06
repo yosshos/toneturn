@@ -1,6 +1,7 @@
 // Mini-lesson player (spec X): narrated steps with examples and visuals, skip to practice, and a
 // celebration when every step was heard — the topic then joins "Topics I learned".
 
+import { TalkToggle } from './TalkToggle';
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { clearSlot, loadSlot, saveSlot } from '../storage/resume';
 import type { MiniLesson } from '../content/miniTypes';
@@ -131,6 +132,7 @@ export function MiniLessonPlayer({ t, settings, lesson, name, onFinish }: { t: S
             <small>{t.miniKicker}</small>
             <h2>{lesson.title[lang]}</h2>
           </div>
+          <TalkToggle lang={lang} />
         </header>
         <div className="mini-progress" aria-hidden="true">
           {lesson.steps.map((_, k) => (

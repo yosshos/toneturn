@@ -14,6 +14,8 @@ import {
   swingPattern,
   type PadSet,
   rhythmPattern,
+  drumPattern,
+  type Drum,
   rhythmTimeline,
   splitRhythm,
   sungToPads,
@@ -58,6 +60,8 @@ export interface GameConfig {
   ladder?: boolean;
   swing?: boolean;
   pads?: PadSet;
+  /** Beat Echo on a drum kit: kick-and-snare phrases, answered on two pads. */
+  drums?: boolean;
 }
 
 export interface GameAdapters {
@@ -102,6 +106,8 @@ export interface GameView {
   entered: (number | null)[];
   /** Tap times (ms from response beat 1) so far this turn. */
   taps: number[];
+  /** Drum Echo: which pad each tap was on. */
+  tapDrums: Drum[];
   litPad: number | null;
   beat: { i: number; accent: boolean; n: number } | null;
   result: TurnResult | null;
@@ -173,6 +179,7 @@ export class MemoryGameController {
       pattern: null,
       entered: [],
       taps: [],
+      tapDrums: [],
       litPad: null,
       beat: null,
       result: null,
@@ -267,12 +274,18 @@ export class MemoryGameController {
   }
 
   /** Rhythm tap; `perfMs` is the event timestamp (performance.now clock). */
-  tapBeat(perfMs: number) {
-    if (this.cfg.input !== 'tap' || this.responseStart === null) return;
+  tapBeat(perfMs: number, drum: Drum = 'k') {
+    if (this.cfg.input !== 'tap') return;
+    // Drum Echo: the pad sounds under the finger.
+    if (this.cfg.drums && (this.view.stage === 'respond' || this.view.stage === 'demo')) {
+      const ac = new AbortController();
+      void this.ad.audio.play([{ midi: 36, start: 0, duration: 0.05, velocity: 0.8, perc: drum === 'k' ? 'kick' : 'snare' }], 0.3, ac.signal).catch(() => {});
+    }
+    if (this.responseStart === null) return;
     if (this.view.stage !== 'respond' && this.view.stage !== 'demo') return;
     const rel = perfMs - this.responseStart - (this.cfg.latencyMs ?? 0);
     if (rel < -400) return; // ignore taps during the count-in
-    this.patch({ taps: [...this.view.taps, Math.round(rel)] });
+    this.patch({ taps: [...this.view.taps, Math.round(rel)], tapDrums: [...this.view.tapDrums, drum] });
   }
 
   private resolveWaiter(v: 'done' | 'retry') {
@@ -306,10 +319,11 @@ export class MemoryGameController {
       const seq = this.cfg.kind === 'melody' ? melodySequence(seed, m.length, this.view.melody!.pads.length) : [];
       const speed = this.cfg.ladder ? ladderFactor(m.length, START_LENGTH[this.cfg.kind]) : 1;
       const base = this.cfg.kind === 'rhythm' ? rhythmPattern(seed, m.length, Math.min(160, Math.round((this.cfg.bpm ?? 90) * speed))) : null;
-      const pattern = base && this.cfg.swing ? swingPattern(base) : base;
+      const swung = base && this.cfg.swing ? swingPattern(base) : base;
+      const pattern = swung && this.cfg.drums ? drumPattern(swung, seed) : swung;
       if (this.view.melody) this.view.melody.noteSec = Math.max(0.28, 0.6 / speed);
       this.responseStart = null;
-      this.patch({ stage: 'turn', seq, pattern, entered: [], taps: [], result: null, beat: null, error: null });
+      this.patch({ stage: 'turn', seq, pattern, entered: [], taps: [], tapDrums: [], result: null, beat: null, error: null });
       await this.say(solo ? this.t.soloTurn(m.length, this.cfg.kind) : this.t.turn(player.name, m.length, this.cfg.kind), signal);
       if (this.cfg.kind === 'melody' && m.log.length === 0) {
         await this.say(this.t.key(spokenMajorKey(this.view.melody!.key, this.cfg.naming, this.cfg.lang)), signal);
@@ -336,7 +350,7 @@ export class MemoryGameController {
       await this.ad.clock.sleep(900, signal);
       const stat: RoundStat = { length: m.length, pass: result.pass };
       if (this.cfg.kind === 'rhythm' && pattern) {
-        const sp = splitRhythm(pattern, this.view.taps);
+        const sp = splitRhythm(pattern, this.view.taps, this.cfg.drums ? this.view.tapDrums : undefined);
         stat.memoryPass = sp.memoryPass;
         stat.precision = sp.precision;
         stat.timingDifficulty = timingDifficulty(pattern);
@@ -416,7 +430,7 @@ export class MemoryGameController {
               if (this.responseStart === null) return;
               const rel = perf - this.responseStart - (this.cfg.latencyMs ?? 0);
               if (rel < -150) return; // the app's own count-in or the demo
-              this.patch({ taps: [...this.view.taps, Math.round(rel)] });
+              this.patch({ taps: [...this.view.taps, Math.round(rel)], tapDrums: [...this.view.tapDrums, 'k'] });
             },
           })
           .then((r) => {
@@ -429,7 +443,7 @@ export class MemoryGameController {
         return null;
       }
     }
-    this.patch({ stage: 'demo', taps: [] });
+    this.patch({ stage: 'demo', taps: [], tapDrums: [] });
     let n = 0;
     try {
       await this.ad.audio.playTimeline(
@@ -438,7 +452,7 @@ export class MemoryGameController {
         (i, accent) => this.patch({ beat: { i, accent, n: n++ } }),
         (perf) => {
           this.responseStart = perf;
-          this.patch({ stage: 'respond', taps: [] });
+          this.patch({ stage: 'respond', taps: [], tapDrums: [] });
         },
       );
     } finally {
@@ -446,7 +460,7 @@ export class MemoryGameController {
     }
     throwIfAborted(signal);
     this.patch({ beat: null });
-    const grade = gradeRhythm(p, this.view.taps);
+    const grade = gradeRhythm(p, this.view.taps, undefined, this.cfg.drums ? this.view.tapDrums : undefined);
     return { pass: grade.pass, unclear: false, rhythm: grade };
   }
 

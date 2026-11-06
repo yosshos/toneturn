@@ -7,6 +7,7 @@
 //  - The microphone/recognizer is only active in the `listening` phase.
 //  - Permission / recognition failures, silence and unclear speech never count as wrong answers.
 
+import { shown } from '../speech/speakable';
 import { retryCoach, revealCoach, sessionInsight } from '../engine/coach';
 import { learnVoiceAlias } from '../engine/learnedVoice';
 import { sungMelodyRemarks } from '../engine/feedbackMelody';
@@ -30,6 +31,7 @@ import { gradeSungSequence } from '../engine/memory';
 import { gradeReading,
   gradeHolds, readTimeline } from '../engine/rhythm';
 import { accuracyFor, type Modality } from '../engine/scoring';
+import type { PaceProfile } from '../engine/fluency';
 import type { Naming } from '../engine/pitch';
 import {
   advance,
@@ -127,6 +129,8 @@ export interface ControllerSettings {
   maxSilentRetries?: number;
   /** Response time affects scores (spec J.5). Default false (untimed). */
   timed?: boolean;
+  /** Personal pace goals (engine/fluency.ts). */
+  pace?: { profile: PaceProfile; on: boolean };
   /** Naming system for spoken note-name answers (input language). Default: same as `naming`. */
   inputNaming?: Naming;
   /** Calibrated tap delay (ms) subtracted from rhythm taps. */
@@ -180,7 +184,7 @@ export class LessonController {
     mode: InputMode,
     private hooks: ControllerHooks = {},
   ) {
-    this.s = { ...createSession(lesson), timed: cfg.timed ?? false };
+    this.s = { ...createSession(lesson), timed: cfg.timed ?? false, ...(cfg.pace ? { pace: cfg.pace } : {}) };
     const r = hooks.resume;
     if (r && r.records.length === lesson.questions.length && r.index >= 0 && r.index < lesson.questions.length) {
       this.s = { ...this.s, records: r.records, index: r.index, xp: r.xp };
@@ -464,7 +468,7 @@ export class LessonController {
   }
 
   private async say(text: string, signal: AbortSignal) {
-    this.patch({ caption: text });
+    this.patch({ caption: shown(text) });
     await this.ad.tts.speak(text, this.cfg.outputLang, signal);
     throwIfAborted(signal);
   }

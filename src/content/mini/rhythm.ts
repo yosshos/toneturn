@@ -19,8 +19,8 @@ function drum(pattern: string, step: number, times: number): Stimulus {
   for (let r = 0; r < times; r++)
     p.split('').forEach((ch, i) => {
       const t = (r * p.length + i) * step;
-      if (ch === 'D') ev.push({ midi: DUM, start: t, duration: 0.18, velocity: 0.85 });
-      if (ch === 'T') ev.push({ midi: TEK, start: t, duration: 0.06, velocity: 0.55 });
+      if (ch === 'D') ev.push({ midi: DUM, start: t, duration: 0.18, velocity: 0.9, perc: 'kick' });
+      if (ch === 'T') ev.push({ midi: TEK, start: t, duration: 0.06, velocity: 0.7, perc: 'snare-soft' });
     });
   return evs(ev, p.length * times * step + 0.2);
 }
@@ -28,8 +28,8 @@ function drum(pattern: string, step: number, times: number): Stimulus {
 function poly(a: number, b: number, cycle: number, times: number): Stimulus {
   const ev: NoteEvent[] = [];
   for (let r = 0; r < times; r++) {
-    for (let i = 0; i < a; i++) ev.push({ midi: 84, start: r * cycle + (i * cycle) / a, duration: 0.05, velocity: i ? 0.5 : 0.7 });
-    for (let i = 0; i < b; i++) ev.push({ midi: 45, start: r * cycle + (i * cycle) / b, duration: 0.12, velocity: i ? 0.6 : 0.8 });
+    for (let i = 0; i < a; i++) ev.push({ midi: 84, start: r * cycle + (i * cycle) / a, duration: 0.05, velocity: i ? 0.55 : 0.8, perc: 'snare-soft' });
+    for (let i = 0; i < b; i++) ev.push({ midi: 45, start: r * cycle + (i * cycle) / b, duration: 0.12, velocity: i ? 0.7 : 0.9, perc: 'kick' });
   }
   return evs(ev, cycle * times + 0.2);
 }
@@ -42,8 +42,8 @@ function meter(groups: number[], bars: number, step = 0.17): Stimulus {
     groups.forEach((g, gi) => {
       for (let k = 0; k < g; k++, i++) {
         const t = (b * len + i) * step;
-        if (k === 0) ev.push({ midi: gi === 0 ? 45 : 50, start: t, duration: 0.12, velocity: gi === 0 ? 0.85 : 0.65 });
-        ev.push({ midi: 84, start: t, duration: 0.04, velocity: k === 0 ? 0.6 : 0.3 });
+        if (k === 0) ev.push({ midi: gi === 0 ? 45 : 50, start: t, duration: 0.12, velocity: gi === 0 ? 0.9 : 0.7, perc: gi === 0 ? 'kick' : 'snare-soft' });
+        ev.push({ midi: 84, start: t, duration: 0.04, velocity: k === 0 ? 0.8 : 0.5, perc: 'hat' });
       }
     });
   }
@@ -66,7 +66,7 @@ function swing(ratio: number, bpm: number, beats: number): Stimulus {
 function clock(bpm: number, audible: number[], total: number, taps: number[] = []): Stimulus {
   const beat = 60 / bpm;
   const ev: NoteEvent[] = audible.map((i) => ({ midi: i % 4 === 0 ? 96 : 91, start: i * beat, duration: 0.05, velocity: i % 4 === 0 ? 0.6 : 0.45 }));
-  for (const t of taps) ev.push({ midi: 84, start: t, duration: 0.05, velocity: 0.6, perc: 'wood' });
+  for (const t of taps) ev.push({ midi: 84, start: t, duration: 0.05, velocity: 0.6, perc: 'snare' });
   return evs(ev, total * beat + 0.3);
 }
 /** Beat Echo turn (as rhythmTimeline): 4 count-in clicks, the pattern on a woodblock over a soft pulse, then optionally the 4-click answer count-in and the gap to answer in. */
@@ -76,7 +76,7 @@ function echo(onsets: number[], beats: number, bpm: number, answer: boolean): St
   const click = (t: number, accent: boolean) => ev.push({ midi: 96, start: t, duration: 0.05, velocity: accent ? 0.5 : 0.3, perc: accent ? 'accent' : 'click' });
   for (let i = 0; i < 4; i++) click(i * b, i === 0);
   for (let i = 0; i < beats; i++) click((4 + i) * b, false);
-  for (const o of onsets) ev.push({ midi: 84, start: (4 + o) * b, duration: 0.05, velocity: 0.7, perc: 'wood' });
+  for (const o of onsets) ev.push({ midi: 84, start: (4 + o) * b, duration: 0.05, velocity: 0.7, perc: 'snare' });
   if (answer) for (let i = 0; i < 4; i++) click((4 + beats + i) * b, i === 0);
   return evs(ev, (answer ? 8 + 2 * beats : 4 + beats) * b + 0.3);
 }

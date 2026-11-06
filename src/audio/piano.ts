@@ -10,7 +10,7 @@
 // Bus: voices → (dry + small convolution room) → compressor/limiter → master.
 
 import { midiToHz } from '../engine/pitch';
-import type { NoteEvent } from '../engine/lesson';
+import type { NoteEvent, PercKind } from '../engine/lesson';
 import { Cancelled, type AudioEngine, type CueKind, type RhythmAudio, type RhythmTimelineLike } from '../game/adapters';
 
 interface Voice {
@@ -25,6 +25,9 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
   private cueBus!: GainNode;
   private noise!: AudioBuffer;
   private limiter!: DynamicsCompressorNode;
+  /** Recorded one-shots (VCSL, CC0): snare, kick, the option bell. Synthesised stand-ins play until they load. */
+  private percBank = new Map<string, AudioBuffer>();
+  private percBus!: GainNode;
   private drone: { gain: GainNode; oscs: AudioScheduledSourceNode[] } | null = null;
   /** Drone sound: the soft synth, or a recorded sustained instrument (looped). */
   private droneBank: { id: string; notes: number[]; buffers: Map<number, AudioBuffer> } | null = null;
@@ -160,6 +163,7 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
       const Ctor = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       this.ctx = new Ctor({ latencyHint: 'interactive' });
       this.build(this.ctx);
+      void this.loadPerc();
     }
     if (this.ctx.state !== 'running') await this.ctx.resume();
   }
@@ -189,6 +193,13 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     this.sampleBus.gain.value = 0.75;
     this.sampleBus.connect(limiter);
     this.sampleBus.connect(reverb);
+
+    this.percBus = ctx.createGain();
+    this.percBus.gain.value = 0.85;
+    this.percBus.connect(limiter);
+    const percRoom = ctx.createGain();
+    percRoom.gain.value = 0.3;
+    this.percBus.connect(percRoom).connect(reverb);
 
     this.cueBus = ctx.createGain();
     this.cueBus.gain.value = 0.18;
@@ -307,7 +318,7 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     };
     for (const e of events) {
       if (e.perc) {
-        this.perc(e.perc, t0 + e.start);
+        this.perc(e.perc, t0 + e.start, e.velocity);
         continue;
       }
       if (!this.sample(e.midi, e.velocity, t0 + e.start, e.duration)) this.voice(e.midi, e.velocity, t0 + e.start, e.duration);
@@ -461,8 +472,115 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     }
   }
 
-  /** Percussion for the rhythm game: metronome click (accented on 1) and woodblock. */
-  private perc(kind: 'click' | 'accent' | 'wood', at: number) {
+  private async loadPerc() {
+    const base = import.meta.env.BASE_URL ?? '/';
+    const ctx = this.ctx;
+    if (!ctx) return;
+    await Promise.all(
+      ['snare', 'snare_soft', 'kick', 'bell'].map(async (id) => {
+        try {
+          const res = await fetch(`${base}samples/perc/${id}.wav`);
+          if (res.ok) this.percBank.set(id, await ctx.decodeAudioData(await res.arrayBuffer()));
+        } catch {
+          /* the synthesised stand-in plays */
+        }
+      }),
+    );
+  }
+
+  /** A recorded one-shot; false when it isn't loaded (yet). */
+  private shot(id: string, at: number, level: number, rate = 1): boolean {
+    const ctx = this.ctx!;
+    const buf = this.percBank.get(id);
+    if (!buf) return false;
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.playbackRate.value = rate;
+    const g = ctx.createGain();
+    g.gain.value = level;
+    src.connect(g).connect(this.percBus);
+    src.start(at);
+    return true;
+  }
+
+  /** Drum kit: kick (recorded hit + a synthesised thump for punch), snare (recorded), closed hi-hat. */
+  private drum(kind: 'kick' | 'snare' | 'snare-soft' | 'hat', at: number, velocity: number) {
+    const ctx = this.ctx!;
+    const env = (g: GainNode, peak: number, tau: number, hold = 0.004) => {
+      g.gain.setValueAtTime(0, at);
+      g.gain.linearRampToValueAtTime(peak, at + 0.002);
+      g.gain.setTargetAtTime(0, at + hold, tau);
+    };
+    if (kind === 'kick') {
+      this.shot('kick', at, 0.7 * velocity);
+      const o = ctx.createOscillator();
+      o.frequency.setValueAtTime(150, at);
+      o.frequency.exponentialRampToValueAtTime(48, at + 0.12);
+      const g = ctx.createGain();
+      env(g, 1.1 * velocity, 0.09, 0.02);
+      o.connect(g).connect(this.percBus);
+      o.start(at);
+      o.stop(at + 0.6);
+      return;
+    }
+    if (kind === 'snare' || kind === 'snare-soft') {
+      const soft = kind === 'snare-soft';
+      if (this.shot(soft ? 'snare_soft' : 'snare', at, (soft ? 0.6 : 0.9) * velocity, 0.98 + Math.random() * 0.04)) return;
+      // Stand-in: high-passed noise (the wires) over a short tuned body.
+      const src = ctx.createBufferSource();
+      src.buffer = this.noise;
+      const hp = ctx.createBiquadFilter();
+      hp.type = 'highpass';
+      hp.frequency.value = 1500;
+      const ng = ctx.createGain();
+      env(ng, (soft ? 0.45 : 0.8) * velocity, 0.05);
+      src.connect(hp).connect(ng).connect(this.percBus);
+      src.start(at);
+      src.stop(at + 0.3);
+      const o = ctx.createOscillator();
+      o.type = 'triangle';
+      o.frequency.setValueAtTime(220, at);
+      o.frequency.exponentialRampToValueAtTime(170, at + 0.08);
+      const og = ctx.createGain();
+      env(og, 0.6 * velocity, 0.04);
+      o.connect(og).connect(this.percBus);
+      o.start(at);
+      o.stop(at + 0.3);
+      return;
+    }
+    const src = ctx.createBufferSource();
+    src.buffer = this.noise;
+    const hp = ctx.createBiquadFilter();
+    hp.type = 'highpass';
+    hp.frequency.value = 7000;
+    const g = ctx.createGain();
+    env(g, 0.35 * velocity, 0.018, 0.002);
+    src.connect(hp).connect(g).connect(this.percBus);
+    src.start(at);
+    src.stop(at + 0.15);
+  }
+
+  /** The option bell: a glockenspiel "ding" — not a piano note, so it never sounds like part of the music. */
+  private optionBell(at: number) {
+    if (this.shot('bell', at, 0.5)) return;
+    const ctx = this.ctx!;
+    for (const [ratio, amp, tau] of [[1, 0.35, 0.35], [2.76, 0.18, 0.12], [5.4, 0.1, 0.06]] as const) {
+      const o = ctx.createOscillator();
+      o.frequency.value = 2093 * ratio;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0, at);
+      g.gain.linearRampToValueAtTime(amp, at + 0.002);
+      g.gain.setTargetAtTime(0, at + 0.004, tau);
+      o.connect(g).connect(this.percBus);
+      o.start(at);
+      o.stop(at + 1.5);
+    }
+  }
+
+  /** Percussion: metronome click (accented on 1), woodblock, drum kit, the option bell. */
+  private perc(kind: PercKind, at: number, velocity = 0.8) {
+    if (kind === 'kick' || kind === 'snare' || kind === 'snare-soft' || kind === 'hat') return this.drum(kind, at, velocity);
+    if (kind === 'bell') return this.optionBell(at);
     const ctx = this.ctx!;
     const g = ctx.createGain();
     g.connect(this.cueBus);
@@ -535,7 +653,10 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     if (signal.aborted) return Promise.reject(new Cancelled());
     const t0 = ctx.currentTime + 0.12;
     tl.clicks.forEach((c) => this.perc(c.accent ? 'accent' : 'click', t0 + c.t));
-    tl.wood.forEach((w) => this.perc('wood', t0 + w));
+    tl.wood.forEach((w, i) => {
+      const d = tl.drums?.[i];
+      this.perc(d === 'k' ? 'kick' : d === 's' ? 'snare' : 'wood', t0 + w, 0.85);
+    });
     const responsePerf = this.heardAt(t0 + tl.responseAt);
     const nowPerf = performance.now();
     const timers: ReturnType<typeof setTimeout>[] = [];

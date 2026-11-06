@@ -78,7 +78,9 @@ describe('canonical rhythm model', () => {
 describe('sound and timing', () => {
   it('count-in clicks, then the rhythm with audible lengths', () => {
     const { events: ev, length } = rhythmSound(R('h.q.q'), 60);
-    expect(ev.filter((e) => e.perc).length).toBe(4);
+    expect(ev.filter((e) => e.perc === 'click' || e.perc === 'accent').length).toBe(4);
+    // A snare hit on every note, on the note's start.
+    expect(ev.filter((e) => e.perc === 'snare').map((e) => e.start)).toEqual([4, 6, 7]);
     const notes = ev.filter((e) => !e.perc);
     expect(notes.map((e) => e.start)).toEqual([4, 6, 7]);
     expect(notes[0].duration).toBeGreaterThan(notes[1].duration);

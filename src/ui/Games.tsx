@@ -1,4 +1,5 @@
 import { NotesView } from './NotesView';
+import { TalkToggle } from './TalkToggle';
 import type { PadSet } from '../engine/memory';
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { displayNote } from '../engine/pitch';
@@ -20,6 +21,8 @@ export interface GameSetupValue {
   ladder?: boolean;
   swing?: boolean;
   pads?: PadSet;
+  /** Beat Echo on a kit: kick-and-snare phrases, two pads. */
+  drums?: boolean;
 }
 
 // ======================================================================= setup
@@ -48,6 +51,7 @@ export function GameSetup({
   const [count, setCount] = useState(1);
   const [ladder, setLadder] = useState(false);
   const [swing, setSwing] = useState(false);
+  const [drums, setDrums] = useState(true);
   const [pads, setPads] = useState<PadSet>('basic');
   const resumeGame = loadSlot<{ setup: GameSetupValue; match: Match }>(`game:${kind}`);
   // (solo games only are ever saved)
@@ -184,6 +188,12 @@ export function GameSetup({
           <input type="checkbox" checked={swing} onChange={(e) => setSwing(e.target.checked)} />
           <span>🎷 {t.swingFeel}</span>
         </label>
+        {kind === 'rhythm' && input === 'tap' && (
+          <label className="toggle-row">
+            <input type="checkbox" checked={drums} onChange={(e) => setDrums(e.target.checked)} data-drums-toggle />
+            <span>🥁 {t.drumEcho}</span>
+          </label>
+        )}
         {kind === 'melody' && (
           <fieldset className="seg-field">
             <legend>{t.padSet}</legend>
@@ -218,7 +228,7 @@ export function GameSetup({
           } catch {
             /* ignore */
           }
-          onStart({ kind, input, players: count === 1 ? [ps[0] || t.playerN] : ps, bpm, ladder, swing, pads });
+          onStart({ kind, input, players: count === 1 ? [ps[0] || t.playerN] : ps, bpm, ladder, swing, pads, drums: kind === 'rhythm' && input === 'tap' && drums });
         }}
       >
         ▶ {t.play}
@@ -287,6 +297,7 @@ export function GameScreen({
         ladder: setup.ladder,
         swing: setup.swing,
         pads: setup.pads,
+        drums: setup.drums,
         tolCents: settings.echoTolerance ?? 80,
         latencyMs: settings.tapLatencyMs,
         voiceRange: settings.voiceRange,
@@ -313,6 +324,7 @@ export function GameScreen({
   }
   const c = ref.current;
   const v = useSyncExternalStore(c.subscribe, c.getView);
+  const drums = !!setup.drums && v.input === 'tap';
   useEffect(() => {
     void c.start();
     return () => c.dispose();
@@ -324,7 +336,12 @@ export function GameScreen({
       if (e.repeat) return;
       if (v.kind === 'rhythm' && (e.code === 'Space' || e.code === 'Enter')) {
         e.preventDefault();
-        c.tapBeat(e.timeStamp);
+        c.tapBeat(e.timeStamp, 'k');
+      }
+      // Drum Echo: F / D / ← = kick, J / K / → = snare.
+      if (v.kind === 'rhythm' && /^(KeyF|KeyD|ArrowLeft|KeyJ|KeyK|ArrowRight)$/.test(e.code)) {
+        e.preventDefault();
+        c.tapBeat(e.timeStamp, /^(KeyF|KeyD|ArrowLeft)$/.test(e.code) ? 'k' : 's');
       }
       if (v.kind === 'melody' && /^Digit[1-4]$/.test(e.code)) c.tapPad(Number(e.code.slice(5)) - 1);
     };
@@ -350,6 +367,7 @@ export function GameScreen({
           <small>{t.chain}</small>
           <b>{m.length}</b>
         </div>
+        <TalkToggle lang={lang} />
         <span className="game-name">{v.kind === 'melody' ? t.echoChain : t.beatEcho}</span>
       </header>
 
@@ -447,7 +465,26 @@ export function GameScreen({
             <>
               <div className={`beat-light ${v.beat?.accent ? 'accent' : ''}`} key={v.beat?.n ?? -1} aria-hidden="true" />
               <BeatGrid v={v} t={t} />
-              {v.input === 'tap' ? (
+              {v.input === 'tap' && drums ? (
+                <div className="drum-pads" dir="ltr">
+                  {(['k', 's'] as const).map((d) => (
+                    <button
+                      key={d}
+                      className={`tap-pad drum-pad ${d === 'k' ? 'kick' : 'snare'} ${v.stage === 'respond' ? 'live' : ''}`}
+                      data-drum={d}
+                      onPointerDown={(e) => {
+                        e.preventDefault();
+                        c.tapBeat(e.timeStamp, d);
+                      }}
+                      aria-label={d === 'k' ? t.kick : t.snare}
+                    >
+                      <span className="drum-face" aria-hidden="true" />
+                      <b>{d === 'k' ? t.kick : t.snare}</b>
+                      <small>{d === 'k' ? 'F' : 'J'}</small>
+                    </button>
+                  ))}
+                </div>
+              ) : v.input === 'tap' ? (
                 <button
                   className={`tap-pad big ${v.stage === 'respond' ? 'live' : ''}`}
                   onPointerDown={(e) => {
@@ -469,7 +506,7 @@ export function GameScreen({
                   </span>
                 </div>
               )}
-              {v.input === 'tap' && <p className="hint">{t.tapKeyHint}</p>}
+              {v.input === 'tap' && <p className="hint">{drums ? t.drumKeyHint : t.tapKeyHint}</p>}
             </>
           )}
 
@@ -516,7 +553,8 @@ function BeatGrid({ v, t }: { v: GameView; t: Strings }) {
         p.onsets.map((o, i) => {
           const h = r?.hits[i];
           const cls = !r ? '' : h?.offsetMs === null ? 'miss' : Math.abs(h!.offsetMs!) < 50 ? 'good' : 'ok';
-          return <span key={`o${i}`} className={`onset ${cls}`} style={{ left: `${(o / p.beats) * 100}%` }} />;
+          const dr = p.drums?.[i];
+          return <span key={`o${i}`} className={`onset ${cls} ${dr === 'k' ? 'kick' : dr === 's' ? 'snare' : ''}`} style={{ left: `${(o / p.beats) * 100}%` }} />;
         })}
       {v.stage === 'result' &&
         v.taps.map((ms, i) => <span key={`t${i}`} className="tapmark" style={{ left: `${(ms / beatMs / p.beats) * 100}%` }} />)}
