@@ -160,6 +160,12 @@ export interface Settings {
   droneSound?: string;
   /** Colour theme (cosmetic, bought with gems). */
   theme?: string;
+  /** Intake questionnaire answers (src/engine/intake.ts); null/absent = not taken. */
+  intake?: import('../engine/intake').Intake | null;
+  /** The track the intake chose. */
+  track?: import('../engine/intake').Track;
+  /** Learning-first players: no reward nudges (avatar card, unlock toasts). */
+  cleanView?: boolean;
   /** Avatar studio (phase 1 showcase): the two avatars' looks. */
   avatars?: unknown;
   /** Vibrato target style (spec P.1). */

@@ -1,3 +1,5 @@
+import { priorityBoost } from './intake';
+import { domainOf, type DomainId } from './rating';
 // Daily workout planner (spec S.1): "I have 5 / 10 / 20 minutes" → a short plan that mixes the weakest
 // skill, due reviews, a vocal warm-up (voice mode) and one game. Pure: the plan is a function of the
 // ratings, the review queue and the day, so it does not change while the player works through it.
@@ -22,6 +24,8 @@ export interface WorkoutInput {
   voice: boolean;
   mastered: (id: LessonId) => boolean;
   day: string; // local day — seeds the variety
+  /** The player's order of practice areas (intake); their skills come first. */
+  priorities?: DomainId[] | null;
 }
 
 const hash = (s: string) => {
@@ -31,9 +35,10 @@ const hash = (s: string) => {
 };
 
 /** Skills ordered weakest first: unmeasured ones count as weakest (to measure them). */
-export function weakestSkills(ratings: Ratings, voice: boolean): SkillId[] {
+export function weakestSkills(ratings: Ratings, voice: boolean, priorities?: DomainId[] | null): SkillId[] {
   const usable = SKILLS.filter((k) => k !== 'absolute' && (voice || !['singing', 'agility', 'technique'].includes(k)));
-  return [...usable].sort((a, b) => (ratings[a]?.n ? ratings[a]!.r : 0) - (ratings[b]?.n ? ratings[b]!.r : 0));
+  const score = (k: SkillId) => (ratings[k]?.n ? ratings[k]!.r : 0) - priorityBoost(priorities, domainOf(k));
+  return [...usable].sort((a, b) => score(a) - score(b));
 }
 
 function stepFor(skill: SkillId, input: WorkoutInput): WorkoutStep {
@@ -66,7 +71,7 @@ export function planWorkout(input: WorkoutInput): WorkoutStep[] {
   const total = () => plan.reduce((a, s) => a + s.minutes, 0);
   if (input.voice && input.minutes >= 10) add({ kind: 'vocal-warmup', minutes: 3 });
   if (input.reviewsDue > 0) add({ kind: 'review', minutes: 2 });
-  const weak = weakestSkills(input.ratings, input.voice);
+  const weak = weakestSkills(input.ratings, input.voice, input.priorities);
   for (const k of weak) {
     if (total() >= input.minutes - 2) break;
     add(stepFor(k, input));

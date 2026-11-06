@@ -18,6 +18,16 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.33.0',
+    date: '2026-11-06',
+    en: [
+      'Getting to know you: a few playful questions on the first visit — what you play, sing and know, and what matters most to you. Your path follows your order (rhythm first? it starts with rhythm), and a gentle siren finds your voice range',
+    ],
+    he: [
+      'היכרות: כמה שאלות קלילות בביקור הראשון — על מה אתם מנגנים, שרים ויודעים, ומה הכי חשוב לכם. המסלול נבנה לפי הסדר שלכם (קצב קודם? הוא מתחיל בקצב), וסירנה עדינה מוצאת את הטווח הקולי',
+    ],
+  },
+  {
     version: '0.32.0',
     date: '2026-11-06',
     en: [

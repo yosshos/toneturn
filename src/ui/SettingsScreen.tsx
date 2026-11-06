@@ -14,6 +14,8 @@ interface Props {
   onChange: (p: Partial<Settings>) => void;
   onBack: () => void;
   account?: ReactNode;
+  /** Take the intake questionnaire again. */
+  onIntake?: () => void;
 }
 
 function Seg<T extends string>({
@@ -50,7 +52,7 @@ const GenderGlyph = ({ g }: { g: Gender }) => (
   </span>
 );
 
-export function SettingsScreen({ t, settings: s, onChange, onBack, account }: Props) {
+export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIntake }: Props) {
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>(listVoices());
   useEffect(() => {
     void voicesReady().then(setVoices);
@@ -216,6 +218,13 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account }: Pr
         )}
       </section>
 
+      {onIntake && (
+        <section className="set-card">
+          <button className="btn ghost" onClick={onIntake} data-intake-retake="1">
+            👋 {t.intake.retake}
+          </button>
+        </section>
+      )}
       <section className="set-card">
         <label className="toggle-row">
           <input type="checkbox" checked={s.miniLessons ?? true} onChange={(e) => onChange({ miniLessons: e.target.checked })} data-mini-setting="1" />

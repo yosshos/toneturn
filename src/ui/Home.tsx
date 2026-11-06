@@ -10,6 +10,7 @@ import { applyUpdate, promptInstall, pwa } from '../pwa';
 import { topicProgress } from '../engine/recommend';
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { LESSON_ORDER, type LessonId } from '../engine/lesson';
+import { personalOrder, type Intake } from '../engine/intake';
 import { displayNote, pc, type Naming } from '../engine/pitch';
 import type { InputMode } from '../engine/session';
 import { LESSON_META } from '../game/content';
@@ -53,12 +54,12 @@ export const DAILY_GOAL_XP = 30;
 export type NodeState = 'done' | 'current' | 'open' | 'locked';
 
 /** Lesson i unlocks when lesson i-1 has been completed at least once. */
-export function lessonStates(progress: Progress): Record<LessonId, NodeState> {
+export function lessonStates(progress: Progress, order: LessonId[] = LESSON_ORDER): Record<LessonId, NodeState> {
   const out = {} as Record<LessonId, NodeState>;
   let currentSet = false;
-  LESSON_ORDER.forEach((id, i) => {
+  order.forEach((id, i) => {
     const done = (progress.lessons[id]?.completions ?? 0) > 0;
-    const prevDone = i === 0 || (progress.lessons[LESSON_ORDER[i - 1]]?.completions ?? 0) > 0;
+    const prevDone = i === 0 || (progress.lessons[order[i - 1]]?.completions ?? 0) > 0;
     const placed = progress.placementUnlocks?.includes(id) ?? false;
     if (done) out[id] = 'done';
     else if (prevDone || placed || UNLOCK_ALL) {
@@ -69,9 +70,9 @@ export function lessonStates(progress: Progress): Record<LessonId, NodeState> {
   return out;
 }
 
-export function nextLessonId(progress: Progress): LessonId {
-  const st = lessonStates(progress);
-  return LESSON_ORDER.find((id) => st[id] === 'current') ?? LESSON_ORDER[LESSON_ORDER.length - 1];
+export function nextLessonId(progress: Progress, order: LessonId[] = LESSON_ORDER): LessonId {
+  const st = lessonStates(progress, order);
+  return order.find((id) => st[id] === 'current') ?? order[order.length - 1];
 }
 
 export function starsFor(best: number, total: number) {
@@ -86,11 +87,14 @@ export function Home({ t, settings, progress, streak, onStreak, account, onPract
   const lang = settings.uiLang;
   const nm = namingFor(settings.naming, lang);
   const bb = displayNote(pc('Bb'), nm, lang);
-  const states = lessonStates(progress);
-  const next = nextLessonId(progress);
+  // The path in the player's own order of areas (intake questionnaire).
+  const order = personalOrder((settings.intake as Intake | null | undefined)?.priorities);
+  const states = lessonStates(progress, order);
+  const next = nextLessonId(progress, order);
   const meta = LESSON_META[next];
-  const anyDone = LESSON_ORDER.some((id) => states[id] === 'done');
-  const doneCount = LESSON_ORDER.filter((id) => states[id] === 'done').length;
+  const anyDone = order.some((id) => states[id] === 'done');
+  const doneCount = order.filter((id) => states[id] === 'done').length;
+  const beginner = settings.track === 'explorer' || settings.track === 'hobby';
 
   const today = localDay(new Date());
   const todayXp = progress.history.filter((h) => localDay(new Date(h.completedAt)) === today).reduce((a, h) => a + h.xp, 0);
@@ -134,13 +138,26 @@ export function Home({ t, settings, progress, streak, onStreak, account, onPract
             <h1>{t.firstRunTitle}</h1>
             <p className="blurb">{t.firstRunBlurb}</p>
             <ModeSwitch mode={settings.mode} onChange={onMode} t={t} />
-            <button className="btn mega first-run-cta" onClick={() => onPlacement()}>
-              {settings.mode === 'voice' && <MicIcon />}
-              {t.findLevel}
-            </button>
-            <button className="link start-from-one" onClick={() => start(next)}>
-              {t.startFromLessonOne}
-            </button>
+            {beginner ? (
+              <>
+                <button className="btn mega first-run-cta" onClick={() => start(next)}>
+                  {t.intake.startBasics}
+                </button>
+                <button className="link start-from-one" onClick={() => onPlacement()}>
+                  {t.intake.findLevelInstead}
+                </button>
+              </>
+            ) : (
+              <>
+                <button className="btn mega first-run-cta" onClick={() => onPlacement()}>
+                  {settings.mode === 'voice' && <MicIcon />}
+                  {t.findLevel}
+                </button>
+                <button className="link start-from-one" onClick={() => start(next)}>
+                  {t.startFromLessonOne}
+                </button>
+              </>
+            )}
           </div>
         </section>
       ) : (
@@ -195,7 +212,7 @@ export function Home({ t, settings, progress, streak, onStreak, account, onPract
         <h2 className="home-h">🗺️ {t.lessonPath}</h2>
         <TopicBars t={t} progress={progress} />
         <ol className="path-list">
-          {LESSON_ORDER.map((id, i) => {
+          {order.map((id, i) => {
             const st = states[id];
             const m = LESSON_META[id];
             const best = progress.lessons[id]?.best ?? 0;

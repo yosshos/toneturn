@@ -1,4 +1,6 @@
 import { lazy, Suspense } from 'react';
+import { IntakeScreen } from './Intake';
+import { personalOrder, type Intake } from '../engine/intake';
 import { vocalUnit } from '../content/units';
 const AvatarStudio = lazy(() => import('./AvatarStudio'));
 import { MiniGateContext, MiniLessonPlayer } from './MiniLesson';
@@ -50,12 +52,12 @@ import { pwa } from '../pwa';
 import { params, piano, setMidiEnabled, SIMULATED, store, tts } from './services';
 import { midi } from '../speech/midi';
 
-type Route = 'studio' | 'home' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong' | 'perform' | 'learned';
+type Route = 'intake' | 'studio' | 'home' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong' | 'perform' | 'learned';
 /** Invite links: #/online/CODE */
 const onlineCodeFromHash = () => (/^#\/?online\/(\w+)/.exec(location.hash)?.[1] ?? '');
 const routeFromHash = (): Route => {
   const h = location.hash.replace(/^#\/?/, '').replace(/^online\/.*$/, 'online');
-  return (['settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong', 'perform', 'learned', 'studio'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
+  return (['settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong', 'perform', 'learned', 'studio', 'intake'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
 };
 
 /** The level a generated modes lesson was made at (from its first question's pool size). */
@@ -68,6 +70,7 @@ const modesAgainLevel = (def: { questions: { choices: unknown[]; difficulty: num
 export function App() {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [progress, setProgress] = useState<Progress>(emptyProgress());
+  const [progressReady, setProgressReady] = useState(false);
   const [vocalWarmup, setVocalWarmup] = useState(false);
   const [route, setRoute] = useState<Route>(routeFromHash());
   const [lessonKey, setLessonKey] = useState(0);
@@ -143,7 +146,10 @@ export function App() {
 
   useEffect(() => {
     void store.loadSettings().then(setSettings).catch(() => setSettings(DEFAULT_SETTINGS));
-    void store.loadProgress().then(setProgress);
+    void store.loadProgress().then((p) => {
+      setProgress(p);
+      setProgressReady(true);
+    });
     // Back from Google sign-in that started on the online screen.
     try {
       const pending = sessionStorage.getItem(PENDING_ONLINE_KEY);
@@ -276,7 +282,7 @@ export function App() {
   const openPlacement = (domain?: DomainId | null) => {
     const d = typeof domain === 'string' ? domain : null;
     const seed = (Date.now() ^ (Math.random() * 1e9)) >>> 0;
-    openGenerated(placementLesson(seed, { singing: s.mode === 'voice' || d === 'voice', domain: d }), (st) => adaptPlacement(st, seed));
+    openGenerated(placementLesson(seed, { singing: s.mode === 'voice' || d === 'voice', domain: d, priorities: (s.intake as Intake | null | undefined)?.priorities }), (st) => adaptPlacement(st, seed));
   };
   const openReview = () => {
     const def = reviewLesson(progress.review, Date.now() >>> 0);
@@ -357,6 +363,15 @@ export function App() {
     void piano.setDroneSound(droneSoundId);
   }, [droneSoundId]);
 
+  // First visit: the intake questionnaire comes before anything else (once; "later" counts as answered).
+  // Automated runs see it only when asked (?intake), like the quick lessons.
+  useEffect(() => {
+    if (!settings || !progressReady || settings.intake !== undefined) return;
+    const automated = (SIMULATED || params.has('unlock') || (typeof navigator !== 'undefined' && navigator.webdriver)) && !params.has('intake');
+    const fresh = progress.history.length === 0 && !Object.values(progress.lessons).some((l) => (l?.completions ?? 0) > 0);
+    if (!automated && fresh && route === 'home') go('intake');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settings?.intake, route, progressReady]);
   // First run: remember the current version silently and when this device started (untimed first week).
   useEffect(() => {
     if (settings && !settings.seenVersion) updateSettings({ seenVersion: APP_VERSION });
@@ -366,9 +381,10 @@ export function App() {
   if (!settings) return <div className="boot" />;
   const news = unseenChanges(s.seenVersion);
 
-  const states = lessonStates(progress);
-  const idx = LESSON_ORDER.indexOf(lessonId);
-  const nextId = LESSON_ORDER[idx + 1];
+  const order = personalOrder((s.intake as Intake | null | undefined)?.priorities);
+  const states = lessonStates(progress, order);
+  const idx = order.indexOf(lessonId);
+  const nextId = order[idx + 1];
   const canNext = nextId && states[nextId] !== 'locked';
 
   return (
@@ -399,7 +415,7 @@ export function App() {
           onStreak={() => setStreakOpen(true)}
           account={<AccountCard t={t} user={user} sync={sync} compact />}
           onMenu={() => setMenuOpen(true)}
-          tools={<>{user && <AssignedCard t={t} items={assigned} lang={s.uiLang} onOpen={(id) => openAssignment(id)} />}<PracticeTools t={t} progress={progress} onSkills={() => go('skills')} onPlacement={openPlacement} onReview={openReview} onPuzzle={openPuzzle} onDaily={() => go('daily')} onRuns={openRuns} onDrone={() => go('drone')} onPerform={() => gate('perform:backing', () => go('perform'))} onLearned={() => go('learned')} onStudio={() => go('studio')} learnedCount={learnedCount(s)} onModes={openModes} onWrongNotes={openWrongNotes} onAbsolute={openAbsolute} onTopic={openTopic} lang={s.uiLang} /></>}
+          tools={<>{user && <AssignedCard t={t} items={assigned} lang={s.uiLang} onOpen={(id) => openAssignment(id)} />}<PracticeTools t={t} progress={progress} onSkills={() => go('skills')} onPlacement={openPlacement} onReview={openReview} onPuzzle={openPuzzle} onDaily={() => go('daily')} onRuns={openRuns} onDrone={() => go('drone')} onPerform={() => gate('perform:backing', () => go('perform'))} onLearned={() => go('learned')} onStudio={s.cleanView ? undefined : () => go('studio')} learnedCount={learnedCount(s)} onModes={openModes} onWrongNotes={openWrongNotes} onAbsolute={openAbsolute} onTopic={openTopic} lang={s.uiLang} /></>}
           updateReady={pwaState.updateReady}
           news={
             <>
@@ -480,7 +496,7 @@ export function App() {
         />
       )}
       {route === 'settings' && (
-        <SettingsScreen t={t} settings={s} onChange={updateSettings} onBack={() => go('home')} account={<AccountCard t={t} user={user} sync={sync} />} />
+        <SettingsScreen t={t} settings={s} onChange={updateSettings} onBack={() => go('home')} onIntake={() => go('intake')} account={<AccountCard t={t} user={user} sync={sync} />} />
       )}
       {route === 'diagnostics' && <Diagnostics t={t} settings={s} onBack={() => go('home')} />}
       {route === 'friends' && <FriendsScreen settings={s} t={t} user={user} sync={sync} onBack={() => go('home')} onBestTier={(b) => b > (s.bestLeague ?? 0) && updateSettings({ bestLeague: b })} onLeagueSeen={(leagueSeen) => updateSettings({ leagueSeen })} />}
@@ -565,6 +581,27 @@ export function App() {
             setOnlineCode('');
             setOnlineKey((k) => k + 1);
             go('online');
+          }}
+        />
+      )}
+      {route === 'intake' && (
+        <IntakeScreen
+          t={t}
+          settings={s}
+          onSkip={() => {
+            updateSettings({ intake: s.intake ?? null });
+            go('home');
+          }}
+          onDone={(res, then) => {
+            updateSettings(res.patch);
+            if (then === 'placement') {
+              go('home');
+              window.setTimeout(() => openPlacement(), 0);
+            } else if (then === 'basics') {
+              const first = personalOrder(res.intake.priorities)[0];
+              go('home');
+              window.setTimeout(() => openLesson(first), 0);
+            } else go('home');
           }}
         />
       )}

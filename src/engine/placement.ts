@@ -199,9 +199,18 @@ export const PLACEMENT_ORDER: SkillId[] = [
 export const PLACEMENT_DERIVED: Partial<Record<SkillId, SkillId>> = { timing: 'rhythm-reading' };
 
 /** The sections of a placement: all skills, or one domain's; sung skills only with the microphone. */
-export function placementSkills(opts: { singing?: boolean; domain?: DomainId | null } = {}): SkillId[] {
+export function placementSkills(opts: { singing?: boolean; domain?: DomainId | null; priorities?: DomainId[] | null } = {}): SkillId[] {
   const dom = opts.domain ? DOMAINS.find((d) => d.id === opts.domain)!.skills : null;
-  return PLACEMENT_ORDER.filter((k) => (opts.singing || !SUNG_SKILLS.includes(k)) && (!dom || dom.includes(k) || (k === 'rhythm-reading' && dom.includes('timing'))));
+  const list = PLACEMENT_ORDER.filter((k) => (opts.singing || !SUNG_SKILLS.includes(k)) && (!dom || dom.includes(k) || (k === 'rhythm-reading' && dom.includes('timing'))));
+  const pr = opts.priorities;
+  if (!pr?.length) return list;
+  // The player's most important areas are measured first (stable within an area).
+  const rank = (k: SkillId) => {
+    const d = DOMAINS.find((x) => x.skills.includes(k) || (k === 'rhythm-reading' && x.skills.includes('timing')))?.id;
+    const i = d ? pr.indexOf(d) : -1;
+    return i < 0 ? pr.length : i;
+  };
+  return list.map((k, i) => ({ k, i })).sort((a, b) => rank(a.k) - rank(b.k) || a.i - b.i).map((x) => x.k);
 }
 
 const ID = /^p:([a-z-]+):(\d+):(\d+)$/;
@@ -270,7 +279,7 @@ function nextQuestion(s: SessionState, seed: number, skills: SkillId[]): Questio
   return LADDERS[cur.skill]![cur.next - 1].make(seed + n * 7919, `p:${cur.skill}:${cur.next}:${n}`);
 }
 
-export function placementLesson(seed: number, opts: { singing?: boolean; domain?: DomainId | null } = {}): LessonDef {
+export function placementLesson(seed: number, opts: { singing?: boolean; domain?: DomainId | null; priorities?: DomainId[] | null } = {}): LessonDef {
   const skills = placementSkills(opts);
   const first = LADDERS[skills[0]]![0].make(seed, `p:${skills[0]}:1:1`);
   return {

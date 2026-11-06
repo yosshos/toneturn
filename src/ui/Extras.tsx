@@ -54,6 +54,7 @@ export function WorkoutCard({ t, progress, settings, onOpen }: { t: Strings; pro
         voice: settings.mode === 'voice',
         mastered: (id) => lessonMastered(progress, id),
         day,
+        priorities: (settings.intake as import('../engine/intake').Intake | null | undefined)?.priorities,
       }),
     // The plan is fixed for the day and length; progress changes only tick the steps.
     // eslint-disable-next-line react-hooks/exhaustive-deps

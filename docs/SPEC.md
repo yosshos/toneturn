@@ -773,3 +773,33 @@ Every new topic has a quick lesson (X).
 - **Players:** solo (60 s, best per level), a duel on one device (the statement faces both players), online rooms (the chosen topics and level travel in the room seed's high bits: seed = base + 2³² × (topic mask + 2¹¹ × level); a seed below 2³² is the original trio game, so no server change).
 - In the Games menu, on the home screen and in the menu; as a practice topic ("Truth or Bluff: theory", 3 stages) in Written theory, so silent theory practice appears along the path of topics.
 
+## Addendum — 2026-11-06 (product owner): AB. Getting to know you — the intake questionnaire
+
+- **When:** on a first visit, before anything else (once; "later" counts as answered). It can be taken again from Settings. Automated runs see it only with `?intake`.
+- **Questions:** one per card, big playful answers, back and skip always available:
+  - relationship with music (listener → pro);
+  - singing (shower → trained);
+  - theory ("a foreign language" → "ii–V–I is home");
+  - reading notes ("birds on power lines" → comfortably);
+  - instruments played (several);
+  - note names (Do-Re-Mi / C-D-E / "you choose");
+  - **the practice areas in the player's own order of importance** (tap 1–5), or "mix everything";
+  - what keeps them coming back;
+  - minutes a day.
+- **Voice range:**
+  - One gentle siren, from a comfortable low note up to a comfortable high note.
+  - A clear safety note: comfortable notes only, no pushing, squeezing or shouting; stop if it scratches or tires.
+  - Live notes while singing, a rough voice type "just for fun", and "not now" (it can be done later in Singing).
+  - The result sets `voiceRange`, so sung items fit the voice.
+- **What the answers change** (`src/engine/intake.ts`):
+  - **Track** (explorer / hobby / student / pro):
+    - explorers and hobbyists are offered "start with the basics" first and placement second; students and pros the reverse;
+    - pros start with quick lessons off.
+  - **The path follows the ranking:**
+    - weighted round-robin over areas (weights 5..1 by rank);
+    - the original order is kept within an area, and prerequisites always come first (for example, hearing degrees before singing them);
+    - rhythm first and singing last gives a rhythm-first path.
+  - **Today's plan** pulls the top areas' skills forward.
+  - **Find my level** measures the top areas first.
+  - **Note naming**, the daily length, and a **clean view** for "just getting better" players (no avatar card on Home).
+
