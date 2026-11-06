@@ -57,7 +57,9 @@ describe('intake: personal path order', () => {
     expect(avg('voice', o)).toBeGreaterThan(avg('voice', LESSON_ORDER));
     // Within an area the original order is kept (rhythm 1 before rhythm 2 …).
     const rh = o.filter((id) => id.startsWith('rhythm-'));
-    expect(rh).toEqual(LESSON_ORDER.filter((id) => id.startsWith('rhythm-')));
+    const numbered = (id: string) => /^rhythm-r\d$/.test(id);
+    expect(rh.filter(numbered).length).toBe(8);
+    expect(rh.filter(numbered)).toEqual(LESSON_ORDER.filter(numbered));
   });
 });
 

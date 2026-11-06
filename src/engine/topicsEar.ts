@@ -83,7 +83,7 @@ TOPIC_GEN['in-tune'] = {
       names[k] = nm(`The ${ord[i]} note`, `הצליל ה${ordHe[i]}`, ord[i], ['second', 'third', 'fourth', 'fifth'][i], ordHe[i]);
       choiceStim[k] = play(i + 1);
     });
-    return choiceQ({ id, topic: 'in-tune', level, seed, skill: 'pitch', difficulty: 1600, ask: { en: 'One note is out of tune (30¢) — which?', he: 'צליל אחד לא מכוון (30¢) — איזה?' }, names, answer: keys[bad - 1], choices: keys, stimulus: play(bad), choiceStim });
+    return choiceQ({ id, topic: 'in-tune', level, seed, skill: 'pitch', difficulty: 1700, ask: { en: 'One note is out of tune (30¢) — which?', he: 'צליל אחד לא מכוון (30¢) — איזה?' }, names, answer: keys[bad - 1], choices: keys, stimulus: play(bad), choiceStim });
   },
 };
 
@@ -93,7 +93,7 @@ const MAJ = [0, 2, 4, 5, 7, 9, 11, 12, 14, 16];
 
 TOPIC_GEN['two-voice'] = {
   title: { en: 'Two voices', he: 'שני קולות' },
-  skill: 'sequences',
+  skill: 'form',
   levels: [
     { en: 'How do the voices move?', he: 'איך הקולות נעים?' },
     { en: 'The upper voice', he: 'הקול העליון' },
@@ -118,7 +118,7 @@ TOPIC_GEN['two-voice'] = {
       const choiceStim: Record<string, Stimulus[]> = {};
       for (const k of keys) choiceStim[k] = play(k);
       return choiceQ({
-        id, topic: 'two-voice', level, seed, skill: 'sequences', difficulty: 1300,
+        id, topic: 'two-voice', level, seed, skill: 'form', difficulty: 1300,
         ask: { en: 'Two voices move — how?', he: 'שני קולות זזים — איך?' },
         names: {
           parallel: nm('Parallel', 'מקבילה', 'parallel motion', 'מקביל'),
@@ -160,7 +160,7 @@ TOPIC_GEN['two-voice'] = {
     if (new Set(all.map(label)).size < all.length) return TOPIC_GEN['two-voice'].gen(seed + 1, level, id);
     const stimulus: Stimulus[] = lower.map((x, i) => chordStim([key + MAJ[x], key + 12 + MAJ[upper[i]]], 0.6));
     return choiceQ({
-      id, topic: 'two-voice', level, seed, skill: 'sequences', difficulty: 1450 + 100 * level,
+      id, topic: 'two-voice', level, seed, skill: 'form', difficulty: 1450 + 100 * level,
       ask: level === 3 ? { en: 'Which line did the lower voice sing? (scale degrees)', he: 'איזה קו שר הקול התחתון? (דרגות)' } : { en: 'Which line did the upper voice sing? (scale degrees)', he: 'איזה קו שר הקול העליון? (דרגות)' },
       names, answer: 'l0', choices: shuffleR(rnd, keys), stimulus, choiceStim,
     });
@@ -399,7 +399,7 @@ const METERS: Record<string, [number[], ReturnType<typeof nm>]> = {
 
 TOPIC_GEN['odd-meter'] = {
   title: { en: 'Odd meters', he: 'משקלים אי־זוגיים' },
-  skill: 'rhythm-dictation',
+  skill: 'meter',
   levels: [
     { en: '5/8, 6/8 or 7/8?', he: '5/8, 6/8 או 7/8?' },
     { en: 'How is the 7/8 grouped?', he: 'איך מחולק ה־7/8?' },
@@ -418,7 +418,7 @@ TOPIC_GEN['odd-meter'] = {
       names[k] = METERS[k][1];
       choiceStim[k] = [meter(METERS[k][0], step, 2)];
     }
-    return choiceQ({ id, topic: 'odd-meter', level, seed, skill: 'rhythm-dictation', difficulty: 1250 + 150 * level, ask: { en: 'Which meter?', he: 'איזה משקל?' }, names, answer, choices: pool, stimulus: [meter(METERS[answer][0], step, 4)], choiceStim });
+    return choiceQ({ id, topic: 'odd-meter', level, seed, skill: 'meter', difficulty: 1250 + 150 * level, ask: { en: 'Which meter?', he: 'איזה משקל?' }, names, answer, choices: pool, stimulus: [meter(METERS[answer][0], step, 4)], choiceStim });
   },
 };
 
@@ -502,7 +502,7 @@ const dispGrid = (on: number[], fine: boolean) =>
 
 TOPIC_GEN['displacement'] = {
   title: { en: 'Rhythmic displacement', he: 'הסטה ריתמית' },
-  skill: 'rhythm-dictation',
+  skill: 'transpose',
   levels: [
     { en: 'By ear: how far did it move?', he: 'בשמיעה: כמה זה זז?' },
     { en: 'On paper: start it later', he: 'בכתב: להתחיל מאוחר יותר' },
@@ -538,7 +538,7 @@ TOPIC_GEN['displacement'] = {
       });
       const ans = letters[order.indexOf('right')];
       return choiceQ({
-        id, topic: 'displacement', level, seed, skill: 'rhythm-reading', difficulty: 1250,
+        id, topic: 'displacement', level, seed, skill: 'transpose', difficulty: 1250,
         ask: { en: `${p.en}: start it ${shiftName.en.toLowerCase()}. Which grid?`, he: `${p.he}: להתחיל ${shiftName.he}. איזו תבנית?` },
         text: { en: g(p.on), he: g(p.on) },
         names, answer: ans, choices: letters.slice(0, order.length), stimulus: [dispSound(p.on, 1)], choiceStim,
@@ -556,7 +556,7 @@ TOPIC_GEN['displacement'] = {
         choiceStim[letters[i]] = [dispSound(opts[oi], 2)];
       });
       return choiceQ({
-        id, topic: 'displacement', level, seed, skill: 'rhythm-dictation', difficulty: 1320,
+        id, topic: 'displacement', level, seed, skill: 'transpose', difficulty: 1320,
         ask: { en: `${p.en}, started ${shiftName.en.toLowerCase()} — which version?`, he: `${p.he}, ${shiftName.he} — איזו גרסה?` },
         names, answer: letters[order.indexOf(0)], choices: letters, stimulus: [dispSound(p.on, 2)], choiceStim,
       });
@@ -565,7 +565,7 @@ TOPIC_GEN['displacement'] = {
     const names: ChoiceQuestion['names'] = {};
     for (const k of pool) names[k] = nm(DISP_SHIFTS[k][1].en, DISP_SHIFTS[k][1].he);
     return choiceQ({
-      id, topic: 'displacement', level, seed, skill: 'rhythm-dictation', difficulty: fine ? 1560 : 1180,
+      id, topic: 'displacement', level, seed, skill: 'transpose', difficulty: fine ? 1560 : 1180,
       ask: { en: `${p.en} — then moved. How far did it move?`, he: `${p.he} — ואז מוסט. כמה הוא זז?` },
       names, answer, choices: pool, stimulus: [dispSound(p.on, 2), rest(0.5), dispSound(shifted, 2)],
     });

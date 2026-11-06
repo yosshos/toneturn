@@ -7,7 +7,7 @@ import { jazzVoicing, PROGRESSIONS, SEVENTHS, voiceProgression, type JazzChord, 
 import { opening, SONGS, type SongOpening } from './songs';
 import { atTempo, buildRun, MAX_RUN_LEVEL, runAt, runDifficulty, type RunMaterial, type RunShape, type RunSpec } from './runs';
 import { majorScale, pc, pcValue, voiceChord, type ChordQuality, type PitchClass } from './pitch';
-import { basicsBeat, basicsPitch, basicsShape, basicsVoice, transposeLesson } from './basics';
+import { basicsBeat, basicsPitch, basicsShape, basicsVoice, chordTonesLesson, rhythmShiftLesson, transposeLesson } from './basics';
 import { options as rhythmOptions, rhythmAt, rhythmFromKey, rhythmKey, rhythmSound, type Rhythm, type RhythmLevel } from './rhythm';
 
 export const CONTENT_SCHEMA_VERSION = 2;
@@ -15,6 +15,12 @@ export const CONTENT_SCHEMA_VERSION = 2;
 export type Answer = number | string;
 /** 'rhythm' = rhythmic memory, 'timing' = rhythmic precision (mirrors 'sequences' / 'singing' for pitch). */
 export type SkillId =
+  /** Meter by ear: in 2/3/4, simple or compound, odd meters, downbeat (spec AD). */
+  | 'meter'
+  /** Form & texture: phrase form, voices (spec AD). */
+  | 'form'
+  /** Expression: dynamics, articulation, mood (spec AD). */
+  | 'expression'
   | 'degrees'
   | 'notes'
   | 'chords'
@@ -101,8 +107,10 @@ export interface CadenceQuestion extends QBase {
 
 export interface SingQuestion extends QBase {
   kind: 'sing';
-  /** degree→sing (#3), name→sing (#4, after a reference), or echo a heard note (#7). */
-  promptBy?: 'degree' | 'name' | 'echo';
+  /** degree→sing (#3), name→sing (#4, after a reference), echo a heard note (#7), a tone of the heard chord, or the note that finishes the heard phrase (spec AD). */
+  promptBy?: 'degree' | 'name' | 'echo' | 'chord' | 'finish';
+  /** promptBy 'chord': which chord tone (1 = root, 3, 5), and the chord's quality. */
+  chordTone?: { tone: 1 | 3 | 5; minor: boolean };
   key: PitchClass;
   degree: number;
   target: PitchClass;
@@ -177,6 +185,12 @@ export interface RhythmReadQuestion extends QBase {
   rhythm: Rhythm;
   bpm: number;
   show: 'notation' | 'words';
+  /** Drawn instead of `rhythm` (spec AD: show the pattern, perform it displaced). */
+  shown?: Rhythm;
+  /** The clicks stop after this many bars of the passage: keep the beat inside (spec AD). */
+  silentAfterBars?: number;
+  /** An instruction replacing the default "Read and tap". */
+  prompt?: { en: string; he: string };
   answer: 'accurate';
 }
 
@@ -229,7 +243,7 @@ export interface ChoiceQuestion extends QBase {
   /** The sound of each choice (compare: your answer, then the right one). */
   choiceStim?: Record<string, Stimulus[]>;
   /** Notes to show (written theory, sight-reading): drawn as notation. */
-  show?: { midis: number[]; clef?: 'treble' | 'bass' | 'alto'; chord?: boolean; key?: PitchClass | null };
+  show?: { midis: number[]; clef?: 'treble' | 'bass' | 'alto' | 'tenor'; chord?: boolean; key?: PitchClass | null };
   /** Text to show with the question (written theory). */
   text?: { en: string; he: string };
 }
@@ -448,7 +462,7 @@ export interface LessonDef {
   /** Find my level: sections the player chose to skip (not measured, not rated). */
   placementSkipped?: SkillId[];
   /** Find my level by domain: which one. */
-  placementDomain?: 'pitch' | 'time' | 'memory' | 'voice' | 'reading';
+  placementDomain?: 'pitch' | 'time' | 'memory' | 'voice' | 'reading' | 'creative';
 }
 
 export type LessonId =
@@ -489,7 +503,9 @@ export type LessonId =
   | 'basics-shape'
   | 'basics-beat'
   | 'basics-voice'
-  | 'transpose';
+  | 'transpose'
+  | 'rhythm-shift'
+  | 'chord-tones';
 
 /** Small deterministic PRNG for seeded generation in tests and replays. */
 export function mulberry32(seed: number): () => number {
@@ -1294,12 +1310,14 @@ export const LESSON_ORDER: LessonId[] = [
   'notes-degrees',
   'sing-names',
   'sing-degrees',
+  'chord-tones',
   'rhythm-r1',
   'rhythm-r2',
   'rhythm-r3',
   'runs',
   'rhythm-r4',
   'rhythm-r5',
+  'rhythm-shift',
   'rhythm-r6',
   'rhythm-r7',
   'rhythm-r8',
@@ -1324,6 +1342,10 @@ export function makeLesson(id: LessonId, seed = Date.now()): LessonDef {
       return basicsVoice(seed);
     case 'transpose':
       return transposeLesson(seed);
+    case 'rhythm-shift':
+      return rhythmShiftLesson(seed);
+    case 'chord-tones':
+      return chordTonesLesson(seed);
     case 'modes':
       return modesLesson(1, seed);
     case 'slash-chords':

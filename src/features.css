@@ -1708,7 +1708,7 @@
 
 /* Skill Map by domain (product owner) */
 .skill-domain + .skill-domain { margin-top: 12px; }
-.skill-domain-h { display: flex; justify-content: space-between; align-items: baseline; margin: 6px 0; font-size: 1rem; }
+.skill-domain-h { display: flex; flex-wrap: wrap; gap: 2px 0; justify-content: space-between; align-items: baseline; margin: 6px 0; font-size: 1rem; overflow-wrap: normal; word-break: normal; }
 .skill-domain-h small { color: var(--ink-dim); font-weight: 600; }
 .radar.domains .axis-label { font-size: 15px; font-weight: 700; }
 
@@ -1719,7 +1719,7 @@
 .placement-domains .pd-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .placement-domains .chip { padding: 6px 10px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--ink) 20%, transparent); background: var(--card); color: var(--ink); font-weight: 700; font-size: .85rem; cursor: pointer; }
 .placement-domains .chip:hover { border-color: var(--gold); }
-.skill-domain-h .measure-domain { margin-inline-start: auto; font-size: .78rem; font-weight: 600; }
+.skill-domain-h .measure-domain { margin-inline-start: auto; font-size: .78rem; font-weight: 600; white-space: nowrap; }
 .skill-domain-h small { margin-inline-start: 8px; }
 
 /* Avatar studio (phase 1 showcase) */
@@ -1796,3 +1796,16 @@
 .term-card { margin-top: 8px; padding: 10px 12px; border-radius: 12px; background: rgba(255, 255, 255, 0.07); text-align: start; display: grid; gap: 4px; }
 .term-card p { margin: 0; line-height: 1.45; }
 .term-card-actions { display: flex; gap: 6px; justify-content: flex-end; }
+
+/* Sub-skills inside a skill (spec AD) */
+.sub-skills h3 { font-size: 0.95rem; margin: 10px 0 6px; }
+.sub-skills ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.sub-row { display: grid; grid-template-columns: minmax(0, 1fr) 56px auto; gap: 8px; align-items: center; font-size: 0.9rem; overflow-wrap: normal; word-break: normal; hyphens: auto; }
+.sub-row .sub-bar { height: 6px; border-radius: 3px; background: rgba(127, 127, 127, 0.25); overflow: hidden; }
+.sub-row .sub-bar i { display: block; height: 100%; background: var(--gold); }
+.sub-row small { opacity: 0.75; white-space: nowrap; }
+.sub-row .sub-tag { grid-column: 1 / -1; font-style: normal; font-size: 0.75rem; justify-self: start; padding: 1px 8px; border-radius: 999px; }
+.sub-tag.good { background: rgba(80, 200, 120, 0.18); }
+.sub-tag.work { background: rgba(240, 160, 60, 0.2); }
+
+.ws-why { display: block; font-size: 0.75rem; opacity: 0.7; font-weight: 500; }

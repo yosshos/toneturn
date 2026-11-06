@@ -49,7 +49,7 @@ function useSvg(draw: (VF: VF, el: HTMLDivElement) => void, deps: unknown[]) {
   return { ref, failed };
 }
 
-export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs }: { notes: number[]; chord: boolean; keyPc: PitchClass | null; labels?: string[]; clef?: 'treble' | 'bass' | 'alto'; durs?: number[] }) {
+export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs }: { notes: number[]; chord: boolean; keyPc: PitchClass | null; labels?: string[]; clef?: 'treble' | 'bass' | 'alto' | 'tenor'; durs?: number[] }) {
   const { ref, failed } = useSvg(
     (VF, el) => {
       const n = chord ? 1 : notes.length;

@@ -124,8 +124,8 @@ describe('Find my level 2.0: every skill, staircase to failure', () => {
       for (const k of skills) expect(d.skills.includes(k) || (k === 'rhythm-reading' && d.id === 'time'), `${d.id}:${k}`).toBe(true);
     }
     const s = run({ sequences: 2, rhythm: 2 }, false, 'memory');
-    expect(new Set(s.lesson.questions.map((q) => q.id.split(':')[1]))).toEqual(new Set(['sequences', 'rhythm']));
-    expect(placementResults(s).map((r) => r.skill).sort()).toEqual(['rhythm', 'sequences']);
+    expect(new Set(s.lesson.questions.map((q) => q.id.split(':')[1]))).toEqual(new Set(['sequences', 'rhythm', 'form']));
+    expect(placementResults(s).map((r) => r.skill).sort()).toEqual(['form', 'rhythm', 'sequences']);
   });
   it('climbs until the player fails, and sets the rating between passed and failed', () => {
     const s = run({ degrees: 5, chords: 99, intervals: 0 });

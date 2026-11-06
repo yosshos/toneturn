@@ -22,16 +22,17 @@ export const BAND_MAX = 1600;
 
 /** Skill Map axis order: listening skills, then performance/memory pairs (pitch: in tune + memory; rhythm: memory + precision). */
 /** Grouped as in spec G.8: listening → performance → memory → precision. */
-export const SKILLS: SkillId[] = ['degrees', 'intervals', 'chords', 'cadences', 'modes', 'pitch', 'absolute', 'rhythm-dictation', 'rhythm-reading', 'timing', 'tempo', 'sequences', 'rhythm', 'singing', 'technique', 'agility', 'notes', 'theory', 'transpose', 'sight', 'improv'];
+export const SKILLS: SkillId[] = ['degrees', 'intervals', 'chords', 'cadences', 'modes', 'pitch', 'absolute', 'rhythm-dictation', 'rhythm-reading', 'timing', 'tempo', 'meter', 'sequences', 'rhythm', 'form', 'singing', 'technique', 'agility', 'notes', 'theory', 'sight', 'improv', 'transpose', 'expression'];
 
-/** The Skill Map's five domains (product owner): skills grouped by how closely the concepts are related. */
-export type DomainId = 'pitch' | 'time' | 'memory' | 'voice' | 'reading';
+/** The Skill Map's six domains (product owner, spec AD): skills grouped by how closely the concepts are related. */
+export type DomainId = 'pitch' | 'time' | 'memory' | 'voice' | 'reading' | 'creative';
 export const DOMAINS: { id: DomainId; skills: SkillId[] }[] = [
   { id: 'pitch', skills: ['degrees', 'intervals', 'chords', 'cadences', 'modes', 'pitch', 'absolute'] },
-  { id: 'time', skills: ['rhythm-dictation', 'rhythm-reading', 'timing', 'tempo'] },
-  { id: 'memory', skills: ['sequences', 'rhythm'] },
+  { id: 'time', skills: ['rhythm-dictation', 'rhythm-reading', 'timing', 'tempo', 'meter'] },
+  { id: 'memory', skills: ['sequences', 'rhythm', 'form'] },
   { id: 'voice', skills: ['singing', 'technique', 'agility'] },
-  { id: 'reading', skills: ['notes', 'theory', 'transpose', 'sight', 'improv'] },
+  { id: 'reading', skills: ['notes', 'theory', 'sight'] },
+  { id: 'creative', skills: ['improv', 'transpose', 'expression'] },
 ];
 export const domainOf = (k: SkillId): DomainId => DOMAINS.find((d) => d.skills.includes(k))?.id ?? 'pitch';
 /** Axes on the Skill Map that have no content yet — always shown as unmeasured. */
@@ -46,6 +47,8 @@ export interface RatingEvent {
   score?: number;
   /** Placement (Find my level): set the rating to this value instead of an Elo step. */
   set?: number;
+  /** Spec AD: the item trains several skills — (skill, sub-skill, weight), Σw = 1, primary = `skill`. */
+  tags?: { skill: SkillId; sub?: string; w: number }[];
   at: string; // ISO
 }
 
@@ -80,14 +83,52 @@ export function rate(cur: SkillRating | undefined, e: Pick<RatingEvent, 'difficu
   };
 }
 
+// ---------------------------------------------------------------- multi-skill credit (spec AD §3.2)
+//
+// An item tagged with several skills is expected against the weighted composite of their ratings,
+// Rc = Σ wₛ·Rₛ, and each skill with wₛ ≥ MIN_UPDATE_W moves by K·shareₛ·(S − E). On a success the
+// share is the weight; on a miss the blame leans toward the skills that are weaker than the composite
+// (wₛ·(1 + λ·zₛ), renormalised), so a player who knows degrees but not key names loses in note naming.
+// A single tag (or none) is exactly the classic one-skill update.
+
+export const MIN_UPDATE_W = 0.15;
+export const BLAME_LAMBDA = 0.5;
+
+/** Apply one event to a ratings map (returns the skills it changed). Mutates `out`. */
+export function applyEvent(out: Ratings, e: RatingEvent): SkillId[] {
+  const tags = (e.tags ?? []).filter((t) => t.w > 0);
+  if (e.set !== undefined || tags.length <= 1) {
+    out[e.skill] = rate(out[e.skill], e);
+    return [e.skill];
+  }
+  const cur = (k: SkillId) => out[k] ?? { r: START_RATING, n: 0, correct: 0, recent: [] };
+  const rc = tags.reduce((a, t) => a + t.w * cur(t.skill).r, 0) / tags.reduce((a, t) => a + t.w, 0);
+  const s = e.score !== undefined ? Math.max(0, Math.min(1, e.score)) : e.correct ? 1 : 0;
+  const err = s - expected(rc, e.difficulty);
+  const upd = tags.filter((t) => t.w >= MIN_UPDATE_W || t.skill === e.skill);
+  const wSum = upd.reduce((a, t) => a + t.w, 0);
+  const raw = upd.map((t) => (err >= 0 ? t.w : t.w * (1 + BLAME_LAMBDA * Math.max(0, (rc - cur(t.skill).r) / 200))));
+  const rawSum = raw.reduce((a, x) => a + x, 0) || 1;
+  upd.forEach((t, i) => {
+    const base = cur(t.skill);
+    const share = (raw[i] / rawSum) * wSum;
+    const k = base.n < PROVISIONAL_UNTIL ? K_PROVISIONAL : K_ESTABLISHED;
+    const delta = Math.round(Math.max(-MAX_STEP, Math.min(MAX_STEP, k * share * err)));
+    out[t.skill] = { r: base.r + delta, n: base.n + 1, correct: base.correct + (s >= 0.5 ? 1 : 0), recent: [...base.recent, { d: e.difficulty, s, delta, at: e.at }].slice(-10) };
+  });
+  return upd.map((t) => t.skill);
+}
+
+const byTime = (events: RatingEvent[]) => [...events].sort((a, b) => a.at.localeCompare(b.at) || a.id.localeCompare(b.id));
+
 /** Fold events (deduplicated by id, in time order) into ratings. Pure and order-stable. */
 export function foldRatings(events: RatingEvent[]): Ratings {
   const seen = new Set<string>();
   const out: Ratings = {};
-  for (const e of [...events].sort((a, b) => a.at.localeCompare(b.at) || a.id.localeCompare(b.id))) {
+  for (const e of byTime(events)) {
     if (seen.has(e.id)) continue;
     seen.add(e.id);
-    out[e.skill] = rate(out[e.skill], e);
+    applyEvent(out, e);
   }
   return out;
 }
@@ -100,12 +141,13 @@ export interface TrendPoint {
 }
 export function ratingHistory(events: RatingEvent[], skill: SkillId, dayOf: (iso: string) => string = (iso) => iso.slice(0, 10)): TrendPoint[] {
   const seen = new Set<string>();
-  let cur: SkillRating | undefined;
+  const all: Ratings = {};
   const out: TrendPoint[] = [];
-  for (const e of [...events].sort((a, b) => a.at.localeCompare(b.at) || a.id.localeCompare(b.id))) {
-    if (e.skill !== skill || seen.has(e.id)) continue;
+  for (const e of byTime(events)) {
+    if (seen.has(e.id)) continue;
     seen.add(e.id);
-    cur = rate(cur, e);
+    if (!applyEvent(all, e).includes(skill)) continue;
+    const cur = all[skill]!;
     const day = dayOf(e.at);
     const last = out[out.length - 1];
     if (last && last.day === day) {
@@ -158,8 +200,8 @@ export const nextLevel = (level: number, correct: boolean, max = 2) => Math.max(
 // Core listening and musicianship count fully; supporting skills ¾; voice-specific and creative skills ½
 // (they count only once measured, so a non-singer is never pulled down); absolute pitch is tracked apart.
 export const OVERALL_WEIGHT: Partial<Record<SkillId, number>> = {
-  notes: 0.75, modes: 0.75, theory: 0.75, pitch: 0.75, sight: 0.75, timing: 0.75, rhythm: 0.75, transpose: 0.75,
-  technique: 0.5, agility: 0.5, improv: 0.5,
+  notes: 0.75, modes: 0.75, theory: 0.75, pitch: 0.75, sight: 0.75, timing: 0.75, rhythm: 0.75, transpose: 0.75, meter: 0.75, form: 0.75,
+  technique: 0.5, agility: 0.5, improv: 0.5, expression: 0.5,
   absolute: 0,
 };
 
@@ -217,10 +259,10 @@ export function overallHistory(events: RatingEvent[], dayOf: (iso: string) => st
   const seen = new Set<string>();
   const cur: Ratings = {};
   const out: TrendPoint[] = [];
-  for (const e of [...events].sort((a, b) => a.at.localeCompare(b.at) || a.id.localeCompare(b.id))) {
+  for (const e of byTime(events)) {
     if (seen.has(e.id)) continue;
     seen.add(e.id);
-    cur[e.skill] = rate(cur[e.skill], e);
+    applyEvent(cur, e);
     const o = overallRating(cur)!;
     const day = dayOf(e.at);
     const last = out[out.length - 1];

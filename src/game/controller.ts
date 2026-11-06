@@ -826,7 +826,7 @@ export class LessonController {
       this.readOpen = true;
       try {
         await this.ad.audio.playTimeline(
-          readTimeline(q.rhythm, q.bpm),
+          readTimeline(q.rhythm, q.bpm, q.silentAfterBars),
           signal,
           (i, accent) => this.patch({ beat: { i, accent, n: n++ } }),
           (perf) => {

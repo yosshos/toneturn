@@ -68,7 +68,9 @@ export const LESSON_AREA: Record<LessonId, DomainId> = {
   'slash-chords': 'pitch',
   dictation: 'memory',
   'jazz-2': 'pitch',
-  transpose: 'reading',
+  transpose: 'creative',
+  'rhythm-shift': 'creative',
+  'chord-tones': 'voice',
   'basics-pitch': 'pitch',
   'basics-shape': 'memory',
   'basics-beat': 'time',
@@ -90,6 +92,8 @@ export const PREREQ: Partial<Record<LessonId, LessonId[]>> = {
   'jazz-2': ['jazz-1'],
   'slash-chords': ['inversions'],
   transpose: ['notes-degrees'],
+  'rhythm-shift': ['rhythm-r3'],
+  'chord-tones': ['major-minor', 'sing-home-five'],
 };
 
 /** The ear basics (no words needed) that open the path for curious listeners and hobbyists. */

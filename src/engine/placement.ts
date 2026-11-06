@@ -89,7 +89,7 @@ export const LADDERS: Partial<Record<SkillId, { difficulty: number; make: Make }
     make: (s: number, id: string) => at({ ...modesLesson(lv, s).questions[0], id }, 980 + (lv - 1) * 130),
   })),
   theory: [
-    { difficulty: 1000, make: (s, id) => at(topic('note-reading', 1)(s, id), 1000) },
+    { difficulty: 1000, make: (s, id) => at(topic('time-signatures', 1)(s, id), 1000) },
     { difficulty: 1110, make: (s, id) => at(topic('key-signatures', 1)(s, id), 1110) },
     { difficulty: 1230, make: (s, id) => at(topic('interval-spelling', 1)(s, id), 1230) },
     { difficulty: 1350, make: (s, id) => at(topic('roman-numerals', 1)(s, id), 1350) },
@@ -186,6 +186,10 @@ export const LADDERS: Partial<Record<SkillId, { difficulty: number; make: Make }
     difficulty: d as number,
     make: (s: number, id: string) => singSeqQuestion(id, pick(mulberry32(s), DEGREE_KEYS), ds as number[], d as number),
   })),
+  // Spec AD: meter, form & texture, expression — measured from their topics.
+  meter: ([['meter-feel', 1, 800], ['meter-feel', 2, 950], ['downbeat', 1, 1050], ['downbeat', 2, 1200], ['meter-feel', 3, 1300], ['odd-meter', 1, 1420], ['meter-feel', 4, 1560], ['odd-meter', 3, 1720]] as [string, number, number][]).map(([tp, lv, d]) => ({ difficulty: d, make: (s: number, id: string) => at(topic(tp, lv)(s, id), d) })),
+  form: ([['voice-count', 1, 900], ['form', 1, 1100], ['voice-count', 2, 1200], ['two-voice', 1, 1320], ['voice-count', 3, 1400], ['form', 2, 1480], ['two-voice', 2, 1650]] as [string, number, number][]).map(([tp, lv, d]) => ({ difficulty: d, make: (s: number, id: string) => at(topic(tp, lv)(s, id), d) })),
+  expression: ([['mood', 1, 650], ['dynamics', 1, 720], ['articulation', 1, 800], ['dynamics', 2, 880], ['mood', 2, 940], ['articulation', 2, 1000], ['dynamics', 3, 1060], ['articulation', 3, 1120]] as [string, number, number][]).map(([tp, lv, d]) => ({ difficulty: d, make: (s: number, id: string) => at(topic(tp, lv)(s, id), d) })),
   // Vocal agility: runs sung back, faster and longer.
   agility: [1, 2, 3, 4, 6, 8].map((lv, i) => ({
     difficulty: 950 + i * 130,
@@ -196,13 +200,14 @@ export const LADDERS: Partial<Record<SkillId, { difficulty: number; make: Make }
 /** (transposition ladder is defined below with the other topic ladders) */
 /** Skills that need the microphone (sung). */
 export const SUNG_SKILLS: SkillId[] = ['singing', 'technique', 'agility'];
-// By domain (pitch, time, memory, reading), the sung skills last. Every skill on the map is measured: rhythmic
+// By domain (pitch, time, memory, reading, creative), the sung skills last. Every skill on the map is measured: rhythmic
 // precision is not a section of its own — it is read from how precisely the rhythm-reading taps landed.
 export const PLACEMENT_ORDER: SkillId[] = [
   'degrees', 'intervals', 'chords', 'cadences', 'modes', 'pitch', 'absolute',
-  'rhythm-dictation', 'rhythm-reading', 'tempo',
-  'sequences', 'rhythm',
-  'notes', 'theory', 'transpose', 'sight', 'improv',
+  'rhythm-dictation', 'rhythm-reading', 'tempo', 'meter',
+  'sequences', 'rhythm', 'form',
+  'notes', 'theory', 'sight',
+  'improv', 'transpose', 'expression',
   'singing', 'technique', 'agility',
 ];
 /** Skills measured inside another section (not a section of their own). */

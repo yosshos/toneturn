@@ -6,7 +6,7 @@ import type { Settings } from '../storage/progress';
 import { Keyboard } from './bits';
 import { GuitarTab, NoteStaff } from './NoteViews';
 
-export function NotesView({ midis, keyPc, settings, chord = false, durs, clef }: { midis: number[]; keyPc: PitchClass | null; settings: Settings; chord?: boolean; durs?: number[]; clef?: 'treble' | 'bass' | 'alto' }) {
+export function NotesView({ midis, keyPc, settings, chord = false, durs, clef }: { midis: number[]; keyPc: PitchClass | null; settings: Settings; chord?: boolean; durs?: number[]; clef?: 'treble' | 'bass' | 'alto' | 'tenor' }) {
   const views: NoteView[] = settings.noteViews ?? ['keyboard', 'staff'];
   if (!midis.length) return <div className="notes-view empty" aria-hidden="true" />;
   const lo = Math.min(...midis);

@@ -247,13 +247,15 @@ export function rhythmSound(r: Rhythm, bpm: number, midi = 67, countIn?: number)
 }
 
 /** Timeline for performing: one-bar count-in, then clicks on every pulse of the passage. */
-export function readTimeline(r: Rhythm, bpm: number) {
+export function readTimeline(r: Rhythm, bpm: number, silentAfterBars?: number) {
   const m = meterOf(r);
   const b = 60 / bpm;
   const pulse = b * pulseBeats(m);
   const perBar = countInPulses(m);
   const n = perBar + Math.round(totalBeats(r) / pulseBeats(m));
-  const clicks = Array.from({ length: n }, (_, i) => ({ t: i * pulse, accent: i % perBar === 0 }));
+  // Internal pulse (spec AD): after the count-in and `silentAfterBars` bars, the clicks stop.
+  const keep = silentAfterBars === undefined ? n : perBar * (1 + silentAfterBars);
+  const clicks = Array.from({ length: Math.min(n, keep) }, (_, i) => ({ t: i * pulse, accent: i % perBar === 0 }));
   const responseAt = perBar * pulse;
   return { clicks, wood: [] as number[], responseAt, responseEnd: responseAt + totalBeats(r) * b + b * 0.6 };
 }

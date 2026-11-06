@@ -204,7 +204,7 @@ function motifs(rnd: () => number, key: number, n: number): number[][] {
 
 TOPIC_GEN['form'] = {
   title: { en: 'Form', he: 'מבנה' },
-  skill: 'sequences',
+  skill: 'form',
   levels: [
     { en: 'Same, varied or new?', he: 'אותו דבר, וריאציה או חדש?' },
     { en: 'Phrase form', he: 'מבנה משפטים' },
@@ -221,7 +221,7 @@ TOPIC_GEN['form'] = {
       const choiceStim: Record<string, Stimulus[]> = {};
       for (const k of Object.keys(second)) choiceStim[k] = [notesStim(A, 0.3), gap, notesStim(second[k], 0.3)];
       return choiceQ({
-        id, topic: 'form', level, seed, skill: 'sequences', difficulty: 1150,
+        id, topic: 'form', level, seed, skill: 'form', difficulty: 1150,
         ask: { en: 'Two phrases: is the second the same, a variation, or something new?', he: 'שני משפטים: השני זהה, וריאציה, או משהו חדש?' },
         names: { same: nm('The same (A A)', 'זהה (A A)', 'same', 'repeat', 'זהה'), varied: nm("A variation (A A')", "וריאציה (A A')", 'variation', 'varied', 'וריאציה'), contrast: nm('Something new (A B)', 'משהו חדש (A B)', 'new', 'contrast', 'different', 'חדש') },
         answer, choices: ['same', 'varied', 'contrast'], stimulus: choiceStim[answer], choiceStim,
@@ -239,6 +239,6 @@ TOPIC_GEN['form'] = {
     };
     const choiceStim: Record<string, Stimulus[]> = {};
     for (const f of forms) choiceStim[f] = play(f);
-    return choiceQ({ id, topic: 'form', level, seed, skill: 'sequences', difficulty: 1350, ask: { en: 'Four phrases — which form?', he: 'ארבעה משפטים — איזה מבנה?' }, names, answer, choices: forms, stimulus: play(answer), choiceStim });
+    return choiceQ({ id, topic: 'form', level, seed, skill: 'form', difficulty: 1350, ask: { en: 'Four phrases — which form?', he: 'ארבעה משפטים — איזה מבנה?' }, names, answer, choices: forms, stimulus: play(answer), choiceStim });
   },
 };

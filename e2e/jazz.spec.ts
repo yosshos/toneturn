@@ -8,8 +8,8 @@ test.beforeEach(async ({ page }) => {
 });
 
 for (const [n, name] of [
-  ['22', 'Jazz 1'],
-  ['23', 'Songs you know'],
+  ['24', 'Jazz 1'],
+  ['25', 'Songs you know'],
 ] as const) {
   test(`${name} (lesson ${n}, simulator) runs to the end`, async ({ page }) => {
     test.setTimeout(240_000);

@@ -69,6 +69,18 @@ export const LESSON_META: Record<LessonId, LessonMeta> = {
     icon: 'steps',
     tip: { en: 'Sing "Happy" in your head starting on any note: the steps stay the same, only home moves.', he: 'שירו בראש מנגינה מוכרת מכל צליל שתבחרו: הצעדים נשארים, רק הבית זז.' },
   },
+  'rhythm-shift': {
+    title: { en: 'Move the rhythm', he: 'להזיז את המקצב' },
+    blurb: { en: 'The same pattern from another beat: Charleston from beat 2.', he: 'אותה תבנית מפעמה אחרת: צ׳רלסטון מהפעמה השנייה.' },
+    icon: 'drum',
+    tip: { en: 'Clap a rhythm you know, then clap it again starting one beat later.', he: 'מחאו כף מקצב שאתם מכירים, ואז שוב — פעמה אחת מאוחר יותר.' },
+  },
+  'chord-tones': {
+    title: { en: 'Sing inside the chord', he: 'לשיר בתוך האקורד' },
+    blurb: { en: 'Hear a chord, sing its root, third or fifth — and finish the tune.', he: 'שומעים אקורד, שרים את השורש, הטרצה או הקווינטה — ומסיימים את המנגינה.' },
+    icon: 'mic',
+    tip: { en: 'Strum or play any chord and hum its three notes from bottom to top.', he: 'נגנו אקורד כלשהו וזמזמו את שלושת הצלילים שלו מלמטה למעלה.' },
+  },
   'bflat-two-homes': {
     title: { en: 'Same {n}, two homes', he: 'אותו {n}, שני בתים' },
     blurb: { en: 'One note. Two keys. Hear it change.', he: 'צליל אחד. שני סולמות. שומעים את ההבדל.' },
@@ -435,6 +447,7 @@ export function roundPrompt(q: Question, l: Lang, nm: Naming, n: number): string
           ? `Round ${n}. In ${spokenMajorKey(q.key, nm, l)}, which note is degree ${deg(q.degree, l)}?`
           : `סיבוב ${n}. ב${spokenMajorKey(q.key, nm, l)}, איזה תו הוא דרגה ${deg(q.degree, l)}?`;
     case 'rhythm-read':
+      if (q.prompt) return l === 'en' ? `Round ${n}. ${q.prompt.en} Count-in, then go.` : `סיבוב ${n}. ${q.prompt.he} ספירה, ואז מתחילים.`;
       return q.show === 'words'
         ? l === 'en'
           ? `Round ${n}. Tap this rhythm: ${describeRhythm(q.rhythm, 'names', l)}. Count-in, then go.`
@@ -510,6 +523,8 @@ export function roundPrompt(q: Question, l: Lang, nm: Naming, n: number): string
       return l === 'en' ? `Round ${n}. ${cap(spokenMajorKey(q.key, nm, l))}. Resolved, or open?` : `סיבוב ${n}. ${spokenMajorKey(q.key, nm, l)}. נפתר, או פתוח?`;
     case 'sing':
       if (q.promptBy === 'echo') return l === 'en' ? `Round ${n}. Listen, then sing it back.` : `סיבוב ${n}. הקשיבו, ושירו בחזרה.`;
+      if (q.promptBy === 'chord') return l === 'en' ? `Round ${n}. Listen to the chord, then sing its ${chordToneWord(q.chordTone?.tone ?? 1, l)}.` : `סיבוב ${n}. הקשיבו לאקורד, ושירו את ${chordToneWord(q.chordTone?.tone ?? 1, l)} שלו.`;
+      if (q.promptBy === 'finish') return l === 'en' ? `Round ${n}. The tune stops before the end. Sing the note that finishes it.` : `סיבוב ${n}. המנגינה נעצרת לפני הסוף. שירו את הצליל שסוגר אותה.`;
       if (q.promptBy === 'name')
         return l === 'en'
           ? `Round ${n}. ${cap(spokenMajorKey(q.key, nm, l))}. Sing ${spokenNote(q.target, nm, l)}.`
@@ -845,6 +860,7 @@ export function askTemplate(q: Question, l: Lang, nm: Naming = 'letter'): string
     case 'run-id':
       return q.aspect === 'material' ? (l === 'en' ? 'Which scale was the run?' : 'מאיזה סולם הראן?') : l === 'en' ? 'Which way did it go?' : 'לאן הוא הלך?';
     case 'rhythm-read':
+      if (q.prompt) return q.prompt[l];
       return l === 'en' ? 'Tap this rhythm' : 'הקישו את הקצב';
     case 'rhythm-dict':
       return l === 'en' ? 'Which rhythm did you hear?' : 'איזה קצב שמעתם?';
@@ -861,6 +877,8 @@ export function askTemplate(q: Question, l: Lang, nm: Naming = 'letter'): string
       return l === 'en' ? 'Resolved or open?' : 'נפתר או פתוח?';
     case 'sing':
       if (q.promptBy === 'echo') return l === 'en' ? 'Sing it back' : 'שירו בחזרה';
+      if (q.promptBy === 'chord') return l === 'en' ? `Sing the chord's ${chordToneWord(q.chordTone?.tone ?? 1, l)}` : `שירו את ${chordToneWord(q.chordTone?.tone ?? 1, l)} של האקורד`;
+      if (q.promptBy === 'finish') return l === 'en' ? 'Sing the last note' : 'שירו את הצליל האחרון';
       if (q.promptBy === 'name') return l === 'en' ? 'Sing {n}' : 'שירו {n}';
       return q.degree === 1 ? (l === 'en' ? 'Sing home (1)' : 'שירו את הבית (1)') : l === 'en' ? `Sing degree ${q.degree}` : `שירו דרגה ${q.degree}`;
   }
@@ -1009,4 +1027,9 @@ export function melodyRemarkText(items: { index: number; remarks: Remark[] }[], 
     })
     .join(l === 'en' ? '; ' : '; ')
     .replace(/^./, (c) => c.toUpperCase());
+}
+
+/** root / third / fifth of a chord, in words. */
+export function chordToneWord(tone: 1 | 3 | 5, l: Lang): string {
+  return l === 'en' ? { 1: 'root (the bottom note)', 3: 'third (the middle note)', 5: 'fifth (the top note)' }[tone] : { 1: 'השורש (הצליל התחתון)', 3: 'הטרצה (הצליל האמצעי)', 5: 'הקווינטה (הצליל העליון)' }[tone];
 }

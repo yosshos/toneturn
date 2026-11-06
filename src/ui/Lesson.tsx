@@ -930,7 +930,7 @@ function ReadPrompt({ q, v, lang, onTap, onRelease, t }: { q: Extract<Question, 
   return (
     <div className="read-prompt" data-onsets={onsetBeats(q.rhythm).join(',')} data-bpm={q.bpm} data-start={v.readStartPerf ?? undefined}>
       {q.show === 'notation' ? (
-        <RhythmStaff rhythm={q.rhythm} label={names} />
+        <RhythmStaff rhythm={q.shown ?? q.rhythm} label={q.shown ? describeRhythm(q.shown, 'names', lang) : names} />
       ) : (
         <p className="read-words" dir="auto">
           {names}

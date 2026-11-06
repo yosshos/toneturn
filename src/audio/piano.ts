@@ -133,7 +133,8 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     src.buffer = buf;
     src.playbackRate.value = Math.pow(2, (midi - nearest) / 12);
     const out = ctx.createGain();
-    const peak = 0.55 + 0.45 * velocity;
+    // Soft notes (expression exercises) really get soft; everything at 0.45 and up sounds as before.
+    const peak = velocity >= 0.45 ? 0.55 + 0.45 * velocity : 0.08 + (0.7525 - 0.08) * (velocity / 0.45);
     out.gain.setValueAtTime(0, start);
     out.gain.linearRampToValueAtTime(peak, start + 0.006);
     out.gain.setTargetAtTime(0, start + dur, 0.11);

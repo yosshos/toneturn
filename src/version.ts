@@ -18,6 +18,24 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.35.0',
+    date: '2026-11-06',
+    en: [
+      'The Skill Map grows to six areas and 24 skills: new Meter, Form & texture and Expression, and a Creative & applied area. Tap a skill to see what is inside it — your strongest and weakest parts',
+      'Answers now credit every skill an exercise trains (transposing trains degrees and note names too); a miss counts most against the weaker one',
+      'Today’s plan picks what you need most for your goals, and says why (new for you, needs work, time to review)',
+      'About 25 new exercises: find the home note, octaves, four kinds of cadence, key changes, harmonise a melody, harmonic dictation, march or waltz, find beat 1, pushed beats, loud and soft, short and smooth, mood, musical terms, time signatures, voice leading, Nashville numbers, sequences, inversion and retrograde, clave, metric modulation and more',
+      'New lessons: Move the rhythm (tap Charleston from beat 2) and Sing inside the chord; keep the beat even when the clicks stop',
+    ],
+    he: [
+      'מפת המיומנויות גדלה לשישה תחומים ו־24 מיומנויות: חדשות — משקל, מבנה ומרקם והבעה, ותחום יצירה ויישום. הקישו על מיומנות כדי לראות מה בתוכה — החלקים החזקים והחלשים שלכם',
+      'תשובות נזקפות עכשיו לכל מיומנות שהתרגיל מאמן (טרנספוזיציה מאמנת גם דרגות ושמות תווים); טעות נספרת בעיקר נגד החלשה מביניהן',
+      'התוכנית להיום בוחרת את מה שהכי חסר לכם לפי המטרות שלכם, ואומרת למה (חדש, צריך חיזוק, הגיע הזמן לחזור)',
+      'כ־25 תרגילים חדשים: למצוא את הבית, אוקטבות, ארבעה סוגי קדנצות, מעברי סולם, הרמון מנגינה, הכתבה הרמונית, מארש או ואלס, למצוא את פעמה 1, פעמות דחופות, חזק וחלש, קצר ורציף, מצב רוח, מונחים, סימני משקל, הובלת קולות, מספרי נאשוויל, סקוונצות, היפוך ורטרוגרד, קלאבה, מודולציה מטרית ועוד',
+      'שיעורים חדשים: להזיז את המקצב (צ׳רלסטון מהפעמה השנייה) ולשיר בתוך האקורד; לשמור על הפעמה גם כשהקליקים נעצרים',
+    ],
+  },
+  {
     version: '0.34.0',
     date: '2026-11-06',
     en: [

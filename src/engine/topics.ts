@@ -11,6 +11,7 @@ import './topicsHarmony';
 import './topicsEar';
 import './topicsTheory';
 import './topicsSkills';
+import './topicsAD';
 
 // ================================================================ T. Barry Harris
 

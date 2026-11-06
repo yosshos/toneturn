@@ -32,7 +32,7 @@ test.describe('placement, Skill Map, review, weekly puzzle', () => {
       }).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['data-start'], childList: true });
     });
     // The topic strip shows what is done, now and left.
-    await expect(page.locator('.topic-strip .ts')).toHaveCount(20); // every skill (transposition included) (rhythmic precision rides on rhythm reading), sung ones included (voice)
+    await expect(page.locator('.topic-strip .ts')).toHaveCount(23); // every skill (transposition, meter, form, expression included) (rhythmic precision rides on rhythm reading), sung ones included (voice)
     await expect(page.locator('.topic-strip .ts.done').first()).toBeVisible({ timeout: 120_000 });
     // The meter at the side follows the climb.
     await expect(page.locator('.placement-meter')).toBeVisible();
@@ -58,7 +58,7 @@ test.describe('placement, Skill Map, review, weekly puzzle', () => {
     await page.getByRole('button', { name: /See my Skill Map/ }).click();
 
     await expect(page.getByRole('heading', { name: 'Skill Map', level: 1 })).toBeVisible();
-    await expect(page.locator('.radar.domains [data-domain]')).toHaveCount(5); // five domains
+    await expect(page.locator('.radar.domains [data-domain]')).toHaveCount(6); // six domains
     await expect(page.locator('.trend-tile')).not.toHaveCount(0); // trends per measured skill
     await expect(page.locator('.trend-detail svg')).toHaveCount(2); // overall + selected skill
     await expect(page.locator('.overall-head .rating-badge')).toBeVisible();
@@ -69,8 +69,8 @@ test.describe('placement, Skill Map, review, weekly puzzle', () => {
     await page.screenshot({ path: 'test-results/skill-map.png', fullPage: true });
 
     // Selecting an axis from the accessible list opens its diagnosis.
-    await page.getByRole('button', { name: /Cadences/ }).first().click();
-    await expect(page.locator('.diag-panel h2')).toHaveText('Cadences');
+    await page.getByRole('button', { name: /Harmony & progressions/ }).first().click();
+    await expect(page.locator('.diag-panel h2')).toHaveText('Harmony & progressions');
 
     // The scripted miss went into the review queue.
     await page.getByRole('button', { name: 'Back' }).click();
@@ -79,11 +79,11 @@ test.describe('placement, Skill Map, review, weekly puzzle', () => {
     await expect(page.locator('.placement-card')).toContainText('Take it again');
   });
 
-  test('measure one area: Memory runs only its two skills', async ({ page }) => {
+  test('measure one area: Memory runs only its three skills', async ({ page }) => {
     await page.goto('/?sim=1&unlock=all');
     await page.locator('.placement-domains [data-domain="memory"]').click();
     await page.getByRole('button', { name: /Use my voice & start|Buttons instead/ }).first().click();
-    await expect(page.locator('.topic-strip .ts')).toHaveCount(2);
+    await expect(page.locator('.topic-strip .ts')).toHaveCount(3);
     await expect(page.locator('.topic-strip .ts').first()).toHaveAttribute('data-skill', 'sequences');
     await expect(page.locator('.placement-meter')).toBeVisible();
   });

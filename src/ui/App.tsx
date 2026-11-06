@@ -441,6 +441,7 @@ export function App() {
             if (st.kind === 'review') return openReview();
             if (st.kind === 'modes') return openModes(st.level);
             if (st.kind === 'runs') return openRuns();
+            if (st.kind === 'topic') return openTopic(st.topic, st.level);
             if (st.kind === 'vocal' || st.kind === 'vocal-warmup') {
               setVocalWarmup(st.kind === 'vocal-warmup');
               return go('vocal');

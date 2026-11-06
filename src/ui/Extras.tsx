@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { type AchievementExtra, achievements } from '../engine/achievements';
 import { planWorkout, stepKey, type WorkoutStep } from '../engine/workout';
 import { LESSON_META } from '../game/content';
+import { foldSubs, SUB_BY_ID } from '../engine/taxonomy';
+import { TOPIC_GEN } from '../engine/topics';
 import type { Strings } from '../i18n/strings';
 import { dueReviews, lessonMastered, localDay, ratingsOf, type Progress, type Settings } from '../storage/progress';
 import { listTakes, thenAndNow, type StoredTake } from '../storage/takes';
@@ -55,6 +57,8 @@ export function WorkoutCard({ t, progress, settings, onOpen }: { t: Strings; pro
         mastered: (id) => lessonMastered(progress, id),
         day,
         priorities: (settings.intake as import('../engine/intake').Intake | null | undefined)?.priorities,
+        subs: foldSubs(progress.ratingEvents ?? []),
+        track: settings.track ?? null,
       }),
     // The plan is fixed for the day and length; progress changes only tick the steps.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -77,8 +81,11 @@ export function WorkoutCard({ t, progress, settings, onOpen }: { t: Strings; pro
         return t.runsWorkshop;
       case 'game':
         return s.game === 'truefalse' ? t.trueFalse : s.game === 'echo' ? t.echoChain : t.beatEcho;
+      case 'topic':
+        return `${TOPIC_GEN[s.topic]?.title[lang] ?? s.topic} · ${TOPIC_GEN[s.topic]?.levels[s.level - 1]?.[lang] ?? s.level}`;
     }
   };
+  const why = (s: WorkoutStep) => (s.kind === 'topic' ? `${s.why === 'new' ? t.whyNew : s.why === 'review' ? t.whyReview : t.whyWeak}: ${SUB_BY_ID[s.sub]?.[lang] ?? ''}` : null);
   const done = plan.filter((s) => doneToday(progress, s, day)).length;
   return (
     <section className="workout-card" aria-label={t.workoutTitle}>
@@ -113,7 +120,7 @@ export function WorkoutCard({ t, progress, settings, onOpen }: { t: Strings; pro
             <li key={stepKey(s)} className={ok ? 'done' : ''}>
               <button
                 onClick={() => {
-                  if (s.kind === 'game') {
+                  if (s.kind === 'game' || s.kind === 'topic') {
                     try {
                       localStorage.setItem(`toneturn.workout.${day}.${stepKey(s)}`, '1');
                     } catch {
@@ -126,7 +133,10 @@ export function WorkoutCard({ t, progress, settings, onOpen }: { t: Strings; pro
                 <span className="ws-check" aria-hidden="true">
                   {ok ? '✓' : '○'}
                 </span>
-                <span className="ws-label">{label(s)}</span>
+                <span className="ws-label">
+                  {label(s)}
+                  {why(s) && <small className="ws-why">{why(s)}</small>}
+                </span>
                 <small dir="ltr">~{s.minutes}′</small>
               </button>
             </li>

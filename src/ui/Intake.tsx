@@ -19,7 +19,7 @@ import { noteLabel } from './Vocal';
 
 type Step = 'hello' | 'music' | 'singing' | 'theory' | 'reading' | 'plays' | 'naming' | 'rank' | 'motivation' | 'minutes' | 'range' | 'plan';
 const STEPS: Step[] = ['hello', 'music', 'singing', 'theory', 'reading', 'plays', 'naming', 'rank', 'motivation', 'minutes', 'range', 'plan'];
-const AREA_ICON: Record<DomainId, string> = { pitch: '👂', time: '🥁', memory: '🧠', voice: '🎤', reading: '📖' };
+const AREA_ICON: Record<DomainId, string> = { pitch: '👂', time: '🥁', memory: '🧠', voice: '🎤', reading: '📖', creative: '🎨' };
 
 export interface IntakeResult {
   intake: IntakeT;

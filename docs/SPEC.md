@@ -822,3 +822,13 @@ Every new topic has a quick lesson (X).
 
 - Every well-known exercise is mapped by domain → skill → sub-skill → exercise type → level, with tag vectors for multi-skill exercises, weighted rating credit, factor-based and calibrated difficulty, and a priority scheduler per track. Full spec and catalogue: `docs/EXERCISE_TAXONOMY.md`.
 - First piece shipped: **rhythmic displacement** (`displacement`, 4 levels: how far it moved, on paper, find the shifted version, sixteenths).
+
+## Addendum — 2026-11-06 (product owner): AE. Taxonomy built (0.35.0)
+
+- Decisions 1–4 of AD were approved and are built; recorded audio (5) is deferred.
+- **6 domains, 24 skills:**
+  - new skills: meter, form & texture, expression;
+  - *Creative & applied* holds improv, transformations and expression.
+- **Every exercise is tagged** (skill, sub-skill, weight). Ratings credit every tagged skill, and a miss leans on the weaker skill. Sub-skill accuracy is shown on the Skill Map.
+- **Today's plan** is chosen by the priority scheduler (track importance × intake order × gap × freshness × prerequisites).
+- **New content:** ~25 new topic families and levels, 2 path lessons, tapping items (keep the beat, internal pulse, displaced patterns) and sung chord tones. The full status is in `docs/EXERCISE_TAXONOMY.md`.

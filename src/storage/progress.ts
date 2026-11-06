@@ -10,6 +10,10 @@ import { placementUnlocks } from '../engine/recommend';
 import { outcomeOf, type InputMode, type SessionState } from '../engine/session';
 import { ratingScore } from '../engine/scoring';
 import { questionSkill, questionTag, type Answer } from '../engine/lesson';
+import { questionTags, type Tag } from '../engine/taxonomy';
+
+/** Items carry their tag vector (spec AD) so ratings and sub-skills can credit every skill they train. */
+export const compactTags = (tags: Tag[]): Tag[] | undefined => (tags.length ? tags : undefined);
 import { foldRatings, SKILLS, type RatingEvent, type Ratings } from '../engine/rating';
 import { medalFor, weekId, type Medal } from '../engine/adaptive';
 import type { Naming } from '../engine/pitch';
@@ -28,7 +32,7 @@ export interface LessonResult {
   /** Question keys that were missed / revealed — feeds the review queue. */
   missed: { questionId: string; key: string; answer: Answer; given: Answer[] }[];
   /** First-attempt results per rated item (ratings + review clearing). Absent on old results. */
-  items?: { id: string; skill: RatingEvent['skill']; difficulty: number; correct: boolean; tag: string; score?: number; timeMs?: number | null; /** Placement: the measured rating. */ set?: number; /** Vocal technique: the take's metric values (teacher view). */ m?: Partial<Record<MetricKey, number>> }[];
+  items?: { id: string; skill: RatingEvent['skill']; difficulty: number; correct: boolean; tag: string; score?: number; /** Spec AD: the skills this item trains, with weights. */ tags?: RatingEvent['tags']; timeMs?: number | null; /** Placement: the measured rating. */ set?: number; /** Vocal technique: the take's metric values (teacher view). */ m?: Partial<Record<MetricKey, number>> }[];
   /** Weekly puzzle outcome (only for lessonId "weekly-puzzle"). */
   puzzle?: { week: string; band: string; medal: Medal };
 }
@@ -312,6 +316,7 @@ export function resultFromSession(s: SessionState, sessionId: string, now: Date)
         difficulty: q.difficulty,
         correct: r.attempts[0].correct,
         tag: questionTag(q),
+        tags: compactTags(questionTags(q)),
         // Graded rating score: accuracy × attempts (guess-corrected) × time × replays (spec J.6).
         score: Math.round(ratingScore(q, o) * 1000) / 1000,
         timeMs: o.attempts[k - 1]?.timeMs ?? null,
@@ -327,7 +332,7 @@ export function resultFromSession(s: SessionState, sessionId: string, now: Date)
           const o = outcomeOf(r, s.timed ?? false);
           const acc = Math.max(0, ...o.attempts.map((a) => a.accuracy));
           const score = Math.round(acc * memoryFactor(o.replays) * 1000) / 1000;
-          return { id: `${sessionId}:${q.id}:mem`, skill: 'sequences' as const, difficulty: q.difficulty, correct: score >= 0.6, tag: questionTag(q), score, timeMs: null };
+          return { id: `${sessionId}:${q.id}:mem`, skill: 'sequences' as const, difficulty: q.difficulty, correct: score >= 0.6, tag: questionTag(q), score, timeMs: null, tags: undefined };
         }),
     )
     // Rhythm reading also measures rhythmic precision (spec G.1), on attempts whose pattern was right.
@@ -343,6 +348,7 @@ export function resultFromSession(s: SessionState, sessionId: string, now: Date)
           tag: questionTag(q),
           score: Math.round((r.attempts[0].precision ?? 0) * 1000) / 1000,
           timeMs: null,
+          tags: undefined,
         })),
     );
   const result: LessonResult = {
@@ -376,7 +382,7 @@ export function applyResult(p: Progress, r: LessonResult, now: Date): Progress {
   const prev = p.lessons[r.lessonId];
   const at = r.completedAt;
   const setAt = new Date(new Date(at).getTime() + 1).toISOString();
-  const newEvents: RatingEvent[] = (r.items ?? []).map((it) => (it.set !== undefined ? { id: it.id, skill: it.skill, difficulty: it.difficulty, correct: it.correct, set: it.set, at: setAt } : { id: it.id, skill: it.skill, difficulty: it.difficulty, correct: it.correct, score: it.score, at }));
+  const newEvents: RatingEvent[] = (r.items ?? []).map((it) => (it.set !== undefined ? { id: it.id, skill: it.skill, difficulty: it.difficulty, correct: it.correct, set: it.set, ...(it.tags ? { tags: it.tags } : {}), at: setAt } : { id: it.id, skill: it.skill, difficulty: it.difficulty, correct: it.correct, score: it.score, ...(it.tags ? { tags: it.tags } : {}), at }));
   const cleared = new Set((r.items ?? []).filter((it) => it.correct).map((it) => it.tag));
   const puzzles = { ...(p.puzzles ?? {}) };
   // Only the first scored try at a week's puzzle counts; later plays are practice.

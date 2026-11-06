@@ -11,6 +11,7 @@ import { TrendDetail, TrendTiles } from './Trends';
 import { OverallCard } from './Rating';
 import { LESSON_META } from '../game/content';
 import { LESSON_ORDER } from '../engine/lesson';
+import { foldSubs, subsOf, type SubStat } from '../engine/taxonomy';
 
 type Axis = SkillId | (typeof PLANNED_SKILLS)[number];
 
@@ -36,6 +37,7 @@ export function SkillMap({
   const rec = weakestSkill(ratings);
   const old = (progress.snapshots ?? []).at(-5);
   const anyMeasured = SKILLS.some((k) => (ratings[k]?.n ?? 0) > 0);
+  const subs = foldSubs(progress.ratingEvents ?? []);
 
   return (
     <main className="panel-screen skillmap">
@@ -83,6 +85,7 @@ export function SkillMap({
         onPractice={onPractice}
         next={PLANNED_SKILLS.includes(sel as never) ? null : recommendFor(sel as SkillId, ratings, (id) => lessonMastered(progress, id))}
         lang={lang}
+        subs={subs}
       />
 
       {!PLANNED_SKILLS.includes(sel as never) && <TrendDetail t={t} events={progress.ratingEvents ?? []} skill={sel as SkillId} lang={lang} />}
@@ -222,6 +225,7 @@ function Diagnosis({
   onPractice,
   next,
   lang,
+  subs,
 }: {
   t: Strings;
   axis: Axis;
@@ -230,6 +234,7 @@ function Diagnosis({
   onPractice: (s: SkillId) => void;
   next: Recommendation | null;
   lang: 'he' | 'en';
+  subs: Record<string, SubStat>;
 }) {
   const nextLabel =
     next?.kind === 'lesson'
@@ -273,6 +278,7 @@ function Diagnosis({
         </div>
       )}
       <p>{t.skillDiag[axis]}</p>
+      {!planned && <SubSkills t={t} skill={axis as SkillId} subs={subs} lang={lang} />}
       {!planned && (
         <>
           {nextLabel && ev !== 'unmeasured' && (
@@ -286,5 +292,37 @@ function Diagnosis({
         </>
       )}
     </section>
+  );
+}
+
+/** The skill's sub-skills (spec AD): accuracy per sub-skill, strongest and weakest marked. */
+function SubSkills({ t, skill, subs, lang }: { t: Strings; skill: SkillId; subs: Record<string, SubStat>; lang: 'he' | 'en' }) {
+  const list = subsOf(skill);
+  if (list.length < 2) return null;
+  const seen = list.filter((s) => (subs[s.id]?.n ?? 0) >= 3);
+  const best = seen.length >= 2 ? seen.reduce((a, b) => (subs[a.id].ewma >= subs[b.id].ewma ? a : b)) : null;
+  const worst = seen.length >= 2 ? seen.reduce((a, b) => (subs[a.id].ewma <= subs[b.id].ewma ? a : b)) : null;
+  return (
+    <div className="sub-skills" data-sub-skills={skill}>
+      <h3>{t.subSkillsTitle}</h3>
+      <ul>
+        {list.map((s) => {
+          const st = subs[s.id];
+          const pct = st ? Math.round(st.ewma * 100) : null;
+          const mark = best && worst && best.id !== worst.id ? (s.id === best.id ? 'strong' : s.id === worst.id ? 'weak' : '') : '';
+          return (
+            <li key={s.id} className={`sub-row ${mark}`} data-sub={s.id}>
+              <span>{s[lang]}</span>
+              <span className="sub-bar" aria-hidden="true">
+                <i style={{ width: `${pct ?? 0}%` }} />
+              </span>
+              <small>{pct === null ? t.evUnmeasured : `${pct}% · ${st!.n}`}</small>
+              {mark === 'strong' && <em className="sub-tag good">{t.subStrong}</em>}
+              {mark === 'weak' && <em className="sub-tag work">{t.subWork}</em>}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }

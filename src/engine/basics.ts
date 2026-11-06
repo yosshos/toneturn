@@ -9,7 +9,8 @@
 // theory domain): it joins knowing the notes, hearing the shape and placing it anywhere.
 // Pure, seeded.
 
-import type { ChoiceQuestion, LessonDef, NameSeqQuestion, Question, SingSeqQuestion, Stimulus } from './lesson';
+import type { ChoiceQuestion, LessonDef, NameSeqQuestion, Question, RhythmReadQuestion, SingQuestion, SingSeqQuestion, Stimulus } from './lesson';
+import type { CellId, Rhythm, RhythmLevel } from './rhythm';
 import type { PitchClass } from './pitch';
 import { mulberry32, nameSeqQuestion, placeInRange, singQuestion, singSeqQuestion } from './lesson';
 import { displayNote, majorScale, pc, pcValue } from './pitch';
@@ -167,7 +168,7 @@ export function basicsShape(seed = Date.now()): LessonDef {
 export function basicsBeat(seed = Date.now()): LessonDef {
   const r = mulberry32(seed);
   const s = () => Math.floor(r() * 1e9);
-  return lesson('basics-beat', 'timing', [gen('basics-beat', 1, s(), 'q1'), gen('basics-beat', 1, s(), 'q2'), gen('tempo', 1, s(), 'q3'), gen('basics-beat', 2, s(), 'q4'), gen('tempo', 1, s(), 'q5'), gen('basics-beat', 2, s(), 'q6')]);
+  return lesson('basics-beat', 'timing', [gen('basics-beat', 1, s(), 'q1'), keepBeatQuestion('q2', 72, 2), gen('tempo', 1, s(), 'q3'), gen('basics-beat', 2, s(), 'q4'), gen('meter-feel', 1, s(), 'q5'), keepBeatQuestion('q6', 80, 3, 1)]);
 }
 /** Match a note with your voice: hear one note, sing it back (no key, no names). */
 export function basicsVoice(seed = Date.now()): LessonDef {
@@ -175,7 +176,7 @@ export function basicsVoice(seed = Date.now()): LessonDef {
   const keys = shuffleR(rnd, ['C', 'D', 'E', 'F', 'G', 'A']);
   const qs = [1, 3, 5, 1].map((deg, i) => {
     const q = singQuestion(`q${i + 1}`, pc(keys[i]), deg);
-    return { ...q, stimulus: [{ kind: 'note' as const, midi: q.targetMidi, duration: 1.4 }], difficulty: 700 + i * 40 };
+    return { ...q, promptBy: 'echo' as const, stimulus: [{ kind: 'note' as const, midi: q.targetMidi, duration: 1.4 }], difficulty: 700 + i * 40 };
   });
   return lesson('basics-voice', 'singing', qs);
 }
@@ -288,14 +289,14 @@ export function transposeNamesQuestion(id: string, from: PitchClass, to: PitchCl
     skillAs: 'transpose',
   };
 }
-/** Hear a melody in one key, sing it in another. */
-export function transposeSingQuestion(id: string, from: PitchClass, to: PitchClass, degs: number[], difficulty: number): SingSeqQuestion {
+/** Hear a melody in one key, sing it in another (`tonicOnly`: the new key is given by its home note alone). */
+export function transposeSingQuestion(id: string, from: PitchClass, to: PitchClass, degs: number[], difficulty: number, tonicOnly = false): SingSeqQuestion {
   const q = singSeqQuestion(id, to, degs, difficulty);
   const t = placeInRange(pcValue(to), 55, 66);
   return {
     ...q,
     fromKey: from,
-    stimulus: [{ kind: 'cadence', key: from }, { kind: 'notes', midis: midisIn(from, degs), each: 0.55 }, rest(0.6), { kind: 'cadence', key: to }, { kind: 'note', midi: t, duration: 1.0 }],
+    stimulus: [{ kind: 'cadence', key: from }, { kind: 'notes', midis: midisIn(from, degs), each: 0.55 }, rest(0.6), ...(tonicOnly ? [] : [{ kind: 'cadence' as const, key: to }]), { kind: 'note', midi: t, duration: 1.0 }],
     skillAs: 'transpose',
   };
 }
@@ -312,6 +313,7 @@ export function transposeLesson(seed = Date.now()): LessonDef {
     transposeNamesQuestion('q5', pc(k[2]), pc(k[3]), [1, 3, 5, 3], 1250),
     gen('transpose', 4, s(), 'q6'),
     transposeSingQuestion('q7', pc(k[1]), pc(k[2]), [1, 2, 3], 1200),
+    transposeSingQuestion('q8', pc(k[3]), pc(k[0]), [1, 2, 3, 1], 1450, true),
   ]);
   // Intro: the same three steps (1 2 3) from two homes.
   L.intro = [
@@ -320,3 +322,194 @@ export function transposeLesson(seed = Date.now()): LessonDef {
   ];
   return L;
 }
+
+// ================================================================ Spec AD: tapping and singing items
+
+const bar4 = (cells: CellId[], bars = 1): Rhythm => ({ beatsPerBar: 4, bars, cells: Array.from({ length: bars }, () => cells).flat() });
+
+/** Keep the beat: tap every quarter note; with `silentAfterBars` the clicks stop and the player keeps going. */
+export function keepBeatQuestion(id: string, bpm: number, bars: number, silentAfterBars?: number): RhythmReadQuestion {
+  const rhythm = bar4(['q', 'q', 'q', 'q'], bars);
+  return {
+    id,
+    kind: 'rhythm-read',
+    level: 1,
+    rhythm,
+    bpm,
+    show: 'notation',
+    choices: [],
+    answer: 'accurate',
+    stimulus: [],
+    difficulty: silentAfterBars === undefined ? 760 : 960 + 60 * (bars - silentAfterBars),
+    ...(silentAfterBars !== undefined ? { silentAfterBars } : {}),
+    prompt:
+      silentAfterBars === undefined
+        ? { en: 'Tap along with every beat.', he: 'הקישו יחד עם כל פעמה.' }
+        : { en: 'Tap every beat — the clicks will stop, keep going on your own.', he: 'הקישו כל פעמה — הקליקים ייעצרו, המשיכו לבד.' },
+    skillAs: 'timing',
+  };
+}
+
+/** Bar patterns that end on a quarter rest, so "start one beat later" is the same bar rotated. */
+export const DISPLACE_PATTERNS: { id: string; en: string; he: string; cells: CellId[]; level: RhythmLevel }[] = [
+  { id: 'charleston', en: 'Charleston', he: 'צ׳רלסטון', cells: ['dqe', 'qr', 'qr'], level: 3 },
+  { id: 'q-ee-q', en: 'Quarter, two eighths, quarter', he: 'רבע, שתי שמיניות, רבע', cells: ['q', 'ee', 'q', 'qr'], level: 2 },
+  { id: 'ee-q-ee', en: 'Eighths around a quarter', he: 'שמיניות סביב רבע', cells: ['ee', 'q', 'ee', 'qr'], level: 2 },
+  { id: 'dqe-ee', en: 'Dotted quarter, eighth, two eighths', he: 'רבע מנוקד, שמינית, שתי שמיניות', cells: ['dqe', 'ee', 'qr'], level: 3 },
+  { id: 'syn', en: 'Syncopation', he: 'סינקופה', cells: ['syn', 'q', 'qr'], level: 5 },
+];
+/** See the pattern, tap it starting one beat later (rhythmic displacement, spec AD T-t5). */
+export function tapDisplacedQuestion(id: string, seed: number): RhythmReadQuestion {
+  const rnd = rng(seed);
+  const p = pickR(rnd, DISPLACE_PATTERNS);
+  const shown = bar4(p.cells, 2);
+  const moved: CellId[] = ['qr', ...p.cells.slice(0, -1)];
+  return {
+    id,
+    kind: 'rhythm-read',
+    level: p.level,
+    rhythm: bar4(moved, 2),
+    shown,
+    bpm: 72,
+    show: 'notation',
+    choices: [],
+    answer: 'accurate',
+    stimulus: [],
+    difficulty: 1250 + 60 * (p.level - 2),
+    prompt: { en: `${p.en}: tap it starting one beat later — on beat 2.`, he: `${p.he}: הקישו אותו כשהוא מתחיל פעמה אחת מאוחר יותר — בפעמה 2.` },
+    skillAs: 'transpose',
+  };
+}
+
+/** Hear a chord, sing one of its tones (spec AD: chord tones, sung). */
+export function chordToneQuestion(id: string, key: PitchClass, tone: 1 | 3 | 5, minor: boolean, difficulty: number): SingQuestion {
+  const root = placeInRange(pcValue(key), 52, 60);
+  const third = minor ? 3 : 4;
+  const off = tone === 1 ? 0 : tone === 3 ? third : 7;
+  const q = singQuestion(id, key, 1);
+  const targetMidi = root + off;
+  const chord = [root, root + third, root + 7];
+  return {
+    ...q,
+    promptBy: 'chord',
+    chordTone: { tone, minor },
+    target: pcOfMidi(targetMidi, key),
+    targetMidi,
+    stimulus: [{ kind: 'chord', midis: chord, duration: 1.6 }, { kind: 'rest', duration: 0.3 }, { kind: 'chord', midis: chord, duration: 1.2, arpeggio: true }],
+    difficulty,
+  };
+}
+/** The pitch class of a midi note, spelled as in the major key's scale where possible. */
+function pcOfMidi(midi: number, key: PitchClass): PitchClass {
+  const want = ((midi % 12) + 12) % 12;
+  const inScale = majorScale(key).find((p) => ((pcValue(p) % 12) + 12) % 12 === want);
+  if (inScale) return inScale;
+  const flat = ['C', 'D', 'D', 'E', 'E', 'F', 'G', 'G', 'A', 'A', 'B', 'B'][want] as PitchClass['letter'];
+  return { letter: flat, acc: ([0, -1, 0, -1, 0, 0, -1, 0, -1, 0, -1, 0][want]) as PitchClass['acc'] };
+}
+/** A tune that stops on 2 or 7: sing the home note that finishes it. */
+export function finishPhraseQuestion(id: string, key: PitchClass, seed: number, difficulty: number): SingQuestion {
+  const rnd = rng(seed);
+  const t = placeInRange(pcValue(key), 55, 64);
+  const phrases = [[1, 2, 3, 4, 5, 4, 3, 2], [5, 3, 4, 2, 3, 1, 2, 7], [3, 4, 5, 6, 5, 4, 3, 2], [1, 3, 5, 4, 2, 7]];
+  const ph = pickR(rnd, phrases);
+  const midis = ph.map((d) => (d === 7 ? t - 1 : t + [0, 2, 4, 5, 7, 9, 11][d - 1]));
+  const q = singQuestion(id, key, 1);
+  return { ...q, promptBy: 'finish', targetMidi: t, stimulus: [{ kind: 'notes', midis, each: 0.42 }], difficulty };
+}
+
+/** "Move the rhythm" (spec AD): rhythmic displacement — hear it, read it, tap it. */
+export function rhythmShiftLesson(seed = Date.now()): LessonDef {
+  const rnd = mulberry32(seed);
+  const s = () => Math.floor(rnd() * 1e9);
+  const L = lesson('rhythm-shift', 'transpose', [
+    gen('displacement', 1, s(), 'q1'),
+    gen('displacement', 2, s(), 'q2'),
+    tapDisplacedQuestion('q3', s()),
+    gen('displacement', 3, s(), 'q4'),
+    tapDisplacedQuestion('q5', s()),
+    gen('rhythm-transform', 1, s(), 'q6'),
+  ]);
+  L.intro = [
+    { id: 'intro-charleston', card: { kind: 'rhythm', rhythm: 'dqe.qr.qr' }, stimulus: [{ kind: 'rhythm', rhythm: 'dqe.qr.qr', bars: 1, bpm: 80 }] },
+    { id: 'intro-moved', card: { kind: 'rhythm', rhythm: 'qr.dqe.qr' }, stimulus: [{ kind: 'rhythm', rhythm: 'qr.dqe.qr', bars: 1, bpm: 80 }] },
+  ];
+  return L;
+}
+
+/** "Sing inside the chord" (spec AD): chord tones and finishing a phrase, sung. */
+export function chordTonesLesson(seed = Date.now()): LessonDef {
+  const rnd = mulberry32(seed);
+  const s = () => Math.floor(rnd() * 1e9);
+  const k = shuffleR(rnd, ['C', 'D', 'F', 'G', 'A', 'E']);
+  const L = lesson('chord-tones', 'singing', [
+    chordToneQuestion('q1', pc(k[0]), 1, false, 1000),
+    chordToneQuestion('q2', pc(k[1]), 5, false, 1080),
+    chordToneQuestion('q3', pc(k[2]), 3, false, 1150),
+    finishPhraseQuestion('q4', pc(k[3]), s(), 1050),
+    chordToneQuestion('q5', pc(k[4]), 3, true, 1220),
+    finishPhraseQuestion('q6', pc(k[5]), s(), 1120),
+  ]);
+  L.intro = [
+    { id: 'intro-major', card: { kind: 'quality', root: pc('C'), quality: 'maj' }, stimulus: [{ kind: 'chord', midis: [48, 52, 55], duration: 1.4, arpeggio: true }] },
+    { id: 'intro-minor', card: { kind: 'quality', root: pc('A'), quality: 'min' }, stimulus: [{ kind: 'chord', midis: [57, 60, 64], duration: 1.4, arpeggio: true }] },
+  ];
+  return L;
+}
+
+// ================================================================ Spec AD P2: harder transposition
+
+/** Read in one key, name in another (from the staff), and melodies with a chromatic note. */
+TOPIC_GEN['transpose-adv'] = {
+  title: { en: 'Transposition: reading and chromatic', he: 'טרנספוזיציה: מהדף וכרומטית' },
+  skill: 'transpose',
+  levels: [
+    { en: 'Read it on the staff, name it in another key', he: 'לקרוא מהחמשה, לקרוא בשמות בסולם אחר' },
+    { en: 'With a chromatic note', he: 'עם צליל כרומטי' },
+  ],
+  gen(seed, level, id) {
+    const rnd = rng(seed);
+    let from: string, to: string;
+    do {
+      from = pickR(rnd, KEYS);
+      to = pickR(rnd, KEYS);
+    } while (from === to);
+    const degs = tuneDeg(rnd, 4);
+    const F = pc(from);
+    const T = pc(to);
+    // Level 2: one note raised a half step (a chromatic neighbour / passing note), kept in both keys.
+    const chrom = level === 2 ? 1 + Math.floor(rnd() * 3) : -1;
+    const sharpen = (p: PitchClass, i: number): PitchClass => (i === chrom ? { letter: p.letter, acc: (p.acc + 1) as PitchClass['acc'] } : p);
+    const fromPs = namesIn(F, degs).map(sharpen);
+    const right = namesIn(T, degs).map(sharpen);
+    const wrongA = namesIn(T, degs); // forgot the chromatic note (level 2) / …
+    const wrongB = namesIn(pc(pickR(rnd, KEYS.filter((k) => k !== to && k !== from))), degs).map(sharpen);
+    const wrongC = right.map((p, i) => (i === 2 ? { letter: p.letter, acc: (p.acc === 0 ? (rnd() < 0.5 ? 1 : -1) : 0) as PitchClass['acc'] } : p));
+    const seen = new Set<string>();
+    const opts = shuffleR(rnd, [right, level === 2 ? wrongA : wrongC, wrongB, wrongC]).filter((o) => {
+      const k = o.map((p) => `${p.letter}${p.acc}`).join(' ');
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+    const names: ChoiceQuestion['names'] = {};
+    opts.forEach((o, i) => (names[`o${i + 1}`] = nm(show(o).en, show(o).he, ['one', 'two', 'three', 'four'][i], ['first', 'second', 'third', 'fourth'][i])));
+    const fromMidis = midisIn(F, degs).map((m, i) => (i === chrom ? m + 1 : m));
+    const ask = { en: `Written in ${nameEn(F)} major — the same tune in ${nameEn(T)} major is…`, he: `כתוב ב${nameHe(F)} מז׳ור — אותה מנגינה ב${nameHe(T)} מז׳ור היא…` };
+    return choiceQ({
+      id,
+      topic: 'transpose-adv',
+      level,
+      seed,
+      skill: 'transpose',
+      difficulty: level === 1 ? 1380 : 1520,
+      ask,
+      names,
+      answer: `o${opts.indexOf(right) + 1}`,
+      choices: opts.map((_, i) => `o${i + 1}`),
+      stimulus: [notesStim(fromMidis, 0.5)],
+      show: { midis: fromMidis, clef: 'treble', key: F },
+      text: { en: fromPs.map(nameEn).join(' '), he: fromPs.map(nameHe).join(' ') },
+    });
+  },
+};

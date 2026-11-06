@@ -303,7 +303,7 @@ TOPIC_GEN['sight-read'] = {
       choiceStim[kk] = [notesStim(changed(i + 1), 0.5)];
     });
     return choiceQ({
-      id, topic: 'sight-read', level, seed, skill: 'sight', difficulty: bass ? 1420 : 1560,
+      id, topic: 'sight-read', level, seed, skill: 'sight', difficulty: bass ? 1530 : 1560,
       ask: minor
         ? { en: `Read along in ${k.name} minor — which note was played differently?`, he: `קראו יחד ב־${k.name} מינור — איזה צליל נוגן אחרת?` }
         : { en: 'Bass clef: read along — which note was played differently?', he: 'מפתח פה: קראו יחד — איזה צליל נוגן אחרת?' },

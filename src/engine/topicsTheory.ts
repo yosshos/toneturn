@@ -431,21 +431,23 @@ TOPIC_GEN['chord-scale'] = {
 
 // ---------------------------------------------------------------- note reading
 
-const CLEF_RANGE: Record<number, { clef: 'treble' | 'bass' | 'alto'; lo: number; hi: number }[]> = {
+const CLEF_RANGE: Record<number, { clef: 'treble' | 'bass' | 'alto' | 'tenor'; lo: number; hi: number }[]> = {
   1: [{ clef: 'treble', lo: 64, hi: 77 }],
   2: [{ clef: 'bass', lo: 43, hi: 57 }],
   3: [{ clef: 'alto', lo: 53, hi: 67 }],
   4: [{ clef: 'treble', lo: 55, hi: 86 }, { clef: 'bass', lo: 36, hi: 64 }, { clef: 'alto', lo: 48, hi: 72 }],
+  5: [{ clef: 'tenor', lo: 50, hi: 64 }],
 };
 
 TOPIC_GEN['note-reading'] = {
   title: { en: 'Reading notes', he: 'קריאת תווים' },
-  skill: 'theory',
+  skill: 'notes',
   levels: [
     { en: 'Treble clef', he: 'מפתח סול' },
     { en: 'Bass clef', he: 'מפתח פה' },
     { en: 'Alto clef', he: 'מפתח דו (אלט)' },
     { en: 'Ledger lines, any clef', he: 'קווי עזר, כל מפתח' },
+    { en: 'Tenor clef', he: 'מפתח דו (טנור)' },
   ],
   gen(seed, level, id) {
     const rnd = rng(seed);
@@ -464,7 +466,7 @@ TOPIC_GEN['note-reading'] = {
       choiceStim[spEn(o)] = [{ kind: 'note', midi: near, duration: 0.9 }];
     }
     return choiceQ({
-      id, topic: 'note-reading', level, seed, skill: 'theory', difficulty: 1000 + 120 * level,
+      id, topic: 'note-reading', level, seed, skill: 'notes', difficulty: 1000 + 120 * level,
       ask: { en: 'Which note is this?', he: 'איזה תו זה?' },
       names, answer: spEn(ans), choices: opts.map(spEn), stimulus: [], choiceStim,
       show: { midis: [m], clef: r.clef, key: null },

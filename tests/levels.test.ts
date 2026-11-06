@@ -62,7 +62,7 @@ describe('topics: done X of Y', () => {
   it('counts finished lessons per topic', () => {
     const done = new Set<LessonId>(['rhythm-r1', 'rhythm-r2', 'intervals']);
     const rows = topicProgress((id) => done.has(id));
-    expect(rows.find((r) => r.id === 'rhythm')).toEqual({ id: 'rhythm', done: 2, total: 8 });
+    expect(rows.find((r) => r.id === 'rhythm')).toEqual({ id: 'rhythm', done: 2, total: 9 });
     expect(rows.find((r) => r.id === 'intervals')).toEqual({ id: 'intervals', done: 1, total: 2 });
   });
 });

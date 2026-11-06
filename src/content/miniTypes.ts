@@ -19,7 +19,7 @@ export interface MiniShow {
   /** Key signature for the staff, e.g. 'C', 'G', 'Bb', 'F#'. */
   key?: string;
   /** Staff clef. */
-  clef?: 'treble' | 'bass' | 'alto';
+  clef?: 'treble' | 'bass' | 'alto' | 'tenor';
   /** Written note lengths in beats (staff), one per note. */
   durs?: number[];
   /** A big short text / symbol, e.g. "1 – 3 – 5", "C7 → F", "♩ ♩ ♫ ♩". */

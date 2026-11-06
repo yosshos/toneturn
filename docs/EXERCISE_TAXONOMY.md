@@ -1,6 +1,6 @@
 # Exercise taxonomy & weighting — specification
 
-*2026-11-06 · spec addendum AD (draft for product-owner review)*
+*2026-11-06 · spec addendum AD · decisions 1–4 approved, 5 deferred (product owner, 2026-11-06) · built in 0.35.0 — see “Status” below*
 
 **Goal.** At launch, every well-known exercise of Western ear training, rhythm, voice and theory that fits a phone app is **in the app**. Each one is **mapped** by domain → skill → sub-skill → difficulty. Exercises that train more than one thing are **weighted** explicitly, so ratings, the path, Today's plan and Find my level all agree on what a player knows.
 
@@ -478,18 +478,16 @@ The **overall rating** uses the same table, normalised, so a pro is not judged o
 
 ---
 
-## 7. Decisions for the product owner
+## 7. Decisions (product owner, 2026-11-06)
 
-1. **Skill changes (§2):**
-   - rename `transpose` → **Transformations** (pitch and time branches);
-   - add **meter**, **form & texture** and **expression**;
-   - move **improv** to a new *Creative & applied* domain;
-   - rename `cadences` → *Harmony*.
-   - Default: yes to all. This brings the Skill Map from 5 domains to 6.
-2. **Multi-skill crediting (§3):** compensatory weighted Elo with weakness-weighted blame. The alternative is a simple primary-skill-only credit plus sub-skill EWMA, which is much simpler but less accurate.
-3. **Track importance table (§5.4):** approve or tune.
-4. **Sub-skill visibility:** show sub-skills on the Skill Map detail ("strong: swing · needs work: displacement"), or keep them internal?
-5. **P3 audio:** budget for recorded instrument and style samples (CC0 or licensed), or leave out for v1?
+1. **Skill changes — approved and built.**
+   - 24 skills in 6 domains. *Creative & applied* holds improv, transformations and expression.
+   - The skill id stays `transpose`; its name is now "Transposition & transformations".
+   - `cadences` is shown as "Harmony & progressions".
+2. **Multi-skill crediting — approved and built.** Compensatory weighted Elo with weakness-weighted blame (`applyEvent` in `rating.ts`).
+3. **Track importance table — approved as written** (`IMPORTANCE` in `scheduler.ts`).
+4. **Sub-skills are shown** on the Skill Map ("Inside this skill", with the strongest and weakest marked) and in Today's plan ("needs work: …").
+5. **Recorded audio (P3: instruments, style, song form) — deferred.**
 
 ## 8. Build plan
 
@@ -501,3 +499,14 @@ The **overall rating** uses the same table, normalised, so a pro is not judged o
 | 4 | P1 content: octave, find the tonic, chord tones (sung), plagal/deceptive, modulation, harmonise, keep the beat, internal pulse, meter 2/3/4, simple/compound, downbeat, tap-displaced, Nashville transpose, sequence continuation, expression (dynamics, articulation, mood), musical terms, time signatures | each generator: deterministic, every answer reachable, playable, bilingual; quick lesson per new topic |
 | 5 | Skill Map 6 domains plus sub-skill detail; calibration overrides | E2E: Skill Map, Find my level by area |
 | 6 | P2, then P3 (assets) | — |
+
+## Status after 0.35.0
+
+| Phase | Built |
+|---|---|
+| 1 | `src/engine/taxonomy.ts` covers 6 domains, 24 skills, ~85 sub-skills, a tag vector for every topic level and question kind, and vocal tags. `tests/taxonomy.test.ts` checks four things: every tag is well formed and its primary is the rated skill; every sub-skill is reachable; every skill has a rising ladder; levels never get easier within a sub-skill (`in-tune` and `sight-read` were fixed). |
+| 2 | Weighted multi-skill Elo (`applyEvent`) and sub-skill accuracy (`foldSubs`). Items and events carry their tags. Ratings are client-side, so no server change was needed. |
+| 3 | `src/engine/scheduler.ts` covers importance × intake × gap × freshness × prerequisites. Today's plan uses it, with topic steps and a reason for each. Tests cover tracks, prerequisites, level choice and no starvation. |
+| 4 | P1 content, all built. New topics: octave, find-tonic, cadence-types (plagal/deceptive), modulation, harmonize, meter-feel (2/3/4, 3/4 vs 6/8, hemiola), downbeat, syncopation, nashville, melodic-transform (sequence, mutation, inversion/retrograde, modes), rhythm-transform (augmentation, clave, 3-over-4, metric modulation), dynamics, articulation, mood, musical-terms, time-signatures, voice-leading, voice-count. Tapping and singing: keep the beat, internal pulse (the clicks stop), tap a pattern displaced to beat 2, sing a chord tone, finish the phrase, sung transposition from the new tonic only. Two new path lessons: *Move the rhythm* and *Sing inside the chord*. Eight new quick lessons. |
+| 5 | Skill Map with 6 domains and sub-skill detail. Calibration overrides need a server aggregate and are not built yet. |
+| 6 | P2, built: compound intervals, scale types (pentatonic / blues / harmonic minor), non-chord tones by ear, harmonic dictation, displacement in 3/4 and 6/8, sight-transposition from the staff, chromatic transposition, tenor clef. Not built: P3 recorded audio (deferred), free composition (cannot be graded automatically), and melodic dictation written on a staff (dictation by degrees exists). |

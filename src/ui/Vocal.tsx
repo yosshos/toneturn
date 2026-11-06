@@ -1,6 +1,7 @@
 // Vocal technique (spec addendum P): range calibration, the 10-level ladder, the daily warm-up, a live
 // pitch trace, per-take metric cards with a tip and listen-back, the range map and per-metric trends.
 
+import { vocalTags } from '../engine/taxonomy';
 import type { SkillId } from '../engine/lesson';
 import { useMiniGate } from './MiniLesson';
 import { vocalUnit } from '../content/units';
@@ -898,7 +899,7 @@ function VocalSession({
       missed: [],
       items: [
         // Harmony singing measures singing in tune; sight-singing measures reading; the rest vocal technique.
-        ...rated.map((x) => ({ id: `${sessionId}:${x.it.id}`, skill: (typeof level === 'number' && level > SIGHT_BASE && level < ORNAMENT_BASE ? 'sight' : typeof level === 'number' && level > HARMONY_BASE && level < BARRY_BASE ? 'singing' : 'technique') as SkillId, difficulty: x.it.difficulty, correct: x.score >= 0.6, tag: `vocal:${x.it.id}`, score: x.score, m: best.current[x.it.id]?.take.m })),
+        ...rated.map((x) => ({ id: `${sessionId}:${x.it.id}`, skill: (typeof level === 'number' && level > SIGHT_BASE && level < ORNAMENT_BASE ? 'sight' : typeof level === 'number' && level > HARMONY_BASE && level < BARRY_BASE ? 'singing' : 'technique') as SkillId, difficulty: x.it.difficulty, correct: x.score >= 0.6, tag: `vocal:${x.it.id}`, score: x.score, m: best.current[x.it.id]?.take.m, tags: vocalTags((typeof level === 'number' && level > SIGHT_BASE && level < ORNAMENT_BASE ? 'sight' : typeof level === 'number' && level > HARMONY_BASE && level < BARRY_BASE ? 'singing' : 'technique') as SkillId, x.it.kind, typeof level === 'number' && level > ORNAMENT_BASE) })),
         // Melodic memory (spec P.9): the right notes, less for every extra listen to the reference.
         ...rated
           .filter((x) => memoryItem(x.it) && best.current[x.it.id])
