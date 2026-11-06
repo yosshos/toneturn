@@ -35,7 +35,7 @@ test.describe('intake questionnaire', () => {
     await page.locator('[data-range-start]').click();
     await expect(page.locator('[data-range]')).toBeVisible({ timeout: 15_000 });
     await page.screenshot({ path: 'test-results/intake-4-range.png' });
-    await page.locator('[data-range-skip]').click();
+    await page.locator('[data-range-keep]').click();
     // the plan: a curious listener starts with the basics; the path starts with rhythm
     await expect(page.locator('main.intake[data-step="plan"]')).toBeVisible();
     await expect(page.locator('.plan-facts')).toContainText('קצב');

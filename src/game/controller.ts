@@ -143,6 +143,10 @@ export interface ControllerHooks {
   onEvent?: (e: { type: string; detail?: unknown }) => void;
   /** Called after each resolved question; may return regenerated questions (adaptive placement). */
   adapt?: (s: SessionState) => Question[] | null;
+  /** After each answered question that is not the last (saving progress to resume later). */
+  onStep?: (s: SessionState) => void;
+  /** Continue a saved session: its answers so far and where it stood (records match the lesson's questions). */
+  resume?: Pick<SessionState, 'records' | 'index' | 'xp'>;
 }
 
 type Waiter = { resolve: (v: WaitResult) => void; turn: number };
@@ -177,13 +181,17 @@ export class LessonController {
     private hooks: ControllerHooks = {},
   ) {
     this.s = { ...createSession(lesson), timed: cfg.timed ?? false };
+    const r = hooks.resume;
+    if (r && r.records.length === lesson.questions.length && r.index >= 0 && r.index < lesson.questions.length) {
+      this.s = { ...this.s, records: r.records, index: r.index, xp: r.xp };
+    }
     this.view = {
       stage: 'starting',
       phase: 'idle',
       introStep: 0,
-      index: 0,
+      index: this.s.index,
       total: lesson.questions.length,
-      question: lesson.questions[0],
+      question: lesson.questions[this.s.index],
       session: this.s,
       mode,
       mic: 'off',
@@ -271,7 +279,7 @@ export class LessonController {
     await this.ad.audio.unlock();
     this.ad.tts.unlock();
     if (this.view.mode === 'voice' && !(await this.ensureMic())) return;
-    this.patch({ stage: this.s.lesson.intro.length ? 'intro' : 'question', introStep: 0 });
+    this.patch({ stage: this.s.lesson.intro.length && this.s.index === 0 && !this.s.records.some((r) => r.attempts.length) ? 'intro' : 'question', introStep: 0 });
     this.restart((sig) => this.runAll(sig));
   }
 
@@ -403,7 +411,7 @@ export class LessonController {
     this.cancelAll();
     if (!(await this.ensureMic())) return;
     if (this.view.stage === 'starting') {
-      this.patch({ stage: this.s.lesson.intro.length ? 'intro' : 'question', introStep: 0 });
+      this.patch({ stage: this.s.lesson.intro.length && this.s.index === 0 && !this.s.records.some((r) => r.attempts.length) ? 'intro' : 'question', introStep: 0 });
       return this.restart((sig) => this.runAll(sig));
     }
     this.restart((sig) => this.runAll(sig, { resumeIntro: this.view.stage === 'intro' }));
@@ -507,6 +515,7 @@ export class LessonController {
       }
       this.setSession(advance(this.s), { feedback: null, heard: null, interim: '' });
       this.silentCount = 0;
+      if (this.s.phase !== 'complete') this.hooks.onStep?.(this.s);
       if (this.s.phase === 'complete') {
         this.patch({ stage: 'complete', caption: null });
         this.ad.audio.cue('complete');

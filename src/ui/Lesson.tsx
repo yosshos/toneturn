@@ -40,6 +40,12 @@ interface Props {
   /** Generated session (placement / review / puzzle) instead of a path lesson. */
   lessonDef?: LessonDef;
   adapt?: (s: SessionState) => Question[] | null;
+  /** Continue a saved session (its lesson is used as saved, already fitted). */
+  resume?: Pick<SessionState, 'records' | 'index' | 'xp'>;
+  /** After each answered question (saving progress). */
+  onStep?: (s: SessionState) => void;
+  /** When the session completes (clears saved progress). */
+  onDone?: () => void;
   nextLabel?: string;
   /** Current skill ratings (for automatic aids). */
   ratings?: Ratings;
@@ -49,7 +55,7 @@ interface Props {
 
 const targetMidiOf = (q: Question) => (q.kind === 'degree' || q.kind === 'sing' || q.kind === 'note-name' ? q.targetMidi : q.kind === 'sing-seq' || q.kind === 'sing-run' ? q.midis[0] : 60);
 
-export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit, onAgain, onNext, onProgress, lessonDef, adapt, nextLabel, ratings, playerName }: Props) {
+export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit, onAgain, onNext, onProgress, lessonDef, adapt, resume, onStep, onDone, nextLabel, ratings, playerName }: Props) {
   const ctrlRef = useRef<LessonController | null>(null);
   const [change, setChange] = useState<{ change: RatingChange; peakBefore: number | null } | null>(null);
   const [streakMoment, setStreakMoment] = useState<{ before: number; after: StreakState; gems: number } | null>(null);
@@ -57,7 +63,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
   if (!ctrlRef.current) {
     // Aids (spec M.3): marked per question from the player's current ratings; aided items count as easier.
     // Sung questions sit inside the player's range (spec P.0): moved by octaves, or left out when they cannot fit.
-    const lesson = fitLessonToRange(withAids(lessonDef ?? makeLesson(lessonId), settings.aids ?? 'auto', ratings ?? {}), settings.voiceRange);
+    const lesson = resume && lessonDef ? lessonDef : fitLessonToRange(withAids(lessonDef ?? makeLesson(lessonId), settings.aids ?? 'auto', ratings ?? {}), settings.voiceRange);
     let c: LessonController | null = null;
     const adapters = makeAdapters(
       () => c?.getView().question.answer ?? 1,
@@ -88,7 +94,10 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
       settings.mode,
       {
         onModeChange: onMode,
+        resume,
+        onStep,
         onComplete: (s) => {
+          onDone?.();
           void (async () => {
             // Rating card (spec L.3): compare ratings before and after this session.
             const before = await store.loadProgress();

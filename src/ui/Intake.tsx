@@ -14,7 +14,9 @@ import { LESSON_META } from '../game/content';
 import type { Strings } from '../i18n/strings';
 import type { Settings } from '../storage/progress';
 import { BrowserPitchCapture } from '../speech/pitchCapture';
-import { SIMULATED } from './services';
+import { SIMULATED, tts } from './services';
+import { WebSpeechTranscriber } from '../speech/webspeech';
+import { AREA_WORDS, MIX_WORDS, PLAY_WORDS, matchMany, matchOption, optionsSpoken, saidAny } from '../engine/intakeVoice';
 import { noteLabel } from './Vocal';
 
 type Step = 'hello' | 'music' | 'singing' | 'theory' | 'reading' | 'plays' | 'naming' | 'rank' | 'motivation' | 'minutes' | 'range' | 'plan';
@@ -26,22 +28,273 @@ export interface IntakeResult {
   patch: Partial<Settings>;
 }
 
+const TALK_KEY = 'toneturn.intake.talk';
+/** Talking is the default; automated runs (and the simulator) read, unless the player chose otherwise. */
+function loadTalk(): boolean {
+  try {
+    const v = localStorage.getItem(TALK_KEY);
+    if (v === '1' || v === '0') return v === '1';
+  } catch {
+    /* private mode */
+  }
+  return !(SIMULATED || (typeof navigator !== 'undefined' && navigator.webdriver));
+}
+function saveTalk(on: boolean) {
+  try {
+    localStorage.setItem(TALK_KEY, on ? '1' : '0');
+  } catch {
+    /* private mode */
+  }
+}
+
+const DRAFT_KEY = 'toneturn.intake.draft.v1';
+type Draft = { step: Step; a: Partial<IntakeT>; naming: 'solfege' | 'letter' | 'auto'; ranked: DomainId[]; mixed: boolean; range: VoiceRange | null; savedAt: number };
+function loadDraft(): Draft | null {
+  try {
+    const d = JSON.parse(localStorage.getItem(DRAFT_KEY) ?? 'null') as Draft | null;
+    return d && Date.now() - d.savedAt < 7 * 24 * 3600 * 1000 ? d : null;
+  } catch {
+    return null;
+  }
+}
+function saveDraft(d: Draft) {
+  try {
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(d));
+  } catch {
+    /* private mode */
+  }
+}
+function clearDraft() {
+  try {
+    localStorage.removeItem(DRAFT_KEY);
+  } catch {
+    /* private mode */
+  }
+}
+
 export function IntakeScreen({ t, settings, onDone, onSkip }: { t: Strings; settings: Settings; onDone: (r: IntakeResult, then: 'placement' | 'basics' | 'home') => void; onSkip: () => void }) {
   const q = t.intake;
   const lang = settings.uiLang;
   const prev = settings.intake as IntakeT | undefined;
-  const [step, setStep] = useState<Step>('hello');
-  const [a, setA] = useState<Partial<IntakeT>>(() => (prev ? { ...prev } : { plays: [] }));
-  const [naming, setNaming] = useState<'solfege' | 'letter' | 'auto'>(settings.naming === 'solfege' || settings.naming === 'letter' ? settings.naming : 'auto');
-  const [ranked, setRanked] = useState<DomainId[]>(() => prev?.priorities ?? []);
-  const [mixed, setMixed] = useState(prev ? prev.priorities === null : false);
-  const [range, setRange] = useState<VoiceRange | null>(settings.voiceRange ?? null);
+  // Leaving half-way (back button, swipe back, reload) keeps the answers so far (playtesting, 0.35.2).
+  const [draft] = useState(loadDraft);
+  const [step, setStep] = useState<Step>(draft?.step && STEPS.includes(draft.step) ? draft.step : 'hello');
+  const [a, setA] = useState<Partial<IntakeT>>(() => draft?.a ?? (prev ? { ...prev } : { plays: [] }));
+  const [naming, setNaming] = useState<'solfege' | 'letter' | 'auto'>(draft?.naming ?? (settings.naming === 'solfege' || settings.naming === 'letter' ? settings.naming : 'auto'));
+  const [ranked, setRanked] = useState<DomainId[]>(() => draft?.ranked ?? prev?.priorities ?? []);
+  const [mixed, setMixed] = useState(draft?.mixed ?? (prev ? prev.priorities === null : false));
+  const [range, setRange] = useState<VoiceRange | null>(draft?.range ?? settings.voiceRange ?? null);
+  useEffect(() => {
+    if (step === 'hello' && !Object.keys(a).some((k) => k !== 'plays')) return;
+    saveDraft({ step, a, naming, ranked, mixed, range, savedAt: Date.now() });
+  }, [step, a, naming, ranked, mixed, range]);
   const i = STEPS.indexOf(step);
   const go = (d: 1 | -1) => setStep(STEPS[Math.max(0, Math.min(STEPS.length - 1, i + d))]);
   const pick = <K extends keyof IntakeT>(k: K, v: IntakeT[K]) => {
     setA((x) => ({ ...x, [k]: v }));
     window.setTimeout(() => go(1), 180);
   };
+  const OPTS = {
+    music: [
+      { v: 0 as Level4, emoji: '🎧', label: q.music0 },
+      { v: 1 as Level4, emoji: '🎸', label: q.music1 },
+      { v: 2 as Level4, emoji: '🎼', label: q.music2 },
+      { v: 3 as Level4, emoji: '🎓', label: q.music3 },
+    ],
+    singing: [
+      { v: 0 as Level4, emoji: '🚿', label: q.sing0 },
+      { v: 1 as Level4, emoji: '📻', label: q.sing1 },
+      { v: 2 as Level4, emoji: '🎤', label: q.sing2 },
+      { v: 3 as Level4, emoji: '🌟', label: q.sing3 },
+    ],
+    theory: [
+      { v: 0 as Level4, emoji: '👽', label: q.theory0 },
+      { v: 1 as Level4, emoji: '🤔', label: q.theory1 },
+      { v: 2 as Level4, emoji: '🙂', label: q.theory2 },
+      { v: 3 as Level4, emoji: '😎', label: q.theory3 },
+    ],
+    reading: [
+      { v: 0 as 0 | 1 | 2, emoji: '🐦', label: q.read0 },
+      { v: 1 as 0 | 1 | 2, emoji: '☝️', label: q.read1 },
+      { v: 2 as 0 | 1 | 2, emoji: '📖', label: q.read2 },
+    ],
+    motivation: [
+      { v: 'learn' as Motivation, emoji: '🎯', label: q.motLearn },
+      { v: 'streaks' as Motivation, emoji: '🔥', label: q.motStreaks },
+      { v: 'collect' as Motivation, emoji: '🧢', label: q.motCollect },
+      { v: 'friends' as Motivation, emoji: '🤝', label: q.motFriends },
+    ],
+    minutes: [
+      { v: 5 as const, emoji: '☕', label: q.min5 },
+      { v: 10 as const, emoji: '🎧', label: q.min10 },
+      { v: 20 as const, emoji: '🎹', label: q.min20 },
+    ],
+  };
+  const NAMING: ['solfege' | 'letter' | 'auto', string, string][] = [
+    ['solfege', '🎵', q.namingSolfege],
+    ['letter', '🔤', q.namingLetter],
+    ['auto', '🤷', q.namingUnsure],
+  ];
+
+  // ---- Talking (product owner): by default the narrator asks out loud and listens; "Reading" at the top turns it off.
+  const [talk, setTalkState] = useState<boolean>(loadTalk);
+  /** Speech needs a tap first (browsers): the conversation runs once the player tapped to start or continue. */
+  const [live, setLive] = useState(false);
+  const [ear, setEar] = useState<'off' | 'speaking' | 'listening'>('off');
+  const [heard, setHeard] = useState('');
+  const [noEars, setNoEars] = useState(false);
+  const [used, setUsed] = useState(false);
+  const sttRef = useRef<WebSpeechTranscriber | null>(null);
+  const firstLine = useRef(true);
+  const wake = () => {
+    tts.unlock();
+    setLive(true);
+    setUsed(true);
+  };
+  const setTalk = (on: boolean) => {
+    setTalkState(on);
+    saveTalk(on);
+    if (on) wake();
+    else {
+      setLive(false);
+      tts.cancel();
+      sttRef.current?.abort();
+    }
+  };
+  const speechLang = lang === 'he' ? 'he-IL' : 'en-US';
+  const clean = (x: string) => x.replace(/[^\p{L}\p{N}\s,.?!'’–:;-]/gu, '').replace(/\s+/g, ' ').trim();
+  const track = trackOf({ music: (a.music ?? 0) as Level4, theory: (a.theory ?? 0) as Level4, reading: (a.reading ?? 0) as 0 | 1 | 2 });
+  /** What the narrator says on a step, and how an answer is handled (true = understood). */
+  const voiceSpec = (st: Step): { say: string; handle?: (alts: string[]) => boolean } | null => {
+    const options = <V,>(question: string, list: { v: V; label: string }[], set: (v: V) => void) => ({
+      say: `${question} ${optionsSpoken(list.map((o) => o.label), lang)}`,
+      handle: (alts: string[]) => {
+        const k = matchOption(alts, list.map((o) => o.label), lang);
+        if (k === null) return false;
+        set(list[k].v);
+        return true;
+      },
+    });
+    switch (st) {
+      case 'music':
+        return options(q.musicQ, OPTS.music, (v) => pick('music', v));
+      case 'singing':
+        return options(q.singQ, OPTS.singing, (v) => pick('singing', v));
+      case 'theory':
+        return options(q.theoryQ, OPTS.theory, (v) => pick('theory', v));
+      case 'reading':
+        return options(q.readQ, OPTS.reading, (v) => pick('reading', v));
+      case 'motivation':
+        return options(q.motQ, OPTS.motivation, (v) => pick('motivation', v));
+      case 'minutes':
+        return options(q.minQ, OPTS.minutes, (v) => pick('minutes', v));
+      case 'naming':
+        return options(q.namingQ, NAMING.map(([v, , label]) => ({ v, label })), (v) => {
+          setNaming(v);
+          window.setTimeout(() => go(1), 180);
+        });
+      case 'plays':
+        return {
+          say: `${q.playsQ} ${q.voicePlays}`,
+          handle: (alts) => {
+            const vocab = Object.fromEntries(Object.entries(PLAY_WORDS[lang]).map(([k, w]) => [k, [...w, q.plays[k]]])) as Record<string, string[]>;
+            const found = matchMany(alts, vocab);
+            if (!found.length) return false;
+            const list = found.includes('none') && found.length > 1 ? found.filter((k) => k !== 'none') : found;
+            setA((x) => ({ ...x, plays: list }));
+            window.setTimeout(() => go(1), 600);
+            return true;
+          },
+        };
+      case 'rank':
+        return {
+          say: `${q.rankQ} ${q.voiceRank} ${AREAS.map((x) => q.areas[x]).join(', ')}.`,
+          handle: (alts) => {
+            if (saidAny(alts, MIX_WORDS[lang])) {
+              setMixed(true);
+              window.setTimeout(() => go(1), 600);
+              return true;
+            }
+            const vocab = Object.fromEntries(AREAS.map((x) => [x, [...AREA_WORDS[lang][x], q.areas[x]]])) as Record<DomainId, string[]>;
+            const found = matchMany(alts, vocab);
+            if (!found.length) return false;
+            setMixed(false);
+            setRanked(found);
+            window.setTimeout(() => go(1), 900);
+            return true;
+          },
+        };
+      case 'range':
+        return { say: `${q.rangeTitle}. ${q.rangeText} ${q.voiceRange}` };
+      case 'plan': {
+        const choices: { v: 'placement' | 'basics' | 'home'; label: string }[] = [
+          { v: 'placement', label: `${q.findLevel} ${q.voiceLevelWords}` },
+          { v: 'basics', label: `${q.startBasics} ${q.voiceBasicsWords}` },
+          { v: 'home', label: `${q.justLook} ${q.voiceLookWords}` },
+        ];
+        return {
+          say: `${clean(q.planTitle[track])}. ${q.planText[track]} ${q.voicePlan}`,
+          handle: (alts) => {
+            const k = matchOption(alts, choices.map((c) => c.label), lang);
+            if (k === null) return false;
+            finish(choices[k].v);
+            return true;
+          },
+        };
+      }
+      default:
+        return null;
+    }
+  };
+  useEffect(() => {
+    if (!talk || !live) return;
+    const spec = voiceSpec(step);
+    if (!spec) return;
+    const ctl = new AbortController();
+    const sig = ctl.signal;
+    if (!sttRef.current) sttRef.current = new WebSpeechTranscriber();
+    const stt = sttRef.current;
+    const intro = firstLine.current ? `${q.helloTitle}. ` : '';
+    firstLine.current = false;
+    void (async () => {
+      try {
+        setEar('speaking');
+        await tts.speak(clean(intro + spec.say), lang, sig);
+        if (!spec.handle || sig.aborted) return setEar('off');
+        if (!stt.isSupported()) {
+          setNoEars(true);
+          return setEar('off');
+        }
+        for (let tries = 0; tries < 3 && !sig.aborted; tries++) {
+          setEar('listening');
+          setHeard('');
+          const r = await stt.listen({ lang: speechLang, signal: sig, onInterim: setHeard });
+          if (sig.aborted) return;
+          if (r.kind === 'result') {
+            setHeard(r.alternatives[0] ?? '');
+            if (spec.handle(r.alternatives)) return setEar('off');
+          }
+          if (r.kind === 'error') {
+            setNoEars(true);
+            return setEar('off');
+          }
+          if (tries < 2) {
+            setEar('speaking');
+            await tts.speak(tries === 0 ? q.voiceAgain : q.voiceTap, lang, sig);
+          }
+        }
+        setEar('off');
+      } catch {
+        if (!sig.aborted) setEar('off');
+      }
+    })();
+    return () => {
+      ctl.abort();
+      tts.cancel();
+      stt.abort();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, talk, live]);
 
   const full = (): IntakeT => ({
     v: 1,
@@ -61,11 +314,13 @@ export function IntakeScreen({ t, settings, onDone, onSkip }: { t: Strings; sett
     const patch: Partial<Settings> = { intake, track: s.track, cleanView: s.cleanView, miniLessons: s.miniLessons };
     if (naming !== 'auto') patch.naming = naming;
     if (range) patch.voiceRange = range;
+    if (used) patch.voiceConsent = true;
     try {
       localStorage.setItem('toneturn.workout.minutes', String(intake.minutes));
     } catch {
       /* private mode */
     }
+    clearDraft();
     onDone({ intake, patch }, then);
   };
 
@@ -82,7 +337,6 @@ export function IntakeScreen({ t, settings, onDone, onSkip }: { t: Strings; sett
     </div>
   );
 
-  const track = trackOf({ music: (a.music ?? 0) as Level4, theory: (a.theory ?? 0) as Level4, reading: (a.reading ?? 0) as 0 | 1 | 2 });
   const order = personalOrder(mixed ? null : ranked.length ? [...ranked, ...AREAS.filter((x) => !ranked.includes(x))] : null, track);
 
   return (
@@ -100,11 +354,25 @@ export function IntakeScreen({ t, settings, onDone, onSkip }: { t: Strings; sett
             <span key={s} className={k < i ? 'done' : k === i ? 'now' : ''} />
           ))}
         </div>
+        <button className={`chip talk-toggle ${talk ? 'on' : ''}`} aria-pressed={talk} onClick={() => setTalk(!talk)} data-talk={talk ? 'on' : 'off'}>
+          {talk ? `🗣️ ${q.talkOn}` : `📖 ${q.talkOff}`}
+        </button>
         <button className="link small" onClick={onSkip} data-intake-skip="1">
           {q.skipAll}
         </button>
       </header>
 
+      {talk && step !== 'hello' && !live && (
+        <button className="btn intake-wake" onClick={wake} data-wake="1">
+          🎙️ {q.voiceResume}
+        </button>
+      )}
+      {talk && live && ear !== 'off' && (
+        <p className={`intake-ear ${ear}`} aria-live="polite">
+          {ear === 'listening' ? `🎙️ ${q.voiceListening}` : '🔊'} {heard && <i>“{heard}”</i>}
+        </p>
+      )}
+      {talk && noEars && <p className="field-hint intake-noears">{q.voiceNoEars}</p>}
       <section className="intake-card" key={step}>
         {step === 'hello' && (
           <>
@@ -113,52 +381,40 @@ export function IntakeScreen({ t, settings, onDone, onSkip }: { t: Strings; sett
             </p>
             <h1>{q.helloTitle}</h1>
             <p className="intake-text">{q.helloText}</p>
-            <button className="btn mega" onClick={() => go(1)}>
-              {q.letsGo}
+            <button
+              className="btn mega"
+              onClick={() => {
+                if (talk) wake();
+                go(1);
+              }}
+            >
+              {talk ? `🎙️ ${q.letsTalk}` : q.letsGo}
             </button>
+            {talk && <p className="field-hint">{q.voiceNote}</p>}
           </>
         )}
         {step === 'music' && (
           <>
             <h1>{q.musicQ}</h1>
-            {opts('music', [
-              { v: 0, emoji: '🎧', label: q.music0 },
-              { v: 1, emoji: '🎸', label: q.music1 },
-              { v: 2, emoji: '🎼', label: q.music2 },
-              { v: 3, emoji: '🎓', label: q.music3 },
-            ])}
+            {opts('music', OPTS.music)}
           </>
         )}
         {step === 'singing' && (
           <>
             <h1>{q.singQ}</h1>
-            {opts('singing', [
-              { v: 0, emoji: '🚿', label: q.sing0 },
-              { v: 1, emoji: '📻', label: q.sing1 },
-              { v: 2, emoji: '🎤', label: q.sing2 },
-              { v: 3, emoji: '🌟', label: q.sing3 },
-            ])}
+            {opts('singing', OPTS.singing)}
           </>
         )}
         {step === 'theory' && (
           <>
             <h1>{q.theoryQ}</h1>
-            {opts('theory', [
-              { v: 0, emoji: '👽', label: q.theory0 },
-              { v: 1, emoji: '🤔', label: q.theory1 },
-              { v: 2, emoji: '🙂', label: q.theory2 },
-              { v: 3, emoji: '😎', label: q.theory3 },
-            ])}
+            {opts('theory', OPTS.theory)}
           </>
         )}
         {step === 'reading' && (
           <>
             <h1>{q.readQ}</h1>
-            {opts('reading', [
-              { v: 0, emoji: '🐦', label: q.read0 },
-              { v: 1, emoji: '☝️', label: q.read1 },
-              { v: 2, emoji: '📖', label: q.read2 },
-            ])}
+            {opts('reading', OPTS.reading)}
           </>
         )}
         {step === 'plays' && (
@@ -197,13 +453,7 @@ export function IntakeScreen({ t, settings, onDone, onSkip }: { t: Strings; sett
           <>
             <h1>{q.namingQ}</h1>
             <div className="intake-opts" role="radiogroup">
-              {(
-                [
-                  ['solfege', '🎵', q.namingSolfege],
-                  ['letter', '🔤', q.namingLetter],
-                  ['auto', '🤷', q.namingUnsure],
-                ] as const
-              ).map(([v, e, l]) => (
+              {NAMING.map(([v, e, l]) => (
                 <button
                   key={v}
                   role="radio"
@@ -269,22 +519,13 @@ export function IntakeScreen({ t, settings, onDone, onSkip }: { t: Strings; sett
         {step === 'motivation' && (
           <>
             <h1>{q.motQ}</h1>
-            {opts('motivation', [
-              { v: 'learn', emoji: '🎯', label: q.motLearn },
-              { v: 'streaks', emoji: '🔥', label: q.motStreaks },
-              { v: 'collect', emoji: '🧢', label: q.motCollect },
-              { v: 'friends', emoji: '🤝', label: q.motFriends },
-            ])}
+            {opts('motivation', OPTS.motivation)}
           </>
         )}
         {step === 'minutes' && (
           <>
             <h1>{q.minQ}</h1>
-            {opts('minutes', [
-              { v: 5, emoji: '☕', label: q.min5 },
-              { v: 10, emoji: '🎧', label: q.min10 },
-              { v: 20, emoji: '🎹', label: q.min20 },
-            ])}
+            {opts('minutes', OPTS.minutes)}
           </>
         )}
         {step === 'range' && <RangeStep t={t} settings={settings} range={range} onRange={setRange} onNext={() => go(1)} />}
@@ -349,8 +590,19 @@ function RangeStep({ t, settings, range, onRange, onNext }: { t: Strings; settin
   const [hi, setHi] = useState<number | null>(null);
   const [unclear, setUnclear] = useState(false);
   const ctl = useRef<AbortController | null>(null);
+  /** Every frame heard so far (so "Stop" keeps what was sung), and whether the stop means "start over". */
+  const seen = useRef<SungFrame[]>([]);
+  const again = useRef(false);
   useEffect(() => () => ctl.current?.abort(), []);
-  const start = async () => {
+  // Playtesting: stopping and trying again must be obvious while the siren records.
+  const stop = () => ctl.current?.abort();
+  const restart = () => {
+    again.current = true;
+    ctl.current?.abort();
+  };
+  const start = async (): Promise<void> => {
+    seen.current = [];
+    again.current = false;
     setOn(true);
     setUnclear(false);
     setLo(null);
@@ -358,6 +610,7 @@ function RangeStep({ t, settings, range, onRange, onNext }: { t: Strings; settin
     const c = new AbortController();
     ctl.current = c;
     const onFrame = (f: SungFrame) => {
+      seen.current.push(f);
       if (f.hz && f.confidence > 0.85) {
         const m = hzToMidi(f.hz);
         setNow(m);
@@ -372,11 +625,12 @@ function RangeStep({ t, settings, range, onRange, onNext }: { t: Strings; settin
     } else {
       try {
         const r = await new BrowserPitchCapture().sing({ signal: c.signal, maxMs: 14000, silenceMs: 6000, endSilenceMs: 1500, hopMs: 33, onFrame });
-        if (r.kind === 'frames') got = r.frames;
+        got = r.kind === 'frames' ? r.frames : seen.current;
       } catch {
-        /* no microphone: unclear */
+        got = seen.current; /* stopped, or no microphone */
       }
     }
+    if (again.current) return start();
     setOn(false);
     const rg = rangeFromGlide(got);
     if (rg) onRange(rg);
@@ -406,14 +660,47 @@ function RangeStep({ t, settings, range, onRange, onNext }: { t: Strings; settin
           {t.vocalRangeUnclear}
         </p>
       )}
-      <div className="intake-row">
-        <button className="btn ghost small" onClick={onNext} data-range-skip="1">
-          {range ? q.next : q.rangeLater}
-        </button>
-        <button className={`btn mega ${on ? 'ghost' : ''}`} disabled={on} onClick={() => void start()} data-range-start="1">
-          {on ? q.rangeListening : range ? `↻ ${q.rangeAgain}` : `🎤 ${q.rangeStart}`}
-        </button>
-      </div>
+      {on ? (
+        <>
+          <p className="range-rec" aria-live="polite">
+            <span className="rec-dot" aria-hidden="true" /> {q.rangeListening}
+          </p>
+          <div className="range-controls">
+            <button className="btn mega" onClick={stop} data-range-stop="1">
+              ⏹ {q.rangeStop}
+            </button>
+            <button className="btn ghost" onClick={restart} data-range-restart="1">
+              ↻ {q.rangeRestart}
+            </button>
+          </div>
+        </>
+      ) : range ? (
+        <div className="range-controls">
+          <button className="btn mega" onClick={onNext} data-range-keep="1">
+            ✓ {q.rangeKeep}
+          </button>
+          <button className="btn ghost" onClick={() => void start()} data-range-start="1">
+            ↻ {q.rangeAgain}
+          </button>
+        </div>
+      ) : (
+        <div className="range-controls">
+          <button className="btn mega" onClick={() => void start()} data-range-start="1">
+            🎤 {unclear ? q.rangeAgain : q.rangeStart}
+          </button>
+          <button className="btn ghost small" onClick={onNext} data-range-skip="1">
+            {q.rangeLater}
+          </button>
+        </div>
+      )}
     </>
   );
+}
+
+/** A questionnaire left half-way: how far it got (for the home screen's "continue" line). */
+export function intakeDraftProgress(): { done: number; all: number } | null {
+  const d = loadDraft();
+  if (!d || !STEPS.includes(d.step)) return null;
+  const done = STEPS.indexOf(d.step);
+  return done > 0 && d.step !== 'plan' ? { done: done - 1, all: STEPS.length - 2 } : null;
 }

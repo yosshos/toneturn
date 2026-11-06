@@ -1818,3 +1818,18 @@
 .catchup-skills { color: var(--ink-soft); font-size: .8rem; }
 .catchup-list .btn { flex: none; }
 .catchup-hide { margin-top: 8px; font-size: .9rem; }
+.resume-placement-go { width: 100%; margin-top: 4px; }
+/* Intake: talking (0.35.2) and clear siren controls */
+.intake-head { grid-template-columns: 44px 1fr auto auto; }
+.talk-toggle { font-size: .85rem; padding: 4px 10px; white-space: nowrap; }
+.talk-toggle.on { background: var(--gold); color: #2a1748; }
+.intake-wake { width: 100%; margin: 10px 0 0; }
+.intake-ear { margin: 10px 0 0; padding: 8px 12px; border-radius: 14px; background: var(--card-2); font-size: .95rem; }
+.intake-ear.listening { outline: 2px solid var(--gold); }
+.intake-ear i { color: var(--ink-soft); margin-inline-start: 6px; }
+.range-controls { display: grid; gap: 8px; margin-top: 12px; }
+.range-controls .btn { width: 100%; }
+.range-rec { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 8px 0 0; font-weight: 700; }
+.rec-dot { width: 12px; height: 12px; border-radius: 50%; background: #ff4d6d; animation: rec-pulse 1s ease-in-out infinite; }
+@keyframes rec-pulse { 50% { opacity: .35; } }
+@media (prefers-reduced-motion: reduce) { .rec-dot { animation: none; } }

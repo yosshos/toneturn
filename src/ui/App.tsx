@@ -2,7 +2,9 @@ import { lazy, Suspense } from 'react';
 import { IntakeScreen } from './Intake';
 import { personalOrder, type Intake } from '../engine/intake';
 import { catchUp, hasCatchUp } from '../engine/catchup';
-import { CatchUpCard } from './CatchUp';
+import { CatchUpCard, ResumePlacementCard, ResumeSessionCard } from './CatchUp';
+import { intakeDraftProgress } from './Intake';
+import { clearPlacement, clearSession, latestSession, loadPlacement, loadSession, PLACEMENT_KEY, placementProgressOf, saveSession, sessionProgressOf, type SavedSession } from '../storage/resume';
 import { vocalUnit } from '../content/units';
 const AvatarStudio = lazy(() => import('./AvatarStudio'));
 import { MiniGateContext, MiniLessonPlayer } from './MiniLesson';
@@ -10,7 +12,9 @@ import { LearnedScreen, learnedCount } from './Learned';
 import { lessonForUnit, MINI_LESSONS } from '../content/minilessons';
 import type { MiniLesson } from '../content/miniTypes';
 import { PerformScreen } from './Perform';
-import { topicLesson } from '../engine/topics';
+import { topicLesson, TOPIC_GEN } from '../engine/topics';
+import { LESSON_META } from '../game/content';
+import { displayNote, pc } from '../engine/pitch';
 import { SingAlongScreen } from './SingAlong';
 import { AchievementsScreen } from './Extras';
 import { absoluteLesson, modesLesson, MODE_ID_LEVELS, wrongNotesLesson } from '../engine/lesson';
@@ -28,7 +32,7 @@ import { PracticeTools } from './Tools';
 import { MicIcon } from './bits';
 import { STRINGS, type Strings } from '../i18n/strings';
 import type { CHANGELOG } from '../version';
-import { gemsOf, lessonMastered, localDay, ratingsOf, type Progress, type Settings, DEFAULT_SETTINGS, emptyProgress, migrateSettings } from '../storage/progress';
+import { gemsOf, lessonMastered, localDay, namingFor, ratingsOf, type Progress, type Settings, DEFAULT_SETTINGS, emptyProgress, migrateSettings } from '../storage/progress';
 import { cloudConfigured, currentUser, onAuthChange, pullSettings, pushSettings, syncProgress, type CloudUser } from '../cloud/cloud';
 import { AccountCard, type SyncState } from './Account';
 import { Home, lessonStates } from './Home';
@@ -57,6 +61,11 @@ import { midi } from '../speech/midi';
 type Route = 'intake' | 'studio' | 'home' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong' | 'perform' | 'learned';
 /** Invite links: #/online/CODE */
 const onlineCodeFromHash = () => (/^#\/?online\/(\w+)/.exec(location.hash)?.[1] ?? '');
+const PLAY_HASH = 'play';
+const LESSON_TITLE_FALLBACK = { en: { wrong: 'Wrong notes' }, he: { wrong: 'תווים שגויים' } };
+const enterPlay = () => {
+  if (location.hash.replace(/^#\/?/, '') !== PLAY_HASH) location.hash = `/${PLAY_HASH}`;
+};
 const routeFromHash = (): Route => {
   const h = location.hash.replace(/^#\/?/, '').replace(/^online\/.*$/, 'online');
   return (['settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong', 'perform', 'learned', 'studio', 'intake'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
@@ -92,6 +101,9 @@ export function App() {
   /** Voice-consent gate for sessions started outside the Practice button. */
   const [consentThen, setConsentThen] = useState<null | (() => void)>(null);
   const [generated, setGenerated] = useState<{ def: LessonDef; adapt?: (s: SessionState) => Question[] | null } | null>(null);
+  /** The running lesson's save slot (every lesson keeps its place after each answer; playtesting, 0.35.2). */
+  const [dropTick, setDropTick] = useState(0);
+  const [slot, setSlot] = useState<{ key: string; title: string; seed?: number; resume?: SavedSession } | null>(null);
   const pwaState = useSyncExternalStore(pwa.subscribe, pwa.get);
   const [sync, setSync] = useState<SyncState>('idle');
   // MIDI keyboard input (Settings): singing tasks capture from the keyboard.
@@ -168,7 +180,13 @@ export function App() {
       if (routeFromHash() === 'online') setOnlineCode(onlineCodeFromHash());
     };
     window.addEventListener('hashchange', onHash);
-    const onHashRoute = () => setRoute((r) => ((r === 'lesson' || r === 'game' || r === 'duelplay') && routeFromHash() === 'home' ? r : routeFromHash()));
+    // A lesson sits on its own history entry (#/play), so the back button or a swipe back returns home inside the
+    // app instead of leaving it (playtesting, 0.35.2); Find my level keeps its place and offers to continue.
+    const onHashRoute = () =>
+      setRoute((r) => {
+        if (location.hash.replace(/^#\/?/, '') === PLAY_HASH) return r === 'lesson' ? r : 'home';
+        return (r === 'game' || r === 'duelplay') && routeFromHash() === 'home' ? r : routeFromHash();
+      });
     window.addEventListener('hashchange', onHashRoute);
     return () => {
       window.removeEventListener('hashchange', onHash);
@@ -249,7 +267,7 @@ export function App() {
   );
 
   const go = (r: Route) => {
-    location.hash = r === 'home' || r === 'lesson' || r === 'game' ? '' : `/${r}`;
+    location.hash = r === 'lesson' ? `/${PLAY_HASH}` : r === 'home' || r === 'game' ? '' : `/${r}`;
     setRoute(r);
   };
 
@@ -267,42 +285,59 @@ export function App() {
     void piano.unlock();
     setMini({ lesson: l, then: start });
   };
-  const openGenerated = (def: LessonDef, adapt?: (s: SessionState) => Question[] | null, consented = false) => {
+  /** Open a generated session in its save slot: an unfinished one in the same slot continues instead. */
+  const openGenerated = (def: LessonDef, adapt?: (s: SessionState) => Question[] | null, consented = false, extra: { key?: string; title?: string; seed?: number; resume?: SavedSession } = {}) => {
     if (!consented && s.mode === 'voice' && !s.voiceConsent) {
-      setConsentThen(() => () => openGenerated(def, adapt, true));
+      setConsentThen(() => () => openGenerated(def, adapt, true, extra));
       return;
     }
     void piano.unlock();
-    setGenerated({ def, adapt });
+    const key = extra.key ?? def.id;
+    const saved = extra.resume ?? (extra.seed === undefined ? loadSession(key) : null);
+    setGenerated({ def: saved ? saved.lesson : def, adapt });
+    setSlot({ key, title: extra.title ?? saved?.title ?? '', seed: extra.seed, resume: saved ?? undefined });
     setLessonId(def.id);
     setLessonKey((k) => k + 1);
     setAutoStart(true);
-    location.hash = '';
+    enterPlay();
     setRoute('lesson');
   };
   /** Find my level: every skill, or one domain (the voice domain always sings). */
-  const openPlacement = (domain?: DomainId | null) => {
+  // A placement left half-way (back button, swipe back, reload) continues where it stopped (playtesting, 0.35.2).
+  const resumePlacement = (v: SavedSession) => openGenerated(v.lesson, (st) => adaptPlacement(st, v.seed!), false, { key: PLACEMENT_KEY, title: t.findLevel, seed: v.seed, resume: v });
+  const startPlacement = (seed: number, def: LessonDef) => openGenerated(def, (st) => adaptPlacement(st, seed), false, { key: PLACEMENT_KEY, title: t.findLevel, seed });
+  const openPlacement = (domain?: DomainId | null, fresh = false) => {
     const d = typeof domain === 'string' ? domain : null;
+    const saved = fresh ? null : loadPlacement();
+    if (saved && (saved.lesson.placementDomain ?? null) === d) return resumePlacement(saved);
     const seed = (Date.now() ^ (Math.random() * 1e9)) >>> 0;
-    openGenerated(placementLesson(seed, { singing: s.mode === 'voice' || d === 'voice', domain: d, priorities: (s.intake as Intake | null | undefined)?.priorities }), (st) => adaptPlacement(st, seed));
+    startPlacement(seed, placementLesson(seed, { singing: s.mode === 'voice' || d === 'voice', domain: d, priorities: (s.intake as Intake | null | undefined)?.priorities }));
   };
   /** Catching up: only the sections this player has not been measured on yet. */
   const openCatchUpPlacement = (only: SkillId[]) => {
+    const saved = loadPlacement();
+    if (saved && !saved.lesson.placementDomain) return resumePlacement(saved);
     const seed = (Date.now() ^ (Math.random() * 1e9)) >>> 0;
-    openGenerated(placementLesson(seed, { singing: s.mode === 'voice', priorities: (s.intake as Intake | null | undefined)?.priorities, only }), (st) => adaptPlacement(st, seed));
+    startPlacement(seed, placementLesson(seed, { singing: s.mode === 'voice', priorities: (s.intake as Intake | null | undefined)?.priorities, only }));
+  };
+  /** The home card's "continue": path lessons through their own opener (mini-lesson gate, unlocks). */
+  const continueSession = (v: SavedSession) => {
+    if (v.key.startsWith('path:')) return openLesson(v.key.slice(5) as LessonId);
+    openGenerated(v.lesson, undefined, false, { key: v.key, title: v.title, resume: v });
   };
   const openReview = () => {
     const def = reviewLesson(progress.review, Date.now() >>> 0);
-    if (def) openGenerated(def);
+    if (def) openGenerated(def, undefined, false, { key: 'review', title: t.review });
   };
   const openPuzzle = () => {
     const week = weekId(new Date());
     const fixed = progress.puzzles?.[week]?.band as Parameters<typeof weeklyPuzzle>[1] | undefined;
-    openGenerated(weeklyPuzzle(week, fixed ?? puzzleBand(ratingsOf(progress))));
+    openGenerated(weeklyPuzzle(week, fixed ?? puzzleBand(ratingsOf(progress))), undefined, false, { key: `puzzle:${week}`, title: t.weeklyPuzzle });
   };
-  const openModes = (level: number) => gate('modes', () => openGenerated(modesLesson(level, Date.now() >>> 0)));
-  const openAbsolute = (level: number) => gate('absolute-pitch', () => openGenerated(absoluteLesson(level, Date.now() >>> 0)));
-  const openTopic = (topic: string, level: number) => gate(`topic:${topic}`, () => openGenerated(topicLesson(topic, level, Date.now() >>> 0)));
+  const openModes = (level: number) => gate('modes', () => openGenerated(modesLesson(level, Date.now() >>> 0), undefined, false, { key: `modes:${level}`, title: `${t.skillNames.modes} · ${level}` }));
+  const openAbsolute = (level: number) => gate('absolute-pitch', () => openGenerated(absoluteLesson(level, Date.now() >>> 0), undefined, false, { key: `absolute:${level}`, title: `${t.skillNames.absolute} · ${level}` }));
+  const openTopic = (topic: string, level: number) =>
+    gate(`topic:${topic}`, () => openGenerated(topicLesson(topic, level, Date.now() >>> 0), undefined, false, { key: `topic:${topic}:${level}`, title: `${TOPIC_GEN[topic]?.title[s.uiLang] ?? topic} · ${level}` }));
   const [vocalLevel, setVocalLevel] = useState<number | null>(null);
   /** Class assignments: path lessons and generated practice (vocal levels, modes, wrong notes). */
   const openAssignment = (id: string) => {
@@ -323,12 +358,12 @@ export function App() {
   const openWrongNotes = (level: number) =>
     gate('wrong-notes', () => {
       setWrongLevel(level);
-      openGenerated(wrongNotesLesson(level, Date.now() >>> 0));
+      openGenerated(wrongNotesLesson(level, Date.now() >>> 0), undefined, false, { key: `wrong-notes:${level}`, title: `${LESSON_TITLE_FALLBACK[s.uiLang].wrong} · ${level}` });
     });
   const openRuns = () =>
     gate('runs', () => {
       const r = ratingsOf(progress).agility;
-      openGenerated(runsWorkshop(runLevelFor(r?.n ? r.r : null)));
+      openGenerated(runsWorkshop(runLevelFor(r?.n ? r.r : null)), undefined, false, { key: 'runs-workshop', title: t.skillNames.agility });
     });
   // Practise a skill at the player's level: the lesson on that skill's ladder that fits their rating.
   const practiceSkill = (k: SkillId) => {
@@ -354,9 +389,13 @@ export function App() {
   const openLessonNow = (id: LessonId) => {
     void piano.unlock(); // inside the Start gesture
     setGenerated(null);
+    const key = `path:${id}`;
+    const saved = loadSession(key);
+    setSlot({ key, title: (LESSON_META[id]?.title[s.uiLang] ?? id).replace(/\{[nk]\}/g, displayNote(pc('Bb'), namingFor(s.naming, s.uiLang), s.uiLang)), resume: saved ?? undefined });
     setLessonId(id);
     setLessonKey((k) => k + 1);
     setAutoStart(true);
+    enterPlay();
     setRoute('lesson');
   };
 
@@ -391,7 +430,13 @@ export function App() {
   const automatedRun = (SIMULATED || params.has('unlock') || (typeof navigator !== 'undefined' && navigator.webdriver)) && !params.has('catchup');
   const started = progress.history.length > 0 || Object.values(progress.lessons).some((l) => (l?.completions ?? 0) > 0);
   const pending = catchUp(s, progress);
-  const showCatchUp = !automatedRun && started && hasCatchUp(pending) && s.catchUpHidden !== pending.key;
+  const savedPlacement = route === 'home' ? loadPlacement() : null;
+  void dropTick;
+  const lastSession = route === 'home' && !automatedRun ? latestSession([PLACEMENT_KEY]) : null;
+  // A questionnaire left half-way shows as partly filled, to continue any time (also before any lesson).
+  const intakeDraft = route === 'home' ? intakeDraftProgress() : null;
+  const catchUpKey = `${pending.key}${intakeDraft ? '|draft' : ''}`;
+  const showCatchUp = !automatedRun && (intakeDraft || (!savedPlacement && started && hasCatchUp(pending))) && s.catchUpHidden !== catchUpKey;
 
   const order = personalOrder((s.intake as Intake | null | undefined)?.priorities, s.track);
   const states = lessonStates(progress, order);
@@ -435,14 +480,38 @@ export function App() {
               {lastFreeze && settings?.seenFreezeDay !== lastFreeze && gems.streak.count > 0 && (
                 <FreezeToast t={t} count={gems.streak.count} onClose={() => updateSettings({ seenFreezeDay: lastFreeze })} />
               )}
+              {savedPlacement && (
+                <ResumePlacementCard
+                  t={t}
+                  progress={placementProgressOf(savedPlacement)}
+                  onContinue={() => resumePlacement(savedPlacement)}
+                  onRestart={() => {
+                    clearPlacement();
+                    openPlacement(savedPlacement.lesson.placementDomain ?? null, true);
+                  }}
+                />
+              )}
+              {lastSession && (
+                <ResumeSessionCard
+                  t={t}
+                  title={lastSession.title}
+                  progress={sessionProgressOf(lastSession)}
+                  onContinue={() => continueSession(lastSession)}
+                  onDrop={() => {
+                    clearSession(lastSession.key);
+                    setDropTick((x) => x + 1);
+                  }}
+                />
+              )}
               {showCatchUp && (
                 <CatchUpCard
                   t={t}
-                  c={pending}
+                  c={{ ...pending, ...(intakeDraft && pending.intake === null ? { intake: 'later' as const } : {}), ...(savedPlacement ? { unmeasured: [] } : {}) }}
+                  draft={intakeDraft}
                   onIntake={() => go('intake')}
                   onMeasure={() => openCatchUpPlacement(pending.unmeasured)}
                   onFindLevel={() => openPlacement()}
-                  onHide={() => updateSettings({ catchUpHidden: pending.key })}
+                  onHide={() => updateSettings({ catchUpHidden: catchUpKey })}
                 />
               )}
               {news.length > 0 ? (
@@ -507,9 +576,12 @@ export function App() {
           autoStart={autoStart}
           onMode={(mode) => updateSettings({ mode })}
           onExit={() => go('home')}
-          onAgain={() => (generated?.def.id === 'placement' ? openPlacement() : generated?.def.id === 'review' ? openReview() : generated?.def.id === 'modes' ? openModes(modesAgainLevel(generated.def)) : generated?.def.id === 'wrong-notes' ? openWrongNotes(wrongLevel) : generated ? openPuzzle() : openLesson(lessonId))}
-          lessonDef={generated?.def}
+          onAgain={() => (generated?.def.id === 'placement' ? openPlacement(generated.def.placementDomain ?? null, true) : generated?.def.id === 'review' ? openReview() : generated?.def.id === 'modes' ? openModes(modesAgainLevel(generated.def)) : generated?.def.id === 'wrong-notes' ? openWrongNotes(wrongLevel) : generated ? openPuzzle() : openLesson(lessonId))}
+          lessonDef={generated?.def ?? slot?.resume?.lesson}
           adapt={generated?.adapt}
+          resume={slot?.resume}
+          onStep={slot ? (st) => saveSession(slot.key, slot.title, st, slot.seed) : undefined}
+          onDone={slot ? () => clearSession(slot.key) : undefined}
           nextLabel={generated ? t.seeSkillMap : undefined}
           ratings={ratingsOf(progress)}
           onNext={generated ? () => go('skills') : canNext ? () => openLesson(nextId) : null}

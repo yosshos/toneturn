@@ -18,6 +18,22 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.35.2',
+    date: '2026-11-06',
+    en: [
+      'Nothing is lost when you leave half-way: every lesson, topic, review, puzzle and Find my level keeps your place after each answer — leave with Back, a swipe, a reload or by closing the app, and continue where you stopped. The home screen offers it',
+      'Back inside a lesson now returns to the home screen instead of leaving the app',
+      'Getting to know you is a conversation: the narrator asks out loud and you answer — say the number or the words (switch to Reading at the top any time). Left half-way, it waits for you on the home screen',
+      'The voice-range siren has clear buttons: stop when you reach the top, start over, or keep the range',
+    ],
+    he: [
+      'שום דבר לא הולך לאיבוד כשיוצאים באמצע: כל שיעור, נושא, חזרה, חידה ומציאת הרמה שומרים את המקום אחרי כל תשובה — יצאתם בכפתור חזרה, בהחלקה, ברענון או בסגירת האפליקציה, וממשיכים מאיפה שעצרתם. מסך הבית מציע להמשיך',
+      'כפתור חזרה בתוך שיעור מחזיר עכשיו למסך הבית במקום לצאת מהאפליקציה',
+      'שאלון ההיכרות הוא שיחה: הקריינית שואלת בקול ואתם עונים — אומרים את המספר או את המילים (אפשר לעבור ל״בקריאה״ למעלה בכל רגע). מי שעצר באמצע, השאלון מחכה לו במסך הבית',
+      'לסירנה של טווח הקול יש כפתורים ברורים: לעצור כשמגיעים למעלה, להתחיל מחדש, או לשמור את הטווח',
+    ],
+  },
+  {
     version: '0.35.1',
     date: '2026-11-06',
     en: ['Started before the latest changes? The home screen now offers what is new for you: the Getting to know you questions, and measuring only the skills you have not been measured on yet'],
