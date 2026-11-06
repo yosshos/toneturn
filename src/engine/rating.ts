@@ -22,7 +22,7 @@ export const BAND_MAX = 1600;
 
 /** Skill Map axis order: listening skills, then performance/memory pairs (pitch: in tune + memory; rhythm: memory + precision). */
 /** Grouped as in spec G.8: listening → performance → memory → precision. */
-export const SKILLS: SkillId[] = ['degrees', 'intervals', 'chords', 'cadences', 'modes', 'pitch', 'absolute', 'rhythm-dictation', 'rhythm-reading', 'timing', 'tempo', 'sequences', 'rhythm', 'singing', 'technique', 'agility', 'notes', 'theory', 'sight', 'improv'];
+export const SKILLS: SkillId[] = ['degrees', 'intervals', 'chords', 'cadences', 'modes', 'pitch', 'absolute', 'rhythm-dictation', 'rhythm-reading', 'timing', 'tempo', 'sequences', 'rhythm', 'singing', 'technique', 'agility', 'notes', 'theory', 'transpose', 'sight', 'improv'];
 
 /** The Skill Map's five domains (product owner): skills grouped by how closely the concepts are related. */
 export type DomainId = 'pitch' | 'time' | 'memory' | 'voice' | 'reading';
@@ -31,7 +31,7 @@ export const DOMAINS: { id: DomainId; skills: SkillId[] }[] = [
   { id: 'time', skills: ['rhythm-dictation', 'rhythm-reading', 'timing', 'tempo'] },
   { id: 'memory', skills: ['sequences', 'rhythm'] },
   { id: 'voice', skills: ['singing', 'technique', 'agility'] },
-  { id: 'reading', skills: ['notes', 'theory', 'sight', 'improv'] },
+  { id: 'reading', skills: ['notes', 'theory', 'transpose', 'sight', 'improv'] },
 ];
 export const domainOf = (k: SkillId): DomainId => DOMAINS.find((d) => d.skills.includes(k))?.id ?? 'pitch';
 /** Axes on the Skill Map that have no content yet — always shown as unmeasured. */
@@ -158,7 +158,7 @@ export const nextLevel = (level: number, correct: boolean, max = 2) => Math.max(
 // Core listening and musicianship count fully; supporting skills ¾; voice-specific and creative skills ½
 // (they count only once measured, so a non-singer is never pulled down); absolute pitch is tracked apart.
 export const OVERALL_WEIGHT: Partial<Record<SkillId, number>> = {
-  notes: 0.75, modes: 0.75, theory: 0.75, pitch: 0.75, sight: 0.75, timing: 0.75, rhythm: 0.75,
+  notes: 0.75, modes: 0.75, theory: 0.75, pitch: 0.75, sight: 0.75, timing: 0.75, rhythm: 0.75, transpose: 0.75,
   technique: 0.5, agility: 0.5, improv: 0.5,
   absolute: 0,
 };

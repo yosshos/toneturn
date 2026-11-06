@@ -39,6 +39,36 @@ export interface LessonMeta {
 }
 
 export const LESSON_META: Record<LessonId, LessonMeta> = {
+  'basics-pitch': {
+    title: { en: 'High and low', he: 'גבוה ונמוך' },
+    blurb: { en: 'Higher or lower? Same or different? Your ears already know.', he: 'גבוה יותר או נמוך יותר? אותו דבר או שונה? האוזניים כבר יודעות.' },
+    icon: 'ear',
+    tip: { en: 'Hum a note, then a higher one, then a lower one. That is the whole idea of pitch.', he: 'זמזמו צליל, אחר כך אחד גבוה יותר, ואז נמוך יותר. זה כל הרעיון של גובה צליל.' },
+  },
+  'basics-shape': {
+    title: { en: 'The shape of a tune', he: 'הצורה של מנגינה' },
+    blurb: { en: 'Up, down, a hill or a valley — melodies have shapes.', he: 'עולה, יורדת, גבעה או עמק — למנגינות יש צורה.' },
+    icon: 'steps',
+    tip: { en: 'Draw a song you like in the air with your finger: up, down, up again.', he: 'ציירו באוויר עם האצבע שיר שאתם אוהבים: למעלה, למטה, ושוב למעלה.' },
+  },
+  'basics-beat': {
+    title: { en: 'Feel the beat', he: 'להרגיש את הפעמה' },
+    blurb: { en: 'Steady or wobbly, faster or slower — the heartbeat of music.', he: 'יציבה או מתנדנדת, מהירה או איטית — הדופק של המוזיקה.' },
+    icon: 'drum',
+    tip: { en: 'Walk to a song and notice your steps land on its beat.', he: 'לכו לצלילי שיר ושימו לב שהצעדים נוחתים על הפעמה שלו.' },
+  },
+  'basics-voice': {
+    title: { en: 'Match a note', he: 'להתאים צליל' },
+    blurb: { en: 'Hear a note, sing it back. No words, no theory.', he: 'שומעים צליל, שרים אותו בחזרה. בלי מילים, בלי תיאוריה.' },
+    icon: 'mic',
+    tip: { en: 'Hum along with a fridge, a fan or a kettle — everything has a pitch.', he: 'זמזמו יחד עם המקרר, המאוורר או הקומקום — לכל דבר יש גובה צליל.' },
+  },
+  transpose: {
+    title: { en: 'Same tune, new key', he: 'אותה מנגינה, סולם אחר' },
+    blurb: { en: 'Move a melody to another key — name it, spot it, sing it.', he: 'מעבירים מנגינה לסולם אחר — קוראים לה בשמות, מזהים אותה ושרים אותה.' },
+    icon: 'steps',
+    tip: { en: 'Sing "Happy" in your head starting on any note: the steps stay the same, only home moves.', he: 'שירו בראש מנגינה מוכרת מכל צליל שתבחרו: הצעדים נשארים, רק הבית זז.' },
+  },
   'bflat-two-homes': {
     title: { en: 'Same {n}, two homes', he: 'אותו {n}, שני בתים' },
     blurb: { en: 'One note. Two keys. Hear it change.', he: 'צליל אחד. שני סולמות. שומעים את ההבדל.' },
@@ -49,7 +79,7 @@ export const LESSON_META: Record<LessonId, LessonMeta> = {
     },
   },
   'degrees-135': {
-    title: { en: 'Home, third, fifth', he: 'טוניקה, טרצה, קווינטה' },
+    title: { en: 'Home, third, fifth', he: 'הבית, השלוש והחמש' },
     blurb: { en: 'The three notes of the home chord, in any key.', he: 'שלושת הצלילים של אקורד הבית, בכל סולם.' },
     icon: 'steps',
     tip: { en: 'Sing 1–3–5 up and down in any key you like. Your ear learns the shape.', he: 'שירו 1–3–5 למעלה ולמטה בכל סולם. האוזן לומדת את הצורה.' },
@@ -61,13 +91,13 @@ export const LESSON_META: Record<LessonId, LessonMeta> = {
     tip: { en: 'Listen for the middle note: it moves just one half-step between major and minor.', he: 'הקשיבו לצליל האמצעי: בין מז׳ור למינור הוא זז רק חצי טון.' },
   },
   cadences: {
-    title: { en: 'Cadence detective', he: 'בלש הקדנצות' },
+    title: { en: 'Cadence detective', he: 'בלש הסיומות' },
     blurb: { en: 'Does the phrase come home, or stop on a question?', he: 'האם המשפט חוזר הביתה, או נעצר בשאלה?' },
     icon: 'cadence',
     tip: { en: 'In songs you know, notice the phrase endings that sound like a question.', he: 'בשירים שאתם מכירים, שימו לב לסופי משפטים שנשמעים כמו שאלה.' },
   },
   intervals: {
-    title: { en: 'Thirds, fifths, octaves', he: 'טרצות, קווינטות, אוקטבות' },
+    title: { en: 'Thirds, fifths, octaves', he: 'מרווחים: כמה רחוק?' },
     blurb: { en: 'How far apart are two notes? One after the other, then together.', he: 'כמה רחוקים שני צלילים? אחד אחרי השני, ואז ביחד.' },
     icon: 'steps',
     tip: { en: 'Hum the first two notes of a song you love — which interval is it?', he: 'זמזמו את שני הצלילים הראשונים של שיר שאתם אוהבים — איזה מרווח זה?' },
@@ -79,7 +109,7 @@ export const LESSON_META: Record<LessonId, LessonMeta> = {
     tip: { en: 'Listen to bass lines today: is the bass on the chord’s root, or somewhere else?', he: 'הקשיבו היום לקווי בס: האם הבס על שורש האקורד, או במקום אחר?' },
   },
   'notes-degrees': {
-    title: { en: 'Notes and degrees', he: 'תווים ודרגות' },
+    title: { en: 'Notes and degrees', he: 'שמות תווים ומספרים בסולם' },
     blurb: { en: 'Hear it and name the note; turn note names into degrees and back.', he: 'שומעים ונותנים שם לתו; הופכים שמות תווים לדרגות ובחזרה.' },
     icon: 'steps',
     tip: { en: 'Pick a key and say its notes as degrees out loud: “E-flat is one, F is two…”.', he: 'בחרו סולם ואמרו את התווים שלו כדרגות בקול: "מי במול זה אחת, פה זה שתיים…".' },
@@ -91,7 +121,7 @@ export const LESSON_META: Record<LessonId, LessonMeta> = {
     tip: { en: 'Hum the note names of a melody you know: the name and the sound start to stick together.', he: 'זמזמו את שמות התווים של מנגינה שאתם מכירים: השם והצליל מתחילים להידבק.' },
   },
   'sing-degrees': {
-    title: { en: 'Sing the degrees', he: 'לשיר את הדרגות' },
+    title: { en: 'Sing the degrees', he: 'לשיר לפי מספרים' },
     blurb: { en: 'Hear “five three one” — sing those notes in order.', he: 'שומעים "חמש שלוש אחת" — שרים את הצלילים לפי הסדר.' },
     icon: 'mic',
     tip: { en: 'Sing 1–2–3–2–1 in a new key every day.', he: 'שירו 1–2–3–2–1 בסולם חדש כל יום.' },
@@ -800,6 +830,7 @@ export function askTemplate(q: Question, l: Lang, nm: Naming = 'letter'): string
     case 'note-name':
       return q.direction === 'heard-pitch→name' ? (l === 'en' ? 'Which note is it?' : 'איזה תו זה?') : l === 'en' ? `Which note is degree ${q.degree}?` : `איזה תו הוא דרגה ${q.degree}?`;
     case 'sing-seq':
+      if (q.fromKey) return l === 'en' ? `Now sing it in ${displayNote(q.key, nm, l)} major` : `עכשיו שירו את זה ב${displayNote(q.key, nm, l)} מז׳ור`;
       if (q.promptBy === 'name' && q.names) return l === 'en' ? `Sing ${namesShown(q.names, nm, l)}` : `שירו ${namesShown(q.names, nm, l)}`;
       return l === 'en' ? `Sing ${q.degrees.join(' – ')}` : `שירו ${q.degrees.join(' – ')}`;
     case 'seventh':
@@ -807,6 +838,7 @@ export function askTemplate(q: Question, l: Lang, nm: Naming = 'letter'): string
     case 'progression':
       return l === 'en' ? 'Which progression?' : 'איזה מהלך?';
     case 'name-seq':
+      if (q.from) return l === 'en' ? `${namesShown(q.from.names, nm, l)} in ${displayNote(q.from.key, nm, l)} major — say it in ${displayNote(q.key, nm, l)} major` : `${namesShown(q.from.names, nm, l)} ב${displayNote(q.from.key, nm, l)} מז׳ור — אמרו את זה ב${displayNote(q.key, nm, l)} מז׳ור`;
       return q.given === 'sound' ? (l === 'en' ? 'Which notes, in order?' : 'אילו תווים, לפי הסדר?') : l === 'en' ? `Which notes are degrees ${q.degrees.join(' – ')}?` : `אילו תווים הם הדרגות ${q.degrees.join(' – ')}?`;
     case 'sing-run':
       return q.prompt === 'echo' ? (l === 'en' ? 'Sing the run back' : 'שירו את הראן בחזרה') : l === 'en' ? `Sing: ${describeRun(q.run, l)}` : `שירו: ${describeRun(q.run, l)}`;

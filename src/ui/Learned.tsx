@@ -6,7 +6,7 @@ import { MINI_LESSONS } from '../content/minilessons';
 import type { AreaId, MiniLesson } from '../content/miniTypes';
 import type { Strings } from '../i18n/strings';
 import type { Settings } from '../storage/progress';
-import { MiniLessonPlayer } from './MiniLesson';
+import { GlossaryList, MiniLessonPlayer } from './MiniLesson';
 
 export const AREAS: AreaId[] = ['ear', 'harmony', 'rhythm', 'theory', 'jazz', 'voice', 'world', 'play'];
 const AREA_ICON: Record<AreaId, string> = { ear: '👂', harmony: '🎼', rhythm: '🥁', theory: '📖', jazz: '🎷', voice: '🎤', world: '🌍', play: '🎹' };
@@ -42,6 +42,7 @@ export function LearnedScreen({ t, settings, name, onLearned, onBack }: { t: Str
         </p>
         <p className="field-hint">{t.learnedHint}</p>
       </section>
+      <GlossaryList lang={lang} title={t.glossaryTitle} hint={t.glossaryHint} />
       {AREAS.map((a) => {
         const ls = all.filter((l) => l.area === a);
         if (!ls.length) return null;

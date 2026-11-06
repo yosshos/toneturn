@@ -7,6 +7,7 @@ import { jazzVoicing, PROGRESSIONS, SEVENTHS, voiceProgression, type JazzChord, 
 import { opening, SONGS, type SongOpening } from './songs';
 import { atTempo, buildRun, MAX_RUN_LEVEL, runAt, runDifficulty, type RunMaterial, type RunShape, type RunSpec } from './runs';
 import { majorScale, pc, pcValue, voiceChord, type ChordQuality, type PitchClass } from './pitch';
+import { basicsBeat, basicsPitch, basicsShape, basicsVoice, transposeLesson } from './basics';
 import { options as rhythmOptions, rhythmAt, rhythmFromKey, rhythmKey, rhythmSound, type Rhythm, type RhythmLevel } from './rhythm';
 
 export const CONTENT_SCHEMA_VERSION = 2;
@@ -37,7 +38,9 @@ export type SkillId =
   /** Sight-singing / sight-reading. */
   | 'sight'
   /** Improvisation (from the improvisation report). */
-  | 'improv';
+  | 'improv'
+  /** Transposition: the same tune in another key or moved by an interval — named, recognised or sung. */
+  | 'transpose';
 export type IntervalName = 'M3' | 'P5' | 'P8';
 export type BassRole = 'root' | 'third' | 'fifth';
 export type Quality = 'maj' | 'min' | 'dim' | 'aug';
@@ -69,6 +72,8 @@ interface QBase {
   difficulty: number;
   /** A visual aid is shown while answering (spec M.3): difficulty already lowered, XP × 0.8. */
   aid?: 'keymap' | 'target' | 'lookup';
+  /** Rated as this skill instead of the one its kind implies (e.g. naming notes in a new key = transposition). */
+  skillAs?: SkillId;
 }
 
 export interface DegreeQuestion extends QBase {
@@ -160,6 +165,8 @@ export interface SingSeqQuestion extends QBase {
   /** Opening of a known melody (revealed after the answer). */
   song?: string;
   names?: string[];
+  /** Transposition: the melody was played in this key; sing it in `key`. */
+  fromKey?: PitchClass;
   answer: 'accurate';
 }
 
@@ -301,6 +308,8 @@ export interface NameSeqQuestion extends QBase {
   names: string[];
   midis: number[];
   given: 'sound' | 'degrees';
+  /** Transposition: the same melody as given in another key (note keys like 'C0'). */
+  from?: { key: PitchClass; names: string[] };
   answer: string;
 }
 
@@ -353,6 +362,7 @@ export const INTERVAL_SEMITONES: Record<IntervalName, number> = { M3: 4, P5: 7, 
 
 /** Which skill a question measures (for ratings). */
 export function questionSkill(q: Question): SkillId {
+  if (q.skillAs) return q.skillAs;
   switch (q.kind) {
     case 'degree':
       return 'degrees';
@@ -474,7 +484,12 @@ export type LessonId =
   | 'wrong-notes'
   | 'placement'
   | 'review'
-  | 'weekly-puzzle';
+  | 'weekly-puzzle'
+  | 'basics-pitch'
+  | 'basics-shape'
+  | 'basics-beat'
+  | 'basics-voice'
+  | 'transpose';
 
 /** Small deterministic PRNG for seeded generation in tests and replays. */
 export function mulberry32(seed: number): () => number {
@@ -1289,6 +1304,7 @@ export const LESSON_ORDER: LessonId[] = [
   'rhythm-r7',
   'rhythm-r8',
   'note-sequences',
+  'transpose',
   'jazz-1',
   'songs',
   'slash-chords',
@@ -1298,6 +1314,16 @@ export const LESSON_ORDER: LessonId[] = [
 
 export function makeLesson(id: LessonId, seed = Date.now()): LessonDef {
   switch (id) {
+    case 'basics-pitch':
+      return basicsPitch(seed);
+    case 'basics-shape':
+      return basicsShape(seed);
+    case 'basics-beat':
+      return basicsBeat(seed);
+    case 'basics-voice':
+      return basicsVoice(seed);
+    case 'transpose':
+      return transposeLesson(seed);
     case 'modes':
       return modesLesson(1, seed);
     case 'slash-chords':

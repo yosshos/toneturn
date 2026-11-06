@@ -32,7 +32,7 @@ test.describe('placement, Skill Map, review, weekly puzzle', () => {
       }).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['data-start'], childList: true });
     });
     // The topic strip shows what is done, now and left.
-    await expect(page.locator('.topic-strip .ts')).toHaveCount(19); // every skill (rhythmic precision rides on rhythm reading), sung ones included (voice)
+    await expect(page.locator('.topic-strip .ts')).toHaveCount(20); // every skill (transposition included) (rhythmic precision rides on rhythm reading), sung ones included (voice)
     await expect(page.locator('.topic-strip .ts.done').first()).toBeVisible({ timeout: 120_000 });
     // The meter at the side follows the climb.
     await expect(page.locator('.placement-meter')).toBeVisible();

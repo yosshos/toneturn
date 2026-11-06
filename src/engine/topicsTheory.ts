@@ -331,8 +331,8 @@ const INSTR = [
 ];
 
 TOPIC_GEN['transposition'] = {
-  title: { en: 'Transposition', he: 'טרנספוזיציה' },
-  skill: 'theory',
+  title: { en: 'Transposition on paper', he: 'טרנספוזיציה בכתב' },
+  skill: 'transpose',
   levels: [
     { en: 'Move a note by an interval', he: 'להזיז צליל במרווח' },
     { en: 'Transposing instruments: concert → written', he: 'כלים מטרנספזים: צליל אמיתי ← כתוב' },
@@ -363,7 +363,7 @@ TOPIC_GEN['transposition'] = {
       }
     } while (!ans || Math.abs(ans.a) > 1);
     const q = spChoicesQ(ans, noteChoices(rnd, ans));
-    return choiceQ({ id, topic: 'transposition', level, seed, skill: 'theory', difficulty: 1150 + 170 * level, ask: ask!, text: text!, ...q, stimulus: [] });
+    return choiceQ({ id, topic: 'transposition', level, seed, skill: 'transpose', difficulty: 1150 + 170 * level, ask: ask!, text: text!, ...q, stimulus: [] });
   },
 };
 

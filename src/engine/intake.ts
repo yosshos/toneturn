@@ -68,6 +68,11 @@ export const LESSON_AREA: Record<LessonId, DomainId> = {
   'slash-chords': 'pitch',
   dictation: 'memory',
   'jazz-2': 'pitch',
+  transpose: 'reading',
+  'basics-pitch': 'pitch',
+  'basics-shape': 'memory',
+  'basics-beat': 'time',
+  'basics-voice': 'voice',
 } as Record<LessonId, DomainId>;
 
 /** Lessons that need another one first, whatever the order of areas (the hearing basics come before singing them…). */
@@ -84,14 +89,26 @@ export const PREREQ: Partial<Record<LessonId, LessonId[]>> = {
   'jazz-1': ['cadences', 'intervals'],
   'jazz-2': ['jazz-1'],
   'slash-chords': ['inversions'],
+  transpose: ['notes-degrees'],
 };
+
+/** The ear basics (no words needed) that open the path for curious listeners and hobbyists. */
+export const BASICS_ORDER: LessonId[] = ['basics-pitch', 'basics-shape', 'basics-beat', 'basics-voice'];
 
 /**
  * The path in the player's order. Weighted round-robin over areas (weights 5, 4, 3, 2, 1 by rank): the top area
  * comes first and most often, the last area latest; within an area the original order is kept, and no lesson comes
  * before its prerequisites. Null priorities = the original path.
  */
-export function personalOrder(priorities: DomainId[] | null | undefined): LessonId[] {
+export function personalOrder(priorities: DomainId[] | null | undefined, track?: Track | null): LessonId[] {
+  const core = coreOrder(priorities);
+  if (track !== 'explorer' && track !== 'hobby') return core;
+  // Beginners start with the ear basics, in their own order of areas.
+  const rank = (id: LessonId) => (priorities ? Math.max(0, priorities.indexOf(LESSON_AREA[id])) : BASICS_ORDER.indexOf(id));
+  return [...[...BASICS_ORDER].sort((a, b) => rank(a) - rank(b)), ...core];
+}
+
+function coreOrder(priorities: DomainId[] | null | undefined): LessonId[] {
   if (!priorities || !priorities.length) return [...LESSON_ORDER];
   const rank = (a: DomainId) => {
     const i = priorities.indexOf(a);

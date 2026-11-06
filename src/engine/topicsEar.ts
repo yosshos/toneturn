@@ -463,3 +463,111 @@ TOPIC_GEN['swing-ratio'] = {
     return choiceQ({ id, topic: 'swing-ratio', level, seed, skill: 'rhythm-dictation', difficulty: 1150 + 250 * level, ask: { en: 'How are the eighth notes played?', he: 'איך מנוגנות השמיניות?' }, names, answer, choices: pool, stimulus: [swing(SWING[answer][0], beat, 8)], choiceStim });
   },
 };
+
+// ---------------------------------------------------------------- AC. Rhythmic displacement
+// "Rhythmic transposition": the same pattern started on another place in the bar (Charleston from beat 2).
+// One 4/4 bar on a sixteenth grid (0..15), shifted cyclically.
+
+const DISP_PATTERNS: { id: string; en: string; he: string; on: number[]; fine?: boolean }[] = [
+  { id: 'charleston', en: 'Charleston', he: 'צ׳רלסטון', on: [0, 6] },
+  { id: 'tresillo', en: 'Tresillo (3-3-2)', he: 'טרסיו (3-3-2)', on: [0, 6, 12] },
+  { id: 'q-ee', en: 'Quarter, two eighths', he: 'רבע ושתי שמיניות', on: [0, 4, 6, 8, 12] },
+  { id: 'push', en: 'The push', he: 'הדחיפה', on: [0, 4, 8, 14] },
+  { id: 'gallop', en: 'Gallop', he: 'דהירה', on: [0, 3, 4, 7, 8, 11], fine: true },
+  { id: 'funk', en: 'Funk cell', he: 'תא פאנק', on: [0, 3, 6, 10, 12], fine: true },
+  { id: 'clave-ish', en: 'Off-beat sixteenths', he: 'שש־עשריות מחוץ לפעמה', on: [1, 4, 7, 10, 14], fine: true },
+];
+const DISP_SHIFTS: Record<string, [number, { en: string; he: string }]> = {
+  s16: [1, { en: 'A sixteenth later', he: 'שש־עשרית מאוחר יותר' }],
+  s8: [2, { en: 'An eighth later', he: 'שמינית מאוחר יותר' }],
+  sd8: [3, { en: 'A dotted eighth later', he: 'שמינית מנוקדת מאוחר יותר' }],
+  s1: [4, { en: 'One beat later', he: 'פעמה אחת מאוחר יותר' }],
+  s2: [8, { en: 'Two beats later', he: 'שתי פעמות מאוחר יותר' }],
+};
+const shiftOn = (on: number[], by: number) => on.map((o) => (((o + by) % 16) + 16) % 16).sort((a, b) => a - b);
+const sameSet = (a: number[], b: number[]) => a.length === b.length && a.every((x, i) => x === b[i]);
+/** Bars of the pattern over a soft click on every beat (accent on 1). */
+function dispSound(on: number[], bars: number, bpm = 88): Stimulus {
+  const step = 60 / bpm / 4;
+  const ev: NoteEvent[] = [];
+  for (let b = 0; b < bars; b++) {
+    for (let k = 0; k < 4; k++) ev.push({ midi: 76, start: (b * 16 + k * 4) * step, duration: 0.04, velocity: k === 0 ? 0.55 : 0.32, perc: k === 0 ? 'accent' : 'click' });
+    for (const o of on) ev.push({ midi: 64, start: (b * 16 + o) * step, duration: step * 1.6, velocity: 0.8 });
+  }
+  return { kind: 'events', events: ev, length: bars * 16 * step + 0.2 };
+}
+/** "●·  ·●  ··  ··" — one group per beat (sixteenths when `fine`, else eighths). */
+const dispGrid = (on: number[], fine: boolean) =>
+  [0, 1, 2, 3].map((beat) => (fine ? [0, 1, 2, 3] : [0, 2]).map((s) => (on.includes(beat * 4 + s) ? '●' : '·')).join('')).join('  ');
+
+TOPIC_GEN['displacement'] = {
+  title: { en: 'Rhythmic displacement', he: 'הסטה ריתמית' },
+  skill: 'rhythm-dictation',
+  levels: [
+    { en: 'By ear: how far did it move?', he: 'בשמיעה: כמה זה זז?' },
+    { en: 'On paper: start it later', he: 'בכתב: להתחיל מאוחר יותר' },
+    { en: 'By ear: find the shifted version', he: 'בשמיעה: מצאו את הגרסה המוסטת' },
+    { en: 'Sixteenths: fine shifts', he: 'שש־עשריות: הסטות עדינות' },
+  ],
+  gen(seed, level, id) {
+    const rnd = rng(seed);
+    const fine = level === 4;
+    let p: (typeof DISP_PATTERNS)[number], pool: string[], answer: string, shifted: number[];
+    do {
+      p = pickR(rnd, DISP_PATTERNS.filter((x) => !!x.fine === fine));
+      pool = fine ? ['s16', 's8', 'sd8', 's1'] : ['s8', 's1', 's2'];
+      answer = pickR(rnd, pool);
+      shifted = shiftOn(p.on, DISP_SHIFTS[answer][0]);
+    } while (sameSet(shifted, p.on) || pool.some((k) => k !== answer && sameSet(shiftOn(p.on, DISP_SHIFTS[k][0]), shifted)));
+    const shiftName = DISP_SHIFTS[answer][1];
+    const g = (on: number[]) => dispGrid(on, fine || p.on.some((o) => o % 2 === 1));
+    if (level === 2) {
+      // Paper: which grid is the pattern started `answer` later? Wrong ones: other shifts, and the same shift earlier.
+      const opts: Record<string, number[]> = { right: shifted };
+      for (const k of pool) if (k !== answer) opts[k] = shiftOn(p.on, DISP_SHIFTS[k][0]);
+      opts.early = shiftOn(p.on, -DISP_SHIFTS[answer][0]);
+      const keys = Object.keys(opts).filter((k, i, a) => a.findIndex((j) => sameSet(opts[j], opts[k])) === i);
+      const letters = ['a', 'b', 'c', 'd'];
+      const order = shuffleR(rnd, keys).slice(0, 4);
+      if (!order.includes('right')) order[0] = 'right';
+      const names: ChoiceQuestion['names'] = {};
+      const choiceStim: Record<string, Stimulus[]> = {};
+      order.forEach((k, i) => {
+        names[letters[i]] = nm(g(opts[k]), g(opts[k]), letters[i].toUpperCase());
+        choiceStim[letters[i]] = [dispSound(opts[k], 1)];
+      });
+      const ans = letters[order.indexOf('right')];
+      return choiceQ({
+        id, topic: 'displacement', level, seed, skill: 'rhythm-reading', difficulty: 1250,
+        ask: { en: `${p.en}: start it ${shiftName.en.toLowerCase()}. Which grid?`, he: `${p.he}: להתחיל ${shiftName.he}. איזו תבנית?` },
+        text: { en: g(p.on), he: g(p.on) },
+        names, answer: ans, choices: letters.slice(0, order.length), stimulus: [dispSound(p.on, 1)], choiceStim,
+      });
+    }
+    if (level === 3) {
+      // Hear the pattern, then pick the version that starts `answer` later (wrong: other shifts, not moved).
+      const opts: number[][] = [shifted, ...pool.filter((k) => k !== answer).map((k) => shiftOn(p.on, DISP_SHIFTS[k][0]))];
+      const order = shuffleR(rnd, [0, 1, 2]);
+      const letters = ['a', 'b', 'c'];
+      const names: ChoiceQuestion['names'] = {};
+      const choiceStim: Record<string, Stimulus[]> = {};
+      order.forEach((oi, i) => {
+        names[letters[i]] = nm(`Version ${letters[i].toUpperCase()}`, `גרסה ${['א', 'ב', 'ג'][i]}`, letters[i].toUpperCase());
+        choiceStim[letters[i]] = [dispSound(opts[oi], 2)];
+      });
+      return choiceQ({
+        id, topic: 'displacement', level, seed, skill: 'rhythm-dictation', difficulty: 1320,
+        ask: { en: `${p.en}, started ${shiftName.en.toLowerCase()} — which version?`, he: `${p.he}, ${shiftName.he} — איזו גרסה?` },
+        names, answer: letters[order.indexOf(0)], choices: letters, stimulus: [dispSound(p.on, 2)], choiceStim,
+      });
+    }
+    // Levels 1 and 4: the pattern, then the same pattern moved — how far?
+    const names: ChoiceQuestion['names'] = {};
+    for (const k of pool) names[k] = nm(DISP_SHIFTS[k][1].en, DISP_SHIFTS[k][1].he);
+    return choiceQ({
+      id, topic: 'displacement', level, seed, skill: 'rhythm-dictation', difficulty: fine ? 1560 : 1180,
+      ask: { en: `${p.en} — then moved. How far did it move?`, he: `${p.he} — ואז מוסט. כמה הוא זז?` },
+      names, answer, choices: pool, stimulus: [dispSound(p.on, 2), rest(0.5), dispSound(shifted, 2)],
+    });
+  },
+};

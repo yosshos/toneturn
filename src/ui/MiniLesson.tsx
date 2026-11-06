@@ -3,6 +3,8 @@
 
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import type { MiniLesson } from '../content/miniTypes';
+import { GLOSSARY, termsIn, type Term } from '../content/glossary';
+import type { Stimulus } from '../engine/lesson';
 import { renderStimulus } from '../engine/lesson';
 import { pc } from '../engine/pitch';
 import type { Strings } from '../i18n/strings';
@@ -24,6 +26,7 @@ export function MiniLessonPlayer({ t, settings, lesson, name, onFinish }: { t: S
   const [i, setI] = useState(0);
   const [phase, setPhase] = useState<Phase>('playing');
   const [celebrate, setCelebrate] = useState(false);
+  const [term, setTerm] = useState<Term | null>(null);
   const heard = useRef(new Set<number>());
   const ctl = useRef<AbortController | null>(null);
   const step = lesson.steps[i];
@@ -71,10 +74,18 @@ export function MiniLessonPlayer({ t, settings, lesson, name, onFinish }: { t: S
 
   const jump = (to: number) => {
     ctl.current?.abort();
+    setTerm(null);
     setI(Math.max(0, Math.min(lesson.steps.length - 1, to)));
     setPhase('playing');
   };
   const heardAll = heard.current.size === lesson.steps.length;
+  const words = termsIn(personal(step.say[lang], name), lang);
+  const explain = (w: Term) => {
+    ctl.current?.abort();
+    setPhase('paused');
+    setTerm(w);
+    void playSound(w.play);
+  };
 
   if (celebrate)
     return (
@@ -129,6 +140,8 @@ export function MiniLessonPlayer({ t, settings, lesson, name, onFinish }: { t: S
           <p className="mini-caption" aria-live="polite">
             {personal(step.say[lang], name)}
           </p>
+          {words.length > 0 && <TermChips words={words} lang={lang} active={term} onPick={explain} label={t.termsWhat} />}
+          {term && <TermCard term={term} lang={lang} onReplay={() => void playSound(term.play)} onClose={() => setTerm(null)} closeLabel={t.termClose} />}
         </div>
         <div className="mini-controls">
           <button className="icon-btn" aria-label={t.miniBack} disabled={i === 0} onClick={() => jump(i - 1)}>
@@ -160,5 +173,77 @@ export function MiniLessonPlayer({ t, settings, lesson, name, onFinish }: { t: S
         </button>
       </div>
     </div>
+  );
+}
+
+const playSound = async (stim: Stimulus[]) => {
+  try {
+    await piano.unlock();
+    const r = renderStimulus(stim);
+    await piano.play(r.events, r.length, new AbortController().signal);
+  } catch {
+    /* no audio */
+  }
+};
+
+/** Music words in the current sentence, as small "what's that?" chips (spec AC). */
+export function TermChips({ words, lang, active, onPick, label }: { words: Term[]; lang: 'en' | 'he'; active: Term | null; onPick: (w: Term) => void; label: string }) {
+  return (
+    <div className="term-chips" aria-label={label}>
+      <span className="term-q" aria-hidden="true">
+        ?
+      </span>
+      {words.map((w) => (
+        <button key={w.id} className={`term-chip ${active?.id === w.id ? 'on' : ''}`} data-term={w.id} onClick={() => onPick(w)}>
+          {w.label[lang]}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+export function TermCard({ term, lang, onReplay, onClose, closeLabel }: { term: Term; lang: 'en' | 'he'; onReplay: () => void; onClose?: () => void; closeLabel: string }) {
+  return (
+    <div className="term-card" data-term-card={term.id} role="note">
+      <b>{term.label[lang]}</b>
+      <p>{term.explain[lang]}</p>
+      <div className="term-card-actions">
+        <button className="btn ghost small" onClick={onReplay}>
+          🔊
+        </button>
+        {onClose && (
+          <button className="btn ghost small" onClick={onClose} aria-label={closeLabel}>
+            ✕
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** Every glossary word, for "Topics I learned". */
+export function GlossaryList({ lang, title, hint }: { lang: 'en' | 'he'; title: string; hint: string }) {
+  const [open, setOpen] = useState<string | null>(null);
+  return (
+    <section className="set-card glossary" data-glossary="1">
+      <h2>📖 {title}</h2>
+      <p className="field-hint">{hint}</p>
+      <div className="term-chips wrap">
+        {GLOSSARY.map((w) => (
+          <button
+            key={w.id}
+            className={`term-chip ${open === w.id ? 'on' : ''}`}
+            data-term={w.id}
+            onClick={() => {
+              setOpen(open === w.id ? null : w.id);
+              if (open !== w.id) void playSound(w.play);
+            }}
+          >
+            {w.label[lang]}
+          </button>
+        ))}
+      </div>
+      {open && <TermCard term={GLOSSARY.find((w) => w.id === open)!} lang={lang} onReplay={() => void playSound(GLOSSARY.find((w) => w.id === open)!.play)} closeLabel="" />}
+    </section>
   );
 }

@@ -1786,3 +1786,13 @@
 @keyframes intakeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 @keyframes rankPop { 0% { transform: scale(.5); } 70% { transform: scale(1.2); } 100% { transform: scale(1); } }
 :root[data-motion='reduced'] .intake-card, :root[data-motion='reduced'] .rank-btn.on .rank-n { animation: none; }
+
+/* Plain-language term chips (spec AC) */
+.term-chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; align-items: center; margin-top: 4px; }
+.term-chips.wrap { justify-content: flex-start; }
+.term-q { width: 20px; height: 20px; border-radius: 50%; display: inline-grid; place-items: center; font-size: 0.75rem; font-weight: 800; background: var(--gold); color: #1b1b1b; }
+.term-chip { border: 1px dashed currentColor; background: transparent; color: inherit; border-radius: 999px; padding: 3px 10px; font-size: 0.85rem; cursor: pointer; opacity: 0.85; }
+.term-chip.on, .term-chip:hover { opacity: 1; border-style: solid; color: var(--gold); }
+.term-card { margin-top: 8px; padding: 10px 12px; border-radius: 12px; background: rgba(255, 255, 255, 0.07); text-align: start; display: grid; gap: 4px; }
+.term-card p { margin: 0; line-height: 1.45; }
+.term-card-actions { display: flex; gap: 6px; justify-content: flex-end; }

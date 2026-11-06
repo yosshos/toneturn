@@ -115,7 +115,7 @@ export const LESSONS: MiniLesson[] = [
     id: 'cadences',
     area: 'harmony',
     emoji: '🕵️',
-    title: { en: 'Cadence detective', he: 'בלש הקדנצות' },
+    title: { en: 'Cadence detective', he: 'בלש הסיומות' },
     takeaway: { en: 'A phrase that ends V → I is resolved, like a full stop; one that stops on V is open, like a question.', he: 'משפט שנגמר ב־V → I הוא נפתר, כמו נקודה; משפט שנעצר על V הוא פתוח, כמו שאלה.' },
     steps: [
       {
@@ -195,7 +195,7 @@ export const LESSONS: MiniLesson[] = [
     id: 'intervals',
     area: 'ear',
     emoji: '📏',
-    title: { en: 'Thirds, fifths, octaves', he: 'טרצות, קווינטות, אוקטבות' },
+    title: { en: 'Thirds, fifths, octaves', he: 'מרווחים: כמה רחוק?' },
     takeaway: { en: 'Major third = 4 half steps, sweet; perfect fifth = 7, open and hollow; octave = 12, the same note higher.', he: 'טרצה גדולה = 4 חצאי טונים, מתוקה; קווינטה זכה = 7, פתוחה וחלולה; אוקטבה = 12, אותו צליל גבוה יותר.' },
     steps: [
       {
@@ -275,7 +275,7 @@ export const LESSONS: MiniLesson[] = [
     id: 'notes-degrees',
     area: 'theory',
     emoji: '🔢',
-    title: { en: 'Notes and degrees', he: 'תווים ודרגות' },
+    title: { en: 'Notes and degrees', he: 'שמות תווים ומספרים בסולם' },
     takeaway: { en: 'Letter names stay fixed; degrees count from the key’s home. To convert, count up the scale from 1.', he: 'שמות התווים קבועים; הדרגות נספרות מהבית של הסולם. כדי להמיר, סופרים למעלה בסולם מ־1.' },
     steps: [
       {
@@ -355,7 +355,7 @@ export const LESSONS: MiniLesson[] = [
     id: 'sing-degrees',
     area: 'voice',
     emoji: '🪜',
-    title: { en: 'Sing the degrees', he: 'לשיר את הדרגות' },
+    title: { en: 'Sing the degrees', he: 'לשיר לפי מספרים' },
     takeaway: { en: 'Lock in home first, then sing the numbers in order: steps walk the scale, 1–3–5 climbs the home chord.', he: 'קודם ננעלים על הבית, ואז שרים את המספרים לפי הסדר: צעדים הולכים בסולם, 1–3–5 מטפס על אקורד הבית.' },
     steps: [
       {

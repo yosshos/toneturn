@@ -134,6 +134,8 @@ export interface Settings {
   seenFreezeDay?: string | null;
   /** Mini-lessons heard to the end (spec X): lesson id → ISO date. */
   learned?: Record<string, string>;
+  /** Quick lessons the player skipped: they don't open again before practice (spec AC). They stay in "Topics I learned". */
+  miniSeen?: Record<string, string>;
   /** Start every unit with its mini-lesson until it is learned (default on). */
   miniLessons?: boolean;
   /** Highest weekly league ever reached (spec Y), as last seen. */

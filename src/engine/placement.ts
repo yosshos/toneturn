@@ -11,6 +11,7 @@ import { absNoteQuestion, cadenceQuestion, degreeQuestion, singRunQuestion, sing
 import type { RhythmLevel } from './rhythm';
 import { TOPIC_GEN } from './topics';
 import { pc } from './pitch';
+import { transposeNamesQuestion } from './basics';
 import { SEVENTHS, type ProgressionId } from './jazz';
 import type { SessionState } from './session';
 import { runAt } from './runs';
@@ -140,6 +141,14 @@ export const LADDERS: Partial<Record<SkillId, { difficulty: number; make: Make }
     [5, 1560],
     [6, 1680],
   ].map(([lv, d]) => ({ difficulty: d, make: (s: number, id: string) => at(topic('sight-read', lv)(s, id), d) })),
+  transpose: [
+    { difficulty: 1050, make: (s, id) => at(topic('transpose', 1)(s, id), 1050) },
+    { difficulty: 1150, make: (s, id) => at(transposeNamesQuestion(id, pc(pick(mulberry32(s), ['C', 'G', 'F'])), pc(pick(mulberry32(s + 1), ['D', 'G', 'F', 'C'])), [1, 2, 3], 1150), 1150) },
+    { difficulty: 1200, make: (s, id) => at(topic('transpose', 2)(s, id), 1200) },
+    { difficulty: 1260, make: (s, id) => at(topic('transpose', 3)(s, id), 1260) },
+    { difficulty: 1330, make: (s, id) => at(topic('transpose', 4)(s, id), 1330) },
+    { difficulty: 1420, make: (s, id) => at(transposeNamesQuestion(id, pc(pick(mulberry32(s), ['Bb', 'D', 'A'])), pc(pick(mulberry32(s + 1), ['Eb', 'E', 'F'])), [1, 3, 5, 4, 2], 1420), 1420) },
+  ],
   'rhythm': [1, 2, 3, 4, 5].map((lv) => ({
     difficulty: [1000, 1200, 1380, 1580, 1720][lv - 1],
     make: (s: number, id: string) => at(topic('rhythm-memory', lv)(s, id), [1000, 1200, 1380, 1580, 1720][lv - 1]),
@@ -184,6 +193,7 @@ export const LADDERS: Partial<Record<SkillId, { difficulty: number; make: Make }
   })),
 };
 
+/** (transposition ladder is defined below with the other topic ladders) */
 /** Skills that need the microphone (sung). */
 export const SUNG_SKILLS: SkillId[] = ['singing', 'technique', 'agility'];
 // By domain (pitch, time, memory, reading), the sung skills last. Every skill on the map is measured: rhythmic
@@ -192,7 +202,7 @@ export const PLACEMENT_ORDER: SkillId[] = [
   'degrees', 'intervals', 'chords', 'cadences', 'modes', 'pitch', 'absolute',
   'rhythm-dictation', 'rhythm-reading', 'tempo',
   'sequences', 'rhythm',
-  'notes', 'theory', 'sight', 'improv',
+  'notes', 'theory', 'transpose', 'sight', 'improv',
   'singing', 'technique', 'agility',
 ];
 /** Skills measured inside another section (not a section of their own). */

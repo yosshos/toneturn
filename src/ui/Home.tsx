@@ -88,7 +88,7 @@ export function Home({ t, settings, progress, streak, onStreak, account, onPract
   const nm = namingFor(settings.naming, lang);
   const bb = displayNote(pc('Bb'), nm, lang);
   // The path in the player's own order of areas (intake questionnaire).
-  const order = personalOrder((settings.intake as Intake | null | undefined)?.priorities);
+  const order = personalOrder((settings.intake as Intake | null | undefined)?.priorities, settings.track);
   const states = lessonStates(progress, order);
   const next = nextLessonId(progress, order);
   const meta = LESSON_META[next];

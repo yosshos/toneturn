@@ -803,3 +803,22 @@ Every new topic has a quick lesson (X).
   - **Find my level** measures the top areas first.
   - **Note naming**, the daily length, and a **clean view** for "just getting better" players (no avatar card on Home).
 
+
+## Addendum — 2026-11-06 (product owner): AC. Ear basics, plain words, transposition
+
+- **Ear basics** (no theory needed): High and low · The shape of a tune · Feel the beat · Match a note. Each has a quick lesson, a topic with 3 levels, and opens the path for explorer and hobby players.
+- **Plain words:**
+  - the music words of every quick-lesson sentence are tappable chips (explanation plus a sound);
+  - a 21-word glossary sits in *Topics I learned*;
+  - the first Hebrew titles avoid jargon.
+- **Skipped quick lessons** don't open again before practice (`settings.miniSeen`). They stay in *Topics I learned*.
+- **Transposition is its own skill** (`transpose`, *Reading & theory* domain):
+  - the melodic topic *Same tune, new key* (4 levels: names, by interval, any key, by ear) plus "sing it in the new key";
+  - the written topic *Transposition on paper*, including transposing instruments;
+  - a lesson on the path, and a ladder in Find my level.
+- **Where else**, with difficulty levels and the recommended additional Western-music areas: see `docs/MUSIC_AREAS_MAP.md`.
+
+## Addendum — 2026-11-06 (product owner): AD. Exercise taxonomy & weighting (draft)
+
+- Every well-known exercise is mapped by domain → skill → sub-skill → exercise type → level, with tag vectors for multi-skill exercises, weighted rating credit, factor-based and calibrated difficulty, and a priority scheduler per track. Full spec and catalogue: `docs/EXERCISE_TAXONOMY.md`.
+- First piece shipped: **rhythmic displacement** (`displacement`, 4 levels: how far it moved, on paper, find the shifted version, sixteenths).

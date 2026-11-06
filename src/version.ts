@@ -18,6 +18,24 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.34.0',
+    date: '2026-11-06',
+    en: [
+      'Ear basics — no theory needed: High and low, The shape of a tune, Feel the beat and Match a note. Explorers and hobby players start here',
+      'Music words in plain language: tap any word in a quick lesson (key, interval, cadence…) to hear it and read what it means; a full glossary sits in Topics I learned',
+      'A skipped quick lesson no longer pops up every time',
+      'New skill — Transposition: the same tune in a new key, by names, by ear and by singing',
+      'Rhythmic displacement: the same pattern started somewhere else in the bar (Charleston from beat 2), by ear and on paper',
+    ],
+    he: [
+      'יסודות השמיעה — בלי תיאוריה: גבוה ונמוך, הצורה של מנגינה, להרגיש את הפעמה ולהתאים צליל. מי שרק מתחילים מתחילים כאן',
+      'מילים במוזיקה בשפה פשוטה: הקישו על מילה בשיעור קצר (סולם, מרווח, קדנצה…) כדי לשמוע ולקרוא מה היא אומרת; מילון מלא נמצא ב"נושאים שלמדתי"',
+      'שיעור קצר שדילגתם עליו לא קופץ שוב בכל פעם',
+      'מיומנות חדשה — טרנספוזיציה: אותה מנגינה בסולם אחר, בשמות, בשמיעה ובשירה',
+      'הסטה ריתמית: אותה תבנית שמתחילה במקום אחר בתיבה (צ׳רלסטון מהפעמה השנייה), בשמיעה ובכתב',
+    ],
+  },
+  {
     version: '0.33.0',
     date: '2026-11-06',
     en: [

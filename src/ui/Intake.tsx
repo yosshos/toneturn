@@ -83,7 +83,7 @@ export function IntakeScreen({ t, settings, onDone, onSkip }: { t: Strings; sett
   );
 
   const track = trackOf({ music: (a.music ?? 0) as Level4, theory: (a.theory ?? 0) as Level4, reading: (a.reading ?? 0) as 0 | 1 | 2 });
-  const order = personalOrder(mixed ? null : ranked.length ? [...ranked, ...AREAS.filter((x) => !ranked.includes(x))] : null);
+  const order = personalOrder(mixed ? null : ranked.length ? [...ranked, ...AREAS.filter((x) => !ranked.includes(x))] : null, track);
 
   return (
     <main className={`intake step-${step}`} data-step={step}>

@@ -51,7 +51,7 @@ export function recommendFor(skill: SkillId, ratings: Ratings, mastered: (id: Le
   if (skill === 'modes') return { kind: 'modes', level: modesLevelFor(ratings.modes?.n ? ratings.modes.r : null) };
   if (skill === 'improv') return { kind: 'perform' };
   // Skills practised in their topic, at the level the rating says.
-  const TOPIC_FOR: Partial<Record<SkillId, [string, number]>> = { tempo: ['tempo', 6], pitch: ['fine-pitch', 3], sight: ['sight-read', 3], theory: ['interval-spelling', 3] };
+  const TOPIC_FOR: Partial<Record<SkillId, [string, number]>> = { tempo: ['tempo', 6], pitch: ['fine-pitch', 3], sight: ['sight-read', 3], theory: ['interval-spelling', 3], transpose: ['transpose', 4] };
   const tf = TOPIC_FOR[skill];
   if (tf) {
     const r0 = ratings[skill];
@@ -85,7 +85,7 @@ export function placementUnlocks(ratings: Ratings): LessonId[] {
 
 /** The path grouped into topics (every path lesson in exactly one) — for "done X of Y" bars. */
 export const TOPICS: { id: 'degrees' | 'harmony' | 'intervals' | 'singing' | 'rhythm'; lessons: LessonId[] }[] = [
-  { id: 'degrees', lessons: ['bflat-two-homes', 'degrees-135', 'notes-degrees', 'note-sequences', 'dictation'] },
+  { id: 'degrees', lessons: ['bflat-two-homes', 'degrees-135', 'notes-degrees', 'note-sequences', 'transpose', 'dictation'] },
   { id: 'harmony', lessons: ['major-minor', 'cadences', 'inversions', 'jazz-1', 'slash-chords', 'jazz-2'] },
   { id: 'intervals', lessons: ['intervals', 'songs'] },
   { id: 'singing', lessons: ['sing-home-five', 'sing-names', 'sing-degrees', 'runs'] },

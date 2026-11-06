@@ -261,7 +261,7 @@ export function App() {
     // Automated test runs (simulator, unlocked, WebDriver) skip them unless asked for with ?mini.
     const automated = SIMULATED || params.has('unlock') || (typeof navigator !== 'undefined' && navigator.webdriver);
     const auto = (cur?.miniLessons ?? true) && (!automated || params.has('mini'));
-    if (!l || !auto || cur?.learned?.[l.id]) return start();
+    if (!l || !auto || cur?.learned?.[l.id] || cur?.miniSeen?.[l.id]) return start();
     void piano.unlock();
     setMini({ lesson: l, then: start });
   };
@@ -381,7 +381,7 @@ export function App() {
   if (!settings) return <div className="boot" />;
   const news = unseenChanges(s.seenVersion);
 
-  const order = personalOrder((s.intake as Intake | null | undefined)?.priorities);
+  const order = personalOrder((s.intake as Intake | null | undefined)?.priorities, s.track);
   const states = lessonStates(progress, order);
   const idx = order.indexOf(lessonId);
   const nextId = order[idx + 1];
@@ -399,6 +399,7 @@ export function App() {
           name={playerFirstName}
           onFinish={(heardAll) => {
             if (heardAll) markLearned(mini.lesson.id);
+            else updateSettings({ miniSeen: { ...(settings?.miniSeen ?? {}), [mini.lesson.id]: new Date().toISOString() } });
             const then = mini.then;
             setMini(null);
             then();
@@ -598,7 +599,7 @@ export function App() {
               go('home');
               window.setTimeout(() => openPlacement(), 0);
             } else if (then === 'basics') {
-              const first = personalOrder(res.intake.priorities)[0];
+              const first = personalOrder(res.intake.priorities, res.patch.track)[0];
               go('home');
               window.setTimeout(() => openLesson(first), 0);
             } else go('home');

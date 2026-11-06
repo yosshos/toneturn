@@ -45,7 +45,7 @@ test.describe('intake questionnaire', () => {
     await page.locator('[data-plan="home"]').click();
     // Home: the path follows the order (rhythm first); the hero offers the basics first.
     await expect(page.locator('.first-run-cta')).toContainText('להתחיל מהבסיס');
-    await expect(page.locator('.path-list .node').first()).toContainText('קצב');
+    await expect(page.locator('.path-list .node').first()).toContainText(/קצב|פעמה/);
     // Settings: take it again
     await page.goto('/?sim=1&lang=he#/settings');
     await expect(page.locator('[data-intake-retake]')).toBeVisible();
