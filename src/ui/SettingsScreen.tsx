@@ -11,6 +11,7 @@ import { DEFAULT_SOUND, namingFor, type Settings, type VoiceGender } from '../st
 import { fillText, Note } from './bits';
 import { piano, tts } from './services';
 import { midi } from '../speech/midi';
+import { LatencyCalibrate } from './LatencyCalibrate';
 
 interface Props {
   t: Strings;
@@ -394,6 +395,8 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
           🎚 {t.tunerOpen}
         </a>
       </section>
+
+      <LatencyCalibrate lang={s.uiLang} values={s} onSave={(p) => onChange(p)} />
 
       <section className="set-card">
         <h2>♿ {t.secAccess}</h2>

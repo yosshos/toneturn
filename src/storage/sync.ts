@@ -12,6 +12,8 @@ export function mergeResults(local: LessonResult[], remote: LessonResult[]): Les
 /** Rebuild progress from results; streaks follow each result's own completion time. */
 import { mergeBase, mergeCounts, mergePeaks, mergeRecords, mergeStatsDays, mergeStatsHours } from '../engine/stats';
 import { mergeAwards } from '../engine/achievements';
+import { mergeRanks } from '../engine/ranks';
+import { mergeBadgeLog } from '../engine/badges';
 
 export function rebuildProgress(results: LessonResult[], local?: Progress): Progress {
   const rebuilt = results.reduce((p, r) => applyResult(p, r, new Date(r.completedAt)), emptyProgress());
@@ -38,9 +40,12 @@ export function rebuildProgress(results: LessonResult[], local?: Progress): Prog
     counts: mergeCounts(local.counts, rebuilt.counts),
     records: mergeRecords(local.records, rebuilt.records),
     awards: mergeAwards(local.awards, rebuilt.awards),
+    ranks: mergeRanks(local.ranks, rebuilt.ranks),
+    badges: mergeBadgeLog(local.badges, rebuilt.badges),
     ratingBase: mergeBase(local.ratingBase, rebuilt.ratingBase),
     bests: local.bests,
     pitchMemory: local.pitchMemory,
+    drillItems: local.drillItems,
   };
 }
 

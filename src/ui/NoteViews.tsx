@@ -93,7 +93,14 @@ function useSvg(draw: (VF: VF, el: HTMLDivElement) => void, deps: unknown[]) {
   return { ref, failed };
 }
 
-export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs }: { notes: number[]; chord: boolean; keyPc: PitchClass | null; labels?: string[]; clef?: 'treble' | 'bass' | 'alto' | 'tenor'; durs?: number[] }) {
+/** Per-note result colours on the staff (after an answer / a take). */
+import type { NoteMark } from '../engine/noteMarks';
+export type { NoteMark };
+const MARK_COLOR: Record<Exclude<NoteMark, undefined>, string> = { ok: '#1f8f67', timing: '#b8861b', wrong: '#d43c2c', missed: '#d43c2c' };
+/** Symbols under marked notes so the result is never colour-only. */
+const MARK_SYM: Record<Exclude<NoteMark, undefined>, string> = { ok: '', timing: '~', wrong: '✕', missed: '○' };
+
+export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs, marks }: { notes: number[]; chord: boolean; keyPc: PitchClass | null; labels?: string[]; clef?: 'treble' | 'bass' | 'alto' | 'tenor'; durs?: number[]; marks?: NoteMark[] }) {
   const { ref, failed } = useSvg(
     (VF, el) => {
       const n = chord ? 1 : notes.length;
@@ -110,7 +117,10 @@ export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs }
             const b = durs?.[i] ?? 1;
             const s = new VF.StaveNote({ keys: [vfKey(m, keyPc)], duration: b >= 4 ? 'w' : b >= 2 ? 'h' : b >= 1 ? 'q' : '8', clef });
             if (b === 1.5 || b === 3) VF.Dot.buildAndAttach([s], { all: true });
-            if (labels?.[i]) s.addModifier(new VF.Annotation(labels[i]).setVerticalJustification(VF.Annotation.VerticalJustify.BOTTOM), 0);
+            const mk = marks?.[i];
+            const lab = mk && MARK_SYM[mk] ? MARK_SYM[mk] : labels?.[i];
+            if (lab) s.addModifier(new VF.Annotation(lab).setVerticalJustification(VF.Annotation.VerticalJustify.BOTTOM), 0);
+            if (mk) s.setStyle({ fillStyle: MARK_COLOR[mk], strokeStyle: MARK_COLOR[mk] });
             return s;
           });
       const voice = new VF.Voice({ num_beats: chord ? 4 : durs ? Math.ceil(durs.reduce((a, b) => a + b, 0)) : notes.length, beat_value: 4 }).setMode(VF.Voice.Mode.SOFT);
@@ -120,12 +130,48 @@ export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs }
       voice.draw(ctx, stave);
       if (durs) VF.Beam.generateBeams(sn).forEach((bm) => bm.setContext(ctx).draw());
     },
-    [notes.join(','), chord, keySpec(keyPc), (labels ?? []).join(','), clef, (durs ?? []).join(',')],
+    [notes.join(','), chord, keySpec(keyPc), (labels ?? []).join(','), clef, (durs ?? []).join(','), (marks ?? []).join(',')],
   );
   return (
-    <div className="note-staff" role="img" aria-label={notes.map((m) => vfKey(m, keyPc)).join(' ')}>
+    <div className="note-staff" role="img" aria-label={notes.map((m, i) => `${vfKey(m, keyPc)}${marks?.[i] ? ` ${marks[i]}` : ''}`).join(' ')}>
       <div ref={ref} />
       {failed && <p className="staff-fallback">{notes.map((m) => vfKey(m, keyPc)).join(' ')}</p>}
+    </div>
+  );
+}
+
+/** One line of tablature with given string/fret positions (drills): chords stack, a mark above (h p / b ~ PM X …), result colours. */
+export function TabLine({ cols, marks, strings = 6 }: { cols: { pos: { str: number; fret: number | 'x' }[]; dur: number; top?: string; bottom?: string }[]; marks?: NoteMark[]; strings?: number }) {
+  const { ref, failed } = useSvg(
+    (VF, el) => {
+      const width = Math.max(220, 60 + cols.length * 40);
+      const renderer = new VF.Renderer(el, VF.Renderer.Backends.SVG);
+      renderer.resize(width, strings === 4 ? 120 : 140);
+      const ctx = renderer.getContext();
+      const stave = new VF.TabStave(4, 0, width - 8, { num_lines: strings });
+      stave.addTabGlyph();
+      stave.setContext(ctx).draw();
+      const tn = cols.map((c, i) => {
+        const b = c.dur;
+        const n = new VF.TabNote({ positions: c.pos, duration: b >= 4 ? 'w' : b >= 2 ? 'h' : b >= 1 ? 'q' : b >= 0.5 ? '8' : '16' });
+        if (c.top) n.addModifier(new VF.Annotation(c.top).setVerticalJustification(VF.Annotation.VerticalJustify.TOP), 0);
+        const mk = marks?.[i];
+        const lab = mk && MARK_SYM[mk] ? MARK_SYM[mk] : c.bottom;
+        if (lab) n.addModifier(new VF.Annotation(lab).setVerticalJustification(VF.Annotation.VerticalJustify.BOTTOM), 0);
+        if (mk) n.setStyle({ fillStyle: MARK_COLOR[mk], strokeStyle: MARK_COLOR[mk] });
+        return n;
+      });
+      const voice = new VF.Voice({ num_beats: Math.max(1, Math.ceil(cols.reduce((a, c) => a + c.dur, 0))), beat_value: 4 }).setMode(VF.Voice.Mode.SOFT);
+      voice.addTickables(tn);
+      new VF.Formatter().joinVoices([voice]).format([voice], width - 60);
+      voice.draw(ctx, stave);
+    },
+    [JSON.stringify(cols), (marks ?? []).join(','), strings],
+  );
+  return (
+    <div className="guitar-tab" role="img" aria-label={cols.map((c, i) => c.pos.map((p) => `${p.str}/${p.fret}`).join('+') + (marks?.[i] ? ` ${marks[i]}` : '')).join(' ')}>
+      <div ref={ref} />
+      {failed && <p className="staff-fallback">TAB</p>}
     </div>
   );
 }
@@ -173,7 +219,16 @@ export function GuitarTab({ notes, chord }: { notes: number[]; chord: boolean })
  * The views under a question. `keysLive` = the sounding notes may light the keyboard (answered, or the
  * sound is only context). Staff and tab show the aid while answering, the content afterwards.
  */
-export function NoteViews({ q, views, answered, keysLive, leftHanded }: { q: Question; views: NoteView[]; answered: boolean; keysLive: boolean; leftHanded?: boolean }) {
+/** Note-by-note marks for a sequence answer (degrees / names): which notes of the melody were right. */
+export function seqMarks(q: Question, answer: unknown): NoteMark[] | undefined {
+  if ((q.kind !== 'degree-seq' && q.kind !== 'name-seq') || answer === undefined || answer === null) return undefined;
+  const sep = q.kind === 'degree-seq' ? '-' : '.';
+  const want = String(q.answer).split(sep);
+  const got = String(answer).split(sep);
+  return want.map((w, i) => (got[i] === undefined || got[i] === '' ? 'missed' : got[i] === w ? 'ok' : 'wrong'));
+}
+
+export function NoteViews({ q, views, answered, keysLive, leftHanded, marks }: { q: Question; views: NoteView[]; answered: boolean; keysLive: boolean; leftHanded?: boolean; marks?: NoteMark[] }) {
   const aid = q.aid ? aidFor(q) : null;
   const content = answered ? contentNotes(q) : null;
   const shown = content ?? (aid ? { notes: aid.notes, chord: false } : null);
@@ -188,7 +243,7 @@ export function NoteViews({ q, views, answered, keysLive, leftHanded }: { q: Que
           aid={!answered && aid ? { notes: aid.notes, labels: aid.labels, tonic: aid.kind !== 'target' ? aid.notes[0] : undefined } : undefined}
         />
       )}
-      {shown && views.includes('staff') && <NoteStaff notes={shown.notes} chord={shown.chord} keyPc={key} labels={labels} />}
+      {shown && views.includes('staff') && <NoteStaff notes={shown.notes} chord={shown.chord} keyPc={key} labels={labels} marks={content && marks?.length === shown.notes.length ? marks : undefined} />}
       {shown && views.includes('tab') && <GuitarView notes={shown.notes} chord={shown.chord} leftHanded={leftHanded} />}
     </div>
   );

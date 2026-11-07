@@ -1,10 +1,8 @@
-// "Find my level" 2.0 (product owner): EVERY skill is measured on its own difficulty ladder, climbing until
-// the player fails, then the next skill — until all are covered. The skill's rating is then SET from where
-// the player failed (not nudged by a few easy answers). Pure.
-//
-// Climb: start at level 1. While there has been no miss, a right answer jumps two levels. After the first
-// miss, step back to the level that was skipped (or retry the same level once); then one level at a time.
-// A second miss ends the skill. Passing the top level ends it too.
+// "Find my level" 3.0 (product owner, 2026-11-07; docs/SPEC-PLACEMENT.md): a RANGE per skill, fast. Each skill
+// is found by an accelerating search on its difficulty ladder — climb 1, 2, 4 rungs while right, bisect once
+// missed — inside a small budget; the first skill of an area is searched fully, the next ones start where the
+// area points, and once two skills of an area agree the rest of it is inferred. The rating is SET at the
+// lower-middle of the range, and a fast-K window after it lets practice finish the job. Pure.
 
 import type { LessonDef, Question, SkillId } from './lesson';
 import { absNoteQuestion, cadenceQuestion, degreeQuestion, singRunQuestion, singSeqQuestion, degreeSeqQuestion, DEGREE_KEYS, intervalQuestion, modesLesson, noteNameQuestion, progressionQuestion, qualityQuestion, rhythmDictQuestion, rhythmReadQuestion, seventhQuestion, singQuestion, mulberry32, ROOT_NAMES, type Quality, type Roman } from './lesson';
@@ -16,7 +14,7 @@ import { transposeNamesQuestion } from './basics';
 import { SEVENTHS, type ProgressionId } from './jazz';
 import type { SessionState } from './session';
 import { runAt } from './runs';
-import { DOMAINS, type DomainId } from './rating';
+import { DOMAINS, domainOf, expected, rate, START_RATING, type DomainId, type RatingEvent, type Ratings, type SkillRating } from './rating';
 
 const pick = <T,>(rnd: () => number, xs: readonly T[]): T => xs[Math.floor(rnd() * xs.length)];
 type Make = (seed: number, id: string) => Question;
@@ -240,6 +238,241 @@ const parse = (q: Question) => {
   return m ? { skill: m[1] as SkillId, level: Number(m[2]), n: Number(m[3]) } : null;
 };
 
+// ======================================================================= the accelerating search (SPEC-PLACEMENT §3)
+
+/** Item budgets (SPEC-PLACEMENT §3.3). */
+export const PLACEMENT_BUDGET = {
+  /** The first skill measured in an area (gallop 1 → 2 → 4 rungs, then bisect). */
+  anchor: 4,
+  /** A later skill of an area: starts where the area points, one step up or down. */
+  follow: 2,
+  /** Skills never inferred from their area (absolute pitch; rhythm reading, which also feeds timing). */
+  own: 2,
+  /** One area, all its skills together. */
+  area: 8,
+  /** A full test without / with the sung area. */
+  test: 34,
+  testSung: 40,
+} as const;
+/** Two measured skills of an area within this many points agree → the rest of the area is inferred (§3.5). */
+export const AGREE = 150;
+/** An inferred skill is set this far below its area (a bit lower is fine); its range is 2 × DERIVE_HALF wide. */
+export const DERIVE_DISCOUNT = 50;
+export const DERIVE_HALF = 150;
+/** The virtual rungs below the first and above the last (the open ends of a range). */
+export const EDGE = 150;
+/** Where in its range a skill is set: 0 = low, 1 = high (lower-middle). */
+export const SET_AT = 0.4;
+/** The first skill's starting point (low-mid); a new area starts this far below the test so far. */
+export const FIRST_PRIOR = 950;
+export const CROSS_AREA_DISCOUNT = 100;
+/** Skills never inferred from their area. */
+export const NOT_DERIVED: SkillId[] = ['absolute', 'rhythm-reading'];
+/** Fixed starting priors (absolute pitch is unrelated to the other pitch skills). */
+const OWN_PRIOR: Partial<Record<SkillId, number>> = { absolute: 1000 };
+/** Evidence credited to a set rating (rating.ts `setN`) and the fast-K window after it (rating.ts `fast`), §5. */
+export const PLACEMENT_EVIDENCE = { anchor: 6, follow: 4, own: 4, derived: 2, fast: 8 } as const;
+
+export type PlacementRole = 'anchor' | 'follow' | 'own' | 'derived' | 'skipped' | 'unmeasured';
+export interface PlacementAnswer {
+  skill: SkillId;
+  level: number;
+  outcome: 'correct' | 'wrong' | 'skipped';
+}
+export interface SkillPlan {
+  skill: SkillId;
+  role: PlacementRole;
+  /** First rung asked (1-based; 0 = not asked), the skill's item budget, items asked. */
+  start: number;
+  budget: number;
+  asked: number;
+  /** Highest rung passed (0 = none) and lowest rung failed (ladder length + 1 = none). */
+  lo: number;
+  hi: number;
+  misses: number;
+  done: boolean;
+  /** Next rung to ask (null when done). */
+  next: number | null;
+  /** The range the player is in and the rating set from it (lower-middle). Null = not measured. */
+  low: number | null;
+  high: number | null;
+  rating: number | null;
+}
+export interface PlacementPlan {
+  skills: SkillPlan[];
+  /** The next item (null = the test is over). */
+  next: { skill: SkillId; level: number } | null;
+  /** Items answered so far. */
+  items: number;
+}
+
+/** A rung's difficulty, with virtual rungs 0 and M+1 at the open ends. */
+export function rungDifficulty(skill: SkillId, rung: number): number {
+  const L = LADDERS[skill]!;
+  if (rung <= 0) return L[0].difficulty - EDGE;
+  if (rung > L.length) return L[L.length - 1].difficulty + EDGE;
+  return L[rung - 1].difficulty;
+}
+/** The highest rung at or below a rating (rung 1 when none is). */
+export function rungAt(skill: SkillId, rating: number): number {
+  let r = 1;
+  LADDERS[skill]!.forEach((x, i) => {
+    if (x.difficulty <= rating) r = i + 1;
+  });
+  return r;
+}
+
+export interface SearchState {
+  lo: number;
+  hi: number;
+  /** The next gallop step up / down (1 → 2 → 4 …). */
+  up: number;
+  down: number;
+  asked: number;
+  misses: number;
+  done: boolean;
+  next: number;
+}
+
+/**
+ * One skill's search (§3.2): start at `start`; while nothing has been missed, a right answer climbs 1, then 2,
+ * then 4 rungs (galloping); while nothing has been passed, a miss descends the same way; once a pass sits under
+ * a miss, bisect. Stop when the bracket is one rung wide, at the top or the bottom, after a skip, or at the budget.
+ */
+export function searchSkill(M: number, start: number, budget: number, answers: { level: number; outcome: PlacementAnswer['outcome'] }[]): SearchState {
+  const s: SearchState = { lo: 0, hi: M + 1, up: 1, down: 1, asked: 0, misses: 0, done: budget <= 0, next: Math.max(1, Math.min(M, start)) };
+  for (const a of answers) {
+    if (s.done) break;
+    s.asked++;
+    if (a.outcome === 'correct') s.lo = Math.max(s.lo, a.level);
+    else {
+      s.misses++;
+      s.hi = Math.min(s.hi, a.level);
+    }
+    if (s.lo >= s.hi) s.lo = s.hi - 1; // a noisy pass above a miss: trust the miss (a bit lower is fine)
+    if (a.outcome === 'skipped' || s.lo >= M || s.hi <= 1 || s.hi - s.lo <= 1 || s.asked >= budget) {
+      s.done = true;
+      break;
+    }
+    if (s.hi > M) {
+      s.next = Math.min(M, s.lo + s.up);
+      s.up *= 2;
+    } else if (s.lo === 0) {
+      s.next = Math.max(1, s.hi - s.down);
+      s.down *= 2;
+    } else s.next = Math.floor((s.lo + s.hi) / 2);
+  }
+  return s;
+}
+
+/** The range a finished (or cut) search stands for, and the rating set from it (§3.4). */
+export function searchRange(skill: SkillId, s: Pick<SearchState, 'lo' | 'hi' | 'up'>): { low: number; high: number; rating: number } {
+  const M = LADDERS[skill]!.length;
+  // Open ends: below, down to the virtual bottom rung (a bit lower is fine); above, as far as the next gallop
+  // step would have gone (an over-estimate costs more than an under-estimate).
+  const low = rungDifficulty(skill, s.lo >= 1 ? s.lo : 0);
+  const high = rungDifficulty(skill, s.hi <= M ? s.hi : Math.min(M + 1, s.lo + s.up));
+  return { low, high, rating: Math.round(low + SET_AT * (high - low)) };
+}
+
+const areaOf = (k: SkillId): DomainId => (k === 'rhythm-reading' ? 'time' : domainOf(k));
+const mean = (xs: number[]) => xs.reduce((a, x) => a + x, 0) / xs.length;
+
+/**
+ * The whole test, replayed from the answers (pure, deterministic): which skills are measured, inferred or
+ * left, each skill's search, and the next item. `order` = every section in test order; `skipped` = sections
+ * the player skipped (their answers still count toward the budgets).
+ */
+export function planPlacement(
+  answers: PlacementAnswer[],
+  order: SkillId[],
+  opts: { skipped?: SkillId[]; sung?: boolean; priors?: Partial<Record<SkillId, number>> } = {},
+): PlacementPlan {
+  const skipped = new Set(opts.skipped ?? []);
+  const testBudget = opts.sung || order.some((k) => SUNG_SKILLS.includes(k)) ? PLACEMENT_BUDGET.testSung : PLACEMENT_BUDGET.test;
+  const by = new Map<SkillId, PlacementAnswer[]>();
+  for (const a of answers) by.set(a.skill, [...(by.get(a.skill) ?? []), a]);
+  const out: SkillPlan[] = [];
+  let usedTest = 0;
+  const usedArea = new Map<DomainId, number>();
+  const spend = (k: SkillId, n: number) => {
+    usedTest += n;
+    usedArea.set(areaOf(k), (usedArea.get(areaOf(k)) ?? 0) + n);
+  };
+  const measured = (d?: DomainId) => out.filter((p) => p.rating !== null && p.role !== 'derived' && (!d || areaOf(p.skill) === d));
+  let next: PlacementPlan['next'] = null;
+  for (let i = 0; i < order.length; i++) {
+    const k = order[i];
+    const mine = by.get(k) ?? [];
+    const M = LADDERS[k]!.length;
+    const blank: SkillPlan = { skill: k, role: 'unmeasured', start: 0, budget: 0, asked: mine.length, lo: 0, hi: M + 1, misses: 0, done: true, next: null, low: null, high: null, rating: null };
+    if (skipped.has(k)) {
+      spend(k, mine.length);
+      out.push({ ...blank, role: 'skipped' });
+      continue;
+    }
+    const d = areaOf(k);
+    const inArea = measured(d);
+    const own = NOT_DERIVED.includes(k);
+    const role: 'anchor' | 'follow' | 'own' = own ? 'own' : inArea.length ? 'follow' : 'anchor';
+    // Inferred when the area's last two measured skills agree (§3.5).
+    const agreed = inArea.length >= 2 && Math.abs(inArea[inArea.length - 1].rating! - inArea[inArea.length - 2].rating!) <= AGREE;
+    // Budget: the skill's own, within what the area (keeping room for its never-inferred skills) and the test have left.
+    const reserve = own ? 0 : order.slice(i + 1).filter((x) => !skipped.has(x) && areaOf(x) === d && NOT_DERIVED.includes(x)).length * PLACEMENT_BUDGET.own;
+    const left = Math.min(PLACEMENT_BUDGET.area - (usedArea.get(d) ?? 0) - reserve, testBudget - usedTest);
+    const budget = Math.max(mine.length, Math.min(PLACEMENT_BUDGET[role], left));
+    if (!mine.length && (budget <= 0 || (agreed && !own))) {
+      // Not asked: inferred from the area (else from the test so far), or left unmeasured (§3.5).
+      const src = own ? [] : inArea.length ? inArea : measured();
+      if (!src.length) {
+        out.push(blank);
+        continue;
+      }
+      const est = mean(src.map((p) => p.rating!)) - DERIVE_DISCOUNT - (inArea.length ? 0 : CROSS_AREA_DISCOUNT);
+      const clamp = (x: number) => Math.round(Math.max(rungDifficulty(k, 0), Math.min(rungDifficulty(k, M + 1), x)));
+      // The same shape as a measured range: `est` sits at SET_AT of a 2·DERIVE_HALF-wide range.
+      const low = clamp(est - 2 * DERIVE_HALF * SET_AT);
+      const high = clamp(est + 2 * DERIVE_HALF * (1 - SET_AT));
+      out.push({ ...blank, role: 'derived', low, high, rating: Math.round(low + SET_AT * (high - low)) });
+      continue;
+    }
+    const all = measured();
+    const prior = opts.priors?.[k] ?? OWN_PRIOR[k] ?? (inArea.length ? mean(inArea.map((p) => p.rating!)) : all.length ? mean(all.map((p) => p.rating!)) - CROSS_AREA_DISCOUNT : FIRST_PRIOR);
+    const start = rungAt(k, prior);
+    let eff = budget;
+    let s = searchSkill(M, start, eff, mine);
+    // A later skill that disagrees with its area (both items the same way, no bracket) earns the anchor's budget.
+    const open = s.done && s.asked >= eff && (s.lo === 0 || s.hi > M) && s.lo < M && s.hi > 1;
+    const wider = Math.max(mine.length, Math.min(PLACEMENT_BUDGET.anchor, left));
+    if (role === 'follow' && open && wider > eff) s = searchSkill(M, start, (eff = wider), mine);
+    spend(k, mine.length);
+    const r = s.asked ? searchRange(k, s) : { low: null, high: null, rating: null };
+    out.push({ skill: k, role, start, budget: eff, asked: s.asked, lo: s.lo, hi: s.hi, misses: s.misses, done: s.done, next: s.done ? null : s.next, ...r });
+    if (!s.done) {
+      next = { skill: k, level: s.next };
+      break;
+    }
+  }
+  return { skills: out, next, items: answers.length };
+}
+
+const answersOf = (s: SessionState): PlacementAnswer[] =>
+  s.lesson.questions.flatMap((q, i) => {
+    const r = s.records[i];
+    const p = parse(q);
+    if (!p || !r || r.outcome === 'pending') return [];
+    return [{ skill: p.skill, level: p.level, outcome: r.outcome === 'correct' ? ('correct' as const) : r.outcome === 'skipped' ? ('skipped' as const) : ('wrong' as const) }];
+  });
+
+/** Optional per-skill starting ratings carried on the lesson (a re-test starts at the player's ratings, §4.4). */
+export type PlacementLessonDef = LessonDef & { placementPriors?: Partial<Record<SkillId, number>> };
+const planOf = (s: SessionState): PlacementPlan => {
+  const l = s.lesson as PlacementLessonDef;
+  return planPlacement(answersOf(s), lessonSections(l), { skipped: l.placementSkipped, sung: !!l.placementSinging, priors: l.placementPriors });
+};
+/** The plan of a placement session (for the result screen: roles, ranges). */
+export const placementPlanOf = planOf;
+
 export interface SkillProgress {
   skill: SkillId;
   /** Highest level answered right (0 = none). */
@@ -250,37 +483,19 @@ export interface SkillProgress {
   asked: number;
 }
 
-/** Where each skill stands, from the answered questions. */
+/** Where each skill stands, from the answered questions (`skills` = the sections still measured). */
 export function placementState(s: SessionState, skills: SkillId[]): SkillProgress[] {
-  const st = new Map<SkillId, SkillProgress & { climbing: boolean }>(skills.map((k) => [k, { skill: k, passed: 0, misses: 0, done: false, next: 1, asked: 0, climbing: true }]));
-  s.lesson.questions.forEach((q, i) => {
-    const r = s.records[i];
-    const p = parse(q);
-    if (!p || !r || r.outcome === 'pending') return;
-    const x = st.get(p.skill);
-    if (!x || x.done) return;
-    const max = LADDERS[p.skill]!.length;
-    x.asked++;
-    const right = r.outcome === 'correct';
-    if (right) {
-      x.passed = Math.max(x.passed, p.level);
-      if (p.level >= max) x.done = true;
-      else x.next = x.climbing ? Math.min(max, p.level + 2) : p.level + 1;
-    } else {
-      x.misses++;
-      x.climbing = false;
-      if (x.misses >= 2 || r.outcome === 'skipped') x.done = true;
-      else x.next = p.level - 1 > x.passed ? p.level - 1 : p.level;
-    }
-  });
+  const l = s.lesson as PlacementLessonDef;
+  const order = l.placementSkills ?? skills;
+  const plan = planPlacement(answersOf(s), order, { skipped: order.filter((k) => !skills.includes(k)), sung: !!l.placementSinging, priors: l.placementPriors });
   return skills.map((k) => {
-    const { climbing: _c, ...rest } = st.get(k)!;
-    void _c;
-    return rest;
+    const p = plan.skills.find((x) => x.skill === k);
+    if (!p) return { skill: k, passed: 0, misses: 0, done: false, next: 1, asked: 0 };
+    return { skill: k, passed: p.lo, misses: p.misses, done: p.done, next: p.next ?? Math.max(1, p.start), asked: p.asked };
   });
 }
 
-/** The rating a skill is set to: between the last level passed and the one failed. */
+/** The midpoint between a passed rung and the next one (the 2.0 estimate; kept for callers and comparisons). */
 export function placementEstimate(skill: SkillId, passed: number): number {
   const L = LADDERS[skill]!;
   if (passed <= 0) return L[0].difficulty - 120;
@@ -292,39 +507,60 @@ export function placementEstimate(skill: SkillId, passed: number): number {
 export const lessonSections = (l: LessonDef): SkillId[] => l.placementSkills ?? placementSkills({ singing: !!l.placementSinging });
 const skillsFor = (l: LessonDef): SkillId[] => lessonSections(l).filter((k) => !(l.placementSkipped ?? []).includes(k));
 
-function nextQuestion(s: SessionState, seed: number, skills: SkillId[]): Question | null {
-  const st = placementState(s, skills);
-  const cur = st.find((x) => !x.done);
-  if (!cur) return null;
-  const n = s.lesson.questions.length + 1;
-  return LADDERS[cur.skill]![cur.next - 1].make(seed + n * 7919, `p:${cur.skill}:${cur.next}:${n}`);
-}
+const makeItem = (skill: SkillId, level: number, seed: number, n: number): Question => LADDERS[skill]![level - 1].make(n > 1 ? seed + n * 7919 : seed, `p:${skill}:${level}:${n}`);
 
-export function placementLesson(seed: number, opts: { singing?: boolean; domain?: DomainId | null; priorities?: DomainId[] | null; only?: SkillId[] } = {}): LessonDef {
+export function placementLesson(
+  seed: number,
+  opts: { singing?: boolean; domain?: DomainId | null; priorities?: DomainId[] | null; only?: SkillId[]; priors?: Partial<Record<SkillId, number>> } = {},
+): LessonDef {
   // `only`: just these sections (catching up on skills measured since the player's last placement).
   const all = placementSkills(opts);
   const only = opts.only?.length ? all.filter((k) => opts.only!.includes(k)) : [];
   const skills = only.length ? only : all;
-  const first = LADDERS[skills[0]]![0].make(seed, `p:${skills[0]}:1:1`);
-  return {
-    id: 'placement', version: 3, skill: 'degrees', scoring: { xpPerCorrect: 5, attemptLimit: 1 }, intro: [], questions: [first],
-    placementSinging: !!opts.singing, placementSkills: skills, ...(opts.domain ? { placementDomain: opts.domain } : {}),
+  const priors = opts.priors && Object.keys(opts.priors).length ? opts.priors : undefined;
+  const first = planPlacement([], skills, { sung: !!opts.singing, priors }).next!;
+  const def: PlacementLessonDef = {
+    id: 'placement', version: 3, skill: 'degrees', scoring: { xpPerCorrect: 5, attemptLimit: 1 }, intro: [], questions: [makeItem(first.skill, first.level, seed, 1)],
+    placementSinging: !!opts.singing, placementSkills: skills, ...(opts.domain ? { placementDomain: opts.domain } : {}), ...(priors ? { placementPriors: priors } : {}),
   };
+  return def;
 }
 
 /** After each answer: the answered questions, plus the next one (none = the placement is over). */
 export function adaptPlacement(s: SessionState, seed: number): Question[] {
-  const skills = skillsFor(s.lesson);
   const answered = s.lesson.questions.slice(0, s.index + 1);
-  const next = nextQuestion({ ...s, lesson: { ...s.lesson, questions: answered } }, seed, skills);
-  return next ? [...answered, next] : answered;
+  const plan = planOf({ ...s, lesson: { ...s.lesson, questions: answered } });
+  if (!plan.next) return answered;
+  return [...answered, makeItem(plan.next.skill, plan.next.level, seed, answered.length + 1)];
 }
 
-/** The skills' ratings to set at the end (spec: placement sets, it does not nudge). */
-export function placementResults(s: SessionState): { skill: SkillId; rating: number; passed: number; asked: number }[] {
-  const out = placementState(s, skillsFor(s.lesson))
-    .filter((x) => x.asked > 0)
-    .map((x) => ({ skill: x.skill, rating: placementEstimate(x.skill, x.passed), passed: x.passed, asked: x.asked }));
+export interface PlacementResult {
+  skill: SkillId;
+  /** The rating to SET: the lower-middle of the range. */
+  rating: number;
+  /** Highest rung passed (0 = none; inferred skills: 0). */
+  passed: number;
+  /** Items asked in this skill (0 = inferred from its area). */
+  asked: number;
+  /** The range the player is in (§3.4). */
+  low: number;
+  high: number;
+  /** Inferred from the area, not asked (§3.5). */
+  derived: boolean;
+  /** Evidence to credit (RatingEvent `setN`) and answers at the fast K after it (RatingEvent `fast`), §5. */
+  n: number;
+  fast: number;
+}
+
+/** The skills' ratings to set at the end (spec: placement sets, it does not nudge) — with their ranges. */
+export function placementResults(s: SessionState): PlacementResult[] {
+  const plan = planOf(s);
+  const out: PlacementResult[] = plan.skills
+    .filter((p) => p.rating !== null && p.role !== 'skipped' && p.role !== 'unmeasured')
+    .map((p) => ({
+      skill: p.skill, rating: p.rating!, passed: p.lo, asked: p.asked, low: p.low!, high: p.high!, derived: p.role === 'derived',
+      n: PLACEMENT_EVIDENCE[p.role as 'anchor' | 'follow' | 'own' | 'derived'], fast: PLACEMENT_EVIDENCE.fast,
+    }));
   // Rhythmic precision, from the rhythm-reading taps (patterns played right): a steadier hand at a higher
   // reading level rates higher.
   const taps = s.lesson.questions
@@ -333,7 +569,111 @@ export function placementResults(s: SessionState): { skill: SkillId; rating: num
   if (taps.length && skillsFor(s.lesson).includes('rhythm-reading')) {
     const p = taps.reduce((acc, x) => acc + (x.a!.precision ?? 0), 0) / taps.length;
     const top = Math.max(...taps.map((x) => x.q.difficulty));
-    out.push({ skill: 'timing', rating: Math.round(Math.max(800, Math.min(1800, 700 + 700 * p + 0.25 * (top - 900)))), passed: taps.length, asked: taps.length });
+    const r = Math.round(Math.max(800, Math.min(1800, 700 + 700 * p + 0.25 * (top - 900))));
+    out.push({ skill: 'timing', rating: r, passed: taps.length, asked: taps.length, low: r - DERIVE_HALF, high: r + DERIVE_HALF, derived: false, n: PLACEMENT_EVIDENCE.own, fast: PLACEMENT_EVIDENCE.fast });
   }
   return out;
+}
+
+// ======================================================================= re-calibration (SPEC-PLACEMENT §6)
+
+/** Thresholds for re-planning after a short placement (§6). */
+export const RECAL = {
+  /** A skill of the current (frozen) unit moved this far since the unit was frozen → rebuild its unplayed steps. */
+  unitDrift: 100,
+  /** A skill moved this far from its placement → the projected units are redrawn (P5 uses 75 for frontiers). */
+  placementDrift: 100,
+  /** Answers since the placement before drift counts. */
+  minAnswers: 6,
+  /** The last `window` answers of a skill … */
+  window: 8,
+  /** … beat the expected score by this much, with ≥ `promoteRight` right → "you seem above this — test out?" */
+  promoteGap: 0.15,
+  promoteRight: 7,
+  /** … fall short by this much, with ≤ `demoteRight` right → "this seems hard — easier steps?" */
+  demoteGap: -0.2,
+  demoteRight: 4,
+  /** An area whose placement is older than this, or with ≥ 2 skills drifted ≥ `retestDrift`, is offered its area test. */
+  retestDays: 30,
+  retestDrift: 150,
+  /** A prompt declined is not shown again for this skill for this many days. */
+  snoozeDays: 7,
+} as const;
+
+/** Skills of `skills` whose rating moved at least `min` between two snapshots (e.g. unit frozen → now). */
+export function ratingDrift(before: Ratings, now: Ratings, skills: SkillId[], min: number = RECAL.unitDrift): { skill: SkillId; from: number; to: number; drift: number }[] {
+  return skills
+    .filter((k) => now[k] && before[k])
+    .map((k) => ({ skill: k, from: before[k]!.r, to: now[k]!.r, drift: now[k]!.r - before[k]!.r }))
+    .filter((x) => Math.abs(x.drift) >= min);
+}
+
+const touches = (e: RatingEvent, k: SkillId) => e.skill === k || (e.tags ?? []).some((t) => t.skill === k && t.w >= 0.5);
+
+/**
+ * A skill since its last placement: the placed value, answers since, and how the last `window` answers compare
+ * with what the rating expected at the time (replayed for this skill alone — an approximation for multi-skill items).
+ */
+export function skillForm(events: RatingEvent[], skill: SkillId, window: number = RECAL.window): { placed: number | null; placedAt: string | null; since: number; n: number; right: number; gap: number } {
+  const mine = [...events].filter((e) => touches(e, skill)).sort((a, b) => a.at.localeCompare(b.at) || a.id.localeCompare(b.id));
+  let cur: SkillRating | undefined;
+  let placed: number | null = null;
+  let placedAt: string | null = null;
+  let since = 0;
+  const seen = new Set<string>();
+  const last: { s: number; e: number }[] = [];
+  for (const e of mine) {
+    if (seen.has(e.id)) continue;
+    seen.add(e.id);
+    if (e.set !== undefined) {
+      placed = e.set;
+      placedAt = e.at;
+      since = 0;
+    } else {
+      since++;
+      const s = e.score !== undefined ? Math.max(0, Math.min(1, e.score)) : e.correct ? 1 : 0;
+      last.push({ s, e: expected(cur?.r ?? START_RATING, e.difficulty) });
+      if (last.length > window) last.shift();
+    }
+    cur = rate(cur, e);
+  }
+  const n = last.length;
+  return { placed, placedAt, since, n, right: last.filter((x) => x.s >= 0.5).length, gap: n ? last.reduce((a, x) => a + x.s - x.e, 0) / n : 0 };
+}
+
+export interface Recalibration {
+  /** Skills that moved ≥ RECAL.placementDrift from their placement (after ≥ RECAL.minAnswers answers). */
+  drifted: { skill: SkillId; placed: number; now: number; drift: number }[];
+  /** Redraw the projected units now (not only at the unit boundary). */
+  redrawProjected: boolean;
+  /** "You seem above this — test out?" (offer the unit's Jump-ahead test, P16). */
+  promote: SkillId[];
+  /** "This seems hard — easier steps?" (rebuild the current unit's unplayed steps from the new frontier). */
+  demote: SkillId[];
+  /** Areas to offer a short re-test (the 8-item area placement). */
+  retest: DomainId[];
+}
+
+/** What to re-plan after a session (§6.2). Pure; `now` for the age of placements; `snoozed` = skills declined recently. */
+export function recalibration(events: RatingEvent[], ratings: Ratings, now: Date, skills: SkillId[] = PLACEMENT_ORDER, snoozed: SkillId[] = []): Recalibration {
+  const drifted: Recalibration['drifted'] = [];
+  const promote: SkillId[] = [];
+  const demote: SkillId[] = [];
+  const old = new Map<DomainId, number>();
+  const moved = new Map<DomainId, number>();
+  for (const k of skills) {
+    const f = skillForm(events, k);
+    const r = ratings[k]?.r;
+    if (f.placed !== null && r !== undefined && f.since >= RECAL.minAnswers && Math.abs(r - f.placed) >= RECAL.placementDrift) drifted.push({ skill: k, placed: f.placed, now: r, drift: r - f.placed });
+    if (f.placed !== null && r !== undefined && Math.abs(r - f.placed) >= RECAL.retestDrift) moved.set(areaOf(k), (moved.get(areaOf(k)) ?? 0) + 1);
+    if (f.placedAt) {
+      const days = (now.getTime() - new Date(f.placedAt).getTime()) / 864e5;
+      old.set(areaOf(k), Math.max(old.get(areaOf(k)) ?? 0, days));
+    }
+    if (snoozed.includes(k) || f.n < RECAL.window) continue;
+    if (f.gap >= RECAL.promoteGap && f.right >= RECAL.promoteRight) promote.push(k);
+    else if (f.gap <= RECAL.demoteGap && f.right <= RECAL.demoteRight) demote.push(k);
+  }
+  const retest = DOMAINS.map((d) => d.id).filter((d) => (moved.get(d) ?? 0) >= 2 || (old.has(d) && old.get(d)! >= RECAL.retestDays && [...drifted, ...promote.map((skill) => ({ skill }))].some((x) => areaOf(x.skill) === d)));
+  return { drifted, redrawProjected: drifted.length > 0, promote, demote, retest };
 }

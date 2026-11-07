@@ -146,6 +146,8 @@ export interface PathInput {
   leaveOut: DomainId[];
   packs: Pack[];
   plays: string[];
+  /** Technique drills left out of the path (drill settings, spec AI owner Q7). */
+  noDrills?: boolean;
   minutes: 5 | 10 | 20;
   ratings: Ratings;
   events: RatingEvent[];
@@ -337,7 +339,8 @@ function subEvidence(events: RatingEvent[]): Map<string, SubEvidence> {
 
 /** The placement value for a skill, when it was measured by Find my level. */
 function placed(events: RatingEvent[], skill: SkillId): { r: number; at: number } | null {
-  const ps = events.filter((e) => e.set !== undefined && e.skill === skill);
+  // Placement 3.0: a skill inferred from its area (setN = 2, never asked) is not placed — it gets the probe first.
+  const ps = events.filter((e) => e.set !== undefined && e.skill === skill && e.setN !== 2);
   if (!ps.length) return null;
   const last = ps[ps.length - 1];
   return { r: last.set!, at: new Date(last.at).getTime() };
@@ -713,6 +716,7 @@ export const GAME_STEPS: Record<string, { domain: DomainId; skill: SkillId; sub:
   'rush-keysig': { domain: 'reading', skill: 'theory', sub: 'keys', title: { en: 'Key Signature Rush', he: 'מרוץ סימני מפתח' } },
   'rush-fretboard': { domain: 'instrument', skill: 'instrument', sub: 'fretboard', title: { en: 'Fretboard Sprint', he: 'ספרינט צוואר' }, forPlays: ['guitar', 'bass'] },
   peakhunter: { domain: 'instrument', skill: 'timbre', sub: 'eq', title: { en: 'Peak Hunter', he: 'צייד הפיקים' } },
+  drills: { domain: 'instrument', skill: 'instrument', sub: 'piano-tech', title: { en: 'Technique drills', he: 'תרגילי טכניקה' }, forPlays: ['keys', 'piano', 'guitar', 'bass'] },
 };
 const AREA_GAMES: Record<DomainId, string[]> = {
   pitch: ['rush-interval', 'rush-chord', 'rush-progression'],
@@ -721,12 +725,13 @@ const AREA_GAMES: Record<DomainId, string[]> = {
   voice: ['flight'],
   reading: ['rush-note', 'rush-keysig'],
   creative: ['rush-chord'],
-  instrument: ['rush-fretboard', 'peakhunter'],
+  instrument: ['drills', 'rush-fretboard', 'peakhunter'],
 };
 /** The game for a unit's leading area (rotating by unit number; mic / instrument / pack rules apply). */
-export function gameForArea(area: DomainId, n: number, inp: Pick<PathInput, 'noMic' | 'noSing' | 'plays' | 'packs'>): string | null {
+export function gameForArea(area: DomainId, n: number, inp: Pick<PathInput, 'noMic' | 'noSing' | 'plays' | 'packs'> & { noDrills?: boolean }): string | null {
   const ok = AREA_GAMES[area].filter((g) => {
     const s = GAME_STEPS[g];
+    if (g === 'drills' && inp.noDrills) return false;
     if (s.needsMic && (inp.noMic || inp.noSing)) return false;
     if (s.forPlays && !s.forPlays.some((p) => inp.plays.includes(p))) return false;
     if (g === 'peakhunter' && !inp.packs.includes('production')) return false;

@@ -196,7 +196,7 @@ export function Highway({
   const flashN = useRef(0);
 
   const px = reduced ? 0.15 : 0.3; // px per ms of scroll
-  const latency = opts.mode === 'tap' ? settings.tapLatencyMs || 0 : useMidi ? 0 : MIC_PITCH_LAG_MS;
+  const latency = opts.mode === 'tap' ? settings.tapLatencyMs || 0 : useMidi ? (settings.midiLatencyMs ?? 0) : (settings.micLatencyMs ?? MIC_PITCH_LAG_MS);
 
   const setBoth = (r: HighwayRun) => {
     runRef.current = r;

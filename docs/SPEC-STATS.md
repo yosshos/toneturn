@@ -117,3 +117,20 @@ sheet, 320 px in both languages.
 | S21 | **Closest to unlock**: the top 3 awards by progress at the top of Awards. |
 | S22 | **Share card**: an award / month in review as an image (canvas → Web Share, download fallback). |
 | S23 | **Rarity and global percentile** need a server aggregate: not in 0.38 (hidden); friend quests: later. |
+
+---
+
+## 9. Ranks per area, leaderboards, seasonal challenges, badges (owner, 2026-11-07)
+
+- **One weekly XP league** stays (effort from everything: lessons, games, drills).
+- **A rank per area** by level (Bronze → Diamond, III → II → I, then Master), plus a **technique rank**: reached only
+  with enough evidence, no demotion below a division held 7 days. Shown on the Skill Map areas and the profile.
+- **Leaderboards per area** among friends / players at your level (privacy as S9) — not leagues.
+- **Monthly area challenge** rotating the areas (3 tiers, a badge).
+- **Many more badges with creative names**: every area × tier, every skill × level, every sub-skill "mastered",
+  every technique family × level, and specials. Engine `engine/ranks.ts`, `engine/badges.ts`; UI `ui/Badges.tsx`.
+- Built: `engine/ranks.ts` (division = 600 + 60·d on the area level, Master ≥ 1550, evidence 20 / 50 / 100 / 200 / 300
+  answers, 7-day floor), `engine/badges.ts` (375 badges: area 48, skill 108, sub-skill 108, technique 88, special 16,
+  season 7), `engine/rankBadges.ts` (refresh after each save; toast on a rank up or a new badge, after the session),
+  `ui/Badges.tsx` (Badges tab in Progress, AreaRanks above the Skill Map). Synced: `progress.ranks`, `progress.badges`.
+- To do: per-area leaderboards in Friends (needs friends' shared ranks), guitar-family badges.

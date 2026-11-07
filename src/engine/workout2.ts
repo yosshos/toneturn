@@ -54,6 +54,8 @@ export interface SuggestInput {
   view: PathView;
   /** A saved default structure (targets + minutes): used instead of the generated one, rescaled to `total`. */
   template?: Block[] | null;
+  /** Keys player with technique drills in the workout (spec AI): the game slot becomes a Technique block. */
+  technique?: boolean;
 }
 
 /** Open steps of the current unit (and the checkpoint), per area. */
@@ -112,7 +114,7 @@ export function suggestWorkout(inp: SuggestInput): Block[] {
     if (shape.warm && (inp.reviewsDue > 0 || T >= 10)) push({ kind: 'warmup' }, shape.warm);
     push({ kind: 'path' }, shape.path + (shape.warm && !out.some((b) => b.target.kind === 'warmup') ? shape.warm : 0));
     shape.areas.forEach((m, i) => cand[i] && push({ kind: 'area', area: cand[i] }, m));
-    if (shape.game) push({ kind: 'game', game: 'highway' }, shape.game);
+    if (shape.game) push({ kind: 'game', game: inp.technique ? 'drills' : 'highway' }, shape.game);
     const diff = T - total(out);
     if (diff !== 0) {
       const p = out.find((b) => b.target.kind === 'path')!;
@@ -162,7 +164,7 @@ export function suggestWorkout(inp: SuggestInput): Block[] {
     const last = [...out].reverse().find((b) => b.target.kind === 'area') ?? out[out.length - 1];
     last.minutes = clampM(last.minutes + left);
   }
-  if (game) push({ kind: 'game', game: 'highway' }, game);
+  if (game) push({ kind: 'game', game: inp.technique ? 'drills' : 'highway' }, game);
   return out;
 }
 

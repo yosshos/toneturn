@@ -109,6 +109,7 @@ export function pathInputFrom(s: Settings, p: Progress, now = new Date()): PathI
     hidden: s.pathHidden ?? [],
     noSing: !!s.noSing,
     noMic: !!s.noMic,
+    noDrills: s.drills?.inPath === false,
     priorities: intake?.priorities ?? null,
     leaveOut: s.pathLeaveOut ?? [],
     packs: s.pathPacks ?? defaultPacks(track, plays, goal),

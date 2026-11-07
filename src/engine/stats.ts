@@ -69,9 +69,12 @@ export type CountKey =
   | 'pitchMemoryDays'
   | 'pitchMemoryCents'
   | 'pitchCents'
-  | 'steadySec';
+  | 'steadySec'
+  | 'drillClean'
+  | 'tempoRecords'
+  | 'evenCv';
 export type Counts = Partial<Record<CountKey, number>>;
-export const LOWER_BETTER: CountKey[] = ['tuneUpCents', 'pitchMemoryCents', 'pitchCents'];
+export const LOWER_BETTER: CountKey[] = ['tuneUpCents', 'pitchMemoryCents', 'pitchCents', 'evenCv'];
 
 export interface PersonalRecords {
   fastPerfect?: { ms: number; at: string; lessonId: string };

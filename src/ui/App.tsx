@@ -7,7 +7,7 @@ import { intakeDraftProgress } from './Intake';
 import { clearSlot, latestAnything, clearPlacement, clearSession, loadPlacement, loadSession, PLACEMENT_KEY, placementProgressOf, saveSession, sessionProgressOf, type SavedSession } from '../storage/resume';
 import { vocalUnit } from '../content/units';
 const AvatarStudio = lazy(() => import('./AvatarStudio'));
-import { MiniGateContext, MiniLessonPlayer } from './MiniLesson';
+import { MiniGateContext, MiniLessonPlayer, RefresherContext } from './MiniLesson';
 import { LearnedScreen, learnedCount } from './Learned';
 import { lessonForUnit, MINI_LESSONS } from '../content/minilessons';
 import type { MiniLesson } from '../content/miniTypes';
@@ -51,11 +51,20 @@ import type { GameKind } from '../game/memoryGame';
 import { MenuSheet } from './Menu';
 import { GAMES2, PlayScreen, TabBar, TAB_ROUTES, type TabId } from './Arcade';
 import { Tuner } from './Tuner';
+import { Drills, drillSettingsOf } from './Drills';
+import { badgeInputOf, refreshRanksBadges } from '../engine/rankBadges';
+import { PLACEMENT_ORDER, ratingDrift, recalibration } from '../engine/placement';
+import { foldFromMemo } from '../engine/stats';
+import { AreaRanks, BadgesView } from './Badges';
+import type { RankChange } from '../engine/ranks';
+import type { Badge } from '../engine/badges';
+import { BadgeUnlock, RankUpUnlock } from './BadgeUnlock';
+import { todayDrills } from '../engine/drills/plan';
 import { WorkoutCard, WorkoutEditor, WorkoutRunScreen } from './Workout';
 import { addSession, nextBlock, nextForBlock, runLeftMs, startRun, suggestWorkout, validateTemplate, type Block, type BlockTarget, type WorkoutRun } from '../engine/workout2';
 import { subPriorities } from '../engine/scheduler';
 import { foldSubs } from '../engine/taxonomy';
-import { DOMAINS, weakestSkill } from '../engine/rating';
+import { DOMAINS, evidence, weakestSkill } from '../engine/rating';
 import { useMotion } from './motion';
 import { awardName, MonthReviewIcon, ProgressTabs } from './Stats';
 import { achievements, earnAwards, firstLaunchAwards } from '../engine/achievements';
@@ -80,7 +89,7 @@ import { pwa } from '../pwa';
 import { params, piano, setMidiEnabled, SIMULATED, store, tts } from './services';
 import { midi } from '../speech/midi';
 
-type Route = 'intake' | 'studio' | 'home' | 'path' | 'arcade' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong' | 'perform' | 'learned' | 'tuner' | 'workout' | 'workoutrun' | 'peakhunter' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'flight' | 'pitchmemory' | 'nametune' | 'tuneup' | 'highway' | 'melodypuzzle';
+type Route = 'intake' | 'studio' | 'home' | 'path' | 'arcade' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong' | 'perform' | 'learned' | 'tuner' | 'drills' | 'workout' | 'workoutrun' | 'peakhunter' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'flight' | 'pitchmemory' | 'nametune' | 'tuneup' | 'highway' | 'melodypuzzle';
 /** Invite links: #/online/CODE */
 const onlineCodeFromHash = () => (/^#\/?online\/(\w+)/.exec(location.hash)?.[1] ?? '');
 const PLAY_HASH = 'play';
@@ -90,7 +99,7 @@ const enterPlay = () => {
 };
 const routeFromHash = (): Route => {
   const h = location.hash.replace(/^#\/?/, '').replace(/^online\/.*$/, 'online');
-  return (['path', 'arcade', 'settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong', 'perform', 'learned', 'studio', 'intake', 'tuner', 'workout', 'workoutrun', 'peakhunter', 'rush-chord', 'rush-note', 'rush-fretboard', 'rush-interval', 'rush-keysig', 'rush-progression', 'flight', 'pitchmemory', 'nametune', 'tuneup', 'highway', 'melodypuzzle'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
+  return (['path', 'arcade', 'settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong', 'perform', 'learned', 'studio', 'intake', 'tuner', 'drills', 'workout', 'workoutrun', 'peakhunter', 'rush-chord', 'rush-note', 'rush-fretboard', 'rush-interval', 'rush-keysig', 'rush-progression', 'flight', 'pitchmemory', 'nametune', 'tuneup', 'highway', 'melodypuzzle'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
 };
 
 /** The level a generated modes lesson was made at (from its first question's pool size). */
@@ -308,6 +317,11 @@ export function App() {
     void piano.unlock();
     setMini({ lesson: l, then: start });
   };
+  /** The concept refresher (owner, 2026-11-07): a mini-lesson over the exercise; the exercise continues after it. */
+  const openRefresher = (lesson: MiniLesson, after: () => void) => {
+    void piano.unlock();
+    setMini({ lesson, then: after });
+  };
   /** Open a generated session in its save slot: an unfinished one in the same slot continues instead. */
   const openGenerated = (def: LessonDef, adapt?: (s: SessionState) => Question[] | null, consented = false, extra: { key?: string; title?: string; seed?: number; resume?: SavedSession } = {}) => {
     if (!consented && s.mode === 'voice' && !s.voiceConsent) {
@@ -326,6 +340,8 @@ export function App() {
     setRoute('lesson');
   };
   /** Find my level: every skill, or one domain (the voice domain always sings). */
+  /** Placement 3.0: skills already measured start the search from their rating (fewer questions on a retake). */
+  const measuredPriors = (): Partial<Record<SkillId, number>> => Object.fromEntries(Object.entries(ratingsOf(progress)).filter(([, r]) => r && evidence(r) === 'measured').map(([k, r]) => [k, Math.round(r!.r)]));
   // A placement left half-way (back button, swipe back, reload) continues where it stopped (playtesting, 0.35.2).
   const resumePlacement = (v: SavedSession) => openGenerated(v.lesson, (st) => adaptPlacement(st, v.seed!), false, { key: PLACEMENT_KEY, title: t.findLevel, seed: v.seed, resume: v });
   const startPlacement = (seed: number, def: LessonDef) => openGenerated(def, (st) => adaptPlacement(st, seed), false, { key: PLACEMENT_KEY, title: t.findLevel, seed });
@@ -334,14 +350,14 @@ export function App() {
     const saved = fresh ? null : loadPlacement();
     if (saved && (saved.lesson.placementDomain ?? null) === d) return resumePlacement(saved);
     const seed = (Date.now() ^ (Math.random() * 1e9)) >>> 0;
-    startPlacement(seed, placementLesson(seed, { singing: s.mode === 'voice' || d === 'voice', domain: d, priorities: (s.intake as Intake | null | undefined)?.priorities }));
+    startPlacement(seed, placementLesson(seed, { singing: s.mode === 'voice' || d === 'voice', domain: d, priorities: (s.intake as Intake | null | undefined)?.priorities, priors: measuredPriors() }));
   };
   /** Catching up: only the sections this player has not been measured on yet. */
   const openCatchUpPlacement = (only: SkillId[]) => {
     const saved = loadPlacement();
     if (saved && !saved.lesson.placementDomain) return resumePlacement(saved);
     const seed = (Date.now() ^ (Math.random() * 1e9)) >>> 0;
-    startPlacement(seed, placementLesson(seed, { singing: s.mode === 'voice', priorities: (s.intake as Intake | null | undefined)?.priorities, only }));
+    startPlacement(seed, placementLesson(seed, { singing: s.mode === 'voice', priorities: (s.intake as Intake | null | undefined)?.priorities, only, priors: measuredPriors() }));
   };
   /** The home card's "continue": path lessons through their own opener (mini-lesson gate, unlocks). */
   const continueSession = (v: SavedSession) => {
@@ -456,6 +472,52 @@ export function App() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [progress.applied.length, progress.ratingEvents?.length, progress.bests, route, settings?.awardsInit]);
+  // ---- re-calibration after every session (docs/SPEC-PLACEMENT.md §6): the level, the path and the workout follow
+  // the evidence more often than at unit boundaries ----
+  const [recalOffer, setRecalOffer] = useState<{ kind: 'promote' | 'retest'; key: string; area?: DomainId } | null>(null);
+  const snoozeRecal = () => {
+    if (recalOffer) updateSettings({ recalSnooze: { ...(settings?.recalSnooze ?? {}), [recalOffer.key]: new Date().toISOString() } });
+    setRecalOffer(null);
+  };
+  const recalSeen = useRef(0);
+  useEffect(() => {
+    if (!settings || route === 'lesson' || !progress.history.length || recalSeen.current === progress.history.length) return;
+    recalSeen.current = progress.history.length;
+    const now = new Date();
+    const snoozed = Object.entries(settings.recalSnooze ?? {}).filter(([, at]) => now.getTime() - Date.parse(at) < 7 * 864e5).map(([k]) => k);
+    const rc = recalibration(progress.ratingEvents ?? [], ratingsOf(progress), now, PLACEMENT_ORDER, snoozed as SkillId[]);
+    // Harder than expected, or the frozen unit's skills moved ≥ 100: the current unit is rebuilt if under half done.
+    const unit = pathView.units.find((u) => u.status === 'current');
+    const unitSkills = unit ? [...new Set(unit.steps.map((x) => x.step.skill))] : [];
+    const frozenAt = settings.pathFacts?.units?.[settings.pathFacts.units.length - 1]?.at;
+    const before = frozenAt ? foldFromMemo(progress.ratingBase, (progress.ratingEvents ?? []).filter((e) => e.at <= frozenAt)) : null;
+    const drift = before ? ratingDrift(before, ratingsOf(progress), unitSkills) : [];
+    if (rc.demote.some((k) => unitSkills.includes(k)) || drift.length) {
+      const next = unfreezeIfEarly(settings.pathFacts);
+      if (next !== settings.pathFacts) updateSettings({ pathFacts: next });
+    }
+    if (rc.promote.some((k) => unitSkills.includes(k)) && !snoozed.includes('promote:' + (unit?.id ?? ''))) setRecalOffer({ kind: 'promote', key: 'promote:' + (unit?.id ?? '') });
+    else if (rc.retest.length && !snoozed.includes('retest:' + rc.retest[0])) setRecalOffer({ kind: 'retest', key: 'retest:' + rc.retest[0], area: rc.retest[0] });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [progress.history.length, route]);
+
+  // ---- area ranks + badges (spec AG §9): refreshed after each save, the unlock overlay after the session ----
+  const [unlock, setUnlock] = useState<{ badges: Badge[]; rank?: RankChange } | null>(null);
+  useEffect(() => {
+    if (!settings || route === 'lesson') return;
+    const r = refreshRanksBadges(progress, new Date(), settings.uiLang === 'he' ? [5, 6] : undefined);
+    if (!r) return;
+    void store.saveProgress(r.next).then(() => setProgress(r.next));
+    if (settings.cleanView || !settings.awardsInit) return;
+    // First run of badges (an update): what was earned before is logged quietly, one note instead of a parade.
+    if (!progress.badges) {
+      if (r.newly.length) setAwardToast(settings.uiLang === 'en' ? `🏅 ${r.newly.length} badges from before are in Progress → Badges` : `🏅 ${r.newly.length} תגים מלפני כן מחכים בהתקדמות ← תגים`);
+      return;
+    }
+    const up = r.rankChanges.filter((c) => c.newTier || c.kind === 'up').sort((a, b) => b.to - a.to)[0];
+    if (up || r.newly.length) setUnlock({ badges: r.newly, rank: up });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [progress.applied.length, progress.ratingEvents?.length, progress.drillItems, route]);
   useEffect(() => {
     if (!awardToast) return;
     const id = window.setTimeout(() => setAwardToast(null), 4500);
@@ -488,7 +550,10 @@ export function App() {
     }
     if (step.kind === 'check') return openGenerated(checkpointSession(unit, seed), undefined, false, { key: `pathstep:${step.id}`, title });
     // A game inside the unit (0.38): its result is recorded as the step's stars when the game ends.
-    if (step.kind === 'game' && step.game) return go(step.game as Route);
+    if (step.kind === 'game' && step.game) {
+      if (step.game === 'drills') drillFrom.current = 'path';
+      return go(step.game as Route);
+    }
     const how = mode === 'practice' ? 'step' : x.probe ? 'probe' : x.state === 'quick' ? 'quick' : 'step';
     const def = stepSession(step, seed, how);
     if (def) gate(`topic:${step.topic}`, () => openGenerated(def, undefined, false, { key: `pathstep:${step.id}`, title }));
@@ -498,6 +563,29 @@ export function App() {
     const { def, steps } = testOutSession(unit, seed);
     pendingStep.current = { id: `testout:${unit.id}`, kind: 'check', after: lastSession(), testOut: steps };
     openGenerated(def, undefined, false, { key: `testout:${unit.id}`, title: s.uiLang === 'en' ? 'Test out' : 'מבחן מעבר' });
+  };
+  /** Technique drills opened from a path step or a workout block run today's items as a queue (spec AI §9). */
+  const drillFrom = useRef<'path' | 'workout' | 'test' | null>(null);
+  const techAfterPlacement = useRef(false);
+  const drillQueue = useMemo(
+    () => (route === 'drills' && (drillFrom.current === 'path' || drillFrom.current === 'workout') && settings && progress ? todayDrills(drillSettingsOf(settings), progress.drillItems ?? {}, settings.drillStart ?? {}, settings.customDrills ?? []).map((x) => x.drill) : undefined),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [route],
+  );
+  const drillQueueDone = (takes: number, clean: number) => {
+    const from = drillFrom.current;
+    drillFrom.current = null;
+    if (from === 'path') {
+      const ps = pendingStep.current;
+      if (ps && ps.kind === 'game' && ps.id.endsWith(':drills') && settings && takes > 0) {
+        pendingStep.current = null;
+        const r = clean / takes;
+        const stars = r >= 0.8 ? 3 : r >= 0.5 ? 2 : takes >= 3 ? 1 : 0;
+        updateSettings({ pathFacts: recordStep(settings.pathFacts ?? {}, ps.id, stars, new Date().toISOString()) });
+      }
+      return go('path');
+    }
+    go(from === 'workout' ? 'workoutrun' : 'arcade');
   };
   /** A game step of the path (0.38): stars from the game's accuracy (≥ 60 % = 1, 80 % = 2, 95 % = 3). */
   const noteGameStep = (game: string, score: number, detail: unknown) => {
@@ -529,6 +617,8 @@ export function App() {
     if (lastR?.lessonId === 'placement' && lastR.sessionId !== seenPlacement.current && settings) {
       seenPlacement.current = lastR.sessionId;
       updateSettings({ pathFacts: unfreezeIfEarly(settings.pathFacts) });
+      // Keys players: the level test continues with its technique section (spec AI §13).
+      if (!lastR.lessonId.includes('domain') && (settings.midiInput || settings.instrument === 'keys' || settings.instrument === 'guitar' || settings.instrument === 'bass' || ((settings.intake as Intake | null | undefined)?.plays ?? []).includes('keys'))) techAfterPlacement.current = true;
     }
     const ps = pendingStep.current;
     const r = p.history[p.history.length - 1];
@@ -565,9 +655,9 @@ export function App() {
   const tmplRaw = s.workoutTemplates?.[String(now0.getDay())] ?? s.workoutTemplates?.all ?? null;
   const suggestedWorkout = useMemo(() => {
     const tmpl = tmplRaw ? validateTemplate(tmplRaw, { leaveOut: s.pathLeaveOut ?? [], topics: new Set(Object.keys(TOPIC_GEN)), hidden: s.pathHidden ?? [], games: new Set(GAMES2.map((g) => g.id)) }) : null;
-    return suggestWorkout({ total: tmpl ? tmpl.reduce((a, b) => a + b.minutes, 0) : baseMinutes, goal: s.goal ?? 'general', priorities: (s.intake as Intake | null | undefined)?.priorities ?? null, leaveOut: s.pathLeaveOut ?? [], reviewsDue: new Set(dueReviews(progress.review, now0).map((r) => r.key)).size, singer: s.mode === 'voice' && !s.noSing && !s.noMic, view: pathView, template: tmpl });
+    return suggestWorkout({ total: tmpl ? tmpl.reduce((a, b) => a + b.minutes, 0) : baseMinutes, goal: s.goal ?? 'general', priorities: (s.intake as Intake | null | undefined)?.priorities ?? null, leaveOut: s.pathLeaveOut ?? [], reviewsDue: new Set(dueReviews(progress.review, now0).map((r) => r.key)).size, singer: s.mode === 'voice' && !s.noSing && !s.noMic, view: pathView, template: tmpl, technique: s.drills?.inWorkout !== false && (!!s.midiInput || s.instrument === 'keys' || s.instrument === 'guitar' || s.instrument === 'bass' || ((s.intake as Intake | null | undefined)?.plays ?? []).includes('keys')) });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathView, baseMinutes, tmplRaw, s.goal, s.pathLeaveOut, s.pathHidden, s.mode, s.noSing, s.noMic, progress.review.length]);
+  }, [pathView, baseMinutes, tmplRaw, s.goal, s.pathLeaveOut, s.pathHidden, s.mode, s.noSing, s.noMic, progress.review.length, today, progress.history.length]);
   const todayBlocks = s.workoutToday?.day === today ? s.workoutToday.blocks : suggestedWorkout;
   const [wrun, setWrun] = useState<WorkoutRun | null>(() => loadSlot<WorkoutRun>(`workout:${today}`)?.data ?? null);
   const wrunRef = useRef(wrun);
@@ -680,6 +770,7 @@ export function App() {
 
   return (
     <MiniGateContext.Provider value={gate}>
+    <RefresherContext.Provider value={openRefresher}>
     <div className={`app ${isTab ? 'has-tabs' : ''}`}>
       {SIMULATED && <div className="sim-banner">{t.simulated}</div>}
       {mini && (
@@ -846,7 +937,14 @@ export function App() {
           settings={s}
           autoStart={autoStart}
           onMode={(mode) => updateSettings({ mode })}
-          onExit={() => go('home')}
+          onExit={() => {
+            if (techAfterPlacement.current) {
+              techAfterPlacement.current = false;
+              drillFrom.current = 'test';
+              return go('drills');
+            }
+            go('home');
+          }}
           onAgain={() => (generated?.def.id === 'placement' ? openPlacement(generated.def.placementDomain ?? null, true) : generated?.def.id === 'review' ? openReview() : generated?.def.id === 'modes' ? openModes(modesAgainLevel(generated.def)) : generated?.def.id === 'wrong-notes' ? openWrongNotes(wrongLevel) : generated ? openPuzzle() : openLesson(lessonId))}
           lessonDef={generated?.def ?? slot?.resume?.lesson}
           adapt={generated?.adapt}
@@ -877,7 +975,13 @@ export function App() {
           extra={{ bestLeague: s.bestLeague, learned: learnedCount(s) }}
           pinned={s.trophies}
           onPin={(trophies) => updateSettings({ trophies })}
-          map={<SkillMap t={t} lang={s.uiLang} progress={progress} bestLeague={s.bestLeague} onBack={() => go('home')} onPractice={practiceSkill} onPlacement={openPlacement} />}
+          map={
+            <>
+              <AreaRanks ranks={progress.ranks} lang={s.uiLang} />
+              <SkillMap t={t} lang={s.uiLang} progress={progress} bestLeague={s.bestLeague} onBack={() => go('home')} onPractice={practiceSkill} onPlacement={openPlacement} />
+            </>
+          }
+          badges={<BadgesView lang={s.uiLang} input={badgeInputOf(progress, new Date(), s.uiLang === 'he' ? [5, 6] : undefined)} log={progress.badges} />}
         />
       )}
       {consentThen && (
@@ -984,6 +1088,18 @@ export function App() {
           }}
         />
       )}
+      {recalOffer && route !== 'lesson' && !unlock && (
+        <div className="sheet-backdrop" onClick={() => snoozeRecal()}>
+          <div className="sheet recal-sheet" role="dialog" aria-modal="true" aria-labelledby="recal-title" onClick={(e) => e.stopPropagation()} data-recal={recalOffer.kind}>
+            <h2 id="recal-title">{recalOffer.kind === 'promote' ? (s.uiLang === 'en' ? 'You seem above this unit' : 'נראה שאתם מעל היחידה הזאת') : s.uiLang === 'en' ? `Your ${t.domainNames[recalOffer.area!]} level moved a lot` : `הרמה שלכם ב${t.domainNames[recalOffer.area!]} זזה הרבה`}</h2>
+            <p>{recalOffer.kind === 'promote' ? (s.uiLang === 'en' ? 'Your last answers are well above what this unit expects. Take the short jump-ahead test and skip what you already know?' : 'התשובות האחרונות שלכם הרבה מעל מה שהיחידה מצפה לו. לעשות את מבחן הקפיצה הקצר ולדלג על מה שאתם כבר יודעים?') : s.uiLang === 'en' ? 'A quick re-test (about 8 questions) puts your path back where you are.' : 'מבחן קצר מחדש (כ־8 שאלות) מחזיר את המסלול למקום שבו אתם נמצאים.'}</p>
+            <div className="row">
+              <button className="btn primary" onClick={() => { const o = recalOffer; setRecalOffer(null); if (o.kind === 'promote') { const u = pathView.units.find((x) => x.status === 'current'); if (u) openTestOut(u); } else openPlacement(o.area ?? null, true); }}>{recalOffer.kind === 'promote' ? (s.uiLang === 'en' ? 'Test out' : 'למבחן') : s.uiLang === 'en' ? 'Re-test' : 'למבחן קצר'}</button>
+              <button className="btn ghost" onClick={() => snoozeRecal()}>{s.uiLang === 'en' ? 'Not now' : 'לא עכשיו'}</button>
+            </div>
+          </div>
+        </div>
+      )}
       {awardToast && (
         <button className="award-toast" role="status" onClick={() => (setAwardToast(null), go('skills'))}>
           {awardToast}
@@ -1023,7 +1139,10 @@ export function App() {
             const b = wrun.blocks[wrun.at];
             // Games and the vocal warm-up: the block counts as done when started (they run on their own screens).
             saveRun(addSession(wrun, b.minutes * 60000, Math.max(1, b.minutes), Math.max(1, b.minutes)));
-            if (b.target.kind === 'game') go(b.target.game as Route);
+            if (b.target.kind === 'game') {
+              if (b.target.game === 'drills') drillFrom.current = 'workout';
+              go(b.target.game as Route);
+            }
             else go('vocal');
           }}
           onBlockDone={(ms) => {
@@ -1049,6 +1168,30 @@ export function App() {
         />
       )}
       {route === 'tuner' && <Tuner lang={s.uiLang} settings={s} onChange={updateSettings} onBack={() => go('home')} />}
+      {unlock &&
+        route !== 'lesson' &&
+        (unlock.rank ? (
+          <RankUpUnlock change={unlock.rank} lang={s.uiLang} onDone={() => setUnlock(unlock.badges.length ? { badges: unlock.badges } : null)} />
+        ) : (
+          <BadgeUnlock badges={unlock.badges} lang={s.uiLang} onDone={() => setUnlock(null)} />
+        ))}
+      {route === 'drills' && (
+        <Drills
+          lang={s.uiLang}
+          settings={s}
+          onSettings={updateSettings}
+          items={progress.drillItems ?? {}}
+          onTake={(st, evs, xp, m) => void store.recordDrill(st, evs, xp, m).then(setProgress)}
+          onBack={() => (drillFrom.current ? drillQueueDone(0, 0) : go('arcade'))}
+          queue={drillQueue}
+          onQueueDone={drillQueueDone}
+          startTest={drillFrom.current === 'test'}
+          onTestDone={() => {
+            drillFrom.current = null;
+            go('path');
+          }}
+        />
+      )}
       {(['chord', 'note', 'fretboard', 'interval', 'keysig', 'progression'] as const).map((mode) => {
         const g = `rush-${mode}` as Route;
         if (route !== g) return null;
@@ -1163,6 +1306,7 @@ export function App() {
       )}
       {isTab && !mini && <TabBar t={t} route={route as TabId} onGo={(r) => go(r)} />}
     </div>
+    </RefresherContext.Provider>
     </MiniGateContext.Provider>
   );
 }

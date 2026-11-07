@@ -19,6 +19,7 @@ import { pc } from '../src/engine/pitch';
 import { applyResult, emptyProgress, ratingsOf, resultFromSession, ProgressStore } from '../src/storage/progress';
 import { memoryKV } from '../src/storage/kv';
 import { LessonController } from '../src/game/controller';
+import type { SkillId as SkillIdT } from '../src/engine/lesson';
 import { FakeAudio, FakeMic, FakeTTS, ScriptedPitch, ScriptedTranscriber, immediateClock } from '../src/game/fakes';
 
 const ev = (id: string, d: number, correct: boolean, at = '2026-11-04T10:00:00Z'): RatingEvent => ({ id, skill: 'degrees', difficulty: d, correct, at });
@@ -69,9 +70,9 @@ describe('Elo-style ratings', () => {
   });
 });
 
-import { LADDERS, PLACEMENT_ORDER, placementEstimate, placementResults, placementSkills, SUNG_SKILLS } from '../src/engine/placement';
+import { LADDERS, PLACEMENT_BUDGET, PLACEMENT_ORDER, placementResults, placementSkills, rungDifficulty, SUNG_SKILLS } from '../src/engine/placement';
 import { DOMAINS, SKILLS, type DomainId } from '../src/engine/rating';
-describe('Find my level 2.0: every skill, staircase to failure', () => {
+describe('Find my level 3.0: every skill gets a range (asked or inferred)', () => {
   // Play a whole placement: the player is right up to `can[skill]` (a ladder level), wrong above it.
   const run = (can: Partial<Record<string, number>>, singing = false, domain: DomainId | null = null, skip: string[] = []) => {
     let lesson = placementLesson(9, { singing, domain });
@@ -93,13 +94,17 @@ describe('Find my level 2.0: every skill, staircase to failure', () => {
     }
     return s;
   };
-  it('every skill in the order is measured; singing only with the microphone', () => {
+  it('every skill in the order gets a result (asked, or inferred from its area); singing only with the microphone', () => {
     const s = run({});
-    const skills = new Set(s.lesson.questions.map((q) => q.id.split(':')[1]));
-    for (const k of PLACEMENT_ORDER.filter((x) => !SUNG_SKILLS.includes(x))) expect(skills.has(k), k).toBe(true);
-    for (const k of SUNG_SKILLS) expect(skills.has(k), k).toBe(false);
-    const sung = new Set(run({}, true).lesson.questions.map((q) => q.id.split(':')[1]));
-    for (const k of SUNG_SKILLS) expect(sung.has(k), k).toBe(true);
+    const rated = new Set(placementResults(s).map((r) => r.skill));
+    for (const k of PLACEMENT_ORDER.filter((x) => !SUNG_SKILLS.includes(x))) expect(rated.has(k), k).toBe(true);
+    for (const k of SUNG_SKILLS) expect(rated.has(k), k).toBe(false);
+    const asked = new Set(s.lesson.questions.map((q) => q.id.split(':')[1]));
+    for (const k of SUNG_SKILLS) expect(asked.has(k), k).toBe(false);
+    const sung = run({}, true);
+    const sungRated = new Set(placementResults(sung).map((r) => r.skill));
+    for (const k of SUNG_SKILLS) expect(sungRated.has(k), k).toBe(true);
+    expect(sung.lesson.questions.some((q) => q.id.startsWith('p:singing:'))).toBe(true);
   });
   it('by default, every skill on the map is measured (rhythmic precision through rhythm reading)', () => {
     const measured = new Set([...placementSkills({ singing: true }), 'timing']);
@@ -112,7 +117,9 @@ describe('Find my level 2.0: every skill, staircase to failure', () => {
     expect(res.intervals).toBeUndefined();
     expect(res.theory).toBeUndefined();
     expect(res.degrees.passed).toBe(3);
-    expect(res.chords.passed).toBe(3);
+    // Chords follow degrees inside the area's budget (the skipped section's item counts toward it).
+    expect(res.chords.passed).toBeGreaterThanOrEqual(2);
+    expect(res.chords.asked).toBeLessThanOrEqual(PLACEMENT_BUDGET.follow);
     expect(res.sight).toBeDefined();
     // Only one question of a skipped section was shown (the one skipped).
     expect(s.lesson.questions.filter((q) => q.id.startsWith('p:intervals:')).length).toBe(1);
@@ -127,17 +134,24 @@ describe('Find my level 2.0: every skill, staircase to failure', () => {
     expect(new Set(s.lesson.questions.map((q) => q.id.split(':')[1]))).toEqual(new Set(['sequences', 'rhythm', 'form']));
     expect(placementResults(s).map((r) => r.skill).sort()).toEqual(['form', 'rhythm', 'sequences']);
   });
-  it('climbs until the player fails, and sets the rating between passed and failed', () => {
-    const s = run({ degrees: 5, chords: 99, intervals: 0 });
+  it('gallops up, brackets the edge, and sets the rating at the lower-middle of the range', () => {
+    const s = run({ degrees: 5, intervals: 0 });
     const res = Object.fromEntries(placementResults(s).map((r) => [r.skill, r]));
+    // degrees: rungs 2 ✓, 3 ✓, 5 ✓, 7 ✗ → budget spent: the player is between rungs 5 and 7.
     expect(res.degrees.passed).toBe(5);
-    expect(res.degrees.rating).toBe(placementEstimate('degrees', 5));
-    expect(res.chords.passed).toBe(LADDERS.chords!.length); // reached the top
-    expect(res.chords.rating).toBeGreaterThan(1600);
+    expect([res.degrees.low, res.degrees.high]).toEqual([rungDifficulty('degrees', 5), rungDifficulty('degrees', 7)]);
+    expect(res.degrees.rating).toBeGreaterThan(res.degrees.low);
+    expect(res.degrees.rating).toBeLessThan((res.degrees.low + res.degrees.high) / 2);
+    // intervals start where the area points (high), miss twice: an open range down to the bottom, set low.
     expect(res.intervals.passed).toBe(0);
-    expect(res.intervals.rating).toBeLessThan(800);
-    // A skill stops after its second miss: never more than ladder length + 2 questions
-    for (const k of PLACEMENT_ORDER) if (res[k]) expect(res[k].asked, k).toBeLessThanOrEqual(LADDERS[k]!.length + 2);
+    expect(res.intervals.low).toBe(rungDifficulty('intervals', 0));
+    expect(res.intervals.rating).toBeLessThan(res.degrees.low - 300);
+    // Never more than the skill's budget.
+    for (const k of PLACEMENT_ORDER) if (res[k]) expect(res[k].asked, k).toBeLessThanOrEqual(PLACEMENT_BUDGET.anchor);
+    const top = run({ degrees: 99, intervals: 99, chords: 99 });
+    const t = Object.fromEntries(placementResults(top).map((r) => [r.skill, r]));
+    expect(t.degrees.passed).toBe(LADDERS.degrees!.length); // reached the top
+    expect(t.chords.rating).toBeGreaterThan(1600); // inferred from an area at the top
   });
   it('ladders get harder level by level', () => {
     for (const [k, L] of Object.entries(LADDERS)) for (let i = 1; i < L!.length; i++) expect(L![i].difficulty, k).toBeGreaterThan(L![i - 1].difficulty);
@@ -305,7 +319,7 @@ describe('controller: adaptive placement and sequence answers', () => {
   const say = (e: unknown) =>
     typeof e === 'number' ? ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven'][e] : e === 'maj' ? 'major' : e === 'min' ? 'minor' : e === 'dim' ? 'diminished' : e === 'aug' ? 'augmented' : String(e).replace(/-/g, ' ');
 
-  it('Find my level by voice: all correct climbs every skill to the top of its ladder, without an intro', async () => {
+  it('Find my level by voice: all correct only ever climbs, to the top or the end of the budget, without an intro', async () => {
     const seed = 77;
     const lesson = placementLesson(seed);
     let c!: LessonController;
@@ -324,12 +338,16 @@ describe('controller: adaptive placement and sequence answers', () => {
     // Rhythm reading is tapped on the pad (a scripted voice cannot tap): stop when it comes up.
     await until(() => c.getView().stage === 'complete' || c.getView().question.id.startsWith('p:rhythm-reading'), 20000);
     const qs = c.getView().session.lesson.questions;
-    const top: Record<string, number> = {};
-    for (const q of qs) {
+    const levels: Record<string, number[]> = {};
+    for (const q of qs.slice(0, c.getView().index)) {
       const [, k, lv] = q.id.split(':');
-      top[k] = Math.max(top[k] ?? 0, Number(lv));
+      (levels[k] ??= []).push(Number(lv));
     }
-    for (const k of PLACEMENT_ORDER.slice(0, PLACEMENT_ORDER.indexOf('rhythm-reading'))) expect(top[k], k).toBe(LADDERS[k]!.length);
+    expect(Object.keys(levels).length).toBeGreaterThanOrEqual(3);
+    for (const [k, lv] of Object.entries(levels)) {
+      for (let i = 1; i < lv.length; i++) expect(lv[i], k).toBeGreaterThan(lv[i - 1]);
+      expect(lv[lv.length - 1] === LADDERS[k as SkillIdT]!.length || lv.length >= PLACEMENT_BUDGET.own, k).toBe(true);
+    }
     c.pause();
   }, 60_000);
 

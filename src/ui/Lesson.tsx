@@ -1,5 +1,6 @@
 import { buzz } from './Arcade';
-import { lessonSections } from '../engine/placement';
+import { langOf } from './Trends';
+import { lessonSections, placementPlanOf } from '../engine/placement';
 import { TalkToggle } from './TalkToggle';
 import { PlacementMeter } from './PlacementMeter';
 import { NoteStaff } from './NoteViews';
@@ -8,7 +9,9 @@ import { reportPuzzle } from '../cloud/compete';
 import { fitLessonToRange, fitQuestions } from '../engine/voiceFit';
 import { withAids } from '../engine/aids';
 import type { Ratings } from '../engine/rating';
-import { NoteViews } from './NoteViews';
+import { NoteViews, seqMarks } from './NoteViews';
+import { refresherFor } from '../content/refresher';
+import { useRefresher } from './MiniLesson';
 import { DiagramView, PlaceSurfaceView } from './Instrument';
 import { itemNeedsHeadphones } from '../engine/fx';
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
@@ -100,6 +103,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
         pace: { profile: loadPace(), on: settings.timedScoring !== false },
         inputNaming: namingFor(settings.naming, settings.inputLang),
         latencyMs: settings.tapLatencyMs,
+        micLatencyMs: settings.micLatencyMs,
         playerName: playerName ?? null,
         rhythmByVoice: settings.rhythmByVoice ?? false,
       },
@@ -145,6 +149,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
   }
   const ctrl = ctrlRef.current;
   const v = useSyncExternalStore(ctrl.subscribe, ctrl.getView);
+  const openRefresher = useRefresher();
 
   useEffect(() => {
     ctrl.updateSettings({ inputLang: settings.inputLang, outputLang: settings.outputLang, naming: namingFor(settings.naming, settings.outputLang) });
@@ -239,6 +244,8 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
                 : '♪ ?';
   const celebrate = v.feedback?.kind === 'correct';
   const isStaircase = v.session.lesson.id === 'placement' && v.session.lesson.version >= 3;
+  // The concept refresher: the mini-lesson behind this question (never inside the level test — it would measure the lesson).
+  const refresher = lesson.id === 'placement' ? null : refresherFor(q, lessonId);
   const placementSkill = isStaircase ? (/^p:([a-z-]+):/.exec(q.id)?.[1] as SkillId | undefined) : undefined;
 
   return (
@@ -351,7 +358,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
             )}
             <Burst on={celebrate} />
           </div>
-          {!hideKeyboard && !isPlace && <NoteViews q={q} views={settings.noteViews ?? ['keyboard', 'staff']} answered={answered} keysLive={keysLive} leftHanded={settings.leftHanded} />}
+          {!hideKeyboard && !isPlace && <NoteViews q={q} views={settings.noteViews ?? ['keyboard', 'staff']} answered={answered} keysLive={keysLive} leftHanded={settings.leftHanded} marks={answered ? seqMarks(q, v.feedback?.answer) : undefined} />}
           {isPlace && q.kind === 'place' && v.stage === 'question' && !paused && !v.error && (
             <PlaceSurfaceView key={`${v.index}-${answered ? 'r' : 'q'}-${placeRec?.attempts.length ?? 0}`} q={q} settings={settings} lang={lang} disabled={!awaiting || answered} result={answered ? (placeLast ?? '') : null} onSubmit={(a) => ctrl.answer(a)} />
           )}
@@ -428,6 +435,18 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
             <button className="btn small" onClick={() => ctrl.skip()}>
               {t.skip} ⇥
             </button>
+            {refresher && openRefresher && (
+              <button
+                className="btn small ghost refresh-concept"
+                data-refresh={refresher.id}
+                onClick={() => {
+                  ctrl.pause();
+                  openRefresher(refresher, () => void ctrl.resume());
+                }}
+              >
+                💡 {lang === 'en' ? 'Refresh' : 'רענון'}
+              </button>
+            )}
             {isStaircase && placementSkill && (
               <button
                 className="btn small ghost skip-section"
@@ -588,14 +607,17 @@ function TopicStrip({ v, t }: { v: LessonView; t: Strings }) {
     const cur = /^p:([a-z-]+):/.exec(qs[v.index]?.id ?? '')?.[1] as SkillId | undefined;
     const ci = cur ? order.indexOf(cur) : -1;
     const done = v.stage === 'complete' ? order.length : ci;
+    const plan = placementPlanOf(v.session);
     return (
       <div className="topic-strip" aria-label={`${t.topicsLeft}: ${order.length - Math.max(0, done)}`}>
         <ol>
           {order.map((k, i) => {
-            const st = skipped.includes(k) && i <= Math.max(ci, done - 1) ? 'skipped' : i < done ? 'done' : i === ci ? 'now' : 'left';
+            const sp = plan.skills.find((p) => p.skill === k);
+            // Placement 3.0: a skill inferred from its area's answers is not asked ("≈ from your … answers").
+            const st = sp?.role === 'derived' ? 'derived' : skipped.includes(k) && i <= Math.max(ci, done - 1) ? 'skipped' : k === cur && v.stage !== 'complete' ? 'now' : sp?.done && (sp.asked > 0 || v.stage === 'complete') ? 'done' : 'left';
             return (
-              <li key={k} className={`ts ${st}`} data-skill={k}>
-                {st === 'done' ? '✓ ' : st === 'skipped' ? '⏭ ' : ''}
+              <li key={k} className={`ts ${st}`} data-skill={k} title={st === 'derived' ? (langOf(t) === 'he' ? 'משוער מהתשובות בתחום' : 'estimated from your answers in this area') : undefined}>
+                {st === 'done' ? '✓ ' : st === 'skipped' ? '⏭ ' : st === 'derived' ? '≈ ' : ''}
                 {t.skillNames[k]}
                 {st === 'skipped' && <span className="sr-only"> · {t.skippedSection}</span>}
               </li>

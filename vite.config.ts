@@ -55,5 +55,7 @@ export default defineConfig(({ mode }) => ({
   test: {
     include: ['tests/**/*.test.ts'],
     environment: 'node',
+    // The generator sweeps (every topic × level, every drill × key) are heavy when 80+ files run in parallel.
+    testTimeout: 30000,
   },
 }));

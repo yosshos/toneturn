@@ -56,7 +56,7 @@ const N = ({ children }: { children: ReactNode }) => <bdi dir="ltr">{children}</
 // ======================================================================= strings
 
 export const SX = {
-  tabs: { map: { en: 'Map', he: 'מפה' }, stats: { en: 'Stats', he: 'נתונים' }, insights: { en: 'Insights', he: 'תובנות' }, history: { en: 'History', he: 'היסטוריה' }, awards: { en: 'Awards', he: 'הישגים' } } as Record<ProgressTab, L>,
+  tabs: { map: { en: 'Map', he: 'מפה' }, stats: { en: 'Stats', he: 'נתונים' }, insights: { en: 'Insights', he: 'תובנות' }, history: { en: 'History', he: 'היסטוריה' }, awards: { en: 'Awards', he: 'הישגים' }, badges: { en: 'Badges', he: 'תגים' } } as Record<ProgressTab, L>,
   progress: { en: 'Progress', he: 'התקדמות' },
   overall: { en: 'Overall level', he: 'רמה כללית' },
   bestEver: { en: 'best ever {r} ({d})', he: 'השיא {r} ({d})' },
@@ -204,8 +204,8 @@ const areaLevel = (r: ReturnType<typeof foldFromMemo>, d: DomainId) => {
 
 // ======================================================================= ProgressTabs
 
-export type ProgressTab = 'map' | 'stats' | 'insights' | 'history' | 'awards';
-const TABS: ProgressTab[] = ['map', 'stats', 'insights', 'history', 'awards'];
+export type ProgressTab = 'map' | 'stats' | 'insights' | 'history' | 'awards' | 'badges';
+const TABS: ProgressTab[] = ['map', 'stats', 'insights', 'history', 'awards', 'badges'];
 const TAB_KEY = 'toneturn.progressTab';
 
 export interface ProgressTabsProps {
@@ -214,6 +214,8 @@ export interface ProgressTabsProps {
   progress: Progress;
   /** The existing Skill Map (radar, areas, sub-skills) — shown under "Map". */
   map?: ReactNode;
+  /** Ranks + badges view (spec AG §9), mounted by the app. */
+  badges?: ReactNode;
   children?: ReactNode;
   extra?: AchievementExtra;
   /** Overall levels of the league group / friends this week (percentile, S13; hidden under 5). */
@@ -262,6 +264,7 @@ export function ProgressTabs(props: ProgressTabsProps) {
         {tab === 'insights' && <InsightsView {...props} />}
         {tab === 'history' && <HistoryView {...props} />}
         {tab === 'awards' && <AwardsView {...props} />}
+        {tab === 'badges' && props.badges}
       </div>
     </div>
   );

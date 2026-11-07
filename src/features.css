@@ -1845,3 +1845,14 @@
   .talk-toggle { padding: 0 10px; }
   .talk-toggle span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 }
+/* Timing calibration (owner, 2026-11-07) */
+.latency-cal { display: grid; gap: 10px; }
+.latency-cal h2 { margin: 0; font-size: 1.1rem; }
+.latency-cal .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.latency-cal .chip.on { background: var(--mint); border-color: var(--mint); color: #0f1020; font-weight: 700; }
+.latency-cal .lat-current { margin: 0; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.latency-cal .lat-pad { width: 140px; height: 140px; justify-self: center; font-size: 2rem; }
+.latency-cal .lat-pad.warm { opacity: 0.6; }
+.latency-cal .lat-result { margin: 0; }
+.latency-cal .lat-result.done b { color: var(--mint); }
+.topic-strip .ts.derived { opacity: .7; font-style: italic; }

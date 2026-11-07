@@ -12,6 +12,8 @@ import type { ProgressStats } from '../engine/achievements';
 import type { Strings } from '../i18n/strings';
 import { localDay, type Progress } from '../storage/progress';
 import { LevelStatsLine } from './LevelStats';
+import { RankCrest } from './Badges';
+import { divisionFor } from '../engine/ranks';
 import { fmtDuration } from './Stats';
 import { FrameChips, langOf, useStatsFrame } from './Trends';
 
@@ -306,10 +308,12 @@ export function FriendsBoard({ t, rows, share, onOpen }: { t: Strings; rows: Fri
   const lang = langOf(t);
   const [metric, setMetric] = useState<'xp' | 'level'>('xp');
   const [frame, setFrame] = useState<Frame>('7d');
+  /** Per-area board (spec AG §9): one area's level among friends, with the rank crest. */
+  const [area, setArea] = useState<DomainId | 'all'>('all');
   const people = rows.filter((r) => r.relation === 'me' || r.relation === 'friend');
   const allowed: Frame[] = (['7d', '30d', '90d', '1y', 'all'] as Frame[]).filter((f) => f === '7d' || f === 'all' || people.some((r) => xpInFrame(r, f) !== null));
   const visible = people.filter((r) => (r.relation === 'me' ? true : metric === 'xp' ? canSeeActivity(r.share) : canSeeLevels(r.share)));
-  const val = (r: FriendStats) => (metric === 'xp' ? xpInFrame(r, frame) : (r.rating ?? null));
+  const val = (r: FriendStats) => (metric === 'xp' ? xpInFrame(r, frame) : area === 'all' ? (r.rating ?? null) : (r.areas?.[area] ?? null));
   const sorted = [...visible].sort((a, b) => (val(b) ?? -1) - (val(a) ?? -1));
   const max = Math.max(1, ...sorted.map((r) => val(r) ?? 0));
   return (
@@ -323,6 +327,15 @@ export function FriendsBoard({ t, rows, share, onOpen }: { t: Strings; rows: Fri
         ))}
       </div>
       {metric === 'xp' && <FrameChips lang={lang} frame={frame} onChange={setFrame} allowed={allowed} />}
+      {metric === 'level' && (
+        <div className="frame-chips cmp-areas" role="radiogroup" aria-label={CX.areas[lang]}>
+          {(['all', ...DOMAINS.map((d) => d.id)] as (DomainId | 'all')[]).map((a) => (
+            <button key={a} role="radio" aria-checked={area === a} className={`chip ${area === a ? 'on' : ''}`} onClick={() => setArea(a)} data-area={a}>
+              {a === 'all' ? CX.overall[lang] : t.domainNames[a]}
+            </button>
+          ))}
+        </div>
+      )}
       <ol className="cmp-rank">
         {sorted.map((r, i) => {
           const v = val(r);
@@ -340,6 +353,7 @@ export function FriendsBoard({ t, rows, share, onOpen }: { t: Strings; rows: Fri
                 <span className="cmp-bar" aria-hidden="true">
                   <span style={{ width: `${Math.round((100 * (v ?? 0)) / max)}%` }} />
                 </span>
+                {metric === 'level' && area !== 'all' && v !== null && <RankCrest div={divisionFor(v)} size={22} lang={lang} />}
                 <b dir="ltr">{v ?? '—'}</b>
               </button>
             </li>

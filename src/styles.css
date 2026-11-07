@@ -1747,6 +1747,8 @@ fieldset,
 
 /* Phones (product owner): nothing may scroll sideways. Defensive rules for every screen. */
 html, body { max-width: 100%; overflow-x: hidden; }
+/* clip (not hidden): hides sideways overflow without making html / body scroll containers, so position: sticky works. */
+@supports (overflow: clip) { html, body { overflow-x: clip; } }
 .app { overflow-x: clip; }
 svg, img, canvas, video { max-width: 100%; }
 main svg:not(.league-badge) { height: auto; }

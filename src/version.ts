@@ -18,6 +18,32 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.39.0',
+    date: '2026-11-07',
+    en: [
+      'Technique drills for piano and guitar / bass: scales, arpeggios, Hanon, Barry Harris, voicings, stride and walking bass, picking, legato, bends, chords and rhythm by genre — the tempo climbs as your takes get clean, then the next key',
+      'After every take each note is marked: green right, amber off time, red wrong or missed — on the staff or the tab',
+      'The drill creator: tap a pattern on the keys or the neck, type it, or play it on MIDI — add rhythm, chords, a separate left hand — and run it through every key; share it with a code',
+      'A rank in every area, from Bronze to Master, leaderboards per area among friends, and a monthly area challenge',
+      'Hundreds of new badges with their own medals — and a celebration when you earn one',
+      'Find my level is about three times shorter: it jumps ahead while you are right, and your path keeps adjusting after every session',
+      '💡 Refresh: unsure about a concept? Open its short lesson in the middle of an exercise and come back to the same question',
+      'Timing calibration for screen taps, MIDI keyboards and the microphone — never marked late when you were on time',
+      'Every exercise fits a phone screen: the Repeat / Skip buttons are always in view',
+    ],
+    he: [
+      'תרגילי טכניקה לפסנתר ולגיטרה / בס: סולמות, ארפג׳ים, האנון, בארי האריס, וויסינגים, סטרייד ו־walking bass, פריטה, לגאטו, בנדים, אקורדים ומקצבים לפי ז׳אנר — הטמפו עולה ככל שהנגינות נקיות, ואז לסולם הבא',
+      'אחרי כל נגינה כל תו מסומן: ירוק נכון, כתום לא בזמן, אדום שגוי או חסר — על החמשה או בטאבים',
+      'יוצר התרגילים: מקישים תבנית על הקלידים או הצוואר, מקלידים או מנגנים ב־MIDI — מוסיפים מקצב, אקורדים ויד שמאל נפרדת — ומריצים בכל הסולמות; משתפים בקוד',
+      'דרגה בכל תחום, מארד ועד מאסטר, טבלאות לפי תחום בין חברים ואתגר חודשי',
+      'מאות תגים חדשים עם מדליות משלהם — וחגיגה כשמקבלים אחד',
+      'מציאת הרמה קצרה פי שלושה בערך: היא קופצת קדימה כל עוד אתם צודקים, והמסלול ממשיך להתכוונן אחרי כל אימון',
+      '💡 רענון: לא בטוחים במושג? פותחים את השיעור הקצר שלו באמצע תרגיל וחוזרים לאותה שאלה',
+      'כיול תזמון להקשות, למקלדות MIDI ולמיקרופון — לא תסומנו כמאחרים כשהייתם בזמן',
+      'כל תרגיל נכנס במסך הטלפון: כפתורי חזרה ודילוג תמיד גלויים',
+    ],
+  },
+  {
     version: '0.38.0',
     date: '2026-11-07',
     en: [

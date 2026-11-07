@@ -21,6 +21,10 @@ export const personal = (text: string, name: string | null) => text.replace(/\s*
 export const MiniGateContext = createContext<(unit: string | null, start: () => void) => void>((_, start) => start());
 export const useMiniGate = () => useContext(MiniGateContext);
 
+/** Opens a mini-lesson as a refresher over an exercise; `after` runs when it closes (provided by App). */
+export const RefresherContext = createContext<((lesson: MiniLesson, after: () => void) => void) | null>(null);
+export const useRefresher = () => useContext(RefresherContext);
+
 type Phase = 'playing' | 'paused' | 'done';
 
 export function MiniLessonPlayer({ t, settings, lesson, name, onFinish }: { t: Strings; settings: Settings; lesson: MiniLesson; name: string | null; onFinish: (heardAll: boolean) => void }) {

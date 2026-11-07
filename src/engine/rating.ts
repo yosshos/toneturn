@@ -48,6 +48,11 @@ export interface RatingEvent {
   score?: number;
   /** Placement (Find my level): set the rating to this value instead of an Elo step. */
   set?: number;
+  /** With `set` only: evidence credited (default PROVISIONAL_UNTIL − 2; never lowers what the skill already has). */
+  setN?: number;
+  /** With `set` only (SPEC-PLACEMENT §5): the next `fast` answers in this skill use K_PROVISIONAL, so practice
+   *  corrects a short placement quickly. Absent = no change from the classic rule. */
+  fast?: number;
   /** Spec AD: the item trains several skills — (skill, sub-skill, weight), Σw = 1, primary = `skill`. */
   tags?: { skill: SkillId; sub?: string; w: number }[];
   at: string; // ISO
@@ -59,20 +64,27 @@ export interface SkillRating {
   correct: number;
   /** Last few updates, newest last (for the diagnosis panel). */
   recent: { d: number; s: number; delta: number; at: string }[];
+  /** Answers left at the fast (provisional) K after a placement set (SPEC-PLACEMENT §5). */
+  fast?: number;
 }
+
+/** K for the next answer: provisional while young or inside a post-placement fast window. */
+const kFor = (b: SkillRating) => (b.n < PROVISIONAL_UNTIL || (b.fast ?? 0) > 0 ? K_PROVISIONAL : K_ESTABLISHED);
+/** The fast window shrinks by one per rated answer (the field disappears at 0). */
+const tick = (b: SkillRating): { fast?: number } => ((b.fast ?? 0) > 1 ? { fast: b.fast! - 1 } : {});
 
 export type Ratings = Partial<Record<SkillId, SkillRating>>;
 
 export const expected = (rating: number, difficulty: number) => 1 / (1 + Math.pow(10, (difficulty - rating) / 400));
 
-export function rate(cur: SkillRating | undefined, e: Pick<RatingEvent, 'difficulty' | 'correct' | 'at' | 'score' | 'set'>): SkillRating {
+export function rate(cur: SkillRating | undefined, e: Pick<RatingEvent, 'difficulty' | 'correct' | 'at' | 'score' | 'set' | 'setN' | 'fast'>): SkillRating {
   const base = cur ?? { r: START_RATING, n: 0, correct: 0, recent: [] };
   if (e.set !== undefined) {
     // A staircase to failure measures the skill: set it, and count it as several answers of evidence.
-    const n = Math.max(base.n, PROVISIONAL_UNTIL - 2);
-    return { r: Math.round(e.set), n, correct: base.correct, recent: [...base.recent, { d: e.difficulty, s: 1, delta: Math.round(e.set) - base.r, at: e.at }].slice(-10) };
+    const n = Math.max(base.n, e.setN ?? PROVISIONAL_UNTIL - 2);
+    return { r: Math.round(e.set), n, correct: base.correct, recent: [...base.recent, { d: e.difficulty, s: 1, delta: Math.round(e.set) - base.r, at: e.at }].slice(-10), ...(e.fast ? { fast: e.fast } : {}) };
   }
-  const k = base.n < PROVISIONAL_UNTIL ? K_PROVISIONAL : K_ESTABLISHED;
+  const k = kFor(base);
   const s = e.score !== undefined ? Math.max(0, Math.min(1, e.score)) : e.correct ? 1 : 0;
   const raw = k * (s - expected(base.r, e.difficulty));
   const delta = Math.round(Math.max(-MAX_STEP, Math.min(MAX_STEP, raw)));
@@ -81,6 +93,7 @@ export function rate(cur: SkillRating | undefined, e: Pick<RatingEvent, 'difficu
     n: base.n + 1,
     correct: base.correct + (s >= 0.5 ? 1 : 0),
     recent: [...base.recent, { d: e.difficulty, s, delta, at: e.at }].slice(-10),
+    ...tick(base),
   };
 }
 
@@ -113,9 +126,9 @@ export function applyEvent(out: Ratings, e: RatingEvent): SkillId[] {
   upd.forEach((t, i) => {
     const base = cur(t.skill);
     const share = (raw[i] / rawSum) * wSum;
-    const k = base.n < PROVISIONAL_UNTIL ? K_PROVISIONAL : K_ESTABLISHED;
+    const k = kFor(base);
     const delta = Math.round(Math.max(-MAX_STEP, Math.min(MAX_STEP, k * share * err)));
-    out[t.skill] = { r: base.r + delta, n: base.n + 1, correct: base.correct + (s >= 0.5 ? 1 : 0), recent: [...base.recent, { d: e.difficulty, s, delta, at: e.at }].slice(-10) };
+    out[t.skill] = { r: base.r + delta, n: base.n + 1, correct: base.correct + (s >= 0.5 ? 1 : 0), recent: [...base.recent, { d: e.difficulty, s, delta, at: e.at }].slice(-10), ...tick(base) };
   });
   return upd.map((t) => t.skill);
 }

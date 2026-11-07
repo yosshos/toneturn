@@ -1,0 +1,368 @@
+/* Technique drills (spec AI): hub, take, results, map, creator. Night-arcade tokens. */
+.drills-screen {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 16px 120px;
+  display: grid;
+  gap: 14px;
+}
+.drills-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.drills-head h1 {
+  flex: 1;
+  margin: 0;
+  font-size: 24px;
+}
+.drill-families {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+.drill-family {
+  display: grid;
+  gap: 4px;
+  text-align: start;
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid var(--card-2);
+  background: linear-gradient(160deg, color-mix(in srgb, var(--hue, var(--mint)) 18%, var(--card)), var(--card));
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+.drill-family b {
+  font-family: var(--display);
+  font-size: 16px;
+}
+.drill-family small {
+  color: var(--soft, #d8d5f0);
+  font-size: 12px;
+}
+.drill-family .lvl {
+  font-weight: 800;
+  color: var(--hue, var(--mint));
+}
+.drill-levels {
+  display: grid;
+  gap: 8px;
+}
+.drill-level {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: var(--card);
+  border: 1px solid var(--card-2);
+  color: var(--ink);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.drill-level .n {
+  font-family: var(--display);
+  color: var(--gold);
+  font-size: 18px;
+}
+.drill-level.done {
+  border-color: color-mix(in srgb, var(--mint) 50%, transparent);
+}
+.drill-opts {
+  display: grid;
+  gap: 8px;
+}
+.drill-opts .row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.drill-opts .row > span {
+  min-width: 70px;
+  color: var(--soft, #d8d5f0);
+  font-size: 13px;
+}
+.drill-staff {
+  display: grid;
+  gap: 6px;
+}
+.drill-staff .note-staff {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.drill-goal {
+  font-size: 14px;
+  color: var(--soft, #d8d5f0);
+}
+.drill-take {
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+}
+.drill-beat {
+  font-family: var(--display);
+  font-size: 22px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.drill-beat .beat-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--card-2);
+}
+.drill-beat.count .beat-dot,
+.drill-beat.play .beat-dot {
+  background: var(--mint);
+  animation: beat-flash 180ms ease-out;
+}
+.drill-beat .beat-dot.accent {
+  background: var(--gold);
+}
+@keyframes beat-flash {
+  from {
+    transform: scale(1.6);
+  }
+}
+.drill-result {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 18px;
+  background: var(--card);
+  border: 2px solid var(--card-2);
+}
+.drill-result.v-clean {
+  border-color: var(--mint);
+}
+.drill-result.v-almost {
+  border-color: var(--gold);
+}
+.drill-result h2 {
+  margin: 0;
+  font-family: var(--display);
+}
+.drill-why {
+  margin: 0;
+  color: var(--soft, #d8d5f0);
+}
+.drill-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  font-size: 13px;
+}
+.drill-chart {
+  margin: 0;
+}
+.drill-chart figcaption {
+  font-size: 12px;
+  color: var(--dim, #a9a6c9);
+  margin-bottom: 2px;
+}
+.drill-chart svg {
+  width: 100%;
+  height: auto;
+  background: rgb(0 0 0 / 0.2);
+  border-radius: 10px;
+}
+.drill-chart .axis {
+  stroke: var(--card-2);
+  stroke-width: 1;
+}
+.drill-chart .bar.good {
+  fill: var(--mint);
+}
+.drill-chart .bar.warn {
+  fill: var(--gold);
+}
+.drill-chart .bar.bad,
+.drill-chart .bar.miss {
+  fill: #ff6b5c;
+}
+.drill-chart .bar.L {
+  opacity: 0.75;
+}
+.drill-chart .glitch {
+  fill: #ff6b5c;
+}
+.drill-chart .vdot.R {
+  fill: #7c8cff;
+}
+.drill-chart .vdot.L {
+  fill: #ff8a5c;
+}
+.drill-chart .vdot.acc {
+  stroke: var(--gold);
+  stroke-width: 1.5;
+}
+.drill-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+.drill-ladder {
+  font-weight: 700;
+  text-align: center;
+}
+.heat {
+  display: grid;
+  gap: 3px;
+  font-size: 11px;
+}
+.heat-row {
+  display: grid;
+  grid-template-columns: 36px repeat(var(--cols), 1fr);
+  gap: 3px;
+  align-items: center;
+}
+.heat-cell {
+  height: 26px;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  background: var(--card-2);
+  color: var(--ink);
+}
+.heat-cell.l1 {
+  background: color-mix(in srgb, var(--mint) 25%, var(--card-2));
+}
+.heat-cell.l2 {
+  background: color-mix(in srgb, var(--mint) 45%, var(--card-2));
+}
+.heat-cell.l3 {
+  background: color-mix(in srgb, var(--mint) 70%, var(--card-2));
+  color: #0f1020;
+}
+.heat-cell.weak {
+  outline: 2px solid #ff6b5c;
+}
+.creator-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.creator-grid .deg {
+  min-width: 40px;
+}
+html[data-motion='reduced'] .drill-beat .beat-dot {
+  animation: none;
+}
+.drill-today ol {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.drill-today .drill-level {
+  width: 100%;
+}
+.drill-level.current {
+  border-color: var(--gold);
+}
+.drill-level-block {
+  display: grid;
+  gap: 8px;
+}
+.drills-screen,
+.drill-levels,
+.drill-level-block,
+.drill-opts {
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+}
+.heat-row {
+  grid-template-columns: 32px repeat(var(--cols), minmax(0, 1fr));
+}
+button.heat-cell {
+  border: 0;
+  padding: 0;
+  min-width: 0;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.drills-screen .screen-head h1 {
+  font-size: 20px;
+  line-height: 1.2;
+}
+.drill-staff {
+  max-height: 46vh;
+  overflow-y: auto;
+}
+.drill-opts input:not([type='checkbox']):not([type='range']),
+.drill-opts select {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--card-2);
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+}
+.drill-opts input[type='number'] {
+  flex: 0 0 70px;
+}
+.drill-opts .chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.drill-opts .chip {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--card-2);
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.drill-opts .chip.on {
+  background: var(--mint);
+  border-color: var(--mint);
+  color: #0f1020;
+  font-weight: 700;
+}
+.mark-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 0;
+  font-size: 12px;
+  color: var(--soft, #d8d5f0);
+}
+.mark-legend .mk.ok {
+  color: #3ccf97;
+}
+.mark-legend .mk.timing {
+  color: #e6b54a;
+}
+.mark-legend .mk.wrong,
+.mark-legend .mk.missed {
+  color: #ff6b5c;
+}
+.drill-inst {
+  display: flex;
+  gap: 6px;
+}
+.drill-inst .chip.on {
+  background: var(--mint);
+  border-color: var(--mint);
+  color: #0f1020;
+  font-weight: 700;
+}
+.drill-tab .guitar-tab {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+}

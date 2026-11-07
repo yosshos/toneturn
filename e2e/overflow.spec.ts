@@ -6,7 +6,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 test.use({ viewport: { width: Number(process.env.OVF_WIDTH ?? 320), height: 720 }, hasTouch: true });
 
-const ALLOWED_SCROLLERS = ['roster-wrap', 'play-cats', 'neck-wrap', 'staff-pad-wrap'];
+const ALLOWED_SCROLLERS = ['roster-wrap', 'play-cats', 'neck-wrap', 'staff-pad-wrap', 'ar-row'];
 
 async function problems(page: Page): Promise<string[]> {
   return page.evaluate((allowed) => {
@@ -42,7 +42,7 @@ async function problems(page: Page): Promise<string[]> {
   }, ALLOWED_SCROLLERS);
 }
 
-const ROUTES = ['', '#/path', '#/arcade', '#/settings', '#/games', '#/friends', '#/skills', '#/daily', '#/online', '#/drone', '#/classes', '#/ghost', '#/truefalse', '#/studio', '#/vocal', '#/achievements', '#/singalong', '#/perform', '#/learned', '#/tuner', '#/workout', '#/highway', '#/flight', '#/melodypuzzle', '#/nametune', '#/tuneup', '#/pitchmemory', '#/peakhunter', '#/rush-chord', '#/rush-note', '#/rush-fretboard', '#/rush-interval', '#/rush-keysig', '#/rush-progression'];
+const ROUTES = ['', '#/path', '#/arcade', '#/settings', '#/games', '#/friends', '#/skills', '#/daily', '#/online', '#/drone', '#/classes', '#/ghost', '#/truefalse', '#/studio', '#/vocal', '#/achievements', '#/singalong', '#/perform', '#/learned', '#/tuner', '#/workout', '#/highway', '#/flight', '#/melodypuzzle', '#/nametune', '#/tuneup', '#/pitchmemory', '#/peakhunter', '#/rush-chord', '#/rush-note', '#/rush-fretboard', '#/rush-interval', '#/rush-keysig', '#/rush-progression', '#/drills'];
 
 async function setup(page: Page) {
   await page.addLocatorHandler(page.locator('.sheet-backdrop .sheet'), async () => {
@@ -54,6 +54,14 @@ function recorder(page: Page) {
   const check = async (label: string) => {
     await page.waitForTimeout(350);
     const p = await problems(page);
+    // Phone fit (owner, 2026-11-07): an exercise's controls (Repeat / Skip / Refresh) are on screen without scrolling.
+    const ctl = await page.evaluate(() => {
+      const c = document.querySelector('.lesson .stage .controls');
+      if (!c) return null;
+      const r = c.getBoundingClientRect();
+      return r.height > 0 && r.bottom > innerHeight + 1 ? `controls below the fold (${Math.round(r.bottom)} > ${innerHeight})` : null;
+    });
+    if (ctl) p.push(ctl);
     if (p.length) {
       bad[label] = p;
       console.log(`OVERFLOW ${label}: ${p.join(' | ')}`);

@@ -625,3 +625,13 @@
     grid-row: 2;
   }
 }
+.cmp-areas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0;
+}
+.cmp-rank-row .rank-crest,
+.cmp-rank-row svg {
+  flex: 0 0 auto;
+}

@@ -1,0 +1,275 @@
+/* Drill creator 2 (src/ui/DrillCreator.tsx). Night-arcade tokens; inherits .drill-opts chips / inputs. */
+.dc {
+  gap: 12px;
+}
+.dc-sec {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 18px;
+  background: var(--card);
+  border: 1px solid var(--card-2);
+  min-width: 0;
+}
+.dc-sec h3 {
+  margin: 0;
+  font-family: var(--display, inherit);
+  font-size: 16px;
+  color: var(--ink);
+}
+.dc-sec summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.dc-sec summary::-webkit-details-marker {
+  display: none;
+}
+.dc-sec summary::after {
+  content: '▾';
+  color: var(--ink-dim, #a9a6c9);
+  transition: transform 0.2s ease;
+}
+.dc-sec details:not([open]) summary::after,
+details.dc-sec:not([open]) > summary::after {
+  transform: rotate(-90deg);
+}
+details.dc-sec[open] > summary {
+  margin-bottom: 6px;
+}
+.dc-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+}
+.dc-head h3 {
+  flex: 1 1 auto;
+}
+.dc-head select {
+  flex: 0 0 auto !important;
+}
+.dc-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.dc .chip.dc-len {
+  min-width: 40px;
+  justify-content: center;
+  font-size: 16px;
+  line-height: 1;
+}
+.dc-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--ink-soft, #d8d5f0);
+}
+.dc-text {
+  display: grid;
+  gap: 4px;
+}
+.dc-text > span {
+  font-size: 12px;
+  color: var(--ink-dim, #a9a6c9);
+}
+.dc-text input {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 15px;
+  letter-spacing: 0.02em;
+}
+.dc-syntax {
+  font-size: 12px;
+  line-height: 1.5;
+}
+.dc-meta {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ink-dim, #a9a6c9);
+}
+.dc-problems {
+  margin: 0;
+  padding-inline-start: 18px;
+  display: grid;
+  gap: 4px;
+  color: var(--coral, #ff7a5c);
+  font-size: 14px;
+}
+.dc-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.dc-stepper b {
+  min-width: 22px;
+  text-align: center;
+  font-size: 18px;
+  color: var(--mint);
+}
+.dc-stepper .chip {
+  width: 36px;
+  justify-content: center;
+}
+.dc-keys .chip {
+  min-width: 46px;
+  justify-content: center;
+}
+.dc-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  position: sticky;
+  bottom: 84px;
+  padding: 10px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--bg, #0f1020) 88%, transparent);
+  backdrop-filter: blur(6px);
+  z-index: 2;
+}
+.dc-actions .btn.primary {
+  flex: 1 1 120px;
+}
+
+/* ── keyboard ── */
+.dc-kbd-wrap {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  padding-bottom: 4px;
+  max-width: 100%;
+}
+.dc-kbd {
+  position: relative;
+  height: 120px;
+}
+.dc-key {
+  position: absolute;
+  top: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0 0 6px;
+  border: 1px solid rgba(0, 0, 0, 0.35);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    transform 0.08s ease,
+    background 0.15s ease;
+}
+.dc-key.white {
+  height: 120px;
+  background: linear-gradient(180deg, #f4f1ff, #d9d5f2);
+  color: #2a2363;
+  border-radius: 0 0 8px 8px;
+  z-index: 1;
+}
+.dc-key.white.in {
+  background: linear-gradient(180deg, #f4f1ff, color-mix(in srgb, var(--mint) 45%, #e9e6fb));
+}
+.dc-key.black {
+  height: 74px;
+  background: linear-gradient(180deg, #2a2c4a, #121327);
+  color: var(--mint);
+  border-radius: 0 0 6px 6px;
+  z-index: 2;
+}
+.dc-key.tonic::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 8px var(--gold);
+}
+.dc-key:active {
+  transform: translateY(2px);
+  filter: brightness(0.92);
+}
+
+/* ── fretboard ── */
+.dc-neck-wrap {
+  overflow-x: auto;
+  max-width: 100%;
+}
+.dc-neck {
+  display: grid;
+  gap: 3px;
+  min-width: 320px;
+  align-items: center;
+}
+.dc-fretno,
+.dc-strno {
+  font-size: 11px;
+  color: var(--ink-dim, #a9a6c9);
+  text-align: center;
+}
+.dc-fret {
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid var(--card-2);
+  background: linear-gradient(180deg, transparent 46%, var(--line, rgba(244, 241, 255, 0.18)) 46%, var(--line, rgba(244, 241, 255, 0.18)) 54%, transparent 54%), var(--bg-2, #16182e);
+  color: var(--ink);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.dc-fret.in {
+  background: color-mix(in srgb, var(--mint) 28%, var(--bg-2, #16182e));
+}
+.dc-fret.tonic {
+  background: color-mix(in srgb, var(--gold) 55%, var(--bg-2, #16182e));
+  color: #0f1020;
+}
+.dc-fret.off {
+  opacity: 0.35;
+}
+.dc-fret:active {
+  transform: scale(0.94);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dc-key,
+  .dc-fret,
+  .dc-sec summary::after {
+    transition: none;
+  }
+}
+
+/* The preview can hold several staves: keep each at its natural height and scroll the block. */
+.dc-preview .drill-staff {
+  grid-auto-rows: max-content;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+
+/* Inputs inside rows shrink with the card (never overflow it). */
+.dc .row > input:not([type='checkbox']),
+.dc .row > select {
+  flex: 1 1 120px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.dc .row > input[type='number'] {
+  flex: 0 1 80px;
+}
+.dc-text input {
+  width: 100%;
+  box-sizing: border-box;
+}
+

@@ -622,6 +622,8 @@ export interface LessonDef {
   placementSkills?: SkillId[];
   /** Find my level: sections the player chose to skip (not measured, not rated). */
   placementSkipped?: SkillId[];
+  /** Placement 3.0: ratings of skills already measured — the search starts from them (docs/SPEC-PLACEMENT.md). */
+  placementPriors?: Partial<Record<SkillId, number>>;
   /** Find my level by domain: which one. */
   placementDomain?: 'pitch' | 'time' | 'memory' | 'voice' | 'reading' | 'creative' | 'instrument';
 }

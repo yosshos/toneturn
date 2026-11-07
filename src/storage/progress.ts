@@ -34,7 +34,7 @@ export interface LessonResult {
   /** Question keys that were missed / revealed — feeds the review queue. */
   missed: { questionId: string; key: string; answer: Answer; given: Answer[] }[];
   /** First-attempt results per rated item (ratings + review clearing). Absent on old results. */
-  items?: { id: string; skill: RatingEvent['skill']; difficulty: number; correct: boolean; tag: string; score?: number; /** Spec AD: the skills this item trains, with weights. */ tags?: RatingEvent['tags']; timeMs?: number | null; /** Placement: the measured rating. */ set?: number; /** Vocal technique: the take's metric values (teacher view). */ m?: Partial<Record<MetricKey, number>> }[];
+  items?: { id: string; skill: RatingEvent['skill']; difficulty: number; correct: boolean; tag: string; score?: number; /** Spec AD: the skills this item trains, with weights. */ tags?: RatingEvent['tags']; timeMs?: number | null; /** Placement: the measured rating. */ set?: number; /** Placement 3.0: evidence the set counts as, and fast-converging answers after it. */ setN?: number; fast?: number; /** Vocal technique: the take's metric values (teacher view). */ m?: Partial<Record<MetricKey, number>> }[];
   /** Weekly puzzle outcome (only for lessonId "weekly-puzzle"). */
   puzzle?: { week: string; band: string; medal: Medal };
 }
@@ -75,12 +75,18 @@ export interface Progress {
   counts?: import('../engine/stats').Counts;
   records?: import('../engine/stats').PersonalRecords;
   awards?: import('../engine/stats').Awards;
+  /** Area ranks (spec AG §9): division per area + technique, with the 7-day no-demotion floor. */
+  ranks?: import('../engine/ranks').Ranks;
+  /** Badges earned: id → when (spec AG §9). */
+  badges?: import('../engine/badges').BadgeLog;
   /** Ratings folded from events dropped by the 3000 cap (S1). */
   ratingBase?: import('../engine/stats').RatingBase;
   /** Best per new game (spec AE §8). */
   bests?: Record<string, number>;
   /** Pitch Memory log (spec AE §8). */
   pitchMemory?: { day: string; cents: number; note: number }[];
+  /** Technique drills: progress per item (spec AI §10). */
+  drillItems?: Record<string, import('../engine/drills/types').ItemState>;
 }
 
 export interface VocalTake {
@@ -146,6 +152,10 @@ export interface Settings {
   seenVersion: string | null;
   /** Measured tap delay for Beat Echo, ms (positive = taps land late). */
   tapLatencyMs: number;
+  /** Calibrated delay of a MIDI keyboard (ms; absent = 0) — removed from timing (owner, 2026-11-07). */
+  midiLatencyMs?: number;
+  /** Calibrated delay of the microphone pipeline (ms; absent = the built-in 70). */
+  micLatencyMs?: number;
   /** Response time affects scores. null = automatic (untimed for the first days). */
   timedScoring: boolean | null;
   /** First time the app was used on this device (ISO). */
@@ -222,6 +232,16 @@ export interface Settings {
   workoutToday?: { day: string; blocks: import('../engine/workout2').Block[] };
   /** After-workout feedback (W11): tomorrow's suggested total moves by delta until this day. */
   workoutNudge?: { until: string; delta: number };
+  // ---- technique drills (spec AI) ----
+  drills?: import('../engine/drills/types').DrillSettings;
+  /** Per-device: latency and the player's velocity range. */
+  drillCal?: import('../engine/drills/types').DrillCalibration;
+  /** The player's own drills (drill creator). */
+  customDrills?: import('../engine/drills/types').CustomDrill[];
+  /** Level test (technique section): the start level per family (spec AI §13). */
+  drillStart?: Partial<Record<import('../engine/drills/types').FamilyId, number>>;
+  /** Re-calibration offers declined (skill or area → ISO day): not offered again for 7 days (SPEC-PLACEMENT §6). */
+  recalSnooze?: Record<string, string>;
   /** Keep one vocal take per exercise per week on this device for "then vs. now" (spec S.2). */
   keepTakes?: boolean;
   /** Instrument sound for every exercise (spec Q): 'classic' (synth) or a sample set id. */
@@ -433,7 +453,7 @@ export function resultFromSession(s: SessionState, sessionId: string, now: Date)
   };
   // Find my level: each skill's rating is SET from where the player failed (staircase to failure).
   if (s.lesson.id === 'placement' && s.lesson.version >= 3) {
-    const sets = placementResults(s).map((x) => ({ id: `${sessionId}:place:${x.skill}`, skill: x.skill, difficulty: x.rating, correct: x.passed > 0, tag: `place:${x.skill}`, set: x.rating }));
+    const sets = placementResults(s).map((x) => ({ id: `${sessionId}:place:${x.skill}`, skill: x.skill, difficulty: x.rating, correct: x.passed > 0, tag: `place:${x.skill}`, set: x.rating, ...(x.n !== undefined ? { setN: x.n } : {}), ...(x.fast ? { fast: x.fast } : {}) }));
     result.items = [...(result.items ?? []), ...sets];
   }
   if (s.lesson.id === 'weekly-puzzle') {
@@ -451,7 +471,7 @@ export function applyResult(p: Progress, r: LessonResult, now: Date): Progress {
   const prev = p.lessons[r.lessonId];
   const at = r.completedAt;
   const setAt = new Date(new Date(at).getTime() + 1).toISOString();
-  const newEvents: RatingEvent[] = (r.items ?? []).map((it) => (it.set !== undefined ? { id: it.id, skill: it.skill, difficulty: it.difficulty, correct: it.correct, set: it.set, ...(it.tags ? { tags: it.tags } : {}), at: setAt } : { id: it.id, skill: it.skill, difficulty: it.difficulty, correct: it.correct, score: it.score, ...(it.tags ? { tags: it.tags } : {}), at }));
+  const newEvents: RatingEvent[] = (r.items ?? []).map((it) => (it.set !== undefined ? { id: it.id, skill: it.skill, difficulty: it.difficulty, correct: it.correct, set: it.set, ...(it.setN !== undefined ? { setN: it.setN } : {}), ...(it.fast ? { fast: it.fast } : {}), ...(it.tags ? { tags: it.tags } : {}), at: setAt } : { id: it.id, skill: it.skill, difficulty: it.difficulty, correct: it.correct, score: it.score, ...(it.tags ? { tags: it.tags } : {}), at }));
   const cleared = new Set((r.items ?? []).filter((it) => it.correct).map((it) => it.tag));
   const puzzles = { ...(p.puzzles ?? {}) };
   // Only the first scored try at a week's puzzle counts; later plays are practice.
@@ -534,6 +554,27 @@ export class ProgressStore {
   }
 
   /** Best score of a 0.38 game (spec AE §8), plus Pitch Memory log entries. */
+  /** A drill take's item state (spec AI); returns the new progress. */
+  async recordDrill(state: import('../engine/drills/types').ItemState, evs: RatingEvent[] = [], xp = 0, m?: { verdict: string; hands: string; cv: number | null }): Promise<Progress> {
+    const p = await this.loadProgress();
+    // Badge counters (spec AG §9): clean takes, tempo records, the best hands-together evenness.
+    let counts = p.counts;
+    const prev = p.drillItems?.[state.itemId];
+    if (m?.verdict === 'clean') counts = bumpCount(counts, 'drillClean', 1);
+    if (prev && prev.cleanBpm > 0 && state.cleanBpm > prev.cleanBpm) counts = bumpCount(counts, 'tempoRecords', 1);
+    if (m?.verdict === 'clean' && m.hands === 'RL' && m.cv !== null) counts = bumpCount(counts, 'evenCv', m.cv, 'min');
+    const day = localDay(new Date());
+    const s0 = p.stats ?? { days: [], goodSessions: 0, xpByDay: {} };
+    const stats = xp ? { ...s0, days: s0.days.includes(day) ? s0.days : [...s0.days, day].slice(-800), xpByDay: { ...s0.xpByDay, [day]: (s0.xpByDay[day] ?? 0) + xp } } : p.stats;
+    const fresh = evs.filter((e) => !(p.ratingEvents ?? []).some((x) => x.id === e.id));
+    const base: Progress = { ...p, xp: p.xp + xp, ...(stats ? { stats } : {}), ...(counts ? { counts } : {}), drillItems: { ...(p.drillItems ?? {}), [state.itemId]: state } };
+    const next0: Progress = fresh.length ? { ...base, ...withEvents(p, fresh) } : base;
+    const next: Progress = fresh.length ? { ...next0, ...statsAfterEvents(base, fresh, ratingsOf(next0)) } : next0;
+    if (fresh.length) next.snapshots = snapshot(next, new Date());
+    await this.kv.set('progress', next);
+    return next;
+  }
+
   async recordGame2(game: string, score: number, memory?: { day: string; cents: number; note: number }, detail?: Record<string, unknown>): Promise<Progress> {
     const p = await this.loadProgress();
     const bests = { ...(p.bests ?? {}), [game]: Math.max(p.bests?.[game] ?? 0, score) };

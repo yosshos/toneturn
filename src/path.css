@@ -1085,3 +1085,54 @@ html[data-motion='reduced'] .wk-undo {
   justify-content: center;
   row-gap: 6px;
 }
+
+/* Phone fit (owner, 2026-11-07): the lesson's controls (Repeat / Skip / Refresh) never fall below the fold — the row
+   sticks to the bottom of the screen, and short screens get a denser question layout. */
+.lesson .stage .controls {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  width: 100%;
+  flex-wrap: wrap;
+  padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
+  background: linear-gradient(to bottom, transparent, var(--bg) 28%);
+}
+.lesson .controls .refresh-concept {
+  white-space: nowrap;
+}
+.feedback.empty {
+  min-height: 40px;
+}
+.lesson .caption:empty,
+.lesson .hint:empty {
+  display: none;
+}
+@media (max-height: 760px) {
+  .lesson .stage {
+    gap: 8px;
+    padding-top: 2px;
+  }
+  .lesson .answer {
+    min-height: 70px;
+  }
+  .lesson .answer b {
+    font-size: 2.6rem;
+  }
+  .lesson .key-badge {
+    padding-block: 6px;
+  }
+  .feedback.empty {
+    min-height: 24px;
+  }
+  .lesson .ask {
+    font-size: clamp(1.15rem, 5vw, 1.5rem);
+  }
+}
+@media (max-height: 640px) {
+  .lesson .answer {
+    min-height: 58px;
+  }
+  .lesson .note-views .note-staff svg {
+    max-height: 96px;
+  }
+}

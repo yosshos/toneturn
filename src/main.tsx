@@ -13,6 +13,7 @@ import './games2.css';
 import './path.css';
 import './motion.css';
 import './peak.css';
+import './drills.css';
 import { App } from './ui/App';
 import { initPwa } from './pwa';
 

@@ -4,7 +4,9 @@
 import type { SungFrame } from '../engine/sing';
 import type { PitchCapture, SingCaptureResult, SingOptions } from '../game/adapters';
 
-type NoteListener = (midi: number, on: boolean, at: number) => void;
+type NoteListener = (midi: number, on: boolean, at: number, velocity: number) => void;
+/** Control change (CC64 sustain, CC67 soft…): controller number, value 0–127, timestamp. */
+type CcListener = (cc: number, value: number, at: number) => void;
 
 /** Minimal shape of the Web MIDI objects we use (not in every TS lib). */
 interface MidiInputLike {
@@ -54,10 +56,13 @@ export class MidiInput {
     const cmd = status & 0xf0;
     if (cmd === 0x90 && vel > 0) {
       this.held.set(note, at);
-      this.listeners.forEach((l) => l(note, true, at));
+      this.listeners.forEach((l) => l(note, true, at, vel));
     } else if (cmd === 0x80 || (cmd === 0x90 && vel === 0)) {
       this.held.delete(note);
-      this.listeners.forEach((l) => l(note, false, at));
+      this.listeners.forEach((l) => l(note, false, at, 0));
+    } else if (cmd === 0xb0) {
+      // Control change (spec AI: the sustain pedal CC64 is measured in the pedalling drills).
+      this.ccListeners.forEach((l) => l(note, vel, at));
     }
   }
 
@@ -78,6 +83,13 @@ export class MidiInput {
     this.listeners.add(cb);
     return () => {
       this.listeners.delete(cb);
+    };
+  }
+  private ccListeners = new Set<CcListener>();
+  onCC(cb: CcListener) {
+    this.ccListeners.add(cb);
+    return () => {
+      this.ccListeners.delete(cb);
     };
   }
   onState(cb: () => void) {

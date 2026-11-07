@@ -449,7 +449,7 @@ export const GAME_CATS: { id: GameCat; icon: string; en: string; he: string }[] 
   { id: 'instrument', icon: '🎸', en: 'Instrument & sound', he: 'כלי וסאונד' },
   { id: 'social', icon: '⚔', en: 'Against others', he: 'מול אחרים' },
 ];
-export const GAMES2: { id: 'highway' | 'flight' | 'melodypuzzle' | 'nametune' | 'tuneup' | 'pitchmemory' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'peakhunter'; icon: string; hue: string; cat: GameCat; en: [string, string]; he: [string, string] }[] = [
+export const GAMES2: { id: 'drills' | 'highway' | 'flight' | 'melodypuzzle' | 'nametune' | 'tuneup' | 'pitchmemory' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'peakhunter'; icon: string; hue: string; cat: GameCat; en: [string, string]; he: [string, string] }[] = [
   { id: 'rush-chord', icon: '🎹', hue: 'var(--hue-pitch)', cat: 'read', en: ['Chord Rush', 'Name chords on the neck, keys or staff — 60 seconds.'], he: ['מרוץ אקורדים', 'זהו אקורדים על הצוואר, הקלידים או החמשה — 60 שניות.'] },
   { id: 'rush-note', icon: '𝄞', hue: 'var(--hue-reading)', cat: 'read', en: ['Note Rush', 'Read notes off the staff as fast as you can.'], he: ['מרוץ תווים', 'קראו תווים מהחמשה הכי מהר שאפשר.'] },
   { id: 'rush-keysig', icon: '♯', hue: 'var(--hue-reading)', cat: 'read', en: ['Key Signature Rush', 'Sharps and flats → the key, fast.'], he: ['מרוץ סימני מפתח', 'דיאזים ובמולים → הסולם, מהר.'] },
@@ -461,6 +461,7 @@ export const GAMES2: { id: 'highway' | 'flight' | 'melodypuzzle' | 'nametune' | 
   { id: 'flight', icon: '🕊', hue: 'var(--hue-voice)', cat: 'voice', en: ['Voice Flight', 'Sing or play to fly through the gates.'], he: ['טיסת קול', 'שירו או נגנו כדי לעוף בין השערים.'] },
   { id: 'melodypuzzle', icon: '🧩', hue: 'var(--hue-memory)', cat: 'memory', en: ['Melody Puzzle', 'Put the notes of what you heard in order.'], he: ['פאזל מנגינה', 'סדרו את התווים של מה ששמעתם.'] },
   { id: 'nametune', icon: '🎶', hue: 'var(--hue-pitch)', cat: 'memory', en: ['Name That Tune', 'Hear the opening, pick the song — fast.'], he: ['זהו את השיר', 'שומעים את הפתיחה, בוחרים את השיר — מהר.'] },
+  { id: 'drills', icon: '🎹', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Technique', 'Scales, Hanon, Barry Harris, voicings — with a tempo ladder and a MIDI analysis.'], he: ['טכניקה', 'סולמות, האנון, בארי האריס, וויסינגים — עם סולם טמפו וניתוח MIDI.'] },
   { id: 'tuneup', icon: '🎸', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Tune-up', 'Turn the peg until the beats disappear.'], he: ['כיוון', 'סובבו את המפתח עד שהפעימות נעלמות.'] },
   { id: 'pitchmemory', icon: '🎯', hue: 'var(--hue-creative)', cat: 'ear', en: ['Pitch Memory', 'Once a day: your note, from memory.'], he: ['זיכרון צליל', 'פעם ביום: הצליל שלכם, מהזיכרון.'] },
 ];

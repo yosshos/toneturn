@@ -136,6 +136,8 @@ export interface ControllerSettings {
   inputNaming?: Naming;
   /** Calibrated tap delay (ms) subtracted from rhythm taps. */
   latencyMs?: number;
+  /** Microphone delay for knocks (ms; absent = latencyMs). */
+  micLatencyMs?: number;
   /** The player's first name for personal feedback (spec X.4), when known. */
   playerName?: string | null;
   /** Rhythm reading: also listen for "ta" / knocks in voice mode (default off — the tap pad is the input). */
@@ -345,9 +347,9 @@ export class LessonController {
     this.readUps.push(Math.round(perfMs - this.readStart - (this.cfg.latencyMs ?? 0)));
   }
 
-  private registerOnset(perfMs: number) {
+  private registerOnset(perfMs: number, latencyMs = this.cfg.latencyMs) {
     if (!this.readOpen || this.readStart === null) return;
-    const rel = perfMs - this.readStart - (this.cfg.latencyMs ?? 0);
+    const rel = perfMs - this.readStart - (latencyMs ?? 0);
     if (rel < -400) return; // during the count-in
     this.readTaps.push(Math.round(rel));
     this.patch({ readTaps: this.readTaps.length });
@@ -828,7 +830,7 @@ export class LessonController {
         const micSignal = mic.signal;
         signal.addEventListener('abort', () => mic?.abort(), { once: true });
         const opened = await new Promise<boolean>((resolve) => {
-          void this.ad.knock!.listen({ signal: micSignal, onReady: () => resolve(true), onKnock: (perf) => this.registerOnset(perf) }).then((r) => {
+          void this.ad.knock!.listen({ signal: micSignal, onReady: () => resolve(true), onKnock: (perf) => this.registerOnset(perf, this.cfg.micLatencyMs) }).then((r) => {
             if (!r.ok) {
               this.patch({ error: r.error });
               resolve(false);
