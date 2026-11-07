@@ -578,6 +578,13 @@
 }
 .song-list .tool-card {
   width: 100%;
+  display: grid;
+  gap: 2px;
+  text-align: start;
+  justify-items: start;
+}
+.song-list .tool-card small {
+  overflow-wrap: normal;
 }
 .sing-notes {
   list-style: none;

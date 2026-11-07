@@ -1,4 +1,4 @@
-// Ninth Sense service worker (generated at build: __VERSION__ / __BUILD__).
+// The 7th Sense service worker (generated at build: __VERSION__ / __BUILD__).
 // - App-shell offline loading (this says nothing about offline speech recognition).
 // - Waits for the player to choose "Update now" before activating a new version.
 // - Shows streak-reminder push notifications.
@@ -83,7 +83,7 @@ self.addEventListener('push', (e) => {
   } catch {
     data = { body: e.data ? e.data.text() : '' };
   }
-  const title = data.title || 'Ninth Sense';
+  const title = data.title || 'The 7th Sense';
   e.waitUntil(
     self.registration.showNotification(title, {
       body: data.body || 'Keep your streak alive — one short lesson.',

@@ -75,6 +75,15 @@ const tick = (b: SkillRating): { fast?: number } => ((b.fast ?? 0) > 1 ? { fast:
 
 export type Ratings = Partial<Record<SkillId, SkillRating>>;
 
+/**
+ * Success ceiling (owner 2026-11-07: "I did well, but not on the hardest exercises"): a success never lifts a
+ * skill more than CEIL_MARGIN above the difficulty of the item that earned it. Plain Elo keeps creeping upward on
+ * a long run of easy successes (90 % right at 1200 → ≈ 1580, the top of the bar); with the ceiling the level says
+ * "the hardest things you beat, plus a little", so the top of an area needs the top items. Losses are unchanged.
+ */
+export const CEIL_MARGIN = 50;
+export const capGain = (r: number, difficulty: number, delta: number) => (delta <= 0 ? delta : Math.min(delta, Math.max(0, difficulty + CEIL_MARGIN - r)));
+
 export const expected = (rating: number, difficulty: number) => 1 / (1 + Math.pow(10, (difficulty - rating) / 400));
 
 export function rate(cur: SkillRating | undefined, e: Pick<RatingEvent, 'difficulty' | 'correct' | 'at' | 'score' | 'set' | 'setN' | 'fast'>): SkillRating {
@@ -87,7 +96,7 @@ export function rate(cur: SkillRating | undefined, e: Pick<RatingEvent, 'difficu
   const k = kFor(base);
   const s = e.score !== undefined ? Math.max(0, Math.min(1, e.score)) : e.correct ? 1 : 0;
   const raw = k * (s - expected(base.r, e.difficulty));
-  const delta = Math.round(Math.max(-MAX_STEP, Math.min(MAX_STEP, raw)));
+  const delta = capGain(base.r, e.difficulty, Math.round(Math.max(-MAX_STEP, Math.min(MAX_STEP, raw))));
   return {
     r: base.r + delta,
     n: base.n + 1,
@@ -127,7 +136,7 @@ export function applyEvent(out: Ratings, e: RatingEvent): SkillId[] {
     const base = cur(t.skill);
     const share = (raw[i] / rawSum) * wSum;
     const k = kFor(base);
-    const delta = Math.round(Math.max(-MAX_STEP, Math.min(MAX_STEP, k * share * err)));
+    const delta = capGain(base.r, e.difficulty, Math.round(Math.max(-MAX_STEP, Math.min(MAX_STEP, k * share * err))));
     out[t.skill] = { r: base.r + delta, n: base.n + 1, correct: base.correct + (s >= 0.5 ? 1 : 0), recent: [...base.recent, { d: e.difficulty, s, delta, at: e.at }].slice(-10), ...tick(base) };
   });
   return upd.map((t) => t.skill);

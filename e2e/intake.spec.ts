@@ -58,7 +58,7 @@ test.describe('intake questionnaire', () => {
     await expect(page.locator('.road .node').filter({ hasText: /קצב|פעמה/ }).first()).toBeVisible();
     await expect(page.locator('.road .node').filter({ hasText: /הבעה|מצב רוח|ארטיקולציה/ })).toHaveCount(0);
     // Settings: take it again
-    await page.goto('/?sim=1&lang=he#/settings');
+    await page.goto('/?sim=1&lang=he#/settings/learning');
     await expect(page.locator('[data-intake-retake]')).toBeVisible();
   });
 

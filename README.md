@@ -1,6 +1,6 @@
-<p align="center"><img src="docs/brand/wordmark.svg" alt="Ninth Sense" width="520"></p>
+<p align="center"><img src="docs/brand/wordmark.svg" alt="The 7th Sense" width="520"></p>
 
-# Ninth Sense
+# The 7th Sense
 
 *Formerly ToneTurn.* The product name changed in 0.20.0; internal identifiers (repository, `toneturn_*` database objects, storage keys, the `/toneturn/` Pages path) keep the old name so existing progress and accounts carry over.
 

@@ -1136,3 +1136,219 @@ html[data-motion='reduced'] .wk-undo {
     max-height: 96px;
   }
 }
+
+/* ===== Exercise fits ONE screen, width and height (owner 2026-11-07, guiding principle: no scrolling while playing).
+   Everything in a live question scales with the viewport height: orb, keyboard, staff, prompt text, answer buttons,
+   gaps and the control row. Checked by e2e/overflow.spec.ts (height) at 375×667 for every practice topic. */
+@media (max-height: 900px) {
+  .lesson .lesson-top {
+    padding: 2px 0 4px;
+  }
+  .lesson .stage {
+    gap: clamp(4px, 1.1vh, 12px);
+    padding-top: 0;
+  }
+  .lesson .key-badge {
+    font-size: clamp(0.85rem, 2.2vh, 1.15rem);
+    padding: 3px 12px;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .lesson .orb {
+    width: clamp(60px, 11vh, 148px);
+    height: clamp(60px, 11vh, 148px);
+    font-size: clamp(1.3rem, 3.6vh, 3rem);
+  }
+  .lesson .stage.question .keyboard {
+    height: clamp(38px, 6.5vh, 64px);
+  }
+  .lesson .note-views .note-staff svg {
+    max-height: clamp(70px, 15vh, 160px);
+  }
+  .lesson .ask {
+    font-size: clamp(1rem, min(5vw, 3vh), 1.6rem);
+    line-height: 1.2;
+  }
+  .lesson .hint {
+    font-size: 0.85rem;
+    margin: 0;
+  }
+  .lesson .caption {
+    min-height: 0;
+    font-size: 0.92rem;
+    line-height: 1.3;
+  }
+  .lesson .feedback.empty {
+    min-height: 18px;
+  }
+  .lesson .answers {
+    gap: clamp(6px, 1.3vh, 14px);
+  }
+  .lesson .answer {
+    min-height: clamp(46px, 8.5vh, 100px);
+    border-radius: 18px;
+  }
+  .lesson .answer b {
+    font-size: clamp(1.5rem, 4.6vh, 3rem);
+  }
+  .lesson .answer small {
+    font-size: 0.85rem;
+  }
+  .lesson .stage .controls {
+    margin-top: 0;
+    padding: 4px 0 calc(4px + env(safe-area-inset-bottom));
+  }
+  .lesson .controls .btn.small {
+    min-height: 40px;
+    padding-block: 6px;
+  }
+}
+
+/* Lane pads (kit reading): three across, so never the single pad's fixed width / aspect ratio. */
+.lane-pads .tap-pad {
+  width: 100%;
+  aspect-ratio: auto;
+  border-radius: 20px;
+  font-size: 1rem;
+  letter-spacing: 0.02em;
+  min-height: clamp(70px, 14vh, 140px);
+}
+@media (max-height: 900px) {
+  .lesson .read-prompt {
+    gap: clamp(4px, 1vh, 14px);
+  }
+  .lesson .read-words {
+    padding: 6px 12px;
+    font-size: clamp(1rem, 2.6vh, 1.3rem);
+  }
+  .lesson .beat-light {
+    width: clamp(26px, 5.5vh, 74px);
+    height: clamp(26px, 5.5vh, 74px);
+  }
+  .lesson .tap-pad {
+    aspect-ratio: auto;
+    height: clamp(84px, 19vh, 200px);
+  }
+  .lesson .lane-pads .tap-pad {
+    height: auto;
+    min-height: clamp(64px, 12vh, 140px);
+  }
+  .lesson .tempo-target {
+    font-size: clamp(22px, 4.4vh, 34px);
+    margin: 0;
+  }
+}
+
+@media (max-height: 900px) {
+  .lesson .tap-pad.big {
+    min-height: clamp(96px, 20vh, 300px);
+    height: auto;
+    border-radius: 26px;
+  }
+  .lesson .lane-row .rhythm-staff svg {
+    max-height: clamp(44px, 8.5vh, 75px);
+  }
+  /* The pad says how to tap; the hint line under the question repeats it. */
+  .lesson .stage:has(.tap-pad) .hint {
+    display: none;
+  }
+}
+
+@media (max-height: 900px) {
+  .lesson .answers.n-4 .answer,
+  .lesson .answers.n-7 .answer {
+    min-height: clamp(46px, 8.5vh, 84px);
+  }
+  .lesson .answers.n-7 .answer b {
+    font-size: clamp(1.4rem, 4vh, 2.2rem);
+  }
+  .lesson .choice-text {
+    font-size: clamp(1rem, 3vh, 1.8rem);
+    line-height: 1.2;
+  }
+  .lesson .choice-show .note-staff svg,
+  .lesson .place-given .note-staff svg {
+    max-height: clamp(64px, 13vh, 160px);
+  }
+  .lesson .tuner {
+    width: min(280px, 80vw, 30vh);
+  }
+  .lesson .aid-chip {
+    font-size: 0.75rem;
+    padding: 2px 10px;
+  }
+  .lesson .btn.record {
+    min-height: clamp(50px, 9vh, 84px);
+    font-size: clamp(1.05rem, 2.6vh, 1.4rem);
+    border-radius: 20px;
+  }
+  /* The neck scrolls sideways already: size it by height, width follows the drawing. */
+  .lesson .neck {
+    height: clamp(110px, 24vh, 300px);
+    width: auto;
+    min-width: 100%;
+  }
+  .lesson .place-surface {
+    margin: 0;
+    gap: 4px;
+  }
+  .lesson .place-actions .btn {
+    min-height: 38px;
+    padding-block: 4px;
+  }
+}
+
+/* Headphones notice: one compact row (the control row already has Skip). */
+.lesson .phones-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 6px 10px;
+  width: 100%;
+}
+.lesson .phones-card p {
+  margin: 0;
+  flex: 1;
+  font-size: 0.85rem;
+  text-align: start;
+}
+.lesson .phones-card .phones-actions {
+  flex: none;
+}
+@media (max-height: 900px) {
+  .lesson .tuner {
+    width: min(280px, 80vw, 22vh);
+  }
+  .lesson .note-views .note-staff svg {
+    max-height: clamp(64px, 12vh, 160px);
+  }
+}
+
+@media (max-height: 900px) {
+  /* The record button says what to do; the hint line repeats it. */
+  .lesson .stage:has(.btn.record) .hint {
+    display: none;
+  }
+  .lesson .choice-show {
+    gap: 4px;
+  }
+}
+
+@media (max-height: 700px) {
+  .lesson .lesson-top {
+    padding: 0 0 2px;
+  }
+  .lesson .stage {
+    gap: 4px;
+  }
+  .lesson .feedback.empty {
+    min-height: 12px;
+  }
+  .lesson .choice-show .note-staff svg,
+  .lesson .note-views .note-staff svg {
+    max-height: 11vh;
+  }
+}

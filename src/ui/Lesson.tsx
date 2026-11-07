@@ -365,7 +365,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
           {q.aid && !answered && <p className="aid-chip">💡 {t.aidOn}</p>}
           {!phones && itemNeedsHeadphones(q) && (
             <div className="phones-card" role="alert">
-              <p>🎧 {lang === 'en' ? 'This one needs headphones: low notes and left / right don’t come through a phone speaker.' : 'כאן צריך אוזניות: צלילים נמוכים ושמאל / ימין לא נשמעים דרך רמקול של טלפון.'}</p>
+              <p>🎧 {lang === 'en' ? 'Needs headphones (low notes, left / right)' : 'צריך אוזניות (צלילים נמוכים, שמאל / ימין)'}</p>
               <div className="phones-actions">
                 <button
                   className="btn primary small"
@@ -376,9 +376,6 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
                   }}
                 >
                   {lang === 'en' ? 'I’m wearing headphones' : 'אני עם אוזניות'}
-                </button>
-                <button className="btn small ghost" onClick={() => ctrl.skip()}>
-                  {t.skip}
                 </button>
               </div>
             </div>
@@ -1051,7 +1048,7 @@ function ReadPrompt({ q, v, lang, onTap, onRelease, t, onLane }: { q: Extract<Qu
     // Several pads (drum kit lanes, two hands): one row per lane, written above its pad (spec AE).
     return (
       <div className="read-prompt lanes" data-bpm={q.bpm} data-start={v.readStartPerf ?? undefined}>
-        {q.prompt && <p className="read-words">{q.prompt[lang]}</p>}
+        {/* q.prompt is the question line itself (askTemplate) — not repeated here (one-screen fit). */}
         {q.lanes.map((ln, i) => (
           <div key={i} className="lane-row">
             <span className="lane-name">{ln.name[lang]}</span>
@@ -1080,7 +1077,7 @@ function ReadPrompt({ q, v, lang, onTap, onRelease, t, onLane }: { q: Extract<Qu
   if (q.tempoGoal) {
     return (
       <div className="read-prompt tempo-goal" data-start={v.readStartPerf ?? undefined}>
-        {q.prompt && <p className="read-words">{q.prompt[lang]}</p>}
+        {/* q.prompt is the question line itself (askTemplate) — not repeated here (one-screen fit). */}
         <p className="tempo-target" dir="ltr">♩ = {q.tempoGoal.bpm}</p>
         <div className={`beat-light ${v.beat?.accent ? 'accent' : ''}`} key={v.beat?.n ?? -1} aria-hidden="true" />
         <TapPad live={v.phase === 'listening'} count={v.readTaps ?? 0} label={t.tapHere} hint={t.tapPadHint} beat={v.beat?.n ?? -1} accent={!!v.beat?.accent} onTap={onTap} onRelease={onRelease} />

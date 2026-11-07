@@ -62,6 +62,17 @@ function recorder(page: Page) {
       return r.height > 0 && r.bottom > innerHeight + 1 ? `controls below the fold (${Math.round(r.bottom)} > ${innerHeight})` : null;
     });
     if (ctl) p.push(ctl);
+    // One screen (owner 2026-11-07, guiding principle): a live exercise question never scrolls vertically either.
+    const tall = await page.evaluate(() => {
+      if (!document.querySelector('main.lesson .stage.question')) return null;
+      // The test-only "simulated" banner is not part of the real screen.
+      const banner = document.querySelector('.sim-banner') as HTMLElement | null;
+      if (banner) banner.style.display = 'none';
+      const over = document.scrollingElement!.scrollHeight - innerHeight;
+      if (banner) banner.style.display = '';
+      return over > 2 ? `exercise taller than the screen by ${Math.round(over)}px` : null;
+    });
+    if (tall) p.push(tall);
     if (p.length) {
       bad[label] = p;
       console.log(`OVERFLOW ${label}: ${p.join(' | ')}`);

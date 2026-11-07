@@ -28,50 +28,45 @@ export function withNote(template: string, note: string, key = '') {
 /** Plain-text fill for speech. */
 export const fillText = (template: string, note: string, key = '') => template.replaceAll('{n}', note).replaceAll('{k}', key);
 
-/** Ninth Sense mark: a 9 that is also an ear (tail = lobe), a note head in the bowl, sound waves coming in. */
-/** The brand mark (0.37): a mint "9" whose stem ends in a gold note head, with sound arriving from the left. */
+/**
+ * The brand mark (owner's pick 2026-11-07, "clef-b"): a gold ear whose outline with the two pink dots is a bass clef,
+ * a white treble clef inside it, and a sound wave going out — the musical sense, beyond hearing.
+ */
 export function Logo({ size = 44, bare = false }: { size?: number; /** No tile behind it (in-app header). */ bare?: boolean }) {
   const id = useId().replace(/:/g, '');
   const u = (k: string) => `url(#${k}${id})`;
   return (
     <svg width={size} height={size} viewBox={bare ? '60 60 420 420' : '0 0 512 512'} aria-hidden="true" className={`logo-mark ${bare ? 'bare' : ''}`}>
       <defs>
-        <radialGradient id={`bg${id}`} cx="0.5" cy="0" r="1.1">
-          <stop offset="0" stopColor="#3B2F96" />
-          <stop offset="0.55" stopColor="#16173A" />
+        <radialGradient id={`bg${id}`} cx="0.6" cy="0.2" r="1">
+          <stop offset="0" stopColor="#1E4E6E" />
+          <stop offset="0.55" stopColor="#16183A" />
           <stop offset="1" stopColor="#0F1020" />
         </radialGradient>
-        <linearGradient id={`nine${id}`} gradientUnits="userSpaceOnUse" x1="220" y1="100" x2="420" y2="420">
-          <stop offset="0" stopColor="#9DF9D4" />
-          <stop offset="0.45" stopColor="#5CF2B5" />
-          <stop offset="1" stopColor="#3FC7E0" />
-        </linearGradient>
-        <radialGradient id={`gold${id}`} cx="0.35" cy="0.3" r="0.8">
+        <linearGradient id={`ear${id}`} gradientUnits="userSpaceOnUse" x1="220" y1="90" x2="380" y2="430">
           <stop offset="0" stopColor="#FFF1B8" />
-          <stop offset="0.5" stopColor="#FFC94D" />
-          <stop offset="1" stopColor="#F08A2C" />
+          <stop offset="0.45" stopColor="#FFC94D" />
+          <stop offset="1" stopColor="#FF8A5C" />
+        </linearGradient>
+        <linearGradient id={`wave${id}`} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="#5CF2B5" stopOpacity="0.35" />
+          <stop offset="1" stopColor="#5CF2B5" />
+        </linearGradient>
+        <radialGradient id={`glow${id}`} cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0" stopColor="#FFC94D" stopOpacity="0.26" />
+          <stop offset="1" stopColor="#FFC94D" stopOpacity="0" />
         </radialGradient>
-        <linearGradient id={`a1${id}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#FF8FC4" />
-          <stop offset="1" stopColor="#FF6FB1" />
-        </linearGradient>
-        <linearGradient id={`a2${id}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#C59BFF" />
-          <stop offset="1" stopColor="#8E6BFF" />
-        </linearGradient>
       </defs>
       {!bare && <rect width="512" height="512" rx="116" fill={u('bg')} />}
-      <g transform="translate(-16 4)">
-        <path className="logo-wave w2" d="M 94 132 A 150 150 0 0 0 94 280" fill="none" stroke={u('a2')} strokeWidth="24" strokeLinecap="round" opacity="0.7" />
-        <path className="logo-wave w1" d="M 150 158 A 100 100 0 0 0 150 254" fill="none" stroke={u('a1')} strokeWidth="24" strokeLinecap="round" />
-        <circle cx="296" cy="206" r="90" fill="none" stroke={u('nine')} strokeWidth="62" />
-        <path d="M 386 206 V 392" fill="none" stroke={u('nine')} strokeWidth="62" strokeLinecap="round" />
-        <ellipse cx="342" cy="410" rx="64" ry="46" transform="rotate(-24 342 410)" fill={u('gold')} />
-        <ellipse cx="322" cy="396" rx="18" ry="9" transform="rotate(-24 322 396)" fill="#FFFFFF" opacity="0.55" />
-        <circle cx="296" cy="206" r="30" fill={u('gold')} />
-        <circle cx="286" cy="196" r="9" fill="#FFFFFF" opacity="0.75" />
-        <path className="logo-spark" d="M 432 82 l 9 25 25 9 -25 9 -9 25 -9 -25 -25 -9 25 -9 z" fill="#FFC94D" />
+      {!bare && <circle cx="290" cy="256" r="190" fill={u('glow')} />}
+      <g transform="translate(256 256) scale(0.9) translate(-306 -256)">
+        <path className="logo-wave w1" d="M 240 286 Q 220 222 200 286 Q 182 338 164 286 Q 149 250 134 286 Q 122 308 110 286" fill="none" stroke={u('wave')} strokeWidth="26" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M 226 206 C 226 132 274 96 318 96 C 380 96 420 146 420 208 C 420 266 388 290 368 320 C 348 350 358 404 304 418 C 266 428 242 404 236 378" fill="none" stroke={u('ear')} strokeWidth="58" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M 290 382 C 292 404 326 402 322 372 L 312 170 C 310 134 354 136 346 172 C 340 206 266 236 266 290 C 266 332 308 346 336 330 C 362 314 354 266 320 266 C 294 266 288 298 308 306" fill="none" stroke="#FFFFFF" strokeWidth="20" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="290" cy="384" r="16" fill="#FF6FB1" />
       </g>
+      <circle className="logo-spark" cx="428" cy="194" r="24" fill="#FF6FB1" />
+      <circle cx="428" cy="266" r="24" fill="#FF6FB1" />
     </svg>
   );
 }

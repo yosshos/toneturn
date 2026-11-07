@@ -1,7 +1,7 @@
 // Weekly league card, asynchronous friend duels and "players at your level" lines (spec S.7, S.8, L.5).
 
 import { LeagueBadge, LeagueLadder } from './LeagueBadge';
-import { LADDER, NINTH_TIER, tierOf, TOP_TIER } from '../engine/league';
+import { LADDER, tierOf, TOP_TIER } from '../engine/league';
 import { piano } from './services';
 import { useCallback, useEffect, useState } from 'react';
 import { createDuel, leagueZone, myDuels, myLeague, submitDuel, type DuelKind, type DuelRow, type League } from '../cloud/compete';
@@ -187,7 +187,7 @@ export function LeagueMove({ t, from, to, onClose }: { t: Strings; from: number;
     return () => c.abort();
   }, [up, from, to]);
   const name = t.leagueTiers[to - 1];
-  const title = up ? (to === NINTH_TIER ? t.leagueUpNinth : to === TOP_TIER ? t.leagueUpTop : fill(t.leagueUpTitle, { name })) : fill(t.leagueDownTitle, { name });
+  const title = up ? (to === TOP_TIER ? t.leagueUpTop : fill(t.leagueUpTitle, { name })) : fill(t.leagueDownTitle, { name });
   return (
     <div className="mini-overlay" role="dialog" aria-modal="true" aria-label={title}>
       <div className={`mini-celebrate league-move ${up ? 'up' : 'down'}`} data-league-move={up ? 'up' : 'down'} style={{ ['--tier-color' as string]: tierOf(to).color }}>

@@ -89,6 +89,12 @@ h2,
   letter-spacing: 0;
   white-space: nowrap;
 }
+.wordmark-th {
+  font-size: 0.6em;
+  vertical-align: 0.55em;
+  line-height: 0;
+  margin-inline-start: 1px;
+}
 .wordmark-accent {
   background: linear-gradient(90deg, #9df9d4, var(--mint) 50%, #3fc7e0);
   -webkit-background-clip: text;
@@ -435,6 +441,25 @@ h2,
   height: 100%;
   background: var(--hue);
   border-radius: 99px;
+}
+.dt-rank {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.dt-rank .rank-crest {
+  flex: none;
+}
+.dt-rank-name {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.domain-tile small.dt-next {
+  margin-top: 4px;
+  font-size: 0.7rem;
 }
 .dt-none {
   margin-top: 2px;

@@ -1,8 +1,8 @@
 // League badge (spec Y.3): a small staff that fills with chord notes from middle C — one note per league,
-// Root → 13. The newest note glows in the league colour; the Ninth (the brand) is always gold; the 13
+// Root → 13. The newest note glows in the league colour; the 13
 // league wears an aurora frame.
 
-import { LADDER, NINTH_TIER, TOP_TIER, tierOf } from '../engine/league';
+import { LADDER, TOP_TIER, tierOf } from '../engine/league';
 
 /** Diatonic step above middle C for each chord note (C E G B♭ D F♯ A are all on lines / ledger lines). */
 const POS = [0, 2, 4, 6, 8, 10, 12];
@@ -42,8 +42,7 @@ export function LeagueBadge({ tier, size = 72, ghostNext = false, title, arrive 
       {next && <ellipse cx={x} cy={y(POS[next.tier - 1])} rx="4.6" ry="3.4" transform={`rotate(-20 ${x} ${y(POS[next.tier - 1])})`} fill="none" stroke="currentColor" strokeOpacity="0.4" strokeDasharray="2 2" />}
       {notes.map((n, i) => {
         const newest = i === tier - 1;
-        const ninth = n.tier === NINTH_TIER;
-        const fillC = ninth ? LADDER[NINTH_TIER - 1].color : newest ? T.color : 'currentColor';
+        const fillC = newest ? T.color : 'currentColor';
         const cy = y(POS[i]);
         return (
           <g key={n.tier} className={`${newest ? 'lb-new' : ''} ${newest && arrive ? 'lb-arrive' : ''}`}>
@@ -54,11 +53,6 @@ export function LeagueBadge({ tier, size = 72, ghostNext = false, title, arrive 
               </text>
             )}
             <ellipse cx={x} cy={cy} rx="4.6" ry="3.4" transform={`rotate(-20 ${x} ${cy})`} fill={fillC} />
-            {ninth && (
-              <text x={x + 11} y={cy + 3} fontSize="8" fontWeight="800" fill={LADDER[NINTH_TIER - 1].color}>
-                9
-              </text>
-            )}
           </g>
         );
       })}

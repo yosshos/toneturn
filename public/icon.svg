@@ -1,43 +1,41 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <title>Ninth Sense</title>
+  <title>The 7th Sense</title>
   <defs>
-    <radialGradient id="bg" cx="0.5" cy="0" r="1.1">
-      <stop offset="0" stop-color="#3B2F96"/>
-      <stop offset="0.55" stop-color="#16173A"/>
+    <radialGradient id="bg" cx="0.6" cy="0.2" r="1">
+      <stop offset="0" stop-color="#1E4E6E"/>
+      <stop offset="0.55" stop-color="#16183A"/>
       <stop offset="1" stop-color="#0F1020"/>
     </radialGradient>
-    <linearGradient id="nine" gradientUnits="userSpaceOnUse" x1="220" y1="100" x2="420" y2="420">
-      <stop offset="0" stop-color="#9DF9D4"/>
-      <stop offset="0.45" stop-color="#5CF2B5"/>
+    <linearGradient id="ear" gradientUnits="userSpaceOnUse" x1="220" y1="90" x2="380" y2="430">
+      <stop offset="0" stop-color="#FFF1B8"/>
+      <stop offset="0.45" stop-color="#FFC94D"/>
+      <stop offset="1" stop-color="#FF8A5C"/>
+    </linearGradient>
+    <linearGradient id="mint" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#B8FFE4"/>
       <stop offset="1" stop-color="#3FC7E0"/>
     </linearGradient>
-    <radialGradient id="gold" cx="0.35" cy="0.3" r="0.8">
-      <stop offset="0" stop-color="#FFF1B8"/>
-      <stop offset="0.5" stop-color="#FFC94D"/>
-      <stop offset="1" stop-color="#F08A2C"/>
-    </radialGradient>
-    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+    <linearGradient id="waveIn" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#5CE1E6" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#5CF2B5"/>
+    </linearGradient>
+    <linearGradient id="waveOut" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0" stop-color="#5CF2B5" stop-opacity="0.35"/>
-      <stop offset="1" stop-color="#5CF2B5" stop-opacity="0"/>
+      <stop offset="1" stop-color="#5CF2B5"/>
+    </linearGradient>
+    <linearGradient id="wavePink" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#9C8CFF" stop-opacity="0.7"/>
+      <stop offset="1" stop-color="#FF6FB1"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#FFC94D" stop-opacity="0.26"/>
+      <stop offset="1" stop-color="#FFC94D" stop-opacity="0"/>
     </radialGradient>
-    <linearGradient id="arc1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF8FC4"/><stop offset="1" stop-color="#FF6FB1"/></linearGradient>
-    <linearGradient id="arc2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C59BFF"/><stop offset="1" stop-color="#8E6BFF"/></linearGradient>
   </defs>
   <rect width="512" height="512" rx="116" fill="url(#bg)"/>
-  <rect x="6" y="6" width="500" height="500" rx="110" fill="none" stroke="#FFFFFF" stroke-opacity="0.07" stroke-width="4"/>
-  <g transform="translate(-16 4)">
-  <circle cx="296" cy="206" r="170" fill="url(#glow)"/>
-  <!-- sound arriving: the sense -->
-  <path d="M 128 132 A 150 150 0 0 0 128 280" fill="none" stroke="url(#arc2)" stroke-width="24" stroke-linecap="round" opacity="0.7" transform="translate(-34 0)"/>
-  <path d="M 150 158 A 100 100 0 0 0 150 254" fill="none" stroke="url(#arc1)" stroke-width="24" stroke-linecap="round"/>
-  <!-- the 9: a ring whose stem ends in a note head -->
-  <circle cx="296" cy="206" r="90" fill="none" stroke="url(#nine)" stroke-width="62"/>
-  <path d="M 386 206 V 392" fill="none" stroke="url(#nine)" stroke-width="62" stroke-linecap="round"/>
-  <ellipse cx="342" cy="410" rx="64" ry="46" transform="rotate(-24 342 410)" fill="url(#gold)"/><ellipse cx="322" cy="396" rx="18" ry="9" transform="rotate(-24 322 396)" fill="#FFFFFF" opacity="0.55"/>
-  <!-- the eye of the 9 -->
-  <circle cx="296" cy="206" r="30" fill="url(#gold)"/>
-  <circle cx="286" cy="196" r="9" fill="#FFFFFF" opacity="0.75"/>
-  <!-- spark -->
-  <path d="M 432 82 l 9 25 25 9 -25 9 -9 25 -9 -25 -25 -9 25 -9 z" fill="#FFC94D"/>
+  <circle cx="290" cy="256" r="190" fill="url(#glow)"/>
+  <g transform="translate(256 256) scale(0.9) translate(-306 -256)">
+    <path d="M 240 286 Q 220 222 200 286 Q 182 338 164 286 Q 149 250 134 286 Q 122 308 110 286" fill="none" stroke="url(#waveOut)" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/><path d="M 226 206 C 226 132 274 96 318 96 C 380 96 420 146 420 208 C 420 266 388 290 368 320 C 348 350 358 404 304 418 C 266 428 242 404 236 378" fill="none" stroke="url(#ear)" stroke-width="58" stroke-linecap="round" stroke-linejoin="round"/><path d="M 290 382 C 292 404 326 402 322 372 L 312 170 C 310 134 354 136 346 172 C 340 206 266 236 266 290 C 266 332 308 346 336 330 C 362 314 354 266 320 266 C 294 266 288 298 308 306" fill="none" stroke="#FFFFFF" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/><circle cx="290" cy="384" r="16" fill="#FF6FB1"/>
   </g>
+  <circle cx="428" cy="194" r="24" fill="#FF6FB1"/><circle cx="428" cy="266" r="24" fill="#FF6FB1"/>
 </svg>

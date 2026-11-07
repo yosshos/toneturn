@@ -110,7 +110,10 @@ export function Home({ t, settings, progress, streak, onStreak, account, onPract
         <div className="brand">
           <Logo bare size={40} />
           <span className="wordmark" dir="ltr">
-            Ninth <span className="wordmark-accent">Sense</span>
+            <span>
+              The 7<span className="wordmark-th">th</span>
+            </span>{' '}
+            <span className="wordmark-accent">Sense</span>
           </span>
         </div>
         <div className="stats">
@@ -160,7 +163,7 @@ export function Home({ t, settings, progress, streak, onStreak, account, onPract
         </section>
       ) : (
         <>
-          <h1 className="sr-only">Ninth Sense — {t.homeToday}</h1>
+          <h1 className="sr-only">The 7th Sense — {t.homeToday}</h1>
           <PlayerStrip t={t} xp={progress.xp} name={playerName} onOpen={onSkills} />
           {workout}
           {!workout && warmUp && warmUp.count >= 3 && (
@@ -186,7 +189,7 @@ export function Home({ t, settings, progress, streak, onStreak, account, onPract
         </>
       )}
 
-      {!firstRun && <DomainTiles t={t} progress={progress} onPractice={onPracticeSkill} />}
+      {!firstRun && <DomainTiles t={t} progress={progress} onPractice={onPracticeSkill} lang={lang} />}
       {!firstRun && !workout && (
         <section className="home-section today" aria-label={lang === 'en' ? 'Free practice' : 'תרגול חופשי'}>
           <h2 className="home-h">🎯 {lang === 'en' ? 'Free practice' : 'תרגול חופשי'}</h2>

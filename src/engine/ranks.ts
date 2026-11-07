@@ -148,6 +148,55 @@ export function techniqueTarget(t: TechniqueInput | null | undefined): number | 
   return Math.min(cap, lv >= 7 ? MASTER_DIV : Math.min(DIVISIONS - 1, Math.floor(lv * 2)));
 }
 
+// ======================================================================= progress inside a rank (the promotion bar)
+
+/**
+ * Where an area stands inside its rank, game-style (owner 2026-11-07): the current division, a bar to the next one,
+ * and what locks the next one. Never "full" below Master, so a good area never reads as finished.
+ *   unranked → bar = answers toward the first rank (or 0 with no level)
+ *   ranked   → bar = level progress from this division's floor to the next division's floor
+ *   lock     → the level already reaches the next division but the evidence gate holds it (N more answers / takes)
+ */
+export interface RankProgress {
+  /** Division shown (stored state wins: it may be held by the 7-day floor). null = not ranked yet. */
+  div: number | null;
+  /** 0..1 toward the next division (1 only at Master). */
+  frac: number;
+  /** Next division (null at Master). */
+  next: number | null;
+  /** Answers (or drill takes) still needed before the next division can be reached. */
+  needAnswers?: number;
+  /** Unranked: answers so far / needed for the first rank. */
+  toFirst?: { answers: number; need: number };
+}
+
+const NEXT_GATE = (d: number): number | null => (d >= MASTER_DIV ? null : d + 1 >= MASTER_DIV ? EVIDENCE.master : d + 1 >= 12 ? EVIDENCE.diamond : d + 1 >= 9 ? EVIDENCE.platinum : d + 1 >= 6 ? EVIDENCE.gold : EVIDENCE.answers);
+
+function progressOf(div: number | null, level: number | null, answers: number, need: number): RankProgress {
+  if (div === null) return { div: null, frac: level === null ? 0 : Math.min(0.99, answers / need), next: 0, toFirst: { answers: Math.min(answers, need), need } };
+  if (div >= MASTER_DIV) return { div, frac: 1, next: null };
+  const lo = divFloor(div);
+  const hi = divFloor(div + 1);
+  const frac = level === null ? 0 : Math.max(0, Math.min(0.99, (level - lo) / (hi - lo)));
+  const gate = NEXT_GATE(div) ?? 0;
+  return { div, frac, next: div + 1, ...(answers < gate ? { needAnswers: gate - answers } : {}) };
+}
+
+/** Rank progress of a Skill Map area. `held` = the stored rank state (progress.ranks[area]). */
+export function areaProgress(ratings: Ratings, events: RatingEvent[], area: DomainId, held?: RankState): RankProgress {
+  const ev = areaEvidence(ratings, events, area);
+  const div = held?.div ?? areaTarget(ratings, events, area);
+  return progressOf(div, ev.level, ev.answers, ev.needAnswers);
+}
+
+/** Rank progress of technique: technique level T (0..7) maps to 2 divisions per level, i.e. "level" = 600 + 120·T. */
+export function techniqueProgress(t: TechniqueInput | null | undefined, held?: RankState): RankProgress {
+  const div = held?.div ?? techniqueTarget(t);
+  const lv = t ? techniqueLevel(t.levels) : null;
+  const level = lv === null ? null : lv >= 7 ? MASTER_AT : DIV_BASE + DIV_STEP * 2 * lv;
+  return progressOf(div, level, t?.takes ?? 0, EVIDENCE.answers);
+}
+
 // ======================================================================= state + update (no demotion below a division held 7 days)
 
 export interface RankState {

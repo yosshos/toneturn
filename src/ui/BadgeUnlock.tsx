@@ -6,7 +6,7 @@
 
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { BADGE_CAT_NAME, type Badge } from '../engine/badges';
-import { AREA_NAME, rankLabel, tierOfDiv, TIER_NAME, type RankArea, type RankChange, type RankTier } from '../engine/ranks';
+import { AREA_NAME, MASTER_DIV, rankLabel, tierOfDiv, TIER_NAME, type RankArea, type RankChange, type RankTier } from '../engine/ranks';
 import { BadgeArt, tierGlow } from './BadgeArt';
 import { RankCrest } from './Badges';
 import '../badges.css';
@@ -143,6 +143,13 @@ export function BadgeUnlock({ badges, lang, onDone }: { badges: Badge[]; lang: L
 }
 
 /** Rank promotion: the crest + "Gold II in Rhythm & time". Pass a RankChange or { area, to }. */
+/** Always something to aim for (owner 2026-11-07): the next rank and how far Master is. */
+function nextGoal(div: number, lang: Lang): string {
+  if (div >= MASTER_DIV) return lang === 'he' ? 'הפסגה! עכשיו שמרו עליה — ונסו את התחומים האחרים' : 'The summit! Now keep it, and take on the other areas';
+  const left = MASTER_DIV - div;
+  return lang === 'he' ? `הבא: ${rankLabel(div + 1, lang)} · עוד ${left} דרגות עד מאסטר` : `Next: ${rankLabel(div + 1, lang)} · ${left} more ranks to Master`;
+}
+
 export function RankUpUnlock({ change, lang, onDone }: { change: Pick<RankChange, 'area' | 'to'> & Partial<Pick<RankChange, 'kind'>>; lang: Lang; onDone: () => void }) {
   const done = useRef(false);
   const close = useCallback(() => {
@@ -162,6 +169,7 @@ export function RankUpUnlock({ change, lang, onDone }: { change: Pick<RankChange
       medal={<RankCrest div={change.to} size={168} lang={lang} />}
       title={title}
       sub={TX.hold[lang]}
+      note={nextGoal(change.to, lang)}
       onNext={close}
       onClose={close}
     />

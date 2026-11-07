@@ -6,20 +6,20 @@ import { pathToFileURL } from 'node:url';
 
 const root = new URL('..', import.meta.url);
 const icon = readFileSync(new URL('public/icon.svg', root), 'utf-8');
-// Wordmark: icon + "Ninth Sense" in Secular One, tagline in Rubik (both embedded, so the SVG renders the same everywhere).
+// Wordmark: icon + "The 7th Sense" in Secular One, tagline in Rubik (both embedded, so the SVG renders the same everywhere).
 const rubik = readFileSync(new URL('node_modules/@fontsource-variable/rubik/files/rubik-latin-wght-normal.woff2', root)).toString('base64');
 const secular = readFileSync(new URL('node_modules/@fontsource/secular-one/files/secular-one-latin-400-normal.woff2', root)).toString('base64');
 const inner = icon.replace(/<\?xml[^>]*>/, '').replace('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">', '').replace('</svg>', '').replace(/<title>.*?<\/title>/, '');
 function wordmark(text, sub) {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1240 320">
-  <title>Ninth Sense</title>
+  <title>The 7th Sense</title>
   <style>@font-face{font-family:'RubikNS';src:url(data:font/woff2;base64,${rubik}) format('woff2');font-weight:300 900}
   @font-face{font-family:'SecularNS';src:url(data:font/woff2;base64,${secular}) format('woff2')}
-  .w{font-family:'SecularNS','Secular One',Rubik,sans-serif;font-size:156px;letter-spacing:-2px}
+  .w{font-family:'SecularNS','Secular One',Rubik,sans-serif;font-size:140px;letter-spacing:-2px}
   .s{font-family:'RubikNS',Rubik,system-ui,sans-serif;font-weight:600;font-size:40px;letter-spacing:6px}</style>
   <defs><linearGradient id="wg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#9DF9D4"/><stop offset="0.5" stop-color="#5CF2B5"/><stop offset="1" stop-color="#3FC7E0"/></linearGradient></defs>
   <svg x="20" y="20" width="280" height="280" viewBox="0 0 512 512">${inner}</svg>
-  <text x="340" y="190" class="w"><tspan fill="${text}">Ninth</tspan><tspan fill="url(#wg)" dx="34">Sense</tspan></text>
+  <text x="340" y="190" class="w"><tspan fill="${text}">The 7</tspan><tspan fill="${text}" font-size="70" dy="-46">th</tspan><tspan fill="url(#wg)" dx="30" dy="46">Sense</tspan></text>
   <text x="346" y="262" class="s" fill="${sub}">HEAR IT · SAY IT · SING IT</text>
 </svg>
 `;
@@ -31,10 +31,9 @@ const browser = await chromium.launch({ channel: 'chrome' });
 const page = await browser.newPage({ deviceScaleFactor: 1 });
 
 async function png(svg, size, out, { maskable = false } = {}) {
-  // Maskable: full-bleed background, artwork inside the 80 % safe zone.
-  const inner = maskable
-    ? `<div style="width:${size}px;height:${size}px;background:#0F1020;display:grid;place-items:center"><img src="data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}" style="width:${size * 0.8}px;height:${size * 0.8}px"></div>`
-    : `<img src="data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}" style="width:${size}px;height:${size}px;display:block">`;
+  // Maskable / iOS: the same art full-bleed (square corners) — the mark already sits inside the 80 % safe zone.
+  if (maskable) svg = svg.replace('rx="116"', 'rx="0"');
+  const inner = `<img src="data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}" style="width:${size}px;height:${size}px;display:block">`;
   await page.setViewportSize({ width: size, height: size });
   await page.setContent(`<html><body style="margin:0;background:transparent">${inner}</body></html>`);
   await page.waitForTimeout(100);

@@ -2,7 +2,7 @@ import { DOMAINS } from '../engine/rating';
 import { defaultPacks, GOAL_NAMES, GOALS, PACKS, type Goal } from '../engine/path';
 import { TOPIC_GEN } from '../engine/topicKit';
 import { TUNINGS } from '../engine/fretboard';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { displayNote, pc, spokenNote } from '../engine/pitch';
 import type { Strings } from '../i18n/strings';
 import { catalogue, chooseVoice, type Gender } from '../speech/voices';
@@ -188,6 +188,9 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
 
   const genderLabel = (g: Gender) => (g === 'female' ? t.voiceFemale : g === 'male' ? t.voiceMale : t.voiceUnknown);
 
+  const lang = s.uiLang;
+  const G = GROUPS;
+
   return (
     <main className="panel-screen settings">
       <header className="screen-head">
@@ -197,278 +200,273 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
         <h1>{t.settings}</h1>
       </header>
 
-      <section className="set-card">
-        <h2>☁ {t.account}</h2>
-        {account}
-      </section>
+      <div className="set-groups">
+        <Group id="account" icon="☁" title={t.account} sub={G.account[lang]}>
+          <section className="set-card">{account}</section>
+        </Group>
 
-      <section className="set-card">
-        <h2>🌐 {t.secLanguage}</h2>
-        <Seg label={t.settingsUi} value={s.uiLang} options={langs} onChange={(uiLang) => onChange({ uiLang })} />
-        <Seg
-          label={t.settingsSpeakIn}
-          hint={t.answerLangHint}
-          value={s.inputLang}
-          options={langs}
-          onChange={(inputLang) => onChange({ inputLang })}
-        />
-        <Seg label={t.settingsListen} value={s.outputLang} options={langs} onChange={(outputLang) => onChange({ outputLang })} />
-      </section>
+        <Group id="language" icon="🌐" title={G.language.title[lang]} sub={G.language.sub[lang]}>
+          <section className="set-card">
+            <h2>🌐 {t.secLanguage}</h2>
+            <Seg label={t.settingsUi} value={s.uiLang} options={langs} onChange={(uiLang) => onChange({ uiLang })} />
+            <Seg label={t.settingsSpeakIn} hint={t.answerLangHint} value={s.inputLang} options={langs} onChange={(inputLang) => onChange({ inputLang })} />
+            <Seg label={t.settingsListen} value={s.outputLang} options={langs} onChange={(outputLang) => onChange({ outputLang })} />
+          </section>
 
-      <section className="set-card">
-        <h2>🎼 {t.secNotes}</h2>
-        <Seg
-          label={t.settingsNaming}
-          hint={s.naming === 'auto' ? t.namingAutoHint : undefined}
-          value={s.naming}
-          options={[
-            ['auto', t.namingAuto],
-            ['letter', t.namingLetter],
-            ['solfege', t.namingSolfege],
-          ]}
-          onChange={(naming) => onChange({ naming })}
-        />
-        <p className="example" aria-live="polite">
-          <span className="ex-label">{t.example}:</span> <Note>{displayNote(bb, uiNaming, s.uiLang)}</Note> ·{' '}
-          <span aria-hidden="true">🔊</span>{' '}
-          <bdi lang={narr} dir={narr === 'he' ? 'rtl' : 'ltr'} className="spoken-ex">
-            {spokenNote(bb, narrNaming, narr)}
-          </bdi>
-        </p>
-      </section>
-
-      <section className="set-card">
-        <h2>🗣 {t.secVoice}</h2>
-        <Seg<VoiceGender>
-          label={t.voiceType}
-          value={s.voiceGender}
-          options={[
-            ['any', t.voiceAny],
-            ['female', <>♀ {t.voiceFemale}</>],
-            ['male', <>♂ {t.voiceMale}</>],
-          ]}
-          onChange={(voiceGender) => onChange({ voiceGender, voices: { ...s.voices, [narr]: null } })}
-        />
-        {list.length === 0 ? (
-          <p className="field-hint warn">{t.noVoices}</p>
-        ) : (
-          <>
-            {genderMissing && (
-              <p className="field-hint warn">
-                {t.noGenderVoice} {chosen?.name}
-              </p>
-            )}
-            <p className="field-hint">
-              {t.voiceFor}{narr === 'he' ? t.hebrew : t.english} · {list.length}
+          <section className="set-card">
+            <h2>🎼 {t.secNotes}</h2>
+            <Seg
+              label={t.settingsNaming}
+              hint={s.naming === 'auto' ? t.namingAutoHint : undefined}
+              value={s.naming}
+              options={[
+                ['auto', t.namingAuto],
+                ['letter', t.namingLetter],
+                ['solfege', t.namingSolfege],
+              ]}
+              onChange={(naming) => onChange({ naming })}
+            />
+            <p className="example" aria-live="polite">
+              <span className="ex-label">{t.example}:</span> <Note>{displayNote(bb, uiNaming, s.uiLang)}</Note> ·{' '}
+              <span aria-hidden="true">🔊</span>{' '}
+              <bdi lang={narr} dir={narr === 'he' ? 'rtl' : 'ltr'} className="spoken-ex">
+                {spokenNote(bb, narrNaming, narr)}
+              </bdi>
             </p>
-            <ul className="voice-list" role="radiogroup" aria-label={t.secVoice}>
-              <li className={!s.voices[narr] ? 'on' : ''}>
-                <button
-                  role="radio"
-                  aria-checked={!s.voices[narr]}
-                  className="voice-pick"
-                  onClick={() => onChange({ voices: { ...s.voices, [narr]: null } })}
-                >
-                  <span className="g-chip g-auto" aria-hidden="true">★</span>
-                  <span className="v-text">
-                    <b>{t.voiceAuto}</b>
-                    <small>
-                      {t.voiceAutoHint}
-                      {chosen && !s.voices[narr] ? ` · ${chosen.name}` : ''}
-                    </small>
-                  </span>
-                </button>
-                <button className="btn small" onClick={() => preview(null)} aria-label={`${t.preview} ${t.voiceAuto}`}>
-                  ▶
-                </button>
-              </li>
-              {list.map(({ voice, gender }) => {
-                const on = s.voices[narr] === voice.voiceURI;
-                return (
-                  <li key={voice.voiceURI} className={on ? 'on' : ''}>
-                    <button
-                      role="radio"
-                      aria-checked={on}
-                      className="voice-pick"
-                      onClick={() => onChange({ voices: { ...s.voices, [narr]: voice.voiceURI } })}
-                    >
-                      <GenderGlyph g={gender} />
+          </section>
+
+          <section className="set-card">
+            <h2>🗣 {t.secVoice}</h2>
+            <Seg<VoiceGender>
+              label={t.voiceType}
+              value={s.voiceGender}
+              options={[
+                ['any', t.voiceAny],
+                ['female', <>♀ {t.voiceFemale}</>],
+                ['male', <>♂ {t.voiceMale}</>],
+              ]}
+              onChange={(voiceGender) => onChange({ voiceGender, voices: { ...s.voices, [narr]: null } })}
+            />
+            {list.length === 0 ? (
+              <p className="field-hint warn">{t.noVoices}</p>
+            ) : (
+              <>
+                {genderMissing && (
+                  <p className="field-hint warn">
+                    {t.noGenderVoice} {chosen?.name}
+                  </p>
+                )}
+                <p className="field-hint">
+                  {t.voiceFor}
+                  {narr === 'he' ? t.hebrew : t.english} · {list.length}
+                </p>
+                <ul className="voice-list" role="radiogroup" aria-label={t.secVoice}>
+                  <li className={!s.voices[narr] ? 'on' : ''}>
+                    <button role="radio" aria-checked={!s.voices[narr]} className="voice-pick" onClick={() => onChange({ voices: { ...s.voices, [narr]: null } })}>
+                      <span className="g-chip g-auto" aria-hidden="true">
+                        ★
+                      </span>
                       <span className="v-text">
-                        <b dir="ltr">{voice.name.replace(/^(Microsoft|Google)\s+/, '')}</b>
+                        <b>{t.voiceAuto}</b>
                         <small>
-                          {genderLabel(gender)} · <span dir="ltr">{voice.lang}</span>
-                          {voice.localService ? '' : ' · online'}
+                          {t.voiceAutoHint}
+                          {chosen && !s.voices[narr] ? ` · ${chosen.name}` : ''}
                         </small>
                       </span>
                     </button>
-                    <button className="btn small" onClick={() => preview(voice.voiceURI)} aria-label={`${t.preview} ${voice.name}`}>
+                    <button className="btn small" onClick={() => preview(null)} aria-label={`${t.preview} ${t.voiceAuto}`}>
                       ▶
                     </button>
                   </li>
-                );
-              })}
-            </ul>
-          </>
-        )}
-      </section>
-
-      {onIntake && (
-        <section className="set-card">
-          <button className="btn ghost" onClick={onIntake} data-intake-retake="1">
-            👋 {t.intake.retake}
-          </button>
-        </section>
-      )}
-      <MyPath t={t} s={s} onChange={onChange} />
-      <section className="set-card">
-        <label className="toggle-row">
-          <input type="checkbox" checked={s.miniLessons ?? true} onChange={(e) => onChange({ miniLessons: e.target.checked })} data-mini-setting="1" />
-          <span>
-            📚 {t.miniSetting}
-            <small className="field-hint"> — {t.miniSettingHint}</small>
-          </span>
-        </label>
-      </section>
-      <section className="set-card">
-        <label className="toggle-row">
-          <input type="checkbox" checked={s.rhythmByVoice ?? false} onChange={(e) => onChange({ rhythmByVoice: e.target.checked })} data-rhythm-voice="1" />
-          <span>
-            🥁 {t.rhythmVoiceSetting}
-            <small className="field-hint"> — {t.rhythmVoiceHint}</small>
-          </span>
-        </label>
-      </section>
-      <SoundSetting t={t} value={s.sound ?? DEFAULT_SOUND} onChange={(sound) => onChange({ sound })} drone={s.droneSound ?? 'soft'} onDrone={(droneSound) => onChange({ droneSound })} />
-
-      <section className="set-card">
-        <h2>🔗 {t.echoChain}</h2>
-        <Seg
-          label={t.echoTolerance}
-          value={String(s.echoTolerance ?? 80)}
-          options={[35, 50, 80, 120].map((c) => [String(c), `±${c}¢ · ${t.toleranceNames[String(c)]}`] as [string, string])}
-          onChange={(v) => onChange({ echoTolerance: Number(v) })}
-        />
-        <p className="field-hint">{t.echoToleranceHint}</p>
-      </section>
-
-      <section className="set-card">
-        <h2>🎷 {t.instrumentTitle}</h2>
-        <p className="field-hint">{t.instrumentHint}</p>
-        <Seg
-          label={t.instrumentTitle}
-          value={s.instrument ?? 'voice'}
-          options={(['voice', 'guitar', 'bass', 'keys', 'strings', 'C', 'Bb', 'Eb', 'F'] as const).map((k) => [k, t.instrumentNames[k]] as [typeof k, string])}
-          onChange={(instrument) => onChange({ instrument })}
-        />
-        <Seg
-          label={t.answerOn}
-          value={s.answerSurface ?? 'auto'}
-          options={(['auto', 'keys', 'neck', 'staff'] as const).map((k) => [k, t.answerOnNames[k]] as [typeof k, string])}
-          onChange={(answerSurface) => onChange({ answerSurface })}
-        />
-        <p className="field-hint">{t.answerOnHint}</p>
-        {(s.instrument === 'guitar' || s.instrument === 'bass' || (s.noteViews ?? []).includes('tab')) && (
-          <>
-            <label className="toggle-row">
-              <input type="checkbox" checked={!!s.leftHanded} onChange={(e) => onChange({ leftHanded: e.target.checked })} />
-              <span>{t.leftHanded}</span>
-            </label>
-            {s.instrument !== 'bass' && (
-              <label className="field-row">
-                <span>{t.tuningTitle}</span>
-                <select value={s.tuning ?? 'standard'} onChange={(e) => onChange({ tuning: e.target.value })}>
-                  {TUNINGS.filter((x) => x.instrument === 'guitar').map((x) => (
-                    <option key={x.id} value={x.id}>
-                      {x.name[s.uiLang]}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                  {list.map(({ voice, gender }) => {
+                    const on = s.voices[narr] === voice.voiceURI;
+                    return (
+                      <li key={voice.voiceURI} className={on ? 'on' : ''}>
+                        <button role="radio" aria-checked={on} className="voice-pick" onClick={() => onChange({ voices: { ...s.voices, [narr]: voice.voiceURI } })}>
+                          <GenderGlyph g={gender} />
+                          <span className="v-text">
+                            <b dir="ltr">{voice.name.replace(/^(Microsoft|Google)\s+/, '')}</b>
+                            <small>
+                              {genderLabel(gender)} · <span dir="ltr">{voice.lang}</span>
+                              {voice.localService ? '' : ' · online'}
+                            </small>
+                          </span>
+                        </button>
+                        <button className="btn small" onClick={() => preview(voice.voiceURI)} aria-label={`${t.preview} ${voice.name}`}>
+                          ▶
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </>
             )}
-          </>
-        )}
-        <label className="toggle-row">
-          <input type="checkbox" checked={!!s.headphones} onChange={(e) => onChange({ headphones: e.target.checked })} />
-          <span>{t.headphonesSet}</span>
-        </label>
-        <a className="btn small ghost" href="#/tuner">
-          🎚 {t.tunerOpen}
-        </a>
-      </section>
+          </section>
+        </Group>
 
-      <LatencyCalibrate lang={s.uiLang} values={s} onSave={(p) => onChange(p)} />
+        <Group id="learning" icon="🧭" title={G.learning.title[lang]} sub={G.learning.sub[lang]}>
+          {onIntake && (
+            <section className="set-card">
+              <button className="btn ghost" onClick={onIntake} data-intake-retake="1">
+                👋 {t.intake.retake}
+              </button>
+            </section>
+          )}
+          <MyPath t={t} s={s} onChange={onChange} />
+          <section className="set-card">
+            <label className="toggle-row">
+              <input type="checkbox" checked={s.miniLessons ?? true} onChange={(e) => onChange({ miniLessons: e.target.checked })} data-mini-setting="1" />
+              <span>
+                📚 {t.miniSetting}
+                <small className="field-hint"> — {t.miniSettingHint}</small>
+              </span>
+            </label>
+            <Seg
+              label={t.aidsLabel}
+              hint={t.aidsHint}
+              value={s.aids ?? 'auto'}
+              options={[
+                ['auto', t.aidsAuto],
+                ['always', t.aidsAlways],
+                ['never', t.aidsNever],
+              ]}
+              onChange={(aids) => onChange({ aids })}
+            />
+            <Seg
+              label={t.timedScoring}
+              hint={t.timedHint}
+              value={s.timedScoring === null ? 'auto' : s.timedScoring ? 'on' : 'off'}
+              options={[
+                ['auto', t.timedAuto],
+                ['on', t.timedOn],
+                ['off', t.timedOff],
+              ]}
+              onChange={(v) => onChange({ timedScoring: v === 'auto' ? null : v === 'on' })}
+            />
+          </section>
+        </Group>
 
-      <section className="set-card">
-        <h2>♿ {t.secAccess}</h2>
-        <Seg
-          label={t.inputMode}
-          value={s.mode}
-          options={[
-            ['voice', t.voice],
-            ['buttons', t.buttons],
-          ]}
-          onChange={(mode) => onChange({ mode })}
-        />
-        <MidiSetting t={t} on={!!s.midiInput} onChange={(midiInput) => onChange({ midiInput })} />
-        <fieldset className="seg-field views-field">
-          <legend>{t.showNotesAs}</legend>
-          <div className="seg">
-            {(['keyboard', 'staff', 'tab'] as const).map((v) => {
-              const cur = s.noteViews ?? ['keyboard', 'staff'];
-              const on = cur.includes(v);
-              return (
-                <button
-                  key={v}
-                  type="button"
-                  role="checkbox"
-                  aria-checked={on}
-                  className={on ? 'on' : ''}
-                  // Two at most (product owner): a third replaces the oldest; at least one stays on.
-                  onClick={() => onChange({ noteViews: on ? (cur.length > 1 ? cur.filter((x) => x !== v) : cur) : [...cur, v].slice(-2) })}
-                >
-                  {{ keyboard: t.viewKeyboard, staff: t.viewStaff, tab: t.viewTab }[v]}
-                </button>
-              );
-            })}
-          </div>
-          <p className="field-hint">{t.showNotesHint}</p>
-        </fieldset>
-        <Seg
-          label={t.aidsLabel}
-          hint={t.aidsHint}
-          value={s.aids ?? 'auto'}
-          options={[
-            ['auto', t.aidsAuto],
-            ['always', t.aidsAlways],
-            ['never', t.aidsNever],
-          ]}
-          onChange={(aids) => onChange({ aids })}
-        />
-        <Seg
-          label={t.timedScoring}
-          hint={t.timedHint}
-          value={s.timedScoring === null ? 'auto' : s.timedScoring ? 'on' : 'off'}
-          options={[
-            ['auto', t.timedAuto],
-            ['on', t.timedOn],
-            ['off', t.timedOff],
-          ]}
-          onChange={(v) => onChange({ timedScoring: v === 'auto' ? null : v === 'on' })}
-        />
-        <label className="check">
-          <input
-            type="checkbox"
-            checked={s.reducedMotion ?? window.matchMedia('(prefers-reduced-motion: reduce)').matches}
-            onChange={(e) => onChange({ reducedMotion: e.target.checked })}
-          />
-          {t.reducedMotion}
-        </label>
-        {s.voiceConsent && (
-          <button className="btn ghost" onClick={() => onChange({ voiceConsent: false })}>
-            {t.revokeConsent}
-          </button>
-        )}
-      </section>
+        <Group id="instrument" icon="🎷" title={t.instrumentTitle} sub={G.instrument[lang]}>
+          <section className="set-card">
+            <p className="field-hint">{t.instrumentHint}</p>
+            <Seg
+              label={t.instrumentTitle}
+              value={s.instrument ?? 'voice'}
+              options={(['voice', 'guitar', 'bass', 'keys', 'strings', 'C', 'Bb', 'Eb', 'F'] as const).map((k) => [k, t.instrumentNames[k]] as [typeof k, string])}
+              onChange={(instrument) => onChange({ instrument })}
+            />
+            <Seg
+              label={t.answerOn}
+              value={s.answerSurface ?? 'auto'}
+              options={(['auto', 'keys', 'neck', 'staff'] as const).map((k) => [k, t.answerOnNames[k]] as [typeof k, string])}
+              onChange={(answerSurface) => onChange({ answerSurface })}
+            />
+            <p className="field-hint">{t.answerOnHint}</p>
+            {(s.instrument === 'guitar' || s.instrument === 'bass' || (s.noteViews ?? []).includes('tab')) && (
+              <>
+                <label className="toggle-row">
+                  <input type="checkbox" checked={!!s.leftHanded} onChange={(e) => onChange({ leftHanded: e.target.checked })} />
+                  <span>{t.leftHanded}</span>
+                </label>
+                {s.instrument !== 'bass' && (
+                  <label className="field-row">
+                    <span>{t.tuningTitle}</span>
+                    <select value={s.tuning ?? 'standard'} onChange={(e) => onChange({ tuning: e.target.value })}>
+                      {TUNINGS.filter((x) => x.instrument === 'guitar').map((x) => (
+                        <option key={x.id} value={x.id}>
+                          {x.name[s.uiLang]}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+              </>
+            )}
+            <label className="toggle-row">
+              <input type="checkbox" checked={!!s.headphones} onChange={(e) => onChange({ headphones: e.target.checked })} />
+              <span>{t.headphonesSet}</span>
+            </label>
+            <a className="btn small ghost" href="#/tuner">
+              🎚 {t.tunerOpen}
+            </a>
+          </section>
+        </Group>
+
+        <Group id="midi" icon="🎹" title={G.midi.title[lang]} sub={s.midiInput ? G.midi.on[lang] : G.midi.off[lang]}>
+          <MidiPanel t={t} lang={lang} on={!!s.midiInput} onChange={(midiInput) => onChange({ midiInput })} naming={uiNaming} />
+          {s.midiInput && <LatencyCalibrate lang={lang} values={s} onSave={(p) => onChange(p)} sources={['midi']} initial="midi" />}
+        </Group>
+
+        <Group id="input" icon="🎤" title={G.input.title[lang]} sub={G.input.sub[lang]}>
+          <section className="set-card">
+            <Seg
+              label={t.inputMode}
+              value={s.mode}
+              options={[
+                ['voice', t.voice],
+                ['buttons', t.buttons],
+              ]}
+              onChange={(mode) => onChange({ mode })}
+            />
+            <label className="toggle-row">
+              <input type="checkbox" checked={s.rhythmByVoice ?? false} onChange={(e) => onChange({ rhythmByVoice: e.target.checked })} data-rhythm-voice="1" />
+              <span>
+                🥁 {t.rhythmVoiceSetting}
+                <small className="field-hint"> — {t.rhythmVoiceHint}</small>
+              </span>
+            </label>
+            <Seg
+              label={`🔗 ${t.echoTolerance}`}
+              value={String(s.echoTolerance ?? 80)}
+              options={[35, 50, 80, 120].map((c) => [String(c), `±${c}¢ · ${t.toleranceNames[String(c)]}`] as [string, string])}
+              onChange={(v) => onChange({ echoTolerance: Number(v) })}
+            />
+            <p className="field-hint">{t.echoToleranceHint}</p>
+            {s.voiceConsent && (
+              <button className="btn ghost" onClick={() => onChange({ voiceConsent: false })}>
+                {t.revokeConsent}
+              </button>
+            )}
+          </section>
+          <LatencyCalibrate lang={lang} values={s} onSave={(p) => onChange(p)} sources={['tap', 'mic']} initial="tap" />
+        </Group>
+
+        <Group id="sound" icon="🔊" title={G.sound.title[lang]} sub={G.sound.sub[lang]}>
+          <SoundSetting t={t} value={s.sound ?? DEFAULT_SOUND} onChange={(sound) => onChange({ sound })} drone={s.droneSound ?? 'soft'} onDrone={(droneSound) => onChange({ droneSound })} />
+        </Group>
+
+        <Group id="display" icon="👁" title={G.display.title[lang]} sub={G.display.sub[lang]}>
+          <section className="set-card">
+            <fieldset className="seg-field views-field">
+              <legend>{t.showNotesAs}</legend>
+              <div className="seg">
+                {(['keyboard', 'staff', 'tab'] as const).map((v) => {
+                  const cur = s.noteViews ?? ['keyboard', 'staff'];
+                  const on = cur.includes(v);
+                  return (
+                    <button
+                      key={v}
+                      type="button"
+                      role="checkbox"
+                      aria-checked={on}
+                      className={on ? 'on' : ''}
+                      // Two at most (product owner): a third replaces the oldest; at least one stays on.
+                      onClick={() => onChange({ noteViews: on ? (cur.length > 1 ? cur.filter((x) => x !== v) : cur) : [...cur, v].slice(-2) })}
+                    >
+                      {{ keyboard: t.viewKeyboard, staff: t.viewStaff, tab: t.viewTab }[v]}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="field-hint">{t.showNotesHint}</p>
+            </fieldset>
+            <label className="check">
+              <input type="checkbox" checked={s.reducedMotion ?? window.matchMedia('(prefers-reduced-motion: reduce)').matches} onChange={(e) => onChange({ reducedMotion: e.target.checked })} />
+              {t.reducedMotion}
+            </label>
+          </section>
+        </Group>
+      </div>
 
       <div className="row">
         <a className="btn" href="#/diagnostics">
@@ -482,20 +480,104 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
   );
 }
 
-function MidiSetting({ t, on, onChange }: { t: Strings; on: boolean; onChange: (on: boolean) => void }) {
+type LL = { en: string; he: string };
+const GROUPS = {
+  account: { en: 'Sign in, sync between devices', he: 'כניסה וסנכרון בין מכשירים' },
+  language: { title: { en: 'Language & voice', he: 'שפה וקול' }, sub: { en: 'App language, note names, narrator voice', he: 'שפת האפליקציה, שמות תווים, קול הקריין' } },
+  learning: { title: { en: 'My path & learning', he: 'המסלול והלמידה שלי' }, sub: { en: 'Goals, mini lessons, hints, speed scoring', he: 'מטרות, שיעורונים, עזרים, ניקוד מהירות' } },
+  instrument: { en: 'Your instrument, how to answer, tuning, headphones', he: 'הכלי שלך, איך עונים, כיוון, אוזניות' },
+  midi: { title: { en: 'MIDI keyboard', he: 'מקלדת MIDI' }, on: { en: 'On · devices, key test, timing', he: 'פועל · מכשירים, בדיקת קלידים, תזמון' }, off: { en: 'Off · connect a keyboard to answer and play drills', he: 'כבוי · חברו מקלדת כדי לענות ולנגן תרגילים' } },
+  input: { title: { en: 'Microphone & timing', he: 'מיקרופון ותזמון' }, sub: { en: 'Voice or buttons, singing tolerance, tap & mic delay', he: 'קול או כפתורים, סבילות שירה, השהיית הקשה ומיקרופון' } },
+  sound: { title: { en: 'Sound', he: 'סאונד' }, sub: { en: 'Instrument sound, drone', he: 'צליל הכלי, צליל רצוף' } },
+  display: { title: { en: 'Display & accessibility', he: 'תצוגה ונגישות' }, sub: { en: 'Keyboard / staff / tab, motion', he: 'מקלדת / חמשה / טאב, תנועה' } },
+} satisfies Record<string, LL | Record<string, LL>>;
+
+const GROUP_KEY = 'tt-settings-open';
+const openGroups = (): string[] => {
+  try {
+    return JSON.parse(localStorage.getItem(GROUP_KEY) ?? '[]') as string[];
+  } catch {
+    return [];
+  }
+};
+
+/** One settings category: a row that opens and closes (remembered on this device). `#/settings/<id>` opens it. */
+function Group({ id, icon, title, sub, children }: { id: string; icon: string; title: string; sub: string; children: ReactNode }) {
+  const deep = typeof location !== 'undefined' && location.hash === `#/settings/${id}`;
+  const [open, setOpen] = useState(() => deep || openGroups().includes(id));
+  const ref = useRef<HTMLDetailsElement>(null);
+  useEffect(() => {
+    if (deep) ref.current?.scrollIntoView({ block: 'start' });
+  }, [deep]);
+  return (
+    <details
+      ref={ref}
+      className="set-group"
+      data-group={id}
+      open={open}
+      onToggle={(e) => {
+        const o = (e.currentTarget as HTMLDetailsElement).open;
+        setOpen(o);
+        try {
+          const cur = openGroups().filter((x) => x !== id);
+          localStorage.setItem(GROUP_KEY, JSON.stringify(o ? [...cur, id] : cur));
+        } catch {
+          /* private mode */
+        }
+      }}
+    >
+      <summary>
+        <span className="sg-icon" aria-hidden="true">
+          {icon}
+        </span>
+        <span className="sg-text">
+          <b>{title}</b>
+          <small>{sub}</small>
+        </span>
+        <span className="sg-chev" aria-hidden="true">
+          ›
+        </span>
+      </summary>
+      {open && <div className="set-group-body">{children}</div>}
+    </details>
+  );
+}
+
+/** MIDI keyboard: on/off, connected devices (live), a key test (note, velocity, sustain pedal). */
+function MidiPanel({ t, lang, on, onChange, naming }: { t: Strings; lang: 'en' | 'he'; on: boolean; onChange: (on: boolean) => void; naming: ReturnType<typeof namingFor> }) {
+  const he = lang === 'he';
   const [status, setStatus] = useState<string | null>(null);
+  const [devices, setDevices] = useState<string[]>(midi.devices);
+  const [last, setLast] = useState<{ note: number; vel: number } | null>(null);
+  const [pedal, setPedal] = useState(false);
+  useEffect(() => {
+    if (!on) return;
+    if (midi.supported) void midi.enable().then(setDevices, () => setStatus(t.midiUnsupported));
+    const offS = midi.onState(() => setDevices([...midi.devices]));
+    const offN = midi.onNote((note, down, _at, vel) => {
+      if (down) setLast({ note, vel });
+    });
+    const offC = midi.onCC((cc, v) => {
+      if (cc === 64) setPedal(v >= 64);
+    });
+    return () => {
+      offS();
+      offN();
+      offC();
+    };
+  }, [on, t.midiUnsupported]);
   const turnOn = async () => {
     if (!midi.supported) return setStatus(t.midiUnsupported);
     try {
-      const devs = await midi.enable();
-      setStatus(devs.length ? `${t.midiConnected}: ${devs.join(', ')}` : t.midiNone);
+      setDevices(await midi.enable());
+      setStatus(null);
       onChange(true);
     } catch {
       setStatus(t.midiUnsupported);
     }
   };
   return (
-    <div className="midi-setting">
+    <section className="set-card midi-setting" data-midi-panel="1">
       <Seg
         label={t.midiKeyboard}
         hint={t.midiHint}
@@ -506,8 +588,30 @@ function MidiSetting({ t, on, onChange }: { t: Strings; on: boolean; onChange: (
         ]}
         onChange={(v) => (v === 'on' ? void turnOn() : onChange(false))}
       />
-      {status && <p className="field-hint" role="status">{status}</p>}
-    </div>
+      {status && (
+        <p className="field-hint warn" role="status">
+          {status}
+        </p>
+      )}
+      {on && (
+        <>
+          <p className="field-hint" role="status">
+            {devices.length ? `${t.midiConnected}: ${devices.join(', ')}` : t.midiNone}
+          </p>
+          <div className="midi-test" aria-live="polite">
+            <span className="mt-label">{he ? 'בדיקה: נגנו קליד' : 'Test: play a key'}</span>
+            <span className="mt-note">{last ? <Note>{displayNote(pc(['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'][last.note % 12]), naming, lang)}</Note> : '—'}</span>
+            {last && (
+              <span className="mt-vel" dir="ltr">
+                {he ? 'עוצמה' : 'velocity'} {last.vel}
+              </span>
+            )}
+            <span className={`mt-pedal ${pedal ? 'on' : ''}`}>{he ? 'פדל' : 'Pedal'} {pedal ? '⬇' : '—'}</span>
+          </div>
+          <p className="field-hint">{he ? 'עוצמת הנגינה (מבוקר–פורטה) מכיילים במסך התרגילים הטכניים ← הגדרות.' : 'Your soft-to-loud range is calibrated in Technique drills → settings.'}</p>
+        </>
+      )}
+    </section>
   );
 }
 

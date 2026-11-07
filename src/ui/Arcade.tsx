@@ -16,6 +16,8 @@ import { Changelog } from './Menu';
 import { lessonStates, NodeIcon, starsFor, TOTALS } from './Home';
 import { MicIcon, withNote } from './bits';
 import { GameIcon } from './Games';
+import { RankCrest } from './Badges';
+import { areaProgress, rankLabel, type RankProgress } from '../engine/ranks';
 import type { GameKind } from '../game/memoryGame';
 
 const fill = (s: string, v: Record<string, string | number>) => Object.entries(v).reduce((a, [k, x]) => a.replaceAll(`{${k}}`, String(x)), s);
@@ -252,8 +254,18 @@ export function MissionCard({ t, settings, lessonId, anyDone, todayXp, goalXp, o
 
 // ---------------------------------------------------------------------------------------------- domains
 
-export function DomainTiles({ t, progress, onPractice }: { t: Strings; progress: Progress; onPractice: (k: SkillId) => void }) {
+/** The line under an area's promotion bar: next rank, what locks it, or how far to the first rank. */
+function rankHint(p: RankProgress, lang: 'en' | 'he'): string {
+  const he = lang === 'he';
+  if (p.toFirst) return he ? `${p.toFirst.answers}/${p.toFirst.need} תשובות לדירוג` : `${p.toFirst.answers}/${p.toFirst.need} answers to rank`;
+  if (p.next === null) return he ? 'הדרגה העליונה' : 'Top rank';
+  if (p.needAnswers) return he ? `🔒 ${rankLabel(p.next, lang)}: עוד ${p.needAnswers} תשובות` : `🔒 ${rankLabel(p.next, lang)}: ${p.needAnswers} more answers`;
+  return `→ ${rankLabel(p.next, lang)}`;
+}
+
+export function DomainTiles({ t, progress, onPractice, lang = 'en' }: { t: Strings; progress: Progress; onPractice: (k: SkillId) => void; lang?: 'en' | 'he' }) {
   const ratings = ratingsOf(progress);
+  const events = progress.ratingEvents ?? [];
   const weakest = weakestSkill(ratings);
   return (
     <section className="home-section domains" aria-label={t.domainsTitle}>
@@ -264,18 +276,27 @@ export function DomainTiles({ t, progress, onPractice }: { t: Strings; progress:
           const v = domainValue(ratings, d.id);
           const pick = weakestSkill(ratings, d.skills.filter((k) => k !== 'absolute'));
           const hot = d.skills.includes(weakest);
+          const rp = areaProgress(ratings, events, d.id, progress.ranks?.[d.id]);
+          const pct = Math.round(rp.frac * 100);
           return (
             <button key={d.id} className="domain-tile" style={{ ['--hue' as string]: DOMAIN_HUE[d.id] }} onClick={() => onPractice(pick)} data-domain={d.id}>
               <span className="dt-top">
-                <span className="dt-dot" aria-hidden="true" />
+                {rp.div !== null ? (
+                  <span className="dt-rank">
+                    <RankCrest div={rp.div} size={30} lang={lang} />
+                    <span className="dt-rank-name">{rankLabel(rp.div, lang)}</span>
+                  </span>
+                ) : (
+                  <span className="dt-dot" aria-hidden="true" />
+                )}
                 {hot && <span className="hot-chip">{t.hotChip}</span>}
               </span>
               <b>{t.domainNames[d.id]}</b>
               <small>{t.skillNames[pick]}</small>
-              <span className="dt-bar" aria-hidden="true">
-                <span style={{ width: v ? `${Math.max(4, Math.round(v.v * 100))}%` : '0%' }} />
+              <span className="dt-bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct} aria-label={rankHint(rp, lang)}>
+                <span style={{ width: v ? `${Math.max(4, pct)}%` : '0%' }} />
               </span>
-              {!v && <small className="dt-none">{t.domainUnmeasured}</small>}
+              {v ? <small className="dt-next">{rankHint(rp, lang)}</small> : <small className="dt-none">{t.domainUnmeasured}</small>}
             </button>
           );
         })}

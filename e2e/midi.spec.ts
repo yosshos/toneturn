@@ -15,9 +15,16 @@ test('MIDI keyboard (stub device): enable in Settings, answer a degree question 
       value: async () => ({ inputs: new Map([['1', input]]), onstatechange: null }),
     });
   });
-  await page.goto('/?unlock=all#/settings');
+  await page.goto('/?unlock=all#/settings/midi');
   await page.getByRole('radiogroup', { name: 'MIDI keyboard' }).getByRole('radio', { name: 'On' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Connected: Test Keys' })).toBeVisible();
+  // The key test in the MIDI category shows the note and velocity.
+  await page.evaluate(() => {
+    const inp = (window as unknown as { __midiIn: { onmidimessage: (e: { data: Uint8Array; timeStamp: number }) => void } }).__midiIn;
+    inp.onmidimessage({ data: new Uint8Array([0x90, 62, 90]), timeStamp: performance.now() });
+  });
+  await expect(page.locator('.mt-note')).toContainText('D');
+  await expect(page.locator('.mt-vel')).toContainText('90');
   await page.goto('/?unlock=all');
   await page.getByRole('radio', { name: 'Buttons' }).click();
   await page.locator('.tab[data-tab="path"]').click();

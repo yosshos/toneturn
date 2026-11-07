@@ -106,7 +106,7 @@ const en = {
   answer: 'Answer',
   consentTitle: 'Voice answers',
   consentBody:
-    'Ninth Sense listens only while it waits for your answer. Your browser’s speech service turns speech into text — in Chrome and Edge this audio may be processed online by the browser vendor. Ninth Sense stores no recordings.',
+    'The 7th Sense listens only while it waits for your answer. Your browser’s speech service turns speech into text — in Chrome and Edge this audio may be processed online by the browser vendor. The 7th Sense stores no recordings.',
   consentAllow: 'Use my voice & start',
   consentButtons: 'Use buttons instead',
   permTitle: 'Voice isn’t available',
@@ -201,7 +201,7 @@ const en = {
   installApp: 'Install app',
   installed: 'Installed',
   installIos: 'On iPhone/iPad: tap Share, then “Add to Home Screen”.',
-  installHint: 'Your browser will offer installation after a visit or two. In Chrome: ⋮ → Install Ninth Sense.',
+  installHint: 'Your browser will offer installation after a visit or two. In Chrome: ⋮ → Install The 7th Sense.',
   updates: 'Updates',
   checkUpdates: 'Check for updates',
   checking: 'Checking…',
@@ -244,7 +244,7 @@ const en = {
   addResult: { requested: 'Request sent', accepted: 'You are now friends!', already: 'Already friends', not_found: 'No player with that code', self: 'That is your own code' } as Record<string, string>,
   noFriends: 'No friends yet. Share your code!',
   selfReported: 'game bests are self-reported',
-  shareText: 'Add me on Ninth Sense! My friend code:',
+  shareText: 'Add me on The 7th Sense! My friend code:',
   games: 'Games',
   gamesHint: 'Memory challenges — play solo or pass the device around.',
   echoChain: 'Echo Chain',
@@ -312,7 +312,7 @@ const en = {
   signOut: 'Sign out',
   signedInAs: 'Signed in as',
   cloudSave: 'Cloud save',
-  cloudHint: 'Optional. Sign in to keep your progress across devices. Ninth Sense works fully without an account.',
+  cloudHint: 'Optional. Sign in to keep your progress across devices. The 7th Sense works fully without an account.',
   cloudOff: 'Cloud save is not configured in this build.',
   synced: 'Synced',
   syncing: 'Syncing…',
@@ -361,7 +361,7 @@ const en = {
   join: 'Join',
   create: 'Create',
   invite: 'Invite',
-  inviteText: 'Join my Ninth Sense room: {c}',
+  inviteText: 'Join my room on The 7th Sense: {c}',
   roomPlayers: 'Players',
   hostTag: 'host',
   startGame: 'Start the game',
@@ -632,7 +632,6 @@ const en = {
   rhythmVoiceSetting: "Rhythm by voice too (“ta” / knocks)",
   rhythmVoiceHint: "Off by default: tapping the big pad is far more precise than syllables.",
   leagueUpTitle: "Up to the {name} league!",
-  leagueUpNinth: "The Ninth — welcome to the brand league!",
   leagueUpTop: "13 — the full chord!",
   leagueUpHint: "A new note joins your chord: {note}. Keep it ringing.",
   leagueDownTitle: "Back to the {name} league",
@@ -1056,7 +1055,7 @@ const he: Strings = {
   answer: 'תשובה',
   consentTitle: 'תשובות בקול',
   consentBody:
-    'Ninth Sense מקשיב רק בזמן שהוא מחכה לתשובה. שירות הדיבור של הדפדפן הופך דיבור לטקסט — ב-Chrome וב-Edge ייתכן שהשמע יעובד ברשת אצל יצרן הדפדפן. Ninth Sense לא שומר הקלטות.',
+    'החוש ה־7 מקשיב רק בזמן שהוא מחכה לתשובה. שירות הדיבור של הדפדפן הופך דיבור לטקסט — ב-Chrome וב-Edge ייתכן שהשמע יעובד ברשת אצל יצרן הדפדפן. החוש ה־7 לא שומר הקלטות.',
   consentAllow: 'להשתמש בקול ולהתחיל',
   consentButtons: 'להשתמש בכפתורים',
   permTitle: 'הקול לא זמין',
@@ -1151,7 +1150,7 @@ const he: Strings = {
   installApp: 'התקנת האפליקציה',
   installed: 'מותקנת',
   installIos: 'באייפון/אייפד: לחצו על שיתוף ואז "הוספה למסך הבית".',
-  installHint: 'הדפדפן יציע התקנה אחרי ביקור או שניים. ב-Chrome: ⋮ ← התקנת Ninth Sense.',
+  installHint: 'הדפדפן יציע התקנה אחרי ביקור או שניים. ב-Chrome: ⋮ ← התקנת The 7th Sense.',
   updates: 'עדכונים',
   checkUpdates: 'בדיקת עדכונים',
   checking: 'בודק…',
@@ -1194,7 +1193,7 @@ const he: Strings = {
   addResult: { requested: 'הבקשה נשלחה', accepted: 'אתם חברים עכשיו!', already: 'כבר חברים', not_found: 'אין שחקן עם הקוד הזה', self: 'זה הקוד שלכם' } as Record<string, string>,
   noFriends: 'עוד אין חברים. שתפו את הקוד!',
   selfReported: 'שיאי המשחקים מדווחים על ידי השחקנים',
-  shareText: 'הוסיפו אותי ב-Ninth Sense! קוד החבר שלי:',
+  shareText: 'הוסיפו אותי באפליקציית החוש ה־7! קוד החבר שלי:',
   games: 'משחקים',
   gamesHint: 'אתגרי זיכרון — לבד, או מעבירים את המכשיר מיד ליד.',
   echoChain: 'שרשרת הד',
@@ -1262,7 +1261,7 @@ const he: Strings = {
   signOut: 'התנתקות',
   signedInAs: 'מחובר/ת בתור',
   cloudSave: 'שמירה בענן',
-  cloudHint: 'לא חובה. התחברו כדי לשמור את ההתקדמות בין מכשירים. Ninth Sense עובד במלואו גם בלי חשבון.',
+  cloudHint: 'לא חובה. התחברו כדי לשמור את ההתקדמות בין מכשירים. החוש ה־7 עובד במלואו גם בלי חשבון.',
   cloudOff: 'שמירה בענן לא מוגדרת בגרסה הזו.',
   synced: 'מסונכרן',
   syncing: 'מסנכרן…',
@@ -1311,7 +1310,7 @@ const he: Strings = {
   join: 'הצטרפות',
   create: 'פתיחה',
   invite: 'הזמנה',
-  inviteText: 'הצטרפו לחדר שלי ב-Ninth Sense: {c}',
+  inviteText: 'הצטרפו לחדר שלי בחוש ה־7: {c}',
   roomPlayers: 'שחקנים',
   hostTag: 'מארח',
   startGame: 'מתחילים',
@@ -1582,7 +1581,6 @@ const he: Strings = {
   rhythmVoiceSetting: "קצב גם בקול (״טה״ / דפיקות)",
   rhythmVoiceHint: "כבוי כברירת מחדל: הקשה על הכפתור הגדול מדויקת הרבה יותר מהברות.",
   leagueUpTitle: "עליתם לליגת ה{name}!",
-  leagueUpNinth: "9 — ברוכים הבאים לליגה שהאפליקציה נקראת על שמה!",
   leagueUpTop: "13 — האקורד המלא!",
   leagueUpHint: "צליל חדש מצטרף לאקורד שלכם: {note}. תשמרו עליו מצלצל.",
   leagueDownTitle: "חזרה לליגת ה{name}",
@@ -1910,7 +1908,7 @@ export function recoverySteps(code: AccessErrorCode, lang: Lang, browser: string
   const isSafari = browser === 'Safari';
   const E: Record<AccessErrorCode, string[]> = {
     'insecure-context': ['This page is not a secure context. Open it over https:// or http://localhost — not from a file or a plain-http LAN address.'],
-    'iframe-policy': ['The page is embedded in a frame that does not allow the microphone (e.g. an attachment preview). Open Ninth Sense in its own browser tab.'],
+    'iframe-policy': ['The page is embedded in a frame that does not allow the microphone (e.g. an attachment preview). Open The 7th Sense in its own browser tab.'],
     'permission-denied': isSafari
       ? ['Safari → Settings for This Website → Microphone → Allow.', 'Then press Retry.']
       : isFirefox
@@ -1936,7 +1934,7 @@ export function recoverySteps(code: AccessErrorCode, lang: Lang, browser: string
   };
   const H: Record<AccessErrorCode, string[]> = {
     'insecure-context': ['הדף לא נטען בהקשר מאובטח. פתחו אותו דרך ‎https://‎ או ‎http://localhost‎ — לא מקובץ ולא מכתובת http ברשת.'],
-    'iframe-policy': ['הדף מוטמע במסגרת שלא מרשה מיקרופון (למשל תצוגה מקדימה של קובץ). פתחו את Ninth Sense בלשונית נפרדת.'],
+    'iframe-policy': ['הדף מוטמע במסגרת שלא מרשה מיקרופון (למשל תצוגה מקדימה של קובץ). פתחו את החוש ה־7 בלשונית נפרדת.'],
     'permission-denied': isSafari
       ? ['Safari ← הגדרות לאתר זה ← מיקרופון ← לאפשר.', 'ואז "לנסות שוב".']
       : isFirefox

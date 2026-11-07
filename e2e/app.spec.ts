@@ -34,7 +34,7 @@ test.describe('home & language', () => {
   test('Hebrew toggle → RTL and Do-Re-Mi names', async ({ page }) => {
     await page.goto('/');
     // The language picker lives in Settings (menu → Settings).
-    await page.goto('/#/settings');
+    await page.goto('/#/settings/language');
     await page.getByRole('radio', { name: 'עברית' }).first().click();
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
     await page.goto('/');
@@ -140,7 +140,7 @@ test.describe('voice check', () => {
 
 test.describe('settings', () => {
   test('naming override, Hebrew narration example uses במול, voice picker present', async ({ page }) => {
-    await page.goto('/#/settings');
+    await page.goto('/#/settings/language');
     const example = page.locator('.example');
     await expect(example).toContainText('B♭');
     await expect(example).toContainText('B flat');
@@ -209,4 +209,14 @@ test.describe('more lessons', () => {
     await expect(page.locator('.score-line')).toContainText('2/3');
     await expect(page.locator('.recap-row').nth(1)).toContainText('low');
   });
+});
+
+test('settings: categories start closed, open on tap and are remembered', async ({ page }) => {
+  await page.goto('/#/settings');
+  await expect(page.locator('.set-group')).toHaveCount(8);
+  await expect(page.locator('.set-group[open]')).toHaveCount(0);
+  await page.locator('.set-group[data-group="midi"] > summary').click();
+  await expect(page.getByRole('radiogroup', { name: 'MIDI keyboard' })).toBeVisible();
+  await page.reload();
+  await expect(page.locator('.set-group[data-group="midi"]')).toHaveAttribute('open', '');
 });

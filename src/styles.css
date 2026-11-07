@@ -1,4 +1,4 @@
-/* Ninth Sense — warm night-stage game look. Chunky type, big targets, audio-synced motion. */
+/* The 7th Sense — warm night-stage game look. Chunky type, big targets, audio-synced motion. */
 
 :root {
   /* 0.37 "night arcade" (docs/ui-redesign.md). Cosmetic themes override the surface tokens. */
@@ -1171,6 +1171,104 @@ select {
   gap: 16px;
   box-shadow: var(--shadow);
 }
+
+/* Settings categories (owner 2026-11-07: too much scrolling): one row per category, opened one at a time. */
+.set-groups {
+  display: grid;
+  gap: 10px;
+}
+.set-group {
+  background: var(--bg-2);
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.set-group > summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  min-height: 56px;
+}
+.set-group > summary::-webkit-details-marker {
+  display: none;
+}
+.sg-icon {
+  font-size: 1.4rem;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--card-2, rgba(255, 255, 255, 0.06));
+  flex: none;
+}
+.sg-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+.sg-text b {
+  font-size: 1.02rem;
+}
+.sg-text small {
+  color: var(--ink-dim);
+  font-size: 0.8rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sg-chev {
+  font-size: 1.5rem;
+  color: var(--ink-dim);
+  transition: transform 0.15s;
+}
+[dir='rtl'] .sg-chev {
+  transform: scaleX(-1);
+}
+.set-group[open] .sg-chev {
+  transform: rotate(90deg);
+}
+.set-group-body {
+  display: grid;
+  gap: 12px;
+  padding: 0 10px 12px;
+}
+.set-group-body .set-card {
+  box-shadow: none;
+  background: var(--card-2, rgba(255, 255, 255, 0.04));
+}
+.midi-test {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.18);
+}
+.mt-label {
+  color: var(--ink-dim);
+  font-size: 0.85rem;
+}
+.mt-note {
+  font-size: 1.4rem;
+  font-weight: 900;
+  min-width: 2ch;
+}
+.mt-vel,
+.mt-pedal {
+  font-size: 0.8rem;
+  color: var(--ink-dim);
+}
+.mt-pedal.on {
+  color: var(--good, #5be3a0);
+  font-weight: 800;
+}
+
 .set-card h2 {
   margin: 0;
   font-size: 1.15rem;
@@ -1687,7 +1785,7 @@ select {
   margin-top: 2px;
 }
 
-/* Narrow phones: stack the wordmark ("Ninth" / "Sense") instead of truncating it. */
+/* Narrow phones: stack the wordmark ("The 7th" / "Sense") instead of truncating it. */
 @media (max-width: 460px) {
   .wordmark {
     display: flex;
@@ -1870,4 +1968,86 @@ p, h1, h2, h3, li, button, small, b, label { overflow-wrap: anywhere; }
 }
 [data-motion='reduced'] .pace-bar.live i {
   animation: none;
+}
+
+/* ===== One-screen fit for games (owner 2026-11-07, guiding principle). A full-height game screen sits inside
+   .app's own padding (12 px top + 24 px bottom), so it may be that much shorter than the viewport, never taller. */
+.app > .hw-play,
+.app > .mp-play,
+.app > .tournament,
+.app > .tf-play,
+.app > .big-screen {
+  min-height: calc(100dvh - 36px - env(safe-area-inset-bottom));
+}
+/* Highway: the road takes whatever height is left above the pad. */
+.app > .hw-play {
+  height: calc(100dvh - 36px - env(safe-area-inset-bottom));
+  padding-block: 0;
+}
+.app > .hw-play .hw-road {
+  flex: 1 1 0;
+  height: auto;
+  min-height: 140px;
+  max-height: none;
+}
+@media (max-height: 900px) {
+  .tap-pad.big {
+    min-height: clamp(96px, 22vh, 300px);
+  }
+  .app > .hw-play .hint {
+    margin: 0;
+    font-size: 0.8rem;
+  }
+}
+
+.app > .mp-play {
+  padding-block: 0;
+}
+.app > .rush.rush-play {
+  padding-bottom: 0;
+}
+@media (max-height: 900px) {
+  .app > .rush.rush-play,
+  .app > .mp-play {
+    gap: clamp(6px, 1.4vh, 14px);
+  }
+  .app > .drone {
+    gap: clamp(6px, 1.4vh, 16px);
+  }
+}
+
+/* Sing-along while singing: roll, keys and staff share the height. */
+@media (max-height: 900px) {
+  .singalong.panel-screen {
+    gap: clamp(4px, 1vh, 12px);
+  }
+  .singalong .screen-head h1 {
+    font-size: clamp(1.1rem, 3vh, 1.6rem);
+  }
+  .singalong .field-hint {
+    margin: 0;
+  }
+  .singalong .sing-roll {
+    height: clamp(70px, 15vh, 160px);
+    margin: 0;
+  }
+  .singalong .keyboard {
+    height: clamp(38px, 6.5vh, 78px);
+  }
+  .singalong .note-staff svg {
+    max-height: clamp(60px, 12vh, 160px);
+  }
+  .singalong .vocal-cue {
+    margin: 0;
+  }
+  .singalong .toggle-row {
+    font-size: 0.82rem;
+  }
+  .singalong .vocal-actions {
+    margin-top: 0;
+  }
+  .singalong .btn.mega {
+    min-height: clamp(50px, 8vh, 72px);
+    padding-block: 6px;
+  }
 }

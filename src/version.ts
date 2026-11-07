@@ -18,6 +18,26 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.40.0',
+    date: '2026-11-07',
+    en: [
+      'A new name and icon: The 7th Sense — the ear is a bass clef, a treble clef sounds inside it',
+      'Every exercise and game now fits your phone screen top to bottom — no scrolling while you play',
+      'Each area shows your rank and how far you are to the next one — and what still unlocks it',
+      'Your level now follows the hardest things you beat: a long run of easy answers no longer fills the bar',
+      'Every rank-up shows your next goal on the way to Master',
+      'Settings in tidy categories, and a MIDI keyboard section: devices, a key test, pedal and timing',
+    ],
+    he: [
+      'שם ואייקון חדשים: החוש ה־7 — האוזן היא מפתח פה, ובתוכה מפתח סול',
+      'כל תרגיל ומשחק נכנס עכשיו במסך הטלפון מלמעלה עד למטה — בלי לגלול תוך כדי',
+      'בכל תחום רואים את הדרגה שלכם וכמה נשאר עד הבאה — ומה עוד פותח אותה',
+      'הרמה עוקבת עכשיו אחרי הדברים הקשים ביותר שעברתם: רצף ארוך של תשובות קלות כבר לא ממלא את הפס',
+      'בכל עלייה בדרגה רואים את היעד הבא בדרך למאסטר',
+      'ההגדרות מסודרות בקטגוריות, ויש קטגוריה למקלדת MIDI: מכשירים, בדיקת קלידים, פדל ותזמון',
+    ],
+  },
+  {
     version: '0.39.0',
     date: '2026-11-07',
     en: [
