@@ -7,7 +7,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('a unit opens with its mini-lesson; skip goes straight to practice; the collection lists every topic', async ({ page }) => {
-  await page.goto('/?sim=1&unlock=all&mini=1');
+  await page.goto('/?sim=1&unlock=all&mini=1#/path');
   await page.getByRole('button', { name: /Home, third, fifth/ }).click();
   await page.getByRole('button', { name: 'Use buttons instead' }).click();
   await expect(page.locator('[data-mini="degrees-135"]')).toBeVisible();
@@ -32,7 +32,7 @@ test('hearing every step celebrates and adds the topic to the collection', async
 });
 
 test('music words are tappable chips; a skipped quick lesson does not come back', async ({ page }) => {
-  await page.goto('/?sim=1&unlock=all&mini=1');
+  await page.goto('/?sim=1&unlock=all&mini=1#/path');
   await page.getByRole('button', { name: /Home, third, fifth/ }).click();
   await page.getByRole('button', { name: 'Use buttons instead' }).click();
   await expect(page.locator('[data-mini="degrees-135"]')).toBeVisible();
@@ -40,6 +40,7 @@ test('music words are tappable chips; a skipped quick lesson does not come back'
   await expect(page.locator('[data-mini]')).toHaveCount(0);
   await page.getByRole('button', { name: 'Pause' }).click();
   await page.locator('.paused-card').getByRole('button', { name: 'Exit' }).click();
+  await page.locator('.tab[data-tab="path"]').click();
   await page.getByRole('button', { name: /Home, third, fifth/ }).click();
   await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible();
   await expect(page.locator('[data-mini]')).toHaveCount(0);

@@ -1,0 +1,485 @@
+// 0.37 "night arcade" pieces (docs/ui-redesign.md): tab bar, level ring, what's-new gift, today's mission,
+// domain tiles, the path as a winding road, and the Play hub.
+
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { levelOf } from '../engine/level';
+import { DOMAINS, domainValue, weakestSkill, type DomainId } from '../engine/rating';
+import type { SkillId, LessonId } from '../engine/lesson';
+import { TOPICS } from '../engine/recommend';
+import { personalOrder, type Intake } from '../engine/intake';
+import { displayNote, pc } from '../engine/pitch';
+import { LESSON_META } from '../game/content';
+import type { Strings } from '../i18n/strings';
+import { namingFor, ratingsOf, type Progress, type Settings } from '../storage/progress';
+import { CHANGELOG } from '../version';
+import { Changelog } from './Menu';
+import { lessonStates, NodeIcon, starsFor, TOTALS } from './Home';
+import { MicIcon, withNote } from './bits';
+import { GameIcon } from './Games';
+import type { GameKind } from '../game/memoryGame';
+
+const fill = (s: string, v: Record<string, string | number>) => Object.entries(v).reduce((a, [k, x]) => a.replaceAll(`{${k}}`, String(x)), s);
+
+export const DOMAIN_HUE: Record<DomainId, string> = {
+  pitch: 'var(--hue-pitch)',
+  time: 'var(--hue-time)',
+  memory: 'var(--hue-memory)',
+  voice: 'var(--hue-voice)',
+  reading: 'var(--hue-reading)',
+  creative: 'var(--hue-creative)',
+};
+type TopicId = (typeof TOPICS)[number]['id'];
+const TOPIC_HUE: Record<TopicId, string> = { degrees: 'var(--hue-reading)', harmony: 'var(--hue-pitch)', intervals: 'var(--hue-memory)', singing: 'var(--hue-voice)', rhythm: 'var(--hue-time)' };
+const TOPIC_ICON: Record<TopicId, string> = { degrees: '🎼', harmony: '🎹', intervals: '↕', singing: '🎤', rhythm: '🥁' };
+
+/** Light haptics (where supported, never with reduced motion). */
+export function buzz(kind: 'good' | 'bad') {
+  if (document.documentElement.dataset.motion === 'reduced') return;
+  try {
+    navigator.vibrate?.(kind === 'good' ? 12 : [18, 40, 18]);
+  } catch {
+    /* not supported */
+  }
+}
+
+// ---------------------------------------------------------------------------------------------- tab bar
+
+export type TabId = 'home' | 'path' | 'skills' | 'arcade' | 'friends';
+export const TAB_ROUTES: TabId[] = ['home', 'path', 'skills', 'arcade', 'friends']
+
+const TAB_ICONS: Record<TabId, React.ReactNode> = {
+  home: <path d="M3 11.5 12 4l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" />,
+  path: (
+    <>
+      <circle cx="6" cy="18" r="2.4" />
+      <circle cx="18" cy="6" r="2.4" />
+      <path d="M8.4 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.6" />
+    </>
+  ),
+  skills: <path d="M5 21V12M12 21V4M19 21v-7" />,
+  arcade: (
+    <>
+      <rect x="2.5" y="7" width="19" height="11" rx="5" />
+      <path d="M7.5 10.5v4M5.5 12.5h4" />
+      <circle cx="15.5" cy="11.5" r="1" fill="currentColor" />
+      <circle cx="18" cy="13.5" r="1" fill="currentColor" />
+    </>
+  ),
+  friends: (
+    <>
+      <circle cx="9" cy="9" r="3.6" />
+      <path d="M2.5 20c0-3.3 2.9-5.4 6.5-5.4s6.5 2.1 6.5 5.4M16.5 5.6a3.3 3.3 0 0 1 0 6.6M17.5 14.8c2.4.4 4 2.2 4 5.2" />
+    </>
+  ),
+};
+
+export function TabBar({ t, route, onGo, dot }: { t: Strings; route: TabId; onGo: (r: TabId) => void; /** Tabs that have something new. */ dot?: Partial<Record<TabId, boolean>> }) {
+  const label: Record<TabId, string> = { home: t.tabHome, path: t.tabPath, skills: t.tabProgress, arcade: t.tabPlay, friends: t.tabFriends };
+  return (
+    <nav className="tabbar" aria-label={t.tabsLabel}>
+      {TAB_ROUTES.map((r) => (
+        <button key={r} className={`tab ${route === r ? 'on' : ''}`} aria-current={route === r ? 'page' : undefined} onClick={() => onGo(r)} data-tab={r}>
+          <span className="tab-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              {TAB_ICONS[r]}
+            </svg>
+            {dot?.[r] && <span className="tab-dot" />}
+          </span>
+          <span className="tab-label">{label[r]}</span>
+        </button>
+      ))}
+    </nav>
+  );
+}
+
+// ---------------------------------------------------------------------------------------------- level
+
+export function LevelRing({ xp, size = 46 }: { xp: number; size?: number }) {
+  const lv = levelOf(xp);
+  const r = 20;
+  const c = 2 * Math.PI * r;
+  return (
+    <span className="level-ring" style={{ width: size, height: size }}>
+      <svg viewBox="0 0 46 46" width={size} height={size} aria-hidden="true">
+        <circle cx="23" cy="23" r={r} className="lr-bg" />
+        <circle cx="23" cy="23" r={r} className="lr-fg" strokeDasharray={c} strokeDashoffset={c * (1 - lv.pct)} transform="rotate(-90 23 23)" />
+      </svg>
+      <b>{lv.level}</b>
+    </span>
+  );
+}
+
+export function greeting(t: Strings, now = new Date()) {
+  const h = now.getHours();
+  return h < 5 ? t.greetNight : h < 12 ? t.greetMorning : h < 17 ? t.greetAfternoon : h < 22 ? t.greetEvening : t.greetNight;
+}
+
+/** The player's card under the header: greeting, level ring and the bar to the next level. */
+export function PlayerStrip({ t, xp, name, onOpen }: { t: Strings; xp: number; name: string | null; onOpen: () => void }) {
+  const lv = levelOf(xp);
+  return (
+    <button className="player-strip" onClick={onOpen} aria-label={`${fill(t.levelN, { n: lv.level })} · ${fill(t.levelXp, { a: lv.into, b: lv.need })}`}>
+      <LevelRing xp={xp} />
+      <span className="ps-text">
+        <b>
+          {greeting(t)}
+          {name ? `, ${name}` : ''}
+        </b>
+        <span className="ps-line">
+          <span>{fill(t.levelN, { n: lv.level })}</span>
+          <span className="ps-bar" aria-hidden="true">
+            <span style={{ width: `${Math.round(lv.pct * 100)}%` }} />
+          </span>
+          <small dir="ltr">{fill(t.levelXp, { a: lv.into, b: lv.need })}</small>
+        </span>
+      </span>
+    </button>
+  );
+}
+
+// ---------------------------------------------------------------------------------------------- what's new
+
+/** A small gift in the header instead of a big card after updates; a dot while something is unseen. */
+export function WhatsNewButton({ t, lang, unseen, onSeen }: { t: Strings; lang: 'he' | 'en'; unseen: boolean; onSeen: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [all, setAll] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const head = CHANGELOG[0];
+  useEffect(() => {
+    if (!open) return;
+    const off = (e: PointerEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const esc = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
+    document.addEventListener('pointerdown', off);
+    document.addEventListener('keydown', esc);
+    return () => {
+      document.removeEventListener('pointerdown', off);
+      document.removeEventListener('keydown', esc);
+    };
+  }, [open]);
+  return (
+    <div className="gift-wrap" ref={ref}>
+      <button
+        className={`icon-btn gift-btn ${unseen ? 'unseen' : ''}`}
+        aria-label={`${t.whatsNew} ${head.version}`}
+        aria-expanded={open}
+        onClick={() => {
+          setOpen((x) => !x);
+          setAll(false);
+          if (unseen) onSeen();
+        }}
+      >
+        <svg className="gift-icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+          <rect x="3.5" y="10" width="17" height="11" rx="2" fill="var(--gold)" />
+          <rect x="2.5" y="7" width="19" height="4.5" rx="1.5" fill="var(--coral)" />
+          <path d="M12 7v14" stroke="var(--bg)" strokeWidth="2" />
+          <path d="M12 7c-2-4-6-3-5 0zM12 7c2-4 6-3 5 0z" fill="var(--hue-voice)" />
+        </svg>
+        {unseen && <span className="gift-dot" />}
+      </button>
+      {open && (
+        <div className="gift-pop" role="dialog" aria-label={t.whatsNew}>
+          <div className="gift-head">
+            <b>{fill(t.newIn, { v: head.version })}</b>
+            <button className="icon-btn small" aria-label={t.done} onClick={() => setOpen(false)}>
+              ✕
+            </button>
+          </div>
+          {all ? (
+            <div className="gift-all">
+              <Changelog lang={lang} entries={CHANGELOG.slice(0, 4)} />
+            </div>
+          ) : (
+            <ul className="gift-list">
+              {head[lang].slice(0, 3).map((line, i) => (
+                <li key={i}>{line.length > 90 ? `${line.slice(0, 88).trimEnd()}…` : line}</li>
+              ))}
+            </ul>
+          )}
+          {!all && (
+            <button className="link gift-more" onClick={() => setAll(true)}>
+              {t.allChanges} <span className="flip-rtl">→</span>
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------------------------- mission
+
+export function MissionCard({ t, settings, lessonId, anyDone, todayXp, goalXp, onStart }: { t: Strings; settings: Settings; lessonId: LessonId; anyDone: boolean; todayXp: number; goalXp: number; onStart: () => void }) {
+  const lang = settings.uiLang;
+  const meta = LESSON_META[lessonId];
+  const bb = displayNote(pc('Bb'), namingFor(settings.naming, lang), lang);
+  const pct = Math.min(1, todayXp / goalXp);
+  return (
+    <section className="mission-card" aria-label={t.todaysMission}>
+      <span className="mission-shine" aria-hidden="true" />
+      <small className="mission-kicker">{t.todaysMission}</small>
+      <h2 className="mission-title">{withNote(meta.title[lang], bb)}</h2>
+      <p className="mission-blurb">{meta.blurb[lang]}</p>
+      <div className="mission-row">
+        <button className="mission-play" data-continue="1" onClick={onStart} aria-label={`${anyDone ? t.continue : t.practice}: ${meta.title[lang].replace(/\{[nk]\}/g, bb)}`}>
+          {settings.mode === 'voice' ? (
+            <MicIcon />
+          ) : (
+            <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true" className="flip-rtl">
+              <path d="M7 4.5 19 12 7 19.5z" fill="currentColor" />
+            </svg>
+          )}
+        </button>
+        <div className="mission-goal">
+          <div className="mg-head">
+            <span>{t.dailyGoal}</span>
+            <b dir="ltr">
+              {todayXp}/{goalXp} {t.xp}
+            </b>
+          </div>
+          <span className="mg-bar" role="progressbar" aria-valuemin={0} aria-valuemax={goalXp} aria-valuenow={Math.min(todayXp, goalXp)} aria-label={t.dailyGoal}>
+            <span style={{ width: `${Math.round(pct * 100)}%` }} />
+          </span>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------------------------- domains
+
+export function DomainTiles({ t, progress, onPractice }: { t: Strings; progress: Progress; onPractice: (k: SkillId) => void }) {
+  const ratings = ratingsOf(progress);
+  const weakest = weakestSkill(ratings);
+  return (
+    <section className="home-section domains" aria-label={t.domainsTitle}>
+      <h2 className="home-h">{t.domainsTitle}</h2>
+      <p className="field-hint">{t.domainsHint}</p>
+      <div className="domain-grid">
+        {DOMAINS.map((d) => {
+          const v = domainValue(ratings, d.id);
+          const pick = weakestSkill(ratings, d.skills.filter((k) => k !== 'absolute'));
+          const hot = d.skills.includes(weakest);
+          return (
+            <button key={d.id} className="domain-tile" style={{ ['--hue' as string]: DOMAIN_HUE[d.id] }} onClick={() => onPractice(pick)} data-domain={d.id}>
+              <span className="dt-top">
+                <span className="dt-dot" aria-hidden="true" />
+                {hot && <span className="hot-chip">{t.hotChip}</span>}
+              </span>
+              <b>{t.domainNames[d.id]}</b>
+              <small>{t.skillNames[pick]}</small>
+              <span className="dt-bar" aria-hidden="true">
+                <span style={{ width: v ? `${Math.max(4, Math.round(v.v * 100))}%` : '0%' }} />
+              </span>
+              {!v && <small className="dt-none">{t.domainUnmeasured}</small>}
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------------------------- path
+
+/** Horizontal position (0..100, from the reading start) of node i on the winding road. */
+export const roadX = (i: number) => 50 + 28 * Math.sin(i * 0.95);
+
+export function PathScreen({ t, settings, progress, onStart, onPlacement }: { t: Strings; settings: Settings; progress: Progress; onStart: (id: LessonId) => void; onPlacement: () => void }) {
+  const lang = settings.uiLang;
+  const bb = displayNote(pc('Bb'), namingFor(settings.naming, lang), lang);
+  const order = personalOrder((settings.intake as Intake | null | undefined)?.priorities, settings.track);
+  const states = lessonStates(progress, order);
+  const done = order.filter((id) => states[id] === 'done').length;
+  const topicOf = (id: LessonId): TopicId => TOPICS.find((tp) => tp.lessons.includes(id))?.id ?? 'degrees';
+  // Units: runs of consecutive lessons on one topic.
+  const units: { topic: TopicId; ids: LessonId[] }[] = [];
+  for (const id of order) {
+    const tp = topicOf(id);
+    if (units.length && units[units.length - 1].topic === tp) units[units.length - 1].ids.push(id);
+    else units.push({ topic: tp, ids: [id] });
+  }
+  const curRef = useRef<HTMLLIElement>(null);
+  const roadRef = useRef<HTMLOListElement>(null);
+  const road = useRoad(roadRef, `${lang}|${order.join()}|${done}`);
+  useEffect(() => {
+    curRef.current?.scrollIntoView({ block: 'center', behavior: 'instant' as ScrollBehavior });
+  }, []);
+  const topics = TOPICS.map((tp) => ({ id: tp.id, d: tp.lessons.filter((id) => (progress.lessons[id]?.completions ?? 0) > 0).length, n: tp.lessons.length }));
+  let k = 0;
+  return (
+    <main className="path-screen">
+      <header className="path-head">
+        <div className="ph-row">
+          <h1>{t.lessonPath}</h1>
+          <span className="count-chip" dir="auto">
+            {fill(t.pathCount, { d: done, n: order.length })}
+          </span>
+        </div>
+        <ul className="path-topics" aria-label={t.topics}>
+          {topics.map((tp) => (
+            <li key={tp.id} data-topic={tp.id} style={{ ['--hue' as string]: TOPIC_HUE[tp.id] }}>
+              <span className="pt-bar" role="progressbar" aria-valuemin={0} aria-valuemax={tp.n} aria-valuenow={tp.d} aria-label={t.topicNames[tp.id]}>
+                <span style={{ width: `${(100 * tp.d) / tp.n}%` }} />
+              </span>
+              <small>{t.topicNames[tp.id]}</small>
+            </li>
+          ))}
+        </ul>
+      </header>
+      <div className="road-wrap">
+      {road && (
+        <svg className="road-svg" width={road.w} height={road.h} viewBox={`0 0 ${road.w} ${road.h}`} aria-hidden="true">
+          <path className="road-bed" d={road.d} />
+          {road.doneD && <path className="road-done" d={road.doneD} />}
+        </svg>
+      )}
+      <ol className="road" ref={roadRef}>
+        {units.map((u, ui) => {
+          const unitLocked = u.ids.every((id) => states[id] === 'locked');
+          return [
+            <li key={`u${ui}`} className={`unit-banner ${unitLocked ? 'locked' : ''}`} style={{ ['--hue' as string]: TOPIC_HUE[u.topic] }}>
+              <span>
+                <small>{fill(t.unitN, { n: ui + 1 })}</small>
+                <b>{t.topicNames[u.topic]}</b>
+                {unitLocked && <small className="unit-hint">{t.pathNextUnit}</small>}
+              </span>
+              <span className="unit-icon" aria-hidden="true">
+                {unitLocked ? '🔒' : TOPIC_ICON[u.topic]}
+              </span>
+            </li>,
+            ...u.ids.map((id) => {
+              const i = k++;
+              const st = states[id];
+              const m = LESSON_META[id];
+              const best = progress.lessons[id]?.best ?? 0;
+              const stars = st === 'done' ? starsFor(best, TOTALS[id] ?? 1) : 0;
+              const x = roadX(i);
+              return (
+                <li key={id} ref={st === 'current' ? curRef : undefined} className={`node ${st}`} style={{ ['--x' as string]: `${x}%`, ['--hue' as string]: TOPIC_HUE[u.topic] }}>
+                  <button className="node-btn" disabled={st === 'locked'} onClick={() => onStart(id)} aria-label={`${i + 1}. ${m.title[lang].replace(/\{[nk]\}/g, bb)}`}>
+                    {st === 'current' && (
+                      <span className="start-bubble" aria-hidden="true">
+                        {t.startLesson} <span className="flip-rtl">▶</span>
+                      </span>
+                    )}
+                    <span className="node-disc" aria-hidden="true">
+                      {st === 'locked' ? <span className="lock">🔒</span> : <NodeIcon kind={m.icon} />}
+                    </span>
+                    <span className="node-text">
+                      {st === 'done' && (
+                        <span className="mini-stars" aria-label={`${stars} ${t.stars}`}>
+                          {[0, 1, 2].map((s) => (
+                            <span key={s} className={s < stars ? 'won' : ''}>
+                              ★
+                            </span>
+                          ))}
+                        </span>
+                      )}
+                      <b>{withNote(m.title[lang], bb)}</b>
+                    </span>
+                  </button>
+                </li>
+              );
+            }),
+          ];
+        })}
+      </ol>
+      </div>
+      <p className="path-foot">
+        <button className="link" onClick={onPlacement}>
+          🧭 {t.findLevel}
+        </button>
+      </p>
+    </main>
+  );
+}
+
+/** One road through every lesson disc, measured after layout (so banners and wrapped titles never break it). */
+function useRoad(ref: React.RefObject<HTMLOListElement | null>, key: string) {
+  const [road, setRoad] = useState<{ w: number; h: number; d: string; doneD: string | null } | null>(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const measure = () => {
+      const box = el.getBoundingClientRect();
+      const pts = Array.from(el.querySelectorAll<HTMLElement>('.node')).map((li) => {
+        const r = li.querySelector('.node-disc')!.getBoundingClientRect();
+        return { x: r.left + r.width / 2 - box.left, y: r.top + r.height / 2 - box.top, done: li.classList.contains('done') };
+      });
+      if (pts.length < 2) return setRoad(null);
+      const seg = (a: (typeof pts)[number], b: (typeof pts)[number]) => {
+        const dy = (b.y - a.y) / 2;
+        return ` C ${a.x} ${a.y + dy}, ${b.x} ${b.y - dy}, ${b.x} ${b.y}`;
+      };
+      let d = `M ${pts[0].x} ${pts[0].y}`;
+      for (let i = 1; i < pts.length; i++) d += seg(pts[i - 1], pts[i]);
+      // Lit up to the first lesson not done yet.
+      const lastDone = pts.findIndex((p) => !p.done);
+      const upto = lastDone === -1 ? pts.length - 1 : lastDone;
+      let doneD: string | null = null;
+      if (upto > 0) {
+        doneD = `M ${pts[0].x} ${pts[0].y}`;
+        for (let i = 1; i <= upto; i++) doneD += seg(pts[i - 1], pts[i]);
+      }
+      setRoad({ w: box.width, h: box.height, d, doneD });
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [ref, key]);
+  return road;
+}
+
+// ---------------------------------------------------------------------------------------------- play
+
+export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline, onGhost, onDaily, onPuzzle }: { t: Strings; progress: Progress; onGame: (k: GameKind) => void; onTrueFalse: () => void; onDuel: () => void; onOnline: () => void; onGhost: () => void; onDaily: () => void; onPuzzle: () => void }) {
+  const best = (n: number | undefined) => (n ? <span className="best-chip">🏅 {t.personalBest}: {n}</span> : null);
+  const cards: { key: string; hue: string; icon: React.ReactNode; title: string; blurb: string; extra?: React.ReactNode; onClick: () => void }[] = [
+    { key: 'melody', hue: 'var(--hue-memory)', icon: <GameIcon kind="melody" />, title: t.echoChain, blurb: t.echoChainBlurb, extra: best(progress.games?.melody), onClick: () => onGame('melody') },
+    { key: 'rhythm', hue: 'var(--hue-time)', icon: <GameIcon kind="rhythm" />, title: t.beatEcho, blurb: t.beatEchoBlurb, extra: best(progress.games?.rhythm), onClick: () => onGame('rhythm') },
+    { key: 'truefalse', hue: 'var(--hue-pitch)', icon: '✓✗', title: t.trueFalse, blurb: t.tfBlurb, extra: progress.tfBest && Object.keys(progress.tfBest).length ? best(Math.max(...Object.values(progress.tfBest))) : <span className="new-chip">{t.newChip}</span>, onClick: onTrueFalse },
+    { key: 'ghost', hue: 'var(--hue-creative)', icon: '👻', title: t.ghostRace, blurb: t.ghostBlurb, onClick: onGhost },
+    { key: 'duel', hue: 'var(--hue-voice)', icon: '⚔', title: t.duel, blurb: t.duelBlurb, onClick: onDuel },
+    { key: 'daily', hue: 'var(--hue-reading)', icon: '📅', title: t.dailyChallenge, blurb: t.dailyBlurb, onClick: onDaily },
+  ];
+  return (
+    <main className="play-screen">
+      <h1 className="screen-title">{t.playTitle}</h1>
+      <p className="field-hint">{t.playHint}</p>
+      <button className="play-hero" onClick={onPuzzle}>
+        <span className="mission-shine" aria-hidden="true" />
+        <small>{t.puzzleNew}</small>
+        <b>🧩 {t.weeklyPuzzle}</b>
+        <span className="play-hero-go">
+          🥇 <span className="flip-rtl">→</span>
+        </span>
+      </button>
+      <div className="play-grid">
+        {cards.map((c) => (
+          <button key={c.key} className={`play-card game-card ${c.key}`} style={{ ['--hue' as string]: c.hue }} onClick={c.onClick}>
+            <span className="pc-icon" aria-hidden="true">
+              {c.icon}
+            </span>
+            <b>{c.title}</b>
+            <small>{c.blurb}</small>
+            {c.extra}
+          </button>
+        ))}
+      </div>
+      <button className="live-card" onClick={onOnline}>
+        <span className="live-icon" aria-hidden="true">
+          <span className="live-ping" />
+          📡
+        </span>
+        <span className="live-text">
+          <b>{t.online}</b>
+          <small>{t.onlineBlurb}</small>
+        </span>
+        <span className="live-go">{t.liveRoom}</span>
+      </button>
+    </main>
+  );
+}

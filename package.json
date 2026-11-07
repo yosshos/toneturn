@@ -1,7 +1,7 @@
 {
   "name": "toneturn",
   "private": true,
-  "version": "0.36.0",
+  "version": "0.37.0",
   "type": "module",
   "description": "ToneTurn — voice-first ear-training game",
   "scripts": {
@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@fontsource-variable/rubik": "^5.3.0",
+    "@fontsource/secular-one": "^5.3.0",
     "@supabase/supabase-js": "^2.119.0",
     "qrcode": "^1.5.4",
     "react": "^19.3.1",

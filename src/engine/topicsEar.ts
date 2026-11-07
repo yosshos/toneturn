@@ -290,6 +290,9 @@ function drum(pattern: string, step: number, times: number): Stimulus {
       if (ch === 'T') ev.push({ midi: TEK, start: t, duration: 0.06, velocity: 0.7, perc: 'snare-soft' });
       if (ch === 'A') ev.push({ midi: TEK, start: t, duration: 0.06, velocity: 0.95, perc: 'snare' });
       if (ch === 't') ev.push({ midi: TEK, start: t, duration: 0.05, velocity: 0.4, perc: 'snare-soft' });
+      // A soft metronome on the beat (two steps) when the cycle has an even length; odd cycles keep
+      // their own grouping (a steady click would contradict it).
+      if (p.length % 2 === 0 && i % 2 === 0) ev.push({ midi: 96, start: t, duration: 0.04, velocity: i === 0 ? 0.26 : 0.15, perc: i === 0 ? 'accent' : 'click' });
     });
   return eventsStim(ev, p.length * times * step + 0.2);
 }

@@ -69,7 +69,7 @@ test.describe('lesson', () => {
     await page.getByRole('button', { name: 'Home' }).click();
     // Lesson 1 runs with automatic aids (a new player is below Solid): each answer gives 80 % XP (8),
     // plus the full speed bonus (3) for answering within the pace goal.
-    await expect(page.locator('.goal-strip')).toContainText('33/30');
+    await expect(page.locator('.mission-goal')).toContainText('33/30');
   });
 
   test('Voice mode (simulator): hands-free after one Start', async ({ page }) => {
@@ -164,8 +164,11 @@ test.describe('settings', () => {
 
 test.describe('more lessons', () => {
   test('completing lesson 1 unlocks lesson 2 on the path', async ({ page }) => {
-    await page.goto('/');
+    // The path is its own tab (0.37).
+    await page.goto('/#/path');
     await expect(page.getByRole('button', { name: /2\. Home, third, fifth/ })).toBeDisabled();
+    await page.goto('/');
+    await page.reload();
     await page.getByRole('radio', { name: 'Buttons' }).click();
     await page.getByRole('button', { name: 'Or start from lesson 1' }).click();
     await page.getByRole('button', { name: 'Skip intro' }).click();
@@ -179,13 +182,14 @@ test.describe('more lessons', () => {
     }
     await expect(page.getByRole('button', { name: /Next lesson/ })).toBeVisible({ timeout: 30_000 });
     await page.getByRole('button', { name: 'Home' }).click();
+    await expect(page.locator('.mission-title')).toHaveText('Home, third, fifth'); // today's mission is the next lesson
+    await page.locator('.tab[data-tab="path"]').click();
     await expect(page.getByRole('button', { name: /2\. Home, third, fifth/ })).toBeEnabled();
     await expect(page.locator('.node.done .mini-stars .won')).toHaveCount(3);
-    await expect(page.locator('.continue-card .continue-text b')).toHaveText('Home, third, fifth'); // the compact Continue card
   });
 
   test('Major or minor (simulator, hands-free)', async ({ page }) => {
-    await page.goto('/?sim=1&unlock=all');
+    await page.goto('/?sim=1&unlock=all#/path');
     await page.getByRole('button', { name: /3\. Major or minor/ }).click();
     await page.getByRole('button', { name: 'Use my voice & start' }).click();
     await expect(page.locator('.intro-card')).toHaveCount(2);
@@ -194,7 +198,7 @@ test.describe('more lessons', () => {
   });
 
   test('Sing home & five (simulator): live tuner and per-attempt pitch feedback', async ({ page }) => {
-    await page.goto('/?sim=1&unlock=all');
+    await page.goto('/?sim=1&unlock=all#/path');
     await page.getByRole('button', { name: /5\. Sing home & five/ }).click();
     await page.getByRole('button', { name: 'Use my voice & start' }).click();
     await page.getByRole('button', { name: 'Skip intro' }).click();

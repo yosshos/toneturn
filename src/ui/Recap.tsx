@@ -11,6 +11,7 @@ import type { LessonView } from '../game/controller';
 import { answerWord, choiceLabel, giveText, LESSON_META, questionBadge } from '../game/content';
 import type { Strings } from '../i18n/strings';
 import { namingFor, type Settings } from '../storage/progress';
+import { levelOf } from '../engine/level';
 import { Note, withNote } from './bits';
 import { median } from '../engine/scoring';
 import { itemPoints, paceTarget, sectionScore } from '../engine/fluency';
@@ -31,9 +32,11 @@ interface Props {
   /** Play your (wrong) answer, then the right one. */
   onCompare?: (i: number) => void;
   playerName?: string | null;
+  /** Total XP before and after this session (level bar); null until saved. */
+  xpTotals?: { before: number; after: number } | null;
 }
 
-export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome, onNext, nextLabel, rating, playerName }: Props) {
+export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome, onNext, nextLabel, rating, playerName, xpTotals }: Props) {
   const s = view.session;
   const sm = summary(s);
   const [xp, setXp] = useState(0);
@@ -101,6 +104,11 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
 
   return (
     <main className="recap">
+      {stars === 3 && (
+        <div className="recap-clip" aria-hidden="true">
+          <span className="recap-rays" />
+        </div>
+      )}
       <p className="eyebrow">{withNote(meta.title[lang], bb)}</p>
       <h1>{t.recapTitle}</h1>
       {(() => {
@@ -141,6 +149,8 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
           </>
         )}
       </p>
+
+      {xpTotals && <LevelBar t={t} before={xpTotals.before} after={xpTotals.after} />}
 
       <p className="pace-line" data-pace-goal={goalMs ?? ''}>
         {goalMs !== null && paced && (
@@ -261,4 +271,22 @@ function ScoreCount({ value }: { value: number }) {
     };
   }, [value]);
   return <b dir="ltr">{v}</b>;
+}
+
+/** The level bar after a session: fills from where it was; a badge when a level was gained. */
+function LevelBar({ t, before, after }: { t: Strings; before: number; after: number }) {
+  const a = levelOf(before);
+  const b = levelOf(after);
+  const up = b.level > a.level;
+  return (
+    <section className="recap-level" data-level={b.level}>
+      <div className="rl-head">
+        <b>{fill(t.levelN, { n: b.level })}</b>
+        {up ? <span className="rl-badge">{fill(t.levelUp, { n: b.level })}</span> : <small dir="ltr">{fill(t.levelXp, { a: b.into, b: b.need })}</small>}
+      </div>
+      <span className="rl-bar" aria-hidden="true">
+        <span style={{ width: `${Math.round(b.pct * 100)}%`, ['--from' as string]: up ? '0%' : `${Math.round(a.pct * 100)}%` }} />
+      </span>
+    </section>
+  );
 }

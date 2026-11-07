@@ -336,6 +336,8 @@ function rhythmStim(durs: number[], bpm = 100): Stimulus {
     ev.push({ midi: 76, start: t, duration: Math.min(0.12, d * e * 0.6), velocity: i === 0 ? 0.7 : 0.55 });
     t += d * e;
   });
+  // A soft metronome on every quarter under the rhythm (playtesting 0.37).
+  for (let q = 0; q < Math.round(t / (2 * e)); q++) ev.push({ midi: 96, start: q * 2 * e, duration: 0.04, velocity: q % 4 === 0 ? 0.28 : 0.16, perc: q % 4 === 0 ? 'accent' : 'click' });
   return eventsStim(ev, t + 0.1);
 }
 /** The same rhythm with one onset moved by an eighth (the total stays the same). Always differs. */

@@ -12,7 +12,7 @@ async function playRound(page: Page, picks: number[]) {
 test.describe('tournament', () => {
   test('duel on one device: split screen, both answer, standings at the end', async ({ page }) => {
     test.setTimeout(120_000);
-    await page.goto('/');
+    await page.goto('/#/arcade');
     await page.getByRole('button', { name: /Duel on this device/ }).click();
     await page.getByRole('textbox', { name: 'Player 1' }).fill('Dana');
     await page.getByRole('textbox', { name: 'Player 2' }).fill('Omer');
@@ -33,6 +33,7 @@ test.describe('tournament', () => {
     await expect(page.locator('.board')).toContainText('Dana');
     await page.screenshot({ path: 'test-results/duel-over.png' });
     await page.getByRole('button', { name: 'Home' }).click();
+    await page.locator('.tab[data-tab="arcade"]').click();
     await expect(page.getByRole('button', { name: /Duel on this device/ })).toBeVisible();
   });
 

@@ -1,11 +1,13 @@
 import { createRoot } from 'react-dom/client';
 import '@fontsource-variable/rubik';
+import '@fontsource/secular-one';
 import './styles.css';
 import './games.css';
 import './menu.css';
 import './features.css';
 import './vocal.css';
 import './tournament.css';
+import './arcade.css';
 import { App } from './ui/App';
 import { initPwa } from './pwa';
 

@@ -168,10 +168,14 @@ export function intakeSettings(i: Intake): {
   naming?: 'solfege' | 'letter';
   miniLessons: boolean;
   cleanView: boolean;
+  /** Guitarists see notes as guitar tab + staff; keyboard players keep keyboard + staff. */
+  noteViews?: ('keyboard' | 'staff' | 'tab')[];
 } {
   const track = trackOf(i);
+  const guitar = (i.plays ?? []).includes('guitar') && !(i.plays ?? []).includes('keys');
   return {
     track,
+    ...(guitar ? { noteViews: ['tab', 'staff'] as ('keyboard' | 'staff' | 'tab')[] } : {}),
     // Pros who know the material skip the short lessons by default (they can switch them back on).
     miniLessons: track !== 'pro',
     cleanView: i.motivation === 'learn',

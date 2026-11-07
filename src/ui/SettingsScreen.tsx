@@ -295,13 +295,15 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
                   role="checkbox"
                   aria-checked={on}
                   className={on ? 'on' : ''}
-                  onClick={() => onChange({ noteViews: on ? cur.filter((x) => x !== v) : [...cur, v] })}
+                  // Two at most (product owner): a third replaces the oldest; at least one stays on.
+                  onClick={() => onChange({ noteViews: on ? (cur.length > 1 ? cur.filter((x) => x !== v) : cur) : [...cur, v].slice(-2) })}
                 >
                   {{ keyboard: t.viewKeyboard, staff: t.viewStaff, tab: t.viewTab }[v]}
                 </button>
               );
             })}
           </div>
+          <p className="field-hint">{t.showNotesHint}</p>
         </fieldset>
         <Seg
           label={t.aidsLabel}

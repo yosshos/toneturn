@@ -3,23 +3,19 @@ import type { WorkoutStep } from '../engine/workout';
 import { TrioArt } from './TrioArt';
 import { StreakChip } from './Streak';
 import type { StreakState } from '../engine/streak';
-import { NameChip } from './Rating';
-import { overallRating } from '../engine/rating';
 import { FIRST_TRIO, randomTrio, type Trio } from '../engine/heroTrio';
 import { applyUpdate, promptInstall, pwa } from '../pwa';
 import { topicProgress } from '../engine/recommend';
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { LESSON_ORDER, type LessonId } from '../engine/lesson';
 import { personalOrder, type Intake } from '../engine/intake';
-import { displayNote, pc, type Naming } from '../engine/pitch';
+import { displayNote, type Naming } from '../engine/pitch';
 import type { InputMode } from '../engine/session';
-import { LESSON_META } from '../game/content';
 import type { Strings } from '../i18n/strings';
-import { localDay, namingFor, ratingsOf, type Progress, type Settings } from '../storage/progress';
-import { Logo, MicIcon, ModeSwitch, withNote } from './bits';
+import { localDay, namingFor, type Progress, type Settings } from '../storage/progress';
+import { Logo, MicIcon, ModeSwitch } from './bits';
+import { DomainTiles, MissionCard, PlayerStrip, WhatsNewButton } from './Arcade';
 import { UNLOCK_ALL } from './services';
-import { GameIcon } from './Games';
-import type { GameKind } from '../game/memoryGame';
 
 interface Props {
   t: Strings;
@@ -33,11 +29,8 @@ interface Props {
   onMode: (m: InputMode) => void;
   onSettings: () => void;
   onLang: (l: 'he' | 'en') => void;
-  onGame: (k: GameKind) => void;
-  onDuel: () => void;
-  onOnline: () => void;
-  onGhost: () => void;
-  onTrueFalse: () => void;
+  onPracticeSkill: (k: import('../engine/lesson').SkillId) => void;
+  whatsNew: { unseen: boolean; onSeen: () => void };
   onVocal: (warmup: boolean) => void;
   onWorkout: (s: WorkoutStep) => void;
   onPlacement: (domain?: import('../engine/rating').DomainId | null) => void;
@@ -80,25 +73,21 @@ export function starsFor(best: number, total: number) {
   return r >= 1 ? 3 : r >= 0.6 ? 2 : r > 0 ? 1 : 0;
 }
 
-const TOTALS: Partial<Record<LessonId, number>> = { 'bflat-two-homes': 3, 'degrees-135': 5, 'major-minor': 5, cadences: 4, 'sing-home-five': 3, intervals: 6, inversions: 5, 'notes-degrees': 6, 'sing-names': 4, 'sing-degrees': 3, 'rhythm-r1': 5, 'rhythm-r2': 5, 'rhythm-r3': 5, runs: 5, 'rhythm-r4': 5, 'rhythm-r5': 5, 'rhythm-r6': 5, 'rhythm-r7': 5, 'rhythm-r8': 5, 'note-sequences': 5, 'jazz-1': 5, songs: 5 };
+export const TOTALS: Partial<Record<LessonId, number>> = { 'bflat-two-homes': 3, 'degrees-135': 5, 'major-minor': 5, cadences: 4, 'sing-home-five': 3, intervals: 6, inversions: 5, 'notes-degrees': 6, 'sing-names': 4, 'sing-degrees': 3, 'rhythm-r1': 5, 'rhythm-r2': 5, 'rhythm-r3': 5, runs: 5, 'rhythm-r4': 5, 'rhythm-r5': 5, 'rhythm-r6': 5, 'rhythm-r7': 5, 'rhythm-r8': 5, 'note-sequences': 5, 'jazz-1': 5, songs: 5 };
 
-export function Home({ t, settings, progress, streak, onStreak, account, onPractice, onButtonsInstead, onMode, onGame, onDuel, onOnline, onGhost, onTrueFalse, onVocal, onWorkout, onPlacement, onSkills, playerName, onMenu, news, tools }: Props) {
+export function Home({ t, settings, progress, streak, onStreak, account, onPractice, onButtonsInstead, onMode, onPracticeSkill, whatsNew, onVocal, onWorkout, onPlacement, onSkills, playerName, onMenu, news, tools }: Props) {
   const [consentFor, setConsentFor] = useState<LessonId | null>(null);
   const lang = settings.uiLang;
   const nm = namingFor(settings.naming, lang);
-  const bb = displayNote(pc('Bb'), nm, lang);
   // The path in the player's own order of areas (intake questionnaire).
   const order = personalOrder((settings.intake as Intake | null | undefined)?.priorities, settings.track);
   const states = lessonStates(progress, order);
   const next = nextLessonId(progress, order);
-  const meta = LESSON_META[next];
   const anyDone = order.some((id) => states[id] === 'done');
-  const doneCount = order.filter((id) => states[id] === 'done').length;
   const beginner = settings.track === 'explorer' || settings.track === 'hobby';
 
   const today = localDay(new Date());
   const todayXp = progress.history.filter((h) => localDay(new Date(h.completedAt)) === today).reduce((a, h) => a + h.xp, 0);
-  const goal = Math.min(1, todayXp / DAILY_GOAL_XP);
 
   // First visit: finding your level is the default first step (spec addendum, user testing).
   const firstRun = !(progress.lessons.placement?.completions ?? 0) && progress.history.length === 0 && !LESSON_ORDER.some((id) => (progress.lessons[id]?.completions ?? 0) > 0);
@@ -111,14 +100,14 @@ export function Home({ t, settings, progress, streak, onStreak, account, onPract
     <main className="home">
       <header className="topbar">
         <div className="brand">
-          <Logo />
+          <Logo bare size={40} />
           <span className="wordmark" dir="ltr">
             Ninth <span className="wordmark-accent">Sense</span>
           </span>
         </div>
         <div className="stats">
-          <NameChip t={t} name={playerName} overall={overallRating(ratingsOf(progress))} onClick={onSkills} />
           <StreakChip t={t} st={streak} onOpen={onStreak} />
+          <WhatsNewButton t={t} lang={lang} unseen={whatsNew.unseen} onSeen={whatsNew.onSeen} />
           <HeaderPwa t={t} />
           <button className="icon-btn menu-btn" onClick={onMenu} aria-label={t.menu}>
             <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" aria-hidden="true">
@@ -163,96 +152,22 @@ export function Home({ t, settings, progress, streak, onStreak, account, onPract
       ) : (
         <>
           <h1 className="sr-only">Ninth Sense — {t.homeToday}</h1>
-          {/* Today (product owner): the goal and the day's plan, together, first. */}
-          <section className="home-section today" aria-label={t.homeToday}>
-            <h2 className="home-h">☀️ {t.homeToday}</h2>
-            <div className="goal-strip">
-              <GoalRing value={goal} />
-              <div className="goal-text">
-                <b>{t.dailyGoal}</b>
-                <small dir="ltr">
-                  {todayXp}/{DAILY_GOAL_XP} {t.xp} · {progress.xp} {t.xp}
-                </small>
-              </div>
-              <div className="goal-done">
-                <b>
-                  {doneCount}/{LESSON_ORDER.length}
-                </b>
-                <small>{t.lessonsDone}</small>
-              </div>
-            </div>
-            <WorkoutCard t={t} progress={progress} settings={settings} onOpen={onWorkout} />
-          </section>
-
-          {/* Continue: the next lesson on the path, compact (no big banner). */}
-          <section className="continue-card" aria-label={t.homeContinue}>
-            <span className="continue-icon" aria-hidden="true">
-              <NodeIcon kind={meta.icon} />
-            </span>
-            <div className="continue-text">
-              <small className="continue-kicker">{t.homeContinue}</small>
-              <b>{withNote(meta.title[lang], bb)}</b>
-              <small>{meta.blurb[lang]}</small>
-            </div>
-            <button className="btn primary continue-go" data-continue="1" onClick={() => start(next)}>
-              {settings.mode === 'voice' && <MicIcon />}
-              {anyDone ? t.continue : t.practice}
-            </button>
-          </section>
+          <PlayerStrip t={t} xp={progress.xp} name={playerName} onOpen={onSkills} />
+          <MissionCard t={t} settings={settings} lessonId={next} anyDone={anyDone} todayXp={todayXp} goalXp={DAILY_GOAL_XP} onStart={() => start(next)} />
           <div className="home-mode-row">
             <ModeSwitch mode={settings.mode} onChange={onMode} t={t} />
             <button className="link start-from-one" onClick={() => onPlacement()}>
               🧭 {t.findLevel}
             </button>
           </div>
+          <section className="home-section today" aria-label={t.homeToday}>
+            <h2 className="home-h">☀️ {t.homeToday}</h2>
+            <WorkoutCard t={t} progress={progress} settings={settings} onOpen={onWorkout} />
+          </section>
         </>
       )}
 
-      <section className="path home-section" aria-label={t.lessonPath}>
-        <h2 className="home-h">🗺️ {t.lessonPath}</h2>
-        <TopicBars t={t} progress={progress} />
-        <ol className="path-list">
-          {order.map((id, i) => {
-            const st = states[id];
-            const m = LESSON_META[id];
-            const best = progress.lessons[id]?.best ?? 0;
-            const stars = st === 'done' ? starsFor(best, TOTALS[id] ?? 1) : 0;
-            const playable = st !== 'locked';
-            return (
-              <li key={id} className={`node ${st} ${i % 2 ? 'alt' : ''}`}>
-                <button className="node-btn" disabled={!playable} onClick={() => start(id)} aria-label={`${i + 1}. ${m.title[lang].replace('{n}', bb)}`}>
-                  <span className="node-disc" aria-hidden="true">
-                    <NodeIcon kind={m.icon} />
-                    {st === 'locked' && <span className="lock">🔒</span>}
-                  </span>
-                  <span className="node-text">
-                    <b>{withNote(m.title[lang], bb)}</b>
-                    <small>
-                      {st === 'done' ? (
-                        <span className="mini-stars" aria-label={`${stars} ${t.stars}`}>
-                          {[0, 1, 2].map((k) => (
-                            <span key={k} className={k < stars ? 'won' : ''}>
-                              ★
-                            </span>
-                          ))}
-                        </span>
-                      ) : st === 'current' ? (
-                        <>
-                          {t.start} <span className="flip-rtl">→</span>
-                        </>
-                      ) : st === 'open' ? (
-                        t.start
-                      ) : (
-                        t.locked
-                      )}
-                    </small>
-                  </span>
-                </button>
-              </li>
-            );
-          })}
-        </ol>
-      </section>
+      {!firstRun && <DomainTiles t={t} progress={progress} onPractice={onPracticeSkill} />}
 
       <section className="home-section practice" aria-label={t.homePractice}>
         <h2 className="home-h">🎯 {t.homePractice}</h2>
@@ -278,54 +193,6 @@ export function Home({ t, settings, progress, streak, onStreak, account, onPract
         </div>
       </section>
 
-
-      <section className="games-row" aria-label={t.games}>
-        <h2>{t.games}</h2>
-        <p className="field-hint">{t.gamesHint}</p>
-        <div className="game-cards">
-          {(['melody', 'rhythm'] as const).map((k) => (
-            <button key={k} className={`game-card ${k}`} onClick={() => onGame(k)}>
-              <GameIcon kind={k} />
-              <b>{k === 'melody' ? t.echoChain : t.beatEcho}</b>
-              <small>{k === 'melody' ? t.echoChainBlurb : t.beatEchoBlurb}</small>
-              {(progress.games?.[k] ?? 0) > 0 && (
-                <span className="best-chip">
-                  {t.personalBest}: {progress.games?.[k]}
-                </span>
-              )}
-            </button>
-          ))}
-          <button className="game-card duel" onClick={onDuel}>
-            <span className="duel-icon" aria-hidden="true">
-              ⚔
-            </span>
-            <b>{t.duel}</b>
-            <small>{t.duelBlurb}</small>
-          </button>
-          <button className="game-card online" onClick={onOnline}>
-            <span className="duel-icon" aria-hidden="true">
-              🌐
-            </span>
-            <b>{t.online}</b>
-            <small>{t.onlineBlurb}</small>
-          </button>
-          <button className="game-card truefalse" onClick={onTrueFalse}>
-            <span className="duel-icon" aria-hidden="true">
-              ✓✗
-            </span>
-            <b>{t.trueFalse}</b>
-            <small>{t.tfBlurb}</small>
-            {!progress.tfBest && <span className="new-chip">{t.newChip}</span>}
-          </button>
-          <button className="game-card ghost" onClick={onGhost}>
-            <span className="duel-icon" aria-hidden="true">
-              👻
-            </span>
-            <b>{t.ghostRace}</b>
-            <small>{t.ghostBlurb}</small>
-          </button>
-        </div>
-      </section>
 
       {account}
 
@@ -355,19 +222,6 @@ export function Home({ t, settings, progress, streak, onStreak, account, onPract
   );
 }
 
-function GoalRing({ value }: { value: number }) {
-  const r = 20;
-  const c = 2 * Math.PI * r;
-  return (
-    <svg className="goal-ring" viewBox="0 0 52 52" width="52" height="52" aria-hidden="true">
-      <circle cx="26" cy="26" r={r} className="ring-bg" />
-      <circle cx="26" cy="26" r={r} className="ring-fg" strokeDasharray={c} strokeDashoffset={c * (1 - value)} transform="rotate(-90 26 26)" />
-      <text x="26" y="31" textAnchor="middle" className="ring-text">
-        {value >= 1 ? '✓' : `${Math.round(value * 100)}`}
-      </text>
-    </svg>
-  );
-}
 
 export function NodeIcon({ kind }: { kind: 'ear' | 'steps' | 'chord' | 'cadence' | 'mic' | 'map' | 'review' | 'puzzle' | 'drum' }) {
   switch (kind) {

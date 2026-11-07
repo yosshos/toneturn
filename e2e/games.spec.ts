@@ -44,14 +44,14 @@ async function repeatTurn(page: Page, expectLen: number, mistake = false) {
 }
 
 test.describe('memory games', () => {
-  test('home lists both games', async ({ page }) => {
-    await page.goto('/');
+  test('the Play tab lists both games', async ({ page }) => {
+    await page.goto('/#/arcade');
     await expect(page.getByRole('button', { name: /Echo Chain/ })).toBeVisible();
     await expect(page.getByRole('button', { name: /Beat Echo/ })).toBeVisible();
   });
 
   test('Echo Chain solo with pads: chain grows, a mistake ends it, best is saved', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/#/arcade');
     await page.getByRole('button', { name: /Echo Chain/ }).click();
     await expect(page.getByRole('radio', { name: /Note pads/ })).toHaveAttribute('aria-checked', 'true');
     await page.getByRole('button', { name: /Play/ }).click();
@@ -64,6 +64,7 @@ test.describe('memory games', () => {
     await expect(page.locator('.big-score b')).toHaveText('3');
     await page.screenshot({ path: 'test-results/echo-chain-over.png' });
     await page.getByRole('button', { name: 'Home' }).click();
+    await page.locator('.tab[data-tab="arcade"]').click();
     await expect(page.getByRole('button', { name: /Echo Chain/ })).toContainText('Best: 3');
   });
 

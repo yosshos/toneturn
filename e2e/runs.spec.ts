@@ -10,7 +10,7 @@ test.beforeEach(async ({ page }) => {
 test.describe('riffs & runs', () => {
   test('Riffs & runs (simulator): name runs by voice, sing three back with a per-note contour', async ({ page }) => {
     test.setTimeout(180_000);
-    await page.goto('/?sim=1&unlock=all');
+    await page.goto('/?sim=1&unlock=all#/path');
     await page.getByRole('button', { name: /15. Riffs & runs/ }).click();
     await page.getByRole('button', { name: 'Use my voice & start' }).click();
     await page.getByRole('button', { name: 'Skip intro' }).click();

@@ -18,6 +18,30 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.37.0',
+    date: '2026-11-07',
+    en: [
+      'A new look: night colours, chunky game buttons, a new logo, and a tab bar at the bottom — Home, Path, Progress, Play and Friends',
+      'Your path is now its own tab: a winding road through units, with stars on what you finished and a pulsing "Start" on what is next',
+      "Home starts with today's mission and your daily goal, then practice by area — each tile plays the skill in that area that needs you most",
+      'Player levels: every XP counts toward your next level, shown at the top of Home and filling up after each lesson',
+      'Games, duels and live rooms all live in the Play tab',
+      "What's new no longer takes up the screen after an update: a small gift in the header opens it",
+      'The metronome keeps going under every rhythm exercise — also while you echo in Beat Echo — except where keeping the beat yourself is the point',
+      'Right answers fly up as XP; phones give a light tap on right and wrong answers',
+    ],
+    he: [
+      'מראה חדש: צבעי לילה, כפתורים של משחק, לוגו חדש וסרגל לשוניות למטה — בית, מסלול, התקדמות, משחקים וחברים',
+      'המסלול קיבל לשונית משלו: דרך מתפתלת ביחידות, עם כוכבים על מה שסיימתם ו״התחלה״ פועם על הבא בתור',
+      'הבית נפתח במשימה של היום וביעד היומי, ואחריהם תרגול לפי תחום — כל אריח מתרגל את המיומנות בתחום שהכי צריכה אתכם',
+      'רמות שחקן: כל XP מקרב לרמה הבאה — מוצגת בראש הבית ומתמלאת אחרי כל שיעור',
+      'משחקים, דו־קרבות וחדרים חיים — הכול בלשונית משחקים',
+      'מה חדש כבר לא תופס את המסך אחרי עדכון: מתנה קטנה בכותרת פותחת אותו',
+      'המטרונום ממשיך מתחת לכל תרגיל קצב — גם כשאתם עונים בהד קצב — חוץ מתרגילים שבהם להחזיק את הפעמה לבד זה כל העניין',
+      'תשובה נכונה עפה כ־XP, ובטלפון יש רטט קל על תשובה נכונה ושגויה',
+    ],
+  },
+  {
     version: '0.36.0',
     date: '2026-11-07',
     en: [

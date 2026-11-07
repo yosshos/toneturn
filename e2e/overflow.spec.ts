@@ -42,7 +42,7 @@ async function problems(page: Page): Promise<string[]> {
   }, ALLOWED_SCROLLERS);
 }
 
-const ROUTES = ['', '#/settings', '#/games', '#/friends', '#/skills', '#/daily', '#/online', '#/drone', '#/classes', '#/ghost', '#/truefalse', '#/studio', '#/vocal', '#/achievements', '#/singalong', '#/perform', '#/learned'];
+const ROUTES = ['', '#/path', '#/arcade', '#/settings', '#/games', '#/friends', '#/skills', '#/daily', '#/online', '#/drone', '#/classes', '#/ghost', '#/truefalse', '#/studio', '#/vocal', '#/achievements', '#/singalong', '#/perform', '#/learned'];
 
 async function setup(page: Page) {
   await page.addLocatorHandler(page.locator('.sheet-backdrop .sheet'), async () => {
@@ -122,11 +122,14 @@ for (const lang of ['en', 'he'] as const) {
     test.setTimeout(900_000);
     await setup(page);
     const { bad, check } = recorder(page);
-    await page.goto(base);
+    // The path has its own tab (0.37).
+    await page.goto(`${base}#/path`);
     const nodes = page.locator('button.node-btn');
+    await nodes.first().waitFor();
     const n = await nodes.count();
     for (let i = 0; i < n; i++) {
-      await page.goto(base);
+      await page.goto(`${base}#/path`);
+      await page.reload();
       const b = page.locator('button.node-btn').nth(i);
       const label = `path ${(await b.innerText()).replace(/\s+/g, ' ').slice(0, 30)}`;
       await b.click();

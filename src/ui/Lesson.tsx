@@ -1,3 +1,4 @@
+import { buzz } from './Arcade';
 import { lessonSections } from '../engine/placement';
 import { TalkToggle } from './TalkToggle';
 import { PlacementMeter } from './PlacementMeter';
@@ -61,6 +62,7 @@ const targetMidiOf = (q: Question) => (q.kind === 'degree' || q.kind === 'sing' 
 export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit, onAgain, onNext, onProgress, lessonDef, adapt, resume, onStep, onDone, nextLabel, ratings, playerName }: Props) {
   const ctrlRef = useRef<LessonController | null>(null);
   const [change, setChange] = useState<{ change: RatingChange; peakBefore: number | null } | null>(null);
+  const [xpTotals, setXpTotals] = useState<{ before: number; after: number } | null>(null);
   const [streakMoment, setStreakMoment] = useState<{ before: number; after: StreakState; gems: number } | null>(null);
   const sessionId = useMemo(() => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`, []);
   if (!ctrlRef.current) {
@@ -114,6 +116,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
               void reportPuzzle(result.puzzle.week, result.puzzle.band, result.puzzle.medal === 'gold' || result.puzzle.medal === 'silver' ? result.puzzle.medal : 'none', ms).catch(() => {});
             }
             setChange({ change: ratingChange(ratingsOf(before), ratingsOf(after)), peakBefore: peakOf(overallHistory(before.ratingEvents ?? [])) });
+            setXpTotals({ before: before.xp, after: after.xp });
             // Streak screen (spec N.2): the first qualifying session of the day.
             const purchases = settings.purchases ?? [];
             const g0 = gemsOf(before, purchases);
@@ -180,7 +183,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
   if (v.stage === 'complete') {
     return (
       <>
-        <Recap t={t} view={v} settings={settings} onReplay={(i) => ctrl.replayQuestion(i)} onCompare={(i) => ctrl.compareQuestion(i)} onAgain={onAgain} onHome={onExit} onNext={onNext} nextLabel={nextLabel} rating={change} playerName={playerName ?? null} />
+        <Recap t={t} view={v} settings={settings} onReplay={(i) => ctrl.replayQuestion(i)} onCompare={(i) => ctrl.compareQuestion(i)} onAgain={onAgain} onHome={onExit} onNext={onNext} nextLabel={nextLabel} rating={change} xpTotals={xpTotals} playerName={playerName ?? null} />
         {streakMoment && (
           <StreakCelebration t={t} before={streakMoment.before} after={streakMoment.after} gemsGained={streakMoment.gems} today={localDay(new Date())} onDone={() => setStreakMoment(null)} />
         )}
@@ -695,6 +698,11 @@ function Listening({ v, t, hint }: { v: LessonView; t: Strings; hint: string }) 
 
 function FeedbackBanner({ v, t, lang, settings }: { v: LessonView; t: Strings; lang: 'he' | 'en'; settings: Settings }) {
   const f = v.feedback;
+  const fk = f?.kind;
+  useEffect(() => {
+    if (fk === 'correct' || fk === 'correct-retry') buzz('good');
+    else if (fk === 'retry' || fk === 'reveal') buzz('bad');
+  }, [fk, v.index]);
   if (!f) return <div className="feedback empty" aria-live="polite" />;
   const q = v.question;
   const nmFb = namingFor(settings.naming, lang);
@@ -733,6 +741,11 @@ function FeedbackBanner({ v, t, lang, settings }: { v: LessonView; t: Strings; l
   }
   return (
     <div className={`feedback ${f.kind}`} aria-live="assertive">
+      {(f.kind === 'correct' || f.kind === 'correct-retry') && (f.xp ?? 0) > 0 && (
+        <span className="xp-fly" dir="ltr" aria-hidden="true" key={`xp${v.index}`}>
+          +{f.xp} XP
+        </span>
+      )}
       <b>{text}</b>
       {f.coach && <span className="coach-line">💬 {f.coach}</span>}
       {f.sung && f.sung.cents !== null && (

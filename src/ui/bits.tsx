@@ -1,6 +1,6 @@
 // Small shared UI pieces: logo, mode switch, keyboard, permission panel.
 
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useId, useState, type ReactNode } from 'react';
 import type { InputMode } from '../engine/session';
 import type { AccessError } from '../game/adapters';
 import { ERROR_TITLES, recoverySteps, type Strings } from '../i18n/strings';
@@ -29,26 +29,49 @@ export function withNote(template: string, note: string, key = '') {
 export const fillText = (template: string, note: string, key = '') => template.replaceAll('{n}', note).replaceAll('{k}', key);
 
 /** Ninth Sense mark: a 9 that is also an ear (tail = lobe), a note head in the bowl, sound waves coming in. */
-export function Logo({ size = 44 }: { size?: number }) {
+/** The brand mark (0.37): a mint "9" whose stem ends in a gold note head, with sound arriving from the left. */
+export function Logo({ size = 44, bare = false }: { size?: number; /** No tile behind it (in-app header). */ bare?: boolean }) {
+  const id = useId().replace(/:/g, '');
+  const u = (k: string) => `url(#${k}${id})`;
   return (
-    <svg width={size} height={size} viewBox="0 0 512 512" aria-hidden="true" className="logo-mark">
+    <svg width={size} height={size} viewBox={bare ? '60 60 420 420' : '0 0 512 512'} aria-hidden="true" className={`logo-mark ${bare ? 'bare' : ''}`}>
       <defs>
-        <linearGradient id="ns-bg" x1="0" y1="0" x2="0.6" y2="1">
-          <stop offset="0" stopColor="#4A2A7A" />
-          <stop offset="1" stopColor="#1E1236" />
+        <radialGradient id={`bg${id}`} cx="0.5" cy="0" r="1.1">
+          <stop offset="0" stopColor="#3B2F96" />
+          <stop offset="0.55" stopColor="#16173A" />
+          <stop offset="1" stopColor="#0F1020" />
+        </radialGradient>
+        <linearGradient id={`nine${id}`} gradientUnits="userSpaceOnUse" x1="220" y1="100" x2="420" y2="420">
+          <stop offset="0" stopColor="#9DF9D4" />
+          <stop offset="0.45" stopColor="#5CF2B5" />
+          <stop offset="1" stopColor="#3FC7E0" />
         </linearGradient>
-        <linearGradient id="ns-nine" x1="0.2" y1="0" x2="0.8" y2="1">
-          <stop offset="0" stopColor="#FFD66B" />
-          <stop offset="0.55" stopColor="#FFB04D" />
-          <stop offset="1" stopColor="#FF6A4D" />
+        <radialGradient id={`gold${id}`} cx="0.35" cy="0.3" r="0.8">
+          <stop offset="0" stopColor="#FFF1B8" />
+          <stop offset="0.5" stopColor="#FFC94D" />
+          <stop offset="1" stopColor="#F08A2C" />
+        </radialGradient>
+        <linearGradient id={`a1${id}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#FF8FC4" />
+          <stop offset="1" stopColor="#FF6FB1" />
+        </linearGradient>
+        <linearGradient id={`a2${id}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#C59BFF" />
+          <stop offset="1" stopColor="#8E6BFF" />
         </linearGradient>
       </defs>
-      <rect width="512" height="512" rx="112" fill="url(#ns-bg)" />
-      <path d="M108 134 A 130 130 0 0 0 108 278" fill="none" stroke="#4BE3B5" strokeWidth="22" strokeLinecap="round" opacity="0.55" />
-      <path d="M156 166 A 80 80 0 0 0 156 246" fill="none" stroke="#4BE3B5" strokeWidth="22" strokeLinecap="round" />
-      <ellipse cx="298" cy="206" rx="96" ry="94" fill="none" stroke="url(#ns-nine)" strokeWidth="58" />
-      <path d="M394 210 V 318 Q 394 426 282 432" fill="none" stroke="url(#ns-nine)" strokeWidth="58" strokeLinecap="round" />
-      <ellipse cx="298" cy="206" rx="34" ry="28" transform="rotate(-22 298 206)" fill="#4BE3B5" />
+      {!bare && <rect width="512" height="512" rx="116" fill={u('bg')} />}
+      <g transform="translate(-16 4)">
+        <path className="logo-wave w2" d="M 94 132 A 150 150 0 0 0 94 280" fill="none" stroke={u('a2')} strokeWidth="24" strokeLinecap="round" opacity="0.7" />
+        <path className="logo-wave w1" d="M 150 158 A 100 100 0 0 0 150 254" fill="none" stroke={u('a1')} strokeWidth="24" strokeLinecap="round" />
+        <circle cx="296" cy="206" r="90" fill="none" stroke={u('nine')} strokeWidth="62" />
+        <path d="M 386 206 V 392" fill="none" stroke={u('nine')} strokeWidth="62" strokeLinecap="round" />
+        <ellipse cx="342" cy="410" rx="64" ry="46" transform="rotate(-24 342 410)" fill={u('gold')} />
+        <ellipse cx="322" cy="396" rx="18" ry="9" transform="rotate(-24 322 396)" fill="#FFFFFF" opacity="0.55" />
+        <circle cx="296" cy="206" r="30" fill={u('gold')} />
+        <circle cx="286" cy="196" r="9" fill="#FFFFFF" opacity="0.75" />
+        <path className="logo-spark" d="M 432 82 l 9 25 25 9 -25 9 -9 25 -9 -25 -25 -9 25 -9 z" fill="#FFC94D" />
+      </g>
     </svg>
   );
 }

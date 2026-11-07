@@ -13,7 +13,7 @@ for (const [n, name] of [
 ] as const) {
   test(`${name} (lesson ${n}, simulator) runs to the end`, async ({ page }) => {
     test.setTimeout(240_000);
-    await page.goto('/?sim=1&unlock=all');
+    await page.goto('/?sim=1&unlock=all#/path');
     await page.getByRole('button', { name: new RegExp(`${n}\. ${name}`) }).click();
     await page.getByRole('button', { name: 'Use my voice & start' }).click();
     await page.getByRole('button', { name: 'Skip intro' }).click();

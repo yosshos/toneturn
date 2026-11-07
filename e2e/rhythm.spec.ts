@@ -13,6 +13,7 @@ test.describe('rhythm reading & dictation', () => {
   test('Rhythm 1 in Buttons mode: notation renders, taps on the metronome are graded, dictation options show notation', async ({ page }) => {
     await page.goto('/?unlock=all');
     await page.getByRole('radio', { name: 'Buttons' }).click();
+    await page.locator('.tab[data-tab="path"]').click();
     await page.getByRole('button', { name: /Rhythm 1: quarters and halves/ }).click();
     await page.getByRole('button', { name: 'Skip intro' }).click();
 
@@ -52,6 +53,7 @@ test.describe('rhythm R4–R8', () => {
   test('Rhythm 4 (sixteenths) to the end: read with taps, choose, then build the bar from blocks', async ({ page }) => {
     await page.goto('/?unlock=all');
     await page.getByRole('radio', { name: 'Buttons' }).click();
+    await page.locator('.tab[data-tab="path"]').click();
     await page.getByRole('button', { name: /Rhythm 4: sixteenths/ }).click();
     await page.getByRole('button', { name: 'Skip intro' }).click();
     await page.evaluate(() => {

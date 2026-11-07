@@ -239,6 +239,10 @@ export function rhythmSound(r: Rhythm, bpm: number, midi = 67, countIn?: number)
   const out: NoteEvent[] = [];
   for (let i = 0; i < n; i++) out.push({ midi: 96, start: i * pulse, duration: 0.05, velocity: i === 0 ? 0.5 : 0.3, perc: i === 0 ? 'accent' : 'click' });
   const t0 = n * pulse;
+  // The metronome keeps going softly under the rhythm (playtesting 0.37): the pulse is the frame you hear it in.
+  const perBar = countInPulses(m);
+  const passage = Math.round(totalBeats(r) / pulseBeats(m));
+  for (let i = 0; i < passage; i++) out.push({ midi: 96, start: t0 + i * pulse, duration: 0.05, velocity: i % perBar === 0 ? 0.26 : 0.16, perc: i % perBar === 0 ? 'accent' : 'click' });
   for (const e of events(r)) {
     if (e.rest) continue;
     // A snare hit marks each note; a soft held tone under it keeps long notes audibly long (a half is not a quarter + rest).

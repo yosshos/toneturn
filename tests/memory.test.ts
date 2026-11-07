@@ -111,7 +111,10 @@ describe('Beat Echo: rhythm', () => {
   it('timeline: count-in, demo, count-in, response', () => {
     const p = rhythmPattern(1, 3, 120);
     const tl = rhythmTimeline(p);
-    expect(tl.clicks.filter((c) => c.accent)).toHaveLength(2);
+    // Count-in, second count-in, and the soft pulse under the response (0.37: the beat never vanishes).
+    expect(tl.clicks.filter((c) => c.accent)).toHaveLength(3);
+    const under = tl.clicks.filter((c) => c.soft);
+    expect(under.map((c) => c.t)).toEqual([0, 1, 2].map((i) => tl.responseAt + i * 0.5));
     expect(tl.responseAt).toBeCloseTo((4 + 3 + 4) * 0.5);
     expect(tl.wood[0]).toBeCloseTo(4 * 0.5);
   });

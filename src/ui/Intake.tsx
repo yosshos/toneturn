@@ -297,7 +297,7 @@ export function IntakeScreen({ t, settings, onDone, onSkip }: { t: Strings; sett
   const finish = (then: 'placement' | 'basics' | 'home') => {
     const intake = full();
     const s = intakeSettings(intake);
-    const patch: Partial<Settings> = { intake, track: s.track, cleanView: s.cleanView, miniLessons: s.miniLessons };
+    const patch: Partial<Settings> = { intake, track: s.track, cleanView: s.cleanView, miniLessons: s.miniLessons, ...(s.noteViews ? { noteViews: s.noteViews } : {}) };
     if (naming !== 'auto') patch.naming = naming;
     if (range) patch.voiceRange = range;
     if (used) patch.voiceConsent = true;

@@ -11,7 +11,7 @@ async function playRun(page: import('@playwright/test').Page) {
 
 test('Ghost race: the first run sets the ghost, the next run races it', async ({ page }) => {
   test.setTimeout(180_000);
-  await page.goto('/');
+  await page.goto('/#/arcade');
   await page.getByRole('button', { name: /Race your ghost/ }).click();
   await expect(page.getByText(/No ghost yet/)).toBeVisible();
   await page.getByRole('button', { name: /Set your ghost/ }).click();

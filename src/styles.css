@@ -1,22 +1,35 @@
 /* Ninth Sense — warm night-stage game look. Chunky type, big targets, audio-synced motion. */
 
 :root {
-  --bg: #1e1236;
-  --bg-2: #2b1a4a;
-  --card: #34215a;
-  --card-2: #3f2a6b;
-  --ink: #fff6ea;
-  --ink-soft: #d9c9f2;
-  --ink-dim: #a893cc;
-  --coral: #ff6a4d;
+  /* 0.37 "night arcade" (docs/ui-redesign.md). Cosmetic themes override the surface tokens. */
+  --bg: #0f1020;
+  --bg-2: #16182e;
+  --card: #1b1d36;
+  --card-2: #23254a;
+  --ink: #f4f1ff;
+  --ink-soft: #d8d5f0;
+  --ink-dim: #a9a6c9;
+  --coral: #ff7a5c;
   --gold: #ffc94d;
-  --mint: #4be3b5;
-  --lilac: #a98bff;
-  --red: #ff5e7a;
-  --line: rgba(255, 246, 234, 0.12);
+  --gold-deep: #c98a1e;
+  --mint: #5cf2b5;
+  --mint-deep: #1f8f67;
+  --lilac: #9c8cff;
+  --red: #ff6b5c;
+  --glow: #2a2363;
+  --hero-end: #2b1f66;
+  --line: rgba(244, 241, 255, 0.1);
+  --hue-pitch: #7c8cff;
+  --hue-time: #ff8a5c;
+  --hue-memory: #5ce1e6;
+  --hue-voice: #ff6fb1;
+  --hue-reading: #ffd15c;
+  --hue-creative: #b57cff;
   --radius: 22px;
-  --shadow: 0 6px 0 rgba(0, 0, 0, 0.28);
+  --shadow: 0 6px 0 rgba(0, 0, 0, 0.35);
   --font: 'Rubik Variable', 'Rubik', system-ui, 'Segoe UI', Arial, sans-serif;
+  --display: 'Secular One', 'Rubik Variable', 'Rubik', system-ui, sans-serif;
+  --tabbar-h: 0px;
   color-scheme: dark;
 }
 

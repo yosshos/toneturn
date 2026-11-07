@@ -37,7 +37,7 @@ test.describe('menu, friends', () => {
     await expect(page.getByText('Add friends with their code')).toBeVisible();
   });
 
-  test("what's new appears once after an update and can be dismissed", async ({ page }) => {
+  test("what's new: a gift with a dot after an update, seen once opened", async ({ page }) => {
     await page.goto('/');
     // A fresh install stores the current version as seen; wait for that write so it cannot land after ours.
     await expect
@@ -80,16 +80,19 @@ test.describe('menu, friends', () => {
         }),
     );
     await page.reload();
-    const news = page.locator('.news-card');
-    await expect(news).toBeVisible();
-    // Compact (home polish): the latest headline; "More" opens the last three versions.
-    await expect(news).toContainText(APP_LATEST);
-    await news.getByRole('button', { name: /More of what's new/ }).click();
-    for (const v of RECENT) await expect(news).toContainText(v);
-    await expect(news).not.toContainText('0.3.0');
-    await news.locator('.news-head .icon-btn').click();
-    await expect(news).toHaveCount(0);
-    await page.reload();
+    // 0.37: no card on Home — a gift in the header with a dot; opening it marks the version seen.
     await expect(page.locator('.news-card')).toHaveCount(0);
+    const gift = page.locator('.gift-btn');
+    await expect(gift).toHaveClass(/unseen/);
+    await expect(page.locator('.gift-dot')).toBeVisible();
+    await gift.click();
+    const pop = page.locator('.gift-pop');
+    await expect(pop).toContainText(APP_LATEST);
+    await pop.getByRole('button', { name: /All changes/ }).click();
+    for (const v of RECENT) await expect(pop).toContainText(v);
+    await expect(page.locator('.gift-dot')).toHaveCount(0);
+    await page.reload();
+    await expect(page.locator('.gift-btn')).not.toHaveClass(/unseen/);
+    await expect(page.locator('.gift-dot')).toHaveCount(0);
   });
 });

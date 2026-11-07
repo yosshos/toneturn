@@ -75,3 +75,14 @@ describe('intake: Today and placement follow the order', () => {
     expect(s.slice().sort()).toEqual(placementSkills({ singing: false }).slice().sort());
   });
 });
+
+describe('note views from the intake', () => {
+  const base2 = { music: 1, theory: 1, reading: 1, motivation: 'learn', minutes: 10, priorities: [] } as unknown as Intake;
+  it('guitarists get tab + staff', () => {
+    expect(intakeSettings({ ...base2, plays: ['guitar'] }).noteViews).toEqual(['tab', 'staff']);
+  });
+  it('keyboard players (also with guitar) keep the default', () => {
+    expect(intakeSettings({ ...base2, plays: ['guitar', 'keys'] }).noteViews).toBeUndefined();
+    expect(intakeSettings({ ...base2, plays: [] }).noteViews).toBeUndefined();
+  });
+});

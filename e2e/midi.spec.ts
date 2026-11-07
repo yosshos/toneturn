@@ -20,6 +20,7 @@ test('MIDI keyboard (stub device): enable in Settings, answer a degree question 
   await expect(page.getByRole('status').filter({ hasText: 'Connected: Test Keys' })).toBeVisible();
   await page.goto('/?unlock=all');
   await page.getByRole('radio', { name: 'Buttons' }).click();
+  await page.locator('.tab[data-tab="path"]').click();
   await page.getByRole('button', { name: /2\. / }).first().click();
   await page.getByRole('button', { name: 'Skip intro' }).click();
   await expect(page.locator('.answers .answer:not([disabled])').first()).toBeVisible({ timeout: 30_000 });

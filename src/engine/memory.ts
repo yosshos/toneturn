@@ -340,7 +340,7 @@ export function gradeRhythm(p: RhythmPattern, tapsMs: number[], toleranceMs?: nu
 
 /** Audio events: count-in clicks (accent on 1), the pattern on woodblock, and a second count-in. */
 export interface RhythmTimeline {
-  clicks: { t: number; accent: boolean }[];
+  clicks: { t: number; accent: boolean; soft?: boolean }[];
   wood: number[];
   /** Drum Echo: kick or snare for each `wood` hit. */
   drums?: Drum[];
@@ -361,6 +361,8 @@ export function rhythmTimeline(p: RhythmPattern, countIn = 4): RhythmTimeline {
   const secondIn = patStart + p.beats * b;
   for (let i = 0; i < countIn; i++) clicks.push({ t: secondIn + i * b, accent: i === 0 });
   const responseAt = secondIn + countIn * b;
+  // …and under the player's echo too (playtesting 0.37: the beat must not vanish when it is your turn), softer.
+  for (let i = 0; i < p.beats; i++) clicks.push({ t: responseAt + i * b, accent: i === 0, soft: true });
   return { clicks, wood, ...(p.drums ? { drums: p.drums } : {}), responseAt, responseEnd: responseAt + p.beats * b + b * 0.6 };
 }
 

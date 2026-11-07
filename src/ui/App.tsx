@@ -30,8 +30,7 @@ import { adaptPlacement, placementLesson, puzzleBand, reviewLesson, weekId, week
 import { SkillMap } from './SkillMap';
 import { PracticeTools } from './Tools';
 import { MicIcon } from './bits';
-import { STRINGS, type Strings } from '../i18n/strings';
-import type { CHANGELOG } from '../version';
+import { STRINGS } from '../i18n/strings';
 import { gemsOf, lessonMastered, localDay, namingFor, ratingsOf, type Progress, type Settings, DEFAULT_SETTINGS, DEFAULT_SOUND, emptyProgress, migrateSettings } from '../storage/progress';
 import { cloudConfigured, currentUser, onAuthChange, pullSettings, pushSettings, syncProgress, type CloudUser } from '../cloud/cloud';
 import { AccountCard, type SyncState } from './Account';
@@ -49,7 +48,8 @@ import { AssignedCard, ClassesScreen } from './Classes';
 import { myClasses, openAssignments } from '../cloud/classes';
 import type { SetKind } from '../engine/tournament';
 import type { GameKind } from '../game/memoryGame';
-import { MenuSheet, Changelog } from './Menu';
+import { MenuSheet } from './Menu';
+import { PathScreen, PlayScreen, TabBar, TAB_ROUTES, type TabId } from './Arcade';
 import { FriendsScreen } from './Friends';
 import { reportGameBest, reportRating, reportStreakDays } from '../cloud/social';
 import { overallRating } from '../engine/rating';
@@ -58,7 +58,7 @@ import { pwa } from '../pwa';
 import { params, piano, setMidiEnabled, SIMULATED, store, tts } from './services';
 import { midi } from '../speech/midi';
 
-type Route = 'intake' | 'studio' | 'home' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong' | 'perform' | 'learned';
+type Route = 'intake' | 'studio' | 'home' | 'path' | 'arcade' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong' | 'perform' | 'learned';
 /** Invite links: #/online/CODE */
 const onlineCodeFromHash = () => (/^#\/?online\/(\w+)/.exec(location.hash)?.[1] ?? '');
 const PLAY_HASH = 'play';
@@ -68,7 +68,7 @@ const enterPlay = () => {
 };
 const routeFromHash = (): Route => {
   const h = location.hash.replace(/^#\/?/, '').replace(/^online\/.*$/, 'online');
-  return (['settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong', 'perform', 'learned', 'studio', 'intake'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
+  return (['path', 'arcade', 'settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong', 'perform', 'learned', 'studio', 'intake'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
 };
 
 /** The level a generated modes lesson was made at (from its first question's pool size). */
@@ -453,9 +453,11 @@ export function App() {
   const nextId = order[idx + 1];
   const canNext = nextId && states[nextId] !== 'locked';
 
+  const isTab = (TAB_ROUTES as string[]).includes(route);
+
   return (
     <MiniGateContext.Provider value={gate}>
-    <div className="app">
+    <div className={`app ${isTab ? 'has-tabs' : ''}`}>
       {SIMULATED && <div className="sim-banner">{t.simulated}</div>}
       {mini && (
         <MiniLessonPlayer
@@ -524,15 +526,11 @@ export function App() {
                   onHide={() => updateSettings({ catchUpHidden: catchUpKey })}
                 />
               )}
-              {news.length > 0 ? (
-              <NewsCard t={t} lang={s.uiLang} entries={news} onClose={() => updateSettings({ seenVersion: APP_VERSION })} />
-            ) : null}
             </>
           }
           onSettings={() => go('settings')}
-          onDuel={() => go('duel')}
-          onGhost={() => go('ghost')}
-          onTrueFalse={() => gate('game:truefalse', () => go('truefalse'))}
+          onPracticeSkill={practiceSkill}
+          whatsNew={{ unseen: news.length > 0, onSeen: () => updateSettings({ seenVersion: APP_VERSION }) }}
           onVocal={(warm) => {
             setVocalWarmup(warm);
             go('vocal');
@@ -554,16 +552,6 @@ export function App() {
           onPlacement={openPlacement}
           onSkills={() => go('skills')}
           playerName={user?.name ? user.name.split(' ')[0] : null}
-          onOnline={() => {
-            setOnlineFacts(null);
-            setOnlineCode('');
-            setOnlineKey((k) => k + 1);
-            go('online');
-          }}
-          onGame={(k) => {
-            setGameKind(k);
-            go('games');
-          }}
           onMode={(mode) => updateSettings({ mode })}
           onLang={(l) => updateSettings({ uiLang: l, inputLang: l, outputLang: l })}
           onPractice={(id, consented) => {
@@ -573,6 +561,28 @@ export function App() {
           onButtonsInstead={(id) => {
             updateSettings({ mode: 'buttons' });
             openLesson(id);
+          }}
+        />
+      )}
+      {route === 'path' && <PathScreen t={t} settings={s} progress={progress} onStart={(id) => (s.mode === 'voice' && !s.voiceConsent ? setConsentThen(() => () => openLesson(id)) : openLesson(id))} onPlacement={() => openPlacement()} />}
+      {route === 'arcade' && (
+        <PlayScreen
+          t={t}
+          progress={progress}
+          onGame={(k) => {
+            setGameKind(k);
+            go('games');
+          }}
+          onTrueFalse={() => gate('game:truefalse', () => go('truefalse'))}
+          onDuel={() => go('duel')}
+          onGhost={() => go('ghost')}
+          onDaily={() => go('daily')}
+          onPuzzle={openPuzzle}
+          onOnline={() => {
+            setOnlineFacts(null);
+            setOnlineCode('');
+            setOnlineKey((k) => k + 1);
+            go('online');
           }}
         />
       )}
@@ -662,7 +672,7 @@ export function App() {
           progress={progress}
           settings={s}
           onSettings={updateSettings}
-          onBack={() => go('home')}
+          onBack={() => go('arcade')}
           onTrueFalse={() => gate('game:truefalse', () => go('truefalse'))}
           onStart={(v) =>
             gate(v.kind === 'melody' ? 'game:echo' : 'game:beat', () => {
@@ -680,7 +690,7 @@ export function App() {
           t={t}
           settings={s}
           progress={progress}
-          onBack={() => go('home')}
+          onBack={() => go('arcade')}
           onProgress={setProgress}
           onOnline={(topics, level) => {
             setOnlineFacts({ topics, level });
@@ -716,14 +726,14 @@ export function App() {
           <AvatarStudio t={t} settings={s} onBack={() => go('home')} onSave={(p) => { updateSettings({ avatars: p }); go('home'); }} />
         </Suspense>
       )}
-      {route === 'ghost' && <GhostScreen t={t} settings={s} progress={progress} onBack={() => go('home')} onProgress={setProgress} />}
+      {route === 'ghost' && <GhostScreen t={t} settings={s} progress={progress} onBack={() => go('arcade')} onProgress={setProgress} />}
       {route === 'classes' && <ClassesScreen t={t} settings={s} user={user} onBack={() => go('home')} onOpenLesson={(id) => openAssignment(id)} />}
       {streakOpen && (
         <StreakSheet t={t} st={gems.streak} gems={gems.balance} today={localDay(new Date())} lang={s.uiLang} onBuy={buy} purchases={s.purchases ?? []} theme={themeId} onBuyCosmetic={buyCosmetic} onTheme={(theme) => updateSettings({ theme })} onClose={() => setStreakOpen(false)} />
       )}
       {route === 'drone' && <DroneScreen t={t} settings={s} onBack={() => go('home')} />}
       {route === 'perform' && <PerformScreen t={t} settings={s} onBack={() => go('home')} onProgress={setProgress} />}
-      {route === 'achievements' && <AchievementsScreen t={t} progress={progress} extra={{ bestLeague: s.bestLeague, learned: learnedCount(s), lessonsTotal: Object.keys(MINI_LESSONS).length }} onBack={() => go('home')} />}
+      {route === 'achievements' && <AchievementsScreen t={t} progress={progress} extra={{ bestLeague: s.bestLeague, learned: learnedCount(s), lessonsTotal: Object.keys(MINI_LESSONS).length }} onBack={() => go('skills')} />}
       {route === 'singalong' && <SingAlongScreen t={t} settings={s} onBack={() => go('vocal')} />}
       {route === 'vocal' && (
         <VocalScreen
@@ -741,13 +751,13 @@ export function App() {
         />
       )}
       {route === 'online' && (
-        <OnlineScreen key={`${onlineKey}-${user?.id ?? ''}`} t={t} settings={s} user={user} initialCode={onlineCode} facts={onlineFacts} onBack={() => go('home')} />
+        <OnlineScreen key={`${onlineKey}-${user?.id ?? ''}`} t={t} settings={s} user={user} initialCode={onlineCode} facts={onlineFacts} onBack={() => go('arcade')} />
       )}
       {route === 'daily' && <DailyScreen t={t} settings={s} progress={progress} user={user} onBack={() => go('home')} onProgress={setProgress} />}
       {route === 'duel' && (
         <DuelSetup
           t={t}
-          onBack={() => go('home')}
+          onBack={() => go('arcade')}
           onStart={(names, kind, rounds) => {
             setDuel({ names, kind, rounds });
             setGameKey((k) => k + 1);
@@ -778,29 +788,8 @@ export function App() {
           }}
         />
       )}
+      {isTab && !mini && <TabBar t={t} route={route as TabId} onGo={(r) => go(r)} />}
     </div>
     </MiniGateContext.Provider>
-  );
-}
-
-/** What's new, compact (home polish): the headline of the latest version; the rest on request. */
-function NewsCard({ t, lang, entries, onClose }: { t: Strings; lang: 'he' | 'en'; entries: typeof CHANGELOG; onClose: () => void }) {
-  const [open, setOpen] = useState(false);
-  const head = entries[0];
-  return (
-    <section className={`news-card compact ${open ? 'open' : ''}`} role="status">
-      <div className="news-head">
-        <b>
-          ✨ {t.whatsNew} <small dir="ltr">{head.version}</small>
-        </b>
-        <button className="icon-btn" aria-label={t.done} onClick={onClose}>
-          ✕
-        </button>
-      </div>
-      {open ? <Changelog lang={lang} entries={entries.slice(0, 3)} /> : <p className="news-headline">{head[lang][0]}</p>}
-      <button className="link news-more" onClick={() => setOpen((x) => !x)}>
-        {open ? t.newsLess : t.newsMore}
-      </button>
-    </section>
   );
 }
