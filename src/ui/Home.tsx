@@ -98,28 +98,7 @@ export function Home({ t, settings, progress, streak, onStreak, onPractice, onBu
 
   return (
     <main className="home today-screen">
-      <header className="topbar">
-        <div className="brand">
-          <Logo bare size={40} />
-          <span className="wordmark" dir="ltr">
-            <span>
-              The 7<span className="wordmark-th">th</span>
-            </span>{' '}
-            <span className="wordmark-accent">Sense</span>
-          </span>
-        </div>
-        <div className="stats">
-          <StreakChip t={t} st={streak} onOpen={onStreak} />
-          <WhatsNewButton t={t} lang={lang} unseen={whatsNew.unseen} onSeen={whatsNew.onSeen} />
-          {headerExtra}
-          <HeaderPwa t={t} />
-          <button className="icon-btn menu-btn" onClick={onMenu} aria-label={t.menu}>
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" aria-hidden="true">
-              <path d="M4 7h16M4 12h16M4 17h16" />
-            </svg>
-          </button>
-        </div>
-      </header>
+      <TopBar t={t} lang={lang} streak={streak} onStreak={onStreak} whatsNew={whatsNew} headerExtra={headerExtra} onMenu={onMenu} />
 
       {news}
 
@@ -223,6 +202,37 @@ export function Home({ t, settings, progress, streak, onStreak, onPractice, onBu
   );
 }
 
+
+/**
+ * The app's top bar (owner 2026-11-07): logo, streak, what's new / gift, month review, install / update, menu — the
+ * same on every main tab (Today, Path, Progress, Play, Friends), never inside an exercise.
+ */
+export function TopBar({ t, lang, streak, onStreak, whatsNew, headerExtra, onMenu }: { t: Strings; lang: 'he' | 'en'; streak: StreakState; onStreak: () => void; whatsNew: { unseen: boolean; onSeen: () => void }; headerExtra?: React.ReactNode; onMenu: () => void }) {
+  return (
+  <header className="topbar">
+    <div className="brand">
+      <Logo bare size={40} />
+      <span className="wordmark" dir="ltr">
+        <span>
+          The 7<span className="wordmark-th">th</span>
+        </span>{' '}
+        <span className="wordmark-accent">Sense</span>
+      </span>
+    </div>
+    <div className="stats">
+      <StreakChip t={t} st={streak} onOpen={onStreak} />
+      <WhatsNewButton t={t} lang={lang} unseen={whatsNew.unseen} onSeen={whatsNew.onSeen} />
+      {headerExtra}
+      <HeaderPwa t={t} />
+      <button className="icon-btn menu-btn" onClick={onMenu} aria-label={t.menu}>
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" aria-hidden="true">
+          <path d="M4 7h16M4 12h16M4 17h16" />
+        </svg>
+      </button>
+    </div>
+  </header>
+  );
+}
 
 export function NodeIcon({ kind }: { kind: 'ear' | 'steps' | 'chord' | 'cadence' | 'mic' | 'map' | 'review' | 'puzzle' | 'drum' }) {
   switch (kind) {

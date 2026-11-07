@@ -194,7 +194,7 @@ export function FriendsScreen({ t, user, sync, onBack, settings, onBestTier, onL
                       <b>
                         {r.relation === 'me' ? `${r.name} (${t.you})` : r.name} <RatingBadge r={r.rating} provisional={!!r.rating_provisional} t={t} size="sm" />
                       </b>
-                      <span className="wk" dir="ltr">
+                      <span className="wk-xp" dir="ltr">
                         {r.week_xp ?? 0} XP
                       </span>
                     </div>

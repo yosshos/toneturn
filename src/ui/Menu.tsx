@@ -16,6 +16,51 @@ interface Props {
   onSettings: (p: Partial<Settings>) => void;
 }
 
+/** Line icons for the menu rows (mature, clean UI — owner 2026-11-07: the old grid looked bad). */
+const MENU_ICON: Record<string, React.ReactNode> = {
+  level: (
+    <>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="m15.5 8.5-2 5-5 2 2-5z" />
+    </>
+  ),
+  friends: (
+    <>
+      <circle cx="9" cy="9" r="3.4" />
+      <path d="M2.8 19.5c.6-3.1 3.1-5 6.2-5s5.6 1.9 6.2 5M16.3 5.8a3.2 3.2 0 0 1 0 6.3M17.4 14.7c2.2.5 3.6 2.2 3.9 4.8" />
+    </>
+  ),
+  class: (
+    <>
+      <path d="M3 9.5 12 5l9 4.5-9 4.5z" />
+      <path d="M7 11.5v4.2c1.4 1.3 3.1 1.9 5 1.9s3.6-.6 5-1.9v-4.2M21 9.5V15" />
+    </>
+  ),
+  medal: (
+    <>
+      <circle cx="12" cy="14.5" r="5" />
+      <path d="M9 3h6l-1.6 6.6M9 3l1.6 6.6M12 12.2v4.6" />
+    </>
+  ),
+  gear: (
+    <>
+      <circle cx="12" cy="12" r="3" />
+      <path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7" />
+    </>
+  ),
+  mic: (
+    <>
+      <rect x="9" y="3" width="6" height="11" rx="3" />
+      <path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21" />
+    </>
+  ),
+};
+const MenuIcon = ({ k }: { k: string }) => (
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+    {MENU_ICON[k]}
+  </svg>
+);
+
 export function MenuSheet({ t, settings, user, onClose, onNavigate, onSettings }: Props) {
   const p = useSyncExternalStore(pwa.subscribe, pwa.get);
   const [checked, setChecked] = useState<null | boolean>(null);
@@ -52,38 +97,31 @@ export function MenuSheet({ t, settings, user, onClose, onNavigate, onSettings }
         </div>
 
         <nav className="menu-links">
-          <button className="menu-link" onClick={() => onNavigate('placement')}>
-            <span aria-hidden="true">🧭</span> {t.findLevel}
-          </button>
-          <button className="menu-link" onClick={() => onNavigate('friends')}>
-            <span aria-hidden="true">👥</span> {t.friends}
-          </button>
-          <button className="menu-link" onClick={() => onNavigate('classes')}>
-            <span aria-hidden="true">🏫</span> {t.classes}
-          </button>
-          <button className="menu-link" onClick={() => onNavigate('truefalse')}>
-            <span aria-hidden="true">✓✗</span> {t.trueFalse} <span className="new-chip">{t.newChip}</span>
-          </button>
-          <button className="menu-link" onClick={() => onNavigate('studio')}>
-            <span aria-hidden="true">🧑‍🎤</span> {t.avatarStudio} <span className="new-chip">{t.previewChip}</span>
-          </button>
-          <button className="menu-link" onClick={() => onNavigate('achievements')}>
-            <span aria-hidden="true">🏅</span> {t.achievementsTitle}
-          </button>
-          <button className="menu-link" onClick={() => onNavigate('games')}>
-            <span aria-hidden="true">🎮</span> {t.games}
-          </button>
-          <button className="menu-link" onClick={() => onNavigate('settings')}>
-            <span aria-hidden="true">⚙</span> {t.settings}
-          </button>
-          <button className="menu-link" onClick={() => onNavigate('diagnostics')}>
-            <span aria-hidden="true">🎙</span> {t.diagnostics}
-          </button>
+          {(
+            [
+              ['placement', 'level', t.findLevel],
+              ['friends', 'friends', t.friends],
+              ['classes', 'class', t.classes],
+              ['achievements', 'medal', t.achievementsTitle],
+              ['settings', 'gear', t.settings],
+              ['diagnostics', 'mic', t.diagnostics],
+            ] as const
+          ).map(([to, icon, label]) => (
+            <button key={to} className="menu-link" onClick={() => onNavigate(to)}>
+              <span className="ml-icon" aria-hidden="true">
+                <MenuIcon k={icon} />
+              </span>
+              <span className="ml-text">{label}</span>
+              <span className="ml-chev flip-rtl" aria-hidden="true">
+                ›
+              </span>
+            </button>
+          ))}
         </nav>
 
         {/* ---- Notifications ---- */}
         <section className="menu-card">
-          <h3>🔔 {t.notifications}</h3>
+          <h3>{t.notifications}</h3>
           <p className="field-hint">{!user && cloudConfigured ? t.notifNeedsSignIn : notifText}</p>
           {user && (push === 'off' || push === 'on') && (
             <div className="row">
@@ -141,7 +179,7 @@ export function MenuSheet({ t, settings, user, onClose, onNavigate, onSettings }
         {/* ---- What's new (latest version, in the chosen language) ---- */}
         <section className="menu-card whats-new-card">
           <h3>
-            ✨ {t.whatsNewIn} <span dir="ltr">{APP_VERSION}</span>
+            {t.whatsNewIn} <span dir="ltr">{APP_VERSION}</span>
           </h3>
           <Changelog lang={lang} entries={CHANGELOG.slice(0, 1)} bare />
           <p className="version-line" dir="ltr">

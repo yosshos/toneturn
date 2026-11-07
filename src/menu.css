@@ -208,7 +208,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.league-top .wk {
+.league-top .wk-xp {
   font-weight: 900;
   color: var(--gold);
   white-space: nowrap;
@@ -236,4 +236,70 @@
   height: 36px;
   font-size: 0.85rem;
   flex: none;
+}
+
+/* Menu, clean (owner 2026-11-07: the two-column grid with emoji looked bad): one list, line icons, hairlines. */
+.menu-sheet {
+  display: grid;
+  gap: 14px;
+}
+.menu-head h2 {
+  font-family: var(--font);
+  font-weight: 800;
+  font-size: 1.3rem;
+  margin: 0;
+}
+.menu-links {
+  grid-template-columns: 1fr;
+  gap: 0;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--card);
+}
+.menu-link {
+  display: grid;
+  grid-template-columns: 34px 1fr auto;
+  gap: 12px;
+  min-height: 52px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  font-weight: 600;
+  font-size: 0.98rem;
+  color: var(--ink);
+}
+.menu-link + .menu-link {
+  border-top: 1px solid var(--line);
+}
+.ml-icon {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  color: var(--ink-soft);
+}
+.ml-chev {
+  color: var(--ink-dim);
+  font-size: 1.2rem;
+}
+.menu-card {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: none;
+}
+.menu-card h3 {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+.menu-card .btn {
+  min-height: 40px;
+  box-shadow: none;
 }

@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.41.1',
+    date: '2026-11-07',
+    en: ['A clean menu (one list, line icons)', 'The top bar — streak, gifts, menu — on every tab', 'Fixed: a pale stripe across the Friends screen'],
+    he: ['תפריט נקי (רשימה אחת, אייקונים בקו)', 'הסרגל העליון — רצף, מתנות, תפריט — בכל הלשוניות', 'תוקן: פס בהיר שחצה את מסך החברים'],
+  },
+  {
     version: '0.41.0',
     date: '2026-11-07',
     en: [

@@ -471,3 +471,14 @@
   box-shadow: none;
   color: var(--ink);
 }
+
+/* Panel screens (Friends, Achievements, Class …): flat cards like Settings. */
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) .panel-screen .set-card {
+  box-shadow: none;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) .panel-screen .screen-head h1 {
+  font-family: var(--display);
+  font-weight: 700;
+}

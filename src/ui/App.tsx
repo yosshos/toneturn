@@ -35,7 +35,7 @@ import { STRINGS } from '../i18n/strings';
 import { dueReviews, gemsOf, lessonMastered, localDay, namingFor, ratingsOf, type Progress, type Settings, DEFAULT_SETTINGS, DEFAULT_SOUND, emptyProgress, migrateSettings } from '../storage/progress';
 import { cloudConfigured, currentUser, onAuthChange, pullSettings, pushSettings, syncProgress, type CloudUser } from '../cloud/cloud';
 import { AccountCard, type SyncState } from './Account';
-import { DAILY_GOAL_XP, Home, lessonStates } from './Home';
+import { DAILY_GOAL_XP, Home, lessonStates, TopBar } from './Home';
 import { LessonScreen } from './Lesson';
 import { SettingsScreen } from './SettingsScreen';
 import { Diagnostics } from './Diagnostics';
@@ -817,6 +817,11 @@ export function App() {
             then();
           }}
         />
+      )}
+      {isTab && route !== 'home' && !mini && (
+        <div className="tab-topbar">
+          <TopBar t={t} lang={s.uiLang} streak={gems.streak} onStreak={() => setStreakOpen(true)} whatsNew={{ unseen: news.length > 0, onSeen: () => updateSettings({ seenVersion: APP_VERSION }) }} headerExtra={<MonthReviewIcon t={t} lang={s.uiLang} progress={progress} seenMonth={s.monthReviewSeen} onSeen={(monthReviewSeen) => updateSettings({ monthReviewSeen })} />} onMenu={() => setMenuOpen(true)} />
+        </div>
       )}
       {route === 'learned' && <LearnedScreen t={t} settings={s} name={playerFirstName} onLearned={markLearned} onBack={() => go('home')} />}
       {route === 'home' && (
