@@ -22,7 +22,8 @@ test.describe('riffs & runs', () => {
   });
 
   test('Runs workshop card opens a slow → fast session', async ({ page }) => {
-    await page.goto('/?sim=1');
+    await page.goto('/?sim=1#/path');
+    await page.locator('[data-px="rooms"] > summary').click();
     const card = page.getByRole('button', { name: /Runs workshop/ });
     await expect(card).toContainText('Level 1');
     await card.click();

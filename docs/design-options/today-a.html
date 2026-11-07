@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=390, initial-scale=1">
+<title>Today — Calm night</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--page);}
+body{width:390px;height:844px;overflow:hidden;font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased;}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+.phone{position:relative;width:390px;height:844px;overflow:hidden;background:var(--bg);display:flex;flex-direction:column}
+.ic{width:20px;height:20px;flex:none;display:block}
+.status{height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 32px;font-size:15px;font-weight:600;color:var(--ink);direction:ltr;letter-spacing:-.01em}
+.status .sys{display:flex;gap:6px;align-items:center}
+.top{height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 16px 0 20px}
+[dir=rtl] .top{padding:0 20px 0 16px}
+.brand{display:flex;align-items:center;gap:10px}
+.logo{display:block;flex:none}
+.word{font-family:var(--word-font,var(--font));font-weight:var(--word-w,600);font-size:var(--word-size,18px);letter-spacing:-.01em;color:var(--ink);white-space:nowrap}
+.word sup{font-size:.55em;vertical-align:.75em;line-height:0;margin-inline-start:.04em;letter-spacing:0}
+.actions{display:flex;align-items:center;gap:4px}
+.streak{display:inline-flex;align-items:center;gap:4px;height:32px;padding:0 11px 0 8px;border-radius:999px;font-weight:600;font-size:15px;font-variant-numeric:tabular-nums;margin-inline-end:4px}
+[dir=rtl] .streak{padding:0 8px 0 11px}
+.streak .ic{width:18px;height:18px}
+.iconbtn{width:40px;height:40px;display:grid;place-items:center;border-radius:12px;color:var(--ink-2);position:relative}
+.iconbtn.sm{width:36px;height:36px;border-radius:10px}
+.iconbtn.sm .ic{width:18px;height:18px}
+.gift .dot{position:absolute;top:9px;inset-inline-end:9px;width:7px;height:7px;border-radius:50%;background:var(--pop);box-shadow:0 0 0 2px var(--bg)}
+main{flex:1;padding:8px 20px 0;display:flex;flex-direction:column;gap:var(--gap,18px)}
+.resume{display:flex;align-items:center;gap:12px;padding:12px 10px 12px 14px}
+[dir=rtl] .resume{padding:12px 14px 12px 10px}
+.rr-ico{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;flex:none}
+.rr-text{flex:1;min-width:0}
+.rr-title{font-size:15px;font-weight:600;line-height:20px}
+.rr-meta{display:flex;align-items:center;gap:10px;margin-top:6px}
+.bar{flex:1;height:4px;border-radius:4px;background:var(--track);overflow:hidden;display:block}
+.bar i{display:block;height:100%;border-radius:4px;background:var(--accent)}
+.rr-count{font-size:12px;font-weight:500;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.resume .iconbtn.solid{color:var(--on-accent);background:var(--accent)}
+.resume .iconbtn.solid .ic{width:16px;height:16px}
+.wk-head{display:flex;align-items:center;justify-content:space-between}
+.kicker{font-size:13px;font-weight:600;color:var(--ink-2);display:flex;align-items:center;gap:6px}
+.kicker .sep{color:var(--ink-3)}
+.wk-title{font-family:var(--head-font,var(--font));font-weight:var(--head-w,600);font-size:var(--head-size,26px);line-height:1.15;letter-spacing:var(--head-ls,-.02em);margin-top:4px}
+.wk-title .sub{display:block;font-family:var(--font);font-size:15px;font-weight:500;letter-spacing:0;color:var(--ink-2);margin-top:6px}
+.blocks{list-style:none;margin-top:18px}
+.blk{display:flex;align-items:center;gap:12px;height:54px;padding:0 12px;font-size:15px;font-weight:500;position:relative}
+.num{width:24px;font-size:13px;font-weight:600;color:var(--ink-3);font-variant-numeric:tabular-nums;flex:none}
+.bico{color:var(--ink-3);flex:none}
+.bico .ic{width:18px;height:18px}
+.bname{flex:1}
+.dur{font-size:14px;color:var(--ink-2);font-variant-numeric:tabular-nums;min-width:22px;text-align:end}
+.now{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px 3px 7px;border-radius:999px}
+.eq{display:inline-flex;align-items:flex-end;gap:1.5px;height:10px}
+.eq i{display:block;width:2px;border-radius:1px;background:currentColor}
+.eq i:nth-child(1){height:5px}.eq i:nth-child(2){height:10px}.eq i:nth-child(3){height:7px}.eq i:nth-child(4){height:3px}
+.wk-foot{display:flex;align-items:center;gap:16px;margin-top:18px}
+.start{flex:1;height:52px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:16px;font-weight:600;background:var(--accent);color:var(--on-accent);border-radius:var(--btn-r,14px)}
+.start .ic{width:16px;height:16px}
+.goal{display:flex;flex-direction:column;align-items:center;gap:2px}
+.ring{position:relative;width:52px;height:52px}
+.ring svg{display:block}
+.ring-bg{stroke:var(--track)}
+.ring-fg{stroke:var(--ring,var(--accent))}
+.ring-num{position:absolute;inset:0;display:grid;place-items:center;font-size:13px;font-variant-numeric:tabular-nums;line-height:1}
+.ring-num b{font-weight:700}
+.ring-num small{font-size:10px;color:var(--ink-3);font-weight:500}
+.ring-num b{font-size:15px}
+.goal-l{font-size:11px;font-weight:600;color:var(--ink-3);font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.find{align-self:center;margin:auto 0 28px;display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 16px;border-radius:999px;font-size:14px;font-weight:600;color:var(--ink-2)}
+.find .ic{width:16px;height:16px}
+.tabbar{height:62px;display:flex;align-items:stretch;justify-content:space-around;padding:0 8px;margin-top:auto}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:11px;font-weight:500;color:var(--ink-3);text-decoration:none;position:relative}
+.tab .ic{width:22px;height:22px}
+.tab.on{color:var(--tab-on,var(--accent))}
+.tab.on span{font-weight:600}
+.home-ind{height:22px;position:relative}
+.home-ind::after{content:"";position:absolute;left:50%;top:8px;width:134px;height:5px;margin-left:-67px;border-radius:3px;background:var(--ink);opacity:.85}
+
+
+:root{--page:#0b0f1a;--bg:#0e1322;--surface:#151b2c;--surface-2:#1a2135;--line:rgba(214,224,255,.09);--ink:#e9edf5;--ink-2:#aab3c5;--ink-3:#8590a6;
+--accent:#86dcbd;--on-accent:#0b1a16;--track:rgba(214,224,255,.10);--pop:#f2b866;
+--font:'Inter','Rubik',system-ui,sans-serif;--head-font:'Inter','Rubik',sans-serif;--head-size:25px;--head-w:600;}
+[lang=he]{--font:'Rubik',system-ui,sans-serif;--head-font:'Rubik',sans-serif}
+.word{--word-size:17px}
+.top{border-bottom:1px solid var(--line)}
+main{padding-top:22px}
+.streak{color:#f2c27a;background:rgba(242,184,102,.10);box-shadow:inset 0 0 0 1px rgba(242,184,102,.22)}
+.streak b{color:var(--ink)}
+.resume{background:var(--surface);border:1px solid var(--line);border-radius:14px}
+.rr-ico{background:rgba(134,220,189,.10);color:var(--accent)}
+.resume .iconbtn.ghost{color:var(--ink-2);box-shadow:inset 0 0 0 1px var(--line)}
+.wk{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px 16px 18px}
+.wk-head .iconbtn{color:var(--ink-2);margin:-8px -6px -8px 0}
+.kicker{text-transform:uppercase;letter-spacing:.07em;font-size:12px}
+.kicker .mins{color:var(--accent)}
+.blocks{border-top:1px solid var(--line)}
+.blk{border-bottom:1px solid var(--line);padding:0 4px}
+.blk:last-child{border-bottom:0}
+.blk.cur{background:linear-gradient(90deg,rgba(134,220,189,.09),rgba(134,220,189,0));border-radius:0}
+[dir=rtl] .blk.cur{background:linear-gradient(270deg,rgba(134,220,189,.09),rgba(134,220,189,0))}
+.blk.cur::before{content:"";position:absolute;inset-inline-start:0;top:10px;bottom:10px;width:2px;border-radius:2px;background:var(--accent)}
+.blk.cur .num,.blk.cur .bico{color:var(--accent)}
+.blk .num{padding-inline-start:8px;width:28px}
+.now{color:var(--accent);background:rgba(134,220,189,.12)}
+.wk-foot{margin-top:16px}
+.start{border-radius:12px}
+.ring-fg{stroke:var(--accent)}
+.find{color:var(--ink-2);box-shadow:inset 0 0 0 1px var(--line)}
+.find .ic{color:var(--accent)}
+.tabbar{border-top:1px solid var(--line);background:var(--bg)}
+.tab.on::before{content:"";position:absolute;top:-1px;width:24px;height:2px;border-radius:2px;background:var(--accent)}
+.home-ind{background:var(--bg)}
+
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="status"><span class="time">9:41</span><span class="sys">
+    <svg viewBox="0 0 18 12" width="18" height="12"><rect x="0" y="8" width="3" height="4" rx="1" fill="currentColor"/><rect x="5" y="5.5" width="3" height="6.5" rx="1" fill="currentColor"/><rect x="10" y="3" width="3" height="9" rx="1" fill="currentColor"/><rect x="15" y="0" width="3" height="12" rx="1" fill="currentColor"/></svg>
+    <svg viewBox="0 0 26 12" width="26" height="12"><rect x=".5" y=".5" width="22" height="11" rx="3" fill="none" stroke="currentColor" opacity=".45"/><rect x="2" y="2" width="16" height="8" rx="1.6" fill="currentColor"/><rect x="23.6" y="4" width="1.6" height="4" rx=".8" fill="currentColor" opacity=".45"/></svg></span></div>
+  <header class="top">
+    <div class="brand"><svg class="logo" width="32" height="32" aria-label="The 7th Sense" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  
+  <defs>
+    <radialGradient id="abg" cx="0.6" cy="0.2" r="1">
+      <stop offset="0" stop-color="#1E4E6E"/>
+      <stop offset="0.55" stop-color="#16183A"/>
+      <stop offset="1" stop-color="#0F1020"/>
+    </radialGradient>
+    <linearGradient id="aear" gradientUnits="userSpaceOnUse" x1="220" y1="90" x2="380" y2="430">
+      <stop offset="0" stop-color="#FFF1B8"/>
+      <stop offset="0.45" stop-color="#FFC94D"/>
+      <stop offset="1" stop-color="#FF8A5C"/>
+    </linearGradient>
+    <linearGradient id="amint" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#B8FFE4"/>
+      <stop offset="1" stop-color="#3FC7E0"/>
+    </linearGradient>
+    <linearGradient id="awaveIn" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#5CE1E6" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#5CF2B5"/>
+    </linearGradient>
+    <linearGradient id="awaveOut" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#5CF2B5" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#5CF2B5"/>
+    </linearGradient>
+    <linearGradient id="awavePink" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#9C8CFF" stop-opacity="0.7"/>
+      <stop offset="1" stop-color="#FF6FB1"/>
+    </linearGradient>
+    <radialGradient id="aglow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#FFC94D" stop-opacity="0.26"/>
+      <stop offset="1" stop-color="#FFC94D" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="116" fill="url(#abg)"/>
+  <circle cx="290" cy="256" r="190" fill="url(#aglow)"/>
+  <g transform="translate(256 256) scale(0.9) translate(-306 -256)">
+    <path d="M 240 286 Q 220 222 200 286 Q 182 338 164 286 Q 149 250 134 286 Q 122 308 110 286" fill="none" stroke="url(#awaveOut)" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/><path d="M 226 206 C 226 132 274 96 318 96 C 380 96 420 146 420 208 C 420 266 388 290 368 320 C 348 350 358 404 304 418 C 266 428 242 404 236 378" fill="none" stroke="url(#aear)" stroke-width="58" stroke-linecap="round" stroke-linejoin="round"/><path d="M 290 382 C 292 404 326 402 322 372 L 312 170 C 310 134 354 136 346 172 C 340 206 266 236 266 290 C 266 332 308 346 336 330 C 362 314 354 266 320 266 C 294 266 288 298 308 306" fill="none" stroke="#FFFFFF" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/><circle cx="290" cy="384" r="16" fill="#FF6FB1"/>
+  </g>
+  <circle cx="428" cy="194" r="24" fill="#FF6FB1"/><circle cx="428" cy="266" r="24" fill="#FF6FB1"/>
+</svg>
+<span class="word" dir="ltr">The 7<sup>th</sup> Sense</span></div>
+    <div class="actions">
+      <span class="streak"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 3c.4 3 3.2 4.6 3.2 8.2a3.2 3.2 0 0 1-6.4 0c0-1.3.5-2.2 1.1-3C7.6 9.6 5.8 12 5.8 14.8a6.2 6.2 0 0 0 12.4 0C18.2 9.6 14 7 12 3z"/></svg><b>12</b></span>
+      <button class="iconbtn gift" aria-label="What’s new"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" ><rect x="3.5" y="8" width="17" height="4" rx="1"/><path d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.8 8a2.4 2.4 0 0 1 0-4.8C10.4 3.2 12 8 12 8s1.6-4.8 4.2-4.8a2.4 2.4 0 0 1 0 4.8"/></svg><i class="dot"></i></button>
+      <button class="iconbtn" aria-label="Menu"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    </div>
+  </header>
+  <main>
+    <section class="resume">
+      <span class="rr-ico"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg></span>
+      <div class="rr-text"><div class="rr-title">Find my level</div>
+        <div class="rr-meta"><span class="bar"><i style="width:26.7%"></i></span><span class="rr-count">4/15</span></div></div>
+      <button class="iconbtn sm ghost" aria-label="Restart"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" ><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1L3.5 8.5"/><path d="M3.5 3.5v5h5"/></svg></button>
+      <button class="iconbtn sm solid" aria-label="Continue"><svg class="ic" viewBox="0 0 24 24"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.4-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" fill="currentColor"/></svg></button>
+    </section>
+
+    <section class="wk">
+      <div class="wk-head"><span class="kicker">Today’s workout<span class="sep">·</span><span class="mins">10 min</span></span>
+        <button class="iconbtn sm ghost" aria-label="Edit workout"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 20h4L19.5 8.5a2.1 2.1 0 0 0-3-3L5 17v3z"/><path d="M14.5 7.5l3 3"/></svg></button></div>
+      <h1 class="wk-title">Chord progressions<span class="sub">Pop progressions</span></h1>
+      <ol class="blocks">
+        <li class="blk cur">
+          <span class="num">1</span>
+          <span class="bico"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" ><path d="M2.5 12c1.6-4.5 3.2-4.5 4.8 0s3.2 4.5 4.7 0 3.2-4.5 4.8 0 3.1 4.5 4.7 0"/></svg></span>
+          <span class="bname">Warm-up</span>
+          <span class="now"><span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Now</span>
+          <span class="dur">2′</span>
+        </li>
+        <li class="blk">
+          <span class="num">2</span>
+          <span class="bico"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" ><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h7.5a3.5 3.5 0 0 0 0-7h-7a3.5 3.5 0 0 1 0-7H16"/></svg></span>
+          <span class="bname">Path</span>
+          
+          <span class="dur">4′</span>
+        </li>
+        <li class="blk">
+          <span class="num">3</span>
+          <span class="bico"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" ><path d="M9 18V5.5l10-2V16"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg></span>
+          <span class="bname">Pitch & harmony</span>
+          
+          <span class="dur">2′</span>
+        </li>
+        <li class="blk">
+          <span class="num">4</span>
+          <span class="bico"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" ><path d="M9.5 3.5h5L18 20.5H6z"/><path d="M12 15.5l5-8"/><path d="M8 16h8"/></svg></span>
+          <span class="bname">Rhythm & time</span>
+          
+          <span class="dur">2′</span>
+        </li>
+      </ol>
+      <div class="wk-foot">
+        <button class="start"><svg class="ic" viewBox="0 0 24 24"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.4-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" fill="currentColor"/></svg><span>Start</span></button>
+        <div class="goal"><div class="ring" aria-label="Daily goal">
+    <svg viewBox="0 0 52 52" width="52" height="52"><circle class="ring-bg" cx="26" cy="26" r="21" fill="none" stroke-width="4"/>
+    <circle class="ring-fg" cx="26" cy="26" r="21" fill="none" stroke-width="4" stroke-linecap="round" stroke-dasharray="79.2 131.9" transform="rotate(-90 26 26)"/></svg>
+    <span class="ring-num"><b>18</b></span></div><span class="goal-l" dir="ltr">/30 XP</span></div>
+      </div>
+    </section>
+
+    <button class="find"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg><span>Find my level</span></button>
+  </main>
+  <nav class="tabbar"><a class="tab on"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 9.5h17M8 3v3.5M16 3v3.5"/><text x="12" y="18.2" text-anchor="middle" font-size="8" font-weight="700" fill="currentColor" stroke="none" font-family="inherit">7</text></svg><span>Today</span></a><a class="tab"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" ><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h7.5a3.5 3.5 0 0 0 0-7h-7a3.5 3.5 0 0 1 0-7H16"/></svg><span>Path</span></a><a class="tab"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" ><path d="M5 20v-6M12 20V9M19 20V4"/></svg><span>Progress</span></a><a class="tab"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" ><rect x="2.5" y="7" width="19" height="11" rx="4"/><path d="M7.5 10.5v4M5.5 12.5h4"/><circle cx="15.5" cy="11.5" r=".6" fill="currentColor"/><circle cx="17.5" cy="13.8" r=".6" fill="currentColor"/></svg><span>Play</span></a><a class="tab"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" ><circle cx="9" cy="8.5" r="3.3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16 5.2a3.3 3.3 0 0 1 0 6.6M21 20a6 6 0 0 0-3.4-5.4"/></svg><span>Friends</span></a></nav>
+  <div class="home-ind"></div>
+</div>
+</body>
+</html>

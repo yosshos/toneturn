@@ -18,6 +18,26 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.41.0',
+    date: '2026-11-07',
+    en: [
+      'Today: your daily workout first — start it, edit it, and one small button to find your level',
+      'A calmer, more grown-up look: the new Calm night theme, plus Studio, Paper (light), OLED black, High contrast and Classic arcade in Settings',
+      'All topics and the practice rooms (drills, singing, runs, drone, review) now live on the Path — with ✓ on levels you already passed',
+      'Your areas and ranks moved to Progress, puzzles and the daily challenge to Play',
+      'Settings: volume, feedback sounds, narration speed, which microphone, MIDI device / octave / pedal and how to connect, text size, colour-blind friendly colours, daily goal',
+      'Things to resume are small rows with a progress bar; every exercise fits even small phones',
+    ],
+    he: [
+      'היום: האימון היומי שלכם קודם — מתחילים, עורכים, וכפתור קטן למציאת הרמה',
+      'מראה רגוע ובוגר יותר: ערכת לילה רגוע החדשה, ובהגדרות גם סטודיו, נייר (בהיר), שחור OLED, ניגודיות גבוהה וארקייד קלאסי',
+      'כל הנושאים וחדרי התרגול (תרגילים טכניים, שירה, ראנים, דרון, חזרה) עברו למסלול — עם ✓ ליד רמות שכבר עברתם',
+      'התחומים והדרגות עברו להתקדמות, החידות והאתגר היומי למשחקים',
+      'הגדרות: עוצמה, צלילי משוב, מהירות קריינות, בחירת מיקרופון, מכשיר MIDI / אוקטבה / פדל ואיך מחברים, גודל טקסט, צבעים ידידותיים לעיוורון צבעים, יעד יומי',
+      'דברים להמשיך הם שורות קטנות עם פס התקדמות; כל תרגיל נכנס גם בטלפונים קטנים',
+    ],
+  },
+  {
     version: '0.40.0',
     date: '2026-11-07',
     en: [

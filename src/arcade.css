@@ -517,7 +517,7 @@ h2,
   color: var(--mint);
 }
 .tab.on .tab-icon {
-  background: rgba(92, 242, 181, 0.16);
+  background: color-mix(in srgb, var(--mint) 16%, transparent);
   transform: translateY(-2px);
 }
 .tab-label {

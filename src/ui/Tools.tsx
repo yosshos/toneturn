@@ -1,221 +1,167 @@
-import { DOMAINS, type DomainId } from '../engine/rating';
+import type { ReactNode } from 'react';
 import { TOPIC_GEN } from '../engine/topics';
 import { TOPIC_GROUPS } from '../engine/topicGroups';
-import { weekId } from '../engine/adaptive';
-import { SKILLS } from '../engine/rating';
 import type { Strings } from '../i18n/strings';
 import { ratingsOf, type Progress } from '../storage/progress';
-import { dueReviews, localDay, reviewDue } from '../storage/progress';
+import { dueReviews, reviewDue } from '../storage/progress';
+import { topicMarks, type PathView } from '../engine/path';
 import { NodeIcon } from './Home';
 import { runLevelFor, MODE_ID_LEVELS, WRONG_NOTE_LEVELS } from '../engine/lesson';
 import { modesLevelFor } from '../engine/recommend';
 
-/** Home-screen practice row: Skill Map / placement, review queue, weekly puzzle. */
-export function PracticeTools({
+const markText = (m: 'done' | 'current' | undefined) => (m === 'done' ? ' ✓' : m === 'current' ? ' ▶' : '');
+
+/**
+ * Below the road on the Path tab (SPEC-TODAY §4): "Practice rooms" (the free-practice tools) and "All topics" (moved
+ * from Home, each level marked from the path). Both closed by default, so the path stays the focus.
+ */
+export function PathExtras({
   t,
   progress,
-  onSkills,
-  onPlacement,
+  view,
+  lang,
+  onTopic,
+  onModes,
+  onWrongNotes,
+  onAbsolute,
   onReview,
-  onPuzzle,
-  onDaily,
   onRuns,
   onDrone,
   onPerform,
   onLearned,
-  onStudio,
   learnedCount = 0,
-  onModes,
-  onWrongNotes,
-  onAbsolute,
-  onTopic,
-  lang = 'en',
+  onDrills,
+  onVocal,
 }: {
   t: Strings;
   progress: Progress;
-  onSkills: () => void;
-  onPlacement: (domain?: DomainId | null) => void;
+  view: PathView;
+  lang: 'he' | 'en';
+  onTopic: (topic: string, level: number) => void;
+  onModes: (level: number) => void;
+  onWrongNotes: (level: number) => void;
+  onAbsolute: (level: number) => void;
   onReview: () => void;
-  onPuzzle: () => void;
-  onDaily: () => void;
   onRuns: () => void;
   onDrone: () => void;
   onPerform?: () => void;
   onLearned?: () => void;
-  onStudio?: () => void;
   learnedCount?: number;
-  onModes: (level: number) => void;
-  onWrongNotes: (level: number) => void;
-  onAbsolute: (level: number) => void;
-  onTopic: (topic: string, level: number) => void;
-  lang?: 'he' | 'en';
+  onDrills: () => void;
+  onVocal: (warmup: boolean) => void;
 }) {
-  const daily = progress.daily?.[localDay(new Date())];
   const ratings = ratingsOf(progress);
-  const measured = SKILLS.filter((k) => (ratings[k]?.n ?? 0) > 0).length;
+  const marks = topicMarks(view);
   const now = new Date();
-  const placed = (progress.lessons.placement?.completions ?? 0) > 0;
   const reviewCount = new Set(dueReviews(progress.review, now).map((r) => r.key)).size;
   const nextDue = progress.review.length ? Math.min(...progress.review.map((r) => new Date(reviewDue(r)).getTime())) : null;
   const nextDays = nextDue !== null && reviewCount === 0 ? Math.max(1, Math.ceil((nextDue - now.getTime()) / 86400000)) : null;
-  const p = progress.puzzles?.[weekId(new Date())];
-  const puzzleStatus = !p ? t.puzzleNew : p.medal === 'gold' ? `🥇 ${t.puzzleGold}` : p.medal === 'silver' ? `🥈 ${t.puzzleSilver}` : t.puzzleTried;
+  const passed = (progress.vocal?.passed ?? []).filter((x) => x < 100);
+  const vocalLv = Math.min(12, (passed.length ? Math.max(...passed) : 0) + 1);
+  const he = lang === 'he';
+  const room = (key: string, icon: ReactNode, title: string, sub: string, onClick: () => void, extra?: { data?: Record<string, string>; badge?: number; disabled?: boolean }) => (
+    <button key={key} className={`room-row ${key}`} onClick={onClick} disabled={extra?.disabled} {...(extra?.data ?? {})}>
+      <span className="room-icon" aria-hidden="true">
+        {icon}
+      </span>
+      <span className="room-text">
+        <b>{title}</b>
+        <small>{sub}</small>
+      </span>
+      {extra?.badge ? (
+        <span className="count-badge">{extra.badge}</span>
+      ) : (
+        <span className="room-chev flip-rtl" aria-hidden="true">
+          ›
+        </span>
+      )}
+    </button>
+  );
   return (
-    <section className="tools-row" aria-label={t.practiceTools}>
-      <h2>{t.practiceTools}</h2>
-      <div className="tool-cards">
-        {/* Find my level stays available: re-take it any time (e.g. after an old, shorter placement). */}
-        <button className="tool-card placement-card" onClick={() => onPlacement()}>
-          <span className="tool-icon" aria-hidden="true">
-            <NodeIcon kind="map" />
-          </span>
-          <b>{t.findLevel}</b>
-          <small>{placed ? t.retakePlacement : t.findLevelHint}</small>
-        </button>
-        <div className="tool-card placement-domains" role="group" aria-label={t.placementByDomain}>
-          <small>{t.placementByDomain}</small>
-          <div className="pd-chips">
-            {DOMAINS.map((d) => (
-              <button key={d.id} className="chip" data-domain={d.id} onClick={() => onPlacement(d.id)}>
-                {t.domainNames[d.id]}
+    <div className="path-extras">
+      <details className="px-section" data-px="rooms">
+        <summary>
+          <span aria-hidden="true">🏋️</span> {he ? 'חדרי תרגול' : 'Practice rooms'}
+        </summary>
+        <div className="room-list">
+          {room('drills-room', '🎹', he ? 'תרגילים טכניים' : 'Technique drills', he ? 'סולמות, ארפג׳ים ועוד — פסנתר, גיטרה ובס' : 'Scales, arpeggios and more — piano, guitar, bass', onDrills, { data: { 'data-room': 'drills' } })}
+          {room('vocal-room', '🎤', t.vocalTitle, `${t.vocalLevel.replace('{n}', String(vocalLv))} · ${t.vocalLevelNames[vocalLv - 1]}`, () => onVocal(false), { data: { 'data-room': 'vocal' } })}
+          {room('warmup-room', '☀️', t.vocalWarmup, t.vocalBlurb, () => onVocal(true), { data: { 'data-room': 'vocal-warmup' } })}
+          {room('review-room', <NodeIcon kind="review" />, t.reviewN, reviewCount ? `${reviewCount} ${t.dueNow}` : nextDays ? t.nextReviewIn.replace('{n}', String(nextDays)) : t.nothingToReview, onReview, { badge: reviewCount, disabled: reviewCount === 0, data: { 'data-room': 'review' } })}
+          {room('runs-card', <NodeIcon kind="mic" />, t.runsWorkshop, t.runsWorkshopHint.replace('{n}', String(runLevelFor(ratings.agility?.n ? ratings.agility.r : null))), onRuns, { data: { 'data-room': 'runs' } })}
+          {room('drone-card', <NodeIcon kind="mic" />, t.dronePractice, t.droneBlurb, onDrone, { data: { 'data-room': 'drone' } })}
+          {onPerform && room('perform-card', <NodeIcon kind="mic" />, t.perfTitle, t.perfBlurb, onPerform, { data: { 'data-perform': '1' } })}
+          {onLearned && room('learned-card-tool', '📚', t.learnedTitle, learnedCount ? `${learnedCount} · ${t.learnedBlurb}` : t.learnedBlurb, onLearned, { data: { 'data-learned': '1' } })}
+        </div>
+      </details>
+      <details className="px-section" data-px="topics">
+        <summary>
+          <span aria-hidden="true">🎯</span> {he ? 'כל הנושאים' : 'All topics'}
+          <small>{he ? '✓ = המסלול כבר סופר את הרמה' : '✓ = the path already counts that level'}</small>
+        </summary>
+        <div className="modes-row">
+          <b>🎼 {t.skillNames.modes}</b>
+          <small>{t.modesByEarHint}</small>
+          <div className="modes-levels" role="group" aria-label={t.skillNames.modes}>
+            {MODE_ID_LEVELS.map((_, i) => {
+              const rec = modesLevelFor(ratings.modes?.n ? ratings.modes.r : null) === i + 1;
+              return (
+                <button key={i} className={`chip ${rec ? 'on' : ''}`} onClick={() => onModes(i + 1)} title={t.modesByEarLevels[i]}>
+                  {i + 1}. {t.modesByEarLevels[i]}
+                  {rec && ' ★'}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        {TOPIC_GROUPS.map((g) => (
+          <details key={g.id} className="topic-group">
+            <summary>
+              {g.icon} {g.title[lang]}
+            </summary>
+            {g.topics
+              .filter((id) => TOPIC_GEN[id])
+              .map((id) => (
+                <div key={id} className="modes-row">
+                  <b>{TOPIC_GEN[id].title[lang]}</b>
+                  <div className="modes-levels" role="group" aria-label={TOPIC_GEN[id].title[lang]}>
+                    {TOPIC_GEN[id].levels.map((lv, i) => {
+                      const m = marks.get(`${id}:${i + 1}`);
+                      return (
+                        <button key={i} className={`chip ${m === 'done' ? 'done' : m === 'current' ? 'on' : ''}`} data-topic={id} data-mark={m} onClick={() => onTopic(id, i + 1)}>
+                          {i + 1}. {lv[lang]}
+                          {markText(m)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+          </details>
+        ))}
+        <div className="modes-row">
+          <b>🎯 {t.skillNames.absolute}</b>
+          <small>{t.absoluteHint}</small>
+          <div className="modes-levels" role="group" aria-label={t.skillNames.absolute}>
+            {[1, 2, 3].map((lv) => (
+              <button key={lv} className="chip" onClick={() => onAbsolute(lv)}>
+                {lv}. {t.absoluteLevels[lv - 1]}
               </button>
             ))}
           </div>
         </div>
-        {measured > 0 && (
-          <button className="tool-card" onClick={onSkills}>
-            <span className="tool-icon" aria-hidden="true">
-              <NodeIcon kind="map" />
-            </span>
-            <b>{t.skillMap}</b>
-            <small>
-              {measured}/{SKILLS.length} {t.measuredShort}
-            </small>
-          </button>
-        )}
-        <button className="tool-card" onClick={onReview} disabled={reviewCount === 0}>
-          <span className="tool-icon" aria-hidden="true">
-            <NodeIcon kind="review" />
-          </span>
-          <b>{t.reviewN}</b>
-          <small>{reviewCount ? `${reviewCount} ${t.dueNow}` : nextDays ? t.nextReviewIn.replace('{n}', String(nextDays)) : t.nothingToReview}</small>
-          {reviewCount > 0 && <span className="count-badge">{reviewCount}</span>}
-        </button>
-        <button className="tool-card" onClick={onPuzzle}>
-          <span className="tool-icon" aria-hidden="true">
-            <NodeIcon kind="puzzle" />
-          </span>
-          <b>{t.weeklyPuzzle}</b>
-          <small>{puzzleStatus}</small>
-        </button>
-        <button className="tool-card runs-card" onClick={onRuns}>
-          <span className="tool-icon" aria-hidden="true">
-            <NodeIcon kind="mic" />
-          </span>
-          <b>{t.runsWorkshop}</b>
-          <small>{t.runsWorkshopHint.replace('{n}', String(runLevelFor(ratings.agility?.n ? ratings.agility.r : null)))}</small>
-        </button>
-        <button className="tool-card drone-card" onClick={onDrone}>
-          <span className="tool-icon" aria-hidden="true">
-            <NodeIcon kind="mic" />
-          </span>
-          <b>{t.dronePractice}</b>
-          <small>{t.droneBlurb}</small>
-        </button>
-        {onStudio && (
-          <button className="tool-card studio-card" onClick={onStudio} data-studio="1">
-            <span className="tool-icon" aria-hidden="true">
-              🧑‍🎤
-            </span>
-            <b>{t.avatarStudio}</b>
-            <small>{t.avatarCardBlurb}</small>
-            <span className="new-chip">{t.previewChip}</span>
-          </button>
-        )}
-        {onLearned && (
-          <button className="tool-card learned-card-tool" onClick={onLearned} data-learned="1">
-            <span className="tool-icon" aria-hidden="true">
-              📚
-            </span>
-            <b>{t.learnedTitle}</b>
-            <small>{learnedCount ? `${learnedCount} · ${t.learnedBlurb}` : t.learnedBlurb}</small>
-          </button>
-        )}
-        {onPerform && (
-          <button className="tool-card perform-card" onClick={onPerform} data-perform="1">
-            <span className="tool-icon" aria-hidden="true">
-              <NodeIcon kind="mic" />
-            </span>
-            <b>{t.perfTitle}</b>
-            <small>{t.perfBlurb}</small>
-          </button>
-        )}
-        <button className="tool-card daily-card" onClick={onDaily}>
-          <span className="tool-icon" aria-hidden="true">
-            <NodeIcon kind="puzzle" />
-          </span>
-          <b>{t.dailyChallenge}</b>
-          <small>{daily ? `✓ ${t.dailyDone} · ${daily.points.toLocaleString()} ${t.points}` : t.dailyBlurb}</small>
-        </button>
-      </div>
-      <div className="modes-row">
-        <b>🎼 {t.skillNames.modes}</b>
-        <small>{t.modesByEarHint}</small>
-        <div className="modes-levels" role="group" aria-label={t.skillNames.modes}>
-          {MODE_ID_LEVELS.map((_, i) => {
-            const rec = modesLevelFor(ratings.modes?.n ? ratings.modes.r : null) === i + 1;
-            return (
-              <button key={i} className={`chip ${rec ? 'on' : ''}`} onClick={() => onModes(i + 1)} title={t.modesByEarLevels[i]}>
-                {i + 1}. {t.modesByEarLevels[i]}
-                {rec && ' ★'}
+        <div className="modes-row">
+          <b>🔎 {t.wrongNotesTitle}</b>
+          <small>{t.wrongNotesHint}</small>
+          <div className="modes-levels" role="group" aria-label={t.wrongNotesTitle}>
+            {WRONG_NOTE_LEVELS.map((_, i) => (
+              <button key={i} className="chip" onClick={() => onWrongNotes(i + 1)}>
+                {i + 1}. {t.wrongNotesLevels[i]}
               </button>
-            );
-          })}
-        </div>
-      </div>
-      {TOPIC_GROUPS.map((g) => (
-        <details key={g.id} className="topic-group">
-          <summary>
-            {g.icon} {g.title[lang]}
-          </summary>
-          {g.topics
-            .filter((id) => TOPIC_GEN[id])
-            .map((id) => (
-              <div key={id} className="modes-row">
-                <b>{TOPIC_GEN[id].title[lang]}</b>
-                <div className="modes-levels" role="group" aria-label={TOPIC_GEN[id].title[lang]}>
-                  {TOPIC_GEN[id].levels.map((lv, i) => (
-                    <button key={i} className="chip" data-topic={id} onClick={() => onTopic(id, i + 1)}>
-                      {i + 1}. {lv[lang]}
-                    </button>
-                  ))}
-                </div>
-              </div>
             ))}
-        </details>
-      ))}
-      <div className="modes-row">
-        <b>🎯 {t.skillNames.absolute}</b>
-        <small>{t.absoluteHint}</small>
-        <div className="modes-levels" role="group" aria-label={t.skillNames.absolute}>
-          {[1, 2, 3].map((lv) => (
-            <button key={lv} className="chip" onClick={() => onAbsolute(lv)}>
-              {lv}. {t.absoluteLevels[lv - 1]}
-            </button>
-          ))}
+          </div>
         </div>
-      </div>
-      <div className="modes-row">
-        <b>🔎 {t.wrongNotesTitle}</b>
-        <small>{t.wrongNotesHint}</small>
-        <div className="modes-levels" role="group" aria-label={t.wrongNotesTitle}>
-          {WRONG_NOTE_LEVELS.map((_, i) => (
-            <button key={i} className="chip" onClick={() => onWrongNotes(i + 1)}>
-              {i + 1}. {t.wrongNotesLevels[i]}
-            </button>
-          ))}
-        </div>
-      </div>
-    </section>
+      </details>
+    </div>
   );
 }

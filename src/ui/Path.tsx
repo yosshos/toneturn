@@ -164,6 +164,7 @@ export function PathView2({
   onPlacement,
   onSettings,
   onLesson,
+  extras,
 }: {
   t: Strings;
   settings: Settings;
@@ -175,6 +176,8 @@ export function PathView2({
   onSettings: (p: Partial<Settings>) => void;
   /** Open a hand-made lesson directly (the unlocked QA list). */
   onLesson?: (id: LessonId) => void;
+  /** Below the road: practice rooms and all topics (SPEC-TODAY §4). */
+  extras?: React.ReactNode;
 }) {
   const lang = settings.uiLang;
   const tx = TX[lang];
@@ -405,6 +408,8 @@ export function PathView2({
           ))}
         </section>
       )}
+
+      {extras}
 
       {UNLOCK_ALL && onLesson && (
         // QA / tests (?unlock=all): every hand-made lesson, numbered in the original path order.

@@ -1,5 +1,5 @@
-import { WorkoutCard } from './Extras';
-import type { WorkoutStep } from '../engine/workout';
+
+import { DOMAINS, type DomainId } from '../engine/rating';
 import { TrioArt } from './TrioArt';
 import { StreakChip } from './Streak';
 import type { StreakState } from '../engine/streak';
@@ -12,42 +12,31 @@ import { personalOrder, type Intake } from '../engine/intake';
 import { displayNote, type Naming } from '../engine/pitch';
 import type { InputMode } from '../engine/session';
 import type { Strings } from '../i18n/strings';
-import { localDay, namingFor, type Progress, type Settings } from '../storage/progress';
+import { namingFor, type Progress, type Settings } from '../storage/progress';
 import { Logo, MicIcon, ModeSwitch } from './bits';
-import { DomainTiles, MissionCard, PlayerStrip, WhatsNewButton } from './Arcade';
+import { WhatsNewButton } from './Arcade';
 import { UNLOCK_ALL } from './services';
 
 interface Props {
   t: Strings;
   settings: Settings;
   progress: Progress;
-  /** The next path step (spec AF D7): the mission card opens it. */
-  pathNext?: { title: string; blurb: string; onStart: () => void };
   /** Extra header icons (month in review, spec AG S16). */
   headerExtra?: React.ReactNode;
-  /** Today's workout (spec AH W1): the first card, in place of the mission and warm-up cards. */
+  /** Today's workout (spec AH W1). */
   workout?: React.ReactNode;
-  /** Reviews due (spec AF D7): a 2-minute warm-up before the path. */
-  warmUp?: { count: number; onStart: () => void };
+  /** Teacher assignments (today's homework), when there are some. */
+  assigned?: React.ReactNode;
   streak: StreakState;
   onStreak: () => void;
-  account: React.ReactNode;
   onPractice: (id: LessonId, consented: boolean) => void;
   onButtonsInstead: (id: LessonId) => void;
   onMode: (m: InputMode) => void;
-  onSettings: () => void;
-  onLang: (l: 'he' | 'en') => void;
-  onPracticeSkill: (k: import('../engine/lesson').SkillId) => void;
   whatsNew: { unseen: boolean; onSeen: () => void };
-  onVocal: (warmup: boolean) => void;
-  onWorkout: (s: WorkoutStep) => void;
-  onPlacement: (domain?: import('../engine/rating').DomainId | null) => void;
-  onSkills: () => void;
-  playerName: string | null;
+  onPlacement: (domain?: DomainId | null) => void;
   onMenu: () => void;
-  updateReady: boolean;
+  /** Things to resume (placement, last session), the freeze toast, the catch-up card. */
   news: React.ReactNode;
-  tools: React.ReactNode;
 }
 
 export const DAILY_GOAL_XP = 30;
@@ -83,29 +72,32 @@ export function starsFor(best: number, total: number) {
 
 export const TOTALS: Partial<Record<LessonId, number>> = { 'bflat-two-homes': 3, 'degrees-135': 5, 'major-minor': 5, cadences: 4, 'sing-home-five': 3, intervals: 6, inversions: 5, 'notes-degrees': 6, 'sing-names': 4, 'sing-degrees': 3, 'rhythm-r1': 5, 'rhythm-r2': 5, 'rhythm-r3': 5, runs: 5, 'rhythm-r4': 5, 'rhythm-r5': 5, 'rhythm-r6': 5, 'rhythm-r7': 5, 'rhythm-r8': 5, 'note-sequences': 5, 'jazz-1': 5, songs: 5 };
 
-export function Home({ t, settings, progress, streak, onStreak, account, onPractice, onButtonsInstead, onMode, onPracticeSkill, whatsNew, onVocal, onWorkout, onPlacement, onSkills, playerName, onMenu, news, tools, pathNext, warmUp, headerExtra, workout }: Props) {
+/**
+ * Today (SPEC-TODAY, owner 2026-11-07): the screen brings the player to today's workout and lets them edit it — plus
+ * one small Find my level button. Everything else moved to its own place (Path: topics and practice rooms; Play:
+ * puzzles and challenges; Progress: areas and ranks; Settings: account). First run keeps the welcome hero.
+ */
+export function Home({ t, settings, progress, streak, onStreak, onPractice, onButtonsInstead, onMode, whatsNew, onPlacement, onMenu, news, assigned, headerExtra, workout }: Props) {
   const [consentFor, setConsentFor] = useState<LessonId | null>(null);
+  const [levelSheet, setLevelSheet] = useState(false);
   const lang = settings.uiLang;
   const nm = namingFor(settings.naming, lang);
   // The path in the player's own order of areas (intake questionnaire).
   const order = personalOrder((settings.intake as Intake | null | undefined)?.priorities, settings.track);
-  const states = lessonStates(progress, order);
   const next = nextLessonId(progress, order);
-  const anyDone = order.some((id) => states[id] === 'done');
   const beginner = settings.track === 'explorer' || settings.track === 'hobby';
-
-  const today = localDay(new Date());
-  const todayXp = progress.history.filter((h) => localDay(new Date(h.completedAt)) === today).reduce((a, h) => a + h.xp, 0);
+  const placed = (progress.lessons.placement?.completions ?? 0) > 0;
 
   // First visit: finding your level is the default first step (spec addendum, user testing).
-  const firstRun = !(progress.lessons.placement?.completions ?? 0) && progress.history.length === 0 && !LESSON_ORDER.some((id) => (progress.lessons[id]?.completions ?? 0) > 0);
+  const firstRun = !placed && progress.history.length === 0 && !LESSON_ORDER.some((id) => (progress.lessons[id]?.completions ?? 0) > 0);
   const start = (id: LessonId) => {
     if (settings.mode === 'voice' && !settings.voiceConsent) return setConsentFor(id);
     onPractice(id, false);
   };
+  const he = lang === 'he';
 
   return (
-    <main className="home">
+    <main className="home today-screen">
       <header className="topbar">
         <div className="brand">
           <Logo bare size={40} />
@@ -164,71 +156,52 @@ export function Home({ t, settings, progress, streak, onStreak, account, onPract
       ) : (
         <>
           <h1 className="sr-only">The 7th Sense — {t.homeToday}</h1>
-          <PlayerStrip t={t} xp={progress.xp} name={playerName} onOpen={onSkills} />
+          {assigned}
           {workout}
-          {!workout && warmUp && warmUp.count >= 3 && (
-            <button className="warmup-card" onClick={warmUp.onStart}>
-              <span aria-hidden="true">🔥</span>
-              <span>
-                <b>{lang === 'en' ? '2-minute warm-up' : 'חימום של 2 דקות'}</b>
-                <small dir="auto">{lang === 'en' ? `${warmUp.count} items to review before your path` : `${warmUp.count} פריטים לחזרה לפני המסלול`}</small>
-              </span>
-            </button>
-          )}
-          {workout ? null : pathNext ? (
-            <MissionCard t={t} settings={settings} lessonId={next} anyDone={anyDone} todayXp={todayXp} goalXp={DAILY_GOAL_XP} onStart={pathNext.onStart} title={pathNext.title} blurb={pathNext.blurb} />
-          ) : (
-            <MissionCard t={t} settings={settings} lessonId={next} anyDone={anyDone} todayXp={todayXp} goalXp={DAILY_GOAL_XP} onStart={() => start(next)} />
-          )}
-          <div className="home-mode-row">
-            <ModeSwitch mode={settings.mode} onChange={onMode} t={t} />
-            <button className="link start-from-one" onClick={() => onPlacement()}>
-              🧭 {t.findLevel}
-            </button>
-          </div>
+          <button className="find-level-btn" onClick={() => setLevelSheet(true)} data-find-level="1">
+            <span aria-hidden="true">🧭</span> {t.findLevel}
+          </button>
         </>
       )}
 
-      {!firstRun && <DomainTiles t={t} progress={progress} onPractice={onPracticeSkill} lang={lang} />}
-      {!firstRun && !workout && (
-        <section className="home-section today" aria-label={lang === 'en' ? 'Free practice' : 'תרגול חופשי'}>
-          <h2 className="home-h">🎯 {lang === 'en' ? 'Free practice' : 'תרגול חופשי'}</h2>
-          <WorkoutCard t={t} progress={progress} settings={settings} onOpen={onWorkout} />
-        </section>
+      {levelSheet && (
+        <div className="sheet-backdrop" onClick={() => setLevelSheet(false)}>
+          <div className="sheet level-sheet" role="dialog" aria-modal="true" aria-labelledby="level-sheet-title" onClick={(e) => e.stopPropagation()}>
+            <h2 id="level-sheet-title">🧭 {t.findLevel}</h2>
+            <p className="field-hint">{placed ? t.retakePlacement : t.findLevelHint}</p>
+            <button
+              className="btn primary ls-all"
+              data-level-all="1"
+              onClick={() => {
+                setLevelSheet(false);
+                onPlacement();
+              }}
+            >
+              <span>{he ? 'הכול יחד' : 'Everything'}</span>
+              <small>{he ? 'כל התחומים · 20–30 דק׳' : 'All areas · 20–30 min'}</small>
+            </button>
+            <p className="ls-or">{t.placementByDomain}</p>
+            <div className="ls-areas" role="group" aria-label={t.placementByDomain}>
+              {DOMAINS.map((d) => (
+                <button
+                  key={d.id}
+                  className="chip"
+                  data-domain={d.id}
+                  onClick={() => {
+                    setLevelSheet(false);
+                    onPlacement(d.id);
+                  }}
+                >
+                  {t.domainNames[d.id]}
+                </button>
+              ))}
+            </div>
+            <button className="btn ghost" onClick={() => setLevelSheet(false)}>
+              {he ? 'ביטול' : 'Cancel'}
+            </button>
+          </div>
+        </div>
       )}
-
-      <section className="home-section practice" aria-label={t.homePractice}>
-        <h2 className="home-h">🎯 {t.homePractice}</h2>
-        {tools}
-      </section>
-
-      <section className="vocal-strip home-section" aria-label={t.vocalTitle}>
-        <div className="vocal-strip-text">
-          <h2>🎤 {t.vocalTitle}</h2>
-          <p>{t.vocalBlurb}</p>
-        </div>
-        <div className="vocal-strip-actions">
-          <button className="btn" onClick={() => onVocal(false)}>
-            {(() => {
-              const passed = (progress.vocal?.passed ?? []).filter((x) => x < 100);
-              const lv = Math.min(12, (passed.length ? Math.max(...passed) : 0) + 1);
-              return `${t.vocalLevel.replace('{n}', String(lv))} · ${t.vocalLevelNames[lv - 1]}`;
-            })()}
-          </button>
-          <button className="btn ghost small" onClick={() => onVocal(true)}>
-            ☀️ {t.vocalWarmup}
-          </button>
-        </div>
-      </section>
-
-
-      {account}
-
-      <footer className="home-foot">
-        <a className="link" href="#/diagnostics">
-          {t.diagnostics}
-        </a>
-      </footer>
 
       {consentFor && (
         <div className="sheet-backdrop" onClick={() => setConsentFor(null)}>

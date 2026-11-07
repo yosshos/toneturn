@@ -210,7 +210,7 @@ export function Highway({
       const side = offset !== null && g === 'good' ? ` · ${tx(offset < 0 ? T.early : T.late)}` : '';
       setFlash({ text: label + side, cls: g, n: flashN.current });
       if ((g === 'miss' || g === 'wrong') && !reduced) setShake((x) => x + 1);
-      if (navigator.vibrate && !reduced && (g === 'miss' || g === 'wrong')) {
+      if (navigator.vibrate && !reduced && document.documentElement.dataset.haptics !== 'off' && (g === 'miss' || g === 'wrong')) {
         try {
           navigator.vibrate(30);
         } catch {

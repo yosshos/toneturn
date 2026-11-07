@@ -5,6 +5,20 @@ import { yin, type PitchFrame } from '../engine/yin';
 import { classifyCaptureError, gatherEnv } from './errors';
 
 let captureSucceeded = false;
+/** The microphone chosen in Settings (deviceId); null = the system default. */
+let preferredMic: string | null = null;
+export const setPreferredMic = (id: string | null | undefined) => {
+  preferredMic = id || null;
+};
+/** Audio inputs (labels appear once the microphone permission was given). */
+export async function listMics(): Promise<{ id: string; label: string }[]> {
+  try {
+    const ds = await navigator.mediaDevices.enumerateDevices();
+    return ds.filter((d) => d.kind === 'audioinput' && d.deviceId).map((d, i) => ({ id: d.deviceId, label: d.label || `Microphone ${i + 1}` }));
+  } catch {
+    return [];
+  }
+}
 /** Whether capture has opened successfully on this page load (used to split recognizer errors). */
 export const captureOk = () => captureSucceeded;
 
@@ -17,7 +31,7 @@ export async function openCapture(
   }
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
-      audio: constraints,
+      audio: preferredMic ? { ...constraints, deviceId: { ideal: preferredMic } } : constraints,
     });
     captureSucceeded = true;
     return { ok: true, stream };

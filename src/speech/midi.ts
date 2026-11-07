@@ -24,6 +24,12 @@ export class MidiInput {
   private access: MidiAccessLike | null = null;
   devices: string[] = [];
   private stateListeners = new Set<() => void>();
+  /** Settings → MIDI: listen to one device only (null = all), shift by octaves (small keyboards), invert the pedal. */
+  opts: { only: string | null; octave: number; pedalInvert: boolean } = { only: null, octave: 0, pedalInvert: false };
+  setOptions(o: Partial<MidiInput['opts']>) {
+    this.opts = { ...this.opts, ...o };
+    this.bind();
+  }
 
   get supported() {
     return typeof navigator !== 'undefined' && 'requestMIDIAccess' in navigator;
@@ -44,15 +50,28 @@ export class MidiInput {
     if (!this.access) return;
     this.devices = [];
     this.access.inputs.forEach((input) => {
-      this.devices.push(input.name ?? 'MIDI');
-      input.onmidimessage = (e) => this.message(e.data, e.timeStamp);
+      const name = input.name ?? 'MIDI';
+      this.devices.push(name);
+      const on = !this.opts.only || this.opts.only === name || !this.devicesHave(this.opts.only);
+      input.onmidimessage = on ? (e) => this.message(e.data, e.timeStamp) : null;
     });
     this.stateListeners.forEach((l) => l());
   }
 
+  private devicesHave(name: string) {
+    let has = false;
+    this.access?.inputs.forEach((i) => {
+      if ((i.name ?? 'MIDI') === name) has = true;
+    });
+    return has;
+  }
+
   /** Raw MIDI bytes → note on/off (exposed for tests). */
   message(data: Uint8Array | number[], at: number) {
-    const [status, note, vel] = [data[0] ?? 0, data[1] ?? 0, data[2] ?? 0];
+    const [status, raw, vel0] = [data[0] ?? 0, data[1] ?? 0, data[2] ?? 0];
+    const isCC = (status & 0xf0) === 0xb0;
+    const note = isCC ? raw : Math.max(0, Math.min(127, raw + 12 * this.opts.octave));
+    const vel = isCC && raw === 64 && this.opts.pedalInvert ? 127 - vel0 : vel0;
     const cmd = status & 0xf0;
     if (cmd === 0x90 && vel > 0) {
       this.held.set(note, at);

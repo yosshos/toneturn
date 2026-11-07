@@ -9,7 +9,10 @@ import { catalogue, chooseVoice, type Gender } from '../speech/voices';
 import { listVoices, voicesReady } from '../speech/tts';
 import { DEFAULT_SOUND, namingFor, type Settings, type VoiceGender } from '../storage/progress';
 import { fillText, Note } from './bits';
-import { piano, tts } from './services';
+import { piano, store, tts } from './services';
+import { listMics } from '../speech/mic';
+import { APP_THEMES } from './themes';
+import { COSMETICS, ownsCosmetic } from '../engine/streak';
 import { midi } from '../speech/midi';
 import { LatencyCalibrate } from './LatencyCalibrate';
 
@@ -67,7 +70,7 @@ function MyPath({ t, s, onChange }: { t: Strings; s: Settings; onChange: (p: Par
   const [note, setNote] = useState<string | null>(null);
   return (
     <section className="set-card my-path" data-my-path="1">
-      <h2>🧭 {L.title}</h2>
+      <h2>{L.title}</h2>
       <label className="field-row">
         <span>{L.goal}</span>
         <select value={s.goal ?? 'general'} onChange={(e) => onChange({ goal: e.target.value as Goal, pathPacks: undefined })}>
@@ -201,20 +204,25 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
       </header>
 
       <div className="set-groups">
-        <Group id="account" icon="☁" title={t.account} sub={G.account[lang]}>
+        <Group id="account" icon={<SetIcon k="account" />} title={t.account} sub={G.account[lang]}>
           <section className="set-card">{account}</section>
+          <section className="set-card">
+            <button className="btn small" onClick={() => void downloadMyData()} data-export="1">
+              ⬇ {lang === 'he' ? 'להוריד את הנתונים שלי (JSON)' : 'Download my data (JSON)'}
+            </button>
+          </section>
         </Group>
 
-        <Group id="language" icon="🌐" title={G.language.title[lang]} sub={G.language.sub[lang]}>
+        <Group id="language" icon={<SetIcon k="language" />} title={G.language.title[lang]} sub={G.language.sub[lang]}>
           <section className="set-card">
-            <h2>🌐 {t.secLanguage}</h2>
+            <h2>{t.secLanguage}</h2>
             <Seg label={t.settingsUi} value={s.uiLang} options={langs} onChange={(uiLang) => onChange({ uiLang })} />
             <Seg label={t.settingsSpeakIn} hint={t.answerLangHint} value={s.inputLang} options={langs} onChange={(inputLang) => onChange({ inputLang })} />
             <Seg label={t.settingsListen} value={s.outputLang} options={langs} onChange={(outputLang) => onChange({ outputLang })} />
           </section>
 
           <section className="set-card">
-            <h2>🎼 {t.secNotes}</h2>
+            <h2>{t.secNotes}</h2>
             <Seg
               label={t.settingsNaming}
               hint={s.naming === 'auto' ? t.namingAutoHint : undefined}
@@ -236,7 +244,7 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
           </section>
 
           <section className="set-card">
-            <h2>🗣 {t.secVoice}</h2>
+            <h2>{t.secVoice}</h2>
             <Seg<VoiceGender>
               label={t.voiceType}
               value={s.voiceGender}
@@ -246,6 +254,16 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
                 ['male', <>♂ {t.voiceMale}</>],
               ]}
               onChange={(voiceGender) => onChange({ voiceGender, voices: { ...s.voices, [narr]: null } })}
+            />
+            <Seg
+              label={lang === 'he' ? 'מהירות הקריינות' : 'Narration speed'}
+              value={String(s.ttsRate ?? 1)}
+              options={[
+                ['0.85', lang === 'he' ? 'איטית' : 'Slow'],
+                ['1', lang === 'he' ? 'רגילה' : 'Normal'],
+                ['1.15', lang === 'he' ? 'מהירה' : 'Fast'],
+              ]}
+              onChange={(v) => onChange({ ttsRate: Number(v) })}
             />
             {list.length === 0 ? (
               <p className="field-hint warn">{t.noVoices}</p>
@@ -304,7 +322,7 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
           </section>
         </Group>
 
-        <Group id="learning" icon="🧭" title={G.learning.title[lang]} sub={G.learning.sub[lang]}>
+        <Group id="learning" icon={<SetIcon k="learning" />} title={G.learning.title[lang]} sub={G.learning.sub[lang]}>
           {onIntake && (
             <section className="set-card">
               <button className="btn ghost" onClick={onIntake} data-intake-retake="1">
@@ -314,10 +332,16 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
           )}
           <MyPath t={t} s={s} onChange={onChange} />
           <section className="set-card">
+            <Seg
+              label={lang === 'he' ? 'יעד יומי' : 'Daily goal'}
+              value={String(s.dailyGoal ?? 30)}
+              options={[10, 20, 30, 50].map((n) => [String(n), `${n} XP`] as [string, string])}
+              onChange={(v) => onChange({ dailyGoal: Number(v) })}
+            />
             <label className="toggle-row">
               <input type="checkbox" checked={s.miniLessons ?? true} onChange={(e) => onChange({ miniLessons: e.target.checked })} data-mini-setting="1" />
               <span>
-                📚 {t.miniSetting}
+                {t.miniSetting}
                 <small className="field-hint"> — {t.miniSettingHint}</small>
               </span>
             </label>
@@ -346,7 +370,7 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
           </section>
         </Group>
 
-        <Group id="instrument" icon="🎷" title={t.instrumentTitle} sub={G.instrument[lang]}>
+        <Group id="instrument" icon={<SetIcon k="instrument" />} title={t.instrumentTitle} sub={G.instrument[lang]}>
           <section className="set-card">
             <p className="field-hint">{t.instrumentHint}</p>
             <Seg
@@ -392,12 +416,22 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
           </section>
         </Group>
 
-        <Group id="midi" icon="🎹" title={G.midi.title[lang]} sub={s.midiInput ? G.midi.on[lang] : G.midi.off[lang]}>
-          <MidiPanel t={t} lang={lang} on={!!s.midiInput} onChange={(midiInput) => onChange({ midiInput })} naming={uiNaming} />
+        <Group id="midi" icon={<SetIcon k="midi" />} title={G.midi.title[lang]} sub={s.midiInput ? G.midi.on[lang] : G.midi.off[lang]}>
+          <MidiPanel t={t} lang={lang} on={!!s.midiInput} onChange={(midiInput) => onChange({ midiInput })} naming={uiNaming} s={s} onSettings={onChange} />
           {s.midiInput && <LatencyCalibrate lang={lang} values={s} onSave={(p) => onChange(p)} sources={['midi']} initial="midi" />}
+          <details className="set-howto" data-midi-howto="1">
+            <summary>{lang === 'he' ? 'איך מחברים מקלדת (כבל / בלוטות׳)' : 'How to connect a keyboard (cable / Bluetooth)'}</summary>
+            <ul>
+              {(lang === 'he' ? MIDI_HOWTO.he : MIDI_HOWTO.en).map((x) => (
+                <li key={x[0]}>
+                  <b>{x[0]}</b> {x[1]}
+                </li>
+              ))}
+            </ul>
+          </details>
         </Group>
 
-        <Group id="input" icon="🎤" title={G.input.title[lang]} sub={G.input.sub[lang]}>
+        <Group id="input" icon={<SetIcon k="input" />} title={G.input.title[lang]} sub={G.input.sub[lang]}>
           <section className="set-card">
             <Seg
               label={t.inputMode}
@@ -411,17 +445,18 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
             <label className="toggle-row">
               <input type="checkbox" checked={s.rhythmByVoice ?? false} onChange={(e) => onChange({ rhythmByVoice: e.target.checked })} data-rhythm-voice="1" />
               <span>
-                🥁 {t.rhythmVoiceSetting}
+                {t.rhythmVoiceSetting}
                 <small className="field-hint"> — {t.rhythmVoiceHint}</small>
               </span>
             </label>
             <Seg
-              label={`🔗 ${t.echoTolerance}`}
+              label={t.echoTolerance}
               value={String(s.echoTolerance ?? 80)}
               options={[35, 50, 80, 120].map((c) => [String(c), `±${c}¢ · ${t.toleranceNames[String(c)]}`] as [string, string])}
               onChange={(v) => onChange({ echoTolerance: Number(v) })}
             />
             <p className="field-hint">{t.echoToleranceHint}</p>
+            <MicPicker lang={lang} value={s.micDeviceId ?? null} onChange={(micDeviceId) => onChange({ micDeviceId })} />
             {s.voiceConsent && (
               <button className="btn ghost" onClick={() => onChange({ voiceConsent: false })}>
                 {t.revokeConsent}
@@ -431,11 +466,65 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
           <LatencyCalibrate lang={lang} values={s} onSave={(p) => onChange(p)} sources={['tap', 'mic']} initial="tap" />
         </Group>
 
-        <Group id="sound" icon="🔊" title={G.sound.title[lang]} sub={G.sound.sub[lang]}>
+        <Group id="sound" icon={<SetIcon k="sound" />} title={G.sound.title[lang]} sub={G.sound.sub[lang]}>
+          <section className="set-card">
+            <label className="field-row vol-row">
+              <span>{lang === 'he' ? 'עוצמה' : 'Volume'}</span>
+              <input type="range" min={0} max={100} step={5} value={Math.round((s.volume ?? 0.9) * 100)} onChange={(e) => onChange({ volume: Number(e.target.value) / 100 })} aria-label={lang === 'he' ? 'עוצמה' : 'Volume'} data-volume="1" />
+              <b dir="ltr">{Math.round((s.volume ?? 0.9) * 100)}%</b>
+            </label>
+            <label className="toggle-row">
+              <input type="checkbox" checked={s.cues ?? true} onChange={(e) => onChange({ cues: e.target.checked })} data-cues="1" />
+              <span>{lang === 'he' ? 'צלילי משוב (נכון / לא נכון)' : 'Feedback sounds (right / wrong)'}</span>
+            </label>
+          </section>
           <SoundSetting t={t} value={s.sound ?? DEFAULT_SOUND} onChange={(sound) => onChange({ sound })} drone={s.droneSound ?? 'soft'} onDrone={(droneSound) => onChange({ droneSound })} />
         </Group>
 
-        <Group id="display" icon="👁" title={G.display.title[lang]} sub={G.display.sub[lang]}>
+        <Group id="display" icon={<SetIcon k="display" />} title={G.display.title[lang]} sub={G.display.sub[lang]}>
+          <section className="set-card">
+            <fieldset className="seg-field">
+              <legend>{lang === 'he' ? 'ערכת עיצוב' : 'Theme'}</legend>
+              <div className="tp-grid" role="radiogroup" aria-label={lang === 'he' ? 'ערכת עיצוב' : 'Theme'}>
+                {[
+                  ...APP_THEMES.map((x) => ({ id: x.id, name: x.name[lang], note: x.note[lang], sw: x.sw as readonly string[] })),
+                  ...Object.keys(COSMETICS)
+                    .filter((k) => ownsCosmetic(s.purchases ?? [], k))
+                    .map((k) => ({ id: k.replace('theme-', ''), name: t.themeNames[k.replace('theme-', '')] ?? k, note: lang === 'he' ? 'מהחנות' : 'From the shop', sw: [] as readonly string[] })),
+                ].map((x) => {
+                  const on = (s.theme && (APP_THEMES.some((a) => a.id === s.theme) || ownsCosmetic(s.purchases ?? [], `theme-${s.theme}`)) ? s.theme : 'calm') === x.id;
+                  return (
+                    <button key={x.id} type="button" role="radio" aria-checked={on} className={`tp-opt ${on ? 'on' : ''}`} data-theme-opt={x.id} onClick={() => onChange({ theme: x.id })}>
+                      <span className="tp-sw" aria-hidden="true" data-theme-preview={x.sw.length ? undefined : x.id}>
+                        {x.sw.map((c, i) => (
+                          <i key={i} style={{ background: c }} />
+                        ))}
+                      </span>
+                      <span className="tp-text">
+                        <b>{x.name}</b>
+                        <small>{x.note}</small>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </fieldset>
+            <Seg
+              label={lang === 'he' ? 'גודל טקסט' : 'Text size'}
+              value={String(s.textScale ?? 1)}
+              options={[
+                ['0.9', 'A−'],
+                ['1', 'A'],
+                ['1.15', 'A+'],
+                ['1.3', 'A++'],
+              ]}
+              onChange={(v) => onChange({ textScale: Number(v) })}
+            />
+            <label className="check">
+              <input type="checkbox" checked={!!s.cvd} onChange={(e) => onChange({ cvd: e.target.checked })} data-cvd="1" />
+              {lang === 'he' ? 'צבעים ידידותיים לעיוורון צבעים (כחול / כתום במקום ירוק / אדום)' : 'Colour-blind friendly (blue / orange instead of green / red)'}
+            </label>
+          </section>
           <section className="set-card">
             <fieldset className="seg-field views-field">
               <legend>{t.showNotesAs}</legend>
@@ -464,6 +553,10 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
               <input type="checkbox" checked={s.reducedMotion ?? window.matchMedia('(prefers-reduced-motion: reduce)').matches} onChange={(e) => onChange({ reducedMotion: e.target.checked })} />
               {t.reducedMotion}
             </label>
+            <label className="check">
+              <input type="checkbox" checked={s.haptics ?? true} onChange={(e) => onChange({ haptics: e.target.checked })} data-haptics="1" />
+              {lang === 'he' ? 'רטט (בטלפון)' : 'Vibration (phones)'}
+            </label>
           </section>
         </Group>
       </div>
@@ -482,14 +575,14 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
 
 type LL = { en: string; he: string };
 const GROUPS = {
-  account: { en: 'Sign in, sync between devices', he: 'כניסה וסנכרון בין מכשירים' },
-  language: { title: { en: 'Language & voice', he: 'שפה וקול' }, sub: { en: 'App language, note names, narrator voice', he: 'שפת האפליקציה, שמות תווים, קול הקריין' } },
-  learning: { title: { en: 'My path & learning', he: 'המסלול והלמידה שלי' }, sub: { en: 'Goals, mini lessons, hints, speed scoring', he: 'מטרות, שיעורונים, עזרים, ניקוד מהירות' } },
+  account: { en: 'Sign in, sync, download my data', he: 'כניסה, סנכרון, הורדת הנתונים שלי' },
+  language: { title: { en: 'Language & voice', he: 'שפה וקול' }, sub: { en: 'Language, note names, narrator voice & speed', he: 'שפה, שמות תווים, קול ומהירות הקריין' } },
+  learning: { title: { en: 'My path & learning', he: 'המסלול והלמידה שלי' }, sub: { en: 'Goals, daily goal, mini lessons, hints', he: 'מטרות, יעד יומי, שיעורונים, עזרים' } },
   instrument: { en: 'Your instrument, how to answer, tuning, headphones', he: 'הכלי שלך, איך עונים, כיוון, אוזניות' },
-  midi: { title: { en: 'MIDI keyboard', he: 'מקלדת MIDI' }, on: { en: 'On · devices, key test, timing', he: 'פועל · מכשירים, בדיקת קלידים, תזמון' }, off: { en: 'Off · connect a keyboard to answer and play drills', he: 'כבוי · חברו מקלדת כדי לענות ולנגן תרגילים' } },
-  input: { title: { en: 'Microphone & timing', he: 'מיקרופון ותזמון' }, sub: { en: 'Voice or buttons, singing tolerance, tap & mic delay', he: 'קול או כפתורים, סבילות שירה, השהיית הקשה ומיקרופון' } },
-  sound: { title: { en: 'Sound', he: 'סאונד' }, sub: { en: 'Instrument sound, drone', he: 'צליל הכלי, צליל רצוף' } },
-  display: { title: { en: 'Display & accessibility', he: 'תצוגה ונגישות' }, sub: { en: 'Keyboard / staff / tab, motion', he: 'מקלדת / חמשה / טאב, תנועה' } },
+  midi: { title: { en: 'MIDI keyboard', he: 'מקלדת MIDI' }, on: { en: 'On · device, test, octave, pedal, timing', he: 'פועל · מכשיר, בדיקה, אוקטבה, פדל, תזמון' }, off: { en: 'Off · connect a keyboard to answer and play drills', he: 'כבוי · חברו מקלדת כדי לענות ולנגן תרגילים' } },
+  input: { title: { en: 'Microphone & timing', he: 'מיקרופון ותזמון' }, sub: { en: 'Voice or buttons, which mic, tolerance, delay', he: 'קול או כפתורים, איזה מיקרופון, סבילות, השהיה' } },
+  sound: { title: { en: 'Sound', he: 'סאונד' }, sub: { en: 'Volume, feedback sounds, instrument, drone', he: 'עוצמה, צלילי משוב, צליל הכלי, צליל רצוף' } },
+  display: { title: { en: 'Display & accessibility', he: 'תצוגה ונגישות' }, sub: { en: 'Keyboard / staff / tab, motion, vibration', he: 'מקלדת / חמשה / טאב, תנועה, רטט' } },
 } satisfies Record<string, LL | Record<string, LL>>;
 
 const GROUP_KEY = 'tt-settings-open';
@@ -502,7 +595,66 @@ const openGroups = (): string[] => {
 };
 
 /** One settings category: a row that opens and closes (remembered on this device). `#/settings/<id>` opens it. */
-function Group({ id, icon, title, sub, children }: { id: string; icon: string; title: string; sub: string; children: ReactNode }) {
+/** Monochrome line icons for the settings categories (mature, clean UI — owner 2026-11-07). */
+const SET_ICON: Record<string, ReactNode> = {
+  account: (
+    <>
+      <circle cx="12" cy="8" r="3.6" />
+      <path d="M4.5 20c.8-3.6 3.8-5.6 7.5-5.6s6.7 2 7.5 5.6" />
+    </>
+  ),
+  language: (
+    <>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M3.5 12h17M12 3.5c2.4 2.6 3.5 5.4 3.5 8.5s-1.1 5.9-3.5 8.5c-2.4-2.6-3.5-5.4-3.5-8.5s1.1-5.9 3.5-8.5z" />
+    </>
+  ),
+  learning: (
+    <>
+      <circle cx="6" cy="18" r="2.2" />
+      <circle cx="18" cy="6" r="2.2" />
+      <path d="M8.2 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.8" />
+    </>
+  ),
+  instrument: (
+    <>
+      <path d="M9 18V6l10-2v12" />
+      <circle cx="6.5" cy="18" r="2.5" />
+      <circle cx="16.5" cy="16" r="2.5" />
+    </>
+  ),
+  midi: (
+    <>
+      <rect x="2.5" y="6" width="19" height="12" rx="2" />
+      <path d="M7 6v7M12 6v7M17 6v7M5 13h4M10 13h4M15 13h4" />
+    </>
+  ),
+  input: (
+    <>
+      <rect x="9" y="3" width="6" height="11" rx="3" />
+      <path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21" />
+    </>
+  ),
+  sound: (
+    <>
+      <path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" />
+      <path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" />
+    </>
+  ),
+  display: (
+    <>
+      <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" />
+      <circle cx="12" cy="12" r="3" />
+    </>
+  ),
+};
+const SetIcon = ({ k }: { k: string }) => (
+  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    {SET_ICON[k]}
+  </svg>
+);
+
+function Group({ id, icon, title, sub, children }: { id: string; icon: ReactNode; title: string; sub: string; children: ReactNode }) {
   const deep = typeof location !== 'undefined' && location.hash === `#/settings/${id}`;
   const [open, setOpen] = useState(() => deep || openGroups().includes(id));
   const ref = useRef<HTMLDetailsElement>(null);
@@ -544,7 +696,61 @@ function Group({ id, icon, title, sub, children }: { id: string; icon: string; t
 }
 
 /** MIDI keyboard: on/off, connected devices (live), a key test (note, velocity, sustain pedal). */
-function MidiPanel({ t, lang, on, onChange, naming }: { t: Strings; lang: 'en' | 'he'; on: boolean; onChange: (on: boolean) => void; naming: ReturnType<typeof namingFor> }) {
+/** How to connect a MIDI keyboard, per platform (Web MIDI: Chrome / Edge / Opera; not Safari). */
+const MIDI_HOWTO = {
+  en: [
+    ['Cable (USB):', 'plug the keyboard in, then turn MIDI on here. Phones need a USB-C / OTG adapter. Works in Chrome, Edge and Opera on computers and Android.'],
+    ['Bluetooth on Android:', 'pair the keyboard in a Bluetooth MIDI app (e.g. "MIDI BLE Connect"), then come back and turn MIDI on.'],
+    ['Bluetooth on Mac:', 'Audio MIDI Setup → Window → Show MIDI Studio → the Bluetooth icon → Connect.'],
+    ['Bluetooth on Windows:', 'Chrome does not see Bluetooth MIDI directly yet — use a cable, or a bridge app (e.g. MIDIberry + loopMIDI).'],
+    ['iPhone / iPad:', 'Safari has no MIDI support. Use the microphone instead, or a computer / Android device for MIDI.'],
+  ],
+  he: [
+    ['כבל (USB):', 'מחברים את המקלדת ואז מפעילים כאן MIDI. בטלפון צריך מתאם USB-C / OTG. עובד ב-Chrome, Edge ו-Opera במחשב ובאנדרואיד.'],
+    ['בלוטות׳ באנדרואיד:', 'מצמידים את המקלדת באפליקציית Bluetooth MIDI (למשל "MIDI BLE Connect"), חוזרים לכאן ומפעילים MIDI.'],
+    ['בלוטות׳ במק:', 'Audio MIDI Setup ← Window ← Show MIDI Studio ← סמל הבלוטות׳ ← Connect.'],
+    ['בלוטות׳ בווינדוס:', 'Chrome עוד לא רואה MIDI בבלוטות׳ ישירות — משתמשים בכבל, או באפליקציית גישור (למשל MIDIberry + loopMIDI).'],
+    ['אייפון / אייפד:', 'ל-Safari אין תמיכה ב-MIDI. אפשר להשתמש במיקרופון, או במחשב / אנדרואיד בשביל MIDI.'],
+  ],
+} as const;
+
+/** The microphone to use (Settings → Microphone & timing); names appear after the microphone permission. */
+function MicPicker({ lang, value, onChange }: { lang: 'en' | 'he'; value: string | null; onChange: (id: string | null) => void }) {
+  const [mics, setMics] = useState<{ id: string; label: string }[]>([]);
+  useEffect(() => {
+    void listMics().then(setMics);
+    const on = () => void listMics().then(setMics);
+    navigator.mediaDevices?.addEventListener?.('devicechange', on);
+    return () => navigator.mediaDevices?.removeEventListener?.('devicechange', on);
+  }, []);
+  if (mics.length < 2) return null;
+  return (
+    <label className="field-row">
+      <span>{lang === 'he' ? 'מיקרופון' : 'Microphone'}</span>
+      <select value={value ?? ''} onChange={(e) => onChange(e.target.value || null)} data-mic-device="1">
+        <option value="">{lang === 'he' ? 'ברירת המחדל של המכשיר' : 'Device default'}</option>
+        {mics.map((m) => (
+          <option key={m.id} value={m.id}>
+            {m.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+/** Settings → Account: everything this device keeps about you, as one JSON file. */
+async function downloadMyData() {
+  const [progress, settings] = await Promise.all([store.loadProgress(), store.loadSettings()]);
+  const blob = new Blob([JSON.stringify({ app: 'The 7th Sense', exportedAt: new Date().toISOString(), settings, progress }, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `the-7th-sense-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
+function MidiPanel({ t, lang, on, onChange, naming, s, onSettings }: { t: Strings; lang: 'en' | 'he'; on: boolean; onChange: (on: boolean) => void; naming: ReturnType<typeof namingFor>; s: Settings; onSettings: (p: Partial<Settings>) => void }) {
   const he = lang === 'he';
   const [status, setStatus] = useState<string | null>(null);
   const [devices, setDevices] = useState<string[]>(midi.devices);
@@ -608,6 +814,29 @@ function MidiPanel({ t, lang, on, onChange, naming }: { t: Strings; lang: 'en' |
             )}
             <span className={`mt-pedal ${pedal ? 'on' : ''}`}>{he ? 'פדל' : 'Pedal'} {pedal ? '⬇' : '—'}</span>
           </div>
+          {devices.length > 1 && (
+            <label className="field-row">
+              <span>{he ? 'מכשיר' : 'Device'}</span>
+              <select value={s.midiDevice ?? ''} onChange={(e) => onSettings({ midiDevice: e.target.value || null })} data-midi-device="1">
+                <option value="">{he ? 'כל המכשירים' : 'All devices'}</option>
+                {devices.map((d) => (
+                  <option key={d} value={d}>
+                    {d}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          <Seg
+            label={he ? 'הזזת אוקטבה (למקלדות קטנות)' : 'Octave shift (small keyboards)'}
+            value={String(s.midiOctave ?? 0)}
+            options={[-2, -1, 0, 1, 2].map((n) => [String(n), n > 0 ? `+${n}` : String(n)] as [string, string])}
+            onChange={(v) => onSettings({ midiOctave: Number(v) })}
+          />
+          <label className="toggle-row">
+            <input type="checkbox" checked={!!s.midiPedalInvert} onChange={(e) => onSettings({ midiPedalInvert: e.target.checked })} data-pedal-invert="1" />
+            <span>{he ? 'הפדל הפוך (לוחץ כשהוא למעלה)' : 'Pedal works backwards (reverse it)'}</span>
+          </label>
           <p className="field-hint">{he ? 'עוצמת הנגינה (מבוקר–פורטה) מכיילים במסך התרגילים הטכניים ← הגדרות.' : 'Your soft-to-loud range is calibrated in Technique drills → settings.'}</p>
         </>
       )}
@@ -643,7 +872,7 @@ function SoundSetting({ t, value, onChange, drone, onDrone }: { t: Strings; valu
   };
   return (
     <section className="set-card">
-      <h2>🎹 {t.soundTitle}</h2>
+      <h2>{t.soundTitle}</h2>
       <p className="field-hint">{t.soundHint}</p>
       <div className="sound-grid" role="radiogroup" aria-label={t.soundTitle}>
         {SOUNDS.map((id) => (

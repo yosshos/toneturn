@@ -21,14 +21,15 @@ import { absoluteLesson, modesLesson, MODE_ID_LEVELS, wrongNotesLesson } from '.
 import { TrueFalseScreen } from './TrueFalse';
 import { FreezeToast, StreakSheet } from './Streak';
 import { canBuy, canBuyCosmetic, ownsCosmetic } from '../engine/streak';
+import { APP_THEMES } from './themes';
 import { modesLevelFor, recommendFor } from '../engine/recommend';
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore, useMemo } from 'react';
+import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { LESSON_ORDER, runLevelFor, runsWorkshop, type LessonDef, type LessonId, type Question, type SkillId } from '../engine/lesson';
 import type { SessionState } from '../engine/session';
 import type { DomainId } from '../engine/rating';
 import { adaptPlacement, placementLesson, puzzleBand, reviewLesson, weekId, weeklyPuzzle } from '../engine/adaptive';
 import { SkillMap } from './SkillMap';
-import { PracticeTools } from './Tools';
+import { PathExtras } from './Tools';
 import { MicIcon } from './bits';
 import { STRINGS } from '../i18n/strings';
 import { dueReviews, gemsOf, lessonMastered, localDay, namingFor, ratingsOf, type Progress, type Settings, DEFAULT_SETTINGS, DEFAULT_SOUND, emptyProgress, migrateSettings } from '../storage/progress';
@@ -49,13 +50,13 @@ import { myClasses, openAssignments } from '../cloud/classes';
 import type { SetKind } from '../engine/tournament';
 import type { GameKind } from '../game/memoryGame';
 import { MenuSheet } from './Menu';
-import { GAMES2, PlayScreen, TabBar, TAB_ROUTES, type TabId } from './Arcade';
+import { DomainTiles, GAMES2, PlayScreen, TabBar, TAB_ROUTES, type TabId } from './Arcade';
 import { Tuner } from './Tuner';
 import { Drills, drillSettingsOf } from './Drills';
 import { badgeInputOf, refreshRanksBadges } from '../engine/rankBadges';
 import { PLACEMENT_ORDER, ratingDrift, recalibration } from '../engine/placement';
 import { foldFromMemo } from '../engine/stats';
-import { AreaRanks, BadgesView } from './Badges';
+import { BadgesView } from './Badges';
 import type { RankChange } from '../engine/ranks';
 import type { Badge } from '../engine/badges';
 import { BadgeUnlock, RankUpUnlock } from './BadgeUnlock';
@@ -80,14 +81,14 @@ import { PeakHunter } from './PeakHunter';
 import { Rush } from './Rush';
 import { loadSlot, saveSlot } from '../storage/resume';
 import { PathView2, stepTitle, usePathView } from './Path';
-import { checkpointSession, recordStep, stepSession, stepStars, testOutPassed, testOutSession, THEMES, type PathStep, type PathUnit, type UnitStep } from '../engine/path';
+import { checkpointSession, recordStep, stepSession, stepStars, testOutPassed, testOutSession, type PathStep, type PathUnit, type UnitStep } from '../engine/path';
 import { FriendsScreen } from './Friends';
 import { reportGameBest, reportRating, reportStreakDays } from '../cloud/social';
 import { overallRating } from '../engine/rating';
 import { APP_VERSION, unseenChanges } from '../version';
-import { pwa } from '../pwa';
 import { params, piano, setMidiEnabled, SIMULATED, store, tts } from './services';
 import { midi } from '../speech/midi';
+import { setPreferredMic } from '../speech/mic';
 
 type Route = 'intake' | 'studio' | 'home' | 'path' | 'arcade' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong' | 'perform' | 'learned' | 'tuner' | 'drills' | 'workout' | 'workoutrun' | 'peakhunter' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'flight' | 'pitchmemory' | 'nametune' | 'tuneup' | 'highway' | 'melodypuzzle';
 /** Invite links: #/online/CODE */
@@ -135,7 +136,6 @@ export function App() {
   /** The running lesson's save slot (every lesson keeps its place after each answer; playtesting, 0.35.2). */
   const [dropTick, setDropTick] = useState(0);
   const [slot, setSlot] = useState<{ key: string; title: string; seed?: number; resume?: SavedSession } | null>(null);
-  const pwaState = useSyncExternalStore(pwa.subscribe, pwa.get);
   const [sync, setSync] = useState<SyncState>('idle');
   // MIDI keyboard input (Settings): singing tasks capture from the keyboard.
   useEffect(() => {
@@ -275,15 +275,30 @@ export function App() {
     document.documentElement.dataset.motion = (s.reducedMotion ?? osReduce) ? 'reduced' : 'full';
   }, [s.uiLang, s.reducedMotion]);
   // Colour theme (cosmetic): only an owned one applies.
-  const themeId = s.theme && ownsCosmetic(s.purchases ?? [], `theme-${s.theme}`) ? s.theme : 'violet';
+  // 0.41: Calm night is the default; the app themes are free, the gem-shop colour themes need owning ('violet' = Classic arcade).
+  const themeId = s.theme && (APP_THEMES.some((x) => x.id === s.theme) || ownsCosmetic(s.purchases ?? [], `theme-${s.theme}`)) ? s.theme : 'calm';
   useEffect(() => {
     document.documentElement.dataset.theme = themeId;
+    // The browser / phone status-bar colour follows the theme.
+    const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', bg || '#0e1322');
   }, [themeId]);
 
   // Narration voice preferences apply to the single shared player.
   useEffect(() => {
     tts.prefs = { gender: s.voiceGender, voices: s.voices };
   }, [s.voiceGender, s.voices]);
+  // Sound, vibration, microphone and MIDI preferences (Settings audit, 0.41) apply to the shared services.
+  useEffect(() => {
+    piano.setVolume(s.volume ?? 0.9);
+    piano.cuesOn = s.cues ?? true;
+    tts.rate = s.ttsRate ?? 1;
+    document.documentElement.dataset.haptics = s.haptics === false ? 'off' : 'on';
+    setPreferredMic(s.micDeviceId);
+    midi.setOptions({ only: s.midiDevice ?? null, octave: s.midiOctave ?? 0, pedalInvert: !!s.midiPedalInvert });
+    document.documentElement.style.fontSize = s.textScale && s.textScale !== 1 ? `${Math.round(s.textScale * 100)}%` : '';
+    document.documentElement.dataset.cvd = s.cvd ? 'on' : 'off';
+  }, [s.textScale, s.cvd, s.volume, s.cues, s.ttsRate, s.haptics, s.micDeviceId, s.midiDevice, s.midiOctave, s.midiPedalInvert]);
 
   const updateSettings = useCallback(
     (patch: Partial<Settings>) => {
@@ -386,6 +401,21 @@ export function App() {
   const openAbsolute = (level: number) => gate('absolute-pitch', () => openGenerated(absoluteLesson(level, Date.now() >>> 0), undefined, false, { key: `absolute:${level}`, title: `${t.skillNames.absolute} · ${level}` }));
   const openTopic = (topic: string, level: number) =>
     gate(`topic:${topic}`, () => openGenerated(topicLesson(topic, level, Date.now() >>> 0), undefined, false, { key: `topic:${topic}:${level}`, title: `${TOPIC_GEN[topic]?.title[s.uiLang] ?? topic} · ${level}` }));
+  // Deep link to a topic level (#/topic/<id>/<level>): opens that practice directly — used by the e2e checks and, later,
+  // by challenge links (SPEC-SOCIAL §8).
+  const openTopicRef = useRef(openTopic);
+  openTopicRef.current = openTopic;
+  const settingsReady = !!settings;
+  useEffect(() => {
+    if (!settingsReady) return;
+    const go = () => {
+      const m = /^#\/topic\/([a-z0-9-]+)\/(\d+)/.exec(location.hash);
+      if (m && TOPIC_GEN[m[1]]) openTopicRef.current(m[1], Number(m[2]));
+    };
+    go();
+    window.addEventListener('hashchange', go);
+    return () => window.removeEventListener('hashchange', go);
+  }, [settingsReady]);
   const [vocalLevel, setVocalLevel] = useState<number | null>(null);
   /** Class assignments: path lessons and generated practice (vocal levels, modes, wrong notes). */
   const openAssignment = (id: string) => {
@@ -794,14 +824,6 @@ export function App() {
           t={t}
           settings={s}
           progress={progress}
-          pathNext={(() => {
-            const cur = pathView.current;
-            const unit = pathView.units.find((u) => u.status === 'current');
-            if (!cur || !unit) return undefined;
-            const th = unit.theme ? THEMES.find((x) => x.id === unit.theme) : null;
-            return { title: stepTitle(cur.step, s, s.uiLang), blurb: `${s.uiLang === 'en' ? 'Unit' : 'יחידה'} ${unit.n}${th ? ` · ${th.name[s.uiLang]}` : ''}`, onStart: () => openPathStep(cur, unit, 'step') };
-          })()}
-          warmUp={{ count: new Set(dueReviews(progress.review, new Date()).map((r) => r.key)).size, onStart: openReview }}
           workout={
             <WorkoutCard
               t={t}
@@ -814,18 +836,14 @@ export function App() {
               onStart={() => (s.mode === 'voice' && !s.voiceConsent ? setConsentThen(() => () => startWorkout()) : startWorkout())}
               onEdit={() => go('workout')}
               onReset={() => updateSettings({ workoutToday: undefined })}
-              ctx={wctx}
-              onCtx={setWctx}
-              goal={{ todayXp: progress.history.filter((h) => localDay(new Date(h.completedAt)) === localDay(new Date())).reduce((a, h) => a + h.xp, 0), goalXp: DAILY_GOAL_XP }}
+              goal={{ todayXp: progress.history.filter((h) => localDay(new Date(h.completedAt)) === localDay(new Date())).reduce((a, h) => a + h.xp, 0), goalXp: s.dailyGoal ?? DAILY_GOAL_XP }}
             />
           }
           headerExtra={<MonthReviewIcon t={t} lang={s.uiLang} progress={progress} seenMonth={s.monthReviewSeen} onSeen={(monthReviewSeen) => updateSettings({ monthReviewSeen })} />}
           streak={gems.streak}
           onStreak={() => setStreakOpen(true)}
-          account={<AccountCard t={t} user={user} sync={sync} compact />}
           onMenu={() => setMenuOpen(true)}
-          tools={<>{user && <AssignedCard t={t} items={assigned} lang={s.uiLang} onOpen={(id) => openAssignment(id)} />}<PracticeTools t={t} progress={progress} onSkills={() => go('skills')} onPlacement={openPlacement} onReview={openReview} onPuzzle={openPuzzle} onDaily={() => go('daily')} onRuns={openRuns} onDrone={() => go('drone')} onPerform={() => gate('perform:backing', () => go('perform'))} onLearned={() => go('learned')} onStudio={s.cleanView ? undefined : () => go('studio')} learnedCount={learnedCount(s)} onModes={openModes} onWrongNotes={openWrongNotes} onAbsolute={openAbsolute} onTopic={openTopic} lang={s.uiLang} /></>}
-          updateReady={pwaState.updateReady}
+          assigned={user && assigned.length ? <AssignedCard t={t} items={assigned} lang={s.uiLang} onOpen={(id) => openAssignment(id)} /> : null}
           news={
             <>
               {lastFreeze && settings?.seenFreezeDay !== lastFreeze && gems.streak.count > 0 && (
@@ -868,32 +886,9 @@ export function App() {
               )}
             </>
           }
-          onSettings={() => go('settings')}
-          onPracticeSkill={practiceSkill}
           whatsNew={{ unseen: news.length > 0, onSeen: () => updateSettings({ seenVersion: APP_VERSION }) }}
-          onVocal={(warm) => {
-            setVocalWarmup(warm);
-            go('vocal');
-          }}
-          onWorkout={(st) => {
-            if (st.kind === 'lesson') return openLesson(st.lessonId);
-            if (st.kind === 'review') return openReview();
-            if (st.kind === 'modes') return openModes(st.level);
-            if (st.kind === 'runs') return openRuns();
-            if (st.kind === 'topic') return openTopic(st.topic, st.level);
-            if (st.kind === 'vocal' || st.kind === 'vocal-warmup') {
-              setVocalWarmup(st.kind === 'vocal-warmup');
-              return go('vocal');
-            }
-            if (st.game === 'truefalse') return gate('game:truefalse', () => go('truefalse'));
-            setGameKind(st.game === 'echo' ? 'melody' : 'rhythm');
-            go('games');
-          }}
           onPlacement={openPlacement}
-          onSkills={() => go('skills')}
-          playerName={user?.name ? user.name.split(' ')[0] : null}
           onMode={(mode) => updateSettings({ mode })}
-          onLang={(l) => updateSettings({ uiLang: l, inputLang: l, outputLang: l })}
           onPractice={(id, consented) => {
             if (consented) updateSettings({ voiceConsent: true });
             openLesson(id);
@@ -904,7 +899,31 @@ export function App() {
           }}
         />
       )}
-      {route === 'path' && <PathView2 t={t} settings={s} progress={progress} view={pathView} onStep={openPathStep} onTestOut={openTestOut} onPlacement={() => openPlacement()} onSettings={updateSettings} onLesson={(id) => (s.mode === 'voice' && !s.voiceConsent ? setConsentThen(() => () => openLesson(id)) : openLesson(id))} />}
+      {route === 'path' && <PathView2 t={t} settings={s} progress={progress} view={pathView} onStep={openPathStep} onTestOut={openTestOut} onPlacement={() => openPlacement()} onSettings={updateSettings} onLesson={(id) => (s.mode === 'voice' && !s.voiceConsent ? setConsentThen(() => () => openLesson(id)) : openLesson(id))}
+          extras={
+            <PathExtras
+              t={t}
+              progress={progress}
+              view={pathView}
+              lang={s.uiLang}
+              onTopic={openTopic}
+              onModes={openModes}
+              onWrongNotes={openWrongNotes}
+              onAbsolute={openAbsolute}
+              onReview={openReview}
+              onRuns={openRuns}
+              onDrone={() => go('drone')}
+              onPerform={() => gate('perform:backing', () => go('perform'))}
+              onLearned={() => go('learned')}
+              learnedCount={learnedCount(s)}
+              onDrills={() => go('drills')}
+              onVocal={(warm) => {
+                setVocalWarmup(warm);
+                go('vocal');
+              }}
+            />
+          }
+        />}
       {route === 'arcade' && (
         <PlayScreen
           t={t}
@@ -977,7 +996,7 @@ export function App() {
           onPin={(trophies) => updateSettings({ trophies })}
           map={
             <>
-              <AreaRanks ranks={progress.ranks} lang={s.uiLang} />
+              <DomainTiles t={t} progress={progress} onPractice={practiceSkill} lang={s.uiLang} onTechnique={() => go('drills')} />
               <SkillMap t={t} lang={s.uiLang} progress={progress} bestLeague={s.bestLeague} onBack={() => go('home')} onPractice={practiceSkill} onPlacement={openPlacement} />
             </>
           }
@@ -1120,6 +1139,8 @@ export function App() {
           }}
           onSaveDefault={(blocks, scope) => updateSettings({ workoutTemplates: { ...(s.workoutTemplates ?? {}), [scope === 'all' ? 'all' : String(new Date().getDay())]: blocks.map((b) => ({ ...b })) }, workoutToday: { day: today, blocks } })}
           onClose={() => go('home')}
+          ctx={wctx}
+          onCtx={setWctx}
           addOptions={{
             suggested: subPriorities({ ratings: ratingsOf(progress), subs: foldSubs(progress.ratingEvents ?? []), track: s.track ?? null, priorities: (s.intake as Intake | null | undefined)?.priorities ?? null, voice: s.mode === 'voice', now: new Date() })
               .slice(0, 12)

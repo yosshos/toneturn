@@ -837,3 +837,17 @@ export function testOutPassed(steps: string[], items: { id: string; correct: boo
   }
   return steps.filter((_, i) => right.get(i) === true);
 }
+
+/** Topic-level marks from the path (SPEC-TODAY §4): ✓ when the path already counts the level, ▶ for the current step. */
+export function topicMarks(view: PathView): Map<string, 'done' | 'current'> {
+  const out = new Map<string, 'done' | 'current'>();
+  for (const u of view.units)
+    for (const x of u.steps) {
+      const { topic, level } = x.step;
+      if (!topic || !level) continue;
+      if (x.state === 'done' || x.state === 'mastered' || x.state === 'tested') out.set(`${topic}:${level}`, 'done');
+    }
+  const cur = view.current?.step;
+  if (cur?.topic && cur.level) out.set(`${cur.topic}:${cur.level}`, 'current');
+  return out;
+}

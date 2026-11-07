@@ -595,6 +595,13 @@ function IntroCardView({ card, state, t, lang, nm }: { card: IntroCard; state: s
 
 /** Find my level: which topics are done, which one is now, which remain. */
 function TopicStrip({ v, t }: { v: LessonView; t: Strings }) {
+  // One scrolling row (one-screen fit, 0.41): keep the current skill in view.
+  const stripRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const box = stripRef.current;
+    const now = box?.querySelector<HTMLElement>('.ts.now');
+    if (box && now) box.scrollLeft += now.getBoundingClientRect().left - box.getBoundingClientRect().left - (box.clientWidth - now.offsetWidth) / 2;
+  });
   const qs = v.session.lesson.questions;
   const lesson = v.session.lesson;
   // Find my level 2.0: every skill it will measure, done / now / left by the current skill.
@@ -606,7 +613,7 @@ function TopicStrip({ v, t }: { v: LessonView; t: Strings }) {
     const done = v.stage === 'complete' ? order.length : ci;
     const plan = placementPlanOf(v.session);
     return (
-      <div className="topic-strip" aria-label={`${t.topicsLeft}: ${order.length - Math.max(0, done)}`}>
+      <div className="topic-strip" ref={stripRef} aria-label={`${t.topicsLeft}: ${order.length - Math.max(0, done)}`}>
         <ol>
           {order.map((k, i) => {
             const sp = plan.skills.find((p) => p.skill === k);

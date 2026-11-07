@@ -1,7 +1,7 @@
 {
   "name": "toneturn",
   "private": true,
-  "version": "0.40.0",
+  "version": "0.41.0",
   "type": "module",
   "description": "ToneTurn — voice-first ear-training game",
   "scripts": {
@@ -18,7 +18,9 @@
     "daily-keys": "rolldown scripts/daily-keys.ts --platform node --format esm -o scripts/.daily-keys.mjs > scripts/.daily-keys.log && node scripts/.daily-keys.mjs"
   },
   "dependencies": {
+    "@fontsource-variable/fraunces": "^5.3.0",
     "@fontsource-variable/rubik": "^5.3.0",
+    "@fontsource/frank-ruhl-libre": "^5.3.0",
     "@fontsource/secular-one": "^5.3.0",
     "@supabase/supabase-js": "^2.119.0",
     "qrcode": "^1.5.4",

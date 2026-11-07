@@ -2,7 +2,9 @@ import { expect, test } from '@playwright/test';
 
 test('Drone practice (simulator): the ladder fills as each degree is held in tune', async ({ page }) => {
   test.setTimeout(60_000);
-  await page.goto('/?sim=1');
+  // 0.41: practice rooms live on the Path tab.
+  await page.goto('/?sim=1#/path');
+  await page.locator('[data-px="rooms"] > summary').click();
   await page.getByRole('button', { name: /Drone practice/ }).click();
   await page.getByRole('button', { name: /Start the drone/ }).click();
   await expect(page.locator('.drone-live.on')).toBeVisible();

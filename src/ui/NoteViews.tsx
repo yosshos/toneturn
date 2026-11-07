@@ -96,7 +96,10 @@ function useSvg(draw: (VF: VF, el: HTMLDivElement) => void, deps: unknown[]) {
 /** Per-note result colours on the staff (after an answer / a take). */
 import type { NoteMark } from '../engine/noteMarks';
 export type { NoteMark };
-const MARK_COLOR: Record<Exclude<NoteMark, undefined>, string> = { ok: '#1f8f67', timing: '#b8861b', wrong: '#d43c2c', missed: '#d43c2c' };
+const MARK_RG: Record<Exclude<NoteMark, undefined>, string> = { ok: '#1f8f67', timing: '#b8861b', wrong: '#d43c2c', missed: '#d43c2c' };
+/** Colour-blind friendly marks (Settings → Display): blue for right, orange for wrong (symbols stay). */
+const MARK_CVD: Record<Exclude<NoteMark, undefined>, string> = { ok: '#1f6fd1', timing: '#8a6a00', wrong: '#d1620f', missed: '#d1620f' };
+const MARK_COLOR = new Proxy(MARK_RG, { get: (o, k: string) => (typeof document !== 'undefined' && document.documentElement.dataset.cvd === 'on' ? MARK_CVD : o)[k as keyof typeof o] });
 /** Symbols under marked notes so the result is never colour-only. */
 const MARK_SYM: Record<Exclude<NoteMark, undefined>, string> = { ok: '', timing: '~', wrong: '✕', missed: '○' };
 

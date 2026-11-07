@@ -2051,3 +2051,305 @@ p, h1, h2, h3, li, button, small, b, label { overflow-wrap: anywhere; }
     padding-block: 6px;
   }
 }
+
+/* Settings audit (0.41): volume slider, the MIDI connection how-to. */
+.vol-row {
+  display: grid;
+  grid-template-columns: auto 1fr 3.5ch;
+  align-items: center;
+  gap: 10px;
+}
+.vol-row input[type="range"] {
+  width: 100%;
+  accent-color: var(--mint);
+}
+.set-howto {
+  border-radius: 14px;
+  padding: 10px 12px;
+  background: var(--card-2, rgba(255, 255, 255, 0.04));
+  font-size: 0.88rem;
+}
+.set-howto summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+.set-howto ul {
+  margin: 8px 0 0;
+  padding-inline-start: 18px;
+  display: grid;
+  gap: 6px;
+  color: var(--ink-soft);
+}
+
+/* ===== Settings, mature & clean (owner 2026-11-07: "more professional, less neon, keep the fun").
+   Neutral surfaces, hairline borders, one restrained accent, line icons, switches. Scoped to Settings for now —
+   the same tokens will move to other app screens step by step. */
+.panel-screen.settings {
+  --pro-surface: color-mix(in srgb, var(--ink) 4%, var(--bg));
+  --pro-raised: color-mix(in srgb, var(--ink) 9%, var(--bg));
+  --pro-line: color-mix(in srgb, var(--ink) 9%, transparent);
+  --pro-accent: color-mix(in srgb, var(--mint) 78%, var(--ink-dim));
+  font-family: var(--font);
+}
+.panel-screen.settings .screen-head h1 {
+  font-family: var(--font);
+  font-weight: 800;
+  font-size: 1.5rem;
+  letter-spacing: -0.01em;
+}
+.panel-screen.settings .icon-btn {
+  box-shadow: none;
+  background: transparent;
+  border: 1px solid var(--pro-line);
+}
+.panel-screen.settings .set-groups {
+  gap: 8px;
+}
+.panel-screen.settings .set-group {
+  background: var(--pro-surface);
+  border: 1px solid var(--pro-line);
+  border-radius: 14px;
+  box-shadow: none;
+}
+.panel-screen.settings .set-group > summary {
+  min-height: 60px;
+  padding: 12px 14px;
+}
+.panel-screen.settings .sg-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: transparent;
+  border: 1px solid var(--pro-line);
+  color: var(--ink-soft);
+  font-size: 1rem;
+}
+.panel-screen.settings .sg-text b {
+  font-weight: 700;
+  font-size: 0.98rem;
+}
+.panel-screen.settings .sg-text small {
+  font-size: 0.78rem;
+}
+.panel-screen.settings .sg-chev {
+  font-size: 1.2rem;
+}
+.panel-screen.settings .set-group-body {
+  gap: 0;
+  padding: 0 14px 6px;
+  border-top: 1px solid var(--pro-line);
+}
+.panel-screen.settings .set-group-body > .set-card,
+.panel-screen.settings .set-group-body > section,
+.panel-screen.settings .set-group-body > details {
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 14px 0;
+  gap: 14px;
+}
+.panel-screen.settings .set-group-body > * + * {
+  border-top: 1px solid var(--pro-line);
+}
+.panel-screen.settings .set-card h2 {
+  font-family: var(--font);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+.panel-screen.settings .seg-field legend {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+.panel-screen.settings .seg {
+  gap: 2px;
+  padding: 3px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+}
+.panel-screen.settings .seg button {
+  min-height: 36px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.86rem;
+  color: var(--ink-dim);
+}
+.panel-screen.settings .seg button.on {
+  background: var(--pro-raised);
+  color: var(--ink);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.35), inset 0 0 0 1px var(--pro-line);
+}
+.panel-screen.settings .field-hint {
+  font-size: 0.8rem;
+  color: var(--ink-dim);
+}
+/* Switches instead of checkboxes. */
+.panel-screen.settings input[type='checkbox'] {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: none;
+  width: 40px;
+  height: 24px;
+  margin: 0;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--ink) 18%, transparent);
+  position: relative;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.panel-screen.settings input[type='checkbox']::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  inset-inline-start: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--ink);
+  transition: transform 0.15s;
+}
+.panel-screen.settings input[type='checkbox']:checked {
+  background: var(--pro-accent);
+}
+.panel-screen.settings input[type='checkbox']:checked::after {
+  transform: translateX(16px);
+}
+[dir='rtl'] .panel-screen.settings input[type='checkbox']:checked::after {
+  transform: translateX(-16px);
+}
+.panel-screen.settings input[type='checkbox']:focus-visible {
+  outline: 2px solid var(--pro-accent);
+  outline-offset: 2px;
+}
+.panel-screen.settings .toggle-row,
+.panel-screen.settings .check {
+  justify-content: space-between;
+  flex-direction: row-reverse;
+  font-weight: 600;
+  min-height: 40px;
+}
+.panel-screen.settings .toggle-row > span,
+.panel-screen.settings .check {
+  font-size: 0.92rem;
+}
+.panel-screen.settings .btn {
+  min-height: 40px;
+  border-radius: 10px;
+  box-shadow: none;
+  background: transparent;
+  border: 1px solid var(--pro-line);
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-decoration: none;
+  transform: none;
+}
+.panel-screen.settings .btn.primary {
+  background: var(--pro-accent);
+  border-color: transparent;
+  color: #0f1020;
+}
+.panel-screen.settings .btn.ghost {
+  border-color: transparent;
+}
+.panel-screen.settings select {
+  min-height: 38px;
+  border-radius: 10px;
+  border: 1px solid var(--pro-line);
+  background: var(--pro-raised);
+  color: var(--ink);
+  font: inherit;
+  padding: 0 10px;
+}
+.panel-screen.settings .chip {
+  box-shadow: none;
+  border-radius: 999px;
+}
+.panel-screen.settings .chip.on {
+  background: var(--pro-raised);
+  color: var(--ink);
+  border-color: var(--pro-accent);
+}
+.panel-screen.settings .midi-test {
+  background: var(--pro-raised);
+  border-radius: 10px;
+}
+.panel-screen.settings .set-howto {
+  background: transparent;
+  padding: 0;
+}
+.panel-screen.settings .vol-row input[type='range'] {
+  accent-color: var(--pro-accent);
+}
+
+.panel-screen.settings .sound-grid {
+  gap: 6px;
+}
+.panel-screen.settings .sound-opt {
+  min-height: 40px;
+  border-radius: 10px;
+  border: 1px solid var(--pro-line);
+  background: transparent;
+  box-shadow: none;
+  font-weight: 600;
+  font-size: 0.86rem;
+  color: var(--ink-soft);
+}
+.panel-screen.settings .sound-opt.on {
+  border-color: var(--pro-accent);
+  color: var(--ink);
+  background: var(--pro-raised);
+}
+.panel-screen.settings .credits {
+  font-size: 0.72rem;
+}
+
+/* Theme picker (Settings → Display). */
+.tp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+}
+.tp-opt {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.tp-opt.on {
+  border-color: var(--mint);
+  box-shadow: inset 0 0 0 1px var(--mint);
+}
+.tp-sw {
+  display: flex;
+  height: 28px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+.tp-sw i {
+  flex: 1;
+}
+.tp-sw[data-theme-preview] {
+  background: linear-gradient(90deg, var(--bg), var(--card), var(--mint));
+}
+.tp-text {
+  display: grid;
+  gap: 1px;
+}
+.tp-text b {
+  font-size: 0.9rem;
+}
+.tp-text small {
+  font-size: 0.74rem;
+  color: var(--ink-dim);
+}

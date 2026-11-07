@@ -162,6 +162,22 @@ export interface Settings {
   firstUseAt: string | null;
   /** Answer and "sing" with a MIDI keyboard instead of the voice. */
   midiInput?: boolean;
+  /** Settings audit (0.41): MIDI device (null = all), octave shift for small keyboards, inverted sustain pedal. */
+  midiDevice?: string | null;
+  midiOctave?: number;
+  midiPedalInvert?: boolean;
+  /** Microphone chosen in Settings (deviceId; null = system default). */
+  micDeviceId?: string | null;
+  /** Master volume 0..1, right/wrong chimes, narration speed, vibration. */
+  volume?: number;
+  cues?: boolean;
+  ttsRate?: number;
+  haptics?: boolean;
+  /** Display (0.41): text size (root scale) and colour-blind friendly feedback colours. */
+  textScale?: number;
+  cvd?: boolean;
+  /** Daily XP goal (Today ring): 10 / 20 / 30 / 50. */
+  dailyGoal?: number;
   /** Gem purchases (streak freezes, repairs) — append-only, synced with the profile settings (spec N.4). */
   purchases?: Purchase[];
   /** Last freeze day the player was told about (freeze-used toast). */

@@ -6,7 +6,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 test.use({ viewport: { width: Number(process.env.OVF_WIDTH ?? 320), height: 720 }, hasTouch: true });
 
-const ALLOWED_SCROLLERS = ['roster-wrap', 'play-cats', 'neck-wrap', 'staff-pad-wrap', 'ar-row'];
+const ALLOWED_SCROLLERS = ['roster-wrap', 'play-cats', 'neck-wrap', 'staff-pad-wrap', 'ar-row', 'topic-strip'];
 
 async function problems(page: Page): Promise<string[]> {
   return page.evaluate((allowed) => {
@@ -114,7 +114,8 @@ for (const lang of ['en', 'he'] as const) {
     await page.locator('[data-learned-card="key-signatures"]').click();
     await check('quick lesson');
     await page.goto(base);
-    await page.getByRole('button', { name: /Find my level|מצאו את הרמה|בדיקת רמה/ }).first().click({ timeout: 5000 }).catch(() => {});
+    await page.getByRole('button', { name: /Find my level|מצאו את הרמה|בדיקת רמה|מציאת הרמה/ }).first().click({ timeout: 5000 }).catch(() => {});
+    await page.locator('[data-level-all]').click({ timeout: 3000 }).catch(() => {});
     await page.waitForTimeout(2500);
     await check('find my level');
     expect(bad, JSON.stringify(bad, null, 1)).toEqual({});
@@ -124,16 +125,18 @@ for (const lang of ['en', 'he'] as const) {
     test.setTimeout(900_000);
     await setup(page);
     const { bad, check } = recorder(page);
-    await page.goto(base);
+    await page.goto(base + '#/path'); // 0.41: topics live on the Path tab (All topics)
+    await page.locator('.path-extras').waitFor();
     await openAll(page);
     // 0.38: ~100 topics — one level of each (the first); every topic's screen is checked.
     const ids = await page.$$eval('[data-topic]', (els) => [...new Set(els.map((e) => (e as HTMLElement).dataset.topic!))]);
     for (const [i, id] of ids.entries()) {
-      await page.goto(base);
-      await openAll(page);
-      const chip = page.locator(`[data-topic="${id}"]`).first();
+      // Each topic opens through its deep link (#/topic/<id>/1) — the Path tab is heavy to re-render 109 times.
+      await page.goto(`${base}#/topic/${id}/1`);
+      // Voice mode asks for the microphone first: answer with "Buttons instead".
+      await page.locator('.sheet-backdrop .btn.ghost').first().click({ timeout: 4000 }).catch(() => {});
+      await page.locator('main.lesson').waitFor({ timeout: 10_000 }).catch(() => {});
       const label = `topic ${id} #${i}`;
-      await chip.click();
       await page.waitForTimeout(1200);
       await check(label);
     }

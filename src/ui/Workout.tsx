@@ -142,72 +142,58 @@ function BlockBar({ blocks, run }: { blocks: Block[]; run?: WorkoutRun | null })
   );
 }
 
-/** The first card on Home (W1): the next step, the blocks, Start / Continue, Edit. */
-export function WorkoutCard({ t, lang, blocks, run, view, nextLine, edited, onStart, onEdit, onReset, ctx, onCtx, goal }: {
-  goal?: { todayXp: number; goalXp: number }; t: Strings; lang: Lang; blocks: Block[]; run: WorkoutRun | null; view: PathView; nextLine: string | null; edited: boolean; onStart: () => void; onEdit: () => void; onReset: () => void; ctx?: { nomic: boolean; quiet: boolean; noinst: boolean }; onCtx?: (c: { nomic: boolean; quiet: boolean; noinst: boolean }) => void }) {
+/**
+ * Today's workout (W1, redesigned 0.41 — owner: "too much text and colour"): one title line with the total and ✎, the
+ * next path step, a calm numbered list of blocks (one accent: the block you're on), Start with a small daily-goal ring.
+ * The context switches (no mic / quiet / no instrument) live in the editor.
+ */
+export function WorkoutCard({ t, lang, blocks, run, nextLine, edited, onStart, onEdit, onReset, goal }: {
+  goal?: { todayXp: number; goalXp: number }; t: Strings; lang: Lang; blocks: Block[]; run: WorkoutRun | null; view?: PathView; nextLine: string | null; edited: boolean; onStart: () => void; onEdit: () => void; onReset: () => void }) {
   const tx = W[lang];
-  const cov = coverage(blocks, view);
-  const active = run && !run.finished && run.at > 0 || (run && Object.keys(run.used).length > 0 && !run.finished);
+  const active = (run && !run.finished && run.at > 0) || (run && Object.keys(run.used).length > 0 && !run.finished);
   const leftMin = run && !run.finished ? Math.ceil(runLeftMs(run) / 60000) : total(blocks);
+  const at = run && !run.finished ? run.at : -1;
+  const pct = goal ? Math.min(1, goal.todayXp / Math.max(1, goal.goalXp)) : 0;
   return (
-    <section className="wk-card" aria-label={tx.title}>
+    <section className="wk-card wk-calm" aria-label={tx.title}>
       <div className="wk-head">
-        <small className="wk-kicker">{tx.title}</small>
-        <span className="wk-total" dir="ltr">
-          {total(blocks)} {tx.min}
-        </span>
+        <small className="wk-kicker">
+          {tx.title} · <span dir="ltr">{total(blocks)} {tx.min}</span>
+        </small>
         <button className="icon-btn wk-edit" onClick={onEdit} aria-label={tx.edit}>
           ✎
         </button>
       </div>
       {nextLine && <h2 className="wk-next">{nextLine}</h2>}
-      {goal && (
-        <div className="mission-goal wk-goal">
-          <div className="mg-head">
-            <span>{t.dailyGoal}</span>
-            <b dir="ltr">
-              {goal.todayXp}/{goal.goalXp} {t.xp}
-            </b>
-          </div>
-          <span className="mg-bar" role="progressbar" aria-valuemin={0} aria-valuemax={goal.goalXp} aria-valuenow={Math.min(goal.todayXp, goal.goalXp)} aria-label={t.dailyGoal}>
-            <span style={{ width: `${Math.round(Math.min(1, goal.todayXp / goal.goalXp) * 100)}%` }} />
-          </span>
-        </div>
-      )}
-      <BlockBar blocks={blocks} run={run} />
-      <ul className="wk-list">
-        {blocks.map((b) => (
-          <li key={b.id} style={{ ['--hue' as string]: hueOf(b.target) }}>
-            <i aria-hidden="true" />
-            <span>{blockLabel(t, b.target, lang)}</span>
-            <b dir="ltr">{b.minutes}′</b>
+      <ol className="wk-steps">
+        {blocks.map((b, i) => (
+          <li key={b.id} className={i < at ? 'done' : i === at || (at < 0 && i === 0) ? 'now' : ''}>
+            <span className="wk-n" aria-hidden="true">
+              {i < at ? '✓' : i + 1}
+            </span>
+            <span className="wk-label">{blockLabel(t, b.target, lang)}</span>
+            <span className="wk-m" dir="ltr">
+              {b.minutes}′
+            </span>
           </li>
         ))}
-      </ul>
-      {cov.unitN !== null && (
-        <p className="wk-cov" dir="auto">
-          {cov.open === 0 ? fill(tx.unitDone, { n: cov.unitN }) : fill(tx.unit, { c: cov.covered, o: cov.open, n: cov.unitN })}
-        </p>
-      )}
-      {ctx && onCtx && !(run && !run.finished && Object.keys(run.used).length) && (
-        <div className="wk-ctx" role="group">
-          {(['nomic', 'quiet', 'noinst'] as const).map((k) => (
-            <button key={k} className={`chip small ${ctx[k] ? 'on' : ''}`} aria-pressed={ctx[k]} onClick={() => onCtx({ ...ctx, [k]: !ctx[k] })}>
-              {tx.ctx[k]}
-            </button>
-          ))}
-        </div>
-      )}
+      </ol>
       <div className="wk-actions">
-        <button className="btn mega wk-start" data-continue="1" onClick={onStart}>
+        <button className="btn primary wk-start" data-continue="1" onClick={onStart}>
           ▶ {active ? `${tx.cont} · ${fill(tx.left, { m: leftMin })}` : tx.start}
         </button>
-        {edited && (
-          <button className="chip wk-edited" onClick={onReset} title={tx.reset}>
-            ✎ {tx.edited} ✕
-          </button>
+        {goal && (
+          <span className="wk-ring" role="progressbar" aria-valuemin={0} aria-valuemax={goal.goalXp} aria-valuenow={Math.min(goal.todayXp, goal.goalXp)} aria-label={`${t.dailyGoal}: ${goal.todayXp}/${goal.goalXp} ${t.xp}`} style={{ ['--p' as string]: `${pct * 360}deg` }}>
+            <b dir="ltr">{goal.todayXp}</b>
+            <small dir="ltr">/{goal.goalXp}</small>
+          </span>
         )}
       </div>
+      {edited && (
+        <button className="link wk-edited" onClick={onReset}>
+          ✎ {tx.edited} · {tx.reset}
+        </button>
+      )}
     </section>
   );
 }
@@ -224,6 +210,8 @@ export function WorkoutEditor({
   onSaveDefault,
   onClose,
   addOptions,
+  ctx,
+  onCtx,
 }: {
   t: Strings;
   lang: Lang;
@@ -235,6 +223,9 @@ export function WorkoutEditor({
   onSaveDefault: (bs: Block[], scope: 'all' | 'weekday') => void;
   onClose: () => void;
   addOptions: { suggested: BlockTarget[]; topics: string[]; games: string[] };
+  /** Where you are today (moved here from the card, 0.41): no mic / quiet place / no instrument. */
+  ctx?: { nomic: boolean; quiet: boolean; noinst: boolean };
+  onCtx?: (c: { nomic: boolean; quiet: boolean; noinst: boolean }) => void;
 }) {
   const tx = W[lang];
   const [bs, setBs] = useState<Block[]>(initial);
@@ -285,6 +276,15 @@ export function WorkoutEditor({
           {tx.done}
         </button>
       </header>
+      {ctx && onCtx && (
+        <div className="wk-ctx" role="group" aria-label={lang === 'he' ? 'איפה אתם היום' : 'Where you are today'}>
+          {(['nomic', 'quiet', 'noinst'] as const).map((k) => (
+            <button key={k} className={`chip small ${ctx[k] ? 'on' : ''}`} aria-pressed={ctx[k]} onClick={() => onCtx({ ...ctx, [k]: !ctx[k] })}>
+              {tx.ctx[k]}
+            </button>
+          ))}
+        </div>
+      )}
       <section className="wk-total-bar" aria-label={tx.total}>
         <div className="wk-chips" role="group">
           {[5, 10, 15, 20, 30, 45, 60].map((n) => (

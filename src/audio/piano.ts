@@ -38,6 +38,12 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
   private listeners = new Set<(active: number[]) => void>();
   /** Master volume (0..1). */
   volume = 0.9;
+  /** Right / wrong / done chimes (Settings → Sound). The "ready" cue stays: it tells you to answer. */
+  cuesOn = true;
+  setVolume(v: number) {
+    this.volume = Math.max(0, Math.min(1, v));
+    if (this.master && this.ctx) this.master.gain.setTargetAtTime(this.volume, this.ctx.currentTime, 0.02);
+  }
   /** Instrument sound (spec Q): 'classic' = the synthesised piano; otherwise a sample set from /samples. */
   private sound = 'classic';
   private bank: { id: string; notes: number[]; buffers: Map<number, AudioBuffer> } | null = null;
@@ -477,6 +483,7 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
   cue(kind: CueKind) {
     const ctx = this.ctx;
     if (!ctx) return;
+    if (!this.cuesOn && kind !== 'ready') return;
     const t = ctx.currentTime + 0.02;
     const bell = (midi: number, at: number, dur: number, amp: number, type: OscillatorType = 'sine') => {
       const o = ctx.createOscillator();

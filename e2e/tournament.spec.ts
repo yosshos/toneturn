@@ -39,7 +39,7 @@ test.describe('tournament', () => {
 
   test('daily challenge: 5 questions, spoiler-free share card, first play recorded', async ({ page }) => {
     test.setTimeout(120_000);
-    await page.goto('/');
+    await page.goto('/#/arcade');
     await page.getByRole('button', { name: /Daily challenge/ }).click();
     await page.getByRole('button', { name: /Play/ }).click();
     for (let r = 0; r < 5; r++) await playRound(page, [0]);
@@ -49,7 +49,7 @@ test.describe('tournament', () => {
     await expect(card).toHaveText(/^The 7th Sense Daily \d{4}-\d{2}-\d{2}\n[🟩🟨⬜]{5} {2}[\d,]+ pts$/u);
     const text = await card.textContent();
     await page.getByRole('button', { name: 'Home' }).click();
-
+    await page.locator('.tab[data-tab="arcade"]').click();
     await expect(page.getByRole('button', { name: /Daily challenge/ })).toContainText('Done today');
     await page.reload();
     await page.getByRole('button', { name: /Daily challenge/ }).click();

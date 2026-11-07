@@ -74,14 +74,20 @@ test.describe('placement, Skill Map, review, weekly puzzle', () => {
 
     // The scripted miss went into the review queue.
     await page.getByRole('button', { name: 'Back' }).click();
-    await expect(page.getByRole('button', { name: /Review/ }).first()).toBeVisible();
-    // Find my level stays in Practice tools after it was done (re-take).
-    await expect(page.locator('.placement-card')).toContainText('Take it again');
+    // The scripted miss is in the review queue (Path → Practice rooms).
+    await page.locator('.tab[data-tab="path"]').click();
+    await page.locator('[data-px="rooms"] > summary').click();
+    await expect(page.locator('[data-room="review"]')).toBeVisible();
+    // Find my level stays on Today after it was done (re-take): one small button → the sheet.
+    await page.locator('.tab[data-tab="home"]').click();
+    await page.locator('[data-find-level]').click();
+    await expect(page.locator('.level-sheet')).toContainText('Take it again');
   });
 
   test('measure one area: Memory runs only its three skills', async ({ page }) => {
-    await page.goto('/?sim=1&unlock=all');
-    await page.locator('.placement-domains [data-domain="memory"]').click();
+    // One area from the Skill Map (Progress tab) — on Today it is the Find my level sheet.
+    await page.goto('/?sim=1&unlock=all#/skills');
+    await page.locator('[data-measure="memory"]').click();
     await page.getByRole('button', { name: /Use my voice & start|Buttons instead/ }).first().click();
     await expect(page.locator('.topic-strip .ts')).toHaveCount(3);
     await expect(page.locator('.topic-strip .ts').first()).toHaveAttribute('data-skill', 'sequences');
@@ -89,18 +95,20 @@ test.describe('placement, Skill Map, review, weekly puzzle', () => {
   });
 
   test('weekly puzzle: solve on the first try → gold, shown on the home screen', async ({ page }) => {
-    await page.goto('/?sim=1');
+    await page.goto('/?sim=1#/arcade');
     await page.getByRole('button', { name: /Weekly puzzle/ }).click();
     await page.getByRole('button', { name: 'Use my voice & start' }).click();
     await expect(page.locator('.ask')).toHaveText('Which degrees, in order?');
     await expect(page.getByRole('heading', { name: 'Lesson complete' })).toBeVisible({ timeout: 90_000 });
     await page.getByRole('button', { name: 'Home' }).click();
+    await page.locator('.tab[data-tab="arcade"]').click();
     await expect(page.getByRole('button', { name: /Weekly puzzle/ })).toContainText('Gold this week');
   });
 
   test('weekly puzzle with the keypad (Buttons mode)', async ({ page }) => {
     await page.goto('/?sim=1');
     await page.getByRole('radio', { name: 'Buttons' }).click();
+    await page.locator('.tab[data-tab="arcade"]').click();
     await page.getByRole('button', { name: /Weekly puzzle/ }).click();
     await expect(page.locator('.seq-keys .seq-key')).toHaveCount(7, { timeout: 60_000 });
     const slots = await page.locator('.seq-slots .slot').count();

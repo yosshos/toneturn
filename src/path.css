@@ -1352,3 +1352,488 @@ html[data-motion='reduced'] .wk-undo {
     max-height: 11vh;
   }
 }
+
+/* ===== Today (SPEC-TODAY, 0.41): the workout card, calm — one accent, no rainbow. */
+.wk-card.wk-calm {
+  background: var(--card);
+  border: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
+  gap: 12px;
+}
+.wk-calm .wk-head {
+  justify-content: space-between;
+}
+.wk-calm .wk-kicker {
+  color: var(--ink-dim);
+  text-transform: none;
+  letter-spacing: 0;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+.wk-calm .wk-next {
+  font-size: clamp(1.15rem, 5vw, 1.4rem);
+}
+.wk-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+.wk-steps li {
+  display: grid;
+  grid-template-columns: 26px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 12px;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+}
+.wk-steps .wk-n {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+  color: var(--ink-dim);
+}
+.wk-steps .wk-m {
+  color: var(--ink-dim);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+.wk-steps li.now {
+  background: color-mix(in srgb, var(--mint) 12%, transparent);
+  color: var(--ink);
+  font-weight: 700;
+}
+.wk-steps li.now .wk-n {
+  background: var(--mint);
+  color: #0f1020;
+}
+.wk-steps li.done {
+  opacity: 0.55;
+}
+.wk-calm .wk-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.wk-calm .wk-start {
+  flex: 1;
+}
+.wk-ring {
+  --p: 0deg;
+  flex: none;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  line-height: 1;
+  background: radial-gradient(closest-side, var(--card) 76%, transparent 78%), conic-gradient(var(--gold) var(--p), color-mix(in srgb, var(--ink) 12%, transparent) 0);
+}
+.wk-ring b {
+  font-size: 1rem;
+}
+.wk-ring small {
+  font-size: 0.62rem;
+  color: var(--ink-dim);
+}
+.wk-calm .wk-edited {
+  justify-self: center;
+  font-size: 0.85rem;
+}
+
+/* Today: one small Find my level button, and its sheet (everything / one area). */
+.find-level-btn {
+  justify-self: center;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px auto 0;
+  padding: 8px 16px;
+  border: 1px solid color-mix(in srgb, var(--ink) 16%, transparent);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.level-sheet {
+  display: grid;
+  gap: 10px;
+}
+.level-sheet .ls-or {
+  margin: 4px 0 0;
+  color: var(--ink-dim);
+  font-size: 0.85rem;
+  text-align: center;
+}
+.ls-areas {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* Path tab: practice rooms and all topics, below the road. */
+.path-extras {
+  display: grid;
+  gap: 10px;
+  margin: 18px 0 8px;
+}
+.px-section {
+  border-radius: 18px;
+  background: var(--card);
+  overflow: hidden;
+}
+.px-section > summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 14px 16px;
+  font-weight: 800;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 8px;
+}
+.px-section > summary::-webkit-details-marker {
+  display: none;
+}
+.px-section > summary small {
+  flex-basis: 100%;
+  font-weight: 500;
+  color: var(--ink-dim);
+  font-size: 0.8rem;
+}
+.px-section[open] > summary {
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
+}
+.px-section > :not(summary) {
+  margin-inline: 12px;
+}
+.px-section > :last-child {
+  margin-bottom: 12px;
+}
+.room-list {
+  display: grid;
+  gap: 4px;
+  padding-top: 8px;
+}
+.room-row {
+  display: grid;
+  grid-template-columns: 36px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 6px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.room-row:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.room-icon {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--ink) 7%, transparent);
+  font-size: 1.1rem;
+}
+.room-icon svg {
+  width: 22px;
+  height: 22px;
+}
+.room-text {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+.room-text small {
+  color: var(--ink-dim);
+  font-size: 0.8rem;
+}
+.room-chev {
+  color: var(--ink-dim);
+  font-size: 1.3rem;
+}
+.chip.done {
+  background: color-mix(in srgb, var(--mint) 14%, transparent);
+  border-color: color-mix(in srgb, var(--mint) 35%, transparent);
+  color: var(--ink-soft);
+}
+
+/* Today: compact rows for things to resume (one line each, the workout stays on the first screen). */
+.resume-row {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 8px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: var(--card);
+  border: 1px solid color-mix(in srgb, var(--gold) 28%, transparent);
+}
+.rr-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.92rem;
+}
+.rr-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.88rem;
+}
+.rr-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.rr-text b {
+  font-size: 0.92rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rr-text small {
+  color: var(--ink-dim);
+  font-size: 0.78rem;
+}
+.rr-alt {
+  font-size: 0.78rem;
+  padding: 0;
+}
+.rr-line .btn.small {
+  flex: none;
+  width: auto;
+  min-width: 0;
+  padding-inline: 14px;
+}
+.rr-line > span {
+  flex: 1;
+  min-width: 0;
+}
+.rr-x {
+  width: 32px;
+  height: 32px;
+}
+.today-screen .freeze-toast {
+  margin-bottom: 8px;
+}
+
+.level-sheet .btn.mega {
+  display: grid;
+  gap: 2px;
+  justify-items: center;
+  font-size: 1.35rem;
+  line-height: 1.15;
+}
+.level-sheet .btn.mega small {
+  font-size: 0.8rem;
+  font-weight: 700;
+  opacity: 0.75;
+}
+
+/* ===== Minimal app buttons (owner 2026-11-07): chunky neon buttons only inside exercises. Resume rows: name, a thin
+   progress bar, small icon buttons. These rules come last and override the first draft above. */
+.resume-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 10px 10px 14px;
+  border: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
+  background: var(--card);
+}
+.resume-row .rr-text {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.rr-bar {
+  display: block;
+  height: 4px;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+  overflow: hidden;
+}
+.rr-bar span {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  background: var(--ink-soft);
+}
+.rr-icon {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--ink) 16%, transparent);
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+.rr-icon.rr-go {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--mint) 18%, transparent);
+  color: var(--mint);
+}
+.catchup-row {
+  grid-template-columns: 1fr auto;
+}
+.rr-link {
+  justify-self: start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 0.85rem;
+  text-align: start;
+  cursor: pointer;
+}
+.today-screen .wk-start,
+.level-sheet .ls-all {
+  min-height: 48px;
+  border-radius: 14px;
+  box-shadow: none;
+  font-size: 1.05rem;
+  transform: none;
+}
+.level-sheet .ls-all {
+  display: grid;
+  gap: 0;
+  justify-items: center;
+  padding-block: 6px;
+}
+.level-sheet .ls-all small {
+  font-size: 0.78rem;
+  font-weight: 600;
+  opacity: 0.75;
+}
+
+.rr-name {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+.rr-name b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.92rem;
+}
+.rr-name small {
+  flex: none;
+  color: var(--ink-dim);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.today-screen .freeze-toast {
+  padding: 6px 8px 6px 12px;
+  border-radius: 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  gap: 8px;
+}
+.today-screen .freeze-toast .ice {
+  font-size: 1rem;
+}
+.today-screen .freeze-toast .icon-btn {
+  width: 32px;
+  height: 32px;
+  min-height: 0;
+}
+
+/* Find my level: the skills it measures as ONE scrolling row (was ~15 wrapped rows on a phone). */
+.lesson .topic-strip {
+  overflow-x: auto;
+  scrollbar-width: none;
+  position: relative;
+}
+.lesson .topic-strip::-webkit-scrollbar {
+  display: none;
+}
+.lesson .topic-strip ol {
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  width: max-content;
+  min-width: 100%;
+}
+.lesson .topic-strip .ts {
+  white-space: nowrap;
+  flex: none;
+}
+
+/* 320-px phones (e2e at 320×720): the control row stays one line, the headphones row wraps its button. */
+.lesson .stage .controls {
+  flex-wrap: nowrap;
+  gap: 6px;
+}
+@media (max-width: 380px) {
+  .lesson .controls .btn.small {
+    padding-inline: 10px;
+    font-size: 0.85rem;
+  }
+  .lesson .controls .refresh-concept {
+    font-size: 0.85rem;
+  }
+}
+.lesson .phones-card {
+  flex-wrap: wrap;
+}
+.lesson .phones-card p {
+  flex: 1 1 150px;
+}
+@media (max-height: 900px) {
+  .lesson .rhythm-builder {
+    gap: 6px;
+  }
+  .lesson .builder-bar {
+    min-height: clamp(56px, 10vh, 90px);
+  }
+  .lesson .builder-palette {
+    grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+    gap: 6px;
+  }
+  .lesson .block-btn {
+    min-height: clamp(48px, 8vh, 72px);
+  }
+  .lesson .place-actions {
+    gap: 6px;
+  }
+  .lesson .ask {
+    font-size: clamp(0.98rem, min(4.6vw, 2.8vh), 1.6rem);
+  }
+}
+@media (max-height: 900px) {
+  .lesson .neck {
+    height: clamp(104px, 21vh, 300px);
+  }
+  .lesson .tuner {
+    width: min(280px, 80vw, 20vh);
+  }
+}

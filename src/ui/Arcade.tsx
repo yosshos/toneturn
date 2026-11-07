@@ -10,14 +10,16 @@ import { personalOrder, type Intake } from '../engine/intake';
 import { displayNote, pc } from '../engine/pitch';
 import { LESSON_META } from '../game/content';
 import type { Strings } from '../i18n/strings';
-import { namingFor, ratingsOf, type Progress, type Settings } from '../storage/progress';
+import { localDay, namingFor, ratingsOf, type Progress, type Settings } from '../storage/progress';
+import { weekId } from '../engine/adaptive';
 import { CHANGELOG } from '../version';
 import { Changelog } from './Menu';
 import { lessonStates, NodeIcon, starsFor, TOTALS } from './Home';
 import { MicIcon, withNote } from './bits';
 import { GameIcon } from './Games';
 import { RankCrest } from './Badges';
-import { areaProgress, rankLabel, type RankProgress } from '../engine/ranks';
+import { areaProgress, rankLabel, techniqueProgress, type RankProgress } from '../engine/ranks';
+import { techniqueOf } from '../engine/rankBadges';
 import type { GameKind } from '../game/memoryGame';
 
 const fill = (s: string, v: Record<string, string | number>) => Object.entries(v).reduce((a, [k, x]) => a.replaceAll(`{${k}}`, String(x)), s);
@@ -37,7 +39,7 @@ const TOPIC_ICON: Record<TopicId, string> = { degrees: '🎼', harmony: '🎹', 
 
 /** Light haptics (where supported, never with reduced motion). */
 export function buzz(kind: 'good' | 'bad') {
-  if (document.documentElement.dataset.motion === 'reduced') return;
+  if (document.documentElement.dataset.motion === 'reduced' || document.documentElement.dataset.haptics === 'off') return;
   try {
     navigator.vibrate?.(kind === 'good' ? 12 : [18, 40, 18]);
   } catch {
@@ -51,7 +53,16 @@ export type TabId = 'home' | 'path' | 'skills' | 'arcade' | 'friends';
 export const TAB_ROUTES: TabId[] = ['home', 'path', 'skills', 'arcade', 'friends']
 
 const TAB_ICONS: Record<TabId, React.ReactNode> = {
-  home: <path d="M3 11.5 12 4l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" />,
+  // Today (SPEC-TODAY): a calendar page showing today's date.
+  home: (
+    <>
+      <rect x="3.5" y="4.5" width="17" height="16" rx="3" />
+      <path d="M3.5 9h17M8 3v3M16 3v3" />
+      <text x="12" y="18.2" textAnchor="middle" fontSize="8.4" fontWeight="800" fill="currentColor" stroke="none" fontFamily="Rubik, system-ui, sans-serif">
+        {new Date().getDate()}
+      </text>
+    </>
+  ),
   path: (
     <>
       <circle cx="6" cy="18" r="2.4" />
@@ -263,7 +274,7 @@ function rankHint(p: RankProgress, lang: 'en' | 'he'): string {
   return `→ ${rankLabel(p.next, lang)}`;
 }
 
-export function DomainTiles({ t, progress, onPractice, lang = 'en' }: { t: Strings; progress: Progress; onPractice: (k: SkillId) => void; lang?: 'en' | 'he' }) {
+export function DomainTiles({ t, progress, onPractice, lang = 'en', onTechnique }: { t: Strings; progress: Progress; onPractice: (k: SkillId) => void; lang?: 'en' | 'he'; /** Adds the Technique tile (Progress tab). */ onTechnique?: () => void }) {
   const ratings = ratingsOf(progress);
   const events = progress.ratingEvents ?? [];
   const weakest = weakestSkill(ratings);
@@ -300,6 +311,33 @@ export function DomainTiles({ t, progress, onPractice, lang = 'en' }: { t: Strin
             </button>
           );
         })}
+        {onTechnique &&
+          (() => {
+            // Technique (drills) has its own rank too (ranks.ts): same tile, opens the drills.
+            const rp = techniqueProgress(techniqueOf(progress.drillItems), progress.ranks?.technique);
+            const pct = Math.round(rp.frac * 100);
+            const started = Object.values(progress.drillItems ?? {}).some((x) => x.takes > 0);
+            return (
+              <button className="domain-tile" style={{ ['--hue' as string]: 'var(--hue-instrument)' }} onClick={onTechnique} data-domain="technique">
+                <span className="dt-top">
+                  {rp.div !== null ? (
+                    <span className="dt-rank">
+                      <RankCrest div={rp.div} size={30} lang={lang} />
+                      <span className="dt-rank-name">{rankLabel(rp.div, lang)}</span>
+                    </span>
+                  ) : (
+                    <span className="dt-dot" aria-hidden="true" />
+                  )}
+                </span>
+                <b>{lang === 'he' ? 'טכניקה' : 'Technique'}</b>
+                <small>{lang === 'he' ? 'תרגילים טכניים' : 'Technique drills'}</small>
+                <span className="dt-bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct} aria-label={rankHint(rp, lang)}>
+                  <span style={{ width: started ? `${Math.max(4, pct)}%` : '0%' }} />
+                </span>
+                {started ? <small className="dt-next">{rankHint(rp, lang)}</small> : <small className="dt-none">{t.domainUnmeasured}</small>}
+              </button>
+            );
+          })()}
       </div>
     </section>
   );
@@ -488,6 +526,10 @@ export const GAMES2: { id: 'drills' | 'highway' | 'flight' | 'melodypuzzle' | 'n
 ];
 
 export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline, onGhost, onDaily, onPuzzle, onGame2, lang = 'en' }: { t: Strings; progress: Progress; onGame: (k: GameKind) => void; onTrueFalse: () => void; onDuel: () => void; onOnline: () => void; onGhost: () => void; onDaily: () => void; onPuzzle: () => void; onGame2?: (id: (typeof GAMES2)[number]['id']) => void; lang?: 'he' | 'en' }) {
+  // Status of the weekly puzzle and the daily challenge (moved here from the old Home tools, 0.41).
+  const daily = progress.daily?.[localDay(new Date())];
+  const pz = progress.puzzles?.[weekId(new Date())];
+  const puzzleStatus = !pz ? t.puzzleNew : pz.medal === 'gold' ? `🥇 ${t.puzzleGold}` : pz.medal === 'silver' ? `🥈 ${t.puzzleSilver}` : t.puzzleTried;
   const best = (n: number | undefined) => (n ? <span className="best-chip">🏅 {t.personalBest}: {n}</span> : null);
   const [cat, setCat] = useState<GameCat | 'all'>(() => {
     try {
@@ -512,7 +554,7 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
     { key: 'ghost', hue: 'var(--hue-creative)', icon: '👻', title: t.ghostRace, blurb: t.ghostBlurb, onClick: onGhost },
     ...(onGame2 ? GAMES2.map((g) => ({ key: g.id, cat: g.cat, hue: g.hue, icon: g.icon, title: g[lang][0], blurb: g[lang][1], extra: progress.bests?.[g.id] ? best(progress.bests[g.id]) : <span className="new-chip">{t.newChip}</span>, onClick: () => onGame2(g.id) })) : []),
     { key: 'duel', hue: 'var(--hue-voice)', icon: '⚔', title: t.duel, blurb: t.duelBlurb, onClick: onDuel },
-    { key: 'daily', hue: 'var(--hue-reading)', icon: '📅', title: t.dailyChallenge, blurb: t.dailyBlurb, onClick: onDaily },
+    { key: 'daily', hue: 'var(--hue-reading)', icon: '📅', title: t.dailyChallenge, blurb: daily ? `✓ ${t.dailyDone} · ${daily.points.toLocaleString()} ${t.points}` : t.dailyBlurb, onClick: onDaily },
   ];
   return (
     <main className="play-screen">
@@ -520,7 +562,7 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
       <p className="field-hint">{t.playHint}</p>
       <button className="play-hero" onClick={onPuzzle}>
         <span className="mission-shine" aria-hidden="true" />
-        <small>{t.puzzleNew}</small>
+        <small>{puzzleStatus}</small>
         <b>🧩 {t.weeklyPuzzle}</b>
         <span className="play-hero-go">
           🥇 <span className="flip-rtl">→</span>

@@ -1,6 +1,8 @@
 import { createRoot } from 'react-dom/client';
 import '@fontsource-variable/rubik';
 import '@fontsource/secular-one';
+import '@fontsource-variable/fraunces';
+import '@fontsource/frank-ruhl-libre/500.css';
 import './styles.css';
 import './games.css';
 import './menu.css';
@@ -14,6 +16,7 @@ import './path.css';
 import './motion.css';
 import './peak.css';
 import './drills.css';
+import './themes.css';
 import { App } from './ui/App';
 import { initPwa } from './pwa';
 
