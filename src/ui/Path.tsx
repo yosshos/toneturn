@@ -3,6 +3,7 @@
 // "back to my step" button (§10.1). Reduced motion: no glide, no stagger, no bounce.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { shortName } from '../engine/pathNames';
 import type { Strings } from '../i18n/strings';
 import type { Progress, Settings } from '../storage/progress';
 import { namingFor, ratingsOf, dueReviews } from '../storage/progress';
@@ -149,6 +150,22 @@ export function stepTitle(step: PathStep, s: Settings, lang: Lang): string {
   return `${T.title[lang]} · ${lv ? lv[lang] : step.level}`;
 }
 
+/** The short road name under a node: "Intervals 3", "Rhythm 2" (the full title is on the sheet and the first slide). */
+export function nodeTitle(step: PathStep, s: Settings, lang: Lang): string {
+  const tx = TX[lang];
+  if (step.kind === 'check') return tx.check;
+  if (step.kind === 'review') return tx.review;
+  if (step.kind === 'game') return step.title[lang];
+  if (step.lesson) {
+    const m = LESSON_META[step.lesson];
+    const bb = displayNote(pc('Bb'), namingFor(s.naming, lang), lang);
+    return withNoteText(m ? shortName(step.lesson, m.title, lang) : step.lesson, bb);
+  }
+  const T = step.topic ? TOPIC_GEN[step.topic] : null;
+  if (!T || !step.topic) return step.id;
+  return `${shortName(step.topic, T.title, lang)} ${step.level ?? 1}`;
+}
+
 const ICON: Record<string, 'ear' | 'steps' | 'chord' | 'cadence' | 'mic' | 'map' | 'review' | 'puzzle' | 'drum'> = { pitch: 'ear', time: 'drum', memory: 'steps', voice: 'mic', reading: 'map', creative: 'puzzle', instrument: 'chord' };
 const iconOf = (step: PathStep) => (step.kind === 'game' ? 'puzzle' : step.kind === 'review' ? 'review' : step.lesson ? (LESSON_META[step.lesson]?.icon ?? 'ear') : ICON[step.domain] ?? 'ear');
 
@@ -183,16 +200,14 @@ export function PathView2({
   const tx = TX[lang];
   void progress;
   const [sheet, setSheet] = useState<{ x: UnitStep; unit: PathUnit } | null>(null);
-  const [openKnown, setOpenKnown] = useState<Record<string, boolean>>({});
-  const [showPast, setShowPast] = useState(false);
   const [away, setAway] = useState<0 | 1 | -1>(0);
   const curRef = useRef<HTMLLIElement | null>(null);
   const roadRef = useRef<HTMLOListElement>(null);
   const curUnit = view.units.find((u) => u.status === 'current');
   const section: Section = curUnit?.section ?? sectionOf(view.units[0]?.difficulty ?? 900);
-  const past = view.units.filter((u) => u.status === 'past');
-  const shownUnits = view.units.filter((u) => u.status !== 'past' || showPast);
-  const roadKey = `${lang}|${shownUnits.map((u) => u.steps.map((x) => x.step.id + x.state).join(',')).join('|')}|${JSON.stringify(openKnown)}`;
+  // Like Duolingo (owner 2026-11-07): everything you passed stays on the road above you — scroll up to see it.
+  const shownUnits = view.units;
+  const roadKey = `${lang}|${shownUnits.map((u) => u.steps.map((x) => x.step.id + x.state).join(',')).join('|')}`;
   const road = useRoad(roadRef, roadKey);
 
   // The change card (P17: the next five steps changed after a rebuild).
@@ -252,20 +267,16 @@ export function PathView2({
     const i = k++;
     const st = x.state;
     const hue = DOMAIN_HUE[x.step.domain];
-    const label = stepTitle(x.step, settings, lang);
+    const label = nodeTitle(x.step, settings, lang);
     const isCur = st === 'current';
     const click = () => {
-      if (isCur) onStep(x, unit, 'step');
-      else if (st !== 'locked') setSheet({ x, unit });
+      // Straight to the exercise's brief page (owner, 2026-11-07: no in-between sheet; hide / keep live on the brief).
+      if (isCur || st === 'quick' || st === 'open' || st === 'refresh') onStep(x, unit, 'step');
+      else if (st !== 'locked') onStep(x, unit, 'practice');
     };
     return (
       <li key={x.step.id} ref={isCur ? curRef : undefined} className={`node ${st === 'mastered' ? 'done mastered' : st} kind-${x.step.kind} ${x.probe ? 'probe' : ''}`} data-step={x.step.id} style={{ ['--x' as string]: `${roadX(i)}%`, ['--hue' as string]: hue }}>
         <button className="node-btn" disabled={st === 'locked'} onClick={click} aria-label={`${label}${st === 'tested' ? ' ✓' : ''}`}>
-          {isCur && (
-            <span className="start-bubble" aria-hidden="true">
-              {x.probe ? tx.probe : tx.start} <span className="flip-rtl">▶</span>
-            </span>
-          )}
           <span className="node-disc" aria-hidden="true">
             {st === 'locked' ? <span className="lock">🔒</span> : x.step.kind === 'check' ? <span className="trophy">🏆</span> : <NodeIcon kind={iconOf(x.step)} />}
             {st === 'tested' && <span className="check-medal">✓</span>}
@@ -283,6 +294,7 @@ export function PathView2({
               </span>
             )}
             <b>{label}</b>
+            {isCur && x.probe && <small className="node-tag">{tx.probe}</small>}
             {st === 'quick' && <small className="node-tag">{tx.quick}</small>}
             {st === 'refresh' && <small className="node-tag">{tx.refresh}</small>}
           </span>
@@ -291,33 +303,8 @@ export function PathView2({
     );
   };
 
-  /** Steps of a unit with ✓ runs folded (≥ 2 in a row). */
-  const unitSteps = (u: PathUnit) => {
-    const out: React.ReactNode[] = [];
-    let run: UnitStep[] = [];
-    const flush = (key: string) => {
-      if (!run.length) return;
-      if (run.length >= 2 && !openKnown[key]) {
-        out.push(
-          <li key={key} className="known-fold">
-            <button className="chip" onClick={() => setOpenKnown((o) => ({ ...o, [key]: true }))}>
-              {fill(tx.known, { n: run.length })} · {tx.showKnown}
-            </button>
-          </li>,
-        );
-      } else run.forEach((x) => out.push(node(x, u)));
-      run = [];
-    };
-    u.steps.forEach((x, j) => {
-      if (x.state === 'tested') run.push(x);
-      else {
-        flush(`${u.id}-k${j}`);
-        out.push(node(x, u));
-      }
-    });
-    flush(`${u.id}-kend`);
-    return out;
-  };
+  /** Every step of a unit, ✓ ones included (no folding: the ✓ steps are what you already master). */
+  const unitSteps = (u: PathUnit) => u.steps.map((x) => node(x, u));
 
   const theme = (u: PathUnit) => THEMES.find((th) => th.id === u.theme);
   const secStats = view.sections[section];
@@ -350,11 +337,6 @@ export function PathView2({
         </div>
       )}
 
-      {past.length > 0 && (
-        <button className="past-toggle chip" onClick={() => setShowPast((v) => !v)}>
-          {fill(tx.pastUnits, { n: past.length })} · {showPast ? tx.hideKnown : tx.showKnown}
-        </button>
-      )}
 
       <div className="road-wrap">
         {road && (
@@ -371,7 +353,7 @@ export function PathView2({
               <li key={u.id} className={`unit-banner sticky ${u.status}`} style={{ ['--hue' as string]: hue }}>
                 <span>
                   <small dir="auto">
-                    {fill(tx.unit, { n: u.n })} · <span dir="ltr">{fill(tx.around, { d: u.difficulty })}</span>
+                    {fill(tx.unit, { n: u.no ?? u.n })} · <span dir="ltr">{fill(tx.around, { d: u.difficulty })}</span>
                   </small>
                   <b>{th ? th.name[lang] : tx.section[u.section]}</b>
                   <span className="unit-areas" aria-hidden="true">

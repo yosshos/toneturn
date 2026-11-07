@@ -134,10 +134,10 @@ export function BingoCard({ lang, card, called, onClaim, marks: controlled, onMa
       </div>
       <div className="bingo-foot" aria-live="polite">
         {status === 'won' ? (
-          <p className="bingo-msg good">🏆 {tx(T.won)}</p>
+          <p className="bingo-msg good">{tx(T.won)}</p>
         ) : status === 'lost' ? (
           <p className="bingo-msg">
-            🏆 <bdi>{winner ?? ''}</bdi> {tx(T.lost)}
+            <bdi>{winner ?? ''}</bdi> {tx(T.lost)}
           </p>
         ) : status === 'over' ? (
           <p className="bingo-msg">{tx(T.over)}</p>

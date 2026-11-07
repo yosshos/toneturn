@@ -110,7 +110,7 @@ export function DuelsSection({ t, settings, friends, onPlaying }: { t: Strings; 
   };
   return (
     <section className="set-card duels" aria-label={t.duelsTitle}>
-      <h2>⚔ {t.duelsTitle}</h2>
+      <h2>{t.duelsTitle}</h2>
       <p className="field-hint">{t.duelsHint}</p>
       {friends.length > 0 && (
         <>
@@ -126,7 +126,7 @@ export function DuelsSection({ t, settings, friends, onPlaying }: { t: Strings; 
               <li key={f.id}>
                 <span>{f.name}</span>
                 <button className="btn small primary" onClick={() => void start(f.id)}>
-                  ⚔ {t.challenge}
+                  {t.challenge}
                 </button>
               </li>
             ))}
@@ -148,11 +148,11 @@ export function DuelsSection({ t, settings, friends, onPlaying }: { t: Strings; 
                     setPlay({ id: d.id, kind: d.kind, seed: d.seed, rounds: d.rounds });
                   }}
                 >
-                  ▶ {t.play}
+                  {t.play}
                 </button>
               ) : (
                 <span dir="ltr">
-                  {d.myPoints} : {d.theirPoints ?? '…'} {d.theirPoints !== null && (d.myPoints > d.theirPoints ? '🏆' : d.myPoints < d.theirPoints ? '' : '🤝')}
+                  {d.myPoints} : {d.theirPoints ?? '…'} {d.theirPoints !== null && (d.myPoints > d.theirPoints ? '✓' : d.myPoints < d.theirPoints ? '' : '=')}
                 </span>
               )}
             </li>

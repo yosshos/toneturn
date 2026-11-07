@@ -9,6 +9,7 @@ export const TOPIC_GROUPS: { id: string; icon: string; title: { en: string; he: 
   { id: 'memory', icon: '🧠', title: { en: 'Memory & improvisation', he: 'זיכרון ואלתור' }, topics: ['rhythm-memory', 'chord-memory', 'call-response', 'audiation', 'sing-intervals'] },
   { id: 'rhythm', icon: '🥁', title: { en: 'Meter & advanced rhythm', he: 'משקל וקצב מתקדם' }, topics: ['tempo', 'meter-feel', 'downbeat', 'syncopation', 'odd-meter', 'polyrhythm', 'swing-ratio', 'click-subdivide', 'click-backbeat', 'gap-click', 'tempo-memory', 'poly-tap', 'tempo-react', 'drum-read', 'rhythm-errors', 'sight-tap'] },
   { id: 'dictation', icon: '✍️', title: { en: 'Written dictation', he: 'הכתבה בכתב' }, topics: ['staff-dictation', 'rhythm-build', 'two-part', 'bass-dictation'] },
+  { id: 'songs', icon: '🎵', title: { en: 'Songs: sing and play real tunes', he: 'שירים: לשיר ולנגן מנגינות אמיתיות' }, topics: ['song-sing', 'song-play'] },
   { id: 'instrument', icon: '🎸', title: { en: 'Your instrument', he: 'הכלי שלך' }, topics: ['play-back', 'fret-notes', 'fret-intervals', 'fret-chords', 'fret-scales', 'string-notes', 'key-notes'] },
   { id: 'sound', icon: '🎛', title: { en: 'Sound & production ear', he: 'אוזן של סאונד והפקה' }, topics: ['eq-ear', 'filter-ear', 'tone-hz', 'space-ear', 'pan-ear', 'width-ear', 'dyn-ear'] },
   { id: 'transform', icon: '🔀', title: { en: 'Transposition & transformations', he: 'טרנספוזיציה וטרנספורמציות' }, topics: ['transpose', 'transpose-adv', 'transposition', 'nashville', 'melodic-transform', 'displacement', 'displacement-3', 'rhythm-transform'] },

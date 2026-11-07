@@ -120,19 +120,19 @@ export function DailyScreen({
                 setPlaying(true);
               }}
             >
-              {saved ? `▶ ${t.continueAt(saved.done, saved.total)}` : t.practiceAgain}
+              {saved ? t.continueAt(saved.done, saved.total) : t.practiceAgain}
             </button>
           </>
         ) : (
           <button
-            className="btn mega"
+            className="btn primary mega"
             onClick={() => {
               void piano.unlock();
               setPractice(false);
               setPlaying(true);
             }}
           >
-            ▶ {saved ? t.continueAt(saved.done, saved.total) : t.play}
+            {saved ? t.continueAt(saved.done, saved.total) : t.play}
           </button>
         )}
       </section>
@@ -213,7 +213,7 @@ export function DuelSetup({ t, onBack, onStart }: { t: Strings; onBack: () => vo
     ['beat', t.skillNames['rhythm-dictation']],
   ];
   return (
-    <main className="panel-screen">
+    <main className="panel-screen duel-setup">
       <header className="screen-head">
         <button className="icon-btn" onClick={onBack} aria-label={t.back}>
           <span className="flip-rtl">←</span>
@@ -252,7 +252,7 @@ export function DuelSetup({ t, onBack, onStart }: { t: Strings; onBack: () => vo
         </fieldset>
       </section>
       <button
-        className="btn mega"
+        className="btn primary mega"
         onClick={() => {
           void piano.unlock();
           onStart(
@@ -262,7 +262,7 @@ export function DuelSetup({ t, onBack, onStart }: { t: Strings; onBack: () => vo
           );
         }}
       >
-        ▶ {t.play}
+        {t.play}
       </button>
     </main>
   );
@@ -331,7 +331,7 @@ export function GhostScreen({ t, settings, progress, onBack, onProgress }: { t: 
     );
   }
   return (
-    <main className="panel-screen">
+    <main className="panel-screen ghost-setup">
       <header className="screen-head">
         <button className="icon-btn" onClick={onBack} aria-label={t.back}>
           <span className="flip-rtl">←</span>
@@ -361,12 +361,12 @@ export function GhostScreen({ t, settings, progress, onBack, onProgress }: { t: 
           </div>
         </fieldset>
         <p className="ghost-best" dir="auto">
-          {ghost ? `👻 ${t.ghostBest}: ${ghost.points.toLocaleString(settings.uiLang)} ${t.points}` : t.ghostNone}
+          {ghost ? `${t.ghostBest}: ${ghost.points.toLocaleString(settings.uiLang)} ${t.points}` : t.ghostNone}
         </p>
       </section>
       {savedRun && (
         <button
-          className="btn mega"
+          className="btn primary mega"
           data-resume-ghost="1"
           onClick={() => {
             void piano.unlock();
@@ -375,18 +375,18 @@ export function GhostScreen({ t, settings, progress, onBack, onProgress }: { t: 
             setRun({ key: 1, seed: savedRun.data.seed, ghost: savedRun.data.ghost, resume: savedRun.data.results });
           }}
         >
-          ▶ {t.continueAt(savedRun.done, savedRun.total)}
+          {t.continueAt(savedRun.done, savedRun.total)}
         </button>
       )}
       <button
-        className={`btn ${savedRun ? 'ghost' : 'mega'}`}
+        className={`btn ${savedRun ? 'ghost' : 'primary mega'}`}
         onClick={() => {
           void piano.unlock();
           clearSlot('ghost');
           setRun({ key: 1, seed: ghost?.seed ?? (Date.now() ^ (Math.random() * 1e9)) >>> 0, ghost });
         }}
       >
-        ▶ {ghost ? t.raceGhost : t.setGhost}
+        {ghost ? t.raceGhost : t.setGhost}
       </button>
     </main>
   );
@@ -460,7 +460,7 @@ export function TournamentPlay({
     return (
       <main className="recap scoreboard">
         <p className="eyebrow">{ghost ? t.ghostRace : duel ? t.duel : t.dailyChallenge}</p>
-        <h1>{duel ? (tie ? t.tie : `🏆 ${players[winner.player]}`) : t.gameOver}</h1>
+        <h1>{duel ? (tie ? t.tie : `${t.winner}: ${players[winner.player]}`) : t.gameOver}</h1>
         {overNote && <p className="ghost-note">{overNote}</p>}
         {duel ? (
           <ol className="board">
@@ -495,8 +495,8 @@ export function TournamentPlay({
         )}
         <div className="recap-actions">
           {onRematch && (
-            <button className="btn mega" onClick={onRematch}>
-              ↻ {t.rematch}
+            <button className="btn primary mega" onClick={onRematch}>
+              {t.rematch}
             </button>
           )}
           <button className="btn ghost" onClick={onExit}>

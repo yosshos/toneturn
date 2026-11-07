@@ -79,7 +79,8 @@ export function DrillStaff({ drill, fingering = false, result }: { drill: Drill;
   const k = keyName(drill.keySig);
   const firstOfChord = (ns: typeof rh) => ns.filter((n, i) => n.chordId === undefined || ns.findIndex((m) => m.chordId === n.chordId) === i);
   const draw = (ns: typeof rh, clef: 'treble' | 'bass') => {
-    const all = firstOfChord(ns).slice(0, 32);
+    // A song shows all of itself (≤ 96 notes); other drills their first 32.
+    const all = firstOfChord(ns).slice(0, drill.chart ? 96 : 32);
     const lines: (typeof all)[] = [];
     for (let i = 0; i < all.length; i += 8) lines.push(all.slice(i, i + 8));
     return lines.map((xs, li) => {
@@ -90,6 +91,13 @@ export function DrillStaff({ drill, fingering = false, result }: { drill: Drill;
   };
   return (
     <div className="drill-staff">
+      {drill.chart && (
+        <ol className="song-chart" aria-label="chords" dir="ltr">
+          {drill.chart.map((c, i) => (
+            <li key={i}>{c}</li>
+          ))}
+        </ol>
+      )}
       {draw(rh, 'treble')}
       {draw(lh, 'bass')}
     </div>

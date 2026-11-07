@@ -285,16 +285,16 @@ export function PeakHunter({ lang, settings, saved, onSave, onExit, onResult, be
           )}
           {resumable ? (
             <div className="g2-col">
-              <button className="btn mega" data-resume-peak onClick={() => begin(true)}>
-                ▶ {tx.cont(resumable.answers.length + 1)}
+              <button className="btn primary mega" data-resume-peak onClick={() => begin(true)}>
+                {tx.cont(resumable.answers.length + 1)}
               </button>
               <button className="btn ghost" onClick={() => begin(false)}>
                 {tx.newGame}
               </button>
             </div>
           ) : (
-            <button className="btn mega" onClick={() => begin(false)}>
-              ▶ {tx.start}
+            <button className="btn primary mega" onClick={() => begin(false)}>
+              {tx.start}
             </button>
           )}
         </section>
@@ -438,8 +438,8 @@ export function PeakHunter({ lang, settings, saved, onSave, onExit, onResult, be
               </li>
             ))}
           </ol>
-          <button className="btn mega" onClick={() => begin(false)}>
-            ↻ {tx.again}
+          <button className="btn primary mega" onClick={() => begin(false)}>
+            {tx.again}
           </button>
           <button className="btn ghost" onClick={back}>
             {tx.back}

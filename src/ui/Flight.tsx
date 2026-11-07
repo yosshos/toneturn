@@ -561,16 +561,16 @@ export function Flight({ lang, settings, saved, onSave, onExit, onResult, best }
           )}
           {cp ? (
             <div className="g2-col">
-              <button className="btn mega" data-resume-flight onClick={() => begin(true)}>
-                ▶ {tx.cont(cp.next)}
+              <button className="btn primary mega" data-resume-flight onClick={() => begin(true)}>
+                {tx.cont(cp.next)}
               </button>
               <button className="btn ghost" onClick={() => begin(false)}>
                 {tx.newGame}
               </button>
             </div>
           ) : (
-            <button className="btn mega" onClick={() => begin(false)}>
-              ▶ {tx.start}
+            <button className="btn primary mega" onClick={() => begin(false)}>
+              {tx.start}
             </button>
           )}
         </section>
@@ -659,8 +659,8 @@ export function Flight({ lang, settings, saved, onSave, onExit, onResult, best }
               {tx.lvl}: <b dir="ltr">{hud.level}</b>
             </li>
           </ul>
-          <button className="btn mega" onClick={() => begin(false)}>
-            ↻ {tx.again}
+          <button className="btn primary mega" onClick={() => begin(false)}>
+            {tx.again}
           </button>
           <button className="btn ghost" onClick={onExit}>
             {tx.back}

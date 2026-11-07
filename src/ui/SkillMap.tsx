@@ -7,8 +7,7 @@ import { band, domainOf, DOMAINS, domainValue, type DomainId, evidence, PLANNED_
 import type { Strings } from '../i18n/strings';
 import { lessonMastered, ratingsOf, type Progress } from '../storage/progress';
 import { recommendFor, type Recommendation } from '../engine/recommend';
-import { TrendDetail, TrendTiles } from './Trends';
-import { OverallCard } from './Rating';
+import { TrendDetail } from './Trends';
 import { LESSON_META } from '../game/content';
 import { LESSON_ORDER } from '../engine/lesson';
 import { foldSubs, subsOf, type SubStat } from '../engine/taxonomy';
@@ -22,7 +21,7 @@ export function SkillMap({
   onPractice,
   onPlacement,
   lang,
-  bestLeague,
+  bestLeague: _bestLeague,
 }: {
   t: Strings;
   lang: 'he' | 'en';
@@ -49,27 +48,9 @@ export function SkillMap({
       </header>
       <p className="field-hint">{t.skillMapHint}</p>
 
-      <OverallCard t={t} ratings={ratings} events={progress.ratingEvents ?? []} lang={lang} />
-      {(() => {
-        // Your ear's chord (spec Y.4): the overall rating in the league's seven steps.
-        const o = overallRating(ratings);
-        if (!o) return null;
-        const ct = chordTierForRating(o.r);
-        return (
-          <section className="set-card ear-chord" data-ear-chord={ct} style={{ ['--tier-color' as string]: tierOf(ct).color }}>
-            <LeagueBadge tier={ct} size={58} ghostNext title={t.leagueTiers[ct - 1]} />
-            <div>
-              <small className="league-kicker">{t.earChord}</small>
-              <div>
-                <b>{t.leagueTiers[ct - 1]}</b>
-                {bestLeague ? <small className="field-hint"> · {t.leagueTitle}: {t.leagueTiers[bestLeague - 1]}</small> : null}
-              </div>
-              <p className="field-hint">{t.earChordHint}</p>
-            </div>
-          </section>
-        );
-      })()}
-
+      {/* Progress → Skills (owner 2026-11-07: "a list with lots of unclear details"): the radar, then one row per
+          area with its bar; tap an area to open its skills, tap a skill for its diagnosis and trend. The overall
+          card and the ear's chord live on Progress → Overview now. */}
       <Radar ratings={ratings} old={old?.ratings} sel={sel} onSelect={setSel} t={t} />
       {old && (
         <p className="legend">
@@ -77,44 +58,31 @@ export function SkillMap({
         </p>
       )}
 
-      <Diagnosis
-        t={t}
-        axis={sel}
-        ratings={ratings}
-        recommended={sel === rec}
-        onPractice={onPractice}
-        next={PLANNED_SKILLS.includes(sel as never) ? null : recommendFor(sel as SkillId, ratings, (id) => lessonMastered(progress, id))}
-        lang={lang}
-        subs={subs}
-      />
-
-      {!PLANNED_SKILLS.includes(sel as never) && <TrendDetail t={t} events={progress.ratingEvents ?? []} skill={sel as SkillId} lang={lang} />}
-      <TrendTiles t={t} events={progress.ratingEvents ?? []} skills={SKILLS} sel={sel} onSelect={setSel} />
-
       {!anyMeasured && (
         <section className="set-card">
-          <h2>🧭 {t.findLevel}</h2>
+          <h2>{t.findLevel}</h2>
           <p className="field-hint">{t.findLevelHint}</p>
-          <button className="btn mega" onClick={() => onPlacement()}>
+          <button className="btn primary" onClick={() => onPlacement()}>
             {t.findLevel}
           </button>
         </section>
       )}
 
-      {/* Text equivalent of the chart (also the keyboard / screen-reader path). */}
-      <section className="set-card">
-        <h2>{t.skillMap}</h2>
+      <section className="sm-areas" aria-label={t.skillMap}>
         {DOMAINS.map((d) => {
           const dv = domainValue(ratings, d.id);
+          const measured = d.skills.filter((k) => (ratings[k]?.n ?? 0) > 0).length;
           return (
-            <div key={d.id} className="skill-domain" data-domain-list={d.id}>
-              <h3 className="skill-domain-h">
-                {t.domainNames[d.id]}
-                <small>{dv ? `${Math.round(dv.v * 100)}%` : t.evUnmeasured}</small>
-                <button className="link measure-domain" data-measure={d.id} onClick={() => onPlacement(d.id)} aria-label={`${t.measureDomain}: ${t.domainNames[d.id]}`}>
-                  🧭 {t.measureDomain}
-                </button>
-              </h3>
+            <details key={d.id} className="sm-area" data-domain-list={d.id} open={d.skills.includes(sel as SkillId) || undefined}>
+              <summary>
+                <span className="sm-area-head">
+                  <b>{t.domainNames[d.id]}</b>
+                  <small>{dv ? `${Math.round(dv.v * 100)}% · ${measured}/${d.skills.length}` : t.evUnmeasured}</small>
+                </span>
+                <span className="sm-bar" aria-hidden="true">
+                  <span style={{ width: dv ? `${Math.max(3, Math.round(dv.v * 100))}%` : '0%' }} />
+                </span>
+              </summary>
               <ul className="skill-list">
                 {d.skills.map((a2) => {
                   const r = ratings[a2];
@@ -123,21 +91,34 @@ export function SkillMap({
                     <li key={a2}>
                       <button className={`skill-row ${sel === a2 ? 'on' : ''}`} onClick={() => setSel(a2)} aria-pressed={sel === a2}>
                         <b>{t.skillNames[a2]}</b>
-                        <span className={`ev ev-${ev}`}>{ev === 'unmeasured' ? t.evUnmeasured : `${t.bands[band(r!.r)]} · ${r!.r} · ${ev === 'provisional' ? t.evProvisional : t.evMeasured}`}</span>
+                        <span className={`ev ev-${ev}`}>{ev === 'unmeasured' ? t.evUnmeasured : `${t.bands[band(r!.r)]} · ${r!.r}${ev === 'provisional' ? ` · ${t.evProvisional}` : ''}`}</span>
                         {a2 === rec && <span className="rec-chip">★</span>}
                       </button>
+                      {sel === a2 && (
+                        <div className="sm-detail">
+                          <Diagnosis
+                            t={t}
+                            axis={sel}
+                            ratings={ratings}
+                            recommended={sel === rec}
+                            onPractice={onPractice}
+                            next={PLANNED_SKILLS.includes(sel as never) ? null : recommendFor(sel as SkillId, ratings, (id) => lessonMastered(progress, id))}
+                            lang={lang}
+                            subs={subs}
+                          />
+                          {!PLANNED_SKILLS.includes(sel as never) && <TrendDetail t={t} events={progress.ratingEvents ?? []} skill={sel as SkillId} lang={lang} />}
+                        </div>
+                      )}
                     </li>
                   );
                 })}
               </ul>
-            </div>
+              <button className="link measure-domain" data-measure={d.id} onClick={() => onPlacement(d.id)} aria-label={`${t.measureDomain}: ${t.domainNames[d.id]}`}>
+                {t.measureDomain}
+              </button>
+            </details>
           );
         })}
-        {anyMeasured && (
-          <button className="btn ghost small" onClick={() => onPlacement()}>
-            {t.findLevel}
-          </button>
-        )}
       </section>
     </main>
   );
@@ -324,5 +305,25 @@ function SubSkills({ t, skill, subs, lang }: { t: Strings; skill: SkillId; subs:
         })}
       </ul>
     </div>
+  );
+}
+
+/** Your ear's chord (spec Y.4): the overall rating in the league's seven steps — Progress → Overview. */
+export function EarChordCard({ t, ratings, bestLeague }: { t: Strings; ratings: Ratings; bestLeague?: number }) {
+  const o = overallRating(ratings);
+  if (!o) return null;
+  const ct = chordTierForRating(o.r);
+  return (
+    <section className="set-card ear-chord" data-ear-chord={ct} style={{ ['--tier-color' as string]: tierOf(ct).color }}>
+      <LeagueBadge tier={ct} size={58} ghostNext title={t.leagueTiers[ct - 1]} />
+      <div>
+        <small className="league-kicker">{t.earChord}</small>
+        <div>
+          <b>{t.leagueTiers[ct - 1]}</b>
+          {bestLeague ? <small className="field-hint"> · {t.leagueTitle}: {t.leagueTiers[bestLeague - 1]}</small> : null}
+        </div>
+        <p className="field-hint">{t.earChordHint}</p>
+      </div>
+    </section>
   );
 }

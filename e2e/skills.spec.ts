@@ -48,7 +48,7 @@ test.describe('placement, Skill Map, review, weekly puzzle', () => {
         await expect(page.locator('.topic-strip .ts.skipped[data-skill="absolute"]')).toBeVisible();
         continue;
       }
-      const skip = page.getByRole('button', { name: 'Skip ⇥' });
+      const skip = page.getByRole('button', { name: 'Skip', exact: true });
       if (await skip.isVisible().catch(() => false)) await skip.click().catch(() => {});
       await page.waitForTimeout(400);
     }
@@ -59,9 +59,7 @@ test.describe('placement, Skill Map, review, weekly puzzle', () => {
 
     await expect(page.getByRole('heading', { name: 'Skill Map', level: 1 })).toBeVisible();
     await expect(page.locator('.radar.domains [data-domain]')).toHaveCount(7); // seven domains (0.38)
-    await expect(page.locator('.trend-tile')).not.toHaveCount(0); // trends per measured skill
-    await expect(page.locator('.trend-detail svg')).toHaveCount(2); // overall + selected skill
-    await expect(page.locator('.overall-head .rating-badge')).toBeVisible();
+    await expect(page.locator('.trend-detail svg')).not.toHaveCount(0); // the selected skill's trend (overall is on Activity, 0.42)
     await expect(page.locator('.radar .area')).toHaveCount(1);
     await expect(page.locator('main.skillmap')).toContainText('provisional');
     await expect(page.locator('main.skillmap')).toContainText('not measured yet');
@@ -69,7 +67,9 @@ test.describe('placement, Skill Map, review, weekly puzzle', () => {
     await page.screenshot({ path: 'test-results/skill-map.png', fullPage: true });
 
     // Selecting an axis from the accessible list opens its diagnosis.
-    await page.getByRole('button', { name: /Harmony & progressions/ }).first().click();
+    // 0.42: areas are a list you open; the skill rows are inside.
+    await page.locator('[data-domain-list="pitch"] > summary').click();
+    await page.locator('[data-domain-list="pitch"]').getByRole('button', { name: /Harmony & progressions/ }).first().click();
     await expect(page.locator('.diag-panel h2')).toHaveText('Harmony & progressions');
 
     // The scripted miss went into the review queue.
@@ -87,6 +87,8 @@ test.describe('placement, Skill Map, review, weekly puzzle', () => {
   test('measure one area: Memory runs only its three skills', async ({ page }) => {
     // One area from the Skill Map (Progress tab) — on Today it is the Find my level sheet.
     await page.goto('/?sim=1&unlock=all#/skills');
+    await page.locator('#ps-tab-skills').click();
+    await page.locator('[data-domain-list="memory"] > summary').click();
     await page.locator('[data-measure="memory"]').click();
     await page.getByRole('button', { name: /Use my voice & start|Buttons instead/ }).first().click();
     await expect(page.locator('.topic-strip .ts')).toHaveCount(3);

@@ -222,7 +222,7 @@ test.describe('more lessons', () => {
 
 test('settings: categories start closed, open on tap and are remembered', async ({ page }) => {
   await page.goto('/#/settings');
-  await expect(page.locator('.set-group')).toHaveCount(8);
+  await expect(page.locator('.set-group')).toHaveCount(9); // + Privacy & friends (0.42)
   await expect(page.locator('.set-group[open]')).toHaveCount(0);
   await page.locator('.set-group[data-group="midi"] > summary').click();
   await expect(page.getByRole('radiogroup', { name: 'MIDI keyboard' })).toBeVisible();

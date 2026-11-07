@@ -176,6 +176,22 @@ export interface Settings {
   /** Display (0.41): text size (root scale) and colour-blind friendly feedback colours. */
   textScale?: number;
   cvd?: boolean;
+  /** Profile (SPEC-SOCIAL §1): nickname, country flag, picture (instrument icon + colour, or a cropped photo). */
+  nickname?: string;
+  /** Today's "choose a nickname" row was dismissed. */
+  hideNickPrompt?: boolean;
+  /** The metronome tool's last settings (tempo, meter, accents, sound, groove, speed trainer). */
+  metronome?: import('../engine/grooves').MetroSettings;
+  /** ISO 3166 alpha-2; null = no flag. */
+  country?: string | null;
+  avatarIcon?: string;
+  avatarColor?: string;
+  /** The cropped circle (256 px WebP data URL), kept on the device until the server stores it. */
+  avatarPhoto?: string | null;
+  /** Privacy & friends (SPEC-SOCIAL §2, §8): a preset plus advanced overrides. */
+  privacy?: import('../engine/privacy').Privacy;
+  /** Year of birth (age gate, SPEC-SOCIAL §8): under 13 → young-player mode. */
+  birthYear?: number | null;
   /** Daily XP goal (Today ring): 10 / 20 / 30 / 50. */
   dailyGoal?: number;
   /** Gem purchases (streak freezes, repairs) — append-only, synced with the profile settings (spec N.4). */

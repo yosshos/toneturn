@@ -64,7 +64,7 @@ const T = {
   cont: { en: 'Continue', he: 'להמשיך' },
   newGame: { en: 'New game', he: 'משחק חדש' },
   best: { en: 'Best', he: 'שיא' },
-  newBest: { en: 'New personal best!', he: 'שיא אישי חדש!' },
+  newBest: { en: 'New personal best', he: 'שיא אישי חדש' },
   score: { en: 'Score', he: 'ניקוד' },
   level: { en: 'Level', he: 'רמה' },
   lives: { en: 'Lives', he: 'חיים' },
@@ -311,7 +311,7 @@ export function Rush({ lang, settings, mode, saved, onSave, onExit, onResult, be
               <div className="rush-seg" role="radiogroup">
                 {(['keys', 'staff', 'neck', 'mixed'] as RushPicture[]).map((p) => (
                   <button key={p} type="button" role="radio" aria-checked={picture === p} className={`rush-opt ${picture === p ? 'on' : ''}`} onClick={() => setPicture(p)}>
-                    <span aria-hidden="true">{p === 'keys' ? '🎹' : p === 'staff' ? '𝄞' : p === 'neck' ? '🎸' : '🔀'}</span> {tx(T.pics[p], lang)}
+                    {tx(T.pics[p], lang)}
                   </button>
                 ))}
               </div>
@@ -330,7 +330,7 @@ export function Rush({ lang, settings, mode, saved, onSave, onExit, onResult, be
           </fieldset>
           {best ? (
             <p className="rush-best">
-              🏅 {tx(T.best, lang)}: <b>{best}</b>
+              {tx(T.best, lang)}: <b>{best}</b>
             </p>
           ) : null}
           <p className="g2-dim">
@@ -368,7 +368,7 @@ export function Rush({ lang, settings, mode, saved, onSave, onExit, onResult, be
             <span>{tx(T.score, lang)}</span>
             <b>{st.score}</b>
           </p>
-          {newBest ? <p className="rush-newbest">🏅 {tx(T.newBest, lang)}</p> : best ? <p className="g2-dim">{tx(T.best, lang)}: {best}</p> : null}
+          {newBest ? <p className="rush-newbest">{tx(T.newBest, lang)}</p> : best ? <p className="g2-dim">{tx(T.best, lang)}: {best}</p> : null}
           <dl className="rush-stats">
             <div>
               <dt>{tx(T.right, lang)}</dt>

@@ -615,8 +615,8 @@ export function bestSessions<T extends SessionLike>(history: T[], n = 3): { s: T
 export function trickyPairs(history: { missed: { answer: unknown; given: unknown[] }[] }[], n = 3): { answer: string; given: string; count: number }[] {
   const m = new Map<string, { answer: string; given: string; count: number }>();
   for (const h of history)
-    for (const x of h.missed) {
-      const g = x.given[0];
+    for (const x of h.missed ?? []) {
+      const g = x.given?.[0];
       if (g === undefined || g === null) continue;
       const a = String(x.answer);
       const gs = String(g);

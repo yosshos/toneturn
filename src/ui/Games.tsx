@@ -182,16 +182,25 @@ export function GameSetup({
         )}
         <label className="toggle-row">
           <input type="checkbox" checked={ladder} onChange={(e) => setLadder(e.target.checked)} />
-          <span>⏩ {t.tempoLadder}</span>
+          <span>
+            {t.tempoLadder}
+            <small className="field-hint">{t.tempoLadderHint}</small>
+          </span>
         </label>
         <label className="toggle-row">
           <input type="checkbox" checked={swing} onChange={(e) => setSwing(e.target.checked)} />
-          <span>🎷 {t.swingFeel}</span>
+          <span>
+            {t.swingFeel}
+            <small className="field-hint">{t.swingFeelHint}</small>
+          </span>
         </label>
         {kind === 'rhythm' && input === 'tap' && (
           <label className="toggle-row">
             <input type="checkbox" checked={drums} onChange={(e) => setDrums(e.target.checked)} data-drums-toggle />
-            <span>🥁 {t.drumEcho}</span>
+            <span>
+              {t.drumEcho}
+              <small className="field-hint">{t.drumEchoHint}</small>
+            </span>
           </label>
         )}
         {kind === 'melody' && (
@@ -214,12 +223,12 @@ export function GameSetup({
         </p>
       )}
       {resumeGame && (
-        <button className="btn mega" data-resume-game="1" onClick={() => onStart(resumeGame.data.setup)}>
-          ▶ {t.continueGame(resumeGame.data.match.players.map((p) => p.name).join(' · '))}
+        <button className="btn primary mega" data-resume-game="1" onClick={() => onStart(resumeGame.data.setup)}>
+          {t.continueGame(resumeGame.data.match.players.map((p) => p.name).join(' · '))}
         </button>
       )}
       <button
-        className={`btn ${resumeGame ? 'ghost' : 'mega'}`}
+        className={`btn ${resumeGame ? 'ghost' : 'primary mega'}`}
         onClick={() => {
           clearSlot(`game:${kind}`);
           const ps = names.slice(0, count).map((n, i) => n.trim() || `${t.playerN} ${i + 1}`);
@@ -231,7 +240,7 @@ export function GameSetup({
           onStart({ kind, input, players: count === 1 ? [ps[0] || t.playerN] : ps, bpm, ladder, swing, pads, drums: kind === 'rhythm' && input === 'tap' && drums });
         }}
       >
-        ▶ {t.play}
+        {t.play}
       </button>
     </main>
   );
@@ -600,7 +609,7 @@ function Scoreboard({ t, v, onRematch, onChangePlayers, onHome }: { t: Strings; 
   return (
     <main className="recap scoreboard">
       <p className="eyebrow">{v.kind === 'melody' ? t.echoChain : t.beatEcho}</p>
-      <h1>{solo ? t.gameOver : m.winners.length > 1 ? t.tie : `🏆 ${m.players[m.winners[0]].name}`}</h1>
+      <h1>{solo ? t.gameOver : m.winners.length > 1 ? t.tie : `${t.winner}: ${m.players[m.winners[0]].name}`}</h1>
       {solo ? (
         <p className="big-score">
           <small>{t.longest}</small>
@@ -623,8 +632,8 @@ function Scoreboard({ t, v, onRematch, onChangePlayers, onHome }: { t: Strings; 
         </ol>
       )}
       <div className="recap-actions">
-        <button className="btn mega" onClick={onRematch}>
-          ↻ {t.rematch}
+        <button className="btn primary mega" onClick={onRematch}>
+          {t.rematch}
         </button>
         <button className="btn" onClick={onChangePlayers}>
           {t.changePlayers}
@@ -688,7 +697,7 @@ function Calibrate({ t, latency, onDone }: { t: Strings; latency: number; onDone
     <div className="calibrate">
       <div className="row">
         <button className="btn small" onClick={() => void run()} disabled={state === 'run'}>
-          ⏱ {t.calibrate}
+          {t.calibrate}
         </button>
         <span className="field-hint" dir="ltr">
           {t.latency}: {result ?? latency} ms

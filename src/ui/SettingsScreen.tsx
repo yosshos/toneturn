@@ -15,6 +15,8 @@ import { APP_THEMES } from './themes';
 import { COSMETICS, ownsCosmetic } from '../engine/streak';
 import { midi } from '../speech/midi';
 import { LatencyCalibrate } from './LatencyCalibrate';
+import { ProfileCard } from './Profile';
+import { DEFAULT_PRIVACY, effectivePrivacy, type Preset, type Privacy, type Who } from '../engine/privacy';
 
 interface Props {
   t: Strings;
@@ -205,12 +207,17 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
 
       <div className="set-groups">
         <Group id="account" icon={<SetIcon k="account" />} title={t.account} sub={G.account[lang]}>
+          <ProfileCard lang={lang} s={s} onChange={onChange} />
           <section className="set-card">{account}</section>
           <section className="set-card">
             <button className="btn small" onClick={() => void downloadMyData()} data-export="1">
               ⬇ {lang === 'he' ? 'להוריד את הנתונים שלי (JSON)' : 'Download my data (JSON)'}
             </button>
           </section>
+        </Group>
+
+        <Group id="privacy" icon={<SetIcon k="privacy" />} title={G.privacy.title[lang]} sub={G.privacy.sub[lang]}>
+          <PrivacySettings lang={lang} s={s} onChange={onChange} />
         </Group>
 
         <Group id="language" icon={<SetIcon k="language" />} title={G.language.title[lang]} sub={G.language.sub[lang]}>
@@ -575,7 +582,8 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
 
 type LL = { en: string; he: string };
 const GROUPS = {
-  account: { en: 'Sign in, sync, download my data', he: 'כניסה, סנכרון, הורדת הנתונים שלי' },
+  account: { en: 'Profile, sign in, sync, my data', he: 'פרופיל, כניסה, סנכרון, הנתונים שלי' },
+  privacy: { title: { en: 'Privacy & friends', he: 'פרטיות וחברים' }, sub: { en: 'Who sees you, who can challenge you, age', he: 'מי רואה אתכם, מי יכול לאתגר, גיל' } },
   language: { title: { en: 'Language & voice', he: 'שפה וקול' }, sub: { en: 'Language, note names, narrator voice & speed', he: 'שפה, שמות תווים, קול ומהירות הקריין' } },
   learning: { title: { en: 'My path & learning', he: 'המסלול והלמידה שלי' }, sub: { en: 'Goals, daily goal, mini lessons, hints', he: 'מטרות, יעד יומי, שיעורונים, עזרים' } },
   instrument: { en: 'Your instrument, how to answer, tuning, headphones', he: 'הכלי שלך, איך עונים, כיוון, אוזניות' },
@@ -597,6 +605,7 @@ const openGroups = (): string[] => {
 /** One settings category: a row that opens and closes (remembered on this device). `#/settings/<id>` opens it. */
 /** Monochrome line icons for the settings categories (mature, clean UI — owner 2026-11-07). */
 const SET_ICON: Record<string, ReactNode> = {
+  privacy: <path d="M12 3 5 6v5.5c0 4.2 3 7.8 7 9.5 4-1.7 7-5.3 7-9.5V6z" />,
   account: (
     <>
       <circle cx="12" cy="8" r="3.6" />
@@ -920,3 +929,61 @@ function DroneSoundSetting({ t, value, onChange }: { t: Strings; value: string; 
   );
 }
 
+
+/** Privacy & friends (SPEC-SOCIAL §2, §8): one preset, advanced overrides, year of birth (young-player mode). */
+function PrivacySettings({ lang, s, onChange }: { lang: 'en' | 'he'; s: Settings; onChange: (p: Partial<Settings>) => void }) {
+  const he = lang === 'he';
+  const p: Privacy = s.privacy ?? DEFAULT_PRIVACY;
+  const eff = effectivePrivacy(p, s.birthYear);
+  const set = (q: Partial<Privacy>) => onChange({ privacy: { ...p, ...q } });
+  const who = (v: Who) => (v === 'everyone' ? (he ? 'כולם' : 'Everyone') : v === 'friends' ? (he ? 'חברים' : 'Friends') : he ? 'אף אחד' : 'No one');
+  const whoOpts: [Who, ReactNode][] = (['everyone', 'friends', 'none'] as Who[]).map((v) => [v, who(v)]);
+  const year = new Date().getFullYear();
+  const lock = eff.young ? <small className="field-hint">{he ? 'מוגבל במצב צעירים' : 'Limited in young-player mode'}</small> : null;
+  return (
+    <>
+      <section className="set-card">
+        <Seg<Preset>
+          label={he ? 'רמת פרטיות' : 'Privacy level'}
+          value={p.preset}
+          options={[
+            ['open', he ? 'פתוח' : 'Open'],
+            ['friends', he ? 'חברים בלבד' : 'Friends only'],
+            ['private', he ? 'פרטי' : 'Private'],
+          ]}
+          hint={p.preset === 'open' ? (he ? 'כל אחד יכול לראות את התמונה ולהזמין אתכם לאתגר.' : 'Anyone can see your picture and challenge you.') : p.preset === 'friends' ? (he ? 'מומלץ: רק חברים רואים את התמונה ומאתגרים.' : 'Recommended: only friends see your picture and challenge you.') : he ? 'אנונימי בטבלאות, חברים רק עם קוד.' : 'Anonymous on boards, friends by code only.'}
+          onChange={(preset) => onChange({ privacy: { preset } })}
+        />
+        <label className="field-row">
+          <span>{he ? 'שנת לידה' : 'Year of birth'}</span>
+          <select value={s.birthYear ?? ''} onChange={(e) => onChange({ birthYear: e.target.value ? Number(e.target.value) : null })} data-birth-year="1">
+            <option value="">{he ? 'לא צוין' : 'Not set'}</option>
+            {Array.from({ length: 90 }, (_, i) => year - 4 - i).map((y) => (
+              <option key={y} value={y}>
+                {y}
+              </option>
+            ))}
+          </select>
+        </label>
+        {eff.young && <p className="field-hint" data-young="1">{he ? 'מצב צעירים: בלי תמונה אישית, חברים רק עם קוד, ושיתוף רק בתוך האפליקציה.' : 'Young-player mode: no personal photo, friends by code only, sharing inside the app only.'}</p>}
+      </section>
+      <details className="set-card privacy-adv">
+        <summary>{he ? 'מתקדם' : 'Advanced'}</summary>
+        <Seg<Who> label={he ? 'מי רואה את התמונה' : 'Who sees my picture'} value={eff.photo} options={whoOpts} onChange={(photo) => set({ photo })} hint={lock} />
+        <Seg<'nickname' | 'anonymous'> label={he ? 'בטבלאות' : 'On leaderboards'} value={eff.onBoards} options={[['nickname', he ? 'הכינוי שלי' : 'My nickname'], ['anonymous', he ? 'אנונימי' : 'Anonymous']]} onChange={(onBoards) => set({ onBoards })} />
+        <Seg<'everyone' | 'code' | 'none'> label={he ? 'בקשות חברות' : 'Friend requests'} value={eff.friendRequests} options={[['everyone', he ? 'כולם' : 'Everyone'], ['code', he ? 'רק עם קוד' : 'By code'], ['none', he ? 'אף אחד' : 'No one']]} onChange={(friendRequests) => set({ friendRequests })} hint={lock} />
+        <Seg<Who> label={he ? 'מי יכול לאתגר אותי' : 'Who can challenge me'} value={eff.challenges} options={whoOpts} onChange={(challenges) => set({ challenges })} />
+        <Seg<Who> label={he ? 'הודעות מהירות' : 'Quick messages'} value={eff.quickMessages} options={whoOpts} onChange={(quickMessages) => set({ quickMessages })} />
+        <Seg<'friends' | 'none'> label={he ? 'תזכורות מחברים' : 'Nudges from friends'} value={eff.nudges} options={[['friends', he ? 'חברים' : 'Friends'], ['none', he ? 'כבוי' : 'Off']]} onChange={(nudges) => set({ nudges })} />
+        <label className="toggle-row">
+          <input type="checkbox" checked={eff.dontDisturb} onChange={(e) => set({ dontDisturb: e.target.checked })} />
+          <span>{he ? 'לא להפריע בזמן תרגול' : "Don't disturb while I practise"}</span>
+        </label>
+      </details>
+      <section className="set-card">
+        <b className="set-sub">{he ? 'חסומים' : 'Blocked'}</b>
+        <p className="field-hint">{he ? 'אין חסומים. אפשר לחסום מכל פרופיל, וזה מסתיר אתכם זה מזה לגמרי.' : 'No one is blocked. You can block from any profile — it hides you from each other completely.'}</p>
+      </section>
+    </>
+  );
+}

@@ -18,6 +18,28 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.42.0',
+    date: '2026-11-08',
+    en: [
+      'Tools: a metronome with a swinging pendulum — tempo, tap, any meter, accents, subdivisions, sounds, a speed trainer and 49 drum grooves by style — and the tuner, both in the menu',
+      'Songs: sing and play 16 well-known public-domain tunes — melody, chords or both, with a chord chart',
+      'Your profile: a nickname, a country flag, an instrument icon or your own photo (round crop)',
+      'Settings → Privacy & friends: one choice (Open / Friends only / Private), advanced options and a young-player mode',
+      'The path: short step names, your real unit number after the level test, every ✓ step on the road, and a quiet intro page before each exercise (with a quick refresher)',
+      'Progress in four tabs: Overview, Skill Map (areas you can open), Activity, Awards (only what you earned)',
+      'A calmer look for the games, the workout editor and the exercise buttons',
+    ],
+    he: [
+      'כלים: מטרונום עם מטוטלת — טמפו, הקשה, כל משקל, הדגשות, חלוקות, צלילים, מאמן מהירות ו־49 מקצבי תופים לפי סגנון — וגם הטיונר, שניהם בתפריט',
+      'שירים: לשיר ולנגן 16 מנגינות מוכרות מנחלת הכלל — מנגינה, אקורדים או שניהם, עם טבלת אקורדים',
+      'הפרופיל שלכם: כינוי, דגל, אייקון של כלי או תמונה משלכם (חיתוך עגול)',
+      'הגדרות ← פרטיות וחברים: בחירה אחת (פתוח / חברים בלבד / פרטי), אפשרויות מתקדמות ומצב צעירים',
+      'המסלול: שמות קצרים, מספר היחידה האמיתי אחרי מבחן הרמה, כל צעדי ה־✓ על הדרך, ודף פתיחה שקט לפני כל תרגיל (עם רענון קצר)',
+      'התקדמות בארבע לשוניות: סקירה, מפת מיומנויות (תחומים שנפתחים), פעילות, פרסים (רק מה שהרווחתם)',
+      'מראה רגוע יותר למשחקים, לעורך האימון ולכפתורי התרגיל',
+    ],
+  },
+  {
     version: '0.41.1',
     date: '2026-11-07',
     en: ['A clean menu (one list, line icons)', 'The top bar — streak, gifts, menu — on every tab', 'Fixed: a pale stripe across the Friends screen'],

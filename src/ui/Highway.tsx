@@ -74,8 +74,8 @@ const T = {
   midiHint: { en: 'MIDI keyboard on: notes are read from the keys.', he: 'מקלדת MIDI פעילה: התווים נקראים מהקלידים.' },
   tapHint: { en: 'Tap, Space or Enter when a note reaches the line.', he: 'הקישו, רווח או Enter כשתו מגיע לקו.' },
   calibrate: {
-    en: 'Your tap delay was never measured — measure it once in Games → Beat Echo (Calibrate) for fair timing.',
-    he: 'השהיית ההקשה עוד לא נמדדה — מדדו פעם אחת במשחקים ← הד הקצב (כיול) לתזמון הוגן.',
+    en: 'Tap delay not measured yet. Calibrate it once in Beat Echo for fair timing.',
+    he: 'השהיית ההקשה עוד לא נמדדה. כיילו אותה פעם אחת בהד הקצב לתזמון הוגן.',
   },
   tapHere: { en: 'Tap', he: 'הקישו' },
   pause: { en: 'Pause', he: 'השהיה' },
@@ -90,8 +90,8 @@ const T = {
   wrong: { en: 'Wrong note', he: 'תו אחר' },
   accuracy: { en: 'Accuracy', he: 'דיוק' },
   maxCombo: { en: 'Longest combo', he: 'הרצף הארוך' },
-  fullCombo: { en: 'Full combo!', he: 'רצף מלא!' },
-  newBest: { en: 'New best!', he: 'שיא חדש!' },
+  fullCombo: { en: 'Full combo', he: 'רצף מלא' },
+  newBest: { en: 'New best', he: 'שיא חדש' },
   again: { en: 'Play again', he: 'שוב' },
   next: { en: 'Next song', he: 'השיר הבא' },
   early: { en: 'early', he: 'מוקדם' },
@@ -482,7 +482,7 @@ export function Highway({
         </section>
         {resumable && (
           <button
-            className="btn mega"
+            className="btn primary mega"
             data-resume-highway="1"
             onClick={() => {
               const s = highwaySong(resumable.opts);
@@ -490,18 +490,18 @@ export function Highway({
               void start(resumable.section, resumable.run, s);
             }}
           >
-            ▶ {tx(T.cont)} <bdi dir="ltr">{resumable.section + 1}</bdi>
+            {tx(T.cont)} <bdi dir="ltr">{resumable.section + 1}</bdi>
           </button>
         )}
         <button
-          className={`btn ${resumable ? 'ghost' : 'mega'}`}
+          className={`btn ${resumable ? 'ghost' : 'primary mega'}`}
           data-start-highway="1"
           onClick={() => {
             onSave(null);
             void start(0, newRun(song), song);
           }}
         >
-          ▶ {tx(T.play)}
+          {tx(T.play)}
         </button>
       </main>
     );
@@ -570,8 +570,8 @@ export function Highway({
           </li>
         </ul>
         <div className="recap-actions">
-          <button className="btn mega" onClick={() => void start(0, newRun(song), song)}>
-            ↻ {tx(T.again)}
+          <button className="btn primary mega" onClick={() => void start(0, newRun(song), song)}>
+            {tx(T.again)}
           </button>
           {song.opts.song < SONGS_PER_LEVEL && (
             <button
@@ -632,7 +632,7 @@ export function Highway({
         <section className="paused-card">
           <h2>{tx(T.paused)}</h2>
           <button className="btn mega" onClick={resumeFromCheckpoint}>
-            ▶ {tx(T.resume)} <bdi dir="ltr">{checkpointRef.current.section + 1}</bdi>
+            {tx(T.resume)} <bdi dir="ltr">{checkpointRef.current.section + 1}</bdi>
           </button>
           <button className="btn ghost" onClick={onExit}>
             {tx(T.exit)}

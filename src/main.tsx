@@ -13,6 +13,8 @@ import './arcade.css';
 import './stats.css';
 import './games2.css';
 import './path.css';
+import './profile.css';
+import './metronome.css';
 import './motion.css';
 import './peak.css';
 import './drills.css';

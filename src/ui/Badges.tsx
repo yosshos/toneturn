@@ -267,17 +267,17 @@ type Filter = 'all' | 'earned' | 'locked';
 /** Categories with many badges are grouped (by skill / family / area) in collapsible sections. */
 const GROUPED: BadgeCat[] = ['skill', 'sub', 'technique', 'area'];
 
-export function BadgesView({ lang, input, log, evidence, onOpenArea, share = true }: { lang: Lang; input: BadgeInput; log?: BadgeLog; evidence?: Partial<Record<RankArea, Pick<AreaEvidence, 'answers' | 'needAnswers'>>>; onOpenArea?: (a: RankArea) => void; share?: boolean }) {
+export function BadgesView({ lang, input, log, evidence, onOpenArea, share = true, earnedOnly = false }: { lang: Lang; input: BadgeInput; log?: BadgeLog; evidence?: Partial<Record<RankArea, Pick<AreaEvidence, 'answers' | 'needAnswers'>>>; onOpenArea?: (a: RankArea) => void; share?: boolean; /** Progress → Awards (owner 2026-11-07): only earned badges + the closest few; ranks and the challenge live on Overview. */ earnedOnly?: boolean }) {
   const states = useMemo(() => badgeStates(input, log), [input, log]);
   const close = useMemo(() => badgeProgress(input, 3, log), [input, log]);
-  const [filter, setFilter] = useState<Filter>('all');
+  const [filter, setFilter] = useState<Filter>(earnedOnly ? 'earned' : 'all');
   const onShare = share ? (b: Badge, svg?: SVGSVGElement | null) => void shareBadge(b, lang, svg) : undefined;
   const shown = states.filter((s) => (filter === 'all' ? true : filter === 'earned' ? s.got : !s.got));
   const got = states.filter((s) => s.got).length;
   return (
     <div className="ps-view bd-view">
-      <AreaRanks ranks={input.ranks} lang={lang} evidence={evidence} onOpen={onOpenArea} />
-      <ChallengeCard input={input} lang={lang} />
+      {!earnedOnly && <AreaRanks ranks={input.ranks} lang={lang} evidence={evidence} onOpen={onOpenArea} />}
+      {!earnedOnly && <ChallengeCard input={input} lang={lang} />}
       <p className="field-hint">
         {BX.title[lang]}: <N>{`${got} / ${states.length}`}</N>
       </p>
@@ -291,13 +291,13 @@ export function BadgesView({ lang, input, log, evidence, onOpenArea, share = tru
           </ul>
         </section>
       )}
-      <div className="bd-filter" role="group">
+      {!earnedOnly && <div className="bd-filter" role="group">
         {(['all', 'earned', 'locked'] as Filter[]).map((f) => (
           <button key={f} type="button" className="chip" aria-pressed={filter === f} onClick={() => setFilter(f)}>
             {BX[f][lang]}
           </button>
         ))}
-      </div>
+      </div>}
       {BADGE_CATS.map((c) => {
         const xs = shown.filter((s) => s.badge.cat === c);
         if (!xs.length) return null;

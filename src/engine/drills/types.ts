@@ -117,6 +117,8 @@ export interface DrillSpec {
 
 /** A generated drill: the notes to play and how it is judged. */
 export interface Drill {
+  /** Songs (songDrills.ts): chord names per bar, shown above the staff as a chart. */
+  chart?: string[];
   spec: DrillSpec;
   /** Stable id of this item (family + kind + key + hands + motion + options): progress is stored per item. */
   itemId: string;

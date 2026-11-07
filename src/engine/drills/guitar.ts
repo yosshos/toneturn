@@ -7,6 +7,7 @@
 import type { Drill, DrillGoal, DrillSettings, DrillSpec, ExpNote, FamilyId } from './types';
 import type { FamilyDef, LevelDef, SpecTemplate } from './generate';
 import { noteAt, tuningById, type Tuning } from '../fretboard';
+import { SONGBOOK, songChords, songNotes } from '../../content/songbook';
 
 export type GuitarStyle = NonNullable<DrillSettings['guitarStyle']>;
 export type GuitarTechnique = NonNullable<ExpNote['technique']>;
@@ -1122,6 +1123,23 @@ function genChords(s: DrillSpec, tu: Tuning): Drill {
       const sh: Shape = { dots: fromOffsets(n, offs, fing), root: key, name: NAMES[key] + Q_NAME[q] };
       evs = chordCheck(sh);
       title = t(`Barre ${sh.name} (${shape} shape, fret ${n}): every string rings`, `ברה ${sh.name} (צורת ${shape}, סריג ${n}): כל מיתר מצלצל`);
+      break;
+    }
+    case 'song': {
+      // A public-domain song's chords (songbook): its real shapes, one down-strum per beat, in the song's key.
+      const song = SONGBOOK[(s.option ?? 0) % SONGBOOK.length];
+      const QM: Record<string, Q> = { maj: 'M', min: 'm', dim: 'm', dom7: '7', min7: 'm7', maj7: 'maj7' };
+      const first = songNotes(song).find((n) => n.semi !== null);
+      const pickup = first ? first.at : 0;
+      for (const c of songChords(song)) {
+        if (c.at + c.beats <= pickup) continue;
+        const sh = chordShape(mod(key + c.root, 12), QM[c.quality] ?? 'M');
+        const from = Math.max(c.at, pickup);
+        for (let b = from; b < c.at + c.beats - 1e-6; b += 1) evs.push({ beat: b - pickup, dur: 1, notes: strumNotes(sh, 'strum-down', 'D', b === from) });
+      }
+      evenness = true;
+      bpm = song.level <= 2 ? 72 : 80;
+      title = t(`${song.title.en} · chords`, `${song.title.he} · אקורדים`);
       break;
     }
     case 'one-minute': {

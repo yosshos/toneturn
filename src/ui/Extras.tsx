@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { type AchievementExtra, achievements } from '../engine/achievements';
+import { AWARD_TEXT } from './Stats';
+import { langOf } from './Trends';
 import { planWorkout, stepKey, type WorkoutStep } from '../engine/workout';
 import { LESSON_META } from '../game/content';
 import { foldSubs, SUB_BY_ID } from '../engine/taxonomy';
@@ -166,8 +168,9 @@ export function AchievementsScreen({ t, progress, extra, onBack }: { t: Strings;
             <span className="badge-icon" aria-hidden="true">
               {a.icon}
             </span>
-            <b>{t.achievementNames[a.id] ?? a.id}</b>
-            <small>{t.achievementHints[a.id] ?? ''}</small>
+            {/* Newer awards have their text in AWARD_TEXT (Stats); never show a bare id. */}
+            <b>{t.achievementNames[a.id] ?? AWARD_TEXT[a.id]?.name[langOf(t)] ?? a.id}</b>
+            <small>{t.achievementHints[a.id] ?? (AWARD_TEXT[a.id]?.hint[langOf(t)] ?? '').replace('{v}', String(a.next ?? a.tiers?.[a.tiers.length - 1] ?? ''))}</small>
             {!a.got && (
               <span className="metric-bar" aria-hidden="true">
                 <span style={{ width: `${Math.round(a.progress * 100)}%` }} />

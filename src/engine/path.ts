@@ -69,6 +69,8 @@ export interface PathUnit {
   status: 'past' | 'current' | 'projected';
   /** The unit's theme (D1). */
   theme?: string;
+  /** The number shown (n + the units you skipped by testing out: a placed player starts at "Unit 37", not "Unit 1"). */
+  no?: number;
 }
 
 /** Facts kept in progress (P9). */
@@ -683,6 +685,8 @@ export function buildPath(inp: PathInput): PathView {
       sec.known++;
     }
   }
+  const skipped = Math.floor(checked / L);
+  for (const u of units) u.no = u.n + skipped;
   return { units, current, progress: { done, checked, total: all.length }, sections, freeze };
 }
 

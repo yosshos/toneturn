@@ -613,6 +613,117 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     src.stop(at + 0.15);
   }
 
+  // ---------------------------------------------------------------- metronome & groove kit (0.42)
+
+  /** Audio-clock "now" (seconds), or null before the audio is unlocked. */
+  audioNow(): number | null {
+    return this.ctx ? this.ctx.currentTime : null;
+  }
+  /** performance.now() time at which a sound scheduled for audio time `t` is heard. */
+  heardTime(t: number): number {
+    return this.ctx ? this.heardAt(t) : performance.now();
+  }
+
+  /** One metronome / groove hit at audio time `at` (recorded kick and snare; the rest synthesised). */
+  metroHit(kind: MetroKind, at: number, velocity = 0.8) {
+    if (!this.ctx) return;
+    switch (kind) {
+      case 'click':
+      case 'accent':
+      case 'wood':
+      case 'kick':
+      case 'snare':
+      case 'snare-soft':
+      case 'bell':
+        return this.perc(kind, at, velocity);
+      case 'hat':
+        return this.metal(at, 0.32 * velocity, 0.022, 8000);
+      case 'hat-open':
+        return this.metal(at, 0.26 * velocity, 0.16, 7500);
+      case 'ride': {
+        this.metal(at, 0.16 * velocity, 0.35, 5200);
+        return this.tone(at, 'sine', 3150, 0.07 * velocity, 0.25);
+      }
+      case 'rim':
+        this.noiseHit(at, 'bandpass', 1900, 6, 0.9 * velocity, 0.012);
+        return this.tone(at, 'triangle', 820, 0.3 * velocity, 0.018);
+      case 'clap':
+        for (const [d, a] of [[0, 0.7], [0.011, 0.6], [0.022, 0.8]] as const) this.noiseHit(at + d, 'bandpass', 1200, 1.4, a * velocity, d === 0.022 ? 0.09 : 0.008);
+        return;
+      case 'cowbell':
+        this.tone(at, 'square', 545, 0.12 * velocity, 0.09, 2600);
+        return this.tone(at, 'square', 815, 0.12 * velocity, 0.09, 2600);
+      case 'shaker':
+        return this.noiseHit(at, 'bandpass', 6500, 1.2, 0.35 * velocity, 0.03, 0.012);
+    }
+  }
+
+  /** 808-style metal: six detuned squares through a band → hi-hat / ride shimmer. */
+  private metal(at: number, amp: number, tau: number, hpf: number) {
+    const ctx = this.ctx!;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0, at);
+    g.gain.linearRampToValueAtTime(amp, at + 0.001);
+    g.gain.setTargetAtTime(0, at + 0.002, tau);
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.value = 10000;
+    bp.Q.value = 0.8;
+    const hp = ctx.createBiquadFilter();
+    hp.type = 'highpass';
+    hp.frequency.value = hpf;
+    bp.connect(hp).connect(g).connect(this.percBus);
+    for (const f of [205.3, 304.4, 369.6, 522.7, 540, 800]) {
+      const o = ctx.createOscillator();
+      o.type = 'square';
+      o.frequency.value = f * 2;
+      o.connect(bp);
+      o.start(at);
+      o.stop(at + tau * 8 + 0.05);
+    }
+    // a little noise for air
+    this.noiseHit(at, 'highpass', 9000, 0.7, amp * 0.5, tau * 0.8);
+  }
+
+  private noiseHit(at: number, type: BiquadFilterType, freq: number, q: number, amp: number, tau: number, attack = 0.001) {
+    const ctx = this.ctx!;
+    const src = ctx.createBufferSource();
+    src.buffer = this.noise;
+    const f = ctx.createBiquadFilter();
+    f.type = type;
+    f.frequency.value = freq;
+    f.Q.value = q;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0, at);
+    g.gain.linearRampToValueAtTime(amp, at + attack);
+    g.gain.setTargetAtTime(0, at + attack + 0.001, tau);
+    src.connect(f).connect(g).connect(this.percBus);
+    src.start(at);
+    src.stop(at + tau * 8 + 0.05);
+  }
+
+  private tone(at: number, type: OscillatorType, freq: number, amp: number, tau: number, lp?: number) {
+    const ctx = this.ctx!;
+    const o = ctx.createOscillator();
+    o.type = type;
+    o.frequency.value = freq;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0, at);
+    g.gain.linearRampToValueAtTime(amp, at + 0.001);
+    g.gain.setTargetAtTime(0, at + 0.002, tau);
+    let n: AudioNode = o;
+    if (lp) {
+      const f = ctx.createBiquadFilter();
+      f.type = 'bandpass';
+      f.frequency.value = lp;
+      f.Q.value = 1.5;
+      n = o.connect(f);
+    }
+    n.connect(g).connect(this.percBus);
+    o.start(at);
+    o.stop(at + tau * 8 + 0.05);
+  }
+
   /** The option bell: a glockenspiel "ding" — not a piano note, so it never sounds like part of the music. */
   private optionBell(at: number) {
     if (this.shot('bell', at, 0.5)) return;
@@ -754,3 +865,5 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     this.listeners.forEach((l) => l(list));
   }
 }
+
+export type MetroKind = 'click' | 'accent' | 'wood' | 'kick' | 'snare' | 'snare-soft' | 'bell' | 'hat' | 'hat-open' | 'ride' | 'rim' | 'clap' | 'cowbell' | 'shaker';

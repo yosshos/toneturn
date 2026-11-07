@@ -482,3 +482,188 @@
   font-family: var(--display);
   font-weight: 700;
 }
+
+/* Audit fixes (owner: unclear screens). */
+/* Progress tabs: full labels in one scrolling row (they were cut to "Insig…"). */
+.ps-seg {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.ps-seg::-webkit-scrollbar {
+  display: none;
+}
+.ps-seg button {
+  flex: none;
+  padding-inline: 12px;
+  overflow: visible;
+}
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='oled'], [data-theme='contrast']) .ps-seg {
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+}
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='oled'], [data-theme='contrast']) :is(.ps-seg button.on, .mode-switch button.on, .seg button.on) {
+  background: var(--card-2);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+/* Selected chips: a quiet accent outline, not a filled neon pill. */
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='oled'], [data-theme='contrast']) .chip.on {
+  background: color-mix(in srgb, var(--mint) 14%, transparent);
+  border-color: color-mix(in srgb, var(--mint) 60%, transparent);
+  color: var(--ink);
+}
+/* Sing-along list: the source under the title, not squeezed beside it. */
+.song-list .tool-card {
+  display: grid !important;
+  justify-items: start;
+  text-align: start;
+}
+.song-list .tool-card {
+  grid-template-columns: 1fr !important;
+}
+
+/* 0.42 mature games
+   Game setup / lobby / result screens under Play speak the same quiet language as Settings and the Rush setup:
+   option rows are switches with normal-weight labels and a dim hint line, legends are small, game pickers are flat cards.
+   The gameplay boards themselves keep their colour. */
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) :is(.game-setup, .tf-setup, .duel-setup, .ghost-setup, .daily, .g2, .g3, .rush, .drone, .singalong, .online, .room-lobby) .toggle-row {
+  justify-content: space-between;
+  flex-direction: row-reverse;
+  gap: 12px;
+  min-height: 44px;
+  font-weight: 500;
+}
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) :is(.game-setup, .tf-setup, .duel-setup, .ghost-setup, .daily, .g2, .g3, .rush, .drone, .singalong, .online, .room-lobby) .toggle-row > span {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  font-size: 0.95rem;
+  line-height: 1.3;
+}
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) :is(.game-setup, .tf-setup, .duel-setup, .ghost-setup, .daily, .g2, .g3, .rush, .drone, .singalong, .online, .room-lobby) .toggle-row .field-hint {
+  display: block;
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--ink-dim);
+}
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) :is(.game-setup, .tf-setup, .duel-setup, .ghost-setup, .daily, .g2, .g3, .rush, .drone, .singalong, .online, .room-lobby) .toggle-row + .toggle-row {
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+}
+/* Switches instead of checkboxes (the same shape as in Settings). */
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) :is(.game-setup, .tf-setup, .duel-setup, .ghost-setup, .daily, .g2, .g3, .rush, .drone, .singalong, .online, .room-lobby) .toggle-row input[type='checkbox'] {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: none;
+  width: 40px;
+  height: 24px;
+  margin: 0;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--ink) 18%, transparent);
+  position: relative;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) :is(.game-setup, .tf-setup, .duel-setup, .ghost-setup, .daily, .g2, .g3, .rush, .drone, .singalong, .online, .room-lobby) .toggle-row input[type='checkbox']::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  inset-inline-start: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--ink);
+  transition: transform 0.15s;
+}
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) :is(.game-setup, .tf-setup, .duel-setup, .ghost-setup, .daily, .g2, .g3, .rush, .drone, .singalong, .online, .room-lobby) .toggle-row input[type='checkbox']:checked {
+  background: color-mix(in srgb, var(--mint) 78%, var(--ink-dim));
+}
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) :is(.game-setup, .tf-setup, .duel-setup, .ghost-setup, .daily, .g2, .g3, .rush, .drone, .singalong, .online, .room-lobby) .toggle-row input[type='checkbox']:checked::after {
+  transform: translateX(16px);
+}
+[dir='rtl']:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) :is(.game-setup, .tf-setup, .duel-setup, .ghost-setup, .daily, .g2, .g3, .rush, .drone, .singalong, .online, .room-lobby) .toggle-row input[type='checkbox']:checked::after {
+  transform: translateX(-16px);
+}
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) :is(.game-setup, .tf-setup, .duel-setup, .ghost-setup, .daily, .g2, .g3, .rush, .drone, .singalong, .online, .room-lobby) .toggle-row input[type='checkbox']:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) :is(.game-setup, .tf-setup, .duel-setup, .ghost-setup, .daily, .g2, .g3, .rush, .drone, .singalong, .online, .room-lobby) .toggle-row input[type='checkbox']:focus-visible {
+  outline: 2px solid var(--mint);
+  outline-offset: 2px;
+}
+/* Small, quiet field labels. */
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) :is(.game-setup, .tf-setup, .duel-setup, .ghost-setup, .daily, .g2, .g3, .drone, .online, .room-lobby) .seg-field legend {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) :is(.ghost-note, .ghost-best, .daily-date) {
+  font-weight: 600;
+}
+/* Echo Chain / Beat Echo picker: flat cards, a quiet accent outline when chosen. */
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) .game-setup .game-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--m-radius);
+  box-shadow: none;
+}
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) .game-setup .game-card:active {
+  transform: none;
+}
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) .game-setup .game-card.on {
+  border-color: color-mix(in srgb, var(--mint) 60%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mint) 60%, transparent);
+}
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) .game-setup .game-card b {
+  font-family: var(--display);
+  font-weight: 700;
+}
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) .best-chip {
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent);
+  font-weight: 600;
+}
+/* Sing-along is an exercise screen: it must still fit one phone screen. */
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) .singalong .toggle-row {
+  min-height: 0;
+}
+/* Every theme (Classic arcade too): the option hint sits on its own line under the label. */
+:is(.game-setup, .tf-setup, .duel-setup, .ghost-setup, .daily, .g2, .g3, .rush, .drone, .singalong, .online, .room-lobby) .toggle-row > span > .field-hint {
+  display: block;
+  margin: 2px 0 0;
+}
+
+/* 0.42: weekly puzzle banner as a calm row (icon · title · chevron); game cards use line icons */
+.play-hero {
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  column-gap: 14px;
+}
+.play-hero .ph-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.play-hero .ph-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--gold) 14%, transparent);
+  color: var(--gold);
+}
+.play-hero .play-hero-go {
+  margin: 0;
+  font-size: 1.6rem;
+  line-height: 1;
+}
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) .play-hero small {
+  letter-spacing: 0.04em;
+  font-weight: 700;
+}
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) .pc-icon {
+  color: var(--hue, var(--mint));
+}

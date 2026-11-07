@@ -20,6 +20,7 @@ import './topicsPitch2';
 import './topicsTime2';
 import './topicsSound';
 import './topicsChordRead';
+import './topicsSongs';
 
 // ================================================================ T. Barry Harris
 

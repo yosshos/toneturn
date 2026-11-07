@@ -1,0 +1,243 @@
+/* 0.42 metronome: an analog pendulum, a calm control deck, and the groove bank. */
+.metronome {
+  --mt-wood-a: color-mix(in srgb, var(--accent, #86dcbd) 18%, #3a2a20);
+  --mt-wood-b: color-mix(in srgb, var(--accent, #86dcbd) 8%, #23170f);
+}
+:root[data-theme='paper'] .metronome {
+  --mt-wood-a: #b88a5e;
+  --mt-wood-b: #8a5f3a;
+}
+.mt-stage {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+.mt-pendulum {
+  width: min(52vw, 210px);
+  height: auto;
+}
+.mt-face {
+  fill: color-mix(in srgb, #000 35%, transparent);
+}
+.mt-scale {
+  stroke: color-mix(in srgb, #fff 45%, transparent);
+  stroke-width: 1.2;
+}
+.mt-rod {
+  stroke: #e8e2d6;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+.mt-weight {
+  fill: var(--accent, #86dcbd);
+}
+.mt-pivot {
+  fill: #e8e2d6;
+}
+.mt-base {
+  stroke: color-mix(in srgb, #000 50%, transparent);
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+.mt-beats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+.mt-dot {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1.5px solid var(--line, #444);
+  background: transparent;
+  cursor: pointer;
+  transition: transform 0.08s ease, background 0.08s ease;
+}
+.mt-dot.a2 {
+  border-color: var(--accent, #86dcbd);
+  background: color-mix(in srgb, var(--accent, #86dcbd) 30%, transparent);
+}
+.mt-dot.a1 {
+  background: color-mix(in srgb, var(--ink, #fff) 12%, transparent);
+}
+.mt-dot.a0 {
+  opacity: 0.35;
+  border-style: dashed;
+}
+.mt-dot.now {
+  background: var(--accent, #86dcbd);
+  transform: scale(1.18);
+}
+.mt-dot:disabled {
+  cursor: default;
+}
+.mt-tempo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin-top: 8px;
+}
+.mt-step {
+  font-size: 1.4rem;
+  width: 44px;
+  height: 44px;
+}
+.mt-bpm {
+  display: grid;
+  justify-items: center;
+  min-width: 140px;
+}
+.mt-bpm b {
+  font-size: 3rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.mt-bpm small {
+  color: var(--ink-dim);
+  text-align: center;
+}
+.mt-slider {
+  display: block;
+  width: 100%;
+  margin: 10px 0 4px;
+  accent-color: var(--accent, #86dcbd);
+}
+.mt-main {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 0 14px;
+}
+.mt-tap {
+  justify-self: end;
+  min-width: 76px;
+}
+.mt-meter-tag {
+  justify-self: start;
+  font-size: 1.1rem;
+  color: var(--ink-dim);
+  font-variant-numeric: tabular-nums;
+}
+.mt-play {
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  border: 0;
+  background: var(--accent, #86dcbd);
+  color: var(--accent-ink, #0d1a14);
+  cursor: pointer;
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--accent, #86dcbd) 35%, transparent);
+}
+.mt-play svg path {
+  transform: translateX(1.5px);
+}
+.mt-play.on {
+  background: color-mix(in srgb, var(--accent, #86dcbd) 22%, var(--card, #222));
+  color: var(--accent, #86dcbd);
+  box-shadow: inset 0 0 0 2px var(--accent, #86dcbd);
+}
+.mt-tabs {
+  margin-bottom: 10px;
+}
+.mt-panel {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.mt-row {
+  display: grid;
+  gap: 6px;
+}
+.mt-label {
+  font-size: 0.85rem;
+  color: var(--ink-dim);
+}
+.mt-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.mt-styles {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+.mt-styles .chip {
+  flex: none;
+}
+.mt-grooves {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.mt-groove {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas: 'name mini' 'meta mini';
+  align-items: center;
+  column-gap: 12px;
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--line, #333);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.mt-groove > span {
+  grid-area: name;
+  font-weight: 600;
+}
+.mt-groove > small {
+  grid-area: meta;
+  color: var(--ink-dim);
+}
+.mt-groove.on {
+  border-color: var(--accent, #86dcbd);
+  background: color-mix(in srgb, var(--accent, #86dcbd) 12%, transparent);
+}
+.mt-mini {
+  grid-area: mini;
+  width: 84px;
+  height: 22px;
+}
+.mt-mini rect {
+  fill: var(--ink-dim, #999);
+}
+.mt-mini rect.r2 {
+  fill: var(--accent, #86dcbd);
+}
+.mt-mini rect.r1 {
+  fill: color-mix(in srgb, var(--accent, #86dcbd) 55%, var(--ink, #fff));
+}
+.mt-mini rect.soft {
+  opacity: 0.45;
+}
+.mt-trainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+.mt-trainer input {
+  width: 3.6em;
+  margin: 0 4px;
+  padding: 4px 6px;
+  border-radius: 8px;
+  border: 1px solid var(--line, #333);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}

@@ -233,16 +233,16 @@ export function TuneUp({ lang, settings, saved, onSave, onExit, onResult, best }
           )}
           {sv ? (
             <div className="g2-col">
-              <button className="btn mega" data-resume-tuneup onClick={() => begin(true)}>
-                ▶ {tx.cont(sv.round + 1)}
+              <button className="btn primary mega" data-resume-tuneup onClick={() => begin(true)}>
+                {tx.cont(sv.round + 1)}
               </button>
               <button className="btn ghost" onClick={() => begin(false)}>
                 {tx.newGame}
               </button>
             </div>
           ) : (
-            <button className="btn mega" onClick={() => begin(false)}>
-              ▶ {tx.start}
+            <button className="btn primary mega" onClick={() => begin(false)}>
+              {tx.start}
             </button>
           )}
         </section>
@@ -345,8 +345,8 @@ export function TuneUp({ lang, settings, saved, onSave, onExit, onResult, best }
               </li>
             ))}
           </ul>
-          <button className="btn mega" onClick={() => begin(false)}>
-            ↻ {tx.again}
+          <button className="btn primary mega" onClick={() => begin(false)}>
+            {tx.again}
           </button>
           <a className="btn" href="#/tuner">
             {tx.tuner}

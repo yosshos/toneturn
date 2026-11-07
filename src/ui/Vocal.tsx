@@ -365,7 +365,7 @@ export function VocalScreen({ t, settings, progress, onSettings, onProgress, onB
           </label>
         </div>
         <button className="btn ghost small" onClick={() => setView({ kind: 'range' })}>
-          🎚 {settings.voiceRange ? t.vocalRangeAgain : t.vocalRangeStart}
+          {settings.voiceRange ? t.vocalRangeAgain : t.vocalRangeStart}
         </button>
         <fieldset className="seg-field">
           <legend>{t.vocalStyle}</legend>

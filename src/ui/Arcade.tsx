@@ -529,8 +529,8 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
   // Status of the weekly puzzle and the daily challenge (moved here from the old Home tools, 0.41).
   const daily = progress.daily?.[localDay(new Date())];
   const pz = progress.puzzles?.[weekId(new Date())];
-  const puzzleStatus = !pz ? t.puzzleNew : pz.medal === 'gold' ? `🥇 ${t.puzzleGold}` : pz.medal === 'silver' ? `🥈 ${t.puzzleSilver}` : t.puzzleTried;
-  const best = (n: number | undefined) => (n ? <span className="best-chip">🏅 {t.personalBest}: {n}</span> : null);
+  const puzzleStatus = !pz ? t.puzzleNew : pz.medal === 'gold' ? t.puzzleGold : pz.medal === 'silver' ? t.puzzleSilver : t.puzzleTried;
+  const best = (n: number | undefined) => (n ? <span className="best-chip">{t.personalBest}: {n}</span> : null);
   const [cat, setCat] = useState<GameCat | 'all'>(() => {
     try {
       return (sessionStorage.getItem('toneturn.playcat') as GameCat | 'all' | null) ?? 'all';
@@ -562,10 +562,15 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
       <p className="field-hint">{t.playHint}</p>
       <button className="play-hero" onClick={onPuzzle}>
         <span className="mission-shine" aria-hidden="true" />
-        <small>{puzzleStatus}</small>
-        <b>🧩 {t.weeklyPuzzle}</b>
-        <span className="play-hero-go">
-          🥇 <span className="flip-rtl">→</span>
+        <span className="ph-icon" aria-hidden="true">
+          <CatIcon k="puzzle" />
+        </span>
+        <span className="ph-text">
+          <small>{puzzleStatus}</small>
+          <b>{t.weeklyPuzzle}</b>
+        </span>
+        <span className="play-hero-go" aria-hidden="true">
+          <span className="flip-rtl">›</span>
         </span>
       </button>
       <div className="play-cats" role="tablist" aria-label={lang === 'en' ? 'Game categories' : 'קטגוריות משחקים'}>
@@ -574,7 +579,7 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
         </button>
         {GAME_CATS.map((c) => (
           <button key={c.id} role="tab" aria-selected={cat === c.id} className={`chip ${cat === c.id ? 'on' : ''}`} data-cat={c.id} onClick={() => pickCat(c.id)}>
-            {c.icon} {c[lang]}
+            {c[lang]}
           </button>
         ))}
       </div>
@@ -585,14 +590,14 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
           <section key={gc.id} className="play-section" aria-label={gc[lang]}>
             {cat === 'all' && (
               <h2 className="play-cat-h">
-                {gc.icon} {gc[lang]}
+                {gc[lang]}
               </h2>
             )}
             <div className="play-grid">
               {list.map((c) => (
                 <button key={c.key} className={`play-card game-card ${c.key}`} style={{ ['--hue' as string]: c.hue }} onClick={c.onClick}>
                   <span className="pc-icon" aria-hidden="true">
-                    {c.icon}
+                    <CatIcon k={c.key === 'duel' || c.key === 'daily' ? c.key : (c.cat ?? CAT_OF[c.key] ?? 'social')} />
                   </span>
                   <b>{c.title}</b>
                   <small>{c.blurb}</small>
@@ -615,5 +620,26 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
         <span className="live-go">{t.liveRoom}</span>
       </button>
     </main>
+  );
+}
+
+/** Line icons for the Play tab (mature UI, 0.42): one per game category, plus the puzzle / duel / daily. */
+const CAT_PATHS: Record<string, string> = {
+  ear: 'M8 9a4 4 0 1 1 8 0c0 2.5-2 3.4-2.6 5.2-.5 1.6-1.3 3.3-3.4 3.3-1.4 0-2.4-.9-2.7-2M10.5 9a1.5 1.5 0 0 1 3 0',
+  rhythm: 'M4 9.5c0-1.4 3.6-2.5 8-2.5s8 1.1 8 2.5v6c0 1.4-3.6 2.5-8 2.5s-8-1.1-8-2.5zM4 9.5c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5M7 3.5l3.5 4M17 3.5l-3.5 4',
+  memory: 'M4 6h5v5H4zM15 6h5v5h-5zM4 15h5v5H4zM15 15h5v5h-5z',
+  read: 'M3 5.5c3-1.2 6-1.2 9 .8 3-2 6-2 9-.8v13c-3-1.2-6-1.2-9 .8-3-2-6-2-9-.8zM12 6.3v13',
+  voice: 'M9 4.5a3 3 0 0 1 6 0v6a3 3 0 0 1-6 0zM5.5 10.5a6.5 6.5 0 0 0 13 0M12 17v3.5',
+  instrument: 'M14.5 3.5l6 6M17.5 6.5 11 13M11 13c-1.2-1.2-3.4-1-4.6.4-.9 1-.7 2.2-1.9 3-1.4.9-1.4 2.6-.2 3.8s2.9 1.2 3.8-.2c.8-1.2 2-1 3-1.9 1.4-1.2 1.6-3.4.4-4.6z',
+  social: 'M9 11a3.2 3.2 0 1 0 0-6.4A3.2 3.2 0 0 0 9 11zM2.8 19.5c.6-3.1 3.1-5 6.2-5s5.6 1.9 6.2 5M16.3 5.8a3.2 3.2 0 0 1 0 6.3M17.4 14.7c2.2.5 3.6 2.2 3.9 4.8',
+  duel: 'M5 19 14 10M14 10l2-5 3 3-5 2M19 19l-9-9M10 10 8 5 5 8l5 2M4 20l2-2M20 20l-2-2',
+  daily: 'M4 6.5h16v13H4zM4 10.5h16M8 4v4M16 4v4',
+  puzzle: 'M5 8h3a2 2 0 1 1 4 0h3v3a2 2 0 1 1 0 4v3h-3a2 2 0 1 0-4 0H5v-3a2 2 0 1 0 0-4z',
+};
+function CatIcon({ k }: { k: string }) {
+  return (
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+      <path d={CAT_PATHS[k] ?? CAT_PATHS.ear} />
+    </svg>
   );
 }

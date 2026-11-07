@@ -25,14 +25,16 @@ export function FriendsScreen({ t, user, sync, onBack, settings, onBestTier, onL
     try {
       const p = await myProfile(null);
       setMe(p);
-      setName(p?.display_name ?? user.name ?? '');
-      if (p && !p.display_name && user.name) setMe(await myProfile(user.name));
+      // The nickname (not the Google name) is what friends see (SPEC-SOCIAL §1).
+      const want = settings.nickname ?? (p?.display_name || user.name || '');
+      setName(want);
+      if (p && want && p.display_name !== want) setMe(await myProfile(want));
       setRows(await listFriends());
       setErr(null);
     } catch (e) {
       setErr(String((e as Error).message ?? e));
     }
-  }, [user]);
+  }, [user, settings.nickname]);
 
   useEffect(() => {
     void load();

@@ -16,7 +16,8 @@ test.describe("today's workout", () => {
     await blocks.first().getByRole('button', { name: '+1' }).click();
     await expect(page.locator('.wk-stepper b')).toContainText('21');
     // Remove with undo.
-    await blocks.last().getByRole('button', { name: 'Remove' }).click();
+    await blocks.last().locator('.wk-more').click(); // 0.42: Remove lives in the ⋯ menu
+    await blocks.last().getByRole('menuitem', { name: /Remove/ }).click();
     await expect(blocks).toHaveCount((await blocks.count()));
     await expect(page.locator('.wk-undo')).toBeVisible();
     await page.locator('.wk-undo .btn').click();

@@ -334,18 +334,18 @@ export function MelodyPuzzle({
           <p className="field-hint">{tx(T.howTo)}</p>
         </section>
         {resumable && (
-          <button className="btn mega" data-resume-puzzle="1" onClick={() => {
+          <button className="btn primary mega" data-resume-puzzle="1" onClick={() => {
             setLabels(resumable.labels);
             begin(resumable);
           }}>
-            ▶ {tx(T.cont)}{' '}
+            {tx(T.cont)}{' '}
             <bdi dir="ltr">
               {resumable.index + 1}/{PUZZLES_PER_RUN}
             </bdi>
           </button>
         )}
         <button
-          className={`btn ${resumable ? 'ghost' : 'mega'}`}
+          className={`btn ${resumable ? 'ghost' : 'primary mega'}`}
           data-start-puzzle="1"
           onClick={() => {
             const s = fresh((Date.now() ^ (Math.random() * 1e9)) >>> 0, startLevel, labels);
@@ -353,7 +353,7 @@ export function MelodyPuzzle({
             onSave(s);
           }}
         >
-          ▶ {tx(T.start)}
+          {tx(T.start)}
         </button>
       </main>
     );
@@ -375,14 +375,14 @@ export function MelodyPuzzle({
         </p>
         <div className="recap-actions">
           <button
-            className="btn mega"
+            className="btn primary mega"
             onClick={() => {
               const s = fresh((Date.now() ^ (Math.random() * 1e9)) >>> 0, st.topLevel, labels);
               begin(s);
               onSave(s);
             }}
           >
-            ↻ {tx(T.playAgain)}
+            {tx(T.playAgain)}
           </button>
           <button className="btn ghost" onClick={onExit}>
             {tx(T.exit)}

@@ -140,7 +140,7 @@ export function BingoHost({ lang, game, called, onCall, winners = [], onEnd, sou
 
       {winners.length > 0 && (
         <div className="bingo-winners" aria-live="assertive">
-          <b>🏆 {tx(T.winners)}</b>
+          <b>{tx(T.winners)}</b>
           <ul>
             {winners.map((w, i) => (
               <li key={i}>

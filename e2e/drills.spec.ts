@@ -46,9 +46,9 @@ test.describe('technique drills', () => {
     await expect(page.locator('[data-family="g-flamenco"]')).toHaveCount(0);
   });
 
-  test('the Badges tab shows area ranks and the badge catalogue', async ({ page }) => {
+  test('the Awards tab shows the earned badges', async ({ page }) => {
     await page.goto('/?sim=1#/skills');
-    await page.locator('#ps-tab-badges').click();
-    await expect(page.locator('.ps-panel')).toContainText(/\d{3}/);
+    await page.locator('#ps-tab-awards').click();
+    await expect(page.locator('#ps-panel-awards')).toBeVisible();
   });
 });

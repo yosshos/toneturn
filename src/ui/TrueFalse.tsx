@@ -178,7 +178,7 @@ export function TrueFalseScreen({
           <div className="seg" role="radiogroup" aria-label={t.players}>
             {(['solo', 'duel', 'online'] as const).map((m) => (
               <button key={m} type="button" role="radio" aria-checked={mode === m} className={mode === m ? 'on' : ''} onClick={() => setMode(m)}>
-                {m === 'solo' ? t.tfSolo : m === 'duel' ? t.tfDuel : `🌐 ${t.online}`}
+                {m === 'solo' ? t.tfSolo : m === 'duel' ? t.tfDuel : t.online}
               </button>
             ))}
           </div>
@@ -187,7 +187,7 @@ export function TrueFalseScreen({
       </section>
       {cont && (
         <button
-          className="btn mega"
+          className="btn primary mega"
           data-resume-tf="1"
           onClick={() => {
             void piano.unlock();
@@ -197,11 +197,11 @@ export function TrueFalseScreen({
             setRun(Date.now());
           }}
         >
-          ▶ {cont.total > 0 ? t.continueAt(cont.done, cont.total) : `${t.resumeSession.go} · ${t.tfSavedRun(Math.ceil((cont.data as SoloSave).left / 1000), (cont.data as SoloSave).score)}`}
+          {cont.total > 0 ? t.continueAt(cont.done, cont.total) : `${t.resumeSession.go} · ${t.tfSavedRun(Math.ceil((cont.data as SoloSave).left / 1000), (cont.data as SoloSave).score)}`}
         </button>
       )}
       <button
-        className={`btn ${cont ? 'ghost' : 'mega'}`}
+        className={`btn ${cont ? 'ghost' : 'primary mega'}`}
         onClick={() => {
           void piano.unlock();
           if (mode === 'online') return onOnline(topics, level);
@@ -210,7 +210,7 @@ export function TrueFalseScreen({
           setRun(Date.now());
         }}
       >
-        ▶ {cont ? t.newGame : t.play}
+        {cont ? t.newGame : t.play}
       </button>
     </main>
   );
@@ -300,11 +300,11 @@ function SoloRun({ t, settings, topics, level, best, bestKey, resume, onProgress
         <h1>{t.gameOver}</h1>
         <p className="big-score">
           <b dir="ltr">{score}</b>
-          <small>{over.best ? `🏆 ${t.newPeak}` : `${t.personalBest}: ${Math.max(best, score)}`}</small>
+          <small>{over.best ? t.newPeak : `${t.personalBest}: ${Math.max(best, score)}`}</small>
         </p>
         <div className="recap-actions">
-          <button className="btn mega" onClick={onAgain}>
-            ↻ {t.rematch}
+          <button className="btn primary mega" onClick={onAgain}>
+            {t.rematch}
           </button>
           <button className="btn ghost" onClick={onExit}>
             {t.home}
@@ -399,7 +399,7 @@ function DuelRun({ t, settings, topics, level, onExit, onAgain }: { t: Strings; 
     return (
       <main className="recap scoreboard">
         <p className="eyebrow">{t.trueFalse}</p>
-        <h1>{w === null ? t.tie : `🏆 ${names[w]}`}</h1>
+        <h1>{w === null ? t.tie : `${t.winner}: ${names[w]}`}</h1>
         <ol className="board">
           {[0, 1].map((p) => (
             <li key={p} style={{ ['--pc' as string]: PLAYER_COLORS[p] }}>
@@ -412,8 +412,8 @@ function DuelRun({ t, settings, topics, level, onExit, onAgain }: { t: Strings; 
           ))}
         </ol>
         <div className="recap-actions">
-          <button className="btn mega" onClick={onAgain}>
-            ↻ {t.rematch}
+          <button className="btn primary mega" onClick={onAgain}>
+            {t.rematch}
           </button>
           <button className="btn ghost" onClick={onExit}>
             {t.home}

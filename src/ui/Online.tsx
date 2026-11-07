@@ -165,12 +165,12 @@ export function OnlineScreen({ t, settings, user, initialCode, facts, onBack }: 
             <label className="toggle-row">
               <input type="checkbox" checked={bigScreen} onChange={(e) => setBigScreen(e.target.checked)} />
               <span>
-                📺 {t.bigScreen}
-                <small className="field-hint"> — {t.bigScreenHint}</small>
+                {t.bigScreen}
+                <small className="field-hint">{t.bigScreenHint}</small>
               </span>
             </label>
             <button
-              className="btn mega"
+              className="btn primary mega"
               disabled={busy}
               onClick={() =>
                 run(async (b) => {
@@ -293,15 +293,15 @@ function RoomScreen({ t, settings, backend, roomId, onExit }: { t: Strings; sett
             {s.players.map((p) => (
               <li key={p.userId} className={p.userId === s.me ? 'me' : ''}>
                 {p.nickname} <RatingBadge r={p.rating} provisional={p.ratingProvisional} t={t} size="sm" />
-                {p.userId === s.host && <small className="host-tag">{s.hostScreen ? `📺 ${t.bigScreen}` : t.hostTag}</small>}
+                {p.userId === s.host && <small className="host-tag">{s.hostScreen ? t.bigScreen : t.hostTag}</small>}
               </li>
             ))}
           </ul>
         </section>
         {v.isHost ? (
           <>
-            <button className="btn mega" disabled={s.players.filter((p) => !p.spectator).length < (s.hostScreen ? 1 : 2)} onClick={() => void c.startGame()}>
-              ▶ {t.startGame}
+            <button className="btn primary mega" disabled={s.players.filter((p) => !p.spectator).length < (s.hostScreen ? 1 : 2)} onClick={() => void c.startGame()}>
+              {t.startGame}
             </button>
             {s.players.filter((p) => !p.spectator).length < (s.hostScreen ? 1 : 2) && <p className="field-hint">{t.needTwo}</p>}
           </>
@@ -403,7 +403,7 @@ function RoomScreen({ t, settings, backend, roomId, onExit }: { t: Strings; sett
         )}
         <TimeBar endsAt={v.phase === 'answering' ? v.windowEndsAt : null} />
       </section>
-      {s.hostScreen && (v.phase === 'playing' || v.phase === 'countdown') && <p className="field-hint big-hint">🔊 {t.listenBigScreen}</p>}
+      {s.hostScreen && (v.phase === 'playing' || v.phase === 'countdown') && <p className="field-hint big-hint">{t.listenBigScreen}</p>}
       <section className="duel-half p0">
         {s.kind === 'echo' && q.kind === 'degree-seq' ? (
           <SeqInput t={t} disabled={v.phase !== 'answering'} onSubmit={(seq) => c.answer(seq)} />

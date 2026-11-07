@@ -1,0 +1,248 @@
+/* 0.42 profile (SPEC-SOCIAL §1): avatar circle + flag, nickname / country / picture sheets, round photo crop,
+   privacy & friends settings. Calm, mature chrome. */
+.avatar {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--av) 22%, var(--card, #222));
+  color: var(--av);
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--av) 55%, transparent);
+}
+.avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.avatar .av-flag {
+  position: absolute;
+  inset-inline-end: -4px;
+  bottom: -3px;
+  line-height: 1;
+  filter: drop-shadow(0 1px 1px rgb(0 0 0 / 0.4));
+}
+.profile-card .pc-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.pc-avatar {
+  padding: 0;
+  border: 0;
+  background: none;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.pc-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.pc-text b {
+  font-size: 1.05rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pc-text small {
+  color: var(--ink-dim);
+}
+.pc-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.profile-sheet {
+  display: grid;
+  gap: 12px;
+  max-height: 88dvh;
+  overflow: auto;
+}
+.ps-sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.ps-sheet-head h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+.nick-ideas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.nick-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--bg-soft, transparent);
+  color: inherit;
+  font: inherit;
+}
+.field-hint.warn {
+  color: var(--bad, #e88);
+}
+.country-list {
+  display: grid;
+  gap: 2px;
+  max-height: 46dvh;
+  overflow: auto;
+}
+.country-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.country-row:hover,
+.country-row.on {
+  background: color-mix(in srgb, var(--accent, #86dcbd) 12%, transparent);
+}
+.country-row.suggested {
+  border: 1px solid var(--line);
+}
+.country-row small {
+  color: var(--ink-dim);
+}
+.country-row .cf {
+  width: 1.6em;
+  text-align: center;
+  font-size: 1.2rem;
+}
+.icon-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+}
+.icon-opt {
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: none;
+  color: var(--ink-dim);
+  cursor: pointer;
+}
+.icon-opt.on {
+  color: var(--av);
+  background: color-mix(in srgb, var(--av) 20%, transparent);
+  border-color: var(--av);
+}
+.color-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+.color-opt {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+}
+.color-opt.on {
+  outline: 2px solid var(--ink, #fff);
+  outline-offset: 2px;
+}
+.crop-view {
+  position: relative;
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #000;
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+}
+.crop-view img {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  max-width: none;
+  pointer-events: none;
+}
+.crop-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  box-shadow: 0 0 0 999px rgb(0 0 0 / 0.55);
+  outline: 2px solid rgb(255 255 255 / 0.85);
+  pointer-events: none;
+}
+.crop-zoom {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.crop-zoom input {
+  flex: 1;
+}
+.profile-sheet .row {
+  display: flex;
+  gap: 8px;
+}
+.profile-sheet .grow {
+  flex: 1;
+}
+.field-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+}
+.field-row select {
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+.privacy-adv > summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.privacy-adv[open] > summary {
+  margin-bottom: 8px;
+}
+.set-sub {
+  display: block;
+  margin-bottom: 4px;
+}
+.today-nick {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.today-nick span {
+  flex: 1;
+}
+.today-nick small {
+  color: var(--ink-dim);
+}

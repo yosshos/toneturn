@@ -1,6 +1,8 @@
 // Technique drills (spec AI): the hub (today's items, families, the technique map), a family's levels with the
 // 12-key heat map, the run loop with the tempo ladder, drills settings, calibration and the drill creator.
 
+import { SONGBOOK } from '../content/songbook';
+import { PART_NAME, songDrill } from '../engine/drills/songDrills';
 import { useMemo, useRef, useState } from 'react';
 import type { Settings } from '../storage/progress';
 import type { RatingEvent } from '../engine/rating';
@@ -271,6 +273,30 @@ function Hub({ lang, ds, settings, items, head, onFamily, onRun, onSettings, onC
           );
         })}
       </div>
+      {/* Songs (owner 2026-11-07): public-domain songs to play — the melody, the chords, or both hands. */}
+      <details className="drill-songs" data-drill-songs="1">
+        <summary>
+          <h2>{lang === 'he' ? 'שירים' : 'Songs'}</h2>
+          <small>{lang === 'he' ? 'מנגינות ואקורדים משירים מוכרים (נחלת הכלל)' : 'Melodies and chords of well-known songs (public domain)'}</small>
+        </summary>
+        <ul className="song-drills">
+          {SONGBOOK.map((s) => (
+            <li key={s.id}>
+              <span className="sd-title">
+                <b>{s.title[lang]}</b>
+                <small>{s.credit}</small>
+              </span>
+              <span className="sd-parts">
+                {((ds.instrument ?? 'piano') === 'piano' ? (['melody', 'chords', 'both'] as const) : ds.instrument === 'bass' ? (['melody'] as const) : (['melody', 'chords'] as const)).map((p) => (
+                  <button key={p} className="chip" data-song={s.id} data-part={p} onClick={() => onRun([songDrill(s, p, ds.instrument ?? 'piano')])}>
+                    {PART_NAME[p][lang]}
+                  </button>
+                ))}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </details>
       {(
         <>
           <h2>{tx.mine}</h2>

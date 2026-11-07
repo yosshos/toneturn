@@ -125,7 +125,7 @@ export function DroneScreen({ t, settings, onBack }: { t: Strings; settings: Set
           <span>{t.droneFifth}</span>
         </label>
       </section>
-      {calibrating && <p className="vocal-cue">🤫 {t.droneQuiet}</p>}
+      {calibrating && <p className="vocal-cue">{t.droneQuiet}</p>}
       <section className={`drone-live ${on ? 'on' : ''}`} aria-live="polite">
         <div className="drone-degree" data-degree={reading?.degree ?? ''}>
           {reading ? (reading.degree ?? '♯/♭') : '–'}
@@ -144,15 +144,15 @@ export function DroneScreen({ t, settings, onBack }: { t: Strings; settings: Set
             </li>
           ))}
         </ol>
-        {found.length === 7 && <p className="drone-done">🎉 {t.droneAll}</p>}
+        {found.length === 7 && <p className="drone-done">{t.droneAll}</p>}
       </section>
       {err && (
         <p className="form-error" role="alert">
           {err}
         </p>
       )}
-      <button className={`btn mega ${on ? 'ghost' : ''}`} onClick={() => (on ? stop() : void start())}>
-        {on ? `■ ${t.stop}` : `▶ ${t.startDrone}`}
+      <button className={`btn mega ${on ? 'ghost' : 'primary'}`} onClick={() => (on ? stop() : void start())}>
+        {on ? t.stop : t.startDrone}
       </button>
     </main>
   );

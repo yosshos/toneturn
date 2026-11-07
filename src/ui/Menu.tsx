@@ -12,7 +12,7 @@ interface Props {
   settings: Settings;
   user: CloudUser | null;
   onClose: () => void;
-  onNavigate: (r: 'friends' | 'settings' | 'diagnostics' | 'games' | 'classes' | 'placement' | 'truefalse' | 'achievements' | 'studio') => void;
+  onNavigate: (r: 'tuner' | 'metronome' | 'friends' | 'settings' | 'diagnostics' | 'games' | 'classes' | 'placement' | 'truefalse' | 'achievements' | 'studio') => void;
   onSettings: (p: Partial<Settings>) => void;
 }
 
@@ -46,6 +46,19 @@ const MENU_ICON: Record<string, React.ReactNode> = {
     <>
       <circle cx="12" cy="12" r="3" />
       <path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7" />
+    </>
+  ),
+  tuner: (
+    <>
+      <path d="M4.5 16a8 8 0 0 1 15 0" />
+      <path d="M12 16l3.5-6.5" />
+      <circle cx="12" cy="16" r="1.2" />
+    </>
+  ),
+  metronome: (
+    <>
+      <path d="M8.5 3h7l4 18h-15z" />
+      <path d="M12 16l4.5-9M6.5 16h11" />
     </>
   ),
   mic: (
@@ -100,6 +113,8 @@ export function MenuSheet({ t, settings, user, onClose, onNavigate, onSettings }
           {(
             [
               ['placement', 'level', t.findLevel],
+              ['tuner', 'tuner', lang === 'he' ? 'טיונר' : 'Tuner'],
+              ['metronome', 'metronome', lang === 'he' ? 'מטרונום' : 'Metronome'],
               ['friends', 'friends', t.friends],
               ['classes', 'class', t.classes],
               ['achievements', 'medal', t.achievementsTitle],

@@ -277,6 +277,8 @@ const skillBadges: Badge[] = SKILLS.flatMap((k) =>
         if (!s || n === 0) return { done: false, p: 0 };
         const r = n >= PROVISIONAL_UNTIL ? Math.max(s.r, x.peaks?.[k]?.r ?? 0) : s.r;
         const lvl: BadgeCheck = { done: r >= lv.r, p: clamp01((r - 600) / (lv.r - 600)), v: r, goal: lv.r };
+        // Level reached but not enough answers yet: show what is missing (answers), not "1150 / 900".
+        if (lvl.done && n < lv.n) return { done: false, p: clamp01(n / lv.n), v: n, goal: lv.n };
         return both(lvl, { done: n >= lv.n, p: clamp01(n / lv.n) });
       },
     };

@@ -153,16 +153,16 @@ export function NameTune({ lang, saved, onSave, onExit, onResult, best }: Game2P
           )}
           {sv ? (
             <div className="g2-col">
-              <button className="btn mega" data-resume-tune onClick={() => begin(true)}>
-                ▶ {tx.cont(sv.round + 1)}
+              <button className="btn primary mega" data-resume-tune onClick={() => begin(true)}>
+                {tx.cont(sv.round + 1)}
               </button>
               <button className="btn ghost" onClick={() => begin(false)}>
                 {tx.newGame}
               </button>
             </div>
           ) : (
-            <button className="btn mega" onClick={() => begin(false)}>
-              ▶ {tx.start}
+            <button className="btn primary mega" onClick={() => begin(false)}>
+              {tx.start}
             </button>
           )}
         </section>
@@ -207,8 +207,8 @@ export function NameTune({ lang, saved, onSave, onExit, onResult, best }: Game2P
             <small> / {MAX_SCORE}</small>
           </p>
           {!!best && game.score > best && <p className="g2-best">{tx.newBest}</p>}
-          <button className="btn mega" onClick={() => begin(false)}>
-            ↻ {tx.again}
+          <button className="btn primary mega" onClick={() => begin(false)}>
+            {tx.again}
           </button>
           <button className="btn ghost" onClick={onExit}>
             {tx.back}

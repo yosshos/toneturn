@@ -1837,3 +1837,195 @@ html[data-motion='reduced'] .wk-undo {
     width: min(280px, 80vw, 20vh);
   }
 }
+
+/* Workout editor, clean (owner: "looks terrible"): one row per block — handle, name, minutes, ⋯ (move / remove / lock / swap). */
+.wk-block {
+  grid-template-columns: auto 1fr auto auto;
+  grid-template-areas: 'drag name min more';
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  border-inline-start-width: 1px;
+}
+.wk-block .wk-name b {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+.wk-block .wk-min .icon-btn,
+.wk-block .wk-more {
+  width: 32px;
+  height: 32px;
+  min-height: 0;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+.wk-block .wk-min {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.wk-block .wk-drag {
+  color: var(--ink-dim);
+  cursor: grab;
+}
+.wk-menu {
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+}
+/* Chips that are <button>s got the browser's default outset border (the broken arcs): a hairline instead. */
+button.chip {
+  border: 1px solid var(--line);
+}
+button.chip.on {
+  border-color: var(--mint);
+}
+.wk-ctx,
+.wk-chips {
+  gap: 6px;
+}
+
+/* 0.42: short road names — at most two lines, never over the next circle */
+.road .node-text b {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  max-width: 120px;
+  overflow-wrap: normal;
+}
+
+/* 0.42: the full name of a topic exercise, on its first question (the road shows a short name) */
+.lesson-about {
+  margin: 0 auto 4px;
+  max-width: 34ch;
+  text-align: center;
+  font-size: 0.92rem;
+  line-height: 1.3;
+  color: var(--ink-dim);
+}
+
+/* 0.42: the brief before a topic exercise — what it is, what you'll do, a refresher, a clean Play */
+.ex-brief {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  margin: auto;
+  padding: 28px 20px;
+  max-width: 420px;
+  text-align: center;
+}
+.ex-kicker {
+  color: var(--ink-dim);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+}
+.ex-title {
+  margin: 0;
+  font-size: 1.45rem;
+  line-height: 1.25;
+}
+.ex-about {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.4;
+}
+.ex-how {
+  margin: 0;
+  color: var(--ink-dim);
+}
+.ex-actions {
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+  margin-top: 18px;
+}
+.ex-learn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.ex-play {
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  border: 0;
+  background: var(--accent, #86dcbd);
+  color: var(--accent-ink, #0d1a14);
+  cursor: pointer;
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--accent, #86dcbd) 35%, transparent);
+  transition: transform 0.15s ease;
+}
+.ex-play:hover {
+  transform: scale(1.05);
+}
+.ex-play:active {
+  transform: scale(0.96);
+}
+.ex-play svg {
+  margin-inline-start: 4px;
+}
+.ex-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 18px;
+  margin-top: 14px;
+  font-size: 0.88rem;
+}
+.ex-links .link {
+  color: var(--ink-dim);
+}
+
+/* 0.42: the exercise's bottom controls — one quiet style (owner: Repeat / Skip / Refresh looked different) */
+:root .lesson .controls .ctl-btn.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  min-height: 38px;
+  padding: 0 12px;
+  line-height: 1;
+  font-size: 0.88rem;
+  border: 1px solid var(--line, #333);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-dim, #aaa);
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: none;
+}
+:root .lesson .controls .ctl-btn.btn:hover {
+  color: var(--ink, #fff);
+  border-color: color-mix(in srgb, var(--ink, #fff) 30%, transparent);
+}
+.lesson .controls .ctl-btn .ctl-icon {
+  flex: none;
+}
+[dir='rtl'] .lesson .controls .ctl-btn .ctl-icon {
+  transform: scaleX(-1);
+}
+
+/* 0.42: calmer lesson header — progress pills without the glow, a quieter pause button */
+.rounds-spacer {
+  flex: 1;
+}
+:root:not([data-theme='violet']) .lesson .pill {
+  height: 6px;
+}
+:root:not([data-theme='violet']) .lesson .pill.current {
+  background: var(--accent, #86dcbd);
+  box-shadow: none;
+}
+:root:not([data-theme='violet']) .lesson .lesson-top > .icon-btn:first-child {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 0.85rem;
+  border: 1px solid var(--line, #333);
+  background: transparent;
+  color: var(--ink-dim, #aaa);
+}

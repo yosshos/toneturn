@@ -74,7 +74,7 @@ export function unitRemaining(view: PathView): { byArea: Map<DomainId, number>; 
     if (x.step.kind === 'check') check = true;
     else if (x.step.kind !== 'review') byArea.set(x.step.domain, (byArea.get(x.step.domain) ?? 0) + 1);
   }
-  return { byArea, check, unitN: unit.n, steps: unit.steps.length, done };
+  return { byArea, check, unitN: unit.no ?? unit.n, steps: unit.steps.length, done };
 }
 
 /** W4: exact shapes for the common totals (path minutes, area minutes in weight order, warm-up, game). */

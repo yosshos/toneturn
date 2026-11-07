@@ -635,3 +635,144 @@
 .cmp-rank-row svg {
   flex: 0 0 auto;
 }
+
+/* Progress → Skills: one row per area (bar), open for its skills (owner 2026-11-07). */
+.sm-areas {
+  display: grid;
+  gap: 8px;
+}
+.sm-area {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--card);
+  overflow: hidden;
+}
+.sm-area > summary {
+  list-style: none;
+  cursor: pointer;
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+}
+.sm-area > summary::-webkit-details-marker {
+  display: none;
+}
+.sm-area-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+.sm-area-head small {
+  color: var(--ink-dim);
+  font-size: 0.8rem;
+}
+.sm-bar {
+  display: block;
+  height: 6px;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+  overflow: hidden;
+}
+.sm-bar span {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  background: var(--mint);
+}
+.sm-area .skill-list {
+  padding: 0 10px 6px;
+  margin: 0;
+}
+.sm-area .measure-domain {
+  margin: 0 14px 12px;
+  font-size: 0.85rem;
+}
+.sm-detail {
+  margin: 6px 0 10px;
+  display: grid;
+  gap: 8px;
+}
+/* Progress → Activity: folded sections. */
+.ps-fold > summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.ps-fold > summary::-webkit-details-marker {
+  display: none;
+}
+.ps-fold > summary::after {
+  content: '›';
+  color: var(--ink-dim);
+  font-size: 1.3rem;
+  transition: transform 0.15s;
+}
+.ps-fold[open] > summary::after {
+  transform: rotate(90deg);
+}
+.ps-fold > summary h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+.ps-sub-h {
+  margin: 10px 0 4px;
+  font-size: 0.85rem;
+  color: var(--ink-dim);
+  font-weight: 700;
+}
+.sm-area .skill-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 2px 8px;
+  text-align: start;
+  width: 100%;
+}
+.sm-area .skill-row b {
+  overflow-wrap: normal;
+  word-break: normal;
+}
+.sm-area .skill-row .ev {
+  grid-column: 1;
+  font-size: 0.78rem;
+}
+.sm-area .skill-row .rec-chip {
+  grid-column: 2;
+  grid-row: 1 / 3;
+}
+
+/* Trend header: title, value and bests wrap as lines (the three side by side squeezed the title into a column). */
+.trend-detail-head {
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+.trend-detail-head h3 {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+.trend-detail-head .trend-bests {
+  flex-basis: 100%;
+}
+/* Time-frame chips: small and quiet. */
+.frame-chips {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.frame-chip {
+  min-height: 32px;
+  padding-inline: 12px;
+  font-size: 0.85rem;
+  flex: none;
+}
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='oled'], [data-theme='contrast']) .frame-chip.on {
+  background: color-mix(in srgb, var(--mint) 14%, transparent);
+  color: var(--ink);
+  border: 1px solid color-mix(in srgb, var(--mint) 60%, transparent);
+  box-shadow: none;
+}

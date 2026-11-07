@@ -12,6 +12,7 @@ import type { Ratings } from '../engine/rating';
 import { NoteViews, seqMarks } from './NoteViews';
 import { refresherFor } from '../content/refresher';
 import { useRefresher } from './MiniLesson';
+import type { MiniLesson } from '../content/miniTypes';
 import { DiagramView, PlaceSurfaceView } from './Instrument';
 import { itemNeedsHeadphones } from '../engine/fx';
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
@@ -37,6 +38,11 @@ import { buildPalette, CELLS, describe as describeRhythm, meterOf, onsetBeats, r
 import { makeAdapters, piano, store } from './services';
 
 interface Props {
+  /** The brief before a topic exercise (owner, 2026-11-07): short name, what it's about, what you'll do, a refresher, Play. */
+  brief?: { kicker: string; title: string; about: string };
+  /** From the brief: take this topic off my path / keep a ✓ step on it. */
+  onHideTopic?: () => void;
+  onKeepStep?: () => void;
   t: Strings;
   lessonId: LessonId;
   settings: Settings;
@@ -66,7 +72,7 @@ interface Props {
 
 const targetMidiOf = (q: Question) => (q.kind === 'degree' || q.kind === 'sing' || q.kind === 'note-name' ? q.targetMidi : q.kind === 'sing-seq' || q.kind === 'sing-run' ? q.midis[0] : 60);
 
-export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit, onAgain, onNext, onProgress, lessonDef, adapt, resume, onStep, onDone, nextLabel, ratings, playerName, onSettings }: Props) {
+export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit, onAgain, onNext, onProgress, lessonDef, adapt, resume, onStep, onDone, nextLabel, ratings, playerName, onSettings, brief, onHideTopic, onKeepStep }: Props) {
   const [phones, setPhones] = useState(!!settings.headphones);
   const ctrlRef = useRef<LessonController | null>(null);
   const [change, setChange] = useState<{ change: RatingChange; peakBefore: number | null } | null>(null);
@@ -156,8 +162,9 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
   }, [ctrl, settings.inputLang, settings.outputLang, settings.naming]);
 
   useEffect(() => {
-    if (autoStart) void ctrl.start();
+    if (autoStart && !(brief && !resume)) void ctrl.start();
     return () => ctrl.dispose();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ctrl, autoStart]);
 
   // MIDI keyboard: a key press answers degree / note-name questions (singing tasks use MidiPitchCapture).
@@ -283,6 +290,8 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
             {t.exit}
           </button>
         </section>
+      ) : v.stage === 'starting' && brief ? (
+        <ExerciseBrief brief={brief} lang={lang} how={howText(lesson.questions[0]?.kind, lang)} refresher={lesson.questions[0] ? refresherFor(lesson.questions[0], lesson.id) : null} onRefresher={openRefresher} onPlay={() => void ctrl.start()} voice={v.mode === 'voice'} onHide={onHideTopic} onKeep={onKeepStep} />
       ) : v.stage === 'starting' ? (
         <section className="paused-card">
           <h2>{withNote(meta.title[lang], bb)}</h2>
@@ -426,33 +435,33 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
           )}
           <Caption text={v.caption} />
           <div className="controls">
-            <button className="btn small" onClick={() => ctrl.repeat()}>
-              ↻ {t.repeat}
+            <button className="btn small ctl-btn" onClick={() => ctrl.repeat()}>
+              <CtlIcon k="repeat" /> {t.repeat}
             </button>
-            <button className="btn small" onClick={() => ctrl.skip()}>
-              {t.skip} ⇥
+            <button className="btn small ctl-btn" onClick={() => ctrl.skip()}>
+              <CtlIcon k="skip" /> {t.skip}
             </button>
             {refresher && openRefresher && (
               <button
-                className="btn small ghost refresh-concept"
+                className="btn small ctl-btn refresh-concept"
                 data-refresh={refresher.id}
                 onClick={() => {
                   ctrl.pause();
                   openRefresher(refresher, () => void ctrl.resume());
                 }}
               >
-                💡 {lang === 'en' ? 'Refresh' : 'רענון'}
+                <CtlIcon k="learn" /> {lang === 'en' ? 'Refresh' : 'רענון'}
               </button>
             )}
             {isStaircase && placementSkill && (
               <button
-                className="btn small ghost skip-section"
+                className="btn small ctl-btn skip-section"
                 onClick={() => {
                   ctrl.updateLesson({ placementSkipped: [...(v.session.lesson.placementSkipped ?? []), placementSkill] });
                   ctrl.skip();
                 }}
               >
-                ⏭ {t.skipSection}
+                <CtlIcon k="skip" /> {t.skipSection}
               </button>
             )}
           </div>
@@ -658,6 +667,8 @@ function TopicStrip({ v, t }: { v: LessonView; t: Strings }) {
 }
 
 function Rounds({ v, t }: { v: LessonView; t: Strings }) {
+  // One question (the weekly puzzle): no progress bar at all — a lone pill only looked like a stray white bar.
+  if (v.session.records.length <= 1) return <span className="rounds-spacer" aria-hidden="true" />;
   // Long sessions (Find my level's staircase): a counter instead of one pill per question.
   if (v.session.records.length > 12)
     return (
@@ -1153,5 +1164,83 @@ export function TapPad({ live, count, label, hint, beat, accent, onTap, onReleas
       {hint && <small className="tap-hint">{hint}</small>}
       <small className="tap-count" dir="ltr">{count ? count : ''}</small>
     </button>
+  );
+}
+
+/** What you'll do, from the first question's kind (a few words). */
+function howText(kind: string | undefined, lang: 'en' | 'he'): string {
+  const he = lang === 'he';
+  const k = kind ?? '';
+  if (k.startsWith('sing')) return he ? 'מקשיבים — ושרים בחזרה.' : 'Listen, then sing it back.';
+  if (k === 'play' || k.startsWith('play')) return he ? 'מנגנים על הכלי שלכם.' : 'Play it on your instrument.';
+  if (k.includes('rhythm') || k.includes('tap') || k.includes('click')) return he ? 'מקשיבים — ומקישים את הקצב.' : 'Listen, then tap the rhythm.';
+  if (k.includes('read') || k.includes('staff') || k.includes('write') || k.includes('spell')) return he ? 'קוראים ועונים.' : 'Read, then answer.';
+  return he ? 'מקשיבים — ובוחרים את התשובה.' : 'Listen, then choose the answer.';
+}
+
+/** The brief before a topic exercise: never starts playing on its own. */
+function ExerciseBrief({ brief, lang, how, refresher, onRefresher, onPlay, voice, onHide, onKeep }: { brief: { kicker: string; title: string; about: string }; lang: 'en' | 'he'; how: string; refresher: MiniLesson | null; onRefresher: ((l: MiniLesson, after: () => void) => void) | null; onPlay: () => void; voice: boolean; onHide?: () => void; onKeep?: () => void }) {
+  const he = lang === 'he';
+  const [kept, setKept] = useState(false);
+  return (
+    <section className="ex-brief" data-brief="1">
+      <small className="ex-kicker">{brief.kicker}</small>
+      <h1 className="ex-title">{brief.title}</h1>
+      <p className="ex-about">{brief.about}</p>
+      <p className="ex-how">{how}</p>
+      <div className="ex-actions">
+        {refresher && onRefresher && (
+          <button className="btn ghost ex-learn" onClick={() => onRefresher(refresher, () => undefined)} data-brief-learn="1">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M3 5.5c3-1.2 6-1.2 9 .8 3-2 6-2 9-.8v13c-3-1.2-6-1.2-9 .8-3-2-6-2-9-.8z" />
+              <path d="M12 6.3v13" />
+            </svg>
+            {he ? 'רענון קצר' : 'Quick refresher'}
+          </button>
+        )}
+        <button className="ex-play" onClick={onPlay} aria-label={he ? 'התחלה' : 'Start'} data-brief-play="1">
+          {voice ? <MicIcon /> : (
+            <svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true">
+              <path d="M8 5.5v13l10.5-6.5z" fill="currentColor" />
+            </svg>
+          )}
+        </button>
+      </div>
+      {(onHide || onKeep) && (
+        <div className="ex-links">
+          {onKeep && (
+            <button className="link" disabled={kept} onClick={() => (onKeep(), setKept(true))}>
+              {kept ? (he ? 'נשאר במסלול ✓' : 'Kept on my path ✓') : he ? 'להשאיר במסלול' : 'Keep it on my path'}
+            </button>
+          )}
+          {onHide && (
+            <button className="link" onClick={onHide} data-brief-hide="1">
+              {he ? 'להסתיר את הנושא הזה' : 'Hide this topic'}
+            </button>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
+/** Line icons for the exercise's bottom controls (one style for all of them). */
+function CtlIcon({ k }: { k: 'repeat' | 'skip' | 'learn' }) {
+  return (
+    <svg className="ctl-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      {k === 'repeat' ? (
+        <>
+          <path d="M4 12a8 8 0 1 0 2.4-5.7" />
+          <path d="M4 4v4.5h4.5" />
+        </>
+      ) : k === 'skip' ? (
+        <path d="M5 6l7 6-7 6M13 6l7 6-7 6" />
+      ) : (
+        <>
+          <path d="M3 5.5c3-1.2 6-1.2 9 .8 3-2 6-2 9-.8v13c-3-1.2-6-1.2-9 .8-3-2-6-2-9-.8z" />
+          <path d="M12 6.3v13" />
+        </>
+      )}
+    </svg>
   );
 }

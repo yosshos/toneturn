@@ -56,8 +56,12 @@ const N = ({ children }: { children: ReactNode }) => <bdi dir="ltr">{children}</
 // ======================================================================= strings
 
 export const SX = {
-  tabs: { map: { en: 'Map', he: 'מפה' }, stats: { en: 'Stats', he: 'נתונים' }, insights: { en: 'Insights', he: 'תובנות' }, history: { en: 'History', he: 'היסטוריה' }, awards: { en: 'Awards', he: 'הישגים' }, badges: { en: 'Badges', he: 'תגים' } } as Record<ProgressTab, L>,
+  tabs: { overview: { en: 'Overview', he: 'סקירה' }, skills: { en: 'Skills', he: 'מיומנויות' }, activity: { en: 'Activity', he: 'פעילות' }, awards: { en: 'Awards', he: 'הישגים' } } as Record<ProgressTab, L>,
   progress: { en: 'Progress', he: 'התקדמות' },
+  historyTitle: { en: 'Session history', he: 'היסטוריית אימונים' },
+  highlights: { en: 'Highlights', he: 'נקודות בולטות' },
+  whenBest: { en: 'When you practise best', he: 'מתי אתם מתרגלים הכי טוב' },
+  earnedTitle: { en: 'Earned', he: 'הושגו' },
   overall: { en: 'Overall level', he: 'רמה כללית' },
   bestEver: { en: 'best ever {r} ({d})', he: 'השיא {r} ({d})' },
   better: { en: 'Higher than {p}% of {g}', he: 'גבוה מ־{p}% מ{g}' },
@@ -204,16 +208,22 @@ const areaLevel = (r: ReturnType<typeof foldFromMemo>, d: DomainId) => {
 
 // ======================================================================= ProgressTabs
 
-export type ProgressTab = 'map' | 'stats' | 'insights' | 'history' | 'awards' | 'badges';
-const TABS: ProgressTab[] = ['map', 'stats', 'insights', 'history', 'awards', 'badges'];
+/** Four tabs (owner 2026-11-07: six overlapping tabs, cut labels, the same data twice). */
+export type ProgressTab = 'overview' | 'skills' | 'activity' | 'awards';
+const TABS: ProgressTab[] = ['overview', 'skills', 'activity', 'awards'];
+/** Old tab names (links, stored state) → their new home. */
+const OLD_TAB: Record<string, ProgressTab> = { map: 'skills', stats: 'overview', insights: 'activity', history: 'activity', badges: 'awards' };
+export const toTab = (x: string | null | undefined): ProgressTab | null => (x ? (TABS.includes(x as ProgressTab) ? (x as ProgressTab) : (OLD_TAB[x] ?? null)) : null);
 const TAB_KEY = 'toneturn.progressTab';
 
 export interface ProgressTabsProps {
   t: Strings;
   lang: Lang;
   progress: Progress;
-  /** The existing Skill Map (radar, areas, sub-skills) — shown under "Map". */
+  /** The Skill Map (radar, areas → skills) — shown under "Skills". */
   map?: ReactNode;
+  /** Above the overall card on Overview: the area tiles, the month's challenge, the ear's chord. */
+  overview?: ReactNode;
   /** Ranks + badges view (spec AG §9), mounted by the app. */
   badges?: ReactNode;
   children?: ReactNode;
@@ -227,18 +237,18 @@ export interface ProgressTabsProps {
   pinned?: string[];
   onPin?: (ids: string[]) => void;
   /** Start on a tab (e.g. from a "what's new" link). */
-  initial?: ProgressTab;
+  initial?: ProgressTab | string;
 }
 
 export function ProgressTabs(props: ProgressTabsProps) {
   const { lang } = props;
   const [tab, setTabState] = useState<ProgressTab>(() => {
-    if (props.initial) return props.initial;
+    const i = toTab(props.initial as string | undefined);
+    if (i) return i;
     try {
-      const v = sessionStorage.getItem(TAB_KEY) as ProgressTab | null;
-      return v && TABS.includes(v) ? v : 'map';
+      return toTab(sessionStorage.getItem(TAB_KEY)) ?? 'overview';
     } catch {
-      return 'map';
+      return 'overview';
     }
   });
   const setTab = (x: ProgressTab) => {
@@ -259,12 +269,15 @@ export function ProgressTabs(props: ProgressTabsProps) {
         ))}
       </div>
       <div role="tabpanel" id={`ps-panel-${tab}`} aria-labelledby={`ps-tab-${tab}`} className="ps-panel">
-        {tab === 'map' && (props.map ?? props.children)}
-        {tab === 'stats' && <StatsView {...props} />}
-        {tab === 'insights' && <InsightsView {...props} />}
-        {tab === 'history' && <HistoryView {...props} />}
-        {tab === 'awards' && <AwardsView {...props} />}
-        {tab === 'badges' && props.badges}
+        {tab === 'overview' && <OverviewView {...props} />}
+        {tab === 'skills' && (props.map ?? props.children)}
+        {tab === 'activity' && <ActivityView {...props} />}
+        {tab === 'awards' && (
+          <>
+            {props.badges}
+            <AwardsView {...props} earnedOnly />
+          </>
+        )}
       </div>
     </div>
   );
@@ -291,6 +304,74 @@ export function TotalsTiles({ tot, lang }: { tot: FrameTotals; lang: Lang }) {
       <Tile label={SX.time[lang]} value={<N>{tot.hasTime ? fmtDuration(tot.ms, lang) : '—'}</N>} />
       <Tile label={SX.xp[lang]} value={<N>{tot.xp}</N>} />
       <Tile label={SX.days[lang]} value={<N>{tot.days}</N>} />
+    </div>
+  );
+}
+
+/** Overview: who you are now — overall level, areas and ranks, the month's challenge, your records. */
+export function OverviewView(props: ProgressTabsProps) {
+  const { t, lang, progress, leagueLevels, friendLevels } = props;
+  const ps = P(progress);
+  const events = progress.ratingEvents ?? [];
+  const ratings = foldFromMemo(ps.ratingBase, events);
+  const o = overallRating(ratings);
+  const pl = o ? percentile(o.r, leagueLevels ?? []) : null;
+  const pf = o ? percentile(o.r, friendLevels ?? []) : null;
+  const peak = ps.peaks?.overall;
+  return (
+    <div className="ps-view">
+      <section className="set-card ps-overall">
+        <div className="ps-overall-head">
+          <div>
+            <small>{SX.overall[lang]}</small>
+            <div className="ps-big">
+              <N>{o ? `${o.r}${o.provisional ? '?' : ''}` : '—'}</N> {o && <span className="ps-band">{t.bands[band(o.r)]}</span>}
+            </div>
+          </div>
+        </div>
+        {peak && <p className="field-hint">{fill(SX.bestEver[lang], { r: peak.r, d: fmtDay(localDay(new Date(peak.at)), lang) })}</p>}
+        {pl !== null && <p className="ps-pct">{fill(SX.better[lang], { p: pl, g: SX.league[lang] })}</p>}
+        {pf !== null && <p className="ps-pct">{fill(SX.better[lang], { p: pf, g: SX.friends[lang] })}</p>}
+      </section>
+      {props.overview}
+      <RecordsCard progress={progress} lang={lang} />
+    </div>
+  );
+}
+
+/** A collapsible section on Activity (closed by default except the first): no long scroll. */
+function Fold({ title, open, children }: { title: string; open?: boolean; children: ReactNode }) {
+  return (
+    <details className="set-card ps-fold" open={open}>
+      <summary>
+        <h2>{title}</h2>
+      </summary>
+      {children}
+    </details>
+  );
+}
+
+/** Activity: how much and how well, over a chosen time frame — totals, the overall trend, the calendar, when you
+ *  practise best, the highlights (best sessions + tricky answers), and the session history — each section folded. */
+export function ActivityView(props: ProgressTabsProps) {
+  const { t, lang, progress } = props;
+  const ps = P(progress);
+  const [frame] = useStatsFrame();
+  const day = today();
+  const events = progress.ratingEvents ?? [];
+  const tot = useMemo(() => frameTotals(ps.statsDays, frame, day), [ps.statsDays, frame, day]);
+  return (
+    <div className="ps-view">
+      <FrameChips lang={lang} />
+      <section className="set-card">
+        <TotalsTiles tot={tot} lang={lang} />
+      </section>
+      <TrendDetail t={t} events={events} skill="overall" lang={lang} base={ps.ratingBase} days={ps.statsDays} peaks={ps.peaks} chips={false} />
+      <ActivityCalendar progress={progress} lang={lang} />
+      <InsightsView {...props} folded />
+      <Fold title={SX.historyTitle[lang]}>
+        <HistoryView {...props} folded />
+      </Fold>
     </div>
   );
 }
@@ -511,7 +592,7 @@ function Reading({ text, lang }: { text: string | null; lang: Lang }) {
   return <p className="ps-reading">{text ?? SX.noData[lang]}</p>;
 }
 
-export function InsightsView({ t, lang, progress }: ProgressTabsProps) {
+export function InsightsView({ t, lang, progress, folded }: ProgressTabsProps & { folded?: boolean }) {
   const ps = P(progress);
   const [frame] = useStatsFrame();
   const day = today();
@@ -533,81 +614,72 @@ export function InsightsView({ t, lang, progress }: ProgressTabsProps) {
   const best = bestSessions(kept);
   const pairs = trickyPairs(kept);
   const more = (c: { diff: number }, a: string, b: string) => fill(SX.moreAcc[lang], { d: c.diff, a, b });
-  return (
-    <div className="ps-view">
-      <FrameChips lang={lang} />
-      <p className="field-hint">{SX.noDataHint[lang]}</p>
-
+  // Each block folds on Activity (owner: no long scroll); the highlights — strongest / weakest, best sessions and
+  // tricky answers — are ONE section now (they were spread over two tabs).
+  const Box = ({ title, open, children }: { title: string; open?: boolean; children: ReactNode }) =>
+    folded ? (
+      <Fold title={title} open={open}>
+        {children}
+      </Fold>
+    ) : (
       <section className="set-card">
-        <h2>{SX.byArea[lang]}</h2>
-        <Reading lang={lang} text={areaC && more(areaC, `${lang === 'he' ? 'ב' : 'in '}${t.domainNames[areaC.best.key]}`, `${lang === 'he' ? 'ב' : 'in '}${t.domainNames[areaC.worst.key]}`)} />
-        <BarRows buckets={areaB} label={(k) => t.domainNames[k]} lang={lang} />
+        <h2>{title}</h2>
+        {children}
       </section>
-
-      <section className="set-card">
-        <h2>{SX.byTime[lang]}</h2>
+    );
+  return (
+    <>
+      <Box title={SX.highlights[lang]} open>
+        <Reading lang={lang} text={sw && fill(SX.strongest[lang], { s: t.skillNames[sw.strong.key], a: pct(sw.strong.ok / sw.strong.n), w: t.skillNames[sw.weak.key], b: pct(sw.weak.ok / sw.weak.n) })} />
+        {best.length > 0 && (
+          <>
+            <h3 className="ps-sub-h">{SX.bestSessions[lang]}</h3>
+            <ul className="ps-list">
+              {best.map((x, i) => (
+                <li key={`${x.s.sessionId ?? ""}-${i}`}>
+                  <b>{fmtDay(localDay(new Date(x.s.completedAt)), lang)}</b> · <N>{pct(x.acc)}</N> · <N>{secs(x.medianMs)}</N>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+        {pairs.length > 0 && (
+          <>
+            <h3 className="ps-sub-h">{SX.tricky[lang]}</h3>
+            <ul className="ps-list">
+              {pairs.map((x, i) => (
+                <li key={`${x.answer}|${x.given}|${i}`}>{fill(SX.trickyLine[lang], { a: x.answer, g: x.given, n: x.count })}</li>
+              ))}
+            </ul>
+          </>
+        )}
+      </Box>
+      <Box title={SX.whenBest[lang]}>
+        <h3 className="ps-sub-h">{SX.byTime[lang]}</h3>
         <Reading lang={lang} text={todC && more(todC, SX.dayParts[todC.best.key][lang], SX.dayParts[todC.worst.key][lang])} />
         <BarRows buckets={tod} label={(k) => SX.dayPartsShort[k][lang]} lang={lang} />
-        <small className="field-hint">{SX.allTime[lang]}</small>
-      </section>
-
-      <section className="set-card">
-        <h2>{SX.byWeekday[lang]}</h2>
+        <h3 className="ps-sub-h">{SX.byWeekday[lang]}</h3>
         <Reading lang={lang} text={wdC && more(wdC, fill(SX.onDay[lang], { d: weekdayName(+wdC.best.key, lang) }), fill(SX.onDay[lang], { d: weekdayName(+wdC.worst.key, lang) }))} />
         <BarRows buckets={wd} label={(k) => weekdayName(+k, lang)} lang={lang} />
-      </section>
-
-      <section className="set-card">
-        <h2>{SX.byInput[lang]}</h2>
-        {tot.hasInput ? (
+        {tot.hasInput && (
           <>
+            <h3 className="ps-sub-h">{SX.byInput[lang]}</h3>
             <Reading lang={lang} text={inC && more(inC, fill(SX.withInput[lang], { x: SX.inputs[inC.best.key][lang] }), fill(SX.withInput[lang], { x: SX.inputs[inC.worst.key][lang] }))} />
             <BarRows buckets={inB} label={(k) => SX.inputs[k][lang]} lang={lang} />
           </>
-        ) : (
-          <p className="field-hint">—</p>
         )}
-      </section>
-
-      <section className="set-card">
-        <h2>{SX.strongWeak[lang]}</h2>
-        <Reading lang={lang} text={sw && fill(SX.strongest[lang], { s: t.skillNames[sw.strong.key], a: pct(sw.strong.ok / sw.strong.n), w: t.skillNames[sw.weak.key], b: pct(sw.weak.ok / sw.weak.n) })} />
-      </section>
-
-      <section className="set-card">
-        <h2>{SX.tricky[lang]}</h2>
-        {pairs.length ? (
-          <ul className="ps-list">
-            {pairs.map((x) => (
-              <li key={`${x.answer}|${x.given}`}>{fill(SX.trickyLine[lang], { a: x.answer, g: x.given, n: x.count })}</li>
-            ))}
-          </ul>
-        ) : (
-          <Reading lang={lang} text={null} />
-        )}
-      </section>
-
-      <section className="set-card">
-        <h2>{SX.bestSessions[lang]}</h2>
-        {best.length ? (
-          <ul className="ps-list">
-            {best.map((b) => (
-              <li key={b.s.sessionId}>
-                <b>{fmtDay(localDay(new Date(b.s.completedAt)), lang)}</b> · <N>{pct(b.acc)}</N> · <N>{secs(b.medianMs)}</N>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <Reading lang={lang} text={null} />
-        )}
-      </section>
-    </div>
+      </Box>
+      <Box title={SX.byArea[lang]}>
+        <Reading lang={lang} text={areaC && more(areaC, `${lang === 'he' ? 'ב' : 'in '}${t.domainNames[areaC.best.key]}`, `${lang === 'he' ? 'ב' : 'in '}${t.domainNames[areaC.worst.key]}`)} />
+        <BarRows buckets={areaB} label={(k) => t.domainNames[k]} lang={lang} />
+      </Box>
+    </>
   );
 }
 
 // ======================================================================= History (S17)
 
-export function HistoryView({ t, lang, progress, onOpenSession }: ProgressTabsProps) {
+export function HistoryView({ t, lang, progress, onOpenSession, folded }: ProgressTabsProps & { folded?: boolean }) {
   const ps = P(progress);
   const [frame] = useStatsFrame();
   const [area, setArea] = useState<DomainId | 'all'>('all');
@@ -615,7 +687,7 @@ export function HistoryView({ t, lang, progress, onOpenSession }: ProgressTabsPr
   const rows = useMemo(() => historyRows<LessonResult>(progress.history, ps.statsDays, frame, today(), { area, kind }), [progress.history, ps.statsDays, frame, area, kind]);
   return (
     <div className="ps-view">
-      <FrameChips lang={lang} />
+      {!folded && <FrameChips lang={lang} />}
       <div className="ps-filters">
         <label>
           <span className="sr-only">{SX.area[lang]}</span>
@@ -715,9 +787,11 @@ export function AwardCard({ a, lang, pinned, onTogglePin, onShare }: { a: Achiev
   );
 }
 
-export function AwardsView({ lang, progress, extra, pinned = [], onPin }: ProgressTabsProps) {
-  const list = useMemo(() => achievements(progress, extra), [progress, extra]);
-  const close = closestToUnlock(list);
+export function AwardsView({ lang, progress, extra, pinned = [], onPin, earnedOnly }: ProgressTabsProps & { earnedOnly?: boolean }) {
+  const all = useMemo(() => achievements(progress, extra), [progress, extra]);
+  // Progress → Awards shows only what you earned (owner: unearned badges should not appear); "closest" stays on badges.
+  const list = earnedOnly ? all.filter((a) => a.got) : all;
+  const close = earnedOnly ? [] : closestToUnlock(all);
   const toggle = (id: string) => {
     if (!onPin) return;
     onPin(pinned.includes(id) ? pinned.filter((x) => x !== id) : [...pinned, id].slice(-3));

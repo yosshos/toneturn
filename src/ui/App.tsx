@@ -28,7 +28,9 @@ import { LESSON_ORDER, runLevelFor, runsWorkshop, type LessonDef, type LessonId,
 import type { SessionState } from '../engine/session';
 import type { DomainId } from '../engine/rating';
 import { adaptPlacement, placementLesson, puzzleBand, reviewLesson, weekId, weeklyPuzzle } from '../engine/adaptive';
-import { SkillMap } from './SkillMap';
+import { EarChordCard, SkillMap } from './SkillMap';
+import { NickPrompt } from './Profile';
+import { shortName } from '../engine/pathNames';
 import { PathExtras } from './Tools';
 import { MicIcon } from './bits';
 import { STRINGS } from '../i18n/strings';
@@ -52,11 +54,12 @@ import type { GameKind } from '../game/memoryGame';
 import { MenuSheet } from './Menu';
 import { DomainTiles, GAMES2, PlayScreen, TabBar, TAB_ROUTES, type TabId } from './Arcade';
 import { Tuner } from './Tuner';
+import { Metronome } from './Metronome';
 import { Drills, drillSettingsOf } from './Drills';
 import { badgeInputOf, refreshRanksBadges } from '../engine/rankBadges';
 import { PLACEMENT_ORDER, ratingDrift, recalibration } from '../engine/placement';
 import { foldFromMemo } from '../engine/stats';
-import { BadgesView } from './Badges';
+import { BadgesView, ChallengeCard } from './Badges';
 import type { RankChange } from '../engine/ranks';
 import type { Badge } from '../engine/badges';
 import { BadgeUnlock, RankUpUnlock } from './BadgeUnlock';
@@ -90,7 +93,7 @@ import { params, piano, setMidiEnabled, SIMULATED, store, tts } from './services
 import { midi } from '../speech/midi';
 import { setPreferredMic } from '../speech/mic';
 
-type Route = 'intake' | 'studio' | 'home' | 'path' | 'arcade' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong' | 'perform' | 'learned' | 'tuner' | 'drills' | 'workout' | 'workoutrun' | 'peakhunter' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'flight' | 'pitchmemory' | 'nametune' | 'tuneup' | 'highway' | 'melodypuzzle';
+type Route = 'intake' | 'studio' | 'home' | 'path' | 'arcade' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong' | 'perform' | 'learned' | 'tuner' | 'metronome' | 'drills' | 'workout' | 'workoutrun' | 'peakhunter' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'flight' | 'pitchmemory' | 'nametune' | 'tuneup' | 'highway' | 'melodypuzzle';
 /** Invite links: #/online/CODE */
 const onlineCodeFromHash = () => (/^#\/?online\/(\w+)/.exec(location.hash)?.[1] ?? '');
 const PLAY_HASH = 'play';
@@ -100,7 +103,7 @@ const enterPlay = () => {
 };
 const routeFromHash = (): Route => {
   const h = location.hash.replace(/^#\/?/, '').replace(/^online\/.*$/, 'online').replace(/^settings\/.*$/, 'settings');
-  return (['path', 'arcade', 'settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong', 'perform', 'learned', 'studio', 'intake', 'tuner', 'drills', 'workout', 'workoutrun', 'peakhunter', 'rush-chord', 'rush-note', 'rush-fretboard', 'rush-interval', 'rush-keysig', 'rush-progression', 'flight', 'pitchmemory', 'nametune', 'tuneup', 'highway', 'melodypuzzle'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
+  return (['path', 'arcade', 'settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong', 'perform', 'learned', 'studio', 'intake', 'tuner', 'metronome', 'drills', 'workout', 'workoutrun', 'peakhunter', 'rush-chord', 'rush-note', 'rush-fretboard', 'rush-interval', 'rush-keysig', 'rush-progression', 'flight', 'pitchmemory', 'nametune', 'tuneup', 'highway', 'melodypuzzle'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
 };
 
 /** The level a generated modes lesson was made at (from its first question's pool size). */
@@ -135,7 +138,8 @@ export function App() {
   const [generated, setGenerated] = useState<{ def: LessonDef; adapt?: (s: SessionState) => Question[] | null } | null>(null);
   /** The running lesson's save slot (every lesson keeps its place after each answer; playtesting, 0.35.2). */
   const [dropTick, setDropTick] = useState(0);
-  const [slot, setSlot] = useState<{ key: string; title: string; seed?: number; resume?: SavedSession } | null>(null);
+  type Brief = { kicker: string; title: string; about: string; topic?: string; keepStep?: string };
+  const [slot, setSlot] = useState<{ key: string; title: string; seed?: number; resume?: SavedSession; brief?: Brief } | null>(null);
   const [sync, setSync] = useState<SyncState>('idle');
   // MIDI keyboard input (Settings): singing tasks capture from the keyboard.
   useEffect(() => {
@@ -338,7 +342,7 @@ export function App() {
     setMini({ lesson, then: after });
   };
   /** Open a generated session in its save slot: an unfinished one in the same slot continues instead. */
-  const openGenerated = (def: LessonDef, adapt?: (s: SessionState) => Question[] | null, consented = false, extra: { key?: string; title?: string; seed?: number; resume?: SavedSession } = {}) => {
+  const openGenerated = (def: LessonDef, adapt?: (s: SessionState) => Question[] | null, consented = false, extra: { key?: string; title?: string; seed?: number; resume?: SavedSession; brief?: Brief } = {}) => {
     if (!consented && s.mode === 'voice' && !s.voiceConsent) {
       setConsentThen(() => () => openGenerated(def, adapt, true, extra));
       return;
@@ -347,7 +351,7 @@ export function App() {
     const key = extra.key ?? def.id;
     const saved = extra.resume ?? (extra.seed === undefined ? loadSession(key) : null);
     setGenerated({ def: saved ? saved.lesson : def, adapt });
-    setSlot({ key, title: extra.title ?? saved?.title ?? '', seed: extra.seed, resume: saved ?? undefined });
+    setSlot({ key, title: extra.title ?? saved?.title ?? '', seed: extra.seed, resume: saved ?? undefined, brief: saved ? undefined : extra.brief });
     setLessonId(def.id);
     setLessonKey((k) => k + 1);
     setAutoStart(true);
@@ -400,7 +404,7 @@ export function App() {
   const openModes = (level: number) => gate('modes', () => openGenerated(modesLesson(level, Date.now() >>> 0), undefined, false, { key: `modes:${level}`, title: `${t.skillNames.modes} · ${level}` }));
   const openAbsolute = (level: number) => gate('absolute-pitch', () => openGenerated(absoluteLesson(level, Date.now() >>> 0), undefined, false, { key: `absolute:${level}`, title: `${t.skillNames.absolute} · ${level}` }));
   const openTopic = (topic: string, level: number) =>
-    gate(`topic:${topic}`, () => openGenerated(topicLesson(topic, level, Date.now() >>> 0), undefined, false, { key: `topic:${topic}:${level}`, title: `${TOPIC_GEN[topic]?.title[s.uiLang] ?? topic} · ${level}` }));
+    gate(`topic:${topic}`, () => openGenerated(topicLesson(topic, level, Date.now() >>> 0), undefined, false, { key: `topic:${topic}:${level}`, title: `${TOPIC_GEN[topic]?.title[s.uiLang] ?? topic} · ${TOPIC_GEN[topic]?.levels[level - 1]?.[s.uiLang] ?? level}`, brief: briefFor(topic, level) }));
   // Deep link to a topic level (#/topic/<id>/<level>): opens that practice directly — used by the e2e checks and, later,
   // by challenge links (SPEC-SOCIAL §8).
   const openTopicRef = useRef(openTopic);
@@ -568,6 +572,22 @@ export function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathView.freeze ? pathView.freeze.id + pathView.freeze.steps.join() : '']);
   const lastSession = () => progress.history[progress.history.length - 1]?.sessionId ?? null;
+  /** The brief before a topic exercise (owner, 2026-11-07); automated test runs skip it unless ?brief. */
+  const briefFor = (topic: string, level: number, extra: Partial<Brief> = {}): Brief | undefined => {
+    const T = TOPIC_GEN[topic];
+    const automated = SIMULATED || params.has('unlock') || (typeof navigator !== 'undefined' && navigator.webdriver);
+    if (!T || (automated && !params.has('brief'))) return undefined;
+    return { kicker: `${shortName(topic, T.title, s.uiLang)} ${level}`, title: T.title[s.uiLang], about: T.levels[level - 1]?.[s.uiLang] ?? '', topic, ...extra };
+  };
+  /** Progress → the Skill Map tab (after a level test, "See my Skill Map"). */
+  const openSkillMap = () => {
+    try {
+      sessionStorage.setItem('toneturn.progressTab', 'skills');
+    } catch {
+      /* private mode */
+    }
+    go('skills');
+  };
   const openPathStep = (x: UnitStep, unit: PathUnit, mode: 'step' | 'practice') => {
     const step = x.step;
     pendingStep.current = { id: step.id, kind: step.kind, after: lastSession() };
@@ -586,7 +606,7 @@ export function App() {
     }
     const how = mode === 'practice' ? 'step' : x.probe ? 'probe' : x.state === 'quick' ? 'quick' : 'step';
     const def = stepSession(step, seed, how);
-    if (def) gate(`topic:${step.topic}`, () => openGenerated(def, undefined, false, { key: `pathstep:${step.id}`, title }));
+    if (def) gate(`topic:${step.topic}`, () => openGenerated(def, undefined, false, { key: `pathstep:${step.id}`, title, brief: step.topic ? briefFor(step.topic, step.level ?? 1, x.state === 'tested' ? { keepStep: step.id } : {}) : undefined }));
   };
   const openTestOut = (unit: PathUnit) => {
     const seed = (Date.now() ^ (Math.random() * 1e9)) >>> 0;
@@ -851,6 +871,7 @@ export function App() {
           assigned={user && assigned.length ? <AssignedCard t={t} items={assigned} lang={s.uiLang} onOpen={(id) => openAssignment(id)} /> : null}
           news={
             <>
+              {(progress.ratingEvents?.length ?? 0) > 0 && <NickPrompt lang={s.uiLang} s={s} onChange={updateSettings} />}
               {lastFreeze && settings?.seenFreezeDay !== lastFreeze && gems.streak.count > 0 && (
                 <FreezeToast t={t} count={gems.streak.count} onClose={() => updateSettings({ seenFreezeDay: lastFreeze })} />
               )}
@@ -970,6 +991,13 @@ export function App() {
             go('home');
           }}
           onAgain={() => (generated?.def.id === 'placement' ? openPlacement(generated.def.placementDomain ?? null, true) : generated?.def.id === 'review' ? openReview() : generated?.def.id === 'modes' ? openModes(modesAgainLevel(generated.def)) : generated?.def.id === 'wrong-notes' ? openWrongNotes(wrongLevel) : generated ? openPuzzle() : openLesson(lessonId))}
+          brief={slot?.brief}
+          onHideTopic={slot?.brief?.topic ? () => {
+            updateSettings({ pathHidden: [...new Set([...(s.pathHidden ?? []), slot.brief!.topic!])] });
+            pendingStep.current = null;
+            go('path');
+          } : undefined}
+          onKeepStep={slot?.brief?.keepStep ? () => updateSettings({ pathKeep: [...new Set([...(s.pathKeep ?? []), slot.brief!.keepStep!])] }) : undefined}
           lessonDef={generated?.def ?? slot?.resume?.lesson}
           adapt={generated?.adapt}
           resume={slot?.resume}
@@ -977,7 +1005,7 @@ export function App() {
           onDone={slot ? () => clearSession(slot.key) : undefined}
           nextLabel={wrun && !wrun.finished && wrun.day === today ? (s.uiLang === 'en' ? `Continue workout · ${Math.ceil(runLeftMs(wrun) / 60000)} min` : `להמשיך באימון · ${Math.ceil(runLeftMs(wrun) / 60000)} דק׳`) : generated ? t.seeSkillMap : undefined}
           ratings={ratingsOf(progress)}
-          onNext={wrun && !wrun.finished && wrun.day === today ? () => runCurrent(wrunRef.current!) : generated ? () => go('skills') : canNext ? () => openLesson(nextId) : null}
+          onNext={wrun && !wrun.finished && wrun.day === today ? () => runCurrent(wrunRef.current!) : generated ? () => openSkillMap() : canNext ? () => openLesson(nextId) : null}
           onProgress={(p) => {
             setProgress(p);
             notePathResult(p);
@@ -999,13 +1027,15 @@ export function App() {
           extra={{ bestLeague: s.bestLeague, learned: learnedCount(s) }}
           pinned={s.trophies}
           onPin={(trophies) => updateSettings({ trophies })}
-          map={
+          overview={
             <>
               <DomainTiles t={t} progress={progress} onPractice={practiceSkill} lang={s.uiLang} onTechnique={() => go('drills')} />
-              <SkillMap t={t} lang={s.uiLang} progress={progress} bestLeague={s.bestLeague} onBack={() => go('home')} onPractice={practiceSkill} onPlacement={openPlacement} />
+              <ChallengeCard input={badgeInputOf(progress, new Date(), s.uiLang === 'he' ? [5, 6] : undefined)} lang={s.uiLang} />
+              <EarChordCard t={t} ratings={ratingsOf(progress)} bestLeague={s.bestLeague} />
             </>
           }
-          badges={<BadgesView lang={s.uiLang} input={badgeInputOf(progress, new Date(), s.uiLang === 'he' ? [5, 6] : undefined)} log={progress.badges} />}
+          map={<SkillMap t={t} lang={s.uiLang} progress={progress} bestLeague={s.bestLeague} onBack={() => go('home')} onPractice={practiceSkill} onPlacement={openPlacement} />}
+          badges={<BadgesView lang={s.uiLang} input={badgeInputOf(progress, new Date(), s.uiLang === 'he' ? [5, 6] : undefined)} log={progress.badges} earnedOnly />}
         />
       )}
       {consentThen && (
@@ -1194,6 +1224,7 @@ export function App() {
         />
       )}
       {route === 'tuner' && <Tuner lang={s.uiLang} settings={s} onChange={updateSettings} onBack={() => go('home')} />}
+      {route === 'metronome' && <Metronome lang={s.uiLang} settings={s} onChange={updateSettings} onBack={() => go('home')} />}
       {unlock &&
         route !== 'lesson' &&
         (unlock.rank ? (

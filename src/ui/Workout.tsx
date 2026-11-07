@@ -304,7 +304,6 @@ export function WorkoutEditor({
             +
           </button>
         </div>
-        <BlockBar blocks={bs} />
         {msg && <p className="field-hint" role="status">{msg}</p>}
       </section>
 
@@ -338,22 +337,20 @@ export function WorkoutEditor({
                   +
                 </button>
               </span>
-              <span className="wk-move">
-                <button className="icon-btn" aria-label="↑" onClick={() => change(moveTo(bs, b.id, bs.findIndex((x) => x.id === b.id) - 1))}>
-                  ↑
-                </button>
-                <button className="icon-btn" aria-label="↓" onClick={() => change(moveTo(bs, b.id, bs.findIndex((x) => x.id === b.id) + 1))}>
-                  ↓
-                </button>
-              </span>
               <button className="icon-btn wk-more" aria-label="⋯" onClick={() => setMenu(menu === b.id ? null : b.id)}>
                 ⋯
               </button>
-              <button className="icon-btn wk-x" aria-label={tx.remove} disabled={bs.length <= 1} onClick={() => change(remove(bs, b.id), tx.removed)}>
-                ✕
-              </button>
               {menu === b.id && (
                 <div className="wk-menu" role="menu">
+                  <button role="menuitem" className="btn small ghost" onClick={() => (change(moveTo(bs, b.id, bs.findIndex((x) => x.id === b.id) - 1)), setMenu(null))}>
+                    ↑ {lang === 'he' ? 'למעלה' : 'Move up'}
+                  </button>
+                  <button role="menuitem" className="btn small ghost" onClick={() => (change(moveTo(bs, b.id, bs.findIndex((x) => x.id === b.id) + 1)), setMenu(null))}>
+                    ↓ {lang === 'he' ? 'למטה' : 'Move down'}
+                  </button>
+                  <button role="menuitem" className="btn small ghost wk-x" disabled={bs.length <= 1} onClick={() => (change(remove(bs, b.id), tx.removed), setMenu(null))}>
+                    ✕ {tx.remove}
+                  </button>
                   <button role="menuitem" className="btn small ghost" onClick={() => (change(bs.map((x) => (x.id === b.id ? { ...x, locked: !x.locked } : x))), setMenu(null))}>
                     🔒 {b.locked ? tx.unlock : tx.lock}
                   </button>

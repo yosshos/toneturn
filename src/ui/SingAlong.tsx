@@ -120,7 +120,7 @@ export function SingAlongScreen({ t, settings, onBack }: { t: Strings; settings:
           <button className="icon-btn" onClick={onBack} aria-label={t.back}>
             <span className="flip-rtl">←</span>
           </button>
-          <h1>🎶 {t.singAlongTitle}</h1>
+          <h1>{t.singAlongTitle}</h1>
         </header>
         <p className="field-hint">{t.singAlongHint}</p>
         <ul className="song-list">
@@ -170,7 +170,7 @@ export function SingAlongScreen({ t, settings, onBack }: { t: Strings; settings:
           <div className="take-score">
             {t.vocalScore}: <b>{Math.round(grade.total * 100)}%</b>
           </div>
-          {remark && <p className="take-remark">🎯 {remark}</p>}
+          {remark && <p className="take-remark">{remark}</p>}
           <ol className="sing-notes" dir="ltr">
             {grade.notes.map((g, i) => (
               <li key={i} className={g === null ? 'miss' : g >= 0.7 ? 'good' : g >= 0.4 ? 'fair' : 'weak'}>
@@ -182,11 +182,14 @@ export function SingAlongScreen({ t, settings, onBack }: { t: Strings; settings:
       )}
       <label className="toggle-row">
         <input type="checkbox" checked={guide} onChange={(e) => setGuide(e.target.checked)} />
-        <span>{t.singAlongGuide}</span>
+        <span>
+          {t.singAlongGuide}
+          <small className="field-hint">{t.singAlongGuideHint}</small>
+        </span>
       </label>
       <div className="vocal-actions">
-        <button className="btn mega" disabled={phase === 'count' || phase === 'singing'} onClick={() => void run()}>
-          {settings.instrument && settings.instrument !== 'voice' ? '🎷' : '🎤'} {phase === 'done' ? t.vocalRetry : settings.instrument && settings.instrument !== 'voice' ? t.playNow : t.vocalSing}
+        <button className="btn primary mega" disabled={phase === 'count' || phase === 'singing'} onClick={() => void run()}>
+          {phase === 'done' ? t.vocalRetry : settings.instrument && settings.instrument !== 'voice' ? t.playNow : t.vocalSing}
         </button>
       </div>
     </main>
