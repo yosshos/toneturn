@@ -1,3 +1,7 @@
+import { DOMAINS } from '../engine/rating';
+import { defaultPacks, GOAL_NAMES, GOALS, PACKS, type Goal } from '../engine/path';
+import { TOPIC_GEN } from '../engine/topicKit';
+import { TUNINGS } from '../engine/fretboard';
 import { useEffect, useState, type ReactNode } from 'react';
 import { displayNote, pc, spokenNote } from '../engine/pitch';
 import type { Strings } from '../i18n/strings';
@@ -51,6 +55,92 @@ const GenderGlyph = ({ g }: { g: Gender }) => (
     {g === 'female' ? '♀' : g === 'male' ? '♂' : '◦'}
   </span>
 );
+
+/** Settings → My path (spec AF D4): goal, areas, packs, modes, hidden topics, rebuild; stats sharing (spec AG S9). */
+function MyPath({ t, s, onChange }: { t: Strings; s: Settings; onChange: (p: Partial<Settings>) => void }) {
+  const lang = s.uiLang;
+  const q = t.intake;
+  const plays = ((s.intake as { plays?: string[] } | null | undefined)?.plays ?? []) as string[];
+  const packs = s.pathPacks ?? defaultPacks(s.track ?? 'hobby', plays, s.goal ?? 'general');
+  const L = lang === 'en' ? { title: 'My path', goal: 'Goal', hidden: 'Hidden topics (tap to bring back)', rebuild: 'Rebuild my path', rebuilt: 'Your next unit will be built again.', share: 'Share my stats with friends', shareNames: { levels: 'Levels only', activity: 'Levels and activity', nothing: 'Nothing' } } : { title: 'המסלול שלי', goal: 'מטרה', hidden: 'נושאים מוסתרים (הקישו כדי להחזיר)', rebuild: 'לבנות מחדש את המסלול', rebuilt: 'היחידה הבאה תיבנה מחדש.', share: 'לשתף את הנתונים שלי עם חברים', shareNames: { levels: 'רק רמות', activity: 'רמות ופעילות', nothing: 'כלום' } };
+  const [note, setNote] = useState<string | null>(null);
+  return (
+    <section className="set-card my-path" data-my-path="1">
+      <h2>🧭 {L.title}</h2>
+      <label className="field-row">
+        <span>{L.goal}</span>
+        <select value={s.goal ?? 'general'} onChange={(e) => onChange({ goal: e.target.value as Goal, pathPacks: undefined })}>
+          {GOALS.map((g) => (
+            <option key={g} value={g}>
+              {GOAL_NAMES[g].icon} {GOAL_NAMES[g][lang]}
+            </option>
+          ))}
+        </select>
+      </label>
+      <h3 className="intake-sub">{q.leaveAreas}</h3>
+      <div className="intake-chips">
+        {DOMAINS.map((d) => {
+          const out = (s.pathLeaveOut ?? []).includes(d.id);
+          return (
+            <button key={d.id} type="button" className={`chip ${out ? '' : 'on'}`} aria-pressed={!out} onClick={() => onChange({ pathLeaveOut: out ? (s.pathLeaveOut ?? []).filter((x) => x !== d.id) : [...(s.pathLeaveOut ?? []), d.id] })}>
+              {t.domainNames[d.id]}
+            </button>
+          );
+        })}
+      </div>
+      <h3 className="intake-sub">{q.leavePacks}</h3>
+      <div className="intake-chips">
+        {PACKS.map((pk) => {
+          const on = packs.includes(pk);
+          return (
+            <button key={pk} type="button" className={`chip ${on ? 'on' : ''}`} aria-pressed={on} onClick={() => onChange({ pathPacks: on ? packs.filter((x) => x !== pk) : [...packs, pk] })}>
+              {q.packNames[pk]}
+            </button>
+          );
+        })}
+      </div>
+      <h3 className="intake-sub">{q.leaveModes}</h3>
+      <div className="intake-chips">
+        <button type="button" className={`chip ${s.noSing ? 'on' : ''}`} aria-pressed={!!s.noSing} onClick={() => onChange({ noSing: !s.noSing })}>
+          🔇 {q.noSing}
+        </button>
+        <button type="button" className={`chip ${s.noMic ? 'on' : ''}`} aria-pressed={!!s.noMic} onClick={() => onChange({ noMic: !s.noMic })}>
+          🎙️✕ {q.noMic}
+        </button>
+      </div>
+      {(s.pathHidden ?? []).length > 0 && (
+        <>
+          <h3 className="intake-sub">{L.hidden}</h3>
+          <div className="intake-chips">
+            {(s.pathHidden ?? []).map((id) => (
+              <button key={id} type="button" className="chip" onClick={() => onChange({ pathHidden: (s.pathHidden ?? []).filter((x) => x !== id) })}>
+                ↩ {TOPIC_GEN[id]?.title[lang] ?? id}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+      <button
+        type="button"
+        className="btn small ghost"
+        onClick={() => {
+          const units = s.pathFacts?.units ?? [];
+          onChange({ pathFacts: { ...(s.pathFacts ?? {}), units: units.slice(0, -1) }, pathKeep: [] });
+          setNote(L.rebuilt);
+        }}
+      >
+        ↻ {L.rebuild}
+      </button>
+      {note && <p className="field-hint">{note}</p>}
+      <Seg
+        label={L.share}
+        value={s.shareStats ?? 'levels'}
+        options={(['levels', 'activity', 'nothing'] as const).map((k) => [k, L.shareNames[k]] as [typeof k, string])}
+        onChange={(shareStats) => onChange({ shareStats })}
+      />
+    </section>
+  );
+}
 
 export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIntake }: Props) {
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>(listVoices());
@@ -228,6 +318,7 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
           </button>
         </section>
       )}
+      <MyPath t={t} s={s} onChange={onChange} />
       <section className="set-card">
         <label className="toggle-row">
           <input type="checkbox" checked={s.miniLessons ?? true} onChange={(e) => onChange({ miniLessons: e.target.checked })} data-mini-setting="1" />
@@ -265,9 +356,43 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
         <Seg
           label={t.instrumentTitle}
           value={s.instrument ?? 'voice'}
-          options={(['voice', 'C', 'Bb', 'Eb', 'F'] as const).map((k) => [k, t.instrumentNames[k]] as [typeof k, string])}
+          options={(['voice', 'guitar', 'bass', 'keys', 'strings', 'C', 'Bb', 'Eb', 'F'] as const).map((k) => [k, t.instrumentNames[k]] as [typeof k, string])}
           onChange={(instrument) => onChange({ instrument })}
         />
+        <Seg
+          label={t.answerOn}
+          value={s.answerSurface ?? 'auto'}
+          options={(['auto', 'keys', 'neck', 'staff'] as const).map((k) => [k, t.answerOnNames[k]] as [typeof k, string])}
+          onChange={(answerSurface) => onChange({ answerSurface })}
+        />
+        <p className="field-hint">{t.answerOnHint}</p>
+        {(s.instrument === 'guitar' || s.instrument === 'bass' || (s.noteViews ?? []).includes('tab')) && (
+          <>
+            <label className="toggle-row">
+              <input type="checkbox" checked={!!s.leftHanded} onChange={(e) => onChange({ leftHanded: e.target.checked })} />
+              <span>{t.leftHanded}</span>
+            </label>
+            {s.instrument !== 'bass' && (
+              <label className="field-row">
+                <span>{t.tuningTitle}</span>
+                <select value={s.tuning ?? 'standard'} onChange={(e) => onChange({ tuning: e.target.value })}>
+                  {TUNINGS.filter((x) => x.instrument === 'guitar').map((x) => (
+                    <option key={x.id} value={x.id}>
+                      {x.name[s.uiLang]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+          </>
+        )}
+        <label className="toggle-row">
+          <input type="checkbox" checked={!!s.headphones} onChange={(e) => onChange({ headphones: e.target.checked })} />
+          <span>{t.headphonesSet}</span>
+        </label>
+        <a className="btn small ghost" href="#/tuner">
+          🎚 {t.tunerOpen}
+        </a>
       </section>
 
       <section className="set-card">

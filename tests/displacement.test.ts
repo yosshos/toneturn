@@ -1,3 +1,4 @@
+import { asChoice } from '../src/engine/topicKit';
 import { describe, expect, it } from 'vitest';
 import { TOPIC_GEN } from '../src/engine/topicKit';
 import '../src/engine/topicsEar';
@@ -9,7 +10,7 @@ describe('rhythmic displacement (spec AC)', () => {
     for (let level = 1; level <= 4; level++) {
       const seen = new Set<string>();
       for (let s = 1; s <= 200; s++) {
-        const q = T.gen(s * 7919, level, 'q');
+        const q = asChoice(T.gen(s * 7919, level, 'q'));
         expect(q.choices).toContain(q.answer);
         seen.add(q.answer);
         expect(renderStimulus(q.stimulus).events.length).toBeGreaterThan(0);
@@ -24,7 +25,7 @@ describe('rhythmic displacement (spec AC)', () => {
   });
   it('Charleston one beat later starts on beat 2', () => {
     for (let s = 1; s < 400; s++) {
-      const q = TOPIC_GEN['displacement'].gen(s, 2, 'q');
+      const q = asChoice(TOPIC_GEN['displacement'].gen(s, 2, 'q'));
       if (q.ask.en.startsWith('Charleston: start it one beat later')) {
         const right = q.names[q.answer];
         expect(right.en).toBe('··  ●·  ·●  ··');

@@ -134,6 +134,11 @@ const parsePc = (s: string): PitchClass | null => {
 export function questionFromTag(tag: string, seed: number, id: string): Question | null {
   const rnd = mulberry32(seed);
   const [kind, a, b] = tag.split(':');
+  if (kind === 'topic') {
+    // Topic-generated items of any kind (spec AE): topic:<id>:<level>:<seed>.
+    const [, topic, lv, sd] = tag.split(':');
+    return TOPIC_GEN[topic] ? (genTopic(topic, Number(sd) >>> 0, Number(lv) || 1, id) as Question) : null;
+  }
   switch (kind) {
     case 'degree': {
       const key = parsePc(a);

@@ -1,13 +1,18 @@
 // Shared kit for topic generators (spec T–V): the registry, seeded randomness, names, stimuli.
 
 import { surfaceVary } from './surface';
-import type { ChoiceQuestion, LessonDef, SkillId, Stimulus } from './lesson';
+import type { ChoiceQuestion, LessonDef, PlaceQuestion, RhythmDictQuestion, RhythmReadQuestion, SingQuestion, SingSeqQuestion, SkillId, Stimulus } from './lesson';
+
+/** What a topic generator may produce (spec AE): a choice, notes to place, a rhythm to tap, a note or line to sing / play. */
+export type TopicItem = ChoiceQuestion | PlaceQuestion | RhythmReadQuestion | RhythmDictQuestion | SingQuestion | SingSeqQuestion;
 
 export interface TopicDef {
   title: { en: string; he: string };
   skill: SkillId;
   levels: { en: string; he: string }[];
-  gen: (seed: number, level: number, id: string) => ChoiceQuestion;
+  gen: (seed: number, level: number, id: string) => TopicItem;
+  /** Only for players of these instruments (spec AE §4.1); absent = everyone. */
+  forPlays?: string[];
 }
 
 export const TOPIC_GEN: Record<string, TopicDef> = {};
@@ -48,9 +53,16 @@ export function choiceQ(p: Omit<ChoiceQuestion, 'kind' | 'id' | 'difficulty'> & 
   return { kind: 'choice', ...p };
 }
 
+/** The item as a choice question (tests and choice-only callers); throws for other kinds. */
+export function asChoice(q: TopicItem): ChoiceQuestion {
+  if (q.kind !== 'choice') throw new Error(`not a choice item: ${q.kind}`);
+  return q;
+}
+
 /** One generated item, with its seed's surface variation (transposition and tempo, when they don't change the answer). */
-export function genTopic(topic: string, seed: number, level: number, id: string): ChoiceQuestion {
-  return surfaceVary(TOPIC_GEN[topic].gen(seed, level, id), topic, seed);
+export function genTopic(topic: string, seed: number, level: number, id: string): TopicItem {
+  const q = TOPIC_GEN[topic].gen(seed, level, id);
+  return q.kind === 'choice' ? surfaceVary(q, topic, seed) : q;
 }
 
 /** A lesson of n items of a topic at a level. */

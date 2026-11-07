@@ -1,0 +1,378 @@
+/* 0.38 solo games: Voice Flight, Pitch Memory, Name That Tune, Tune-up (src/ui/Flight.tsx …).
+   Night-arcade tokens from styles.css / arcade.css; logical properties only (LTR + RTL). */
+
+.g2 {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-inline-size: 760px;
+  margin-inline: auto;
+  padding-block-end: 24px;
+}
+.g2-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.g2-head h1 {
+  flex: 1;
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+.g2-hud-mini {
+  color: var(--gold);
+  font-weight: 800;
+  white-space: nowrap;
+}
+.g2-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: start;
+}
+.g2-card h2 {
+  margin: 0;
+}
+.g2-h {
+  font-size: 1.05rem;
+}
+.g2-card p {
+  margin: 0;
+}
+.g2-dim {
+  color: var(--ink-dim);
+  font-size: 0.9rem;
+}
+.g2-lead {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+.g2-warn {
+  color: var(--red);
+  font-weight: 700;
+}
+.g2-best {
+  color: var(--gold);
+  font-weight: 700;
+}
+.g2-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.g2-row > .btn {
+  flex: 1 1 140px;
+}
+.g2-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.g2-seg {
+  flex-wrap: wrap;
+}
+.g2-big {
+  font-family: var(--display);
+  font-size: 2.6rem;
+  line-height: 1.1;
+  text-align: center;
+  color: var(--ink);
+}
+.g2-big small {
+  font-family: var(--font);
+  font-size: 1rem;
+  color: var(--ink-dim);
+}
+.g2-big.good {
+  color: var(--mint);
+}
+.g2-big.ok {
+  color: var(--gold);
+}
+.g2-big.off {
+  color: var(--red);
+}
+.g2-over {
+  align-items: stretch;
+  text-align: center;
+}
+.g2-stats {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 14px;
+  color: var(--ink-soft);
+}
+.g2-mic code {
+  font-size: 0.85rem;
+}
+
+/* ---------- Voice Flight ---------- */
+.g2-hud {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding-inline: 4px;
+}
+.g2-hud span {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.g2-hud small {
+  color: var(--ink-dim);
+}
+.g2-hud b {
+  font-family: var(--display);
+  font-size: 1.3rem;
+}
+.g2-stage {
+  position: relative;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: var(--bg-2);
+}
+.g2-canvas {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  aspect-ratio: 720 / 400;
+  touch-action: none;
+}
+.g2-overlay {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: 40%;
+  margin: 0;
+  text-align: center;
+  font-weight: 800;
+  color: var(--ink);
+  text-shadow: 0 2px 6px #000;
+  padding-inline: 12px;
+}
+.g2-overlay.soft {
+  color: var(--mint);
+}
+.g2-toast {
+  position: absolute;
+  inset-block-start: 10px;
+  inset-inline: 0;
+  margin: 0 auto;
+  inline-size: fit-content;
+  max-inline-size: 90%;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--gold);
+  color: #0f1020;
+  font-weight: 800;
+  animation: g2-pop 0.25s ease-out;
+}
+.g2-paused {
+  text-align: center;
+}
+
+/* ---------- Pitch Memory ---------- */
+.g2-notes {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
+}
+.g2-notes button {
+  min-block-size: 42px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--card-2);
+  color: var(--ink);
+  font-weight: 700;
+  cursor: pointer;
+}
+.g2-notes button.on {
+  background: var(--mint);
+  color: #0f1020;
+}
+.g2-listen {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  color: var(--mint);
+}
+.g2-pulse {
+  inline-size: 14px;
+  block-size: 14px;
+  border-radius: 50%;
+  background: var(--mint);
+  animation: g2-pulse 1s ease-in-out infinite;
+}
+.g2-today {
+  text-align: center;
+}
+.g2-trend {
+  inline-size: 100%;
+  block-size: auto;
+}
+.g2-trend-band {
+  fill: var(--mint);
+  opacity: 0.12;
+}
+.g2-trend-zero {
+  stroke: var(--ink-dim);
+  stroke-dasharray: 3 4;
+}
+.g2-trend-line {
+  fill: none;
+  stroke: var(--hue-pitch);
+  stroke-width: 2;
+}
+.g2-trend circle.good {
+  fill: var(--mint);
+}
+.g2-trend circle.off {
+  fill: var(--gold);
+}
+.g2-trend-lbl {
+  fill: var(--ink-dim);
+  font-size: 9px;
+}
+
+/* ---------- Name That Tune ---------- */
+.g2-dots {
+  display: flex;
+  gap: 6px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  justify-content: center;
+}
+.g2-dots li {
+  inline-size: 12px;
+  block-size: 12px;
+  border-radius: 50%;
+  background: var(--card-2);
+}
+.g2-dots li.now {
+  background: var(--ink);
+}
+.g2-dots li.ok {
+  background: var(--mint);
+}
+.g2-dots li.bad {
+  background: var(--red);
+}
+.g2-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 10px;
+}
+.g2-option {
+  min-block-size: 56px;
+  padding: 10px 14px;
+  border-radius: 18px;
+  border: 0;
+  background: var(--card-2);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  text-align: center;
+  box-shadow: 0 5px 0 #0b0c19;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.g2-option:active:not(:disabled) {
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 #0b0c19;
+}
+.g2-option.right {
+  background: var(--mint);
+  color: #0f1020;
+}
+.g2-option.wrong {
+  background: var(--red);
+  color: #0f1020;
+}
+.g2-option.dim {
+  opacity: 0.5;
+}
+.g2-option:disabled {
+  cursor: default;
+}
+
+/* ---------- Tune-up ---------- */
+.g2-tunecard {
+  align-items: stretch;
+  text-align: center;
+}
+.g2-peg-wrap {
+  display: flex;
+  justify-content: center;
+  padding-block: 8px;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+.g2-peg-wrap:active {
+  cursor: grabbing;
+}
+.g2-peg {
+  inline-size: 140px;
+  block-size: 140px;
+}
+.g2-peg-post {
+  fill: var(--card-2);
+  stroke: var(--line);
+  stroke-width: 2;
+}
+.g2-peg-key {
+  fill: var(--gold);
+}
+.g2-peg-dot {
+  fill: var(--bg);
+}
+.g2-slider {
+  inline-size: 100%;
+  accent-color: var(--mint);
+}
+
+/* ---------- motion ---------- */
+@keyframes g2-pop {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes g2-pulse {
+  50% {
+    transform: scale(1.35);
+    opacity: 0.6;
+  }
+}
+.g2-calm .g2-toast,
+.g2-calm .g2-pulse,
+[data-motion='reduced'] .g2-toast,
+[data-motion='reduced'] .g2-pulse {
+  animation: none;
+}
+
+@media (max-width: 380px) {
+  .g2-notes {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .g2-big {
+    font-size: 2.1rem;
+  }
+  .g2-hud b {
+    font-size: 1.1rem;
+  }
+}

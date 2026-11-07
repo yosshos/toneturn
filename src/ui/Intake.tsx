@@ -7,6 +7,7 @@ import { setTalk, talkOn } from '../speech/talk';
 import { useEffect, useRef, useState } from 'react';
 import { AREAS, intakeSettings, trackOf, voiceTypeOf, type Intake as IntakeT, type Level4, type Motivation } from '../engine/intake';
 import { personalOrder } from '../engine/intake';
+import { defaultPacks, GOAL_NAMES, GOALS, PACKS } from '../engine/path';
 import type { DomainId } from '../engine/rating';
 import { rangeFromGlide, type VoiceRange } from '../engine/vocal';
 import type { SungFrame } from '../engine/sing';
@@ -20,9 +21,9 @@ import { WebSpeechTranscriber } from '../speech/webspeech';
 import { AREA_WORDS, MIX_WORDS, PLAY_WORDS, matchMany, matchOption, optionsSpoken, saidAny } from '../engine/intakeVoice';
 import { noteLabel } from './Vocal';
 
-type Step = 'hello' | 'music' | 'singing' | 'theory' | 'reading' | 'plays' | 'naming' | 'rank' | 'motivation' | 'minutes' | 'range' | 'plan';
-const STEPS: Step[] = ['hello', 'music', 'singing', 'theory', 'reading', 'plays', 'naming', 'rank', 'motivation', 'minutes', 'range', 'plan'];
-const AREA_ICON: Record<DomainId, string> = { pitch: '👂', time: '🥁', memory: '🧠', voice: '🎤', reading: '📖', creative: '🎨' };
+type Step = 'hello' | 'music' | 'singing' | 'theory' | 'reading' | 'plays' | 'goal' | 'naming' | 'rank' | 'leave' | 'motivation' | 'minutes' | 'range' | 'plan';
+const STEPS: Step[] = ['hello', 'music', 'singing', 'theory', 'reading', 'plays', 'goal', 'naming', 'rank', 'leave', 'motivation', 'minutes', 'range', 'plan'];
+const AREA_ICON: Record<DomainId, string> = { pitch: '👂', time: '🥁', memory: '🧠', voice: '🎤', reading: '📖', creative: '🎨', instrument: '🎸' };
 
 export interface IntakeResult {
   intake: IntakeT;
@@ -293,11 +294,27 @@ export function IntakeScreen({ t, settings, onDone, onSkip }: { t: Strings; sett
     priorities: mixed || ranked.length < AREAS.length ? (mixed ? null : [...ranked, ...AREAS.filter((x) => !ranked.includes(x))]) : ranked,
     motivation: (a.motivation ?? 'learn') as Motivation,
     minutes: (a.minutes ?? 10) as 5 | 10 | 20,
+    goal: a.goal ?? 'general',
+    leaveOut: a.leaveOut ?? [],
+    packs: a.packs ?? defaultPacks(trackOf({ music: (a.music ?? 0) as Level4, theory: (a.theory ?? 0) as Level4, reading: (a.reading ?? 0) as 0 | 1 | 2 }), a.plays ?? [], a.goal ?? 'general'),
+    noSing: !!a.noSing,
+    noMic: !!a.noMic,
   });
   const finish = (then: 'placement' | 'basics' | 'home') => {
     const intake = full();
     const s = intakeSettings(intake);
     const patch: Partial<Settings> = { intake, track: s.track, cleanView: s.cleanView, miniLessons: s.miniLessons, ...(s.noteViews ? { noteViews: s.noteViews } : {}) };
+    // The path (spec AF D2 / D4) and the instrument (spec AE §6.1).
+    patch.goal = intake.goal;
+    patch.pathLeaveOut = intake.leaveOut;
+    patch.pathPacks = intake.packs;
+    patch.noSing = intake.noSing;
+    patch.noMic = intake.noMic;
+    const pl = intake.plays;
+    if (pl.includes('guitar')) patch.instrument = 'guitar';
+    else if (pl.includes('bass')) patch.instrument = 'bass';
+    else if (pl.includes('keys')) patch.instrument = 'keys';
+    else if (pl.includes('strings')) patch.instrument = 'strings';
     if (naming !== 'auto') patch.naming = naming;
     if (range) patch.voiceRange = range;
     if (used) patch.voiceConsent = true;
@@ -408,7 +425,7 @@ export function IntakeScreen({ t, settings, onDone, onSkip }: { t: Strings; sett
             <h1>{q.playsQ}</h1>
             <p className="intake-text">{q.playsHint}</p>
             <div className="intake-chips">
-              {(['none', 'keys', 'guitar', 'strings', 'winds', 'drums', 'voice'] as const).map((k) => {
+              {(['none', 'keys', 'guitar', 'bass', 'strings', 'winds', 'drums', 'voice', 'production'] as const).map((k) => {
                 const on = (a.plays ?? []).includes(k);
                 return (
                   <button
@@ -429,6 +446,73 @@ export function IntakeScreen({ t, settings, onDone, onSkip }: { t: Strings; sett
                   </button>
                 );
               })}
+            </div>
+            <button className="btn mega" onClick={() => go(1)}>
+              {q.next}
+            </button>
+          </>
+        )}
+        {step === 'goal' && (
+          <>
+            <h1>{q.goalQ}</h1>
+            <p className="intake-text">{q.goalHint}</p>
+            <div className="intake-opts" role="radiogroup">
+              {GOALS.map((g) => (
+                <button
+                  key={g}
+                  role="radio"
+                  aria-checked={(a.goal ?? 'general') === g}
+                  className={`intake-opt ${(a.goal ?? 'general') === g ? 'on' : ''}`}
+                  data-goal={g}
+                  onClick={() => {
+                    setA((x) => ({ ...x, goal: g, packs: undefined }));
+                    go(1);
+                  }}
+                >
+                  <span className="io-emoji" aria-hidden="true">
+                    {GOAL_NAMES[g].icon}
+                  </span>
+                  <span>{GOAL_NAMES[g][lang]}</span>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+        {step === 'leave' && (
+          <>
+            <h1>{q.leaveQ}</h1>
+            <p className="intake-text">{q.leaveHint}</p>
+            <h2 className="intake-sub">{q.leaveAreas}</h2>
+            <div className="intake-chips">
+              {AREAS.map((ar) => {
+                const out = (a.leaveOut ?? []).includes(ar);
+                return (
+                  <button key={ar} className={`chip ${out ? '' : 'on'}`} aria-pressed={!out} data-area={ar} onClick={() => setA((x) => ({ ...x, leaveOut: out ? (x.leaveOut ?? []).filter((y) => y !== ar) : [...(x.leaveOut ?? []), ar] }))}>
+                    {AREA_ICON[ar]} {t.domainNames[ar]}
+                  </button>
+                );
+              })}
+            </div>
+            <h2 className="intake-sub">{q.leavePacks}</h2>
+            <div className="intake-chips">
+              {PACKS.map((pk) => {
+                const cur = a.packs ?? defaultPacks(track, a.plays ?? [], a.goal ?? 'general');
+                const on = cur.includes(pk);
+                return (
+                  <button key={pk} className={`chip ${on ? 'on' : ''}`} aria-pressed={on} data-pack={pk} onClick={() => setA((x) => ({ ...x, packs: on ? cur.filter((y) => y !== pk) : [...cur, pk] }))}>
+                    {q.packNames[pk]}
+                  </button>
+                );
+              })}
+            </div>
+            <h2 className="intake-sub">{q.leaveModes}</h2>
+            <div className="intake-chips">
+              <button className={`chip ${a.noSing ? 'on' : ''}`} aria-pressed={!!a.noSing} data-mode="nosing" onClick={() => setA((x) => ({ ...x, noSing: !x.noSing }))}>
+                🔇 {q.noSing}
+              </button>
+              <button className={`chip ${a.noMic ? 'on' : ''}`} aria-pressed={!!a.noMic} data-mode="nomic" onClick={() => setA((x) => ({ ...x, noMic: !x.noMic }))}>
+                🎙️✕ {q.noMic}
+              </button>
             </div>
             <button className="btn mega" onClick={() => go(1)}>
               {q.next}

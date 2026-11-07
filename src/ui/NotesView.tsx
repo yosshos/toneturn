@@ -4,7 +4,7 @@ import type { NoteView } from '../engine/aids';
 import type { PitchClass } from '../engine/pitch';
 import type { Settings } from '../storage/progress';
 import { Keyboard } from './bits';
-import { GuitarTab, NoteStaff } from './NoteViews';
+import { GuitarView, NoteStaff } from './NoteViews';
 
 export function NotesView({ midis, keyPc, settings, chord = false, durs, clef }: { midis: number[]; keyPc: PitchClass | null; settings: Settings; chord?: boolean; durs?: number[]; clef?: 'treble' | 'bass' | 'alto' | 'tenor' }) {
   const views: NoteView[] = settings.noteViews ?? ['keyboard', 'staff'];
@@ -18,7 +18,7 @@ export function NotesView({ midis, keyPc, settings, chord = false, durs, clef }:
     <div className="notes-view">
       {views.includes('keyboard') && <Keyboard low={low} high={high} live={false} aid={{ notes: midis }} />}
       {views.includes('staff') && <NoteStaff notes={midis} chord={chord} keyPc={keyPc} durs={durs} clef={clef} />}
-      {views.includes('tab') && <GuitarTab notes={midis} chord={chord} />}
+      {views.includes('tab') && <GuitarView notes={midis} chord={chord} leftHanded={settings.leftHanded} />}
     </div>
   );
 }

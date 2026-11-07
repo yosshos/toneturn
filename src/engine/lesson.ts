@@ -1,6 +1,7 @@
 // Versioned lesson content. Prompts, stimulus, scoring policy and explanations are kept separate.
 // Pure: no browser APIs. Text for narration / UI lives in src/game/content.ts.
 
+import type { FxSpec } from './fx';
 import { events as rhythmEvents, TPQ as RTPQ } from './rhythm';
 import { MODE_FAMILY, MODE_STEPS, modeDistance, type ModeId } from './modes';
 import { jazzVoicing, PROGRESSIONS, SEVENTHS, voiceProgression, type JazzChord, type ProgressionId, type SeventhQuality } from './jazz';
@@ -46,7 +47,13 @@ export type SkillId =
   /** Improvisation (from the improvisation report). */
   | 'improv'
   /** Transposition: the same tune in another key or moved by an interval — named, recognised or sung. */
-  | 'transpose';
+  | 'transpose'
+  /** Your instrument (spec AE): where the notes are on the neck / keys, shapes, playing back what you hear. */
+  | 'instrument'
+  /** Sound & production ear (spec AE): frequencies, space, panning, dynamics processing. */
+  | 'timbre'
+  /** Written dictation (spec AE): what you hear, written on the staff or built on a grid. */
+  | 'dictation';
 export type IntervalName = 'M3' | 'P5' | 'P8';
 export type BassRole = 'root' | 'third' | 'fifth';
 export type Quality = 'maj' | 'min' | 'dim' | 'aug';
@@ -68,7 +75,9 @@ export type Stimulus =
   /** Free timed notes (polyrhythms, Middle-Eastern rhythms, quarter tones: midi may be fractional). */
   | { kind: 'events'; events: NoteEvent[]; length: number }
   /** "Option n comes next": a bell struck n times. Never a piano note, so it can't be mistaken for the music. */
-  | { kind: 'marker'; n: number };
+  | { kind: 'marker'; n: number }
+  /** Processed sound (spec AE §4.4): a synthesised source through an effect chain, rendered by audio/fx.ts. */
+  | { kind: 'fx'; fx: FxSpec };
 
 /** The option marker before version n (1-based). */
 export const marker = (n: number): Stimulus => ({ kind: 'marker', n });
@@ -113,7 +122,13 @@ export interface CadenceQuestion extends QBase {
 export interface SingQuestion extends QBase {
   kind: 'sing';
   /** degree→sing (#3), name→sing (#4, after a reference), echo a heard note (#7), a tone of the heard chord, or the note that finishes the heard phrase (spec AD). */
-  promptBy?: 'degree' | 'name' | 'echo' | 'chord' | 'finish';
+  promptBy?: 'degree' | 'name' | 'echo' | 'chord' | 'finish' | 'interval' | 'inner';
+  /** promptBy 'interval': the given note and the interval to sing from it (spec AE sing-intervals). */
+  interval?: { fromMidi: number; semis: number; name: { en: string; he: string } };
+  /** promptBy 'inner': a melody played with a silent stretch; sing the note where it would be now. */
+  inner?: { midis: number[]; silentFrom: number };
+  /** Topic generator item (rebuilt from its tag). */
+  topic?: { id: string; level: number; seed: number };
   /** promptBy 'chord': which chord tone (1 = root, 3, 5), and the chord's quality. */
   chordTone?: { tone: 1 | 3 | 5; minor: boolean };
   key: PitchClass;
@@ -180,6 +195,16 @@ export interface SingSeqQuestion extends QBase {
   names?: string[];
   /** Transposition: the melody was played in this key; sing it in `key`. */
   fromKey?: PitchClass;
+  /** An instruction replacing the default wording (spec AE: sing an arpeggio, sing the roots). */
+  prompt?: { en: string; he: string };
+  /** Play it back on an instrument (spec AE play-back): wording says "play"; `beats` = onsets graded too. */
+  play?: { beats?: number[]; bpm?: number };
+  /** Sight-singing while tapping the beat (spec AE sight-tap): taps are graded for steadiness. */
+  tapBeat?: { bpm: number };
+  /** Drawn on a staff while singing (sight-tap). */
+  show?: { midis: number[]; durs?: number[]; key?: PitchClass | null };
+  /** Topic generator item (rebuilt from its tag). */
+  topic?: { id: string; level: number; seed: number };
   answer: 'accurate';
 }
 
@@ -196,7 +221,117 @@ export interface RhythmReadQuestion extends QBase {
   silentAfterBars?: number;
   /** An instruction replacing the default "Read and tap". */
   prompt?: { en: string; he: string };
+  /** Which clicks sound while the player taps (spec AE time with the click). Default: every pulse. */
+  clicks?: ClickPattern;
+  /** Tap a tempo from memory (spec AE tempo-memory): no reference; graded by tempo error. `withClicks` = clicks first, then hold. */
+  tempoGoal?: { bpm: number; beats: number; withClicks?: number };
+  /** Several pads (drum kit lanes, two hands): each lane has its own rhythm; taps carry the lane index. */
+  lanes?: { rhythm: Rhythm; name: { en: string; he: string }; perc?: 'kick' | 'snare' | 'hat' | 'clave' }[];
+  /** Topic generator item (rebuilt from its tag). */
+  topic?: { id: string; level: number; seed: number };
   answer: 'accurate';
+}
+
+/** Clicks heard while tapping: every pulse, only 2 and 4, only beat 1, on the "and"s, every other bar, or on/off bars. */
+export type ClickPattern =
+  | { kind: 'beats' }
+  | { kind: 'backbeat' }
+  | { kind: 'one' }
+  | { kind: 'offbeat' }
+  | { kind: 'every2' }
+  | { kind: 'gaps'; on: number; off: number }
+  | { kind: 'random-gaps'; seed: number };
+
+/**
+ * Enter notes on an instrument picture or the staff (spec AE §3.3): the neck, the keys or the staff — or play them
+ * (mic / MIDI). Deterministic from (topic, level, seed). Answer = canonical key of the target (placeKey).
+ */
+export interface PlaceQuestion extends QBase {
+  kind: 'place';
+  topic: string;
+  level: number;
+  seed: number;
+  skill: SkillId;
+  ask: { en: string; he: string };
+  /** The notes to enter (MIDI). */
+  target: number[];
+  /** Durations in beats when rhythm counts (staff dictation with rhythm). */
+  durs?: number[];
+  /** Order matters (melody) or not (chord, every place of a note). */
+  as: 'seq' | 'set';
+  /** Same MIDI note, or any octave. */
+  match: 'exact' | 'pc';
+  /** A topic may force the surface (fretboard topics: neck). */
+  surface?: PlaceSurface;
+  /** Drawn above the surface: given notes (a written note to find, the given voice of a two-part dictation). */
+  given?: { midis: number[]; clef?: 'treble' | 'bass' | 'alto' | 'tenor'; key?: PitchClass | null; chord?: boolean; durs?: number[] };
+  /** Staff entry: key signature and clef. */
+  staff?: { key: PitchClass | null; clef: 'treble' | 'bass' | 'alto' | 'tenor' };
+  /** Neck entry: allowed strings (1 = highest), fret range, a required string, marked dots (a shape to complete). */
+  neck?: { strings?: number[]; frets?: [number, number]; onString?: number; dots?: { str: number; fret: number }[] };
+  /** Instrument whose picture this is (fretboard topics for bass / bowed strings). */
+  instrument?: 'guitar' | 'bass' | 'violin' | 'viola' | 'cello' | 'keys';
+  /** Text shown with the question. */
+  text?: { en: string; he: string };
+  /** Other correct answers (canonical keys): e.g. every good voicing of a four-part chord. */
+  alts?: string[];
+  answer: string;
+  choices: [];
+}
+export type PlaceSurface = 'keys' | 'neck' | 'staff';
+
+/** Canonical key of entered notes for a place question (order / octave rules applied). */
+export function placeKey(q: Pick<PlaceQuestion, 'as' | 'match' | 'durs'>, midis: number[], durs?: number[]): string {
+  let xs = midis.map((m) => (q.match === 'pc' ? ((Math.round(m) % 12) + 12) % 12 : Math.round(m)));
+  if (q.as === 'set') xs = [...new Set(xs)].sort((a, b) => a - b);
+  const d = q.durs ? (durs ?? q.durs) : undefined;
+  return (d ? xs.map((x, i) => `${x}:${d[i] ?? 0}`) : xs.map(String)).join('.');
+}
+
+export type PlaceMark = 'ok' | 'wrong' | 'missing' | 'rhythm';
+/** Partial credit for a place answer: right notes / max(target, entered); a wrong duration costs half a note. */
+export function gradePlace(q: Pick<PlaceQuestion, 'as' | 'match' | 'durs' | 'target'> & { alts?: string[] }, answer: string): { score: number; marks: PlaceMark[] } {
+  let best = gradePlaceOne(q, answer, placeKey(q, q.target, q.durs));
+  for (const k of q.alts ?? []) {
+    const g = gradePlaceOne(q, answer, k);
+    if (g.score > best.score) best = g;
+  }
+  return best;
+}
+
+function gradePlaceOne(q: Pick<PlaceQuestion, 'as' | 'match' | 'durs'>, answer: string, wantKey: string): { score: number; marks: PlaceMark[] } {
+  const parse = (k: string) =>
+    k
+      ? k.split('.').map((x) => {
+          const [m, d] = x.split(':');
+          return { m: Number(m), d: d === undefined ? undefined : Number(d) };
+        })
+      : [];
+  const want = parse(wantKey);
+  const got = parse(answer);
+  if (q.as === 'set') {
+    const ws = new Set(want.map((w) => w.m));
+    const right = got.filter((g) => ws.has(g.m)).length;
+    const marks: PlaceMark[] = got.map((g) => (ws.has(g.m) ? 'ok' : 'wrong'));
+    for (let i = right; i < want.length; i++) marks.push('missing');
+    return { score: right / Math.max(want.length, got.length, 1), marks };
+  }
+  let pts = 0;
+  const marks: PlaceMark[] = [];
+  for (let i = 0; i < Math.max(want.length, got.length); i++) {
+    const w = want[i];
+    const g = got[i];
+    if (!g) marks.push('missing');
+    else if (!w || w.m !== g.m) marks.push('wrong');
+    else if (w.d !== undefined && w.d !== g.d) {
+      pts += 0.5;
+      marks.push('rhythm');
+    } else {
+      pts += 1;
+      marks.push('ok');
+    }
+  }
+  return { score: pts / Math.max(want.length, got.length, 1), marks };
 }
 
 /** Hear a rhythm, choose its notation or say it (spec G, rhythm dictation). Answer = rhythm key. */
@@ -207,6 +342,8 @@ export interface RhythmDictQuestion extends QBase {
   bpm: number;
   /** Choose among notated options (default) or build the bar from rhythm blocks (spec G.6). */
   mode?: 'choose' | 'build';
+  /** Topic generator item (rebuilt from its tag). */
+  topic?: { id: string; level: number; seed: number };
   answer: string;
 }
 
@@ -251,6 +388,23 @@ export interface ChoiceQuestion extends QBase {
   show?: { midis: number[]; clef?: 'treble' | 'bass' | 'alto' | 'tenor'; chord?: boolean; key?: PitchClass | null };
   /** Text to show with the question (written theory). */
   text?: { en: string; he: string };
+  /** An instrument picture to show with the question (spec AE): a neck with dots, a chord box, or keys. */
+  diagram?: Diagram;
+}
+
+/** A drawn instrument picture (spec AE §3.1). Strings are numbered from the highest (1). */
+export interface Diagram {
+  kind: 'neck' | 'box' | 'keys';
+  instrument?: 'guitar' | 'bass' | 'violin' | 'viola' | 'cello';
+  dots?: { str: number; fret: number; label?: string; root?: boolean }[];
+  /** Strings not played (chord box ✕) and open (○). */
+  muted?: number[];
+  open?: number[];
+  /** First fret shown (chord box base fret / neck window). */
+  baseFret?: number;
+  frets?: number;
+  /** Keys: MIDI notes to mark. */
+  midis?: number[];
 }
 
 /** Absolute pitch (spec S.11, optional): a note with no reference — name it. Answer: the note key. */
@@ -347,6 +501,7 @@ export interface ProgressionQuestion extends QBase {
 }
 
 export type Question =
+  | PlaceQuestion
   | ModeIdQuestion
   | ChoiceQuestion
   | AbsNoteQuestion
@@ -418,6 +573,7 @@ export function questionSkill(q: Question): SkillId {
     case 'abs-note':
       return 'absolute';
     case 'choice':
+    case 'place':
       return q.skill;
     case 'name-seq':
       return q.given === 'sound' ? 'notes' : 'degrees';
@@ -467,7 +623,7 @@ export interface LessonDef {
   /** Find my level: sections the player chose to skip (not measured, not rated). */
   placementSkipped?: SkillId[];
   /** Find my level by domain: which one. */
-  placementDomain?: 'pitch' | 'time' | 'memory' | 'voice' | 'reading' | 'creative';
+  placementDomain?: 'pitch' | 'time' | 'memory' | 'voice' | 'reading' | 'creative' | 'instrument';
 }
 
 export type LessonId =
@@ -1433,6 +1589,8 @@ export function explainStimulus(q: Question): Stimulus[] {
       return [{ kind: 'note', midi: q.midi, duration: 1.2 }];
     case 'choice':
       return q.choiceStim?.[q.answer] ?? q.stimulus;
+    case 'place':
+      return q.as === 'set' ? [{ kind: 'chord', midis: q.target, duration: 1.4 }] : [{ kind: 'notes', midis: q.target, each: 0.5 }];
     case 'degree': {
       const s: Stimulus[] = [{ kind: 'note', midi: q.targetMidi, duration: 1.0 }];
       if (q.answer !== 1) s.push({ kind: 'resolve', fromMidi: q.targetMidi, toMidi: nearestTonicMidi(q.key, q.targetMidi) });
@@ -1584,6 +1742,14 @@ export function compareStimulus(q: Question, given: Answer): Stimulus[] | null {
       const tonic = q.midis[0] - q.run.offsets[0];
       return [{ kind: 'notes', midis: offs.map((o) => tonic + o), each: 1 / q.run.nps }, { kind: 'rest', duration: 0.5 }, { kind: 'notes', midis: q.midis, each: 1 / q.run.nps }];
     }
+    case 'place': {
+      if (typeof given !== 'string' || !given || given === q.answer) return null;
+      const mine = given.split('.').map((x) => Number(x.split(':')[0])).filter((m) => Number.isFinite(m));
+      if (!mine.length) return null;
+      const lift = (ms: number[]) => (q.match === 'pc' ? ms.map((m) => (m < 24 ? 60 + m : m)) : ms);
+      const st = (ms: number[]): Stimulus => (q.as === 'set' ? { kind: 'chord', midis: ms, duration: 1.3 } : { kind: 'notes', midis: ms, each: 0.45 });
+      return [st(lift(mine)), { kind: 'rest', duration: 0.6 }, st(q.target)];
+    }
     case 'sing':
     case 'sing-seq':
     case 'sing-run':
@@ -1599,6 +1765,8 @@ export interface NoteEvent {
   velocity: number; // 0..1
   /** Percussion instead of piano (metronome click / accent / woodblock / drum kit / the option bell). */
   perc?: PercKind;
+  /** Processed sound (spec AE): played by audio/fx.ts instead of a note; `midi` is ignored. */
+  fx?: FxSpec;
 }
 
 export type PercKind = 'click' | 'accent' | 'wood' | 'kick' | 'snare' | 'snare-soft' | 'hat' | 'bell';
@@ -1684,6 +1852,10 @@ export function renderStimulus(stimulus: Stimulus[]): { events: NoteEvent[]; len
         for (const e of s.events) events.push({ ...e, start: t + e.start });
         t += s.length;
         break;
+      case 'fx':
+        events.push({ midi: 0, start: t, duration: s.fx.seconds, velocity: 0, fx: s.fx });
+        t += s.fx.seconds + 0.35;
+        break;
       case 'marker':
         for (let k = 0; k < s.n; k++) events.push({ midi: 96, start: t + k * 0.2, duration: 0.05, velocity: 0.7, perc: 'bell' });
         t += 0.2 * (s.n - 1) + 0.6;
@@ -1707,6 +1879,8 @@ export function questionTag(q: Question): string {
       return `abs:${k(q.target)}`;
     case 'choice':
       return `choice:${q.topic}:${q.level}:${q.seed}`;
+    case 'place':
+      return `topic:${q.topic}:${q.level}:${q.seed}`;
     case 'slash':
       return `slash:${k(q.key)}:${k(q.bass)}`;
     case 'tf':
@@ -1722,6 +1896,7 @@ export function questionTag(q: Question): string {
     case 'cadence':
       return `cadence:${q.answer}`;
     case 'sing':
+      if (q.topic) return `topic:${q.topic.id}:${q.topic.level}:${q.topic.seed}`;
       return `sing:${q.degree}`;
     case 'degree-seq':
       if (q.song) return `song:${k(q.key)}:${q.song}:${q.degrees.length}`;
@@ -1733,11 +1908,14 @@ export function questionTag(q: Question): string {
     case 'note-name':
       return `name:${k(q.key)}:${q.degree}:${q.direction === 'heard-pitch→name' ? 'heard' : 'degree'}`;
     case 'sing-seq':
+      if (q.topic) return `topic:${q.topic.id}:${q.topic.level}:${q.topic.seed}`;
       if (q.song) return `singsong:${k(q.key)}:${q.song}:${q.degrees.length}`;
       return `singseq:${k(q.key)}:${q.degrees.join('-')}${q.promptBy === 'name' ? ':name' : ''}`;
     case 'rhythm-read':
+      if (q.topic) return `topic:${q.topic.id}:${q.topic.level}:${q.topic.seed}`;
       return `rread:${q.level}:${q.rhythm.bars}:${q.show}:${rhythmKey(q.rhythm)}`;
     case 'rhythm-dict':
+      if (q.topic) return `topic:${q.topic.id}:${q.topic.level}:${q.topic.seed}`;
       return `rdict:${q.level}:${q.rhythm.bars}:${q.answer}`;
     case 'seventh':
       return `seventh:${q.answer}:${q.choices.length}`;

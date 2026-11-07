@@ -10,6 +10,9 @@ export function mergeResults(local: LessonResult[], remote: LessonResult[]): Les
 }
 
 /** Rebuild progress from results; streaks follow each result's own completion time. */
+import { mergeBase, mergeCounts, mergePeaks, mergeRecords, mergeStatsDays, mergeStatsHours } from '../engine/stats';
+import { mergeAwards } from '../engine/achievements';
+
 export function rebuildProgress(results: LessonResult[], local?: Progress): Progress {
   const rebuilt = results.reduce((p, r) => applyResult(p, r, new Date(r.completedAt)), emptyProgress());
   if (!local) return rebuilt;
@@ -28,6 +31,16 @@ export function rebuildProgress(results: LessonResult[], local?: Progress): Prog
     ratingEvents: [...(rebuilt.ratingEvents ?? []), ...localLesson, ...gameEvents],
     puzzles: { ...(local.puzzles ?? {}), ...(rebuilt.puzzles ?? {}) },
     snapshots: local.snapshots && (local.snapshots.length > (rebuilt.snapshots?.length ?? 0)) ? local.snapshots : rebuilt.snapshots,
+    // Stats (spec AG S3): merged by max / union, never replaced by the rebuild.
+    statsDays: mergeStatsDays(local.statsDays, rebuilt.statsDays),
+    statsHours: mergeStatsHours(local.statsHours, rebuilt.statsHours),
+    peaks: mergePeaks(local.peaks, rebuilt.peaks),
+    counts: mergeCounts(local.counts, rebuilt.counts),
+    records: mergeRecords(local.records, rebuilt.records),
+    awards: mergeAwards(local.awards, rebuilt.awards),
+    ratingBase: mergeBase(local.ratingBase, rebuilt.ratingBase),
+    bests: local.bests,
+    pitchMemory: local.pitchMemory,
   };
 }
 

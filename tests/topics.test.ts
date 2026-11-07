@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { TOPIC_GEN, topicLesson } from '../src/engine/topics';
+import { asChoice } from '../src/engine/topicKit';
 import { questionTag } from '../src/engine/lesson';
 import { questionFromTag } from '../src/engine/adaptive';
 import { parseNamedChoice } from '../src/engine/parser';
@@ -10,13 +11,23 @@ describe('topic generators (spec T–V)', () => {
     it(`${topic}: every level is sound, deterministic, rebuildable and speakable`, () => {
       for (let level = 1; level <= T.levels.length; level++)
         for (let seed = 1; seed < 40; seed++) {
-          const q = T.gen(seed * 7919, level, 'x');
+          const g = T.gen(seed * 7919, level, 'x');
+          if (g.kind !== 'choice') {
+            // Notes to place, rhythms to tap, lines to sing / play (spec AE): stable, rebuildable, audible or drawn.
+            expect(T.gen(seed * 7919, level, 'x')).toEqual(g);
+            const r = questionFromTag(questionTag(g), 1, 'r')!;
+            expect(r, `${topic} L${level} rebuild`).toBeTruthy();
+            expect(r.answer).toBe(g.answer);
+            if (g.stimulus.length) expect(renderStimulus(g.stimulus).length).toBeGreaterThan(0);
+            continue;
+          }
+          const q = asChoice(g);
           expect(q.choices).toContain(q.answer);
           expect(new Set(q.choices).size).toBe(q.choices.length);
           for (const c of q.choices) expect(q.names[c], `${topic} ${c}`).toBeTruthy();
           expect(q.stimulus.length > 0 || !!q.text || !!q.show).toBe(true);
           if (q.stimulus.length) expect(renderStimulus(q.stimulus).length).toBeGreaterThan(0);
-          const again = T.gen(seed * 7919, level, 'x');
+          const again = asChoice(T.gen(seed * 7919, level, 'x'));
           expect(again.answer).toBe(q.answer);
           const r = questionFromTag(questionTag(q), 1, 'r')!;
           expect(r.answer).toBe(q.answer);
@@ -48,7 +59,7 @@ describe('written theory spells correctly (spec U.11)', () => {
   it('chord-spelling answers are real chords', () => {
     const T = TOPIC_GEN['chord-spelling'];
     for (let seed = 1; seed < 60; seed++) {
-      const q = T.gen(seed * 31, 2, 'x');
+      const q = asChoice(T.gen(seed * 31, 2, 'x'));
       const notes = q.answer.split(' – ');
       // Each consecutive chord tone is a third (two letters) apart for seventh chords.
       const letters = notes.map((n) => 'CDEFGAB'.indexOf(n[0]));
@@ -56,12 +67,12 @@ describe('written theory spells correctly (spec U.11)', () => {
     }
   });
   it('maqam level 2 really uses quarter tones', () => {
-    const q = TOPIC_GEN['maqam'].gen(5, 2, 'x');
+    const q = asChoice(TOPIC_GEN['maqam'].gen(5, 2, 'x'));
     const s = q.stimulus[0];
     expect(s.kind === 'notes' && s.midis.some((m) => m % 1 !== 0)).toBe(true);
   });
   it('polyrhythm 3:2 has 3 high and 2 low hits per cycle', () => {
-    const q = TOPIC_GEN['polyrhythm'].gen(1, 1, 'x');
+    const q = asChoice(TOPIC_GEN['polyrhythm'].gen(1, 1, 'x'));
     const st = q.choiceStim!['3:2'][0];
     expect(st.kind).toBe('events');
     if (st.kind === 'events') {

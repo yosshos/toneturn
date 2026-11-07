@@ -8,6 +8,50 @@ import { aidFor, contentNotes, guitarPosition, guitarPositions, spellMidi } from
 import type { Question } from '../engine/lesson';
 import type { PitchClass } from '../engine/pitch';
 import { Keyboard } from './bits';
+import { ChordBox, Neck } from './Instrument';
+import { TUNINGS } from '../engine/fretboard';
+
+/** Strings for a chord, one note per string (clashes move to the next lower string). */
+function chordPositions(notes: number[]): { str: number; fret: number }[] {
+  const opens = [64, 59, 55, 50, 45, 40];
+  const pos = notes.map((m) => guitarPosition(m));
+  const used = new Set<number>();
+  return pos.map((p, i) => {
+    let s = p.str;
+    while (used.has(s) && s < 6) s++;
+    used.add(s);
+    let m = notes[i];
+    while (m < opens[s - 1]) m += 12;
+    return { str: s, fret: Math.max(0, m - opens[s - 1]) };
+  });
+}
+
+/** The guitar view picks the right picture (spec AE §3.1): chord box, neck for one or two notes, tab for a line. */
+export function GuitarView({ notes, chord, leftHanded }: { notes: number[]; chord: boolean; leftHanded?: boolean }) {
+  const tuning = TUNINGS[0];
+  if (chord && notes.length >= 3) {
+    const pos = chordPositions(notes);
+    const fretted = pos.filter((p) => p.fret > 0).map((p) => p.fret);
+    const base = fretted.length && Math.max(...fretted) > 4 ? Math.min(...fretted) : 1;
+    const strs = pos.map((p) => p.str);
+    return (
+      <div className="guitar-box">
+        <ChordBox
+          tuning={tuning}
+          leftHanded={leftHanded}
+          d={{ kind: 'box', dots: pos.filter((p) => p.fret > 0), open: pos.filter((p) => p.fret === 0).map((p) => p.str), muted: [1, 2, 3, 4, 5, 6].filter((s) => !strs.includes(s)), baseFret: base, frets: Math.max(4, (fretted.length ? Math.max(...fretted) : 0) - base + 1) }}
+        />
+      </div>
+    );
+  }
+  if (notes.length <= 2) {
+    const pos = chord ? chordPositions(notes) : guitarPositions(notes);
+    const hi = Math.max(5, ...pos.map((p) => p.fret + 1));
+    const lo = Math.max(0, Math.min(...pos.map((p) => p.fret)) - (hi > 12 ? 2 : 99));
+    return <Neck tuning={tuning} lo={Math.min(lo, hi - 5)} hi={Math.min(hi, 15)} dots={pos.map((p) => ({ ...p, tone: 'given' as const }))} leftHanded={leftHanded} />;
+  }
+  return <GuitarTab notes={notes} chord={chord} />;
+}
 
 type VF = typeof import('vexflow/bravura');
 let vfPromise: Promise<VF> | null = null;
@@ -129,7 +173,7 @@ export function GuitarTab({ notes, chord }: { notes: number[]; chord: boolean })
  * The views under a question. `keysLive` = the sounding notes may light the keyboard (answered, or the
  * sound is only context). Staff and tab show the aid while answering, the content afterwards.
  */
-export function NoteViews({ q, views, answered, keysLive }: { q: Question; views: NoteView[]; answered: boolean; keysLive: boolean }) {
+export function NoteViews({ q, views, answered, keysLive, leftHanded }: { q: Question; views: NoteView[]; answered: boolean; keysLive: boolean; leftHanded?: boolean }) {
   const aid = q.aid ? aidFor(q) : null;
   const content = answered ? contentNotes(q) : null;
   const shown = content ?? (aid ? { notes: aid.notes, chord: false } : null);
@@ -145,7 +189,7 @@ export function NoteViews({ q, views, answered, keysLive }: { q: Question; views
         />
       )}
       {shown && views.includes('staff') && <NoteStaff notes={shown.notes} chord={shown.chord} keyPc={key} labels={labels} />}
-      {shown && views.includes('tab') && <GuitarTab notes={shown.notes} chord={shown.chord} />}
+      {shown && views.includes('tab') && <GuitarView notes={shown.notes} chord={shown.chord} leftHanded={leftHanded} />}
     </div>
   );
 }

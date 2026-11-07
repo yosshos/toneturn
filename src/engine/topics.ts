@@ -12,6 +12,14 @@ import './topicsEar';
 import './topicsTheory';
 import './topicsSkills';
 import './topicsAD';
+// 0.38 (spec AE): new topics and deeper levels for existing ones (wrappers run after the base topics).
+import './topicsInstrument';
+import './topicsWritten';
+import './topicsHarmony2';
+import './topicsPitch2';
+import './topicsTime2';
+import './topicsSound';
+import './topicsChordRead';
 
 // ================================================================ T. Barry Harris
 

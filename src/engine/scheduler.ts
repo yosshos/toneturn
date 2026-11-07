@@ -45,6 +45,16 @@ export const SUB_PREREQ: Record<string, string[]> = {
   'theory/voice-leading': ['theory/harmony'],
   'rhythm-dictation/poly': ['rhythm-dictation/dictate'],
   'pitch/fine': ['pitch/higher-lower'],
+  // 0.38 (spec AE §4.8)
+  'dictation/melodic': ['sequences/melody', 'notes/staff'],
+  'dictation/two-part': ['dictation/melodic'],
+  'dictation/bass': ['cadences/progression'],
+  'cadences/chromatic': ['cadences/progression'],
+  'theory/chromatic': ['theory/harmony'],
+  'form/song': ['form/phrases'],
+  'timing/poly': ['timing/subdivide'],
+  'instrument/shapes': ['instrument/fretboard'],
+  'sequences/inner': ['sequences/melody'],
 };
 
 export interface SchedulerInput {

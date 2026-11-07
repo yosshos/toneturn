@@ -25,8 +25,8 @@ const check = (where: string, q: Parameters<typeof questionTags>[0]) => {
 const EVENT_SOURCED = ['singing/harmony', 'technique/control', 'technique/vibrato', 'agility/ornaments', 'sight/sing', 'improv/play', 'timing/precision'];
 
 describe('exercise taxonomy (spec AD)', () => {
-  it('six domains hold every skill exactly once', () => {
-    expect(DOMAINS).toHaveLength(6);
+  it('seven domains (0.38: Instrument & sound) hold every skill exactly once', () => {
+    expect(DOMAINS).toHaveLength(7);
     const all = DOMAINS.flatMap((d) => d.skills);
     expect(new Set(all).size).toBe(all.length);
     expect(new Set(all)).toEqual(new Set(SKILLS));
@@ -38,7 +38,7 @@ describe('exercise taxonomy (spec AD)', () => {
       for (let level = 1; level <= T.levels.length; level++) {
         const t = TOPIC_TAGS[topic];
         const tags = typeof t === 'function' ? t(level) : t;
-        expect(tags[0].skill, `${topic} L${level}: tag primary = rated skill`).toBe(T.gen(5, level, 'x').skill);
+        expect(tags[0].skill, `${topic} L${level}: tag primary = rated skill`).toBe(questionSkill(T.gen(5, level, 'x')));
       }
       for (let level = 1; level <= T.levels.length; level++)
         for (let s = 1; s <= 6; s++) check(`${topic} L${level}`, T.gen(s * 97, level, 'q')).forEach((t) => reached.add(t.sub));

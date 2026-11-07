@@ -225,7 +225,7 @@ export function distractors(r: Rhythm, level: RhythmLevel, count: number, seed: 
 // ---------------------------------------------------------------- audio
 
 /** Count-in: one bar of metronome pulses. */
-const countInPulses = (m: Meter) => barBeats(m) / pulseBeats(m);
+export const countInPulses = (m: Meter) => barBeats(m) / pulseBeats(m);
 
 /**
  * Note events for hearing a rhythm (single pitch, durations audible) after a one-bar count-in.

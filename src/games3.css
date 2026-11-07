@@ -1,0 +1,551 @@
+/* 0.38 games: Rhythm Highway, Melody Puzzle, Ear Bingo. Night-arcade tokens (docs/ui-redesign.md).
+   UI chrome uses logical properties and mirrors in RTL; the highway road, slots, tray and bingo grid are
+   physical (dir="ltr") on purpose. */
+
+.g3 {
+  --g3-lane-0: var(--hue-pitch, #7c8cff);
+  --g3-lane-1: var(--hue-time, #ff8a5c);
+  --g3-lane-2: var(--hue-memory, #5ce1e6);
+  --g3-lane-3: var(--hue-voice, #ff6fb1);
+  --g3-lane-4: var(--hue-reading, #ffd15c);
+  min-width: 0;
+}
+
+/* ---------- shared chips ---------- */
+.g3-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.g3-chip {
+  min-width: 52px;
+  min-height: 44px;
+  padding: 6px 12px;
+  border-radius: 14px;
+  border: 2px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+}
+.g3-chip small {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--ink-dim);
+}
+.g3-chip.on {
+  border-color: var(--mint);
+  background: color-mix(in srgb, var(--mint) 16%, var(--card));
+}
+.g3-chip.wide {
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: 10px;
+  text-align: start;
+  width: 100%;
+}
+.g3-chip.wide b {
+  min-width: 1.6em;
+  text-align: center;
+  font-family: var(--display);
+}
+.g3-center {
+  display: grid;
+  gap: 12px;
+  text-align: center;
+}
+.field-hint.warn {
+  color: var(--gold);
+}
+
+/* ---------- Rhythm Highway ---------- */
+.hw-play,
+.mp-play {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 16px 24px;
+  min-height: 100dvh;
+  max-width: 640px;
+  margin-inline: auto;
+  box-sizing: border-box;
+}
+.hw-top,
+.mp-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.hw-stat {
+  display: grid;
+  justify-items: center;
+  line-height: 1.1;
+  min-width: 56px;
+}
+.hw-stat small {
+  color: var(--ink-dim);
+  font-size: 0.72rem;
+}
+.hw-stat b {
+  font-family: var(--display);
+  font-size: 1.3rem;
+}
+.hw-stat.combo b {
+  color: var(--gold);
+}
+
+.hw-road {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 300px;
+  max-height: 62vh;
+  height: 56vh;
+  overflow: hidden;
+  border-radius: 22px;
+  background: linear-gradient(180deg, var(--bg) 0%, var(--card) 70%, var(--card-2) 100%);
+  border: 2px solid var(--line);
+  display: grid;
+  grid-template-columns: repeat(var(--lanes, 1), 1fr);
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.hw-lane {
+  border-inline-end: 1px dashed color-mix(in srgb, var(--line) 80%, transparent);
+}
+.hw-lane:last-of-type {
+  border-inline-end: 0;
+}
+/* Hit line at 16% from the bottom; the strip's bottom edge sits on it and moves down as the song plays. */
+.hw-strip {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 16%;
+  height: 0;
+  will-change: transform;
+}
+.hw-bar {
+  position: absolute;
+  inset-inline: 0;
+  height: 1px;
+  background: color-mix(in srgb, var(--ink-dim) 25%, transparent);
+}
+.hw-bar.sec {
+  height: 2px;
+  background: color-mix(in srgb, var(--ink-dim) 45%, transparent);
+}
+.hw-note {
+  position: absolute;
+  left: calc((100% / var(--lanes, 1)) * var(--i, 0) + 10px);
+  width: calc(100% / var(--lanes, 1) - 20px);
+  transform: translateY(50%);
+  border-radius: 10px;
+  background: var(--g3-lane-0);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--g3-lane-0) 60%, transparent), inset 0 -3px 0 rgb(0 0 0 / 0.25);
+}
+.hw-road { --lanes: 1; }
+.hw-road.lanes-3 { --lanes: 3; }
+.hw-road.lanes-4 { --lanes: 4; }
+.hw-road.lanes-5 { --lanes: 5; }
+.hw-note.lane-1 { background: var(--g3-lane-1); box-shadow: 0 0 14px color-mix(in srgb, var(--g3-lane-1) 60%, transparent); }
+.hw-note.lane-2 { background: var(--g3-lane-2); box-shadow: 0 0 14px color-mix(in srgb, var(--g3-lane-2) 60%, transparent); }
+.hw-note.lane-3 { background: var(--g3-lane-3); box-shadow: 0 0 14px color-mix(in srgb, var(--g3-lane-3) 60%, transparent); }
+.hw-note.lane-4 { background: var(--g3-lane-4); box-shadow: 0 0 14px color-mix(in srgb, var(--g3-lane-4) 60%, transparent); }
+.hw-road.lanes-1 .hw-note,
+.hw-road:not(.lanes-3):not(.lanes-4):not(.lanes-5) .hw-note {
+  left: 22%;
+  width: 56%;
+  background: var(--mint);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--mint) 55%, transparent);
+}
+.hw-note.is-perfect,
+.hw-note.is-good {
+  opacity: 0;
+  transition: opacity 0.18s, transform 0.18s;
+  transform: translateY(50%) scale(1.25);
+}
+.hw-note.is-miss {
+  opacity: 0.25;
+  filter: grayscale(1);
+}
+.hw-hitline {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 16%;
+  height: 4px;
+  margin-bottom: -2px;
+  background: var(--mint);
+  box-shadow: 0 0 16px var(--mint);
+  pointer-events: none;
+}
+.hw-flash {
+  position: absolute;
+  inset-inline: 0;
+  top: 30%;
+  text-align: center;
+  font-family: var(--display);
+  font-size: 1.6rem;
+  pointer-events: none;
+  animation: hw-pop 0.5s ease-out both;
+}
+.hw-flash.perfect { color: var(--gold); }
+.hw-flash.good { color: var(--mint); }
+.hw-flash.miss,
+.hw-flash.wrong { color: var(--coral); }
+@keyframes hw-pop {
+  0% { opacity: 0; transform: scale(0.7); }
+  25% { opacity: 1; transform: scale(1.1); }
+  100% { opacity: 0; transform: scale(1) translateY(-14px); }
+}
+.hw-lane-labels {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 14%;
+  display: grid;
+  grid-template-columns: repeat(var(--lanes, 1), 1fr);
+  align-items: center;
+  pointer-events: none;
+}
+.hw-lane-labels span {
+  display: grid;
+  justify-items: center;
+  line-height: 1.05;
+}
+.hw-lane-labels b {
+  font-family: var(--display);
+  font-size: 1.15rem;
+}
+.hw-lane-labels small {
+  color: var(--ink-soft);
+  font-size: 0.75rem;
+}
+.hw-road.shake-0 { animation: hw-shake-a 0.22s; }
+.hw-road.shake-1 { animation: hw-shake-b 0.22s; }
+@keyframes hw-shake-a {
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+@keyframes hw-shake-b {
+  25% { transform: translateX(5px); }
+  75% { transform: translateX(-5px); }
+}
+.hw-pad {
+  min-height: 96px;
+}
+.g3 .hint {
+  text-align: center;
+  color: var(--ink-dim);
+  font-size: 0.85rem;
+  margin: 0;
+}
+.g3-stats {
+  list-style: none;
+  padding: 0;
+  margin: 0 auto 16px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  max-width: 420px;
+}
+.g3-stats li {
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  font-size: 0.9rem;
+}
+.g3-stats li.perfect { border-color: var(--gold); }
+.g3-stats li.good { border-color: var(--mint); }
+.g3-stats li.miss { border-color: var(--coral); }
+
+/* Calm variant (reduced motion): no shake, no pop, no glow pulse. */
+.hw-play.calm .hw-road,
+[data-motion='reduced'] .hw-road { animation: none !important; }
+.hw-play.calm .hw-flash,
+[data-motion='reduced'] .hw-flash { animation: none; opacity: 1; }
+.hw-play.calm .hw-note.is-perfect,
+.hw-play.calm .hw-note.is-good { transition: none; transform: translateY(50%); }
+@media (prefers-reduced-motion: reduce) {
+  .hw-road { animation: none !important; }
+  .hw-flash { animation: none; }
+  .hw-note.is-perfect,
+  .hw-note.is-good { transition: none; }
+}
+
+/* ---------- Melody Puzzle ---------- */
+.mp-levels {
+  display: grid;
+  gap: 6px;
+}
+.mp-key {
+  margin-inline-start: auto;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+.mp-listen {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+}
+.mp-listen .btn {
+  min-width: 200px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.mp-cost {
+  font-size: 0.75rem;
+  padding: 2px 6px;
+  border-radius: 8px;
+  background: rgb(0 0 0 / 0.18);
+}
+.mp-slots {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+.mp-slot {
+  position: relative;
+  width: 60px;
+  height: 68px;
+  border-radius: 14px;
+  border: 2px dashed var(--line);
+  background: color-mix(in srgb, var(--card) 70%, transparent);
+  color: var(--ink);
+  font: inherit;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.mp-slot .mp-n {
+  position: absolute;
+  top: 3px;
+  left: 6px;
+  font-size: 0.65rem;
+  color: var(--ink-dim);
+}
+.mp-slot.filled {
+  border-style: solid;
+  border-color: var(--hue-pitch, #7c8cff);
+  background: var(--card-2);
+}
+.mp-slot.active {
+  border-color: var(--mint);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mint) 35%, transparent);
+}
+.mp-slot.wrong {
+  border-color: var(--coral);
+  background: color-mix(in srgb, var(--coral) 18%, var(--card));
+}
+.mp-slot.right {
+  border-color: var(--mint);
+}
+.mp-slot:disabled {
+  cursor: default;
+  opacity: 1;
+}
+.mp-tile-face,
+.mp-tile {
+  font-family: var(--display);
+  font-size: 1.25rem;
+}
+.mp-tray {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 18px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  min-height: 72px;
+}
+.mp-tile {
+  min-width: 56px;
+  height: 56px;
+  padding: 0 10px;
+  border-radius: 14px;
+  border: 0;
+  background: var(--hue-pitch, #7c8cff);
+  color: #0f1020;
+  box-shadow: 0 5px 0 rgb(0 0 0 / 0.35);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.mp-tile:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 rgb(0 0 0 / 0.35);
+}
+.mp-tile.lifting {
+  opacity: 0.35;
+}
+.mp-ghost {
+  position: fixed;
+  z-index: 50;
+  pointer-events: none;
+  transform: translate(-50%, -60%) scale(1.08);
+  display: grid;
+  place-items: center;
+}
+.mp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+.mp-actions .btn {
+  min-width: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .mp-tile:active { transform: none; }
+}
+
+/* ---------- Ear Bingo ---------- */
+.bingo-card,
+.bingo-host {
+  display: grid;
+  gap: 12px;
+  max-width: 520px;
+  margin-inline: auto;
+  padding: 12px 0;
+}
+.bingo-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.bingo-head h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+.bingo-calls {
+  color: var(--ink-dim);
+  font-size: 0.9rem;
+}
+.bingo-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr));
+  gap: 8px;
+}
+.bingo-cell {
+  aspect-ratio: 1;
+  min-height: 56px;
+  border-radius: 14px;
+  border: 2px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  font-size: clamp(0.72rem, 3.4vw, 1.05rem);
+  padding: 4px;
+  display: grid;
+  place-items: center;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+.bingo-cell.on {
+  background: color-mix(in srgb, var(--gold) 28%, var(--card));
+  border-color: var(--gold);
+}
+.bingo-cell.win {
+  background: var(--mint);
+  border-color: var(--mint-deep, #1f8f67);
+  color: #0f1020;
+}
+.bingo-cell:disabled {
+  cursor: default;
+}
+.bingo-foot {
+  display: grid;
+  gap: 8px;
+  text-align: center;
+}
+.bingo-msg {
+  margin: 0;
+  font-weight: 700;
+}
+.bingo-msg.good { color: var(--mint); }
+.bingo-msg.warn { color: var(--coral); }
+.bingo-btn.ready {
+  background: var(--gold);
+  box-shadow: 0 6px 0 var(--gold-deep, #b8862a);
+}
+.bingo-current {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 16px;
+  border-radius: 22px;
+  background: var(--card);
+  border: 2px solid var(--line);
+}
+.bingo-current b {
+  font-family: var(--display);
+  font-size: clamp(2rem, 9vw, 3.4rem);
+  line-height: 1.1;
+}
+.bingo-num {
+  color: var(--ink-dim);
+}
+.bingo-host-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+.bingo-called {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.bingo-called li {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--card-2);
+  font-weight: 700;
+}
+.bingo-called li small {
+  color: var(--ink-dim);
+  font-weight: 500;
+}
+.bingo-called li.hidden {
+  opacity: 0.6;
+}
+.bingo-winners {
+  padding: 12px;
+  border-radius: 18px;
+  border: 2px solid var(--gold);
+  background: color-mix(in srgb, var(--gold) 12%, var(--card));
+}
+.bingo-winners ul {
+  margin: 6px 0 0;
+  padding-inline-start: 18px;
+}

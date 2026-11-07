@@ -64,7 +64,7 @@ import { piano, SIMULATED, store } from './services';
 const fill = (s: string, v: Record<string, string | number>) => Object.entries(v).reduce((a, [k, x]) => a.replaceAll(`{${k}}`, String(x)), s);
 
 /** Written pitch = concert pitch + this (B♭ instruments read a tone higher, E♭ a major sixth, F a fifth). */
-export const TRANSPOSE: Record<NonNullable<Settings['instrument']>, number> = { voice: 0, C: 0, Bb: 2, Eb: 9, F: 7 };
+export const TRANSPOSE: Record<NonNullable<Settings['instrument']>, number> = { voice: 0, C: 0, Bb: 2, Eb: 9, F: 7, guitar: 12, bass: 12, keys: 0, strings: 0 };
 
 export function noteLabel(midi: number, settings: Settings, key: PitchClass | null = null): string {
   const s = spellMidi(midi + TRANSPOSE[settings.instrument ?? 'voice'], key && TRANSPOSE[settings.instrument ?? 'voice'] ? null : key);

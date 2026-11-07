@@ -1,0 +1,109 @@
+/* Light motion (0.38): short, small, once. Everything here is switched off with reduced motion. */
+
+/* ---- screen transitions ---- */
+:root {
+  --nav-dx: 14px;
+}
+[dir='rtl'] {
+  --nav-dx: -14px;
+}
+html[data-nav='fwd'] :is(.app > main, .app > .progress-tabs) {
+  animation: nav-in-x 240ms cubic-bezier(0.2, 0.8, 0.3, 1) backwards;
+}
+html[data-nav='back'] :is(.app > main, .app > .progress-tabs) {
+  animation: nav-in-x-back 240ms cubic-bezier(0.2, 0.8, 0.3, 1) backwards;
+}
+html[data-nav='up'] .app > main:not(.lesson) {
+  animation: nav-in-y 220ms ease-out backwards;
+}
+@keyframes nav-in-x {
+  from {
+    opacity: 0;
+    transform: translateX(var(--nav-dx));
+  }
+}
+@keyframes nav-in-x-back {
+  from {
+    opacity: 0;
+    transform: translateX(calc(var(--nav-dx) * -1));
+  }
+}
+@keyframes nav-in-y {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+/* ---- cards rise in as they scroll into view ---- */
+[data-rv='0'] {
+  opacity: 0;
+  transform: translateY(12px);
+}
+[data-rv='1'] {
+  animation: rv-in 280ms cubic-bezier(0.2, 0.8, 0.3, 1) var(--rv-delay, 0ms) backwards;
+}
+@keyframes rv-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+/* ---- the active tab's pill pops in ---- */
+.tab.on .tab-icon {
+  animation: pill-in 260ms cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+@keyframes pill-in {
+  from {
+    transform: translateY(0) scale(0.75);
+    background: transparent;
+  }
+}
+
+/* ---- sheets slide up, their backdrop fades ---- */
+.sheet-backdrop {
+  animation: fade-in 180ms ease-out backwards;
+}
+.sheet-backdrop > .sheet {
+  animation: sheet-up 260ms cubic-bezier(0.2, 0.9, 0.3, 1) backwards;
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes sheet-up {
+  from {
+    transform: translateY(24px);
+    opacity: 0.4;
+  }
+}
+
+
+/* ---- press: a quick squeeze where there was none (buttons that already press down keep theirs) ---- */
+:is(.chip, .tool-card, .tab, .icon-btn, .intake-opt, .mode-switch button, .seg button, .string-chip, .warmup-card, .live-card, .play-hero, .back-to-step, .past-toggle, .award-toast, .ps-seg button, .frame-chips button, .test-out) {
+  transition: transform 90ms ease-out;
+}
+:is(.chip, .tool-card, .tab, .icon-btn, .intake-opt, .mode-switch button, .seg button, .string-chip, .warmup-card, .live-card, .play-hero, .back-to-step, .past-toggle, .award-toast, .ps-seg button, .frame-chips button, .test-out):active:not(:disabled) {
+  transform: scale(0.96);
+}
+.keys-pad button:active:not(:disabled) {
+  filter: brightness(0.85);
+}
+
+/* ---- reduced motion: none of the above ---- */
+html[data-motion='reduced'] .app > main,
+html[data-motion='reduced'] .tab.on .tab-icon,
+html[data-motion='reduced'] .sheet-backdrop,
+html[data-motion='reduced'] .sheet-backdrop > .sheet,
+html[data-motion='reduced'] [data-rv='1'] {
+  animation: none !important;
+}
+html[data-motion='reduced'] :is(.chip, .tool-card, .tab, .icon-btn, .intake-opt, .mode-switch button, .seg button, .string-chip, .warmup-card, .live-card, .play-hero, .back-to-step, .past-toggle, .award-toast, .ps-seg button, .frame-chips button, .test-out):active {
+  transform: none;
+}
+html[data-motion='reduced'] [data-rv='0'] {
+  opacity: 1;
+  transform: none;
+}

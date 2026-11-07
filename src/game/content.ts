@@ -3,8 +3,8 @@
 
 import { unspoken } from '../speech/speakable';
 import { learnedAnswer } from '../engine/learnedVoice';
-import { pcFromKey, type Answer, type IntroStep, type LessonDef, type LessonId, type Question } from '../engine/lesson';
-import { displayNote, spokenMajorKey, spokenNote, type Naming, type PitchClass } from '../engine/pitch';
+import { pcFromKey, placeKey, type Answer, type IntroStep, type LessonDef, type LessonId, type Question } from '../engine/lesson';
+import { displayNote, pcValue, spokenMajorKey, spokenNote, type Naming, type PitchClass } from '../engine/pitch';
 import type { SungResult } from '../engine/sing';
 import type { Remark } from '../engine/feedback';
 import { parseAlternatives, parseCadence, parseDegree, parseDegreeSequence, parseInterval, parseInversion, parseNoteName, parseQuality, parseRunMaterial, parseRunShape, parseNoteNameSequence, parseProgression, parseSeventh, type ParseResult } from '../engine/parser';
@@ -422,6 +422,7 @@ export function sayChoices(q: Question, l: Lang): string {
 export function roundPrompt(q: Question, l: Lang, nm: Naming, n: number): string {
   switch (q.kind) {
     case 'choice':
+    case 'place':
       return `${l === 'en' ? 'Round' : 'סיבוב'} ${n}. ${q.ask[l]}`;
     case 'abs-note':
       return l === 'en' ? `Round ${n}. No reference. Which note is this?` : `סיבוב ${n}. בלי צליל ייחוס. איזה צליל זה?`;
@@ -487,6 +488,8 @@ export function roundPrompt(q: Question, l: Lang, nm: Naming, n: number): string
           ? `Round ${n}. Does the run go up, down, or up and back?`
           : `סיבוב ${n}. הראן עולה, יורד, או עולה וחוזר?`;
     case 'sing-seq':
+      if (q.prompt) return `${l === 'en' ? 'Round' : 'סיבוב'} ${n}. ${q.prompt[l]}`;
+      if (q.play) return l === 'en' ? `Round ${n}. Listen, then play it back on your instrument.` : `סיבוב ${n}. הקשיבו, ונגנו את זה בחזרה על הכלי שלכם.`;
       if (q.promptBy === 'name' && q.names)
         return l === 'en'
           ? `Round ${n}. ${cap(spokenMajorKey(q.key, nm, l))}. Sing ${namesWords(q.names, nm, l)}.`
@@ -526,6 +529,8 @@ export function roundPrompt(q: Question, l: Lang, nm: Naming, n: number): string
       if (q.promptBy === 'echo') return l === 'en' ? `Round ${n}. Listen, then sing it back.` : `סיבוב ${n}. הקשיבו, ושירו בחזרה.`;
       if (q.promptBy === 'chord') return l === 'en' ? `Round ${n}. Listen to the chord, then sing its ${chordToneWord(q.chordTone?.tone ?? 1, l)}.` : `סיבוב ${n}. הקשיבו לאקורד, ושירו את ${chordToneWord(q.chordTone?.tone ?? 1, l)} שלו.`;
       if (q.promptBy === 'finish') return l === 'en' ? `Round ${n}. The tune stops before the end. Sing the note that finishes it.` : `סיבוב ${n}. המנגינה נעצרת לפני הסוף. שירו את הצליל שסוגר אותה.`;
+      if (q.promptBy === 'interval' && q.interval) return l === 'en' ? `Round ${n}. Listen to the note, then sing ${q.interval.name.en} from it.` : `סיבוב ${n}. הקשיבו לצליל, ושירו ממנו ${q.interval.name.he}.`;
+      if (q.promptBy === 'inner') return l === 'en' ? `Round ${n}. The tune goes silent — keep it going in your head, then sing the note where it is now.` : `סיבוב ${n}. המנגינה משתתקת — המשיכו אותה בראש, ושירו את הצליל שבו היא נמצאת עכשיו.`;
       if (q.promptBy === 'name')
         return l === 'en'
           ? `Round ${n}. ${cap(spokenMajorKey(q.key, nm, l))}. Sing ${spokenNote(q.target, nm, l)}.`
@@ -550,6 +555,18 @@ function parseAnswerRaw(q: Question, alternatives: string[], inputNaming: Naming
   switch (q.kind) {
     case 'choice':
       return parseAlternatives(alternatives, (t) => parseNamedChoice(t, q.choices, q.names), inChoices);
+    case 'place': {
+      // Spoken note names (R11): only where the register doesn't matter.
+      if (q.match !== 'pc') return { kind: 'unrecognized', heard: alternatives[0] ?? '' };
+      const r = parseAlternatives(alternatives, (t) => parseNoteNameSequence(t, inputNaming));
+      if (r.kind !== 'answer') return r.kind === 'ambiguous' ? { kind: 'unrecognized', heard: alternatives[0] ?? '' } : r;
+      const pcs = String(r.value)
+        .split('.')
+        .map((k) => pcFromKey(k))
+        .filter((p): p is PitchClass => !!p)
+        .map((p) => pcValue(p));
+      return { ...r, value: placeKey(q, pcs) };
+    }
     case 'abs-note': {
       const r = parseAlternatives(alternatives, (t) => parseNoteName(t, inputNaming));
       if (r.kind === 'answer') return { ...r, value: `${r.value.letter}${r.value.acc}` };
@@ -645,6 +662,8 @@ function revealCore(q: Question, l: Lang, nm: Naming): string {
   switch (q.kind) {
     case 'choice':
       return l === 'en' ? `It was ${q.names[q.answer]?.en ?? q.answer}.` : `זה היה ${q.names[q.answer]?.he ?? q.answer}.`;
+    case 'place':
+      return l === 'en' ? 'Here are the right notes — yours, then these.' : 'אלה התווים הנכונים — שלכם, ואז אלה.';
     case 'abs-note':
       return l === 'en' ? `It was ${spokenNote(q.target, nm, l)}. Your note, then this one.` : `זה היה ${spokenNote(q.target, nm, l)}. הצליל שלכם, ואז הזה.`;
     case 'slash':
@@ -829,6 +848,7 @@ export function askTemplate(q: Question, l: Lang, nm: Naming = 'letter'): string
   if (q.kind === 'degree-seq' && q.bassLine) return l === 'en' ? 'Which bass notes, as degrees of {k} major?' : 'אילו צלילי בס, כדרגות ב־{k} מז׳ור?';
   switch (q.kind) {
     case 'choice':
+    case 'place':
       return q.ask[l];
     case 'abs-note':
       return l === 'en' ? 'Which note is this? (no reference)' : 'איזה צליל זה? (בלי ייחוס)';
@@ -846,6 +866,8 @@ export function askTemplate(q: Question, l: Lang, nm: Naming = 'letter'): string
     case 'note-name':
       return q.direction === 'heard-pitch→name' ? (l === 'en' ? 'Which note is it?' : 'איזה תו זה?') : l === 'en' ? `Which note is degree ${q.degree}?` : `איזה תו הוא דרגה ${q.degree}?`;
     case 'sing-seq':
+      if (q.prompt) return q.prompt[l];
+      if (q.play) return l === 'en' ? 'Play it back on your instrument' : 'נגנו את זה בחזרה על הכלי';
       if (q.fromKey) return l === 'en' ? `Now sing it in ${displayNote(q.key, nm, l)} major` : `עכשיו שירו את זה ב${displayNote(q.key, nm, l)} מז׳ור`;
       if (q.promptBy === 'name' && q.names) return l === 'en' ? `Sing ${namesShown(q.names, nm, l)}` : `שירו ${namesShown(q.names, nm, l)}`;
       return l === 'en' ? `Sing ${q.degrees.join(' – ')}` : `שירו ${q.degrees.join(' – ')}`;
@@ -880,6 +902,8 @@ export function askTemplate(q: Question, l: Lang, nm: Naming = 'letter'): string
       if (q.promptBy === 'echo') return l === 'en' ? 'Sing it back' : 'שירו בחזרה';
       if (q.promptBy === 'chord') return l === 'en' ? `Sing the chord's ${chordToneWord(q.chordTone?.tone ?? 1, l)}` : `שירו את ${chordToneWord(q.chordTone?.tone ?? 1, l)} של האקורד`;
       if (q.promptBy === 'finish') return l === 'en' ? 'Sing the last note' : 'שירו את הצליל האחרון';
+      if (q.promptBy === 'interval' && q.interval) return l === 'en' ? `Sing ${q.interval.name.en} from this note` : `שירו ${q.interval.name.he} מהצליל הזה`;
+      if (q.promptBy === 'inner') return l === 'en' ? 'Sing where the tune is now' : 'שירו איפה שהמנגינה נמצאת עכשיו';
       if (q.promptBy === 'name') return l === 'en' ? 'Sing {n}' : 'שירו {n}';
       return q.degree === 1 ? (l === 'en' ? 'Sing home (1)' : 'שירו את הבית (1)') : l === 'en' ? `Sing degree ${q.degree}` : `שירו דרגה ${q.degree}`;
   }
@@ -907,6 +931,7 @@ export function questionBadge(q: Question, l: Lang, nm: Naming): { key?: PitchCl
   const major = l === 'en' ? 'major' : "מז׳ור";
   switch (q.kind) {
     case 'choice':
+    case 'place':
       return { text: TOPIC_GEN[q.topic]?.title[l] ?? q.topic };
     case 'abs-note':
       return { text: l === 'en' ? 'Absolute pitch' : 'שמיעה מוחלטת' };

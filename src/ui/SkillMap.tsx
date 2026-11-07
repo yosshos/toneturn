@@ -175,7 +175,7 @@ function Radar({
       .join(' ');
   const selDomain = domainOf(sel as SkillId);
   return (
-    <svg className="radar domains" viewBox="-100 -14 520 348" role="img" aria-label={t.skillMap}>
+    <svg className="radar domains" viewBox="-100 -14 520 348" role="img" aria-label={t.skillMap} style={{ direction: 'ltr' }}>
       {[0.25, 0.5, 0.75, 1].map((k) => (
         <polygon key={k} className="ring" points={DOMAINS.map((_, i) => pt(i, k).join(',')).join(' ')} />
       ))}

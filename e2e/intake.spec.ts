@@ -19,6 +19,9 @@ test.describe('intake questionnaire', () => {
     await expect(page.locator('main.intake[data-step="plays"]')).toBeVisible();
     await page.locator('[data-play="none"]').click();
     await page.locator('.intake .btn.mega').click();
+    // 0.38: the goal shapes the path (spec AF D2)
+    await expect(page.locator('main.intake[data-step="goal"]')).toBeVisible();
+    await page.locator('.intake-opt[data-goal="general"]').click();
     await page.locator('.intake-opt[data-v="solfege"]').click();
     // ranking: rhythm, hearing, memory, reading, singing
     await expect(page.locator('main.intake[data-step="rank"]')).toBeVisible();
@@ -27,6 +30,11 @@ test.describe('intake questionnaire', () => {
     await expect(page.locator('[data-area="voice"] .rank-n')).toHaveText('5');
     await page.screenshot({ path: 'test-results/intake-3-rank.png' });
     await page.locator('.intake-row .btn.mega').click();
+    // 0.38: anything to leave out (spec AF D4) — leave out "creative & applied"
+    await expect(page.locator('main.intake[data-step="leave"]')).toBeVisible();
+    await page.locator('[data-area="creative"]').click();
+    await page.screenshot({ path: 'test-results/intake-3b-leave.png' });
+    await page.locator('main.intake[data-step="leave"] .btn.mega').click();
     await page.locator('.intake-opt[data-v="learn"]').click();
     await page.locator('.intake-opt[data-v="5"]').click();
     // range: a gentle siren (the simulator sings C3 → C5)
@@ -46,7 +54,9 @@ test.describe('intake questionnaire', () => {
     // Home: the path follows the order (rhythm first); the hero offers the basics first.
     await expect(page.locator('.first-run-cta')).toContainText('להתחיל מהבסיס');
     await page.locator('.tab[data-tab="path"]').click();
-    await expect(page.locator('.road .node').first()).toContainText(/קצב|פעמה/);
+    // The spiral path: rhythm (ranked first) is in the first unit; "creative" (left out) is not.
+    await expect(page.locator('.road .node').filter({ hasText: /קצב|פעמה/ }).first()).toBeVisible();
+    await expect(page.locator('.road .node').filter({ hasText: /הבעה|מצב רוח|ארטיקולציה/ })).toHaveCount(0);
     // Settings: take it again
     await page.goto('/?sim=1&lang=he#/settings');
     await expect(page.locator('[data-intake-retake]')).toBeVisible();

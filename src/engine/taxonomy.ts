@@ -11,7 +11,7 @@ export interface Tag {
   w: number;
 }
 type T = [SkillId, string, number];
-const tg = (...xs: T[]): Tag[] => xs.map(([skill, sub, w]) => ({ skill, sub: `${skill}/${sub}`, w }));
+export const tg = (...xs: T[]): Tag[] => xs.map(([skill, sub, w]) => ({ skill, sub: `${skill}/${sub}`, w }));
 
 // ---------------------------------------------------------------- sub-skills
 
@@ -112,13 +112,39 @@ export const SUB_SKILLS: SubSkill[] = [
   S('expression', 'dynamics', 'Loud and soft', 'חזק וחלש'),
   S('expression', 'articulation', 'Articulation', 'ארטיקולציה'),
   S('expression', 'mood', 'Mood', 'מצב רוח'),
+  // 0.38 (spec AE)
+  S('cadences', 'chromatic', 'Colour chords', 'אקורדי צבע'),
+  S('theory', 'chromatic', 'Colour chords on paper', 'אקורדי צבע בכתב'),
+  S('sequences', 'inner', 'Inner hearing', 'שמיעה פנימית'),
+  S('form', 'song', 'Song form', 'מבנה שיר'),
+  S('form', 'style', 'Style and period', 'סגנון ותקופה'),
+  S('timing', 'subdivide', 'Subdividing the click', 'חלוקת הקליק'),
+  S('timing', 'backbeat', 'When the click moves', 'כשהקליק זז'),
+  S('timing', 'gap', 'Through the gaps', 'דרך השקט'),
+  S('timing', 'poly', 'Two hands', 'שתי ידיים'),
+  S('tempo', 'produce', 'Tempo from memory', 'טמפו מהזיכרון'),
+  S('rhythm-reading', 'errors', 'Spotting rhythm slips', 'זיהוי טעויות קצב'),
+  S('rhythm-reading', 'drums', 'Reading the drum kit', 'קריאת תופים'),
+  S('singing', 'intervals', 'Singing intervals', 'שירת מרווחים'),
+  S('dictation', 'melodic', 'Writing the melody', 'כתיבת מנגינה'),
+  S('dictation', 'rhythm', 'Building the rhythm', 'בניית מקצב'),
+  S('dictation', 'two-part', 'Two voices', 'שני קולות'),
+  S('dictation', 'bass', 'Writing the bass', 'כתיבת הבס'),
+  S('instrument', 'echo', 'Playing it back', 'לנגן בחזרה'),
+  S('instrument', 'fretboard', 'Notes on the neck', 'תווים על הצוואר'),
+  S('instrument', 'shapes', 'Shapes on the neck', 'צורות על הצוואר'),
+  S('instrument', 'keyboard', 'Notes on the keys', 'תווים על הקלידים'),
+  S('timbre', 'eq', 'Frequencies', 'תדרים'),
+  S('timbre', 'space', 'Room and echo', 'חלל והד'),
+  S('timbre', 'pan', 'Left, right, wide', 'שמאל, ימין, רוחב'),
+  S('timbre', 'dynamics', 'Compression and drive', 'דחיסה ועיוות'),
 ];
 export const SUB_BY_ID: Record<string, SubSkill> = Object.fromEntries(SUB_SKILLS.map((s) => [s.id, s]));
 export const subsOf = (k: SkillId) => SUB_SKILLS.filter((s) => s.skill === k);
 
 // ---------------------------------------------------------------- tags per topic (choice questions)
 
-type LevelTags = Tag[] | ((level: number) => Tag[]);
+export type LevelTags = Tag[] | ((level: number) => Tag[]);
 export const TOPIC_TAGS: Record<string, LevelTags> = {
   // basics
   'basics-highlow': tg(['pitch', 'higher-lower', 1]),
@@ -202,6 +228,7 @@ const DEFAULT_SUB: Partial<Record<SkillId, string>> = {
   degrees: 'diatonic', notes: 'names', chords: 'quality', cadences: 'cadence', singing: 'match', sequences: 'melody', rhythm: 'memory', timing: 'precision',
   intervals: 'melodic', 'rhythm-reading': 'read', 'rhythm-dictation': 'dictate', agility: 'runs', technique: 'control', modes: 'modes', absolute: 'name',
   theory: 'facts', tempo: 'compare', pitch: 'fine', sight: 'read', improv: 'play', transpose: 'pitch', meter: 'count', form: 'phrases', expression: 'dynamics',
+  instrument: 'echo', timbre: 'eq', dictation: 'melodic',
 };
 export const defaultTags = (k: SkillId): Tag[] => [{ skill: k, sub: `${k}/${DEFAULT_SUB[k]}`, w: 1 }];
 
@@ -209,7 +236,12 @@ export const defaultTags = (k: SkillId): Tag[] => [{ skill: k, sub: `${k}/${DEFA
 export function questionTags(q: Question): Tag[] {
   const primary = questionSkill(q);
   let tags: Tag[] | null = null;
-  switch (q.kind) {
+  // Topic-generated items of any kind (spec AE) carry their topic: its tags apply.
+  const topicRef = q.kind === 'place' ? { id: q.topic, level: q.level } : (q.kind === 'rhythm-read' || q.kind === 'sing-seq' || q.kind === 'sing' || q.kind === 'rhythm-dict') && q.topic ? q.topic : null;
+  if (topicRef && TOPIC_TAGS[topicRef.id]) {
+    const t = TOPIC_TAGS[topicRef.id];
+    tags = typeof t === 'function' ? t(topicRef.level) : t;
+  } else switch (q.kind) {
     case 'choice': {
       const t = TOPIC_TAGS[q.topic];
       tags = t ? (typeof t === 'function' ? t(q.level) : t) : null;
@@ -268,7 +300,9 @@ export function questionTags(q: Question): Tag[] {
       break;
     case 'rhythm-read':
       tags =
-        q.skillAs === 'timing'
+        q.skillAs === 'timing' && q.silentAfterBars !== undefined
+          ? tg(['timing', 'gap', 1])
+          : q.skillAs === 'timing'
           ? tg(['timing', 'steady', 0.8], ['rhythm-reading', 'read', 0.2])
           : q.skillAs === 'transpose'
             ? tg(['transpose', 'displacement', 0.6], ['rhythm-reading', 'syncopation', 0.4])

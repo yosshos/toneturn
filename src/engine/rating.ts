@@ -22,17 +22,18 @@ export const BAND_MAX = 1600;
 
 /** Skill Map axis order: listening skills, then performance/memory pairs (pitch: in tune + memory; rhythm: memory + precision). */
 /** Grouped as in spec G.8: listening → performance → memory → precision. */
-export const SKILLS: SkillId[] = ['degrees', 'intervals', 'chords', 'cadences', 'modes', 'pitch', 'absolute', 'rhythm-dictation', 'rhythm-reading', 'timing', 'tempo', 'meter', 'sequences', 'rhythm', 'form', 'singing', 'technique', 'agility', 'notes', 'theory', 'sight', 'improv', 'transpose', 'expression'];
+export const SKILLS: SkillId[] = ['degrees', 'intervals', 'chords', 'cadences', 'modes', 'pitch', 'absolute', 'rhythm-dictation', 'rhythm-reading', 'timing', 'tempo', 'meter', 'sequences', 'rhythm', 'form', 'singing', 'technique', 'agility', 'notes', 'theory', 'sight', 'dictation', 'improv', 'transpose', 'expression', 'instrument', 'timbre'];
 
 /** The Skill Map's six domains (product owner, spec AD): skills grouped by how closely the concepts are related. */
-export type DomainId = 'pitch' | 'time' | 'memory' | 'voice' | 'reading' | 'creative';
+export type DomainId = 'pitch' | 'time' | 'memory' | 'voice' | 'reading' | 'creative' | 'instrument';
 export const DOMAINS: { id: DomainId; skills: SkillId[] }[] = [
   { id: 'pitch', skills: ['degrees', 'intervals', 'chords', 'cadences', 'modes', 'pitch', 'absolute'] },
   { id: 'time', skills: ['rhythm-dictation', 'rhythm-reading', 'timing', 'tempo', 'meter'] },
   { id: 'memory', skills: ['sequences', 'rhythm', 'form'] },
   { id: 'voice', skills: ['singing', 'technique', 'agility'] },
-  { id: 'reading', skills: ['notes', 'theory', 'sight'] },
+  { id: 'reading', skills: ['notes', 'theory', 'sight', 'dictation'] },
   { id: 'creative', skills: ['improv', 'transpose', 'expression'] },
+  { id: 'instrument', skills: ['instrument', 'timbre'] },
 ];
 export const domainOf = (k: SkillId): DomainId => DOMAINS.find((d) => d.skills.includes(k))?.id ?? 'pitch';
 /** Axes on the Skill Map that have no content yet — always shown as unmeasured. */

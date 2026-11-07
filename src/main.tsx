@@ -8,6 +8,11 @@ import './features.css';
 import './vocal.css';
 import './tournament.css';
 import './arcade.css';
+import './stats.css';
+import './games2.css';
+import './path.css';
+import './motion.css';
+import './peak.css';
 import { App } from './ui/App';
 import { initPwa } from './pwa';
 

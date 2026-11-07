@@ -6,7 +6,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 test.use({ viewport: { width: Number(process.env.OVF_WIDTH ?? 320), height: 720 }, hasTouch: true });
 
-const ALLOWED_SCROLLERS = ['roster-wrap'];
+const ALLOWED_SCROLLERS = ['roster-wrap', 'play-cats', 'neck-wrap', 'staff-pad-wrap'];
 
 async function problems(page: Page): Promise<string[]> {
   return page.evaluate((allowed) => {
@@ -42,7 +42,7 @@ async function problems(page: Page): Promise<string[]> {
   }, ALLOWED_SCROLLERS);
 }
 
-const ROUTES = ['', '#/path', '#/arcade', '#/settings', '#/games', '#/friends', '#/skills', '#/daily', '#/online', '#/drone', '#/classes', '#/ghost', '#/truefalse', '#/studio', '#/vocal', '#/achievements', '#/singalong', '#/perform', '#/learned'];
+const ROUTES = ['', '#/path', '#/arcade', '#/settings', '#/games', '#/friends', '#/skills', '#/daily', '#/online', '#/drone', '#/classes', '#/ghost', '#/truefalse', '#/studio', '#/vocal', '#/achievements', '#/singalong', '#/perform', '#/learned', '#/tuner', '#/workout', '#/highway', '#/flight', '#/melodypuzzle', '#/nametune', '#/tuneup', '#/pitchmemory', '#/peakhunter', '#/rush-chord', '#/rush-note', '#/rush-fretboard', '#/rush-interval', '#/rush-keysig', '#/rush-progression'];
 
 async function setup(page: Page) {
   await page.addLocatorHandler(page.locator('.sheet-backdrop .sheet'), async () => {
@@ -57,6 +57,8 @@ function recorder(page: Page) {
     if (p.length) {
       bad[label] = p;
       console.log(`OVERFLOW ${label}: ${p.join(' | ')}`);
+      await page.screenshot({ path: `test-results/ovf-${label.replace(/[^a-z0-9]+/gi, '_').slice(0, 40)}.png`, fullPage: true }).catch(() => {});
+      console.log('MAIN', await page.evaluate(() => [...document.querySelectorAll('main')].map((m) => m.className + ' w=' + Math.round(m.getBoundingClientRect().width)).join(' ; ') + ' hash=' + location.hash));
     }
   };
   return { bad, check };
@@ -105,12 +107,13 @@ for (const lang of ['en', 'he'] as const) {
     const { bad, check } = recorder(page);
     await page.goto(base);
     await openAll(page);
-    const n = await page.locator('[data-topic]').count();
-    for (let i = 0; i < n; i++) {
+    // 0.38: ~100 topics — one level of each (the first); every topic's screen is checked.
+    const ids = await page.$$eval('[data-topic]', (els) => [...new Set(els.map((e) => (e as HTMLElement).dataset.topic!))]);
+    for (const [i, id] of ids.entries()) {
       await page.goto(base);
       await openAll(page);
-      const chip = page.locator('[data-topic]').nth(i);
-      const label = `topic ${await chip.getAttribute('data-topic')} #${i}`;
+      const chip = page.locator(`[data-topic="${id}"]`).first();
+      const label = `topic ${id} #${i}`;
       await chip.click();
       await page.waitForTimeout(1200);
       await check(label);
@@ -124,13 +127,14 @@ for (const lang of ['en', 'he'] as const) {
     const { bad, check } = recorder(page);
     // The path has its own tab (0.37).
     await page.goto(`${base}#/path`);
-    const nodes = page.locator('button.node-btn');
+    // 0.38: the hand-made lessons from the unlocked QA list (path nodes may be locked or ✓).
+    const nodes = page.locator('.all-lessons button');
     await nodes.first().waitFor();
     const n = await nodes.count();
     for (let i = 0; i < n; i++) {
       await page.goto(`${base}#/path`);
       await page.reload();
-      const b = page.locator('button.node-btn').nth(i);
+      const b = page.locator('.all-lessons button').nth(i);
       const label = `path ${(await b.innerText()).replace(/\s+/g, ' ').slice(0, 30)}`;
       await b.click();
       await page.waitForTimeout(600);

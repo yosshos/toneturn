@@ -14,7 +14,9 @@ import { questionTags, type Tag } from '../engine/taxonomy';
 
 /** Items carry their tag vector (spec AD) so ratings and sub-skills can credit every skill they train. */
 export const compactTags = (tags: Tag[]): Tag[] | undefined => (tags.length ? tags : undefined);
-import { foldRatings, SKILLS, type RatingEvent, type Ratings } from '../engine/rating';
+import { SKILLS, type RatingEvent, type Ratings } from '../engine/rating';
+import { bumpCount, foldFromMemo, statsAfterEvents, statsAfterResult, trimIntoBase } from '../engine/stats';
+import { gameEvents } from '../engine/gameRating';
 import { medalFor, weekId, type Medal } from '../engine/adaptive';
 import type { Naming } from '../engine/pitch';
 import type { KV } from './kv';
@@ -66,6 +68,19 @@ export interface Progress {
   ghosts?: Record<string, GhostRun>;
   /** Vocal technique (spec P): best score per item, passed levels and a short per-metric history (local only). */
   vocal?: VocalProgress;
+  // ---- stats (spec AG): long-lived aggregates and counters, merged by max on sync (S1–S3) ----
+  statsDays?: import('../engine/stats').StatsDays;
+  statsHours?: import('../engine/stats').StatsHours;
+  peaks?: import('../engine/stats').Peaks;
+  counts?: import('../engine/stats').Counts;
+  records?: import('../engine/stats').PersonalRecords;
+  awards?: import('../engine/stats').Awards;
+  /** Ratings folded from events dropped by the 3000 cap (S1). */
+  ratingBase?: import('../engine/stats').RatingBase;
+  /** Best per new game (spec AE §8). */
+  bests?: Record<string, number>;
+  /** Pitch Memory log (spec AE §8). */
+  pitchMemory?: { day: string; cents: number; note: number }[];
 }
 
 export interface VocalTake {
@@ -92,7 +107,12 @@ export interface GhostRun {
   at: string;
 }
 
-export const ratingsOf = (p: Progress): Ratings => foldRatings(p.ratingEvents ?? []);
+export const ratingsOf = (p: Progress): Ratings => foldFromMemo(p.ratingBase, p.ratingEvents ?? []);
+/** Append rating events, folding the oldest beyond the cap into the base (S1). */
+function withEvents(p: Progress, fresh: RatingEvent[]): Pick<Progress, 'ratingEvents' | 'ratingBase'> {
+  const t = trimIntoBase(p.ratingBase, [...(p.ratingEvents ?? []), ...fresh], 3000);
+  return { ratingEvents: t.events, ratingBase: t.base };
+}
 
 function snapshot(p: Progress, now: Date): Progress['snapshots'] {
   const r = ratingsOf(p);
@@ -157,7 +177,51 @@ export interface Settings {
   /** Echo Chain: sung-note tolerance in cents (playtest; default 80). */
   echoTolerance?: number;
   /** Instrument mode (spec S.12): answer on an acoustic instrument; written-pitch names for transposing ones. */
-  instrument?: 'voice' | 'C' | 'Bb' | 'Eb' | 'F';
+  instrument?: 'voice' | 'C' | 'Bb' | 'Eb' | 'F' | 'guitar' | 'bass' | 'keys' | 'strings';
+  /** Where notes are entered in "place" exercises (spec AE §3.3): automatic = the first chosen note view. */
+  answerSurface?: 'auto' | 'keys' | 'neck' | 'staff';
+  /** Draw the neck and chord boxes for a left-handed player. */
+  leftHanded?: boolean;
+  /** Guitar / bass tuning id (src/engine/fretboard.ts). */
+  tuning?: string;
+  /** Tuner calibration, Hz (430–450). */
+  a4?: number;
+  /** The player confirmed headphones for low-frequency / stereo sound exercises (spec AE R2). */
+  headphones?: boolean;
+  /** Tuner preset last used. */
+  tunerPreset?: string;
+  // ---- the learning path (spec AF): choices and facts; synced with the settings (P9) ----
+  /** The questionnaire goal. */
+  goal?: import('../engine/path').Goal;
+  /** Areas left out of the path. */
+  pathLeaveOut?: import('../engine/rating').DomainId[];
+  /** Optional content packs on (null/absent = defaults from track, plays and goal). */
+  pathPacks?: import('../engine/path').Pack[];
+  /** Topics hidden from the path. */
+  pathHidden?: string[];
+  /** Modes left out. */
+  noSing?: boolean;
+  noMic?: boolean;
+  /** ✓ steps the player keeps on the path. */
+  pathKeep?: string[];
+  /** Facts: finished steps, frozen units, test-outs. */
+  pathFacts?: import('../engine/path').PathFacts;
+  /** The next step ids last shown (to tell the player when a rebuild changed them). */
+  pathSeen?: string[];
+  // ---- stats (spec AG) ----
+  /** Share my stats with friends (S9). */
+  shareStats?: import('../engine/stats').ShareStats;
+  /** Trophy case: up to 3 pinned awards. */
+  trophies?: string[];
+  monthReviewSeen?: string;
+  awardsInit?: boolean;
+  // ---- today's workout (spec AH) ----
+  /** Saved defaults: "all" days, or a weekday "0".."6" (W13). */
+  workoutTemplates?: Record<string, import('../engine/workout2').Block[]>;
+  /** Today's own edits (W18). */
+  workoutToday?: { day: string; blocks: import('../engine/workout2').Block[] };
+  /** After-workout feedback (W11): tomorrow's suggested total moves by delta until this day. */
+  workoutNudge?: { until: string; delta: number };
   /** Keep one vocal take per exercise per week on this device for "then vs. now" (spec S.2). */
   keepTakes?: boolean;
   /** Instrument sound for every exercise (spec Q): 'classic' (synth) or a sample set id. */
@@ -392,12 +456,14 @@ export function applyResult(p: Progress, r: LessonResult, now: Date): Progress {
   const puzzles = { ...(p.puzzles ?? {}) };
   // Only the first scored try at a week's puzzle counts; later plays are practice.
   if (r.puzzle && !puzzles[r.puzzle.week]) puzzles[r.puzzle.week] = { band: r.puzzle.band, medal: r.puzzle.medal, completedAt: at };
-  const withEvents: Progress = { ...p, ratingEvents: [...(p.ratingEvents ?? []), ...newEvents].slice(-3000), puzzles };
-  const unlocks = r.lessonId === 'placement' ? [...new Set([...(p.placementUnlocks ?? []), ...placementUnlocks(ratingsOf(withEvents))])] : p.placementUnlocks;
+  const withEv: Progress = { ...p, ...withEvents(p, newEvents), puzzles };
+  const st = statsAfterResult(p, r, ratingsOf(withEv));
+  const withEvents2: Progress = { ...withEv, ...st };
+  const unlocks = r.lessonId === 'placement' ? [...new Set([...(p.placementUnlocks ?? []), ...placementUnlocks(ratingsOf(withEvents2))])] : p.placementUnlocks;
   return {
-    ...withEvents,
+    ...withEvents2,
     ...(unlocks ? { placementUnlocks: unlocks } : {}),
-    snapshots: snapshot(withEvents, now),
+    snapshots: snapshot(withEvents2, now),
     xp: p.xp + r.xp,
     applied: [...p.applied, eventId].slice(-500),
     lessons: {
@@ -460,8 +526,39 @@ export class ProgressStore {
     const have = new Set((p.ratingEvents ?? []).map((e) => e.id));
     const fresh = events.filter((e) => !have.has(e.id));
     if (!fresh.length) return p;
-    const next: Progress = { ...p, ratingEvents: [...(p.ratingEvents ?? []), ...fresh].slice(-3000) };
+    const next0: Progress = { ...p, ...withEvents(p, fresh) };
+    const next: Progress = { ...next0, ...statsAfterEvents(p, fresh, ratingsOf(next0)) };
     next.snapshots = snapshot(next, now);
+    await this.kv.set('progress', next);
+    return next;
+  }
+
+  /** Best score of a 0.38 game (spec AE §8), plus Pitch Memory log entries. */
+  async recordGame2(game: string, score: number, memory?: { day: string; cents: number; note: number }, detail?: Record<string, unknown>): Promise<Progress> {
+    const p = await this.loadProgress();
+    const bests = { ...(p.bests ?? {}), [game]: Math.max(p.bests?.[game] ?? 0, score) };
+    const pitchMemory = memory ? [...(p.pitchMemory ?? []).filter((x) => x.day !== memory.day), memory].slice(-400) : p.pitchMemory;
+    // Achievement counters (spec AG S2, S14).
+    let counts = p.counts;
+    const d = detail ?? {};
+    if (game === 'flight' && d.input !== 'touch' && typeof d.gates === 'number') counts = bumpCount(counts, 'gates', d.gates);
+    if (game === 'tuneup') {
+      counts = bumpCount(counts, 'tuneUps', 1);
+      if (typeof d.meanCents === 'number') counts = bumpCount(counts, 'tuneUpCents', d.meanCents, 'min');
+    }
+    if (game === 'highway' && d.fullCombo === true) counts = bumpCount(counts, 'highwayFC', 1);
+    if (game === 'nametune') counts = bumpCount(counts, 'nameTuneBest', score, 'max');
+    if (memory) {
+      if (!(p.pitchMemory ?? []).some((x) => x.day === memory.day)) counts = bumpCount(counts, 'pitchMemoryDays', 1);
+      counts = bumpCount(counts, 'pitchMemoryCents', Math.abs(memory.cents), 'min');
+    }
+    // Single-player games count (0.38): rated answers in the skills they train → ratings, stats, and the path's evidence.
+    const at = new Date().toISOString();
+    const evs = gameEvents(game, score, memory ? { ...(detail ?? {}), cents: memory.cents } : detail, at, Date.now().toString(36)).filter((e) => !(p.ratingEvents ?? []).some((x) => x.id === e.id));
+    const base: Progress = { ...p, bests, ...(pitchMemory ? { pitchMemory } : {}), ...(counts ? { counts } : {}) };
+    const next0: Progress = evs.length ? { ...base, ...withEvents(p, evs) } : base;
+    const next: Progress = evs.length ? { ...next0, ...statsAfterEvents(base, evs, ratingsOf(next0)) } : next0;
+    if (evs.length) next.snapshots = snapshot(next, new Date());
     await this.kv.set('progress', next);
     return next;
   }
@@ -503,7 +600,8 @@ export class ProgressStore {
     const have = new Set((p.ratingEvents ?? []).map((e) => e.id));
     const fresh = events.filter((e) => !have.has(e.id));
     if (!fresh.length) return p;
-    const next: Progress = { ...p, ratingEvents: [...(p.ratingEvents ?? []), ...fresh].slice(-3000) };
+    const next0: Progress = { ...p, ...withEvents(p, fresh) };
+    const next: Progress = { ...next0, ...statsAfterEvents(p, fresh, ratingsOf(next0)) };
     next.snapshots = snapshot(next, now);
     await this.kv.set('progress', next);
     return next;
@@ -514,11 +612,12 @@ export class ProgressStore {
     const have = new Set((p.ratingEvents ?? []).map((e) => e.id));
     const fresh = events.filter((e) => !have.has(e.id));
     const prevBest = p.tfBest?.[level] ?? 0;
-    const next: Progress = {
+    const next0: Progress = {
       ...p,
-      ratingEvents: [...(p.ratingEvents ?? []), ...fresh].slice(-3000),
+      ...withEvents(p, fresh),
       tfBest: { ...(p.tfBest ?? {}), [level]: Math.max(prevBest, score) },
     };
+    const next: Progress = { ...next0, ...statsAfterEvents(p, fresh, ratingsOf(next0)) };
     next.snapshots = snapshot(next, now);
     await this.kv.set('progress', next);
     return { progress: next, best: score > prevBest };

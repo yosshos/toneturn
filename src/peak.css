@@ -1,0 +1,252 @@
+/* Peak Hunter (src/ui/PeakHunter.tsx). Builds on the .g2 game shell (games2.css) and night-arcade tokens.
+   The slider block is dir="ltr" (low → high, left → right in both languages); the rest uses logical properties. */
+
+.ph-card {
+  gap: 14px;
+}
+
+/* ---- A / B */
+.ph-ab {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.ph-ab-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-block-size: 56px;
+  font-weight: 800;
+  font-size: 1.05rem;
+}
+.ph-ab-btn.on {
+  border-color: var(--mint);
+  box-shadow: 0 0 0 2px var(--mint) inset;
+}
+.ph-b.on {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px var(--gold) inset;
+}
+.ph-ab-icon {
+  font-size: 0.9em;
+}
+.ph-phones {
+  color: var(--gold);
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+
+/* ---- slider: --thumb is the range thumb size; marks sit on the thumb-centre rail */
+.ph-slider {
+  --thumb: 26px;
+  --rail: calc(100% - var(--thumb));
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-block-start: 4px;
+}
+.ph-readout {
+  align-self: center;
+  font-family: var(--display);
+  font-size: 1.8rem;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.ph-track-wrap {
+  position: relative;
+  padding-block: 26px 4px;
+}
+.ph-range {
+  inline-size: 100%;
+  margin: 0;
+  block-size: var(--thumb);
+  background: transparent;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  touch-action: none;
+}
+.ph-range:disabled {
+  cursor: default;
+}
+.ph-range:focus-visible {
+  outline: 2px solid var(--mint);
+  outline-offset: 4px;
+  border-radius: 999px;
+}
+.ph-range::-webkit-slider-runnable-track {
+  block-size: 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--hue-pitch, #7c8cff), var(--mint, #5cf2b5), var(--gold, #ffc94d));
+  opacity: 0.85;
+}
+.ph-range::-moz-range-track {
+  block-size: 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--hue-pitch, #7c8cff), var(--mint, #5cf2b5), var(--gold, #ffc94d));
+  opacity: 0.85;
+}
+.ph-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  inline-size: var(--thumb);
+  block-size: var(--thumb);
+  margin-block-start: calc((8px - var(--thumb)) / 2);
+  border-radius: 50%;
+  background: var(--ink, #f4f1ff);
+  border: 3px solid var(--bg-2, #16182e);
+  box-shadow: 0 0 0 2px var(--mint, #5cf2b5);
+}
+.ph-range::-moz-range-thumb {
+  inline-size: var(--thumb);
+  block-size: var(--thumb);
+  box-sizing: border-box;
+  border-radius: 50%;
+  background: var(--ink, #f4f1ff);
+  border: 3px solid var(--bg-2, #16182e);
+  box-shadow: 0 0 0 2px var(--mint, #5cf2b5);
+}
+.ph-range:disabled::-webkit-slider-thumb {
+  box-shadow: 0 0 0 2px var(--ink-dim, #a9a6c9);
+}
+.ph-range:disabled::-moz-range-thumb {
+  box-shadow: 0 0 0 2px var(--ink-dim, #a9a6c9);
+}
+
+.ph-mark,
+.ph-gap,
+.ph-ticks > span {
+  position: absolute;
+  left: calc(var(--thumb) / 2 + var(--p, 0) * var(--rail));
+}
+.ph-mark {
+  inset-block-end: 4px;
+  inline-size: 4px;
+  block-size: calc(var(--thumb) + 10px);
+  transform: translateX(-50%);
+  border-radius: 2px;
+  pointer-events: none;
+}
+.ph-truth {
+  background: var(--gold);
+  z-index: 2;
+}
+.ph-guess {
+  background: var(--ink-dim);
+  z-index: 1;
+}
+.ph-mark-label {
+  position: absolute;
+  inset-block-end: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+.ph-truth .ph-mark-label {
+  color: var(--gold);
+}
+.ph-guess .ph-mark-label {
+  color: var(--ink-dim);
+  inset-block-end: auto;
+  inset-block-start: 100%;
+}
+.ph-gap {
+  inset-block-end: calc(4px + var(--thumb) / 2 - 3px);
+  block-size: 6px;
+  inline-size: calc(var(--w, 0) * var(--rail));
+  background: var(--red);
+  opacity: 0.5;
+  border-radius: 3px;
+  pointer-events: none;
+}
+
+.ph-ticks {
+  position: relative;
+  block-size: 1.2em;
+  margin-block-start: 14px;
+  font-size: 0.78rem;
+  color: var(--ink-dim);
+  font-variant-numeric: tabular-nums;
+}
+.ph-ticks > span {
+  transform: translateX(-50%);
+}
+.ph-ticks > span:first-child {
+  transform: none;
+}
+.ph-ticks > span:last-child {
+  transform: translateX(-100%);
+}
+
+/* ---- results */
+.ph-result {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: center;
+}
+.ph-rounds {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+.ph-rounds li {
+  min-inline-size: 2.6em;
+  padding: 4px 6px;
+  border-radius: 8px;
+  background: var(--card-2, rgba(255, 255, 255, 0.06));
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.ph-rounds li.good {
+  color: var(--mint);
+}
+.ph-rounds li.ok {
+  color: var(--gold);
+}
+.ph-rounds li.off {
+  color: var(--red);
+}
+
+/* ---- motion (off with reduced motion) */
+.ph-pop {
+  animation: ph-pop 420ms cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+.ph-mark.ph-pop {
+  animation-name: ph-drop;
+}
+@keyframes ph-pop {
+  from {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes ph-drop {
+  from {
+    transform: translate(-50%, -14px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(-50%);
+    opacity: 1;
+  }
+}
+.ph-calm .ph-pop,
+.ph-calm .ph-mark {
+  animation: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ph-pop {
+    animation: none !important;
+  }
+}

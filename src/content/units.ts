@@ -2,7 +2,23 @@
 //   path lessons: the LessonId · topics: "topic:<id>" · vocal tracks: "vocal:<track>" · Play & improvise
 //   tabs: "perform:<tab>" · games: "game:<id>"
 
+import { UNITS as INSTRUMENT } from './mini/instrument';
+import { UNITS as WRITTEN } from './mini/written';
+import { UNITS as HARMONY2 } from './mini/harmony2';
+import { UNITS as PITCH2 } from './mini/pitch2';
+import { UNITS as TIME2 } from './mini/time2';
+import { UNITS as SOUND } from './mini/sound';
+import { UNITS as CHORDREAD } from './mini/chordread';
+
 export const UNIT_LESSON: Record<string, string> = {
+  // 0.38 (spec AE): each area file maps its own topics.
+  ...INSTRUMENT,
+  ...WRITTEN,
+  ...HARMONY2,
+  ...PITCH2,
+  ...TIME2,
+  ...SOUND,
+  ...CHORDREAD,
   // Learning path
   'bflat-two-homes': 'bflat-two-homes',
   'degrees-135': 'degrees-135',

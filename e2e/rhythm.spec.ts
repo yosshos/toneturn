@@ -14,7 +14,7 @@ test.describe('rhythm reading & dictation', () => {
     await page.goto('/?unlock=all');
     await page.getByRole('radio', { name: 'Buttons' }).click();
     await page.locator('.tab[data-tab="path"]').click();
-    await page.getByRole('button', { name: /Rhythm 1: quarters and halves/ }).click();
+    await page.locator('.all-lessons').getByRole('button', { name: /Rhythm 1: quarters and halves/ }).click();
     await page.getByRole('button', { name: 'Skip intro' }).click();
 
     // Tap whatever rhythm is shown, timed from the moment beat 1 is heard (exposed as data-start).

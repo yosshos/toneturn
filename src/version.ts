@@ -18,6 +18,36 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.38.0',
+    date: '2026-11-07',
+    en: [
+      'Your path is rebuilt around you: choose a goal, leave out what you don’t want, and every unit mixes all your areas at your level — the level test and the questionnaire now change it right away',
+      'Steps you already know get a ✓ (from your answers, your speed and the level test), and any unit can be tested out',
+      'Play your instrument: find notes on the guitar neck and the keys, chord shapes and CAGED, scales, and play back what you hear — by microphone or MIDI',
+      'A tuner for guitar, bass, ukulele and violin',
+      'Write what you hear on the staff, build rhythms, two-voice and bass dictation, four-part harmony, counterpoint and scales on paper',
+      'New ear training: seventh chords and inversions, colour chords, song form, style, inner hearing, intervals to sing, and a producer’s ear (EQ, reverb, panning, compression)',
+      'Time with the click: subdivide it, play through gaps, tap a tempo from memory, two hands, and read the drum kit',
+      "Today's workout comes first on Home: suggested from your goals, then yours — change the time, the minutes per topic, the order, add or remove — and it moves your path forward",
+      'New games: Chord Rush, Note Rush, Fretboard Sprint, Interval Sprint, Key Signature Rush, Progression Detective, Peak Hunter, Rhythm Highway, Voice Flight, Melody Puzzle, Name That Tune, Tune-up and Pitch Memory — by category, some inside your path units, and every game counts toward your levels',
+      'Read the chord: name chords drawn on the guitar, the keys or the staff',
+      'Progress now has Stats, Insights, History and Awards with tiers — and every chart lets you pick the time frame',
+    ],
+    he: [
+      'המסלול נבנה סביבכם: בוחרים מטרה, משאירים בחוץ מה שלא רוצים, וכל יחידה משלבת את כל התחומים שלכם ברמה שלכם — מבחן הרמה והשאלון משנים אותו מיד',
+      'שלבים שאתם כבר יודעים מקבלים ✓ (לפי התשובות, המהירות ומבחן הרמה), ואפשר לעבור כל יחידה במבחן',
+      'לנגן על הכלי: למצוא תווים על צוואר הגיטרה ועל הקלידים, צורות אקורדים ו־CAGED, סולמות, ולנגן בחזרה את מה ששומעים — במיקרופון או ב־MIDI',
+      'טיונר לגיטרה, בס, יוקלילי וכינור',
+      'לכתוב על החמשה את מה ששומעים, לבנות מקצבים, הכתבה בשני קולות ושל בס, הרמוניה בארבעה קולות, קונטרפונקט וסולמות בכתב',
+      'אימון אוזן חדש: ספטאקורדים והיפוכים, אקורדי צבע, מבנה שיר, סגנון, שמיעה פנימית, מרווחים לשירה ואוזן של מפיק (EQ, הדהוד, פאן, דחיסה)',
+      'זמן עם קליק: לחלק אותו, לנגן דרך שקט, להקיש טמפו מהזיכרון, שתי ידיים ולקרוא תופים',
+      'האימון של היום ראשון בבית: מוצע לפי המטרות שלכם, ואז שלכם — משנים את הזמן, את הדקות לכל נושא, את הסדר, מוסיפים ומסירים — והוא מקדם את המסלול',
+      'משחקים חדשים: מרוץ אקורדים, מרוץ תווים, ספרינט צוואר, ספרינט מרווחים, מרוץ סימני מפתח, בלש המהלכים, צייד הפיקים, כביש הקצב, טיסת קול, פאזל מנגינה, זהו את השיר, כיוון וזיכרון צליל — לפי קטגוריות, חלקם בתוך יחידות המסלול, וכל משחק נחשב לרמות שלכם',
+      'לקרוא את האקורד: לזהות אקורדים שמצוירים על הגיטרה, הקלידים או החמשה',
+      'בהתקדמות יש עכשיו נתונים, תובנות, היסטוריה ופרסים בדרגות — ובכל גרף בוחרים את טווח הזמן',
+    ],
+  },
+  {
     version: '0.37.0',
     date: '2026-11-07',
     en: [

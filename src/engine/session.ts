@@ -1,7 +1,7 @@
 // Pure lesson-session state. All scoring happens here, guarded by turn tokens
 // so a late recognizer callback or a double click can never score twice.
 
-import type { Answer, LessonDef, Question } from './lesson';
+import { gradePlace, type Answer, type LessonDef, type Question } from './lesson';
 import { SCORING, xpFor, type ItemOutcome, type Modality } from './scoring';
 import { paceTarget, speedCredit, type PaceProfile } from './fluency';
 
@@ -147,8 +147,8 @@ export function grade(
   const rec = s.records[questionIndex];
   if (isResolved(rec)) return [s, { kind: 'stale' }];
   const q = s.lesson.questions[questionIndex];
-  const correct = answer === q.answer;
-  const accuracy = ev.accuracy ?? (correct ? 1 : 0);
+  const correct = answer === q.answer || (q.kind === 'place' && gradePlace(q, String(answer)).score === 1);
+  const accuracy = ev.accuracy ?? (q.kind === 'place' ? gradePlace(q, String(answer)).score : correct ? 1 : 0);
   const attempts: Attempt[] = [
     ...rec.attempts,
     { answer, correct, via, accuracy, timeMs: ev.timeMs ?? null, modality: ev.modality ?? (via === 'voice' ? 'voice' : 'buttons'), precision: ev.precision },

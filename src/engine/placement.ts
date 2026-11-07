@@ -190,6 +190,10 @@ export const LADDERS: Partial<Record<SkillId, { difficulty: number; make: Make }
   // Spec AD: meter, form & texture, expression — measured from their topics.
   meter: ([['meter-feel', 1, 800], ['meter-feel', 2, 950], ['downbeat', 1, 1050], ['downbeat', 2, 1200], ['meter-feel', 3, 1300], ['odd-meter', 1, 1420], ['meter-feel', 4, 1560], ['odd-meter', 3, 1720]] as [string, number, number][]).map(([tp, lv, d]) => ({ difficulty: d, make: (s: number, id: string) => at(topic(tp, lv)(s, id), d) })),
   form: ([['voice-count', 1, 900], ['form', 1, 1100], ['voice-count', 2, 1200], ['two-voice', 1, 1320], ['voice-count', 3, 1400], ['form', 2, 1480], ['two-voice', 2, 1650]] as [string, number, number][]).map(([tp, lv, d]) => ({ difficulty: d, make: (s: number, id: string) => at(topic(tp, lv)(s, id), d) })),
+  // 0.38 (spec AE): written dictation, your instrument (the keyboard map: the theory picture), sound & production.
+  dictation: ([['staff-dictation',1,1000],['rhythm-build',2,1080],['staff-dictation',2,1150],['staff-dictation',3,1260],['rhythm-build',4,1340],['staff-dictation',4,1420],['two-part',1,1500],['staff-dictation',6,1600]] as [string, number, number][]).map(([tp, lv, d]) => ({ difficulty: d, make: (s: number, id: string) => at(topic(tp, lv)(s, id), d) })),
+  instrument: ([['key-notes',1,800],['key-notes',2,900],['key-notes',3,1020],['key-notes',4,1150],['key-notes',5,1300]] as [string, number, number][]).map(([tp, lv, d]) => ({ difficulty: d, make: (s: number, id: string) => at(topic(tp, lv)(s, id), d) })),
+  timbre: ([['eq-ear',1,900],['dyn-ear',1,950],['space-ear',2,1100],['filter-ear',2,1200],['dyn-ear',4,1300],['eq-ear',6,1550]] as [string, number, number][]).map(([tp, lv, d]) => ({ difficulty: d, make: (s: number, id: string) => at(topic(tp, lv)(s, id), d) })),
   expression: ([['mood', 1, 650], ['dynamics', 1, 720], ['articulation', 1, 800], ['dynamics', 2, 880], ['mood', 2, 940], ['articulation', 2, 1000], ['dynamics', 3, 1060], ['articulation', 3, 1120]] as [string, number, number][]).map(([tp, lv, d]) => ({ difficulty: d, make: (s: number, id: string) => at(topic(tp, lv)(s, id), d) })),
   // Vocal agility: runs sung back, faster and longer.
   agility: [1, 2, 3, 4, 6, 8].map((lv, i) => ({
@@ -207,8 +211,9 @@ export const PLACEMENT_ORDER: SkillId[] = [
   'degrees', 'intervals', 'chords', 'cadences', 'modes', 'pitch', 'absolute',
   'rhythm-dictation', 'rhythm-reading', 'tempo', 'meter',
   'sequences', 'rhythm', 'form',
-  'notes', 'theory', 'sight',
+  'notes', 'theory', 'sight', 'dictation',
   'improv', 'transpose', 'expression',
+  'instrument', 'timbre',
   'singing', 'technique', 'agility',
 ];
 /** Skills measured inside another section (not a section of their own). */

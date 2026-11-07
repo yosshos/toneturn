@@ -6,9 +6,12 @@ import { addFriend, listFriends, myProfile, removeFriend, respondFriend, weeklyB
 import type { CloudUser } from '../cloud/cloud';
 import type { Strings } from '../i18n/strings';
 import { AccountCard, type SyncState } from './Account';
+import { CompareSheet, FriendsBoard, type FriendStats } from './Compare';
+import type { Progress } from '../storage/progress';
 
-export function FriendsScreen({ t, user, sync, onBack, settings, onBestTier, onLeagueSeen }: { t: Strings; user: CloudUser | null; sync: SyncState; onBack: () => void; settings: Settings; onBestTier?: (tier: number) => void; onLeagueSeen?: (tier: number) => void }) {
+export function FriendsScreen({ t, user, sync, onBack, settings, onBestTier, onLeagueSeen, progress, streak = 0 }: { t: Strings; user: CloudUser | null; sync: SyncState; onBack: () => void; settings: Settings; onBestTier?: (tier: number) => void; onLeagueSeen?: (tier: number) => void; progress?: Progress; streak?: number }) {
   const [duelPlaying, setDuelPlaying] = useState(false);
+  const [cmp, setCmp] = useState<FriendStats | null>(null);
   const [me, setMe] = useState<MyProfile | null>(null);
   const [rows, setRows] = useState<FriendRow[]>([]);
   const [code, setCode] = useState('');
@@ -103,6 +106,12 @@ export function FriendsScreen({ t, user, sync, onBack, settings, onBestTier, onL
             </form>
           </section>
 
+          {progress && rows.some((r) => r.relation === 'friend') && (
+            <section className="set-card">
+              <FriendsBoard t={t} rows={rows.filter((r) => r.relation === 'friend') as FriendStats[]} share={settings.shareStats ?? 'levels'} onOpen={setCmp} />
+            </section>
+          )}
+          {progress && cmp && <CompareSheet t={t} progress={progress} friend={cmp} share={settings.shareStats ?? 'levels'} myStreak={streak} onClose={() => setCmp(null)} />}
           <section className="set-card">
             <h2>➕ {t.addFriend}</h2>
             <form

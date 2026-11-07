@@ -29,7 +29,8 @@ import {
 import { evaluateSung, type SungResult } from '../engine/sing';
 import { gradeSungSequence } from '../engine/memory';
 import { gradeReading,
-  gradeHolds, readTimeline } from '../engine/rhythm';
+  gradeHolds, readTimeline, countInPulses, meterOf } from '../engine/rhythm';
+import { applyClicks, gradeLanes, gradeTempo, tempoTimeline } from '../engine/clicks';
 import { accuracyFor, type Modality } from '../engine/scoring';
 import type { PaceProfile } from '../engine/fluency';
 import type { Naming } from '../engine/pitch';
@@ -328,10 +329,15 @@ export class LessonController {
     w.resolve({ kind: 'answer', answer });
   }
 
-  /** Rhythm reading tap (screen / keyboard); `perfMs` is the event timestamp. */
-  tapBeat(perfMs: number) {
+  /** Rhythm reading tap (screen / keyboard); `perfMs` is the event timestamp; `lane` for multi-pad items. */
+  tapBeat(perfMs: number, lane?: number) {
+    if (lane !== undefined && this.readOpen && this.readStart !== null) {
+      const rel = perfMs - this.readStart - (this.cfg.latencyMs ?? 0);
+      if (rel >= -400) this.laneTaps.push({ ms: Math.round(rel), lane });
+    }
     this.registerOnset(perfMs);
   }
+  private laneTaps: { ms: number; lane: number }[] = [];
 
   /** Rhythm reading: the pad is released (hold-to-sustain, spec G.5). */
   tapRelease(perfMs: number) {
@@ -810,6 +816,7 @@ export class LessonController {
       }
       this.setSession(newTurn(this.s, 'listening'), { feedback: null, readTaps: 0, beat: null });
       this.readTaps = [];
+      this.laneTaps = [];
       this.readUps = [];
       this.readStart = null;
       // Rhythm is tapped on the pad. Only when the player opted in: also "ta" syllables / knocks from the
@@ -839,7 +846,14 @@ export class LessonController {
       this.readOpen = true;
       try {
         await this.ad.audio.playTimeline(
-          readTimeline(q.rhythm, q.bpm, q.silentAfterBars),
+          (() => {
+            // Spec AE: tempo from memory (no reference), or clicks in a pattern (backbeat, gaps …).
+            if (q.tempoGoal) return tempoTimeline(q.tempoGoal);
+            const tl = readTimeline(q.rhythm, q.bpm, q.silentAfterBars);
+            if (!q.clicks) return tl;
+            const per = countInPulses(meterOf(q.rhythm));
+            return { ...tl, clicks: applyClicks(tl.clicks, q.clicks, per, per) };
+          })(),
           signal,
           (i, accent) => this.patch({ beat: { i, accent, n: n++ } }),
           (perf) => {
@@ -863,6 +877,15 @@ export class LessonController {
           continue;
         }
         await this.say(l === 'en' ? "I didn't catch any taps. Again, after the count-in." : 'לא קלטתי הקשות. שוב, אחרי הספירה.', signal);
+        continue;
+      }
+      if (q.tempoGoal || q.lanes) {
+        const gt = q.tempoGoal ? gradeTempo(this.readTaps, q.tempoGoal) : null;
+        const gl = q.lanes ? gradeLanes(q.lanes, q.bpm, this.laneTaps, q.level) : null;
+        if (gt) this.patch({ caption: `${Math.round(gt.bpm)} BPM (${gt.errPct > 0 ? '+' : ''}${Math.round(gt.errPct)}%)` });
+        const pass = gt ? gt.pass : gl!.pass;
+        const accuracy = gt ? gt.accuracy : gl!.accuracy;
+        if (await this.evaluate(pass ? 'accurate' : 'wrong', signal, undefined, { timeMs: null, modality, accuracy, precision: gl?.precision ?? gt?.steadiness ?? 0 })) return;
         continue;
       }
       const g = gradeReading(q.rhythm, q.bpm, this.readTaps, q.level);
@@ -899,7 +922,8 @@ export class LessonController {
       let answer: Answer | null = null;
       let ev: { timeMs: number | null; modality: Modality } = { timeMs: null, modality: 'buttons' };
 
-      if (this.view.mode === 'buttons' || this.view.needsListenTap) {
+      // R11: notes placed at an exact pitch (neck, staff) can't be spoken: those wait for the surface even in voice mode.
+      if (this.view.mode === 'buttons' || this.view.needsListenTap || (q.kind === 'place' && q.match === 'exact')) {
         this.setSession(newTurn(this.s, 'listening'), { mic: 'off' });
         const r = await this.waitFor(signal);
         if (r.kind === 'listen') {

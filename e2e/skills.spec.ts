@@ -32,7 +32,7 @@ test.describe('placement, Skill Map, review, weekly puzzle', () => {
       }).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['data-start'], childList: true });
     });
     // The topic strip shows what is done, now and left.
-    await expect(page.locator('.topic-strip .ts')).toHaveCount(23); // every skill (transposition, meter, form, expression included) (rhythmic precision rides on rhythm reading), sung ones included (voice)
+    await expect(page.locator('.topic-strip .ts')).toHaveCount(26); // 0.38: + dictation, instrument, timbre — every skill (transposition, meter, form, expression included) (rhythmic precision rides on rhythm reading), sung ones included (voice)
     await expect(page.locator('.topic-strip .ts.done').first()).toBeVisible({ timeout: 120_000 });
     // The meter at the side follows the climb.
     await expect(page.locator('.placement-meter')).toBeVisible();
@@ -58,7 +58,7 @@ test.describe('placement, Skill Map, review, weekly puzzle', () => {
     await page.getByRole('button', { name: /See my Skill Map/ }).click();
 
     await expect(page.getByRole('heading', { name: 'Skill Map', level: 1 })).toBeVisible();
-    await expect(page.locator('.radar.domains [data-domain]')).toHaveCount(6); // six domains
+    await expect(page.locator('.radar.domains [data-domain]')).toHaveCount(7); // seven domains (0.38)
     await expect(page.locator('.trend-tile')).not.toHaveCount(0); // trends per measured skill
     await expect(page.locator('.trend-detail svg')).toHaveCount(2); // overall + selected skill
     await expect(page.locator('.overall-head .rating-badge')).toBeVisible();

@@ -27,6 +27,7 @@ export const DOMAIN_HUE: Record<DomainId, string> = {
   voice: 'var(--hue-voice)',
   reading: 'var(--hue-reading)',
   creative: 'var(--hue-creative)',
+  instrument: 'var(--hue-instrument)',
 };
 type TopicId = (typeof TOPICS)[number]['id'];
 const TOPIC_HUE: Record<TopicId, string> = { degrees: 'var(--hue-reading)', harmony: 'var(--hue-pitch)', intervals: 'var(--hue-memory)', singing: 'var(--hue-voice)', rhythm: 'var(--hue-time)' };
@@ -210,9 +211,11 @@ export function WhatsNewButton({ t, lang, unseen, onSeen }: { t: Strings; lang: 
 
 // ---------------------------------------------------------------------------------------------- mission
 
-export function MissionCard({ t, settings, lessonId, anyDone, todayXp, goalXp, onStart }: { t: Strings; settings: Settings; lessonId: LessonId; anyDone: boolean; todayXp: number; goalXp: number; onStart: () => void }) {
+export function MissionCard({ t, settings, lessonId, anyDone, todayXp, goalXp, onStart, title, blurb }: { t: Strings; settings: Settings; lessonId: LessonId; anyDone: boolean; todayXp: number; goalXp: number; onStart: () => void; title?: string; blurb?: string }) {
   const lang = settings.uiLang;
-  const meta = LESSON_META[lessonId];
+  const base = LESSON_META[lessonId];
+  // The next path step (spec AF D7) may be a topic level, a checkpoint …: its own title and line.
+  const meta = title ? { ...base, title: { en: title, he: title }, blurb: { en: blurb ?? '', he: blurb ?? '' } } : base;
   const bb = displayNote(pc('Bb'), namingFor(settings.naming, lang), lang);
   const pct = Math.min(1, todayXp / goalXp);
   return (
@@ -397,7 +400,7 @@ export function PathScreen({ t, settings, progress, onStart, onPlacement }: { t:
 }
 
 /** One road through every lesson disc, measured after layout (so banners and wrapped titles never break it). */
-function useRoad(ref: React.RefObject<HTMLOListElement | null>, key: string) {
+export function useRoad(ref: React.RefObject<HTMLOListElement | null>, key: string) {
   const [road, setRoad] = useState<{ w: number; h: number; d: string; doneD: string | null } | null>(null);
   useLayoutEffect(() => {
     const el = ref.current;
@@ -435,13 +438,57 @@ function useRoad(ref: React.RefObject<HTMLOListElement | null>, key: string) {
 
 // ---------------------------------------------------------------------------------------------- play
 
-export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline, onGhost, onDaily, onPuzzle }: { t: Strings; progress: Progress; onGame: (k: GameKind) => void; onTrueFalse: () => void; onDuel: () => void; onOnline: () => void; onGhost: () => void; onDaily: () => void; onPuzzle: () => void }) {
+/** The 0.38 games (spec AE §8): route, icon, hue and names. */
+export type GameCat = 'ear' | 'rhythm' | 'memory' | 'read' | 'voice' | 'instrument' | 'social';
+export const GAME_CATS: { id: GameCat; icon: string; en: string; he: string }[] = [
+  { id: 'ear', icon: '👂', en: 'Ear & harmony', he: 'שמיעה והרמוניה' },
+  { id: 'rhythm', icon: '🥁', en: 'Rhythm', he: 'קצב' },
+  { id: 'memory', icon: '🧠', en: 'Memory', he: 'זיכרון' },
+  { id: 'read', icon: '📖', en: 'Reading & theory', he: 'קריאה ותיאוריה' },
+  { id: 'voice', icon: '🎤', en: 'Voice', he: 'קול' },
+  { id: 'instrument', icon: '🎸', en: 'Instrument & sound', he: 'כלי וסאונד' },
+  { id: 'social', icon: '⚔', en: 'Against others', he: 'מול אחרים' },
+];
+export const GAMES2: { id: 'highway' | 'flight' | 'melodypuzzle' | 'nametune' | 'tuneup' | 'pitchmemory' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'peakhunter'; icon: string; hue: string; cat: GameCat; en: [string, string]; he: [string, string] }[] = [
+  { id: 'rush-chord', icon: '🎹', hue: 'var(--hue-pitch)', cat: 'read', en: ['Chord Rush', 'Name chords on the neck, keys or staff — 60 seconds.'], he: ['מרוץ אקורדים', 'זהו אקורדים על הצוואר, הקלידים או החמשה — 60 שניות.'] },
+  { id: 'rush-note', icon: '𝄞', hue: 'var(--hue-reading)', cat: 'read', en: ['Note Rush', 'Read notes off the staff as fast as you can.'], he: ['מרוץ תווים', 'קראו תווים מהחמשה הכי מהר שאפשר.'] },
+  { id: 'rush-keysig', icon: '♯', hue: 'var(--hue-reading)', cat: 'read', en: ['Key Signature Rush', 'Sharps and flats → the key, fast.'], he: ['מרוץ סימני מפתח', 'דיאזים ובמולים → הסולם, מהר.'] },
+  { id: 'rush-interval', icon: '↕', hue: 'var(--hue-pitch)', cat: 'ear', en: ['Interval Sprint', 'Hear two notes, name the distance — beat the clock.'], he: ['ספרינט מרווחים', 'שומעים שני צלילים, קובעים את המרחק — נגד השעון.'] },
+  { id: 'rush-progression', icon: '🕵', hue: 'var(--hue-pitch)', cat: 'ear', en: ['Progression Detective', 'Name the chords of what you hear. Three lives.'], he: ['בלש המהלכים', 'זהו את האקורדים של מה שאתם שומעים. שלושה חיים.'] },
+  { id: 'rush-fretboard', icon: '🎸', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Fretboard Sprint', 'Find the note on the neck — 60 seconds.'], he: ['ספרינט צוואר', 'מצאו את התו על הצוואר — 60 שניות.'] },
+  { id: 'peakhunter', icon: '🎛', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Peak Hunter', 'Find the boosted frequency.'], he: ['צייד הפיקים', 'מצאו את התדר שהוגבר.'] },
+  { id: 'highway', icon: '🛣', hue: 'var(--hue-time)', cat: 'rhythm', en: ['Rhythm Highway', 'Tap the notes as they reach the line.'], he: ['כביש הקצב', 'הקישו על התווים כשהם מגיעים לקו.'] },
+  { id: 'flight', icon: '🕊', hue: 'var(--hue-voice)', cat: 'voice', en: ['Voice Flight', 'Sing or play to fly through the gates.'], he: ['טיסת קול', 'שירו או נגנו כדי לעוף בין השערים.'] },
+  { id: 'melodypuzzle', icon: '🧩', hue: 'var(--hue-memory)', cat: 'memory', en: ['Melody Puzzle', 'Put the notes of what you heard in order.'], he: ['פאזל מנגינה', 'סדרו את התווים של מה ששמעתם.'] },
+  { id: 'nametune', icon: '🎶', hue: 'var(--hue-pitch)', cat: 'memory', en: ['Name That Tune', 'Hear the opening, pick the song — fast.'], he: ['זהו את השיר', 'שומעים את הפתיחה, בוחרים את השיר — מהר.'] },
+  { id: 'tuneup', icon: '🎸', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Tune-up', 'Turn the peg until the beats disappear.'], he: ['כיוון', 'סובבו את המפתח עד שהפעימות נעלמות.'] },
+  { id: 'pitchmemory', icon: '🎯', hue: 'var(--hue-creative)', cat: 'ear', en: ['Pitch Memory', 'Once a day: your note, from memory.'], he: ['זיכרון צליל', 'פעם ביום: הצליל שלכם, מהזיכרון.'] },
+];
+
+export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline, onGhost, onDaily, onPuzzle, onGame2, lang = 'en' }: { t: Strings; progress: Progress; onGame: (k: GameKind) => void; onTrueFalse: () => void; onDuel: () => void; onOnline: () => void; onGhost: () => void; onDaily: () => void; onPuzzle: () => void; onGame2?: (id: (typeof GAMES2)[number]['id']) => void; lang?: 'he' | 'en' }) {
   const best = (n: number | undefined) => (n ? <span className="best-chip">🏅 {t.personalBest}: {n}</span> : null);
-  const cards: { key: string; hue: string; icon: React.ReactNode; title: string; blurb: string; extra?: React.ReactNode; onClick: () => void }[] = [
+  const [cat, setCat] = useState<GameCat | 'all'>(() => {
+    try {
+      return (sessionStorage.getItem('toneturn.playcat') as GameCat | 'all' | null) ?? 'all';
+    } catch {
+      return 'all';
+    }
+  });
+  const pickCat = (c: GameCat | 'all') => {
+    setCat(c);
+    try {
+      sessionStorage.setItem('toneturn.playcat', c);
+    } catch {
+      /* ignore */
+    }
+  };
+  const CAT_OF: Record<string, GameCat> = { melody: 'memory', rhythm: 'rhythm', truefalse: 'read', ghost: 'social', duel: 'social', daily: 'social' };
+  const cards: { key: string; hue: string; icon: React.ReactNode; title: string; blurb: string; extra?: React.ReactNode; onClick: () => void; cat?: GameCat }[] = [
     { key: 'melody', hue: 'var(--hue-memory)', icon: <GameIcon kind="melody" />, title: t.echoChain, blurb: t.echoChainBlurb, extra: best(progress.games?.melody), onClick: () => onGame('melody') },
     { key: 'rhythm', hue: 'var(--hue-time)', icon: <GameIcon kind="rhythm" />, title: t.beatEcho, blurb: t.beatEchoBlurb, extra: best(progress.games?.rhythm), onClick: () => onGame('rhythm') },
     { key: 'truefalse', hue: 'var(--hue-pitch)', icon: '✓✗', title: t.trueFalse, blurb: t.tfBlurb, extra: progress.tfBest && Object.keys(progress.tfBest).length ? best(Math.max(...Object.values(progress.tfBest))) : <span className="new-chip">{t.newChip}</span>, onClick: onTrueFalse },
     { key: 'ghost', hue: 'var(--hue-creative)', icon: '👻', title: t.ghostRace, blurb: t.ghostBlurb, onClick: onGhost },
+    ...(onGame2 ? GAMES2.map((g) => ({ key: g.id, cat: g.cat, hue: g.hue, icon: g.icon, title: g[lang][0], blurb: g[lang][1], extra: progress.bests?.[g.id] ? best(progress.bests[g.id]) : <span className="new-chip">{t.newChip}</span>, onClick: () => onGame2(g.id) })) : []),
     { key: 'duel', hue: 'var(--hue-voice)', icon: '⚔', title: t.duel, blurb: t.duelBlurb, onClick: onDuel },
     { key: 'daily', hue: 'var(--hue-reading)', icon: '📅', title: t.dailyChallenge, blurb: t.dailyBlurb, onClick: onDaily },
   ];
@@ -457,18 +504,41 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
           🥇 <span className="flip-rtl">→</span>
         </span>
       </button>
-      <div className="play-grid">
-        {cards.map((c) => (
-          <button key={c.key} className={`play-card game-card ${c.key}`} style={{ ['--hue' as string]: c.hue }} onClick={c.onClick}>
-            <span className="pc-icon" aria-hidden="true">
-              {c.icon}
-            </span>
-            <b>{c.title}</b>
-            <small>{c.blurb}</small>
-            {c.extra}
+      <div className="play-cats" role="tablist" aria-label={lang === 'en' ? 'Game categories' : 'קטגוריות משחקים'}>
+        <button role="tab" aria-selected={cat === 'all'} className={`chip ${cat === 'all' ? 'on' : ''}`} onClick={() => pickCat('all')}>
+          {lang === 'en' ? 'All' : 'הכול'}
+        </button>
+        {GAME_CATS.map((c) => (
+          <button key={c.id} role="tab" aria-selected={cat === c.id} className={`chip ${cat === c.id ? 'on' : ''}`} data-cat={c.id} onClick={() => pickCat(c.id)}>
+            {c.icon} {c[lang]}
           </button>
         ))}
       </div>
+      {GAME_CATS.filter((c) => cat === 'all' || cat === c.id).map((gc) => {
+        const list = cards.filter((c) => (c.cat ?? CAT_OF[c.key] ?? 'social') === gc.id);
+        if (!list.length) return null;
+        return (
+          <section key={gc.id} className="play-section" aria-label={gc[lang]}>
+            {cat === 'all' && (
+              <h2 className="play-cat-h">
+                {gc.icon} {gc[lang]}
+              </h2>
+            )}
+            <div className="play-grid">
+              {list.map((c) => (
+                <button key={c.key} className={`play-card game-card ${c.key}`} style={{ ['--hue' as string]: c.hue }} onClick={c.onClick}>
+                  <span className="pc-icon" aria-hidden="true">
+                    {c.icon}
+                  </span>
+                  <b>{c.title}</b>
+                  <small>{c.blurb}</small>
+                  {c.extra}
+                </button>
+              ))}
+            </div>
+          </section>
+        );
+      })}
       <button className="live-card" onClick={onOnline}>
         <span className="live-icon" aria-hidden="true">
           <span className="live-ping" />

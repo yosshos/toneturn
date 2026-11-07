@@ -174,6 +174,70 @@ export const GLOSSARY: Term[] = [
     play: [notes([60, 64, 67], 0.35), rest(0.4), notes([65, 69, 72], 0.35)],
     match: { en: /\btranspos/i, he: /טרנספוז|להעביר סולם/ },
   },
+  // ---- 0.38 (spec AE §10.4) ----
+  {
+    id: 'seventh-chord',
+    label: { en: 'seventh chord', he: 'ספטאקורד' },
+    explain: { en: 'A chord of four notes: a triad with one more note on top, a seventh above the root. It sounds richer, often jazzy.', he: 'אקורד של ארבעה צלילים: משולש ועוד צליל אחד מעליו, ספטימה מעל השורש. נשמע עשיר יותר, לפעמים ג׳אזי.' },
+    play: [chord([48, 52, 55, 59]), rest(), chord([48, 52, 55, 58])],
+    match: { en: /seventh chords?/i, he: heWord('ספטאקורד(ים)?') },
+  },
+  {
+    id: 'neapolitan',
+    label: { en: 'Neapolitan chord', he: 'אקורד נפוליטני' },
+    explain: { en: 'A major chord on the lowered second step (D♭ in C), usually just before the dominant. Dark and dramatic.', he: 'אקורד מז׳ור על הדרגה השנייה המונמכת (רה♭ בדו), בדרך כלל ממש לפני הדומיננטה. כהה ודרמטי.' },
+    play: [chord([53, 56, 61]), chord([55, 59, 62]), chord([48, 52, 55])],
+    match: { en: /neapolitan/i, he: /נפוליטני/ },
+  },
+  {
+    id: 'aug-sixth',
+    label: { en: 'augmented sixth', he: 'סקסטה מוגדלת' },
+    explain: { en: 'A chord whose two outer notes squeeze outwards onto the same note an octave apart — a strong pull to the dominant.', he: 'אקורד ששני הצלילים החיצוניים שלו נפתחים החוצה אל אותו צליל באוקטבה — משיכה חזקה לדומיננטה.' },
+    play: [chord([44, 48, 54]), chord([43, 50, 55])],
+    match: { en: /augmented sixth|(it|fr|ger)+6/i, he: /סקסטה מוגדלת/ },
+  },
+  {
+    id: 'figured-bass',
+    label: { en: 'figured bass', he: 'בס ממוספר' },
+    explain: { en: 'A bass line with small numbers under it that tell which chord to play above each note.', he: 'קו בס עם מספרים קטנים מתחתיו שאומרים איזה אקורד לנגן מעל כל צליל.' },
+    play: [notes([48, 52, 55], 0.35)],
+    match: { en: /figured bass|figures/i, he: /בס ממוספר|ספרות הבס/ },
+  },
+  {
+    id: 'caged',
+    label: { en: 'CAGED', he: 'CAGED' },
+    explain: { en: 'Five chord shapes (C, A, G, E, D) that move up the guitar neck — every chord can be played with each of them.', he: 'חמש צורות אקורד (C, A, G, E, D) שזזות לאורך צוואר הגיטרה — כל אקורד אפשר לנגן בכל אחת מהן.' },
+    play: [chord([48, 52, 55, 60, 64])],
+    match: { en: /CAGED/, he: /CAGED/ },
+  },
+  {
+    id: 'audiation',
+    label: { en: 'inner hearing', he: 'שמיעה פנימית' },
+    explain: { en: 'Hearing music in your head when no sound is playing — keeping a tune going in silence.', he: 'לשמוע מוזיקה בראש כשאין צליל — להמשיך מנגינה בתוך השקט.' },
+    play: [notes([60, 62, 64], 0.4), rest(1.2), notes([67], 0.6)],
+    match: { en: /inner hearing|audiat/i, he: /שמיעה פנימית/ },
+  },
+  {
+    id: 'eq',
+    label: { en: 'EQ', he: 'EQ (אקולייזר)' },
+    explain: { en: 'Turning some frequencies up or down — more bass, less harshness, more air.', he: 'להגביר או להחליש תדרים מסוימים — יותר בס, פחות צורמני, יותר אוויר.' },
+    play: [notes([48, 72], 0.6)],
+    match: { en: /EQ|equali[sz]/i, he: /אקולייזר|EQ/ },
+  },
+  {
+    id: 'compression',
+    label: { en: 'compression', he: 'דחיסה' },
+    explain: { en: 'Making the loud parts softer so everything sounds even and punchy.', he: 'להחליש את החלקים החזקים כדי שהכול יישמע אחיד ובועט.' },
+    play: [clicks(4, 0.3)],
+    match: { en: /compress/i, he: /דחיסה|קומפרסור/ },
+  },
+  {
+    id: 'reverb',
+    label: { en: 'reverb', he: 'הדהוד' },
+    explain: { en: 'The sound of a room: the tail of echoes after a note — small in a room, long in a cathedral.', he: 'הצליל של חדר: זנב ההדים אחרי צליל — קצר בחדר, ארוך בקתדרלה.' },
+    play: [notes([67], 0.8)],
+    match: { en: /reverb/i, he: /הדהוד|ריוורב/ },
+  },
 ];
 
 export const TERM_BY_ID: Record<string, Term> = Object.fromEntries(GLOSSARY.map((t) => [t.id, t]));

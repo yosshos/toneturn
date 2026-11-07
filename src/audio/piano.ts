@@ -12,6 +12,7 @@
 import { midiToHz } from '../engine/pitch';
 import type { NoteEvent, PercKind } from '../engine/lesson';
 import { Cancelled, type AudioEngine, type CueKind, type RhythmAudio, type RhythmTimelineLike } from '../game/adapters';
+import { renderFx } from './fx';
 
 interface Voice {
   out: GainNode;
@@ -41,6 +42,9 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
   private sound = 'classic';
   private bank: { id: string; notes: number[]; buffers: Map<number, AudioBuffer> } | null = null;
   private sampleBus!: GainNode;
+  /** Processed sounds (spec AE `fx`): straight to the master (past the limiter, so compression items stay honest). */
+  private master!: GainNode;
+  private fxPlaying = new Set<{ src: AudioBufferSourceNode; gain: GainNode }>();
 
   get soundId() {
     return this.bank ? this.bank.id : 'classic';
@@ -179,6 +183,7 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     master.gain.value = this.volume;
     limiter.connect(master).connect(ctx.destination);
     this.limiter = limiter;
+    this.master = master;
 
     this.pianoBus = ctx.createGain();
     this.pianoBus.gain.value = 0.2;
@@ -305,6 +310,33 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     const ctx = this.ctx;
     if (!ctx) return Promise.reject(new Error('Audio not unlocked'));
     if (signal.aborted) return Promise.reject(new Cancelled());
+    // Processed sounds (spec AE) are rendered offline first (cached), then everything is scheduled together.
+    const fx = events.filter((e) => e.fx);
+    if (!fx.length) return this.playNow(events, length, signal, []);
+    return Promise.all(fx.map((e) => renderFx(e.fx!))).then((bufs) => {
+      if (signal.aborted) throw new Cancelled();
+      return this.playNow(events, length, signal, bufs);
+    });
+  }
+
+  private playFx(buf: AudioBuffer, at: number) {
+    const ctx = this.ctx!;
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    const gain = ctx.createGain();
+    src.connect(gain).connect(this.master);
+    const h = { src, gain };
+    this.fxPlaying.add(h);
+    src.onended = () => {
+      this.fxPlaying.delete(h);
+      gain.disconnect();
+    };
+    src.start(Math.max(at, ctx.currentTime));
+  }
+
+  private playNow(events: NoteEvent[], length: number, signal: AbortSignal, fxBufs: AudioBuffer[]): Promise<void> {
+    const ctx = this.ctx!;
+    let fxI = 0;
     const t0 = ctx.currentTime + 0.06;
     const local = new Set<ReturnType<typeof setTimeout>>();
     const later = (ms: number, fn: () => void) => {
@@ -317,6 +349,10 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
       this.timers.add(t);
     };
     for (const e of events) {
+      if (e.fx) {
+        this.playFx(fxBufs[fxI++], t0 + e.start);
+        continue;
+      }
       if (e.perc) {
         this.perc(e.perc, t0 + e.start, e.velocity);
         continue;
@@ -414,6 +450,16 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     this.emit();
     if (!ctx) return;
     const now = ctx.currentTime;
+    for (const h of this.fxPlaying) {
+      h.gain.gain.cancelScheduledValues(now);
+      h.gain.gain.setValueAtTime(h.gain.gain.value, now);
+      h.gain.gain.setTargetAtTime(0, now, 0.02);
+      try {
+        h.src.stop(now + 0.12);
+      } catch {
+        /* not started / already stopped */
+      }
+    }
     for (const v of this.voices) {
       v.out.gain.cancelScheduledValues(now);
       v.out.gain.setValueAtTime(v.out.gain.value, now);

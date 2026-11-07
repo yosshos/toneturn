@@ -1,0 +1,450 @@
+/* Speed games (src/ui/Rush.tsx): night-arcade tokens, logical properties only (mirrors in Hebrew). */
+
+.rush {
+  max-width: 760px;
+  margin-inline: auto;
+  padding: 0 16px calc(24px + var(--tabbar-h, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.rush-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.rush-field {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.rush-field legend {
+  font-weight: 700;
+  color: var(--ink-soft);
+  margin-block-end: 8px;
+}
+.rush-seg {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.rush-opt,
+.rush-lvl {
+  font: inherit;
+  color: var(--ink);
+  background: var(--card-2);
+  border: 2px solid var(--line);
+  border-radius: 14px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+.rush-opt.on,
+.rush-lvl.on {
+  border-color: var(--mint);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--mint) 30%, transparent);
+}
+.rush-levels {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+}
+.rush-lvl {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: start;
+}
+.rush-lvl b {
+  font-family: var(--display);
+  font-size: 1.3rem;
+  color: var(--gold);
+  min-width: 1.2em;
+  text-align: center;
+}
+.rush-lvl span {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  line-height: 1.25;
+}
+.rush-best {
+  margin: 0;
+  color: var(--gold);
+}
+
+/* ---------- HUD ---------- */
+.rush-hud {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 8px 14px;
+  box-shadow: var(--shadow);
+}
+.rush-hud small {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--ink-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.rush-hud b {
+  font-family: var(--display);
+  font-size: 1.5rem;
+  font-variant-numeric: tabular-nums;
+}
+.rush-score,
+.rush-combo,
+.rush-level {
+  text-align: center;
+}
+.rush-combo em {
+  font-style: normal;
+  font-size: 1rem;
+  color: var(--gold);
+}
+.rush-combo.x2 em {
+  color: var(--coral);
+}
+.rush-clock {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  flex: none;
+}
+.rush-clock svg {
+  width: 100%;
+  height: 100%;
+}
+.rush-clock circle {
+  fill: none;
+  stroke-width: 6;
+}
+.rush-clock .track {
+  stroke: var(--line);
+}
+.rush-clock .fill {
+  stroke: var(--mint);
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.1s linear;
+}
+.rush-clock.low .fill {
+  stroke: var(--coral);
+}
+.rush-clock b {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 1.3rem;
+}
+.rush-clock.low b {
+  color: var(--coral);
+}
+.rush-lives {
+  display: flex;
+  gap: 4px;
+  font-size: 1.6rem;
+  line-height: 1;
+}
+.rush-lives .on {
+  color: var(--coral);
+}
+.rush-lives .off {
+  color: var(--ink-dim);
+  opacity: 0.6;
+}
+
+/* ---------- the picture ---------- */
+.rush-stage {
+  position: relative;
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 14px;
+  min-height: 190px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  overflow: hidden;
+}
+.rush-ask {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 1.2rem;
+  color: var(--ink-soft);
+  text-align: center;
+}
+.rush-text {
+  margin: 0;
+  font-size: 1.2rem;
+}
+.rush-pic {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+.rush-pic .note-staff {
+  background: #f7f4ff;
+  border-radius: 14px;
+  padding: 4px 8px;
+}
+.rush-pic .chord-box {
+  width: min(220px, 60vw);
+  height: auto;
+}
+.rush-pic .keys-pad {
+  width: min(560px, 100%);
+}
+.rush-pic .neck-wrap {
+  width: 100%;
+}
+.rush-target {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.rush-target b {
+  font-family: var(--display);
+  font-size: 3.2rem;
+  line-height: 1;
+  color: var(--gold);
+}
+.rush-target small {
+  color: var(--ink-soft);
+  font-size: 1rem;
+}
+.rush-replay {
+  align-self: center;
+}
+
+/* ---------- answers ---------- */
+.rush-answers {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.rush-answers.n3,
+.rush-answers.n5,
+.rush-answers.n6 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.rush-ans {
+  position: relative;
+  font: inherit;
+  color: var(--ink);
+  background: var(--card-2);
+  border: 2px solid transparent;
+  border-radius: 18px;
+  padding: 14px 10px 12px;
+  min-height: 64px;
+  box-shadow: 0 5px 0 #0b0c19;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+.rush-ans:active:not(:disabled) {
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 #0b0c19;
+}
+.rush-ans:focus-visible {
+  outline: 3px solid var(--lilac);
+  outline-offset: 2px;
+}
+.rush-ans kbd {
+  position: absolute;
+  inset-block-start: 6px;
+  inset-inline-start: 8px;
+  font: 700 0.7rem var(--font);
+  color: var(--ink-dim);
+}
+.rush-ans .sym {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: var(--display);
+  font-size: 1.5rem;
+  font-weight: 400;
+}
+.rush-ans .sym small {
+  font-family: var(--font);
+  font-size: 0.75rem;
+  color: var(--ink-soft);
+}
+.rush-ans.ok {
+  background: var(--mint);
+  color: #0f1020;
+}
+.rush-ans.ok .sym small,
+.rush-ans.ok kbd {
+  color: #0f1020;
+}
+.rush-ans.bad {
+  background: var(--red);
+  color: #0f1020;
+}
+.rush-ans.dim {
+  opacity: 0.5;
+}
+.rush-neck {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 8px;
+  overflow-x: auto;
+}
+.rush-live {
+  min-height: 1.4em;
+  margin: 0;
+  text-align: center;
+  color: var(--ink-soft);
+}
+.rush-play.fb-bad .rush-live {
+  color: var(--coral);
+}
+
+/* ---------- pops, combo burst, level up ---------- */
+.rush-pop,
+.rush-burst,
+.rush-lvlup {
+  position: absolute;
+  pointer-events: none;
+  font-family: var(--display);
+  z-index: 2;
+}
+.rush-pop {
+  inset-block-start: 10px;
+  inset-inline-end: 16px;
+  color: var(--mint);
+  font-size: 1.6rem;
+  animation: rush-rise 0.6s ease-out forwards;
+}
+.rush-burst {
+  inset-block-start: 40%;
+  inset-inline: 0;
+  text-align: center;
+  font-size: 2.4rem;
+  color: var(--gold);
+  text-shadow: 0 0 18px color-mix(in srgb, var(--gold) 60%, transparent);
+  animation: rush-burst 0.9s ease-out forwards;
+}
+.rush-lvlup {
+  inset-block-start: 10px;
+  inset-inline-start: 16px;
+  color: var(--lilac);
+  font-size: 1.3rem;
+  animation: rush-rise 1.2s ease-out forwards;
+}
+@keyframes rush-rise {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-24px);
+  }
+}
+@keyframes rush-burst {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  25% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
+/* ---------- results ---------- */
+.rush-result {
+  align-items: center;
+  text-align: center;
+}
+.rush-final {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+.rush-final span {
+  color: var(--ink-dim);
+}
+.rush-final b {
+  font-family: var(--display);
+  font-size: 3.4rem;
+  color: var(--gold);
+  line-height: 1.1;
+}
+.rush-newbest {
+  margin: 0;
+  color: var(--gold);
+  font-weight: 800;
+}
+.rush-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+  margin: 0;
+}
+.rush-stats div {
+  background: var(--card-2);
+  border-radius: 14px;
+  padding: 8px 4px;
+}
+.rush-stats dt {
+  font-size: 0.75rem;
+  color: var(--ink-dim);
+}
+.rush-stats dd {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 1.5rem;
+}
+
+@media (max-width: 480px) {
+  .rush-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .rush-hud b {
+    font-size: 1.25rem;
+  }
+  .rush-answers.n5,
+  .rush-answers.n6 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Reduced motion: no flying numbers, no scaling — the texts just show. */
+.rush.calm .rush-pop,
+.rush.calm .rush-burst,
+.rush.calm .rush-lvlup {
+  animation: none;
+}
+.rush.calm .rush-clock .fill {
+  transition: none;
+}
+.rush.calm .rush-ans:active:not(:disabled) {
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rush-pop,
+  .rush-burst,
+  .rush-lvlup {
+    animation: none;
+  }
+  .rush-clock .fill {
+    transition: none;
+  }
+}

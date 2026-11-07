@@ -28,6 +28,13 @@ export interface Intake {
   priorities: DomainId[] | null;
   motivation: Motivation;
   minutes: 5 | 10 | 20;
+  /** The path goal (spec AF D2). */
+  goal?: import('./path').Goal;
+  /** What to leave out of the path (D4). */
+  leaveOut?: DomainId[];
+  packs?: import('./path').Pack[];
+  noSing?: boolean;
+  noMic?: boolean;
 }
 
 export const AREAS: DomainId[] = DOMAINS.map((d) => d.id);
@@ -172,7 +179,7 @@ export function intakeSettings(i: Intake): {
   noteViews?: ('keyboard' | 'staff' | 'tab')[];
 } {
   const track = trackOf(i);
-  const guitar = (i.plays ?? []).includes('guitar') && !(i.plays ?? []).includes('keys');
+  const guitar = ((i.plays ?? []).includes('guitar') || (i.plays ?? []).includes('bass')) && !(i.plays ?? []).includes('keys');
   return {
     track,
     ...(guitar ? { noteViews: ['tab', 'staff'] as ('keyboard' | 'staff' | 'tab')[] } : {}),

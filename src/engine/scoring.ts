@@ -1,7 +1,7 @@
 // Scoring model (spec addendum J): one evidence record per answer → three scores
 // (skill rating, XP, tournament points). All weights live in SCORING; records are stored raw.
 
-import type { Answer, Question } from './lesson';
+import { gradePlace, type Answer, type Question } from './lesson';
 import { gradeMelody } from './memory';
 import type { SungResult } from './sing';
 
@@ -49,6 +49,7 @@ export function pitchAccuracy(cents: number | null): number {
 
 /** Accuracy of a given answer to a question (categorical = 0/1; graded items partial). */
 export function accuracyFor(q: Question, answer: Answer, sung?: SungResult): number {
+  if (q.kind === 'place') return gradePlace(q, String(answer)).score;
   if (q.kind === 'sing') {
     if (!sung || sung.status === 'wrong' || sung.status === 'unclear') return 0;
     return pitchAccuracy(sung.cents);

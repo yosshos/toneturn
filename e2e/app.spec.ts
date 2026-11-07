@@ -164,9 +164,9 @@ test.describe('settings', () => {
 
 test.describe('more lessons', () => {
   test('completing lesson 1 unlocks lesson 2 on the path', async ({ page }) => {
-    // The path is its own tab (0.37).
+    // The path is its own tab (0.37); 0.38: an adaptive spiral — the first step is current, the rest locked or open.
     await page.goto('/#/path');
-    await expect(page.getByRole('button', { name: /2\. Home, third, fifth/ })).toBeDisabled();
+    await expect(page.locator('.road .node.current')).toHaveCount(1);
     await page.goto('/');
     await page.reload();
     await page.getByRole('radio', { name: 'Buttons' }).click();
@@ -182,10 +182,11 @@ test.describe('more lessons', () => {
     }
     await expect(page.getByRole('button', { name: /Next lesson/ })).toBeVisible({ timeout: 30_000 });
     await page.getByRole('button', { name: 'Home' }).click();
-    await expect(page.locator('.mission-title')).toHaveText('Home, third, fifth'); // today's mission is the next lesson
+    // Today's workout leads with the next path step (no longer the finished lesson).
+    await expect(page.locator('.wk-next')).not.toContainText('two homes');
     await page.locator('.tab[data-tab="path"]').click();
-    await expect(page.getByRole('button', { name: /2\. Home, third, fifth/ })).toBeEnabled();
-    await expect(page.locator('.node.done .mini-stars .won')).toHaveCount(3);
+    // The finished lesson counts on the path wherever it was played (spec AF): one step done.
+    await expect(page.locator('.path-head .count-chip')).toHaveText(/^1\//);
   });
 
   test('Major or minor (simulator, hands-free)', async ({ page }) => {

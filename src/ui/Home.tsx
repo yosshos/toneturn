@@ -21,6 +21,14 @@ interface Props {
   t: Strings;
   settings: Settings;
   progress: Progress;
+  /** The next path step (spec AF D7): the mission card opens it. */
+  pathNext?: { title: string; blurb: string; onStart: () => void };
+  /** Extra header icons (month in review, spec AG S16). */
+  headerExtra?: React.ReactNode;
+  /** Today's workout (spec AH W1): the first card, in place of the mission and warm-up cards. */
+  workout?: React.ReactNode;
+  /** Reviews due (spec AF D7): a 2-minute warm-up before the path. */
+  warmUp?: { count: number; onStart: () => void };
   streak: StreakState;
   onStreak: () => void;
   account: React.ReactNode;
@@ -75,7 +83,7 @@ export function starsFor(best: number, total: number) {
 
 export const TOTALS: Partial<Record<LessonId, number>> = { 'bflat-two-homes': 3, 'degrees-135': 5, 'major-minor': 5, cadences: 4, 'sing-home-five': 3, intervals: 6, inversions: 5, 'notes-degrees': 6, 'sing-names': 4, 'sing-degrees': 3, 'rhythm-r1': 5, 'rhythm-r2': 5, 'rhythm-r3': 5, runs: 5, 'rhythm-r4': 5, 'rhythm-r5': 5, 'rhythm-r6': 5, 'rhythm-r7': 5, 'rhythm-r8': 5, 'note-sequences': 5, 'jazz-1': 5, songs: 5 };
 
-export function Home({ t, settings, progress, streak, onStreak, account, onPractice, onButtonsInstead, onMode, onPracticeSkill, whatsNew, onVocal, onWorkout, onPlacement, onSkills, playerName, onMenu, news, tools }: Props) {
+export function Home({ t, settings, progress, streak, onStreak, account, onPractice, onButtonsInstead, onMode, onPracticeSkill, whatsNew, onVocal, onWorkout, onPlacement, onSkills, playerName, onMenu, news, tools, pathNext, warmUp, headerExtra, workout }: Props) {
   const [consentFor, setConsentFor] = useState<LessonId | null>(null);
   const lang = settings.uiLang;
   const nm = namingFor(settings.naming, lang);
@@ -108,6 +116,7 @@ export function Home({ t, settings, progress, streak, onStreak, account, onPract
         <div className="stats">
           <StreakChip t={t} st={streak} onOpen={onStreak} />
           <WhatsNewButton t={t} lang={lang} unseen={whatsNew.unseen} onSeen={whatsNew.onSeen} />
+          {headerExtra}
           <HeaderPwa t={t} />
           <button className="icon-btn menu-btn" onClick={onMenu} aria-label={t.menu}>
             <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" aria-hidden="true">
@@ -153,21 +162,37 @@ export function Home({ t, settings, progress, streak, onStreak, account, onPract
         <>
           <h1 className="sr-only">Ninth Sense — {t.homeToday}</h1>
           <PlayerStrip t={t} xp={progress.xp} name={playerName} onOpen={onSkills} />
-          <MissionCard t={t} settings={settings} lessonId={next} anyDone={anyDone} todayXp={todayXp} goalXp={DAILY_GOAL_XP} onStart={() => start(next)} />
+          {workout}
+          {!workout && warmUp && warmUp.count >= 3 && (
+            <button className="warmup-card" onClick={warmUp.onStart}>
+              <span aria-hidden="true">🔥</span>
+              <span>
+                <b>{lang === 'en' ? '2-minute warm-up' : 'חימום של 2 דקות'}</b>
+                <small dir="auto">{lang === 'en' ? `${warmUp.count} items to review before your path` : `${warmUp.count} פריטים לחזרה לפני המסלול`}</small>
+              </span>
+            </button>
+          )}
+          {workout ? null : pathNext ? (
+            <MissionCard t={t} settings={settings} lessonId={next} anyDone={anyDone} todayXp={todayXp} goalXp={DAILY_GOAL_XP} onStart={pathNext.onStart} title={pathNext.title} blurb={pathNext.blurb} />
+          ) : (
+            <MissionCard t={t} settings={settings} lessonId={next} anyDone={anyDone} todayXp={todayXp} goalXp={DAILY_GOAL_XP} onStart={() => start(next)} />
+          )}
           <div className="home-mode-row">
             <ModeSwitch mode={settings.mode} onChange={onMode} t={t} />
             <button className="link start-from-one" onClick={() => onPlacement()}>
               🧭 {t.findLevel}
             </button>
           </div>
-          <section className="home-section today" aria-label={t.homeToday}>
-            <h2 className="home-h">☀️ {t.homeToday}</h2>
-            <WorkoutCard t={t} progress={progress} settings={settings} onOpen={onWorkout} />
-          </section>
         </>
       )}
 
       {!firstRun && <DomainTiles t={t} progress={progress} onPractice={onPracticeSkill} />}
+      {!firstRun && !workout && (
+        <section className="home-section today" aria-label={lang === 'en' ? 'Free practice' : 'תרגול חופשי'}>
+          <h2 className="home-h">🎯 {lang === 'en' ? 'Free practice' : 'תרגול חופשי'}</h2>
+          <WorkoutCard t={t} progress={progress} settings={settings} onOpen={onWorkout} />
+        </section>
+      )}
 
       <section className="home-section practice" aria-label={t.homePractice}>
         <h2 className="home-h">🎯 {t.homePractice}</h2>

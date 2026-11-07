@@ -31,10 +31,10 @@ import { SkillMap } from './SkillMap';
 import { PracticeTools } from './Tools';
 import { MicIcon } from './bits';
 import { STRINGS } from '../i18n/strings';
-import { gemsOf, lessonMastered, localDay, namingFor, ratingsOf, type Progress, type Settings, DEFAULT_SETTINGS, DEFAULT_SOUND, emptyProgress, migrateSettings } from '../storage/progress';
+import { dueReviews, gemsOf, lessonMastered, localDay, namingFor, ratingsOf, type Progress, type Settings, DEFAULT_SETTINGS, DEFAULT_SOUND, emptyProgress, migrateSettings } from '../storage/progress';
 import { cloudConfigured, currentUser, onAuthChange, pullSettings, pushSettings, syncProgress, type CloudUser } from '../cloud/cloud';
 import { AccountCard, type SyncState } from './Account';
-import { Home, lessonStates } from './Home';
+import { DAILY_GOAL_XP, Home, lessonStates } from './Home';
 import { LessonScreen } from './Lesson';
 import { SettingsScreen } from './SettingsScreen';
 import { Diagnostics } from './Diagnostics';
@@ -49,7 +49,29 @@ import { myClasses, openAssignments } from '../cloud/classes';
 import type { SetKind } from '../engine/tournament';
 import type { GameKind } from '../game/memoryGame';
 import { MenuSheet } from './Menu';
-import { PathScreen, PlayScreen, TabBar, TAB_ROUTES, type TabId } from './Arcade';
+import { GAMES2, PlayScreen, TabBar, TAB_ROUTES, type TabId } from './Arcade';
+import { Tuner } from './Tuner';
+import { WorkoutCard, WorkoutEditor, WorkoutRunScreen } from './Workout';
+import { addSession, nextBlock, nextForBlock, runLeftMs, startRun, suggestWorkout, validateTemplate, type Block, type BlockTarget, type WorkoutRun } from '../engine/workout2';
+import { subPriorities } from '../engine/scheduler';
+import { foldSubs } from '../engine/taxonomy';
+import { DOMAINS, weakestSkill } from '../engine/rating';
+import { useMotion } from './motion';
+import { awardName, MonthReviewIcon, ProgressTabs } from './Stats';
+import { achievements, earnAwards, firstLaunchAwards } from '../engine/achievements';
+import { bumpCount } from '../engine/stats';
+import { gameAccuracy } from '../engine/gameRating';
+import { Flight } from './Flight';
+import { NameTune } from './NameTune';
+import { TuneUp } from './TuneUp';
+import { Highway } from './Highway';
+import { MelodyPuzzle } from './MelodyPuzzle';
+import { PitchMemory } from './PitchMemory';
+import { PeakHunter } from './PeakHunter';
+import { Rush } from './Rush';
+import { loadSlot, saveSlot } from '../storage/resume';
+import { PathView2, stepTitle, usePathView } from './Path';
+import { checkpointSession, recordStep, stepSession, stepStars, testOutPassed, testOutSession, THEMES, type PathStep, type PathUnit, type UnitStep } from '../engine/path';
 import { FriendsScreen } from './Friends';
 import { reportGameBest, reportRating, reportStreakDays } from '../cloud/social';
 import { overallRating } from '../engine/rating';
@@ -58,7 +80,7 @@ import { pwa } from '../pwa';
 import { params, piano, setMidiEnabled, SIMULATED, store, tts } from './services';
 import { midi } from '../speech/midi';
 
-type Route = 'intake' | 'studio' | 'home' | 'path' | 'arcade' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong' | 'perform' | 'learned';
+type Route = 'intake' | 'studio' | 'home' | 'path' | 'arcade' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong' | 'perform' | 'learned' | 'tuner' | 'workout' | 'workoutrun' | 'peakhunter' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'flight' | 'pitchmemory' | 'nametune' | 'tuneup' | 'highway' | 'melodypuzzle';
 /** Invite links: #/online/CODE */
 const onlineCodeFromHash = () => (/^#\/?online\/(\w+)/.exec(location.hash)?.[1] ?? '');
 const PLAY_HASH = 'play';
@@ -68,7 +90,7 @@ const enterPlay = () => {
 };
 const routeFromHash = (): Route => {
   const h = location.hash.replace(/^#\/?/, '').replace(/^online\/.*$/, 'online');
-  return (['path', 'arcade', 'settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong', 'perform', 'learned', 'studio', 'intake'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
+  return (['path', 'arcade', 'settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong', 'perform', 'learned', 'studio', 'intake', 'tuner', 'workout', 'workoutrun', 'peakhunter', 'rush-chord', 'rush-note', 'rush-fretboard', 'rush-interval', 'rush-keysig', 'rush-progression', 'flight', 'pitchmemory', 'nametune', 'tuneup', 'highway', 'melodypuzzle'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
 };
 
 /** The level a generated modes lesson was made at (from its first question's pool size). */
@@ -266,6 +288,7 @@ export function App() {
     [user],
   );
 
+  useMotion(route);
   const go = (r: Route) => {
     location.hash = r === 'lesson' || r === 'game' ? `/${PLAY_HASH}` : r === 'home' ? '' : `/${r}`;
     setRoute(r);
@@ -408,6 +431,206 @@ export function App() {
     setRoute('lesson');
   };
 
+  // ---- awards (spec AG §5, S7): earned after each save; a toast after the session, never during a question ----
+  const [awardToast, setAwardToast] = useState<string | null>(null);
+  useEffect(() => {
+    if (!settings || !progress.applied.length) return;
+    if (route === 'lesson') return; // never during a session
+    const extra = { bestLeague: settings.bestLeague, learned: learnedCount(settings) };
+    const at = new Date().toISOString();
+    if (!settings.awardsInit) {
+      const { awards, count } = firstLaunchAwards(progress, extra, at);
+      const next = { ...progress, awards };
+      void store.saveProgress(next).then(() => setProgress(next));
+      updateSettings({ awardsInit: true });
+      if (count > 0 && !settings.cleanView) setAwardToast(settings.uiLang === 'en' ? `🏅 ${count} awards from before are in your Awards` : `🏅 ${count} פרסים מלפני כן מחכים בפרסים שלכם`);
+      return;
+    }
+    const { awards, newly } = earnAwards(progress.awards, achievements(progress, extra), at);
+    if (!newly.length) return;
+    const next = { ...progress, awards };
+    void store.saveProgress(next).then(() => setProgress(next));
+    if (!settings.cleanView) {
+      const best = newly.sort((a, b) => b.tier - a.tier)[0];
+      setAwardToast(`🏅 ${awardName(best.id, settings.uiLang)}${newly.length > 1 ? ` +${newly.length - 1}` : ''}`);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [progress.applied.length, progress.ratingEvents?.length, progress.bests, route, settings?.awardsInit]);
+  useEffect(() => {
+    if (!awardToast) return;
+    const id = window.setTimeout(() => setAwardToast(null), 4500);
+    return () => window.clearTimeout(id);
+  }, [awardToast]);
+
+  // ---- the learning path (spec AF) ----
+  const pathView = usePathView(s, progress);
+  /** The step being played from the path: its result is recorded when the session completes. */
+  const pendingStep = useRef<{ id: string; kind: PathStep['kind']; after: string | null; testOut?: string[] } | null>(null);
+  // A unit becomes current → frozen as a fact (P9).
+  useEffect(() => {
+    const f = pathView.freeze;
+    if (!f || !settings) return;
+    const units = settings.pathFacts?.units ?? [];
+    if (units.some((u) => u.id === f.id)) return;
+    updateSettings({ pathFacts: { ...(settings.pathFacts ?? {}), units: [...units, { ...f, at: new Date().toISOString() }] } });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathView.freeze ? pathView.freeze.id + pathView.freeze.steps.join() : '']);
+  const lastSession = () => progress.history[progress.history.length - 1]?.sessionId ?? null;
+  const openPathStep = (x: UnitStep, unit: PathUnit, mode: 'step' | 'practice') => {
+    const step = x.step;
+    pendingStep.current = { id: step.id, kind: step.kind, after: lastSession() };
+    const title = stepTitle(step, s, s.uiLang);
+    const seed = (Date.now() ^ (Math.random() * 1e9)) >>> 0;
+    if (step.kind === 'lesson' && step.lesson) return s.mode === 'voice' && !s.voiceConsent ? setConsentThen(() => () => openLesson(step.lesson!)) : openLesson(step.lesson);
+    if (step.kind === 'review') {
+      pendingStep.current = null;
+      return openReview();
+    }
+    if (step.kind === 'check') return openGenerated(checkpointSession(unit, seed), undefined, false, { key: `pathstep:${step.id}`, title });
+    // A game inside the unit (0.38): its result is recorded as the step's stars when the game ends.
+    if (step.kind === 'game' && step.game) return go(step.game as Route);
+    const how = mode === 'practice' ? 'step' : x.probe ? 'probe' : x.state === 'quick' ? 'quick' : 'step';
+    const def = stepSession(step, seed, how);
+    if (def) gate(`topic:${step.topic}`, () => openGenerated(def, undefined, false, { key: `pathstep:${step.id}`, title }));
+  };
+  const openTestOut = (unit: PathUnit) => {
+    const seed = (Date.now() ^ (Math.random() * 1e9)) >>> 0;
+    const { def, steps } = testOutSession(unit, seed);
+    pendingStep.current = { id: `testout:${unit.id}`, kind: 'check', after: lastSession(), testOut: steps };
+    openGenerated(def, undefined, false, { key: `testout:${unit.id}`, title: s.uiLang === 'en' ? 'Test out' : 'מבחן מעבר' });
+  };
+  /** A game step of the path (0.38): stars from the game's accuracy (≥ 60 % = 1, 80 % = 2, 95 % = 3). */
+  const noteGameStep = (game: string, score: number, detail: unknown) => {
+    const ps = pendingStep.current;
+    if (!ps || ps.kind !== 'game' || !ps.id.endsWith(`:${game}`) || !settings) return;
+    pendingStep.current = null;
+    const acc = gameAccuracy(game, score, (detail ?? {}) as Record<string, unknown>);
+    const stars = acc >= 0.95 ? 3 : acc >= 0.8 ? 2 : acc >= 0.6 ? 1 : 0;
+    updateSettings({ pathFacts: recordStep(settings.pathFacts ?? {}, ps.id, stars, new Date().toISOString()) });
+  };
+  /** P14: after the questionnaire or the level test, a current unit under half done is rebuilt. */
+  const unfreezeIfEarly = (facts: Settings['pathFacts']): Settings['pathFacts'] => {
+    const units = facts?.units ?? [];
+    const last = units[units.length - 1];
+    if (!last) return facts;
+    const done = last.steps.filter((id) => (facts?.steps?.[id]?.stars ?? 0) > 0).length;
+    return done < last.steps.length / 2 ? { ...facts, units: units.slice(0, -1) } : facts;
+  };
+  const seenPlacement = useRef<string | null>(null);
+  /** After a session: a path step's stars (P10), or a test-out's ✓ by test (P16). */
+  const notePathResult = (p: Progress) => {
+    const lastR = p.history[p.history.length - 1];
+    {
+      // The workout's credit first (it needs the step id before the path's pending step is cleared).
+      const ps0 = pendingStep.current;
+      const done0 = ps0 && lastR && lastR.sessionId !== ps0.after && !ps0.testOut && stepStars(ps0.kind, lastR.firstTry, lastR.total) > 0 ? ps0.id : null;
+      if (lastR && (!ps0 || lastR.sessionId !== ps0.after)) noteWorkoutResult(p, done0);
+    }
+    if (lastR?.lessonId === 'placement' && lastR.sessionId !== seenPlacement.current && settings) {
+      seenPlacement.current = lastR.sessionId;
+      updateSettings({ pathFacts: unfreezeIfEarly(settings.pathFacts) });
+    }
+    const ps = pendingStep.current;
+    const r = p.history[p.history.length - 1];
+    if (!ps || !r || r.sessionId === ps.after || !settings) return;
+    pendingStep.current = null;
+    const at = new Date().toISOString();
+    if (ps.testOut) {
+      const passed = testOutPassed(ps.testOut, (r.items ?? []).map((it) => ({ id: it.id, correct: it.correct })));
+      if (passed.length) {
+        updateSettings({ pathFacts: { ...(settings.pathFacts ?? {}), tests: { ...(settings.pathFacts?.tests ?? {}), ...Object.fromEntries(passed.map((id) => [id, at])) } } });
+        const np = { ...p, counts: bumpCount(p.counts, 'stepsByTest', passed.length) };
+        void store.saveProgress(np).then(() => setProgress(np));
+      }
+      return;
+    }
+    const stars = stepStars(ps.kind, r.firstTry, r.total);
+    updateSettings({ pathFacts: recordStep(settings.pathFacts ?? {}, ps.id, stars, at) });
+    if (ps.kind === 'check' && stars > 0) {
+      // Path awards (spec AG §5): units finished, checkpoints at 3 stars.
+      let c = bumpCount(p.counts, 'units', 1);
+      if (stars === 3) c = bumpCount(c, 'checkpoints3', 1);
+      const np = { ...p, counts: c };
+      void store.saveProgress(np).then(() => setProgress(np));
+    }
+  };
+
+  // ---- today's workout (spec AH): suggested, editable, and one system with the path (§9) ----
+  const now0 = new Date();
+  // W9: a workout belongs to the day it started; until 04:00 yesterday's unfinished one continues.
+  const yday = localDay(new Date(now0.getTime() - 86400000));
+  const today = now0.getHours() < 4 && (loadSlot<WorkoutRun>(`workout:${yday}`)?.data?.finished === false) ? yday : localDay(now0);
+  const nudge = s.workoutNudge && s.workoutNudge.until >= today ? s.workoutNudge.delta : 0;
+  const baseMinutes = Math.max(5, Math.min(60, ((s.intake as Intake | null | undefined)?.minutes ?? 10) + nudge));
+  const tmplRaw = s.workoutTemplates?.[String(now0.getDay())] ?? s.workoutTemplates?.all ?? null;
+  const suggestedWorkout = useMemo(() => {
+    const tmpl = tmplRaw ? validateTemplate(tmplRaw, { leaveOut: s.pathLeaveOut ?? [], topics: new Set(Object.keys(TOPIC_GEN)), hidden: s.pathHidden ?? [], games: new Set(GAMES2.map((g) => g.id)) }) : null;
+    return suggestWorkout({ total: tmpl ? tmpl.reduce((a, b) => a + b.minutes, 0) : baseMinutes, goal: s.goal ?? 'general', priorities: (s.intake as Intake | null | undefined)?.priorities ?? null, leaveOut: s.pathLeaveOut ?? [], reviewsDue: new Set(dueReviews(progress.review, now0).map((r) => r.key)).size, singer: s.mode === 'voice' && !s.noSing && !s.noMic, view: pathView, template: tmpl });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathView, baseMinutes, tmplRaw, s.goal, s.pathLeaveOut, s.pathHidden, s.mode, s.noSing, s.noMic, progress.review.length]);
+  const todayBlocks = s.workoutToday?.day === today ? s.workoutToday.blocks : suggestedWorkout;
+  const [wrun, setWrun] = useState<WorkoutRun | null>(() => loadSlot<WorkoutRun>(`workout:${today}`)?.data ?? null);
+  const wrunRef = useRef(wrun);
+  wrunRef.current = wrun;
+  const saveRun = (r: WorkoutRun | null) => {
+    setWrun(r);
+    wrunRef.current = r;
+    if (r) saveSlot(`workout:${r.day}`, { title: s.uiLang === 'en' ? "Today's workout" : 'האימון של היום', route: 'home', done: r.at, total: r.blocks.length, data: r });
+  };
+  /** A session started from the workout (credited when it completes). */
+  const workoutPending = useRef<{ t0: number } | null>(null);
+  const [wctx, setWctx] = useState<{ nomic: boolean; quiet: boolean; noinst: boolean }>({ nomic: !!s.noMic, quiet: false, noinst: false });
+  /** W10: today's context swaps blocks that need the mic / sound / an instrument. */
+  const withContext = (bs: Block[]): Block[] =>
+    bs
+      .map((b) => (((wctx.nomic || wctx.quiet) && b.target.kind === 'vocal') || (wctx.quiet && b.target.kind === 'game') ? { ...b, target: { kind: 'warmup' } as BlockTarget } : b))
+      .filter((b) => !(wctx.noinst && b.target.kind === 'practice'));
+  const runCurrent = (r: WorkoutRun) => {
+    if (r.finished || !r.blocks[r.at]) return go('workoutrun');
+    const b = r.blocks[r.at];
+    const t = b.target;
+    if (t.kind === 'game' || t.kind === 'vocal' || t.kind === 'practice') return go('workoutrun');
+    workoutPending.current = { t0: Date.now() };
+    if (t.kind === 'warmup' || t.kind === 'mistakes') {
+      const due = new Set(dueReviews(progress.review, new Date()).map((x) => x.key)).size;
+      if (due > 0) return openReview();
+      return practiceSkill(weakestSkill(ratingsOf(progress)));
+    }
+    const nx = nextForBlock(b, pathView, new Set(r.steps));
+    if (nx && 'step' in nx) {
+      const unit = pathView.units.find((u) => u.id === nx.unitId)!;
+      return openPathStep(nx.step, unit, 'step');
+    }
+    // Free practice (§9.1.3): the area's / skill's weakest skill, or the topic at its first open level.
+    if (t.kind === 'area') return practiceSkill(weakestSkill(ratingsOf(progress), DOMAINS.find((d) => d.id === t.area)!.skills));
+    if (t.kind === 'skill') return practiceSkill(t.skill);
+    if (t.kind === 'topic') return openTopic(t.topic, 1);
+    return openPathStep(pathView.current ?? pathView.units[0].steps[0], pathView.units.find((u) => u.status === 'current') ?? pathView.units[0], 'step');
+  };
+  const startWorkout = () => {
+    void piano.unlock();
+    const r = wrun && wrun.day === today && !wrun.finished ? wrun : startRun(today, withContext(todayBlocks));
+    saveRun(r);
+    runCurrent(r);
+  };
+  /** Credit a finished session to the block in progress (W2, W3). */
+  const noteWorkoutResult = (p: Progress, stepId: string | null) => {
+    const r = wrunRef.current;
+    const lastR = p.history[p.history.length - 1];
+    if (!r || r.finished || !lastR) return;
+    const fromWorkout = workoutPending.current;
+    workoutPending.current = null;
+    const ms = fromWorkout ? Date.now() - fromWorkout.t0 : lastR.total * 30000;
+    // From the road (not started in the workout): only path steps that fit the current block count (W2).
+    if (!fromWorkout) {
+      const b = r.blocks[r.at];
+      const step = stepId ? pathView.units.flatMap((u) => u.steps).find((x) => x.step.id === stepId)?.step : null;
+      const fits = !!b && !!step && (b.target.kind === 'path' || (b.target.kind === 'area' && b.target.area === step.domain));
+      if (!fits) return;
+    }
+    saveRun(addSession(r, ms, lastR.total, lastR.firstTry, stepId ?? undefined));
+  };
+
   // Instrument sound (spec Q): load the chosen sample set (falls back to the classic piano on failure).
   const soundId = settings?.sound ?? DEFAULT_SOUND;
   useEffect(() => {
@@ -480,6 +703,32 @@ export function App() {
           t={t}
           settings={s}
           progress={progress}
+          pathNext={(() => {
+            const cur = pathView.current;
+            const unit = pathView.units.find((u) => u.status === 'current');
+            if (!cur || !unit) return undefined;
+            const th = unit.theme ? THEMES.find((x) => x.id === unit.theme) : null;
+            return { title: stepTitle(cur.step, s, s.uiLang), blurb: `${s.uiLang === 'en' ? 'Unit' : 'יחידה'} ${unit.n}${th ? ` · ${th.name[s.uiLang]}` : ''}`, onStart: () => openPathStep(cur, unit, 'step') };
+          })()}
+          warmUp={{ count: new Set(dueReviews(progress.review, new Date()).map((r) => r.key)).size, onStart: openReview }}
+          workout={
+            <WorkoutCard
+              t={t}
+              lang={s.uiLang}
+              blocks={wrun && wrun.day === today && !wrun.finished ? wrun.blocks : todayBlocks}
+              run={wrun && wrun.day === today ? wrun : null}
+              view={pathView}
+              nextLine={pathView.current ? stepTitle(pathView.current.step, s, s.uiLang) : null}
+              edited={s.workoutToday?.day === today}
+              onStart={() => (s.mode === 'voice' && !s.voiceConsent ? setConsentThen(() => () => startWorkout()) : startWorkout())}
+              onEdit={() => go('workout')}
+              onReset={() => updateSettings({ workoutToday: undefined })}
+              ctx={wctx}
+              onCtx={setWctx}
+              goal={{ todayXp: progress.history.filter((h) => localDay(new Date(h.completedAt)) === localDay(new Date())).reduce((a, h) => a + h.xp, 0), goalXp: DAILY_GOAL_XP }}
+            />
+          }
+          headerExtra={<MonthReviewIcon t={t} lang={s.uiLang} progress={progress} seenMonth={s.monthReviewSeen} onSeen={(monthReviewSeen) => updateSettings({ monthReviewSeen })} />}
           streak={gems.streak}
           onStreak={() => setStreakOpen(true)}
           account={<AccountCard t={t} user={user} sync={sync} compact />}
@@ -564,7 +813,7 @@ export function App() {
           }}
         />
       )}
-      {route === 'path' && <PathScreen t={t} settings={s} progress={progress} onStart={(id) => (s.mode === 'voice' && !s.voiceConsent ? setConsentThen(() => () => openLesson(id)) : openLesson(id))} onPlacement={() => openPlacement()} />}
+      {route === 'path' && <PathView2 t={t} settings={s} progress={progress} view={pathView} onStep={openPathStep} onTestOut={openTestOut} onPlacement={() => openPlacement()} onSettings={updateSettings} onLesson={(id) => (s.mode === 'voice' && !s.voiceConsent ? setConsentThen(() => () => openLesson(id)) : openLesson(id))} />}
       {route === 'arcade' && (
         <PlayScreen
           t={t}
@@ -578,6 +827,8 @@ export function App() {
           onGhost={() => go('ghost')}
           onDaily={() => go('daily')}
           onPuzzle={openPuzzle}
+          onGame2={(id) => go(id)}
+          lang={s.uiLang}
           onOnline={() => {
             setOnlineFacts(null);
             setOnlineCode('');
@@ -602,21 +853,33 @@ export function App() {
           resume={slot?.resume}
           onStep={slot ? (st) => saveSession(slot.key, slot.title, st, slot.seed) : undefined}
           onDone={slot ? () => clearSession(slot.key) : undefined}
-          nextLabel={generated ? t.seeSkillMap : undefined}
+          nextLabel={wrun && !wrun.finished && wrun.day === today ? (s.uiLang === 'en' ? `Continue workout · ${Math.ceil(runLeftMs(wrun) / 60000)} min` : `להמשיך באימון · ${Math.ceil(runLeftMs(wrun) / 60000)} דק׳`) : generated ? t.seeSkillMap : undefined}
           ratings={ratingsOf(progress)}
-          onNext={generated ? () => go('skills') : canNext ? () => openLesson(nextId) : null}
+          onNext={wrun && !wrun.finished && wrun.day === today ? () => runCurrent(wrunRef.current!) : generated ? () => go('skills') : canNext ? () => openLesson(nextId) : null}
           onProgress={(p) => {
             setProgress(p);
+            notePathResult(p);
             if (user) void runSync();
           }}
+          onSettings={updateSettings}
         />
       )}
       {route === 'settings' && (
         <SettingsScreen t={t} settings={s} onChange={updateSettings} onBack={() => go('home')} onIntake={() => go('intake')} account={<AccountCard t={t} user={user} sync={sync} />} />
       )}
       {route === 'diagnostics' && <Diagnostics t={t} settings={s} onBack={() => go('home')} />}
-      {route === 'friends' && <FriendsScreen settings={s} t={t} user={user} sync={sync} onBack={() => go('home')} onBestTier={(b) => b > (s.bestLeague ?? 0) && updateSettings({ bestLeague: b })} onLeagueSeen={(leagueSeen) => updateSettings({ leagueSeen })} />}
-      {route === 'skills' && <SkillMap t={t} lang={s.uiLang} progress={progress} bestLeague={s.bestLeague} onBack={() => go('home')} onPractice={practiceSkill} onPlacement={openPlacement} />}
+      {route === 'friends' && <FriendsScreen settings={s} t={t} user={user} sync={sync} progress={progress} streak={gems.streak.count} onBack={() => go('home')} onBestTier={(b) => b > (s.bestLeague ?? 0) && updateSettings({ bestLeague: b })} onLeagueSeen={(leagueSeen) => updateSettings({ leagueSeen })} />}
+      {route === 'skills' && (
+        <ProgressTabs
+          t={t}
+          lang={s.uiLang}
+          progress={progress}
+          extra={{ bestLeague: s.bestLeague, learned: learnedCount(s) }}
+          pinned={s.trophies}
+          onPin={(trophies) => updateSettings({ trophies })}
+          map={<SkillMap t={t} lang={s.uiLang} progress={progress} bestLeague={s.bestLeague} onBack={() => go('home')} onPractice={practiceSkill} onPlacement={openPlacement} />}
+        />
+      )}
       {consentThen && (
         <div className="sheet-backdrop" onClick={() => setConsentThen(null)}>
           <div className="sheet" role="dialog" aria-modal="true" aria-labelledby="consent2-title" onClick={(e) => e.stopPropagation()}>
@@ -709,7 +972,7 @@ export function App() {
             go('home');
           }}
           onDone={(res, then) => {
-            updateSettings(res.patch);
+            updateSettings({ ...res.patch, pathFacts: unfreezeIfEarly(s.pathFacts) });
             if (then === 'placement') {
               go('home');
               window.setTimeout(() => openPlacement(), 0);
@@ -721,6 +984,116 @@ export function App() {
           }}
         />
       )}
+      {awardToast && (
+        <button className="award-toast" role="status" onClick={() => (setAwardToast(null), go('skills'))}>
+          {awardToast}
+        </button>
+      )}
+      {route === 'workout' && (
+        <WorkoutEditor
+          t={t}
+          lang={s.uiLang}
+          blocks={wrun && wrun.day === today && !wrun.finished ? wrun.blocks.slice(wrun.at) : todayBlocks}
+          suggested={suggestedWorkout}
+          view={pathView}
+          settings={s}
+          onSave={(blocks) => {
+            // W8: during a run only the blocks not run yet change.
+            if (wrun && wrun.day === today && !wrun.finished) saveRun({ ...wrun, blocks: [...wrun.blocks.slice(0, wrun.at), ...blocks] });
+            updateSettings({ workoutToday: { day: today, blocks: wrun && wrun.day === today && !wrun.finished ? [...wrun.blocks.slice(0, wrun.at), ...blocks] : blocks } });
+          }}
+          onSaveDefault={(blocks, scope) => updateSettings({ workoutTemplates: { ...(s.workoutTemplates ?? {}), [scope === 'all' ? 'all' : String(new Date().getDay())]: blocks.map((b) => ({ ...b })) }, workoutToday: { day: today, blocks } })}
+          onClose={() => go('home')}
+          addOptions={{
+            suggested: subPriorities({ ratings: ratingsOf(progress), subs: foldSubs(progress.ratingEvents ?? []), track: s.track ?? null, priorities: (s.intake as Intake | null | undefined)?.priorities ?? null, voice: s.mode === 'voice', now: new Date() })
+              .slice(0, 12)
+              .map((x) => ({ kind: 'skill', skill: x.skill }) as BlockTarget)
+              .filter((x, i, a) => a.findIndex((y) => JSON.stringify(y) === JSON.stringify(x)) === i),
+            topics: Object.keys(TOPIC_GEN),
+            games: GAMES2.map((g) => g.id),
+          }}
+        />
+      )}
+      {route === 'workoutrun' && wrun && (
+        <WorkoutRunScreen
+          t={t}
+          lang={s.uiLang}
+          run={wrun}
+          onGo={() => {
+            const b = wrun.blocks[wrun.at];
+            // Games and the vocal warm-up: the block counts as done when started (they run on their own screens).
+            saveRun(addSession(wrun, b.minutes * 60000, Math.max(1, b.minutes), Math.max(1, b.minutes)));
+            if (b.target.kind === 'game') go(b.target.game as Route);
+            else go('vocal');
+          }}
+          onBlockDone={(ms) => {
+            const b = wrun.blocks[wrun.at];
+            const r = addSession(wrun, Math.max(ms, b.minutes * 60000), 1, 1);
+            saveRun(r);
+            if (!r.finished) runCurrent(r);
+          }}
+          onSkip={() => {
+            const r = nextBlock(wrun);
+            saveRun(r);
+            runCurrent(r);
+          }}
+          onEnd={() => {
+            saveRun({ ...wrun, finished: true });
+            go('home');
+          }}
+          onFeedback={(f) => {
+            const until = localDay(new Date(Date.now() + 3 * 86400000));
+            updateSettings({ workoutNudge: { until, delta: f === 'easy' ? 5 : f === 'long' ? -5 : 0 } });
+            go('home');
+          }}
+        />
+      )}
+      {route === 'tuner' && <Tuner lang={s.uiLang} settings={s} onChange={updateSettings} onBack={() => go('home')} />}
+      {(['chord', 'note', 'fretboard', 'interval', 'keysig', 'progression'] as const).map((mode) => {
+        const g = `rush-${mode}` as Route;
+        if (route !== g) return null;
+        const key = `game:${g}`;
+        return (
+          <Rush
+            key={g}
+            lang={s.uiLang}
+            settings={s}
+            mode={mode}
+            saved={loadSlot<unknown>(key)?.data ?? null}
+            onSave={(st: unknown | null) => (st ? saveSlot(key, { title: GAMES2.find((x) => x.id === g)?.[s.uiLang][0] ?? g, route: g, done: 0, total: 0, data: st }) : clearSlot(key))}
+            onExit={() => go('arcade')}
+            onResult={(r: { game: string; score: number; detail?: unknown }) => {
+              void store.recordGame2(g, r.score, undefined, (r.detail ?? {}) as Record<string, unknown>).then(setProgress);
+              noteGameStep(g, r.score, r.detail);
+            }}
+            best={progress.bests?.[g]}
+          />
+        );
+      })}
+      {(['flight', 'nametune', 'tuneup', 'highway', 'melodypuzzle', 'pitchmemory', 'peakhunter'] as const).map((g) => {
+        if (route !== g) return null;
+        const key = `game:${g === 'melodypuzzle' ? 'melody-puzzle' : g}`;
+        const title = GAMES2.find((x) => x.id === g)![s.uiLang][0];
+        const props = {
+          lang: s.uiLang,
+          settings: s,
+          saved: loadSlot<unknown>(key)?.data ?? null,
+          onSave: (st: unknown | null) => (st ? saveSlot(key, { title, route: g, done: 0, total: 0, data: st }) : clearSlot(key)),
+          onExit: () => go('arcade'),
+          onResult: (r: { score: number; detail?: unknown }) => {
+            void store.recordGame2(g, r.score, undefined, (r.detail ?? {}) as Record<string, unknown>).then(setProgress);
+            noteGameStep(g, r.score, r.detail);
+          },
+          best: progress.bests?.[g],
+        };
+        if (g === 'flight') return <Flight key={g} {...props} />;
+        if (g === 'nametune') return <NameTune key={g} {...props} />;
+        if (g === 'tuneup') return <TuneUp key={g} {...props} />;
+        if (g === 'highway') return <Highway key={g} {...props} />;
+        if (g === 'melodypuzzle') return <MelodyPuzzle key={g} {...props} />;
+        if (g === 'peakhunter') return <PeakHunter key={g} {...props} />;
+        return <PitchMemory key={g} {...props} log={progress.pitchMemory ?? []} onLog={(e) => void store.recordGame2('pitchmemory', Math.max(0, 100 - Math.abs(e.cents)), e).then(setProgress)} />;
+      })}
       {route === 'studio' && (
         <Suspense fallback={<main className="panel-screen"><p className="stage-msg">{t.avatarLoading}</p></main>}>
           <AvatarStudio t={t} settings={s} onBack={() => go('home')} onSave={(p) => { updateSettings({ avatars: p }); go('home'); }} />

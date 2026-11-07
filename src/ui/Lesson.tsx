@@ -9,6 +9,8 @@ import { fitLessonToRange, fitQuestions } from '../engine/voiceFit';
 import { withAids } from '../engine/aids';
 import type { Ratings } from '../engine/rating';
 import { NoteViews } from './NoteViews';
+import { DiagramView, PlaceSurfaceView } from './Instrument';
+import { itemNeedsHeadphones } from '../engine/fx';
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { answerFromMidi, makeLesson, pcFromKey, questionSkill, type IntroCard, type SkillId, type LessonDef, type LessonId, type Question } from '../engine/lesson';
 import type { SessionState } from '../engine/session';
@@ -55,11 +57,14 @@ interface Props {
   ratings?: Ratings;
   /** The player's first name, for personal feedback. */
   playerName?: string | null;
+  /** Change a setting from inside the lesson (headphones confirmation, spec AE R2). */
+  onSettings?: (p: Partial<Settings>) => void;
 }
 
 const targetMidiOf = (q: Question) => (q.kind === 'degree' || q.kind === 'sing' || q.kind === 'note-name' ? q.targetMidi : q.kind === 'sing-seq' || q.kind === 'sing-run' ? q.midis[0] : 60);
 
-export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit, onAgain, onNext, onProgress, lessonDef, adapt, resume, onStep, onDone, nextLabel, ratings, playerName }: Props) {
+export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit, onAgain, onNext, onProgress, lessonDef, adapt, resume, onStep, onDone, nextLabel, ratings, playerName, onSettings }: Props) {
+  const [phones, setPhones] = useState(!!settings.headphones);
   const ctrlRef = useRef<LessonController | null>(null);
   const [change, setChange] = useState<{ change: RatingChange; peakBefore: number | null } | null>(null);
   const [xpTotals, setXpTotals] = useState<{ before: number; after: number } | null>(null);
@@ -195,7 +200,12 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
   const isSing = q.kind === 'sing' || q.kind === 'sing-seq' || q.kind === 'sing-run';
   const isSeq = q.kind === 'degree-seq' || q.kind === 'name-seq';
   const isRead = q.kind === 'rhythm-read';
-  const showButtons = v.stage === 'question' && !paused && !v.error && !isSing && !isSeq && !isRead && (v.mode === 'buttons' || v.needsListenTap);
+  const isPlace = q.kind === 'place';
+  const showButtons = v.stage === 'question' && !paused && !v.error && !isSing && !isSeq && !isRead && !isPlace && (v.mode === 'buttons' || v.needsListenTap);
+  // Place questions (spec AE §3.3): the surface is the answer pad; after the answer it shows yours and the right notes.
+  const placeRec = isPlace ? v.session.records[v.index] : null;
+  const placeLast = placeRec?.attempts.length ? String(placeRec.attempts[placeRec.attempts.length - 1].answer) : null;
+  const playing = !!settings.instrument && !['voice'].includes(settings.instrument);
   const showKeypad = v.stage === 'question' && !paused && !v.error && isSeq && (v.mode === 'buttons' || v.needsListenTap);
   const showRecord = v.stage === 'question' && !paused && !v.error && isSing && (v.mode === 'buttons' || v.needsListenTap);
   const awaiting = v.phase === 'listening';
@@ -319,12 +329,21 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
                 {v.feedback?.seqNotes && v.runFrames && v.runFrames.length > 0 && <PitchTrace frames={v.runFrames} targets={q.midis} seconds={q.midis.length / q.run.nps + 0.5} label={t.runTrace} />}
               </>
             ) : q.kind === 'rhythm-read' ? (
-              <ReadPrompt q={q} v={v} lang={lang} onTap={(ms) => ctrl.tapBeat(ms)} onRelease={(ms) => ctrl.tapRelease(ms)} t={t} />
+              <ReadPrompt q={q} v={v} lang={lang} onTap={(ms) => ctrl.tapBeat(ms)} onRelease={(ms) => ctrl.tapRelease(ms)} t={t} onLane={(ms, lane) => ctrl.tapBeat(ms, lane)} />
             ) : (
-              q.kind === 'choice' && (q.text || q.show) ? (
+              q.kind === 'choice' && (q.text || q.show || q.diagram) ? (
                 <div className="choice-show">
                   {q.text && <p className="choice-text" dir="ltr">{q.text[lang]}</p>}
                   {q.show && <NoteStaff notes={q.show.midis} chord={!!q.show.chord} keyPc={q.show.key ?? null} clef={q.show.clef ?? 'treble'} />}
+                  {q.diagram && <DiagramView d={q.diagram} settings={settings} />}
+                </div>
+              ) : q.kind === 'place' ? (
+                <div className="choice-show place-given">
+                  {q.text && <p className="choice-text">{q.text[lang]}</p>}
+                  {q.given && q.given.midis.length > 0 && (q.surface !== 'staff' || q.given.midis.some((m) => !q.target.includes(m))) && (
+                    <NoteStaff notes={q.given.midis} chord={!!q.given.chord} keyPc={q.given.key ?? null} clef={q.given.clef ?? 'treble'} durs={q.given.durs} />
+                  )}
+                  {(!q.given || !q.given.midis.length) && !q.text && q.stimulus.length > 0 && <Orb v={v} label="♪ ?" />}
                 </div>
               ) : (
               <Orb v={v} label={q.kind === 'rhythm-dict' ? '♩ ?' : orbLabel} />
@@ -332,8 +351,31 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
             )}
             <Burst on={celebrate} />
           </div>
-          {!hideKeyboard && <NoteViews q={q} views={settings.noteViews ?? ['keyboard', 'staff']} answered={answered} keysLive={keysLive} />}
+          {!hideKeyboard && !isPlace && <NoteViews q={q} views={settings.noteViews ?? ['keyboard', 'staff']} answered={answered} keysLive={keysLive} leftHanded={settings.leftHanded} />}
+          {isPlace && q.kind === 'place' && v.stage === 'question' && !paused && !v.error && (
+            <PlaceSurfaceView key={`${v.index}-${answered ? 'r' : 'q'}-${placeRec?.attempts.length ?? 0}`} q={q} settings={settings} lang={lang} disabled={!awaiting || answered} result={answered ? (placeLast ?? '') : null} onSubmit={(a) => ctrl.answer(a)} />
+          )}
           {q.aid && !answered && <p className="aid-chip">💡 {t.aidOn}</p>}
+          {!phones && itemNeedsHeadphones(q) && (
+            <div className="phones-card" role="alert">
+              <p>🎧 {lang === 'en' ? 'This one needs headphones: low notes and left / right don’t come through a phone speaker.' : 'כאן צריך אוזניות: צלילים נמוכים ושמאל / ימין לא נשמעים דרך רמקול של טלפון.'}</p>
+              <div className="phones-actions">
+                <button
+                  className="btn primary small"
+                  onClick={() => {
+                    setPhones(true);
+                    onSettings?.({ headphones: true });
+                    ctrl.repeat();
+                  }}
+                >
+                  {lang === 'en' ? 'I’m wearing headphones' : 'אני עם אוזניות'}
+                </button>
+                <button className="btn small ghost" onClick={() => ctrl.skip()}>
+                  {t.skip}
+                </button>
+              </div>
+            </div>
+          )}
           <h1 className="ask">{withNote(askTemplate(q, lang, nm), target, keyName)}</h1>
           <PaceBar v={v} t={t} />
           <Listening v={v} t={t} hint={hintText(q, lang, v.mode === 'voice' && !v.needsListenTap)} />
@@ -370,7 +412,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
           {showKeypad && q.kind === 'degree-seq' && <SeqKeypad key={`${v.index}-${v.session.turn}`} t={t} length={q.degrees.length} disabled={!awaiting} onSubmit={(a) => ctrl.answer(a)} />}
           {showRecord && (
             <button className="btn record" disabled={!awaiting} onClick={() => ctrl.record()}>
-              <MicIcon /> {t.singNow}
+              <MicIcon /> {playing ? t.playNow : t.singNow}
             </button>
           )}
           {v.needsListenTap && v.mode === 'voice' && !isSing && (
@@ -981,8 +1023,48 @@ function SeqTargets({ degrees, notes }: { degrees: number[]; notes?: string[] })
 }
 
 /** What to perform (notation or words), the metronome light and a big tap pad. */
-function ReadPrompt({ q, v, lang, onTap, onRelease, t }: { q: Extract<Question, { kind: 'rhythm-read' }>; v: LessonView; lang: 'he' | 'en'; onTap: (ms: number) => void; onRelease?: (ms: number) => void; t: Strings }) {
+function ReadPrompt({ q, v, lang, onTap, onRelease, t, onLane }: { q: Extract<Question, { kind: 'rhythm-read' }>; v: LessonView; lang: 'he' | 'en'; onTap: (ms: number) => void; onRelease?: (ms: number) => void; t: Strings; onLane?: (ms: number, lane: number) => void }) {
   const names = describeRhythm(q.rhythm, 'names', lang);
+  if (q.lanes && onLane) {
+    // Several pads (drum kit lanes, two hands): one row per lane, written above its pad (spec AE).
+    return (
+      <div className="read-prompt lanes" data-bpm={q.bpm} data-start={v.readStartPerf ?? undefined}>
+        {q.prompt && <p className="read-words">{q.prompt[lang]}</p>}
+        {q.lanes.map((ln, i) => (
+          <div key={i} className="lane-row">
+            <span className="lane-name">{ln.name[lang]}</span>
+            {q.show === 'notation' ? <RhythmStaff rhythm={ln.rhythm} label={describeRhythm(ln.rhythm, 'names', lang)} compact height={70} /> : <span className="read-words">{describeRhythm(ln.rhythm, 'names', lang)}</span>}
+          </div>
+        ))}
+        <div className={`beat-light ${v.beat?.accent ? 'accent' : ''}`} key={v.beat?.n ?? -1} aria-hidden="true" />
+        <div className="lane-pads" dir="ltr">
+          {q.lanes.map((ln, i) => (
+            <button
+              key={i}
+              className={`tap-pad lane-pad ${v.phase === 'listening' ? 'live' : ''}`}
+              data-lane={i}
+              onPointerDown={(e) => {
+                e.preventDefault();
+                onLane(e.timeStamp, i);
+              }}
+            >
+              {ln.name[lang]}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  if (q.tempoGoal) {
+    return (
+      <div className="read-prompt tempo-goal" data-start={v.readStartPerf ?? undefined}>
+        {q.prompt && <p className="read-words">{q.prompt[lang]}</p>}
+        <p className="tempo-target" dir="ltr">♩ = {q.tempoGoal.bpm}</p>
+        <div className={`beat-light ${v.beat?.accent ? 'accent' : ''}`} key={v.beat?.n ?? -1} aria-hidden="true" />
+        <TapPad live={v.phase === 'listening'} count={v.readTaps ?? 0} label={t.tapHere} hint={t.tapPadHint} beat={v.beat?.n ?? -1} accent={!!v.beat?.accent} onTap={onTap} onRelease={onRelease} />
+      </div>
+    );
+  }
   return (
     <div className="read-prompt" data-onsets={onsetBeats(q.rhythm).join(',')} data-bpm={q.bpm} data-start={v.readStartPerf ?? undefined}>
       {q.show === 'notation' ? (

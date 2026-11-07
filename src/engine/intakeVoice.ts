@@ -87,7 +87,7 @@ export const PLAY_WORDS: Record<'he' | 'en', Record<string, string[]>> = {
   he: { none: ['כלום', 'שום', 'לא', 'אף'], keys: ['פסנתר', 'קלידים', 'אורגן', 'קלביר'], guitar: ['גיטרה', 'בס', 'יוקלילי'], strings: ['כינור', 'צ׳לו', 'צלו', 'ויולה', 'מיתרים'], winds: ['חליל', 'סקסופון', 'סקס', 'קלרינט', 'חצוצרה', 'טרומבון', 'נשיפה'], drums: ['תופים', 'תוף', 'כלי הקשה', 'מתופף'], voice: ['קול', 'שירה', 'שר', 'שרה', 'זמר', 'זמרת'] },
 };
 export const AREA_WORDS: Record<'he' | 'en', Record<string, string[]>> = {
-  en: { pitch: ['hearing', 'notes', 'chords', 'ear', 'pitch'], time: ['rhythm', 'tempo', 'beat'], memory: ['memory', 'remember', 'form'], voice: ['singing', 'sing', 'voice'], reading: ['reading', 'theory', 'read'], creative: ['improvising', 'improvise', 'transposing', 'expression', 'creative'] },
-  he: { pitch: ['שמיעה', 'צלילים', 'אקורדים', 'אוזן'], time: ['קצב', 'מקצב', 'טמפו', 'פעמה'], memory: ['זיכרון', 'לזכור', 'מבנה'], voice: ['שירה', 'לשיר', 'קול'], reading: ['קריאה', 'תיאוריה', 'תווים', 'לקרוא'], creative: ['אלתור', 'לאלתר', 'טרנספוזיציה', 'הבעה', 'יצירה'] },
+  en: { pitch: ['hearing', 'notes', 'chords', 'ear', 'pitch'], time: ['rhythm', 'tempo', 'beat'], memory: ['memory', 'remember', 'form'], voice: ['singing', 'sing', 'voice'], reading: ['reading', 'theory', 'read'], creative: ['improvising', 'improvise', 'transposing', 'expression', 'creative'], instrument: ['instrument', 'guitar', 'fretboard', 'sound', 'production', 'mixing'] },
+  he: { pitch: ['שמיעה', 'צלילים', 'אקורדים', 'אוזן'], time: ['קצב', 'מקצב', 'טמפו', 'פעמה'], memory: ['זיכרון', 'לזכור', 'מבנה'], voice: ['שירה', 'לשיר', 'קול'], reading: ['קריאה', 'תיאוריה', 'תווים', 'לקרוא'], creative: ['אלתור', 'לאלתר', 'טרנספוזיציה', 'הבעה', 'יצירה'], instrument: ['כלי', 'גיטרה', 'צוואר', 'סאונד', 'הפקה', 'מיקס'] },
 };
 export const MIX_WORDS = { en: ['mix', 'mixed', 'everything', 'all'], he: ['הכל', 'הכול', 'מעורבב', 'לערבב', 'שילוב', 'כולם'] };
