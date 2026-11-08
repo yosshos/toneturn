@@ -18,6 +18,20 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.50.1',
+    date: '2026-11-08',
+    en: [
+      'MIDI keyboards: the sound now wakes up on the first tap and after the phone was in the background; a button in MIDI settings turns it on if the browser blocked it',
+      'Rhythm items (tempo, meter, downbeat, swing, syncopation, rhythm memory and building) now play on drums, not piano',
+      'Pause, Repeat and Skip now really stop everything: no metronome or drum pattern keeps playing, and replaying a comparison no longer mixes clips',
+    ],
+    he: [
+      'מקלדות מידי: הצליל מתעורר עכשיו בנגיעה הראשונה וגם אחרי שהטלפון היה ברקע; בהגדרות המידי יש כפתור שמפעיל אותו אם הדפדפן חסם',
+      'תרגילי קצב (טמפו, משקל, פעמה ראשונה, סווינג, סינקופה, זיכרון ובניית מקצב) מתנגנים עכשיו בתופים, לא בפסנתר',
+      'השהיה, השמעה חוזרת ודילוג עוצרים עכשיו הכל באמת: שום מטרונום או מקצב תופים לא ממשיך, והשמעה חוזרת של השוואה כבר לא מערבבת קטעים',
+    ],
+  },
+  {
     version: '0.50.0',
     date: '2026-11-08',
     en: [

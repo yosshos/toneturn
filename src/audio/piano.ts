@@ -301,6 +301,8 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
   liveNote(m: number, on: boolean, velocity127: number) {
     const ctx = this.ctx;
     if (!ctx) return;
+    // A phone that was in the background (or a context made before any tap) may be suspended: wake it on each key.
+    if (ctx.state !== 'running') void ctx.resume().catch(() => {});
     if (on) {
       this.liveRelease(m, 0.03);
       this.ensureLiveBuses();
@@ -372,6 +374,11 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
       }
     }
     this.noteOff(m);
+  }
+
+  /** Whether sound can play now (false until the first tap, or after the system suspended it). */
+  get audioRunning() {
+    return this.ctx?.state === 'running';
   }
 
   get context() {
@@ -586,6 +593,37 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     });
   }
 
+  /** A soft sustained hum (rhythm items): shows how long a note lasts under a drum hit, without sounding like a piano. */
+  private hum(midi: number, velocity: number, start: number, dur: number) {
+    const ctx = this.ctx!;
+    const f = 440 * 2 ** ((midi - 69) / 12);
+    const out = ctx.createGain();
+    const peak = 0.22 * velocity;
+    out.gain.setValueAtTime(0, start);
+    out.gain.linearRampToValueAtTime(peak, start + 0.02);
+    out.gain.setValueAtTime(peak, start + Math.max(0.03, dur - 0.04));
+    out.gain.linearRampToValueAtTime(0, start + dur);
+    out.connect(this.percBus);
+    const oscs: AudioScheduledSourceNode[] = [];
+    for (const [type, amp] of [['sine', 1], ['triangle', 0.25]] as const) {
+      const o = ctx.createOscillator();
+      o.type = type;
+      o.frequency.value = f;
+      const g = ctx.createGain();
+      g.gain.value = amp;
+      o.connect(g).connect(out);
+      o.start(start);
+      o.stop(start + dur + 0.05);
+      oscs.push(o);
+    }
+    const v: Voice = { out, oscs, end: start + dur + 0.05 };
+    this.voices.add(v);
+    oscs[0].onended = () => {
+      this.voices.delete(v);
+      out.disconnect();
+    };
+  }
+
   private playFx(buf: AudioBuffer, at: number) {
     const ctx = this.ctx!;
     const src = ctx.createBufferSource();
@@ -624,7 +662,11 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
         this.perc(e.perc, t0 + e.start, e.velocity);
         continue;
       }
-      if (!this.sample(e.midi, e.velocity, t0 + e.start, e.duration, e.inst)) this.voice(e.midi, e.velocity, t0 + e.start, e.duration);
+      if (e.inst === 'hum') {
+        this.hum(e.midi, e.velocity, t0 + e.start, e.duration);
+        continue;
+      }
+      if (!this.sample(e.midi, e.velocity, t0 + e.start, e.duration, e.inst === 'bass' ? 'bass' : undefined)) this.voice(e.midi, e.velocity, t0 + e.start, e.duration);
       const lead = (t0 - ctx.currentTime) * 1000;
       later(lead + e.start * 1000, () => this.noteOn(e.midi));
       later(lead + (e.start + e.duration) * 1000, () => this.noteOff(e.midi));
@@ -739,6 +781,30 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
         }
       }
     }
+    this.cutScheduledPerc(now);
+  }
+
+  /**
+   * Drum hits, clicks and cues are scheduled ahead and not tracked one by one, so Stop / Pause / Repeat used to leave
+   * the rest of a pattern (or the count-in) playing over the next one. Swap their buses: everything already scheduled
+   * goes to the old bus, which fades out and is unplugged; new sounds go to fresh ones.
+   */
+  private cutScheduledPerc(now: number) {
+    const ctx = this.ctx;
+    if (!ctx || !this.percBus || !this.cueBus) return;
+    const old = [this.percBus, this.cueBus];
+    for (const b of old) {
+      b.gain.cancelScheduledValues(now);
+      b.gain.setValueAtTime(b.gain.value, now);
+      b.gain.setTargetAtTime(0, now, 0.012);
+    }
+    setTimeout(() => old.forEach((b) => b.disconnect()), 120);
+    this.percBus = ctx.createGain();
+    this.percBus.gain.value = 0.85;
+    this.percBus.connect(this.strips.drums!.input);
+    this.cueBus = ctx.createGain();
+    this.cueBus.gain.value = 0.18;
+    this.cueBus.connect(this.strips.cues!.input);
   }
 
   cue(kind: CueKind) {

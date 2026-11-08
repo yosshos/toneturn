@@ -337,17 +337,22 @@ export function App() {
     const offS = midi.onState(() => piano.liveAllOff());
     const onVis = () => document.hidden && piano.liveAllOff();
     document.addEventListener('visibilitychange', onVis);
-    // Browsers start sound only after a tap: the first tap or key anywhere opens it, so the first MIDI key already sounds.
-    const wake = () => void piano.unlock().catch(() => {});
-    addEventListener('pointerdown', wake, { once: true });
-    addEventListener('keydown', wake, { once: true });
+    // Browsers start sound only after a tap: the first tap or key anywhere opens it, so the first MIDI key already sounds
+    // (and again after the phone suspended it), so every tap or key re-opens it while it is not running.
+    const wake = () => {
+      if (!piano.audioRunning) void piano.unlock().catch(() => {});
+    };
+    addEventListener('pointerdown', wake, true);
+    addEventListener('keydown', wake, true);
+    document.addEventListener('visibilitychange', wake);
     return () => {
       offN();
       offC();
       offS();
       document.removeEventListener('visibilitychange', onVis);
-      removeEventListener('pointerdown', wake);
-      removeEventListener('keydown', wake);
+      removeEventListener('pointerdown', wake, true);
+      removeEventListener('keydown', wake, true);
+      document.removeEventListener('visibilitychange', wake);
       piano.liveAllOff();
     };
   }, [s.midiInput, s.midiSound]);

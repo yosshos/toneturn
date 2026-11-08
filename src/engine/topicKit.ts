@@ -1,6 +1,7 @@
 // Shared kit for topic generators (spec T–V): the registry, seeded randomness, names, stimuli.
 
 import { surfaceVary } from './surface';
+import { drumVoice } from './drumVoice';
 import type { ChoiceQuestion, LessonDef, PlaceQuestion, RhythmDictQuestion, RhythmReadQuestion, SingQuestion, SingSeqQuestion, SkillId, Stimulus } from './lesson';
 
 /** What a topic generator may produce (spec AE): a choice, notes to place, a rhythm to tap, a note or line to sing / play. */
@@ -61,7 +62,7 @@ export function asChoice(q: TopicItem): ChoiceQuestion {
 
 /** One generated item, with its seed's surface variation (transposition and tempo, when they don't change the answer). */
 export function genTopic(topic: string, seed: number, level: number, id: string): TopicItem {
-  const q = TOPIC_GEN[topic].gen(seed, level, id);
+  const q = drumVoice(TOPIC_GEN[topic].gen(seed, level, id), topic);
   return q.kind === 'choice' ? surfaceVary(q, topic, seed) : q;
 }
 

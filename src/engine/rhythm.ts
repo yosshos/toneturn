@@ -245,10 +245,10 @@ export function rhythmSound(r: Rhythm, bpm: number, midi = 67, countIn?: number)
   for (let i = 0; i < passage; i++) out.push({ midi: 96, start: t0 + i * pulse, duration: 0.05, velocity: i % perBar === 0 ? 0.26 : 0.16, perc: i % perBar === 0 ? 'accent' : 'click' });
   for (const e of events(r)) {
     if (e.rest) continue;
-    // A snare hit marks each note; a soft held tone under it keeps long notes audibly long (a half is not a quarter + rest).
+    // A snare hit marks each note; a soft hum under it (not a piano) keeps long notes audibly long (a half is not a quarter + rest).
     const at = t0 + (e.start / TPQ) * beat;
     out.push({ midi: 38, start: at, duration: 0.05, velocity: 0.85, perc: 'snare' });
-    out.push({ midi, start: at, duration: Math.max(0.1, (e.dur / TPQ) * beat * 0.92), velocity: 0.3 });
+    out.push({ midi, start: at, duration: Math.max(0.1, (e.dur / TPQ) * beat * 0.92), velocity: 0.3, inst: 'hum' });
   }
   return { events: out, length: t0 + totalBeats(r) * beat + 0.4 };
 }

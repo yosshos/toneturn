@@ -31,7 +31,6 @@ test('MIDI keyboard (stub device): enable in Settings, answer a degree question 
     const inp = (window as unknown as { __midiIn: { onmidimessage: (e: { data: Uint8Array; timeStamp: number }) => void } }).__midiIn;
     const path = '/src/ui/services.ts';
     const { piano } = await import(/* @vite-ignore */ path);
-    await piano.unlock();
     let seen: number[] = [];
     const off = piano.onNotes((a: number[]) => (seen = a));
     inp.onmidimessage({ data: new Uint8Array([0x90, 64, 100]), timeStamp: performance.now() });

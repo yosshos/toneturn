@@ -772,6 +772,11 @@ function MidiPanel({ t, lang, on, onChange, naming, s, onSettings }: { t: String
   const [devices, setDevices] = useState<string[]>(midi.devices);
   const [last, setLast] = useState<{ note: number; vel: number } | null>(null);
   const [pedal, setPedal] = useState(false);
+  const [audioOn, setAudioOn] = useState(piano.audioRunning);
+  useEffect(() => {
+    const id = setInterval(() => setAudioOn(piano.audioRunning), 600);
+    return () => clearInterval(id);
+  }, []);
   useEffect(() => {
     if (!on) return;
     if (midi.supported) void midi.enable().then(setDevices, () => setStatus(t.midiUnsupported));
@@ -789,6 +794,7 @@ function MidiPanel({ t, lang, on, onChange, naming, s, onSettings }: { t: String
     };
   }, [on, t.midiUnsupported]);
   const turnOn = async () => {
+    void piano.unlock().catch(() => {}); // inside the tap: the keys can sound at once
     if (!midi.supported) return setStatus(t.midiUnsupported);
     try {
       setDevices(await midi.enable());
@@ -838,6 +844,11 @@ function MidiPanel({ t, lang, on, onChange, naming, s, onSettings }: { t: String
             <p className="field-hint">{he ? 'רוב מקלדות המידי בלי רמקולים — האפליקציה מנגנת בצליל שבחרתם (הגדרות ← צליל). אם לפסנתר שלכם יש רמקולים משלו, כבו כדי לא לשמוע כפול.' : 'Most MIDI keyboards have no speakers, so the app plays your keys in the sound you chose (Settings → Sound). If your piano has its own speakers, turn this off to avoid hearing everything twice.'}</p>
             {s.midiSound !== false && (
               <>
+                {!audioOn && (
+                  <button className="btn primary small" onClick={() => void piano.unlock().then(() => setAudioOn(piano.audioRunning))} data-midi-audio-on="1">
+                    {he ? '🔈 הפעלת צליל (הדפדפן דורש נגיעה אחת)' : '🔈 Turn sound on (the browser needs one tap)'}
+                  </button>
+                )}
                 <label className="mx-knob">
                   <span>{he ? 'עוצמת הקלידים' : 'Keys volume'}</span>
                   <input type="range" dir="ltr" min={0} max={1.5} step={0.05} value={s.midiVolume ?? 1} onChange={(e) => onSettings({ midiVolume: Number(e.target.value) })} data-midi-volume="1" />
