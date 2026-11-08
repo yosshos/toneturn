@@ -246,3 +246,47 @@
 .today-nick small {
   color: var(--ink-dim);
 }
+
+/* 0.45 — Friends screen, calmer: me card, three tabs, clean ranking rows (owner 2026-11-08: "this view is ugly") */
+.fr2 { display: grid; gap: 12px; }
+.fr2 .fr-me { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); }
+.fr2 .fr-me-text { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.fr2 .fr-me-text b { font-size: 1.05rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fr2 .fr-me-text small { color: var(--ink-dim); }
+.fr2 .friend-code { font-family: ui-monospace, monospace; letter-spacing: 0.08em; color: var(--ink); font-weight: 700; }
+.fr2 .fr-tabs { display: grid; grid-template-columns: repeat(3, 1fr); }
+.fr2 .set-card h2 { font-size: 1.05rem; margin: 0; }
+.fr2 .fr-board-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.fr2 .fr-sort { display: flex; gap: 4px; flex: none; }
+.fr2 .fr-sort .chip { padding: 4px 10px; font-size: 0.82rem; min-height: 0; }
+.fr2 .fr-list { list-style: none; margin: 0; padding: 0; display: grid; }
+.fr2 .fr-row { display: flex; align-items: center; gap: 10px; padding: 10px 6px; border-top: 1px solid var(--line); min-width: 0; }
+.fr2 .fr-row:first-child { border-top: 0; }
+.fr2 .fr-row.me { background: color-mix(in srgb, var(--accent, #888) 8%, transparent); border-radius: 10px; }
+.fr2 .fr-rank { width: 18px; flex: none; text-align: center; font-weight: 700; color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+.fr2 .fr-av { width: 34px; height: 34px; flex: none; display: grid; place-items: center; border-radius: 50%; background: color-mix(in srgb, var(--ink) 10%, transparent); font-weight: 700; color: var(--ink-soft); }
+.fr2 .fr-main { flex: 1; min-width: 0; display: grid; gap: 4px; }
+.fr2 .fr-top { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
+.fr2 .fr-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; font-weight: 600; }
+.fr2 .fr-you { color: var(--ink-dim); flex: none; }
+.fr2 .fr-xp { margin-inline-start: auto; flex: none; font-weight: 700; font-variant-numeric: tabular-nums; }
+.fr2 .fr-bar { display: block; height: 4px; border-radius: 99px; background: color-mix(in srgb, var(--ink) 10%, transparent); overflow: hidden; }
+.fr2 .fr-bar > span { display: block; height: 100%; border-radius: inherit; background: var(--accent, var(--gold)); }
+.fr2 .fr-stats { display: flex; align-items: center; gap: 12px; color: var(--ink-dim); font-size: 0.82rem; }
+.fr2 .fr-stats > span { display: inline-flex; align-items: center; gap: 4px; }
+.fr2 .fr-remove { width: 30px; height: 30px; min-height: 30px; padding: 0; flex: none; opacity: 0.55; }
+.fr2 .fr-add-row { display: flex; gap: 8px; margin-top: 8px; }
+.fr2 .fr-add-row .code-input { flex: 1; min-width: 0; letter-spacing: 0.1em; }
+.fr2 .fr-req-list { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 8px; }
+.fr2 .fr-req-list li { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.fr2 .fr-req-list li b { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fr2 .fr-req-list li small { color: var(--ink-dim); }
+.fr2 { align-content: start; }
+.fr2 .fr-me .friend-code { font-size: inherit; display: inline; }
+.fr2 .fr-tabs { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 1fr; }
+.fr2 .fr-tabs > button { padding-inline: 4px; white-space: nowrap; }
+.classes.embedded { display: grid; gap: 12px; }
+/* "Community" fits the tab bar on a 360px phone */
+.tab { padding-inline: 0; }
+.tab-label { letter-spacing: -0.01em; }
+.fr2 .fr-remove { width: 24px; height: 24px; min-height: 24px; font-size: 0.75rem; border: 0; background: none; }

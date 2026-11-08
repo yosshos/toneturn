@@ -25,7 +25,7 @@ test.describe('practice hub', () => {
   test('menu groups and the Progress area sheet', async ({ page }) => {
     await page.goto('/?sim=1');
     await page.getByRole('button', { name: 'Menu' }).click();
-    await expect(page.locator('.menu-group-h')).toHaveText(['Tools', 'Check yourself', 'Community', 'App']);
+    await expect(page.locator('.menu-group-h')).toHaveText(['Tools', 'Check yourself', 'You']);
     await page.locator('.menu-sheet .menu-head .icon-btn').click();
     await page.goto('/?sim=1#/skills');
     await page.locator('#ps-tab-overview').click();

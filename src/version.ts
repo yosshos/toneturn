@@ -18,6 +18,20 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.45.0',
+    date: '2026-11-08',
+    en: [
+      'Friends is now Community: your card and friend code on top, then Friends, League, Duels and Class tabs',
+      'A cleaner weekly ranking: avatars, one-line rows, simple icons — nothing cut off at the edge',
+      'The menu is shorter: Tools, Check yourself, You',
+    ],
+    he: [
+      'חברים הפך לקהילה: הכרטיס וקוד החבר שלכם למעלה, ואז לשוניות חברים, ליגה, דו־קרבות וכיתה',
+      'דירוג שבועי נקי יותר: תמונות, שורה אחת לכל חבר, אייקונים פשוטים — שום דבר לא נחתך בקצה',
+      'התפריט קצר יותר: כלים, בדיקה, אני',
+    ],
+  },
+  {
     version: '0.44.0',
     date: '2026-11-08',
     en: [

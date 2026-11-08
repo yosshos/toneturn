@@ -8,7 +8,7 @@ import { LESSON_META } from '../game/content';
 import type { Strings } from '../i18n/strings';
 import type { Settings } from '../storage/progress';
 
-export function ClassesScreen({ t, settings, user, onBack, onOpenLesson }: { t: Strings; settings: Settings; user: CloudUser | null; onBack: () => void; onOpenLesson: (id: LessonId) => void }) {
+export function ClassesScreen({ t, settings, user, onBack, onOpenLesson, embedded }: { t: Strings; settings: Settings; user: CloudUser | null; onBack: () => void; onOpenLesson: (id: LessonId) => void; /** Inside the Community tab (0.45): no own header. */ embedded?: boolean }) {
   const lang = settings.uiLang;
   const [data, setData] = useState<MyClasses | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -40,13 +40,15 @@ export function ClassesScreen({ t, settings, user, onBack, onOpenLesson }: { t: 
   const title = (id: string) => assignmentTitle(id, lang, t);
 
   return (
-    <main className="panel-screen classes">
-      <header className="screen-head">
-        <button className="icon-btn" onClick={onBack} aria-label={t.back}>
-          <span className="flip-rtl">←</span>
-        </button>
-        <h1>{t.classes}</h1>
-      </header>
+    <main className={embedded ? "classes embedded" : "panel-screen classes"}>
+      {!embedded && (
+        <header className="screen-head">
+          <button className="icon-btn" onClick={onBack} aria-label={t.back}>
+            <span className="flip-rtl">←</span>
+          </button>
+          <h1>{t.classes}</h1>
+        </header>
+      )}
       <p className="field-hint">{t.classesHint}</p>
       {!cloudConfigured ? (
         <p className="set-card">{t.onlineUnavailable}</p>

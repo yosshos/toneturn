@@ -7,9 +7,12 @@ import type { CloudUser } from '../cloud/cloud';
 import type { Strings } from '../i18n/strings';
 import { AccountCard, type SyncState } from './Account';
 import { CompareSheet, FriendsBoard, type FriendStats } from './Compare';
+import { Avatar } from './Profile';
 import type { Progress } from '../storage/progress';
 
-export function FriendsScreen({ t, user, sync, onBack, settings, onBestTier, onLeagueSeen, progress, streak = 0 }: { t: Strings; user: CloudUser | null; sync: SyncState; onBack: () => void; settings: Settings; onBestTier?: (tier: number) => void; onLeagueSeen?: (tier: number) => void; progress?: Progress; streak?: number }) {
+export function FriendsScreen({ t, user: realUser, sync, onBack, settings, onBestTier, onLeagueSeen, progress, streak = 0, classes }: { classes?: React.ReactNode; t: Strings; user: CloudUser | null; sync: SyncState; onBack: () => void; settings: Settings; onBestTier?: (tier: number) => void; onLeagueSeen?: (tier: number) => void; progress?: Progress; streak?: number }) {
+  // Dev-only layout preview with made-up friends (?demoFriends): never in a production build.
+  const user = realUser ?? (import.meta.env.DEV && DEMO ? DEMO_USER : null);
   const [duelPlaying, setDuelPlaying] = useState(false);
   const [cmp, setCmp] = useState<FriendStats | null>(null);
   const [me, setMe] = useState<MyProfile | null>(null);
@@ -22,6 +25,12 @@ export function FriendsScreen({ t, user, sync, onBack, settings, onBestTier, onL
 
   const load = useCallback(async () => {
     if (!user) return;
+    if (import.meta.env.DEV && DEMO && !realUser) {
+      setMe({ friend_code: 'K7Q2MX', display_name: settings.nickname ?? 'DorianShredder11', tz: 'UTC', reminder_hour: 19 });
+      setName(settings.nickname ?? 'DorianShredder11');
+      setRows(demoRows());
+      return;
+    }
     try {
       const p = await myProfile(null);
       setMe(p);
@@ -46,13 +55,49 @@ export function FriendsScreen({ t, user, sync, onBack, settings, onBestTier, onL
   const outgoing = rows.filter((r) => r.relation === 'outgoing');
   const maxWeek = Math.max(1, ...board.map((r) => r.week_xp ?? 0));
 
+  const lang = settings.uiLang;
+  type Tab = 'friends' | 'league' | 'duels' | 'class';
+  const [tab, setTab] = useState<Tab>(() => {
+    try {
+      return (sessionStorage.getItem('toneturn.friendsTab') as Tab | null) ?? 'friends';
+    } catch {
+      return 'friends';
+    }
+  });
+  const pickTab = (x: Tab) => {
+    setTab(x);
+    try {
+      sessionStorage.setItem('toneturn.friendsTab', x);
+    } catch {
+      /* fine */
+    }
+  };
+  const friends = rows.filter((r) => r.relation === 'friend');
+  const shareCode = async () => {
+    const text = `${t.shareText} ${me?.friend_code}`;
+    try {
+      if (navigator.share) await navigator.share({ text });
+      else await navigator.clipboard.writeText(me?.friend_code ?? '');
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* cancelled */
+    }
+  };
+  const TABS = [
+    ['friends', t.friends],
+    ['league', lang === 'he' ? 'ליגה' : 'League'],
+    ['duels', lang === 'he' ? 'דו־קרבות' : 'Duels'],
+    ...(classes ? ([['class', lang === 'he' ? 'כיתה' : 'Class']] as const) : []),
+  ] as const;
+
   return (
-    <main className="panel-screen friends">
+    <main className="panel-screen friends fr2">
       <header className="screen-head">
         <button className="icon-btn" onClick={onBack} aria-label={t.back}>
           <span className="flip-rtl">←</span>
         </button>
-        <h1>{t.friends}</h1>
+        <h1>{lang === 'he' ? 'קהילה' : 'Community'}</h1>
       </header>
 
       {!user ? (
@@ -64,109 +109,37 @@ export function FriendsScreen({ t, user, sync, onBack, settings, onBestTier, onL
         <>
           {err && <p className="field-hint warn">{err}</p>}
 
-          <section className="set-card code-card">
-            <div className="code-row">
-              <div>
-                <small>{t.yourCode}</small>
-                <b className="friend-code" dir="ltr">
+          {/* Me: picture, flag, nickname (edited in Settings → Account) and the friend code to share. */}
+          <section className="fr-me" data-fr-me="1">
+            <Avatar s={settings} size={48} />
+            <span className="fr-me-text">
+              <b>{name || '…'}</b>
+              <small>
+                {t.yourCode}{' '}
+                <span className="friend-code" dir="ltr">
                   {me?.friend_code ?? '······'}
-                </b>
-              </div>
-              <button
-                className="btn small"
-                disabled={!me}
-                onClick={async () => {
-                  const text = `${t.shareText} ${me?.friend_code}`;
-                  try {
-                    if (navigator.share) await navigator.share({ text });
-                    else await navigator.clipboard.writeText(me?.friend_code ?? '');
-                    setCopied(true);
-                    setTimeout(() => setCopied(false), 1500);
-                  } catch {
-                    /* cancelled */
-                  }
-                }}
-              >
-                {copied ? `✓ ${t.copied}` : t.copy}
-              </button>
-            </div>
-            <form
-              className="row"
-              onSubmit={async (e) => {
-                e.preventDefault();
-                setMe(await myProfile(name));
-                void load();
-              }}
-            >
-              <label className="grow inline-field">
-                <small>{t.nickname}</small>
-                <input value={name} maxLength={40} onChange={(e) => setName(e.target.value)} />
-              </label>
-              <button className="btn small" type="submit">
-                {t.save}
-              </button>
-            </form>
+                </span>
+              </small>
+            </span>
+            <button className="btn small" disabled={!me} onClick={() => void shareCode()} data-fr-share="1">
+              {copied ? `✓ ${t.copied}` : lang === 'he' ? 'שיתוף' : 'Share'}
+            </button>
           </section>
 
-          {progress && rows.some((r) => r.relation === 'friend') && (
-            <section className="set-card">
-              <FriendsBoard t={t} rows={rows.filter((r) => r.relation === 'friend') as FriendStats[]} share={settings.shareStats ?? 'levels'} onOpen={setCmp} />
-            </section>
-          )}
-          {progress && cmp && <CompareSheet t={t} progress={progress} friend={cmp} share={settings.shareStats ?? 'levels'} myStreak={streak} onClose={() => setCmp(null)} />}
-          <section className="set-card">
-            <h2>➕ {t.addFriend}</h2>
-            <form
-              className="row"
-              onSubmit={async (e) => {
-                e.preventDefault();
-                setMsg(null);
-                try {
-                  const r = await addFriend(code);
-                  setMsg(t.addResult[r]);
-                  if (r === 'requested' || r === 'accepted') setCode('');
-                  void load();
-                } catch (x) {
-                  setMsg(String((x as Error).message ?? x));
-                }
-              }}
-            >
-              <input
-                className="code-input grow"
-                dir="ltr"
-                value={code}
-                maxLength={8}
-                placeholder="ABC234"
-                aria-label={t.friendCode}
-                onChange={(e) => setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
-              />
-              <button className="btn primary" type="submit" disabled={code.length < 6}>
-                {t.add}
-              </button>
-            </form>
-            {msg && <p className="field-hint">{msg}</p>}
-          </section>
-
-          {user && <LeagueCard t={t} lang={settings.uiLang} onBestTier={onBestTier} lastSeen={settings.leagueSeen} onSeen={onLeagueSeen} />}
-          {user && (
-            <DuelsSection
-              t={t}
-              settings={settings}
-              friends={rows.filter((r) => r.relation === 'friend').map((r) => ({ id: r.user_id, name: r.name }))}
-              onPlaying={setDuelPlaying}
-            />
-          )}
           {!duelPlaying && incoming.length > 0 && (
-            <section className="set-card">
-              <h2>📨 {t.requests}</h2>
-              <ul className="req-list">
+            <section className="set-card fr-requests">
+              <h2>{t.requests}</h2>
+              <ul className="fr-req-list">
                 {incoming.map((r) => (
                   <li key={r.user_id}>
+                    <span className="fr-av" aria-hidden="true">
+                      {initial(r.name)}
+                    </span>
                     <b>{r.name}</b>
                     <button className="btn small primary" onClick={() => void respondFriend(r.user_id, true).then(load)}>
                       {t.accept}
                     </button>
-                    <button className="btn small" onClick={() => void respondFriend(r.user_id, false).then(load)}>
+                    <button className="btn small ghost" onClick={() => void respondFriend(r.user_id, false).then(load)}>
                       {t.decline}
                     </button>
                   </li>
@@ -175,76 +148,155 @@ export function FriendsScreen({ t, user, sync, onBack, settings, onBestTier, onL
             </section>
           )}
 
-          <section className="set-card">
-            <div className="league-head">
-              <h2>🏆 {sortBy === 'xp' ? t.thisWeek : t.overallRating}</h2>
-              <div className="seg small-seg" role="radiogroup" aria-label={t.sortBy}>
-                {(['xp', 'rating'] as const).map((k) => (
-                  <button key={k} type="button" role="radio" aria-checked={sortBy === k} className={sortBy === k ? 'on' : ''} onClick={() => setSortBy(k)}>
-                    {k === 'xp' ? t.xpThisWeek : t.overallRating}
-                  </button>
-                ))}
-              </div>
-            </div>
-            {board.length <= 1 && <p className="field-hint">{t.noFriends}</p>}
-            <ol className="league">
-              {board.map((r, i) => (
-                <li key={r.user_id} className={r.relation === 'me' ? 'me' : ''}>
-                  <span className="rank">{i + 1}</span>
-                  <div className="league-main">
-                    <div className="league-top">
-                      <b>
-                        {r.relation === 'me' ? `${r.name} (${t.you})` : r.name} <RatingBadge r={r.rating} provisional={!!r.rating_provisional} t={t} size="sm" />
-                      </b>
-                      <span className="wk-xp" dir="ltr">
-                        {r.week_xp ?? 0} XP
-                      </span>
-                    </div>
-                    <div className="bar" aria-hidden="true">
-                      <span style={{ width: `${((r.week_xp ?? 0) / maxWeek) * 100}%` }} />
-                    </div>
-                    <div className="league-stats">
-                      <span title={t.streak}>🔥 {r.streak ?? 0}</span>
-                      <span title={t.totalXp}>★ {r.total_xp ?? 0}</span>
-                      <span title={t.lessons}>📘 {r.lessons_done ?? 0}</span>
-                      <span title={t.echoChain}>🎵 {r.best_melody ?? '–'}</span>
-                      <span title={t.beatEcho}>🥁 {r.best_rhythm ?? '–'}</span>
-                    </div>
-                  </div>
-                  {r.relation === 'friend' && (
-                    <button
-                      className="icon-btn small-x"
-                      aria-label={`${t.remove} ${r.name}`}
-                      onClick={() => {
-                        if (confirm(`${t.remove} ${r.name}?`)) void removeFriend(r.user_id).then(load);
-                      }}
-                    >
-                      ✕
-                    </button>
-                  )}
-                </li>
-              ))}
-            </ol>
-            <p className="field-hint">🎵🥁 {t.selfReported}</p>
-          </section>
+          <div className="seg fr-tabs" role="tablist" aria-label={t.friends}>
+            {TABS.map(([k, label]) => (
+              <button key={k} role="tab" aria-selected={tab === k} className={tab === k ? 'on' : ''} onClick={() => pickTab(k)} data-fr-tab={k}>
+                {label}
+              </button>
+            ))}
+          </div>
 
-          {outgoing.length > 0 && (
-            <section className="set-card">
-              <h2>⏳ {t.pending}</h2>
-              <ul className="req-list">
-                {outgoing.map((r) => (
-                  <li key={r.user_id}>
-                    <b>{r.name}</b>
-                    <button className="btn small" onClick={() => void removeFriend(r.user_id).then(load)}>
-                      {t.remove}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </section>
+          {tab === 'friends' && (
+            <>
+              <section className="set-card fr-board">
+                <div className="fr-board-head">
+                  <h2>{sortBy === 'xp' ? t.thisWeek : t.overallRating}</h2>
+                  <div className="fr-sort" role="radiogroup" aria-label={t.sortBy}>
+                    {(['xp', 'rating'] as const).map((k) => (
+                      <button key={k} type="button" role="radio" aria-checked={sortBy === k} className={`chip ${sortBy === k ? 'on' : ''}`} onClick={() => setSortBy(k)}>
+                        {k === 'xp' ? 'XP' : t.overallRating}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <ol className="fr-list">
+                  {board.map((r, i) => {
+                    const mine = r.relation === 'me';
+                    return (
+                      <li key={r.user_id} className={`fr-row ${mine ? 'me' : ''}`}>
+                        <span className="fr-rank">{i + 1}</span>
+                        {mine ? (
+                          <Avatar s={settings} size={34} />
+                        ) : (
+                          <span className="fr-av" aria-hidden="true">
+                            {initial(r.name)}
+                          </span>
+                        )}
+                        <span className="fr-main">
+                          <span className="fr-top">
+                            <b className="fr-name">{r.name}</b>
+                            {mine && <small className="fr-you">{t.you}</small>}
+                            <span className="fr-xp" dir="ltr">
+                              {sortBy === 'xp' ? `${r.week_xp ?? 0} XP` : (r.rating ?? '—')}
+                            </span>
+                          </span>
+                          <span className="fr-bar" aria-hidden="true">
+                            <span style={{ width: `${((r.week_xp ?? 0) / maxWeek) * 100}%` }} />
+                          </span>
+                          <span className="fr-stats">
+                            <span title={t.streak}>
+                              <LineIcon d={FLAME} /> {r.streak ?? 0}
+                            </span>
+                            <span title={t.lessons}>
+                              <LineIcon d={BOOK} /> {r.lessons_done ?? 0}
+                            </span>
+                            {sortBy === 'xp' && <RatingBadge r={r.rating} provisional={!!r.rating_provisional} t={t} size="sm" />}
+                          </span>
+                        </span>
+                        {r.relation === 'friend' && (
+                          <button
+                            className="icon-btn fr-remove"
+                            aria-label={`${t.remove} ${r.name}`}
+                            onClick={() => {
+                              if (confirm(`${t.remove} ${r.name}?`)) void removeFriend(r.user_id).then(load);
+                            }}
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ol>
+                {board.length <= 1 && <p className="field-hint">{t.noFriends}</p>}
+              </section>
+
+              {progress && friends.length > 0 && (
+                <section className="set-card">
+                  <FriendsBoard t={t} rows={friends as FriendStats[]} share={settings.shareStats ?? 'levels'} onOpen={setCmp} />
+                </section>
+              )}
+              {progress && cmp && <CompareSheet t={t} progress={progress} friend={cmp} share={settings.shareStats ?? 'levels'} myStreak={streak} onClose={() => setCmp(null)} />}
+
+              <section className="set-card fr-add">
+                <h2>{t.addFriend}</h2>
+                <form
+                  className="fr-add-row"
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    setMsg(null);
+                    try {
+                      const r = await addFriend(code);
+                      setMsg(t.addResult[r]);
+                      if (r === 'requested' || r === 'accepted') setCode('');
+                      void load();
+                    } catch (x) {
+                      setMsg(String((x as Error).message ?? x));
+                    }
+                  }}
+                >
+                  <input className="code-input" dir="ltr" value={code} maxLength={8} placeholder="ABC234" aria-label={t.friendCode} onChange={(e) => setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))} />
+                  <button className="btn primary" type="submit" disabled={code.length < 6}>
+                    {t.add}
+                  </button>
+                </form>
+                {msg && <p className="field-hint">{msg}</p>}
+                {outgoing.length > 0 && (
+                  <ul className="fr-req-list fr-pending">
+                    {outgoing.map((r) => (
+                      <li key={r.user_id}>
+                        <span className="fr-av" aria-hidden="true">
+                          {initial(r.name)}
+                        </span>
+                        <b>{r.name}</b>
+                        <small>{t.pending}</small>
+                        <button className="btn small ghost" onClick={() => void removeFriend(r.user_id).then(load)}>
+                          {t.remove}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+            </>
           )}
+          {tab === 'league' && <LeagueCard t={t} lang={lang} onBestTier={onBestTier} lastSeen={settings.leagueSeen} onSeen={onLeagueSeen} />}
+          {tab === 'class' && classes}
+          {tab === 'duels' && <DuelsSection t={t} settings={settings} friends={friends.map((r) => ({ id: r.user_id, name: r.name }))} onPlaying={setDuelPlaying} />}
         </>
       )}
     </main>
+  );
+}
+
+const DEMO = import.meta.env.DEV && typeof location !== 'undefined' && new URLSearchParams(location.search).has('demoFriends');
+const demo = (user_id: string, name: string, relation: FriendRow['relation'], week_xp: number, streak: number, lessons_done: number, rating: number): FriendRow => ({ user_id, name, relation, week_xp, total_xp: week_xp * 6, streak, lessons_done, best_melody: null, best_rhythm: null, last_active: null, rating, rating_provisional: false });
+const DEMO_USER = { id: 'demo', name: 'Demo' } as unknown as CloudUser;
+const demoRows = (): FriendRow[] => [
+  demo('me', 'DorianShredder11', 'me', 420, 3, 12, 1414),
+  demo('a', 'CodaFox42', 'friend', 610, 12, 40, 1288),
+  demo('b', 'Mixolydia', 'friend', 180, 1, 7, 1102),
+  demo('c', 'BlueNoteBenjamin_TheLongName', 'friend', 95, 0, 3, 960),
+  demo('d', 'Allegra', 'incoming', 0, 0, 0, 900),
+  demo('e', 'Ostinato7', 'outgoing', 0, 0, 0, 900),
+];
+const initial = (n: string | null | undefined) => (n?.trim()?.[0] ?? '?').toUpperCase();
+const FLAME = 'M12 3c.5 3-2.5 4.5-2.5 8a2.5 2.5 0 0 0 5 0c0-1-.4-1.8-.9-2.5 2.3 1 3.9 3.3 3.9 6A5.5 5.5 0 0 1 6 14.5C6 9.5 10 7.5 12 3z';
+const BOOK = 'M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5zM4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5';
+function LineIcon({ d }: { d: string }) {
+  return (
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={d} />
+    </svg>
   );
 }

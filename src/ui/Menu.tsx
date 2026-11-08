@@ -126,12 +126,10 @@ export function MenuSheet({ t, settings, user, onClose, onNavigate, onSettings }
               ['placement', 'level', t.findLevel],
               ['diagnostics', 'mic', t.diagnostics],
             ]],
-            [lang === 'he' ? 'קהילה' : 'Community', [
-              ['friends', 'friends', t.friends],
-              ['classes', 'class', t.classes],
+            [lang === 'he' ? 'אני' : 'You', [
               ['achievements', 'medal', t.achievementsTitle],
+              ['settings', 'gear', t.settings],
             ]],
-            [lang === 'he' ? 'אפליקציה' : 'App', [['settings', 'gear', t.settings]]],
           ] as const
         ).map(([title, rows]) => (
           <section key={title} className="menu-group">
