@@ -18,6 +18,26 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.50.0',
+    date: '2026-11-08',
+    en: [
+      'Insights: one screen that reads all your practice — your Ear Index, the fingers, hands, keys and scales that need work, your groove, the answers you mix up, and your trouble bars, each with a button to practise it',
+      'Ear Index: one number for your ear, built from the hardest items you beat, with its history',
+      'Groove fingerprint: where your notes land against the beat — by subdivision, tempo, after rests, across a phrase — and how it changes week by week',
+      'Groove trainer: the fading click (keep time when it drops out), pocket targets (push, on, or lay back on purpose) and the swing dial',
+      'Confusion map: the pairs you mix up most, with a boss fight that drills exactly that pair',
+      'MIDI keyboards now sound through the app, on by default (most have no speakers): your chosen instrument, its own volume, touch response, sustain, soft and sostenuto pedals, and no stuck notes',
+    ],
+    he: [
+      'תובנות: מסך אחד שקורא את כל האימון שלכם — מדד האוזן, האצבעות, הידיים והסולמות שצריכים עבודה, הגרוב, התשובות שאתם מבלבלים והתיבות הבעייתיות, ולכל אחד כפתור לתרגל אותו',
+      'מדד האוזן: מספר אחד לאוזן שלכם, שנבנה מהפריטים הקשים ביותר שעברתם, עם ההיסטוריה שלו',
+      'טביעת הגרוב: איפה הצלילים שלכם נוחתים ביחס לפעמה — לפי חלוקה, טמפו, אחרי הפסקות, לאורך משפט — ואיך זה משתנה משבוע לשבוע',
+      'מאמן גרוב: הקליק הנעלם (לשמור על הזמן כשהוא נעלם), מטרות כיס (לדחוף, להיות על הפעמה או להישען אחורה בכוונה) וחוגת הסווינג',
+      'מפת בלבולים: הזוגות שאתם מבלבלים הכי הרבה, עם קרב בוס שמתרגל בדיוק את הזוג הזה',
+      'מקלדות מידי נשמעות עכשיו דרך האפליקציה, כברירת מחדל (לרובן אין רמקולים): בצליל שבחרתם, עם עוצמה משלהן, תגובת מגע, פדל הדהוד, פדל שמאלי ופדל אמצעי, ובלי צלילים תקועים',
+    ],
+  },
+  {
     version: '0.49.0',
     date: '2026-11-08',
     en: [

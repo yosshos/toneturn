@@ -102,6 +102,23 @@ test.describe('practice hub', () => {
     await expect(page.locator('.pc-task')).toContainText('55');
   });
 
+  test("0.50: insights from Progress, groove trainer from Insights and back", async ({ page }) => {
+    await page.goto("/?sim=1#/skills");
+    await page.locator("#ps-tab-overview").click();
+    await page.locator("[data-open-insights]").click();
+    for (const k of ["groove", "confusions"]) await expect(page.locator(`[data-${k}]`)).toBeVisible();
+    await page.locator("[data-open-groove]").click();
+    await expect(page.locator("[data-groove-trainer]")).toBeVisible();
+    await page.locator("[data-groove-mode=pocket]").click();
+    await expect(page.locator("[data-pocket]")).toHaveCount(5);
+    await page.locator("[data-groove-mode=swing]").click();
+    await expect(page.locator("[data-swing-dial]")).toBeVisible();
+    await page.locator(".screen-head .icon-btn").first().click();
+    await expect(page.locator("[data-groove]")).toBeVisible();
+    await page.goto("/?sim=1#/arcade");
+    await expect(page.locator("[data-hub=groove]")).toBeVisible();
+  });
+
   test('menu groups and the Progress area sheet', async ({ page }) => {
     await page.goto('/?sim=1');
     await page.getByRole('button', { name: 'Menu' }).click();

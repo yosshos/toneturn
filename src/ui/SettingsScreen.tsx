@@ -830,6 +830,37 @@ function MidiPanel({ t, lang, on, onChange, naming, s, onSettings }: { t: String
             )}
             <span className={`mt-pedal ${pedal ? 'on' : ''}`}>{he ? 'פדל' : 'Pedal'} {pedal ? '⬇' : '—'}</span>
           </div>
+          <div className="midi-sound" data-midi-sound-panel="1">
+            <label className="toggle-row">
+              <input type="checkbox" checked={s.midiSound !== false} onChange={(e) => (void piano.unlock(), onSettings({ midiSound: e.target.checked }))} data-midi-sound="1" />
+              <span>{he ? 'להשמיע את הקלידים דרך האפליקציה' : 'Play my keys through the app'}</span>
+            </label>
+            <p className="field-hint">{he ? 'רוב מקלדות המידי בלי רמקולים — האפליקציה מנגנת בצליל שבחרתם (הגדרות ← צליל). אם לפסנתר שלכם יש רמקולים משלו, כבו כדי לא לשמוע כפול.' : 'Most MIDI keyboards have no speakers, so the app plays your keys in the sound you chose (Settings → Sound). If your piano has its own speakers, turn this off to avoid hearing everything twice.'}</p>
+            {s.midiSound !== false && (
+              <>
+                <label className="mx-knob">
+                  <span>{he ? 'עוצמת הקלידים' : 'Keys volume'}</span>
+                  <input type="range" dir="ltr" min={0} max={1.5} step={0.05} value={s.midiVolume ?? 1} onChange={(e) => onSettings({ midiVolume: Number(e.target.value) })} data-midi-volume="1" />
+                  <b dir="ltr">{Math.round((s.midiVolume ?? 1) * 100)}%</b>
+                </label>
+                <Seg
+                  label={he ? 'תגובת מגע' : 'Touch response'}
+                  hint={he ? 'קלה: גם נגיעה עדינה נשמעת מלאה. כבדה: צריך ללחוץ חזק כדי לנגן חזק. קבועה: כל צליל באותה עוצמה.' : 'Light: a gentle touch already sounds full. Heavy: you must press hard to play loud. Fixed: every note at the same level.'}
+                  value={s.midiCurve ?? 'normal'}
+                  options={[
+                    ['light', he ? 'קלה' : 'Light'],
+                    ['normal', he ? 'רגילה' : 'Normal'],
+                    ['heavy', he ? 'כבדה' : 'Heavy'],
+                    ['fixed', he ? 'קבועה' : 'Fixed'],
+                  ]}
+                  onChange={(v) => onSettings({ midiCurve: v as 'light' | 'normal' | 'heavy' | 'fixed' })}
+                />
+                <button className="btn ghost small" onClick={() => piano.liveAllOff()} data-midi-panic="1">
+                  {he ? 'השתקת צלילים תקועים' : 'Stop stuck notes'}
+                </button>
+              </>
+            )}
+          </div>
           {devices.length > 1 && (
             <label className="field-row">
               <span>{he ? 'מכשיר' : 'Device'}</span>

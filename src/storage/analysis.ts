@@ -29,3 +29,23 @@ export function recordTakeAnalysis(drill: Drill, m: TakeMetrics, bpm: number): P
   }).catch(() => {});
   return chain;
 }
+
+// ---------------------------------------------------------------- the groove fingerprint (0.50)
+import { addPerformance, emptyGroove, type GrooveModel } from '../engine/analysis/groove';
+
+let gcache: GrooveModel | null = null;
+export async function loadGroove(): Promise<GrooveModel> {
+  if (gcache) return gcache;
+  gcache = (await kv.get<GrooveModel>('groove')) ?? emptyGroove();
+  return gcache;
+}
+/** Fold one rhythm performance in (onsets in quarter beats, signed offsets in ms). */
+export function recordGroove(onsets: number[], offsets: (number | null)[], bpm: number, beatsPerBar: number): Promise<unknown> {
+  chain = chain
+    .then(async () => {
+      gcache = addPerformance(await loadGroove(), onsets, offsets, bpm, beatsPerBar, new Date());
+      await kv.set('groove', gcache);
+    })
+    .catch(() => {});
+  return chain;
+}

@@ -167,6 +167,12 @@ export interface Settings {
   midiDevice?: string | null;
   midiOctave?: number;
   midiPedalInvert?: boolean;
+  /** Sound the keys through the app (on unless turned off: most MIDI keyboards have no speakers). */
+  midiSound?: boolean;
+  /** Volume of your own keys (0–1.5), apart from the app's playback. */
+  midiVolume?: number;
+  /** Touch response of the keys. */
+  midiCurve?: 'light' | 'normal' | 'heavy' | 'fixed';
   /** Microphone chosen in Settings (deviceId; null = system default). */
   micDeviceId?: string | null;
   /** Master volume 0..1, right/wrong chimes, narration speed, vibration. */

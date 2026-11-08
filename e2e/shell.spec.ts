@@ -27,13 +27,15 @@ test.describe('menu, friends', () => {
     await expect(sheet.locator('.changelog.bare > li')).toHaveCount(1);
     await sheet.getByRole('button', { name: 'All versions' }).click();
     await expect(sheet.locator('.changelog:not(.bare) > li').first()).toBeVisible();
-    await sheet.getByRole('button', { name: /Friends/ }).click();
-    await expect(page.getByRole('heading', { name: 'Friends', level: 1 })).toBeVisible();
+    // Friends live in the Community tab since 0.45 (no longer in the menu).
+    await sheet.locator('.menu-head .icon-btn').click();
+    await page.locator('.tab[data-tab="friends"]').click();
+    await expect(page.getByRole('heading', { name: 'Community', level: 1 })).toBeVisible();
   });
 
-  test('friends screen asks to sign in when signed out', async ({ page }) => {
+  test('community screen asks to sign in when signed out', async ({ page }) => {
     await page.goto('/#/friends');
-    await expect(page.getByRole('heading', { name: 'Friends', level: 1 })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Community', level: 1 })).toBeVisible();
     await expect(page.getByText('Add friends with their code')).toBeVisible();
   });
 

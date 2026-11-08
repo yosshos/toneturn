@@ -1,4 +1,6 @@
 import { buzz } from './Arcade';
+import { recordGroove } from '../storage/analysis';
+import { recordConfusion } from '../storage/confusion';
 import { langOf } from './Trends';
 import { lessonSections, placementPlanOf } from '../engine/placement';
 import { TalkToggle } from './TalkToggle';
@@ -116,6 +118,19 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
       settings.mode,
       {
         onModeChange: onMode,
+        // The confusion map (0.50): every wrong choice answer → which answer was mixed up with which, per topic.
+        onEvent: (e) => {
+          if (import.meta.env.DEV) console.debug('[toneturn]', e.type, e.detail ?? '');
+          if (e.type !== 'graded') return;
+          const d = e.detail as { answer: unknown; result: { kind: string }; question?: Question; readHits?: (number | null)[] };
+          // The groove fingerprint (0.50): every tapped rhythm → its offsets per onset.
+          if (d.question?.kind === 'rhythm-read' && d.readHits?.length && !d.question.tempoGoal) {
+            const rq = d.question;
+            void recordGroove(onsetBeats(rq.rhythm), d.readHits, rq.bpm, rq.rhythm.beatsPerBar);
+          }
+          if (d.result.kind === 'correct' || !d.question) return;
+          recordConfusion(d.question, d.answer);
+        },
         resume,
         onStep,
         onComplete: (s) => {
@@ -139,9 +154,6 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
             if (g1.streak.practicedToday && !g0.streak.practicedToday) setStreakMoment({ before: g0.streak.count, after: g1.streak, gems: g1.earned - g0.earned });
             onProgress(after);
           })();
-        },
-        onEvent: (e) => {
-          if (import.meta.env.DEV) console.debug('[toneturn]', e.type, e.detail ?? '');
         },
         adapt: adapt
           ? (st) => {

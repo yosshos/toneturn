@@ -40,7 +40,15 @@ export class MidiInput {
     if (!this.supported) throw new Error('unsupported');
     if (!this.access) {
       this.access = (await (navigator as unknown as { requestMIDIAccess: (o: object) => Promise<MidiAccessLike> }).requestMIDIAccess({ sysex: false })) as MidiAccessLike;
-      this.access.onstatechange = () => this.bind();
+      this.access.onstatechange = () => {
+        // A keyboard plugged out mid-note never sends its note-offs: let every held key go.
+        const at = performance.now();
+        for (const n of [...this.held.keys()]) {
+          this.held.delete(n);
+          this.listeners.forEach((l) => l(n, false, at, 0));
+        }
+        this.bind();
+      };
     }
     this.bind();
     return this.devices;

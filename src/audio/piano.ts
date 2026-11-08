@@ -43,6 +43,15 @@ export function grandTargetDb(v: number): number {
   return y0 + ((x - x0) * (y1 - y0)) / (x1 - x0);
 }
 
+/** Touch response of the MIDI keys (like a keyboard's velocity curve): light = soft touch already sounds full. */
+export type LiveCurve = 'light' | 'normal' | 'heavy' | 'fixed';
+export function liveVelocity(v127: number, curve: LiveCurve): number {
+  if (curve === 'fixed') return 0.7;
+  const x = Math.max(1, Math.min(127, v127)) / 127;
+  const y = curve === 'light' ? Math.pow(x, 0.6) : curve === 'heavy' ? Math.pow(x, 1.6) : x;
+  return Math.max(0.08, Math.min(1, y));
+}
+
 export class PianoEngine implements AudioEngine, RhythmAudio {
   private ctx: AudioContext | null = null;
   private pianoBus!: GainNode;
@@ -243,7 +252,7 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     out.gain.setValueAtTime(0, start);
     out.gain.linearRampToValueAtTime(peak, start + 0.006);
     out.gain.setTargetAtTime(0, start + dur, 0.11);
-    src.connect(out).connect(bus ?? this.sampleBus);
+    src.connect(out).connect(bus ?? (this.liveRoute && this.liveSampleBus ? this.liveSampleBus : this.sampleBus));
     const stopAt = Math.min(start + buf.duration / src.playbackRate.value, start + dur + 0.8);
     src.start(start);
     src.stop(stopAt);
@@ -254,6 +263,115 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
       out.disconnect();
     };
     return true;
+  }
+
+  // Live notes from a MIDI keyboard (0.50): the keys sound through the app, as in a piano app or a software
+  // instrument — on by default, since most MIDI keyboards have no speakers. A key holds its note until released;
+  // the sustain pedal (CC64) holds released notes, the sostenuto pedal (CC66) holds only the notes down when it was
+  // pressed, the soft pedal (CC67) plays quieter and darker. Its own volume and touch curve; at most LIVE_MAX notes
+  // sound at once (the oldest is let go); "all notes off" on request, on disconnect and when the app is hidden.
+  private live = new Map<number, Voice>();
+  private liveHeld = new Set<number>();
+  private liveSustain = false;
+  private liveSostenuto = new Set<number>();
+  private liveSoft = false;
+  private liveRoute = false;
+  private liveSampleBus: GainNode | null = null;
+  private liveSynthBus: GainNode | null = null;
+  private liveOpts: { volume: number; curve: LiveCurve } = { volume: 1, curve: 'normal' };
+  static LIVE_MAX = 48;
+  setLiveOptions(o: Partial<{ volume: number; curve: LiveCurve }>) {
+    this.liveOpts = { ...this.liveOpts, ...o };
+    const ctx = this.ctx;
+    if (ctx && this.liveSampleBus && this.liveSynthBus) {
+      this.liveSampleBus.gain.setTargetAtTime(0.75 * this.liveOpts.volume, ctx.currentTime, 0.02);
+      this.liveSynthBus.gain.setTargetAtTime(0.2 * this.liveOpts.volume, ctx.currentTime, 0.02);
+    }
+  }
+  private ensureLiveBuses() {
+    const ctx = this.ctx!;
+    if (this.liveSampleBus && this.liveSynthBus) return;
+    this.liveSampleBus = ctx.createGain();
+    this.liveSampleBus.gain.value = 0.75 * this.liveOpts.volume;
+    this.liveSampleBus.connect(this.strips.piano!.input);
+    this.liveSynthBus = ctx.createGain();
+    this.liveSynthBus.gain.value = 0.2 * this.liveOpts.volume;
+    this.liveSynthBus.connect(this.strips.piano!.input);
+  }
+  liveNote(m: number, on: boolean, velocity127: number) {
+    const ctx = this.ctx;
+    if (!ctx) return;
+    if (on) {
+      this.liveRelease(m, 0.03);
+      this.ensureLiveBuses();
+      let vel = liveVelocity(velocity127, this.liveOpts.curve);
+      if (this.liveSoft) vel *= 0.72;
+      const at = ctx.currentTime + 0.003;
+      const before = new Set(this.voices);
+      this.liveRoute = true;
+      try {
+        if (!this.sample(m, vel, at, 20)) this.voice(m, vel, at, 20);
+      } finally {
+        this.liveRoute = false;
+      }
+      const v = [...this.voices].find((x) => !before.has(x));
+      if (v) this.live.set(m, v);
+      this.liveHeld.add(m);
+      this.noteOn(m);
+      // polyphony: let go of the oldest notes that are no longer held
+      if (this.live.size > PianoEngine.LIVE_MAX) {
+        for (const k of [...this.live.keys()]) {
+          if (this.live.size <= PianoEngine.LIVE_MAX) break;
+          if (!this.liveHeld.has(k)) this.liveRelease(k, 0.05);
+        }
+      }
+    } else {
+      this.liveHeld.delete(m);
+      if (!this.liveSustain && !this.liveSostenuto.has(m)) this.liveRelease(m);
+    }
+  }
+  /** Pedals and channel messages from the keyboard. */
+  liveControl(cc: number, value: number) {
+    const down = value >= 64;
+    if (cc === 64) {
+      this.liveSustain = down;
+      if (!down) this.releaseUnheld();
+    } else if (cc === 66) {
+      if (down) this.liveSostenuto = new Set(this.liveHeld);
+      else {
+        this.liveSostenuto.clear();
+        if (!this.liveSustain) this.releaseUnheld();
+      }
+    } else if (cc === 67) this.liveSoft = down;
+    else if (cc === 120 || cc === 123) this.liveAllOff();
+  }
+  /** All notes off (disconnect, app hidden, panic). */
+  liveAllOff() {
+    this.liveHeld.clear();
+    this.liveSostenuto.clear();
+    this.liveSustain = false;
+    this.liveSoft = false;
+    for (const m of [...this.live.keys()]) this.liveRelease(m);
+  }
+  private releaseUnheld() {
+    for (const m of [...this.live.keys()]) if (!this.liveHeld.has(m) && !this.liveSostenuto.has(m)) this.liveRelease(m);
+  }
+  private liveRelease(m: number, tau = 0.09) {
+    const v = this.live.get(m);
+    if (!v || !this.ctx) return;
+    this.live.delete(m);
+    const t = this.ctx.currentTime;
+    v.out.gain.cancelScheduledValues(t);
+    v.out.gain.setValueAtTime(v.out.gain.value, t);
+    v.out.gain.setTargetAtTime(0, t, tau);
+    for (const o of v.oscs) {
+      try {
+        o.stop(t + tau * 7);
+      } catch {
+        /* already stopped */
+      }
+    }
+    this.noteOff(m);
   }
 
   get context() {
@@ -394,7 +512,7 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     lp.frequency.setTargetAtTime(Math.min(bright, f0 * 3 + 900), start + 0.02, 0.7);
     const pan = ctx.createStereoPanner();
     pan.pan.value = Math.max(-0.6, Math.min(0.6, (midi - 62) / 40));
-    lp.connect(out).connect(pan).connect(this.pianoBus);
+    lp.connect(out).connect(pan).connect(this.liveRoute && this.liveSynthBus ? this.liveSynthBus : this.pianoBus);
 
     // Loudness compensation: high notes are thinner; keep perceived level even.
     const level = velocity * (midi < 48 ? 0.85 : midi > 76 ? 1.15 : 1);

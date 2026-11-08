@@ -2244,3 +2244,60 @@ button.chip.on {
 .pieces .ch-list { list-style: none; margin: 0; padding: 0; display: grid; }
 .pieces .ch-row { all: unset; box-sizing: border-box; width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 2px; border-top: 1px solid var(--line); cursor: pointer; }
 .pieces .ch-list li:first-child .ch-row { border-top: 0; }
+
+/* insights (0.50) */
+.insights { display: flex; flex-direction: column; gap: 10px; }
+.in-entry { all: unset; box-sizing: border-box; display: flex; align-items: center; gap: 12px; width: 100%; cursor: pointer; }
+.in-entry-n { font-size: 1.6rem; font-weight: 800; min-width: 3ch; text-align: center; }
+.in-entry-text { display: grid; gap: 2px; flex: 1; min-width: 0; }
+.in-entry-text small { color: var(--ink-dim); }
+.in-head { display: flex; justify-content: space-between; align-items: baseline; }
+.in-head h2 { margin: 0; }
+.in-big { font-size: 2.2rem; font-weight: 800; }
+.in-spark { width: 100%; height: 48px; color: var(--accent, var(--mint)); }
+.in-list { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 8px; }
+.in-list li { display: flex; align-items: center; gap: 10px; justify-content: space-between; border-top: 1px solid var(--line); padding-top: 8px; }
+.in-list li:first-child { border-top: 0; padding-top: 0; }
+.in-text { display: grid; gap: 2px; min-width: 0; }
+.in-text small { color: var(--ink-dim); }
+.in-hands { display: flex; gap: 14px; justify-content: center; margin-top: 8px; flex-wrap: wrap; }
+.in-hand { display: flex; gap: 4px; align-items: flex-end; }
+.in-hand > b { align-self: center; margin-inline-end: 4px; color: var(--ink-dim); }
+.in-finger { display: grid; justify-items: center; width: 38px; padding: 6px 0; border-radius: 10px 10px 6px 6px; border: 1px solid var(--line); font-weight: 700; }
+.in-finger small { font-weight: 400; font-size: 0.7rem; }
+.in-finger.weak { background: color-mix(in srgb, #e66 28%, transparent); }
+.in-finger.strong { background: color-mix(in srgb, #fb3 26%, transparent); }
+.in-finger.ok { background: color-mix(in srgb, var(--accent, var(--mint)) 16%, transparent); }
+.in-finger.na { opacity: 0.35; }
+.in-keys { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; margin-top: 8px; }
+.in-key { text-align: center; padding: 8px 0; border-radius: 8px; border: 1px solid var(--line); background: color-mix(in srgb, #e66 calc(var(--w, 0) * 60%), transparent); }
+.in-key.na { opacity: 0.35; }
+.in-groove { display: grid; gap: 6px; margin-top: 8px; }
+.in-g-row { display: grid; grid-template-columns: 6.5em 1fr 3em; align-items: center; gap: 8px; font-size: 0.88rem; }
+.in-g-row b { text-align: end; font-weight: 500; }
+.in-g-track { position: relative; height: 14px; border-radius: 7px; background: color-mix(in srgb, var(--ink) 7%, transparent); }
+.in-g-zero { position: absolute; left: 50%; top: -2px; bottom: -2px; width: 2px; background: var(--ink-dim); }
+.in-g-spread { position: absolute; top: 3px; bottom: 3px; border-radius: 4px; background: color-mix(in srgb, var(--accent, var(--mint)) 35%, transparent); }
+.in-g-dot { position: absolute; top: 1px; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%; background: var(--accent, var(--mint)); }
+.in-g-axis { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--ink-dim); padding-inline-start: 7em; }
+
+/* Groove trainer (0.50) */
+.groove-trainer { display: flex; flex-direction: column; gap: 12px; }
+.groove-trainer .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.gt-tempo { display: flex; align-items: center; gap: 10px; justify-content: center; }
+.gt-tempo b { font-size: 1.3rem; min-width: 3ch; text-align: center; font-variant-numeric: tabular-nums; }
+.gt-row { display: flex; gap: 8px; justify-content: center; }
+.gt-pad { all: unset; box-sizing: border-box; align-self: center; width: min(62vw, 220px); aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 1.1rem; border: 2px solid var(--line, #8884); background: var(--card, #fff1); cursor: pointer; touch-action: manipulation; user-select: none; transition: transform 60ms, background 60ms; }
+.gt-pad:disabled { opacity: 0.45; cursor: default; }
+.gt-pad.hit { transform: scale(0.95); background: var(--accent-soft, #6aa3ff33); }
+.gt-meter { display: grid; gap: 4px; justify-items: center; }
+.gt-track { position: relative; width: 100%; max-width: 320px; height: 14px; border-radius: 7px; background: var(--line, #8883); }
+.gt-track i { position: absolute; top: -3px; width: 4px; height: 20px; border-radius: 2px; transform: translateX(-50%); }
+.gt-zero { left: 50%; background: var(--ink-dim, #888); }
+.gt-target { background: var(--good, #2a9d6a); width: 10px !important; opacity: 0.6; }
+.gt-you { background: var(--accent, #3b7cff); transition: left 200ms; }
+.gt-swing { display: grid; gap: 8px; }
+
+/* MIDI keys through the app (0.50) */
+.midi-sound { display: grid; gap: 10px; margin: 6px 0 4px; }
+.midi-sound .btn.small { justify-self: start; }

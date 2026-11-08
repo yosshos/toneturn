@@ -619,7 +619,7 @@ export class LessonController {
     const rec = next.records[next.index];
     const chips = { timeMs: ev.timeMs, attempt: rec.attempts.length, xp: rec.xp, accuracy, seqNotes: ev.seqNotes, readHits: ev.readHits, readExtra: ev.readExtra };
     this.setSession(next, { needsListenTap: false });
-    this.emit('graded', { answer, result: g, ...chips });
+    this.emit('graded', { answer, result: g, question: q, ...chips });
     if (g.kind === 'correct') {
       this.ad.audio.cue('correct');
       this.patch({ feedback: { kind: g.firstTry ? 'correct' : 'correct-retry', answer: q.answer, given: answer, sung, ...chips } });

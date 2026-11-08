@@ -25,6 +25,41 @@ test('MIDI keyboard (stub device): enable in Settings, answer a degree question 
   });
   await expect(page.locator('.mt-note')).toContainText('D');
   await expect(page.locator('.mt-vel')).toContainText('90');
+  // The keys sound through the app by default (most MIDI keyboards have no speakers): a held key is a sounding note.
+  await expect(page.locator('[data-midi-sound]')).toBeChecked();
+  const sounding = await page.evaluate(async () => {
+    const inp = (window as unknown as { __midiIn: { onmidimessage: (e: { data: Uint8Array; timeStamp: number }) => void } }).__midiIn;
+    const path = '/src/ui/services.ts';
+    const { piano } = await import(/* @vite-ignore */ path);
+    await piano.unlock();
+    let seen: number[] = [];
+    const off = piano.onNotes((a: number[]) => (seen = a));
+    inp.onmidimessage({ data: new Uint8Array([0x90, 64, 100]), timeStamp: performance.now() });
+    await new Promise((r) => setTimeout(r, 100));
+    const held = [...seen];
+    inp.onmidimessage({ data: new Uint8Array([0x80, 64, 0]), timeStamp: performance.now() });
+    await new Promise((r) => setTimeout(r, 100));
+    const after = [...seen];
+    // the sustain pedal holds a released key until the pedal comes up
+    const send = (d: number[]) => inp.onmidimessage({ data: new Uint8Array(d), timeStamp: performance.now() });
+    const wait = () => new Promise((r) => setTimeout(r, 80));
+    send([0xb0, 64, 127]);
+    send([0x90, 60, 80]);
+    send([0x80, 60, 0]);
+    await wait();
+    const pedalHeld = [...seen];
+    send([0xb0, 64, 0]);
+    await wait();
+    off();
+    return { held, after, pedalHeld, pedalUp: seen };
+  });
+  expect(sounding.held).toContain(64);
+  expect(sounding.after).not.toContain(64);
+  expect(sounding.pedalHeld).toContain(60);
+  expect(sounding.pedalUp).not.toContain(60);
+  // its own volume and touch response
+  await expect(page.locator("[data-midi-volume]")).toBeVisible();
+  await page.getByRole("radiogroup", { name: "Touch response" }).getByRole("radio", { name: "Heavy" }).click();
   await page.goto('/?unlock=all');
   await page.getByRole('radio', { name: 'Buttons' }).click();
   await page.locator('.tab[data-tab="path"]').click();

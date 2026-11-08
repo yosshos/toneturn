@@ -1,4 +1,7 @@
 import { miniForSkill } from '../content/refresher';
+import { InsightsScreen } from './Insights';
+import { GrooveTrainerScreen } from './GrooveTrainer';
+import { earIndex } from '../engine/rating';
 import { MixerScreen } from './Mixer';
 import type { Drill } from '../engine/drills/types';
 import { generate } from '../engine/drills/generate';
@@ -104,7 +107,7 @@ import { params, piano, setMidiEnabled, SIMULATED, store, tts } from './services
 import { midi } from '../speech/midi';
 import { setPreferredMic } from '../speech/mic';
 
-type Route = 'intake' | 'studio' | 'home' | 'path' | 'arcade' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong' | 'perform' | 'learned' | 'tuner' | 'metronome' | 'songs' | 'drills' | 'workout' | 'workoutrun' | 'peakhunter' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'flight' | 'pitchmemory' | 'nametune' | 'tuneup' | 'highway' | 'melodypuzzle' | 'charts' | 'slowdown' | 'pieces' | 'mixer';
+type Route = 'intake' | 'studio' | 'home' | 'path' | 'arcade' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong' | 'perform' | 'learned' | 'tuner' | 'metronome' | 'songs' | 'drills' | 'workout' | 'workoutrun' | 'peakhunter' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'flight' | 'pitchmemory' | 'nametune' | 'tuneup' | 'highway' | 'melodypuzzle' | 'charts' | 'slowdown' | 'pieces' | 'mixer' | 'insights' | 'groove';
 /** Invite links: #/online/CODE */
 const onlineCodeFromHash = () => (/^#\/?online\/(\w+)/.exec(location.hash)?.[1] ?? '');
 const PLAY_HASH = 'play';
@@ -114,7 +117,7 @@ const enterPlay = () => {
 };
 const routeFromHash = (): Route => {
   const h = location.hash.replace(/^#\/?/, '').replace(/^online\/.*$/, 'online').replace(/^settings\/.*$/, 'settings');
-  return (['path', 'arcade', 'settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong', 'perform', 'learned', 'studio', 'intake', 'tuner', 'metronome', 'songs', 'drills', 'workout', 'workoutrun', 'peakhunter', 'rush-chord', 'rush-note', 'rush-fretboard', 'rush-interval', 'rush-keysig', 'rush-progression', 'flight', 'pitchmemory', 'nametune', 'tuneup', 'highway', 'melodypuzzle', 'charts', 'slowdown', 'pieces', 'mixer'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
+  return (['path', 'arcade', 'settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong', 'perform', 'learned', 'studio', 'intake', 'tuner', 'metronome', 'songs', 'drills', 'workout', 'workoutrun', 'peakhunter', 'rush-chord', 'rush-note', 'rush-fretboard', 'rush-interval', 'rush-keysig', 'rush-progression', 'flight', 'pitchmemory', 'nametune', 'tuneup', 'highway', 'melodypuzzle', 'charts', 'slowdown', 'pieces', 'mixer', 'insights', 'groove'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
 };
 
 /** The level a generated modes lesson was made at (from its first question's pool size). */
@@ -322,6 +325,32 @@ export function App() {
     document.documentElement.style.fontSize = s.textScale && s.textScale !== 1 ? `${Math.round(s.textScale * 100)}%` : '';
     document.documentElement.dataset.cvd = s.cvd ? 'on' : 'off';
   }, [s.mixer, s.textScale, s.cvd, s.volume, s.cues, s.ttsRate, s.haptics, s.micDeviceId, s.midiDevice, s.midiOctave, s.midiPedalInvert]);
+  // MIDI keys sounded through the app (0.50), everywhere — on by default (most MIDI keyboards have no speakers).
+  useEffect(() => {
+    piano.setLiveOptions({ volume: s.midiVolume ?? 1, curve: s.midiCurve ?? 'normal' });
+  }, [s.midiVolume, s.midiCurve]);
+  useEffect(() => {
+    if (!s.midiInput || s.midiSound === false) return;
+    const offN = midi.onNote((m, on, _at, vel) => (piano.context ? piano.liveNote(m, on, vel) : void piano.unlock().then(() => piano.liveNote(m, on, vel), () => {})));
+    const offC = midi.onCC((cc, v) => piano.liveControl(cc, v));
+    // A keyboard unplugged mid-note, or the app sent to the background: no note may keep sounding.
+    const offS = midi.onState(() => piano.liveAllOff());
+    const onVis = () => document.hidden && piano.liveAllOff();
+    document.addEventListener('visibilitychange', onVis);
+    // Browsers start sound only after a tap: the first tap or key anywhere opens it, so the first MIDI key already sounds.
+    const wake = () => void piano.unlock().catch(() => {});
+    addEventListener('pointerdown', wake, { once: true });
+    addEventListener('keydown', wake, { once: true });
+    return () => {
+      offN();
+      offC();
+      offS();
+      document.removeEventListener('visibilitychange', onVis);
+      removeEventListener('pointerdown', wake);
+      removeEventListener('keydown', wake);
+      piano.liveAllOff();
+    };
+  }, [s.midiInput, s.midiSound]);
 
   const updateSettings = useCallback(
     (patch: Partial<Settings>) => {
@@ -383,7 +412,7 @@ export function App() {
   // Where a tool (tuner, metronome, drone) was opened from — Practice tab or the menu — so Back returns there.
   const toolFrom = useRef<Route>('home');
   const go = (r: Route) => {
-    if ((r === 'tuner' || r === 'metronome' || r === 'drone' || r === 'charts' || r === 'slowdown' || r === 'vocal' || r === 'learned') && route !== r && route !== 'lesson' && route !== 'singalong' && route !== 'mixer') toolFrom.current = route === 'arcade' || route === 'path' || route === 'drills' ? route : 'home';
+    if ((r === 'tuner' || r === 'metronome' || r === 'drone' || r === 'charts' || r === 'slowdown' || r === 'groove' || r === 'vocal' || r === 'learned') && route !== r && route !== 'lesson' && route !== 'singalong' && route !== 'mixer') toolFrom.current = route === 'arcade' || route === 'path' || route === 'drills' || route === 'insights' ? route : 'home';
     location.hash = r === 'lesson' || r === 'game' ? `/${PLAY_HASH}` : r === 'home' ? '' : `/${r}`;
     setRoute(r);
   };
@@ -1057,6 +1086,7 @@ export function App() {
             log: () => setLogOpen(true),
             charts: () => go('charts'),
             slowdown: () => go('slowdown'),
+            groove: () => go('groove'),
           }}
           onOnline={() => {
             setOnlineFacts(null);
@@ -1122,6 +1152,18 @@ export function App() {
           onPin={(trophies) => updateSettings({ trophies })}
           overview={
             <>
+              <button className="set-card in-entry" onClick={() => go('insights')} data-open-insights="1">
+                <span className="in-entry-n" dir="ltr">
+                  {earIndex(ratingsOf(progress))?.r ?? '—'}
+                </span>
+                <span className="in-entry-text">
+                  <b>{s.uiLang === 'he' ? 'תובנות' : 'Insights'}</b>
+                  <small>{s.uiLang === 'he' ? 'מדד האוזן, מפת הידיים, טביעת הגרוב, מפת הבלבולים' : 'Ear Index, hand map, groove fingerprint, confusion map'}</small>
+                </span>
+                <span className="flip-rtl" aria-hidden="true">
+                  ›
+                </span>
+              </button>
               <EarChordCard t={t} ratings={ratingsOf(progress)} bestLeague={s.bestLeague} />
               <DomainTiles t={t} progress={progress} onPractice={practiceSkill} lang={s.uiLang} onTechnique={() => go('drills')} onLearn={{ has: (k) => !!miniForSkill(k), open: (k) => openRefresher(miniForSkill(k)!, () => undefined) }} />
               <ChallengeCard input={badgeInputOf(progress, new Date(), s.uiLang === 'he' ? [5, 6] : undefined)} lang={s.uiLang} />
@@ -1327,6 +1369,8 @@ export function App() {
           }}
         />
       )}
+      {route === 'insights' && <InsightsScreen lang={s.uiLang} progress={progress} onBack={() => go('skills')} onTopic={(id, lv) => openTopic(id, lv)} onDrills={() => go('drills')} onPieces={() => go('pieces')} onGroove={() => go('groove')} />}
+      {route === 'groove' && <GrooveTrainerScreen settings={s} onBack={() => go(toolFrom.current)} />}
       {route === 'mixer' && <MixerScreen settings={s} onChange={updateSettings} onBack={() => go(mixerFrom.current)} />}
       {route === 'slowdown' && <SlowDownScreen lang={s.uiLang} onBack={() => go(toolFrom.current)} />}
       {route === 'charts' && <ChartsScreen

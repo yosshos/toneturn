@@ -322,3 +322,49 @@ export function ratingChange(before: Ratings, after: Ratings): RatingChange {
     .map((s) => ({ skill: s.skill, band: band(s.to) }));
   return { overall: oa ? { from: ob ? ob.r : null, to: oa.r, provisional: oa.provisional } : null, skills, bandsReached };
 }
+
+// ---------------------------------------------------------------- Ear Index (0.50)
+
+/** The skills the Ear Index is made of: hearing pitch, harmony, time and form — not the voice, reading or the hands. */
+export const EAR_SKILLS: SkillId[] = ['degrees', 'intervals', 'chords', 'cadences', 'modes', 'pitch', 'rhythm-dictation', 'timing', 'tempo', 'meter', 'sequences', 'rhythm', 'form', 'dictation'];
+
+/**
+ * One number for the ear (like a chess rating): the confidence-weighted level of the ear skills, built from the hardest
+ * items beaten — never from time spent. Null until a few ear skills have answers.
+ */
+export function earIndex(ratings: Ratings): { r: number; provisional: boolean; skills: number } | null {
+  let num = 0;
+  let den = 0;
+  let skills = 0;
+  let n = 0;
+  for (const k of EAR_SKILLS) {
+    const s = ratings[k];
+    if (!s || s.n === 0) continue;
+    const c = Math.min(1, s.n / CONFIDENT_AT);
+    num += c * (START_RATING + c * (s.r - START_RATING));
+    den += c;
+    skills++;
+    n += s.n;
+  }
+  if (!den || skills < 2) return null;
+  return { r: Math.round(num / den), provisional: skills < 5 || n < 40, skills };
+}
+
+/** The Ear Index over time, one point per local day. */
+export function earIndexHistory(events: RatingEvent[], dayOf: (iso: string) => string = (iso) => iso.slice(0, 10)): TrendPoint[] {
+  const seen = new Set<string>();
+  const cur: Ratings = {};
+  const out: TrendPoint[] = [];
+  for (const e of byTime(events)) {
+    if (seen.has(e.id)) continue;
+    seen.add(e.id);
+    applyEvent(cur, e);
+    const o = earIndex(cur);
+    if (!o) continue;
+    const day = dayOf(e.at);
+    const last = out[out.length - 1];
+    if (last && last.day === day) last.r = o.r;
+    else out.push({ day, r: o.r, n: 0 });
+  }
+  return out;
+}

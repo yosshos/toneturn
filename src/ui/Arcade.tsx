@@ -635,6 +635,7 @@ export interface PracticeHub {
   charts?: () => void;
   /** Slow down & loop your own audio (SPEC-0.48 §P3). */
   slowdown?: () => void;
+  groove?: () => void;
 }
 const HUB_PATHS: Record<string, React.ReactNode> = {
   songs: (
@@ -682,6 +683,12 @@ const HUB_PATHS: Record<string, React.ReactNode> = {
       <path d="M12 9v4l2.5 2M9.5 2.5h5" />
     </>
   ),
+  groove: (
+    <>
+      <path d="M3 15c2 0 2-6 4.5-6S10 15 12 15s2.5-6 4.5-6S19 15 21 15" />
+      <path d="M3 20h18" />
+    </>
+  ),
   charts: (
     <>
       <rect x="3" y="5" width="18" height="14" rx="2" />
@@ -717,6 +724,7 @@ const HUB_TX = {
   log: { en: 'Log', he: 'רישום' },
   charts: { en: 'Charts', he: 'מהלכים' },
   slowdown: { en: 'Slow down', he: 'האטה' },
+  groove: { en: 'Groove', he: 'גרוב' },
   games: { en: ['Games', 'By type, topic and level'], he: ['משחקים', 'לפי סוג, נושא ורמה'] },
 };
 
@@ -799,7 +807,7 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
           </div>
           <div className="hub-tools" role="group" aria-label={HUB_TX.tools[lang]}>
             <span className="hub-tools-h">{HUB_TX.tools[lang]}</span>
-            {(['tuner', 'metronome', 'drone', 'charts', 'slowdown', 'log'] as const).filter((k) => hub[k]).map((k) => (
+            {(['tuner', 'metronome', 'drone', 'charts', 'slowdown', 'groove', 'log'] as const).filter((k) => hub[k]).map((k) => (
               <button key={k} className="hub-tool" onClick={hub[k]} data-hub={k}>
                 <HubIcon k={k} size={18} />
                 <span>{HUB_TX[k][lang]}</span>
