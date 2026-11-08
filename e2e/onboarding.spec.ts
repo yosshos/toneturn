@@ -1,0 +1,32 @@
+import { expect, test } from '@playwright/test';
+
+// 0.52: the first minute — the logo draws itself, a welcome with one promise, a first taste (which note was higher),
+// three questions, then where to start. The full questionnaire stays in Settings (?intake for its own test).
+test('splash → welcome → taste → three questions → the first lesson', async ({ page }) => {
+  await page.goto('/?sim=1&welcome=1&splash=1&lang=en');
+  await expect(page.locator('[data-splash]')).toBeVisible();
+  await expect(page.locator('[data-splash]')).toBeHidden({ timeout: 5000 });
+  await expect(page.locator('[data-onboarding="welcome"]')).toBeVisible();
+  await expect(page.locator('[data-side-nav]')).toBeHidden();
+  await page.locator('[data-ob="start"]').click();
+  await expect(page.locator('[data-onboarding="taste"]')).toBeVisible();
+  await expect(page.locator('[data-ob="taste-next"]')).toBeDisabled();
+  await page.locator('[data-ob="listen"]').click();
+  await expect(page.locator('[data-ob="taste-0"]')).toBeEnabled({ timeout: 10_000 });
+  await page.locator('[data-ob="taste-0"]').click();
+  await expect(page.locator('.ob-said')).not.toBeEmpty();
+  await page.locator('[data-ob="taste-next"]').click();
+  await page.locator('[data-ob="goal-read"]').click();
+  await page.locator('[data-ob="inst-guitar"]').click();
+  await page.locator('[data-ob="level-0"]').click();
+  await expect(page.locator('[data-onboarding="start"]')).toBeVisible();
+  await page.locator('[data-ob="basics"]').click();
+  await expect(page.locator('main.lesson, .mini-player, .gate').first()).toBeVisible({ timeout: 15_000 });
+});
+
+test('the parent digest page: an unknown link says so, without menus', async ({ page }) => {
+  await page.goto('/?sim=1#/digest/abcdefghijklmnopqrstuvwxyz');
+  await expect(page.locator('[data-digest]')).toBeVisible();
+  await expect(page.locator('[data-digest]')).toContainText(/not active|לא פעיל/, { timeout: 15_000 });
+  await expect(page.locator('.tabbar')).toHaveCount(0);
+});

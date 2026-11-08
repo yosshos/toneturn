@@ -103,7 +103,7 @@ export function FactPicker({ t, lang, topics, onTopics, level, onLevel }: { t: S
         <div className="tf-topics" role="group" aria-label={t.tfTopics}>
           {FACT_TOPICS.map((x) => (
             <button key={x.id} type="button" className={`chip ${topics.includes(x.id) ? 'on' : ''}`} aria-pressed={topics.includes(x.id)} data-topic={x.id} onClick={() => toggle(x.id)}>
-              <span aria-hidden="true">{x.emoji}</span> {x.title[lang]}
+              {x.title[lang]}
               {x.sound && <small> · {t.tfSound}</small>}
             </button>
           ))}

@@ -961,7 +961,7 @@ export interface Preset {
   drill: Partial<CustomDrill>;
 }
 export const PRESETS: Preset[] = [
-  { id: 'hanon', title: t2('Hanon-style group', 'קבוצה בסגנון הנון'), text: '1/16 3 4 5 6 5 4 3', drill: { sequenceSteps: 6, handsMode: 'octaves', startBpm: 60, goalBpm: 108 } },
+  { id: 'hanon', title: t2('Hanon-style group', 'קבוצה בסגנון האנון'), text: '1/16 3 4 5 6 5 4 3', drill: { sequenceSteps: 6, handsMode: 'octaves', startBpm: 60, goalBpm: 108 } },
   { id: '1235', title: t2('1-2-3-5 pattern', 'תבנית 1-2-3-5'), text: '1/8 2 3 5', drill: { sequenceSteps: 6, handsMode: 'R', startBpm: 72, goalBpm: 132 } },
   { id: 'enclosure', title: t2('Enclosure (approach the 3rd)', 'כיתור (גישה לטרצה)'), text: '4/8 #2 3/4', drill: { sequenceSteps: 6, handsMode: 'R', startBpm: 72, goalBpm: 140 } },
   { id: 'harris', title: t2('Barry Harris: arpeggio up, scale down', 'בארי האריס: ארפג׳ למעלה, סולם למטה'), text: '1/8 3 5 7 9 8 7 6', drill: { scale: 'bebop-dom', sequenceSteps: 3, step: 2, direction: 'up', handsMode: 'R', startBpm: 72, goalBpm: 160 } },

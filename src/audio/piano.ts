@@ -376,6 +376,23 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     this.noteOff(m);
   }
 
+  // The output device (0.52): an audio interface such as a MIDI keyboard with a headphone jack can become the system
+  // default, and the sound then goes there. Settings can send it to a chosen device (AudioContext.setSinkId, Chromium).
+  private sinkId: string | null = null;
+  get canChooseOutput() {
+    return typeof AudioContext !== 'undefined' && 'setSinkId' in AudioContext.prototype;
+  }
+  async setOutputDevice(id: string | null) {
+    this.sinkId = id;
+    const ctx = this.ctx as (AudioContext & { setSinkId?: (id: string) => Promise<void> }) | null;
+    if (!ctx?.setSinkId) return;
+    try {
+      await ctx.setSinkId(id ?? '');
+    } catch {
+      /* device gone: the system default plays */
+    }
+  }
+
   /** Whether sound can play now (false until the first tap, or after the system suspended it). */
   get audioRunning() {
     return this.ctx?.state === 'running';
@@ -394,6 +411,7 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
       void this.loadKit(this.kit);
       this.loadExtra('bass'); // small (≈0.4 MB), so backing tracks have it from their first note
     }
+    if (this.sinkId !== null) void this.setOutputDevice(this.sinkId);
     if (this.ctx.state !== 'running') await this.ctx.resume();
   }
 

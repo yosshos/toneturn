@@ -1,3 +1,4 @@
+import { Icon } from './icons';
 import { LevelStatsLine } from './LevelStats';
 import { RatingBadge } from './Rating';
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
@@ -549,7 +550,7 @@ export function TournamentPlay({
           <p className={`half-result ${res.correct ? 'good' : ''}`} dir="ltr">
             {res.correct ? `+${res.points}` : res.answer === null ? t.timeUp : '0'}
             {res.correct && res.timeMs !== null && ` · ${(res.timeMs / 1000).toFixed(2)}s`}
-            {v.last?.fastest === p && duel ? ' ⚡' : ''}
+            {v.last?.fastest === p && duel ? <> <Icon k="bolt" /></> : ''}
           </p>
         )}
       </section>

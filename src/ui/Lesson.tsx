@@ -1,3 +1,4 @@
+import { Icon } from './icons';
 import { buzz } from './Arcade';
 import { recordGroove } from '../storage/analysis';
 import { recordConfusion } from '../storage/confusion';
@@ -10,6 +11,8 @@ import { PitchTrace } from './Vocal';
 import { reportPuzzle } from '../cloud/compete';
 import { fitLessonToRange, fitQuestions } from '../engine/voiceFit';
 import { keyboardIsHint, noHints, withAids } from '../engine/aids';
+import { LessonAside } from './Asides';
+import { TOPIC_GEN } from '../engine/topics';
 import type { Ratings } from '../engine/rating';
 import { NoteViews, seqMarks } from './NoteViews';
 import { refresherFor } from '../content/refresher';
@@ -185,14 +188,14 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
 
   // MIDI keyboard: a key press answers degree / note-name questions (singing tasks use MidiPitchCapture).
   useEffect(() => {
-    if (!settings.midiInput) return;
+    if (!settings.midiInput && !settings.computerKeys) return;
     return midi.onNote((m, on) => {
       const view = ctrl.getView();
       if (!on || view.stage !== 'question' || view.phase !== 'listening') return;
       const a = answerFromMidi(view.question, m);
       if (a !== null) ctrl.answer(a);
     });
-  }, [ctrl, settings.midiInput]);
+  }, [ctrl, settings.midiInput, settings.computerKeys]);
 
   // Space / Enter tap the beat while a rhythm is being performed.
   useEffect(() => {
@@ -425,7 +428,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
           )}
           {!phones && itemNeedsHeadphones(q) && (
             <div className="phones-card" role="alert">
-              <p>🎧 {lang === 'en' ? 'Needs headphones (low notes, left / right)' : 'צריך אוזניות (צלילים נמוכים, שמאל / ימין)'}</p>
+              <p><Icon k="phones" /> {lang === 'en' ? 'Needs headphones (low notes, left / right)' : 'צריך אוזניות (צלילים נמוכים, שמאל / ימין)'}</p>
               <div className="phones-actions">
                 <button
                   className="btn primary small"
@@ -529,6 +532,16 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
             )}
           </div>
         </section>
+      )}
+      {v.stage === 'question' && (
+        <LessonAside
+          lang={lang}
+          index={v.index}
+          total={v.total}
+          answered={v.session.records.filter((r) => r.attempts.length > 0).length}
+          firstTry={v.session.records.filter((r) => r.outcome === 'correct').length}
+          title={'topic' in q && typeof q.topic === 'string' && TOPIC_GEN[q.topic] ? TOPIC_GEN[q.topic].title[lang] : lang === 'he' ? 'תרגיל' : 'Exercise'}
+        />
       )}
     </main>
   );
@@ -1026,7 +1039,7 @@ function PaceBar({ v, t }: { v: LessonView; t: Strings }) {
   return (
     <div className={`pace-bar ${live ? 'live' : 'idle'}`} title={`${t.paceGoal}: ${(goal / 1000).toFixed(1)}s`} data-goal={goal} aria-hidden="true">
       <i key={`${v.index}-${v.session.turn}-${live}`} style={{ ['--goal' as string]: `${goal}ms` }} />
-      <span dir="ltr">⚡ {(goal / 1000).toFixed(1)}s</span>
+      <span dir="ltr"><Icon k="bolt" /> {(goal / 1000).toFixed(1)}s</span>
     </div>
   );
 }
@@ -1039,7 +1052,7 @@ function AnswerChips({ f, t, goalMs }: { f: NonNullable<LessonView['feedback']>;
       {f.accuracy !== undefined && f.accuracy > 0 && f.accuracy < 1 && <span className="chip-mini">{Math.round(f.accuracy * 100)}%</span>}
       {f.timeMs != null && (
         <span className={`chip-mini pace-${band ?? 'none'} ${fast ? 'good' : ''}`} title={fast ? t.paceFast : t.responseTime} data-pace={band ?? ''}>
-          {fast ? '⚡' : '⏱'} {(f.timeMs / 1000).toFixed(1)}s{goalMs !== null && !fast && band && <small> / {(goalMs / 1000).toFixed(1)}s</small>}
+          {fast ? <Icon k="bolt" /> : <Icon k="clock" />} {(f.timeMs / 1000).toFixed(1)}s{goalMs !== null && !fast && band && <small> / {(goalMs / 1000).toFixed(1)}s</small>}
         </span>
       )}
       {(f.attempt ?? 1) > 1 && <span className="chip-mini">×{f.attempt}</span>}

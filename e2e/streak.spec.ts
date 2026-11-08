@@ -17,7 +17,7 @@ test('first lesson of the day: streak screen, lit flame, streak sheet with calen
   }
   const screen = page.locator('.streak-celebrate');
   await expect(screen).toBeVisible({ timeout: 60_000 });
-  await expect(screen.getByRole('heading')).toHaveText('Streak extended!');
+  await expect(screen.getByRole('heading')).toHaveText('Streak extended');
   await expect(screen.locator('.sc-count')).toHaveText('1');
   await page.screenshot({ path: 'test-results/streak-celebrate.png' });
   await screen.locator('.btn.mega').click();
@@ -28,7 +28,7 @@ test('first lesson of the day: streak screen, lit flame, streak sheet with calen
   const sheet = page.getByRole('dialog', { name: 'Streak' });
   await expect(sheet).toContainText('1-day streak');
   await expect(sheet.locator('.streak-cal li.done.today')).toHaveCount(1);
-  await expect(sheet.locator('.streak-facts')).toContainText('❄'); // the free weekly freeze
+  await expect(sheet.locator('.streak-facts .ico-snow').first()).toBeVisible(); // the free weekly freeze
   await expect(sheet.getByRole('button', { name: /200/ })).toBeDisabled(); // not enough gems yet
   await page.waitForTimeout(400); // let the sheet finish sliding in
   await page.screenshot({ path: 'test-results/streak-sheet.png' });

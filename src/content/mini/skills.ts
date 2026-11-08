@@ -100,7 +100,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: '140 or 70?', he: '140 או 70?' } },
       },
       {
-        say: { en: 'Slowing down is ritardando. It often closes a piece; listen for the gaps stretching. Practice tip: keeping a slow tempo steady is harder than a fast one, so practise slow with a metronome.', he: 'האטה נקראת ריטרדנדו. היא סוגרת הרבה פעמים יצירה; הקשיבו לרווחים שנמתחים. טיפ לתרגול: להחזיק טמפו איטי יציב קשה יותר ממהיר, אז תרגלו לאט עם מטרונום.' },
+        say: { en: 'Slowing down is ritardando. It often closes a piece; listen for the gaps stretching. Practice tip: keeping a slow tempo steady is harder than a fast one, so practice slow with a metronome.', he: 'האטה נקראת ריטרדנדו. היא סוגרת הרבה פעמים יצירה; הקשיבו לרווחים שנמתחים. טיפ לתרגול: להחזיק טמפו איטי יציב קשה יותר ממהיר, אז תרגלו לאט עם מטרונום.' },
         play: [clicks(110, 8, 80)],
         show: { text: { en: 'ritardando ↘', he: 'ריטרדנדו ↘' } },
       },
@@ -115,10 +115,10 @@ export const LESSONS: MiniLesson[] = [
     area: 'ear',
     emoji: '📏',
     title: { en: 'Every interval by ear', he: 'כל המרווחים בשמיעה' },
-    takeaway: { en: 'Twelve intervals, each a number of semitones with its own colour: rub, step, sad, sweet, open, tense, hollow, warm, bluesy, longing, the same note.', he: 'שנים־עשר מרווחים, כל אחד מספר חצאי טונים עם צבע משלו: חיכוך, צעד, עצוב, מתוק, פתוח, מתוח, חלול, חם, בלוזי, כמיהה, אותו צליל.' },
+    takeaway: { en: 'Twelve intervals, each a number of semitones with its own color: rub, step, sad, sweet, open, tense, hollow, warm, bluesy, longing, the same note.', he: 'שנים־עשר מרווחים, כל אחד מספר חצאי טונים עם צבע משלו: חיכוך, צעד, עצוב, מתוק, פתוח, מתוח, חלול, חם, בלוזי, כמיהה, אותו צליל.' },
     steps: [
       {
-        say: { en: 'Hi {name}! Between two notes there are twelve intervals, from one semitone up to the octave. Each has its own colour. Let us meet them.', he: 'היי {name}! בין שני צלילים יש שנים־עשר מרווחים, מחצי טון ועד אוקטבה. לכל אחד צבע משלו. בואו נכיר אותם.' },
+        say: { en: 'Hi {name}! Between two notes there are twelve intervals, from one semitone up to the octave. Each has its own color. Let us meet them.', he: 'היי {name}! בין שני צלילים יש שנים־עשר מרווחים, מחצי טון ועד אוקטבה. לכל אחד צבע משלו. בואו נכיר אותם.' },
         play: [{ kind: 'notes', midis: [60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72], each: 0.28 }],
         show: { text: { en: '1 … 12 semitones', he: '1 … 12 חצאי טונים' } },
       },
@@ -143,7 +143,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'together · down', he: 'ביחד · למטה' } },
       },
       {
-        say: { en: 'Your turn! First up, then all twelve, then together, then down. Pick the interval — guess by colour, then count if you need to.', he: 'תורכם! קודם עולים, אחר כך כל השנים־עשר, אחר כך ביחד, ואז יורדים. בחרו את המרווח — נחשו לפי הצבע, ואז ספרו אם צריך.' },
+        say: { en: 'Your turn! First up, then all twelve, then together, then down. Pick the interval — guess by color, then count if you need to.', he: 'תורכם! קודם עולים, אחר כך כל השנים־עשר, אחר כך ביחד, ואז יורדים. בחרו את המרווח — נחשו לפי הצבע, ואז ספרו אם צריך.' },
         show: { text: { en: 'which interval?', he: 'איזה מרווח?' } },
       },
     ],
@@ -179,12 +179,12 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [60, 62, 64, 65, 67], text: { en: 'fa = P4 · sol = P5', he: 'פה = P4 · סול = P5' } },
       },
       {
-        say: { en: 'Beyond the octave, intervals are compound: a ninth is an octave plus a second, a tenth an octave plus a third. They keep the colour of the small interval, opened out.', he: 'מעבר לאוקטבה המרווחים מורכבים: 9 היא אוקטבה ועוד סקונדה, 10 אוקטבה ועוד טרצה. הם שומרים על הצבע של המרווח הקטן, רק פתוח יותר.' },
+        say: { en: 'Beyond the octave, intervals are compound: a ninth is an octave plus a second, a tenth an octave plus a third. They keep the color of the small interval, opened out.', he: 'מעבר לאוקטבה המרווחים מורכבים: 9 היא אוקטבה ועוד סקונדה, 10 אוקטבה ועוד טרצה. הם שומרים על הצבע של המרווח הקטן, רק פתוח יותר.' },
         play: [...two(48, 62, true), rest(0.2), ...two(48, 64, true)],
         show: { notes: [48, 62, 64], text: { en: '9 = 8 + 2 · 10 = 8 + 3', he: '9 = 8 + 2 · 10 = 8 + 3' } },
       },
       {
-        say: { en: 'To keep: count letters for the number, half steps for the quality. Guess by colour first, then check by singing the scale between the two notes.', he: 'מה לזכור: אותיות בשביל המספר, חצאי טונים בשביל האיכות. נחשו קודם לפי הצבע, ואז בדקו בשירת הסולם שבין שני הצלילים.' },
+        say: { en: 'To keep: count letters for the number, half steps for the quality. Guess by color first, then check by singing the scale between the two notes.', he: 'מה לזכור: אותיות בשביל המספר, חצאי טונים בשביל האיכות. נחשו קודם לפי הצבע, ואז בדקו בשירת הסולם שבין שני הצלילים.' },
         show: { text: { en: 'letters → number · half steps → quality', he: 'אותיות ← מספר · חצאי טונים ← איכות' } },
       },
     ],
@@ -207,7 +207,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [57, 59, 60, 62, 64, 65, 67, 69], text: { en: '1 2 ♭3 4 5 ♭6 ♭7 8', he: '1 2 ♭3 4 5 ♭6 ♭7 8' } },
       },
       {
-        say: { en: 'Degrees still feel the same: 1 rests, 5 is strong. Here is 5, then 3 — in minor, 3 is the dark colour.', he: 'הדרגות עדיין מרגישות אותו דבר: 1 נח, 5 חזק. הנה 5, ואז 3 — במינור, 3 הוא הצבע הכהה.' },
+        say: { en: 'Degrees still feel the same: 1 rests, 5 is strong. Here is 5, then 3 — in minor, 3 is the dark color.', he: 'הדרגות עדיין מרגישות אותו דבר: 1 נח, 5 חזק. הנה 5, ואז 3 — במינור, 3 הוא הצבע הכהה.' },
         play: [...minorCadence, { kind: 'note', midi: 64, duration: 1 }, { kind: 'note', midi: 60, duration: 1.2 }],
         show: { notes: [64, 60], text: { en: '5 · ♭3', he: '5 · ♭3' } },
       },
@@ -442,12 +442,12 @@ export const MEMORY_LESSONS: MiniLesson[] = [
         show: { text: { en: 'bright · dark', he: 'בהיר · כהה' } },
       },
       {
-        say: { en: 'Now the same three — but the middle one changed. The bass moved and the colour went dark. That is the one.', he: 'עכשיו אותם שלושה — אבל האמצעי השתנה. הבס זז והצבע נהיה כהה. זה הוא.' },
+        say: { en: 'Now the same three — but the middle one changed. The bass moved and the color went dark. That is the one.', he: 'עכשיו אותם שלושה — אבל האמצעי השתנה. הבס זז והצבע נהיה כהה. זה הוא.' },
         play: [tri(60, 4, 7), tri(65, 4, 7), tri(67, 4, 7), { kind: 'rest', duration: 0.8 }, tri(60, 4, 7), tri(62, 3, 7), tri(67, 4, 7)],
         show: { text: { en: 'chord 2 changed', he: 'אקורד 2 השתנה' } },
       },
       {
-        say: { en: 'For long progressions, number them as you go — one, two, three, four — and keep the bass line humming in your head. When the colour flips, note the number.', he: 'במהלכים ארוכים, מספרו אותם תוך כדי — אחת, שתיים, שלוש, ארבע — ותזמזמו את קו הבס בראש. כשהצבע מתהפך, זכרו את המספר.' },
+        say: { en: 'For long progressions, number them as you go — one, two, three, four — and keep the bass line humming in your head. When the color flips, note the number.', he: 'במהלכים ארוכים, מספרו אותם תוך כדי — אחת, שתיים, שלוש, ארבע — ותזמזמו את קו הבס בראש. כשהצבע מתהפך, זכרו את המספר.' },
         play: [tri(60, 4, 7), tri(69, 3, 7), tri(65, 4, 7), tri(67, 4, 7)],
         show: { text: { en: '1 · 2 · 3 · 4', he: '1 · 2 · 3 · 4' } },
       },
@@ -463,7 +463,7 @@ export const MEMORY_LESSONS: MiniLesson[] = [
         show: { text: { en: 'I · IV · V · vi', he: 'I · IV · V · vi' } },
       },
       {
-        say: { en: 'Each chord quality has its colour: major bright, minor dark, a dominant seventh tense and wanting to move, diminished unstable. Hear C, A minor, G7 and B diminished.', he: 'לכל סוג אקורד צבע משלו: מז׳ור בהיר, מינור כהה, ספטימה דומיננטית מתוחה ורוצה לזוז, מוקטן לא יציב. שמעו דו, לה מינור, G7 ו־סי מוקטן.' },
+        say: { en: 'Each chord quality has its color: major bright, minor dark, a dominant seventh tense and wanting to move, diminished unstable. Hear C, A minor, G7 and B diminished.', he: 'לכל סוג אקורד צבע משלו: מז׳ור בהיר, מינור כהה, ספטימה דומיננטית מתוחה ורוצה לזוז, מוקטן לא יציב. שמעו דו, לה מינור, G7 ו־סי מוקטן.' },
         play: [tri(60, 4, 7), tri(69, 3, 7), { kind: 'chord', midis: [43, 59, 62, 65], duration: 0.8 }, tri(59, 3, 6)],
         show: { text: { en: 'bright · dark · tense · unstable', he: 'בהיר · כהה · מתוח · לא יציב' } },
       },
@@ -478,7 +478,7 @@ export const MEMORY_LESSONS: MiniLesson[] = [
         show: { text: { en: 'I · V · vi · IV', he: 'I · V · vi · IV' } },
       },
       {
-        say: { en: 'A change can hide in the colour alone. Here the bass stays on F, but the second time F major becomes F minor — a chord borrowed from the minor key.', he: 'שינוי יכול להסתתר רק בצבע. כאן הבס נשאר על פה, אבל בפעם השנייה פה מז׳ור הופך לפה מינור — אקורד מושאל מהסולם המינורי.' },
+        say: { en: 'A change can hide in the color alone. Here the bass stays on F, but the second time F major becomes F minor — a chord borrowed from the minor key.', he: 'שינוי יכול להסתתר רק בצבע. כאן הבס נשאר על פה, אבל בפעם השנייה פה מז׳ור הופך לפה מינור — אקורד מושאל מהסולם המינורי.' },
         play: [tri(60, 4, 7), tri(65, 4, 7), tri(60, 4, 7), { kind: 'rest', duration: 0.6 }, tri(60, 4, 7), tri(65, 3, 7), tri(60, 4, 7)],
         show: { text: { en: 'IV → iv', he: 'IV → iv' } },
       },
@@ -487,8 +487,8 @@ export const MEMORY_LESSONS: MiniLesson[] = [
         show: { text: { en: '(1 2) (3 4) (5 6)', he: '(1 2) (3 4) (5 6)' } },
       },
       {
-        say: { en: 'The common mistake is trying to hold every chord at once. Keep the bass and the colours, and listen for the moment something feels different. To keep: numbers, bass, colour, pairs.', he: 'הטעות הנפוצה היא לנסות להחזיק כל אקורד בבת אחת. שמרו את הבס ואת הצבעים, והקשיבו לרגע שבו משהו מרגיש אחרת. מה לזכור: מספרים, בס, צבע, זוגות.' },
-        show: { text: { en: 'numbers · bass · colour · pairs', he: 'מספרים · בס · צבע · זוגות' } },
+        say: { en: 'The common mistake is trying to hold every chord at once. Keep the bass and the colors, and listen for the moment something feels different. To keep: numbers, bass, color, pairs.', he: 'הטעות הנפוצה היא לנסות להחזיק כל אקורד בבת אחת. שמרו את הבס ואת הצבעים, והקשיבו לרגע שבו משהו מרגיש אחרת. מה לזכור: מספרים, בס, צבע, זוגות.' },
+        show: { text: { en: 'numbers · bass · color · pairs', he: 'מספרים · בס · צבע · זוגות' } },
       },
     ],
   },

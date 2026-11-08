@@ -240,8 +240,12 @@
   text-align: start;
   cursor: pointer;
 }
-.today-nick span {
+.today-nick > span:not(.avatar) {
   flex: 1;
+}
+/* the avatar keeps its circle (it is a span too: the rule above once stretched it into an ellipse) */
+.today-nick .avatar {
+  flex: none;
 }
 .today-nick small {
   color: var(--ink-dim);

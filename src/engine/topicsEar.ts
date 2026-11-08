@@ -196,7 +196,7 @@ TOPIC_GEN['set-classes'] = {
   title: { en: 'Post-tonal: trichords', he: 'פוסט־טונלי: טריכורדים' },
   skill: 'chords',
   levels: [
-    { en: 'Four distinct colours', he: 'ארבעה צבעים שונים' },
+    { en: 'Four distinct colors', he: 'ארבעה צבעים שונים' },
     { en: 'Semitone sets', he: 'סטים עם חצי טון' },
     { en: 'Six close sets', he: 'שישה סטים קרובים' },
   ],

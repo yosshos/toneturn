@@ -70,7 +70,7 @@ export const LESSONS: MiniLesson[] = [
         play: [chords([ch(0), ch(9, 'm'), ch(5), ch(7), ch(0), null, null, ch(7)], 0.8, true)],
       },
       {
-        say: { en: 'That skill is called audiation. Practise it anywhere: hum a song, stop, keep it going silently, then come back in.', he: 'הכישור הזה נקרא אודיאציה. אפשר לתרגל אותו בכל מקום: מזמזמים שיר, עוצרים, ממשיכים בשקט, ואז חוזרים לשיר בקול.' },
+        say: { en: 'That skill is called audiation. Practice it anywhere: hum a song, stop, keep it going silently, then come back in.', he: 'הכישור הזה נקרא אודיאציה. אפשר לתרגל אותו בכל מקום: מזמזמים שיר, עוצרים, ממשיכים בשקט, ואז חוזרים לשיר בקול.' },
       },
     ],
     more: [
@@ -171,7 +171,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: '5/3 · 6 · 6/4', he: '5/3 · 6 · 6/4' } },
       },
       {
-        say: { en: 'In real music, major and minor triads carry most pop, folk and classical harmony. Diminished chords often pass between two others, and a sus4 resolving to major is a favourite in rock and hymns alike.', he: 'במוזיקה אמיתית, משולשים מז׳וריים ומינוריים נושאים את רוב ההרמוניה בפופ, בפולק ובמוזיקה קלאסית. אקורדים מוקטנים עוברים הרבה בין שני אקורדים, וסאס 4 שנפתר למז׳ור אהוב גם ברוק וגם במזמורים.' },
+        say: { en: 'In real music, major and minor triads carry most pop, folk and classical harmony. Diminished chords often pass between two others, and a sus4 resolving to major is a favorite in rock and hymns alike.', he: 'במוזיקה אמיתית, משולשים מז׳וריים ומינוריים נושאים את רוב ההרמוניה בפופ, בפולק ובמוזיקה קלאסית. אקורדים מוקטנים עוברים הרבה בין שני אקורדים, וסאס 4 שנפתר למז׳ור אהוב גם ברוק וגם במזמורים.' },
         play: [chords([ch(0), ch(5), ch(7, 'sus4'), ch(7), ch(0)], 0.8)],
         show: { text: { en: 'I – IV – Vsus4 – V – I', he: 'I – IV – Vsus4 – V – I' } },
       },
@@ -251,8 +251,8 @@ export const LESSONS: MiniLesson[] = [
     id: 'chromatic-chords',
     area: 'harmony',
     emoji: '🎨',
-    title: { en: 'Colour chords', he: 'אקורדי צבע' },
-    takeaway: { en: 'Colour chords borrow notes from outside the key. The cadential 6/4, the Neapolitan, the augmented sixth and borrowed chords each add a typical colour before the music goes home.', he: 'אקורדי צבע שואלים צלילים מחוץ לסולם. הקוורטסקסט הקדנציאלי, הנפוליטני, הסקסטה המוגדלת והאקורדים השאולים מוסיפים כל אחד צבע אופייני לפני החזרה הביתה.' },
+    title: { en: 'Color chords', he: 'אקורדי צבע' },
+    takeaway: { en: 'Color chords borrow notes from outside the key. The cadential 6/4, the Neapolitan, the augmented sixth and borrowed chords each add a typical color before the music goes home.', he: 'אקורדי צבע שואלים צלילים מחוץ לסולם. הקוורטסקסט הקדנציאלי, הנפוליטני, הסקסטה המוגדלת והאקורדים השאולים מוסיפים כל אחד צבע אופייני לפני החזרה הביתה.' },
     steps: [
       {
         say: { en: 'Hi {name}! First a plain cadence. Then the same with a cadential six four: the home chord over the fifth in the bass, delaying the V.', he: 'היי {name}! קודם קדנצה פשוטה. אחר כך אותה קדנצה עם קוורטסקסט קדנציאלי: אקורד הבית מעל הקווינטה בבס, שמשהה את ה־V.' },
@@ -271,12 +271,12 @@ export const LESSONS: MiniLesson[] = [
         play: [chords([ch(0), ch(5), ch(5, 'm'), ch(0)], 0.9)],
       },
       {
-        say: { en: 'Listen for the moment the colour changes, then for where it goes next. Almost every colour chord leads to V or straight home.', he: 'הקשיבו לרגע שבו הצבע משתנה, ואז לאן הוא ממשיך. כמעט כל אקורד צבע מוביל ל־V או ישר הביתה.' },
+        say: { en: 'Listen for the moment the color changes, then for where it goes next. Almost every color chord leads to V or straight home.', he: 'הקשיבו לרגע שבו הצבע משתנה, ואז לאן הוא ממשיך. כמעט כל אקורד צבע מוביל ל־V או ישר הביתה.' },
       },
     ],
     more: [
       {
-        say: { en: 'Chromatic chords use notes from outside the key without leaving it. They colour the road to a goal — usually V or I — and each has a typical sound and a typical destination.', he: 'אקורדים כרומטיים משתמשים בצלילים מחוץ לסולם בלי לעזוב אותו. הם צובעים את הדרך אל היעד — בדרך כלל V או I — ולכל אחד צליל אופייני ויעד אופייני.' },
+        say: { en: 'Chromatic chords use notes from outside the key without leaving it. They color the road to a goal — usually V or I — and each has a typical sound and a typical destination.', he: 'אקורדים כרומטיים משתמשים בצלילים מחוץ לסולם בלי לעזוב אותו. הם צובעים את הדרך אל היעד — בדרך כלל V או I — ולכל אחד צליל אופייני ויעד אופייני.' },
       },
       {
         say: { en: 'The most common is the secondary dominant: a dominant seventh aimed at a chord other than I. In C, D7 with its F♯ is “V of V” and drives to G.', he: 'הנפוץ ביותר הוא הדומיננטה המשנית: ספט דומיננטי שמכוון לאקורד אחר מ־I. בדו, D7 עם הפה דיאז שלו הוא “V של V” ודוחף אל סול.' },
@@ -313,7 +313,7 @@ export const LESSONS: MiniLesson[] = [
         say: { en: 'In real music, Mozart and Beethoven place Neapolitan and augmented-sixth chords at big cadences. In pop and rock, ♭VI–♭VII–I and the minor iv are classic moves.', he: 'במוזיקה אמיתית, מוצרט ובטהובן שמים אקורדים נפוליטניים וסקסטות מוגדלות בקדנצות גדולות. בפופ וברוק, ♭VI–♭VII–I וה־iv המינורי הם מהלכים קלאסיים.' },
       },
       {
-        say: { en: 'Recap: a colour chord borrows a note from outside the key, and that note almost always moves by semitone toward V or I.', he: 'לסיכום: אקורד צבע שואל צליל מחוץ לסולם, והצליל הזה כמעט תמיד זז בחצי טון לכיוון V או I.' },
+        say: { en: 'Recap: a color chord borrows a note from outside the key, and that note almost always moves by semitone toward V or I.', he: 'לסיכום: אקורד צבע שואל צליל מחוץ לסולם, והצליל הזה כמעט תמיד זז בחצי טון לכיוון V או I.' },
       },
     ],
   },
@@ -322,7 +322,7 @@ export const LESSONS: MiniLesson[] = [
     area: 'ear',
     emoji: '🧩',
     title: { en: 'Verse, chorus, bridge', he: 'בית, פזמון, גשר' },
-    takeaway: { en: 'The verse tells the story and is calmer; the chorus is fuller, louder and repeats a hook; the bridge brings a new colour before the last chorus. Follow the sections and you can map any song.', he: 'הבית מספר את הסיפור והוא רגוע יותר; הפזמון מלא, חזק וחוזר על הוק; הגשר מביא צבע חדש לפני הפזמון האחרון. כשעוקבים אחרי החלקים אפשר למפות כל שיר.' },
+    takeaway: { en: 'The verse tells the story and is calmer; the chorus is fuller, louder and repeats a hook; the bridge brings a new color before the last chorus. Follow the sections and you can map any song.', he: 'הבית מספר את הסיפור והוא רגוע יותר; הפזמון מלא, חזק וחוזר על הוק; הגשר מביא צבע חדש לפני הפזמון האחרון. כשעוקבים אחרי החלקים אפשר למפות כל שיר.' },
     steps: [
       {
         say: { en: 'Hi {name}! This is a verse: light drums, a soft pad, and a melody that keeps moving to new notes.', he: 'היי {name}! זה בית: תופים קלים, ריפוד רך ומנגינה שממשיכה לצלילים חדשים.' },
@@ -333,7 +333,7 @@ export const LESSONS: MiniLesson[] = [
         play: [play([chorus])],
       },
       {
-        say: { en: 'The bridge changes the colour: chords from outside the usual set, a new melody, and it ends wanting to go back to the chorus.', he: 'הגשר משנה את הצבע: אקורדים מחוץ לסט הרגיל, מנגינה חדשה, והוא נגמר ברצון לחזור לפזמון.' },
+        say: { en: 'The bridge changes the color: chords from outside the usual set, a new melody, and it ends wanting to go back to the chorus.', he: 'הגשר משנה את הצבע: אקורדים מחוץ לסט הרגיל, מנגינה חדשה, והוא נגמר ברצון לחזור לפזמון.' },
         play: [play([bridge])],
       },
       {
@@ -355,7 +355,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'verse', he: 'בית' } },
       },
       {
-        say: { en: 'The chorus is the centre. The title and the hook usually live there; words and music both repeat, the melody often sits higher, and the band plays fuller.', he: 'הפזמון הוא המרכז. השם של השיר וההוק נמצאים שם בדרך כלל; גם המילים וגם המוזיקה חוזרות, המנגינה יושבת לרוב גבוה יותר, והלהקה מנגנת מלא יותר.' },
+        say: { en: 'The chorus is the center. The title and the hook usually live there; words and music both repeat, the melody often sits higher, and the band plays fuller.', he: 'הפזמון הוא המרכז. השם של השיר וההוק נמצאים שם בדרך כלל; גם המילים וגם המוזיקה חוזרות, המנגינה יושבת לרוב גבוה יותר, והלהקה מנגנת מלא יותר.' },
         play: [play([chorus])],
         show: { text: { en: 'chorus', he: 'פזמון' } },
       },
@@ -392,7 +392,7 @@ export const LESSONS: MiniLesson[] = [
     area: 'ear',
     emoji: '🏛️',
     title: { en: 'Which period?', he: 'איזו תקופה?' },
-    takeaway: { en: 'Baroque runs in busy, equal lines; Classical is a clear tune over a light accompaniment; Romantic is rich, wide and flexible in time; the 20th century stacks fourths and new scales; jazz swings; pop loops four chords over a beat.', he: 'בארוק רץ בקווים עסוקים ושווים; קלאסי הוא מנגינה ברורה מעל ליווי קליל; רומנטי עשיר, רחב וגמיש בזמן; המאה ה־20 בונה רביעיות וסולמות חדשים; ג׳אז מסווינג; ופופ חוזר על ארבעה אקורדים מעל ביט.' },
+    takeaway: { en: 'Baroque runs in busy, equal lines; Classical is a clear tune over a light accompaniment; Romantic is rich, wide and flexible in time; the 20th century stacks fourths and new scales; jazz swings; pop loops four chords over a beat.', he: 'בארוק רץ בקווים עסוקים ושווים; קלאסי הוא מנגינה ברורה מעל ליווי קליל; רומנטי עשיר, רחב וגמיש בזמן; המאה ה־20 בונה קוורטות וסולמות חדשים; ג׳אז מסווינג; ופופ חוזר על ארבעה אקורדים מעל ביט.' },
     steps: [
       {
         say: { en: 'Hi {name}! Baroque: two lines running in steady, even notes, both equally important, like a conversation.', he: 'היי {name}! בארוק: שני קווים שרצים בצלילים קבועים ושווים, שניהם חשובים באותה מידה, כמו שיחה.' },
@@ -436,7 +436,7 @@ export const LESSONS: MiniLesson[] = [
         play: [clip('romantic')],
       },
       {
-        say: { en: 'The 20th century went in many directions: Debussy’s whole-tone scales and parallel chords, Stravinsky’s shifting metres, chords built in fourths, and music with no home key at all.', he: 'המאה ה־20 הלכה לכיוונים רבים: סולמות הטונים השלמים והאקורדים המקבילים של דביסי, המשקלים המתחלפים של סטרווינסקי, אקורדים שבנויים בקוורטות, ומוזיקה בלי סולם בית בכלל.' },
+        say: { en: 'The 20th century went in many directions: Debussy’s whole-tone scales and parallel chords, Stravinsky’s shifting meters, chords built in fourths, and music with no home key at all.', he: 'המאה ה־20 הלכה לכיוונים רבים: סולמות הטונים השלמים והאקורדים המקבילים של דביסי, המשקלים המתחלפים של סטרווינסקי, אקורדים שבנויים בקוורטות, ומוזיקה בלי סולם בית בכלל.' },
         play: [clip('modern')],
       },
       {

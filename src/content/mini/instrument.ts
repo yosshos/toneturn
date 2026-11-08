@@ -50,7 +50,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [55], key: 'G', text: { en: 'G: 1 = G', he: 'סול: 1 = סול' } },
       },
       {
-        say: { en: 'Next, the contour: up or down, and how far. A step is one or two half steps — the neighbouring note of the scale. Anything bigger is a leap. Here: step, step, leap, step down.', he: 'אחר כך הקו: למעלה או למטה, וכמה רחוק. צעד הוא חצי טון או טון — השכן בסולם. כל דבר גדול יותר הוא קפיצה. כאן: צעד, צעד, קפיצה, צעד למטה.' },
+        say: { en: 'Next, the contour: up or down, and how far. A step is one or two half steps — the neighboring note of the scale. Anything bigger is a leap. Here: step, step, leap, step down.', he: 'אחר כך הקו: למעלה או למטה, וכמה רחוק. צעד הוא חצי טון או טון — השכן בסולם. כל דבר גדול יותר הוא קפיצה. כאן: צעד, צעד, קפיצה, צעד למטה.' },
         play: [notes([60, 62, 64, 67, 65], 0.55)],
         show: { notes: [60, 62, 64, 67, 65], key: 'C', text: { en: 'step · step · leap · step', he: 'צעד · צעד · קפיצה · צעד' } },
       },
@@ -60,7 +60,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [67, 65, 64, 62, 60], key: 'C', text: { en: '5 … 1', he: '5 … 1' } },
       },
       {
-        say: { en: 'A note outside the key usually leans on a neighbour. Here E flat slides into E. If a note sounds "wrong but close", try a half step up or down from the scale note.', he: 'צליל מחוץ לסולם בדרך כלל נשען על שכן. כאן מי במול מחליק אל מי. אם צליל נשמע "לא נכון אבל קרוב", נסו חצי טון מעל או מתחת לצליל הסולם.' },
+        say: { en: 'A note outside the key usually leans on a neighbor. Here E flat slides into E. If a note sounds "wrong but close", try a half step up or down from the scale note.', he: 'צליל מחוץ לסולם בדרך כלל נשען על שכן. כאן מי במול מחליק אל מי. אם צליל נשמע "לא נכון אבל קרוב", נסו חצי טון מעל או מתחת לצליל הסולם.' },
         play: [{ kind: 'cadence', key: C }, notes([60, 62, 63, 64], 0.55)],
         show: { notes: [60, 62, 63, 64], key: 'C', text: { en: '♭3 → 3', he: '♭3 → 3' } },
       },
@@ -337,7 +337,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'C → A → G → E → D → C', he: 'C → A → G → E → D → C' } },
       },
       {
-        say: { en: 'Same chord, different colour: each shape puts a different note on top. Open C ends on E, the A shape on G, the E shape at fret 8 on a high C.', he: 'אותו אקורד, צבע אחר: כל צורה שמה צליל אחר למעלה. C פתוח מסתיים על מי, צורת A על סול, צורת E בסריג 8 על דו גבוה.' },
+        say: { en: 'Same chord, different color: each shape puts a different note on top. Open C ends on E, the A shape on G, the E shape at fret 8 on a high C.', he: 'אותו אקורד, צבע אחר: כל צורה שמה צליל אחר למעלה. C פתוח מסתיים על מי, צורת A על סול, צורת E בסריג 8 על דו גבוה.' },
         play: [chord([48, 52, 55, 60, 64], 1), chord([48, 55, 60, 64, 67], 1), chord([48, 55, 60, 64, 67, 72], 1.3)],
         show: { text: { en: 'top: E · G · C', he: 'למעלה: E · G · C' } },
       },
@@ -414,7 +414,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: '3 · 3 · 3', he: '3 · 3 · 3' } },
       },
       {
-        say: { en: 'Practise music, not just up and down. Play the scale in thirds: 1-3, 2-4, 3-5. It trains your fingers and your ear to skip, the way melodies really move.', he: 'תרגלו מוזיקה, לא רק למעלה ולמטה. נגנו את הסולם בטרצות: 1־3, 2־4, 3־5. זה מאמן את האצבעות ואת האוזן לדלג, כמו שמנגינות באמת זזות.' },
+        say: { en: 'Practice music, not just up and down. Play the scale in thirds: 1-3, 2-4, 3-5. It trains your fingers and your ear to skip, the way melodies really move.', he: 'תרגלו מוזיקה, לא רק למעלה ולמטה. נגנו את הסולם בטרצות: 1־3, 2־4, 3־5. זה מאמן את האצבעות ואת האוזן לדלג, כמו שמנגינות באמת זזות.' },
         play: [notes([60, 64, 62, 65, 64, 67, 65, 69, 67], 0.3)],
         show: { notes: [60, 64, 62, 65, 64, 67, 65, 69, 67], key: 'C', text: { en: 'in thirds', he: 'בטרצות' } },
       },
@@ -473,7 +473,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [60, 69], text: { en: 'C4 · A4 = 440 Hz', he: 'C4 · A4 = 440 הרץ' } },
       },
       {
-        say: { en: 'White neighbours are usually a whole step apart, with a black key between. Only E–F and B–C are half steps. So C major is all white, and G major needs one black key: F sharp.', he: 'שכנים לבנים רחוקים בדרך כלל טון שלם, עם שחור ביניהם. רק מי־פה וסי־דו הם חצאי טונים. לכן דו מז׳ור כולו לבן, וסול מז׳ור צריך שחור אחד: פה דיאז.' },
+        say: { en: 'White neighbors are usually a whole step apart, with a black key between. Only E–F and B–C are half steps. So C major is all white, and G major needs one black key: F sharp.', he: 'שכנים לבנים רחוקים בדרך כלל טון שלם, עם שחור ביניהם. רק מי־פה וסי־דו הם חצאי טונים. לכן דו מז׳ור כולו לבן, וסול מז׳ור צריך שחור אחד: פה דיאז.' },
         play: [notes([55, 57, 59, 60, 62, 64, 66, 67], 0.38)],
         show: { notes: [55, 57, 59, 60, 62, 64, 66, 67], key: 'G' },
       },

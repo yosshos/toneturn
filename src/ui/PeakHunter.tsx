@@ -2,6 +2,7 @@
 // Honest by design: the player only ever hears A and B — no sweep tone, no audition of the slider.
 // The slider runs low → high, left → right in both languages; only the chrome mirrors in Hebrew.
 
+import { Icon } from './icons';
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react';
 import { renderFx } from '../audio/fx';
 import type { FxSpec } from '../engine/fx';
@@ -337,7 +338,7 @@ export function PeakHunter({ lang, settings, saved, onSave, onExit, onResult, be
             </p>
             {phones && (
               <p className="ph-phones" role="note">
-                🎧 {tx.phones}
+                <Icon k="phones" /> {tx.phones}
               </p>
             )}
 

@@ -286,7 +286,7 @@ TOPIC_GEN['circle-fifths'] = {
   levels: [
     { en: 'How many sharps or flats?', he: 'כמה דיאזים או במולים?' },
     { en: 'Relative minor', he: 'המינור המקביל' },
-    { en: 'Neighbours on the circle', he: 'שכנים במעגל' },
+    { en: 'Neighbors on the circle', he: 'שכנים במעגל' },
   ],
   gen(seed, level, id) {
     const rnd = rng(seed);
@@ -315,7 +315,7 @@ TOPIC_GEN['circle-fifths'] = {
     for (const o of opts) names[spEn(o.tonic)] = keyName(o.tonic, false);
     return choiceQ({
       id, topic: 'circle-fifths', level, seed, skill: 'theory', difficulty: 1300,
-      ask: dir ? { en: `One step clockwise (a fifth up) from ${spEn(k.tonic)} major?`, he: `צעד אחד עם כיוון השעון (קווינטה למעלה) מ${spHe(k.tonic)} מז׳ור?` } : { en: `One step anticlockwise (a fifth down) from ${spEn(k.tonic)} major?`, he: `צעד אחד נגד כיוון השעון (קווינטה למטה) מ${spHe(k.tonic)} מז׳ור?` },
+      ask: dir ? { en: `One step clockwise (a fifth up) from ${spEn(k.tonic)} major?`, he: `צעד אחד עם כיוון השעון (קווינטה למעלה) מ${spHe(k.tonic)} מז׳ור?` } : { en: `One step counterclockwise (a fifth down) from ${spEn(k.tonic)} major?`, he: `צעד אחד נגד כיוון השעון (קווינטה למטה) מ${spHe(k.tonic)} מז׳ור?` },
       text: { en: `${spEn(k.tonic)} ${dir ? '→ +1♯' : '→ +1♭'}`, he: `${spHe(k.tonic)} ${dir ? '← +1♯' : '← +1♭'}` },
       names, answer: spEn(ansK.tonic), choices: opts.map((o) => spEn(o.tonic)), stimulus: [{ kind: 'cadence', key: pcOf(k.tonic) }],
     });

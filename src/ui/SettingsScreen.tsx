@@ -1,8 +1,9 @@
+import { Icon } from './icons';
 import { DOMAINS } from '../engine/rating';
 import { defaultPacks, GOAL_NAMES, GOALS, PACKS, type Goal } from '../engine/path';
 import { TOPIC_GEN } from '../engine/topicKit';
 import { TUNINGS } from '../engine/fretboard';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { displayNote, pc, spokenNote } from '../engine/pitch';
 import type { Strings } from '../i18n/strings';
 import { catalogue, chooseVoice, type Gender } from '../speech/voices';
@@ -15,6 +16,7 @@ import { APP_THEMES } from './themes';
 import { COSMETICS, ownsCosmetic } from '../engine/streak';
 import { midi } from '../speech/midi';
 import { LatencyCalibrate } from './LatencyCalibrate';
+import { AudioOutputPicker } from './AudioOutput';
 import { ProfileCard } from './Profile';
 import { DEFAULT_PRIVACY, effectivePrivacy, type Preset, type Privacy, type Who } from '../engine/privacy';
 
@@ -28,6 +30,10 @@ interface Props {
   onIntake?: () => void;
   /** Open the mixer (levels, EQ, effects per channel). */
   onMixer?: () => void;
+  /** Plans and prices (0.54). */
+  onPlans?: () => void;
+  /** The owner's control panel (admins only). */
+  onAdmin?: () => void;
 }
 
 function Seg<T extends string>({
@@ -110,10 +116,10 @@ function MyPath({ t, s, onChange }: { t: Strings; s: Settings; onChange: (p: Par
       <h3 className="intake-sub">{q.leaveModes}</h3>
       <div className="intake-chips">
         <button type="button" className={`chip ${s.noSing ? 'on' : ''}`} aria-pressed={!!s.noSing} onClick={() => onChange({ noSing: !s.noSing })}>
-          🔇 {q.noSing}
+          <Icon k="mute" /> {q.noSing}
         </button>
         <button type="button" className={`chip ${s.noMic ? 'on' : ''}`} aria-pressed={!!s.noMic} onClick={() => onChange({ noMic: !s.noMic })}>
-          🎙️✕ {q.noMic}
+          <Icon k="mic" />✕ {q.noMic}
         </button>
       </div>
       {(s.pathHidden ?? []).length > 0 && (
@@ -150,7 +156,7 @@ function MyPath({ t, s, onChange }: { t: Strings; s: Settings; onChange: (p: Par
   );
 }
 
-export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIntake, onMixer }: Props) {
+export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIntake, onMixer, onPlans, onAdmin }: Props) {
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>(listVoices());
   useEffect(() => {
     void voicesReady().then(setVoices);
@@ -197,9 +203,35 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
 
   const lang = s.uiLang;
   const G = GROUPS;
+  const wide = useWide();
+  const hashId = typeof location !== 'undefined' ? /^#\/settings\/(\w+)/.exec(location.hash)?.[1] : undefined;
+  const [active, setActive] = useState<string>(hashId ?? 'account');
+  const [query, setQuery] = useState('');
+  useEffect(() => {
+    const on = () => {
+      const m = /^#\/settings\/(\w+)/.exec(location.hash);
+      if (m) setActive(m[1]);
+    };
+    addEventListener('hashchange', on);
+    return () => removeEventListener('hashchange', on);
+  }, []);
+  const NAV: { id: string; title: string; sub: string }[] = [
+    { id: 'account', title: t.account, sub: G.account[lang] },
+    { id: 'privacy', title: G.privacy.title[lang], sub: G.privacy.sub[lang] },
+    { id: 'language', title: G.language.title[lang], sub: G.language.sub[lang] },
+    { id: 'learning', title: G.learning.title[lang], sub: G.learning.sub[lang] },
+    { id: 'instrument', title: t.instrumentTitle, sub: G.instrument[lang] },
+    { id: 'midi', title: G.midi.title[lang], sub: (s.midiInput ? G.midi.on : G.midi.off)[lang] },
+    { id: 'input', title: G.input.title[lang], sub: G.input.sub[lang] },
+    { id: 'sound', title: G.sound.title[lang], sub: G.sound.sub[lang] },
+    { id: 'display', title: G.display.title[lang], sub: G.display.sub[lang] },
+  ];
+  const q = query.trim().toLowerCase();
+  const shownNav = q ? NAV.filter((x) => `${x.title} ${x.sub}`.toLowerCase().includes(q)) : NAV;
 
   return (
-    <main className="panel-screen settings">
+    <PaneCtx.Provider value={{ wide, active }}>
+    <main className={`panel-screen settings ${wide ? 'settings-wide' : ''}`}>
       <header className="screen-head">
         <button className="icon-btn" onClick={onBack} aria-label={t.back}>
           <span className="flip-rtl">←</span>
@@ -207,9 +239,34 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
         <h1>{t.settings}</h1>
       </header>
 
+      {wide && (
+        <nav className="set-nav" aria-label={t.settings} data-settings-nav="1">
+          <input className="set-search" type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={lang === 'he' ? 'חיפוש בהגדרות' : 'Search settings'} aria-label={lang === 'he' ? 'חיפוש בהגדרות' : 'Search settings'} />
+          {shownNav.map((x) => (
+            <button key={x.id} className={`set-nav-item ${active === x.id ? 'on' : ''}`} onClick={() => setActive(x.id)} aria-current={active === x.id ? 'page' : undefined} data-set-nav={x.id} title={x.sub}>
+              <SetIcon k={x.id} />
+              <span>{x.title}</span>
+            </button>
+          ))}
+        </nav>
+      )}
       <div className="set-groups">
         <Group id="account" icon={<SetIcon k="account" />} title={t.account} sub={G.account[lang]}>
           <ProfileCard lang={lang} s={s} onChange={onChange} />
+          {(onPlans || onAdmin) && (
+            <div className="row" style={{ flexWrap: 'wrap', gap: 8 }}>
+              {onPlans && (
+                <button className="btn ghost small" onClick={onPlans} data-open-plans="1">
+                  {lang === 'he' ? 'מנויים ומחירים' : 'Plans & prices'}
+                </button>
+              )}
+              {onAdmin && (
+                <button className="btn ghost small" onClick={onAdmin} data-open-admin="1">
+                  {lang === 'he' ? 'ניהול (מנהל)' : 'Admin'}
+                </button>
+              )}
+            </div>
+          )}
           <section className="set-card">{account}</section>
           <section className="set-card">
             <button className="btn small" onClick={() => void downloadMyData()} data-export="1">
@@ -245,7 +302,7 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
             />
             <p className="example" aria-live="polite">
               <span className="ex-label">{t.example}:</span> <Note>{displayNote(bb, uiNaming, s.uiLang)}</Note> ·{' '}
-              <span aria-hidden="true">🔊</span>{' '}
+              <Icon k="speaker" />{' '}
               <bdi lang={narr} dir={narr === 'he' ? 'rtl' : 'ltr'} className="spoken-ex">
                 {spokenNote(bb, narrNaming, narr)}
               </bdi>
@@ -536,7 +593,7 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
             />
             <label className="check">
               <input type="checkbox" checked={!!s.cvd} onChange={(e) => onChange({ cvd: e.target.checked })} data-cvd="1" />
-              {lang === 'he' ? 'צבעים ידידותיים לעיוורון צבעים (כחול / כתום במקום ירוק / אדום)' : 'Colour-blind friendly (blue / orange instead of green / red)'}
+              {lang === 'he' ? 'צבעים ידידותיים לעיוורון צבעים (כחול / כתום במקום ירוק / אדום)' : 'Color-blind friendly (blue / orange instead of green / red)'}
             </label>
           </section>
           <section className="set-card">
@@ -584,6 +641,7 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
         </button>
       </div>
     </main>
+    </PaneCtx.Provider>
   );
 }
 
@@ -670,7 +728,44 @@ const SetIcon = ({ k }: { k: string }) => (
   </svg>
 );
 
+/** Settings on a computer (SPEC-DESKTOP §4, owner 2026-11-08): categories in a column, the chosen one as a page. */
+const PaneCtx = createContext<{ wide: boolean; active: string } | null>(null);
+function useWide() {
+  const q = '(min-width: 1100px)';
+  const [wide, setWide] = useState(() => typeof matchMedia !== 'undefined' && matchMedia(q).matches);
+  useEffect(() => {
+    if (typeof matchMedia === 'undefined') return;
+    const m = matchMedia(q);
+    const on = () => setWide(m.matches);
+    m.addEventListener('change', on);
+    return () => m.removeEventListener('change', on);
+  }, []);
+  return wide;
+}
+
 function Group({ id, icon, title, sub, children }: { id: string; icon: ReactNode; title: string; sub: string; children: ReactNode }) {
+  const pane = useContext(PaneCtx);
+  if (pane?.wide) {
+    if (pane.active !== id) return null;
+    return (
+      <section className="set-page" data-group={id} aria-labelledby={`sp-${id}`}>
+        <header className="sp-head">
+          <span className="sg-icon" aria-hidden="true">
+            {icon}
+          </span>
+          <span>
+            <h2 id={`sp-${id}`}>{title}</h2>
+            <small>{sub}</small>
+          </span>
+        </header>
+        <div className="set-group-body">{children}</div>
+      </section>
+    );
+  }
+  return <GroupAccordion id={id} icon={icon} title={title} sub={sub}>{children}</GroupAccordion>;
+}
+
+function GroupAccordion({ id, icon, title, sub, children }: { id: string; icon: ReactNode; title: string; sub: string; children: ReactNode }) {
   const deep = typeof location !== 'undefined' && location.hash === `#/settings/${id}`;
   const [open, setOpen] = useState(() => deep || openGroups().includes(id));
   const ref = useRef<HTMLDetailsElement>(null);
@@ -816,6 +911,15 @@ function MidiPanel({ t, lang, on, onChange, naming, s, onSettings }: { t: String
         ]}
         onChange={(v) => (v === 'on' ? void turnOn() : onChange(false))}
       />
+      <label className="toggle-row">
+        <input type="checkbox" checked={!!s.computerKeys} onChange={(e) => onSettings({ computerKeys: e.target.checked })} data-computer-keys="1" />
+        <span>
+          {he ? 'לנגן במקלדת המחשב' : 'Play with the computer keyboard'}
+          <small className="field-hint" style={{ display: 'block' }}>
+            {he ? 'A W S E D F T G Y H U J K הם דו עד דו; Z / X מזיזים אוקטבה. בזמן שזה פועל, האותיות מנגנות ולא משמשות כקיצורים.' : 'A W S E D F T G Y H U J K play C to C; Z / X move the octave. While on, letters play notes instead of shortcuts.'}
+          </small>
+        </span>
+      </label>
       {status && (
         <p className="field-hint warn" role="status">
           {status}
@@ -842,6 +946,7 @@ function MidiPanel({ t, lang, on, onChange, naming, s, onSettings }: { t: String
               <span>{he ? 'להשמיע את הקלידים דרך האפליקציה' : 'Play my keys through the app'}</span>
             </label>
             <p className="field-hint">{he ? 'רוב מקלדות המידי בלי רמקולים — האפליקציה מנגנת בצליל שבחרתם (הגדרות ← צליל). אם לפסנתר שלכם יש רמקולים משלו, כבו כדי לא לשמוע כפול.' : 'Most MIDI keyboards have no speakers, so the app plays your keys in the sound you chose (Settings → Sound). If your piano has its own speakers, turn this off to avoid hearing everything twice.'}</p>
+            <AudioOutputPicker lang={he ? 'he' : 'en'} value={s.audioOutput ?? null} onChange={(id) => onSettings({ audioOutput: id })} />
             {s.midiSound !== false && (
               <>
                 {!audioOn && (
@@ -895,7 +1000,7 @@ function MidiPanel({ t, lang, on, onChange, naming, s, onSettings }: { t: String
             <input type="checkbox" checked={!!s.midiPedalInvert} onChange={(e) => onSettings({ midiPedalInvert: e.target.checked })} data-pedal-invert="1" />
             <span>{he ? 'הפדל הפוך (לוחץ כשהוא למעלה)' : 'Pedal works backwards (reverse it)'}</span>
           </label>
-          <p className="field-hint">{he ? 'עוצמת הנגינה (מבוקר–פורטה) מכיילים במסך התרגילים הטכניים ← הגדרות.' : 'Your soft-to-loud range is calibrated in Technique drills → settings.'}</p>
+          <p className="field-hint">{he ? 'עוצמת הנגינה (פיאנו–פורטה) מכיילים במסך התרגילים הטכניים ← הגדרות.' : 'Your soft-to-loud range is calibrated in Technique drills → settings.'}</p>
         </>
       )}
     </section>
@@ -1026,7 +1131,7 @@ function PrivacySettings({ lang, s, onChange }: { lang: 'en' | 'he'; s: Settings
         <Seg<'friends' | 'none'> label={he ? 'תזכורות מחברים' : 'Nudges from friends'} value={eff.nudges} options={[['friends', he ? 'חברים' : 'Friends'], ['none', he ? 'כבוי' : 'Off']]} onChange={(nudges) => set({ nudges })} />
         <label className="toggle-row">
           <input type="checkbox" checked={eff.dontDisturb} onChange={(e) => set({ dontDisturb: e.target.checked })} />
-          <span>{he ? 'לא להפריע בזמן תרגול' : "Don't disturb while I practise"}</span>
+          <span>{he ? 'לא להפריע בזמן תרגול' : "Don't disturb while I practice"}</span>
         </label>
       </details>
       <section className="set-card">

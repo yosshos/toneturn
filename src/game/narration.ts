@@ -10,8 +10,8 @@ const deg = (n: number, l: Lang) => NUM[l][n] ?? String(n);
 /** A different phrasing each time, so the narrator doesn't sound like a loop. Pure when `pickAt` is given. */
 const POOLS = {
   yes: {
-    en: ['Yes, {w}!', 'Nailed it — {w}!', '{w}. Spot on!', 'Exactly: {w}.', 'Nice ear — {w}!', '{w}! You heard it.'],
-    he: ['נכון, {w}!', 'בול — {w}!', '{w}. מדויק!', 'בדיוק: {w}.', 'אוזן טובה — {w}!', '{w}! שמעתם את זה.'],
+    en: ['Yes, {w}.', 'Correct — {w}.', '{w}. Exactly.', 'Exactly: {w}.', 'Right — {w}.', '{w}. You heard it.'],
+    he: ['נכון, {w}.', 'נכון — {w}.', '{w}. מדויק.', 'בדיוק: {w}.', 'כן — {w}.', '{w}. שמעתם את זה.'],
   },
   again: {
     en: ["That's it, {w}.", 'There you go — {w}.', 'Got it this time: {w}.'],

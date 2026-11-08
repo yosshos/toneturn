@@ -191,7 +191,7 @@ export const LESSON_META: Record<LessonId, LessonMeta> = {
     title: { en: 'Find my level', he: 'מציאת הרמה שלי' },
     blurb: { en: 'Nine quick questions that adapt to you.', he: 'תשע שאלות קצרות שמתאימות את עצמן אליכם.' },
     icon: 'map',
-    tip: { en: 'Open your Skill Map to see what to practise next.', he: 'פתחו את מפת המיומנויות כדי לראות מה לתרגל עכשיו.' },
+    tip: { en: 'Open your Skill Map to see what to practice next.', he: 'פתחו את מפת המיומנויות כדי לראות מה לתרגל עכשיו.' },
   },
   review: {
     title: { en: 'Review my mistakes', he: 'חזרה על הטעויות שלי' },
@@ -227,7 +227,7 @@ export const LESSON_META: Record<LessonId, LessonMeta> = {
     title: { en: 'Riffs & runs', he: 'ריפים וראנים' },
     blurb: { en: 'Hear a fast run, name it, then sing it back.', he: 'שומעים ראן מהיר, מזהים אותו, ושרים אותו בחזרה.' },
     icon: 'mic',
-    tip: { en: 'Practise a run slowly on “ah”, then speed it up — the Runs workshop does this for you.', he: 'תרגלו ראן לאט על "אה", ואז האיצו — סדנת הראנים עושה את זה בשבילכם.' },
+    tip: { en: 'Practice a run slowly on “ah”, then speed it up — the Runs workshop does this for you.', he: 'תרגלו ראן לאט על "אה", ואז האיצו — סדנת הראנים עושה את זה בשבילכם.' },
   },
   topic: {
     title: { en: 'Practice', he: 'תרגול' },
@@ -239,7 +239,7 @@ export const LESSON_META: Record<LessonId, LessonMeta> = {
     title: { en: 'Absolute pitch corner (optional)', he: 'פינת שמיעה מוחלטת (רשות)' },
     blurb: { en: 'A note with no reference — name it. Tracked apart from your relative skills.', he: 'צליל בלי צליל ייחוס — מה שמו? נמדד בנפרד מהמיומנויות היחסיות.' },
     icon: 'ear',
-    tip: { en: 'Few adults gain full absolute pitch; this trains a feel for each note’s colour.', he: 'מעט מבוגרים רוכשים שמיעה מוחלטת מלאה; זה מאמן תחושה ל"צבע" של כל צליל.' },
+    tip: { en: 'Few adults gain full absolute pitch; this trains a feel for each note’s color.', he: 'מעט מבוגרים רוכשים שמיעה מוחלטת מלאה; זה מאמן תחושה ל"צבע" של כל צליל.' },
   },
   'jazz-2': {
     title: { en: 'Jazz 2: licks & melodic minor', he: 'ג׳אז 2: ליקים ומינור מלודי' },
@@ -1022,10 +1022,10 @@ const REMARK_TEXT: Record<Remark, { en: string; he: string }> = {
   'bit-sharp': { en: 'a bit sharp', he: 'קצת גבוה' },
   'quite-flat': { en: 'quite flat', he: 'נמוך מדי' },
   'quite-sharp': { en: 'quite sharp', he: 'גבוה מדי' },
-  'end-flat': { en: 'you went flat at the end', he: 'ירדת בסוף' },
-  'end-sharp': { en: 'you went sharp at the end', he: 'עלית בסוף' },
-  'scoop-up': { en: 'you slid up into the note', he: 'החלקת אל הצליל מלמטה' },
-  'scoop-down': { en: 'you came down into the note', he: 'החלקת אל הצליל מלמעלה' },
+  'end-flat': { en: 'you went flat at the end', he: 'ירדתם בסוף' },
+  'end-sharp': { en: 'you went sharp at the end', he: 'עליתם בסוף' },
+  'scoop-up': { en: 'you slid up into the note', he: 'החלקתם אל הצליל מלמטה' },
+  'scoop-down': { en: 'you came down into the note', he: 'החלקתם אל הצליל מלמעלה' },
   unsteady: { en: 'it was a bit unsteady', he: 'זה היה קצת לא יציב' },
 };
 const isOffset = (r: Remark) => /^(touch|bit|quite)-/.test(r);

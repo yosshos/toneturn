@@ -3,6 +3,7 @@
 // like WhatsApp (drag to move, pinch / wheel / slider to zoom). Kept on the device; the server copy comes with the
 // social version. Young players (age gate) can't upload a photo.
 
+import { Icon } from './icons';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { checkNickname, NICK_WHY, suggestNicknames } from '../engine/nickname';
 import { COUNTRY_CODES, countryName, deviceCountry } from '../engine/country';
@@ -201,7 +202,7 @@ export function NicknameSheet({ lang, current, onSave, onClose }: { lang: Lang; 
           </button>
         ))}
         <button type="button" className="chip" onClick={() => setSeed((x) => x + 1)} aria-label={he ? 'עוד הצעות' : 'More ideas'}>
-          🎲
+          <Icon k="dice" />
         </button>
       </div>
       <input className="nick-input" value={name} maxLength={20} dir="ltr" onChange={(e) => setName(e.target.value.trim())} placeholder="CodaFox42" aria-label={he ? 'כינוי' : 'Nickname'} />
@@ -265,7 +266,7 @@ export function PictureSheet({ lang, s, onSave, onClose }: { lang: Lang; s: Sett
           </button>
         ))}
       </div>
-      <div className="color-row" role="radiogroup" aria-label={he ? 'צבע' : 'Colour'}>
+      <div className="color-row" role="radiogroup" aria-label={he ? 'צבע' : 'Color'}>
         {PROFILE_COLORS.map((c) => (
           <button key={c} type="button" role="radio" aria-checked={(s.avatarColor ?? PROFILE_COLORS[0]) === c} className={`color-opt ${(s.avatarColor ?? PROFILE_COLORS[0]) === c ? 'on' : ''}`} style={{ background: c }} onClick={() => onSave({ avatarColor: c })} aria-label={c} />
         ))}

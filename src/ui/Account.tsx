@@ -1,3 +1,4 @@
+import { Icon } from './icons';
 import { useState } from 'react';
 import { cloudConfigured, signInWithGoogle, signOut, type CloudUser } from '../cloud/cloud';
 import { disablePush } from '../cloud/social';
@@ -14,7 +15,7 @@ export function AccountCard({ t, user, sync, compact }: { t: Strings; user: Clou
     return (
       <section className={`account-card ${compact ? 'compact' : ''}`}>
         <div className="account-text">
-          <b>☁ {t.cloudSave}</b>
+          <b><Icon k="cloud" /> {t.cloudSave}</b>
           <small>{t.cloudHint}</small>
         </div>
         <button
@@ -43,7 +44,7 @@ export function AccountCard({ t, user, sync, compact }: { t: Strings; user: Clou
       <div className="account-text">
         <b>{user.name ?? user.email}</b>
         <small>
-          {sync === 'syncing' ? t.syncing : sync === 'error' ? t.syncError : sync === 'synced' ? `☁ ${t.synced}` : t.cloudSave}
+          {sync === 'syncing' ? t.syncing : sync === 'error' ? t.syncError : sync === 'synced' ? <><Icon k="cloud" /> {t.synced}</> : t.cloudSave}
         </small>
       </div>
       <button

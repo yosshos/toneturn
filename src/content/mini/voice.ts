@@ -120,7 +120,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [60], text: { en: 'straight = steady air', he: 'ישר = אוויר יציב' } },
       },
       {
-        say: { en: 'Look after the instrument. Warm up for a few minutes with hums or lip trills, sip water through the day, and practise in your comfortable middle range. Stop if you feel pain or get hoarse, and rest. Hoarseness that lasts more than two weeks is a reason to see a doctor.', he: 'שמרו על הכלי. התחממו כמה דקות עם זמזום או טריל שפתיים, שתו מים לאורך היום, ותרגלו באמצע הנוח של המנעד. עצרו אם יש כאב או צרידות, ונוחו. צרידות שנמשכת יותר משבועיים היא סיבה לפנות לרופא.' },
+        say: { en: 'Look after the instrument. Warm up for a few minutes with hums or lip trills, sip water through the day, and practice in your comfortable middle range. Stop if you feel pain or get hoarse, and rest. Hoarseness that lasts more than two weeks is a reason to see a doctor.', he: 'שמרו על הכלי. התחממו כמה דקות עם זמזום או טריל שפתיים, שתו מים לאורך היום, ותרגלו באמצע הנוח של המנעד. עצרו אם יש כאב או צרידות, ונוחו. צרידות שנמשכת יותר משבועיים היא סיבה לפנות לרופא.' },
         show: { text: { en: 'warm up · water · stop on pain', he: 'חימום · מים · עוצרים בכאב' } },
       },
       {
@@ -150,9 +150,9 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: '≈ 5–7 per second', he: '≈ 5–7 בשנייה' } },
       },
       {
-        say: { en: 'Width is how far each wave swings, in cents. Pop voices keep it narrow, classical voices swing wider, but the centre always stays on the note.', he: 'הרוחב הוא כמה רחוק כל גל מתנדנד, בסנטים. בפופ הוא צר, בשירה קלאסית רחב יותר, אבל המרכז תמיד נשאר על הצליל.' },
+        say: { en: 'Width is how far each wave swings, in cents. Pop voices keep it narrow, classical voices swing wider, but the center always stays on the note.', he: 'הרוחב הוא כמה רחוק כל גל מתנדנד, בסנטים. בפופ הוא צר, בשירה קלאסית רחב יותר, אבל המרכז תמיד נשאר על הצליל.' },
         play: [note(60, 2)],
-        show: { notes: [60], text: { en: 'centre = the note', he: 'המרכז = הצליל' } },
+        show: { notes: [60], text: { en: 'center = the note', he: 'המרכז = הצליל' } },
       },
       {
         say: { en: 'A good vibrato is regular: every wave the same speed and size. Hear steady pulses, then uneven ones. I score that evenness.', he: 'ויברטו טוב הוא קבוע: כל גל באותה מהירות ובאותו גודל. הקשיבו לפעימות אחידות, ואז ללא אחידות. את האחידות הזאת אני מודד.' },
@@ -182,12 +182,12 @@ export const LESSONS: MiniLesson[] = [
     ],
     more: [
       {
-        say: { en: 'Vibrato is a regular wave in pitch, with a small wave in loudness riding along. It has two measures: rate, usually about five to seven waves a second, and extent, how far it swings. We hear the centre of the wave as the note.', he: 'ויברטו הוא גל קבוע בגובה הצליל, ואיתו גל קטן גם בעוצמה. יש לו שני מדדים: מהירות, בדרך כלל בערך חמישה עד שבעה גלים בשנייה, ורוחב — כמה רחוק הוא מתנדנד. את מרכז הגל אנחנו שומעים כצליל.' },
+        say: { en: 'Vibrato is a regular wave in pitch, with a small wave in loudness riding along. It has two measures: rate, usually about five to seven waves a second, and extent, how far it swings. We hear the center of the wave as the note.', he: 'ויברטו הוא גל קבוע בגובה הצליל, ואיתו גל קטן גם בעוצמה. יש לו שני מדדים: מהירות, בדרך כלל בערך חמישה עד שבעה גלים בשנייה, ורוחב — כמה רחוק הוא מתנדנד. את מרכז הגל אנחנו שומעים כצליל.' },
         play: [pulses(6, 2)],
-        show: { text: { en: 'rate · extent · centre', he: 'מהירות · רוחב · מרכז' } },
+        show: { text: { en: 'rate · extent · center', he: 'מהירות · רוחב · מרכז' } },
       },
       {
-        say: { en: 'Extent changes with style. Pop and musical-theatre singers often keep it narrow; classical singers may swing up to about a half step each way. Either way, the centre must sit on the pitch.', he: 'הרוחב משתנה לפי סגנון. בפופ ובמחזמר שומרים עליו לרוב צר; זמרים קלאסיים יכולים להתנדנד עד בערך חצי טון לכל כיוון. בכל מקרה, המרכז צריך לשבת על הצליל.' },
+        say: { en: 'Extent changes with style. Pop and musical-theater singers often keep it narrow; classical singers may swing up to about a half step each way. Either way, the center must sit on the pitch.', he: 'הרוחב משתנה לפי סגנון. בפופ ובמחזמר שומרים עליו לרוב צר; זמרים קלאסיים יכולים להתנדנד עד בערך חצי טון לכל כיוון. בכל מקרה, המרכז צריך לשבת על הצליל.' },
         play: [note(60, 2)],
         show: { notes: [60], text: { en: 'narrow (pop) · wide (classical)', he: 'צר (פופ) · רחב (קלאסי)' } },
       },
@@ -210,13 +210,13 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'jaw still in the mirror', he: 'לסת שקטה במראה' } },
       },
       {
-        say: { en: 'In opera and art song, vibrato is nearly continuous. Early music and many choirs use it sparingly, to blend. Pop, jazz and musical theatre often use a delayed vibrato: the long note starts straight and blooms at the end.', he: 'באופרה ובשיר אמנותי הוויברטו כמעט רציף. במוזיקה עתיקה ובמקהלות רבות משתמשים בו במשורה, כדי להתמזג. בפופ, בג׳אז ובמחזמר נפוץ ויברטו מושהה: הצליל הארוך מתחיל ישר ופורח בסופו.' },
+        say: { en: 'In opera and art song, vibrato is nearly continuous. Early music and many choirs use it sparingly, to blend. Pop, jazz and musical theater often use a delayed vibrato: the long note starts straight and blooms at the end.', he: 'באופרה ובשיר אמנותי הוויברטו כמעט רציף. במוזיקה עתיקה ובמקהלות רבות משתמשים בו במשורה, כדי להתמזג. בפופ, בג׳אז ובמחזמר נפוץ ויברטו מושהה: הצליל הארוך מתחיל ישר ופורח בסופו.' },
         play: [{ kind: 'melody', midis: [60, 62, 64, 65, 67], beats: [1, 1, 1, 1, 4], bpm: 100 }],
         show: { notes: [60, 62, 64, 65, 67], durs: [1, 1, 1, 1, 4], key: 'C', text: { en: 'straight … then ~~~', he: 'ישר … ואז ~~~' } },
       },
       {
-        say: { en: 'To keep: vibrato is a regular wave of five to seven per second, centred on the note. Let it come from free breath, and choose where it goes.', he: 'לזכור: ויברטו הוא גל קבוע של חמש עד שבע פעמים בשנייה, שמרכזו על הצליל. תנו לו לבוא מנשימה חופשית, ובחרו לאן הוא הולך.' },
-        show: { notes: [60], text: { en: '5–7 / s · centred · chosen', he: '5–7 בשנייה · במרכז · בבחירה' } },
+        say: { en: 'To keep: vibrato is a regular wave of five to seven per second, centered on the note. Let it come from free breath, and choose where it goes.', he: 'לזכור: ויברטו הוא גל קבוע של חמש עד שבע פעמים בשנייה, שמרכזו על הצליל. תנו לו לבוא מנשימה חופשית, ובחרו לאן הוא הולך.' },
+        show: { notes: [60], text: { en: '5–7 / s · centered · chosen', he: '5–7 בשנייה · במרכז · בבחירה' } },
       },
     ],
   },
@@ -245,7 +245,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [53], text: { en: 'low: relaxed', he: 'נמוך: רגוע' } },
       },
       {
-        say: { en: 'High notes need steady air, not more squeeze. Keep the jaw and neck loose and let the sound get lighter as you climb.', he: 'צלילים גבוהים צריכים אוויר יציב, לא עוד לחץ. השאירו את הלסת והצוואר משוחררים ותנו לצליל להתקל ככל שעולים.' },
+        say: { en: 'High notes need steady air, not more squeeze. Keep the jaw and neck loose and let the sound get lighter as you climb.', he: 'צלילים גבוהים צריכים אוויר יציב, לא עוד לחץ. השאירו את הלסת והצוואר משוחררים ותנו לצליל להיעשות קל יותר ככל שעולים.' },
         play: [note(67, 2)],
         show: { notes: [67], text: { en: 'high: light, loose', he: 'גבוה: קל ומשוחרר' } },
       },
@@ -267,7 +267,7 @@ export const LESSONS: MiniLesson[] = [
     ],
     more: [
       {
-        say: { en: 'Your full range is every note you can make; your comfortable range, or tessitura, is where the voice sits easily for a whole song. Voice types such as soprano, alto, tenor and bass depend on that comfort zone and on colour, not only on the extreme notes.', he: 'המנעד המלא הוא כל צליל שאתם מסוגלים להפיק; המנעד הנוח, או הטסיטורה, הוא המקום שבו הקול יושב בקלות לאורך שיר שלם. סוגי קול כמו סופרן, אלט, טנור ובס נקבעים לפי האזור הנוח ולפי הגוון, לא רק לפי הצלילים הקיצוניים.' },
+        say: { en: 'Your full range is every note you can make; your comfortable range, or tessitura, is where the voice sits easily for a whole song. Voice types such as soprano, alto, tenor and bass depend on that comfort zone and on color, not only on the extreme notes.', he: 'המנעד המלא הוא כל צליל שאתם מסוגלים להפיק; המנעד הנוח, או הטסיטורה, הוא המקום שבו הקול יושב בקלות לאורך שיר שלם. סוגי קול כמו סופרן, אלט, טנור ובס נקבעים לפי האזור הנוח ולפי הגוון, לא רק לפי הצלילים הקיצוניים.' },
         play: [notes([48, 52, 55, 60, 64, 67, 72], 0.4)],
         show: { notes: [48, 60, 72], text: { en: 'range ⊃ tessitura', he: 'מנעד ⊃ טסיטורה' } },
       },
@@ -277,7 +277,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [64, 67], text: { en: 'passaggio ≈ E4–G4', he: 'פסאג׳ו ≈ E4–G4' } },
       },
       {
-        say: { en: 'To smooth the shift, don\'t carry the heavy low sound upward. Let it thin out gradually as you climb, and narrow the vowel slightly. Sirens on a lip trill, on "ng" or through a straw are classic, gentle tools for this.', he: 'כדי להחליק את המעבר, אל תסחבו את הצליל הכבד מלמטה כלפי מעלה. תנו לו להתקל בהדרגה ככל שעולים, וצמצמו מעט את התנועה. סירנות על טריל שפתיים, על "נג" או דרך קשית הן כלים קלאסיים ועדינים לזה.' },
+        say: { en: 'To smooth the shift, don\'t carry the heavy low sound upward. Let it thin out gradually as you climb, and narrow the vowel slightly. Sirens on a lip trill, on "ng" or through a straw are classic, gentle tools for this.', he: 'כדי להחליק את המעבר, אל תסחבו את הצליל הכבד מלמטה כלפי מעלה. תנו לו להיעשות קל ודק יותר בהדרגה ככל שעולים, וצמצמו מעט את התנועה. סירנות על טריל שפתיים, על "נג" או דרך קשית הן כלים קלאסיים ועדינים לזה.' },
         play: [notes([55, 57, 59, 60, 62, 64, 65, 67, 69, 71, 72], 0.25)],
         show: { notes: [55, 60, 64, 67, 72], text: { en: 'thinner as you climb', he: 'דק יותר ככל שעולים' } },
       },
@@ -320,7 +320,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [55, 60], text: { en: 'slide ↗ smooth', he: 'גלישה ↗ חלקה' } },
       },
       {
-        say: { en: 'The piano can only give you the two ends. I check that your slide is even, always moving one way, and lands right on the target.', he: 'הפסנתר נותן רק את שתי הקצוות. אני בודק שהגלישה אחידה, נעה תמיד לכיוון אחד ונוחתת בדיוק על היעד.' },
+        say: { en: 'The piano can only give you the two ends. I check that your slide is even, always moving one way, and lands right on the target.', he: 'הפסנתר נותן רק את שני הקצוות. אני בודק שהגלישה אחידה, נעה תמיד לכיוון אחד ונוחתת בדיוק על היעד.' },
         play: [notes([62, 55], 1.1)],
         show: { notes: [62, 55], text: { en: 'even · one way · land', he: 'אחיד · כיוון אחד · נחיתה' } },
       },
@@ -372,7 +372,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [62, 60, 59, 57, 55], key: 'G', text: { en: 'sinking ✗ · true ✓', he: 'שוקע ✗ · מדויק ✓' } },
       },
       {
-        say: { en: 'Fast passages need a light, flexible voice. Keep the air moving and avoid putting an "h" before each note. Practise slowly with a metronome, in small groups, then raise the tempo step by step. Accuracy first, speed second.', he: 'קטעים מהירים צריכים קול קל וגמיש. שמרו על זרימת האוויר והימנעו מ"ה" לפני כל צליל. תרגלו לאט עם מטרונום, בקבוצות קטנות, ואז העלו את הטמפו בהדרגה. קודם דיוק, אחר כך מהירות.' },
+        say: { en: 'Fast passages need a light, flexible voice. Keep the air moving and avoid putting an "h" before each note. Practice slowly with a metronome, in small groups, then raise the tempo step by step. Accuracy first, speed second.', he: 'קטעים מהירים צריכים קול קל וגמיש. שמרו על זרימת האוויר והימנעו מ"ה" לפני כל צליל. תרגלו לאט עם מטרונום, בקבוצות קטנות, ואז העלו את הטמפו בהדרגה. קודם דיוק, אחר כך מהירות.' },
         play: [{ kind: 'melody', midis: [55, 57, 59, 60, 62, 60, 59, 57, 55], beats: [0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 1], bpm: 72 }],
         show: { notes: [55, 57, 59, 60, 62, 60, 59, 57, 55], key: 'G', text: { en: 'slow → faster', he: 'לאט ← מהר יותר' } },
       },
@@ -447,12 +447,12 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [57, 59, 60, 62, 64, 65, 68, 69], key: 'C', text: { en: 'A harmonic minor: F → G♯', he: 'לה מינור הרמוני: פה ← סול♯' } },
       },
       {
-        say: { en: 'The modes start the major pattern from different notes. Each has a colour note: Dorian is minor with a raised 6, Phrygian minor with a lowered 2, Lydian major with a raised 4, Mixolydian major with a lowered 7. Here is G Dorian: listen for E natural.', he: 'המודוסים מתחילים את תבנית המז׳ור מצלילים שונים. לכל אחד יש צליל צבע: דורי הוא מינור עם 6 מוגבהת, פריגי מינור עם 2 מונמכת, לידי מז׳ור עם 4 מוגבהת, מיקסולידי מז׳ור עם 7 מונמכת. הנה סול דורי: הקשיבו למי בקר.' },
+        say: { en: 'The modes start the major pattern from different notes. Each has a color note: Dorian is minor with a raised 6, Phrygian minor with a lowered 2, Lydian major with a raised 4, Mixolydian major with a lowered 7. Here is G Dorian: listen for E natural.', he: 'המודוסים מתחילים את תבנית המז׳ור מצלילים שונים. לכל אחד יש צליל צבע: דורי הוא מינור עם 6 מוגבהת, פריגי מינור עם 2 מונמכת, לידי מז׳ור עם 4 מוגבהת, מיקסולידי מז׳ור עם 7 מונמכת. הנה סול דורי: הקשיבו למי בקר.' },
         play: [notes([55, 57, 58, 60, 62, 64, 65, 67], 0.42)],
         show: { notes: [55, 57, 58, 60, 62, 64, 65, 67], key: 'F', text: { en: 'G Dorian: ♮6', he: 'סול דורי: ♮6' } },
       },
       {
-        say: { en: 'To hear a mode, sing it over a held tonic, a drone. The colour note rubs or glows against it. Here is G Lydian over a G drone: the raised 4, C sharp, floats.', he: 'כדי לשמוע מודוס, שירו אותו מעל טוניקה מוחזקת — דרון. צליל הצבע מתחכך או זוהר מולה. הנה סול לידי מעל דרון סול: דרגה 4 המוגבהת, דו דיאז, מרחפת.' },
+        say: { en: 'To hear a mode, sing it over a held tonic, a drone. The color note rubs or glows against it. Here is G Lydian over a G drone: the raised 4, C sharp, floats.', he: 'כדי לשמוע מודוס, שירו אותו מעל טוניקה מוחזקת — דרון. צליל הצבע מתחכך או זוהר מולה. הנה סול לידי מעל דרון סול: דרגה 4 המוגבהת, דו דיאז, מרחפת.' },
         play: [{
           kind: 'events',
           length: 4.6,
@@ -475,8 +475,8 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [55, 58, 60, 62, 65, 67], key: 'Bb', text: { en: '1 ♭3 4 5 ♭7', he: '1 ♭3 4 5 ♭7' } },
       },
       {
-        say: { en: 'The common mistake is slipping back into major halfway through a mode, because the ear knows major best. Anchor on 1, 3 and 5, and aim deliberately at the colour note.', he: 'הטעות הנפוצה היא לחזור למז׳ור באמצע מודוס, כי האוזן מכירה מז׳ור הכי טוב. היאחזו ב־1, 3 ו־5, וכוונו במודע אל צליל הצבע.' },
-        show: { text: { en: 'anchor 1 3 5 · aim at the colour', he: 'עוגן 1 3 5 · לכוון לצליל הצבע' } },
+        say: { en: 'The common mistake is slipping back into major halfway through a mode, because the ear knows major best. Anchor on 1, 3 and 5, and aim deliberately at the color note.', he: 'הטעות הנפוצה היא לחזור למז׳ור באמצע מודוס, כי האוזן מכירה מז׳ור הכי טוב. היאחזו ב־1, 3 ו־5, וכוונו במודע אל צליל הצבע.' },
+        show: { text: { en: 'anchor 1 3 5 · aim at the color', he: 'עוגן 1 3 5 · לכוון לצליל הצבע' } },
       },
       {
         say: { en: 'Modes are everywhere: Scarborough Fair is usually sung in Dorian, The Simpsons theme is Lydian, and much rock and folk is Mixolydian. To keep: the same ladder with different rungs moved; know which ones.', he: 'מודוסים נמצאים בכל מקום: את Scarborough Fair שרים בדרך כלל בדורי, הפתיח של משפחת סימפסון בלידי, והרבה רוק ופולק במיקסולידי. לזכור: אותו סולם עם שלבים אחרים שזזו — דעו אילו.' },
@@ -557,7 +557,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [64, 65, 67, 69, 71], key: 'C', text: { en: 'a third above', he: 'טרצה מעל' } },
       },
       {
-        say: { en: 'Move that part down an octave and it becomes a sixth below. Sixths sound warm and open, a favourite for a lower voice under the tune.', he: 'מורידים את הקו הזה באוקטבה, והוא הופך לסקסטה מתחת. סקסטות נשמעות חמות ופתוחות, ואהובות על קול נמוך שמתחת למנגינה.' },
+        say: { en: 'Move that part down an octave and it becomes a sixth below. Sixths sound warm and open, a favorite for a lower voice under the tune.', he: 'מורידים את הקו הזה באוקטבה, והוא הופך לסקסטה מתחת. סקסטות נשמעות חמות ופתוחות, ואהובות על קול נמוך שמתחת למנגינה.' },
         play: [{
           kind: 'events',
           length: 2.8,
@@ -583,7 +583,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [60, 64], text: { en: 'blend ✓ · beating ✗', he: 'מיזוג ✓ · פעימה ✗' } },
       },
       {
-        say: { en: 'Practise in layers: sing the melody, then your part alone, then your part against the melody. Know your degree in the chord, for example the 3. Covering one ear lightly helps you hear yourself inside the blend.', he: 'תרגלו בשכבות: שירו את המנגינה, אחר כך את הקול שלכם לבד, ואז את הקול שלכם מול המנגינה. דעו מה הדרגה שלכם באקורד, למשל 3. כיסוי קל של אוזן אחת עוזר לשמוע את עצמכם בתוך המיזוג.' },
+        say: { en: 'Practice in layers: sing the melody, then your part alone, then your part against the melody. Know your degree in the chord, for example the 3. Covering one ear lightly helps you hear yourself inside the blend.', he: 'תרגלו בשכבות: שירו את המנגינה, אחר כך את הקול שלכם לבד, ואז את הקול שלכם מול המנגינה. דעו מה הדרגה שלכם באקורד, למשל 3. כיסוי קל של אוזן אחת עוזר לשמוע את עצמכם בתוך המיזוג.' },
         show: { text: { en: 'melody → part → together', he: 'מנגינה ← קול ← ביחד' } },
       },
       {
@@ -674,7 +674,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'lost? → hear 1', he: 'אבודים? ← לשמוע את 1' } },
       },
       {
-        say: { en: 'Practise a little every day with simple tunes, folk songs and hymns, slightly below your level, so you can keep going. Read a new melody each time; the skill is reading, not memory.', he: 'תרגלו קצת כל יום עם מנגינות פשוטות, שירי עם ומזמורים, מעט מתחת לרמה שלכם, כדי שתוכלו להמשיך בלי לעצור. קראו מנגינה חדשה בכל פעם; המיומנות היא קריאה, לא זיכרון.' },
+        say: { en: 'Practice a little every day with simple tunes, folk songs and hymns, slightly below your level, so you can keep going. Read a new melody each time; the skill is reading, not memory.', he: 'תרגלו קצת כל יום עם מנגינות פשוטות, שירי עם ומזמורים, מעט מתחת לרמה שלכם, כדי שתוכלו להמשיך בלי לעצור. קראו מנגינה חדשה בכל פעם; המיומנות היא קריאה, לא זיכרון.' },
         show: { text: { en: 'a little, every day', he: 'קצת, כל יום' } },
       },
       {
@@ -738,7 +738,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [62, 60], text: { en: 'crushed · leaning', he: 'נמחצת · נשענת' } },
       },
       {
-        say: { en: 'Names vary. In Baroque terms the mordent dips to the note below and back; the version that flicks to the note above is the upper, or inverted, mordent. A turn uses both neighbours: above, main, below, main.', he: 'השמות משתנים. במינוח הבארוקי המורדנט יורד לצליל שמתחת וחוזר; הגרסה שנוגעת בצליל שמעל נקראת מורדנט עליון, או מורדנט הפוך. טרן משתמש בשני השכנים: מעל, עיקרי, מתחת, עיקרי.' },
+        say: { en: 'Names vary. In Baroque terms the mordent dips to the note below and back; the version that flicks to the note above is the upper, or inverted, mordent. A turn uses both neighbors: above, main, below, main.', he: 'השמות משתנים. במינוח הבארוקי המורדנט יורד לצליל שמתחת וחוזר; הגרסה שנוגעת בצליל שמעל נקראת מורדנט עליון, או מורדנט הפוך. טרן משתמש בשני השכנים: מעל, עיקרי, מתחת, עיקרי.' },
         play: [seq([[60, 0.1], [59, 0.1], [60, 1]]), rest(0.3), seq([[62, 0.1], [60, 0.1], [59, 0.1], [60, 1]])],
         show: { notes: [60, 59, 60], text: { en: 'mordent · turn', he: 'מורדנט · טרן' } },
       },
@@ -808,7 +808,7 @@ export const LESSONS: MiniLesson[] = [
     ],
     more: [
       {
-        say: { en: 'Tab shows where to play, not what the note is called. The six lines are the six strings: the top line is the high E string, the bottom line the low E. A number is a fret, and numbers stacked vertically are played together.', he: 'טאב מראה איפה לנגן, לא איך קוראים לצליל. שישה הקווים הם שישה המיתרים: הקו העליון הוא מיתר מי הגבוה, התחתון הוא מי הנמוך. מספר הוא סריג, ומספרים זה מעל זה מנוגנים יחד.' },
+        say: { en: 'Tab shows where to play, not what the note is called. The six lines are the six strings: the top line is the high E string, the bottom line the low E. A number is a fret, and numbers stacked vertically are played together.', he: 'טאב מראה איפה לנגן, לא איך קוראים לצליל. ששת הקווים הם ששת המיתרים: הקו העליון הוא מיתר מי הגבוה, התחתון הוא מי הנמוך. מספר הוא סריג, ומספרים זה מעל זה מנוגנים יחד.' },
         play: [notes([64, 67], 0.8)],
         show: { notes: [64, 67], text: { en: 'line = string · number = fret', he: 'קו = מיתר · מספר = סריג' } },
       },
@@ -866,7 +866,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [60, 62, 64, 67], key: 'C', text: { en: '1 2 3 5', he: '1 2 3 5' } },
       },
       {
-        say: { en: 'Don\'t memorise letters. Remember the shape: up, a little down, a jump, back home.', he: 'אל תשננו אותיות. זכרו את הצורה: למעלה, קצת למטה, קפיצה, חזרה הביתה.' },
+        say: { en: 'Don\'t memorize letters. Remember the shape: up, a little down, a jump, back home.', he: 'אל תשננו אותיות. זכרו את הצורה: למעלה, קצת למטה, קפיצה, חזרה הביתה.' },
         play: [notes([60, 64, 62, 67, 60], 0.6)],
         show: { notes: [60, 64, 62, 67, 60], key: 'C', text: { en: '↗ ↘ ↗ ⌂', he: '↗ ↘ ↗ ⌂' } },
       },
@@ -979,7 +979,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [57, 60, 63, 64], text: { en: 'Am · Adim', he: 'Am · Adim' } },
       },
       {
-        say: { en: 'Relatives: every major key shares its signature with the minor key a minor third below. C major and A minor have no sharps or flats; G major and E minor share one sharp. A favourite bluff names the minor a major third below.', he: 'מקבילים: לכל סולם מז׳ור יש אותו סימן מפתח כמו למינור שנמצא טרצה קטנה מתחתיו. לדו מז׳ור וללה מינור אין דיאזים או במולים; סול מז׳ור ומי מינור חולקים דיאז אחד. בלוף אהוב הוא לתת את המינור שטרצה גדולה מתחת.' },
+        say: { en: 'Relatives: every major key shares its signature with the minor key a minor third below. C major and A minor have no sharps or flats; G major and E minor share one sharp. A favorite bluff names the minor a major third below.', he: 'מקבילים: לכל סולם מז׳ור יש אותו סימן מפתח כמו למינור שנמצא טרצה קטנה מתחתיו. לדו מז׳ור וללה מינור אין דיאזים או במולים; סול מז׳ור ומי מינור חולקים דיאז אחד. בלוף אהוב הוא לתת את המינור שטרצה גדולה מתחת.' },
         show: { text: { en: 'C ↔ Am · G ↔ Em', he: 'C ↔ Am · G ↔ Em' } },
       },
       {

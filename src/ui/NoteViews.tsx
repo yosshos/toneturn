@@ -103,7 +103,7 @@ const MARK_COLOR = new Proxy(MARK_RG, { get: (o, k: string) => (typeof document 
 /** Symbols under marked notes so the result is never colour-only. */
 const MARK_SYM: Record<Exclude<NoteMark, undefined>, string> = { ok: '', timing: '~', wrong: '✕', missed: '○' };
 
-export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs, marks }: { notes: number[]; chord: boolean; keyPc: PitchClass | null; labels?: string[]; clef?: 'treble' | 'bass' | 'alto' | 'tenor'; durs?: number[]; marks?: NoteMark[] }) {
+export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs, marks, rests, meter, timeSig }: { notes: number[]; chord: boolean; keyPc: PitchClass | null; labels?: string[]; clef?: 'treble' | 'bass' | 'alto' | 'tenor'; durs?: number[]; marks?: NoteMark[]; /** Rests: true where the item is a rest of durs[i] (its note value is ignored). */ rests?: boolean[]; /** Beats per bar: draws bar lines between bars (with durs). */ meter?: number; /** Show the time signature (first line of a passage). */ timeSig?: boolean }) {
   const { ref, failed } = useSvg(
     (VF, el) => {
       const n = chord ? 1 : notes.length;
@@ -113,25 +113,40 @@ export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs, 
       const ctx = renderer.getContext();
       const stave = new VF.Stave(4, 10, width - 8);
       stave.addClef(clef).addKeySignature(keySpec(keyPc));
+      if (timeSig && meter && durs) stave.addTimeSignature(`${meter}/4`);
       stave.setContext(ctx).draw();
       const sn = chord
         ? [new VF.StaveNote({ keys: notes.map((m) => vfKey(m, keyPc)), duration: 'w', clef })]
         : notes.map((m, i) => {
             const b = durs?.[i] ?? 1;
-            const s = new VF.StaveNote({ keys: [vfKey(m, keyPc)], duration: b >= 4 ? 'w' : b >= 2 ? 'h' : b >= 1 ? 'q' : '8', clef });
+            const rest = !!rests?.[i];
+            const s = new VF.StaveNote({ keys: [rest ? (clef === 'bass' ? 'd/3' : 'b/4') : vfKey(m, keyPc)], duration: (b >= 4 ? 'w' : b >= 2 ? 'h' : b >= 1 ? 'q' : '8') + (rest ? 'r' : ''), clef });
             if (b === 1.5 || b === 3) VF.Dot.buildAndAttach([s], { all: true });
             const mk = marks?.[i];
-            const lab = mk && MARK_SYM[mk] ? MARK_SYM[mk] : labels?.[i];
+            // a given label (what was played, a finger) wins over the bare mark symbol
+            const lab = labels?.[i] || (mk && MARK_SYM[mk] ? MARK_SYM[mk] : '');
             if (lab) s.addModifier(new VF.Annotation(lab).setVerticalJustification(VF.Annotation.VerticalJustify.BOTTOM), 0);
             if (mk) s.setStyle({ fillStyle: MARK_COLOR[mk], strokeStyle: MARK_COLOR[mk] });
             return s;
           });
       const voice = new VF.Voice({ num_beats: chord ? 4 : durs ? Math.ceil(durs.reduce((a, b) => a + b, 0)) : notes.length, beat_value: 4 }).setMode(VF.Voice.Mode.SOFT);
-      voice.addTickables(sn);
+      // Bar lines between bars (engraving, 0.52): after a note that completes a bar, unless it is the last one.
+      const ticks: InstanceType<typeof VF.StaveNote | typeof VF.BarNote>[] = [];
+      let acc = 0;
+      sn.forEach((x, i) => {
+        ticks.push(x);
+        if (chord || !durs || !meter) return;
+        acc += durs[i] ?? 1;
+        if (i < sn.length - 1 && Math.abs(acc / meter - Math.round(acc / meter)) < 1e-6) ticks.push(new VF.BarNote());
+      });
+      voice.addTickables(ticks);
       VF.Accidental.applyAccidentals([voice], keySpec(keyPc));
-      new VF.Formatter().joinVoices([voice]).format([voice], width - 90);
+      // Beams must exist before the notes are drawn: a beamed note then has no flag (an eighth with a flag AND a beam is
+      // not notation). Beams group by the beat.
+      const beams = durs ? VF.Beam.generateBeams(sn.filter((_, i) => !rests?.[i]), { groups: [new VF.Fraction(1, 4)] }) : [];
+      new VF.Formatter().joinVoices([voice]).format([voice], width - (timeSig ? 110 : 90));
       voice.draw(ctx, stave);
-      if (durs) VF.Beam.generateBeams(sn).forEach((bm) => bm.setContext(ctx).draw());
+      beams.forEach((bm) => bm.setContext(ctx).draw());
     },
     [notes.join(','), chord, keySpec(keyPc), (labels ?? []).join(','), clef, (durs ?? []).join(','), (marks ?? []).join(',')],
   );

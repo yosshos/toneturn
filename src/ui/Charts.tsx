@@ -1,6 +1,7 @@
 // My charts (SPEC-0.48 §P2): type chord symbols, get a backing track in a style, key and tempo — loop it and play
 // along. Charts are kept in the settings (synced with the profile). Templates are free progressions, not songs.
 
+import { Icon } from './icons';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { STANDARD_CHANGES } from '../engine/standards';
 import { RHYTHMS, RHYTHM_NAME, STRIDES, VOICINGS, VOICING_NAME, chartKind, type ChartMode, type ChartVoicing, type CompRhythm } from '../engine/drills/chartDrills';
@@ -458,13 +459,13 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
             ▶ {tx.play}
           </button>
           <button className="btn ghost" onClick={() => void goImprov()} disabled={!parsed.chords.length} data-chart-improv="1" title={ix.hint}>
-            🎤 {ix.go}
+            <Icon k="mic" /> {ix.go}
           </button>
         </div>
       )}
       {!playing && (
         <label className="ch-drums">
-          <input type="checkbox" checked={headphones} onChange={(e) => setHeadphones(e.target.checked)} /> 🎧 {ix.headphones}
+          <input type="checkbox" checked={headphones} onChange={(e) => setHeadphones(e.target.checked)} /> <Icon k="phones" /> {ix.headphones}
         </label>
       )}
       {rulesRep && !playing && (
@@ -506,14 +507,14 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
           </ul>
           {report.tips.slice(0, 2).map((k) => (
             <p key={k} className="take-tip">
-              💡 {ix.tips[k]}
+              <Icon k="tip" /> {ix.tips[k]}
             </p>
           ))}
         </div>
       )}
       {onDrill && !playing && (
         <details className="ch-practise" data-chart-practise="1">
-          <summary>{lang === 'he' ? 'לתרגל בפסנתר: וויסינג, קומפינג, סטרייד' : 'Practise at the piano: voicings, comping, stride'}</summary>
+          <summary>{lang === 'he' ? 'לתרגל בפסנתר: וויסינג, קומפינג, סטרייד' : 'Practice at the piano: voicings, comping, stride'}</summary>
           <div className="ch-rules">
             <select value={pv} onChange={(e) => setPv(e.target.value as ChartVoicing)} aria-label="voicing" data-practise-voicing="1">
               <optgroup label={lang === 'he' ? 'וויסינג' : 'Voicings'}>

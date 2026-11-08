@@ -143,7 +143,7 @@ const T = {
     unclear: 'לא הצלחתי לשמוע. אותו תור שוב.',
     winner: (n: string) => `${n} ניצח!`,
     tie: (ns: string[]) => `תיקו: ${ns.join(' ו')}.`,
-    solo: (b: number, kind: GameKind) => `המשחק נגמר. השרשרת הארוכה: ${b} ${kind === 'melody' ? 'צלילים' : 'פעמות'}.`,
+    solo: (b: number, kind: GameKind) => `המשחק נגמר. השרשרת הארוכה ביותר:${b} ${kind === 'melody' ? 'צלילים' : 'פעמות'}.`,
   },
 };
 

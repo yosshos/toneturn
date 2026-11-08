@@ -98,8 +98,9 @@ export const gateLabel = (g: Gate): string => CHROMA[((g.semis % 12) + 12) % 12]
 export function flightRange(voiceRange: FlightRange | null | undefined, input: 'voice' | 'midi' | 'instrument'): FlightRange {
   if (input === 'midi') return { low: 57, high: 76 };
   if (input === 'instrument') return voiceRange && voiceRange.high - voiceRange.low >= 12 ? voiceRange : { low: 55, high: 74 };
-  const r = voiceRange ?? { low: 55, high: 67 };
-  return r.high - r.low >= 12 ? r : { low: r.low, high: r.low + 12 };
+  // The singer's own range, never beyond it (0.52, owner: "limit every voice exercise to my range"). A narrow range
+  // stays narrow — the course just uses fewer notes; only a missing range falls back to a middle octave.
+  return voiceRange && voiceRange.high > voiceRange.low ? { low: voiceRange.low, high: voiceRange.high } : { low: 55, high: 67 };
 }
 
 /** The visible pitch band (a little air above and below the range). */
@@ -122,6 +123,8 @@ export function makeCourse(seed: number, startLevel: FlightLevel, range: FlightR
   let tonic = range.low + ((pc - range.low) % 12 + 12) % 12;
   while (tonic + 12 <= mid + 3 && tonic + 12 <= range.high) tonic += 12;
   if (Math.abs(tonic + 12 - mid) < Math.abs(tonic - mid) && tonic + 12 <= range.high) tonic += 12;
+  // A narrow range may not hold this key's tonic at all: then the key moves so its tonic sits in the middle of the range.
+  if (tonic > range.high || tonic < range.low) tonic = Math.round(mid);
   const c: Course = { seed, startLevel, range, tonic, gates: [] };
   ensureGates(c, 12);
   return c;

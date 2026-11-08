@@ -1,6 +1,7 @@
 // Mini-lesson player (spec X): narrated steps with examples and visuals, skip to practice, and a
 // celebration when every step was heard — the topic then joins "Topics I learned".
 
+import { Icon } from './icons';
 import { TalkToggle } from './TalkToggle';
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { clearSlot, loadSlot, saveSlot } from '../storage/resume';
@@ -197,7 +198,7 @@ export function MiniLessonPlayer({ t, settings, lesson, name, onFinish, startDee
           </button>
           {phase === 'playing' ? (
             <button className="icon-btn big" aria-label={t.miniPause} onClick={() => (ctl.current?.abort(), setPhase('paused'))}>
-              ⏸
+              <Icon k="pause" />
             </button>
           ) : (
             <button className="icon-btn big" aria-label={t.miniPlay} onClick={() => jump(phase === 'done' ? 0 : i)}>
@@ -206,7 +207,7 @@ export function MiniLessonPlayer({ t, settings, lesson, name, onFinish, startDee
           )}
           {step.play?.length ? (
             <button className="icon-btn" aria-label={t.miniReplay} onClick={() => void piano.unlock().then(() => playExample(new AbortController().signal)).catch(() => {})}>
-              🔁
+              <Icon k="repeat" />
             </button>
           ) : (
             <span className="icon-btn ghost" aria-hidden="true" />
@@ -262,8 +263,8 @@ export function TermCard({ term, lang, onReplay, onClose, closeLabel }: { term: 
       <p>{term.explain[lang]}</p>
       {term.example && <p className="term-example">{term.example[lang]}</p>}
       <div className="term-card-actions">
-        <button className="btn ghost small" onClick={onReplay}>
-          🔊
+        <button className="btn ghost small" onClick={onReplay} aria-label={lang === 'en' ? 'Play' : 'השמעה'}>
+          <Icon k="speaker" />
         </button>
         {onClose && (
           <button className="btn ghost small" onClick={onClose} aria-label={closeLabel}>

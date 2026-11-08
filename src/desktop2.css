@@ -1,0 +1,106 @@
+/* Desktop audit (0.53, owner: "go through every screen on a computer — a desktop app, not a phone app on a wide
+   screen"): screens use the width with grids and columns, instead of one narrow phone column. */
+@media (min-width: 1100px) {
+  /* panel screens: the main column's width (the phone layout capped them at ~560 px) */
+  .app.with-side .panel-screen { max-width: none; }
+
+  /* Insights: findings as a two-column board */
+  .app.with-side .insights { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-items: start; }
+  .app.with-side .insights > .screen-head,
+  .app.with-side .insights > .field-hint { grid-column: 1 / -1; }
+
+  /* Practice hub: four cards in a row */
+  .app.with-side .practice-hub .hub-cards { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+  /* Songs: two columns of songs */
+  .app.with-side .song-drills { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 16px; }
+
+  /* Lessons: the topic list in two columns */
+  .app.with-side .lessons2 .ls-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 18px; }
+
+  /* Games: setup cards side by side */
+  .app.with-side .game-setup .game-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+  /* Mixer: channel strips side by side, like a mixing desk */
+  .app.with-side .mixer { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: start; }
+  .app.with-side .mixer > .screen-head,
+  .app.with-side .mixer > .field-hint,
+  .app.with-side .mixer > .mx-top,
+  .app.with-side .mixer > :not(.mx-ch) { grid-column: 1 / -1; }
+  .app.with-side .mixer > .mx-ch { margin: 0; }
+
+  /* Metronome: the pendulum beside its controls */
+  .app.with-side main.metronome { max-width: 900px; margin-inline: auto; }
+
+  /* Community and classes: cards in two columns */
+  .app.with-side .fr2 .fr-list,
+  .app.with-side .classes:not(.embedded) { max-width: 900px; }
+
+  /* Exams, plans: wider grids already; keep text measure readable */
+  .app.with-side .panel-screen > .field-hint { max-width: 75ch; }
+
+  /* Drills hub: family cards in three columns */
+  .app.with-side .drills-screen .drill-families { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* Search palette (Ctrl / ⌘ K) */
+.palette-backdrop { align-items: start !important; padding-top: 12vh !important; }
+.sheet.palette { width: min(620px, 100%) !important; padding: 10px !important; gap: 6px; }
+.palette-input { width: 100%; box-sizing: border-box; padding: 12px 14px; font: inherit; font-size: 1.05rem; border-radius: 10px; border: 1px solid var(--line, rgba(255,255,255,.12)); background: var(--card); color: var(--ink); }
+.palette-input:focus { outline: 2px solid var(--mint); outline-offset: 0; }
+.palette-list { list-style: none; margin: 0; padding: 0; max-height: 50vh; overflow: auto; }
+.palette-list li { display: flex; align-items: center; gap: 12px; padding: 8px 10px; border-radius: 8px; cursor: pointer; }
+.palette-list li.on { background: color-mix(in srgb, var(--mint) 14%, transparent); }
+.pal-kind { flex: none; width: 4.5em; font-size: 0.75rem; color: var(--ink-dim); }
+.pal-text { display: grid; min-width: 0; }
+.pal-text b { font-weight: 600; }
+.pal-text small { color: var(--ink-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pal-empty { color: var(--ink-dim); }
+.palette-foot { color: var(--ink-dim); padding: 4px 8px 2px; }
+/* the search field in the side menu */
+.sn-search { all: unset; box-sizing: border-box; display: flex; align-items: center; gap: 10px; margin: 0 2px 8px; padding: 7px 10px; border-radius: 9px; border: 1px solid var(--line, rgba(255,255,255,.1)); color: var(--ink-dim); font-size: 0.88rem; cursor: pointer; }
+.sn-search kbd { margin-inline-start: auto; font: 11px ui-monospace, monospace; border: 1px solid var(--line, rgba(255,255,255,.15)); border-radius: 5px; padding: 0 5px; }
+
+/* Side panels (lesson, today): only from 1100 px, beside the main column */
+.side-panel { display: none; }
+@media (min-width: 1100px) {
+  :root { --aside-w: 0px; }
+  .app.with-side:has(.side-panel) { --main-max: 760px; padding-inline-end: calc(300px + 40px); }
+  .side-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    position: fixed;
+    top: 72px;
+    inset-inline-end: 24px;
+    width: 280px;
+    max-height: calc(100vh - 96px);
+    overflow: auto;
+    padding: 16px;
+    border: 1px solid var(--line, rgba(255,255,255,.1));
+    border-radius: 14px;
+    background: var(--bg-2, var(--card));
+    box-sizing: border-box;
+  }
+  .side-panel h2 { margin: 0 0 2px; font-size: 1rem; font-weight: 600; }
+  .side-panel h3 { margin: 0 0 4px; font-size: 0.85rem; font-weight: 600; color: var(--ink-soft); }
+  .side-panel small { color: var(--ink-dim); }
+  .side-panel section { display: grid; gap: 6px; }
+  .side-panel .btn { justify-self: start; }
+  .sp-bar { height: 6px; border-radius: 6px; background: var(--card-2); overflow: hidden; }
+  .sp-bar i { display: block; height: 100%; background: var(--mint); }
+  .sp-num { font-size: 1.4rem; font-weight: 650; }
+  .sp-keys { margin: 0; display: grid; gap: 4px; }
+  .sp-keys div { display: flex; gap: 10px; align-items: center; font-size: 0.85rem; color: var(--ink-soft); }
+  .sp-keys dt { width: 4.5em; }
+  .sp-keys dd { margin: 0; }
+  .sp-keys kbd { font: 11px ui-monospace, monospace; border: 1px solid var(--line, rgba(255,255,255,.18)); border-radius: 5px; padding: 1px 6px; }
+  .sp-week { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .sp-week li { height: 28px; border-radius: 6px; background: var(--card-2); display: grid; place-items: center; font-size: 0.75rem; color: var(--ink-dim); }
+  .sp-week li.done { background: color-mix(in srgb, var(--mint) 35%, var(--card-2)); color: var(--ink); }
+  .sp-week li.today { outline: 1.5px solid var(--mint); }
+  .sp-links { gap: 8px; }
+  .sp-links .link { justify-self: start; }
+  /* in an exercise, the keys guide moves to the panel */
+  .app.with-side:has(.lesson-aside) main.lesson .stage .controls::after { content: none; }
+}

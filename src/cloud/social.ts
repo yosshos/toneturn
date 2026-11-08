@@ -260,5 +260,5 @@ export async function nudge(friend: string, message: 'practise' | 'duet'): Promi
   const { error } = await sb.rpc('toneturn_nudge', { p_friend: friend, p_message: message });
   if (!error) return 'ok';
   const m = String(error.message ?? '');
-  return m.includes('already practised') || m.includes('duplicate') ? 'done' : m.includes('nudges off') ? 'off' : 'error';
+  return m.includes('already practiced') || m.includes('duplicate') ? 'done' : m.includes('nudges off') ? 'off' : 'error';
 }

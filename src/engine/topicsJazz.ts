@@ -181,7 +181,7 @@ TOPIC_GEN['bh-block'] = {
       const run = (mi: boolean) => Array.from({ length: 9 }, (_, k) => chordStim(blockAt(tonic, mi, k).midis, k === 8 ? 1.4 : 0.38));
       return choiceQ({
         id, topic: 'bh-block', level, seed, skill: 'chords', difficulty: 1400,
-        ask: { en: 'The harmonised scale: major 6th-diminished or minor 6th-diminished?', he: 'הסולם המהורמן: 6 דימיניש מז׳ורי או מינורי?' },
+        ask: { en: 'The harmonized scale: major 6th-diminished or minor 6th-diminished?', he: 'הסולם המהורמן: 6 דימיניש מז׳ורי או מינורי?' },
         names: { maj: nm('Major (6 chord)', 'מז׳ורי (אקורד 6)', 'major'), min: nm('Minor (minor 6 chord)', 'מינורי (מינור 6)', 'minor') },
         answer: minor ? 'min' : 'maj', choices: ['maj', 'min'], stimulus: run(minor), choiceStim: { maj: run(false), min: run(true) },
       });

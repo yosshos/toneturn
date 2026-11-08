@@ -17,14 +17,14 @@ const TX = {
     title: 'Insights', ear: 'Ear Index', earHint: 'One number for your ear — built from the hardest items you beat, never from time spent.', provisional: 'still settling',
     tech: 'Technique', hands: 'Hand map', handsHint: 'Each finger’s loudness against the hand’s average', keys: 'Key map', keysHint: 'Misses by key (darker = weaker)',
     groove: 'Groove fingerprint', grooveHint: 'Where your notes land against the beat (− early, + late), and how wide they spread',
-    conf: 'Confusion map', confHint: 'The pairs you mix up most', boss: 'Boss fight', trouble: 'Trouble bars', practise: 'Practise', none: 'Not enough data yet — keep practising and this fills in.',
+    conf: 'Confusion map', confHint: 'The pairs you mix up most', boss: 'Practice this pair', trouble: 'Trouble bars', practise: 'Practice', none: 'Not enough data yet — keep practicing and this fills in.',
     early: 'early', late: 'late', back: 'Back', sub: { beat: 'Beats', '8': 'Eighths', '16': 'Sixteenths', trip: 'Triplets' } as Record<string, string>, bars: 'bars', weeks: 'Your timing by week', train: 'Train your groove',
   },
   he: {
     title: 'תובנות', ear: 'מדד האוזן', earHint: 'מספר אחד לאוזן שלכם — נבנה מהפריטים הקשים ביותר שעברתם, לא מזמן אימון.', provisional: 'עדיין מתייצב',
     tech: 'טכניקה', hands: 'מפת ידיים', handsHint: 'עוצמת כל אצבע ביחס לממוצע של היד', keys: 'מפת סולמות', keysHint: 'החטאות לפי סולם (כהה = חלש)',
     groove: 'טביעת הגרוב', grooveHint: 'איפה הצלילים שלכם נוחתים ביחס לפעמה (− מוקדם, + מאוחר), וכמה הם מתפזרים',
-    conf: 'מפת בלבולים', confHint: 'הזוגות שאתם מבלבלים הכי הרבה', boss: 'קרב בוס', trouble: 'תיבות בעייתיות', practise: 'לתרגל', none: 'עוד אין מספיק נתונים — המשיכו להתאמן וזה יתמלא.',
+    conf: 'מפת בלבולים', confHint: 'הזוגות שאתם מבלבלים הכי הרבה', boss: 'לתרגל את הזוג', trouble: 'תיבות בעייתיות', practise: 'לתרגל', none: 'עוד אין מספיק נתונים — המשיכו להתאמן וזה יתמלא.',
     early: 'מוקדם', late: 'מאוחר', back: 'חזרה', sub: { beat: 'פעמות', '8': 'שמיניות', '16': 'שש־עשריות', trip: 'טריולות' } as Record<string, string>, bars: 'תיבות', weeks: 'התזמון שלכם לפי שבוע', train: 'לאמן את הגרוב',
   },
 };

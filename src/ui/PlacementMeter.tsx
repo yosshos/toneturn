@@ -2,6 +2,7 @@
 // ladder the player is; every step up animates, and a changing, personal line says what is happening
 // ("That was easy for you — let's go up a level", "We found your edge", "Next: chords").
 
+import { Icon } from './icons';
 import { useEffect, useRef, useState } from 'react';
 import { LADDERS, lessonSections } from '../engine/placement';
 import type { SkillId } from '../engine/lesson';
@@ -66,7 +67,7 @@ export function PlacementMeter({ s, t }: { s: SessionState; t: Strings }) {
       </aside>
       {line && (
         <p className={`pm-line ${line.move}`} key={line.key} role="status" data-pm-move={line.move}>
-          {line.move === 'up' || line.move === 'up2' ? '⬆️ ' : line.move === 'next' ? '➡️ ' : line.move === 'edge' ? '🎯 ' : '🎧 '}
+          {line.move === 'up' || line.move === 'up2' ? '↑ ' : line.move === 'next' ? <span className="flip-rtl">→ </span> : line.move === 'edge' ? <><Icon k="target" /> </> : <><Icon k="phones" /> </>}
           {line.text}
         </p>
       )}

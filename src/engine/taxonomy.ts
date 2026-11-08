@@ -47,7 +47,7 @@ export const SUB_SKILLS: SubSkill[] = [
   S('cadences', 'cadence', 'Cadences', 'קדנצות'),
   S('cadences', 'progression', 'Progressions', 'מהלכי אקורדים'),
   S('cadences', 'modulation', 'Key changes', 'מעברי סולם'),
-  S('cadences', 'harmonize', 'Harmonising a melody', 'הרמון מנגינה'),
+  S('cadences', 'harmonize', 'Harmonizing a melody', 'הרמון מנגינה'),
   S('cadences', 'nct', 'Notes outside the chord', 'צלילים מחוץ לאקורד'),
   S('cadences', 'dictation', 'Harmonic dictation', 'הכתבה הרמונית'),
   S('modes', 'modes', 'Church modes', 'מודוסים'),
@@ -113,8 +113,8 @@ export const SUB_SKILLS: SubSkill[] = [
   S('expression', 'articulation', 'Articulation', 'ארטיקולציה'),
   S('expression', 'mood', 'Mood', 'מצב רוח'),
   // 0.38 (spec AE)
-  S('cadences', 'chromatic', 'Colour chords', 'אקורדי צבע'),
-  S('theory', 'chromatic', 'Colour chords on paper', 'אקורדי צבע בכתב'),
+  S('cadences', 'chromatic', 'Color chords', 'אקורדי צבע'),
+  S('theory', 'chromatic', 'Color chords on paper', 'אקורדי צבע בכתב'),
   S('sequences', 'inner', 'Inner hearing', 'שמיעה פנימית'),
   S('form', 'song', 'Song form', 'מבנה שיר'),
   S('form', 'style', 'Style and period', 'סגנון ותקופה'),
@@ -188,6 +188,11 @@ export const TOPIC_TAGS: Record<string, LevelTags> = {
   'bh-block': tg(['chords', 'barry', 1]),
   comping: tg(['rhythm-dictation', 'feel', 1]),
   turnarounds: tg(['cadences', 'progression', 1]),
+  // 0.53 progression games
+  'where-home': tg(['cadences', 'cadence', 1]),
+  'next-chord': tg(['cadences', 'progression', 1]),
+  'reharm-swap': tg(['cadences', 'progression', 0.7], ['chords', 'quality', 0.3]),
+  'figure-out': (l) => (l === 1 ? tg(['dictation', 'melodic', 0.6], ['degrees', 'find-tonic', 0.4]) : l === 2 ? tg(['dictation', 'bass', 1]) : l === 3 ? tg(['dictation', 'bass', 0.6], ['cadences', 'progression', 0.4]) : tg(['dictation', 'melodic', 1])),
   'guide-tones': tg(['sequences', 'lines', 0.6], ['chords', 'voicing', 0.4]),
   // time
   tempo: (l) => (l === 3 || l >= 5 ? tg(['tempo', 'bpm', 1]) : tg(['tempo', 'compare', 1])),

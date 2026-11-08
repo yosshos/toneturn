@@ -173,6 +173,14 @@ export interface Settings {
   midiVolume?: number;
   /** Touch response of the keys. */
   midiCurve?: 'light' | 'normal' | 'heavy' | 'fixed';
+  /** Audio output device id (null = the system default). */
+  audioOutput?: string | null;
+  /** The daily progression puzzle: the guesses per local day. */
+  progPuzzle?: Record<string, { rows: string[][] }>;
+  /** Chords the player knows (songbook by known chords). */
+  knownChords?: string[];
+  /** The computer keyboard plays notes (A W S E D F T G Y H U J K; Z / X octave). */
+  computerKeys?: boolean;
   /** Microphone chosen in Settings (deviceId; null = system default). */
   micDeviceId?: string | null;
   /** Master volume 0..1, right/wrong chimes, narration speed, vibration. */

@@ -479,7 +479,7 @@ function chromLevel(level: number, rnd: () => number): { minor: boolean; opts: R
 }
 
 TOPIC_GEN['chromatic-harmony'] = {
-  title: { en: 'Colour chords', he: 'אקורדי צבע' },
+  title: { en: 'Color chords', he: 'אקורדי צבע' },
   skill: 'cadences',
   levels: [
     { en: 'Cadential 6/4 or plain V', he: 'קוורטסקסט קדנציאלי או V רגיל' },

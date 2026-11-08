@@ -176,7 +176,7 @@ TOPIC_GEN['modulation'] = {
 };
 
 TOPIC_GEN['harmonize'] = {
-  title: { en: 'Harmonise a melody', he: 'להרמן מנגינה' },
+  title: { en: 'Harmonize a melody', he: 'להרמן מנגינה' },
   skill: 'cadences',
   levels: [
     { en: 'I, IV or V under the tune?', he: 'I, IV או V מתחת למנגינה?' },
@@ -283,7 +283,7 @@ TOPIC_GEN['scale-types'] = {
 const NCT: Record<string, { en: string; he: string; say: string[]; mel: (c: number) => [number, number][] }> = {
   // [midi offset from the chord root, length in beats]; the chord is a major triad on c.
   passing: { en: 'Passing note', he: 'צליל מעבר', say: ['passing'], mel: () => [[4, 1], [5, 1], [7, 2]] },
-  neighbour: { en: 'Neighbour note', he: 'צליל שכן', say: ['neighbour', 'neighbor'], mel: () => [[7, 1], [9, 1], [7, 2]] },
+  neighbour: { en: 'Neighbor note', he: 'צליל שכן', say: ['neighbour', 'neighbor'], mel: () => [[7, 1], [9, 1], [7, 2]] },
   suspension: { en: 'Suspension (held over, then down)', he: 'השהיה (מוחזק ואז יורד)', say: ['suspension'], mel: () => [[5, 2], [4, 2]] },
   appoggiatura: { en: 'Appoggiatura (leap in, step out)', he: 'אפוג׳יאטורה (קפיצה פנימה, צעד החוצה)', say: ['appoggiatura'], mel: () => [[0, 1], [9, 1.5], [7, 1.5]] },
 };
@@ -291,7 +291,7 @@ TOPIC_GEN['nct-ear'] = {
   title: { en: 'Notes outside the chord', he: 'צלילים מחוץ לאקורד' },
   skill: 'cadences',
   levels: [
-    { en: 'Passing or neighbour?', he: 'מעבר או שכן?' },
+    { en: 'Passing or neighbor?', he: 'מעבר או שכן?' },
     { en: 'With suspension', he: 'כולל השהיה' },
     { en: 'All four', he: 'כל הארבעה' },
   ],

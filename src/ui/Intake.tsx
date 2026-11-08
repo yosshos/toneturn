@@ -3,6 +3,7 @@
 // clean view, the voice range (sung gently — never strained) and the player's own order of practice areas,
 // which reorders the path (src/engine/intake.ts).
 
+import { Icon } from './icons';
 import { setTalk, talkOn } from '../speech/talk';
 import { useEffect, useRef, useState } from 'react';
 import { AREAS, intakeSettings, trackOf, voiceTypeOf, type Intake as IntakeT, type Level4, type Motivation } from '../engine/intake';
@@ -23,7 +24,6 @@ import { noteLabel } from './Vocal';
 
 type Step = 'hello' | 'music' | 'singing' | 'theory' | 'reading' | 'plays' | 'goal' | 'naming' | 'rank' | 'leave' | 'motivation' | 'minutes' | 'range' | 'plan';
 const STEPS: Step[] = ['hello', 'music', 'singing', 'theory', 'reading', 'plays', 'goal', 'naming', 'rank', 'leave', 'motivation', 'minutes', 'range', 'plan'];
-const AREA_ICON: Record<DomainId, string> = { pitch: '👂', time: '🥁', memory: '🧠', voice: '🎤', reading: '📖', creative: '🎨', instrument: '🎸' };
 
 export interface IntakeResult {
   intake: IntakeT;
@@ -83,38 +83,38 @@ export function IntakeScreen({ t, settings, onDone, onSkip }: { t: Strings; sett
   };
   const OPTS = {
     music: [
-      { v: 0 as Level4, emoji: '🎧', label: q.music0 },
-      { v: 1 as Level4, emoji: '🎸', label: q.music1 },
-      { v: 2 as Level4, emoji: '🎼', label: q.music2 },
-      { v: 3 as Level4, emoji: '🎓', label: q.music3 },
+      { v: 0 as Level4, label: q.music0 },
+      { v: 1 as Level4, label: q.music1 },
+      { v: 2 as Level4, label: q.music2 },
+      { v: 3 as Level4, label: q.music3 },
     ],
     singing: [
-      { v: 0 as Level4, emoji: '🚿', label: q.sing0 },
-      { v: 1 as Level4, emoji: '📻', label: q.sing1 },
-      { v: 2 as Level4, emoji: '🎤', label: q.sing2 },
-      { v: 3 as Level4, emoji: '🌟', label: q.sing3 },
+      { v: 0 as Level4, label: q.sing0 },
+      { v: 1 as Level4, label: q.sing1 },
+      { v: 2 as Level4, label: q.sing2 },
+      { v: 3 as Level4, label: q.sing3 },
     ],
     theory: [
-      { v: 0 as Level4, emoji: '👽', label: q.theory0 },
-      { v: 1 as Level4, emoji: '🤔', label: q.theory1 },
-      { v: 2 as Level4, emoji: '🙂', label: q.theory2 },
-      { v: 3 as Level4, emoji: '😎', label: q.theory3 },
+      { v: 0 as Level4, label: q.theory0 },
+      { v: 1 as Level4, label: q.theory1 },
+      { v: 2 as Level4, label: q.theory2 },
+      { v: 3 as Level4, label: q.theory3 },
     ],
     reading: [
-      { v: 0 as 0 | 1 | 2, emoji: '🐦', label: q.read0 },
-      { v: 1 as 0 | 1 | 2, emoji: '☝️', label: q.read1 },
-      { v: 2 as 0 | 1 | 2, emoji: '📖', label: q.read2 },
+      { v: 0 as 0 | 1 | 2, label: q.read0 },
+      { v: 1 as 0 | 1 | 2, label: q.read1 },
+      { v: 2 as 0 | 1 | 2, label: q.read2 },
     ],
     motivation: [
-      { v: 'learn' as Motivation, emoji: '🎯', label: q.motLearn },
-      { v: 'streaks' as Motivation, emoji: '🔥', label: q.motStreaks },
-      { v: 'collect' as Motivation, emoji: '🧢', label: q.motCollect },
-      { v: 'friends' as Motivation, emoji: '🤝', label: q.motFriends },
+      { v: 'learn' as Motivation, label: q.motLearn },
+      { v: 'streaks' as Motivation, label: q.motStreaks },
+      { v: 'collect' as Motivation, label: q.motCollect },
+      { v: 'friends' as Motivation, label: q.motFriends },
     ],
     minutes: [
-      { v: 5 as const, emoji: '☕', label: q.min5 },
-      { v: 10 as const, emoji: '🎧', label: q.min10 },
-      { v: 20 as const, emoji: '🎹', label: q.min20 },
+      { v: 5 as const, label: q.min5 },
+      { v: 10 as const, label: q.min10 },
+      { v: 20 as const, label: q.min20 },
     ],
   };
   const NAMING: ['solfege' | 'letter' | 'auto', string, string][] = [
@@ -327,7 +327,7 @@ export function IntakeScreen({ t, settings, onDone, onSkip }: { t: Strings; sett
     onDone({ intake, patch }, then);
   };
 
-  const opts = <K extends 'music' | 'singing' | 'theory' | 'reading' | 'motivation' | 'minutes'>(k: K, list: { v: IntakeT[K]; emoji: string; label: string }[]) => (
+  const opts = <K extends 'music' | 'singing' | 'theory' | 'reading' | 'motivation' | 'minutes'>(k: K, list: { v: IntakeT[K]; label: string }[]) => (
     <div className="intake-opts" role="radiogroup">
       {list.map((o) => (
         <button key={String(o.v)} role="radio" aria-checked={a[k] === o.v} className={`intake-opt ${a[k] === o.v ? 'on' : ''}`} data-v={String(o.v)} onClick={() => pick(k, o.v)}>
@@ -364,12 +364,12 @@ export function IntakeScreen({ t, settings, onDone, onSkip }: { t: Strings; sett
 
       {talk && step !== 'hello' && !live && (
         <button className="btn intake-wake" onClick={wake} data-wake="1">
-          🎙️ {q.voiceResume}
+          <Icon k="mic" /> {q.voiceResume}
         </button>
       )}
       {talk && live && ear !== 'off' && (
         <p className={`intake-ear ${ear}`} aria-live="polite">
-          {ear === 'listening' ? `🎙️ ${q.voiceListening}` : '🔊'} {heard && <i>“{heard}”</i>}
+          {ear === 'listening' ? <><Icon k="mic" /> {q.voiceListening}</> : <Icon k="speaker" />} {heard && <i>“{heard}”</i>}
         </p>
       )}
       {talk && noEars && <p className="field-hint intake-noears">{q.voiceNoEars}</p>}
@@ -385,7 +385,7 @@ export function IntakeScreen({ t, settings, onDone, onSkip }: { t: Strings; sett
                 go(1);
               }}
             >
-              {talk ? `🎙️ ${q.letsTalk}` : q.letsGo}
+              {talk ? <><Icon k="mic" /> {q.letsTalk}</> : q.letsGo}
             </button>
             {talk && <p className="field-hint">{q.voiceNote}</p>}
           </>
@@ -479,7 +479,7 @@ export function IntakeScreen({ t, settings, onDone, onSkip }: { t: Strings; sett
                 const out = (a.leaveOut ?? []).includes(ar);
                 return (
                   <button key={ar} className={`chip ${out ? '' : 'on'}`} aria-pressed={!out} data-area={ar} onClick={() => setA((x) => ({ ...x, leaveOut: out ? (x.leaveOut ?? []).filter((y) => y !== ar) : [...(x.leaveOut ?? []), ar] }))}>
-                    {AREA_ICON[ar]} {t.domainNames[ar]}
+                    {t.domainNames[ar]}
                   </button>
                 );
               })}
@@ -499,10 +499,10 @@ export function IntakeScreen({ t, settings, onDone, onSkip }: { t: Strings; sett
             <h2 className="intake-sub">{q.leaveModes}</h2>
             <div className="intake-chips">
               <button className={`chip ${a.noSing ? 'on' : ''}`} aria-pressed={!!a.noSing} data-mode="nosing" onClick={() => setA((x) => ({ ...x, noSing: !x.noSing }))}>
-                🔇 {q.noSing}
+                <Icon k="mute" /> {q.noSing}
               </button>
               <button className={`chip ${a.noMic ? 'on' : ''}`} aria-pressed={!!a.noMic} data-mode="nomic" onClick={() => setA((x) => ({ ...x, noMic: !x.noMic }))}>
-                🎙️✕ {q.noMic}
+                <Icon k="mic" />✕ {q.noMic}
               </button>
             </div>
             <button className="btn mega" onClick={() => go(1)}>
@@ -550,7 +550,6 @@ export function IntakeScreen({ t, settings, onDone, onSkip }: { t: Strings; sett
                       <span className="rank-n" aria-hidden="true">
                         {r >= 0 ? r + 1 : ''}
                       </span>
-                      <span aria-hidden="true">{AREA_ICON[ar]}</span>
                       <span className="rank-text">
                         <b>{q.areas[ar]}</b>
                         <small>{q.areaHints[ar]}</small>
@@ -562,7 +561,7 @@ export function IntakeScreen({ t, settings, onDone, onSkip }: { t: Strings; sett
             </ol>
             <label className="toggle-row">
               <input type="checkbox" checked={mixed} onChange={(e) => setMixed(e.target.checked)} data-mixed="1" />
-              <span>🎲 {q.rankMixed}</span>
+              <span><Icon k="dice" /> {q.rankMixed}</span>
             </label>
             <div className="intake-row">
               <button className="btn ghost small" onClick={() => setRanked([])} disabled={!ranked.length || mixed}>
@@ -594,7 +593,7 @@ export function IntakeScreen({ t, settings, onDone, onSkip }: { t: Strings; sett
             <div className="plan-facts">
               {!mixed && ranked.length > 0 && (
                 <p>
-                  <b>{q.planOrder}</b> {[...ranked, ...AREAS.filter((x) => !ranked.includes(x))].map((x) => `${AREA_ICON[x]} ${q.areas[x]}`).join(' · ')}
+                  <b>{q.planOrder}</b> {[...ranked, ...AREAS.filter((x) => !ranked.includes(x))].map((x) => q.areas[x]).join(' · ')}
                 </p>
               )}
               <p>
@@ -697,10 +696,10 @@ function RangeStep({ t, settings, range, onRange, onNext }: { t: Strings; settin
       <h1>{q.rangeTitle}</h1>
       <p className="intake-text">{q.rangeText}</p>
       <p className="safety" role="note">
-        🛟 {q.rangeSafety}
+        {q.rangeSafety}
       </p>
       <div className="range-live" aria-live="polite" dir="ltr">
-        {live ? `${noteLabel(Math.round(lo!), settings)} … ${noteLabel(Math.round(hi!), settings)}` : now !== null ? noteLabel(Math.round(now), settings) : '🎤'}
+        {live ? `${noteLabel(Math.round(lo!), settings)} … ${noteLabel(Math.round(hi!), settings)}` : now !== null ? noteLabel(Math.round(now), settings) : <Icon k="mic" />}
       </div>
       {range && !on && (
         <p className="range-result" data-range="1">
@@ -738,7 +737,7 @@ function RangeStep({ t, settings, range, onRange, onNext }: { t: Strings; settin
       ) : (
         <div className="range-controls">
           <button className="btn mega" onClick={() => void start()} data-range-start="1">
-            🎤 {unclear ? q.rangeAgain : q.rangeStart}
+            <Icon k="mic" /> {unclear ? q.rangeAgain : q.rangeStart}
           </button>
           <button className="btn ghost small" onClick={onNext} data-range-skip="1">
             {q.rangeLater}

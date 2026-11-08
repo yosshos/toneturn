@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { assignLesson, classVocal, createClass, deleteClass, EXTRA_ASSIGNABLE, joinClass, leaveClass, myClasses, unassign, type MyClasses, type StudentVocal, type TeachingClass } from '../cloud/classes';
+import { classVocal, createClass, deleteClass, EXTRA_ASSIGNABLE, joinClass, leaveClass, myClasses, unassign, type MyClasses, type StudentVocal, type TeachingClass } from '../cloud/classes';
 import { cloudConfigured, signInWithGoogle, type CloudUser } from '../cloud/cloud';
 import { normaliseCode, ROOM_CODE_RE } from '../cloud/rooms';
 import { LESSON_ORDER, type LessonId } from '../engine/lesson';
@@ -7,16 +7,20 @@ import { SKILLS } from '../engine/rating';
 import { LESSON_META } from '../game/content';
 import type { Strings } from '../i18n/strings';
 import type { Settings } from '../storage/progress';
+import { classDetail, myAssignments, type AssignItem, type ClassDetail } from '../cloud/teacher';
+import { AssignForm, ClassHeatmap, GradingInbox, itemTitle, MyAssignmentsList, ParentLinkCard } from './TeacherLoop';
 
-export function ClassesScreen({ t, settings, user, onBack, onOpenLesson, embedded }: { t: Strings; settings: Settings; user: CloudUser | null; onBack: () => void; onOpenLesson: (id: LessonId) => void; /** Inside the Community tab (0.45): no own header. */ embedded?: boolean }) {
+export function ClassesScreen({ t, settings, user, onBack, onOpenLesson, onOpenItem, embedded }: { t: Strings; settings: Settings; user: CloudUser | null; onBack: () => void; onOpenLesson: (id: LessonId) => void; /** An assignment of any kind (0.52); its result is sent when finished. */ onOpenItem?: (a: AssignItem) => void; /** Inside the Community tab (0.45): no own header. */ embedded?: boolean }) {
   const lang = settings.uiLang;
   const [data, setData] = useState<MyClasses | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
   const [busy, setBusy] = useState(false);
+  const [mine, setMine] = useState<AssignItem[]>([]);
   const load = useCallback(async () => {
     try {
+      void myAssignments().then(setMine, () => {});
       setData(await myClasses());
       setErr(null);
     } catch (e) {
@@ -71,6 +75,8 @@ export function ClassesScreen({ t, settings, user, onBack, onOpenLesson, embedde
             </div>
           </section>
 
+          {onOpenItem && <MyAssignmentsList items={mine} lang={lang} t={t} onOpen={onOpenItem} />}
+          {data && data.memberOf.length > 0 && <ParentLinkCard lang={lang} />}
           {data?.memberOf.map((c) => (
             <section key={c.id} className="set-card class-card">
               <div className="class-head">
@@ -109,7 +115,7 @@ export function ClassesScreen({ t, settings, user, onBack, onOpenLesson, embedde
               </button>
             </div>
           </section>
-          {data?.teaching.map((c) => <TeacherCard key={c.id} t={t} c={c} lang={lang} busy={busy} act={act} title={title} />)}
+          {data?.teaching.map((c) => <TeacherCard key={c.id} t={t} c={c} lang={lang} busy={busy} act={act} title={title} onError={setErr} />)}
         </>
       )}
       {err && (
@@ -125,13 +131,14 @@ function pct(s: { n: number; correct: number } | undefined) {
   return s && s.n ? `${Math.round((100 * s.correct) / s.n)}%` : '–';
 }
 
-function TeacherCard({ t, c, lang, busy, act, title }: { t: Strings; c: TeachingClass; lang: 'he' | 'en'; busy: boolean; act: (f: () => Promise<unknown>) => Promise<void>; title: (id: string) => string }) {
-  const [lesson, setLesson] = useState<string>(LESSON_ORDER[0]);
+function TeacherCard({ t, c, lang, busy, act, onError }: { t: Strings; c: TeachingClass; lang: 'he' | 'en'; busy: boolean; act: (f: () => Promise<unknown>) => Promise<void>; title: (id: string) => string; onError: (e: string) => void }) {
+  const [detail, setDetail] = useState<ClassDetail | null>(null);
+  const loadDetail = useCallback(() => void classDetail(c.id).then(setDetail, () => {}), [c.id]);
+  useEffect(() => loadDetail(), [loadDetail]);
   const [vocal, setVocal] = useState<StudentVocal[] | null>(null);
   useEffect(() => {
     void classVocal(c.id).then(setVocal);
   }, [c.id]);
-  const [due, setDue] = useState('');
   const shown = SKILLS.filter((k) => c.students.some((s) => s.skills[k]?.n));
   return (
     <section className="set-card class-card teacher">
@@ -217,36 +224,24 @@ function TeacherCard({ t, c, lang, busy, act, title }: { t: Strings; c: Teaching
       )}
       <h3>{t.assignments}</h3>
       <ul className="assign-list">
-        {c.assignments.map((a) => (
-          <li key={a.id}>
-            <span>{title(a.lessonId)}</span>
-            <small dir="ltr">
-              {a.done}/{c.students.length} ✓{a.dueOn ? ` · ${t.dueLabel} ${a.dueOn}` : ''}
-            </small>
-            <button className="icon-btn small" aria-label={t.remove} disabled={busy} onClick={() => act(() => unassign(a.id))}>
-              ✕
-            </button>
-          </li>
-        ))}
+        {(detail?.assignments ?? c.assignments.map((a) => ({ ...a, kind: 'lesson' as const, ref: null, submissions: [] as { userId?: string }[] }))).map((a) => {
+          const who = new Set(a.submissions.map((x) => x.userId)).size;
+          return (
+            <li key={a.id}>
+              <span>{itemTitle(a, lang, t)}</span>
+              <small dir="ltr">
+                {who}/{c.students.length} ✓{a.dueOn ? ` · ${t.dueLabel} ${a.dueOn}` : ''}
+              </small>
+              <button className="icon-btn small" aria-label={t.remove} disabled={busy} onClick={() => act(() => unassign(a.id)).then(loadDetail)}>
+                ✕
+              </button>
+            </li>
+          );
+        })}
       </ul>
-      <div className="assign-form">
-        <select value={lesson} onChange={(e) => setLesson(e.target.value)} aria-label={t.assignLesson}>
-          {LESSON_ORDER.map((id, i) => (
-            <option key={id} value={id}>
-              {i + 1}. {title(id)}
-            </option>
-          ))}
-          {EXTRA_ASSIGNABLE.map((id) => (
-            <option key={id} value={id}>
-              {title(id)}
-            </option>
-          ))}
-        </select>
-        <input type="date" value={due} onChange={(e) => setDue(e.target.value)} aria-label={t.dueLabel} />
-        <button className="btn primary small" disabled={busy} onClick={() => act(() => assignLesson(c.id, lesson, due || null))}>
-          {t.assignLesson}
-        </button>
-      </div>
+      <AssignForm classId={c.id} lang={lang} t={t} busy={busy} onAssigned={loadDetail} onError={onError} />
+      {detail && <GradingInbox detail={detail} lang={lang} t={t} onChanged={loadDetail} />}
+      {detail && <ClassHeatmap c={c} minutes={detail.minutes} lang={lang} t={t} />}
       <button
         className="btn ghost small danger"
         disabled={busy}

@@ -83,7 +83,7 @@ export const GLOSSARY: Term[] = [
   {
     id: 'melody',
     label: { en: 'melody', he: 'מנגינה' },
-    explain: { en: 'A line of single notes, one after another, that forms a recognisable tune.', he: 'שורה של צלילים בודדים, אחד אחרי השני, שיוצרת מנגינה שאפשר לזהות.' },
+    explain: { en: 'A line of single notes, one after another, that forms a recognizable tune.', he: 'שורה של צלילים בודדים, אחד אחרי השני, שיוצרת מנגינה שאפשר לזהות.' },
     example: { en: 'The melody is the part of a song you hum afterwards.', he: 'המנגינה היא החלק בשיר שמזמזמים אחר כך.' },
     play: [notes([60, 62, 64, 60, 64, 65, 67], 0.3)],
     match: { en: /\bmelod(y|ies)\b/i, he: heWord('מלודיה|מלודיות|מנגינה|מנגינות') },
@@ -125,7 +125,7 @@ export const GLOSSARY: Term[] = [
   {
     id: 'key',
     label: { en: 'key', he: 'סולם' },
-    explain: { en: 'The set of notes a piece uses, organised around one home note. "In G major" means G is home and the notes are those of the G major scale.', he: 'קבוצת הצלילים שיצירה משתמשת בה, סביב צליל בית אחד. "בסול מז׳ור" אומר שסול הוא הבית והצלילים הם של סולם סול מז׳ור.' },
+    explain: { en: 'The set of notes a piece uses, organized around one home note. "In G major" means G is home and the notes are those of the G major scale.', he: 'קבוצת הצלילים שיצירה משתמשת בה, סביב צליל בית אחד. "בסול מז׳ור" אומר שסול הוא הבית והצלילים הם של סולם סול מז׳ור.' },
     example: { en: 'A song in G major uses G A B C D E F♯ and ends on G.', he: 'שיר בסול מז׳ור משתמש ב־G A B C D E F♯ ומסתיים בסול.' },
     play: [{ kind: 'cadence', key: C }, notes([60, 62, 64, 65, 67, 69, 71, 72], 0.25)],
     match: { en: /(?<!(?:piano|black|white|relative) )\bkeys?\b(?! signatures?\b)/i, he: heWord('סולם(?! (?:ה)?(?:בלוז|פנטטוני|כרומטי|מקביל))|סולמות|סולמים') },
@@ -165,7 +165,7 @@ export const GLOSSARY: Term[] = [
   {
     id: 'major-minor',
     label: { en: 'major / minor', he: 'מז׳ור / מינור' },
-    explain: { en: 'The two main colours of chords and keys. Major usually sounds bright; minor sounds darker. The difference is the third: a half step lower in minor.', he: 'שני הצבעים העיקריים של אקורדים וסולמות. מז׳ור נשמע בדרך כלל בהיר; מינור כהה יותר. ההבדל הוא בטרצה: חצי טון נמוכה יותר במינור.' },
+    explain: { en: 'The two main colors of chords and keys. Major usually sounds bright; minor sounds darker. The difference is the third: a half step lower in minor.', he: 'שני הצבעים העיקריים של אקורדים וסולמות. מז׳ור נשמע בדרך כלל בהיר; מינור כהה יותר. ההבדל הוא בטרצה: חצי טון נמוכה יותר במינור.' },
     example: { en: 'C major is C E G; C minor is C E♭ G — one note apart.', he: 'דו מז׳ור הוא C E G; דו מינור הוא C E♭ G — הבדל של צליל אחד.' },
     play: [chord([60, 64, 67], 1.2), rest(0.4), chord([60, 63, 67], 1.4)],
     match: { en: /\bmajor\b(?! (?:second|third|sixth|seventh)s?\b)|(?<!(?:natural|harmonic|melodic|relative) )\bminor\b(?! (?:second|third|sixth|seventh)s?\b)/i, he: /מז׳ור|מז'ור|מינור(?! (?:טבעי|הרמוני|מלודי|מקביל))/ },
@@ -229,7 +229,7 @@ export const GLOSSARY: Term[] = [
   {
     id: 'mode',
     label: { en: 'mode', he: 'מודוס' },
-    explain: { en: 'A scale heard from a different home note. Playing the white keys from D to D gives Dorian, from E Phrygian, and so on — each with its own colour.', he: 'סולם שנשמע מצליל בית אחר. נגינת הקלידים הלבנים מרה עד רה נותנת דורי, ממי פריגי, וכן הלאה — לכל אחד צבע משלו.' },
+    explain: { en: 'A scale heard from a different home note. Playing the white keys from D to D gives Dorian, from E Phrygian, and so on — each with its own color.', he: 'סולם שנשמע מצליל בית אחר. נגינת הקלידים הלבנים מרה עד רה נותנת דורי, ממי פריגי, וכן הלאה — לכל אחד צבע משלו.' },
     example: { en: 'The seven modes of the white keys: Ionian (C), Dorian (D), Phrygian (E), Lydian (F), Mixolydian (G), Aeolian (A), Locrian (B).', he: 'שבעת המודוסים של הקלידים הלבנים: יוני (C), דורי (D), פריגי (E), לידי (F), מיקסולידי (G), אאולי (A), לוקרי (B).' },
     play: [notes([62, 64, 65, 67, 69, 71, 72, 74], 0.25)],
     match: { en: /\bmodes?\b|\bmodal\b(?! interchange)|\bionian\b/i, he: heWord('מודוס|מודוסים|מודאלי') },
@@ -245,7 +245,7 @@ export const GLOSSARY: Term[] = [
   {
     id: 'phrygian',
     label: { en: 'Phrygian', he: 'פריגי' },
-    explain: { en: 'A minor mode with a lowered 2: the half step just above home gives it a dark, Spanish flavour.', he: 'מודוס מינורי עם 2 מונמכת: חצי הטון ממש מעל הבית נותן לו צבע כהה וספרדי.' },
+    explain: { en: 'A minor mode with a lowered 2: the half step just above home gives it a dark, Spanish flavor.', he: 'מודוס מינורי עם 2 מונמכת: חצי הטון ממש מעל הבית נותן לו צבע כהה וספרדי.' },
     example: { en: 'Flamenco guitar lives on Phrygian moves like F → E over E. C Phrygian: C D♭ E♭ F G A♭ B♭ C.', he: 'גיטרת פלמנקו חיה על מהלכים פריגיים כמו F → E מעל מי. דו פריגי: C D♭ E♭ F G A♭ B♭ C.' },
     play: [notes([60, 61, 63, 65, 67, 68, 70, 72], 0.25)],
     match: { en: /\bphrygian\b/i, he: heWord('פריגי|פריגית|הפריגי') },
@@ -441,8 +441,8 @@ export const GLOSSARY: Term[] = [
   {
     id: 'add-chord',
     label: { en: 'add chord', he: 'אקורד add' },
-    explain: { en: 'A triad with one extra colour note but no seventh, written "add" plus the number.', he: 'משולש עם צליל צבע אחד נוסף אבל בלי ספטימה, נכתב "add" ועוד המספר.' },
-    example: { en: 'Cadd9 = C E G + D; a favourite of acoustic guitarists.', he: 'Cadd9 = C E G + D; אהוב על גיטריסטים אקוסטיים.' },
+    explain: { en: 'A triad with one extra color note but no seventh, written "add" plus the number.', he: 'משולש עם צליל צבע אחד נוסף אבל בלי ספטימה, נכתב "add" ועוד המספר.' },
+    example: { en: 'Cadd9 = C E G + D; a favorite of acoustic guitarists.', he: 'Cadd9 = C E G + D; אהוב על גיטריסטים אקוסטיים.' },
     play: [chord([60, 64, 67], 0.9), chord([60, 64, 67, 74], 1.3)],
     match: { en: /\badd(2|4|9|11)\b|\badd chords?\b/i, he: /add(2|4|9|11)|אקורד add/ },
   },
@@ -473,7 +473,7 @@ export const GLOSSARY: Term[] = [
   {
     id: 'extension',
     label: { en: 'extensions (9, 11, 13)', he: 'טנשנים (9, 11, 13)' },
-    explain: { en: 'Notes stacked above the seventh — 9, 11 and 13 — that add colour without changing the chord’s job.', he: 'צלילים שנערמים מעל הספטימה — 9, 11 ו־13 — ומוסיפים צבע בלי לשנות את התפקיד של האקורד.' },
+    explain: { en: 'Notes stacked above the seventh — 9, 11 and 13 — that add color without changing the chord’s job.', he: 'צלילים שנערמים מעל הספטימה — 9, 11 ו־13 — ומוסיפים צבע בלי לשנות את התפקיד של האקורד.' },
     example: { en: 'Cmaj9 = Cmaj7 + D; G13 = G7 with E on top.', he: 'Cmaj9 = Cmaj7 + D; ‏G13 = G7 עם מי למעלה.' },
     play: [chord([48, 52, 55, 59], 1), chord([48, 52, 55, 59, 62], 1.4)],
     match: { en: /\b(chord )?extensions?\b|\btensions\b|\b(9th|11th|13th) chords?\b/i, he: heWord('טנשן|טנשנים|הטנשנים') },
@@ -817,7 +817,7 @@ export const GLOSSARY: Term[] = [
   {
     id: 'motif',
     label: { en: 'motif', he: 'מוטיב' },
-    explain: { en: 'A short, recognisable idea — a few notes or a rhythm — that is repeated and developed through a piece.', he: 'רעיון קצר ומזוהה — כמה צלילים או מקצב — שחוזר ומתפתח לאורך היצירה.' },
+    explain: { en: 'A short, recognizable idea — a few notes or a rhythm — that is repeated and developed through a piece.', he: 'רעיון קצר ומזוהה — כמה צלילים או מקצב — שחוזר ומתפתח לאורך היצירה.' },
     example: { en: 'Beethoven’s Fifth Symphony opens with a four-note motif: short-short-short-long.', he: 'הסימפוניה החמישית של בטהובן נפתחת במוטיב של ארבעה צלילים: קצר־קצר־קצר־ארוך.' },
     play: [ev([[67, 0, 0.17, 0.85], [67, 0.2, 0.17, 0.85], [67, 0.4, 0.17, 0.85], [63, 0.6, 1.2, 0.9], [65, 2.1, 0.17, 0.85], [65, 2.3, 0.17, 0.85], [65, 2.5, 0.17, 0.85], [62, 2.7, 1.4, 0.9]], 4.3)],
     match: { en: /\bmoti(f|fs|ve|ves)\b/i, he: heWord('מוטיב|מוטיבים|המוטיב') },
@@ -884,7 +884,7 @@ export const GLOSSARY: Term[] = [
   {
     id: 'drone',
     label: { en: 'drone', he: 'דרון' },
-    explain: { en: 'One long note (or fifth) held under the music. Against it, every melody note’s colour becomes easy to hear.', he: 'צליל ארוך אחד (או קווינטה) שמוחזק מתחת למוזיקה. מולו קל לשמוע את הצבע של כל צליל במנגינה.' },
+    explain: { en: 'One long note (or fifth) held under the music. Against it, every melody note’s color becomes easy to hear.', he: 'צליל ארוך אחד (או קווינטה) שמוחזק מתחת למוזיקה. מולו קל לשמוע את הצבע של כל צליל במנגינה.' },
     example: { en: 'Bagpipes and the Indian tanpura play a constant drone.', he: 'חמת חלילים והטנפורה ההודית מנגנות דרון קבוע.' },
     play: [ev([[48, 0, 3.2, 0.45], [55, 0, 3.2, 0.35], [64, 0.3, 0.6], [65, 0.9, 0.6], [67, 1.5, 0.6], [64, 2.1, 1]], 3.5)],
     match: { en: /\bdrones?\b/i, he: heWord('דרון|דרונים|הדרון') },
@@ -893,7 +893,7 @@ export const GLOSSARY: Term[] = [
   // ---- Sound and production ----
   {
     id: 'timbre',
-    label: { en: 'timbre (tone colour)', he: 'גוון צליל' },
+    label: { en: 'timbre (tone color)', he: 'גוון צליל' },
     explain: { en: 'What makes two sounds of the same pitch and loudness different — why a flute and a violin never sound alike.', he: 'מה שגורם לשני צלילים באותו גובה ובאותה עוצמה להישמע שונה — למה חליל וכינור לעולם לא נשמעים אותו דבר.' },
     example: { en: 'The same A (440 Hz) as a pure sine tone, then on piano.', he: 'אותו לה (440 הרץ) כצליל סינוס טהור, ואז בפסנתר.' },
     play: [fx('sine', {}, { sineHz: 440, level: true }), { kind: 'note', midi: 69, duration: 1.2 }],
@@ -976,7 +976,7 @@ export const GLOSSARY: Term[] = [
   {
     id: 'register',
     label: { en: 'register', he: 'רגיסטר' },
-    explain: { en: 'A region of the range — low, middle or high — each with its own colour.', he: 'אזור במנעד — נמוך, אמצעי או גבוה — ולכל אחד צבע משלו.' },
+    explain: { en: 'A region of the range — low, middle or high — each with its own color.', he: 'אזור במנעד — נמוך, אמצעי או גבוה — ולכל אחד צבע משלו.' },
     example: { en: 'The same tune in a low register sounds dark; in a high register, bright.', he: 'אותה מנגינה ברגיסטר נמוך נשמעת כהה; ברגיסטר גבוה — בהירה.' },
     play: [notes([48, 52, 55, 52, 48], 0.3), rest(0.3), notes([72, 76, 79, 76, 72], 0.3)],
     match: { en: /\bregisters?\b/i, he: heWord('רגיסטר|רגיסטרים|הרגיסטר') },
@@ -1076,7 +1076,7 @@ export const GLOSSARY: Term[] = [
   {
     id: 'tritone-sub',
     label: { en: 'tritone substitution', he: 'תחליף טריטון' },
-    explain: { en: 'Replacing a dominant 7 with the dominant 7 a tritone away. Both share the same tritone, so the pull is the same but the bass slides by half step.', he: 'החלפה של אקורד דומיננטי 7 בדומיננטי 7 שנמצא במרחק טריטון. לשניהם אותו טריטון, כך שהמשיכה זהה אבל הבס גולש בחצי טון.' },
+    explain: { en: 'Replacing a dominant 7 with the dominant 7 a tritone away. Both share the same tritone, so the pull is the same but the bass slides by a half step.', he: 'החלפה של אקורד דומיננטי 7 בדומיננטי 7 שנמצא במרחק טריטון. לשניהם אותו טריטון, כך שהמשיכה זהה אבל הבס גולש בחצי טון.' },
     example: { en: 'Dm7 – D♭7 – Cmaj7: D♭7 replaces G7; both contain F and B (C♭).', he: 'Dm7 – D♭7 – Cmaj7: ‏D♭7 מחליף את G7; בשניהם יש פה וסי (דו♭).' },
     play: [jazz([{ root: 2, q: 'm7' }, { root: 1, q: '7' }, { root: 0, q: 'maj7' }])],
     match: { en: /\btritone sub(stitut(e|es|ion|ions)|s)?\b/i, he: /תחליף (ה)?טריטון|תחליפי טריטון/ },
@@ -1103,7 +1103,7 @@ export const GLOSSARY: Term[] = [
     id: 'jins',
     label: { en: 'jins', he: 'ג׳ינס' },
     explain: { en: 'A building block of a maqam: three to five notes with a set pattern of steps. Plural: ajnas.', he: 'אבן בניין של מקאם: שלושה עד חמישה צלילים בתבנית צעדים קבועה. ברבים: אג׳נאס.' },
-    example: { en: 'Jins Hijaz on D: D E♭ F♯ G — the wide step in the middle gives its famous colour.', he: 'ג׳ינס חיג׳אז על רה: D E♭ F♯ G — הצעד הרחב באמצע נותן את הצבע המפורסם שלו.' },
+    example: { en: 'Jins Hijaz on D: D E♭ F♯ G — the wide step in the middle gives its famous color.', he: 'ג׳ינס חיג׳אז על רה: D E♭ F♯ G — הצעד הרחב באמצע נותן את הצבע המפורסם שלו.' },
     play: [notes([62, 63, 66, 67, 66, 63, 62], 0.35)],
     match: { en: /\bjins\b|\bajnas\b/i, he: /ג׳ינס|ג'ינס|אג׳נאס|אג'נאס/ },
   },

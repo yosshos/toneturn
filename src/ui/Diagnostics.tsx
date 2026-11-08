@@ -248,7 +248,7 @@ export function Diagnostics({ t, settings, onBack }: { t: Strings; settings: Set
         <h2>3 · {t.stageCapture}</h2>
         <div className="row">
           <button className="btn primary" onClick={testMic}>
-            {lang === 'he' ? 'בדוק מיקרופון (8 שניות)' : 'Test microphone (8 s)'}
+            {lang === 'he' ? 'בדקו מיקרופון (8 שניות)' : 'Test microphone (8 s)'}
           </button>
           <Badge s={micStatus} />
         </div>
@@ -273,7 +273,7 @@ export function Diagnostics({ t, settings, onBack }: { t: Strings; settings: Set
             <option value="en-US">en-US</option>
           </select>
           <button className="btn primary" onClick={testRec}>
-            {lang === 'he' ? 'בדוק זיהוי — אמרו "חמש"' : 'Test recognition — say “five”'}
+            {lang === 'he' ? 'בדקו זיהוי — אמרו "חמש"' : 'Test recognition — say “five”'}
           </button>
           <Badge s={recStatus} />
         </div>

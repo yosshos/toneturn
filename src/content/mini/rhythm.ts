@@ -712,7 +712,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: '3+2+2  ·  2+3+2', he: '3+2+2  ·  2+3+2' } },
       },
       {
-        say: { en: 'Longer ones: 9/8 here is 2+2+2+3, a Balkan favourite. 11/8 is 2+2+3+2+2.', he: 'וארוכים יותר: 9/8 כאן הוא 2+2+2+3, אהוב בבלקן. 11/8 הוא 2+2+3+2+2.' },
+        say: { en: 'Longer ones: 9/8 here is 2+2+2+3, a Balkan favorite. 11/8 is 2+2+3+2+2.', he: 'וארוכים יותר: 9/8 כאן הוא 2+2+2+3, אהוב בבלקן. 11/8 הוא 2+2+3+2+2.' },
         play: [meter([2, 2, 2, 3], 2), meter([2, 2, 3, 2, 2], 2)],
         show: { text: { en: '9/8 = 2+2+2+3  ·  11/8 = 2+2+3+2+2', he: '9/8 = 2+2+2+3  ·  11/8 = 2+2+3+2+2' } },
       },
@@ -825,7 +825,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: '4 : 3  ·  grid of 12', he: '4 : 3  ·  רשת של 12' } },
       },
       {
-        say: { en: 'Listening strategy: your ear picks one layer as "the beat". Here the roles swap — the low drum now plays three and the high click two. Practise hearing either layer as the beat; the pattern is the same.', he: 'אסטרטגיית האזנה: האוזן בוחרת שכבה אחת להיות "הפעמה". כאן התפקידים מתחלפים — התוף הנמוך מנגן עכשיו שלושה והקליק הגבוה שניים. התאמנו לשמוע כל אחת מהשכבות כפעמה; הדפוס זהה.' },
+        say: { en: 'Listening strategy: your ear picks one layer as "the beat". Here the roles swap — the low drum now plays three and the high click two. Practice hearing either layer as the beat; the pattern is the same.', he: 'אסטרטגיית האזנה: האוזן בוחרת שכבה אחת להיות "הפעמה". כאן התפקידים מתחלפים — התוף הנמוך מנגן עכשיו שלושה והקליק הגבוה שניים. התאמנו לשמוע כל אחת מהשכבות כפעמה; הדפוס זהה.' },
         play: [poly(2, 3, 1.2, 4)],
         show: { text: { en: '2 : 3', he: '2 : 3' } },
       },
@@ -931,7 +931,7 @@ export const LESSONS: MiniLesson[] = [
     takeaway: { en: 'Iqa\'at are cycles of dum (low) and tek (high): maqsum, baladi, saidi, malfuf — plus samai in 10/8 and karsilama in 9/8.', he: 'איקאעאת הם מחזורים של דום (נמוך) ותק (גבוה): מקסום, בלדי, סעידי, מלפוף — ועוד סמאעי ב־10/8 וקרשילמה ב־9/8.' },
     steps: [
       {
-        say: { en: 'Ahlan, {name}! Arabic music rides on rhythm cycles called iqa\'at. They\'re spoken in two sounds: dum, the deep centre of the drum, and tek, the sharp rim.', he: 'אהלן {name}! המוזיקה הערבית רוכבת על מחזורי קצב שנקראים איקאעאת. אומרים אותם בשני צלילים: דום, המרכז העמוק של התוף, ותק, השפה החדה.' },
+        say: { en: 'Ahlan, {name}! Arabic music rides on rhythm cycles called iqa\'at. They\'re spoken in two sounds: dum, the deep center of the drum, and tek, the sharp rim.', he: 'אהלן {name}! המוזיקה הערבית רוכבת על מחזורי קצב שנקראים איקאעאת. אומרים אותם בשני צלילים: דום, המרכז העמוק של התוף, ותק, השפה החדה.' },
         play: [drum('D---T---', 0.2, 2)],
         show: { text: { en: 'dum = low · tek = high', he: 'דום = נמוך · תק = גבוה' } },
       },
@@ -971,8 +971,8 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: '4/4: maqsum · baladi · saidi  ·  2/4: malfuf', he: '4/4: מקסום · בלדי · סעידי  ·  2/4: מלפוף' } },
       },
       {
-        say: { en: 'On the darbuka, the goblet drum, dum is a stroke of the strong hand near the centre; tek is a sharp stroke on the rim. A tek played by the other hand is often called ka.', he: 'על הדרבוקה, תוף הגביע, דום הוא מכה של היד החזקה ליד המרכז; תק הוא מכה חדה על השפה. תק שמנוגן ביד השנייה נקרא לעתים קרובות קה.' },
-        show: { text: { en: 'dum = centre · tek = rim · ka = other hand', he: 'דום = מרכז · תק = שפה · קה = היד השנייה' } },
+        say: { en: 'On the darbuka, the goblet drum, dum is a stroke of the strong hand near the center; tek is a sharp stroke on the rim. A tek played by the other hand is often called ka.', he: 'על הדרבוקה, תוף הגביע, דום הוא מכה של היד החזקה ליד המרכז; תק הוא מכה חדה על השפה. תק שמנוגן ביד השנייה נקרא לעתים קרובות קה.' },
+        show: { text: { en: 'dum = center · tek = rim · ka = other hand', he: 'דום = מרכז · תק = שפה · קה = היד השנייה' } },
       },
       {
         say: { en: 'Listening strategy: ignore the teks and follow the dums. Maqsum starts dum-tek; baladi starts dum-dum. Hear them back to back — that second dum gives baladi away.', he: 'אסטרטגיית האזנה: התעלמו מהתקים ועקבו אחרי הדומים. מקסום מתחיל דום-תק; בלדי מתחיל דום-דום. שמעו אותם ברצף — הדום השני מסגיר את הבלדי.' },
@@ -1005,7 +1005,7 @@ export const LESSONS: MiniLesson[] = [
         say: { en: 'Maqsum underlies a huge share of Egyptian song and of Mizrahi pop in Israel. Baladi is a staple of belly dance, and saidi accompanies the stick dance of Upper Egypt.', he: 'מקסום עומד בבסיס של חלק עצום מהשיר המצרי ושל הפופ המזרחי בישראל. בלדי הוא עמוד תווך של ריקוד הבטן, וסעידי מלווה את ריקוד המקלות של מצרים העילית.' },
       },
       {
-        say: { en: 'To keep: an iqa\' is a cycle you recognise by its dums. Learn the skeleton, then hear it through the ornaments.', he: 'לזכור: איקאע הוא מחזור שמזהים לפי הדומים שלו. לומדים את השלד, ואז שומעים אותו דרך הקישוטים.' },
+        say: { en: 'To keep: an iqa\' is a cycle you recognize by its dums. Learn the skeleton, then hear it through the ornaments.', he: 'לזכור: איקאע הוא מחזור שמזהים לפי הדומים שלו. לומדים את השלד, ואז שומעים אותו דרך הקישוטים.' },
         show: { text: { en: 'follow the dums', he: 'עקבו אחרי הדומים' } },
       },
     ],
@@ -1019,7 +1019,7 @@ export const LESSONS: MiniLesson[] = [
     takeaway: { en: 'Keep the beat when the metronome goes silent; getting ahead is rushing, falling behind is dragging.', he: 'שומרים על הפעמה כשהמטרונום משתתק; להקדים זה למהר, לפגר זה לגרור.' },
     steps: [
       {
-        say: { en: 'Hey {name}! Every musician carries an inner clock. This drill checks how steady yours is when nobody keeps time for you.', he: 'היי {name}! לכל מוזיקאי יש שעון פנימי. התרגיל הזה בודק כמה יציב שלכם כשאף אחד לא שומר לכם על הקצב.' },
+        say: { en: 'Hey {name}! Every musician carries an inner clock. This drill checks how steady yours is when nobody keeps time for you.', he: 'היי {name}! לכל מוזיקאי יש שעון פנימי. התרגיל הזה בודק כמה יציב השעון שלכם כשאף אחד לא שומר לכם על הקצב.' },
         play: [clock(96, [0, 1, 2, 3, 4, 5, 6, 7], 8)],
         show: { text: { en: '1 2 3 4  1 2 3 4', he: '1 2 3 4  1 2 3 4' } },
       },
@@ -1120,7 +1120,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: '2 → 3 → 4 → …', he: '2 ← 3 ← 4 ← …' } },
       },
       {
-        say: { en: 'Trick: don\'t memorise taps — sing it in your head, "ti-ti ta sh sh-ti", and tap what you sing.', he: 'טריק: אל תשננו הקשות — שירו את זה בראש, "טי-טי טה שְׁ שְׁ-טי", והקישו את מה שאתם שרים.' },
+        say: { en: 'Trick: don\'t memorize taps — sing it in your head, "ti-ti ta sh sh-ti", and tap what you sing.', he: 'טריק: אל תשננו הקשות — שירו את זה בראש, "טי-טי טה שְׁ שְׁ-טי", והקישו את מה שאתם שרים.' },
         play: [echo([0, 0.5, 1, 3.5], 4, 90, false)],
         show: { text: { en: 'sing it, then tap it', he: 'שרים, ואז מקישים' } },
       },

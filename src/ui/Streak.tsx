@@ -1,6 +1,7 @@
 // Streak 2.0 UI (spec addendum N): flame states, the streak screen after the first session of the day,
 // the streak sheet (calendar, freezes, gems, shop) and the "freeze used" notice. Reduced motion respected.
 
+import { Icon } from './icons';
 import { useEffect, useState } from 'react';
 import { addDays, canBuy, canBuyCosmetic, COSMETICS, MAX_FREEZES, ownsCosmetic, PRICES, THEMES, type Purchase, type StreakState } from '../engine/streak';
 import type { Strings } from '../i18n/strings';
@@ -62,7 +63,7 @@ function WeekStrip({ st, today, t }: { st: StreakState; today: string; t: String
         return (
           <li key={d} className={`${done ? 'done' : ''} ${freeze.has(d) ? 'freeze' : ''} ${isToday ? 'today' : ''}`} style={{ ['--i' as string]: i }}>
             <span>{new Date(d + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'narrow' })}</span>
-            <i aria-hidden="true">{freeze.has(d) ? '❄' : done ? '🔥' : ''}</i>
+            <i aria-hidden="true">{freeze.has(d) ? <Icon k="snow" size={14} /> : done ? <Icon k="flame" size={14} /> : null}</i>
           </li>
         );
       })}
@@ -98,7 +99,7 @@ export function StreakCelebration({ t, before, after, gemsGained, today, onDone 
       <h1>{milestone ? fmt(t.milestoneReached, { n: milestone.days }) : t.streakExtended}</h1>
       <WeekStrip st={after} today={today} t={t} />
       {after.next && <p className="sc-next">{fmt(t.daysToMilestone, { n: after.next.left, m: after.next.days })}</p>}
-      {gemsGained > 0 && <p className="sc-gems">+{gemsGained} 💎</p>}
+      {gemsGained > 0 && <p className="sc-gems">+{gemsGained} <Icon k="gem" /></p>}
       <p className="field-hint">{t.seeYouTomorrow}</p>
       <button className="btn mega" onClick={onDone} autoFocus>
         {t.continue}
@@ -177,14 +178,20 @@ export function StreakSheet({
           </div>
           <div>
             <small>{t.freezes}</small>
-            <b>
-              {'❄'.repeat(st.freezes)}
-              <span className="dim">{'❄'.repeat(MAX_FREEZES - st.freezes)}</span>
+            <b data-freezes={st.freezes}>
+              {Array.from({ length: st.freezes }, (_, i) => (
+                <Icon key={i} k="snow" />
+              ))}
+              <span className="dim">
+                {Array.from({ length: MAX_FREEZES - st.freezes }, (_, i) => (
+                  <Icon key={i} k="snow" />
+                ))}
+              </span>
             </b>
           </div>
           <div>
             <small>{t.gems}</small>
-            <b>💎 {gems}</b>
+            <b><Icon k="gem" /> {gems}</b>
           </div>
         </div>
         {st.next && (
@@ -210,30 +217,30 @@ export function StreakSheet({
             const cls = freeze.has(d) ? 'freeze' : repaired.has(d) ? 'repaired' : practiced.has(d) ? 'done' : '';
             return (
               <li key={d} className={`${cls} ${d === today ? 'today' : ''} ${milestoneDays.has(d) ? 'milestone' : ''}`} title={d}>
-                {cls === 'freeze' ? '❄' : i + 1}
+                {cls === 'freeze' ? <Icon k="snow" size={14} /> : i + 1}
               </li>
             );
           })}
         </ol>
         <section className="menu-card shop">
-          <h3>💎 {t.shop}</h3>
+          <h3>{t.shop}</h3>
           <div className="shop-row">
             <div>
-              <b>❄ {t.streakFreeze}</b>
+              <b><Icon k="snow" /> {t.streakFreeze}</b>
               <small>{t.freezeHint}</small>
             </div>
             <button className="btn primary small" disabled={!canBuy('freeze', gems, st)} onClick={() => onBuy('freeze')}>
-              {PRICES.freeze} 💎
+              {PRICES.freeze} <Icon k="gem" />
             </button>
           </div>
           {st.repairable && (
             <div className="shop-row repair">
               <div>
-                <b>🔧 {t.streakRepair}</b>
+                <b>{t.streakRepair}</b>
                 <small>{fmt(t.repairHint, { n: st.repairable.lost })}</small>
               </div>
               <button className="btn primary small" disabled={!canBuy('repair', gems, st)} onClick={() => onBuy('repair')}>
-                {PRICES.repair} 💎
+                {PRICES.repair} <Icon k="gem" />
               </button>
             </div>
           )}
@@ -241,7 +248,7 @@ export function StreakSheet({
         </section>
         {onBuyCosmetic && onTheme && (
           <section className="menu-card shop themes">
-            <h3>🎨 {t.themesTitle}</h3>
+            <h3>{t.themesTitle}</h3>
             <div className="theme-grid">
               {THEMES.map((id) => {
                 const item = `theme-${id}`;
@@ -256,7 +263,7 @@ export function StreakSheet({
                       </button>
                     ) : (
                       <button className="btn primary small" disabled={!canBuyCosmetic(item, gems, purchases)} onClick={() => onBuyCosmetic(item)}>
-                        {COSMETICS[item]} 💎
+                        {COSMETICS[item]} <Icon k="gem" />
                       </button>
                     )}
                   </div>
@@ -276,7 +283,7 @@ export function FreezeToast({ t, count, onClose }: { t: Strings; count: number; 
   return (
     <div className="freeze-toast" role="status">
       <span className="ice" aria-hidden="true">
-        ❄
+        <Icon k="snow" size={20} />
       </span>
       <span>{fmt(t.freezeUsed, { n: count })}</span>
       <button className="icon-btn small" onClick={onClose} aria-label={t.done}>

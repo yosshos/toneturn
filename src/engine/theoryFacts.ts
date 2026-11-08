@@ -385,7 +385,7 @@ const GEN: Record<Exclude<FactTopic, 'trio' | 'trio-ear'>, (lv: FactLevel, r: Rn
       [`The relative major of E minor is B major`, `המז׳ור המקביל של E מינור הוא B מז׳ור`, false, 'E minor ↔ G major (one sharp)', 'E מינור ↔ G מז׳ור (דיאז אחד)'],
       [`F♯ major and G♭ major sound the same`, `F♯ מז׳ור ו־G♭ מז׳ור נשמעים אותו דבר`, true, 'Enharmonic keys: 6 sharps = 6 flats', 'סולמות אנהרמוניים: 6 דיאזים = 6 במולים'],
       [`Going around the circle of fifths visits all twelve keys`, `סיבוב במעגל הקווינטות עובר בכל שנים־עשר הסולמות`, true, '12 fifths up return to the start', '12 קווינטות למעלה חוזרות להתחלה'],
-      [`Neighbours on the circle differ by two accidentals`, `שכנים במעגל נבדלים בשני סימני היתק`, false, 'Neighbours differ by one sharp or flat', 'שכנים נבדלים בדיאז או במול אחד'],
+      [`Neighbors on the circle differ by two accidentals`, `שכנים במעגל נבדלים בשני סימני היתק`, false, 'Neighbors differ by one sharp or flat', 'שכנים נבדלים בדיאז או במול אחד'],
     ]);
   },
 

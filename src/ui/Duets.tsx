@@ -2,11 +2,12 @@
 // both practised. Shown at the top of Community → Friends: up to five duets with today's status for both, invites to
 // accept, a nudge when the partner has not practised yet, and "start a duet" with a friend.
 
+import { Icon } from './icons';
 import { useCallback, useEffect, useState } from 'react';
 import { duetAction, listDuets, nudge, type DuetRow, type FriendRow } from '../cloud/social';
 
 const TX = {
-  en: { title: 'Duet streaks', hint: 'A day counts when you both practise.', start: 'Start a duet', pick: 'Choose a friend', invite: 'Invite', accept: 'Accept', waiting: 'Invited — waiting', nudge: 'Nudge', nudged: 'Nudged ✓', end: 'End duet', endQ: 'End the duet with', both: 'Both practised today', you: 'You practised — waiting for them', them: 'They practised — your turn', none: 'Nobody yet today', days: 'days', max: 'Up to 5 duets', invitedYou: 'invited you', error: 'Could not do that right now.' },
+  en: { title: 'Duet streaks', hint: 'A day counts when you both practice.', start: 'Start a duet', pick: 'Choose a friend', invite: 'Invite', accept: 'Accept', waiting: 'Invited — waiting', nudge: 'Nudge', nudged: 'Nudged ✓', end: 'End duet', endQ: 'End the duet with', both: 'Both practiced today', you: 'You practiced — waiting for them', them: 'They practiced — your turn', none: 'Nobody yet today', days: 'days', max: 'Up to 5 duets', invitedYou: 'invited you', error: 'Could not do that right now.' },
   he: { title: 'רצף בזוגות', hint: 'יום נספר כששניכם מתאמנים.', start: 'להתחיל רצף זוגי', pick: 'בחרו חבר', invite: 'להזמין', accept: 'לאשר', waiting: 'הוזמן — ממתינים', nudge: 'תזכורת', nudged: 'נשלחה ✓', end: 'לסיים', endQ: 'לסיים את הרצף עם', both: 'שניכם התאמנתם היום', you: 'התאמנתם — מחכים לחבר', them: 'החבר התאמן — תורכם', none: 'אף אחד עוד לא היום', days: 'ימים', max: 'עד 5 רצפים', invitedYou: 'הזמין אתכם', error: 'לא ניתן כרגע.' },
 };
 
@@ -61,8 +62,8 @@ export function DuetsStrip({ lang, friends }: { lang: 'en' | 'he'; friends: Frie
               <li key={d.friend}>
                 <button className={`duet ${d.status} st-${st} ${open === d.friend ? 'on' : ''}`} onClick={() => setOpen(open === d.friend ? null : d.friend)} data-duet={d.status} aria-label={`${d.name}: ${d.status === 'active' ? `${d.streak} ${tx.days}, ${tx[st]}` : d.invited_by_me ? tx.waiting : tx.invitedYou}`}>
                   <span className="duet-flames" aria-hidden="true">
-                    <i className={d.me_today ? 'lit' : ''}>🔥</i>
-                    <i className={d.them_today ? 'lit' : ''}>🔥</i>
+                    <i className={d.me_today ? 'lit' : ''}><Icon k="flame" /></i>
+                    <i className={d.them_today ? 'lit' : ''}><Icon k="flame" /></i>
                   </span>
                   <b dir="ltr">{d.status === 'active' ? d.streak : '…'}</b>
                   <small dir="auto">{d.name}</small>

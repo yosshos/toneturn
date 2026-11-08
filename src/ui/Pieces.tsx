@@ -39,15 +39,15 @@ const savePieces = (ps: StoredPiece[]) => kv.set('all', ps);
 const TX = {
   en: {
     title: 'My pieces', add: 'Add a piece', formats: 'MusicXML (.musicxml, .xml) or MIDI (.mid). From MuseScore: File → Export → MusicXML (uncompressed).', none: 'No pieces yet.', bad: 'This file could not be read:',
-    setup: 'Set up', target: 'Target tempo', chunk: 'Bars per chunk', backward: 'Start from the end', start: 'Start practising', back: 'Back', del: 'Delete', progress: 'learned',
+    setup: 'Set up', target: 'Target tempo', chunk: 'Bars per chunk', backward: 'Start from the end', start: 'Start practicing', back: 'Back', del: 'Delete', progress: 'learned',
     bars: 'bars', tempo: '♩ =', loop: 'Fix this bar', seam: 'The join', join: 'Put it together', warm: 'Warm-up', burst: 'One burst at full tempo', spot: 'The hard spot', chunk1: 'Next part', trouble: 'The bar that keeps tripping you',
-    done: 'You can play the whole piece at the target tempo. 🎉', again: 'Again', minutes: 'min today',
+    done: 'You can play the whole piece at the target tempo.', again: 'Again', minutes: 'min today',
   },
   he: {
     title: 'היצירות שלי', add: 'להוסיף יצירה', formats: 'MusicXML (‏.musicxml, ‏.xml) או MIDI (‏.mid). ממיוזסקור: קובץ ← ייצוא ← MusicXML (לא דחוס).', none: 'עדיין אין יצירות.', bad: 'לא ניתן לקרוא את הקובץ:',
     setup: 'הגדרה', target: 'טמפו יעד', chunk: 'תיבות בכל קטע', backward: 'להתחיל מהסוף', start: 'להתחיל להתאמן', back: 'חזרה', del: 'מחיקה', progress: 'נלמד',
     bars: 'תיבות', tempo: '♩ =', loop: 'לתקן את התיבה הזו', seam: 'החיבור', join: 'לחבר הכול', warm: 'חימום', burst: 'פרץ אחד בטמפו המלא', spot: 'המקום הקשה', chunk1: 'החלק הבא', trouble: 'התיבה שחוזרת להכשיל',
-    done: 'אתם מנגנים את כל היצירה בטמפו היעד. 🎉', again: 'שוב', minutes: 'דק׳ היום',
+    done: 'אתם מנגנים את כל היצירה בטמפו היעד.', again: 'שוב', minutes: 'דק׳ היום',
   },
 };
 

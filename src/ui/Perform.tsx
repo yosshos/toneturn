@@ -1,6 +1,7 @@
 // Play & improvise (spec V.4–V.7): play-along backing tracks, guided improvisation over a chart, MIDI
 // keyboard drills (with an on-screen keyboard when there is no MIDI device), guitar from tab.
 
+import { Icon } from './icons';
 import { useMiniGate } from './MiniLesson';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { clockEvents, clockPlan, clockReport, type ClockReport } from '../engine/perform';
@@ -225,7 +226,7 @@ function Improv({ t, chart, keyPc, bpm, controls, ctl, onProgress }: { t: String
       <ChartLine chart={chart} keyPc={keyPc} beat={beat} />
       <label className="toggle-row">
         <input type="checkbox" checked={headphones} onChange={(e) => setHeadphones(e.target.checked)} />
-        <span>🎧 {t.vocalHeadphones}</span>
+        <span><Icon k="phones" /> {t.vocalHeadphones}</span>
       </label>
       {phase === 'playing' ? (
         <>
@@ -238,7 +239,7 @@ function Improv({ t, chart, keyPc, bpm, controls, ctl, onProgress }: { t: String
         </>
       ) : (
         <button className="btn mega" data-improv="go" onClick={() => void go()}>
-          🎤 {t.perfImprovGo}
+          <Icon k="mic" /> {t.perfImprovGo}
         </button>
       )}
       {report && (
@@ -265,7 +266,7 @@ function Improv({ t, chart, keyPc, bpm, controls, ctl, onProgress }: { t: String
           </ul>
           {report.tips.map((k) => (
             <p key={k} className="take-tip">
-              💡 {t.perfTips[k]}
+              <Icon k="tip" /> {t.perfTips[k]}
             </p>
           ))}
         </div>
@@ -420,7 +421,7 @@ function MidiDrills({ t, settings, onProgress }: { t: Strings; settings: Setting
       )}
       {drill === 'melody' && (
         <button className="btn ghost" onClick={() => void piano.unlock().then(() => piano.play(task.melody.map((m, i) => ({ midi: m, start: i * 0.45, duration: 0.42, velocity: 0.7 })), 2.6, new AbortController().signal))}>
-          🔊 {t.perfHearMelody}
+          <Icon k="speaker" /> {t.perfHearMelody}
         </button>
       )}
       <ScreenKeys

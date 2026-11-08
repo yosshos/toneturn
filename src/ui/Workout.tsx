@@ -1,6 +1,7 @@
 // Today's workout (spec AH): the first card on Home, a calm editor (W17), and the run screen for blocks that are
 // not lessons (practice timer, game, vocal) plus the end summary with one-tap feedback (W11).
 
+import { Icon } from './icons';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Strings } from '../i18n/strings';
 import type { Settings } from '../storage/progress';
@@ -47,7 +48,7 @@ const W = {
     presets: { suggested: 'Suggested', ear: 'Ear focus', rhythm: 'Rhythm focus', reading: 'Reading focus', voice: 'Voice focus', instrument: 'Instrument focus', quick5: 'Quick 5', mistakes: 'Fix my mistakes' } as Record<Preset, string>,
     ctx: { nomic: 'No mic', quiet: 'Quiet place', noinst: 'No instrument' },
     kinds: { path: 'Path', warmup: 'Warm-up', vocal: 'Vocal warm-up', practice: 'My instrument', mistakes: 'Fix my mistakes' } as Record<string, string>,
-    practiceHint: 'Practise on your own instrument. The metronome helps; write what you worked on.',
+    practiceHint: 'Practice on your own instrument. The metronome helps; write what you worked on.',
     metronome: 'Metronome',
     note: 'What did you work on?',
     blockDone: 'Block done',
@@ -90,7 +91,7 @@ const W = {
     remove: 'להסיר',
     cantFit: 'זה לא נכנס — שחררו קודם בלוק נעול',
     done: 'סיום',
-    presets: { suggested: 'מוצע', ear: 'דגש על שמיעה', rhythm: 'דגש על קצב', reading: 'דגש על קריאה', voice: 'דגש על קול', instrument: 'דגש על הכלי', quick5: '5 מהירות', mistakes: 'לתקן טעויות' } as Record<Preset, string>,
+    presets: { suggested: 'מוצע', ear: 'דגש על שמיעה', rhythm: 'דגש על קצב', reading: 'דגש על קריאה', voice: 'דגש על קול', instrument: 'דגש על הכלי', quick5: 'חמש דקות מהירות', mistakes: 'לתקן טעויות' } as Record<Preset, string>,
     ctx: { nomic: 'בלי מיקרופון', quiet: 'מקום שקט', noinst: 'בלי כלי' },
     kinds: { path: 'מסלול', warmup: 'חימום', vocal: 'חימום קולי', practice: 'הכלי שלי', mistakes: 'לתקן טעויות' } as Record<string, string>,
     practiceHint: 'נגנו על הכלי שלכם. המטרונום עוזר; כתבו על מה עבדתם.',
@@ -143,7 +144,7 @@ function BlockBar({ blocks, run }: { blocks: Block[]; run?: WorkoutRun | null })
 }
 
 /**
- * Today's workout (W1, redesigned 0.41 — owner: "too much text and colour"): one title line with the total and ✎, the
+ * Today's workout (W1, redesigned 0.41 — owner: "too much text and color"): one title line with the total and ✎, the
  * next path step, a calm numbered list of blocks (one accent: the block you're on), Start with a small daily-goal ring.
  * The context switches (no mic / quiet / no instrument) live in the editor.
  */
@@ -352,7 +353,7 @@ export function WorkoutEditor({
                     ✕ {tx.remove}
                   </button>
                   <button role="menuitem" className="btn small ghost" onClick={() => (change(bs.map((x) => (x.id === b.id ? { ...x, locked: !x.locked } : x))), setMenu(null))}>
-                    🔒 {b.locked ? tx.unlock : tx.lock}
+                    <Icon k="lock" /> {b.locked ? tx.unlock : tx.lock}
                   </button>
                   {(b.target.kind === 'area' || b.target.kind === 'topic' || b.target.kind === 'skill') && (
                     <button

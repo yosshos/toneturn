@@ -135,7 +135,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [60, 63, 64], text: { en: '4 = major · 3 = minor', he: '4 = מז׳ור · 3 = מינור' } },
       },
       {
-        say: { en: 'The root will change every round, but the colour does not. Here is G major, then G minor.', he: 'השורש ישתנה בכל סיבוב, אבל הצבע לא. הנה סול מז׳ור, ואז סול מינור.' },
+        say: { en: 'The root will change every round, but the color does not. Here is G major, then G minor.', he: 'השורש ישתנה בכל סיבוב, אבל הצבע לא. הנה סול מז׳ור, ואז סול מינור.' },
         play: [chord([55, 59, 62], 1.4), rest(0.3), chord([55, 58, 62], 1.6)],
         show: { notes: [55, 58, 59, 62], text: { en: 'G → Gm', he: 'סול → סול מינור' } },
       },
@@ -171,7 +171,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [57, 60, 64], text: { en: 'A – C – E = minor', he: 'לה – דו – מי = מינור' } },
       },
       {
-        say: { en: 'In real songs the two colours alternate constantly. The pop progression I, V, vi, IV moves from major chords to the minor vi and back.', he: 'בשירים אמיתיים שני הצבעים מתחלפים כל הזמן. מהלך הפופ I, V, vi, IV עובר מאקורדי מז׳ור אל vi המינורי וחוזר.' },
+        say: { en: 'In real songs the two colors alternate constantly. The pop progression I, V, vi, IV moves from major chords to the minor vi and back.', he: 'בשירים אמיתיים שני הצבעים מתחלפים כל הזמן. מהלך הפופ I, V, vi, IV עובר מאקורדי מז׳ור אל vi המינורי וחוזר.' },
         play: [{ kind: 'phrase', key: G, chords: ['I', 'V', 'vi', 'IV'] }],
         show: { text: { en: 'I – V – vi – IV', he: 'I – V – vi – IV' } },
       },
@@ -625,7 +625,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [62, 66, 69], key: 'D', text: { en: 'D F♯ A = 1 3 5', he: 'רה פה♯ לה = 1 3 5' } },
       },
       {
-        say: { en: 'Your turn. Echo the notes I play, then sing the notes I name, after the chime. Aim for the centre of each note.', he: 'תורכם. חזרו על הצלילים שאני מנגן, ואז שירו את התווים שאני אומר, אחרי הצליל. כוונו למרכז של כל צליל.' },
+        say: { en: 'Your turn. Echo the notes I play, then sing the notes I name, after the chime. Aim for the center of each note.', he: 'תורכם. חזרו על הצלילים שאני מנגן, ואז שירו את התווים שאני אומר, אחרי הצליל. כוונו למרכז של כל צליל.' },
         show: { text: { en: 'echo · then by name', he: 'הד · ואז לפי שם' } },
       },
     ],
@@ -695,7 +695,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [60, 64, 67], key: 'C', text: { en: '5 3 1 · 1 5 3', he: '5 3 1 · 1 5 3' } },
       },
       {
-        say: { en: 'And 5, 6, 5 is a little neighbour: step up from 5 and come right back.', he: 'ו־5, 6, 5 הוא שכן קטן: צעד אחד למעלה מ־5 וחזרה מיד.' },
+        say: { en: 'And 5, 6, 5 is a little neighbor: step up from 5 and come right back.', he: 'ו־5, 6, 5 הוא שכן קטן: צעד אחד למעלה מ־5 וחזרה מיד.' },
         play: [notes([67, 69, 67], 0.7)],
         show: { notes: [67, 69], key: 'C', text: { en: '5 6 5', he: '5 6 5' } },
       },
@@ -716,7 +716,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [60, 62, 64, 65, 67], key: 'C', text: { en: '1 2 3 4 5 = do re mi fa sol', he: '1 2 3 4 5 = דו רה מי פה סול' } },
       },
       {
-        say: { en: 'Degrees 1, 3 and 5 belong to the home chord and feel stable. The others are active and lean toward a neighbour: 7 rises to 1, 4 falls to 3, 2 falls to 1, 6 falls to 5.', he: 'דרגות 1, 3 ו־5 שייכות לאקורד הבית ומרגישות יציבות. האחרות פעילות ונשענות על שכן: 7 עולה ל־1, 4 יורד ל־3, 2 יורד ל־1, 6 יורד ל־5.' },
+        say: { en: 'Degrees 1, 3 and 5 belong to the home chord and feel stable. The others are active and lean toward a neighbor: 7 rises to 1, 4 falls to 3, 2 falls to 1, 6 falls to 5.', he: 'דרגות 1, 3 ו־5 שייכות לאקורד הבית ומרגישות יציבות. האחרות פעילות ונשענות על שכן: 7 עולה ל־1, 4 יורד ל־3, 2 יורד ל־1, 6 יורד ל־5.' },
         play: [cad(C), notes([71, 72], 0.7), rest(0.3), notes([65, 64], 0.7)],
         show: { notes: [71, 72, 65, 64], key: 'C', text: { en: '7 → 1 · 4 → 3', he: '7 → 1 · 4 → 3' } },
       },
@@ -746,7 +746,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [60], key: 'C', text: { en: 'back to 1 — still true?', he: 'חזרה ל־1 — עדיין מדויק?' } },
       },
       {
-        say: { en: 'Recap: lock in home, use the home chord as scaffolding, and let active notes lean into their neighbours.', he: 'לסיכום: ננעלים על הבית, נעזרים באקורד הבית כפיגום, ונותנים לצלילים הפעילים להישען על השכנים שלהם.' },
+        say: { en: 'Recap: lock in home, use the home chord as scaffolding, and let active notes lean into their neighbors.', he: 'לסיכום: ננעלים על הבית, נעזרים באקורד הבית כפיגום, ונותנים לצלילים הפעילים להישען על השכנים שלהם.' },
         show: { text: { en: '1 3 5 stable · others lean', he: '1 3 5 יציבים · השאר נשענים' } },
       },
     ],
@@ -871,7 +871,7 @@ export const LESSONS: MiniLesson[] = [
     ],
     more: [
       {
-        say: { en: 'You recognise a melody by its pattern of intervals, not by its exact pitches. That is why you know a song in any key: the degrees stay, only the starting pitch moves. “Twinkle” in D:', he: 'מזהים מנגינה לפי תבנית המרווחים שלה, לא לפי הגבהים המדויקים. לכן מזהים שיר בכל סולם: הדרגות נשארות, רק צליל ההתחלה זז. "כוכב קטן" ברה:' },
+        say: { en: 'You recognize a melody by its pattern of intervals, not by its exact pitches. That is why you know a song in any key: the degrees stay, only the starting pitch moves. “Twinkle” in D:', he: 'מזהים מנגינה לפי תבנית המרווחים שלה, לא לפי הגבהים המדויקים. לכן מזהים שיר בכל סולם: הדרגות נשארות, רק צליל ההתחלה זז. "כוכב קטן" ברה:' },
         play: [cad(D), melody([62, 62, 69, 69, 71, 71, 69], [1, 1, 1, 1, 1, 1, 2])],
         show: { notes: [62, 62, 69, 69, 71, 71, 69], key: 'D', text: { en: 'D: 1 1 5 5 6 6 5', he: 'רה: 1 1 5 5 6 6 5' } },
       },
@@ -891,7 +891,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [65, 65, 64, 64, 62, 62, 60], key: 'C', text: { en: '4 4 3 3 2 2 1', he: '4 4 3 3 2 2 1' } },
       },
       {
-        say: { en: 'Rhythm and metre are clues too. “Happy Birthday” sways in three beats per bar; “Twinkle” marches in four, even though both open with a repeated note.', he: 'גם הקצב והמשקל הם רמזים. "יום הולדת שמח" מתנדנד בשלוש פעמות בתיבה; "כוכב קטן" צועד בארבע, למרות ששניהם נפתחים בצליל חוזר.' },
+        say: { en: 'Rhythm and meter are clues too. “Happy Birthday” sways in three beats per bar; “Twinkle” marches in four, even though both open with a repeated note.', he: 'גם הקצב והמשקל הם רמזים. "יום הולדת שמח" מתנדנד בשלוש פעמות בתיבה; "כוכב קטן" צועד בארבע, למרות ששניהם נפתחים בצליל חוזר.' },
         show: { text: { en: '3/4 · 4/4', he: '3/4 · 4/4' } },
       },
       {
@@ -950,7 +950,7 @@ export const LESSONS: MiniLesson[] = [
     ],
     more: [
       {
-        say: { en: 'Melodic dictation means writing down a melody you hear: its pitches, its rhythm and its metre. Professionals work in stages, and so should you.', he: 'הכתבה מלודית פירושה לכתוב מנגינה ששומעים: את הגבהים, את הקצב ואת המשקל. מקצוענים עובדים בשלבים, וכדאי שגם אתם.' },
+        say: { en: 'Melodic dictation means writing down a melody you hear: its pitches, its rhythm and its meter. Professionals work in stages, and so should you.', he: 'הכתבה מלודית פירושה לכתוב מנגינה ששומעים: את הגבהים, את הקצב ואת המשקל. מקצוענים עובדים בשלבים, וכדאי שגם אתם.' },
         play: [cad(G), rest(0.3), melody([67, 71, 69, 67], [1, 1, 1, 1], 72)],
         show: { notes: [67, 71, 69, 67], key: 'G', durs: [1, 1, 1, 1], text: { en: '1 3 2 1', he: '1 3 2 1' } },
       },
@@ -999,7 +999,7 @@ export const LESSONS: MiniLesson[] = [
     area: 'ear',
     emoji: '🎯',
     title: { en: 'Absolute pitch corner', he: 'פינת השמיעה המוחלטת' },
-    takeaway: { en: 'Absolute pitch is rare and optional; relative pitch is the main goal. Here you train a feel for each note’s colour.', he: 'שמיעה מוחלטת היא נדירה ולא חובה; שמיעה יחסית היא המטרה העיקרית. כאן מאמנים תחושה ל"צבע" של כל צליל.' },
+    takeaway: { en: 'Absolute pitch is rare and optional; relative pitch is the main goal. Here you train a feel for each note’s color.', he: 'שמיעה מוחלטת היא נדירה ולא חובה; שמיעה יחסית היא המטרה העיקרית. כאן מאמנים תחושה ל"צבע" של כל צליל.' },
     steps: [
       {
         say: { en: 'Hey {name}! Welcome to a bonus corner. Absolute pitch means naming a note with no reference at all — no key, no chords. Like this A.', he: 'היי {name}! ברוכים הבאים לפינת בונוס. שמיעה מוחלטת פירושה לזהות צליל בלי שום נקודת ייחוס — בלי סולם, בלי אקורדים. כמו הלה הזה.' },
@@ -1012,7 +1012,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'same tune, any key = relative', he: 'אותה מנגינה, כל סולם = יחסית' } },
       },
       {
-        say: { en: 'Still, many people find each note has a faint colour of its own, and practice sharpens that feel. That is what we play with here.', he: 'ובכל זאת, הרבה אנשים מגלים שלכל צליל יש "צבע" עדין משלו, ותרגול מחדד את התחושה הזאת. עם זה נשחק כאן.' },
+        say: { en: 'Still, many people find each note has a faint color of its own, and practice sharpens that feel. That is what we play with here.', he: 'ובכל זאת, הרבה אנשים מגלים שלכל צליל יש "צבע" עדין משלו, ותרגול מחדד את התחושה הזאת. עם זה נשחק כאן.' },
         play: [note(60, 1.2), rest(0.3), note(64, 1.2)],
         show: { notes: [60, 64], text: { en: 'C · E', he: 'דו · מי' } },
       },
@@ -1042,16 +1042,16 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'rare · trainable in part', he: 'נדירה · ניתנת לאימון חלקי' } },
       },
       {
-        say: { en: 'Many people without it still have pitch memory: asked to sing a favourite recording, they often land close to its original key. The ear stores pitch even when naming it takes training.', he: 'להרבה אנשים בלי שמיעה מוחלטת יש בכל זאת זיכרון צלילי: כשמבקשים מהם לשיר הקלטה אהובה, הם נוחתים הרבה פעמים קרוב לסולם המקורי. האוזן שומרת גובה גם כשלתת לו שם דורש אימון.' },
+        say: { en: 'Many people without it still have pitch memory: asked to sing a favorite recording, they often land close to its original key. The ear stores pitch even when naming it takes training.', he: 'להרבה אנשים בלי שמיעה מוחלטת יש בכל זאת זיכרון צלילי: כשמבקשים מהם לשיר הקלטה אהובה, הם נוחתים הרבה פעמים קרוב לסולם המקורי. האוזן שומרת גובה גם כשלתת לו שם דורש אימון.' },
         show: { text: { en: 'pitch memory', he: 'זיכרון צלילי' } },
       },
       {
-        say: { en: 'How to practise: start with one or two anchor notes, say A and C. Listen for their character, then compare each new note to an anchor before you guess.', he: 'איך מתרגלים: מתחילים מצליל עוגן אחד או שניים, למשל לה ודו. מקשיבים לאופי שלהם, ומשווים כל צליל חדש לעוגן לפני שמנחשים.' },
+        say: { en: 'How to practice: start with one or two anchor notes, say A and C. Listen for their character, then compare each new note to an anchor before you guess.', he: 'איך מתרגלים: מתחילים מצליל עוגן אחד או שניים, למשל לה ודו. מקשיבים לאופי שלהם, ומשווים כל צליל חדש לעוגן לפני שמנחשים.' },
         play: [note(69, 1.4), rest(0.4), note(60, 1.4)],
         show: { notes: [69, 60], text: { en: 'anchors: A · C', he: 'עוגנים: לה · דו' } },
       },
       {
-        say: { en: 'A note’s colour shifts with register and instrument, so you are learning its name, not its height. Here is C in three octaves — the same note class each time.', he: 'הצבע של צליל משתנה עם הרגיסטר והכלי, אז אתם לומדים את השם שלו, לא את הגובה. הנה דו בשלוש אוקטבות — אותו צליל בכל פעם.' },
+        say: { en: 'A note’s color shifts with register and instrument, so you are learning its name, not its height. Here is C in three octaves — the same note class each time.', he: 'הצבע של צליל משתנה עם הרגיסטר והכלי, אז אתם לומדים את השם שלו, לא את הגובה. הנה דו בשלוש אוקטבות — אותו צליל בכל פעם.' },
         play: [notes([48, 60, 72], 1.0)],
         show: { notes: [48, 60, 72], text: { en: 'C · C · C', he: 'דו · דו · דו' } },
       },
@@ -1080,7 +1080,7 @@ export const LESSONS: MiniLesson[] = [
     takeaway: { en: 'Find the third (bright or dark), then the one odd note: Dorian has a raised 6th, Mixolydian a flat 7th.', he: 'מוצאים את הטרצה (בהירה או כהה), ואז את הצליל החריג: בדורי דרגה 6 מוגבהת, במיקסולידי ♭7.' },
     steps: [
       {
-        say: { en: 'Hi {name}! A mode is a scale with its own mood. Same home note, a few notes shifted — and the colour changes. Ionian is plain major.', he: 'היי {name}! מודוס הוא סולם עם מצב רוח משלו. אותו צליל בית, כמה צלילים זזים — והצבע משתנה. יוני הוא פשוט מז׳ור.' },
+        say: { en: 'Hi {name}! A mode is a scale with its own mood. Same home note, a few notes shifted — and the color changes. Ionian is plain major.', he: 'היי {name}! מודוס הוא סולם עם מצב רוח משלו. אותו צליל בית, כמה צלילים זזים — והצבע משתנה. יוני הוא פשוט מז׳ור.' },
         play: [note(60, 0.9), rest(0.3), notes(upDown(C_IONIAN), 0.38)],
         show: { notes: C_IONIAN, text: { en: 'Ionian: 1 2 3 4 5 6 7', he: 'יוני: 1 2 3 4 5 6 7' } },
       },
@@ -1121,7 +1121,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [71, 70], text: { en: 'Ionian 7 · Mixolydian ♭7', he: 'יוני 7 · מיקסולידי ♭7' } },
       },
       {
-        say: { en: 'Two more you will meet. Lydian is major with a raised 4: dreamy and floating, a favourite of film composers.', he: 'עוד שניים שתפגשו. לידי הוא מז׳ור עם דרגה 4 מוגבהת: חלומי ומרחף, אהוב על מלחיני סרטים.' },
+        say: { en: 'Two more you will meet. Lydian is major with a raised 4: dreamy and floating, a favorite of film composers.', he: 'עוד שניים שתפגשו. לידי הוא מז׳ור עם דרגה 4 מוגבהת: חלומי ומרחף, אהוב על מלחיני סרטים.' },
         play: [note(60, 0.8), notes([60, 62, 64, 66, 67, 69, 71, 72], 0.38)],
         show: { notes: [60, 62, 64, 66, 67, 69, 71, 72], text: { en: 'Lydian: 1 2 3 ♯4 5 6 7', he: 'לידי: 1 2 3 ♯4 5 6 7' } },
       },
@@ -1135,7 +1135,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: '3rd → odd note → mode', he: 'טרצה → צליל חריג → מודוס' } },
       },
       {
-        say: { en: 'Each mode’s colour also lives in a chord. Dorian sounds like a minor chord with a major 6th; Mixolydian like a dominant 7th chord. Here are Cm6 and C7.', he: 'הצבע של כל מודוס חי גם באקורד. דורי נשמע כמו אקורד מינור עם סקסטה גדולה; מיקסולידי כמו אקורד דומיננט־ספטימה. הנה Cm6 ו־C7.' },
+        say: { en: 'Each mode’s color also lives in a chord. Dorian sounds like a minor chord with a major 6th; Mixolydian like a dominant 7th chord. Here are Cm6 and C7.', he: 'הצבע של כל מודוס חי גם באקורד. דורי נשמע כמו אקורד מינור עם סקסטה גדולה; מיקסולידי כמו אקורד דומיננט־ספטימה. הנה Cm6 ו־C7.' },
         play: [chord([48, 60, 63, 67, 69], 1.6), rest(0.3), chord([48, 60, 64, 67, 70], 1.6)],
         show: { notes: [48, 60, 63, 67, 69], chord: true, text: { en: 'Cm6 · C7', he: 'Cm6 · C7' } },
       },
@@ -1149,7 +1149,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'rock · pop · modal jazz', he: 'רוק · פופ · ג׳ז מודאלי' } },
       },
       {
-        say: { en: 'Recap: same home, different colours. Third first, then the characteristic note names the mode.', he: 'לסיכום: אותו בית, צבעים שונים. קודם הטרצה, ואז הצליל האופייני נותן למודוס את השם.' },
+        say: { en: 'Recap: same home, different colors. Third first, then the characteristic note names the mode.', he: 'לסיכום: אותו בית, צבעים שונים. קודם הטרצה, ואז הצליל האופייני נותן למודוס את השם.' },
         show: { text: { en: 'third → characteristic note', he: 'טרצה → צליל אופייני' } },
       },
     ],
@@ -1216,7 +1216,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [60, 62, 64, 66, 67], key: 'C', text: { en: '♯4, not 5', he: '♯4, לא 5' } },
       },
       {
-        say: { en: 'To go further, practise descending scales too: sing down from 8 to 1 so your expectation works in both directions.', he: 'כדי להתקדם, תרגלו גם סולמות יורדים: שירו מ־8 עד 1 כדי שהציפייה תעבוד בשני הכיוונים.' },
+        say: { en: 'To go further, practice descending scales too: sing down from 8 to 1 so your expectation works in both directions.', he: 'כדי להתקדם, תרגלו גם סולמות יורדים: שירו מ־8 עד 1 כדי שהציפייה תעבוד בשני הכיוונים.' },
         play: [notes([72, 71, 69, 67, 65, 64, 62, 60], 0.4)],
         show: { notes: [72, 71, 69, 67, 65, 64, 62, 60], key: 'C', text: { en: '8 7 6 5 4 3 2 1', he: '8 7 6 5 4 3 2 1' } },
       },
@@ -1245,7 +1245,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [60, 62, 64, 65, 67, 69], key: 'C', text: { en: 'major', he: 'מז׳ור' } },
       },
       {
-        say: { en: 'The minor pentatonic has just five notes per octave, with bigger gaps. Soulful — an R&B favourite.', he: 'בפנטטוני מינורי יש רק חמישה צלילים באוקטבה, עם רווחים גדולים יותר. נשמתי — אהוב במיוחד בר׳נ׳ב.' },
+        say: { en: 'The minor pentatonic has just five notes per octave, with bigger gaps. Soulful — an R&B favorite.', he: 'בפנטטוני מינורי יש רק חמישה צלילים באוקטבה, עם רווחים גדולים יותר. נשמתי — אהוב במיוחד בר׳נ׳ב.' },
         play: [cad(C), rest(0.3), notes([60, 63, 65, 67, 70, 72], 0.33)],
         show: { notes: [60, 63, 65, 67, 70, 72], text: { en: 'C E♭ F G B♭ C', he: 'דו מי♭ פה סול סי♭ דו' } },
       },
@@ -1276,7 +1276,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [67, 69, 67, 64, 62, 60], key: 'C', text: { en: '5 6 5 3 2 1', he: '5 6 5 3 2 1' } },
       },
       {
-        say: { en: 'The scale sets the colour. Major runs sound sweet and bright; the minor pentatonic, 1 ♭3 4 5 ♭7, sounds soulful; the blues scale adds ♭5 for grit.', he: 'הסולם קובע את הצבע. ראנים במז׳ור נשמעים מתוקים ובהירים; הפנטטוני המינורי, 1 ♭3 4 5 ♭7, נשמע נשמתי; סולם הבלוז מוסיף ♭5 בשביל חספוס.' },
+        say: { en: 'The scale sets the color. Major runs sound sweet and bright; the minor pentatonic, 1 ♭3 4 5 ♭7, sounds soulful; the blues scale adds ♭5 for grit.', he: 'הסולם קובע את הצבע. ראנים במז׳ור נשמעים מתוקים ובהירים; הפנטטוני המינורי, 1 ♭3 4 5 ♭7, נשמע נשמתי; סולם הבלוז מוסיף ♭5 בשביל חספוס.' },
         play: [notes([72, 70, 67, 65, 63, 60], 0.22), rest(0.4), notes([72, 70, 67, 66, 65, 63, 60], 0.22)],
         show: { notes: [72, 70, 67, 66, 65, 63, 60], text: { en: 'pentatonic · blues', he: 'פנטטוני · בלוז' } },
       },
@@ -1291,7 +1291,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [72, 69, 67, 64, 62, 60], key: 'C', text: { en: 'target: 1', he: 'יעד: 1' } },
       },
       {
-        say: { en: 'Practise slowly on “ah”, one note per beat with a metronome. Double the speed only when every note is in tune. Grouping notes in threes or fours helps you keep your place.', he: 'מתרגלים לאט על "אה", צליל אחד בכל פעמה עם מטרונום. מכפילים מהירות רק כשכל צליל מדויק. חלוקת הצלילים לקבוצות של שלוש או ארבע עוזרת לא ללכת לאיבוד.' },
+        say: { en: 'Practice slowly on “ah”, one note per beat with a metronome. Double the speed only when every note is in tune. Grouping notes in threes or fours helps you keep your place.', he: 'מתרגלים לאט על "אה", צליל אחד בכל פעמה עם מטרונום. מכפילים מהירות רק כשכל צליל מדויק. חלוקת הצלילים לקבוצות של שלוש או ארבע עוזרת לא ללכת לאיבוד.' },
         play: [notes([67, 64, 62, 60], 0.5), rest(0.3), notes([67, 64, 62, 60], 0.25)],
         show: { notes: [67, 64, 62, 60], key: 'C', text: { en: 'slow → ×2', he: 'לאט → ×2' } },
       },

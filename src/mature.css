@@ -1,0 +1,128 @@
+/* One mature design language for the whole app (owner 2026-11-08: "the emoji are a sign that the design language
+   still has leftovers of the childish game — the whole app must speak a more serious, mature language").
+   Applies to every theme except the deliberately old "Classic arcade" ('violet'). Loaded last.
+   Rules: flat surfaces, thin borders, one restrained accent, no 3D drop-shadows, no candy gradients, no glow,
+   measured type, calm motion. Exercises included — their colour is a tint, not a toy. */
+
+/* ---------------------------------------------------------------- buttons */
+:root:not([data-theme='violet']) .btn.mega {
+  min-height: 52px;
+  font-size: 1.08rem;
+  font-weight: 650;
+  border-radius: 12px;
+  background: var(--mint);
+  color: #0c2219;
+  box-shadow: none;
+  letter-spacing: 0;
+}
+:root:not([data-theme='violet']) .btn.mega:active { transform: scale(0.985); box-shadow: none; }
+:root:not([data-theme='violet']) .btn.primary { box-shadow: none; }
+
+/* ---------------------------------------------------------------- answer pads (exercises) */
+:root:not([data-theme='violet']) .answer {
+  --tone: var(--mint);
+  border-radius: 14px;
+  border: 0;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tone) 42%, transparent);
+  background: color-mix(in srgb, var(--tone) 11%, var(--card));
+  color: var(--ink);
+  transition: background 0.12s, border-color 0.12s, transform 0.08s;
+}
+:root:not([data-theme='violet']) .answer.tone-mint { --tone: var(--mint); }
+:root:not([data-theme='violet']) .answer.tone-lilac { --tone: var(--hue-pitch, var(--lilac)); }
+:root:not([data-theme='violet']) .answer.tone-gold { --tone: var(--hue-reading, var(--gold)); }
+:root:not([data-theme='violet']) .answer.tone-coral { --tone: var(--hue-voice, var(--coral)); }
+:root:not([data-theme='violet']) .answer[class*='deg-'] { --tone: var(--hue-pitch, var(--lilac)); }
+:root:not([data-theme='violet']) .answer.deg-1 { --tone: var(--mint); }
+:root:not([data-theme='violet']) .answer b { font-size: 2.3rem; font-weight: 650; color: var(--ink); }
+:root:not([data-theme='violet']) .answer small { font-weight: 500; font-size: 0.9rem; color: var(--ink-soft); }
+:root:not([data-theme='violet']) .answer:hover:not(:disabled) { background: color-mix(in srgb, var(--tone) 18%, var(--card)); }
+:root:not([data-theme='violet']) .answer:active:not(:disabled) { transform: scale(0.985); }
+:root:not([data-theme='violet']) .answer:disabled { opacity: 0.55; }
+:root:not([data-theme='violet']) .answer.is-right { opacity: 1; box-shadow: inset 0 0 0 2px var(--good, #2bb673); background: color-mix(in srgb, #2bb673 16%, var(--card)); }
+:root:not([data-theme='violet']) .answer.is-wrong { opacity: 1; box-shadow: inset 0 0 0 2px var(--red); background: color-mix(in srgb, var(--red) 14%, var(--card)); }
+
+/* ---------------------------------------------------------------- the orb (what is sounding) */
+:root:not([data-theme='violet']) .orb {
+  background: var(--card-2);
+  color: var(--ink);
+  border: 0;
+  /* an inner ring: no extra height (a border made the exercise 4 px taller than a small phone) */
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--hue-pitch, var(--lilac)) 70%, transparent);
+  font-weight: 600;
+}
+:root:not([data-theme='violet']) .orb.sounding { box-shadow: inset 0 0 0 2px var(--hue-pitch, var(--lilac)), 0 0 0 8px color-mix(in srgb, var(--hue-pitch, var(--lilac)) 14%, transparent); }
+:root:not([data-theme='violet']) .orb.correct,
+:root:not([data-theme='violet']) .orb.correct-retry { background: color-mix(in srgb, #2bb673 18%, var(--card-2)); box-shadow: inset 0 0 0 2px #2bb673; color: var(--ink); }
+:root:not([data-theme='violet']) .orb.retry,
+:root:not([data-theme='violet']) .orb.reveal { background: color-mix(in srgb, var(--red) 16%, var(--card-2)); box-shadow: inset 0 0 0 2px var(--red); color: var(--ink); }
+
+/* ---------------------------------------------------------------- the path (a learning path, not a game board) */
+:root:not([data-theme='violet']) .road .node-disc {
+  width: 56px;
+  height: 56px;
+  background: var(--card);
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.1));
+  box-shadow: none;
+}
+:root:not([data-theme='violet']) .road .node.done .node-disc {
+  background: color-mix(in srgb, var(--hue, var(--mint)) 22%, var(--card));
+  border-color: color-mix(in srgb, var(--hue, var(--mint)) 60%, transparent);
+  color: var(--ink);
+  box-shadow: none;
+}
+:root:not([data-theme='violet']) .road .node.open .node-disc { box-shadow: none; border: 1.5px solid var(--hue, var(--mint)); color: var(--ink); }
+:root:not([data-theme='violet']) .road .node.current .node-disc {
+  width: 64px;
+  height: 64px;
+  background: var(--card-2);
+  color: var(--ink);
+  border: 2px solid var(--mint);
+  animation: none;
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--mint) 14%, transparent);
+}
+:root:not([data-theme='violet']) .road .node-btn:active:not(:disabled) .node-disc { transform: scale(0.97); }
+:root:not([data-theme='violet']) .path2 .node.mastered .node-disc { box-shadow: 0 0 0 2px var(--gold); }
+:root:not([data-theme='violet']) .check-medal,
+:root:not([data-theme='violet']) .master-medal { box-shadow: none; }
+
+/* ---------------------------------------------------------------- celebrations: calm, matter-of-fact */
+:root:not([data-theme='violet']) .streak-celebrate { background: var(--bg); }
+:root:not([data-theme='violet']) .streak-celebrate h1 { font-size: 1.5rem; font-weight: 600; }
+:root:not([data-theme='violet']) .sc-flame .flame { filter: none; transform: scale(0.7); animation: none; }
+:root:not([data-theme='violet']) .sc-count { font-size: 3rem; font-weight: 650; color: var(--ink); height: 3.2rem; }
+:root:not([data-theme='violet']) .xp-fly { font-weight: 600; text-shadow: none; }
+
+/* ---------------------------------------------------------------- the first screen: no cartoon */
+:root:not([data-theme='violet']) .hero-art { display: none; }
+
+/* ---------------------------------------------------------------- type: measured headings */
+:root:not([data-theme='violet']) h1 { letter-spacing: -0.01em; }
+:root:not([data-theme='violet']) .wordmark-accent { color: inherit; background: none; -webkit-text-fill-color: currentColor; }
+
+/* ---------------------------------------------------------------- remaining game styling */
+:root:not([data-theme='violet']) .unit-banner {
+  color: var(--ink);
+  background: var(--card);
+  border: 1px solid color-mix(in srgb, var(--hue, var(--mint)) 55%, transparent);
+  border-inline-start: 4px solid var(--hue, var(--mint));
+  box-shadow: none;
+  border-radius: 12px;
+}
+:root:not([data-theme='violet']) .unit-banner small { color: var(--ink-dim); }
+:root:not([data-theme='violet']) .tagline { color: var(--ink-dim); font-weight: 500; text-transform: none; letter-spacing: 0; }
+:root:not([data-theme='violet']) .hero h1 { font-size: clamp(1.5rem, 5vw, 2rem); font-weight: 650; line-height: 1.2; }
+:root:not([data-theme='violet']) .aid-chip { background: transparent; color: var(--ink-dim); font-weight: 500; padding: 0; }
+:root:not([data-theme='violet']) .gift-btn.unseen { box-shadow: none; }
+:root:not([data-theme='violet']) .gift-btn.unseen .gift-icon { animation: none; }
+:root:not([data-theme='violet']) .gift-icon { color: var(--ink-soft); }
+
+/* ---------------------------------------------------------------- line icons (src/ui/icons.tsx) */
+.ico { display: inline-block; vertical-align: -0.15em; flex: none; }
+
+/* the streak flame: one flat colour, no gradient glow (grey until today is done) */
+:root:not([data-theme='violet']) .flame.lit { color: var(--coral); }
+:root:not([data-theme='violet']) .flame.cold { color: var(--ink-dim); }
+:root:not([data-theme='violet']) .flame path:first-of-type { fill: currentColor; }
+:root:not([data-theme='violet']) .flame path:last-of-type { display: none; }
+:root:not([data-theme='violet']) .sc-flame .flame { width: 44px; height: 44px; }

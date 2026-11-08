@@ -18,6 +18,38 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.52.0',
+    date: '2026-11-09',
+    en: [
+      "A new first minute: the logo draws itself, one promise, a first taste (which note was higher?), three short questions, then your start",
+      "One serious, calm look everywhere: no cartoon art or emoji, flat answer buttons, a quieter path, calm celebrations, line icons",
+      "On a computer: search everything with Ctrl K, side panels beside exercises and Today, settings in two panes, dialogs in the middle of the screen, wider screens (two-column lists, a mixing desk), larger staves",
+      "Notation fixed: beamed eighths without flags, bar lines and time signatures, rests in gaps; after a take each note shows what you played — wrong pitch, early or late",
+      "Technique level test: your take marked on the staff, and an octave-shifted keyboard is detected with a one-tap fix",
+      "Sound output: choose where the sound plays (for MIDI keyboards and interfaces that take over the computer’s sound); or play with the computer keyboard (A–K, opt-in in Settings → MIDI)",
+      "Teachers: assign a topic level, a technique level, a chord chart with rules or a piece, with strictness, target tempo and a note; a grading inbox, a class map, and a parent link with a weekly summary",
+      "Progression games: Where is home?, What comes next?, Which chord changed?, Figure it out — and the Progression of the day, a daily puzzle to share",
+      "Improvisation studio: phrasing rules, vary a phrase, and trading fours with the app answering your idea developed",
+      "Exams: the music Bagrut by track and conservatory entrance exams (Jerusalem Academy, Tel Aviv, Bar-Ilan, Rimon) — every section to practise, and timed mock exams",
+      "Songbook by the chords you know: pick your chords and see the key each song fits — or the one new chord it needs",
+      "Plans: prices, sales and the free tier set from an admin panel; Voice Flight stays inside your range; American spelling and a full proofread",
+    ],
+    he: [
+      "דקה ראשונה חדשה: הלוגו מצייר את עצמו, הבטחה אחת, טעימה ראשונה (איזה צליל היה גבוה יותר?), שלוש שאלות קצרות, ואז מתחילים",
+      "מראה אחד רציני ורגוע בכל מקום: בלי איורים מצוירים ואימוג׳ים, כפתורי תשובה שטוחים, מסלול שקט יותר, חגיגות רגועות, אייקונים בקו",
+      "במחשב: חיפוש בכל האפליקציה עם Ctrl K, פאנל צד ליד התרגילים ומסך היום, הגדרות בשני טורים, חלונות במרכז המסך, מסכים רחבים (רשימות בשני טורים, מיקסר), חמשות גדולות יותר",
+      "כתב התווים תוקן: שמיניות מחוברות בלי דגלים, קווי תיבה ומשקל, הפסקות ברווחים; אחרי ניגון כל תו מראה מה ניגנתם — צליל שגוי, מוקדם או מאוחר",
+      "בדיקת רמת הטכניקה: הניגון שלכם מסומן על החמשה, ומקלדת מוזזת באוקטבה מזוהה עם תיקון בלחיצה",
+      "יציאת שמע: לבחור איפה הצליל מתנגן (למקלדות מידי וכרטיסי קול שמשתלטים על הצליל של המחשב); או לנגן במקלדת המחשב (A–K, להפעלה בהגדרות ← MIDI)",
+      "מורים: להטיל רמה בנושא, רמה בטכניקה, מהלך עם חוקים או יצירה, עם קפדנות, טמפו יעד והערה; תיבת בדיקה, מפת כיתה, וקישור להורים עם סיכום שבועי",
+      "משחקי מהלכים: איפה הבית?, מה בא אחר כך?, איזה אקורד השתנה?, לפענח לבד — ומהלך היום, חידה יומית לשיתוף",
+      "סטודיו לאלתור: חוקי פרייזינג, וריאציה על משפט, וחילופי ארבע שבהם האפליקציה עונה עם הרעיון שלכם בפיתוח",
+      "מבחנים: בגרות במוזיקה לפי מגמה ומבחני כניסה (האקדמיה בירושלים, תל אביב, בר־אילן, רימון) — כל חלק לתרגול, ומבחני דמה עם זמן",
+      "שירון לפי האקורדים שאתם מכירים: בחרו אקורדים וראו באיזה סולם כל שיר מתאים — או את האקורד החדש האחד שחסר",
+      "מנויים: מחירים, מבצעים והמסלול החינמי נקבעים מלוח ניהול; טיסת קול נשארת במנעד שלכם; כתיב אמריקאי והגהה מלאה",
+    ],
+  },
+  {
     version: '0.51.0',
     date: '2026-11-08',
     en: [
@@ -63,7 +95,7 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.50.0',
     date: '2026-11-08',
     en: [
-      'Insights: one screen that reads all your practice — your Ear Index, the fingers, hands, keys and scales that need work, your groove, the answers you mix up, and your trouble bars, each with a button to practise it',
+      'Insights: one screen that reads all your practice — your Ear Index, the fingers, hands, keys and scales that need work, your groove, the answers you mix up, and your trouble bars, each with a button to practice it',
       'Ear Index: one number for your ear, built from the hardest items you beat, with its history',
       'Groove fingerprint: where your notes land against the beat — by subdivision, tempo, after rests, across a phrase — and how it changes week by week',
       'Groove trainer: the fading click (keep time when it drops out), pocket targets (push, on, or lay back on purpose) and the swing dial',
@@ -83,7 +115,7 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.49.0',
     date: '2026-11-08',
     en: [
-      'My pieces now show the real score: both hands, bar lines, key and time, systems that wrap and scroll, the part you practise tinted, a cursor that follows the take, and every note coloured after it',
+      'My pieces now show the real score: both hands, bar lines, key and time, systems that wrap and scroll, the part you practice tinted, a cursor that follows the take, and every note colored after it',
       'Wait mode: no tempo — the score waits on each chord until you play it (MIDI)',
       'Trouble bars: a bar that keeps failing across sessions opens the next day as a short drill, until it is clean twice',
       'Piano chords by microphone: in pieces and chord drills the app now hears which notes of each expected chord you played, even without a MIDI cable',
@@ -110,10 +142,10 @@ export const CHANGELOG: ChangeEntry[] = [
       'Jazz & Barry Harris: new ear training — block chords, same notes / other names (C6 = Am7), turnarounds, comping rhythms and guide-tone lines — a new drill for the diminished moves into four keys, and Improvise over any chart with a score and tips',
       "Songs: 40 public-domain songs (was 16), from children's tunes to Für Elise and the Irish Washerwoman",
       'Improvise under rules: pick a scale for each bar (or let the chord choose), then rules for the notes (chord tones only, guide tones on 1 and 3, land on the 3rd, three notes), the intervals (steps, thirds) and the rhythm (continuous eighths, triplets, quarters, two bars on / two off) — every note is checked, by MIDI or microphone. 14 improvisation levels, from one chord to tritone subs, altered dominants and Coltrane changes',
-      'Any progression at the piano: practise the improvisation levels, 12 standards’ changes (Autumn Leaves, Blue Bossa, Solar, Lady Bird, Giant Steps…) or your own chart as voicings — shells, guide tones, rootless A / B, close, drop 2, drop 3, open, two-handed, quartal, upper structures, block chords — in Charleston, reverse, Red Garland, anticipation or four to the bar, with the tempo climbing as it gets clean; or comp with the left hand while the right hand improvises',
+      'Any progression at the piano: practice the improvisation levels, 12 standards’ changes (Autumn Leaves, Blue Bossa, Solar, Lady Bird, Giant Steps…) or your own chart as voicings — shells, guide tones, rootless A / B, close, drop 2, drop 3, open, two-handed, quartal, upper structures, block chords — in Charleston, reverse, Red Garland, anticipation or four to the bar, with the tempo climbing as it gets clean; or comp with the left hand while the right hand improvises',
       'A new sound: the grand piano has four velocity layers (it answers how hard you play), backing tracks have a real upright bass, and a light room — plus a mixer: every channel (piano, bass, drums & metronome, cues) has level, mute and solo, pan, a 3-band EQ, compressor, chorus, reverb (room or hall) and delay',
       'Stride: seven new levels — tenths, broken tenths, a walking bass, the blues, rhythm changes, standards, stride with the right hand free, and all twelve keys',
-      'Duet streaks: keep a streak together with a friend — a day counts when you both practise; invite, accept and nudge in Community',
+      'Duet streaks: keep a streak together with a friend — a day counts when you both practice; invite, accept and nudge in Community',
     ],
     he: [
       "היצירות שלי (תצוגה מקדימה): העלו תווים (MusicXML או MIDI), קבעו טמפו יעד, והמאמן מנהל את האימון — כמה תיבות בכל פעם, קודם לאט, עולים שלב אחרי שלוש פעמים נקי, חוזרים לתיבה עם הטעות, ומחברים את החלקים עד שכל היצירה בטמפו",
@@ -204,7 +236,7 @@ export const CHANGELOG: ChangeEntry[] = [
   {
     version: '0.42.2',
     date: '2026-11-08',
-    en: ['The path: the units you passed in the level test are back — folded at the top of the path ("Units 1–36"), open it to see or practise any step'],
+    en: ['The path: the units you passed in the level test are back — folded at the top of the path ("Units 1–36"), open it to see or practice any step'],
     he: ['המסלול: היחידות שעברתם במבחן הרמה חזרו — מקופלות בראש המסלול ("יחידות 1–36"), פותחים כדי לראות או לתרגל כל שלב'],
   },
   {
@@ -249,7 +281,7 @@ export const CHANGELOG: ChangeEntry[] = [
       'A calmer, more grown-up look: the new Calm night theme, plus Studio, Paper (light), OLED black, High contrast and Classic arcade in Settings',
       'All topics and the practice rooms (drills, singing, runs, drone, review) now live on the Path — with ✓ on levels you already passed',
       'Your areas and ranks moved to Progress, puzzles and the daily challenge to Play',
-      'Settings: volume, feedback sounds, narration speed, which microphone, MIDI device / octave / pedal and how to connect, text size, colour-blind friendly colours, daily goal',
+      'Settings: volume, feedback sounds, narration speed, which microphone, MIDI device / octave / pedal and how to connect, text size, color-blind friendly colors, daily goal',
       'Things to resume are small rows with a progress bar; every exercise fits even small phones',
     ],
     he: [
@@ -316,7 +348,7 @@ export const CHANGELOG: ChangeEntry[] = [
       'Play your instrument: find notes on the guitar neck and the keys, chord shapes and CAGED, scales, and play back what you hear — by microphone or MIDI',
       'A tuner for guitar, bass, ukulele and violin',
       'Write what you hear on the staff, build rhythms, two-voice and bass dictation, four-part harmony, counterpoint and scales on paper',
-      'New ear training: seventh chords and inversions, colour chords, song form, style, inner hearing, intervals to sing, and a producer’s ear (EQ, reverb, panning, compression)',
+      'New ear training: seventh chords and inversions, color chords, song form, style, inner hearing, intervals to sing, and a producer’s ear (EQ, reverb, panning, compression)',
       'Time with the click: subdivide it, play through gaps, tap a tempo from memory, two hands, and read the drum kit',
       "Today's workout comes first on Home: suggested from your goals, then yours — change the time, the minutes per topic, the order, add or remove — and it moves your path forward",
       'New games: Chord Rush, Note Rush, Fretboard Sprint, Interval Sprint, Key Signature Rush, Progression Detective, Peak Hunter, Rhythm Highway, Voice Flight, Melody Puzzle, Name That Tune, Tune-up and Pitch Memory — by category, some inside your path units, and every game counts toward your levels',
@@ -341,7 +373,7 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.37.0',
     date: '2026-11-07',
     en: [
-      'A new look: night colours, chunky game buttons, a new logo, and a tab bar at the bottom — Home, Path, Progress, Play and Friends',
+      'A new look: night colors, chunky game buttons, a new logo, and a tab bar at the bottom — Home, Path, Progress, Play and Friends',
       'Your path is now its own tab: a winding road through units, with stars on what you finished and a pulsing "Start" on what is next',
       "Home starts with today's mission and your daily goal, then practice by area — each tile plays the skill in that area that needs you most",
       'Player levels: every XP counts toward your next level, shown at the top of Home and filling up after each lesson',
@@ -418,7 +450,7 @@ export const CHANGELOG: ChangeEntry[] = [
       'The Skill Map grows to six areas and 24 skills: new Meter, Form & texture and Expression, and a Creative & applied area. Tap a skill to see what is inside it — your strongest and weakest parts',
       'Answers now credit every skill an exercise trains (transposing trains degrees and note names too); a miss counts most against the weaker one',
       'Today’s plan picks what you need most for your goals, and says why (new for you, needs work, time to review)',
-      'About 25 new exercises: find the home note, octaves, four kinds of cadence, key changes, harmonise a melody, harmonic dictation, march or waltz, find beat 1, pushed beats, loud and soft, short and smooth, mood, musical terms, time signatures, voice leading, Nashville numbers, sequences, inversion and retrograde, clave, metric modulation and more',
+      'About 25 new exercises: find the home note, octaves, four kinds of cadence, key changes, harmonize a melody, harmonic dictation, march or waltz, find beat 1, pushed beats, loud and soft, short and smooth, mood, musical terms, time signatures, voice leading, Nashville numbers, sequences, inversion and retrograde, clave, metric modulation and more',
       'New lessons: Move the rhythm (tap Charleston from beat 2) and Sing inside the chord; keep the beat even when the clicks stop',
     ],
     he: [
@@ -526,7 +558,7 @@ export const CHANGELOG: ChangeEntry[] = [
       'Ornaments & dynamics: grace notes, mordents, turns, trills, crescendo, decrescendo, swell',
       'New practice topics: extensions & alterations, voicings, progressions, form, fine pitch, in tune?, two voices, trichords, maqamat with quarter tones, Middle-Eastern rhythms, polyrhythms, odd meters, swing feel, and written theory (key signatures, spelling, Roman numerals, circle of fifths, transposition, chord-scale, three clefs)',
       'Play & improvise: backing tracks (ii–V–I, minor, blues), improvise with feedback, MIDI keyboard drills, guitar from tab; choir rooms where every phone sings its own part',
-      'Inner clock drill (the metronome drops out — keep the beat), sus4 / add9 / alt in extensions, a recorded organ drone, colour themes for gems, a notification when a friend plays your duel',
+      'Inner clock drill (the metronome drops out — keep the beat), sus4 / add9 / alt in extensions, a recorded organ drone, color themes for gems, a notification when a friend plays your duel',
       'Leagues climb the overtone series: Fundamental → Octave → Fifth → Seventh → The Ninth; written theory now shows on your Skill Map',
       'Voice answers understood better: common mishearings of numbers (“to” → 2, “for” → 4, שלש → 3 …), every recognizer guess is checked, and when it misses and you tap the answer, it learns that mishearing',
     ],

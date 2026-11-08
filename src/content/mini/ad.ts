@@ -396,12 +396,12 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'I ii V , · I V I .', he: 'I ii V , · I V I .' } },
       },
       {
-        say: { en: 'The deceptive cadence goes V to vi. The melody still resolves, B to C, but the bass steps up to A instead of falling to C. The vi chord shares two notes with I, C and E, so it can stand in for home with a darker colour.', he: 'הקדנצה המטעה הולכת מ־V ל־vi. המנגינה עדיין נפתרת, סי לדו, אבל הבס עולה צעד ללה במקום לרדת לדו. לאקורד vi יש שני צלילים משותפים עם I, דו ומי, ולכן הוא יכול למלא את מקום הבית בצבע כהה יותר.' },
+        say: { en: 'The deceptive cadence goes V to vi. The melody still resolves, B to C, but the bass steps up to A instead of falling to C. The vi chord shares two notes with I, C and E, so it can stand in for home with a darker color.', he: 'הקדנצה המטעה הולכת מ־V ל־vi. המנגינה עדיין נפתרת, סי לדו, אבל הבס עולה צעד ללה במקום לרדת לדו. לאקורד vi יש שני צלילים משותפים עם I, דו ומי, ולכן הוא יכול למלא את מקום הבית בצבע כהה יותר.' },
         play: [phrase([I4, IV4, V4, vi4])],
         show: { text: { en: 'V → vi  (G → A)', he: 'V → vi  (G → A)' } },
       },
       {
-        say: { en: 'To tell them apart, follow the bass on the last two chords. G down to C: authentic. F to C: plagal. Stopping on G, unresolved: half. G up to A, with a minor colour: deceptive.', he: 'כדי להבדיל ביניהן, עקבו אחרי הבס בשני האקורדים האחרונים. סול יורד לדו: אותנטית. פה לדו: פלגלית. נעצר על סול, בלי פתרון: חצי קדנצה. סול עולה ללה, בצבע מינורי: מטעה.' },
+        say: { en: 'To tell them apart, follow the bass on the last two chords. G down to C: authentic. F to C: plagal. Stopping on G, unresolved: half. G up to A, with a minor color: deceptive.', he: 'כדי להבדיל ביניהן, עקבו אחרי הבס בשני האקורדים האחרונים. סול יורד לדו: אותנטית. פה לדו: פלגלית. נעצר על סול, בלי פתרון: חצי קדנצה. סול עולה ללה, בצבע מינורי: מטעה.' },
       },
       {
         say: { en: 'A modulation makes a new note home. The smooth way uses a pivot chord that belongs to both keys. A minor is vi in C and ii in G; from it, D7, the V7 of G, leads to G, and F-sharp, the new leading tone, confirms the move.', he: 'מודולציה הופכת צליל אחר לבית. הדרך החלקה עוברת דרך אקורד ציר ששייך לשני הסולמות. לה מינור הוא vi בדו ו־ii בסול; ממנו D7, ה־V7 של סול, מוביל לסול, ופה דיאז, הצליל המוביל החדש, מאשר את המעבר.' },
@@ -414,7 +414,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'C → D', he: 'C → D' } },
       },
       {
-        say: { en: 'Fitting a chord to a melody: a note fits when it is one of the chord\'s tones. G belongs to C major and to G major, so both work under it. Under F major, G is not a chord tone but an added colour, the 9.', he: 'להתאים אקורד למנגינה: צליל מתאים כשהוא אחד מצלילי האקורד. סול שייך לדו מז׳ור ולסול מז׳ור, אז שניהם עובדים מתחתיו. מתחת לפה מז׳ור, סול הוא לא צליל אקורד אלא צבע נוסף — ה־9.' },
+        say: { en: 'Fitting a chord to a melody: a note fits when it is one of the chord\'s tones. G belongs to C major and to G major, so both work under it. Under F major, G is not a chord tone but an added color, the 9.', he: 'להתאים אקורד למנגינה: צליל מתאים כשהוא אחד מצלילי האקורד. סול שייך לדו מז׳ור ולסול מז׳ור, אז שניהם עובדים מתחתיו. מתחת לפה מז׳ור, סול הוא לא צליל אקורד אלא צבע נוסף — ה־9.' },
         play: [chord([48, 52, 55, 67], 1.1), rest(0.2), chord([55, 59, 62, 67], 1.1), rest(0.2), chord([53, 57, 60, 67], 1.1)],
         show: { text: { en: 'G over C ✓ · G ✓ · F (9)', he: 'G מעל C ✓ · G ✓ · F (9)' } },
       },
@@ -490,13 +490,13 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: '♫ ♫ → ♩ ♩ ♩ ♩', he: '♫ ♫ → ♩ ♩ ♩ ♩' } },
       },
       {
-        say: { en: 'To recognise a transformation, trace the contour with your hand. Same shape, higher: transposition or sequence. Mirror image: inversion. Last note first: retrograde. Same shape, slower or faster: augmentation or diminution.', he: 'כדי לזהות טרנספורמציה, ציירו את קו המתאר ביד. אותה צורה, גבוה יותר: טרנספוזיציה או סקוונצה. תמונת ראי: היפוך. הצליל האחרון ראשון: רטרוגרד. אותה צורה, לאט או מהר יותר: אוגמנטציה או דימינוציה.' },
+        say: { en: 'To recognize a transformation, trace the contour with your hand. Same shape, higher: transposition or sequence. Mirror image: inversion. Last note first: retrograde. Same shape, slower or faster: augmentation or diminution.', he: 'כדי לזהות טרנספורמציה, ציירו את קו המתאר ביד. אותה צורה, גבוה יותר: טרנספוזיציה או סקוונצה. תמונת ראי: היפוך. הצליל האחרון ראשון: רטרוגרד. אותה צורה, לאט או מהר יותר: אוגמנטציה או דימינוציה.' },
       },
       {
         say: { en: 'The usual confusion is inversion versus retrograde, since both sound "turned around". Check the first note: an inversion starts where the original started; a retrograde starts where the original ended.', he: 'הבלבול הרגיל הוא בין היפוך לרטרוגרד, כי שניהם נשמעים "הפוכים". בדקו את הצליל הראשון: היפוך מתחיל איפה שהמקור התחיל; רטרוגרד מתחיל איפה שהמקור נגמר.' },
       },
       {
-        say: { en: 'To keep: numbers carry chords between keys, a sequence moves a motif in pitch, inversion mirrors it, retrograde reverses it, and augmentation and diminution change its speed. The idea stays recognisable every time.', he: 'מה לזכור: מספרים מעבירים אקורדים בין סולמות, סקוונצה מזיזה מוטיב בגובה, היפוך משקף אותו, רטרוגרד הופך את הסדר, ואוגמנטציה ודימינוציה משנות את המהירות. הרעיון נשאר מזוהה בכל פעם.' },
+        say: { en: 'To keep: numbers carry chords between keys, a sequence moves a motif in pitch, inversion mirrors it, retrograde reverses it, and augmentation and diminution change its speed. The idea stays recognizable every time.', he: 'מה לזכור: מספרים מעבירים אקורדים בין סולמות, סקוונצה מזיזה מוטיב בגובה, היפוך משקף אותו, רטרוגרד הופך את הסדר, ואוגמנטציה ודימינוציה משנות את המהירות. הרעיון נשאר מזוהה בכל פעם.' },
       },
     ],
   },
@@ -584,7 +584,7 @@ export const LESSONS: MiniLesson[] = [
     area: 'ear',
     emoji: '🏠',
     title: { en: 'Home, octaves and scales', he: 'בית, אוקטבות וסולמות' },
-    takeaway: { en: 'Every tune has a home note your ear finds by itself. Octaves are the same note higher or lower. Scales are families of notes with their own colour.', he: 'לכל מנגינה יש צליל בית שהאוזן מוצאת בעצמה. אוקטבות הן אותו צליל, גבוה או נמוך יותר. סולמות הם משפחות של צלילים עם צבע משלהן.' },
+    takeaway: { en: 'Every tune has a home note your ear finds by itself. Octaves are the same note higher or lower. Scales are families of notes with their own color.', he: 'לכל מנגינה יש צליל בית שהאוזן מוצאת בעצמה. אוקטבות הן אותו צליל, גבוה או נמוך יותר. סולמות הם משפחות של צלילים עם צבע משלהן.' },
     steps: [
       {
         say: { en: 'Hi {name}! Even without chords, a tune has a home — the note where it feels finished. Listen, then hear the home note.', he: 'היי {name}! גם בלי אקורדים, למנגינה יש בית — הצליל שבו היא מרגישה גמורה. הקשיבו, ואז שמעו את צליל הבית.' },

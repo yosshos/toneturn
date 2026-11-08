@@ -130,7 +130,7 @@ export const THEMES: { id: string; name: { en: string; he: string }; subs: strin
   { id: 'harmony', name: { en: 'Harmony moves', he: 'הרמוניה בתנועה' }, subs: ['cadences/progression', 'cadences/modulation', 'cadences/harmonize', 'cadences/chromatic', 'dictation/bass'] },
   { id: 'groove', name: { en: 'Groove & feel', he: 'גרוב ותחושה' }, subs: ['rhythm-dictation/', 'transpose/displacement', 'transpose/rhythmic', 'timing/poly', 'rhythm-reading/drums'] },
   { id: 'read', name: { en: 'Read & transform', he: 'לקרוא ולהזיז' }, subs: ['notes/', 'theory/', 'sight/', 'transpose/'] },
-  { id: 'sound', name: { en: 'Colour & sound', he: 'צבע וסאונד' }, subs: ['expression/', 'form/', 'timbre/', 'chords/voicing', 'improv/'] },
+  { id: 'sound', name: { en: 'Color & sound', he: 'צבע וסאונד' }, subs: ['expression/', 'form/', 'timbre/', 'chords/voicing', 'improv/'] },
 ];
 const inTheme = (sub: string, t: (typeof THEMES)[number]) => t.subs.some((x) => (x.endsWith('/') ? sub.startsWith(x) : sub === x));
 

@@ -248,21 +248,16 @@ export function GameSetup({
 
 export function GameIcon({ kind }: { kind: GameKind }) {
   return kind === 'melody' ? (
-    <svg viewBox="0 0 48 48" width="44" height="44" aria-hidden="true">
-      <circle cx="12" cy="30" r="7" fill="#4BE3B5" />
-      <circle cx="24" cy="20" r="7" fill="#FFC94D" />
-      <circle cx="36" cy="12" r="7" fill="#A98BFF" />
-      <path d="M12 30 24 20 36 12" stroke="#FFF6EA" strokeWidth="2.5" strokeDasharray="3 4" fill="none" />
-      <circle cx="38" cy="36" r="6" fill="none" stroke="#FF6A4D" strokeWidth="3" />
+    <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="6" cy="16" r="2.2" />
+      <circle cx="12" cy="11" r="2.2" />
+      <circle cx="18" cy="6" r="2.2" />
+      <path d="M7.8 14.6l2.4-2.2M13.8 9.6l2.4-2.2" strokeDasharray="1.5 2" />
     </svg>
   ) : (
-    <svg viewBox="0 0 48 48" width="44" height="44" aria-hidden="true">
-      {[6, 16, 26, 36].map((x, i) => (
-        <rect key={x} x={x} y={i === 0 ? 10 : 18} width="6" height={i === 0 ? 28 : 20} rx="3" fill={i === 0 ? '#FF6A4D' : '#FFF6EA'} />
-      ))}
-      <circle cx="12" cy="42" r="3" fill="#FFC94D" />
-      <circle cx="29" cy="42" r="3" fill="#FFC94D" />
-      <circle cx="34" cy="42" r="3" fill="#FFC94D" />
+    <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M4 6v12M9 9v9M14 9v9M19 9v9" />
+      <path d="M3 21h18" />
     </svg>
   );
 }

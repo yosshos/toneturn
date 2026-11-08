@@ -544,9 +544,9 @@ export function analyzeGuitarTake(drill: Drill, bpm: number, played: PlayedNote[
         he: v.rateHz === null ? 'לא נשמע ויברטו' : `ויברטו ${v.rateHz.toFixed(1)} הרץ, ${Math.round(v.widthCents ?? 0)} סנט`,
       });
   if (extra.legatoRatio !== null && extra.legatoRatio < 0.5)
-    factors.push({ verdict: extra.legatoRatio < 0.3 ? 'not' : 'almost', en: `Hammer-ons / pull-offs too quiet (${Math.round(extra.legatoRatio * 100)} % of picked)`, he: `ההקשות / המשיכות שקטות מדי (${Math.round(extra.legatoRatio * 100)}% מהנפרטים)` });
+    factors.push({ verdict: extra.legatoRatio < 0.3 ? 'not' : 'almost', en: `Hammer-ons / pull-offs too quiet (${Math.round(extra.legatoRatio * 100)}% of picked)`, he: `ההקשות / המשיכות שקטות מדי (${Math.round(extra.legatoRatio * 100)}% מהנפרטים)` });
   if (extra.palmMuteShare !== null && extra.palmMuteShare < 0.75)
-    factors.push({ verdict: extra.palmMuteShare < 0.5 ? 'not' : 'almost', en: `Palm mute not heard on ${Math.round((1 - extra.palmMuteShare) * 100)} % of notes`, he: `השתקת כף היד לא נשמעה ב-${Math.round((1 - extra.palmMuteShare) * 100)}% מהצלילים` });
+    factors.push({ verdict: extra.palmMuteShare < 0.5 ? 'not' : 'almost', en: `Palm mute not heard on ${Math.round((1 - extra.palmMuteShare) * 100)}% of notes`, he: `השתקת כף היד לא נשמעה ב-${Math.round((1 - extra.palmMuteShare) * 100)}% מהצלילים` });
 
   let verdict = m.verdict;
   let why = m.why;

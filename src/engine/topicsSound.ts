@@ -82,7 +82,7 @@ const EQ_LEVELS: Bi[] = [
   { en: 'Octave bands, 125 Hz – 8 kHz', he: 'פסי אוקטבה, 125 הרץ – 8 קילו-הרץ' },
   { en: 'On a band loop', he: 'על לופ של להקה' },
   { en: 'Boost or cut, and where', he: 'הגברה או הנמכה, ואיפה' },
-  { en: 'Third-octave neighbours', he: 'שכנים בשליש אוקטבה' },
+  { en: 'Third-octave neighbors', he: 'שכנים בשליש אוקטבה' },
   { en: 'How much? (+3 to +12 dB)', he: 'כמה? (‎+3 עד ‎+12 dB)' },
   { en: 'Match it', he: 'להתאים את הסאונד' },
 ];
@@ -292,23 +292,23 @@ TOPIC_GEN['pan-ear'] = {
   title: { en: 'Left or right', he: 'שמאל או ימין' },
   skill: 'timbre',
   levels: [
-    { en: 'Left, centre or right?', he: 'שמאל, מרכז או ימין?' },
+    { en: 'Left, center or right?', he: 'שמאל, מרכז או ימין?' },
     { en: 'Five positions', he: 'חמישה מקומות' },
     { en: 'Which instrument is on the left?', he: 'איזה כלי נמצא משמאל?' },
   ],
   gen(seed, level, id) {
     const rnd = rng(seed);
     const T = 'pan-ear';
-    const askPan: Bi = { en: 'Headphones on. Where is the sound: left, centre or right?', he: 'שימו אוזניות. איפה הסאונד: שמאל, מרכז או ימין?' };
+    const askPan: Bi = { en: 'Headphones on. Where is the sound: left, center or right?', he: 'שימו אוזניות. איפה הסאונד: שמאל, מרכז או ימין?' };
     if (level <= 2) {
       const base: Base = { source: pickR(rnd, ['voice', 'pink'] as FxSource[]), seed: seedOf(rnd), bpm: bpmOf(rnd) };
       const pos: Record<string, [number, string, string, string[]]> =
         level === 1
-          ? { left: [-0.8, 'Left', 'שמאל', ['left']], centre: [0, 'Centre', 'מרכז', ['centre', 'center', 'middle']], right: [0.8, 'Right', 'ימין', ['right']] }
+          ? { left: [-0.8, 'Left', 'שמאל', ['left']], centre: [0, 'Center', 'מרכז', ['centre', 'center', 'middle']], right: [0.8, 'Right', 'ימין', ['right']] }
           : {
               hl: [-1, 'Hard left', 'שמאל לגמרי', ['hard left', 'far left']],
               l: [-0.5, 'Half left', 'חצי שמאלה', ['half left', 'slightly left']],
-              c: [0, 'Centre', 'מרכז', ['centre', 'center', 'middle']],
+              c: [0, 'Center', 'מרכז', ['centre', 'center', 'middle']],
               r: [0.5, 'Half right', 'חצי ימינה', ['half right', 'slightly right']],
               hr: [1, 'Hard right', 'ימין לגמרי', ['hard right', 'far right']],
             };

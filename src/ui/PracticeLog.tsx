@@ -6,7 +6,7 @@ import { LOG_KINDS, LOG_MINUTES, LOG_NAME, LOG_XP_PER_DAY, isLog, logKind, logMi
 import { localDay, type Progress } from '../storage/progress';
 
 const TX = {
-  en: { title: 'Log practice', what: 'What did you practise?', long: 'How long?', min: 'min', save: 'Save', week: 'This week, away from the app', none: 'Nothing logged this week yet.', close: 'Close', xpCap: `Logged practice earns up to ${LOG_XP_PER_DAY} XP a day.`, other: 'Other' },
+  en: { title: 'Log practice', what: 'What did you practice?', long: 'How long?', min: 'min', save: 'Save', week: 'This week, away from the app', none: 'Nothing logged this week yet.', close: 'Close', xpCap: `Logged practice earns up to ${LOG_XP_PER_DAY} XP a day.`, other: 'Other' },
   he: { title: 'רישום אימון', what: 'על מה התאמנתם?', long: 'כמה זמן?', min: 'דק׳', save: 'שמירה', week: 'השבוע, מחוץ לאפליקציה', none: 'עדיין לא נרשם אימון השבוע.', close: 'סגירה', xpCap: `אימון שנרשם מזכה בעד ${LOG_XP_PER_DAY} XP ביום.`, other: 'אחר' },
 };
 

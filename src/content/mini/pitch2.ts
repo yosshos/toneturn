@@ -61,7 +61,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [60, 67, 72], text: { en: 'hear it → sing it', he: 'לשמוע ← לשיר' } },
       },
       {
-        say: { en: 'Descending intervals feel different, so practise them on their own. Hear the top note as a degree: a fifth down is often 5 falling to 1, the sound of a bass line coming home.', he: 'מרווחים יורדים מרגישים אחרת, אז תרגלו אותם בנפרד. שמעו את הצליל העליון כדרגה: קווינטה למטה היא לעיתים קרובות 5 שיורד ל־1, הצליל של קו בס שחוזר הביתה.' },
+        say: { en: 'Descending intervals feel different, so practice them on their own. Hear the top note as a degree: a fifth down is often 5 falling to 1, the sound of a bass line coming home.', he: 'מרווחים יורדים מרגישים אחרת, אז תרגלו אותם בנפרד. שמעו את הצליל העליון כדרגה: קווינטה למטה היא לעיתים קרובות 5 שיורד ל־1, הצליל של קו בס שחוזר הביתה.' },
         play: [notes([67, 60], 0.8)],
         show: { notes: [67, 60], text: { en: '5 → 1', he: '5 ← 1' } },
       },

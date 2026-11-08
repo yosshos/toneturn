@@ -2567,7 +2567,7 @@ function genPedal(s: DrillSpec): Drill {
   return finish(
     s,
     buf,
-    title([t(`Pedalling: ${nm.en} in ${keyName(key)}`, `פדל: ${nm.he} ב-${keyName(key)}`)], { ...s, hands: 'RL' }),
+    title([t(`Pedaling: ${nm.en} in ${keyName(key)}`, `פדל: ${nm.he} ב-${keyName(key)}`)], { ...s, hands: 'RL' }),
     { evenness: false, hands: false, pedal: { style: op === 0 ? 'direct' : 'legato', changes } },
     60,
     4,
@@ -3507,7 +3507,7 @@ export function catalog(): FamilyDef[] {
           [k({ hands: 'RL', articulation: 'legato' }), k({ hands: 'RL', articulation: 'staccato' }), k({ hands: 'RL', articulation: 'portato' }), k({ hands: 'RL', articulation: 'staccato', motion: 'contrary' })],
           [0, 7, 5, 2, 9],
         ),
-        L('control', 10, 'Pedalling: direct and legato pedal', 'פדל: ישיר ולגאטו', [0, 1, 2].map((o) => ({ family: 'control' as FamilyId, kind: 'pedal', hands: 'RL' as const, option: o })), [0, 7, 5, 2, 10]),
+        L('control', 10, 'Pedaling: direct and legato pedal', 'פדל: ישיר ולגאטו', [0, 1, 2].map((o) => ({ family: 'control' as FamilyId, kind: 'pedal', hands: 'RL' as const, option: o })), [0, 7, 5, 2, 10]),
         L(
           'control',
           11,
@@ -3743,7 +3743,7 @@ export function catalog(): FamilyDef[] {
         L('accomp', 11, 'Stride: tenths', 'סטרייד: דסימות', [st('tpl:fifties', 'stride-tenth'), st('lv:turnaround', 'stride-tenth')], [0, 7, 5, 2]),
         L('accomp', 12, 'Stride: broken tenths', 'סטרייד: דסימות שבורות', [st('tpl:fifties', 'stride-broken'), st('lv:turnaround', 'stride-broken')], [0, 7, 5, 10]),
         L('accomp', 13, 'Stride: the bass walks to the next chord', 'סטרייד: הבס הולך לאקורד הבא', [st('lv:blues', 'stride-walk'), st('lv:turnaround', 'stride-walk')], [0, 5, 10]),
-        L('accomp', 14, 'Stride through the blues and rhythm changes', 'סטרייד בבלוז וברידם צ׳יינג׳ס', [st('lv:blues', 'stride-octave'), st('lv:rhythm-changes', 'stride-single'), st('std:rhythm-bridge', 'stride-tenth')], [0, 5]),
+        L('accomp', 14, 'Stride through the blues and rhythm changes', 'סטרייד בבלוז ובריתם צ׳יינג׳ס', [st('lv:blues', 'stride-octave'), st('lv:rhythm-changes', 'stride-single'), st('std:rhythm-bridge', 'stride-tenth')], [0, 5]),
         L('accomp', 15, 'Stride on standards', 'סטרייד על סטנדרטים', [st('std:a-train', 'stride-tenth'), st('std:satin', 'stride-octave'), st('std:fly', 'stride-broken'), st('std:attya', 'stride-tenth')], [0]),
         L('accomp', 16, 'Stride with the right hand free', 'סטרייד עם יד ימין חופשית', [st('lv:blues', 'stride-tenth', 'improv'), st('std:a-train', 'stride-octave', 'improv'), st('lv:turnaround', 'stride-walk', 'improv')], [0]),
         L('accomp', 17, 'Stride in all keys, up to tempo', 'סטרייד בכל הסולמות, עד הטמפו', [st('lv:two-five-one', 'stride-tenth'), st('lv:turnaround', 'stride-broken')], [0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5]),

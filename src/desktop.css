@@ -159,3 +159,66 @@
   html[lang='he'] main.lesson .controls::after { content: 'מקשים: 1–9 תשובה · רווח השמעה חוזרת · Enter המשך · C השוואה · H רמז · S דילוג · Esc השהיה'; }
   .answer:hover:not(:disabled), .btn:hover:not(:disabled) { filter: brightness(1.06); }
 }
+
+/* Settings on a computer (0.52): a category column and the open category as a page — like desktop settings apps. */
+@media (min-width: 1100px) {
+  main.settings.settings-wide {
+    display: grid;
+    grid-template-columns: 230px minmax(0, 1fr);
+    grid-template-areas: 'head head' 'nav page' 'nav row';
+    column-gap: 28px;
+    align-items: start;
+  }
+  main.settings.settings-wide > .screen-head { grid-area: head; }
+  main.settings.settings-wide > .set-nav { grid-area: nav; position: sticky; top: 16px; display: flex; flex-direction: column; gap: 2px; }
+  main.settings.settings-wide > .set-groups { grid-area: page; display: block; }
+  main.settings.settings-wide > .row { grid-area: row; }
+  .set-search { margin-bottom: 8px; padding: 8px 10px; border-radius: 9px; border: 1px solid var(--line, rgba(255,255,255,.1)); background: var(--card); color: var(--ink); font: inherit; font-size: 0.9rem; }
+  .set-nav-item { all: unset; box-sizing: border-box; display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 9px; color: var(--ink-soft); cursor: pointer; font-size: 0.93rem; }
+  .set-nav-item svg { width: 18px; height: 18px; flex: none; }
+  .set-nav-item:hover { background: color-mix(in srgb, var(--ink) 6%, transparent); }
+  .set-nav-item.on { background: color-mix(in srgb, var(--mint) 14%, transparent); color: var(--ink); }
+  .set-nav-item.on svg { color: var(--mint); }
+  .set-nav-item:focus-visible { outline: 2px solid var(--mint); outline-offset: 1px; }
+  .set-page { max-width: 720px; }
+  .set-page .sp-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .set-page .sp-head h2 { margin: 0; font-size: 1.35rem; font-weight: 600; }
+  .set-page .sp-head small { color: var(--ink-dim); }
+  .set-page .set-group-body { padding: 0; }
+}
+
+/* Drill staves on a computer: the phone's height cap (one screen) shrank them to a strip — let them use the width. */
+@media (min-width: 1100px) and (min-height: 700px) {
+  .drills-screen[data-drills='run'] .drill-staff .note-staff svg,
+  .drills-screen[data-drills='test'] .drill-staff .note-staff svg { max-height: 200px; width: 100%; height: auto; }
+  .drills-screen .drill-staff .note-staff { padding: 6px 10px; width: 100%; max-width: 860px; box-sizing: border-box; }
+  .drills-screen .drill-staff { justify-items: stretch; }
+  .app.with-side .drills-screen { max-width: none; }
+}
+
+/* Sheets become dialogs on a computer (owner 2026-11-08: "a panel stuck to the bottom is not desktop design"):
+   centred, a measured width, rounded on all sides, the page dimmed and blurred behind; buttons at a normal size. */
+@media (min-width: 700px) {
+  .sheet-backdrop {
+    align-items: center;
+    justify-items: center;
+    padding: 32px;
+    background: rgba(6, 8, 18, 0.55);
+    backdrop-filter: blur(3px);
+  }
+  .sheet-backdrop > .sheet {
+    width: min(560px, 100%);
+    max-height: min(84vh, 760px);
+    overflow: auto;
+    margin: 0;
+    border-radius: 16px;
+    padding: 24px 24px 22px;
+    border: 1px solid var(--line, rgba(255, 255, 255, 0.1));
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+    animation-name: dialog-in;
+  }
+  .sheet-backdrop > .sheet.menu-sheet { width: min(420px, 100%); }
+  .sheet-backdrop > .sheet .btn.mega { min-height: 44px; font-size: 1rem; width: auto; justify-self: stretch; }
+  .sheet-backdrop > .sheet h2 { font-size: 1.25rem; font-weight: 600; }
+  @keyframes dialog-in { from { transform: translateY(8px) scale(0.985); opacity: 0; } }
+}

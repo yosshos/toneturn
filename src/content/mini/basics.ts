@@ -330,7 +330,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [60, 64, 67, 67, 71, 74], text: { en: 'C E G → G B D', he: 'דו מי סול → סול סי רה' } },
       },
       {
-        say: { en: 'Why bother? Singers move songs to suit their voice, and horn players read in other keys every day. It is a real musician’s superpower.', he: 'למה זה חשוב? זמרים מעבירים שירים כדי שיתאימו לקול שלהם, ונגני כלי נשיפה קוראים בסולמות אחרים כל יום. זו כוח־על אמיתי של מוזיקאים.' },
+        say: { en: 'Why bother? Singers move songs to suit their voice, and horn players read in other keys every day. It is a real musician’s superpower.', he: 'למה זה חשוב? זמרים מעבירים שירים כדי שיתאימו לקול שלהם, ונגני כלי נשיפה קוראים בסולמות אחרים כל יום. זה כוח־על אמיתי של מוזיקאים.' },
         play: [notes([60, 64, 67, 72], 0.4), rest(0.5), notes([65, 69, 72, 77], 0.4)],
         show: { text: { en: 'C → F: same song', he: 'דו → פה: אותו שיר' } },
       },

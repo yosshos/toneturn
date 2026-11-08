@@ -1,11 +1,23 @@
 import { miniForSkill } from '../content/refresher';
 import { InsightsScreen } from './Insights';
 import { Sidebar, type NavId } from './Sidebar';
+import { Onboarding, Splash } from './Onboarding';
+import { CommandPalette, type PaletteHit } from './CommandPalette';
+import { startComputerKeys } from '../speech/computerKeys';
+import { TodayAside } from './Asides';
+import { ProgPuzzleScreen } from './ProgPuzzle';
+import { ImprovStudioScreen } from './ImprovStudio';
+import { ExamsScreen, mockExamLesson } from './Exams';
+import { AdminScreen, CoolDownSheet, PlansScreen } from './Plans';
+import { coolDown, loadPricing, myPlan, type MyPlan, type Pricing } from '../cloud/pricing';
 import { GrooveTrainerScreen } from './GrooveTrainer';
 import { earIndex } from '../engine/rating';
 import { MixerScreen } from './Mixer';
 import type { Drill } from '../engine/drills/types';
-import { generate } from '../engine/drills/generate';
+import { catalog, generate } from '../engine/drills/generate';
+import { levelDrills } from '../engine/drills/plan';
+import { parseTopicRef, submitResult, type AssignItem } from '../cloud/teacher';
+import { DigestScreen } from './TeacherLoop';
 import { IMPROV_LEVELS } from '../engine/charts';
 import { PiecesScreen } from './Pieces';
 import { SlowDownScreen } from './SlowDown';
@@ -49,7 +61,7 @@ import { PathExtras } from './Tools';
 import { MicIcon } from './bits';
 import { STRINGS } from '../i18n/strings';
 import { dueReviews, gemsOf, lessonMastered, localDay, namingFor, ratingsOf, type Progress, type Settings, DEFAULT_SETTINGS, DEFAULT_SOUND, emptyProgress, migrateSettings } from '../storage/progress';
-import { cloudConfigured, currentUser, onAuthChange, pullSettings, pushSettings, syncProgress, type CloudUser } from '../cloud/cloud';
+import { cloudConfigured, currentUser, signInWithGoogle, onAuthChange, pullSettings, pushSettings, syncProgress, type CloudUser } from '../cloud/cloud';
 import { AccountCard, type SyncState } from './Account';
 import { DAILY_GOAL_XP, Home, lessonStates, TopBar } from './Home';
 import { LessonScreen } from './Lesson';
@@ -108,7 +120,7 @@ import { params, piano, setMidiEnabled, SIMULATED, store, tts } from './services
 import { midi } from '../speech/midi';
 import { setPreferredMic } from '../speech/mic';
 
-type Route = 'intake' | 'studio' | 'home' | 'path' | 'arcade' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong' | 'perform' | 'learned' | 'tuner' | 'metronome' | 'songs' | 'drills' | 'workout' | 'workoutrun' | 'peakhunter' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'flight' | 'pitchmemory' | 'nametune' | 'tuneup' | 'highway' | 'melodypuzzle' | 'charts' | 'slowdown' | 'pieces' | 'mixer' | 'insights' | 'groove';
+type Route = 'intake' | 'studio' | 'home' | 'path' | 'arcade' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong' | 'perform' | 'learned' | 'tuner' | 'metronome' | 'songs' | 'drills' | 'workout' | 'workoutrun' | 'peakhunter' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'flight' | 'pitchmemory' | 'nametune' | 'tuneup' | 'highway' | 'melodypuzzle' | 'charts' | 'slowdown' | 'pieces' | 'mixer' | 'insights' | 'groove' | 'welcome' | 'puzzle' | 'improv' | 'exams' | 'plans' | 'admin';
 /** Invite links: #/online/CODE */
 const onlineCodeFromHash = () => (/^#\/?online\/(\w+)/.exec(location.hash)?.[1] ?? '');
 const PLAY_HASH = 'play';
@@ -120,7 +132,7 @@ const enterPlay = () => {
 };
 const routeFromHash = (): Route => {
   const h = location.hash.replace(/^#\/?/, '').replace(/^online\/.*$/, 'online').replace(/^settings\/.*$/, 'settings');
-  return (['path', 'arcade', 'settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong', 'perform', 'learned', 'studio', 'intake', 'tuner', 'metronome', 'songs', 'drills', 'workout', 'workoutrun', 'peakhunter', 'rush-chord', 'rush-note', 'rush-fretboard', 'rush-interval', 'rush-keysig', 'rush-progression', 'flight', 'pitchmemory', 'nametune', 'tuneup', 'highway', 'melodypuzzle', 'charts', 'slowdown', 'pieces', 'mixer', 'insights', 'groove'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
+  return (['path', 'arcade', 'settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong', 'perform', 'learned', 'studio', 'intake', 'tuner', 'metronome', 'songs', 'drills', 'workout', 'workoutrun', 'peakhunter', 'rush-chord', 'rush-note', 'rush-fretboard', 'rush-interval', 'rush-keysig', 'rush-progression', 'flight', 'pitchmemory', 'nametune', 'tuneup', 'highway', 'melodypuzzle', 'charts', 'slowdown', 'pieces', 'mixer', 'insights', 'groove', 'welcome', 'puzzle', 'improv', 'exams', 'plans', 'admin'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
 };
 
 /** The level a generated modes lesson was made at (from its first question's pool size). */
@@ -149,6 +161,35 @@ export function App() {
   const [onlineFacts, setOnlineFacts] = useState<{ topics: FactTopic[]; level: FactLevel } | null>(null);
   const [duel, setDuel] = useState<{ names: string[]; kind: SetKind; rounds: number } | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  // Pricing (0.54): public prices and the free tier's limit; my plan (signed in). The cool-down shows when a free
+  // player starts a lesson after today's free minutes (only when the owner turned the limit on).
+  const [pricing, setPricing] = useState<Pricing | null>(null);
+  const [plan, setPlan] = useState<MyPlan | null>(null);
+  const [cool, setCool] = useState(false);
+  useEffect(() => {
+    void loadPricing().then(setPricing);
+  }, []);
+  useEffect(() => {
+    if (user) void myPlan().then(setPlan);
+    else setPlan(null);
+  }, [user]);
+  /** Today's practice minutes (about 20 s an answered item). */
+  const minutesToday = () => {
+    const d = localDay(new Date());
+    return Math.round(progress.history.filter((h) => localDay(new Date(h.completedAt)) === d).reduce((a, h) => a + h.total, 0) / 3);
+  };
+  /** The free tier's cool-down (off unless the owner turned the limit on): true = stopped here. */
+  const cooled = () => {
+    if (pricing && coolDown(pricing, plan, minutesToday())) {
+      setCool(true);
+      return true;
+    }
+    return false;
+  };
+  // The parent digest (#/digest/<token>, 0.52): readable without signing in.
+  const [digestToken, setDigestToken] = useState<string | null>(() => /^#\/?digest\/([\w-]{20,64})/.exec(location.hash)?.[1] ?? null);
+  // The opening (0.52): the logo draws itself once per app start (not in automated runs unless ?splash).
+  const [splash, setSplash] = useState(() => params.has('splash') || !(SIMULATED || params.has('unlock') || (typeof navigator !== 'undefined' && navigator.webdriver)));
   /** Generated session in progress (placement / review / weekly puzzle). */
   /** Voice-consent gate for sessions started outside the Practice button. */
   const [consentThen, setConsentThen] = useState<null | (() => void)>(null);
@@ -332,8 +373,12 @@ export function App() {
   useEffect(() => {
     piano.setLiveOptions({ volume: s.midiVolume ?? 1, curve: s.midiCurve ?? 'normal' });
   }, [s.midiVolume, s.midiCurve]);
+  // The chosen sound output (Settings → MIDI / Sound), applied now and whenever audio starts.
   useEffect(() => {
-    if (!s.midiInput || s.midiSound === false) return;
+    void piano.setOutputDevice(s.audioOutput ?? null);
+  }, [s.audioOutput]);
+  useEffect(() => {
+    if ((!s.midiInput && !s.computerKeys) || s.midiSound === false) return;
     const offN = midi.onNote((m, on, _at, vel) => (piano.context ? piano.liveNote(m, on, vel) : void piano.unlock().then(() => piano.liveNote(m, on, vel), () => {})));
     const offC = midi.onCC((cc, v) => piano.liveControl(cc, v));
     // A keyboard unplugged mid-note, or the app sent to the background: no note may keep sounding.
@@ -358,7 +403,9 @@ export function App() {
       document.removeEventListener('visibilitychange', wake);
       piano.liveAllOff();
     };
-  }, [s.midiInput, s.midiSound]);
+  }, [s.midiInput, s.midiSound, s.computerKeys]);
+  // The computer keyboard as a piano (opt-in, Settings → MIDI).
+  useEffect(() => (s.computerKeys ? startComputerKeys(midi) : undefined), [s.computerKeys]);
 
   const updateSettings = useCallback(
     (patch: Partial<Settings>) => {
@@ -446,6 +493,7 @@ export function App() {
   };
   /** Open a generated session in its save slot: an unfinished one in the same slot continues instead. */
   const openGenerated = (def: LessonDef, adapt?: (s: SessionState) => Question[] | null, consented = false, extra: { key?: string; title?: string; seed?: number; resume?: SavedSession; brief?: Brief } = {}) => {
+    if (!extra.resume && cooled()) return;
     if (!consented && s.mode === 'voice' && !s.voiceConsent) {
       setConsentThen(() => () => openGenerated(def, adapt, true, extra));
       return;
@@ -536,6 +584,37 @@ export function App() {
   }, [settingsReady]);
   const [vocalLevel, setVocalLevel] = useState<number | null>(null);
   /** Class assignments: path lessons and generated practice (vocal levels, modes, wrong notes). */
+  // The teacher loop (0.52): an assignment opened from the class list; its result is sent when it is finished.
+  const activeAssign = useRef<{ a: AssignItem; t0: number; after: string | null } | null>(null);
+  const submitAssign = (score: number, metrics: Record<string, unknown> = {}) => {
+    const x = activeAssign.current;
+    if (!x) return;
+    activeAssign.current = null;
+    void submitResult(x.a.id, score, (Date.now() - x.t0) / 60000, metrics).catch(() => {});
+  };
+  const openAssignItem = (a: AssignItem) => {
+    activeAssign.current = { a, t0: Date.now(), after: progress.history[progress.history.length - 1]?.sessionId ?? null };
+    if (a.kind === 'lesson') return openAssignment(a.lessonId);
+    if (a.kind === 'topic') {
+      const r = parseTopicRef(a.ref);
+      if (r) return openTopic(r.id, r.level);
+    }
+    if (a.kind === 'drill' && settings) {
+      const id = (a.ref ?? '').replace(/^drill:/, '');
+      const lv = catalog().flatMap((f) => f.levels).find((l) => l.id === id);
+      if (lv) {
+        chartQueue.current = levelDrills(lv, drillSettingsOf(settings).keyOrder);
+        drillFrom.current = 'assign';
+        return go('drills');
+      }
+    }
+    if (a.kind === 'chart' && a.ref) {
+      chartQueue.current = [generate({ family: a.ref.includes('~stride-') ? 'accomp' : 'voicings', kind: a.ref, key: 0, hands: 'L', swing: true })];
+      drillFrom.current = 'assign';
+      return go('drills');
+    }
+    activeAssign.current = null;
+  };
   const openAssignment = (id: string) => {
     if ((LESSON_ORDER as string[]).includes(id)) return openLesson(id as LessonId);
     const m = /^vocal-(modes-|harmony-|barry-|sight-|orn-)?(\d+)$/.exec(id);
@@ -581,7 +660,7 @@ export function App() {
     openLesson(rec.lessonId);
   };
 
-  const openLesson = (id: LessonId) => gate(id, () => openLessonNow(id));
+  const openLesson = (id: LessonId) => (cooled() ? undefined : gate(id, () => openLessonNow(id)));
   const openLessonNow = (id: LessonId) => {
     void piano.unlock(); // inside the Start gesture
     setGenerated(null);
@@ -729,7 +808,7 @@ export function App() {
     openGenerated(def, undefined, false, { key: `testout:${unit.id}`, title: s.uiLang === 'en' ? 'Test out' : 'מבחן מעבר' });
   };
   /** Technique drills opened from a path step or a workout block run today's items as a queue (spec AI §9). */
-  const drillFrom = useRef<'path' | 'workout' | 'test' | 'chart' | null>(null);
+  const drillFrom = useRef<'path' | 'workout' | 'test' | 'chart' | 'assign' | null>(null);
   /** A progression from Charts practised as a drill (voicings / comping / stride). */
   const chartQueue = useRef<Drill[] | null>(null);
   /** The mixer returns to the screen it was opened from (Settings or Charts). */
@@ -740,7 +819,7 @@ export function App() {
   };
   const techAfterPlacement = useRef(false);
   const drillQueue = useMemo(
-    () => (route === 'drills' && drillFrom.current === 'chart' ? chartQueue.current ?? undefined : route === 'drills' && (drillFrom.current === 'path' || drillFrom.current === 'workout') && settings && progress ? todayDrills(drillSettingsOf(settings), progress.drillItems ?? {}, settings.drillStart ?? {}, settings.customDrills ?? []).map((x) => x.drill) : undefined),
+    () => (route === 'drills' && (drillFrom.current === 'chart' || drillFrom.current === 'assign') ? chartQueue.current ?? undefined : route === 'drills' && (drillFrom.current === 'path' || drillFrom.current === 'workout') && settings && progress ? todayDrills(drillSettingsOf(settings), progress.drillItems ?? {}, settings.drillStart ?? {}, settings.customDrills ?? []).map((x) => x.drill) : undefined),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [route],
   );
@@ -756,6 +835,11 @@ export function App() {
         updateSettings({ pathFacts: recordStep(settings.pathFacts ?? {}, ps.id, stars, new Date().toISOString()) });
       }
       return go('path');
+    }
+    if (from === 'assign') {
+      chartQueue.current = null;
+      if (takes > 0) submitAssign(clean / takes, { takes, clean });
+      return go('friends');
     }
     if (from === 'chart') {
       chartQueue.current = null;
@@ -788,6 +872,9 @@ export function App() {
   /** After a session: a path step's stars (P10), or a test-out's ✓ by test (P16). */
   const notePathResult = (p: Progress) => {
     const lastR = p.history[p.history.length - 1];
+    // An assigned lesson / topic just finished: its result goes to the teacher (0.52).
+    const asg = activeAssign.current;
+    if (asg && (asg.a.kind === 'lesson' || asg.a.kind === 'topic') && lastR && lastR.sessionId !== asg.after && lastR.total > 0) submitAssign(lastR.firstTry / lastR.total, { firstTry: lastR.firstTry, total: lastR.total, xp: lastR.xp });
     {
       // The workout's credit first (it needs the step id before the path's pending step is cleared).
       const ps0 = pendingStep.current;
@@ -911,13 +998,16 @@ export function App() {
     void piano.setDroneSound(droneSoundId);
   }, [droneSoundId]);
 
+  const fresh0 = () => progress.history.length === 0 && !Object.values(progress.lessons).some((l) => (l?.completions ?? 0) > 0);
   // First visit: the intake questionnaire comes before anything else (once; "later" counts as answered).
   // Automated runs see it only when asked (?intake), like the quick lessons.
   useEffect(() => {
     if (!settings || !progressReady || settings.intake !== undefined) return;
-    const automated = (SIMULATED || params.has('unlock') || (typeof navigator !== 'undefined' && navigator.webdriver)) && !params.has('intake');
+    const automated = (SIMULATED || params.has('unlock') || (typeof navigator !== 'undefined' && navigator.webdriver)) && !params.has('intake') && !params.has('welcome');
+    if (params.has('intake') && fresh0() && route === 'home') return go('intake');
     const fresh = progress.history.length === 0 && !Object.values(progress.lessons).some((l) => (l?.completions ?? 0) > 0);
-    if (!automated && fresh && route === 'home') go('intake');
+    // 0.52: the short onboarding (splash → welcome → a first taste → three questions); the full questionnaire stays in Settings.
+    if ((!automated || params.has('welcome')) && fresh && route === 'home') go('welcome');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings?.intake, route, progressReady]);
   // First run: remember the current version silently and when this device started (untimed first week).
@@ -948,7 +1038,14 @@ export function App() {
 
   const isTab = (TAB_ROUTES as string[]).includes(route);
   // The side menu (SPEC-DESKTOP): shown from 700 px wide by CSS; not during the first questionnaire or the studio.
-  const withSide = route !== 'intake' && route !== 'studio' && !mini;
+  const withSide = route !== 'intake' && route !== 'welcome' && route !== 'studio' && !mini;
+  const onPalette = (h: PaletteHit) => {
+    if (h.kind === 'nav') return sideNav(h.id);
+    if (h.kind === 'topic') return openTopic(h.id, 1);
+    if (h.kind === 'song') return go('songs');
+    location.hash = `/settings/${h.id}`;
+    go('settings');
+  };
   const sideNav = (id: NavId) => {
     if (id === 'placement') return openPlacement();
     if (id === 'mixer') return openMixer();
@@ -956,10 +1053,20 @@ export function App() {
     go(id as Route);
   };
 
+  // The parent digest page stands alone (no menus, no sign-in).
+  if (digestToken)
+    return (
+      <div className="app">
+        <DigestScreen token={digestToken} lang={s.uiLang} t={t} onHome={() => ((location.hash = ''), setDigestToken(null))} />
+      </div>
+    );
+
   return (
     <MiniGateContext.Provider value={gate}>
     <RefresherContext.Provider value={openRefresher}>
     <div className={`app ${isTab ? 'has-tabs' : ''} ${withSide ? 'with-side' : ''}`}>
+      {splash && <Splash onDone={() => setSplash(false)} />}
+      {withSide && <CommandPalette lang={s.uiLang} onPick={onPalette} />}
       {SIMULATED && <div className="sim-banner">{t.simulated}</div>}
       {withSide && <Sidebar route={route} lang={s.uiLang} onNav={sideNav} me={{ name: playerFirstName, streak: gems.streak.count, onOpen: () => go('settings') }} />}
       {mini && (
@@ -1008,6 +1115,7 @@ export function App() {
           onStreak={() => setStreakOpen(true)}
           onMenu={() => setMenuOpen(true)}
           assigned={user && assigned.length ? <AssignedCard t={t} items={assigned} lang={s.uiLang} onOpen={(id) => openAssignment(id)} /> : null}
+          aside={<TodayAside lang={s.uiLang} progress={progress} streak={gems.streak.count} puzzleRows={s.progPuzzle?.[localDay(new Date())]?.rows} onPuzzle={() => go('puzzle')} onDaily={() => go('daily')} onExams={() => go('exams')} onImprov={() => go('improv')} />}
           news={
             <>
               {(progress.ratingEvents?.length ?? 0) > 0 && <NickPrompt lang={s.uiLang} s={s} onChange={updateSettings} />}
@@ -1115,6 +1223,9 @@ export function App() {
             charts: () => go('charts'),
             slowdown: () => go('slowdown'),
             groove: () => go('groove'),
+            improv: () => go('improv'),
+            puzzle: () => go('puzzle'),
+            exams: () => go('exams'),
           }}
           onOnline={() => {
             setOnlineFacts(null);
@@ -1170,10 +1281,10 @@ export function App() {
         />
       )}
       {route === 'settings' && (
-        <SettingsScreen t={t} settings={s} onChange={updateSettings} onBack={() => go('home')} onIntake={() => go('intake')} onMixer={openMixer} account={<AccountCard t={t} user={user} sync={sync} />} />
+        <SettingsScreen t={t} settings={s} onChange={updateSettings} onBack={() => go('home')} onPlans={() => go('plans')} onAdmin={plan?.admin ? () => go('admin') : undefined} onIntake={() => go('intake')} onMixer={openMixer} account={<AccountCard t={t} user={user} sync={sync} />} />
       )}
       {route === 'diagnostics' && <Diagnostics t={t} settings={s} onBack={() => go('home')} />}
-      {route === 'friends' && <FriendsScreen profileErr={profileErr} settings={s} t={t} user={user} sync={sync} progress={progress} streak={gems.streak.count} onBack={() => go('home')} onBestTier={(b) => b > (s.bestLeague ?? 0) && updateSettings({ bestLeague: b })} onLeagueSeen={(leagueSeen) => updateSettings({ leagueSeen })} classes={<ClassesScreen t={t} settings={s} user={user} onBack={() => go('friends')} onOpenLesson={(id) => openAssignment(id)} embedded />} />}
+      {route === 'friends' && <FriendsScreen profileErr={profileErr} settings={s} t={t} user={user} sync={sync} progress={progress} streak={gems.streak.count} onBack={() => go('home')} onBestTier={(b) => b > (s.bestLeague ?? 0) && updateSettings({ bestLeague: b })} onLeagueSeen={(leagueSeen) => updateSettings({ leagueSeen })} classes={<ClassesScreen t={t} settings={s} user={user} onBack={() => go('friends')} onOpenLesson={(id) => openAssignment(id)} onOpenItem={openAssignItem} embedded />} />}
       {route === 'skills' && (
         <ProgressTabs
           t={t}
@@ -1285,6 +1396,23 @@ export function App() {
             setOnlineCode('');
             setOnlineKey((k) => k + 1);
             go('online');
+          }}
+        />
+      )}
+      {route === 'welcome' && (
+        <Onboarding
+          lang={s.uiLang}
+          onSignIn={() => void signInWithGoogle()}
+          onDone={(res, then) => {
+            updateSettings({ ...res.patch, pathFacts: unfreezeIfEarly(s.pathFacts) });
+            if (then === 'placement') {
+              go('home');
+              window.setTimeout(() => openPlacement(), 0);
+            } else {
+              const first = personalOrder(res.intake.priorities, res.patch.track)[0];
+              go('home');
+              window.setTimeout(() => openLesson(first), 0);
+            }
           }}
         />
       )}
@@ -1403,6 +1531,28 @@ export function App() {
       )}
       {route === 'insights' && <InsightsScreen lang={s.uiLang} progress={progress} onBack={() => go('skills')} onTopic={(id, lv) => openTopic(id, lv)} onDrills={() => go('drills')} onPieces={() => go('pieces')} onGroove={() => go('groove')} />}
       {route === 'groove' && <GrooveTrainerScreen settings={s} onBack={() => go(toolFrom.current)} />}
+      {route === 'puzzle' && (
+        <ProgPuzzleScreen
+          settings={s}
+          onChange={updateSettings}
+          onBack={() => go('arcade')}
+          onSolved={(pts) => {
+            if (pts > 0) void store.markPracticeDay().then(setProgress);
+          }}
+        />
+      )}
+      {route === 'improv' && <ImprovStudioScreen settings={s} onBack={() => go('arcade')} />}
+      {route === 'exams' && (
+        <ExamsScreen
+          lang={s.uiLang}
+          onBack={() => go('arcade')}
+          onPractise={(topic, level) => openTopic(topic, level)}
+          onMock={(e) => openGenerated(mockExamLesson(e), undefined, false, { key: `exam:${e.id}`, title: e.title[s.uiLang] })}
+        />
+      )}
+      {route === 'plans' && <PlansScreen lang={s.uiLang} onBack={() => go('settings')} />}
+      {route === 'admin' && <AdminScreen lang={s.uiLang} onBack={() => go('settings')} />}
+      {cool && <CoolDownSheet lang={s.uiLang} minutes={pricing?.free.dailyMinutes ?? 20} onPlans={() => (setCool(false), go('plans'))} onClose={() => setCool(false)} />}
       {route === 'mixer' && <MixerScreen settings={s} onChange={updateSettings} onBack={() => go(mixerFrom.current)} />}
       {route === 'slowdown' && <SlowDownScreen lang={s.uiLang} onBack={() => go(toolFrom.current)} />}
       {route === 'charts' && <ChartsScreen
@@ -1523,7 +1673,7 @@ export function App() {
         </Suspense>
       )}
       {route === 'ghost' && <GhostScreen t={t} settings={s} progress={progress} onBack={() => go('arcade')} onProgress={setProgress} />}
-      {route === 'classes' && <ClassesScreen t={t} settings={s} user={user} onBack={() => go('home')} onOpenLesson={(id) => openAssignment(id)} />}
+      {route === 'classes' && <ClassesScreen t={t} settings={s} user={user} onBack={() => go('home')} onOpenLesson={(id) => openAssignment(id)} onOpenItem={openAssignItem} />}
       {logOpen && <PracticeLogSheet lang={s.uiLang} progress={progress} onSave={(k, m, x) => void saveLog(k, m, x)} onClose={() => setLogOpen(false)} />}
       {streakOpen && (
         <StreakSheet t={t} st={gems.streak} gems={gems.balance} today={localDay(new Date())} lang={s.uiLang} onBuy={buy} purchases={s.purchases ?? []} theme={themeId} onBuyCosmetic={buyCosmetic} onTheme={(theme) => updateSettings({ theme })} onClose={() => setStreakOpen(false)} />

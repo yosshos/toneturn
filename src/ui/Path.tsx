@@ -2,6 +2,7 @@
 // a sticky unit header, the glide to the current step, steps that rise in as they scroll into view, and a
 // "back to my step" button (§10.1). Reduced motion: no glide, no stagger, no bounce.
 
+import { Icon } from './icons';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { shortName } from '../engine/pathNames';
 import type { Strings } from '../i18n/strings';
@@ -286,7 +287,7 @@ export function PathView2({
       <li key={x.step.id} ref={isCur ? curRef : undefined} className={`node ${st === 'mastered' ? 'done mastered' : st} kind-${x.step.kind} ${x.probe ? 'probe' : ''}`} data-step={x.step.id} style={{ ['--x' as string]: `${roadX(i)}%`, ['--hue' as string]: hue }}>
         <button className="node-btn" disabled={st === 'locked'} onClick={click} aria-label={`${label}${st === 'tested' ? ' ✓' : ''}`}>
           <span className="node-disc" aria-hidden="true">
-            {st === 'locked' ? <span className="lock">🔒</span> : x.step.kind === 'check' ? <span className="trophy">🏆</span> : <NodeIcon kind={iconOf(x.step)} />}
+            {st === 'locked' ? <span className="lock"><Icon k="lock" /></span> : x.step.kind === 'check' ? <span className="trophy"><Icon k="trophy" /></span> : <NodeIcon kind={iconOf(x.step)} />}
             {st === 'tested' && <span className="check-medal">✓</span>}
             {st === 'mastered' && <span className="master-medal">★</span>}
             {st === 'refresh' && <span className="refresh-medal">↻</span>}
@@ -421,7 +422,7 @@ export function PathView2({
           {later.map((sec) => (
             <div key={sec} className="later-section">
               <b>
-                🔒 {tx.section[sec]} <small dir="ltr">{view.sections[sec].total ? `${Math.round((100 * view.sections[sec].known) / view.sections[sec].total)}%` : ''}</small>
+                <Icon k="lock" /> {tx.section[sec]} <small dir="ltr">{view.sections[sec].total ? `${Math.round((100 * view.sections[sec].known) / view.sections[sec].total)}%` : ''}</small>
               </b>
               <small>{tx.later}</small>
             </div>

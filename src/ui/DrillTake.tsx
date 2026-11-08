@@ -18,7 +18,7 @@ import { listenLoop } from './Flight';
 
 type Lang = 'he' | 'en';
 const TX = {
-  en: { play: 'Play', stop: 'Stop', countIn: 'Count-in…', go: 'Go!', again: 'Again', slower: 'Slower −10 %', next: 'Next', clean: 'Clean', almost: 'Almost', not: 'Not yet', midiOff: 'Turn on MIDI in Settings for the full analysis — the microphone hears pitch and timing only.', evenness: 'Timing per note (early ← → late)', velocity: 'Loudness per note', hands: 'Hands together (RH − LH, ms)', notes: 'notes', wrong: 'wrong', missing: 'missing', bpm: '♩', loop: 'Loop the spot −15 %' },
+  en: { play: 'Play', stop: 'Stop', countIn: 'Count-in…', go: 'Go!', again: 'Again', slower: 'Slower −10%', next: 'Next', clean: 'Clean', almost: 'Almost', not: 'Not yet', midiOff: 'Turn on MIDI in Settings for the full analysis — the microphone hears pitch and timing only.', evenness: 'Timing per note (early ← → late)', velocity: 'Loudness per note', hands: 'Hands together (RH − LH, ms)', notes: 'notes', wrong: 'wrong', missing: 'missing', bpm: '♩', loop: 'Loop the spot −15%' },
   he: { play: 'לנגן', stop: 'עצירה', countIn: 'ספירה…', go: 'עכשיו!', again: 'שוב', slower: 'לאט יותר −10%', next: 'הבא', clean: 'נקי', almost: 'כמעט', not: 'עוד לא', midiOff: 'הדליקו MIDI בהגדרות לניתוח המלא — המיקרופון שומע רק גובה ותזמון.', evenness: 'תזמון לכל תו (מוקדם ← → מאוחר)', velocity: 'עוצמה לכל תו', hands: 'שתי הידיים יחד (ימין − שמאל, מ״ש)', notes: 'תווים', wrong: 'שגויים', missing: 'חסרים', bpm: '♩', loop: 'לחזור על הקטע −15%' },
 };
 
@@ -26,6 +26,7 @@ const keyName = (sig: string) => (sig === 'C' ? null : { letter: sig[0] as 'C', 
 
 /** Staff(s) for a drill: treble for RH, bass for LH (both when hands together). Long drills show the first 2 bars per line. */
 const noteKey = (n: ExpNote) => `${n.hand}:${n.beat}:${n.pitch}`;
+const NAMES = ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
 const WORSE: NoteMark[] = ['missed', 'wrong', 'timing', 'ok'];
 
 const TECH_SYM: Partial<Record<NonNullable<ExpNote['technique']>, string>> = { hammer: 'h', pull: 'p', slide: '/', bend: 'b', prebend: 'pb', release: 'r', vibrato: '~', tap: 'T', harmonic: 'harm', mute: 'PM', dead: 'X', 'strum-down': '↓', 'strum-up': '↑', 'rest-stroke': 'apoy.', rasgueado: 'rasg.' };
@@ -79,15 +80,66 @@ export function DrillStaff({ drill, fingering = false, result }: { drill: Drill;
   const lh = drill.notes.filter((n) => n.hand === 'L');
   const k = keyName(drill.keySig);
   const firstOfChord = (ns: typeof rh) => ns.filter((n, i) => n.chordId === undefined || ns.findIndex((m) => m.chordId === n.chordId) === i);
+  /** Under a marked note (0.52): what was really played — the note name for a wrong pitch, ms early / late off time. */
+  const playedLabel = (n: ExpNote): string => {
+    const r = byKey.get(noteKey(n));
+    if (!r) return '';
+    if (r.played && r.played.pitch !== n.pitch) return `✕ ${NAMES[((r.played.pitch % 12) + 12) % 12]}${Math.floor(r.played.pitch / 12) - 1}`;
+    if (!r.played) return '○';
+    if (r.dev !== null && Math.abs(r.dev) > timingMs) return `${r.dev > 0 ? '+' : '−'}${Math.round(Math.abs(r.dev))}`;
+    return '';
+  };
+  // Lines by bars (0.52): two bars a line, bar lines and the time signature — never a lone note on its own line.
+  const meter = drill.meter || 4;
   const draw = (ns: typeof rh, clef: 'treble' | 'bass') => {
-    // A song shows all of itself (≤ 96 notes); other drills their first 32.
-    const all = firstOfChord(ns).slice(0, drill.chart ? 96 : 32);
+    // A song shows all of itself (≤ 96 notes); other drills their first 8 bars.
+    const all = firstOfChord(ns).filter((n) => drill.chart || n.beat < meter * 8);
+    const per = meter * (meter >= 6 ? 1 : 2);
     const lines: (typeof all)[] = [];
-    for (let i = 0; i < all.length; i += 8) lines.push(all.slice(i, i + 8));
-    return lines.map((xs, li) => {
-      const labels = fingering && xs.some((n) => n.finger) ? xs.map((n) => (n.finger ? String(n.finger) : '')) : undefined;
+    for (const n of all) {
+      const li = Math.floor(n.beat / per + 1e-6);
+      (lines[li] ??= []).push(n);
+    }
+    return lines.filter(Boolean).map((xs, li) => {
+      const fing = fingering && xs.some((n) => n.finger);
+      const labels = result ? xs.map((n) => playedLabel(n) || (fing && n.finger ? String(n.finger) : '')) : fing ? xs.map((n) => (n.finger ? String(n.finger) : '')) : undefined;
       const marks = result ? xs.map((n) => markFor(n, ns)) : undefined;
-      return <NoteStaff key={`${clef}${li}`} notes={xs.map((n) => n.pitch)} chord={false} keyPc={k} clef={clef} durs={xs.map((n) => Math.max(0.5, n.dur))} labels={labels} marks={marks} />;
+      // Written values; a gap before the next note (or to the bar line at the end) becomes rests of standard values.
+      type It = { n: ExpNote | null; dur: number };
+      const items: It[] = [];
+      const std = (d: number) => [4, 3, 2, 1.5, 1, 0.5].find((v) => v <= d + 1e-6) ?? 0.5;
+      const pushRest = (gap: number) => {
+        let g = gap;
+        while (g > 0.49) {
+          const v = [4, 2, 1, 0.5].find((x) => x <= g + 1e-6)!;
+          items.push({ n: null, dur: v });
+          g -= v;
+        }
+      };
+      const lineStart = li * per;
+      if (xs[0].beat - lineStart > 0.49) pushRest(xs[0].beat - lineStart);
+      xs.forEach((n, i) => {
+        const nextAt = xs[i + 1]?.beat ?? Math.min(lineStart + per, Math.ceil((n.beat + n.dur) / meter - 1e-6) * meter);
+        const d = std(Math.min(Math.max(0.5, n.dur), Math.max(0.5, nextAt - n.beat)));
+        items.push({ n, dur: d });
+        if (nextAt - (n.beat + d) > 0.49) pushRest(nextAt - (n.beat + d));
+      });
+      const idx = (n: ExpNote) => xs.indexOf(n);
+      return (
+        <NoteStaff
+          key={`${clef}${li}`}
+          notes={items.map((x) => x.n?.pitch ?? 71)}
+          rests={items.map((x) => !x.n)}
+          chord={false}
+          keyPc={k}
+          clef={clef}
+          durs={items.map((x) => x.dur)}
+          labels={labels ? items.map((x) => (x.n ? labels[idx(x.n)] : '')) : undefined}
+          marks={marks ? items.map((x) => (x.n ? marks[idx(x.n)] : undefined)) : undefined}
+          meter={meter}
+          timeSig={li === 0}
+        />
+      );
     });
   };
   return (

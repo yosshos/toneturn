@@ -2,6 +2,7 @@
 // 12-key heat map, the run loop with the tempo ladder, drills settings, calibration and the drill creator.
 
 import { SONGBOOK } from '../content/songbook';
+import { COMMON_CHORDS, keyName as songKeyName, songFit } from '../engine/songChords';
 import { recordTakeAnalysis } from '../storage/analysis';
 import { checkRules } from '../engine/improvRules';
 import { parseChart } from '../engine/charts';
@@ -162,7 +163,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
             {lang === 'he' ? 'לשיר שיר' : 'Sing a song'}
           </button>
         )}
-        <SongList lang={lang} ds={ds} onRun={(q) => setView({ k: 'run', queue: q, i: 0, from: { k: 'songs' } })} />
+        <SongList lang={lang} ds={ds} onRun={(q) => setView({ k: 'run', queue: q, i: 0, from: { k: 'songs' } })} known={settings.knownChords} onKnown={(k) => onSettings({ knownChords: k })} />
       </main>
     );
   if (view.k === 'test')
@@ -175,6 +176,8 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
           cal={calOf(settings)}
           items={items}
           onTake={onTake}
+          midiOctave={settings.midiOctave ?? 0}
+          onOctave={(o) => onSettings({ midiOctave: o })}
           onDone={(start) => {
             if (start) onSettings({ drillStart: { ...(settings.drillStart ?? {}), ...start } });
             if (startTest && onTestDone) onTestDone();
@@ -654,7 +657,7 @@ function Calibration({ lang, cal, onSave }: { lang: Lang; cal: DrillCalibration;
 }
 
 /** Technique section of Find my level (spec AI §13): a tempo staircase on a few probe drills → start level per family. */
-function TechLevelTest({ lang, ds, cal, items, onTake, onDone }: { lang: Lang; ds: DrillSettings; cal: DrillCalibration; items: Record<string, ItemState>; onTake: DrillsProps['onTake']; onDone: (start: Partial<Record<FamilyId, number>> | null) => void }) {
+function TechLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, onOctave }: { lang: Lang; ds: DrillSettings; cal: DrillCalibration; items: Record<string, ItemState>; onTake: DrillsProps['onTake']; onDone: (start: Partial<Record<FamilyId, number>> | null) => void; midiOctave: number; onOctave: (o: number) => void }) {
   const tx = T[lang];
   const inst = ds.instrument ?? 'piano';
   const probes = useMemo(() => {
@@ -776,7 +779,9 @@ function TechLevelTest({ lang, ds, cal, items, onTake, onDone }: { lang: Lang; d
         ) : null}
       </p>
       {last && <p className="drill-why">{last.why[lang]}</p>}
-      <DrillScore drill={pr.drill} ds={ds} />
+      {last?.octaveShift !== undefined && <OctaveFix lang={lang} shift={last.octaveShift} current={midiOctave} onFix={onOctave} />}
+      <DrillScore drill={pr.drill} ds={ds} result={last} />
+      {last && <MarkLegend lang={lang} />}
       <DrillTake key={`${pr.id}:${take}`} drill={pr.drill} bpm={bpm} lang={lang} cal={cal} onDone={(m) => done(m)} />
       <button className="btn ghost" onClick={() => nextProbe(best)}>
         {tx.skip}
@@ -785,27 +790,86 @@ function TechLevelTest({ lang, ds, cal, items, onTake, onDone }: { lang: Lang; d
   );
 }
 
+/** The keyboard plays an octave off (small MIDI keyboards): one tap shifts it the right way (Settings → MIDI → octave). */
+function OctaveFix({ lang, shift, current, onFix }: { lang: Lang; shift: number; current: number; onFix: (o: number) => void }) {
+  const [done, setDone] = useState(false);
+  const next = Math.max(-2, Math.min(2, current - Math.round(shift / 12)));
+  if (done) return <p className="field-hint">{lang === 'he' ? 'המקלדת הוזזה — נסו שוב.' : 'Keyboard shifted — try again.'}</p>;
+  return (
+    <button className="btn primary small octave-fix" onClick={() => (onFix(next), setDone(true))} data-octave-fix={next}>
+      {lang === 'he' ? `להזיז את המקלדת אוקטבה ${shift < 0 ? 'למעלה' : 'למטה'}` : `Shift my keyboard an octave ${shift < 0 ? 'up' : 'down'}`}
+    </button>
+  );
+}
+
 /** The songbook: each public-domain song with its playable parts for the player's instrument. */
-function SongList({ lang, ds, onRun }: { lang: Lang; ds: DrillSettings; onRun: (q: Drill[]) => void }) {
+function SongList({ lang, ds, onRun, known, onKnown }: { lang: Lang; ds: DrillSettings; onRun: (q: Drill[]) => void; known?: string[]; onKnown?: (k: string[]) => void }) {
   const inst = ds.instrument ?? 'piano';
   const parts = inst === 'piano' ? (['melody', 'chords', 'both'] as const) : inst === 'bass' ? (['melody'] as const) : (['melody', 'chords'] as const);
+  // Songbook by the chords you know (0.53): pick your chords; each song shows the key that fits them, or the one new chord.
+  const he = lang === 'he';
+  const [pick, setPick] = useState(false);
+  const [onlyMine, setOnlyMine] = useState(false);
+  const kn = new Set(known ?? []);
+  const pool = COMMON_CHORDS[inst === 'guitar' || inst === 'bass' ? 'guitar' : 'piano'];
+  const fits = SONGBOOK.map((sg) => ({ sg, fit: kn.size ? songFit(sg, kn) : null }));
+  const shown = onlyMine && kn.size ? fits.filter((x) => x.fit?.kind === 'playable') : fits;
   return (
-    <ul className="song-drills">
-      {SONGBOOK.map((s) => (
-        <li key={s.id}>
-          <span className="sd-title">
-            <b>{s.title[lang]}</b>
-            <small>{s.credit}</small>
-          </span>
-          <span className="sd-parts">
-            {parts.map((p) => (
-              <button key={p} className="chip" data-song={s.id} data-part={p} onClick={() => onRun([songDrill(s, p, inst)])}>
-                {PART_NAME[p][lang]}
-              </button>
-            ))}
-          </span>
-        </li>
-      ))}
-    </ul>
+    <>
+      {onKnown && (
+        <div className="known-chords" data-known-chords="1">
+          <div className="kc-row">
+            <button className="btn ghost small" onClick={() => setPick(!pick)} aria-expanded={pick}>
+              {he ? 'האקורדים שאני מכיר' : 'Chords I know'}
+              {kn.size ? ` (${kn.size})` : ''}
+            </button>
+            {kn.size > 0 && (
+              <label className="toggle-row">
+                <input type="checkbox" checked={onlyMine} onChange={(e) => setOnlyMine(e.target.checked)} data-only-mine="1" />
+                <span>{he ? 'רק שירים שאני יכול לנגן' : 'Only songs I can play'}</span>
+              </label>
+            )}
+          </div>
+          {pick && (
+            <div className="chips kc-chips" dir="ltr">
+              {pool.map((c) => (
+                <button key={c} className={`chip ${kn.has(c) ? 'on' : ''}`} aria-pressed={kn.has(c)} onClick={() => onKnown(kn.has(c) ? [...kn].filter((x) => x !== c) : [...kn, c])} data-known={c}>
+                  {c}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+      <ul className="song-drills">
+        {shown.map(({ sg, fit }) => {
+          const song = fit && fit.kind !== 'far' ? { ...sg, key: fit.key } : sg;
+          return (
+            <li key={sg.id}>
+              <span className="sd-title">
+                <b>{sg.title[lang]}</b>
+                <small>
+                  {sg.credit}
+                  {fit?.kind === 'playable' && <span className="kc-fit ok"> · {he ? 'ניתן לנגן ב' : 'playable in '}{songKeyName(fit.key, !!sg.minor)}</span>}
+                  {fit?.kind === 'one-new' && (
+                    <span className="kc-fit new">
+                      {' · '}
+                      {he ? 'אקורד חדש אחד:' : 'one new chord:'} {fit.missing[0]} ({songKeyName(fit.key, !!sg.minor)})
+                    </span>
+                  )}
+                </small>
+              </span>
+              <span className="sd-parts">
+                {parts.map((p) => (
+                  <button key={p} className="chip" data-song={sg.id} data-part={p} onClick={() => onRun([songDrill(song, p, inst)])}>
+                    {PART_NAME[p][lang]}
+                  </button>
+                ))}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </>
   );
 }

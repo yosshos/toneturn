@@ -224,6 +224,8 @@ export interface TakeMetrics {
   verdict: Verdict;
   /** The one-line reason (worst factor), EN / HE. */
   why: { en: string; he: string };
+  /** Most notes were played exactly this many semitones off (±12, ±24): the keyboard is shifted by octaves. */
+  octaveShift?: number;
   /** Pedalling drills (MIDI CC64): changes done right / total. */
   pedal?: { ok: number; total: number; pass: boolean };
 }

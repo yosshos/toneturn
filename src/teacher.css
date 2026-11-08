@@ -1,0 +1,97 @@
+/* The teacher loop (0.52): assign form, grading inbox, class heat map, student assignments, parent link, digest. */
+.assign-form2 { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--line, rgba(255,255,255,.1)); border-radius: 12px; margin: 8px 0 14px; }
+.assign-form2 select, .assign-form2 input { min-width: 0; width: 100%; box-sizing: border-box; }
+.af-row { display: grid; gap: 4px; font-size: 0.85rem; color: var(--ink-dim); }
+.af-pair { display: grid; grid-template-columns: 2fr 1fr; gap: 8px; }
+.af-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; }
+.assign-form2 .btn { justify-self: start; }
+.inbox h3, .heat h3 { margin-bottom: 4px; }
+.inbox-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.inbox-list li { border: 1px solid var(--line, rgba(255,255,255,.1)); border-inline-start: 3px solid var(--mint); border-radius: 10px; padding: 10px 12px; display: grid; gap: 8px; }
+.inbox-list li.low { border-inline-start-color: var(--gold); }
+.ib-head { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
+.ib-head small { color: var(--ink-dim); margin-inline-start: auto; }
+.ib-act { display: flex; flex-wrap: wrap; gap: 6px; }
+.ib-act input { flex: 1 1 180px; min-width: 0; }
+.heat-table td { text-align: center; font-variant-numeric: tabular-nums; }
+.heat-table td:first-child { text-align: start; }
+.heat-table tr.behind td:first-child { color: var(--gold); }
+.behind-tag { color: var(--gold); }
+.my-assign .assign-list li { display: flex; gap: 10px; align-items: center; justify-content: space-between; }
+.ma-main { display: grid; gap: 2px; min-width: 0; }
+.ma-main small { color: var(--ink-dim); }
+.ma-note { font-style: italic; }
+.ma-teacher { color: var(--ink-soft) !important; }
+.parent-link .pl-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.parent-link .pl-row input { flex: 1 1 220px; min-width: 0; font-size: 0.85rem; }
+.digest { max-width: 560px; margin: 0 auto; }
+.digest-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; margin: 12px 0; }
+.digest-stats div { background: var(--card); border: 1px solid var(--line, rgba(255,255,255,.1)); border-radius: 12px; padding: 12px; display: grid; gap: 2px; }
+.digest-stats b { font-size: 1.6rem; font-weight: 650; }
+.digest-stats small { color: var(--ink-dim); }
+
+/* sound output picker (0.52) */
+.audio-out { display: grid; gap: 8px; margin-top: 6px; }
+.audio-out select { max-width: 100%; }
+.audio-out-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* Progression puzzle (0.53) */
+.prog-puzzle { display: grid; gap: 12px; }
+.pp-grid { display: grid; gap: 6px; justify-content: center; }
+.pp-row { display: grid; grid-template-columns: repeat(4, 64px); gap: 6px; }
+.pp-cell { height: 52px; display: grid; place-items: center; border-radius: 8px; border: 1px solid var(--line, rgba(255,255,255,.12)); font-weight: 600; font-size: 1.05rem; }
+.pp-cell.filled { border-color: color-mix(in srgb, var(--ink) 35%, transparent); }
+.pp-cell.right { background: color-mix(in srgb, #2bb673 55%, var(--card)); border-color: transparent; }
+.pp-cell.present { background: color-mix(in srgb, var(--gold) 50%, var(--card)); border-color: transparent; }
+.pp-cell.absent { background: var(--card-2); border-color: transparent; color: var(--ink-dim); }
+.pp-keys { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.pp-actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.pp-done { display: grid; gap: 10px; text-align: center; }
+/* Improvisation studio (0.53) */
+.improv-studio { display: grid; gap: 12px; }
+.is-ask { font-weight: 600; text-align: center; margin: 0; }
+.is-keys { display: flex; gap: 2px; overflow-x: auto; padding: 4px 0; }
+.is-key { all: unset; flex: none; width: 26px; height: 90px; border-radius: 0 0 5px 5px; cursor: pointer; }
+.is-key.w { background: #e9edf5; }
+.is-key.b { background: #1a2033; width: 18px; height: 60px; margin-inline: -9px; z-index: 1; }
+.is-key:active { filter: brightness(0.85); }
+.is-result { display: grid; gap: 8px; }
+.is-result .ok b { color: var(--mint); }
+.is-result .no b { color: var(--red); }
+.is-stats { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.is-stats li { background: var(--card); border: 1px solid var(--line, rgba(255,255,255,.1)); border-radius: 10px; padding: 10px; display: grid; }
+.is-stats b { font-size: 1.3rem; font-weight: 650; }
+.is-stats small { color: var(--ink-dim); }
+/* Exams (0.54) */
+.exams { display: grid; gap: 14px; }
+.exam-group h2 { font-size: 1.05rem; font-weight: 600; color: var(--ink-soft); margin: 6px 0 8px; }
+.exam-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+.exam-card { background: var(--card); border: 1px solid var(--line, rgba(255,255,255,.1)); border-radius: 12px; padding: 14px; display: grid; gap: 8px; align-content: start; }
+.exam-card.open { grid-column: 1 / -1; }
+.exam-head { all: unset; cursor: pointer; display: grid; gap: 2px; }
+.exam-head b { font-weight: 600; }
+.exam-head small { color: var(--ink-dim); }
+.exam-card .btn.primary { justify-self: start; }
+.exam-sections { margin: 0; padding-inline-start: 20px; display: grid; gap: 6px; }
+.exam-sections li { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.exam-sections small { color: var(--ink-dim); }
+/* Plans & admin (0.54) */
+.plans, .admin { display: grid; gap: 12px; }
+.plans-sale { margin: 0; padding: 10px 14px; border-radius: 10px; border: 1px solid color-mix(in srgb, var(--gold) 55%, transparent); color: var(--ink); background: color-mix(in srgb, var(--gold) 10%, var(--card)); }
+.plans-period { justify-self: start; }
+.plans-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.plan-card { background: var(--card); border: 1px solid var(--line, rgba(255,255,255,.1)); border-radius: 12px; padding: 16px; display: grid; gap: 8px; align-content: start; }
+.plan-card.current { border-color: var(--mint); }
+.plan-card h2 { margin: 0; font-size: 1.1rem; font-weight: 600; }
+.plan-price { margin: 0; font-size: 1.5rem; font-weight: 650; }
+.plan-price s { color: var(--ink-dim); font-size: 1rem; font-weight: 400; }
+.plan-price small { color: var(--ink-dim); font-size: 0.85rem; font-weight: 400; }
+.admin-row { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); align-items: end; margin: 8px 0; }
+.admin-row label { display: grid; gap: 4px; font-size: 0.85rem; color: var(--ink-dim); }
+.admin-row input, .admin-row select { min-width: 0; }
+
+/* songbook by known chords (0.53) */
+.known-chords { display: grid; gap: 8px; margin-bottom: 8px; }
+.kc-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.kc-fit.ok { color: var(--mint); }
+.kc-fit.new { color: var(--gold); }

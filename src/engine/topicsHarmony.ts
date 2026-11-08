@@ -21,7 +21,7 @@ TOPIC_GEN['extensions'] = {
   levels: [
     { en: '7, 9 or 13?', he: '7, 9 או 13?' },
     { en: 'Altered dominants', he: 'דומיננטים אלטרד' },
-    { en: 'Major colours', he: 'צבעים של מז׳ור' },
+    { en: 'Major colors', he: 'צבעים של מז׳ור' },
     { en: 'sus4, 7sus4, add9, alt', he: 'sus4, 7sus4, add9, alt' },
   ],
   gen(seed, level, id) {
@@ -53,7 +53,7 @@ TOPIC_GEN['extensions'] = {
         add9: nm('add9', 'add9', 'add nine', 'added ninth'),
         alt: nm('7alt (♯9 ♭13)', '7alt (♯9 ♭13)', 'alt', 'altered', 'seven alt', 'אלטרד'),
       };
-      ask = { en: 'Which chord colour?', he: 'איזה צבע אקורד?' };
+      ask = { en: 'Which chord color?', he: 'איזה צבע אקורד?' };
     } else {
       voicing = { maj7: [r - 12, r + 4, r + 7, r + 11], maj9: [r - 12, r + 4, r + 11, r + 14], lyd: [r - 12, r + 4, r + 11, r + 18], six9: [r - 12, r + 4, r + 9, r + 14] };
       names = {
@@ -62,7 +62,7 @@ TOPIC_GEN['extensions'] = {
         lyd: nm('Major 7 ♯11', 'מז׳ור 7 דיאז 11', 'lydian', 'sharp eleven', 'לידי'),
         six9: nm('6/9', '6/9', 'six nine', 'six over nine', 'שש תשע'),
       };
-      ask = { en: 'Which major colour?', he: 'איזה צבע של מז׳ור?' };
+      ask = { en: 'Which major color?', he: 'איזה צבע של מז׳ור?' };
     }
     const keys = Object.keys(voicing);
     const answer = pickR(rnd, keys);

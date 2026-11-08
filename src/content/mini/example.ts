@@ -11,7 +11,7 @@ export const EXAMPLE: MiniLesson[] = [
     area: 'ear',
     emoji: '🏠',
     title: { en: 'Home, third, fifth', he: 'הבית, השלוש והחמש' },
-    takeaway: { en: '1, 3 and 5 build the home chord: 1 is rest, 5 is open and strong, 3 is the warm colour in between.', he: '1, 3 ו־5 בונים את אקורד הבית: 1 הוא מנוחה, 5 פתוח וחזק, 3 הוא הצבע החם שביניהם.' },
+    takeaway: { en: '1, 3 and 5 build the home chord: 1 is rest, 5 is open and strong, 3 is the warm color in between.', he: '1, 3 ו־5 בונים את אקורד הבית: 1 הוא מנוחה, 5 פתוח וחזק, 3 הוא הצבע החם שביניהם.' },
     steps: [
       {
         say: { en: 'Hey {name}! Every key has a home note — we call it 1. Listen: the chords lead you there, and you can feel it land.', he: 'היי {name}! לכל סולם יש צליל בית — אנחנו קוראים לו 1. הקשיבו: האקורדים מובילים אליו, ומרגישים איך הוא נוחת.' },
@@ -29,9 +29,9 @@ export const EXAMPLE: MiniLesson[] = [
         show: { notes: [67], key: 'C', text: { en: '5 — open, strong', he: '5 — פתוח, חזק' } },
       },
       {
-        say: { en: 'Number 3 is the warm one — it gives the chord its colour. In a major key it sounds sweet and bright.', he: 'צליל 3 הוא החם — הוא נותן לאקורד את הצבע שלו. בסולם מז׳ור הוא נשמע מתוק ומואר.' },
+        say: { en: 'Number 3 is the warm one — it gives the chord its color. In a major key it sounds sweet and bright.', he: 'צליל 3 הוא החם — הוא נותן לאקורד את הצבע שלו. בסולם מז׳ור הוא נשמע מתוק ומואר.' },
         play: [cadenceC, { kind: 'note', midi: 64, duration: 1.6 }],
-        show: { notes: [64], key: 'C', text: { en: '3 — warm colour', he: '3 — צבע חם' } },
+        show: { notes: [64], key: 'C', text: { en: '3 — warm color', he: '3 — צבע חם' } },
       },
       {
         say: { en: 'And 1 is total rest: nothing wants to move. Here are all three again — 1, then 3, then 5. Feel the difference?', he: 'ו־1 הוא מנוחה מוחלטת: שום דבר לא רוצה לזוז. הנה שלושתם שוב — 1, אחר כך 3, אחר כך 5. מרגישים את ההבדל?' },
@@ -76,7 +76,7 @@ export const EXAMPLE: MiniLesson[] = [
         show: { notes: [72, 55], key: 'C', text: { en: 'high 1 · low 5', he: '1 גבוה · 5 נמוך' } },
       },
       {
-        say: { en: 'In a minor key, 3 is a semitone lower — E♭ in C minor. 1 and 5 stay where they are; only the colour turns darker. Listen to major, then minor.', he: 'בסולם מינור, 3 נמוך בחצי טון — מי במול בדו מינור. 1 ו־5 נשארים במקומם; רק הצבע נעשה כהה יותר. הקשיבו למז׳ור, ואז למינור.' },
+        say: { en: 'In a minor key, 3 is a semitone lower — E♭ in C minor. 1 and 5 stay where they are; only the color turns darker. Listen to major, then minor.', he: 'בסולם מינור, 3 נמוך בחצי טון — מי במול בדו מינור. 1 ו־5 נשארים במקומם; רק הצבע נעשה כהה יותר. הקשיבו למז׳ור, ואז למינור.' },
         play: [{ kind: 'chord', midis: [60, 64, 67], duration: 1.2, arpeggio: true }, { kind: 'chord', midis: [60, 63, 67], duration: 1.2, arpeggio: true }],
         show: { notes: [60, 63, 67], key: 'C', text: { en: '1 – ♭3 – 5', he: '1 – ♭3 – 5' } },
       },
@@ -91,7 +91,7 @@ export const EXAMPLE: MiniLesson[] = [
         show: { notes: [55, 60, 64, 67, 64, 67, 72], key: 'C', text: { en: '5 1 3 5 3 5 1', he: '5 1 3 5 3 5 1' } },
       },
       {
-        say: { en: 'Recap: 1 is rest, 3 is the warm colour, 5 is open and strong. Together they make the home chord, in every key.', he: 'לסיכום: 1 הוא מנוחה, 3 הוא הצבע החם, 5 פתוח וחזק. יחד הם בונים את אקורד הבית, בכל סולם.' },
+        say: { en: 'Recap: 1 is rest, 3 is the warm color, 5 is open and strong. Together they make the home chord, in every key.', he: 'לסיכום: 1 הוא מנוחה, 3 הוא הצבע החם, 5 פתוח וחזק. יחד הם בונים את אקורד הבית, בכל סולם.' },
         show: { notes: [60, 64, 67], chord: true, key: 'C', text: { en: '1 – 3 – 5', he: '1 – 3 – 5' } },
       },
     ],

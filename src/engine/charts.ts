@@ -325,7 +325,7 @@ export interface ImprovLevel {
 }
 
 export const IMPROV_LEVELS: ImprovLevel[] = [
-  { n: 1, id: 'vamp-dorian', title: { en: 'One chord: D dorian vamp', he: 'אקורד אחד: ווּמפּ רה דורי' }, focus: { en: 'Stay in one scale; hear the colour of the 6th', he: 'להישאר בסולם אחד; לשמוע את הצבע של ה־6' }, text: 'Dm7 | % | % | % | Dm7 | % | % | %', style: 'swing', bpm: 100, rules: { note: 'scale', interval: null, rhythm: 'quarters' } },
+  { n: 1, id: 'vamp-dorian', title: { en: 'One chord: D dorian vamp', he: 'אקורד אחד: ווּמפּ רה דורי' }, focus: { en: 'Stay in one scale; hear the color of the 6th', he: 'להישאר בסולם אחד; לשמוע את הצבע של ה־6' }, text: 'Dm7 | % | % | % | Dm7 | % | % | %', style: 'swing', bpm: 100, rules: { note: 'scale', interval: null, rhythm: 'quarters' } },
   { n: 2, id: 'two-chords', title: { en: 'Two chords: Dm7 – G7', he: 'שני אקורדים: Dm7 – G7' }, focus: { en: 'Chord tones as the chord changes', he: 'צלילי אקורד כשהאקורד מתחלף' }, text: 'Dm7 | Dm7 | G7 | G7', style: 'bossa', bpm: 104, rules: { note: 'chord-tones', interval: null, rhythm: 'quarters' } },
   { n: 3, id: 'blues', title: { en: 'Blues in F', he: 'בלוז בפה' }, focus: { en: 'Twelve bars, three chords, the 3rd moving', he: 'שתים־עשרה תיבות, שלושה אקורדים, הטרצה זזה' }, text: 'F7 | Bb7 | F7 | F7 | Bb7 | Bb7 | F7 | D7 | Gm7 | C7 | F7 D7 | Gm7 C7', style: 'swing', bpm: 112, rules: { note: 'target-3', interval: null, rhythm: null } },
   { n: 4, id: 'two-five-one', title: { en: 'ii–V–I in C', he: 'ii–V–I בדו' }, focus: { en: 'Guide tones: 7 falls to 3', he: 'צלילים מנחים: 7 יורד ל־3' }, text: 'Dm7 | G7 | Cmaj7 | Cmaj7', style: 'swing', bpm: 116, rules: { note: 'guide-beats', interval: null, rhythm: 'eighths' } },

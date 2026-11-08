@@ -1,18 +1,15 @@
 
 import { DOMAINS, type DomainId } from '../engine/rating';
-import { TrioArt } from './TrioArt';
 import { StreakChip } from './Streak';
 import type { StreakState } from '../engine/streak';
-import { FIRST_TRIO, randomTrio, type Trio } from '../engine/heroTrio';
 import { applyUpdate, promptInstall, pwa } from '../pwa';
 import { topicProgress } from '../engine/recommend';
-import { useEffect, useState, useSyncExternalStore } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import { LESSON_ORDER, type LessonId } from '../engine/lesson';
 import { personalOrder, type Intake } from '../engine/intake';
-import { displayNote, type Naming } from '../engine/pitch';
 import type { InputMode } from '../engine/session';
 import type { Strings } from '../i18n/strings';
-import { namingFor, type Progress, type Settings } from '../storage/progress';
+import type { Progress, Settings } from '../storage/progress';
 import { Logo, MicIcon, ModeSwitch } from './bits';
 import { WhatsNewButton } from './Arcade';
 import { UNLOCK_ALL } from './services';
@@ -38,6 +35,8 @@ interface Props {
   headerExtra?: React.ReactNode;
   /** Today's workout (spec AH W1). */
   workout?: React.ReactNode;
+  /** The side panel on a computer (this week, daily challenge, progression of the day). */
+  aside?: React.ReactNode;
   /** Teacher assignments (today's homework), when there are some. */
   assigned?: React.ReactNode;
   streak: StreakState;
@@ -90,11 +89,10 @@ export const TOTALS: Partial<Record<LessonId, number>> = { 'bflat-two-homes': 3,
  * one small Find my level button. Everything else moved to its own place (Path: topics and practice rooms; Play:
  * puzzles and challenges; Progress: areas and ranks; Settings: account). First run keeps the welcome hero.
  */
-export function Home({ t, settings, progress, streak, onStreak, onPractice, onButtonsInstead, onMode, whatsNew, onPlacement, onMenu, news, assigned, headerExtra, workout }: Props) {
+export function Home({ t, settings, progress, streak, onStreak, onPractice, onButtonsInstead, onMode, whatsNew, onPlacement, onMenu, news, assigned, headerExtra, workout, aside }: Props) {
   const [consentFor, setConsentFor] = useState<LessonId | null>(null);
   const [levelSheet, setLevelSheet] = useState(false);
   const lang = settings.uiLang;
-  const nm = namingFor(settings.naming, lang);
   // The path in the player's own order of areas (intake questionnaire).
   const order = personalOrder((settings.intake as Intake | null | undefined)?.priorities, settings.track);
   const next = nextLessonId(progress, order);
@@ -117,9 +115,7 @@ export function Home({ t, settings, progress, streak, onStreak, onPractice, onBu
 
       {firstRun ? (
         <section className="hero first-run">
-          <HeroArt nm={nm} lang={lang} />
           <div className="hero-copy">
-            <p className="tagline">{t.appTagline}</p>
             <h1>{t.firstRunTitle}</h1>
             <p className="blurb">{t.firstRunBlurb}</p>
             <ModeSwitch mode={settings.mode} onChange={onMode} t={t} />
@@ -148,6 +144,7 @@ export function Home({ t, settings, progress, streak, onStreak, onPractice, onBu
       ) : (
         <>
           <h1 className="sr-only">The 7th Sense — {t.homeToday}</h1>
+          {aside}
           {assigned}
           {workout}
           <button className="find-level-btn" onClick={() => setLevelSheet(true)} data-find-level="1">
@@ -319,20 +316,6 @@ export function NodeIcon({ kind }: { kind: 'ear' | 'steps' | 'chord' | 'cadence'
   }
 }
 
-/** Illustrated hero: a piano horizon, the B♭ token floating between its two homes. */
-/** Three notes on the keyboard and the intervals between them; a new random trio every few seconds. */
-function HeroArt({ nm, lang }: { nm: Naming; lang: 'he' | 'en' }) {
-  const [state, setState] = useState<{ n: number; trio: Trio }>({ n: 0, trio: FIRST_TRIO });
-  useEffect(() => {
-    const id = window.setInterval(() => {
-      if (document.hidden) return;
-      setState((s) => ({ n: s.n + 1, trio: randomTrio() }));
-    }, 4500);
-    return () => window.clearInterval(id);
-  }, []);
-  const { trio, n } = state;
-  return <TrioArt n={n} left={displayNote(trio.left, nm, lang)} mid={displayNote(trio.mid, nm, lang)} right={displayNote(trio.right, nm, lang)} intervalLeft={trio.intervalLeft} intervalRight={trio.intervalRight} />;
-}
 
 /** "Done X of Y" per topic across the whole path. */
 export function TopicBars({ t, progress }: { t: Strings; progress: Progress }) {

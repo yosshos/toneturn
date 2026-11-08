@@ -8,7 +8,7 @@ import { Logo } from './bits';
 
 export type NavId =
   | TabId
-  | 'songs' | 'drills' | 'learned' | 'pieces' | 'charts'
+  | 'songs' | 'drills' | 'learned' | 'pieces' | 'charts' | 'improv' | 'puzzle' | 'exams'
   | 'insights' | 'achievements'
   | 'tuner' | 'metronome' | 'drone' | 'groove' | 'slowdown' | 'mixer' | 'log'
   | 'placement' | 'diagnostics' | 'settings';
@@ -63,6 +63,9 @@ const SECTIONS: Section[] = [
       { id: 'learned', label: { en: 'Lessons', he: 'שיעורים' } },
       { id: 'pieces', label: { en: 'My pieces', he: 'היצירות שלי' } },
       { id: 'charts', label: { en: 'Chord charts', he: 'מהלכים' } },
+      { id: 'improv', label: { en: 'Improvisation studio', he: 'סטודיו לאלתור' } },
+      { id: 'puzzle', label: { en: 'Progression of the day', he: 'מהלך היום' } },
+      { id: 'exams', label: { en: 'Exams: Bagrut & conservatory', he: 'מבחנים: בגרות וקונסרבטוריון' } },
     ],
   },
   {
@@ -201,6 +204,14 @@ export function Sidebar({ route, lang, onNav, badges, me }: { route: string; lan
           The 7<span className="wordmark-th">th</span> Sense
         </span>
       </div>
+      <button className="sn-search sn-label-wrap" onClick={() => dispatchEvent(new Event('tt-open-search'))} title={lang === 'he' ? 'חיפוש (Ctrl K)' : 'Search (Ctrl K)'} data-nav-search="1">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="6.5" />
+          <path d="M20 20l-4-4" />
+        </svg>
+        <span className="sn-label">{lang === 'he' ? 'חיפוש' : 'Search'}</span>
+        <kbd className="sn-label">Ctrl K</kbd>
+      </button>
       <div className="sn-list">
         {SECTIONS.map((s) => section(s, s.id))}
         <div className="sn-hr" />

@@ -315,7 +315,8 @@ export function Flight({ lang, settings, saved, onSave, onExit, onResult, best }
 
   const begin = (fromCp: boolean) => {
     const seed = fromCp && cp ? cp.seed : (Date.now() ^ (Math.random() * 1e9)) >>> 0;
-    const course = makeCourse(seed, fromCp && cp ? cp.startLevel : level, fromCp && cp ? cp.range : range);
+    // A saved flight resumes in today's range (the range may have been measured or changed since it was saved).
+    const course = makeCourse(seed, fromCp && cp ? cp.startLevel : level, range);
     const s = initState(course, fromCp ? cp : null);
     game.current = { course, s };
     onSave(checkpointOf(course, s));

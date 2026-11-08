@@ -1,3 +1,4 @@
+import { Icon } from './icons';
 import { RatingBadge } from './Rating';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { cloudConfigured, signInWithGoogle, type CloudUser } from '../cloud/cloud';
@@ -503,7 +504,7 @@ function ChoirRound({ t, settings, chord, index, disabled, onScore }: { t: Strin
         🎼 {fmt(t.choirYourPart, { part: t.choirParts[part] ?? String(part + 1), note: name })}
       </p>
       <button className="btn ghost" onClick={() => void piano.play([{ midi, start: 0, duration: 1.2, velocity: 0.7 }], 1.3, new AbortController().signal)}>
-        🔊 {t.choirHearPart}
+        <Icon k="speaker" /> {t.choirHearPart}
       </button>
       <button className="btn ghost" onClick={() => void piano.play(chord.map((m) => ({ midi: m, start: 0, duration: 1.6, velocity: 0.5 })), 1.7, new AbortController().signal)}>
         🎹 {t.choirHearChord}
@@ -545,7 +546,7 @@ function VocalRound({ t, settings, midi, disabled, onScore }: { t: Strings; sett
         <p className="big-score small">{score}%</p>
       ) : (
         <button className="btn mega" disabled={disabled || state === 'singing'} onClick={() => void sing()}>
-          🎤 {state === 'singing' ? '…' : t.vocalSing}
+          <Icon k="mic" /> {state === 'singing' ? '…' : t.vocalSing}
         </button>
       )}
     </div>

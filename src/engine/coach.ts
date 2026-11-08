@@ -22,7 +22,7 @@ export function opener(l: Lang, seed: number, name: string | null): string {
 const DEGREE_CHAR: Record<number, { en: string; he: string }> = {
   1: { en: '1 is home — total rest', he: '1 הוא הבית — מנוחה מוחלטת' },
   2: { en: '2 sits just above home and wants to step down', he: '2 יושב ממש מעל הבית ורוצה לרדת' },
-  3: { en: '3 is the warm colour of the chord', he: '3 הוא הצבע החם של האקורד' },
+  3: { en: '3 is the warm color of the chord', he: '3 הוא הצבע החם של האקורד' },
   4: { en: '4 leans down towards 3', he: '4 נשען למטה אל 3' },
   5: { en: '5 is open and strong, a little "in the air"', he: '5 פתוח וחזק, קצת "באוויר"' },
   6: { en: '6 is soft and a bit wistful', he: '6 רך וקצת נוגה' },
@@ -178,7 +178,7 @@ function choiceContrast(q: Extract<Question, { kind: 'choice' }>, given: string,
 
 /** One listening tip per practice topic, said with the contrast. */
 const TOPIC_CONTRAST: Record<string, { en: string; he: string }> = {
-  extensions: { en: 'Listen to the top note only: it carries the colour.', he: 'הקשיבו רק לצליל העליון: הוא נושא את הצבע.' },
+  extensions: { en: 'Listen to the top note only: it carries the color.', he: 'הקשיבו רק לצליל העליון: הוא נושא את הצבע.' },
   voicings: { en: 'Listen to the spacing and to the lowest note.', he: 'הקשיבו למרווחים בין הצלילים ולצליל הנמוך ביותר.' },
   progressions: { en: 'Follow the bass: where it moves tells the progression.', he: 'עקבו אחרי הבס: לאן שהוא זז — זה המהלך.' },
   form: { en: 'Compare each phrase with the first one: same start? same end?', he: 'השוו כל משפט לראשון: אותה התחלה? אותו סוף?' },
@@ -186,19 +186,23 @@ const TOPIC_CONTRAST: Record<string, { en: string; he: string }> = {
   'in-tune': { en: 'Out of tune, two notes beat — a slow wobble in the sound.', he: 'כשהם לא מכוונים, שני צלילים פועמים — רעד איטי בצליל.' },
   'two-voice': { en: 'Follow one voice at a time, then the other.', he: 'עקבו אחרי קול אחד בכל פעם, ואז אחרי השני.' },
   'set-classes': { en: 'Find the ingredients: a semitone crunch, a tritone, an open fifth.', he: 'חפשו את המרכיבים: חיכוך של חצי טון, טריטון, קווינטה פתוחה.' },
-  maqam: { en: 'The first four notes (the jins) give the flavour — listen to their gaps.', he: 'ארבעת הצלילים הראשונים (הג׳ינס) נותנים את הטעם — הקשיבו למרווחים ביניהם.' },
+  maqam: { en: 'The first four notes (the jins) give the flavor — listen to their gaps.', he: 'ארבעת הצלילים הראשונים (הג׳ינס) נותנים את הטעם — הקשיבו למרווחים ביניהם.' },
   'eastern-rhythm': { en: 'Listen for where the low dums fall in the cycle.', he: 'הקשיבו איפה נופלים הדומים הנמוכים במחזור.' },
   polyrhythm: { en: 'Count the low drum first, then the high clicks between two meeting points.', he: 'ספרו קודם את התוף הנמוך, ואז את הקליקים הגבוהים בין שתי נקודות מפגש.' },
   'odd-meter': { en: 'Count the groups — short, short, long — not every eighth.', he: 'ספרו קבוצות — קצר, קצר, ארוך — לא כל שמינית.' },
   'swing-ratio': { en: 'Listen to where the short note lands inside the beat.', he: 'הקשיבו איפה נוחת הצליל הקצר בתוך הפעמה.' },
   'bh-convert': { en: 'Lowered note = dominant (restless); raised note = minor 6 (dark, at rest).', he: 'צליל שירד = דומיננט (חסר מנוחה); צליל שעלה = מינור 6 (כהה ונח).' },
-  'bh-convert-2': { en: 'Still restless? a dominant. At rest: sunny major 6 or shadowy minor 6?', he: 'עדיין חסר מנוחה? דומיננט. נח: מז׳ור 6 מואר או מינור 6 מוצל?' },
+  'bh-convert-2': { en: 'Still restless? A dominant. At rest: sunny major 6 or shadowy minor 6?', he: 'עדיין חסר מנוחה? דומיננט. נח: מז׳ור 6 מואר או מינור 6 מוצל?' },
   'bh-keys': { en: 'Hum the first home note, then compare the new home with it.', he: 'זמזמו את צליל הבית הראשון, ואז השוו אליו את הבית החדש.' },
   'bh-brothers': { en: 'Brothers have roots three or six semitones apart.', he: 'לאחים יש שורשים במרחק שלושה או שישה חצאי טונים.' },
   'bh-family': { en: 'A 6 chord is the minor 7 a minor third below it; listen to the bass to name it.', he: 'אקורד 6 הוא המינור 7 שטרצה קטנה מתחתיו; הקשיבו לבס כדי לתת שם.' },
   'bh-block': { en: 'Hum the top note: if it is 1, 3, 5 or 6 of the scale the chord is the 6 chord.', he: 'זמזמו את הצליל העליון: אם הוא 1, 3, 5 או 6 בסולם — זה אקורד ה־6.' },
   comping: { en: 'Count 1 & 2 & — where does the piano land: on a beat or on an "&"?', he: 'ספרו 1 ו 2 ו — איפה הפסנתר נוחת: על פעמה או על "ו"?' },
   turnarounds: { en: 'Listen to the bass: it walks the roots — and a half step down means a tritone sub.', he: 'הקשיבו לבס: הוא הולך על השורשים — וירידה בחצי טון פירושה תחליף טריטון.' },
+  'where-home': { en: 'Home feels like rest: listen for the chord where the tension lets go — usually right after the V.', he: 'הבית מרגיש כמו מנוחה: הקשיבו לאקורד שבו המתח משתחרר — לרוב מיד אחרי ה־V.' },
+  'next-chord': { en: 'Sing the bass of the next chord before you answer — where does it want to go?', he: 'שירו את הבס של האקורד הבא לפני שעונים — לאן הוא רוצה ללכת?' },
+  'reharm-swap': { en: 'Follow the bass in both versions: the bar where it moves differently is the one that changed.', he: 'עקבו אחרי הבס בשתי הגרסאות: התיבה שבה הוא זז אחרת היא זו שהשתנתה.' },
+  'figure-out': { en: 'One step at a time: first home, then the bass, then the chords, then the tune.', he: 'צעד אחר צעד: קודם הבית, אחר כך הבס, אחר כך האקורדים, ואז המנגינה.' },
   'guide-tones': { en: 'Follow only the top voice: does it hold, then fall a half step, or fall first?', he: 'עקבו רק אחרי הקול העליון: הוא נשאר ואז יורד חצי טון, או יורד קודם?' },
   'chromatic-added': { en: 'Sing the plain scale in your head along with it — the extra note sticks out.', he: 'שירו בראש את הסולם הרגיל יחד איתו — הצליל הנוסף בולט.' },
 };
@@ -211,7 +215,7 @@ export interface SessionInsight {
 /** The confusion that came up most, or praise. `misses`: [right answer, given] per wrong try. */
 export function sessionInsight(qs: Question[], misses: { q: number; given: Answer }[], firstTry: number, total: number, l: Lang, name: string | null): SessionInsight {
   if (total > 0 && firstTry === total)
-    return { kind: 'flawless', text: withName(l === 'en' ? 'Flawless{n}! Every answer right the first time. 🔥' : 'מושלם{n}! כל התשובות נכונות בניסיון הראשון. 🔥', name, l) };
+    return { kind: 'flawless', text: withName(l === 'en' ? 'Flawless{n}! Every answer right the first time.' : 'מושלם{n}! כל התשובות נכונות בניסיון הראשון.', name, l) };
   const pairs = new Map<string, { q: Question; given: Answer; n: number }>();
   for (const m of misses) {
     const q = qs[m.q];

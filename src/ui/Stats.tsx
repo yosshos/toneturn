@@ -60,7 +60,7 @@ export const SX = {
   progress: { en: 'Progress', he: 'התקדמות' },
   historyTitle: { en: 'Session history', he: 'היסטוריית אימונים' },
   highlights: { en: 'Highlights', he: 'נקודות בולטות' },
-  whenBest: { en: 'When you practise best', he: 'מתי אתם מתרגלים הכי טוב' },
+  whenBest: { en: 'When you practice best', he: 'מתי אתם מתרגלים הכי טוב' },
   earnedTitle: { en: 'Earned', he: 'הושגו' },
   overall: { en: 'Overall level', he: 'רמה כללית' },
   bestEver: { en: 'best ever {r} ({d})', he: 'השיא {r} ({d})' },
@@ -130,7 +130,7 @@ export const SX = {
   // month
   month: { en: 'Month in review', he: 'סיכום החודש' },
   monthOpen: { en: 'Your month in review is ready', he: 'סיכום החודש שלכם מוכן' },
-  topArea: { en: 'Most practised', he: 'הכי הרבה תרגול' },
+  topArea: { en: 'Most practiced', he: 'הכי הרבה תרגול' },
   gains: { en: 'Best gains', he: 'השיפורים הגדולים' },
   newAwards: { en: 'Awards', he: 'הישגים' },
   close: { en: 'Close', he: 'סגירה' },
@@ -140,7 +140,7 @@ export const SX = {
 export const AWARD_TEXT: Record<string, { name: L; hint: L }> = {
   'first-lesson': { name: { en: 'First lesson', he: 'שיעור ראשון' }, hint: { en: 'Finish any lesson', he: 'לסיים שיעור כלשהו' } },
   'ten-lessons': { name: { en: 'Lessons', he: 'שיעורים' }, hint: { en: 'Finish {v} lessons', he: 'לסיים {v} שיעורים' } },
-  days: { name: { en: 'Practice days', he: 'ימי תרגול' }, hint: { en: 'Practise on {v} different days', he: 'לתרגל ב־{v} ימים שונים' } },
+  days: { name: { en: 'Practice days', he: 'ימי תרגול' }, hint: { en: 'Practice on {v} different days', he: 'לתרגל ב־{v} ימים שונים' } },
   streak: { name: { en: 'Best streak', he: 'רצף שיא' }, hint: { en: 'A streak of {v} days', he: 'רצף של {v} ימים' } },
   'all-lessons': { name: { en: 'The whole path', he: 'כל המסלול' }, hint: { en: 'Finish every path lesson once', he: 'לסיים כל שיעור במסלול פעם אחת' } },
   units: { name: { en: 'Units', he: 'יחידות' }, hint: { en: 'Finish {v} units', he: 'לסיים {v} יחידות' } },

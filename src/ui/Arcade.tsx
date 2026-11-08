@@ -1,6 +1,7 @@
 // 0.37 "night arcade" pieces (docs/ui-redesign.md): tab bar, level ring, what's-new gift, today's mission,
 // domain tiles, the path as a winding road, and the Play hub.
 
+import { Icon } from './icons';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { levelOf } from '../engine/level';
 import { DOMAINS, domainValue, weakestSkill, type DomainId } from '../engine/rating';
@@ -35,7 +36,7 @@ export const DOMAIN_HUE: Record<DomainId, string> = {
 };
 type TopicId = (typeof TOPICS)[number]['id'];
 const TOPIC_HUE: Record<TopicId, string> = { degrees: 'var(--hue-reading)', harmony: 'var(--hue-pitch)', intervals: 'var(--hue-memory)', singing: 'var(--hue-voice)', rhythm: 'var(--hue-time)' };
-const TOPIC_ICON: Record<TopicId, string> = { degrees: '🎼', harmony: '🎹', intervals: '↕', singing: '🎤', rhythm: '🥁' };
+const TOPIC_ICON: Record<TopicId, 'steps' | 'chord' | 'ear' | 'mic' | 'drum'> = { degrees: 'steps', harmony: 'chord', intervals: 'ear', singing: 'mic', rhythm: 'drum' };
 
 /** Light haptics (where supported, never with reduced motion). */
 export function buzz(kind: 'good' | 'bad') {
@@ -184,11 +185,10 @@ export function WhatsNewButton({ t, lang, unseen, onSeen }: { t: Strings; lang: 
           if (unseen) onSeen();
         }}
       >
-        <svg className="gift-icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
-          <rect x="3.5" y="10" width="17" height="11" rx="2" fill="var(--gold)" />
-          <rect x="2.5" y="7" width="19" height="4.5" rx="1.5" fill="var(--coral)" />
-          <path d="M12 7v14" stroke="var(--bg)" strokeWidth="2" />
-          <path d="M12 7c-2-4-6-3-5 0zM12 7c2-4 6-3 5 0z" fill="var(--hue-voice)" />
+        {/* what is new: a plain line icon (0.52, mature language) */}
+        <svg className="gift-icon" viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <rect x="3.5" y="9" width="17" height="11.5" rx="2" />
+          <path d="M2.5 9h19M12 9v11.5M12 9c-1.6-3.6-5.4-3.4-5-1 .3 1.6 3.4 1 5 1zM12 9c1.6-3.6 5.4-3.4 5-1-.3 1.6-3.4 1-5 1z" />
         </svg>
         {unseen && <span className="gift-dot" />}
       </button>
@@ -270,7 +270,7 @@ function rankHint(p: RankProgress, lang: 'en' | 'he'): string {
   const he = lang === 'he';
   if (p.toFirst) return he ? `${p.toFirst.answers}/${p.toFirst.need} תשובות לדירוג` : `${p.toFirst.answers}/${p.toFirst.need} answers to rank`;
   if (p.next === null) return he ? 'הדרגה העליונה' : 'Top rank';
-  if (p.needAnswers) return he ? `🔒 ${rankLabel(p.next, lang)}: עוד ${p.needAnswers} תשובות` : `🔒 ${rankLabel(p.next, lang)}: ${p.needAnswers} more answers`;
+  if (p.needAnswers) return he ? `${rankLabel(p.next, lang)}: עוד ${p.needAnswers} תשובות` : `${rankLabel(p.next, lang)}: ${p.needAnswers} more answers`;
   return `→ ${rankLabel(p.next, lang)}`;
 }
 
@@ -504,7 +504,7 @@ export function PathScreen({ t, settings, progress, onStart, onPlacement }: { t:
                 {unitLocked && <small className="unit-hint">{t.pathNextUnit}</small>}
               </span>
               <span className="unit-icon" aria-hidden="true">
-                {unitLocked ? '🔒' : TOPIC_ICON[u.topic]}
+                {unitLocked ? <Icon k="lock" size={20} /> : <NodeIcon kind={TOPIC_ICON[u.topic]} />}
               </span>
             </li>,
             ...u.ids.map((id) => {
@@ -523,7 +523,7 @@ export function PathScreen({ t, settings, progress, onStart, onPlacement }: { t:
                       </span>
                     )}
                     <span className="node-disc" aria-hidden="true">
-                      {st === 'locked' ? <span className="lock">🔒</span> : <NodeIcon kind={m.icon} />}
+                      {st === 'locked' ? <span className="lock"><Icon k="lock" /></span> : <NodeIcon kind={m.icon} />}
                     </span>
                     <span className="node-text">
                       {st === 'done' && (
@@ -636,6 +636,9 @@ export interface PracticeHub {
   /** Slow down & loop your own audio (SPEC-0.48 §P3). */
   slowdown?: () => void;
   groove?: () => void;
+  improv?: () => void;
+  puzzle?: () => void;
+  exams?: () => void;
 }
 const HUB_PATHS: Record<string, React.ReactNode> = {
   songs: (
@@ -683,6 +686,27 @@ const HUB_PATHS: Record<string, React.ReactNode> = {
       <path d="M12 9v4l2.5 2M9.5 2.5h5" />
     </>
   ),
+  improv: (
+    <>
+      <path d="M9 18V6l10-2v12" />
+      <circle cx="6.5" cy="18" r="2.5" />
+      <path d="M3 8c2-2 4-2 6 0" />
+    </>
+  ),
+  puzzle: (
+    <>
+      <rect x="3.5" y="3.5" width="7" height="7" rx="1.5" />
+      <rect x="13.5" y="3.5" width="7" height="7" rx="1.5" />
+      <rect x="3.5" y="13.5" width="7" height="7" rx="1.5" />
+      <rect x="13.5" y="13.5" width="7" height="7" rx="1.5" />
+    </>
+  ),
+  exams: (
+    <>
+      <path d="M7 3.5h8l3.5 3.5V20.5H7z" />
+      <path d="M10 11l1.8 1.8L15 9.5M10 16.5h5" />
+    </>
+  ),
   groove: (
     <>
       <path d="M3 15c2 0 2-6 4.5-6S10 15 12 15s2.5-6 4.5-6S19 15 21 15" />
@@ -725,6 +749,9 @@ const HUB_TX = {
   charts: { en: 'Charts', he: 'מהלכים' },
   slowdown: { en: 'Slow down', he: 'האטה' },
   groove: { en: 'Groove', he: 'גרוב' },
+  improv: { en: 'Improvise', he: 'אלתור' },
+  puzzle: { en: 'Daily progression', he: 'מהלך היום' },
+  exams: { en: 'Exams', he: 'מבחנים' },
   games: { en: ['Games', 'By type, topic and level'], he: ['משחקים', 'לפי סוג, נושא ורמה'] },
 };
 
@@ -807,7 +834,7 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
           </div>
           <div className="hub-tools" role="group" aria-label={HUB_TX.tools[lang]}>
             <span className="hub-tools-h">{HUB_TX.tools[lang]}</span>
-            {(['tuner', 'metronome', 'drone', 'charts', 'slowdown', 'groove', 'log'] as const).filter((k) => hub[k]).map((k) => (
+            {(['tuner', 'metronome', 'drone', 'charts', 'improv', 'puzzle', 'exams', 'slowdown', 'groove', 'log'] as const).filter((k) => hub[k]).map((k) => (
               <button key={k} className="hub-tool" onClick={hub[k]} data-hub={k}>
                 <HubIcon k={k} size={18} />
                 <span>{HUB_TX[k][lang]}</span>

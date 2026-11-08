@@ -20,6 +20,10 @@ import './peak.css';
 import './drills.css';
 import './themes.css';
 import './desktop.css';
+import './onboarding.css';
+import './teacher.css';
+import './mature.css';
+import './desktop2.css';
 import { App } from './ui/App';
 import { initPwa } from './pwa';
 

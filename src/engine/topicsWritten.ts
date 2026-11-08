@@ -1046,7 +1046,7 @@ TOPIC_TAGS['figured-bass'] = (l) => (l === 1 ? tg(['theory', 'harmony', 1]) : tg
 // ======================================================================= chromatic-theory
 
 TOPIC_GEN['chromatic-theory'] = {
-  title: { en: 'Colour chords on paper', he: 'אקורדי צבע בכתב' },
+  title: { en: 'Color chords on paper', he: 'אקורדי צבע בכתב' },
   skill: 'theory',
   levels: [
     { en: 'The cadential 6/4', he: 'הקוורטסקסט הקדנציאלי' },

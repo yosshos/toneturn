@@ -33,11 +33,15 @@ test('MIDI keyboard (stub device): enable in Settings, answer a degree question 
     const { piano } = await import(/* @vite-ignore */ path);
     let seen: number[] = [];
     const off = piano.onNotes((a: number[]) => (seen = a));
+    // wait for a condition (up to 3 s): the audio may still be starting under load
+    const until = async (ok: () => boolean) => {
+      for (let k = 0; k < 60 && !ok(); k++) await new Promise((r) => setTimeout(r, 50));
+    };
     inp.onmidimessage({ data: new Uint8Array([0x90, 64, 100]), timeStamp: performance.now() });
-    await new Promise((r) => setTimeout(r, 100));
+    await until(() => seen.includes(64));
     const held = [...seen];
     inp.onmidimessage({ data: new Uint8Array([0x80, 64, 0]), timeStamp: performance.now() });
-    await new Promise((r) => setTimeout(r, 100));
+    await until(() => !seen.includes(64));
     const after = [...seen];
     // the sustain pedal holds a released key until the pedal comes up
     const send = (d: number[]) => inp.onmidimessage({ data: new Uint8Array(d), timeStamp: performance.now() });
@@ -45,10 +49,11 @@ test('MIDI keyboard (stub device): enable in Settings, answer a degree question 
     send([0xb0, 64, 127]);
     send([0x90, 60, 80]);
     send([0x80, 60, 0]);
+    await until(() => seen.includes(60));
     await wait();
     const pedalHeld = [...seen];
     send([0xb0, 64, 0]);
-    await wait();
+    await until(() => !seen.includes(60));
     off();
     return { held, after, pedalHeld, pedalUp: seen };
   });

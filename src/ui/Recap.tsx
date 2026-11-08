@@ -1,3 +1,4 @@
+import { Icon } from './icons';
 import { sessionInsight } from '../engine/coach';
 import { LevelStatsLine } from './LevelStats';
 import { RatingCard } from './Rating';
@@ -144,7 +145,7 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
         {medianMs !== null && (
           <>
             {' '}
-            · <span dir="ltr">⏱ {(medianMs / 1000).toFixed(1)}s</span> <small>{t.medianTime}</small>
+            · <span dir="ltr"><Icon k="clock" /> {(medianMs / 1000).toFixed(1)}s</span> <small>{t.medianTime}</small>
           </>
         )}
       </p>
@@ -154,7 +155,7 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
       <p className="pace-line" data-pace-goal={goalMs ?? ''}>
         {goalMs !== null && paced && (
           <span className="pace-goal">
-            {t.paceGoal} <b dir="ltr">{(goalMs / 1000).toFixed(1)}s</b> · ⚡ {fl.onPace}/{fl.total}
+            {t.paceGoal} <b dir="ltr">{(goalMs / 1000).toFixed(1)}s</b> · <Icon k="bolt" /> {fl.onPace}/{fl.total}
           </span>
         )}
         {lacks.length > 0 && (

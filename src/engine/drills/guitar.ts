@@ -1949,7 +1949,7 @@ function genJazz(s: DrillSpec, tu: Tuning): Drill {
         near = Math.min(...v.map((p) => p.f));
         evs.push({ beat: d * 2, dur: 2, notes: v.map((x) => ({ ...x, tech: 'strum-down' as GuitarTechnique, stroke: 'D' as Stroke })) });
       }
-      title = t(`Harmonised major scale in drop-2 (melody on top) · ${NAMES[key]}`, `סולם מז׳ור מהורמן בדרופ 2 (מנגינה למעלה) · ${NAMES[key]}`);
+      title = t(`Harmonized major scale in drop-2 (melody on top) · ${NAMES[key]}`, `סולם מז׳ור מהורמן בדרופ 2 (מנגינה למעלה) · ${NAMES[key]}`);
       break;
     }
     default:
@@ -2469,7 +2469,7 @@ export function guitarCatalog(): GuitarFamilyDef[] {
       L('g-jazz', 4, 'Drop-2 ii–V–I, voice-led', 'ii–V–I בדרופ 2, הובלת קולות', [J('iivi-drop2')], CYC4),
       L('g-jazz', 5, 'Guide-tone lines', 'קווי צלילים מנחים', [J('guide-tones', { option: 0 }), J('guide-tones', { option: 1 })], CYC4),
       L('g-jazz', 6, 'Walking bass on guitar', 'בס מהלך על גיטרה', [J('walking')], CYC4),
-      L('g-jazz', 7, 'Harmonised scale in drop-2 (chord melody) and octaves', 'סולם מהורמן בדרופ 2 (אקורד-מלודיה) ואוקטבות', [J('harmonized'), J('octaves')], CYC4.slice(0, 6)),
+      L('g-jazz', 7, 'Harmonized scale in drop-2 (chord melody) and octaves', 'סולם מהורמן בדרופ 2 (אקורד-מלודיה) ואוקטבות', [J('harmonized'), J('octaves')], CYC4.slice(0, 6)),
     ]),
     fam('g-reading', 'Reading by position', 'קריאה לפי מצבים', 'classical', ['all'], [
       L('g-reading', 1, 'Position I, strings 1–3', 'מצב I, מיתרים 1–3', [RD('position', { position: 1, option: 1 })], [0]),

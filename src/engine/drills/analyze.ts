@@ -502,7 +502,7 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
     if (bandHit !== null)
       F.push({
         sev: (1 - bandHit) / 0.15,
-        en: `Off the ${lvl} level (${pct(bandHit)} % in band)`,
+        en: `Off the ${lvl} level (${pct(bandHit)}% in band)`,
         he: `לא ברמת ${lvl} (${pct(bandHit)}% בטווח)`,
       });
   }
@@ -548,14 +548,14 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
   if (goal.articulation === 'staccato' && kdr !== null)
     F.push({
       sev: kdr / 0.5,
-      en: `Staccato too long (${pct(kdr)} % of the gap)`,
+      en: `Staccato too long (${pct(kdr)}% of the gap)`,
       he: `סטקטו ארוך מדי (${pct(kdr)}%)`,
     });
   if (goal.articulation === 'portato' && kdr !== null) {
     const off = kdr < 0.6 ? 0.6 - kdr : kdr > 0.8 ? kdr - 0.8 : 0;
     F.push({
       sev: off === 0 ? 0.5 : 1 + off / 0.1,
-      en: `Portato length off (${pct(kdr)} %)`,
+      en: `Portato length off (${pct(kdr)}%)`,
       he: `אורך הפורטטו לא מדויק (${pct(kdr)}%)`,
     });
   }
@@ -604,6 +604,28 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
     };
   else why = { en: 'Almost — one more', he: 'כמעט — עוד אחד' };
 
+  // An octave-shifted keyboard (small MIDI keyboards start an octave low or high): most expected notes have a played
+  // note at their time, an exact number of octaves away — say so, instead of "everything wrong".
+  const octaveShift = (() => {
+    if (accuracy > 0.5 || nExp < 3) return undefined;
+    const counts = new Map<number, number>();
+    exp.forEach((e, i) => {
+      if (ok[i]) return;
+      const near = played.filter((p) => Math.abs(p.on - T[i]) <= Math.max(120, beatMs * 0.45));
+      const d = near.map((p) => p.pitch - e.pitch).find((x) => x !== 0 && x % 12 === 0 && Math.abs(x) <= 24);
+      if (d !== undefined) counts.set(d, (counts.get(d) ?? 0) + 1);
+    });
+    const best = [...counts.entries()].sort((x, y) => y[1] - x[1])[0];
+    return best && best[1] >= Math.max(3, nExp * 0.5) ? best[0] : undefined;
+  })();
+  if (octaveShift !== undefined) {
+    const n = Math.abs(octaveShift) / 12;
+    why =
+      octaveShift < 0
+        ? { en: `You played ${n === 1 ? "an octave" : n + " octaves"} lower than written — your keyboard may be shifted. Fix it below or in Settings → MIDI.`, he: `ניגנתם ${n === 1 ? "אוקטבה" : n + " אוקטבות"} נמוך מהכתוב — כנראה שהמקלדת מוזזת. אפשר לתקן כאן למטה או בהגדרות ← MIDI.` }
+        : { en: `You played ${n === 1 ? "an octave" : n + " octaves"} higher than written — your keyboard may be shifted. Fix it below or in Settings → MIDI.`, he: `ניגנתם ${n === 1 ? "אוקטבה" : n + " אוקטבות"} גבוה מהכתוב — כנראה שהמקלדת מוזזת. אפשר לתקן כאן למטה או בהגדרות ← MIDI.` };
+  }
+
   const perNote: NoteResult[] = exp.map((e, i) => {
     const r: NoteResult = {
       exp: e,
@@ -643,5 +665,6 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
     perNote,
     verdict,
     why,
+    ...(octaveShift !== undefined ? { octaveShift } : {}),
   };
 }

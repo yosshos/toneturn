@@ -30,7 +30,7 @@ export const LESSONS: MiniLesson[] = [
     id: 'extensions',
     area: 'harmony',
     emoji: '✨',
-    title: { en: 'Extensions and colours', he: 'הרחבות וצבעים' },
+    title: { en: 'Extensions and colors', he: 'הרחבות וצבעים' },
     takeaway: { en: 'Keep stacking thirds past the 7th: 9, 11, 13. Alter them (♭9 ♯9 ♯11 ♭13) for spice, or swap the 3 for a 4 for sus.', he: 'ממשיכים לערום טרצות מעל ה־7: ‏9, 11, 13. משנים אותן (♭9 ♯9 ♯11 ♭13) בשביל תבלין, או מחליפים את ה־3 ב־4 בשביל sus.' },
     steps: [
       {
@@ -54,7 +54,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [...G7, 73], chord: true, key: 'C', text: { en: '♯11 · ♭13', he: '♯11 · ♭13' } },
       },
       {
-        say: { en: 'Major chords wear softer colours: maj7, maj9, the sparkling Lydian maj7♯11, and 6/9, which has no seventh at all.', he: 'לאקורדי מז׳ור יש צבעים רכים יותר: maj7, ‏maj9, ה־maj7♯11 הלידי והנוצץ, ו־6/9 — שאין בו ספטימה בכלל.' },
+        say: { en: 'Major chords wear softer colors: maj7, maj9, the sparkling Lydian maj7♯11, and 6/9, which has no seventh at all.', he: 'לאקורדי מז׳ור יש צבעים רכים יותר: maj7, ‏maj9, ה־maj7♯11 הלידי והנוצץ, ו־6/9 — שאין בו ספטימה בכלל.' },
         play: [ch([43, 59, 62, 66], 1.1), ch([43, 59, 66, 69], 1.1), ch([43, 59, 66, 73], 1.1), ch([43, 59, 64, 69], 1.4)],
         show: { notes: [43, 59, 64, 69], chord: true, key: 'G', text: { en: 'maj7 · maj9 · maj7♯11 · 6/9', he: 'maj7 · maj9 · maj7♯11 · 6/9' } },
       },
@@ -64,7 +64,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [43, 60, 62, 67], chord: true, key: 'C', text: { en: 'sus4 · 7sus4 · add9 · 7alt', he: 'sus4 · 7sus4 · add9 · 7alt' } },
       },
       {
-        say: { en: 'Your turn! I play a chord together, then note by note upward. Listen to the top note and the colour, and pick its name.', he: 'תורכם! אני מנגן אקורד ביחד, ואז צליל אחר צליל מלמטה למעלה. הקשיבו לצליל העליון ולצבע, ובחרו את השם.' },
+        say: { en: 'Your turn! I play a chord together, then note by note upward. Listen to the top note and the color, and pick its name.', he: 'תורכם! אני מנגן אקורד ביחד, ואז צליל אחר צליל מלמטה למעלה. הקשיבו לצליל העליון ולצבע, ובחרו את השם.' },
         play: [ch([...G7, 69], 1.5), arp([...G7, 69])],
         show: { notes: [...G7, 69], chord: true, key: 'C', text: { en: '7? 9? 13?', he: '7? 9? 13?' } },
       },
@@ -95,12 +95,12 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [67, 69], key: 'C', text: { en: 'G → A = 9 · G → A♭ = ♭9', he: 'סול ← לה = 9 · סול ← לה♭ = ♭9' } },
       },
       {
-        say: { en: 'A common mistake is putting colours too low. A 9 a step above a low root turns to mud. Keep the root alone in the bass and place the tensions above middle C, where they ring.', he: 'טעות נפוצה היא לשים את הצבעים נמוך מדי. 9 צמוד לשורש נמוך הופך לבוץ. השאירו את השורש לבד בבס ושימו את הטנשנים מעל דו האמצעי, שם הם מצלצלים.' },
+        say: { en: 'A common mistake is putting colors too low. A 9 a step above a low root turns to mud. Keep the root alone in the bass and place the tensions above middle C, where they ring.', he: 'טעות נפוצה היא לשים את הצבעים נמוך מדי. 9 צמוד לשורש נמוך הופך לבוץ. השאירו את השורש לבד בבס ושימו את הטנשנים מעל דו האמצעי, שם הם מצלצלים.' },
         play: [ch([43, 45, 59, 65], 1.4), ch([43, 59, 65, 69], 1.6)],
         show: { notes: [43, 59, 65, 69], chord: true, key: 'C', text: { en: 'muddy · clear', he: 'בוץ · צלול' } },
       },
       {
-        say: { en: 'In real music, 9ths and 13ths are everyday jazz, soul and funk colours. The ♯9 is called the Hendrix chord after Purple Haze. Maj7♯11 is the dreamy Lydian sound of film scores and modern jazz.', he: 'במוזיקה אמיתית, 9 ו־13 הם צבעים יומיומיים בג׳אז, בסול ובפאנק. ה־♯9 נקרא ״אקורד הנדריקס״ בגלל Purple Haze. ‏maj7♯11 הוא הצליל הלידי והחולמני של פסקולים ושל ג׳אז מודרני.' },
+        say: { en: 'In real music, 9ths and 13ths are everyday jazz, soul and funk colors. The ♯9 is called the Hendrix chord after Purple Haze. Maj7♯11 is the dreamy Lydian sound of film scores and modern jazz.', he: 'במוזיקה אמיתית, 9 ו־13 הם צבעים יומיומיים בג׳אז, בסול ובפאנק. ה־♯9 נקרא ״אקורד הנדריקס״ בגלל Purple Haze. ‏maj7♯11 הוא הצליל הלידי והחולמני של פסקולים ושל ג׳אז מודרני.' },
         play: [ch([40, 56, 62, 67], 1.6)],
         show: { notes: [40, 56, 62, 67], chord: true, key: 'E', text: { en: 'E7♯9', he: 'E7♯9' } },
       },
@@ -115,7 +115,7 @@ export const LESSONS: MiniLesson[] = [
     area: 'harmony',
     emoji: '🎹',
     title: { en: 'Voicings and inversions', he: 'וויסינגים והיפוכים' },
-    takeaway: { en: 'Same chord, different arrangement: close, drop 2 or spread; the bass note sets the inversion; jazz voicings leave notes out or add colour on top.', he: 'אותו אקורד, סידור אחר: צפוף, Drop 2 או פרוש; צליל הבס קובע את ההיפוך; וויסינגים בג׳אז משמיטים צלילים או מוסיפים צבע למעלה.' },
+    takeaway: { en: 'Same chord, different arrangement: close, drop 2 or spread; the bass note sets the inversion; jazz voicings leave notes out or add color on top.', he: 'אותו אקורד, סידור אחר: צפוף, Drop 2 או פרוש; צליל הבס קובע את ההיפוך; וויסינגים בג׳אז משמיטים צלילים או מוסיפים צבע למעלה.' },
     steps: [
       {
         say: { en: 'Same chord, different outfit: a voicing is how you arrange its notes. Here is Cmaj7 in close position, all four notes packed as tight as they go.', he: 'אותו אקורד, תלבושת אחרת: וויסינג הוא האופן שבו מסדרים את הצלילים. הנה Cmaj7 במצב צפוף — ארבעת הצלילים צמודים ככל האפשר.' },
@@ -123,7 +123,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [60, 64, 67, 71], chord: true, key: 'C', text: { en: 'Close', he: 'צפוף' } },
       },
       {
-        say: { en: 'Drop 2: take the second note from the top and drop it an octave. Wider and smoother — a big-band and guitar favourite.', he: 'Drop 2: לוקחים את הצליל השני מלמעלה ומורידים אותו אוקטבה. רחב וחלק יותר — אהוב על ביג־בנדים ועל גיטריסטים.' },
+        say: { en: 'Drop 2: take the second note from the top and drop it an octave. Wider and smoother — a big-band and guitar favorite.', he: 'Drop 2: לוקחים את הצליל השני מלמעלה ומורידים אותו אוקטבה. רחב וחלק יותר — אהוב על ביג־בנדים ועל גיטריסטים.' },
         play: [ch([55, 60, 64, 71], 1.4), arp([55, 60, 64, 71])],
         show: { notes: [55, 60, 64, 71], chord: true, key: 'C', text: { en: 'Drop 2', he: 'Drop 2' } },
       },
@@ -280,7 +280,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: '♭VII – IV – I', he: '♭VII – IV – I' } },
       },
       {
-        say: { en: 'To keep: chords have jobs, and the bass tells you which degree you are on. Fifths down pull hardest; borrowed chords add colour from the parallel minor.', he: 'לזכור: לאקורדים יש תפקידים, והבס אומר על איזו דרגה אתם. קווינטה למטה מושכת הכי חזק; אקורדים שאולים מוסיפים צבע מהמינור שעל אותה טוניקה.' },
+        say: { en: 'To keep: chords have jobs, and the bass tells you which degree you are on. Fifths down pull hardest; borrowed chords add color from the parallel minor.', he: 'לזכור: לאקורדים יש תפקידים, והבס אומר על איזו דרגה אתם. קווינטה למטה מושכת הכי חזק; אקורדים שאולים מוסיפים צבע מהמינור שעל אותה טוניקה.' },
         show: { text: { en: 'T → PD → D → T', he: 'T – S – D – T' } },
       },
     ],
@@ -383,7 +383,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: '+50¢ ↑', he: '+50¢ ↑' } },
       },
       {
-        say: { en: 'Now 25 cents, lower. Do not analyse — just feel which way it leans.', he: 'עכשיו 25 סנט, נמוך יותר. אל תנתחו — פשוט הרגישו לאן הוא נוטה.' },
+        say: { en: 'Now 25 cents, lower. Do not analyze — just feel which way it leans.', he: 'עכשיו 25 סנט, נמוך יותר. אל תנתחו — פשוט הרגישו לאן הוא נוטה.' },
         play: [n1(64), rest(0.25), n1(63.75)],
         show: { text: { en: '−25¢ ↓', he: '−25¢ ↓' } },
       },
@@ -513,7 +513,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [62, 71, 60, 72], key: 'C', text: { en: '2→1 · 7→8', he: '2→1 · 7→8' } },
       },
       {
-        say: { en: 'To practise, play one line and sing the other, then swap. The lower voice is the hard one, so sing it first.', he: 'כדי לתרגל, נגנו קו אחד ושירו את השני, ואז החליפו. הקול התחתון הוא הקשה, אז שירו אותו קודם.' },
+        say: { en: 'To practice, play one line and sing the other, then swap. The lower voice is the hard one, so sing it first.', he: 'כדי לתרגל, נגנו קו אחד ושירו את השני, ואז החליפו. הקול התחתון הוא הקשה, אז שירו אותו קודם.' },
         play: [ns([60, 62, 64, 62], 0.55)],
         show: { notes: [60, 62, 64, 62], key: 'C', text: { en: 'sing the lower line', he: 'שירו את הקו התחתון' } },
       },
@@ -613,10 +613,10 @@ export const LESSONS: MiniLesson[] = [
     area: 'world',
     emoji: '🕌',
     title: { en: 'Maqamat', he: 'מקאמים' },
-    takeaway: { en: 'A maqam is built from small note groups (ajnas); the first jins gives its flavour: Hijaz has the wide gap, Rast and Bayati the quarter tones.', he: 'מקאם בנוי מקבוצות צלילים קטנות (אג׳נאס); הג׳ינס הראשון נותן את הטעם: בחיג׳אז יש את הפער הרחב, בראסט ובביאתי — רבעי הטונים.' },
+    takeaway: { en: 'A maqam is built from small note groups (ajnas); the first jins gives its flavor: Hijaz has the wide gap, Rast and Bayati the quarter tones.', he: 'מקאם בנוי מקבוצות צלילים קטנות (אג׳נאס); הג׳ינס הראשון נותן את הטעם: בחיג׳אז יש את הפער הרחב, בראסט ובביאתי — רבעי הטונים.' },
     steps: [
       {
-        say: { en: 'Hi {name}! Arabic music organises melody in maqamat. Each maqam is built from small groups of about four notes, each called a jins. The first jins gives the flavour.', he: 'היי {name}! המוזיקה הערבית מארגנת מנגינות במקאמים. כל מקאם בנוי מקבוצות קטנות של כארבעה צלילים, וכל אחת נקראת ג׳ינס. הג׳ינס הראשון נותן את הטעם.' },
+        say: { en: 'Hi {name}! Arabic music organizes melody in maqamat. Each maqam is built from small groups of about four notes, each called a jins. The first jins gives the flavor.', he: 'היי {name}! המוזיקה הערבית מארגנת מנגינות במקאמים. כל מקאם בנוי מקבוצות קטנות של כארבעה צלילים, וכל אחת נקראת ג׳ינס. הג׳ינס הראשון נותן את הטעם.' },
         play: [ns(mq(58, [0, 2, 4, 5, 7, 9, 11, 12]), 0.32)],
         show: { notes: mq(58, [0, 2, 4, 5, 7, 9, 11, 12]), key: 'Bb', text: { en: 'Ajam = major', he: 'עג׳ם = מז׳ור' } },
       },
@@ -683,7 +683,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'Bayati D E½♭ F G · Saba D E½♭ F G♭', he: 'ביאתי רה מי½♭ פה סול · סבא רה מי½♭ פה סול♭' } },
       },
       {
-        say: { en: 'To sing the half-flat, sing E♭ and E, then aim right between them. Practise each jins slowly over a drone on the tonic, so you hear every step against home.', he: 'כדי לשיר את חצי הבמול, שירו מי במול ומי, ואז כוונו בדיוק לאמצע. תרגלו כל ג׳ינס לאט מעל דרון על הטוניקה, כדי לשמוע כל צעד מול הבית.' },
+        say: { en: 'To sing the half-flat, sing E♭ and E, then aim right between them. Practice each jins slowly over a drone on the tonic, so you hear every step against home.', he: 'כדי לשיר את חצי הבמול, שירו מי במול ומי, ואז כוונו בדיוק לאמצע. תרגלו כל ג׳ינס לאט מעל דרון על הטוניקה, כדי לשמוע כל צעד מול הבית.' },
         play: [n1(62, 1), ns([63, 64, 63.5], 0.7)],
         show: { text: { en: 'E♭ · E · E½♭', he: 'מי♭ · מי · מי½♭' } },
       },
@@ -731,7 +731,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [63, 64], key: 'E', text: { en: 'D♯ → E major', he: 'רה♯ ← מי מז׳ור' } },
       },
       {
-        say: { en: 'Flat keys: the second-to-last flat names the key. B♭, E♭, A♭ — that is E♭ major. One flat is the one to memorise: F major.', he: 'סולמות עם במולים: הבמול הלפני אחרון הוא שם הסולם. סי♭, מי♭, לה♭ — זה מי במול מז׳ור. במול אחד צריך פשוט לזכור: פה מז׳ור.' },
+        say: { en: 'Flat keys: the second-to-last flat names the key. B♭, E♭, A♭ — that is E♭ major. One flat is the one to memorize: F major.', he: 'סולמות עם במולים: הבמול הלפני אחרון הוא שם הסולם. סי♭, מי♭, לה♭ — זה מי במול מז׳ור. במול אחד צריך פשוט לזכור: פה מז׳ור.' },
         play: [cad('E', -1)],
         show: { notes: [63, 67, 70], chord: true, key: 'Eb', text: { en: 'B♭ E♭ A♭ → E♭ major', he: 'סי♭ מי♭ לה♭ ← מי במול מז׳ור' } },
       },
@@ -818,7 +818,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [59, 66], chord: true, key: 'C', text: { en: 'm3 3 · M3 4 · P4 5 · P5 7', he: 'טרצה קטנה 3 · טרצה גדולה 4 · קוורטה 5 · קווינטה 7' } },
       },
       {
-        say: { en: 'Augmented is a semitone wider than major or perfect; diminished, a semitone narrower than minor or perfect. C to F♯ and C to G♭ sound the same — a fourth and a fifth.', he: 'מוגדל רחב בחצי טון מגדול או מזך; מוקטן צר בחצי טון מקטן או מזך. דו–פה דיאז ודו–סול במול נשמעים אותו דבר — קוורטה מוגדלת וקווינטה מוקטנת.' },
+        say: { en: 'Augmented is a semitone wider than major or perfect; diminished, a semitone narrower than minor or perfect. C to F♯ and C to G♭ sound the same — an augmented fourth and a diminished fifth.', he: 'מוגדל רחב בחצי טון מגדול או מזך; מוקטן צר בחצי טון מקטן או מזך. דו–פה דיאז ודו–סול במול נשמעים אותו דבר — קוורטה מוגדלת וקווינטה מוקטנת.' },
         play: [ch([60, 66], 1.4)],
         show: { notes: [60, 66], chord: true, key: 'C', text: { en: 'C–F♯ A4 · C–G♭ d5', he: 'דו–פה♯ קוורטה מוגדלת · דו–סול♭ קווינטה מוקטנת' } },
       },
@@ -863,7 +863,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'bottom note = 1', he: 'הצליל התחתון = 1' } },
       },
       {
-        say: { en: 'Practise downward too: count letters down. A major 3rd below F: F, E, D gives D, but F down to D is three semitones, so lower it to D♭. To keep: letters for the number, semitones for the quality.', he: 'תרגלו גם כלפי מטה: סופרים אותיות למטה. טרצה גדולה מתחת לפה: פה, מי, רה נותן רה, אבל מפה לרה למטה יש שלושה חצאי טונים, אז מנמיכים לרה במול. לזכור: אותיות למספר, חצאי טונים לאיכות.' },
+        say: { en: 'Practice downward too: count letters down. A major 3rd below F: F, E, D gives D, but F down to D is three semitones, so lower it to D♭. To keep: letters for the number, semitones for the quality.', he: 'תרגלו גם כלפי מטה: סופרים אותיות למטה. טרצה גדולה מתחת לפה: פה, מי, רה נותן רה, אבל מפה לרה למטה יש שלושה חצאי טונים, אז מנמיכים לרה במול. לזכור: אותיות למספר, חצאי טונים לאיכות.' },
         play: [ns([65, 61], 0.7)],
         show: { notes: [65, 61], key: 'C', text: { en: 'F ↓ M3 = D♭', he: 'פה ↓ טרצה גדולה = רה♭' } },
       },
@@ -928,7 +928,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [60, 63, 66, 69], chord: true, key: 'C', text: { en: 'Cø7 · C°7 = C E♭ G♭ B♭♭', he: 'Cø7 · C°7 = דו מי♭ סול♭ סי♭♭' } },
       },
       {
-        say: { en: 'To recognise the four triads by ear: major is bright, minor dark, diminished tight and tense, augmented hanging and unresolved. Here they are on D.', he: 'כדי לזהות את ארבעת המשולשים באוזן: מז׳ור מואר, מינור כהה, מוקטן צפוף ומתוח, מוגדל תלוי ולא פתור. הנה הם על רה.' },
+        say: { en: 'To recognize the four triads by ear: major is bright, minor dark, diminished tight and tense, augmented hanging and unresolved. Here they are on D.', he: 'כדי לזהות את ארבעת המשולשים באוזן: מז׳ור מואר, מינור כהה, מוקטן צפוף ומתוח, מוגדל תלוי ולא פתור. הנה הם על רה.' },
         play: [ch([62, 66, 69], 0.9), ch([62, 65, 69], 0.9), ch([62, 65, 68], 0.9), ch([62, 66, 70], 1.2)],
         show: { text: { en: 'D · Dm · D° · D+', he: 'D · Dm · D° · D+' } },
       },
@@ -1037,7 +1037,7 @@ export const LESSONS: MiniLesson[] = [
     area: 'theory',
     emoji: '🧭',
     title: { en: 'The circle of fifths', he: 'מעגל הקווינטות' },
-    takeaway: { en: 'Clockwise by fifths adds a sharp (G D A E B F♯), anticlockwise adds a flat (F B♭ E♭ A♭ D♭ G♭); the relative minor is a minor third down.', he: 'עם כיוון השעון בקווינטות מוסיפים דיאז (סול רה לה מי סי פה♯), נגד כיוון השעון מוסיפים במול (פה סי♭ מי♭ לה♭ רה♭ סול♭); המינור המקביל טרצה קטנה למטה.' },
+    takeaway: { en: 'Clockwise by fifths adds a sharp (G D A E B F♯), counterclockwise adds a flat (F B♭ E♭ A♭ D♭ G♭); the relative minor is a minor third down.', he: 'עם כיוון השעון בקווינטות מוסיפים דיאז (סול רה לה מי סי פה♯), נגד כיוון השעון מוסיפים במול (פה סי♭ מי♭ לה♭ רה♭ סול♭); המינור המקביל טרצה קטנה למטה.' },
     steps: [
       {
         say: { en: 'Hi {name}! Go up a perfect fifth from C and you reach G. Keep going: D, A, E, B, F♯. Each step adds one sharp.', he: 'היי {name}! עולים קווינטה זכה מדו ומגיעים לסול. ממשיכים: רה, לה, מי, סי, פה דיאז. כל צעד מוסיף דיאז אחד.' },
@@ -1055,11 +1055,11 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [65, 58, 63, 56, 61, 54], text: { en: 'F B♭ E♭ A♭ D♭ G♭', he: 'פה סי♭ מי♭ לה♭ רה♭ סול♭' } },
       },
       {
-        say: { en: 'Put them on a clock: C at the top, sharps clockwise, flats anticlockwise. At the bottom F♯ and G♭ meet: same sound, two names.', he: 'שמים אותם על שעון: דו למעלה, הדיאזים עם כיוון השעון, הבמולים נגדו. למטה נפגשים פה דיאז וסול במול: אותו צליל, שני שמות.' },
+        say: { en: 'Put them on a clock: C at the top, sharps clockwise, flats counterclockwise. At the bottom F♯ and G♭ meet: same sound, two names.', he: 'שמים אותם על שעון: דו למעלה, הדיאזים עם כיוון השעון, הבמולים נגדו. למטה נפגשים פה דיאז וסול במול: אותו צליל, שני שמות.' },
         show: { text: { en: '♭ ← C → ♯', he: 'דו למעלה · ♯ עם השעון · ♭ נגדו' } },
       },
       {
-        say: { en: 'Neighbours on the circle are a fifth apart and differ by just one sharp or flat. Clockwise from D is A; anticlockwise is G.', he: 'שכנים במעגל רחוקים קווינטה זה מזה ונבדלים בדיאז או במול אחד בלבד. עם כיוון השעון מרה — לה; נגד כיוון השעון — סול.' },
+        say: { en: 'Neighbors on the circle are a fifth apart and differ by just one sharp or flat. Clockwise from D is A; counterclockwise is G.', he: 'שכנים במעגל רחוקים קווינטה זה מזה ונבדלים בדיאז או במול אחד בלבד. עם כיוון השעון מרה — לה; נגד כיוון השעון — סול.' },
         play: [ch([55, 59, 62], 1), ch([50, 54, 57], 1), ch([57, 61, 64], 1.3)],
         show: { text: { en: 'G ← D → A', he: 'השכנים של רה: סול, לה' } },
       },
@@ -1069,19 +1069,19 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [57, 60, 64], chord: true, key: 'C', text: { en: 'C major ↔ A minor', he: 'דו מז׳ור ↔ לה מינור' } },
       },
       {
-        say: { en: 'Your turn! I name a major key. Depending on the level, tell me how many sharps or flats it has, its relative minor, or its neighbour one step around the circle.', he: 'תורכם! אני אומר סולם מז׳ור. לפי השלב, אמרו לי כמה דיאזים או במולים יש בו, מה המינור המקביל שלו, או מי השכן שלו צעד אחד במעגל.' },
+        say: { en: 'Your turn! I name a major key. Depending on the level, tell me how many sharps or flats it has, its relative minor, or its neighbor one step around the circle.', he: 'תורכם! אני אומר סולם מז׳ור. לפי השלב, אמרו לי כמה דיאזים או במולים יש בו, מה המינור המקביל שלו, או מי השכן שלו צעד אחד במעגל.' },
         play: [cad('E', -1)],
         show: { text: { en: 'E♭ major: ?', he: 'מי במול מז׳ור: ?' } },
       },
     ],
     more: [
       {
-        say: { en: 'Why fifths? G major shares six of its seven notes with C major; only F becomes F♯. Each step clockwise raises the old 4th degree into a new leading tone. Each step anticlockwise lowers the old 7th.', he: 'למה קווינטות? לסול מז׳ור יש שישה מתוך שבעה צלילים משותפים עם דו מז׳ור; רק פה הופך לפה דיאז. כל צעד עם כיוון השעון מגביה את דרגה 4 הישנה לצליל מוביל חדש. כל צעד נגד כיוון השעון מנמיך את דרגה 7 הישנה.' },
+        say: { en: 'Why fifths? G major shares six of its seven notes with C major; only F becomes F♯. Each step clockwise raises the old 4th degree into a new leading tone. Each step counterclockwise lowers the old 7th.', he: 'למה קווינטות? לסול מז׳ור יש שישה מתוך שבעה צלילים משותפים עם דו מז׳ור; רק פה הופך לפה דיאז. כל צעד עם כיוון השעון מגביה את דרגה 4 הישנה לצליל מוביל חדש. כל צעד נגד כיוון השעון מנמיך את דרגה 7 הישנה.' },
         play: [ns([60, 62, 64, 65, 67, 69, 71, 72], 0.26), rest(0.3), ns([55, 57, 59, 60, 62, 64, 66, 67], 0.26)],
         show: { notes: [55, 57, 59, 60, 62, 64, 66, 67], key: 'G', text: { en: 'C → G: F becomes F♯', he: 'דו ← סול: פה הופך לפה♯' } },
       },
       {
-        say: { en: 'Down a fifth is the same as up a fourth. So anticlockwise you can also count fourths: C, F, B♭, E♭. Jazz musicians call this the cycle of fourths and practise everything around it.', he: 'קווינטה למטה זהה לקוורטה למעלה. לכן נגד כיוון השעון אפשר גם לספור קוורטות: דו, פה, סי♭, מי♭. מוזיקאי ג׳אז קוראים לזה מעגל הקוורטות ומתרגלים הכול סביבו.' },
+        say: { en: 'Down a fifth is the same as up a fourth. So counterclockwise you can also count fourths: C, F, B♭, E♭. Jazz musicians call this the cycle of fourths and practice everything around it.', he: 'קווינטה למטה זהה לקוורטה למעלה. לכן נגד כיוון השעון אפשר גם לספור קוורטות: דו, פה, סי♭, מי♭. מוזיקאי ג׳אז קוראים לזה מעגל הקוורטות ומתרגלים הכול סביבו.' },
         play: [ns([60, 65, 70, 75], 0.5)],
         show: { notes: [60, 65, 70, 75], key: 'C', text: { en: 'C F B♭ E♭ = up in fourths', he: 'דו פה סי♭ מי♭ = קוורטות למעלה' } },
       },
@@ -1095,7 +1095,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'iii – vi – ii – V7 – I', he: 'iii – vi – ii – V7 – I' } },
       },
       {
-        say: { en: 'Distance on the circle is distance in sound. A move to a neighbouring key is smooth. A jump across the circle, a tritone away, is a jolt. Hear C go to G through D7, then C jump to F♯.', he: 'מרחק במעגל הוא מרחק בצליל. מעבר לסולם שכן הוא חלק. קפיצה לצד השני של המעגל, טריטון משם, היא טלטלה. שמעו את דו עובר לסול דרך D7, ואז את דו קופץ לפה דיאז.' },
+        say: { en: 'Distance on the circle is distance in sound. A move to a neighboring key is smooth. A jump across the circle, a tritone away, is a jolt. Hear C go to G through D7, then C jump to F♯.', he: 'מרחק במעגל הוא מרחק בצליל. מעבר לסולם שכן הוא חלק. קפיצה לצד השני של המעגל, טריטון משם, היא טלטלה. שמעו את דו עובר לסול דרך D7, ואז את דו קופץ לפה דיאז.' },
         play: [ch([48, 55, 64, 72], 0.9), ch([50, 57, 60, 66], 0.9), ch([43, 59, 62, 67], 1.2), rest(0.4), ch([48, 55, 64, 72], 0.9), ch([54, 58, 61, 66], 1.3)],
         show: { text: { en: 'C → D7 → G · C → F♯', he: 'C → D7 → G · C → F♯' } },
       },
@@ -1105,8 +1105,8 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [59, 66], chord: true, key: 'C', text: { en: 'B–F♯ P5 ✓ · B–F d5 ✗', he: 'סי–פה♯ קווינטה זכה ✓ · סי–פה מוקטנת ✗' } },
       },
       {
-        say: { en: 'In real music, Baroque sequences and jazz standards such as Autumn Leaves march around the circle. To keep: clockwise adds a sharp, anticlockwise adds a flat, and neighbours are closely related keys.', he: 'במוזיקה אמיתית, סקוונצות בארוק וסטנדרטים של ג׳אז כמו Autumn Leaves צועדים סביב המעגל. לזכור: עם כיוון השעון מוסיפים דיאז, נגדו מוסיפים במול, ושכנים הם סולמות קרובים.' },
-        show: { text: { en: '♯ clockwise · ♭ anticlockwise', he: '♯ עם השעון · ♭ נגדו' } },
+        say: { en: 'In real music, Baroque sequences and jazz standards such as Autumn Leaves march around the circle. To keep: clockwise adds a sharp, counterclockwise adds a flat, and neighbors are closely related keys.', he: 'במוזיקה אמיתית, סקוונצות בארוק וסטנדרטים של ג׳אז כמו Autumn Leaves צועדים סביב המעגל. לזכור: עם כיוון השעון מוסיפים דיאז, נגדו מוסיפים במול, ושכנים הם סולמות קרובים.' },
+        show: { text: { en: '♯ clockwise · ♭ counterclockwise', he: '♯ עם השעון · ♭ נגדו' } },
       },
     ],
   },
@@ -1218,7 +1218,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [55, 57, 59, 60, 62, 64, 65, 67], key: 'C', text: { en: 'G7 → G Mixolydian', he: 'G7 ← סול מיקסולידי' } },
       },
       {
-        say: { en: 'Jazz adds colour. 7alt takes the altered scale, 13♭9 the half-whole diminished, and 7♯11 the Lydian dominant.', he: 'הג׳אז מוסיף צבע. 7alt מקבל את סולם האלטרד, 13♭9 את הדימיניש חצי־שלם, ו־7♯11 את הלידי הדומיננטי.' },
+        say: { en: 'Jazz adds color. 7alt takes the altered scale, 13♭9 the half-whole diminished, and 7♯11 the Lydian dominant.', he: 'הג׳אז מוסיף צבע. 7alt מקבל את סולם האלטרד, 13♭9 את הדימיניש חצי־שלם, ו־7♯11 את הלידי הדומיננטי.' },
         play: [ch([43, 59, 65, 70, 75], 1.4), ch([43, 59, 65, 69, 73], 1.4)],
         show: { notes: [43, 59, 65, 70, 75], chord: true, key: 'C', text: { en: '7alt · 13♭9 · 7♯11', he: '7alt · 13♭9 · 7♯11' } },
       },
@@ -1344,7 +1344,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [43], clef: 'bass', text: { en: 'bottom line: E (treble) · G (bass)', he: 'קו תחתון: מי (סול) · סול (פה)' } },
       },
       {
-        say: { en: 'Practise a few minutes every day, naming notes aloud, and time yourself. To keep: check the clef, find the nearest landmark, then count by lines and spaces.', he: 'תרגלו כמה דקות כל יום, אמרו את שמות התווים בקול, ומדדו זמן. לזכור: בודקים את המפתח, מוצאים את ציון הדרך הקרוב, ואז סופרים קווים ורווחים.' },
+        say: { en: 'Practice a few minutes every day, naming notes aloud, and time yourself. To keep: check the clef, find the nearest landmark, then count by lines and spaces.', he: 'תרגלו כמה דקות כל יום, אמרו את שמות התווים בקול, ומדדו זמן. לזכור: בודקים את המפתח, מוצאים את ציון הדרך הקרוב, ואז סופרים קווים ורווחים.' },
         show: { text: { en: 'clef → landmark → count', he: 'מפתח ← ציון דרך ← ספירה' } },
       },
     ],

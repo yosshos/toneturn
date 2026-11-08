@@ -1,6 +1,7 @@
 // Vocal technique (spec addendum P): range calibration, the 10-level ladder, the daily warm-up, a live
 // pitch trace, per-take metric cards with a tip and listen-back, the range map and per-metric trends.
 
+import { Icon } from './icons';
 import { vocalTags } from '../engine/taxonomy';
 import type { SkillId } from '../engine/lesson';
 import { useMiniGate } from './MiniLesson';
@@ -405,7 +406,7 @@ export function VocalScreen({ t, settings, progress, onSettings, onProgress, onB
                 <span className="lv-num">{lv}</span>
                 <span className="lv-text">
                   <b>{t.vocalLevelNames[lv - 1]}</b>
-                  <small>{passed ? `✓ ${t.vocalPassed}` : !open ? `🔒 ${t.vocalLocked}` : best > 0 ? `${Math.round(best * 100)}%` : fill(t.vocalLevel, { n: lv })}</small>
+                  <small>{passed ? `✓ ${t.vocalPassed}` : !open ? <><Icon k="lock" /> {t.vocalLocked}</> : best > 0 ? `${Math.round(best * 100)}%` : fill(t.vocalLevel, { n: lv })}</small>
                 </span>
               </button>
             </li>
@@ -428,7 +429,7 @@ export function VocalScreen({ t, settings, progress, onSettings, onProgress, onB
                   <span className="lv-num">{i + 1}</span>
                   <span className="lv-text">
                     <b>{t.modesLevelNames[i]}</b>
-                    <small>{passed ? `✓ ${t.vocalPassed}` : !open ? `🔒 ${t.vocalLocked}` : best > 0 ? `${Math.round(best * 100)}%` : fill(t.vocalLevel, { n: i + 1 })}</small>
+                    <small>{passed ? `✓ ${t.vocalPassed}` : !open ? <><Icon k="lock" /> {t.vocalLocked}</> : best > 0 ? `${Math.round(best * 100)}%` : fill(t.vocalLevel, { n: i + 1 })}</small>
                   </span>
                 </button>
               </li>
@@ -451,7 +452,7 @@ export function VocalScreen({ t, settings, progress, onSettings, onProgress, onB
                   <span className="lv-num">{i + 1}</span>
                   <span className="lv-text">
                     <b>{t.ornLevelNames[i]}</b>
-                    <small>{passed ? `✓ ${t.vocalPassed}` : !open ? `🔒 ${t.vocalLocked}` : fill(t.vocalLevel, { n: i + 1 })}</small>
+                    <small>{passed ? `✓ ${t.vocalPassed}` : !open ? <><Icon k="lock" /> {t.vocalLocked}</> : fill(t.vocalLevel, { n: i + 1 })}</small>
                   </span>
                 </button>
               </li>
@@ -474,7 +475,7 @@ export function VocalScreen({ t, settings, progress, onSettings, onProgress, onB
                   <span className="lv-num">{i + 1}</span>
                   <span className="lv-text">
                     <b>{t.sightLevelNames[i]}</b>
-                    <small>{passed ? `✓ ${t.vocalPassed}` : !open ? `🔒 ${t.vocalLocked}` : fill(t.vocalLevel, { n: i + 1 })}</small>
+                    <small>{passed ? `✓ ${t.vocalPassed}` : !open ? <><Icon k="lock" /> {t.vocalLocked}</> : fill(t.vocalLevel, { n: i + 1 })}</small>
                   </span>
                 </button>
               </li>
@@ -497,7 +498,7 @@ export function VocalScreen({ t, settings, progress, onSettings, onProgress, onB
                   <span className="lv-num">{i + 1}</span>
                   <span className="lv-text">
                     <b>{t.barryLevelNames[i]}</b>
-                    <small>{passed ? `✓ ${t.vocalPassed}` : !open ? `🔒 ${t.vocalLocked}` : fill(t.vocalLevel, { n: i + 1 })}</small>
+                    <small>{passed ? `✓ ${t.vocalPassed}` : !open ? <><Icon k="lock" /> {t.vocalLocked}</> : fill(t.vocalLevel, { n: i + 1 })}</small>
                   </span>
                 </button>
               </li>
@@ -520,7 +521,7 @@ export function VocalScreen({ t, settings, progress, onSettings, onProgress, onB
                   <span className="lv-num">{i + 1}</span>
                   <span className="lv-text">
                     <b>{t.harmonyLevelNames[i]}</b>
-                    <small>{passed ? `✓ ${t.vocalPassed}` : !open ? `🔒 ${t.vocalLocked}` : `🎧 ${t.headphonesNeeded}`}</small>
+                    <small>{passed ? `✓ ${t.vocalPassed}` : !open ? <><Icon k="lock" /> {t.vocalLocked}</> : <><Icon k="phones" /> {t.headphonesNeeded}</>}</small>
                   </span>
                 </button>
               </li>
@@ -639,7 +640,7 @@ function RangeCalibration({ t, settings, onDone }: { t: Strings; settings: Setti
         </button>
       ) : (
         <button className={`btn mega ${on ? 'ghost' : ''}`} disabled={on} onClick={() => void start()}>
-          {on ? '…' : `🎤 ${t.vocalRangeStart}`}
+          {on ? '…' : <><Icon k="mic" /> {t.vocalRangeStart}</>}
         </button>
       )}
     </main>
@@ -694,7 +695,7 @@ function VocalSession({
   const best = useRef<Record<string, { score: number; take: VocalTake }>>(saved?.best ?? {});
   useEffect(() => {
     if (i === 0 && noteIdx === 0) return;
-    saveSlot(slotKey, { title: `${t.vocalTitle} · ${typeof level === 'number' ? level : '🔥'}`, route: 'vocal', done: i, total: items.length, data: { ids: items.map((it) => it.id), i, noteIdx, best: best.current } });
+    saveSlot(slotKey, { title: typeof level === 'number' ? `${t.vocalTitle} · ${level}` : t.vocalWarmup, route: 'vocal', done: i, total: items.length, data: { ids: items.map((it) => it.id), i, noteIdx, best: best.current } });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [i, noteIdx]);
   const rangeScores = useRef<number[]>([]);
@@ -996,7 +997,7 @@ function VocalSession({
         </header>
         <section className="vocal-summary" aria-live="polite">
           <div className="big-score">{Math.round(summary.score * 100)}%</div>
-          {level !== 'warmup' && <p>{summary.passed ? `🎉 ${t.vocalLevelPassed}` : fill(t.vocalLevelNotYet, { need: Math.round(levelDef(level).pass * 100) })}</p>}
+          {level !== 'warmup' && <p>{summary.passed ? t.vocalLevelPassed : fill(t.vocalLevelNotYet, { need: Math.round(levelDef(level).pass * 100) })}</p>}
         </section>
         <button className="btn mega" onClick={onExit}>
           {t.vocalDone}
@@ -1088,7 +1089,7 @@ function VocalSession({
               }
             }}
           />
-          <span>🎧 {t.vocalHeadphones}</span>
+          <span><Icon k="phones" /> {t.vocalHeadphones}</span>
         </label>
       )}
 
@@ -1104,10 +1105,10 @@ function VocalSession({
               <MetricBars t={t} g={grade} />
               {grade.chordMade && <p className="take-remark">🎹 {fill(t.barryMade, { chord: `${pcLabel(grade.chordMade.root)}${grade.chordMade.kind === 'dom7' ? '7' : 'm6'}` })}</p>}
               {item.bh?.mode === 'free' && !grade.chordMade && <p className="take-remark">{t.barryNotHalfStep}</p>}
-              {remarkLine && <p className="take-remark">🎯 {remarkLine}</p>}
-              {tipKey && <p className="take-tip">💡 {t.vocalTips[tipKey]}</p>}
+              {remarkLine && <p className="take-remark"><Icon k="target" /> {remarkLine}</p>}
+              {tipKey && <p className="take-tip"><Icon k="tip" /> {t.vocalTips[tipKey]}</p>}
               <NotesView midis={shownTargets} keyPc={null} settings={settings} />
-              {memoryItem(item) && refs > 0 && <p className="field-hint">🔁 {fill(t.refCost, { n: refs, p: Math.round((1 - memoryFactor(refs)) * 100) })}</p>}
+              {memoryItem(item) && refs > 0 && <p className="field-hint"><Icon k="repeat" /> {fill(t.refCost, { n: refs, p: Math.round((1 - memoryFactor(refs)) * 100) })}</p>}
             </>
           )}
           {audioUrl && (
@@ -1122,7 +1123,7 @@ function VocalSession({
       <div className="vocal-actions">
         {phase === 'ready' && (
           <button className="btn mega" onClick={() => void take()}>
-            {isInstrument(settings) ? `🎷 ${t.playNow}` : `🎤 ${t.vocalSing}`}
+            {isInstrument(settings) ? t.playNow : <><Icon k="mic" /> {t.vocalSing}</>}
           </button>
         )}
         {phase === 'calibrating' && <p className="vocal-cue">🤫 {t.gateWait}</p>}
@@ -1140,7 +1141,7 @@ function VocalSession({
               setRefs(refsRef.current);
             }}
           >
-            🔁 {t.refAgain}
+            <Icon k="repeat" /> {t.refAgain}
             {refs > 0 && ` (${refs})`}
           </button>
         )}
