@@ -366,7 +366,7 @@ export function App() {
   // Where a tool (tuner, metronome, drone) was opened from — Practice tab or the menu — so Back returns there.
   const toolFrom = useRef<Route>('home');
   const go = (r: Route) => {
-    if ((r === 'tuner' || r === 'metronome' || r === 'drone') && route !== r) toolFrom.current = route === 'arcade' || route === 'path' ? route : 'home';
+    if ((r === 'tuner' || r === 'metronome' || r === 'drone' || r === 'vocal' || r === 'learned') && route !== r && route !== 'lesson' && route !== 'singalong') toolFrom.current = route === 'arcade' || route === 'path' || route === 'drills' ? route : 'home';
     location.hash = r === 'lesson' || r === 'game' ? `/${PLAY_HASH}` : r === 'home' ? '' : `/${r}`;
     setRoute(r);
   };
@@ -892,7 +892,7 @@ export function App() {
           <TopBar t={t} lang={s.uiLang} streak={gems.streak} onStreak={() => setStreakOpen(true)} whatsNew={{ unseen: news.length > 0, onSeen: () => updateSettings({ seenVersion: APP_VERSION }) }} headerExtra={<MonthReviewIcon t={t} lang={s.uiLang} progress={progress} seenMonth={s.monthReviewSeen} onSeen={(monthReviewSeen) => updateSettings({ monthReviewSeen })} />} onMenu={() => setMenuOpen(true)} />
         </div>
       )}
-      {route === 'learned' && <LearnedScreen t={t} settings={s} name={playerFirstName} onLearned={markLearned} onBack={() => go('home')} />}
+      {route === 'learned' && <LearnedScreen t={t} settings={s} name={playerFirstName} onLearned={markLearned} onBack={() => go(toolFrom.current)} />}
       {route === 'home' && (
         <Home
           t={t}
@@ -1017,7 +1017,7 @@ export function App() {
           hub={{
             songs: () => go('songs'),
             drills: () => go('drills'),
-            vocal: s.noSing || (s.pathLeaveOut ?? []).includes('voice') ? undefined : () => (setVocalWarmup(false), go('vocal')),
+            lessons: () => go('learned'),
             tuner: () => go('tuner'),
             metronome: () => go('metronome'),
             drone: () => go('drone'),
@@ -1297,6 +1297,7 @@ export function App() {
           items={progress.drillItems ?? {}}
           onTake={(st, evs, xp, m) => void store.recordDrill(st, evs, xp, m).then(setProgress)}
           onBack={() => (drillFrom.current ? drillQueueDone(0, 0) : go('arcade'))}
+          onVoice={s.noSing ? undefined : () => (setVocalWarmup(false), go('vocal'))}
           queue={drillQueue}
           onQueueDone={drillQueueDone}
           startTest={drillFrom.current === 'test'}
@@ -1395,7 +1396,7 @@ export function App() {
           progress={progress}
           onSettings={updateSettings}
           onProgress={setProgress}
-          onBack={() => go('home')}
+          onBack={() => go(toolFrom.current)}
           onRuns={openRuns}
           onSingAlong={() => gate('vocal:singalong', () => go('singalong'))}
           startWarmup={vocalWarmup}

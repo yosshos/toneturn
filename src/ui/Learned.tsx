@@ -9,7 +9,6 @@ import type { Settings } from '../storage/progress';
 import { GlossaryList, MiniLessonPlayer } from './MiniLesson';
 
 export const AREAS: AreaId[] = ['ear', 'harmony', 'rhythm', 'theory', 'jazz', 'voice', 'world', 'play'];
-const AREA_ICON: Record<AreaId, string> = { ear: '👂', harmony: '🎼', rhythm: '🥁', theory: '📖', jazz: '🎷', voice: '🎤', world: '🌍', play: '🎹' };
 
 export function learnedCount(settings: Settings) {
   return Object.keys(settings.learned ?? {}).filter((id) => MINI_LESSONS[id]).length;
@@ -19,59 +18,94 @@ export function LearnedScreen({ t, settings, name, onLearned, onBack }: { t: Str
   const lang = settings.uiLang;
   const learned = settings.learned ?? {};
   const [open, setOpen] = useState<MiniLesson | null>(null);
+  // Practice → Lessons (owner 2026-11-08): the short theory lessons, split and filtered by topic like the games list.
+  const [topic, setTopicState] = useState<AreaId | 'all' | 'glossary'>(() => {
+    try {
+      return (sessionStorage.getItem('toneturn.lessonTopic') as AreaId | 'all' | 'glossary' | null) ?? 'all';
+    } catch {
+      return 'all';
+    }
+  });
+  const setTopic = (x: AreaId | 'all' | 'glossary') => {
+    setTopicState(x);
+    try {
+      sessionStorage.setItem('toneturn.lessonTopic', x);
+    } catch {
+      /* fine */
+    }
+  };
   const all = Object.values(MINI_LESSONS);
   const total = all.length;
   const got = all.filter((l) => learned[l.id]).length;
+  const areas = AREAS.filter((a) => all.some((l) => l.area === a));
+  const he = lang === 'he';
   return (
-    <main className="panel-screen learned">
+    <main className="panel-screen learned lessons2">
       <header className="screen-head">
         <button className="icon-btn" onClick={onBack} aria-label={t.back}>
           <span className="flip-rtl">←</span>
         </button>
-        <h1>📚 {t.learnedTitle}</h1>
+        <h1>{he ? 'שיעורים' : 'Lessons'}</h1>
       </header>
-      <section className="set-card learned-summary">
-        <div className="learned-meter" aria-hidden="true">
+      <section className="ls-summary">
+        <span className="ls-meter" aria-hidden="true">
           <span style={{ width: `${Math.round((got / Math.max(1, total)) * 100)}%` }} />
-        </div>
-        <p>
+        </span>
+        <small>
           <b dir="ltr">
             {got}/{total}
           </b>{' '}
-          {t.learnedOf}
-        </p>
-        <p className="field-hint">{t.learnedHint}</p>
+          {he ? 'שיעורים שהשלמתם' : 'lessons completed'}
+        </small>
       </section>
-      <GlossaryList lang={lang} title={t.glossaryTitle} hint={t.glossaryHint} />
-      {AREAS.map((a) => {
-        const ls = all.filter((l) => l.area === a);
-        if (!ls.length) return null;
-        const n = ls.filter((l) => learned[l.id]).length;
-        return (
-          <section key={a} className="set-card learned-area" data-area={a}>
-            <h2>
-              {AREA_ICON[a]} {t.areaNames[a]}{' '}
-              <small dir="ltr">
-                {n}/{ls.length}
-              </small>
-            </h2>
-            <div className="learned-grid">
-              {ls.map((l) => {
-                const has = !!learned[l.id];
-                return (
-                  <button key={l.id} className={`learned-card ${has ? 'got' : 'todo'}`} data-learned-card={l.id} onClick={() => setOpen(l)}>
-                    <span className="learned-emoji" aria-hidden="true">
-                      {has ? l.emoji : '❔'}
-                    </span>
-                    <b>{l.title[lang]}</b>
-                    {has ? <small>{l.takeaway[lang]}</small> : <small>{t.learnedListen}</small>}
-                  </button>
-                );
-              })}
-            </div>
-          </section>
-        );
-      })}
+      <div className="chips ls-topics" role="tablist" aria-label={he ? 'נושאים' : 'Topics'}>
+        {(['all', ...areas, 'glossary'] as const).map((x) => (
+          <button key={x} role="tab" aria-selected={topic === x} className={`chip ${topic === x ? 'on' : ''}`} onClick={() => setTopic(x)} data-lesson-topic={x}>
+            {x === 'all' ? (he ? 'הכול' : 'All') : x === 'glossary' ? (he ? 'מילון' : 'Glossary') : t.areaNames[x]}
+          </button>
+        ))}
+      </div>
+      {topic === 'glossary' ? (
+        <GlossaryList lang={lang} title={t.glossaryTitle} hint={t.glossaryHint} />
+      ) : (
+        areas
+          .filter((a) => topic === 'all' || topic === a)
+          .map((a) => {
+            const ls = all.filter((l) => l.area === a);
+            const n = ls.filter((l) => learned[l.id]).length;
+            return (
+              <section key={a} className="set-card learned-area" data-area={a}>
+                <h2>
+                  {t.areaNames[a]}{' '}
+                  <small dir="ltr">
+                    {n}/{ls.length}
+                  </small>
+                </h2>
+                <ul className="ls-list">
+                  {ls.map((l) => {
+                    const has = !!learned[l.id];
+                    return (
+                      <li key={l.id}>
+                        <button className={`learned-card ls-row ${has ? 'got' : 'todo'}`} data-learned-card={l.id} onClick={() => setOpen(l)}>
+                          <span className="ls-mark" aria-hidden="true">
+                            {has ? '✓' : ''}
+                          </span>
+                          <span className="ls-text">
+                            <b>{l.title[lang]}</b>
+                            {has && <small>{l.takeaway[lang]}</small>}
+                          </span>
+                          <span className="ls-go flip-rtl" aria-hidden="true">
+                            ›
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+            );
+          })
+      )}
       {open && (
         <MiniLessonPlayer
           t={t}

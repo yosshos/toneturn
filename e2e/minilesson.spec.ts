@@ -16,7 +16,7 @@ test('a unit opens with its mini-lesson; skip goes straight to practice; the col
   await page.locator('[data-mini-skip]').click();
   await expect(page.locator('[data-mini]')).toHaveCount(0);
   await page.goto('/?sim=1&unlock=all&mini=1#/learned');
-  await expect(page.getByRole('heading', { name: /Topics I learned/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Lessons' })).toBeVisible();
   expect(await page.locator('[data-learned-card]').count()).toBeGreaterThan(60);
   await expect(page.locator('.learned-card.got')).toHaveCount(0); // skipped ≠ learned
 });
@@ -44,11 +44,13 @@ test('music words are tappable chips; a skipped quick lesson does not come back'
   await page.locator('.all-lessons').getByRole('button', { name: /Home, third, fifth/ }).click();
   await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible();
   await expect(page.locator('[data-mini]')).toHaveCount(0);
-  // The glossary in "Topics I learned": tap a word, read it in plain language.
+  // The glossary (Practice → Lessons → Glossary): tap a word, read it in plain language.
   await page.goto('/?sim=1&unlock=all&mini=1#/learned');
+  await page.locator('[data-lesson-topic="glossary"]').click();
   await page.locator('[data-glossary] [data-term="interval"]').click();
   await expect(page.locator('[data-term-card="interval"]')).toContainText('distance between two notes');
   // Inside a quick lesson, the step's words show as chips.
+  await page.locator('[data-lesson-topic="all"]').click();
   await page.locator('[data-learned-card="degrees-135"]').click();
   await expect(page.locator('.mini-player .term-chip').first()).toBeVisible();
   await page.locator('.mini-player .term-chip').first().click();

@@ -18,6 +18,18 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.47.0',
+    date: '2026-11-08',
+    en: [
+      'Practice: Songs, Technique, Games and a new Lessons card — 134 short theory lessons by topic, with the glossary',
+      'Technique now includes your voice: pick Voice next to Piano, Guitar and Bass for vocal technique',
+    ],
+    he: [
+      'תרגול: שירים, טכניקה, משחקים וכרטיס שיעורים חדש — 134 שיעורי תיאוריה קצרים לפי נושא, עם המילון',
+      'הטכניקה כוללת עכשיו גם את הקול: בחרו קול ליד פסנתר, גיטרה ובס לטכניקה קולית',
+    ],
+  },
+  {
     version: '0.46.1',
     date: '2026-11-08',
     en: ['A new icon: the ear now holds a 7 — The 7th Sense'],

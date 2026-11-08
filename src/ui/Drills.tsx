@@ -105,11 +105,13 @@ export interface DrillsProps {
   songs?: boolean;
   /** "Sing a song" on the songbook page. */
   onSing?: () => void;
+  /** Voice is an instrument here too (owner 2026-11-08): opens vocal training. */
+  onVoice?: () => void;
 }
 
 type View = { k: 'test' } | { k: 'hub' } | { k: 'songs' } | { k: 'family'; f: FamilyDef } | { k: 'run'; queue: Drill[]; i: number; from: View } | { k: 'settings' } | { k: 'calib' } | { k: 'creator'; edit?: CustomDrill };
 
-export function Drills({ lang, settings, onSettings, items, onTake, onBack, queue, onQueueDone, startTest, onTestDone, songs, onSing }: DrillsProps) {
+export function Drills({ lang, settings, onSettings, items, onTake, onBack, queue, onQueueDone, startTest, onTestDone, songs, onSing, onVoice }: DrillsProps) {
   const tx = T[lang];
   const ds = drillSettingsOf(settings);
   const [view, setView] = useState<View>(startTest ? { k: 'test' } : queue?.length ? { k: 'run', queue, i: 0, from: { k: 'hub' } } : songs ? { k: 'songs' } : { k: 'hub' });
@@ -231,6 +233,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
       onCreate={(edit) => setView({ k: 'creator', edit })}
       onTest={() => setView({ k: 'test' })}
       onInstrument={(i) => setDs({ instrument: i })}
+      onVoice={onVoice}
     />
   );
 }
@@ -254,7 +257,7 @@ const TOPIC_NAME: Record<DrillTopic, { en: string; he: string }> = {
   mine: { en: 'My drills', he: 'התרגילים שלי' },
 };
 
-function Hub({ lang, ds, settings, items, head, onFamily, onRun, onSettings, onCreate, onTest, onInstrument }: { lang: Lang; ds: DrillSettings; settings: Settings; items: Record<string, ItemState>; head: React.ReactNode; onFamily: (f: FamilyDef) => void; onRun: (q: Drill[]) => void; onSettings: () => void; onCreate: (edit?: CustomDrill) => void; onTest: () => void; onInstrument: (i: 'piano' | 'guitar' | 'bass') => void }) {
+function Hub({ lang, ds, settings, items, head, onFamily, onRun, onSettings, onCreate, onTest, onInstrument, onVoice }: { onVoice?: () => void; lang: Lang; ds: DrillSettings; settings: Settings; items: Record<string, ItemState>; head: React.ReactNode; onFamily: (f: FamilyDef) => void; onRun: (q: Drill[]) => void; onSettings: () => void; onCreate: (edit?: CustomDrill) => void; onTest: () => void; onInstrument: (i: 'piano' | 'guitar' | 'bass') => void }) {
   const tx = T[lang];
   const today = useMemo(() => todayDrills(ds, items, settings.drillStart ?? {}, settings.customDrills ?? []), [ds, items, settings.drillStart, settings.customDrills]);
   const fams = shownFamilies(ds);
@@ -298,6 +301,11 @@ function Hub({ lang, ds, settings, items, head, onFamily, onRun, onSettings, onC
             {tx.insts[i]}
           </button>
         ))}
+        {onVoice && (
+          <button role="radio" aria-checked={false} className="chip" onClick={onVoice} data-inst="voice">
+            {lang === 'he' ? 'קול' : 'Voice'}
+          </button>
+        )}
       </div>
       {!midi.devices.length && (ds.instrument ?? 'piano') === 'piano' && <p className="field-hint">{tx.noMidi}</p>}
       {!settings.drillStart && !Object.keys(items).length && (

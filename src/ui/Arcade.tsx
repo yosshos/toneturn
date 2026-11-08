@@ -625,7 +625,7 @@ export const GAMES2: { id: 'drills' | 'highway' | 'flight' | 'melodypuzzle' | 'n
 export interface PracticeHub {
   songs: () => void;
   drills: () => void;
-  vocal?: () => void;
+  lessons: () => void;
   tuner: () => void;
   metronome: () => void;
   drone: () => void;
@@ -646,10 +646,10 @@ const HUB_PATHS: Record<string, React.ReactNode> = {
       <path d="M2.5 9.5v5M21.5 9.5v5" />
     </>
   ),
-  vocal: (
+  lessons: (
     <>
-      <rect x="9" y="3" width="6" height="11" rx="3" />
-      <path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21" />
+      <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z" />
+      <path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5M9 8h7M9 11.5h5" />
     </>
   ),
   tuner: (
@@ -684,8 +684,8 @@ const HubIcon = ({ k, size = 22 }: { k: string; size?: number }) => (
 );
 const HUB_TX = {
   songs: { en: ['Songs', 'Play and sing real songs'], he: ['שירים', 'לנגן ולשיר שירים אמיתיים'] },
-  drills: { en: ['Technique', 'Scales, chords and drills'], he: ['טכניקה', 'סולמות, אקורדים ותרגילים'] },
-  vocal: { en: ['Singing', 'Voice, range and singing'], he: ['שירה', 'קול, מנעד ושירה'] },
+  drills: { en: ['Technique', 'Your instrument and your voice'], he: ['טכניקה', 'הכלי שלכם והקול שלכם'] },
+  lessons: { en: ['Lessons', 'Short theory lessons by topic'], he: ['שיעורים', 'שיעורי תיאוריה קצרים לפי נושא'] },
   tools: { en: 'Tools', he: 'כלים' },
   tuner: { en: 'Tuner', he: 'טיונר' },
   metronome: { en: 'Metronome', he: 'מטרונום' },
@@ -758,7 +758,7 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
       {hub && !games && (
         <section className="practice-hub" data-practice-hub="1">
           <div className="hub-cards">
-            {(['songs', 'drills', 'games', ...(hub.vocal ? (['vocal'] as const) : [])] as const).map((k) => (
+            {(['songs', 'drills', 'games', 'lessons'] as const).map((k) => (
               <button key={k} className={`hub-card hub-${k}`} onClick={k === 'games' ? () => showGames(true) : hub[k]} data-hub={k}>
                 <span className="hub-icon">
                   <HubIcon k={k} />

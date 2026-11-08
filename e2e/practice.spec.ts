@@ -8,11 +8,24 @@ test.describe('practice hub', () => {
   test('hub cards, songbook, games list, tools back to Practice', async ({ page }) => {
     await page.goto('/?sim=1#/arcade');
     await expect(page.locator('[data-practice-hub]')).toBeVisible();
-    for (const k of ['songs', 'drills', 'games', 'tuner', 'metronome', 'drone']) await expect(page.locator(`[data-hub="${k}"]`)).toBeVisible();
+    for (const k of ['songs', 'drills', 'games', 'lessons', 'tuner', 'metronome', 'drone']) await expect(page.locator(`[data-hub="${k}"]`)).toBeVisible();
     await page.locator('[data-hub="songs"]').click();
     await expect(page.locator('[data-drills="songs"]')).toBeVisible();
     await expect(page.locator('.song-drills li')).toHaveCount(16);
     await page.locator('.screen-head .icon-btn').click();
+    await page.locator('[data-hub="lessons"]').click();
+    await expect(page.locator('[data-learned-card]').first()).toBeVisible();
+    await page.locator('[data-lesson-topic="glossary"]').click();
+    await expect(page.locator('[data-glossary]')).toBeVisible();
+    await page.locator('[data-lesson-topic="all"]').click();
+    await page.locator('.screen-head .icon-btn').click();
+    await page.locator('[data-hub="drills"]').click();
+    await expect(page.locator('[data-inst="voice"]')).toBeVisible();
+    await page.locator('[data-inst="voice"]').click();
+    await expect(page).toHaveURL(/vocal/);
+    await page.locator('.screen-head .icon-btn').first().click();
+    await expect(page.locator('[data-drills="hub"]')).toBeVisible();
+    await page.locator('.screen-head .icon-btn').first().click();
     await page.locator('[data-hub="games"]').click();
     await expect(page.locator('.play-hero')).toBeVisible();
     await page.locator('.play-screen .screen-head .icon-btn').click();
