@@ -1,7 +1,8 @@
 {
  "credits": {
-  "grand": "Salamander Grand Piano V3 — Alexander Holm (CC BY 3.0)",
-  "vcsl": "Versilian Community Sample Library — Versilian Studios (CC0)"
+  "grand": "Salamander Grand Piano V3 — Alexander Holm (CC BY 3.0, https://creativecommons.org/licenses/by/3.0/). Source: https://archive.org/details/SalamanderGrandPianoV3 via https://github.com/sfzinstruments/SalamanderGrandPiano. Sets grand-pp/mp/mf/f are velocity layers v3/v7/v11/v15, trimmed, faded, resampled to 44.1 kHz, level-matched per layer and encoded to MP3 (changes made).",
+  "vcsl": "Versilian Community Sample Library — Versilian Studios (CC0)",
+  "bass": "Upright bass (pizzicato, mf): 1958 Otto Rubner double bass played and sampled by D. Smolken, 2013 (CC0 1.0). Source: https://github.com/sfzinstruments/dsmolken.double-bass"
  },
  "sets": {
   "grand": {
@@ -138,6 +139,134 @@
     72,
     75,
     78
+   ]
+  },
+  "grand-pp": {
+   "ext": "mp3",
+   "notes": [
+    33,
+    36,
+    39,
+    42,
+    45,
+    48,
+    51,
+    54,
+    57,
+    60,
+    63,
+    66,
+    69,
+    72,
+    75,
+    78,
+    81,
+    84,
+    87,
+    90,
+    93,
+    96,
+    99
+   ]
+  },
+  "grand-mp": {
+   "ext": "mp3",
+   "notes": [
+    33,
+    36,
+    39,
+    42,
+    45,
+    48,
+    51,
+    54,
+    57,
+    60,
+    63,
+    66,
+    69,
+    72,
+    75,
+    78,
+    81,
+    84,
+    87,
+    90,
+    93,
+    96,
+    99
+   ]
+  },
+  "grand-mf": {
+   "ext": "mp3",
+   "notes": [
+    33,
+    36,
+    39,
+    42,
+    45,
+    48,
+    51,
+    54,
+    57,
+    60,
+    63,
+    66,
+    69,
+    72,
+    75,
+    78,
+    81,
+    84,
+    87,
+    90,
+    93,
+    96,
+    99
+   ]
+  },
+  "grand-f": {
+   "ext": "mp3",
+   "notes": [
+    33,
+    36,
+    39,
+    42,
+    45,
+    48,
+    51,
+    54,
+    57,
+    60,
+    63,
+    66,
+    69,
+    72,
+    75,
+    78,
+    81,
+    84,
+    87,
+    90,
+    93,
+    96,
+    99
+   ]
+  },
+  "bass": {
+   "ext": "mp3",
+   "notes": [
+    24,
+    27,
+    31,
+    34,
+    38,
+    41,
+    45,
+    48,
+    52,
+    55,
+    57
    ]
   }
  }

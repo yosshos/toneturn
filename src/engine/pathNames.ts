@@ -112,6 +112,11 @@ const SHORT: Record<string, L2> = {
   'bh-six-over': { en: 'Barry Harris 7', he: 'בארי האריס 7' },
   'bh-lines': { en: 'Barry Harris 8', he: 'בארי האריס 8' },
   'bh-brothers': { en: 'Barry Harris 9', he: 'בארי האריס 9' },
+  'bh-family': { en: 'Same notes', he: 'אותם צלילים' },
+  'bh-block': { en: 'Block chords', he: 'אקורדי בלוק' },
+  comping: { en: 'Comping', he: 'קומפינג' },
+  turnarounds: { en: 'Turnarounds', he: 'טרנאראונדים' },
+  'guide-tones': { en: 'Guide tones', he: 'צלילים מנחים' },
   // lessons
   'basics-shape': { en: 'Melody shape', he: 'צורת מנגינה' },
   'rhythm-shift': { en: 'Move the rhythm', he: 'הזזת קצב' },

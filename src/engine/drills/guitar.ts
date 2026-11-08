@@ -1891,7 +1891,7 @@ function genJazz(s: DrillSpec, tu: Tuning): Drill {
           beat += dur;
         }),
       );
-      title = t(`Guide-tone line (${start7 ? '7th' : '3rd'} first) over ii–V–I · ${NAMES[key]}`, `קו צלילים מובילים (${start7 ? 'ספטימה' : 'טרצה'} תחילה) על ii–V–I · ${NAMES[key]}`);
+      title = t(`Guide-tone line (${start7 ? '7th' : '3rd'} first) over ii–V–I · ${NAMES[key]}`, `קו צלילים מנחים (${start7 ? 'ספטימה' : 'טרצה'} תחילה) על ii–V–I · ${NAMES[key]}`);
       return finish(s, tu, evs, { title, bpm: 80, evenness: true, goal: { chordTonesOnBeats: true } });
     }
     case 'walking': {
@@ -2116,7 +2116,7 @@ function genImpro(s: DrillSpec, tu: Tuning): Drill {
     'targets-root': t('roots on beat 1', 'יסודות על פעמה 1'),
     'targets-third': s.option ? t('3rds on beat 1 (the 3rd of each chord)', 'טרצות על פעמה 1 (הטרצה של כל אקורד)') : t('3rds on beat 1 (major 3rd over each 7th chord)', 'טרצות על פעמה 1 (טרצה גדולה של כל אקורד)'),
     'targets-arp': t('chord-tone arpeggio every bar', 'ארפג׳יו צלילי אקורד בכל תיבה'),
-    'targets-guide': t('guide tones (3rd → 7th)', 'צלילים מובילים (טרצה ← ספטימה)'),
+    'targets-guide': t('guide tones (3rd → 7th)', 'צלילים מנחים (טרצה ← ספטימה)'),
   };
   const n = nm[kind];
   if (!n) throw new Error(`Unknown impro kind ${kind}`);
@@ -2467,7 +2467,7 @@ export function guitarCatalog(): GuitarFamilyDef[] {
       L('g-jazz', 2, 'Drop-2 inversions (maj7, 7, m7, m7♭5) on three string sets', 'היפוכי דרופ 2 (maj7, 7, m7, m7♭5) על שלוש קבוצות מיתרים', [...range(4).map((o) => J('drop2', { option: o })), ...range(4).flatMap((o) => [J('drop2', { option: o, position: 1 }), J('drop2', { option: o, position: 2 })])], CYC4),
       L('g-jazz', 3, 'Drop-3 ii–V–I', 'ii–V–I בדרופ 3', [J('drop3')], CYC4),
       L('g-jazz', 4, 'Drop-2 ii–V–I, voice-led', 'ii–V–I בדרופ 2, הובלת קולות', [J('iivi-drop2')], CYC4),
-      L('g-jazz', 5, 'Guide-tone lines', 'קווי צלילים מובילים', [J('guide-tones', { option: 0 }), J('guide-tones', { option: 1 })], CYC4),
+      L('g-jazz', 5, 'Guide-tone lines', 'קווי צלילים מנחים', [J('guide-tones', { option: 0 }), J('guide-tones', { option: 1 })], CYC4),
       L('g-jazz', 6, 'Walking bass on guitar', 'בס מהלך על גיטרה', [J('walking')], CYC4),
       L('g-jazz', 7, 'Harmonised scale in drop-2 (chord melody) and octaves', 'סולם מהורמן בדרופ 2 (אקורד-מלודיה) ואוקטבות', [J('harmonized'), J('octaves')], CYC4.slice(0, 6)),
     ]),
@@ -2482,7 +2482,7 @@ export function guitarCatalog(): GuitarFamilyDef[] {
       L('g-impro', 1, 'Roots on beat 1: blues, minor blues, ii–V–I, a standard', 'יסודות על 1: בלוז, בלוז מינורי, ii–V–I, סטנדרט', [I('targets-root'), I('targets-root', { option: 1 }), I('targets-root', { option: 2 }), I('targets-root', { option: 3 })], BLUES_KEYS),
       L('g-impro', 2, '3rds on beat 1 through the forms', 'טרצות על 1 לאורך הצורות', [I('targets-third'), I('targets-third', { option: 1 }), I('targets-third', { option: 2 }), I('targets-third', { option: 3 })], BLUES_KEYS),
       L('g-impro', 3, 'Chord-tone arpeggios through the form', 'ארפג׳יו צלילי אקורד לאורך הצורה', [I('targets-arp'), I('targets-arp', { option: 1 }), I('targets-arp', { option: 2 }), I('targets-arp', { option: 3 })], BLUES_KEYS),
-      L('g-impro', 4, 'Guide tones through the form', 'צלילים מובילים לאורך הצורה', [I('targets-guide'), I('targets-guide', { option: 1 }), I('targets-guide', { option: 2 }), I('targets-guide', { option: 3 })], BLUES_KEYS),
+      L('g-impro', 4, 'Guide tones through the form', 'צלילים מנחים לאורך הצורה', [I('targets-guide'), I('targets-guide', { option: 1 }), I('targets-guide', { option: 2 }), I('targets-guide', { option: 3 })], BLUES_KEYS),
     ]),
     fam(
       'g-bass',

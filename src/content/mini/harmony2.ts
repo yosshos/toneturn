@@ -73,6 +73,40 @@ export const LESSONS: MiniLesson[] = [
         say: { en: 'That skill is called audiation. Practise it anywhere: hum a song, stop, keep it going silently, then come back in.', he: 'הכישור הזה נקרא אודיאציה. אפשר לתרגל אותו בכל מקום: מזמזמים שיר, עוצרים, ממשיכים בשקט, ואז חוזרים לשיר בקול.' },
       },
     ],
+    more: [
+      {
+        say: { en: 'Audiation means hearing and understanding music in your mind when no sound is present. The term comes from the music educator Edwin Gordon. It is to music what thinking in words is to language.', he: 'אודיאציה פירושה לשמוע ולהבין מוזיקה בראש כשאין שום צליל. המונח בא ממחנך המוזיקה אדווין גורדון. היא למוזיקה מה שחשיבה במילים היא לשפה.' },
+      },
+      {
+        say: { en: 'It is more than memory: when you audiate, you predict. You know which note comes next and where the beat falls, so a wrong note jumps out at once. Listen — the second time, one note is off.', he: 'זה יותר מזיכרון: כשעושים אודיאציה, צופים קדימה. יודעים איזה צליל בא ואיפה נופלת הפעמה, ולכן צליל שגוי קופץ מיד. הקשיבו — בפעם השנייה צליל אחד לא במקום.' },
+        play: [withClicks([C, C, C + 7, C + 7, C + 9, C + 9, C + 7, null]), rest(0.4), withClicks([C, C, C + 7, C + 7, C + 9, C + 10, C + 7, null])],
+        show: { text: { en: '1 1 5 5 6 6 5 · 1 1 5 5 6 ♭7 5', he: '1 1 5 5 6 6 5 · 1 1 5 5 6 ♭7 5' } },
+      },
+      {
+        say: { en: 'The pulse is the frame that holds the silent music. During a gap, count the beats in your head so the music returns exactly on time. Here four notes of the scale go silent.', he: 'הפעמה היא המסגרת שמחזיקה את המוזיקה השקטה. בזמן הפסקה, ספרו את הפעמות בראש כדי שהמוזיקה תחזור בדיוק בזמן. כאן ארבעה צלילים של הסולם שותקים.' },
+        play: [withClicks([C, C + 2, C + 4, null, null, null, null, C + 12])],
+        show: { text: { en: '1 2 3 · · · · 1', he: '1 2 3 · · · · 1' } },
+      },
+      {
+        say: { en: 'Harmony can be audiated too. Start with the bass: it is the easiest part to carry silently, and the chords hang on it. Hum the lowest notes of this loop, then keep them going in your head.', he: 'אפשר לעשות אודיאציה גם להרמוניה. התחילו מהבס: הוא החלק הכי קל להמשיך בשקט, והאקורדים נשענים עליו. זמזמו את הצלילים הנמוכים של הלופ הזה, ואז המשיכו אותם בראש.' },
+        play: [chords([ch(0), ch(9, 'm'), ch(5), ch(7), ch(0)], 0.8)],
+        show: { text: { en: 'I – vi – IV – V – I', he: 'I – vi – IV – V – I' } },
+      },
+      {
+        say: { en: 'A practice routine: sing a scale but voice only every other note; the silent ones still happen inside. Then try a song you know with whole bars left silent.', he: 'שגרת תרגול: שירו סולם אבל השמיעו בקול רק כל צליל שני; הצלילים השקטים עדיין קורים בפנים. אחר כך נסו שיר מוכר עם תיבות שלמות בשקט.' },
+        play: [withClicks([C, null, C + 4, null, C + 7, null, C + 11, C + 12])],
+        show: { text: { en: '1 · 3 · 5 · 7 1', he: '1 · 3 · 5 · 7 1' } },
+      },
+      {
+        say: { en: 'The common mistake is letting the tempo drift in the silence — most people rush. Keep the beat in your body: tap a finger, nod, or breathe with it.', he: 'הטעות הנפוצה היא לתת לטמפו לזוז בזמן השקט — רוב האנשים ממהרים. החזיקו את הפעמה בגוף: הקישו באצבע, הנהנו, או נשמו איתה.' },
+      },
+      {
+        say: { en: 'Musicians audiate all the time: a singer hears the first note before the band starts, a sight-reader hears the page before playing it, a composer hears parts with no instrument at hand.', he: 'מוזיקאים עושים אודיאציה כל הזמן: זמרת שומעת את הצליל הראשון לפני שהלהקה מתחילה, קורא תווים שומע את הדף לפני שהוא מנגן, ומלחין שומע קולות בלי כלי ביד.' },
+      },
+      {
+        say: { en: 'Recap: audiation is hearing music inside, with its pulse and its harmony. Keep counting, predict what comes next, and check yourself when the sound returns.', he: 'לסיכום: אודיאציה היא לשמוע מוזיקה בפנים, עם הפעמה וההרמוניה שלה. המשיכו לספור, צפו מה בא, ובדקו את עצמכם כשהצליל חוזר.' },
+      },
+    ],
   },
   {
     id: 'triad-types',
@@ -100,6 +134,49 @@ export const LESSONS: MiniLesson[] = [
       {
         say: { en: 'Close position keeps the notes inside one octave; open position spreads them wide. Same chord, a fuller sound.', he: 'במצב צפוף הצלילים בתוך אוקטבה אחת; במצב פתוח הם פרושים לרוחב. אותו אקורד, צליל מלא יותר.' },
         play: [chord([C - 12, C - 8, C - 5, C], 1.3), rest(0.3), chord([C - 12, C - 5, C + 4, C + 7], 1.3)],
+      },
+    ],
+    more: [
+      {
+        say: { en: 'A triad stacks two thirds on a root. Major: a major third (4 semitones), then a minor third (3) — C E G. Minor: minor, then major — C E♭ G. Both span a perfect fifth, 7 semitones.', he: 'משולש בונה שתי טרצות על יסוד. מז׳ור: טרצה גדולה (4 חצאי טונים) ואז טרצה קטנה (3) — דו מי סול. מינור: קטנה ואז גדולה — דו מי♭ סול. בשניהם יש קווינטה זכה, 7 חצאי טונים.' },
+        play: [chord([C, C + 4, C + 7], 1.1, true), rest(0.2), chord([C, C + 3, C + 7], 1.1, true)],
+        show: { notes: [C, C + 4, C + 7], key: 'C', text: { en: 'C E G · C E♭ G', he: 'דו מי סול · דו מי♭ סול' } },
+      },
+      {
+        say: { en: 'Diminished stacks two minor thirds: C E♭ G♭ — the fifth shrinks to 6 semitones, a tritone. Augmented stacks two major thirds: C E G♯ — the fifth grows to 8.', he: 'מוקטן בונה שתי טרצות קטנות: דו מי♭ סול♭ — הקווינטה מתכווצת ל־6 חצאי טונים, טריטון. מוגדל בונה שתי טרצות גדולות: דו מי סול♯ — הקווינטה גדלה ל־8.' },
+        play: [chord([C, C + 3, C + 6], 1.1, true), rest(0.2), chord([C, C + 4, C + 8], 1.1, true)],
+        show: { text: { en: 'C E♭ G♭ · C E G♯', he: 'דו מי♭ סול♭ · דו מי סול♯' } },
+      },
+      {
+        say: { en: 'In a major key the triads fall in place: major on 1, 4 and 5; minor on 2, 3 and 6; diminished on 7. Augmented never appears in major; it lives on 3 of harmonic minor.', he: 'בסולם מז׳ור המשולשים מסתדרים: מז׳ור על 1, 4 ו־5; מינור על 2, 3 ו־6; מוקטן על 7. מוגדל לא מופיע במז׳ור; הוא גר על 3 של המינור ההרמוני.' },
+        play: [chords([ch(0), ch(2, 'm'), ch(4, 'm'), ch(5), ch(7), ch(9, 'm'), ch(11, 'd'), ch(0)], 0.55)],
+        show: { text: { en: 'I ii iii IV V vi vii° I', he: 'I ii iii IV V vi vii° I' } },
+      },
+      {
+        say: { en: 'Sus chords replace the third. Sus2 uses the 2nd (C D G), sus4 the 4th (C F G). With no third they are neither major nor minor — open and undecided until the third arrives.', he: 'אקורדי סאס מחליפים את הטרצה. סאס 2 משתמש בסקונדה (דו רה סול), סאס 4 בקוורטה (דו פה סול). בלי טרצה הם לא מז׳ור ולא מינור — פתוחים ולא מוכרעים עד שהטרצה מגיעה.' },
+        play: [chord([C, C + 2, C + 7], 1), chord([C, C + 5, C + 7], 1), chord([C, C + 4, C + 7], 1.3)],
+        show: { text: { en: 'sus2 · sus4 · C', he: 'sus2 · sus4 · C' } },
+      },
+      {
+        say: { en: 'A listening order: first, stable or not? Major and minor are stable. Then sort the rest: bright or dark (major, minor), squeezed (diminished), stretched (augmented), or hollow (sus).', he: 'סדר הקשבה: קודם, יציב או לא? מז׳ור ומינור יציבים. אחר כך ממיינים: בהיר או כהה (מז׳ור, מינור), דחוס (מוקטן), מתוח לרוחב (מוגדל), או חלול (סאס).' },
+      },
+      {
+        say: { en: 'A common confusion is minor versus diminished: both start with a minor third. Listen to the top note — in diminished it is a semitone lower and pulls inward.', he: 'בלבול נפוץ הוא מינור מול מוקטן: שניהם מתחילים בטרצה קטנה. הקשיבו לצליל העליון — במוקטן הוא נמוך בחצי טון ומושך פנימה.' },
+        play: [chord([C, C + 3, C + 7], 1.2), rest(0.2), chord([C, C + 3, C + 6], 1.2)],
+        show: { text: { en: 'Cm · Cdim', he: 'Cm · Cdim' } },
+      },
+      {
+        say: { en: 'Inversions name the bass: root in the bass is root position; the third, first inversion (figured 6); the fifth, second inversion (6/4). The quality never changes — only the weight of the chord.', he: 'ההיפוכים נקראים לפי הבס: יסוד בבס הוא מצב יסודי; טרצה בבס, היפוך ראשון (סקסט, 6); קווינטה בבס, היפוך שני (קוורטסקסט, 6/4). האיכות לא משתנה — רק המשקל של האקורד.' },
+        play: [chord([C - 12, C, C + 4, C + 7], 0.9), chord([C - 8, C, C + 7, C + 12], 0.9), chord([C - 5, C, C + 4, C + 12], 1.2)],
+        show: { text: { en: '5/3 · 6 · 6/4', he: '5/3 · 6 · 6/4' } },
+      },
+      {
+        say: { en: 'In real music, major and minor triads carry most pop, folk and classical harmony. Diminished chords often pass between two others, and a sus4 resolving to major is a favourite in rock and hymns alike.', he: 'במוזיקה אמיתית, משולשים מז׳וריים ומינוריים נושאים את רוב ההרמוניה בפופ, בפולק ובמוזיקה קלאסית. אקורדים מוקטנים עוברים הרבה בין שני אקורדים, וסאס 4 שנפתר למז׳ור אהוב גם ברוק וגם במזמורים.' },
+        play: [chords([ch(0), ch(5), ch(7, 'sus4'), ch(7), ch(0)], 0.8)],
+        show: { text: { en: 'I – IV – Vsus4 – V – I', he: 'I – IV – Vsus4 – V – I' } },
+      },
+      {
+        say: { en: 'Recap: two stacked thirds make a triad; their sizes give major, minor, diminished or augmented. Sus replaces the third, and the bass names the inversion.', he: 'לסיכום: שתי טרצות זו על זו יוצרות משולש; הגודל שלהן קובע מז׳ור, מינור, מוקטן או מוגדל. סאס מחליף את הטרצה, והבס קובע את ההיפוך.' },
       },
     ],
   },
@@ -130,6 +207,45 @@ export const LESSONS: MiniLesson[] = [
         say: { en: 'Tip: first decide if the chord is bright or dark, then whether it is calm or tense. That narrows it down fast.', he: 'טיפ: קודם החליטו אם האקורד בהיר או כהה, ואחר כך אם הוא רגוע או מתוח. זה מצמצם את האפשרויות מהר.' },
       },
     ],
+    more: [
+      {
+        say: { en: 'A seventh chord is a triad plus the seventh above the root. Its name comes from two choices: the triad (major, minor or diminished) and the seventh (major, 11 semitones; minor, 10; diminished, 9).', he: 'ספטאקורד הוא משולש ועוד הספטימה מעל היסוד. השם שלו נקבע משתי בחירות: המשולש (מז׳ור, מינור או מוקטן) והספטימה (גדולה, 11 חצאי טונים; קטנה, 10; מוקטנת, 9).' },
+      },
+      {
+        say: { en: 'The five types on C: maj7 is C E G B; 7 is C E G B♭; m7 is C E♭ G B♭; half-diminished, ø7, is C E♭ G♭ B♭; diminished, °7, is C E♭ G♭ B𝄫 — sounding like A.', he: 'חמשת הסוגים על דו: maj7 הוא דו מי סול סי; 7 הוא דו מי סול סי♭; m7 הוא דו מי♭ סול סי♭; חצי מוקטן, ø7, הוא דו מי♭ סול♭ סי♭; מוקטן, °7, הוא דו מי♭ סול♭ סי𝄫 — שנשמע כמו לה.' },
+        play: [chord([C, C + 4, C + 7, C + 11], 0.9), chord([C, C + 4, C + 7, C + 10], 0.9), chord([C, C + 3, C + 7, C + 10], 0.9), chord([C, C + 3, C + 6, C + 10], 0.9), chord([C, C + 3, C + 6, C + 9], 1.2)],
+        show: { text: { en: 'maj7 · 7 · m7 · ø7 · °7', he: 'maj7 · 7 · m7 · ø7 · °7' } },
+      },
+      {
+        say: { en: 'In a major key: Imaj7 and IVmaj7; ii7, iii7 and vi7 are minor sevenths; V7 is the only dominant seventh; viiø7 is half-diminished. The full diminished seventh comes from harmonic minor.', he: 'בסולם מז׳ור: Imaj7 ו־IVmaj7; ii7, iii7 ו־vi7 הם ספט מינור; V7 הוא הספט הדומיננטי היחיד; viiø7 חצי מוקטן. הספט המוקטן המלא בא מהמינור ההרמוני.' },
+        play: [chords([ch(2, 'm7'), ch(7, '7'), ch(0, 'maj7')], 1)],
+        show: { text: { en: 'ii7 – V7 – Imaj7', he: 'ii7 – V7 – Imaj7' } },
+      },
+      {
+        say: { en: 'Why V7 pulls home: G7 contains B and F, a tritone apart. B rises to C, F falls to E, and the tension dissolves into the tonic chord.', he: 'למה V7 מושך הביתה: ב־G7 יש סי ופה, במרחק טריטון. סי עולה לדו, פה יורד למי, והמתח נמס לתוך אקורד הטוניקה.' },
+        play: [chord([C - 17, C - 1, C + 5], 1.2), chord([C - 12, C, C + 4], 1.5)],
+        show: { notes: [43, 59, 65], text: { en: 'B → C · F → E', he: 'סי → דו · פה → מי' } },
+      },
+      {
+        say: { en: 'How to hear the seventh: find the triad first, then listen to the top. A major seventh sits a semitone under the octave and rubs sweetly; a minor seventh is a whole tone under and sounds bluesy.', he: 'איך שומעים את הספטימה: קודם מוצאים את המשולש, ואז מקשיבים למעלה. ספטימה גדולה יושבת חצי טון מתחת לאוקטבה ומתחככת במתיקות; ספטימה קטנה נמצאת טון מתחת ונשמעת בלוזית.' },
+        play: [chord([C - 12, C + 4, C + 7, C + 11], 1.2), rest(0.2), chord([C - 12, C + 4, C + 7, C + 10], 1.2)],
+        show: { text: { en: 'Cmaj7 · C7', he: 'Cmaj7 · C7' } },
+      },
+      {
+        say: { en: 'A common mistake is in the names: plain “C7” always means the minor seventh, B♭ — the dominant sound. The major seventh must be written maj7 or Δ7.', he: 'טעות נפוצה היא בשמות: “C7” לבד תמיד פירושו ספטימה קטנה, סי במול — הצליל הדומיננטי. ספטימה גדולה חייבים לכתוב maj7 או Δ7.' },
+      },
+      {
+        say: { en: 'The diminished seventh is built only from minor thirds, so it divides the octave into four equal parts. B D F A♭ resolves to C — and the same sound, respelled, can lead to three other keys.', he: 'הספט המוקטן בנוי רק מטרצות קטנות, ולכן הוא מחלק את האוקטבה לארבעה חלקים שווים. סי רה פה לה♭ נפתר לדו — ואותו צליל, בכתיב אחר, יכול להוביל לעוד שלושה סולמות.' },
+        play: [chord([C - 1, C + 2, C + 5, C + 8], 1.2), chord([C, C + 4, C + 7, C + 12], 1.5)],
+        show: { notes: [59, 62, 65, 68], chord: true, text: { en: 'B°7 → C', he: 'B°7 → C' } },
+      },
+      {
+        say: { en: 'In real music: jazz runs on sevenths, and ii7–V7–Imaj7 is its most common progression. Blues puts a dominant seventh on every chord. Classical music relies on V7 and vii°7 to drive its cadences.', he: 'במוזיקה אמיתית: הג׳אז רץ על ספטאקורדים, ו־ii7–V7–Imaj7 הוא המהלך הנפוץ ביותר שלו. בבלוז יש ספט דומיננטי על כל אקורד. המוזיקה הקלאסית נשענת על V7 ו־vii°7 כדי להניע את הקדנצות.' },
+      },
+      {
+        say: { en: 'Recap: triad plus seventh. Major triad with a major seventh is maj7, with a minor seventh it is the dominant 7. Minor gives m7; diminished gives ø7 or °7.', he: 'לסיכום: משולש ועוד ספטימה. משולש מז׳ורי עם ספטימה גדולה הוא maj7, עם ספטימה קטנה — 7 הדומיננטי. מינור נותן m7; מוקטן נותן ø7 או °7.' },
+      },
+    ],
   },
   {
     id: 'chromatic-chords',
@@ -156,6 +272,48 @@ export const LESSONS: MiniLesson[] = [
       },
       {
         say: { en: 'Listen for the moment the colour changes, then for where it goes next. Almost every colour chord leads to V or straight home.', he: 'הקשיבו לרגע שבו הצבע משתנה, ואז לאן הוא ממשיך. כמעט כל אקורד צבע מוביל ל־V או ישר הביתה.' },
+      },
+    ],
+    more: [
+      {
+        say: { en: 'Chromatic chords use notes from outside the key without leaving it. They colour the road to a goal — usually V or I — and each has a typical sound and a typical destination.', he: 'אקורדים כרומטיים משתמשים בצלילים מחוץ לסולם בלי לעזוב אותו. הם צובעים את הדרך אל היעד — בדרך כלל V או I — ולכל אחד צליל אופייני ויעד אופייני.' },
+      },
+      {
+        say: { en: 'The most common is the secondary dominant: a dominant seventh aimed at a chord other than I. In C, D7 with its F♯ is “V of V” and drives to G.', he: 'הנפוץ ביותר הוא הדומיננטה המשנית: ספט דומיננטי שמכוון לאקורד אחר מ־I. בדו, D7 עם הפה דיאז שלו הוא “V של V” ודוחף אל סול.' },
+        play: [chords([ch(0), ch(2, '7'), ch(7), ch(0)], 0.9)],
+        show: { text: { en: 'I – V7/V – V – I', he: 'I – V7/V – V – I' } },
+      },
+      {
+        say: { en: 'The cadential 6/4 is the tonic triad over 5 in the bass — C E over G. It sounds like home, but works as V with two notes delayed: the 6 falls to 5 and the 4 to 3.', he: 'הקוורטסקסט הקדנציאלי הוא משולש הטוניקה מעל 5 בבס — דו ומי מעל סול. הוא נשמע כמו הבית, אבל מתפקד כ־V עם שני צלילים מושהים: 6 יורד ל־5 ו־4 יורד ל־3.' },
+        play: [chord([43, 60, 64, 67], 1), chord([43, 59, 62, 67], 1), chord([36, 60, 64, 67], 1.4)],
+        show: { text: { en: 'I 6/4 → V → I', he: 'I 6/4 → V → I' } },
+      },
+      {
+        say: { en: 'The Neapolitan is a major chord on the lowered 2nd: in C minor, D♭ F A♭. It usually has F in the bass — the Neapolitan sixth — and moves to V, D♭ dropping to the leading note B.', he: 'הנפוליטני הוא אקורד מז׳ורי על הדרגה 2 המונמכת: בדו מינור, רה♭ פה לה♭. בדרך כלל פה בבס — הסקסטה הנפוליטנית — והוא עובר ל־V, כשרה♭ יורד לצליל המוביל סי.' },
+        play: [chord([41, 56, 61, 65], 1.1), chord([43, 55, 59, 62], 1.1), chord([36, 55, 60, 63], 1.4)],
+        show: { text: { en: 'N6 → V → i', he: 'N6 → V → i' } },
+      },
+      {
+        say: { en: 'Augmented sixth chords put ♭6 in the bass and ♯4 above — A♭ and F♯ in C. Both slide a semitone outward to the octave G. Italian, French and German versions differ in their remaining notes.', he: 'אקורדי סקסטה מוגדלת שמים ♭6 בבס ו־♯4 מעליו — לה♭ ופה♯ בדו. שניהם מחליקים חצי טון החוצה לאוקטבה של סול. הגרסאות האיטלקית, הצרפתית והגרמנית נבדלות בשאר הצלילים.' },
+        play: [chord([44, 60, 66, 72], 1.2), chord([43, 59, 67, 74], 1.5)],
+        show: { text: { en: 'A♭ + F♯ → G + G', he: 'לה♭ + פה♯ → סול + סול' } },
+      },
+      {
+        say: { en: 'Borrowed chords come from the parallel minor while you stay in major: iv (F A♭ C), ♭VI (A♭ C E♭), ♭VII (B♭ D F). The A♭ is the giveaway — a darker 6th inside a bright key.', he: 'אקורדים שאולים מגיעים מהמינור המקביל בזמן שנשארים במז׳ור: iv (פה לה♭ דו), ♭VI (לה♭ דו מי♭), ♭VII (סי♭ רה פה). הלה במול מסגיר אותם — 6 כהה בתוך סולם בהיר.' },
+        play: [chords([ch(0), ch(8), ch(10), ch(0)], 0.9)],
+        show: { text: { en: 'I – ♭VI – ♭VII – I', he: 'I – ♭VI – ♭VII – I' } },
+      },
+      {
+        say: { en: 'How to hear them: catch the odd note, then follow it. A sharp rising by semitone points to a secondary dominant; a flat 6 or flat 2 sinking toward 5 or 1 points to a borrowed, Neapolitan or augmented-sixth chord.', he: 'איך שומעים אותם: תופסים את הצליל הזר, ועוקבים אחריו. דיאז שעולה בחצי טון מצביע על דומיננטה משנית; 6 או 2 מונמכים ששוקעים אל 5 או 1 מצביעים על אקורד שאול, נפוליטני או סקסטה מוגדלת.' },
+      },
+      {
+        say: { en: 'A common mistake is hearing the cadential 6/4 as a real arrival home. Check the bass: if it sits on 5 and V follows, the “home” was only a delay.', he: 'טעות נפוצה היא לשמוע את הקוורטסקסט הקדנציאלי כהגעה אמיתית הביתה. בדקו את הבס: אם הוא על 5 ואחריו בא V, ה“בית” היה רק השהיה.' },
+      },
+      {
+        say: { en: 'In real music, Mozart and Beethoven place Neapolitan and augmented-sixth chords at big cadences. In pop and rock, ♭VI–♭VII–I and the minor iv are classic moves.', he: 'במוזיקה אמיתית, מוצרט ובטהובן שמים אקורדים נפוליטניים וסקסטות מוגדלות בקדנצות גדולות. בפופ וברוק, ♭VI–♭VII–I וה־iv המינורי הם מהלכים קלאסיים.' },
+      },
+      {
+        say: { en: 'Recap: a colour chord borrows a note from outside the key, and that note almost always moves by semitone toward V or I.', he: 'לסיכום: אקורד צבע שואל צליל מחוץ לסולם, והצליל הזה כמעט תמיד זז בחצי טון לכיוון V או I.' },
       },
     ],
   },
@@ -185,6 +343,47 @@ export const LESSONS: MiniLesson[] = [
       {
         say: { en: 'A 12-bar blues has its own map: four bars on I, two on IV, two on I, then V, IV, and a turnaround back to the top.', he: 'לבלוז של 12 תיבות יש מפה משלו: ארבע תיבות על I, שתיים על IV, שתיים על I, ואז V, IV וטרנאראונד חזרה להתחלה.' },
         play: [chords([ch(0, '7'), ch(5, '7'), ch(0, '7'), ch(7, '7'), ch(5, '7'), ch(0, '7')], 0.75)],
+      },
+    ],
+    more: [
+      {
+        say: { en: 'Song form is the order of a song’s sections. Each section is a group of bars, very often 8 or 16, with its own job. Letters label them: the same letter means the same music.', he: 'מבנה שיר הוא סדר החלקים שלו. כל חלק הוא קבוצת תיבות, הרבה פעמים 8 או 16, עם תפקיד משלו. מסמנים אותם באותיות: אותה אות פירושה אותה מוזיקה.' },
+      },
+      {
+        say: { en: 'The verse sets the scene. Its music returns each time with new words, so it tends to stay calmer and lower, leaving room for the story.', he: 'הבית מציג את הסיפור. המוזיקה שלו חוזרת כל פעם עם מילים חדשות, ולכן הוא נוטה להיות רגוע ונמוך יותר, ומשאיר מקום לסיפור.' },
+        play: [play([verse])],
+        show: { text: { en: 'verse', he: 'בית' } },
+      },
+      {
+        say: { en: 'The chorus is the centre. The title and the hook usually live there; words and music both repeat, the melody often sits higher, and the band plays fuller.', he: 'הפזמון הוא המרכז. השם של השיר וההוק נמצאים שם בדרך כלל; גם המילים וגם המוזיקה חוזרות, המנגינה יושבת לרוב גבוה יותר, והלהקה מנגנת מלא יותר.' },
+        play: [play([chorus])],
+        show: { text: { en: 'chorus', he: 'פזמון' } },
+      },
+      {
+        say: { en: 'Many songs add a pre-chorus, a short build between verse and chorus, plus an intro and an outro to open and close.', he: 'הרבה שירים מוסיפים פרה־פזמון, בנייה קצרה בין הבית לפזמון, וגם פתיחה וסיום.' },
+      },
+      {
+        say: { en: 'The bridge usually comes once, after the second chorus. It brings new chords — often starting away from the tonic — and leads back into a final chorus, often the biggest.', he: 'הגשר מגיע בדרך כלל פעם אחת, אחרי הפזמון השני. הוא מביא אקורדים חדשים — לעיתים קרובות מתחיל רחוק מהטוניקה — ומוביל חזרה לפזמון אחרון, שהוא בדרך כלל הגדול ביותר.' },
+        play: [play([bridge])],
+        show: { text: { en: 'bridge', he: 'גשר' } },
+      },
+      {
+        say: { en: 'AABA, the 32-bar song form, has four 8-bar sections: a tune, the tune again, a contrasting B — also called the bridge or middle eight — and the tune to finish. Many jazz standards use it.', he: 'AABA, מבנה 32 התיבות, בנוי מארבעה חלקים של 8 תיבות: מנגינה, שוב המנגינה, B מנוגד — שנקרא גם גשר — והמנגינה לסיום. הרבה סטנדרטים של ג׳אז בנויים כך.' },
+        show: { text: { en: 'A8 A8 B8 A8 = 32', he: 'A8 A8 B8 A8 = 32' } },
+      },
+      {
+        say: { en: 'The 12-bar blues: four bars of I, two of IV, two of I, then V, IV, I, and often V in the last bar as a turnaround back to the top.', he: 'בלוז של 12 תיבות: ארבע תיבות של I, שתיים של IV, שתיים של I, ואז V, IV, I, ולרוב V בתיבה האחרונה כטרנאראונד חזרה להתחלה.' },
+        play: [chords([0, 0, 0, 0, 5, 5, 0, 0, 7, 5, 0, 7].map((r) => ch(r, '7')), 0.42)],
+        show: { text: { en: 'I I I I | IV IV I I | V IV I V', he: 'I I I I | IV IV I I | V IV I V' } },
+      },
+      {
+        say: { en: 'How to map a song: count bars in groups of four and mark every change — a drum fill, the band thinning or swelling, the melody jumping up. Sections usually change every 8 or 16 bars.', he: 'איך ממפים שיר: סופרים תיבות בקבוצות של ארבע ומסמנים כל שינוי — מילוי של תופים, הלהקה מתדללת או מתעצמת, המנגינה קופצת למעלה. החלקים מתחלפים בדרך כלל כל 8 או 16 תיבות.' },
+      },
+      {
+        say: { en: 'A common mistake is calling the first loud part the chorus. Check what repeats: a chorus brings back the same words, a verse brings new words over the same music.', he: 'טעות נפוצה היא לקרוא לחלק החזק הראשון פזמון. בדקו מה חוזר: פזמון מחזיר את אותן מילים, בית מביא מילים חדשות על אותה מוזיקה.' },
+      },
+      {
+        say: { en: 'Recap: verse tells, chorus repeats the hook, bridge contrasts. Count in fours, listen for changes, and you can map almost any song.', he: 'לסיכום: הבית מספר, הפזמון חוזר על ההוק, הגשר מביא ניגוד. ספרו בארבע, הקשיבו לשינויים, ותוכלו למפות כמעט כל שיר.' },
       },
     ],
   },
@@ -218,6 +417,40 @@ export const LESSONS: MiniLesson[] = [
       {
         say: { en: 'Pop: four chords looping over a steady backbeat, with a catchy hook. Listen for the rhythm first, then the harmony.', he: 'פופ: ארבעה אקורדים בלופ מעל ביט יציב, עם הוק קליט. הקשיבו קודם למקצב, ואחר כך להרמוניה.' },
         play: [clip('pop')],
+      },
+    ],
+    more: [
+      {
+        say: { en: 'Style periods are rough labels for how music was written at a time. The usual outline is Baroque (about 1600–1750), Classical (1750–1820), Romantic (1820–1900) and the 20th century. Jazz and pop grew up alongside in the 1900s.', he: 'תקופות סגנון הן תוויות כלליות לאופן שבו כתבו מוזיקה בזמן מסוים. החלוקה המקובלת: בארוק (בערך 1600–1750), קלאסי (1750–1820), רומנטי (1820–1900) והמאה ה־20. ג׳אז ופופ צמחו לצידה במאה ה־20.' },
+      },
+      {
+        say: { en: 'Baroque: polyphony — several equal lines woven together — over a busy bass, a steady motor rhythm, and plenty of ornaments. Bach and Handel, harpsichord and organ.', he: 'בארוק: פוליפוניה — כמה קווים שווים שזורים יחד — מעל בס עסוק, מקצב מוטורי קבוע והרבה קישוטים. באך והנדל, צ׳מבלו ועוגב.' },
+        play: [clip('baroque')],
+      },
+      {
+        say: { en: 'Classical: one clear melody with accompaniment, balanced 4- and 8-bar phrases, tidy cadences. Haydn, Mozart, early Beethoven. A hallmark is the Alberti bass: a broken chord played low, high, middle, high.', he: 'קלאסי: מנגינה אחת ברורה עם ליווי, משפטים מאוזנים של 4 ו־8 תיבות, קדנצות מסודרות. היידן, מוצרט, בטהובן המוקדם. סימן היכר הוא בס אלברטי: אקורד שבור בסדר נמוך, גבוה, אמצעי, גבוה.' },
+        play: [clip('classical')],
+      },
+      {
+        say: { en: 'Romantic: bigger emotions, richer and more chromatic harmony, wide piano textures, and rubato — a tempo that bends. Chopin, Schumann, Brahms, Tchaikovsky.', he: 'רומנטי: רגשות גדולים יותר, הרמוניה עשירה וכרומטית יותר, מרקמים רחבים בפסנתר, ורובאטו — טמפו שמתגמש. שופן, שומאן, ברהמס, צ׳ייקובסקי.' },
+        play: [clip('romantic')],
+      },
+      {
+        say: { en: 'The 20th century went in many directions: Debussy’s whole-tone scales and parallel chords, Stravinsky’s shifting metres, chords built in fourths, and music with no home key at all.', he: 'המאה ה־20 הלכה לכיוונים רבים: סולמות הטונים השלמים והאקורדים המקבילים של דביסי, המשקלים המתחלפים של סטרווינסקי, אקורדים שבנויים בקוורטות, ומוזיקה בלי סולם בית בכלל.' },
+        play: [clip('modern')],
+      },
+      {
+        say: { en: 'Jazz: a swing feel with long-short eighths, seventh chords and extensions, improvisation, and a walking bass. Pop: a steady backbeat on 2 and 4, short chord loops, verse–chorus form and a hook.', he: 'ג׳אז: תחושת סווינג עם שמיניות ארוך־קצר, ספטאקורדים וטנשנים, אימפרוביזציה ובס מהלך. פופ: ביט יציב עם הדגשה על 2 ו־4, לופים קצרים של אקורדים, מבנה בית־פזמון והוק.' },
+        play: [clip('jazz')],
+      },
+      {
+        say: { en: 'A listening order: first the rhythm (motor, flexible, swung or backbeat), then the texture (equal lines, or a tune with accompaniment), then the harmony (plain or rich).', he: 'סדר הקשבה: קודם המקצב (מוטורי, גמיש, סווינג או ביט), אחר כך המרקם (קווים שווים, או מנגינה עם ליווי), ובסוף ההרמוניה (פשוטה או עשירה).' },
+      },
+      {
+        say: { en: 'The classic mix-up is Baroque versus Classical. Both sound tidy, but in Baroque every line stays busy, while in Classical one tune leads and the rest support it.', he: 'הבלבול הקלאסי הוא בארוק מול קלאסי. שניהם נשמעים מסודרים, אבל בבארוק כל הקווים עסוקים, ובקלאסי מנגינה אחת מובילה והשאר תומכים בה.' },
+      },
+      {
+        say: { en: 'Recap: rhythm, texture, harmony — in that order. Equal busy lines say Baroque, a clear tune says Classical, rich and flexible says Romantic, swing says jazz, a backbeat says pop.', he: 'לסיכום: מקצב, מרקם, הרמוניה — בסדר הזה. קווים עסוקים ושווים אומרים בארוק, מנגינה ברורה — קלאסי, עשיר וגמיש — רומנטי, סווינג — ג׳אז, ביט — פופ.' },
       },
     ],
   },

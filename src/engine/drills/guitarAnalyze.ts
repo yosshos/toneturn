@@ -9,6 +9,7 @@
 
 import type { Drill, DrillCalibration, ExpNote, PlayedNote, TakeMetrics, Verdict } from './types';
 import { analyzeTake, expTimeMs, median } from './analyze';
+import { meanChroma, ringCheck } from '../chroma';
 
 /** One analysis frame from the microphone (times in ms relative to beat 0, latency removed). */
 export interface GFrame {
@@ -21,12 +22,16 @@ export interface GFrame {
   rms: number;
   /** Spectral centroid (Hz), optional — sharpens the palm-mute cue. */
   centroid?: number;
+  /** 12-bin chroma (C = 0, max 1), optional — the chord ring-check (SPEC-0.48 §I1). */
+  chroma?: number[];
 }
 
 /** Pitch of an onset whose pitch could not be read (strum noise, muted chuck). */
 export const UNPITCHED = -1;
 
 type T2 = { en: string; he: string };
+const PC_EN = ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
+const PC_HE = ['דו', 'דו♯', 'רה', 'מי♭', 'מי', 'פה', 'פה♯', 'סול', 'לה♭', 'לה', 'סי♭', 'סי'];
 const mod12 = (n: number): number => ((n % 12) + 12) % 12;
 const midiHz = (m: number): number => 440 * 2 ** ((m - 69) / 12);
 const centsOf = (hz: number, base: number): number => 1200 * Math.log2(hz / midiHz(base));
@@ -408,6 +413,8 @@ export interface GuitarExtras {
   palmMuteShare: number | null;
   /** Clean chord changes per minute (chord drills). */
   changesPerMin: number | null;
+  /** Chord ring-check: chords judged, chords where every note rang, and how often each pitch class was missing. */
+  ring: { chords: number; full: number; missing: Record<number, number> } | null;
   selfCheck: T2[];
 }
 export type GuitarTakeMetrics = TakeMetrics & { guitar: GuitarExtras };
@@ -437,6 +444,7 @@ export function analyzeGuitarTake(drill: Drill, bpm: number, played: PlayedNote[
     changeGapMs: null,
     palmMuteShare: null,
     changesPerMin: null,
+    ring: null,
     selfCheck: selfChecks(drill),
   };
   const factors: { verdict: Verdict; en: string; he: string }[] = [];
@@ -471,6 +479,33 @@ export function analyzeGuitarTake(drill: Drill, bpm: number, played: PlayedNote[
 
   // Chord changes: a chord group whose pitch set differs from the previous chord group.
   const chordGs = gs.filter((g) => g.notes.length >= 2);
+
+  // Ring-check: in the first ~400 ms after each chord's onset, did every chord note sound?
+  if (chordGs.length && frames.some((f) => f.chroma)) {
+    const ring = { chords: 0, full: 0, missing: {} as Record<number, number> };
+    for (const g of chordGs) {
+      const on = onOf(drill.notes.indexOf(g.notes[0]));
+      const win = frames.filter((f) => f.chroma && f.t >= on + 50 && f.t <= on + 420 && f.rms > 0.01);
+      if (win.length < 3) continue;
+      const r = ringCheck(meanChroma(win.map((f) => f.chroma!)), [...g.pcs]);
+      ring.chords++;
+      if (!r.missing.length) ring.full++;
+      for (const p of r.missing) ring.missing[p] = (ring.missing[p] ?? 0) + 1;
+    }
+    if (ring.chords) {
+      extra.ring = ring;
+      const share = ring.full / ring.chords;
+      if (share < 0.75) {
+        const worst = Object.entries(ring.missing).sort((a, b) => b[1] - a[1]).slice(0, 2).map(([p]) => PC_EN[+p]);
+        const worstHe = Object.entries(ring.missing).sort((a, b) => b[1] - a[1]).slice(0, 2).map(([p]) => PC_HE[+p]);
+        factors.push({
+          verdict: share < 0.4 ? 'not' : 'almost',
+          en: `Not every note rang (${ring.full} of ${ring.chords} chords full) — listen for ${worst.join(', ')}`,
+          he: `לא כל הצלילים צלצלו (${ring.full} מתוך ${ring.chords} אקורדים מלאים) — הקשיבו ל־${worstHe.join(', ')}`,
+        });
+      }
+    }
+  }
   if (chordGs.length >= 2) {
     const key = (g: Group) => [...g.pcs].sort((a, b) => a - b).join(',');
     const changeIdx = chordGs.map((g, i) => (i > 0 && key(g) !== key(chordGs[i - 1]) ? i : -1)).filter((i) => i > 0);

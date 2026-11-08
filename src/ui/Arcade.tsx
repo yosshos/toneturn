@@ -629,6 +629,12 @@ export interface PracticeHub {
   tuner: () => void;
   metronome: () => void;
   drone: () => void;
+  /** Log practice done away from the app (SPEC-0.48 §P1). */
+  log?: () => void;
+  /** My charts: typed chord charts with backing tracks (SPEC-0.48 §P2). */
+  charts?: () => void;
+  /** Slow down & loop your own audio (SPEC-0.48 §P3). */
+  slowdown?: () => void;
 }
 const HUB_PATHS: Record<string, React.ReactNode> = {
   songs: (
@@ -670,6 +676,24 @@ const HUB_PATHS: Record<string, React.ReactNode> = {
       <path d="M3 12h2M7 8v8M11 5v14M15 8v8M19 10v4M21 12h0" />
     </>
   ),
+  slowdown: (
+    <>
+      <circle cx="12" cy="13" r="8" />
+      <path d="M12 9v4l2.5 2M9.5 2.5h5" />
+    </>
+  ),
+  charts: (
+    <>
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="M9 5v14M15 5v14M5.5 10h2M11 13h2M17 10h2" />
+    </>
+  ),
+  log: (
+    <>
+      <rect x="4" y="3.5" width="16" height="17" rx="2.5" />
+      <path d="M8 8h8M8 12h5M14.5 16.5l1.5 1.5 3-3.5" />
+    </>
+  ),
   games: (
     <>
       <rect x="2.5" y="7" width="19" height="11" rx="5.5" />
@@ -690,6 +714,9 @@ const HUB_TX = {
   tuner: { en: 'Tuner', he: 'טיונר' },
   metronome: { en: 'Metronome', he: 'מטרונום' },
   drone: { en: 'Drone', he: 'צליל רקע' },
+  log: { en: 'Log', he: 'רישום' },
+  charts: { en: 'Charts', he: 'מהלכים' },
+  slowdown: { en: 'Slow down', he: 'האטה' },
   games: { en: ['Games', 'By type, topic and level'], he: ['משחקים', 'לפי סוג, נושא ורמה'] },
 };
 
@@ -772,7 +799,7 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
           </div>
           <div className="hub-tools" role="group" aria-label={HUB_TX.tools[lang]}>
             <span className="hub-tools-h">{HUB_TX.tools[lang]}</span>
-            {(['tuner', 'metronome', 'drone'] as const).map((k) => (
+            {(['tuner', 'metronome', 'drone', 'charts', 'slowdown', 'log'] as const).filter((k) => hub[k]).map((k) => (
               <button key={k} className="hub-tool" onClick={hub[k]} data-hub={k}>
                 <HubIcon k={k} size={18} />
                 <span>{HUB_TX[k][lang]}</span>

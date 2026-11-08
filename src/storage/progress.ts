@@ -2,6 +2,7 @@
 // so a repeated callback or an app resume can never award points twice.
 
 import { placementResults } from '../engine/placement';
+import { isLog, logMinutes } from '../engine/practiceLog';
 import type { MetricKey, VibratoStyle, VoiceRange } from '../engine/vocal';
 import { memoryFactor } from '../engine/vocal';
 import type { AidMode, NoteView } from '../engine/aids';
@@ -276,6 +277,12 @@ export interface Settings {
   recalSnooze?: Record<string, string>;
   /** Keep one vocal take per exercise per week on this device for "then vs. now" (spec S.2). */
   keepTakes?: boolean;
+  /** My charts (SPEC-0.48 §P2): typed chord charts for backing tracks. */
+  myCharts?: import('../ui/Charts').MyChart[];
+  /** Improvisation levels: best rules score (0..1) per level id. */
+  improvBest?: Record<string, number>;
+  /** The mixer: levels, EQ and effects per channel (absent = the default mix). */
+  mixer?: Partial<import('../audio/mixer').MixerSettings>;
   /** Instrument sound for every exercise (spec Q): 'classic' (synth) or a sample set id. */
   sound?: string;
   /** Drone sound: 'soft' (synthesised, default) or a sustained recorded set ('organ'). */
@@ -509,7 +516,9 @@ export function applyResult(p: Progress, r: LessonResult, now: Date): Progress {
   // Only the first scored try at a week's puzzle counts; later plays are practice.
   if (r.puzzle && !puzzles[r.puzzle.week]) puzzles[r.puzzle.week] = { band: r.puzzle.band, medal: r.puzzle.medal, completedAt: at };
   const withEv: Progress = { ...p, ...withEvents(p, newEvents), puzzles };
-  const st = statsAfterResult(p, r, ratingsOf(withEv));
+  // Practice log (SPEC-0.48 §P1): its minutes are its duration — also after a cloud rebuild, which has no duration column.
+  const rd = isLog(r.lessonId) ? { ...r, durationMs: logMinutes(r) * 60000 } : r;
+  const st = statsAfterResult(p, rd, ratingsOf(withEv));
   const withEvents2: Progress = { ...withEv, ...st };
   const unlocks = r.lessonId === 'placement' ? [...new Set([...(p.placementUnlocks ?? []), ...placementUnlocks(ratingsOf(withEvents2))])] : p.placementUnlocks;
   return {

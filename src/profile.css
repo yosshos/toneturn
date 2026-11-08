@@ -290,3 +290,19 @@
 .tab { padding-inline: 0; }
 .tab-label { letter-spacing: -0.01em; }
 .fr2 .fr-remove { width: 24px; height: 24px; min-height: 24px; font-size: 0.75rem; border: 0; background: none; }
+
+/* duet streaks (SPEC-SOCIAL §3) */
+.duets .duets-head { display: grid; gap: 2px; margin-bottom: 8px; }
+.duets .duets-head h2 { margin: 0; }
+.duet-row { list-style: none; margin: 0; padding: 0; display: flex; gap: 8px; overflow-x: auto; }
+.duet { all: unset; box-sizing: border-box; display: grid; justify-items: center; gap: 2px; min-width: 64px; padding: 8px 6px; border: 1px solid var(--line); border-radius: 14px; cursor: pointer; }
+.duet.on { border-color: var(--accent, var(--mint)); }
+.duet b { font-size: 1.2rem; }
+.duet small { max-width: 72px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink-dim); }
+.duet .duet-flames i { font-style: normal; filter: grayscale(1); opacity: 0.35; font-size: 0.85rem; }
+.duet .duet-flames i.lit { filter: none; opacity: 1; }
+.duet.pending { border-style: dashed; }
+.duet-card { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.duet-card p { margin: 0; flex-basis: 100%; }
+.duet-start { margin-top: 10px; display: flex; gap: 8px; }
+.duet-start select { flex: 1; min-width: 0; font: inherit; padding: 6px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel, transparent); color: inherit; }

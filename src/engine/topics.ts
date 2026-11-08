@@ -21,6 +21,8 @@ import './topicsTime2';
 import './topicsSound';
 import './topicsChordRead';
 import './topicsSongs';
+import './topicsJazz';
+import { applyDepth } from './topicsDepth';
 
 // ================================================================ T. Barry Harris
 
@@ -437,3 +439,6 @@ TOPIC_GEN['bh-brothers'] = {
     });
   },
 };
+
+// SPEC-0.48 §D: deeper levels for the thin topics (after every base topic above).
+applyDepth();

@@ -36,3 +36,28 @@ describe('mini-lessons (spec X)', () => {
       expect(examples, `${l.id} examples`).toBeGreaterThanOrEqual(3);
     });
 });
+
+describe('mini-lessons in depth (SPEC-0.48 §L)', () => {
+  for (const l of Object.values(MINI_LESSONS))
+    it(`${l.id}: in depth is full but light`, () => {
+        expect(l.more, `${l.id} has no in-depth part`).toBeTruthy();
+        const more = l.more!;
+        expect(more.length, l.id).toBeGreaterThanOrEqual(5);
+        expect(more.length, l.id).toBeLessThanOrEqual(12);
+        const en = more.reduce((a, s) => a + words(s.say.en), 0);
+        expect(en, `${l.id} in-depth words`).toBeGreaterThanOrEqual(150);
+        expect(en, `${l.id} in-depth words`).toBeLessThanOrEqual(420);
+        let examples = 0;
+        for (const s of more) {
+          expect(words(s.say.en), `${l.id} step too long`).toBeLessThanOrEqual(60);
+          expect(/[א-ת]/.test(s.say.he), `${l.id} Hebrew text`).toBe(true);
+          if (s.play?.length) {
+            examples++;
+            expect(renderStimulus(s.play).length).toBeGreaterThan(0);
+            expect(renderStimulus(s.play).length, `${l.id} example too long`).toBeLessThan(16);
+          }
+          if (s.show?.notes) for (const m of s.show.notes) expect(m >= 28 && m <= 96, `${l.id} note ${m}`).toBe(true);
+        }
+        expect(examples, `${l.id} in-depth examples`).toBeGreaterThanOrEqual(2);
+      });
+});

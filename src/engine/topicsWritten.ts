@@ -1353,6 +1353,59 @@ TOPIC_GEN['ornaments'] = {
   },
 };
 TOPIC_TAGS['ornaments'] = tg(['theory', 'terms', 1]);
+// SPEC-0.48 §D: ornaments by ear inside a phrase, then count them.
+{
+  const base = TOPIC_GEN['ornaments'];
+  const baseN = base.levels.length;
+  const phrase = (rnd: () => number, orn: (string | null)[]) => {
+    const t = pickR(rnd, MAJ_KEYS.slice(0, 5));
+    const T = tonicAt(spPc(t), 60);
+    let d = 2 + Math.floor(rnd() * 3);
+    const m: number[] = [];
+    const ds: number[] = [];
+    orn.forEach((k, i) => {
+      const M = idxMidi(T, d, MAJ);
+      if (k) {
+        const s = ORN[k].shape(M, idxMidi(T, d + 1, MAJ), idxMidi(T, d - 1, MAJ));
+        const scale = 2 / s.d.reduce((a, b) => a + b, 0);
+        m.push(...s.m);
+        ds.push(...s.d.map((x) => x * scale));
+      } else {
+        m.push(M);
+        ds.push(i === orn.length - 1 ? 2 : 1);
+      }
+      d = Math.max(1, Math.min(6, d + pickR(rnd, [-1, 1, 2, -2])));
+    });
+    return { kind: 'melody' as const, midis: m, beats: ds, bpm: 84 };
+  };
+  TOPIC_GEN['ornaments'] = {
+    ...base,
+    levels: [...base.levels, { en: 'Which ornament is in the phrase?', he: 'איזה קישוט יש במשפט?' }, { en: 'How many ornaments?', he: 'כמה קישוטים?' }],
+    gen(seed, level, id) {
+      if (level <= baseN) return base.gen(seed, level, id);
+      const rnd = rng(seed);
+      const kinds = Object.keys(ORN);
+      if (level === baseN + 1) {
+        const kind = pickR(rnd, kinds);
+        const at = 1 + Math.floor(rnd() * 2);
+        const orn = [null, null, null, null].map((_, i) => (i === at ? kind : null));
+        const choices = shuffleR(rnd, [kind, ...shuffleR(rnd, kinds.filter((k) => k !== kind)).slice(0, 3)]);
+        const names: Names = {};
+        for (const c of choices) names[c] = nm(ORN[c].n.en, ORN[c].n.he, ORN[c].say);
+        return choiceQ({ id, topic: 'ornaments', level, seed, skill: 'theory', difficulty: 1400, ask: { en: 'A short phrase with one ornament. Which one?', he: 'משפט קצר עם קישוט אחד. איזה?' }, names, answer: kind, choices, stimulus: [phrase(rnd, orn)] });
+      }
+      const n = 1 + Math.floor(rnd() * 3);
+      const slots = shuffleR(rnd, [0, 1, 2, 3, 4]).slice(0, n);
+      const orn = [0, 1, 2, 3, 4, 5].map((i) => (slots.includes(i) ? pickR(rnd, kinds) : null));
+      return choiceQ({
+        id, topic: 'ornaments', level, seed, skill: 'theory', difficulty: 1500,
+        ask: { en: 'How many notes in this phrase are ornamented?', he: 'כמה צלילים במשפט הזה מקושטים?' },
+        names: { n1: nm('One', 'אחד', 'one', '1'), n2: nm('Two', 'שניים', 'two', '2'), n3: nm('Three', 'שלושה', 'three', '3') },
+        answer: `n${n}`, choices: ['n1', 'n2', 'n3'], stimulus: [phrase(rnd, orn)],
+      });
+    },
+  };
+}
 
 // ======================================================================= time-signatures 4–5 (wraps spec AD)
 

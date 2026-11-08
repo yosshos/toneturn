@@ -18,6 +18,40 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.48.0',
+    date: '2026-11-08',
+    en: [
+      "My pieces (preview): bring a score (MusicXML or MIDI), set a target tempo, and the coach runs your practice — a few bars at a time, slow first, up a step after three clean takes, back to the bar with the mistake, then joining the parts until the whole piece is at tempo",
+      'Every lesson now has an "In depth" part: the whole topic — what it is, how to hear it and play it, the common mistake, where it lives in real music. The short version still plays before each exercise',
+      'The glossary grows from 30 to 137 music words, each with an example',
+      'New tools in Practice: Charts (type chords, get a backing track in swing, pop, rock, bossa, ballad or waltz, in any key and tempo), Slow down (your own recording, slower without changing the pitch, with an A–B loop) and Log (practice away from the app counts toward your streak)',
+      'Guitar chords: the app now hears which strings rang in each strummed chord and tells you which note was missing',
+      'Deeper topics: form, ornaments, stereo width, added half steps and every Barry Harris topic now have at least three levels',
+      'Jazz & Barry Harris: new ear training — block chords, same notes / other names (C6 = Am7), turnarounds, comping rhythms and guide-tone lines — a new drill for the diminished moves into four keys, and Improvise over any chart with a score and tips',
+      "Songs: 40 public-domain songs (was 16), from children's tunes to Für Elise and the Irish Washerwoman",
+      'Improvise under rules: pick a scale for each bar (or let the chord choose), then rules for the notes (chord tones only, guide tones on 1 and 3, land on the 3rd, three notes), the intervals (steps, thirds) and the rhythm (continuous eighths, triplets, quarters, two bars on / two off) — every note is checked, by MIDI or microphone. 14 improvisation levels, from one chord to tritone subs, altered dominants and Coltrane changes',
+      'Any progression at the piano: practise the improvisation levels, 12 standards’ changes (Autumn Leaves, Blue Bossa, Solar, Lady Bird, Giant Steps…) or your own chart as voicings — shells, guide tones, rootless A / B, close, drop 2, drop 3, open, two-handed, quartal, upper structures, block chords — in Charleston, reverse, Red Garland, anticipation or four to the bar, with the tempo climbing as it gets clean; or comp with the left hand while the right hand improvises',
+      'A new sound: the grand piano has four velocity layers (it answers how hard you play), backing tracks have a real upright bass, and a light room — plus a mixer: every channel (piano, bass, drums & metronome, cues) has level, mute and solo, pan, a 3-band EQ, compressor, chorus, reverb (room or hall) and delay',
+      'Stride: seven new levels — tenths, broken tenths, a walking bass, the blues, rhythm changes, standards, stride with the right hand free, and all twelve keys',
+      'Duet streaks: keep a streak together with a friend — a day counts when you both practise; invite, accept and nudge in Community',
+    ],
+    he: [
+      "היצירות שלי (תצוגה מקדימה): העלו תווים (MusicXML או MIDI), קבעו טמפו יעד, והמאמן מנהל את האימון — כמה תיבות בכל פעם, קודם לאט, עולים שלב אחרי שלוש פעמים נקי, חוזרים לתיבה עם הטעות, ומחברים את החלקים עד שכל היצירה בטמפו",
+      'לכל שיעור יש עכשיו חלק "לעומק": הנושא המלא — מה זה, איך שומעים ומנגנים, הטעות הנפוצה, ואיפה זה במוזיקה אמיתית. הגרסה הקצרה עדיין מתנגנת לפני כל תרגיל',
+      'המילון גדל מ־30 ל־137 מונחים, כל אחד עם דוגמה',
+      'כלים חדשים בתרגול: מהלכים (כותבים אקורדים ומקבלים ליווי בסווינג, פופ, רוק, בוסה, בלדה או ואלס, בכל סולם וטמפו), האטה (הקלטה שלכם, לאט יותר בלי לשנות גובה, עם לופ A–B) ורישום (אימון מחוץ לאפליקציה נספר לרצף)',
+      'אקורדים בגיטרה: האפליקציה שומעת עכשיו אילו מיתרים צלצלו בכל אקורד ואומרת איזה צליל חסר',
+      'נושאים מעמיקים יותר: מבנה, קישוטים, רוחב סטריאו, חצי טון נוסף וכל נושאי בארי האריס — לפחות שלוש רמות בכל אחד',
+      'ג׳אז ובארי האריס: פיתוח שמיעה חדש — אקורדי בלוק, אותם צלילים בשמות אחרים (C6 = Am7), טרנאראונדים, מקצבי קומפינג וקווי צלילים מנחים — תרגיל חדש לתנועות הדימיניש לארבעה סולמות, ואלתור מעל כל מהלך עם ציון וטיפים',
+      'שירים: 40 שירים מנחלת הכלל (היו 16), משירי ילדים ועד לאליזה והכובסת האירית',
+      'אלתור עם כללים: בוחרים סולם לכל תיבה (או שהאקורד בוחר), ואז כללים לצלילים (רק צלילי אקורד, צליל מנחה על 1 ו־3, נחיתה על הטרצה, שלושה צלילים), למרווחים (צעדים, טרצות) ולקצב (שמיניות רצופות, טריולות, רבעים, שתי תיבות כן ושתיים לא) — כל צליל נבדק, ב־MIDI או במיקרופון. 14 שלבי אלתור, מאקורד אחד ועד תחליפי טריטון, דומיננטות אלטרד וקולטריין צ׳יינג׳ס',
+      'כל מהלך בפסנתר: מתרגלים את שלבי האלתור, 12 מהלכים של סטנדרטים (Autumn Leaves, Blue Bossa, Solar, Lady Bird, Giant Steps…) או מהלך משלכם בוויסינגים — שלדים, צלילים מנחים, בלי יסוד A / B, צמוד, דרופ 2, דרופ 3, פתוח, שתי ידיים, קוורטלי, Upper structure, אקורדי בלוק — בצ׳רלסטון, הפוך, רד גרלנד, הקדמה או ארבע לתיבה, והטמפו עולה כשנקי; או ליווי ביד שמאל בזמן שיד ימין מאלתרת',
+      'צליל חדש: פסנתר כנף עם ארבע שכבות דינמיקה (מגיב לעוצמת הנגינה), קונטרבס אמיתי בליווי, וחדר אקוסטי קל — ומיקסר: לכל ערוץ (פסנתר, בס, תופים ומטרונום, רמזים) עוצמה, השתקה וסולו, פאן, אקולייזר בשלוש רצועות, קומפרסור, קורוס, ריוורב (חדר או אולם) ודיליי',
+      'סטרייד: שבעה שלבים חדשים — דסימות, דסימות שבורות, בס הולך, בלוז, רידם צ׳יינג׳ס, סטנדרטים, סטרייד עם יד ימין חופשית, וכל שנים־עשר הסולמות',
+      'רצף בזוגות: שומרים על רצף יחד עם חבר — יום נספר כששניכם מתאמנים; הזמנה, אישור ותזכורת בקהילה',
+    ],
+  },
+  {
     version: '0.47.0',
     date: '2026-11-08',
     en: [
@@ -677,3 +711,4 @@ export function unseenChanges(lastSeen: string | null): ChangeEntry[] {
   if (!lastSeen) return [];
   return CHANGELOG.filter((c) => compareVersions(c.version, lastSeen) > 0);
 }
+

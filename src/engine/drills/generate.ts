@@ -2,6 +2,8 @@
 // Pure and deterministic. Fingerings: research §1.1 (help only, never graded; omitted where unsure).
 
 import { generateGuitar } from './guitar';
+import { chartKind, type ChartMode, type ChartVoicing, type CompRhythm } from './chartDrills';
+import { chartDrillData } from './chartDrills';
 import type { Drill, DrillGoal, DrillSpec, DynamicsGoal, ExpNote, FamilyId, Hand, KeyOrder, Motion, ScaleType, Variant } from './types';
 
 type T2 = { en: string; he: string };
@@ -692,6 +694,17 @@ function chordDrill(s: DrillSpec, evs: ChordEv[], ttl: T2, startBpm: number, mor
   }
   const handsSet = new Set(evs.flatMap((e) => e.notes.map((n) => n.hand)));
   return finish(s, buf, ttl, { evenness: false, hands: handsSet.size > 1, chordSets: sets, ...more }, startBpm, meter, keySig);
+}
+
+// ───────────────────────────── any progression as voicings / comping / stride (chartDrills.ts) ─────────────────────────────
+
+function genChart(s: DrillSpec): Drill {
+  const d = chartDrillData(s.kind, s.key);
+  if (!d) throw new Error(`Unknown chart drill: ${s.kind}`);
+  const evs: ChordEv[] = d.evs.map((e) => ({ beat: e.beat, dur: e.dur, notes: e.notes, required: e.required, allowed: e.allowed }));
+  const sp: DrillSpec = { ...s, hands: evs.some((e) => e.notes.some((n) => n.hand === 'R')) ? 'RL' : 'L', swing: s.swing ?? true };
+  const drill = chordDrill(sp, evs, d.title, d.startBpm, {}, 'C', d.meter);
+  return { ...drill, chart: d.text.split(' | '), ...(d.freeAbove !== undefined ? { freeAbove: d.freeAbove } : {}) };
 }
 
 // ───────────────────────────── C: cadences ─────────────────────────────
@@ -1509,6 +1522,45 @@ function genHarris(s: DrillSpec): Drill {
         : title([H(9, `${kn}6 / diminished block chords`, `אקורדי בלוק ${kn}6 / מוקטן`), dn], sp);
       return chordDrill(s, evs, ttl, 60, {}, SIG[minor6 ? mod(key + 3, 12) : key]);
     }
+    case 'h13-dimmoves': {
+      // Barry's diminished moves on the keys (owner 2026-11-08): the diminished chord a half step under the key, then one
+      // note moves a half step — down: a dominant 7 that resolves to its key (all four keys of the diminished chord);
+      // up (option 1): a minor 6 chord, itself a home chord.
+      const up = (s.option ?? 0) === 1;
+      const dimRoot = mod(key + 11, 12);
+      const close = (pcs: number[], from = 55) => {
+        const out: number[] = [];
+        for (let p = from; out.length < pcs.length; p++) if (pcs.includes(mod(p, 12))) out.push(p);
+        return out;
+      };
+      const dim = [0, 3, 6, 9].map((x) => mod(dimRoot + x, 12));
+      const evs: ChordEv[] = [];
+      let beat = 0;
+      const push = (pcs: number[], dur: number, voiced?: number[]) => {
+        const v = voiced ?? close(pcs);
+        evs.push({ beat, dur, notes: v.map((p, j) => ({ pitch: p, hand: 'R' as const, accent: j === v.length - 1 })), required: pcs, allowed: pcs });
+        beat += dur;
+      };
+      const dimV = close(dim);
+      // the order Barry teaches: the move that lands in the key first, then round the other three
+      const first = dimV.findIndex((p) => mod(p + (up ? 1 : -1), 12) === mod(up ? key + 7 : key + 7, 12));
+      const order = [0, 1, 2, 3].map((x) => (x + Math.max(0, first)) % 4);
+      for (const j of order) {
+        push(dim, 1, dimV);
+        const moved = dimV.map((p, i) => (i === j ? p + (up ? 1 : -1) : p));
+        const pcs = moved.map((p) => mod(p, 12));
+        push(pcs, 1, moved);
+        if (!up) {
+          // V7 → I6: the lowered note is the dominant's root; home is a fourth above it
+          const home = mod(moved[j] + 5, 12);
+          push([0, 4, 7, 9].map((x) => mod(home + x, 12)), 2);
+        } else beat += 0;
+      }
+      const ttl = up
+        ? title([H(13, `${keyName(dimRoot)}°7: raise one note — four minor 6 chords`, `${keyName(dimRoot)}°7: מעלים צליל אחד — ארבעה אקורדי מינור 6`)], s)
+        : title([H(13, `${keyName(dimRoot)}°7: lower one note — a dominant, then home, in four keys`, `${keyName(dimRoot)}°7: מורידים צליל אחד — דומיננט ואז הביתה, בארבעה סולמות`)], s);
+      return chordDrill(s, evs, ttl, 60, {}, SIG[key]);
+    }
   }
   throw new Error(`Unknown Barry Harris drill: ${s.kind}`);
 }
@@ -1790,7 +1842,7 @@ function genVoicings(s: DrillSpec): Drill {
         [DM.tones, G7.tones, CM.tones],
         70,
       );
-      name = t(`Guide tones (3rds & 7ths) ii–V–I in ${kn}`, `צלילים מובילים (טרצות וספטימות) ii–V–I ב-${kn}`);
+      name = t(`Guide tones (3rds & 7ths) ii–V–I in ${kn}`, `צלילים מנחים (טרצות וספטימות) ii–V–I ב-${kn}`);
       break;
     }
     case 'ust': {
@@ -1976,7 +2028,7 @@ function genVoicings(s: DrillSpec): Drill {
         prev = gv;
         return { v: [pitchIn(r, 36), ...gv], req: [r, ...g], allow: [...ints.map((x) => r + x), r + 2] };
       });
-      name = t(`Coltrane changes in ${kn}: root + guide tones (${coltraneNames(key)})`, `מהלכי קולטריין ב-${kn}: יסוד + צלילים מובילים (${coltraneNames(key)})`);
+      name = t(`Coltrane changes in ${kn}: root + guide tones (${coltraneNames(key)})`, `מהלכי קולטריין ב-${kn}: יסוד + צלילים מנחים (${coltraneNames(key)})`);
       break;
     }
     default:
@@ -2639,7 +2691,7 @@ function genFormLine(s: DrillSpec): Drill {
   });
   const what: Record<string, T2> = {
     'form-thirds': t('the 3rd of each chord on its first beat', 'הטרצה של כל אקורד בפעמה הראשונה שלו'),
-    'form-guide': t('guide-tone line (3rds and 7ths)', 'קו צלילים מובילים (טרצות וספטימות)'),
+    'form-guide': t('guide-tone line (3rds and 7ths)', 'קו צלילים מנחים (טרצות וספטימות)'),
     'form-arp': t('chord-tone arpeggios through the changes', 'ארפג׳יו צלילי אקורד דרך המהלך'),
   };
   const w = what[s.kind] ?? what['form-arp'];
@@ -2884,6 +2936,7 @@ function genWalkChanges(s: DrillSpec): Drill {
 export function generate(spec: DrillSpec): Drill {
   if (spec.family.startsWith('g-')) return generateGuitar(spec);
   const s: DrillSpec = { ...spec, key: mod(spec.key, 12) };
+  if (s.kind.startsWith('chart~')) return genChart(s);
   switch (s.kind) {
     case 'scale':
     case 'octaves':
@@ -3077,6 +3130,14 @@ export function catalog(): FamilyDef[] {
     hands: 'L',
     ...o,
   });
+  // Any progression as a drill (chartDrills.ts): voicings / comping / stride over levels, standards and templates.
+  const cv = (ref: string, voicing: ChartVoicing, rhythm: CompRhythm = 'whole', mode: ChartMode = 'comp', fam: 'voicings' | 'accomp' = 'voicings'): SpecTemplate => ({
+    family: fam,
+    kind: chartKind(ref, voicing, rhythm, mode),
+    hands: 'L',
+    swing: true,
+  });
+  const st = (ref: string, voicing: ChartVoicing, mode: ChartMode = 'comp') => cv(ref, voicing, 'whole', mode, 'accomp');
   const c = (kind: string, o: Partial<SpecTemplate> = {}): SpecTemplate => ({
     family: 'cadences',
     kind,
@@ -3562,6 +3623,7 @@ export function catalog(): FamilyDef[] {
           h('h5-pivots', { hands: 'L' }),
           h('h6-approach', { hands: 'L' }),
         ], cyc4),
+        L('harris', 13, 'Diminished moves: four keys from one chord', 'תנועות הדימיניש: ארבעה סולמות מאקורד אחד', [h('h13-dimmoves'), h('h13-dimmoves', { option: 1 })], cyc4),
       ],
     },
     {
@@ -3587,7 +3649,12 @@ export function catalog(): FamilyDef[] {
         L('voicings', 9, 'Two-handed voicings and drop 2', 'קולות בשתי ידיים ודרופ 2', [v('two-hand', { hands: 'RL' }), v('drop2', { hands: 'RL' })], cyc4),
         L('voicings', 10, 'Tritone substitution ii–♭II7–I', 'תחליף טריטון ii–♭II7–I', [v('tritone-sub')], cyc4),
         L('voicings', 11, 'Comping rhythms: Charleston, reverse, anticipations, Red Garland', "מקצבי ליווי: צ'רלסטון, הפוך, הקדמות, רד גרלנד", [0, 1, 2, 3].map((o) => v('comp', { option: o, swing: true })), cyc4),
-        L('voicings', 12, 'Coltrane changes with root and guide tones', 'מהלכי קולטריין עם יסוד וצלילים מובילים', [v('coltrane-v')], [0, 5, 10, 3, 7, 2]),
+        L('voicings', 12, 'Coltrane changes with root and guide tones', 'מהלכי קולטריין עם יסוד וצלילים מנחים', [v('coltrane-v')], [0, 5, 10, 3, 7, 2]),
+        L('voicings', 13, 'Rootless A / B through the progressions', 'בלי יסוד A / B לאורך המהלכים', [cv('lv:two-five-one', 'rootless-a'), cv('lv:two-five-one', 'rootless-b'), cv('lv:minor-two-five', 'rootless'), cv('lv:turnaround', 'rootless'), cv('lv:tritone-subs', 'rootless'), cv('lv:extensions', 'rootless')], [0, 5, 10, 3]),
+        L('voicings', 14, 'Comping rhythms on standards', 'מקצבי ליווי על סטנדרטים', [cv('std:autumn', 'rootless', 'charleston'), cv('std:fly', 'rootless', 'reverse'), cv('std:satin', 'shell', 'garland'), cv('std:blue-bossa', 'rootless', 'anticip'), cv('std:a-train', 'shell', 'four')], [0]),
+        L('voicings', 15, 'Drop 2, drop 3 and block chords on standards', 'דרופ 2, דרופ 3 ואקורדי בלוק על סטנדרטים', [cv('std:autumn', 'drop2'), cv('std:attya', 'drop2', 'charleston'), cv('std:fly', 'drop3'), cv('std:satin', 'block'), cv('std:solar', 'drop2', 'reverse')], [0]),
+        L('voicings', 16, 'Open, two-handed, quartal and upper structures', 'פתוח, שתי ידיים, קוורטלי ו־Upper structure', [cv('lv:two-five-one', 'open'), cv('std:autumn', 'two-hand'), cv('std:so-what', 'quartal'), cv('lv:altered-chain', 'upper'), cv('std:ladybird', 'two-hand', 'charleston'), cv('lv:coltrane', 'open')], [0]),
+        L('voicings', 17, 'Left hand comps, right hand improvises', 'יד שמאל מלווה, יד ימין מאלתרת', [cv('lv:two-five-one', 'rootless', 'charleston', 'improv'), cv('lv:blues', 'shell', 'charleston', 'improv'), cv('std:autumn', 'rootless', 'reverse', 'improv'), cv('std:bird-blues', 'rootless', 'charleston', 'improv'), cv('lv:rhythm-changes', 'shell', 'garland', 'improv'), cv('std:giant', 'guide', 'whole', 'improv')], [0]),
       ],
     },
     {
@@ -3599,7 +3666,7 @@ export function catalog(): FamilyDef[] {
           'jazz',
           1,
           'Guide tones ii–V–I',
-          'צלילים מובילים ii–V–I',
+          'צלילים מנחים ii–V–I',
           [j('guide-tones'), j('guide-tones', { option: 1 }), j('guide-tones', { hands: 'RL' })],
           cyc4,
         ),
@@ -3636,7 +3703,7 @@ export function catalog(): FamilyDef[] {
           'jazz',
           7,
           'Guide-tone lines and chord-tone arpeggios over forms',
-          'קווי צלילים מובילים וארפג׳יו צלילי אקורד על צורות',
+          'קווי צלילים מנחים וארפג׳יו צלילי אקורד על צורות',
           [...[0, 1, 2, 3].map((o) => j('form-guide', { option: o })), ...[0, 2, 3].map((o) => j('form-arp', { option: o, swing: true }))],
           [5, 10, 0, 7, 3],
         ),
@@ -3673,6 +3740,13 @@ export function catalog(): FamilyDef[] {
           m('boogie', { option: 1, swing: true }),
           m('bossa', { hands: 'RL' }),
         ], [2, 9, 4, 10, 3, 8, 1, 11]),
+        L('accomp', 11, 'Stride: tenths', 'סטרייד: דסימות', [st('tpl:fifties', 'stride-tenth'), st('lv:turnaround', 'stride-tenth')], [0, 7, 5, 2]),
+        L('accomp', 12, 'Stride: broken tenths', 'סטרייד: דסימות שבורות', [st('tpl:fifties', 'stride-broken'), st('lv:turnaround', 'stride-broken')], [0, 7, 5, 10]),
+        L('accomp', 13, 'Stride: the bass walks to the next chord', 'סטרייד: הבס הולך לאקורד הבא', [st('lv:blues', 'stride-walk'), st('lv:turnaround', 'stride-walk')], [0, 5, 10]),
+        L('accomp', 14, 'Stride through the blues and rhythm changes', 'סטרייד בבלוז וברידם צ׳יינג׳ס', [st('lv:blues', 'stride-octave'), st('lv:rhythm-changes', 'stride-single'), st('std:rhythm-bridge', 'stride-tenth')], [0, 5]),
+        L('accomp', 15, 'Stride on standards', 'סטרייד על סטנדרטים', [st('std:a-train', 'stride-tenth'), st('std:satin', 'stride-octave'), st('std:fly', 'stride-broken'), st('std:attya', 'stride-tenth')], [0]),
+        L('accomp', 16, 'Stride with the right hand free', 'סטרייד עם יד ימין חופשית', [st('lv:blues', 'stride-tenth', 'improv'), st('std:a-train', 'stride-octave', 'improv'), st('lv:turnaround', 'stride-walk', 'improv')], [0]),
+        L('accomp', 17, 'Stride in all keys, up to tempo', 'סטרייד בכל הסולמות, עד הטמפו', [st('lv:two-five-one', 'stride-tenth'), st('lv:turnaround', 'stride-broken')], [0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5]),
       ],
     },
   ];

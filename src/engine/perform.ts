@@ -55,7 +55,7 @@ export function backingTrack(id: ChartId, key: number, bpm: number, choruses: nu
     const pos = b % 4;
     const iv = QUALITY[c.q];
     const bass = pos === 0 ? root : pos === 1 ? root + iv[1] : pos === 2 ? root + iv[2] : bassOf((key + next.deg) % 12) + (next !== c || (b + 1) % 4 === 0 ? (b % 8 < 4 ? -1 : 1) : 0);
-    ev.push({ midi: bass, start: t, duration: beat * 0.9, velocity: 0.7 });
+    ev.push({ midi: bass, start: t, duration: beat * 0.9, velocity: 0.7, inst: 'bass' });
     // Ride: every beat, with the swung skip note on 2 and 4.
     ev.push({ midi: 93, start: t, duration: 0.05, velocity: pos % 2 ? 0.35 : 0.28 });
     if (pos % 2 === 1) ev.push({ midi: 93, start: t + (beat * swing) / (swing + 1), duration: 0.04, velocity: 0.22 });
@@ -92,12 +92,17 @@ export interface ImprovReport {
 
 /** Analyse an improvised take over a chart (frames timed from the first beat after the count-in). */
 export function improvReport(frames: SungFrame[], id: ChartId, key: number, bpm: number): ImprovReport {
+  return improvReportBy(frames, (b) => chordPcs(key, chordAt(id, b)), bpm);
+}
+
+/** The same analysis over any chart: `pcsAt(beat)` gives the chord's pitch classes at a beat (My charts, SPEC-0.48). */
+export function improvReportBy(frames: SungFrame[], pcsAt: (beat: number) => number[], bpm: number): ImprovReport {
   const beat = 60 / bpm;
   const notes = segmentNotes(frames, { minSec: 0.09 });
   const none: ImprovReport = { notes: 0, strongChordTones: 0, endsOnChordTone: false, rhythmicVariety: 0, rangeSemis: 0, chromaticApproaches: 0, score: 0, tips: ['strong', 'rhythm', 'range'] };
   if (notes.length < 3) return none;
   const pcOf = (m: number) => ((Math.round(m) % 12) + 12) % 12;
-  const isCT = (m: number, b: number) => chordPcs(key, chordAt(id, Math.floor(b))).includes(pcOf(m));
+  const isCT = (m: number, b: number) => pcsAt(Math.floor(b)).includes(pcOf(m));
   const beats = notes.map((n) => n.start / beat);
   const strong = notes.filter((_, i) => {
     const b = beats[i];

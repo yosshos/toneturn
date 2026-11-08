@@ -5,7 +5,7 @@ import { questionTags, TOPIC_TAGS } from '../src/engine/taxonomy';
 import { SING_HI, SING_LO } from '../src/engine/topicsPitch2';
 import type { Stimulus } from '../src/engine/lesson';
 
-const DEEPER: Record<string, number> = { maqam: 6, 'scale-types': 5, 'degrees-ext': 4, 'chord-scale': 3, 'transpose-adv': 3, mood: 4, 'bh-keys': 2, 'bh-tone': 2, 'bh-pivot': 2, 'sing-intervals': 6 };
+const DEEPER: Record<string, number> = { maqam: 6, 'scale-types': 5, 'degrees-ext': 4, 'chord-scale': 3, 'transpose-adv': 3, mood: 4, 'bh-keys': 4, 'bh-tone': 4, 'bh-pivot': 4, 'sing-intervals': 6 };
 const NEW_FROM: Record<string, number> = { maqam: 4, 'scale-types': 4, 'degrees-ext': 3, 'chord-scale': 3, 'transpose-adv': 3, mood: 3, 'bh-keys': 2, 'bh-tone': 2, 'bh-pivot': 2, 'sing-intervals': 1 };
 
 describe('pitch & voice, 0.38 (spec AE §4.7, §10.3)', () => {

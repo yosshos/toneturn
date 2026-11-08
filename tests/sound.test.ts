@@ -6,7 +6,7 @@ import { fxSpecsIn, fxTail, itemNeedsHeadphones, needsHeadphones, sourceSeconds,
 import { driveCurve, makeImpulse, matchGain, pinkNoise, renderSource, rms } from '../src/audio/fx';
 
 const TOPICS = ['eq-ear', 'filter-ear', 'tone-hz', 'space-ear', 'pan-ear', 'width-ear', 'dyn-ear'];
-const LEVELS: Record<string, number> = { 'eq-ear': 7, 'filter-ear': 3, 'tone-hz': 3, 'space-ear': 6, 'pan-ear': 3, 'width-ear': 2, 'dyn-ear': 6 };
+const LEVELS: Record<string, number> = { 'eq-ear': 7, 'filter-ear': 3, 'tone-hz': 3, 'space-ear': 6, 'pan-ear': 3, 'width-ear': 4, 'dyn-ear': 6 };
 const specs = (s: Stimulus[]) => fxSpecsIn(s);
 
 describe('sound & production ear topics (spec AE §4.4, §10)', () => {

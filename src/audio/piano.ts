@@ -10,6 +10,7 @@
 // Bus: voices → (dry + small convolution room) → compressor/limiter → master.
 
 import { midiToHz } from '../engine/pitch';
+import { CHANNELS, ChannelStrip, effectiveVol, mixerOf, type ChannelId, type MixerSettings } from './mixer';
 import { KIT_FILES, type DrumKit } from '../engine/grooves';
 import type { NoteEvent, PercKind } from '../engine/lesson';
 import { Cancelled, type AudioEngine, type CueKind, type RhythmAudio, type RhythmTimelineLike } from '../game/adapters';
@@ -19,6 +20,27 @@ interface Voice {
   out: GainNode;
   oscs: AudioScheduledSourceNode[];
   end: number;
+}
+
+type SampleBank = { id: string; notes: number[]; buffers: Map<number, AudioBuffer> };
+
+/**
+ * The grand's velocity layers (Salamander v3 / v7 / v11 / v15, sets "grand-pp" …): `upTo` = the velocity where the
+ * next layer starts; `db` = the layer's level as encoded (relative to mf, see public/samples/manifest.json credits).
+ */
+const GRAND_LAYERS = [
+  { id: 'pp', upTo: 0.35, db: -11 },
+  { id: 'mp', upTo: 0.55, db: -5.5 },
+  { id: 'mf', upTo: 0.8, db: 0 },
+  { id: 'f', upTo: Infinity, db: 3.5 },
+] as const;
+/** Loudness (dB, relative to mf) for a velocity: a straight line through the layer centres, so it rises smoothly. */
+export function grandTargetDb(v: number): number {
+  const pts: [number, number][] = [[0.175, -11], [0.45, -5.5], [0.675, 0], [0.9, 3.5]];
+  const x = Math.max(0, Math.min(1, v));
+  const i = x < pts[1][0] ? 0 : x < pts[2][0] ? 1 : 2;
+  const [[x0, y0], [x1, y1]] = [pts[i], pts[i + 1]];
+  return y0 + ((x - x0) * (y1 - y0)) / (x1 - x0);
 }
 
 export class PianoEngine implements AudioEngine, RhythmAudio {
@@ -56,6 +78,31 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
   /** Processed sounds (spec AE `fx`): straight to the master (past the limiter, so compression items stay honest). */
   private master!: GainNode;
   private fxPlaying = new Set<{ src: AudioBufferSourceNode; gain: GainNode }>();
+  /** Extra sample sets loaded in the background: the grand's velocity layers and the upright bass. */
+  private extras = new Map<string, SampleBank>();
+  private extraLoads = new Set<string>();
+  private extraFailed = new Map<string, number>();
+  /** The light room on the piano / bass. */
+  private roomWet: GainNode | null = null;
+  private roomOn = true;
+  /** The mixer (owner 2026-11-08): a channel strip per source — piano, bass, drums & metronome, cues. */
+  private strips: Partial<Record<ChannelId, ChannelStrip>> = {};
+  private mixer: MixerSettings = mixerOf(null);
+  private bassBus!: GainNode;
+  private delayNode: DelayNode | null = null;
+  private delayFb: GainNode | null = null;
+  /** Apply mixer settings (levels, EQ, effects, sends); kept for when the audio graph is built later. */
+  setMixer(m: Partial<MixerSettings> | null | undefined) {
+    this.mixer = mixerOf(m);
+    this.applyMixer();
+  }
+  private applyMixer() {
+    if (!this.ctx) return;
+    for (const id of CHANNELS) this.strips[id]?.apply(this.mixer.channels[id], effectiveVol(this.mixer, id));
+    const t = this.ctx.currentTime;
+    this.delayNode?.delayTime.setTargetAtTime(Math.max(0.05, Math.min(1.5, this.mixer.delayMs / 1000)), t, 0.05);
+    this.delayFb?.gain.setTargetAtTime(Math.max(0, Math.min(0.8, this.mixer.feedback)), t, 0.05);
+  }
 
   get soundId() {
     return this.bank ? this.bank.id : 'classic';
@@ -77,6 +124,7 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
         const bank = await this.loadSet(id, onProgress);
         if (this.sound !== id) return false; // changed meanwhile
         this.bank = bank;
+        if (id === 'grand') this.loadExtra('grand-mf'); // the everyday layer; the others load when first needed
         return true;
       } catch {
         if (this.sound === id) this.bank = null;
@@ -139,24 +187,63 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     return [a / sr, b / sr];
   }
 
+  /** Load a velocity layer of the grand ("grand-pp" …) or the bass once, in the background; failures retry after a minute. */
+  private loadExtra(id: string) {
+    if (this.extras.has(id) || this.extraLoads.has(id) || Date.now() - (this.extraFailed.get(id) ?? -1e9) < 60_000) return;
+    this.extraLoads.add(id);
+    this.loadSet(id)
+      .then((b) => void this.extras.set(id, b))
+      .catch(() => void this.extraFailed.set(id, Date.now()))
+      .finally(() => this.extraLoads.delete(id));
+  }
+
+  /** Room reverb on the piano / bass (Settings could switch it off; the metronome and processed sounds never use it). */
+  setRoom(on: boolean) {
+    this.roomOn = on;
+    if (this.roomWet && this.ctx) this.roomWet.gain.setTargetAtTime(on ? 1 : 0, this.ctx.currentTime, 0.05);
+  }
+
   /** Play one note from the sample bank; false when there is no bank (the synth plays instead). */
-  private sample(midi: number, velocity: number, start: number, dur: number): boolean {
+  private sample(midi: number, velocity: number, start: number, dur: number, inst?: NoteEvent['inst']): boolean {
     const ctx = this.ctx;
+    if (!ctx) return false;
+    if (inst === 'bass') {
+      const bass = this.extras.get('bass');
+      if (bass) {
+        // Pizzicato upright bass (one mf layer): a gentle gain with velocity; out of its range the piano plays.
+        const ok = this.playBuf(bass, midi, start, dur, 0.3 + 0.47 * velocity, 4, this.bassBus);
+        if (ok) return true;
+      } else this.loadExtra('bass');
+    }
     const bank = this.bank;
-    if (!ctx || !bank) return false;
+    if (!bank) return false;
+    if (bank.id === 'grand') {
+      // Velocity layers (pp / mp / mf / f): the layer gives the timbre, a gentle gain inside it keeps loudness rising
+      // smoothly. Until a layer has loaded, the single-layer grand plays as before.
+      const layer = GRAND_LAYERS.find((l) => velocity < l.upTo) ?? GRAND_LAYERS[GRAND_LAYERS.length - 1];
+      const lb = this.extras.get(`grand-${layer.id}`);
+      if (lb) return this.playBuf(lb, midi, start, dur, 0.83 * Math.pow(10, (grandTargetDb(velocity) - layer.db) / 20));
+      this.loadExtra(`grand-${layer.id}`);
+    }
+    // Soft notes (expression exercises) really get soft; everything at 0.45 and up sounds as before.
+    const peak = velocity >= 0.45 ? 0.55 + 0.45 * velocity : 0.08 + (0.7525 - 0.08) * (velocity / 0.45);
+    return this.playBuf(bank, midi, start, dur, peak);
+  }
+
+  /** One sampled note from `bank` (nearest sample, re-pitched). False when no sample is within `maxShift` semitones. */
+  private playBuf(bank: SampleBank, midi: number, start: number, dur: number, peak: number, maxShift = 99, bus?: GainNode): boolean {
+    const ctx = this.ctx!;
     const nearest = bank.notes.reduce((a, b) => (Math.abs(b - midi) < Math.abs(a - midi) ? b : a));
     const buf = bank.buffers.get(nearest);
-    if (!buf) return false;
+    if (!buf || Math.abs(midi - nearest) > maxShift) return false;
     const src = ctx.createBufferSource();
     src.buffer = buf;
     src.playbackRate.value = Math.pow(2, (midi - nearest) / 12);
     const out = ctx.createGain();
-    // Soft notes (expression exercises) really get soft; everything at 0.45 and up sounds as before.
-    const peak = velocity >= 0.45 ? 0.55 + 0.45 * velocity : 0.08 + (0.7525 - 0.08) * (velocity / 0.45);
     out.gain.setValueAtTime(0, start);
     out.gain.linearRampToValueAtTime(peak, start + 0.006);
     out.gain.setTargetAtTime(0, start + dur, 0.11);
-    src.connect(out).connect(this.sampleBus);
+    src.connect(out).connect(bus ?? this.sampleBus);
     const stopAt = Math.min(start + buf.duration / src.playbackRate.value, start + dur + 0.8);
     src.start(start);
     src.stop(stopAt);
@@ -180,6 +267,7 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
       this.build(this.ctx);
       void this.loadPerc();
       void this.loadKit(this.kit);
+      this.loadExtra('bass'); // small (≈0.4 MB), so backing tracks have it from their first note
     }
     if (this.ctx.state !== 'running') await this.ctx.resume();
   }
@@ -199,34 +287,83 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
 
     this.pianoBus = ctx.createGain();
     this.pianoBus.gain.value = 0.2;
+    // Shared effects returns (the mixer's sends feed them):
+    // the hall (1.9 s; drums and cues by default) …
     const reverb = ctx.createConvolver();
     reverb.buffer = this.roomImpulse(ctx, 1.9);
-    const wet = ctx.createGain();
-    wet.gain.value = 0.22;
-    this.pianoBus.connect(limiter);
-    this.pianoBus.connect(reverb).connect(wet).connect(limiter);
-    // Recorded instruments: their own level, the same room.
+    reverb.connect(limiter);
+    // … a short, light room (synthetic impulse, generated here — no licence needed; piano and bass by default) …
+    const room = ctx.createConvolver();
+    room.buffer = PianoEngine.smallRoom(ctx);
+    this.roomWet = ctx.createGain();
+    this.roomWet.gain.value = this.roomOn ? 1 : 0;
+    room.connect(this.roomWet).connect(limiter);
+    // … and a feedback delay, darkened a little on each repeat.
+    const delayIn = ctx.createGain();
+    const dl = ctx.createDelay(2);
+    const fb = ctx.createGain();
+    const tone = ctx.createBiquadFilter();
+    tone.type = 'lowpass';
+    tone.frequency.value = 3500;
+    delayIn.connect(dl).connect(tone).connect(limiter);
+    tone.connect(fb).connect(dl);
+    this.delayNode = dl;
+    this.delayFb = fb;
+    const buses = { room, hall: reverb, delay: delayIn };
+    for (const id of CHANNELS) this.strips[id] = new ChannelStrip(ctx, limiter, buses);
+    // Sources into their channel strips (each keeps its old trim, so the default mix sounds as before).
+    this.pianoBus.connect(this.strips.piano!.input);
     this.sampleBus = ctx.createGain();
     this.sampleBus.gain.value = 0.75;
-    this.sampleBus.connect(limiter);
-    this.sampleBus.connect(reverb);
+    this.sampleBus.connect(this.strips.piano!.input);
+    this.bassBus = ctx.createGain();
+    this.bassBus.gain.value = 0.75;
+    this.bassBus.connect(this.strips.bass!.input);
 
     this.percBus = ctx.createGain();
     this.percBus.gain.value = 0.85;
-    this.percBus.connect(limiter);
-    const percRoom = ctx.createGain();
-    percRoom.gain.value = 0.3;
-    this.percBus.connect(percRoom).connect(reverb);
+    this.percBus.connect(this.strips.drums!.input);
 
     this.cueBus = ctx.createGain();
     this.cueBus.gain.value = 0.18;
-    this.cueBus.connect(limiter);
-    this.cueBus.connect(reverb);
+    this.cueBus.connect(this.strips.cues!.input);
+    this.applyMixer();
 
     const len = Math.floor(ctx.sampleRate * 0.5);
     this.noise = ctx.createBuffer(1, len, ctx.sampleRate);
     const d = this.noise.getChannelData(0);
     for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+  }
+
+  /**
+   * A small room (~1 s): 6 ms pre-delay, a handful of early reflections, then a decorrelated stereo tail
+   * (RT60 ≈ 0.9 s) that gets darker as it decays.
+   */
+  private static smallRoom(ctx: BaseAudioContext): AudioBuffer {
+    const sr = ctx.sampleRate;
+    const seconds = 1.1;
+    const len = Math.floor(sr * seconds);
+    const ir = ctx.createBuffer(2, len, sr);
+    const pre = Math.floor(0.006 * sr);
+    const refl: [number, number, number][] = [
+      [0.011, 0.5, 0.35], [0.017, 0.4, 0.45], [0.023, 0.38, 0.3], [0.031, 0.3, 0.32], [0.041, 0.26, 0.2], [0.053, 0.2, 0.24],
+    ];
+    for (let ch = 0; ch < 2; ch++) {
+      const d = ir.getChannelData(ch);
+      for (const [t, l, r] of refl) {
+        const i = pre + Math.floor((t + (ch ? 0.0013 : 0)) * sr);
+        if (i < len) d[i] += ch ? r : l;
+      }
+      let lp = 0;
+      const k = 6.9 / 0.9; // −60 dB in 0.9 s
+      for (let i = pre; i < len; i++) {
+        const t = (i - pre) / sr;
+        lp += (Math.random() * 2 - 1 - lp) * (0.6 - 0.45 * Math.min(1, t / 0.8));
+        const fadeIn = t < 0.02 ? t / 0.02 : 1;
+        d[i] += 0.5 * lp * Math.exp(-k * t) * fadeIn;
+      }
+    }
+    return ir; // the ConvolverNode normalises it (normalize = true), as with the hall
   }
 
   private roomImpulse(ctx: AudioContext, seconds: number): AudioBuffer {
@@ -369,7 +506,7 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
         this.perc(e.perc, t0 + e.start, e.velocity);
         continue;
       }
-      if (!this.sample(e.midi, e.velocity, t0 + e.start, e.duration)) this.voice(e.midi, e.velocity, t0 + e.start, e.duration);
+      if (!this.sample(e.midi, e.velocity, t0 + e.start, e.duration, e.inst)) this.voice(e.midi, e.velocity, t0 + e.start, e.duration);
       const lead = (t0 - ctx.currentTime) * 1000;
       later(lead + e.start * 1000, () => this.noteOn(e.midi));
       later(lead + (e.start + e.duration) * 1000, () => this.noteOff(e.midi));

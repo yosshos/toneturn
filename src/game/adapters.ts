@@ -93,6 +93,8 @@ export interface SingOptions {
   record?: boolean;
   /** Treat the first ms after the microphone opens as silence (the reference's tail and the "ready" chime still ring). */
   ignoreFirstMs?: number;
+  /** Also compute a chroma vector per frame from a long FFT (chord ring-check). */
+  chroma?: boolean;
 }
 
 export type SingCaptureResult =

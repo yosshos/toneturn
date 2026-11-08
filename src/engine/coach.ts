@@ -195,6 +195,11 @@ const TOPIC_CONTRAST: Record<string, { en: string; he: string }> = {
   'bh-convert-2': { en: 'Still restless? a dominant. At rest: sunny major 6 or shadowy minor 6?', he: 'עדיין חסר מנוחה? דומיננט. נח: מז׳ור 6 מואר או מינור 6 מוצל?' },
   'bh-keys': { en: 'Hum the first home note, then compare the new home with it.', he: 'זמזמו את צליל הבית הראשון, ואז השוו אליו את הבית החדש.' },
   'bh-brothers': { en: 'Brothers have roots three or six semitones apart.', he: 'לאחים יש שורשים במרחק שלושה או שישה חצאי טונים.' },
+  'bh-family': { en: 'A 6 chord is the minor 7 a minor third below it; listen to the bass to name it.', he: 'אקורד 6 הוא המינור 7 שטרצה קטנה מתחתיו; הקשיבו לבס כדי לתת שם.' },
+  'bh-block': { en: 'Hum the top note: if it is 1, 3, 5 or 6 of the scale the chord is the 6 chord.', he: 'זמזמו את הצליל העליון: אם הוא 1, 3, 5 או 6 בסולם — זה אקורד ה־6.' },
+  comping: { en: 'Count 1 & 2 & — where does the piano land: on a beat or on an "&"?', he: 'ספרו 1 ו 2 ו — איפה הפסנתר נוחת: על פעמה או על "ו"?' },
+  turnarounds: { en: 'Listen to the bass: it walks the roots — and a half step down means a tritone sub.', he: 'הקשיבו לבס: הוא הולך על השורשים — וירידה בחצי טון פירושה תחליף טריטון.' },
+  'guide-tones': { en: 'Follow only the top voice: does it hold, then fall a half step, or fall first?', he: 'עקבו רק אחרי הקול העליון: הוא נשאר ואז יורד חצי טון, או יורד קודם?' },
   'chromatic-added': { en: 'Sing the plain scale in your head along with it — the extra note sticks out.', he: 'שירו בראש את הסולם הרגיל יחד איתו — הצליל הנוסף בולט.' },
 };
 

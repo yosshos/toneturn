@@ -68,6 +68,42 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [70], text: { en: '1 or 5?', he: '1 או 5?' } },
       },
     ],
+    more: [
+      {
+        say: { en: 'A degree describes a note’s job in a key, not its pitch. In B-flat major, B-flat is the tonic, 1. In E-flat major it is the dominant, 5. Same pitch; only the context changes.', he: 'דרגה מתארת את התפקיד של צליל בסולם, לא את הגובה שלו. בסי במול מז׳ור, סי במול הוא הטוניקה, 1. במי במול מז׳ור הוא הדומיננטה, 5. אותו גובה בדיוק; רק ההקשר משתנה.' },
+        play: [cad(Bb), note(70, 1.4), cad(Eb), note(70, 1.4)],
+        show: { notes: [70], text: { en: 'B♭ = 1 · B♭ = 5', he: 'סי במול = 1 · סי במול = 5' } },
+      },
+      {
+        say: { en: 'Why does 1 feel like rest? It is the root of the home chord, the chord every cadence ends on. In B-flat major that chord is B-flat, D, F.', he: 'למה 1 מרגיש כמו מנוחה? הוא השורש של אקורד הבית, האקורד שכל קדנצה נגמרת בו. בסי במול מז׳ור האקורד הזה הוא סי במול, רה, פה.' },
+        play: [chord([58, 62, 65], 1.2, true), chord([46, 58, 62, 65], 1.6)],
+        show: { notes: [58, 62, 65], chord: true, key: 'Bb', text: { en: 'B♭ – D – F = 1 3 5', he: 'סי במול – רה – פה = 1 3 5' } },
+      },
+      {
+        say: { en: '5 is also in the home chord, so it is stable — but it is the root of the V chord too, the chord that pulls home. In E-flat: E-flat chord, B-flat 7, E-flat chord.', he: 'גם 5 נמצא באקורד הבית, ולכן הוא יציב — אבל הוא גם השורש של אקורד V, האקורד שמושך הביתה. במי במול: אקורד מי במול, סי במול 7, אקורד מי במול.' },
+        play: [chord([51, 63, 67, 70], 1.0), chord([46, 62, 65, 68], 1.0), chord([51, 63, 67, 70], 1.5)],
+        show: { notes: [63, 67, 70], chord: true, key: 'Eb', text: { en: 'E♭ – B♭7 – E♭', he: 'E♭ – B♭7 – E♭' } },
+      },
+      {
+        say: { en: 'A listening strategy: after the chords, sing home. If home is the very note you hear, it is 1. If you have to walk down 5, 4, 3, 2, 1 to reach home, it is 5.', he: 'אסטרטגיית האזנה: אחרי האקורדים, שירו את הבית. אם הבית הוא בדיוק הצליל ששמעתם, זה 1. אם צריך לרדת 5, 4, 3, 2, 1 כדי להגיע הביתה, זה 5.' },
+        play: [cad(Eb), note(70, 1.0), notes([70, 68, 67, 65, 63], 0.5)],
+        show: { notes: [70, 68, 67, 65, 63], key: 'Eb', text: { en: '5 4 3 2 1', he: '5 4 3 2 1' } },
+      },
+      {
+        say: { en: 'The common mistake is judging by height: high means 5, low means 1. But the degree ignores the octave. This low B-flat is still 5 in E-flat major.', he: 'הטעות הנפוצה היא לשפוט לפי הגובה: גבוה זה 5, נמוך זה 1. אבל הדרגה לא תלויה באוקטבה. הסי במול הנמוך הזה הוא עדיין 5 במי במול מז׳ור.' },
+        play: [cad(Eb), note(58, 1.6)],
+        show: { notes: [58], key: 'Eb', text: { en: 'low, still 5', he: 'נמוך, ועדיין 5' } },
+      },
+      {
+        say: { en: 'In real music this happens all the time. A note shared by two chords — a common tone — can stay put while the harmony moves, quietly changing its job. Hear B-flat on top, from B-flat major to E-flat major.', he: 'במוזיקה אמיתית זה קורה כל הזמן. צליל משותף לשני אקורדים יכול להישאר במקום בזמן שההרמוניה זזה, ולהחליף תפקיד בשקט. שמעו את הסי במול למעלה, מסי במול מז׳ור למי במול מז׳ור.' },
+        play: [chord([46, 62, 65, 70], 1.4), chord([51, 63, 67, 70], 1.8)],
+        show: { notes: [70], text: { en: 'common tone: 1 → 5', he: 'צליל משותף: 1 → 5' } },
+      },
+      {
+        say: { en: 'Recap: a note gets its degree from the key, not from itself. Hear the chords, find home, then measure the note from home.', he: 'לסיכום: צליל מקבל את הדרגה שלו מהסולם, לא מעצמו. שומעים את האקורדים, מוצאים את הבית, ומודדים את הצליל ממנו.' },
+        show: { text: { en: 'key → home → degree', he: 'סולם → בית → דרגה' } },
+      },
+    ],
   },
 
   // ------------------------------------------------------------------ 3. Major or minor?
@@ -106,6 +142,47 @@ export const LESSONS: MiniLesson[] = [
       {
         say: { en: 'Your turn! I play a chord, you say "major" or "minor". Not sure? Hum the middle note: smiling means major, shaded means minor.', he: 'תורכם! אני מנגן אקורד, ואתם אומרים "מז׳ור" או "מינור". לא בטוחים? זמזמו את הצליל האמצעי: חיוך זה מז׳ור, צל זה מינור.' },
         show: { text: { en: 'major or minor?', he: 'מז׳ור או מינור?' } },
+      },
+    ],
+    more: [
+      {
+        say: { en: 'A triad is two thirds stacked. Major: a major third (4 half steps), then a minor third (3). Minor: the reverse, 3 then 4. Both span a perfect fifth, 7 half steps, from root to top.', he: 'טריאדה היא שתי טרצות זו על זו. מז׳ור: טרצה גדולה (4 חצאי טונים), ואז טרצה קטנה (3). מינור: הפוך, 3 ואז 4. בשניהם יש קווינטה זכה, 7 חצאי טונים, מהשורש עד הצליל העליון.' },
+        play: [chord([60, 64, 67], 1.3, true), rest(0.3), chord([60, 63, 67], 1.3, true)],
+        show: { notes: [60, 63, 64, 67], text: { en: '4 + 3 = major · 3 + 4 = minor', he: '4 + 3 = מז׳ור · 3 + 4 = מינור' } },
+      },
+      {
+        say: { en: 'Spell them with letters. D major is D, F-sharp, A; D minor is D, F, A. A major is A, C-sharp, E; A minor is A, C, E.', he: 'מאייתים אותם באותיות. רה מז׳ור הוא רה, פה דיאז, לה; רה מינור הוא רה, פה, לה. לה מז׳ור הוא לה, דו דיאז, מי; לה מינור הוא לה, דו, מי.' },
+        play: [chord([62, 66, 69], 1.2), chord([62, 65, 69], 1.4)],
+        show: { notes: [62, 65, 66, 69], text: { en: 'D–F♯–A · D–F–A', he: 'רה–פה♯–לה · רה–פה–לה' } },
+      },
+      {
+        say: { en: 'Inside a major key, chords I, IV and V are major; ii, iii and vi are minor. In C: C, F and G major; D minor, E minor and A minor.', he: 'בתוך סולם מז׳ור, האקורדים I, IV ו־V הם מז׳ור; ii, iii ו־vi הם מינור. בדו: דו, פה וסול מז׳ור; רה מינור, מי מינור ולה מינור.' },
+        play: [{ kind: 'phrase', key: C, chords: ['I', 'ii', 'iii', 'IV', 'V', 'vi'] }],
+        show: { text: { en: 'I ii iii IV V vi', he: 'I ii iii IV V vi' } },
+      },
+      {
+        say: { en: 'The common mistake: calling quiet, slow or low chords minor and loud, high ones major. Register and mood do not decide; only the third does. Here is a low G major, then a high E minor.', he: 'הטעות הנפוצה: לקרוא לאקורד שקט, איטי או נמוך מינור, ולאקורד חזק וגבוה מז׳ור. הרגיסטר ומצב הרוח לא קובעים; רק הטרצה. הנה סול מז׳ור נמוך, ואז מי מינור גבוה.' },
+        play: [chord([43, 47, 50], 1.6), rest(0.3), chord([76, 79, 83], 1.2)],
+        show: { notes: [43, 47, 50, 76, 79, 83], text: { en: 'G (major) · Em (minor)', he: 'G (מז׳ור) · Em (מינור)' } },
+      },
+      {
+        say: { en: 'A listening tip: sing the chord back from the bottom, 1, 3, 5, and focus on the step from 1 to 3. A wide, open step is major; a narrow one is minor.', he: 'טיפ להאזנה: שירו את האקורד מלמטה, 1, 3, 5, והתמקדו בצעד מ־1 ל־3. צעד רחב ופתוח זה מז׳ור; צעד צר זה מינור.' },
+        play: [chord([57, 60, 64], 1.4), notes([57, 60, 64], 0.6)],
+        show: { notes: [57, 60, 64], text: { en: 'A – C – E = minor', he: 'לה – דו – מי = מינור' } },
+      },
+      {
+        say: { en: 'In real songs the two colours alternate constantly. The pop progression I, V, vi, IV moves from major chords to the minor vi and back.', he: 'בשירים אמיתיים שני הצבעים מתחלפים כל הזמן. מהלך הפופ I, V, vi, IV עובר מאקורדי מז׳ור אל vi המינורי וחוזר.' },
+        play: [{ kind: 'phrase', key: G, chords: ['I', 'V', 'vi', 'IV'] }],
+        show: { text: { en: 'I – V – vi – IV', he: 'I – V – vi – IV' } },
+      },
+      {
+        say: { en: 'Two more triads exist. Diminished stacks two minor thirds and sounds tense; augmented stacks two major thirds and sounds unsettled. You will meet them later.', he: 'יש עוד שתי טריאדות. מוקטן בנוי משתי טרצות קטנות ונשמע מתוח; מוגדל בנוי משתי טרצות גדולות ונשמע לא יציב. תפגשו אותם בהמשך.' },
+        play: [chord([59, 62, 65], 1.3), rest(0.3), chord([60, 64, 68], 1.4)],
+        show: { notes: [59, 62, 65, 68], text: { en: 'B° · C+', he: 'B° · C+' } },
+      },
+      {
+        say: { en: 'Recap: same root, same fifth — the third decides. Four half steps above the root is major, three is minor.', he: 'לסיכום: אותו שורש, אותה קווינטה — הטרצה מכריעה. ארבעה חצאי טונים מעל השורש זה מז׳ור, שלושה זה מינור.' },
+        show: { text: { en: '3rd: 4 = major · 3 = minor', he: 'טרצה: 4 = מז׳ור · 3 = מינור' } },
       },
     ],
   },
@@ -148,6 +225,47 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'resolved or open?', he: 'נפתר או פתוח?' } },
       },
     ],
+    more: [
+      {
+        say: { en: 'A cadence is the harmonic ending of a phrase. The authentic cadence, V to I, closes it. The half cadence stops on V and leaves it open.', he: 'קדנצה היא הסיום ההרמוני של משפט. הקדנצה האותנטית, V ל־I, סוגרת אותו. חצי קדנצה נעצרת על V ומשאירה אותו פתוח.' },
+        play: [{ kind: 'phrase', key: C, chords: ['IV', 'V7', 'I'] }, rest(0.4), { kind: 'phrase', key: C, chords: ['I', 'IV', 'V'] }],
+        show: { text: { en: 'V → I .   … → V ?', he: 'V → I .   … → V ?' } },
+      },
+      {
+        say: { en: 'Why does V pull to I? In C, the G7 chord holds B, the leading tone, a half step below C. Its F leans down to E. Both tensions resolve at once.', he: 'למה V מושך ל־I? בדו, באקורד G7 יש סי — הצליל המוביל, חצי טון מתחת לדו. והפה שלו נשען למטה אל מי. שני המתחים נפתרים בבת אחת.' },
+        play: [chord([43, 59, 62, 65], 1.3), chord([48, 60, 64, 67], 1.8)],
+        show: { notes: [59, 65, 60, 64], text: { en: 'B → C · F → E', he: 'סי → דו · פה → מי' } },
+      },
+      {
+        say: { en: 'A gentler close is the plagal cadence, IV to I — the “Amen” at the end of many hymns. It resolves, but without the leading tone’s pull.', he: 'סיום רך יותר הוא הקדנצה הפלגאלית, IV ל־I — ה"אמן" בסוף הרבה מזמורים כנסייתיים. היא נפתרת, אבל בלי המשיכה של הצליל המוביל.' },
+        play: [{ kind: 'phrase', key: F, chords: ['I', 'IV', 'I'] }],
+        show: { text: { en: 'IV → I', he: 'IV → I' } },
+      },
+      {
+        say: { en: 'The deceptive cadence sets up V, then lands on vi instead of I. It sounds like a surprise turn: the phrase is not finished yet.', he: 'הקדנצה המטעה מכינה V, ואז נוחתת על vi במקום על I. זה נשמע כמו תפנית מפתיעה: המשפט עוד לא נגמר.' },
+        play: [{ kind: 'phrase', key: C, chords: ['I', 'IV', 'V7', 'vi'] }],
+        show: { text: { en: 'V7 → vi !', he: 'V7 → vi !' } },
+      },
+      {
+        say: { en: 'A listening strategy: when the music stops, sing home. If your note sits comfortably in the last chord, the phrase is closed. If it rubs, the ending is open.', he: 'אסטרטגיית האזנה: כשהמוזיקה נעצרת, שירו את הבית. אם הצליל שלכם יושב בנוחות בתוך האקורד האחרון, המשפט סגור. אם הוא מתחכך, הסיום פתוח.' },
+        play: [{ kind: 'phrase', key: G, chords: ['I', 'IV', 'V'] }, note(55, 1.6)],
+        show: { notes: [55], key: 'G', text: { en: 'home vs. V = open', he: 'בית מול V = פתוח' } },
+      },
+      {
+        say: { en: 'The common mistake: hearing a half cadence as closed because V is a bright major chord. On its own it sounds stable; in the key it wants I. Judge the last chord against the key, not by itself.', he: 'הטעות הנפוצה: לשמוע חצי קדנצה כסגורה כי V הוא אקורד מז׳ור בהיר. לבד הוא נשמע יציב; בתוך הסולם הוא רוצה את I. שפטו את האקורד האחרון ביחס לסולם, לא לבד.' },
+        play: [{ kind: 'phrase', key: D, chords: ['I', 'vi', 'ii', 'V'] }],
+        show: { text: { en: 'I – vi – ii – V ?', he: 'I – vi – ii – V ?' } },
+      },
+      {
+        say: { en: 'In real music, phrases often come in pairs: the first ends with a half cadence, like a question, the second with an authentic cadence, like the answer. This pair is called a period.', he: 'במוזיקה אמיתית משפטים מגיעים הרבה פעמים בזוגות: הראשון נגמר בחצי קדנצה, כמו שאלה, והשני בקדנצה אותנטית, כמו תשובה. הזוג הזה נקרא פריודה.' },
+        play: [{ kind: 'phrase', key: C, chords: ['I', 'IV', 'V'] }, rest(0.4), { kind: 'phrase', key: C, chords: ['I', 'V7', 'I'] }],
+        show: { text: { en: 'question ? · answer .', he: 'שאלה ? · תשובה .' } },
+      },
+      {
+        say: { en: 'Recap: V to I is a full stop; stopping on V is a question mark. IV to I closes gently, and V to vi is a surprise.', he: 'לסיכום: V ל־I הוא נקודה; עצירה על V היא סימן שאלה. IV ל־I סוגר ברכות, ו־V ל־vi הוא הפתעה.' },
+        show: { text: { en: 'V→I . · →V ? · IV→I · V→vi', he: 'V→I . · →V ? · IV→I · V→vi' } },
+      },
+    ],
   },
 
   // ------------------------------------------------------------------ 5. Sing home & five
@@ -184,8 +302,48 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [55, 62], key: 'G', text: { en: 'G: 1 → 5', he: 'סול: 1 → 5' } },
       },
       {
-        say: { en: 'Your turn! Hear the key and home, wait for the chime, then sing what I ask: home, or five. Breathe, relax your jaw — you got this.', he: 'תורכם! שומעים את הסולם ואת הבית, מחכים לצליל, ושרים מה שאבקש: את הבית, או את החמש. נשימה, לסת רפויה — אתם יכולים.' },
+        say: { en: 'Your turn. Hear the key and home, wait for the chime, then sing what I ask: home, or five. Breathe low and keep your jaw relaxed.', he: 'תורכם. שומעים את הסולם ואת הבית, מחכים לצליל, ושרים מה שאבקש: את הבית, או את החמש. נשימה נמוכה ולסת רפויה.' },
         show: { text: { en: '1 or 5 — sing it!', he: '1 או 5 — שירו!' } },
+      },
+    ],
+    more: [
+      {
+        say: { en: '1 is the tonic, the note the key is named after. 5 is the dominant, a perfect fifth above: seven half steps. Together they frame the key, and most melodies lean on them.', he: '1 הוא הטוניקה, הצליל שעל שמו נקרא הסולם. 5 הוא הדומיננטה, קווינטה זכה מעליו: שבעה חצאי טונים. יחד הם מסגרים את הסולם, ורוב המנגינות נשענות עליהם.' },
+        play: [cad(C), notes([60, 67], 0.9)],
+        show: { notes: [60, 67], key: 'C', text: { en: 'C → G = 7 half steps', he: 'דו → סול = 7 חצאי טונים' } },
+      },
+      {
+        say: { en: '5 also lives below home: a perfect fourth down, five half steps. Same degree, another octave. Sing whichever sits comfortably in your voice.', he: '5 נמצא גם מתחת לבית: קוורטה זכה למטה, חמישה חצאי טונים. אותה דרגה, אוקטבה אחרת. שירו את מה שנוח לקול שלכם.' },
+        play: [cad(C), notes([60, 55], 0.9)],
+        show: { notes: [60, 55], key: 'C', text: { en: '1 → 5 below', he: '1 → 5 למטה' } },
+      },
+      {
+        say: { en: 'To find home, let the chords finish and hum the note that feels like rest. Hold it until nothing in you wants to move.', he: 'כדי למצוא את הבית, תנו לאקורדים להסתיים וזמזמו את הצליל שמרגיש כמו מנוחה. החזיקו אותו עד שכלום בפנים לא רוצה לזוז.' },
+        play: [cad(F), note(65, 2.0)],
+        show: { notes: [65], key: 'F', text: { en: 'F major: 1 = F', he: 'פה מז׳ור: 1 = פה' } },
+      },
+      {
+        say: { en: 'To reach 5, climb the scale: do, re, mi, fa, sol — aloud at first, later silently. With practice you jump straight there, using the opening leap of “Twinkle, Twinkle” as your anchor.', he: 'כדי להגיע ל־5, מטפסים בסולם: דו, רה, מי, פה, סול — בהתחלה בקול, אחר כך בשקט. עם תרגול קופצים ישר, ונעזרים בקפיצה של "כוכב קטן" כעוגן.' },
+        play: [cad(D), notes([62, 64, 66, 67, 69], 0.45), note(69, 1.2)],
+        show: { notes: [62, 64, 66, 67, 69], key: 'D', text: { en: 'D E F♯ G A = 1 2 3 4 5', he: '1 2 3 4 5' } },
+      },
+      {
+        say: { en: 'Pitch starts in the body. Breathe low, keep the jaw loose, and sing on a soft “mm” or “oo”. Start the note gently on pitch instead of scooping up into it.', he: 'דיוק בגובה מתחיל בגוף. נשימה נמוכה, לסת רפויה, ושירה על "מממ" או "או" רכים. התחילו את הצליל בעדינות ישר בגובה, במקום להחליק אליו מלמטה.' },
+        show: { text: { en: 'low breath · loose jaw · “oo”', he: 'נשימה נמוכה · לסת רפויה · "או"' } },
+      },
+      {
+        say: { en: 'The common mistake is landing on 4 or 6 instead of 5. To check, sing down from your note: 5, 4, 3, 2, 1. If you end on home, you were right.', he: 'הטעות הנפוצה היא לנחות על 4 או 6 במקום על 5. כדי לבדוק, שירו למטה מהצליל שלכם: 5, 4, 3, 2, 1. אם הגעתם לבית, צדקתם.' },
+        play: [cad(C), notes([67, 65, 64, 62, 60], 0.5)],
+        show: { notes: [67, 65, 64, 62, 60], key: 'C', text: { en: '5 4 3 2 1', he: '5 4 3 2 1' } },
+      },
+      {
+        say: { en: 'In real music, 1 and 5 are the backbone of bass lines. In country, polka and many folk songs, the bass simply alternates root and fifth.', he: 'במוזיקה אמיתית, 1 ו־5 הם עמוד השדרה של קווי הבס. בקאנטרי, בפולקה ובהרבה שירי עם, הבס פשוט מתחלף בין השורש לקווינטה.' },
+        play: [melody([48, 43, 48, 43, 48, 43, 48], [1, 1, 1, 1, 1, 1, 2], 110)],
+        show: { notes: [48, 43, 48, 43], key: 'C', clef: 'bass', text: { en: '1 5 1 5', he: '1 5 1 5' } },
+      },
+      {
+        say: { en: 'Recap: hear the key, settle on 1, then find 5 — seven half steps up, or five down.', he: 'לסיכום: שומעים את הסולם, נוחתים על 1, ומוצאים את 5 — שבעה חצאי טונים למעלה, או חמישה למטה.' },
+        show: { notes: [55, 60, 67], key: 'C', text: { en: '5 · 1 · 5', he: '5 · 1 · 5' } },
       },
     ],
   },
@@ -224,9 +382,50 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [60, 64, 67, 72], text: { en: 'warm · hollow · one', he: 'חמה · חלולה · אחד' } },
       },
       {
-        say: { en: 'Your turn! First the notes come one after the other, then together. Say "third", "fifth" or "octave". Easy does it!', he: 'תורכם! קודם הצלילים מגיעים בזה אחר זה, ואז ביחד. תגידו "טרצה", "קווינטה" או "אוקטבה". בנחת!' },
+        say: { en: 'Your turn. First the notes come one after the other, then together. Say "third", "fifth" or "octave".', he: 'תורכם. קודם הצלילים מגיעים בזה אחר זה, ואז ביחד. תגידו "טרצה", "קווינטה" או "אוקטבה".' },
         play: [notes([57, 64], 0.9)],
         show: { text: { en: 'third, fifth or octave?', he: 'טרצה, קווינטה או אוקטבה?' } },
+      },
+    ],
+    more: [
+      {
+        say: { en: 'An interval has a number and a quality. The number counts letter names, both ends included: C to E spans C, D, E — a third. C to G spans five letters — a fifth.', he: 'למרווח יש מספר ואיכות. המספר סופר שמות תווים, כולל שני הקצוות: מדו למי עוברים דו, רה, מי — טרצה. מדו לסול יש חמישה תווים — קווינטה.' },
+        play: [notes([60, 62, 64], 0.5), rest(0.3), notes([60, 62, 64, 65, 67], 0.4)],
+        show: { notes: [60, 62, 64, 65, 67], key: 'C', text: { en: 'C D E = 3 · C…G = 5', he: 'דו רה מי = 3 · דו…סול = 5' } },
+      },
+      {
+        say: { en: 'The quality refines the size. A third can be major, 4 half steps like C to E, or minor, 3 like C to E-flat. Fifths and octaves are called perfect: 7 and 12.', he: 'האיכות מדייקת את הגודל. טרצה יכולה להיות גדולה, 4 חצאי טונים כמו דו–מי, או קטנה, 3 כמו דו–מי במול. קווינטה ואוקטבה נקראות זכות: 7 ו־12.' },
+        play: [chord([60, 64], 1.2), rest(0.3), chord([60, 63], 1.2)],
+        show: { notes: [60, 63, 64], text: { en: 'M3 = 4 · m3 = 3', he: 'טרצה גדולה = 4 · קטנה = 3' } },
+      },
+      {
+        say: { en: 'Played one after the other, an interval is melodic; together, it is harmonic. Melodic is easier at first; harmonic trains you to hear the blend.', he: 'כשהצלילים מתנגנים בזה אחר זה, המרווח מלודי; כשהם יחד, הוא הרמוני. מלודי קל יותר בהתחלה; הרמוני מאמן לשמוע את התערובת.' },
+        play: [notes([62, 69], 0.8), chord([62, 69], 1.4)],
+        show: { notes: [62, 69], text: { en: 'D – A: fifth', he: 'רה – לה: קווינטה' } },
+      },
+      {
+        say: { en: 'Anchor each interval to a tune you know. The major third opens “When the Saints Go Marching In”. The fifth is “Twinkle, Twinkle”. The octave opens “Over the Rainbow”.', he: 'קשרו כל מרווח למנגינה מוכרת. הטרצה הגדולה פותחת את "When the Saints Go Marching In". הקווינטה היא "כוכב קטן". האוקטבה פותחת את "Over the Rainbow".' },
+        play: [melody([60, 64, 65, 67], [1, 1, 1, 2]), rest(0.4), melody([60, 72], [2, 2])],
+        show: { notes: [60, 64, 72], key: 'C', text: { en: '1→3 · 1→8', he: '1→3 · 1→8' } },
+      },
+      {
+        say: { en: 'Intervals also go down. A falling fifth, G down to C, is the same size as C up to G — count the same way.', he: 'מרווחים הולכים גם למטה. קווינטה יורדת, מסול לדו, היא באותו גודל כמו מדו לסול — סופרים אותו דבר.' },
+        play: [notes([67, 60], 0.9), rest(0.3), notes([60, 67], 0.9)],
+        show: { notes: [60, 67], text: { en: 'G ↓ C = C ↑ G', he: 'סול ↓ דו = דו ↑ סול' } },
+      },
+      {
+        say: { en: 'The common mistake is confusing the fifth and the octave, since both sound pure. In an octave you hear one note doubled; in a fifth, two clearly different notes.', he: 'הטעות הנפוצה היא לבלבל בין קווינטה לאוקטבה, כי שתיהן נשמעות נקיות. באוקטבה שומעים צליל אחד כפול; בקווינטה, שני צלילים שונים בבירור.' },
+        play: [chord([57, 64], 1.4), rest(0.3), chord([57, 69], 1.4)],
+        show: { notes: [57, 64, 69], text: { en: 'A–E (5th) · A–A (8ve)', he: 'לה–מי (קווינטה) · לה–לה (אוקטבה)' } },
+      },
+      {
+        say: { en: 'In real music, the fifth is the rock power chord and the tuning of the violin’s strings. Thirds give harmony singing its sweetness: two voices a third apart.', he: 'במוזיקה אמיתית, הקווינטה היא אקורד הפאוור של הרוק והכיוון של מיתרי הכינור. הטרצות נותנות לשירה בהרמוניה את המתיקות שלה: שני קולות במרחק טרצה.' },
+        play: [chord([40, 47, 52], 1.2), rest(0.3), chord([64, 67], 0.6), chord([65, 69], 0.6), chord([67, 71], 1.0)],
+        show: { notes: [40, 47, 52], text: { en: 'E5 power chord · thirds', he: 'E5 אקורד פאוור · טרצות' } },
+      },
+      {
+        say: { en: 'Recap: count letters for the number, half steps for the quality. Major third 4, perfect fifth 7, octave 12.', he: 'לסיכום: סופרים תווים בשביל המספר, וחצאי טונים בשביל האיכות. טרצה גדולה 4, קווינטה זכה 7, אוקטבה 12.' },
+        show: { text: { en: '3rd = 4 · 5th = 7 · 8ve = 12', he: 'טרצה 4 · קווינטה 7 · אוקטבה 12' } },
       },
     ],
   },
@@ -268,6 +467,47 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'root, third or fifth?', he: 'שורש, טרצה או קווינטה?' } },
       },
     ],
+    more: [
+      {
+        say: { en: 'An inversion is a chord with a note other than the root in the bass. Root in the bass: root position. Third in the bass: first inversion. Fifth in the bass: second inversion.', he: 'היפוך הוא אקורד שבבס שלו יש צליל שאינו השורש. שורש בבס: מצב יסודי. טרצה בבס: היפוך ראשון. קווינטה בבס: היפוך שני.' },
+        play: [chord([60, 64, 67], 1.1), chord([64, 67, 72], 1.1), chord([67, 72, 76], 1.3)],
+        show: { notes: [60, 64, 67], chord: true, text: { en: 'C · C/E · C/G', he: 'C · C/E · C/G' } },
+      },
+      {
+        say: { en: 'Pop and jazz charts write inversions as slash chords: the chord, a slash, then the bass note. G/B is a G chord over B, its third. F/C is F over C, its fifth.', he: 'בפופ ובג׳ז כותבים היפוכים כאקורדי סלאש: האקורד, קו נטוי, ואז צליל הבס. G/B הוא אקורד סול מעל סי, הטרצה שלו. F/C הוא פה מעל דו, הקווינטה שלו.' },
+        play: [chord([47, 62, 67, 71], 1.4), rest(0.3), chord([48, 65, 69, 72], 1.4)],
+        show: { notes: [47, 62, 67, 71], chord: true, text: { en: 'G/B · F/C', he: 'G/B · F/C' } },
+      },
+      {
+        say: { en: 'Only the bass decides the name. The upper notes can come in any order and spacing: with E in the bass, both of these are C/E.', he: 'רק הבס קובע את השם. הצלילים העליונים יכולים להופיע בכל סדר ובכל מרווח: כשמי בבס, שני אלה הם C/E.' },
+        play: [chord([40, 55, 60, 64], 1.4), rest(0.3), chord([40, 60, 67, 72], 1.4)],
+        show: { notes: [40, 55, 60, 64], chord: true, text: { en: 'C/E = C/E', he: 'C/E = C/E' } },
+      },
+      {
+        say: { en: 'Why use inversions? They let the bass move by step. C, then G/B, then A minor: the bass walks C, B, A — smooth instead of jumping.', he: 'למה להשתמש בהיפוכים? הם מאפשרים לבס לזוז בצעדים. C, אחריו G/B, ואז לה מינור: הבס הולך דו, סי, לה — חלק, בלי קפיצות.' },
+        play: [chord([48, 64, 67, 72], 1.0), chord([47, 62, 67, 71], 1.0), chord([45, 64, 69, 72], 1.5)],
+        show: { notes: [48, 47, 45], clef: 'bass', text: { en: 'C – G/B – Am', he: 'C – G/B – Am' } },
+      },
+      {
+        say: { en: 'Each position has a typical role. Root position is stable and final. First inversion is lighter and moving. Second inversion is unstable: C/G before G7 at a cadence is the classic “cadential six-four”.', he: 'לכל מצב יש תפקיד אופייני. מצב יסודי יציב וסוגר. היפוך ראשון קליל ובתנועה. היפוך שני לא יציב: C/G לפני G7 בקדנצה הוא ה"קוורט־סקסט הקדנציאלי" הקלאסי.' },
+        play: [chord([43, 60, 64, 67], 1.1), chord([43, 59, 62, 65], 1.1), chord([48, 60, 64, 67], 1.6)],
+        show: { notes: [43, 60, 64, 67], chord: true, text: { en: 'C/G → G7 → C', he: 'C/G → G7 → C' } },
+      },
+      {
+        say: { en: 'The common mistake is naming the top note instead of the bass. The melody grabs your attention, but the inversion lives at the bottom. Here C is on top, yet the bass is G: second inversion.', he: 'הטעות הנפוצה היא לזהות את הצליל העליון במקום את הבס. המלודיה תופסת את תשומת הלב, אבל ההיפוך גר למטה. כאן דו למעלה, אבל הבס הוא סול: היפוך שני.' },
+        play: [chord([43, 64, 67, 72], 1.6), rest(0.3), note(43, 1.2)],
+        show: { notes: [43, 64, 67, 72], chord: true, text: { en: 'top C · bass G = C/G', he: 'למעלה דו · בבס סול = C/G' } },
+      },
+      {
+        say: { en: 'In real music, inversions build descending bass lines, common in pop ballads and Baroque music alike. C, G/B, Am, C/G, F walks the bass straight down the scale.', he: 'במוזיקה אמיתית, היפוכים בונים קווי בס יורדים, נפוצים גם בבלדות פופ וגם במוזיקת בארוק. C, G/B, Am, C/G, F מוריד את הבס ישר במורד הסולם.' },
+        play: [chord([48, 64, 67, 72], 0.9), chord([47, 62, 67, 71], 0.9), chord([45, 64, 69, 72], 0.9), chord([43, 64, 67, 72], 0.9), chord([41, 65, 69, 72], 1.4)],
+        show: { notes: [48, 47, 45, 43, 41], clef: 'bass', text: { en: 'C B A G F', he: 'דו סי לה סול פה' } },
+      },
+      {
+        say: { en: 'Recap: the lowest note names the inversion. Root is grounded, third is light, fifth is hovering; slash chords write it as chord over bass.', he: 'לסיכום: הצליל הנמוך קובע את ההיפוך. שורש מקורקע, טרצה קלילה, קווינטה מרחפת; אקורד סלאש כותב את זה כאקורד מעל בס.' },
+        show: { text: { en: 'C · C/E · C/G', he: 'C · C/E · C/G' } },
+      },
+    ],
   },
 
   // ------------------------------------------------------------------ 8. Notes and degrees
@@ -304,8 +544,49 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [66], key: 'D', text: { en: 'D major: 3 = F♯', he: 'רה מז׳ור: 3 = פה דיאז' } },
       },
       {
-        say: { en: 'Your turn! I name a key, then ask for a note or a degree — or play one. Count from home. Fingers are totally allowed!', he: 'תורכם! אני אומר סולם, ואז שואל על תו או על דרגה — או מנגן אחד. סופרים מהבית. מותר לגמרי להיעזר באצבעות!' },
+        say: { en: 'Your turn. I name a key, then ask for a note or a degree — or play one. Count from home; counting on your fingers is fine.', he: 'תורכם. אני אומר סולם, ואז שואל על תו או על דרגה — או מנגן אחד. סופרים מהבית; מותר להיעזר באצבעות.' },
         show: { text: { en: 'note ↔ degree', he: 'תו ↔ דרגה' } },
+      },
+    ],
+    more: [
+      {
+        say: { en: 'Letter names are absolute: C is always C. Degrees are relative: they number a scale’s notes from its tonic, 1 to 7. The same numbers work in every key, which is why musicians use them to transpose.', he: 'שמות התווים מוחלטים: דו הוא תמיד דו. הדרגות יחסיות: הן ממספרות את צלילי הסולם מהטוניקה, 1 עד 7. אותם מספרים עובדים בכל סולם, ולכן מוזיקאים משתמשים בהם כדי לטרנספז.' },
+        play: [cad(D), notes([62, 64, 66, 67, 69, 71, 73], 0.42)],
+        show: { notes: [62, 64, 66, 67, 69, 71, 73], key: 'D', text: { en: 'D E F♯ G A B C♯ = 1–7', he: 'רה מי פה♯ סול לה סי דו♯ = 1–7' } },
+      },
+      {
+        say: { en: 'Every major scale follows one pattern of whole and half steps: whole, whole, half, whole, whole, whole, half. The half steps fall between 3 and 4, and between 7 and 8.', he: 'כל סולם מז׳ור בנוי לפי אותה תבנית של טונים וחצאי טונים: טון, טון, חצי, טון, טון, טון, חצי. חצאי הטונים נמצאים בין 3 ל־4, ובין 7 ל־8.' },
+        play: [notes(C_IONIAN, 0.42)],
+        show: { notes: C_IONIAN, key: 'C', text: { en: 'W W H W W W H', he: 'ט ט ח ט ט ט ח' } },
+      },
+      {
+        say: { en: 'That pattern decides the key signature. G major needs F-sharp, or the step from 7 to 8 would not be a half step. F major needs B-flat to keep 3 to 4 a half step.', he: 'התבנית הזאת קובעת את סימני ההיתק. סול מז׳ור צריך פה דיאז, אחרת הצעד מ־7 ל־8 לא יהיה חצי טון. פה מז׳ור צריך סי במול כדי שהצעד מ־3 ל־4 יישאר חצי טון.' },
+        play: [notes([55, 57, 59, 60, 62, 64, 66, 67], 0.4)],
+        show: { notes: [55, 57, 59, 60, 62, 64, 66, 67], key: 'G', text: { en: 'G major: F♯ → G', he: 'סול מז׳ור: פה♯ → סול' } },
+      },
+      {
+        say: { en: 'Each degree takes its own letter, once. In D major, 3 is F-sharp, never G-flat: the letters must run D, E, F, G, A, B, C.', he: 'כל דרגה מקבלת אות משלה, פעם אחת. ברה מז׳ור, 3 הוא פה דיאז, אף פעם לא סול במול: האותיות חייבות לרוץ רה, מי, פה, סול, לה, סי, דו.' },
+        play: [notes([62, 64, 66], 0.6)],
+        show: { notes: [62, 64, 66], key: 'D', text: { en: 'D E F♯ = 1 2 3', he: 'רה מי פה♯ = 1 2 3' } },
+      },
+      {
+        say: { en: 'Degrees have names too. 1 is the tonic, 4 the subdominant, 5 the dominant, and 7 the leading tone, because it leads up to 1.', he: 'לדרגות יש גם שמות. 1 היא הטוניקה, 4 הסובדומיננטה, 5 הדומיננטה, ו־7 הצליל המוביל, כי הוא מוביל למעלה ל־1.' },
+        play: [cad(C), notes([60, 65, 67, 71, 72], 0.6)],
+        show: { notes: [60, 65, 67, 71, 72], key: 'C', text: { en: '1 tonic · 4 · 5 dominant · 7 → 8', he: '1 טוניקה · 4 · 5 דומיננטה · 7 → 8' } },
+      },
+      {
+        say: { en: 'A shortcut for high degrees: count down from the octave. In A major, 7 is one step below the next A — G-sharp. That is faster than counting six steps up.', he: 'קיצור דרך לדרגות גבוהות: סופרים למטה מהאוקטבה. בלה מז׳ור, 7 נמצא צעד אחד מתחת ללה הבא — סול דיאז. זה מהיר יותר מלספור שישה צעדים למעלה.' },
+        play: [notes([57, 69, 68], 0.7)],
+        show: { notes: [57, 69, 68], key: 'A', text: { en: '8 → 7 = G♯', he: '8 → 7 = סול♯' } },
+      },
+      {
+        say: { en: 'The common mistake: forgetting the key signature while counting. In E-flat major, 4 is A-flat, not A. Say the scale with its accidentals before you count.', he: 'הטעות הנפוצה: לשכוח את סימני ההיתק תוך כדי ספירה. במי במול מז׳ור, 4 הוא לה במול, לא לה. אמרו את הסולם עם הסימנים לפני שסופרים.' },
+        play: [notes([63, 65, 67, 68], 0.55)],
+        show: { notes: [63, 65, 67, 68], key: 'Eb', text: { en: 'E♭ F G A♭ = 1 2 3 4', he: 'מי♭ פה סול לה♭ = 1 2 3 4' } },
+      },
+      {
+        say: { en: 'Recap: letters are fixed, degrees move with home. Know the key’s accidentals, count from 1, and give every degree its own letter.', he: 'לסיכום: האותיות קבועות, הדרגות זזות עם הבית. הכירו את סימני ההיתק, ספרו מ־1, ותנו לכל דרגה אות משלה.' },
+        show: { text: { en: 'letter ↔ degree', he: 'תו ↔ דרגה' } },
       },
     ],
   },
@@ -344,8 +625,48 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [62, 66, 69], key: 'D', text: { en: 'D F♯ A = 1 3 5', he: 'רה פה♯ לה = 1 3 5' } },
       },
       {
-        say: { en: 'Your turn! Echo the notes I play, then sing the notes I name, after the chime. Aim for the middle of the note — you can do it.', he: 'תורכם! חזרו על הצלילים שאני מנגן, ואז שירו את התווים שאני אומר, אחרי הצליל. כוונו לאמצע הצליל — אתם יכולים.' },
+        say: { en: 'Your turn. Echo the notes I play, then sing the notes I name, after the chime. Aim for the centre of each note.', he: 'תורכם. חזרו על הצלילים שאני מנגן, ואז שירו את התווים שאני אומר, אחרי הצליל. כוונו למרכז של כל צליל.' },
         show: { text: { en: 'echo · then by name', he: 'הד · ואז לפי שם' } },
+      },
+    ],
+    more: [
+      {
+        say: { en: 'Two skills hide here. Echoing — matching a pitch you just heard — teaches your voice to follow your ear. Singing a named note teaches your inner map: name, then degree, then sound.', he: 'יש כאן שתי מיומנויות. הד — התאמה לצליל ששמעתם הרגע — מלמד את הקול ללכת אחרי האוזן. שירת תו לפי שם מלמדת את המפה הפנימית: שם, אחר כך דרגה, ואז צליל.' },
+        play: [note(57, 1.6)],
+        show: { notes: [57], text: { en: 'name → degree → sound', he: 'שם → דרגה → צליל' } },
+      },
+      {
+        say: { en: 'Echo in the octave that suits your voice. Lower voices usually sing an octave below the piano’s middle; that still counts as the same note. Here is E, then the E an octave lower.', he: 'שירו את ההד באוקטבה שמתאימה לקול שלכם. קולות נמוכים שרים בדרך כלל אוקטבה מתחת לאמצע הפסנתר; זה עדיין נחשב אותו צליל. הנה מי, ואז המי שאוקטבה מתחתיו.' },
+        play: [notes([64, 52], 1.0)],
+        show: { notes: [64, 52], text: { en: 'E4 = E3', he: 'מי = מי' } },
+      },
+      {
+        say: { en: 'To match a pitch, start the note softly, then nudge it up or down until it stops fighting the piano and locks in. Small, slow corrections beat big swoops.', he: 'כדי להתאים צליל, התחילו אותו ברכות, ואז הזיזו אותו קצת למעלה או למטה עד שהוא מפסיק להתנגש בפסנתר וננעל. תיקונים קטנים ואיטיים עדיפים על החלקות גדולות.' },
+        play: [note(62, 2.4)],
+        show: { notes: [62], text: { en: 'small nudges', he: 'תיקונים קטנים' } },
+      },
+      {
+        say: { en: 'For a named note, go through the degree. In F major, “sing A”: A is 3, so sing do, re, mi from F.', he: 'לתו לפי שם, עוברים דרך הדרגה. בפה מז׳ור, "שירו לה": לה הוא 3, אז שרים דו, רה, מי מפה.' },
+        play: [cad(F), notes([65, 67, 69], 0.6)],
+        show: { notes: [65, 67, 69], key: 'F', text: { en: 'F G A = 1 2 3', he: 'פה סול לה = 1 2 3' } },
+      },
+      {
+        say: { en: 'Some notes sit just below home. In G major, F-sharp is 7, a half step under G: sing home, then lean down one small step.', he: 'יש צלילים שיושבים ממש מתחת לבית. בסול מז׳ור, פה דיאז הוא 7, חצי טון מתחת לסול: שרים את הבית, ואז נשענים צעד קטן אחד למטה.' },
+        play: [cad(G), notes([67, 66], 0.9)],
+        show: { notes: [67, 66], key: 'G', text: { en: 'G → F♯ = 1 → 7', he: 'סול → פה♯ = 1 → 7' } },
+      },
+      {
+        say: { en: 'The common mistake: guessing from the letter alone. B is 7 in C major, a tense note under home — but in G major it is 3, calm and sweet. Always go through the degree.', he: 'הטעות הנפוצה: לנחש רק לפי האות. סי הוא 7 בדו מז׳ור, צליל מתוח מתחת לבית — אבל בסול מז׳ור הוא 3, רגוע ומתוק. תמיד עוברים דרך הדרגה.' },
+        play: [cad(C), note(71, 1.3), cad(G), note(71, 1.3)],
+        show: { notes: [71], text: { en: 'B: 7 in C · 3 in G', he: 'סי: 7 בדו · 3 בסול' } },
+      },
+      {
+        say: { en: 'This is how singers read new music without a piano: find the key, turn each note into a degree, then sing it from home.', he: 'כך זמרים קוראים מוזיקה חדשה בלי פסנתר: מוצאים את הסולם, הופכים כל תו לדרגה, ושרים אותו מהבית.' },
+        show: { text: { en: 'key → degree → sing', he: 'סולם → דרגה → שירה' } },
+      },
+      {
+        say: { en: 'Recap: echo by gentle tuning, any octave. For a named note, find home, turn the name into a degree, and climb there.', he: 'לסיכום: הד בכיוון עדין, בכל אוקטבה. לתו לפי שם, מוצאים את הבית, הופכים את השם לדרגה, ומטפסים אליה.' },
+        show: { text: { en: 'echo · name → degree', he: 'הד · שם → דרגה' } },
       },
     ],
   },
@@ -388,6 +709,47 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'sing the numbers', he: 'שירו את המספרים' } },
       },
     ],
+    more: [
+      {
+        say: { en: 'Singing degrees is the core of solfège: each number names a step of the scale, sung relative to home. Numbers or syllables — do, re, mi — work the same way, as long as the name follows the function.', he: 'שירה לפי דרגות היא הלב של הסולפג׳: כל מספר הוא צעד בסולם, שמושר ביחס לבית. מספרים או הברות — דו, רה, מי — עובדים אותו דבר, כל עוד השם הולך אחרי התפקיד.' },
+        play: [cad(C), notes([60, 62, 64, 65, 67], 0.5)],
+        show: { notes: [60, 62, 64, 65, 67], key: 'C', text: { en: '1 2 3 4 5 = do re mi fa sol', he: '1 2 3 4 5 = דו רה מי פה סול' } },
+      },
+      {
+        say: { en: 'Degrees 1, 3 and 5 belong to the home chord and feel stable. The others are active and lean toward a neighbour: 7 rises to 1, 4 falls to 3, 2 falls to 1, 6 falls to 5.', he: 'דרגות 1, 3 ו־5 שייכות לאקורד הבית ומרגישות יציבות. האחרות פעילות ונשענות על שכן: 7 עולה ל־1, 4 יורד ל־3, 2 יורד ל־1, 6 יורד ל־5.' },
+        play: [cad(C), notes([71, 72], 0.7), rest(0.3), notes([65, 64], 0.7)],
+        show: { notes: [71, 72, 65, 64], key: 'C', text: { en: '7 → 1 · 4 → 3', he: '7 → 1 · 4 → 3' } },
+      },
+      {
+        say: { en: 'Use those pulls to find active notes. To find 7, sing 1 and slip a half step down. To find 4, sing 3 and step a half step up.', he: 'השתמשו במשיכות האלה כדי למצוא צלילים פעילים. כדי למצוא 7, שירו 1 והחליקו חצי טון למטה. כדי למצוא 4, שירו 3 ועלו חצי טון.' },
+        play: [notes([72, 71, 72], 0.7), rest(0.3), notes([64, 65, 64], 0.7)],
+        show: { notes: [72, 71, 64, 65], key: 'C', text: { en: '1 7 1 · 3 4 3', he: '1 7 1 · 3 4 3' } },
+      },
+      {
+        say: { en: 'For leaps, use the home chord as scaffolding. 1 to 6? Think 1 to 5, then one step up to 6.', he: 'בקפיצות, השתמשו באקורד הבית כפיגום. מ־1 ל־6? חשבו מ־1 ל־5, ואז צעד אחד למעלה ל־6.' },
+        play: [notes([60, 67], 0.7), note(69, 1.2)],
+        show: { notes: [60, 67, 69], key: 'C', text: { en: '1 (5) 6', he: '1 (5) 6' } },
+      },
+      {
+        say: { en: 'Degrees also sit below 1. Many melodies start on 5 or 7 below home and rise into it.', he: 'דרגות נמצאות גם מתחת ל־1. הרבה מנגינות מתחילות ב־5 או ב־7 שמתחת לבית ועולות אליו.' },
+        play: [cad(C), notes([55, 60], 0.7), rest(0.3), notes([59, 60], 0.7)],
+        show: { notes: [55, 59, 60], key: 'C', text: { en: 'low 5 → 1 · low 7 → 1', he: '5 נמוך → 1 · 7 נמוך → 1' } },
+      },
+      {
+        say: { en: 'A short daily routine: in one key, sing 1-2-3-2-1, then 1-3-5-3-1, then 1-5-1, checking against the piano. Then change key — the numbers stay the same.', he: 'שגרה יומית קצרה: בסולם אחד, שירו 1־2־3־2־1, אחר כך 1־3־5־3־1, ואז 1־5־1, ובדקו מול הפסנתר. אחר כך החליפו סולם — המספרים נשארים אותו דבר.' },
+        play: [notes([60, 64, 67, 64, 60], 0.45), rest(0.4), notes([62, 66, 69, 66, 62], 0.45)],
+        show: { notes: [62, 66, 69], key: 'D', text: { en: 'C, then D: 1 3 5 3 1', he: 'דו, ואז רה: 1 3 5 3 1' } },
+      },
+      {
+        say: { en: 'The common mistake is drift: after a few notes, your sense of home slides sharp or flat, and every degree after it is off. Return to 1 often and compare it with the piano.', he: 'הטעות הנפוצה היא סחיפה: אחרי כמה צלילים, תחושת הבית זזה למעלה או למטה, וכל דרגה אחריה יוצאת לא מדויקת. חזרו ל־1 לעיתים קרובות והשוו אותו לפסנתר.' },
+        play: [cad(C), notes([60, 64, 67, 69, 67, 64], 0.45), note(60, 1.4)],
+        show: { notes: [60], key: 'C', text: { en: 'back to 1 — still true?', he: 'חזרה ל־1 — עדיין מדויק?' } },
+      },
+      {
+        say: { en: 'Recap: lock in home, use the home chord as scaffolding, and let active notes lean into their neighbours.', he: 'לסיכום: ננעלים על הבית, נעזרים באקורד הבית כפיגום, ונותנים לצלילים הפעילים להישען על השכנים שלהם.' },
+        show: { text: { en: '1 3 5 stable · others lean', he: '1 3 5 יציבים · השאר נשענים' } },
+      },
+    ],
   },
 
   // ------------------------------------------------------------------ 20. Note sequences
@@ -428,6 +790,45 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'sound · names · degrees', he: 'צליל · שמות · דרגות' } },
       },
     ],
+    more: [
+      {
+        say: { en: 'Short-term memory holds only a few items at once. Turning sounds into degrees packs them tightly: three numbers are far easier to hold than three raw pitches. In D major: F-sharp, E, D is 3, 2, 1.', he: 'הזיכרון לטווח קצר מחזיק רק כמה פריטים בבת אחת. הפיכת צלילים לדרגות דוחסת אותם: שלושה מספרים הרבה יותר קל להחזיק מאשר שלושה צלילים גולמיים. ברה מז׳ור: פה דיאז, מי, רה זה 3, 2, 1.' },
+        play: [cad(D), notes([66, 64, 62], 0.7)],
+        show: { notes: [66, 64, 62], key: 'D', text: { en: 'F♯ E D = 3 2 1', he: 'פה♯ מי רה = 3 2 1' } },
+      },
+      {
+        say: { en: 'Look for patterns: steps, repeats, or a chord outline. 1, 3, 5, 8 is just the home chord climbing — four notes, one idea.', he: 'חפשו תבניות: צעדים, חזרות, או מתאר של אקורד. 1, 3, 5, 8 הוא פשוט אקורד הבית מטפס — ארבעה צלילים, רעיון אחד.' },
+        play: [cad(C), notes([60, 64, 67, 72], 0.6)],
+        show: { notes: [60, 64, 67, 72], key: 'C', text: { en: '1 3 5 8 = one chord', he: '1 3 5 8 = אקורד אחד' } },
+      },
+      {
+        say: { en: 'Get the first note right and the rest follow. Find its degree against home, then track each move: up or down, step or leap. In F major: A, B-flat, C, F is 3, 4, 5, 1.', he: 'תפסו נכון את הצליל הראשון, והשאר יבואו. מצאו את הדרגה שלו ביחס לבית, ואז עקבו אחרי כל תנועה: למעלה או למטה, צעד או קפיצה. בפה מז׳ור: לה, סי במול, דו, פה זה 3, 4, 5, 1.' },
+        play: [cad(F), notes([69, 70, 72, 65], 0.65)],
+        show: { notes: [69, 70, 72, 65], key: 'F', text: { en: 'A B♭ C F = 3 4 5 1', he: 'לה סי♭ דו פה = 3 4 5 1' } },
+      },
+      {
+        say: { en: 'To convert names, say the scale from home and count. In D major, A is 5, B is 6 and F-sharp is 3.', he: 'כדי להמיר שמות, אומרים את הסולם מהבית וסופרים. ברה מז׳ור, לה הוא 5, סי הוא 6, ופה דיאז הוא 3.' },
+        play: [notes([69, 71, 66], 0.7)],
+        show: { notes: [69, 71, 66], key: 'D', text: { en: 'A B F♯ = 5 6 3', he: 'לה סי פה♯ = 5 6 3' } },
+      },
+      {
+        say: { en: 'If one note slips away, keep the contour — the up-and-down shape. A sequence with the right shape and one wrong number is easy to fix on the next hearing.', he: 'אם צליל אחד בורח, שמרו על הקונטור — צורת העליות והירידות. רצף עם צורה נכונה ומספר שגוי אחד קל לתקן בהשמעה הבאה.' },
+        play: [notes([60, 67, 64, 65], 0.6)],
+        show: { notes: [60, 67, 64, 65], key: 'C', text: { en: 'up · down · up', he: 'למעלה · למטה · למעלה' } },
+      },
+      {
+        say: { en: 'The common mistake is naming each note the moment it sounds, and missing the next one. Listen to the whole sequence, sing it back, and only then name it.', he: 'הטעות הנפוצה היא לתת שם לכל צליל ברגע שהוא נשמע, ולפספס את הבא. הקשיבו לכל הרצף, שירו אותו בחזרה, ורק אז תנו שמות.' },
+        show: { text: { en: 'hear → sing → name', he: 'שומעים → שרים → נותנים שם' } },
+      },
+      {
+        say: { en: 'This is how musicians learn riffs and melodies by ear: hear a short phrase, sing it, turn it into degrees, then find it on the instrument.', he: 'כך מוזיקאים לומדים ריפים ומנגינות בשמיעה: שומעים משפט קצר, שרים אותו, הופכים אותו לדרגות, ואז מוצאים אותו על הכלי.' },
+        show: { text: { en: 'ear → degrees → instrument', he: 'אוזן → דרגות → כלי' } },
+      },
+      {
+        say: { en: 'Recap: remember sequences as numbers and shapes, anchor the first note to home, and name only after the whole sequence has finished.', he: 'לסיכום: זוכרים רצפים כמספרים וכצורות, מעגנים את הצליל הראשון לבית, ונותנים שמות רק אחרי שכל הרצף נגמר.' },
+        show: { text: { en: 'numbers · shape · anchor', he: 'מספרים · צורה · עוגן' } },
+      },
+    ],
   },
 
   // ------------------------------------------------------------------ 22. Songs you know
@@ -464,8 +865,47 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [64, 62, 60, 62, 64, 64, 64], key: 'C', text: { en: '3 2 1 2 3 3 3', he: '3 2 1 2 3 3 3' } },
       },
       {
-        say: { en: 'Your turn! I play an opening, you say its degrees in order — then I reveal the song. Once, you will sing one from its numbers. Feeling famous yet?', he: 'תורכם! אני מנגן פתיחה, ואתם אומרים את הדרגות לפי הסדר — ואז אני מגלה איזה שיר זה. פעם אחת גם תשירו שיר מהמספרים שלו. מרגישים כבר מפורסמים?' },
+        say: { en: 'Your turn. I play an opening, you say its degrees in order — then I reveal the song. Once, you will sing one from its numbers.', he: 'תורכם. אני מנגן פתיחה, ואתם אומרים את הדרגות לפי הסדר — ואז אני מגלה איזה שיר זה. פעם אחת גם תשירו שיר מהמספרים שלו.' },
         show: { text: { en: 'degrees → song', he: 'דרגות → שיר' } },
+      },
+    ],
+    more: [
+      {
+        say: { en: 'You recognise a melody by its pattern of intervals, not by its exact pitches. That is why you know a song in any key: the degrees stay, only the starting pitch moves. “Twinkle” in D:', he: 'מזהים מנגינה לפי תבנית המרווחים שלה, לא לפי הגבהים המדויקים. לכן מזהים שיר בכל סולם: הדרגות נשארות, רק צליל ההתחלה זז. "כוכב קטן" ברה:' },
+        play: [cad(D), melody([62, 62, 69, 69, 71, 71, 69], [1, 1, 1, 1, 1, 1, 2])],
+        show: { notes: [62, 62, 69, 69, 71, 71, 69], key: 'D', text: { en: 'D: 1 1 5 5 6 6 5', he: 'רה: 1 1 5 5 6 6 5' } },
+      },
+      {
+        say: { en: 'Melodies can start on any degree. Many begin on 5 below home and rise into the key. “Happy Birthday” does: 5, 5, 6, 5, 1, 7.', he: 'מנגינות יכולות להתחיל בכל דרגה. הרבה מהן מתחילות ב־5 שמתחת לבית ועולות לתוך הסולם. "יום הולדת שמח" למשל: 5, 5, 6, 5, 1, 7.' },
+        play: [cad(C), melody([55, 55, 57, 55, 60, 59], [0.75, 0.25, 1, 1, 1, 2])],
+        show: { notes: [55, 55, 57, 55, 60, 59], key: 'C', durs: [0.75, 0.25, 1, 1, 1, 2], text: { en: '5 5 6 5 1 7', he: '5 5 6 5 1 7' } },
+      },
+      {
+        say: { en: 'Strategy: notice where the melody rests — usually the last note of a phrase. That is most often 1. Then measure the first note from there.', he: 'אסטרטגיה: שימו לב איפה המנגינה נחה — בדרך כלל בצליל האחרון של משפט. לרוב זה 1. משם מודדים את הצליל הראשון.' },
+        play: [melody([60, 62, 64, 60, 60, 62, 64, 60], [1, 1, 1, 1, 1, 1, 1, 1])],
+        show: { notes: [60, 62, 64, 60], key: 'C', text: { en: '1 2 3 1 · ends on 1', he: '1 2 3 1 · נגמר ב־1' } },
+      },
+      {
+        say: { en: 'Then follow the motion. Most melodies move mostly by step, with an occasional leap for character. The second line of “Twinkle” is all steps down: 4, 4, 3, 3, 2, 2, 1.', he: 'אחר כך עוקבים אחרי התנועה. רוב המנגינות זזות בעיקר בצעדים, עם קפיצה מדי פעם בשביל אופי. השורה השנייה של "כוכב קטן" היא כולה צעדים למטה: 4, 4, 3, 3, 2, 2, 1.' },
+        play: [melody([65, 65, 64, 64, 62, 62, 60], [1, 1, 1, 1, 1, 1, 2])],
+        show: { notes: [65, 65, 64, 64, 62, 62, 60], key: 'C', text: { en: '4 4 3 3 2 2 1', he: '4 4 3 3 2 2 1' } },
+      },
+      {
+        say: { en: 'Rhythm and metre are clues too. “Happy Birthday” sways in three beats per bar; “Twinkle” marches in four, even though both open with a repeated note.', he: 'גם הקצב והמשקל הם רמזים. "יום הולדת שמח" מתנדנד בשלוש פעמות בתיבה; "כוכב קטן" צועד בארבע, למרות ששניהם נפתחים בצליל חוזר.' },
+        show: { text: { en: '3/4 · 4/4', he: '3/4 · 4/4' } },
+      },
+      {
+        say: { en: 'The common mistake is assuming every song starts on 1. If your numbers come out strange, check the final note: if it is not 1, your home is in the wrong place.', he: 'הטעות הנפוצה היא להניח שכל שיר מתחיל ב־1. אם המספרים יוצאים מוזרים, בדקו את הצליל האחרון: אם הוא לא 1, הבית שלכם במקום הלא נכון.' },
+        show: { text: { en: 'check the last note', he: 'בדקו את הצליל האחרון' } },
+      },
+      {
+        say: { en: 'Musicians use this to play by ear, to transpose on the spot, and to write charts. Once a melody is in numbers, you can play it in any key — here, F.', he: 'מוזיקאים משתמשים בזה כדי לנגן בשמיעה, לטרנספז במקום, ולכתוב תווים. ברגע שמנגינה הפכה למספרים, אפשר לנגן אותה בכל סולם — הנה, בפה.' },
+        play: [melody([65, 65, 72, 72, 74, 74, 72], [1, 1, 1, 1, 1, 1, 2])],
+        show: { notes: [65, 65, 72, 72, 74, 74, 72], key: 'F', text: { en: 'F: 1 1 5 5 6 6 5', he: 'פה: 1 1 5 5 6 6 5' } },
+      },
+      {
+        say: { en: 'Recap: find where the tune rests, call it 1, and measure every note from there — up or down, step or leap.', he: 'לסיכום: מוצאים איפה המנגינה נחה, קוראים לזה 1, ומודדים ממנו כל צליל — למעלה או למטה, צעד או קפיצה.' },
+        show: { text: { en: 'rest = 1 · measure from home', he: 'מנוחה = 1 · מודדים מהבית' } },
       },
     ],
   },
@@ -508,6 +948,49 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'degrees → rhythm', he: 'דרגות → קצב' } },
       },
     ],
+    more: [
+      {
+        say: { en: 'Melodic dictation means writing down a melody you hear: its pitches, its rhythm and its metre. Professionals work in stages, and so should you.', he: 'הכתבה מלודית פירושה לכתוב מנגינה ששומעים: את הגבהים, את הקצב ואת המשקל. מקצוענים עובדים בשלבים, וכדאי שגם אתם.' },
+        play: [cad(G), rest(0.3), melody([67, 71, 69, 67], [1, 1, 1, 1], 72)],
+        show: { notes: [67, 71, 69, 67], key: 'G', durs: [1, 1, 1, 1], text: { en: '1 3 2 1', he: '1 3 2 1' } },
+      },
+      {
+        say: { en: 'Before writing anything, gather three facts: the key, the first note’s degree, and the beat. Tap along and count how many beats make a bar — usually four or three.', he: 'לפני שכותבים משהו, אוספים שלוש עובדות: הסולם, הדרגה של הצליל הראשון, והפעמה. תופפו יחד וספרו כמה פעמות יש בתיבה — בדרך כלל ארבע או שלוש.' },
+        show: { text: { en: 'key · first note · beat', he: 'סולם · צליל ראשון · פעמה' } },
+      },
+      {
+        say: { en: 'Pass one, pitches. Sketch the contour first — up, down, same — then fill in exact degrees, checking each against home. This one: 1, 3, 2, 5.', he: 'מעבר ראשון, גבהים. קודם משרטטים את הקונטור — למעלה, למטה, אותו צליל — ואז ממלאים דרגות מדויקות, ובודקים כל אחת מול הבית. כאן: 1, 3, 2, 5.' },
+        play: [cad(C), melody([60, 64, 62, 67], [1, 1, 1, 1], 72)],
+        show: { notes: [60, 64, 62, 67], key: 'C', text: { en: '1 3 2 5', he: '1 3 2 5' } },
+      },
+      {
+        say: { en: 'Pass two, rhythm. Tap the beat and notice which notes take one beat, which share a beat, and which hold longer. Here: two eighths, then three quarters.', he: 'מעבר שני, קצב. תופפו את הפעמה ושימו לב אילו צלילים לוקחים פעמה אחת, אילו חולקים פעמה, ואילו נמשכים יותר. כאן: שתי שמיניות, ואז שלושה רבעים.' },
+        play: [melody([60, 62, 64, 65, 67], [0.5, 0.5, 1, 1, 1], 76)],
+        show: { notes: [60, 62, 64, 65, 67], key: 'C', durs: [0.5, 0.5, 1, 1, 1], text: { en: 'ti-ti ta ta ta', he: 'טי־טי טה טה טה' } },
+      },
+      {
+        say: { en: 'A dot adds half the note’s value. A dotted quarter lasts one and a half beats and is usually followed by an eighth; a dotted half lasts three beats.', he: 'נקודה מוסיפה חצי מערך התו. רבע מנוקד נמשך פעמה וחצי ובדרך כלל אחריו באה שמינית; חצי מנוקד נמשך שלוש פעמות.' },
+        play: [melody([67, 65, 64, 62], [1.5, 0.5, 1, 1], 76), rest(0.3), melody([64, 60], [3, 1], 76)],
+        show: { notes: [67, 65, 64, 62], key: 'C', durs: [1.5, 0.5, 1, 1], text: { en: 'ta-i ti ta ta', he: 'טה־אי טי טה טה' } },
+      },
+      {
+        say: { en: 'Do not write during the first hearing. Listen, sing it back in your head, then write. On every replay, fill in only what is still missing.', he: 'אל תכתבו בהשמעה הראשונה. הקשיבו, שירו בראש, ורק אז כתבו. בכל השמעה חוזרת, השלימו רק את מה שעוד חסר.' },
+        show: { text: { en: 'listen · sing · write', he: 'מקשיבים · שרים · כותבים' } },
+      },
+      {
+        say: { en: 'The common mistake is straightening uneven rhythms. A dotted figure easily turns into even quarters on paper. Clap it back before choosing. Dotted, then even:', he: 'הטעות הנפוצה היא ליישר קצבים לא שווים. צורה מנוקדת הופכת בקלות לרבעים שווים על הדף. מחאו אותה בחזרה לפני שבוחרים. מנוקד, ואז שווה:' },
+        play: [melody([60, 60, 62, 64], [1.5, 0.5, 1, 1], 80), rest(0.4), melody([60, 60, 62, 64], [1, 1, 1, 1], 80)],
+        show: { notes: [60, 60, 62, 64], key: 'C', durs: [1.5, 0.5, 1, 1], text: { en: 'ta-i ti ≠ ta ta', he: 'טה־אי טי ≠ טה טה' } },
+      },
+      {
+        say: { en: 'Dictation is the heart of ear-training exams and of transcribing solos. The same two passes work for one bar or a whole song.', he: 'הכתבה היא הלב של מבחני פיתוח שמיעה ושל תמלול סולואים. אותם שני מעברים עובדים לתיבה אחת או לשיר שלם.' },
+        show: { text: { en: 'pitches → rhythm', he: 'גבהים → קצב' } },
+      },
+      {
+        say: { en: 'Recap: key, first note and beat first; then degrees; then rhythm. Listen before you write.', he: 'לסיכום: קודם סולם, צליל ראשון ופעמה; אחר כך דרגות; ואז קצב. מקשיבים לפני שכותבים.' },
+        show: { text: { en: 'listen → degrees → rhythm', he: 'מקשיבים → דרגות → קצב' } },
+      },
+    ],
   },
 
   // ------------------------------------------------------------------ Absolute pitch corner
@@ -546,6 +1029,44 @@ export const LESSONS: MiniLesson[] = [
       {
         say: { en: 'Your turn! Hear a note, pick its name. Guess freely — this score is tracked apart from your other skills, so it cannot hurt them.', he: 'תורכם! שומעים צליל ובוחרים את השם שלו. נחשו בחופשיות — הציון כאן נמדד בנפרד מהמיומנויות האחרות, אז הוא לא יכול לפגוע בהן.' },
         show: { text: { en: 'which note?', he: 'איזה צליל?' } },
+      },
+    ],
+    more: [
+      {
+        say: { en: 'Absolute pitch, also called perfect pitch, is naming or singing a note with no reference. Relative pitch names notes by their relation to a known note or key. Most professional musicians rely on relative pitch.', he: 'שמיעה מוחלטת היא היכולת לזהות או לשיר צליל בלי שום נקודת ייחוס. שמיעה יחסית מזהה צלילים לפי היחס שלהם לצליל או לסולם ידועים. רוב המוזיקאים המקצועיים נשענים על שמיעה יחסית.' },
+        play: [note(62, 1.6)],
+        show: { notes: [62], text: { en: 'D — no reference', he: 'רה — בלי נקודת ייחוס' } },
+      },
+      {
+        say: { en: 'Research links full absolute pitch to musical training in early childhood, and it is more common among speakers of tonal languages. Adults can improve with practice, but rarely reach effortless, instant naming.', he: 'מחקרים קושרים שמיעה מוחלטת מלאה ללימוד מוזיקה בגיל הילדות המוקדמת, והיא נפוצה יותר בקרב דוברי שפות טונאליות. מבוגרים יכולים להשתפר בתרגול, אבל רק לעיתים רחוקות מגיעים לזיהוי מיידי וללא מאמץ.' },
+        show: { text: { en: 'rare · trainable in part', he: 'נדירה · ניתנת לאימון חלקי' } },
+      },
+      {
+        say: { en: 'Many people without it still have pitch memory: asked to sing a favourite recording, they often land close to its original key. The ear stores pitch even when naming it takes training.', he: 'להרבה אנשים בלי שמיעה מוחלטת יש בכל זאת זיכרון צלילי: כשמבקשים מהם לשיר הקלטה אהובה, הם נוחתים הרבה פעמים קרוב לסולם המקורי. האוזן שומרת גובה גם כשלתת לו שם דורש אימון.' },
+        show: { text: { en: 'pitch memory', he: 'זיכרון צלילי' } },
+      },
+      {
+        say: { en: 'How to practise: start with one or two anchor notes, say A and C. Listen for their character, then compare each new note to an anchor before you guess.', he: 'איך מתרגלים: מתחילים מצליל עוגן אחד או שניים, למשל לה ודו. מקשיבים לאופי שלהם, ומשווים כל צליל חדש לעוגן לפני שמנחשים.' },
+        play: [note(69, 1.4), rest(0.4), note(60, 1.4)],
+        show: { notes: [69, 60], text: { en: 'anchors: A · C', he: 'עוגנים: לה · דו' } },
+      },
+      {
+        say: { en: 'A note’s colour shifts with register and instrument, so you are learning its name, not its height. Here is C in three octaves — the same note class each time.', he: 'הצבע של צליל משתנה עם הרגיסטר והכלי, אז אתם לומדים את השם שלו, לא את הגובה. הנה דו בשלוש אוקטבות — אותו צליל בכל פעם.' },
+        play: [notes([48, 60, 72], 1.0)],
+        show: { notes: [48, 60, 72], text: { en: 'C · C · C', he: 'דו · דו · דו' } },
+      },
+      {
+        say: { en: 'The common mistake is quietly measuring from the previous note. That is relative pitch in disguise — a great skill, but here the cluster breaks the chain on purpose. Judge each note fresh.', he: 'הטעות הנפוצה היא למדוד בשקט מהצליל הקודם. זו שמיעה יחסית בתחפושת — מיומנות מצוינת, אבל כאן הקלאסטר שובר את השרשרת בכוונה. שפטו כל צליל מחדש.' },
+        play: [chord([55, 56, 61, 66, 68], 0.5), rest(0.9), note(65, 1.4)],
+        show: { text: { en: 'cluster → fresh note', he: 'קלאסטר → צליל חדש' } },
+      },
+      {
+        say: { en: 'Even partial pitch memory is useful: it helps you sense a song’s key quickly and start singing closer to the right pitch.', he: 'גם זיכרון צלילי חלקי מועיל: הוא עוזר לחוש מהר את הסולם של שיר ולהתחיל לשיר קרוב יותר לגובה הנכון.' },
+        show: { text: { en: 'a useful extra', he: 'תוספת שימושית' } },
+      },
+      {
+        say: { en: 'Recap: absolute pitch is a bonus, relative pitch is the foundation. Train with anchor notes, and judge each note fresh.', he: 'לסיכום: שמיעה מוחלטת היא בונוס, שמיעה יחסית היא הבסיס. מתאמנים עם צלילי עוגן, ושופטים כל צליל מחדש.' },
+        show: { text: { en: 'anchors · fresh ears', he: 'עוגנים · אוזן רעננה' } },
       },
     ],
   },
@@ -588,6 +1109,50 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'which mode?', he: 'איזה מודוס?' } },
       },
     ],
+    more: [
+      {
+        say: { en: 'The modes are seven scales made from the major scale’s notes, each starting on a different degree. Using only white keys: from C you get Ionian, from D Dorian, from G Mixolydian, from A Aeolian.', he: 'המודוסים הם שבעה סולמות שבנויים מהצלילים של סולם המז׳ור, וכל אחד מתחיל בדרגה אחרת. רק על הקלידים הלבנים: מדו מקבלים יוני, מרה דורי, מסול מיקסולידי, מלה איאולי.' },
+        play: [notes([62, 64, 65, 67, 69, 71, 72, 74], 0.38)],
+        show: { notes: [62, 64, 65, 67, 69, 71, 72, 74], text: { en: 'D E F G A B C D = D Dorian', he: 'רה מי פה סול לה סי דו רה = רה דורי' } },
+      },
+      {
+        say: { en: 'For the ear, it is easier to compare modes on the same home note, as this exercise does. Then each mode is simply major or minor with one or two notes changed.', he: 'לאוזן קל יותר להשוות מודוסים על אותו צליל בית, כמו בתרגיל הזה. אז כל מודוס הוא פשוט מז׳ור או מינור עם צליל אחד או שניים שהשתנו.' },
+        play: [note(60, 0.8), notes(C_IONIAN, 0.32), rest(0.3), notes(C_MIXO, 0.32)],
+        show: { notes: [71, 70], text: { en: 'Ionian 7 · Mixolydian ♭7', he: 'יוני 7 · מיקסולידי ♭7' } },
+      },
+      {
+        say: { en: 'Two more you will meet. Lydian is major with a raised 4: dreamy and floating, a favourite of film composers.', he: 'עוד שניים שתפגשו. לידי הוא מז׳ור עם דרגה 4 מוגבהת: חלומי ומרחף, אהוב על מלחיני סרטים.' },
+        play: [note(60, 0.8), notes([60, 62, 64, 66, 67, 69, 71, 72], 0.38)],
+        show: { notes: [60, 62, 64, 66, 67, 69, 71, 72], text: { en: 'Lydian: 1 2 3 ♯4 5 6 7', he: 'לידי: 1 2 3 ♯4 5 6 7' } },
+      },
+      {
+        say: { en: 'Phrygian is minor with a flat 2, a half step above home: dark and tense, heard in flamenco and metal. Locrian, with ♭2 and ♭5, is the rarest and darkest.', he: 'פריגי הוא מינור עם ♭2, חצי טון מעל הבית: כהה ומתוח, נשמע בפלמנקו ובמטאל. לוקרי, עם ♭2 ו־♭5, הוא הנדיר והכהה מכולם.' },
+        play: [note(60, 0.8), notes([60, 61, 63, 65, 67, 68, 70, 72], 0.38)],
+        show: { notes: [60, 61, 63, 65, 67, 68, 70, 72], text: { en: 'Phrygian: 1 ♭2 ♭3 4 5 ♭6 ♭7', he: 'פריגי: 1 ♭2 ♭3 4 5 ♭6 ♭7' } },
+      },
+      {
+        say: { en: 'The method: settle home, decide major or minor third, then hunt the characteristic note — ♯4 Lydian, ♭7 Mixolydian, 6 Dorian, ♭2 Phrygian. If nothing stands out, it is plain major or natural minor.', he: 'השיטה: נוחתים על הבית, מחליטים טרצה גדולה או קטנה, ואז מחפשים את הצליל האופייני — ♯4 לידי, ♭7 מיקסולידי, 6 דורי, ♭2 פריגי. אם שום דבר לא בולט, זה מז׳ור רגיל או מינור טבעי.' },
+        show: { text: { en: '3rd → odd note → mode', he: 'טרצה → צליל חריג → מודוס' } },
+      },
+      {
+        say: { en: 'Each mode’s colour also lives in a chord. Dorian sounds like a minor chord with a major 6th; Mixolydian like a dominant 7th chord. Here are Cm6 and C7.', he: 'הצבע של כל מודוס חי גם באקורד. דורי נשמע כמו אקורד מינור עם סקסטה גדולה; מיקסולידי כמו אקורד דומיננט־ספטימה. הנה Cm6 ו־C7.' },
+        play: [chord([48, 60, 63, 67, 69], 1.6), rest(0.3), chord([48, 60, 64, 67, 70], 1.6)],
+        show: { notes: [48, 60, 63, 67, 69], chord: true, text: { en: 'Cm6 · C7', he: 'Cm6 · C7' } },
+      },
+      {
+        say: { en: 'The common mistake is hearing Dorian as major because of its bright 6. Check the third first: Dorian’s is minor. The 6 only lifts a minor scale.', he: 'הטעות הנפוצה היא לשמוע דורי כמז׳ור בגלל דרגה 6 הבהירה. בדקו קודם את הטרצה: בדורי היא קטנה. דרגה 6 רק מרימה סולם מינורי.' },
+        play: [note(60, 0.8), notes([60, 62, 63, 65, 67, 69, 70, 72], 0.38)],
+        show: { notes: [63, 69], text: { en: '♭3 … 6 = Dorian', he: '♭3 … 6 = דורי' } },
+      },
+      {
+        say: { en: 'In real music, Mixolydian fills rock and folk riffs, Aeolian is the everyday sound of minor pop, and Dorian is central to modal jazz — Miles Davis’s “So What” is built on it.', he: 'במוזיקה אמיתית, מיקסולידי ממלא ריפים של רוק ופולק, איאולי הוא הצליל היומיומי של פופ במינור, ודורי מרכזי בג׳ז מודאלי — "So What" של מיילס דייוויס בנוי עליו.' },
+        show: { text: { en: 'rock · pop · modal jazz', he: 'רוק · פופ · ג׳ז מודאלי' } },
+      },
+      {
+        say: { en: 'Recap: same home, different colours. Third first, then the characteristic note names the mode.', he: 'לסיכום: אותו בית, צבעים שונים. קודם הטרצה, ואז הצליל האופייני נותן למודוס את השם.' },
+        show: { text: { en: 'third → characteristic note', he: 'טרצה → צליל אופייני' } },
+      },
+    ],
   },
 
   // ------------------------------------------------------------------ Spot the wrong note
@@ -620,8 +1185,48 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [60, 62, 63, 65, 67, 69, 71, 72], key: 'C', text: { en: '1 2 ♭3 4 5 6 7 8', he: '1 2 ♭3 4 5 6 7 8' } },
       },
       {
-        say: { en: 'Your turn! I play home, then the scale. Say the number of the wrong note — home and the top are always right. Happy hunting!', he: 'תורכם! אני מנגן את הבית, ואז את הסולם. אמרו את המספר של הצליל השגוי — הבית והצליל העליון תמיד נכונים. ציד מוצלח!' },
+        say: { en: 'Your turn. I play home, then the scale. Say the number of the wrong note — home and the top are always right.', he: 'תורכם. אני מנגן את הבית, ואז את הסולם. אמרו את המספר של הצליל השגוי — הבית והצליל העליון תמיד נכונים.' },
         show: { text: { en: 'which number?', he: 'איזה מספר?' } },
+      },
+    ],
+    more: [
+      {
+        say: { en: 'Spotting a wrong note means comparing what you hear with what you expect. Once home is set, your ear predicts each next step of the scale; a wrong note breaks that prediction.', he: 'לזהות צליל שגוי פירושו להשוות בין מה ששומעים למה שמצפים. ברגע שהבית נקבע, האוזן צופה את הצעד הבא בסולם; צליל שגוי שובר את הציפייה הזאת.' },
+        play: [cad(C), notes(C_IONIAN, 0.4)],
+        show: { notes: C_IONIAN, key: 'C', text: { en: 'expected: 1–8', he: 'הצפוי: 1–8' } },
+      },
+      {
+        say: { en: 'Every wrong note distorts the pattern of whole and half steps. Raise 4 to F-sharp, and the half step moves: 3 to 4 becomes a whole step, 4 to 5 a half step.', he: 'כל צליל שגוי מעוות את תבנית הטונים וחצאי הטונים. מגביהים את 4 לפה דיאז, וחצי הטון זז: מ־3 ל־4 נהיה טון שלם, ומ־4 ל־5 חצי טון.' },
+        play: [notes([64, 65, 67], 0.55), rest(0.3), notes([64, 66, 67], 0.55)],
+        show: { notes: [64, 65, 66, 67], key: 'C', text: { en: 'E F G · E F♯ G', he: 'מי פה סול · מי פה♯ סול' } },
+      },
+      {
+        say: { en: 'Raised notes tend to sound sharp and pushy, pulling upward. Lowered notes sound darker; a lowered 3, 6 or 7 hints at minor or blues. Here, 7 drops to B-flat.', he: 'צלילים מוגבהים נשמעים בדרך כלל חדים ודוחפים, נמשכים למעלה. צלילים מונמכים נשמעים כהים יותר; 3, 6 או 7 מונמכים רומזים על מינור או בלוז. כאן, 7 יורד לסי במול.' },
+        play: [note(60, 0.8), notes(C_MIXO, 0.4)],
+        show: { notes: C_MIXO, key: 'C', text: { en: '1 2 3 4 5 6 ♭7 8', he: '1 2 3 4 5 6 ♭7 8' } },
+      },
+      {
+        say: { en: 'The method: sing the correct scale silently, a hair ahead of the piano. The moment your inner voice and the piano disagree, note the number. On replay, check: higher or lower?', he: 'השיטה: שירו בשקט את הסולם הנכון, טיפה לפני הפסנתר. ברגע שהקול הפנימי והפסנתר לא מסכימים, רשמו את המספר. בהשמעה הבאה בדקו: גבוה יותר או נמוך יותר?' },
+        play: [note(60, 0.8), notes([60, 61, 64, 65, 67, 69, 71, 72], 0.45)],
+        show: { notes: [60, 61, 64, 65, 67, 69, 71, 72], key: 'C', text: { en: '1 ♭2 3 4 5 6 7 8', he: '1 ♭2 3 4 5 6 7 8' } },
+      },
+      {
+        say: { en: 'The common mistake is blaming the note after the wrong one. A wrong note makes the next step sound odd too, because the gap is wrong on both sides. The first surprise is usually the culprit.', he: 'הטעות הנפוצה היא להאשים את הצליל שאחרי השגוי. צליל שגוי גורם גם לצעד הבא להישמע מוזר, כי המרווח שגוי משני הצדדים. ההפתעה הראשונה היא בדרך כלל האשמה.' },
+        play: [notes([60, 62, 64, 66, 67], 0.55)],
+        show: { notes: [60, 62, 64, 66, 67], key: 'C', text: { en: '♯4, not 5', he: '♯4, לא 5' } },
+      },
+      {
+        say: { en: 'To go further, practise descending scales too: sing down from 8 to 1 so your expectation works in both directions.', he: 'כדי להתקדם, תרגלו גם סולמות יורדים: שירו מ־8 עד 1 כדי שהציפייה תעבוד בשני הכיוונים.' },
+        play: [notes([72, 71, 69, 67, 65, 64, 62, 60], 0.4)],
+        show: { notes: [72, 71, 69, 67, 65, 64, 62, 60], key: 'C', text: { en: '8 7 6 5 4 3 2 1', he: '8 7 6 5 4 3 2 1' } },
+      },
+      {
+        say: { en: 'In real music, this is proofreading: catching a wrong note in a chart, in your own playing, or in a choir. It also helps you notice chromatic notes a composer added on purpose.', he: 'במוזיקה אמיתית, זו הגהה: לתפוס צליל שגוי בתווים, בנגינה שלכם או במקהלה. זה גם עוזר לשים לב לצלילים כרומטיים שמלחין הוסיף בכוונה.' },
+        show: { text: { en: 'proofreading by ear', he: 'הגהה בשמיעה' } },
+      },
+      {
+        say: { en: 'Recap: keep the right scale running in your head, mark the first disagreement, then decide whether it was raised or lowered.', he: 'לסיכום: הריצו בראש את הסולם הנכון, סמנו את אי ההסכמה הראשונה, ואז החליטו אם הצליל הוגבה או הונמך.' },
+        show: { text: { en: 'expect · compare · mark', he: 'מצפים · משווים · מסמנים' } },
       },
     ],
   },
@@ -662,6 +1267,50 @@ export const LESSONS: MiniLesson[] = [
       {
         say: { en: 'Your turn! First say the scale — major, pentatonic or blues — and the shape. Then sing runs back after me. Breathe low, keep it light.', he: 'תורכם! קודם אמרו את הסולם — מז׳ור, פנטטוני או בלוז — ואת הצורה. ואז שירו ראנים בחזרה אחריי. נשימה עמוקה, וקליל.' },
         show: { text: { en: 'name it · sing it', he: 'מזהים · שרים' } },
+      },
+    ],
+    more: [
+      {
+        say: { en: 'A run, or riff, is a quick ornament sung on one syllable — a melisma. It decorates a melody note, often at the end of a phrase, and always fits the scale and chord underneath.', he: 'ראן, או ריף, הוא קישוט מהיר שמושר על הברה אחת — מליסמה. הוא מקשט צליל במנגינה, הרבה פעמים בסוף משפט, ותמיד מתאים לסולם ולאקורד שמתחת.' },
+        play: [cad(C), rest(0.2), notes([67, 69, 67, 64, 62, 60], 0.2), note(60, 1.0)],
+        show: { notes: [67, 69, 67, 64, 62, 60], key: 'C', text: { en: '5 6 5 3 2 1', he: '5 6 5 3 2 1' } },
+      },
+      {
+        say: { en: 'The scale sets the colour. Major runs sound sweet and bright; the minor pentatonic, 1 ♭3 4 5 ♭7, sounds soulful; the blues scale adds ♭5 for grit.', he: 'הסולם קובע את הצבע. ראנים במז׳ור נשמעים מתוקים ובהירים; הפנטטוני המינורי, 1 ♭3 4 5 ♭7, נשמע נשמתי; סולם הבלוז מוסיף ♭5 בשביל חספוס.' },
+        play: [notes([72, 70, 67, 65, 63, 60], 0.22), rest(0.4), notes([72, 70, 67, 66, 65, 63, 60], 0.22)],
+        show: { notes: [72, 70, 67, 66, 65, 63, 60], text: { en: 'pentatonic · blues', he: 'פנטטוני · בלוז' } },
+      },
+      {
+        say: { en: 'Pentatonic scales contain no half steps, so their notes rarely clash with the chord. That is why they are the standard material for runs in gospel, soul and R&B.', he: 'בסולמות פנטטוניים אין חצאי טונים, ולכן הצלילים שלהם כמעט לא מתנגשים באקורד. בגלל זה הם חומר הגלם הסטנדרטי לראנים בגוספל, בסול ובר׳נ׳ב.' },
+        play: [notes([60, 62, 64, 67, 69, 72], 0.25), rest(0.3), chord([48, 60, 64, 67], 1.4)],
+        show: { notes: [60, 62, 64, 67, 69, 72], key: 'C', text: { en: 'C D E G A C', he: 'דו רה מי סול לה דו' } },
+      },
+      {
+        say: { en: 'Every run has a target: the note it lands on, usually a chord tone like 1, 3 or 5. Know where you will end, then fill the path. Descending runs are the most common and the easiest to sing.', he: 'לכל ראן יש יעד: הצליל שהוא נוחת עליו, בדרך כלל צליל מהאקורד כמו 1, 3 או 5. דעו איפה תסיימו, ואז מלאו את הדרך. ראנים יורדים הם הנפוצים והקלים ביותר לשירה.' },
+        play: [notes([72, 69, 67, 64, 62], 0.2), note(60, 1.2)],
+        show: { notes: [72, 69, 67, 64, 62, 60], key: 'C', text: { en: 'target: 1', he: 'יעד: 1' } },
+      },
+      {
+        say: { en: 'Practise slowly on “ah”, one note per beat with a metronome. Double the speed only when every note is in tune. Grouping notes in threes or fours helps you keep your place.', he: 'מתרגלים לאט על "אה", צליל אחד בכל פעמה עם מטרונום. מכפילים מהירות רק כשכל צליל מדויק. חלוקת הצלילים לקבוצות של שלוש או ארבע עוזרת לא ללכת לאיבוד.' },
+        play: [notes([67, 64, 62, 60], 0.5), rest(0.3), notes([67, 64, 62, 60], 0.25)],
+        show: { notes: [67, 64, 62, 60], key: 'C', text: { en: 'slow → ×2', he: 'לאט → ×2' } },
+      },
+      {
+        say: { en: 'Keep runs light: less volume, less breath pressure, a relaxed throat. Move the pitch, not the jaw. Heavy, loud runs smear the notes together.', he: 'שמרו על ראנים קלילים: פחות עוצמה, פחות לחץ אוויר, גרון רפוי. מזיזים את הגובה, לא את הלסת. ראנים כבדים וחזקים מורחים את הצלילים זה לתוך זה.' },
+        show: { text: { en: 'light · relaxed · clear', he: 'קליל · רפוי · ברור' } },
+      },
+      {
+        say: { en: 'The common mistake is sliding instead of singing separate notes. A clean run has a distinct pitch on every note, like beads on a string, not a siren.', he: 'הטעות הנפוצה היא להחליק במקום לשיר צלילים נפרדים. בראן נקי לכל צליל יש גובה ברור, כמו חרוזים על חוט, לא כמו סירנה.' },
+        play: [notes([60, 62, 64, 65, 67], 0.25)],
+        show: { notes: [60, 62, 64, 65, 67], key: 'C', text: { en: 'beads, not a siren', he: 'חרוזים, לא סירנה' } },
+      },
+      {
+        say: { en: 'Runs are a hallmark of gospel, soul and R&B, and of Baroque arias, where long melismas show off the voice. Use them sparingly: one clean run says more than ten.', he: 'ראנים הם סימן היכר של גוספל, סול ור׳נ׳ב, וגם של אריות בארוק, שבהן מליסמות ארוכות מציגות את הקול. השתמשו בהם במשורה: ראן נקי אחד אומר יותר מעשרה.' },
+        show: { text: { en: 'less is more', he: 'פחות זה יותר' } },
+      },
+      {
+        say: { en: 'Recap: choose the scale, know the target, sing it slow and clean, then speed up.', he: 'לסיכום: בוחרים סולם, יודעים את היעד, שרים לאט ונקי, ואז מאיצים.' },
+        show: { text: { en: 'scale · target · slow → fast', he: 'סולם · יעד · לאט → מהר' } },
       },
     ],
   },

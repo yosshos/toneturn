@@ -39,6 +39,45 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: '👂 → 🎵 → 🎸', he: '👂 ← 🎵 ← 🎸' } },
       },
     ],
+    more: [
+      {
+        say: { en: 'Playing by ear is translation: a sound in your head becomes a place on your instrument. It has three stages — hear it, sing it inside, find it. Skip the middle stage and you are only guessing.', he: 'לנגן בשמיעה זה תרגום: צליל בראש הופך למקום על הכלי. יש לזה שלושה שלבים — לשמוע, לשיר בפנים, למצוא. מדלגים על השלב האמצעי, ונשארים עם ניחושים.' },
+        show: { text: { en: 'hear → sing → find', he: 'לשמוע ← לשיר ← למצוא' } },
+      },
+      {
+        say: { en: 'Start with the key. The chords before each tune point to 1, home. Find 1 on your instrument first; then every note is a degree you already know, not a random pitch.', he: 'מתחילים מהסולם. האקורדים שלפני כל מנגינה מצביעים על 1, הבית. מצאו קודם את 1 על הכלי; מאותו רגע כל צליל הוא דרגה שאתם כבר מכירים, לא גובה אקראי.' },
+        play: [{ kind: 'cadence', key: { letter: 'G', acc: 0 } }, notes([55], 1)],
+        show: { notes: [55], key: 'G', text: { en: 'G: 1 = G', he: 'סול: 1 = סול' } },
+      },
+      {
+        say: { en: 'Next, the contour: up or down, and how far. A step is one or two half steps — the neighbouring note of the scale. Anything bigger is a leap. Here: step, step, leap, step down.', he: 'אחר כך הקו: למעלה או למטה, וכמה רחוק. צעד הוא חצי טון או טון — השכן בסולם. כל דבר גדול יותר הוא קפיצה. כאן: צעד, צעד, קפיצה, צעד למטה.' },
+        play: [notes([60, 62, 64, 67, 65], 0.55)],
+        show: { notes: [60, 62, 64, 67, 65], key: 'C', text: { en: 'step · step · leap · step', he: 'צעד · צעד · קפיצה · צעד' } },
+      },
+      {
+        say: { en: 'A good listening strategy: lock in the first and the last note. Many short tunes end on 1, so the last note is often a free answer. Fill in the middle afterwards.', he: 'אסטרטגיה טובה: תפסו קודם את הצליל הראשון ואת האחרון. הרבה מנגינות קצרות מסתיימות על 1, אז הצליל האחרון הוא לעיתים קרובות תשובה בחינם. את האמצע ממלאים אחר כך.' },
+        play: [{ kind: 'cadence', key: C }, notes([67, 65, 64, 62, 60], 0.5)],
+        show: { notes: [67, 65, 64, 62, 60], key: 'C', text: { en: '5 … 1', he: '5 … 1' } },
+      },
+      {
+        say: { en: 'A note outside the key usually leans on a neighbour. Here E flat slides into E. If a note sounds "wrong but close", try a half step up or down from the scale note.', he: 'צליל מחוץ לסולם בדרך כלל נשען על שכן. כאן מי במול מחליק אל מי. אם צליל נשמע "לא נכון אבל קרוב", נסו חצי טון מעל או מתחת לצליל הסולם.' },
+        play: [{ kind: 'cadence', key: C }, notes([60, 62, 63, 64], 0.55)],
+        show: { notes: [60, 62, 63, 64], key: 'C', text: { en: '♭3 → 3', he: '♭3 → 3' } },
+      },
+      {
+        say: { en: 'For a bass line, ignore the top of the chords and follow the lowest note. Most of the time it is the root: here C, F, G and back to C.', he: 'בקו בס, התעלמו מהחלק העליון של האקורדים ועקבו אחרי הצליל הנמוך ביותר. רוב הזמן זה השורש: כאן דו, פה, סול וחזרה לדו.' },
+        play: [chord([48, 64, 67], 0.9), chord([53, 65, 69], 0.9), chord([55, 62, 67], 0.9), chord([48, 64, 72], 1.2)],
+        show: { notes: [48, 53, 55, 48], clef: 'bass', text: { en: 'C · F · G · C', he: 'דו · פה · סול · דו' } },
+      },
+      {
+        say: { en: 'How the app hears you: with a microphone, play one clear note at a time, let it ring, and mute the others — chords and buzzing strings confuse pitch detection. With a MIDI keyboard every note arrives exactly.', he: 'איך האפליקציה שומעת אתכם: עם מיקרופון, נגנו צליל אחד ברור בכל פעם, תנו לו לצלצל, והשתיקו את השאר — אקורדים ומיתרים מזמזמים מבלבלים את זיהוי הגובה. עם קלידי MIDI כל צליל מגיע בדיוק.' },
+        show: { text: { en: '🎤 one note · 🎹 MIDI', he: '🎤 צליל אחד · 🎹 MIDI' } },
+      },
+      {
+        say: { en: 'The common mistake is hunting note by note before the tune is in your head. Sing it first, even twice. To keep: home first, then contour, then the notes.', he: 'הטעות הנפוצה היא לחפש צליל אחרי צליל לפני שהמנגינה בראש. שירו אותה קודם, אפילו פעמיים. מה לזכור: קודם הבית, אחר כך הקו, ואז הצלילים.' },
+        show: { text: { en: 'home → contour → notes', he: 'בית ← קו ← צלילים' } },
+      },
+    ],
   },
   {
     id: 'fret-notes',
@@ -69,6 +108,47 @@ export const LESSONS: MiniLesson[] = [
       {
         say: { en: 'Your turn! I name a note, you tap it on the neck. Say the names out loud while you look — it sticks faster.', he: 'תורכם! אני אומר שם של תו, ואתם מקישים עליו בצוואר. אמרו את השמות בקול כשאתם מחפשים — זה נדבק מהר יותר.' },
         show: { text: { en: 'E A D G B E', he: 'E A D G B E' } },
+      },
+    ],
+    more: [
+      {
+        say: { en: 'Standard tuning, from the thickest string (6) to the thinnest (1): E, A, D, G, B, E. Every pair is a fourth apart, except G to B, which is a major third.', he: 'כיוון סטנדרטי, מהמיתר העבה (6) לדק (1): E, A, D, G, B, E. כל זוג מיתרים רחוק קוורטה, חוץ מ־G ל־B, שביניהם טרצה גדולה.' },
+        play: [notes([40, 45, 50, 55, 59, 64], 0.55)],
+        show: { text: { en: '6 E · 5 A · 4 D · 3 G · 2 B · 1 E', he: '6 E · 5 A · 4 D · 3 G · 2 B · 1 E' } },
+      },
+      {
+        say: { en: 'There are seven note names and twelve half steps. Each fret is one half step. Here are the natural notes on string 6: frets 0, 1, 3, 5, 7, 8, 10 and 12.', he: 'יש שבעה שמות של תווים ושנים־עשר חצאי טונים. כל סריג הוא חצי טון. הנה התווים הטבעיים על מיתר 6: סריגים 0, 1, 3, 5, 7, 8, 10 ו־12.' },
+        play: [notes([40, 41, 43, 45, 47, 48, 50, 52], 0.4)],
+        show: { text: { en: 'E0 F1 G3 A5 B7 C8 D10 E12', he: 'E0 F1 G3 A5 B7 C8 D10 E12' } },
+      },
+      {
+        say: { en: 'And on string 5: A at 0, B at 2, C at 3, D at 5, E at 7, F at 8, G at 10. These two strings are your map — barre-chord roots live here.', he: 'ועל מיתר 5: A ב־0, B ב־2, C ב־3, D ב־5, E ב־7, F ב־8, G ב־10. שני המיתרים האלה הם המפה שלכם — שורשי אקורדי הברה גרים כאן.' },
+        play: [notes([45, 47, 48, 50, 52, 53, 55, 57], 0.4)],
+        show: { text: { en: 'A0 B2 C3 D5 E7 F8 G10 A12', he: 'A0 B2 C3 D5 E7 F8 G10 A12' } },
+      },
+      {
+        say: { en: 'The fret between two naturals has two names. Fret 2 on string 6 is F sharp or G flat — same sound. Choose the name the key uses: F sharp in G major, G flat in D flat major.', he: 'הסריג שבין שני תווים טבעיים מקבל שני שמות. סריג 2 על מיתר 6 הוא F♯ או G♭ — אותו צליל. בוחרים את השם שהסולם משתמש בו: F♯ בסול מז׳ור, G♭ ברה במול מז׳ור.' },
+        play: [notes([41, 42, 43], 0.6)],
+        show: { text: { en: 'fret 2 = F♯ = G♭', he: 'סריג 2 = F♯ = G♭' } },
+      },
+      {
+        say: { en: 'Octave shapes carry names across the neck. From string 6 or 5: skip a string, two frets up. From string 4 or 3: skip a string, three frets up, because of the B string. G at fret 3 → fret 5 → fret 8.', he: 'צורות אוקטבה מעבירות שמות לאורך הצוואר. ממיתר 6 או 5: מדלגים מיתר, שני סריגים למעלה. ממיתר 4 או 3: מדלגים מיתר, שלושה סריגים למעלה, בגלל מיתר B. סול בסריג 3 ← סריג 5 ← סריג 8.' },
+        play: [notes([43, 55, 67], 0.7)],
+        show: { text: { en: 'G: 6/3 → 4/5 → 2/8', he: 'סול: 6/3 ← 4/5 ← 2/8' } },
+      },
+      {
+        say: { en: 'Fret 5 of a string equals the next open string — fret 4 on the G string. That is also how guitarists tune by ear: the two notes should ring as one.', he: 'סריג 5 במיתר שווה למיתר הפתוח הבא — סריג 4 במיתר G. כך גם מכוונים גיטרה בשמיעה: שני הצלילים צריכים לצלצל כאחד.' },
+        play: [notes([50], 0.9), chord([50, 50], 1.2)],
+        show: { text: { en: 'A string fret 5 = open D', he: 'מיתר A סריג 5 = D פתוח' } },
+      },
+      {
+        say: { en: 'A good drill: one note, every place. Find all the Cs — string 5 fret 3, string 3 fret 5, string 2 fret 1, string 1 fret 8 — and say the name each time.', he: 'תרגיל טוב: תו אחד, בכל המקומות. מצאו את כל ה־C — מיתר 5 סריג 3, מיתר 3 סריג 5, מיתר 2 סריג 1, מיתר 1 סריג 8 — ואמרו את השם בכל פעם.' },
+        play: [notes([48, 60, 60, 72], 0.6)],
+        show: { text: { en: 'all the Cs', he: 'כל ה־C' } },
+      },
+      {
+        say: { en: 'The common mistake is counting from the nut every time. Use landmarks instead: the dots at frets 3, 5, 7, 9 and 12. To keep: learn strings 6 and 5, then move by octave shapes.', he: 'הטעות הנפוצה היא לספור מהאוכף בכל פעם. השתמשו בנקודות ציון: הנקודות בסריגים 3, 5, 7, 9 ו־12. מה לזכור: לומדים את מיתרים 6 ו־5, ואז זזים בצורות אוקטבה.' },
+        show: { text: { en: '3 · 5 · 7 · 9 · 12', he: '3 · 5 · 7 · 9 · 12' } },
       },
     ],
   },
@@ -102,6 +182,42 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'G D A E', he: 'G D A E' } },
       },
     ],
+    more: [
+      {
+        say: { en: 'The bowed strings are tuned in fifths. Violin: G, D, A, E from the G below middle C. Viola: C, G, D, A, a fifth lower. Cello: C, G, D, A, an octave below the viola.', he: 'כלי הקשת מכוונים בקווינטות. כינור: סול, רה, לה, מי, מהסול שמתחת לדו האמצעי. ויולה: דו, סול, רה, לה, קווינטה למטה. צ׳לו: דו, סול, רה, לה, אוקטבה מתחת לוויולה.' },
+        play: [notes([55, 62, 69, 76], 0.55), rest(0.3), notes([36, 43, 50, 57], 0.55)],
+        show: { text: { en: 'violin G D A E · cello C G D A', he: 'כינור G D A E · צ׳לו C G D A' } },
+      },
+      {
+        say: { en: 'The double bass is the exception: it is tuned in fourths, E, A, D, G, like the low four strings of a guitar, and sounds an octave below where it is written.', he: 'הקונטרבס הוא היוצא מן הכלל: הוא מכוון בקוורטות, מי, לה, רה, סול, כמו ארבעת המיתרים הנמוכים של הגיטרה, ונשמע אוקטבה מתחת למה שכתוב.' },
+        play: [notes([28, 33, 38, 43], 0.7)],
+        show: { text: { en: 'bass: E A D G (fourths)', he: 'קונטרבס: E A D G (קוורטות)' } },
+      },
+      {
+        say: { en: 'On violin in first position, finger 1 is a whole step above the open string and finger 4 reaches the next open string\'s note. On the A string: B, C sharp, D, then E — the same as open E.', he: 'בכינור בפוזיציה הראשונה, אצבע 1 נמצאת טון מעל המיתר הפתוח, ואצבע 4 מגיעה לצליל של המיתר הפתוח הבא. על מיתר לה: סי, דו דיאז, רה, ואז מי — כמו מי פתוח.' },
+        play: [notes([69, 71, 73, 74, 76], 0.5), rest(0.2), notes([76], 0.9)],
+        show: { notes: [69, 71, 73, 74, 76], text: { en: '0 · 1 · 2 · 3 · 4 = open E', he: '0 · 1 · 2 · 3 · 4 = מי פתוח' } },
+      },
+      {
+        say: { en: 'What changes from key to key is where the half step falls. With C sharp, finger 2 sits close to 3. With C natural, it slides back next to 1. Hear the difference.', he: 'מה שמשתנה מסולם לסולם הוא איפה נופל חצי הטון. עם דו דיאז, אצבע 2 צמודה ל־3. עם דו טבעי, היא חוזרת ונצמדת ל־1. שמעו את ההבדל.' },
+        play: [notes([69, 71, 73, 74], 0.5), rest(0.4), notes([69, 71, 72, 74], 0.5)],
+        show: { notes: [69, 71, 73, 74, 72], text: { en: 'high 2 · low 2', he: '2 גבוהה · 2 נמוכה' } },
+      },
+      {
+        say: { en: 'On the cello the hand covers less: in first position each finger is a half step, so four fingers span a minor third. Reaching a whole step between fingers 1 and 2 is called an extension.', he: 'בצ׳לו היד מכסה פחות: בפוזיציה הראשונה כל אצבע היא חצי טון, כך שארבע אצבעות משתרעות על טרצה קטנה. כשמותחים טון שלם בין אצבע 1 ל־2, זה נקרא אקסטנשן.' },
+        play: [notes([50, 52, 53, 54, 55], 0.5)],
+        show: { text: { en: 'cello: 1 · 2 · 3 · 4 = half steps', he: 'צ׳לו: 1 · 2 · 3 · 4 = חצאי טונים' } },
+      },
+      {
+        say: { en: 'Check your intonation against the open strings. Finger 3 on the violin A string is D, an octave above the open D. In tune, the open string rings along in sympathy.', he: 'בדקו אינטונציה מול המיתרים הפתוחים. אצבע 3 על מיתר לה בכינור היא רה, אוקטבה מעל רה הפתוח. כשזה מדויק, המיתר הפתוח מצלצל יחד מעצמו.' },
+        play: [notes([62], 0.8), chord([62, 74], 1.6)],
+        show: { notes: [62, 74], chord: true, text: { en: 'open D + 3rd finger D', he: 'רה פתוח + רה באצבע 3' } },
+      },
+      {
+        say: { en: 'The common mistake is placing fingers by memory and not by ear, so the notes drift flat as the hand tires. To keep: tuned in fifths, finger patterns follow the key, and your ear has the last word.', he: 'הטעות הנפוצה היא להניח אצבעות מהזיכרון ולא לפי האוזן, ואז הצלילים נוטים להיות נמוכים כשהיד מתעייפת. מה לזכור: כיוון בקווינטות, דפוסי האצבעות הולכים לפי הסולם, ולאוזן המילה האחרונה.' },
+        show: { text: { en: 'fifths · pattern · ear', he: 'קווינטות · דפוס · אוזן' } },
+      },
+    ],
   },
   {
     id: 'fret-intervals',
@@ -131,6 +247,42 @@ export const LESSONS: MiniLesson[] = [
       {
         say: { en: 'Your turn! Start from the dot and find the interval I ask for. Later, you will hear it and find it by ear.', he: 'תורכם! התחילו מהנקודה ומצאו את המרווח שאני מבקש. בהמשך תשמעו אותו ותמצאו אותו לפי האוזן.' },
         show: { text: { en: '● → ?', he: '● ← ?' } },
+      },
+    ],
+    more: [
+      {
+        say: { en: 'An interval is a number of half steps, and on one string that is simply a number of frets. Open A to fret 7 on the same string is seven half steps: a perfect fifth, A to E.', he: 'מרווח הוא מספר של חצאי טונים, ועל מיתר אחד זה פשוט מספר סריגים. מלה פתוח עד סריג 7 על אותו מיתר יש שבעה חצאי טונים: קווינטה זכה, לה עד מי.' },
+        play: [notes([45, 52], 0.8)],
+        show: { text: { en: '7 frets = 7 half steps = P5', he: '7 סריגים = 7 חצאי טונים = קווינטה' } },
+      },
+      {
+        say: { en: 'Across to the next string you start from five half steps, a fourth. So: two frets back is a minor third, one back a major third, same fret a fourth, one up the tritone, two up a fifth.', he: 'במעבר למיתר הבא מתחילים מחמישה חצאי טונים, קוורטה. אז: שני סריגים אחורה זו טרצה קטנה, אחד אחורה טרצה גדולה, אותו סריג קוורטה, אחד קדימה טריטון, שניים קדימה קווינטה.' },
+        play: [notes([45, 48], 0.5), notes([45, 49], 0.5), notes([45, 50], 0.5), notes([45, 51], 0.5), notes([45, 52], 0.5)],
+        show: { text: { en: '−2 m3 · −1 M3 · 0 P4 · +1 TT · +2 P5', he: '−2 m3 · −1 M3 · 0 P4 · +1 TT · +2 P5' } },
+      },
+      {
+        say: { en: 'Two strings over you start from ten half steps, a minor seventh. One fret up is a major seventh, two frets up the octave. Same fret, two strings over: A to G.', he: 'שני מיתרים הלאה מתחילים מעשרה חצאי טונים, ספטימה קטנה. סריג אחד קדימה זו ספטימה גדולה, שניים קדימה אוקטבה. אותו סריג, שני מיתרים הלאה: לה עד סול.' },
+        play: [notes([45, 55], 0.6), notes([45, 56], 0.6), notes([45, 57], 0.6)],
+        show: { text: { en: '0 m7 · +1 M7 · +2 octave', he: '0 m7 · +1 M7 · +2 אוקטבה' } },
+      },
+      {
+        say: { en: 'Any shape that crosses from the G string to the B string moves one fret up, because that pair is a major third apart. An octave from string 4 to string 2 is three frets up, not two.', he: 'כל צורה שעוברת ממיתר G למיתר B זזה סריג אחד למעלה, כי בין שני המיתרים האלה יש טרצה גדולה. אוקטבה ממיתר 4 למיתר 2 היא שלושה סריגים למעלה, לא שניים.' },
+        play: [notes([52, 64], 0.8)],
+        show: { text: { en: 'E: 4th string fret 2 → 2nd string fret 5', he: 'מי: מיתר 4 סריג 2 ← מיתר 2 סריג 5' } },
+      },
+      {
+        say: { en: 'The power chord is root, fifth and octave stacked as one shape. From G on string 6, fret 3: the fifth and the octave both sit at fret 5 on the next two strings.', he: 'אקורד פאוור הוא שורש, קווינטה ואוקטבה בצורה אחת. מסול על מיתר 6, סריג 3: הקווינטה והאוקטבה שתיהן בסריג 5 על שני המיתרים הבאים.' },
+        play: [chord([43, 50, 55], 1.4)],
+        show: { text: { en: 'G5: 3 · 5 · 5', he: 'G5: 3 · 5 · 5' } },
+      },
+      {
+        say: { en: 'In real music, sixths on the G and E strings, a string skipped between them, give the sweet double stops of soul and country. Slide the pair through the key: major sixth, major sixth, minor sixth.', he: 'במוזיקה אמיתית, סקסטות על מיתרי G ו־E, עם מיתר מדולג ביניהם, נותנות את הדאבל־סטופים המתוקים של סול וקאנטרי. החליקו את הזוג לאורך הסולם: סקסטה גדולה, גדולה, קטנה.' },
+        play: [chord([60, 69], 0.8), chord([62, 71], 0.8), chord([64, 72], 1.2)],
+        show: { text: { en: 'C+A · D+B · E+C', he: 'C+A · D+B · E+C' } },
+      },
+      {
+        say: { en: 'The common mistake is forgetting the G–B shift, so a third or an octave comes out a half step flat. To keep: count half steps, start from a fourth on the next string, and add one fret past G.', he: 'הטעות הנפוצה היא לשכוח את ההזזה בין G ל־B, ואז טרצה או אוקטבה יוצאות חצי טון נמוכות מדי. מה לזכור: סופרים חצאי טונים, מתחילים מקוורטה במיתר הבא, ומוסיפים סריג אחרי G.' },
+        show: { text: { en: 'next string = P4 · past G: +1', he: 'מיתר הבא = קוורטה · אחרי G: +1' } },
       },
     ],
   },
@@ -164,6 +316,46 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'R · 3 · 5 · 7', he: 'R · 3 · 5 · 7' } },
       },
     ],
+    more: [
+      {
+        say: { en: 'Read a chord name as six digits, string 6 to string 1. C is x32010: string 6 silent, then fret 3 (C), fret 2 (E), open G, fret 1 (C), open E. Only three note names: C, E, G.', he: 'קוראים שם אקורד כשש ספרות, ממיתר 6 למיתר 1. C הוא x32010: מיתר 6 שקט, אחר כך סריג 3 (דו), סריג 2 (מי), סול פתוח, סריג 1 (דו), מי פתוח. רק שלושה שמות: דו, מי, סול.' },
+        play: [chord([48, 52, 55, 60, 64], 1.6, true)],
+        show: { text: { en: 'x32010 = C E G C E', he: 'x32010 = C E G C E' } },
+      },
+      {
+        say: { en: 'A major triad is root, major third, fifth; minor lowers the third by one fret. Open E is 022100; lift one finger, 022000, and it becomes E minor.', he: 'טריאדה מז׳ורית היא שורש, טרצה גדולה, קווינטה; במינור הטרצה יורדת בסריג אחד. E פתוח הוא 022100; מרימים אצבע אחת, 022000, והוא הופך ל־E מינור.' },
+        play: [chord([40, 47, 52, 56, 59, 64], 1.2, true), rest(0.2), chord([40, 47, 52, 55, 59, 64], 1.2, true)],
+        show: { text: { en: 'E 022100 · Em 022000', he: 'E 022100 · Em 022000' } },
+      },
+      {
+        say: { en: 'CAGED names the five open shapes. Each one holds the root in a different place, so each can be barred and moved. The A shape at fret 3 is C major: x35553.', he: 'CAGED הוא השם של חמש הצורות הפתוחות. כל אחת מחזיקה את השורש במקום אחר, ולכן כל אחת אפשר לתפוס בברה ולהזיז. צורת A בסריג 3 היא דו מז׳ור: x35553.' },
+        play: [chord([48, 55, 60, 64, 67], 1.4, true)],
+        show: { text: { en: 'A shape, fret 3 = C', he: 'צורת A, סריג 3 = C' } },
+      },
+      {
+        say: { en: 'The shapes link up the neck in that order. For C major: the open C shape, the A shape at 3, the G shape around 5, the E shape at 8, the D shape at 10 — then C again at 12.', he: 'הצורות מתחברות לאורך הצוואר בסדר הזה. בדו מז׳ור: צורת C הפתוחה, צורת A בסריג 3, צורת G סביב 5, צורת E בסריג 8, צורת D בסריג 10 — ושוב C בסריג 12.' },
+        show: { text: { en: 'C → A → G → E → D → C', he: 'C → A → G → E → D → C' } },
+      },
+      {
+        say: { en: 'Same chord, different colour: each shape puts a different note on top. Open C ends on E, the A shape on G, the E shape at fret 8 on a high C.', he: 'אותו אקורד, צבע אחר: כל צורה שמה צליל אחר למעלה. C פתוח מסתיים על מי, צורת A על סול, צורת E בסריג 8 על דו גבוה.' },
+        play: [chord([48, 52, 55, 60, 64], 1), chord([48, 55, 60, 64, 67], 1), chord([48, 55, 60, 64, 67, 72], 1.3)],
+        show: { text: { en: 'top: E · G · C', he: 'למעלה: E · G · C' } },
+      },
+      {
+        say: { en: 'Small triads on strings 3, 2 and 1 cover the neck in three inversions: G-C-E at the nut, C-E-G at fret 5, E-G-C at fret 8. They cut through a band without clashing with the bass.', he: 'טריאדות קטנות על מיתרים 3, 2 ו־1 מכסות את הצוואר בשלושה היפוכים: סול־דו־מי ליד האוכף, דו־מי־סול בסריג 5, מי־סול־דו בסריג 8. הן חותכות דרך הלהקה בלי להתנגש בבס.' },
+        play: [chord([55, 60, 64], 0.9), chord([60, 64, 67], 0.9), chord([64, 67, 72], 1.2)],
+        show: { notes: [55, 60, 64, 67, 72], text: { en: 'GCE · CEG · EGC', he: 'GCE · CEG · EGC' } },
+      },
+      {
+        say: { en: 'For seventh chords guitarists use Drop 2: take a close voicing, C-E-G-B, and drop the second note from the top down an octave. You get G-C-E-B, on the top four strings at frets 5-5-5-7.', he: 'לאקורדי ספטימה גיטריסטים משתמשים ב־Drop 2: לוקחים קול צמוד, דו־מי־סול־סי, ומורידים אוקטבה את הצליל השני מלמעלה. מקבלים סול־דו־מי־סי, על ארבעת המיתרים העליונים בסריגים 5־5־5־7.' },
+        play: [chord([60, 64, 67, 71], 1.2), rest(0.2), chord([55, 60, 64, 71], 1.4)],
+        show: { notes: [55, 60, 64, 71], chord: true, text: { en: 'Cmaj7 Drop 2: xx5557', he: 'Cmaj7 Drop 2: xx5557' } },
+      },
+      {
+        say: { en: 'The common mistake is learning shapes as finger pictures without knowing where the root is. Mark the root in every shape. To keep: five shapes, one chord, the whole neck.', he: 'הטעות הנפוצה היא ללמוד צורות כתמונות של אצבעות בלי לדעת איפה השורש. סמנו את השורש בכל צורה. מה לזכור: חמש צורות, אקורד אחד, כל הצוואר.' },
+        show: { text: { en: 'find the root first', he: 'קודם מוצאים את השורש' } },
+      },
+    ],
   },
   {
     id: 'fret-scales',
@@ -193,6 +385,42 @@ export const LESSONS: MiniLesson[] = [
       {
         say: { en: 'Your turn! Play the scales I ask for, from the lowest note up, and name the box you see.', he: 'תורכם! נגנו את הסולמות שאני מבקש, מהצליל הנמוך למעלה, וזהו את הבוקס שאתם רואים.' },
         show: { text: { en: '🪜 low → high', he: '🪜 נמוך ← גבוה' } },
+      },
+    ],
+    more: [
+      {
+        say: { en: 'A major scale is a pattern of whole and half steps: W W H W W W H. From G on string 6: G, A, then B, C, D on string 5, then E, F sharp, G on string 4.', he: 'סולם מז׳ור הוא תבנית של טונים וחצאי טונים: ט ט ח ט ט ט ח. מסול על מיתר 6: סול, לה, אחר כך סי, דו, רה על מיתר 5, ואז מי, פה דיאז, סול על מיתר 4.' },
+        play: [notes([43, 45, 47, 48, 50, 52, 54, 55], 0.4)],
+        show: { text: { en: 'W W H W W W H', he: 'ט ט ח ט ט ט ח' } },
+      },
+      {
+        say: { en: 'The minor pentatonic is 1, flat 3, 4, 5, flat 7 — in A: A, C, D, E, G. No half steps at all, which is why almost nothing in it sounds wrong.', he: 'הפנטטונית המינורית היא 1, ♭3, 4, 5, ♭7 — בלה: לה, דו, רה, מי, סול. בלי חצאי טונים בכלל, ולכן כמעט שום צליל בה לא נשמע לא נכון.' },
+        play: [notes([45, 48, 50, 52, 55, 57], 0.45)],
+        show: { text: { en: '1 ♭3 4 5 ♭7', he: '1 ♭3 4 5 ♭7' } },
+      },
+      {
+        say: { en: 'The same box is also C major pentatonic: C, D, E, G, A. Same frets, different home. Which one you play depends on the chord underneath and the note you land on.', he: 'אותו בוקס הוא גם הפנטטונית של דו מז׳ור: דו, רה, מי, סול, לה. אותם סריגים, בית אחר. מה אתם מנגנים תלוי באקורד שמתחת ובצליל שעליו אתם נוחתים.' },
+        play: [chord([48, 55, 64], 1), notes([60, 62, 64, 67, 69, 72], 0.4)],
+        show: { text: { en: 'Am pent = C pent', he: 'פנט׳ לה מינור = פנט׳ דו מז׳ור' } },
+      },
+      {
+        say: { en: 'Add one note, the flat 5 — E flat in A — and you have the blues scale. Use it as a passing note between 4 and 5, not as a place to stop.', he: 'מוסיפים צליל אחד, ♭5 — מי במול בלה — ומקבלים את סולם הבלוז. השתמשו בו כצליל מעבר בין 4 ל־5, לא כמקום לעצור.' },
+        play: [notes([45, 48, 50, 51, 52, 55, 57], 0.4)],
+        show: { text: { en: '1 ♭3 4 ♭5 5 ♭7', he: '1 ♭3 4 ♭5 5 ♭7' } },
+      },
+      {
+        say: { en: 'Three notes per string turn a seven-note scale into a wider, even pattern. G major from fret 3: G A B, then C D E, then F sharp G A — each string fingered the same way.', he: 'שלושה צלילים בכל מיתר הופכים סולם של שבעה צלילים לתבנית רחבה ואחידה. סול מז׳ור מסריג 3: סול לה סי, אחר כך דו רה מי, ואז פה דיאז סול לה — כל מיתר באותה אצבוע.' },
+        play: [notes([43, 45, 47, 48, 50, 52, 54, 55, 57], 0.3)],
+        show: { text: { en: '3 · 3 · 3', he: '3 · 3 · 3' } },
+      },
+      {
+        say: { en: 'Practise music, not just up and down. Play the scale in thirds: 1-3, 2-4, 3-5. It trains your fingers and your ear to skip, the way melodies really move.', he: 'תרגלו מוזיקה, לא רק למעלה ולמטה. נגנו את הסולם בטרצות: 1־3, 2־4, 3־5. זה מאמן את האצבעות ואת האוזן לדלג, כמו שמנגינות באמת זזות.' },
+        play: [notes([60, 64, 62, 65, 64, 67, 65, 69, 67], 0.3)],
+        show: { notes: [60, 64, 62, 65, 64, 67, 65, 69, 67], key: 'C', text: { en: 'in thirds', he: 'בטרצות' } },
+      },
+      {
+        say: { en: 'The common mistake is running boxes without landing anywhere. End phrases on a chord tone and know which dot is the root. To keep: one pattern, one root, and the five boxes join into one neck.', he: 'הטעות הנפוצה היא לרוץ בבוקסים בלי לנחות בשום מקום. סיימו משפטים על צליל של האקורד ודעו איזו נקודה היא השורש. מה לזכור: תבנית אחת, שורש אחד, וחמשת הבוקסים מתחברים לצוואר אחד.' },
+        show: { text: { en: 'land on the root', he: 'לנחות על השורש' } },
       },
     ],
   },
@@ -226,6 +454,46 @@ export const LESSONS: MiniLesson[] = [
       {
         say: { en: 'Your turn! Find the notes I name, then build intervals and chords right on the keys.', he: 'תורכם! מצאו את התווים שאני אומר, ואז בנו מרווחים ואקורדים ישר על הקלידים.' },
         show: { text: { en: 'C D E F G A B', he: 'דו רה מי פה סול לה סי' } },
+      },
+    ],
+    more: [
+      {
+        say: { en: 'An octave on the keyboard has twelve keys: seven white and five black. The black keys alternate in groups of two and three, and that pattern is your map.', he: 'אוקטבה על המקלדת היא שנים־עשר קלידים: שבעה לבנים וחמישה שחורים. השחורים מתחלפים בקבוצות של שניים ושלושה, והתבנית הזו היא המפה שלכם.' },
+        play: [notes([60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72], 0.28)],
+        show: { notes: [60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72] },
+      },
+      {
+        say: { en: 'More landmarks: D sits between the two black keys, and the middle black key of the three is G sharp, or A flat. C and F sit just left of each group.', he: 'עוד נקודות ציון: רה יושב בין שני השחורים, והשחור האמצעי מבין השלושה הוא סול דיאז, או לה במול. דו ופה יושבים משמאל לכל קבוצה.' },
+        play: [notes([62, 68], 0.8)],
+        show: { notes: [62, 68] },
+      },
+      {
+        say: { en: 'A full piano has 88 keys, from A0 to C8. Middle C is C4; the A above it, A4, is the tuning note at 440 hertz. Octave numbers change at every C.', he: 'לפסנתר מלא יש 88 קלידים, מ־A0 עד C8. הדו האמצעי הוא C4; הלה שמעליו, A4, הוא צליל הכיוון ב־440 הרץ. מספר האוקטבה מתחלף בכל דו.' },
+        play: [notes([60, 69], 0.9)],
+        show: { notes: [60, 69], text: { en: 'C4 · A4 = 440 Hz', he: 'C4 · A4 = 440 הרץ' } },
+      },
+      {
+        say: { en: 'White neighbours are usually a whole step apart, with a black key between. Only E–F and B–C are half steps. So C major is all white, and G major needs one black key: F sharp.', he: 'שכנים לבנים רחוקים בדרך כלל טון שלם, עם שחור ביניהם. רק מי־פה וסי־דו הם חצאי טונים. לכן דו מז׳ור כולו לבן, וסול מז׳ור צריך שחור אחד: פה דיאז.' },
+        play: [notes([55, 57, 59, 60, 62, 64, 66, 67], 0.38)],
+        show: { notes: [55, 57, 59, 60, 62, 64, 66, 67], key: 'G' },
+      },
+      {
+        say: { en: 'Build triads by counting half steps. Major is 4 + 3, minor 3 + 4, diminished 3 + 3, augmented 4 + 4. From C: C-E-G, C-E♭-G, C-E♭-G♭, C-E-G♯.', he: 'בונים טריאדות לפי ספירת חצאי טונים. מז׳ור 4 + 3, מינור 3 + 4, מוקטן 3 + 3, מוגדל 4 + 4. מדו: דו־מי־סול, דו־מי♭־סול, דו־מי♭־סול♭, דו־מי־סול♯.' },
+        play: [chord([60, 64, 67], 0.9), chord([60, 63, 67], 0.9), chord([60, 63, 66], 0.9), chord([60, 64, 68], 1.1)],
+        show: { notes: [60, 63, 64, 66, 67, 68], text: { en: '4+3 · 3+4 · 3+3 · 4+4', he: '4+3 · 3+4 · 3+3 · 4+4' } },
+      },
+      {
+        say: { en: 'Names follow letters, not keys. The note a major third above C is E; a minor third above C is E flat, never D sharp, even though it is the same black key.', he: 'השמות הולכים לפי אותיות, לא לפי קלידים. טרצה גדולה מעל דו היא מי; טרצה קטנה מעל דו היא מי במול, אף פעם לא רה דיאז, למרות שזה אותו קליד שחור.' },
+        play: [notes([60, 63], 0.7), chord([60, 63], 1.2)],
+        show: { notes: [60, 63], text: { en: 'C → E♭ (not D♯)', he: 'דו ← מי♭ (לא רה♯)' } },
+      },
+      {
+        say: { en: 'A practice tip: right hand plays a triad with fingers 1, 3, 5, left hand with 5, 3, 1. In scales the thumb passes under after 3 — in C major, after E in the right hand.', he: 'טיפ לתרגול: יד ימין מנגנת טריאדה באצבעות 1, 3, 5, יד שמאל ב־5, 3, 1. בסולמות האגודל עובר מתחת אחרי 3 — בדו מז׳ור, אחרי מי ביד ימין.' },
+        show: { text: { en: 'RH 1-3-5 · LH 5-3-1', he: 'ימין 1-3-5 · שמאל 5-3-1' } },
+      },
+      {
+        say: { en: 'The common mistake is counting white keys from the far end. Jump to the nearest black group instead. To keep: groups of two and three, C and F to their left, and count half steps for everything else.', he: 'הטעות הנפוצה היא לספור קלידים לבנים מהקצה. קפצו לקבוצת השחורים הקרובה. מה לזכור: קבוצות של שניים ושלושה, דו ופה משמאלן, וכל השאר בספירת חצאי טונים.' },
+        show: { text: { en: '2 · 3 · C · F', he: '2 · 3 · דו · פה' } },
       },
     ],
   },

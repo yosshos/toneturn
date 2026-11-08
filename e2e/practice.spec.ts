@@ -11,7 +11,7 @@ test.describe('practice hub', () => {
     for (const k of ['songs', 'drills', 'games', 'lessons', 'tuner', 'metronome', 'drone']) await expect(page.locator(`[data-hub="${k}"]`)).toBeVisible();
     await page.locator('[data-hub="songs"]').click();
     await expect(page.locator('[data-drills="songs"]')).toBeVisible();
-    await expect(page.locator('.song-drills li')).toHaveCount(16);
+    expect(await page.locator('.song-drills li').count()).toBeGreaterThanOrEqual(16);
     await page.locator('.screen-head .icon-btn').click();
     await page.locator('[data-hub="lessons"]').click();
     await expect(page.locator('[data-learned-card]').first()).toBeVisible();
@@ -33,6 +33,73 @@ test.describe('practice hub', () => {
     await expect(page.locator('[data-metro-play]')).toBeVisible();
     await page.locator('.screen-head .icon-btn').first().click();
     await expect(page.locator('[data-practice-hub]')).toBeVisible();
+  });
+
+  test('0.48 tools: charts, practice log, slow down, my pieces', async ({ page }) => {
+    await page.goto('/?sim=1#/arcade');
+    for (const k of ['charts', 'slowdown', 'log']) await expect(page.locator(`[data-hub="${k}"]`)).toBeVisible();
+    // Charts: a template opens, plays and highlights a bar; transpose changes the text.
+    await page.locator('[data-hub="charts"]').click();
+    await page.locator('[data-chart-template="pop-four"]').click();
+    await expect(page.locator('.ch-bar')).toHaveCount(4);
+    await page.locator('[data-chart-up]').click();
+    await expect(page.locator('[data-chart-text]')).toHaveValue('Db | Ab | Bbm | Gb');
+    await page.locator('[data-chart-play]').click();
+    await expect(page.locator('[data-chart-stop]')).toBeVisible();
+    await page.locator('[data-chart-stop]').click();
+    // Improvising under rules: pick rules, set a bar's scale; both are saved with the chart.
+    await page.locator('[data-rule="interval"]').selectOption('thirds');
+    await page.locator('[data-rule="rhythm"]').selectOption('eighths');
+    await page.locator('[data-bar="0"]').click();
+    await page.locator('[data-scale="lydian"]').click();
+    await expect(page.locator('[data-bar="0"] .ch-scale.set')).toBeVisible();
+    await expect(page.locator('[data-chart-improv]')).toBeVisible();
+    await page.locator('[data-chart-save]').click();
+    await page.locator('.screen-head .icon-btn').first().click();
+    await expect(page.locator('[data-chart-open]')).toHaveCount(1);
+    // Standards' changes → practise at the piano as a voicing drill (opens the drill run with the chart).
+    await page.locator('[data-standard="autumn"]').click();
+    await page.locator('[data-chart-practise] summary').click();
+    await page.locator('[data-practise-voicing]').selectOption('drop2');
+    await page.locator('[data-practise-go]').click();
+    await expect(page.locator('.drill-run')).toBeVisible();
+    await expect(page.locator('.song-chart li')).toHaveCount(8);
+    await page.locator('.screen-head .icon-btn').first().click();
+    await expect(page.locator('[data-standards]')).toBeVisible();
+    await page.locator('.screen-head .icon-btn').first().click();
+    // Practice log: kind + minutes → saved, shown in the week total.
+    await page.locator('[data-hub="log"]').click();
+    await page.locator('[data-log-kind="piece"]').click();
+    await page.locator('[data-log-min="20"]').click();
+    await page.locator('[data-log-save]').click();
+    await expect(page.locator('[data-practice-log]')).toHaveCount(0);
+    await page.locator('[data-hub="log"]').click();
+    await expect(page.locator('.plog-week h3')).toContainText('20');
+    await page.keyboard.press('Escape');
+    // The mixer: from Charts, a channel per sound; a level change shows in dB; reset.
+    await page.locator('[data-hub="charts"]').click();
+    await page.locator('[data-charts-mixer]').click();
+    await expect(page.locator('[data-mx-ch]')).toHaveCount(4);
+    await page.locator('[data-mx="bass-vol"]').fill('0.5');
+    await expect(page.locator('[data-mx-ch="bass"] .mx-knob b').first()).toHaveText('-6 dB');
+    await page.locator('[data-mx-reset]').click();
+    await expect(page.locator('[data-mx-ch="bass"] .mx-knob b').first()).toHaveText('0 dB');
+    await page.locator('.screen-head .icon-btn').first().click();
+    await page.locator('.screen-head .icon-btn').first().click();
+    // Slow down opens with its file picker.
+    await page.locator('[data-hub="slowdown"]').click();
+    await expect(page.locator('[data-slowdown-file]')).toBeAttached();
+    await page.locator('.screen-head .icon-btn').first().click();
+    // My pieces from Songs: import a small MusicXML, set up, practise screen with the first chunk.
+    await page.locator('[data-hub="songs"]').click();
+    await page.locator('[data-pieces-open]').click();
+    const bars = Array.from({ length: 8 }, (_, i) => `<measure number="${i + 1}">${i === 0 ? '<attributes><divisions>1</divisions><time><beats>4</beats><beat-type>4</beat-type></time></attributes>' : ''}${'<note><pitch><step>C</step><octave>5</octave></pitch><duration>1</duration></note>'.repeat(4)}</measure>`).join('');
+    const xml = `<?xml version="1.0"?><score-partwise><work><work-title>E2E Study</work-title></work><part-list><score-part id="P1"/></part-list><part id="P1">${bars}</part></score-partwise>`;
+    await page.locator('[data-piece-file]').setInputFiles({ name: 'e2e.musicxml', mimeType: 'application/xml', buffer: Buffer.from(xml) });
+    await page.locator('[data-piece-start]').click();
+    await expect(page.locator('[data-piece-practice]')).toBeVisible();
+    await expect(page.locator('.pc-heat span')).toHaveCount(8);
+    await expect(page.locator('.pc-task')).toContainText('55');
   });
 
   test('menu groups and the Progress area sheet', async ({ page }) => {

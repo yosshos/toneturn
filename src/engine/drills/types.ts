@@ -119,6 +119,8 @@ export interface DrillSpec {
 export interface Drill {
   /** Songs (songDrills.ts): chord names per bar, shown above the staff as a chart. */
   chart?: string[];
+  /** Chart drills, improv mode (owner 2026-11-08): notes at or above this pitch are the free right hand — not graded. */
+  freeAbove?: number;
   spec: DrillSpec;
   /** Stable id of this item (family + kind + key + hands + motion + options): progress is stored per item. */
   itemId: string;

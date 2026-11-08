@@ -21,7 +21,7 @@ const KEYS = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'G♭', 'G', 'A♭', 'A', 'B�
 const fill = (s: string, v: Record<string, string | number>) => s.replace(/\{(\w+)\}/g, (_, k) => String(v[k] ?? ''));
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 
-function useHeadphones(): [boolean, (v: boolean) => void] {
+export function useHeadphones(): [boolean, (v: boolean) => void] {
   const [h, setH] = useState(() => {
     try {
       return localStorage.getItem('toneturn.headphones') === '1';

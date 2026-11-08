@@ -221,3 +221,44 @@ export async function avatarUrl(uid: string): Promise<string | null> {
   photoUrls.set(uid, { url: data.signedUrl, until: Date.now() + 50 * 60 * 1000 });
   return data.signedUrl;
 }
+
+// ---------------------------------------------------------------- duet streaks & nudges (SPEC-SOCIAL §3, §4)
+
+export interface DuetRow {
+  friend: string;
+  name: string;
+  status: 'pending' | 'active';
+  invited_by_me: boolean;
+  expired: boolean;
+  streak: number;
+  best: number;
+  me_today: boolean;
+  them_today: boolean;
+}
+
+/** My duets (pending and active) with today's status for both and the shared streak. */
+export async function listDuets(): Promise<DuetRow[]> {
+  const sb = supabase();
+  if (!sb) return [];
+  const { data, error } = await sb.rpc('toneturn_duets_view');
+  if (error) throw error;
+  return (data ?? []) as DuetRow[];
+}
+
+/** Invite a friend to a duet, accept an invite, or end a duet. */
+export async function duetAction(friend: string, action: 'invite' | 'accept' | 'end'): Promise<void> {
+  const sb = supabase();
+  if (!sb) return;
+  const { error } = await sb.rpc('toneturn_duet', { p_friend: friend, p_action: action });
+  if (error) throw error;
+}
+
+/** A friendly nudge (one per friend per day; the server checks their setting and that they have not practised). */
+export async function nudge(friend: string, message: 'practise' | 'duet'): Promise<'ok' | 'done' | 'off' | 'error'> {
+  const sb = supabase();
+  if (!sb) return 'error';
+  const { error } = await sb.rpc('toneturn_nudge', { p_friend: friend, p_message: message });
+  if (!error) return 'ok';
+  const m = String(error.message ?? '');
+  return m.includes('already practised') || m.includes('duplicate') ? 'done' : m.includes('nudges off') ? 'off' : 'error';
+}

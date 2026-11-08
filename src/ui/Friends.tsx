@@ -1,4 +1,5 @@
 import { DuelsSection, LeagueCard } from './Compete';
+import { DuetsStrip } from './Duets';
 import type { Settings } from '../storage/progress';
 import { RatingBadge } from './Rating';
 import { useCallback, useEffect, useState } from 'react';
@@ -156,6 +157,7 @@ export function FriendsScreen({ t, user: realUser, sync, onBack, settings, onBes
 
           {tab === 'friends' && (
             <>
+              {realUser && <DuetsStrip lang={lang} friends={rows} />}
               <section className="set-card fr-board">
                 <div className="fr-board-head">
                   <h2>{sortBy === 'xp' ? t.thisWeek : t.overallRating}</h2>

@@ -4,9 +4,10 @@ import type { PitchCapture, SingCaptureResult, SingOptions } from '../game/adapt
 import type { SungFrame } from '../engine/sing';
 import { yin } from '../engine/yin';
 import { openCapture, stopStream } from './mic';
+import { chromaFromSpectrum } from '../engine/chroma';
 
 export class BrowserPitchCapture implements PitchCapture {
-  async sing({ signal, maxMs = 4500, silenceMs = 4000, endSilenceMs, hopMs, onCapturing, onFrame, record, ignoreFirstMs = 0 }: SingOptions): Promise<SingCaptureResult> {
+  async sing({ signal, maxMs = 4500, silenceMs = 4000, endSilenceMs, hopMs, onCapturing, onFrame, record, ignoreFirstMs = 0, chroma }: SingOptions): Promise<SingCaptureResult> {
     if (signal.aborted) return { kind: 'aborted' };
     const r = await openCapture({ echoCancellation: false, noiseSuppression: false, autoGainControl: false });
     if (!r.ok) return { kind: 'error', error: r.error };
@@ -20,6 +21,14 @@ export class BrowserPitchCapture implements PitchCapture {
     an.fftSize = 2048;
     src.connect(an);
     const buf = new Float32Array(an.fftSize);
+    // A second, long analyser for chroma: 8192 points ≈ 6 Hz bins, enough to part the low guitar notes.
+    const anC = chroma ? ctx.createAnalyser() : null;
+    if (anC) {
+      anC.fftSize = 8192;
+      anC.smoothingTimeConstant = 0;
+      src.connect(anC);
+    }
+    const spec = anC ? new Float32Array(anC.frequencyBinCount) : null;
     const frames: SungFrame[] = [];
     const chunks: Blob[] = [];
     let rec: MediaRecorder | null = null;
@@ -59,6 +68,10 @@ export class BrowserPitchCapture implements PitchCapture {
         const y = yin(buf, ctx.sampleRate, { minRms: 0.008 });
         const quiet = t * 1000 < ignoreFirstMs;
         const f: SungFrame = { t, hz: quiet ? null : y.hz, confidence: quiet ? 0 : y.confidence, rms: y.rms };
+        if (anC && spec && !quiet) {
+          anC.getFloatFrequencyData(spec);
+          f.chroma = chromaFromSpectrum(spec, ctx.sampleRate, anC.fftSize);
+        }
         frames.push(f);
         onFrame?.(f);
         const voiced = !!f.hz && f.confidence > 0.8;

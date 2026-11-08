@@ -43,4 +43,10 @@ export interface MiniLesson {
   /** One line for the collection card: the core idea. */
   takeaway: Bi;
   steps: MiniStep[];
+  /**
+   * In depth (SPEC-0.48 §L): the full topic after the short core — what it is, how it sounds, how to hear / play it,
+   * a common mistake, where it lives in real music, a recap. Offered after the core and in Practice → Lessons;
+   * never played automatically before an exercise.
+   */
+  more?: MiniStep[];
 }

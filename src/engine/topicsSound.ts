@@ -334,10 +334,25 @@ TOPIC_GEN['width-ear'] = {
   levels: [
     { en: 'Mono or stereo?', he: 'מונו או סטריאו?' },
     { en: 'Narrow, medium or wide?', he: 'צר, בינוני או רחב?' },
+    { en: 'Which one is wider?', he: 'איזה מהם רחב יותר?' },
+    { en: 'Match it', he: 'להתאים את הרוחב' },
   ],
   gen(seed, level, id) {
     const rnd = rng(seed);
     const base: Base = { source: 'loop', seed: seedOf(rnd), bpm: bpmOf(rnd) };
+    if (level === 3) {
+      const pair = pickR(rnd, [[0.5, 1], [1, 1.6], [0.7, 1.3]]);
+      const wider = rnd() < 0.5 ? 'a' : 'b';
+      const [wa, wb] = wider === 'a' ? [pair[1], pair[0]] : pair;
+      const names: Names = { a: nm('A (first)', 'א (הראשון)', 'a', 'first'), b: nm('B (second)', 'ב (השני)', 'b', 'second') };
+      return make('width-ear', id, seed, level, 1400, { ask: { en: 'Headphones on. The same mix twice: which one is wider?', he: 'שימו אוזניות. אותו מיקס פעמיים: איזה רחב יותר?' }, names, choices: ['a', 'b'], answer: wider, stimulus: ab(S(base, { width: wa }, { width: 1 }), S(base, { width: wb }, { width: 1 })) });
+    }
+    if (level === 4) {
+      const ws = [0, 0.6, 1.2, 1.8];
+      const names: Names = Object.fromEntries(ws.map((x) => [`w${x * 10}`, nm(`Width ${Math.round(x * 100)}%`, `רוחב ${Math.round(x * 100)}%`, `${Math.round(x * 100)} percent`)]));
+      const choices = ws.map((x) => `w${x * 10}`);
+      return make('width-ear', id, seed, level, 1550, oneItem({ en: 'Headphones on. Try the widths: which one matches this mix?', he: 'שימו אוזניות. נסו את הרוחבים: איזה מתאים למיקס הזה?' }, names, choices, pickR(rnd, choices), (c) => S(base, { width: +c.slice(1) / 10 }, { width: 1 })));
+    }
     const w: Record<string, [number, string, string, string[]]> =
       level === 1
         ? { mono: [0, 'Mono', 'מונו', ['mono']], stereo: [1.3, 'Stereo', 'סטריאו', ['stereo']] }

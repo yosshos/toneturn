@@ -8,6 +8,8 @@ export interface SungFrame {
   hz: number | null;
   confidence: number;
   rms: number;
+  /** 12-bin chroma (C = 0, max 1) when the capture was asked for it (chord ring-check, SPEC-0.48 §I1). */
+  chroma?: number[];
 }
 
 export type SungStatus = 'accurate' | 'sharp' | 'flat' | 'wrong' | 'unclear';

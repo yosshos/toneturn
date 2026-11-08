@@ -6,7 +6,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 test.use({ viewport: { width: Number(process.env.OVF_WIDTH ?? 320), height: 720 }, hasTouch: true });
 
-const ALLOWED_SCROLLERS = ['roster-wrap', 'play-cats', 'neck-wrap', 'staff-pad-wrap', 'ar-row', 'topic-strip', 'ps-seg', 'frame-chips', 'drill-topics', 'mt-styles', 'mt-kit', 'ls-topics'];
+const ALLOWED_SCROLLERS = ['roster-wrap', 'play-cats', 'neck-wrap', 'staff-pad-wrap', 'ar-row', 'topic-strip', 'ps-seg', 'frame-chips', 'drill-topics', 'mt-styles', 'mt-kit', 'ls-topics', 'ch-grid', 'ch-styles'];
 
 async function problems(page: Page): Promise<string[]> {
   return page.evaluate((allowed) => {

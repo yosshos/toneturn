@@ -186,7 +186,7 @@ TOPIC_GEN['progressions'] = {
 
 const MAJ = [0, 2, 4, 5, 7, 9, 11, 12, 14];
 /** Distinct 5-note motifs in a key: contour and register differ. */
-function motifs(rnd: () => number, key: number, n: number): number[][] {
+export function motifs(rnd: () => number, key: number, n: number): number[][] {
   const out: number[][] = [];
   while (out.length < n) {
     const start = pickR(rnd, out.length === 1 ? [4, 5, 6] : [0, 1, 2]);

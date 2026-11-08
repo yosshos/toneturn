@@ -184,6 +184,11 @@ export const TOPIC_TAGS: Record<string, LevelTags> = {
   'bh-six-over': (l) => (l === 3 ? tg(['chords', 'barry', 1]) : tg(['theory', 'harmony', 1])),
   'bh-lines': tg(['sequences', 'lines', 1]),
   'bh-pivot': tg(['sequences', 'lines', 1]),
+  'bh-family': (l) => (l === 4 ? tg(['chords', 'barry', 1]) : tg(['theory', 'harmony', 0.7], ['chords', 'barry', 0.3])),
+  'bh-block': tg(['chords', 'barry', 1]),
+  comping: tg(['rhythm-dictation', 'feel', 1]),
+  turnarounds: tg(['cadences', 'progression', 1]),
+  'guide-tones': tg(['sequences', 'lines', 0.6], ['chords', 'voicing', 0.4]),
   // time
   tempo: (l) => (l === 3 || l >= 5 ? tg(['tempo', 'bpm', 1]) : tg(['tempo', 'compare', 1])),
   'meter-feel': (l) => (l <= 2 ? tg(['meter', 'count', 1]) : l === 3 ? tg(['meter', 'compound', 1]) : tg(['meter', 'hemiola', 1])),

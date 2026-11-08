@@ -27,23 +27,34 @@ export const useRefresher = () => useContext(RefresherContext);
 
 type Phase = 'playing' | 'paused' | 'done';
 
-export function MiniLessonPlayer({ t, settings, lesson, name, onFinish }: { t: Strings; settings: Settings; lesson: MiniLesson; name: string | null; onFinish: (heardAll: boolean) => void }) {
+/** "In depth" labels (SPEC-0.48 §L) — kept here, next to the player. */
+const DEEP_TX = {
+  en: { go: 'In depth', kicker: 'In depth', hint: 'The full topic — about 2 minutes' },
+  he: { go: 'לעומק', kicker: 'לעומק', hint: 'הנושא המלא — כ־2 דקות' },
+};
+
+export function MiniLessonPlayer({ t, settings, lesson, name, onFinish, startDeep = false }: { t: Strings; settings: Settings; lesson: MiniLesson; name: string | null; onFinish: (heardAll: boolean) => void; startDeep?: boolean }) {
   const lang = settings.uiLang;
+  const dx = DEEP_TX[lang];
+  // The short core plays before exercises; "In depth" (lesson.more) is the full topic, offered after it.
+  const [deep, setDeep] = useState(() => startDeep && !!lesson.more?.length);
+  const steps = deep && lesson.more?.length ? lesson.more : lesson.steps;
+  const coreHeard = useRef(false);
   // Left half-way, a quick lesson continues from its step next time (playtesting, 0.35.3).
-  const slotKey = `mini:${lesson.id}`;
+  const slotKey = `mini:${lesson.id}${deep ? ':deep' : ''}`;
   const [saved] = useState(() => loadSlot<{ i: number; heard: number[] }>(slotKey));
-  const [i, setI] = useState(() => Math.min(saved?.data.i ?? 0, lesson.steps.length - 1));
+  const [i, setI] = useState(() => Math.min(saved?.data.i ?? 0, steps.length - 1));
   const [phase, setPhase] = useState<Phase>('playing');
   const [celebrate, setCelebrate] = useState(false);
   const [term, setTerm] = useState<Term | null>(null);
   const heard = useRef(new Set<number>(saved?.data.heard ?? []));
   useEffect(() => {
     if (phase === 'done') clearSlot(slotKey);
-    else if (i > 0) saveSlot(slotKey, { title: lesson.title[lang], route: 'home', done: i, total: lesson.steps.length, data: { i, heard: [...heard.current] } });
+    else if (i > 0) saveSlot(slotKey, { title: lesson.title[lang], route: 'home', done: i, total: steps.length, data: { i, heard: [...heard.current] } });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [i, phase]);
   const ctl = useRef<AbortController | null>(null);
-  const step = lesson.steps[i];
+  const step = steps[i];
 
   const playExample = async (signal: AbortSignal) => {
     if (!step.play?.length) return;
@@ -68,10 +79,13 @@ export function MiniLessonPlayer({ t, settings, lesson, name, onFinish }: { t: S
         heard.current.add(i);
         await new Promise((r) => setTimeout(r, SIMULATED ? 50 : 450));
         if (c.signal.aborted) return;
-        if (i < lesson.steps.length - 1) setI(i + 1);
+        if (i < steps.length - 1) setI(i + 1);
         else {
           setPhase('done');
-          if (heard.current.size === lesson.steps.length) setCelebrate(true);
+          if (heard.current.size === steps.length) {
+            if (!deep) coreHeard.current = true;
+            setCelebrate(true);
+          }
         }
       } catch {
         /* aborted */
@@ -82,18 +96,32 @@ export function MiniLessonPlayer({ t, settings, lesson, name, onFinish }: { t: S
       tts.cancel?.();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [i, phase]);
+  }, [i, phase, deep]);
 
   useEffect(() => () => ctl.current?.abort(), []);
+
+  const goDeep = () => {
+    ctl.current?.abort();
+    clearSlot(slotKey);
+    if (heard.current.size === steps.length && !deep) coreHeard.current = true;
+    heard.current = new Set();
+    setTerm(null);
+    setCelebrate(false);
+    setDeep(true);
+    setI(0);
+    setPhase('playing');
+  };
+  const canDeep = !deep && !!lesson.more?.length;
+  const learned = () => coreHeard.current || heard.current.size === steps.length;
 
   const jump = (to: number) => {
     ctl.current?.abort();
     setTerm(null);
-    setI(Math.max(0, Math.min(lesson.steps.length - 1, to)));
+    setI(Math.max(0, Math.min(steps.length - 1, to)));
     setPhase('playing');
   };
-  const heardAll = heard.current.size === lesson.steps.length;
-  const words = termsIn(personal(step.say[lang], name), lang);
+  const heardAll = heard.current.size === steps.length;
+  const words = termsIn(personal(step.say[lang], name), lang).slice(0, 3);
   const explain = (w: Term) => {
     ctl.current?.abort();
     setPhase('paused');
@@ -113,7 +141,7 @@ export function MiniLessonPlayer({ t, settings, lesson, name, onFinish }: { t: S
           <div className="mini-card-flip">
             <span className="mini-big-emoji">{lesson.emoji}</span>
           </div>
-          <h2>{t.miniLearnedTitle}</h2>
+          <h2>{deep ? dx.kicker + ' ✓' : t.miniLearnedTitle}</h2>
           <p className="mini-learned-name">
             📚 {lesson.title[lang]}
           </p>
@@ -121,6 +149,11 @@ export function MiniLessonPlayer({ t, settings, lesson, name, onFinish }: { t: S
           <button className="btn mega" data-mini-go="1" onClick={() => (clearSlot(slotKey), onFinish(true))}>
             {t.miniPractise} →
           </button>
+          {canDeep && (
+            <button className="btn ghost mini-deep" data-mini-deep="1" onClick={goDeep}>
+              {dx.go} <small>· {dx.hint}</small>
+            </button>
+          )}
         </div>
       </div>
     );
@@ -133,13 +166,13 @@ export function MiniLessonPlayer({ t, settings, lesson, name, onFinish }: { t: S
             {lesson.emoji}
           </span>
           <div>
-            <small>{t.miniKicker}</small>
+            <small>{deep ? dx.kicker : t.miniKicker}</small>
             <h2>{lesson.title[lang]}</h2>
           </div>
           <TalkToggle lang={lang} />
         </header>
         <div className="mini-progress" aria-hidden="true">
-          {lesson.steps.map((_, k) => (
+          {steps.map((_, k) => (
             <span key={k} className={k < i || heard.current.has(k) ? 'done' : k === i ? 'now' : ''} />
           ))}
         </div>
@@ -178,12 +211,17 @@ export function MiniLessonPlayer({ t, settings, lesson, name, onFinish }: { t: S
           ) : (
             <span className="icon-btn ghost" aria-hidden="true" />
           )}
-          <button className="icon-btn" aria-label={t.miniNext} disabled={i >= lesson.steps.length - 1} onClick={() => jump(i + 1)}>
+          <button className="icon-btn" aria-label={t.miniNext} disabled={i >= steps.length - 1} onClick={() => jump(i + 1)}>
             <span className="flip-rtl">⏭</span>
           </button>
         </div>
         {phase === 'done' && !heardAll && <p className="field-hint">{t.miniHearAll}</p>}
-        <button className="btn ghost mini-skip" data-mini-skip="1" onClick={() => (ctl.current?.abort(), clearSlot(slotKey), onFinish(false))}>
+        {canDeep && phase === 'done' && (
+          <button className="btn ghost mini-deep" data-mini-deep="1" onClick={goDeep}>
+            {dx.go}
+          </button>
+        )}
+        <button className="btn ghost mini-skip" data-mini-skip="1" onClick={() => (ctl.current?.abort(), clearSlot(slotKey), onFinish(learned()))}>
           {phase === 'done' ? t.miniPractise : t.miniSkip} →
         </button>
       </div>
@@ -222,6 +260,7 @@ export function TermCard({ term, lang, onReplay, onClose, closeLabel }: { term: 
     <div className="term-card" data-term-card={term.id} role="note">
       <b>{term.label[lang]}</b>
       <p>{term.explain[lang]}</p>
+      {term.example && <p className="term-example">{term.example[lang]}</p>}
       <div className="term-card-actions">
         <button className="btn ghost small" onClick={onReplay}>
           🔊

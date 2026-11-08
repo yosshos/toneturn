@@ -2,6 +2,8 @@
 // 12-key heat map, the run loop with the tempo ladder, drills settings, calibration and the drill creator.
 
 import { SONGBOOK } from '../content/songbook';
+import { checkRules } from '../engine/improvRules';
+import { parseChart } from '../engine/charts';
 import { PART_NAME, songDrill } from '../engine/drills/songDrills';
 import { useMemo, useRef, useState } from 'react';
 import type { Settings } from '../storage/progress';
@@ -62,7 +64,7 @@ const takeInfo = (d: Drill, m: TakeMetrics) => {
   const cvs = [m.cvR, m.cvL].filter((x): x is number => x !== null);
   return { verdict: m.verdict, hands: d.spec.hands, cv: cvs.length ? Math.max(...cvs) : null };
 };
-const DEFAULT_CAL: DrillCalibration = { latencyMs: 0, velMin: 20, velMax: 120 };
+export const DEFAULT_CAL: DrillCalibration = { latencyMs: 0, velMin: 20, velMax: 120 };
 /** The drill calibration with the input's calibrated delay (MIDI when a keyboard is connected, else the microphone). */
 const calOf = (s: Settings): DrillCalibration => ({ ...DEFAULT_CAL, ...(s.drillCal ?? {}), latencyMs: inputLatency(s, midi.devices.length ? 'midi' : 'mic') });
 const FAM_HUE: Partial<Record<FamilyId, string>> = { scales: 'var(--mint)', arpeggios: '#7c8cff', cadences: '#c38cff', fingers: 'var(--gold)', control: '#ff8a5c', advanced: '#ff6b9a', harris: '#5cd6ff', jazz: '#5cffb0', voicings: '#ffd15c', accomp: '#b0ff5c', custom: '#e0e0ff' };
@@ -107,11 +109,13 @@ export interface DrillsProps {
   onSing?: () => void;
   /** Voice is an instrument here too (owner 2026-11-08): opens vocal training. */
   onVoice?: () => void;
+  /** My pieces — learn a whole piece from a score (SPEC-PIECE). */
+  onPieces?: () => void;
 }
 
 type View = { k: 'test' } | { k: 'hub' } | { k: 'songs' } | { k: 'family'; f: FamilyDef } | { k: 'run'; queue: Drill[]; i: number; from: View } | { k: 'settings' } | { k: 'calib' } | { k: 'creator'; edit?: CustomDrill };
 
-export function Drills({ lang, settings, onSettings, items, onTake, onBack, queue, onQueueDone, startTest, onTestDone, songs, onSing, onVoice }: DrillsProps) {
+export function Drills({ lang, settings, onSettings, items, onTake, onBack, queue, onQueueDone, startTest, onTestDone, songs, onSing, onVoice, onPieces }: DrillsProps) {
   const tx = T[lang];
   const ds = drillSettingsOf(settings);
   const [view, setView] = useState<View>(startTest ? { k: 'test' } : queue?.length ? { k: 'run', queue, i: 0, from: { k: 'hub' } } : songs ? { k: 'songs' } : { k: 'hub' });
@@ -146,6 +150,12 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
       <main className="drills-screen songs-screen" data-drills="songs">
         {head(lang === 'he' ? 'שירים' : 'Songs', onBack)}
         <p className="field-hint">{lang === 'he' ? 'שירים מוכרים מנחלת הכלל: לנגן את המנגינה, את האקורדים או את שניהם — או לשיר.' : 'Well-known public-domain songs: play the melody, the chords or both — or sing.'}</p>
+        {onPieces && (
+          <button className="pc-entry" onClick={onPieces} data-pieces-open="1">
+            <b>{lang === 'he' ? 'היצירות שלי' : 'My pieces'}</b>
+            <small>{lang === 'he' ? 'העלו תווים (MusicXML / MIDI) — והאפליקציה תבנה תוכנית אימון עד הטמפו' : 'Bring a score (MusicXML / MIDI) — the app builds the practice plan up to tempo'}</small>
+          </button>
+        )}
         {onSing && (
           <button className="btn songs-sing" onClick={onSing} data-song-sing="1">
             {lang === 'he' ? 'לשיר שיר' : 'Sing a song'}
@@ -469,6 +479,8 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd }: { lang:
   const stateOf = (d: Drill) => local.current[d.itemId] ?? items[d.itemId] ?? newItem(d);
   const [bpm, setBpm] = useState(() => (drill ? stateOf(drill).goalBpm : 60));
   const [res, setRes] = useState<{ m: TakeMetrics; lad: LadderResult } | null>(null);
+  // Left hand comps, right hand improvises (chart drills): the free right hand checked against each chord's scale.
+  const [rh, setRh] = useState<{ ok: number; total: number } | null>(null);
   const session = useRef(Date.now().toString(36));
   const count = useRef({ takes: 0, clean: 0 });
   const [take, setTake] = useState(0);
@@ -488,7 +500,12 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd }: { lang:
     setBpm(stateOf(queue[j]).goalBpm);
     setTake((t) => t + 1);
   };
-  const done = (m: TakeMetrics, _played: PlayedNote[]) => {
+  const done = (m: TakeMetrics, played: PlayedNote[]) => {
+    if (drill.freeAbove !== undefined && drill.chart?.length) {
+      const free = played.filter((p) => p.pitch >= drill.freeAbove!).map((p) => ({ start: p.on / 1000, end: (p.off ?? p.on + 200) / 1000, midi: p.pitch }));
+      const r = checkRules(free, parseChart(drill.chart.join(' | '), drill.meter), drill.meter, bpm, { note: 'scale', interval: null, rhythm: null });
+      setRh(r.checks[0] && r.checks[0].total ? { ok: r.checks[0].ok, total: r.checks[0].total } : null);
+    } else setRh(null);
     const lad = applyTake(stateOf(drill), m, bpm, new Date().toISOString(), ds);
     local.current[drill.itemId] = lad.state;
     const n = count.current.takes++;
@@ -514,6 +531,11 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd }: { lang:
       {res && (
         <>
           <p className="drill-ladder">{res.lad.message[lang]}</p>
+          {rh && (
+            <p className="drill-rh" data-rh-scale={rh.ok}>
+              {lang === 'he' ? 'יד ימין בתוך הסולם של כל אקורד' : 'Right hand inside each chord’s scale'}: <b dir="ltr">{rh.ok}/{rh.total}</b>
+            </p>
+          )}
           <TakeResult
             m={res.m}
             lang={lang}

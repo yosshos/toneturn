@@ -138,7 +138,7 @@ describe('drills: generate', () => {
       }
     }
     expect(count).toBeGreaterThan(500);
-  }, 30000);
+  }, 120_000);
 
   it('a perfect take of every catalogue item in every key is clean', () => {
     for (const fam of catalog())

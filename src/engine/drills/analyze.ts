@@ -226,7 +226,9 @@ interface Factor {
 }
 
 /** Measure one take against a drill and give the verdict with the worst factor. */
-export function analyzeTake(drill: Drill, bpm: number, played: PlayedNote[], cal?: DrillCalibration): TakeMetrics {
+export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], cal?: DrillCalibration): TakeMetrics {
+  // Improv mode: the right hand above the split plays freely and is checked elsewhere (against the chord-scales).
+  const played = drill.freeAbove !== undefined ? played0.filter((p) => p.pitch < drill.freeAbove!) : played0;
   const exp = drill.notes;
   const goal = drill.goal;
   const beatMs = 60000 / bpm;

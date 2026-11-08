@@ -156,3 +156,14 @@ ACUM licenses online services whose "central economic operations" are in Israel 
 4. **Chord-only charts for popular songs:** written by us or the user, with no lyrics, melody or riffs. Sharing between users only after adding takedown handling and terms that make users responsible.
 5. **Don't use:** Chordonomicon, UG/Chordify/Songsterr content, Spotify/Apple/Deezer audio or previews, Hooktheory data (without a licence), or lyrics.
 6. **Before charging money:** send emails to licensing@jamendo.com, ACUM, and Hooktheory, and get a one-hour lawyer review of §4. Later, for lyrics, riffs and tabs of hits, approach Musixmatch/LyricFind and Songsterr/Hal Leonard (Muse Group).
+
+## 6. Instrument samples
+
+Bundled audio in `public/samples/` (each set's credit is also in `public/samples/manifest.json` → `credits`). Only CC0 or CC BY: no NC, no ND. Licences checked at the source repos on 2026-11-08.
+
+| Set | Source | Licence | Attribution / notes |
+|---|---|---|---|
+| `grand`, `grand-pp`, `grand-mp`, `grand-mf`, `grand-f` | Salamander Grand Piano V3 by Alexander Holm ([archive.org](https://archive.org/details/SalamanderGrandPianoV3), FLAC from [sfzinstruments/SalamanderGrandPiano](https://github.com/sfzinstruments/SalamanderGrandPiano), LICENSE = CC BY 3.0 Unported) | CC BY 3.0 | Credit required: "Salamander Grand Piano V3 — Alexander Holm (CC BY 3.0)", and say it was changed. The layers use velocity files v3/v7/v11/v15, every minor third A1–D#7. They are trimmed, faded, resampled to 44.1 kHz, level-matched and encoded as 112 kbps MP3. `grand` is the older single-layer Tone.js MP3 subset of the same piano. |
+| `bass` | 1958 Otto Rubner double bass, pizzicato, played and mapped by D. Smolken, 2013 ([sfzinstruments/dsmolken.double-bass](https://github.com/sfzinstruments/dsmolken.double-bass), LICENSE = CC0 1.0; readme: "Royalty-free for all commercial and non-commercial use") | CC0 | No credit required; we credit anyway. Uses the mf layer, first round robin (`pizz_*_ma.wav`) for C1–A3 (MIDI 24–57, 11 notes). It is trimmed, faded, level-matched and encoded as 96 kbps mono MP3. Karoryfer Sneakybass (CC0, same org) was also considered; its mapping is unusual, so the Smolken set was used. |
+| `upright`, `harpsichord`, `harp`, `marimba`, `vibraphone`, `organ`, `perc` | Versilian Community Sample Library (VCSL), Versilian Studios | CC0 | Credit given anyway. (The metronome drum kits in `kits/` are from CC0 libraries too, see `src/engine/grooves.ts`.) |
+| Room reverb (piano / bass) | Synthetic impulse generated in code (`smallRoom` in `src/audio/piano.ts`) | n/a (our own) | No third-party impulse response is used. |

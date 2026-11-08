@@ -3,9 +3,9 @@
 // creator's format, so the tempo ladder, the ✓/✗ marks, MIDI / microphone and the tab view all work unchanged.
 
 import type { CustomDrill, Drill } from './types';
-import { customToDrill } from './custom';
+import { customToDrill, guitarTonic, tuningOfCustom } from './custom';
 import { generateGuitar } from './guitar';
-import { chordName, SONGBOOK, songChords, songNotes, type SongChord, type SongDef } from '../../content/songbook';
+import { chordName, SONGBOOK, songChords, songNotes, songRange, type SongChord, type SongDef } from '../../content/songbook';
 
 export type SongPart = 'melody' | 'chords' | 'both';
 
@@ -100,7 +100,18 @@ export function songCustom(s: SongDef, part: SongPart, instrument: 'piano' | 'gu
     inWorkout: false,
     inPath: false,
   };
-  if (instrument !== 'piano' || part === 'melody') return base;
+  if (instrument !== 'piano') {
+    // The tonic sits on the lowest string by default; a song that dips well below its tonic (Für Elise, a G-major
+    // tune going down to D) would fall off the neck — move the tonic to the next string up until it fits.
+    const tu = tuningOfCustom(base);
+    const n = tu.open.length;
+    const [lo] = songRange(s);
+    for (let rs = n; rs >= 1; rs--) {
+      if (guitarTonic({ ...base, rootString: rs }, s.key) + lo >= tu.open[n - 1]) return rs === n ? base : { ...base, rootString: rs };
+    }
+    return base;
+  }
+  if (part === 'melody') return base;
   if (part === 'chords') return { ...base, pattern: chordRow(s, 'L'), marks: undefined, hands: 'L', handsMode: 'L' };
   return { ...base, hands: 'RL', handsMode: 'independent', lh: chordRow(s, 'L') };
 }

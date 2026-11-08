@@ -1,4 +1,13 @@
 import { miniForSkill } from '../content/refresher';
+import { MixerScreen } from './Mixer';
+import type { Drill } from '../engine/drills/types';
+import { generate } from '../engine/drills/generate';
+import { IMPROV_LEVELS } from '../engine/charts';
+import { PiecesScreen } from './Pieces';
+import { SlowDownScreen } from './SlowDown';
+import { ChartsScreen } from './Charts';
+import { PracticeLogSheet } from './PracticeLog';
+import { makeLogResult, type LogKind } from '../engine/practiceLog';
 import { lazy, Suspense } from 'react';
 import { IntakeScreen } from './Intake';
 import { personalOrder, type Intake } from '../engine/intake';
@@ -95,7 +104,7 @@ import { params, piano, setMidiEnabled, SIMULATED, store, tts } from './services
 import { midi } from '../speech/midi';
 import { setPreferredMic } from '../speech/mic';
 
-type Route = 'intake' | 'studio' | 'home' | 'path' | 'arcade' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong' | 'perform' | 'learned' | 'tuner' | 'metronome' | 'songs' | 'drills' | 'workout' | 'workoutrun' | 'peakhunter' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'flight' | 'pitchmemory' | 'nametune' | 'tuneup' | 'highway' | 'melodypuzzle';
+type Route = 'intake' | 'studio' | 'home' | 'path' | 'arcade' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong' | 'perform' | 'learned' | 'tuner' | 'metronome' | 'songs' | 'drills' | 'workout' | 'workoutrun' | 'peakhunter' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'flight' | 'pitchmemory' | 'nametune' | 'tuneup' | 'highway' | 'melodypuzzle' | 'charts' | 'slowdown' | 'pieces' | 'mixer';
 /** Invite links: #/online/CODE */
 const onlineCodeFromHash = () => (/^#\/?online\/(\w+)/.exec(location.hash)?.[1] ?? '');
 const PLAY_HASH = 'play';
@@ -105,7 +114,7 @@ const enterPlay = () => {
 };
 const routeFromHash = (): Route => {
   const h = location.hash.replace(/^#\/?/, '').replace(/^online\/.*$/, 'online').replace(/^settings\/.*$/, 'settings');
-  return (['path', 'arcade', 'settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong', 'perform', 'learned', 'studio', 'intake', 'tuner', 'metronome', 'songs', 'drills', 'workout', 'workoutrun', 'peakhunter', 'rush-chord', 'rush-note', 'rush-fretboard', 'rush-interval', 'rush-keysig', 'rush-progression', 'flight', 'pitchmemory', 'nametune', 'tuneup', 'highway', 'melodypuzzle'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
+  return (['path', 'arcade', 'settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong', 'perform', 'learned', 'studio', 'intake', 'tuner', 'metronome', 'songs', 'drills', 'workout', 'workoutrun', 'peakhunter', 'rush-chord', 'rush-note', 'rush-fretboard', 'rush-interval', 'rush-keysig', 'rush-progression', 'flight', 'pitchmemory', 'nametune', 'tuneup', 'highway', 'melodypuzzle', 'charts', 'slowdown', 'pieces', 'mixer'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
 };
 
 /** The level a generated modes lesson was made at (from its first question's pool size). */
@@ -169,6 +178,13 @@ export function App() {
   }, [user, progress]);
   // Streak 2.0 & gems (spec N): derived from progress + the synced purchase list.
   const [streakOpen, setStreakOpen] = useState(false);
+  // Practice log (SPEC-0.48 §P1): practice away from the app.
+  const [logOpen, setLogOpen] = useState(false);
+  const saveLog = async (kind: LogKind, minutes: number, xpToday: number) => {
+    const id = typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
+    setProgress(await store.recordCompletion(makeLogResult(kind, minutes, xpToday, new Date(), id)));
+    setLogOpen(false);
+  };
   const gems = useMemo(() => gemsOf(progress, settings?.purchases ?? []), [progress, settings?.purchases]);
   const buyCosmetic = (item: string) => {
     const purchases = settings?.purchases ?? [];
@@ -297,6 +313,7 @@ export function App() {
   // Sound, vibration, microphone and MIDI preferences (Settings audit, 0.41) apply to the shared services.
   useEffect(() => {
     piano.setVolume(s.volume ?? 0.9);
+    piano.setMixer(s.mixer);
     piano.cuesOn = s.cues ?? true;
     tts.rate = s.ttsRate ?? 1;
     document.documentElement.dataset.haptics = s.haptics === false ? 'off' : 'on';
@@ -304,7 +321,7 @@ export function App() {
     midi.setOptions({ only: s.midiDevice ?? null, octave: s.midiOctave ?? 0, pedalInvert: !!s.midiPedalInvert });
     document.documentElement.style.fontSize = s.textScale && s.textScale !== 1 ? `${Math.round(s.textScale * 100)}%` : '';
     document.documentElement.dataset.cvd = s.cvd ? 'on' : 'off';
-  }, [s.textScale, s.cvd, s.volume, s.cues, s.ttsRate, s.haptics, s.micDeviceId, s.midiDevice, s.midiOctave, s.midiPedalInvert]);
+  }, [s.mixer, s.textScale, s.cvd, s.volume, s.cues, s.ttsRate, s.haptics, s.micDeviceId, s.midiDevice, s.midiOctave, s.midiPedalInvert]);
 
   const updateSettings = useCallback(
     (patch: Partial<Settings>) => {
@@ -366,7 +383,7 @@ export function App() {
   // Where a tool (tuner, metronome, drone) was opened from — Practice tab or the menu — so Back returns there.
   const toolFrom = useRef<Route>('home');
   const go = (r: Route) => {
-    if ((r === 'tuner' || r === 'metronome' || r === 'drone' || r === 'vocal' || r === 'learned') && route !== r && route !== 'lesson' && route !== 'singalong') toolFrom.current = route === 'arcade' || route === 'path' || route === 'drills' ? route : 'home';
+    if ((r === 'tuner' || r === 'metronome' || r === 'drone' || r === 'charts' || r === 'slowdown' || r === 'vocal' || r === 'learned') && route !== r && route !== 'lesson' && route !== 'singalong' && route !== 'mixer') toolFrom.current = route === 'arcade' || route === 'path' || route === 'drills' ? route : 'home';
     location.hash = r === 'lesson' || r === 'game' ? `/${PLAY_HASH}` : r === 'home' ? '' : `/${r}`;
     setRoute(r);
   };
@@ -664,10 +681,18 @@ export function App() {
     openGenerated(def, undefined, false, { key: `testout:${unit.id}`, title: s.uiLang === 'en' ? 'Test out' : 'מבחן מעבר' });
   };
   /** Technique drills opened from a path step or a workout block run today's items as a queue (spec AI §9). */
-  const drillFrom = useRef<'path' | 'workout' | 'test' | null>(null);
+  const drillFrom = useRef<'path' | 'workout' | 'test' | 'chart' | null>(null);
+  /** A progression from Charts practised as a drill (voicings / comping / stride). */
+  const chartQueue = useRef<Drill[] | null>(null);
+  /** The mixer returns to the screen it was opened from (Settings or Charts). */
+  const mixerFrom = useRef<Route>('settings');
+  const openMixer = () => {
+    mixerFrom.current = route;
+    go('mixer');
+  };
   const techAfterPlacement = useRef(false);
   const drillQueue = useMemo(
-    () => (route === 'drills' && (drillFrom.current === 'path' || drillFrom.current === 'workout') && settings && progress ? todayDrills(drillSettingsOf(settings), progress.drillItems ?? {}, settings.drillStart ?? {}, settings.customDrills ?? []).map((x) => x.drill) : undefined),
+    () => (route === 'drills' && drillFrom.current === 'chart' ? chartQueue.current ?? undefined : route === 'drills' && (drillFrom.current === 'path' || drillFrom.current === 'workout') && settings && progress ? todayDrills(drillSettingsOf(settings), progress.drillItems ?? {}, settings.drillStart ?? {}, settings.customDrills ?? []).map((x) => x.drill) : undefined),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [route],
   );
@@ -683,6 +708,14 @@ export function App() {
         updateSettings({ pathFacts: recordStep(settings.pathFacts ?? {}, ps.id, stars, new Date().toISOString()) });
       }
       return go('path');
+    }
+    if (from === 'chart') {
+      chartQueue.current = null;
+      // back to Charts, and Charts' own back still goes where it came from (not to the drill)
+      const keep = toolFrom.current;
+      go('charts');
+      toolFrom.current = keep;
+      return;
     }
     go(from === 'workout' ? 'workoutrun' : 'arcade');
   };
@@ -1021,6 +1054,9 @@ export function App() {
             tuner: () => go('tuner'),
             metronome: () => go('metronome'),
             drone: () => go('drone'),
+            log: () => setLogOpen(true),
+            charts: () => go('charts'),
+            slowdown: () => go('slowdown'),
           }}
           onOnline={() => {
             setOnlineFacts(null);
@@ -1072,7 +1108,7 @@ export function App() {
         />
       )}
       {route === 'settings' && (
-        <SettingsScreen t={t} settings={s} onChange={updateSettings} onBack={() => go('home')} onIntake={() => go('intake')} account={<AccountCard t={t} user={user} sync={sync} />} />
+        <SettingsScreen t={t} settings={s} onChange={updateSettings} onBack={() => go('home')} onIntake={() => go('intake')} onMixer={openMixer} account={<AccountCard t={t} user={user} sync={sync} />} />
       )}
       {route === 'diagnostics' && <Diagnostics t={t} settings={s} onBack={() => go('home')} />}
       {route === 'friends' && <FriendsScreen profileErr={profileErr} settings={s} t={t} user={user} sync={sync} progress={progress} streak={gems.streak.count} onBack={() => go('home')} onBestTier={(b) => b > (s.bestLeague ?? 0) && updateSettings({ bestLeague: b })} onLeagueSeen={(leagueSeen) => updateSettings({ leagueSeen })} classes={<ClassesScreen t={t} settings={s} user={user} onBack={() => go('friends')} onOpenLesson={(id) => openAssignment(id)} embedded />} />}
@@ -1280,6 +1316,37 @@ export function App() {
           }}
         />
       )}
+      {route === 'pieces' && (
+        <PiecesScreen
+          settings={s}
+          onBack={() => go('songs')}
+          onMinutes={(min, cleanReps) => {
+            const id = typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
+            const r = makeLogResult('piece', min, 0, new Date(), id);
+            void store.recordCompletion({ ...r, sessionId: `piece-${id}`, xp: Math.min(30, cleanReps * 2) }).then(setProgress);
+          }}
+        />
+      )}
+      {route === 'mixer' && <MixerScreen settings={s} onChange={updateSettings} onBack={() => go(mixerFrom.current)} />}
+      {route === 'slowdown' && <SlowDownScreen lang={s.uiLang} onBack={() => go(toolFrom.current)} />}
+      {route === 'charts' && <ChartsScreen
+          settings={s}
+          onChange={updateSettings}
+          onBack={() => go(toolFrom.current)}
+          onMixer={openMixer}
+          onDrill={(kind, stride) => {
+            chartQueue.current = [generate({ family: stride ? 'accomp' : 'voicings', kind, key: 0, hands: 'L', swing: true })];
+            drillFrom.current = 'chart';
+            go('drills');
+          }}
+          onImprov={(score, bpm, chords, level) => {
+            if (level && score > (s.improvBest?.[level] ?? -1)) updateSettings({ improvBest: { ...(s.improvBest ?? {}), [level]: score } });
+            const lv = level ? IMPROV_LEVELS.find((x) => x.id === level)?.n ?? 0 : 0;
+            void store
+              .recordRatingEvents([{ id: `improv:chart:${Date.now()}`, skill: 'improv', difficulty: Math.round((lv ? 900 + lv * 55 : 1050 + Math.min(200, chords * 15)) + Math.max(0, bpm - 90) * 2), correct: score >= 0.6, score, at: new Date().toISOString() }])
+              .then(setProgress);
+          }}
+        />}
       {route === 'tuner' && <Tuner lang={s.uiLang} settings={s} onChange={updateSettings} onBack={() => go(toolFrom.current)} />}
       {route === 'metronome' && <Metronome lang={s.uiLang} settings={s} onChange={updateSettings} onBack={() => go(toolFrom.current)} />}
       {unlock &&
@@ -1317,6 +1384,7 @@ export function App() {
           onTake={(st, evs, xp, m) => void store.recordDrill(st, evs, xp, m).then(setProgress)}
           onBack={() => go('arcade')}
           songs
+          onPieces={() => go('pieces')}
           onSing={
             s.noSing
               ? undefined
@@ -1380,6 +1448,7 @@ export function App() {
       )}
       {route === 'ghost' && <GhostScreen t={t} settings={s} progress={progress} onBack={() => go('arcade')} onProgress={setProgress} />}
       {route === 'classes' && <ClassesScreen t={t} settings={s} user={user} onBack={() => go('home')} onOpenLesson={(id) => openAssignment(id)} />}
+      {logOpen && <PracticeLogSheet lang={s.uiLang} progress={progress} onSave={(k, m, x) => void saveLog(k, m, x)} onClose={() => setLogOpen(false)} />}
       {streakOpen && (
         <StreakSheet t={t} st={gems.streak} gems={gems.balance} today={localDay(new Date())} lang={s.uiLang} onBuy={buy} purchases={s.purchases ?? []} theme={themeId} onBuyCosmetic={buyCosmetic} onTheme={(theme) => updateSettings({ theme })} onClose={() => setStreakOpen(false)} />
       )}

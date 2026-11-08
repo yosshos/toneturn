@@ -208,10 +208,18 @@ export function DrillTake({ drill, bpm, lang, cal, onDone }: { drill: Drill; bpm
     const frames: GFrame[] = [];
     if (guitar && !midi.devices.length) {
       micStop = new AbortController();
-      void listenLoop(new BrowserPitchCapture(), micStop.signal, (f) => {
-        if (!zero) return;
-        frames.push({ t: performance.now() - zero - cal.latencyMs, hz: f.hz, conf: f.confidence, rms: f.rms });
-      });
+      // Chords in the drill → also a chroma per frame, so the analysis can hear which strings rang (SPEC-0.48 §I1).
+      const chords = drill.notes.some((n, i) => drill.notes.some((o, j) => j !== i && Math.abs(o.beat - n.beat) < 1e-4));
+      void listenLoop(
+        new BrowserPitchCapture(),
+        micStop.signal,
+        (f) => {
+          if (!zero) return;
+          frames.push({ t: performance.now() - zero - cal.latencyMs, hz: f.hz, conf: f.confidence, rms: f.rms, chroma: f.chroma });
+        },
+        undefined,
+        { chroma: chords },
+      );
     } else if (!midi.devices.length) {
       micStop = new AbortController();
       let cand: number | null = null;
@@ -331,6 +339,14 @@ export function TakeResult({ m, lang, onAgain, onSlower, onNext }: { m: TakeMetr
         {m.velSD !== null && (
           <span>
             vel SD <b>{m.velSD.toFixed(1)}</b>
+          </span>
+        )}
+        {(m as TakeMetrics & { guitar?: { ring: { chords: number; full: number } | null } }).guitar?.ring && (
+          <span data-ring="1">
+            {lang === 'he' ? 'אקורדים מלאים' : 'full chords'}{' '}
+            <b>
+              {(m as TakeMetrics & { guitar: { ring: { chords: number; full: number } } }).guitar.ring.full}/{(m as TakeMetrics & { guitar: { ring: { chords: number; full: number } } }).guitar.ring.chords}
+            </b>
           </span>
         )}
       </div>

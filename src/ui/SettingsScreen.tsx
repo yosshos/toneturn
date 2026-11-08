@@ -26,6 +26,8 @@ interface Props {
   account?: ReactNode;
   /** Take the intake questionnaire again. */
   onIntake?: () => void;
+  /** Open the mixer (levels, EQ, effects per channel). */
+  onMixer?: () => void;
 }
 
 function Seg<T extends string>({
@@ -148,7 +150,7 @@ function MyPath({ t, s, onChange }: { t: Strings; s: Settings; onChange: (p: Par
   );
 }
 
-export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIntake }: Props) {
+export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIntake, onMixer }: Props) {
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>(listVoices());
   useEffect(() => {
     void voicesReady().then(setVoices);
@@ -486,6 +488,11 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
             </label>
           </section>
           <SoundSetting t={t} value={s.sound ?? DEFAULT_SOUND} onChange={(sound) => onChange({ sound })} drone={s.droneSound ?? 'soft'} onDrone={(droneSound) => onChange({ droneSound })} />
+          {onMixer && (
+            <button className="btn ghost mx-open" onClick={onMixer} data-open-mixer="1">
+              🎚 {s.uiLang === 'he' ? 'מיקסר: עוצמות, אקולייזר ואפקטים' : 'Mixer: levels, EQ and effects'}
+            </button>
+          )}
         </Group>
 
         <Group id="display" icon={<SetIcon k="display" />} title={G.display.title[lang]} sub={G.display.sub[lang]}>

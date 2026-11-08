@@ -18,6 +18,7 @@ export function LearnedScreen({ t, settings, name, onLearned, onBack }: { t: Str
   const lang = settings.uiLang;
   const learned = settings.learned ?? {};
   const [open, setOpen] = useState<MiniLesson | null>(null);
+  const [deep, setDeep] = useState(false);
   // Practice → Lessons (owner 2026-11-08): the short theory lessons, split and filtered by topic like the games list.
   const [topic, setTopicState] = useState<AreaId | 'all' | 'glossary'>(() => {
     try {
@@ -86,7 +87,7 @@ export function LearnedScreen({ t, settings, name, onLearned, onBack }: { t: Str
                     const has = !!learned[l.id];
                     return (
                       <li key={l.id}>
-                        <button className={`learned-card ls-row ${has ? 'got' : 'todo'}`} data-learned-card={l.id} onClick={() => setOpen(l)}>
+                        <button className={`learned-card ls-row ${has ? 'got' : 'todo'}`} data-learned-card={l.id} onClick={() => (setDeep(false), setOpen(l))}>
                           <span className="ls-mark" aria-hidden="true">
                             {has ? '✓' : ''}
                           </span>
@@ -98,6 +99,11 @@ export function LearnedScreen({ t, settings, name, onLearned, onBack }: { t: Str
                             ›
                           </span>
                         </button>
+                        {l.more?.length ? (
+                          <button className="ls-deep" data-lesson-deep={l.id} onClick={() => (setDeep(true), setOpen(l))} aria-label={he ? `${l.title[lang]} — לעומק` : `${l.title[lang]} — in depth`}>
+                            {he ? 'לעומק' : 'In depth'}
+                          </button>
+                        ) : null}
                       </li>
                     );
                   })}
@@ -112,6 +118,7 @@ export function LearnedScreen({ t, settings, name, onLearned, onBack }: { t: Str
           settings={settings}
           lesson={open}
           name={name}
+          startDeep={deep}
           onFinish={(heardAll) => {
             if (heardAll) onLearned(open.id);
             setOpen(null);
