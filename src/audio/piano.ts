@@ -26,7 +26,7 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
   private cueBus!: GainNode;
   private noise!: AudioBuffer;
   private limiter!: DynamicsCompressorNode;
-  /** Recorded one-shots (VCSL, CC0): snare, kick, the option bell. Synthesised stand-ins play until they load. */
+  /** Recorded one-shots (VCSL, CC0): kick, snare, hats, ride, rim, clap, cowbell, shaker, the option bell. Synthesised stand-ins play until they load. */
   private percBank = new Map<string, AudioBuffer>();
   private percBus!: GainNode;
   private drone: { gain: GainNode; oscs: AudioScheduledSourceNode[] } | null = null;
@@ -530,7 +530,7 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     const ctx = this.ctx;
     if (!ctx) return;
     await Promise.all(
-      ['snare', 'snare_soft', 'kick', 'bell'].map(async (id) => {
+      ['snare', 'snare_soft', 'kick', 'bell', 'hat', 'hat_open', 'ride', 'rim', 'clap', 'cowbell', 'shaker'].map(async (id) => {
         try {
           const res = await fetch(`${base}samples/perc/${id}.wav`);
           if (res.ok) this.percBank.set(id, await ctx.decodeAudioData(await res.arrayBuffer()));
@@ -601,6 +601,7 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
       o.stop(at + 0.3);
       return;
     }
+    if (this.shot('hat', at, 0.55 * velocity, 0.97 + Math.random() * 0.06)) return;
     const src = ctx.createBufferSource();
     src.buffer = this.noise;
     const hp = ctx.createBiquadFilter();
@@ -624,9 +625,15 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     return this.ctx ? this.heardAt(t) : performance.now();
   }
 
-  /** One metronome / groove hit at audio time `at` (recorded kick and snare; the rest synthesised). */
+  /** One metronome / groove hit at audio time `at`: recorded VCSL one-shots (CC0), synthesised stand-ins until they load. */
   metroHit(kind: MetroKind, at: number, velocity = 0.8) {
     if (!this.ctx) return;
+    const rec: Partial<Record<MetroKind, [string, number]>> = {
+      hat: ['hat', 0.55], 'hat-open': ['hat_open', 0.45], ride: ['ride', 0.4], rim: ['rim', 0.75],
+      clap: ['clap', 0.7], cowbell: ['cowbell', 0.5], shaker: ['shaker', 0.5],
+    };
+    const r = rec[kind];
+    if (r && this.shot(r[0], at, r[1] * velocity, 0.98 + Math.random() * 0.04)) return;
     switch (kind) {
       case 'click':
       case 'accent':

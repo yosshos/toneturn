@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.42.1',
+    date: '2026-11-08',
+    en: ['Metronome and drum grooves: real recorded hi-hats, ride, rim, clap, cowbell and shaker (free VCSL samples)'],
+    he: ['מטרונום ומקצבי תופים: הקלטות אמיתיות של היי־האט, רייד, רים, מחיאת כף, קאובל ושייקר (דגימות VCSL חופשיות)'],
+  },
+  {
     version: '0.42.0',
     date: '2026-11-08',
     en: [
