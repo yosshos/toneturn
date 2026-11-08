@@ -18,6 +18,20 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.50.2',
+    date: '2026-11-08',
+    en: [
+      'Buttons mode answers quietly: a chime, the right answer in green and yours in red, one short line on what went wrong — no narration. Compare plays yours against the right one when you tap it, Continue moves on',
+      'Left in the middle? A phone that closed the app in the background now reopens the exercise where it stood (Find my level included), and five answers already count for today’s streak',
+      'The keyboard is a hint on degree and note-name questions: hidden until you ask for it, and asking costs a little XP. Find my level never shows it',
+    ],
+    he: [
+      'מצב כפתורים עונה בשקט: צליל, התשובה הנכונה בירוק ושלכם באדום, שורה קצרה על הטעות — בלי קריינות. השוואה משמיעה את שלכם מול הנכון כשלוחצים עליה, והמשך עובר הלאה',
+      'יצאתם באמצע? טלפון שסגר את האפליקציה ברקע פותח עכשיו את התרגיל בדיוק איפה שעצר (גם בדיקת הרמה), וחמש תשובות כבר נחשבות לרצף של היום',
+      'המקלדת היא רמז בשאלות דרגה ושם תו: מוסתרת עד שמבקשים, והבקשה עולה מעט נקודות. בבדיקת הרמה היא לא מופיעה',
+    ],
+  },
+  {
     version: '0.50.1',
     date: '2026-11-08',
     en: [

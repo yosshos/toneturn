@@ -9,7 +9,7 @@ import { NoteStaff } from './NoteViews';
 import { PitchTrace } from './Vocal';
 import { reportPuzzle } from '../cloud/compete';
 import { fitLessonToRange, fitQuestions } from '../engine/voiceFit';
-import { withAids } from '../engine/aids';
+import { keyboardIsHint, noHints, withAids } from '../engine/aids';
 import type { Ratings } from '../engine/rating';
 import { NoteViews, seqMarks } from './NoteViews';
 import { refresherFor } from '../content/refresher';
@@ -26,7 +26,7 @@ import type { InputMode } from '../engine/session';
 import { LessonController, type LessonView } from '../game/controller';
 import { answerWord, askTemplate, choiceLabel, hintText, keysGiveAway, LESSON_META, questionBadge } from '../game/content';
 import type { Strings } from '../i18n/strings';
-import { gemsOf, localDay, namingFor, ratingsOf, resultFromSession, type Progress, type Settings } from '../storage/progress';
+import { gemsOf, localDay, namingFor, provisionalDays, ratingsOf, resultFromSession, type Progress, type Settings } from '../storage/progress';
 import { StreakCelebration } from './Streak';
 import type { StreakState } from '../engine/streak';
 import { overallHistory, peakOf, ratingChange, type RatingChange } from '../engine/rating';
@@ -149,7 +149,11 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
             setXpTotals({ before: before.xp, after: after.xp });
             // Streak screen (spec N.2): the first qualifying session of the day.
             const purchases = settings.purchases ?? [];
-            const g0 = gemsOf(before, purchases);
+            // A day counted early (five answers in) is still celebrated by its first finished session.
+            const today = localDay(new Date());
+            const early = provisionalDays.has(today);
+            if (early) provisionalDays.delete(today);
+            const g0 = gemsOf(early ? { ...before, stats: before.stats ? { ...before.stats, days: before.stats.days.filter((d) => d !== today) } : before.stats } : before, purchases);
             const g1 = gemsOf(after, purchases);
             if (g1.streak.practicedToday && !g0.streak.practicedToday) setStreakMoment({ before: g0.streak.count, after: g1.streak, gems: g1.earned - g0.earned });
             onProgress(after);
@@ -244,7 +248,10 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
   const answered = !!v.feedback && ['correct', 'correct-retry', 'reveal', 'skipped'].includes(v.feedback.kind);
   const keysLive = answered || !keysGiveAway(q);
   // Rhythm exercises have no note views; for everything else keysGiveAway() keeps the answer hidden.
-  const hideKeyboard = q.kind === 'rhythm-read' || q.kind === 'rhythm-dict';
+  // Degree ↔ name questions: an unasked-for keyboard lets the player count to the answer — it waits for Hint (0.50.2).
+  const keysAreHint = !answered && !q.aid && keyboardIsHint(q);
+  const canHint = keysAreHint && !noHints(v.session.lesson.id);
+  const hideKeyboard = q.kind === 'rhythm-read' || q.kind === 'rhythm-dict' || keysAreHint;
   const orbLabel =
     q.kind === 'degree'
       ? target
@@ -383,7 +390,12 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
           {isPlace && q.kind === 'place' && v.stage === 'question' && !paused && !v.error && (
             <PlaceSurfaceView key={`${v.index}-${answered ? 'r' : 'q'}-${placeRec?.attempts.length ?? 0}`} q={q} settings={settings} lang={lang} disabled={!awaiting || answered} result={answered ? (placeLast ?? '') : null} onSubmit={(a) => ctrl.answer(a)} />
           )}
-          {q.aid && !answered && <p className="aid-chip">💡 {t.aidOn}</p>}
+          {q.aid && !answered && <p className="aid-chip">{t.aidOn}</p>}
+          {canHint && (
+            <button className="btn ghost small hint-btn" onClick={() => ctrl.useHint()} data-hint="1">
+              {lang === 'he' ? 'רמז: להציג מקלדת' : 'Hint: show the keyboard'}
+            </button>
+          )}
           {!phones && itemNeedsHeadphones(q) && (
             <div className="phones-card" role="alert">
               <p>🎧 {lang === 'en' ? 'Needs headphones (low notes, left / right)' : 'צריך אוזניות (צלילים נמוכים, שמאל / ימין)'}</p>
@@ -405,6 +417,18 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
           <PaceBar v={v} t={t} />
           <Listening v={v} t={t} hint={hintText(q, lang, v.mode === 'voice' && !v.needsListenTap)} />
           <FeedbackBanner v={v} t={t} lang={lang} settings={settings} />
+          {v.awaitNext && (
+            <div className="fb-actions" data-await-next="1">
+              {v.canCompare && (
+                <button className="btn ghost" onClick={() => ctrl.compareNow()} data-compare-now="1">
+                  {lang === 'he' ? '⇄ השוואה: שלכם מול הנכון' : '⇄ Compare: yours vs the right one'}
+                </button>
+              )}
+              <button className="btn primary" onClick={() => ctrl.next()} data-continue="1" autoFocus>
+                {lang === 'he' ? 'המשך' : 'Continue'}
+              </button>
+            </div>
+          )}
           {showButtons && q.kind === 'rhythm-dict' && q.mode === 'build' && (
             <RhythmBuilder key={`${v.index}-${v.session.turn}`} q={q} lang={lang} t={t} disabled={!awaiting} onSubmit={(a) => ctrl.answer(a)} />
           )}
@@ -415,7 +439,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
                 return (
                   <button
                     key={String(c)}
-                    className={`answer tone-${lb.tone} ${q.kind === 'rhythm-dict' ? 'rhythm-opt' : ''}`}
+                    className={`answer tone-${lb.tone} ${q.kind === 'rhythm-dict' ? 'rhythm-opt' : ''} ${markOf(v, c)}`}
                     disabled={!awaiting}
                     onClick={() => ctrl.answer(c)}
                     data-answer={String(c)}
@@ -785,6 +809,16 @@ function Listening({ v, t, hint }: { v: LessonView; t: Strings; hint: string }) 
       </span>
     </div>
   );
+}
+
+/** After an answer the buttons show it (0.50.2): yours red when wrong, the right one green once it is revealed or got. */
+function markOf(v: LessonView, c: unknown): string {
+  const f = v.feedback;
+  if (!f) return '';
+  const same = (a: unknown) => a !== undefined && String(a) === String(c);
+  if ((f.kind === 'correct' || f.kind === 'correct-retry' || f.kind === 'reveal') && same(f.answer)) return 'is-right';
+  if ((f.kind === 'retry' || f.kind === 'reveal') && same(f.given)) return 'is-wrong';
+  return '';
 }
 
 function FeedbackBanner({ v, t, lang, settings }: { v: LessonView; t: Strings; lang: 'he' | 'en'; settings: Settings }) {

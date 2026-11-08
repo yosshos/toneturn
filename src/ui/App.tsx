@@ -17,7 +17,7 @@ import { personalOrder, type Intake } from '../engine/intake';
 import { catchUp, hasCatchUp } from '../engine/catchup';
 import { CatchUpCard, ResumePlacementCard, ResumeSessionCard } from './CatchUp';
 import { intakeDraftProgress } from './Intake';
-import { clearSlot, latestAnything, clearPlacement, clearSession, loadPlacement, loadSession, PLACEMENT_KEY, placementProgressOf, saveSession, sessionProgressOf, type SavedSession } from '../storage/resume';
+import { clearSlot, latestAnything, latestSession, clearPlacement, clearSession, loadPlacement, loadSession, PLACEMENT_KEY, placementProgressOf, saveSession, sessionProgressOf, type SavedSession } from '../storage/resume';
 import { vocalUnit } from '../content/units';
 const AvatarStudio = lazy(() => import('./AvatarStudio'));
 import { MiniGateContext, MiniLessonPlayer, RefresherContext } from './MiniLesson';
@@ -111,6 +111,8 @@ type Route = 'intake' | 'studio' | 'home' | 'path' | 'arcade' | 'lesson' | 'sett
 /** Invite links: #/online/CODE */
 const onlineCodeFromHash = () => (/^#\/?online\/(\w+)/.exec(location.hash)?.[1] ?? '');
 const PLAY_HASH = 'play';
+/** The app (re)opened inside an exercise — the phone reloaded a tab it had closed in the background. */
+const BOOT_IN_PLAY = typeof location !== 'undefined' && location.hash.replace(/^#\/?/, '') === PLAY_HASH;
 const LESSON_TITLE_FALLBACK = { en: { wrong: 'Wrong notes' }, he: { wrong: 'תווים שגויים' } };
 const enterPlay = () => {
   if (location.hash.replace(/^#\/?/, '') !== PLAY_HASH) location.hash = `/${PLAY_HASH}`;
@@ -519,6 +521,17 @@ export function App() {
     go();
     window.addEventListener('hashchange', go);
     return () => window.removeEventListener('hashchange', go);
+  }, [settingsReady]);
+  // Back into the exercise (0.50.2): a phone that closed the tab in the background reloads the app on #/play — open the
+  // session that was cut off (saved after every answer) where it stood, instead of the home screen.
+  const resumeRef = useRef({ resumePlacement, continueSession });
+  resumeRef.current = { resumePlacement, continueSession };
+  useEffect(() => {
+    if (!settingsReady || !BOOT_IN_PLAY) return;
+    const v = latestSession();
+    if (!v || Date.now() - new Date(v.savedAt).getTime() > 6 * 3600 * 1000) return;
+    if (v.key === PLACEMENT_KEY && v.seed !== undefined) resumeRef.current.resumePlacement(v);
+    else resumeRef.current.continueSession(v);
   }, [settingsReady]);
   const [vocalLevel, setVocalLevel] = useState<number | null>(null);
   /** Class assignments: path lessons and generated practice (vocal levels, modes, wrong notes). */
@@ -1129,7 +1142,11 @@ export function App() {
           lessonDef={generated?.def ?? slot?.resume?.lesson}
           adapt={generated?.adapt}
           resume={slot?.resume}
-          onStep={slot ? (st) => saveSession(slot.key, slot.title, st, slot.seed) : undefined}
+          onStep={(st) => {
+            if (slot) saveSession(slot.key, slot.title, st, slot.seed);
+            // Five answers in, today is a practice day (the streak), even if the session is left unfinished.
+            if (st.records.filter((r) => r.attempts.length).length === 5) void store.markPracticeDay().then(setProgress);
+          }}
           onDone={slot ? () => clearSession(slot.key) : undefined}
           nextLabel={wrun && !wrun.finished && wrun.day === today ? (s.uiLang === 'en' ? `Continue workout · ${Math.ceil(runLeftMs(wrun) / 60000)} min` : `להמשיך באימון · ${Math.ceil(runLeftMs(wrun) / 60000)} דק׳`) : generated ? t.seeSkillMap : undefined}
           ratings={ratingsOf(progress)}

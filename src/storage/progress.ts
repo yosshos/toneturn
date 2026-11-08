@@ -738,6 +738,22 @@ export class ProgressStore {
     return next;
   }
 
+  /**
+   * Today counts as a practice day (the streak) once a session has some answers, finished or not (0.50.2): leaving
+   * Find my level half-way — or the phone closing the tab — no longer leaves the day empty.
+   */
+  async markPracticeDay(now = new Date()): Promise<Progress> {
+    // (the streak celebration at the end still treats this day as new: see provisionalDays)
+    const p = await this.loadProgress();
+    const day = localDay(now);
+    const st = p.stats ?? { days: [], goodSessions: 0, xpByDay: {} };
+    if (practiceDays(p).has(day)) return p;
+    provisionalDays.add(day);
+    const next = { ...p, stats: { ...st, days: [...st.days, day].slice(-800) } };
+    await this.kv.set('progress', next);
+    return next;
+  }
+
   async saveProgress(p: Progress) {
     await this.kv.set('progress', p);
   }
@@ -775,6 +791,9 @@ export function addSessionStats(stats: Progress['stats'], r: LessonResult): NonN
   if (keys.length > 800) for (const k of keys.slice(0, keys.length - 800)) delete xpByDay[k];
   return { days: s.days.includes(day) ? s.days : [...s.days, day].slice(-800), goodSessions: s.goodSessions + (good ? 1 : 0), xpByDay };
 }
+
+/** Days counted early by markPracticeDay (five answers in) in this run: the first finished session still celebrates them. */
+export const provisionalDays = new Set<string>();
 
 /** Every local day with qualifying practice: sessions, daily challenge first plays, memory games. */
 export function practiceDays(p: Progress): Set<string> {

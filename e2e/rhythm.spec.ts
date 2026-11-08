@@ -74,6 +74,8 @@ test.describe('rhythm R4–R8', () => {
     let built = false;
     for (let i = 0; i < 200; i++) {
       if (await page.getByRole('heading', { name: 'Lesson complete' }).isVisible()) break;
+      // 0.50.2: a wrong final answer waits for Continue
+      if (await page.locator('[data-continue]').isVisible()) await page.locator('[data-continue]').click().catch(() => {});
       if (await page.locator('.rhythm-builder').isVisible()) {
         const done = page.locator('.rhythm-builder .btn.primary');
         for (let k = 0; k < 16 && !(await done.isEnabled()); k++) {

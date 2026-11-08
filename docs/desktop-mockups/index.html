@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>7th Sense — desktop mockups</title>
+<style>
+:root{--bg:#0e1322;--bg-2:#141a2b;--card:#151b2c;--card-2:#1a2135;--ink:#e9edf5;--ink-soft:#c3cad8;--ink-dim:#8f9ab0;--mint:#86dcbd;--mint-deep:#3f8f74;--gold:#f2b866;--coral:#ef8f78;--red:#ec7a6d;--lilac:#a7a4ea;--line:rgba(214,224,255,.09);--hue-pitch:#8e9cf0;--hue-time:#eda07c;--hue-voice:#e891bd;--hue-instrument:#9ccc86;--hue-memory:#7fcfd6}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:15px/1.45 Rubik,"Segoe UI",system-ui,sans-serif}
+svg{display:block}
+.shell{display:grid;grid-template-columns:248px minmax(0,1fr) 320px;grid-template-rows:56px minmax(0,1fr);height:100vh}
+.shell.no-panel{grid-template-columns:248px minmax(0,1fr)}
+/* sidebar */
+.side{grid-row:1/3;background:var(--bg-2);border-inline-end:1px solid var(--line);display:flex;flex-direction:column;padding:14px 10px;gap:2px;overflow:auto}
+.logo{display:flex;align-items:center;gap:10px;padding:4px 10px 16px;font-weight:700;font-size:17px}
+.logo i{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--mint),var(--lilac));display:block}
+.nav{display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:10px;color:var(--ink-soft);font-size:14.5px}
+.nav svg{width:19px;height:19px;flex:none;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.nav .chev{margin-inline-start:auto;width:14px;height:14px;opacity:.6}
+.nav.on{background:color-mix(in srgb,var(--mint) 14%,transparent);color:var(--ink)}
+.nav.on svg{color:var(--mint)}
+.nav .badge{margin-inline-start:auto;background:var(--coral);color:#1b1010;font-size:11px;font-weight:700;border-radius:99px;padding:1px 7px}
+.sub{display:flex;flex-direction:column;margin:2px 0 6px;padding-inline-start:30px;border-inline-start:1px solid var(--line);margin-inline-start:19px}
+.sub a{padding:6px 10px;border-radius:8px;color:var(--ink-dim);font-size:14px}
+.sub a.on{color:var(--ink);background:var(--card-2)}
+.hr{height:1px;background:var(--line);margin:10px 8px}
+.me{margin-top:auto;display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;background:var(--card)}
+.me .av{width:34px;height:34px;border-radius:50%;background:#2a3557;display:grid;place-items:center;font-weight:700;color:var(--lilac)}
+.me small{display:block;color:var(--ink-dim);font-size:12px}
+/* top bar */
+.top{grid-column:2/-1;display:flex;align-items:center;gap:14px;padding:0 24px;border-bottom:1px solid var(--line)}
+.crumb{font-size:14px;color:var(--ink-dim)}.crumb b{color:var(--ink);font-weight:600}
+.search{margin-inline-start:auto;display:flex;align-items:center;gap:8px;width:300px;padding:7px 12px;border-radius:10px;background:var(--card);color:var(--ink-dim);font-size:13.5px;border:1px solid var(--line)}
+.search svg{width:16px;height:16px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8}
+.search{white-space:nowrap}
+.search kbd{margin-inline-start:auto;font:11px ui-monospace,monospace;border:1px solid var(--line);border-radius:5px;padding:1px 5px}
+.stat{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--ink-soft)}
+.stat svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.8}
+.stat.fl{color:var(--coral)}.stat.xp{color:var(--gold)}
+/* main + panel */
+main{overflow:auto;padding:28px 32px}
+.wrap{max-width:900px;margin:0 auto}
+.panel{border-inline-start:1px solid var(--line);background:var(--bg-2);padding:22px 20px;overflow:auto;display:flex;flex-direction:column;gap:14px}
+h1{font-size:24px;margin:0 0 4px;font-weight:700}
+h2{font-size:15px;margin:0 0 10px;font-weight:600;color:var(--ink-soft)}
+.hint{color:var(--ink-dim);font-size:14px;margin:0 0 20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:8px;min-height:118px}
+.tile .ic{width:36px;height:36px;border-radius:10px;display:grid;place-items:center}
+.tile .ic svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tile b{font-weight:600}.tile small{color:var(--ink-dim);font-size:13px}
+.btn{white-space:nowrap;display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:10px;font:inherit;font-weight:600;border:1px solid var(--line);background:var(--card-2);color:var(--ink)}
+.btn.primary{background:var(--mint);color:#0d2a20;border-color:transparent}
+.btn.ghost{background:transparent}
+.btn kbd,.kb{font:11px ui-monospace,monospace;border:1px solid currentColor;border-radius:5px;padding:0 5px;opacity:.65}
+.row2{display:grid;grid-template-columns:1.4fr 1fr;gap:16px}
+.bar{height:8px;border-radius:9px;background:var(--card-2);overflow:hidden}.bar i{display:block;height:100%;background:var(--mint)}
+.list{display:flex;flex-direction:column}
+.li{display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px solid var(--line);font-size:14.5px}
+.li:last-child{border:0}.li small{color:var(--ink-dim);margin-inline-start:auto}
+.dot{width:9px;height:9px;border-radius:50%}
+/* exercise */
+.ex{max-width:820px;margin:0 auto;display:flex;flex-direction:column;gap:18px;align-items:center;text-align:center}
+.ex .key{display:inline-flex;gap:8px;align-items:center;background:var(--card);border:1px solid var(--line);padding:6px 14px;border-radius:99px;font-size:14px;color:var(--ink-soft)}
+.ex h1{font-size:26px}
+.answers{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;width:100%}
+.ans{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 10px;display:flex;flex-direction:column;align-items:center;gap:4px;position:relative}
+.ans b{font-size:26px;direction:ltr;unicode-bidi:isolate}.ans small{color:var(--ink-dim)}
+.ans .kb{position:absolute;top:8px;inset-inline-start:10px;font-size:10px}
+.ans.right{outline:3px solid #2bb673;outline-offset:2px}.ans.wrong{outline:3px solid var(--red);outline-offset:2px}
+.fb{width:100%;padding:12px 16px;border-radius:12px;background:color-mix(in srgb,var(--red) 12%,var(--card));text-align:start;font-size:14.5px}
+.fb b{display:block;margin-bottom:2px}
+.acts{display:flex;gap:10px;justify-content:center}
+.piano{display:flex;position:relative;height:150px;width:100%;max-width:820px;direction:ltr}
+.wk{flex:1;background:#e9edf5;border:1px solid #9aa3b8;border-radius:0 0 7px 7px;margin:0 1px}
+.wk.hl{background:#9fe3c9}
+.bk{position:absolute;top:0;width:3.4%;height:62%;background:#1a2033;border-radius:0 0 5px 5px}
+.ctrl{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.meter{display:flex;flex-direction:column;gap:6px}
+.strip{display:grid;grid-template-columns:repeat(13,1fr);gap:4px}
+.strip i{height:8px;border-radius:4px;background:var(--card-2)}.strip i.d{background:var(--mint)}.strip i.n{background:var(--gold)}
+.small{font-size:13px;color:var(--ink-dim)}
+.kbd-help{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:13px;color:var(--ink-soft)}
+.staffwrap{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:6px 10px;width:100%}
+.ropt{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px;align-items:center;position:relative}
+.ropt .kb{position:absolute;top:8px;inset-inline-start:10px;font-size:10px}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}.tbl th{color:var(--ink-dim);font-weight:500;text-align:start;padding:8px;border-bottom:1px solid var(--line)}.tbl td{padding:10px 8px;border-bottom:1px solid var(--line)}
+.set-nav{display:flex;flex-direction:column;gap:2px}
+.set-nav a{padding:9px 12px;border-radius:9px;color:var(--ink-soft);font-size:14.5px}.set-nav a.on{background:var(--card-2);color:var(--ink)}
+.field{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--line);gap:20px}
+.field small{display:block;color:var(--ink-dim);font-size:13px}
+.tog{width:40px;height:22px;border-radius:99px;background:var(--mint);position:relative;flex:none}.tog::after{content:"";position:absolute;top:3px;inset-inline-start:3px;width:16px;height:16px;border-radius:50%;background:#0d2a20}
+.tog.off{background:var(--card-2)}.tog.off::after{inset-inline-start:auto;inset-inline-end:3px;background:var(--ink-dim)}
+.seg{display:inline-flex;background:var(--card-2);border-radius:9px;padding:3px}.seg span{padding:5px 12px;border-radius:7px;font-size:13.5px;color:var(--ink-soft)}.seg span.on{background:var(--card);color:var(--ink)}
+.slider{width:220px;height:6px;border-radius:9px;background:var(--card-2);position:relative}.slider i{position:absolute;inset-block:0;inset-inline-start:0;width:66%;background:var(--mint);border-radius:9px}
+.screen{display:none}.screen.on{display:block}
+</style>
+</head>
+<body>
+<template id="icons">
+</template>
+<script>
+const I = {
+  today:'<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>',
+  path:'<path d="M6 20c0-4 12-4 12-8s-12-4-12-8"/><circle cx="6" cy="20" r="1.5"/><circle cx="18" cy="12" r="1.5"/><circle cx="6" cy="4" r="1.5"/>',
+  practice:'<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 6v7M11 6v7M15 6v7M19 6v7"/>',
+  progress:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+  community:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.3 2.9-5.4 6.5-5.4s6.5 2.1 6.5 5.4M16.5 5.6a3.3 3.3 0 0 1 0 6.6M17.5 14.8c2.4.4 4 2.2 4 5.2"/>',
+  tools:'<path d="M14 7l3-3 3 3-3 3M17 4v0M4 20l9-9M15 13l5 5-2 2-5-5"/>',
+  check:'<circle cx="11" cy="11" r="7"/><path d="M16 16l5 5M8 11l2 2 4-4"/>',
+  gear:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
+  chev:'<path d="M15 6l-6 6 6 6"/>',
+  down:'<path d="M6 9l6 6 6-6"/>',
+  flame:'<path d="M12 21c4 0 7-2.7 7-6.6 0-3.6-2.8-5.7-4.2-8.9-1.2 2.4-2.6 3.2-4 3.6.4-2.6-.5-4.7-2-6.1C8.6 6.5 5 9.2 5 14.4 5 18.3 8 21 12 21z"/>',
+  gem:'<path d="M6 3h12l3 6-9 12L3 9z M3 9h18M9 3l3 18M15 3l-3 18"/>',
+  bell:'<path d="M6 16V11a6 6 0 1 1 12 0v5l2 2H4zM10 20a2 2 0 0 0 4 0"/>',
+  ear:'<path d="M7 9a5 5 0 1 1 10 0c0 3-3 4-3 7a3 3 0 0 1-6 0"/><path d="M10 9a2 2 0 1 1 4 0"/>',
+  drum:'<ellipse cx="12" cy="8" rx="8" ry="3"/><path d="M4 8v8c0 1.7 3.6 3 8 3s8-1.3 8-3V8M6 4l4 4M18 4l-4 4"/>',
+  mic:'<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>',
+  guitar:'<path d="M14 4l6 6M17 7l-6.5 6.5M9 12c-2-1-4.5-.5-5.5 1.5-1.5 3 1 6.5 4 6.5 2 0 3.5-1 4-3 .4-1.4 1.2-2 2.5-2.5"/>',
+  book:'<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM4 19V5"/>',
+  music:'<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>',
+  game:'<rect x="2.5" y="7" width="19" height="11" rx="5.5"/><path d="M7.5 10.5v4M5.5 12.5h4"/>',
+  piece:'<path d="M6 3h9l3 3v15H6z"/><path d="M9 10h6M9 14h6M9 18h3"/>',
+  search:'<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',
+  play:'<path d="M7 5l12 7-12 7z"/>',
+};
+const svg = (k, cls='') => `<svg viewBox="0 0 24 24" class="${cls}">${I[k]}</svg>`;
+
+function sidebar(active, open) {
+  const items = [
+    ['today','היום','today'],['path','מסלול','path'],['practice','תרגול','practice'],['progress','התקדמות','progress'],['community','קהילה','community'],
+  ];
+  const subs = {
+    practice:[['שירים','songs'],['טכניקה','technique'],['משחקים','games'],['שיעורים','lessons'],['היצירות שלי','pieces'],['מהלכים','charts']],
+    progress:[['מפת מיומנויות'],['תובנות','insights'],['הישגים']],
+    tools:[['טיונר'],['מטרונום'],['צליל רקע'],['מאמן גרוב'],['האטה'],['מיקסר'],['רישום אימון']],
+  };
+  let h = `<div class="logo"><i></i>החוש השביעי</div>`;
+  for (const [k,label,ic] of items) {
+    const hasSub = !!subs[k];
+    h += `<div class="nav ${active===k?'on':''}">${svg(ic)}${label}${k==='community'?'<span class="badge">2</span>':''}${hasSub?svg(open===k?'down':'chev','chev'):''}</div>`;
+    if (open===k) h += `<div class="sub">${subs[k].map(([l,id])=>`<a class="${id===activeSub?'on':''}">${l}</a>`).join('')}</div>`;
+  }
+  h += `<div class="hr"></div>`;
+  h += `<div class="nav ${active==='tools'?'on':''}">${svg('tools')}כלים${svg(open==='tools'?'down':'chev','chev')}</div>`;
+  if (open==='tools') h += `<div class="sub">${subs.tools.map(([l])=>`<a>${l}</a>`).join('')}</div>`;
+  h += `<div class="nav">${svg('check')}בדיקת רמה</div>`;
+  h += `<div class="hr"></div><div class="nav">${svg('gear')}הגדרות</div>`;
+  h += `<div class="me"><span class="av">יו</span><span>יוסי<small>דרגה: מתקדם · 12 ימים</small></span></div>`;
+  return `<aside class="side">${h}</aside>`;
+}
+function topbar(crumb) {
+  return `<header class="top"><span class="crumb">${crumb}</span>
+  <span class="search">${svg('search')}חיפוש נושא, שיר, כלי…<kbd>Ctrl K</kbd></span>
+  <span class="stat fl">${svg('flame')}12</span><span class="stat xp">${svg('gem')}340</span><span class="stat">${svg('bell')}</span></header>`;
+}
+let activeSub = '';
+const P = new URLSearchParams(location.search);
+const screen = P.get('s') || 'today';
+let html = '';
+if (screen === 'today') {
+  html = `<div class="shell">${sidebar('today')}${topbar('<b>היום</b>')}
+  <main><div class="wrap">
+    <h1>ערב טוב, יוסי</h1><p class="hint">האימון של היום מוכן — 14 דקות, מותאם לנקודות שצריכות עבודה.</p>
+    <div class="row2">
+      <div class="card"><h2>האימון של היום</h2>
+        <div class="list">
+          <div class="li"><span class="dot" style="background:var(--hue-pitch)"></span>דרגות במינור — זיהוי בשמיעה<small>4 דק׳</small></div>
+          <div class="li"><span class="dot" style="background:var(--hue-time)"></span>סינקופה — הכתבה קצבית<small>3 דק׳</small></div>
+          <div class="li"><span class="dot" style="background:var(--hue-instrument)"></span>Drop 2 על ii–V–I · ♩=96<small>5 דק׳</small></div>
+          <div class="li"><span class="dot" style="background:var(--hue-memory)"></span>חזרה: הזוגות שמתבלבלים (6 ↔ ♭6)<small>2 דק׳</small></div>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:10px"><span class="btn primary">${svg('play')}להתחיל <kbd>Enter</kbd></span><span class="btn ghost">להחליף תרגיל</span></div>
+      </div>
+      <div class="card"><h2>השבוע</h2>
+        <div style="display:flex;gap:6px;margin-bottom:14px">${['א','ב','ג','ד','ה','ו','ש'].map((d,i)=>`<div style="flex:1;text-align:center"><div style="height:34px;border-radius:8px;background:${i<5?'color-mix(in srgb,var(--coral) 30%,var(--card-2))':'var(--card-2)'}"></div><small class="small">${d}</small></div>`).join('')}</div>
+        <div class="small" style="margin-bottom:6px">יעד שבועי · 64 / 90 דק׳</div><div class="bar"><i style="width:71%"></i></div>
+        <div class="small" style="margin:14px 0 6px">מדד האוזן</div><div style="font-size:28px;font-weight:700">1,284 <small class="small" style="font-size:13px">+38 החודש</small></div>
+      </div>
+    </div>
+    <h2 style="margin-top:26px">להמשיך מאיפה שעצרת</h2>
+    <div class="grid">
+      <div class="tile"><span class="ic" style="background:color-mix(in srgb,var(--hue-pitch) 18%,transparent);color:var(--hue-pitch)">${svg('ear')}</span><b>בדיקת רמה</b><small>8 מתוך 13 תחומים · 3 דק׳ להמשך</small><div class="bar"><i style="width:61%"></i></div></div>
+      <div class="tile"><span class="ic" style="background:color-mix(in srgb,var(--hue-instrument) 18%,transparent);color:var(--hue-instrument)">${svg('piece')}</span><b>Für Elise</b><small>תיבות 9–16 · ♩=72</small><div class="bar"><i style="width:40%"></i></div></div>
+      <div class="tile"><span class="ic" style="background:color-mix(in srgb,var(--hue-time) 18%,transparent);color:var(--hue-time)">${svg('drum')}</span><b>מאמן גרוב</b><small>הקליק הנעלם · שיא 4 תיבות</small></div>
+    </div>
+  </div></main>
+  <aside class="panel"><div class="card"><h2>אתגר יומי</h2><div class="small">זהו את המהלך: 5 אקורדים, ניסיון אחד.</div><span class="btn" style="margin-top:10px">לשחק</span></div>
+  <div class="card"><h2>חברים</h2><div class="list"><div class="li">נועה סיימה יחידה 7<small>לפני שעה</small></div><div class="li">רצף משותף עם דן · 9 ימים<small>${svg('flame').replace('<svg','<svg style="width:14px;height:14px;display:inline;stroke:var(--coral);fill:none"')}</small></div><div class="li">אורי הזמין אותך לדו־קרב<small>חדש</small></div></div></div></aside></div>`;
+}
+if (screen === 'practice') {
+  activeSub = 'technique';
+  html = `<div class="shell no-panel">${sidebar('practice','practice')}${topbar('תרגול › <b>טכניקה</b>')}
+  <main><div class="wrap">
+    <h1>טכניקה</h1><p class="hint">תרגילי כלי וקול — עם MIDI, מיקרופון או בלי ציוד.</p>
+    <div style="display:flex;gap:8px;margin-bottom:18px"><span class="seg"><span class="on">פסנתר</span><span>גיטרה</span><span>קול</span></span></div>
+    <div class="grid">
+      ${[['סולמות וארפג׳ים','24 סולמות · אצבוע','instrument','practice'],['Voicings על מהלכים','Drop 2/3, A/B, שתי ידיים','instrument','music'],['סטרייד','17 רמות','instrument','practice'],['קומפינג בקצבים','צ׳רלסטון, רד גרלנד','time','drum'],['אלתור עם חוקים','סולם לכל תיבה','memory','music'],['היצירות שלי','מאמן יצירה עם תווים','instrument','piece'],['אחידות אצבעות','מפת ידיים','pitch','practice'],['קריאה ממבט','רמות 1–12','pitch','book']].map(([t,s,h,ic])=>`<div class="tile"><span class="ic" style="background:color-mix(in srgb,var(--hue-${h}) 18%,transparent);color:var(--hue-${h})">${svg(ic)}</span><b>${t}</b><small>${s}</small></div>`).join('')}
+    </div>
+    <h2 style="margin-top:26px">התוצאות האחרונות</h2>
+    <div class="card" style="padding:6px 18px"><table class="tbl"><tr><th>תרגיל</th><th>טמפו</th><th>דיוק</th><th>אחידות</th><th>מתי</th></tr>
+    <tr><td>Drop 2 · ii–V–I בכל הסולמות</td><td>♩=96</td><td>94%</td><td>±18ms</td><td>היום</td></tr>
+    <tr><td>סולם סי♭ מז׳ור · שתי ידיים</td><td>♩=112</td><td>98%</td><td>±11ms</td><td>אתמול</td></tr>
+    <tr><td>סטרייד · רמה 4</td><td>♩=80</td><td>87%</td><td>±26ms</td><td>אתמול</td></tr></table></div>
+  </div></main></div>`;
+}
+function exShell(crumb, body, panel) {
+  return `<div class="shell">${sidebar('path')}${topbar(crumb)}<main>${body}</main><aside class="panel">${panel}</aside></div>`;
+}
+function piano(hl=[]) {
+  const whites = 21; let w=''; for(let i=0;i<whites;i++) w+=`<div class="wk ${hl.includes(i)?'hl':''}"></div>`;
+  let b=''; const pat=[1,1,0,1,1,1,0]; for(let i=0;i<whites-1;i++) if(pat[i%7]) b+=`<div class="bk" style="left:calc(${(i+1)*100/whites}% - 1.7%)"></div>`;
+  return `<div class="piano">${w}${b}</div>`;
+}
+const exPanel = (title, done, extra='') => `<div><h2>${title}</h2><div class="small">שאלה ${done} מתוך 12</div><div class="bar" style="margin-top:6px"><i style="width:${done/12*100}%"></i></div></div>
+  <div class="card"><h2>רמה</h2><div class="meter"><div class="small">${title} · רמה 4</div><div class="strip">${Array.from({length:13},(_,i)=>`<i class="${i<6?'d':i===6?'n':''}"></i>`).join('')}</div></div></div>
+  ${extra}
+  <div class="card"><h2>קיצורי מקלדת</h2><div class="kbd-help"><span class="kb">1–7</span>תשובה<span class="kb">Space</span>להשמיע שוב<span class="kb">Enter</span>המשך<span class="kb">C</span>השוואה<span class="kb">H</span>רמז<span class="kb">S</span>דילוג<span class="kb">Esc</span>השהיה</div></div>`;
+if (screen === 'ex-degree') {
+  html = exShell('מסלול › יחידה 6 › <b>דרגות במינור</b>', `<div class="ex">
+    <span class="key">סולם: לה מינור · אחרי הקדנצה</span>
+    <h1>איזו דרגה שמעתם?</h1>
+    <div class="answers" style="grid-template-columns:repeat(7,minmax(0,1fr))">${[['1','בית'],['2','שנייה'],['♭3','מינורית'],['4','רביעית'],['5','חמישית'],['♭6','שישית'],['7','מובילה']].map(([b,s],i)=>`<div class="ans"><span class="kb">${i+1}</span><b>${b}</b><small>${s}</small></div>`).join('')}</div>
+    <div class="small">המקלדת מוסתרת — היא רמז. אפשר לבקש אותה (<span class="kb">H</span>), במחיר של פחות נקודות.</div>
+    <div class="ctrl"><span class="btn ghost">${svg('play')}להשמיע שוב <kbd>Space</kbd></span><span class="btn ghost">רמז: מקלדת <kbd>H</kbd></span><span class="btn ghost">דילוג <kbd>S</kbd></span></div>
+  </div>`, exPanel('דרגות במינור', 5));
+}
+if (screen === 'ex-wrong') {
+  html = exShell('מסלול › יחידה 6 › <b>דרגות במינור</b>', `<div class="ex">
+    <span class="key">סולם: לה מינור · אחרי הקדנצה</span>
+    <h1>איזו דרגה שמעתם?</h1>
+    <div class="answers" style="grid-template-columns:repeat(7,minmax(0,1fr))">${[['1','בית'],['2','שנייה'],['♭3','מינורית'],['4','רביעית'],['5','חמישית'],['♭6','שישית'],['7','מובילה']].map(([b,s],i)=>`<div class="ans ${i===5?'right':i===4?'wrong':''}"><span class="kb">${i+1}</span><b>${b}</b><small>${s}</small></div>`).join('')}</div>
+    <div class="fb"><b>התשובה: <bdi>♭6</bdi></b>שמעתם 5 — <bdi>♭6</bdi> יושבת חצי טון מעליה ונמשכת למטה, אליה.</div>
+    <div class="acts"><span class="btn ghost">⇄ השוואה: שלכם מול הנכון <kbd>C</kbd></span><span class="btn primary">המשך <kbd>Enter</kbd></span></div>
+    ${piano([4,5])}
+  </div>`, exPanel('דרגות במינור', 6));
+}
+if (screen === 'ex-rhythm') {
+  const staff = (pattern) => `<svg viewBox="0 0 260 60" style="width:100%;height:56px"><g stroke="#c3cad8" stroke-width="1">${[14,22,30,38,46].map(y=>`<line x1="6" x2="254" y1="${y}" y2="${y}"/>`).join('')}<line x1="6" x2="6" y1="14" y2="46"/><line x1="254" x2="254" y1="14" y2="46"/></g>${pattern.map((x,i)=>`<g fill="#e9edf5" stroke="#e9edf5"><ellipse cx="${x}" cy="34" rx="6" ry="4.5" transform="rotate(-20 ${x} 34)"/><line x1="${x+5.5}" y1="33" x2="${x+5.5}" y2="8" stroke-width="1.6"/></g>`).join('')}</svg>`;
+  html = exShell('תרגול › זמן › <b>סינקופה</b>', `<div class="ex">
+    <span class="key">${svg('drum').replace('<svg','<svg style="width:16px;height:16px;stroke:var(--hue-time);fill:none;stroke-width:1.8"')} 4/4 · ♩=92 · תופים</span>
+    <h1>איזה מקצב שמעתם?</h1>
+    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;width:100%">${[[30,80,105,160,210],[30,80,130,160,230],[30,55,105,160,210],[30,80,105,185,210]].map((p,i)=>`<div class="ropt ${i===1?'right':''}"><span class="kb">${i+1}</span>${staff(p)}</div>`).join('')}</div>
+    <div class="ctrl"><span class="btn ghost">${svg('play')}להשמיע שוב <kbd>Space</kbd></span><span class="btn ghost">דילוג <kbd>S</kbd></span></div>
+  </div>`, exPanel('סינקופה', 3, `<div class="card"><h2>טביעת הגרוב</h2><div class="small">במקצבים סינקופטיים אתם ממהרים ב־14ms בממוצע.</div></div>`));
+}
+if (screen === 'settings') {
+  html = `<div class="shell no-panel">${sidebar('none')}${topbar('<b>הגדרות</b> › מקלדת MIDI')}
+  <main><div class="wrap" style="display:grid;grid-template-columns:220px minmax(0,1fr);gap:28px">
+    <nav class="set-nav">${['פרופיל','מצב תשובה וקול','שפה ושמות תווים','מקלדת MIDI','מיקרופון ותזמון','סאונד ומיקסר','תצוגה ונגישות','התראות','חשבון'].map(l=>`<a class="${l==='מקלדת MIDI'?'on':''}">${l}</a>`).join('')}</nav>
+    <div><h1>מקלדת MIDI</h1><p class="hint">מחוברת: Arturia KeyLab Essential 61</p>
+      <div class="card" style="padding:4px 18px">
+        <div class="field"><span>להשמיע את הקלידים דרך האפליקציה<small>רוב מקלדות המידי בלי רמקולים</small></span><span class="tog"></span></div>
+        <div class="field"><span>עוצמת הקלידים</span><span class="slider"><i></i></span></div>
+        <div class="field"><span>תגובת מגע</span><span class="seg"><span>קלה</span><span class="on">רגילה</span><span>כבדה</span><span>קבועה</span></span></div>
+        <div class="field"><span>הזזת אוקטבה</span><span class="seg"><span>-2</span><span>-1</span><span class="on">0</span><span>+1</span><span>+2</span></span></div>
+        <div class="field"><span>פדל הפוך</span><span class="tog off"></span></div>
+        <div class="field"><span>בדיקה: נגנו קליד<small>מי (E4) · עוצמה 92 · פדל ⬇</small></span><span class="btn ghost">השתקת צלילים תקועים</span></div>
+      </div></div>
+  </div></main></div>`;
+}
+document.body.innerHTML = html;
+</script>
+</body>
+</html>

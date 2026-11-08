@@ -9,6 +9,8 @@ test('first lesson of the day: streak screen, lit flame, streak sheet with calen
   await page.getByRole('button', { name: 'Or start from lesson 1' }).click();
   // Answer until the lesson ends (any answer; wrong ones are retried, then revealed).
   for (let i = 0; i < 240 && !(await page.locator('.streak-celebrate').isVisible()); i++) {
+    // 0.50.2: a wrong final answer waits for Continue
+    if (await page.locator('[data-continue]').isVisible()) await page.locator('[data-continue]').click().catch(() => {});
     const btn = page.locator('.answers .answer:not([disabled])').nth(i % 2);
     if (await btn.isVisible()) await btn.click().catch(() => {});
     await page.waitForTimeout(500);

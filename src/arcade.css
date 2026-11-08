@@ -1163,3 +1163,10 @@ html[data-motion='reduced'] .xp-fly {
 .sheet-backdrop {
   z-index: 50;
 }
+
+/* Answer marks and the Continue row (0.50.2): short, visual feedback in Buttons mode */
+.answer.is-right { outline: 3px solid var(--good, #2bb673); outline-offset: 2px; box-shadow: 0 0 0 6px color-mix(in srgb, var(--good, #2bb673) 22%, transparent); }
+.answer.is-wrong { outline: 3px solid var(--bad, #e5484d); outline-offset: 2px; opacity: 0.85; }
+.answer.is-right:disabled, .answer.is-wrong:disabled { opacity: 1; }
+.fb-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 6px 0 2px; }
+.fb-actions .btn { min-width: 9em; }

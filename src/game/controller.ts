@@ -7,6 +7,7 @@
 //  - The microphone/recognizer is only active in the `listening` phase.
 //  - Permission / recognition failures, silence and unclear speech never count as wrong answers.
 
+import { noHints, withHint } from '../engine/aids';
 import { shown } from '../speech/speakable';
 import { retryCoach, revealCoach, sessionInsight } from '../engine/coach';
 import { learnVoiceAlias } from '../engine/learnedVoice';
@@ -117,6 +118,10 @@ export interface LessonView {
   error: AccessError | null;
   /** Silence retries exhausted: waiting for a tap (Listen) or a button answer. */
   needsListenTap: boolean;
+  /** Buttons mode after a wrong final answer: waiting for Continue (Compare / Repeat may be tapped first). */
+  awaitNext?: boolean;
+  /** Whether Compare has something to play for the current answer. */
+  canCompare?: boolean;
   simulated: boolean;
 }
 
@@ -157,7 +162,10 @@ export interface ControllerHooks {
 }
 
 type Waiter = { resolve: (v: WaitResult) => void; turn: number };
-type WaitResult = { kind: 'answer'; answer: Answer } | { kind: 'listen' } | { kind: 'retry' } | { kind: 'record' };
+type WaitResult = { kind: 'answer'; answer: Answer } | { kind: 'listen' } | { kind: 'retry' } | { kind: 'record' } | { kind: 'next' };
+
+/** Sounds up to this long are compared / replayed on their own after an answer; longer ones wait for a tap (0.50.2). */
+const SHORT_STIM_S = 3;
 
 const RECOGNIZER_LANG: Record<Lang, string> = { he: 'he-IL', en: 'en-US' };
 
@@ -257,7 +265,7 @@ export class LessonController {
     this.ctl = new AbortController();
     const signal = this.ctl.signal;
     this.s = { ...this.s, turn: this.s.turn + 1 };
-    this.patch({ mic: 'off', interim: '' });
+    this.patch({ mic: 'off', interim: '', awaitNext: false, canCompare: false });
     task(signal).catch((e) => {
       if (!(e instanceof Cancelled)) {
         console.error(e);
@@ -363,6 +371,52 @@ export class LessonController {
     w.resolve({ kind: 'record' });
   }
 
+  /** A hint asked for (the keyboard on degree ↔ name questions): the current question gets its aid, at the aid's cost. */
+  useHint() {
+    if (this.view.stage !== 'question' || noHints(this.s.lesson.id)) return;
+    const i = this.s.index;
+    const q = this.s.lesson.questions[i];
+    if (!q || isResolved(this.s.records[i])) return;
+    const h = withHint(q);
+    if (h === q) return;
+    const questions = this.s.lesson.questions.map((x, j) => (j === i ? h : x));
+    this.setSession({ ...this.s, lesson: { ...this.s.lesson, questions } }, {});
+    this.emit('hint', q.id);
+  }
+
+  /** Buttons mode, after a wrong answer: go on to the next question. */
+  next() {
+    const w = this.waiter;
+    if (!w || !this.view.awaitNext) return;
+    this.waiter = null;
+    this.side?.abort();
+    this.ad.audio.stopAll();
+    w.resolve({ kind: 'next' });
+  }
+
+  /** Buttons mode, after a wrong answer: hear your answer, then the right one (or the teaching sound). */
+  compareNow() {
+    if (!this.view.awaitNext) return;
+    const f = this.view.feedback;
+    const q = currentQuestion(this.s);
+    const stim = (f?.given !== undefined ? compareStimulus(q, f.given) : null) ?? explainStimulus(q);
+    if (stim) this.sidePlay(stim);
+  }
+
+  private side: AbortController | null = null;
+  /** Play without disturbing the waiting question flow (Compare / Repeat while waiting for Continue). */
+  private sidePlay(stim: Stimulus[]) {
+    this.side?.abort();
+    this.ad.audio.stopAll();
+    this.side = new AbortController();
+    const { events, length } = renderStimulus(stim);
+    this.ad.audio.play(events, length, this.side.signal).catch(() => {});
+  }
+
+  private get quiet() {
+    return this.view.mode === 'buttons';
+  }
+
   /** Re-open listening after silence retries were exhausted. */
   listenNow() {
     const w = this.waiter;
@@ -373,12 +427,14 @@ export class LessonController {
 
   repeat() {
     if (this.view.stage !== 'question' || this.s.phase === 'paused') return;
+    if (this.view.awaitNext) return this.sidePlay(currentQuestion(this.s).stimulus);
     if (isResolved(this.s.records[this.s.index])) return;
     this.s = noteReplay(this.s);
     this.restart((sig) => this.runAll(sig, { replayOnly: true }));
   }
 
   skip() {
+    if (this.view.awaitNext) return this.next();
     if (this.view.stage === 'intro') return this.skipIntro();
     if (this.view.stage !== 'question') return;
     this.cancelAll();
@@ -405,7 +461,7 @@ export class LessonController {
   pause() {
     if (this.view.stage === 'complete' || this.view.stage === 'starting') return;
     this.cancelAll();
-    this.setSession({ ...this.s, phase: 'paused' }, { mic: 'off', caption: null, needsListenTap: false });
+    this.setSession({ ...this.s, phase: 'paused' }, { mic: 'off', caption: null, needsListenTap: false, awaitNext: false, canCompare: false });
     this.emit('paused');
   }
 
@@ -568,7 +624,8 @@ export class LessonController {
     const l = this.cfg.outputLang;
     if (!opts.skipPrompt) {
       this.setSession(newTurn(this.s, 'prompting'), { feedback: null, needsListenTap: false, singLive: null });
-      if (!opts.replayOnly) await this.say(roundPrompt(q, l, this.cfg.naming, this.s.index + 1), signal);
+      // Buttons mode reads the question on screen; the spoken round prompt is for hands-free Voice mode (0.50.2).
+      if (!opts.replayOnly && !this.quiet) await this.say(roundPrompt(q, l, this.cfg.naming, this.s.index + 1), signal);
       this.setSession(newTurn(this.s, 'playback'), { caption: null });
       await this.playStim(q.stimulus, signal);
     }
@@ -623,6 +680,12 @@ export class LessonController {
     if (g.kind === 'correct') {
       this.ad.audio.cue('correct');
       this.patch({ feedback: { kind: g.firstTry ? 'correct' : 'correct-retry', answer: q.answer, given: answer, sung, ...chips } });
+      if (this.quiet) {
+        // Buttons mode: the chime, the green button and a short line are the feedback (0.50.2).
+        if (ev.remark) this.patch({ feedback: { ...this.view.feedback!, coach: ev.remark } });
+        await this.ad.clock.sleep(ev.remark ? 1400 : 700, signal);
+        return true;
+      }
       await this.say(sung ? singFeedbackText(sung, l) : correctText(q, l, g.firstTry, this.cfg.naming), signal);
       if (ev.remark) await this.say(ev.remark, signal);
       await this.ad.clock.sleep(500, signal);
@@ -633,19 +696,44 @@ export class LessonController {
       // Personal, about *this* wrong answer — without giving the right one away (spec X.4).
       const coach = sung ? null : retryCoach(q, answer, l, this.s.turn, this.cfg.playerName ?? null);
       this.patch({ feedback: { kind: 'retry', given: answer, sung, ...chips, ...(coach ? { coach } : {}) } });
+      const again = q.kind === 'sing' ? q.stimulus.slice(-1) : q.stimulus;
+      if (this.quiet) {
+        // No speech; a short sound is heard again by itself, a long one waits for Repeat.
+        if (ev.remark && !coach) this.patch({ feedback: { ...this.view.feedback!, coach: ev.remark } });
+        await this.ad.clock.sleep(600, signal);
+        if (renderStimulus(again).length <= SHORT_STIM_S) {
+          this.setSession(newTurn(this.s, 'playback'));
+          await this.playStim(again, signal);
+        }
+        return false;
+      }
       await this.say(sung ? singFeedbackText(sung, l) : (coach ?? retryText(q, l)), signal);
       if (ev.remark) await this.say(ev.remark, signal);
       this.setSession(newTurn(this.s, 'playback'));
-      await this.playStim(q.kind === 'sing' ? q.stimulus.slice(-1) : q.stimulus, signal);
+      await this.playStim(again, signal);
       return false;
     }
     // What makes your answer and the right one different (spec X.4).
     const why = sung ? null : revealCoach(q, answer, l);
     this.patch({ feedback: { kind: 'reveal', answer: q.answer, given: answer, sung, ...chips, ...(why ? { coach: why } : {}) } });
+    const cmp = compareStimulus(q, answer) ?? explainStimulus(q);
+    if (this.quiet) {
+      // Buttons mode (0.50.2): the right answer is marked and the reason shown — nothing spoken. A short comparison
+      // (a note against a note) plays by itself; a long one (two patterns) waits for Compare. Then Continue.
+      this.patch({ awaitNext: true, canCompare: !!cmp });
+      // (played on the side, so Continue works at once)
+      if (cmp && renderStimulus(cmp).length <= SHORT_STIM_S) this.sidePlay(cmp);
+      for (;;) {
+        const w = await this.waitFor(signal);
+        if (w.kind === 'next') break;
+      }
+      this.patch({ awaitNext: false, canCompare: false });
+      return true;
+    }
     await this.say(revealText(q, l, this.cfg.naming), signal);
     if (why) await this.say(why, signal);
     // Hear your answer next to the right one (when it can be played), else the teaching gesture.
-    await this.playStim(compareStimulus(q, answer) ?? explainStimulus(q), signal);
+    if (cmp) await this.playStim(cmp, signal);
     await this.ad.clock.sleep(400, signal);
     return true;
   }

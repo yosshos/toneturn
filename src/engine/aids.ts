@@ -71,6 +71,25 @@ export function aidsOn(mode: AidMode, skill: SkillId, ratings: Ratings): boolean
 /** Lessons that never get aids: placement (it measures) and the daily / tournament items. */
 const NO_AIDS = new Set(['placement', 'weekly-puzzle']);
 
+/** Lessons that measure (no hint on request either). */
+export const noHints = (lessonId: string) => NO_AIDS.has(lessonId);
+
+/**
+ * A keyboard on screen lets the player count from the tonic to the answer (degree ↔ note name questions): it is a
+ * hint, so it is hidden until asked for (0.50.2) — and asking costs what an aid costs (lower difficulty, less XP).
+ */
+export function keyboardIsHint(q: Question): boolean {
+  const a = aidFor(q);
+  return !!a && a.kind !== 'target';
+}
+
+/** The question with its aid switched on (a hint asked for): marked, and its difficulty lowered. */
+export function withHint(q: Question): Question {
+  const aid = aidFor(q);
+  if (!aid || q.aid) return q;
+  return { ...q, aid: aid.kind, difficulty: q.difficulty - AID_DISCOUNT[aid.kind] };
+}
+
 /** Mark questions that will show an aid and lower their difficulty accordingly. */
 export function withAids(lesson: LessonDef, mode: AidMode, ratings: Ratings): LessonDef {
   if (NO_AIDS.has(lesson.id)) return lesson;
