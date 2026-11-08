@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.42.2',
+    date: '2026-11-08',
+    en: ['The path: the units you passed in the level test are back — folded at the top of the path ("Units 1–36"), open it to see or practise any step'],
+    he: ['המסלול: היחידות שעברתם במבחן הרמה חזרו — מקופלות בראש המסלול ("יחידות 1–36"), פותחים כדי לראות או לתרגל כל שלב'],
+  },
+  {
     version: '0.42.1',
     date: '2026-11-08',
     en: ['Metronome and drum grooves: real recorded hi-hats, ride, rim, clap, cowbell and shaker (free VCSL samples)'],

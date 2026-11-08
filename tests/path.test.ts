@@ -87,6 +87,15 @@ describe('learning path (spec AF)', () => {
     const strongD = strong.units.find((u) => u.status === 'current')!.difficulty;
     expect(strong.progress.checked).toBeGreaterThan(10);
     expect(strongD).toBeGreaterThan(freshD);
+    // History (0.42.2): the ✓ steps not on the road sit in units 1…H, easiest first; the road counts on from H+1.
+    expect(fresh.history).toHaveLength(0);
+    const H = strong.history.length;
+    expect(H).toBeGreaterThan(0);
+    expect(strong.history.map((u) => u.no)).toEqual(strong.history.map((_, i) => i + 1));
+    expect(strong.history.every((u) => u.status === 'past' && u.steps.every((x) => x.state === 'tested'))).toBe(true);
+    const onRoad = new Set(strong.units.flatMap((u) => u.steps.map((x) => x.step.id)));
+    expect(strong.history.flatMap((u) => u.steps).some((x) => onRoad.has(x.step.id))).toBe(false);
+    expect(strong.units[0].no).toBe(strong.units[0].n + H);
   });
 
   it('✓ needs every factor: one lucky answer is not enough', () => {

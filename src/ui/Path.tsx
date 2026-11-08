@@ -50,6 +50,10 @@ const TX = {
     myPath: 'My path',
     stars: 'stars',
     pastUnits: '{n} units done',
+    histMany: 'Units 1–{n}',
+    histOne: 'Unit 1',
+    histSub: '✓ {n} steps you already know',
+    histUnit: 'Unit {n}',
   },
   he: {
     title: 'המסלול שלך',
@@ -81,6 +85,10 @@ const TX = {
     myPath: 'המסלול שלי',
     stars: 'כוכבים',
     pastUnits: '{n} יחידות הושלמו',
+    histMany: 'יחידות 1–{n}',
+    histOne: 'יחידה 1',
+    histSub: '✓ {n} שלבים שאתם כבר יודעים',
+    histUnit: 'יחידה {n}',
   },
 };
 const fill = (s: string, v: Record<string, string | number>) => Object.entries(v).reduce((a, [k, x]) => a.replaceAll(`{${k}}`, String(x)), s);
@@ -337,6 +345,36 @@ export function PathView2({
         </div>
       )}
 
+
+      {view.history.length > 0 && (
+        <details className="path-history" data-path-history>
+          <summary>
+            <span className="hist-mark" aria-hidden="true">✓</span>
+            <span className="hist-head">
+              <b dir="auto">{view.history.length === 1 ? tx.histOne : fill(tx.histMany, { n: view.history.length })}</b>
+              <small dir="auto">{fill(tx.histSub, { n: view.history.reduce((a, u) => a + u.steps.length, 0) })}</small>
+            </span>
+            <span className="hist-chev" aria-hidden="true">›</span>
+          </summary>
+          <ol className="hist-units">
+            {view.history.map((u) => (
+              <li key={u.id} className="hist-unit">
+                <small dir="auto">
+                  {fill(tx.histUnit, { n: u.no ?? u.n })} · {tx.section[u.section]}
+                </small>
+                <div className="hist-steps">
+                  {u.steps.map((x) => (
+                    <button key={x.step.id} className="hist-step" style={{ ['--hue' as string]: DOMAIN_HUE[x.step.domain] }} onClick={() => onStep(x, u, 'practice')}>
+                      <NodeIcon kind={iconOf(x.step)} />
+                      <span dir="auto">{nodeTitle(x.step, settings, lang)}</span>
+                    </button>
+                  ))}
+                </div>
+              </li>
+            ))}
+          </ol>
+        </details>
+      )}
 
       <div className="road-wrap">
         {road && (

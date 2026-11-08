@@ -165,6 +165,9 @@ export interface PathInput {
 
 export interface PathView {
   units: PathUnit[];
+  /** History (owner 2026-11-08): steps you already know that are not on the road — ✓ by the level test or played
+   * elsewhere — grouped into units 1…H by difficulty, shown folded above the road. The road's units are numbered from H+1. */
+  history: PathUnit[];
   current: UnitStep | null;
   /** Steps ✓ or done out of all steps in the player's path. */
   progress: { done: number; checked: number; total: number };
@@ -685,9 +688,19 @@ export function buildPath(inp: PathInput): PathView {
       sec.known++;
     }
   }
-  const skipped = Math.floor(checked / L);
-  for (const u of units) u.no = u.n + skipped;
-  return { units, current, progress: { done, checked, total: all.length }, sections, freeze };
+  const onRoad = new Set(units.flatMap((u) => u.steps.map((x) => x.step.id)));
+  const known = all
+    .filter((s) => s.kind !== 'check' && s.kind !== 'review' && !onRoad.has(s.id) && (isDone(s.id) || isChecked(s.id)))
+    .sort((a, b) => a.difficulty - b.difficulty);
+  const history: PathUnit[] = [];
+  for (let i = 0; i < known.length; i += L) {
+    const n = history.length + 1;
+    const u = mkUnit(`hist-${n}`, n, known.slice(i, i + L).map((st) => stateOf(st)), 'past');
+    u.no = n;
+    history.push(u);
+  }
+  for (const u of units) u.no = u.n + history.length;
+  return { units, history, current, progress: { done, checked, total: all.length }, sections, freeze };
 }
 
 /** Checkpoint and review steps (generated per unit). */

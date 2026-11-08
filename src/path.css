@@ -2029,3 +2029,18 @@ button.chip.on {
   background: transparent;
   color: var(--ink-dim, #aaa);
 }
+
+/* 0.42.2 — path history: the units you already know (level test ✓), folded above the road */
+.path-history { margin: 4px 12px 10px; border: 1px solid var(--line, rgba(127,127,127,.25)); border-radius: 12px; background: var(--card, transparent); }
+.path-history > summary { list-style: none; display: flex; align-items: center; gap: 10px; padding: 10px 12px; cursor: pointer; }
+.path-history > summary::-webkit-details-marker { display: none; }
+.path-history .hist-mark { width: 28px; height: 28px; flex: none; display: grid; place-items: center; border-radius: 50%; background: color-mix(in srgb, var(--ok, #3a9d6a) 18%, transparent); color: var(--ok, #3a9d6a); font-weight: 700; }
+.path-history .hist-head { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.path-history .hist-head small { opacity: .7; }
+.path-history .hist-chev { opacity: .6; transition: transform .2s; }
+.path-history[open] .hist-chev { transform: rotate(90deg); }
+.path-history .hist-units { list-style: none; margin: 0; padding: 0 12px 12px; display: grid; gap: 10px; max-height: 50vh; overflow-y: auto; }
+.path-history .hist-unit > small { display: block; opacity: .7; margin-bottom: 4px; }
+.path-history .hist-steps { display: flex; flex-wrap: wrap; gap: 6px; }
+.path-history .hist-step { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px 4px 6px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--hue) 35%, transparent); background: color-mix(in srgb, var(--hue) 8%, transparent); color: inherit; font: inherit; font-size: .85rem; cursor: pointer; }
+.path-history .hist-step svg { width: 16px; height: 16px; color: var(--hue); }
