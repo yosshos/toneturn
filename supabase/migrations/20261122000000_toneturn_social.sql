@@ -1,6 +1,6 @@
 -- ToneTurn / The 7th Sense — social version (docs/SPEC-SOCIAL.md §1–§5, §8).
--- NOT APPLIED YET (written 2026-11-07 without database access; review, then apply after
--- 20261121000000_toneturn_league_placement.sql). Safe to re-run.
+-- APPLIED 2026-11-08 to the app project (with the owner's OK), after
+-- 20261121000000_toneturn_league_placement.sql. Safe to re-run.
 --
 -- Profile: nickname (unique, case-insensitive), country flag, picture (icon + colour or a photo in storage),
 -- privacy jsonb, year of birth (young-player mode). Blocks, reports, duet streaks, nudges, friends' activity and

@@ -2,7 +2,7 @@ import { DuelsSection, LeagueCard } from './Compete';
 import type { Settings } from '../storage/progress';
 import { RatingBadge } from './Rating';
 import { useCallback, useEffect, useState } from 'react';
-import { addFriend, listFriends, myProfile, removeFriend, respondFriend, weeklyBoard, type FriendRow, type MyProfile } from '../cloud/social';
+import { addFriend, avatarUrl, listFriends, myProfile, removeFriend, respondFriend, weeklyBoard, type FriendRow, type MyProfile } from '../cloud/social';
 import type { CloudUser } from '../cloud/cloud';
 import type { Strings } from '../i18n/strings';
 import { AccountCard, type SyncState } from './Account';
@@ -10,7 +10,7 @@ import { CompareSheet, FriendsBoard, type FriendStats } from './Compare';
 import { Avatar } from './Profile';
 import type { Progress } from '../storage/progress';
 
-export function FriendsScreen({ t, user: realUser, sync, onBack, settings, onBestTier, onLeagueSeen, progress, streak = 0, classes }: { classes?: React.ReactNode; t: Strings; user: CloudUser | null; sync: SyncState; onBack: () => void; settings: Settings; onBestTier?: (tier: number) => void; onLeagueSeen?: (tier: number) => void; progress?: Progress; streak?: number }) {
+export function FriendsScreen({ t, user: realUser, sync, onBack, settings, onBestTier, onLeagueSeen, progress, streak = 0, classes, profileErr }: { profileErr?: string | null; classes?: React.ReactNode; t: Strings; user: CloudUser | null; sync: SyncState; onBack: () => void; settings: Settings; onBestTier?: (tier: number) => void; onLeagueSeen?: (tier: number) => void; progress?: Progress; streak?: number }) {
   // Dev-only layout preview with made-up friends (?demoFriends): never in a production build.
   const user = realUser ?? (import.meta.env.DEV && DEMO ? DEMO_USER : null);
   const [duelPlaying, setDuelPlaying] = useState(false);
@@ -37,7 +37,6 @@ export function FriendsScreen({ t, user: realUser, sync, onBack, settings, onBes
       // The nickname (not the Google name) is what friends see (SPEC-SOCIAL §1).
       const want = settings.nickname ?? (p?.display_name || user.name || '');
       setName(want);
-      if (p && want && p.display_name !== want) setMe(await myProfile(want));
       setRows(await listFriends());
       setErr(null);
     } catch (e) {
@@ -126,15 +125,14 @@ export function FriendsScreen({ t, user: realUser, sync, onBack, settings, onBes
             </button>
           </section>
 
+          {profileErr && <p className="field-hint warn">{profileErr}</p>}
           {!duelPlaying && incoming.length > 0 && (
             <section className="set-card fr-requests">
               <h2>{t.requests}</h2>
               <ul className="fr-req-list">
                 {incoming.map((r) => (
                   <li key={r.user_id}>
-                    <span className="fr-av" aria-hidden="true">
-                      {initial(r.name)}
-                    </span>
+                    <FriendAvatar r={r} size={30} />
                     <b>{r.name}</b>
                     <button className="btn small primary" onClick={() => void respondFriend(r.user_id, true).then(load)}>
                       {t.accept}
@@ -178,9 +176,7 @@ export function FriendsScreen({ t, user: realUser, sync, onBack, settings, onBes
                         {mine ? (
                           <Avatar s={settings} size={34} />
                         ) : (
-                          <span className="fr-av" aria-hidden="true">
-                            {initial(r.name)}
-                          </span>
+                          <FriendAvatar r={r} />
                         )}
                         <span className="fr-main">
                           <span className="fr-top">
@@ -255,9 +251,7 @@ export function FriendsScreen({ t, user: realUser, sync, onBack, settings, onBes
                   <ul className="fr-req-list fr-pending">
                     {outgoing.map((r) => (
                       <li key={r.user_id}>
-                        <span className="fr-av" aria-hidden="true">
-                          {initial(r.name)}
-                        </span>
+                        <FriendAvatar r={r} size={30} />
                         <b>{r.name}</b>
                         <small>{t.pending}</small>
                         <button className="btn small ghost" onClick={() => void removeFriend(r.user_id).then(load)}>
@@ -284,8 +278,8 @@ const demo = (user_id: string, name: string, relation: FriendRow['relation'], we
 const DEMO_USER = { id: 'demo', name: 'Demo' } as unknown as CloudUser;
 const demoRows = (): FriendRow[] => [
   demo('me', 'DorianShredder11', 'me', 420, 3, 12, 1414),
-  demo('a', 'CodaFox42', 'friend', 610, 12, 40, 1288),
-  demo('b', 'Mixolydia', 'friend', 180, 1, 7, 1102),
+  { ...demo('a', 'CodaFox42', 'friend', 610, 12, 40, 1288), avatar_icon: 'guitar', avatar_color: '#c9733a', country: 'IL' },
+  { ...demo('b', 'Mixolydia', 'friend', 180, 1, 7, 1102), avatar_icon: 'mic', country: 'FR' },
   demo('c', 'BlueNoteBenjamin_TheLongName', 'friend', 95, 0, 3, 960),
   demo('d', 'Allegra', 'incoming', 0, 0, 0, 900),
   demo('e', 'Ostinato7', 'outgoing', 0, 0, 0, 900),
@@ -299,4 +293,23 @@ function LineIcon({ d }: { d: string }) {
       <path d={d} />
     </svg>
   );
+}
+
+/** A friend's picture: their photo when they share it with me, else their instrument icon + colour; their flag. */
+function FriendAvatar({ r, size = 34 }: { r: FriendRow; size?: number }) {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    let live = true;
+    if (r.has_photo) void avatarUrl(r.user_id).then((u) => live && setUrl(u));
+    return () => {
+      live = false;
+    };
+  }, [r.user_id, r.has_photo]);
+  if (!r.avatar_icon && !r.avatar_color && !url && !r.country)
+    return (
+      <span className="fr-av" aria-hidden="true">
+        {initial(r.name)}
+      </span>
+    );
+  return <Avatar s={{ avatarIcon: r.avatar_icon ?? undefined, avatarColor: r.avatar_color ?? undefined, avatarPhoto: url, country: r.country ?? null }} size={size} />;
 }

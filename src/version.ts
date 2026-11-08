@@ -18,6 +18,22 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.46.0',
+    date: '2026-11-08',
+    en: [
+      'Your profile is saved on the server: friends see your nickname, flag and picture',
+      'Community: friends appear with their picture and flag',
+      "Progress: your ear's degree (Third … Thirteenth) is now at the top",
+      "Today's workout shows a short step name",
+    ],
+    he: [
+      'הפרופיל שלכם נשמר בשרת: חברים רואים את הכינוי, הדגל והתמונה שלכם',
+      'קהילה: חברים מופיעים עם התמונה והדגל שלהם',
+      'התקדמות: הדרגה של האוזן שלכם (טרצה … שלוש־עשרה) עכשיו למעלה',
+      'האימון היומי מציג שם קצר לשלב',
+    ],
+  },
+  {
     version: '0.45.0',
     date: '2026-11-08',
     en: [

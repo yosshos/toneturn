@@ -84,10 +84,11 @@ import { PitchMemory } from './PitchMemory';
 import { PeakHunter } from './PeakHunter';
 import { Rush } from './Rush';
 import { loadSlot, saveSlot } from '../storage/resume';
-import { PathView2, stepTitle, usePathView } from './Path';
+import { nodeTitle, PathView2, stepTitle, usePathView } from './Path';
 import { checkpointSession, recordStep, stepSession, stepStars, testOutPassed, testOutSession, type PathStep, type PathUnit, type UnitStep } from '../engine/path';
 import { FriendsScreen } from './Friends';
-import { reportGameBest, reportRating, reportStreakDays } from '../cloud/social';
+import { reportGameBest, reportRating, reportStreakDays, setProfile, uploadAvatar } from '../cloud/social';
+import { isYoung } from '../engine/privacy';
 import { overallRating } from '../engine/rating';
 import { APP_VERSION, unseenChanges } from '../version';
 import { params, piano, setMidiEnabled, SIMULATED, store, tts } from './services';
@@ -318,6 +319,50 @@ export function App() {
   );
 
   useMotion(route);
+  // Profile → server (SPEC-SOCIAL §1–§2, owner 2026-11-08: "no reason for it to stay on the device"): nickname, flag,
+  // picture (icon + colour, or the cropped photo in storage), privacy and year of birth, a moment after any change.
+  const [profileErr, setProfileErr] = useState<string | null>(null);
+  const sentProfile = useRef('');
+  const sentPhoto = useRef<string | null | undefined>(undefined);
+  useEffect(() => {
+    if (!user || !settings) return;
+    const st = settings;
+    const key = JSON.stringify([st.nickname, st.country, st.avatarIcon, st.avatarColor, !!st.avatarPhoto, st.privacy, st.birthYear]);
+    const photoChanged = sentPhoto.current !== (st.avatarPhoto ?? null);
+    if (key === sentProfile.current && !photoChanged) return;
+    const id = setTimeout(() => {
+      void (async () => {
+        try {
+          const young = isYoung(st.birthYear);
+          if (photoChanged && !young) await uploadAvatar(user.id, st.avatarPhoto ?? null);
+          await setProfile({
+            nickname: st.nickname ?? null,
+            country: st.country ?? '',
+            icon: st.avatarIcon ?? null,
+            color: st.avatarColor ?? null,
+            photo: !!st.avatarPhoto && !young,
+            privacy: st.privacy ?? null,
+            birthYear: st.birthYear ?? null,
+          });
+          sentProfile.current = key;
+          sentPhoto.current = st.avatarPhoto ?? null;
+          setProfileErr(null);
+        } catch (e) {
+          const m = String((e as { message?: string })?.message ?? e);
+          const he = st.uiLang === 'he';
+          setProfileErr(
+            /taken/.test(m)
+              ? he ? 'הכינוי הזה כבר תפוס — בחרו אחר בהגדרות.' : 'That nickname is taken — pick another in Settings.'
+              : /30 days/.test(m)
+                ? he ? 'אפשר לשנות כינוי פעם ב־30 יום.' : 'The nickname can change once every 30 days.'
+                : he ? 'הפרופיל לא נשמר בשרת — ננסה שוב.' : 'Your profile could not be saved — we will try again.',
+          );
+        }
+      })();
+    }, 1200);
+    return () => clearTimeout(id);
+  }, [user, settings]);
+
   // Where a tool (tuner, metronome, drone) was opened from — Practice tab or the menu — so Back returns there.
   const toolFrom = useRef<Route>('home');
   const go = (r: Route) => {
@@ -860,7 +905,7 @@ export function App() {
               blocks={wrun && wrun.day === today && !wrun.finished ? wrun.blocks : todayBlocks}
               run={wrun && wrun.day === today ? wrun : null}
               view={pathView}
-              nextLine={pathView.current ? stepTitle(pathView.current.step, s, s.uiLang) : null}
+              nextLine={pathView.current ? nodeTitle(pathView.current.step, s, s.uiLang) : null}
               edited={s.workoutToday?.day === today}
               onStart={() => (s.mode === 'voice' && !s.voiceConsent ? setConsentThen(() => () => startWorkout()) : startWorkout())}
               onEdit={() => go('workout')}
@@ -1030,7 +1075,7 @@ export function App() {
         <SettingsScreen t={t} settings={s} onChange={updateSettings} onBack={() => go('home')} onIntake={() => go('intake')} account={<AccountCard t={t} user={user} sync={sync} />} />
       )}
       {route === 'diagnostics' && <Diagnostics t={t} settings={s} onBack={() => go('home')} />}
-      {route === 'friends' && <FriendsScreen settings={s} t={t} user={user} sync={sync} progress={progress} streak={gems.streak.count} onBack={() => go('home')} onBestTier={(b) => b > (s.bestLeague ?? 0) && updateSettings({ bestLeague: b })} onLeagueSeen={(leagueSeen) => updateSettings({ leagueSeen })} classes={<ClassesScreen t={t} settings={s} user={user} onBack={() => go('friends')} onOpenLesson={(id) => openAssignment(id)} embedded />} />}
+      {route === 'friends' && <FriendsScreen profileErr={profileErr} settings={s} t={t} user={user} sync={sync} progress={progress} streak={gems.streak.count} onBack={() => go('home')} onBestTier={(b) => b > (s.bestLeague ?? 0) && updateSettings({ bestLeague: b })} onLeagueSeen={(leagueSeen) => updateSettings({ leagueSeen })} classes={<ClassesScreen t={t} settings={s} user={user} onBack={() => go('friends')} onOpenLesson={(id) => openAssignment(id)} embedded />} />}
       {route === 'skills' && (
         <ProgressTabs
           t={t}
@@ -1041,9 +1086,9 @@ export function App() {
           onPin={(trophies) => updateSettings({ trophies })}
           overview={
             <>
+              <EarChordCard t={t} ratings={ratingsOf(progress)} bestLeague={s.bestLeague} />
               <DomainTiles t={t} progress={progress} onPractice={practiceSkill} lang={s.uiLang} onTechnique={() => go('drills')} onLearn={{ has: (k) => !!miniForSkill(k), open: (k) => openRefresher(miniForSkill(k)!, () => undefined) }} />
               <ChallengeCard input={badgeInputOf(progress, new Date(), s.uiLang === 'he' ? [5, 6] : undefined)} lang={s.uiLang} />
-              <EarChordCard t={t} ratings={ratingsOf(progress)} bestLeague={s.bestLeague} />
             </>
           }
           map={<SkillMap t={t} lang={s.uiLang} progress={progress} bestLeague={s.bestLeague} onBack={() => go('home')} onPractice={practiceSkill} onPlacement={openPlacement} />}

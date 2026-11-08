@@ -17,6 +17,11 @@ export interface FriendRow {
   /** Overall rating (spec L); absent until the server has the rating migration. */
   rating?: number | null;
   rating_provisional?: boolean | null;
+  /** Social profile (20261123 migration): flag, picture icon + colour, and whether their photo may be shown to me. */
+  country?: string | null;
+  avatar_icon?: string | null;
+  avatar_color?: string | null;
+  has_photo?: boolean | null;
 }
 
 export interface MyProfile {
@@ -151,4 +156,68 @@ export async function reportStreakDays(days: { day: string; kind: 'freeze' | 're
   const sb = supabase();
   if (!sb || !days.length) return;
   await sb.rpc('toneturn_report_streak_days', { p_days: days });
+}
+
+// ---------------------------------------------------------------- social profile (SPEC-SOCIAL §1–§2)
+
+export interface ProfilePatch {
+  nickname?: string | null;
+  /** ISO code, or '' to clear. */
+  country?: string | null;
+  icon?: string | null;
+  color?: string | null;
+  photo?: boolean | null;
+  privacy?: unknown;
+  birthYear?: number | null;
+}
+
+/** Save my profile on the server. Throws 'nickname: taken' / 'nickname: once per 30 days' for the nickname. */
+export async function setProfile(p: ProfilePatch): Promise<void> {
+  const sb = supabase();
+  if (!sb) return;
+  const { error } = await sb.rpc('toneturn_set_profile', {
+    p_nickname: p.nickname ?? null,
+    p_country: p.country === undefined ? null : (p.country ?? ''),
+    p_icon: p.icon ?? null,
+    p_color: p.color ?? null,
+    p_photo: p.photo ?? null,
+    p_privacy: p.privacy ?? null,
+    p_birth_year: p.birthYear ?? null,
+  });
+  if (error) throw error;
+}
+
+/** Is a nickname free (case-insensitive)? null = can't tell (offline / signed out). */
+export async function nicknameFree(n: string): Promise<boolean | null> {
+  const sb = supabase();
+  if (!sb) return null;
+  const { data, error } = await sb.rpc('toneturn_nickname_free', { p_nickname: n });
+  return error ? null : !!data;
+}
+
+/** Upload my cropped photo (a WebP data URL from the crop) as avatars/<uid>.webp; null removes it. */
+export async function uploadAvatar(uid: string, dataUrl: string | null): Promise<void> {
+  const sb = supabase();
+  if (!sb) return;
+  const path = `${uid}.webp`;
+  if (!dataUrl) {
+    await sb.storage.from('avatars').remove([path]);
+    return;
+  }
+  const blob = await (await fetch(dataUrl)).blob();
+  const { error } = await sb.storage.from('avatars').upload(path, blob, { upsert: true, contentType: 'image/webp', cacheControl: '3600' });
+  if (error) throw error;
+}
+
+const photoUrls = new Map<string, { url: string; until: number }>();
+/** A short-lived link to a player's photo (the server checks friendship, blocks and their photo setting). */
+export async function avatarUrl(uid: string): Promise<string | null> {
+  const hit = photoUrls.get(uid);
+  if (hit && hit.until > Date.now()) return hit.url;
+  const sb = supabase();
+  if (!sb) return null;
+  const { data, error } = await sb.storage.from('avatars').createSignedUrl(`${uid}.webp`, 3600);
+  if (error || !data?.signedUrl) return null;
+  photoUrls.set(uid, { url: data.signedUrl, until: Date.now() + 50 * 60 * 1000 });
+  return data.signedUrl;
 }
