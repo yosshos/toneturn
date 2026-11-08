@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.46.1',
+    date: '2026-11-08',
+    en: ['A new icon: the ear now holds a 7 — The 7th Sense'],
+    he: ['אייקון חדש: בתוך האוזן יש עכשיו 7 — החוש ה־7'],
+  },
+  {
     version: '0.46.0',
     date: '2026-11-08',
     en: [

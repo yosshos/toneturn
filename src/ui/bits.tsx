@@ -62,8 +62,8 @@ export function Logo({ size = 44, bare = false }: { size?: number; /** No tile b
       <g transform="translate(256 256) scale(0.9) translate(-306 -256)">
         <path className="logo-wave w1" d="M 240 286 Q 220 222 200 286 Q 182 338 164 286 Q 149 250 134 286 Q 122 308 110 286" fill="none" stroke={u('wave')} strokeWidth="26" strokeLinecap="round" strokeLinejoin="round" />
         <path d="M 226 206 C 226 132 274 96 318 96 C 380 96 420 146 420 208 C 420 266 388 290 368 320 C 348 350 358 404 304 418 C 266 428 242 404 236 378" fill="none" stroke={u('ear')} strokeWidth="58" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M 290 382 C 292 404 326 402 322 372 L 312 170 C 310 134 354 136 346 172 C 340 206 266 236 266 290 C 266 332 308 346 336 330 C 362 314 354 266 320 266 C 294 266 288 298 308 306" fill="none" stroke="#FFFFFF" strokeWidth="20" strokeLinecap="round" strokeLinejoin="round" />
-        <circle cx="290" cy="384" r="16" fill="#FF6FB1" />
+        <path d="M 272 186 L 356 186 Q 370 186 364 200 L 312 330" fill="none" stroke="#FFFFFF" strokeWidth="24" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="306" cy="366" r="16" fill="#FF6FB1" />
       </g>
       <circle className="logo-spark" cx="428" cy="194" r="24" fill="#FF6FB1" />
       <circle cx="428" cy="266" r="24" fill="#FF6FB1" />
