@@ -18,6 +18,20 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.51.0',
+    date: '2026-11-08',
+    en: [
+      'On a computer: a side menu instead of the phone tab bar — Today, Path, Practice (songs, technique, lessons, pieces, charts), Progress, Community, Tools, Find my level and Settings, with sections that open in place; on a tablet it is a rail of icons, and it collapses on request',
+      'Exercises on a computer: answer with the number keys, Space repeats, Enter continues, C compares, H hints, S skips, Esc pauses',
+      'A cleaner look: the leftover emoji and the big game-style buttons outside exercises are gone, the Find my level button no longer shows as a brown box, and path nodes are flat',
+    ],
+    he: [
+      'במחשב: תפריט צד במקום סרגל הלשוניות של הטלפון — היום, מסלול, תרגול (שירים, טכניקה, שיעורים, יצירות, מהלכים), התקדמות, קהילה, כלים, בדיקת רמה והגדרות, עם חלקים שנפתחים במקום; בטאבלט הוא פס של אייקונים, ואפשר לכווץ אותו',
+      'תרגילים במחשב: עונים במקשי המספרים, רווח משמיע שוב, Enter ממשיך, C משווה, H רמז, S מדלג, Esc משהה',
+      'מראה נקי יותר: האימוג׳ים שנשארו והכפתורים הגדולים בסגנון משחק מחוץ לתרגילים הוסרו, כפתור בדיקת הרמה כבר לא מופיע כקופסה חומה, וצמתי המסלול שטוחים',
+    ],
+  },
+  {
     version: '0.50.2',
     date: '2026-11-08',
     en: [

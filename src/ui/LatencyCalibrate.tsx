@@ -113,7 +113,7 @@ export function LatencyCalibrate({ lang, values, onSave, sources = ['tap', 'midi
   const cur = values[KEY[src]];
   return (
     <section className="latency-cal card set-card" data-latency={src}>
-      <h2>⏱ {tx.title}</h2>
+      <h2>{tx.title}</h2>
       <p className="field-hint">{tx.intro}</p>
       <div className="chips" role="radiogroup">
         {sources.map((x) => (

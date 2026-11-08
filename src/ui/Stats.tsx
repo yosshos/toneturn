@@ -549,7 +549,7 @@ export function RecordsCard({ progress, lang }: { progress: Progress; lang: Lang
   ];
   return (
     <section className="set-card ps-records">
-      <h2>🏆 {SX.records[lang]}</h2>
+      <h2>{SX.records[lang]}</h2>
       <dl>
         {rows.map(([k, v, when]) => (
           <div key={k} className="ps-rec">
@@ -773,7 +773,7 @@ export function AwardCard({ a, lang, pinned, onTogglePin, onShare }: { a: Achiev
         <span className="aw-actions">
           {onTogglePin && (
             <button className="chip" aria-pressed={!!pinned} onClick={onTogglePin}>
-              {pinned ? `📌 ${SX.unpin[lang]}` : SX.pin[lang]}
+              {pinned ? SX.unpin[lang] : SX.pin[lang]}
             </button>
           )}
           {onShare && (
@@ -996,7 +996,10 @@ export function MonthReviewIcon({ t, lang, progress, seenMonth, onSeen }: { t: S
             onSeen(due);
           }}
         >
-          <span aria-hidden="true">📅</span>
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <rect x="4" y="5.5" width="16" height="14" rx="2" />
+            <path d="M4 10h16M8.5 3.5v4M15.5 3.5v4" />
+          </svg>
         </button>
       )}
       {open && <MonthReviewSheet t={t} lang={lang} progress={progress} month={open} onClose={() => setOpen(null)} />}
@@ -1011,7 +1014,7 @@ export function MonthReviewSheet({ t, lang, progress, month, onClose }: { t: Str
     <div className="sheet-backdrop" onClick={onClose}>
       <div className="sheet ps-month" role="dialog" aria-modal="true" aria-labelledby="ps-month-title" onClick={(e) => e.stopPropagation()}>
         <h2 id="ps-month-title">
-          📅 {SX.month[lang]} · {monthLabel(month, lang)}
+          {SX.month[lang]} · {monthLabel(month, lang)}
         </h2>
         {!m ? (
           <p className="field-hint">{SX.noData[lang]}</p>

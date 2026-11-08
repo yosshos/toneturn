@@ -118,7 +118,6 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
         const ins = sessionInsight(s.lesson.questions, misses, answered.filter((r) => r.attempts[0]?.correct).length, answered.length, lang, playerName ?? null);
         return (
           <p className={`coach-insight ${ins.kind}`} data-insight={ins.kind}>
-            {ins.kind === 'pair' ? '🎯 ' : ins.kind === 'flawless' ? '' : '💪 '}
             {ins.kind === 'flawless' && fl.score < 100 ? t.flawlessNotFast : ins.text}
           </p>
         );
@@ -155,7 +154,7 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
       <p className="pace-line" data-pace-goal={goalMs ?? ''}>
         {goalMs !== null && paced && (
           <span className="pace-goal">
-            🎯 {t.paceGoal} <b dir="ltr">{(goalMs / 1000).toFixed(1)}s</b> · ⚡ {fl.onPace}/{fl.total}
+            {t.paceGoal} <b dir="ltr">{(goalMs / 1000).toFixed(1)}s</b> · ⚡ {fl.onPace}/{fl.total}
           </span>
         )}
         {lacks.length > 0 && (

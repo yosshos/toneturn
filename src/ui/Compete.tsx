@@ -201,7 +201,7 @@ export function LeagueMove({ t, from, to, onClose }: { t: Strings; from: number;
         <LeagueBadge tier={to} size={150} arrive={up} falling={up ? [] : LADDER.slice(to, from).map((n) => n.tier)} title={name} />
         <h2>{title}</h2>
         <p className="mini-takeaway">{up ? fill(t.leagueUpHint, { note: tierOf(to).symbol }) : t.leagueDownHint}</p>
-        <button className="btn mega" data-league-move-ok="1" onClick={onClose}>
+        <button className="btn primary" data-league-move-ok="1" onClick={onClose}>
           {t.leagueMoveGo}
         </button>
       </div>

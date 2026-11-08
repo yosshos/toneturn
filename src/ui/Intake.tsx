@@ -331,9 +331,6 @@ export function IntakeScreen({ t, settings, onDone, onSkip }: { t: Strings; sett
     <div className="intake-opts" role="radiogroup">
       {list.map((o) => (
         <button key={String(o.v)} role="radio" aria-checked={a[k] === o.v} className={`intake-opt ${a[k] === o.v ? 'on' : ''}`} data-v={String(o.v)} onClick={() => pick(k, o.v)}>
-          <span className="io-emoji" aria-hidden="true">
-            {o.emoji}
-          </span>
           <span>{o.label}</span>
         </button>
       ))}
@@ -379,9 +376,6 @@ export function IntakeScreen({ t, settings, onDone, onSkip }: { t: Strings; sett
       <section className="intake-card" key={step}>
         {step === 'hello' && (
           <>
-            <p className="intake-big" aria-hidden="true">
-              👋🎶
-            </p>
             <h1>{q.helloTitle}</h1>
             <p className="intake-text">{q.helloText}</p>
             <button
@@ -469,9 +463,6 @@ export function IntakeScreen({ t, settings, onDone, onSkip }: { t: Strings; sett
                     go(1);
                   }}
                 >
-                  <span className="io-emoji" aria-hidden="true">
-                    {GOAL_NAMES[g].icon}
-                  </span>
                   <span>{GOAL_NAMES[g][lang]}</span>
                 </button>
               ))}
@@ -523,7 +514,7 @@ export function IntakeScreen({ t, settings, onDone, onSkip }: { t: Strings; sett
           <>
             <h1>{q.namingQ}</h1>
             <div className="intake-opts" role="radiogroup">
-              {NAMING.map(([v, e, l]) => (
+              {NAMING.map(([v, , l]) => (
                 <button
                   key={v}
                   role="radio"
@@ -535,9 +526,6 @@ export function IntakeScreen({ t, settings, onDone, onSkip }: { t: Strings; sett
                     window.setTimeout(() => go(1), 180);
                   }}
                 >
-                  <span className="io-emoji" aria-hidden="true">
-                    {e}
-                  </span>
                   <span>{l}</span>
                 </button>
               ))}
@@ -601,9 +589,6 @@ export function IntakeScreen({ t, settings, onDone, onSkip }: { t: Strings; sett
         {step === 'range' && <RangeStep t={t} settings={settings} range={range} onRange={setRange} onNext={() => go(1)} />}
         {step === 'plan' && (
           <>
-            <p className="intake-big" aria-hidden="true">
-              {track === 'explorer' ? '🌱' : track === 'hobby' ? '🎸' : track === 'student' ? '🎼' : '🎓'}
-            </p>
             <h1>{q.planTitle[track]}</h1>
             <p className="intake-text">{q.planText[track]}</p>
             <div className="plan-facts">
@@ -624,7 +609,7 @@ export function IntakeScreen({ t, settings, onDone, onSkip }: { t: Strings; sett
             </div>
             {track === 'explorer' || track === 'hobby' ? (
               <>
-                <button className="btn mega" onClick={() => finish('basics')} data-plan="basics">
+                <button className="btn primary" onClick={() => finish('basics')} data-plan="basics">
                   {q.startBasics}
                 </button>
                 <button className="btn ghost" onClick={() => finish('placement')} data-plan="placement">
@@ -633,7 +618,7 @@ export function IntakeScreen({ t, settings, onDone, onSkip }: { t: Strings; sett
               </>
             ) : (
               <>
-                <button className="btn mega" onClick={() => finish('placement')} data-plan="placement">
+                <button className="btn primary" onClick={() => finish('placement')} data-plan="placement">
                   {q.findLevel}
                 </button>
                 <button className="btn ghost" onClick={() => finish('basics')} data-plan="basics">
@@ -709,9 +694,6 @@ function RangeStep({ t, settings, range, onRange, onNext }: { t: Strings; settin
   const live = on && lo !== null && hi !== null;
   return (
     <>
-      <p className="intake-big" aria-hidden="true">
-        🎢
-      </p>
       <h1>{q.rangeTitle}</h1>
       <p className="intake-text">{q.rangeText}</p>
       <p className="safety" role="note">

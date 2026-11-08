@@ -1,5 +1,6 @@
 import { miniForSkill } from '../content/refresher';
 import { InsightsScreen } from './Insights';
+import { Sidebar, type NavId } from './Sidebar';
 import { GrooveTrainerScreen } from './GrooveTrainer';
 import { earIndex } from '../engine/rating';
 import { MixerScreen } from './Mixer';
@@ -946,12 +947,21 @@ export function App() {
   const canNext = nextId && states[nextId] !== 'locked';
 
   const isTab = (TAB_ROUTES as string[]).includes(route);
+  // The side menu (SPEC-DESKTOP): shown from 700 px wide by CSS; not during the first questionnaire or the studio.
+  const withSide = route !== 'intake' && route !== 'studio' && !mini;
+  const sideNav = (id: NavId) => {
+    if (id === 'placement') return openPlacement();
+    if (id === 'mixer') return openMixer();
+    if (id === 'log') return setLogOpen(true);
+    go(id as Route);
+  };
 
   return (
     <MiniGateContext.Provider value={gate}>
     <RefresherContext.Provider value={openRefresher}>
-    <div className={`app ${isTab ? 'has-tabs' : ''}`}>
+    <div className={`app ${isTab ? 'has-tabs' : ''} ${withSide ? 'with-side' : ''}`}>
       {SIMULATED && <div className="sim-banner">{t.simulated}</div>}
+      {withSide && <Sidebar route={route} lang={s.uiLang} onNav={sideNav} me={{ name: playerFirstName, streak: gems.streak.count, onOpen: () => go('settings') }} />}
       {mini && (
         <MiniLessonPlayer
           t={t}

@@ -437,7 +437,7 @@ export function WorkoutEditor({
               ))}
               {addOptions.games.map((g) => (
                 <button key={g} className="chip" onClick={() => (change(add(bs, { kind: 'game', game: g }, 3)), setAdding(false))}>
-                  🎮 {blockLabel(t, { kind: 'game', game: g }, lang)}
+                  {blockLabel(t, { kind: 'game', game: g }, lang)}
                 </button>
               ))}
             </div>
@@ -479,9 +479,9 @@ export function WorkoutRunScreen({ t, lang, run, onGo, onBlockDone, onSkip, onEn
     const mins = Math.round(Object.values(run.used).reduce((a, x) => a + x, 0) / 60000);
     return (
       <main className="wk-run wk-finished">
-        <h1>🎉 {tx.finished}</h1>
+        <h1>{tx.finished}</h1>
         <p dir="ltr" className="wk-sum">
-          {mins}′ · {items[0]} ✓{items[1]} · {run.steps.length} 🧭
+          {mins}′ · {items[0]} ✓{items[1]} · {run.steps.length} {lang === 'he' ? 'שלבים' : 'steps'}
         </p>
         <h2>{tx.howWas}</h2>
         <div className="intake-chips">
@@ -491,7 +491,7 @@ export function WorkoutRunScreen({ t, lang, run, onGo, onBlockDone, onSkip, onEn
             </button>
           ))}
         </div>
-        <button className="btn mega" onClick={onEnd}>
+        <button className="btn primary" onClick={onEnd}>
           {tx.home}
         </button>
       </main>
@@ -518,12 +518,12 @@ export function WorkoutRunScreen({ t, lang, run, onGo, onBlockDone, onSkip, onEn
           </label>
           <input type="range" min={40} max={200} value={bpm} onChange={(e) => setBpm(Number(e.target.value))} aria-label={tx.metronome} />
           <textarea className="wk-note" placeholder={tx.note} value={note} onChange={(e) => setNote(e.target.value)} rows={3} />
-          <button className="btn mega" onClick={() => onBlockDone(now - t0)}>
+          <button className="btn primary" onClick={() => onBlockDone(now - t0)}>
             ✓ {tx.blockDone}
           </button>
         </>
       ) : (
-        <button className="btn mega" onClick={onGo}>
+        <button className="btn primary" onClick={onGo}>
           ▶ {tx.go}
         </button>
       )}

@@ -15,7 +15,9 @@ export default defineConfig({
     launchOptions: { args: ['--use-fake-device-for-media-stream', '--autoplay-policy=no-user-gesture-required'] },
   },
   projects: [
-    { name: 'desktop-chromium', use: { ...devices['Desktop Chrome'], channel: 'chrome' } }, // installed Google Chrome (headless): real media stack; the downloaded Chromium is blocked by OS policy here
+    // 690 px wide (0.51): the suite walks the phone layout (tab bar, menu sheet); e2e/desktop.spec.ts sets its own
+    // 1440 / 900 px viewports for the side menu and the tablet rail (SPEC-DESKTOP).
+    { name: 'desktop-chromium', use: { ...devices['Desktop Chrome'], viewport: { width: 690, height: 720 }, channel: 'chrome' } }, // installed Google Chrome (headless): real media stack; the downloaded Chromium is blocked by OS policy here
     { name: 'mobile-chromium', use: { ...devices['Pixel 7'], channel: 'chrome' }, grep: /@mobile/ },
   ],
   webServer: [

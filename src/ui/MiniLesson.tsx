@@ -143,7 +143,7 @@ export function MiniLessonPlayer({ t, settings, lesson, name, onFinish, startDee
           </div>
           <h2>{deep ? dx.kicker + ' ✓' : t.miniLearnedTitle}</h2>
           <p className="mini-learned-name">
-            📚 {lesson.title[lang]}
+            {lesson.title[lang]}
           </p>
           <p className="mini-takeaway">{lesson.takeaway[lang]}</p>
           <button className="btn mega" data-mini-go="1" onClick={() => (clearSlot(slotKey), onFinish(true))}>
@@ -280,7 +280,7 @@ export function GlossaryList({ lang, title, hint }: { lang: 'en' | 'he'; title: 
   const [open, setOpen] = useState<string | null>(null);
   return (
     <section className="set-card glossary" data-glossary="1">
-      <h2>📖 {title}</h2>
+      <h2>{title}</h2>
       <p className="field-hint">{hint}</p>
       <div className="term-chips wrap">
         {GLOSSARY.map((w) => (

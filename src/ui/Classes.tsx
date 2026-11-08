@@ -155,7 +155,7 @@ function TeacherCard({ t, c, lang, busy, act, title }: { t: Strings; c: Teaching
                 <th>{t.overallRating}</th>
                 <th>{t.lessonsDoneShort}</th>
                 <th>XP 7d</th>
-                <th>🔥</th>
+                <th>{lang === 'he' ? 'רצף' : 'Streak'}</th>
                 {shown.map((k) => (
                   <th key={k} title={t.skillNames[k]}>
                     {t.skillNames[k]}
@@ -184,7 +184,7 @@ function TeacherCard({ t, c, lang, busy, act, title }: { t: Strings; c: Teaching
       )}
       {vocal && vocal.some((s) => s.takes > 0) && (
         <>
-          <h3>🎤 {t.vocalTitle}</h3>
+          <h3>{t.vocalTitle}</h3>
           <div className="roster-wrap">
             <table className="roster">
               <thead>
@@ -265,7 +265,7 @@ export function AssignedCard({ t, items, lang, onOpen }: { t: Strings; items: { 
   if (!items.length) return null;
   return (
     <section className="assigned-card" aria-label={t.yourAssignments}>
-      <h2>🏫 {t.yourAssignments}</h2>
+      <h2>{t.yourAssignments}</h2>
       <ul className="assign-list">
         {items.slice(0, 4).map((a) => (
           <li key={a.id}>

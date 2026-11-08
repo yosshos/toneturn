@@ -52,7 +52,7 @@ export function buzz(kind: 'good' | 'bad') {
 export type TabId = 'home' | 'path' | 'skills' | 'arcade' | 'friends';
 export const TAB_ROUTES: TabId[] = ['home', 'path', 'skills', 'arcade', 'friends']
 
-const TAB_ICONS: Record<TabId, React.ReactNode> = {
+export const TAB_ICONS: Record<TabId, React.ReactNode> = {
   // Today (SPEC-TODAY): a calendar page showing today's date.
   home: (
     <>

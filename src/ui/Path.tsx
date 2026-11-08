@@ -147,7 +147,7 @@ export function stepTitle(step: PathStep, s: Settings, lang: Lang): string {
   const tx = TX[lang];
   if (step.kind === 'check') return tx.check;
   if (step.kind === 'review') return tx.review;
-  if (step.kind === 'game') return `🎮 ${step.title[lang]}`;
+  if (step.kind === 'game') return step.title[lang];
   if (step.lesson) {
     const bb = displayNote(pc('Bb'), namingFor(s.naming, lang), lang);
     return withNoteText(LESSON_META[step.lesson]?.title[lang] ?? step.lesson, bb);
@@ -338,7 +338,7 @@ export function PathView2({
 
       {changed && (
         <div className="path-changed" role="status">
-          <span>🧭 {view.progress.checked > checkedBefore ? fill(tx.updatedChecked, { n: view.progress.checked - checkedBefore }) : tx.updated}</span>
+          <span>{view.progress.checked > checkedBefore ? fill(tx.updatedChecked, { n: view.progress.checked - checkedBefore }) : tx.updated}</span>
           <button className="btn small" onClick={ackChange}>
             {tx.ok}
           </button>
@@ -404,11 +404,11 @@ export function PathView2({
                   <button className="btn small ghost test-out" onClick={() => onTestOut(u)}>
                     {tx.testOut}
                   </button>
-                ) : (
+                ) : u.status === 'past' ? (
                   <span className="unit-icon" aria-hidden="true">
-                    {u.status === 'past' ? '✓' : '🎯'}
+                    ✓
                   </span>
-                )}
+                ) : null}
               </li>,
               ...unitSteps(u),
             ];
@@ -446,11 +446,11 @@ export function PathView2({
         </section>
       )}
       <p className="path-foot">
-        <button className="link" onClick={onPlacement}>
-          🧭 {tx.findLevel}
+        <button className="btn ghost small" onClick={onPlacement}>
+          {tx.findLevel}
         </button>
-        <a className="link" href="#/settings">
-          ⚙ {tx.myPath}
+        <a className="btn ghost small" href="#/settings">
+          {tx.myPath}
         </a>
       </p>
 

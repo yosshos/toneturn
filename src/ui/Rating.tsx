@@ -116,10 +116,10 @@ export function RatingCard({ t, change, peakBefore, accuracy }: { t: Strings; ch
           <b dir="ltr">{Math.round(accuracy * 100)}%</b>
         </div>
       </div>
-      {newPeak && <p className="rc-peak">🏆 {t.newPeak}: {to}</p>}
+      {newPeak && <p className="rc-peak">{t.newPeak}: {to}</p>}
       {change.bandsReached.map((b) => (
         <p key={b.skill} className="rc-band">
-          ⭐ {t.bandReached.replace('{b}', t.bands[b.band]).replace('{s}', t.skillNames[b.skill])}
+          {t.bandReached.replace('{b}', t.bands[b.band]).replace('{s}', t.skillNames[b.skill])}
         </p>
       ))}
       <ul className="rc-skills">

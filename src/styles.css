@@ -1,4 +1,4 @@
-/* The 7th Sense — warm night-stage game look. Chunky type, big targets, audio-synced motion. */
+/* The 7th Sense — mature, clean learning-app themes (light & dark): calm surfaces, clear type, small icons; playful styling only inside exercises. */
 
 :root {
   /* 0.37 "night arcade" (docs/ui-redesign.md). Cosmetic themes override the surface tokens. */
@@ -160,7 +160,16 @@ code {
 }
 .link {
   color: var(--ink-soft);
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
   font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+}
+.link:hover {
+  text-decoration: underline;
 }
 .row {
   display: flex;
@@ -367,9 +376,9 @@ code {
   box-shadow: 0 6px 0 rgba(0, 0, 0, 0.3);
 }
 .node.current .node-disc {
-  background: linear-gradient(180deg, #ffd66b, #ffb43d);
-  color: #2a1747;
-  box-shadow: 0 6px 0 #c9771c, 0 0 0 6px rgba(255, 201, 77, 0.2);
+  background: var(--card-2);
+  color: var(--ink);
+  box-shadow: 0 0 0 3px var(--mint);
   animation: pulse 2s ease-in-out infinite;
 }
 .node.done .node-disc {
@@ -396,7 +405,7 @@ code {
 }
 @keyframes pulse {
   50% {
-    box-shadow: 0 6px 0 #c9771c, 0 0 0 14px rgba(255, 201, 77, 0.08);
+    box-shadow: 0 0 0 3px var(--mint), 0 0 0 9px color-mix(in srgb, var(--mint) 18%, transparent);
   }
 }
 .home-foot {

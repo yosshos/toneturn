@@ -235,10 +235,10 @@ export function Diagnostics({ t, settings, onBack }: { t: Strings; settings: Set
             ▶ {lang === 'he' ? 'נגן אקורד' : 'Play chord'}
           </button>
           <button className="btn" onClick={() => testVoice('he')}>
-            🗣 עברית
+            עברית
           </button>
           <button className="btn" onClick={() => testVoice('en')}>
-            🗣 English
+            English
           </button>
           <Badge s={audioOk} />
         </div>

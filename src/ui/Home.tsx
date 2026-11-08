@@ -17,6 +17,19 @@ import { Logo, MicIcon, ModeSwitch } from './bits';
 import { WhatsNewButton } from './Arcade';
 import { UNLOCK_ALL } from './services';
 
+/** Small line icons for the Home chrome (stroke = currentColor). */
+const CompassIcon = () => (
+  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <circle cx="12" cy="12" r="8" />
+    <path d="M15.5 8.5l-2 5-5 2 2-5z" />
+  </svg>
+);
+const InstallIcon = () => (
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19h14" />
+  </svg>
+);
+
 interface Props {
   t: Strings;
   settings: Settings;
@@ -112,7 +125,7 @@ export function Home({ t, settings, progress, streak, onStreak, onPractice, onBu
             <ModeSwitch mode={settings.mode} onChange={onMode} t={t} />
             {beginner ? (
               <>
-                <button className="btn mega first-run-cta" onClick={() => start(next)}>
+                <button className="btn primary first-run-cta" onClick={() => start(next)}>
                   {t.intake.startBasics}
                 </button>
                 <button className="link start-from-one" onClick={() => onPlacement()}>
@@ -121,7 +134,7 @@ export function Home({ t, settings, progress, streak, onStreak, onPractice, onBu
               </>
             ) : (
               <>
-                <button className="btn mega first-run-cta" onClick={() => onPlacement()}>
+                <button className="btn primary first-run-cta" onClick={() => onPlacement()}>
                   {settings.mode === 'voice' && <MicIcon />}
                   {t.findLevel}
                 </button>
@@ -138,7 +151,7 @@ export function Home({ t, settings, progress, streak, onStreak, onPractice, onBu
           {assigned}
           {workout}
           <button className="find-level-btn" onClick={() => setLevelSheet(true)} data-find-level="1">
-            <span aria-hidden="true">🧭</span> {t.findLevel}
+            <CompassIcon /> {t.findLevel}
           </button>
         </>
       )}
@@ -146,7 +159,7 @@ export function Home({ t, settings, progress, streak, onStreak, onPractice, onBu
       {levelSheet && (
         <div className="sheet-backdrop" onClick={() => setLevelSheet(false)}>
           <div className="sheet level-sheet" role="dialog" aria-modal="true" aria-labelledby="level-sheet-title" onClick={(e) => e.stopPropagation()}>
-            <h2 id="level-sheet-title">🧭 {t.findLevel}</h2>
+            <h2 id="level-sheet-title">{t.findLevel}</h2>
             <p className="field-hint">{placed ? t.retakePlacement : t.findLevelHint}</p>
             <button
               className="btn primary ls-all"
@@ -189,7 +202,7 @@ export function Home({ t, settings, progress, streak, onStreak, onPractice, onBu
               <MicIcon /> {t.consentTitle}
             </h2>
             <p>{t.consentBody}</p>
-            <button className="btn mega" autoFocus onClick={() => onPractice(consentFor, true)}>
+            <button className="btn primary" autoFocus onClick={() => onPractice(consentFor, true)}>
               {t.consentAllow}
             </button>
             <button className="btn ghost" onClick={() => onButtonsInstead(consentFor)}>
@@ -362,13 +375,13 @@ function HeaderPwa({ t }: { t: Strings }) {
           title={t.installApp}
           onClick={() => (p.canInstall ? void promptInstall() : setHowTo(true))}
         >
-          <span aria-hidden="true">📲</span>
+          <InstallIcon />
         </button>
       )}
       {howTo && (
         <div className="sheet-backdrop" onClick={() => setHowTo(false)}>
           <div className="sheet install-sheet" role="dialog" aria-modal="true" aria-label={t.installApp} onClick={(e) => e.stopPropagation()}>
-            <h2>📲 {t.installApp}</h2>
+            <h2>{t.installApp}</h2>
             <p>{p.iosManual ? t.installIos : t.installHint}</p>
             <button className="btn primary" onClick={() => setHowTo(false)}>
               {t.done}

@@ -320,8 +320,8 @@ function Hub({ lang, ds, settings, items, head, onFamily, onRun, onSettings, onC
       </div>
       {!midi.devices.length && (ds.instrument ?? 'piano') === 'piano' && <p className="field-hint">{tx.noMidi}</p>}
       {!settings.drillStart && !Object.keys(items).length && (
-        <button className="btn primary mega" onClick={onTest} data-drills-test="1">
-          🧭 {tx.test}
+        <button className="btn primary" onClick={onTest} data-drills-test="1">
+          {tx.test}
         </button>
       )}
       <div className="chips drill-topics" role="tablist" aria-label={lang === 'he' ? 'נושאים' : 'Topics'}>
@@ -399,7 +399,7 @@ function Hub({ lang, ds, settings, items, head, onFamily, onRun, onSettings, onC
         </button>
         {(settings.drillStart || Object.keys(items).length > 0) && (
           <button className="btn ghost" onClick={onTest}>
-            🧭 {tx.test}
+            {tx.test}
           </button>
         )}
       </div>

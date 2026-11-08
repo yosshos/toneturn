@@ -92,7 +92,7 @@ export function WorkoutCard({ t, progress, settings, onOpen }: { t: Strings; pro
   return (
     <section className="workout-card" aria-label={t.workoutTitle}>
       <div className="workout-head">
-        <h2>⏱ {t.workoutTitle}</h2>
+        <h2>{t.workoutTitle}</h2>
         <div className="seg small" role="radiogroup" aria-label={t.workoutTitle}>
           {([5, 10, 20] as const).map((m) => (
             <button
@@ -145,7 +145,7 @@ export function WorkoutCard({ t, progress, settings, onOpen }: { t: Strings; pro
           );
         })}
       </ol>
-      <p className="field-hint">{done === plan.length ? `🎉 ${t.workoutDone}` : fill(t.workoutProgress, { n: done, m: plan.length })}</p>
+      <p className="field-hint">{done === plan.length ? t.workoutDone : fill(t.workoutProgress, { n: done, m: plan.length })}</p>
     </section>
   );
 }
@@ -159,7 +159,7 @@ export function AchievementsScreen({ t, progress, extra, onBack }: { t: Strings;
         <button className="icon-btn" onClick={onBack} aria-label={t.back}>
           <span className="flip-rtl">←</span>
         </button>
-        <h1>🏅 {t.achievementsTitle}</h1>
+        <h1>{t.achievementsTitle}</h1>
       </header>
       <p className="field-hint">{fill(t.achievementsCount, { n: got, m: list.length })}</p>
       <ul className="badge-grid">

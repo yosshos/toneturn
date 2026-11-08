@@ -1,0 +1,161 @@
+/* The app on a tablet or a computer (SPEC-DESKTOP, 0.51): one app, three layouts by width.
+   < 700 px  phone   — bottom tab bar + menu sheet (unchanged), the side menu hidden;
+   700–1099  tablet  — a rail of icons on the start side (right in Hebrew, left in English);
+   ≥ 1100    desktop — the full side menu with nested sections; content up to --main-max, centred in the rest.
+   Positioning is logical (inline-start / inline-end), so Hebrew mirrors by itself. */
+
+.side-nav { display: none; }
+
+@media (min-width: 700px) {
+  :root { --side-w: 76px; --main-max: 760px; }
+  .app.with-side {
+    max-width: none;
+    margin: 0;
+    margin-inline-start: var(--side-w);
+    padding-inline: max(24px, calc((100vw - var(--side-w) - var(--main-max)) / 2));
+    padding-top: 18px;
+  }
+  .app.with-side.has-tabs { padding-bottom: 40px; }
+  .app.with-side .tabbar { display: none; }
+  /* the menu button opens the phone's menu sheet: the side menu holds all of it now */
+  .app.with-side .topbar .menu-btn { display: none; }
+
+  .side-nav {
+    position: fixed;
+    z-index: 45;
+    inset-block: 0;
+    inset-inline-start: 0;
+    width: var(--side-w);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 14px 10px 12px;
+    box-sizing: border-box;
+    background: var(--bg-2, var(--bg));
+    border-inline-end: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+    overflow: hidden auto;
+    scrollbar-width: thin;
+  }
+  .sn-brand { display: flex; align-items: center; gap: 10px; padding: 4px 8px 14px; font-weight: 700; font-size: 1rem; white-space: nowrap; }
+  .sn-logo { flex: none; width: 32px; height: 32px; display: grid; place-items: center; }
+  .sn-word .wordmark-th { font-size: 0.6em; vertical-align: super; }
+  /* the logo and name live in the side menu: the top bar keeps only its buttons */
+  .app.with-side .topbar .brand { display: none; }
+  .app.with-side .topbar { justify-content: flex-end; }
+  .sn-list { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+  .sn-row { display: flex; align-items: center; gap: 2px; }
+  .sn-item, .sn-subitem, .sn-chev, .sn-me, .sn-collapse {
+    all: unset;
+    box-sizing: border-box;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .sn-item {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 12px;
+    border-radius: 10px;
+    color: var(--ink-soft);
+    font-size: 0.93rem;
+    white-space: nowrap;
+  }
+  .sn-item svg { flex: none; }
+  .sn-label { overflow: hidden; text-overflow: ellipsis; }
+  .sn-sec.on > .sn-row > .sn-item { color: var(--ink); }
+  .sn-sec.on > .sn-row > .sn-item svg { color: var(--mint); }
+  .sn-item.current, .sn-sec.on:not(.open) > .sn-row > .sn-item { background: color-mix(in srgb, var(--mint) 14%, transparent); }
+  .sn-item:hover, .sn-subitem:hover, .sn-chev:hover, .sn-me:hover, .sn-collapse:hover { background: color-mix(in srgb, var(--ink) 7%, transparent); }
+  .sn-item:focus-visible, .sn-subitem:focus-visible, .sn-chev:focus-visible, .sn-me:focus-visible, .sn-collapse:focus-visible { outline: 2px solid var(--mint); outline-offset: 1px; }
+  .sn-chev { flex: none; width: 30px; height: 30px; display: grid; place-items: center; border-radius: 8px; color: var(--ink-dim); }
+  .sn-chev svg { width: 15px; height: 15px; transition: transform 0.15s; }
+  [dir='rtl'] .sn-chev svg { transform: scaleX(-1); }
+  .sn-sec.open .sn-chev svg { transform: rotate(90deg); }
+  .sn-chev.passive { pointer-events: none; }
+  .sn-sub {
+    display: flex;
+    flex-direction: column;
+    margin: 2px 0 6px;
+    margin-inline-start: 21px;
+    padding-inline-start: 14px;
+    border-inline-start: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+  }
+  .sn-subitem { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 8px; color: var(--ink-dim); font-size: 0.88rem; }
+  .sn-subitem.current { color: var(--ink); background: var(--card-2); }
+  .sn-badge { margin-inline-start: auto; min-width: 8px; height: 8px; padding: 0 5px; border-radius: 99px; background: var(--coral, #ef8f78); color: #1b1010; font-size: 0.7rem; font-weight: 700; line-height: 16px; }
+  .sn-badge:not(:empty) { height: 16px; }
+  .sn-hr { height: 1px; margin: 8px 6px; background: var(--line, rgba(255, 255, 255, 0.08)); }
+  .sn-foot { display: flex; align-items: center; gap: 4px; padding-top: 8px; }
+  .sn-me { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 12px; background: var(--card); }
+  .sn-avatar { flex: none; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: var(--card-2); color: var(--lilac, var(--mint)); font-weight: 700; }
+  .sn-me-text { display: grid; min-width: 0; }
+  .sn-me-text b { font-weight: 600; font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sn-me-text small { color: var(--ink-dim); font-size: 0.75rem; }
+  .sn-collapse { flex: none; width: 32px; height: 32px; display: grid; place-items: center; border-radius: 8px; color: var(--ink-dim); }
+  [dir='rtl'] .sn-collapse svg { transform: scaleX(-1); }
+  .side-nav.collapsed .sn-collapse svg { transform: scaleX(-1); }
+  [dir='rtl'] .side-nav.collapsed .sn-collapse svg { transform: none; }
+
+  /* the rail: icons only (tablet width, or collapsed by the player) */
+  .side-nav .sn-label, .side-nav .sn-chev, .side-nav .sn-sub, .side-nav .sn-me { display: none; }
+  .side-nav .sn-item { justify-content: center; padding: 10px 0; }
+  .side-nav .sn-foot { justify-content: center; }
+  .side-nav .sn-collapse { display: none; }
+}
+
+@media (min-width: 1100px) {
+  :root { --side-w: 248px; --main-max: 880px; }
+  .side-nav .sn-label { display: inline; }
+  .side-nav .sn-word { display: inline; }
+  .side-nav .sn-chev { display: grid; }
+  .side-nav .sn-sub { display: flex; }
+  .side-nav .sn-me { display: flex; }
+  .side-nav .sn-item { justify-content: flex-start; padding: 9px 12px; }
+  .side-nav .sn-foot { justify-content: stretch; }
+  .side-nav .sn-collapse { display: grid; }
+  .side-nav .sn-me-text { display: grid; }
+
+  /* collapsed by the player: back to the rail */
+  :root:has(.side-nav.collapsed) { --side-w: 76px; }
+  .side-nav.collapsed .sn-label, .side-nav.collapsed .sn-chev, .side-nav.collapsed .sn-sub, .side-nav.collapsed .sn-me { display: none; }
+  .side-nav.collapsed .sn-item { justify-content: center; padding: 10px 0; }
+  .side-nav.collapsed .sn-foot { justify-content: center; }
+}
+
+/* Exercises on a computer (SPEC-DESKTOP §5): focused width, the shortcut number on each answer, a one-line key guide.
+   Only with a mouse (hover + fine pointer): touch laptops and tablets keep the touch layout. */
+@media (min-width: 1100px) {
+  main.lesson .answers,
+  main.lesson .controls,
+  main.lesson .fb-actions,
+  main.lesson .feedback { max-width: 760px; margin-inline: auto; }
+}
+@media (min-width: 1100px) and (hover: hover) and (pointer: fine) {
+  main.lesson .answers { counter-reset: ans; }
+  main.lesson .answers > .answer { position: relative; counter-increment: ans; }
+  main.lesson .answers > .answer::before {
+    content: counter(ans);
+    position: absolute;
+    top: 7px;
+    inset-inline-start: 9px;
+    min-width: 1.3em;
+    padding: 0 4px;
+    border: 1px solid currentColor;
+    border-radius: 5px;
+    font: 600 11px/1.5 ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    opacity: 0.5;
+  }
+  main.lesson .stage .controls { flex-wrap: wrap; justify-content: center; }
+  main.lesson .controls::after {
+    flex-basis: 100%;
+    text-align: center;
+    margin-top: 6px;
+    font-size: 0.78rem;
+    color: var(--ink-dim);
+    content: 'Keys: 1–9 answer · Space repeat · Enter continue · C compare · H hint · S skip · Esc pause';
+  }
+  html[lang='he'] main.lesson .controls::after { content: 'מקשים: 1–9 תשובה · רווח השמעה חוזרת · Enter המשך · C השוואה · H רמז · S דילוג · Esc השהיה'; }
+  .answer:hover:not(:disabled), .btn:hover:not(:disabled) { filter: brightness(1.06); }
+}

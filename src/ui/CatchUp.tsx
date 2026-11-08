@@ -41,7 +41,7 @@ export function CatchUpCard({ t, c, draft, onIntake, onMeasure, onFindLevel, onH
   return (
     <section className="resume-row catchup-row" data-catchup={c.key} aria-label={k.title}>
       <span className="rr-text">
-        <b>🧭 {k.title}</b>
+        <b>{k.title}</b>
         {intakeLine && (
           <button className="rr-link" data-catchup-do="intake" onClick={onIntake}>
             {intakeLine} <span className="flip-rtl">›</span>
@@ -63,7 +63,7 @@ export function CatchUpCard({ t, c, draft, onIntake, onMeasure, onFindLevel, onH
 /** Find my level was left half-way — continue it (or start over). */
 export function ResumePlacementCard({ t, progress, onContinue, onRestart }: { t: Strings; progress: { answered: number; sections: number; doneSections: number }; onContinue: () => void; onRestart: () => void }) {
   const k = t.resumePlacement;
-  return <Row kind="resume-placement" name={`🧭 ${t.findLevel}`} done={progress.doneSections} all={progress.sections} sub={k.where(progress.doneSections, progress.sections, progress.answered)} onGo={onContinue} goLabel={k.go} alt={{ icon: '↺', label: k.restart, onClick: onRestart }} />;
+  return <Row kind="resume-placement" name={t.findLevel} done={progress.doneSections} all={progress.sections} sub={k.where(progress.doneSections, progress.sections, progress.answered)} onGo={onContinue} goLabel={k.go} alt={{ icon: '↺', label: k.restart, onClick: onRestart }} />;
 }
 
 /** Any lesson or exercise left half-way — continue it, or let it go. */

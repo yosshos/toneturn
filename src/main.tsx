@@ -19,6 +19,7 @@ import './motion.css';
 import './peak.css';
 import './drills.css';
 import './themes.css';
+import './desktop.css';
 import { App } from './ui/App';
 import { initPwa } from './pwa';
 

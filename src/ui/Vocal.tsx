@@ -334,10 +334,10 @@ export function VocalScreen({ t, settings, progress, onSettings, onProgress, onB
         <button className="icon-btn" onClick={onBack} aria-label={t.back}>
           <span className="flip-rtl">←</span>
         </button>
-        <h1>🎤 {t.vocalTitle}</h1>
+        <h1>{t.vocalTitle}</h1>
       </header>
       <p className="field-hint">{t.vocalBlurb}</p>
-      <p className="care-note">💙 {t.vocalCare}</p>
+      <p className="care-note">{t.vocalCare}</p>
 
       <section className="set-card">
         <h2>{t.vocalRangeTitle}</h2>
@@ -380,12 +380,12 @@ export function VocalScreen({ t, settings, progress, onSettings, onProgress, onB
       </section>
 
       <button className="tool-card warmup-card" onClick={() => setView({ kind: 'session', level: 'warmup', items: warmupItems(v.passed).filter((it) => itemFits(it, range)) })}>
-        <b>☀️ {t.vocalWarmup}</b>
+        <b>{t.vocalWarmup}</b>
         <small>{t.vocalWarmupHint}</small>
       </button>
       {onSingAlong && (
         <button className="tool-card warmup-card" onClick={onSingAlong}>
-          <b>🎶 {t.singAlongTitle}</b>
+          <b>{t.singAlongTitle}</b>
           <small>{t.singAlongHint}</small>
         </button>
       )}
@@ -414,7 +414,7 @@ export function VocalScreen({ t, settings, progress, onSettings, onProgress, onB
       </ol>
 
       <section className="set-card">
-        <h2>🎼 {t.modesTitle}</h2>
+        <h2>{t.modesTitle}</h2>
         <p className="field-hint">{t.modesBlurb}</p>
         <ol className="vocal-levels">
           {MODE_LEVELS.map((lvDef, i) => {
@@ -438,7 +438,7 @@ export function VocalScreen({ t, settings, progress, onSettings, onProgress, onB
       </section>
 
       <section className="set-card">
-        <h2>🎻 {t.ornTitle}</h2>
+        <h2>{t.ornTitle}</h2>
         <p className="field-hint">{t.ornBlurb}</p>
         <ol className="vocal-levels">
           {ORNAMENT_LEVELS.map((lvDef, i) => {
@@ -461,7 +461,7 @@ export function VocalScreen({ t, settings, progress, onSettings, onProgress, onB
       </section>
 
       <section className="set-card">
-        <h2>👁️ {t.sightTitle}</h2>
+        <h2>{t.sightTitle}</h2>
         <p className="field-hint">{t.sightBlurb}</p>
         <ol className="vocal-levels">
           {SIGHT_LEVELS.map((lvDef, i) => {
@@ -484,7 +484,7 @@ export function VocalScreen({ t, settings, progress, onSettings, onProgress, onB
       </section>
 
       <section className="set-card">
-        <h2>🎹 {t.barryTitle}</h2>
+        <h2>{t.barryTitle}</h2>
         <p className="field-hint">{t.barryBlurb}</p>
         <ol className="vocal-levels">
           {BARRY_LEVELS.map((lvDef, i) => {
@@ -507,7 +507,7 @@ export function VocalScreen({ t, settings, progress, onSettings, onProgress, onB
       </section>
 
       <section className="set-card">
-        <h2>🎶 {t.harmonyTitle}</h2>
+        <h2>{t.harmonyTitle}</h2>
         <p className="field-hint">{t.harmonyBlurb}</p>
         <ol className="vocal-levels">
           {HARMONY_LEVELS.map((lvDef, i) => {
@@ -550,7 +550,7 @@ export function VocalScreen({ t, settings, progress, onSettings, onProgress, onB
       <VocalTrends t={t} takes={v.takes} />
 
       <section className="set-card">
-        <h2>🕰 {t.thenNowTitle}</h2>
+        <h2>{t.thenNowTitle}</h2>
         <label className="toggle-row">
           <input type="checkbox" checked={!!settings.keepTakes} onChange={(e) => onSettings({ keepTakes: e.target.checked })} />
           <span>{t.keepTakes}</span>

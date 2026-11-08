@@ -206,6 +206,33 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
     return () => window.removeEventListener('keydown', onKey);
   }, [ctrl]);
 
+  // Keyboard shortcuts (SPEC-DESKTOP §5): 1–9 answer, Space repeat, Enter continue, C compare, H hint, S skip, Esc pause.
+  // Never while typing in a field, and Space / Enter stay the beat in rhythm reading (above).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+      const tgt = e.target as HTMLElement | null;
+      if (tgt && (tgt.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(tgt.tagName))) return;
+      const view = ctrl.getView();
+      if (view.stage !== 'question') return;
+      const q = view.question;
+      const k = e.key.toLowerCase();
+      if (/^[1-9]$/.test(e.key) && view.phase === 'listening' && 'choices' in q && q.choices.length && !(q.kind === 'rhythm-dict' && q.mode === 'build')) {
+        const c = q.choices[Number(e.key) - 1];
+        if (c !== undefined) ctrl.answer(c);
+      } else if (e.key === 'Enter' && view.awaitNext) ctrl.next();
+      else if (e.code === 'Space' && q.kind !== 'rhythm-read') ctrl.repeat();
+      else if (k === 'c' && view.awaitNext) ctrl.compareNow();
+      else if (k === 'h') ctrl.useHint();
+      else if (k === 's') ctrl.skip();
+      else if (e.key === 'Escape') ctrl.pause();
+      else return;
+      e.preventDefault();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [ctrl]);
+
   const lang = settings.uiLang;
   const nm = namingFor(settings.naming, lang);
   const lesson = v.session.lesson;

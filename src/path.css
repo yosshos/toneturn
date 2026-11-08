@@ -152,7 +152,8 @@
     0 6px 0 #b8861b;
 }
 .path2 .node.kind-check .node-disc {
-  background: linear-gradient(160deg, var(--gold), #f59e0b);
+  background: var(--card);
+  border: 1.5px solid var(--gold);
 }
 .path2 .node .trophy {
   font-size: 26px;
@@ -194,7 +195,11 @@
 .path2 .path-foot {
   display: flex;
   justify-content: center;
-  gap: 18px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.path2 .path-foot a.btn {
+  text-decoration: none;
 }
 
 .back-to-step {

@@ -81,26 +81,26 @@ export function PathExtras({
     <div className="path-extras">
       <details className="px-section" data-px="rooms">
         <summary>
-          <span aria-hidden="true">🏋️</span> {he ? 'חדרי תרגול' : 'Practice rooms'}
+          {he ? 'חדרי תרגול' : 'Practice rooms'}
         </summary>
         <div className="room-list">
-          {room('drills-room', '🎹', he ? 'תרגילים טכניים' : 'Technique drills', he ? 'סולמות, ארפג׳ים ועוד — פסנתר, גיטרה ובס' : 'Scales, arpeggios and more — piano, guitar, bass', onDrills, { data: { 'data-room': 'drills' } })}
-          {room('vocal-room', '🎤', t.vocalTitle, `${t.vocalLevel.replace('{n}', String(vocalLv))} · ${t.vocalLevelNames[vocalLv - 1]}`, () => onVocal(false), { data: { 'data-room': 'vocal' } })}
-          {room('warmup-room', '☀️', t.vocalWarmup, t.vocalBlurb, () => onVocal(true), { data: { 'data-room': 'vocal-warmup' } })}
+          {room('drills-room', <NodeIcon kind="steps" />, he ? 'תרגילים טכניים' : 'Technique drills', he ? 'סולמות, ארפג׳ים ועוד — פסנתר, גיטרה ובס' : 'Scales, arpeggios and more — piano, guitar, bass', onDrills, { data: { 'data-room': 'drills' } })}
+          {room('vocal-room', <NodeIcon kind="mic" />, t.vocalTitle, `${t.vocalLevel.replace('{n}', String(vocalLv))} · ${t.vocalLevelNames[vocalLv - 1]}`, () => onVocal(false), { data: { 'data-room': 'vocal' } })}
+          {room('warmup-room', <NodeIcon kind="mic" />, t.vocalWarmup, t.vocalBlurb, () => onVocal(true), { data: { 'data-room': 'vocal-warmup' } })}
           {room('review-room', <NodeIcon kind="review" />, t.reviewN, reviewCount ? `${reviewCount} ${t.dueNow}` : nextDays ? t.nextReviewIn.replace('{n}', String(nextDays)) : t.nothingToReview, onReview, { badge: reviewCount, disabled: reviewCount === 0, data: { 'data-room': 'review' } })}
           {room('runs-card', <NodeIcon kind="mic" />, t.runsWorkshop, t.runsWorkshopHint.replace('{n}', String(runLevelFor(ratings.agility?.n ? ratings.agility.r : null))), onRuns, { data: { 'data-room': 'runs' } })}
           {room('drone-card', <NodeIcon kind="mic" />, t.dronePractice, t.droneBlurb, onDrone, { data: { 'data-room': 'drone' } })}
           {onPerform && room('perform-card', <NodeIcon kind="mic" />, t.perfTitle, t.perfBlurb, onPerform, { data: { 'data-perform': '1' } })}
-          {onLearned && room('learned-card-tool', '📚', t.learnedTitle, learnedCount ? `${learnedCount} · ${t.learnedBlurb}` : t.learnedBlurb, onLearned, { data: { 'data-learned': '1' } })}
+          {onLearned && room('learned-card-tool', <NodeIcon kind="map" />, t.learnedTitle, learnedCount ? `${learnedCount} · ${t.learnedBlurb}` : t.learnedBlurb, onLearned, { data: { 'data-learned': '1' } })}
         </div>
       </details>
       <details className="px-section" data-px="topics">
         <summary>
-          <span aria-hidden="true">🎯</span> {he ? 'כל הנושאים' : 'All topics'}
+          {he ? 'כל הנושאים' : 'All topics'}
           <small>{he ? '✓ = המסלול כבר סופר את הרמה' : '✓ = the path already counts that level'}</small>
         </summary>
         <div className="modes-row">
-          <b>🎼 {t.skillNames.modes}</b>
+          <b>{t.skillNames.modes}</b>
           <small>{t.modesByEarHint}</small>
           <div className="modes-levels" role="group" aria-label={t.skillNames.modes}>
             {MODE_ID_LEVELS.map((_, i) => {
@@ -117,7 +117,7 @@ export function PathExtras({
         {TOPIC_GROUPS.map((g) => (
           <details key={g.id} className="topic-group">
             <summary>
-              {g.icon} {g.title[lang]}
+              {g.title[lang]}
             </summary>
             {g.topics
               .filter((id) => TOPIC_GEN[id])
@@ -140,7 +140,7 @@ export function PathExtras({
           </details>
         ))}
         <div className="modes-row">
-          <b>🎯 {t.skillNames.absolute}</b>
+          <b>{t.skillNames.absolute}</b>
           <small>{t.absoluteHint}</small>
           <div className="modes-levels" role="group" aria-label={t.skillNames.absolute}>
             {[1, 2, 3].map((lv) => (
@@ -151,7 +151,7 @@ export function PathExtras({
           </div>
         </div>
         <div className="modes-row">
-          <b>🔎 {t.wrongNotesTitle}</b>
+          <b>{t.wrongNotesTitle}</b>
           <small>{t.wrongNotesHint}</small>
           <div className="modes-levels" role="group" aria-label={t.wrongNotesTitle}>
             {WRONG_NOTE_LEVELS.map((_, i) => (
