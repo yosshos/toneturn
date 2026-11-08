@@ -2,13 +2,17 @@
 // practice — chunk by chunk, tempo step by tempo step, joining as it goes. Pieces live on this device (IndexedDB).
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { recordTakeAnalysis } from '../storage/analysis';
 import { parseMidi, parseMusicXml, type Piece } from '../engine/piece/score';
 import { barMastery, initPlan, nextTask, planProgress, recordRep, startDay, type CoachEvent, type PlanState, type Task } from '../engine/piece/coach';
 import { barLabel, chunkDrill, repFromTake } from '../engine/piece/toDrill';
 import type { TakeMetrics } from '../engine/drills/types';
 import { indexedKV, memoryKV, type KV } from '../storage/kv';
 import { localDay, type Settings } from '../storage/progress';
-import { DrillStaff, DrillTake, MarkLegend } from './DrillTake';
+import { DrillTake, MarkLegend } from './DrillTake';
+import { ScoreView } from './ScoreView';
+import { WaitMode } from './WaitMode';
+import type { NoteMark } from '../engine/noteMarks';
 import { DEFAULT_CAL } from './Drills';
 import { inputLatency } from '../engine/latency';
 import { midi } from '../speech/midi';
@@ -36,13 +40,13 @@ const TX = {
   en: {
     title: 'My pieces', add: 'Add a piece', formats: 'MusicXML (.musicxml, .xml) or MIDI (.mid). From MuseScore: File → Export → MusicXML (uncompressed).', none: 'No pieces yet.', bad: 'This file could not be read:',
     setup: 'Set up', target: 'Target tempo', chunk: 'Bars per chunk', backward: 'Start from the end', start: 'Start practising', back: 'Back', del: 'Delete', progress: 'learned',
-    bars: 'bars', tempo: '♩ =', loop: 'Fix this bar', seam: 'The join', join: 'Put it together', warm: 'Warm-up', burst: 'One burst at full tempo', spot: 'The hard spot', chunk1: 'Next part',
+    bars: 'bars', tempo: '♩ =', loop: 'Fix this bar', seam: 'The join', join: 'Put it together', warm: 'Warm-up', burst: 'One burst at full tempo', spot: 'The hard spot', chunk1: 'Next part', trouble: 'The bar that keeps tripping you',
     done: 'You can play the whole piece at the target tempo. 🎉', again: 'Again', minutes: 'min today',
   },
   he: {
     title: 'היצירות שלי', add: 'להוסיף יצירה', formats: 'MusicXML (‏.musicxml, ‏.xml) או MIDI (‏.mid). ממיוזסקור: קובץ ← ייצוא ← MusicXML (לא דחוס).', none: 'עדיין אין יצירות.', bad: 'לא ניתן לקרוא את הקובץ:',
     setup: 'הגדרה', target: 'טמפו יעד', chunk: 'תיבות בכל קטע', backward: 'להתחיל מהסוף', start: 'להתחיל להתאמן', back: 'חזרה', del: 'מחיקה', progress: 'נלמד',
-    bars: 'תיבות', tempo: '♩ =', loop: 'לתקן את התיבה הזו', seam: 'החיבור', join: 'לחבר הכול', warm: 'חימום', burst: 'פרץ אחד בטמפו המלא', spot: 'המקום הקשה', chunk1: 'החלק הבא',
+    bars: 'תיבות', tempo: '♩ =', loop: 'לתקן את התיבה הזו', seam: 'החיבור', join: 'לחבר הכול', warm: 'חימום', burst: 'פרץ אחד בטמפו המלא', spot: 'המקום הקשה', chunk1: 'החלק הבא', trouble: 'התיבה שחוזרת להכשיל',
     done: 'אתם מנגנים את כל היצירה בטמפו היעד. 🎉', again: 'שוב', minutes: 'דק׳ היום',
   },
 };
@@ -215,6 +219,20 @@ function PiecePractice({ settings, sp, onSave, onBack, onMinutes }: { settings: 
   const [lastTask, setLastTask] = useState<Task | null>(null);
   const t0 = useRef(Date.now());
   const clean = useRef(0);
+  // score cursor: beat steps from the take, smoothed between beats
+  const [cursor, setCursor] = useState<number | null>(null);
+  const [marks, setMarks] = useState<Map<number, NoteMark> | undefined>(undefined);
+  const [wait, setWait] = useState(false);
+  const beatAt = useRef<{ beat: number; t: number } | null>(null);
+  useEffect(() => {
+    const id = setInterval(() => {
+      const b = beatAt.current;
+      if (!b || !task) return;
+      const beatMs = 60000 / task.tempo;
+      setCursor(b.beat + Math.min(1, (performance.now() - b.t) / beatMs));
+    }, 50);
+    return () => clearInterval(id);
+  });
   const task = nextTask(plan);
   const drill = useMemo(() => (task ? chunkDrill(p, sp.id, task.from, task.to, task.tempo) : null), [p, sp.id, task?.from, task?.to, task?.tempo]); // eslint-disable-line react-hooks/exhaustive-deps
   const mastery = useMemo(() => barMastery(plan, p.bars.length), [plan, p.bars.length]);
@@ -228,6 +246,7 @@ function PiecePractice({ settings, sp, onSave, onBack, onMinutes }: { settings: 
   };
   const onTake = (m: TakeMetrics) => {
     if (!task) return;
+    if (drill) void recordTakeAnalysis(drill, m, task.tempo);
     const res = repFromTake(p, task.from, m);
     const r = recordRep(plan, task, res, new Date());
     if (r.state.log[r.state.log.length - 1]?.clean) clean.current++;
@@ -236,8 +255,19 @@ function PiecePractice({ settings, sp, onSave, onBack, onMinutes }: { settings: 
     setLastTask(task);
     setLine(coachLine(r.events, lang, p, r.state));
     onSave({ ...sp, plan: r.state });
+    beatAt.current = null;
+    setCursor(null);
+    // colour the notes of the take on the score
+    const mk = new Map<number, NoteMark>();
+    const s0 = p.bars[task.from]?.start ?? 0;
+    for (const nr of m.perNote) {
+      const abs = nr.exp.beat + s0;
+      const idx = p.notes.findIndex((n) => n.midi === nr.exp.pitch && Math.abs(n.start - abs) < 1e-3);
+      if (idx >= 0) mk.set(idx, nr.ok ? 'ok' : nr.played ? 'wrong' : 'missed');
+    }
+    setMarks(mk);
   };
-  const kindLabel = (t: Task) => (t.kind === 'loop' ? tx.loop : t.kind === 'seam' ? tx.seam : t.kind === 'join' ? tx.join : t.kind === 'warm' ? tx.warm : t.kind === 'burst' ? tx.burst : t.kind === 'spot' ? tx.spot : tx.chunk1);
+  const kindLabel = (t: Task) => (t.kind === 'trouble' ? tx.trouble : t.kind === 'loop' ? tx.loop : t.kind === 'seam' ? tx.seam : t.kind === 'join' ? tx.join : t.kind === 'warm' ? tx.warm : t.kind === 'burst' ? tx.burst : t.kind === 'spot' ? tx.spot : tx.chunk1);
   return (
     <main className="panel-screen pieces pc-practice" data-piece-practice={sp.id}>
       <header className="screen-head">
@@ -269,9 +299,40 @@ function PiecePractice({ settings, sp, onSave, onBack, onMinutes }: { settings: 
               {line}
             </p>
           )}
-          <DrillStaff drill={drill} result={last && lastTask && lastTask.from === task.from && lastTask.to === task.to ? last : null} />
+          <ScoreView
+            piece={p}
+            cursorBeat={cursor === null ? null : cursor + (p.bars[task.from]?.start ?? 0)}
+            activeBar={cursor === null ? null : Math.min(task.to, p.bars.findIndex((b) => b.start + b.beats > cursor + (p.bars[task.from]?.start ?? 0)))}
+            rangeFrom={task.from}
+            rangeTo={task.to}
+            marks={last && lastTask && lastTask.from === task.from && lastTask.to === task.to ? marks : undefined}
+          />
           {last && <MarkLegend lang={lang} />}
-          <DrillTake key={`${task.chunk}-${task.kind}-${task.tempo}-${plan.log.length}`} drill={drill} bpm={task.tempo} lang={lang} cal={cal} onDone={(m) => onTake(m)} />
+          <label className="pc-wait">
+            <input type="checkbox" checked={wait} onChange={(e) => (setWait(e.target.checked), setCursor(null))} data-wait-toggle="1" /> {lang === 'he' ? 'מצב המתנה (בלי טמפו)' : 'Wait mode (no tempo)'}
+          </label>
+          {wait ? (
+            <WaitMode
+              key={`w-${task.from}-${task.to}`}
+              piece={p}
+              from={task.from}
+              to={task.to}
+              lang={lang}
+              onCursor={(b) => setCursor(b)}
+              onMarks={setMarks}
+              onDone={() => setCursor(null)}
+            />
+          ) : (
+            <DrillTake
+              key={`${task.chunk}-${task.kind}-${task.tempo}-${plan.log.length}`}
+              drill={drill}
+              bpm={task.tempo}
+              lang={lang}
+              cal={cal}
+              onBeat={(b) => (beatAt.current = b >= 0 ? { beat: b, t: performance.now() } : null)}
+              onDone={(m) => onTake(m)}
+            />
+          )}
         </>
       )}
     </main>

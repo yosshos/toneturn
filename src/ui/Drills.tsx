@@ -2,6 +2,7 @@
 // 12-key heat map, the run loop with the tempo ladder, drills settings, calibration and the drill creator.
 
 import { SONGBOOK } from '../content/songbook';
+import { recordTakeAnalysis } from '../storage/analysis';
 import { checkRules } from '../engine/improvRules';
 import { parseChart } from '../engine/charts';
 import { PART_NAME, songDrill } from '../engine/drills/songDrills';
@@ -501,6 +502,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd }: { lang:
     setTake((t) => t + 1);
   };
   const done = (m: TakeMetrics, played: PlayedNote[]) => {
+    void recordTakeAnalysis(drill, m, bpm);
     if (drill.freeAbove !== undefined && drill.chart?.length) {
       const free = played.filter((p) => p.pitch >= drill.freeAbove!).map((p) => ({ start: p.on / 1000, end: (p.off ?? p.on + 200) / 1000, midi: p.pitch }));
       const r = checkRules(free, parseChart(drill.chart.join(' | '), drill.meter), drill.meter, bpm, { note: 'scale', interval: null, rhythm: null });

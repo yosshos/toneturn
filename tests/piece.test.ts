@@ -151,3 +151,24 @@ describe('piece coach (SPEC-PIECE §2)', () => {
     expect(notesIn(p, 2, 2)[0].start).toBe(0);
   });
 });
+
+import { troubleBars } from '../src/engine/piece/coach';
+describe('trouble bars (0.49)', () => {
+  it('a bar that fails on two days opens the next day as a drill, and retires after two clean takes', () => {
+    const p = demoPiece();
+    let s = initPlan(p, { target: 100 }, 'd1');
+    const t = nextTask(s)!;
+    s = recordRep(s, t, { acc: 0.9, timingOk: true, errorBar: 2 }, new Date()).state;
+    s = startDay(s, 'd2');
+    s = recordRep(s, nextTask(s)!, { acc: 0.85, timingOk: true, errorBar: 2 }, new Date()).state;
+    expect(troubleBars(s)).toEqual([2]);
+    s = startDay(s, 'd3');
+    // warm-ups first, then the trouble bar
+    while (s.warm.length) s = recordRep(s, nextTask(s)!, { acc: 1, timingOk: true }, new Date()).state;
+    const tt = nextTask(s)!;
+    expect([tt.kind, tt.to]).toEqual(['trouble', 2]);
+    s = recordRep(s, tt, { acc: 1, timingOk: true }, new Date()).state;
+    s = recordRep(s, nextTask(s)!, { acc: 1, timingOk: true }, new Date()).state;
+    expect(nextTask(s)!.kind).not.toBe('trouble');
+  });
+});

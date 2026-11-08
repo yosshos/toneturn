@@ -18,6 +18,24 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.49.0',
+    date: '2026-11-08',
+    en: [
+      'My pieces now show the real score: both hands, bar lines, key and time, systems that wrap and scroll, the part you practise tinted, a cursor that follows the take, and every note coloured after it',
+      'Wait mode: no tempo — the score waits on each chord until you play it (MIDI)',
+      'Trouble bars: a bar that keeps failing across sessions opens the next day as a short drill, until it is clean twice',
+      'Piano chords by microphone: in pieces and chord drills the app now hears which notes of each expected chord you played, even without a MIDI cable',
+      'Behind the scenes: every take now feeds your personal player model (fingers, hands, keys, scales, timing) — the Insights screen arrives next',
+    ],
+    he: [
+      'היצירות שלי מציגות עכשיו תווים אמיתיים: שתי ידיים, קווי תיבה, סולם ומשקל, שורות שנגללות, הקטע שמתאמנים עליו צבוע, סמן שעוקב אחרי הנגינה, וכל צליל צבוע אחריה',
+      'מצב המתנה: בלי טמפו — התווים מחכים על כל אקורד עד שמנגנים אותו (MIDI)',
+      'תיבות בעייתיות: תיבה שנכשלת שוב ושוב בין אימונים נפתחת למחרת כתרגיל קצר, עד שהיא נקייה פעמיים',
+      'אקורדי פסנתר במיקרופון: ביצירות ובתרגילי אקורדים האפליקציה שומעת עכשיו אילו צלילים מכל אקורד צפוי ניגנתם, גם בלי כבל MIDI',
+      'מאחורי הקלעים: כל ניגון בונה עכשיו את מודל הנגן האישי שלכם (אצבעות, ידיים, סולמות, תזמון) — מסך התובנות מגיע בגרסה הבאה',
+    ],
+  },
+  {
     version: '0.48.0',
     date: '2026-11-08',
     en: [

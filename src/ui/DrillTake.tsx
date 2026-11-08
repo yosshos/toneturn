@@ -2,6 +2,7 @@
 // both hands), then the analysis right away — verdict, the evenness strip, the velocity curve, the hands chart.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { scoreInformedNotes } from '../engine/drills/pianoMic';
 import type { Drill, PlayedNote, TakeMetrics, DrillCalibration } from '../engine/drills/types';
 import { analyzeTake, tempoBand, thresholds } from '../engine/drills/analyze';
 import type { ExpNote, NoteResult } from '../engine/drills/types';
@@ -160,7 +161,7 @@ export function VelocityCurve({ m, lang }: { m: TakeMetrics; lang: Lang }) {
 }
 
 /** Play a drill once: count-in, metronome, record; resolves with the analysis. */
-export function DrillTake({ drill, bpm, lang, cal, onDone }: { drill: Drill; bpm: number; lang: Lang; cal: DrillCalibration; onDone: (m: TakeMetrics, played: PlayedNote[]) => void }) {
+export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat }: { drill: Drill; bpm: number; lang: Lang; cal: DrillCalibration; onDone: (m: TakeMetrics, played: PlayedNote[]) => void; /** Beat index of the take (after the count-in; −1 when idle) — for a score cursor. */ onBeat?: (beat: number) => void }) {
   const tx = TX[lang];
   const [phase, setPhase] = useState<'ready' | 'count' | 'play'>('ready');
   const [beat, setBeat] = useState(-1);
@@ -206,7 +207,9 @@ export function DrillTake({ drill, bpm, lang, cal, onDone }: { drill: Drill; bpm
     // Guitar / bass (spec AJ): raw frames → onsets (repeated notes and strums count) → the guitar analysis.
     const guitar = isGuitarDrill(drill);
     const frames: GFrame[] = [];
-    if (guitar && !midi.devices.length) {
+    // Piano chords by microphone (0.49): frames with chroma, judged against the expected chords (score-informed).
+    const pianoChords = !guitar && !midi.devices.length && drill.notes.some((n) => n.chordId !== undefined);
+    if ((guitar || pianoChords) && !midi.devices.length) {
       micStop = new AbortController();
       // Chords in the drill → also a chroma per frame, so the analysis can hear which strings rang (SPEC-0.48 §I1).
       const chords = drill.notes.some((n, i) => drill.notes.some((o, j) => j !== i && Math.abs(o.beat - n.beat) < 1e-4));
@@ -252,6 +255,7 @@ export function DrillTake({ drill, bpm, lang, cal, onDone }: { drill: Drill; bpm
         abort.signal,
         (i) => {
           setBeat(i);
+          onBeat?.(i - drill.meter);
           if (i >= drill.meter) setPhase('play');
         },
         (perf) => {
@@ -273,6 +277,10 @@ export function DrillTake({ drill, bpm, lang, cal, onDone }: { drill: Drill; bpm
     if (guitar) {
       const played = frames.length ? detectOnsets(frames) : notes;
       return onDone(analyzeGuitarTake(drill, bpm, played, cal, frames), played);
+    }
+    if (pianoChords) {
+      const played = scoreInformedNotes(drill, bpm, frames);
+      return onDone(analyzeTake(drill, bpm, played, cal), played);
     }
     const m = analyzeTake(drill, bpm, notes, cal);
     if (drill.goal.pedal && midi.devices.length) {

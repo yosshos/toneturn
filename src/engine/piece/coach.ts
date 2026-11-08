@@ -51,6 +51,15 @@ export interface RepLog {
   tempo: number;
   acc: number;
   clean: boolean;
+  /** The bar with the most errors in this rep (when known). */
+  bar?: number | null;
+}
+
+/** Trouble bars (0.49): a bar that keeps failing across sessions — failures, clean passes since, the days it failed. */
+export interface Trouble {
+  fails: number;
+  clean: number;
+  days: string[];
 }
 
 export interface PlanState {
@@ -69,6 +78,10 @@ export interface PlanState {
   burst: { chunk: string } | null;
   /** Warm-up queue on a new day (chunk ids). */
   warm: string[];
+  /** Trouble bars by piece bar index (0.49). */
+  trouble?: Record<number, Trouble>;
+  /** Trouble-bar drills queued for this session (bar indexes). */
+  troubleQueue?: number[];
   day: string;
   /** Days with a clean full run at target. */
   fullRuns: string[];
@@ -93,7 +106,7 @@ export type CoachEvent =
 
 export interface Task {
   chunk: string;
-  kind: ChunkKind | 'loop' | 'burst' | 'warm';
+  kind: ChunkKind | 'loop' | 'burst' | 'warm' | 'trouble';
   from: number;
   to: number;
   tempo: number;
@@ -198,7 +211,15 @@ export function initPlan(p: Piece, o: CoachOpts, day: string): PlanState {
 }
 
 const byId = (s: PlanState, id: string) => s.chunks.find((c) => c.id === id)!;
-const clone = (s: PlanState): PlanState => ({ ...s, chunks: s.chunks.map((c) => ({ ...c, recent: [...c.recent] })), order: [...s.order], warm: [...s.warm], fullRuns: [...s.fullRuns], log: [...s.log] });
+const clone = (s: PlanState): PlanState => ({ ...s, chunks: s.chunks.map((c) => ({ ...c, recent: [...c.recent] })), order: [...s.order], warm: [...s.warm], fullRuns: [...s.fullRuns], log: [...s.log], trouble: Object.fromEntries(Object.entries(s.trouble ?? {}).map(([k, v]) => [k, { ...v, days: [...v.days] }])), troubleQueue: [...(s.troubleQueue ?? [])] });
+
+/** Bars that failed on at least two different days and are not yet clean three times since — worst first. */
+export function troubleBars(s: PlanState): number[] {
+  return Object.entries(s.trouble ?? {})
+    .filter(([, t]) => t.days.length >= 2 && t.clean < 3)
+    .sort((a, b) => b[1].fails - b[1].clean - (a[1].fails - a[1].clean))
+    .map(([k]) => Number(k));
+}
 const share = (s: PlanState, c: Chunk) => c.tempo / s.target;
 
 /** A new practice day: yesterday's open chunks first, a little slower (retrieval warm-up). */
@@ -210,6 +231,7 @@ export function startDay(st: PlanState, day: string): PlanState {
   s.loop = null;
   s.burst = null;
   s.upsInRow = 0;
+  s.troubleQueue = troubleBars(s).slice(0, 2);
   return s;
 }
 
@@ -219,6 +241,11 @@ export function nextTask(s: PlanState): Task | null {
   if (s.warm.length) {
     const c = byId(s, s.warm[0]);
     return { chunk: c.id, kind: 'warm', from: c.from, to: c.to, tempo: Math.max(30, r(c.tempo * 0.95)) };
+  }
+  if (s.troubleQueue?.length) {
+    const bar = s.troubleQueue[0];
+    const c = s.chunks.find((x) => x.kind !== 'join' && bar >= x.from && bar <= x.to) ?? s.chunks[0];
+    return { chunk: c.id, kind: 'trouble', from: Math.max(c.from, bar - (bar > c.from ? 1 : 0)), to: bar, tempo: Math.max(30, r(Math.max(c.best, c.tempo) * 0.85)) };
   }
   if (s.loop) {
     const c = byId(s, s.loop.chunk);
@@ -245,8 +272,23 @@ export function recordRep(st: PlanState, task: Task, res: RepResult, now: Date):
   const s = clone(st);
   const ev: CoachEvent[] = [];
   const clean = res.acc >= CLEAN_ACC && res.timingOk && !res.stopped;
-  s.log = [...s.log, { at: now.toISOString(), chunk: task.chunk, tempo: task.tempo, acc: Math.round(res.acc * 1000) / 1000, clean }].slice(-2000);
+  s.log = [...s.log, { at: now.toISOString(), chunk: task.chunk, tempo: task.tempo, acc: Math.round(res.acc * 1000) / 1000, clean, bar: res.errorBar ?? null }].slice(-2000);
   const c = byId(s, task.chunk);
+  // trouble memory: a failing bar is remembered with the day; clean passes over it count down
+  s.trouble ??= {};
+  if (!clean && res.errorBar !== null && res.errorBar !== undefined) {
+    const t = (s.trouble[res.errorBar] ??= { fails: 0, clean: 0, days: [] });
+    t.fails++;
+    t.clean = 0;
+    if (!t.days.includes(s.day)) t.days = [...t.days, s.day].slice(-10);
+  } else if (clean) for (let b = task.from; b <= task.to; b++) if (s.trouble[b]) s.trouble[b].clean++;
+  if (task.kind === 'trouble') {
+    // two clean takes of the trouble bar retire it for today
+    const bar = task.to;
+    const lastTwo = s.log.filter((x) => x.chunk === task.chunk).slice(-2);
+    if (clean && lastTwo.length === 2 && lastTwo.every((x) => x.clean)) s.troubleQueue = (s.troubleQueue ?? []).filter((x) => x !== bar);
+    return { state: s, events: ev };
+  }
 
   if (task.kind === 'warm') {
     s.warm.shift();

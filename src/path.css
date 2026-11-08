@@ -2230,3 +2230,17 @@ button.chip.on {
 .mx-sub { color: var(--ink-dim); margin-top: 6px; }
 .mx-rt { justify-content: flex-end; }
 .mx-open { margin-top: 8px; width: 100%; }
+
+/* score view (0.49) */
+.score-view { position: relative; max-height: 46vh; overflow-y: auto; border-radius: 12px; background: #fff; color: #111; }
+.score-view .score-inner { position: relative; }
+.score-view svg { display: block; }
+.score-bar { all: unset; position: absolute; box-sizing: border-box; border-radius: 6px; cursor: pointer; }
+.score-bar.range { background: rgba(92, 242, 181, 0.12); }
+.score-bar.now { background: rgba(255, 201, 77, 0.22); outline: 2px solid rgba(255, 166, 0, 0.55); }
+.score-bar:focus-visible { outline: 2px solid #2b6cff; }
+.score-cursor { position: absolute; width: 3px; margin-left: -1px; background: #ff3b6b; border-radius: 2px; pointer-events: none; transition: left 0.12s linear; }
+.pc-wait { display: inline-flex; gap: 6px; align-items: center; font-size: 0.9rem; }
+.pieces .ch-list { list-style: none; margin: 0; padding: 0; display: grid; }
+.pieces .ch-row { all: unset; box-sizing: border-box; width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 2px; border-top: 1px solid var(--line); cursor: pointer; }
+.pieces .ch-list li:first-child .ch-row { border-top: 0; }
