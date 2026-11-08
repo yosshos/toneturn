@@ -420,6 +420,8 @@ code {
   width: 100%;
   margin: 0 auto;
   display: grid;
+  /* one column that never grows past the screen (a wide child used to push the streak sheet off the side) */
+  grid-template-columns: minmax(0, 1fr);
   gap: 14px;
   animation: up 0.25s ease-out;
 }

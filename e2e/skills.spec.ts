@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { openGames } from './practice';
 
 // The first lesson of the day shows the streak screen over the recap; dismiss it whenever it is in the way.
 test.beforeEach(async ({ page }) => {
@@ -98,12 +99,14 @@ test.describe('placement, Skill Map, review, weekly puzzle', () => {
 
   test('weekly puzzle: solve on the first try → gold, shown on the home screen', async ({ page }) => {
     await page.goto('/?sim=1#/arcade');
+    await openGames(page);
     await page.getByRole('button', { name: /Weekly puzzle/ }).click();
     await page.getByRole('button', { name: 'Use my voice & start' }).click();
     await expect(page.locator('.ask')).toHaveText('Which degrees, in order?');
     await expect(page.getByRole('heading', { name: 'Lesson complete' })).toBeVisible({ timeout: 90_000 });
     await page.getByRole('button', { name: 'Home' }).click();
     await page.locator('.tab[data-tab="arcade"]').click();
+    await openGames(page);
     await expect(page.getByRole('button', { name: /Weekly puzzle/ })).toContainText('Gold this week');
   });
 
@@ -111,6 +114,7 @@ test.describe('placement, Skill Map, review, weekly puzzle', () => {
     await page.goto('/?sim=1');
     await page.getByRole('radio', { name: 'Buttons' }).click();
     await page.locator('.tab[data-tab="arcade"]').click();
+    await openGames(page);
     await page.getByRole('button', { name: /Weekly puzzle/ }).click();
     await expect(page.locator('.seq-keys .seq-key')).toHaveCount(7, { timeout: 60_000 });
     const slots = await page.locator('.seq-slots .slot').count();

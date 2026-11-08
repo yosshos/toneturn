@@ -2044,3 +2044,49 @@ button.chip.on {
 .path-history .hist-steps { display: flex; flex-wrap: wrap; gap: 6px; }
 .path-history .hist-step { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px 4px 6px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--hue) 35%, transparent); background: color-mix(in srgb, var(--hue) 8%, transparent); color: inherit; font: inherit; font-size: .85rem; cursor: pointer; }
 .path-history .hist-step svg { width: 16px; height: 16px; color: var(--hue); }
+
+/* 0.44 — Progress area sheet: the area's rank, each sub-skill with its rank bar and small Learn / Play buttons */
+.area-sheet { max-height: 88dvh; overflow-y: auto; }
+.area-sheet .as-head { display: grid; gap: 6px; }
+.area-sheet .as-head small { color: var(--ink-dim); }
+.area-sheet .dt-bar { display: block; height: 6px; border-radius: 99px; background: color-mix(in srgb, var(--hue) 14%, transparent); overflow: hidden; }
+.area-sheet .dt-bar > span { display: block; height: 100%; border-radius: inherit; background: var(--hue); }
+.area-sheet .as-skills { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.area-sheet .as-skill { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line, rgba(127,127,127,.2)); }
+.area-sheet .as-info { flex: 1; min-width: 0; display: grid; gap: 5px; }
+.area-sheet .as-name { display: flex; align-items: center; gap: 6px; }
+.area-sheet .as-name b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.area-sheet .as-info small { color: var(--ink-dim); font-size: .8rem; }
+.area-sheet .as-btns { display: flex; gap: 6px; flex: none; }
+.area-sheet .as-btns .icon-btn { width: 36px; height: 36px; min-height: 36px; padding: 0; display: grid; place-items: center; }
+.area-sheet .as-btns .icon-btn.as-play { background: var(--hue); color: #fff; border-color: transparent; }
+/* the shop price buttons in the streak sheet never wrap ("200 💎") */
+.shop-row .btn { flex: none; white-space: nowrap; }
+
+/* 0.44 — Practice tab hub: songs, technique and singing above the games, with the tools */
+.practice-hub { display: grid; gap: 10px; margin-bottom: 4px; }
+.practice-hub .hub-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.practice-hub .hub-card { display: flex; align-items: center; gap: 10px; text-align: start; padding: 12px; min-height: 64px; border-radius: 14px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font: inherit; cursor: pointer; }
+.practice-hub .hub-icon { width: 38px; height: 38px; flex: none; display: grid; place-items: center; border-radius: 10px; color: var(--accent, var(--ink)); background: color-mix(in srgb, var(--accent, #888) 12%, transparent); }
+.practice-hub .hub-songs .hub-icon { color: var(--hue-voice, var(--accent)); background: color-mix(in srgb, var(--hue-voice, #888) 14%, transparent); }
+.practice-hub .hub-drills .hub-icon { color: var(--hue-instrument, var(--accent)); background: color-mix(in srgb, var(--hue-instrument, #888) 14%, transparent); }
+.practice-hub .hub-vocal .hub-icon { color: var(--hue-pitch, var(--accent)); background: color-mix(in srgb, var(--hue-pitch, #888) 14%, transparent); }
+.practice-hub .hub-text { display: grid; gap: 2px; min-width: 0; }
+.practice-hub .hub-text b { font-weight: 700; }
+.practice-hub .hub-text small { color: var(--ink-dim); font-size: 0.8rem; line-height: 1.3; }
+.practice-hub .hub-tools { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.practice-hub .hub-tools-h { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-dim); margin-inline-end: 4px; }
+.practice-hub .hub-tool { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font: inherit; font-size: 0.88rem; cursor: pointer; }
+.practice-hub .hub-games-h { margin: 8px 0 0; }
+.songs-screen .songs-sing { justify-self: start; margin: 4px 0 10px; }
+.practice-hub .hub-cards { grid-template-columns: 1fr 1fr; }
+.practice-hub .hub-card:last-child:nth-child(odd) { grid-column: 1 / -1; }
+.practice-hub .hub-games .hub-icon { color: var(--hue-memory, var(--accent)); background: color-mix(in srgb, var(--hue-memory, #888) 14%, transparent); }
+
+/* 0.44 — Technique topics: one scrolling chip row, sections like the games list */
+.drill-topics { display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 6px; scrollbar-width: none; padding-bottom: 2px; }
+.drill-topics .chip { flex: none; }
+.drill-topic { display: grid; gap: 8px; }
+.drill-topic h2, .drill-songs h2 { margin: 6px 0 0; }
+.drill-songs { display: grid; gap: 6px; }
+.drill-songs-link { width: 100%; text-align: start; }

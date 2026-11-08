@@ -12,7 +12,7 @@ interface Props {
   settings: Settings;
   user: CloudUser | null;
   onClose: () => void;
-  onNavigate: (r: 'tuner' | 'metronome' | 'friends' | 'settings' | 'diagnostics' | 'games' | 'classes' | 'placement' | 'truefalse' | 'achievements' | 'studio') => void;
+  onNavigate: (r: 'tuner' | 'metronome' | 'drone' | 'friends' | 'settings' | 'diagnostics' | 'games' | 'classes' | 'placement' | 'truefalse' | 'achievements' | 'studio') => void;
   onSettings: (p: Partial<Settings>) => void;
 }
 
@@ -59,6 +59,11 @@ const MENU_ICON: Record<string, React.ReactNode> = {
     <>
       <path d="M8.5 3h7l4 18h-15z" />
       <path d="M12 16l4.5-9M6.5 16h11" />
+    </>
+  ),
+  drone: (
+    <>
+      <path d="M3 12h2M7 8v8M11 5v14M15 8v8M19 10v4" />
     </>
   ),
   mic: (
@@ -109,30 +114,43 @@ export function MenuSheet({ t, settings, user, onClose, onNavigate, onSettings }
           </button>
         </div>
 
-        <nav className="menu-links">
-          {(
-            [
-              ['placement', 'level', t.findLevel],
+        {/* Grouped by what you do (owner 2026-11-08: the old list mixed the level test, settings and tools) */}
+        {(
+          [
+            [lang === 'he' ? 'כלים' : 'Tools', [
               ['tuner', 'tuner', lang === 'he' ? 'טיונר' : 'Tuner'],
               ['metronome', 'metronome', lang === 'he' ? 'מטרונום' : 'Metronome'],
+              ['drone', 'drone', lang === 'he' ? 'צליל רקע' : 'Drone'],
+            ]],
+            [lang === 'he' ? 'בדיקה' : 'Check yourself', [
+              ['placement', 'level', t.findLevel],
+              ['diagnostics', 'mic', t.diagnostics],
+            ]],
+            [lang === 'he' ? 'קהילה' : 'Community', [
               ['friends', 'friends', t.friends],
               ['classes', 'class', t.classes],
               ['achievements', 'medal', t.achievementsTitle],
-              ['settings', 'gear', t.settings],
-              ['diagnostics', 'mic', t.diagnostics],
-            ] as const
-          ).map(([to, icon, label]) => (
-            <button key={to} className="menu-link" onClick={() => onNavigate(to)}>
-              <span className="ml-icon" aria-hidden="true">
-                <MenuIcon k={icon} />
-              </span>
-              <span className="ml-text">{label}</span>
-              <span className="ml-chev flip-rtl" aria-hidden="true">
-                ›
-              </span>
-            </button>
-          ))}
-        </nav>
+            ]],
+            [lang === 'he' ? 'אפליקציה' : 'App', [['settings', 'gear', t.settings]]],
+          ] as const
+        ).map(([title, rows]) => (
+          <section key={title} className="menu-group">
+            <h3 className="menu-group-h">{title}</h3>
+            <nav className="menu-links">
+              {rows.map(([to, icon, label]) => (
+                <button key={to} className="menu-link" onClick={() => onNavigate(to)} data-menu={to}>
+                  <span className="ml-icon" aria-hidden="true">
+                    <MenuIcon k={icon} />
+                  </span>
+                  <span className="ml-text">{label}</span>
+                  <span className="ml-chev flip-rtl" aria-hidden="true">
+                    ›
+                  </span>
+                </button>
+              ))}
+            </nav>
+          </section>
+        ))}
 
         {/* ---- Notifications ---- */}
         <section className="menu-card">

@@ -58,3 +58,9 @@ export function refresherFor(q: Question, lessonId?: string | null): MiniLesson 
   }
   return null;
 }
+
+/** The mini-lesson that teaches a skill (the "Learn" button on the Progress area sheet), or null. */
+export function miniForSkill(skill: SkillId): MiniLesson | null {
+  const id = indexes().bySkill.get(skill);
+  return id ? MINI_LESSONS[id] ?? null : null;
+}

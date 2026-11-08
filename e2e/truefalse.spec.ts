@@ -1,9 +1,11 @@
 import { expect, test } from '@playwright/test';
+import { openGames } from './practice';
 
 test.describe('Truth or Bluff', () => {
   test('solo 60-second run on theory statements: answer, a bluff shows why, score, best kept', async ({ page }) => {
     test.setTimeout(180_000);
     await page.goto('/#/arcade');
+    await openGames(page);
     await page.getByRole('button', { name: /Truth or Bluff/ }).first().click();
     await expect(page.getByText('No best score yet at this level.')).toBeVisible();
     // Default topics: all the theory (no sound); level Easy.

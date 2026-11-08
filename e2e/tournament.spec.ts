@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { openGames } from './practice';
 
 /** Wait until a round is open for answers, then tap one choice per player. */
 async function playRound(page: Page, picks: number[]) {
@@ -13,6 +14,7 @@ test.describe('tournament', () => {
   test('duel on one device: split screen, both answer, standings at the end', async ({ page }) => {
     test.setTimeout(120_000);
     await page.goto('/#/arcade');
+    await openGames(page);
     await page.getByRole('button', { name: /Duel on this device/ }).click();
     await page.getByRole('textbox', { name: 'Player 1' }).fill('Dana');
     await page.getByRole('textbox', { name: 'Player 2' }).fill('Omer');
@@ -34,12 +36,14 @@ test.describe('tournament', () => {
     await page.screenshot({ path: 'test-results/duel-over.png' });
     await page.getByRole('button', { name: 'Home' }).click();
     await page.locator('.tab[data-tab="arcade"]').click();
+    await openGames(page);
     await expect(page.getByRole('button', { name: /Duel on this device/ })).toBeVisible();
   });
 
   test('daily challenge: 5 questions, spoiler-free share card, first play recorded', async ({ page }) => {
     test.setTimeout(120_000);
     await page.goto('/#/arcade');
+    await openGames(page);
     await page.getByRole('button', { name: /Daily challenge/ }).click();
     await page.getByRole('button', { name: /Play/ }).click();
     for (let r = 0; r < 5; r++) await playRound(page, [0]);
@@ -50,6 +54,7 @@ test.describe('tournament', () => {
     const text = await card.textContent();
     await page.getByRole('button', { name: 'Home' }).click();
     await page.locator('.tab[data-tab="arcade"]').click();
+    await openGames(page);
     await expect(page.getByRole('button', { name: /Daily challenge/ })).toContainText('Done today');
     await page.reload();
     await page.getByRole('button', { name: /Daily challenge/ }).click();

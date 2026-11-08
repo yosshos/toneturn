@@ -18,7 +18,7 @@ import { lessonStates, NodeIcon, starsFor, TOTALS } from './Home';
 import { MicIcon, withNote } from './bits';
 import { GameIcon } from './Games';
 import { RankCrest } from './Badges';
-import { areaProgress, rankLabel, techniqueProgress, type RankProgress } from '../engine/ranks';
+import { areaProgress, divFloor, divisionFor, MASTER_DIV, rankLabel, techniqueProgress, type RankProgress } from '../engine/ranks';
 import { techniqueOf } from '../engine/rankBadges';
 import type { GameKind } from '../game/memoryGame';
 
@@ -274,10 +274,27 @@ function rankHint(p: RankProgress, lang: 'en' | 'he'): string {
   return `→ ${rankLabel(p.next, lang)}`;
 }
 
-export function DomainTiles({ t, progress, onPractice, lang = 'en', onTechnique }: { t: Strings; progress: Progress; onPractice: (k: SkillId) => void; lang?: 'en' | 'he'; /** Adds the Technique tile (Progress tab). */ onTechnique?: () => void }) {
+export function DomainTiles({
+  t,
+  progress,
+  onPractice,
+  lang = 'en',
+  onTechnique,
+  onLearn,
+}: {
+  t: Strings;
+  progress: Progress;
+  onPractice: (k: SkillId) => void;
+  lang?: 'en' | 'he';
+  /** Adds the Technique tile (Progress tab). */
+  onTechnique?: () => void;
+  /** Progress tab (owner 2026-11-08): a tile opens the area sheet (sub-skills, ranks, Play / Learn) instead of playing. */
+  onLearn?: { has: (k: SkillId) => boolean; open: (k: SkillId) => void };
+}) {
   const ratings = ratingsOf(progress);
   const events = progress.ratingEvents ?? [];
   const weakest = weakestSkill(ratings);
+  const [open, setOpen] = useState<DomainId | null>(null);
   return (
     <section className="home-section domains" aria-label={t.domainsTitle}>
       <h2 className="home-h">{t.domainsTitle}</h2>
@@ -290,7 +307,7 @@ export function DomainTiles({ t, progress, onPractice, lang = 'en', onTechnique 
           const rp = areaProgress(ratings, events, d.id, progress.ranks?.[d.id]);
           const pct = Math.round(rp.frac * 100);
           return (
-            <button key={d.id} className="domain-tile" style={{ ['--hue' as string]: DOMAIN_HUE[d.id] }} onClick={() => onPractice(pick)} data-domain={d.id}>
+            <button key={d.id} className="domain-tile" style={{ ['--hue' as string]: DOMAIN_HUE[d.id] }} onClick={() => (onLearn ? setOpen(d.id) : onPractice(pick))} data-domain={d.id}>
               <span className="dt-top">
                 {rp.div !== null ? (
                   <span className="dt-rank">
@@ -339,7 +356,86 @@ export function DomainTiles({ t, progress, onPractice, lang = 'en', onTechnique 
             );
           })()}
       </div>
+      {open && onLearn && <AreaSheet t={t} lang={lang} progress={progress} area={open} onClose={() => setOpen(null)} onPractice={(k) => (setOpen(null), onPractice(k))} learn={onLearn} />}
     </section>
+  );
+}
+
+/** One sub-skill's rank from its rating: the division and the bar to the next (never full below Master). */
+function skillRank(r: number): { div: number; frac: number } {
+  const div = divisionFor(r);
+  if (div >= MASTER_DIV) return { div, frac: 1 };
+  const lo = divFloor(div);
+  return { div, frac: Math.max(0, Math.min(0.99, (r - lo) / (divFloor(div + 1) - lo))) };
+}
+
+/** The area sheet: the area's rank and bar, then every sub-skill with its rank, a bar, and small Play / Learn buttons. */
+function AreaSheet({ t, lang, progress, area, onClose, onPractice, learn }: { t: Strings; lang: 'en' | 'he'; progress: Progress; area: DomainId; onClose: () => void; onPractice: (k: SkillId) => void; learn: { has: (k: SkillId) => boolean; open: (k: SkillId) => void } }) {
+  const ratings = ratingsOf(progress);
+  const d = DOMAINS.find((x) => x.id === area)!;
+  const rp = areaProgress(ratings, progress.ratingEvents ?? [], area, progress.ranks?.[area]);
+  const he = lang === 'he';
+  useEffect(() => {
+    const k = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    addEventListener('keydown', k);
+    return () => removeEventListener('keydown', k);
+  }, [onClose]);
+  return (
+    <div className="sheet-backdrop" onClick={onClose}>
+      <div className="sheet area-sheet" role="dialog" aria-modal="true" aria-labelledby="area-sheet-title" onClick={(e) => e.stopPropagation()} style={{ ['--hue' as string]: DOMAIN_HUE[area] }} data-area-sheet={area}>
+        <div className="menu-head">
+          <h2 id="area-sheet-title">
+            <RankCrest div={rp.div} size={32} lang={lang} /> {t.domainNames[area]}
+          </h2>
+          <button className="icon-btn" onClick={onClose} aria-label={t.back}>
+            ✕
+          </button>
+        </div>
+        <div className="as-head">
+          <small>{rp.div !== null ? rankLabel(rp.div, lang) : t.domainUnmeasured}</small>
+          <span className="dt-bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(rp.frac * 100)} aria-label={rankHint(rp, lang)}>
+            <span style={{ width: `${Math.max(rp.div === null && !rp.frac ? 0 : 4, Math.round(rp.frac * 100))}%` }} />
+          </span>
+          <small className="dt-next">{rankHint(rp, lang)}</small>
+        </div>
+        <ul className="as-skills">
+          {d.skills.map((k) => {
+            const sr = ratings[k];
+            const measured = !!sr && sr.n > 0;
+            const rk = measured ? skillRank(sr!.r) : null;
+            return (
+              <li key={k} className="as-skill" data-skill={k}>
+                <div className="as-info">
+                  <span className="as-name">
+                    <b>{t.skillNames[k]}</b>
+                    {rk && <RankCrest div={rk.div} size={20} lang={lang} />}
+                  </span>
+                  <span className="dt-bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={rk ? Math.round(rk.frac * 100) : 0} aria-label={t.skillNames[k]}>
+                    <span style={{ width: rk ? `${Math.max(4, Math.round(rk.frac * 100))}%` : '0%' }} />
+                  </span>
+                  <small>{rk ? `${rankLabel(rk.div, lang)}${sr!.n < 10 ? '?' : ''}` : t.domainUnmeasured}</small>
+                </div>
+                <div className="as-btns">
+                  {learn.has(k) && (
+                    <button className="icon-btn small" onClick={() => learn.open(k)} aria-label={`${he ? 'ללמוד' : 'Learn'}: ${t.skillNames[k]}`} title={he ? 'ללמוד' : 'Learn'} data-learn={k}>
+                      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z" />
+                        <path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5" />
+                      </svg>
+                    </button>
+                  )}
+                  <button className="icon-btn small as-play" onClick={() => onPractice(k)} aria-label={`${he ? 'לתרגל' : 'Play'}: ${t.skillNames[k]}`} title={he ? 'לתרגל' : 'Play'} data-play={k}>
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+                      <path d="M7 4.5v15l13-7.5z" />
+                    </svg>
+                  </button>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </div>
   );
 }
 
@@ -525,12 +621,100 @@ export const GAMES2: { id: 'drills' | 'highway' | 'flight' | 'melodypuzzle' | 'n
   { id: 'pitchmemory', icon: '🎯', hue: 'var(--hue-creative)', cat: 'ear', en: ['Pitch Memory', 'Once a day: your note, from memory.'], he: ['זיכרון צליל', 'פעם ביום: הצליל שלכם, מהזיכרון.'] },
 ];
 
-export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline, onGhost, onDaily, onPuzzle, onGame2, lang = 'en' }: { t: Strings; progress: Progress; onGame: (k: GameKind) => void; onTrueFalse: () => void; onDuel: () => void; onOnline: () => void; onGhost: () => void; onDaily: () => void; onPuzzle: () => void; onGame2?: (id: (typeof GAMES2)[number]['id']) => void; lang?: 'he' | 'en' }) {
+/** Practice tab hub (owner 2026-11-08): songs, technique and singing get their own place above the games, with the tools. */
+export interface PracticeHub {
+  songs: () => void;
+  drills: () => void;
+  vocal?: () => void;
+  tuner: () => void;
+  metronome: () => void;
+  drone: () => void;
+}
+const HUB_PATHS: Record<string, React.ReactNode> = {
+  songs: (
+    <>
+      <path d="M9 18V5l11-2v13" />
+      <circle cx="6.5" cy="18" r="2.5" />
+      <circle cx="17.5" cy="16" r="2.5" />
+    </>
+  ),
+  drills: (
+    <>
+      <path d="M8 12h8" />
+      <rect x="5" y="7" width="3" height="10" rx="1" />
+      <rect x="16" y="7" width="3" height="10" rx="1" />
+      <path d="M2.5 9.5v5M21.5 9.5v5" />
+    </>
+  ),
+  vocal: (
+    <>
+      <rect x="9" y="3" width="6" height="11" rx="3" />
+      <path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21" />
+    </>
+  ),
+  tuner: (
+    <>
+      <path d="M4.5 16a8 8 0 0 1 15 0" />
+      <path d="M12 16l3.5-6.5" />
+      <circle cx="12" cy="16" r="1.2" />
+    </>
+  ),
+  metronome: (
+    <>
+      <path d="M8.5 3h7l4 18h-15z" />
+      <path d="M12 16l4.5-9M6.5 16h11" />
+    </>
+  ),
+  drone: (
+    <>
+      <path d="M3 12h2M7 8v8M11 5v14M15 8v8M19 10v4M21 12h0" />
+    </>
+  ),
+  games: (
+    <>
+      <rect x="2.5" y="7" width="19" height="11" rx="5.5" />
+      <path d="M7.5 10.5v4M5.5 12.5h4M15.5 11.5h0M18 13.5h0" />
+    </>
+  ),
+};
+const HubIcon = ({ k, size = 22 }: { k: string; size?: number }) => (
+  <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    {HUB_PATHS[k]}
+  </svg>
+);
+const HUB_TX = {
+  songs: { en: ['Songs', 'Play and sing real songs'], he: ['שירים', 'לנגן ולשיר שירים אמיתיים'] },
+  drills: { en: ['Technique', 'Scales, chords and drills'], he: ['טכניקה', 'סולמות, אקורדים ותרגילים'] },
+  vocal: { en: ['Singing', 'Voice, range and singing'], he: ['שירה', 'קול, מנעד ושירה'] },
+  tools: { en: 'Tools', he: 'כלים' },
+  tuner: { en: 'Tuner', he: 'טיונר' },
+  metronome: { en: 'Metronome', he: 'מטרונום' },
+  drone: { en: 'Drone', he: 'צליל רקע' },
+  games: { en: ['Games', 'By type, topic and level'], he: ['משחקים', 'לפי סוג, נושא ורמה'] },
+};
+
+export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline, onGhost, onDaily, onPuzzle, onGame2, lang = 'en', hub }: { t: Strings; progress: Progress; onGame: (k: GameKind) => void; onTrueFalse: () => void; onDuel: () => void; onOnline: () => void; onGhost: () => void; onDaily: () => void; onPuzzle: () => void; onGame2?: (id: (typeof GAMES2)[number]['id']) => void; lang?: 'he' | 'en'; hub?: PracticeHub }) {
   // Status of the weekly puzzle and the daily challenge (moved here from the old Home tools, 0.41).
   const daily = progress.daily?.[localDay(new Date())];
   const pz = progress.puzzles?.[weekId(new Date())];
   const puzzleStatus = !pz ? t.puzzleNew : pz.medal === 'gold' ? t.puzzleGold : pz.medal === 'silver' ? t.puzzleSilver : t.puzzleTried;
   const best = (n: number | undefined) => (n ? <span className="best-chip">{t.personalBest}: {n}</span> : null);
+  // Practice tab (owner 2026-11-08): the hub first; "Games" opens the games list (kept while you play a game and come back).
+  const [games, setGames] = useState<boolean>(() => {
+    try {
+      return !hub || sessionStorage.getItem('toneturn.practice') === 'games';
+    } catch {
+      return !hub;
+    }
+  });
+  const showGames = (on: boolean) => {
+    setGames(on);
+    try {
+      sessionStorage.setItem('toneturn.practice', on ? 'games' : 'hub');
+    } catch {
+      /* fine */
+    }
+  };
   const [cat, setCat] = useState<GameCat | 'all'>(() => {
     try {
       return (sessionStorage.getItem('toneturn.playcat') as GameCat | 'all' | null) ?? 'all';
@@ -558,8 +742,47 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
   ];
   return (
     <main className="play-screen">
-      <h1 className="screen-title">{t.playTitle}</h1>
-      <p className="field-hint">{t.playHint}</p>
+      {hub && games ? (
+        <header className="screen-head">
+          <button className="icon-btn" onClick={() => showGames(false)} aria-label={t.back}>
+            <span className="flip-rtl">‹</span>
+          </button>
+          <h1>{HUB_TX.games[lang][0]}</h1>
+        </header>
+      ) : (
+        <>
+          <h1 className="screen-title">{t.playTitle}</h1>
+          <p className="field-hint">{t.playHint}</p>
+        </>
+      )}
+      {hub && !games && (
+        <section className="practice-hub" data-practice-hub="1">
+          <div className="hub-cards">
+            {(['songs', 'drills', 'games', ...(hub.vocal ? (['vocal'] as const) : [])] as const).map((k) => (
+              <button key={k} className={`hub-card hub-${k}`} onClick={k === 'games' ? () => showGames(true) : hub[k]} data-hub={k}>
+                <span className="hub-icon">
+                  <HubIcon k={k} />
+                </span>
+                <span className="hub-text">
+                  <b>{HUB_TX[k][lang][0]}</b>
+                  <small>{HUB_TX[k][lang][1]}</small>
+                </span>
+              </button>
+            ))}
+          </div>
+          <div className="hub-tools" role="group" aria-label={HUB_TX.tools[lang]}>
+            <span className="hub-tools-h">{HUB_TX.tools[lang]}</span>
+            {(['tuner', 'metronome', 'drone'] as const).map((k) => (
+              <button key={k} className="hub-tool" onClick={hub[k]} data-hub={k}>
+                <HubIcon k={k} size={18} />
+                <span>{HUB_TX[k][lang]}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+      {(!hub || games) && (
+      <>
       <button className="play-hero" onClick={onPuzzle}>
         <span className="mission-shine" aria-hidden="true" />
         <span className="ph-icon" aria-hidden="true">
@@ -619,6 +842,8 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
         </span>
         <span className="live-go">{t.liveRoom}</span>
       </button>
+      </>
+      )}
     </main>
   );
 }

@@ -18,6 +18,22 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.44.0',
+    date: '2026-11-08',
+    en: [
+      'A new Practice tab: Songs, Technique, Games and Singing, with your tools (tuner, metronome, drone) one tap away',
+      'Technique and Games open lists split by topic, with filters; the songbook has its own page',
+      'Progress: tap an area to see each sub-skill with its rank, a bar, and Learn / Play buttons',
+      'The menu in groups: Tools, Check yourself, Community, App; the streak window fits the screen again',
+    ],
+    he: [
+      'לשונית תרגול חדשה: שירים, טכניקה, משחקים ושירה, והכלים שלכם (טיונר, מטרונום, צליל רקע) בהקשה אחת',
+      'טכניקה ומשחקים נפתחים לרשימות לפי נושא עם סינון; לספר השירים יש דף משלו',
+      'התקדמות: הקשה על תחום מראה כל תת־תחום עם דרגה, פס התקדמות וכפתורי ללמוד / לתרגל',
+      'התפריט מסודר בקבוצות: כלים, בדיקה, קהילה, אפליקציה; חלון הרצף שוב נכנס במסך',
+    ],
+  },
+  {
     version: '0.43.0',
     date: '2026-11-08',
     en: ['Metronome: choose a drum kit — Classic, Jazz club, Rock, Brushes, Drum machine or Body percussion — recorded from real kits (free CC0 libraries: Virtuosity Drums, Big Rusty Drums, Body Percussion)'],

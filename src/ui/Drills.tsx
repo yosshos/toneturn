@@ -101,14 +101,18 @@ export interface DrillsProps {
   /** Open on the technique level test (after Find my level). */
   startTest?: boolean;
   onTestDone?: () => void;
+  /** Open on the songbook (Practice → Songs, 0.44). */
+  songs?: boolean;
+  /** "Sing a song" on the songbook page. */
+  onSing?: () => void;
 }
 
-type View = { k: 'test' } | { k: 'hub' } | { k: 'family'; f: FamilyDef } | { k: 'run'; queue: Drill[]; i: number; from: View } | { k: 'settings' } | { k: 'calib' } | { k: 'creator'; edit?: CustomDrill };
+type View = { k: 'test' } | { k: 'hub' } | { k: 'songs' } | { k: 'family'; f: FamilyDef } | { k: 'run'; queue: Drill[]; i: number; from: View } | { k: 'settings' } | { k: 'calib' } | { k: 'creator'; edit?: CustomDrill };
 
-export function Drills({ lang, settings, onSettings, items, onTake, onBack, queue, onQueueDone, startTest, onTestDone }: DrillsProps) {
+export function Drills({ lang, settings, onSettings, items, onTake, onBack, queue, onQueueDone, startTest, onTestDone, songs, onSing }: DrillsProps) {
   const tx = T[lang];
   const ds = drillSettingsOf(settings);
-  const [view, setView] = useState<View>(startTest ? { k: 'test' } : queue?.length ? { k: 'run', queue, i: 0, from: { k: 'hub' } } : { k: 'hub' });
+  const [view, setView] = useState<View>(startTest ? { k: 'test' } : queue?.length ? { k: 'run', queue, i: 0, from: { k: 'hub' } } : songs ? { k: 'songs' } : { k: 'hub' });
   const head = (title: string, back: () => void) => (
     <header className="screen-head">
       <button className="icon-btn" onClick={back} aria-label="Back">
@@ -133,6 +137,19 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
           onTake={onTake}
           onEnd={(takes, clean) => (onQueueDone && queue?.length ? onQueueDone(takes, clean) : setView(view.from))}
         />
+      </main>
+    );
+  if (view.k === 'songs')
+    return (
+      <main className="drills-screen songs-screen" data-drills="songs">
+        {head(lang === 'he' ? 'שירים' : 'Songs', onBack)}
+        <p className="field-hint">{lang === 'he' ? 'שירים מוכרים מנחלת הכלל: לנגן את המנגינה, את האקורדים או את שניהם — או לשיר.' : 'Well-known public-domain songs: play the melody, the chords or both — or sing.'}</p>
+        {onSing && (
+          <button className="btn songs-sing" onClick={onSing} data-song-sing="1">
+            {lang === 'he' ? 'לשיר שיר' : 'Sing a song'}
+          </button>
+        )}
+        <SongList lang={lang} ds={ds} onRun={(q) => setView({ k: 'run', queue: q, i: 0, from: { k: 'songs' } })} />
       </main>
     );
   if (view.k === 'test')
@@ -219,10 +236,59 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
 }
 
 
+/** Technique topics (owner 2026-11-08): the drills split and filtered like the games list. */
+type DrillTopic = 'all' | 'scales' | 'chords' | 'hands' | 'styles' | 'songs' | 'mine';
+const TOPIC_OF: Record<string, Exclude<DrillTopic, 'all' | 'songs' | 'mine'>> = {
+  scales: 'scales', arpeggios: 'scales', 'g-scales': 'scales', 'g-arps': 'scales', 'g-reading': 'scales', 'g-bass': 'scales',
+  cadences: 'chords', voicings: 'chords', accomp: 'chords', 'g-chords': 'chords', 'g-rhythm': 'chords',
+  fingers: 'hands', control: 'hands', advanced: 'hands', 'g-fretting': 'hands', 'g-picking': 'hands', 'g-legato': 'hands', 'g-fingerstyle': 'hands',
+  harris: 'styles', jazz: 'styles', 'g-lead': 'styles', 'g-flamenco': 'styles', 'g-jazz': 'styles', 'g-impro': 'styles',
+};
+const TOPIC_NAME: Record<DrillTopic, { en: string; he: string }> = {
+  all: { en: 'All', he: 'הכול' },
+  scales: { en: 'Scales & arpeggios', he: 'סולמות וארפג׳יו' },
+  chords: { en: 'Chords & harmony', he: 'אקורדים והרמוניה' },
+  hands: { en: 'Hand technique', he: 'טכניקת ידיים' },
+  styles: { en: 'Styles & jazz', he: 'סגנונות וג׳אז' },
+  songs: { en: 'Songs', he: 'שירים' },
+  mine: { en: 'My drills', he: 'התרגילים שלי' },
+};
+
 function Hub({ lang, ds, settings, items, head, onFamily, onRun, onSettings, onCreate, onTest, onInstrument }: { lang: Lang; ds: DrillSettings; settings: Settings; items: Record<string, ItemState>; head: React.ReactNode; onFamily: (f: FamilyDef) => void; onRun: (q: Drill[]) => void; onSettings: () => void; onCreate: (edit?: CustomDrill) => void; onTest: () => void; onInstrument: (i: 'piano' | 'guitar' | 'bass') => void }) {
   const tx = T[lang];
   const today = useMemo(() => todayDrills(ds, items, settings.drillStart ?? {}, settings.customDrills ?? []), [ds, items, settings.drillStart, settings.customDrills]);
   const fams = shownFamilies(ds);
+  const [topicRaw, setTopicState] = useState<DrillTopic>(() => {
+    try {
+      return (sessionStorage.getItem('toneturn.drilltopic') as DrillTopic | null) ?? 'all';
+    } catch {
+      return 'all';
+    }
+  });
+  const setTopic = (x: DrillTopic) => {
+    setTopicState(x);
+    try {
+      sessionStorage.setItem('toneturn.drilltopic', x);
+    } catch {
+      /* fine */
+    }
+  };
+  const famTopics = (['scales', 'chords', 'hands', 'styles'] as const).filter((k) => fams.some((f) => (TOPIC_OF[f.id] ?? 'hands') === k));
+  const topics: DrillTopic[] = ['all', ...famTopics, 'songs', 'mine'];
+  const topic: DrillTopic = topics.includes(topicRaw) ? topicRaw : 'all';
+  const famCard = (f: FamilyDef) => {
+    const lv = familyLevel(items, f.id);
+    return (
+      <button key={f.id} className="drill-family" style={{ ['--hue' as string]: FAM_HUE[f.id] }} onClick={() => onFamily(f)} data-family={f.id}>
+        <b>{f.title[lang]}</b>
+        <small>
+          {tx.level} <span className="lvl">{lv ? lv.toFixed(1) : '—'}</span> / 7
+        </small>
+        <HeatRow heat={keyHeat(f.id, items)} />
+      </button>
+    );
+  };
+  const show = (x: DrillTopic) => topic === 'all' || topic === x;
   return (
     <main className="drills-screen" data-drills="hub">
       {head}
@@ -239,6 +305,14 @@ function Hub({ lang, ds, settings, items, head, onFamily, onRun, onSettings, onC
           🧭 {tx.test}
         </button>
       )}
+      <div className="chips drill-topics" role="tablist" aria-label={lang === 'he' ? 'נושאים' : 'Topics'}>
+        {topics.map((x) => (
+          <button key={x} role="tab" aria-selected={topic === x} className={`chip ${topic === x ? 'on' : ''}`} onClick={() => setTopic(x)} data-topic={x}>
+            {TOPIC_NAME[x][lang]}
+          </button>
+        ))}
+      </div>
+      {topic === 'all' && (
       <section className="drill-today card" aria-label={tx.today}>
         <div className="drills-head">
           <h2>{tx.today}</h2>
@@ -258,46 +332,28 @@ function Hub({ lang, ds, settings, items, head, onFamily, onRun, onSettings, onC
           ))}
         </ol>
       </section>
-      <h2>{tx.families}</h2>
-      <div className="drill-families">
-        {fams.map((f) => {
-          const lv = familyLevel(items, f.id);
-          return (
-            <button key={f.id} className="drill-family" style={{ ['--hue' as string]: FAM_HUE[f.id] }} onClick={() => onFamily(f)} data-family={f.id}>
-              <b>{f.title[lang]}</b>
-              <small>
-                {tx.level} <span className="lvl">{lv ? lv.toFixed(1) : '—'}</span> / 7
-              </small>
-              <HeatRow heat={keyHeat(f.id, items)} />
-            </button>
-          );
-        })}
-      </div>
+      )}
+      {famTopics.filter(show).map((k) => (
+        <section key={k} className="drill-topic" data-drill-topic={k}>
+          {topic === 'all' && <h2>{TOPIC_NAME[k][lang]}</h2>}
+          <div className="drill-families">{fams.filter((f) => (TOPIC_OF[f.id] ?? 'hands') === k).map(famCard)}</div>
+        </section>
+      ))}
       {/* Songs (owner 2026-11-07): public-domain songs to play — the melody, the chords, or both hands. */}
-      <details className="drill-songs" data-drill-songs="1">
-        <summary>
-          <h2>{lang === 'he' ? 'שירים' : 'Songs'}</h2>
-          <small>{lang === 'he' ? 'מנגינות ואקורדים משירים מוכרים (נחלת הכלל)' : 'Melodies and chords of well-known songs (public domain)'}</small>
-        </summary>
-        <ul className="song-drills">
-          {SONGBOOK.map((s) => (
-            <li key={s.id}>
-              <span className="sd-title">
-                <b>{s.title[lang]}</b>
-                <small>{s.credit}</small>
-              </span>
-              <span className="sd-parts">
-                {((ds.instrument ?? 'piano') === 'piano' ? (['melody', 'chords', 'both'] as const) : ds.instrument === 'bass' ? (['melody'] as const) : (['melody', 'chords'] as const)).map((p) => (
-                  <button key={p} className="chip" data-song={s.id} data-part={p} onClick={() => onRun([songDrill(s, p, ds.instrument ?? 'piano')])}>
-                    {PART_NAME[p][lang]}
-                  </button>
-                ))}
-              </span>
-            </li>
-          ))}
-        </ul>
-      </details>
-      {(
+      {topic === 'all' && (
+        <button className="drill-family drill-songs-link" onClick={() => setTopic('songs')} data-topic-link="songs">
+          <b>{TOPIC_NAME.songs[lang]}</b>
+          <small>{lang === 'he' ? `${SONGBOOK.length} שירים מוכרים — מנגינה ואקורדים` : `${SONGBOOK.length} well-known songs — melody and chords`}</small>
+        </button>
+      )}
+      {topic === 'songs' && (
+        <section className="drill-songs" data-drill-songs="1">
+          <h2>{TOPIC_NAME.songs[lang]}</h2>
+          <small className="field-hint">{lang === 'he' ? 'מנגינות ואקורדים משירים מוכרים (נחלת הכלל)' : 'Melodies and chords of well-known songs (public domain)'}</small>
+          <SongList lang={lang} ds={ds} onRun={onRun} />
+        </section>
+      )}
+      {show('mine') && (
         <>
           <h2>{tx.mine}</h2>
           <div className="drill-levels">
@@ -694,5 +750,30 @@ function TechLevelTest({ lang, ds, cal, items, onTake, onDone }: { lang: Lang; d
         {tx.skip}
       </button>
     </div>
+  );
+}
+
+/** The songbook: each public-domain song with its playable parts for the player's instrument. */
+function SongList({ lang, ds, onRun }: { lang: Lang; ds: DrillSettings; onRun: (q: Drill[]) => void }) {
+  const inst = ds.instrument ?? 'piano';
+  const parts = inst === 'piano' ? (['melody', 'chords', 'both'] as const) : inst === 'bass' ? (['melody'] as const) : (['melody', 'chords'] as const);
+  return (
+    <ul className="song-drills">
+      {SONGBOOK.map((s) => (
+        <li key={s.id}>
+          <span className="sd-title">
+            <b>{s.title[lang]}</b>
+            <small>{s.credit}</small>
+          </span>
+          <span className="sd-parts">
+            {parts.map((p) => (
+              <button key={p} className="chip" data-song={s.id} data-part={p} onClick={() => onRun([songDrill(s, p, inst)])}>
+                {PART_NAME[p][lang]}
+              </button>
+            ))}
+          </span>
+        </li>
+      ))}
+    </ul>
   );
 }

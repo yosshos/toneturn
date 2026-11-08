@@ -1,3 +1,4 @@
+import { miniForSkill } from '../content/refresher';
 import { lazy, Suspense } from 'react';
 import { IntakeScreen } from './Intake';
 import { personalOrder, type Intake } from '../engine/intake';
@@ -93,7 +94,7 @@ import { params, piano, setMidiEnabled, SIMULATED, store, tts } from './services
 import { midi } from '../speech/midi';
 import { setPreferredMic } from '../speech/mic';
 
-type Route = 'intake' | 'studio' | 'home' | 'path' | 'arcade' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong' | 'perform' | 'learned' | 'tuner' | 'metronome' | 'drills' | 'workout' | 'workoutrun' | 'peakhunter' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'flight' | 'pitchmemory' | 'nametune' | 'tuneup' | 'highway' | 'melodypuzzle';
+type Route = 'intake' | 'studio' | 'home' | 'path' | 'arcade' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong' | 'perform' | 'learned' | 'tuner' | 'metronome' | 'songs' | 'drills' | 'workout' | 'workoutrun' | 'peakhunter' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'flight' | 'pitchmemory' | 'nametune' | 'tuneup' | 'highway' | 'melodypuzzle';
 /** Invite links: #/online/CODE */
 const onlineCodeFromHash = () => (/^#\/?online\/(\w+)/.exec(location.hash)?.[1] ?? '');
 const PLAY_HASH = 'play';
@@ -103,7 +104,7 @@ const enterPlay = () => {
 };
 const routeFromHash = (): Route => {
   const h = location.hash.replace(/^#\/?/, '').replace(/^online\/.*$/, 'online').replace(/^settings\/.*$/, 'settings');
-  return (['path', 'arcade', 'settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong', 'perform', 'learned', 'studio', 'intake', 'tuner', 'metronome', 'drills', 'workout', 'workoutrun', 'peakhunter', 'rush-chord', 'rush-note', 'rush-fretboard', 'rush-interval', 'rush-keysig', 'rush-progression', 'flight', 'pitchmemory', 'nametune', 'tuneup', 'highway', 'melodypuzzle'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
+  return (['path', 'arcade', 'settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong', 'perform', 'learned', 'studio', 'intake', 'tuner', 'metronome', 'songs', 'drills', 'workout', 'workoutrun', 'peakhunter', 'rush-chord', 'rush-note', 'rush-fretboard', 'rush-interval', 'rush-keysig', 'rush-progression', 'flight', 'pitchmemory', 'nametune', 'tuneup', 'highway', 'melodypuzzle'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
 };
 
 /** The level a generated modes lesson was made at (from its first question's pool size). */
@@ -317,7 +318,10 @@ export function App() {
   );
 
   useMotion(route);
+  // Where a tool (tuner, metronome, drone) was opened from — Practice tab or the menu — so Back returns there.
+  const toolFrom = useRef<Route>('home');
   const go = (r: Route) => {
+    if ((r === 'tuner' || r === 'metronome' || r === 'drone') && route !== r) toolFrom.current = route === 'arcade' || route === 'path' ? route : 'home';
     location.hash = r === 'lesson' || r === 'game' ? `/${PLAY_HASH}` : r === 'home' ? '' : `/${r}`;
     setRoute(r);
   };
@@ -965,6 +969,14 @@ export function App() {
           onPuzzle={openPuzzle}
           onGame2={(id) => go(id)}
           lang={s.uiLang}
+          hub={{
+            songs: () => go('songs'),
+            drills: () => go('drills'),
+            vocal: s.noSing || (s.pathLeaveOut ?? []).includes('voice') ? undefined : () => (setVocalWarmup(false), go('vocal')),
+            tuner: () => go('tuner'),
+            metronome: () => go('metronome'),
+            drone: () => go('drone'),
+          }}
           onOnline={() => {
             setOnlineFacts(null);
             setOnlineCode('');
@@ -1029,7 +1041,7 @@ export function App() {
           onPin={(trophies) => updateSettings({ trophies })}
           overview={
             <>
-              <DomainTiles t={t} progress={progress} onPractice={practiceSkill} lang={s.uiLang} onTechnique={() => go('drills')} />
+              <DomainTiles t={t} progress={progress} onPractice={practiceSkill} lang={s.uiLang} onTechnique={() => go('drills')} onLearn={{ has: (k) => !!miniForSkill(k), open: (k) => openRefresher(miniForSkill(k)!, () => undefined) }} />
               <ChallengeCard input={badgeInputOf(progress, new Date(), s.uiLang === 'he' ? [5, 6] : undefined)} lang={s.uiLang} />
               <EarChordCard t={t} ratings={ratingsOf(progress)} bestLeague={s.bestLeague} />
             </>
@@ -1223,8 +1235,8 @@ export function App() {
           }}
         />
       )}
-      {route === 'tuner' && <Tuner lang={s.uiLang} settings={s} onChange={updateSettings} onBack={() => go('home')} />}
-      {route === 'metronome' && <Metronome lang={s.uiLang} settings={s} onChange={updateSettings} onBack={() => go('home')} />}
+      {route === 'tuner' && <Tuner lang={s.uiLang} settings={s} onChange={updateSettings} onBack={() => go(toolFrom.current)} />}
+      {route === 'metronome' && <Metronome lang={s.uiLang} settings={s} onChange={updateSettings} onBack={() => go(toolFrom.current)} />}
       {unlock &&
         route !== 'lesson' &&
         (unlock.rank ? (
@@ -1247,6 +1259,27 @@ export function App() {
             drillFrom.current = null;
             go('path');
           }}
+        />
+      )}
+      {route === 'songs' && (
+        <Drills
+          key="songs"
+          lang={s.uiLang}
+          settings={s}
+          onSettings={updateSettings}
+          items={progress.drillItems ?? {}}
+          onTake={(st, evs, xp, m) => void store.recordDrill(st, evs, xp, m).then(setProgress)}
+          onBack={() => go('arcade')}
+          songs
+          onSing={
+            s.noSing
+              ? undefined
+              : () => {
+                  const r = ratingsOf(progress).singing;
+                  const lv = Math.max(1, Math.min(TOPIC_GEN['song-sing']?.levels.length ?? 1, r?.n ? 1 + Math.floor((r.r - 800) / 150) : 1));
+                  openTopic('song-sing', lv);
+                }
+          }
         />
       )}
       {(['chord', 'note', 'fretboard', 'interval', 'keysig', 'progression'] as const).map((mode) => {
@@ -1304,7 +1337,7 @@ export function App() {
       {streakOpen && (
         <StreakSheet t={t} st={gems.streak} gems={gems.balance} today={localDay(new Date())} lang={s.uiLang} onBuy={buy} purchases={s.purchases ?? []} theme={themeId} onBuyCosmetic={buyCosmetic} onTheme={(theme) => updateSettings({ theme })} onClose={() => setStreakOpen(false)} />
       )}
-      {route === 'drone' && <DroneScreen t={t} settings={s} onBack={() => go('home')} />}
+      {route === 'drone' && <DroneScreen t={t} settings={s} onBack={() => go(toolFrom.current)} />}
       {route === 'perform' && <PerformScreen t={t} settings={s} onBack={() => go('home')} onProgress={setProgress} />}
       {route === 'achievements' && <AchievementsScreen t={t} progress={progress} extra={{ bestLeague: s.bestLeague, learned: learnedCount(s), lessonsTotal: Object.keys(MINI_LESSONS).length }} onBack={() => go('skills')} />}
       {route === 'singalong' && <SingAlongScreen t={t} settings={s} onBack={() => go('vocal')} />}

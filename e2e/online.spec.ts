@@ -1,8 +1,10 @@
 import { expect, test } from '@playwright/test';
+import { openGames } from './practice';
 
 test.describe('online rooms', () => {
   test('signed out: the online screen asks to sign in', async ({ page }) => {
     await page.goto('/#/arcade');
+    await openGames(page);
     await page.getByRole('button', { name: /Online room/ }).click();
     await expect(page.getByText(/Sign in to play online/)).toBeVisible();
     await expect(page.getByRole('button', { name: /Sign in with Google/ })).toBeVisible();
