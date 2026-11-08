@@ -1,4 +1,5 @@
 -- ToneTurn / The 7th Sense — social profiles on the boards (SPEC-SOCIAL §1, §2). After 20261122000000_toneturn_social.
+-- APPLIED 2026-11-08 to the app project (with the owner's OK).
 -- 1) toneturn_friends() also returns each row's country, icon, colour and whether a photo may be shown to me;
 --    blocked players disappear from each other's lists.
 -- 2) Storage read rule for "avatars": my own photo, or a friend's photo when their photo setting allows it.
