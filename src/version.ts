@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.43.0',
+    date: '2026-11-08',
+    en: ['Metronome: choose a drum kit — Classic, Jazz club, Rock, Brushes, Drum machine or Body percussion — recorded from real kits (free CC0 libraries: Virtuosity Drums, Big Rusty Drums, Body Percussion)'],
+    he: ['מטרונום: בחירת ערכת תופים — קלאסי, מועדון ג׳אז, רוק, מברשות, מכונת תופים או כלי הקשה בגוף — הקלטות של ערכות אמיתיות (ספריות חופשיות CC0: Virtuosity Drums, Big Rusty Drums, Body Percussion)'],
+  },
+  {
     version: '0.42.2',
     date: '2026-11-08',
     en: ['The path: the units you passed in the level test are back — folded at the top of the path ("Units 1–36"), open it to see or practise any step'],

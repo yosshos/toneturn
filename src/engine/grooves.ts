@@ -143,6 +143,29 @@ export const stepSeconds = (g: Groove, bpm: number) => (g.den === 8 && g.sub ===
 /** Grooves of a style (all when null), in bank order. */
 export const groovesOf = (style: GrooveStyle | null) => (style ? GROOVES.filter((g) => g.style === style) : GROOVES);
 
+// ---------------------------------------------------------------- drum kits
+
+/** Recorded kits (CC0 libraries) + a synthesised drum machine. Missing pieces fall back to the classic kit. */
+export type DrumKit = 'classic' | 'club' | 'rock' | 'brush' | 'body' | 'electro';
+export const DRUM_KITS: DrumKit[] = ['classic', 'club', 'rock', 'brush', 'electro', 'body'];
+export const KIT_NAME: Record<DrumKit, { en: string; he: string }> = {
+  classic: { en: 'Classic', he: 'קלאסי' },
+  club: { en: 'Jazz club', he: 'מועדון ג׳אז' },
+  rock: { en: 'Rock', he: 'רוק' },
+  brush: { en: 'Brushes', he: 'מברשות' },
+  electro: { en: 'Drum machine', he: 'מכונת תופים' },
+  body: { en: 'Body', he: 'גוף' },
+};
+const KIT_ALL = ['kick', 'snare', 'snare_soft', 'rim', 'hat', 'hat_open', 'ride', 'clap', 'cowbell', 'shaker'];
+const KIT_CORE = ['kick', 'snare', 'snare_soft', 'rim', 'hat', 'hat_open', 'ride'];
+/** The sample files each recorded kit has (public/samples/kits/<kit>/<id>.wav). */
+export const KIT_FILES: Partial<Record<DrumKit, string[]>> = {
+  club: [...KIT_CORE, 'cowbell', 'shaker'],
+  rock: KIT_CORE,
+  brush: KIT_CORE,
+  body: KIT_ALL,
+};
+
 // ---------------------------------------------------------------- the click metronome
 
 export interface MetroSettings {
@@ -154,6 +177,8 @@ export interface MetroSettings {
   /** Clicks between beats: 1 none, 2 eighths, 3 triplets, 4 sixteenths. */
   sub: 1 | 2 | 3 | 4;
   sound: 'click' | 'wood' | 'hat' | 'kit' | 'bell';
+  /** The drum kit for grooves and the "kit" click (0.43). */
+  kit?: DrumKit;
   /** Groove instead of the click (id), or null. */
   groove: string | null;
   /** Speed trainer: +step BPM every `bars` bars, up to `to`. */

@@ -4,7 +4,7 @@
 // pendulum follows the audio clock too, so it swings exactly to what you hear.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { clampBpm, DEFAULT_METRO, defaultAccents, GROOVES, grooveHits, grooveSteps, groovesOf, STYLE_NAME, stepSeconds, tapBpm, tempoName, type GrooveStyle, type MetroSettings } from '../engine/grooves';
+import { clampBpm, DEFAULT_METRO, defaultAccents, DRUM_KITS, KIT_NAME, GROOVES, grooveHits, grooveSteps, groovesOf, STYLE_NAME, stepSeconds, tapBpm, tempoName, type DrumKit, type GrooveStyle, type MetroSettings } from '../engine/grooves';
 import type { Settings } from '../storage/progress';
 import { piano } from './services';
 
@@ -26,6 +26,7 @@ const TX = {
   start: { en: 'Start', he: 'הפעלה' },
   stop: { en: 'Stop', he: 'עצירה' },
   bars: { en: 'bars', he: 'תיבות' },
+  kit: { en: 'Drum kit', he: 'ערכת תופים' },
 };
 const SOUNDS: [MetroSettings['sound'], { en: string; he: string }][] = [
   ['click', { en: 'Click', he: 'קליק' }],
@@ -64,6 +65,37 @@ export function Metronome({ lang, settings, onChange, onBack }: { lang: Lang; se
     setM(next);
     onChange({ metronome: next });
   };
+  // The drum kit: chosen here, loaded on demand; picking one while stopped plays a short sample bar.
+  const kit: DrumKit = m.kit ?? 'classic';
+  useEffect(() => {
+    void piano.setDrumKit(kit);
+  }, [kit]);
+  const pickKit = async (k: DrumKit) => {
+    save({ kit: k });
+    if (running) return void piano.setDrumKit(k);
+    await piano.unlock();
+    await piano.setDrumKit(k);
+    const t = (piano.audioNow() ?? 0) + 0.05;
+    const e = 0.22;
+    piano.metroHit('kick', t, 0.9);
+    piano.metroHit('hat', t, 0.6);
+    piano.metroHit('hat', t + e, 0.45);
+    piano.metroHit('snare', t + 2 * e, 0.85);
+    piano.metroHit('hat', t + 2 * e, 0.6);
+    piano.metroHit('hat-open', t + 3 * e, 0.5);
+  };
+  const kitRow = (
+    <div className="mt-row mt-kit">
+      <span className="mt-label">{TX.kit[lang]}</span>
+      <div className="mt-chips">
+        {DRUM_KITS.map((k) => (
+          <button key={k} type="button" className={`chip ${kit === k ? 'on' : ''}`} onClick={() => void pickKit(k)} data-kit={k}>
+            {KIT_NAME[k][lang]}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
   const setBpm = (b: number) => {
     const bpm = clampBpm(b);
     save({ bpm });
@@ -319,10 +351,12 @@ export function Metronome({ lang, settings, onChange, onBack }: { lang: Lang; se
               ))}
             </div>
           </div>
+          {m.sound === 'kit' && kitRow}
           <p className="field-hint">{TX.accentHint[lang]}</p>
         </section>
       ) : (
         <section className="set-card mt-panel">
+          {kitRow}
           <div className="mt-chips mt-styles">
             <button type="button" className={`chip ${style === null ? 'on' : ''}`} onClick={() => setStyle(null)}>
               {TX.all[lang]}

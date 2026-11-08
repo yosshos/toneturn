@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { defaultAccents, GROOVES, grooveHits, grooveSteps, STYLE_NAME, tapBpm, tempoName } from '../src/engine/grooves';
+import { defaultAccents, GROOVES, grooveHits, grooveSteps, STYLE_NAME, tapBpm, tempoName, DRUM_KITS, KIT_FILES, KIT_NAME } from '../src/engine/grooves';
+import { existsSync } from 'node:fs';
 
 describe('metronome groove bank', () => {
   it('every lane fits the bar exactly and uses x . o only', () => {
@@ -23,5 +24,14 @@ describe('metronome groove bank', () => {
     expect(tempoName(60)).toBe('Adagio');
     expect(tapBpm([0, 500, 1000, 1500])).toBe(120);
     expect(tapBpm([0])).toBeNull();
+  });
+});
+
+describe('drum kits', () => {
+  it('every kit has a name and every listed one-shot exists', () => {
+    for (const k of DRUM_KITS) {
+      expect(KIT_NAME[k].en && KIT_NAME[k].he).toBeTruthy();
+      for (const id of KIT_FILES[k] ?? []) expect(existsSync(`public/samples/kits/${k}/${id}.wav`), `${k}/${id}`).toBe(true);
+    }
   });
 });

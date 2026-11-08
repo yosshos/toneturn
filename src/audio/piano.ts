@@ -10,6 +10,7 @@
 // Bus: voices → (dry + small convolution room) → compressor/limiter → master.
 
 import { midiToHz } from '../engine/pitch';
+import { KIT_FILES, type DrumKit } from '../engine/grooves';
 import type { NoteEvent, PercKind } from '../engine/lesson';
 import { Cancelled, type AudioEngine, type CueKind, type RhythmAudio, type RhythmTimelineLike } from '../game/adapters';
 import { renderFx } from './fx';
@@ -28,6 +29,10 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
   private limiter!: DynamicsCompressorNode;
   /** Recorded one-shots (VCSL, CC0): kick, snare, hats, ride, rim, clap, cowbell, shaker, the option bell. Synthesised stand-ins play until they load. */
   private percBank = new Map<string, AudioBuffer>();
+  /** The metronome's drum kit (0.43) and its recorded one-shots, loaded on demand ("kit:id"). */
+  private kit: DrumKit = 'classic';
+  private kitBank = new Map<string, AudioBuffer>();
+  private kitLoads = new Map<string, Promise<void>>();
   private percBus!: GainNode;
   private drone: { gain: GainNode; oscs: AudioScheduledSourceNode[] } | null = null;
   /** Drone sound: the soft synth, or a recorded sustained instrument (looped). */
@@ -174,6 +179,7 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
       this.ctx = new Ctor({ latencyHint: 'interactive' });
       this.build(this.ctx);
       void this.loadPerc();
+      void this.loadKit(this.kit);
     }
     if (this.ctx.state !== 'running') await this.ctx.resume();
   }
@@ -525,6 +531,34 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     }
   }
 
+  /** Choose the drum kit for metronome hits; its samples load in the background (stand-ins play meanwhile). */
+  setDrumKit(kit: DrumKit): Promise<void> {
+    this.kit = kit;
+    return this.loadKit(kit);
+  }
+
+  private loadKit(kit: DrumKit): Promise<void> {
+    const ctx = this.ctx;
+    const ids = KIT_FILES[kit];
+    if (!ctx || !ids) return Promise.resolve();
+    let p = this.kitLoads.get(kit);
+    if (!p) {
+      const base = import.meta.env.BASE_URL ?? '/';
+      p = Promise.all(
+        ids.map(async (id) => {
+          try {
+            const res = await fetch(`${base}samples/kits/${kit}/${id}.wav`);
+            if (res.ok) this.kitBank.set(`${kit}:${id}`, await ctx.decodeAudioData(await res.arrayBuffer()));
+          } catch {
+            /* the classic kit plays this piece */
+          }
+        }),
+      ).then(() => undefined);
+      this.kitLoads.set(kit, p);
+    }
+    return p;
+  }
+
   private async loadPerc() {
     const base = import.meta.env.BASE_URL ?? '/';
     const ctx = this.ctx;
@@ -628,12 +662,32 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
   /** One metronome / groove hit at audio time `at`: recorded VCSL one-shots (CC0), synthesised stand-ins until they load. */
   metroHit(kind: MetroKind, at: number, velocity = 0.8) {
     if (!this.ctx) return;
+    if (this.kit === 'electro' && this.machine(kind, at, velocity)) return;
+    const piece = KIT_PIECE[kind];
+    if (piece && this.kit !== 'classic') {
+      const buf = this.kitBank.get(`${this.kit}:${piece}`);
+      if (buf) {
+        const src = this.ctx.createBufferSource();
+        src.buffer = buf;
+        src.playbackRate.value = 0.99 + Math.random() * 0.02;
+        const g = this.ctx.createGain();
+        g.gain.value = 0.95 * velocity;
+        src.connect(g).connect(this.percBus);
+        src.start(at);
+        return;
+      }
+    }
     const rec: Partial<Record<MetroKind, [string, number]>> = {
       hat: ['hat', 0.55], 'hat-open': ['hat_open', 0.45], ride: ['ride', 0.4], rim: ['rim', 0.75],
       clap: ['clap', 0.7], cowbell: ['cowbell', 0.5], shaker: ['shaker', 0.5],
     };
     const r = rec[kind];
     if (r && this.shot(r[0], at, r[1] * velocity, 0.98 + Math.random() * 0.04)) return;
+    this.synthHit(kind, at, velocity);
+  }
+
+  /** The synthesised voice of a hit (the stand-in while samples load, and the drum machine's sound). */
+  private synthHit(kind: MetroKind, at: number, velocity: number) {
     switch (kind) {
       case 'click':
       case 'accent':
@@ -663,6 +717,33 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
       case 'shaker':
         return this.noiseHit(at, 'bandpass', 6500, 1.2, 0.35 * velocity, 0.03, 0.012);
     }
+  }
+
+  /** The drum machine kit: an 808-style kick and snare; hats, rim, clap… use the synthesised voices below. */
+  private machine(kind: MetroKind, at: number, velocity: number): boolean {
+    const ctx = this.ctx!;
+    if (kind === 'kick') {
+      const o = ctx.createOscillator();
+      o.frequency.setValueAtTime(130, at);
+      o.frequency.exponentialRampToValueAtTime(46, at + 0.09);
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0, at);
+      g.gain.linearRampToValueAtTime(1.2 * velocity, at + 0.003);
+      g.gain.setTargetAtTime(0, at + 0.02, 0.16);
+      o.connect(g).connect(this.percBus);
+      o.start(at);
+      o.stop(at + 1.2);
+      this.tone(at, 'square', 900, 0.08 * velocity, 0.004);
+      return true;
+    }
+    if (kind === 'snare' || kind === 'snare-soft') {
+      const v = (kind === 'snare' ? 1 : 0.55) * velocity;
+      this.tone(at, 'triangle', 185, 0.5 * v, 0.05);
+      this.tone(at, 'triangle', 330, 0.3 * v, 0.03);
+      this.noiseHit(at, 'highpass', 1800, 0.7, 0.7 * v, 0.06);
+      return true;
+    }
+    return ['hat', 'hat-open', 'ride', 'rim', 'clap', 'cowbell', 'shaker'].includes(kind) ? (this.synthHit(kind, at, velocity), true) : false;
   }
 
   /** 808-style metal: six detuned squares through a band → hi-hat / ride shimmer. */
@@ -872,5 +953,10 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     this.listeners.forEach((l) => l(list));
   }
 }
+
+/** Metronome hit → the kit sample piece. */
+const KIT_PIECE: Partial<Record<MetroKind, string>> = {
+  kick: 'kick', snare: 'snare', 'snare-soft': 'snare_soft', hat: 'hat', 'hat-open': 'hat_open', ride: 'ride', rim: 'rim', clap: 'clap', cowbell: 'cowbell', shaker: 'shaker',
+};
 
 export type MetroKind = 'click' | 'accent' | 'wood' | 'kick' | 'snare' | 'snare-soft' | 'bell' | 'hat' | 'hat-open' | 'ride' | 'rim' | 'clap' | 'cowbell' | 'shaker';

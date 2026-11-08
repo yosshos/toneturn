@@ -164,13 +164,15 @@
   flex-wrap: wrap;
   gap: 6px;
 }
-.mt-styles {
+.mt-styles,
+.mt-kit .mt-chips {
   flex-wrap: nowrap;
   overflow-x: auto;
   scrollbar-width: none;
   padding-bottom: 2px;
 }
-.mt-styles .chip {
+.mt-styles .chip,
+.mt-kit .chip {
   flex: none;
 }
 .mt-grooves {
