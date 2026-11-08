@@ -196,7 +196,8 @@
 
 ## Update 5 — v0.6.0: hosting, placement, Skill Map, review, weekly puzzle
 
-- **Live at https://yosshos.github.io/toneturn/** (repo public by owner's decision; history scanned — no secrets ever committed). Actions: typecheck → unit tests → build → Pages. Supabase site URL + redirect allow-list updated; live check: loads, service worker controls the page, offline reload, Google sign-in redirects back to the Pages URL.
+- **Main address since 2026-11-08: https://7sense.netlify.app/** (Netlify, auto-deploy from main; Supabase site URL points here; allow-list: localhost, 7sense.netlify.app, the Pages URL).
+- **Also live at https://yosshos.github.io/toneturn/** (repo public by owner's decision; history scanned — no secrets ever committed). Actions: typecheck → unit tests → build → Pages. Supabase site URL + redirect allow-list updated; live check: loads, service worker controls the page, offline reload, Google sign-in redirects back to the Pages URL.
 - Milestone 3 core: per-skill Elo ratings, adaptive placement, radar Skill Map with evidence levels + text equivalent + diagnosis + recommendation + snapshots, review session with your-answer-vs-correct playback, weekly puzzle (gold/silver, attempts separate from XP), tap-latency calibration, new item types (degrees 1–7, diminished/augmented, spoken degree sequences).
 - Fixed during testing: practice tools skipped the voice-consent notice; stray control characters from a patch script inside a regex.
 - Cloud: migration 3 applied (per-item results, new session types, path-only lesson count) and verified with a rolled-back insert as a signed-in user.

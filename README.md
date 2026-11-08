@@ -66,7 +66,9 @@ Useful URLs
 
 ## Live
 
-**https://yosshos.github.io/toneturn/** — deployed by GitHub Actions on every push to `main` (typecheck + unit tests + build with `BASE_PATH=/toneturn/`).
+**https://7sense.netlify.app/** — the main address: Netlify builds and deploys on every push to `main` (env vars `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_VAPID_PUBLIC_KEY` set in Netlify; headers in `public/_headers`).
+
+Also **https://yosshos.github.io/toneturn/** — GitHub Actions on every push to `main` (typecheck + unit tests + build with `BASE_PATH=/toneturn/`).
 
 ## Practice tools (0.6)
 
