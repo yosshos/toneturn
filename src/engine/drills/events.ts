@@ -22,18 +22,34 @@ export function drillScore(drill: Drill, m: TakeMetrics): number {
   return Math.round(Math.max(0, Math.min(1, m.accuracy * (0.6 + 0.4 * even))) * 1000) / 1000;
 }
 
+/** Bass drills (the bass course, the old g-bass starter, any drill for the bass) rate the bass technique sub-skill. */
+export const isBassTechDrill = (drill: Drill): boolean => drill.spec.family.startsWith('b-') || drill.spec.family === 'g-bass' || drill.spec.instrument === 'bass';
+
+type Tags = NonNullable<RatingEvent['tags']>;
 /**
- * One take = one graded rated event (instrument / piano technique — guitar technique for 'g-' families, with a timing share for evenness drills).
+ * What a take rates besides the technique sub-skill (BASS_AUDIT A11): bass time / pocket drills feed timing (the click
+ * on 2 & 4 or the off-beats → "when the click moves", a click on 1 or fading → "through the gaps", the kick → steady
+ * beat), walking lines feed progressions, chord-tone lines feed harmony; other evenness drills a little subdividing.
+ */
+function secondTag(drill: Drill): Tags[number] | null {
+  const f = drill.spec.family;
+  if (f === 'b-time') return { skill: 'timing', sub: drill.click === '24' || drill.click === 'and' ? 'timing/backbeat' : drill.click === 'one' || drill.click === 'fade' ? 'timing/gap' : 'timing/subdivide', w: 0.4 };
+  if (f === 'b-pocket') return { skill: 'timing', sub: 'timing/steady', w: 0.4 };
+  if (f === 'b-walk') return { skill: 'cadences', sub: 'cadences/progression', w: 0.3 };
+  if (f === 'b-chord') return { skill: 'theory', sub: 'theory/harmony', w: 0.3 };
+  if (drill.goal.evenness) return { skill: 'timing', sub: 'timing/subdivide', w: 0.2 };
+  return null;
+}
+
+/**
+ * One take = one graded rated event (instrument / piano technique — guitar technique for 'g-' families, bass technique
+ * for bass drills — plus a timing / harmony share, see secondTag).
  * Ids use the 'g:drill:<session>:<i>' shape so the path groups a drill session like a game session.
  */
 export function drillEvents(drill: Drill, m: TakeMetrics, at: string, sessionId: string, index: number): RatingEvent[] {
-  const sub = isGuitarDrill(drill) ? 'instrument/guitar-tech' : 'instrument/piano-tech';
-  const tags: NonNullable<RatingEvent['tags']> = drill.goal.evenness
-    ? [
-        { skill: 'instrument', sub, w: 0.8 },
-        { skill: 'timing', sub: 'timing/subdivide', w: 0.2 },
-      ]
-    : [{ skill: 'instrument', sub, w: 1 }];
+  const sub = isBassTechDrill(drill) ? 'instrument/bass-tech' : isGuitarDrill(drill) ? 'instrument/guitar-tech' : 'instrument/piano-tech';
+  const two = secondTag(drill);
+  const tags: Tags = two ? [{ skill: 'instrument', sub, w: Math.round((1 - two.w) * 10) / 10 }, two] : [{ skill: 'instrument', sub, w: 1 }];
   return [{ id: `g:drill:${sessionId}:${index}`, skill: 'instrument', difficulty: drillDifficulty(drill, m), correct: m.verdict === 'clean', score: drillScore(drill, m), tags, at }];
 }
 
