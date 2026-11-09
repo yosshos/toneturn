@@ -7,10 +7,12 @@
 //    chord-change gaps, palm-mute share, changes per minute, and the self-check list for what audio cannot judge.
 // Thresholds marked ⚙ are research starting points (research doc §5), to calibrate with real takes.
 
-import type { Drill, DrillCalibration, ExpNote, PlayedNote, TakeMetrics, Verdict } from './types';
-import { analyzeTake, expTimeMs, median } from './analyze';
+import type { Drill, DrillCalibration, ExpNote, PlayedNote, TakeMetrics, TakeRules, Verdict } from './types';
+import { analyzeTake, bassThresholds, expTimeMs, median, npsOf, tempoBand } from './analyze';
 import { meanChroma, ringCheck } from '../chroma';
-import { crossingPenalty, ghostGapDb, kickLock, lengthClass, lengthMatch, loudSdDb, oddEvenAsym, releaseTime } from './bassAnalyze';
+import { centsOff, crossingPenalty, ghostGapDb, ioiDrift, kickLock, lengthClass, lengthMatch, loudSdDb, oddEvenAsym, overlapMs, pocketShare, releaseAccuracy, releaseTime, ringThrough, ruleCheck, shiftGap, slapClass, subBias, swingRatio, zoneShift } from './bassAnalyze';
+import { tuningById } from '../fretboard';
+import { bassPitchOpts } from '../yin';
 
 /** One analysis frame from the microphone (times in ms relative to beat 0, latency removed). */
 export interface GFrame {
@@ -45,19 +47,43 @@ const sd = (xs: number[]): number => {
 
 // ───────────────────────────── onsets from frames ─────────────────────────────
 
+/** A bass drill (the bass course, the old g-bass starter, or any drill for the bass): bass capture + bass rules. */
+export const isBassDrill = (drill: Drill): boolean => drill.spec.family.startsWith('b-') || drill.spec.family === 'g-bass' || drill.spec.instrument === 'bass';
+
+/**
+ * Microphone settings for a drill (BASS_AUDIT A1): bass → minHz 28 (22 when the tuning has a low B), a 4096-sample
+ * analyser and the spectral centroid (plucking zone / slap advice); guitar → null (the 2048 / 70 Hz default).
+ * `tuning` = the player's bass tuning id when the drill has none.
+ */
+export function captureOptsFor(drill: Drill, tuning?: string): { minHz: number; fftSize: number; centroid: boolean } | null {
+  if (!isBassDrill(drill)) return null;
+  const tu = tuningById(drill.spec.tuning ?? tuning ?? 'bass');
+  const lowB = tu.instrument === 'bass' && Math.min(...tu.open) < 28;
+  return { ...bassPitchOpts(lowB), centroid: true };
+}
+
+/** detectOnsets options for a drill: bass reads the pitch 40–120 ms after the onset (low E needs ~48 ms, low B ~65). */
+export const onsetOptsFor = (drill: Drill): { pitchFrom: number; pitchTo: number } => (isBassDrill(drill) ? { pitchFrom: 40, pitchTo: 120 } : { pitchFrom: 20, pitchTo: 80 });
+
 /**
  * Onsets from microphone frames: an energy rise (≥ ratio × the recent minimum, above the floor) starts a note; a new
  * stable pitch without an energy rise starts a legato note (hammer-on / pull-off / slide arrival). Pitch = the median
- * f0 20–80 ms after the onset when confident, else UNPITCHED. Velocity = peak RMS mapped to 1–127 (relative only).
+ * f0 20–80 ms after the onset (bass: 40–120 ms, see onsetOptsFor) when confident, else UNPITCHED. Velocity = peak RMS
+ * mapped to 1–127 (relative only). Timing is always the energy onset, never the pitch frame.
  */
-export function detectOnsets(frames: GFrame[], opts: { ratio?: number; floor?: number; refractoryMs?: number; minConf?: number } = {}): PlayedNote[] {
+export function detectOnsets(frames: GFrame[], opts: { ratio?: number; floor?: number; refractoryMs?: number; minConf?: number; pitchFrom?: number; pitchTo?: number } = {}): PlayedNote[] {
   const ratio = opts.ratio ?? 1.8;
   const floor = opts.floor ?? 0.01;
   const refr = opts.refractoryMs ?? 50;
   const minConf = opts.minConf ?? 0.8;
+  const pFrom = opts.pitchFrom ?? 20;
+  const pTo = opts.pitchTo ?? 80;
   const out: PlayedNote[] = [];
   const pitchAt = (t0: number): number => {
-    const hs = frames.filter((f) => f.t >= t0 + 20 && f.t <= t0 + 80 && f.hz && (f.conf ?? 1) >= minConf).map((f) => 69 + 12 * Math.log2(f.hz! / 440));
+    // Never past the next energy onset (a fast note's window would read the next one).
+    const nextOn = frames.find((f, i) => f.t > t0 + refr && i > 0 && f.rms > floor && f.rms > ratio * Math.max(Math.min(...frames.slice(Math.max(0, i - 3), i).map((x) => x.rms)), floor / 2));
+    const to = Math.min(t0 + pTo, nextOn ? nextOn.t - 5 : Infinity);
+    const hs = frames.filter((f) => f.t >= t0 + pFrom && f.t <= to && f.hz && (f.conf ?? 1) >= minConf).map((f) => 69 + 12 * Math.log2(f.hz! / 440));
     return hs.length ? Math.round(median(hs)) : UNPITCHED;
   };
   const peakAt = (t0: number): number => Math.max(0, ...frames.filter((f) => f.t >= t0 && f.t <= t0 + 50).map((f) => f.rms));
@@ -138,6 +164,8 @@ export interface Normalized {
   glides: number;
   /** Clustered strums: onset, spread of the string onsets (ms), how many onsets were merged. */
   strums: { at: number; spread: number; size: number }[];
+  /** The single onsets snapped to an expected note for TIMING only (objects inside `played`): never a right pitch. */
+  snapped: PlayedNote[];
 }
 
 /**
@@ -221,13 +249,11 @@ export function normalizeGuitarTake(drill: Drill, bpm: number, played: PlayedNot
     strums.push({ at: t0, spread: members[members.length - 1].p.on - t0, size: members.length });
   });
 
-  // 4) Unpitched single onsets snap to the nearest single-note group (timing only); unmatched ones stay extra.
-  ps.forEach((p, j) => {
-    if (used.has(j)) return;
-    if (p.pitch !== UNPITCHED) {
-      out.push(p);
-      return;
-    }
+  // 4) Unpitched single onsets snap to the nearest single-note group (TIMING only: analyzeGuitarTake never credits
+  //    their pitch, BASS_AUDIT A2); unmatched ones stay extra. A pitched onset at an expected dead note whose pitch
+  //    matches nothing written there (a muted string reads as noise) is treated the same way.
+  const snapped: PlayedNote[] = [];
+  const nearestSingle = (p: PlayedNote): number => {
     let best = -1;
     let bd = Infinity;
     gs.forEach((g, i) => {
@@ -237,13 +263,32 @@ export function normalizeGuitarTake(drill: Drill, bpm: number, played: PlayedNot
         best = i;
       }
     });
+    return best;
+  };
+  ps.forEach((p, j) => {
+    if (used.has(j)) return;
+    if (p.pitch !== UNPITCHED) {
+      const k = nearestSingle(p);
+      const near = gs.filter((g, i) => Math.abs(p.on - g.t) <= radius(i));
+      if (k >= 0 && gs[k].notes[0].technique === 'dead' && !near.some((g) => g.notes.some((n) => n.pitch === p.pitch))) {
+        const s = { ...p, pitch: gs[k].notes[0].pitch };
+        snapped.push(s);
+        out.push(s);
+        return;
+      }
+      out.push(p);
+      return;
+    }
+    const best = nearestSingle(p);
     if (best >= 0) {
       unpitched++;
-      out.push({ ...p, pitch: gs[best].notes[0].pitch });
+      const s = { ...p, pitch: gs[best].notes[0].pitch };
+      snapped.push(s);
+      out.push(s);
     } else out.push(p);
   });
   out.sort((a, b) => a.on - b.on);
-  return { played: out, unpitched, octaveFixed, glides, strums };
+  return { played: out, unpitched, octaveFixed, glides, strums, snapped };
 }
 
 // ───────────────────────────── expression: bends, vibrato ─────────────────────────────
@@ -417,27 +462,155 @@ export interface GuitarExtras {
   /** Chord ring-check: chords judged, chords where every note rang, and how often each pitch class was missing. */
   ring: { chords: number; full: number; missing: Record<number, number> } | null;
   selfCheck: T2[];
+  /** Expected pitched notes heard only as an onset without a pitch: timing counted, pitch never credited (A2). */
+  unclear: number;
   /** Bass measures (drills with goal.bass): what was measured, null where it could not be. */
-  bass?: { asym: { ms: number; db: number | null } | null; loudSd: number | null; crossing: number | null; kick: { lock: number; stray: number } | null; lengths: number | null; ghostDb: number | null };
+  bass?: BassMeasures;
+  /** Advice lines that never change the verdict (slap / pop classes, A13). */
+  advice?: T2[];
+}
+
+/** What the bass rules measured in a take (guitar.bass). Null = not asked for, or could not be measured. */
+export interface BassMeasures {
+  asym: { ms: number; db: number | null } | null;
+  loudSd: number | null;
+  crossing: number | null;
+  kick: { lock: number; stray: number } | null;
+  /** Share of notes whose length class matched (mic frames or MIDI note-offs). */
+  lengths: number | null;
+  ghostDb: number | null;
+  /** A3: share of notes in the right class (dead = unpitched / short, the rest pitched). */
+  ghostClass: number | null;
+  /** A6: |mean offset| (ms) and the limit used (bass default 15 MIDI / 25 mic). */
+  meanMs: { ms: number; lim: number } | null;
+  /** A6: pocket on purpose: share within ±12 ms of each section's target, and each section's mean offset. */
+  pocket: { share: number; means: number[] } | null;
+  /** A8 */
+  shiftGap: number | null;
+  drift: number | null;
+  swing: number | null;
+  subBias: Record<string, number> | null;
+  /** A9: rests judged / rests that rang; release share within ±ms; share of pairs overlapping ≤ the limit. */
+  ringThrough: { rests: number; rang: number } | null;
+  release: number | null;
+  overlap: number | null;
+  /** Fretless / upright: share of notes within ±cents, and the median |cents|. */
+  cents: { share: number; median: number } | null;
+  /** A12: bridge ÷ neck centroid ratio. */
+  zone: number | null;
+  /** A13 (advice only): share of thumb notes heard as thumb, pop notes heard as pop. */
+  slap: { thumb: number | null; pop: number | null } | null;
 }
 export type GuitarTakeMetrics = TakeMetrics & { guitar: GuitarExtras };
 
 const RANK: Record<Verdict, number> = { clean: 0, almost: 1, not: 2 };
+const isGhostTech = (n: ExpNote): boolean => n.technique === 'dead' || n.technique === 'mute' || n.technique === 'harmonic';
+
+/**
+ * Free-choice drills (goal.bass.rules, A5): pair each slot of the model line with the nearest played onset, judge the
+ * played pitches by the rules, and return a drill whose slots carry the played pitches (so the shared analysis judges
+ * only timing for them) plus the rule report.
+ */
+function applyRules(drill: Drill, bpm: number, played: PlayedNote[]): { judged: Drill; rules: TakeRules } | null {
+  const r = drill.goal.bass?.rules;
+  if (!r) return null;
+  const beatMs = 60000 / bpm;
+  const T = drill.notes.map((n) => expTimeMs(drill, n.beat, bpm));
+  const used = new Set<number>();
+  const slot = drill.notes.map((n, i) => {
+    if (n.chordId !== undefined) return null;
+    const rad = Math.min(beatMs / 2, i > 0 ? (T[i] - T[i - 1]) / 2 : Infinity, i < T.length - 1 ? (T[i + 1] - T[i]) / 2 : Infinity);
+    let best = -1;
+    let bd = Infinity;
+    played.forEach((p, j) => {
+      const d = Math.abs(p.on - T[i]);
+      if (!used.has(j) && p.pitch !== UNPITCHED && d <= rad + 1e-6 && d < bd) {
+        bd = d;
+        best = j;
+      }
+    });
+    if (best < 0) return null;
+    used.add(best);
+    return best;
+  });
+  const rep = ruleCheck(
+    r.kind,
+    r.chart,
+    drill.notes.map((n, i) => ({ pitch: slot[i] === null ? null : played[slot[i]!].pitch, beat: n.beat })),
+    drill.meter || 4,
+    r.maxMove ?? 4,
+  );
+  const notes = drill.notes.map((n, i) => (slot[i] === null ? n : { ...n, pitch: played[slot[i]!].pitch }));
+  return { judged: { ...drill, notes, goal: { ...drill.goal, chordTonesOnBeats: undefined } }, rules: rep };
+}
 
 /**
  * One guitar take: normalise, run the shared analysis, add the guitar measures. Frames are optional (without them
- * only pitch + timing are judged; bends / vibrato / legato / mute / gaps stay null).
+ * only pitch + timing are judged; bends / vibrato / legato / mute / gaps stay null). Frames present = a microphone
+ * take (bass: mic thresholds, A7); none = MIDI (note-offs used for the note-length rules, A9).
  */
 export function analyzeGuitarTake(drill: Drill, bpm: number, played: PlayedNote[], cal?: DrillCalibration, frames: GFrame[] = []): GuitarTakeMetrics {
   const beatMs = 60000 / bpm;
+  const bassDrill = isBassDrill(drill);
+  const mic = frames.length > 0;
   const norm = normalizeGuitarTake(drill, bpm, played);
   // Without loudness (the plain pitch pipeline sends one velocity for every note) accents cannot be judged.
   const hasLoudness = new Set(played.map((p) => p.vel)).size > 1;
+  // Free-choice lines (A5): the rules decide which pitches are right; the shared analysis then judges the timing.
+  const ruled = applyRules(drill, bpm, norm.played);
+  const base = ruled ? ruled.judged : drill;
   // The same holds for a dynamics shape (bass 16ths with a crescendo): pitch and timing are still judged.
-  const judged: Drill = hasLoudness ? drill : { ...drill, goal: drill.goal.dynamics ? { ...drill.goal, dynamics: undefined } : drill.goal, notes: drill.notes.map((n) => (n.accent ? { ...n, accent: undefined } : n)) };
-  const m = analyzeTake(judged, bpm, norm.played, cal);
+  const judged: Drill = hasLoudness ? base : { ...base, goal: base.goal.dynamics ? { ...base.goal, dynamics: undefined } : base.goal, notes: base.notes.map((n) => (n.accent ? { ...n, accent: undefined } : n)) };
+  // Bass timing limits (A7): mic SD ≤ 28 / CV ≤ .06 at every tempo; MIDI never stricter than SD 20 / CV .06.
+  const m = analyzeTake(judged, bpm, norm.played, cal, bassDrill ? { thresholds: bassThresholds(tempoBand(npsOf(drill, bpm)), mic) } : {});
+  // The shared analysis saw the substituted pitches; give the model line back to the per-note results.
+  if (ruled) m.perNote.forEach((r, i) => (r.exp = drill.notes[i]));
   const gs = groupsOf(drill, bpm);
+  const factors: { verdict: Verdict; en: string; he: string }[] = [];
+
+  // A2: an onset without a pitch counts for timing only. Expected dead / muted / harmonic notes are the exception.
+  const snapped = new Set(norm.snapped);
+  let unclear = 0;
+  m.perNote.forEach((r) => {
+    if (r.played && snapped.has(r.played) && !isGhostTech(r.exp)) {
+      r.ok = false;
+      unclear++;
+    }
+  });
+  if (ruled) {
+    m.rules = ruled.rules;
+    m.perNote.forEach((r, i) => {
+      if (r.played && !ruled.rules.valid[i]) r.ok = false;
+    });
+  }
+  if (unclear || ruled) m.accuracy = m.perNote.length ? m.perNote.filter((r) => r.ok).length / m.perNote.length : 1;
+  {
+    const pitchedExp = drill.notes.filter((n) => !isGhostTech(n)).length;
+    const share = pitchedExp ? unclear / pitchedExp : 0;
+    if (share > 0.1) factors.push({ verdict: share > 0.25 ? 'not' : 'almost', en: `${unclear} note${unclear === 1 ? '' : 's'} not heard clearly — play closer to the mic or a little louder`, he: `${unclear} צלילים לא נשמעו בבירור — נגנו קרוב יותר למיקרופון או מעט חזק יותר` });
+  }
+  if (ruled) {
+    const R = ruled.rules;
+    const w = R.worst;
+    const at = w ? { en: `bar ${w.bar + 1}, beat ${Math.round(w.beatInBar * 100) / 100 + 1}`, he: `תיבה ${w.bar + 1}, פעמה ${Math.round(w.beatInBar * 100) / 100 + 1}` } : null;
+    const nm = (k: number) => {
+      const p = m.perNote[k].played?.pitch;
+      return p === undefined ? { en: '?', he: '?' } : { en: PC_EN[mod12(p)], he: PC_HE[mod12(p)] };
+    };
+    if (R.validShare < 0.95)
+      factors.push({
+        verdict: R.validShare < 0.85 ? 'not' : 'almost',
+        en: w && at ? `${Math.round(R.validShare * 100)}% of the notes fit — ${at.en}: ${nm(w.slot).en} doesn't fit ${w.chord}` : `${Math.round(R.validShare * 100)}% of the notes fit the chords`,
+        he: w && at ? `${Math.round(R.validShare * 100)}% מהצלילים מתאימים — ${at.he}: ${nm(w.slot).he} לא מתאים ל־${w.chord}` : `${Math.round(R.validShare * 100)}% מהצלילים מתאימים לאקורדים`,
+      });
+    if (R.kind === 'walk' && R.beat1Ct < 0.9)
+      factors.push({ verdict: R.beat1Ct < 0.75 ? 'not' : 'almost', en: `A chord tone on ${Math.round(R.beat1Ct * 100)}% of the chord changes (90% needed)`, he: `צליל אקורד ב-${Math.round(R.beat1Ct * 100)}% מחילופי האקורדים (צריך 90%)` });
+    const maxRep = drill.goal.bass?.rules?.maxRepeat ?? (R.kind === 'walk' ? 0.05 : 1);
+    if (R.repeats > maxRep + 1e-9) factors.push({ verdict: R.repeats > 2 * maxRep + 0.05 ? 'not' : 'almost', en: `Repeated notes: ${Math.round(R.repeats * 100)}% (keep it moving)`, he: `צלילים חוזרים: ${Math.round(R.repeats * 100)}% (להמשיך לנוע)` });
+    if (R.moves !== null && R.moves < 0.9) factors.push({ verdict: R.moves < 0.75 ? 'not' : 'almost', en: `Nearest chord tone on ${Math.round(R.moves * 100)}% of the moves (90% needed)`, he: `לצליל האקורד הקרוב ב-${Math.round(R.moves * 100)}% מהמעברים (צריך 90%)` });
+  }
   const extra: GuitarExtras = {
+    unclear,
     unpitched: norm.unpitched,
     octaveFixed: norm.octaveFixed,
     glides: norm.glides,
@@ -451,7 +624,6 @@ export function analyzeGuitarTake(drill: Drill, bpm: number, played: PlayedNote[
     ring: null,
     selfCheck: selfChecks(drill),
   };
-  const factors: { verdict: Verdict; en: string; he: string }[] = [];
 
   // Played onset of each expected note (from the shared analysis), else the click time.
   const onOf = (i: number): number => m.perNote[i].played?.on ?? expTimeMs(drill, drill.notes[i].beat, bpm);
@@ -552,18 +724,52 @@ export function analyzeGuitarTake(drill: Drill, bpm: number, played: PlayedNote[
   if (extra.palmMuteShare !== null && extra.palmMuteShare < 0.75)
     factors.push({ verdict: extra.palmMuteShare < 0.5 ? 'not' : 'almost', en: `Palm mute not heard on ${Math.round((1 - extra.palmMuteShare) * 100)}% of notes`, he: `השתקת כף היד לא נשמעה ב-${Math.round((1 - extra.palmMuteShare) * 100)}% מהצלילים` });
 
-  // Bass pass rules (BASS_CURRICULUM §5) on top of pitch + timing.
+  // Bass pass rules (BASS_CURRICULUM §5, BASS_AUDIT A3–A13) on top of pitch + timing.
   const bg = drill.goal.bass;
+  const worse = (v: number, lim: number) => (v > 1.5 * lim ? 'not' : 'almost') as Verdict;
+  // Played notes as (written beat, onset, offset) for the timing measures; unclear (snapped) onsets keep their timing.
+  const pts = m.perNote.map((r, i) => ({ i, beat: drill.notes[i].beat, p: r.played, dev: r.dev })).filter((x) => x.p && x.dev !== null);
+  const b: BassMeasures = { asym: null, loudSd: null, crossing: null, kick: null, lengths: null, ghostDb: null, ghostClass: null, meanMs: null, pocket: null, shiftGap: null, drift: null, swing: null, subBias: null, ringThrough: null, release: null, overlap: null, cents: null, zone: null, slap: null };
+  if (bassDrill) {
+    // A6: no consistent rush / drag (|mean offset| ≤ 15 ms MIDI, 25 ms mic), unless the level asks for a pocket.
+    if (bg?.pocket?.length) {
+      b.pocket = pocketShare(
+        pts.map((x) => ({ beat: x.beat, dev: x.dev! })),
+        bg.pocket,
+        drill.beats,
+      );
+      if (b.pocket && b.pocket.share < 0.7) {
+        const sec = b.pocket.means.map((x, k) => ({ x, k, off: Number.isFinite(x) ? x - bg.pocket![k] : 0 })).sort((p, q) => Math.abs(q.off) - Math.abs(p.off))[0];
+        const want = (v: number) => (v > 0 ? { en: `${v} ms behind`, he: `${v} ms מאחורי הפעמה` } : v < 0 ? { en: `${-v} ms ahead`, he: `${-v} ms לפני הפעמה` } : { en: 'on the beat', he: 'על הפעמה' });
+        const w = want(bg.pocket[sec.k]);
+        factors.push({ verdict: b.pocket.share < 0.55 ? 'not' : 'almost', en: `In the pocket on ${Math.round(b.pocket.share * 100)}% of notes (70% needed) — part ${sec.k + 1} should sit ${w.en}, you were at ${Math.round(sec.x)} ms`, he: `בכיס ב-${Math.round(b.pocket.share * 100)}% מהצלילים (צריך 70%) — חלק ${sec.k + 1} צריך לשבת ${w.he}, ניגנתם ב-${Math.round(sec.x)} ms` });
+      }
+    } else if (m.timingMean !== null && pts.length >= 3) {
+      const lim = bg?.meanMs ?? (mic ? 25 : 15);
+      b.meanMs = { ms: Math.abs(m.timingMean), lim };
+      if (b.meanMs.ms > lim) {
+        const late = m.timingMean > 0;
+        factors.push({ verdict: worse(b.meanMs.ms, lim), en: `${late ? 'Dragging' : 'Rushing'}: ${Math.round(b.meanMs.ms)} ms ${late ? 'behind' : 'ahead of'} the click on average`, he: `${late ? 'מאחרים' : 'ממהרים'}: בממוצע ${Math.round(b.meanMs.ms)} ms ${late ? 'אחרי' : 'לפני'} הקליק` });
+      }
+    }
+  }
   if (bg) {
     const hit = drill.notes.map((n, i) => ({ n, i, p: m.perNote[i].played })).filter((x) => x.p);
     const loudOf = (on: number, vel: number) => (frames.length ? peakRms(frames, on) : vel);
     const loud = hasLoudness || frames.length ? hit.map((x) => loudOf(x.p!.on, x.p!.vel)) : undefined;
-    const b: NonNullable<GuitarExtras['bass']> = { asym: null, loudSd: null, crossing: null, kick: null, lengths: null, ghostDb: null };
-    const worse = (v: number, lim: number) => (v > 1.5 * lim ? 'not' : 'almost') as Verdict;
+    // Next written onset after note i (in beats; null for the last note).
+    const nextBeat = (i: number): number | null => {
+      const nx = drill.notes.find((x) => x.beat > drill.notes[i].beat + 1e-6);
+      return nx ? nx.beat : null;
+    };
+    const ms = (beat: number) => expTimeMs(drill, beat, bpm);
+    const bars = Math.max(1, drill.beats / (drill.meter || 4));
     if (bg.asym) {
+      // A10: odd / even by the expected note index.
       b.asym = oddEvenAsym(
         hit.map((x) => x.p!.on),
         loud,
+        hit.map((x) => x.i),
       );
       if (b.asym && (b.asym.ms > bg.asym.ms || (b.asym.db !== null && b.asym.db > bg.asym.db))) {
         const over = b.asym.ms > bg.asym.ms;
@@ -588,18 +794,21 @@ export function analyzeGuitarTake(drill: Drill, bpm: number, played: PlayedNote[
         norm.played.map((p) => p.on),
         bg.kick,
       );
-      const bars = Math.max(1, drill.beats / (drill.meter || 4));
       if (b.kick.lock < 0.9 || b.kick.stray > bars) factors.push({ verdict: b.kick.lock < 0.75 ? 'not' : 'almost', en: `Locked with the kick on ${Math.round(b.kick.lock * 100)}% of hits (90% needed)`, he: `נעול עם הבס-דראם ב-${Math.round(b.kick.lock * 100)}% מהמכות (צריך 90%)` });
     }
-    if (bg.lengths && frames.length) {
+    // Sounded length of a played note (ms): mic = the energy release, MIDI = the note-off (A9, B19).
+    const soundedMs = (p: PlayedNote, until: number): number | null => (mic ? releaseTime(frames, p.on, until) : p.off !== null ? p.off - p.on : null);
+    if (bg.lengths) {
       const res: { want: 'short' | 'full'; ratio: number }[] = [];
       drill.notes.forEach((n, i) => {
         const p = m.perNote[i].played;
-        const next = drill.notes.find((x) => x.beat > n.beat + 1e-6);
-        if (!p || !next) return;
-        const gapMs = expTimeMs(drill, next.beat, bpm) - expTimeMs(drill, n.beat, bpm);
+        const nb = nextBeat(i);
+        if (!p || nb === null) return;
+        const gapMs = ms(nb) - ms(n.beat);
         if (gapMs <= 0) return;
-        res.push({ want: lengthClass(n.dur, next.beat - n.beat), ratio: releaseTime(frames, p.on, p.on + gapMs * 1.5) / gapMs });
+        const len = soundedMs(p, p.on + gapMs * 1.5);
+        if (len === null) return;
+        res.push({ want: lengthClass(n.dur, nb - n.beat), ratio: len / gapMs });
       });
       b.lengths = lengthMatch(res);
       if (b.lengths !== null && b.lengths < 0.85) factors.push({ verdict: b.lengths < 0.6 ? 'not' : 'almost', en: `Note lengths right on ${Math.round(b.lengths * 100)}% of notes (85% needed)`, he: `אורך הצליל נכון ב-${Math.round(b.lengths * 100)}% מהצלילים (צריך 85%)` });
@@ -612,8 +821,159 @@ export function analyzeGuitarTake(drill: Drill, bpm: number, played: PlayedNote[
       );
       if (b.ghostDb !== null && b.ghostDb < bg.ghostDb) factors.push({ verdict: b.ghostDb < bg.ghostDb / 2 ? 'not' : 'almost', en: `Ghost notes only ${b.ghostDb.toFixed(1)} dB quieter (${bg.ghostDb} dB needed)`, he: `צלילי הרפאים שקטים רק ב-${b.ghostDb.toFixed(1)} dB (צריך ${bg.ghostDb})` });
     }
-    extra.bass = b;
+    // A3: dead notes must sound dead (no pitch, or short, or — MIDI — much softer), the others pitched.
+    if (bg.ghostClass) {
+      const pitchedVel = hit.filter((x) => x.n.technique !== 'dead' && !snapped.has(x.p!)).map((x) => x.p!.vel);
+      const medVel = pitchedVel.length ? median(pitchedVel) : 0;
+      let right = 0;
+      let deadWrong = 0;
+      let pitchWrong = 0;
+      drill.notes.forEach((n, i) => {
+        const p = m.perNote[i].played;
+        if (n.technique === 'dead') {
+          if (!p) return void deadWrong++;
+          const nb = nextBeat(i);
+          const gap = nb === null ? beatMs : ms(nb) - ms(n.beat);
+          const short = p.off !== null && p.off - p.on <= Math.min(150, 0.6 * gap);
+          const soft = !mic && hasLoudness && medVel > 0 && p.vel <= 0.5 * medVel;
+          if (snapped.has(p) || short || soft) right++;
+          else deadWrong++;
+        } else if (p && !snapped.has(p)) right++;
+        else pitchWrong++;
+      });
+      b.ghostClass = drill.notes.length ? right / drill.notes.length : null;
+      if (b.ghostClass !== null && b.ghostClass < bg.ghostClass)
+        factors.push({
+          verdict: b.ghostClass < bg.ghostClass - 0.15 ? 'not' : 'almost',
+          en: deadWrong >= pitchWrong ? `${deadWrong} ghost note${deadWrong === 1 ? '' : 's'} rang with a pitch — mute the string with the fretting hand` : `${pitchWrong} note${pitchWrong === 1 ? '' : 's'} came out dead — press them down fully`,
+          he: deadWrong >= pitchWrong ? `${deadWrong} צלילי רפאים נשמעו עם גובה — השתיקו את המיתר ביד שמאל` : `${pitchWrong} צלילים יצאו מתים — לחצו אותם עד הסוף`,
+        });
+    }
+    // A8: shift gap (a new hand position, or a jump of ≥ 3 frets on one string, while the note before still sounds).
+    if (bg.shiftGap) {
+      const pairs: { prevOn: number; on: number; prevOff?: number | null }[] = [];
+      drill.notes.forEach((n, i) => {
+        if (i === 0) return;
+        const a = drill.notes[i - 1];
+        const moved = (a.pos !== undefined && n.pos !== undefined && a.pos !== n.pos) || (a.string !== undefined && a.string === n.string && a.fret !== undefined && n.fret !== undefined && a.fret > 0 && n.fret > 0 && Math.abs(a.fret - n.fret) >= 3);
+        const legato = a.beat + a.dur >= n.beat - 1e-6;
+        const pa = m.perNote[i - 1].played;
+        const pb = m.perNote[i].played;
+        if (moved && legato && pa && pb) pairs.push({ prevOn: pa.on, on: pb.on, prevOff: mic ? undefined : pa.off });
+      });
+      b.shiftGap = shiftGap(pairs, frames);
+      if (b.shiftGap !== null && b.shiftGap > bg.shiftGap) factors.push({ verdict: worse(b.shiftGap, bg.shiftGap), en: `Silence before the shifts (${Math.round(b.shiftGap)} ms): move the hand while the note still sounds`, he: `שקט לפני ההחלפות (${Math.round(b.shiftGap)} ms): להזיז את היד בזמן שהצליל עוד נשמע` });
+    }
+    if (bg.drift) {
+      b.drift = ioiDrift(
+        pts.map((x) => ({ beat: x.beat, on: x.p!.on })),
+        drill.meter || 4,
+      );
+      if (b.drift !== null && b.drift > bg.drift) factors.push({ verdict: worse(b.drift, bg.drift), en: `Less even at the end (${Math.round(b.drift * 100)}% more spread in the last 2 bars)`, he: `פחות אחיד בסוף (${Math.round(b.drift * 100)}% יותר פיזור ב-2 התיבות האחרונות)` });
+    }
+    if (bg.swing) {
+      b.swing = swingRatio(
+        pts.map((x) => ({ beat: x.beat, on: x.p!.on })),
+        bg.swing.sub,
+      );
+      if (b.swing !== null && Math.abs(b.swing - bg.swing.ratio) > bg.swing.tol)
+        factors.push({ verdict: Math.abs(b.swing - bg.swing.ratio) > 2 * bg.swing.tol ? 'not' : 'almost', en: `Swing ${b.swing.toFixed(2)} : 1 (aim for ${bg.swing.ratio} : 1)`, he: `סווינג ${b.swing.toFixed(2)} : 1 (המטרה ${bg.swing.ratio} : 1)` });
+    }
+    if (bg.subBias) {
+      b.subBias = subBias(pts.map((x) => ({ beat: x.beat, dev: x.dev! })));
+      const w = Object.entries(b.subBias).sort((p, q) => Math.abs(q[1]) - Math.abs(p[1]))[0];
+      const SUB: Record<string, { en: string; he: string }> = { beat: { en: 'on the beat', he: 'על הפעמה' }, '8': { en: 'on the "and"', he: 'על ה"וְ"' }, '16': { en: 'on the 16ths', he: 'על השש-עשריות' }, trip: { en: 'on the triplets', he: 'על הטריולות' } };
+      if (w && Math.abs(w[1]) > bg.subBias) factors.push({ verdict: worse(Math.abs(w[1]), bg.subBias), en: `${w[1] > 0 ? 'Late' : 'Early'} ${SUB[w[0]].en} (${Math.round(Math.abs(w[1]))} ms)`, he: `${w[1] > 0 ? 'מאחרים' : 'מקדימים'} ${SUB[w[0]].he} (${Math.round(Math.abs(w[1]))} ms)` });
+    }
+    // A9: note-length suite.
+    if (bg.ringThrough !== undefined) {
+      const tu = tuningById(drill.spec.tuning ?? (bassDrill ? 'bass' : 'standard'));
+      const rests: Parameters<typeof ringThrough>[0] = [];
+      drill.notes.forEach((n, i) => {
+        const p = m.perNote[i].played;
+        const nb = nextBeat(i);
+        if (!p || nb === null || n.beat + n.dur > nb - 0.24) return;
+        rests.push({ from: ms(n.beat + n.dur), to: ms(nb), prevOn: p.on, prevPitch: n.pitch, prevOff: mic ? undefined : p.off });
+      });
+      b.ringThrough = ringThrough(rests, frames, tu.open.map(mod12));
+      const allowed = bg.ringThrough * Math.max(1, bars / 8);
+      if (b.ringThrough.rests && b.ringThrough.rang > allowed)
+        factors.push({ verdict: b.ringThrough.rang > 2 * allowed + 1 ? 'not' : 'almost', en: `${b.ringThrough.rang} rest${b.ringThrough.rang === 1 ? '' : 's'} kept ringing — stop the string on the rest`, he: `${b.ringThrough.rang} הפסקות המשיכו לצלצל — לעצור את המיתר בהפסקה` });
+    }
+    if (bg.release) {
+      const xs: { release: number | null; target: number }[] = [];
+      drill.notes.forEach((n, i) => {
+        const p = m.perNote[i].played;
+        const nb = nextBeat(i);
+        if (!p || nb === null || n.beat + n.dur >= nb - 1e-6) return;
+        xs.push({ release: soundedMs(p, p.on + (ms(nb) - ms(n.beat))), target: ms(n.beat + n.dur) - ms(n.beat) });
+      });
+      b.release = releaseAccuracy(xs, bg.release.ms);
+      if (b.release !== null && b.release < 0.85) factors.push({ verdict: b.release < 0.6 ? 'not' : 'almost', en: `Released on time on ${Math.round(b.release * 100)}% of notes (±${bg.release.ms} ms, 85% needed)`, he: `שחרור בזמן ב-${Math.round(b.release * 100)}% מהצלילים (±${bg.release.ms} ms, צריך 85%)` });
+    }
+    if (bg.overlap !== undefined) {
+      const pairs: Parameters<typeof overlapMs>[0] = [];
+      drill.notes.forEach((n, i) => {
+        if (i === 0) return;
+        const a = drill.notes[i - 1];
+        const pa = m.perNote[i - 1].played;
+        const pb = m.perNote[i].played;
+        if (!pa || !pb || a.pitch === n.pitch || a.beat >= n.beat - 1e-6) return;
+        pairs.push({ prevPitch: a.pitch, prevOff: mic ? undefined : pa.off, nextPitch: n.pitch, nextOn: pb.on });
+      });
+      const lim = bg.overlap;
+      const ov = overlapMs(pairs, frames).filter((x): x is number => x !== null);
+      b.overlap = ov.length ? ov.filter((x) => x <= lim).length / ov.length : null;
+      if (b.overlap !== null && b.overlap < 0.85) factors.push({ verdict: b.overlap < 0.6 ? 'not' : 'almost', en: `Notes overlap (${Math.round((1 - b.overlap) * 100)}% ring into the next one) — stop each note as the next sounds`, he: `צלילים חופפים (${Math.round((1 - b.overlap) * 100)}% ממשיכים לתוך הבא) — לעצור כל צליל כשהבא נשמע` });
+    }
+    // Fretless / upright intonation (mic only: a MIDI bass has no cents).
+    if (bg.cents && mic) {
+      const tol = bg.cents;
+      const notes = drill.notes
+        .map((n, i) => ({ n, p: m.perNote[i].played, i }))
+        .filter((x) => x.p && !snapped.has(x.p) && !isGhostTech(x.n))
+        .map((x) => {
+          const nb = nextBeat(x.i);
+          const until = Math.min(nb === null ? Infinity : ms(nb), ms(x.n.beat + x.n.dur)) - ms(x.n.beat);
+          return { pitch: x.n.pitch, from: x.p!.on, to: x.p!.on + until };
+        });
+      const cs = centsOff(frames, notes).filter((x): x is number => x !== null);
+      if (cs.length) {
+        const share = cs.filter((c) => Math.abs(c) <= tol).length / cs.length;
+        b.cents = { share, median: median(cs.map(Math.abs)) };
+        if (share < 0.85) {
+          const sharp = median(cs) > 0;
+          factors.push({ verdict: share < 0.7 ? 'not' : 'almost', en: `In tune on ${Math.round(share * 100)}% of notes (±${tol} cents, 85% needed) — mostly ${sharp ? 'sharp' : 'flat'}`, he: `מכוון ב-${Math.round(share * 100)}% מהצלילים (±${tol} סנט, צריך 85%) — בעיקר ${sharp ? 'גבוה' : 'נמוך'}` });
+        }
+      }
+    }
+    // A12: plucking zone — the second half (bridge) brighter than the first (neck), against the player's own neck tone.
+    if (bg.zone && mic) {
+      b.zone = zoneShift(
+        frames,
+        hit.map((x) => x.p!.on),
+        ms(drill.beats / 2),
+      );
+      if (b.zone !== null && b.zone < bg.zone) factors.push({ verdict: b.zone < 1 + (bg.zone - 1) / 2 ? 'not' : 'almost', en: `Bridge half only ${Math.round((b.zone - 1) * 100)}% brighter than the neck half — pluck closer to the bridge`, he: `החצי ליד הגשר בהיר רק ב-${Math.round((b.zone - 1) * 100)}% מהחצי ליד הצוואר — לפרוט קרוב יותר לגשר` });
+    }
+    // A13: slap / pop classes — advice only, never a factor.
+    if (bg.slapAdvice && mic) {
+      const pk = median(hit.map((x) => peakRms(frames, x.p!.on)).filter((x) => x > 0));
+      const cls = hit.map((x) => ({ st: x.n.stroke, c: slapClass(frames, x.p!.on, pk) })).filter((x) => x.c !== null);
+      const share = (st: string, want: string) => {
+        const xs = cls.filter((x) => x.st === st);
+        return xs.length ? xs.filter((x) => x.c === want).length / xs.length : null;
+      };
+      if (cls.length) {
+        b.slap = { thumb: share('p', 'thumb'), pop: share('i', 'pop') };
+        const adv: T2[] = [];
+        if (b.slap.thumb !== null && b.slap.thumb < 0.7) adv.push({ en: `Thumb notes sounded like slaps ${Math.round(b.slap.thumb * 100)}% of the time — bounce off the string near the end of the neck`, he: `צלילי האגודל נשמעו כסלאפ ב-${Math.round(b.slap.thumb * 100)}% מהפעמים — לקפוץ מהמיתר ליד סוף הצוואר` });
+        if (b.slap.pop !== null && b.slap.pop < 0.7) adv.push({ en: `Pops sounded like pops ${Math.round(b.slap.pop * 100)}% of the time — hook the string and let it snap`, he: `הפופים נשמעו כפופ ב-${Math.round(b.slap.pop * 100)}% מהפעמים — לתפוס את המיתר ולתת לו להצליף` });
+        if (adv.length) extra.advice = adv;
+      }
+    }
   }
+  if (bg || bassDrill) extra.bass = b;
 
   let verdict = m.verdict;
   let why = m.why;

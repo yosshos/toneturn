@@ -225,8 +225,21 @@ interface Factor {
   he: string;
 }
 
-/** Measure one take against a drill and give the verdict with the worst factor. */
-export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], cal?: DrillCalibration): TakeMetrics {
+/**
+ * Bass timing thresholds (BASS_CURRICULUM §4, BASS_AUDIT A7): mic SD ≤ 28 ms and CV ≤ .06 at every tempo (a 25 ms
+ * frame clock can't do better at fast 16ths); MIDI the tempo-band thresholds, but never stricter than SD 20 / CV .06.
+ */
+export function bassThresholds(band: number, mic: boolean): { cv: number; sd: number } {
+  if (mic) return { cv: 0.06, sd: 28 };
+  const th = thresholds(band);
+  return { cv: Math.max(0.06, th.cv), sd: Math.max(20, th.sd) };
+}
+
+/**
+ * Measure one take against a drill and give the verdict with the worst factor. `opts.thresholds` overrides the
+ * tempo-band CV / SD limits (bass, A7).
+ */
+export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], cal?: DrillCalibration, opts: { thresholds?: { cv: number; sd: number } } = {}): TakeMetrics {
   // Improv mode: the right hand above the split plays freely and is checked elsewhere (against the chord-scales).
   const played = drill.freeAbove !== undefined ? played0.filter((p) => p.pitch < drill.freeAbove!) : played0;
   const exp = drill.notes;
@@ -438,7 +451,7 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
 
   // Tempo band and thresholds.
   const nps = npsOf(drill, bpm);
-  const th = thresholds(tempoBand(nps));
+  const th = { ...thresholds(tempoBand(nps)), ...(opts.thresholds ?? {}) };
 
   // Factors (severity > 1 = misses the goal; ≤ 1.5 = almost).
   const F: Factor[] = [];
