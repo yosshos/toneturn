@@ -220,12 +220,13 @@ test.describe('more lessons', () => {
   });
 });
 
-test('settings: categories start closed, open on tap and are remembered', async ({ page }) => {
+test('settings: five sections with current values; a section opens its groups, search finds any group', async ({ page }) => {
   await page.goto('/#/settings');
-  await expect(page.locator('.set-group')).toHaveCount(9); // + Privacy & friends (0.42)
-  await expect(page.locator('.set-group[open]')).toHaveCount(0);
-  await page.locator('.set-group[data-group="midi"] > summary').click();
+  await expect(page.locator('.set-sec')).toHaveCount(5);
+  await expect(page.locator('.set-sec[data-set-nav="inst"] small')).toContainText('MIDI');
+  await page.locator('.set-sec[data-set-nav="inst"]').click();
   await expect(page.getByRole('radiogroup', { name: 'MIDI keyboard' })).toBeVisible();
-  await page.reload();
-  await expect(page.locator('.set-group[data-group="midi"]')).toHaveAttribute('open', '');
+  await page.locator('[data-set-back]').click();
+  await page.locator('.set-search').fill('midi');
+  await expect(page.locator('.set-group[data-group="midi"]')).toHaveCount(1);
 });

@@ -1384,3 +1384,58 @@
   border: 2px solid var(--outline);
   color: var(--ink-c);
 }
+
+/* ── Settings control centre (0.61, iteration 3): search, quick tune, five sections with their current values ── */
+:root[data-theme] .set-hub { display: flex; flex-direction: column; gap: 12px; }
+:root[data-theme] .set-search { width: 100%; box-sizing: border-box; padding: 11px 14px; border-radius: 14px; border: var(--stroke) solid var(--outline); background: var(--card, #fff); color: var(--ink); font: inherit; }
+:root[data-theme] .set-cap { margin: 6px 2px 0; font-family: 'Secular One', Rubik, sans-serif; font-size: 0.92rem; font-weight: 400; color: var(--ink-dim); letter-spacing: 0.02em; }
+:root[data-theme] .sq-card { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; border-radius: 18px; border: var(--stroke) solid var(--outline); background: var(--card, #fff); box-shadow: var(--shadow-s); }
+:root[data-theme] .sq-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 36px; }
+:root[data-theme] .sq-row > span:first-child { font-weight: 600; }
+:root[data-theme] .sq-row input[type='range'] { flex: 1; max-width: 60%; accent-color: var(--purple); }
+:root[data-theme] .sq-seg button { padding: 6px 10px; font-size: 0.86rem; }
+:root[data-theme] .set-secs { display: flex; flex-direction: column; gap: 8px; }
+:root[data-theme] .set-sec { all: unset; box-sizing: border-box; display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 16px; border: var(--stroke) solid var(--outline); background: var(--card, #fff); color: var(--ink); cursor: pointer; box-shadow: var(--shadow-s); }
+:root[data-theme] .set-sec:hover { transform: translateY(-1px); }
+:root[data-theme] .set-sec:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+:root[data-theme] .set-sec.on { background: var(--ink-c); color: #fff; }
+:root[data-theme] .set-sec.on small { color: var(--lemon); }
+:root[data-theme] .set-sec .ss-ic { flex: none; width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; border: var(--stroke) solid var(--ink-c); color: var(--ink-c); }
+:root[data-theme] .set-sec .ss-ic svg { width: 20px; height: 20px; }
+:root[data-theme] .set-sec .ss-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+:root[data-theme] .set-sec .ss-text b { font-family: 'Secular One', Rubik, sans-serif; font-weight: 400; font-size: 1.02rem; }
+:root[data-theme] .set-sec .ss-text small { color: var(--ink-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+:root[data-theme] .set-sec .ss-chev { font-size: 1.4rem; opacity: 0.55; }
+:root[data-theme] .set-foot { margin: 4px 0 0; text-align: center; color: var(--ink-dim); font-size: 0.82rem; }
+:root[data-theme] .set-back { align-self: flex-start; margin-bottom: 8px; }
+:root[data-theme] .settings:not(.settings-wide) .set-page { margin-bottom: 18px; }
+@media (min-width: 1100px) {
+  :root[data-theme] main.settings.settings-wide > .set-hub { grid-area: nav; position: sticky; top: 16px; }
+  :root[data-theme] main.settings.settings-wide .set-sec { box-shadow: none; padding: 8px 10px; }
+}
+/* one switch everywhere: the 0.52 settings switch moved its knob with a transform; v2 moves it by offset */
+:root[data-theme] .panel-screen.settings input[type='checkbox'] { width: 48px; height: 28px; border-radius: 14px; border: 2.5px solid var(--outline); background: var(--card-2); margin: 0; }
+:root[data-theme] .panel-screen.settings input[type='checkbox']:checked { background: var(--teal); }
+:root[data-theme] .panel-screen.settings input[type='checkbox']::after,
+:root[data-theme][dir] .panel-screen.settings input[type='checkbox']:checked::after { transform: none; top: 50%; margin-top: -9px; background: #fff; border: 2.5px solid var(--outline); box-sizing: border-box; transition: inset-inline-start 0.15s; }
+:root[data-theme] .panel-screen.settings input[type='checkbox']:checked::after { inset-inline-start: 22px; }
+:root[data-theme] .vol-row > span { white-space: nowrap; }
+:root[data-theme] .vol-row > b { white-space: nowrap; min-width: 3.2em; text-align: end; }
+:root[data-theme] .btn.set-back { display: inline-flex; width: fit-content; max-width: 100%; align-self: flex-start; }
+
+/* Sound cards (0.61): a drawing of the instrument, name, note; the round play button sits in the drawing's corner,
+   never over the text. Tapping the card chooses; the play button only listens. */
+:root[data-theme] .panel-screen.settings .sound-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+:root[data-theme] .sound-opt-wrap { position: relative; }
+:root[data-theme] .panel-screen.settings .sound-opt { display: flex; flex-direction: column; align-items: stretch; gap: 2px; width: 100%; height: 100%; box-sizing: border-box; padding: 10px 12px 12px; border-radius: 16px; border: var(--stroke) solid var(--outline); background: var(--card, #fff); color: var(--ink); text-align: start; box-shadow: var(--shadow-s); cursor: pointer; }
+:root[data-theme] .panel-screen.settings .sound-opt.on { background: var(--ink-c); color: #fff; box-shadow: var(--shadow); }
+:root[data-theme] .panel-screen.settings .sound-opt.on small { color: var(--lemon); }
+:root[data-theme] .panel-screen.settings .sound-opt b { font-family: 'Secular One', Rubik, sans-serif; font-weight: 400; font-size: 0.98rem; }
+:root[data-theme] .panel-screen.settings .sound-opt small { font-size: 0.76rem; color: var(--ink-dim); }
+:root[data-theme] .inst-art { display: block; width: 100%; max-width: 116px; height: 58px; margin: 0 0 6px; margin-inline-end: 34px; color: var(--ink-c); }
+:root[data-theme] .sound-opt.on .inst-art { color: #fff; }
+:root[data-theme] .sound-play { all: unset; box-sizing: border-box; position: absolute; top: 8px; inset-inline-end: 8px; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: var(--lemon); color: var(--ink-c); border: var(--stroke) solid var(--ink-c); cursor: pointer; }
+:root[data-theme] .sound-play svg { width: 14px; height: 14px; }
+:root[data-theme][dir='rtl'] .sound-play svg { transform: none; }
+:root[data-theme] .sound-play:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+:root[data-theme] .sound-play:disabled { opacity: 0.5; cursor: default; }

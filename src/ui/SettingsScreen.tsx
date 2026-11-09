@@ -1,3 +1,5 @@
+import { APP_VERSION } from '../version';
+import { InstrumentArt } from './InstrumentArt';
 import { Glyph, glyphForEmoji } from './Glyph';
 import { Icon } from './icons';
 import { REGISTRATIONS } from '../audio/organ';
@@ -206,7 +208,7 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
   const G = GROUPS;
   const wide = useWide();
   const hashId = typeof location !== 'undefined' ? /^#\/settings\/(\w+)/.exec(location.hash)?.[1] : undefined;
-  const [active, setActive] = useState<string>(hashId ?? 'account');
+  const [active, setActive] = useState<string>(hashId ?? '');
   const [query, setQuery] = useState('');
   useEffect(() => {
     const on = () => {
@@ -229,9 +231,32 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
   ];
   const q = query.trim().toLowerCase();
   const shownNav = q ? NAV.filter((x) => `${x.title} ${x.sub}`.toLowerCase().includes(q)) : NAV;
+  // 0.61 (SPEC-REDESIGN, settings iteration 3): five sections, each row showing what is set now; the nine groups
+  // live inside them. Deep links (#/settings/<group>) open the section that holds the group.
+  const he = lang === 'he';
+  const instName = s.instrument ? t.instrumentNames[s.instrument] : he ? 'לא נבחר' : 'Not set';
+  const apName = APP_THEMES.find((x) => x.id === appearanceOf(s.theme))?.name[lang] ?? '';
+  const SECS: { id: string; groups: string[]; title: string; values: string; icon: string; color: string }[] = [
+    { id: 'me', groups: ['account', 'privacy', 'language'], title: he ? 'אני ושפה' : 'Me & language', values: [s.nickname, he ? (s.uiLang === 'he' ? 'עברית' : 'אנגלית') : s.uiLang === 'he' ? 'Hebrew' : 'English'].filter(Boolean).join(' · '), icon: 'account', color: '#A78BFA' },
+    { id: 'learn', groups: ['learning'], title: he ? 'הלימוד' : 'Learning', values: he ? `יעד יומי ${s.dailyGoal ?? 30} XP` : `Daily goal ${s.dailyGoal ?? 30} XP`, icon: 'learning', color: '#12C9B4' },
+    { id: 'inst', groups: ['instrument', 'midi', 'input'], title: he ? 'הכלי והקלט' : 'Instrument & input', values: `${instName} · MIDI ${s.midiInput ? (he ? 'פעיל' : 'on') : he ? 'כבוי' : 'off'}`, icon: 'instrument', color: '#FFD43B' },
+    { id: 'sound', groups: ['sound'], title: he ? 'צליל' : 'Sound', values: `${he ? 'עוצמה' : 'Volume'} ${Math.round((s.volume ?? 0.9) * 100)}%`, icon: 'sound', color: '#FF5FA2' },
+    { id: 'display', groups: ['display'], title: he ? 'תצוגה' : 'Display', values: apName, icon: 'display', color: '#3AB8FF' },
+  ];
+  const secOf = (g: string | undefined) => SECS.find((x) => g && x.groups.includes(g))?.id ?? null;
+  const [sec, setSec] = useState<string | null>(() => secOf(hashId) ?? (wide ? 'me' : null));
+  useEffect(() => {
+    if (wide && !sec) setSec('me');
+  }, [wide, sec]);
+  useEffect(() => {
+    const to = secOf(active);
+    if (to) setSec(to);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active]);
+  const shownGroups = q ? shownNav.map((x) => x.id) : (SECS.find((x) => x.id === sec)?.groups ?? []);
 
   return (
-    <PaneCtx.Provider value={{ wide, active }}>
+    <PaneCtx.Provider value={{ wide: wide || (!q && !!sec), active, groups: shownGroups }}>
     <main className={`panel-screen settings ${wide ? 'settings-wide' : ''}`}>
       <header className="screen-head">
         <button className="icon-btn" onClick={onBack} aria-label={t.back}>
@@ -240,17 +265,64 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
         <h1>{t.settings}</h1>
       </header>
 
-      {wide && (
-        <nav className="set-nav" aria-label={t.settings} data-settings-nav="1">
-          <input className="set-search" type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={lang === 'he' ? 'חיפוש בהגדרות' : 'Search settings'} aria-label={lang === 'he' ? 'חיפוש בהגדרות' : 'Search settings'} />
-          {shownNav.map((x) => (
-            <button key={x.id} className={`set-nav-item ${active === x.id ? 'on' : ''}`} onClick={() => setActive(x.id)} aria-current={active === x.id ? 'page' : undefined} data-set-nav={x.id} title={x.sub}>
-              <SetIcon k={x.id} />
-              <span>{x.title}</span>
-            </button>
-          ))}
+      {(wide || !sec) && (
+        <nav className="set-hub" aria-label={t.settings} data-settings-nav="1">
+          <input className="set-search" type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={he ? 'חיפוש הגדרה…' : 'Search settings…'} aria-label={he ? 'חיפוש בהגדרות' : 'Search settings'} />
+          {!wide && !q && (
+            <section className="set-quick" aria-label={he ? 'כוונון מהיר' : 'Quick tune'}>
+              <h2 className="set-cap">{he ? 'כוונון מהיר' : 'Quick tune'}</h2>
+              <div className="sq-card">
+                <label className="sq-row">
+                  <span>{he ? 'עוצמה' : 'Volume'}</span>
+                  <input type="range" min={0} max={100} step={5} value={Math.round((s.volume ?? 0.9) * 100)} onChange={(e) => onChange({ volume: Number(e.target.value) / 100 })} aria-label={he ? 'עוצמה' : 'Volume'} />
+                </label>
+                <div className="sq-row">
+                  <span>{he ? 'הכלי' : 'Instrument'}</span>
+                  <div className="seg sq-seg" role="radiogroup">
+                    {(['keys', 'guitar', 'voice'] as const).map((k) => (
+                      <button key={k} type="button" role="radio" aria-checked={s.instrument === k} className={s.instrument === k ? 'on' : ''} onClick={() => onChange({ instrument: k })}>
+                        {t.instrumentNames[k]}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <label className="sq-row toggle-row">
+                  <span>{he ? 'עונים בקול (מיקרופון)' : 'Answer by voice (mic)'}</span>
+                  <input type="checkbox" checked={s.mode === 'voice'} onChange={(e) => onChange({ mode: e.target.checked ? 'voice' : 'buttons' })} />
+                </label>
+              </div>
+            </section>
+          )}
+          {!q && (
+            <>
+              {!wide && <h2 className="set-cap">{he ? 'כל ההגדרות' : 'All settings'}</h2>}
+              <div className="set-secs">
+                {SECS.map((x) => (
+                  <button key={x.id} className={`set-sec ${wide && sec === x.id ? 'on' : ''}`} onClick={() => setSec(x.id)} aria-current={wide && sec === x.id ? 'page' : undefined} data-set-nav={x.id}>
+                    <span className="ss-ic" style={{ background: x.color }} aria-hidden="true">
+                      <SetIcon k={x.icon} />
+                    </span>
+                    <span className="ss-text">
+                      <b>{x.title}</b>
+                      <small>{x.values}</small>
+                    </span>
+                    <span className="ss-chev flip-rtl" aria-hidden="true">
+                      ›
+                    </span>
+                  </button>
+                ))}
+              </div>
+              {!wide && <p className="set-foot">{he ? `גרסה ${APP_VERSION}` : `Version ${APP_VERSION}`}</p>}
+            </>
+          )}
         </nav>
       )}
+      {!wide && sec && !q && (
+        <button className="btn ghost small set-back" onClick={() => setSec(null)} data-set-back="1">
+          <span className="flip-rtl">→</span> {SECS.find((x) => x.id === sec)?.title}
+        </button>
+      )}
+      {(wide || sec || q) && (
       <div className="set-groups">
         <Group id="account" icon={<SetIcon k="account" />} title={t.account} sub={G.account[lang]}>
           <ProfileCard lang={lang} s={s} onChange={onChange} />
@@ -630,7 +702,9 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
           </section>
         </Group>
       </div>
+      )}
 
+      {(wide || sec) && (
       <div className="row">
         <a className="btn" href="#/diagnostics">
           {t.diagnostics} →
@@ -639,6 +713,7 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
           {t.done}
         </button>
       </div>
+      )}
     </main>
     </PaneCtx.Provider>
   );
@@ -728,7 +803,7 @@ const SetIcon = ({ k }: { k: string }) => (
 );
 
 /** Settings on a computer (SPEC-DESKTOP §4, owner 2026-11-08): categories in a column, the chosen one as a page. */
-const PaneCtx = createContext<{ wide: boolean; active: string } | null>(null);
+const PaneCtx = createContext<{ wide: boolean; active: string; groups: string[] } | null>(null);
 function useWide() {
   const q = '(min-width: 1100px)';
   const [wide, setWide] = useState(() => typeof matchMedia !== 'undefined' && matchMedia(q).matches);
@@ -744,8 +819,8 @@ function useWide() {
 
 function Group({ id, icon, title, sub, children }: { id: string; icon: ReactNode; title: string; sub: string; children: ReactNode }) {
   const pane = useContext(PaneCtx);
+  if (pane && !pane.groups.includes(id)) return null;
   if (pane?.wide) {
-    if (pane.active !== id) return null;
     return (
       <section className="set-page" data-group={id} aria-labelledby={`sp-${id}`}>
         <header className="sp-head">
@@ -1047,6 +1122,18 @@ function SoundSetting({ t, s, onChange }: { t: Strings; s: Settings; onChange: (
     onChange({ sound: id });
     preview();
   };
+  // Listen without choosing (0.61): load that sound, play the preview, then return to the chosen one.
+  const listen = async (id: string) => {
+    if (id === value) return preview();
+    setFailed(false);
+    setBusy({ id, done: 0, total: 1 });
+    await piano.unlock();
+    const ok = await piano.setSound(id, (done, total) => setBusy({ id, done, total }));
+    setBusy(null);
+    if (!ok) return setFailed(true);
+    preview();
+    setTimeout(() => void piano.setSound(value), 2600);
+  };
   // Preview: a short voicing then a line, soft and loud (so the dynamics are heard too).
   const preview = () =>
     void piano
@@ -1069,10 +1156,16 @@ function SoundSetting({ t, s, onChange }: { t: Strings; s: Settings; onChange: (
             <h3 className="sound-group-h">{g.name[lang]}</h3>
             <div className="sound-grid">
               {g.sounds.map((id) => (
-                <button key={id} type="button" role="radio" aria-checked={value === id} className={`sound-opt ${value === id ? 'on' : ''}`} disabled={!!busy} onClick={() => void choose(id)} data-sound={id}>
-                  <b>{SOUND_NAME[id][lang]}</b>
-                  <small>{busy?.id === id ? `${Math.round((busy.done / busy.total) * 100)}%` : SOUND_NAME[id].note[lang]}</small>
-                </button>
+                <div key={id} className={`sound-opt-wrap ${value === id ? 'on' : ''}`}>
+                  <button type="button" role="radio" aria-checked={value === id} className={`sound-opt ${value === id ? 'on' : ''}`} disabled={!!busy} onClick={() => void choose(id)} data-sound={id}>
+                    <InstrumentArt id={id} />
+                    <b>{SOUND_NAME[id][lang]}</b>
+                    <small>{busy?.id === id ? `${Math.round((busy.done / busy.total) * 100)}%` : SOUND_NAME[id].note[lang]}</small>
+                  </button>
+                  <button type="button" className="sound-play" disabled={!!busy} onClick={() => void listen(id)} aria-label={`${he ? 'להשמיע' : 'Play'}: ${SOUND_NAME[id][lang]}`} data-sound-play={id}>
+                    <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.5v9l7.5-4.5z" fill="currentColor" /></svg>
+                  </button>
+                </div>
               ))}
             </div>
           </div>
