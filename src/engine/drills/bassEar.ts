@@ -7,7 +7,7 @@
 //
 // Pure and deterministic. Imports bass.ts helpers only inside functions (bass.ts ↔ guitar.ts load order).
 
-import type { Drill, DrillSpec } from './types';
+import type { Drill, DrillSpec, TakeMetrics } from './types';
 import type { Tuning } from '../fretboard';
 import { rng, mod, NAMES } from './guitar';
 import { alt, chartOf, drillOf, fold, QI, rootOf, textOf, type BN, type Prog, type Q } from './bass';
@@ -152,7 +152,9 @@ export function generateBassEar(s: DrillSpec, tu: Tuning): Drill {
         line.push({ b: 8 + w.beat, d: 1, p: m });
       }
       band(0, 8);
-      return finishEar(s, tu, line, notes, windows, 'transcribe', { en: 'Transcribe two bars of walking bass', he: 'תמלול שתי תיבות של ווקינג בס' }, chartOf(key, prog));
+      // Bagrut transcription: after playing it back, write the line (tap it on the neck), graded note for note.
+      const d = finishEar(s, tu, line, notes, windows, 'transcribe', { en: 'Transcribe two bars of walking bass', he: 'תמלול שתי תיבות של ווקינג בס' }, chartOf(key, prog));
+      return { ...d, write: { pitches: line.map((x) => x.p) } };
     }
     case 'slash': {
       // Inversions and slash bass by ear: piano chords over their bass notes (C – G/B – Am – C/G …), then play the bass line.
@@ -171,6 +173,29 @@ export function generateBassEar(s: DrillSpec, tu: Tuning): Drill {
     }
   }
   throw new Error(`Unknown b-ear kind ${s.kind}`);
+}
+
+/** A written transcription graded note for note: the same sounding pitch in the same slot (any string / fret). */
+export interface WrittenGrade {
+  ok: number;
+  total: number;
+  marks: boolean[];
+}
+export function gradeWritten(want: number[], got: number[]): WrittenGrade {
+  const marks = want.map((p, i) => got[i] === p);
+  return { ok: marks.filter(Boolean).length, total: want.length, marks };
+}
+
+/**
+ * The take's verdict with the written part (ear L7): the played answer AND the written one must be right. A wrong
+ * written note keeps a clean take from counting (it becomes "almost", with the slot named); it never raises a verdict.
+ */
+export function withWritten(m: TakeMetrics, g: WrittenGrade): TakeMetrics {
+  const written = { ok: g.ok, total: g.total };
+  if (g.ok === g.total) return { ...m, written };
+  const first = g.marks.findIndex((x) => !x);
+  const why = { en: `Written: ${g.ok}/${g.total} notes right — note ${first + 1} is off.`, he: `בכתב: ${g.ok}/${g.total} תווים נכונים — תו ${first + 1} לא נכון.` };
+  return { ...m, written, verdict: m.verdict === 'clean' ? 'almost' : m.verdict, why: m.verdict === 'clean' ? why : { en: `${m.why.en} ${why.en}`, he: `${m.why.he} ${why.he}` } };
 }
 
 function finishEar(s: DrillSpec, tu: Tuning, line: BN[], notes: LN[], windows: [number, number][], ask: string, name: { en: string; he: string }, chart?: string[]): Drill {

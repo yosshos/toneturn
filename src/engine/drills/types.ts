@@ -376,6 +376,8 @@ export interface TakeMetrics {
   pedal?: { ok: number; total: number; pass: boolean };
   /** Free-choice drills (goal.bass.rules, A5): per-slot labels and the worst bar for the "Why?" line. */
   rules?: TakeRules;
+  /** Written transcription (ear L7): notes written right / total. */
+  written?: { ok: number; total: number };
 }
 
 /** Progress of one item (synced, small). */

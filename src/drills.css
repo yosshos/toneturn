@@ -467,6 +467,11 @@ button.heat-cell {
 .ear-bars li.you { background: var(--card); color: var(--ink); }
 .ear-bars li.now { background: var(--now); color: var(--ink); }
 .drums-gate { display: grid; gap: 8px; }
+.drill-prep { display: grid; gap: 8px; justify-items: center; }
+.write-slots li { flex: 1 0 68px; font-size: 0.75rem; }
+.write-slots li.w-ok { border-color: #3ccf97; }
+.write-slots li.w-bad { border-color: #ff6b5c; }
+.write-answer { display: block; color: var(--ink-dim); }
 .drums-route { justify-self: center; font-size: 0.85rem; }
 .level-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; font-size: 0.75rem; color: var(--ink-dim); }
 .level-meta .lm-exam { padding: 0 6px; border: 1.5px solid var(--line-strong); border-radius: 999px; }

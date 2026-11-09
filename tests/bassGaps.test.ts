@@ -9,7 +9,8 @@ import { drumHits } from '../src/engine/drills/bass';
 import { bandHits, bandStyleOf, chartText } from '../src/engine/drills/bassBand';
 import { bandComping, closeVoicings } from '../src/engine/band';
 import { parseChart } from '../src/engine/charts';
-import { DEFAULT_DRILL_SETTINGS, type Drill } from '../src/engine/drills/types';
+import { gradeWritten, withWritten } from '../src/engine/drills/bassEar';
+import { DEFAULT_DRILL_SETTINGS, type Drill, type TakeMetrics } from '../src/engine/drills/types';
 
 const BASS = guitarCatalog().filter((f) => f.id.startsWith('b-'));
 const levelById = (id: string) => BASS.flatMap((f) => f.levels).find((l) => l.id === id) as GuitarLevelDef;
@@ -106,6 +107,33 @@ describe('pocket L7: two groove sections (8 bars in time, 8 half-time)', () => {
       const onsets = d.notes.filter((n) => n.beat < 64).map((n) => n.beat);
       expect(onsets).toEqual(kicks.filter((b) => b < 64));
     }
+  });
+});
+
+describe('ear L7: the written transcription', () => {
+  it('every item carries the line to write: the answer bars, note for note, on every tuning', () => {
+    for (const d of drillsOf('b-ear-7')) {
+      const answer = d.notes.filter((n) => n.beat >= 8).map((n) => n.pitch);
+      expect(d.write?.pitches).toEqual(answer);
+      expect(d.write!.pitches.length).toBe(8);
+    }
+  });
+
+  it('graded note for note; a wrong written note keeps a clean take from counting, never raises one', () => {
+    const want = [38, 41, 45, 44, 43, 47, 50, 49];
+    expect(gradeWritten(want, want)).toEqual({ ok: 8, total: 8, marks: want.map(() => true) });
+    const g = gradeWritten(want, [38, 41, 45, 44, 43, 47, 50, 37]);
+    expect(g.ok).toBe(7);
+    expect(g.marks[7]).toBe(false);
+    const clean = { verdict: 'clean', why: { en: 'ok', he: 'ok' } } as TakeMetrics;
+    expect(withWritten(clean, gradeWritten(want, want)).verdict).toBe('clean');
+    const w = withWritten(clean, g);
+    expect(w.verdict).toBe('almost');
+    expect(w.written).toEqual({ ok: 7, total: 8 });
+    expect(w.why.en).toContain('note 8');
+    expect(/[֐-׿]/.test(w.why.he)).toBe(true);
+    const not = { verdict: 'not', why: { en: 'late', he: 'מאוחר' } } as TakeMetrics;
+    expect(withWritten(not, g).verdict).toBe('not');
   });
 });
 
