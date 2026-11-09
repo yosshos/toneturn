@@ -1,5 +1,6 @@
 // Weekly league card, asynchronous friend duels and "players at your level" lines (spec S.7, S.8, L.5).
 
+import { Toni } from './Toni';
 import { LeagueBadge, LeagueLadder } from './LeagueBadge';
 import { LADDER, tierOf, TOP_TIER } from '../engine/league';
 import { piano } from './services';
@@ -198,6 +199,9 @@ export function LeagueMove({ t, from, to, onClose }: { t: Strings; from: number;
             ))}
           </div>
         )}
+        <span className="cele-toni">
+          <Toni state={up ? 'streak' : 'close'} size={84} />
+        </span>
         <LeagueBadge tier={to} size={150} arrive={up} falling={up ? [] : LADDER.slice(to, from).map((n) => n.tier)} title={name} />
         <h2>{title}</h2>
         <p className="mini-takeaway">{up ? fill(t.leagueUpHint, { note: tierOf(to).symbol }) : t.leagueDownHint}</p>

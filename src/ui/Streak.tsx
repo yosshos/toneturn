@@ -1,6 +1,7 @@
 // Streak 2.0 UI (spec addendum N): flame states, the streak screen after the first session of the day,
 // the streak sheet (calendar, freezes, gems, shop) and the "freeze used" notice. Reduced motion respected.
 
+import { Toni } from './Toni';
 import { Icon } from './icons';
 import { useEffect, useState } from 'react';
 import { addDays, canBuy, canBuyCosmetic, COSMETICS, FRAMES, MAX_FREEZES, ownsCosmetic, PRICES, type Purchase, type StreakState } from '../engine/streak';
@@ -88,6 +89,9 @@ export function StreakCelebration({ t, before, after, gemsGained, today, onDone 
       {milestone && <Confetti />}
       <div className="sc-flame">
         <Flame lit size={132} />
+        <span className="sc-toni">
+          <Toni state="streak" size={78} />
+        </span>
       </div>
       <div className="sc-count" dir="ltr" aria-live="polite">
         <span key={shown} className="roll">
@@ -108,11 +112,10 @@ export function StreakCelebration({ t, before, after, gemsGained, today, onDone 
 
 function Confetti() {
   if (reduced()) return null;
-  const colors = ['#FFC94D', '#4BE3B5', '#A98BFF', '#FF6A4D', '#FFF6EA'];
   return (
     <div className="confetti" aria-hidden="true">
       {Array.from({ length: 36 }, (_, i) => (
-        <span key={i} style={{ left: `${(i * 97) % 100}%`, background: colors[i % colors.length], animationDelay: `${(i % 9) * 0.08}s`, ['--r' as string]: `${(i * 47) % 360}deg` }} />
+        <span key={i} style={{ left: `${(i * 97) % 100}%`, animationDelay: `${(i % 9) * 0.08}s`, ['--r' as string]: `${(i * 47) % 360}deg` }} />
       ))}
     </div>
   );

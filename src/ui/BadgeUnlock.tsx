@@ -9,6 +9,7 @@ import { BADGE_CAT_NAME, type Badge } from '../engine/badges';
 import { AREA_NAME, MASTER_DIV, rankLabel, tierOfDiv, TIER_NAME, type RankArea, type RankChange, type RankTier } from '../engine/ranks';
 import { BadgeArt, tierGlow } from './BadgeArt';
 import { RankCrest } from './Badges';
+import { Toni } from './Toni';
 import '../badges.css';
 
 type Lang = 'he' | 'en';
@@ -69,6 +70,9 @@ function Stage({ k, tier, kicker, medal, title, sub, note, counter, lang, onNext
     <div className="bu-overlay" role="dialog" aria-modal="true" aria-labelledby="bu-title" dir={lang === 'he' ? 'rtl' : 'ltr'} style={style} onClick={onNext}>
       <p className="bu-sr" aria-live="assertive" aria-atomic="true">{`${kicker} ${title}. ${sub}`}</p>
       <div className="bu-card" key={k}>
+        <span className="cele-toni">
+          <Toni state="wow" size={84} />
+        </span>
         <p className="bu-kicker">
           {kicker}
           {counter && <bdi dir="ltr" className="bu-count">{counter}</bdi>}
