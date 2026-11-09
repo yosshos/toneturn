@@ -18,6 +18,22 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.61.0',
+    date: '2026-11-09',
+    en: [
+      'A new look across the whole app: light and dark (the colour themes are retired and their gems refunded; avatar frames take their place), Toni the eighth note who reacts as you play, note-head symbols instead of emoji, and a clearer path',
+      'Courses: ear & theory, voice, keys, guitar, bass, jazz and exam each have their own path, daily workout and practice — switch from the chip at the top',
+      'Shorter questions and one-line feedback ("Why?" only when you miss); answers move from names to the staff as you improve',
+      'Settings as a control centre with search, quick tune and sound cards you can listen to; a redrawn metronome, tuner and games (Flight, Highway, True or false)',
+    ],
+    he: [
+      'מראה חדש לכל האפליקציה: בהיר וכהה (ערכות הצבע יצאו והיהלומים הוחזרו; במקומן מסגרות לאווטאר), טוני — תו שמינית שמגיב תוך כדי, סמלי ראשי תווים במקום אמוג׳י ומסלול ברור יותר',
+      'קורסים: שמיעה ותיאוריה, קול, קלידים, גיטרה, בס, ג׳אז ובגרות — לכל אחד מסלול, אימון יומי ותרגול משלו. מחליפים מהכפתור למעלה',
+      'שאלות קצרות ומשוב בשורה אחת ("למה?" רק כשטועים); התשובות עוברות משמות לחמשה ככל שמשתפרים',
+      'הגדרות כמרכז שליטה עם חיפוש, כוונון מהיר וכרטיסי צליל שאפשר להשמיע; מטרונום, טיונר ומשחקים (מעוף קולי, כביש הקצב, אמת או בלוף) בציור חדש',
+    ],
+  },
+  {
     version: '0.60.0',
     date: '2026-11-09',
     en: ['Update and install now sit in the top bar like the other icons (a quiet dot when an update is waiting, a short label on a computer) and no longer push the phone layout; “update now” is in the menu too; the name stays on one line'],
