@@ -1,3 +1,5 @@
+import { DOMAIN_COLOR, Glyph } from './Glyph';
+import { EchoArt } from './GameArt';
 import { NotesView } from './NotesView';
 import { TalkToggle } from './TalkToggle';
 import type { PadSet } from '../engine/memory';
@@ -82,6 +84,7 @@ export function GameSetup({
         <h1>{t.games}</h1>
       </header>
 
+      <EchoArt kind={kind} />
       <div className="game-cards" role="radiogroup" aria-label={t.games}>
         {(['melody', 'rhythm'] as const).map((k) => (
           <button key={k} role="radio" aria-checked={kind === k} className={`game-card ${k} ${kind === k ? 'on' : ''}`} onClick={() => pickKind(k)}>
@@ -246,20 +249,9 @@ export function GameSetup({
   );
 }
 
+/** 0.61: the echo games in the note-head symbol set (echo = memory blue, beat echo = rhythm pink). */
 export function GameIcon({ kind }: { kind: GameKind }) {
-  return kind === 'melody' ? (
-    <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <circle cx="6" cy="16" r="2.2" />
-      <circle cx="12" cy="11" r="2.2" />
-      <circle cx="18" cy="6" r="2.2" />
-      <path d="M7.8 14.6l2.4-2.2M13.8 9.6l2.4-2.2" strokeDasharray="1.5 2" />
-    </svg>
-  ) : (
-    <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M4 6v12M9 9v9M14 9v9M19 9v9" />
-      <path d="M3 21h18" />
-    </svg>
-  );
+  return kind === 'melody' ? <Glyph kind="echo" color={DOMAIN_COLOR.ear} size={44} /> : <Glyph kind="rhythm" color={DOMAIN_COLOR.rhythm} size={44} />;
 }
 
 // ======================================================================= play

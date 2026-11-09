@@ -1281,8 +1281,11 @@ function ReadStrip({ hits, extra, t }: { hits: (number | null)[]; extra: number;
   return (
     <div className="read-strip" dir="ltr">
       {hits.map((h, i) => (
-        <span key={i} className={`rs ${h === null ? 'miss' : Math.abs(h) <= 40 ? 'good' : 'ok'}`} title={h === null ? t.missed : `${h > 0 ? '+' : ''}${h} ms`}>
-          {h === null ? '·' : Math.abs(h) <= 40 ? '✓' : h < 0 ? '←' : '→'}
+        // 0.61: each onset is a note head on its own beat line, shifted left when early and right when late.
+        <span key={i} className={`rs ${h === null ? 'miss' : Math.abs(h) <= 40 ? 'good' : 'ok'}`} title={h === null ? t.missed : `${h > 0 ? '+' : ''}${h} ms`} style={{ ['--off' as string]: h === null ? 0 : Math.max(-1, Math.min(1, h / 120)) }}>
+          <i className="rs-line" aria-hidden="true" />
+          {h === null ? <i className="rs-rest" aria-hidden="true">𝄽</i> : <i className="rs-head" aria-hidden="true" />}
+          <small dir="ltr">{h === null ? '' : Math.abs(h) <= 40 ? '' : `${h > 0 ? '+' : ''}${h}`}</small>
         </span>
       ))}
       {extra > 0 && (

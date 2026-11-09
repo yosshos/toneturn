@@ -1,6 +1,7 @@
 // Tune-up (spec AE §8, R7): a string is out of tune; the in-tune reference sounds together with it so the
 // beats are audible. Turn the peg (drag, or the slider / arrow keys) until the beats vanish.
 
+import { TuneUpArt } from './GameArt';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { centsLeft, isTuneUpSave, makeRounds, MAX_SCORE, midiHz, PEG_RANGE, ROUNDS, roundPoints, STRING_NAMES, toneHz, type TuneRound, type TuneUpSave } from '../engine/tuneUp';
 import { G2Head, prefersCalm, type Game2Props } from './Flight';
@@ -224,6 +225,7 @@ export function TuneUp({ lang, settings, saved, onSave, onExit, onResult, best }
 
       {phase === 'intro' && (
         <section className="g2-card">
+          <TuneUpArt />
           <p>{tx.blurb}</p>
           <p className="g2-dim">{tx.headphones}</p>
           {!!best && (
