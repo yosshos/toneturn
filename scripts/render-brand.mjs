@@ -17,15 +17,14 @@ function wordmark(text, sub) {
   @font-face{font-family:'SecularNS';src:url(data:font/woff2;base64,${secular}) format('woff2')}
   .w{font-family:'SecularNS','Secular One',Rubik,sans-serif;font-size:140px;letter-spacing:-2px}
   .s{font-family:'RubikNS',Rubik,system-ui,sans-serif;font-weight:600;font-size:40px;letter-spacing:6px}</style>
-  <defs><linearGradient id="wg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#9DF9D4"/><stop offset="0.5" stop-color="#5CF2B5"/><stop offset="1" stop-color="#3FC7E0"/></linearGradient></defs>
-  <svg x="20" y="20" width="280" height="280" viewBox="0 0 512 512">${inner}</svg>
-  <text x="340" y="190" class="w"><tspan fill="${text}">The 7</tspan><tspan fill="${text}" font-size="70" dy="-46">th</tspan><tspan fill="url(#wg)" dx="30" dy="46">Sense</tspan></text>
-  <text x="346" y="262" class="s" fill="${sub}">HEAR IT · SAY IT · SING IT</text>
+    <svg x="20" y="20" width="280" height="280" viewBox="0 0 512 512">${inner}</svg>
+  <text x="340" y="190" class="w"><tspan fill="${text}">The 7</tspan><tspan fill="${text}" font-size="70" dy="-46">th</tspan><tspan fill="#6D28D9" dx="30" dy="46">Sense</tspan></text>
+  <text x="346" y="262" class="s" fill="${sub}">HEAR · UNDERSTAND · PERFORM</text>
 </svg>
 `;
 }
-writeFileSync(new URL('docs/brand/wordmark.svg', root), wordmark('#0F1020', '#5B5880'));
-writeFileSync(new URL('docs/brand/wordmark-dark.svg', root), wordmark('#F4F1FF', '#A9A6C9'));
+writeFileSync(new URL('docs/brand/wordmark.svg', root), wordmark('#1E1033', '#5B4A86'));
+writeFileSync(new URL('docs/brand/wordmark-dark.svg', root), wordmark('#FFFFFF', '#B9A8DE'));
 
 const browser = await chromium.launch({ channel: 'chrome' });
 const page = await browser.newPage({ deviceScaleFactor: 1 });

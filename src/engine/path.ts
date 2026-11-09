@@ -12,6 +12,7 @@ import { BASICS_ORDER, LESSON_AREA, PREREQ } from './intake';
 import { LESSON_ORDER, makeLesson, type LessonDef, type LessonId, type Question, type SkillId } from './lesson';
 import { TOPIC_GEN, genTopic, topicLesson } from './topicKit';
 import type { Track } from './intake';
+import { inCourse, type CourseId } from './courses';
 
 // ---------------------------------------------------------------- types
 
@@ -161,6 +162,8 @@ export interface PathInput {
   /** Review items due now (spec §7). */
   reviewDue: number;
   now: Date;
+  /** The course this path belongs to (0.61, SPEC-COURSES); none = the old mixed path. */
+  course?: CourseId;
 }
 
 export interface PathView {
@@ -270,7 +273,8 @@ export function stepCatalogue(): PathStep[] {
 // ---------------------------------------------------------------- filters
 
 /** Steps this player's path can contain (areas, packs, instruments, singing). */
-export function eligible(s: PathStep, inp: Pick<PathInput, 'leaveOut' | 'packs' | 'plays' | 'track'> & Partial<Pick<PathInput, 'hidden' | 'noSing' | 'noMic'>>): boolean {
+export function eligible(s: PathStep, inp: Pick<PathInput, 'leaveOut' | 'packs' | 'plays' | 'track'> & Partial<Pick<PathInput, 'hidden' | 'noSing' | 'noMic' | 'course'>>): boolean {
+  if (inp.course && !inCourse(s, inp.course)) return false;
   if (inp.leaveOut.includes(s.domain)) return false;
   if (s.sung && (inp.leaveOut.includes('voice') || inp.noSing)) return false;
   if (s.mic && inp.noMic) return false;
@@ -745,9 +749,10 @@ const AREA_GAMES: Record<DomainId, string[]> = {
   instrument: ['drills', 'rush-fretboard', 'peakhunter'],
 };
 /** The game for a unit's leading area (rotating by unit number; mic / instrument / pack rules apply). */
-export function gameForArea(area: DomainId, n: number, inp: Pick<PathInput, 'noMic' | 'noSing' | 'plays' | 'packs'> & { noDrills?: boolean }): string | null {
+export function gameForArea(area: DomainId, n: number, inp: Pick<PathInput, 'noMic' | 'noSing' | 'plays' | 'packs'> & { noDrills?: boolean; course?: CourseId }): string | null {
   const ok = AREA_GAMES[area].filter((g) => {
     const s = GAME_STEPS[g];
+    if (inp.course && !inCourse({ domain: s.domain, sung: !!s.needsMic && s.domain === 'voice', forPlays: s.forPlays }, inp.course)) return false;
     if (g === 'drills' && inp.noDrills) return false;
     if (s.needsMic && (inp.noMic || inp.noSing)) return false;
     if (s.forPlays && !s.forPlays.some((p) => inp.plays.includes(p))) return false;

@@ -1,6 +1,6 @@
 // Small shared UI pieces: logo, mode switch, keyboard, permission panel.
 
-import { useEffect, useId, useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import type { InputMode } from '../engine/session';
 import type { AccessError } from '../game/adapters';
 import { ERROR_TITLES, recoverySteps, type Strings } from '../i18n/strings';
@@ -29,44 +29,29 @@ export function withNote(template: string, note: string, key = '') {
 export const fillText = (template: string, note: string, key = '') => template.replaceAll('{n}', note).replaceAll('{k}', key);
 
 /**
- * The brand mark (owner's pick 2026-11-07, "clef-b"): a gold ear whose outline with the two pink dots is a bass clef,
- * a white treble clef inside it, and a sound wave going out — the musical sense, beyond hearing.
+ * The brand mark (0.61, logo A redrawn for the v2 language): the ear whose outline with the two dots is a bass clef,
+ * a 7 inside it, and a sound wave going in. Ink outline, flat fills, no gradients. `bare` = no tile (in-app header).
  */
-export function Logo({ size = 44, bare = false }: { size?: number; /** No tile behind it (in-app header). */ bare?: boolean }) {
-  const id = useId().replace(/:/g, '');
-  const u = (k: string) => `url(#${k}${id})`;
+const EAR = 'M226 206 C226 132 274 96 318 96 C380 96 420 146 420 208 C420 266 388 290 368 320 C348 350 358 404 304 418 C266 428 242 404 236 378';
+const WAVE = 'M240 286 Q220 222 200 286 Q182 338 164 286 Q149 250 134 286 Q122 308 110 286';
+const SEVEN = 'M272 186 L356 186 Q370 186 364 200 L312 330';
+export function Logo({ size = 44, bare = false, onDark = false }: { size?: number; /** No tile behind it (in-app header). */ bare?: boolean; /** Light outline for dark surfaces. */ onDark?: boolean }) {
+  const ink = '#1E1033';
+  const edge = onDark ? '#FFFFFF' : ink;
   return (
     <svg width={size} height={size} viewBox={bare ? '60 60 420 420' : '0 0 512 512'} aria-hidden="true" className={`logo-mark ${bare ? 'bare' : ''}`}>
-      <defs>
-        <radialGradient id={`bg${id}`} cx="0.6" cy="0.2" r="1">
-          <stop offset="0" stopColor="#1E4E6E" />
-          <stop offset="0.55" stopColor="#16183A" />
-          <stop offset="1" stopColor="#0F1020" />
-        </radialGradient>
-        <linearGradient id={`ear${id}`} gradientUnits="userSpaceOnUse" x1="220" y1="90" x2="380" y2="430">
-          <stop offset="0" stopColor="#FFF1B8" />
-          <stop offset="0.45" stopColor="#FFC94D" />
-          <stop offset="1" stopColor="#FF8A5C" />
-        </linearGradient>
-        <linearGradient id={`wave${id}`} x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0" stopColor="#5CF2B5" stopOpacity="0.35" />
-          <stop offset="1" stopColor="#5CF2B5" />
-        </linearGradient>
-        <radialGradient id={`glow${id}`} cx="0.5" cy="0.5" r="0.5">
-          <stop offset="0" stopColor="#FFC94D" stopOpacity="0.26" />
-          <stop offset="1" stopColor="#FFC94D" stopOpacity="0" />
-        </radialGradient>
-      </defs>
-      {!bare && <rect width="512" height="512" rx="116" fill={u('bg')} />}
-      {!bare && <circle cx="290" cy="256" r="190" fill={u('glow')} />}
-      <g transform="translate(256 256) scale(0.9) translate(-306 -256)">
-        <path className="logo-wave w1" d="M 240 286 Q 220 222 200 286 Q 182 338 164 286 Q 149 250 134 286 Q 122 308 110 286" fill="none" stroke={u('wave')} strokeWidth="26" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M 226 206 C 226 132 274 96 318 96 C 380 96 420 146 420 208 C 420 266 388 290 368 320 C 348 350 358 404 304 418 C 266 428 242 404 236 378" fill="none" stroke={u('ear')} strokeWidth="58" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M 272 186 L 356 186 Q 370 186 364 200 L 312 330" fill="none" stroke="#FFFFFF" strokeWidth="24" strokeLinecap="round" strokeLinejoin="round" />
-        <circle cx="306" cy="366" r="16" fill="#FF6FB1" />
+      {!bare && <rect width="512" height="512" rx="116" fill="#6D28D9" />}
+      <g transform="translate(256 256) scale(0.86) translate(-306 -256)" fill="none" strokeLinecap="round" strokeLinejoin="round">
+        <path className="logo-wave w1" d={WAVE} stroke={ink} strokeWidth="44" />
+        <path d={WAVE} stroke="#12C9B4" strokeWidth="24" />
+        <path d={EAR} stroke={bare ? edge : ink} strokeWidth="80" />
+        <path d={EAR} stroke="#FFD43B" strokeWidth="56" />
+        <path d={SEVEN} stroke={ink} strokeWidth="40" />
+        <path d={SEVEN} stroke="#FFFFFF" strokeWidth="20" />
+        <circle cx="306" cy="370" r="20" fill="#FF5FA2" stroke={ink} strokeWidth="9" />
       </g>
-      <circle className="logo-spark" cx="428" cy="194" r="24" fill="#FF6FB1" />
-      <circle cx="428" cy="266" r="24" fill="#FF6FB1" />
+      <circle className="logo-spark" cx="430" cy="196" r="26" fill="#FF5FA2" stroke={ink} strokeWidth="9" />
+      <circle cx="430" cy="268" r="26" fill="#FF5FA2" stroke={ink} strokeWidth="9" />
     </svg>
   );
 }

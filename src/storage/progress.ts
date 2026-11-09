@@ -1,6 +1,7 @@
 // Local progress + settings. XP and completion writes are idempotent by event id,
 // so a repeated callback or an app resume can never award points twice.
 
+import { coursesFromProfile } from '../engine/courses';
 import { placementResults } from '../engine/placement';
 import { isLog, logMinutes } from '../engine/practiceLog';
 import type { MetricKey, VibratoStyle, VoiceRange } from '../engine/vocal';
@@ -263,6 +264,12 @@ export interface Settings {
   pathKeep?: string[];
   /** Facts: finished steps, frozen units, test-outs. */
   pathFacts?: import('../engine/path').PathFacts;
+  /** Courses (0.61, SPEC-COURSES): the player's courses and the active one. pathFacts / pathKeep hold the ACTIVE
+   *  course's path; the other courses wait in pathFactsBy / pathKeepBy and swap in on a switch (engine/courses.ts). */
+  courses?: import('../engine/courses').CourseId[];
+  activeCourse?: import('../engine/courses').CourseId;
+  pathFactsBy?: Partial<Record<import('../engine/courses').CourseId, import('../engine/path').PathFacts>>;
+  pathKeepBy?: Partial<Record<import('../engine/courses').CourseId, string[]>>;
   /** The next step ids last shown (to tell the player when a rebuild changed them). */
   pathSeen?: string[];
   // ---- stats (spec AG) ----
@@ -363,7 +370,16 @@ export function migrateSettings(raw: Partial<Settings> | undefined): Settings {
   if (!raw.version || raw.version < 2) {
     return { ...DEFAULT_SETTINGS, mode: raw.mode ?? DEFAULT_SETTINGS.mode, voiceConsent: raw.voiceConsent ?? false, reducedMotion: raw.reducedMotion ?? null };
   }
-  return { ...DEFAULT_SETTINGS, ...raw, voices: { ...DEFAULT_SETTINGS.voices, ...(raw.voices ?? {}) } };
+  return withCourses({ ...DEFAULT_SETTINGS, ...raw, voices: { ...DEFAULT_SETTINGS.voices, ...(raw.voices ?? {}) } });
+}
+
+/** 0.61 (SPEC-COURSES): a player from before courses gets them from the goal and instruments they chose; the mixed
+ *  path's facts stay with the course that matches the goal (the active one). Nothing is lost. */
+export function withCourses(s: Settings): Settings {
+  if (s.courses?.length && s.activeCourse) return s;
+  const plays = [...((s.intake as { plays?: string[] } | null | undefined)?.plays ?? []), ...(s.instrument && !['voice', 'C', 'Bb', 'Eb', 'F'].includes(s.instrument) ? [s.instrument] : [])];
+  const { courses, active } = coursesFromProfile(s.goal, plays);
+  return { ...s, courses: s.courses?.length ? s.courses : courses, activeCourse: s.activeCourse ?? active };
 }
 
 export const emptyProgress = (): Progress => ({

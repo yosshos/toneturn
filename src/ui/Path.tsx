@@ -2,6 +2,7 @@
 // a sticky unit header, the glide to the current step, steps that rise in as they scroll into view, and a
 // "back to my step" button (§10.1). Reduced motion: no glide, no stagger, no bounce.
 
+import { courseInput } from '../engine/courses';
 import { Icon } from './icons';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { shortName } from '../engine/pathNames';
@@ -113,7 +114,7 @@ export function pathInputFrom(s: Settings, p: Progress, now = new Date()): PathI
   const plays = [...(intake?.plays ?? []), ...(s.midiInput ? ['keys'] : []), ...(s.instrument && !['voice', 'C', 'Bb', 'Eb', 'F'].includes(s.instrument) ? [s.instrument] : [])];
   const track = s.track ?? 'hobby';
   const goal: Goal = s.goal ?? 'general';
-  return {
+  const base: PathInput = {
     track,
     goal,
     hidden: s.pathHidden ?? [],
@@ -132,6 +133,8 @@ export function pathInputFrom(s: Settings, p: Progress, now = new Date()): PathI
     reviewDue: new Set(dueReviews(p.review, now).map((r) => r.key)).size,
     now,
   };
+  // 0.61: the path is the active course's (SPEC-COURSES).
+  return courseInput(base, s.activeCourse ?? 'ear');
 }
 
 /** The path, memoised on its inputs (P19). */
@@ -140,7 +143,7 @@ export function usePathView(s: Settings, p: Progress): PathView {
   return useMemo(
     () => buildPath(pathInputFrom(s, p)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [s.intake, s.track, s.goal, s.pathHidden, s.noSing, s.noMic, s.pathLeaveOut, s.pathPacks, s.pathFacts, s.pathKeep, s.midiInput, s.instrument, p.ratingEvents?.length, p.review.length, p.lessons, day],
+    [s.activeCourse, s.intake, s.track, s.goal, s.pathHidden, s.noSing, s.noMic, s.pathLeaveOut, s.pathPacks, s.pathFacts, s.pathKeep, s.midiInput, s.instrument, p.ratingEvents?.length, p.review.length, p.lessons, day],
   );
 }
 
