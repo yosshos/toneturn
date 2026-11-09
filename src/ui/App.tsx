@@ -1,4 +1,5 @@
 import { TodayCards } from './TodayCards';
+import { courseLevels } from '../engine/courseSocial';
 import { techQueue, workoutCreditsStep } from '../engine/ladderFacts';
 import { CourseContext } from './courseContext';
 import { CourseSheet } from './CourseSwitcher';
@@ -464,12 +465,15 @@ export function App() {
   // Profile → server (SPEC-SOCIAL §1–§2, owner 2026-11-08: "no reason for it to stay on the device"): nickname, flag,
   // picture (icon + colour, or the cropped photo in storage), privacy and year of birth, a moment after any change.
   const [profileErr, setProfileErr] = useState<string | null>(null);
+  // My level per course (pp … ff) goes with the profile, so friends can compare per course (owner 2026-11-09).
+  const courseLevelsJson = useMemo(() => (settings ? JSON.stringify(courseLevels(settings.courses ?? ['ear'], ratingsOf(progress))) : ''), [settings, progress]);
   const sentProfile = useRef('');
   const sentPhoto = useRef<string | null | undefined>(undefined);
   useEffect(() => {
     if (!user || !settings) return;
     const st = settings;
-    const key = JSON.stringify([st.nickname, st.country, st.avatarIcon, st.avatarColor, !!st.avatarPhoto, st.privacy, st.birthYear]);
+    const levels = courseLevelsJson ? (JSON.parse(courseLevelsJson) as Record<string, string>) : undefined;
+    const key = JSON.stringify([st.nickname, st.country, st.avatarIcon, st.avatarColor, !!st.avatarPhoto, st.privacy, st.birthYear, courseLevelsJson]);
     const photoChanged = sentPhoto.current !== (st.avatarPhoto ?? null);
     if (key === sentProfile.current && !photoChanged) return;
     const id = setTimeout(() => {
@@ -485,6 +489,7 @@ export function App() {
             photo: !!st.avatarPhoto && !young,
             privacy: st.privacy ?? null,
             birthYear: st.birthYear ?? null,
+            courseLevels: levels,
           });
           sentProfile.current = key;
           sentPhoto.current = st.avatarPhoto ?? null;
@@ -503,7 +508,7 @@ export function App() {
       })();
     }, 1200);
     return () => clearTimeout(id);
-  }, [user, settings]);
+  }, [user, settings, courseLevelsJson]);
 
   // Where a tool (tuner, metronome, drone) was opened from — Practice tab or the menu — so Back returns there.
   const toolFrom = useRef<Route>('home');
