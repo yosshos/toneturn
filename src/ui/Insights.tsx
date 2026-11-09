@@ -141,7 +141,7 @@ export function InsightsScreen({ lang, progress, onBack, onTopic, onDrills, onPi
                 </span>
                 {c.gen && (
                   <button className="btn ghost small" onClick={() => onTopic(c.gen!.id, c.gen!.level)} data-boss={c.gen.id}>
-                    ⚔ {tx.boss}
+                    {tx.boss}
                   </button>
                 )}
               </li>

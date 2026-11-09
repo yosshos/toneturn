@@ -1,5 +1,6 @@
 // Spec S: the daily workout planner card, the achievements screen and "then vs. now" for vocal takes.
 
+import { Glyph, glyphForEmoji } from './Glyph';
 import { useEffect, useMemo, useState } from 'react';
 import { type AchievementExtra, achievements } from '../engine/achievements';
 import { AWARD_TEXT } from './Stats';
@@ -166,7 +167,7 @@ export function AchievementsScreen({ t, progress, extra, onBack }: { t: Strings;
         {list.map((a) => (
           <li key={a.id} className={a.got ? 'got' : ''}>
             <span className="badge-icon" aria-hidden="true">
-              {a.icon}
+              <Glyph kind={glyphForEmoji(a.icon)} color="#FFD43B" size={40} />
             </span>
             {/* Newer awards have their text in AWARD_TEXT (Stats); never show a bare id. */}
             <b>{t.achievementNames[a.id] ?? AWARD_TEXT[a.id]?.name[langOf(t)] ?? a.id}</b>

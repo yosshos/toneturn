@@ -1319,7 +1319,7 @@ export function TapPad({ live, count, label, hint, beat, accent, onTap, onReleas
       {ripples.map((p) => (
         <span key={p.id} className="tap-ripple" style={{ left: p.x, top: p.y }} aria-hidden="true" />
       ))}
-      <span className="tap-label">👆 {label}</span>
+      <span className="tap-label">{label}</span>
       {hint && <small className="tap-hint">{hint}</small>}
       <small className="tap-count" dir="ltr">{count ? count : ''}</small>
     </button>

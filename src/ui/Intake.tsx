@@ -118,9 +118,9 @@ export function IntakeScreen({ t, settings, onDone, onSkip }: { t: Strings; sett
     ],
   };
   const NAMING: ['solfege' | 'letter' | 'auto', string, string][] = [
-    ['solfege', '🎵', q.namingSolfege],
-    ['letter', '🔤', q.namingLetter],
-    ['auto', '🤷', q.namingUnsure],
+    ['solfege', '', q.namingSolfege],
+    ['letter', '', q.namingLetter],
+    ['auto', '', q.namingUnsure],
   ];
 
   // ---- Talking (product owner): by default the narrator asks out loud and listens; "Reading" at the top turns it off.
@@ -355,7 +355,7 @@ export function IntakeScreen({ t, settings, onDone, onSkip }: { t: Strings; sett
           ))}
         </div>
         <button className={`chip talk-toggle ${talk ? 'on' : ''}`} aria-pressed={talk} onClick={() => setTalk(!talk)} data-talk={talk ? 'on' : 'off'}>
-          {talk ? `🗣️ ${q.talkOn}` : `📖 ${q.talkOff}`}
+          {talk ? `${q.talkOn}` : `${q.talkOff}`}
         </button>
         <button className="link small" onClick={onSkip} data-intake-skip="1">
           {q.skipAll}

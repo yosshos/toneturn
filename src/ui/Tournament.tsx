@@ -580,7 +580,7 @@ export function TournamentPlay({
       </section>
       {ghost && (
         <div className={`ghost-bar ${v.locked[1] !== undefined ? 'in' : ''}`} dir="ltr">
-          <span>👻 {players[1]}</span>
+          <span>{players[1]}</span>
           <b>{(v.standings.find((s) => s.player === 1)?.points ?? 0).toLocaleString(lang)}</b>
           <span className="ghost-state">{v.locked[1] !== undefined ? '✓' : '…'}</span>
           <span className="ghost-me">

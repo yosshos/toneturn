@@ -531,8 +531,12 @@ export function Flight({ lang, settings, saved, onSave, onExit, onResult, best }
     <main className={`panel-screen g2 g2-flight ${calm ? 'g2-calm' : ''}`} data-game="flight" data-phase={phase}>
       <G2Head title={tx.title} backLabel={phase === 'play' ? tx.pause : tx.back} onBack={back}>
         {phase === 'play' && (
-          <span className="g2-hud-mini" dir="ltr">
-            {'♥'.repeat(Math.max(0, hud.lives))}
+          <span className="g2-hud-mini breaths" dir="ltr" aria-label={`${hud.lives}`}>
+            {Array.from({ length: Math.max(0, hud.lives) }, (_, i) => (
+              <span key={i} className="breath on">
+                ,
+              </span>
+            ))}
           </span>
         )}
       </G2Head>

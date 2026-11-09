@@ -5,7 +5,7 @@ import type { AccessErrorCode } from '../game/adapters';
 export type Lang = 'he' | 'en';
 
 const en = {
-  appTagline: 'Hear it. Say it. Sing it.',
+  appTagline: 'Hear. Understand. Perform.',
   practice: 'Practice',
   continue: 'Continue',
   startLesson: 'Start',
@@ -414,7 +414,7 @@ const en = {
   tfLevelLabel: 'Level',
   aidOn: 'Aid on — this question counts a little easier',
   showNotesAs: 'Show notes as',
-  showNotesHint: 'Pick any two: keyboard, staff or guitar tab (🎸 for guitarists).',
+  showNotesHint: 'Pick any two: keyboard, staff or guitar tab (for guitarists).',
   viewKeyboard: 'Keyboard',
   viewStaff: 'Notation',
   viewTab: 'Guitar tab',
@@ -453,7 +453,7 @@ const en = {
   intake: {
     skipAll: 'Skip for now',
     helloTitle: 'Before we start — let me get to know you',
-    helloText: 'A few quick questions so the app fits you: what to start with, what to skip, how long to play. No wrong answers — this is the only part of the app like that 😉',
+    helloText: 'A few quick questions so the app fits you: what to start with, what to skip, how long to play. No wrong answers — this is the only part of the app like that ',
     letsGo: "Let's go",
     letsTalk: "Let's talk",
     talkOn: 'Talking',
@@ -535,7 +535,7 @@ const en = {
     rangeLater: 'Not now — later in Singing',
     roughGuess: 'a rough guess, just for fun',
     voiceTypes: { bass: 'bass', baritone: 'baritone', tenor: 'tenor', alto: 'alto', mezzo: 'mezzo', soprano: 'soprano' } as Record<string, string>,
-    planTitle: { explorer: 'Welcome, curious ear 🌱', hobby: 'Welcome, music maker 🎸', student: 'Welcome, musician 🎼', pro: 'Welcome, maestro 🎓' } as Record<string, string>,
+    planTitle: { explorer: 'Welcome, curious ear ', hobby: 'Welcome, music maker ', student: 'Welcome, musician ', pro: 'Welcome, maestro ' } as Record<string, string>,
     planText: {
       explorer: "We'll start from zero — every new word explained, with sound. No theory needed: your ears already know more than you think.",
       hobby: "We'll build on what your ears already do — the words for it come along as you go. Finding your level is there whenever you like.",
@@ -760,10 +760,10 @@ const en = {
   playNow: "Play",
   instrumentTitle: "My instrument",
   instrumentHint: "Answer sung exercises on an acoustic instrument through the microphone. In Vocal technique and Sing-along, note names are shown in your instrument's written pitch; lessons use concert pitch.",
-  instrumentNames: {"voice": "Voice", "C": "C instrument", "Bb": "B♭ (trumpet, clarinet, tenor sax)", "Eb": "E♭ (alto / baritone sax)", "F": "F (horn)", "guitar": "🎸 Guitar", "bass": "🎸 Bass", "keys": "🎹 Keys", "strings": "🎻 Strings"} as Record<string, string>,
+  instrumentNames: {"voice": "Voice", "C": "C instrument", "Bb": "B♭ (trumpet, clarinet, tenor sax)", "Eb": "E♭ (alto / baritone sax)", "F": "F (horn)", "guitar": "Guitar", "bass": "Bass", "keys": "Keys", "strings": "Strings"} as Record<string, string>,
   answerOn: 'Answer on',
   answerOnHint: 'Where you enter notes in exercises that ask you to write or place them. Automatic = your first note view.',
-  answerOnNames: { auto: 'Automatic', keys: '🎹 Keys', neck: '🎸 Neck', staff: '𝄞 Staff' } as Record<string, string>,
+  answerOnNames: { auto: 'Automatic', keys: 'Keys', neck: 'Neck', staff: '𝄞 Staff' } as Record<string, string>,
   leftHanded: 'Left-handed neck',
   tuningTitle: 'Guitar tuning',
   headphonesSet: 'I use headphones (sound exercises with low notes and left / right)',
@@ -959,7 +959,7 @@ const en = {
 export type Strings = typeof en;
 
 const he: Strings = {
-  appTagline: 'שומעים. אומרים. שרים.',
+  appTagline: 'לשמוע. להבין. לבצע.',
   practice: 'לתרגל',
   continue: 'להמשיך',
   startLesson: 'התחלה',
@@ -1368,7 +1368,7 @@ const he: Strings = {
   tfLevelLabel: 'רמה',
   aidOn: 'עזרה פעילה — השאלה נחשבת קצת קלה יותר',
   showNotesAs: 'הצגת התווים',
-  showNotesHint: 'בחרו שתיים: מקלדת, חמשה או טאבים לגיטרה (🎸 לגיטריסטים).',
+  showNotesHint: 'בחרו שתיים: מקלדת, חמשה או טאבים לגיטרה (לגיטריסטים).',
   viewKeyboard: 'מקלדת',
   viewStaff: 'תווים',
   viewTab: 'טאבים לגיטרה',
@@ -1407,7 +1407,7 @@ const he: Strings = {
   intake: {
     skipAll: 'אחר כך',
     helloTitle: 'לפני שמתחילים — בואו נכיר',
-    helloText: 'כמה שאלות קצרות כדי שהאפליקציה תתאים לכם: במה להתחיל, על מה לדלג, כמה זמן לשחק. אין תשובות לא נכונות — זה החלק היחיד באפליקציה שככה 😉',
+    helloText: 'כמה שאלות קצרות כדי שהאפליקציה תתאים לכם: במה להתחיל, על מה לדלג, כמה זמן לשחק. אין תשובות לא נכונות — זה החלק היחיד באפליקציה שככה ',
     letsGo: 'להתחיל',
     letsTalk: 'בואו נדבר',
     talkOn: 'בשיחה',
@@ -1489,7 +1489,7 @@ const he: Strings = {
     rangeLater: 'לא עכשיו — אחר כך בשירה',
     roughGuess: 'ניחוש גס, בשביל הכיף',
     voiceTypes: { bass: 'בס', baritone: 'בריטון', tenor: 'טנור', alto: 'אלט', mezzo: 'מצו', soprano: 'סופרן' } as Record<string, string>,
-    planTitle: { explorer: 'ברוכים הבאים, אוזן סקרנית 🌱', hobby: 'ברוכים הבאים, יוצרי מוזיקה 🎸', student: 'ברוכים הבאים, מוזיקאים 🎼', pro: 'ברוכים הבאים, מאסטרו 🎓' } as Record<string, string>,
+    planTitle: { explorer: 'ברוכים הבאים, אוזן סקרנית ', hobby: 'ברוכים הבאים, יוצרי מוזיקה ', student: 'ברוכים הבאים, מוזיקאים ', pro: 'ברוכים הבאים, מאסטרו ' } as Record<string, string>,
     planText: {
       explorer: 'מתחילים מאפס — כל מילה חדשה מוסברת, עם צליל. לא צריך תיאוריה: האוזניים שלכם כבר יודעות יותר ממה שאתם חושבים.',
       hobby: 'נבנה על מה שהאוזניים שלכם כבר עושות — המילים לזה יגיעו תוך כדי. מבחן הרמה זמין מתי שתרצו.',
@@ -1714,10 +1714,10 @@ const he: Strings = {
   playNow: "לנגן",
   instrumentTitle: "הכלי שלי",
   instrumentHint: "לענות על תרגילי שירה בכלי אקוסטי דרך המיקרופון. בטכניקה קולית ובשירה עם שירים, שמות התווים מוצגים בגובה הכתוב של הכלי שלך; השיעורים בגובה הקונצרטי.",
-  instrumentNames: {"voice": "קול", "C": "כלי בדו", "Bb": "סי♭ (חצוצרה, קלרינט, סקסופון טנור)", "Eb": "מי♭ (סקסופון אלט / בריטון)", "F": "פה (קרן)", "guitar": "🎸 גיטרה", "bass": "🎸 בס", "keys": "🎹 קלידים", "strings": "🎻 כלי קשת"} as Record<string, string>,
+  instrumentNames: {"voice": "קול", "C": "כלי בדו", "Bb": "סי♭ (חצוצרה, קלרינט, סקסופון טנור)", "Eb": "מי♭ (סקסופון אלט / בריטון)", "F": "פה (קרן)", "guitar": "גיטרה", "bass": "בס", "keys": "קלידים", "strings": "כלי קשת"} as Record<string, string>,
   answerOn: 'עונים על',
   answerOnHint: 'איפה מזינים תווים בתרגילים שמבקשים לכתוב או למקם אותם. אוטומטי = תצוגת התווים הראשונה שלכם.',
-  answerOnNames: { auto: 'אוטומטי', keys: '🎹 קלידים', neck: '🎸 צוואר', staff: '𝄞 חמשה' } as Record<string, string>,
+  answerOnNames: { auto: 'אוטומטי', keys: 'קלידים', neck: 'צוואר', staff: '𝄞 חמשה' } as Record<string, string>,
   leftHanded: 'צוואר לשמאליים',
   tuningTitle: 'כיוון הגיטרה',
   headphonesSet: 'אני משתמש/ת באוזניות (תרגילי סאונד עם צלילים נמוכים ושמאל / ימין)',

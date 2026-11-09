@@ -1272,3 +1272,20 @@
   max-height: 56px;
   overflow: hidden;
 }
+
+/* ---------------------------------------------------------------- lives are breath marks (0.61): no hearts */
+.breath {
+  display: inline-block;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 700;
+  font-size: 1.9rem;
+  line-height: 0.6;
+  margin-inline: 2px;
+  color: var(--purple);
+}
+.breath.off {
+  color: var(--line-strong);
+}
+:root[data-theme='dark'] .breath.on {
+  color: var(--lemon);
+}

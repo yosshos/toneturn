@@ -398,7 +398,7 @@ function Hub({ lang, ds, settings, items, head, onFamily, onRun, onSettings, onC
       )}
       <div className="drill-actions">
         <button className="btn ghost" onClick={onSettings} data-drills-settings="1">
-          ⚙ {tx.settings}
+          {tx.settings}
         </button>
         {(settings.drillStart || Object.keys(items).length > 0) && (
           <button className="btn ghost" onClick={onTest}>
@@ -611,7 +611,7 @@ function DrillSettingsView({ lang, ds, onChange, onCalib }: { lang: Lang; ds: Dr
       {toggle('inPath', tx.inPath)}
       {toggle('inWorkout', tx.inWorkout)}
       <button className="btn ghost" onClick={onCalib}>
-        🎚 {tx.calib}
+        {tx.calib}
       </button>
     </div>
   );

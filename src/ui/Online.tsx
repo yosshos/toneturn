@@ -501,13 +501,13 @@ function ChoirRound({ t, settings, chord, index, disabled, onScore }: { t: Strin
   return (
     <div className="choir-round">
       <p className="choir-part">
-        🎼 {fmt(t.choirYourPart, { part: t.choirParts[part] ?? String(part + 1), note: name })}
+        {fmt(t.choirYourPart, { part: t.choirParts[part] ?? String(part + 1), note: name })}
       </p>
       <button className="btn ghost" onClick={() => void piano.play([{ midi, start: 0, duration: 1.2, velocity: 0.7 }], 1.3, new AbortController().signal)}>
         <Icon k="speaker" /> {t.choirHearPart}
       </button>
       <button className="btn ghost" onClick={() => void piano.play(chord.map((m) => ({ midi: m, start: 0, duration: 1.6, velocity: 0.5 })), 1.7, new AbortController().signal)}>
-        🎹 {t.choirHearChord}
+        {t.choirHearChord}
       </button>
       <p className="field-hint">{t.choirHint}</p>
       <VocalRound t={t} settings={settings} midi={midi} disabled={disabled} onScore={onScore} />

@@ -54,7 +54,7 @@ export function functionOf(c: ChartChordEv, next: ChartChordEv, key: number): Fn
 }
 
 TOPIC_GEN['chart-analysis'] = {
-  title: { en: 'Read a lead sheet', he: 'לקרוא ליד־שיט' },
+  title: { en: 'Read a lead sheet', he: 'לקרוא דף אקורדים' },
   skill: 'cadences',
   levels: [
     { en: 'What key is the tune in?', he: 'באיזה סולם השיר?' },

@@ -94,7 +94,7 @@ const SHORT: Record<string, L2> = {
   'sight-tap': { en: 'Sing & tap', he: 'לשיר ולהקיש' },
   'sight-modulate': { en: 'Sing a key change', he: 'לשיר מעבר סולם' },
   'chorale-rn': { en: 'Chorale analysis', he: 'ניתוח כורל' },
-  'chart-analysis': { en: 'Read a lead sheet', he: 'לקרוא ליד־שיט' },
+  'chart-analysis': { en: 'Read a lead sheet', he: 'לקרוא דף אקורדים' },
   'eq-ear': { en: 'EQ', he: 'אקולייזר' },
   'filter-ear': { en: 'Cut-off', he: 'פילטר' },
   'tone-hz': { en: 'Name the Hz', he: 'זיהוי תדר' },

@@ -1,3 +1,4 @@
+import { Glyph, glyphForEmoji } from './Glyph';
 import { Icon } from './icons';
 import { REGISTRATIONS } from '../audio/organ';
 import { DOMAINS } from '../engine/rating';
@@ -86,7 +87,7 @@ function MyPath({ t, s, onChange }: { t: Strings; s: Settings; onChange: (p: Par
         <select value={s.goal ?? 'general'} onChange={(e) => onChange({ goal: e.target.value as Goal, pathPacks: undefined })}>
           {GOALS.map((g) => (
             <option key={g} value={g}>
-              {GOAL_NAMES[g].icon} {GOAL_NAMES[g][lang]}
+              <Glyph kind={glyphForEmoji(GOAL_NAMES[g].icon)} color="#A78BFA" size={28} /> {GOAL_NAMES[g][lang]}
             </option>
           ))}
         </select>
@@ -392,7 +393,7 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
           {onIntake && (
             <section className="set-card">
               <button className="btn ghost" onClick={onIntake} data-intake-retake="1">
-                👋 {t.intake.retake}
+                {t.intake.retake}
               </button>
             </section>
           )}
@@ -477,7 +478,7 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
               <span>{t.headphonesSet}</span>
             </label>
             <a className="btn small ghost" href="#/tuner">
-              🎚 {t.tunerOpen}
+              {t.tunerOpen}
             </a>
           </section>
         </Group>
@@ -549,7 +550,7 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
           {(s.sound ?? DEFAULT_SOUND) === 'grand' && <GrandDetail lang={s.uiLang} value={s.pianoDetail ?? 'auto'} onChange={(pianoDetail) => onChange({ pianoDetail })} />}
           {onMixer && (
             <button className="btn ghost mx-open" onClick={onMixer} data-open-mixer="1">
-              🎚 {s.uiLang === 'he' ? 'מיקסר: עוצמות, אקולייזר ואפקטים' : 'Mixer: levels, EQ and effects'}
+              {s.uiLang === 'he' ? 'מיקסר: עוצמות, אקולייזר ואפקטים' : 'Mixer: levels, EQ and effects'}
             </button>
           )}
         </Group>
@@ -949,7 +950,7 @@ function MidiPanel({ t, lang, on, onChange, naming, s, onSettings }: { t: String
               <>
                 {!audioOn && (
                   <button className="btn primary small" onClick={() => void piano.unlock().then(() => setAudioOn(piano.audioRunning))} data-midi-audio-on="1">
-                    {he ? '🔈 הפעלת צליל (הדפדפן דורש נגיעה אחת)' : '🔈 Turn sound on (the browser needs one tap)'}
+                    {he ? 'הפעלת צליל (הדפדפן דורש נגיעה אחת)' : 'Turn sound on (the browser needs one tap)'}
                   </button>
                 )}
                 <label className="mx-knob">

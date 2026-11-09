@@ -416,8 +416,8 @@ export function Rush({ lang, settings, mode, saved, onSave, onExit, onResult, be
         {streak ? (
           <div className="rush-lives" aria-label={`${tx(T.lives, lang)}: ${st.lives}`}>
             {Array.from({ length: START_LIVES }, (_, i) => (
-              <span key={i} className={i < st.lives ? 'on' : 'off'} aria-hidden="true">
-                {i < st.lives ? '❤' : '♡'}
+              <span key={i} className={`breath ${i < st.lives ? 'on' : 'off'}`} aria-hidden="true">
+                ,
               </span>
             ))}
           </div>

@@ -3,6 +3,7 @@
 // (easy / medium / hard) at the start. Solo 60-second run, a duel on one device, or online (a room with the
 // same topics and level). After a wrong answer the reason is shown, so every miss teaches something.
 
+import { Glyph, glyphForEmoji } from './Glyph';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { clearSlot, loadSlot, saveSlot } from '../storage/resume';
 import { tfPoints, TF_PENALTY_MS, TF_RUN_MS } from '../engine/truefalse';
@@ -67,7 +68,7 @@ function Statement({ fact, n, nm, lang }: { fact: Fact; n: number; nm: Naming; l
   return (
     <div className="tf-statement" key={n} data-topic={fact.topic}>
       <small className="tf-topic">
-        <span aria-hidden="true">{topic.emoji}</span> {topic.title[lang]}
+        <Glyph kind={glyphForEmoji(topic.emoji)} color="#FF8A3D" size={30} /> {topic.title[lang]}
       </small>
       <p className="tf-text">{fact.text[lang]}</p>
     </div>

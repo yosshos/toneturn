@@ -17,7 +17,7 @@ export function LevelStatsLine({ t, kind, day, week, band }: { t: Strings; kind:
   const secs = s.medianMs ? (s.medianMs / 1000).toFixed(1) : '–';
   return (
     <p className="field-hint level-stats">
-      👥{' '}
+      {' '}
       {kind === 'daily'
         ? fill(t.peersDaily, { n: s.players, p: Math.round(s.medianPoints ?? 0), s: secs })
         : fill(t.peersPuzzle, { n: s.players, g: Math.round((100 * (s.gold ?? 0)) / s.players), s: secs })}

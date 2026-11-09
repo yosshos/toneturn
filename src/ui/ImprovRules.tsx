@@ -143,7 +143,7 @@ const IMP = {
     addSel: 'Add selected',
   },
   he: {
-    title: 'ייבוא ליד־שיט',
+    title: 'ייבוא דף אקורדים',
     file: 'בחירת קובץ',
     paste: 'או להדביק קישור של iReal Pro או אקורדים',
     add: 'הוספה',

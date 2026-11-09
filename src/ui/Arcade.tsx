@@ -1,6 +1,7 @@
 // 0.37 "night arcade" pieces (docs/ui-redesign.md): tab bar, level ring, what's-new gift, today's mission,
 // domain tiles, the path as a winding road, and the Play hub.
 
+import { DOMAIN_COLOR, Glyph, type GlyphKind } from './Glyph';
 import { useCourse } from './courseContext';
 import type { CourseId } from '../engine/courses';
 import { Icon } from './icons';
@@ -550,7 +551,7 @@ export function PathScreen({ t, settings, progress, onStart, onPlacement }: { t:
       </div>
       <p className="path-foot">
         <button className="link" onClick={onPlacement}>
-          🧭 {t.findLevel}
+          {t.findLevel}
         </button>
       </p>
     </main>
@@ -813,6 +814,13 @@ const ROW_TX: Record<string, { en: [string, string]; he: [string, string] }> = {
   puzzle: { en: ['Progression of the day', 'One daily puzzle to solve and share'], he: ['מהלך היום', 'חידה יומית לפתור ולשתף'] },
 };
 
+/** Each game's note-head symbol and its category colour (0.61, SPEC-REDESIGN: no emoji). */
+const GAME_GLYPH: Record<string, GlyphKind> = {
+  melody: 'echo', rhythm: 'rhythm', truefalse: 'theory', ghost: 'ghost', duel: 'duel', daily: 'calendar', 'rush-chord': 'chords', 'rush-note': 'sight', 'rush-keysig': 'theory', 'rush-interval': 'intervals',
+  'rush-progression': 'prog', 'rush-fretboard': 'guitar', peakhunter: 'eq', highway: 'rhythm', flight: 'sing', melodypuzzle: 'puzzle', nametune: 'name', drills: 'scales', tuneup: 'tune', pitchmemory: 'memory',
+};
+const CAT_COLOR: Record<string, string> = { ear: DOMAIN_COLOR.ear, rhythm: DOMAIN_COLOR.rhythm, memory: DOMAIN_COLOR.harmony, read: DOMAIN_COLOR.theory, voice: DOMAIN_COLOR.voice, instrument: DOMAIN_COLOR.play, social: '#EDE6F7' };
+
 export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline, onGhost, onDaily, onPuzzle, onGame2, lang = 'en', hub, status }: { status?: Partial<Record<string, string>>; t: Strings; progress: Progress; onGame: (k: GameKind) => void; onTrueFalse: () => void; onDuel: () => void; onOnline: () => void; onGhost: () => void; onDaily: () => void; onPuzzle: () => void; onGame2?: (id: (typeof GAMES2)[number]['id']) => void; lang?: 'he' | 'en'; hub?: PracticeHub }) {
   const course = useCourse().active;
   const rows = COURSE_ROWS[course];
@@ -963,7 +971,7 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
               {list.map((c) => (
                 <button key={c.key} className={`play-card game-card ${c.key}`} style={{ ['--hue' as string]: c.hue }} onClick={c.onClick}>
                   <span className="pc-icon" aria-hidden="true">
-                    <CatIcon k={c.key === 'duel' || c.key === 'daily' ? c.key : (c.cat ?? CAT_OF[c.key] ?? 'social')} />
+                    <Glyph kind={GAME_GLYPH[c.key] ?? 'contour'} color={CAT_COLOR[c.cat ?? CAT_OF[c.key] ?? 'social']} size={52} />
                   </span>
                   <b>{c.title}</b>
                   <small>{c.blurb}</small>

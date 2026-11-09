@@ -157,7 +157,7 @@ export function ChartsScreen({ settings, onChange, onBack, onImprov, onDrill, on
       </section>
       <section className="set-card" data-standards="1">
         <h2>{lang === 'he' ? 'מהלכים של סטנדרטים' : 'Standards’ changes'}</h2>
-        <p className="field-hint">{lang === 'he' ? `${STANDARD_CHANGES.length} מהלכים מוכנים, רובם בצורה המלאה. כל סטנדרט אחר נכנס דרך ייבוא ליד־שיט (למשל רשימות של iReal Pro).` : `${STANDARD_CHANGES.length} ready changes, most as the whole form. Any other standard comes in through Import a lead sheet (for example an iReal Pro playlist).`}</p>
+        <p className="field-hint">{lang === 'he' ? `${STANDARD_CHANGES.length} מהלכים מוכנים, רובם בצורה המלאה. כל סטנדרט אחר נכנס דרך ייבוא דף אקורדים (למשל רשימות של iReal Pro).` : `${STANDARD_CHANGES.length} ready changes, most as the whole form. Any other standard comes in through Import a lead sheet (for example an iReal Pro playlist).`}</p>
         {(Object.keys(STANDARD_GROUPS) as StandardGroup[]).map((g) => (
         <details key={g} className="std-group" open={g === 'blues' || g === 'swing'}>
         <summary>{STANDARD_GROUPS[g][lang]} <small dir="ltr">({STANDARD_CHANGES.filter((x) => x.group === g).length})</small></summary>

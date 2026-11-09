@@ -258,7 +258,7 @@ export function Diagnostics({ t, settings, onBack }: { t: Strings; settings: Set
               <span style={{ width: `${Math.min(100, (reading?.rms ?? 0) * 400)}%` }} />
             </div>
             <p dir="ltr">
-              peak {maxPeak.toFixed(3)} {maxPeak < 0.02 ? '⚠ no signal yet — speak or sing' : '✓ signal'} · pitch {pitch}
+              peak {maxPeak.toFixed(3)} {maxPeak < 0.02 ? 'no signal yet — speak or sing' : '✓ signal'} · pitch {pitch}
             </p>
           </div>
         )}

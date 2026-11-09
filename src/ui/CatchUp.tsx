@@ -1,3 +1,4 @@
+import { Glyph, glyphForEmoji } from './Glyph';
 import type { CatchUp } from '../engine/catchup';
 import type { Strings } from '../i18n/strings';
 
@@ -23,7 +24,7 @@ function Row({ name, done, all, sub, onGo, goLabel, alt, kind }: { name: string;
       </span>
       {alt && (
         <button className="rr-icon" onClick={alt.onClick} aria-label={alt.label} title={alt.label}>
-          {alt.icon}
+          <Glyph kind={glyphForEmoji(typeof alt.icon === 'string' ? alt.icon : '')} color="#3AB8FF" size={36} />
         </button>
       )}
       <button className="rr-icon rr-go resume-placement-go" onClick={onGo} aria-label={goLabel} title={goLabel} data-resume-session={kind === 'resume-session' ? '1' : undefined}>

@@ -40,7 +40,7 @@ export function AccountCard({ t, user, sync, compact }: { t: Strings; user: Clou
   }
   return (
     <section className={`account-card signed ${compact ? 'compact' : ''}`}>
-      {user.avatar ? <img className="avatar" src={user.avatar} alt="" referrerPolicy="no-referrer" /> : <span className="avatar">☺</span>}
+      {user.avatar ? <img className="avatar" src={user.avatar} alt="" referrerPolicy="no-referrer" /> : <span className="avatar">♪</span>}
       <div className="account-text">
         <b>{user.name ?? user.email}</b>
         <small>

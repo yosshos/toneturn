@@ -1103,7 +1103,7 @@ function VocalSession({
                 {t.vocalScore}: <b>{Math.round(grade.score * 100)}%</b>
               </div>
               <MetricBars t={t} g={grade} />
-              {grade.chordMade && <p className="take-remark">🎹 {fill(t.barryMade, { chord: `${pcLabel(grade.chordMade.root)}${grade.chordMade.kind === 'dom7' ? '7' : 'm6'}` })}</p>}
+              {grade.chordMade && <p className="take-remark">{fill(t.barryMade, { chord: `${pcLabel(grade.chordMade.root)}${grade.chordMade.kind === 'dom7' ? '7' : 'm6'}` })}</p>}
               {item.bh?.mode === 'free' && !grade.chordMade && <p className="take-remark">{t.barryNotHalfStep}</p>}
               {remarkLine && <p className="take-remark"><Icon k="target" /> {remarkLine}</p>}
               {tipKey && <p className="take-tip"><Icon k="tip" /> {t.vocalTips[tipKey]}</p>}
@@ -1126,7 +1126,7 @@ function VocalSession({
             {isInstrument(settings) ? t.playNow : <><Icon k="mic" /> {t.vocalSing}</>}
           </button>
         )}
-        {phase === 'calibrating' && <p className="vocal-cue">🤫 {t.gateWait}</p>}
+        {phase === 'calibrating' && <p className="vocal-cue">{t.gateWait}</p>}
         {memoryItem(item) && phase !== 'calibrating' && (
           <button
             className="btn ghost"

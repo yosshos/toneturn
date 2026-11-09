@@ -720,7 +720,7 @@ TOPIC_GEN['song-form'] = {
       aaba: nm('32-bar AABA', 'AABA של 32 תיבות', 'thirty two bar'),
       rhythm: nm('Rhythm changes', 'ריתם צ׳יינג׳ס', 'rhythm changes', 'rhythm'),
     };
-    return choiceQ({ ...base, difficulty: 1550, ask: { en: 'One chorus of a jazz tune. Which form is it?', he: 'כורוס אחד של מנגינת ג׳אז. איזו צורה זו?' }, names, answer, choices: keys.slice(), stimulus: [sf(arrange(jazzForm(answer), { tonic: tonic - 4, bpm: 216, groove: 'swing' }))] });
+    return choiceQ({ ...base, difficulty: 1550, ask: { en: 'One chorus of a jazz tune. Which form is it?', he: 'סבב אחד של מנגינת ג׳אז. איזו צורה זו?' }, names, answer, choices: keys.slice(), stimulus: [sf(arrange(jazzForm(answer), { tonic: tonic - 4, bpm: 216, groove: 'swing' }))] });
   },
 };
 TOPIC_TAGS['song-form'] = tg(['form', 'song', 0.8], ['cadences', 'progression', 0.2]);

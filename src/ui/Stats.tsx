@@ -3,6 +3,7 @@
 // bands, tooltips, a table view, ▲/▼ never colour alone; time axes left → right in both languages,
 // numbers in LTR islands.
 
+import { Glyph, glyphForEmoji } from './Glyph';
 import { useMemo, useState, type ReactNode } from 'react';
 import { achievements, AWARD_CATEGORIES, closestToUnlock, tierName, type Achievement, type AchievementExtra, type AwardCategory, type ProgressStats, type TierName } from '../engine/achievements';
 import type { SkillId } from '../engine/lesson';
@@ -756,7 +757,7 @@ export function AwardCard({ a, lang, pinned, onTogglePin, onShare }: { a: Achiev
   return (
     <li className={`aw-card ${a.got ? 'got' : ''} ${n ? `tier-${n}` : ''}`}>
       <span className="aw-icon" aria-hidden="true">
-        {a.icon}
+        <Glyph kind={glyphForEmoji(a.icon)} color="#FFD43B" size={40} />
       </span>
       <span className="aw-main">
         <b>{awardName(a.id, lang)}</b>
@@ -847,7 +848,7 @@ export function TrophyCase({ list, pinned, lang }: { list: Achievement[]; pinned
               {a ? (
                 <>
                   <span className="aw-icon" aria-hidden="true">
-                    {a.icon}
+                    <Glyph kind={glyphForEmoji(a.icon)} color="#FFD43B" size={40} />
                   </span>
                   <small>{awardName(a.id, lang)}</small>
                   <TierBadge a={a} lang={lang} />

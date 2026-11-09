@@ -1,6 +1,7 @@
 // Mini-lesson player (spec X): narrated steps with examples and visuals, skip to practice, and a
 // celebration when every step was heard — the topic then joins "Topics I learned".
 
+import { Glyph, glyphForEmoji } from './Glyph';
 import { Icon } from './icons';
 import { TalkToggle } from './TalkToggle';
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
@@ -140,7 +141,7 @@ export function MiniLessonPlayer({ t, settings, lesson, name, onFinish, startDee
             ))}
           </div>
           <div className="mini-card-flip">
-            <span className="mini-big-emoji">{lesson.emoji}</span>
+            <span className="mini-big-emoji"><Glyph kind={glyphForEmoji(lesson.emoji)} color="#A78BFA" size={110} shadow /></span>
           </div>
           <h2>{deep ? dx.kicker + ' ✓' : t.miniLearnedTitle}</h2>
           <p className="mini-learned-name">
@@ -164,7 +165,7 @@ export function MiniLessonPlayer({ t, settings, lesson, name, onFinish, startDee
       <div className="mini-player" data-mini={lesson.id}>
         <header className="mini-head">
           <span className="mini-emoji" aria-hidden="true">
-            {lesson.emoji}
+            <Glyph kind={glyphForEmoji(lesson.emoji)} color="#A78BFA" size={40} />
           </span>
           <div>
             <small>{deep ? dx.kicker : t.miniKicker}</small>

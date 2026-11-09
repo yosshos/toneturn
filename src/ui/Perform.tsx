@@ -389,10 +389,10 @@ function MidiDrills({ t, settings, onProgress }: { t: Strings; settings: Setting
       <p className="field-hint">{t.perfMidiHint}</p>
       {devices === null ? (
         <button className="btn ghost" onClick={() => void enable()}>
-          🎹 {t.perfEnableMidi}
+          {t.perfEnableMidi}
         </button>
       ) : (
-        <p className="field-hint">{devices.length ? `🎹 ${devices.join(', ')}` : t.perfNoMidi}</p>
+        <p className="field-hint">{devices.length ? `${devices.join(', ')}` : t.perfNoMidi}</p>
       )}
       <div className="seg" role="radiogroup">
         {(['voicing', 'melody', 'scale', 'read', 'iivi'] as Drill[]).map((d) => (
@@ -517,7 +517,7 @@ function GuitarTabDrill({ t, settings, ctl, onProgress }: { t: Strings; settings
         <small className="field-hint">♩ = {item.bpm ?? 72}</small>
       </div>
       <button className="btn mega" data-guitar="go" disabled={phase === 'count' || phase === 'playing'} onClick={() => void go()}>
-        🎸 {phase === 'count' ? t.sightCountIn : phase === 'playing' ? '…' : t.perfGuitarGo}
+        {phase === 'count' ? t.sightCountIn : phase === 'playing' ? '…' : t.perfGuitarGo}
       </button>
       {grade && (
         <div className="take-card" aria-live="polite" data-guitar-score={Math.round(grade.score * 100)}>
@@ -622,7 +622,7 @@ function InnerClock({ t, ctl, onProgress }: { t: Strings; ctl: React.MutableRefO
       </div>
       {phase === 'running' ? (
         <button className={`clock-pad ${silentNow ? 'silent' : ''}`} data-clock-tap="1" onPointerDown={(e) => (e.preventDefault(), tap())}>
-          {beatNow === null ? '…' : silentNow ? `🤫 ${t.clockKeepGoing}` : beatNow < plan.silent[0] ? `${(beatNow % 4) + 1}` : `👂 ${t.clockBack}`}
+          {beatNow === null ? '…' : silentNow ? `${t.clockKeepGoing}` : beatNow < plan.silent[0] ? `${(beatNow % 4) + 1}` : `${t.clockBack}`}
         </button>
       ) : (
         <button className="btn mega" data-clock="go" onClick={() => void go()}>

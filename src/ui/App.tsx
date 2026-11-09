@@ -729,7 +729,7 @@ export function App() {
       const next = { ...progress, awards };
       void store.saveProgress(next).then(() => setProgress(next));
       updateSettings({ awardsInit: true });
-      if (count > 0 && !settings.cleanView) setAwardToast(settings.uiLang === 'en' ? `🏅 ${count} awards from before are in your Awards` : `🏅 ${count} פרסים מלפני כן מחכים בפרסים שלכם`);
+      if (count > 0 && !settings.cleanView) setAwardToast(settings.uiLang === 'en' ? `${count} awards from before are in your Awards` : `${count} פרסים מלפני כן מחכים בפרסים שלכם`);
       return;
     }
     const { awards, newly } = earnAwards(progress.awards, achievements(progress, extra), at);
@@ -738,7 +738,7 @@ export function App() {
     void store.saveProgress(next).then(() => setProgress(next));
     if (!settings.cleanView) {
       const best = newly.sort((a, b) => b.tier - a.tier)[0];
-      setAwardToast(`🏅 ${awardName(best.id, settings.uiLang)}${newly.length > 1 ? ` +${newly.length - 1}` : ''}`);
+      setAwardToast(`${awardName(best.id, settings.uiLang)}${newly.length > 1 ? ` +${newly.length - 1}` : ''}`);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [progress.applied.length, progress.ratingEvents?.length, progress.bests, route, settings?.awardsInit]);
@@ -781,7 +781,7 @@ export function App() {
     if (settings.cleanView || !settings.awardsInit) return;
     // First run of badges (an update): what was earned before is logged quietly, one note instead of a parade.
     if (!progress.badges) {
-      if (r.newly.length) setAwardToast(settings.uiLang === 'en' ? `🏅 ${r.newly.length} badges from before are in Progress → Badges` : `🏅 ${r.newly.length} תגים מלפני כן מחכים בהתקדמות ← תגים`);
+      if (r.newly.length) setAwardToast(settings.uiLang === 'en' ? `${r.newly.length} badges from before are in Progress → Badges` : `${r.newly.length} תגים מלפני כן מחכים בהתקדמות ← תגים`);
       return;
     }
     const up = r.rankChanges.filter((c) => c.newTier || c.kind === 'up').sort((a, b) => b.to - a.to)[0];

@@ -97,8 +97,86 @@ export const GLYPHS: Record<string, ReactNode> = {
       <rect x={6} y={6} width={14} height={14} rx={3} />
     </g>
   ),
+  name: (
+    <text x={0} y={9} textAnchor="middle" fontFamily="'Secular One', Rubik, sans-serif" fontSize={26} fill={I}>
+      ?
+    </text>
+  ),
+  eq: <path d="M-16 14V-2M-6 14V-14M4 14V2M14 14V-8" {...sw} strokeWidth={3.4} />,
+  trophy: <path d="M-12 -16h24v8a12 12 0 0 1-24 0zM-4 8h8v8h-8zM-10 18h20" {...sw} strokeLinejoin="round" />,
+  person: (
+    <g {...sw}>
+      <circle cx={0} cy={-8} r={7} />
+      <path d="M-14 18c2-9 7-12 14-12s12 3 14 12" />
+    </g>
+  ),
+  drone: (
+    <>
+      <path d="M-24 0H24" stroke={I} strokeWidth={5} strokeLinecap="round" />
+      <path d="M-24 -10H24M-24 10H24" stroke={I} strokeWidth={2} opacity={0.5} />
+    </>
+  ),
+  slow: (
+    <g {...sw}>
+      <circle r={16} />
+      <path d="M0 -8V0L7 5" />
+    </g>
+  ),
+  mixer: (
+    <>
+      <path d="M-12 -18v36M0 -18v36M12 -18v36" {...sw} strokeWidth={3} />
+      <g fill="#FFFFFF" stroke={I} strokeWidth={2.5}>
+        <rect x={-17} y={2} width={10} height={7} rx={2} />
+        <rect x={-5} y={-10} width={10} height={7} rx={2} />
+        <rect x={7} y={6} width={10} height={7} rx={2} />
+      </g>
+    </>
+  ),
+  log: (
+    <g {...sw} strokeWidth={3}>
+      <rect x={-15} y={-18} width={30} height={36} rx={4} />
+      <path d="M-8 -8h16M-8 0h16M-8 8h10" />
+    </g>
+  ),
+  groove: <path d="M-22 8c6-16 10-16 16 0s10 16 16 0 8-12 12-6" {...sw} />,
+  live: (
+    <>
+      <circle r={6} fill={I} />
+      <path d="M-14 -12a20 20 0 0 0 0 24M14 -12a20 20 0 0 1 0 24" {...sw} strokeWidth={3} />
+    </>
+  ),
+  duel: <path d="M-18 -16 14 16M18 -16 -14 16" {...sw} strokeWidth={3.4} />,
+  ghost: (
+    <>
+      <path d="M-14 16V-2a14 14 0 0 1 28 0v18l-7-5-7 5-7-5z" {...sw} strokeLinejoin="round" />
+      <circle cx={-5} cy={-2} r={2.5} fill={I} />
+      <circle cx={5} cy={-2} r={2.5} fill={I} />
+    </>
+  ),
+  calendar: (
+    <g {...sw} strokeWidth={3}>
+      <rect x={-18} y={-14} width={36} height={32} rx={4} />
+      <path d="M-18 -4h36M-8 -20v8M8 -20v8" />
+    </g>
+  ),
+  fire: <path d="M0 -20c8 10 14 14 14 24a14 14 0 0 1-28 0c0-6 4-10 6-14 2 6 4 8 8 8-2-6-2-12 0-18z" {...sw} strokeLinejoin="round" />,
+  star: <path d="M0 -20 6 -6 21 -5 9 5 13 19 0 11 -13 19 -9 5 -21 -5 -6 -6z" {...sw} strokeLinejoin="round" />,
 };
 export type GlyphKind = keyof typeof GLYPHS;
+
+/** Emoji left in content data → the closest symbol of our set (0.61: no emoji in the interface). */
+const EMOJI: Record<string, GlyphKind> = {
+  '🎸': 'guitar', '🪕': 'guitar', '🎻': 'guitar', '🎹': 'keys', '🎤': 'sing', '🗣': 'sing', '🥁': 'rhythm', '👂': 'intervals', '🎵': 'contour', '🎶': 'contour', '♪': 'contour', '♫': 'contour', '♩': 'rhythm',
+  '🎼': 'sight', '📖': 'book', '📚': 'book', '🎓': 'book', '🧠': 'memory', '🧩': 'puzzle', '🎯': 'tune', '🎷': 'prog', '🎺': 'prog', '🔥': 'fire', '📅': 'calendar', '🗓': 'calendar', '⚔': 'duel', '👻': 'ghost',
+  '🎛': 'eq', '🎚': 'mixer', '🛣': 'rhythm', '🕊': 'sing', '🕵': 'prog', '🏆': 'trophy', '🥇': 'trophy', '🏅': 'trophy', '🎖': 'trophy', '👑': 'trophy', '⭐': 'star', '🌟': 'star', '✨': 'star', '★': 'star',
+  '🔑': 'theory', '♯': 'theory', '♭': 'theory', '📏': 'scales', '🪜': 'scales', '📈': 'scales', '🧭': 'tune', '🗺': 'contour', '⚡': 'tempo', '🏁': 'trophy', '🤝': 'person', '👥': 'person', '🧘': 'drone', '⏱': 'slow',
+};
+export function glyphForEmoji(e: string | null | undefined): GlyphKind {
+  if (!e) return 'contour';
+  for (const ch of Array.from(e)) if (EMOJI[ch]) return EMOJI[ch];
+  return EMOJI[e] ?? 'contour';
+}
+
 
 /** A symbol inside a tilted note head. `shadow` adds the hard offset shadow used for big, tappable ones. */
 export function Glyph({ kind, color = DOMAIN_COLOR.ear, size = 46, shadow = false, label }: { kind: GlyphKind; color?: string; size?: number; shadow?: boolean; label?: string }) {
