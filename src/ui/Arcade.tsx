@@ -801,6 +801,11 @@ export const COURSE_GAMES: Record<CourseId, string[]> = {
   // 0.65: technique on the kit, Highway with drum lanes, beat echo, the groove trainer.
   drums: ['drills', 'highway', 'rhythm', 'groove'],
 };
+/** An instrument course's own words on shared game cards (the shared text is the piano's: Hanon, Barry Harris, MIDI). */
+const COURSE_BLURB: Partial<Record<CourseId, Record<string, { en: string; he: string }>>> = {
+  guitar: { drills: { en: 'Scales, chords, picking and legato — measured on your guitar.', he: 'סולמות, אקורדים, פריטה ולגאטו — נמדדים בגיטרה שלכם.' } },
+  bass: { drills: { en: 'Grooves, scales and walking lines — measured on your bass.', he: 'גרובים, סולמות וקווי הליכה — נמדדים בבס שלכם.' } },
+};
 /** The drums course's own words on shared game cards. */
 const DRUMS_BLURB: Record<string, { en: string; he: string }> = {
   drills: { en: 'Strokes, rudiments, grooves and fills — measured on your kit.', he: 'מכות, רודימנטים, גרובים ומעברים — נמדדים על המערכת שלכם.' },
@@ -834,6 +839,8 @@ const DRUMS_TX: Record<string, { en: [string, string]; he: [string, string] }> =
   drills: { en: ['Technique', 'Rudiments, grooves, fills'], he: ['טכניקה', 'רודימנטים, גרובים, מעברים'] },
   games: { en: ['Games', 'Rhythm games and the kit Highway'], he: ['משחקים', 'משחקי קצב והייווי למערכת'] },
 };
+/** Technique in an instrument course: the instrument only ("and your voice" is the voice course's). */
+const INSTR_DRILLS_TX: { en: [string, string]; he: [string, string] } = { en: ['Technique', 'Your instrument, level by level — measured'], he: ['טכניקה', 'הכלי שלכם, שלב אחר שלב — במדידה'] };
 const ROW_TX: Record<string, { en: [string, string]; he: [string, string] }> = {
   songs: { en: ['Songs', 'Play and sing real songs — by the chords you know'], he: ['שירים', 'לנגן ולשיר שירים אמיתיים — לפי האקורדים שאתם מכירים'] },
   pieces: { en: ['My pieces', 'Bring a score; the coach takes you to tempo'], he: ['היצירות שלי', 'מעלים תווים; המאמן מביא אתכם לטמפו'] },
@@ -898,7 +905,7 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
     { key: 'rhythm', hue: 'var(--hue-time)', icon: <GameIcon kind="rhythm" />, title: t.beatEcho, blurb: t.beatEchoBlurb, extra: best(progress.games?.rhythm), onClick: () => onGame('rhythm') },
     { key: 'truefalse', hue: 'var(--hue-pitch)', icon: '✓✗', title: t.trueFalse, blurb: t.tfBlurb, extra: progress.tfBest && Object.keys(progress.tfBest).length ? best(Math.max(...Object.values(progress.tfBest))) : <span className="new-chip">{t.newChip}</span>, onClick: onTrueFalse },
     { key: 'ghost', hue: 'var(--hue-creative)', icon: '👻', title: t.ghostRace, blurb: t.ghostBlurb, onClick: onGhost },
-    ...(onGame2 ? GAMES2.map((g) => ({ key: g.id, cat: g.cat, hue: g.hue, icon: g.icon, title: g[lang][0], blurb: course === 'drums' && DRUMS_BLURB[g.id] ? DRUMS_BLURB[g.id][lang] : g[lang][1], extra: progress.bests?.[g.id] ? best(progress.bests[g.id]) : <span className="new-chip">{t.newChip}</span>, onClick: () => onGame2(g.id) })) : []),
+    ...(onGame2 ? GAMES2.map((g) => ({ key: g.id, cat: g.cat, hue: g.hue, icon: g.icon, title: g[lang][0], blurb: course === 'drums' && DRUMS_BLURB[g.id] ? DRUMS_BLURB[g.id][lang] : (COURSE_BLURB[course]?.[g.id]?.[lang] ?? g[lang][1]), extra: progress.bests?.[g.id] ? best(progress.bests[g.id]) : <span className="new-chip">{t.newChip}</span>, onClick: () => onGame2(g.id) })) : []),
     // The groove trainer (fading click, pocket, swing) is a drums-course game too (0.65).
     ...(hub?.groove ? [{ key: 'groove', cat: 'rhythm' as GameCat, hue: 'var(--hue-time)', icon: '', title: lang === 'he' ? 'מאמן הגרוב' : 'Groove trainer', blurb: lang === 'he' ? 'קליק שנעלם, כיס וסווינג — האם הזמן נשאר שלכם?' : 'A fading click, the pocket, swing — does the time stay yours?', onClick: hub.groove }] : []),
     { key: 'duel', hue: 'var(--hue-voice)', icon: '⚔', title: t.duel, blurb: t.duelBlurb, onClick: onDuel },
@@ -929,7 +936,7 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
             {rows
               .filter((k) => k !== 'games' && hub[k as keyof PracticeHub])
               .map((k) => {
-                const tx = (course === 'voice' && VOICE_TX[k] ? VOICE_TX[k] : course === 'drums' && DRUMS_TX[k] ? DRUMS_TX[k] : ROW_TX[k])[lang];
+                const tx = (course === 'voice' && VOICE_TX[k] ? VOICE_TX[k] : course === 'drums' && DRUMS_TX[k] ? DRUMS_TX[k] : k === 'drills' && (course === 'keys' || course === 'guitar' || course === 'bass') ? INSTR_DRILLS_TX : ROW_TX[k])[lang];
                 return (
                   <button
                     key={k}
@@ -961,7 +968,7 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
                     data-hub-cat={c}
                   >
                     <span className="pt-icon">
-                      <Glyph kind={course === 'drums' && c === 'instrument' ? 'drums' : CAT_GLYPH[c]} color="#FFFFFF" size={44} />
+                      <Glyph kind={c === 'instrument' && (course === 'drums' || course === 'guitar' || course === 'bass') ? course : CAT_GLYPH[c]} color="#FFFFFF" size={44} />
                     </span>
                     <b>{gc[lang]}</b>
                     <small>{lang === 'he' ? 'משחקים ותרגילים' : 'Games and drills'}</small>

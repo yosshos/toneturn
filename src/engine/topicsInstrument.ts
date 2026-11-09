@@ -364,6 +364,8 @@ TOPIC_GEN['fret-chords'] = {
   title: { en: 'Chord shapes', he: 'צורות של אקורדים' },
   skill: 'instrument',
   forPlays: ['guitar', 'bass'],
+  // Levels 1–5 draw guitar shapes, 6–7 bass lines: each course gets only its own levels.
+  levelPlays: [['guitar'], ['guitar'], ['guitar'], ['guitar'], ['guitar'], ['bass'], ['bass']],
   levels: [
     { en: 'Open chords by diagram (C A G E D, minor)', he: 'אקורדים פתוחים לפי דיאגרמה (C A G E D, מינור)' },
     { en: 'Build a triad on the top three strings', he: 'לבנות טריאדה על שלושת המיתרים העליונים' },
@@ -484,6 +486,8 @@ TOPIC_GEN['fret-scales'] = {
   title: { en: 'Scales on the neck', he: 'סולמות על הצוואר' },
   skill: 'instrument',
   forPlays: ['guitar', 'bass'],
+  // Levels 1–4 are guitar (string 6, 3 notes per string), level 5 is bass (walking approach notes).
+  levelPlays: [['guitar'], ['guitar'], ['guitar'], ['guitar'], ['bass']],
   levels: [
     { en: 'Major scale from a root on string 6', he: "סולם מז'ור משורש על מיתר 6" },
     { en: 'Minor pentatonic, box 1', he: 'פנטטונית מינורית, בוקס 1' },

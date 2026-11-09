@@ -11,7 +11,7 @@ export interface Quest {
   target: number;
   /** Note-head colour of the quest's symbol. */
   color: string;
-  glyph: 'intervals' | 'sing' | 'keys' | 'rhythm' | 'scales' | 'tempo' | 'guitar' | 'bass' | 'sticks';
+  glyph: 'intervals' | 'sing' | 'keys' | 'guitar' | 'bass' | 'drums' | 'rhythm' | 'scales' | 'tempo' | 'sticks';
 }
 
 interface QuestDay {

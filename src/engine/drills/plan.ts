@@ -66,16 +66,22 @@ const gen = (spec: Parameters<typeof generate>[0]): Drill => {
   return d;
 };
 
+/** Each item once: a key-free item (guitar natural harmonics) generates the same item in every key of its level. */
+const uniq = (ds: Drill[]): Drill[] => {
+  const seen = new Set<string>();
+  return ds.filter((d) => !seen.has(d.itemId) && !!seen.add(d.itemId));
+};
+
 /** Every drill of a level: key by key, each spec (e.g. RH then LH). */
 export function levelDrills(level: LevelDef, order: DrillSettings['keyOrder']): Drill[] {
   const out: Drill[] = [];
   for (const key of levelKeys(level, order)) for (const s of level.specs) out.push(gen({ ...s, key }));
-  return out;
+  return uniq(out);
 }
 
 /** One spec of a level through all its keys. */
 export function specDrills(level: LevelDef, specIndex: number, order: DrillSettings['keyOrder']): Drill[] {
-  return levelKeys(level, order).map((key) => gen({ ...level.specs[specIndex], key }));
+  return uniq(levelKeys(level, order).map((key) => gen({ ...level.specs[specIndex], key })));
 }
 
 /** Levels without a stated tempo range: the target is the start tempo + 25 % (about one tempo band). */

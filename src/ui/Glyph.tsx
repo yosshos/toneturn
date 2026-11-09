@@ -289,6 +289,70 @@ export const GLYPHS: Record<string, ReactNode> = {
       <path d="M-15 -15C-15 -3 -6 0 -5 6L-10 20H10L5 6C6 0 15 -3 15 -15" strokeLinejoin="round" />
     </g>
   ),
+  // Guitar course (0.66): every technique family its own symbol, apart from the guitar topics' symbols.
+  fingers1234: (
+    <text x={0} y={7} textAnchor="middle" fontFamily="'Secular One', Rubik, sans-serif" fontSize={18} fill={I} direction="ltr" letterSpacing={0.5}>
+      1234
+    </text>
+  ),
+  pick: <path d="M0 20C-9 11-18 0-18-9c0-8 8-11 18-11s18 3 18 11C18 0 9 11 0 20z" {...sw} strokeLinejoin="round" />,
+  slur: (
+    <>
+      {head(-12, 10)}
+      {head(12, 2)}
+      <path d="M-18 -2Q-2 -22 18 -10" {...sw} />
+    </>
+  ),
+  box: (
+    <>
+      <path d="M-24 -12H24M-24 -4H24M-24 4H24M-24 12H24M-12 -16V16M4 -16V16" stroke={I} strokeWidth={1.8} />
+      {[
+        [-18, -12],
+        [-4, -4],
+        [12, -12],
+        [-18, 4],
+        [12, 12],
+        [-4, 12],
+      ].map(([x, y]) => (
+        <circle key={`${x},${y}`} cx={x} cy={y} r={3.6} fill={I} />
+      ))}
+    </>
+  ),
+  chordbox: (
+    <>
+      <path d="M-15 -16V18M-9 -16V18M-3 -16V18M3 -16V18M9 -16V18M15 -16V18M-15 -5H15M-15 6H15" stroke={I} strokeWidth={1.8} />
+      <path d="M-16 -16H16" stroke={I} strokeWidth={4.5} />
+      <circle cx={-9} cy={0.5} r={3.6} fill={I} />
+      <circle cx={-3} cy={11.5} r={3.6} fill={I} />
+      <circle cx={9} cy={0.5} r={3.6} fill={I} />
+    </>
+  ),
+  arp: (
+    <>
+      <path d="M-22 16q4-4 0-8t0-8 0-8 0-8" {...sw} strokeWidth={2.6} />
+      {head(-6, 13)}
+      {head(4, 2)}
+      {head(14, -9)}
+    </>
+  ),
+  strum: <path d="M-10 -18V16M-17 9l7 7 7-7M10 16V-18M3-11l7-7 7 7" {...sw} strokeLinejoin="round" />,
+  bend: (
+    <g {...sw}>
+      <path d="M-22 16H-2Q12 16 13-12" />
+      <path d="M7-6l6-8 6 8" strokeLinejoin="round" />
+    </g>
+  ),
+  pima: (
+    <text x={0} y={6} textAnchor="middle" fontFamily="Rubik, sans-serif" fontStyle="italic" fontWeight={700} fontSize={17} fill={I} direction="ltr">
+      pima
+    </text>
+  ),
+  fan: (
+    <g {...sw}>
+      <path d="M0 18-18-8M0 18-6-15M0 18 6-15M0 18 18-8" strokeWidth={2.8} />
+      <path d="M-20-8Q0-26 20-8" />
+    </g>
+  ),
 };
 export type GlyphKind = keyof typeof GLYPHS;
 

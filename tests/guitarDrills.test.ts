@@ -100,7 +100,8 @@ describe('guitar drills: catalogue', () => {
     const seen = new Map<string, string>();
     for (const { drill, spec } of DRILLS) {
       expect(generateGuitar(spec).itemId).toBe(drill.itemId);
-      const sig = JSON.stringify(Object.entries(spec).filter(([, v]) => v !== undefined).sort());
+      // Key-free items (natural harmonics) are one item under their stored key.
+      const sig = JSON.stringify(Object.entries({ ...spec, key: drill.spec.key }).filter(([, v]) => v !== undefined).sort());
       const prev = seen.get(drill.itemId);
       if (prev !== undefined) expect(prev, drill.itemId).toBe(sig);
       seen.set(drill.itemId, sig);

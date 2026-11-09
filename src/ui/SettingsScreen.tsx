@@ -1072,6 +1072,8 @@ function SoundSetting({ t, s, onChange }: { t: Strings; s: Settings; onChange: (
     }
     onChange({ sound: id });
     preview();
+    // The guitar course keeps its guitar sound: the chosen piano sound is heard, then plays in the other courses.
+    if (s.activeCourse === 'guitar') setTimeout(() => void piano.setSound('guitar'), 2600);
   };
   // Listen without choosing (0.61): load that sound, play the preview, then return to the chosen one.
   const listen = async (id: string) => {
@@ -1083,7 +1085,7 @@ function SoundSetting({ t, s, onChange }: { t: Strings; s: Settings; onChange: (
     setBusy(null);
     if (!ok) return setFailed(true);
     preview();
-    setTimeout(() => void piano.setSound(value), 2600);
+    setTimeout(() => void piano.setSound(s.activeCourse === 'guitar' ? 'guitar' : value), 2600);
   };
   // Preview: a short voicing then a line, soft and loud (so the dynamics are heard too).
   const preview = () =>

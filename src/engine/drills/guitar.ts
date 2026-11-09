@@ -138,6 +138,11 @@ function npsFingers(fs: number[]): number[] {
 
 const upDown = <T>(xs: T[]): T[] => [...xs, ...xs.slice(0, -1).reverse()];
 
+/** The highest fret a drill asks for: most electric guitars have 21–22 frets (24 only on some). */
+export const MAX_FRET = 22;
+/** Key-free items (natural harmonics) are stored under this key. */
+export const HARMONICS_KEY = 9;
+
 /** Find a place for a pitch on the given strings with the fret inside [lo, hi]. */
 function place(tu: Tuning, pitch: number, strings: number[], lo: number, hi: number): { s: number; f: number } | null {
   for (const s of strings) {
@@ -501,7 +506,7 @@ function genPicking(s: DrillSpec, tu: Tuning): Drill {
       const frets = upDown([0, 1, 2, 3].map((x) => p + x));
       for (const f of frets) for (let r = 0; r < 2; r++) gns.push({ s: s.option ?? 1, f, pos: p, finger: f - p + 1 });
       gns = alt(gns);
-      title = t(`Alternate picking, one string · fret ${p}`, `פריטה מתחלפת, מיתר אחד · סריג ${p}`);
+      title = t(`Alternate picking on string ${s.option ?? 1} · fret ${p}`, `פריטה מתחלפת על מיתר ${s.option ?? 1} · סריג ${p}`);
       break;
     }
     case 'cross': {
@@ -745,7 +750,7 @@ function genLegato(s: DrillSpec, tu: Tuning): Drill {
         const up = i % 2 === 1;
         gns.push({ s: str, f: p + (up ? b : a) - 1, pos: p, finger: up ? b : a, tech: i === 0 ? 'pick' : up ? 'hammer' : 'pull' });
       }
-      title = t(`Trill, fingers ${a}-${b} (hammer / pull) · 3rd string`, `טריל, אצבעות ${a}-${b} (הקשה / משיכה) · מיתר 3`);
+      title = t(`Trill, fingers ${a}-${b} (hammer / pull) · 3rd string, fret ${p}`, `טריל, אצבעות ${a}-${b} (הקשה / משיכה) · מיתר 3, סריג ${p}`);
       return finish(s, tu, seqEv(gns, 1 / 4), { title, bpm: bpmAt(3, 4) });
     }
     case 'penta-legato': {
@@ -798,10 +803,12 @@ function genLegato(s: DrillSpec, tu: Tuning): Drill {
         [7, false],
       ];
       for (const [d, minor] of prog) {
-        const r = lowFret1(tu, key + d, 1);
+        // The octave tap stays on a 22-fret neck: a root at fret 12 pulls off to the open string instead.
+        const r1 = lowFret1(tu, key + d, 1);
+        const r = r1 + 12 > MAX_FRET ? r1 - 12 : r1;
         const third = minor ? 3 : 4;
         for (let k = 0; k < 4; k++)
-          gns.push({ s: 1, f: r + (k % 2 === 0 ? 7 : 12), tech: 'tap' }, { s: 1, f: r, pos: r, finger: 1, tech: 'pull' }, { s: 1, f: r + third, pos: r, finger: third === 3 ? 3 : 4, tech: 'hammer' });
+          gns.push({ s: 1, f: r + (k % 2 === 0 ? 7 : 12), tech: 'tap' }, { s: 1, f: r, pos: Math.max(1, r), finger: 1, tech: 'pull' }, { s: 1, f: r + third, pos: Math.max(1, r), finger: third === 3 ? 3 : 4, tech: 'hammer' });
       }
       title = t(`Tapped arpeggios I–vi–IV–V · ${NAMES[key]}`, `ארפג׳יו בטאפינג I–vi–IV–V · ${NAMES[key]}`);
       return finish(s, tu, seqEv(gns, 1 / 3), { title, bpm: bpmAt(3, 3) });
@@ -846,8 +853,8 @@ function genScales(s: DrillSpec, tu: Tuning): Drill {
       let ps = offs[box].flatMap((fs, i) => fs.map((f) => ({ s: 6 - i, f: r + f })));
       if (Math.max(...ps.map((p) => p.f)) > 15) ps = ps.map((p) => ({ s: p.s, f: p.f - 12 }));
       line = upDown(ps);
-      const nm = s.minor === false ? `${NAMES[key]} major` : `${NAMES[key]}m`;
-      title = t(`Pentatonic box ${box + 1} · ${nm}`, `פנטטוני תיבה ${box + 1} · ${nm}`);
+      const nm = s.minor === false ? t(`${NAMES[key]} major`, `${NAMES[key]} מז׳ור`) : t(`${NAMES[key]}m`, `${NAMES[key]}m`);
+      title = t(`Pentatonic box ${box + 1} · ${nm.en}`, `פנטטוני תיבה ${box + 1} · ${nm.he}`);
       break;
     }
     case 'blues': {
@@ -894,11 +901,17 @@ function genScales(s: DrillSpec, tu: Tuning): Drill {
     }
     case 'one-string': {
       // Goodrick "unitar": one octave of the major scale on one string, up and down (shifting).
-      const str = s.position ?? 3;
-      const r = lowFret1(tu, key, str);
+      // The octave must fit a 22-fret neck: the open-string root starts at 0, a root above fret 10 moves to the next
+      // lower string (F♯ on string 3 → string 4).
+      let str = s.position ?? 3;
+      let r = lowFret(tu, key, str);
+      if (r + 12 > MAX_FRET && str < tu.open.length) {
+        str += 1;
+        r = lowFret(tu, key, str);
+      }
       const fs = MAJOR.concat(12).map((i) => r + i);
-      line = upDown(fs.map((f, i) => ({ s: str, f, pos: i % 2 === 0 ? f : fs[i - 1] })));
-      line = line.map((g) => ({ ...g, finger: g.f - g.pos! + 1 }));
+      line = upDown(fs.map((f, i) => ({ s: str, f, pos: Math.max(1, i % 2 === 0 ? f : fs[i - 1]) })));
+      line = line.map((g) => (g.f === 0 ? g : { ...g, finger: clamp(g.f - g.pos! + 1, 1, 4) }));
       title = t(`One-string major scale (string ${str}) · ${NAMES[key]}`, `סולם מז׳ור על מיתר אחד (מיתר ${str}) · ${NAMES[key]}`);
       break;
     }
@@ -1397,7 +1410,10 @@ function genLead(s: DrillSpec, tu: Tuning): Drill {
       }
       // Pentatonic notes along one string (3rd, or 2nd for option 1), each reached by a slide with the 3rd finger.
       const str = op === 1 ? 2 : 3;
-      const fs = windowScale(tu, key, SCALES.pentaMinor, lowFret1(tu, key, str), lowFret1(tu, key, str) + 12, [str]).map((x) => x.f);
+      // One octave along the string, inside a 22-fret neck (a root at fret 11–12 starts an octave lower, from fret 1).
+      const lo0 = lowFret1(tu, key, str);
+      const lo = lo0 + 12 > MAX_FRET ? lo0 - 12 : lo0;
+      const fs = windowScale(tu, key, SCALES.pentaMinor, Math.max(1, lo), lo + 12, [str]).map((x) => x.f);
       const line = upDown(fs);
       line.forEach((f, i) => push(1, { s: str, f, pos: Math.max(1, f - 2), finger: clamp(f - Math.max(1, f - 2) + 1, 1, 4), tech: i === 0 ? 'pick' : 'slide' }));
       title = str === 3 ? t(`Slides along the 3rd string (pentatonic) · ${NAMES[key]}m`, `החלקות לאורך מיתר 3 (פנטטוני) · ${NAMES[key]}m`) : t(`Slides along the 2nd string (pentatonic) · ${NAMES[key]}m`, `החלקות לאורך מיתר 2 (פנטטוני) · ${NAMES[key]}m`);
@@ -1475,7 +1491,9 @@ function genLead(s: DrillSpec, tu: Tuning): Drill {
       // Diatonic 3rds on strings 3-2 (option 0) or 6ths on strings 3-1 (option 1), up an octave and back.
       const sixths = s.option === 1;
       const hiStr = sixths ? 1 : 2;
-      const rf = lowFret1(tu, key, 3);
+      // Up an octave from the tonic on string 3, inside a 22-fret neck (G: from the open strings).
+      const rf1 = lowFret1(tu, key, 3);
+      const rf = rf1 + 12 > MAX_FRET ? rf1 - 12 : rf1;
       const lowP = noteAt(tu, 3, rf);
       const sc = (k: number) => lowP + 12 * Math.floor(k / 7) + MAJOR[mod(k, 7)];
       const pairs: GN[][] = [];
@@ -1533,7 +1551,7 @@ export const FS_PROGS: Record<number, [number, Q][]> = {
 };
 type Role = 'p' | 'p2' | 'i' | 'm' | 'a';
 /** Right-hand arpeggio patterns: steps of roles (a pinch = several roles at once). 0–3 basic PIMA, 4–9 Giuliani-style. */
-export const PIMA: { steps: Role[][]; per: number; name: string }[] = [
+export const PIMA: { steps: Role[][]; per: number; name: string; he?: string }[] = [
   { steps: [['p'], ['i'], ['m'], ['a']], per: 2, name: 'p-i-m-a' },
   { steps: [['p'], ['a'], ['m'], ['i']], per: 2, name: 'p-a-m-i' },
   { steps: [['p'], ['i'], ['m'], ['i']], per: 2, name: 'p-i-m-i' },
@@ -1543,7 +1561,7 @@ export const PIMA: { steps: Role[][]; per: number; name: string }[] = [
   { steps: [['p'], ['m', 'i'], ['a'], ['m', 'i']], per: 2, name: 'p-(i+m)-a-(i+m)' },
   { steps: [['p'], ['i', 'm', 'a']], per: 1, name: 'p-(i+m+a)' },
   { steps: [['p'], ['a'], ['i'], ['m'], ['i'], ['a']], per: 3, name: 'p-a-i-m-i-a' },
-  { steps: [['p'], ['i'], ['p2'], ['m']], per: 2, name: 'p-i-p-m (alternating bass)' },
+  { steps: [['p'], ['i'], ['p2'], ['m']], per: 2, name: 'p-i-p-m (alternating bass)', he: 'p-i-p-m (בס מתחלף)' },
 ];
 
 function fsVoices(tu: Tuning, sh: Shape): Record<Role, GN> {
@@ -1591,7 +1609,7 @@ function genFingerstyle(s: DrillSpec, tu: Tuning): Drill {
       });
       if (s.kind === 'thumb') title = t(`Alternating thumb bass · ${progName}`, `בס אגודל מתחלף · ${progName}`);
       else if (s.kind === 'travis') title = t(`Travis picking · ${progName}`, `פריטת טראוויס · ${progName}`);
-      else title = t(`Arpeggio pattern ${PIMA[(s.option ?? 0) % PIMA.length].name} · ${progName}`, `תבנית ארפג׳יו ${PIMA[(s.option ?? 0) % PIMA.length].name} · ${progName}`);
+      else title = t(`Arpeggio pattern ${PIMA[(s.option ?? 0) % PIMA.length].name} · ${progName}`, `תבנית ארפג׳יו ${PIMA[(s.option ?? 0) % PIMA.length].he ?? PIMA[(s.option ?? 0) % PIMA.length].name} · ${progName}`);
       bpm = s.kind === 'pima' ? bpmAt(2, PIMA[(s.option ?? 0) % PIMA.length].per) : 60;
       break;
     }
@@ -2310,7 +2328,8 @@ export function genBass(s: DrillSpec, tu: Tuning): Drill {
 
 /** Build a guitar / bass drill (any 'g-' family). */
 export function generateGuitar(spec: DrillSpec): Drill {
-  const s: DrillSpec = { ...spec, key: mod(spec.key, 12) };
+  // Natural harmonics sit at fixed frets: one item for every key of its level (plan.levelDrills keeps it once).
+  const s: DrillSpec = { ...spec, key: spec.family === 'g-lead' && spec.kind === 'harmonics' ? HARMONICS_KEY : mod(spec.key, 12) };
   const tu = tuningOf(s);
   switch (s.family) {
     case 'g-fretting':
@@ -2394,15 +2413,15 @@ export function guitarCatalog(): GuitarFamilyDef[] {
   });
   const range = (n: number, from = 0) => Array.from({ length: n }, (_, i) => i + from);
   return [
-    fam('g-fretting', 'Fretting hand', 'יד שמאל (לוחצת)', 'classical', ['all'], [
+    fam('g-fretting', 'Fretting hand', 'יד לוחצת', 'classical', ['all'], [
       L('g-fretting', 1, 'Chromatic 1-2-3-4, fret 5 → 1', 'כרומטי 1-2-3-4, סריג 5 ← 1', [F('spider', { option: 0 })], POS_5_TO_1),
       L('g-fretting', 2, 'Finger permutations (1243, 1324, 1342 …)', 'תמורות אצבעות (1243, 1324, 1342 …)', range(5, 1).map((o) => F('spider', { option: o })), [9]),
       L('g-fretting', 3, 'Spider (two-string crossing)', 'עכביש (מעבר בין שני מיתרים)', [F('cross')], POS_5_TO_1),
       L('g-fretting', 4, 'Chromatic walk up the neck', 'הליכה כרומטית במעלה הצוואר', [F('walk')], [5, 9]),
       L('g-fretting', 5, 'All 24 permutations in 16ths', 'כל 24 התמורות בשש-עשריות', range(24).map((o) => F('spider', { option: o, perBeat: 4 })), [9]),
-      L('g-fretting', 6, 'Stretches', 'מתיחות', [F('stretch', { stretch: true })], [0, 9, 5]),
+      L('g-fretting', 6, 'Stretches', 'מתיחות', [F('stretch', { stretch: true })], [0, 11, 9]),
     ]),
-    fam('g-picking', 'Picking', 'פריטה (יד ימין)', 'classical', ['all'], [
+    fam('g-picking', 'Picking', 'פריטה', 'classical', ['all'], [
       L('g-picking', 1, 'Alternate picking on one string', 'פריטה מתחלפת על מיתר אחד', [P('single-string'), P('single-string', { option: 2 })], POS_5_TO_1),
       L('g-picking', 2, 'String crossing: outside, inside and pedal point', 'מעבר מיתרים: חיצוני, פנימי וצליל עוגב', [P('cross', { option: 0 }), P('cross', { option: 1 }), P('pedal'), P('pedal', { perBeat: 4 })], POS_5_TO_1),
       L('g-picking', 3, 'Scales 3 notes per string, alternate / economy', 'סולמות 3 צלילים במיתר, מתחלפת / חסכונית', [P('3nps', { option: 0, perBeat: 3, stretch: true }), P('3nps-economy', { option: 0, perBeat: 3, stretch: true }), P('3nps', { option: 4, perBeat: 3, stretch: true }), P('3nps-economy', { option: 1, perBeat: 3, stretch: true })], GKEYS_MAJOR),

@@ -564,6 +564,12 @@ function LevelMeta({ l, lang }: { l: LevelDef; lang: Lang }) {
   );
 }
 
+/** A guitar / bass variant's short name: its title without the key, tempo or progression parts. */
+export function variantName(d: Drill | undefined, lang: Lang): string {
+  if (!d) return '';
+  return d.title[lang].split(' · ')[0];
+}
+
 function LevelGrid({ lang, ds, level, items, onRun }: { lang: Lang; ds: DrillSettings; level: LevelDef; items: Record<string, ItemState>; onRun: (q: Drill[], i: number) => void }) {
   const tx = T[lang];
   const keys = levelKeys(level, ds.keyOrder);
@@ -597,9 +603,12 @@ function LevelGrid({ lang, ds, level, items, onRun }: { lang: Lang; ds: DrillSet
       <div className="heat">
         {level.specs.map((s, si) => {
           const row = specDrills(level, si, ds.keyOrder);
+          // Guitar / bass rows are variants, not hands: a caption names each one (the key cells follow).
+          const piano = (ds.instrument ?? 'piano') === 'piano';
           return (
-            <div key={si} className="heat-row" style={{ ['--cols' as string]: keys.length }}>
-              <span title={row[0]?.title[lang]}>{HANDS_TX[lang][s.hands]}</span>
+            <div key={si} className="heat-row" style={{ ['--cols' as string]: piano ? keys.length : row.length }}>
+              {!piano && <small className="heat-cap">{variantName(row[0], lang)}</small>}
+              <span title={row[0]?.title[lang]}>{piano ? HANDS_TX[lang][s.hands] : si + 1}</span>
               {row.map((d, i) => {
                 const st = items[d.itemId];
                 const lvl = !st || st.cleanBpm <= 0 ? 0 : st.cleanBpm >= st.goalBpm * 0.95 ? 3 : st.cleanBpm >= st.goalBpm * 0.8 ? 2 : 1;

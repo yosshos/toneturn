@@ -120,7 +120,8 @@ export function Rush({ lang, settings, mode, saved, onSave, onExit, onResult, be
 
   const [stage, setStage] = useState<'setup' | 'play' | 'over'>('setup');
   const [startLevel, setStartLevel] = useState(1);
-  const [picture, setPicture] = useState<RushPicture>('mixed');
+  // The course's own instrument first: chords on the neck in the guitar course, on the keys in the piano course.
+  const [picture, setPicture] = useState<RushPicture>(settings.activeCourse === 'guitar' ? 'neck' : settings.activeCourse === 'keys' ? 'keys' : 'mixed');
   const [st, setSt] = useState<RushState | null>(null);
   const [item, setItem] = useState<RushItem | null>(null);
   const [fb, setFb] = useState<Feedback | null>(null);

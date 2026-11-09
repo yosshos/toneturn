@@ -19,6 +19,7 @@ import { layerGain, layerOf, RoundRobin, WURLI_LAYERS, wurliGain } from './layer
 import { Leslie, organKey, REGISTRATIONS, type Registration } from './organ';
 import { autoPan, epKey } from './epiano';
 import { damperTau, layerFor, lightDevice, loadOrder, nearestLoaded, NO_DAMPER_FROM, releaseNoiseGain, releaseResGain, targetDb, vel127, type GrandLayer } from './grand';
+import { pluckSamples } from './pluck';
 
 interface Voice {
   out: GainNode;
@@ -142,7 +143,7 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     }
     if (this.bank?.id === id) return Promise.resolve(true);
     // modelled instruments: nothing to download
-    if (id === 'tonewheel' || id === 'tine') {
+    if (id === 'tonewheel' || id === 'tine' || id === 'guitar') {
       this.bank = { id, notes: [], buffers: new Map() };
       return Promise.resolve(true);
     }
@@ -328,6 +329,7 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     if (bank.id === 'tonewheel') return this.playOrgan(midi, velocity, start, dur);
     if (bank.id === 'tine') return this.playTine(midi, velocity, start, dur);
     if (bank.id === 'wurli') return this.playWurli(midi, velocity, start, dur);
+    if (bank.id === 'guitar') return this.playGuitar(midi, velocity, start, dur);
     if (LAYERED[bank.id]) {
       const lay = LAYERED[bank.id];
       const want = layerOf(velocity, lay.sets.length);
@@ -569,6 +571,41 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     if (!bank) return false;
     const db = this.info[bank.id]?.db ?? (this.grandInfo[bank.id]?.db as number | undefined) ?? -9;
     return this.playBuf(bank, midi, start, dur, wurliGain(v127) * Math.pow(10, (-9 - db) / 20) * WURLI_TRIM);
+  }
+
+  /** The modelled guitar (0.66, the guitar course's sound): one Karplus–Strong buffer per note, made on first use. */
+  private guitarBufs = new Map<number, { buf: AudioBuffer; rate: number }>();
+  private playGuitar(midi: number, v: number, start: number, dur: number): boolean {
+    const ctx = this.ctx;
+    if (!ctx || midi < 28 || midi > 100) return false;
+    let g = this.guitarBufs.get(midi);
+    if (!g) {
+      const { data, rate } = pluckSamples(midi, ctx.sampleRate);
+      const buf = ctx.createBuffer(1, data.length, ctx.sampleRate);
+      buf.getChannelData(0).set(data);
+      g = { buf, rate };
+      this.guitarBufs.set(midi, g);
+    }
+    const src = ctx.createBufferSource();
+    src.buffer = g.buf;
+    src.playbackRate.value = g.rate;
+    const out = ctx.createGain();
+    const peak = 0.12 + 0.5 * Math.max(0, Math.min(1, v));
+    out.gain.setValueAtTime(0, start);
+    out.gain.linearRampToValueAtTime(peak, start + 0.003);
+    // A released note is damped by the fretting hand; a held one rings out to the end of its buffer.
+    out.gain.setTargetAtTime(0, start + Math.max(0.05, dur), 0.07);
+    src.connect(out).connect(this.liveRoute && this.liveSampleBus ? this.liveSampleBus : this.sampleBus);
+    const stopAt = Math.min(start + g.buf.duration / g.rate, start + dur + 0.5);
+    src.start(start);
+    src.stop(stopAt);
+    const voice: Voice = { out, oscs: [src], end: stopAt };
+    this.voices.add(voice);
+    src.onended = () => {
+      this.voices.delete(voice);
+      out.disconnect();
+    };
+    return true;
   }
 
   /** Organ settings: the registration and the rotating speaker. */

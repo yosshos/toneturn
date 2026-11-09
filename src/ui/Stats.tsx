@@ -414,7 +414,9 @@ function courseAxes(course: CourseId, ratings: Parameters<typeof domainValue>[0]
     const f = familyById(id as FamilyId);
     const lv = f?.levels ?? [];
     const done = lv.filter((l) => techStars(l, items, DEFAULT_DRILL_SETTINGS.keyOrder) >= TECH_DONE_STARS).length;
-    return { label: (f?.title[lang] ?? id).split(/[ ,(—]/)[0], v: done ? done / Math.max(1, lv.length) : null };
+    // A short name whole ("יד לוחצת", "Fretting hand"); a long one by its first word ("אקורדים והחלפות" → "אקורדים").
+    const name = f?.title[lang] ?? id;
+    return { label: name.length <= 13 ? name : name.split(/[ ,(—]/)[0], v: done ? done / Math.max(1, lv.length) : null };
   });
 }
 const AREA_NAME_SHORT: Record<DomainId, { he: string; en: string }> = {

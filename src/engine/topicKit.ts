@@ -14,6 +14,8 @@ export interface TopicDef {
   gen: (seed: number, level: number, id: string) => TopicItem;
   /** Only for players of these instruments (spec AE §4.1); absent = everyone. */
   forPlays?: string[];
+  /** Per level (index = level − 1): the instruments of that level when it differs from forPlays (guitar-only shapes vs bass-only lines in one topic). */
+  levelPlays?: (string[] | undefined)[];
 }
 
 export const TOPIC_GEN: Record<string, TopicDef> = {};
