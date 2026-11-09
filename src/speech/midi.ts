@@ -3,10 +3,25 @@
 
 import type { SungFrame } from '../engine/sing';
 import type { PitchCapture, SingCaptureResult, SingOptions } from '../game/adapters';
+import { DEFAULT_KIT, hatState, hatVoice, openness, voiceOf, type DrumVoice, type HatState, type KitProfile } from '../engine/drumKit';
 
 type NoteListener = (midi: number, on: boolean, at: number, velocity: number) => void;
 /** Control change (CC64 sustain, CC67 soft…): controller number, value 0–127, timestamp. */
 type CcListener = (cc: number, value: number, at: number) => void;
+
+/** One drum hit (drum mode): the raw note, the voice it plays on this kit, velocity, time, hi-hat openness at hit time. */
+export interface DrumHitEvent {
+  note: number;
+  voice: DrumVoice | null;
+  vel: number;
+  at: number;
+  /** CC4 openness 0..1 when the kit sends CC4 (null = never seen). */
+  open: number | null;
+  hat: HatState | null;
+}
+type HitListener = (h: DrumHitEvent) => void;
+/** Cymbal choke (polyphonic key pressure 0xA0 on the cymbal's note): note, pressure, time. */
+type ChokeListener = (note: number, pressure: number, at: number) => void;
 
 /** Minimal shape of the Web MIDI objects we use (not in every TS lib). */
 interface MidiInputLike {
@@ -24,9 +39,18 @@ export class MidiInput {
   private access: MidiAccessLike | null = null;
   devices: string[] = [];
   private stateListeners = new Set<() => void>();
-  /** Settings → MIDI: listen to one device only (null = all), shift by octaves (small keyboards), invert the pedal. */
-  opts: { only: string | null; octave: number; pedalInvert: boolean } = { only: null, octave: 0, pedalInvert: false };
+  /**
+   * Settings → MIDI: listen to one device only (null = all), shift by octaves (small keyboards), invert the pedal.
+   * Drum mode (the drums course, DRUMS_CURRICULUM §3.5): raw notes (no octave shift, no pedal invert), CC4 kept as the
+   * hi-hat openness, 0xA0 chokes forwarded, note-offs never end a hit, the kit's map names each hit; optional cross-talk
+   * filter (a neighbour pad within 3 ms at < 25 % of the main hit's velocity is bleed).
+   */
+  opts: { only: string | null; octave: number; pedalInvert: boolean; drums: boolean; kit: KitProfile; crosstalk: boolean } = { only: null, octave: 0, pedalInvert: false, drums: false, kit: DEFAULT_KIT, crosstalk: false };
+  /** Latest CC4 value (drum mode), null until the kit sends one. */
+  cc4: number | null = null;
+  private lastHit: { note: number; vel: number; at: number } | null = null;
   setOptions(o: Partial<MidiInput['opts']>) {
+    if (o.drums === false || (o.drums && !this.opts.drums)) this.cc4 = null;
     this.opts = { ...this.opts, ...o };
     this.bind();
   }
@@ -76,6 +100,7 @@ export class MidiInput {
 
   /** Raw MIDI bytes → note on/off (exposed for tests). */
   message(data: Uint8Array | number[], at: number) {
+    if (this.opts.drums) return this.drumMessage(data, at);
     const [status, raw, vel0] = [data[0] ?? 0, data[1] ?? 0, data[2] ?? 0];
     const isCC = (status & 0xf0) === 0xb0;
     const note = isCC ? raw : Math.max(0, Math.min(127, raw + 12 * this.opts.octave));
@@ -91,6 +116,49 @@ export class MidiInput {
       // Control change (spec AI: the sustain pedal CC64 is measured in the pedalling drills).
       this.ccListeners.forEach((l) => l(note, vel, at));
     }
+  }
+
+  /** Drum mode: raw notes, hits with voice + openness, CC4 state, chokes. */
+  private drumMessage(data: Uint8Array | number[], at: number) {
+    const [status, note, v] = [data[0] ?? 0, data[1] ?? 0, data[2] ?? 0];
+    const cmd = status & 0xf0;
+    if (cmd === 0x90 && v > 0) {
+      const lh = this.lastHit;
+      if (this.opts.crosstalk && lh && lh.note !== note && Math.abs(at - lh.at) <= 3 && v < 0.25 * lh.vel) return;
+      if (!lh || v >= (lh.vel ?? 0) || Math.abs(at - lh.at) > 3) this.lastHit = { note, vel: v, at };
+      const open = this.cc4 === null ? null : openness(this.cc4, this.opts.kit);
+      const v0 = voiceOf(note, this.opts.kit);
+      const voice = v0 ? hatVoice(v0, open) : null;
+      const hit: DrumHitEvent = { note, voice, vel: v, at, open, hat: voice === 'hihat' || voice === 'hhOpen' ? (open === null ? (voice === 'hhOpen' ? 'open' : 'closed') : hatState(open)) : null };
+      this.held.set(note, at);
+      this.listeners.forEach((l) => l(note, true, at, v));
+      this.hitListeners.forEach((l) => l(hit));
+    } else if (cmd === 0x80 || (cmd === 0x90 && v === 0)) {
+      // Kits send short or meaningless note-offs: they only clear the held set, never end a hit.
+      if (this.held.delete(note)) this.listeners.forEach((l) => l(note, false, at, 0));
+    } else if (cmd === 0xb0) {
+      if (note === 4) this.cc4 = v;
+      this.ccListeners.forEach((l) => l(note, v, at));
+    } else if (cmd === 0xa0) {
+      this.chokeListeners.forEach((l) => l(note, v, at));
+    }
+  }
+
+  private hitListeners = new Set<HitListener>();
+  /** Drum hits (drum mode only). */
+  onHit(cb: HitListener) {
+    this.hitListeners.add(cb);
+    return () => {
+      this.hitListeners.delete(cb);
+    };
+  }
+  private chokeListeners = new Set<ChokeListener>();
+  /** Cymbal chokes (drum mode; Roland sends 0xA0 — other kits may send nothing, so never required). */
+  onChoke(cb: ChokeListener) {
+    this.chokeListeners.add(cb);
+    return () => {
+      this.chokeListeners.delete(cb);
+    };
   }
 
   /** Highest-priority sounding note: the most recently pressed one still held. */

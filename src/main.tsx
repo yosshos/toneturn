@@ -24,6 +24,7 @@ import './teacher.css';
 import './mature.css';
 import './desktop2.css';
 import './v2.css';
+import './drums.css';
 import { App } from './ui/App';
 import { initPwa } from './pwa';
 

@@ -117,7 +117,7 @@ describe('progress, log and merge', () => {
 
 describe('guitar technique badges', () => {
   // Bass-course families (b-*) have no family badges yet; the guitar list and g-bass do.
-  const cat = guitarCatalog().filter((f) => !f.id.startsWith('b-'));
+  const cat = guitarCatalog().filter((f) => !f.id.startsWith('b-') && !f.id.startsWith('d-'));
   const allKeys = (k: number[] | 'major' | 'minor') => (Array.isArray(k) ? k : Array.from({ length: 12 }, (_, i) => i));
   it('every guitar family has one level badge per catalogue level, EN + HE, and a glyph group', () => {
     expect(GUITAR_BADGE_FAMILIES.slice().sort()).toEqual(cat.map((f) => f.id).sort());

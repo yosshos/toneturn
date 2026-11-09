@@ -1,0 +1,357 @@
+/* Drums course (0.65): kit card and setup wizard, the percussion staff and the lanes, the per-limb line.
+   v2 language: ink outlines, flat fills, the hard offset shadow. Loaded after v2.css. */
+
+/* ---------------------------------------------------------------- kit card */
+.kit-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: var(--shadow-s);
+}
+.kit-card.ready {
+  background: var(--card-2);
+}
+.kit-card .kc-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.kit-card .kc-text small {
+  color: var(--ink-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------- setup wizard (one screen per step) */
+.kit-setup {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.kit-steps {
+  display: flex;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  justify-content: center;
+}
+.kit-steps li {
+  width: 26px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--line-strong);
+}
+.kit-steps li.past {
+  background: var(--teal);
+}
+.kit-steps li.now {
+  background: var(--purple);
+}
+.kit-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+.kit-step h2 {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 1.25rem;
+}
+.kit-step .btn {
+  width: 100%;
+  max-width: 360px;
+}
+.kit-step .field-hint.small {
+  font-size: 0.82rem;
+}
+.kit-warn {
+  margin: 0;
+  padding: 8px 12px;
+  border: 2px solid var(--outline);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--lemon) 35%, var(--card));
+  font-size: 0.85rem;
+  color: var(--ink);
+}
+.kit-presets {
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.kit-pad {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.kit-pad b {
+  font-size: 1.1rem;
+}
+.kit-dots {
+  display: flex;
+  gap: 6px;
+}
+.kit-dots i {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--outline);
+  background: var(--card);
+}
+.kit-dots i.on {
+  background: var(--teal);
+}
+.kit-dots.eight i {
+  width: 12px;
+  height: 12px;
+}
+.kit-learned {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+}
+.kit-learned li {
+  padding: 2px 8px;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 999px;
+}
+.kit-learned li.flash {
+  border-color: var(--teal);
+  background: var(--ok-soft);
+}
+
+/* ---------------------------------------------------------------- notation and lanes (LTR) */
+.drum-score {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  padding: 6px 4px;
+  border: var(--stroke) solid var(--outline);
+  border-radius: 16px;
+  background: var(--card);
+}
+.drum-score svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 22vh;
+}
+.drum-score .tab-pager {
+  align-self: center;
+}
+.dn-line {
+  stroke: var(--ink);
+  stroke-width: 0.9;
+  opacity: 0.55;
+}
+.dn-bar {
+  stroke: var(--ink);
+  stroke-width: 1.2;
+}
+.dn-clef rect {
+  fill: var(--ink);
+}
+.dn-stem,
+.dn-flag {
+  stroke: var(--ink);
+  stroke-width: 1.2;
+  fill: none;
+}
+.dn-beam {
+  stroke: var(--ink);
+  stroke-width: 3;
+}
+.dn-tup,
+.dn-dyn,
+.dn-stick {
+  fill: var(--ink-soft);
+  font: 600 9px var(--font);
+}
+.dn-dyn {
+  font-style: italic;
+  font-family: Georgia, serif;
+  font-size: 11px;
+}
+.dn-rest {
+  fill: var(--ink);
+  font: 18px var(--music);
+}
+.dn-head {
+  fill: var(--ink);
+}
+.dn-x {
+  stroke: var(--ink);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+.dn-ghost {
+  fill: var(--ink);
+  font: 600 10px var(--font);
+  letter-spacing: 3px;
+}
+.dn-acc {
+  stroke: var(--ink);
+  stroke-width: 1.4;
+  fill: none;
+}
+.dn-open {
+  stroke: var(--ink);
+  stroke-width: 1.3;
+  fill: none;
+}
+.dn.ok .dn-head {
+  fill: var(--teal);
+}
+.dn.ok .dn-x {
+  stroke: var(--teal);
+}
+.dn.timing .dn-head {
+  fill: var(--tangerine);
+}
+.dn.timing .dn-x {
+  stroke: var(--tangerine);
+}
+.dn.wrong .dn-head,
+.dn.missed .dn-head {
+  fill: var(--pink);
+}
+.dn.wrong .dn-x,
+.dn.missed .dn-x {
+  stroke: var(--pink);
+}
+.dn-cursor {
+  stroke: var(--purple);
+  stroke-width: 2;
+  opacity: 0.7;
+}
+.dl-lane {
+  fill: var(--card-2);
+  stroke: var(--line-strong);
+  stroke-width: 1;
+}
+.dl-lane.l-kick {
+  fill: color-mix(in srgb, var(--lilac) 25%, var(--card));
+}
+.dl-lane.l-snare {
+  fill: color-mix(in srgb, var(--pink) 18%, var(--card));
+}
+.dl-lane.l-hat,
+.dl-lane.l-ride,
+.dl-lane.l-crash {
+  fill: color-mix(in srgb, var(--lemon) 25%, var(--card));
+}
+.dl-name {
+  fill: var(--ink-soft);
+  font: 700 8px var(--font);
+}
+.dl-bar {
+  stroke: var(--ink);
+  stroke-width: 1.2;
+}
+.dl-beat {
+  stroke: var(--line-strong);
+  stroke-width: 0.8;
+}
+.dl-hit {
+  fill: var(--ink);
+  stroke: var(--outline);
+  stroke-width: 1;
+}
+.dl-hit.ghost {
+  fill: var(--card);
+}
+.dl-hit.open {
+  fill: var(--card);
+  stroke-width: 2.2;
+}
+.dl-hit.ok {
+  fill: var(--teal);
+}
+.dl-hit.timing {
+  fill: var(--tangerine);
+}
+.dl-hit.wrong,
+.dl-hit.missed {
+  fill: var(--pink);
+}
+.drum-key {
+  margin: 0;
+  text-align: center;
+  font-size: 0.72rem;
+  color: var(--ink-dim);
+}
+
+/* ---------------------------------------------------------------- result and hub */
+.drum-limbs {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+.drum-variants {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.drum-variants .heat-cell {
+  min-width: 44px;
+  height: 36px;
+  font-weight: 700;
+}
+
+/* Onboarding: with the drums course the course grid has an odd count — the last one spans the row. */
+.ob-course-grid > .ob-course:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+.level-pips {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+}
+.level-pips i {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--line-strong);
+}
+.level-pips i.on {
+  background: var(--teal);
+}
+.level-pips i.now {
+  background: var(--lemon);
+  outline: 1.5px solid var(--outline);
+}
+.dn-dot {
+  fill: var(--ink);
+}
+/* Seven courses: the tiles go compact (glyph beside the name) so the grid still fits one phone screen. */
+.ob-course-grid {
+  gap: 10px;
+  margin: 10px 0 14px;
+}
+.ob-course {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  min-height: 64px;
+  padding: 10px;
+}
+.ob-course b {
+  flex: 1 1 64px;
+  min-width: 64px;
+  line-height: 1.15;
+}

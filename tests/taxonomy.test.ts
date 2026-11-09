@@ -22,7 +22,7 @@ const check = (where: string, q: Parameters<typeof questionTags>[0]) => {
 };
 
 // Sub-skills fed only by events outside question items (vocal studio, Perform, games).
-const EVENT_SOURCED = ['singing/harmony', 'technique/control', 'technique/vibrato', 'agility/ornaments', 'sight/sing', 'improv/play', 'timing/precision', 'instrument/piano-tech', 'instrument/guitar-tech', 'instrument/bass-tech'];
+const EVENT_SOURCED = ['singing/harmony', 'technique/control', 'technique/vibrato', 'agility/ornaments', 'sight/sing', 'improv/play', 'timing/precision', 'instrument/piano-tech', 'instrument/guitar-tech', 'instrument/bass-tech', 'instrument/drum-tech'];
 
 describe('exercise taxonomy (spec AD)', () => {
   it('seven domains (0.38: Instrument & sound) hold every skill exactly once', () => {

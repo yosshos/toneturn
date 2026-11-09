@@ -30,7 +30,7 @@ async function seedDb(page) {
         streak: { count: 12, lastDay: day },
         review: [],
       };
-      const settings = { version: 2, uiLang: lang, inputLang: lang, outputLang: lang, mode: 'buttons', voiceConsent: true, intake: { v: 1, at: now, music: 1, singing: 1, theory: 1, reading: 1, plays: ['keys'], priorities: null, motivation: 'learn', minutes: 10, goal: 'general', leaveOut: [], packs: [], noSing: false, noMic: false }, courses: ['ear', 'keys', 'voice'], activeCourse: course, seenVersion: '9.9.9' };
+      const settings = { version: 2, uiLang: lang, inputLang: lang, outputLang: lang, mode: 'buttons', voiceConsent: true, intake: { v: 1, at: now, music: 1, singing: 1, theory: 1, reading: 1, plays: ['keys'], priorities: null, motivation: 'learn', minutes: 10, goal: 'general', leaveOut: [], packs: [], noSing: false, noMic: false }, courses: [...new Set(['ear', 'keys', 'voice', course])], activeCourse: course, seenVersion: '9.9.9' };
       await new Promise((res, rej) => {
         const r = indexedDB.open('toneturn', 1);
         r.onupgradeneeded = () => r.result.createObjectStore('kv');

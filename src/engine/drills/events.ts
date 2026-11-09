@@ -25,6 +25,9 @@ export function drillScore(drill: Drill, m: TakeMetrics): number {
 /** Bass drills (the bass course, the old g-bass starter, any drill for the bass) rate the bass technique sub-skill. */
 export const isBassTechDrill = (drill: Drill): boolean => drill.spec.family.startsWith('b-') || drill.spec.family === 'g-bass' || drill.spec.instrument === 'bass';
 
+/** Drum drills (the drums course, 'd-' families) rate the drum technique sub-skill. */
+export const isDrumDrill = (drill: Drill): boolean => drill.spec.family.startsWith('d-') || drill.spec.instrument === 'drums';
+
 type Tags = NonNullable<RatingEvent['tags']>;
 /**
  * What a take rates besides the technique sub-skill (BASS_AUDIT A11): bass time / pocket drills feed timing (the click
@@ -33,6 +36,12 @@ type Tags = NonNullable<RatingEvent['tags']>;
  */
 function secondTag(drill: Drill): Tags[number] | null {
   const f = drill.spec.family;
+  // Drums (DRUMS_CURRICULUM §4): time drills feed timing by their click, grooves and fills the steady beat, reading
+  // the drum-kit reading sub-skill; every drum take is also a timing take (it is all time).
+  if (f === 'd-time') return { skill: 'timing', sub: drill.click === '24' || drill.click === 'and' ? 'timing/backbeat' : drill.click === 'gap' ? 'timing/gap' : 'timing/subdivide', w: 0.4 };
+  if (f === 'd-rock' || f === 'd-fills') return { skill: 'timing', sub: 'timing/steady', w: 0.3 };
+  if (f === 'd-read') return { skill: 'rhythm-reading', sub: drill.notes.some((n) => n.voice && n.voice !== 'snare') ? 'rhythm-reading/drums' : 'rhythm-reading/read', w: 0.4 };
+  if (f.startsWith('d-')) return { skill: 'timing', sub: 'timing/subdivide', w: 0.3 };
   if (f === 'b-time') return { skill: 'timing', sub: drill.click === '24' || drill.click === 'and' ? 'timing/backbeat' : drill.click === 'one' || drill.click === 'fade' ? 'timing/gap' : 'timing/subdivide', w: 0.4 };
   if (f === 'b-pocket') return { skill: 'timing', sub: 'timing/steady', w: 0.4 };
   if (f === 'b-walk') return { skill: 'cadences', sub: 'cadences/progression', w: 0.3 };
@@ -47,7 +56,7 @@ function secondTag(drill: Drill): Tags[number] | null {
  * Ids use the 'g:drill:<session>:<i>' shape so the path groups a drill session like a game session.
  */
 export function drillEvents(drill: Drill, m: TakeMetrics, at: string, sessionId: string, index: number): RatingEvent[] {
-  const sub = isBassTechDrill(drill) ? 'instrument/bass-tech' : isGuitarDrill(drill) ? 'instrument/guitar-tech' : 'instrument/piano-tech';
+  const sub = isDrumDrill(drill) ? 'instrument/drum-tech' : isBassTechDrill(drill) ? 'instrument/bass-tech' : isGuitarDrill(drill) ? 'instrument/guitar-tech' : 'instrument/piano-tech';
   const two = secondTag(drill);
   const tags: Tags = two ? [{ skill: 'instrument', sub, w: Math.round((1 - two.w) * 10) / 10 }, two] : [{ skill: 'instrument', sub, w: 1 }];
   return [{ id: `g:drill:${sessionId}:${index}`, skill: 'instrument', difficulty: drillDifficulty(drill, m), correct: m.verdict === 'clean', score: drillScore(drill, m), tags, at }];
