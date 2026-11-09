@@ -161,12 +161,99 @@ export const GLYPHS: Record<string, ReactNode> = {
   ),
   fire: <path d="M0 -20c8 10 14 14 14 24a14 14 0 0 1-28 0c0-6 4-10 6-14 2 6 4 8 8 8-2-6-2-12 0-18z" {...sw} strokeLinejoin="round" />,
   star: <path d="M0 -20 6 -6 21 -5 9 5 13 19 0 11 -13 19 -9 5 -21 -5 -6 -6z" {...sw} strokeLinejoin="round" />,
+  // Drums (0.65): the course and one symbol per drum family / pad — every step on the drums path has its own.
+  drums: (
+    <g {...sw}>
+      <ellipse cx={0} cy={-2} rx={19} ry={6} />
+      <path d="M-19 -2v11a19 6 0 0 0 38 0v-11" />
+      <path d="M-15 -24 3 -8M15 -24 -3 -8" />
+    </g>
+  ),
+  sticks: (
+    <g {...sw}>
+      <path d="M-22 14 12 -16M-14 19 21 -11" />
+      <circle cx={13} cy={-17} r={2.6} fill={I} />
+      <circle cx={22} cy={-12} r={2.6} fill={I} />
+    </g>
+  ),
+  snare: (
+    <g {...sw}>
+      <ellipse cx={0} cy={-6} rx={20} ry={6.5} />
+      <path d="M-20 -6v12a20 6.5 0 0 0 40 0v-12M-12 0v10M0 1v11M12 0v10" />
+    </g>
+  ),
+  kick: (
+    <g {...sw}>
+      <circle cx={-2} cy={2} r={16} />
+      <circle cx={-2} cy={2} r={5} fill={I} />
+      <path d="M14 -10 22 -18M18 -6 24 -2" />
+    </g>
+  ),
+  hihat: (
+    <g {...sw}>
+      <path d="M-22 -10 Q0 -18 22 -10Z" strokeLinejoin="round" />
+      <path d="M-22 -4 Q0 4 22 -4Z" strokeLinejoin="round" />
+      <path d="M0 -2V20M-9 20H9" />
+    </g>
+  ),
+  cymbal: (
+    <g {...sw}>
+      <path d="M-24 -4 Q0 -16 24 -4 Q0 2 -24 -4Z" strokeLinejoin="round" />
+      <path d="M0 -6V20M-8 20H8" />
+      <path d="M-14 -16l-4-4M14 -16l4-4" />
+    </g>
+  ),
+  toms: (
+    <g {...sw}>
+      <ellipse cx={-12} cy={-8} rx={9} ry={4} />
+      <path d="M-21 -8v8a9 4 0 0 0 18 0v-8" />
+      <ellipse cx={11} cy={2} rx={11} ry={4.5} />
+      <path d="M0 2v10a11 4.5 0 0 0 22 0v-10" />
+    </g>
+  ),
+  rudiment: (
+    <>
+      <ellipse cx={0} cy={6} rx={21} ry={7} {...sw} />
+      {[-12, -4, 4, 12].map((x, i) => (
+        <circle key={x} cx={x} cy={i % 2 ? -14 : -9} r={3.4} fill={I} />
+      ))}
+    </>
+  ),
+  paradiddle: (
+    <text x={0} y={7} textAnchor="middle" fontFamily="'Secular One', Rubik, sans-serif" fontSize={17} fill={I} direction="ltr" letterSpacing={-0.5}>
+      RLRR
+    </text>
+  ),
+  pulse: (
+    <g {...sw}>
+      <path d="M-18 14V-14" strokeWidth={5} />
+      <path d="M-6 14V-4M6 14V-4M18 14V-4" />
+      <path d="M-24 18H24" strokeWidth={2.2} />
+    </g>
+  ),
+  fill: (
+    <g {...sw}>
+      <circle cx={-16} cy={-10} r={5} />
+      <circle cx={-2} cy={-4} r={6} />
+      <circle cx={14} cy={4} r={7.5} />
+      <path d="M-20 10 Q-4 22 18 18" />
+      <path d="M13 13l5 5-6 3" strokeLinejoin="round" />
+    </g>
+  ),
+  drumread: (
+    <>
+      <path d="M-26 -12H26M-26 -4H26M-26 4H26M-26 12H26" stroke={I} strokeWidth={1.8} />
+      <path d="M-18 -20l8 8M-10 -20l-8 8M2 -20l8 8M10 -20l-8 8" {...sw} strokeWidth={3} />
+      {head(-12, 8, 5.5, 4)}
+      {head(14, 0, 5.5, 4)}
+    </>
+  ),
 };
 export type GlyphKind = keyof typeof GLYPHS;
 
 /** Emoji left in content data → the closest symbol of our set (0.61: no emoji in the interface). */
 const EMOJI: Record<string, GlyphKind> = {
-  '🎸': 'guitar', '🪕': 'guitar', '🎻': 'guitar', '🎹': 'keys', '🎤': 'sing', '🗣': 'sing', '🥁': 'rhythm', '👂': 'intervals', '🎵': 'contour', '🎶': 'contour', '♪': 'contour', '♫': 'contour', '♩': 'rhythm',
+  '🎸': 'guitar', '🪕': 'guitar', '🎻': 'guitar', '🎹': 'keys', '🎤': 'sing', '🗣': 'sing', '🥁': 'drums', '👂': 'intervals', '🎵': 'contour', '🎶': 'contour', '♪': 'contour', '♫': 'contour', '♩': 'rhythm',
   '🎼': 'sight', '📖': 'book', '📚': 'book', '🎓': 'book', '🧠': 'memory', '🧩': 'puzzle', '🎯': 'tune', '🎷': 'prog', '🎺': 'prog', '🔥': 'fire', '📅': 'calendar', '🗓': 'calendar', '⚔': 'duel', '👻': 'ghost',
   '🎛': 'eq', '🎚': 'mixer', '🛣': 'rhythm', '🕊': 'sing', '🕵': 'prog', '🏆': 'trophy', '🥇': 'trophy', '🏅': 'trophy', '🎖': 'trophy', '👑': 'trophy', '⭐': 'star', '🌟': 'star', '✨': 'star', '★': 'star',
   '🔑': 'theory', '♯': 'theory', '♭': 'theory', '📏': 'scales', '🪜': 'scales', '📈': 'scales', '🧭': 'tune', '🗺': 'contour', '⚡': 'tempo', '🏁': 'trophy', '🤝': 'person', '👥': 'person', '🧘': 'drone', '⏱': 'slow',
