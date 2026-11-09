@@ -293,7 +293,7 @@ function genTime(s: DrillSpec): Drill {
           b += per;
         }
       const nm = [t('up', 'עולה'), t('down', 'יורד'), t('up, two beats each', 'עולה, שתי פעמות לכל אחת')][op];
-      return finish(s, hits, { title: t(`Subdivision ladder ♩ ♫ 3 ♬ · ${nm.en}`, `סולם חלוקות ♩ ♫ 3 ♬ · ${nm.he}`), bpm: 60, bars: 4, mic: true });
+      return finish(s, hits, { title: t(`Subdivision ladder · ${nm.en}`, `סולם חלוקות · ${nm.he}`), bpm: 60, bars: 4, mic: true });
     }
     case 3: {
       const [hits, nm] = three(4, false)[op];

@@ -1291,7 +1291,7 @@ export function App() {
                   draft={intakeDraft}
                   onIntake={() => go('intake')}
                   onMeasure={() => openCatchUpPlacement(pending.unmeasured)}
-                  onFindLevel={() => openPlacement()}
+                  onFindLevel={() => (s.activeCourse === 'drums' ? openTechTest() : openPlacement())}
                   onHide={() => updateSettings({ catchUpHidden: catchUpKey })}
                 />
               )}

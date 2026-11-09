@@ -224,6 +224,10 @@ export function analyzeDrumTake(drill: Drill, bpm: number, hits0: DrumTakeHit[],
     max(`sd:${l.limb}`, l.sd, T.sd);
     max(`mean:${l.limb}`, l.mean === null ? null : Math.abs(l.mean), T.mean);
   }
+  // Only measured practice counts: a level about loudness never passes on a take without loudness data (a mic with
+  // every peak the same) — it used to skip those rules and pass on timing alone.
+  const velGoal = [goal.velCv, goal.balance, goal.levels, goal.accentGap, goal.tapCv, goal.accentPos, goal.ghost, goal.ratio].some((x) => x !== undefined);
+  if (velGoal && !velData && hits.length) rules.push({ id: 'noVel', amt: 9 });
   if (goal.velCv !== undefined) max('velCv', velCv, goal.velCv);
   if (goal.balance !== undefined) max('balance', balance, goal.balance);
   if (goal.levels !== undefined) min('levels', levels, goal.levels);
@@ -303,6 +307,8 @@ export function drumWhy(d: DrumMetrics, v: Verdict): { en: string; he: string } 
     }
     case 'sd':
       return limb ? { en: `${LIMB_NAME[limb.limb].en} uneven (±${Math.round(limb.sd ?? 0)} ms).`, he: `${LIMB_NAME[limb.limb].he} לא אחידה (±${Math.round(limb.sd ?? 0)} מ״ש).` } : { en: 'Uneven timing.', he: 'תזמון לא אחיד.' };
+    case 'noVel':
+      return { en: 'No loudness measured — raise the mic level.', he: 'לא נמדדה עוצמה — הגבירו את המיקרופון.' };
     case 'velCv':
       return { en: 'Strokes not even in loudness.', he: 'המכות לא שוות בעוצמה.' };
     case 'balance':

@@ -201,10 +201,16 @@ describe('drum take analysis', () => {
     expect(analyzeDrumTake(a, 70, flat).verdict).toBe('not');
   });
 
-  it('microphone mode: one surface, matched by time only; no velocity data skips the velocity rules', () => {
+  it('microphone mode: one surface, matched by time only; a loudness level never passes without loudness data', () => {
+    const q = generate({ family: 'd-time', kind: '1:pulse', option: 2, key: 0, hands: 'RL', instrument: 'drums' });
+    const flat = (d: Drill) => perfectHits(d, 70).map((h) => ({ ...h, voice: null, vel: 64 }));
+    expect(analyzeDrumTake(q, 70, flat(q), { mic: true }).verdict).toBe('clean');
     const d = generate({ family: 'd-strokes', kind: '1:quarters', option: 2, key: 0, hands: 'RL', instrument: 'drums' });
-    const hits = perfectHits(d, 70).map((h) => ({ ...h, voice: null, vel: 64 }));
-    expect(analyzeDrumTake(d, 70, hits, { mic: true }).verdict).toBe('clean');
+    const m = analyzeDrumTake(d, 70, flat(d), { mic: true });
+    expect(m.verdict).toBe('not');
+    expect(m.why.en).toMatch(/No loudness measured/);
+    const varied = perfectHits(d, 70).map((h, i) => ({ ...h, voice: null, vel: 76 + (i % 3) }));
+    expect(analyzeDrumTake(d, 70, varied, { mic: true }).verdict).toBe('clean');
     expect(analyzeDrumTake(d, 70, [], { mic: true }).verdict).toBe('not');
   });
 
