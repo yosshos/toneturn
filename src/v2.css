@@ -1345,3 +1345,42 @@
   font-weight: 400;
   font-size: 1.8rem;
 }
+
+/* ---------------------------------------------------------------- avatar picker: families of note-head-coloured circles */
+.icon-family {
+  margin-bottom: 12px;
+}
+.icon-family-h {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0 8px;
+  font-family: var(--font);
+  font-size: 0.9rem;
+  font-weight: 900;
+}
+.icon-family-h i {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--outline);
+}
+.icon-family-h small {
+  color: var(--ink-dim);
+  font-weight: 700;
+}
+:root[data-theme] .icon-opt {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: var(--stroke) solid var(--outline);
+  background: var(--av, var(--lilac));
+  color: var(--ink-c);
+}
+:root[data-theme] .icon-opt.on {
+  box-shadow: 0 0 0 3px var(--bg), 0 0 0 5.5px var(--outline);
+}
+:root[data-theme] .avatar {
+  border: 2px solid var(--outline);
+  color: var(--ink-c);
+}

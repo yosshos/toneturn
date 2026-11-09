@@ -3,6 +3,7 @@
 // like WhatsApp (drag to move, pinch / wheel / slider to zoom). Kept on the device; the server copy comes with the
 // social version. Young players (age gate) can't upload a photo.
 
+import { AVATAR_FAMILIES, AVATAR_SVG } from './avatarSet';
 import { Icon } from './icons';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { checkNickname, NICK_WHY, suggestNicknames } from '../engine/nickname';
@@ -144,9 +145,11 @@ export const PROFILE_ICONS: Record<string, ReactNode> = {
     </>
   ),
 };
-export const PROFILE_COLORS = ['#86dcbd', '#8e9cf0', '#f2b866', '#e891bd', '#eda07c', '#7fcfd6', '#b49bec', '#9ccc86'];
+export const PROFILE_COLORS = ['#A78BFA', '#FFD43B', '#3AB8FF', '#FF5FA2', '#12C9B4', '#FF8A3D', '#6D28D9', '#FFFFFF'];
 
 export function ProfileIcon({ k, size = 24 }: { k: string; size?: number }) {
+  // 0.61: the 123-symbol set (static, generated from MIT icons + our own drawings); the first 18 still render.
+  if (AVATAR_SVG[k]) return <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true" dangerouslySetInnerHTML={{ __html: AVATAR_SVG[k] }} />;
   return (
     <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       {PROFILE_ICONS[k] ?? PROFILE_ICONS.note}
@@ -259,13 +262,24 @@ export function PictureSheet({ lang, s, onSave, onClose }: { lang: Lang; s: Sett
   if (crop) return <PhotoCrop lang={lang} src={crop} onCancel={() => setCrop(null)} onDone={(url) => (onSave({ avatarPhoto: url }), onClose())} />;
   return (
     <Sheet title={he ? 'התמונה שלך' : 'Your picture'} onClose={onClose}>
-      <div className="icon-grid" role="radiogroup" aria-label={he ? 'אייקון' : 'Icon'}>
-        {Object.keys(PROFILE_ICONS).map((k) => (
-          <button key={k} type="button" role="radio" aria-checked={!s.avatarPhoto && (s.avatarIcon ?? 'note') === k} className={`icon-opt ${!s.avatarPhoto && (s.avatarIcon ?? 'note') === k ? 'on' : ''}`} style={{ ['--av' as string]: s.avatarColor ?? PROFILE_COLORS[0] }} onClick={() => onSave({ avatarIcon: k, avatarPhoto: null })} data-icon={k}>
-            <ProfileIcon k={k} size={26} />
-          </button>
-        ))}
-      </div>
+      {AVATAR_FAMILIES.map((fam) => (
+        <section key={fam.id} className="icon-family" aria-label={fam[lang]}>
+          <h3 className="icon-family-h">
+            <i style={{ background: fam.color }} aria-hidden="true" />
+            {fam[lang]} <small>{fam.items.length}</small>
+          </h3>
+          <div className="icon-grid" role="radiogroup" aria-label={fam[lang]}>
+            {fam.items.map((k) => {
+              const on = !s.avatarPhoto && s.avatarIcon === k;
+              return (
+                <button key={k} type="button" role="radio" aria-checked={on} className={`icon-opt ${on ? 'on' : ''}`} style={{ ['--av' as string]: s.avatarColor ?? fam.color }} onClick={() => onSave({ avatarIcon: k, avatarPhoto: null, avatarColor: s.avatarColor ?? fam.color })} data-icon={k}>
+                  <ProfileIcon k={k} size={26} />
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      ))}
       <div className="color-row" role="radiogroup" aria-label={he ? 'צבע' : 'Color'}>
         {PROFILE_COLORS.map((c) => (
           <button key={c} type="button" role="radio" aria-checked={(s.avatarColor ?? PROFILE_COLORS[0]) === c} className={`color-opt ${(s.avatarColor ?? PROFILE_COLORS[0]) === c ? 'on' : ''}`} style={{ background: c }} onClick={() => onSave({ avatarColor: c })} aria-label={c} />

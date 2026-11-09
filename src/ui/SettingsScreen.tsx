@@ -1143,6 +1143,7 @@ function SoundSetting({ t, s, onChange }: { t: Strings; s: Settings; onChange: (
               [he ? 'תופים' : 'Drums', 'Virtuosity Drums — Versilian Studios & Karoryfer Samples (CC0)'],
               [he ? 'קונטרבס' : 'Double bass', 'D. Smolken (CC0)'],
               [he ? 'שאר הכלים המוקלטים' : 'Other recorded instruments', 'Versilian Community Sample Library (CC0)'],
+              [he ? 'סמלי הדמות' : 'Avatar symbols', 'IconOven Stroke icons — Appic Marketing (MIT)'],
             ] as const
           ).map(([what, who]) => (
             <li key={what}>
