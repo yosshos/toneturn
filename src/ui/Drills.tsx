@@ -32,6 +32,9 @@ import { withWritten } from '../engine/drills/bassEar';
 import { midi } from '../speech/midi';
 import { inputLatency } from '../engine/latency';
 import { LatencyCalibrate } from './LatencyCalibrate';
+import { DrumScore, KitCard, KitSetup } from './DrumViews';
+import { drumProbes, placeDrums, type DrumProbeResult, type DrumSlot } from '../engine/drills/drums';
+import { isDrumDrill } from '../engine/drills/events';
 
 type Lang = 'he' | 'en';
 const T = {
@@ -46,7 +49,7 @@ const T = {
     latency: 'Latency (ms)', softest: 'Play your softest note', loudest: 'Play your loudest note', range: 'Velocity range', save: 'Save', cancel: 'Cancel', del: 'Delete',
     name: 'Name', scale: 'Scale', pattern: 'Degrees (1 = tonic, 8 = octave, b3 / #4 for altered)', seq: 'Sequence steps up the scale', hands: 'Hands', record: 'Record on MIDI (in C)', recording: 'Playing… press stop when done', stop: 'Stop', preview: 'Preview in C',
     allKeys: 'Run through all keys', keyDone: 'All keys done!', backToLevel: 'Back',
-    instrument: 'Instrument', insts: { piano: 'Piano', guitar: 'Guitar', bass: 'Bass' } as Record<string, string>, gStyle: 'Style', gView: 'Show', gViews: { tab: 'Tab', staff: 'Notation', both: 'Both' } as Record<string, string>, picking: 'Show picking (↓ ↑, p i m a) instead of fingers',
+    instrument: 'Instrument', insts: { piano: 'Piano', guitar: 'Guitar', bass: 'Bass', drums: 'Drums' } as Record<string, string>, gStyle: 'Style', gView: 'Show', gViews: { tab: 'Tab', staff: 'Notation', both: 'Both' } as Record<string, string>, picking: 'Show picking (↓ ↑, p i m a) instead of fingers',
     gStyles: { all: 'All', rock: 'Rock', blues: 'Blues', metal: 'Metal', pop: 'Pop', funk: 'Funk', country: 'Country', jazz: 'Jazz', classical: 'Classical', fingerstyle: 'Fingerstyle', flamenco: 'Flamenco', reggae: 'Reggae', latin: 'Latin' } as Record<string, string>,
     test: 'Find my technique level', testIntro: 'A few short takes: each clean one goes faster, until it stops being clean. This sets where every drill family starts and at what tempo.', testDone: 'Your technique level is set', skip: 'Skip', bestTempo: 'Clean up to',
   },
@@ -61,7 +64,7 @@ const T = {
     latency: 'השהיה (מ״ש)', softest: 'נגנו את התו הכי שקט', loudest: 'נגנו את התו הכי חזק', range: 'טווח עוצמה', save: 'שמירה', cancel: 'ביטול', del: 'מחיקה',
     name: 'שם', scale: 'סולם', pattern: 'דרגות (1 = טוניקה, 8 = אוקטבה, b3 / #4 לשינויים)', seq: 'צעדי סקוונצה במעלה הסולם', hands: 'ידיים', record: 'להקליט ב-MIDI (בדו)', recording: 'מנגנים… לחצו עצירה בסוף', stop: 'עצירה', preview: 'תצוגה בדו',
     allKeys: 'לעבור בכל הסולמות', keyDone: 'כל הסולמות הושלמו!', backToLevel: 'חזרה',
-    instrument: 'כלי', insts: { piano: 'פסנתר', guitar: 'גיטרה', bass: 'בס' } as Record<string, string>, gStyle: 'סגנון', gView: 'תצוגה', gViews: { tab: 'טאבים', staff: 'תווים', both: 'שניהם' } as Record<string, string>, picking: 'להציג פריטה (↓ ↑, p i m a) במקום אצבעות',
+    instrument: 'כלי', insts: { piano: 'פסנתר', guitar: 'גיטרה', bass: 'בס', drums: 'תופים' } as Record<string, string>, gStyle: 'סגנון', gView: 'תצוגה', gViews: { tab: 'טאבים', staff: 'תווים', both: 'שניהם' } as Record<string, string>, picking: 'להציג פריטה (↓ ↑, p i m a) במקום אצבעות',
     gStyles: { all: 'הכול', rock: 'רוק', blues: 'בלוז', metal: 'מטאל', pop: 'פופ', funk: 'פאנק', country: 'קאנטרי', jazz: 'ג׳אז', classical: 'קלאסי', fingerstyle: 'פינגרסטייל', flamenco: 'פלמנקו', reggae: 'רגאיי', latin: 'לטיני' } as Record<string, string>,
     test: 'למצוא את רמת הטכניקה שלי', testIntro: 'כמה נגינות קצרות: כל נגינה נקייה מהירה יותר, עד שהיא כבר לא נקייה. כך נקבע מאיפה כל משפחת תרגילים מתחילה ובאיזה טמפו.', testDone: 'רמת הטכניקה שלך נקבעה', skip: 'דילוג', bestTempo: 'נקי עד',
   },
@@ -81,7 +84,7 @@ const HANDS_TX: Record<Lang, Record<string, string>> = { en: { R: 'RH', L: 'LH',
 export function drillSettingsOf(s: Pick<Settings, 'drills' | 'instrument'> & { activeCourse?: Settings['activeCourse'] }): DrillSettings {
   const inst = s.instrument === 'guitar' ? 'guitar' : s.instrument === 'bass' ? 'bass' : 'piano';
   // 0.64: an instrument course decides the technique instrument (keys → piano, guitar, bass), however the course was reached.
-  const byCourse: DrillSettings['instrument'] | null = s.activeCourse === 'keys' ? 'piano' : s.activeCourse === 'guitar' ? 'guitar' : s.activeCourse === 'bass' ? 'bass' : null;
+  const byCourse: DrillSettings['instrument'] | null = s.activeCourse === 'keys' ? 'piano' : s.activeCourse === 'guitar' ? 'guitar' : s.activeCourse === 'bass' ? 'bass' : s.activeCourse === 'drums' ? 'drums' : null;
   const out: DrillSettings = { ...DEFAULT_DRILL_SETTINGS, instrument: inst as DrillSettings['instrument'], ...(s.drills ?? {}) };
   return byCourse ? { ...out, instrument: byCourse } : out;
 }
@@ -93,6 +96,8 @@ export function drillSettingsOf(s: Pick<Settings, 'drills' | 'instrument'> & { a
  */
 export function DrillScore({ drill, ds, result, beat = -1, lang = 'en' }: { drill: Drill; ds: DrillSettings; result?: TakeMetrics | null; beat?: number; lang?: Lang }) {
   const [model, setModel] = useState(false);
+  // Drums (0.65): a percussion staff (reading always), or lanes by the setting.
+  if (isDrumDrill(drill)) return <DrumScore drill={drill} view={drill.show === 'staff' ? 'staff' : (ds.drumView ?? 'staff')} result={result} beat={beat} lang={lang} />;
   if (!isGuitarDrill(drill)) return <DrillStaff drill={drill} fingering={ds.showFingering} result={result} />;
   if (drill.show === 'none' && !result) return <EarCard drill={drill} beat={beat} lang={lang} />;
   const view = drill.show === 'staff' ? 'staff' : (ds.guitarView ?? 'tab');
@@ -138,12 +143,12 @@ export interface DrillsProps {
   onPieces?: () => void;
 }
 
-type View = { k: 'test' } | { k: 'hub' } | { k: 'songs' } | { k: 'family'; f: FamilyDef } | { k: 'run'; queue: Drill[]; i: number; from: View } | { k: 'settings' } | { k: 'calib' } | { k: 'creator'; edit?: CustomDrill };
+type View = { k: 'test' } | { k: 'hub' } | { k: 'songs' } | { k: 'family'; f: FamilyDef } | { k: 'run'; queue: Drill[]; i: number; from: View } | { k: 'settings' } | { k: 'calib' } | { k: 'creator'; edit?: CustomDrill } | { k: 'kit'; then?: 'test' };
 
 export function Drills({ lang, settings, onSettings, items, onTake, onBack, queue, onQueueDone, startTest, onTestDone, songs, onSing, onVoice, onPieces }: DrillsProps) {
   const tx = T[lang];
   const ds = drillSettingsOf(settings);
-  const [view, setView] = useState<View>(startTest ? { k: 'test' } : queue?.length ? { k: 'run', queue, i: 0, from: { k: 'hub' } } : songs ? { k: 'songs' } : { k: 'hub' });
+  const [view, setView] = useState<View>(startTest ? (ds.instrument === 'drums' && !settings.drumKit?.done ? { k: 'kit' } : { k: 'test' }) : queue?.length ? { k: 'run', queue, i: 0, from: { k: 'hub' } } : songs ? { k: 'songs' } : { k: 'hub' });
   // A 5- / 6-string or drop-D bass (Settings → tuning): the bass-course drills are placed on that neck.
   // B12 (0.64): the bass has its own tuning setting (Settings → bassTuning), apart from the guitar's.
   const bassTuning = bassTuningOf(settings);
@@ -169,6 +174,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
           onHeadphones={(h) => onSettings({ headphones: h })}
           cal={calOf(settings)}
           queue={runQueue}
+          kit={settings.drumKit}
           start={view.i}
           items={items}
           onTake={onTake}
@@ -208,6 +214,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
           midiOctave={settings.midiOctave ?? 0}
           onOctave={(o) => onSettings({ midiOctave: o })}
           onBassTuning={(t) => onSettings({ bassTuning: t })}
+          kit={settings.drumKit}
           onDone={(start) => {
             if (start) onSettings({ drillStart: { ...(settings.drillStart ?? {}), ...start } });
             if (startTest && onTestDone) onTestDone();
@@ -216,11 +223,26 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
         />
       </main>
     );
+  if (view.k === 'kit')
+    return (
+      <main className="drills-screen" data-drills="kit">
+        {head(lang === 'he' ? 'הגדרת המערכת' : 'Set up your kit', () => setView({ k: 'hub' }))}
+        <KitSetup
+          lang={lang}
+          kit={settings.drumKit}
+          latency={settings}
+          onSave={(k) => onSettings({ drumKit: k, ...(k.mic ? {} : { midiInput: true }) })}
+          onLatency={(p) => onSettings(p)}
+          onDone={() => setView({ k: 'hub' })}
+          onTest={() => setView({ k: 'test' })}
+        />
+      </main>
+    );
   if (view.k === 'settings')
     return (
       <main className="drills-screen" data-drills="settings">
         {head(tx.settings, () => setView({ k: 'hub' }))}
-        <DrillSettingsView lang={lang} ds={ds} onChange={setDs} onCalib={() => setView({ k: 'calib' })} />
+        <DrillSettingsView lang={lang} ds={ds} onChange={setDs} onCalib={() => setView(ds.instrument === 'drums' ? { k: 'kit' } : { k: 'calib' })} />
       </main>
     );
   if (view.k === 'calib')
@@ -238,7 +260,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
         <DrillCreator
           lang={lang}
           edit={view.edit}
-          instrument={ds.instrument ?? 'piano'}
+          instrument={ds.instrument === 'drums' ? 'piano' : (ds.instrument ?? 'piano')}
           settings={ds}
           onSave={(c) => {
             const list = (settings.customDrills ?? []).filter((x) => x.id !== c.id);
@@ -275,16 +297,17 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
       onRun={(q) => setView({ k: 'run', queue: q, i: 0, from: { k: 'hub' } })}
       onSettings={() => setView({ k: 'settings' })}
       onCreate={(edit) => setView({ k: 'creator', edit })}
-      onTest={() => setView({ k: 'test' })}
+      onTest={() => setView(ds.instrument === 'drums' && !settings.drumKit?.done ? { k: 'kit' } : { k: 'test' })}
       onInstrument={(i) => setDs({ instrument: i })}
       onVoice={onVoice}
+      onKit={() => setView({ k: 'kit' })}
     />
   );
 }
 
 
 /** Technique topics (owner 2026-11-08): the drills split and filtered like the games list. */
-type DrillTopic = 'all' | 'scales' | 'chords' | 'hands' | 'time' | 'styles' | 'reading' | 'ear' | 'upright' | 'songs' | 'mine';
+type DrillTopic = 'all' | 'scales' | 'chords' | 'hands' | 'time' | 'grooves' | 'styles' | 'reading' | 'ear' | 'upright' | 'songs' | 'mine';
 const TOPIC_OF: Record<string, Exclude<DrillTopic, 'all' | 'songs' | 'mine'>> = {
   scales: 'scales', arpeggios: 'scales', 'g-scales': 'scales', 'g-arps': 'scales', 'g-reading': 'scales', 'g-bass': 'scales',
   cadences: 'chords', voicings: 'chords', accomp: 'chords', 'g-chords': 'chords', 'g-rhythm': 'chords',
@@ -293,6 +316,8 @@ const TOPIC_OF: Record<string, Exclude<DrillTopic, 'all' | 'songs' | 'mine'>> = 
   // Bass course (unlisted b-* families fall under hands: pluck, fret, length, legato, pick, slap). B17 (0.64): time and
   // pocket are their own topic, reading has one, the bass ear one, and the upright track is grouped on its own.
   'b-scale': 'scales', 'b-read': 'reading', 'b-chord': 'chords', 'b-walk': 'chords', 'b-time': 'time', 'b-pocket': 'time', 'b-ghost': 'styles', 'b-styles': 'styles', 'b-ear': 'ear',
+  // Drums (0.65): strokes, rudiments and paradiddles are hand technique; grooves and fills their own topic.
+  'd-strokes': 'hands', 'd-rolls': 'hands', 'd-diddles': 'hands', 'd-time': 'time', 'd-rock': 'grooves', 'd-fills': 'grooves', 'd-read': 'reading',
   'b-up-pos': 'upright', 'b-up-arco': 'upright', 'b-up-scales': 'upright', 'b-up-pizz': 'upright', 'b-up-walk': 'upright', 'b-up-read': 'upright',
 };
 const TOPIC_NAME: Record<DrillTopic, { en: string; he: string }> = {
@@ -301,6 +326,7 @@ const TOPIC_NAME: Record<DrillTopic, { en: string; he: string }> = {
   chords: { en: 'Chords & harmony', he: 'אקורדים והרמוניה' },
   hands: { en: 'Hand technique', he: 'טכניקת ידיים' },
   time: { en: 'Time & groove', he: 'זמן וגרוב' },
+  grooves: { en: 'Grooves & fills', he: 'גרובים ומעברים' },
   styles: { en: 'Styles & jazz', he: 'סגנונות וג׳אז' },
   reading: { en: 'Reading & charts', he: 'קריאה וצ׳ארטים' },
   ear: { en: 'Bass ear', he: 'שמיעה לבסיסטים' },
@@ -309,12 +335,14 @@ const TOPIC_NAME: Record<DrillTopic, { en: string; he: string }> = {
   mine: { en: 'My drills', he: 'התרגילים שלי' },
 };
 
-function Hub({ lang, ds, settings, items, head, onFamily, onRun, onSettings, onCreate, onTest, onInstrument, onVoice }: { onVoice?: () => void; lang: Lang; ds: DrillSettings; settings: Settings; items: Record<string, ItemState>; head: React.ReactNode; onFamily: (f: FamilyDef) => void; onRun: (q: Drill[]) => void; onSettings: () => void; onCreate: (edit?: CustomDrill) => void; onTest: () => void; onInstrument: (i: 'piano' | 'guitar' | 'bass') => void }) {
+function Hub({ lang, ds, settings, items, head, onFamily, onRun, onSettings, onCreate, onTest, onInstrument, onVoice, onKit }: { onKit?: () => void; onVoice?: () => void; lang: Lang; ds: DrillSettings; settings: Settings; items: Record<string, ItemState>; head: React.ReactNode; onFamily: (f: FamilyDef) => void; onRun: (q: Drill[]) => void; onSettings: () => void; onCreate: (edit?: CustomDrill) => void; onTest: () => void; onInstrument: (i: 'piano' | 'guitar' | 'bass' | 'drums') => void }) {
   const tx = T[lang];
   // N10: the bass tuning hides the low-B levels on a bass without a low B.
   const bassTuning = bassTuningOf(settings);
-  const today = useMemo(() => todayDrills({ ...ds, bassTuning }, items, settings.drillStart ?? {}, settings.customDrills ?? []), [ds, bassTuning, items, settings.drillStart, settings.customDrills]);
-  const fams = shownFamilies({ ...ds, bassTuning });
+  const drums = ds.instrument === 'drums';
+  const drumMic = drums && !!settings.drumKit?.mic;
+  const today = useMemo(() => todayDrills({ ...ds, bassTuning, drumMic }, items, settings.drillStart ?? {}, settings.customDrills ?? []), [ds, bassTuning, drumMic, items, settings.drillStart, settings.customDrills]);
+  const fams = shownFamilies({ ...ds, bassTuning, drumMic });
   const [topicRaw, setTopicState] = useState<DrillTopic>(() => {
     try {
       return (sessionStorage.getItem('toneturn.drilltopic') as DrillTopic | null) ?? 'all';
@@ -330,11 +358,29 @@ function Hub({ lang, ds, settings, items, head, onFamily, onRun, onSettings, onC
       /* fine */
     }
   };
-  const famTopics = (['scales', 'chords', 'hands', 'time', 'styles', 'reading', 'ear', 'upright'] as const).filter((k) => fams.some((f) => (TOPIC_OF[f.id] ?? 'hands') === k));
-  const topics: DrillTopic[] = ['all', ...famTopics, 'songs', 'mine'];
+  const famTopics = (['scales', 'chords', 'hands', 'time', 'grooves', 'styles', 'reading', 'ear', 'upright'] as const).filter((k) => fams.some((f) => (TOPIC_OF[f.id] ?? 'hands') === k));
+  // Drums: no songbook or drill creator (melody / chords) — the course's own families only.
+  const topics: DrillTopic[] = drums ? ['all', ...famTopics] : ['all', ...famTopics, 'songs', 'mine'];
   const topic: DrillTopic = topics.includes(topicRaw) ? topicRaw : 'all';
   const famCard = (f: FamilyDef) => {
     const lv = familyLevel(items, f.id);
+    // Drums: no keys and no tempo bands — the level worked on of the family's levels, and a pip per level done.
+    if (drums) {
+      const cur = currentLevel(f, items, ds.keyOrder, settings.drillStart?.[f.id]);
+      return (
+        <button key={f.id} className="drill-family" onClick={() => onFamily(f)} data-family={f.id}>
+          <b>{f.title[lang]}</b>
+          <small>
+            {tx.level} <span className="lvl">{cur.level}</span> / {f.levels.length}
+          </small>
+          <span className="level-pips" aria-hidden="true">
+            {f.levels.map((l) => (
+              <i key={l.id} className={levelDone(l, items, ds.keyOrder) ? 'on' : l.id === cur.id ? 'now' : ''} />
+            ))}
+          </span>
+        </button>
+      );
+    }
     return (
       <button key={f.id} className="drill-family" style={{ ['--hue' as string]: FAM_HUE[f.id] }} onClick={() => onFamily(f)} data-family={f.id}>
         <b>{f.title[lang]}</b>
@@ -350,9 +396,9 @@ function Hub({ lang, ds, settings, items, head, onFamily, onRun, onSettings, onC
     <main className="drills-screen" data-drills="hub">
       {head}
       {/* 0.64 (owner): in an instrument course technique is that instrument's only — no switching to another one here. */}
-      {!['keys', 'guitar', 'bass'].includes(settings.activeCourse ?? 'ear') && (
+      {!['keys', 'guitar', 'bass', 'drums'].includes(settings.activeCourse ?? 'ear') && (
       <div className="chips drill-inst" role="radiogroup" aria-label={tx.instrument}>
-        {(['piano', 'guitar', 'bass'] as const).map((i) => (
+        {(['piano', 'guitar', 'bass', 'drums'] as const).map((i) => (
           <button key={i} role="radio" aria-checked={(ds.instrument ?? 'piano') === i} className={`chip ${(ds.instrument ?? 'piano') === i ? 'on' : ''}`} onClick={() => onInstrument(i)} data-inst={i}>
             {tx.insts[i]}
           </button>
@@ -365,6 +411,7 @@ function Hub({ lang, ds, settings, items, head, onFamily, onRun, onSettings, onC
       </div>
       )}
       {!midi.devices.length && (ds.instrument ?? 'piano') === 'piano' && <p className="field-hint">{tx.noMidi}</p>}
+      {drums && onKit && <KitCard kit={settings.drumKit} lang={lang} onSetup={onKit} />}
       {!settings.drillStart && !Object.keys(items).length && (
         <button className="btn primary" onClick={onTest} data-drills-test="1">
           {tx.test}
@@ -405,7 +452,7 @@ function Hub({ lang, ds, settings, items, head, onFamily, onRun, onSettings, onC
         </section>
       ))}
       {/* Songs (owner 2026-11-07): public-domain songs to play — the melody, the chords, or both hands. */}
-      {topic === 'all' && (
+      {topic === 'all' && !drums && (
         <button className="drill-family drill-songs-link" onClick={() => setTopic('songs')} data-topic-link="songs">
           <b>{TOPIC_NAME.songs[lang]}</b>
           <small>{lang === 'he' ? `${SONGBOOK.length} שירים מוכרים — מנגינה ואקורדים` : `${SONGBOOK.length} well-known songs — melody and chords`}</small>
@@ -418,7 +465,7 @@ function Hub({ lang, ds, settings, items, head, onFamily, onRun, onSettings, onC
           <SongList lang={lang} ds={ds} onRun={onRun} />
         </section>
       )}
-      {show('mine') && (
+      {show('mine') && !drums && (
         <>
           <h2>{tx.mine}</h2>
           <div className="drill-levels">
@@ -515,6 +562,28 @@ function LevelMeta({ l, lang }: { l: LevelDef; lang: Lang }) {
 function LevelGrid({ lang, ds, level, items, onRun }: { lang: Lang; ds: DrillSettings; level: LevelDef; items: Record<string, ItemState>; onRun: (q: Drill[], i: number) => void }) {
   const tx = T[lang];
   const keys = levelKeys(level, ds.keyOrder);
+  if (ds.instrument === 'drums') {
+    // Drums: no keys — the level's variants (stickings, grooves, fills), one cell each, shaded by the tempo reached.
+    const row = levelDrills(level, ds.keyOrder);
+    return (
+      <div className="drill-opts">
+        <button className="btn primary" onClick={() => onRun(row, 0)} data-level-start={level.id}>
+          ▶ {lang === 'he' ? 'כל הווריאציות' : 'All variations'}
+        </button>
+        <div className="heat drum-variants">
+          {row.map((d, i) => {
+            const st = items[d.itemId];
+            const lvl = !st || st.cleanBpm <= 0 ? 0 : st.cleanBpm >= st.goalBpm * 0.95 ? 3 : st.cleanBpm >= st.goalBpm * 0.8 ? 2 : 1;
+            return (
+              <button key={d.itemId} className={`heat-cell l${lvl}`} onClick={() => onRun(row, i)} title={d.title[lang]} aria-label={`${d.title[lang]} ${st?.cleanBpm ? `♩${st.cleanBpm}` : ''}`} data-variant={i + 1}>
+                {i + 1}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="drill-opts">
       <button className="btn primary" onClick={() => onRun(levelDrills(level, ds.keyOrder), 0)} data-level-start={level.id}>
@@ -543,7 +612,7 @@ function LevelGrid({ lang, ds, level, items, onRun }: { lang: Lang; ds: DrillSet
   );
 }
 
-function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphones, onHeadphones }: { lang: Lang; ds: DrillSettings; cal: DrillCalibration; queue: Drill[]; start: number; items: Record<string, ItemState>; onTake: DrillsProps['onTake']; onEnd: (takes: number, clean: number) => void; headphones?: boolean; onHeadphones?: (h: boolean) => void }) {
+function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphones, onHeadphones, kit }: { lang: Lang; ds: DrillSettings; cal: DrillCalibration; queue: Drill[]; start: number; items: Record<string, ItemState>; onTake: DrillsProps['onTake']; onEnd: (takes: number, clean: number) => void; headphones?: boolean; onHeadphones?: (h: boolean) => void; kit?: Settings['drumKit'] }) {
   const [beat, setBeat] = useState(-1);
   const tx = T[lang];
   const [i, setI] = useState(start);
@@ -604,7 +673,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
       </p>
       <DrillScore drill={drill} ds={ds} result={res?.m} beat={res ? -1 : beat} lang={lang} />
       {res && <MarkLegend lang={lang} />}
-      {!res && !writing && <DrillTake key={`${drill.itemId}:${take}`} drill={drill} bpm={bpm} lang={lang} cal={cal} onDone={(m, p) => (setBeat(-1), drill.write ? setWriting({ m, p }) : done(m, p))} onBeat={setBeat} drumsOk={headphones} onDrums={onHeadphones} />}
+      {!res && !writing && <DrillTake key={`${drill.itemId}:${take}`} drill={drill} bpm={bpm} lang={lang} cal={cal} onDone={(m, p) => (setBeat(-1), drill.write ? setWriting({ m, p }) : done(m, p))} onBeat={setBeat} drumsOk={headphones} onDrums={onHeadphones} kit={kit} />}
       {/* Ear L7: write the line after playing it; the written grade joins the take's verdict. */}
       {!res && writing && <TranscribeWrite drill={drill} lang={lang} onDone={(g) => (setWriting(null), done(withWritten(writing.m, g), writing.p))} />}
       {res && (
@@ -644,6 +713,30 @@ function DrillSettingsView({ lang, ds, onChange, onCalib }: { lang: Lang; ds: Dr
       <input type="checkbox" checked={ds[key]} onChange={(e) => onChange({ [key]: e.target.checked })} /> {label}
     </label>
   );
+  if (ds.instrument === 'drums')
+    return (
+      <div className="drill-opts card">
+        <div className="row">
+          <span>{lang === 'he' ? 'תצוגה' : 'Show'}</span>
+          <div className="chips" role="radiogroup">
+            {(['staff', 'lanes'] as const).map((v) => (
+              <button key={v} role="radio" aria-checked={(ds.drumView ?? 'staff') === v} className={`chip ${(ds.drumView ?? 'staff') === v ? 'on' : ''}`} onClick={() => onChange({ drumView: v })} data-drum-view-pick={v}>
+                {v === 'staff' ? (lang === 'he' ? 'תווים' : 'Notation') : lang === 'he' ? 'מסלולים' : 'Lanes'}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="row">
+          <span>{tx.cont}</span>
+          {seg('continuous', { off: tx.conts.off, 'raise-tempo': tx.conts['raise-tempo'], 'next-drill': tx.conts['next-drill'] })}
+        </div>
+        {toggle('inPath', tx.inPath)}
+        {toggle('inWorkout', tx.inWorkout)}
+        <button className="btn ghost" onClick={onCalib} data-kit-open="1">
+          {lang === 'he' ? 'המערכת: מיפוי, עוצמות, השהיה' : 'Kit: mapping, velocity, latency'}
+        </button>
+      </div>
+    );
   return (
     <div className="drill-opts card">
       {toggle('showFingering', tx.fingering)}
@@ -758,20 +851,25 @@ function bassMeasure(slot: NonNullable<ReturnType<typeof probeSlot>>, drill: Dri
 }
 
 /** Technique section of Find my level (spec AI §13): a tempo staircase on a few probe drills → start level per family. */
-function TechLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, onOctave, onBassTuning }: { lang: Lang; ds: DrillSettings; cal: DrillCalibration; items: Record<string, ItemState>; onTake: DrillsProps['onTake']; onDone: (start: Partial<Record<FamilyId, number>> | null) => void; midiOctave: number; onOctave: (o: number) => void; onBassTuning?: (t: string) => void }) {
+function TechLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, onOctave, onBassTuning, kit }: { lang: Lang; ds: DrillSettings; cal: DrillCalibration; items: Record<string, ItemState>; onTake: DrillsProps['onTake']; onDone: (start: Partial<Record<FamilyId, number>> | null) => void; midiOctave: number; onOctave: (o: number) => void; onBassTuning?: (t: string) => void; kit?: Settings['drumKit'] }) {
   const tx = T[lang];
   const inst = ds.instrument ?? 'piano';
+  // Drums (DRUMS_CURRICULUM §5): the adaptive probe — single takes, a staircase for the hands; a failed easy step
+  // skips the harder ones of its family. Mic mode (a practice pad) runs the single-surface steps.
+  const drumMic = inst === 'drums' && (!!kit?.mic || !midi.devices.length);
+  const drumRes = useRef<Partial<Record<DrumSlot, DrumProbeResult>>>({});
   // Bass (B6, 0.64): measured tasks with the doc's decision rules (bassProbes.ts), some a single take.
   const bassRes = useRef<Partial<Record<NonNullable<ReturnType<typeof probeSlot>>, BassProbeResult>>>({});
   const probes = useMemo(() => {
+    if (inst === 'drums') return drumProbes(drumMic).map((p) => ({ id: p.slot as string, drill: generate(p.spec), seeds: [] as FamilyId[], once: p.mode === 'once', slot: null }));
     if (inst === 'bass') return BASS_PROBES.map((p) => ({ id: p.family, drill: generate(p.spec), seeds: p.seeds ?? [], once: p.mode === 'once', slot: probeSlot(p) }));
-    if (inst !== 'piano') return GUITAR_PROBES.filter((p) => p.instruments.includes(inst)).map((p) => ({ id: p.family, drill: generate(p.spec), seeds: p.seeds ?? [], once: false, slot: null }));
+    if (inst !== 'piano') return GUITAR_PROBES.filter((p) => (p.instruments as string[]).includes(inst)).map((p) => ({ id: p.family, drill: generate(p.spec), seeds: p.seeds ?? [], once: false, slot: null }));
     const fams: FamilyId[] = ds.emphasis === 'jazz' ? ['scales', 'harris'] : ds.emphasis === 'classical' ? ['scales', 'fingers'] : ['scales', 'fingers', 'harris'];
     return fams.map((id) => {
       const f = shownFamilies({ emphasis: 'both' }).find((x) => x.id === id)!;
       return { id, drill: specDrills(f.levels[0], 0, ds.keyOrder).find((d) => d.spec.key === 0) ?? specDrills(f.levels[0], 0, ds.keyOrder)[0], seeds: [] as FamilyId[], once: false, slot: null };
     });
-  }, [ds.emphasis, ds.keyOrder, inst]);
+  }, [ds.emphasis, ds.keyOrder, inst, drumMic]);
   const [p, setP] = useState(0);
   const [bpm, setBpm] = useState(() => probes[0].drill.startBpm);
   const [best, setBest] = useState<Record<string, number>>({});
@@ -783,6 +881,11 @@ function TechLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, onOct
   const n = useRef(0);
   const finish = (b: Record<string, number>) => {
     const start: Partial<Record<FamilyId, number>> = {};
+    if (inst === 'drums') {
+      const r = { ...drumRes.current };
+      if (b.hands) r.hands = { ...(r.hands ?? { verdict: 'clean' }), best: b.hands };
+      return onDone(placeDrums(r, familiesOf('drums').map((f) => ({ id: f.id, levels: f.levels.length }))));
+    }
     if (inst === 'bass') {
       const fams = familiesOf('bass').map((f) => ({ id: f.id, levels: f.levels.length }));
       const r = { ...bassRes.current };
@@ -829,9 +932,12 @@ function TechLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, onOct
   const nextProbe = (b: Record<string, number>) => {
     failAt.current = null;
     bisected.current = false;
-    if (p + 1 >= probes.length) return finish(b);
-    setP(p + 1);
-    setBpm(probes[p + 1].drill.startBpm);
+    // Drums: hands never clean → skip the doubles and the paradiddle (harder steps of the same families).
+    let q = p + 1;
+    while (inst === 'drums' && q < probes.length && !b.hands && (probes[q].id === 'doubles' || probes[q].id === 'diddle')) q++;
+    if (q >= probes.length) return finish(b);
+    setP(q);
+    setBpm(probes[q].drill.startBpm);
     setTries(0);
     setLast(null);
     setTake((t) => t + 1);
@@ -852,6 +958,12 @@ function TechLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, onOct
     );
   const pr = probes[p];
   const done = (m: TakeMetrics, played: PlayedNote[] = []) => {
+    if (inst === 'drums') {
+      const sds = (m.drum?.limbs ?? []).map((l) => l.sd).filter((x): x is number => x !== null);
+      const prev = drumRes.current[pr.id as DrumSlot];
+      // A staircase keeps its best verdict; single takes their one.
+      if (!prev || m.verdict === 'clean' || prev.verdict !== 'clean') drumRes.current[pr.id as DrumSlot] = { verdict: m.verdict, sd: sds.length ? Math.max(...sds) : null, kit: pr.id === 'read' && !drumMic };
+    }
     if (inst === 'bass' && pr.slot) bassRes.current[pr.slot] = { ...(bassRes.current[pr.slot] ?? {}), ...bassMeasure(pr.slot, pr.drill, m, played, bpm) };
     const st = items[pr.drill.itemId] ?? newItem(pr.drill);
     const lad = applyTake(st, m, bpm, new Date().toISOString(), ds, { targetBpm: itemTargetBpm(pr.drill) });
@@ -898,7 +1010,7 @@ function TechLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, onOct
       {last?.octaveShift !== undefined && <OctaveFix lang={lang} shift={last.octaveShift} current={midiOctave} onFix={onOctave} />}
       <DrillScore drill={pr.drill} ds={ds} result={last} />
       {last && <MarkLegend lang={lang} />}
-      <DrillTake key={`${pr.slot ?? pr.id}:${take}`} drill={pr.drill} bpm={bpm} lang={lang} cal={cal} onDone={(m, played) => done(m, played)} />
+      <DrillTake key={`${pr.slot ?? pr.id}:${take}`} drill={pr.drill} bpm={bpm} lang={lang} cal={cal} kit={kit} onDone={(m, played) => done(m, played)} />
       <button className="btn ghost" onClick={() => nextProbe(best)}>
         {tx.skip}
       </button>
@@ -920,7 +1032,8 @@ function OctaveFix({ lang, shift, current, onFix }: { lang: Lang; shift: number;
 
 /** The songbook: each public-domain song with its playable parts for the player's instrument. */
 function SongList({ lang, ds, onRun, known, onKnown }: { lang: Lang; ds: DrillSettings; onRun: (q: Drill[]) => void; known?: string[]; onKnown?: (k: string[]) => void }) {
-  const inst = ds.instrument ?? 'piano';
+  // Songs are melody / chords: drums have none (the drums course has no Songs row).
+  const inst = ds.instrument === 'drums' ? 'piano' : (ds.instrument ?? 'piano');
   const parts = inst === 'piano' ? (['melody', 'chords', 'both'] as const) : inst === 'bass' ? (['melody'] as const) : (['melody', 'chords'] as const);
   // Songbook by the chords you know (0.53): pick your chords; each song shows the key that fits them, or the one new chord.
   const he = lang === 'he';

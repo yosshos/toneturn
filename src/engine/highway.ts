@@ -6,7 +6,7 @@
 import { mulberry32, type NoteEvent } from './lesson';
 import { barBeats, compound, events, meterOf, readTolerance, rhythmAt, TPQ, type Rhythm, type RhythmLevel } from './rhythm';
 
-export type HighwayMode = 'tap' | 'pitch';
+export type HighwayMode = 'tap' | 'pitch' | 'kit';
 export type HitGrade = 'perfect' | 'good' | 'miss';
 
 export interface HighwayOptions {
@@ -63,11 +63,49 @@ const DEGREE_SEMIS = [0, 2, 4, 5, 7, 9, 11];
 export const LANE_DEGREES: Record<3 | 4 | 5, number[]> = { 3: [1, 2, 3], 4: [1, 2, 3, 5], 5: [1, 2, 3, 4, 5] };
 
 export const songId = (o: Pick<HighwayOptions, 'mode' | 'level' | 'song' | 'lanes'>) =>
-  `${o.mode === 'pitch' ? `p${o.lanes ?? 3}` : 't'}-R${o.level}-${o.song}`;
+  `${o.mode === 'pitch' ? `p${o.lanes ?? 3}` : o.mode === 'kit' ? 'k' : 't'}-R${o.level}-${o.song}`;
 
-const songSeed = (o: HighwayOptions) => (0x51a7 + o.level * 7919 + o.song * 104729 + (o.mode === 'pitch' ? 15485863 : 0)) >>> 0;
+const songSeed = (o: HighwayOptions) => (0x51a7 + o.level * 7919 + o.song * 104729 + (o.mode === 'pitch' ? 15485863 : o.mode === 'kit' ? 32452843 : 0)) >>> 0;
+
+// ---------------------------------------------------------------- kit lanes (drums course, DRUMS_CURRICULUM §6 #9)
+
+/** Kit lanes, left to right: hi-hat, snare, kick, tom, cymbal (crash / ride). Each lane's note is its GM drum note. */
+export const KIT_LANES = ['hihat', 'snare', 'kick', 'tom', 'cymbal'] as const;
+export type KitLane = (typeof KIT_LANES)[number];
+export const KIT_LANE_NOTE: Record<KitLane, number> = { hihat: 42, snare: 38, kick: 36, tom: 48, cymbal: 49 };
+/** A drum voice → its lane (the pedal "chick" has none). */
+export function kitLaneOf(voice: string | null | undefined): number | null {
+  if (!voice) return null;
+  if (voice === 'hihat' || voice === 'hhOpen') return 0;
+  if (voice === 'snare' || voice === 'rim') return 1;
+  if (voice === 'kick') return 2;
+  if (voice.startsWith('tom')) return 3;
+  if (voice === 'crash' || voice === 'ride') return 4;
+  return null;
+}
+/** Kit mode has its own grooves: levels 1–6 (quarter hats → 16th hats, kick variations, fills at section ends). */
+export const KIT_MAX_LEVEL = 6;
+/** One bar of a kit-mode groove, as [lane, beat] pairs. Level and a seeded choice pick the variation. */
+function kitBar(level: number, rnd: () => number, fill: boolean, crash: boolean): [number, number][] {
+  const out: [number, number][] = [];
+  const hatStep = level <= 1 ? 1 : level <= 4 ? 0.5 : 0.25;
+  const kicks = [[0, 2], [0, 2, 2.5], [0, 1.5, 2], [0, 0.75, 2, 2.5], [0, 1.75, 2.5]][Math.min(4, Math.floor(rnd() * Math.min(5, level + 1)))];
+  const end = fill ? (level >= 3 ? 2 : 3) : 4;
+  for (let b = 0; b < end - 1e-9; b += hatStep) if (!(crash && b === 0)) out.push([0, b]);
+  for (const k of kicks) if (k < end) out.push([2, k]);
+  for (const s of [1, 3]) if (s < end) out.push([1, s]);
+  if (level >= 4 && !fill && rnd() < 0.4) out.push([1, 3.75]);
+  if (crash) out.push([4, 0]);
+  if (fill) {
+    // The fill: 8ths (L1–2) or 16ths, snare then toms, to the bar line.
+    const st = level <= 2 ? 0.5 : 0.25;
+    for (let b = end, i = 0; b < 4 - 1e-9; b += st, i++) out.push([i < (4 - end) / st / 2 ? 1 : 3, b]);
+  }
+  return out;
+}
 
 export function highwaySong(o: HighwayOptions): HighwaySong {
+  if (o.mode === 'kit') return kitSong(o);
   const bars = o.bars ?? 8;
   const seed = songSeed(o);
   const rhythm = rhythmAt(o.level, bars, seed);
@@ -123,6 +161,28 @@ export function highwaySong(o: HighwayOptions): HighwaySong {
   };
 }
 
+function kitSong(o: HighwayOptions): HighwaySong {
+  const bars = o.bars ?? 8;
+  const seed = songSeed(o);
+  const rhythm = rhythmAt(1, bars, seed);
+  const beatsPerBar = 4;
+  const beatMs = 60000 / o.bpm;
+  const rnd = mulberry32(seed ^ 0x2b7e);
+  const laneMidis = KIT_LANES.map((l) => KIT_LANE_NOTE[l]);
+  const hits: [number, number][] = [];
+  for (let bar = 0; bar < bars; bar++) {
+    const fill = bar % SECTION_BARS === SECTION_BARS - 1 && bar < bars - 1 && o.level >= 2;
+    const crash = bar % SECTION_BARS === 0 && bar > 0 && o.level >= 2;
+    for (const [lane, b] of kitBar(o.level, rnd, fill, crash)) hits.push([lane, bar * 4 + b]);
+  }
+  hits.sort((a, b) => a[1] - b[1] || a[0] - b[0]);
+  const notes: HighwayNote[] = hits.map(([lane, beat], i) => {
+    const bar = Math.floor(beat / beatsPerBar + 1e-9);
+    return { i, beat, ms: Math.round(beat * beatMs), durMs: Math.round(0.25 * beatMs), bar, section: Math.floor(bar / SECTION_BARS), lane, midi: laneMidis[lane] };
+  });
+  return { id: songId(o), opts: o, rhythm, beatsPerBar, beatMs, bars, sectionBars: SECTION_BARS, sections: Math.ceil(bars / SECTION_BARS), lengthMs: Math.round(bars * beatsPerBar * beatMs), notes, laneMidis, laneDegrees: [] };
+}
+
 export const sectionStartMs = (s: HighwaySong, section: number) => Math.round(section * s.sectionBars * s.beatsPerBar * s.beatMs);
 
 // ---------------------------------------------------------------- hit windows
@@ -137,7 +197,8 @@ export interface HitWindows {
  * it. Pitch lanes are wider: pitch detection needs a few frames before it names a note.
  */
 export function hitWindows(level: RhythmLevel, bpm: number, mode: HighwayMode = 'tap'): HitWindows {
-  const tol = readTolerance(level, bpm);
+  // Kit mode: MIDI time stamps, the rhythm-level tolerance of a level-1 reading (generous for four limbs).
+  const tol = readTolerance(mode === 'kit' ? (Math.min(level, 3) as RhythmLevel) : level, bpm);
   const k = mode === 'pitch' ? 1.6 : 1;
   return { perfect: Math.round(Math.max(28, tol * 0.45) * k), good: Math.round(tol * k) };
 }
@@ -201,14 +262,22 @@ export function judgeInput(s: HighwaySong, run: HighwayRun, songMs: number, late
   const t = songMs - latencyMs;
   let best = -1;
   let bestAbs = Infinity;
+  const kit = s.opts.mode === 'kit';
+  let otherLane = false;
   s.notes.forEach((n, i) => {
     if (run.grades[i] !== null) return;
     const d = Math.abs(t - n.ms);
+    // Kit lanes: only a note of the lane that was hit; another lane's note there = the wrong drum.
+    if (kit && n.midi !== midi) {
+      if (d <= w.good) otherLane = true;
+      return;
+    }
     if (d <= w.good && d < bestAbs) {
       best = i;
       bestAbs = d;
     }
   });
+  if (best < 0 && kit && otherLane) return { run: { ...run, extra: run.extra + 1, wrongPitch: run.wrongPitch + 1, combo: 0 }, note: null, grade: null, offset: null, wrongPitch: true };
   if (best < 0) return { run: { ...run, extra: run.extra + 1, combo: 0 }, note: null, grade: null, offset: null };
   const n = s.notes[best];
   if (s.opts.mode === 'pitch' && n.midi !== null) {
@@ -308,7 +377,7 @@ export interface BackingTrack {
  * Bass: a I–IV–V–I loop, one chord per bar. `bass: false` (pitch lanes by microphone) leaves the bass out so
  * the pitch tracker does not hear it.
  */
-export function backingTrack(s: HighwaySong, fromSection = 0, opts: { bass?: boolean } = {}): BackingTrack {
+export function backingTrack(s: HighwaySong, fromSection = 0, opts: { bass?: boolean; drums?: boolean } = {}): BackingTrack {
   const beat = s.beatMs / 1000;
   const m = meterOf(s.rhythm);
   const per = s.beatsPerBar;
@@ -324,14 +393,15 @@ export function backingTrack(s: HighwaySong, fromSection = 0, opts: { bass?: boo
   const loop = [0, 5, 7, 0];
   for (let b = firstBar; b < s.bars; b++) {
     const t0 = responseAt + (b - firstBar) * per * beat;
-    for (let p = 0; p < pulsesPerBar; p++) {
+    // Kit mode: the player is the drummer — the band brings only the bass.
+    for (let p = 0; p < pulsesPerBar && opts.drums !== false; p++) {
       const t = t0 + p * pulse * beat;
       if (comp) kit.push({ t, d: p % 2 === 0 ? 'k' : 's' });
       else if (per === 3) kit.push({ t, d: p === 0 ? 'k' : 's' });
       else kit.push({ t, d: p % 2 === 0 ? 'k' : 's' });
     }
     // Eighth hats; swing (R8) delays the off-beat to the last triplet.
-    for (let e = 0; e < per * 2; e++) {
+    for (let e = 0; e < per * 2 && opts.drums !== false; e++) {
       const off = e % 2 === 1;
       const t = t0 + (Math.floor(e / 2) + (off ? (s.rhythm.swing ? 2 / 3 : 0.5) : 0)) * beat;
       extras.push({ midi: 0, start: t, duration: 0.04, velocity: off ? 0.35 : 0.5, perc: 'hat' });

@@ -798,12 +798,19 @@ export const COURSE_GAMES: Record<CourseId, string[]> = {
   keys: ['drills', 'rush-note', 'rush-chord', 'rush-keysig', 'highway', 'melodypuzzle', 'rhythm'],
   guitar: ['drills', 'rush-fretboard', 'tuneup', 'rush-chord', 'highway', 'rush-note', 'rhythm'],
   bass: ['drills', 'rush-fretboard', 'tuneup', 'highway', 'rush-note', 'rhythm'],
+  // 0.65: technique on the kit, Highway with drum lanes, beat echo, the groove trainer.
+  drums: ['drills', 'highway', 'rhythm', 'groove'],
+};
+/** The drums course's own words on shared game cards. */
+const DRUMS_BLURB: Record<string, { en: string; he: string }> = {
+  drills: { en: 'Strokes, rudiments, grooves and fills — measured on your kit.', he: 'מכות, רודימנטים, גרובים ומעברים — נמדדים על המערכת שלכם.' },
+  highway: { en: 'Kit lanes: hi-hat, snare, kick, tom, cymbal.', he: 'מסלולים של מערכת: היי־האט, סנר, קיק, טום, מצילה.' },
 };
 /** The weekly puzzle and the live quiz rooms are ear & theory things. */
 const COURSE_SOCIAL: CourseId[] = ['ear', 'exam', 'jazz'];
 /** Practice tiles (0.63): a colour per row, and the game kinds each course shows as their own tiles. */
 const TILE_COLOR: Record<string, string> = { lessons: '#FF8A3D', puzzle: '#A78BFA', drills: '#FFD43B', songs: '#12C9B4', pieces: '#FF5FA2', charts: '#A78BFA', improv: '#6D28D9', exams: '#FF8A3D' };
-const COURSE_TILE_CATS: Partial<Record<CourseId, GameCat[]>> = { ear: ['ear', 'rhythm', 'memory', 'read'], exam: ['ear', 'read'], jazz: ['ear'], voice: ['voice'], keys: ['instrument'], guitar: ['instrument'], bass: ['instrument'] };
+const COURSE_TILE_CATS: Partial<Record<CourseId, GameCat[]>> = { ear: ['ear', 'rhythm', 'memory', 'read'], exam: ['ear', 'read'], jazz: ['ear'], voice: ['voice'], keys: ['instrument'], guitar: ['instrument'], bass: ['instrument'], drums: ['instrument', 'rhythm'] };
 const CAT_GLYPH: Record<GameCat, GlyphKind> = { ear: 'intervals', rhythm: 'rhythm', memory: 'memory', read: 'sight', voice: 'sing', instrument: 'keys', social: 'duel' };
 /** What Practice shows in each course (0.61, SPEC-COURSES): only the course's own rows; tools are shared. */
 export const COURSE_ROWS: Record<CourseId, string[]> = {
@@ -812,11 +819,12 @@ export const COURSE_ROWS: Record<CourseId, string[]> = {
   keys: ['drills', 'pieces', 'songs', 'games'],
   guitar: ['drills', 'songs', 'pieces', 'games'],
   bass: ['drills', 'songs', 'games'],
+  drums: ['drills', 'games'],
   jazz: ['charts', 'improv', 'games'],
   exam: ['exams', 'lessons', 'puzzle', 'games'],
 };
 /** The games list opens on the course's own category. */
-export const COURSE_GAME_CAT: Record<CourseId, GameCat> = { ear: 'ear', voice: 'voice', keys: 'instrument', guitar: 'instrument', bass: 'instrument', jazz: 'ear', exam: 'read' };
+export const COURSE_GAME_CAT: Record<CourseId, GameCat> = { ear: 'ear', voice: 'voice', keys: 'instrument', guitar: 'instrument', bass: 'instrument', drums: 'instrument', jazz: 'ear', exam: 'read' };
 const VOICE_TX: Record<string, { en: [string, string]; he: [string, string] }> = {
   drills: { en: ['Vocal technique', 'Range, breath, long tones, agility'], he: ['טכניקה קולית', 'מנעד, נשימה, צליל ארוך, גמישות'] },
   songs: { en: ['Sing along', 'Real songs in your key, with a guide voice'], he: ['שירה עם שירים', 'שירים אמיתיים בטונליות שלך, עם קול מוביל'] },
@@ -836,7 +844,7 @@ const ROW_TX: Record<string, { en: [string, string]; he: [string, string] }> = {
 /** Each game's note-head symbol and its category colour (0.61, SPEC-REDESIGN: no emoji). */
 const GAME_GLYPH: Record<string, GlyphKind> = {
   melody: 'echo', rhythm: 'rhythm', truefalse: 'theory', ghost: 'ghost', duel: 'duel', daily: 'calendar', 'rush-chord': 'chords', 'rush-note': 'sight', 'rush-keysig': 'theory', 'rush-interval': 'intervals',
-  'rush-progression': 'prog', 'rush-fretboard': 'guitar', peakhunter: 'eq', highway: 'rhythm', flight: 'sing', melodypuzzle: 'puzzle', nametune: 'name', drills: 'scales', tuneup: 'tune', pitchmemory: 'memory',
+  'rush-progression': 'prog', 'rush-fretboard': 'guitar', peakhunter: 'eq', highway: 'rhythm', flight: 'sing', melodypuzzle: 'puzzle', nametune: 'name', drills: 'scales', tuneup: 'tune', pitchmemory: 'memory', groove: 'groove',
 };
 const CAT_COLOR: Record<string, string> = { ear: DOMAIN_COLOR.ear, rhythm: DOMAIN_COLOR.rhythm, memory: DOMAIN_COLOR.harmony, read: DOMAIN_COLOR.theory, voice: DOMAIN_COLOR.voice, instrument: DOMAIN_COLOR.play, social: '#EDE6F7' };
 
@@ -885,7 +893,9 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
     { key: 'rhythm', hue: 'var(--hue-time)', icon: <GameIcon kind="rhythm" />, title: t.beatEcho, blurb: t.beatEchoBlurb, extra: best(progress.games?.rhythm), onClick: () => onGame('rhythm') },
     { key: 'truefalse', hue: 'var(--hue-pitch)', icon: '✓✗', title: t.trueFalse, blurb: t.tfBlurb, extra: progress.tfBest && Object.keys(progress.tfBest).length ? best(Math.max(...Object.values(progress.tfBest))) : <span className="new-chip">{t.newChip}</span>, onClick: onTrueFalse },
     { key: 'ghost', hue: 'var(--hue-creative)', icon: '👻', title: t.ghostRace, blurb: t.ghostBlurb, onClick: onGhost },
-    ...(onGame2 ? GAMES2.map((g) => ({ key: g.id, cat: g.cat, hue: g.hue, icon: g.icon, title: g[lang][0], blurb: g[lang][1], extra: progress.bests?.[g.id] ? best(progress.bests[g.id]) : <span className="new-chip">{t.newChip}</span>, onClick: () => onGame2(g.id) })) : []),
+    ...(onGame2 ? GAMES2.map((g) => ({ key: g.id, cat: g.cat, hue: g.hue, icon: g.icon, title: g[lang][0], blurb: course === 'drums' && DRUMS_BLURB[g.id] ? DRUMS_BLURB[g.id][lang] : g[lang][1], extra: progress.bests?.[g.id] ? best(progress.bests[g.id]) : <span className="new-chip">{t.newChip}</span>, onClick: () => onGame2(g.id) })) : []),
+    // The groove trainer (fading click, pocket, swing) is a drums-course game too (0.65).
+    ...(hub?.groove ? [{ key: 'groove', cat: 'rhythm' as GameCat, hue: 'var(--hue-time)', icon: '', title: lang === 'he' ? 'מאמן הגרוב' : 'Groove trainer', blurb: lang === 'he' ? 'קליק שנעלם, כיס וסווינג — האם הזמן נשאר שלכם?' : 'A fading click, the pocket, swing — does the time stay yours?', onClick: hub.groove }] : []),
     { key: 'duel', hue: 'var(--hue-voice)', icon: '⚔', title: t.duel, blurb: t.duelBlurb, onClick: onDuel },
     { key: 'daily', hue: 'var(--hue-reading)', icon: '📅', title: t.dailyChallenge, blurb: daily ? `✓ ${t.dailyDone} · ${daily.points.toLocaleString()} ${t.points}` : t.dailyBlurb, onClick: onDaily },
   ].filter((c) => COURSE_GAMES[course].includes(c.key));
@@ -946,7 +956,7 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
                     data-hub-cat={c}
                   >
                     <span className="pt-icon">
-                      <Glyph kind={CAT_GLYPH[c]} color="#FFFFFF" size={44} />
+                      <Glyph kind={course === 'drums' && c === 'instrument' ? 'drums' : CAT_GLYPH[c]} color="#FFFFFF" size={44} />
                     </span>
                     <b>{gc[lang]}</b>
                     <small>{lang === 'he' ? 'משחקים ותרגילים' : 'Games and drills'}</small>
@@ -1016,7 +1026,7 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
               {list.map((c) => (
                 <button key={c.key} className={`play-card game-card ${c.key}`} style={{ ['--hue' as string]: c.hue }} onClick={c.onClick}>
                   <span className="pc-icon" aria-hidden="true">
-                    <Glyph kind={GAME_GLYPH[c.key] ?? 'contour'} color={CAT_COLOR[c.cat ?? CAT_OF[c.key] ?? 'social']} size={52} />
+                    <Glyph kind={course === 'drums' && c.key === 'drills' ? 'sticks' : (GAME_GLYPH[c.key] ?? 'contour')} color={CAT_COLOR[c.cat ?? CAT_OF[c.key] ?? 'social']} size={52} />
                   </span>
                   <b>{c.title}</b>
                   <small>{c.blurb}</small>

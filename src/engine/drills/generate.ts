@@ -2,6 +2,7 @@
 // Pure and deterministic. Fingerings: research §1.1 (help only, never graded; omitted where unsure).
 
 import { generateGuitar } from './guitar';
+import { generateDrums } from './drums';
 import { chartKind, type ChartMode, type ChartVoicing, type CompRhythm } from './chartDrills';
 import { chartDrillData } from './chartDrills';
 import type { Drill, DrillGoal, DrillSpec, DynamicsGoal, ExpNote, FamilyId, Hand, KeyOrder, Motion, ScaleType, Variant } from './types';
@@ -2934,6 +2935,7 @@ function genWalkChanges(s: DrillSpec): Drill {
 
 /** Build the drill a spec describes (any family except 'custom', which goes through customToDrill). */
 export function generate(spec: DrillSpec): Drill {
+  if (spec.family.startsWith('d-')) return generateDrums(spec);
   if (spec.family.startsWith('g-') || spec.family.startsWith('b-')) return generateGuitar(spec);
   const s: DrillSpec = { ...spec, key: mod(spec.key, 12) };
   if (s.kind.startsWith('chart~')) return genChart(s);

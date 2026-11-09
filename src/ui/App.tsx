@@ -253,7 +253,7 @@ export function App() {
     setCourseSheet(false);
     if (!settings) return;
     // 0.61: technique follows the course's instrument (keys → piano drills, guitar / bass → theirs).
-    const inst = c === 'keys' ? 'piano' : c === 'guitar' || c === 'bass' ? c : null;
+    const inst = c === 'keys' ? 'piano' : c === 'guitar' || c === 'bass' || c === 'drums' ? c : null;
     updateSettings({ ...switchCourse(settings, c), ...(inst ? { drills: { ...drillSettingsOf(settings), instrument: inst } } : {}) });
     // 0.64 (owner): stay where you are — the same screen of the other course (only a screen that belongs to one
     // exercise falls back to Today).
@@ -407,10 +407,11 @@ export function App() {
     tts.rate = s.ttsRate ?? 1;
     document.documentElement.dataset.haptics = s.haptics === false ? 'off' : 'on';
     setPreferredMic(s.micDeviceId);
-    midi.setOptions({ only: s.midiDevice ?? null, octave: s.midiOctave ?? 0, pedalInvert: !!s.midiPedalInvert });
+    // 0.65: the drums course reads the e-kit in drum mode (raw notes, CC4 hi-hat, the learned kit map).
+    midi.setOptions({ only: s.midiDevice ?? null, octave: s.midiOctave ?? 0, pedalInvert: !!s.midiPedalInvert, drums: s.activeCourse === 'drums', ...(s.drumKit ? { kit: s.drumKit } : {}) });
     document.documentElement.style.fontSize = s.textScale && s.textScale !== 1 ? `${Math.round(s.textScale * 100)}%` : '';
     document.documentElement.dataset.cvd = s.cvd ? 'on' : 'off';
-  }, [s.mixer, s.textScale, s.cvd, s.volume, s.cues, s.ttsRate, s.haptics, s.micDeviceId, s.midiDevice, s.midiOctave, s.midiPedalInvert]);
+  }, [s.mixer, s.textScale, s.cvd, s.volume, s.cues, s.ttsRate, s.haptics, s.micDeviceId, s.midiDevice, s.midiOctave, s.midiPedalInvert, s.activeCourse, s.drumKit]);
   // MIDI keys sounded through the app (0.50), everywhere — on by default (most MIDI keyboards have no speakers).
   useEffect(() => {
     piano.setLiveOptions({ volume: s.midiVolume ?? 1, curve: s.midiCurve ?? 'normal' });
@@ -420,7 +421,8 @@ export function App() {
     void piano.setOutputDevice(s.audioOutput ?? null);
   }, [s.audioOutput]);
   useEffect(() => {
-    if ((!s.midiInput && !s.computerKeys) || s.midiSound === false) return;
+    // An e-kit's module plays its own drums: no piano notes for kit hits in the drums course.
+    if ((!s.midiInput && !s.computerKeys) || s.midiSound === false || s.activeCourse === 'drums') return;
     const offN = midi.onNote((m, on, _at, vel) => (piano.context ? piano.liveNote(m, on, vel) : void piano.unlock().then(() => piano.liveNote(m, on, vel), () => {})));
     const offC = midi.onCC((cc, v) => piano.liveControl(cc, v));
     // A keyboard unplugged mid-note, or the app sent to the background: no note may keep sounding.
@@ -445,7 +447,7 @@ export function App() {
       document.removeEventListener('visibilitychange', wake);
       piano.liveAllOff();
     };
-  }, [s.midiInput, s.midiSound, s.computerKeys]);
+  }, [s.midiInput, s.midiSound, s.computerKeys, s.activeCourse]);
   // The computer keyboard as a piano (opt-in, Settings → MIDI).
   useEffect(() => (s.computerKeys ? startComputerKeys(midi) : undefined), [s.computerKeys]);
 
@@ -905,13 +907,13 @@ export function App() {
   };
   const techAfterPlacement = useRef(false);
   /** 0.61: an instrument course's "find my level" is the playing test (it sets the start level of every technique family). */
-  const instrumentCourse = !!settings && ['keys', 'guitar', 'bass'].includes(settings.activeCourse ?? 'ear');
+  const instrumentCourse = !!settings && ['keys', 'guitar', 'bass', 'drums'].includes(settings.activeCourse ?? 'ear');
   const openTechTest = () => {
     drillFrom.current = 'test';
     go('drills');
   };
   const drillQueue = useMemo(
-    () => (route === 'drills' && (drillFrom.current === 'chart' || drillFrom.current === 'assign' || (drillFrom.current === 'path' && chartQueue.current)) ? chartQueue.current ?? undefined : route === 'drills' && (drillFrom.current === 'path' || drillFrom.current === 'workout') && settings && progress ? todayDrills({ ...drillSettingsOf(settings), bassTuning: bassTuningOf(settings) }, progress.drillItems ?? {}, settings.drillStart ?? {}, settings.customDrills ?? []).map((x) => x.drill) : undefined),
+    () => (route === 'drills' && (drillFrom.current === 'chart' || drillFrom.current === 'assign' || (drillFrom.current === 'path' && chartQueue.current)) ? chartQueue.current ?? undefined : route === 'drills' && (drillFrom.current === 'path' || drillFrom.current === 'workout') && settings && progress ? todayDrills({ ...drillSettingsOf(settings), bassTuning: bassTuningOf(settings), drumMic: settings.drumKit?.mic }, progress.drillItems ?? {}, settings.drillStart ?? {}, settings.customDrills ?? []).map((x) => x.drill) : undefined),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [route],
   );
@@ -1036,7 +1038,7 @@ export function App() {
     // 0.61 (SPEC-COURSES): the workout belongs to the active course — its own areas, its goal, its warm-ups only.
     const course = courseOf(s.activeCourse);
     const own = COURSE_AREAS[course.id];
-    return suggestWorkout({ total: tmpl ? tmpl.reduce((a, b) => a + b.minutes, 0) : baseMinutes, goal: course.goal, priorities: (s.intake as Intake | null | undefined)?.priorities ?? null, leaveOut: [...new Set([...(s.pathLeaveOut ?? []).filter((d) => course.id === 'ear' || course.id === 'exam' || !own.includes(d)), ...INTAKE_AREAS.filter((d) => !own.includes(d))])], reviewsDue: new Set(dueReviews(progress.review, now0).map((r) => r.key)).size, singer: course.id === 'voice' && !s.noMic, view: pathView, template: tmpl, technique: s.drills?.inWorkout !== false && (course.id === 'keys' || course.id === 'guitar' || course.id === 'bass') });
+    return suggestWorkout({ total: tmpl ? tmpl.reduce((a, b) => a + b.minutes, 0) : baseMinutes, goal: course.goal, priorities: (s.intake as Intake | null | undefined)?.priorities ?? null, leaveOut: [...new Set([...(s.pathLeaveOut ?? []).filter((d) => course.id === 'ear' || course.id === 'exam' || !own.includes(d)), ...INTAKE_AREAS.filter((d) => !own.includes(d))])], reviewsDue: new Set(dueReviews(progress.review, now0).map((r) => r.key)).size, singer: course.id === 'voice' && !s.noMic, view: pathView, template: tmpl, technique: s.drills?.inWorkout !== false && (course.id === 'keys' || course.id === 'guitar' || course.id === 'bass' || course.id === 'drums') });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathView, baseMinutes, tmplRaw, s.goal, s.pathLeaveOut, s.pathHidden, s.mode, s.noSing, s.noMic, progress.review.length, today, progress.history.length]);
   const todayBlocks = s.workoutToday?.day === today ? s.workoutToday.blocks : suggestedWorkout;

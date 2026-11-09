@@ -154,12 +154,12 @@ export function pathInputFrom(s: Settings, p: Progress, now = new Date()): PathI
   const inp = courseInput(base, course);
   // 0.61 (owner): an instrument / voice course teaches its technique ladders as path steps, passed only by measured takes.
   const ds = drillSettingsOf(s);
-  const families = s.drills?.inPath === false ? [] : ladderFamiliesFor(course, ds, s.bassTuning);
+  const families = s.drills?.inPath === false ? [] : ladderFamiliesFor(course, ds, s.bassTuning, s.drumKit?.mic);
   if (!families.length) return inp;
   return {
     ...inp,
     ladderFamilies: families,
-    ladderHidden: ladderHiddenFor(course, s.bassTuning),
+    ladderHidden: ladderHiddenFor(course, s.bassTuning, s.drumKit?.mic),
     facts: withLadderFacts(inp.facts, { families, items: p.drillItems ?? {}, order: ds.keyOrder, start: s.drillStart ?? {}, vocalPassed: p.vocal?.passed ?? [], at: now.toISOString() }),
   };
 }
@@ -170,7 +170,7 @@ export function usePathView(s: Settings, p: Progress): PathView {
   return useMemo(
     () => buildPath(pathInputFrom(s, p)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [s.activeCourse, s.intake, s.track, s.goal, s.pathHidden, s.noSing, s.noMic, s.pathLeaveOut, s.pathPacks, s.pathFacts, s.pathKeep, s.midiInput, s.instrument, s.drills, s.drillStart, s.bassTuning, p.ratingEvents?.length, p.review.length, p.lessons, p.drillItems, p.vocal, day],
+    [s.activeCourse, s.intake, s.track, s.goal, s.pathHidden, s.noSing, s.noMic, s.pathLeaveOut, s.pathPacks, s.pathFacts, s.pathKeep, s.midiInput, s.instrument, s.drills, s.drillStart, s.bassTuning, s.drumKit, p.ratingEvents?.length, p.review.length, p.lessons, p.drillItems, p.vocal, day],
   );
 }
 
@@ -215,6 +215,7 @@ const FAMILY_GLYPH: Record<string, GlyphKind> = {
   scales: 'scales', arpeggios: 'chords', cadences: 'prog', fingers: 'keys', control: 'tempo', advanced: 'scales', harris: 'improv', voicings: 'chords', jazz: 'prog', accomp: 'rhythm',
   'g-fretting': 'guitar', 'g-picking': 'tempo', 'g-legato': 'contour', 'g-scales': 'scales', 'g-arps': 'chords', 'g-chords': 'chords', 'g-rhythm': 'rhythm', 'g-lead': 'improv', 'g-fingerstyle': 'guitar', 'g-flamenco': 'rhythm', 'g-jazz': 'prog', 'g-reading': 'sight', 'g-impro': 'improv', 'g-bass': 'bass',
   'b-pluck': 'bass', 'b-time': 'tempo', 'b-fret': 'scales', 'b-chord': 'chords', 'b-scale': 'scales', 'b-length': 'rhythm', 'b-pocket': 'groove', 'b-read': 'sight', 'b-styles': 'groove', 'b-ghost': 'ghost', 'b-walk': 'contour', 'b-legato': 'contour', 'b-pick': 'tempo', 'b-slap': 'rhythm', 'b-ear': 'intervals', 'b-up-pos': 'scales', 'b-up-arco': 'sing', 'b-up-scales': 'scales', 'b-up-pizz': 'bass', 'b-up-walk': 'contour', 'b-up-read': 'sight',
+  'd-strokes': 'sticks', 'd-rolls': 'rudiment', 'd-diddles': 'paradiddle', 'd-time': 'pulse', 'd-rock': 'hihat', 'd-fills': 'fill', 'd-read': 'drumread',
   'v-ladder': 'sing', 'v-modes': 'scales', 'v-sight': 'sight', 'v-harmony': 'chords', 'v-ornament': 'contour', 'v-barry': 'improv',
 };
 /** Instrument topics (they all used to share one chord icon). */
@@ -223,7 +224,7 @@ const TOPIC_GLYPH: Record<string, GlyphKind> = {
   'pan-ear': 'mixer', 'space-ear': 'echo', 'eq-ear': 'eq', 'filter-ear': 'eq', 'dyn-ear': 'tempo', 'tone-hz': 'tune', 'width-ear': 'mixer',
 };
 function StepIcon({ step }: { step: PathStep }) {
-  const kind = step.ladder ? (FAMILY_GLYPH[step.ladder.family] ?? (step.kind === 'vocal' ? 'sing' : step.ladder.instrument === 'piano' ? 'keys' : 'guitar')) : step.topic ? TOPIC_GLYPH[step.topic] : undefined;
+  const kind = step.ladder ? (FAMILY_GLYPH[step.ladder.family] ?? (step.kind === 'vocal' ? 'sing' : step.ladder.instrument === 'piano' ? 'keys' : step.ladder.instrument === 'drums' ? 'drums' : 'guitar')) : step.topic ? TOPIC_GLYPH[step.topic] : undefined;
   if (!kind) return <NodeIcon kind={iconOf(step)} />;
   return (
     <svg className="step-glyph" viewBox="-30 -27 60 54" width="30" height="27" aria-hidden="true">

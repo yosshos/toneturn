@@ -8,6 +8,10 @@ import {
   hitWindows,
   highwaySong,
   judgeInput,
+  KIT_LANE_NOTE,
+  KIT_LANES,
+  KIT_MAX_LEVEL,
+  kitLaneOf,
   MIC_PITCH_LAG_MS,
   newRun,
   OnsetTracker,
@@ -37,6 +41,9 @@ import { piano } from './services';
 type Lang = 'he' | 'en';
 type Text = { en: string; he: string };
 
+/** Kit lane labels (short: the road is narrow on a phone). */
+const KIT_SHORT: Record<(typeof KIT_LANES)[number], Text> = { hihat: { en: 'HH', he: 'הייהט' }, snare: { en: 'SN', he: 'סנר' }, kick: { en: 'BD', he: 'קיק' }, tom: { en: 'TOM', he: 'טום' }, cymbal: { en: 'CYM', he: 'מצילה' } };
+
 export interface HighwaySaved {
   v: 1;
   game: 'highway';
@@ -56,6 +63,8 @@ const T = {
   back: { en: 'Back', he: 'חזרה' },
   mode: { en: 'Play with', he: 'מנגנים עם' },
   tap: { en: 'Taps', he: 'הקשות' },
+  kit: { en: 'Drum kit', he: 'מערכת תופים' },
+  kitHint: { en: 'Play the lanes on your e-kit: hi-hat, snare, kick, tom, cymbal.', he: 'נגנו את המסלולים על התופים: היי־האט, סנר, קיק, טום, מצילה.' },
   pitch: { en: 'My instrument', he: 'הכלי שלי' },
   level: { en: 'Rhythm level', he: 'רמת קצב' },
   song: { en: 'Song', he: 'שיר' },
@@ -172,9 +181,12 @@ export function Highway({
   const resumable = isHighwaySaved(saved) ? saved : null;
   const reduced = useReducedMotion(settings);
   const useMidi = !!settings.midiInput;
+  // 0.65: in the drums course the highway has kit lanes (hi-hat, snare, kick, tom, cymbal) played on the e-kit.
+  const drumsCourse = settings.activeCourse === 'drums';
+  const MODES: HighwayMode[] = drumsCourse ? ['kit', 'tap'] : ['tap', 'pitch'];
 
   const [opts, setOpts] = useState<HighwayOptions>(
-    () => resumable?.opts ?? { mode: 'tap', level: 1, song: 1, bpm: 90, lanes: 3, keyPc: laneKeyPc(settings) },
+    () => resumable?.opts ?? { mode: drumsCourse ? 'kit' : 'tap', level: 1, song: 1, bpm: 90, lanes: 3, keyPc: laneKeyPc(settings) },
   );
   const song = useMemo(() => highwaySong(opts), [opts]);
   const [stage, setStage] = useState<Stage>('setup');
@@ -196,7 +208,7 @@ export function Highway({
   const flashN = useRef(0);
 
   const px = reduced ? 0.15 : 0.3; // px per ms of scroll
-  const latency = opts.mode === 'tap' ? settings.tapLatencyMs || 0 : useMidi ? (settings.midiLatencyMs ?? 0) : (settings.micLatencyMs ?? MIC_PITCH_LAG_MS);
+  const latency = opts.mode === 'tap' ? settings.tapLatencyMs || 0 : opts.mode === 'kit' ? (settings.midiLatencyMs ?? 0) : useMidi ? (settings.midiLatencyMs ?? 0) : (settings.micLatencyMs ?? MIC_PITCH_LAG_MS);
 
   const setBoth = (r: HighwayRun) => {
     runRef.current = r;
@@ -320,11 +332,24 @@ export function Highway({
       /* audio may still start */
     }
     const pitch = s.opts.mode === 'pitch';
-    const bt = backingTrack(s, fromSection, { bass: !(pitch && !useMidi) });
+    const kitMode = s.opts.mode === 'kit';
+    const bt = backingTrack(s, fromSection, { bass: !(pitch && !useMidi), drums: !kitMode });
     const offsetMs = sectionStartMs(s, fromSection);
     let unsub: (() => void) | null = null;
 
-    if (pitch && useMidi) {
+    if (kitMode) {
+      try {
+        await midiInput.enable();
+      } catch {
+        /* no MIDI: nothing will be heard */
+      }
+      // Each kit hit → its lane's note (the kit map names the pad); the pedal chick has no lane.
+      unsub = midiInput.onHit((h) => {
+        const lane = kitLaneOf(h.voice);
+        input(h.at || performance.now(), lane === null ? -1 : KIT_LANE_NOTE[KIT_LANES[lane]], settings.midiLatencyMs ?? 0);
+      });
+      ac.signal.addEventListener('abort', () => unsub?.(), { once: true });
+    } else if (pitch && useMidi) {
       try {
         await midiInput.enable();
       } catch {
@@ -395,11 +420,12 @@ export function Highway({
   // ------------------------------------------------------------- render
 
   if (stage === 'setup') {
-    const maxLevel = opts.mode === 'pitch' ? PITCH_MAX_LEVEL : (MAX_RHYTHM_LEVEL as RhythmLevel);
+    const maxLevel = opts.mode === 'pitch' ? PITCH_MAX_LEVEL : opts.mode === 'kit' ? (KIT_MAX_LEVEL as RhythmLevel) : (MAX_RHYTHM_LEVEL as RhythmLevel);
     const set = (p: Partial<HighwayOptions>) =>
       setOpts((o) => {
         const n = { ...o, ...p };
         if (n.mode === 'pitch' && n.level > PITCH_MAX_LEVEL) n.level = PITCH_MAX_LEVEL;
+        if (n.mode === 'kit' && n.level > KIT_MAX_LEVEL) n.level = KIT_MAX_LEVEL as RhythmLevel;
         return n;
       });
     return (
@@ -414,13 +440,13 @@ export function Highway({
           <fieldset className="seg-field">
             <legend>{tx(T.mode)}</legend>
             <div className="seg" role="radiogroup" aria-label={tx(T.mode)}>
-              {(['tap', 'pitch'] as HighwayMode[]).map((m) => (
-                <button key={m} type="button" role="radio" aria-checked={opts.mode === m} className={opts.mode === m ? 'on' : ''} onClick={() => set({ mode: m })}>
-                  {tx(m === 'tap' ? T.tap : T.pitch)}
+              {MODES.map((m) => (
+                <button key={m} type="button" role="radio" aria-checked={opts.mode === m} className={opts.mode === m ? 'on' : ''} onClick={() => set({ mode: m })} data-hw-mode={m}>
+                  {tx(m === 'tap' ? T.tap : m === 'kit' ? T.kit : T.pitch)}
                 </button>
               ))}
             </div>
-            <p className="field-hint">{opts.mode === 'tap' ? tx(T.tapHint) : useMidi ? tx(T.midiHint) : tx(T.pitchHint)}</p>
+            <p className="field-hint">{opts.mode === 'tap' ? tx(T.tapHint) : opts.mode === 'kit' ? tx(T.kitHint) : useMidi ? tx(T.midiHint) : tx(T.pitchHint)}</p>
             {opts.mode === 'tap' && !settings.tapLatencyMs && <p className="field-hint warn">{tx(T.calibrate)}</p>}
           </fieldset>
           <fieldset className="seg-field">
@@ -681,7 +707,16 @@ export function Highway({
                 {flash.text}
               </div>
             )}
-            {s.laneMidis.length > 0 && (
+            {s.opts.mode === 'kit' && (
+              <div className="hw-lane-labels kit" data-kit-lanes="1">
+                {KIT_LANES.map((l, i) => (
+                  <span key={l} style={{ ['--i' as string]: i }}>
+                    <b>{KIT_SHORT[l][lang]}</b>
+                  </span>
+                ))}
+              </div>
+            )}
+            {s.laneMidis.length > 0 && s.opts.mode !== 'kit' && (
               <div className="hw-lane-labels">
                 {s.laneMidis.map((m, i) => (
                   <span key={i} style={{ ['--i' as string]: i }}>
@@ -704,7 +739,7 @@ export function Highway({
               {tx(T.tapHere)}
             </button>
           )}
-          <p className="hint">{opts.mode === 'tap' ? tx(T.tapHint) : tx(T.pitchHint)}</p>
+          <p className="hint">{opts.mode === 'tap' ? tx(T.tapHint) : opts.mode === 'kit' ? tx(T.kitHint) : tx(T.pitchHint)}</p>
         </>
       )}
     </main>
