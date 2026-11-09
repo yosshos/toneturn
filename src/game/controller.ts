@@ -606,6 +606,8 @@ export class LessonController {
     const lesson = this.s.lesson;
     const l = this.cfg.outputLang;
     const nm = this.cfg.naming;
+    // The voice makes the intro's lines while the first ones play (0.65, Kokoro).
+    this.ad.tts.prefetch?.([...lesson.intro.slice(from).map((step) => introText(lesson, step, l, nm)), introGo(lesson, l)], l);
     for (let i = from; i < lesson.intro.length; i++) {
       const step = lesson.intro[i];
       this.s = newTurn(this.s, 'intro');

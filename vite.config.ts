@@ -14,6 +14,9 @@ const commit = (() => {
 })();
 const buildTime = new Date().toISOString();
 
+/** Built files of the on-device narrator (Kokoro worker + onnxruntime WASM). Keep in step with the service worker. */
+const VOICE_FILE = /\/assets\/(kokoroWorker-[^/]*\.js|ort-wasm[^/]*\.wasm)$/;
+
 /** Emit sw.js with the version and the exact list of built files to precache. */
 function serviceWorker(): Plugin {
   let base = '/';
@@ -25,7 +28,10 @@ function serviceWorker(): Plugin {
     },
     generateBundle(_opts, bundle) {
       const files = Object.keys(bundle).map((f) => `${base}${f}`);
-      const precache = [base, `${base}index.html`, `${base}icon.svg`, `${base}manifest.webmanifest`, ...files.filter((f) => /\.(js|css|woff2)$/.test(f) && !/AvatarStudio|three/i.test(f))];
+      // The Kokoro narrator (0.65): its worker (≈2 MB) and onnxruntime's WASM (≈21 MB) are never precached — they load
+      // only when an English line is first spoken, then live in the service worker's voice cache across versions.
+      const voice = files.filter((f) => VOICE_FILE.test(f));
+      const precache = [base, `${base}index.html`, `${base}icon.svg`, `${base}manifest.webmanifest`, ...files.filter((f) => /\.(js|css|woff2)$/.test(f) && !/AvatarStudio|three/i.test(f) && !VOICE_FILE.test(f))];
       const tpl = readFileSync(new URL('./src/sw-template.js', import.meta.url), 'utf-8');
       this.emitFile({
         type: 'asset',
@@ -34,7 +40,8 @@ function serviceWorker(): Plugin {
           .replaceAll('__BASE__', base)
           .replaceAll('__VERSION__', pkg.version)
           .replaceAll('__BUILD__', `${commit}-${buildTime.replace(/[^0-9]/g, '').slice(0, 12)}`)
-          .replace('__PRECACHE__', JSON.stringify(precache)),
+          .replace('__PRECACHE__', JSON.stringify(precache))
+          .replace('__VOICE_FILES__', JSON.stringify(voice)),
       });
     },
   };
@@ -52,6 +59,8 @@ export default defineConfig(({ mode }) => ({
     __APP_BUILT__: JSON.stringify(buildTime),
   },
   server: { port: 5173 },
+  // The Kokoro worker is an ES module worker (it imports onnxruntime-web).
+  worker: { format: 'es' },
   test: {
     include: ['tests/**/*.test.ts'],
     environment: 'node',

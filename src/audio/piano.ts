@@ -871,6 +871,11 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     return this.ctx;
   }
 
+  /** The narrator's voice (Kokoro, 0.65): dry into the master — it follows the volume and the output device, no hall. */
+  voiceOut(): { ctx: AudioContext; out: AudioNode } | null {
+    return this.ctx && this.master ? { ctx: this.ctx, out: this.master } : null;
+  }
+
   async unlock(): Promise<void> {
     if (!this.ctx) {
       const Ctor = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;

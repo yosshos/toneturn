@@ -9,6 +9,14 @@ const PRECACHE = __PRECACHE__;
 const BASE = '__BASE__';
 /** Instrument samples (spec Q): downloaded on first use, kept across app versions. */
 const SAMPLES = 'toneturn-samples-v1';
+/**
+ * The on-device narrator (Kokoro, 0.65): its worker script and onnxruntime's WASM, fetched on first English line,
+ * kept across app versions (only files this build no longer uses are dropped). The model weights themselves come
+ * from huggingface.co and are cached by the library (Cache API 'transformers-cache'); the SW never sees them.
+ */
+const VOICE = 'toneturn-voice-v1';
+const VOICE_FILES = __VOICE_FILES__;
+const isVoiceFile = (p) => /\/assets\/(kokoroWorker-[^/]*\.js|ort-wasm[^/]*\.wasm)$/.test(p);
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(PRECACHE)));
@@ -24,7 +32,10 @@ self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches
       .keys()
-      .then((ks) => Promise.all(ks.filter((k) => k.startsWith('toneturn-') && k !== CACHE && k !== SAMPLES).map((k) => caches.delete(k))))
+      .then((ks) => Promise.all(ks.filter((k) => k.startsWith('toneturn-') && k !== CACHE && k !== SAMPLES && k !== VOICE).map((k) => caches.delete(k))))
+      // narrator files of older builds leave the device
+      .then(() => caches.open(VOICE))
+      .then((c) => c.keys().then((reqs) => Promise.all(reqs.filter((r) => !VOICE_FILES.includes(new URL(r.url).pathname)).map((r) => c.delete(r)))))
       // sample sets that were replaced (0.54: the 4-layer grand → 16 layers) leave the device
       .then(() => caches.open(SAMPLES))
       .then((c) => c.keys().then((reqs) => Promise.all(reqs.filter((r) => /\/samples\/grand-(pp|mp|mf|f)\//.test(r.url)).map((r) => c.delete(r)))))
@@ -39,6 +50,22 @@ self.addEventListener('fetch', (e) => {
   if (url.origin !== location.origin) return;
   if (req.mode === 'navigate') {
     e.respondWith(fetch(req).catch(() => caches.match(BASE + 'index.html')));
+    return;
+  }
+  if (isVoiceFile(url.pathname)) {
+    // cache-first: hashed names never change content
+    e.respondWith(
+      caches.open(VOICE).then((c) =>
+        c.match(req).then(
+          (hit) =>
+            hit ||
+            fetch(req).then((res) => {
+              if (res.ok) c.put(req, res.clone());
+              return res;
+            }),
+        ),
+      ),
+    );
     return;
   }
   if (url.pathname.startsWith(BASE + 'samples/')) {

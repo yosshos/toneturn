@@ -1,5 +1,5 @@
 import { TypedText } from './TypedText';
-import { useTalk } from './TalkToggle';
+import { useNarration } from './TalkToggle';
 import { DOMAIN_COLOR, Glyph } from './Glyph';
 import { answerFormat, pcToMidi, type AnswerFormat } from '../engine/answerFormat';
 import { Toni, type ToniState } from './Toni';
@@ -1043,10 +1043,11 @@ function InARow({ records, lang }: { records: { outcome: string; attempts: unkno
 
 function Caption({ text }: { text: string | null }) {
   // 0.64 (owner): in reading mode (the default) the line types itself out with a soft pop per word.
-  const [talk] = useTalk();
+  // 0.65: while the Kokoro voice speaks an English line, the text types at the voice's pace and without the pop.
+  const { speaking, msPerWord } = useNarration(text && /[a-z]/i.test(text) ? 'en' : 'he', text);
   return (
     <p className="caption" aria-live="polite">
-      {text && !SIMULATED ? <TypedText key={text} text={text} sound={!talk || !/[a-z]/i.test(text)} msPerWord={talk && /[a-z]/i.test(text) ? 220 : 90} /> : (text ?? ' ')}
+      {text && !SIMULATED ? <TypedText key={text} text={text} sound={!speaking} msPerWord={speaking ? (msPerWord ?? 220) : 90} /> : (text ?? ' ')}
     </p>
   );
 }

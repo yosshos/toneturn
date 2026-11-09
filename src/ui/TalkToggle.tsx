@@ -2,7 +2,28 @@
 
 import { useEffect, useState } from 'react';
 import { onTalk, setTalk, talkOn } from '../speech/talk';
-import { tts } from './services';
+import { paceFor, type KokoroStatus } from '../speech/kokoro/decide';
+import { narrator, tts } from './services';
+
+/** The Kokoro voice's status (Settings: downloading x% / ready / unavailable). */
+export function useNarratorStatus(): KokoroStatus {
+  const [s, setS] = useState(narrator.state);
+  useEffect(() => narrator.onStatus(setS), []);
+  return s;
+}
+
+/**
+ * Is this line spoken (true) or read with a pop per word (false)? And the typing pace: while the voice speaks a
+ * line, the text types at the voice's speed (its length is known once the line is made).
+ */
+export function useNarration(lang: 'he' | 'en', text: string | null): { speaking: boolean; msPerWord: number | undefined } {
+  const [talk] = useTalk();
+  useNarratorStatus();
+  const [pace, setPace] = useState<{ text: string; ms: number } | null>(null);
+  useEffect(() => narrator.onLine((l) => setPace({ text: l.text, ms: paceFor(l.text, l.ms) })), []);
+  const speaking = talk && tts.speaking(lang);
+  return { speaking, msPerWord: speaking && text && pace?.text === text ? pace.ms : undefined };
+}
 
 export function useTalk(): [boolean, (on: boolean) => void] {
   const [on, setOn] = useState(talkOn);

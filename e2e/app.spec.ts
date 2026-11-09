@@ -148,7 +148,12 @@ test.describe('voice check', () => {
 });
 
 test.describe('settings', () => {
-  test('naming override, Hebrew narration example uses במול, voice picker present', async ({ page }) => {
+  test('naming override, Hebrew narration example uses במול, the Kokoro narrator card', async ({ page }) => {
+    // Automated runs never download the voice model (nor its worker / WASM), even with the narrator switched on.
+    const voiceReqs: string[] = [];
+    page.on('request', (r) => {
+      if (/huggingface\.co|kokoroWorker|ort-wasm/.test(r.url())) voiceReqs.push(r.url());
+    });
     await page.goto('/#/settings/language');
     const example = page.locator('.example');
     await expect(example).toContainText('B♭');
@@ -161,13 +166,18 @@ test.describe('settings', () => {
     await page.getByRole('radiogroup', { name: 'Narration in' }).getByRole('radio', { name: 'עברית' }).click();
     await expect(example).toContainText('סי במול');
     await expect(example).not.toContainText('פלאט');
-    // Gender preference control.
-    const voiceGroup = page.getByRole('radiogroup', { name: 'Voice type' });
-    await expect(voiceGroup.getByRole('radio', { name: /Female/ })).toBeVisible();
-    await voiceGroup.getByRole('radio', { name: /Male/ }).last().click();
-    await expect(voiceGroup.getByRole('radio', { name: /Male/ }).last()).toHaveAttribute('aria-checked', 'true');
-    // Either a voice list or the "no voices" notice — headless browsers often have none.
-    await expect(page.locator('.voice-list, .field-hint.warn').first()).toBeVisible();
+    // 0.65: one English voice (Kokoro, on the device) with its status and an on/off switch; no OS voice picker.
+    await expect(page.locator('.voice-list')).toHaveCount(0);
+    const status = page.locator('[data-kokoro]');
+    await expect(status).toContainText('Kokoro (on device)');
+    await expect(status).toHaveAttribute('data-kokoro', 'off');
+    const use = page.locator('[data-narrator-toggle]');
+    await use.check();
+    await page.getByRole('radiogroup', { name: 'Narration in' }).getByRole('radio', { name: 'English' }).click();
+    await page.locator('[data-narrator-preview]').click();
+    await page.waitForTimeout(500);
+    await expect(status).toHaveAttribute('data-kokoro', 'off');
+    expect(voiceReqs).toEqual([]);
   });
 });
 

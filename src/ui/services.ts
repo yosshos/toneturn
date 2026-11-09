@@ -10,6 +10,7 @@ import type { GameAdapters } from '../game/memoryGame';
 import type { Answer } from '../engine/lesson';
 import { BrowserMicAccess } from '../speech/mic';
 import { BrowserPromptPlayer } from '../speech/tts';
+import { browserKokoroDeps, KokoroNarrator } from '../speech/kokoro/engine';
 import { WebSpeechTranscriber } from '../speech/webspeech';
 import { ProgressStore } from '../storage/progress';
 import { defaultKV, memoryKV } from '../storage/kv';
@@ -22,6 +23,9 @@ export const UNLOCK_ALL = params.get('unlock') === 'all';
 export const piano = new PianoEngine();
 /** One narration player for the whole app so voice settings apply everywhere. */
 export const tts = new BrowserPromptPlayer();
+/** The English voice (Kokoro, on the device). Nothing loads until an English line is wanted; the simulator never speaks. */
+export const narrator = new KokoroNarrator(browserKokoroDeps(() => piano.voiceOut()));
+if (!SIMULATED) tts.narrator = narrator;
 // Simulated runs never touch real progress.
 export const store = new ProgressStore(SIMULATED ? memoryKV() : defaultKV());
 

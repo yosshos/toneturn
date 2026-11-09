@@ -7,10 +7,10 @@ import type { AccessError } from '../game/adapters';
 import { ERROR_TITLES, recoverySteps, type Strings } from '../i18n/strings';
 import { detectBrowser, gatherEnv, type EnvFacts } from '../speech/errors';
 import { MicProbe, type ProbeReading } from '../speech/mic';
-import { listVoices, pickVoice, voicesReady } from '../speech/tts';
+import { useNarratorStatus } from './TalkToggle';
 import { getRecognitionCtor, WebSpeechTranscriber } from '../speech/webspeech';
 import type { Settings } from '../storage/progress';
-import { piano, tts } from './services';
+import { narrator, piano, tts } from './services';
 
 type Status = 'idle' | 'running' | 'ok' | 'fail';
 interface LogLine {
@@ -23,7 +23,7 @@ const NOTE = ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B�
 export function Diagnostics({ t, settings, onBack }: { t: Strings; settings: Settings; onBack: () => void }) {
   const lang = settings.uiLang;
   const [env, setEnv] = useState<EnvFacts | null>(null);
-  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const kokoro = useNarratorStatus();
   const [local, setLocal] = useState<Record<string, string>>({});
   const [micStatus, setMicStatus] = useState<Status>('idle');
   const [micErr, setMicErr] = useState<AccessError | null>(null);
@@ -44,7 +44,6 @@ export function Diagnostics({ t, settings, onBack }: { t: Strings; settings: Set
 
   useEffect(() => {
     void gatherEnv().then(setEnv);
-    void voicesReady().then(setVoices);
     return () => probe.current?.stop();
   }, []);
 
@@ -149,8 +148,8 @@ export function Diagnostics({ t, settings, onBack }: { t: Strings; settings: Set
 
   const testVoice = (l: 'he' | 'en') => {
     tts.unlock();
-    const v = pickVoice(l, tts.prefs);
-    add(`tts ${l}: ${v ? `${v.name} (${v.lang})` : 'no voice — text only'}`);
+    const k = narrator.state;
+    add(`tts ${l}: ${l === 'he' ? 'Hebrew is read (no voice)' : `Kokoro ${k.state}${k.state === 'downloading' ? ` ${k.pct}%` : ''}${k.rtf ? ` · RTF ${k.rtf.toFixed(2)}` : ''}${k.device ? ` · ${k.device}` : ''}`}`);
     tts.force = true;
     void tts.speak(l === 'he' ? 'סי במול הוא דרגה חמש במי במול מז׳ור' : 'B flat is degree five in E flat major', l, new AbortController().signal);
     tts.force = false;
@@ -167,18 +166,13 @@ export function Diagnostics({ t, settings, onBack }: { t: Strings; settings: Set
         audio: audioOk,
         capture: { status: micStatus, error: micErr, maxPeak: Number(maxPeak.toFixed(3)) },
         recognition: { status: recStatus, lang: recLang, error: recErr, heard, localProcessing: local },
-        voices: {
-          he: listVoices().filter((v) => /^(he|iw)/i.test(v.lang)).map((v) => `${v.name} (${v.lang}${v.localService ? ', local' : ''})`),
-          en: listVoices().filter((v) => /^en/i.test(v.lang)).length,
-        },
+        narrator: kokoro,
         log,
       },
       null,
       2,
     );
 
-  const heVoices = voices.filter((v) => /^(he|iw)/i.test(v.lang));
-  const enVoices = voices.filter((v) => /^en/i.test(v.lang));
   const pitch = lastHz ? `${NOTE[Math.round(hzToMidi(lastHz)) % 12]} · ${lastHz.toFixed(1)} Hz` : '—';
 
   return (
@@ -221,9 +215,13 @@ export function Diagnostics({ t, settings, onBack }: { t: Strings; settings: Set
               'API not exposed'
             )}
           </dd>
-          <dt>TTS voices</dt>
-          <dd>
-            he: {heVoices.length ? heVoices.map((v) => v.name).join(', ') : <span className="bad">none</span>} · en: {enVoices.length}
+          <dt>narrator</dt>
+          <dd className={kokoro.state === 'ready' ? 'good' : kokoro.state === 'unavailable' ? 'warn' : ''}>
+            Kokoro {kokoro.state}
+            {kokoro.state === 'downloading' ? ` ${kokoro.pct}%` : ''}
+            {kokoro.why ? ` (${kokoro.why})` : ''}
+            {kokoro.rtf ? ` · RTF ${kokoro.rtf.toFixed(2)}` : ''}
+            {kokoro.device ? ` · ${kokoro.device}` : ''} · he: read
           </dd>
         </dl>
       </section>
