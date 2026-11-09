@@ -11,6 +11,7 @@ import { barDrift, chartAt, chartPcs, fillLandings, walkProbeReport, WALK_VARIET
 import { analyzeGuitarTake, captureOptsFor, onsetOptsFor, untimedPitch } from '../src/engine/drills/guitarAnalyze';
 import { expTimeMs } from '../src/engine/drills/analyze';
 import { yin } from '../src/engine/yin';
+import { noteAt, remapDots, tuningById } from '../src/engine/fretboard';
 import { DEFAULT_DRILL_SETTINGS, type Drill, type ExpNote, type ItemState, type PlayedNote, type TakeMetrics } from '../src/engine/drills/types';
 
 /** Every written note played on time (f may shift a note or drop it with null). */
@@ -350,6 +351,27 @@ describe('N12 / N13 technique steps: workout credit and old 1-star facts', () =>
     expect(Object.keys(fresh.steps ?? {}).filter((k) => k.startsWith('tech:'))).toEqual([]);
     const passed = withLadderFacts({} as PathFacts, { ...opts, items: passAll() });
     expect(passed.steps?.['tech:b-pluck-1']?.stars).toBeGreaterThanOrEqual(2);
+  });
+});
+
+describe('B12 bass neck diagrams on the bass tuning', () => {
+  const eadg = tuningById('bass');
+  const dots = [
+    { str: 1, fret: 2, root: true },
+    { str: 3, fret: 5 },
+    { str: 4, fret: 3 },
+    { str: 4, fret: 0 },
+  ];
+  it('each dot keeps its pitch on 5-string, 6-string and drop D', () => {
+    for (const id of ['bass5', 'bass6', 'bass-dropd', 'upright']) {
+      const to = tuningById(id);
+      const out = remapDots(eadg, to, dots);
+      expect(out.map((d) => noteAt(to, d.str, d.fret)), id).toEqual(dots.map((d) => noteAt(eadg, d.str, d.fret)));
+      expect(out[0].root).toBe(true);
+    }
+    expect(remapDots(eadg, tuningById('bass6'), dots)[0]).toMatchObject({ str: 2, fret: 2 });
+    expect(remapDots(eadg, tuningById('bass-dropd'), dots)[2]).toMatchObject({ str: 4, fret: 5 });
+    expect(remapDots(eadg, tuningById('bass5'), dots)).toEqual(dots);
   });
 });
 

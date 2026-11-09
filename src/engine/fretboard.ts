@@ -38,6 +38,24 @@ export const defaultTuning = (inst: NeckInstrument): Tuning => TUNINGS.find((t) 
 /** The note at a string and fret. */
 export const noteAt = (t: Tuning, str: number, fret: number): number => t.open[str - 1] + fret;
 
+/**
+ * Dots written for one tuning (string / fret), moved onto another so each dot keeps its pitch (B12: bass diagrams on
+ * the player's bass tuning). The string with the same open note keeps the fret (5-string: E A D G unchanged; 6-string:
+ * G is string 2); else the same string with the fret moved (drop D: +2 on the 4th string); else the lowest fret anywhere.
+ * A dot that can't be played on the new tuning is left out.
+ */
+export function remapDots<D extends { str: number; fret: number }>(from: Tuning, to: Tuning, dots: D[]): D[] {
+  if (from.id === to.id) return dots;
+  return dots.flatMap((d) => {
+    const midi = noteAt(from, d.str, d.fret);
+    const same = to.open.findIndex((o) => o === from.open[d.str - 1]);
+    if (same >= 0) return [{ ...d, str: same + 1 }];
+    if (d.str <= to.open.length && midi - to.open[d.str - 1] >= 0) return [{ ...d, fret: midi - to.open[d.str - 1] }];
+    const ps = positionsOf(to, midi, 0, 24).sort((a, b) => a.fret - b.fret);
+    return ps.length ? [{ ...d, str: ps[0].str, fret: ps[0].fret }] : [];
+  });
+}
+
 /** Every place a MIDI note can be played, frets lo..hi (inclusive). */
 export function positionsOf(t: Tuning, midi: number, lo = 0, hi = 15, strings?: number[]): { str: number; fret: number }[] {
   const out: { str: number; fret: number }[] = [];

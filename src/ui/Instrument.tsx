@@ -8,10 +8,10 @@ import { listenLoop } from './Flight';
 import { positionsOf } from '../engine/fretboard';
 import type { Diagram, PlaceMark, PlaceQuestion, PlaceSurface } from '../engine/lesson';
 import { gradePlace, placeKey } from '../engine/lesson';
-import { defaultTuning, INLAYS, noteAt, tuningById, type NeckInstrument, type Tuning } from '../engine/fretboard';
+import { defaultTuning, INLAYS, noteAt, remapDots, tuningById, type NeckInstrument, type Tuning } from '../engine/fretboard';
 import { majorScale, pcValue, type PitchClass } from '../engine/pitch';
 import { spellMidi } from '../engine/aids';
-import type { Settings } from '../storage/progress';
+import { bassTuningOf, type Settings } from '../storage/progress';
 import { piano } from './services';
 
 type Lang = 'he' | 'en';
@@ -185,8 +185,11 @@ export function ChordBox({ d, tuning, leftHanded }: { d: Diagram; tuning: Tuning
 }
 
 /** A choice question's picture: neck, chord box or keys (spec AE). */
-export function DiagramView({ d, settings }: { d: Diagram; settings: Settings }) {
-  const tuning = d.instrument ? (d.instrument === 'guitar' ? tuningById(settings.tuning) : defaultTuning(d.instrument)) : tuningById(settings.tuning);
+export function DiagramView({ d: d0, settings }: { d: Diagram; settings: Settings }) {
+  // B12: bass diagrams on the player's bass tuning (5 / 6-string, drop D); the dots, written for EADG, keep their pitch.
+  const bassTu = d0.instrument === 'bass' ? tuningById(bassTuningOf(settings) ?? 'bass') : null;
+  const d: Diagram = bassTu && d0.dots ? { ...d0, dots: remapDots(defaultTuning('bass'), bassTu, d0.dots) } : d0;
+  const tuning = bassTu ?? (d.instrument ? (d.instrument === 'guitar' ? tuningById(settings.tuning) : defaultTuning(d.instrument)) : tuningById(settings.tuning));
   if (d.kind === 'box') return <ChordBox d={d} tuning={tuning} leftHanded={settings.leftHanded} />;
   if (d.kind === 'keys') return <KeysPad marks={(d.midis ?? []).map((m) => ({ m, tone: 'given' }))} lo={Math.min(48, ...(d.midis ?? [60]))} hi={Math.max(72, ...(d.midis ?? [60]))} />;
   const frets = (d.dots ?? []).map((p) => p.fret);
