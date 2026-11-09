@@ -20,11 +20,15 @@ export function techLevel(id: string): LevelDef | undefined {
 }
 
 /** The families / programs a course's path teaches, in teaching order. Other courses: none. */
-export function ladderFamiliesFor(course: CourseId, ds: DrillSettings): string[] {
+export function ladderFamiliesFor(course: CourseId, ds: DrillSettings, bassTuning?: string): string[] {
   if (course === 'voice') return VOCAL_PROGRAMS.map((p) => p.id);
   const instrument = course === 'keys' ? 'piano' : course === 'guitar' ? 'guitar' : course === 'bass' ? 'bass' : null;
   if (!instrument) return [];
-  return shownFamilies({ emphasis: ds.emphasis, instrument, guitarStyle: ds.guitarStyle }).map((f) => f.id);
+  // The upright track only for an upright / fretless bass (BASS_AUDIT B16); its families otherwise stay in Drills.
+  const upright = bassTuning === 'upright' || bassTuning === 'bass-fretless';
+  return shownFamilies({ emphasis: ds.emphasis, instrument, guitarStyle: ds.guitarStyle })
+    .filter((f) => upright || !(f as { upright?: boolean }).upright)
+    .map((f) => f.id);
 }
 
 /**

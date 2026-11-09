@@ -299,7 +299,7 @@ function ladderSteps(): PathStep[] {
     );
   for (const f of guitarCatalog())
     f.levels.forEach((lv, i) =>
-      out.push({ id: `tech:${lv.id}`, kind: 'tech', ladder: { family: f.id, level: lv.level, ref: lv.id, instrument: f.instruments.includes('guitar') ? 'guitar' : 'bass' }, skill: 'instrument', sub: 'instrument/guitar-tech', domain: 'instrument', difficulty: diff(i), choices: 0, forPlays: [...f.instruments], title: { en: `${f.title.en} · ${lv.title.en}`, he: `${f.title.he} · ${lv.title.he}` } }),
+      out.push({ id: `tech:${lv.id}`, kind: 'tech', ladder: { family: f.id, level: lv.level, ref: lv.id, instrument: f.instruments.includes('guitar') ? 'guitar' : 'bass' }, skill: 'instrument', sub: f.instruments.includes('guitar') ? 'instrument/guitar-tech' : 'instrument/bass-tech', domain: 'instrument', difficulty: diff(i), choices: 0, forPlays: [...f.instruments], title: { en: `${f.title.en} · ${lv.title.en}`, he: `${f.title.he} · ${lv.title.he}` } }),
     );
   for (const pr of VOCAL_PROGRAMS)
     pr.levels.forEach((_, i) => {

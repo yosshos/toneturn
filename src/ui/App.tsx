@@ -1002,6 +1002,9 @@ export function App() {
       }
       return;
     }
+    // BASS_AUDIT A4: a technique step is passed only by its level's measured rule (3 clean takes at the target tempo,
+    // derived by withLadderFacts) — never by one session's clean share.
+    if (ps.kind === 'tech') return;
     const stars = stepStars(ps.kind, r.firstTry, r.total);
     updateSettings({ pathFacts: recordStep(settings.pathFacts ?? {}, ps.id, stars, at) });
     if (ps.kind === 'check' && stars > 0) {

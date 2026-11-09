@@ -25,6 +25,9 @@ export const TUNINGS: Tuning[] = [
   { id: 'bass5', instrument: 'bass', name: { en: '5-string bass (BEADG)', he: 'בס 5 מיתרים (BEADG)' }, open: [43, 38, 33, 28, 23], fretted: true },
   { id: 'bass6', instrument: 'bass', name: { en: '6-string bass (BEADGC)', he: 'בס 6 מיתרים (BEADGC)' }, open: [48, 43, 38, 33, 28, 23], fretted: true },
   { id: 'bass-dropd', instrument: 'bass', name: { en: 'Bass, drop D (DADG)', he: 'בס, Drop D (DADG)' }, open: [43, 38, 33, 26], fretted: true },
+  // 0.64 (BASS_CURRICULUM §5.1): fretless electric and upright (double) bass — same strings, no frets (intonation in cents).
+  { id: 'bass-fretless', instrument: 'bass', name: { en: 'Fretless bass (EADG)', he: 'בס פרטלס (EADG)' }, open: [43, 38, 33, 28], fretted: false },
+  { id: 'upright', instrument: 'bass', name: { en: 'Double bass (EADG)', he: 'קונטרבס (EADG)' }, open: [43, 38, 33, 28], fretted: false },
   { id: 'violin', instrument: 'violin', name: { en: 'Violin (GDAE)', he: 'כינור (GDAE)' }, open: [76, 69, 62, 55], fretted: false },
   { id: 'viola', instrument: 'viola', name: { en: 'Viola (CGDA)', he: 'ויולה (CGDA)' }, open: [69, 62, 55, 48], fretted: false },
   { id: 'cello', instrument: 'cello', name: { en: 'Cello (CGDA)', he: "צ'לו (CGDA)" }, open: [57, 50, 43, 36], fretted: false },

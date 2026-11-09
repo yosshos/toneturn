@@ -12,7 +12,7 @@ import { displayNote, pc, spokenNote } from '../engine/pitch';
 import type { Strings } from '../i18n/strings';
 import { catalogue, chooseVoice, type Gender } from '../speech/voices';
 import { listVoices, voicesReady } from '../speech/tts';
-import { DEFAULT_SOUND, namingFor, type Settings, type VoiceGender } from '../storage/progress';
+import { DEFAULT_SOUND, bassTuningOf, namingFor, type Settings, type VoiceGender } from '../storage/progress';
 import { fillText, Note } from './bits';
 import { piano, store, tts } from './services';
 import { listMics } from '../speech/mic';
@@ -533,13 +533,15 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
                 </label>
                 {(() => {
                   // Bass: 4-string, 5-string, 6-string or drop D (the bass-course drills follow it); guitar: its tunings.
+                  // 0.64 (B12): the bass tuning is its own setting (bassTuning); the guitar keeps `tuning`.
                   const neck = s.instrument === 'bass' ? 'bass' : 'guitar';
                   const list = TUNINGS.filter((x) => x.instrument === neck);
-                  const value = list.some((x) => x.id === s.tuning) ? s.tuning! : list[0].id;
+                  const cur = neck === 'bass' ? bassTuningOf(s) : s.tuning;
+                  const value = list.some((x) => x.id === cur) ? cur! : list[0].id;
                   return (
                   <label className="field-row">
                     <span>{t.tuningTitle}</span>
-                    <select value={value} onChange={(e) => onChange({ tuning: e.target.value })}>
+                    <select value={value} onChange={(e) => onChange(neck === 'bass' ? { bassTuning: e.target.value } : { tuning: e.target.value })} data-tuning={neck}>
                       {list.map((x) => (
                         <option key={x.id} value={x.id}>
                           {x.name[s.uiLang]}

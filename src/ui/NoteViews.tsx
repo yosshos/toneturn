@@ -103,7 +103,7 @@ const MARK_COLOR = new Proxy(MARK_RG, { get: (o, k: string) => (typeof document 
 /** Symbols under marked notes so the result is never colour-only. */
 const MARK_SYM: Record<Exclude<NoteMark, undefined>, string> = { ok: '', timing: '~', wrong: '✕', missed: '○' };
 
-export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs, marks, rests, meter, timeSig }: { notes: number[]; chord: boolean; keyPc: PitchClass | null; labels?: string[]; clef?: 'treble' | 'bass' | 'alto' | 'tenor'; durs?: number[]; marks?: NoteMark[]; /** Rests: true where the item is a rest of durs[i] (its note value is ignored). */ rests?: boolean[]; /** Beats per bar: draws bar lines between bars (with durs). */ meter?: number; /** Show the time signature (first line of a passage). */ timeSig?: boolean }) {
+export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs, marks, rests, meter, timeSig, sig }: { notes: number[]; chord: boolean; keyPc: PitchClass | null; labels?: string[]; clef?: 'treble' | 'bass' | 'alto' | 'tenor'; durs?: number[]; marks?: NoteMark[]; /** Rests: true where the item is a rest of durs[i] (its note value is ignored). */ rests?: boolean[]; /** Beats per bar: draws bar lines between bars (with durs). */ meter?: number; /** Show the time signature (first line of a passage). */ timeSig?: boolean; /** The time signature text when it is not meter/4 (eighth-note meters: '7/8'). */ sig?: string }) {
   const { ref, failed } = useSvg(
     (VF, el) => {
       const n = chord ? 1 : notes.length;
@@ -113,14 +113,14 @@ export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs, 
       const ctx = renderer.getContext();
       const stave = new VF.Stave(4, 10, width - 8);
       stave.addClef(clef).addKeySignature(keySpec(keyPc));
-      if (timeSig && meter && durs) stave.addTimeSignature(`${meter}/4`);
+      if (timeSig && meter && durs) stave.addTimeSignature(sig ?? `${meter}/4`);
       stave.setContext(ctx).draw();
       const sn = chord
         ? [new VF.StaveNote({ keys: notes.map((m) => vfKey(m, keyPc)), duration: 'w', clef })]
         : notes.map((m, i) => {
             const b = durs?.[i] ?? 1;
             const rest = !!rests?.[i];
-            const s = new VF.StaveNote({ keys: [rest ? (clef === 'bass' ? 'd/3' : 'b/4') : vfKey(m, keyPc)], duration: (b >= 4 ? 'w' : b >= 2 ? 'h' : b >= 1 ? 'q' : '8') + (rest ? 'r' : ''), clef });
+            const s = new VF.StaveNote({ keys: [rest ? (clef === 'bass' ? 'd/3' : clef === 'tenor' ? 'a/3' : 'b/4') : vfKey(m, keyPc)], duration: (b >= 4 ? 'w' : b >= 2 ? 'h' : b >= 1 ? 'q' : '8') + (rest ? 'r' : ''), clef });
             if (b === 1.5 || b === 3) VF.Dot.buildAndAttach([s], { all: true });
             const mk = marks?.[i];
             // a given label (what was played, a finger) wins over the bare mark symbol
@@ -148,7 +148,7 @@ export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs, 
       voice.draw(ctx, stave);
       beams.forEach((bm) => bm.setContext(ctx).draw());
     },
-    [notes.join(','), chord, keySpec(keyPc), (labels ?? []).join(','), clef, (durs ?? []).join(','), (marks ?? []).join(',')],
+    [notes.join(','), chord, keySpec(keyPc), (labels ?? []).join(','), clef, (durs ?? []).join(','), (marks ?? []).join(','), sig],
   );
   return (
     <div className="note-staff" role="img" aria-label={notes.map((m, i) => `${vfKey(m, keyPc)}${marks?.[i] ? ` ${marks[i]}` : ''}`).join(' ')}>

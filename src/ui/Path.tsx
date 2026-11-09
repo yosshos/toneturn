@@ -154,7 +154,7 @@ export function pathInputFrom(s: Settings, p: Progress, now = new Date()): PathI
   const inp = courseInput(base, course);
   // 0.61 (owner): an instrument / voice course teaches its technique ladders as path steps, passed only by measured takes.
   const ds = drillSettingsOf(s);
-  const families = s.drills?.inPath === false ? [] : ladderFamiliesFor(course, ds);
+  const families = s.drills?.inPath === false ? [] : ladderFamiliesFor(course, ds, s.bassTuning);
   if (!families.length) return inp;
   return {
     ...inp,
@@ -169,7 +169,7 @@ export function usePathView(s: Settings, p: Progress): PathView {
   return useMemo(
     () => buildPath(pathInputFrom(s, p)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [s.activeCourse, s.intake, s.track, s.goal, s.pathHidden, s.noSing, s.noMic, s.pathLeaveOut, s.pathPacks, s.pathFacts, s.pathKeep, s.midiInput, s.instrument, s.drills, s.drillStart, p.ratingEvents?.length, p.review.length, p.lessons, p.drillItems, p.vocal, day],
+    [s.activeCourse, s.intake, s.track, s.goal, s.pathHidden, s.noSing, s.noMic, s.pathLeaveOut, s.pathPacks, s.pathFacts, s.pathKeep, s.midiInput, s.instrument, s.drills, s.drillStart, s.bassTuning, p.ratingEvents?.length, p.review.length, p.lessons, p.drillItems, p.vocal, day],
   );
 }
 
@@ -213,7 +213,7 @@ const iconOf = (step: PathStep) => (step.kind === 'tech' ? 'chord' : step.kind =
 const FAMILY_GLYPH: Record<string, GlyphKind> = {
   scales: 'scales', arpeggios: 'chords', cadences: 'prog', fingers: 'keys', control: 'tempo', advanced: 'scales', harris: 'improv', voicings: 'chords', jazz: 'prog', accomp: 'rhythm',
   'g-fretting': 'guitar', 'g-picking': 'tempo', 'g-legato': 'contour', 'g-scales': 'scales', 'g-arps': 'chords', 'g-chords': 'chords', 'g-rhythm': 'rhythm', 'g-lead': 'improv', 'g-fingerstyle': 'guitar', 'g-flamenco': 'rhythm', 'g-jazz': 'prog', 'g-reading': 'sight', 'g-impro': 'improv', 'g-bass': 'guitar',
-  'b-pluck': 'guitar', 'b-time': 'tempo', 'b-fret': 'scales', 'b-chord': 'chords', 'b-scale': 'scales', 'b-length': 'rhythm', 'b-pocket': 'groove', 'b-read': 'sight', 'b-styles': 'groove', 'b-ghost': 'ghost', 'b-walk': 'contour', 'b-legato': 'contour', 'b-pick': 'tempo', 'b-slap': 'rhythm', 'b-ear': 'intervals',
+  'b-pluck': 'guitar', 'b-time': 'tempo', 'b-fret': 'scales', 'b-chord': 'chords', 'b-scale': 'scales', 'b-length': 'rhythm', 'b-pocket': 'groove', 'b-read': 'sight', 'b-styles': 'groove', 'b-ghost': 'ghost', 'b-walk': 'contour', 'b-legato': 'contour', 'b-pick': 'tempo', 'b-slap': 'rhythm', 'b-ear': 'intervals', 'b-up-pos': 'scales', 'b-up-arco': 'sing', 'b-up-scales': 'scales', 'b-up-pizz': 'guitar', 'b-up-walk': 'contour', 'b-up-read': 'sight',
   'v-ladder': 'sing', 'v-modes': 'scales', 'v-sight': 'sight', 'v-harmony': 'chords', 'v-ornament': 'contour', 'v-barry': 'improv',
 };
 /** Instrument topics (they all used to share one chord icon). */

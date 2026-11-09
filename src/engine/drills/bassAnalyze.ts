@@ -237,9 +237,10 @@ export function ringThrough(rests: { from: number; to: number; prevOn: number; p
       judged++;
       const ring = win.filter((f) => f.rms >= floor * pk || (f.hz && (f.conf ?? 1) >= 0.8 && f.rms >= 0.08 * pk && (pc(Math.round(midiOfHz(f.hz))) === pc(r.prevPitch) || openPcs.includes(pc(Math.round(midiOfHz(f.hz))))))).length;
       if (ring >= win.length / 2) rang++;
-    } else if (r.prevOff !== undefined) {
+    } else if (typeof r.prevOff === 'number') {
+      // MIDI note-off known; a missing release (null) is unknown, not "kept ringing".
       judged++;
-      if (r.prevOff === null || r.prevOff > (r.from + r.to) / 2) rang++;
+      if (r.prevOff > (r.from + r.to) / 2) rang++;
     }
   }
   return { rests: judged, rang };

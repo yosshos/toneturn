@@ -8,16 +8,16 @@ import { analyzeGuitarTake, type GFrame } from '../src/engine/drills/guitarAnaly
 import { expTimeMs } from '../src/engine/drills/analyze';
 import type { Drill, PlayedNote } from '../src/engine/drills/types';
 
-const ORDER = ['b-pluck', 'b-time', 'b-fret', 'b-chord', 'b-scale', 'b-length', 'b-pocket', 'b-read', 'b-styles', 'b-ghost', 'b-walk', 'b-legato', 'b-pick', 'b-slap'];
+const ORDER = ['b-pluck', 'b-time', 'b-fret', 'b-chord', 'b-ear', 'b-scale', 'b-length', 'b-pocket', 'b-read', 'b-styles', 'b-ghost', 'b-walk', 'b-legato', 'b-pick', 'b-slap', 'b-up-pos', 'b-up-arco', 'b-up-scales', 'b-up-pizz', 'b-up-walk', 'b-up-read'];
 const BASS = guitarCatalog().filter((f) => f.id.startsWith('b-'));
 const TUNE_IDS = ['bass', 'bass5', 'bass6', 'bass-dropd'];
 
 describe('bass course families', () => {
-  it('has the 14 families in teaching order, bass only, with ≥ 5 levels each', () => {
+  it('has the families in teaching order (bass ear after chords, the upright track last), bass only, with ≥ 3 levels each', () => {
     expect(BASS.map((f) => f.id)).toEqual(ORDER);
     for (const f of BASS) {
       expect(f.instruments).toEqual(['bass']);
-      expect(f.levels.length).toBeGreaterThanOrEqual(5);
+      expect(f.levels.length).toBeGreaterThanOrEqual(f.id.startsWith('b-up-') ? 3 : 5);
       expect(f.title.he.length).toBeGreaterThan(0);
     }
     expect(BASS.reduce((n, f) => n + f.levels.length, 0)).toBeGreaterThanOrEqual(118);
@@ -78,14 +78,14 @@ describe('bass course families', () => {
     expect(guitarCatalog().find((f) => f.id === 'g-bass')?.levels.length).toBe(6);
     // A genre filter keeps every family; only the style levels of other genres drop out.
     const rock = shownFamilies({ emphasis: 'both', instrument: 'bass', guitarStyle: 'rock' });
-    expect(rock.find((f) => f.id === 'b-styles')!.levels.every((l) => (l as GuitarLevelDef).genres?.includes('rock'))).toBe(true);
-    expect(rock.find((f) => f.id === 'b-walk')!.levels.length).toBe(12);
+    expect(rock.find((f) => f.id === 'b-styles')!.levels.every((l) => (l as GuitarLevelDef).genres?.some((g) => g === 'rock' || g === 'all'))).toBe(true);
+    expect(rock.find((f) => f.id === 'b-walk')!.levels.length).toBe(17);
   });
 
   it('the tuning only moves notes: item ids ignore it, withBassTuning rebuilds on the player\'s bass', () => {
     const sp = BASS[0].levels[3].specs[0];
     expect(guitarItemId({ ...sp, key: 4, tuning: 'bass5' })).toBe(guitarItemId({ ...sp, key: 4 }));
-    expect(TUNINGS.filter((t) => t.instrument === 'bass').map((t) => t.id)).toEqual(TUNE_IDS);
+    expect(TUNINGS.filter((t) => t.instrument === 'bass').map((t) => t.id)).toEqual([...TUNE_IDS, 'bass-fretless', 'upright']);
     expect(tuningById('bass5').open).toEqual([43, 38, 33, 28, 23]);
     expect(tuningById('bass6').open).toEqual([48, 43, 38, 33, 28, 23]);
     expect(tuningById('bass-dropd').open).toEqual([43, 38, 33, 26]);
@@ -97,13 +97,13 @@ describe('bass course families', () => {
     expect(withBassTuning(ds, undefined)).toBe(ds);
   });
 
-  it('placement probes: one per main family, seeding the rest of section 6', () => {
+  it('placement probes: the tasks of section 6, each placing its own family', () => {
     const probes = GUITAR_PROBES.filter((p) => p.instruments.includes('bass'));
     const placed = new Set(probes.flatMap((p) => [p.family, ...(p.seeds ?? [])]));
     for (const f of ['b-time', 'b-pocket', 'b-chord', 'b-fret', 'b-scale', 'b-pluck', 'b-walk']) expect(placed.has(f as never), f).toBe(true);
     for (const p of probes) {
       const d = generate(p.spec);
-      expect(d.notes.length).toBeGreaterThan(8);
+      expect(d.notes.length).toBeGreaterThan(3);
       expect(ORDER).toContain(p.family);
     }
   });

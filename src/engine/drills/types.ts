@@ -32,7 +32,29 @@ export type FamilyId =
   // Bass course (docs/research/BASS_CURRICULUM.md §5, F1–F14): instrument bass, pitches SOUNDING MIDI.
   | BassFamilyId;
 
-export type BassFamilyId = 'b-pluck' | 'b-fret' | 'b-length' | 'b-time' | 'b-pocket' | 'b-ghost' | 'b-chord' | 'b-scale' | 'b-walk' | 'b-slap' | 'b-legato' | 'b-pick' | 'b-read' | 'b-styles';
+export type BassFamilyId =
+  | 'b-pluck'
+  | 'b-fret'
+  | 'b-length'
+  | 'b-time'
+  | 'b-pocket'
+  | 'b-ghost'
+  | 'b-chord'
+  | 'b-scale'
+  | 'b-walk'
+  | 'b-slap'
+  | 'b-legato'
+  | 'b-pick'
+  | 'b-read'
+  | 'b-styles'
+  // 0.64 (track B): the bass-ear family F15 and the upright / double-bass track (BASS_CURRICULUM §5, §5.1).
+  | 'b-ear'
+  | 'b-up-pos'
+  | 'b-up-arco'
+  | 'b-up-scales'
+  | 'b-up-pizz'
+  | 'b-up-walk'
+  | 'b-up-read';
 
 export type Dyn = 'pp' | 'p' | 'mp' | 'mf' | 'f' | 'ff';
 export type Articulation = 'legato' | 'staccato' | 'portato';
@@ -144,6 +166,24 @@ export interface Drill {
   goal: DrillGoal;
   /** Suggested starting tempo (♩ bpm) when the item is new. */
   startBpm: number;
+  // ---- added by the bass content track (B), 0.64: all optional, a drill without them runs as before ----
+  /** B5: drums under the take (a GROOVES id), heard only with headphones / line-in / MIDI (else the click); bars in `fills` get a drum fill. */
+  drums?: { groove: string; fills?: number[] };
+  /**
+   * B11 ear drills: what the band plays inside the take (beats from beat 0). The player answers in the other bars;
+   * onsets inside `windows` (the band's bars) are ignored, so a speaker's sound is never taken for the answer.
+   */
+  listen?: { notes: { beat: number; dur: number; midi: number[]; inst?: 'bass' | 'piano'; perc?: 'kick' | 'snare' | 'hat' }[]; windows: [number, number][]; ask: { en: string; he: string } };
+  /** B3 / B10 / B11: what the score shows — notation only (reading), only the chord chart (free choice; a model line is opt-in), or nothing until the result (ear). */
+  show?: 'staff' | 'chart' | 'none';
+  /** B3: with show 'chart', the notes before this beat are written out (written bars, then free bars). */
+  freeFrom?: number;
+  /** B7: eighth-note meters (7/8, 10/8): one drill beat is an eighth and the tempo counts eighths (♪ = bpm). */
+  pulse?: 8;
+  /** B10: untimed note naming — one note at a time, each answered within maxMs. */
+  untimed?: { maxMs: number };
+  /** B16 upright track: bowed (arco) or plucked (pizz). */
+  bow?: 'arco' | 'pizz';
 }
 
 export interface DrillGoal {
@@ -209,6 +249,12 @@ export interface BassGoal {
   // ---- added by track A (A12) ----
   /** Plucking zone (A12): the second half (bridge) must be brighter than the first (neck): centroid ratio ≥ this (e.g. 1.2). */
   zone?: number;
+  // ---- added by the content track (B), 0.64 ----
+  /**
+   * B5: the drum kick lane under the take, as beats from beat 0 of the drill (the drums play only with headphones /
+   * line-in / MIDI; the lane is the same either way). Kick lock compares bass onsets with THESE, not with the written notes.
+   */
+  kickLane?: number[];
 }
 
 /** Free-choice rule verdict (A5), per slot of the model line (TakeMetrics.rules). */
