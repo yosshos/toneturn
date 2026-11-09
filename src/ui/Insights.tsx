@@ -234,17 +234,28 @@ function KeyMap({ model, tx }: { model: PlayerModel; tx: (typeof TX)['en'] }) {
     <section className="set-card" data-key-map="1">
       <h2>{tx.keys}</h2>
       <small className="field-hint">{tx.keysHint}</small>
-      <div className="in-keys" dir="ltr">
-        {KEYS_5THS.map((pc) => {
+      {/* 0.61: the keys on the circle of fifths; the warmer and bigger the note head, the more mistakes there. */}
+      <svg className="in-circle" viewBox="-130 -130 260 260" role="img" aria-label={tx.keys} style={{ direction: 'ltr' }}>
+        <circle r={92} fill="none" stroke="currentColor" strokeWidth={2} opacity={0.25} />
+        {KEYS_5THS.map((pc, i) => {
           const s = model.stats[`k:${pc}`];
           const v = s && s.n >= 15 ? s.err / max : null;
+          const a = (i / 12) * Math.PI * 2 - Math.PI / 2;
+          const x = Math.cos(a) * 92;
+          const y = Math.sin(a) * 92;
+          const r = v === null ? 15 : 15 + v * 9;
+          const fill = v === null ? 'var(--card-2)' : v > 0.66 ? '#FF5FA2' : v > 0.33 ? '#FFD43B' : '#12C9B4';
           return (
-            <span key={pc} className={`in-key ${v === null ? 'na' : ''}`} style={v === null ? undefined : { ['--w' as string]: v }} title={v === null ? '' : `${Math.round(s!.err * 100)}%`}>
-              {KEY_N[pc]}
-            </span>
+            <g key={pc} className={`in-ck ${v === null ? 'na' : ''}`}>
+              <title>{v === null ? KEY_N[pc] : `${KEY_N[pc]} · ${Math.round(s!.err * 100)}%`}</title>
+              <ellipse cx={x} cy={y} rx={r * 1.25} ry={r} transform={`rotate(-20 ${x} ${y})`} fill={fill} stroke="var(--ink-c)" strokeWidth={2.5} />
+              <text x={x} y={y + 5} textAnchor="middle">
+                {KEY_N[pc]}
+              </text>
+            </g>
           );
         })}
-      </div>
+      </svg>
     </section>
   );
 }

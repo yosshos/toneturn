@@ -246,7 +246,7 @@ export function Metronome({ lang, settings, onChange, onBack }: { lang: Lang; se
               <stop offset="1" stopColor="var(--mt-wood-b)" />
             </linearGradient>
           </defs>
-          <path d="M70 12h60l32 176H38z" fill="url(#mtWood)" />
+          <path d="M70 12h60l32 176H38z" fill="url(#mtWood)" className="mt-body" />
           <path d="M84 26h32l20 132H64z" className="mt-face" />
           {Array.from({ length: 11 }, (_, i) => (
             <path key={i} d={`M${98 - (i % 2 ? 3 : 6)} ${36 + i * 11}h${i % 2 ? 6 : 12}`} className="mt-scale" transform={`translate(${i % 2 ? 1.5 : 0} 0)`} />

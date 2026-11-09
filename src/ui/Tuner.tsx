@@ -109,7 +109,7 @@ export function Tuner({ lang, settings, onChange, onBack }: { lang: Lang; settin
           <div className="tuner-cents" dir="ltr">
             {read ? `${cents > 0 ? '+' : ''}${cents} ${tx.cents} · ${read.hz.toFixed(1)} ${tx.hz}` : tx.listen}
           </div>
-          <p className="tuner-verdict">{read ? (ok ? `✓ ${tx.inTune}` : cents > 0 ? `▲ ${tx.sharp}` : `▼ ${tx.flat}`) : ''}</p>
+          <p className="tuner-verdict">{read ? (ok ? tx.inTune : cents > 0 ? `▲ ${tx.sharp}` : `▼ ${tx.flat}`) : ''}</p>
         </section>
       )}
       {preset.strings.length > 0 && (

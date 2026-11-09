@@ -1527,3 +1527,50 @@
 :root[data-theme] .mini-celebrate .mini-confetti { overflow: hidden; border-radius: 26px; }
 :root[data-theme] .sc-flame { position: relative; }
 :root[data-theme] .sc-toni { position: absolute; inset-block-end: -6px; inset-inline-end: -62px; }
+
+/* Insights (0.61): circle of fifths, groove fingerprint in the v2 palette */
+:root[data-theme] .in-circle { display: block; width: min(280px, 100%); margin: 8px auto 0; color: var(--ink); }
+:root[data-theme] .in-circle text { font: 400 14px 'Secular One', Rubik, sans-serif; fill: var(--ink-c); }
+:root[data-theme] .in-ck.na { opacity: 0.45; }
+:root[data-theme] .in-big { font-family: 'Secular One', Rubik, sans-serif; font-weight: 400; color: var(--purple); }
+:root[data-theme] .in-spark { color: var(--purple); }
+:root[data-theme] .in-g-track { height: 16px; border-radius: 8px; border: 2px solid var(--outline); background: var(--card-2); box-sizing: border-box; }
+:root[data-theme] .in-g-zero { background: var(--ink-c); width: 3px; }
+:root[data-theme] .in-g-spread { background: color-mix(in srgb, var(--lilac) 70%, transparent); border-radius: 4px; top: 2px; bottom: 2px; }
+:root[data-theme] .in-g-dot { width: 16px; height: 12px; margin-left: -8px; top: 0; border-radius: 50%; background: var(--lemon); border: 2px solid var(--ink-c); box-sizing: border-box; transform: rotate(-20deg); }
+:root[data-theme] .in-finger { border: 2px solid var(--outline); }
+:root[data-theme] .in-finger.weak { background: color-mix(in srgb, var(--pink) 45%, transparent); }
+:root[data-theme] .in-finger.strong { background: color-mix(in srgb, var(--teal) 40%, transparent); }
+:root[data-theme] .in-finger.ok { background: color-mix(in srgb, var(--lemon) 40%, transparent); }
+
+/* Metronome (0.61): a flat pendulum in the brand — lilac body, paper face, ink rod, lemon weight; beats as note heads */
+:root[data-theme] .mt-pendulum .mt-body { fill: var(--lilac); stroke: var(--ink-c); stroke-width: 4; stroke-linejoin: round; }
+:root[data-theme] .mt-pendulum .mt-face { fill: #fff; stroke: var(--ink-c); stroke-width: 3; }
+:root[data-theme] .mt-pendulum .mt-scale { stroke: var(--ink-c); stroke-width: 2; opacity: 0.6; }
+:root[data-theme] .mt-pendulum .mt-rod { stroke: var(--ink-c); stroke-width: 4; stroke-linecap: round; }
+:root[data-theme] .mt-pendulum .mt-weight { fill: var(--lemon); stroke: var(--ink-c); stroke-width: 3; stroke-linejoin: round; }
+:root[data-theme] .mt-pendulum .mt-pivot { fill: var(--ink-c); }
+:root[data-theme] .mt-pendulum .mt-base { stroke: var(--ink-c); stroke-width: 5; stroke-linecap: round; }
+:root[data-theme] .mt-dot { width: 26px; height: 19px; border-radius: 50%; transform: rotate(-20deg); border: 2.5px solid var(--outline); background: var(--card-2); box-shadow: none; }
+:root[data-theme] .mt-dot.a2 { background: var(--lilac); }
+:root[data-theme] .mt-dot.a1 { background: var(--card-2); }
+:root[data-theme] .mt-dot.a0 { background: transparent; border-style: dashed; }
+:root[data-theme] .mt-dot.now { background: var(--lemon); transform: rotate(-20deg) scale(1.2); }
+:root[data-theme] .mt-play { background: var(--lemon); color: var(--ink-c); border: 3px solid var(--ink-c); box-shadow: var(--shadow); }
+:root[data-theme] .mt-play.on { background: var(--ink-c); color: var(--lemon); box-shadow: none; }
+:root[data-theme] .mt-play:active { transform: translate(var(--sx), 4px); box-shadow: none; }
+
+/* Tuner (0.61): a paper dial with an ink rim, teal in-tune zone, ink needle with a lemon note-head hub */
+:root[data-theme] .tuner-dial { background: var(--card, #fff); border: var(--stroke) solid var(--outline); border-radius: 22px; box-shadow: var(--shadow); padding: 14px; }
+:root[data-theme] .tuner-dial .dial-arc { fill: none; stroke: var(--ink-c); stroke-width: 5; stroke-linecap: round; }
+:root[data-theme] .tuner-dial .dial-zone { fill: none; stroke: var(--teal); stroke-width: 12; stroke-linecap: round; }
+:root[data-theme] .tuner-dial .dial-tick { stroke: var(--ink-c); stroke-width: 3; }
+:root[data-theme] .tuner-dial .needle { stroke: var(--ink-c); stroke-width: 5; stroke-linecap: round; }
+:root[data-theme] .tuner-dial .needle-hub { fill: var(--lemon); stroke: var(--ink-c); stroke-width: 3; }
+:root[data-theme] .tuner-dial.off .needle { stroke: var(--pink); }
+:root[data-theme] .tuner-dial.ok .needle { stroke: var(--teal); }
+:root[data-theme] .tuner-note { font-family: 'Secular One', Rubik, sans-serif; color: var(--ink); }
+:root[data-theme] .tuner-dial.locked { background: color-mix(in srgb, var(--teal) 18%, var(--card, #fff)); }
+:root[data-theme] .string-chip { border: var(--stroke) solid var(--outline); border-radius: 50%; min-width: 44px; height: 34px; background: var(--card, #fff); font-family: 'Secular One', Rubik, sans-serif; transform: rotate(-12deg); }
+:root[data-theme] .string-chip.on, :root[data-theme] .string-chip.active { background: var(--lemon); }
+:root[data-theme] .string-chip.ok { background: var(--teal); }
