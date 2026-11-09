@@ -25,6 +25,9 @@ self.addEventListener('activate', (e) => {
     caches
       .keys()
       .then((ks) => Promise.all(ks.filter((k) => k.startsWith('toneturn-') && k !== CACHE && k !== SAMPLES).map((k) => caches.delete(k))))
+      // sample sets that were replaced (0.54: the 4-layer grand → 16 layers) leave the device
+      .then(() => caches.open(SAMPLES))
+      .then((c) => c.keys().then((reqs) => Promise.all(reqs.filter((r) => /\/samples\/grand-(pp|mp|mf|f)\//.test(r.url)).map((r) => c.delete(r)))))
       .then(() => self.clients.claim()),
   );
 });

@@ -1002,6 +1002,8 @@ export function App() {
   useEffect(() => {
     void piano.setSound(soundId);
   }, [soundId]);
+  const pianoDetail = settings?.pianoDetail ?? 'auto';
+  useEffect(() => piano.setPianoDetail(pianoDetail), [pianoDetail]);
   const droneSoundId = settings?.droneSound ?? 'soft';
   useEffect(() => {
     void piano.setDroneSound(droneSoundId);

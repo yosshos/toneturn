@@ -1,14 +1,14 @@
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { grandTargetDb } from '../src/audio/piano';
+import { damperTau, layerFor, loadOrder, nearestLoaded, releaseNoiseGain, releaseResGain, targetDb, type GrandLayer } from '../src/audio/grand';
 import { chartBacking, parseChart } from '../src/engine/charts';
 import { backingTrack } from '../src/engine/perform';
 
 const dir = join(__dirname, '..', 'public', 'samples');
 const manifest = JSON.parse(readFileSync(join(dir, 'manifest.json'), 'utf8')) as {
   credits: Record<string, string>;
-  sets: Record<string, { ext: string; notes: number[] }>;
+  sets: Record<string, { ext: string; notes: number[]; lovel?: number; db?: number }>;
 };
 
 describe('instrument samples', () => {
@@ -20,29 +20,56 @@ describe('instrument samples', () => {
         expect(statSync(f).size, f).toBeGreaterThan(1000);
       }
   });
-  it('has the grand velocity layers and the bass, with credits', () => {
-    for (const l of ['pp', 'mp', 'mf', 'f']) expect(manifest.sets[`grand-${l}`].notes).toEqual(manifest.sets.grand.notes);
+  it('has the 16 grand velocity layers, its release sounds and the bass, with credits', () => {
+    const layers = Object.keys(manifest.sets).filter((k) => /^grand-v\d\d$/.test(k)).sort();
+    expect(layers.length).toBe(16);
+    const lovel = layers.map((k) => manifest.sets[k].lovel!);
+    expect(lovel[0]).toBe(1);
+    for (let i = 1; i < 16; i++) expect(lovel[i]).toBeGreaterThan(lovel[i - 1]);
+    for (let i = 1; i < 16; i++) expect(manifest.sets[layers[i]].db!).toBeGreaterThan(manifest.sets[layers[i - 1]].db!);
+    for (const k of layers) expect(manifest.sets[k].notes.length).toBe(30);
+    expect(manifest.sets['grand-rel'].notes.length).toBe(88);
+    expect(manifest.sets['grand-resL'].notes.length).toBe(23);
+    expect(manifest.sets['grand-pedal'].notes).toEqual([1, 2, 3, 4]);
+    for (const old of ['grand-pp', 'grand-mp', 'grand-mf', 'grand-f']) expect(manifest.sets[old]).toBeUndefined();
     const bass = manifest.sets.bass.notes;
     expect(Math.min(...bass)).toBeLessThanOrEqual(28);
     expect(Math.max(...bass)).toBeGreaterThanOrEqual(55);
-    expect(manifest.credits.grand).toMatch(/CC BY 3\.0/);
+    expect(manifest.credits.grand).toMatch(/CC BY 3.0/);
     expect(manifest.credits.bass).toMatch(/CC0/);
   });
-  it('the whole grand (all layers) stays under 10 MB', () => {
-    let bytes = 0;
-    for (const id of ['grand', 'grand-pp', 'grand-mp', 'grand-mf', 'grand-f'])
+  it('a layer stays a sensible download (under 4 MB), the whole grand under 70 MB', () => {
+    let all = 0;
+    for (const id of Object.keys(manifest.sets).filter((k) => k.startsWith('grand'))) {
+      let bytes = 0;
       for (const m of manifest.sets[id].notes) bytes += statSync(join(dir, id, `${m}.mp3`)).size;
-    expect(bytes).toBeLessThan(10e6);
+      expect(bytes, id).toBeLessThan(4e6);
+      all += bytes;
+    }
+    expect(all).toBeLessThan(70e6);
   });
-  it('loudness rises with velocity, smoothly', () => {
+  it('loudness rises with velocity, smoothly, and a missing layer is stood in for by its neighbour', () => {
+    const L: GrandLayer[] = Object.keys(manifest.sets).filter((k) => /^grand-v\d\d$/.test(k)).sort().map((id) => ({ id, lovel: manifest.sets[id].lovel!, db: manifest.sets[id].db! }));
     let prev = -Infinity;
-    for (let v = 0; v <= 1.0001; v += 0.01) {
-      const db = grandTargetDb(v);
-      expect(db).toBeGreaterThan(prev);
-      if (prev > -Infinity) expect(db - prev).toBeLessThan(0.5);
+    for (let v = 1; v <= 127; v++) {
+      const db = targetDb(L, v);
+      expect(db).toBeGreaterThanOrEqual(prev);
+      if (prev > -Infinity) expect(db - prev).toBeLessThan(1.2);
       prev = db;
     }
-    expect(grandTargetDb(0.675)).toBeCloseTo(0);
+    expect(layerFor(L, 1)).toBe(0);
+    expect(layerFor(L, 64)).toBe(7);
+    expect(layerFor(L, 127)).toBe(15);
+    expect(nearestLoaded(16, 7, (i) => i === 9 || i === 4)).toBe(9);
+    expect(nearestLoaded(16, 7, () => false)).toBe(-1);
+    expect(loadOrder(16, true).length).toBe(8);
+    expect(new Set(loadOrder(16, false)).size).toBe(16);
+  });
+  it('dampers by register; release sounds fade with how long the key was held', () => {
+    expect(damperTau(30)).toBeGreaterThan(damperTau(80));
+    expect(damperTau(95)).toBe(Infinity);
+    expect(releaseResGain(-4, 7, 3, 100)).toBeLessThan(releaseResGain(-4, 7, 0.2, 100));
+    expect(releaseNoiseGain(127)).toBeGreaterThan(releaseNoiseGain(20));
   });
 });
 

@@ -299,6 +299,8 @@ export interface Settings {
   mixer?: Partial<import('../audio/mixer').MixerSettings>;
   /** Instrument sound for every exercise (spec Q): 'classic' (synth) or a sample set id. */
   sound?: string;
+  /** The concert grand's detail (0.54): 'auto' = all 16 layers on a computer, 8 on a light phone. */
+  pianoDetail?: 'auto' | 'full' | 'light';
   /** Drone sound: 'soft' (synthesised, default) or a sustained recorded set ('organ'). */
   droneSound?: string;
   /** Colour theme (cosmetic, bought with gems). */

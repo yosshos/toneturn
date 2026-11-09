@@ -545,6 +545,7 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
             </label>
           </section>
           <SoundSetting t={t} value={s.sound ?? DEFAULT_SOUND} onChange={(sound) => onChange({ sound })} drone={s.droneSound ?? 'soft'} onDrone={(droneSound) => onChange({ droneSound })} />
+          {(s.sound ?? DEFAULT_SOUND) === 'grand' && <GrandDetail lang={s.uiLang} value={s.pianoDetail ?? 'auto'} onChange={(pianoDetail) => onChange({ pianoDetail })} />}
           {onMixer && (
             <button className="btn ghost mx-open" onClick={onMixer} data-open-mixer="1">
               🎚 {s.uiLang === 'he' ? 'מיקסר: עוצמות, אקולייזר ואפקטים' : 'Mixer: levels, EQ and effects'}
@@ -1052,6 +1053,43 @@ function SoundSetting({ t, value, onChange, drone, onDrone }: { t: Strings; valu
       )}
       <p className="field-hint credits">{t.soundCredits}</p>
       <DroneSoundSetting t={t} value={drone} onChange={onDrone} />
+    </section>
+  );
+}
+
+/** The concert grand's detail: how many velocity layers this device keeps (each layer ≈ 2–3 MB, loaded once). */
+function GrandDetail({ lang, value, onChange }: { lang: 'en' | 'he'; value: 'auto' | 'full' | 'light'; onChange: (v: 'auto' | 'full' | 'light') => void }) {
+  const he = lang === 'he';
+  const [ready, setReady] = useState(piano.grandReady);
+  useEffect(() => {
+    const id = setInterval(() => setReady(piano.grandReady), 1000);
+    return () => clearInterval(id);
+  }, []);
+  const opts = [
+    ['auto', he ? 'אוטומטי' : 'Automatic'],
+    ['full', he ? 'מלא — 16 שכבות' : 'Full — 16 layers'],
+    ['light', he ? 'חסכוני — 8 שכבות' : 'Light — 8 layers'],
+  ] as const;
+  return (
+    <section className="set-card" data-grand-detail="1">
+      <h2>{he ? 'הפסנתר: רמת פירוט' : 'Grand piano detail'}</h2>
+      <p className="field-hint">
+        {he
+          ? 'פסנתר כנף מוקלט ב־16 עוצמות נגינה, עם צליל השחרור של כל קליד, תהודת המיתרים והפדל. השכבות נטענות ברקע פעם אחת ונשמרות במכשיר. "אוטומטי" טוען את כולן במחשב ושמונה בטלפון חסכוני.'
+          : 'A concert grand recorded at 16 dynamics, with each key’s release, string resonance and the pedal. Layers load once in the background and stay on the device. Automatic loads all of them on a computer and eight on a light phone.'}
+      </p>
+      <div className="chips" role="radiogroup" aria-label={he ? 'רמת פירוט' : 'Detail'}>
+        {opts.map(([id, label]) => (
+          <button key={id} role="radio" aria-checked={value === id} className={`chip ${value === id ? 'on' : ''}`} onClick={() => onChange(id)} data-grand-detail-opt={id}>
+            {label}
+          </button>
+        ))}
+      </div>
+      {ready.total > 0 && (
+        <small className="field-hint" dir="auto" data-grand-ready={ready.loaded}>
+          {he ? `שכבות מוכנות: ${ready.loaded} מתוך ${ready.total}` : `Layers ready: ${ready.loaded} of ${ready.total}`}
+        </small>
+      )}
     </section>
   );
 }

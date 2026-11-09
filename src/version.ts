@@ -18,6 +18,18 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.54.0',
+    date: '2026-11-09',
+    en: [
+      'A concert grand at full detail: all 16 recorded dynamics instead of 4, so every touch has its own color; full 48 kHz sound (the highs were cut before); the damper’s sound and the string’s ring when a key is let go; the top keys ring on as on a real grand; with a MIDI keyboard, the sustain pedal’s sound and the strings blooming while it is down',
+      'Settings → Sound: the grand’s detail — automatic (all layers on a computer, eight on a light phone), full or light',
+    ],
+    he: [
+      'פסנתר כנף בפירוט מלא: כל 16 עוצמות הנגינה המוקלטות במקום 4, כך שלכל מגע יש צבע משלו; צליל מלא ב־48 קילוהרץ (הגבוהים נחתכו קודם); צליל הבולם ותהודת המיתר כשעוזבים קליד; הקלידים העליונים ממשיכים לצלצל כמו בפסנתר אמיתי; עם מקלדת MIDI גם הצליל של פדל ההמשך והמיתרים שמהדהדים כשהוא לחוץ',
+      'הגדרות ← צליל: רמת הפירוט של הפסנתר — אוטומטי (כל השכבות במחשב, שמונה בטלפון חסכוני), מלא או חסכוני',
+    ],
+  },
+  {
     version: '0.53.0',
     date: '2026-11-09',
     en: [

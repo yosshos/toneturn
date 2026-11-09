@@ -15,6 +15,7 @@ import { KIT_FILES, type DrumKit } from '../engine/grooves';
 import type { NoteEvent, PercKind } from '../engine/lesson';
 import { Cancelled, type AudioEngine, type CueKind, type RhythmAudio, type RhythmTimelineLike } from '../game/adapters';
 import { renderFx } from './fx';
+import { damperTau, layerFor, lightDevice, loadOrder, nearestLoaded, NO_DAMPER_FROM, releaseNoiseGain, releaseResGain, targetDb, vel127, type GrandLayer } from './grand';
 
 interface Voice {
   out: GainNode;
@@ -23,25 +24,13 @@ interface Voice {
 }
 
 type SampleBank = { id: string; notes: number[]; buffers: Map<number, AudioBuffer> };
+type SetInfo = { ext: string; notes: number[]; lovel?: number; db?: number; rtDecay?: number };
 
 /**
- * The grand's velocity layers (Salamander v3 / v7 / v11 / v15, sets "grand-pp" …): `upTo` = the velocity where the
- * next layer starts; `db` = the layer's level as encoded (relative to mf, see public/samples/manifest.json credits).
+ * Level trim of the 16-layer grand (its samples keep their recorded dynamics, the loudest peak at −1 dBFS):
+ * set so a velocity of 0.75 sounds as loud as the earlier 4-layer grand did.
  */
-const GRAND_LAYERS = [
-  { id: 'pp', upTo: 0.35, db: -11 },
-  { id: 'mp', upTo: 0.55, db: -5.5 },
-  { id: 'mf', upTo: 0.8, db: 0 },
-  { id: 'f', upTo: Infinity, db: 3.5 },
-] as const;
-/** Loudness (dB, relative to mf) for a velocity: a straight line through the layer centres, so it rises smoothly. */
-export function grandTargetDb(v: number): number {
-  const pts: [number, number][] = [[0.175, -11], [0.45, -5.5], [0.675, 0], [0.9, 3.5]];
-  const x = Math.max(0, Math.min(1, v));
-  const i = x < pts[1][0] ? 0 : x < pts[2][0] ? 1 : 2;
-  const [[x0, y0], [x1, y1]] = [pts[i], pts[i + 1]];
-  return y0 + ((x - x0) * (y1 - y0)) / (x1 - x0);
-}
+const GRAND_TRIM = 0.61;
 
 /** Touch response of the MIDI keys (like a keyboard's velocity curve): light = soft touch already sounds full. */
 export type LiveCurve = 'light' | 'normal' | 'heavy' | 'fixed';
@@ -133,7 +122,7 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
         const bank = await this.loadSet(id, onProgress);
         if (this.sound !== id) return false; // changed meanwhile
         this.bank = bank;
-        if (id === 'grand') this.loadExtra('grand-mf'); // the everyday layer; the others load when first needed
+        if (id === 'grand') void this.prefetchGrand();
         return true;
       } catch {
         if (this.sound === id) this.bank = null;
@@ -143,13 +132,80 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     return load;
   }
 
+  private manifestP: Promise<Record<string, SetInfo>> | null = null;
+  /** The sample manifest (fetched once). */
+  private sets(): Promise<Record<string, SetInfo>> {
+    const base = import.meta.env.BASE_URL ?? '/';
+    this.manifestP ??= fetch(`${base}samples/manifest.json`)
+      .then((r) => r.json() as Promise<{ sets: Record<string, SetInfo> }>)
+      .then((m) => m.sets)
+      .catch((e) => {
+        this.manifestP = null;
+        throw e;
+      });
+    return this.manifestP;
+  }
+
+  // ---- the 16-layer concert grand (0.54)
+  private grandLayers: GrandLayer[] | null = null;
+  private grandInfo: Record<string, SetInfo> = {};
+  /** 'auto' = every layer on a computer, eight on a light phone; or set by the player. */
+  private pianoDetail: 'auto' | 'full' | 'light' = 'auto';
+  setPianoDetail(d: 'auto' | 'full' | 'light') {
+    this.pianoDetail = d;
+    if (this.bank?.id === 'grand') void this.prefetchGrand();
+  }
+  /** How many of the grand's layers are ready (for Settings). */
+  get grandReady(): { loaded: number; total: number } {
+    const ids = this.grandLayers?.map((l) => l.id) ?? [];
+    return { loaded: ids.filter((id) => this.extras.has(id)).length, total: ids.length };
+  }
+  private prefetching = false;
+  /** Load the grand's layers in the background, the everyday ones first, then its release and pedal sounds. */
+  private async prefetchGrand() {
+    try {
+      const sets = await this.sets();
+      this.grandInfo = sets;
+      this.grandLayers ??= Object.keys(sets)
+        .filter((k) => /^grand-v\d\d$/.test(k))
+        .sort()
+        .map((id) => ({ id, lovel: sets[id].lovel ?? 1, db: sets[id].db ?? 0 }));
+      if (this.prefetching || !this.grandLayers.length) return;
+      this.prefetching = true;
+      const light = this.pianoDetail === 'light' || (this.pianoDetail === 'auto' && lightDevice());
+      const order = loadOrder(this.grandLayers.length, light).map((i) => this.grandLayers![i].id);
+      const extrasAfter = 2; // release and pedal sounds right after the two everyday layers
+      for (let k = 0; k < order.length; k++) {
+        if (this.bank?.id !== 'grand') break;
+        await this.loadNow(order[k]);
+        if (k + 1 === extrasAfter) for (const id of ['grand-rel', 'grand-resL', 'grand-resS', 'grand-pedal']) if (sets[id]) await this.loadNow(id);
+      }
+    } catch {
+      /* offline: the layers that loaded play, the rest stand in */
+    } finally {
+      this.prefetching = false;
+    }
+  }
+  /** Load a set into `extras` now (awaitable; shares the in-flight guard with loadExtra). */
+  private async loadNow(id: string) {
+    if (this.extras.has(id) || this.extraLoads.has(id)) return;
+    this.extraLoads.add(id);
+    try {
+      this.extras.set(id, await this.loadSet(id));
+    } catch {
+      this.extraFailed.set(id, Date.now());
+    } finally {
+      this.extraLoads.delete(id);
+    }
+  }
+
   /** Load a sample set (shared by instrument sounds and the drone). */
   private async loadSet(id: string, onProgress?: (done: number, total: number) => void) {
     const base = import.meta.env.BASE_URL ?? '/';
-    const manifest = (await (await fetch(`${base}samples/manifest.json`)).json()) as { sets: Record<string, { ext: string; notes: number[] }> };
-    const set = manifest.sets[id];
+    const set = (await this.sets())[id];
     if (!set) throw new Error('no set');
-    const decoder = new OfflineAudioContext(1, 1, 22050);
+    // Decode at the playing rate: decoding into a 22 kHz context (as before 0.54) cut everything above 11 kHz.
+    const decoder: BaseAudioContext = this.ctx ?? new OfflineAudioContext(2, 1, 48000);
     const buffers = new Map<number, AudioBuffer>();
     let done = 0;
     await Promise.all(
@@ -226,13 +282,15 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     }
     const bank = this.bank;
     if (!bank) return false;
-    if (bank.id === 'grand') {
-      // Velocity layers (pp / mp / mf / f): the layer gives the timbre, a gentle gain inside it keeps loudness rising
-      // smoothly. Until a layer has loaded, the single-layer grand plays as before.
-      const layer = GRAND_LAYERS.find((l) => velocity < l.upTo) ?? GRAND_LAYERS[GRAND_LAYERS.length - 1];
-      const lb = this.extras.get(`grand-${layer.id}`);
-      if (lb) return this.playBuf(lb, midi, start, dur, 0.83 * Math.pow(10, (grandTargetDb(velocity) - layer.db) / 20));
-      this.loadExtra(`grand-${layer.id}`);
+    if (bank.id === 'grand' && this.grandLayers?.length) {
+      // 16 velocity layers: the layer gives the timbre, the level follows a smooth line through the layers' measured
+      // loudness. A layer still loading is stood in for by its nearest loaded neighbour (and asked for now).
+      const L = this.grandLayers;
+      const v = vel127(velocity);
+      const want = layerFor(L, v);
+      if (!this.extras.has(L[want].id)) this.loadExtra(L[want].id);
+      const i = nearestLoaded(L.length, want, (k) => this.extras.has(L[k].id));
+      if (i >= 0) return this.playGrand(this.extras.get(L[i].id)!, midi, start, dur, v, Math.pow(10, (targetDb(L, v) - L[i].db) / 20) * GRAND_TRIM);
     }
     // Soft notes (expression exercises) really get soft; everything at 0.45 and up sounds as before.
     const peak = velocity >= 0.45 ? 0.55 + 0.45 * velocity : 0.08 + (0.7525 - 0.08) * (velocity / 0.45);
@@ -263,6 +321,94 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
       out.disconnect();
     };
     return true;
+  }
+
+  /**
+   * One note of the concert grand: the nearest of its samples (every minor third), a hair of natural variation between
+   * strikes (±2 cents, ±0.4 dB — no two hammer blows are the same), the damper by register (the top keys have none and
+   * ring on), and at the release the key's damper noise and the string's release resonance, as the library maps them.
+   */
+  private playGrand(bank: SampleBank, midi: number, start: number, dur: number, v: number, gain: number): boolean {
+    const ctx = this.ctx!;
+    const nearest = bank.notes.reduce((a, b) => (Math.abs(b - midi) < Math.abs(a - midi) ? b : a));
+    const buf = bank.buffers.get(nearest);
+    if (!buf) return false;
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    const cents = (Math.random() * 2 - 1) * 2;
+    src.playbackRate.value = Math.pow(2, (midi - nearest) / 12 + cents / 1200);
+    const out = ctx.createGain();
+    const peak = gain * Math.pow(10, ((Math.random() * 2 - 1) * 0.4) / 20);
+    out.gain.setValueAtTime(0, start);
+    out.gain.linearRampToValueAtTime(peak, start + 0.002);
+    const tau = damperTau(midi);
+    const live = this.liveRoute;
+    const natural = start + buf.duration / src.playbackRate.value;
+    let stopAt = natural;
+    if (!live && Number.isFinite(tau)) {
+      out.gain.setTargetAtTime(0, start + dur, tau);
+      stopAt = Math.min(natural, start + dur + tau * 8);
+    }
+    src.connect(out).connect(live && this.liveSampleBus ? this.liveSampleBus : this.sampleBus);
+    src.start(start);
+    src.stop(stopAt);
+    const voice: Voice & { grand?: { v: number; t0: number } } = { out, oscs: [src], end: stopAt, grand: { v, t0: start } };
+    this.voices.add(voice);
+    src.onended = () => {
+      this.voices.delete(voice);
+      out.disconnect();
+    };
+    if (!live && midi < NO_DAMPER_FROM) this.grandRelease(midi, v, start + dur, dur);
+    return true;
+  }
+
+  /** The release of a grand key at `at`: the damper's noise and the string's release resonance. */
+  private grandRelease(midi: number, v: number, at: number, held: number, bus?: GainNode) {
+    const ctx = this.ctx;
+    if (!ctx) return;
+    const out = bus ?? this.sampleBus;
+    const one = (id: string, key: number, gain: number, maxShift: number) => {
+      const b = this.extras.get(id);
+      if (!b || gain < 0.0005) return;
+      const nearest = b.notes.reduce((a, c) => (Math.abs(c - key) < Math.abs(a - key) ? c : a));
+      const buf = b.buffers.get(nearest);
+      if (!buf || Math.abs(nearest - key) > maxShift) return;
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      src.playbackRate.value = Math.pow(2, (key - nearest) / 12);
+      const g = ctx.createGain();
+      g.gain.value = gain * GRAND_TRIM;
+      src.connect(g).connect(out);
+      const t = Math.max(at, ctx.currentTime);
+      src.start(t);
+      const vc: Voice = { out: g, oscs: [src], end: t + buf.duration };
+      this.voices.add(vc);
+      src.onended = () => {
+        this.voices.delete(vc);
+        g.disconnect();
+      };
+    };
+    one('grand-rel', midi, releaseNoiseGain(v), 0);
+    const res = v >= 45 ? 'grand-resL' : 'grand-resS';
+    const info = this.grandInfo[res];
+    if (info) one(res, midi, releaseResGain(info.db ?? 0, info.rtDecay ?? 7, held, v) * 0.7, 2);
+  }
+
+  /** The sustain pedal's own sound (felt and mechanism), and its resonance send. */
+  private pedalNoise(down: boolean) {
+    const ctx = this.ctx;
+    const b = this.extras.get('grand-pedal');
+    if (!ctx || !b || this.bank?.id !== 'grand') return;
+    const key = down ? (Math.random() < 0.5 ? 1 : 2) : Math.random() < 0.5 ? 3 : 4;
+    const buf = b.buffers.get(key);
+    if (!buf) return;
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    const g = ctx.createGain();
+    g.gain.value = Math.pow(10, (this.grandInfo['grand-pedal']?.db ?? -20) / 20) * GRAND_TRIM;
+    src.connect(g).connect(this.liveSampleBus ?? this.sampleBus);
+    src.start();
+    src.onended = () => g.disconnect();
   }
 
   // Live notes from a MIDI keyboard (0.50): the keys sound through the app, as in a piano app or a software
@@ -297,6 +443,42 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     this.liveSynthBus = ctx.createGain();
     this.liveSynthBus.gain.value = 0.2 * this.liveOpts.volume;
     this.liveSynthBus.connect(this.strips.piano!.input);
+    // Sympathetic resonance: with the sustain pedal down every string is free, and the whole set rings along with what
+    // is played — a dense, slowly fading bloom fed by the live notes (a send that opens only while the pedal is down).
+    const res = ctx.createConvolver();
+    res.buffer = PianoEngine.stringBloom(ctx);
+    this.pedalSend = ctx.createGain();
+    this.pedalSend.gain.value = 0;
+    this.liveSampleBus.connect(this.pedalSend).connect(res).connect(this.strips.piano!.input);
+  }
+  private pedalSend: GainNode | null = null;
+  private pedalResonance(down: boolean) {
+    const ctx = this.ctx;
+    if (!ctx || !this.pedalSend) return;
+    this.pedalSend.gain.setTargetAtTime(down && this.bank?.id === 'grand' ? 0.22 : 0, ctx.currentTime, down ? 0.05 : 0.25);
+  }
+  /**
+   * The undamped strings' bloom: a stereo impulse of decorrelated noise shaped like many strings ringing — a soft
+   * onset (the strings take a moment to pick up energy), a long fade (RT60 ≈ 3.5 s) that darkens as it goes.
+   */
+  private static stringBloom(ctx: BaseAudioContext): AudioBuffer {
+    const sr = ctx.sampleRate;
+    const len = Math.floor(sr * 3.6);
+    const ir = ctx.createBuffer(2, len, sr);
+    for (let ch = 0; ch < 2; ch++) {
+      const d = ir.getChannelData(ch);
+      let lp = 0;
+      let hp = 0;
+      for (let i = 0; i < len; i++) {
+        const t = i / sr;
+        const w = Math.random() * 2 - 1;
+        lp += (w - lp) * (0.35 - 0.27 * Math.min(1, t / 3));
+        hp += (lp - hp) * 0.01; // take out the rumble
+        const onset = 1 - Math.exp(-t / 0.06);
+        d[i] = (lp - hp) * onset * Math.exp((-6.9 * t) / 3.5);
+      }
+    }
+    return ir;
   }
   liveNote(m: number, on: boolean, velocity127: number) {
     const ctx = this.ctx;
@@ -336,6 +518,10 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
   liveControl(cc: number, value: number) {
     const down = value >= 64;
     if (cc === 64) {
+      if (down !== this.liveSustain) {
+        this.pedalNoise(down);
+        this.pedalResonance(down);
+      }
       this.liveSustain = down;
       if (!down) this.releaseUnheld();
     } else if (cc === 66) {
@@ -353,16 +539,29 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     this.liveSostenuto.clear();
     this.liveSustain = false;
     this.liveSoft = false;
+    this.pedalResonance(false);
     for (const m of [...this.live.keys()]) this.liveRelease(m);
   }
   private releaseUnheld() {
     for (const m of [...this.live.keys()]) if (!this.liveHeld.has(m) && !this.liveSostenuto.has(m)) this.liveRelease(m);
   }
   private liveRelease(m: number, tau = 0.09) {
-    const v = this.live.get(m);
+    const v = this.live.get(m) as (Voice & { grand?: { v: number; t0: number } }) | undefined;
     if (!v || !this.ctx) return;
     this.live.delete(m);
     const t = this.ctx.currentTime;
+    if (v.grand) {
+      // The grand: its damper by register (a re-struck key or a polyphony steal still stops quickly), the top keys
+      // ring on, and the release sounds play.
+      const quick = tau < 0.09;
+      const dt = quick ? tau : damperTau(m);
+      if (!quick) this.grandRelease(m, v.grand.v, t, t - v.grand.t0, this.liveSampleBus ?? undefined);
+      if (!Number.isFinite(dt)) {
+        this.noteOff(m);
+        return;
+      }
+      tau = dt;
+    }
     v.out.gain.cancelScheduledValues(t);
     v.out.gain.setValueAtTime(v.out.gain.value, t);
     v.out.gain.setTargetAtTime(0, t, tau);
