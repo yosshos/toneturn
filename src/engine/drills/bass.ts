@@ -65,7 +65,7 @@ export const fold = (tu: Tuning, p: number): number => {
  * Place a line on the neck. A greedy hand model: the index finger sits at `pos` and covers pos … pos+span; each
  * note goes to the string / fret that needs the least hand movement (open strings are cheap unless `open: false`).
  */
-function placeLine(tu: Tuning, line: BN[], o: { pos?: number; open?: boolean; span?: number; meter?: number } = {}): Ev[] {
+function placeLine(tu: Tuning, line: BN[], o: { pos?: number; open?: boolean; span?: number; meter?: number; stay?: boolean } = {}): Ev[] {
   // B8 (0.64): the whole line is planned at once (a shortest path over every string / fret choice), not note by note.
   // Shifts cost more inside a bar than at a bar line (one hand position per bar), and a leap of 7+ frets within half a
   // beat is all but forbidden. Fixed places (open-string drills, octave shapes) stay where they are.
@@ -83,7 +83,10 @@ function placeLine(tu: Tuning, line: BN[], o: { pos?: number; open?: boolean; sp
     }
     return out.length ? out : [{ s: n, f: clamp(p - tu.open[n - 1], 0, maxF(tu)) }];
   };
-  const own = (c: C) => (c.f === 0 ? (o.open === false ? 8 : 0.4) : 0) + (c.f > 12 ? 0.04 * (c.f - 12) : 0);
+  // Final bass check: a line played "in position" (one-octave scales) keeps every note inside the hand's window
+  // (pos − 1 … pos + span + 1); before, a scale could creep up one string to fret 15, which no step cost noticed.
+  const outside = (f: number) => (o.stay && o.pos !== undefined && f > 0 ? (f < o.pos - 1 ? o.pos - 1 - f : f > o.pos + span + 1 ? f - o.pos - span - 1 : 0) * 3 : 0);
+  const own = (c: C) => (c.f === 0 ? (o.open === false ? 8 : 0.4) : 0) + (c.f > 12 ? 0.04 * (c.f - 12) : 0) + outside(c.f);
   const first = (c: C) => {
     if (o.pos !== undefined) return c.f === 0 ? 0 : c.f < o.pos ? (o.pos - c.f) * 1.5 : c.f > o.pos + span ? (c.f - o.pos - span) * 1.5 : 0;
     // No position given: start low on the neck, on a low string.
@@ -97,6 +100,10 @@ function placeLine(tu: Tuning, line: BN[], o: { pos?: number; open?: boolean; sp
       if (d >= 7 && dt <= 0.5 + 1e-9) c += 40;
       if (a.s === b.s && d >= 7 && dt <= 0.5 + 1e-9) c += 40;
     }
+    // Final bass check: a jump from an open string straight up the neck was free (E1 open → E2 at fret 12 on the same
+    // string, → G♯2 at fret 11 on the A string); after an open string the hand is near the nut, so the octave / 10th
+    // shape there (D string fret 2, G string fret 1) is what bassists play — and what they pop.
+    if (a.f === 0 && b.f >= 7 && dt <= 0.5 + 1e-9) c += a.s === b.s ? 1.5 : 1;
     return c;
   };
   const cands = line.map(candsOf);
@@ -218,13 +225,15 @@ interface Out {
   band?: BandStyle | false;
   /** Quick study: seconds to read before Play. */
   prep?: number;
+  /** Keep the whole line inside the hand position at `pos` (one-octave scales in position). */
+  stay?: boolean;
   /** Ear transcription: write the line after playing it. */
   write?: Drill['write'];
 }
 export function drillOf(s: DrillSpec, tu: Tuning, line: BN[], o: Out): Drill {
   const key = mod(s.key, 12);
   const k = o.keyName ?? `${NAMES[key]}${s.minor ? 'm' : ''}`;
-  const evs = placeLine(tu, line, { pos: o.pos, open: o.open, span: o.span, meter: o.meter });
+  const evs = placeLine(tu, line, { pos: o.pos, open: o.open, span: o.span, meter: o.meter, stay: o.stay });
   const bass: BassGoal | undefined = o.bass || o.drums ? { ...(o.bass ?? {}) } : undefined;
   const d0 = { beats: dur(line), meter: o.meter ?? 4 };
   if (o.drums && bass) bass.kickLane = drumHits(o.drums, d0.beats, d0.meter, o.pulse).filter((h) => h.d === 'k').map((h) => h.beat);
@@ -1058,7 +1067,7 @@ function genScale(s: DrillSpec, tu: Tuning): Drill {
       const ps = [...up, ...up.slice(0, -1).reverse()];
       const line: BN[] = ps.map((p, i) => ({ b: i / 2, d: i === ps.length - 1 ? 1 : 0.5, p }));
       line[0] = { ...line[0], s: str, f };
-      return drillOf(s, tu, alt(line), { en: `${sc.en}${(s.position ?? 0) === 1 ? ', 2nd position' : ''}`, he: `${sc.he}${(s.position ?? 0) === 1 ? ', מצב שני' : ''}`, pos: Math.max(1, f - 1), open: f === 0 });
+      return drillOf(s, tu, alt(line), { en: `${sc.en}${(s.position ?? 0) === 1 ? ', 2nd position' : ''}`, he: `${sc.he}${(s.position ?? 0) === 1 ? ', מצב שני' : ''}`, pos: Math.max(1, f - 1), open: f === 0, stay: true });
     }
     case 'penta5': {
       // The minor pentatonic over two octaves: up through the five positions, shifting, and back.

@@ -5,6 +5,7 @@ import { eligible, stepCatalogue, type PathInput } from '../src/engine/path';
 import { TOPIC_GEN } from '../src/engine/topics';
 import type { PlaceQuestion } from '../src/engine/lesson';
 import { ladderFamiliesFor } from '../src/engine/ladderFacts';
+import { families, levelDrills } from '../src/engine/drills/plan';
 import { DEFAULT_DRILL_SETTINGS } from '../src/engine/drills/types';
 import { FAMILY_GLYPH, GAME_STEP_GLYPH, TOPIC_GLYPH } from '../src/ui/stepGlyphs';
 import { GLYPHS } from '../src/ui/Glyph';
@@ -125,5 +126,29 @@ describe('bass in games and screens', () => {
     expect(courseOfResult(r('tech:b-up-arco-1'))).toBe('bass');
     expect(courseOfResult(r('topic:bass-notes:1'))).toBe('bass');
     expect(courseOfResult(r('topic:bass-shapes:3', 'ear'))).toBe('bass');
+  });
+});
+
+describe('bass fingering (final check)', () => {
+  const lv = (id: string) => families('bass').flatMap((f) => f.levels).find((l) => l.id === id)!;
+  it('one-octave scales in position stay in one hand position (no creeping up a string)', () => {
+    for (const id of ['b-scale-1', 'b-scale-2', 'b-scale-3', 'b-scale-4', 'b-scale-7', 'b-scale-8', 'b-scale-9', 'b-up-arco-6'])
+      for (const d of levelDrills(lv(id), 'fifths-up')) {
+        const fs = d.notes.map((n) => n.fret ?? 0).filter((f) => f > 0);
+        expect(Math.max(...fs) - Math.min(...fs), `${id} ${d.title.en}: ${fs.join(',')}`).toBeLessThanOrEqual(5);
+      }
+  });
+  it('an open string is never followed within half a beat by fret 7+ on the same string', () => {
+    for (const f of families('bass').filter((x) => x.id.startsWith('b-')))
+      for (const l of f.levels)
+        for (const d of levelDrills(l, 'fifths-up'))
+          d.notes.forEach((a, i) => {
+            const b = d.notes[i + 1];
+            if (b && a.fret === 0 && b.string === a.string && (b.fret ?? 0) >= 7 && b.beat - a.beat <= 0.5) expect.fail(`${l.id} ${d.title.en} at beat ${b.beat}`);
+          });
+  });
+  it('octaves from an open E use the octave shape (D string, fret 2)', () => {
+    const d = levelDrills(lv('b-slap-2'), 'fifths-up').find((x) => x.title.en.endsWith('· E'))!;
+    expect(d.notes[1]).toMatchObject({ pitch: 40, string: 2, fret: 2 });
   });
 });

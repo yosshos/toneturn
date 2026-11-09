@@ -462,7 +462,7 @@ button.heat-cell {
 .ear-card { display: grid; gap: 8px; padding: 12px; border: 2px solid var(--outline); border-radius: 14px; background: var(--card); }
 .ear-ask { margin: 0; font-weight: 600; color: var(--ink); }
 .ear-bars { display: flex; flex-wrap: wrap; gap: 4px; margin: 0; padding: 0; list-style: none; }
-.ear-bars li { flex: 1 0 52px; text-align: center; padding: 6px 4px; border: 2px solid var(--outline); border-radius: 8px; font-size: 0.8rem; }
+.ear-bars li { flex: 1 0 58px; text-align: center; padding: 6px 2px; border: 2px solid var(--outline); border-radius: 8px; font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } /* final bass check: 'הקשבה' broke mid-word */
 .ear-bars li.band { background: var(--bg-2); color: var(--ink-dim); }
 .ear-bars li.you { background: var(--card); color: var(--ink); }
 .ear-bars li.now { background: var(--now); color: var(--ink); }

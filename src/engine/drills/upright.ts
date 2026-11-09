@@ -180,7 +180,11 @@ export function generateUpright(s: DrillSpec, tu: Tuning): Drill {
           [...sc, ...sc.slice(0, -1).reverse()].forEach((p, i) => line.push({ b: i / 2, d: 0.5, p, st: i % 2 ? 'U' : 'D' }));
       }
       const NAMES_T = [tt('Long tones on open strings', 'צלילים ארוכים על מיתרים פתוחים'), tt('Separate bows', 'קשתות נפרדות'), tt('Slurs: two notes a bow', 'לגאטו: שני צלילים בקשת'), tt('Hooked bowing (dotted rhythm)', 'קשת מחוברת (מקצב מנוקד)'), tt('String crossing under one bow', 'מעבר מיתרים בקשת אחת'), tt('Scales in rhythm (8ths)', 'סולמות במקצב (שמיניות)')];
-      const d = drillOf(s, tu, line, { ...NAMES_T[op % 6], evenness: op % 6 !== 3, bow: 'arco', open: op % 6 === 0 || op % 6 === 4 });
+      // Final bass check: the bowed scales (1, 2, 3, 5) stay in one position from the root, open strings allowed, as
+      // ABRSM's early grades finger them — they used to creep up the E string to fret 15.
+      const scale = [1, 2, 3, 5].includes(op % 6);
+      const rootFret = R - tu.open[n - 1];
+      const d = drillOf(s, tu, line, { ...NAMES_T[op % 6], evenness: op % 6 !== 3, bow: 'arco', ...(scale ? { pos: Math.max(1, rootFret - 1), stay: true } : { open: op % 6 === 0 || op % 6 === 4 }) });
       return withCents(d, 12, op % 6 === 0 ? { loudSd: 3 } : {});
     }
     case 'b-up-scales': {
