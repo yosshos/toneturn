@@ -234,6 +234,10 @@ export interface BassGoal {
   shiftGap?: number;
   /** IOI CV drift first vs last 2 bars ≤ ratio (stamina, A8). */
   drift?: number;
+  /** Tempo drift with a sparse click (time L6): |offset slope| ≤ ms per bar (A8). */
+  barDrift?: number;
+  /** Landing after the drummer's fills (pocket L8): the downbeat after each fill bar within ±ms (B5). */
+  landing?: number;
   /** Swing ratio target and tolerance (A8), 8ths or 16ths. */
   swing?: { ratio: number; tol: number; sub: 8 | 16 };
   /** Per-subdivision bias |mean| ≤ ms for each of these positions (A8). */

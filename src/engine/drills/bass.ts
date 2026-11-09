@@ -408,7 +408,9 @@ function genPluck(s: DrillSpec, tu: Tuning): Drill {
       const fig = (R: number): BN[] => [0, 7, 12, 7, 0, 7, 12, 7].map((x, k) => ({ b: k / 2, d: 0.5, p: R + x }));
       const line = overProg(tu, key, [...PROGS.p1451, ...PROGS.p1451], fig);
       line.push(endOn(tu, key, 32, 1));
-      return drillOf(s, tu, alt(line), { en: 'Plucking zones: 4 bars near the neck, 4 near the bridge', he: 'אזורי פריטה: 4 תיבות ליד הצוואר, 4 ליד הגשר', chart: chartOf(key, [...PROGS.p1451, ...PROGS.p1451]) });
+      // A12 / N7: the bridge half must be brighter than the neck half of the SAME take (the player's own neck tone is
+      // the calibration, every take); mic only — a MIDI bass has no tone.
+      return drillOf(s, tu, alt(line), { en: 'Plucking zones: 4 bars near the neck, 4 near the bridge', he: 'אזורי פריטה: 4 תיבות ליד הצוואר, 4 ליד הגשר', chart: chartOf(key, [...PROGS.p1451, ...PROGS.p1451]), bass: { zone: 1.15 } });
     }
   }
   throw new Error(`Unknown b-pluck kind ${s.kind}`);
@@ -627,7 +629,8 @@ function genTime(s: DrillSpec, tu: Tuning): Drill {
         tt('One click per bar', 'קליק אחד לתיבה'),
         tt('The click drops out', 'הקליק נעלם'),
       ][op % 4];
-      return drillOf(s, tu, alt(line), { ...nm, click: mode, chart: chartOf(key, prog) });
+      // A8: with one click a bar (op 2) the tempo must not drift between the clicks (≤ 20 ms a bar), nor the evenness.
+      return drillOf(s, tu, alt(line), { ...nm, click: mode, chart: chartOf(key, prog), ...(op % 4 === 2 ? { bass: { barDrift: 20, drift: 0.2 } } : {}) });
     }
     case 'synco': {
       // Anticipations: the next chord's root arrives on the "and" of 4 and is tied over the bar line.
@@ -740,7 +743,7 @@ function genPocket(s: DrillSpec, tu: Tuning): Drill {
       const kicks = kickBeats('rock-8b');
       const line = overProg(tu, key, prog, (R, _c, bar) => (bar % 4 === 3 ? [{ b: 0, d: 1, p: R }] : kicks.map((b, i) => ({ b, d: (kicks[i + 1] ?? 4) - b, p: R }))));
       line.push({ ...endOn(tu, key, 32, 1), acc: true });
-      return drillOf(s, tu, alt(line), { en: 'Land on 1 after the fill', he: 'לנחות על 1 אחרי המילוי', chart: chartOf(key, prog), evenness: false, bass: { kick: 25 }, drums: { groove: 'rock-8b', fills: [3, 7] } });
+      return drillOf(s, tu, alt(line), { en: 'Land on 1 after the fill', he: 'לנחות על 1 אחרי המילוי', chart: chartOf(key, prog), evenness: false, bass: { kick: 25, landing: 15 }, drums: { groove: 'rock-8b', fills: [3, 7] } });
     }
   }
   throw new Error(`Unknown b-pocket kind ${s.kind}`);
@@ -796,7 +799,7 @@ function genGhost(s: DrillSpec, tu: Tuning): Drill {
     case 'ghost-dyn': {
       const line = fig('R.xx..xxR.xx..xx').map((x) => ({ ...x, d: 0.25 }));
       line.push(endOn(tu, key, 16, 1));
-      return drillOf(s, tu, alt(line), s.kind === 'ghost-dyn' ? { en: 'Ghost notes quieter than the notes', he: 'צלילי רפאים שקטים מהצלילים', chart: chartOf(key, prog), bass: { ghostDb: 8 }, evenness: false } : { en: 'Ghost notes in 16ths', he: 'צלילי רפאים בשש-עשריות', chart: chartOf(key, prog), evenness: false, bass: { ghostClass: 0.9 } });
+      return drillOf(s, tu, alt(line), s.kind === 'ghost-dyn' ? { en: 'Ghost notes quieter than the notes', he: 'צלילי רפאים שקטים מהצלילים', chart: chartOf(key, prog), bass: { ghostDb: 8, ghostClass: 0.9 }, evenness: false } : { en: 'Ghost notes in 16ths', he: 'צלילי רפאים בשש-עשריות', chart: chartOf(key, prog), evenness: false, bass: { ghostClass: 0.9 } });
     }
     case 'ghost-oct': {
       const line = fig('R.xO..xOR.xO.xO.').map((x) => ({ ...x, d: Math.min(x.d, 0.5) }));
@@ -817,7 +820,7 @@ function genGhost(s: DrillSpec, tu: Tuning): Drill {
       for (let k = 0; k < bars / 2; k++) for (const x of two) line.push({ ...x, b: x.b + k * 8, p: x.p + shifts[k] });
       line.push(endOn(tu, key, bars * 4, 1));
       const ch = Array.from({ length: bars }, (_, i) => chordName(key, shifts[Math.floor(i / 2)] ? [shifts[Math.floor(i / 2)], '7'] : [0, 'm7']));
-      return drillOf(s, tu, alt(line), study ? { en: '8-bar funk study: ghosts, slides, hammer-ons', he: 'אטיוד פאנק 8 תיבות: רפאים, החלקות, הקשות', chart: ch, evenness: false } : { en: 'Two-bar funk line', he: 'קו פאנק בשתי תיבות', chart: ch, evenness: false, bass: { ghostClass: 0.9, kick: 25 }, drums: { groove: 'funk-1' } });
+      return drillOf(s, tu, alt(line), study ? { en: '8-bar funk study: ghosts, slides, hammer-ons', he: 'אטיוד פאנק 8 תיבות: רפאים, החלקות, הקשות', chart: ch, evenness: false, ...(line.some((x) => x.tech === 'dead') ? { bass: { ghostClass: 0.9 } } : {}) } : { en: 'Two-bar funk line', he: 'קו פאנק בשתי תיבות', chart: ch, evenness: false, bass: { ghostClass: 0.9, kick: 25 }, drums: { groove: 'funk-1' } });
     }
   }
   throw new Error(`Unknown b-ghost kind ${s.kind}`);
@@ -1677,7 +1680,7 @@ export function genRead(s: DrillSpec, tu: Tuning): Drill {
       const prog: Prog = [[0, 'm7'], [0, 'm7'], [5, '7'], [5, '7']];
       const line = cellLine(tu, key, prog, rnd, 4);
       line.push(endOn(tu, key, 16, 1));
-      return drillOf(s, tu, alt(line), { en: '16th funk reading', he: 'קריאת פאנק בשש-עשריות', chart: chartOf(key, prog), evenness: false, show: 'staff' });
+      return drillOf(s, tu, alt(line), { en: '16th funk reading', he: 'קריאת פאנק בשש-עשריות', chart: chartOf(key, prog), evenness: false, show: 'staff', ...(line.some((x) => x.tech === 'dead') ? { bass: { ghostClass: 0.9 } } : {}) });
     }
   }
   throw new Error(`Unknown b-read kind ${s.kind}`);
@@ -1916,6 +1919,7 @@ function genStyle(s: DrillSpec, tu: Tuning): Drill {
   const beats = prog.length * meter;
   if (tail) line.push(endOn(tu, key, beats, 1));
   const groove = STYLE_GROOVE[op];
+  const ghosts = line.some((x) => x.tech === 'dead');
   return drillOf(s, tu, line.some((x) => x.st) ? line : alt(line), {
     ...nm,
     chart: chart ?? chartOf(key, prog),
@@ -1923,7 +1927,11 @@ function genStyle(s: DrillSpec, tu: Tuning): Drill {
     pulse,
     evenness,
     // B5: every style level locks with the drum kick (the F5 rule), when a groove plays under it.
-    bass: groove ? { kick: 25, ...(op === 10 || op === 15 ? { swing: { ratio: 1.5, tol: 0.1, sub: 16 as const } } : {}), ...(op === 4 ? { ghostClass: 0.9 } : {}) } : undefined,
+    // N8: every style line with written dead notes asks for them dead (0.85 for the styles, 0.9 for the funk-ghost op 4).
+    bass:
+      groove || ghosts
+        ? { ...(groove ? { kick: 25 } : {}), ...(op === 10 || op === 15 ? { swing: { ratio: 1.5, tol: 0.1, sub: 16 as const } } : {}), ...(op === 4 ? { ghostClass: 0.9 } : ghosts ? { ghostClass: 0.85 } : {}) }
+        : undefined,
     drums: groove ? { groove } : undefined,
   });
 }

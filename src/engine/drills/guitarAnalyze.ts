@@ -10,7 +10,7 @@
 import type { Drill, DrillCalibration, ExpNote, PlayedNote, TakeMetrics, TakeRules, Verdict } from './types';
 import { analyzeTake, bassThresholds, expTimeMs, median, npsOf, tempoBand } from './analyze';
 import { meanChroma, ringCheck } from '../chroma';
-import { centsOff, crossingPenalty, ghostGapDb, ioiDrift, kickLock, lengthClass, lengthMatch, loudSdDb, oddEvenAsym, overlapMs, pocketShare, releaseAccuracy, releaseTime, ringThrough, ruleCheck, shiftGap, WALK_VARIETY, slapClass, subBias, swingRatio, zoneShift } from './bassAnalyze';
+import { barDrift, centsOff, crossingPenalty, fillLandings, ghostGapDb, ioiDrift, kickLock, lengthClass, lengthMatch, loudSdDb, oddEvenAsym, overlapMs, pocketShare, releaseAccuracy, releaseTime, ringThrough, ruleCheck, shiftGap, WALK_VARIETY, slapClass, subBias, swingRatio, zoneShift } from './bassAnalyze';
 import { tuningById } from '../fretboard';
 import { bassPitchOpts } from '../yin';
 
@@ -507,6 +507,9 @@ export interface BassMeasures {
   /** A8 */
   shiftGap: number | null;
   drift: number | null;
+  /** Tempo drift (ms per bar, + = dragging) with a sparse click; |offset| of each landing after a fill (ms). Optional: absent = not asked for. */
+  barDrift?: number | null;
+  landings?: number[] | null;
   swing: number | null;
   subBias: Record<string, number> | null;
   /** A9: rests judged / rests that rang; release share within ±ms; share of pairs overlapping ≤ the limit. */
@@ -832,10 +835,12 @@ export function analyzeGuitarTake(drill: Drill, bpm: number, played: PlayedNote[
       const written = [...new Set(drill.notes.map((n) => expTimeMs(drill, n.beat, bpm)))];
       const lane = (bg.kickLane ?? []).map((k) => expTimeMs(drill, k, bpm));
       const onWritten = lane.filter((k) => written.some((w) => Math.abs(w - k) <= 1));
-      const kicks = lane.length ? [...new Set(onWritten.length ? onWritten : lane)] : written;
+      // A line written to avoid the kick (reggae one-drop: the kick on 3, the bass never) has nothing to lock to: the
+      // line is the lane then, as without drums.
+      const kicks = onWritten.length ? [...new Set(onWritten)] : written;
       const ons = norm.played.map((p) => p.on);
       b.kick = kickLock(kicks, ons, bg.kick);
-      if (lane.length) b.kick.stray = kickLock(written, ons, bg.kick).stray;
+      if (onWritten.length) b.kick.stray = kickLock(written, ons, bg.kick).stray;
       if (b.kick.lock < 0.9 || b.kick.stray > bars) factors.push({ verdict: b.kick.lock < 0.75 ? 'not' : 'almost', en: `Locked with the kick on ${Math.round(b.kick.lock * 100)}% of hits (90% needed)`, he: `נעול עם הבס-דראם ב-${Math.round(b.kick.lock * 100)}% מהמכות (צריך 90%)` });
     }
     // Sounded length of a played note (ms): mic = the energy release, MIDI = the note-off (A9, B19).
@@ -912,6 +917,29 @@ export function analyzeGuitarTake(drill: Drill, bpm: number, played: PlayedNote[
         drill.meter || 4,
       );
       if (b.drift !== null && b.drift > bg.drift) factors.push({ verdict: worse(b.drift, bg.drift), en: `Less even at the end (${Math.round(b.drift * 100)}% more spread in the last 2 bars)`, he: `פחות אחיד בסוף (${Math.round(b.drift * 100)}% יותר פיזור ב-2 התיבות האחרונות)` });
+    }
+    if (bg.barDrift) {
+      b.barDrift = barDrift(
+        pts.map((x) => ({ beat: x.beat, dev: x.dev! })),
+        drill.meter || 4,
+      );
+      if (b.barDrift !== null && Math.abs(b.barDrift) > bg.barDrift) {
+        const late = b.barDrift > 0;
+        factors.push({ verdict: worse(Math.abs(b.barDrift), bg.barDrift), en: `${late ? 'Slowing down' : 'Speeding up'} between the clicks: ${Math.round(Math.abs(b.barDrift))} ms a bar (${bg.barDrift} allowed)`, he: `${late ? 'מאטים' : 'מאיצים'} בין הקליקים: ${Math.round(Math.abs(b.barDrift))} ms לתיבה (מותר ${bg.barDrift})` });
+      }
+    }
+    if (bg.landing && drill.drums?.fills?.length) {
+      b.landings = fillLandings(
+        drill.drums.fills,
+        drill.meter || 4,
+        drill.beats,
+        pts.map((x) => ({ beat: x.beat, dev: x.dev! })),
+      );
+      const off = b.landings.filter((x) => x > bg.landing!);
+      if (off.length) {
+        const w = Math.max(...off);
+        factors.push({ verdict: off.length > b.landings.length / 2 || w > 2 * bg.landing ? 'not' : 'almost', en: `Landing on 1 after the fill: ${off.length} of ${b.landings.length} off by more than ${bg.landing} ms${Number.isFinite(w) ? ` (${Math.round(w)} ms)` : ''}`, he: `נחיתה על 1 אחרי המילוי: ${off.length} מתוך ${b.landings.length} סטו ביותר מ-${bg.landing} ms${Number.isFinite(w) ? ` (${Math.round(w)} ms)` : ''}` });
+      }
     }
     if (bg.swing) {
       b.swing = swingRatio(

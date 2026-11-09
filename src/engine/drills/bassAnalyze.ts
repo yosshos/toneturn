@@ -189,6 +189,39 @@ export function ioiDrift(pts: { beat: number; on: number }[], meter: number, bar
 }
 
 /**
+ * Tempo drift with a sparse click (time L6, one click a bar): the least-squares slope of the timing offset (ms) per
+ * bar — + = dragging, − = rushing. Null with fewer than 6 notes or under 2 bars.
+ */
+export function barDrift(pts: { beat: number; dev: number }[], meter: number): number | null {
+  if (pts.length < 6) return null;
+  const xs = pts.map((p) => p.beat / meter);
+  if (Math.max(...xs) - Math.min(...xs) < 2 - 1e-6) return null;
+  const mx = mean(xs);
+  const my = mean(pts.map((p) => p.dev));
+  let num = 0;
+  let den = 0;
+  pts.forEach((p, i) => {
+    num += (xs[i] - mx) * (p.dev - my);
+    den += (xs[i] - mx) ** 2;
+  });
+  return den > 0 ? num / den : null;
+}
+
+/**
+ * Landing after the drummer's fills (pocket L8, B5): for each fill bar, the |offset| (ms) of the note played on the
+ * downbeat after it (Infinity when nothing was played there; fills after the last bar are skipped).
+ */
+export function fillLandings(fills: number[], meter: number, beats: number, pts: { beat: number; dev: number }[]): number[] {
+  return fills
+    .map((f) => (f + 1) * meter)
+    .filter((b) => b <= beats + 1e-6)
+    .map((b) => {
+      const p = pts.find((x) => Math.abs(x.beat - b) < 1e-6);
+      return p ? Math.abs(p.dev) : Infinity;
+    });
+}
+
+/**
  * Swing ratio (A8): long ÷ short of each swung pair (8ths: per beat; 16ths: per half beat), median. 1 = straight,
  * 2 = triplet swing. Null with fewer than 3 measurable pairs.
  */

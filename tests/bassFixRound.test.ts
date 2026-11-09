@@ -5,7 +5,7 @@ import { itemTargetBpm, levelDrills, levelOfDrill, levelStars } from '../src/eng
 import { guitarCatalog, type GuitarLevelDef } from '../src/engine/drills/guitar';
 import { generate } from '../src/engine/drills/generate';
 import { BASS_PROBES, placeWalk } from '../src/engine/drills/bassProbes';
-import { chartAt, chartPcs, walkProbeReport, WALK_VARIETY } from '../src/engine/drills/bassAnalyze';
+import { barDrift, chartAt, chartPcs, fillLandings, walkProbeReport, WALK_VARIETY } from '../src/engine/drills/bassAnalyze';
 import { analyzeGuitarTake, captureOptsFor, onsetOptsFor, untimedPitch } from '../src/engine/drills/guitarAnalyze';
 import { expTimeMs } from '../src/engine/drills/analyze';
 import { yin } from '../src/engine/yin';
@@ -220,6 +220,12 @@ describe('N6 free walking needs variety: roots in alternating octaves fail', () 
     });
   }
 
+  it('the walk L11 model line has enough non-root notes', () => {
+    const d = levelDrills(levelById('b-walk-11'), order).find((x) => x.goal.bass?.rules?.kind === 'walk')!;
+    const m = analyzeGuitarTake(d, d.startBpm, playAll(d, d.startBpm));
+    expect(m.rules!.nonRoot!).toBeGreaterThanOrEqual(WALK_VARIETY.nonRoot);
+  });
+
   it('every free walking model line in the bass course keeps the variety rule', () => {
     const bad: string[] = [];
     for (const f of BASS)
@@ -229,5 +235,72 @@ describe('N6 free walking needs variety: roots in alternating octaves fail', () 
           if (R.nonRoot! < WALK_VARIETY.nonRoot || R.pcRepeats! > WALK_VARIETY.pcRepeats) bad.push(`${d.itemId} nonRoot ${R.nonRoot} pcRep ${R.pcRepeats}`);
         }
     expect(bad).toEqual([]);
+  });
+});
+
+describe('N7 / N8 / A8 / B5: zone, ghost class, drift and landing gates', () => {
+  it('pluck L9: the plucking-zone gate, calibrated on the same take (neck half vs bridge half)', () => {
+    const d = levelDrills(levelById('b-pluck-9'), order)[0];
+    expect(d.goal.bass?.zone).toBe(1.15);
+    const bpm = 80;
+    const played = playAll(d, bpm);
+    const split = expTimeMs(d, d.beats / 2, bpm);
+    const end = played[played.length - 1].on + 500;
+    const frames = (bright: number) => Array.from({ length: Math.ceil(end / 10) }, (_, k) => ({ t: k * 10, hz: 55, conf: 0.95, rms: 0.1, centroid: k * 10 >= split ? 800 * bright : 800 }));
+    const same = analyzeGuitarTake(d, bpm, played, undefined, frames(1));
+    expect(same.guitar.bass?.zone).toBeCloseTo(1, 5);
+    expect(same.verdict).not.toBe('clean');
+    expect(JSON.stringify(same.why)).toMatch(/Bridge half/);
+    const moved = analyzeGuitarTake(d, bpm, played, undefined, frames(1.3));
+    expect(moved.guitar.bass?.zone).toBeCloseTo(1.3, 5);
+    expect(JSON.stringify(moved.why)).not.toMatch(/Bridge half/);
+  });
+
+  it.each(['b-ghost-4', 'b-ghost-6', 'b-styles-10', 'b-read-9'])('%s: every item with dead notes asks for them; all-pitched fails, the right mix passes', (id) => {
+    const ds = levelDrills(levelById(id), order).filter((x) => x.notes.some((n) => n.technique === 'dead'));
+    expect(ds.length).toBeGreaterThan(0);
+    for (const d of ds.slice(0, 3)) {
+      expect(d.goal.bass?.ghostClass, d.itemId).toBeGreaterThanOrEqual(0.85);
+      const bpm = d.startBpm;
+      const pitched = analyzeGuitarTake(d, bpm, playAll(d, bpm));
+      expect(pitched.guitar.bass?.ghostClass ?? 1, d.itemId).toBeLessThan(d.goal.bass!.ghostClass!);
+      expect(pitched.verdict, d.itemId).not.toBe('clean');
+      const mix = analyzeGuitarTake(d, bpm, playAll(d, bpm, (n, i) => (n.technique === 'dead' ? { vel: 30, off: expTimeMs(d, n.beat, bpm) + 40 } : { vel: 90 + (i % 2) })));
+      expect(mix.guitar.bass?.ghostClass, d.itemId).toBeGreaterThanOrEqual(d.goal.bass!.ghostClass!);
+    }
+  });
+
+  it('time L6 (one click a bar): steady is fine, dragging 30 ms a bar is not', () => {
+    const d = levelDrills(levelById('b-time-6'), order)[0];
+    expect(d.goal.bass?.barDrift).toBe(20);
+    const bpm = d.startBpm;
+    expect(barDrift(d.notes.map((n) => ({ beat: n.beat, dev: 0 })), 4)).toBeCloseTo(0, 6);
+    const steady = analyzeGuitarTake(d, bpm, playAll(d, bpm));
+    expect(Math.abs(steady.guitar.bass?.barDrift ?? 0)).toBeLessThan(1);
+    expect(JSON.stringify(steady.why)).not.toMatch(/between the clicks/);
+    const drag = analyzeGuitarTake(d, bpm, playAll(d, bpm, (n) => ({ on: expTimeMs(d, n.beat, bpm) + 30 * (n.beat / 4) })));
+    expect(drag.guitar.bass?.barDrift).toBeCloseTo(30, 0);
+    expect(drag.verdict).not.toBe('clean');
+  });
+
+  it('fillLandings (pure): |offset| of the downbeat after each fill, Infinity when missed', () => {
+    const pts = [{ beat: 0, dev: 3 }, { beat: 16, dev: -12 }, { beat: 32, dev: 22 }];
+    expect(fillLandings([3, 7], 4, 33, pts)).toEqual([12, 22]);
+    expect(fillLandings([3, 7], 4, 33, pts.slice(0, 2))).toEqual([12, Infinity]);
+    expect(fillLandings([9], 4, 33, pts)).toEqual([]);
+  });
+
+  it('pocket L8: landing on 1 after each fill within 15 ms', () => {
+    const d = levelDrills(levelById('b-pocket-8'), order)[0];
+    expect(d.goal.bass?.landing).toBe(15);
+    const bpm = d.startBpm;
+    const landing = new Set(d.drums!.fills!.map((f) => (f + 1) * 4));
+    const on = analyzeGuitarTake(d, bpm, playAll(d, bpm));
+    expect(on.guitar.bass?.landings).toEqual(d.drums!.fills!.map(() => 0));
+    expect(JSON.stringify(on.why)).not.toMatch(/after the fill/);
+    const late = analyzeGuitarTake(d, bpm, playAll(d, bpm, (n) => (landing.has(n.beat) ? { on: expTimeMs(d, n.beat, bpm) + 35 } : {})));
+    expect(late.guitar.bass?.landings?.every((x) => x > 30)).toBe(true);
+    expect(late.verdict).toBe('not');
+    expect(JSON.stringify(late.why)).toMatch(/Landing on 1 after the fill/);
   });
 });
