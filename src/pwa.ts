@@ -66,6 +66,7 @@ export function initPwa(register: boolean) {
     set({ canInstall: false, installed: true });
   });
   if (!register || !('serviceWorker' in navigator)) return;
+  const bootAt = Date.now();
   let reloading = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (reloading || !updateRequested) return;
@@ -81,6 +82,16 @@ export function initPwa(register: boolean) {
       });
     };
     if (r.waiting && navigator.serviceWorker.controller) set({ updateReady: true });
+    // 0.63: a new version found right after opening the app is applied at once (nothing started yet, so nothing is
+    // lost); later in the session the player still chooses when ("Update now").
+    const freshStart = () => Date.now() - bootAt < 20000 && /^(#\/?(home)?)?$/.test(location.hash);
+    if (r.waiting && navigator.serviceWorker.controller && freshStart()) applyUpdate();
+    r.addEventListener('updatefound', () => {
+      const w = r.installing;
+      w?.addEventListener('statechange', () => {
+        if (w.state === 'installed' && navigator.serviceWorker.controller && freshStart()) applyUpdate();
+      });
+    });
     watch(r.installing);
     r.addEventListener('updatefound', () => watch(r.installing));
     // Check again every hour while the app is open.

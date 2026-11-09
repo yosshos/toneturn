@@ -567,7 +567,7 @@ export function useRoad(ref: React.RefObject<HTMLOListElement | null>, key: stri
     const measure = () => {
       const box = el.getBoundingClientRect();
       const pts = Array.from(el.querySelectorAll<HTMLElement>('.node')).map((li) => {
-        const r = li.querySelector('.node-disc')!.getBoundingClientRect();
+        const r = (li.querySelector('.node-disc, .node-bar') ?? li).getBoundingClientRect();
         return { x: r.left + r.width / 2 - box.left, y: r.top + r.height / 2 - box.top, done: li.classList.contains('done') };
       });
       if (pts.length < 2) return setRoad(null);
@@ -786,6 +786,10 @@ export const PRACTICE_GROUPS: { id: 'play' | 'train' | 'study'; name: { en: stri
   { id: 'train', name: { en: 'Train', he: 'להתאמן' }, items: ['drills', 'improv', 'games'] },
   { id: 'study', name: { en: 'Study', he: 'ללמוד' }, items: ['lessons', 'exams', 'puzzle'] },
 ];
+/** Practice tiles (0.63): a colour per row, and the game kinds each course shows as their own tiles. */
+const TILE_COLOR: Record<string, string> = { lessons: '#FF8A3D', puzzle: '#A78BFA', drills: '#FFD43B', songs: '#12C9B4', pieces: '#FF5FA2', charts: '#A78BFA', improv: '#6D28D9', exams: '#FF8A3D' };
+const COURSE_TILE_CATS: Partial<Record<CourseId, GameCat[]>> = { ear: ['ear', 'rhythm', 'memory', 'read'], exam: ['ear', 'read'], jazz: ['ear'], voice: ['voice'], keys: ['instrument'], guitar: ['instrument'], bass: ['instrument'] };
+const CAT_GLYPH: Record<GameCat, GlyphKind> = { ear: 'intervals', rhythm: 'rhythm', memory: 'memory', read: 'sight', voice: 'sing', instrument: 'keys', social: 'duel' };
 /** What Practice shows in each course (0.61, SPEC-COURSES): only the course's own rows; tools are shared. */
 export const COURSE_ROWS: Record<CourseId, string[]> = {
   ear: ['lessons', 'puzzle', 'games'],
@@ -886,47 +890,69 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
         </>
       )}
       {hub && !games && (
-        <section className="practice-hub" data-practice-hub="1">
-          {PRACTICE_GROUPS.filter((g) => g.items.some((k) => rows.includes(k))).map((g) => (
-            <section key={g.id} className="hub-group" aria-label={g.name[lang]} data-hub-group={g.id} id={`practice-${g.id}`}>
-              <h2 className="hub-group-h">{g.name[lang]}</h2>
-              <div className="hub-rows">
-                {g.items
-                  .filter((k) => rows.includes(k) && (k === 'games' || hub[k as keyof PracticeHub]))
-                  .map((k) => (
-                    <button
-                      key={k}
-                      className="hub-row"
-                      onClick={k === 'games' ? () => showGames(true) : course === 'voice' && k === 'drills' && hub.vocal ? hub.vocal : course === 'voice' && k === 'songs' && hub.singalong ? hub.singalong : (hub[k as keyof PracticeHub] as () => void)}
-                      data-hub={k}
-                    >
-                      <span className="hub-icon">
-                        <HubIcon k={k} />
-                      </span>
-                      <span className="hub-text">
-                        <b>{(course === 'voice' && VOICE_TX[k] ? VOICE_TX[k] : ROW_TX[k])[lang][0]}</b>
-                        <small>{(course === 'voice' && VOICE_TX[k] ? VOICE_TX[k] : ROW_TX[k])[lang][1]}</small>
-                      </span>
-                      {status?.[k] && (
-                        <span className="hub-status" data-hub-status={k}>
-                          {status[k]}
-                        </span>
-                      )}
-                      <span className="hub-go flip-rtl" aria-hidden="true">
-                        ›
-                      </span>
-                    </button>
-                  ))}
-              </div>
-            </section>
-          ))}
-          <section className="hub-group" aria-label={HUB_TX.tools[lang]} data-hub-group="tools">
-            <h2 className="hub-group-h">{HUB_TX.tools[lang]}</h2>
-            <div className="hub-tools">
+        <section className="practice-hub v2-tiles" data-practice-hub="1">
+          {/* 0.63 (design board PhonePractice): big colour tiles — the course's own rows, and its games split by kind —
+              then the tools as round buttons. */}
+          <div className="pt-grid">
+            {rows
+              .filter((k) => k !== 'games' && hub[k as keyof PracticeHub])
+              .map((k) => {
+                const tx = (course === 'voice' && VOICE_TX[k] ? VOICE_TX[k] : ROW_TX[k])[lang];
+                return (
+                  <button
+                    key={k}
+                    className="pt-tile"
+                    style={{ ['--tile' as string]: TILE_COLOR[k] ?? '#A78BFA' }}
+                    onClick={course === 'voice' && k === 'drills' && hub.vocal ? hub.vocal : course === 'voice' && k === 'songs' && hub.singalong ? hub.singalong : (hub[k as keyof PracticeHub] as () => void)}
+                    data-hub={k}
+                  >
+                    <span className="pt-icon">
+                      <HubIcon k={k} size={34} />
+                    </span>
+                    <b>{tx[0]}</b>
+                    <small>{status?.[k] ?? tx[1]}</small>
+                  </button>
+                );
+              })}
+            {rows.includes('games') &&
+              (COURSE_TILE_CATS[course] ?? []).map((c) => {
+                const gc = GAME_CATS.find((x) => x.id === c)!;
+                return (
+                  <button
+                    key={c}
+                    className="pt-tile"
+                    style={{ ['--tile' as string]: CAT_COLOR[c] }}
+                    onClick={() => {
+                      pickCat(c);
+                      showGames(true);
+                    }}
+                    data-hub-cat={c}
+                  >
+                    <span className="pt-icon">
+                      <Glyph kind={CAT_GLYPH[c]} color="#FFFFFF" size={44} />
+                    </span>
+                    <b>{gc[lang]}</b>
+                    <small>{lang === 'he' ? 'משחקים ותרגילים' : 'Games and drills'}</small>
+                  </button>
+                );
+              })}
+            {rows.includes('games') && (
+              <button className="pt-tile pt-all" style={{ ['--tile' as string]: '#FFFFFF' }} onClick={() => showGames(true)} data-hub="games">
+                <span className="pt-icon">
+                  <HubIcon k="games" size={34} />
+                </span>
+                <b>{ROW_TX.games[lang][0]}</b>
+                <small>{lang === 'he' ? 'כל המשחקים' : 'All games'}</small>
+              </button>
+            )}
+          </div>
+          <section className="pt-tools" aria-label={HUB_TX.tools[lang]} data-hub-group="tools">
+            <h2>{HUB_TX.tools[lang]}</h2>
+            <div className="pt-tool-row">
               {(['tuner', 'metronome', 'drone', 'groove', 'slowdown', 'mixer', 'log'] as const).filter((k) => hub[k]).map((k) => (
-                <button key={k} className="hub-tool" onClick={hub[k]} data-hub={k}>
-                  <HubIcon k={k} size={20} />
-                  <span>{HUB_TX[k][lang]}</span>
+                <button key={k} className="pt-tool" onClick={hub[k]} data-hub={k} aria-label={HUB_TX[k][lang]} title={HUB_TX[k][lang]}>
+                  <HubIcon k={k} size={22} />
+                  <small>{HUB_TX[k][lang]}</small>
                 </button>
               ))}
             </div>

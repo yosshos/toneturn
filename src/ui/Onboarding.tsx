@@ -53,7 +53,8 @@ export function Splash({ onDone, lang = 'he' }: { onDone: () => void; lang?: Lan
   };
   useEffect(() => {
     const reduced = document.documentElement.dataset.motion === 'reduced' || matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const id = setTimeout(finish, reduced ? 500 : 1700);
+    // 0.63 (owner): long enough to read the name and the slogan.
+    const id = setTimeout(finish, reduced ? 1200 : 2800);
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -61,6 +62,10 @@ export function Splash({ onDone, lang = 'he' }: { onDone: () => void; lang?: Lan
     <div className="splash" onPointerDown={finish} role="presentation" data-splash="1">
       <SplashLogo onDark />
       <div className="splash-word">{lang === 'he' ? 'החוש השביעי' : 'The 7th Sense'}</div>
+      <div className="splash-slogan">{lang === 'he' ? 'לשמוע. להבין. לבצע.' : 'Hear. Understand. Perform.'}</div>
+      <svg className="splash-staff" viewBox="0 0 390 130" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M0 2H390M0 32H390M0 62H390M0 92H390M0 122H390" stroke="rgb(255 255 255 / 0.22)" strokeWidth="1.6" vectorEffect="non-scaling-stroke" />
+      </svg>
     </div>
   );
 }

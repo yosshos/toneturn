@@ -1,3 +1,4 @@
+import { TodayCards } from './TodayCards';
 import { techQueue } from '../engine/ladderFacts';
 import { CourseContext } from './courseContext';
 import { CourseSheet } from './CourseSwitcher';
@@ -1230,9 +1231,9 @@ export function App() {
               onStart={() => (s.mode === 'voice' && !s.voiceConsent ? setConsentThen(() => () => startWorkout()) : startWorkout())}
               onEdit={() => go('workout')}
               onReset={() => updateSettings({ workoutToday: undefined })}
-              goal={{ todayXp: progress.history.filter((h) => localDay(new Date(h.completedAt)) === localDay(new Date())).reduce((a, h) => a + h.xp, 0), goalXp: s.dailyGoal ?? DAILY_GOAL_XP }}
             />
           }
+          today={<TodayCards t={t} settings={s} progress={progress} goalXp={s.dailyGoal ?? DAILY_GOAL_XP} signedIn={!!user} onLeague={() => go('friends')} />}
           headerExtra={<MonthReviewIcon t={t} lang={s.uiLang} progress={progress} seenMonth={s.monthReviewSeen} onSeen={(monthReviewSeen) => updateSettings({ monthReviewSeen })} />}
           streak={gems.streak}
           onStreak={() => setStreakOpen(true)}

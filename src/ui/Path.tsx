@@ -21,7 +21,7 @@ import { displayNote, pc } from '../engine/pitch';
 import { NodeIcon, starsFor, TOTALS } from './Home';
 import { UNLOCK_ALL } from './services';
 import { LESSON_ORDER, type LessonId } from '../engine/lesson';
-import { DOMAIN_HUE, roadX, useRoad } from './Arcade';
+import { DOMAIN_HUE, useRoad } from './Arcade';
 
 type Lang = 'he' | 'en';
 const TX = {
@@ -304,9 +304,7 @@ export function PathView2({
     };
   }, [roadKey]);
 
-  let k = 0;
-  const node = (x: UnitStep, unit: PathUnit) => {
-    const i = k++;
+  const node = (x: UnitStep, unit: PathUnit, slot: number) => {
     const st = x.state;
     const hue = DOMAIN_HUE[x.step.domain];
     const label = nodeTitle(x.step, settings, lang);
@@ -317,14 +315,44 @@ export function PathView2({
       else if (st !== 'locked') onStep(x, unit, 'practice');
     };
     return (
-      <li key={x.step.id} ref={isCur ? curRef : undefined} className={`node ${st === 'mastered' ? 'done mastered' : st} kind-${x.step.kind} ${x.probe ? 'probe' : ''}`} data-step={x.step.id} style={{ ['--x' as string]: `${roadX(i)}%`, ['--hue' as string]: hue }}>
+      <li key={x.step.id} ref={isCur ? curRef : undefined} className={`node ${st === 'mastered' ? 'done mastered' : st} kind-${x.step.kind} ${x.probe ? 'probe' : ''}`} data-step={x.step.id} data-slot={slot} style={{ ['--hue' as string]: hue }}>
         <button className="node-btn" disabled={st === 'locked'} onClick={click} aria-label={`${label}${st === 'tested' ? ' ✓' : ''}`}>
-          <span className="node-disc" aria-hidden="true">
-            {st === 'locked' ? <span className="lock"><Icon k="lock" /></span> : x.step.kind === 'check' ? <span className="trophy"><Icon k="trophy" /></span> : <NodeIcon kind={iconOf(x.step)} />}
-            {st === 'tested' && <span className="check-medal">✓</span>}
-            {st === 'mastered' && <span className="master-medal">★</span>}
-            {st === 'refresh' && <span className="refresh-medal">↻</span>}
-          </span>
+          {/* 0.63 (design board PhonePath): a note head on the staff — the unit test is a final double barline with a fermata,
+              review is a repeat sign; done is a filled head with a check, the current one lemon with a ring. */}
+          {x.step.kind === 'check' ? (
+            <span className="node-bar" aria-hidden="true">
+              <svg viewBox="0 0 60 90" width="60" height="90">
+                <path d="M12 26 A18 18 0 0 1 48 26" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+                <circle cx="30" cy="22" r="3.6" fill="currentColor" />
+                <rect x="24" y="34" width="3" height="56" fill="var(--ink-c)" />
+                <rect x="31" y="34" width="9" height="56" fill="var(--ink-c)" />
+              </svg>
+            </span>
+          ) : x.step.kind === 'review' ? (
+            <span className="node-bar repeat" aria-hidden="true">
+              <svg viewBox="0 0 40 90" width="40" height="90">
+                <rect x="6" y="34" width="6" height="56" fill="var(--ink-c)" />
+                <rect x="17" y="34" width="2.5" height="56" fill="var(--ink-c)" />
+                <circle cx="27" cy="55" r="3.5" fill="var(--ink-c)" />
+                <circle cx="27" cy="69" r="3.5" fill="var(--ink-c)" />
+              </svg>
+            </span>
+          ) : (
+            <span className="node-disc" aria-hidden="true">
+              {st === 'locked' ? (
+                <span className="lock">
+                  <Icon k="lock" />
+                </span>
+              ) : st === 'done' || st === 'mastered' || st === 'tested' ? (
+                <svg className="node-check" viewBox="0 0 24 24" width="24" height="24">
+                  <path d="M5 12.5l5 5 9-10" fill="none" stroke="#fff" strokeWidth="3.6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              ) : (
+                <NodeIcon kind={iconOf(x.step)} />
+              )}
+              {st === 'refresh' && <span className="refresh-medal">↻</span>}
+            </span>
+          )}
           <span className="node-text">
             {(st === 'done' || st === 'mastered') && (
               <span className="mini-stars" aria-label={`${x.stars ?? 0} ${tx.stars}`}>
@@ -336,6 +364,7 @@ export function PathView2({
             <b>
               <Iso text={label} />
             </b>
+            {isCur && <small className="node-go">{lang === 'he' ? 'לגעת כדי להתחיל' : 'Tap to start'}</small>}
             {isCur && x.probe && <small className="node-tag">{tx.probe}</small>}
             {st === 'quick' && <small className="node-tag">{tx.quick}</small>}
             {st === 'refresh' && <small className="node-tag">{tx.refresh}</small>}
@@ -345,8 +374,21 @@ export function PathView2({
     );
   };
 
-  /** Every step of a unit, ✓ ones included (no folding: the ✓ steps are what you already master). */
-  const unitSteps = (u: PathUnit) => u.steps.map((x) => node(x, u));
+  /** Every step of a unit, ✓ ones included, three to a staff (0.63, the design's systems). */
+  const unitSteps = (u: PathUnit) => {
+    const rows: UnitStep[][] = [];
+    for (let r = 0; r < u.steps.length; r += 3) rows.push(u.steps.slice(r, r + 3));
+    return rows.map((row, ri) => (
+      <li key={`${u.id}-sys${ri}`} className={`sys ${u.status}`}>
+        <svg className="sys-staff" viewBox="0 0 350 56" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M0 1H350M0 14.5H350M0 28H350M0 41.5H350M0 55H350" stroke="var(--staff-line)" strokeWidth="1.6" vectorEffect="non-scaling-stroke" />
+          <rect x="0" y="0" width="3" height="56" fill="var(--ink-c)" />
+          {ri < rows.length - 1 && <rect x="347" y="0" width="3" height="56" fill="var(--ink-c)" />}
+        </svg>
+        <ol className="sys-notes">{row.map((x, j) => node(x, u, j))}</ol>
+      </li>
+    ));
+  };
 
   const theme = (u: PathUnit) => THEMES.find((th) => th.id === u.theme);
   const secStats = view.sections[section];

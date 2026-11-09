@@ -310,6 +310,102 @@ export function TotalsTiles({ tot, lang }: { tot: FrameTotals; lang: Lang }) {
 }
 
 /** Overview: who you are now — overall level, areas and ranks, the month's challenge, your records. */
+/** Dynamics as the level (0.63, design board ProgressPhone): pp … ff from the overall rating. */
+const DYN: { name: string; from: number }[] = [
+  { name: 'pp', from: 0 },
+  { name: 'p', from: 800 },
+  { name: 'mp', from: 950 },
+  { name: 'mf', from: 1100 },
+  { name: 'f', from: 1250 },
+  { name: 'ff', from: 1400 },
+];
+const AXES: { id: DomainId; en: string; he: string }[] = [
+  { id: 'pitch', en: 'Ear', he: 'שמיעה' },
+  { id: 'reading', en: 'Reading', he: 'קריאה' },
+  { id: 'creative', en: 'Harmony', he: 'הרמוניה' },
+  { id: 'time', en: 'Rhythm', he: 'קצב' },
+  { id: 'memory', en: 'Memory', he: 'זיכרון' },
+  { id: 'instrument', en: 'Playing', he: 'נגינה' },
+];
+
+function OverviewV2({ lang, ratings, r, days }: { lang: 'he' | 'en'; ratings: Parameters<typeof domainValue>[0]; r: number | null; days: Record<string, { xp: number }> | undefined }) {
+  const he = lang === 'he';
+  const i = r === null ? -1 : DYN.reduce((a, d, k) => (r >= d.from ? k : a), 0);
+  const next = i >= 0 && i < DYN.length - 1 ? DYN[i + 1] : null;
+  const span = next && i >= 0 ? next.from - DYN[i].from : 1;
+  const into = next && r !== null && i >= 0 ? Math.max(0, Math.min(1, (r - DYN[i].from) / span)) : 1;
+  // Radar: each area from 600 (centre) to 1600 (edge); areas not measured yet sit at a small radius.
+  const val = AXES.map((a) => {
+    const d = domainValue(ratings, a.id);
+    return d ? Math.max(0.12, Math.min(1, (d.v - 600) / 1000)) : 0.12;
+  });
+  const R = 92;
+  const pt = (k: number, f: number) => {
+    const ang = (Math.PI * 2 * k) / AXES.length - Math.PI / 2;
+    return [130 + Math.cos(ang) * R * f, 120 + Math.sin(ang) * R * f];
+  };
+  const poly = (f: (k: number) => number) => AXES.map((_, k) => pt(k, f(k)).map((x) => x.toFixed(1)).join(',')).join(' ');
+  const week = Array.from({ length: 7 }, (_, k) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - k));
+    const key = localDay(d);
+    return { key, xp: days?.[key]?.xp ?? 0, label: d.toLocaleDateString(he ? 'he-IL' : 'en-US', { weekday: 'narrow' }) };
+  });
+  const maxXp = Math.max(1, ...week.map((w) => w.xp));
+  const total = week.reduce((a, w) => a + w.xp, 0);
+  return (
+    <>
+      <section className="ov-card ov-dyn" aria-label={he ? 'הדרגה' : 'Your level'}>
+        <div className="ov-head">
+          <small>{he ? 'הדרגה שלך' : 'Your level'}</small>
+        </div>
+        <div className="ov-chips" dir="ltr">
+          {DYN.map((d, k) => (
+            <span key={d.name} className={`ov-chip ${k < i ? 'past' : k === i ? 'now' : ''}`}>
+              {d.name}
+            </span>
+          ))}
+        </div>
+        <p className="ov-next">{r === null ? (he ? 'עוד לא נמדד — כמה תרגילים ונדע' : 'Not measured yet — a few exercises and we will know') : next ? (he ? `עוד ${next.from - r} נקודות ל־${next.name}` : `${next.from - r} points to ${next.name}`) : he ? 'בדרגה הגבוהה ביותר' : 'At the top level'}</p>
+        <span className="ov-bar" aria-hidden="true">
+          <i style={{ width: `${into * 100}%` }} />
+        </span>
+      </section>
+      <section className="ov-card ov-radar" aria-label={he ? 'התחומים שלך' : 'Your areas'}>
+        <svg viewBox="0 0 260 245" role="img" aria-label={AXES.map((a, k) => `${a[lang]} ${Math.round(val[k] * 100)}%`).join(', ')}>
+          {[1, 0.66, 0.33].map((f) => (
+            <polygon key={f} points={poly(() => f)} fill="none" stroke="var(--staff-line)" strokeWidth="1.5" />
+          ))}
+          <polygon points={poly((k) => val[k])} fill="var(--lemon)" stroke="var(--ink-c)" strokeWidth="3" strokeLinejoin="round" />
+          {AXES.map((a, k) => {
+            const [x, y] = pt(k, 1.22);
+            return (
+              <text key={a.id} x={x} y={y + 4} textAnchor="middle" className="ov-axis">
+                {a[lang]}
+              </text>
+            );
+          })}
+        </svg>
+      </section>
+      <section className="ov-card ov-week" aria-label={he ? 'השבוע' : 'This week'}>
+        <div className="ov-head">
+          <small>
+            {he ? 'השבוע' : 'This week'} · <span dir="ltr">{total} XP</span>
+          </small>
+        </div>
+        <div className="ov-bars" dir="ltr">
+          {week.map((w) => (
+            <span key={w.key} className="ov-col">
+              <i style={{ height: `${Math.max(10, (w.xp / maxXp) * 100)}%` }} className={w.xp ? '' : 'zero'} />
+              <small>{w.label}</small>
+            </span>
+          ))}
+        </div>
+      </section>
+    </>
+  );
+}
+
 export function OverviewView(props: ProgressTabsProps) {
   const { t, lang, progress, leagueLevels, friendLevels } = props;
   const ps = P(progress);
@@ -321,6 +417,7 @@ export function OverviewView(props: ProgressTabsProps) {
   const peak = ps.peaks?.overall;
   return (
     <div className="ps-view">
+      <OverviewV2 lang={lang} ratings={ratings} r={o?.r ?? null} days={ps.statsDays} />
       <section className="set-card ps-overall">
         <div className="ps-overall-head">
           <div>

@@ -1629,3 +1629,100 @@
 :root[data-theme] .path-techtest small { color: var(--ink-dim); }
 :root[data-theme] .path-techtest .btn { flex: none; }
 :root[data-theme] .beta-chip { display: inline-block; margin-inline-start: 6px; padding: 0 7px; border-radius: 999px; border: 2px solid var(--ink-c); background: var(--card-2); color: var(--ink-c); font: 400 0.68rem/1.5 'Secular One', Rubik, sans-serif; vertical-align: middle; }
+
+/* ── Today under the workout (0.63, design board Main): goal + league cards, today's quests ── */
+:root[data-theme] .today-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+:root[data-theme] .tc-card { all: unset; box-sizing: border-box; display: flex; flex-direction: column; gap: 6px; min-width: 0; padding: 12px 14px; border-radius: 20px; border: var(--stroke) solid var(--outline); background: var(--card, #fff); color: var(--ink); box-shadow: var(--shadow); }
+:root[data-theme] button.tc-card { cursor: pointer; }
+:root[data-theme] button.tc-card:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+:root[data-theme] .tc-card > small { font-weight: 700; color: var(--ink-dim); font-size: 0.8rem; }
+:root[data-theme] .tc-card > b { font-family: 'Secular One', Rubik, sans-serif; font-weight: 400; font-size: 1.25rem; line-height: 1.2; }
+:root[data-theme] .tc-card .wave-meter { margin-top: auto; }
+:root[data-theme] .tc-foot { display: flex; align-items: center; gap: 8px; margin-top: auto; color: var(--ink-dim); font-size: 0.8rem; }
+:root[data-theme] .tc-hint { color: var(--ink-dim); font-size: 0.8rem; }
+:root[data-theme] .today-quests { margin-top: 18px; }
+:root[data-theme] .tq-head { display: flex; justify-content: space-between; align-items: baseline; margin: 0 2px 8px; }
+:root[data-theme] .tq-head h2 { margin: 0; font-family: 'Secular One', Rubik, sans-serif; font-weight: 400; font-size: 1.1rem; }
+:root[data-theme] .tq-list { list-style: none; margin: 0; padding: 0; border-radius: 20px; border: var(--stroke) solid var(--outline); background: var(--card, #fff); box-shadow: var(--shadow); overflow: hidden; }
+:root[data-theme] .tq-list li { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-top: 1.5px solid var(--card-2); }
+:root[data-theme] .tq-list li:first-child { border-top: 0; }
+:root[data-theme] .tq-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+:root[data-theme] .tq-text b { font-weight: 800; font-size: 0.95rem; }
+:root[data-theme] .tq-bar { display: block; height: 8px; border-radius: 4px; background: var(--card-2); overflow: hidden; }
+:root[data-theme] .tq-bar i { display: block; height: 100%; border-radius: 4px; }
+:root[data-theme] .tq-n { font-weight: 900; font-variant-numeric: tabular-nums; }
+:root[data-theme] .tq-list li.done .tq-n { color: var(--teal); }
+:root[data-theme] .find-level-btn { margin-top: 16px; }
+
+/* ── The path on staves (0.63, design board PhonePath): three steps per system, rising note heads, barlines;
+   the unit test is a final double barline under a fermata, review a repeat sign ── */
+:root[data-theme] { --staff-line: #D9C8FF; }
+:root[data-theme='dark'] { --staff-line: rgb(196 181 253 / 0.35); }
+:root[data-theme] .path2 .road-svg { display: none; }
+:root[data-theme] .path2 .road .sys { position: relative; height: 176px; list-style: none; margin: 0 0 6px; }
+:root[data-theme] .path2 .road .sys-staff { position: absolute; inset-inline: 4px; top: 48px; width: calc(100% - 8px); height: 56px; overflow: visible; }
+:root[data-theme] .path2 .road .sys-notes { list-style: none; margin: 0; padding: 0; position: static; }
+:root[data-theme] .path2 .road .sys .node { position: static; height: 0; display: block; opacity: 1; transform: none; }
+:root[data-theme] .path2 .road .sys .node .node-btn { position: absolute; width: 128px; top: var(--top); inset-inline-start: var(--x); translate: -50% 0; z-index: 1; }
+:root[data-theme][dir='rtl'] .path2 .road .sys .node .node-btn { translate: 50% 0; }
+:root[data-theme] .path2 .road .sys .node[data-slot='0'] { --x: 17%; --top: 66px; }
+:root[data-theme] .path2 .road .sys .node[data-slot='1'] { --x: 43%; --top: 46px; }
+:root[data-theme] .path2 .road .sys .node[data-slot='2'] { --x: 69%; --top: 28px; }
+:root[data-theme] .path2 .road .sys .node .node-disc { width: 62px; height: 46px; display: grid; place-items: center; transform: rotate(-14deg); border-radius: 50%; border: 3px solid var(--ink-c); box-shadow: var(--sx) 4px 0 var(--ink-c); }
+:root[data-theme] .path2 .road .sys .node.current .node-disc { width: 70px; height: 52px; position: relative; }
+:root[data-theme] .path2 .road .sys .node.current .node-disc::after { content: ''; position: absolute; inset: -9px; border-radius: 50%; border: 5px solid var(--lemon); opacity: 0.8; animation: sys-ring 1.6s ease-out infinite; }
+@keyframes sys-ring { from { transform: scale(1); opacity: 0.85; } to { transform: scale(1.35); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { :root[data-theme] .path2 .road .sys .node.current .node-disc::after { animation: none; } }
+:root[data-theme] .path2 .road .sys .node.locked .node-disc { box-shadow: none; border-width: 2.5px; background: var(--card); color: var(--lilac); }
+:root[data-theme] .path2 .road .sys .node .node-check { transform: rotate(14deg); }
+:root[data-theme] .path2 .road .sys .node .node-text { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-top: 4px; }
+:root[data-theme] .path2 .road .sys .node .node-text b { font-family: 'Secular One', Rubik, sans-serif; font-weight: 400; font-size: 13px; color: var(--ink-dim); line-height: 1.2; }
+:root[data-theme] .path2 .road .sys .node.current .node-text b { color: var(--ink); }
+:root[data-theme] .path2 .road .sys .node .mini-stars { display: none; }
+:root[data-theme] .path2 .road .sys .node .node-go { padding: 6px 11px; border-radius: 12px; background: var(--ink-c); color: var(--lemon); font-size: 12px; font-weight: 900; white-space: nowrap; }
+:root[data-theme] .path2 .road .sys .node .node-bar { display: block; color: var(--purple); margin-top: -30px; }
+:root[data-theme] .path2 .road .sys .node.kind-check .node-btn,
+:root[data-theme] .path2 .road .sys .node.kind-review .node-btn { --top: 18px; }
+:root[data-theme] .path2 .road .sys .node.kind-check.locked .node-bar { color: var(--lilac); }
+
+/* ── Practice as colour tiles (0.63, design board PhonePractice) ── */
+:root[data-theme] .v2-tiles { display: flex; flex-direction: column; gap: 18px; }
+:root[data-theme] .pt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+@media (min-width: 900px) { :root[data-theme] .pt-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+:root[data-theme] .pt-tile { all: unset; box-sizing: border-box; position: relative; display: flex; flex-direction: column; justify-content: flex-end; gap: 4px; min-height: 148px; padding: 14px; border-radius: 22px; background: var(--tile); border: var(--stroke) solid var(--ink-c); box-shadow: var(--sx) 4px 0 var(--ink-c); color: var(--ink-c); cursor: pointer; text-align: start; }
+:root[data-theme] .pt-tile:active { transform: translate(var(--sx), 4px); box-shadow: none; }
+:root[data-theme] .pt-tile:focus-visible { outline: 3px solid var(--sky); outline-offset: 3px; }
+:root[data-theme] .pt-tile b { font-family: 'Secular One', Rubik, sans-serif; font-weight: 400; font-size: 1.25rem; line-height: 1.15; }
+:root[data-theme] .pt-tile small { font-size: 0.78rem; font-weight: 700; line-height: 1.3; }
+:root[data-theme] .pt-tile .pt-icon { position: absolute; top: 12px; inset-inline-start: 14px; color: var(--ink-c); }
+:root[data-theme] .pt-tile .pt-icon svg { stroke: currentColor; }
+:root[data-theme] .pt-tile.pt-all { background: var(--card, #fff); }
+:root[data-theme] .pt-tools h2 { margin: 0 2px 8px; font-size: 0.85rem; font-weight: 800; color: var(--ink); }
+:root[data-theme] .pt-tool-row { display: flex; flex-wrap: wrap; gap: 10px 12px; }
+:root[data-theme] .pt-tool { all: unset; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; gap: 4px; width: 58px; cursor: pointer; color: var(--ink); }
+:root[data-theme] .pt-tool svg { box-sizing: content-box; width: 22px; height: 22px; padding: 11px; border-radius: 50%; border: var(--stroke) solid var(--ink-c); background: var(--card, #fff); box-shadow: var(--sx) 3px 0 var(--ink-c); color: var(--ink-c); }
+:root[data-theme] .pt-tool small { font-size: 0.68rem; font-weight: 700; text-align: center; line-height: 1.2; }
+:root[data-theme] .pt-tool:focus-visible svg { outline: 3px solid var(--sky); outline-offset: 2px; }
+/* splash (0.63): name, slogan, the staff under them (design board Splash) */
+:root[data-theme] .splash .splash-slogan { margin-top: 8px; color: var(--lemon); font-family: 'Secular One', Rubik, sans-serif; font-size: 1.15rem; letter-spacing: 0.02em; opacity: 0; animation: v2-rise 0.5s ease-out 0.9s forwards; }
+:root[data-theme] .splash .splash-staff { position: absolute; inset-inline: 0; bottom: 18%; width: 100%; height: 130px; pointer-events: none; }
+@keyframes v2-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { :root[data-theme] .splash .splash-slogan { animation: none; opacity: 1; } }
+
+/* ── Progress overview (0.63, design board ProgressPhone): dynamics as level, the area radar, the week ── */
+:root[data-theme] .ov-card { background: var(--card, #fff); border: var(--stroke) solid var(--outline); border-radius: 20px; box-shadow: var(--shadow); padding: 14px 16px; margin-bottom: 14px; }
+:root[data-theme] .ov-head small { font-weight: 800; color: var(--ink-dim); font-size: 0.82rem; }
+:root[data-theme] .ov-chips { display: flex; gap: 6px; margin: 10px 0 8px; flex-wrap: wrap; }
+:root[data-theme] .ov-chip { min-width: 34px; height: 30px; padding: 0 8px; box-sizing: border-box; display: grid; place-items: center; border-radius: 10px; border: 2px solid var(--outline); background: var(--card, #fff); font: italic 700 1rem Georgia, 'Times New Roman', serif; color: var(--ink-dim); }
+:root[data-theme] .ov-chip.past { background: var(--purple); color: #fff; border-color: var(--ink-c); }
+:root[data-theme] .ov-chip.now { background: var(--lemon); color: var(--ink-c); border-color: var(--ink-c); box-shadow: var(--sx) 3px 0 var(--ink-c); }
+:root[data-theme] .ov-next { margin: 0 0 8px; font-weight: 800; font-size: 0.9rem; }
+:root[data-theme] .ov-bar { display: block; height: 10px; border-radius: 5px; background: var(--card-2); overflow: hidden; }
+:root[data-theme] .ov-bar i { display: block; height: 100%; background: var(--purple); border-radius: 5px; }
+:root[data-theme] .ov-radar svg { display: block; width: 100%; max-width: 320px; margin: 0 auto; }
+:root[data-theme] .ov-axis { font: 400 13px 'Secular One', Rubik, sans-serif; fill: var(--ink); }
+:root[data-theme] .ov-bars { display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; height: 110px; margin-top: 10px; }
+:root[data-theme] .ov-col { flex: 1; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; }
+:root[data-theme] .ov-col i { display: block; width: 100%; max-width: 30px; border-radius: 14px; background: var(--teal); border: 2px solid var(--ink-c); box-sizing: border-box; }
+:root[data-theme] .ov-col i.zero { background: var(--card-2); border-style: dashed; }
+:root[data-theme] .ov-col small { font-size: 0.72rem; font-weight: 700; color: var(--ink-dim); }

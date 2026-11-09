@@ -23,8 +23,9 @@ export const APP_THEMES: AppTheme[] = [
 export function appearanceOf(theme: string | undefined): Appearance {
   if (!theme) return 'auto';
   if (theme === 'auto' || theme === 'light' || theme === 'dark' || theme === 'contrast') return theme;
-  if (theme === 'paper') return 'light';
-  return 'dark'; // calm, studio, oled, violet and the retired shop themes were all dark
+  // 0.63 (owner): the redesign is drawn light — every theme from before it opens in the light look; dark is a choice
+  // made in Settings → Display after the redesign.
+  return 'light';
 }
 
 /** The mode actually painted (auto resolves against the device). */

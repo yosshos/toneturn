@@ -69,7 +69,7 @@ test.describe('lesson', () => {
     await page.getByRole('button', { name: 'Home' }).click();
     // Lesson 1 runs with automatic aids (a new player is below Solid): each answer gives 80 % XP (8),
     // plus the full speed bonus (3) for answering within the pace goal.
-    await expect(page.locator('.wk-goal')).toContainText('33/');
+    await expect(page.locator('.tc-goal')).toContainText('33 /');
     // Today (SPEC-TODAY): the workout and one small Find my level button — no topic list, no tools, no account card.
     await expect(page.locator('.tab[data-tab="home"]')).toContainText('Today');
     await expect(page.locator('.wk-card')).toBeVisible();

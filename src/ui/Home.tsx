@@ -36,6 +36,8 @@ interface Props {
   headerExtra?: React.ReactNode;
   /** Today's workout (spec AH W1). */
   workout?: React.ReactNode;
+  /** Under the workout (0.63): daily goal, league, today's quests. */
+  today?: React.ReactNode;
   /** The side panel on a computer (this week, daily challenge, progression of the day). */
   aside?: React.ReactNode;
   /** Teacher assignments (today's homework), when there are some. */
@@ -90,7 +92,7 @@ export const TOTALS: Partial<Record<LessonId, number>> = { 'bflat-two-homes': 3,
  * one small Find my level button. Everything else moved to its own place (Path: topics and practice rooms; Play:
  * puzzles and challenges; Progress: areas and ranks; Settings: account). First run keeps the welcome hero.
  */
-export function Home({ t, settings, progress, streak, onStreak, onPractice, onButtonsInstead, onMode, whatsNew, onPlacement, onMenu, news, assigned, headerExtra, workout, aside }: Props) {
+export function Home({ t, settings, progress, streak, onStreak, onPractice, onButtonsInstead, onMode, whatsNew, onPlacement, onMenu, news, assigned, headerExtra, workout, aside, today }: Props) {
   const [consentFor, setConsentFor] = useState<LessonId | null>(null);
   const [levelSheet, setLevelSheet] = useState(false);
   const lang = settings.uiLang;
@@ -148,6 +150,7 @@ export function Home({ t, settings, progress, streak, onStreak, onPractice, onBu
           {aside}
           {assigned}
           {workout}
+          {today}
           <button className="find-level-btn" onClick={() => setLevelSheet(true)} data-find-level="1">
             <CompassIcon /> {t.findLevel}
           </button>

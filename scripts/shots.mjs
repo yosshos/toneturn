@@ -11,10 +11,11 @@ const sizes = { phone: { width: 390, height: 844 }, wide: { width: 1440, height:
 const which = mode === 'both' ? ['phone', 'wide'] : [mode];
 const seed = !!process.env.SHOT_SEED;
 const course = process.env.SHOT_COURSE ?? 'ear';
+const BASE = process.env.SHOT_BASE ?? 'http://localhost:5173';
 const lang = process.env.SHOT_LANG === 'en' ? 'en' : 'he';
 
 async function seedDb(page) {
-  await page.goto('http://localhost:5173/manifest.webmanifest', { waitUntil: 'domcontentloaded' });
+  await page.goto(`${BASE}/manifest.webmanifest`, { waitUntil: 'domcontentloaded' });
   await page.evaluate(
     async ({ course, lang }) => {
       const now = new Date().toISOString();
@@ -54,7 +55,7 @@ for (const w of which) {
   if (seed) await seedDb(page);
   for (const h of hashes) {
     const q = seed ? '?unlock' : lang === 'en' ? '?sim=1&lang=en' : '?sim=1';
-    await page.goto(`http://localhost:5173/${q}#/${h}`, { waitUntil: 'networkidle' }).catch(() => {});
+    await page.goto(`${BASE}/${q}#/${h}`, { waitUntil: 'networkidle' }).catch(() => {});
     await page.waitForTimeout(1000);
     if (process.env.SHOT_SETUP) await page.evaluate(process.env.SHOT_SETUP).catch(() => {});
     await page.waitForTimeout(300);
