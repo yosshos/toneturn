@@ -47,7 +47,7 @@ function line(sticking: string, n: number, step: number, from = 0, extra: (i: nu
 type Lanes = Partial<Record<'h' | 'r' | 's' | 'k' | 'c' | 'p' | 't1' | 't2' | 't3', string>>;
 const LANE_VOICE: Record<keyof Lanes, DrumVoice> = { h: 'hihat', r: 'ride', s: 'snare', k: 'kick', c: 'crash', p: 'hhPedal', t1: 'tom1', t2: 'tom2', t3: 'tom3' };
 /** One bar of a groove from `b0`; `sub` steps per beat; `hatHands` = sticking for the hat lane (default all R). */
-function bar(l: Lanes, sub: number, b0: number, o: { hatHands?: string; from?: number; to?: number } = {}): DH[] {
+function bar(l: Lanes, sub: number, b0: number, o: { hatHands?: string; from?: number; to?: number; sHand?: (i: number, c: string) => 'R' | 'L' } = {}): DH[] {
   const out: DH[] = [];
   const hh = o.hatHands ? hands(o.hatHands) : null;
   for (const [lane, pat] of Object.entries(l) as [keyof Lanes, string][]) {
@@ -56,7 +56,8 @@ function bar(l: Lanes, sub: number, b0: number, o: { hatHands?: string; from?: n
       const b = i / sub;
       if ((o.from !== undefined && b < o.from - 1e-9) || (o.to !== undefined && b >= o.to - 1e-9)) return;
       const voice: DrumVoice = lane === 'h' && c === 'o' ? 'hhOpen' : LANE_VOICE[lane];
-      const h: 'R' | 'L' = lane === 's' ? 'L' : lane === 'h' && hh ? hh[i % hh.length] : 'R';
+      // Two hands on the hat (hatHands): the snare takes that step's hand, so the alternation never breaks (RLRL|R on 2).
+      const h: 'R' | 'L' = (lane === 's' || lane === 'h') && hh ? hh[i % hh.length] : lane === 's' ? (o.sHand ? o.sHand(i, c) : 'L') : 'R';
       // Written length: to the lane's next hit (a kick on 1 and 3 is a quarter, not an 8th), at most a beat.
       const nx = [...pat].findIndex((x, j) => j > i && x !== '.');
       const d = Math.min(1, ((nx < 0 ? pat.length : nx) - i) / sub);
@@ -140,7 +141,7 @@ function genStrokes(s: DrillSpec): Drill {
         ['mf', 'p', 'f', 'p'],
       ];
       const plan = plans[op];
-      return finish(s, line('RL', 32, 0.5, 0, (i) => ({ dyn: plan[Math.floor(i / 8)] })), { title: t(`Three dynamics on cue · ${plan.join(' → ')}`, `שלוש עוצמות לפי הסימן · ${plan.join(' ← ')}`), bpm: 70, bars: 4, mic: true, goal: { levels: 0.85 } });
+      return finish(s, line('RL', 32, 0.5, 0, (i) => ({ dyn: plan[Math.floor(i / 8)] })), { title: t(`Three dynamics on cue · ${plan.join(' → ')}`, `שלוש עוצמות לפי הסימן · ${plan.join(' → ')}`), bpm: 70, bars: 4, mic: true, goal: { levels: 0.85 } });
     }
     case 4: {
       const st = op === 1 ? 'LRLR' : 'RLRL';
@@ -196,14 +197,14 @@ function genRolls(s: DrillSpec): Drill {
     case 5: {
       // Single-stroke four / seven: even strokes into an accent.
       if (op === 1) {
-        const hits = rep(8, (k) => line(k % 2 ? 'LRLRLR' : 'RLRLRL', 6, 1 / 6, k * 2).concat(line(k % 2 ? 'R' : 'L', 1, 1, k * 2 + 1, () => ({ acc: true }))));
+        const hits = rep(8, (k) => line(k % 2 ? 'LRLRLR' : 'RLRLRL', 6, 1 / 6, k * 2).concat(line(k % 2 ? 'L' : 'R', 1, 1, k * 2 + 1, () => ({ acc: true }))));
         return finish(s, hits, { title: t('Single-stroke seven', 'שבע מכות בודדות'), bpm: 70, bars: 4, mic: true, goal: { accentPos: 0.85 } });
       }
       if (op === 2) {
         const hits = rep(8, (k) => line(k % 2 ? 'LRL' : 'RLR', 3, 0.25, k * 2 + 0.25).concat(line(k % 2 ? 'R' : 'L', 1, 1, k * 2 + 1, () => ({ acc: true }))));
         return finish(s, hits, { title: t('Single-stroke four in 16ths', 'ארבע מכות בודדות בשש-עשריות'), bpm: 70, bars: 4, mic: true, goal: { accentPos: 0.85 } });
       }
-      const hits = rep(16, (k) => line(k % 2 ? 'LRL' : 'RLR', 3, 1 / 6, k).concat(line(k % 2 ? 'R' : 'L', 1, 1, k + 0.5, () => ({ acc: true }))));
+      const hits = rep(16, (k) => line(k % 2 ? 'LRL' : 'RLR', 3, 1 / 6, k).concat(line(k % 2 ? 'R' : 'L', 1, 0.5, k + 0.5, () => ({ acc: true }))));
       return finish(s, hits, { title: t('Single-stroke four (16th triplets)', 'ארבע מכות בודדות (טריולות שש-עשריות)'), bpm: 70, bars: 4, mic: true, goal: { accentPos: 0.85 } });
     }
     default: {
@@ -211,9 +212,13 @@ function genRolls(s: DrillSpec): Drill {
       const strokes = [5, 7, 9][op];
       const span = op === 2 ? 4 : 2;
       const hits = rep(16 / span, (k) => {
-        const st = k % 2 ? 'LLRR' : 'RRLL';
+        // 5 and 9 alternate the lead (RRLLR LLRRL); the 7 releases on the other hand, so each group restarts on R.
+        const st = k % 2 && strokes !== 7 ? 'LLRR' : 'RRLL';
         const doubles = line(st, strokes - 1, 0.25, k * span, (i) => ({ dbl: (i % 2 ? 2 : 1) as 1 | 2 }));
-        const rel = line(k % 2 ? 'L' : 'R', 1, 1, k * span + (strokes - 1) * 0.25, () => ({ acc: true }));
+        // PAS: the release is the hand after the last double (5: RRLL R, 7: RRLLRR L, 9: RRLLRRLL R).
+        const last = doubles[doubles.length - 1].h;
+        const relAt = (strokes - 1) * 0.25;
+        const rel = line(last === 'R' ? 'L' : 'R', 1, Math.min(1, span - relAt), k * span + relAt, () => ({ acc: true }));
         return [...doubles, ...rel];
       });
       return finish(s, hits, { title: t(`${strokes}-stroke roll (open)`, `גלגול של ${strokes} מכות (פתוח)`), bpm: 70, bars: 4, mic: true, goal: { ratio: 0.8 } });
@@ -288,7 +293,7 @@ function genTime(s: DrillSpec): Drill {
           b += per;
         }
       const nm = [t('up', 'עולה'), t('down', 'יורד'), t('up, two beats each', 'עולה, שתי פעמות לכל אחת')][op];
-      return finish(s, hits, { title: t(`Subdivision ladder ♩ ♫ 3 ♬ · ${nm.en}`, `סולם חלוקות ♩ ♫ 3 ♬ · ${nm.he}`), bpm: 60, bars: 4, mic: true });
+      return finish(s, hits, { title: t(`Subdivision ladder · ${nm.en}`, `סולם חלוקות · ${nm.he}`), bpm: 60, bars: 4, mic: true });
     }
     case 3: {
       const [hits, nm] = three(4, false)[op];
@@ -310,7 +315,7 @@ function genTime(s: DrillSpec): Drill {
 // ───────────────────────────── F5 rock & pop grooves ─────────────────────────────
 
 const ROCK: Lanes = { h: 'xxxxxxxx', s: '..x...x.', k: 'x...x...' };
-const KICKS8 = ['x...x.x.', 'x..xx...', 'xx..x...', 'x...x..x'];
+const KICKS8 = ['x...xx..', 'x..xx...', 'xx..x...', 'x...x..x'];
 /** A groove bar, `bars` times; bar 0 may start with a crash instead of the hat. */
 function grooveBars(l: Lanes, sub: number, bars: number, o: { hatHands?: string; crashFirst?: boolean } = {}): DH[] {
   const out = rep(bars, (k) => bar(l, sub, k * 4, { hatHands: o.hatHands }));
@@ -342,7 +347,7 @@ function genRock(s: DrillSpec): Drill {
       return fin(grooveBars({ h: 'xxxxxxxxxxxxxxxx', s: '....x.......x...', k }, 4, 8), `16th hi-hat, one hand · kick ${['1 & 3', '1, "&" of 2, 3', '1, 3, "&" of 3'][op]}`, `היי־האט בשש-עשריות ביד אחת · קיק ${['1 ו-3', '1, "וְ" של 2, 3', '1, 3, "וְ" של 3'][op]}`, 70);
     }
     case 5: {
-      // Two hands on the hat (R L R L); on 2 and 4 the hand goes to the snare instead of the hat.
+      // Two hands on the hat (R L R L); on 2 and 4 the right hand (its turn in the alternation) moves to the snare.
       const k = ['x.......x.......', 'x.....x.x.......', 'x..x....x.x.....'][op];
       return fin(grooveBars({ h: 'xxxx.xxxxxxx.xxx', s: '....x.......x...', k }, 4, 8, { hatHands: 'RLRLRLRLRLRLRLRL' }), `16th hi-hat, two hands · variation ${op + 1}`, `היי־האט בשש-עשריות בשתי ידיים · וריאציה ${op + 1}`, 80);
     }
@@ -465,7 +470,7 @@ function rnd(seed: string): () => number {
 /** Beat cells (onsets inside one beat, as fractions) for each reading level. */
 const CELLS: Record<number, number[][]> = {
   1: [[0], [0, 0.5], [0.5], [], [0], [0, 0.5]],
-  // L2 dotted quarters and ties: two-beat cells (onsets in beats from the cell start).
+  // L2 dotted quarters and syncopation (a quarter on the "&"): two-beat cells (onsets in beats from the cell start).
   2: [[0, 1.5], [0, 1], [0, 0.5, 1.5], [0.5, 1], [0, 1, 1.5]],
   3: [[0, 0.25, 0.5, 0.75], [0, 0.5, 0.75], [0, 0.25, 0.5], [0, 0.75], [0.25, 0.5, 0.75], [0, 0.5]],
   4: [[0, 1 / 3, 2 / 3], [0, 0.5], [0], [0, 1 / 3, 2 / 3], [0, 0.25, 0.5, 0.75]],
@@ -495,15 +500,23 @@ function genRead(s: DrillSpec): Drill {
     const c = cells[Math.floor(r() * cells.length)];
     // The first beat of each bar always has a note (easier to read), the last bar ends on 1 of the next if empty.
     const cell = c.length || b % 4 ? c : [0];
-    // Hand to hand: each beat starts with the right hand and alternates.
-    cell.forEach((x, j) => hits.push({ b: b + x, v: 'snare', h: j % 2 ? 'L' : 'R', d: 0.25 }));
+    // Sticking by grid position (hand to hand): 8th levels R on the beat, L on the "&"; 16th levels R on 1 and "&", L
+    // on "e" and "a"; triplets alternate inside the beat.
+    const grid = lv <= 2 ? 2 : 4;
+    cell.forEach((x, j) => {
+      const g = (x % 1) * grid;
+      const h: 'R' | 'L' = Math.abs(g - Math.round(g)) < 1e-6 ? (Math.round(g) % 2 ? 'L' : 'R') : j % 2 ? 'L' : 'R';
+      hits.push({ b: b + x, v: 'snare', h, d: 0.25 });
+    });
   }
   // Durations: up to the next onset (the staff draws dotted values and rests from these).
   hits.sort((a, b) => a.b - b.b);
-  // Written lengths: to the next onset — quarters at most, dotted quarters in L2 (rests fill the rest).
+  // Written lengths: to the next onset, never past the end of the note's beat (an 8th on the "&" then an 8th rest,
+  // not a quarter across the beat) — except L2, whose items are dotted quarters and syncopated quarters on the "&".
   hits.forEach((h, i) => {
     const gap = (hits[i + 1]?.b ?? 16) - h.b;
-    h.d = lv === 2 && gap >= 1.5 && Number.isInteger(h.b) ? 1.5 : Math.min(1, gap);
+    const toBeat = Math.ceil(h.b + 1e-6) - h.b;
+    h.d = lv === 2 ? (gap >= 1.5 && Number.isInteger(h.b) ? 1.5 : Math.min(1, gap)) : Math.min(gap, toBeat);
   });
   if (lv === 4) {
     // Markings: accents on some beats, ghost notes on some offbeats (velocity bands from the calibration).
@@ -512,9 +525,178 @@ function genRead(s: DrillSpec): Drill {
       else if (!Number.isInteger(h.b) && r() < 0.3 && i % 3 === 1) h.ghost = true;
     });
   }
-  const nm = [t('quarters, 8ths and rests', 'רבעים, שמיניות והפסקות'), t('dotted quarters and ties', 'רבעים מנוקדים וקשתות'), t('16th groupings', 'קבוצות של שש-עשריות'), t('triplets, accents, ghost notes', 'טריולות, הדגשות ותווי רפאים')][lv - 1];
+  const nm = [t('quarters, 8ths and rests', 'רבעים, שמיניות והפסקות'), t('dotted quarters, syncopation', 'רבעים מנוקדים וסינקופות'), t('16th groupings', 'קבוצות של שש-עשריות'), t('triplets, accents, ghost notes', 'טריולות, הדגשות ותווי רפאים')][lv - 1];
   const goal: DrumGoal = lv === 4 ? { accentPos: 0.8, ghost: 0.75 } : {};
   return finish(s, hits, { title: t(`Snare reading · ${nm.en} · ${op + 1}`, `קריאה על הסנר · ${nm.he} · ${op + 1}`), bpm: lv >= 3 ? 60 : 70, bars: 4, mic: true, show: 'staff', goal });
+}
+
+// ───────────────────────────── v2 families (DRUMS_AUDIT N1): F6, F7, F10, F12, F13 ─────────────────────────────
+
+/** `bars` bars of one groove bar. */
+const gb = (l: Lanes, sub: number, bars: number, o: Parameters<typeof bar>[3] = {}): DH[] => rep(bars, (k) => bar(l, sub, k * 4, o));
+/** Hand to hand on the 16th grid: R on the beat and "&", L on "e" and "a". */
+const grid16 = (i: number): 'R' | 'L' => (i % 2 ? 'L' : 'R');
+const BB = '....x.......x...';
+
+// F6 — funk & ghost notes (16th grid). L1 snare alone (practice pad OK), then hat, a syncopated kick, the 16th hat.
+function genFunk(s: DrillSpec): Drill {
+  const op = s.option ?? 0;
+  const lv = levelOfKind(s.kind);
+  const fin = (hits: DH[], en: string, he: string, bpm: number, goal: DrumGoal, mic = false) => finish(s, hits, { title: t(en, he), bpm, bars: mic ? 4 : 8, mic, goal });
+  switch (lv) {
+    case 1: {
+      const sn = ['.g.gXg.g.g.gXg.g', '...gX..g...gX..g', '.gggX....gggX...'][op];
+      const nm = [t('ghosts on "e" and "a"', 'רפאים על "e" ועל "a"'), t('ghosts on "a"', 'רפאים על "a"'), t('ghosts into 2 and 4', 'רפאים לקראת 2 ו-4')][op];
+      return fin(gb({ s: sn }, 4, 4, { sHand: grid16 }), `Snare ghosts, accents on 2 and 4 · ${nm.en}`, `תווי רפאים בסנר, הדגשות על 2 ו-4 · ${nm.he}`, 60, { ghost: 0.85, accentPos: 0.85 }, true);
+    }
+    case 2: {
+      const sn = ['...gX......gX...', '....Xg......Xg..', '...gXg.....gXg..'][op];
+      const nm = [t('ghost before the backbeat', 'רפאים לפני הביט האחורי'), t('ghost after the backbeat', 'רפאים אחרי הביט האחורי'), t('ghosts around the backbeat', 'רפאים סביב הביט האחורי')][op];
+      return fin(gb({ h: 'x.x.x.x.x.x.x.x.', s: sn, k: 'x.......x.......' }, 4, 8), `Ghost notes with hi-hat 8ths · ${nm.en}`, `תווי רפאים עם היי־האט בשמיניות · ${nm.he}`, 70, { ghost: 0.85 });
+    }
+    case 3: {
+      const k = ['x.....x...x.....', 'x..x..x...x..x..', 'x.....xx..x.....'][op];
+      return fin(gb({ h: 'x.x.x.x.x.x.x.x.', s: '...gX......gX..g', k }, 4, 8), `Ghost notes and a syncopated kick · variation ${op + 1}`, `תווי רפאים וקיק מסונכפ · וריאציה ${op + 1}`, 70, { ghost: 0.85 });
+    }
+    default: {
+      const sn = ['....X..g.g..X...', '...gX......gX.g.', '..g.X..g..g.X...'][op];
+      return fin(gb({ h: 'xxxxxxxxxxxxxxxx', s: sn, k: 'x.....x...x.....' }, 4, 8), `16th hi-hat funk with ghosts · variation ${op + 1}`, `פאנק עם היי־האט בשש-עשריות ורפאים · וריאציה ${op + 1}`, 70, { ghost: 0.85 });
+    }
+  }
+}
+
+// F7 — shuffle & triplet feels (8th-triplet grid: 12 steps a bar).
+function genShuffle(s: DrillSpec): Drill {
+  const op = s.option ?? 0;
+  const lv = levelOfKind(s.kind);
+  const fin = (hits: DH[], en: string, he: string, bpm: number, goal: DrumGoal = {}) => finish(s, hits, { title: t(en, he), bpm, bars: 8, mic: false, goal });
+  const SN = '...x.....x..';
+  switch (lv) {
+    case 1: {
+      const l: Lanes = op === 1 ? { r: 'xxxxxxxxxxxx', s: SN, k: 'x.....x.....' } : { h: 'xxxxxxxxxxxx', s: SN, k: op === 2 ? 'x.....x....x' : 'x.....x.....' };
+      const nm = [t('hi-hat', 'היי־האט'), t('ride', 'רייד'), t('kick on the last triplet of 4', 'קיק על הטריולה האחרונה של 4')][op];
+      return fin(gb(l, 3, 8), `Triplets, snare on 2 and 4 · ${nm.en}`, `טריולות, סנר על 2 ו-4 · ${nm.he}`, 60);
+    }
+    case 2: {
+      const l: Lanes = op === 1 ? { r: 'x.xx.xx.xx.x', s: SN, k: 'x.....x.....' } : { h: 'x.xx.xx.xx.x', s: SN, k: op === 2 ? 'x....xx.....' : 'x.....x.....' };
+      const nm = [t('hi-hat', 'היי־האט'), t('ride', 'רייד'), t('kick pickup into 3', 'קיק מוביל ל-3')][op];
+      return fin(gb(l, 3, 8), `Shuffle · ${nm.en}`, `שאפל · ${nm.he}`, 80);
+    }
+    case 3: {
+      const k = ['x.....x.....', 'x....xx.....', 'x.x...x.x...'][op];
+      return fin(gb({ r: 'xxxxxxxxxxxx', s: SN, k }, 3, 8), `Slow blues, 12/8 feel · variation ${op + 1}`, `בלוז איטי בתחושת 12/8 · וריאציה ${op + 1}`, 50);
+    }
+    default: {
+      // Double (Texas) shuffle: both hands shuffle — the right on the hat / ride, the left on the snare, 2 and 4 accented.
+      const top: Lanes = op === 1 ? { r: 'x.xx.xx.xx.x' } : { h: 'x.xx.xx.xx.x' };
+      const k = op === 2 ? 'x.....x.....' : 'x..x..x..x..';
+      return fin(gb({ ...top, s: 'g.gX.gg.gX.g', k }, 3, 8), `Double shuffle · ${[t('hi-hat', 'היי־האט'), t('ride', 'רייד'), t('kick on 1 and 3', 'קיק על 1 ו-3')][op].en}`, `שאפל כפול · ${[t('hi-hat', 'היי־האט'), t('ride', 'רייד'), t('kick on 1 and 3', 'קיק על 1 ו-3')][op].he}`, 100, { ghost: 0.8 });
+    }
+  }
+}
+
+// F10 — independence: an ostinato over the kick in unison, then generated kick / snare lines to read (Reed-style idea).
+/** A generated two-bar line on one lane: per beat one of the cells (onsets in a beat, 16th grid), bar starts on 1. */
+function genLine(seed: string, cells: number[][], sub: number): string {
+  const r = rnd(seed);
+  const steps = Array(8 * sub).fill('.');
+  for (let b = 0; b < 8; b++) {
+    const c = cells[Math.floor(r() * cells.length)];
+    const cell = b % 4 === 0 && !c.includes(0) ? [0, ...c] : c;
+    for (const x of cell) steps[Math.round((b + x) * sub)] = 'x';
+  }
+  return steps.join('');
+}
+function genIndep(s: DrillSpec): Drill {
+  const op = s.option ?? 0;
+  const lv = levelOfKind(s.kind);
+  const two = (l: Lanes, sub: number): DH[] => {
+    // A two-bar line: split each lane in halves and alternate them for four bars.
+    const half = (x: string, k: number) => x.slice(k * 4 * sub, (k + 1) * 4 * sub);
+    return rep(4, (k) => bar(Object.fromEntries(Object.entries(l).map(([n, x]) => [n, x!.length > 4 * sub ? half(x!, k % 2) : x])) as Lanes, sub, k * 4));
+  };
+  switch (lv) {
+    case 1: {
+      const l: Lanes = [{ h: 'xxxxxxxx', k: 'xxxxxxxx' }, { h: 'xxxxxxxx', k: 'x.x.x.x.' }, { h: 'x.x.x.x.', k: 'xxxxxxxx' }][op];
+      const nm = [t('hat and kick 8ths', 'היי־האט וקיק בשמיניות'), t('hat 8ths, kick quarters', 'היי־האט בשמיניות, קיק ברבעים'), t('hat quarters, kick 8ths', 'היי־האט ברבעים, קיק בשמיניות')][op];
+      return finish(s, gb(l, 2, 4), { title: t(`Hands and feet together · ${nm.en}`, `ידיים ורגליים יחד · ${nm.he}`), bpm: 60, bars: 4, mic: false });
+    }
+    case 2: {
+      const k = genLine(`indep2:${op}`, [[0], [0.5], [0, 0.5], [], [0]], 2);
+      return finish(s, two({ h: 'x'.repeat(16), k }, 2), { title: t(`Hi-hat 8ths, read the kick (8ths) · ${op + 1}`, `היי־האט בשמיניות, לקרוא את הקיק (שמיניות) · ${op + 1}`), bpm: 60, bars: 4, mic: false, show: 'staff' });
+    }
+    case 3: {
+      const k = genLine(`indep3:${op}`, [[0], [0, 0.75], [0, 0.5], [0.25], [0.5, 0.75], [0.75], []], 4);
+      return finish(s, two({ h: 'x.'.repeat(16), k }, 4), { title: t(`Hi-hat 8ths, read the kick (16ths) · ${op + 1}`, `היי־האט בשמיניות, לקרוא את הקיק (שש-עשריות) · ${op + 1}`), bpm: 60, bars: 4, mic: false, show: 'staff' });
+    }
+    default: {
+      const sn = genLine(`indep4:${op}`, [[0.5], [0], [0.25, 0.5], [0.75], [0, 0.75], [0.5, 0.75], []], 4);
+      return finish(s, two({ h: 'x.'.repeat(16), s: sn, k: 'x.......x.......'.repeat(2) }, 4), { title: t(`Hi-hat and kick, read the snare · ${op + 1}`, `היי־האט וקיק, לקרוא את הסנר · ${op + 1}`), bpm: 60, bars: 4, mic: false, show: 'staff' });
+    }
+  }
+}
+
+// F12 — Middle-Eastern & Israeli (16th grid): dum → kick (or floor tom), tak → snare (right hand), ka → snare ghost (left).
+// Traditional patterns, in 8ths: maqsum D T . T D . T . · baladi D D . T D . T . · sa'idi D T . D D . T . · malfuf (2/4) D . . T . . T .
+const ME: Record<'maqsum' | 'baladi' | 'saidi' | 'malfuf', { k: string; s: string; ka: string; en: string; he: string }> = {
+  maqsum: { k: 'x.......x.......', s: '..x...x.....x...', ka: '..x.g.x...g.x.g.', en: 'Maqsum', he: 'מקסום' },
+  baladi: { k: 'x.x.....x.......', s: '......x.....x...', ka: '....g.x...g.x.g.', en: 'Baladi', he: 'בלדי' },
+  saidi: { k: 'x.....x.x.......', s: '..x.........x...', ka: '..x.g.....g.x.g.', en: "Sa'idi", he: 'סעידי' },
+  malfuf: { k: 'x.......x.......', s: '...x..x....x..x.', ka: '...x..x....x..x.', en: 'Malfuf', he: 'מלפוף' },
+};
+const takKa = (_i: number, c: string): 'R' | 'L' => (c === 'g' ? 'L' : 'R');
+function genMideast(s: DrillSpec): Drill {
+  const op = s.option ?? 0;
+  const lv = levelOfKind(s.kind);
+  const fin = (hits: DH[], en: string, he: string, bpm: number, goal: DrumGoal = {}) => finish(s, hits, { title: t(en, he), bpm, bars: 8, mic: false, goal });
+  switch (lv) {
+    case 1: {
+      const r = [ME.malfuf, ME.maqsum, ME.maqsum][op];
+      const l: Lanes = op === 2 ? { t3: r.k, s: r.s } : { k: r.k, s: r.s };
+      return fin(gb(l, 4, 8, { sHand: takKa }), `${r.en}: dum and tak${op === 2 ? ' · dum on the floor tom' : ''}`, `${r.he}: דום ותק${op === 2 ? ' · הדום על טום הרצפה' : ''}`, 80);
+    }
+    case 2: {
+      if (op === 2) {
+        const hits = rep(8, (k) => bar({ k: (k % 2 ? ME.baladi : ME.maqsum).k, s: (k % 2 ? ME.baladi : ME.maqsum).s }, 4, k * 4, { sHand: takKa }));
+        return fin(hits, 'Maqsum and baladi, bar by bar', 'מקסום ובלדי, תיבה אחרי תיבה', 80);
+      }
+      const r = [ME.baladi, ME.saidi][op];
+      return fin(gb({ k: r.k, s: r.s }, 4, 8, { sHand: takKa }), `${r.en}: dum and tak`, `${r.he}: דום ותק`, 80);
+    }
+    case 3: {
+      const r = [ME.maqsum, ME.baladi, ME.saidi][op];
+      return fin(gb({ k: r.k, s: r.ka }, 4, 8, { sHand: takKa }), `${r.en} with ka (soft left hand)`, `${r.he} עם קה (יד שמאל רכה)`, 80, { ghost: 0.8 });
+    }
+    default: {
+      // The Mizrahi pop kit groove: the rhythm split on the kit — kick dums, snare taks, the hi-hat in 16ths.
+      const r = [ME.maqsum, ME.baladi, ME.saidi][op];
+      return fin(gb({ h: 'xxxxxxxxxxxxxxxx', k: r.k, s: r.s }, 4, 8), `Mizrahi pop groove on the kit · ${r.en}`, `גרוב פופ מזרחי על המערכת · ${r.he}`, 90);
+    }
+  }
+}
+
+// F13 — feet: the hi-hat foot (GM 44 "pedal") and the kick foot.
+function genFeet(s: DrillSpec): Drill {
+  const op = s.option ?? 0;
+  const lv = levelOfKind(s.kind);
+  const fin = (hits: DH[], en: string, he: string, bpm: number) => finish(s, hits, { title: t(en, he), bpm, bars: 8, mic: false });
+  switch (lv) {
+    case 1: {
+      const l: Lanes = [{ r: 'x.x.x.x.', p: '..x...x.' }, { s: 'x.x.x.x.', p: '..x...x.' }, { r: 'xxxxxxxx', p: '..x...x.' }][op];
+      const nm = [t('ride quarters', 'רייד ברבעים'), t('snare quarters', 'סנר ברבעים'), t('ride 8ths', 'רייד בשמיניות')][op];
+      return fin(gb(l, 2, 8, { sHand: (i) => (i % 4 ? 'L' : 'R') }), `Hi-hat foot on 2 and 4 · ${nm.en}`, `רגל היי־האט על 2 ו-4 · ${nm.he}`, 70);
+    }
+    case 2: {
+      const l: Lanes = [{ r: 'xxxxxxxx', s: '..x...x.', k: 'x...x...', p: 'x.x.x.x.' }, { r: 'xxxxxxxx', s: '..x...x.', k: 'x...x...', p: '.x.x.x.x' }, { r: 'xxxxxxxx', s: '..x...x.', k: 'x..xx...', p: '..x...x.' }][op];
+      const nm = [t('foot quarters', 'רגל ברבעים'), t('foot on the "&"', 'רגל על ה"וְ"'), t('foot on 2 and 4, kick variation', 'רגל על 2 ו-4, וריאציית קיק')][op];
+      return fin(gb(l, 2, 8), `Groove with the hi-hat foot · ${nm.en}`, `גרוב עם רגל ההיי־האט · ${nm.he}`, 80);
+    }
+    default: {
+      const l: Lanes = [{ h: 'x...x...x...x...', s: BB, k: 'x.x.x.x.x.x.x.x.' }, { r: 'x...x...x...x...', s: BB, k: 'x.x.x.x.x.x.x.x.' }, { h: 'x.x.x.x.x.x.x.x.', s: BB, k: 'x.x.x.x.x.x.xxx.' }][op];
+      const nm = [t('hi-hat quarters', 'היי־האט ברבעים'), t('ride quarters', 'רייד ברבעים'), t('hi-hat 8ths, a 16th pair at the end', 'היי־האט בשמיניות, זוג שש-עשריות בסוף')][op];
+      return fin(gb(l, 4, 8), `Kick 8ths under a groove · ${nm.en}`, `קיק בשמיניות מתחת לגרוב · ${nm.he}`, 60);
+    }
+  }
 }
 
 // ───────────────────────────── dispatch + catalogue ─────────────────────────────
@@ -539,6 +721,16 @@ export function generateDrums(spec: DrillSpec): Drill {
       return genFills(s);
     case 'd-read':
       return genRead(s);
+    case 'd-funk':
+      return genFunk(s);
+    case 'd-shuffle':
+      return genShuffle(s);
+    case 'd-indep':
+      return genIndep(s);
+    case 'd-mideast':
+      return genMideast(s);
+    case 'd-feet':
+      return genFeet(s);
     default:
       throw new Error(`Not a drum family: ${s.family}`);
   }
@@ -609,10 +801,40 @@ export function drumFamilies(): DrumFamilyDef[] {
     ]),
     fam('d-read', 'Reading', 'קריאת תווים', [
       L('d-read', 1, 'Snare: quarters, 8ths, rests', 'סנר: רבעים, שמיניות, הפסקות', 'read', 4, [70, 90], '1/8', true),
-      L('d-read', 2, 'Snare: dotted quarters, ties', 'סנר: רבעים מנוקדים, קשתות', 'read', 4, [70, 90], '1/8', true),
+      L('d-read', 2, 'Snare: dotted quarters, syncopation', 'סנר: רבעים מנוקדים, סינקופות', 'read', 4, [70, 90], '1/8', true),
       L('d-read', 3, 'Snare: 16th groupings', 'סנר: קבוצות של שש-עשריות', 'read', 4, [60, 80], '1/16', true),
-      L('d-read', 4, 'Snare: triplets, accents, dynamics', 'סנר: טריולות, הדגשות, עוצמות', 'read', 4, [60, 80], 'mixed', true),
+      L('d-read', 4, 'Snare: triplets, accents, ghost notes', 'סנר: טריולות, הדגשות ותווי רפאים', 'read', 4, [60, 80], 'mixed', true),
       L('d-read', 5, 'Kit notation: read a groove', 'תווים למערכת: לקרוא גרוב', 'kit', 4, [80, 80], '1/8', false),
+    ]),
+    // v2 families (DRUMS_AUDIT N1): F6 L1–4, F7 L1–4, F10 L1–4, F12 (own order: dum/tak, baladi/sa'idi, ka, the kit groove), F13 L1–3.
+    fam('d-funk', 'Funk & ghost notes', 'פאנק ותווי רפאים', [
+      L('d-funk', 1, 'Snare ghosts, accents on 2 and 4', 'רפאים בסנר, הדגשות על 2 ו-4', 'ghosts', 3, [60, 90], '1/16', true),
+      L('d-funk', 2, 'Ghost notes with hi-hat 8ths', 'רפאים עם היי־האט בשמיניות', 'hat', 3, [70, 95], '1/16', false),
+      L('d-funk', 3, 'Add a syncopated kick', 'מוסיפים קיק מסונכפ', 'kick', 3, [70, 95], '1/16', false),
+      L('d-funk', 4, '16th hi-hat funk with ghosts', 'פאנק עם היי־האט בשש-עשריות', 'hat16', 3, [70, 100], '1/16', false),
+    ]),
+    fam('d-shuffle', 'Shuffle & triplet feels', 'שאפל ותחושת טריולות', [
+      L('d-shuffle', 1, 'Triplets on the hat, snare 2 and 4', 'טריולות בהיי־האט, סנר על 2 ו-4', 'triplets', 3, [60, 90], '1/8T', false),
+      L('d-shuffle', 2, 'Shuffle', 'שאפל', 'shuffle', 3, [80, 120], '1/8T', false),
+      L('d-shuffle', 3, 'Slow blues, 12/8 feel', 'בלוז איטי בתחושת 12/8', 'blues', 3, [50, 66], '1/8T', false),
+      L('d-shuffle', 4, 'Double shuffle', 'שאפל כפול', 'double', 3, [100, 140], '1/8T', false),
+    ]),
+    fam('d-indep', 'Independence', 'עצמאות גפיים', [
+      L('d-indep', 1, 'Hands and feet together', 'ידיים ורגליים יחד', 'unison', 3, [60, 100], '1/8', false),
+      L('d-indep', 2, 'Read the kick in 8ths', 'לקרוא את הקיק בשמיניות', 'kick8', 4, [60, 100], '1/8', false),
+      L('d-indep', 3, 'Read the kick in 16ths', 'לקרוא את הקיק בשש-עשריות', 'kick16', 4, [60, 90], '1/16', false),
+      L('d-indep', 4, 'Read the snare over hat and kick', 'לקרוא את הסנר מעל היי־האט וקיק', 'snare', 4, [60, 100], '1/16', false),
+    ]),
+    fam('d-mideast', 'Middle-Eastern & Mizrahi', 'מקצבים מזרחיים', [
+      L('d-mideast', 1, 'Malfuf and maqsum: dum and tak', 'מלפוף ומקסום: דום ותק', 'maqsum', 3, [80, 110], '1/16', false),
+      L('d-mideast', 2, "Baladi and sa'idi", 'בלדי וסעידי', 'baladi', 3, [80, 110], '1/16', false),
+      L('d-mideast', 3, 'With ka: the soft left hand', 'עם קה: יד שמאל רכה', 'ka', 3, [80, 110], '1/16', false),
+      L('d-mideast', 4, 'Mizrahi pop groove on the kit', 'גרוב פופ מזרחי על המערכת', 'kit', 3, [90, 115], '1/16', false),
+    ]),
+    fam('d-feet', 'Feet', 'רגליים', [
+      L('d-feet', 1, 'Hi-hat foot on 2 and 4', 'רגל היי־האט על 2 ו-4', 'chick', 3, [70, 110], '1/4', false),
+      L('d-feet', 2, 'Groove with the hi-hat foot', 'גרוב עם רגל ההיי־האט', 'groove', 3, [80, 110], '1/8', false),
+      L('d-feet', 3, 'Kick 8ths under a groove', 'קיק בשמיניות מתחת לגרוב', 'kick8', 3, [60, 110], '1/8', false),
     ]),
   ];
 }
@@ -694,5 +916,8 @@ export function placeDrums(r: Partial<Record<DrumSlot, DrumProbeResult>>, famili
   cap('d-fills', v('fill') === 'clean' ? 4 : v('fill') === 'almost' ? 2 : 1);
   // F14: kit reading clean → L5; snare reading clean → L3; almost → L2.
   cap('d-read', v('read') === 'clean' ? (r.read?.kit ? 5 : 3) : v('read') === 'almost' ? 2 : 1);
+  // v2 families (no probe step yet): level 1; independence one level on from a clean basic groove.
+  cap('d-indep', v('groove') === 'clean' ? 2 : 1);
+  for (const f of families) if (out[f.id] === undefined && String(f.id).startsWith('d-')) cap(f.id, 1);
   return out;
 }

@@ -543,6 +543,31 @@ function bassBadges(): Badge[] {
   return out;
 }
 
+// ---------------------------------------------------------------- drums course (DRUMS_AUDIT I2)
+// The same family milestones as bass for every d-* family (first steps, halfway, the whole family). Ids live under
+// `tech:drums:…` so they share the drawn drum glyph; they belong to the drums course.
+function drumBadges(): Badge[] {
+  const out: Badge[] = [];
+  for (const f of guitarCatalog().filter((x) => x.id.startsWith('d-'))) {
+    const n = f.levels.length;
+    const tiers = Array.from(new Set([Math.min(3, n), Math.ceil(n / 2), n])).sort((a, b) => a - b);
+    tiers.forEach((lv, i) => {
+      const what = lv === n ? { en: 'the whole family', he: 'כל המשפחה' } : i === 0 ? { en: 'first steps', he: 'צעדים ראשונים' } : { en: 'halfway', he: 'חצי הדרך' };
+      out.push({
+        id: `tech:drums:${f.id}:${lv}`,
+        cat: 'technique',
+        icon: '♩',
+        group: f.id,
+        tone: lv === n ? 'platinum' : i === 0 ? 'bronze' : 'gold',
+        name: { en: `${f.title.en}: ${what.en}`, he: `${f.title.he}: ${what.he}` },
+        desc: { en: `${f.title.en}: reach level ${lv} of ${n}.`, he: `${f.title.he}: להגיע לשלב ${lv} מתוך ${n}.` },
+        rule: (x: BadgeInput): BadgeCheck => count(x.technique?.levels?.[f.id] ?? 0, lv),
+      });
+    });
+  }
+  return out;
+}
+
 const techniqueBadges: Badge[] = [
   ...BADGE_FAMILIES.flatMap((f) =>
     FAMILY_TITLES[f].map(([en, he], i) => {
@@ -622,6 +647,7 @@ const techniqueBadges: Badge[] = [
   })),
   ...guitarSpecials(),
   ...bassBadges(),
+  ...drumBadges(),
 ];
 
 // ======================================================================= specials
@@ -688,8 +714,8 @@ const AREA_COURSE: Record<RankArea, { course: CourseId; alsoIn?: CourseId[] }> =
   reading: { course: 'ear', alsoIn: ['exam'] },
   voice: { course: 'voice' },
   creative: { course: 'jazz' },
-  instrument: { course: 'keys', alsoIn: ['guitar', 'bass'] },
-  technique: { course: 'keys', alsoIn: ['guitar', 'bass'] },
+  instrument: { course: 'keys', alsoIn: ['guitar', 'bass', 'drums'] },
+  technique: { course: 'keys', alsoIn: ['guitar', 'bass', 'drums'] },
 };
 /** Skills the Exams course is clearly about (theory, reading, dictation) and the Jazz course (chords, changes, modes). */
 const EXAM_SKILLS: SkillId[] = ['theory', 'notes', 'sight', 'dictation', 'cadences'];
@@ -710,17 +736,18 @@ export function badgeCourse(b: Pick<Badge, 'id' | 'cat' | 'group'>): { course: B
     case 'sub': {
       const d = domainOfSkill(g as SkillId);
       if (d === 'voice') return { course: 'voice' };
-      if (d === 'instrument') return { course: 'keys', alsoIn: ['guitar', 'bass'] };
+      if (d === 'instrument') return { course: 'keys', alsoIn: ['guitar', 'bass', 'drums'] };
       if (d === 'creative') return { course: 'jazz', alsoIn: ['ear'] };
       const also = [...(EXAM_SKILLS.includes(g as SkillId) ? ['exam' as const] : []), ...(JAZZ_SKILLS.includes(g as SkillId) ? ['jazz' as const] : [])];
       return { course: 'ear', alsoIn: also.length ? also : ['exam'] };
     }
     case 'technique': {
       if (isBassGroup(g) || b.id.startsWith('tech:g-bass')) return { course: 'bass' };
+      if (g.startsWith('d-') || b.id.startsWith('tech:drums:')) return { course: 'drums' };
       if (g.startsWith('g-')) return { course: 'guitar' };
       if ((PIANO_BADGE_FAMILIES as string[]).includes(g) || b.id.startsWith('tech:even-')) return { course: 'keys' };
       // Clean takes, tempo records: any instrument.
-      return { course: 'keys', alsoIn: ['guitar', 'bass'] };
+      return { course: 'keys', alsoIn: ['guitar', 'bass', 'drums'] };
     }
   }
 }

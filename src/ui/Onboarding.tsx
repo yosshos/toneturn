@@ -166,7 +166,7 @@ export function Onboarding({ lang, onDone, onSignIn }: { lang: Lang; onDone: (r:
   const [picked, setPicked] = useState<CourseId[]>([]);
   const first = picked[0] ?? 'ear';
   const goal: Goal = courseOf(first).goal;
-  const inst = picked.find((c) => c === 'keys' || c === 'guitar' || c === 'bass') ?? (picked.includes('voice') ? 'voice' : 'none');
+  const inst = picked.find((c) => c === 'keys' || c === 'guitar' || c === 'bass' || c === 'drums') ?? (picked.includes('voice') ? 'voice' : 'none');
   const togglePick = (c: CourseId) => setPicked((p) => (p.includes(c) ? p.filter((x) => x !== c) : [...p, c]));
   const finish = (then: 'placement' | 'basics') => {
     const r = quickIntake(goal, inst, level ?? 0);

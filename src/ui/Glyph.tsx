@@ -263,6 +263,32 @@ export const GLYPHS: Record<string, ReactNode> = {
       {head(14, 0, 5.5, 4)}
     </>
   ),
+  // Drums v2 families (DRUMS_AUDIT N1): the shuffle (a long + short pair under a triplet bracket), independence (four
+  // limbs), the darbuka (Middle-Eastern rhythms).
+  shuffle: (
+    <>
+      {head(-12, 12)}
+      {head(12, 12)}
+      <path d="M-6 10V-12M18 10V-12" {...sw} />
+      <path d="M18 -12q5 4 6 10" {...sw} />
+      <path d="M-22 -16v-5H22v5" {...sw} strokeWidth={2.4} />
+    </>
+  ),
+  limbs: (
+    <g {...sw}>
+      <circle cx={-13} cy={-11} r={6} />
+      <circle cx={13} cy={-11} r={6} />
+      <circle cx={-13} cy={13} r={6} fill={I} />
+      <circle cx={13} cy={13} r={6} fill={I} />
+      <path d="M-7 -11H7M-13 -5V7M13 -5V7" />
+    </g>
+  ),
+  darbuka: (
+    <g {...sw}>
+      <ellipse cx={0} cy={-15} rx={15} ry={4.5} />
+      <path d="M-15 -15C-15 -3 -6 0 -5 6L-10 20H10L5 6C6 0 15 -3 15 -15" strokeLinejoin="round" />
+    </g>
+  ),
 };
 export type GlyphKind = keyof typeof GLYPHS;
 

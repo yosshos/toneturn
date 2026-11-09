@@ -407,7 +407,8 @@ function courseAxes(course: CourseId, ratings: Parameters<typeof domainValue>[0]
       return { label: pr.title[lang].split(' ')[0], v: n ? n / pr.levels.length : null };
     });
   }
-  const fams = ladderFamiliesFor(course, DEFAULT_DRILL_SETTINGS).slice(0, 6);
+  // Drums: the seven core families (reading too — it fell off at six, DRUMS_AUDIT I11).
+  const fams = ladderFamiliesFor(course, DEFAULT_DRILL_SETTINGS).slice(0, course === 'drums' ? 7 : 6);
   const items = progress.drillItems ?? {};
   return fams.map((id) => {
     const f = familyById(id as FamilyId);

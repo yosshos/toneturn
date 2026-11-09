@@ -318,6 +318,8 @@ const TOPIC_OF: Record<string, Exclude<DrillTopic, 'all' | 'songs' | 'mine'>> = 
   'b-scale': 'scales', 'b-read': 'reading', 'b-chord': 'chords', 'b-walk': 'chords', 'b-time': 'time', 'b-pocket': 'time', 'b-ghost': 'styles', 'b-styles': 'styles', 'b-ear': 'ear',
   // Drums (0.65): strokes, rudiments and paradiddles are hand technique; grooves and fills their own topic.
   'd-strokes': 'hands', 'd-rolls': 'hands', 'd-diddles': 'hands', 'd-time': 'time', 'd-rock': 'grooves', 'd-fills': 'grooves', 'd-read': 'reading',
+  // Drums v2 families (DRUMS_AUDIT N1): styles (funk, shuffle, Middle-Eastern), coordination with the grooves.
+  'd-funk': 'styles', 'd-shuffle': 'styles', 'd-mideast': 'styles', 'd-indep': 'grooves', 'd-feet': 'grooves',
   'b-up-pos': 'upright', 'b-up-arco': 'upright', 'b-up-scales': 'upright', 'b-up-pizz': 'upright', 'b-up-walk': 'upright', 'b-up-read': 'upright',
 };
 const TOPIC_NAME: Record<DrillTopic, { en: string; he: string }> = {
@@ -334,6 +336,9 @@ const TOPIC_NAME: Record<DrillTopic, { en: string; he: string }> = {
   songs: { en: 'Songs', he: 'שירים' },
   mine: { en: 'My drills', he: 'התרגילים שלי' },
 };
+
+/** A topic's name; the drums course has no jazz under "styles" (DRUMS_AUDIT N1). */
+const topicName = (k: DrillTopic, drums: boolean): { en: string; he: string } => (drums && k === 'styles' ? { en: 'Styles', he: 'סגנונות' } : TOPIC_NAME[k]);
 
 function Hub({ lang, ds, settings, items, head, onFamily, onRun, onSettings, onCreate, onTest, onInstrument, onVoice, onKit }: { onKit?: () => void; onVoice?: () => void; lang: Lang; ds: DrillSettings; settings: Settings; items: Record<string, ItemState>; head: React.ReactNode; onFamily: (f: FamilyDef) => void; onRun: (q: Drill[]) => void; onSettings: () => void; onCreate: (edit?: CustomDrill) => void; onTest: () => void; onInstrument: (i: 'piano' | 'guitar' | 'bass' | 'drums') => void }) {
   const tx = T[lang];
@@ -420,7 +425,7 @@ function Hub({ lang, ds, settings, items, head, onFamily, onRun, onSettings, onC
       <div className="chips drill-topics" role="tablist" aria-label={lang === 'he' ? 'נושאים' : 'Topics'}>
         {topics.map((x) => (
           <button key={x} role="tab" aria-selected={topic === x} className={`chip ${topic === x ? 'on' : ''}`} onClick={() => setTopic(x)} data-topic={x}>
-            {TOPIC_NAME[x][lang]}
+            {topicName(x, drums)[lang]}
           </button>
         ))}
       </div>
@@ -447,7 +452,7 @@ function Hub({ lang, ds, settings, items, head, onFamily, onRun, onSettings, onC
       )}
       {famTopics.filter(show).map((k) => (
         <section key={k} className="drill-topic" data-drill-topic={k}>
-          {topic === 'all' && <h2>{TOPIC_NAME[k][lang]}</h2>}
+          {topic === 'all' && <h2>{topicName(k, drums)[lang]}</h2>}
           <div className="drill-families">{fams.filter((f) => (TOPIC_OF[f.id] ?? 'hands') === k).map(famCard)}</div>
         </section>
       ))}

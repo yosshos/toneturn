@@ -10,7 +10,7 @@ import { DEFAULT_DRILL_SETTINGS, type Drill, type ItemState } from '../src/engin
 import { VOICE_NOTE } from '../src/engine/drumKit';
 
 const FAMS = drumFamilies();
-const V1: Record<string, number> = { 'd-strokes': 5, 'd-rolls': 6, 'd-diddles': 4, 'd-time': 6, 'd-rock': 8, 'd-fills': 5, 'd-read': 5 };
+const V1: Record<string, number> = { 'd-strokes': 5, 'd-rolls': 6, 'd-diddles': 4, 'd-time': 6, 'd-rock': 8, 'd-fills': 5, 'd-read': 5, 'd-funk': 4, 'd-shuffle': 4, 'd-indep': 4, 'd-mideast': 4, 'd-feet': 3 };
 const HE = /[֐-׿]/;
 const allDrills = (): { lv: DrumLevelDef; d: Drill }[] => FAMS.flatMap((f) => f.levels.flatMap((lv) => levelDrills(lv, 'fifths-up').map((d) => ({ lv, d }))));
 
@@ -34,7 +34,7 @@ describe('drums v1 catalogue (DRUMS_CURRICULUM §4.3)', () => {
       expect(HE.test(f.title.he)).toBe(true);
     }
     // In the shared catalogue, found by id, and only for the drums instrument.
-    expect(guitarCatalog().filter((f) => f.id.startsWith('d-')).length).toBe(7);
+    expect(guitarCatalog().filter((f) => f.id.startsWith('d-')).length).toBe(12);
     expect(familyById('d-rock')?.levels.length).toBe(8);
     expect(shownFamilies({ emphasis: 'both', instrument: 'drums' }).map((f) => f.id)).toEqual(Object.keys(V1));
     expect(shownFamilies({ emphasis: 'both', instrument: 'bass' }).some((f) => f.id.startsWith('d-'))).toBe(false);
@@ -73,7 +73,7 @@ describe('drums v1 catalogue (DRUMS_CURRICULUM §4.3)', () => {
       if (lv.mic) expect(d.notes.every((n) => n.voice === 'snare'), d.itemId).toBe(true);
     }
     const mic = shownFamilies({ emphasis: 'both', instrument: 'drums', drumMic: true });
-    expect(mic.map((f) => f.id)).toEqual(['d-strokes', 'd-rolls', 'd-diddles', 'd-time', 'd-read']);
+    expect(mic.map((f) => f.id)).toEqual(['d-strokes', 'd-rolls', 'd-diddles', 'd-time', 'd-read', 'd-funk']);
     expect(mic.find((f) => f.id === 'd-read')!.levels.length).toBe(4);
   });
 
@@ -201,16 +201,23 @@ describe('drum take analysis', () => {
     expect(analyzeDrumTake(a, 70, flat).verdict).toBe('not');
   });
 
-  it('microphone mode: one surface, matched by time only; no velocity data skips the velocity rules', () => {
+  it('microphone mode: one surface, matched by time only; a loudness level never passes without loudness data', () => {
+    const q = generate({ family: 'd-time', kind: '1:pulse', option: 2, key: 0, hands: 'RL', instrument: 'drums' });
+    const flat = (d: Drill) => perfectHits(d, 70).map((h) => ({ ...h, voice: null, vel: 64 }));
+    expect(analyzeDrumTake(q, 70, flat(q), { mic: true }).verdict).toBe('clean');
     const d = generate({ family: 'd-strokes', kind: '1:quarters', option: 2, key: 0, hands: 'RL', instrument: 'drums' });
-    const hits = perfectHits(d, 70).map((h) => ({ ...h, voice: null, vel: 64 }));
-    expect(analyzeDrumTake(d, 70, hits, { mic: true }).verdict).toBe('clean');
+    const m = analyzeDrumTake(d, 70, flat(d), { mic: true });
+    expect(m.verdict).toBe('not');
+    expect(m.why.en).toMatch(/No loudness measured/);
+    const varied = perfectHits(d, 70).map((h, i) => ({ ...h, voice: null, vel: 76 + (i % 3) }));
+    expect(analyzeDrumTake(d, 70, varied, { mic: true }).verdict).toBe('clean');
     expect(analyzeDrumTake(d, 70, [], { mic: true }).verdict).toBe('not');
   });
 
-  it('the window tightens with the tier and never exceeds 22 % of the shortest gap', () => {
+  it('the window tightens with the tempo (22 % of the shortest gap) but not below 1.6 × the tier SD, never past 35 %', () => {
     const d = generate({ family: 'd-rolls', kind: '2:singles16', option: 0, key: 0, hands: 'RL', instrument: 'drums' });
-    expect(drumWindow(d, 110)).toBeCloseTo(0.22 * (60000 / 110 / 4), 1);
+    expect(drumWindow(d, 110)).toBeCloseTo(40, 1);
+    expect(drumWindow(d, 200)).toBeCloseTo(0.35 * (60000 / 200 / 4), 1);
     const q = generate({ family: 'd-time', kind: '1:pulse', option: 0, key: 0, hands: 'RL', instrument: 'drums' });
     expect(drumWindow(q, 60)).toBe(60);
   });

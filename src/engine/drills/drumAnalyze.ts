@@ -41,13 +41,18 @@ const median = (xs: number[]): number | null => {
   return s.length % 2 ? s[k] : (s[k - 1] + s[k]) / 2;
 };
 
-/** The hit window of a take: the tier's, never wider than 22 % of the shortest written gap between onsets. */
+/**
+ * The hit window of a take: the tier's, tightened to 22 % of the shortest written gap between onsets — but never below
+ * 1.6 × the tier's SD limit (else a player inside the SD rule fails the hit rate at fast subdivisions: ±20 ms at
+ * sextuplets ♩110 meant SD ≤ 10 ms in practice), and never past 35 % of the gap (a hit stays nearer its own note).
+ */
 export function drumWindow(drill: Drill, bpm: number): number {
   const tier = drill.drum?.tier ?? 1;
   const ts = [...new Set(drill.notes.map((n) => Math.round(expTimeMs(drill, n.beat, bpm) * 100) / 100))].sort((a, b) => a - b);
   const gaps = ts.slice(1).map((x, i) => x - ts[i]).filter((g) => g > 1);
   const minIoi = gaps.length ? Math.min(...gaps) : 1000;
-  return Math.max(15, Math.min(DRUM_TIERS[tier].window, 0.22 * minIoi));
+  const T = DRUM_TIERS[tier];
+  return Math.max(15, Math.min(T.window, Math.max(0.22 * minIoi, Math.min(1.6 * T.sd, 0.35 * minIoi))));
 }
 
 /** Silent click bars (click 'gap'): bar index → no click. */
@@ -219,6 +224,10 @@ export function analyzeDrumTake(drill: Drill, bpm: number, hits0: DrumTakeHit[],
     max(`sd:${l.limb}`, l.sd, T.sd);
     max(`mean:${l.limb}`, l.mean === null ? null : Math.abs(l.mean), T.mean);
   }
+  // Only measured practice counts: a level about loudness never passes on a take without loudness data (a mic with
+  // every peak the same) — it used to skip those rules and pass on timing alone.
+  const velGoal = [goal.velCv, goal.balance, goal.levels, goal.accentGap, goal.tapCv, goal.accentPos, goal.ghost, goal.ratio].some((x) => x !== undefined);
+  if (velGoal && !velData && hits.length) rules.push({ id: 'noVel', amt: 9 });
   if (goal.velCv !== undefined) max('velCv', velCv, goal.velCv);
   if (goal.balance !== undefined) max('balance', balance, goal.balance);
   if (goal.levels !== undefined) min('levels', levels, goal.levels);
@@ -298,6 +307,8 @@ export function drumWhy(d: DrumMetrics, v: Verdict): { en: string; he: string } 
     }
     case 'sd':
       return limb ? { en: `${LIMB_NAME[limb.limb].en} uneven (±${Math.round(limb.sd ?? 0)} ms).`, he: `${LIMB_NAME[limb.limb].he} לא אחידה (±${Math.round(limb.sd ?? 0)} מ״ש).` } : { en: 'Uneven timing.', he: 'תזמון לא אחיד.' };
+    case 'noVel':
+      return { en: 'No loudness measured — raise the mic level.', he: 'לא נמדדה עוצמה — הגבירו את המיקרופון.' };
     case 'velCv':
       return { en: 'Strokes not even in loudness.', he: 'המכות לא שוות בעוצמה.' };
     case 'balance':

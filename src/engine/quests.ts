@@ -11,7 +11,7 @@ export interface Quest {
   target: number;
   /** Note-head colour of the quest's symbol. */
   color: string;
-  glyph: 'intervals' | 'sing' | 'keys' | 'rhythm' | 'scales' | 'tempo';
+  glyph: 'intervals' | 'sing' | 'keys' | 'rhythm' | 'scales' | 'tempo' | 'guitar' | 'bass' | 'sticks';
 }
 
 interface QuestDay {
@@ -49,8 +49,9 @@ const POOL: Record<string, Make> = {
   steps2: (d) => ({ id: 'steps2', title: { en: 'Finish 2 path steps', he: 'לסיים 2 צעדים במסלול' }, now: d.stepsToday, target: 2, color: '#FFD43B', glyph: 'scales' }),
   min10: (d) => ({ id: 'min10', title: { en: 'Practise 10 minutes', he: 'להתאמן 10 דקות' }, now: Math.round(d.minutesToday), target: 10, color: '#12C9B4', glyph: 'tempo' }),
   sing3: (d) => ({ id: 'sing3', title: { en: 'Sing 3 melodies', he: 'לשיר 3 מנגינות' }, now: d.sessions.filter((s) => /sing|vocal/.test(s)).length, target: 3, color: '#12C9B4', glyph: 'sing' }),
-  tech3: (d) => ({ id: 'tech3', title: { en: '3 technique sessions', he: '3 אימוני טכניקה' }, now: d.sessions.filter((s) => s.startsWith('tech') || s.startsWith('technique')).length, target: 3, color: '#FFD43B', glyph: 'keys' }),
-  rhythm: (d) => ({ id: 'rhythm', title: { en: '5 rhythm answers right', he: '5 תשובות קצב נכונות' }, now: d.events.filter((e) => sameDay(e.at, d.day) && e.set === undefined && /rhythm|timing|tempo|meter/.test(e.skill) && (e.score ?? (e.correct ? 1 : 0)) >= 0.7).length, target: 5, color: '#FF5FA2', glyph: 'rhythm' }),
+  tech3: (d) => ({ id: 'tech3', title: { en: '3 technique sessions', he: '3 אימוני טכניקה' }, now: d.sessions.filter((s) => s.startsWith('tech') || s.startsWith('technique')).length, target: 3, color: '#FFD43B', glyph: d.course === 'drums' ? 'sticks' : d.course === 'guitar' ? 'guitar' : d.course === 'bass' ? 'bass' : 'keys' }),
+  // Drums (DRUMS_AUDIT I8): a measured drum take is rated 'instrument' with a timing share — it counts here.
+  rhythm: (d) => ({ id: 'rhythm', title: d.course === 'drums' ? { en: 'Rhythm right 5 times', he: 'קצב נכון 5 פעמים' } : { en: '5 rhythm answers right', he: '5 תשובות קצב נכונות' }, now: d.events.filter((e) => sameDay(e.at, d.day) && e.set === undefined && (/rhythm|timing|tempo|meter/.test(e.skill) || (d.course === 'drums' && !!e.tags?.some((x) => /rhythm|timing/.test(x.skill)))) && (e.score ?? (e.correct ? 1 : 0)) >= 0.7).length, target: 5, color: '#FF5FA2', glyph: 'rhythm' }),
 };
 
 /** Which quests a course offers (first one rotates with the day). */

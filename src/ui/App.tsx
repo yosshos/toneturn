@@ -1287,7 +1287,7 @@ export function App() {
                   draft={intakeDraft}
                   onIntake={() => go('intake')}
                   onMeasure={() => openCatchUpPlacement(pending.unmeasured)}
-                  onFindLevel={() => openPlacement()}
+                  onFindLevel={() => (s.activeCourse === 'drums' ? openTechTest() : openPlacement())}
                   onHide={() => updateSettings({ catchUpHidden: catchUpKey })}
                 />
               )}
@@ -1559,7 +1559,10 @@ export function App() {
             updateSettings({ ...res.patch, pathFacts: unfreezeIfEarly(s.pathFacts) });
             if (then === 'placement') {
               go('home');
-              window.setTimeout(() => openPlacement(), 0);
+              // Drums first: its level test is the kit setup + the playing probe, not the ear placement (keys / guitar /
+              // bass keep the ear placement, which continues into their technique section).
+              const drumsFirst = res.patch.activeCourse === 'drums';
+              window.setTimeout(() => (drumsFirst ? openTechTest() : openPlacement()), 0);
             } else {
               const first = personalOrder(res.intake.priorities, res.patch.track)[0];
               go('home');
@@ -1580,7 +1583,10 @@ export function App() {
             updateSettings({ ...res.patch, pathFacts: unfreezeIfEarly(s.pathFacts) });
             if (then === 'placement') {
               go('home');
-              window.setTimeout(() => openPlacement(), 0);
+              // Drums first: its level test is the kit setup + the playing probe, not the ear placement (keys / guitar /
+              // bass keep the ear placement, which continues into their technique section).
+              const drumsFirst = res.patch.activeCourse === 'drums';
+              window.setTimeout(() => (drumsFirst ? openTechTest() : openPlacement()), 0);
             } else if (then === 'basics') {
               const first = personalOrder(res.intake.priorities, res.patch.track)[0];
               go('home');

@@ -575,7 +575,11 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
         // B5: the headphones gate — where the sound goes, so the mic hears only the bass. Not a pass of anything.
         <div className="drums-gate" data-drums-gate="1">
           <p className="field-hint">
-            {drill.band
+            {drum
+              ? lang === 'he'
+                ? 'בתרגיל הזה מתנגן גרוב ליווי. כדי שהמיקרופון ישמע רק את הפד, הגרוב מתנגן רק באוזניות או בחיבור קווי.'
+                : 'A backing groove plays in this drill. So the mic hears only your pad, it plays only in headphones or over a line-in.'
+              : drill.band
               ? lang === 'he'
                 ? 'בתרגיל הזה מנגנת להקה (תופים ופסנתר). כדי שהמיקרופון ישמע רק את הבס, היא מתנגנת רק באוזניות או בחיבור קווי.'
                 : 'A band plays in this drill (drums and piano). So the mic hears only your bass, it plays only in headphones or over a line-in.'
