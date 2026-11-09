@@ -2,6 +2,7 @@
 // a sticky unit header, the glide to the current step, steps that rise in as they scroll into view, and a
 // "back to my step" button (§10.1). Reduced motion: no glide, no stagger, no bounce.
 
+import { Iso } from './Iso';
 import { courseInput } from '../engine/courses';
 import { Icon } from './icons';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -107,6 +108,18 @@ function withLessonFacts(f: NonNullable<Settings['pathFacts']>, p: Progress): No
   }
   return { ...f, steps };
 }
+
+/** Units are marked like rehearsal letters in a score: A, B, C … Z, AA, AB … (0.61, SPEC-REDESIGN). */
+export const rehearsal = (n: number) => {
+  let x = Math.max(1, n);
+  let out = '';
+  while (x > 0) {
+    x -= 1;
+    out = String.fromCharCode(65 + (x % 26)) + out;
+    x = Math.floor(x / 26);
+  }
+  return out;
+};
 
 /** The path input from settings and progress (spec AF §3). */
 export function pathInputFrom(s: Settings, p: Progress, now = new Date()): PathInput {
@@ -299,13 +312,13 @@ export function PathView2({
             {(st === 'done' || st === 'mastered') && (
               <span className="mini-stars" aria-label={`${x.stars ?? 0} ${tx.stars}`}>
                 {[0, 1, 2].map((s) => (
-                  <span key={s} className={s < (x.stars ?? 0) ? 'won' : ''}>
-                    ★
-                  </span>
+                  <i key={s} className={s < (x.stars ?? 0) ? 'won' : ''} />
                 ))}
               </span>
             )}
-            <b>{label}</b>
+            <b>
+              <Iso text={label} />
+            </b>
             {isCur && x.probe && <small className="node-tag">{tx.probe}</small>}
             {st === 'quick' && <small className="node-tag">{tx.quick}</small>}
             {st === 'refresh' && <small className="node-tag">{tx.refresh}</small>}
@@ -393,7 +406,10 @@ export function PathView2({
             const hue = DOMAIN_HUE[u.areas[0] ?? 'pitch'];
             return [
               <li key={u.id} className={`unit-banner sticky ${u.status}`} style={{ ['--hue' as string]: hue }}>
-                <span>
+                <span className="unit-letter" aria-hidden="true">
+                  {rehearsal(u.no ?? u.n)}
+                </span>
+                <span className="unit-copy">
                   <small dir="auto">
                     {fill(tx.unit, { n: u.no ?? u.n })} · <span dir="ltr">{fill(tx.around, { d: u.difficulty })}</span>
                   </small>
