@@ -6,6 +6,7 @@ import { TOPIC_GEN } from '../src/engine/topics';
 import type { PlaceQuestion } from '../src/engine/lesson';
 import { ladderFamiliesFor } from '../src/engine/ladderFacts';
 import { families, levelDrills } from '../src/engine/drills/plan';
+import { chartOf, keyNameOf, PROGS } from '../src/engine/drills/bass';
 import { DEFAULT_DRILL_SETTINGS } from '../src/engine/drills/types';
 import { FAMILY_GLYPH, GAME_STEP_GLYPH, TOPIC_GLYPH } from '../src/ui/stepGlyphs';
 import { GLYPHS } from '../src/ui/Glyph';
@@ -150,5 +151,25 @@ describe('bass fingering (final check)', () => {
   it('octaves from an open E use the octave shape (D string, fret 2)', () => {
     const d = levelDrills(lv('b-slap-2'), 'fifths-up').find((x) => x.title.en.endsWith('· E'))!;
     expect(d.notes[1]).toMatchObject({ pitch: 40, string: 2, fret: 2 });
+  });
+});
+
+describe('chord names spelled for the key (final check)', () => {
+  it('sharp keys use sharps, flat keys flats, minor keys their relative major', () => {
+    expect(chartOf(4, PROGS.pop)).toEqual(['E', 'C♯m', 'A', 'B']);
+    expect(chartOf(6, PROGS.p1451)).toEqual(['F♯', 'B', 'C♯', 'F♯']);
+    expect(chartOf(5, PROGS.pop)).toEqual(['F', 'Dm', 'B♭', 'C']);
+    expect(chartOf(1, PROGS.minor)).toEqual(['C♯m7', 'F♯m7', 'C♯m7', 'G♯7']);
+    expect(keyNameOf(1, true)).toBe('C♯');
+    expect(keyNameOf(1)).toBe('D♭');
+  });
+  it('no bass drill in a sharp key shows a flat chord name', () => {
+    for (const f of families('bass').filter((x) => x.id.startsWith('b-')))
+      for (const l of f.levels)
+        for (const d of levelDrills(l, 'fifths-up')) {
+          const key = d.spec.key % 12;
+          if (d.spec.minor || ![7, 2, 9, 4, 11].includes(key) || !d.chart || d.spec.family === 'b-walk' || d.spec.family === 'b-up-walk' || /^[A-G][♯♭]?m(?!aj)/.test(d.chart.find((c) => c) ?? '')) continue;
+          for (const c of d.chart) expect(c.includes('♭') && !c.includes('7♭') && !c.includes('♭5') && !c.includes('♭9'), `${l.id} ${d.title.en}: ${d.chart.join(' ')}`).toBe(false);
+        }
   });
 });

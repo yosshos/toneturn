@@ -8,8 +8,8 @@
 
 import type { BassGoal, Drill, DrillSpec } from './types';
 import { noteAt, type Tuning } from '../fretboard';
-import { guitarItemId, mod, modeInts, NAMES, rng, SIG, windowScale } from './guitar';
-import { drillOf, genRead, genWalk, rootOf, type BN } from './bass';
+import { guitarItemId, mod, modeInts, rng, SIG, windowScale } from './guitar';
+import { drillOf, genRead, genWalk, rootOf, spell, type BN } from './bass';
 
 /** EN / HE pair (local: bass.ts helpers can't run at module load). */
 const tt = (en: string, he: string) => ({ en, he });
@@ -231,7 +231,7 @@ export function generateUpright(s: DrillSpec, tu: Tuning): Drill {
         [R, R + 7, R + 12, R + 7].forEach((p, k) => line.push({ b: bar * 4 + k, d: 1, p, ct: true }));
       });
       line.push({ b: prog.length * 4, d: 2, p: rootOf(tu, key), ct: true });
-      const chart = prog.map(([d]) => `${NAMES[mod(key + d, 12)]}${op === 1 && d === 2 ? 'm7' : op === 1 && d === 7 ? '7' : ''}`);
+      const chart = prog.map(([d]) => `${spell(key + d, key)}${op === 1 && d === 2 ? 'm7' : op === 1 && d === 7 ? '7' : ''}`);
       const d = drillOf(s, tu, line, { en: op === 1 ? 'Pizz quarters over ii–V–I, full length' : op === 2 ? 'Pizz quarters through a blues, full length' : 'Pizz quarters, full length', he: op === 1 ? 'רבעים בפיציקטו על ii–V–I, באורך מלא' : op === 2 ? 'רבעים בפיציקטו לאורך בלוז, באורך מלא' : 'רבעים בפיציקטו, באורך מלא', chart, bow: 'pizz', drums: { groove: 'swing' } });
       return withCents(d, 15, { lengths: true, loudSd: 3 });
     }

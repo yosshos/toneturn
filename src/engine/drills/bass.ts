@@ -188,8 +188,42 @@ export const PROGS: Record<string, Prog> = {
   vamp: [[0, 'm7'], [0, 'm7'], [5, '7'], [5, '7']],
 };
 export const BLUES: Prog = [0, 5, 0, 0, 5, 5, 0, 0, 7, 5, 0, 7].map((d): [number, Q] => [d, '7']);
-export const chordName = (key: number, [d, q]: [number, Q]): string => NAMES[mod(key + d, 12)] + QS[q];
-export const chartOf = (key: number, prog: Prog): string[] => prog.map((c) => chordName(key, c));
+/** Final bass check: descriptive standards' names in Hebrew (tune titles stay as they are). */
+const STD_NAME_HE: Record<string, string> = {
+  'Backdoor ii–V study in G': 'אטיוד ii–V אחורי ב־G',
+  'Ballad turnarounds in E♭': 'טרנאראונדים של בלדה ב־E♭',
+  'Basic 12-bar blues in G': 'בלוז בסיסי של 12 תיבות ב־G',
+  'Bird blues (Blues for Alice changes)': 'בלוז בירד (ההרמוניה של Blues for Alice)',
+  'Blues waltz in F': 'בלוז ואלס ב־F',
+  'Giant Steps (slow practice)': 'Giant Steps (תרגול איטי)',
+  'I–vi–ii–V turnarounds in F': 'טרנאראונדים I–vi–ii–V ב־F',
+  'Jazz blues in B♭': 'בלוז ג׳אז ב־B♭',
+  'Jazz blues in F': 'בלוז ג׳אז ב־F',
+  'Minor blues in C': 'בלוז מינורי ב־C',
+  'Minor bossa in A': 'בוסה מינורית ב־A',
+  'Minor ii–V–i around the cycle': 'ii–V–i מינורי במעגל הקווינטות',
+  'Rhythm changes in B♭': 'ריתם צ׳יינג׳ס ב־B♭',
+  'Rhythm changes': 'ריתם צ׳יינג׳ס',
+  'Secondary dominants in C': 'דומיננטות משניות ב־C',
+  'Two-chord dorian vamp': 'וואמפ דורי בשני אקורדים',
+  'Two-mode form in A (dorian, lydian)': 'צורה בשני מודוסים ב־A (דורי, לידי)',
+  'ii–V–I through all twelve keys': 'ii–V–I בכל שנים־עשר הסולמות',
+  'Chameleon (vamp)': 'Chameleon (וואמפ)',
+};
+/** Final bass check: note names spelled for the key — sharps in G D A E B F♯ (C♯m, not D♭m, in E major), flats elsewhere. */
+const SHARP_NAMES = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
+const SHARP_HOMES = [7, 2, 9, 4, 11, 6];
+/** The name of pitch class `pc` in the major key `home` (a minor key's home is its relative major, key + 3). */
+export const spell = (pc: number, home: number): string => (SHARP_HOMES.includes(mod(home, 12)) ? SHARP_NAMES : NAMES)[mod(pc, 12)];
+/** A key's own name: major keys as NAMES (F♯, D♭), minor keys by their relative major (C♯m, G♯m, B♭m). */
+export const keyNameOf = (key: number, minor = false): string => (minor ? spell(key, key + 3) : NAMES[mod(key, 12)]);
+const minorQ = (q: Q) => q === 'm' || q === 'm7' || q === 'm7b5';
+export const chordName = (key: number, [d, q]: [number, Q], home = key): string => spell(key + d, home) + QS[q];
+/** A progression's chart; a progression that starts on a minor chord is in a minor key (spelled from its relative major). */
+export const chartOf = (key: number, prog: Prog): string[] => {
+  const home = prog.length && minorQ(prog[0][1]) ? key + 3 : key;
+  return prog.map((c) => chordName(key, c, home));
+};
 const dur = (xs: BN[]): number => Math.max(0, ...xs.map((x) => x.b + x.d));
 
 // ───────────────────────────── a drill from a line ─────────────────────────────
@@ -232,7 +266,7 @@ interface Out {
 }
 export function drillOf(s: DrillSpec, tu: Tuning, line: BN[], o: Out): Drill {
   const key = mod(s.key, 12);
-  const k = o.keyName ?? `${NAMES[key]}${s.minor ? 'm' : ''}`;
+  const k = o.keyName ?? `${keyNameOf(key, !!s.minor)}${s.minor ? 'm' : ''}`;
   const evs = placeLine(tu, line, { pos: o.pos, open: o.open, span: o.span, meter: o.meter, stay: o.stay });
   const bass: BassGoal | undefined = o.bass || o.drums ? { ...(o.bass ?? {}) } : undefined;
   const d0 = { beats: dur(line), meter: o.meter ?? 4 };
@@ -1027,7 +1061,7 @@ function genChord(s: DrillSpec, tu: Tuning): Drill {
       const chart = chords.map((c, i) => {
         const nm = chordName(key, c);
         const b = mod(key + bassDeg[i], 12);
-        return b === mod(key + c[0], 12) ? nm : `${nm}/${NAMES[b]}`;
+        return b === mod(key + c[0], 12) ? nm : `${nm}/${spell(b, key)}`;
       });
       return drillOf(s, tu, alt(line), op === 1 ? { en: 'Pedal point under the changes', he: 'צליל עוגב מתחת להחלפות', chart } : { en: 'Slash chords: the bass note is not the root', he: 'אקורדים עם בס (סלאש): צליל הבס הוא לא היסוד', chart });
     }
@@ -1331,10 +1365,10 @@ export function genWalk(s: DrillSpec, tu: Tuning): Drill {
       const part = st.part.en === 'Whole form' || st.part.en.startsWith('Whole form') ? '' : ` (${st.part.en})`;
       const partHe = part ? ` (${st.part.he})` : '';
       const feel = FEEL_T[std.feel];
-      const kn = `${NAMES[std.key]}${std.minor ? 'm' : ''}`;
+      const kn = `${keyNameOf(std.key, !!std.minor)}${std.minor ? 'm' : ''}`;
       return drillOf(s, tu, alt(line), {
         en: `${st.name}${part}, ${feel.en}`,
-        he: `${st.name}${partHe}, ${feel.he}`,
+        he: `${STD_NAME_HE[st.name] ?? st.name}${partHe}, ${feel.he}`,
         keyName: kn,
         keySig: SIG[std.minor ? mod(std.key + 3, 12) : std.key],
         chart: bars,
@@ -1777,7 +1811,7 @@ function genStyle(s: DrillSpec, tu: Tuning): Drill {
       // B4: the 5th is the CHORD's 5th (D under G/B, never F♯), and the chart names the slash bass (G/B).
       const bass = [0, 11, 9, 5].map((d) => rootOf(tu, key + d));
       prog = [[0, 'M'], [7, 'M'], [9, 'm'], [5, 'M']];
-      chart = chartOf(key, prog).map((c, i) => (i === 1 ? `${c}/${NAMES[mod(key + 11, 12)]}` : c));
+      chart = chartOf(key, prog).map((c, i) => (i === 1 ? `${c}/${spell(key + 11, key)}` : c));
       line = [{ b: 0, d: 2, p: bass[0] }];
       bass.forEach((p, bar) => {
         const five = rootOf(tu, key + prog[bar][0] + 7);
