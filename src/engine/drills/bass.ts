@@ -12,7 +12,8 @@ import type { SpecTemplate } from './generate';
 import { noteAt, type Tuning } from '../fretboard';
 import { finish, genFretting, rng, mod, clamp, NAMES, SIG, modeInts, SCALES, windowScale, type Ev, type GN, type GuitarFamilyDef, type GuitarLevelDef, type GuitarStyle, type T2 } from './guitar';
 import { parseChart } from '../charts';
-import { walkingBass, hashOf } from '../band';
+import { walkingBass, hashOf, type BandStyle } from '../band';
+import { bandStyleOf } from './bassBand';
 import { GROOVES } from '../grooves';
 import { STANDARD_CHANGES } from '../standards';
 import { generateBassEar } from './bassEar';
@@ -211,6 +212,12 @@ interface Out {
   listen?: Drill['listen'];
   untimed?: Drill['untimed'];
   bow?: Drill['bow'];
+  /** The harmony band's style (default: from the drum groove), or false for drums only. */
+  band?: BandStyle | false;
+  /** Quick study: seconds to read before Play. */
+  prep?: number;
+  /** Ear transcription: write the line after playing it. */
+  write?: Drill['write'];
 }
 export function drillOf(s: DrillSpec, tu: Tuning, line: BN[], o: Out): Drill {
   const key = mod(s.key, 12);
@@ -224,12 +231,16 @@ export function drillOf(s: DrillSpec, tu: Tuning, line: BN[], o: Out): Drill {
   if (o.chart) d.chart = o.chart;
   if (o.click && o.click !== 'all') d.click = o.click;
   if (o.drums) d.drums = o.drums;
+  // The harmony band (bassBand.ts): every drill with drums and a chord chart gets the band's comping in the groove's style.
+  if (o.drums && d.chart?.some((c) => /[A-G]/.test(c)) && o.band !== false) d.band = { style: o.band ?? bandStyleOf(o.drums.groove) };
   if (o.show) d.show = o.show;
   if (o.freeFrom !== undefined) d.freeFrom = o.freeFrom;
   if (o.pulse) d.pulse = o.pulse;
   if (o.listen) d.listen = o.listen;
   if (o.untimed) d.untimed = o.untimed;
   if (o.bow) d.bow = o.bow;
+  if (o.prep) d.prep = o.prep;
+  if (o.write) d.write = o.write;
   return d;
 }
 
@@ -238,15 +249,21 @@ export function drillOf(s: DrillSpec, tu: Tuning, line: BN[], o: Out): Drill {
  * `fills` bars (snare 16ths into toms on beats 3–4, crash on the next 1). Beats from beat 0 of the drill.
  */
 export function drumHits(dr: NonNullable<Drill['drums']>, beats: number, meter = 4, pulse?: 8): { beat: number; d: 'k' | 's' | 'h' | 'tom-hi' | 'tom-lo' | 'crash' }[] {
-  const g = GROOVES.find((x) => x.id === dr.groove);
-  if (!g) return [];
+  const g0 = GROOVES.find((x) => x.id === dr.groove);
+  if (!g0) return [];
   const out: { beat: number; d: 'k' | 's' | 'h' | 'tom-hi' | 'tom-lo' | 'crash' }[] = [];
-  // One step in drill beats: eighth-note grooves (den 8, sub 2) step one eighth = one drill beat when the drill counts eighths.
-  const stepB = g.den === 8 && g.sub === 2 ? (pulse === 8 ? 1 : 0.5) : 1 / g.sub;
-  const steps = Math.round(meter / stepB);
   const bars = Math.ceil(beats / meter - 1e-9);
   const fills = new Set(dr.fills ?? []);
+  // Feel changes (pocket L7): the groove of a bar is the last section starting at or before it.
+  const grooveAt = (bar: number) => {
+    const sec = [...(dr.sections ?? [])].filter((x) => x.bar <= bar).sort((a, b) => b.bar - a.bar)[0];
+    return (sec && GROOVES.find((x) => x.id === sec.groove)) || g0;
+  };
   for (let bar = 0; bar < bars; bar++) {
+    const g = grooveAt(bar);
+    // One step in drill beats: eighth-note grooves (den 8, sub 2) step one eighth = one drill beat when the drill counts eighths.
+    const stepB = g.den === 8 && g.sub === 2 ? (pulse === 8 ? 1 : 0.5) : 1 / g.sub;
+    const steps = Math.round(meter / stepB);
     const b0 = bar * meter;
     if (fills.has(bar)) {
       // A fill: groove on the first half, then 16th snare into the toms, crash on the next bar's 1.
@@ -731,11 +748,12 @@ function genPocket(s: DrillSpec, tu: Tuning): Drill {
       return drillOf(s, tu, alt(line), { en: 'Pocket on purpose: on, 15 ms behind, 10 ms ahead', he: 'כיס מכוון: על הפעמה, 15 מ״ש מאחור, 10 מ״ש מקדימה', chart: chartOf(key, prog), bass: { kick: 25, pocket: [0, 15, -10] }, evenness: false, drums: { groove: 'rock-8b' } });
     }
     case 'halftime': {
-      // Four bars in time, four bars half-time.
-      const a = kickLine(tu, key, PROGS.pop, kickBeats('rock-8b'));
-      const b = kickLine(tu, key, PROGS.pop, kickBeats('half-time')).map((x) => ({ ...x, b: x.b + 16 }));
-      const line = [...a, ...b, endOn(tu, key, 32, 1)];
-      return drillOf(s, tu, alt(line), { en: 'Half-time feel change', he: 'מעבר לחצי זמן', chart: [...chartOf(key, PROGS.pop), ...chartOf(key, PROGS.pop)], bass: { kick: 25 }, evenness: false });
+      // Eight bars in time, then the drums go half-time for eight: two groove sections, the bass follows each kick lane.
+      const prog: Prog = [...PROGS.pop, ...PROGS.pop];
+      const a = kickLine(tu, key, prog, kickBeats('rock-8b'));
+      const b = kickLine(tu, key, prog, kickBeats('half-time')).map((x) => ({ ...x, b: x.b + 32 }));
+      const line = [...a, ...b, endOn(tu, key, 64, 1)];
+      return drillOf(s, tu, alt(line), { en: 'Half-time feel change: 8 bars in time, 8 half-time', he: 'מעבר לחצי זמן: 8 תיבות בזמן, 8 בחצי זמן', chart: [...chartOf(key, prog), ...chartOf(key, prog)], bass: { kick: 25 }, evenness: false, drums: { groove: 'rock-8b', sections: [{ bar: 8, groove: 'half-time' }] } });
     }
     case 'fills': {
       // Three bars of groove, a bar of space for the drummer's fill, land on 1. Twice.
@@ -1272,7 +1290,7 @@ export function genWalk(s: DrillSpec, tu: Tuning): Drill {
       for (const k of [0, 5, 10, 3, 0]) prog.push([mod(k + 2, 12), 'm7'], [mod(k + 7, 12), '7'], [k, 'maj7'], [k, 'maj7']);
       const line = refWalk(tu, textOf(key, prog), `b-walk:cycle:${key}`, false);
       line.push(endOn(tu, key, prog.length * 4, 2));
-      return drillOf(s, tu, alt(line), { en: 'ii–V–I up in 4ths and home', he: 'ii–V–I בעליות של קוורטות, וחזרה הביתה', chart: chartOf(key, prog), goal: { chordTonesOnBeats: true } });
+      return drillOf(s, tu, alt(line), { en: 'ii–V–I up in 4ths and home', he: 'ii–V–I בעליות של קוורטות, וחזרה הביתה', chart: chartOf(key, prog), goal: { chordTonesOnBeats: true }, drums: { groove: 'swing' } });
     }
     case 'rhythm': {
       // Rhythm changes, A section: two chords a bar.
@@ -1289,7 +1307,7 @@ export function genWalk(s: DrillSpec, tu: Tuning): Drill {
       const text = bars.map((b) => b.map((c) => chordName(key, c).replace('°7', 'dim7').replace('♭', 'b').replace('♯', '#')).join(' ')).join(' | ');
       const line = refWalk(tu, text, `b-walk:rhythm:${key}`, false);
       line.push(endOn(tu, key, 32, 2));
-      return drillOf(s, tu, alt(line), { en: 'Rhythm changes: two chords a bar', he: 'ריתם צ׳יינג׳ס: שני אקורדים בתיבה', chart: bars.map((b) => b.map((c) => chordName(key, c)).join(' ')), goal: { chordTonesOnBeats: true } });
+      return drillOf(s, tu, alt(line), { en: 'Rhythm changes: two chords a bar', he: 'ריתם צ׳יינג׳ס: שני אקורדים בתיבה', chart: bars.map((b) => b.map((c) => chordName(key, c)).join(' ')), goal: { chordTonesOnBeats: true }, drums: { groove: 'swing' } });
     }
     case 'standard': {
       // One chorus of a standard's changes in the tune's own key and feel (B13 / B18), chart only, judged by the rules.
@@ -1356,14 +1374,14 @@ export function genWalk(s: DrillSpec, tu: Tuning): Drill {
         return [...three, approach('chrom', three[2], tgt, bar)];
       }, [3]);
       line.push({ b: 32, d: 2, p: lowRoot(tu, key) ?? rootOf(tu, key) });
-      return drillOf(s, tu, alt(line), { en: 'Low register walk (low B on 5-string)', he: 'ווקינג באזור הנמוך (B נמוך בבס 5 מיתרים)', chart: chartOf(key, iivi), goal: { chordTonesOnBeats: true } });
+      return drillOf(s, tu, alt(line), { en: 'Low register walk (low B on 5-string)', he: 'ווקינג באזור הנמוך (B נמוך בבס 5 מיתרים)', chart: chartOf(key, iivi), goal: { chordTonesOnBeats: true }, drums: { groove: 'swing' } });
     }
     case 'two-four': {
       // A blues chorus in 2 (half notes), then a chorus in 4 (walking).
       const a = overProg(tu, key, blues, (R) => [{ b: 0, d: 2, p: R, ct: true }, { b: 2, d: 2, p: R + 7 > floorOf(tu) + 14 ? R - 5 : R + 7 }]);
       const b = refWalk(tu, textOf(key, blues), `b-walk:24:${key}`, false).map((x) => ({ ...x, b: x.b + 48 }));
       const line = [...a, ...b, endOn(tu, key, 96, 2)];
-      return drillOf(s, tu, alt(line), { en: 'Blues in 2, then in 4', he: 'בלוז בשתיים, ואז בארבע', chart: [...chartOf(key, blues), ...chartOf(key, blues)], evenness: false });
+      return drillOf(s, tu, alt(line), { en: 'Blues in 2, then in 4', he: 'בלוז בשתיים, ואז בארבע', chart: [...chartOf(key, blues), ...chartOf(key, blues)], evenness: false, drums: { groove: 'swing' } });
     }
   }
   throw new Error(`Unknown b-walk kind ${s.kind}`);
@@ -1679,7 +1697,7 @@ export function genRead(s: DrillSpec, tu: Tuning): Drill {
         bar >= 4 ? [0, 1, 2, 3].map((k) => ({ b: k, d: 1, p: R + [0, QI[c[1]][1], QI[c[1]][2], 12][k], ct: true })) : [0, 1, 1.5, 2, 3].map((b, k) => ({ b, d: k === 1 ? 0.5 : k === 2 ? 0.5 : 1, p: R + [0, 7, 12, 7, 0][k], ct: true })),
       );
       line.push(endOn(tu, key, 48, 1));
-      return drillOf(s, tu, alt(line), { en: 'Quick study: 4 written bars, then 8 of your own', he: 'לימוד מהיר: 4 תיבות כתובות, ואז 8 משלך', chart: chartOf(key, prog), show: 'chart', freeFrom: 16, evenness: false, bass: { rules: rulesOf(key, prog, 'chordTones') } });
+      return drillOf(s, tu, alt(line), { en: 'Quick study: 4 written bars, then 8 of your own', he: 'לימוד מהיר: 4 תיבות כתובות, ואז 8 משלך', chart: chartOf(key, prog), show: 'chart', freeFrom: 16, evenness: false, bass: { rules: rulesOf(key, prog, 'chordTones') }, drums: { groove: 'pop-1' }, prep: 30 });
     }
     case 'written': {
       // Two written bars, then six bars of chord tones (for now written out too).
@@ -1690,7 +1708,7 @@ export function genRead(s: DrillSpec, tu: Tuning): Drill {
       });
       line.push(endOn(tu, key, 32, 1));
       // B3 (RSL Gr 4–5 Improvisation & Interpretation): two written bars, then six free bars from the chords (rules).
-      return drillOf(s, tu, alt(line), { en: 'Written groove + your own continuation', he: 'גרוב כתוב + המשך משלך', chart: chartOf(key, prog), show: 'chart', freeFrom: 8, bass: { rules: rulesOf(key, prog, 'chordTones') } });
+      return drillOf(s, tu, alt(line), { en: 'Written groove + your own continuation', he: 'גרוב כתוב + המשך משלך', chart: chartOf(key, prog), show: 'chart', freeFrom: 8, bass: { rules: rulesOf(key, prog, 'chordTones') }, drums: { groove: 'pop-1' } });
     }
     case 'funkread': {
       const prog: Prog = [[0, 'm7'], [0, 'm7'], [5, '7'], [5, '7']];
