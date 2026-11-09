@@ -16,6 +16,8 @@ import { midi } from '../speech/midi';
 import { BrowserPitchCapture } from '../speech/pitchCapture';
 import { listenLoop } from './Flight';
 import { tuningById } from '../engine/fretboard';
+import { drumHits } from '../engine/drills/bass';
+import type { NoteEvent } from '../engine/lesson';
 
 type Lang = 'he' | 'en';
 const TX = {
@@ -33,14 +35,51 @@ const WORSE: NoteMark[] = ['missed', 'wrong', 'timing', 'ok'];
 const TECH_SYM: Partial<Record<NonNullable<ExpNote['technique']>, string>> = { hammer: 'h', pull: 'p', slide: '/', bend: 'b', prebend: 'pb', release: 'r', vibrato: '~', tap: 'T', harmonic: 'harm', mute: 'PM', dead: 'X', 'strum-down': '↓', 'strum-up': '↑', 'rest-stroke': 'apoy.', rasgueado: 'rasg.' };
 const STROKE_SYM: Record<string, string> = { D: '⊓', U: 'V', p: 'p', i: 'i', m: 'm', a: 'a', c: 'c' };
 
+/** A bass drill (bass course, the old g-bass family, or a bass custom drill). */
+export const isBassDrill = (d: Drill): boolean => d.spec.instrument === 'bass' || d.spec.family === 'g-bass' || d.spec.family.startsWith('b-');
+/** Drill beats → quarter notes (eighth-note meters count eighths). */
+const qOf = (d: Drill): number => (d.pulse === 8 ? 0.5 : 1);
+
+/**
+ * B2: a moving window over the lines of a long drill — two lines (four bars) at a time, following the take's beat, so
+ * the whole drill is reachable and still fits one phone screen. Idle: small ‹ › page buttons; after a take it opens
+ * on the first line with a mistake.
+ */
+function useLineWindow(lines: number, beat: number, perLine: number, focus: number): { from: number; pager: React.ReactNode } {
+  const [page, setPage] = useState(0);
+  const [lastFocus, setLastFocus] = useState(focus);
+  if (focus !== lastFocus) {
+    setLastFocus(focus);
+    setPage(Math.max(0, Math.min(lines - 2, focus)));
+  }
+  const follow = beat >= 0 ? Math.max(0, Math.min(lines - 2, Math.floor(beat / perLine + 1e-6))) : null;
+  const from = follow ?? Math.max(0, Math.min(page, lines - 2));
+  const pager =
+    lines > 2 && follow === null ? (
+      <div className="tab-pager" dir="ltr">
+        <button className="icon-btn" aria-label="Previous lines" disabled={from === 0} onClick={() => setPage(Math.max(0, from - 2))}>
+          ‹
+        </button>
+        <small>
+          {from + 1}–{Math.min(lines, from + 2)} / {lines}
+        </small>
+        <button className="icon-btn" aria-label="Next lines" disabled={from + 2 >= lines} onClick={() => setPage(Math.min(lines - 2, from + 2))}>
+          ›
+        </button>
+      </div>
+    ) : null;
+  return { from, pager };
+}
+
 /** Guitar / bass drill as tab (spec AJ): string / fret, technique marks above, fingers or strokes below, result colours. */
-export function DrillTab({ drill, fingering = false, picking = false, result }: { drill: Drill; fingering?: boolean; picking?: boolean; result?: TakeMetrics | null }) {
-  const ns = drill.notes;
+export function DrillTab({ drill, fingering = false, picking = false, result, beat = -1, upTo }: { drill: Drill; fingering?: boolean; picking?: boolean; result?: TakeMetrics | null; /** Beat of the running take (−1 idle): the window follows it. */ beat?: number; /** Only the notes before this beat (the written bars of a free-choice drill). */ upTo?: number }) {
+  const ns = upTo === undefined ? drill.notes : drill.notes.filter((n) => n.beat < upTo - 1e-6);
   const byKey = new Map<string, NoteResult>();
   for (const r of result?.perNote ?? []) byKey.set(noteKey(r.exp), r);
   const timingMs = result ? thresholds(tempoBand(result.nps)).sd * 2 : 0;
-  const cols: { pos: { str: number; fret: number | 'x' }[]; dur: number; top?: string; bottom?: string; mark?: NoteMark }[] = [];
+  const cols: { pos: { str: number; fret: number | 'x' }[]; dur: number; at: number; top?: string; bottom?: string; mark?: NoteMark }[] = [];
   const seen = new Set<number>();
+  const k = qOf(drill);
   for (const n of ns) {
     if (n.chordId !== undefined) {
       if (seen.has(n.chordId)) continue;
@@ -52,22 +91,88 @@ export function DrillTab({ drill, fingering = false, picking = false, result }: 
     const tech = n.technique && TECH_SYM[n.technique] ? TECH_SYM[n.technique]! + (n.bendCents && n.technique !== 'vibrato' ? (n.bendCents >= 200 ? ' full' : ' ½') : '') : undefined;
     const bottom = picking ? (n.stroke ? STROKE_SYM[n.stroke] : undefined) : fingering && n.finger ? String(n.finger) : undefined;
     const ms = result ? group.map((x) => markOf(byKey.get(noteKey(x)), timingMs)) : [];
-    cols.push({ pos, dur: Math.max(0.25, n.dur), top: tech, bottom, mark: result ? WORSE.find((w) => ms.includes(w)) : undefined });
+    cols.push({ pos, dur: Math.max(0.25, n.dur * k), at: n.beat, top: tech, bottom, mark: result ? WORSE.find((w) => ms.includes(w)) : undefined });
   }
-  const strings = drill.spec.tuning ? tuningById(drill.spec.tuning).open.length : drill.spec.instrument === 'bass' || drill.spec.family === 'g-bass' || drill.spec.family.startsWith('b-') ? 4 : 6;
+  const strings = drill.spec.tuning ? tuningById(drill.spec.tuning).open.length : isBassDrill(drill) ? 4 : 6;
+  // B2 (0.64): the whole drill, two bars a line (bar lines where the music has them), in a window that follows the beat.
+  const perLine = (drill.meter || 4) * 2;
   const lines: (typeof cols)[] = [];
-  for (let i = 0; i < Math.min(cols.length, 32); i += 8) lines.push(cols.slice(i, i + 8));
+  for (const c of cols) (lines[Math.floor(c.at / perLine + 1e-6)] ??= []).push(c);
+  for (let i = 0; i < lines.length; i++) lines[i] ??= [];
+  const firstBad = result ? lines.findIndex((l) => l.some((c) => c.mark && c.mark !== 'ok')) : -1;
+  const { from, pager } = useLineWindow(lines.length, beat, perLine, Math.max(0, firstBad));
   return (
-    <div className="drill-staff drill-tab">
-      {lines.map((l, i) => (
-        <TabLine key={i} cols={l.map(({ mark: _m, ...c }) => c)} marks={result ? l.map((c) => c.mark) : undefined} strings={strings} />
+    <div className="drill-staff drill-tab" data-tab-lines={lines.length}>
+      {lines.slice(from, from + 2).map((l, i) =>
+        l.length ? <TabLine key={from + i} cols={l.map(({ mark: _m, at: _a, ...c }) => c)} marks={result ? l.map((c) => c.mark) : undefined} strings={strings} /> : <div key={from + i} className="tab-rest-line" />,
+      )}
+      {pager}
+    </div>
+  );
+}
+
+/**
+ * B3: a free-choice drill shows only its chord chart — bars with the chord and one slash a beat, the bar being played
+ * marked. From `fromBeat` on (a written start comes before it in notation / tab).
+ */
+export function ChartView({ drill, beat = -1, fromBeat = 0 }: { drill: Drill; beat?: number; fromBeat?: number }) {
+  const meter = drill.meter || 4;
+  const first = Math.floor(fromBeat / meter + 1e-6);
+  const bars = (drill.chart ?? []).slice(first);
+  const cur = beat >= 0 ? Math.floor(beat / meter + 1e-6) - first : -1;
+  // Four bars a row; long charts show the rows around the bar being played (one screen).
+  const rows: string[][] = [];
+  for (let i = 0; i < bars.length; i += 4) rows.push(bars.slice(i, i + 4));
+  const curRow = cur >= 0 ? Math.floor(cur / 4) : 0;
+  const start = Math.max(0, Math.min(rows.length - 4, curRow - 1));
+  const slashes = Math.min(meter, 7);
+  return (
+    <div className="chart-view" dir="ltr" data-chart-only="1" aria-label="chord chart">
+      {rows.slice(start, start + 4).map((r, ri) => (
+        <ol key={start + ri} className="chart-row">
+          {r.map((c, i) => {
+            const idx = (start + ri) * 4 + i;
+            return (
+              <li key={idx} className={`chart-bar ${idx === cur ? 'now' : ''}`}>
+                <b>{c || '%'}</b>
+                <span aria-hidden>{'/ '.repeat(slashes).trim()}</span>
+              </li>
+            );
+          })}
+        </ol>
       ))}
     </div>
   );
 }
 
-export function DrillStaff({ drill, fingering = false, result }: { drill: Drill; fingering?: boolean; result?: TakeMetrics | null }) {
-  const rh = drill.notes.filter((n) => n.hand === 'R');
+/** B11: an ear drill before its result — what to do, and which bars the band plays and which are yours. */
+export function EarCard({ drill, beat = -1, lang }: { drill: Drill; beat?: number; lang: Lang }) {
+  const meter = drill.meter || 4;
+  const bars = Math.ceil(drill.beats / meter - 1e-6);
+  const cur = beat >= 0 ? Math.floor(beat / meter + 1e-6) : -1;
+  const band = (bar: number) => (drill.listen?.windows ?? []).some(([a, b]) => bar * meter >= a - 1e-6 && bar * meter < b - 1e-6);
+  return (
+    <div className="ear-card" data-ear-card="1">
+      <p className="ear-ask">{drill.listen?.ask[lang]}</p>
+      <ol className="ear-bars" dir="ltr">
+        {Array.from({ length: bars }, (_, i) => (
+          <li key={i} className={`${band(i) ? 'band' : 'you'} ${i === cur ? 'now' : ''}`}>
+            {band(i) ? (lang === 'he' ? 'הקשבה' : 'Listen') : lang === 'he' ? 'אתם' : 'You'}
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
+export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo }: { drill: Drill; fingering?: boolean; result?: TakeMetrics | null; beat?: number; upTo?: number }) {
+  // B1 (0.64): bass is written in the bass clef an octave above where it sounds (standard bass notation); the
+  // upright's upper register in the tenor clef. B7: eighth-note meters are drawn in eighths with an x/8 signature.
+  const bass = isBassDrill(drill);
+  const shift = bass ? 12 : 0;
+  const qk = qOf(drill);
+  const rhClef: 'treble' | 'bass' | 'tenor' = bass ? (drill.spec.kind === 'tenor' ? 'tenor' : 'bass') : 'treble';
+  const rh = drill.notes.filter((n) => n.hand === 'R' && (upTo === undefined || n.beat < upTo - 1e-6));
   const byKey = new Map<string, NoteResult>();
   for (const r of result?.perNote ?? []) byKey.set(noteKey(r.exp), r);
   const timingMs = result ? thresholds(tempoBand(result.nps)).sd * 2 : 0;
@@ -91,17 +196,24 @@ export function DrillStaff({ drill, fingering = false, result }: { drill: Drill;
     return '';
   };
   // Lines by bars (0.52): two bars a line, bar lines and the time signature — never a lone note on its own line.
-  const meter = drill.meter || 4;
-  const draw = (ns: typeof rh, clef: 'treble' | 'bass') => {
-    // A song shows all of itself (≤ 96 notes); other drills their first 8 bars.
-    const all = firstOfChord(ns).filter((n) => drill.chart || n.beat < meter * 8);
-    const per = meter * (meter >= 6 ? 1 : 2);
+  // Positions are in quarter notes (eighth-note meters: beats × ½).
+  const meter = (drill.meter || 4) * qk;
+  const sig = drill.pulse === 8 ? `${drill.meter}/8` : undefined;
+  const per = meter * (meter >= 6 ? 1 : 2);
+  const bq = (n: ExpNote) => n.beat * qk;
+  const dq = (n: ExpNote) => n.dur * qk;
+  const lineOf = (n: ExpNote) => Math.floor(bq(n) / per + 1e-6);
+  // A song shows all of itself (≤ 96 notes); a bass drill all of itself in a moving window (B2); others their first 8 bars.
+  const shown = (ns: ExpNote[]) => firstOfChord(ns).filter((n) => drill.chart || bass || bq(n) < meter * 8);
+  const nLines = Math.max(1, ...shown(rh).map((n) => lineOf(n) + 1));
+  const firstBad = result ? shown(rh).find((n) => markFor(n, rh) && markFor(n, rh) !== 'ok') : undefined;
+  const win = useLineWindow(nLines, beat >= 0 ? beat * qk : -1, per, firstBad ? lineOf(firstBad) : 0);
+  const draw = (ns: typeof rh, clef: 'treble' | 'bass' | 'tenor', windowed: boolean) => {
+    const all = shown(ns);
     const lines: (typeof all)[] = [];
-    for (const n of all) {
-      const li = Math.floor(n.beat / per + 1e-6);
-      (lines[li] ??= []).push(n);
-    }
-    return lines.filter(Boolean).map((xs, li) => {
+    for (const n of all) (lines[lineOf(n)] ??= []).push(n);
+    return lines.map((xs, li) => {
+      if (!xs || (windowed && (li < win.from || li >= win.from + 2))) return null;
       const fing = fingering && xs.some((n) => n.finger);
       const labels = result ? xs.map((n) => playedLabel(n) || (fing && n.finger ? String(n.finger) : '')) : fing ? xs.map((n) => (n.finger ? String(n.finger) : '')) : undefined;
       const marks = result ? xs.map((n) => markFor(n, ns)) : undefined;
@@ -118,18 +230,18 @@ export function DrillStaff({ drill, fingering = false, result }: { drill: Drill;
         }
       };
       const lineStart = li * per;
-      if (xs[0].beat - lineStart > 0.49) pushRest(xs[0].beat - lineStart);
+      if (bq(xs[0]) - lineStart > 0.49) pushRest(bq(xs[0]) - lineStart);
       xs.forEach((n, i) => {
-        const nextAt = xs[i + 1]?.beat ?? Math.min(lineStart + per, Math.ceil((n.beat + n.dur) / meter - 1e-6) * meter);
-        const d = std(Math.min(Math.max(0.5, n.dur), Math.max(0.5, nextAt - n.beat)));
+        const nextAt = xs[i + 1] ? bq(xs[i + 1]) : Math.min(lineStart + per, Math.ceil((bq(n) + dq(n)) / meter - 1e-6) * meter);
+        const d = std(Math.min(Math.max(0.5, dq(n)), Math.max(0.5, nextAt - bq(n))));
         items.push({ n, dur: d });
-        if (nextAt - (n.beat + d) > 0.49) pushRest(nextAt - (n.beat + d));
+        if (nextAt - (bq(n) + d) > 0.49) pushRest(nextAt - (bq(n) + d));
       });
       const idx = (n: ExpNote) => xs.indexOf(n);
       return (
         <NoteStaff
           key={`${clef}${li}`}
-          notes={items.map((x) => x.n?.pitch ?? 71)}
+          notes={items.map((x) => (x.n ? x.n.pitch + (clef === 'treble' ? 0 : shift) : 71))}
           rests={items.map((x) => !x.n)}
           chord={false}
           keyPc={k}
@@ -138,22 +250,31 @@ export function DrillStaff({ drill, fingering = false, result }: { drill: Drill;
           labels={labels ? items.map((x) => (x.n ? labels[idx(x.n)] : '')) : undefined}
           marks={marks ? items.map((x) => (x.n ? marks[idx(x.n)] : undefined)) : undefined}
           meter={meter}
-          timeSig={li === 0}
+          timeSig={li === 0 || (windowed && li === win.from)}
+          sig={sig}
         />
       );
     });
   };
   return (
-    <div className="drill-staff">
-      {drill.chart && (
+    <div className="drill-staff" data-clef={rhClef}>
+      {drill.chart && !bass && (
         <ol className="song-chart" aria-label="chords" dir="ltr">
           {drill.chart.map((c, i) => (
             <li key={i}>{c}</li>
           ))}
         </ol>
       )}
-      {draw(rh, 'treble')}
-      {draw(lh, 'bass')}
+      {drill.chart && bass && (
+        <ol className="song-chart" aria-label="chords" dir="ltr">
+          {drill.chart.slice((win.from * per) / meter, ((win.from + 2) * per) / meter).map((c, i) => (
+            <li key={i}>{c}</li>
+          ))}
+        </ol>
+      )}
+      {draw(rh, rhClef, bass)}
+      {draw(lh, 'bass', false)}
+      {bass && win.pager}
     </div>
   );
 }
@@ -227,22 +348,45 @@ function clickHeard(drill: Pick<Drill, 'meter' | 'click'>, i: number): boolean {
 }
 
 /** Play a drill once: count-in, metronome, record; resolves with the analysis. */
-export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat }: { drill: Drill; bpm: number; lang: Lang; cal: DrillCalibration; onDone: (m: TakeMetrics, played: PlayedNote[]) => void; /** Beat index of the take (after the count-in; −1 when idle) — for a score cursor. */ onBeat?: (beat: number) => void }) {
+/** The band part of a bass drill as audio events (B5 drums, B11 ear prompts), in seconds from the timeline's start. */
+function backingEvents(drill: Drill, beatS: number, drums: boolean): NoteEvent[] {
+  // piano.play schedules 60 ms ahead, playTimeline 120 ms: shift by the difference so both share one clock.
+  const at = (b: number) => 0.06 + (drill.meter + b) * beatS;
+  const out: NoteEvent[] = [];
+  if (drums && drill.drums) {
+    const PERC = { k: 'kick', s: 'snare', h: 'hat', 'tom-hi': 'tom-hi', 'tom-lo': 'tom-lo', crash: 'crash' } as const;
+    for (const h of drumHits(drill.drums, drill.beats, drill.meter, drill.pulse)) out.push({ midi: 36, start: at(h.beat), duration: 0.2, velocity: h.d === 'h' ? 0.4 : h.d === 'crash' ? 0.7 : 0.85, perc: PERC[h.d] });
+  }
+  for (const n of drill.listen?.notes ?? [])
+    for (const m of n.midi) out.push(n.perc ? { midi: m, start: at(n.beat), duration: n.dur * beatS, velocity: 0.45, perc: n.perc } : { midi: m, start: at(n.beat), duration: n.dur * beatS, velocity: n.inst === 'bass' ? 0.85 : 0.5, ...(n.inst === 'bass' ? { inst: 'bass' as const } : {}) });
+  return out;
+}
+
+/** Play a drill once: count-in, metronome, record; resolves with the analysis. */
+export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDrums }: { drill: Drill; bpm: number; lang: Lang; cal: DrillCalibration; onDone: (m: TakeMetrics, played: PlayedNote[]) => void; /** Beat index of the take (after the count-in; −1 when idle) — for a score cursor. */ onBeat?: (beat: number) => void; /** B5: headphones / line-in confirmed (undefined = never asked). An audio-routing choice only — it never passes anything. */ drumsOk?: boolean; onDrums?: (headphones: boolean) => void }) {
   const tx = TX[lang];
   const [phase, setPhase] = useState<'ready' | 'count' | 'play'>('ready');
   const [beat, setBeat] = useState(-1);
   const ac = useRef<AbortController | null>(null);
   const useMidi = midi.devices.length > 0;
   useEffect(() => () => ac.current?.abort(), []);
+  // B5: drums under the take only when the mic can't hear them (headphones, line-in, or a MIDI bass); else the click.
+  const drums = !!drill.drums && (useMidi || drumsOk === true);
+  const askDrums = !!drill.drums && !useMidi && drumsOk === undefined && !!onDrums;
+  if (drill.untimed) return <UntimedTake drill={drill} lang={lang} cal={cal} onDone={onDone} />;
   const start = async () => {
     await piano.unlock();
     const abort = new AbortController();
     ac.current = abort;
     const beatS = 60 / bpm;
-    const clicks = Array.from({ length: drill.meter + Math.ceil(drill.beats) + 1 }, (_, i) => ({ t: i * beatS, accent: i % drill.meter === 0, silent: !clickHeard(drill, i) }));
+    // With the drums playing, the click stops after the count-in (the drummer keeps time).
+    const clicks = Array.from({ length: drill.meter + Math.ceil(drill.beats) + 1 }, (_, i) => ({ t: i * beatS, accent: i % drill.meter === 0, silent: !clickHeard(drill, i) || (drums && i >= drill.meter) }));
     // Click on the off-beats (bass time drills): a woodblock on every "and" after the count-in.
-    const wood = drill.click === 'and' ? Array.from({ length: Math.ceil(drill.beats) }, (_, k) => (drill.meter + k + 0.5) * beatS) : [];
+    const wood = drill.click === 'and' && !drums ? Array.from({ length: Math.ceil(drill.beats) }, (_, k) => (drill.meter + k + 0.5) * beatS) : [];
     const tl = { clicks, wood, responseAt: drill.meter * beatS, responseEnd: (drill.meter + drill.beats + 1) * beatS };
+    const backing = backingEvents(drill, beatS, drums);
+    // B11: onsets inside the band's bars are not the answer (a speaker's sound on the mic).
+    const inBand = (ms: number) => (drill.listen?.windows ?? []).some(([a, b]) => ms >= a * beatS * 1000 - 40 && ms < b * beatS * 1000 + 120);
     let zero = 0;
     const notes: PlayedNote[] = [];
     const open = new Map<number, PlayedNote>();
@@ -318,6 +462,7 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat }: { drill: Dr
     }
     setPhase('count');
     try {
+      if (backing.length) void piano.play(backing, (drill.meter + drill.beats + 1) * beatS + 0.5, abort.signal).catch(() => {});
       await piano.playTimeline(
         tl,
         abort.signal,
@@ -343,8 +488,9 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat }: { drill: Dr
     }
     setPhase('ready');
     if (guitar) {
-      const played = frames.length ? detectOnsets(frames) : notes;
-      return onDone(analyzeGuitarTake(drill, bpm, played, cal, frames), played);
+      const heard = drill.listen ? frames.filter((f) => !inBand(f.t)) : frames;
+      const played = (heard.length ? detectOnsets(heard) : notes).filter((p) => !drill.listen || !inBand(p.on));
+      return onDone(analyzeGuitarTake(drill, bpm, played, cal, heard), played);
     }
     if (pianoChords) {
       const played = scoreInformedNotes(drill, bpm, frames);
@@ -363,10 +509,28 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat }: { drill: Dr
     <div className="drill-take">
       {!useMidi && !isGuitarDrill(drill) && <p className="field-hint">{tx.midiOff}</p>}
       <div className={`drill-beat ${phase}`} aria-live="polite" dir="ltr">
-        {phase === 'count' ? `${tx.countIn} ${Math.max(1, drill.meter - beat)}` : phase === 'play' ? tx.go : `${tx.bpm} = ${bpm}`}
+        {phase === 'count' ? `${tx.countIn} ${Math.max(1, drill.meter - beat)}` : phase === 'play' ? tx.go : `${drill.pulse === 8 ? '♪' : tx.bpm} = ${bpm}`}
         <span className={`beat-dot ${beat % drill.meter === 0 ? 'accent' : ''}`} key={beat} />
       </div>
-      {phase === 'ready' ? (
+      {phase === 'ready' && drill.drums && !askDrums && !useMidi && onDrums && (
+        <button className="link drums-route" onClick={() => onDrums(!drumsOk)} data-drums={drums ? 'on' : 'off'}>
+          {drums ? (lang === 'he' ? 'תופים באוזניות · להחליף לקליק' : 'Drums in headphones · switch to the click') : lang === 'he' ? 'קליק ברמקול · יש לי אוזניות' : 'Click on the speaker · I have headphones'}
+        </button>
+      )}
+      {phase === 'ready' && askDrums ? (
+        // B5: the headphones gate — where the sound goes, so the mic hears only the bass. Not a pass of anything.
+        <div className="drums-gate" data-drums-gate="1">
+          <p className="field-hint">{lang === 'he' ? 'יש תופים בתרגיל הזה. כדי שהמיקרופון ישמע רק את הבס, התופים מתנגנים רק באוזניות או בחיבור קווי.' : 'This drill has drums. So the mic hears only your bass, they play only in headphones or over a line-in.'}</p>
+          <div className="drill-actions">
+            <button className="btn primary" onClick={() => onDrums!(true)} data-drums-choice="headphones">
+              {lang === 'he' ? 'אוזניות / חיבור קווי' : 'Headphones / line-in'}
+            </button>
+            <button className="btn ghost" onClick={() => onDrums!(false)} data-drums-choice="speaker">
+              {lang === 'he' ? 'רמקול: רק קליק' : 'Speaker: click only'}
+            </button>
+          </div>
+        </div>
+      ) : phase === 'ready' ? (
         <button className="btn mega" onClick={() => void start()} data-drill-play="1">
           ▶ {tx.play}
         </button>
@@ -442,5 +606,111 @@ export function TakeResult({ m, lang, onAgain, onSlower, onNext }: { m: TakeMetr
         )}
       </div>
     </section>
+  );
+}
+
+/**
+ * B10: untimed note finding (reading L1) — one note at a time on the bass clef; the player finds it on the bass and the
+ * pitch heard (mic) or played (MIDI) is checked, with the response time. Clean = ≥ 95 % right, each within maxMs.
+ */
+function UntimedTake({ drill, lang, cal, onDone }: { drill: Drill; lang: Lang; cal: DrillCalibration; onDone: (m: TakeMetrics, played: PlayedNote[]) => void }) {
+  const [i, setI] = useState(-1);
+  const ac = useRef<AbortController | null>(null);
+  const res = useRef<{ played: PlayedNote | null; ms: number | null; ok: boolean }[]>([]);
+  useEffect(() => () => ac.current?.abort(), []);
+  const maxMs = drill.untimed?.maxMs ?? 2000;
+  const notes = drill.notes;
+  const k = keyName(drill.keySig);
+  const run = () => {
+    const abort = new AbortController();
+    ac.current = abort;
+    res.current = [];
+    let idx = 0;
+    let shownAt = performance.now();
+    setI(0);
+    const answer = (midiNote: number, at: number) => {
+      if (abort.signal.aborted || idx >= notes.length) return;
+      const want = notes[idx];
+      const ms = Math.max(0, at - shownAt - cal.latencyMs);
+      // Any octave counts on the mic (bass octave errors); the note name must be right.
+      const ok = (((midiNote - want.pitch) % 12) + 12) % 12 === 0;
+      res.current.push({ played: { pitch: midiNote, on: ms, off: null, vel: 64 }, ms, ok });
+      idx++;
+      if (idx >= notes.length) return finish();
+      shownAt = performance.now();
+      setI(idx);
+    };
+    const giveUp = window.setInterval(() => {
+      if (abort.signal.aborted) {
+        window.clearInterval(giveUp);
+        offMidi();
+        return;
+      }
+      if (idx < notes.length && performance.now() - shownAt > maxMs * 2.5) {
+        res.current.push({ played: null, ms: null, ok: false });
+        idx++;
+        if (idx >= notes.length) return finish();
+        shownAt = performance.now();
+        setI(idx);
+      }
+    }, 200);
+    const offMidi = midi.onNote((m, on, at) => on && answer(m, at));
+    let cand: number | null = null;
+    let since = 0;
+    let last: number | null = null;
+    if (!midi.devices.length)
+      void listenLoop(new BrowserPitchCapture(), abort.signal, (f) => {
+        const now = performance.now();
+        if (!f.hz || f.confidence < 0.85) return void ((cand = null), (last = null));
+        const m = Math.round(69 + 12 * Math.log2(f.hz / 440));
+        if (m !== cand) return void ((cand = m), (since = now));
+        if (now - since > 60 && m !== last) ((last = m), answer(m, since));
+      });
+    function finish() {
+      window.clearInterval(giveUp);
+      offMidi();
+      abort.abort();
+      setI(-1);
+      const r = res.current;
+      const right = r.filter((x) => x.ok).length;
+      const slow = r.filter((x) => x.ok && (x.ms ?? Infinity) > maxMs).length;
+      const acc = right / notes.length;
+      const verdict = acc >= 0.95 && slow === 0 ? 'clean' : acc >= 0.8 ? 'almost' : 'not';
+      const rts = r.filter((x) => x.ms !== null).map((x) => x.ms!);
+      const mean = rts.length ? rts.reduce((a, b) => a + b, 0) / rts.length : null;
+      const perNote = notes.map((n, j) => ({ exp: n, played: r[j]?.played ?? null, dev: r[j]?.ms ?? null, ok: !!r[j]?.ok && (r[j].ms ?? Infinity) <= maxMs }));
+      const why =
+        verdict === 'clean'
+          ? { en: `Every note found, ${mean ? (mean / 1000).toFixed(1) : '–'} s on average.`, he: `כל התווים נמצאו, ${mean ? (mean / 1000).toFixed(1) : '–'} ש׳ בממוצע.` }
+          : slow && acc >= 0.95
+            ? { en: `${slow} took longer than ${maxMs / 1000} s.`, he: `${slow} לקחו יותר מ-${maxMs / 1000} ש׳.` }
+            : { en: `${notes.length - right} of ${notes.length} were another note.`, he: `${notes.length - right} מתוך ${notes.length} היו תו אחר.` };
+      const m: TakeMetrics = { bpm: 0, nps: 0, accuracy: acc, wrong: r.filter((x) => x.played && !x.ok).length, missing: r.filter((x) => !x.played).length + Math.max(0, notes.length - r.length), timingMean: mean, timingSD: null, cvR: null, cvL: null, handsMean: null, handsAbs: null, chordSpread: null, velSD: null, velMean: null, bandHit: null, slope: null, r2: null, accentGap: null, kot: null, kdr: null, hesitations: slow, glitches: [], chordToneOnBeats: null, voiceLeading: null, perNote, verdict, why };
+      onDone(m, r.map((x) => x.played).filter((x): x is PlayedNote => !!x));
+    }
+  };
+  const cur = i >= 0 ? notes[i] : null;
+  return (
+    <div className="drill-take untimed" data-untimed="1">
+      {cur ? (
+        <>
+          <p className="drill-goal" dir="ltr">
+            {i + 1} / {notes.length}
+          </p>
+          <NoteStaff notes={[cur.pitch + 12]} chord={false} keyPc={k} clef="bass" />
+          <p className="field-hint">{lang === 'he' ? 'מצאו את התו הזה על הבס ונגנו אותו' : 'Find this note on your bass and play it'}</p>
+          <button className="btn mega ghost" onClick={() => (ac.current?.abort(), setI(-1))}>
+            ■ {TX[lang].stop}
+          </button>
+        </>
+      ) : (
+        <>
+          <p className="field-hint">{lang === 'he' ? `תו אחד בכל פעם, בלי קצב — עד ${maxMs / 1000} שניות לכל תו.` : `One note at a time, no beat — up to ${maxMs / 1000} s each.`}</p>
+          <button className="btn mega" onClick={run} data-drill-play="1">
+            ▶ {TX[lang].play}
+          </button>
+        </>
+      )}
+    </div>
   );
 }

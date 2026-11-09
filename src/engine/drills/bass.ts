@@ -1642,14 +1642,14 @@ export function genRead(s: DrillSpec, tu: Tuning): Drill {
       return drillOf(s, tu, alt(line), { en: op === 1 ? 'Chart roadmap: D.S. al Coda' : 'Chart roadmap: repeats and endings', he: op === 1 ? 'מפת צ׳ארט: D.S. אל הקודה' : 'מפת צ׳ארט: חזרות וסיומות', chart, show: 'chart' });
     }
     case 'quick': {
-      // B15 (RSL Gr 6–8 Quick Study Piece): a lead sheet — 4 written bars, 4 bars of your own line from the chords,
-      // 4 written bars again. The free bars are judged by the chord-tone rules.
+      // B15 (RSL Gr 6–8 Quick Study Piece): a lead sheet — 4 written bars, then 8 bars of your own line from the chords,
+      // judged by the chord-tone rules.
       const prog: Prog = [...PROGS.pop, ...PROGS.jazz, ...PROGS.pop];
       const line = overProg(tu, key, prog, (R, c, bar) =>
-        bar >= 4 && bar < 8 ? [0, 1, 2, 3].map((k) => ({ b: k, d: 1, p: R + [0, QI[c[1]][1], QI[c[1]][2], 12][k], ct: true })) : [0, 1, 1.5, 2, 3].map((b, k) => ({ b, d: k === 1 ? 0.5 : k === 2 ? 0.5 : 1, p: R + [0, 7, 12, 7, 0][k], ct: true })),
+        bar >= 4 ? [0, 1, 2, 3].map((k) => ({ b: k, d: 1, p: R + [0, QI[c[1]][1], QI[c[1]][2], 12][k], ct: true })) : [0, 1, 1.5, 2, 3].map((b, k) => ({ b, d: k === 1 ? 0.5 : k === 2 ? 0.5 : 1, p: R + [0, 7, 12, 7, 0][k], ct: true })),
       );
       line.push(endOn(tu, key, 48, 1));
-      return drillOf(s, tu, alt(line), { en: 'Quick study: written, free, written', he: 'לימוד מהיר: כתוב, חופשי, כתוב', chart: chartOf(key, prog), show: 'staff', freeFrom: 16, evenness: false, bass: { rules: rulesOf(key, prog, 'chordTones') } });
+      return drillOf(s, tu, alt(line), { en: 'Quick study: 4 written bars, then 8 of your own', he: 'לימוד מהיר: 4 תיבות כתובות, ואז 8 משלך', chart: chartOf(key, prog), show: 'chart', freeFrom: 16, evenness: false, bass: { rules: rulesOf(key, prog, 'chordTones') } });
     }
     case 'written': {
       // Two written bars, then six bars of chord tones (for now written out too).

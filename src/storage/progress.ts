@@ -243,8 +243,10 @@ export interface Settings {
   answerSurface?: 'auto' | 'keys' | 'neck' | 'staff';
   /** Draw the neck and chord boxes for a left-handed player. */
   leftHanded?: boolean;
-  /** Guitar / bass tuning id (src/engine/fretboard.ts). */
+  /** Guitar tuning id (src/engine/fretboard.ts). Before 0.64 it also held the bass tuning (moved to bassTuning). */
   tuning?: string;
+  /** Bass tuning id (0.64, B12): 4- / 5- / 6-string, drop D, fretless, upright — the bass-course drills follow it. */
+  bassTuning?: string;
   /** Tuner calibration, Hz (430–450). */
   a4?: number;
   /** The player confirmed headphones for low-frequency / stereo sound exercises (spec AE R2). */
@@ -373,7 +375,22 @@ export function migrateSettings(raw: Partial<Settings> | undefined): Settings {
   if (!raw.version || raw.version < 2) {
     return { ...DEFAULT_SETTINGS, mode: raw.mode ?? DEFAULT_SETTINGS.mode, voiceConsent: raw.voiceConsent ?? false, reducedMotion: raw.reducedMotion ?? null };
   }
-  return withCourses({ ...DEFAULT_SETTINGS, ...raw, voices: { ...DEFAULT_SETTINGS.voices, ...(raw.voices ?? {}) } });
+  return migrateBassTuning({ ...withCourses({ ...DEFAULT_SETTINGS, ...raw, voices: { ...DEFAULT_SETTINGS.voices, ...(raw.voices ?? {}) } }) });
+}
+
+/** Is this a bass tuning id (fretboard.ts: bass, bass5, bass6, bass-dropd, bass-fretless, upright)? */
+const isBassTuningId = (id: string | undefined): boolean => !!id && (id === 'upright' || id === 'bass' || id.startsWith('bass'));
+
+/** 0.64 (B12): a bass tuning saved in the shared 	uning key moves to assTuning; the guitar keeps its own. */
+export function migrateBassTuning(s: Settings): Settings {
+  if (!isBassTuningId(s.tuning)) return s;
+  const { tuning, ...rest } = s;
+  return { ...rest, bassTuning: s.bassTuning ?? tuning };
+}
+
+/** The player's bass tuning (the new key, else an old bass value still in 	uning). */
+export function bassTuningOf(s: Pick<Settings, 'bassTuning' | 'tuning'>): string | undefined {
+  return s.bassTuning ?? (isBassTuningId(s.tuning) ? s.tuning : undefined);
 }
 
 /** 0.61 (SPEC-COURSES): a player from before courses gets them from the goal and instruments they chose; the mixed
