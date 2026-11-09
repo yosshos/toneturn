@@ -1133,7 +1133,10 @@ export function App() {
       {splash && <Splash lang={s.uiLang} onDone={() => setSplash(false)} />}
       {withSide && <CommandPalette lang={s.uiLang} onPick={onPalette} />}
       {SIMULATED && <div className="sim-banner">{t.simulated}</div>}
-      {withSide && <Sidebar route={route} lang={s.uiLang} onNav={sideNav} me={{ name: playerFirstName, streak: gems.streak.count, onOpen: () => go('settings') }} />}
+      {withSide && <Sidebar route={route} lang={s.uiLang} onNav={sideNav} me={{ name: playerFirstName, streak: gems.streak.count, onOpen: () => go('settings') }} extra={<>
+            <WhatsNewButton t={t} lang={s.uiLang} unseen={news.length > 0} onSeen={() => updateSettings({ seenVersion: APP_VERSION })} />
+            <MonthReviewIcon t={t} lang={s.uiLang} progress={progress} seenMonth={s.monthReviewSeen} onSeen={(monthReviewSeen) => updateSettings({ monthReviewSeen })} />
+          </>} />}
       {mini && (
         <MiniLessonPlayer
           t={t}

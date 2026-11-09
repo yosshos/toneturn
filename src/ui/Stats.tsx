@@ -1008,6 +1008,37 @@ export function MonthReviewIcon({ t, lang, progress, seenMonth, onSeen }: { t: S
   );
 }
 
+/** The month as a melody (0.61): one note per day on a staff — higher for more items; a rest on days off. */
+function MonthMelody({ days, month, lang }: { days: Record<string, { items: number; sessions: number }> | undefined; month: string; lang: Lang }) {
+  const [y, mo] = month.split('-').map(Number);
+  const n = new Date(y, mo, 0).getDate();
+  const vals = Array.from({ length: n }, (_, i) => days?.[`${month}-${String(i + 1).padStart(2, '0')}`]?.items ?? 0);
+  const max = Math.max(1, ...vals);
+  const W = 12 + n * 11;
+  return (
+    <svg className="ps-melody" viewBox={`0 0 ${W} 74`} role="img" aria-label={lang === 'he' ? 'החודש כמנגינה: תו לכל יום, גבוה יותר כשתרגלתם יותר' : 'The month as a melody: a note per day, higher on bigger days'} style={{ direction: 'ltr' }}>
+      {[14, 24, 34, 44, 54].map((yy) => (
+        <path key={yy} d={`M2 ${yy}H${W - 2}`} stroke="currentColor" strokeWidth={1} opacity={0.35} />
+      ))}
+      {[7, 14, 21, 28].filter((d) => d < n).map((d) => (
+        <path key={`b${d}`} d={`M${8 + d * 11} 14V54`} stroke="currentColor" strokeWidth={1} opacity={0.35} />
+      ))}
+      <path d={`M${W - 6} 14V54M${W - 2.5} 14V54`} stroke="currentColor" strokeWidth={1.2} />
+      {vals.map((v, i) => {
+        const x = 13 + i * 11;
+        if (!v) return <rect key={i} x={x - 3} y={31} width={6} height={3} fill="currentColor" opacity={0.5} />;
+        const yy = 58 - Math.round((v / max) * 9) * 5;
+        return (
+          <g key={i}>
+            <path d={`M${x + 3.6} ${yy}V${yy - 16}`} stroke="var(--ink-c)" strokeWidth={1.4} />
+            <ellipse cx={x} cy={yy} rx={4.4} ry={3.2} transform={`rotate(-20 ${x} ${yy})`} fill={v === max ? '#FFD43B' : '#A78BFA'} stroke="var(--ink-c)" strokeWidth={1.4} />
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
 export function MonthReviewSheet({ t, lang, progress, month, onClose }: { t: Strings; lang: Lang; progress: Progress; month: string; onClose: () => void }) {
   const ps = P(progress);
   const m = monthReview(ps.statsDays, ps.awards, month);
@@ -1021,6 +1052,7 @@ export function MonthReviewSheet({ t, lang, progress, month, onClose }: { t: Str
           <p className="field-hint">{SX.noData[lang]}</p>
         ) : (
           <>
+            <MonthMelody days={ps.statsDays as Record<string, { items: number; sessions: number }> | undefined} month={month} lang={lang} />
             <div className="ps-tiles">
               <Tile label={SX.days[lang]} value={<N>{m.days}</N>} />
               <Tile label={SX.items[lang]} value={<N>{m.items}</N>} />

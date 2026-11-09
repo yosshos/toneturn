@@ -4,7 +4,7 @@
 // all positioning is logical. Below 1100 px (or when collapsed) it is a narrow rail of icons with tooltips.
 import { CourseChip } from './CourseSwitcher';
 import { useCourse } from './courseContext';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { TAB_ICONS, type TabId } from './Arcade';
 import { Logo } from './bits';
 
@@ -131,7 +131,7 @@ const readCollapsed = () => {
   }
 };
 
-export function Sidebar({ route, lang, onNav, badges, me }: { route: string; lang: 'en' | 'he'; onNav: (id: NavId) => void; badges?: Partial<Record<NavId, number | boolean>>; me: { name: string | null; streak: number; onOpen: () => void } }) {
+export function Sidebar({ route, lang, onNav, badges, me, extra }: { route: string; lang: 'en' | 'he'; onNav: (id: NavId) => void; badges?: Partial<Record<NavId, number | boolean>>; me: { name: string | null; streak: number; onOpen: () => void }; extra?: ReactNode }) {
   const here = sectionOf(route);
   // Screens outside the menu (a lesson, a game) keep the last section lit.
   const [last, setLast] = useState<NavId | 'tools' | null>(here ?? 'home');
@@ -250,6 +250,7 @@ export function Sidebar({ route, lang, onNav, badges, me }: { route: string; lan
           </div>
         </div>
       </div>
+      {extra && <div className="sn-extra">{extra}</div>}
       <div className="sn-foot">
         <button className="sn-me" onClick={me.onOpen} title={me.name ?? (lang === 'he' ? 'הפרופיל שלי' : 'My profile')}>
           <span className="sn-avatar" aria-hidden="true">

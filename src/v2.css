@@ -1574,3 +1574,12 @@
 :root[data-theme] .string-chip { border: var(--stroke) solid var(--outline); border-radius: 50%; min-width: 44px; height: 34px; background: var(--card, #fff); font-family: 'Secular One', Rubik, sans-serif; transform: rotate(-12deg); }
 :root[data-theme] .string-chip.on, :root[data-theme] .string-chip.active { background: var(--lemon); }
 :root[data-theme] .string-chip.ok { background: var(--teal); }
+:root[data-theme] .ps-melody { display: block; width: 100%; height: auto; margin: 4px 0 10px; color: var(--ink); background: var(--card, #fff); border: 2px solid var(--outline); border-radius: 14px; padding: 4px; box-sizing: border-box; }
+
+/* What's new + month review on a computer (0.61): two small icons above the profile in the sidebar; the note opens
+   as a centred card, not a popover cut off at the window edge. */
+:root[data-theme] .sn-extra { display: flex; gap: 8px; padding: 6px 12px; }
+:root[data-theme] .sn-extra .icon-btn { background: transparent; color: #fff; border-color: rgb(255 255 255 / 0.35); box-shadow: none; }
+@media (min-width: 900px) {
+  :root[data-theme] .gift-pop { position: fixed; inset: 50% auto auto 50%; transform: translate(-50%, -50%); width: min(440px, 90vw); max-height: 80vh; overflow: auto; z-index: 90; background: var(--card, #fff); color: var(--ink); border: 3px solid var(--outline); border-radius: 22px; box-shadow: var(--sx) 6px 0 var(--outline), 0 0 0 100vmax rgb(30 16 51 / 0.35); padding: 16px 18px; }
+}
