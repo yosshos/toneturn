@@ -13,10 +13,13 @@ import { LESSON_ORDER, makeLesson, type LessonDef, type LessonId, type Question,
 import { TOPIC_GEN, genTopic, topicLesson } from './topicKit';
 import type { Track } from './intake';
 import { inCourse, type CourseId } from './courses';
+import { catalog } from './drills/generate';
+import { guitarCatalog } from './drills/guitar';
+import { BARRY_LEVELS, HARMONY_LEVELS, LADDER, MODE_LEVELS, ORNAMENT_LEVELS, SIGHT_LEVELS } from './vocal';
 
 // ---------------------------------------------------------------- types
 
-export type StepKind = 'lesson' | 'topic' | 'check' | 'review' | 'game';
+export type StepKind = 'lesson' | 'topic' | 'check' | 'review' | 'game' | 'tech' | 'vocal';
 export interface PathStep {
   id: string;
   kind: StepKind;
@@ -41,6 +44,9 @@ export interface PathStep {
   mic?: boolean;
   /** A game step (product owner, 0.38: games inside units): the game's route id. */
   game?: string;
+  /** 0.61 (owner): a level of a measured ladder — a technique family level ('tech') or a vocal program level ('vocal').
+   * family = drill family id / vocal program; ref = the drill level id ("scales-3") or the vocal level number ("103"). */
+  ladder?: { family: string; level: number; ref: string; instrument?: 'piano' | 'guitar' | 'bass' };
   title: { en: string; he: string };
 }
 
@@ -164,6 +170,8 @@ export interface PathInput {
   now: Date;
   /** The course this path belongs to (0.61, SPEC-COURSES); none = the old mixed path. */
   course?: CourseId;
+  /** 0.61: the technique families / vocal programs this player's course path may use, in teaching order. Absent = no ladder steps. */
+  ladderFamilies?: string[];
 }
 
 export interface PathView {
@@ -264,17 +272,50 @@ export function stepCatalogue(): PathStep[] {
       /* a lesson that can't be built offline is not a path step */
     }
   }
+  out.push(...ladderSteps());
   out.sort((a, b) => a.difficulty - b.difficulty || a.id.localeCompare(b.id));
   CATALOGUE = out;
   CAT_KEY = key;
   return out;
 }
 
+/** Vocal programs (0.61): level number bases, in teaching order (same numbering as the Vocal screen). */
+export const VOCAL_PROGRAMS: { id: string; base: number; levels: { level: number }[]; title: { en: string; he: string } }[] = [
+  { id: 'v-ladder', base: 0, levels: LADDER, title: { en: 'Vocal technique', he: 'טכניקה קולית' } },
+  { id: 'v-modes', base: 100, levels: MODE_LEVELS, title: { en: 'Scales & modes', he: 'סולמות ומודוסים' } },
+  { id: 'v-sight', base: 400, levels: SIGHT_LEVELS, title: { en: 'Sight-singing', he: 'שירה מתווים' } },
+  { id: 'v-harmony', base: 200, levels: HARMONY_LEVELS, title: { en: 'Harmony singing', he: 'שירה בהרמוניה' } },
+  { id: 'v-ornament', base: 500, levels: ORNAMENT_LEVELS, title: { en: 'Ornaments', he: 'קישוטים' } },
+  { id: 'v-barry', base: 300, levels: BARRY_LEVELS, title: { en: 'Barry Harris lines', he: 'קווים של בארי האריס' } },
+];
+
+/** Every level of every technique family and vocal program as a path step (0.61, owner: technique inside the course path). */
+function ladderSteps(): PathStep[] {
+  const out: PathStep[] = [];
+  const diff = (i: number) => 700 + i * 70;
+  for (const f of catalog())
+    f.levels.forEach((lv, i) =>
+      out.push({ id: `tech:${lv.id}`, kind: 'tech', ladder: { family: f.id, level: lv.level, ref: lv.id, instrument: 'piano' }, skill: 'instrument', sub: 'instrument/piano-tech', domain: 'instrument', difficulty: diff(i), choices: 0, forPlays: ['keys', 'piano'], title: { en: `${f.title.en} · ${lv.title.en}`, he: `${f.title.he} · ${lv.title.he}` } }),
+    );
+  for (const f of guitarCatalog())
+    f.levels.forEach((lv, i) =>
+      out.push({ id: `tech:${lv.id}`, kind: 'tech', ladder: { family: f.id, level: lv.level, ref: lv.id, instrument: f.instruments.includes('guitar') ? 'guitar' : 'bass' }, skill: 'instrument', sub: 'instrument/guitar-tech', domain: 'instrument', difficulty: diff(i), choices: 0, forPlays: [...f.instruments], title: { en: `${f.title.en} · ${lv.title.en}`, he: `${f.title.he} · ${lv.title.he}` } }),
+    );
+  for (const pr of VOCAL_PROGRAMS)
+    pr.levels.forEach((_, i) => {
+      const n = pr.base + i + 1;
+      out.push({ id: `vocal:${n}`, kind: 'vocal', ladder: { family: pr.id, level: i + 1, ref: String(n) }, skill: 'singing', sub: 'singing/vocal-ladder', domain: 'voice', difficulty: diff(i), choices: 0, sung: true, mic: true, title: { en: `${pr.title.en} · ${i + 1}`, he: `${pr.title.he} · ${i + 1}` } });
+    });
+  return out;
+}
+
 // ---------------------------------------------------------------- filters
 
 /** Steps this player's path can contain (areas, packs, instruments, singing). */
-export function eligible(s: PathStep, inp: Pick<PathInput, 'leaveOut' | 'packs' | 'plays' | 'track'> & Partial<Pick<PathInput, 'hidden' | 'noSing' | 'noMic' | 'course'>>): boolean {
+export function eligible(s: PathStep, inp: Pick<PathInput, 'leaveOut' | 'packs' | 'plays' | 'track'> & Partial<Pick<PathInput, 'hidden' | 'noSing' | 'noMic' | 'course' | 'ladderFamilies'>>): boolean {
   if (inp.course && !inCourse(s, inp.course)) return false;
+  // Ladder steps only where the course asked for them (and only for its families / programs).
+  if (s.ladder && !inp.ladderFamilies?.includes(s.ladder.family)) return false;
   if (inp.leaveOut.includes(s.domain)) return false;
   if (s.sung && (inp.leaveOut.includes('voice') || inp.noSing)) return false;
   if (s.mic && inp.noMic) return false;
@@ -376,6 +417,8 @@ export interface CheckVerdict {
 }
 
 export function checkStep(s: PathStep, inp: PathInput, subs: Map<string, SubEvidence>): CheckVerdict {
+  // Ladder steps are passed only by measured playing / singing (owner, 0.61) — never by rating evidence.
+  if (s.ladder) return inp.facts.tests?.[s.id] ? { state: 'tested', why: { en: '✓ from your playing test', he: '✓ ממבחן הנגינה' } } : { state: null };
   if (s.kind === 'check' || s.kind === 'review') return { state: null };
   if (inp.keep.includes(s.id)) return { state: null };
   const ev = subs.get(s.sub);
@@ -546,6 +589,10 @@ export function buildPath(inp: PathInput): PathView {
       const prev = `topic:${s.topic}:${(s.level ?? 1) - 1}`;
       if (byId.has(prev) && all.some((x) => x.id === prev) && !taken.has(prev) && !scheduled.has(prev)) return false;
     }
+    if (s.ladder && s.ladder.level > 1) {
+      const prev = ladderPrev.get(s.id);
+      if (prev && !taken.has(prev) && !scheduled.has(prev)) return false;
+    }
     if (s.kind === 'lesson') for (const p of PREREQ[s.lesson!] ?? []) {
       const pid = `lesson:${p}`;
       if (all.some((x) => x.id === pid) && !taken.has(pid) && !scheduled.has(pid)) return false;
@@ -558,27 +605,65 @@ export function buildPath(inp: PathInput): PathView {
     return true;
   };
 
+  // Ladder steps (0.61): the previous level of each family, and which families are open to the player now.
+  const ladderPrev = new Map<string, string>();
+  {
+    const byFam = new Map<string, PathStep[]>();
+    for (const s of stepCatalogue()) if (s.ladder) byFam.set(s.ladder.family, [...(byFam.get(s.ladder.family) ?? []), s]);
+    for (const xs of byFam.values()) {
+      xs.sort((a, b) => a.ladder!.level - b.ladder!.level);
+      for (let i = 1; i < xs.length; i++) ladderPrev.set(xs[i].id, xs[i - 1].id);
+    }
+  }
+  /** Families open now: those already started, then the next ones in teaching order — one more for every family two levels in. */
+  const openFamilies = (): string[] => {
+    const fams = inp.ladderFamilies ?? [];
+    const levelsTaken = (f: string) => all.filter((s) => s.ladder?.family === f && taken.has(s.id)).length;
+    const started = fams.filter((f) => levelsTaken(f) > 0);
+    const deep = fams.filter((f) => levelsTaken(f) >= 2).length;
+    const k = Math.min(fams.length, Math.max(2, started.length, 2 + deep));
+    return [...new Set([...started, ...fams.slice(0, k)])];
+  };
+  /** One step per family, rotating which families come first; at most about half the unit (owner's daily mix). */
+  const pickLadder = (n: number, room: number, scheduled: Set<string>): PathStep[] => {
+    const fams = openFamilies();
+    if (!fams.length || room <= 0) return [];
+    const out: PathStep[] = [];
+    for (let k = 0; k < fams.length && out.length < room; k++) {
+      const f = fams[(n - 1 + k) % fams.length];
+      const next = all.filter((s) => s.ladder?.family === f && !taken.has(s.id) && !scheduled.has(s.id)).sort((a, b) => a.ladder!.level - b.ladder!.level)[0];
+      if (!next) continue;
+      const prev = ladderPrev.get(next.id);
+      if (prev && all.some((x) => x.id === prev) && !taken.has(prev) && !scheduled.has(prev)) continue;
+      out.push(next);
+      scheduled.add(next.id);
+    }
+    return out;
+  };
+
   const unitTheme = new Map<number, string>();
   const buildUnit = (n: number, warm: boolean): UnitStep[] => {
     const scheduled = new Set<string>();
     const theme = themeFor(n);
     unitTheme.set(n, theme.id);
     const near = (s: PathStep, f: number) => Math.abs(s.difficulty - (f + 50)) - (inTheme(s.sub, theme) ? 120 : 0);
-    const open = all.filter((s) => !taken.has(s.id));
+    const slots = L - 1 /* checkpoint */ - (inp.reviewDue >= 3 && n === units.length + 1 ? 1 : 0);
+    const ladder = pickLadder(n, Math.ceil(slots / 2), scheduled);
+    const open = all.filter((s) => !taken.has(s.id) && !s.ladder);
     const live = [...new Set(open.map((s) => s.domain))];
-    const shares = unitShares(weights, live, L - 1 /* checkpoint */ - (inp.reviewDue >= 3 && n === units.length + 1 ? 1 : 0), n);
-    const picked: { s: PathStep; probe?: boolean; isNew?: boolean }[] = [];
+    const shares = unitShares(weights, live, slots - ladder.length, n);
+    const picked: { s: PathStep; probe?: boolean; isNew?: boolean }[] = ladder.map((s) => ({ s }));
     let newSubs = 0;
     for (const [area, count] of shares) {
       const themed = (k: SkillId) => (open.some((s) => s.skill === k && inTheme(s.sub, theme)) ? 1 : 0);
       const skills = [...new Set(open.filter((s) => s.domain === area).map((s) => s.skill))].sort((a, b) => themed(b) - themed(a) || imp(b) - imp(a) || a.localeCompare(b));
       let k = 0;
       let guard = 0;
-      while (picked.filter((p) => p.s.domain === area).length < count && guard++ < 40 && skills.length) {
+      while (picked.filter((p) => p.s.domain === area && !p.s.ladder).length < count && guard++ < 40 && skills.length) {
         const skill = skills[k++ % skills.length];
         const f = fr(skill) - (warm ? 50 : 0);
         // Cognitive load (P11, tuned): new sub-skills at most half of an area's share and half of the unit.
-        const areaNew = picked.filter((p) => p.s.domain === area && p.isNew).length;
+        const areaNew = picked.filter((p) => p.s.domain === area && !p.s.ladder && p.isNew).length;
         const allowNew = newSubs < Math.ceil(L / 2) && areaNew < Math.ceil(count / 2);
         const ok = (s: PathStep) => s.skill === skill && !scheduled.has(s.id) && prereqOk(s, scheduled) && (allowNew || seenSubs.has(s.sub));
         const cands = open.filter((s) => ok(s) && s.difficulty >= f - 150 && s.difficulty <= f + 200);
@@ -592,7 +677,7 @@ export function buildPath(inp: PathInput): PathView {
         if (isNew) {
           newSubs++;
           const teach = open.find((s) => s.teach && s.sub === best!.sub && !scheduled.has(s.id) && prereqOk(s, scheduled));
-          if (teach && teach.id !== best.id && picked.filter((p) => p.s.domain === area).length + 1 < count) {
+          if (teach && teach.id !== best.id && picked.filter((p) => p.s.domain === area && !p.s.ladder).length + 1 < count) {
             picked.push({ s: teach });
             scheduled.add(teach.id);
           }
@@ -631,9 +716,11 @@ export function buildPath(inp: PathInput): PathView {
     if (inp.reviewDue >= 3 && n === units.length + 1) steps.push({ step: virtualStep(`review:${unitId}`, unitId)!, state: 'open' });
     // A game for the unit's leading area (0.38), before the checkpoint — a lighter, faster round of the same skills.
     const lead = order[0]?.s.domain;
-    const game = lead ? gameForArea(lead, n, inp) : null;
+    const game = lead ? gameForArea(lead, n, { ...inp, noDrills: inp.noDrills || !!inp.ladderFamilies?.length }) : null;
     if (game && order.length >= 4) steps.push(stateOf(virtualStep(`game:${unitId}:${game}`, unitId, order.map((p) => p.s))!));
-    if (steps.length) steps.push({ step: virtualStep(`check:${unitId}`, unitId, order.map((p) => p.s))!, state: 'open' });
+    // A checkpoint asks questions: it needs question steps (a unit of technique only is checked by its own playing).
+    const questions = order.filter((p) => p.s.kind === 'topic' || p.s.kind === 'lesson');
+    if (steps.length && questions.length >= 2) steps.push({ step: virtualStep(`check:${unitId}`, unitId, questions.map((p) => p.s))!, state: 'open' });
     return steps;
   };
 

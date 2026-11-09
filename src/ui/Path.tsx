@@ -2,6 +2,8 @@
 // a sticky unit header, the glide to the current step, steps that rise in as they scroll into view, and a
 // "back to my step" button (§10.1). Reduced motion: no glide, no stagger, no bounce.
 
+import { ladderFamiliesFor, withLadderFacts } from '../engine/ladderFacts';
+import { drillSettingsOf } from './Drills';
 import { Iso } from './Iso';
 import { courseInput } from '../engine/courses';
 import { Icon } from './icons';
@@ -147,7 +149,17 @@ export function pathInputFrom(s: Settings, p: Progress, now = new Date()): PathI
     now,
   };
   // 0.61: the path is the active course's (SPEC-COURSES).
-  return courseInput(base, s.activeCourse ?? 'ear');
+  const course = s.activeCourse ?? 'ear';
+  const inp = courseInput(base, course);
+  // 0.61 (owner): an instrument / voice course teaches its technique ladders as path steps, passed only by measured takes.
+  const ds = drillSettingsOf(s);
+  const families = s.drills?.inPath === false ? [] : ladderFamiliesFor(course, ds);
+  if (!families.length) return inp;
+  return {
+    ...inp,
+    ladderFamilies: families,
+    facts: withLadderFacts(inp.facts, { families, items: p.drillItems ?? {}, order: ds.keyOrder, start: s.drillStart ?? {}, vocalPassed: p.vocal?.passed ?? [], at: now.toISOString() }),
+  };
 }
 
 /** The path, memoised on its inputs (P19). */
@@ -156,7 +168,7 @@ export function usePathView(s: Settings, p: Progress): PathView {
   return useMemo(
     () => buildPath(pathInputFrom(s, p)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [s.activeCourse, s.intake, s.track, s.goal, s.pathHidden, s.noSing, s.noMic, s.pathLeaveOut, s.pathPacks, s.pathFacts, s.pathKeep, s.midiInput, s.instrument, p.ratingEvents?.length, p.review.length, p.lessons, day],
+    [s.activeCourse, s.intake, s.track, s.goal, s.pathHidden, s.noSing, s.noMic, s.pathLeaveOut, s.pathPacks, s.pathFacts, s.pathKeep, s.midiInput, s.instrument, s.drills, s.drillStart, p.ratingEvents?.length, p.review.length, p.lessons, p.drillItems, p.vocal, day],
   );
 }
 
@@ -164,7 +176,7 @@ export function stepTitle(step: PathStep, s: Settings, lang: Lang): string {
   const tx = TX[lang];
   if (step.kind === 'check') return tx.check;
   if (step.kind === 'review') return tx.review;
-  if (step.kind === 'game') return step.title[lang];
+  if (step.kind === 'game' || step.ladder) return step.title[lang];
   if (step.lesson) {
     const bb = displayNote(pc('Bb'), namingFor(s.naming, lang), lang);
     return withNoteText(LESSON_META[step.lesson]?.title[lang] ?? step.lesson, bb);
@@ -181,6 +193,8 @@ export function nodeTitle(step: PathStep, s: Settings, lang: Lang): string {
   if (step.kind === 'check') return tx.check;
   if (step.kind === 'review') return tx.review;
   if (step.kind === 'game') return step.title[lang];
+  // A ladder level: "Scales 3" — the family's name and the level number.
+  if (step.ladder) return `${step.title[lang].split(' · ')[0]} ${step.ladder.level}`;
   if (step.lesson) {
     const m = LESSON_META[step.lesson];
     const bb = displayNote(pc('Bb'), namingFor(s.naming, lang), lang);
@@ -192,7 +206,7 @@ export function nodeTitle(step: PathStep, s: Settings, lang: Lang): string {
 }
 
 const ICON: Record<string, 'ear' | 'steps' | 'chord' | 'cadence' | 'mic' | 'map' | 'review' | 'puzzle' | 'drum'> = { pitch: 'ear', time: 'drum', memory: 'steps', voice: 'mic', reading: 'map', creative: 'puzzle', instrument: 'chord' };
-const iconOf = (step: PathStep) => (step.kind === 'game' ? 'puzzle' : step.kind === 'review' ? 'review' : step.lesson ? (LESSON_META[step.lesson]?.icon ?? 'ear') : ICON[step.domain] ?? 'ear');
+const iconOf = (step: PathStep) => (step.kind === 'tech' ? 'chord' : step.kind === 'vocal' ? 'mic' : step.kind === 'game' ? 'puzzle' : step.kind === 'review' ? 'review' : step.lesson ? (LESSON_META[step.lesson]?.icon ?? 'ear') : ICON[step.domain] ?? 'ear');
 
 const reduced = () => typeof document !== 'undefined' && (document.documentElement.dataset.motion === 'reduced' || (typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches));
 
@@ -207,6 +221,7 @@ export function PathView2({
   onSettings,
   onLesson,
   extras,
+  onTechTest,
 }: {
   t: Strings;
   settings: Settings;
@@ -220,6 +235,8 @@ export function PathView2({
   onLesson?: (id: LessonId) => void;
   /** Below the road: practice rooms and all topics (SPEC-TODAY §4). */
   extras?: React.ReactNode;
+  /** An instrument course whose player never took the playing test (0.61): open it. */
+  onTechTest?: () => void;
 }) {
   const lang = settings.uiLang;
   const tx = TX[lang];
@@ -352,6 +369,18 @@ export function PathView2({
           <small dir="auto">{fill(tx.sectionKnown, { p: Math.round(secStats.total ? (100 * secStats.known) / secStats.total : 0) })}</small>
         </div>
       </header>
+
+      {onTechTest && (
+        <div className="path-techtest" data-tech-test="1">
+          <span>
+            <b>{lang === 'he' ? 'כבר מנגנים?' : 'Already playing?'}</b>
+            <small>{lang === 'he' ? 'בדיקת נגינה קצרה (כ־3 דקות) קובעת מאיזה שלב מתחילים בכל משפחת טכניקה.' : 'A short playing test (about 3 minutes) sets your starting level in each technique family.'}</small>
+          </span>
+          <button className="btn primary small" onClick={onTechTest}>
+            {lang === 'he' ? 'לבדיקה' : 'Take the test'}
+          </button>
+        </div>
+      )}
 
       {changed && (
         <div className="path-changed" role="status">

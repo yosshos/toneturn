@@ -366,9 +366,9 @@ describe('guitar drills: analysis', () => {
     const d = generate({ family: 'g-fretting', kind: 'spider', key: 9, hands: 'R', option: 0 });
     const m = analyzeGuitarTake(d, d.startBpm, perfect(d, d.startBpm));
     const ev = drillEvents(d, m, '2026-11-07T10:00:00Z', 's1', 0)[0];
-    expect(ev.tags?.[0].sub).toBe('guitar-tech');
+    expect(ev.tags?.[0].sub).toBe('instrument/guitar-tech');
     const p = generate({ family: 'scales', kind: 'scale', key: 0, hands: 'R' });
-    expect(drillEvents(p, analyzeGuitarTake(p, 80, perfect(p, 80)), '2026-11-07T10:00:00Z', 's1', 0)[0].tags?.[0].sub).toBe('piano-tech');
+    expect(drillEvents(p, analyzeGuitarTake(p, 80, perfect(p, 80)), '2026-11-07T10:00:00Z', 's1', 0)[0].tags?.[0].sub).toBe('instrument/piano-tech');
   });
 });
 

@@ -1,0 +1,305 @@
+<title>מטסט למוצר</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Secular+One&family=Rubik:wght@400;500;700&display=swap">
+<style>
+/* Layout: one reading column (~68ch), RTL, section cards only where a block is a separate object (tables, gates). */
+:root {
+  --bg: #FBF7FF;
+  --card: #FFFFFF;
+  --ink: #1E1033;
+  --ink-dim: #5B4B75;
+  --line: #E4DAF2;
+  --purple: #6D28D9;
+  --lemon: #FFD43B;
+  --teal: #0E9F8F;
+  --pink: #D63384;
+  --chip: #F1EAFB;
+  --display: 'Secular One', 'Rubik', 'Arial Hebrew', sans-serif;
+  --body: 'Rubik', 'Arial Hebrew', system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --bg: #160C26; --card: #21143A; --ink: #F3EEFB; --ink-dim: #B9A9D6; --line: #3A2A5A; --purple: #B79BFF; --lemon: #FFD43B; --teal: #3FD8C6; --pink: #FF7AB8; --chip: #2C1C4A; color-scheme: dark; }
+}
+:root[data-theme="dark"] { --bg: #160C26; --card: #21143A; --ink: #F3EEFB; --ink-dim: #B9A9D6; --line: #3A2A5A; --purple: #B79BFF; --lemon: #FFD43B; --teal: #3FD8C6; --pink: #FF7AB8; --chip: #2C1C4A; color-scheme: dark; }
+
+body { background: var(--bg); color: var(--ink); font: 400 16.5px/1.7 var(--body); direction: rtl; }
+.wrap { max-width: 760px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 64px; display: flex; flex-direction: column; gap: 34px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 400; line-height: 1.25; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(1.9rem, 6vw, 2.6rem); }
+h2 { font-size: 1.5rem; color: var(--purple); }
+h3 { font-size: 1.12rem; }
+p { margin: 0; }
+section { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.kicker { font-size: 0.82rem; letter-spacing: 0.04em; color: var(--ink-dim); }
+.lede { font-size: 1.12rem; }
+.thesis { background: var(--purple); color: #fff; border-radius: 22px; padding: 20px 22px; display: flex; flex-direction: column; gap: 10px; }
+:root[data-theme="dark"] .thesis, :root:not([data-theme="light"]) .thesis { }
+.thesis b { color: var(--lemon); }
+.thesis p { color: #fff; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .thesis { background: #4B1FA0; } }
+:root[data-theme="dark"] .thesis { background: #4B1FA0; }
+ul, ol { margin: 0; padding-inline-start: 1.3em; display: flex; flex-direction: column; gap: 8px; }
+li { min-width: 0; }
+.table-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 16px; background: var(--card); }
+table { border-collapse: collapse; width: 100%; min-width: 640px; font-size: 0.92rem; }
+th, td { text-align: start; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+th { font-family: var(--display); font-weight: 400; background: var(--chip); }
+tr:last-child td { border-bottom: 0; }
+td.us { background: color-mix(in srgb, var(--lemon) 22%, transparent); }
+.num { font-variant-numeric: tabular-nums; direction: ltr; unicode-bidi: isolate; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.box { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.box h3 { display: flex; align-items: center; gap: 8px; }
+.dot { width: 12px; height: 9px; border-radius: 50%; transform: rotate(-20deg); flex: none; border: 2px solid var(--ink); }
+.dot.ok { background: var(--teal); } .dot.bad { background: var(--pink); } .dot.y { background: var(--lemon); }
+.bars { display: flex; flex-direction: column; gap: 6px; }
+.bar { display: grid; grid-template-columns: 7.5em 1fr 3em; align-items: center; gap: 10px; font-size: 0.9rem; }
+.bar i { display: block; height: 12px; border-radius: 6px; background: var(--purple); min-width: 3px; }
+.bar i.thin { background: var(--pink); }
+.bar span:last-child { text-align: end; }
+.gate { background: var(--card); border: 2px solid var(--ink); border-radius: 18px; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; }
+.gate header { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 12px; align-items: baseline; }
+.gate .when { font-size: 0.85rem; color: var(--ink-dim); }
+.metrics { display: flex; flex-wrap: wrap; gap: 8px; }
+.metrics span { background: var(--chip); border-radius: 999px; padding: 4px 12px; font-size: 0.86rem; }
+.steps li::marker { font-family: var(--display); color: var(--purple); }
+.who { font-size: 0.82rem; color: var(--ink-dim); }
+.dont li::marker { content: '× '; color: var(--pink); }
+.decide { border-inline-start: 4px solid var(--lemon); padding-inline-start: 14px; display: flex; flex-direction: column; gap: 10px; }
+.src { font-size: 0.82rem; color: var(--ink-dim); }
+.src a { color: var(--purple); overflow-wrap: anywhere; }
+a:focus-visible { outline: 2px solid var(--purple); outline-offset: 2px; }
+</style>
+
+<div class="wrap">
+
+<header style="display:flex;flex-direction:column;gap:10px">
+  <span class="kicker">החוש השביעי · מסמך כיוון · 9 בנובמבר 2026 · גרסה 0.61</span>
+  <h1>מטסט למוצר</h1>
+  <p class="lede">איפה האפליקציה עומדת מול השוק, מה יכול להפוך אותה למובילה בנישה, ומה היעד שאחריו היא כבר מוצר שאפשר להוציא החוצה, ולא ניסוי פרטי.</p>
+</header>
+
+<div class="thesis">
+  <p><b>בשורה אחת:</b> ברוחב, האפליקציה כבר עוברת כל מתחרה יחיד: שמיעה, תיאוריה, כלי, קול, ג׳אז ואלתור, בגרות, חברתי ומורים. אבל רוחב עוד לא עושה מוצר.</p>
+  <p>מה שחסר הוא לא עוד פיצ׳רים. חסרים ארבעה דברים: <b>מסלול שמוביל דרך כל התוכן שכבר קיים</b>, <b>מדידה</b> (אין היום שום נתון על שימור), <b>דרך להגיע לאנשים</b> (חנויות אפליקציות, מורים) ו־<b>תשלום שעובד</b>.</p>
+  <p>היעד המוצע: <b>1,000 לומדים מבחוץ, 20% מהם עוד פעילים אחרי שבועיים, ו־3% משלמים.</b> כשמגיעים לזה, זה סטארט־אפ.</p>
+</div>
+
+<section>
+  <h2>איפה אנחנו היום</h2>
+  <p>מה יש באפליקציה בפועל, לפי הקוד ולא לפי התוכניות:</p>
+  <div class="grid2">
+    <div class="box">
+      <h3>תוכן</h3>
+      <ul>
+        <li>שבעה קורסים, כל אחד עם מסלול, אימון יומי ותרגול.</li>
+        <li>כ־110 נושאי תרגול ושיעורי תיאוריה עם הרחבה.</li>
+        <li>36 סטנדרטים, ו־51 כללי אלתור עם 51 אתגרים.</li>
+        <li>הכנה לבגרות במוזיקה (חמש יחידות) ולקונסרבטוריון.</li>
+        <li>מאמן יצירות: מעלים תווים ומתקדמים לטמפו.</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h3>טכנולוגיה וחוויה</h3>
+      <ul>
+        <li>עונים בקול (זיהוי גובה במיקרופון), במקלדת MIDI או בכפתורים.</li>
+        <li>סאונד אמיתי: פסנתר כנף ב־16 שכבות, להקת ג׳אז מלווה.</li>
+        <li>משחקים, ליגות, דו־קרבים, חדרים מקוונים, רצף ותגים.</li>
+        <li>כלים לנגנים: טיונר, מטרונום, צליל רקע, האטה, מיקסר, יומן אימון.</li>
+        <li>כלים למורה: כיתות, משימות, מפת חום, דוח להורים.</li>
+        <li>עברית ואנגלית, טלפון ומחשב, בלי התקנה (PWA).</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>מה יש בכל קורס</h3>
+  <p>בכל קורס יש שני סוגי תוכן: <b>המסלול</b> (הצעדים שהאפליקציה מובילה בהם יום־יום) ו<b>הטכניקה</b> (קטלוג תרגילים בשלבים, כל שלב בכל הסולמות ובסולם טמפו עולה).</p>
+  <div class="table-scroll">
+    <table style="min-width:520px">
+      <thead><tr><th>קורס</th><th>צעדי מסלול</th><th>טכניקה ותוכן נוסף</th><th>מצב</th></tr></thead>
+      <tbody>
+        <tr><td>שמיעה ותיאוריה</td><td class="num">332</td><td>שיעורי תיאוריה, משחקים, מהלך היום</td><td>מלא</td></tr>
+        <tr><td>בגרות</td><td class="num">332</td><td>אותו תוכן בסדר של תוכנית הבגרות, ומבחני דמה</td><td>מלא</td></tr>
+        <tr><td>קלידים</td><td class="num">17</td><td>10 משפחות טכניקה ב־127 שלבים (סולמות, ארפג׳ים, קדנצות, אצבעות, וויסינג, ג׳אז, ליווי), מאמן יצירות, שירים</td><td>תוכן עשיר, מסלול דק</td></tr>
+        <tr><td>גיטרה</td><td class="num">33</td><td>13 משפחות ב־79 שלבים (פריטה, לגאטו, אקורדים, ריתם, פינגרסטייל, פלמנקו, ג׳אז, קריאה, אלתור), 40 שירים</td><td>תוכן עשיר, מסלול דק</td></tr>
+        <tr><td>קול</td><td class="num">26</td><td>כ־50 שלבים: טכניקה קולית, מודוסים, ויברטו, הרמוניה, שירה מתווים, קישוטים</td><td>טוב, מסלול דק</td></tr>
+        <tr><td>ג׳אז</td><td class="num">104</td><td>36 סטנדרטים, 51 כללי אלתור עם 51 אתגרים, להקה מלווה</td><td>מלא</td></tr>
+        <tr><td>בס</td><td class="num">24</td><td>משפחה אחת ב־6 שלבים</td><td>באמת דק</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>בגרסה הראשונה של העמוד ספרתי רק את צעדי המסלול, ולכן קראתי לקורסי הכלי "שלד". זו הייתה טעות: התוכן שלהם עשיר. מה שדק הוא <b>המסלול</b>. בקלידים, למשל, כל 127 השלבים יושבים מאחורי צעד אחד, "תרגילי טכניקה", ולא נפרסים ליום־יום. כך לומד שבוחר "קלידים" מקבל מסלול קצר, ואת העושר צריך למצוא לבד. רק הבס דק באמת.</p>
+</section>
+
+<section>
+  <h2>מול מי אנחנו מתחרים</h2>
+  <p>בשוק יש שלוש משפחות של מוצרים, ואנחנו נוגעים בכולן:</p>
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr><th>משפחה</th><th>דוגמאות</th><th>מחיר</th><th>החוזק שלהם</th><th>איפה אנחנו חזקים יותר</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>אפליקציות שמיעה</td>
+          <td>Functional Ear Trainer, EarMaster, Tenuto, Complete Ear Trainer, Perfect Ear</td>
+          <td>חינם עד כ־5$ לחודש; Tenuto בתשלום חד־פעמי</td>
+          <td>שנים בשוק, ביקורות בחנויות, תרגול ממוקד ופשוט</td>
+          <td class="us">מסלול מסתגל, סאונד אמיתי, עונים בקול ובכלי, משחק וחברים. הם בעיקר "מכונת תרגילים".</td>
+        </tr>
+        <tr>
+          <td>אפליקציות לנגינה</td>
+          <td>Yousician, Simply Piano, Flowkey, Fender Play</td>
+          <td>כ־120–150$ לשנה (Simply)</td>
+          <td>תקציבי ענק, ספריית שירים ברישיון; ל־Yousician ול־GuitarTuna יחד יותר מ־20 מיליון משתמשים פעילים בחודש</td>
+          <td class="us">הבנה: שמיעה, הרמוניה, אלתור וג׳אז. הם מלמדים לנגן תווים על המסך, אנחנו מלמדים לשמוע ולהבין.</td>
+        </tr>
+        <tr>
+          <td>הענקים הכלליים</td>
+          <td>Duolingo Music</td>
+          <td>בתוך Duolingo</td>
+          <td>הפצה עצומה. היום רק פסנתר בסיסי; גיטרה, קול וקצב בתכנון אחרי רכישת NextBeat</td>
+          <td class="us">עומק: Duolingo עוצרת במתחילים. אנחנו ממשיכים לבגרות, לג׳אז ולאלתור.</td>
+        </tr>
+        <tr>
+          <td>בעברית</td>
+          <td>אין מתחרה ישיר</td>
+          <td>—</td>
+          <td>—</td>
+          <td class="us">השוק הישראלי פנוי: עברית מלאה, בגרות, קונסרבטוריונים ומורים פרטיים.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p>המסקנה: אנחנו לא צריכים לנצח את Yousician בשירים או את Duolingo בהפצה. יש לנו נישה שאף אחד לא מחזיק לבד: <b>מוזיקאיות מלאה (musicianship) לנגנים</b>, כלומר לשמוע, להבין ולבצע. זה בדיוק הסלוגן שבחרנו.</p>
+</section>
+
+<section>
+  <h2>חוזקות וחולשות, בכנות</h2>
+  <div class="grid2">
+    <div class="box">
+      <h3><span class="dot ok"></span>מה שקשה להעתיק</h3>
+      <ul>
+        <li>עברית ובגרות: שוק קטן שלנו בלבד, עם קהל מוגדר (תלמידי מגמות, מורים).</li>
+        <li>אלתור עם כללים וליווי להקה: חוויה שאין לאף מתחרה, וטובה לסרטוני שיווק.</li>
+        <li>תשובה בקול ובכלי בזמן אמת, לא רק בכפתורים.</li>
+        <li>מורה ותלמיד באותה מערכת: כיתות, משימות, דוח להורים.</li>
+        <li>רוחב: קורס אחד במקום שלוש אפליקציות.</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h3><span class="dot bad"></span>מה שמחזיק אותנו כ״טסט״</h3>
+      <ul>
+        <li>בקורסי הכלי והקול המסלול לא מוביל דרך תוכן הטכניקה העשיר; קורס הבס דק באמת.</li>
+        <li>אין מדידה: לא יודעים מי חוזר, איפה נוטשים ומה נשבר.</li>
+        <li>לא בחנויות האפליקציות, ובלי זה קשה למצוא אותנו. גם הגישה למיקרופון ב־PWA באייפון מוגבלת.</li>
+        <li>התשלום עוד לא פעיל: החשבונות אצל ספק התשלום עדיין לא נפתחו.</li>
+        <li>אין עדויות שזה עובד: לא ציונים, לא סיפורי לומדים, לא ביקורות.</li>
+        <li>משפטי: תקנון, פרטיות (תיקון 13 לחוק הגנת הפרטיות), נגישות אתרים, וזכויות בשירים.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>מה יהפוך אותנו למובילים בנישה</h2>
+  <ol class="steps">
+    <li><b>לבחור נישה אחת להשקה ולנצח בה.</b> ההמלצה: "שמיעה ותיאוריה לנגנים" ו״הכנה לבגרות״, בעברית. אלה שני הקורסים העמוקים שכבר קיימים, עם קהל שמוכן לשלם: תלמידי מגמה, הורים, מורים.</li>
+    <li><b>המורים כערוץ ההפצה.</b> מורה אחד מביא 10–30 תלמידים. כלי המורה כבר בנויים, אז צריך 5–10 מורים ראשונים שמשתמשים בהם בכיתה ומחזירים משוב. זו גם הדרך להיכנס לבתי ספר וקונסרבטוריונים.</li>
+    <li><b>הוכחה שזה עובד.</b> מבחן מיקום בהתחלה ושוב אחרי 30 יום, ו״מדד האוזן״ שעולה. משפט כמו "תוך חודש זיהוי מרווחים עלה מ־55% ל־85%" מוכר יותר מכל פיצ׳ר.</li>
+    <li><b>פיצ׳ר דגל לשיווק.</b> אלתור עם כללים מול להקה מלווה, וטוני שמגיב. סרטונים קצרים של "אתגר אלתור של היום" מתאימים לטיקטוק וליוטיוב, ואף מתחרה לא יכול להציג כזה.</li>
+    <li><b>לולאות שיתוף.</b> כרטיס תוצאה יומי בלי ספוילרים, דו־קרב בקישור, רצף זוגי עם חבר. כל אחד מהם מביא משתמשים בלי תקציב פרסום.</li>
+    <li><b>להיכנס לחנויות.</b> עטיפה (Google Play דרך TWA, App Store דרך Capacitor) נותנת חיפוש, ביקורות ואמון, ופותרת את מגבלות המיקרופון באייפון.</li>
+    <li><b>לפרוס את הטכניקה לתוך המסלול.</b> בקלידים, בגיטרה ובקול: במקום צעד אחד שמוביל לקטלוג, שלבי הטכניקה נכנסים ליחידות המסלול ולאימון היומי, לצד השמיעה. ככה העושר שכבר בנוי מגיע ללומד.</li>
+    <li><b>אחר כך:</b> לעבות את הבס, להוסיף מאמן AI שמסביר טעויות, ולפתוח לשוק הבינלאומי באנגלית.</li>
+  </ol>
+</section>
+
+<section>
+  <h2>היעד: שלושה שערים</h2>
+  <p>כל שער מוגדר במספרים, כדי שאפשר יהיה לדעת בוודאות אם עברנו אותו.</p>
+
+  <div class="gate">
+    <header><h3>שער 1: בטא סגורה</h3><span class="when">4–6 שבועות</span></header>
+    <ul>
+      <li>מדידה ודיווח שגיאות בתוך האפליקציה, וכפתור "יש לי הערה".</li>
+      <li>מסלולי הקלידים, הגיטרה והקול פורסים את הטכניקה ליום־יום. הבס מסומן "בטא".</li>
+      <li>החוויה הראשונה עד 5 דקות: מבחן מיקום קצר, ניצחון ראשון וטוני.</li>
+      <li>30–50 לומדים מבחוץ דרך 3–5 מורים.</li>
+      <li>תשלום עובד, גם אם עוד כבוי לרוב המשתמשים.</li>
+    </ul>
+    <div class="metrics"><span>חוזרים למחרת ≥ 40%</span><span>אחרי שבוע ≥ 20%</span><span>3+ אימונים בשבוע לפעילים</span></div>
+  </div>
+
+  <div class="gate">
+    <header><h3>שער 2: השקה בישראל</h3><span class="when">עוד כ־3 חודשים</span></header>
+    <ul>
+      <li>באפליקציה ב־Google Play וב־App Store.</li>
+      <li>מחיר: ליבה חינם ועומק בתשלום. בסביבות ₪19–25 לחודש או ₪149–199 לשנה, הנחת "חברים מייסדים" ואפשרות לכל החיים. מחיר למורה בנפרד. בלי פרסומות.</li>
+      <li>תקנון, מדיניות פרטיות, הצהרת נגישות, ובדיקה מול אקו״ם לגבי שירים.</li>
+      <li>דף נחיתה, שלושה סרטוני הדגמה ופנייה ישירה למגמות מוזיקה.</li>
+    </ul>
+    <div class="metrics"><span>1,000 נרשמים</span><span>אחרי שבועיים ≥ 20%</span><span>אחרי חודש ≥ 10%</span><span>משלמים ≥ 3%</span><span>NPS ≥ 40</span></div>
+  </div>
+
+  <div class="gate">
+    <header><h3>שער 3: סטארט־אפ</h3><span class="when">אחרי שהמספרים של שער 2 מחזיקים</span></header>
+    <ul>
+      <li>שיווק בינלאומי באנגלית לנגנים שרוצים לשמוע, סביב אלתור, ג׳אז ואוזן.</li>
+      <li>בס בעומק מלא, וכלים נוספים לפי הביקוש.</li>
+      <li>גיוס: מענק של רשות החדשנות או השקעת פרי־סיד. שימור מוכח הוא מה שמשקיעים שואלים עליו ראשון.</li>
+    </ul>
+    <div class="metrics"><span>10,000 פעילים בחודש</span><span>הכנסה חודשית חוזרת שגדלה כל חודש</span></div>
+  </div>
+</section>
+
+<section>
+  <h2>עשרת הצעדים הבאים, לפי הסדר</h2>
+  <ol class="steps">
+    <li>מדידה ודיווח שגיאות (שירות שמכבד פרטיות) <span class="who">· אני · 1–2 ימים</span></li>
+    <li>כפתור משוב בתוך האפליקציה <span class="who">· אני · יום</span></li>
+    <li>פריסת שלבי הטכניקה למסלולי הקלידים, הגיטרה והקול; הבס מסומן "בטא" <span class="who">· אני · כשבוע</span></li>
+    <li>פתיחת חשבון אצל ספק תשלומים: ישראלי לשקלים, או ספק שמטפל במס בחו״ל <span class="who">· אתה</span></li>
+    <li>תקנון, פרטיות, הצהרת נגישות; טיוטה ממני ובדיקה של עו״ד <span class="who">· שנינו</span></li>
+    <li>עטיפה לחנויות: Google Play קודם, אחר כך App Store <span class="who">· אני, וחשבונות מפתח שלך</span></li>
+    <li>גיוס 3–5 מורים ו־30–50 תלמידים לבטא <span class="who">· אתה</span></li>
+    <li>דף נחיתה ושלושה סרטוני הדגמה <span class="who">· אני מכין, אתה מאשר</span></li>
+    <li>ארבעה שבועות מדידה, ושיפור החוויה הראשונה לפי מה שרואים <span class="who">· שנינו</span></li>
+    <li>קביעת מחיר לפי הנתונים, והצעת חברים מייסדים <span class="who">· אתה</span></li>
+  </ol>
+</section>
+
+<section>
+  <h2>מה לא לעשות עכשיו</h2>
+  <ul class="dont">
+    <li>לא להתחרות ב־Yousician על ספריית שירים ברישיון. זה יקר, משפטי, ולא הנישה שלנו.</li>
+    <li>לא להוסיף עוד פיצ׳רים לפני שיש מדידה. כרגע אנחנו לא יודעים מה מהקיים בכלל עובד.</li>
+    <li>לא להשיק קורס שהמסלול שלו נגמר אחרי שבוע. מסלול קצר שמאכזב פוגע גם בתוכן הטוב שמאחוריו.</li>
+    <li>לא לפרסם בתשלום לפני שהשימור אחרי שבוע עובר 20%. זה ישפוך כסף לדלי שדולף.</li>
+  </ul>
+</section>
+
+<section class="decide">
+  <h2>שלוש החלטות שמחכות לך</h2>
+  <ol>
+    <li><b>נישת ההשקה:</b> שמיעה ותיאוריה + בגרות בעברית (ההמלצה שלי), או משהו אחר?</li>
+    <li><b>ערוץ ראשון:</b> מורים ומגמות (ההמלצה שלי), או ישירות ללומדים ברשתות?</li>
+    <li><b>קורסי הכלי בהשקה:</b> להשיק איתם אחרי פריסת הטכניקה למסלול (ההמלצה שלי), או להשיק קודם רק עם שמיעה ובגרות?</li>
+  </ol>
+</section>
+
+<section class="src">
+  <h3>מקורות</h3>
+  <p>מחירים ומספרים בשוק הם לפי מקורות משניים, ולפעמים הם סותרים זה את זה. הם נכונים לסדר גודל, לא לדיוק. מספרי האפליקציה שלנו לקוחים מהקוד.</p>
+  <ul>
+    <li><a href="https://fifths-marketing.pages.dev/blog/best-ear-training-apps/">Best ear training apps in 2026: an honest comparison</a></li>
+    <li><a href="https://www.musicianwave.com/music-theory-ear-training-apps/">10 Great Music Theory and Ear Training Apps (2026)</a></li>
+    <li><a href="https://apps.apple.com/us/app/earforge-learn-ear-training/id1429049063?uo=4">EarForge on the App Store</a> · <a href="https://apps.apple.com/us/app/-/id6778828065">Pitch Master on the App Store</a> · <a href="https://apps.apple.com/us/app/perfect-ear-music-rhythm/id1440768353">Perfect Ear on the App Store</a></li>
+    <li><a href="https://www.crunchbase.com/organization/ovelin">Yousician (Ovelin) on Crunchbase</a></li>
+    <li><a href="https://hackernoon.com/lang/ja/best-piano-learning-apps-in-2026-an-in-depth-comparison-of-music-education-technology">Best piano learning apps in 2026 (HackerNoon)</a></li>
+    <li><a href="https://www.fastcompany.com/91382293/duolingo-wants-to-make-music-lessons-more-addictive">Duolingo wants to make music lessons more addictive (Fast Company)</a> · <a href="https://www.engadget.com/duolingos-gamified-music-lessons-are-launching-this-fall-050009231.html">Engadget on Duolingo Music</a></li>
+    <li><a href="https://www.technavio.com/report/music-lessons-market-industry-analysis">Music lessons market analysis (Technavio)</a></li>
+  </ul>
+</section>
+
+</div>

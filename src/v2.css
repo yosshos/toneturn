@@ -1621,3 +1621,11 @@
   :root[data-theme] main.lesson .choice-text { font-size: 0.88rem; line-height: 1.25; }
   :root[data-theme] main.lesson .choice-show .note-staff svg { max-height: 76px; }
 }
+
+/* Instrument course (0.61): "Already playing?" — the playing test that sets the start of each technique family */
+:root[data-theme] .path-techtest { display: flex; align-items: center; gap: 12px; padding: 12px 14px; margin: 0 0 12px; border-radius: 18px; border: var(--stroke) solid var(--outline); background: color-mix(in srgb, var(--lemon) 30%, var(--card, #fff)); box-shadow: var(--shadow-s); }
+:root[data-theme] .path-techtest > span { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+:root[data-theme] .path-techtest b { font-family: 'Secular One', Rubik, sans-serif; font-weight: 400; }
+:root[data-theme] .path-techtest small { color: var(--ink-dim); }
+:root[data-theme] .path-techtest .btn { flex: none; }
+:root[data-theme] .beta-chip { display: inline-block; margin-inline-start: 6px; padding: 0 7px; border-radius: 999px; border: 2px solid var(--ink-c); background: var(--card-2); color: var(--ink-c); font: 400 0.68rem/1.5 'Secular One', Rubik, sans-serif; vertical-align: middle; }

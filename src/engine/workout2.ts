@@ -111,10 +111,14 @@ export function suggestWorkout(inp: SuggestInput): Block[] {
     const w0 = (a: DomainId) => (gw0[AREAS.indexOf(a)] ?? 1) * (inp.priorities ? Math.max(1, 5 - Math.max(0, inp.priorities.indexOf(a))) : 2);
     const cand = [...new Set([...[...rem0.byArea.keys()].sort((x, y) => w0(y) - w0(x)), ...AREAS.slice().sort((x, y) => w0(y) - w0(x))])].filter((a) => !inp.leaveOut.includes(a) && w0(a) > 0);
     if (inp.singer && T >= 15) push({ kind: 'vocal' }, 2);
-    if (shape.warm && (inp.reviewsDue > 0 || T >= 10)) push({ kind: 'warmup' }, shape.warm);
-    push({ kind: 'path' }, shape.path + (shape.warm && !out.some((b) => b.target.kind === 'warmup') ? shape.warm : 0));
+    // 0.61 (owner): an instrument course warms up on its own technique (today's measured drills), and its path —
+    // about half technique levels — does the rest; no second drills block.
+    const warmT: BlockTarget = inp.technique ? { kind: 'game', game: 'drills' } : { kind: 'warmup' };
+    if (shape.warm && (inp.reviewsDue > 0 || T >= 10 || inp.technique)) push(warmT, shape.warm);
+    const warmed = out.some((b) => b.target.kind === 'warmup' || (b.target.kind === 'game' && b.target.game === 'drills'));
+    push({ kind: 'path' }, shape.path + (shape.warm && !warmed ? shape.warm : 0) + (inp.technique ? shape.game : 0));
     shape.areas.forEach((m, i) => cand[i] && push({ kind: 'area', area: cand[i] }, m));
-    if (shape.game) push({ kind: 'game', game: inp.technique ? 'drills' : 'highway' }, shape.game);
+    if (shape.game && !inp.technique) push({ kind: 'game', game: 'highway' }, shape.game);
     const diff = T - total(out);
     if (diff !== 0) {
       const p = out.find((b) => b.target.kind === 'path')!;
@@ -123,11 +127,12 @@ export function suggestWorkout(inp: SuggestInput): Block[] {
     return out;
   }
   if (inp.singer && T >= 10) push({ kind: 'vocal' }, 3);
-  if (inp.reviewsDue > 0 || T >= 10) push({ kind: 'warmup' }, 2);
+  if (inp.technique) push({ kind: 'game', game: 'drills' }, 2);
+  else if (inp.reviewsDue > 0 || T >= 10) push({ kind: 'warmup' }, 2);
   const rem = unitRemaining(inp.view);
   // §9.2: minutes for the current unit, area by area (each step ≈ 1.5 min, the checkpoint ≈ 2).
   const fixed = total(out);
-  const game = T >= 15 ? 3 : 0;
+  const game = T >= 15 && !inp.technique ? 3 : 0;
   let left = T - fixed - game;
   const gw = GOAL_WEIGHTS[inp.goal] ?? GOAL_WEIGHTS.general;
   const weight = (a: DomainId) => {
@@ -164,7 +169,7 @@ export function suggestWorkout(inp: SuggestInput): Block[] {
     const last = [...out].reverse().find((b) => b.target.kind === 'area') ?? out[out.length - 1];
     last.minutes = clampM(last.minutes + left);
   }
-  if (game) push({ kind: 'game', game: inp.technique ? 'drills' : 'highway' }, game);
+  if (game) push({ kind: 'game', game: 'highway' }, game);
   return out;
 }
 

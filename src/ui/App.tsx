@@ -1,3 +1,4 @@
+import { techQueue } from '../engine/ladderFacts';
 import { CourseContext } from './courseContext';
 import { CourseSheet } from './CourseSwitcher';
 import { COURSE_AREAS, courseOf, switchCourse, type CourseId } from '../engine/courses';
@@ -249,7 +250,9 @@ export function App() {
   const pickCourse = (c: CourseId) => {
     setCourseSheet(false);
     if (!settings) return;
-    updateSettings(switchCourse(settings, c));
+    // 0.61: technique follows the course's instrument (keys → piano drills, guitar / bass → theirs).
+    const inst = c === 'keys' ? 'piano' : c === 'guitar' || c === 'bass' ? c : null;
+    updateSettings({ ...switchCourse(settings, c), ...(inst ? { drills: { ...drillSettingsOf(settings), instrument: inst } } : {}) });
     go('home');
   };
   /** First-try results per skill (the answer ladder, 0.61): the last 60 rated items of each skill, oldest first. */
@@ -835,6 +838,18 @@ export function App() {
       return openReview();
     }
     if (step.kind === 'check') return openGenerated(checkpointSession(unit, seed), undefined, false, { key: `pathstep:${step.id}`, title });
+    // 0.61 (owner): a technique level runs its items not yet clean as a drill queue; a vocal level opens the Vocal screen on it.
+    if (step.kind === 'tech' && step.ladder && settings && progress) {
+      chartQueue.current = techQueue(step.ladder.ref, progress.drillItems ?? {}, drillSettingsOf(settings).keyOrder);
+      drillFrom.current = 'path';
+      return go('drills');
+    }
+    if (step.kind === 'vocal' && step.ladder) {
+      toolFrom.current = 'path';
+      setVocalWarmup(false);
+      setVocalLevel(Number(step.ladder.ref));
+      return go('vocal');
+    }
     // A game inside the unit (0.38): its result is recorded as the step's stars when the game ends.
     if (step.kind === 'game' && step.game) {
       if (step.game === 'drills') drillFrom.current = 'path';
@@ -861,14 +876,34 @@ export function App() {
     go('mixer');
   };
   const techAfterPlacement = useRef(false);
+  /** 0.61: an instrument course's "find my level" is the playing test (it sets the start level of every technique family). */
+  const instrumentCourse = !!settings && ['keys', 'guitar', 'bass'].includes(settings.activeCourse ?? 'ear');
+  const openTechTest = () => {
+    drillFrom.current = 'test';
+    go('drills');
+  };
   const drillQueue = useMemo(
-    () => (route === 'drills' && (drillFrom.current === 'chart' || drillFrom.current === 'assign') ? chartQueue.current ?? undefined : route === 'drills' && (drillFrom.current === 'path' || drillFrom.current === 'workout') && settings && progress ? todayDrills(drillSettingsOf(settings), progress.drillItems ?? {}, settings.drillStart ?? {}, settings.customDrills ?? []).map((x) => x.drill) : undefined),
+    () => (route === 'drills' && (drillFrom.current === 'chart' || drillFrom.current === 'assign' || (drillFrom.current === 'path' && chartQueue.current)) ? chartQueue.current ?? undefined : route === 'drills' && (drillFrom.current === 'path' || drillFrom.current === 'workout') && settings && progress ? todayDrills(drillSettingsOf(settings), progress.drillItems ?? {}, settings.drillStart ?? {}, settings.customDrills ?? []).map((x) => x.drill) : undefined),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [route],
   );
   const drillQueueDone = (takes: number, clean: number) => {
     const from = drillFrom.current;
     drillFrom.current = null;
+    if (from === 'path' && pendingStep.current?.kind === 'tech') {
+      // A technique level from the path: one result for the session (history → streak, teacher, workout, the step's stars).
+      const ps = pendingStep.current;
+      chartQueue.current = null;
+      if (takes > 0)
+        void store
+          .recordCompletion({ lessonId: ps.id, lessonVersion: 1, sessionId: `tech-${Date.now()}`, completedAt: new Date().toISOString(), firstTry: clean, total: takes, xp: 0, missed: [], items: [] })
+          .then((p) => {
+            setProgress(p);
+            notePathResult(p);
+          });
+      else pendingStep.current = null;
+      return go('path');
+    }
     if (from === 'path') {
       const ps = pendingStep.current;
       if (ps && ps.kind === 'game' && ps.id.endsWith(':drills') && settings && takes > 0) {
@@ -1240,7 +1275,7 @@ export function App() {
           }}
         />
       )}
-      {route === 'path' && <PathView2 t={t} settings={s} progress={progress} view={pathView} onStep={openPathStep} onTestOut={openTestOut} onPlacement={() => openPlacement()} onSettings={updateSettings} onLesson={(id) => (s.mode === 'voice' && !s.voiceConsent ? setConsentThen(() => () => openLesson(id)) : openLesson(id))}
+      {route === 'path' && <PathView2 t={t} settings={s} progress={progress} view={pathView} onStep={openPathStep} onTestOut={openTestOut} onPlacement={() => (instrumentCourse ? openTechTest() : openPlacement())} onTechTest={instrumentCourse && !s.drillStart && !Object.keys(progress.drillItems ?? {}).length ? openTechTest : undefined} onSettings={updateSettings} onLesson={(id) => (s.mode === 'voice' && !s.voiceConsent ? setConsentThen(() => () => openLesson(id)) : openLesson(id))}
           extras={
             <PathExtras
               t={t}
@@ -1780,7 +1815,10 @@ export function App() {
           settings={s}
           progress={progress}
           onSettings={updateSettings}
-          onProgress={setProgress}
+          onProgress={(p) => {
+            setProgress(p);
+            notePathResult(p);
+          }}
           onBack={() => go(toolFrom.current)}
           onRuns={openRuns}
           onSingAlong={() => gate('vocal:singalong', () => go('singalong'))}

@@ -31,7 +31,10 @@ export function CourseSheet({ mine, active, lang, onPick, onClose }: { mine: Cou
       <button key={id} className={`course-row ${on ? 'on' : ''}`} onClick={() => onPick(id)} aria-current={on ? 'true' : undefined} data-course={id}>
         <Glyph kind={c.glyph} color={c.color} size={48} />
         <span className="cr-text">
-          <b>{c.name[lang]}</b>
+          <b>
+            {c.name[lang]}
+            {c.beta && <span className="beta-chip">{he ? 'בטא' : 'Beta'}</span>}
+          </b>
           {isNew && <small>{he ? 'מתחילים במבחן מיקום קצר, או מההתחלה' : 'Starts with a short placement test, or from the beginning'}</small>}
         </span>
         {on && (

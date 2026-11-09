@@ -302,6 +302,7 @@ export function Onboarding({ lang, onDone, onSignIn }: { lang: Lang; onDone: (r:
                 <button key={c.id} className={`ob-course ${on ? 'on' : ''}`} aria-pressed={on} onClick={() => togglePick(c.id)} data-ob={`course-${c.id}`}>
                   <Glyph kind={c.glyph} color={c.color} size={44} />
                   <b>{c.name[lang]}</b>
+                  {c.beta && <span className="beta-chip">{lang === 'he' ? 'בטא' : 'Beta'}</span>}
                 </button>
               );
             })}

@@ -27,11 +27,11 @@ export function drillScore(drill: Drill, m: TakeMetrics): number {
  * Ids use the 'g:drill:<session>:<i>' shape so the path groups a drill session like a game session.
  */
 export function drillEvents(drill: Drill, m: TakeMetrics, at: string, sessionId: string, index: number): RatingEvent[] {
-  const sub = isGuitarDrill(drill) ? 'guitar-tech' : 'piano-tech';
+  const sub = isGuitarDrill(drill) ? 'instrument/guitar-tech' : 'instrument/piano-tech';
   const tags: NonNullable<RatingEvent['tags']> = drill.goal.evenness
     ? [
         { skill: 'instrument', sub, w: 0.8 },
-        { skill: 'timing', sub: 'subdivide', w: 0.2 },
+        { skill: 'timing', sub: 'timing/subdivide', w: 0.2 },
       ]
     : [{ skill: 'instrument', sub, w: 1 }];
   return [{ id: `g:drill:${sessionId}:${index}`, skill: 'instrument', difficulty: drillDifficulty(drill, m), correct: m.verdict === 'clean', score: drillScore(drill, m), tags, at }];
