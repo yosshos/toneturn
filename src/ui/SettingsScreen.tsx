@@ -13,8 +13,7 @@ import { DEFAULT_SOUND, namingFor, type Settings, type VoiceGender } from '../st
 import { fillText, Note } from './bits';
 import { piano, store, tts } from './services';
 import { listMics } from '../speech/mic';
-import { APP_THEMES } from './themes';
-import { COSMETICS, ownsCosmetic } from '../engine/streak';
+import { APP_THEMES, appearanceOf } from './themes';
 import { midi } from '../speech/midi';
 import { LatencyCalibrate } from './LatencyCalibrate';
 import { AudioOutputPicker } from './AudioOutput';
@@ -558,15 +557,11 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
         <Group id="display" icon={<SetIcon k="display" />} title={G.display.title[lang]} sub={G.display.sub[lang]}>
           <section className="set-card">
             <fieldset className="seg-field">
-              <legend>{lang === 'he' ? 'ערכת עיצוב' : 'Theme'}</legend>
-              <div className="tp-grid" role="radiogroup" aria-label={lang === 'he' ? 'ערכת עיצוב' : 'Theme'}>
-                {[
-                  ...APP_THEMES.map((x) => ({ id: x.id, name: x.name[lang], note: x.note[lang], sw: x.sw as readonly string[] })),
-                  ...Object.keys(COSMETICS)
-                    .filter((k) => ownsCosmetic(s.purchases ?? [], k))
-                    .map((k) => ({ id: k.replace('theme-', ''), name: t.themeNames[k.replace('theme-', '')] ?? k, note: lang === 'he' ? 'מהחנות' : 'From the shop', sw: [] as readonly string[] })),
-                ].map((x) => {
-                  const on = (s.theme && (APP_THEMES.some((a) => a.id === s.theme) || ownsCosmetic(s.purchases ?? [], `theme-${s.theme}`)) ? s.theme : 'calm') === x.id;
+              <legend>{lang === 'he' ? 'מראה' : 'Appearance'}</legend>
+              <div className="tp-grid" role="radiogroup" aria-label={lang === 'he' ? 'מראה' : 'Appearance'}>
+                {APP_THEMES.map((x) => ({ id: x.id, name: x.name[lang], note: x.note[lang], sw: x.sw as readonly string[] }))
+                .map((x) => {
+                  const on = appearanceOf(s.theme) === x.id;
                   return (
                     <button key={x.id} type="button" role="radio" aria-checked={on} className={`tp-opt ${on ? 'on' : ''}`} data-theme-opt={x.id} onClick={() => onChange({ theme: x.id })}>
                       <span className="tp-sw" aria-hidden="true" data-theme-preview={x.sw.length ? undefined : x.id}>

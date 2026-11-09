@@ -6,7 +6,7 @@
 /* ---------------------------------------------------------------- shared by the mature themes */
 :root[data-theme='calm'],
 :root[data-theme='studio'],
-:root[data-theme='paper'],
+:root[data-theme='light'],
 :root[data-theme='oled'],
 :root[data-theme='contrast'] {
   --display: 'Rubik Variable', 'Rubik', system-ui, sans-serif;
@@ -72,7 +72,7 @@
 }
 
 /* ---------------------------------------------------------------- C · Paper (light) */
-:root[data-theme='paper'] {
+:root[data-theme='light'] {
   --bg: #f7f5f0;
   --bg-2: #ffffff;
   --card: #ffffff;
@@ -164,7 +164,7 @@
 }
 
 /* ---------------------------------------------------------------- mature themes: calmer chrome */
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) body {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) body {
   background: radial-gradient(120% 60% at 50% -10%, var(--glow) 0%, var(--bg) 55%) fixed, var(--bg);
 }
 :root:is([data-theme='calm'], [data-theme='studio'], [data-theme='oled'], [data-theme='contrast']) .tabbar {
@@ -173,110 +173,110 @@
 }
 
 /* ---------------------------------------------------------------- Paper: the light theme needs a few flips */
-:root[data-theme='paper'] body {
+:root[data-theme='light'] body {
   background: var(--bg);
 }
 /* Text on the accent is light (indigo accent), not the dark text the neon mint needed. */
-:root[data-theme='paper'] :is(.btn.primary, .btn.mega, .rr-icon.rr-go, .wk-steps li.now .wk-n) {
+:root[data-theme='light'] :is(.btn.primary, .btn.mega, .rr-icon.rr-go, .wk-steps li.now .wk-n) {
   color: #ffffff;
 }
 /* Selected chips, segments and switches: the accent with white text (they used light-on-dark ink). */
-:root[data-theme='paper'] :is(.chip.on, .mode-switch button.on, .ps-seg button.on, .seg button.on, .drill-inst .chip.on, .latency-cal .chip.on) {
+:root[data-theme='light'] :is(.chip.on, .mode-switch button.on, .ps-seg button.on, .seg button.on, .drill-inst .chip.on, .latency-cal .chip.on) {
   background: var(--mint);
   border-color: var(--mint);
   color: #ffffff;
   box-shadow: none;
 }
-:root[data-theme='paper'] :is(.mode-switch, .ps-seg) {
+:root[data-theme='light'] :is(.mode-switch, .ps-seg) {
   background: #ece9e1;
 }
-:root[data-theme='paper'] .tab.on .tab-icon {
+:root[data-theme='light'] .tab.on .tab-icon {
   background: color-mix(in srgb, var(--mint) 12%, transparent);
 }
-:root[data-theme='paper'] .panel-screen.settings input[type='checkbox'] {
+:root[data-theme='light'] .panel-screen.settings input[type='checkbox'] {
   background: #d6d2c8;
 }
-:root[data-theme='paper'] .panel-screen.settings input[type='checkbox']::after {
+:root[data-theme='light'] .panel-screen.settings input[type='checkbox']::after {
   background: #ffffff;
   box-shadow: 0 1px 2px rgb(0 0 0 / 0.25);
 }
-:root[data-theme='paper'] .panel-screen.settings input[type='checkbox']:checked {
+:root[data-theme='light'] .panel-screen.settings input[type='checkbox']:checked {
   background: var(--mint);
 }
-:root[data-theme='paper'] .rr-icon.rr-go {
+:root[data-theme='light'] .rr-icon.rr-go {
   background: var(--mint);
 }
-:root[data-theme='paper'] .wk-steps li.now {
+:root[data-theme='light'] .wk-steps li.now {
   background: color-mix(in srgb, var(--mint) 9%, transparent);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mint) 45%, transparent);
 }
 /* Subtle white overlays and deep shadows assumed a dark page. */
-:root[data-theme='paper'] :is(.card, .set-card, .wk-card, .domain-tile, .resume-row, .px-section, .set-group, .tool-card, .play-card, .drill-family, .room-row:hover) {
+:root[data-theme='light'] :is(.card, .set-card, .wk-card, .domain-tile, .resume-row, .px-section, .set-group, .tool-card, .play-card, .drill-family, .room-row:hover) {
   border: 1px solid var(--line);
   box-shadow: var(--shadow);
 }
-:root[data-theme='paper'] .domain-tile {
+:root[data-theme='light'] .domain-tile {
   background: #ffffff;
 }
-:root[data-theme='paper'] .domain-tile:active {
+:root[data-theme='light'] .domain-tile:active {
   box-shadow: none;
 }
-:root[data-theme='paper'] .tabbar {
+:root[data-theme='light'] .tabbar {
   background: rgba(255, 255, 255, 0.94);
   border-top: 1px solid var(--line);
 }
-:root[data-theme='paper'] .btn {
+:root[data-theme='light'] .btn {
   box-shadow: none;
   border: 1px solid var(--line);
   background: #ffffff;
   color: var(--ink);
 }
-:root[data-theme='paper'] .btn.primary,
-:root[data-theme='paper'] .btn.mega {
+:root[data-theme='light'] .btn.primary,
+:root[data-theme='light'] .btn.mega {
   background: var(--mint);
   border-color: transparent;
 }
-:root[data-theme='paper'] .icon-btn {
+:root[data-theme='light'] .icon-btn {
   background: #ffffff;
   border: 1px solid var(--line);
   color: var(--ink);
   box-shadow: none;
 }
-:root[data-theme='paper'] .seg {
+:root[data-theme='light'] .seg {
   background: #ece9e1;
 }
-:root[data-theme='paper'] .seg button.on {
+:root[data-theme='light'] .seg button.on {
   background: var(--mint);
 }
-:root[data-theme='paper'] .sheet {
+:root[data-theme='light'] .sheet {
   background: #ffffff;
   color: var(--ink);
 }
-:root[data-theme='paper'] .sheet-backdrop {
+:root[data-theme='light'] .sheet-backdrop {
   background: rgba(20, 22, 30, 0.35);
 }
-:root[data-theme='paper'] .chip:not(.on) {
+:root[data-theme='light'] .chip:not(.on) {
   background: #ffffff;
   border: 1px solid var(--line);
   color: var(--ink-soft);
 }
-:root[data-theme='paper'] .orb {
+:root[data-theme='light'] .orb {
   color: #ffffff;
 }
-:root[data-theme='paper'] .wordmark {
+:root[data-theme='light'] .wordmark {
   color: var(--ink);
 }
-:root[data-theme='paper'] .lesson-top {
+:root[data-theme='light'] .lesson-top {
   background: linear-gradient(var(--bg) 70%, transparent);
 }
-:root[data-theme='paper'] .lesson .stage .controls {
+:root[data-theme='light'] .lesson .stage .controls {
   background: linear-gradient(to bottom, transparent, var(--bg) 28%);
 }
-:root[data-theme='paper'] .streak-chip,
-:root[data-theme='paper'] .hot-chip {
+:root[data-theme='light'] .streak-chip,
+:root[data-theme='light'] .hot-chip {
   color: var(--ink);
 }
-:root[data-theme='paper'] .logo-mark.bare {
+:root[data-theme='light'] .logo-mark.bare {
   filter: none;
 }
 
@@ -320,18 +320,18 @@
    The themes above change colours; these rules change the shapes on app screens to match the Calm-night mockup:
    flat surfaces, hairline borders, no glow / 3D drop shadows / neon gradients, modest primary buttons.
    Inside exercises the answer pads keep a little colour (the press is part of the game). */
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) {
   --m-radius: 14px;
 }
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) :is(.btn, .icon-btn, .chip) {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) :is(.btn, .icon-btn, .chip) {
   box-shadow: none;
 }
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) .btn {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) .btn {
   border-radius: 12px;
   border: 1px solid var(--line);
   font-weight: 700;
 }
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) .btn:active {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) .btn:active {
   transform: none;
   opacity: 0.85;
 }
@@ -339,59 +339,59 @@
   border-color: transparent;
   color: #0f1416;
 }
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) main:not(.lesson) .btn.mega {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) main:not(.lesson) .btn.mega {
   min-height: 52px;
   font-size: 1.1rem;
   font-family: var(--font);
   font-weight: 700;
   border-radius: 14px;
 }
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) .icon-btn {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) .icon-btn {
   background: transparent;
   border: 1px solid var(--line);
 }
 
 /* Today / first run */
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) .hero {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) .hero {
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 18px;
   box-shadow: none;
 }
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) .hero h1 {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) .hero h1 {
   font-family: var(--display);
   font-weight: 700;
   letter-spacing: -0.01em;
 }
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) .gift-btn.unseen {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) .gift-btn.unseen {
   box-shadow: none;
 }
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) .gift-btn.unseen .gift-icon {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) .gift-btn.unseen .gift-icon {
   animation: none;
 }
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) .wk-card {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) .wk-card {
   box-shadow: none;
   border-radius: 16px;
 }
 
 /* Area tiles (Progress) */
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) .domain-tile {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) .domain-tile {
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: var(--m-radius);
   box-shadow: none;
 }
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) .domain-tile:active {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) .domain-tile:active {
   transform: none;
   box-shadow: none;
 }
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) .dt-dot {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) .dt-dot {
   width: 10px;
   height: 10px;
   border-radius: 50%;
   box-shadow: none;
 }
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) .hot-chip {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) .hot-chip {
   animation: none;
   background: transparent;
   color: var(--gold);
@@ -399,7 +399,7 @@
 }
 
 /* Play */
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) .play-hero {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) .play-hero {
   background: var(--card);
   color: var(--ink);
   border: 1px solid var(--line);
@@ -407,33 +407,33 @@
   border-radius: var(--m-radius);
   box-shadow: none;
 }
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) .play-hero small {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) .play-hero small {
   color: var(--gold);
 }
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) .play-hero b {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) .play-hero b {
   font-family: var(--display);
   font-weight: 700;
   font-size: 1.25rem;
 }
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) .play-hero .mission-shine {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) .play-hero .mission-shine {
   display: none;
 }
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) .play-hero-go {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) .play-hero-go {
   background: transparent;
   color: var(--mint);
   padding: 0;
 }
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) .play-card {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) .play-card {
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: var(--m-radius);
   box-shadow: none;
   min-height: 0;
 }
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) .play-card:active {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) .play-card:active {
   transform: none;
 }
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) .pc-icon {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) .pc-icon {
   width: 38px;
   height: 38px;
   border-radius: 10px;
@@ -441,31 +441,31 @@
   color: var(--hue);
   background: color-mix(in srgb, var(--hue) 16%, transparent);
 }
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) .play-card b {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) .play-card b {
   font-family: var(--display);
   font-weight: 700;
 }
 
 /* Technique drills hub */
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) .drill-family {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) .drill-family {
   background: var(--card);
   border-color: var(--line);
   border-radius: var(--m-radius);
 }
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) .drill-family b {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) .drill-family b {
   font-weight: 700;
 }
 
 /* Sheets and the tab bar */
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) .sheet {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) .sheet {
   border-radius: 18px 18px 0 0;
   box-shadow: 0 -1px 0 var(--line);
 }
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) .tab.on .tab-icon {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) .tab.on .tab-icon {
   transform: none;
 }
 
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) .freeze-toast {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) .freeze-toast {
   background: var(--card);
   border: 1px solid var(--line);
   box-shadow: none;
@@ -473,12 +473,12 @@
 }
 
 /* Panel screens (Friends, Achievements, Class …): flat cards like Settings. */
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) .panel-screen .set-card {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) .panel-screen .set-card {
   box-shadow: none;
   border: 1px solid var(--line);
   border-radius: 14px;
 }
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) .panel-screen .screen-head h1 {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) .panel-screen .screen-head h1 {
   font-family: var(--display);
   font-weight: 700;
 }
@@ -525,14 +525,14 @@
    Game setup / lobby / result screens under Play speak the same quiet language as Settings and the Rush setup:
    option rows are switches with normal-weight labels and a dim hint line, legends are small, game pickers are flat cards.
    The gameplay boards themselves keep their colour. */
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) :is(.game-setup, .tf-setup, .duel-setup, .ghost-setup, .daily, .g2, .g3, .rush, .drone, .singalong, .online, .room-lobby) .toggle-row {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) :is(.game-setup, .tf-setup, .duel-setup, .ghost-setup, .daily, .g2, .g3, .rush, .drone, .singalong, .online, .room-lobby) .toggle-row {
   justify-content: space-between;
   flex-direction: row-reverse;
   gap: 12px;
   min-height: 44px;
   font-weight: 500;
 }
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) :is(.game-setup, .tf-setup, .duel-setup, .ghost-setup, .daily, .g2, .g3, .rush, .drone, .singalong, .online, .room-lobby) .toggle-row > span {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) :is(.game-setup, .tf-setup, .duel-setup, .ghost-setup, .daily, .g2, .g3, .rush, .drone, .singalong, .online, .room-lobby) .toggle-row > span {
   flex: 1;
   min-width: 0;
   display: grid;
@@ -540,19 +540,19 @@
   font-size: 0.95rem;
   line-height: 1.3;
 }
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) :is(.game-setup, .tf-setup, .duel-setup, .ghost-setup, .daily, .g2, .g3, .rush, .drone, .singalong, .online, .room-lobby) .toggle-row .field-hint {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) :is(.game-setup, .tf-setup, .duel-setup, .ghost-setup, .daily, .g2, .g3, .rush, .drone, .singalong, .online, .room-lobby) .toggle-row .field-hint {
   display: block;
   margin: 0;
   font-size: 0.8rem;
   font-weight: 400;
   color: var(--ink-dim);
 }
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) :is(.game-setup, .tf-setup, .duel-setup, .ghost-setup, .daily, .g2, .g3, .rush, .drone, .singalong, .online, .room-lobby) .toggle-row + .toggle-row {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) :is(.game-setup, .tf-setup, .duel-setup, .ghost-setup, .daily, .g2, .g3, .rush, .drone, .singalong, .online, .room-lobby) .toggle-row + .toggle-row {
   border-top: 1px solid var(--line);
   padding-top: 8px;
 }
 /* Switches instead of checkboxes (the same shape as in Settings). */
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) :is(.game-setup, .tf-setup, .duel-setup, .ghost-setup, .daily, .g2, .g3, .rush, .drone, .singalong, .online, .room-lobby) .toggle-row input[type='checkbox'] {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) :is(.game-setup, .tf-setup, .duel-setup, .ghost-setup, .daily, .g2, .g3, .rush, .drone, .singalong, .online, .room-lobby) .toggle-row input[type='checkbox'] {
   appearance: none;
   -webkit-appearance: none;
   flex: none;
@@ -565,7 +565,7 @@
   cursor: pointer;
   transition: background 0.15s;
 }
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) :is(.game-setup, .tf-setup, .duel-setup, .ghost-setup, .daily, .g2, .g3, .rush, .drone, .singalong, .online, .room-lobby) .toggle-row input[type='checkbox']::after {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) :is(.game-setup, .tf-setup, .duel-setup, .ghost-setup, .daily, .g2, .g3, .rush, .drone, .singalong, .online, .room-lobby) .toggle-row input[type='checkbox']::after {
   content: '';
   position: absolute;
   top: 3px;
@@ -576,57 +576,57 @@
   background: var(--ink);
   transition: transform 0.15s;
 }
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) :is(.game-setup, .tf-setup, .duel-setup, .ghost-setup, .daily, .g2, .g3, .rush, .drone, .singalong, .online, .room-lobby) .toggle-row input[type='checkbox']:checked {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) :is(.game-setup, .tf-setup, .duel-setup, .ghost-setup, .daily, .g2, .g3, .rush, .drone, .singalong, .online, .room-lobby) .toggle-row input[type='checkbox']:checked {
   background: color-mix(in srgb, var(--mint) 78%, var(--ink-dim));
 }
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) :is(.game-setup, .tf-setup, .duel-setup, .ghost-setup, .daily, .g2, .g3, .rush, .drone, .singalong, .online, .room-lobby) .toggle-row input[type='checkbox']:checked::after {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) :is(.game-setup, .tf-setup, .duel-setup, .ghost-setup, .daily, .g2, .g3, .rush, .drone, .singalong, .online, .room-lobby) .toggle-row input[type='checkbox']:checked::after {
   transform: translateX(16px);
 }
-[dir='rtl']:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) :is(.game-setup, .tf-setup, .duel-setup, .ghost-setup, .daily, .g2, .g3, .rush, .drone, .singalong, .online, .room-lobby) .toggle-row input[type='checkbox']:checked::after {
+[dir='rtl']:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) :is(.game-setup, .tf-setup, .duel-setup, .ghost-setup, .daily, .g2, .g3, .rush, .drone, .singalong, .online, .room-lobby) .toggle-row input[type='checkbox']:checked::after {
   transform: translateX(-16px);
 }
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) :is(.game-setup, .tf-setup, .duel-setup, .ghost-setup, .daily, .g2, .g3, .rush, .drone, .singalong, .online, .room-lobby) .toggle-row input[type='checkbox']:disabled {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) :is(.game-setup, .tf-setup, .duel-setup, .ghost-setup, .daily, .g2, .g3, .rush, .drone, .singalong, .online, .room-lobby) .toggle-row input[type='checkbox']:disabled {
   opacity: 0.5;
   cursor: default;
 }
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) :is(.game-setup, .tf-setup, .duel-setup, .ghost-setup, .daily, .g2, .g3, .rush, .drone, .singalong, .online, .room-lobby) .toggle-row input[type='checkbox']:focus-visible {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) :is(.game-setup, .tf-setup, .duel-setup, .ghost-setup, .daily, .g2, .g3, .rush, .drone, .singalong, .online, .room-lobby) .toggle-row input[type='checkbox']:focus-visible {
   outline: 2px solid var(--mint);
   outline-offset: 2px;
 }
 /* Small, quiet field labels. */
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) :is(.game-setup, .tf-setup, .duel-setup, .ghost-setup, .daily, .g2, .g3, .drone, .online, .room-lobby) .seg-field legend {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) :is(.game-setup, .tf-setup, .duel-setup, .ghost-setup, .daily, .g2, .g3, .drone, .online, .room-lobby) .seg-field legend {
   font-weight: 600;
   font-size: 0.9rem;
   color: var(--ink-soft);
 }
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) :is(.ghost-note, .ghost-best, .daily-date) {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) :is(.ghost-note, .ghost-best, .daily-date) {
   font-weight: 600;
 }
 /* Echo Chain / Beat Echo picker: flat cards, a quiet accent outline when chosen. */
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) .game-setup .game-card {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) .game-setup .game-card {
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: var(--m-radius);
   box-shadow: none;
 }
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) .game-setup .game-card:active {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) .game-setup .game-card:active {
   transform: none;
 }
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) .game-setup .game-card.on {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) .game-setup .game-card.on {
   border-color: color-mix(in srgb, var(--mint) 60%, transparent);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mint) 60%, transparent);
 }
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) .game-setup .game-card b {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) .game-setup .game-card b {
   font-family: var(--display);
   font-weight: 700;
 }
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) .best-chip {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) .best-chip {
   background: transparent;
   border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent);
   font-weight: 600;
 }
 /* Sing-along is an exercise screen: it must still fit one phone screen. */
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) .singalong .toggle-row {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) .singalong .toggle-row {
   min-height: 0;
 }
 /* Every theme (Classic arcade too): the option hint sits on its own line under the label. */
@@ -660,10 +660,10 @@
   font-size: 1.6rem;
   line-height: 1;
 }
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) .play-hero small {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) .play-hero small {
   letter-spacing: 0.04em;
   font-weight: 700;
 }
-:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='paper'], [data-theme='oled'], [data-theme='contrast']) .pc-icon {
+:root:is([data-theme='calm'], [data-theme='studio'], [data-theme='light'], [data-theme='oled'], [data-theme='contrast']) .pc-icon {
   color: var(--hue, var(--mint));
 }

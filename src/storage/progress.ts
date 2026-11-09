@@ -310,8 +310,10 @@ export interface Settings {
   bandDrums?: 'jazz' | 'classic';
   /** Drone sound: 'soft' (synthesised, default) or a sustained recorded set ('organ'). */
   droneSound?: string;
-  /** Colour theme (cosmetic, bought with gems). */
+  /** Appearance: 'auto' | 'light' | 'dark' | 'contrast' (older colour-theme ids map to a mode, see ui/themes.ts). */
   theme?: string;
+  /** Avatar frame bought with gems ('gold' | 'staff' | 'notes'); none = plain. */
+  avatarFrame?: string | null;
   /** Intake questionnaire answers (src/engine/intake.ts); null/absent = not taken. */
   intake?: import('../engine/intake').Intake | null;
   /** The catch-up card's key when the player chose "Not now" (it comes back when what it offers changes). */

@@ -6,10 +6,13 @@ export const MILESTONES = [3, 7, 14, 30, 50, 100, 200, 365];
 export const MILESTONE_GEMS: Record<number, number> = { 7: 50, 30: 150, 100: 500, 365: 1500 };
 export const MAX_FREEZES = 2;
 export const PRICES = { freeze: 200, repair: 400 } as const;
-/** Cosmetic extras bought with gems (spec N: cosmetic only — never difficulty or scoring). */
-export const COSMETICS: Record<string, number> = { 'theme-ocean': 300, 'theme-forest': 300, 'theme-sunset': 300, 'theme-midnight': 500, 'theme-rose': 500 };
-export const THEMES = ['violet', 'ocean', 'forest', 'sunset', 'midnight', 'rose'] as const;
-export type ThemeId = (typeof THEMES)[number];
+/** Cosmetic extras bought with gems (spec N: cosmetic only — never difficulty or scoring).
+ *  0.61 (SPEC-REDESIGN, owner 2026-11-09): one design language, so colour themes are no longer sold. They are
+ *  priced 0 from now on, which refunds every gem ever spent on one (the balance is derived from the purchase list).
+ *  Avatar frames take their place. */
+export const COSMETICS: Record<string, number> = { 'frame-gold': 300, 'frame-staff': 300, 'frame-notes': 500 };
+export const FRAMES = ['gold', 'staff', 'notes'] as const;
+export type FrameId = (typeof FRAMES)[number];
 export const REPAIR_WINDOW_DAYS = 2;
 
 export interface Purchase {
@@ -142,8 +145,8 @@ export function gemsEarned(s: GemSources): number {
 const priceOf = (p: Purchase) => (p.kind === 'cosmetic' ? (COSMETICS[p.item ?? ''] ?? 0) : PRICES[p.kind]);
 export const gemsSpent = (purchases: Purchase[]) => purchases.reduce((a, p) => a + priceOf(p), 0);
 
-/** Owned cosmetics (the default theme is always owned). */
-export const ownsCosmetic = (purchases: Purchase[], item: string) => item === 'theme-violet' || purchases.some((p) => p.kind === 'cosmetic' && p.item === item);
+/** Owned cosmetics. Retired colour themes (theme-*) still count as bought, but cost nothing now (refunded). */
+export const ownsCosmetic = (purchases: Purchase[], item: string) => purchases.some((p) => p.kind === 'cosmetic' && p.item === item);
 export const canBuyCosmetic = (item: string, balance: number, purchases: Purchase[]) => item in COSMETICS && !ownsCosmetic(purchases, item) && balance >= COSMETICS[item];
 
 /** Can this purchase be made now? */

@@ -48,8 +48,8 @@ import { AchievementsScreen } from './Extras';
 import { absoluteLesson, modesLesson, MODE_ID_LEVELS, wrongNotesLesson } from '../engine/lesson';
 import { TrueFalseScreen } from './TrueFalse';
 import { FreezeToast, StreakSheet } from './Streak';
-import { canBuy, canBuyCosmetic, ownsCosmetic } from '../engine/streak';
-import { APP_THEMES } from './themes';
+import { canBuy, canBuyCosmetic } from '../engine/streak';
+import { appearanceOf, resolvedTheme } from './themes';
 import { modesLevelFor, recommendFor } from '../engine/recommend';
 import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { LESSON_ORDER, runLevelFor, runsWorkshop, type LessonDef, type LessonId, type Question, type SkillId } from '../engine/lesson';
@@ -240,7 +240,7 @@ export function App() {
     const purchases = settings?.purchases ?? [];
     if (!canBuyCosmetic(item, gems.balance, purchases)) return;
     const id = typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
-    updateSettings({ purchases: [...purchases, { id, kind: 'cosmetic', item, day: localDay(new Date()) }], theme: item.replace(/^theme-/, '') });
+    updateSettings({ purchases: [...purchases, { id, kind: 'cosmetic', item, day: localDay(new Date()) }], avatarFrame: item.replace(/^frame-/, '') });
   };
   const buy = (kind: 'freeze' | 'repair') => {
     const purchases = settings?.purchases ?? [];
@@ -346,14 +346,22 @@ export function App() {
     const osReduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     document.documentElement.dataset.motion = (s.reducedMotion ?? osReduce) ? 'reduced' : 'full';
   }, [s.uiLang, s.reducedMotion]);
-  // Colour theme (cosmetic): only an owned one applies.
-  // 0.41: Calm night is the default; the app themes are free, the gem-shop colour themes need owning ('violet' = Classic arcade).
-  const themeId = s.theme && (APP_THEMES.some((x) => x.id === s.theme) || ownsCosmetic(s.purchases ?? [], `theme-${s.theme}`)) ? s.theme : 'calm';
+  // Appearance (0.61): light / dark / high contrast, or automatic by the device. Old theme choices map to a mode.
+  const appearance = appearanceOf(s.theme);
+  const [prefersDark, setPrefersDark] = useState(() => window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false);
+  useEffect(() => {
+    const mq = window.matchMedia?.('(prefers-color-scheme: dark)');
+    if (!mq) return;
+    const on = () => setPrefersDark(mq.matches);
+    mq.addEventListener('change', on);
+    return () => mq.removeEventListener('change', on);
+  }, []);
+  const themeId = resolvedTheme(appearance, prefersDark);
   useEffect(() => {
     document.documentElement.dataset.theme = themeId;
     // The browser / phone status-bar colour follows the theme.
     const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', bg || '#0e1322');
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', bg || '#FBF7FF');
   }, [themeId]);
 
   // Narration voice preferences apply to the single shared player.
@@ -1718,7 +1726,7 @@ export function App() {
       {route === 'classes' && <ClassesScreen t={t} settings={s} user={user} onBack={() => go('home')} onOpenLesson={(id) => openAssignment(id)} onOpenItem={openAssignItem} />}
       {logOpen && <PracticeLogSheet lang={s.uiLang} progress={progress} onSave={(k, m, x) => void saveLog(k, m, x)} onClose={() => setLogOpen(false)} />}
       {streakOpen && (
-        <StreakSheet t={t} st={gems.streak} gems={gems.balance} today={localDay(new Date())} lang={s.uiLang} onBuy={buy} purchases={s.purchases ?? []} theme={themeId} onBuyCosmetic={buyCosmetic} onTheme={(theme) => updateSettings({ theme })} onClose={() => setStreakOpen(false)} />
+        <StreakSheet t={t} st={gems.streak} gems={gems.balance} today={localDay(new Date())} lang={s.uiLang} onBuy={buy} purchases={s.purchases ?? []} frame={s.avatarFrame} onBuyCosmetic={buyCosmetic} onFrame={(avatarFrame) => updateSettings({ avatarFrame })} onClose={() => setStreakOpen(false)} />
       )}
       {route === 'drone' && <DroneScreen t={t} settings={s} onBack={() => go(toolFrom.current)} />}
       {route === 'perform' && <PerformScreen t={t} settings={s} onBack={() => go('home')} onProgress={setProgress} />}

@@ -1,0 +1,378 @@
+/* v2 design language (0.61, docs/SPEC-REDESIGN.md, owner 2026-11-09). Loaded last.
+   Ink outlines, flat fills, a hard offset shadow toward the inline-start, the tilted note head as the recurring shape.
+   Light (paper) is the default; dark and high contrast are modes, not themes. No gradients, no glow, no emoji. */
+
+/* ---------------------------------------------------------------- tokens */
+:root,
+:root[data-theme='light'] {
+  --paper: #fbf7ff;
+  --ink-c: #1e1033;
+  --purple: #6d28d9;
+  --lilac: #a78bfa;
+  --lemon: #ffd43b;
+  --sky: #3ab8ff;
+  --pink: #ff5fa2;
+  --teal: #12c9b4;
+  --tangerine: #ff8a3d;
+
+  --bg: var(--paper);
+  --bg-2: #f3ecff;
+  --card: #ffffff;
+  --card-2: #f6f0ff;
+  --ink: var(--ink-c);
+  --ink-soft: #3b2a5c;
+  --ink-dim: #5b4a86;
+  --outline: var(--ink-c);
+  --line: rgba(30, 16, 51, 0.12);
+  --line-strong: #c9b8ec;
+  --accent: var(--purple);
+  --accent-ink: #ffffff;
+  --now: var(--lemon);
+  --ok: var(--teal);
+  --ok-soft: #d9fbf5;
+  --bad: var(--pink);
+  --bad-soft: #ffe1ee;
+  --near: var(--tangerine);
+
+  /* legacy names, now pointing at v2 */
+  --mint: var(--teal);
+  --mint-deep: #0b7a6d;
+  --gold: var(--lemon);
+  --gold-deep: #b08a00;
+  --coral: var(--tangerine);
+  --red: var(--pink);
+  --glow: var(--bg);
+  --hero-end: var(--purple);
+  --hue-pitch: var(--sky);
+  --hue-time: var(--pink);
+  --hue-memory: var(--lilac);
+  --hue-voice: var(--teal);
+  --hue-reading: var(--tangerine);
+  --hue-creative: var(--lilac);
+  --hue-instrument: var(--lemon);
+
+  --stroke: 2.5px;
+  --radius: 20px;
+  --sx: -4px; /* hard shadow toward inline-start (left in RTL) */
+  --shadow: var(--sx) 4px 0 var(--outline);
+  --shadow-s: calc(var(--sx) * 0.75) 3px 0 var(--outline);
+  --font: 'Rubik Variable', 'Rubik', system-ui, 'Segoe UI', Arial, sans-serif;
+  --display: 'Secular One', 'Rubik Variable', 'Rubik', system-ui, sans-serif;
+  --music: 'Noto Music', 'Rubik Variable', serif;
+  color-scheme: light;
+}
+:root[dir='ltr'] {
+  --sx: 4px;
+}
+:root[data-theme='dark'] {
+  --bg: #140a24;
+  --bg-2: #1e1033;
+  --card: #241540;
+  --card-2: #2e1a4f;
+  --ink: #ffffff;
+  --ink-soft: #e3d8ff;
+  --ink-dim: #b9a8de;
+  --outline: #07030f;
+  --line: rgba(255, 255, 255, 0.1);
+  --line-strong: #4a3670;
+  --accent: var(--lilac);
+  --accent-ink: var(--ink-c);
+  --ok-soft: #0e3d39;
+  --bad-soft: #4a1630;
+  color-scheme: dark;
+}
+:root[data-theme='contrast'] {
+  --bg: #000000;
+  --bg-2: #000000;
+  --card: #000000;
+  --card-2: #111111;
+  --ink: #ffffff;
+  --ink-soft: #ffffff;
+  --ink-dim: #e6e6e6;
+  --outline: #ffffff;
+  --line: #ffffff;
+  --line-strong: #ffffff;
+  --accent: #ffe600;
+  --accent-ink: #000000;
+  --now: #ffe600;
+  --ok: #00e5c7;
+  --bad: #ff5fa2;
+  --ok-soft: #00332c;
+  --bad-soft: #3a0018;
+  --shadow: none;
+  --shadow-s: none;
+  color-scheme: dark;
+}
+
+/* ---------------------------------------------------------------- page */
+:root[data-theme] body,
+:root[data-theme] html {
+  background: var(--bg);
+  color: var(--ink);
+}
+:root[data-theme] h1,
+:root[data-theme] h2 {
+  font-family: var(--display);
+  font-weight: 400;
+  letter-spacing: 0;
+}
+:root[data-theme] :focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+.music,
+.acc-glyph {
+  font-family: var(--music);
+}
+
+/* ---------------------------------------------------------------- buttons: outlined, a hard shadow, they sink when pressed */
+:root[data-theme] .btn {
+  border: var(--stroke) solid var(--outline);
+  border-radius: 14px;
+  background: var(--card);
+  color: var(--ink);
+  font-weight: 800;
+  box-shadow: var(--shadow);
+  transition: transform 0.08s, box-shadow 0.08s;
+}
+:root[data-theme] .btn:hover:not(:disabled) {
+  filter: none;
+  background: var(--card-2);
+}
+:root[data-theme] .btn:active:not(:disabled) {
+  transform: translate(var(--sx), 4px);
+  box-shadow: 0 0 0 var(--outline);
+}
+:root[data-theme] .btn.primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+:root[data-theme] .btn.primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 88%, var(--ink-c));
+}
+:root[data-theme] .btn.mega {
+  min-height: 56px;
+  border-radius: 16px;
+  background: var(--now);
+  color: var(--ink-c);
+  font-size: 1.08rem;
+  font-weight: 900;
+  box-shadow: var(--shadow);
+}
+:root[data-theme] .btn.mega:active:not(:disabled) {
+  transform: translate(var(--sx), 4px);
+  box-shadow: 0 0 0 var(--outline);
+}
+:root[data-theme] .btn.ghost {
+  background: transparent;
+  border-color: var(--line-strong);
+  box-shadow: none;
+}
+:root[data-theme] .btn.small {
+  border-radius: 12px;
+  box-shadow: var(--shadow-s);
+}
+:root[data-theme] .btn.danger {
+  background: var(--bad);
+  color: var(--ink-c);
+}
+:root[data-theme] .btn:disabled {
+  opacity: 0.45;
+  box-shadow: none;
+}
+:root[data-theme] .icon-btn {
+  border: var(--stroke) solid var(--outline);
+  border-radius: 13px;
+  background: var(--card);
+  color: var(--ink);
+  box-shadow: var(--shadow-s);
+}
+:root[data-theme] .icon-btn:active {
+  transform: translate(calc(var(--sx) * 0.75), 3px);
+  box-shadow: none;
+}
+
+/* ---------------------------------------------------------------- surfaces */
+:root[data-theme] .menu-card,
+:root[data-theme] .set-card,
+:root[data-theme] .v2-card {
+  background: var(--card);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+:root[data-theme] .sheet {
+  background: var(--bg);
+  color: var(--ink);
+  border: var(--stroke) solid var(--outline);
+  border-bottom: 0;
+  border-radius: 28px 28px 0 0;
+  box-shadow: none;
+}
+:root[data-theme] .chip {
+  border: 2px solid var(--outline);
+  border-radius: 11px;
+  background: var(--card);
+  color: var(--ink);
+  font-weight: 800;
+  box-shadow: none;
+}
+:root[data-theme] input[type='text'],
+:root[data-theme] input[type='email'],
+:root[data-theme] input[type='search'],
+:root[data-theme] input[type='number'],
+:root[data-theme] textarea,
+:root[data-theme] select {
+  background: var(--card);
+  color: var(--ink);
+  border: 2px solid var(--outline);
+  border-radius: 12px;
+}
+
+/* ---------------------------------------------------------------- answer pads: outlined tiles, lilac when chosen */
+:root[data-theme] .answer {
+  --tone: var(--accent);
+  border: var(--stroke) solid var(--outline);
+  border-radius: 18px;
+  background: var(--card);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+}
+:root[data-theme] .answer:hover:not(:disabled) {
+  background: var(--card-2);
+}
+:root[data-theme] .answer:active:not(:disabled) {
+  transform: translate(var(--sx), 4px);
+  box-shadow: none;
+}
+:root[data-theme] .answer b {
+  color: var(--ink);
+}
+:root[data-theme] .answer.is-right {
+  opacity: 1;
+  background: var(--ok-soft);
+  border-color: var(--ok);
+  box-shadow: var(--sx) 4px 0 var(--ok);
+}
+:root[data-theme] .answer.is-wrong {
+  opacity: 1;
+  background: var(--bad-soft);
+  border-color: var(--bad);
+  box-shadow: var(--sx) 4px 0 var(--bad);
+}
+
+/* ---------------------------------------------------------------- avatar frames (gem shop, 0.61) */
+.avatar-frame {
+  position: relative;
+}
+.avatar-frame::after {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.avatar-frame.fr-gold::after {
+  border: 3px solid var(--lemon);
+  box-shadow: 0 0 0 2px var(--outline);
+}
+.avatar-frame.fr-staff::after {
+  background: repeating-radial-gradient(circle, transparent 0 calc(50% - 6px), var(--outline) calc(50% - 6px) calc(50% - 5px), transparent calc(50% - 5px) calc(50% - 3px));
+  border: 2px solid var(--outline);
+}
+.avatar-frame.fr-notes::after {
+  border: 4px dotted var(--purple);
+  box-shadow: 0 0 0 2px var(--outline);
+}
+.frame-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.frame-opt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+.frame-preview {
+  display: block;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--lilac);
+  border: 2px solid var(--outline);
+}
+
+/* ---------------------------------------------------------------- Toni (the mascot) */
+.toni {
+  display: inline-block;
+  line-height: 0;
+}
+.toni svg {
+  overflow: visible;
+}
+.toni .t-body,
+.toni .t-flag,
+.toni .t-eye,
+.toni .t-fx {
+  transform-box: view-box;
+}
+.toni .t-body {
+  transform-origin: 96px 186px;
+}
+.toni .t-flag {
+  transform-origin: 142px 30px;
+}
+.toni .t-eye {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+@keyframes t-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+@keyframes t-blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.1); } }
+@keyframes t-sway { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-6deg); } }
+@keyframes t-tilt { 0%, 100% { transform: rotate(0); } 30%, 80% { transform: rotate(-9deg); } }
+@keyframes t-tap { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(10deg); } }
+@keyframes t-point { 0%, 40%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-8px); } }
+@keyframes t-hop { 0%, 100% { transform: translateY(0) scale(1, 1); } 10% { transform: scale(1.06, 0.92); } 35% { transform: translateY(-26px) scale(0.96, 1.05); } 60% { transform: scale(1.05, 0.95); } 75% { transform: none; } }
+@keyframes t-raise { 0%, 100% { transform: rotate(60deg); } 30%, 85% { transform: rotate(0); } }
+@keyframes t-spin { 0%, 20% { transform: rotate(0); } 60%, 100% { transform: rotate(360deg); } }
+@keyframes t-wave { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-18deg); } 75% { transform: rotate(14deg); } }
+@keyframes t-no { 0%, 60%, 100% { transform: rotate(0); } 10% { transform: rotate(-6deg); } 20% { transform: rotate(6deg); } 30% { transform: rotate(-4deg); } 40% { transform: rotate(3deg); } }
+@keyframes t-droop { 0% { transform: rotate(-40deg); } 40%, 100% { transform: rotate(0); } }
+@keyframes t-back { 0%, 100% { transform: translate(0, 0); } 15% { transform: translate(8px, -10px) rotate(6deg); } 35% { transform: translate(0, 0); } }
+@keyframes t-breathe { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.03, 0.97); } }
+@keyframes t-unfurl { 0%, 15% { transform: scaleX(0.05) rotate(-80deg); } 45% { transform: scaleX(1.12) rotate(6deg); } 60%, 100% { transform: scaleX(1) rotate(0); } }
+@keyframes t-bye { 0% { transform: rotate(-30deg); } 15% { transform: rotate(20deg); } 30% { transform: rotate(-30deg); } 45% { transform: rotate(20deg); } 60% { transform: rotate(-20deg); } 85%, 100% { transform: rotate(60deg); } }
+@keyframes t-fade { 0%, 100% { opacity: 0.2; } 50% { opacity: 1; } }
+.toni.s-idle .t-body { animation: t-bob 2.6s ease-in-out infinite; }
+.toni.s-idle .t-eye { animation: t-blink 4s infinite; }
+.toni.s-idle .t-flag { animation: t-sway 2.6s ease-in-out infinite; }
+.toni.s-listen .t-body { animation: t-tilt 2.8s ease-in-out infinite; }
+.toni.s-listen .t-fx { animation: t-fade 0.9s ease-in-out infinite; }
+.toni.s-think .t-flag { animation: t-tap 0.5s ease-in-out infinite; }
+.toni.s-think .t-fx { animation: t-fade 2s infinite; }
+.toni.s-hint .t-flag { animation: t-point 1.4s ease-in-out infinite; }
+.toni.s-correct .t-body { animation: t-hop 0.9s cubic-bezier(0.3, 0.7, 0.4, 1) 1; }
+.toni.s-correct .t-flag { animation: t-raise 0.9s ease-out 1; }
+.toni.s-streak .t-body { animation: t-spin 1.2s cubic-bezier(0.5, 0, 0.3, 1) 1; }
+.toni.s-streak .t-flag { animation: t-wave 0.5s ease-in-out infinite; }
+.toni.s-wrong .t-body { animation: t-no 1.2s ease-in-out 1; }
+.toni.s-wrong .t-flag { animation: t-droop 1.2s cubic-bezier(0.4, 1.6, 0.5, 1) 1; }
+.toni.s-close .t-flag { animation: t-tap 1s ease-in-out 2; }
+.toni.s-wow .t-body { animation: t-back 1.2s ease-out 1; }
+.toni.s-sleepy .t-body { animation: t-breathe 3.6s ease-in-out infinite; }
+.toni.s-sleepy .t-fx { animation: t-fade 3s ease-in-out infinite; }
+.toni.s-draw .t-flag { animation: t-unfurl 0.9s cubic-bezier(0.3, 1.5, 0.5, 1) 1; }
+.toni.s-bye .t-flag { animation: t-bye 2.4s ease-in-out 1 forwards; }
+:root[data-motion='reduced'] .toni * {
+  animation: none !important;
+}
+
+/* ---------------------------------------------------------------- glyphs (note-head symbols) */
+.glyph {
+  display: inline-block;
+  flex: none;
+  line-height: 0;
+}

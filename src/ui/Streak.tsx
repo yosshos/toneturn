@@ -3,7 +3,7 @@
 
 import { Icon } from './icons';
 import { useEffect, useState } from 'react';
-import { addDays, canBuy, canBuyCosmetic, COSMETICS, MAX_FREEZES, ownsCosmetic, PRICES, THEMES, type Purchase, type StreakState } from '../engine/streak';
+import { addDays, canBuy, canBuyCosmetic, COSMETICS, FRAMES, MAX_FREEZES, ownsCosmetic, PRICES, type Purchase, type StreakState } from '../engine/streak';
 import type { Strings } from '../i18n/strings';
 
 const fmt = (s: string, v: Record<string, string | number>) => s.replace(/\{(\w+)\}/g, (_, k) => String(v[k] ?? ''));
@@ -129,9 +129,9 @@ export function StreakSheet({
   lang,
   onBuy,
   purchases = [],
-  theme = 'violet',
+  frame,
   onBuyCosmetic,
-  onTheme,
+  onFrame,
   onClose,
 }: {
   t: Strings;
@@ -141,9 +141,9 @@ export function StreakSheet({
   lang: 'he' | 'en';
   onBuy: (kind: 'freeze' | 'repair') => void;
   purchases?: Purchase[];
-  theme?: string;
+  frame?: string | null;
   onBuyCosmetic?: (item: string) => void;
-  onTheme?: (theme: string) => void;
+  onFrame?: (frame: string | null) => void;
   onClose: () => void;
 }) {
   const [month, setMonth] = useState(today.slice(0, 7));
@@ -246,20 +246,20 @@ export function StreakSheet({
           )}
           <p className="field-hint">{t.gemsHint}</p>
         </section>
-        {onBuyCosmetic && onTheme && (
-          <section className="menu-card shop themes">
-            <h3>{t.themesTitle}</h3>
-            <div className="theme-grid">
-              {THEMES.map((id) => {
-                const item = `theme-${id}`;
+        {onBuyCosmetic && onFrame && (
+          <section className="menu-card shop frames">
+            <h3>{t.framesTitle}</h3>
+            <div className="frame-grid">
+              {FRAMES.map((id) => {
+                const item = `frame-${id}`;
                 const owned = ownsCosmetic(purchases, item);
                 return (
-                  <div key={id} className={`theme-opt ${theme === id ? 'on' : ''}`} data-theme-opt={id}>
-                    <span className={`theme-swatch sw-${id}`} aria-hidden="true" />
-                    <b>{t.themeNames[id]}</b>
+                  <div key={id} className={`frame-opt ${frame === id ? 'on' : ''}`} data-frame-opt={id}>
+                    <span className={`frame-preview avatar-frame fr-${id}`} aria-hidden="true" />
+                    <b>{t.frameNames[id]}</b>
                     {owned ? (
-                      <button className="btn ghost small" disabled={theme === id} onClick={() => onTheme(id)}>
-                        {theme === id ? `✓ ${t.themeInUse}` : t.themeUse}
+                      <button className="btn ghost small" onClick={() => onFrame(frame === id ? null : id)}>
+                        {frame === id ? t.frameNone : t.frameUse}
                       </button>
                     ) : (
                       <button className="btn primary small" disabled={!canBuyCosmetic(item, gems, purchases)} onClick={() => onBuyCosmetic(item)}>
@@ -270,7 +270,7 @@ export function StreakSheet({
                 );
               })}
             </div>
-            <p className="field-hint">{t.themesHint}</p>
+            <p className="field-hint">{t.framesHint}</p>
           </section>
         )}
       </div>

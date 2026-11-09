@@ -155,9 +155,9 @@ export function ProfileIcon({ k, size = 24 }: { k: string; size?: number }) {
 }
 
 /** The circle shown next to every name: a photo, or an icon on its colour, with the flag at its lower edge. */
-export function Avatar({ s, size = 44 }: { s: Pick<Settings, 'avatarIcon' | 'avatarColor' | 'avatarPhoto' | 'country'>; size?: number }) {
+export function Avatar({ s, size = 44 }: { s: Pick<Settings, 'avatarIcon' | 'avatarColor' | 'avatarPhoto' | 'country'> & { avatarFrame?: string | null }; size?: number }) {
   return (
-    <span className="avatar" style={{ width: size, height: size, ['--av' as string]: s.avatarColor ?? PROFILE_COLORS[0] }}>
+    <span className={`avatar ${s.avatarFrame ? `avatar-frame fr-${s.avatarFrame}` : ''}`} style={{ width: size, height: size, ['--av' as string]: s.avatarColor ?? PROFILE_COLORS[0] }}>
       {s.avatarPhoto ? <img src={s.avatarPhoto} alt="" width={size} height={size} /> : <ProfileIcon k={s.avatarIcon ?? 'note'} size={Math.round(size * 0.58)} />}
       {s.country && (
         <span className="av-flag" aria-hidden="true" style={{ fontSize: Math.max(12, Math.round(size * 0.34)) }}>
