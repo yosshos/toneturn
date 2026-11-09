@@ -1617,3 +1617,7 @@
   :root[data-theme] main.lesson .controls .ctl-btn { white-space: nowrap; padding-inline: 8px; }
 }
 :root[data-theme] main.lesson .controls .ctl-btn { white-space: nowrap; }
+@media (max-width: 360px) {
+  :root[data-theme] main.lesson .choice-text { font-size: 0.88rem; line-height: 1.25; }
+  :root[data-theme] main.lesson .choice-show .note-staff svg { max-height: 76px; }
+}
