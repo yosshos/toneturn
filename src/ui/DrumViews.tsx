@@ -6,6 +6,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Drill, DrumVoice, ExpNote, TakeMetrics } from '../engine/drills/types';
 import { markOf, type NoteMark } from '../engine/noteMarks';
+import { beamBeats, dotted, restsOf, type RestKind } from '../engine/drumNotation';
 import { calibrateVel, classOf, DEFAULT_KIT, pedalRange, PRESETS, slowOutput, voiceOf, VOICE_NAME, wizardDone, wizardHit, wizardSkip, wizardStart, WIZARD_PADS, type KitPreset, type KitProfile, type WizardState } from '../engine/drumKit';
 import { midi } from '../speech/midi';
 import { Glyph, type GlyphKind } from './Glyph';
@@ -72,41 +73,37 @@ function StaffLine({ drill, line, per, marks, beat, sticking }: { drill: Drill; 
     const x = xOf(g[0].beat) + (up ? 4.5 : -4.5);
     stems.push(up ? { x, y1: Math.max(...ys), y2: Math.min(10, Math.min(...ys) - 20), up, beat: g[0].beat, dur: Math.min(...g.map((n) => n.dur)) } : { x, y1: Math.min(...ys), y2: Math.max(...ys) + 20, up, beat: g[0].beat, dur: Math.min(...g.map((n) => n.dur)) });
   }
-  // Beams per beat (one for 8ths / triplets, two for 16ths), flags for a lone short note.
+  // Beams per beat (drumNotation): a primary beam over the 8ths and shorter, a second beam only between 16ths (a stub for
+  // a lone one), a flag for a lone short note, 3 / 6 over tuplets; quarters and longer stand alone.
   const beams: React.ReactNode[] = [];
   for (const up of [true, false]) {
-    const byBeat = new Map<number, typeof stems>();
-    for (const s of stems.filter((x) => x.up === up)) byBeat.set(Math.floor(s.beat + 1e-6), [...(byBeat.get(Math.floor(s.beat + 1e-6)) ?? []), s]);
-    for (const [bt, ss] of byBeat) {
-      ss.sort((a, b) => a.beat - b.beat);
-      const short = Math.min(...ss.map((s) => s.dur));
-      if (short >= 0.99) continue;
-      const n16 = ss.some((s, i) => i > 0 && s.beat - ss[i - 1].beat < 0.3) || short <= 0.26 ? 2 : 1;
-      const trip = ss.some((s) => Math.abs((s.beat - bt) * 3 - Math.round((s.beat - bt) * 3)) < 1e-4 && Math.abs((s.beat - bt) * 2 - Math.round((s.beat - bt) * 2)) > 1e-4);
-      const y = up ? Math.min(...ss.map((s) => s.y2)) : Math.max(...ss.map((s) => s.y2));
-      for (const s of ss) s.y2 = y;
-      if (ss.length === 1) {
-        const s = ss[0];
-        beams.push(<path key={`f${up}${bt}`} d={up ? `M${s.x} ${y} q 6 6 7 14` : `M${s.x} ${y} q 6 -6 7 -14`} className="dn-flag" />);
-        continue;
+    const ss = stems.filter((x) => x.up === up);
+    for (const g of beamBeats(ss)) {
+      const m = g.idx.map((i) => ss[i]);
+      const y = up ? Math.min(...m.map((s) => s.y2)) : Math.max(...m.map((s) => s.y2));
+      for (const s of m) s.y2 = y;
+      const key = `${up}${m[0].beat}`;
+      const dy = up ? 4 : -4;
+      if (g.flag) {
+        const s = m[0];
+        for (let k = 0; k < g.flag; k++) beams.push(<path key={`f${key}${k}`} d={up ? `M${s.x} ${y + k * dy} q 6 6 7 14` : `M${s.x} ${y + k * dy} q 6 -6 7 -14`} className="dn-flag" />);
+      } else {
+        beams.push(<line key={`b${key}`} x1={m[0].x} x2={m[m.length - 1].x} y1={y} y2={y} className="dn-beam" />);
+        for (const [a, b] of g.second) beams.push(<line key={`b2${key}${a}`} x1={m[a].x} x2={m[b].x} y1={y + dy} y2={y + dy} className="dn-beam" />);
+        for (const st of g.stubs) beams.push(<line key={`bs${key}${st.at}`} x1={m[st.at].x} x2={m[st.at].x + st.dir * 6} y1={y + dy} y2={y + dy} className="dn-beam" />);
       }
-      for (let k = 0; k < n16; k++) {
-        const yy = up ? y + k * 4 : y - k * 4;
-        beams.push(<line key={`b${up}${bt}${k}`} x1={ss[0].x} x2={ss[ss.length - 1].x} y1={yy} y2={yy} className="dn-beam" />);
-      }
-      if (trip) beams.push(<text key={`t${up}${bt}`} x={(ss[0].x + ss[ss.length - 1].x) / 2} y={up ? y - 3 : y + 10} className="dn-tup" textAnchor="middle">3</text>);
+      if (g.tuplet) beams.push(<text key={`t${key}`} x={(m[g.tuplet.from].x + m[g.tuplet.to].x) / 2} y={up ? y - 3 : y + 10} className="dn-tup" textAnchor="middle">{g.tuplet.n}</text>);
     }
   }
-  // Rests for a one-voice line (reading): an empty beat → a quarter rest, a beat starting on its "&" → an 8th rest.
-  const rests: React.ReactNode[] = [];
-  if (ns.every((n) => n.voice === 'snare')) {
-    for (let b = b0; b < b0 + per; b++) {
-      const inBeat = ns.filter((n) => n.beat >= b - 1e-6 && n.beat < b + 1 - 1e-6);
-      const ringing = drill.notes.some((n) => n.beat < b - 1e-6 && n.beat + n.dur > b + 1e-6);
-      if (!inBeat.length && !ringing) rests.push(<text key={`r${b}`} x={xOf(b)} y={47} className="dn-rest" textAnchor="middle">{'\u{1D13D}'}</text>);
-      else if (inBeat.length && inBeat[0].beat > b + 0.4 && !ringing) rests.push(<text key={`r${b}`} x={xOf(b)} y={44} className="dn-rest" textAnchor="middle">{'\u{1D13E}'}</text>);
-    }
-  }
+  // Rests for a one-voice line (reading, rudiments): whatever no note covers, on the 16th grid.
+  const REST: Record<RestKind, string> = { q: '\u{1D13D}', '8': '\u{1D13E}', '16': '\u{1D13F}' };
+  const rests: React.ReactNode[] = ns.every((n) => n.voice === 'snare')
+    ? restsOf(drill.notes.filter((n) => n.voice === 'snare'), b0, b0 + per).map((r) => (
+        <text key={`r${r.beat}`} x={xOf(r.beat)} y={r.kind === 'q' ? 47 : 44} className="dn-rest" textAnchor="middle" data-rest={r.kind}>
+          {REST[r.kind]}
+        </text>
+      ))
+    : [];
   let lastDyn: string | undefined;
   const cursor = beat >= b0 && beat < b0 + per ? xOf(beat) : null;
   return (
@@ -138,7 +135,7 @@ function StaffLine({ drill, line, per, marks, beat, sticking }: { drill: Drill; 
           <g key={i} className={`dn ${m ?? ''}`} data-voice={n.voice}>
             {STEP[n.voice!] >= 10 && <line x1={x - 7} x2={x + 7} y1={20} y2={20} className="dn-line" />}
             {XHEAD.has(n.voice!) ? <path d={`M${x - 4} ${y - 4}l8 8M${x + 4} ${y - 4}l-8 8`} className="dn-x" /> : <ellipse cx={x} cy={y} rx={4.6} ry={3.4} transform={`rotate(-20 ${x} ${y})`} className="dn-head" />}
-            {n.dur > 1.49 && <circle cx={x + 8} cy={y - 1} r={1.6} className="dn-dot" />}
+            {dotted(n.dur) && <circle cx={x + 8} cy={y - 1} r={1.6} className="dn-dot" />}
             {n.ghost && <text x={x} y={y + 3.5} className="dn-ghost" textAnchor="middle">(  )</text>}
             {n.accent && <path d={`M${x - 4} ${isFoot(n.voice!) ? 82 : 6}l8 3-8 3`} className="dn-acc" />}
             {n.voice === 'hhOpen' && <circle cx={x} cy={7} r={2.6} className="dn-open" />}

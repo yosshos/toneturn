@@ -56,7 +56,8 @@ function bar(l: Lanes, sub: number, b0: number, o: { hatHands?: string; from?: n
       const b = i / sub;
       if ((o.from !== undefined && b < o.from - 1e-9) || (o.to !== undefined && b >= o.to - 1e-9)) return;
       const voice: DrumVoice = lane === 'h' && c === 'o' ? 'hhOpen' : LANE_VOICE[lane];
-      const h: 'R' | 'L' = lane === 's' ? 'L' : lane === 'h' && hh ? hh[i % hh.length] : 'R';
+      // Two hands on the hat (hatHands): the snare takes that step's hand, so the alternation never breaks (RLRL|R on 2).
+      const h: 'R' | 'L' = (lane === 's' || lane === 'h') && hh ? hh[i % hh.length] : lane === 's' ? 'L' : 'R';
       // Written length: to the lane's next hit (a kick on 1 and 3 is a quarter, not an 8th), at most a beat.
       const nx = [...pat].findIndex((x, j) => j > i && x !== '.');
       const d = Math.min(1, ((nx < 0 ? pat.length : nx) - i) / sub);
@@ -140,7 +141,7 @@ function genStrokes(s: DrillSpec): Drill {
         ['mf', 'p', 'f', 'p'],
       ];
       const plan = plans[op];
-      return finish(s, line('RL', 32, 0.5, 0, (i) => ({ dyn: plan[Math.floor(i / 8)] })), { title: t(`Three dynamics on cue · ${plan.join(' → ')}`, `שלוש עוצמות לפי הסימן · ${plan.join(' ← ')}`), bpm: 70, bars: 4, mic: true, goal: { levels: 0.85 } });
+      return finish(s, line('RL', 32, 0.5, 0, (i) => ({ dyn: plan[Math.floor(i / 8)] })), { title: t(`Three dynamics on cue · ${plan.join(' → ')}`, `שלוש עוצמות לפי הסימן · ${plan.join(' → ')}`), bpm: 70, bars: 4, mic: true, goal: { levels: 0.85 } });
     }
     case 4: {
       const st = op === 1 ? 'LRLR' : 'RLRL';
@@ -196,14 +197,14 @@ function genRolls(s: DrillSpec): Drill {
     case 5: {
       // Single-stroke four / seven: even strokes into an accent.
       if (op === 1) {
-        const hits = rep(8, (k) => line(k % 2 ? 'LRLRLR' : 'RLRLRL', 6, 1 / 6, k * 2).concat(line(k % 2 ? 'R' : 'L', 1, 1, k * 2 + 1, () => ({ acc: true }))));
+        const hits = rep(8, (k) => line(k % 2 ? 'LRLRLR' : 'RLRLRL', 6, 1 / 6, k * 2).concat(line(k % 2 ? 'L' : 'R', 1, 1, k * 2 + 1, () => ({ acc: true }))));
         return finish(s, hits, { title: t('Single-stroke seven', 'שבע מכות בודדות'), bpm: 70, bars: 4, mic: true, goal: { accentPos: 0.85 } });
       }
       if (op === 2) {
         const hits = rep(8, (k) => line(k % 2 ? 'LRL' : 'RLR', 3, 0.25, k * 2 + 0.25).concat(line(k % 2 ? 'R' : 'L', 1, 1, k * 2 + 1, () => ({ acc: true }))));
         return finish(s, hits, { title: t('Single-stroke four in 16ths', 'ארבע מכות בודדות בשש-עשריות'), bpm: 70, bars: 4, mic: true, goal: { accentPos: 0.85 } });
       }
-      const hits = rep(16, (k) => line(k % 2 ? 'LRL' : 'RLR', 3, 1 / 6, k).concat(line(k % 2 ? 'R' : 'L', 1, 1, k + 0.5, () => ({ acc: true }))));
+      const hits = rep(16, (k) => line(k % 2 ? 'LRL' : 'RLR', 3, 1 / 6, k).concat(line(k % 2 ? 'R' : 'L', 1, 0.5, k + 0.5, () => ({ acc: true }))));
       return finish(s, hits, { title: t('Single-stroke four (16th triplets)', 'ארבע מכות בודדות (טריולות שש-עשריות)'), bpm: 70, bars: 4, mic: true, goal: { accentPos: 0.85 } });
     }
     default: {
@@ -211,9 +212,13 @@ function genRolls(s: DrillSpec): Drill {
       const strokes = [5, 7, 9][op];
       const span = op === 2 ? 4 : 2;
       const hits = rep(16 / span, (k) => {
-        const st = k % 2 ? 'LLRR' : 'RRLL';
+        // 5 and 9 alternate the lead (RRLLR LLRRL); the 7 releases on the other hand, so each group restarts on R.
+        const st = k % 2 && strokes !== 7 ? 'LLRR' : 'RRLL';
         const doubles = line(st, strokes - 1, 0.25, k * span, (i) => ({ dbl: (i % 2 ? 2 : 1) as 1 | 2 }));
-        const rel = line(k % 2 ? 'L' : 'R', 1, 1, k * span + (strokes - 1) * 0.25, () => ({ acc: true }));
+        // PAS: the release is the hand after the last double (5: RRLL R, 7: RRLLRR L, 9: RRLLRRLL R).
+        const last = doubles[doubles.length - 1].h;
+        const relAt = (strokes - 1) * 0.25;
+        const rel = line(last === 'R' ? 'L' : 'R', 1, Math.min(1, span - relAt), k * span + relAt, () => ({ acc: true }));
         return [...doubles, ...rel];
       });
       return finish(s, hits, { title: t(`${strokes}-stroke roll (open)`, `גלגול של ${strokes} מכות (פתוח)`), bpm: 70, bars: 4, mic: true, goal: { ratio: 0.8 } });
@@ -310,7 +315,7 @@ function genTime(s: DrillSpec): Drill {
 // ───────────────────────────── F5 rock & pop grooves ─────────────────────────────
 
 const ROCK: Lanes = { h: 'xxxxxxxx', s: '..x...x.', k: 'x...x...' };
-const KICKS8 = ['x...x.x.', 'x..xx...', 'xx..x...', 'x...x..x'];
+const KICKS8 = ['x...xx..', 'x..xx...', 'xx..x...', 'x...x..x'];
 /** A groove bar, `bars` times; bar 0 may start with a crash instead of the hat. */
 function grooveBars(l: Lanes, sub: number, bars: number, o: { hatHands?: string; crashFirst?: boolean } = {}): DH[] {
   const out = rep(bars, (k) => bar(l, sub, k * 4, { hatHands: o.hatHands }));
@@ -342,7 +347,7 @@ function genRock(s: DrillSpec): Drill {
       return fin(grooveBars({ h: 'xxxxxxxxxxxxxxxx', s: '....x.......x...', k }, 4, 8), `16th hi-hat, one hand · kick ${['1 & 3', '1, "&" of 2, 3', '1, 3, "&" of 3'][op]}`, `היי־האט בשש-עשריות ביד אחת · קיק ${['1 ו-3', '1, "וְ" של 2, 3', '1, 3, "וְ" של 3'][op]}`, 70);
     }
     case 5: {
-      // Two hands on the hat (R L R L); on 2 and 4 the hand goes to the snare instead of the hat.
+      // Two hands on the hat (R L R L); on 2 and 4 the right hand (its turn in the alternation) moves to the snare.
       const k = ['x.......x.......', 'x.....x.x.......', 'x..x....x.x.....'][op];
       return fin(grooveBars({ h: 'xxxx.xxxxxxx.xxx', s: '....x.......x...', k }, 4, 8, { hatHands: 'RLRLRLRLRLRLRLRL' }), `16th hi-hat, two hands · variation ${op + 1}`, `היי־האט בשש-עשריות בשתי ידיים · וריאציה ${op + 1}`, 80);
     }
@@ -465,7 +470,7 @@ function rnd(seed: string): () => number {
 /** Beat cells (onsets inside one beat, as fractions) for each reading level. */
 const CELLS: Record<number, number[][]> = {
   1: [[0], [0, 0.5], [0.5], [], [0], [0, 0.5]],
-  // L2 dotted quarters and ties: two-beat cells (onsets in beats from the cell start).
+  // L2 dotted quarters and syncopation (a quarter on the "&"): two-beat cells (onsets in beats from the cell start).
   2: [[0, 1.5], [0, 1], [0, 0.5, 1.5], [0.5, 1], [0, 1, 1.5]],
   3: [[0, 0.25, 0.5, 0.75], [0, 0.5, 0.75], [0, 0.25, 0.5], [0, 0.75], [0.25, 0.5, 0.75], [0, 0.5]],
   4: [[0, 1 / 3, 2 / 3], [0, 0.5], [0], [0, 1 / 3, 2 / 3], [0, 0.25, 0.5, 0.75]],
@@ -495,15 +500,23 @@ function genRead(s: DrillSpec): Drill {
     const c = cells[Math.floor(r() * cells.length)];
     // The first beat of each bar always has a note (easier to read), the last bar ends on 1 of the next if empty.
     const cell = c.length || b % 4 ? c : [0];
-    // Hand to hand: each beat starts with the right hand and alternates.
-    cell.forEach((x, j) => hits.push({ b: b + x, v: 'snare', h: j % 2 ? 'L' : 'R', d: 0.25 }));
+    // Sticking by grid position (hand to hand): 8th levels R on the beat, L on the "&"; 16th levels R on 1 and "&", L
+    // on "e" and "a"; triplets alternate inside the beat.
+    const grid = lv <= 2 ? 2 : 4;
+    cell.forEach((x, j) => {
+      const g = (x % 1) * grid;
+      const h: 'R' | 'L' = Math.abs(g - Math.round(g)) < 1e-6 ? (Math.round(g) % 2 ? 'L' : 'R') : j % 2 ? 'L' : 'R';
+      hits.push({ b: b + x, v: 'snare', h, d: 0.25 });
+    });
   }
   // Durations: up to the next onset (the staff draws dotted values and rests from these).
   hits.sort((a, b) => a.b - b.b);
-  // Written lengths: to the next onset — quarters at most, dotted quarters in L2 (rests fill the rest).
+  // Written lengths: to the next onset, never past the end of the note's beat (an 8th on the "&" then an 8th rest,
+  // not a quarter across the beat) — except L2, whose items are dotted quarters and syncopated quarters on the "&".
   hits.forEach((h, i) => {
     const gap = (hits[i + 1]?.b ?? 16) - h.b;
-    h.d = lv === 2 && gap >= 1.5 && Number.isInteger(h.b) ? 1.5 : Math.min(1, gap);
+    const toBeat = Math.ceil(h.b + 1e-6) - h.b;
+    h.d = lv === 2 ? (gap >= 1.5 && Number.isInteger(h.b) ? 1.5 : Math.min(1, gap)) : Math.min(gap, toBeat);
   });
   if (lv === 4) {
     // Markings: accents on some beats, ghost notes on some offbeats (velocity bands from the calibration).
@@ -512,7 +525,7 @@ function genRead(s: DrillSpec): Drill {
       else if (!Number.isInteger(h.b) && r() < 0.3 && i % 3 === 1) h.ghost = true;
     });
   }
-  const nm = [t('quarters, 8ths and rests', 'רבעים, שמיניות והפסקות'), t('dotted quarters and ties', 'רבעים מנוקדים וקשתות'), t('16th groupings', 'קבוצות של שש-עשריות'), t('triplets, accents, ghost notes', 'טריולות, הדגשות ותווי רפאים')][lv - 1];
+  const nm = [t('quarters, 8ths and rests', 'רבעים, שמיניות והפסקות'), t('dotted quarters, syncopation', 'רבעים מנוקדים וסינקופות'), t('16th groupings', 'קבוצות של שש-עשריות'), t('triplets, accents, ghost notes', 'טריולות, הדגשות ותווי רפאים')][lv - 1];
   const goal: DrumGoal = lv === 4 ? { accentPos: 0.8, ghost: 0.75 } : {};
   return finish(s, hits, { title: t(`Snare reading · ${nm.en} · ${op + 1}`, `קריאה על הסנר · ${nm.he} · ${op + 1}`), bpm: lv >= 3 ? 60 : 70, bars: 4, mic: true, show: 'staff', goal });
 }
@@ -609,9 +622,9 @@ export function drumFamilies(): DrumFamilyDef[] {
     ]),
     fam('d-read', 'Reading', 'קריאת תווים', [
       L('d-read', 1, 'Snare: quarters, 8ths, rests', 'סנר: רבעים, שמיניות, הפסקות', 'read', 4, [70, 90], '1/8', true),
-      L('d-read', 2, 'Snare: dotted quarters, ties', 'סנר: רבעים מנוקדים, קשתות', 'read', 4, [70, 90], '1/8', true),
+      L('d-read', 2, 'Snare: dotted quarters, syncopation', 'סנר: רבעים מנוקדים, סינקופות', 'read', 4, [70, 90], '1/8', true),
       L('d-read', 3, 'Snare: 16th groupings', 'סנר: קבוצות של שש-עשריות', 'read', 4, [60, 80], '1/16', true),
-      L('d-read', 4, 'Snare: triplets, accents, dynamics', 'סנר: טריולות, הדגשות, עוצמות', 'read', 4, [60, 80], 'mixed', true),
+      L('d-read', 4, 'Snare: triplets, accents, ghost notes', 'סנר: טריולות, הדגשות ותווי רפאים', 'read', 4, [60, 80], 'mixed', true),
       L('d-read', 5, 'Kit notation: read a groove', 'תווים למערכת: לקרוא גרוב', 'kit', 4, [80, 80], '1/8', false),
     ]),
   ];

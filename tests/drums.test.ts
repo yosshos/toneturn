@@ -208,9 +208,10 @@ describe('drum take analysis', () => {
     expect(analyzeDrumTake(d, 70, [], { mic: true }).verdict).toBe('not');
   });
 
-  it('the window tightens with the tier and never exceeds 22 % of the shortest gap', () => {
+  it('the window tightens with the tempo (22 % of the shortest gap) but not below 1.6 × the tier SD, never past 35 %', () => {
     const d = generate({ family: 'd-rolls', kind: '2:singles16', option: 0, key: 0, hands: 'RL', instrument: 'drums' });
-    expect(drumWindow(d, 110)).toBeCloseTo(0.22 * (60000 / 110 / 4), 1);
+    expect(drumWindow(d, 110)).toBeCloseTo(40, 1);
+    expect(drumWindow(d, 200)).toBeCloseTo(0.35 * (60000 / 200 / 4), 1);
     const q = generate({ family: 'd-time', kind: '1:pulse', option: 0, key: 0, hands: 'RL', instrument: 'drums' });
     expect(drumWindow(q, 60)).toBe(60);
   });

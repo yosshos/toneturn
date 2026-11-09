@@ -41,13 +41,18 @@ const median = (xs: number[]): number | null => {
   return s.length % 2 ? s[k] : (s[k - 1] + s[k]) / 2;
 };
 
-/** The hit window of a take: the tier's, never wider than 22 % of the shortest written gap between onsets. */
+/**
+ * The hit window of a take: the tier's, tightened to 22 % of the shortest written gap between onsets — but never below
+ * 1.6 × the tier's SD limit (else a player inside the SD rule fails the hit rate at fast subdivisions: ±20 ms at
+ * sextuplets ♩110 meant SD ≤ 10 ms in practice), and never past 35 % of the gap (a hit stays nearer its own note).
+ */
 export function drumWindow(drill: Drill, bpm: number): number {
   const tier = drill.drum?.tier ?? 1;
   const ts = [...new Set(drill.notes.map((n) => Math.round(expTimeMs(drill, n.beat, bpm) * 100) / 100))].sort((a, b) => a - b);
   const gaps = ts.slice(1).map((x, i) => x - ts[i]).filter((g) => g > 1);
   const minIoi = gaps.length ? Math.min(...gaps) : 1000;
-  return Math.max(15, Math.min(DRUM_TIERS[tier].window, 0.22 * minIoi));
+  const T = DRUM_TIERS[tier];
+  return Math.max(15, Math.min(T.window, Math.max(0.22 * minIoi, Math.min(1.6 * T.sd, 0.35 * minIoi))));
 }
 
 /** Silent click bars (click 'gap'): bar index → no click. */
