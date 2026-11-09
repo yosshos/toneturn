@@ -28,7 +28,7 @@ test.describe('menu, friends', () => {
     await sheet.getByRole('button', { name: 'All versions' }).click();
     await expect(sheet.locator('.changelog:not(.bare) > li').first()).toBeVisible();
     // Friends live in the Community tab since 0.45 (no longer in the menu).
-    await sheet.locator('.menu-head .icon-btn').click();
+    await sheet.locator('.menu-head .menu-close').click();
     await page.locator('.tab[data-tab="friends"]').click();
     await expect(page.getByRole('heading', { name: 'Community', level: 1 })).toBeVisible();
   });
@@ -82,11 +82,14 @@ test.describe('menu, friends', () => {
         }),
     );
     await page.reload();
-    // 0.37: no card on Home — a gift in the header with a dot; opening it marks the version seen.
+    // 0.37: no card on Home — a gift with a dot; opening it marks the version seen. 0.61: on a phone the gift sits
+    // in the menu, and the menu button carries the dot.
     await expect(page.locator('.news-card')).toHaveCount(0);
-    const gift = page.locator('.gift-btn');
+    await expect(page.locator('.menu-btn.has-dot')).toBeVisible();
+    await page.getByRole('button', { name: 'Menu' }).click();
+    const gift = page.locator('.menu-sheet .gift-btn');
     await expect(gift).toHaveClass(/unseen/);
-    await expect(page.locator('.gift-dot')).toBeVisible();
+    await expect(page.locator('.menu-sheet .gift-dot')).toBeVisible();
     await gift.click();
     const pop = page.locator('.gift-pop');
     await expect(pop).toContainText(APP_LATEST);
@@ -94,7 +97,7 @@ test.describe('menu, friends', () => {
     for (const v of RECENT) await expect(pop).toContainText(v);
     await expect(page.locator('.gift-dot')).toHaveCount(0);
     await page.reload();
-    await expect(page.locator('.gift-btn')).not.toHaveClass(/unseen/);
+    await expect(page.locator('.menu-btn')).not.toHaveClass(/has-dot/);
     await expect(page.locator('.gift-dot')).toHaveCount(0);
   });
 });

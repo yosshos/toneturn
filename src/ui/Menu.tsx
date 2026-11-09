@@ -137,7 +137,7 @@ export function MenuSheet({ t, settings, user, onClose, onNavigate, onSettings, 
         <div className="menu-head">
           <h2>{t.menu}</h2>
           {extra && <div className="menu-extra">{extra}</div>}
-          <button className="icon-btn" onClick={onClose} aria-label={t.back}>
+          <button className="icon-btn menu-close" onClick={onClose} aria-label={t.back}>
             ✕
           </button>
         </div>

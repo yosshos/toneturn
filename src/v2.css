@@ -1606,3 +1606,9 @@
 :root[data-theme] .practice-hub .hub-tools { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
 :root[data-theme] .practice-hub .hub-tool { min-width: 0; padding: 8px 2px; font-size: 0.72rem; justify-content: center; text-align: center; overflow: hidden; word-break: keep-all; overflow-wrap: normal; hyphens: none; }
 @media (min-width: 700px) { :root[data-theme] .practice-hub .hub-tools { grid-template-columns: repeat(7, minmax(0, 1fr)); } }
+/* short / narrow phones: the listening row gives back its height so the exercise still fits one screen */
+@media (max-width: 360px), (max-height: 740px) {
+  :root[data-theme] .orb-row .toni { width: 60px !important; height: 60px !important; }
+  :root[data-theme] .orb-row .toni svg { width: 60px; height: 60px; }
+  :root[data-theme] .orb { width: 112px; height: 80px; font-size: 2rem; }
+}

@@ -948,7 +948,7 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
         </span>
       </button>
       <div className="play-cats" role="tablist" aria-label={lang === 'en' ? 'Game categories' : 'קטגוריות משחקים'}>
-        <button role="tab" aria-selected={cat === 'all'} className={`chip ${cat === 'all' ? 'on' : ''}`} onClick={() => pickCat('all')}>
+        <button role="tab" aria-selected={cat === 'all'} className={`chip ${cat === 'all' ? 'on' : ''}`} data-cat="all" onClick={() => pickCat('all')}>
           {lang === 'en' ? 'All' : 'הכול'}
         </button>
         {GAME_CATS.map((c) => (

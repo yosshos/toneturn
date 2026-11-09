@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { switchCourse } from './practice';
 
 // Practice tab (0.44): the hub (Songs, Technique, Games, Singing + tools) → the songbook, the games list and back;
 // the menu in groups; a Progress area opens its sheet instead of playing.
@@ -8,24 +9,14 @@ test.describe('practice hub', () => {
   test('hub cards, songbook, games list, tools back to Practice', async ({ page }) => {
     await page.goto('/?sim=1#/arcade');
     await expect(page.locator('[data-practice-hub]')).toBeVisible();
-    for (const k of ['songs', 'drills', 'games', 'lessons', 'tuner', 'metronome', 'drone']) await expect(page.locator(`[data-hub="${k}"]`)).toBeVisible();
-    await page.locator('[data-hub="songs"]').click();
-    await expect(page.locator('[data-drills="songs"]')).toBeVisible();
-    expect(await page.locator('.song-drills li').count()).toBeGreaterThanOrEqual(16);
-    await page.locator('.screen-head .icon-btn').click();
+    // 0.61: the hub shows the active course's rows (ear & theory: lessons, puzzle, games) plus the tools.
+    for (const k of ['games', 'lessons', 'tuner', 'metronome', 'drone']) await expect(page.locator(`[data-hub="${k}"]`)).toBeVisible();
     await page.locator('[data-hub="lessons"]').click();
     await expect(page.locator('[data-learned-card]').first()).toBeVisible();
     await page.locator('[data-lesson-topic="glossary"]').click();
     await expect(page.locator('[data-glossary]')).toBeVisible();
     await page.locator('[data-lesson-topic="all"]').click();
     await page.locator('.screen-head .icon-btn').click();
-    await page.locator('[data-hub="drills"]').click();
-    await expect(page.locator('[data-inst="voice"]')).toBeVisible();
-    await page.locator('[data-inst="voice"]').click();
-    await expect(page).toHaveURL(/vocal/);
-    await page.locator('.screen-head .icon-btn').first().click();
-    await expect(page.locator('[data-drills="hub"]')).toBeVisible();
-    await page.locator('.screen-head .icon-btn').first().click();
     await page.locator('[data-hub="games"]').click();
     await expect(page.locator('.play-hero')).toBeVisible();
     await page.locator('.play-screen .screen-head .icon-btn').click();
@@ -33,9 +24,24 @@ test.describe('practice hub', () => {
     await expect(page.locator('[data-metro-play]')).toBeVisible();
     await page.locator('.screen-head .icon-btn').first().click();
     await expect(page.locator('[data-practice-hub]')).toBeVisible();
+    // The guitar course brings songs and technique.
+    await switchCourse(page, 'guitar');
+    await page.goto('/?sim=1#/arcade');
+    for (const k of ['songs', 'drills']) await expect(page.locator(`[data-hub="${k}"]`)).toBeVisible();
+    await page.locator('[data-hub="songs"]').click();
+    await expect(page.locator('[data-drills="songs"]')).toBeVisible();
+    expect(await page.locator('.song-drills li').count()).toBeGreaterThanOrEqual(16);
+    await page.locator('.screen-head .icon-btn').first().click();
+    await page.locator('[data-hub="drills"]').click();
+    await expect(page.locator('[data-inst="voice"]')).toBeVisible();
+    await page.locator('[data-inst="voice"]').click();
+    await expect(page).toHaveURL(/vocal/);
   });
 
   test('0.48 tools: charts, practice log, slow down, my pieces', async ({ page }) => {
+    await page.goto('/?sim=1#/arcade');
+    // 0.61: charts are the jazz course's; slow down and the log are tools in every course.
+    await switchCourse(page, 'jazz');
     await page.goto('/?sim=1#/arcade');
     for (const k of ['charts', 'slowdown', 'log']) await expect(page.locator(`[data-hub="${k}"]`)).toBeVisible();
     // Charts: a template opens, plays and highlights a bar; transpose changes the text.
@@ -90,7 +96,9 @@ test.describe('practice hub', () => {
     await page.locator('[data-hub="slowdown"]').click();
     await expect(page.locator('[data-slowdown-file]')).toBeAttached();
     await page.locator('.screen-head .icon-btn').first().click();
-    // My pieces from Songs: import a small MusicXML, set up, practise screen with the first chunk.
+    // My pieces from Songs (keys course): import a small MusicXML, set up, practise screen with the first chunk.
+    await switchCourse(page, 'keys');
+    await page.goto('/?sim=1#/arcade');
     await page.locator('[data-hub="songs"]').click();
     await page.locator('[data-pieces-open]').click();
     const bars = Array.from({ length: 8 }, (_, i) => `<measure number="${i + 1}">${i === 0 ? '<attributes><divisions>1</divisions><time><beats>4</beats><beat-type>4</beat-type></time></attributes>' : ''}${'<note><pitch><step>C</step><octave>5</octave></pitch><duration>1</duration></note>'.repeat(4)}</measure>`).join('');
@@ -123,7 +131,7 @@ test.describe('practice hub', () => {
     await page.goto('/?sim=1');
     await page.getByRole('button', { name: 'Menu' }).click();
     await expect(page.locator('.menu-group-h')).toHaveText(['Tools', 'Check yourself', 'You']);
-    await page.locator('.menu-sheet .menu-head .icon-btn').click();
+    await page.locator('.menu-sheet .menu-head .menu-close').click();
     await page.goto('/?sim=1#/skills');
     await page.locator('#ps-tab-overview').click();
     await page.locator('.domain-tile[data-domain="pitch"]').click();

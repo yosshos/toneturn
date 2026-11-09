@@ -11,9 +11,9 @@ test.describe('desktop layout', () => {
     await expect(page.locator('.tabbar')).toBeHidden();
     const box = (await nav.boundingBox())!;
     expect(box.x).toBeLessThan(5); // start side = left
-    // Practice is open on its own page; its children navigate
-    await nav.locator('[data-nav="drills"]').click();
-    await expect(page.locator('[data-drills="hub"]')).toBeVisible();
+    // 0.61: the side menu is the course's sections (Practice holds the course's own rows) and the shared ones
+    await nav.locator('[data-nav="path"]').click();
+    await expect(page.locator('.path2')).toBeVisible();
     // Tools is a group: it opens in place
     await nav.locator('[data-nav="group:tools"]').click();
     await nav.locator('[data-nav="metronome"]').click();
