@@ -83,10 +83,10 @@ describe('decisions', () => {
     expect(wantsKokoro('en', false, false)).toBe(false);
     expect(wantsKokoro('en', true, true)).toBe(false);
   });
-  it('runs q8 on WASM unless the big fp32 file is allowed for WebGPU', () => {
+  it('runs fp32 on WebGPU, else q8 on WASM (also when the player saves data)', () => {
+    expect(pickBackend(true)).toEqual({ device: 'webgpu', dtype: 'fp32' });
     expect(pickBackend(false)).toEqual({ device: 'wasm', dtype: 'q8' });
-    expect(pickBackend(true)).toEqual({ device: 'wasm', dtype: 'q8' });
-    expect(pickBackend(true, true)).toEqual({ device: 'webgpu', dtype: 'fp32' });
+    expect(pickBackend(true, true)).toEqual({ device: 'wasm', dtype: 'q8' });
   });
   it('types at the voice’s pace', () => {
     // 5 words, one full stop (380 ms breath): (2380 − 380) / 5 = 400
@@ -143,14 +143,15 @@ function fakeOut() {
   return { out, played, stops: () => stops };
 }
 
-function narrator(w: FakeWorker, store = memoryClipStore()) {
+function narrator(w: FakeWorker | (() => FakeWorker), store = memoryClipStore(), gpu = false) {
   const o = fakeOut();
   let made = 0;
   const deps: KokoroDeps = {
-    makeWorker: () => (made++, w),
+    makeWorker: () => (made++, typeof w === 'function' ? w() : w),
     cache: new ClipCache(store),
     out: () => o.out,
-    hasWebGpu: () => false,
+    hasWebGpu: async () => gpu,
+    saveData: () => false,
     online: () => true,
   };
   return { n: new KokoroNarrator(deps), o, made: () => made, store };
@@ -234,6 +235,18 @@ describe('Kokoro narrator', () => {
     await n.speak('First line.', new AbortController().signal);
     expect(o.played.length).toBe(1);
     expect(n.state).toMatchObject({ state: 'unavailable', why: 'slow' });
+  });
+
+  it('takes fp32 on WebGPU, and retries once on WASM q8 when WebGPU fails to start', async () => {
+    const workers = [new FakeWorker(0.3, true), new FakeWorker()];
+    let k = 0;
+    const { n, made } = narrator(() => workers[k++], memoryClipStore(), true);
+    expect(await n.ensure()).toBe(true);
+    expect(workers[0].sent[0]).toMatchObject({ type: 'load', device: 'webgpu', dtype: 'fp32' });
+    expect(workers[0].terminated).toBe(true);
+    expect(workers[1].sent[0]).toMatchObject({ type: 'load', device: 'wasm', dtype: 'q8' });
+    expect(n.state).toMatchObject({ state: 'ready', device: 'wasm', mb: 88 });
+    expect(made()).toBe(2);
   });
 
   it('is unavailable when the model can’t load', async () => {

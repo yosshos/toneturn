@@ -6,7 +6,7 @@
 import { Cancelled } from '../../game/adapters';
 import { ClipCache, fromPcm16, idbClipStore, memoryClipStore, toPcm16, type Clip } from './cache';
 import { clipKey, normText } from './hash';
-import { KOKORO_MODEL, KOKORO_VOICE, pickBackend, tooSlow, type KokoroStatus } from './decide';
+import { KOKORO_MB, KOKORO_MODEL, KOKORO_VOICE, pickBackend, tooSlow, type KokoroDevice, type KokoroDtype, type KokoroStatus } from './decide';
 import type { FromWorker, ToWorker } from './protocol';
 
 export interface WorkerLike {
@@ -24,7 +24,10 @@ export interface KokoroDeps {
   makeWorker: () => WorkerLike;
   cache: ClipCache;
   out: () => PlayOut | null;
-  hasWebGpu: () => boolean;
+  /** A usable WebGPU adapter (not just navigator.gpu). */
+  hasWebGpu: () => Promise<boolean>;
+  /** The player asked the browser to save data (Data Saver): take the small graph. */
+  saveData: () => boolean;
   online: () => boolean;
 }
 
@@ -41,6 +44,7 @@ export class KokoroNarrator {
   private nextId = 1;
   private pending = new Map<number, Pending>();
   private checkedFirst = false;
+  private backend: { device: KokoroDevice; dtype: KokoroDtype } | null = null;
   /** In-flight or finished lines this session, by cache key. */
   private lines = new Map<string, Promise<Clip>>();
   private playing: { stop(): void } | null = null;
@@ -74,18 +78,39 @@ export class KokoroNarrator {
   ensure(): Promise<boolean> {
     if (this.ready) return this.ready;
     this.ready = new Promise<boolean>((res) => (this.readyResolve = res));
+    this.set({ state: 'downloading', pct: 0, why: undefined });
+    void (async () => {
+      const gpu = await this.deps.hasWebGpu().catch(() => false);
+      this.start(pickBackend(gpu, this.deps.saveData()));
+    })();
+    return this.ready;
+  }
+
+  private start(be: { device: KokoroDevice; dtype: KokoroDtype }) {
     try {
       const w = this.deps.makeWorker();
       this.worker = w;
+      this.backend = be;
       w.onmessage = (e) => this.onMessage(e.data);
-      w.onerror = () => this.fail('error');
-      const be = pickBackend(this.deps.hasWebGpu());
-      this.set({ state: 'downloading', pct: 0, device: be.device, why: undefined });
+      w.onerror = () => this.loadFailed();
+      this.set({ state: 'downloading', pct: 0, device: be.device, mb: KOKORO_MB[be.dtype] });
       w.postMessage({ type: 'load', model: KOKORO_MODEL, dtype: be.dtype, device: be.device, voice: this.voice });
     } catch {
       this.fail('unsupported');
     }
-    return this.ready;
+  }
+
+  /** WebGPU can fail to start on some GPUs / drivers: try once more on the CPU (WASM, q8) before giving up. */
+  private loadFailed() {
+    if (this.backend?.device === 'webgpu' && this.status.state === 'downloading' && this.deps.online()) {
+      try {
+        this.worker?.terminate();
+      } catch {
+        /* ignore */
+      }
+      return this.start({ device: 'wasm', dtype: 'q8' });
+    }
+    this.fail(this.deps.online() ? 'error' : 'offline');
   }
 
   private fail(why: NonNullable<KokoroStatus['why']>) {
@@ -114,7 +139,7 @@ export class KokoroNarrator {
       this.set({ state: 'ready', pct: 100, rtf });
       this.readyResolve?.(true);
     } else if (m.type === 'error') {
-      this.fail(this.deps.online() ? 'error' : 'offline');
+      this.loadFailed();
     } else if (m.type === 'audio') {
       const p = this.pending.get(m.id);
       if (!p) return;
@@ -283,7 +308,11 @@ export function browserKokoroDeps(voiceOut: () => { ctx: AudioContext; out: Audi
     makeWorker: () => new Worker(new URL('./kokoroWorker.ts', import.meta.url), { type: 'module' }) as unknown as WorkerLike,
     cache: new ClipCache(idb ? idbClipStore() : memoryClipStore()),
     out: webAudioOut(voiceOut),
-    hasWebGpu: () => typeof navigator !== 'undefined' && 'gpu' in navigator,
+    hasWebGpu: async () => {
+      const gpu = (navigator as unknown as { gpu?: { requestAdapter(): Promise<unknown> } }).gpu;
+      return !!gpu && !!(await gpu.requestAdapter());
+    },
+    saveData: () => !!(navigator as unknown as { connection?: { saveData?: boolean } }).connection?.saveData,
     online: () => typeof navigator === 'undefined' || navigator.onLine !== false,
   };
 }

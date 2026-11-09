@@ -74,10 +74,12 @@ function Seg<T extends string>({
 function kokoroLine(k: KokoroStatus, lang: 'he' | 'en'): string {
   const he = lang === 'he';
   const name = he ? 'Kokoro (על המכשיר)' : 'Kokoro (on device)';
-  if (k.state === 'downloading') return `${name} · ${he ? 'מוריד' : 'downloading'} ${k.pct}%`;
+  if (k.state === 'downloading' && k.pct >= 100) return `${name} · ${he ? 'מתכונן…' : 'getting ready…'}`;
+  if (k.state === 'downloading') return `${name} · ${he ? 'מוריד' : 'downloading'} ${k.pct}%${k.mb ? ` ${he ? 'מתוך' : 'of'} ${k.mb} MB` : ''}`;
   if (k.state === 'ready') return `${name} · ${he ? 'מוכן' : 'ready'}`;
   if (k.state === 'unavailable') return `${name} · ${he ? 'לא זמין כרגע במכשיר הזה — השורות מוצגות לקריאה' : 'not available on this device right now — lines are shown to read'}`;
-  return `${name} · ${he ? `נטען בפעם הראשונה שהוא מדבר (כ-${KOKORO_MB} MB, פעם אחת)` : `loads the first time it speaks (about ${KOKORO_MB} MB, once)`}`;
+  const size = `${KOKORO_MB.q8}–${KOKORO_MB.fp32} MB`;
+  return `${name} · ${he ? `נטען בפעם הראשונה שהוא מדבר (${size} לפי המכשיר, פעם אחת)` : `loads the first time it speaks (${size} depending on the device, once)`}`;
 }
 
 /** Settings → My path (spec AF D4): goal, areas, packs, modes, hidden topics, rebuild; stats sharing (spec AG S9). */

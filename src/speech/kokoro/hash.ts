@@ -20,6 +20,6 @@ export function normText(text: string): string {
 }
 
 /** Cache key for one generated line, e.g. "af_heart@1:3f9a…". The model version is part of it so a new model re-generates. */
-export function clipKey(voice: string, speed: number, text: string, model = 'k82m-v1-q8'): string {
+export function clipKey(voice: string, speed: number, text: string, model = 'k82m-v1'): string {
   return `${voice}@${speed}:${model}:${cyrb53(normText(text)).toString(36)}`;
 }
