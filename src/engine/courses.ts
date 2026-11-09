@@ -13,7 +13,7 @@ export interface CourseDef {
   short: { he: string; en: string };
   /** Domain colour (v2 palette) and the note-head glyph. */
   color: string;
-  glyph: 'intervals' | 'sing' | 'keys' | 'guitar' | 'prog' | 'theory';
+  glyph: 'ear' | 'intervals' | 'sing' | 'keys' | 'guitar' | 'bass' | 'prog' | 'theory';
   /** The path goal used inside the course (area weights and boosts). */
   goal: Goal;
   /** What the course plays on (instrument-only steps). */
@@ -23,11 +23,11 @@ export interface CourseDef {
 }
 
 export const COURSES: CourseDef[] = [
-  { id: 'ear', name: { he: 'שמיעה ותיאוריה', en: 'Ear & theory' }, short: { he: 'שמיעה', en: 'Ear' }, color: '#3AB8FF', glyph: 'intervals', goal: 'general', plays: [] },
+  { id: 'ear', name: { he: 'שמיעה ותיאוריה', en: 'Ear & theory' }, short: { he: 'שמיעה', en: 'Ear' }, color: '#3AB8FF', glyph: 'ear', goal: 'general', plays: [] },
   { id: 'voice', name: { he: 'שירה', en: 'Singing' }, short: { he: 'שירה', en: 'Voice' }, color: '#12C9B4', glyph: 'sing', goal: 'sing', plays: ['voice'] },
   { id: 'keys', name: { he: 'פסנתר וקלידים', en: 'Piano & keys' }, short: { he: 'פסנתר', en: 'Piano' }, color: '#FFD43B', glyph: 'keys', goal: 'general', plays: ['keys'] },
   { id: 'guitar', name: { he: 'גיטרה', en: 'Guitar' }, short: { he: 'גיטרה', en: 'Guitar' }, color: '#FFD43B', glyph: 'guitar', goal: 'guitar', plays: ['guitar'] },
-  { id: 'bass', name: { he: 'בס', en: 'Bass' }, short: { he: 'בס', en: 'Bass' }, color: '#FFD43B', glyph: 'guitar', goal: 'guitar', plays: ['bass'], beta: true },
+  { id: 'bass', name: { he: 'בס', en: 'Bass' }, short: { he: 'בס', en: 'Bass' }, color: '#FF5FA2', glyph: 'bass', goal: 'guitar', plays: ['bass'], beta: true },
   { id: 'jazz', name: { he: 'ג׳אז ואלתור', en: 'Jazz & improv' }, short: { he: 'ג׳אז', en: 'Jazz' }, color: '#A78BFA', glyph: 'prog', goal: 'jazz', plays: [] },
   { id: 'exam', name: { he: 'בגרות ומבחנים', en: 'Exams' }, short: { he: 'בגרות', en: 'Exams' }, color: '#FF8A3D', glyph: 'theory', goal: 'exam', plays: [] },
 ];

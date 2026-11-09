@@ -21,6 +21,7 @@ export function talkOn(): boolean {
   } catch {
     /* private mode */
   }
+  // 0.64 (owner): the narrator speaks by default again (a better voice is coming); the text types itself out with it.
   cached = v === '1' || v === '0' ? v === '1' : !automated() && !new URLSearchParams(location.search).has('sim');
   return cached;
 }

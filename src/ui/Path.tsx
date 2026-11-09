@@ -213,8 +213,8 @@ const iconOf = (step: PathStep) => (step.kind === 'tech' ? 'chord' : step.kind =
 /** A ladder level's symbol (0.64, owner: every technique / vocal family its own, like the ear course's steps). */
 const FAMILY_GLYPH: Record<string, GlyphKind> = {
   scales: 'scales', arpeggios: 'chords', cadences: 'prog', fingers: 'keys', control: 'tempo', advanced: 'scales', harris: 'improv', voicings: 'chords', jazz: 'prog', accomp: 'rhythm',
-  'g-fretting': 'guitar', 'g-picking': 'tempo', 'g-legato': 'contour', 'g-scales': 'scales', 'g-arps': 'chords', 'g-chords': 'chords', 'g-rhythm': 'rhythm', 'g-lead': 'improv', 'g-fingerstyle': 'guitar', 'g-flamenco': 'rhythm', 'g-jazz': 'prog', 'g-reading': 'sight', 'g-impro': 'improv', 'g-bass': 'guitar',
-  'b-pluck': 'guitar', 'b-time': 'tempo', 'b-fret': 'scales', 'b-chord': 'chords', 'b-scale': 'scales', 'b-length': 'rhythm', 'b-pocket': 'groove', 'b-read': 'sight', 'b-styles': 'groove', 'b-ghost': 'ghost', 'b-walk': 'contour', 'b-legato': 'contour', 'b-pick': 'tempo', 'b-slap': 'rhythm', 'b-ear': 'intervals', 'b-up-pos': 'scales', 'b-up-arco': 'sing', 'b-up-scales': 'scales', 'b-up-pizz': 'guitar', 'b-up-walk': 'contour', 'b-up-read': 'sight',
+  'g-fretting': 'guitar', 'g-picking': 'tempo', 'g-legato': 'contour', 'g-scales': 'scales', 'g-arps': 'chords', 'g-chords': 'chords', 'g-rhythm': 'rhythm', 'g-lead': 'improv', 'g-fingerstyle': 'guitar', 'g-flamenco': 'rhythm', 'g-jazz': 'prog', 'g-reading': 'sight', 'g-impro': 'improv', 'g-bass': 'bass',
+  'b-pluck': 'bass', 'b-time': 'tempo', 'b-fret': 'scales', 'b-chord': 'chords', 'b-scale': 'scales', 'b-length': 'rhythm', 'b-pocket': 'groove', 'b-read': 'sight', 'b-styles': 'groove', 'b-ghost': 'ghost', 'b-walk': 'contour', 'b-legato': 'contour', 'b-pick': 'tempo', 'b-slap': 'rhythm', 'b-ear': 'intervals', 'b-up-pos': 'scales', 'b-up-arco': 'sing', 'b-up-scales': 'scales', 'b-up-pizz': 'bass', 'b-up-walk': 'contour', 'b-up-read': 'sight',
   'v-ladder': 'sing', 'v-modes': 'scales', 'v-sight': 'sight', 'v-harmony': 'chords', 'v-ornament': 'contour', 'v-barry': 'improv',
 };
 /** Instrument topics (they all used to share one chord icon). */

@@ -4,7 +4,7 @@ import { sessionInsight } from '../engine/coach';
 import { LevelStatsLine } from './LevelStats';
 import { RatingCard } from './Rating';
 import type { RatingChange } from '../engine/rating';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { displayNote } from '../engine/pitch';
 import { compareStimulus, pcFromKey } from '../engine/lesson';
 import { songById } from '../engine/songs';
@@ -62,6 +62,8 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
 
   const lang = settings.uiLang;
   const nm = namingFor(settings.naming, lang);
+  const [page, setPage] = useState(0);
+  const pagesRef = useRef<HTMLDivElement>(null);
   const meta = LESSON_META[s.lesson.id];
   const bb = displayNote({ letter: 'B', acc: -1 }, nm, lang);
   const eb = displayNote({ letter: 'E', acc: -1 }, nm, lang);
@@ -104,8 +106,27 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
     if (paced && slow > 0) lacks.push(fill(t.lackSlow, { n: slow }));
   }
 
+  const hasProgress = !!xpTotals || (goalMs !== null && paced) || lacks.length > 0 || (rating !== undefined && rating !== null);
+  const pages = hasProgress ? 3 : 2;
+  const go = (k: number) => {
+    const n = Math.max(0, Math.min(pages - 1, k));
+    setPage(n);
+    pagesRef.current?.children[n]?.scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
+  };
   return (
-    <main className="recap">
+    <main className="recap paged" data-recap-page={page}>
+      {/* 0.64 (owner): the recap is a few cards, one screen each, with Continue — like a story, not a long scroll. */}
+      <div
+        className="recap-pages"
+        ref={pagesRef}
+        onScroll={(e) => {
+          const el = e.currentTarget;
+          const w = el.clientWidth || 1;
+          const k = Math.round(Math.abs(el.scrollLeft) / w);
+          if (k !== page) setPage(k);
+        }}
+      >
+      <section className="rp rp-cele" aria-label={t.recapTitle}>
       {/* 0.61 (SPEC-REDESIGN): the lesson ends on a final barline with a fermata, and Toni celebrates. */}
       <div className="recap-art" aria-hidden="true">
         <svg className="recap-staff" viewBox="0 0 365 120" preserveAspectRatio="xMidYMid meet">
@@ -117,7 +138,7 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
           <path d="M244 38 A26 26 0 0 1 296 38" className="rs-fermata" />
           <circle cx="270" cy="33" r="4.5" className="rs-dot" />
         </svg>
-        <Toni state={stars === 3 ? 'streak' : stars >= 1 ? 'correct' : 'idle'} size={150} />
+        <Toni state={stars === 3 ? 'streak' : stars >= 1 ? 'correct' : 'close'} size={150} />
       </div>
       <p className="eyebrow">{withNote(meta.title[lang], bb)}</p>
       <h1>{t.recapTitle}</h1>
@@ -161,6 +182,12 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
         )}
       </p>
 
+      </section>
+      {hasProgress && (
+      <section className="rp rp-progress" aria-label={lang === 'he' ? 'ההתקדמות שלך' : 'Your progress'}>
+      <div className="rp-toni" aria-hidden="true">
+        <Toni state="wow" size={96} />
+      </div>
       {xpTotals && <LevelBar t={t} before={xpTotals.before} after={xpTotals.after} />}
 
       <p className="pace-line" data-pace-goal={goalMs ?? ''}>
@@ -177,7 +204,10 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
       </p>
 
       {rating !== undefined && rating !== null && <RatingCard t={t} change={rating.change} peakBefore={rating.peakBefore} accuracy={sm.total ? sm.firstTry / sm.total : 0} />}
+      </section>
+      )}
 
+      <section className="rp rp-answers" aria-label={lang === 'he' ? 'התשובות שלך' : 'Your answers'}>
       <ol className="recap-list">
         {s.lesson.questions.map((q, i) => {
           const r = s.records[i];
@@ -258,6 +288,20 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
           {t.home}
         </button>
       </div>
+      </section>
+      </div>
+      {page < pages - 1 && (
+        <div className="rp-nav">
+          <span className="rp-dots" aria-hidden="true">
+            {Array.from({ length: pages }, (_, k) => (
+              <i key={k} className={k === page ? 'on' : ''} />
+            ))}
+          </span>
+          <button className="btn mega rp-next" onClick={() => go(page + 1)} data-recap-next="1">
+            {lang === 'he' ? 'המשך' : 'Continue'} <span className="flip-rtl">→</span>
+          </button>
+        </div>
+      )}
     </main>
   );
 }

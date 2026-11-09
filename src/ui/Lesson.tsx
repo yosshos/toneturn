@@ -1,3 +1,5 @@
+import { TypedText } from './TypedText';
+import { useTalk } from './TalkToggle';
 import { DOMAIN_COLOR, Glyph } from './Glyph';
 import { answerFormat, pcToMidi, type AnswerFormat } from '../engine/answerFormat';
 import { Toni, type ToniState } from './Toni';
@@ -43,7 +45,7 @@ import { Burst, Keyboard, MicIcon, ModeSwitch, Note, PermissionPanel, withNote }
 import { Recap } from './Recap';
 import { RhythmStaff } from './RhythmStaff';
 import { buildPalette, CELLS, describe as describeRhythm, meterOf, onsetBeats, rhythmFromKey, rhythmKey, sameRhythm, totalBeats, type CellId, type Rhythm } from '../engine/rhythm';
-import { makeAdapters, piano, store } from './services';
+import { makeAdapters, piano, SIMULATED, store } from './services';
 
 interface Props {
   /** The brief before a topic exercise (owner, 2026-11-07): short name, what it's about, what you'll do, a refresher, Play. */
@@ -332,6 +334,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
 
   return (
     <main className={`lesson stage-${v.stage} phase-${v.phase} kind-${q.kind} ${isStaircase ? 'with-meter' : ''}`}>
+      <InARow records={v.session.records} lang={lang} />
       {isStaircase && <PlacementMeter s={v.session} t={t} />}
       <header className="lesson-top">
         <button className="icon-btn" onClick={() => (paused ? onExit() : ctrl.pause())} aria-label={paused ? t.exit : t.pause}>
@@ -1006,10 +1009,44 @@ function FeedbackBanner({ v, t, lang, settings }: { v: LessonView; t: Strings; l
   );
 }
 
+/** "N in a row" (0.64, owner): after 3, 5, 10, 15 … right first-try answers in a row, Toni pops up for a moment. */
+function InARow({ records, lang }: { records: { outcome: string; attempts: unknown[] }[]; lang: 'he' | 'en' }) {
+  let run = 0;
+  for (const r of records) {
+    if (!r.attempts.length) continue;
+    run = r.outcome === 'correct' ? run + 1 : 0;
+  }
+  const [shown, setShown] = useState<number | null>(null);
+  const seen = useRef(0);
+  useEffect(() => {
+    if (run > seen.current && (run === 3 || run === 5 || (run >= 10 && run % 5 === 0))) {
+      setShown(run);
+      const id = setTimeout(() => setShown(null), 1800);
+      seen.current = run;
+      return () => clearTimeout(id);
+    }
+    if (run < seen.current) seen.current = run;
+  }, [run]);
+  if (shown === null) return null;
+  const he = lang === 'he';
+  const line = shown >= 10 ? (he ? 'לא עוצרים!' : 'Unstoppable!') : shown >= 5 ? (he ? 'כל הכבוד!' : 'Great job!') : he ? 'יפה מאוד!' : 'Nice!';
+  return (
+    <div className="in-a-row" role="status" aria-live="polite" data-in-a-row={shown}>
+      <Toni state="streak" size={64} />
+      <span>
+        <b dir="ltr">{he ? `${shown} ברצף` : `${shown} in a row`}</b>
+        <small>{line}</small>
+      </span>
+    </div>
+  );
+}
+
 function Caption({ text }: { text: string | null }) {
+  // 0.64 (owner): in reading mode (the default) the line types itself out with a soft pop per word.
+  const [talk] = useTalk();
   return (
     <p className="caption" aria-live="polite">
-      {text ?? ' '}
+      {text && !SIMULATED ? <TypedText key={text} text={text} sound={!talk} msPerWord={talk ? 220 : 90} /> : (text ?? ' ')}
     </p>
   );
 }

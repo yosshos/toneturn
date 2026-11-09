@@ -1746,3 +1746,52 @@
 :root[data-theme] .lvl-stars i.won { background: var(--lemon); }
 :root[data-theme] .lvl-stars i.won:nth-child(n+4) { background: var(--teal); }
 :root[data-theme] .path2 .road .sys .node.kind-tech .mini-stars { display: inline-flex; }
+
+/* Typed text (0.64): each word pops in */
+.typed .tw { opacity: 0; display: inline-block; transform: translateY(4px) scale(0.9); }
+.typed .tw.in { opacity: 1; transform: none; transition: opacity 0.14s ease-out, transform 0.18s cubic-bezier(0.3, 1.6, 0.5, 1); }
+@media (prefers-reduced-motion: reduce) { .typed .tw { opacity: 1; transform: none; transition: none; } }
+
+/* ── Recap as cards (0.64, owner: Duolingo-like, Continue between them; no long scroll) ── */
+:root[data-theme] main.recap.paged { display: flex; flex-direction: column; height: calc(100dvh - 24px); padding-bottom: 0; overflow: hidden; }
+:root[data-theme] .recap-pages { flex: 1; min-height: 0; display: flex; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; }
+:root[data-theme] .recap-pages::-webkit-scrollbar { display: none; }
+:root[data-theme] .recap-pages > .rp { flex: 0 0 100%; min-width: 0; scroll-snap-align: start; overflow-y: auto; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 8px 4px 16px; box-sizing: border-box; }
+:root[data-theme] .rp-cele { justify-content: center; text-align: center; }
+:root[data-theme] .rp-cele .recap-art .toni { animation: recap-hop 0.9s cubic-bezier(0.3, 1.6, 0.5, 1) 0.2s both; }
+@keyframes recap-hop { 0% { transform: translateY(30px) scale(0.6); opacity: 0; } 60% { transform: translateY(-14px) scale(1.06); opacity: 1; } 100% { transform: none; } }
+:root[data-theme] .rp-progress { justify-content: center; }
+:root[data-theme] .rp-progress > * { width: 100%; max-width: 520px; }
+:root[data-theme] .rp-toni { display: grid; place-items: center; }
+:root[data-theme] .rp-answers { align-items: stretch; }
+:root[data-theme] .rp-nav { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 10px 4px 14px; }
+:root[data-theme] .rp-dots { display: flex; gap: 6px; }
+:root[data-theme] .rp-dots i { width: 12px; height: 9px; border-radius: 50%; transform: rotate(-20deg); border: 2px solid var(--outline); background: var(--card); }
+:root[data-theme] .rp-dots i.on { background: var(--lemon); }
+:root[data-theme] .rp-next { width: 100%; max-width: 520px; }
+@media (prefers-reduced-motion: reduce) { :root[data-theme] .rp-cele .recap-art .toni { animation: none; } }
+/* N in a row (0.64) */
+:root[data-theme] .in-a-row { position: fixed; z-index: 70; top: calc(env(safe-area-inset-top, 0px) + 72px); left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; padding: 6px 16px 6px 8px; border-radius: 22px; background: var(--ink-c); color: #fff; border: 3px solid var(--ink-c); box-shadow: 0 6px 0 rgb(30 16 51 / 0.25); animation: iar-pop 1.8s cubic-bezier(0.3, 1.5, 0.5, 1) both; pointer-events: none; }
+:root[data-theme] .in-a-row b { display: block; font-family: 'Secular One', Rubik, sans-serif; font-weight: 400; font-size: 1.15rem; color: var(--lemon); }
+:root[data-theme] .in-a-row small { font-weight: 800; }
+@keyframes iar-pop { 0% { opacity: 0; transform: translate(-50%, -16px) scale(0.7); } 12% { opacity: 1; transform: translate(-50%, 0) scale(1.06); } 20% { transform: translate(-50%, 0) scale(1); } 85% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -8px); } }
+@media (prefers-reduced-motion: reduce) { :root[data-theme] .in-a-row { animation: none; } }
+
+/* ── Readability (0.64, tester: white on yellow, light yellow on white) ──
+   Old components read --soft / --dim (never defined in v2, so they fell back to the old dark theme's pale greys). */
+:root[data-theme] { --soft: var(--ink-soft); --dim: var(--ink-dim); }
+/* Lemon surfaces always carry ink text. */
+:root[data-theme] .btn.mega,
+:root[data-theme] .btn.primary.mega,
+:root[data-theme] .btn.mega:is(:hover, :focus-visible) { color: var(--ink-c); }
+:root[data-theme] .btn.mega svg { color: var(--ink-c); fill: currentColor; }
+/* "New", "Hot", "New this week": a lemon chip with ink text, never yellow text on white. */
+:root[data-theme] :is(.new-chip, .hot-chip, .play-card .new-chip, .game-card .new-chip) { background: var(--lemon); color: var(--ink-c); border: 2px solid var(--ink-c); border-radius: 999px; padding: 1px 9px; font-weight: 800; text-shadow: none; }
+:root[data-theme] .play-hero small { color: var(--purple); font-weight: 800; }
+:root[data-theme] .drill-row .n, :root[data-theme] .today-list .n { color: var(--ink-c); background: var(--lemon); border-radius: 999px; padding: 0 8px; }
+:root[data-theme] .btn.mega { color: var(--ink-c) !important; }
+:root[data-theme] .drills-screen span.n:not(:empty) { color: var(--ink); }
+:root[data-theme] .daily-date { color: var(--ink-dim); }
+:root[data-theme] .pt-tile.pt-all { color: var(--ink); }
+:root[data-theme] .pt-tile.pt-all .pt-icon { color: var(--ink); }
+:root[data-theme] .unit-banner .test-out { color: var(--ink-c); background: #fff; border-color: var(--ink-c); }

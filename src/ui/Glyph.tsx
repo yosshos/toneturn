@@ -74,6 +74,21 @@ export const GLYPHS: Record<string, ReactNode> = {
       <path d="M-11 -12v14M0 -12v14M11 -12v14" />
     </g>
   ),
+  // 0.64 (tester): the ear & theory course is an ear; bass is the bass clef (no longer the guitar's symbol).
+  ear: (
+    <g {...sw}>
+      <path d="M-12 -6 C-12 -22 14 -24 16 -6 C17 6 6 8 4 16 C2 22 -8 22 -10 14" />
+      <path d="M-4 -6 C-4 -14 8 -14 8 -5 C8 1 2 1 1 6" />
+    </g>
+  ),
+  bass: (
+    <>
+      <path d="M-14 -10 C-6 -22 16 -20 13 -2 C11 12 -2 19 -16 22" {...sw} strokeWidth={3.4} />
+      <circle cx={-12} cy={-9} r={4.5} fill={I} />
+      <circle cx={21} cy={-11} r={3} fill={I} />
+      <circle cx={21} cy={1} r={3} fill={I} />
+    </>
+  ),
   guitar: (
     <g {...sw}>
       <path d="M6 -18l12 12M12 -12 -4 4" />
