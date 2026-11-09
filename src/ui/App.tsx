@@ -252,6 +252,16 @@ export function App() {
     updateSettings(switchCourse(settings, c));
     go('home');
   };
+  /** First-try results per skill (the answer ladder, 0.61): the last 60 rated items of each skill, oldest first. */
+  const recentBySkill = (p: Progress): Partial<Record<string, boolean[]>> => {
+    const out: Record<string, boolean[]> = {};
+    for (const e of p.ratingEvents ?? []) {
+      if (e.set !== undefined) continue;
+      (out[e.skill] ??= []).push(e.score !== undefined ? e.score >= 0.5 : e.correct);
+    }
+    for (const k of Object.keys(out)) out[k] = out[k].slice(-60);
+    return out;
+  };
   const buy = (kind: 'freeze' | 'repair') => {
     const purchases = settings?.purchases ?? [];
     if (!canBuy(kind, gems.balance, gems.streak)) return;
@@ -1337,6 +1347,7 @@ export function App() {
           onDone={slot ? () => clearSession(slot.key) : undefined}
           nextLabel={wrun && !wrun.finished && wrun.day === today ? (s.uiLang === 'en' ? `Continue workout · ${Math.ceil(runLeftMs(wrun) / 60000)} min` : `להמשיך באימון · ${Math.ceil(runLeftMs(wrun) / 60000)} דק׳`) : generated ? t.seeSkillMap : undefined}
           ratings={ratingsOf(progress)}
+          recent={recentBySkill(progress)}
           onNext={wrun && !wrun.finished && wrun.day === today ? () => runCurrent(wrunRef.current!) : generated ? () => openSkillMap() : canNext ? () => openLesson(nextId) : null}
           onProgress={(p) => {
             setProgress(p);

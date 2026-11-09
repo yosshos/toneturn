@@ -1077,6 +1077,67 @@
   color: var(--ink-c);
 }
 
+/* ---------------------------------------------------------------- recap */
+.recap-art {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 190px;
+}
+.recap-art .recap-staff {
+  position: absolute;
+  inset: auto 0 18px 0;
+  width: 100%;
+  height: 120px;
+}
+.recap-staff .rs-lines path {
+  stroke: var(--line-strong);
+  stroke-width: 1.6;
+  fill: none;
+}
+.recap-staff .rs-bar {
+  fill: var(--outline);
+}
+.recap-staff .rs-fermata {
+  stroke: var(--purple);
+  stroke-width: 4.5;
+  fill: none;
+  stroke-linecap: round;
+}
+.recap-staff .rs-dot {
+  fill: var(--purple);
+}
+:root[data-theme] .recap .stars .star.note {
+  color: inherit;
+  text-shadow: none;
+}
+:root[data-theme] .recap .stars .star.note svg ellipse {
+  fill: var(--card);
+  stroke: var(--outline);
+  stroke-width: 7;
+}
+:root[data-theme] .recap .stars .star.note.won svg ellipse {
+  fill: var(--lemon);
+}
+:root[data-theme] .recap h1 {
+  font-size: 2rem;
+}
+:root[data-theme] .recap .fluency-score,
+:root[data-theme] .recap .recap-list > li {
+  border: var(--stroke) solid var(--outline);
+  border-radius: 16px;
+  background: var(--card);
+}
+:root[data-theme] .recap .recap-list > li {
+  box-shadow: none;
+}
+:root[data-theme] .recap .coach-insight {
+  background: color-mix(in srgb, var(--lemon) 26%, var(--card));
+  border: 2px solid var(--outline);
+  border-radius: 14px;
+  color: var(--ink);
+}
+
 /* ---------------------------------------------------------------- menu sheet */
 :root[data-theme] .menu-sheet .menu-head h2 {
   font-size: 1.6rem;
@@ -1188,4 +1249,26 @@
   display: inline-block;
   flex: none;
   line-height: 0;
+}
+
+/* ---------------------------------------------------------------- the answer ladder: staff answers */
+.answers.fmt-staff .answer {
+  padding: 4px;
+}
+.answer .answer-staff,
+.answer .answer-hint {
+  display: block;
+  width: 100%;
+  line-height: 0;
+}
+.answer .answer-staff .note-staff,
+.answer .answer-hint .note-staff {
+  border: 0;
+  background: transparent;
+  margin: 0;
+}
+.answer .answer-hint {
+  opacity: 0.85;
+  max-height: 56px;
+  overflow: hidden;
 }

@@ -1,3 +1,4 @@
+import { answerFormat, pcToMidi, type AnswerFormat } from '../engine/answerFormat';
 import { Toni, type ToniState } from './Toni';
 import { Icon } from './icons';
 import { buzz } from './Arcade';
@@ -22,9 +23,9 @@ import type { MiniLesson } from '../content/miniTypes';
 import { DiagramView, PlaceSurfaceView } from './Instrument';
 import { itemNeedsHeadphones } from '../engine/fx';
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
-import { answerFromMidi, makeLesson, pcFromKey, questionSkill, type IntroCard, type SkillId, type LessonDef, type LessonId, type Question } from '../engine/lesson';
+import { answerFromMidi, INTERVAL_SEMITONES, makeLesson, pcFromKey, questionSkill, type IntervalName, type IntroCard, type SkillId, type LessonDef, type LessonId, type Question } from '../engine/lesson';
 import type { SessionState } from '../engine/session';
-import { displayNote, type Naming } from '../engine/pitch';
+import { displayNote, type Naming, type PitchClass } from '../engine/pitch';
 import { midi } from '../speech/midi';
 import type { InputMode } from '../engine/session';
 import { LessonController, type LessonView } from '../game/controller';
@@ -72,13 +73,15 @@ interface Props {
   ratings?: Ratings;
   /** The player's first name, for personal feedback. */
   playerName?: string | null;
+  /** First-try results per skill, oldest first (the answer ladder, 0.61). */
+  recent?: Partial<Record<string, boolean[]>>;
   /** Change a setting from inside the lesson (headphones confirmation, spec AE R2). */
   onSettings?: (p: Partial<Settings>) => void;
 }
 
 const targetMidiOf = (q: Question) => (q.kind === 'degree' || q.kind === 'sing' || q.kind === 'note-name' ? q.targetMidi : q.kind === 'sing-seq' || q.kind === 'sing-run' ? q.midis[0] : 60);
 
-export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit, onAgain, onNext, onProgress, lessonDef, adapt, resume, onStep, onDone, nextLabel, ratings, playerName, onSettings, brief, onHideTopic, onKeepStep }: Props) {
+export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit, onAgain, onNext, onProgress, lessonDef, adapt, resume, onStep, onDone, nextLabel, ratings, playerName, onSettings, brief, onHideTopic, onKeepStep, recent }: Props) {
   const [phones, setPhones] = useState(!!settings.headphones);
   const ctrlRef = useRef<LessonController | null>(null);
   const [change, setChange] = useState<{ change: RatingChange; peakBefore: number | null } | null>(null);
@@ -240,6 +243,27 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
   const lang = settings.uiLang;
   const nm = namingFor(settings.naming, lang);
   const lesson = v.session.lesson;
+  // The answer ladder (0.61): names → names with a staff hint → pick the staff, per skill.
+  const ladderQ = v.question;
+  const ladderOn = ladderQ.kind === 'interval' || (ladderQ.kind === 'note-name' && ladderQ.direction === 'heard-pitch→name');
+  const fmtLog = useRef<Record<number, AnswerFormat>>({});
+  if (ladderOn && fmtLog.current[v.index] === undefined) {
+    const skill = questionSkill(ladderQ);
+    const prev = Object.keys(fmtLog.current)
+      .map(Number)
+      .sort((a, b) => a - b)
+      .map((k) => fmtLog.current[k]);
+    fmtLog.current[v.index] = answerFormat({ recent: recent?.[skill] ?? [], reading: recent?.notes, seed: `${v.session.lesson.id}:${v.index}:${ladderQ.id}`, prev, isNew: !!(lesson as { intro?: unknown[] }).intro?.length && v.index < 2 });
+  }
+  const fmt: AnswerFormat = ladderOn ? fmtLog.current[v.index] : 'names';
+  const staffOf = (c: unknown): { notes: number[]; chord: boolean; keyPc: PitchClass | null } | null => {
+    if (ladderQ.kind === 'interval') return { notes: [ladderQ.lowMidi, ladderQ.lowMidi + INTERVAL_SEMITONES[c as IntervalName]], chord: ladderQ.mode === 'harmonic', keyPc: null };
+    if (ladderQ.kind === 'note-name') {
+      const pc = pcFromKey(String(c));
+      return pc ? { notes: [pcToMidi(pc.letter, pc.acc)], chord: false, keyPc: ladderQ.key } : null;
+    }
+    return null;
+  };
   const meta = LESSON_META[lesson.id];
   const q = v.question;
   const bb = displayNote({ letter: 'B', acc: -1 }, nm, lang);
@@ -478,7 +502,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
             <RhythmBuilder key={`${v.index}-${v.session.turn}`} q={q} lang={lang} t={t} disabled={!awaiting} onSubmit={(a) => ctrl.answer(a)} />
           )}
           {showButtons && !(q.kind === 'rhythm-dict' && q.mode === 'build') && (
-            <div className={`answers n-${q.choices.length}`}>
+            <div className={`answers n-${q.choices.length} fmt-${fmt}`}>
               {q.choices.map((c) => {
                 const lb = choiceLabel(q, c, lang, nm);
                 return (
@@ -491,10 +515,19 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
                   >
                     {q.kind === 'rhythm-dict' ? (
                       <RhythmStaff rhythm={rhythmFromKey(String(c), q.rhythm.bars)} label={lb.small} compact height={80} />
+                    ) : fmt === 'staff' && staffOf(c) ? (
+                      <span className="answer-staff" dir="ltr">
+                        <NoteStaff {...staffOf(c)!} />
+                      </span>
                     ) : (
                       <b>{lb.big}</b>
                     )}
-                    <small>{lb.small}</small>
+                    {fmt !== 'staff' && <small>{lb.small}</small>}
+                    {fmt === 'hint' && staffOf(c) && (
+                      <span className="answer-hint" dir="ltr" aria-hidden="true">
+                        <NoteStaff {...staffOf(c)!} />
+                      </span>
+                    )}
                   </button>
                 );
               })}

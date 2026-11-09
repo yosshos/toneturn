@@ -1,3 +1,4 @@
+import { Toni } from './Toni';
 import { Icon } from './icons';
 import { sessionInsight } from '../engine/coach';
 import { LevelStatsLine } from './LevelStats';
@@ -105,11 +106,19 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
 
   return (
     <main className="recap">
-      {stars === 3 && (
-        <div className="recap-clip" aria-hidden="true">
-          <span className="recap-rays" />
-        </div>
-      )}
+      {/* 0.61 (SPEC-REDESIGN): the lesson ends on a final barline with a fermata, and Toni celebrates. */}
+      <div className="recap-art" aria-hidden="true">
+        <svg className="recap-staff" viewBox="0 0 365 120" preserveAspectRatio="xMidYMid meet">
+          <g className="rs-lines">
+            <path d="M0 50H260M0 66H260M0 82H260M0 98H260M0 114H260" />
+          </g>
+          <rect x="260" y="50" width="3.5" height="64" className="rs-bar" />
+          <rect x="269" y="50" width="11" height="64" className="rs-bar" />
+          <path d="M244 38 A26 26 0 0 1 296 38" className="rs-fermata" />
+          <circle cx="270" cy="33" r="4.5" className="rs-dot" />
+        </svg>
+        <Toni state={stars === 3 ? 'streak' : stars >= 1 ? 'correct' : 'idle'} size={150} />
+      </div>
       <p className="eyebrow">{withNote(meta.title[lang], bb)}</p>
       <h1>{t.recapTitle}</h1>
       {(() => {
@@ -129,8 +138,10 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
       </div>
       <div className="stars" aria-label={`${stars} ${t.stars}`}>
         {[0, 1, 2].map((i) => (
-          <span key={i} className={`star ${i < stars ? 'won' : ''}`} style={{ ['--i' as string]: i }} aria-hidden="true">
-            ★
+          <span key={i} className={`star note ${i < stars ? 'won' : ''}`} style={{ ['--i' as string]: i }} aria-hidden="true">
+            <svg viewBox="0 0 120 92" width="50" height="38">
+              <ellipse cx="60" cy="46" rx="50" ry="36" transform="rotate(-14 60 46)" />
+            </svg>
           </span>
         ))}
       </div>
@@ -193,7 +204,7 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
           return (
             <li key={q.id} className={`recap-row ${r.outcome}`}>
               <span className="recap-mark" aria-hidden="true">
-                {r.outcome === 'correct' ? '★' : ok ? '✓' : r.outcome === 'skipped' ? '–' : '✗'}
+                {ok ? '✓' : r.outcome === 'skipped' ? '–' : '✗'}
               </span>
               {r.outcome !== 'skipped' && r.attempts.length > 0 && (
                 <span className="recap-pts" dir="ltr" data-pts={itemPoints(q, r, s.pace?.profile, paced)}>
