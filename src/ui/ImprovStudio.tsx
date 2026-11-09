@@ -266,6 +266,7 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart }: { settings
             </select>
           </label>
           <ChallengeList
+            best={settings.challengeBest}
             lang={lang}
             onPick={(ch) => {
               const id = `${Date.now()}`;

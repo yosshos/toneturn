@@ -1067,7 +1067,7 @@ function SoundSetting({ t, s, onChange }: { t: Strings; s: Settings; onChange: (
     <>
       <section className="set-card sound-card" data-sound-card="1">
         <h2>{t.soundTitle}</h2>
-        <p className="field-hint">{t.soundHint}</p>
+        <p className="field-hint">{he ? "הכלי שמנגן בכל התרגילים. כלים מוקלטים נטענים פעם אחת ונשמרים במכשיר (פסנתר הכנף בפירוט מלא: עד כ־47MB, ברקע); הממודלים לא צריכים הורדה." : "The instrument for every exercise. Recorded ones load once and stay on the device (the full grand: up to about 47 MB, in the background); modelled ones need no download."}</p>
         {SOUND_GROUPS.map((g) => (
           <div key={g.id} className="sound-group" role="radiogroup" aria-label={g.name[lang]}>
             <h3 className="sound-group-h">{g.name[lang]}</h3>
@@ -1139,11 +1139,22 @@ function SoundSetting({ t, s, onChange }: { t: Strings; s: Settings; onChange: (
             />
           </label>
         )}
-        <p className="field-hint credits">
-          {he
-            ? 'פסנתר כנף: Salamander Grand Piano V3 מאת Alexander Holm (CC BY 3.0). וורליצר: Greg Sullivan (CC BY 3.0). תופים: Virtuosity Drums מאת Versilian Studios ו־Karoryfer Samples (CC0). קונטרבס: D. Smolken (CC0). שאר הכלים המוקלטים: Versilian Community Sample Library (CC0). האורגן והפסנתר החשמלי ממודלים באפליקציה. כל הדגימות נערכו וקודדו מחדש.'
-            : 'Grand: Salamander Grand Piano V3 by Alexander Holm (CC BY 3.0). Wurlitzer: Greg Sullivan (CC BY 3.0). Drums: Virtuosity Drums by Versilian Studios & Karoryfer Samples (CC0). Double bass: D. Smolken (CC0). Other recorded instruments: Versilian Community Sample Library (CC0). The organ and the tine piano are modelled in the app. All samples trimmed and re-encoded.'}
-        </p>
+        <ul className="field-hint credits sound-credits">
+          {(
+            [
+              [he ? 'פסנתר כנף' : 'Grand', 'Salamander Grand Piano V3 — Alexander Holm (CC BY 3.0)'],
+              [he ? 'וורליצר' : 'Wurlitzer', 'Greg Sullivan (CC BY 3.0)'],
+              [he ? 'תופים' : 'Drums', 'Virtuosity Drums — Versilian Studios & Karoryfer Samples (CC0)'],
+              [he ? 'קונטרבס' : 'Double bass', 'D. Smolken (CC0)'],
+              [he ? 'שאר הכלים המוקלטים' : 'Other recorded instruments', 'Versilian Community Sample Library (CC0)'],
+            ] as const
+          ).map(([what, who]) => (
+            <li key={what}>
+              {what}: <span dir="ltr">{who}</span>
+            </li>
+          ))}
+          <li>{he ? 'האורגן והפסנתר החשמלי ממודלים באפליקציה. כל הדגימות נערכו וקודדו מחדש.' : 'The organ and the tine piano are modelled in the app. All samples trimmed and re-encoded.'}</li>
+        </ul>
       </section>
       <section className="set-card" data-band-card="1">
         <h2>{he ? 'הלהקה' : 'The band'}</h2>

@@ -1,4 +1,5 @@
 import { miniForSkill } from '../content/refresher';
+import { CHALLENGES } from '../engine/improvRules';
 import { InsightsScreen } from './Insights';
 import { Sidebar, type NavId } from './Sidebar';
 import { Onboarding, Splash } from './Onboarding';
@@ -1232,7 +1233,7 @@ export function App() {
             ...((s.myCharts ?? []).length ? { charts: s.uiLang === 'he' ? `${(s.myCharts ?? []).length} שמורים` : `${(s.myCharts ?? []).length} saved` } : {}),
             ...((s.knownChords ?? []).length ? { songs: s.uiLang === 'he' ? `${(s.knownChords ?? []).length} אקורדים` : `${(s.knownChords ?? []).length} chords` } : {}),
             ...(s.progPuzzle?.[localDay(new Date())] ? { puzzle: s.uiLang === 'he' ? 'שוחק היום' : 'Played today' } : {}),
-            ...(Object.keys(s.improvBest ?? {}).length ? { improv: s.uiLang === 'he' ? `${Object.keys(s.improvBest ?? {}).length} שלבים` : `${Object.keys(s.improvBest ?? {}).length} levels` } : {}),
+            ...(Object.keys(s.challengeBest ?? {}).length ? { improv: `${Object.values(s.challengeBest ?? {}).filter((x) => x >= 0.85).length}/${CHALLENGES.length}` } : {}),
           }}
           t={t}
           progress={progress}
@@ -1603,7 +1604,8 @@ export function App() {
             drillFrom.current = 'chart';
             go('drills');
           }}
-          onImprov={(score, bpm, chords, level) => {
+          onImprov={(score, bpm, chords, level, challenge) => {
+            if (challenge && score > (s.challengeBest?.[challenge] ?? -1)) updateSettings({ challengeBest: { ...(s.challengeBest ?? {}), [challenge]: score } });
             // an "improvise under rules" assignment: the take is the submission
             if (activeAssign.current?.a.kind === 'chart' && activeAssign.current.a.ref?.startsWith('rules:')) submitAssign(score, { bpm, rules: true });
             if (level && score > (s.improvBest?.[level] ?? -1)) updateSettings({ improvBest: { ...(s.improvBest ?? {}), [level]: score } });

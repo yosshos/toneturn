@@ -63,12 +63,14 @@ export function debrief(rep: RulesReport, chart: ParsedChart, meter: number, rul
       : null;
   void meter;
   let next: Debrief['next'];
-  if (rep.notes >= 4 && score >= 0.85) {
+  if (rep.notes < 4) {
+    next = { kind: 'again', challenge: cur, bpm, why: { en: 'Play through the whole chorus, then we can talk.', he: 'נגנו את כל הסבב, ואז נדבר.' } };
+  } else if (score >= 0.85) {
     const up = cur ? stepChallenge(cur, 1) : null;
     next = up
       ? { kind: 'harder', challenge: up, bpm, why: { en: `Ready for more: ${up.title.en}.`, he: `מוכנים ליותר: ${up.title.he}.` } }
       : { kind: 'again', challenge: cur, bpm: Math.min(300, bpm + 12), why: { en: 'Same rules, faster.', he: 'אותם כללים, מהר יותר.' } };
-  } else if (rep.notes >= 4 && score >= 0.6) {
+  } else if (score >= 0.6) {
     next = { kind: 'again', challenge: cur, bpm, why: { en: 'Once more at this tempo — aim for 85%.', he: 'עוד פעם בטמפו הזה — המטרה 85%.' } };
   } else {
     const down = cur && bpm <= 70 ? stepChallenge(cur, -1) : null;

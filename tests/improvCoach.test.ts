@@ -45,3 +45,10 @@ describe('MIDI takes get the musical report too', () => {
     expect(rep.rangeSemis).toBe(13);
   });
 });
+describe('too few notes', () => {
+  it('asks for a whole chorus, same tempo, no step back', () => {
+    const d = debrief({ notes: 2, checks: [{ rule: 'target-3', ok: 0, total: 1 }], bars: [{ notes: 2, breaks: 1 }], score: 0 }, parseChart('C | F'), 4, CHALLENGES[0].rules, 120);
+    expect(d.next.kind).toBe('again');
+    expect(d.next.bpm).toBe(120);
+  });
+});

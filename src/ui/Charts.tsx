@@ -19,7 +19,7 @@ import { useHeadphones } from './Perform';
 import { segmentNotes } from '../engine/memory';
 import { midi } from '../speech/midi';
 import { MODE_NAMES, type ModeId } from '../engine/modes';
-import { BAR_SCALES, RULE_NAME, autoScale, checkRules, type PlayedNote, type RuleSet, type RulesReport } from '../engine/improvRules';
+import { BAR_SCALES, RULE_NAME, autoScale, challengeOf, checkRules, type PlayedNote, type RuleSet, type RulesReport } from '../engine/improvRules';
 import { LeadSheetImport, RulesPanel } from './ImprovRules';
 import { irealStyle, type LeadSheet } from '../engine/leadsheet';
 
@@ -55,7 +55,7 @@ const TX = {
 
 const newId = () => (typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`);
 
-export function ChartsScreen({ settings, onChange, onBack, onImprov, onDrill, onMixer, initial }: { settings: Settings; onChange: (p: Partial<Settings>) => void; onBack: () => void; onImprov?: (score: number, bpm: number, chords: number, level?: string) => void; onDrill?: (kind: string, stride: boolean) => void; onMixer?: () => void; initial?: () => MyChart | null }) {
+export function ChartsScreen({ settings, onChange, onBack, onImprov, onDrill, onMixer, initial }: { settings: Settings; onChange: (p: Partial<Settings>) => void; onBack: () => void; onImprov?: (score: number, bpm: number, chords: number, level?: string, challenge?: string) => void; onDrill?: (kind: string, stride: boolean) => void; onMixer?: () => void; initial?: () => MyChart | null }) {
   const lang = settings.uiLang;
   const tx = TX[lang];
   const mine = settings.myCharts ?? [];
@@ -81,6 +81,7 @@ export function ChartsScreen({ settings, onChange, onBack, onImprov, onDrill, on
         }}
         onBack={() => setOpen(null)}
         onImprov={onImprov}
+        best={settings.challengeBest}
         onDrill={onDrill}
       />
     );
@@ -192,7 +193,7 @@ export function ChartsScreen({ settings, onChange, onBack, onImprov, onDrill, on
   );
 }
 
-function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, onDrill }: { lang: 'en' | 'he'; chart: MyChart; saved: boolean; onSave: (c: MyChart) => void; onDelete: () => void; onBack: () => void; onImprov?: (score: number, bpm: number, chords: number, level?: string) => void; onDrill?: (kind: string, stride: boolean) => void }) {
+function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, onDrill, best }: { best?: Record<string, number>; lang: 'en' | 'he'; chart: MyChart; saved: boolean; onSave: (c: MyChart) => void; onDelete: () => void; onBack: () => void; onImprov?: (score: number, bpm: number, chords: number, level?: string, challenge?: string) => void; onDrill?: (kind: string, stride: boolean) => void }) {
   const tx = TX[lang];
   const ix = IMP[lang];
   const [headphones, setHeadphones] = useHeadphones();
@@ -412,7 +413,7 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
     const rr = anyRule ? checkRules(judged, parsed, meter, bpm, rules, scales, parsed.bars * loops) : null;
     setRulesRep(rr);
     const score = rr && rr.notes >= 4 ? rr.score : rep.score;
-    if ((rr?.notes ?? rep.notes) >= 3) onImprov?.(score, bpm, new Set(parsed.chords.map((x) => x.sym)).size, chart.level);
+    if ((rr?.notes ?? rep.notes) >= 3) onImprov?.(score, bpm, new Set(parsed.chords.map((x) => x.sym)).size, chart.level, rr && rr.notes >= 4 ? challengeOf(rules)?.id : undefined);
   };
   const pct = (x: number) => `${Math.round(x * 100)}%`;
   const cur = beat >= 0 ? chordAtBeat(parsed, meter, beat) : null;
@@ -455,7 +456,7 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
           {tx.bad} <span dir="ltr">{parsed.errors.join(' ')}</span>
         </p>
       )}
-      <RulesPanel lang={lang} rules={rules} onRules={setRules} disabled={playing} />
+      <RulesPanel lang={lang} rules={rules} onRules={setRules} disabled={playing} best={best} />
       {pickBar !== null && (
         <div className="ch-scalepick" role="dialog" aria-label={`${rx.barScale} ${pickBar + 1}`} data-scale-pick={pickBar}>
           <div className="ch-sp-head">

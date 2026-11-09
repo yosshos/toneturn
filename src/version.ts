@@ -18,6 +18,20 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.58.0',
+    date: '2026-11-09',
+    en: [
+      'Your best score on every improvisation challenge, shown in the challenge library; Practice counts the challenges you have mastered (85% and up)',
+      'The debrief asks for a whole chorus when there were too few notes, instead of slowing you down',
+      'Settings → Sound: clearer download note, organ and electric-piano options laid out for a phone, credits as a list',
+    ],
+    he: [
+      'התוצאה הטובה ביותר שלכם בכל אתגר אלתור, בספריית האתגרים; התרגול סופר כמה אתגרים שלטתם בהם (85% ומעלה)',
+      'הסיכום מבקש סבב שלם כשהיו מעט מדי צלילים, במקום להאט אתכם',
+      'הגדרות ← צליל: הסבר הורדה ברור יותר, אפשרויות האורגן והפסנתר החשמלי מסודרות לטלפון, הקרדיטים כרשימה',
+    ],
+  },
+  {
     version: '0.57.0',
     date: '2026-11-09',
     en: [

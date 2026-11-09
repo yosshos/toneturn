@@ -295,6 +295,8 @@ export interface Settings {
   myCharts?: import('../ui/Charts').MyChart[];
   /** Improvisation levels: best rules score (0..1) per level id. */
   improvBest?: Record<string, number>;
+  /** Best compliance per improvisation challenge (0.58). */
+  challengeBest?: Record<string, number>;
   /** The mixer: levels, EQ and effects per channel (absent = the default mix). */
   mixer?: Partial<import('../audio/mixer').MixerSettings>;
   /** Instrument sound for every exercise (spec Q): 'classic' (synth) or a sample set id. */

@@ -23,7 +23,7 @@ const dots = (n: number) => (
 );
 
 /** The four rule pickers, the active rules explained, and the way into the challenge library. */
-export function RulesPanel({ lang, rules, onRules, disabled }: { lang: Lang; rules: RuleSet; onRules: (r: RuleSet) => void; disabled?: boolean }) {
+export function RulesPanel({ lang, rules, onRules, disabled, best }: { lang: Lang; rules: RuleSet; onRules: (r: RuleSet) => void; disabled?: boolean; best?: Record<string, number> }) {
   const t = T[lang];
   const [lib, setLib] = useState(false);
   const ch = challengeOf(rules);
@@ -70,13 +70,13 @@ export function RulesPanel({ lang, rules, onRules, disabled }: { lang: Lang; rul
           ))}
         </ul>
       )}
-      {lib && <ChallengeLibrary lang={lang} current={ch?.id} onPick={(c) => (onRules(c.rules), setLib(false))} onClose={() => setLib(false)} />}
+      {lib && <ChallengeLibrary lang={lang} current={ch?.id} best={best} onPick={(c) => (onRules(c.rules), setLib(false))} onClose={() => setLib(false)} />}
     </section>
   );
 }
 
 /** The challenge library as a dialog (a centered window on a computer). */
-export function ChallengeLibrary({ lang, current, onPick, onClose }: { lang: Lang; current?: string; onPick: (c: Challenge) => void; onClose: () => void }) {
+export function ChallengeLibrary({ lang, current, onPick, onClose, best }: { lang: Lang; current?: string; onPick: (c: Challenge) => void; onClose: () => void; best?: Record<string, number> }) {
   const t = T[lang];
   useEffect(() => {
     const k = (e: KeyboardEvent) => e.key === 'Escape' && (e.stopPropagation(), onClose());
@@ -92,14 +92,14 @@ export function ChallengeLibrary({ lang, current, onPick, onClose }: { lang: Lan
             ✕
           </button>
         </div>
-        <ChallengeList lang={lang} current={current} onPick={onPick} />
+        <ChallengeList lang={lang} current={current} onPick={onPick} best={best} />
       </div>
     </div>
   );
 }
 
 /** All challenges, grouped. */
-export function ChallengeList({ lang, current, onPick }: { lang: Lang; current?: string; onPick: (c: Challenge) => void }) {
+export function ChallengeList({ lang, current, onPick, best }: { lang: Lang; current?: string; onPick: (c: Challenge) => void; best?: Record<string, number> }) {
   return (
     <div className="ir-groups">
       {(Object.keys(CHALLENGE_GROUPS) as Challenge['group'][]).map((g) => (
@@ -113,6 +113,11 @@ export function ChallengeList({ lang, current, onPick }: { lang: Lang; current?:
                     <b>{c.title[lang]}</b>
                     <small>{c.idea[lang]}</small>
                   </span>
+                  {best?.[c.id] !== undefined && (
+                    <small className={`ir-best ${best[c.id] >= 0.85 ? 'good' : ''}`} dir="ltr" data-challenge-best={c.id}>
+                      {Math.round(best[c.id] * 100)}%
+                    </small>
+                  )}
                   {dots(c.level)}
                 </button>
               </li>
