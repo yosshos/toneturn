@@ -1,5 +1,5 @@
 import { TodayCards } from './TodayCards';
-import { techQueue } from '../engine/ladderFacts';
+import { techQueue, workoutCreditsStep } from '../engine/ladderFacts';
 import { CourseContext } from './courseContext';
 import { CourseSheet } from './CourseSwitcher';
 import { COURSE_AREAS, courseOf, switchCourse, type CourseId } from '../engine/courses';
@@ -979,7 +979,9 @@ export function App() {
     {
       // The workout's credit first (it needs the step id before the path's pending step is cleared).
       const ps0 = pendingStep.current;
-      const done0 = ps0 && lastR && lastR.sessionId !== ps0.after && !ps0.testOut && stepStars(ps0.kind, lastR.firstTry, lastR.total) > 0 ? ps0.id : null;
+      // N12: a technique step is credited only once its level's measured rule passes (workoutCreditsStep); the
+      // session's minutes still count for a block started from the workout.
+      const done0 = ps0 && lastR && lastR.sessionId !== ps0.after && !ps0.testOut && workoutCreditsStep(ps0, lastR.firstTry, lastR.total, p.drillItems ?? {}, drillSettingsOf(settings ?? DEFAULT_SETTINGS).keyOrder) ? ps0.id : null;
       if (lastR && (!ps0 || lastR.sessionId !== ps0.after)) noteWorkoutResult(p, done0);
     }
     if (lastR?.lessonId === 'placement' && lastR.sessionId !== seenPlacement.current && settings) {

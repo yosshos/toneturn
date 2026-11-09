@@ -2,8 +2,8 @@
 import { describe, expect, it } from 'vitest';
 import { applyTake, itemPass, newItem } from '../src/engine/drills/ladder';
 import { itemTargetBpm, levelDrills, levelOfDrill, levelStars, LOW_B_LEVELS, shownFamilies } from '../src/engine/drills/plan';
-import { ladderHiddenFor } from '../src/engine/ladderFacts';
-import { eligible, stepCatalogue } from '../src/engine/path';
+import { ladderHiddenFor, withLadderFacts, workoutCreditsStep } from '../src/engine/ladderFacts';
+import { eligible, stepCatalogue, type PathFacts } from '../src/engine/path';
 import { guitarCatalog, type GuitarLevelDef } from '../src/engine/drills/guitar';
 import { generate } from '../src/engine/drills/generate';
 import { BASS_PROBES, placeWalk } from '../src/engine/drills/bassProbes';
@@ -316,6 +316,40 @@ describe('N9 eighth-pulse items have a ladder', () => {
       expect(t, d.itemId).toBeGreaterThan(d.startBpm);
       expect(t, d.itemId).toBe(Math.round((d.startBpm * lv.tempo![1]) / lv.tempo![0]));
     }
+  });
+});
+
+describe('N12 / N13 technique steps: workout credit and old 1-star facts', () => {
+  const lv = levelById('b-pluck-1');
+  const passAll = (): Record<string, ItemState> => {
+    const items: Record<string, ItemState> = {};
+    for (const d of levelDrills(lv, order)) {
+      const t = itemTargetBpm(d);
+      let st: ItemState = { ...newItem(d), goalBpm: t };
+      for (const at of ['2026-11-07T11:00:00Z', '2026-11-07T11:05:00Z', '2026-11-08T11:00:00Z']) st = applyTake(st, take('clean'), t, at, DEFAULT_DRILL_SETTINGS, { targetBpm: t }).state;
+      items[d.itemId] = st;
+    }
+    return items;
+  };
+
+  it('a perfect session share does not credit a tech step to the workout; the passed level does', () => {
+    const step = { id: 'tech:b-pluck-1', kind: 'tech' };
+    expect(workoutCreditsStep(step, 10, 10, {}, order)).toBe(false);
+    expect(workoutCreditsStep(step, 10, 10, passAll(), order)).toBe(true);
+    // other steps keep the session-share rule
+    expect(workoutCreditsStep({ id: 'lesson:x', kind: 'lesson' }, 10, 10, {}, order)).toBe(true);
+    expect(workoutCreditsStep({ id: 'lesson:x', kind: 'lesson' }, 1, 10, {}, order)).toBe(false);
+  });
+
+  it('old 1-star tech facts are kept (grandfathered); no new fact below 2 stars is created', () => {
+    const old = { steps: { 'tech:b-pluck-1': { stars: 1, at: '2026-10-01T00:00:00Z', times: 1, firstAt: '2026-10-01T00:00:00Z' } } } as unknown as PathFacts;
+    const opts = { families: ['b-pluck'], items: {}, order, start: {}, vocalPassed: [], at: '2026-11-09T00:00:00Z' };
+    const kept = withLadderFacts(old, opts);
+    expect(kept.steps?.['tech:b-pluck-1']?.stars).toBe(1);
+    const fresh = withLadderFacts({} as PathFacts, opts);
+    expect(Object.keys(fresh.steps ?? {}).filter((k) => k.startsWith('tech:'))).toEqual([]);
+    const passed = withLadderFacts({} as PathFacts, { ...opts, items: passAll() });
+    expect(passed.steps?.['tech:b-pluck-1']?.stars).toBeGreaterThanOrEqual(2);
   });
 });
 

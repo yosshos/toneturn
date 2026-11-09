@@ -7,7 +7,7 @@ import { guitarCatalog } from './drills/guitar';
 import { hiddenBassLevels, levelDrills, levelStars, shownFamilies, targetBpmOf } from './drills/plan';
 import { itemPass } from './drills/ladder';
 import type { Drill, DrillSettings, FamilyId, ItemState } from './drills/types';
-import { VOCAL_PROGRAMS, type PathFacts } from './path';
+import { stepStars, VOCAL_PROGRAMS, type PathFacts } from './path';
 
 let LEVELS: Map<string, LevelDef> | null = null;
 /** A technique level by its id ("scales-3", "g-bass-2"). */
@@ -47,7 +47,28 @@ export function techStars(level: LevelDef, items: Record<string, ItemState>, ord
 /** A technique step is done on the path at this many stars (1 star only shows progress). */
 export const TECH_DONE_STARS = 2;
 
-/** The path facts plus what the drills and the vocal programs measured (like lessons finished elsewhere). */
+/**
+ * N12: does a finished session credit its path step to the workout block (W2)? A technique step only when its level's
+ * measured rule has passed (≥ TECH_DONE_STARS from the drill items) — one session's first-try share never does. Other
+ * steps by the session's stars, as before. A session started from the workout counts its MINUTES either way.
+ */
+export function workoutCreditsStep(step: { id: string; kind: string }, firstTry: number, total: number, items: Record<string, ItemState>, order: DrillSettings['keyOrder']): boolean {
+  if (step.kind === 'tech') {
+    const lv = techLevel(step.id.replace(/^tech:/, ''));
+    return !!lv && techStars(lv, items, order) >= TECH_DONE_STARS;
+  }
+  return stepStars(step.kind as Parameters<typeof stepStars>[0], firstTry, total) > 0;
+}
+
+/**
+ * The path facts plus what the drills and the vocal programs measured (like lessons finished elsewhere).
+ *
+ * N13 (grandfathered, 0.64): builds before 0.64 recorded technique steps (`steps['tech:*']`) from one session's
+ * first-try share, some at 1 star. Those facts are KEPT — the path counts any stars > 0 as done, and a player keeps
+ * what they were given — and this function only ever raises stars. New technique facts are created only here, from the
+ * level rule (≥ 2 stars): App.notePathResult returns early for tech steps and the workout credits a tech step only
+ * through workoutCreditsStep. So no new 1-star technique fact can appear.
+ */
 export function withLadderFacts(
   f: PathFacts,
   opts: { families: string[]; items: Record<string, ItemState>; order: DrillSettings['keyOrder']; start: Partial<Record<FamilyId, number>>; vocalPassed: number[]; at: string },
