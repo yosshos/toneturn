@@ -5,7 +5,7 @@ import { expect, test } from '@playwright/test';
 test('splash → welcome → taste → three questions → the first lesson', async ({ page }) => {
   await page.goto('/?sim=1&welcome=1&splash=1&lang=en');
   await expect(page.locator('[data-splash]')).toBeVisible();
-  await expect(page.locator('[data-splash]')).toBeHidden({ timeout: 5000 });
+  await expect(page.locator('[data-splash]')).toBeHidden({ timeout: 9000 });
   await expect(page.locator('[data-onboarding="welcome"]')).toBeVisible();
   await expect(page.locator('[data-side-nav]')).toBeHidden();
   await page.locator('[data-ob="start"]').click();

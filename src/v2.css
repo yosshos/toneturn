@@ -1726,3 +1726,15 @@
 :root[data-theme] .ov-col i { display: block; width: 100%; max-width: 30px; border-radius: 14px; background: var(--teal); border: 2px solid var(--ink-c); box-sizing: border-box; }
 :root[data-theme] .ov-col i.zero { background: var(--card-2); border-style: dashed; }
 :root[data-theme] .ov-col small { font-size: 0.72rem; font-weight: 700; color: var(--ink-dim); }
+/* Splash timeline (0.63, owner: calmer, time to read the slogan): logo drawn 0.2–2.4 s, name at 2.0 s, slogan at 2.7 s,
+   held until 4.6 s, then a slow fade into the app (5.3 s). A tap still skips. */
+:root[data-theme] .splash { animation: splash-out 0.7s ease 4.6s both; }
+:root[data-theme] .splash-logo .sp-ear { animation: sp-draw 1.2s cubic-bezier(0.45, 0, 0.25, 1) 0.2s forwards; }
+:root[data-theme] .splash-logo .sp-seven { animation: sp-draw 0.7s cubic-bezier(0.45, 0, 0.25, 1) 1.1s forwards; }
+:root[data-theme] .splash-logo .sp-wave { animation: sp-draw 0.8s ease-out 1.5s forwards; }
+:root[data-theme] .splash-logo .d0 { animation-delay: 2.1s; }
+:root[data-theme] .splash-logo .d1 { animation-delay: 2.25s; }
+:root[data-theme] .splash-logo .d2 { animation-delay: 2.4s; }
+:root[data-theme] .splash .splash-word { animation: sp-fade 0.8s ease 2s both; }
+:root[data-theme] .splash .splash-slogan { animation: v2-rise 0.8s ease-out 2.7s forwards; }
+@media (prefers-reduced-motion: reduce) { :root[data-theme] .splash { animation: splash-out 0.5s ease 2.6s both; } :root[data-theme] .splash .splash-word { animation: none; } }

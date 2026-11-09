@@ -54,7 +54,7 @@ export function Splash({ onDone, lang = 'he' }: { onDone: () => void; lang?: Lan
   useEffect(() => {
     const reduced = document.documentElement.dataset.motion === 'reduced' || matchMedia('(prefers-reduced-motion: reduce)').matches;
     // 0.63 (owner): long enough to read the name and the slogan.
-    const id = setTimeout(finish, reduced ? 1200 : 2800);
+    const id = setTimeout(finish, reduced ? 3100 : 5300);
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
