@@ -4,7 +4,7 @@
 // Every note carries string / fret; `pos` = index-finger fret of the hand position; `finger` = fretting-hand finger
 // 1–4 (help only, never graded); `stroke` = picking hand (help only: pick direction cannot be heard).
 
-import type { Drill, DrillGoal, DrillSettings, DrillSpec, ExpNote, FamilyId } from './types';
+import type { Drill, DrillGoal, DrillSettings, DrillSpec, ExpNote, FamilyId, LevelExamTag } from './types';
 import type { FamilyDef, LevelDef, SpecTemplate } from './generate';
 import { noteAt, tuningById, type Tuning } from '../fretboard';
 import { SONGBOOK, songChords, songNotes } from '../../content/songbook';
@@ -23,6 +23,8 @@ export interface GuitarFamilyDef extends FamilyDef {
   levels: GuitarLevelDef[];
   /** Kept only so old progress / path ids stay valid; not shown in the hub or new course paths. */
   retired?: boolean;
+  /** Bass: the upright / double-bass track (BASS_CURRICULUM §5.1), a secondary track grouped on its own. */
+  upright?: boolean;
 }
 export interface GuitarLevelDef extends LevelDef {
   /** Genres of this level (rhythm guitar levels are per genre); absent = the family's genres. */
@@ -30,6 +32,8 @@ export interface GuitarLevelDef extends LevelDef {
   /** Bass levels: start → target tempo (♩) and the subdivision, from BASS_CURRICULUM §5. */
   tempo?: [number, number];
   sub?: string;
+  /** Bass: exam / bagrut mapping of the level (BASS_AUDIT §3), shown on the level card and used by badges. */
+  exam?: LevelExamTag[];
 }
 
 export type T2 = { en: string; he: string };
