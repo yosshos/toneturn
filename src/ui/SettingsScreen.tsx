@@ -1020,14 +1020,14 @@ export const SOUND_GROUPS: { id: string; name: { en: string; he: string }; sound
 export const SOUNDS = SOUND_GROUPS.flatMap((g) => g.sounds);
 const SOUND_NAME: Record<string, { en: string; he: string; note: { en: string; he: string } }> = {
   grand: { en: 'Concert grand', he: 'פסנתר כנף', note: { en: '16 dynamics, recorded', he: '16 עוצמות, מוקלט' } },
-  upright: { en: 'Upright piano', he: 'פסנתר עומד', note: { en: 'Recorded', he: 'מוקלט' } },
+  upright: { en: 'Upright piano', he: 'פסנתר עומד', note: { en: '3 dynamics, recorded', he: '3 עוצמות, מוקלט' } },
   classic: { en: 'Synth piano', he: 'פסנתר סינתטי', note: { en: 'Light, no download', he: 'קל, בלי הורדה' } },
   wurli: { en: 'Wurlitzer', he: 'וורליצר', note: { en: '4 dynamics, recorded', he: '4 עוצמות, מוקלט' } },
   tine: { en: 'Tine electric piano', he: 'פסנתר חשמלי (טיין)', note: { en: 'Modelled, follows your touch', he: 'ממודל, מגיב למגע' } },
   tonewheel: { en: 'Tonewheel organ', he: 'אורגן גלגלי צליל', note: { en: 'Drawbars, percussion, rotating speaker', he: 'דרואברים, פרקשן, רמקול מסתובב' } },
   organ: { en: 'Pipe organ', he: 'עוגב צינורות', note: { en: 'Recorded', he: 'מוקלט' } },
-  vibraphone: { en: 'Vibraphone', he: 'ויברפון', note: { en: 'Recorded', he: 'מוקלט' } },
-  marimba: { en: 'Marimba', he: 'מרימבה', note: { en: 'Recorded', he: 'מוקלט' } },
+  vibraphone: { en: 'Vibraphone', he: 'ויברפון', note: { en: '3 dynamics, recorded', he: '3 עוצמות, מוקלט' } },
+  marimba: { en: 'Marimba', he: 'מרימבה', note: { en: '3 dynamics, recorded', he: '3 עוצמות, מוקלט' } },
   harp: { en: 'Harp', he: 'נבל', note: { en: 'Recorded', he: 'מוקלט' } },
   harpsichord: { en: 'Harpsichord', he: 'צ׳מבלו', note: { en: 'Recorded', he: 'מוקלט' } },
 };

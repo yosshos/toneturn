@@ -1,4 +1,4 @@
-"""Vibraphone and marimba with their dynamics (0.58), from the Versilian Community Sample Library (CC0).
+"""Vibraphone, marimba and the upright piano with their dynamics (0.58), from the Versilian Community Sample Library (CC0).
 
     python -I scripts/build-mallets.py <raw dir with the VCSL wavs> <out dir> <manifest.json to update>
 
@@ -48,6 +48,8 @@ def rms_db(y, rate, win=0.15):
 
 INSTR = {
     'vibes': (5.0, [(r'^Vibes_soft_([A-G]#?\d)_v1_rr1_Main\.wav$', 1), (r'^Vibes_soft_([A-G]#?\d)_v2_rr1_Main\.wav$', 2), (r'^Vibes_hard_([A-G]#?\d)_v2_rr1_Main\.wav$', 3), (r'^Vibes_hard_([A-G]#?\d)_v3_rr1_Main\.wav$', 4)]),
+    # the Yamaha upright: its octave numbers put middle C at C3 (pitch measured), 3 dynamics, C and G in every octave
+    'upright': (6.0, [(r'^Upright1_Sus_([A-G]#?\d)_vl1_rr1\.wav$', 1), (r'^Upright1_Sus_([A-G]#?\d)_vl2_rr1\.wav$', 2), (r'^Upright1_Sus_([A-G]#?\d)_vl3_rr1\.wav$', 3)]),
     'marimba': (2.6, [(r'^Marimba_hit_Outrigger_([A-G]#?\d)_soft_01\.wav$', 1), (r'^Marimba_hit_Outrigger_([A-G]#?\d)_med_01\.wav$', 2), (r'^Marimba_hit_Outrigger_([A-G]#?\d)_loud_01\.wav$', 3)]),
 }
 files = os.listdir(RAW)
@@ -60,7 +62,9 @@ for inst, (longest, pats) in INSTR.items():
             m = re.match(pat, f)
             if m:
                 x, r = sf.read(os.path.join(RAW, f), dtype='float32', always_2d=True)
-                data[(layer, midi_of(m.group(1)))] = (trim(x, r, longest), r)
+                data[(layer, midi_of(m.group(1)) + (12 if inst == 'upright' else 0))] = (trim(x, r, longest), r)
+    if not data:
+        continue  # this instrument's files are not in the folder
     gpeak = max(float(np.abs(y).max()) for y, _ in data.values())
     gain = 10 ** (-1 / 20) / gpeak
     for _, layer in pats:

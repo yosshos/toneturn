@@ -38,6 +38,16 @@ const GRAND_TRIM = 0.61;
 const DRUM_TRIM_DB: Record<string, number> = { kick: 5.5, snare: 1.5, rim: 4.5, hat: 7, 'hat-foot': 6, 'hat-open': 5, ride: 8, 'ride-bell': 6, crash: 2, 'tom-hi': 2, 'tom-lo': 2 };
 /** The pizzicato bass, matched to the earlier single-layer bass at a velocity of 0.7. */
 const BASS_TRIM = 0.8;
+/**
+ * Instruments with recorded dynamics (0.58, VCSL): the vibraphone (soft mallets for soft playing, hard for loud —
+ * so the colour never jumps back) and the marimba. The middle layer loads first; the trim matches the earlier
+ * single-layer sound at a velocity of 0.75.
+ */
+const LAYERED: Record<string, { sets: string[]; trim: number }> = {
+  vibraphone: { sets: ['vibes-1', 'vibes-2', 'vibes-4'], trim: Math.pow(10, -0.3 / 20) },
+  marimba: { sets: ['marimba-1', 'marimba-2', 'marimba-3'], trim: Math.pow(10, 4.5 / 20) },
+  upright: { sets: ['upright-1', 'upright-2', 'upright-3'], trim: Math.pow(10, -1.4 / 20) },
+};
 /** The Wurlitzer next to the grand. */
 const WURLI_TRIM = 0.6;
 /** Percussion kinds → pieces of the recorded kit. */
@@ -139,7 +149,14 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     const load = (async () => {
       try {
         // the Wurlitzer: its mp layer is the base, the other dynamics load behind it
-        const bank = id === 'wurli' ? { ...(await this.loadSet('wurli-mp', onProgress)), id: 'wurli' } : await this.loadSet(id, onProgress);
+        const lay = LAYERED[id];
+        const baseSet = lay ? lay.sets[1] : null;
+        const bank = id === 'wurli' ? { ...(await this.loadSet('wurli-mp', onProgress)), id: 'wurli' } : baseSet ? { ...(await this.loadSet(baseSet, onProgress)), id } : await this.loadSet(id, onProgress);
+        if (lay && baseSet) {
+          this.extras.set(baseSet, { ...bank, id: baseSet });
+          for (const l of lay.sets) this.loadExtra(l);
+          void this.sets().then((all) => lay.sets.forEach((l) => all[l] && (this.info[l] = all[l])));
+        }
         if (id === 'wurli') {
           this.extras.set('wurli-mp', { ...bank, id: 'wurli-mp' });
           for (const l of WURLI_LAYERS) this.loadExtra(l.id);
@@ -311,6 +328,14 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     if (bank.id === 'tonewheel') return this.playOrgan(midi, velocity, start, dur);
     if (bank.id === 'tine') return this.playTine(midi, velocity, start, dur);
     if (bank.id === 'wurli') return this.playWurli(midi, velocity, start, dur);
+    if (LAYERED[bank.id]) {
+      const lay = LAYERED[bank.id];
+      const want = layerOf(velocity, lay.sets.length);
+      if (!this.extras.has(lay.sets[want])) this.loadExtra(lay.sets[want]);
+      const i = nearestLoaded(lay.sets.length, want, (k) => this.extras.has(lay.sets[k]));
+      const dbs = lay.sets.map((l) => this.info[l]?.db ?? -20);
+      if (i >= 0) return this.playBuf(this.extras.get(lay.sets[i])!, midi, start, dur, layerGain(velocity, dbs, i) * lay.trim);
+    }
     if (bank.id === 'grand' && this.grandLayers?.length) {
       // 16 velocity layers: the layer gives the timbre, the level follows a smooth line through the layers' measured
       // loudness. A layer still loading is stood in for by its nearest loaded neighbour (and asked for now).

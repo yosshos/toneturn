@@ -1,7 +1,7 @@
 {
  "credits": {
   "grand": "Salamander Grand Piano V3 — Alexander Holm (CC BY 3.0, https://creativecommons.org/licenses/by/3.0/). Source: https://github.com/sfzinstruments/SalamanderGrandPiano (SFZ reconstruction by kinwie). Sets grand-v01…v16 are its 16 velocity layers; grand-rel, grand-resL/S and grand-pedal its release, release-resonance and pedal samples — trimmed, faded, level-scaled as one set and encoded to MP3 (changes made).",
-  "vcsl": "Versilian Community Sample Library — Versilian Studios (CC0)",
+  "vcsl": "Versilian Community Sample Library — Versilian Studios (CC0); the vibraphone (soft and hard mallets) and marimba with their recorded dynamics.",
   "bass": "Upright bass (pizzicato): 1958 Otto Rubner double bass played and sampled by D. Smolken, 2013 (CC0 1.0), all dynamics and alternate strikes; trimmed and encoded to MP3.",
   "drums": "Virtuosity Drums — Versilian Studios & Karoryfer Samples (CC0), mid-room microphones; trimmed and encoded to MP3.",
   "wurli": "Wurlitzer EP200 — Greg Sullivan (CC BY 3.0, https://creativecommons.org/licenses/by/3.0/), SFZ mapping by kinwie; trimmed, level-scaled and encoded to MP3 (changes made)."
@@ -1709,6 +1709,159 @@
     79
    ],
    "db": -11.02
+  },
+  "vibes-1": {
+   "ext": "mp3",
+   "notes": [
+    41,
+    45,
+    55,
+    59,
+    62,
+    65,
+    69,
+    72,
+    76
+   ],
+   "db": -39.57
+  },
+  "vibes-2": {
+   "ext": "mp3",
+   "notes": [
+    41,
+    45,
+    48,
+    52,
+    55,
+    59,
+    62,
+    65,
+    69,
+    72,
+    76
+   ],
+   "db": -20.35
+  },
+  "vibes-4": {
+   "ext": "mp3",
+   "notes": [
+    41,
+    45,
+    48,
+    52,
+    55,
+    59,
+    62,
+    65,
+    69,
+    72,
+    76
+   ],
+   "db": -16.47
+  },
+  "marimba-1": {
+   "ext": "mp3",
+   "notes": [
+    29,
+    36,
+    43,
+    47,
+    53,
+    60,
+    67,
+    71,
+    77,
+    84
+   ],
+   "db": -45.56
+  },
+  "marimba-2": {
+   "ext": "mp3",
+   "notes": [
+    29,
+    36,
+    43,
+    47,
+    53,
+    60,
+    67,
+    71,
+    77,
+    84
+   ],
+   "db": -30.99
+  },
+  "marimba-3": {
+   "ext": "mp3",
+   "notes": [
+    29,
+    36,
+    43,
+    47,
+    53,
+    60,
+    67,
+    71,
+    77,
+    84
+   ],
+   "db": -18.75
+  },
+  "upright-1": {
+   "ext": "mp3",
+   "notes": [
+    24,
+    31,
+    36,
+    43,
+    48,
+    55,
+    60,
+    67,
+    72,
+    79,
+    84,
+    91
+   ],
+   "db": -43.73
+  },
+  "upright-2": {
+   "ext": "mp3",
+   "notes": [
+    24,
+    31,
+    36,
+    43,
+    48,
+    55,
+    60,
+    67,
+    72,
+    79,
+    84,
+    91,
+    96
+   ],
+   "db": -26.49
+  },
+  "upright-3": {
+   "ext": "mp3",
+   "notes": [
+    24,
+    31,
+    36,
+    43,
+    48,
+    55,
+    60,
+    67,
+    72,
+    79,
+    84,
+    91,
+    96
+   ],
+   "db": -16.56
   }
  }
 }

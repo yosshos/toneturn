@@ -90,3 +90,12 @@ describe('backing tracks play their bass lines on the bass', () => {
     }
   });
 });
+
+describe('instruments with recorded dynamics (0.58)', () => {
+  it('vibraphone, marimba and upright: each layer louder than the one below, notes across the range', () => {
+    for (const sets of [['vibes-1', 'vibes-2', 'vibes-4'], ['marimba-1', 'marimba-2', 'marimba-3'], ['upright-1', 'upright-2', 'upright-3']]) {
+      for (let i = 1; i < sets.length; i++) expect(manifest.sets[sets[i]].db!, sets[i]).toBeGreaterThan(manifest.sets[sets[i - 1]].db!);
+      for (const s of sets) expect(manifest.sets[s].notes.length, s).toBeGreaterThanOrEqual(9);
+    }
+  });
+});

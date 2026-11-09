@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.59.0',
+    date: '2026-11-09',
+    en: ['The vibraphone, marimba and upright piano now have their recorded dynamics too — three each, soft to loud (the vibraphone on soft mallets when you play softly, hard ones when you play out)'],
+    he: ['גם לוויברפון, למרימבה ולפסנתר העומד יש עכשיו את העוצמות המוקלטות שלהם — שלוש לכל אחד, משקט לחזק (הוויברפון במקושים רכים כשמנגנים בשקט, קשים כשמנגנים חזק)'],
+  },
+  {
     version: '0.58.0',
     date: '2026-11-09',
     en: [
