@@ -59,6 +59,7 @@ export function MiniLessonPlayer({ t, settings, lesson, name, onFinish, startDee
   }, [i, phase]);
   const ctl = useRef<AbortController | null>(null);
   const typedDone = useRef<(() => void) | null>(null);
+  const typedFinished = useRef(false);
   const [talk] = useTalk();
   const step = steps[i];
 
@@ -73,6 +74,8 @@ export function MiniLessonPlayer({ t, settings, lesson, name, onFinish, startDee
     if (phase !== 'playing') return;
     const c = new AbortController();
     ctl.current = c;
+    typedFinished.current = false;
+    typedDone.current = null;
     void (async () => {
       try {
         await piano.unlock();
@@ -81,10 +84,12 @@ export function MiniLessonPlayer({ t, settings, lesson, name, onFinish, startDee
         if (SIMULATED) await new Promise((r) => setTimeout(r, 250));
         else if (!voiceOn(lang)) {
           // 0.64 (owner): reading mode types the text out word by word (TypedText), then a moment to read it.
-          await new Promise<void>((res) => {
-            typedDone.current = res;
-            c.signal.addEventListener('abort', () => res());
-          });
+          // The text may already have finished typing (unlocking audio / an example can take a moment).
+          if (!typedFinished.current)
+            await new Promise<void>((res) => {
+              typedDone.current = res;
+              c.signal.addEventListener('abort', () => res());
+            });
           await new Promise((r) => setTimeout(r, 700 + Math.min(2500, text.split(/\s+/).length * 60)));
         } else await tts.speak(text, lang, c.signal);
         if (!step.playFirst) await playExample(c.signal);
@@ -199,7 +204,10 @@ export function MiniLessonPlayer({ t, settings, lesson, name, onFinish, startDee
             <NotesView midis={step.show.notes} keyPc={step.show.key ? pc(step.show.key) : null} settings={settings} chord={step.show.chord} durs={step.show.durs} clef={step.show.clef} />
           )}
           <p className="mini-caption" aria-live="polite">
-            {SIMULATED ? personal(step.say[lang], name) : <TypedText key={`${deep}-${i}`} text={personal(step.say[lang], name)} sound={!talk || lang === 'he'} msPerWord={talk && lang === 'en' ? 260 : 120} onDone={() => typedDone.current?.()} />}
+            {SIMULATED ? personal(step.say[lang], name) : <TypedText key={`${deep}-${i}`} text={personal(step.say[lang], name)} sound={!talk || lang === 'he'} msPerWord={talk && lang === 'en' ? 260 : 120} onDone={() => {
+              typedFinished.current = true;
+              typedDone.current?.();
+            }} />}
           </p>
           {words.length > 0 && <TermChips words={words} lang={lang} active={term} onPick={explain} label={t.termsWhat} />}
           {term && <TermCard term={term} lang={lang} onReplay={() => void playSound(term.play)} onClose={() => setTerm(null)} closeLabel={t.termClose} />}

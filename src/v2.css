@@ -1662,9 +1662,9 @@
 :root[data-theme] .path2 .road .sys { position: relative; height: 176px; list-style: none; margin: 0 0 6px; }
 :root[data-theme] .path2 .road .sys-staff { position: absolute; inset-inline: 4px; top: 48px; width: calc(100% - 8px); height: 56px; overflow: visible; }
 :root[data-theme] .path2 .road .sys-notes { list-style: none; margin: 0; padding: 0; position: static; }
-:root[data-theme] .path2 .road .sys .node { position: static; height: 0; display: block; opacity: 1; transform: none; }
-:root[data-theme] .path2 .road .sys .node .node-btn { position: absolute; width: 128px; top: var(--top); inset-inline-start: var(--x); translate: -50% 0; z-index: 1; }
-:root[data-theme][dir='rtl'] .path2 .road .sys .node .node-btn { translate: 50% 0; }
+:root[data-theme] .path2 .road .sys .node { position: absolute; height: auto; width: 128px; top: var(--top); inset-inline-start: var(--x); translate: -50% 0; display: block; opacity: 1; transform: none; z-index: 1; }
+:root[data-theme] .path2 .road .sys .node .node-btn { position: static; width: 128px; translate: none; }
+:root[data-theme][dir='rtl'] .path2 .road .sys .node { translate: 50% 0; }
 :root[data-theme] .path2 .road .sys .node[data-slot='0'] { --x: 17%; --top: 66px; }
 :root[data-theme] .path2 .road .sys .node[data-slot='1'] { --x: 43%; --top: 46px; }
 :root[data-theme] .path2 .road .sys .node[data-slot='2'] { --x: 69%; --top: 28px; }
@@ -1681,8 +1681,8 @@
 :root[data-theme] .path2 .road .sys .node .mini-stars { display: none; }
 :root[data-theme] .path2 .road .sys .node .node-go { padding: 6px 11px; border-radius: 12px; background: var(--ink-c); color: var(--lemon); font-size: 12px; font-weight: 900; white-space: nowrap; }
 :root[data-theme] .path2 .road .sys .node .node-bar { display: block; color: var(--purple); margin-top: -30px; }
-:root[data-theme] .path2 .road .sys .node.kind-check .node-btn,
-:root[data-theme] .path2 .road .sys .node.kind-review .node-btn { --top: 18px; }
+:root[data-theme] .path2 .road .sys .node.kind-check,
+:root[data-theme] .path2 .road .sys .node.kind-review { --top: 18px; }
 :root[data-theme] .path2 .road .sys .node.kind-check.locked .node-bar { color: var(--lilac); }
 
 /* ── Practice as colour tiles (0.63, design board PhonePractice) ── */
