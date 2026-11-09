@@ -1904,3 +1904,11 @@
 ) { color: var(--gold-ink); }
 
 :root[data-theme='light'] .good { color: var(--mint-deep); }
+
+/* 0.65 (owner, readability): a selected row / tile is tinted lilac, not lemon — the piano and guitar course marks are lemon
+   and vanished on a pale-yellow tint. */
+:root[data-theme] :is(.ob-choice, .intake-opt, .rank-btn):is(.on, [aria-checked='true'], [aria-pressed='true']),
+:root[data-theme] .course-row.on,
+:root[data-theme] .ob-course.on {
+  background: color-mix(in srgb, var(--purple) 12%, var(--card));
+}
