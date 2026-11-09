@@ -9,22 +9,20 @@ import type { Strings } from '../i18n/strings';
 const fmt = (s: string, v: Record<string, string | number>) => s.replace(/\{(\w+)\}/g, (_, k) => String(v[k] ?? ''));
 const reduced = () => document.documentElement.dataset.motion === 'reduced';
 
+/** The streak mark (0.61, SPEC-REDESIGN): a streak is counted in bars — a measure with a note, lemon once today is in.
+ *  (The name stays Flame for the callers.) */
 export function Flame({ lit, size = 22 }: { lit: boolean; size?: number }) {
   return (
-    <svg className={`flame ${lit ? 'lit' : 'cold'}`} width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
-      <defs>
-        <linearGradient id={lit ? 'fl-lit' : 'fl-cold'} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor={lit ? '#FFD66B' : '#B9AECF'} />
-          <stop offset="1" stopColor={lit ? '#FF5E3A' : '#6E6190'} />
-        </linearGradient>
-      </defs>
-      <path d="M12 2c1 3.5 5.5 6 5.5 11a5.5 5.5 0 0 1-11 0c0-2.4 1.2-3.9 2.4-5.1.2 1.6.9 2.6 1.9 3.1C10.3 8.2 11.2 4.9 12 2z" fill={`url(#${lit ? 'fl-lit' : 'fl-cold'})`} />
-      <path d="M12 12.5c.6 1.4 2.3 2.2 2.3 4.1a2.3 2.3 0 0 1-4.6 0c0-1.3.9-2.2 2.3-4.1z" fill={lit ? '#FFF1B8' : '#D7D0E6'} opacity=".9" />
+    <svg className={`flame bars ${lit ? 'lit' : 'cold'}`} width={size * 1.3} height={size} viewBox="0 0 30 22" aria-hidden="true">
+      {lit && <rect x="15" y="2" width="12" height="18" rx="2" fill="#FFD43B" />}
+      <path d="M2 5H28M2 9H28M2 13H28M2 17H28" stroke="currentColor" strokeWidth="1" opacity=".35" />
+      <path d="M2 2V20M15 2V20M28 2V20" stroke="currentColor" strokeWidth="2.2" />
+      <ellipse cx="8.5" cy="14" rx="3.4" ry="2.5" transform="rotate(-20 8.5 14)" fill={lit ? '#6D28D9' : 'currentColor'} opacity={lit ? 1 : 0.45} />
+      <ellipse cx="21.5" cy="9.5" rx="3.4" ry="2.5" transform="rotate(-20 21.5 9.5)" fill={lit ? '#1E1033' : 'currentColor'} opacity={lit ? 1 : 0.3} />
     </svg>
   );
 }
 
-/** Header chip: flame (grey until today is done) + count; opens the streak sheet. */
 export function StreakChip({ t, st, onOpen }: { t: Strings; st: StreakState; onOpen: () => void }) {
   return (
     <button className={`chip streak streak-chip ${st.practicedToday ? 'done' : 'todo'}`} onClick={onOpen} aria-label={`${t.streak}: ${st.count}${st.practicedToday ? '' : ` · ${t.streakTodo}`}`}>
@@ -282,8 +280,11 @@ export function StreakSheet({
 export function FreezeToast({ t, count, onClose }: { t: Strings; count: number; onClose: () => void }) {
   return (
     <div className="freeze-toast" role="status">
-      <span className="ice" aria-hidden="true">
-        <Icon k="snow" size={20} />
+      <span className="ice fermata" aria-hidden="true">
+        <svg viewBox="0 0 24 20" width="24" height="20">
+          <path d="M3 15a9 9 0 0 1 18 0" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
+          <circle cx="12" cy="13" r="2.2" fill="currentColor" />
+        </svg>
       </span>
       <span>{fmt(t.freezeUsed, { n: count })}</span>
       <button className="icon-btn small" onClick={onClose} aria-label={t.done}>
