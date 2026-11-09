@@ -15,7 +15,7 @@ test.describe('desktop layout', () => {
     await nav.locator('[data-nav="drills"]').click();
     await expect(page.locator('[data-drills="hub"]')).toBeVisible();
     // Tools is a group: it opens in place
-    await nav.locator('[data-nav="tools"]').click();
+    await nav.locator('[data-nav="group:tools"]').click();
     await nav.locator('[data-nav="metronome"]').click();
     await expect(page.locator('[data-metro-play]')).toBeVisible();
     // collapse to the rail and back (remembered)

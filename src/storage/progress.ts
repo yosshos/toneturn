@@ -301,6 +301,11 @@ export interface Settings {
   sound?: string;
   /** The concert grand's detail (0.54): 'auto' = all 16 layers on a computer, 8 on a light phone. */
   pianoDetail?: 'auto' | 'full' | 'light';
+  /** The tonewheel organ (0.55): registration and rotating-speaker speed; the tine piano's tremolo (0–1); the band's drums. */
+  organReg?: string;
+  organFast?: boolean;
+  epTremolo?: number;
+  bandDrums?: 'jazz' | 'classic';
   /** Drone sound: 'soft' (synthesised, default) or a sustained recorded set ('organ'). */
   droneSound?: string;
   /** Colour theme (cosmetic, bought with gems). */

@@ -8,7 +8,7 @@ import { Logo } from './bits';
 
 export type NavId =
   | TabId
-  | 'songs' | 'drills' | 'learned' | 'pieces' | 'charts' | 'improv' | 'puzzle' | 'exams'
+  | 'songs' | 'drills' | 'learned' | 'pieces' | 'charts' | 'improv' | 'puzzle' | 'exams' | 'gamelist'
   | 'insights' | 'achievements'
   | 'tuner' | 'metronome' | 'drone' | 'groove' | 'slowdown' | 'mixer' | 'log'
   | 'placement' | 'diagnostics' | 'settings';
@@ -47,6 +47,21 @@ const ICON = {
     </>,
   ),
   chevron: I(<path d="M9 6l6 6-6 6" />),
+  play: I(
+    <>
+      <path d="M9 18V5l11-2v13" />
+      <circle cx="6.5" cy="18" r="2.5" />
+      <circle cx="17.5" cy="16" r="2.5" />
+    </>,
+  ),
+  train: I(
+    <>
+      <path d="M8 12h8" />
+      <rect x="5" y="7" width="3" height="10" rx="1" />
+      <rect x="16" y="7" width="3" height="10" rx="1" />
+      <path d="M2.5 9.5v5M21.5 9.5v5" />
+    </>,
+  ),
   cap: I(
     <>
       <path d="M3 9.5 12 5l9 4.5-9 4.5z" />
@@ -66,18 +81,37 @@ const ICON = {
 const SECTIONS: Section[] = [
   { id: 'home', label: { en: 'Today', he: 'היום' }, icon: TAB_ICONS.home },
   { id: 'path', label: { en: 'Path', he: 'מסלול' }, icon: TAB_ICONS.path },
-  { id: 'improv', label: { en: 'Improvise', he: 'אלתור' }, icon: ICON.improv },
-  { id: 'exams', label: { en: 'Programs & exams', he: 'תכניות לימוד ומבחנים' }, icon: ICON.cap },
+  // Play / Train / Study (SPEC-IA-2, owner 2026-11-09): the same four groups as the Practice page
   {
-    id: 'arcade',
-    label: { en: 'Practice', he: 'תרגול' },
-    icon: TAB_ICONS.arcade,
+    id: 'songs',
+    group: true,
+    label: { en: 'Play', he: 'לנגן' },
+    icon: ICON.play,
     children: [
       { id: 'songs', label: { en: 'Songs', he: 'שירים' } },
-      { id: 'drills', label: { en: 'Technique', he: 'טכניקה' } },
-      { id: 'learned', label: { en: 'Lessons', he: 'שיעורים' } },
       { id: 'pieces', label: { en: 'My pieces', he: 'היצירות שלי' } },
-      { id: 'charts', label: { en: 'Chord charts', he: 'מהלכים' } },
+      { id: 'charts', label: { en: 'Charts & lead sheets', he: 'מהלכים וליד־שיטים' } },
+    ],
+  },
+  {
+    id: 'drills',
+    group: true,
+    label: { en: 'Train', he: 'להתאמן' },
+    icon: ICON.train,
+    children: [
+      { id: 'drills', label: { en: 'Technique', he: 'טכניקה' } },
+      { id: 'improv', label: { en: 'Improvise', he: 'אלתור' } },
+      { id: 'gamelist', label: { en: 'Games', he: 'משחקים' } },
+    ],
+  },
+  {
+    id: 'learned',
+    group: true,
+    label: { en: 'Study', he: 'ללמוד' },
+    icon: ICON.cap,
+    children: [
+      { id: 'learned', label: { en: 'Lessons', he: 'שיעורים' } },
+      { id: 'exams', label: { en: 'Programs & exams', he: 'תכניות לימוד ומבחנים' } },
       { id: 'puzzle', label: { en: 'Progression of the day', he: 'מהלך היום' } },
     ],
   },
@@ -111,6 +145,7 @@ const TOOLS: Section = {
 /** Which section a screen belongs to (for the highlight and the open section). */
 export function sectionOf(route: string): NavId | 'tools' | null {
   for (const s of SECTIONS) if (s.id === route || s.children?.some((c) => c.id === route)) return s.id;
+  if (route === 'games' || route === 'arcade') return 'drills';
   if (TOOLS.children!.some((c) => c.id === route)) return 'tools';
   if (route === 'settings' || route === 'diagnostics') return route;
   return null;
@@ -181,7 +216,7 @@ export function Sidebar({ route, lang, onNav, badges, me }: { route: string; lan
             aria-current={!s.group && route === s.id ? 'page' : undefined}
             aria-expanded={s.group ? isOpen : undefined}
             title={L(s.label)}
-            data-nav={s.group ? key : s.id}
+            data-nav={s.group ? `group:${key}` : s.id}
           >
             {svg(s.icon)}
             <span className="sn-label">{L(s.label)}</span>

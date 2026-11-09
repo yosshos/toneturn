@@ -12,7 +12,7 @@ interface Props {
   settings: Settings;
   user: CloudUser | null;
   onClose: () => void;
-  onNavigate: (r: 'tuner' | 'metronome' | 'drone' | 'friends' | 'settings' | 'diagnostics' | 'games' | 'classes' | 'placement' | 'truefalse' | 'achievements' | 'studio' | 'exams' | 'improv' | 'charts') => void;
+  onNavigate: (r: 'tuner' | 'metronome' | 'drone' | 'friends' | 'settings' | 'diagnostics' | 'games' | 'classes' | 'placement' | 'truefalse' | 'achievements' | 'studio' | 'exams' | 'improv' | 'charts' | 'groove' | 'slowdown') => void;
   onSettings: (p: Partial<Settings>) => void;
 }
 
@@ -79,6 +79,18 @@ const MENU_ICON: Record<string, React.ReactNode> = {
       <path d="M9 5v14M15 5v14M3.5 12h17" />
     </>
   ),
+  groove: (
+    <>
+      <path d="M3 15c2 0 2-6 4.5-6S10 15 12 15s2.5-6 4.5-6S19 15 21 15" />
+      <path d="M3 20h18" />
+    </>
+  ),
+  slowdown: (
+    <>
+      <circle cx="12" cy="13" r="8" />
+      <path d="M12 9v4l2.5 2M9.5 2.5h5" />
+    </>
+  ),
   mic: (
     <>
       <rect x="9" y="3" width="6" height="11" rx="3" />
@@ -130,15 +142,12 @@ export function MenuSheet({ t, settings, user, onClose, onNavigate, onSettings }
         {/* Grouped by what you do (owner 2026-11-08: the old list mixed the level test, settings and tools) */}
         {(
           [
-            [lang === 'he' ? 'ללמוד' : 'Learn', [
-              ['exams', 'class', lang === 'he' ? 'תכניות לימוד ומבחנים' : 'Study programs & exams'],
-              ['improv', 'note', lang === 'he' ? 'אלתור עם כללים' : 'Improvise under rules'],
-              ['charts', 'chart', lang === 'he' ? 'מהלכים וליד־שיטים' : 'Charts & lead sheets'],
-            ]],
             [lang === 'he' ? 'כלים' : 'Tools', [
               ['tuner', 'tuner', lang === 'he' ? 'טיונר' : 'Tuner'],
               ['metronome', 'metronome', lang === 'he' ? 'מטרונום' : 'Metronome'],
               ['drone', 'drone', lang === 'he' ? 'צליל רקע' : 'Drone'],
+              ['groove', 'groove', lang === 'he' ? 'מאמן גרוב' : 'Groove trainer'],
+              ['slowdown', 'slowdown', lang === 'he' ? 'האטה ולופ' : 'Slow down & loop'],
             ]],
             [lang === 'he' ? 'בדיקה' : 'Check yourself', [
               ['placement', 'level', t.findLevel],

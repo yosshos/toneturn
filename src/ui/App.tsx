@@ -162,6 +162,7 @@ export function App() {
   const [onlineFacts, setOnlineFacts] = useState<{ topics: FactTopic[]; level: FactLevel } | null>(null);
   const [duel, setDuel] = useState<{ names: string[]; kind: SetKind; rounds: number } | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [arcadeKey, setArcadeKey] = useState(0);
   // Pricing (0.54): public prices and the free tier's limit; my plan (signed in). The cool-down shows when a free
   // player starts a lesson after today's free minutes (only when the owner turned the limit on).
   const [pricing, setPricing] = useState<Pricing | null>(null);
@@ -1004,6 +1005,13 @@ export function App() {
   }, [soundId]);
   const pianoDetail = settings?.pianoDetail ?? 'auto';
   useEffect(() => piano.setPianoDetail(pianoDetail), [pianoDetail]);
+  const organReg = settings?.organReg ?? 'jazz';
+  const organFast = !!settings?.organFast;
+  useEffect(() => piano.setOrgan({ reg: organReg, fast: organFast }), [organReg, organFast]);
+  const epTremolo = settings?.epTremolo ?? 0;
+  useEffect(() => piano.setTremolo(epTremolo), [epTremolo]);
+  const bandDrums = settings?.bandDrums ?? 'jazz';
+  useEffect(() => piano.setBandDrums(bandDrums), [bandDrums]);
   const droneSoundId = settings?.droneSound ?? 'soft';
   useEffect(() => {
     void piano.setDroneSound(droneSoundId);
@@ -1059,6 +1067,15 @@ export function App() {
   };
   const sideNav = (id: NavId) => {
     if (id === 'placement') return openPlacement();
+    if (id === 'gamelist') {
+      try {
+        sessionStorage.setItem('toneturn.practice', 'games');
+      } catch {
+        /* private mode */
+      }
+      setArcadeKey((k) => k + 1);
+      return go('arcade');
+    }
     if (id === 'mixer') return openMixer();
     if (id === 'log') return setLogOpen(true);
     go(id as Route);
@@ -1210,6 +1227,7 @@ export function App() {
         />}
       {route === 'arcade' && (
         <PlayScreen
+          key={arcadeKey}
           t={t}
           progress={progress}
           onGame={(k) => {
@@ -1237,6 +1255,8 @@ export function App() {
             improv: () => go('improv'),
             puzzle: () => go('puzzle'),
             exams: () => go('exams'),
+            pieces: () => go('pieces'),
+            mixer: openMixer,
           }}
           onOnline={() => {
             setOnlineFacts(null);

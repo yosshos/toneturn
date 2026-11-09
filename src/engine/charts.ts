@@ -226,9 +226,16 @@ export function chartBacking(p: ParsedChart, style: ChartStyle, bpm: number, loo
         B(walk, b, 0.9, 0.7);
         if (pos === 0 || pos === 1) for (const m of v) N(m, pos === 0 ? b : b + swing, pos === 0 ? 0.8 : 1.2, 0.4);
         if (drums) {
-          N(93, b, 0.05, pos % 2 ? 0.33 : 0.26);
-          if (pos % 2 === 1) N(93, b + swing, 0.04, 0.2);
-          if (pos % 2 === 1) N(42, b, 0.05, 0.25, 'hat');
+          // A jazz drummer's time (0.55): the ride's "ding, ding-a, ding, ding-a", the hi-hat foot on 2 and 4, the bass
+          // drum feathered under every beat, a snare comment now and then, a crash at the top of each chorus.
+          const bar = Math.floor(b / meter);
+          N(51, b, 0.05, pos % 2 ? 0.6 : 0.5, 'ride');
+          if (pos % 2 === 1) N(51, b + swing, 0.04, 0.38, 'ride');
+          if (pos % 2 === 1) N(44, b, 0.05, 0.5, 'hat-foot');
+          N(36, b, 0.05, 0.16, 'kick');
+          if (pos === meter - 1 && bar % 2 === 1) N(38, b + swing, 0.05, bar % 4 === 3 ? 0.42 : 0.22, 'snare');
+          if (pos === 1 && bar % 4 === 2) N(38, b + swing, 0.05, 0.18, 'snare');
+          if (pos === 0 && b % (p.bars * meter) === 0 && b > 0) N(49, b, 0.05, 0.55, 'crash');
         }
         break;
       }
@@ -246,6 +253,7 @@ export function chartBacking(p: ParsedChart, style: ChartStyle, bpm: number, loo
           if (pos % 2 === 1) N(38, b, 0.1, 0.75, 'snare');
           N(42, b, 0.05, 0.35, 'hat');
           N(42, b + 0.5, 0.05, 0.25, 'hat');
+          if (pos === 0 && b % (p.bars * meter) === 0 && b > 0) N(49, b, 0.05, 0.5, 'crash');
         }
         break;
       }
@@ -258,23 +266,36 @@ export function chartBacking(p: ParsedChart, style: ChartStyle, bpm: number, loo
         const hits = (Math.floor(b / meter) % 2 === 0 ? [0, 1.5, 3] : [1, 2.5]).filter((h) => Math.floor(h) === pos);
         for (const h of hits) for (const m of v) N(m, b - pos + h, 0.4, 0.34);
         if (drums) {
-          N(42, b, 0.04, 0.22, 'hat');
-          N(42, b + 0.5, 0.04, 0.16, 'hat');
-          if (pos === 0 || pos === 2) N(36, b, 0.1, 0.5, 'kick');
-          if ((Math.floor(b / meter) % 2 === 0 ? [0, 1.5, 3] : [1, 2.5]).some((h) => Math.floor(h) === pos)) N(76, b - pos + ((Math.floor(b / meter) % 2 === 0 ? [0, 1.5, 3] : [1, 2.5]).find((h) => Math.floor(h) === pos) ?? pos), 0.05, 0.4, 'wood');
+          // bossa: straight eighths on the hat, the "boom — ba-boom" bass drum, the cross-stick on the 3-2 clave
+          N(42, b, 0.04, 0.3, 'hat');
+          N(42, b + 0.5, 0.04, 0.2, 'hat');
+          if (pos === 0 || pos === 2) N(36, b, 0.1, 0.42, 'kick');
+          if (pos === 1 || pos === 3) N(36, b + 0.5, 0.1, 0.3, 'kick');
+          const clave = Math.floor(b / meter) % 2 === 0 ? [0, 1.5, 3] : [1, 2];
+          for (const h of clave.filter((x) => Math.floor(x) === pos)) N(37, b - pos + h, 0.05, 0.5, 'rim');
         }
         break;
       }
       case 'ballad': {
         if (pos === 0 || isNew) B(root, b, 1.9, 0.6);
         if (pos === 0 || isNew) v.forEach((m, k) => N(m, b + k * 0.25, 1.9 - k * 0.25, 0.32));
-        if (drums && pos % 2 === 1) N(42, b, 0.05, 0.18, 'hat');
+        // ballad: a soft ride on every beat, the hi-hat foot on 2 and 4
+        if (drums) {
+          N(51, b, 0.05, 0.3, 'ride');
+          if (pos % 2 === 1) N(44, b, 0.05, 0.35, 'hat-foot');
+        }
         break;
       }
       case 'waltz': {
         if (pos === 0) B(root, b, 0.9, 0.7);
         else for (const m of v) N(m, b, 0.6, 0.3);
-        if (drums) N(42, b, 0.05, pos === 0 ? 0.3 : 0.18, pos === 0 ? 'kick' : 'hat');
+        // jazz waltz: ride on every beat with a skip before 3, hi-hat foot on 2 and 3, a soft bass drum on 1
+        if (drums) {
+          N(51, b, 0.05, pos === 0 ? 0.55 : 0.42, 'ride');
+          if (pos === 1) N(51, b + 2 / 3, 0.04, 0.32, 'ride');
+          if (pos > 0) N(44, b, 0.05, 0.4, 'hat-foot');
+          if (pos === 0) N(36, b, 0.05, 0.3, 'kick');
+        }
         break;
       }
     }

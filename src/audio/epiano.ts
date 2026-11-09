@@ -17,7 +17,7 @@ export function epKey(ctx: BaseAudioContext, midi: number, velocity: number, sta
   const f0 = 440 * Math.pow(2, (midi - 69) / 12);
   const v = Math.max(0.02, Math.min(1, velocity));
   const g = ctx.createGain();
-  const level = 0.18 + 0.82 * Math.pow(v, 1.3);
+  const level = 0.3 * (0.12 + 0.88 * Math.pow(v, 1.4)); // next to the grand at the same velocity
   const t60 = tineT60(midi);
   g.gain.setValueAtTime(0, start);
   g.gain.linearRampToValueAtTime(level, start + 0.003);

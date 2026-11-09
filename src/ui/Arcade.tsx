@@ -639,6 +639,8 @@ export interface PracticeHub {
   improv?: () => void;
   puzzle?: () => void;
   exams?: () => void;
+  pieces?: () => void;
+  mixer?: () => void;
 }
 const HUB_PATHS: Record<string, React.ReactNode> = {
   songs: (
@@ -725,6 +727,20 @@ const HUB_PATHS: Record<string, React.ReactNode> = {
       <path d="M8 8h8M8 12h5M14.5 16.5l1.5 1.5 3-3.5" />
     </>
   ),
+  pieces: (
+    <>
+      <path d="M6 3.5h9l3.5 3.5v13.5H6z" />
+      <path d="M9 9.5h6M9 13h6M9 16.5h3.5" />
+    </>
+  ),
+  mixer: (
+    <>
+      <path d="M6 4v16M12 4v16M18 4v16" />
+      <rect x="4" y="13" width="4" height="3" rx="1" />
+      <rect x="10" y="7" width="4" height="3" rx="1" />
+      <rect x="16" y="11" width="4" height="3" rx="1" />
+    </>
+  ),
   games: (
     <>
       <rect x="2.5" y="7" width="19" height="11" rx="5.5" />
@@ -752,7 +768,27 @@ const HUB_TX = {
   improv: { en: 'Improvise', he: 'אלתור' },
   puzzle: { en: 'Daily progression', he: 'מהלך היום' },
   exams: { en: 'Programs & exams', he: 'תכניות לימוד ומבחנים' },
+  pieces: { en: 'My pieces', he: 'היצירות שלי' },
+  mixer: { en: 'Mixer', he: 'מיקסר' },
   games: { en: ['Games', 'By type, topic and level'], he: ['משחקים', 'לפי סוג, נושא ורמה'] },
+};
+
+/** The Practice page (SPEC-IA-2, owner 2026-11-09): four groups by what you do — play, train, study — and the tools. */
+export const PRACTICE_GROUPS: { id: 'play' | 'train' | 'study'; name: { en: string; he: string }; items: string[] }[] = [
+  { id: 'play', name: { en: 'Play', he: 'לנגן' }, items: ['songs', 'pieces', 'charts'] },
+  { id: 'train', name: { en: 'Train', he: 'להתאמן' }, items: ['drills', 'improv', 'games'] },
+  { id: 'study', name: { en: 'Study', he: 'ללמוד' }, items: ['lessons', 'exams', 'puzzle'] },
+];
+const ROW_TX: Record<string, { en: [string, string]; he: [string, string] }> = {
+  songs: { en: ['Songs', 'Play and sing real songs — by the chords you know'], he: ['שירים', 'לנגן ולשיר שירים אמיתיים — לפי האקורדים שאתם מכירים'] },
+  pieces: { en: ['My pieces', 'Bring a score; the coach takes you to tempo'], he: ['היצירות שלי', 'מעלים תווים; המאמן מביא אתכם לטמפו'] },
+  charts: { en: ['Charts & lead sheets', 'Backing tracks, standards, import a lead sheet'], he: ['מהלכים וליד־שיטים', 'ליווי, סטנדרטים, ייבוא ליד־שיט'] },
+  drills: { en: ['Technique', 'Your instrument and your voice, level by level'], he: ['טכניקה', 'הכלי שלכם והקול שלכם, שלב אחר שלב'] },
+  improv: { en: ['Improvise', 'Under rules, phrasing, trading fours'], he: ['אלתור', 'עם כללים, פרייזינג, חילופי ארבע'] },
+  games: { en: ['Games', 'Ear, rhythm and memory games'], he: ['משחקים', 'משחקי שמיעה, קצב וזיכרון'] },
+  lessons: { en: ['Lessons', 'Short theory lessons by topic'], he: ['שיעורים', 'שיעורי תיאוריה קצרים לפי נושא'] },
+  exams: { en: ['Programs & exams', 'Bagrut and conservatory entrance, section by section'], he: ['תכניות לימוד ומבחנים', 'בגרות ומבחני כניסה לקונסרבטוריון, חלק אחר חלק'] },
+  puzzle: { en: ['Progression of the day', 'One daily puzzle to solve and share'], he: ['מהלך היום', 'חידה יומית לפתור ולשתף'] },
 };
 
 export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline, onGhost, onDaily, onPuzzle, onGame2, lang = 'en', hub }: { t: Strings; progress: Progress; onGame: (k: GameKind) => void; onTrueFalse: () => void; onDuel: () => void; onOnline: () => void; onGhost: () => void; onDaily: () => void; onPuzzle: () => void; onGame2?: (id: (typeof GAMES2)[number]['id']) => void; lang?: 'he' | 'en'; hub?: PracticeHub }) {
@@ -814,39 +850,50 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
       ) : (
         <>
           <h1 className="screen-title">{t.playTitle}</h1>
-          <p className="field-hint">{t.playHint}</p>
+          {!hub && <p className="field-hint">{t.playHint}</p>}
         </>
       )}
       {hub && !games && (
         <section className="practice-hub" data-practice-hub="1">
-          <div className="hub-cards">
-            {(['songs', 'drills', 'games', 'lessons'] as const).map((k) => (
-              <button key={k} className={`hub-card hub-${k}`} onClick={k === 'games' ? () => showGames(true) : hub[k]} data-hub={k}>
-                <span className="hub-icon">
-                  <HubIcon k={k} />
-                </span>
-                <span className="hub-text">
-                  <b>{HUB_TX[k][lang][0]}</b>
-                  <small>{HUB_TX[k][lang][1]}</small>
-                </span>
-              </button>
-            ))}
-          </div>
-          <div className="hub-tools" role="group" aria-label={HUB_TX.tools[lang]}>
-            <span className="hub-tools-h">{HUB_TX.tools[lang]}</span>
-            {(['tuner', 'metronome', 'drone', 'charts', 'improv', 'puzzle', 'exams', 'slowdown', 'groove', 'log'] as const).filter((k) => hub[k]).map((k) => (
-              <button key={k} className="hub-tool" onClick={hub[k]} data-hub={k}>
-                <HubIcon k={k} size={18} />
-                <span>{HUB_TX[k][lang]}</span>
-              </button>
-            ))}
-          </div>
+          {PRACTICE_GROUPS.map((g) => (
+            <section key={g.id} className="hub-group" aria-label={g.name[lang]} data-hub-group={g.id} id={`practice-${g.id}`}>
+              <h2 className="hub-group-h">{g.name[lang]}</h2>
+              <div className="hub-rows">
+                {g.items
+                  .filter((k) => k === 'games' || hub[k as keyof PracticeHub])
+                  .map((k) => (
+                    <button key={k} className="hub-row" onClick={k === 'games' ? () => showGames(true) : (hub[k as keyof PracticeHub] as () => void)} data-hub={k}>
+                      <span className="hub-icon">
+                        <HubIcon k={k} />
+                      </span>
+                      <span className="hub-text">
+                        <b>{ROW_TX[k][lang][0]}</b>
+                        <small>{ROW_TX[k][lang][1]}</small>
+                      </span>
+                      <span className="hub-go flip-rtl" aria-hidden="true">
+                        ›
+                      </span>
+                    </button>
+                  ))}
+              </div>
+            </section>
+          ))}
+          <section className="hub-group" aria-label={HUB_TX.tools[lang]} data-hub-group="tools">
+            <h2 className="hub-group-h">{HUB_TX.tools[lang]}</h2>
+            <div className="hub-tools">
+              {(['tuner', 'metronome', 'drone', 'groove', 'slowdown', 'mixer', 'log'] as const).filter((k) => hub[k]).map((k) => (
+                <button key={k} className="hub-tool" onClick={hub[k]} data-hub={k}>
+                  <HubIcon k={k} size={20} />
+                  <span>{HUB_TX[k][lang]}</span>
+                </button>
+              ))}
+            </div>
+          </section>
         </section>
       )}
       {(!hub || games) && (
       <>
-      <button className="play-hero" onClick={onPuzzle}>
-        <span className="mission-shine" aria-hidden="true" />
+      <button className="play-hero plain" onClick={onPuzzle}>
         <span className="ph-icon" aria-hidden="true">
           <CatIcon k="puzzle" />
         </span>
@@ -896,7 +943,7 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
       <button className="live-card" onClick={onOnline}>
         <span className="live-icon" aria-hidden="true">
           <span className="live-ping" />
-          📡
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><circle cx="12" cy="12" r="2" /><path d="M8.5 8.5a5 5 0 0 0 0 7M15.5 8.5a5 5 0 0 1 0 7M5.6 5.6a9 9 0 0 0 0 12.8M18.4 5.6a9 9 0 0 1 0 12.8" /></svg>
         </span>
         <span className="live-text">
           <b>{t.online}</b>

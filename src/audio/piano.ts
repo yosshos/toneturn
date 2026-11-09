@@ -15,6 +15,9 @@ import { KIT_FILES, type DrumKit } from '../engine/grooves';
 import type { NoteEvent, PercKind } from '../engine/lesson';
 import { Cancelled, type AudioEngine, type CueKind, type RhythmAudio, type RhythmTimelineLike } from '../game/adapters';
 import { renderFx } from './fx';
+import { layerGain, layerOf, RoundRobin, WURLI_LAYERS, wurliGain } from './layers';
+import { Leslie, organKey, REGISTRATIONS, type Registration } from './organ';
+import { autoPan, epKey } from './epiano';
 import { damperTau, layerFor, lightDevice, loadOrder, nearestLoaded, NO_DAMPER_FROM, releaseNoiseGain, releaseResGain, targetDb, vel127, type GrandLayer } from './grand';
 
 interface Voice {
@@ -31,6 +34,17 @@ type SetInfo = { ext: string; notes: number[]; lovel?: number; db?: number; rtDe
  * set so a velocity of 0.75 sounds as loud as the earlier 4-layer grand did.
  */
 const GRAND_TRIM = 0.61;
+/** Per-piece level of the recorded jazz kit (dB), matched to the earlier one-shots at a velocity of 0.8. */
+const DRUM_TRIM_DB: Record<string, number> = { kick: 5.5, snare: 1.5, rim: 4.5, hat: 7, 'hat-foot': 6, 'hat-open': 5, ride: 8, 'ride-bell': 6, crash: 2, 'tom-hi': 2, 'tom-lo': 2 };
+/** The pizzicato bass, matched to the earlier single-layer bass at a velocity of 0.7. */
+const BASS_TRIM = 0.8;
+/** The Wurlitzer next to the grand. */
+const WURLI_TRIM = 0.6;
+/** Percussion kinds → pieces of the recorded kit. */
+const PERC_PIECE: Partial<Record<PercKind, string>> = {
+  kick: 'kick', snare: 'snare', 'snare-soft': 'snare', hat: 'hat', ride: 'ride', 'ride-bell': 'ride-bell', 'hat-foot': 'hat-foot',
+  'hat-open': 'hat-open', rim: 'rim', crash: 'crash', 'tom-hi': 'tom-hi', 'tom-lo': 'tom-lo',
+};
 
 /** Touch response of the MIDI keys (like a keyboard's velocity curve): light = soft touch already sounds full. */
 export type LiveCurve = 'light' | 'normal' | 'heavy' | 'fixed';
@@ -117,9 +131,19 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
       return Promise.resolve(true);
     }
     if (this.bank?.id === id) return Promise.resolve(true);
+    // modelled instruments: nothing to download
+    if (id === 'tonewheel' || id === 'tine') {
+      this.bank = { id, notes: [], buffers: new Map() };
+      return Promise.resolve(true);
+    }
     const load = (async () => {
       try {
-        const bank = await this.loadSet(id, onProgress);
+        // the Wurlitzer: its mp layer is the base, the other dynamics load behind it
+        const bank = id === 'wurli' ? { ...(await this.loadSet('wurli-mp', onProgress)), id: 'wurli' } : await this.loadSet(id, onProgress);
+        if (id === 'wurli') {
+          this.extras.set('wurli-mp', { ...bank, id: 'wurli-mp' });
+          for (const l of WURLI_LAYERS) this.loadExtra(l.id);
+        }
         if (this.sound !== id) return false; // changed meanwhile
         this.bank = bank;
         if (id === 'grand') void this.prefetchGrand();
@@ -273,6 +297,8 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     const ctx = this.ctx;
     if (!ctx) return false;
     if (inst === 'bass') {
+      if (this.playBass(midi, velocity, start, dur)) return true;
+      void this.loadStems('bass-pizz');
       const bass = this.extras.get('bass');
       if (bass) {
         // Pizzicato upright bass (one mf layer): a gentle gain with velocity; out of its range the piano plays.
@@ -282,6 +308,9 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     }
     const bank = this.bank;
     if (!bank) return false;
+    if (bank.id === 'tonewheel') return this.playOrgan(midi, velocity, start, dur);
+    if (bank.id === 'tine') return this.playTine(midi, velocity, start, dur);
+    if (bank.id === 'wurli') return this.playWurli(midi, velocity, start, dur);
     if (bank.id === 'grand' && this.grandLayers?.length) {
       // 16 velocity layers: the layer gives the timbre, the level follows a smooth line through the layers' measured
       // loudness. A layer still loading is stood in for by its nearest loaded neighbour (and asked for now).
@@ -392,6 +421,180 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     const res = v >= 45 ? 'grand-resL' : 'grand-resS';
     const info = this.grandInfo[res];
     if (info) one(res, midi, releaseResGain(info.db ?? 0, info.rtDecay ?? 7, held, v) * 0.7, 2);
+  }
+
+  // ---------------------------------------------------------------- the band and the other keyboards (0.55)
+
+  /** Sample sets addressed by name (drum strikes "snare-2-3", bass "m-41-2"), decoded at the playing rate. */
+  private stems = new Map<string, Map<string, AudioBuffer>>();
+  private stemLoads = new Map<string, Promise<boolean>>();
+  private info: Record<string, SetInfo & { pieces?: Record<string, { layers: string[][]; db: number[] }>; layers?: { dyn: string; notes: number[]; rr: number; db: number }[] }> = {};
+  private loadStems(id: string): Promise<boolean> {
+    let p = this.stemLoads.get(id);
+    if (!p) {
+      p = (async () => {
+        const ctx = this.ctx;
+        if (!ctx) return false;
+        try {
+          const base = import.meta.env.BASE_URL ?? '/';
+          const sets = (await this.sets()) as typeof this.info;
+          const set = sets[id];
+          if (!set) return false;
+          this.info[id] = set;
+          const m = new Map<string, AudioBuffer>();
+          await Promise.all(
+            (set.notes as unknown as string[]).map(async (s) => {
+              const r = await fetch(`${base}samples/${id}/${s}.${set.ext}`);
+              if (r.ok) m.set(s, await ctx.decodeAudioData(await r.arrayBuffer()));
+            }),
+          );
+          this.stems.set(id, m);
+          return true;
+        } catch {
+          this.stemLoads.delete(id);
+          return false;
+        }
+      })();
+      this.stemLoads.set(id, p);
+    }
+    return p;
+  }
+
+  /** Which drums the backing tracks and rhythm items use: the recorded jazz kit (default) or the earlier one-shots. */
+  bandDrums: 'jazz' | 'classic' = 'jazz';
+  setBandDrums(k: 'jazz' | 'classic') {
+    this.bandDrums = k;
+    if (k === 'jazz') void this.loadStems('drums-jazz');
+  }
+  private rr = new RoundRobin();
+  /**
+   * One strike of the recorded jazz kit: the dynamic layer from the velocity, an alternate strike never the same twice
+   * in a row, the level along a smooth line through the layers' measured loudness. False when the kit is not loaded.
+   */
+  private kitHit(piece: string, at: number, v: number): boolean {
+    const P = this.info['drums-jazz']?.pieces?.[piece];
+    const bufs = this.stems.get('drums-jazz');
+    if (!P || !bufs || !this.ctx) {
+      void this.loadStems('drums-jazz');
+      return false;
+    }
+    const i = layerOf(v, P.layers.length);
+    const list = P.layers[i];
+    const buf = bufs.get(list[this.rr.pick(`${piece}:${i}`, list.length)]);
+    if (!buf) return false;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    const g = this.ctx.createGain();
+    g.gain.value = layerGain(v, P.db, i) * Math.pow(10, (DRUM_TRIM_DB[piece] ?? 3) / 20);
+    src.connect(g).connect(this.percBus);
+    src.start(Math.max(at, this.ctx.currentTime));
+    src.onended = () => g.disconnect();
+    return true;
+  }
+
+  /** The pizzicato double bass: 3 dynamics × 4 alternate plucks; false when not loaded or out of its range. */
+  private playBass(midi: number, v: number, start: number, dur: number): boolean {
+    const ctx = this.ctx;
+    const L = this.info['bass-pizz']?.layers;
+    const bufs = this.stems.get('bass-pizz');
+    if (!ctx || !L || !bufs) return false;
+    const i = layerOf(v, L.length);
+    const layer = L[i];
+    const near = layer.notes.reduce((a, b) => (Math.abs(b - midi) < Math.abs(a - midi) ? b : a));
+    if (Math.abs(near - midi) > 4) return false;
+    const k = this.rr.pick(`bass:${layer.dyn}:${near}`, layer.rr);
+    const buf = bufs.get(`${layer.dyn}-${near}-${k + 1}`) ?? bufs.get(`${layer.dyn}-${near}-1`);
+    if (!buf) return false;
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.playbackRate.value = Math.pow(2, (midi - near) / 12);
+    const out = ctx.createGain();
+    const peak = layerGain(v, L.map((l) => l.db), i) * BASS_TRIM;
+    out.gain.setValueAtTime(peak, start);
+    out.gain.setTargetAtTime(0, start + dur, 0.07); // the left hand stops the string
+    src.connect(out).connect(this.bassBus);
+    const stopAt = Math.min(start + buf.duration / src.playbackRate.value, start + dur + 0.6);
+    src.start(start);
+    src.stop(stopAt);
+    const vc: Voice = { out, oscs: [src], end: stopAt };
+    this.voices.add(vc);
+    src.onended = () => {
+      this.voices.delete(vc);
+      out.disconnect();
+    };
+    return true;
+  }
+
+  /** The Wurlitzer: 4 recorded dynamics; prefers a layer with a sample close to the key (the set is sparse). */
+  private playWurli(midi: number, v: number, start: number, dur: number): boolean {
+    const v127 = vel127(v);
+    let want = 0;
+    WURLI_LAYERS.forEach((l, k) => l.lovel <= v127 && (want = k));
+    const order = [want, want - 1, want + 1, want - 2, want + 2, want - 3, want + 3].filter((k) => k >= 0 && k < WURLI_LAYERS.length);
+    const dist = (b: SampleBank) => Math.min(...b.notes.map((n) => Math.abs(n - midi)));
+    let bank: SampleBank | undefined;
+    for (const k of order) {
+      const b = this.extras.get(WURLI_LAYERS[k].id);
+      if (b && dist(b) <= 3) {
+        bank = b;
+        break;
+      }
+    }
+    bank ??= order.map((k) => this.extras.get(WURLI_LAYERS[k].id)).find(Boolean) ?? this.bank ?? undefined;
+    if (!bank) return false;
+    const db = this.info[bank.id]?.db ?? (this.grandInfo[bank.id]?.db as number | undefined) ?? -9;
+    return this.playBuf(bank, midi, start, dur, wurliGain(v127) * Math.pow(10, (-9 - db) / 20) * WURLI_TRIM);
+  }
+
+  /** Organ settings: the registration and the rotating speaker. */
+  private organReg: Registration = REGISTRATIONS[0];
+  private leslie: Leslie | null = null;
+  private leslieFast = false;
+  setOrgan(o: { reg?: string; fast?: boolean }) {
+    if (o.reg) this.organReg = REGISTRATIONS.find((r) => r.id === o.reg) ?? this.organReg;
+    if (o.fast !== undefined) {
+      this.leslieFast = o.fast;
+      this.leslie?.setSpeed(o.fast);
+    }
+  }
+  private playOrgan(midi: number, v: number, start: number, dur: number): boolean {
+    const ctx = this.ctx!;
+    if (!this.leslie) {
+      this.leslie = new Leslie(ctx);
+      const g = ctx.createGain();
+      g.gain.value = 0.26;
+      this.leslie.output.connect(g).connect(this.strips.piano!.input);
+      this.leslie.setSpeed(this.leslieFast);
+    }
+    const k = organKey(ctx, 440 * Math.pow(2, (midi - 69) / 12), this.organReg, start, start + dur, v, this.leslie.input);
+    const vc: Voice = { out: k.out, oscs: k.srcs, end: k.stop };
+    this.voices.add(vc);
+    k.srcs[0].onended = () => {
+      this.voices.delete(vc);
+      k.out.disconnect();
+    };
+    return true;
+  }
+
+  /** The tine electric piano, with the suitcase tremolo when it is on. */
+  private tineTrem: { input: AudioNode; setDepth: (x: number) => void } | null = null;
+  private tremDepth = 0;
+  setTremolo(depth: number) {
+    this.tremDepth = Math.max(0, Math.min(1, depth));
+    this.tineTrem?.setDepth(this.tremDepth);
+  }
+  private playTine(midi: number, v: number, start: number, dur: number): boolean {
+    const ctx = this.ctx!;
+    const bus = this.liveRoute && this.liveSampleBus ? this.liveSampleBus : this.sampleBus;
+    if (this.tremDepth > 0 && !this.tineTrem) this.tineTrem = autoPan(ctx, this.sampleBus, 4.2, this.tremDepth);
+    const k = epKey(ctx, midi, v, start, start + dur, bus, this.tremDepth > 0 ? this.tineTrem!.input : undefined);
+    const vc: Voice = { out: k.out, oscs: k.srcs, end: k.stop };
+    this.voices.add(vc);
+    k.srcs[0].onended = () => {
+      this.voices.delete(vc);
+      k.out.disconnect();
+    };
+    return true;
   }
 
   /** The sustain pedal's own sound (felt and mechanism), and its resonance send. */
@@ -609,6 +812,11 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
       void this.loadPerc();
       void this.loadKit(this.kit);
       this.loadExtra('bass'); // small (≈0.4 MB), so backing tracks have it from their first note
+      // the band (0.55): the jazz kit (≈5.6 MB) and the pizzicato bass (≈2 MB) load in the background
+      setTimeout(() => {
+        if (this.bandDrums === 'jazz') void this.loadStems('drums-jazz');
+        void this.loadStems('bass-pizz');
+      }, 1500);
     }
     if (this.sinkId !== null) void this.setOutputDevice(this.sinkId);
     if (this.ctx.state !== 'running') await this.ctx.resume();
@@ -1076,6 +1284,7 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
   }
 
   private loadKit(kit: DrumKit): Promise<void> {
+    if (kit === 'jazz') return this.loadStems('drums-jazz').then(() => undefined);
     const ctx = this.ctx;
     const ids = KIT_FILES[kit];
     if (!ctx || !ids) return Promise.resolve();
@@ -1201,6 +1410,10 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
   metroHit(kind: MetroKind, at: number, velocity = 0.8) {
     if (!this.ctx) return;
     if (this.kit === 'electro' && this.machine(kind, at, velocity)) return;
+    if (this.kit === 'jazz') {
+      const piece = ({ kick: 'kick', snare: 'snare', 'snare-soft': 'snare', hat: 'hat', 'hat-open': 'hat-open', ride: 'ride', rim: 'rim' } as Partial<Record<MetroKind, string>>)[kind];
+      if (piece && this.kitHit(piece, at, kind === 'snare-soft' ? velocity * 0.55 : velocity)) return;
+    }
     const piece = KIT_PIECE[kind];
     if (piece && this.kit !== 'classic') {
       const buf = this.kitBank.get(`${this.kit}:${piece}`);
@@ -1225,7 +1438,7 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
   }
 
   /** The synthesised voice of a hit (the stand-in while samples load, and the drum machine's sound). */
-  private synthHit(kind: MetroKind, at: number, velocity: number) {
+  private synthHit(kind: MetroKind, at: number, velocity: number): void {
     switch (kind) {
       case 'click':
       case 'accent':
@@ -1368,8 +1581,17 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
   }
 
   /** Percussion: metronome click (accented on 1), woodblock, drum kit, the option bell. */
-  private perc(kind: PercKind, at: number, velocity = 0.8) {
+  private perc(kind: PercKind, at: number, velocity = 0.8): void {
+    // the recorded jazz kit (0.55): every drum sound in backing tracks, grooves and rhythm items
+    const piece = PERC_PIECE[kind];
+    if (piece && this.bandDrums === 'jazz' && this.kitHit(piece, at, kind === 'snare-soft' ? velocity * 0.55 : velocity)) return;
     if (kind === 'kick' || kind === 'snare' || kind === 'snare-soft' || kind === 'hat') return this.drum(kind, at, velocity);
+    // stand-ins for the kit's other pieces while it loads (or with the earlier kit)
+    if (kind === 'ride' || kind === 'ride-bell') return this.synthHit('ride', at, velocity);
+    if (kind === 'hat-foot') return this.synthHit('hat', at, velocity * 0.6);
+    if (kind === 'hat-open' || kind === 'crash') return this.synthHit('hat-open', at, velocity);
+    if (kind === 'rim') return this.synthHit('rim', at, velocity);
+    if (kind === 'tom-hi' || kind === 'tom-lo') return this.tone(at, 'sine', kind === 'tom-hi' ? 196 : 131, 0.5 * velocity, 0.18);
     if (kind === 'bell') return this.optionBell(at);
     const ctx = this.ctx!;
     const g = ctx.createGain();

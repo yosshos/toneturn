@@ -56,9 +56,12 @@ export function backingTrack(id: ChartId, key: number, bpm: number, choruses: nu
     const iv = QUALITY[c.q];
     const bass = pos === 0 ? root : pos === 1 ? root + iv[1] : pos === 2 ? root + iv[2] : bassOf((key + next.deg) % 12) + (next !== c || (b + 1) % 4 === 0 ? (b % 8 < 4 ? -1 : 1) : 0);
     ev.push({ midi: bass, start: t, duration: beat * 0.9, velocity: 0.7, inst: 'bass' });
-    // Ride: every beat, with the swung skip note on 2 and 4.
-    ev.push({ midi: 93, start: t, duration: 0.05, velocity: pos % 2 ? 0.35 : 0.28 });
-    if (pos % 2 === 1) ev.push({ midi: 93, start: t + (beat * swing) / (swing + 1), duration: 0.04, velocity: 0.22 });
+    // Drums (0.55, the recorded jazz kit): ride every beat with the swung skip on 2 and 4, hi-hat foot on 2 and 4,
+    // the bass drum feathered.
+    ev.push({ midi: 51, start: t, duration: 0.05, velocity: pos % 2 ? 0.6 : 0.5, perc: 'ride' });
+    if (pos % 2 === 1) ev.push({ midi: 51, start: t + (beat * swing) / (swing + 1), duration: 0.04, velocity: 0.38, perc: 'ride' });
+    if (pos % 2 === 1) ev.push({ midi: 44, start: t, duration: 0.05, velocity: 0.5, perc: 'hat-foot' });
+    ev.push({ midi: 36, start: t, duration: 0.05, velocity: 0.16, perc: 'kick' });
     // Comping: beat 1 and the "and" of 2 (Charleston) — 3rd, 7th and a colour tone.
     if (pos === 0 || pos === 1) {
       const at = pos === 0 ? t : t + (beat * swing) / (swing + 1);

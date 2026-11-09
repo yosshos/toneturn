@@ -1,4 +1,5 @@
 import { Icon } from './icons';
+import { REGISTRATIONS } from '../audio/organ';
 import { DOMAINS } from '../engine/rating';
 import { defaultPacks, GOAL_NAMES, GOALS, PACKS, type Goal } from '../engine/path';
 import { TOPIC_GEN } from '../engine/topicKit';
@@ -544,7 +545,8 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
               <span>{lang === 'he' ? 'צלילי משוב (נכון / לא נכון)' : 'Feedback sounds (right / wrong)'}</span>
             </label>
           </section>
-          <SoundSetting t={t} value={s.sound ?? DEFAULT_SOUND} onChange={(sound) => onChange({ sound })} drone={s.droneSound ?? 'soft'} onDrone={(droneSound) => onChange({ droneSound })} />
+          <SoundSetting t={t} s={s} onChange={onChange} />
+          <section className="set-card"><DroneSoundSetting t={t} value={s.droneSound ?? 'soft'} onChange={(droneSound) => onChange({ droneSound })} /></section>
           {(s.sound ?? DEFAULT_SOUND) === 'grand' && <GrandDetail lang={s.uiLang} value={s.pianoDetail ?? 'auto'} onChange={(pianoDetail) => onChange({ pianoDetail })} />}
           {onMixer && (
             <button className="btn ghost mx-open" onClick={onMixer} data-open-mixer="1">
@@ -1008,10 +1010,32 @@ function MidiPanel({ t, lang, on, onChange, naming, s, onSettings }: { t: String
   );
 }
 
-/** Instrument sound (spec Q): the classic synth piano or a recorded instrument, downloaded on first use. */
-export const SOUNDS = ['classic', 'grand', 'upright', 'harpsichord', 'harp', 'marimba', 'vibraphone', 'organ'] as const;
+/** Instrument sound (spec Q; by category since 0.55): recorded instruments download on first use, modelled ones need nothing. */
+export const SOUND_GROUPS: { id: string; name: { en: string; he: string }; sounds: string[] }[] = [
+  { id: 'pianos', name: { en: 'Pianos', he: 'פסנתרים' }, sounds: ['grand', 'upright', 'classic'] },
+  { id: 'ep', name: { en: 'Electric pianos', he: 'פסנתרים חשמליים' }, sounds: ['wurli', 'tine'] },
+  { id: 'organs', name: { en: 'Organs', he: 'עוגבים' }, sounds: ['tonewheel', 'organ'] },
+  { id: 'more', name: { en: 'Mallets and plucked', he: 'מקושים ופריטה' }, sounds: ['vibraphone', 'marimba', 'harp', 'harpsichord'] },
+];
+export const SOUNDS = SOUND_GROUPS.flatMap((g) => g.sounds);
+const SOUND_NAME: Record<string, { en: string; he: string; note: { en: string; he: string } }> = {
+  grand: { en: 'Concert grand', he: 'פסנתר כנף', note: { en: '16 dynamics, recorded', he: '16 עוצמות, מוקלט' } },
+  upright: { en: 'Upright piano', he: 'פסנתר עומד', note: { en: 'Recorded', he: 'מוקלט' } },
+  classic: { en: 'Synth piano', he: 'פסנתר סינתטי', note: { en: 'Light, no download', he: 'קל, בלי הורדה' } },
+  wurli: { en: 'Wurlitzer', he: 'וורליצר', note: { en: '4 dynamics, recorded', he: '4 עוצמות, מוקלט' } },
+  tine: { en: 'Tine electric piano', he: 'פסנתר חשמלי (טיין)', note: { en: 'Modelled, follows your touch', he: 'ממודל, מגיב למגע' } },
+  tonewheel: { en: 'Tonewheel organ', he: 'אורגן גלגלי צליל', note: { en: 'Drawbars, percussion, rotating speaker', he: 'דרואברים, פרקשן, רמקול מסתובב' } },
+  organ: { en: 'Pipe organ', he: 'עוגב צינורות', note: { en: 'Recorded', he: 'מוקלט' } },
+  vibraphone: { en: 'Vibraphone', he: 'ויברפון', note: { en: 'Recorded', he: 'מוקלט' } },
+  marimba: { en: 'Marimba', he: 'מרימבה', note: { en: 'Recorded', he: 'מוקלט' } },
+  harp: { en: 'Harp', he: 'נבל', note: { en: 'Recorded', he: 'מוקלט' } },
+  harpsichord: { en: 'Harpsichord', he: 'צ׳מבלו', note: { en: 'Recorded', he: 'מוקלט' } },
+};
 
-function SoundSetting({ t, value, onChange, drone, onDrone }: { t: Strings; value: string; onChange: (v: string) => void; drone: string; onDrone: (v: string) => void }) {
+function SoundSetting({ t, s, onChange }: { t: Strings; s: Settings; onChange: (p: Partial<Settings>) => void }) {
+  const lang = s.uiLang;
+  const he = lang === 'he';
+  const value = s.sound ?? DEFAULT_SOUND;
   const [busy, setBusy] = useState<{ id: string; done: number; total: number } | null>(null);
   const [failed, setFailed] = useState(false);
   const choose = async (id: string) => {
@@ -1024,36 +1048,145 @@ function SoundSetting({ t, value, onChange, drone, onDrone }: { t: Strings; valu
       setFailed(true);
       return;
     }
-    onChange(id);
-    // Preview: a short arpeggio in the new sound.
+    onChange({ sound: id });
+    preview();
+  };
+  // Preview: a short voicing then a line, soft and loud (so the dynamics are heard too).
+  const preview = () =>
     void piano
       .play(
-        [60, 64, 67, 72].map((m, i) => ({ midi: m, start: i * 0.22, duration: i === 3 ? 0.9 : 0.25, velocity: 0.75 })),
-        1.6,
+        [
+          ...[48, 55, 64, 71].map((m) => ({ midi: m, start: 0, duration: 1.1, velocity: 0.45 })),
+          ...[72, 76, 79, 83].map((m, i) => ({ midi: m, start: 1.2 + i * 0.2, duration: 0.25, velocity: 0.5 + i * 0.13 })),
+        ],
+        2.4,
         new AbortController().signal,
       )
       .catch(() => {});
-  };
   return (
-    <section className="set-card">
-      <h2>{t.soundTitle}</h2>
-      <p className="field-hint">{t.soundHint}</p>
-      <div className="sound-grid" role="radiogroup" aria-label={t.soundTitle}>
-        {SOUNDS.map((id) => (
-          <button key={id} type="button" role="radio" aria-checked={value === id} className={`sound-opt ${value === id ? 'on' : ''}`} disabled={!!busy} onClick={() => void choose(id)}>
-            {t.soundNames[id]}
-            {busy?.id === id && <small> {Math.round((busy.done / busy.total) * 100)}%</small>}
-          </button>
+    <>
+      <section className="set-card sound-card" data-sound-card="1">
+        <h2>{t.soundTitle}</h2>
+        <p className="field-hint">{t.soundHint}</p>
+        {SOUND_GROUPS.map((g) => (
+          <div key={g.id} className="sound-group" role="radiogroup" aria-label={g.name[lang]}>
+            <h3 className="sound-group-h">{g.name[lang]}</h3>
+            <div className="sound-grid">
+              {g.sounds.map((id) => (
+                <button key={id} type="button" role="radio" aria-checked={value === id} className={`sound-opt ${value === id ? 'on' : ''}`} disabled={!!busy} onClick={() => void choose(id)} data-sound={id}>
+                  <b>{SOUND_NAME[id][lang]}</b>
+                  <small>{busy?.id === id ? `${Math.round((busy.done / busy.total) * 100)}%` : SOUND_NAME[id].note[lang]}</small>
+                </button>
+              ))}
+            </div>
+          </div>
         ))}
-      </div>
-      {failed && (
-        <p className="form-error" role="alert">
-          {t.soundFailed}
+        {failed && (
+          <p className="form-error" role="alert">
+            {t.soundFailed}
+          </p>
+        )}
+        {value === 'tonewheel' && (
+          <div className="sound-opts" data-organ-opts="1">
+            <label className="field-row">
+              <span>{he ? 'רגיסטרציה' : 'Registration'}</span>
+              <select
+                value={s.organReg ?? 'jazz'}
+                onChange={(e) => {
+                  piano.setOrgan({ reg: e.target.value });
+                  onChange({ organReg: e.target.value });
+                  preview();
+                }}
+              >
+                {REGISTRATIONS.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.name[lang]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <div className="chips" role="radiogroup" aria-label={he ? 'רמקול מסתובב' : 'Rotating speaker'}>
+              {([false, true] as const).map((fast) => (
+                <button
+                  key={String(fast)}
+                  role="radio"
+                  aria-checked={!!s.organFast === fast}
+                  className={`chip ${!!s.organFast === fast ? 'on' : ''}`}
+                  onClick={() => {
+                    piano.setOrgan({ fast });
+                    onChange({ organFast: fast });
+                  }}
+                >
+                  {fast ? (he ? 'רמקול: מהיר' : 'Speaker: fast') : he ? 'רמקול: איטי' : 'Speaker: slow'}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+        {value === 'tine' && (
+          <label className="field-row sound-opts">
+            <span>{he ? 'טרמולו' : 'Tremolo'}</span>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              value={Math.round((s.epTremolo ?? 0) * 100)}
+              onChange={(e) => {
+                piano.setTremolo(Number(e.target.value) / 100);
+                onChange({ epTremolo: Number(e.target.value) / 100 });
+              }}
+              aria-label={he ? 'טרמולו' : 'Tremolo'}
+            />
+          </label>
+        )}
+        <p className="field-hint credits">
+          {he
+            ? 'פסנתר כנף: Salamander Grand Piano V3 מאת Alexander Holm (CC BY 3.0). וורליצר: Greg Sullivan (CC BY 3.0). תופים: Virtuosity Drums מאת Versilian Studios ו־Karoryfer Samples (CC0). קונטרבס: D. Smolken (CC0). שאר הכלים המוקלטים: Versilian Community Sample Library (CC0). האורגן והפסנתר החשמלי ממודלים באפליקציה. כל הדגימות נערכו וקודדו מחדש.'
+            : 'Grand: Salamander Grand Piano V3 by Alexander Holm (CC BY 3.0). Wurlitzer: Greg Sullivan (CC BY 3.0). Drums: Virtuosity Drums by Versilian Studios & Karoryfer Samples (CC0). Double bass: D. Smolken (CC0). Other recorded instruments: Versilian Community Sample Library (CC0). The organ and the tine piano are modelled in the app. All samples trimmed and re-encoded.'}
         </p>
-      )}
-      <p className="field-hint credits">{t.soundCredits}</p>
-      <DroneSoundSetting t={t} value={drone} onChange={onDrone} />
-    </section>
+      </section>
+      <section className="set-card" data-band-card="1">
+        <h2>{he ? 'הלהקה' : 'The band'}</h2>
+        <p className="field-hint">{he ? 'התופים והבס בליווי, בגרוב ובתרגילי הקצב.' : 'The drums and bass in backing tracks, grooves and rhythm items.'}</p>
+        <div className="sound-group" role="radiogroup" aria-label={he ? 'תופים' : 'Drums'}>
+          <h3 className="sound-group-h">{he ? 'תופים' : 'Drums'}</h3>
+          <div className="sound-grid">
+            {(['jazz', 'classic'] as const).map((k) => (
+              <button
+                key={k}
+                type="button"
+                role="radio"
+                aria-checked={(s.bandDrums ?? 'jazz') === k}
+                className={`sound-opt ${(s.bandDrums ?? 'jazz') === k ? 'on' : ''}`}
+                onClick={() => {
+                  piano.setBandDrums(k);
+                  onChange({ bandDrums: k });
+                  void piano.unlock().then(() =>
+                    piano
+                      .play(
+                        [0, 1, 2, 3].flatMap((b) => [
+                          { midi: 51, start: b * 0.45, duration: 0.05, velocity: b % 2 ? 0.6 : 0.5, perc: 'ride' as const },
+                          ...(b % 2 ? [{ midi: 51, start: b * 0.45 + 0.3, duration: 0.05, velocity: 0.38, perc: 'ride' as const }, { midi: 44, start: b * 0.45, duration: 0.05, velocity: 0.5, perc: 'hat-foot' as const }] : []),
+                          { midi: 36, start: b * 0.45, duration: 0.05, velocity: b === 0 ? 0.6 : 0.18, perc: 'kick' as const },
+                          ...(b === 3 ? [{ midi: 38, start: b * 0.45 + 0.3, duration: 0.05, velocity: 0.45, perc: 'snare' as const }] : []),
+                        ]),
+                        2,
+                        new AbortController().signal,
+                      )
+                      .catch(() => {}),
+                  );
+                }}
+                data-band-drums={k}
+              >
+                <b>{k === 'jazz' ? (he ? 'ערכת ג׳אז' : 'Jazz kit') : he ? 'ערכה קלה' : 'Light kit'}</b>
+                <small>{k === 'jazz' ? (he ? 'מוקלטת, 4 עוצמות ומכות מתחלפות' : 'Recorded, 4 dynamics, alternating strikes') : he ? 'הצלילים הקודמים' : 'The earlier sounds'}</small>
+              </button>
+            ))}
+          </div>
+        </div>
+        <p className="field-hint">{he ? 'בס: קונטרבס בפיציקטו — 3 עוצמות ו־4 פריטות מתחלפות לכל צליל.' : 'Bass: a double bass, pizzicato — 3 dynamics and 4 alternating plucks per note.'}</p>
+      </section>
+    </>
   );
 }
 

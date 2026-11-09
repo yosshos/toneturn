@@ -146,9 +146,10 @@ export const groovesOf = (style: GrooveStyle | null) => (style ? GROOVES.filter(
 // ---------------------------------------------------------------- drum kits
 
 /** Recorded kits (CC0 libraries) + a synthesised drum machine. Missing pieces fall back to the classic kit. */
-export type DrumKit = 'classic' | 'club' | 'rock' | 'brush' | 'body' | 'electro';
-export const DRUM_KITS: DrumKit[] = ['classic', 'club', 'rock', 'brush', 'electro', 'body'];
+export type DrumKit = 'classic' | 'jazz' | 'club' | 'rock' | 'brush' | 'body' | 'electro';
+export const DRUM_KITS: DrumKit[] = ['jazz', 'classic', 'club', 'rock', 'brush', 'electro', 'body'];
 export const KIT_NAME: Record<DrumKit, { en: string; he: string }> = {
+  jazz: { en: 'Jazz kit (recorded, full dynamics)', he: 'ערכת ג׳אז (מוקלטת, כל הדינמיקות)' },
   classic: { en: 'Classic', he: 'קלאסי' },
   club: { en: 'Jazz club', he: 'מועדון ג׳אז' },
   rock: { en: 'Rock', he: 'רוק' },

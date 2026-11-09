@@ -18,6 +18,22 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.55.0',
+    date: '2026-11-09',
+    en: [
+      'The band: a recorded jazz kit (4 dynamics, alternating strikes, ride, cross-stick, crash, toms) and a double bass with 3 dynamics and 4 plucks per note — and the drummer now plays like one: ride and hi-hat on 2 and 4 in swing, the clave on the rim in bossa, a jazz waltz',
+      'New keyboards: Wurlitzer (recorded), a tine electric piano and a tonewheel organ (modelled — drawbars, percussion, rotating speaker), with dynamics that follow your touch',
+      'Settings → Sound by category (pianos, electric pianos, organs, mallets and plucked), each instrument with its own options, and a Band card for the drums',
+      'Practice in four groups — Play, Train, Study and Tools — on the phone and in the side menu on a computer',
+    ],
+    he: [
+      'הלהקה: ערכת תופי ג׳אז מוקלטת (4 עוצמות, מכות מתחלפות, רייד, היי־האט ברגל, קרוס־סטיק, קראש, טומים) וקונטרבס עם 3 עוצמות ו־4 פריטות לכל צליל — והמתופף מנגן כמו מתופף: רייד והיי־האט על 2 ו־4 בסווינג, קלאווה על החישוק בבוסה, ואלס ג׳אז',
+      'קלידים חדשים: וורליצר (מוקלט), פסנתר חשמלי טיין ואורגן גלגלי צליל (ממודלים — דרואברים, פרקשן, רמקול מסתובב), עם דינמיקה שמגיבה למגע',
+      'הגדרות ← צליל לפי קטגוריות (פסנתרים, פסנתרים חשמליים, עוגבים, מקושים ופריטה), לכל כלי האפשרויות שלו, וכרטיס "הלהקה" לתופים',
+      'תרגול בארבע קבוצות — לנגן, להתאמן, ללמוד וכלים — בטלפון ובתפריט הצד במחשב',
+    ],
+  },
+  {
     version: '0.54.0',
     date: '2026-11-09',
     en: [

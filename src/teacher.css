@@ -127,3 +127,35 @@
 .improv-studio .is-src { display: grid; gap: 4px; justify-items: stretch; }
 .improv-studio .is-src select { width: 100%; min-width: 0; max-width: 100%; }
 @media (min-width: 700px) { .improv-studio .is-src { grid-template-columns: auto minmax(0, 420px); align-items: center; justify-content: start; gap: 12px; } }
+
+/* ---- sound by category (0.55) */
+.sound-group { margin-top: 10px; }
+.sound-group-h { margin: 0 0 4px; font-size: 0.74rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-dim, inherit); }
+.panel-screen.settings .sound-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.panel-screen.settings .sound-opt { display: grid; gap: 1px; text-align: start; padding: 8px 10px; }
+.panel-screen.settings .sound-opt small { font-weight: 400; font-size: 0.72rem; color: var(--ink-dim, inherit); }
+.sound-opts { margin-top: 10px; display: grid; gap: 8px; }
+
+/* ---- the Practice page in four groups (0.55, SPEC-IA-2) */
+.practice-hub { gap: 18px; }
+.hub-group { display: grid; gap: 6px; }
+.hub-group-h { margin: 0; font-size: 0.74rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-dim); }
+.hub-rows { display: grid; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: var(--card); }
+.hub-row { all: unset; box-sizing: border-box; display: flex; align-items: center; gap: 12px; padding: 10px 12px; min-height: 60px; cursor: pointer; border-top: 1px solid var(--line); color: var(--ink); }
+.hub-row:first-child { border-top: 0; }
+.hub-row:hover { background: color-mix(in srgb, var(--ink) 4%, transparent); }
+.hub-row:focus-visible { outline: 2px solid var(--accent, var(--mint)); outline-offset: -2px; }
+.hub-row .hub-text { flex: 1; }
+.hub-row .hub-go { color: var(--ink-dim); font-size: 1.2rem; }
+.practice-hub .hub-group .hub-icon { color: var(--ink); background: color-mix(in srgb, var(--ink) 7%, transparent); }
+.practice-hub .hub-group[data-hub-group='play'] .hub-icon { color: var(--hue-voice, var(--ink)); }
+.practice-hub .hub-group[data-hub-group='train'] .hub-icon { color: var(--hue-instrument, var(--ink)); }
+.practice-hub .hub-group[data-hub-group='study'] .hub-icon { color: var(--hue-pitch, var(--ink)); }
+.practice-hub .hub-tools { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.practice-hub .hub-tool { display: grid; justify-items: center; gap: 4px; padding: 10px 4px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font: inherit; font-size: 0.74rem; cursor: pointer; text-align: center; }
+@media (min-width: 1100px) {
+  .app.with-side .practice-hub { grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; column-gap: 16px; }
+  .app.with-side .practice-hub .hub-group[data-hub-group='tools'] { grid-column: 1 / -1; }
+  .app.with-side .practice-hub .hub-tools { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+}
+.play-hero.plain { background: var(--card); border: 1px solid var(--line); box-shadow: none; color: var(--ink); }
