@@ -1613,7 +1613,7 @@
   :root[data-theme] .orb { width: 112px; height: 80px; font-size: 2rem; }
 }
 @media (max-width: 360px), (max-height: 740px) {
-  :root[data-theme] main.lesson .answers .answer { min-height: 50px; padding-block: 6px; }
+  :root[data-theme] main.lesson .answers .answer { min-height: 50px; padding-block: 6px; font-size: 0.86rem; line-height: 1.15; }
   :root[data-theme] main.lesson .controls .ctl-btn { white-space: nowrap; padding-inline: 8px; }
 }
 :root[data-theme] main.lesson .controls .ctl-btn { white-space: nowrap; }
