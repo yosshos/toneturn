@@ -225,6 +225,8 @@ test('settings: five sections with current values; a section opens its groups, s
   await expect(page.locator('.set-sec')).toHaveCount(5);
   await expect(page.locator('.set-sec[data-set-nav="inst"] small')).toContainText('MIDI');
   await page.locator('.set-sec[data-set-nav="inst"]').click();
+  // 0.64: on a phone a section's groups start closed — open MIDI.
+  await page.locator('.set-group[data-group="midi"] > summary').click();
   await expect(page.getByRole('radiogroup', { name: 'MIDI keyboard' })).toBeVisible();
   await page.locator('[data-set-back]').click();
   await page.locator('.set-search').fill('midi');

@@ -259,7 +259,7 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
   const shownGroups = q ? shownNav.map((x) => x.id) : (SECS.find((x) => x.id === sec)?.groups ?? []);
 
   return (
-    <PaneCtx.Provider value={{ wide: wide || (!q && !!sec), active, groups: shownGroups }}>
+    <PaneCtx.Provider value={{ wide: wide || (!q && !!sec && (SECS.find((x) => x.id === sec)?.groups.length ?? 0) === 1), active, groups: shownGroups }}>
     <main className={`panel-screen settings ${wide ? 'settings-wide' : ''}`}>
       <header className="screen-head">
         <button className="icon-btn" onClick={onBack} aria-label={t.back}>
@@ -322,7 +322,7 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
       )}
       {!wide && sec && !q && (
         <button className="btn ghost small set-back" onClick={() => setSec(null)} data-set-back="1">
-          <span className="flip-rtl">→</span> {SECS.find((x) => x.id === sec)?.title}
+          <span className="flip-rtl">←</span> {SECS.find((x) => x.id === sec)?.title}
         </button>
       )}
       {(wide || sec || q) && (
@@ -733,7 +733,7 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
 type LL = { en: string; he: string };
 const GROUPS = {
   account: { en: 'Profile, sign in, sync, my data', he: 'פרופיל, כניסה, סנכרון, הנתונים שלי' },
-  privacy: { title: { en: 'Privacy & friends', he: 'פרטיות וחברים' }, sub: { en: 'Who sees you, who can challenge you, age', he: 'מי רואה אתכם, מי יכול לאתגר, גיל' } },
+  privacy: { title: { en: 'Privacy', he: 'פרטיות' }, sub: { en: 'Who sees you, who can challenge you, age', he: 'מי רואה אתכם, מי יכול לאתגר, גיל' } },
   language: { title: { en: 'Language & voice', he: 'שפה וקול' }, sub: { en: 'Language, note names, narrator voice & speed', he: 'שפה, שמות תווים, קול ומהירות הקריין' } },
   learning: { title: { en: 'My path & learning', he: 'המסלול והלמידה שלי' }, sub: { en: 'Goals, daily goal, mini lessons, hints', he: 'מטרות, יעד יומי, שיעורונים, עזרים' } },
   instrument: { en: 'Your instrument, how to answer, tuning, headphones', he: 'הכלי שלך, איך עונים, כיוון, אוזניות' },
@@ -852,7 +852,8 @@ function Group({ id, icon, title, sub, children }: { id: string; icon: ReactNode
 
 function GroupAccordion({ id, icon, title, sub, children }: { id: string; icon: ReactNode; title: string; sub: string; children: ReactNode }) {
   const deep = typeof location !== 'undefined' && location.hash === `#/settings/${id}`;
-  const [open, setOpen] = useState(() => deep || openGroups().includes(id));
+  // 0.64 (tester): on a phone a section's groups start closed — tap one to open it (a deep link opens its own).
+  const [open, setOpen] = useState(() => deep);
   const ref = useRef<HTMLDetailsElement>(null);
   useEffect(() => {
     if (deep) ref.current?.scrollIntoView({ block: 'start' });
