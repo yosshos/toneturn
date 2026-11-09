@@ -1,3 +1,4 @@
+import { DOMAIN_COLOR, Glyph } from './Glyph';
 import { answerFormat, pcToMidi, type AnswerFormat } from '../engine/answerFormat';
 import { Toni, type ToniState } from './Toni';
 import { Icon } from './icons';
@@ -643,7 +644,9 @@ function IntroCardView({ card, state, t, lang, nm }: { card: IntroCard; state: s
       return (
         <div className={`intro-card ${state} q-${card.quality}`}>
           <span className="intro-key">{card.quality === 'maj' ? t.majorWord : t.minorWord}</span>
-          <span className="intro-coin big-glyph">{card.quality === 'maj' ? '☀' : '☾'}</span>
+          <span className="intro-coin big-glyph">
+            <Glyph kind="chords" color={card.quality === 'maj' ? DOMAIN_COLOR.play : DOMAIN_COLOR.harmony} size={56} />
+          </span>
           <span className="intro-deg">{card.quality === 'maj' ? t.brightWord : t.darkWord}</span>
         </div>
       );

@@ -9,10 +9,12 @@ import type { SkillId } from '../engine/lesson';
 import type { SessionState } from '../engine/session';
 import type { Strings } from '../i18n/strings';
 
+// 0.61: the six domain colours of the v2 palette (ear sky, harmony lilac, rhythm pink, voice teal, play lemon, theory tangerine).
+const SKY = '#3AB8FF', LILAC = '#A78BFA', PINK = '#FF5FA2', TEAL = '#12C9B4', LEMON = '#FFD43B', TANGERINE = '#FF8A3D';
 const SKILL_COLOR: Partial<Record<SkillId, string>> = {
-  degrees: '#ffc94d', intervals: '#4ea8de', chords: '#a06cf0', cadences: '#2ec4b6', notes: '#ff8a3d', modes: '#ff4d8d',
-  sequences: '#7af0d0', 'rhythm-dictation': '#ff6a4d', 'rhythm-reading': '#ffd166', theory: '#9bb7ff', singing: '#b8f27c', pitch: '#e9a5ff', tempo: '#ffb3c7', sight: '#a0e7ff',
-  absolute: '#f0a35e', rhythm: '#ff9f80', improv: '#c3a6ff', technique: '#8fe3a8', agility: '#6fd3ff',
+  degrees: SKY, intervals: SKY, chords: LILAC, cadences: LILAC, notes: TANGERINE, modes: LILAC,
+  sequences: SKY, 'rhythm-dictation': PINK, 'rhythm-reading': PINK, theory: TANGERINE, singing: TEAL, pitch: TEAL, tempo: PINK, sight: TANGERINE,
+  absolute: SKY, rhythm: PINK, improv: LEMON, technique: LEMON, agility: LEMON,
 };
 const parse = (id: string) => {
   const m = /^p:([a-z-]+):(\d+):(\d+)$/.exec(id);
@@ -46,7 +48,7 @@ export function PlacementMeter({ s, t }: { s: SessionState; t: Strings }) {
 
   if (!cur) return null;
   const max = LADDERS[cur.skill]?.length ?? 1;
-  const color = SKILL_COLOR[cur.skill] ?? '#ffc94d';
+  const color = SKILL_COLOR[cur.skill] ?? LEMON;
   const doneIdx = skills.indexOf(cur.skill);
   return (
     <>

@@ -866,7 +866,7 @@ export function TrophyCase({ list, pinned, lang }: { list: Achievement[]; pinned
 
 // ======================================================================= share card (S22)
 
-const TIER_HEX: Record<TierName, string> = { bronze: '#CD7F32', silver: '#C0C6D6', gold: '#FFC94D', diamond: '#7DE3FF' };
+const TIER_HEX: Record<TierName, string> = { bronze: '#CD7F32', silver: '#C0C6D6', gold: '#FFD43B', diamond: '#7DE3FF' };
 
 /** Draw on a canvas and hand it to Web Share (files), else download a PNG. */
 export async function shareCanvas(draw: (ctx: CanvasRenderingContext2D, w: number, h: number) => void, filename: string, text: string): Promise<'shared' | 'downloaded' | 'failed'> {
@@ -920,7 +920,7 @@ export function shareAward(a: Achievement, lang: Lang) {
   return shareCanvas(
     (ctx, w, h) => {
       ctx.textAlign = 'center';
-      ctx.strokeStyle = n ? TIER_HEX[n] : '#FFC94D';
+      ctx.strokeStyle = n ? TIER_HEX[n] : '#FFD43B';
       ctx.lineWidth = 18;
       ctx.beginPath();
       ctx.arc(w / 2, h / 2 - 110, 190, 0, Math.PI * 2);
@@ -933,7 +933,7 @@ export function shareAward(a: Achievement, lang: Lang) {
       ctx.fillText(name, w / 2, h / 2 + 180);
       if (n) {
         ctx.font = '700 46px Rubik, system-ui, sans-serif';
-        ctx.fillStyle = n ? TIER_HEX[n] : '#FFC94D';
+        ctx.fillStyle = n ? TIER_HEX[n] : '#FFD43B';
         ctx.fillText(`${TIER_GLYPH[n]} ${SX.tiers[n][lang]}`, w / 2, h / 2 + 260);
       }
     },
@@ -947,7 +947,7 @@ export function shareMonth(m: MonthReview, lang: Lang, t: Strings) {
     (ctx, w) => {
       ctx.textAlign = 'center';
       ctx.direction = lang === 'he' ? 'rtl' : 'ltr';
-      ctx.fillStyle = '#FFC94D';
+      ctx.fillStyle = '#FFD43B';
       ctx.font = '700 70px Rubik, system-ui, sans-serif';
       ctx.fillText(SX.month[lang], w / 2, 170);
       ctx.fillStyle = '#f4f1ff';

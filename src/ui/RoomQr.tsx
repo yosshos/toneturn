@@ -7,7 +7,7 @@ export function RoomQr({ link, label, size = 180 }: { link: string; label: strin
   useEffect(() => {
     let alive = true;
     void import('qrcode')
-      .then((q) => q.toString(link, { type: 'svg', margin: 1, errorCorrectionLevel: 'M', color: { dark: '#1e1236', light: '#ffffff' } }))
+      .then((q) => q.toString(link, { type: 'svg', margin: 1, errorCorrectionLevel: 'M', color: { dark: '#1E1033', light: '#ffffff' } }))
       .then((s) => alive && setSvg(s))
       .catch(() => alive && setSvg(null));
     return () => {

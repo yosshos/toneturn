@@ -535,7 +535,7 @@ export function PlaceSurfaceView({ q, settings, lang, disabled, onSubmit, result
       {canPlay && (
         <div className="place-play">
           <button type="button" className={`btn small ${playing ? 'primary' : ''}`} aria-pressed={playing} onClick={() => setPlaying((v) => !v)}>
-            🎸 {playing ? T.stopPlay[lang] : T.playIn[lang]}
+            {playing ? T.stopPlay[lang] : T.playIn[lang]}
           </button>
           {playing && (
             <small className="field-hint" role="status">
