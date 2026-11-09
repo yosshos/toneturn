@@ -397,6 +397,15 @@ export const GLYPHS: Record<string, Glyph> = {
     </>
   ),
   'family:guitar': guitarGlyph,
+  // Final bass check: the bass families' badges (b-…) get the bass clef instead of the generic note.
+  'family:bass': () => (
+    <>
+      {p('M5.5 8.5c1.5-3.5 8-4.5 9 .5.8 4.4-3.6 8.6-9.5 10.5')}
+      {dot(6.6, 8.6, 1.9)}
+      {dot(18, 7.4)}
+      {dot(18, 12)}
+    </>
+  ),
   // ---------- guitar drill families
   'family:g-fretting': () => (
     <>
@@ -839,6 +848,7 @@ export function resolveGlyph(b: Pick<Badge, 'id' | 'cat' | 'group'>): { key: str
   if (hit) return { key, glyph: hit, fallback: false };
   // Guitar drill families ('g-…') and any other unknown family: the generic guitar / note glyph.
   if (key.startsWith('family:g-')) return { key, glyph: GLYPHS['family:guitar'], fallback: false };
+  if (key.startsWith('family:b-')) return { key, glyph: GLYPHS['family:bass'], fallback: false };
   return { key, glyph: FALLBACK, fallback: true };
 }
 

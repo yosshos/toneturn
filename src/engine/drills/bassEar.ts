@@ -9,8 +9,8 @@
 
 import type { Drill, DrillSpec, TakeMetrics } from './types';
 import type { Tuning } from '../fretboard';
-import { rng, mod, NAMES } from './guitar';
-import { alt, chartOf, drillOf, fold, QI, rootOf, textOf, type BN, type Prog, type Q } from './bass';
+import { rng, mod } from './guitar';
+import { alt, chartOf, drillOf, fold, QI, rootOf, spell, textOf, type BN, type Prog, type Q } from './bass';
 
 /** EN / HE pair (local: bass.ts helpers can't run at module load). */
 const tt = (en: string, he: string) => ({ en, he });
@@ -189,7 +189,7 @@ export function generateBassEar(s: DrillSpec, tu: Tuning): Drill {
         line.push({ b: 16 + i * 2, d: 2, p: rootOf(tu, key + b), ct: true });
       });
       band(0, 16);
-      const chart = pr.map(([d, q, b]) => (mod(b - d, 12) === 0 ? `${NAMES[mod(key + d, 12)]}${q === 'm' ? 'm' : ''}` : `${NAMES[mod(key + d, 12)]}${q === 'm' ? 'm' : ''}/${NAMES[mod(key + b, 12)]}`));
+      const chart = pr.map(([d, q, b]) => (mod(b - d, 12) === 0 ? `${spell(key + d, key)}${q === 'm' ? 'm' : ''}` : `${spell(key + d, key)}${q === 'm' ? 'm' : ''}/${spell(key + b, key)}`));
       return finishEar(s, tu, line, notes, windows, 'slash', { en: 'Slash bass by ear', he: 'בס סלאש בשמיעה' }, chart);
     }
   }

@@ -398,6 +398,17 @@ export function bassTuningOf(s: Pick<Settings, 'bassTuning' | 'tuning'>): string
   return s.bassTuning ?? (isBassTuningId(s.tuning) ? s.tuning : undefined);
 }
 
+/** The neck games and pictures draw (final bass check): the bass course → the player's bass tuning, else the guitar's. */
+export function neckTuningOf(s: Pick<Settings, 'bassTuning' | 'tuning' | 'activeCourse'>): string | undefined {
+  return s.activeCourse === 'bass' ? (bassTuningOf(s) ?? 'bass') : s.tuning;
+}
+
+/** The instrument the screens assume: an instrument course decides (keys / guitar / bass), else the profile's. */
+export function courseInstrumentOf(s: Pick<Settings, 'instrument' | 'activeCourse'>): Settings['instrument'] {
+  const c = s.activeCourse;
+  return c === 'bass' || c === 'guitar' || c === 'keys' ? c : s.instrument;
+}
+
 /** 0.61 (SPEC-COURSES): a player from before courses gets them from the goal and instruments they chose; the mixed
  *  path's facts stay with the course that matches the goal (the active one). Nothing is lost. */
 export function withCourses(s: Settings): Settings {

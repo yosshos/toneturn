@@ -363,9 +363,10 @@ const BASS_ARP: { iv: number[]; sym: Bi; minor: boolean }[] = [
 TOPIC_GEN['fret-chords'] = {
   title: { en: 'Chord shapes', he: 'צורות של אקורדים' },
   skill: 'instrument',
-  forPlays: ['guitar', 'bass'],
-  // Levels 1–5 draw guitar shapes, 6–7 bass lines: each course gets only its own levels.
-  levelPlays: [['guitar'], ['guitar'], ['guitar'], ['guitar'], ['guitar'], ['bass'], ['bass']],
+  // Final bass check: guitar only — its bass levels (6, 7) are the bass course's 'bass-shapes', so no guitar chord
+  // diagrams reach the bass path. Levels 6–7 (bass lines) sit on no path: the bass course has them as 'bass-shapes'.
+  forPlays: ['guitar'],
+  levelPlays: [['guitar'], ['guitar'], ['guitar'], ['guitar'], ['guitar'], [], []],
   levels: [
     { en: 'Open chords by diagram (C A G E D, minor)', he: 'אקורדים פתוחים לפי דיאגרמה (C A G E D, מינור)' },
     { en: 'Build a triad on the top three strings', he: 'לבנות טריאדה על שלושת המיתרים העליונים' },
@@ -485,9 +486,9 @@ TOPIC_TAGS['fret-chords'] = (l) => (l >= 6 ? tg(['instrument', 'fretboard', 0.6]
 TOPIC_GEN['fret-scales'] = {
   title: { en: 'Scales on the neck', he: 'סולמות על הצוואר' },
   skill: 'instrument',
-  forPlays: ['guitar', 'bass'],
-  // Levels 1–4 are guitar (string 6, 3 notes per string), level 5 is bass (walking approach notes).
-  levelPlays: [['guitar'], ['guitar'], ['guitar'], ['guitar'], ['bass']],
+  // Guitar only (its bass level 5 is 'bass-shapes' level 3 in the bass course).
+  forPlays: ['guitar'],
+  levelPlays: [['guitar'], ['guitar'], ['guitar'], ['guitar'], []],
   levels: [
     { en: 'Major scale from a root on string 6', he: "סולם מז'ור משורש על מיתר 6" },
     { en: 'Minor pentatonic, box 1', he: 'פנטטונית מינורית, בוקס 1' },
@@ -571,6 +572,44 @@ TOPIC_GEN['fret-scales'] = {
   },
 };
 TOPIC_TAGS['fret-scales'] = (l) => (l === 5 ? tg(['instrument', 'fretboard', 0.6], ['cadences', 'progression', 0.4]) : tg(['instrument', 'fretboard', 0.6], ['modes', 'scales', 0.4]));
+
+// ======================================================================= the bass neck (bass course)
+
+TOPIC_GEN['bass-notes'] = {
+  title: { en: 'Notes on the bass neck', he: 'תווים על צוואר הבס' },
+  skill: 'instrument',
+  forPlays: ['bass'],
+  levels: [
+    { en: 'Natural notes on the E and A strings', he: 'תווים טבעיים על מיתרי E ו־A' },
+    { en: 'Natural notes, all four strings', he: 'תווים טבעיים, כל ארבעת המיתרים' },
+    { en: 'With sharps and flats', he: 'עם דיאזים ובמולים' },
+    { en: 'Every place of one note (frets 0–12)', he: 'כל המקומות של צליל אחד (סריגים 0–12)' },
+  ],
+  gen(seed, level, id) {
+    const mode = (['low2', 'all', 'acc', 'every'] as const)[level - 1];
+    return findNote('bass-notes', BASS, 'bass', mode, mode === 'every' ? [0, 12] : [0, 11], seed, level, id, [850, 950, 1100, 1200][level - 1]);
+  },
+};
+TOPIC_TAGS['bass-notes'] = tg(['instrument', 'fretboard', 0.7], ['notes', 'names', 0.3]);
+
+/** The bass course's shapes: root–5–octave, arpeggio shapes, approach notes (the bass levels of fret-chords / fret-scales). */
+const BASS_SHAPE_SRC: [topic: string, level: number][] = [['fret-chords', 6], ['fret-chords', 7], ['fret-scales', 5]];
+TOPIC_GEN['bass-shapes'] = {
+  title: { en: 'Bass shapes', he: 'צורות בבס' },
+  skill: 'instrument',
+  forPlays: ['bass'],
+  levels: [
+    { en: 'Root, fifth, octave', he: 'שורש, קווינטה, אוקטבה' },
+    { en: 'Arpeggio shapes', he: 'צורות ארפג׳ו' },
+    { en: 'Walking approach notes', he: 'צלילי גישה בווקינג' },
+  ],
+  gen(seed, level, id) {
+    const [topic, lv] = BASS_SHAPE_SRC[level - 1];
+    const q = TOPIC_GEN[topic].gen(seed, lv, id) as PlaceQuestion;
+    return { ...q, topic: 'bass-shapes', level };
+  },
+};
+TOPIC_TAGS['bass-shapes'] = (l) => (l === 3 ? tg(['instrument', 'fretboard', 0.6], ['cadences', 'progression', 0.4]) : tg(['instrument', 'fretboard', 0.6], ['chords', 'quality', 0.4]));
 
 // ======================================================================= notes on the keys
 

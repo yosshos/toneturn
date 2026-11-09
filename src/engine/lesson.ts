@@ -1771,8 +1771,9 @@ export interface NoteEvent {
   perc?: PercKind;
   /** Processed sound (spec AE): played by audio/fx.ts instead of a note; `midi` is ignored. */
   fx?: FxSpec;
-  /** Played on another recorded instrument instead of the piano ('bass': the upright bass of backing tracks; the piano plays it until the samples load). */
-  inst?: 'bass' | 'hum';
+  /** Played on another recorded instrument instead of the piano ('bass': the upright bass of backing tracks; the piano plays it until the samples load).
+   *  'piano' = always the piano, even where the course's own voice would take low notes (the bass course's band comping). */
+  inst?: 'bass' | 'hum' | 'piano';
 }
 
 export type PercKind = 'click' | 'accent' | 'wood' | 'kick' | 'snare' | 'snare-soft' | 'hat' | 'bell' | 'ride' | 'ride-bell' | 'hat-foot' | 'hat-open' | 'rim' | 'crash' | 'tom-hi' | 'tom-lo' | 'brush-sweep' | 'brush-tap';

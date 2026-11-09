@@ -84,8 +84,9 @@ describe('guitar audit: course wiring', () => {
     expect(g).toContain('topic:fret-chords:1');
     expect(g).not.toContain('topic:fret-chords:6');
     expect(g).not.toContain('topic:fret-scales:5');
-    expect(b).toContain('topic:fret-chords:6');
-    expect(b).toContain('topic:fret-scales:5');
+    // The bass lines live in the bass course's own topic (final bass check), not in the guitar topics.
+    expect(b.some((id) => id.startsWith('topic:bass-shapes:'))).toBe(true);
+    expect(b).not.toContain('topic:fret-chords:6');
     expect(b).not.toContain('topic:fret-chords:1');
     expect(b).not.toContain('topic:fret-scales:1');
   });

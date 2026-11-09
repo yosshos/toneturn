@@ -811,6 +811,19 @@ const DRUMS_BLURB: Record<string, { en: string; he: string }> = {
   drills: { en: 'Strokes, rudiments, grooves and fills — measured on your kit.', he: 'מכות, רודימנטים, גרובים ומעברים — נמדדים על המערכת שלכם.' },
   highway: { en: 'Kit lanes: hi-hat, snare, kick, tom, cymbal.', he: 'מסלולים של מערכת: היי־האט, סנר, קיק, טום, מצילה.' },
 };
+/** The bass course's own words on shared game cards and rows (final bass check). */
+const BASS_BLURB: Record<string, { en: string; he: string }> = {
+  drills: { en: 'Plucking, groove, walking and reading — measured on your bass.', he: 'פריטה, גרוב, ווקינג וקריאה — נמדדים על הבס שלכם.' },
+  'rush-fretboard': { en: 'Find the note on the bass neck — 60 seconds.', he: 'מצאו את התו על צוואר הבס — 60 שניות.' },
+  'rush-note': { en: 'Read bass-clef notes as fast as you can.', he: 'קראו תווים במפתח פה הכי מהר שאפשר.' },
+  tuneup: { en: 'Tune the four bass strings by ear.', he: 'מכוונים את ארבעת מיתרי הבס בשמיעה.' },
+};
+const BASS_TX: Record<string, { en: [string, string]; he: [string, string] }> = {
+  drills: { en: ['Technique', 'Plucking, groove, walking, reading'], he: ['טכניקה', 'פריטה, גרוב, ווקינג וקריאה'] },
+  songs: { en: ['Songs', 'Real tunes on the bass'], he: ['שירים', 'מנגינות אמיתיות על הבס'] },
+};
+/** The instrument tile's symbol per course. */
+const INSTRUMENT_TILE: Partial<Record<CourseId, GlyphKind>> = { drums: 'drums', bass: 'bass', guitar: 'guitar' };
 /** The weekly puzzle and the live quiz rooms are ear & theory things. */
 const COURSE_SOCIAL: CourseId[] = ['ear', 'exam', 'jazz'];
 /** Practice tiles (0.63): a colour per row, and the game kinds each course shows as their own tiles. */
@@ -905,7 +918,7 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
     { key: 'rhythm', hue: 'var(--hue-time)', icon: <GameIcon kind="rhythm" />, title: t.beatEcho, blurb: t.beatEchoBlurb, extra: best(progress.games?.rhythm), onClick: () => onGame('rhythm') },
     { key: 'truefalse', hue: 'var(--hue-pitch)', icon: '✓✗', title: t.trueFalse, blurb: t.tfBlurb, extra: progress.tfBest && Object.keys(progress.tfBest).length ? best(Math.max(...Object.values(progress.tfBest))) : <span className="new-chip">{t.newChip}</span>, onClick: onTrueFalse },
     { key: 'ghost', hue: 'var(--hue-creative)', icon: '👻', title: t.ghostRace, blurb: t.ghostBlurb, onClick: onGhost },
-    ...(onGame2 ? GAMES2.map((g) => ({ key: g.id, cat: g.cat, hue: g.hue, icon: g.icon, title: g[lang][0], blurb: course === 'drums' && DRUMS_BLURB[g.id] ? DRUMS_BLURB[g.id][lang] : (COURSE_BLURB[course]?.[g.id]?.[lang] ?? g[lang][1]), extra: progress.bests?.[g.id] ? best(progress.bests[g.id]) : <span className="new-chip">{t.newChip}</span>, onClick: () => onGame2(g.id) })) : []),
+    ...(onGame2 ? GAMES2.map((g) => ({ key: g.id, cat: g.cat, hue: g.hue, icon: g.icon, title: g[lang][0], blurb: course === 'drums' && DRUMS_BLURB[g.id] ? DRUMS_BLURB[g.id][lang] : course === 'bass' && BASS_BLURB[g.id] ? BASS_BLURB[g.id][lang] : (COURSE_BLURB[course]?.[g.id]?.[lang] ?? g[lang][1]), extra: progress.bests?.[g.id] ? best(progress.bests[g.id]) : <span className="new-chip">{t.newChip}</span>, onClick: () => onGame2(g.id) })) : []),
     // The groove trainer (fading click, pocket, swing) is a drums-course game too (0.65).
     ...(hub?.groove ? [{ key: 'groove', cat: 'rhythm' as GameCat, hue: 'var(--hue-time)', icon: '', title: lang === 'he' ? 'מאמן הגרוב' : 'Groove trainer', blurb: lang === 'he' ? 'קליק שנעלם, כיס וסווינג — האם הזמן נשאר שלכם?' : 'A fading click, the pocket, swing — does the time stay yours?', onClick: hub.groove }] : []),
     { key: 'duel', hue: 'var(--hue-voice)', icon: '⚔', title: t.duel, blurb: t.duelBlurb, onClick: onDuel },
@@ -936,7 +949,7 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
             {rows
               .filter((k) => k !== 'games' && hub[k as keyof PracticeHub])
               .map((k) => {
-                const tx = (course === 'voice' && VOICE_TX[k] ? VOICE_TX[k] : course === 'drums' && DRUMS_TX[k] ? DRUMS_TX[k] : k === 'drills' && (course === 'keys' || course === 'guitar' || course === 'bass') ? INSTR_DRILLS_TX : ROW_TX[k])[lang];
+                const tx = (course === 'voice' && VOICE_TX[k] ? VOICE_TX[k] : course === 'drums' && DRUMS_TX[k] ? DRUMS_TX[k] : course === 'bass' && BASS_TX[k] ? BASS_TX[k] : k === 'drills' && (course === 'keys' || course === 'guitar' || course === 'bass') ? INSTR_DRILLS_TX : ROW_TX[k])[lang];
                 return (
                   <button
                     key={k}
@@ -968,7 +981,7 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
                     data-hub-cat={c}
                   >
                     <span className="pt-icon">
-                      <Glyph kind={c === 'instrument' && (course === 'drums' || course === 'guitar' || course === 'bass') ? course : CAT_GLYPH[c]} color="#FFFFFF" size={44} />
+                      <Glyph kind={c === 'instrument' && INSTRUMENT_TILE[course] ? INSTRUMENT_TILE[course]! : CAT_GLYPH[c]} color="#FFFFFF" size={44} />
                     </span>
                     <b>{gc[lang]}</b>
                     <small>{lang === 'he' ? 'משחקים ותרגילים' : 'Games and drills'}</small>
@@ -1038,7 +1051,7 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
               {list.map((c) => (
                 <button key={c.key} className={`play-card game-card ${c.key}`} style={{ ['--hue' as string]: c.hue }} onClick={c.onClick}>
                   <span className="pc-icon" aria-hidden="true">
-                    <Glyph kind={course === 'drums' && c.key === 'drills' ? 'sticks' : (GAME_GLYPH[c.key] ?? 'contour')} color={CAT_COLOR[c.cat ?? CAT_OF[c.key] ?? 'social']} size={52} />
+                    <Glyph kind={course === 'drums' && c.key === 'drills' ? 'sticks' : course === 'bass' && c.key === 'drills' ? 'pluck' : course === 'bass' && c.key === 'rush-fretboard' ? 'fretboard' : (GAME_GLYPH[c.key] ?? 'contour')} color={CAT_COLOR[c.cat ?? CAT_OF[c.key] ?? 'social']} size={52} />
                   </span>
                   <b>{c.title}</b>
                   <small>{c.blurb}</small>

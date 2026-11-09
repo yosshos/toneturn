@@ -365,9 +365,9 @@ function backingEvents(drill: Drill, beatS: number, drums: boolean): NoteEvent[]
     for (const h of drumHits(drill.drums, drill.beats, drill.meter, drill.pulse)) out.push({ midi: 36, start: at(h.beat), duration: 0.2, velocity: h.d === 'h' ? 0.4 : h.d === 'crash' ? 0.7 : 0.85, perc: PERC[h.d] });
   }
   // The harmony band (bassBand.ts): comping on the same clock, only where the drums may play (headphones / MIDI).
-  if (drums) for (const h of bandHits(drill)) for (const m of h.notes) out.push({ midi: m, start: at(h.beat), duration: h.len * beatS, velocity: h.vel });
+  if (drums) for (const h of bandHits(drill)) for (const m of h.notes) out.push({ midi: m, start: at(h.beat), duration: h.len * beatS, velocity: h.vel, inst: 'piano' });
   for (const n of drill.listen?.notes ?? [])
-    for (const m of n.midi) out.push(n.perc ? { midi: m, start: at(n.beat), duration: n.dur * beatS, velocity: 0.45, perc: n.perc } : { midi: m, start: at(n.beat), duration: n.dur * beatS, velocity: n.inst === 'bass' ? 0.85 : 0.5, ...(n.inst === 'bass' ? { inst: 'bass' as const } : {}) });
+    for (const m of n.midi) out.push(n.perc ? { midi: m, start: at(n.beat), duration: n.dur * beatS, velocity: 0.45, perc: n.perc } : { midi: m, start: at(n.beat), duration: n.dur * beatS, velocity: n.inst === 'bass' ? 0.85 : 0.5, inst: n.inst === 'bass' ? ('bass' as const) : ('piano' as const) });
   return out;
 }
 

@@ -1104,6 +1104,9 @@ export function App() {
 
   // Instrument sound (spec Q): load the chosen sample set (falls back to the classic piano on failure).
   // The guitar course sounds like a guitar (0.66: a modelled plucked string; the piano before), whatever the piano sound.
+  // The bass course's games, lessons and neck taps sound on the bass (unmarked notes up to C4).
+  const courseVoice = settings?.activeCourse === 'bass' ? 'bass' : null;
+  useEffect(() => piano.setCourseVoice(courseVoice), [courseVoice]);
   const soundId = settings?.activeCourse === 'guitar' ? 'guitar' : (settings?.sound ?? DEFAULT_SOUND);
   useEffect(() => {
     void piano.setSound(soundId);

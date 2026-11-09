@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <title>Ninth Sense - Note Ear</title>
+  <defs>
+    <radialGradient id="bg" cx="0.6" cy="0.2" r="1">
+      <stop offset="0" stop-color="#2B2370"/>
+      <stop offset="0.55" stop-color="#16183A"/>
+      <stop offset="1" stop-color="#0F1020"/>
+    </radialGradient>
+    <linearGradient id="ear" gradientUnits="userSpaceOnUse" x1="220" y1="90" x2="380" y2="430">
+      <stop offset="0" stop-color="#FFF1B8"/>
+      <stop offset="0.45" stop-color="#FFC94D"/>
+      <stop offset="1" stop-color="#FF8A5C"/>
+    </linearGradient>
+    <linearGradient id="mint" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#B8FFE4"/>
+      <stop offset="1" stop-color="#3FC7E0"/>
+    </linearGradient>
+    <radialGradient id="gem" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="0.35" stop-color="#FF9CD0"/>
+      <stop offset="1" stop-color="#FF6FB1" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="g310250" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#B57CFF" stop-opacity="0.45"/><stop offset="1" stop-color="#B57CFF" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="116" fill="url(#bg)"/>
+  
+  <circle cx="310" cy="250" r="200" fill="url(#g310250)"/>
+  <path d="M 226 206 C 226 132 274 96 318 96 C 380 96 420 146 420 208 C 420 266 388 290 368 320 C 348 350 358 404 304 418 C 266 428 242 404 236 378" fill="none" stroke="url(#ear)" stroke-width="58" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- the inner curl is a note -->
+  <ellipse cx="294" cy="304" rx="34" ry="25" transform="rotate(-24 294 304)" fill="url(#mint)"/>
+  <path d="M 322 296 V 176 C 338 196 372 204 362 250" fill="none" stroke="url(#mint)" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="284" cy="296" r="8" fill="#FFFFFF" opacity="0.8"/>
+  <path d="M 140 120 Q 149 161 190 170 Q 149 179 140 220 Q 131 179 90 170 Q 131 161 140 120 Z" fill="#FFF1B8" />
+  <path d="M 118 272 Q 123.04 294.96 146 300 Q 123.04 305.04 118 328 Q 112.96 305.04 90 300 Q 112.96 294.96 118 272 Z" fill="#FF9CD0" />
+  <path d="M 170 376 Q 173.6 392.4 190 396 Q 173.6 399.6 170 416 Q 166.4 399.6 150 396 Q 166.4 392.4 170 376 Z" fill="#B8FFE4" />
+
+</svg>

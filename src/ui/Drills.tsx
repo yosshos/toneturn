@@ -370,13 +370,14 @@ function Hub({ lang, ds, settings, items, head, onFamily, onRun, onSettings, onC
   const famCard = (f: FamilyDef) => {
     const lv = familyLevel(items, f.id);
     // Drums: no keys and no tempo bands — the level worked on of the family's levels, and a pip per level done.
-    if (drums) {
+    // Bass / guitar (final bass check): their families have 4–18 levels, not the piano's 7 — same card.
+    if (drums || ds.instrument === 'bass' || ds.instrument === 'guitar') {
       const cur = currentLevel(f, items, ds.keyOrder, settings.drillStart?.[f.id]);
       return (
-        <button key={f.id} className="drill-family" onClick={() => onFamily(f)} data-family={f.id}>
+        <button key={f.id} className="drill-family" style={drums ? undefined : { ['--hue' as string]: FAM_HUE[f.id] }} onClick={() => onFamily(f)} data-family={f.id}>
           <b>{f.title[lang]}</b>
           <small>
-            {tx.level} <span className="lvl">{cur.level}</span> / {f.levels.length}
+            {tx.level} <span className="lvl">{f.levels.indexOf(cur) + 1}</span> / {f.levels.length}
           </small>
           <span className="level-pips" aria-hidden="true">
             {f.levels.map((l) => (

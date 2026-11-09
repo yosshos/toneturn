@@ -69,6 +69,8 @@ const SHORT: Record<string, L2> = {
   'fret-intervals': { en: 'Interval shapes', he: 'צורות מרווחים' },
   'fret-chords': { en: 'Chord shapes', he: 'צורות אקורדים' },
   'fret-scales': { en: 'Neck scales', he: 'סולמות בצוואר' },
+  'bass-notes': { en: 'Bass notes', he: 'תווים בבס' },
+  'bass-shapes': { en: 'Bass shapes', he: 'צורות בבס' },
   'key-notes': { en: 'Key notes', he: 'תווים בקלידים' },
   'staff-dictation': { en: 'Write it', he: 'לכתוב מנגינה' },
   'rhythm-build': { en: 'Build a rhythm', he: 'לבנות קצב' },

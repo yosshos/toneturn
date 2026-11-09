@@ -497,6 +497,136 @@ export const LESSONS: MiniLesson[] = [
       },
     ],
   },
+  // Final bass check: the bass course's own neck topics (no guitar shapes on the bass path).
+  {
+    id: 'bass-notes',
+    area: 'play',
+    emoji: '𝄢',
+    title: { en: 'Notes on the bass neck', he: 'תווים על צוואר הבס' },
+    takeaway: { en: 'Each fret is a half step. Learn the E and A strings first; everything repeats at fret 12.', he: 'כל סריג הוא חצי טון. לומדים קודם את מיתרי E ו־A; הכול חוזר בסריג 12.' },
+    steps: [
+      {
+        say: { en: 'Hi {name}! A bass has four strings. From the lowest: E, A, D and G, each one a fourth above the last.', he: 'היי {name}! לבס יש ארבעה מיתרים. מהנמוך: E, ‏A, ‏D ו־G, כל אחד קוורטה מעל הקודם.' },
+        play: [notes([28, 33, 38, 43], 0.6)],
+        show: { text: { en: 'E A D G', he: 'E A D G' } },
+      },
+      {
+        say: { en: 'Every fret raises the note by a half step. Listen to the E string climbing fret by fret.', he: 'כל סריג מעלה את הצליל בחצי טון. הקשיבו למיתר E עולה סריג אחרי סריג.' },
+        play: [notes([28, 29, 30, 31, 32, 33], 0.4)],
+      },
+      {
+        say: { en: 'Most natural notes are two frets apart. Only E to F and B to C sit side by side, with no fret between them.', he: 'רוב התווים הטבעיים רחוקים שני סריגים. רק E ל־F ו־B ל־C צמודים, בלי סריג ביניהם.' },
+        play: [notes([28, 29, 31, 33], 0.5)],
+        show: { text: { en: 'E0 F1 G3 A5', he: 'E0 F1 G3 A5' } },
+      },
+      {
+        say: { en: 'Learn the E and A strings first: the roots of most bass lines live there.', he: 'לומדים קודם את מיתרי E ו־A: שם גרים השורשים של רוב קווי הבס.' },
+        play: [notes([31], 0.8), rest(0.2), notes([36], 0.8)],
+        show: { text: { en: 'G = E3 · C = A3', he: 'G = E3 · C = A3' } },
+      },
+      {
+        say: { en: 'At fret 12 it all starts again, an octave up. Your turn: I name a note, you tap it on the neck.', he: 'בסריג 12 הכול מתחיל מחדש, אוקטבה למעלה. תורכם: אני אומר שם של תו, ואתם מקישים עליו בצוואר.' },
+        play: [notes([28, 40], 0.8)],
+        show: { text: { en: 'fret 12 = octave', he: 'סריג 12 = אוקטבה' } },
+      },
+    ],
+    more: [
+      {
+        say: { en: 'The natural notes on the E string: frets 0, 1, 3, 5, 7, 8, 10 and 12. Say them as you play them.', he: 'התווים הטבעיים על מיתר E: סריגים 0, 1, 3, 5, 7, 8, 10 ו־12. אמרו אותם בקול כשאתם מנגנים.' },
+        play: [notes([28, 29, 31, 33, 35, 36, 38, 40], 0.4)],
+        show: { text: { en: 'E F G A B C D E', he: 'E F G A B C D E' } },
+      },
+      {
+        say: { en: 'On the A string: A at 0, B at 2, C at 3, D at 5, E at 7, F at 8, G at 10.', he: 'על מיתר A: ‏A ב־0, ‏B ב־2, ‏C ב־3, ‏D ב־5, ‏E ב־7, ‏F ב־8, ‏G ב־10.' },
+        play: [notes([33, 35, 36, 38, 40, 41, 43, 45], 0.4)],
+        show: { text: { en: 'A0 B2 C3 D5 E7 F8 G10', he: 'A0 B2 C3 D5 E7 F8 G10' } },
+      },
+      {
+        say: { en: 'The fret between two naturals has two names: fret 2 on the E string is F sharp or G flat. Use the name the key uses.', he: 'לסריג שבין שני תווים טבעיים יש שני שמות: סריג 2 על מיתר E הוא F♯ או G♭. בוחרים את השם שהסולם משתמש בו.' },
+        show: { text: { en: 'fret 2 = F♯ = G♭', he: 'סריג 2 = F♯ = G♭' } },
+      },
+      {
+        say: { en: 'The same note lives on the next string, five frets lower: fret 5 on E equals the open A string.', he: 'אותו צליל גר במיתר הבא, חמישה סריגים פחות: סריג 5 על E שווה למיתר A הפתוח.' },
+        play: [notes([33, 33], 0.7)],
+        show: { text: { en: 'E5 = A0', he: 'E5 = A0' } },
+      },
+      {
+        say: { en: 'Octaves carry names across the neck: two strings up, two frets up. G at fret 3 on E is also G at fret 5 on D.', he: 'אוקטבות מעבירות שמות לאורך הצוואר: שני מיתרים למעלה, שני סריגים קדימה. G בסריג 3 על E הוא גם G בסריג 5 על D.' },
+        play: [notes([31, 43], 0.7)],
+      },
+      {
+        say: { en: 'The usual mistake is counting from the nut every time. Use landmarks instead: frets 3, 5, 7 and 12 carry dots.', he: 'הטעות הנפוצה היא לספור מהאוכף כל פעם. משתמשים בנקודות ציון: בסריגים 3, 5, 7 ו־12 יש נקודות.' },
+      },
+      {
+        say: { en: 'To keep: E A D G, a half step per fret, the octave at 12. Five minutes a day of naming notes out loud is enough.', he: 'מה לזכור: E A D G, חצי טון לכל סריג, האוקטבה ב־12. חמש דקות ביום של שמות תווים בקול מספיקות.' },
+        show: { text: { en: 'E A D G · 12', he: 'E A D G · 12' } },
+      },
+    ],
+  },
+  {
+    id: 'bass-shapes',
+    area: 'play',
+    emoji: '𝄢',
+    title: { en: 'Bass shapes', he: 'צורות בבס' },
+    takeaway: { en: 'Root, fifth, octave: one shape, every key. Arpeggios and approach notes grow from it.', he: 'שורש, קווינטה, אוקטבה: צורה אחת, בכל סולם. ארפג׳ו וצלילי גישה צומחים ממנה.' },
+    steps: [
+      {
+        say: { en: 'Hi {name}! On the bass one shape works in every key. Start on the root, on the E or the A string.', he: 'היי {name}! בבס צורה אחת עובדת בכל סולם. מתחילים מהשורש, על מיתר E או A.' },
+        play: [notes([31], 0.8)],
+      },
+      {
+        say: { en: 'The fifth is one string up and two frets up. The octave is two strings up and two frets up.', he: 'הקווינטה: מיתר אחד למעלה ושני סריגים קדימה. האוקטבה: שני מיתרים למעלה ושני סריגים קדימה.' },
+        play: [notes([31, 38, 43], 0.6)],
+        show: { text: { en: 'R · 5 · 8', he: 'R · 5 · 8' } },
+      },
+      {
+        say: { en: 'Add the third and you have the chord. Major and minor are one fret apart.', he: 'מוסיפים את הטרצה ויש אקורד. מז׳ור ומינור רחוקים סריג אחד.' },
+        play: [notes([31, 35, 38, 43], 0.45), rest(0.3), notes([31, 34, 38, 43], 0.45)],
+        show: { text: { en: 'R 3 5 8 · R ♭3 5 8', he: 'R 3 5 8 · R ♭3 5 8' } },
+      },
+      {
+        say: { en: 'Move the same shape two frets up and the key changes from G to A, while the fingers stay exactly the same.', he: 'מזיזים את אותה צורה שני סריגים קדימה והסולם משתנה מ־G ל־A, והאצבעות נשארות בדיוק אותו דבר.' },
+        play: [notes([33, 40, 45], 0.5)],
+      },
+      {
+        say: { en: 'An approach note leads into the next root: a half step below it, above it, or its fifth. Your turn: tap the shapes.', he: 'צליל גישה מוביל לשורש הבא: חצי טון מתחתיו, מעליו, או הקווינטה שלו. תורכם: הקישו את הצורות.' },
+        play: [notes([31, 35, 36], 0.5)],
+        show: { text: { en: 'G → B → C', he: 'G → B → C' } },
+      },
+    ],
+    more: [
+      {
+        say: { en: 'Root and fifth carry most bass lines in pop, rock and country. The octave adds lift without new notes.', he: 'שורש וקווינטה נושאים את רוב קווי הבס בפופ, רוק וקאנטרי. האוקטבה מוסיפה תנופה בלי צלילים חדשים.' },
+        play: [notes([33, 40, 45, 40], 0.4)],
+      },
+      {
+        say: { en: 'The fifth also sits below the root: same fret, one string down. Handy when the root is on the A string.', he: 'הקווינטה יושבת גם מתחת לשורש: אותו סריג, מיתר אחד למטה. שימושי כשהשורש על מיתר A.' },
+        play: [notes([36, 31], 0.6)],
+        show: { text: { en: 'C on A3 · G on E3', he: 'C על A3 · G על E3' } },
+      },
+      {
+        say: { en: 'Seventh chords add one more note: a major seventh is one fret below the octave, a minor seventh two frets below.', he: 'אקורדי ספט מוסיפים צליל אחד: ספט גדול הוא סריג אחד מתחת לאוקטבה, ספט קטן שני סריגים מתחתיה.' },
+        play: [notes([31, 35, 38, 42], 0.45), rest(0.3), notes([31, 35, 38, 41], 0.45)],
+        show: { text: { en: 'maj7 · 7', he: 'maj7 · 7' } },
+      },
+      {
+        say: { en: 'A half step below the next root pulls hardest. A half step above sounds bluesier. Try both into the same chord.', he: 'חצי טון מתחת לשורש הבא מושך הכי חזק. חצי טון מעליו נשמע בלוזי יותר. נסו את שניהם אל אותו אקורד.' },
+        play: [notes([31, 35, 36], 0.5), rest(0.3), notes([31, 37, 36], 0.5)],
+      },
+      {
+        say: { en: 'The usual mistake is looking for each note alone. Think in shapes from the root, and say the chord tone you land on.', he: 'הטעות הנפוצה היא לחפש כל צליל לבד. חושבים בצורות מהשורש, ואומרים בקול על איזה צליל אקורד נוחתים.' },
+      },
+      {
+        say: { en: 'Walking lines use all of it: a chord tone on the first beat, then steps, and an approach note on the last beat into the next chord.', he: 'קווי ווקינג משתמשים בכל זה: צליל אקורד על הפעמה הראשונה, אחר כך צעדים, וצליל גישה בפעמה האחרונה אל האקורד הבא.' },
+        play: [notes([31, 33, 35, 37, 38], 0.45)],
+        show: { text: { en: 'G A B C♯ → D', he: 'G A B C♯ → D' } },
+      },
+      {
+        say: { en: 'To keep: root, fifth and octave first, then the third and the seventh, then the note that leads to the next root.', he: 'מה לזכור: קודם שורש, קווינטה ואוקטבה, אחר כך הטרצה והספט, ואז הצליל שמוביל לשורש הבא.' },
+        show: { text: { en: 'R 5 8 · 3 7 · →', he: 'R 5 8 · 3 7 · →' } },
+      },
+    ],
+  },
 ];
 
 /** Unit id ("topic:<id>") → mini-lesson id. */
@@ -507,5 +637,7 @@ export const UNITS: Record<string, string> = {
   'topic:fret-intervals': 'fret-intervals',
   'topic:fret-chords': 'fret-chords',
   'topic:fret-scales': 'fret-scales',
+  'topic:bass-notes': 'bass-notes',
+  'topic:bass-shapes': 'bass-shapes',
   'topic:key-notes': 'key-notes',
 };

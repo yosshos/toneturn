@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <title>Ninth Sense - Nine Pads</title>
+  <defs>
+    <radialGradient id="bg" cx="0.5" cy="0.3" r="1">
+      <stop offset="0" stop-color="#2A2363"/>
+      <stop offset="0.6" stop-color="#15162E"/>
+      <stop offset="1" stop-color="#0F1020"/>
+    </radialGradient>
+    <linearGradient id="hl" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.45"/>
+      <stop offset="0.5" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="14"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="116" fill="url(#bg)"/>
+  <!-- glow under the lit pads -->
+  <g filter="url(#soft)" opacity="0.55">
+    <rect x="214" y="214" width="84" height="84" rx="22" fill="#FFC94D"/>
+  </g>
+  <g>
+    <rect x="112" y="112" width="84" height="84" rx="22" fill="#7C8CFF"/>
+    <rect x="214" y="112" width="84" height="84" rx="22" fill="#FF8A5C"/>
+    <rect x="316" y="112" width="84" height="84" rx="22" fill="#5CE1E6"/>
+    <rect x="112" y="214" width="84" height="84" rx="22" fill="#FF6FB1"/>
+    <rect x="214" y="214" width="84" height="84" rx="22" fill="#FFC94D"/>
+    <rect x="316" y="214" width="84" height="84" rx="22" fill="#B57CFF"/>
+    <rect x="112" y="316" width="84" height="84" rx="22" fill="#8FE36B"/>
+    <rect x="214" y="316" width="84" height="84" rx="22" fill="#5CF2B5"/>
+    <rect x="316" y="316" width="84" height="84" rx="22" fill="#FFD15C"/>
+  </g>
+  <g fill="url(#hl)">
+    <rect x="112" y="112" width="84" height="84" rx="22"/>
+    <rect x="214" y="112" width="84" height="84" rx="22"/>
+    <rect x="316" y="112" width="84" height="84" rx="22"/>
+    <rect x="112" y="214" width="84" height="84" rx="22"/>
+    <rect x="214" y="214" width="84" height="84" rx="22"/>
+    <rect x="316" y="214" width="84" height="84" rx="22"/>
+    <rect x="112" y="316" width="84" height="84" rx="22"/>
+    <rect x="214" y="316" width="84" height="84" rx="22"/>
+    <rect x="316" y="316" width="84" height="84" rx="22"/>
+  </g>
+  <!-- note on the center pad -->
+  <ellipse cx="248" cy="272" rx="17" ry="12.5" transform="rotate(-24 248 272)" fill="#1B1D36"/>
+  <path d="M 262 270 V 232 Q 278 238 282 252" fill="none" stroke="#1B1D36" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

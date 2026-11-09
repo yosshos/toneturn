@@ -2,7 +2,7 @@
 // The microphone is opened only while this screen is open; nothing is recorded.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { Settings } from '../storage/progress';
+import { courseInstrumentOf, type Settings } from '../storage/progress';
 import { BrowserPitchCapture } from '../speech/pitchCapture';
 import { MidiPitchCapture } from '../speech/midi';
 import { listenLoop } from './Flight';
@@ -21,9 +21,7 @@ const noteName = (m: number, sol: boolean) => `${(sol ? NAMES_SOL : NAMES_EN)[((
 
 export function Tuner({ lang, settings, onChange, onBack }: { lang: Lang; settings: Settings; onChange: (p: Partial<Settings>) => void; onBack: () => void }) {
   const tx = TX[lang];
-  // No preset chosen yet: the active course's instrument (guitar / bass course), else the player's instrument.
-  const inst = settings.activeCourse === 'guitar' || settings.activeCourse === 'bass' ? settings.activeCourse : settings.instrument;
-  const preset = presetById(settings.tunerPreset ?? (inst === 'bass' ? 'bass' : inst === 'guitar' ? 'guitar' : 'chromatic'));
+  const preset = presetById(settings.tunerPreset ?? (courseInstrumentOf(settings) === 'bass' ? 'bass' : courseInstrumentOf(settings) === 'guitar' ? 'guitar' : 'chromatic'));
   const a4 = settings.a4 ?? 440;
   const sol = settings.naming === 'solfege' || (settings.naming === 'auto' && lang === 'he');
   const [lock, setLock] = useState<number | null>(null);

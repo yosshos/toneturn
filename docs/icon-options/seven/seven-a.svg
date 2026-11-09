@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><title>A</title><defs>
+  <radialGradient id="bg" cx="0.6" cy="0.2" r="1"><stop offset="0" stop-color="#1E4E6E"/><stop offset="0.55" stop-color="#16183A"/><stop offset="1" stop-color="#0F1020"/></radialGradient>
+  <linearGradient id="ear" gradientUnits="userSpaceOnUse" x1="200" y1="90" x2="360" y2="440"><stop offset="0" stop-color="#FFF1B8"/><stop offset="0.45" stop-color="#FFC94D"/><stop offset="1" stop-color="#FF8A5C"/></linearGradient>
+  <linearGradient id="wave" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#5CF2B5" stop-opacity="0.35"/><stop offset="1" stop-color="#5CF2B5"/></linearGradient>
+  <linearGradient id="waveBar" gradientUnits="userSpaceOnUse" x1="70" y1="0" x2="330" y2="0"><stop offset="0" stop-color="#5CF2B5" stop-opacity="0.4"/><stop offset="0.75" stop-color="#5CF2B5"/><stop offset="1" stop-color="#FFE38A"/></linearGradient>
+  <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FFC94D" stop-opacity="0.24"/><stop offset="1" stop-color="#FFC94D" stop-opacity="0"/></radialGradient>
+</defs><rect width="512" height="512" rx="116" fill="url(#bg)"/><circle cx="280" cy="256" r="190" fill="url(#glow)"/><path d="M 66 300 Q 84 266 102 300 Q 116 326 130 300" fill="none" stroke="url(#wave)" stroke-width="22" stroke-linecap="round"/>
+     <path d="M 150 132 L 360 132 Q 404 132 388 172 L 300 372 C 284 410 242 420 226 392" fill="none" stroke="url(#ear)" stroke-width="56" stroke-linecap="round" stroke-linejoin="round"/>
+     <g transform="translate(222 268) scale(0.62) translate(-310 -280)"><path d="M 290 382 C 292 404 326 402 322 372 L 312 170 C 310 134 354 136 346 172 C 340 206 266 236 266 290 C 266 332 308 346 336 330 C 362 314 354 266 320 266 C 294 266 288 298 308 306" fill="none" stroke="#fff" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/><circle cx="290" cy="384" r="20" fill="#FF6FB1"/></g>
+     <circle cx="440" cy="300" r="20" fill="#FF6FB1"/><circle cx="440" cy="362" r="20" fill="#FF6FB1"/></svg>

@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <title>Ninth Sense - Tuning Fork</title>
+  <defs>
+    <radialGradient id="bg" cx="0.5" cy="0.35" r="0.9">
+      <stop offset="0" stop-color="#1F3A5E"/>
+      <stop offset="0.6" stop-color="#15162E"/>
+      <stop offset="1" stop-color="#0F1020"/>
+    </radialGradient>
+    <linearGradient id="fork" gradientUnits="userSpaceOnUse" x1="200" y1="110" x2="310" y2="420">
+      <stop offset="0" stop-color="#FFF1B8"/>
+      <stop offset="0.45" stop-color="#FFC94D"/>
+      <stop offset="1" stop-color="#F08A2C"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#FFC94D" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#FFC94D" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="116" fill="url(#bg)"/>
+  <circle cx="256" cy="210" r="170" fill="url(#glow)"/>
+  <!-- vibration -->
+  <g fill="none" stroke-linecap="round" stroke-width="28">
+    <path d="M 160 150 A 110 110 0 0 0 160 270" stroke="#5CF2B5"/>
+    <path d="M 352 150 A 110 110 0 0 1 352 270" stroke="#5CF2B5"/>
+    <path d="M 108 118 A 170 170 0 0 0 108 302" stroke="#5CE1E6" opacity="0.7"/>
+    <path d="M 404 118 A 170 170 0 0 1 404 302" stroke="#5CE1E6" opacity="0.7"/>
+  </g>
+  <!-- fork -->
+  <path d="M 212 124 V 262 A 44 44 0 0 0 300 262 V 124" fill="none" stroke="url(#fork)" stroke-width="44" stroke-linecap="round"/>
+  <path d="M 256 300 V 382" fill="none" stroke="url(#fork)" stroke-width="40" stroke-linecap="round"/>
+  <circle cx="256" cy="396" r="30" fill="url(#fork)"/>
+  <circle cx="246" cy="386" r="9" fill="#FFFFFF" opacity="0.6"/>
+</svg>

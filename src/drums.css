@@ -322,6 +322,9 @@
   gap: 4px;
   margin-top: 6px;
 }
+.level-pips:has(i:nth-child(11)) {
+  gap: 2px; /* bass families run to 18 levels */
+}
 .level-pips i {
   flex: 1;
   height: 6px;

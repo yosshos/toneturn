@@ -25,7 +25,7 @@ import {
 } from '../engine/rush';
 import { renderStimulus, type Stimulus } from '../engine/lesson';
 import { noteAt, tuningById } from '../engine/fretboard';
-import type { Settings } from '../storage/progress';
+import { neckTuningOf, type Settings } from '../storage/progress';
 import { DiagramView, Neck, type NeckDot } from './Instrument';
 import { NoteStaff } from './NoteViews';
 import { G2Head, prefersCalm } from './Flight';
@@ -114,12 +114,14 @@ export function Rush({ lang, settings, mode, saved, onSave, onExit, onResult, be
   const ladder = rushLadder(mode);
   const calm = prefersCalm(settings);
   const streak = isStreak(mode);
-  const tuningId = mode === 'fretboard' ? settings.tuning : undefined;
+  // The bass course drills the bass neck (its own tuning), every other course the guitar's.
+  const tuningId = mode === 'fretboard' ? neckTuningOf(settings) : undefined;
   const tuning = tuningById(tuningId);
   const resumable = streak && isRushSaved(saved, mode) ? saved.state : null;
 
   const [stage, setStage] = useState<'setup' | 'play' | 'over'>('setup');
-  const [startLevel, setStartLevel] = useState(1);
+  // Note Rush in the bass course starts on the bass clef (level 2).
+  const [startLevel, setStartLevel] = useState(mode === 'note' && settings.activeCourse === 'bass' ? 2 : 1);
   // The course's own instrument first: chords on the neck in the guitar course, on the keys in the piano course.
   const [picture, setPicture] = useState<RushPicture>(settings.activeCourse === 'guitar' ? 'neck' : settings.activeCourse === 'keys' ? 'keys' : 'mixed');
   const [st, setSt] = useState<RushState | null>(null);
@@ -541,7 +543,7 @@ function FretPrompt({ item, lang }: { item: Extract<RushItem, { kind: 'fret' }>;
 }
 
 function FretBoard({ item, fb, settings, onTap, lang }: { item: Extract<RushItem, { kind: 'fret' }>; fb: Feedback | null; settings: Settings; onTap: (s: number, f: number) => void; lang: Lang }) {
-  const tuning = tuningById(settings.tuning);
+  const tuning = tuningById(neckTuningOf(settings));
   const t = item.target;
   const dots: NeckDot[] = [];
   if (fb?.tap) dots.push({ ...fb.tap, tone: fb.correct ? 'ok' : 'wrong' });
