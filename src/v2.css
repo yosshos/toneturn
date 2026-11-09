@@ -504,6 +504,43 @@
   cursor: pointer;
 }
 
+/* ---------------------------------------------------------------- onboarding: choose courses */
+.ob-course-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 14px 0 18px;
+}
+.ob-course {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px;
+  min-height: 104px;
+  border: var(--stroke) solid var(--outline);
+  border-radius: 20px;
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  text-align: start;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+}
+.ob-course b {
+  font-size: 1rem;
+  font-weight: 900;
+}
+.ob-course.on {
+  background: color-mix(in srgb, var(--lemon) 26%, var(--card));
+  transform: translate(var(--sx), 4px);
+  box-shadow: none;
+}
+.ob-next {
+  width: 100%;
+  min-height: 54px;
+}
+
 /* ---------------------------------------------------------------- glyphs (note-head symbols) */
 .glyph {
   display: inline-block;

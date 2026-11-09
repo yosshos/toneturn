@@ -16,8 +16,9 @@ test('splash → welcome → taste → three questions → the first lesson', as
   await page.locator('[data-ob="taste-0"]').click();
   await expect(page.locator('.ob-said')).not.toBeEmpty();
   await page.locator('[data-ob="taste-next"]').click();
-  await page.locator('[data-ob="goal-read"]').click();
-  await page.locator('[data-ob="inst-guitar"]').click();
+  await page.locator('[data-ob="course-ear"]').click();
+  await page.locator('[data-ob="course-guitar"]').click();
+  await page.locator('[data-ob="courses-next"]').click();
   await page.locator('[data-ob="level-0"]').click();
   await expect(page.locator('[data-onboarding="start"]')).toBeVisible();
   await page.locator('[data-ob="basics"]').click();

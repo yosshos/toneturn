@@ -8,6 +8,8 @@
 //   3 questions — goal · instrument · starting point (everything else has sensible defaults; the full questionnaire stays
 //                 in Settings).
 //   Start    — Find my level (stop any time) or start from the beginning.
+import { COURSES, courseOf, type CourseId } from '../engine/courses';
+import { Glyph } from './Glyph';
 import { useEffect, useRef, useState } from 'react';
 import { intakeSettings, trackOf, type Intake, type Level4 } from '../engine/intake';
 import { defaultPacks, type Goal } from '../engine/path';
@@ -115,22 +117,6 @@ const TX = {
   },
 };
 
-const GOAL_OPTS: { v: Goal; en: string; he: string; en2: string; he2: string }[] = [
-  { v: 'general', en: 'A better ear', he: 'אוזן טובה יותר', en2: 'Intervals, chords, rhythm — everything', he2: 'מרווחים, אקורדים, קצב — הכל' },
-  { v: 'sing', en: 'Singing in tune', he: 'לשיר מדויק', en2: 'Pitch, range, sight-singing', he2: 'אינטונציה, מנעד, סולפג׳' },
-  { v: 'guitar', en: 'Playing an instrument', he: 'לנגן על כלי', en2: 'Technique, chords, songs', he2: 'טכניקה, אקורדים, שירים' },
-  { v: 'read', en: 'Reading music', he: 'לקרוא תווים', en2: 'Notes, rhythm, sight-reading', he2: 'תווים, קצב, קריאה ממבט' },
-  { v: 'jazz', en: 'Jazz & improvisation', he: 'ג׳אז ואלתור', en2: 'Harmony, voicings, solos', he2: 'הרמוניה, קולות, סולואים' },
-  { v: 'exam', en: 'Exams & conservatory', he: 'בגרות וקונסרבטוריון', en2: 'Dictation, analysis, solfège', he2: 'הכתבות, ניתוח, סולפג׳' },
-];
-const INST_OPTS: { v: string; en: string; he: string }[] = [
-  { v: 'keys', en: 'Piano / keys', he: 'פסנתר / קלידים' },
-  { v: 'guitar', en: 'Guitar', he: 'גיטרה' },
-  { v: 'voice', en: 'My voice', he: 'הקול שלי' },
-  { v: 'bass', en: 'Bass', he: 'בס' },
-  { v: 'strings', en: 'Strings / winds', he: 'כלי קשת / נשיפה' },
-  { v: 'none', en: 'Nothing yet', he: 'עוד לא' },
-];
 const LEVEL_OPTS: { v: Level4; en: string; he: string; en2: string; he2: string }[] = [
   { v: 0, en: 'New to music', he: 'חדשים במוזיקה', en2: 'I love listening', he2: 'אוהבים להקשיב' },
   { v: 1, en: 'I play or sing for fun', he: 'מנגנים או שרים להנאה', en2: 'No formal study', he2: 'בלי לימודים מסודרים' },
@@ -138,8 +124,9 @@ const LEVEL_OPTS: { v: Level4; en: string; he: string; en2: string; he2: string 
   { v: 3, en: 'Professional / music student', he: 'מקצוענים / סטודנטים למוזיקה', en2: 'Skip the basics', he2: 'בלי הבסיס' },
 ];
 
-type Step = 'welcome' | 'taste' | 'goal' | 'inst' | 'level' | 'start';
-const ORDER: Step[] = ['welcome', 'taste', 'goal', 'inst', 'level', 'start'];
+type Step = 'welcome' | 'taste' | 'courses' | 'level' | 'start';
+// 0.61 (SPEC-COURSES): "goal" and "instrument" became one step — the courses. Level and start are for the first course.
+const ORDER: Step[] = ['welcome', 'taste', 'courses', 'level', 'start'];
 
 /** The intake built from the three answers (the rest: defaults; the full questionnaire stays in Settings). */
 export function quickIntake(goal: Goal, inst: string, music: Level4): IntakeResult {
@@ -172,8 +159,15 @@ export function quickIntake(goal: Goal, inst: string, music: Level4): IntakeResu
 export function Onboarding({ lang, onDone, onSignIn }: { lang: Lang; onDone: (r: IntakeResult, then: 'placement' | 'basics') => void; onSignIn: () => void }) {
   const tx = TX[lang];
   const [step, setStep] = useState<Step>('welcome');
-  const [goal, setGoal] = useState<Goal | null>(null);
-  const [inst, setInst] = useState<string | null>(null);
+  const [picked, setPicked] = useState<CourseId[]>([]);
+  const first = picked[0] ?? 'ear';
+  const goal: Goal = courseOf(first).goal;
+  const inst = picked.find((c) => c === 'keys' || c === 'guitar' || c === 'bass') ?? (picked.includes('voice') ? 'voice' : 'none');
+  const togglePick = (c: CourseId) => setPicked((p) => (p.includes(c) ? p.filter((x) => x !== c) : [...p, c]));
+  const finish = (then: 'placement' | 'basics') => {
+    const r = quickIntake(goal, inst, level ?? 0);
+    onDone({ ...r, patch: { ...r.patch, courses: picked.length ? picked : ['ear'], activeCourse: first } }, then);
+  };
   const [level, setLevel] = useState<Level4 | null>(null);
   const [taste, setTaste] = useState<{ hi: 0 | 1; heard: boolean; said: 'right' | 'wrong' | null }>(() => ({ hi: Math.random() < 0.5 ? 0 : 1, heard: false, said: null }));
   const i = ORDER.indexOf(step);
@@ -295,16 +289,24 @@ export function Onboarding({ lang, onDone, onSignIn }: { lang: Lang; onDone: (r:
         </section>
       )}
 
-      {step === 'goal' && (
+      {step === 'courses' && (
         <section>
-          <h1>{tx.goalQ}</h1>
-          {choice(GOAL_OPTS.map((o) => ({ v: o.v, label: o[lang], sub: lang === 'he' ? o.he2 : o.en2 })), goal, setGoal, 'goal')}
-        </section>
-      )}
-      {step === 'inst' && (
-        <section>
-          <h1>{tx.instQ}</h1>
-          {choice(INST_OPTS.map((o) => ({ v: o.v, label: o[lang] })), inst, setInst, 'inst')}
+          <h1>{lang === 'he' ? 'מה בא לך ללמוד?' : 'What would you like to learn?'}</h1>
+          <p className="field-hint">{lang === 'he' ? 'אפשר לבחור כמה. כל קורס הוא מסלול נפרד, ומחליפים ביניהם בלחיצה.' : 'Pick as many as you like. Each course is its own path; switch with one tap.'}</p>
+          <div className="ob-course-grid" role="group">
+            {COURSES.filter((c) => c.id !== 'bass').map((c) => {
+              const on = picked.includes(c.id);
+              return (
+                <button key={c.id} className={`ob-course ${on ? 'on' : ''}`} aria-pressed={on} onClick={() => togglePick(c.id)} data-ob={`course-${c.id}`}>
+                  <Glyph kind={c.glyph} color={c.color} size={44} />
+                  <b>{c.name[lang]}</b>
+                </button>
+              );
+            })}
+          </div>
+          <button className="btn primary ob-next" disabled={!picked.length} onClick={next} data-ob="courses-next">
+            {lang === 'he' ? 'המשך' : 'Continue'}
+          </button>
         </section>
       )}
       {step === 'level' && (
@@ -317,11 +319,11 @@ export function Onboarding({ lang, onDone, onSignIn }: { lang: Lang; onDone: (r:
         <section>
           <h1>{tx.startQ}</h1>
           <div className="ob-choices">
-            <button className="ob-choice big" onClick={() => onDone(quickIntake(goal ?? 'general', inst ?? 'none', level ?? 0), 'placement')} data-ob="placement">
+            <button className="ob-choice big" onClick={() => finish('placement')} data-ob="placement">
               <b>{tx.findLevel}</b>
               <small>{tx.findHint}</small>
             </button>
-            <button className="ob-choice big" onClick={() => onDone(quickIntake(goal ?? 'general', inst ?? 'none', level ?? 0), 'basics')} data-ob="basics">
+            <button className="ob-choice big" onClick={() => finish('basics')} data-ob="basics">
               <b>{tx.basics}</b>
               <small>{tx.basicsHint}</small>
             </button>
