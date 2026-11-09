@@ -18,6 +18,26 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.65.0',
+    date: '2026-11-10',
+    en: [
+      'New: a drums course (beta) — rudiments, grooves, fills, reading, funk, shuffle, independence, Middle-Eastern rhythms and feet, measured on an electronic kit or a practice pad.',
+      'English narration with a natural on-device voice (Kokoro); Hebrew text types itself out.',
+      'Guitar: the course sounds like a guitar, answers played on the neck are graded right, and every step has its own symbol.',
+      'Bass: bass sound and bass neck in games, bass-only lessons, cleaner fingerings and chord spelling.',
+      'Readable everywhere: no more yellow on white or pale-yellow behind icons; the recap comes as cards.',
+      'Settings on a phone: each group opens on tap.',
+    ],
+    he: [
+      'חדש: קורס תופים (בטא) — רודימנטים, גרובים, מעברים, קריאה, פאנק, שאפל, עצמאות גפיים, מקצבים מזרחיים ורגליים, במדידה על מערכת אלקטרונית או פד אימון.',
+      'קריינות באנגלית בקול טבעי שרץ על המכשיר (Kokoro); בעברית הטקסט מוקלד מילה אחר מילה.',
+      'גיטרה: הקורס נשמע כמו גיטרה, תשובה שמנוגנת על הצוואר נבדקת נכון, ולכל שלב סמל משלו.',
+      'בס: צליל בס וצוואר בס במשחקים, שיעורים לבס בלבד, אצבוע וכתיב אקורדים מדויקים יותר.',
+      'קריא בכל מקום: בלי צהוב על לבן ובלי רקע צהוב בהיר מאחורי סמלים; הסיכום מגיע ככרטיסים.',
+      'הגדרות בטלפון: כל קבוצה נפתחת בלחיצה.',
+    ],
+  },
+  {
     version: '0.64.0',
     date: '2026-11-09',
     en: [
