@@ -33,6 +33,19 @@ describe('lead sheets in', () => {
     expect(parseChart(l.text).errors).toEqual([]);
   });
 
+  it('MusicXML: the melody comes along — top note of a chord, ties joined, repeats written out', () => {
+    const n = (step: string, oct: number, dur: number, extra = '') => `<note>${extra.includes('<chord/>') ? '<chord/>' : ''}<pitch><step>${step}</step><octave>${oct}</octave></pitch><duration>${dur}</duration>${extra.replace('<chord/>', '')}</note>`;
+    const src = xml(
+      measure(1, attrs + harmony('C', 'major') + n('C', 5, 2) + n('E', 4, 2, '<chord/>') + n('D', 5, 2, '<tie type="start"/>'), '<barline location="left"><repeat direction="forward"/></barline>') +
+        measure(2, harmony('G', 'dominant') + n('D', 5, 1, '<tie type="stop"/>') + n('B', 4, 3), '<barline location="right"><repeat direction="backward"/></barline>'),
+    );
+    const l = leadSheetFromMusicXml(src);
+    expect(l.melody?.map((x) => [x.beat, x.dur, x.midi])).toEqual([
+      [0, 2, 72], [2, 3, 74], [5, 3, 71],
+      [8, 2, 72], [10, 3, 74], [13, 3, 71],
+    ]);
+  });
+
   it('MusicXML without chord symbols is refused with a reason', () => {
     expect(() => leadSheetFromMusicXml(xml(measure(1, attrs + note(4))))).toThrow(/no chord symbols/);
   });

@@ -5,6 +5,7 @@
 // C7sus4, Cadd9, C5, with an optional slash bass (C/E).
 
 import type { NoteEvent } from './lesson';
+import { comping, hashOf, walkingBass } from './band';
 
 export interface ChartChordEv {
   /** Root pitch class 0–11. */
@@ -212,7 +213,6 @@ export function chartBacking(p: ParsedChart, style: ChartStyle, bpm: number, loo
   for (let b = 0; b < total; b++) {
     const c = chordAtBeat(p, meter, b);
     if (!c) continue;
-    const next = chordAtBeat(p, meter, b + 1)!;
     const pos = b % meter;
     const isNew = c.bar * meter + c.at === b % (p.bars * meter);
     const root = lowBass(c.bass);
@@ -220,21 +220,24 @@ export function chartBacking(p: ParsedChart, style: ChartStyle, bpm: number, loo
     const fifth = lowBass((c.root + 7) % 12);
     switch (style) {
       case 'swing': {
-        const third = root + (c.iv[1] ?? 4);
-        const toNext = lowBass(next.bass) + (pos === meter - 1 ? (b % 2 ? 1 : -1) : 0);
-        const walk = pos === 0 ? root : pos === 1 ? third : pos === 2 ? lowBass((c.root + (c.iv[2] ?? 7)) % 12) : toNext;
-        B(walk, b, 0.9, 0.7);
-        if (pos === 0 || pos === 1) for (const m of v) N(m, pos === 0 ? b : b + swing, pos === 0 ? 0.8 : 1.2, 0.4);
+        // the walking bass and the comping are played by the band (band.ts), added after this loop
         if (drums) {
           // A jazz drummer's time (0.55): the ride's "ding, ding-a, ding, ding-a", the hi-hat foot on 2 and 4, the bass
           // drum feathered under every beat, a snare comment now and then, a crash at the top of each chorus.
           const bar = Math.floor(b / meter);
-          N(51, b, 0.05, pos % 2 ? 0.6 : 0.5, 'ride');
-          if (pos % 2 === 1) N(51, b + swing, 0.04, 0.38, 'ride');
+          // slow swing (under 92 BPM) is played with brushes: the sweep on every beat, the tap on 2 and 4 and its swung pickup
+          if (bpm < 92) {
+            N(38, b, 0.05, 0.6, 'brush-sweep');
+            if (pos % 2 === 1) N(38, b, 0.05, 0.5, 'brush-tap');
+            if (pos % 2 === 0) N(38, b + swing, 0.04, 0.3, 'brush-tap');
+          } else {
+            N(51, b, 0.05, pos % 2 ? 0.6 : 0.5, 'ride');
+            if (pos % 2 === 1) N(51, b + swing, 0.04, 0.38, 'ride');
+          }
           if (pos % 2 === 1) N(44, b, 0.05, 0.5, 'hat-foot');
           N(36, b, 0.05, 0.16, 'kick');
-          if (pos === meter - 1 && bar % 2 === 1) N(38, b + swing, 0.05, bar % 4 === 3 ? 0.42 : 0.22, 'snare');
-          if (pos === 1 && bar % 4 === 2) N(38, b + swing, 0.05, 0.18, 'snare');
+          if (bpm >= 92 && pos === meter - 1 && bar % 2 === 1) N(38, b + swing, 0.05, bar % 4 === 3 ? 0.42 : 0.22, 'snare');
+          if (bpm >= 92 && pos === 1 && bar % 4 === 2) N(38, b + swing, 0.05, 0.18, 'snare');
           if (pos === 0 && b % (p.bars * meter) === 0 && b > 0) N(49, b, 0.05, 0.55, 'crash');
         }
         break;
@@ -263,8 +266,6 @@ export function chartBacking(p: ParsedChart, style: ChartStyle, bpm: number, loo
         if (pos === 1) B(fifth, b + 0.5, 0.45, 0.6);
         if (pos === 2) B(fifth, b, 1.4, 0.65);
         if (pos === 3) B(root, b + 0.5, 0.45, 0.6);
-        const hits = (Math.floor(b / meter) % 2 === 0 ? [0, 1.5, 3] : [1, 2.5]).filter((h) => Math.floor(h) === pos);
-        for (const h of hits) for (const m of v) N(m, b - pos + h, 0.4, 0.34);
         if (drums) {
           // bossa: straight eighths on the hat, the "boom — ba-boom" bass drum, the cross-stick on the 3-2 clave
           N(42, b, 0.04, 0.3, 'hat');
@@ -278,17 +279,16 @@ export function chartBacking(p: ParsedChart, style: ChartStyle, bpm: number, loo
       }
       case 'ballad': {
         if (pos === 0 || isNew) B(root, b, 1.9, 0.6);
-        if (pos === 0 || isNew) v.forEach((m, k) => N(m, b + k * 0.25, 1.9 - k * 0.25, 0.32));
-        // ballad: a soft ride on every beat, the hi-hat foot on 2 and 4
+        // ballad (0.56): brushes — a sweep through every beat, a tap on 2 and 4, the hi-hat foot with it
         if (drums) {
-          N(51, b, 0.05, 0.3, 'ride');
-          if (pos % 2 === 1) N(44, b, 0.05, 0.35, 'hat-foot');
+          N(38, b, 0.05, 0.6, 'brush-sweep');
+          if (pos % 2 === 1) N(38, b, 0.05, 0.5, 'brush-tap');
+          if (pos % 2 === 1) N(44, b, 0.05, 0.3, 'hat-foot');
         }
         break;
       }
       case 'waltz': {
         if (pos === 0) B(root, b, 0.9, 0.7);
-        else for (const m of v) N(m, b, 0.6, 0.3);
         // jazz waltz: ride on every beat with a skip before 3, hi-hat foot on 2 and 3, a soft bass drum on 1
         if (drums) {
           N(51, b, 0.05, pos === 0 ? 0.55 : 0.42, 'ride');
@@ -299,6 +299,16 @@ export function chartBacking(p: ParsedChart, style: ChartStyle, bpm: number, loo
         break;
       }
     }
+  }
+  // the band (0.56): a walking bass in swing, voice-led comping with a varied rhythm in swing, bossa, ballad and waltz
+  if (style === 'swing' || style === 'bossa' || style === 'ballad' || style === 'waltz') {
+    const seed = hashOf(p.chords.map((c) => c.sym).join(' ') + style);
+    if (style === 'swing') for (const n of walkingBass(p, meter, total, seed)) B(n.midi, n.ghost ? n.beat : n.beat, n.ghost ? 0.25 : 0.92, n.ghost ? 0.35 : 0.66 + (n.beat % 2 ? 0.06 : 0));
+    for (const h of comping(p, meter, total, style, seed)) {
+      const at = style === 'swing' ? Math.floor(h.beat) + ((h.beat % 1) > 0.01 ? swing : 0) : h.beat;
+      for (const m of h.notes) N(m, at, h.len, h.vel);
+    }
+    ev.sort((a, b) => a.start - b.start);
   }
   return { events: ev, length: (startBeat + total) * beat + 0.4, startBeat };
 }

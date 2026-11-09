@@ -387,7 +387,8 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
             {q.kind === 'sing' ? (
               <Tuner v={v} />
             ) : q.kind === 'sing-seq' ? (
-              <SeqTargets degrees={q.degrees} notes={v.feedback?.seqNotes} />
+              // sight-singing (a written line): the degrees would give the answer away — shown only with the result
+              q.show && !v.feedback ? null : <SeqTargets degrees={q.degrees} notes={v.feedback?.seqNotes} />
             ) : q.kind === 'sing-run' ? (
               <>
                 <RunTargets offsets={q.run.offsets} notes={v.feedback?.seqNotes} caption={v.caption} />

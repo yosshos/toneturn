@@ -92,6 +92,8 @@ const SHORT: Record<string, L2> = {
   'rhythm-errors': { en: 'Rhythm slips', he: 'טעויות קצב' },
   'tempo-react': { en: 'Reaction', he: 'תגובה' },
   'sight-tap': { en: 'Sing & tap', he: 'לשיר ולהקיש' },
+  'sight-modulate': { en: 'Sing a key change', he: 'לשיר מעבר סולם' },
+  'chorale-rn': { en: 'Chorale analysis', he: 'ניתוח כורל' },
   'eq-ear': { en: 'EQ', he: 'אקולייזר' },
   'filter-ear': { en: 'Cut-off', he: 'פילטר' },
   'tone-hz': { en: 'Name the Hz', he: 'זיהוי תדר' },

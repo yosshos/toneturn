@@ -100,24 +100,24 @@ Levels are 1-based, as in `TOPIC_GEN` (`level 1` = first level).
 | Pop-rock excerpt analysis | Bagrut pop-rock | `song-form` 1–5, `progressions` 1, `reharm-swap` 1–3 | Partial (ear only; no analysis on a written excerpt) |
 | Maqam, jins, sayr (modulation), iqa' | Bagrut Arabic | `maqam` 1–6, `eastern-rhythm` 1–5, `odd-meter` | Covered |
 | Sight-singing (diatonic) | internal Bagrut 8%, all conservatories | `sight-tap` 1–3, vocal sight-singing track (`vocal.ts`, not a topic), `song-sing` 1–5, `sing-intervals` 1–6 | Partial: `sight-tap` tops at eighths and thirds |
-| Sight-singing with modulation / chromatic | TAU (oral), JAMD | — | **GAP** |
+| Sight-singing with modulation / chromatic | TAU (oral), JAMD | `sight-modulate` 1–5 (0.56) | Covered |
 | Sing intervals, chords, scales on demand | TAU, JAMD | `sing-intervals` 1–6 (L5 arpeggio of a named chord) | Partial: no "sing the scale/mode naming notes" |
 | Sing back from memory | TAU oral | `call-response`, core `sing-seq` lessons, `play-back` 1–7 | Covered |
 | Keyboard harmony (I–IV–V–I at the keys) | BIU | `key-notes` 5 (build a chord), `play-back` 6 | Partial: no "play the progression" item |
 
 ### Gaps (generators that would be needed)
 
-1. **Modulating / chromatic sight-singing** (TAU oral, JAMD): a `sing-seq` over 4–8 bars that leaves the key (to V, relative, IV) with accidentals, graded by the vocal engine; extend `sight-tap` or the vocal sight-singing track to levels with dotted rhythms, 6/8, chromatic notes and modulation.
-2. **Full chorale analysis**: show a 4-part chorale phrase (8–16 chords), ask for Roman numeral + inversion on each beat (place answers), Bagrut "ניתוח כורל" and TAU sample Q9.
+1. ~~**Modulating / chromatic sight-singing**~~ — done in 0.56: `sight-modulate` (chromatic note, to V, to vi, to IV, away and back). (TAU oral, JAMD): a `sing-seq` over 4–8 bars that leaves the key (to V, relative, IV) with accidentals, graded by the vocal engine; extend `sight-tap` or the vocal sight-singing track to levels with dotted rhythms, 6/8, chromatic notes and modulation.
+2. ~~**Full chorale analysis**~~ — by ear in 0.56: `chorale-rn` (Roman numeral and inversion of a marked chord in a 4-part phrase, 5 levels to minor keys).: show a 4-part chorale phrase (8–16 chords), ask for Roman numeral + inversion on each beat (place answers), Bagrut "ניתוח כורל" and TAU sample Q9.
 3. **Bass / soprano harmonization in four parts** (JAMD, TAU): given a bass (or soprano) line, the user writes the upper voices; grade with `voice-leading` rules.
-4. **Lead-sheet / jazz-standard analysis** (Bagrut jazz, JAMD jazz): a short standard with chord symbols; ask key areas, ii–V brackets, chord function, form.
+4. **Lead-sheet / jazz-standard analysis** (lead sheets can now be imported, 0.53; the analysis item is still to do) (Bagrut jazz, JAMD jazz): a short standard with chord symbols; ask key areas, ii–V brackets, chord function, form.
 5. **Excerpt analysis on a written score** (Bagrut track question "branched analysis": form + tonality + harmony + melody), multi-part questions on one excerpt.
 6. **Named-work listening identification** (Bagrut 2027 period questions; works list published yearly): needs licensed recordings, see the "My songs + legal" constraints. Unseen-comparison question is likewise audio-content bound.
 7. **Four-part chorale / string-quartet dictation, 5–6 note clusters** (TAU graduate only, low priority).
 8. **Sing the scale/mode, naming notes** (TAU oral): `sing-seq` over a named mode.
 9. **Keyboard harmony**: play I–IV–V–I (or ii–V–I) in a named key on the keys/MIDI.
 10. **Small theory gaps** (BIU): register/octave names (great, small, one-line…), acoustics and orchestra terms.
-11. **Swung rhythmic dictation**: `rhythm-build` stops at R7; R8 (swung 4/4, quarter triplets) exists in `rhythm.ts` and would serve the jazz mocks.
+11. ~~**Swung rhythmic dictation**~~ — done in 0.56: `rhythm-build` level 8 (R8), used by the jazz mocks.: `rhythm-build` stops at R7; R8 (swung 4/4, quarter triplets) exists in `rhythm.ts` and would serve the jazz mocks.
 
 ---
 

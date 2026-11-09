@@ -2,6 +2,8 @@
 // along. Charts are kept in the settings (synced with the profile). Templates are free progressions, not songs.
 
 import { Icon } from './icons';
+import type { NoteEvent } from '../engine/lesson';
+import { debrief } from '../engine/improvCoach';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { STANDARD_CHANGES, STANDARD_GROUPS, type StandardGroup } from '../engine/standards';
 import { RHYTHMS, RHYTHM_NAME, STRIDES, VOICINGS, VOICING_NAME, chartKind, type ChartMode, type ChartVoicing, type CompRhythm } from '../engine/drills/chartDrills';
@@ -30,6 +32,8 @@ export interface MyChart {
   /** Improvising under rules (owner 2026-11-08): a scale per chart bar (absent = the chord's usual scale) and the rules. */
   scales?: Record<number, ModeId>;
   rules?: RuleSet;
+  /** The tune from an imported lead sheet (b = beat, d = length in beats, m = MIDI): the head, played before the solo. */
+  melody?: { b: number; d: number; m: number }[];
   /** An improvisation level this chart came from (best scores are kept per level). */
   level?: string;
 }
@@ -57,7 +61,7 @@ export function ChartsScreen({ settings, onChange, onBack, onImprov, onDrill, on
   const mine = settings.myCharts ?? [];
   const [open, setOpen] = useState<MyChart | null>(() => initial?.() ?? null);
   const addSheets = (sheets: LeadSheet[]) => {
-    const made: MyChart[] = sheets.map((l) => ({ id: newId(), title: l.title === 'Untitled' ? tx.untitled : l.title, text: l.text, style: l.meter === 3 ? 'waltz' : l.style ? (irealStyle(l.style) as ChartStyle) : 'swing', bpm: l.bpm && l.bpm > 30 ? l.bpm : 120 }));
+    const made: MyChart[] = sheets.map((l) => ({ id: newId(), title: l.title === 'Untitled' ? tx.untitled : l.title, text: l.text, style: l.meter === 3 ? 'waltz' : l.style ? (irealStyle(l.style) as ChartStyle) : 'swing', bpm: l.bpm && l.bpm > 30 ? l.bpm : 120, ...(l.melody ? { melody: l.melody.map((n) => ({ b: n.beat, d: n.dur, m: n.midi })) } : {}) }));
     onChange({ myCharts: [...made, ...mine].slice(0, 120) });
     if (made.length === 1) setOpen(made[0]);
   };
@@ -207,6 +211,10 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
   const [text, setText] = useState(chart.text);
   const [style, setStyle] = useState<ChartStyle>(chart.style);
   const [bpm, setBpm] = useState(chart.bpm);
+  const [melody, setMelody] = useState(chart.melody ?? []);
+  const [head, setHead] = useState(!!chart.melody?.length);
+  /** The head's notes for a backing whose chart starts at beat `from` (played once, on the lead piano). */
+  const headEvents = (from: number) => (head ? melody.map((n) => ({ midi: n.m, start: (from + n.b) * (60 / bpm), duration: Math.max(0.08, n.d * (60 / bpm) * 0.95), velocity: 0.74 })) : []);
   const [drums, setDrums] = useState(true);
   const [playing, setPlaying] = useState(false);
   const [beat, setBeat] = useState(-1);
@@ -220,6 +228,61 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
     ctl.current?.abort();
     setPlaying(false);
     setBeat(-1);
+  };
+  // Listen back (0.56): the last take over the same band — MIDI notes replayed, or the microphone's sound itself.
+  type Take = { events: NoteEvent[]; length: number; t0: number; notes?: PlayedNote[]; audio?: AudioBuffer; offset?: number };
+  const lastTake = useRef<Take | null>(null);
+  const [hasTake, setHasTake] = useState(false);
+  const recorder = async () => {
+    // iOS mutes the first microphone stream when a second one opens: no recording there (the pitch capture comes first)
+    if (/iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) || typeof MediaRecorder === 'undefined') return null;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+      const rec = new MediaRecorder(stream);
+      const parts: Blob[] = [];
+      rec.ondataavailable = (e) => parts.push(e.data);
+      const started = new Promise<number>((r) => (rec.onstart = () => r(performance.now())));
+      rec.start();
+      const at = await started;
+      return {
+        at,
+        stop: () =>
+          new Promise<Blob>((r) => {
+            rec.onstop = () => {
+              stream.getTracks().forEach((t) => t.stop());
+              r(new Blob(parts, { type: rec.mimeType }));
+            };
+            rec.stop();
+          }),
+      };
+    } catch {
+      return null;
+    }
+  };
+  const listenBack = async () => {
+    const tk = lastTake.current;
+    if (!tk) return;
+    stop();
+    const c = new AbortController();
+    ctl.current = c;
+    await piano.unlock();
+    setPlaying(true);
+    const ctx = piano.context!;
+    const events = tk.notes ? [...tk.events, ...tk.notes.map((n) => ({ midi: n.midi, start: tk.t0 + n.start, duration: Math.max(0.05, n.end - n.start), velocity: 0.78 }))] : tk.events;
+    let src: AudioBufferSourceNode | null = null;
+    if (tk.audio) {
+      src = ctx.createBufferSource();
+      src.buffer = tk.audio;
+      const g = ctx.createGain();
+      g.gain.value = 1.4;
+      src.connect(g).connect(ctx.destination);
+      // the backing starts 60 ms after this moment (piano.play); the recording began `offset` s after the backing
+      src.start(Math.max(ctx.currentTime, ctx.currentTime + 0.06 + (tk.offset ?? 0)));
+      c.signal.addEventListener('abort', () => src?.stop());
+    }
+    await piano.play(events, tk.length, c.signal).catch(() => {});
+    src?.stop();
+    setPlaying(false);
   };
   const play = async () => {
     stop();
@@ -235,6 +298,7 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
     while (!c.signal.aborted) {
       const loops = Math.max(1, Math.ceil(32 / loopBeats));
       const b = chartBacking(parsed, style, bpm, loops, meter, { countIn: first, drums });
+      if (first && head) b.events.push(...headEvents(b.startBeat));
       const t0 = performance.now() + 120;
       // A timer, not animation frames: it keeps running with the screen off or the tab in the background.
       const timer = setInterval(() => {
@@ -264,9 +328,12 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
     setImprov('on');
     setPlaying(true);
     const loops = parsed.bars * meter < 24 ? 2 : 1;
-    const b = chartBacking(parsed, style, bpm, loops, meter, { countIn: true, drums });
+    const headBeats = head && melody.length ? parsed.bars * meter : 0;
+    const b = chartBacking(parsed, style, bpm, loops + (headBeats ? 1 : 0), meter, { countIn: true, drums });
+    if (headBeats) b.events.push(...headEvents(b.startBeat));
     const beatS = 60 / bpm;
-    const t0 = b.startBeat * beatS;
+    // with the head, the solo starts a chorus later; everything is timed from the solo's first beat
+    const t0 = (b.startBeat + headBeats) * beatS;
     const listenFrom = t0 + meter * beatS;
     const loopBeats = parsed.bars * meter;
     const start = performance.now() + 120;
@@ -293,9 +360,13 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
       });
       await piano.play(b.events, b.length, c.signal).catch(() => {});
       off();
+      lastTake.current = { events: b.events, length: b.length, t0, notes: midiNotes };
+      setHasTake(true);
     } else {
       const gate = headphones ? null : new BleedGate([...new Set(b.events.filter((e) => !e.perc).map((e) => e.midi))]);
       const buf: SungFrame[] = [];
+      const rec = await recorder();
+      const backingAt = piano.heardTime((piano.context?.currentTime ?? 0) + 0.06);
       void piano.play(b.events, b.length, c.signal).catch(() => {});
       const r = await new BrowserPitchCapture().sing({
         signal: c.signal,
@@ -309,6 +380,17 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
         },
       });
       frames = r.kind === 'frames' ? buf : [];
+      if (rec) {
+        const blob = await rec.stop();
+        try {
+          const audio = await piano.context!.decodeAudioData(await blob.arrayBuffer());
+          // the recording began this long after the backing was heard (a little input latency taken off)
+          lastTake.current = { events: b.events, length: b.length, t0, audio, offset: (rec.at - backingAt) / 1000 - 0.04 };
+          setHasTake(true);
+        } catch {
+          /* no playback for this take */
+        }
+      }
     }
     clearInterval(timer);
     const aborted = c.signal.aborted && !SIMULATED;
@@ -326,7 +408,7 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
     const judged = sung.filter((n) => n.start >= meter * beatS - 0.05);
     const rep = useMidi ? improvReportBy([], pcsAt, bpm) : improvReportBy(shifted, pcsAt, bpm);
     setReport(useMidi ? null : rep);
-    const anyRule = !!(rules.note || rules.interval || rules.rhythm);
+    const anyRule = !!(rules.note || rules.interval || rules.rhythm || rules.shape);
     const rr = anyRule ? checkRules(judged, parsed, meter, bpm, rules, scales, parsed.bars * loops) : null;
     setRulesRep(rr);
     const score = rr && rr.notes >= 4 ? rr.score : rep.score;
@@ -424,16 +506,21 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
         </span>
         <span className="ch-step">
           <small>{tx.key}</small>
-          <button className="icon-btn" onClick={() => setText((t) => transposeChart(t, -1))} aria-label="♭" data-chart-down="1">
+          <button className="icon-btn" onClick={() => (setText((t) => transposeChart(t, -1)), setMelody((ms) => ms.map((n) => ({ ...n, m: n.m - 1 }))))} aria-label="♭" data-chart-down="1">
             ♭
           </button>
-          <button className="icon-btn" onClick={() => setText((t) => transposeChart(t, 1))} aria-label="♯" data-chart-up="1">
+          <button className="icon-btn" onClick={() => (setText((t) => transposeChart(t, 1)), setMelody((ms) => ms.map((n) => ({ ...n, m: n.m + 1 }))))} aria-label="♯" data-chart-up="1">
             ♯
           </button>
         </span>
         <label className="ch-drums">
           <input type="checkbox" checked={drums} onChange={(e) => setDrums(e.target.checked)} /> {tx.drums}
         </label>
+        {melody.length > 0 && (
+          <label className="ch-drums" data-chart-head="1">
+            <input type="checkbox" checked={head} onChange={(e) => setHead(e.target.checked)} /> {lang === 'he' ? 'מנגינה לפני הסולו' : 'Play the tune first'}
+          </label>
+        )}
       </div>
       {playing ? (
         <>
@@ -461,6 +548,11 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
           <input type="checkbox" checked={headphones} onChange={(e) => setHeadphones(e.target.checked)} /> <Icon k="phones" /> {ix.headphones}
         </label>
       )}
+      {hasTake && !playing && (
+        <button className="btn ghost small ch-listen" onClick={() => void listenBack()} data-chart-listen="1">
+          ▶ {lang === 'he' ? 'להאזין לסולו שלכם' : 'Listen to your solo'}
+        </button>
+      )}
       {rulesRep && !playing && (
         <div className="take-card ch-rules-result" aria-live="polite" data-rules-score={Math.round(rulesRep.score * 100)}>
           <div className="take-score">
@@ -474,6 +566,33 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
             ))}
           </ul>
           {rulesRep.bars.some((x) => x.breaks) && <small className="field-hint">{rx.where}</small>}
+          {(() => {
+            const d = debrief(rulesRep, parsed, meter, rules, bpm);
+            return (
+              <div className="debrief" data-debrief={d.next.kind}>
+                <p className="db-head">{d.headline[lang]}</p>
+                {d.good && <p className="db-good">{d.good[lang]}</p>}
+                {d.work && <p className="db-work">{d.work[lang]}</p>}
+                {d.where && <p className="db-where">{d.where[lang]}</p>}
+                <div className="db-next">
+                  <small>{d.next.why[lang]}</small>
+                  <button
+                    className="btn small"
+                    onClick={() => {
+                      if (d.next.challenge) setRules(d.next.challenge.rules);
+                      setBpm(d.next.bpm);
+                      setRulesRep(null);
+                      setReport(null);
+                    }}
+                    data-debrief-next="1"
+                  >
+                    {d.next.kind === 'harder' ? (lang === 'he' ? 'לאתגר הבא' : 'Next challenge') : d.next.kind === 'easier' ? (lang === 'he' ? 'צעד אחורה' : 'Step back') : lang === 'he' ? 'שוב' : 'Again'}
+                    {d.next.bpm !== bpm ? ` · ${d.next.bpm} BPM` : ''}
+                  </button>
+                </div>
+              </div>
+            );
+          })()}
         </div>
       )}
       {report && !playing && (
@@ -544,7 +663,7 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
       )}
       <div className="ch-save">
         {dirty && (
-          <button className="btn ghost small" onClick={() => onSave({ ...chart, title: title.trim() || tx.untitled, text, style, bpm, rules, scales })} disabled={!parsed.chords.length} data-chart-save="1">
+          <button className="btn ghost small" onClick={() => onSave({ ...chart, title: title.trim() || tx.untitled, text, style, bpm, rules, scales, ...(melody.length ? { melody } : {}) })} disabled={!parsed.chords.length} data-chart-save="1">
             {tx.save}
           </button>
         )}

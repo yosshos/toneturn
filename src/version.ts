@@ -18,6 +18,24 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.56.0',
+    date: '2026-11-09',
+    en: [
+      'The band plays like a band: a real walking bass (roots on the change, approach notes, lines that head somewhere) and comping with voice-led rootless voicings in rhythms that never repeat three bars running; ballads and slow swing on brushes',
+      'After every chorus under rules: what went well, the one thing to work on, the bars where it broke — and the next step (a harder challenge, again, or slower) in one tap',
+      'Lead sheets with the tune: a MusicXML file brings its melody — the head plays first, then you solo',
+      'Listen to your solo: the take over the same band (MIDI notes, or your own sound with a microphone)',
+      'For the exams: sing a line that changes key (5 levels), chorale analysis by ear (Roman numerals and inversions, 5 levels), swing rhythmic dictation (R8) — in the Bagrut and conservatory mocks',
+    ],
+    he: [
+      'הלהקה מנגנת כמו להקה: בס מהלך אמיתי (שורש בהחלפה, צלילי גישה, קווים שהולכים למקום מסוים) וקומפינג עם וויסינגים בלי שורש והובלת קולות, במקצבים שלא חוזרים שלוש תיבות ברצף; בלדות וסווינג איטי במברשות',
+      'אחרי כל סבב עם כללים: מה היה טוב, הדבר האחד לעבוד עליו, התיבות שבהן זה נשבר — והצעד הבא (אתגר קשה יותר, שוב, או לאט יותר) בלחיצה',
+      'ליד־שיט עם המנגינה: קובץ MusicXML מביא את המנגינה — הנושא מתנגן קודם, ואז הסולו שלכם',
+      'להאזין לסולו: הניגון שלכם מעל אותה להקה (צלילי MIDI, או הצליל שלכם עם מיקרופון)',
+      'למבחנים: לשיר שורה שמשנה סולם (5 רמות), ניתוח כורל בשמיעה (ספרות רומיות והיפוכים, 5 רמות), הכתבה קצבית בסווינג (R8) — במבחני הדמה של הבגרות והקונסרבטוריונים',
+    ],
+  },
+  {
     version: '0.55.0',
     date: '2026-11-09',
     en: [

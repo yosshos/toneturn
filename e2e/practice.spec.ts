@@ -142,6 +142,10 @@ test.describe('practice hub', () => {
     await expect(page.locator('[data-challenge-library] [data-challenge]')).toHaveCount(51);
     await page.locator('[data-challenge-library] [data-challenge="one-note-swing"]').click();
     await expect(page.locator('[data-rule="note"]')).toHaveValue('one-note');
+    // improvise (simulator): the debrief follows with a next step
+    await page.locator('[data-chart-improv]').click();
+    await expect(page.locator('[data-debrief]')).toBeVisible({ timeout: 60000 });
+    await expect(page.locator('[data-debrief-next]')).toBeVisible();
     await page.locator('.screen-head .icon-btn').first().click();
     await page.locator('[data-leadsheet-paste]').fill('[Am]words [F]more\n[C]and [G7]more');
     await page.locator('[data-leadsheet-add]').click();

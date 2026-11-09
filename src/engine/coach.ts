@@ -199,6 +199,8 @@ const TOPIC_CONTRAST: Record<string, { en: string; he: string }> = {
   'bh-block': { en: 'Hum the top note: if it is 1, 3, 5 or 6 of the scale the chord is the 6 chord.', he: 'זמזמו את הצליל העליון: אם הוא 1, 3, 5 או 6 בסולם — זה אקורד ה־6.' },
   comping: { en: 'Count 1 & 2 & — where does the piano land: on a beat or on an "&"?', he: 'ספרו 1 ו 2 ו — איפה הפסנתר נוחת: על פעמה או על "ו"?' },
   turnarounds: { en: 'Listen to the bass: it walks the roots — and a half step down means a tritone sub.', he: 'הקשיבו לבס: הוא הולך על השורשים — וירידה בחצי טון פירושה תחליף טריטון.' },
+  'sight-modulate': { en: 'Find the new accidental before you start: it is the leading tone of the new home. Hear that home before you sing toward it.', he: 'מצאו את סימן ההיתק החדש לפני שמתחילים: הוא הצליל המוביל של הבית החדש. שמעו את הבית הזה לפני ששרים אליו.' },
+  'chorale-rn': { en: 'Start from the bass: its note tells you the inversion. Then ask what the chord does — rest (I), move away (IV, ii) or pull home (V).', he: 'התחילו מהבס: הצליל שלו מגלה את ההיפוך. ואז שאלו מה האקורד עושה — מנוחה (I), תנועה החוצה (IV, ii) או משיכה הביתה (V).' },
   'where-home': { en: 'Home feels like rest: listen for the chord where the tension lets go — usually right after the V.', he: 'הבית מרגיש כמו מנוחה: הקשיבו לאקורד שבו המתח משתחרר — לרוב מיד אחרי ה־V.' },
   'next-chord': { en: 'Sing the bass of the next chord before you answer — where does it want to go?', he: 'שירו את הבס של האקורד הבא לפני שעונים — לאן הוא רוצה ללכת?' },
   'reharm-swap': { en: 'Follow the bass in both versions: the bar where it moves differently is the one that changed.', he: 'עקבו אחרי הבס בשתי הגרסאות: התיבה שבה הוא זז אחרת היא זו שהשתנתה.' },

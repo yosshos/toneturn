@@ -355,7 +355,11 @@ TOPIC_TAGS['staff-dictation'] = tg(['dictation', 'melodic', 0.6], ['sequences', 
 TOPIC_GEN['rhythm-build'] = {
   title: { en: 'Build the rhythm', he: 'לבנות את המקצב' },
   skill: 'dictation',
-  levels: [1, 2, 3, 4, 5, 6, 7].map((r) => ({ en: `Rhythm level R${r}`, he: `מקצבים ברמה R${r}` })),
+  levels: [
+    ...[1, 2, 3, 4, 5, 6, 7].map((r) => ({ en: `Rhythm level R${r}`, he: `מקצבים ברמה R${r}` })),
+    // R8 (0.56, a Bagrut jazz / Rimon gap): swung eighths and quarter triplets, written straight, heard long-short
+    { en: 'R8: swing and quarter triplets', he: 'R8: סווינג וטריולות של רבעים' },
+  ],
   gen(seed, level, id) {
     const q = rhythmDictQuestion(id, level as RhythmLevel, 2, seed, 'build');
     // `topic` lets the review queue rebuild it once RhythmDictQuestion carries it (see the 0.38 build report).

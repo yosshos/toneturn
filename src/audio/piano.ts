@@ -597,6 +597,48 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     return true;
   }
 
+  /**
+   * Brushes (0.56), modelled: no free recording is good enough. A sweep is the wire brush circling the snare head —
+   * band-limited noise that swells and fades over about a beat while its colour drifts and it moves a little across
+   * the stereo field; a tap is the brush striking — a short bright burst over a low snare-head thud.
+   */
+  private brush(sweep: boolean, at: number, v: number) {
+    const ctx = this.ctx!;
+    const src = ctx.createBufferSource();
+    src.buffer = this.noise;
+    src.loop = true;
+    src.playbackRate.value = 0.9 + Math.random() * 0.2;
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    const g = ctx.createGain();
+    const pan = ctx.createStereoPanner();
+    src.connect(bp).connect(g).connect(pan).connect(this.percBus);
+    if (sweep) {
+      const len = 0.42 + Math.random() * 0.08;
+      bp.Q.value = 0.6;
+      bp.frequency.setValueAtTime(2400 + Math.random() * 600, at);
+      bp.frequency.linearRampToValueAtTime(4200 + Math.random() * 800, at + len * 0.6);
+      bp.frequency.linearRampToValueAtTime(3000, at + len);
+      g.gain.setValueAtTime(0, at);
+      g.gain.linearRampToValueAtTime(0.11 * v, at + len * 0.45);
+      g.gain.linearRampToValueAtTime(0, at + len);
+      pan.pan.setValueAtTime(-0.25, at);
+      pan.pan.linearRampToValueAtTime(0.25, at + len);
+      src.start(at);
+      src.stop(at + len + 0.02);
+      return;
+    }
+    bp.Q.value = 0.9;
+    bp.frequency.value = 3800;
+    g.gain.setValueAtTime(0, at);
+    g.gain.linearRampToValueAtTime(0.5 * v, at + 0.002);
+    g.gain.setTargetAtTime(0, at + 0.004, 0.035);
+    src.start(at);
+    src.stop(at + 0.25);
+    // the head's low thud
+    this.tone(at, 'sine', 190, 0.22 * v, 0.06);
+  }
+
   /** The sustain pedal's own sound (felt and mechanism), and its resonance send. */
   private pedalNoise(down: boolean) {
     const ctx = this.ctx;
@@ -1592,6 +1634,7 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     if (kind === 'hat-open' || kind === 'crash') return this.synthHit('hat-open', at, velocity);
     if (kind === 'rim') return this.synthHit('rim', at, velocity);
     if (kind === 'tom-hi' || kind === 'tom-lo') return this.tone(at, 'sine', kind === 'tom-hi' ? 196 : 131, 0.5 * velocity, 0.18);
+    if (kind === 'brush-sweep' || kind === 'brush-tap') return this.brush(kind === 'brush-sweep', at, velocity);
     if (kind === 'bell') return this.optionBell(at);
     const ctx = this.ctx!;
     const g = ctx.createGain();

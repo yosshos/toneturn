@@ -19,7 +19,7 @@ describe('written dictation and theory (spec AE §4.2, §4.5, §10)', () => {
     expect(TOPIC_GEN['staff-dictation'].levels).toHaveLength(10);
     expect(TOPIC_GEN['two-part'].levels).toHaveLength(6);
     expect(TOPIC_GEN['bass-dictation'].levels).toHaveLength(4);
-    expect(TOPIC_GEN['rhythm-build'].levels).toHaveLength(7);
+    expect(TOPIC_GEN['rhythm-build'].levels).toHaveLength(8);
   });
 
   it('every item is deterministic, answerable, bilingual and tagged', () => {

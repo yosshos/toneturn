@@ -1773,7 +1773,7 @@ export interface NoteEvent {
   inst?: 'bass' | 'hum';
 }
 
-export type PercKind = 'click' | 'accent' | 'wood' | 'kick' | 'snare' | 'snare-soft' | 'hat' | 'bell' | 'ride' | 'ride-bell' | 'hat-foot' | 'hat-open' | 'rim' | 'crash' | 'tom-hi' | 'tom-lo';
+export type PercKind = 'click' | 'accent' | 'wood' | 'kick' | 'snare' | 'snare-soft' | 'hat' | 'bell' | 'ride' | 'ride-bell' | 'hat-foot' | 'hat-open' | 'rim' | 'crash' | 'tom-hi' | 'tom-lo' | 'brush-sweep' | 'brush-tap';
 
 const ROMAN: Record<Roman, { deg: number; q: ChordQuality }> = {
   I: { deg: 0, q: 'maj' },

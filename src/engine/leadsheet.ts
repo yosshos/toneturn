@@ -11,6 +11,12 @@ import { parseChord } from './charts';
 import { find, kid, kids, parseXml, txt, type XNode } from './piece/xml';
 import { performanceOrder } from './piece/score';
 
+export interface MelodyNote {
+  beat: number;
+  dur: number;
+  midi: number;
+}
+
 export interface LeadSheet {
   title: string;
   composer?: string;
@@ -21,6 +27,8 @@ export interface LeadSheet {
   bpm?: number;
   /** A style hint from the source ("Medium Swing", "Bossa Nova" …). */
   style?: string;
+  /** The tune (from MusicXML): beats from the chart's start, lengths in beats. */
+  melody?: MelodyNote[];
   /** Symbols that had to be simplified (shown to the player). */
   simplified: string[];
 }
@@ -164,9 +172,9 @@ export function leadSheetFromMusicXml(src: string): LeadSheet {
   let sig: [number, number] = [4, 4];
   let bpm: number | undefined;
   const simplified: string[] = [];
-  const raw: { syms: { sym: string; at: number }[]; beats: number; repeatStart: boolean; repeatEnd: boolean; ending: number[] | null }[] = [];
+  const raw: { mel: { at: number; dur: number; midi: number; tieStop: boolean }[]; syms: { sym: string; at: number }[]; beats: number; repeatStart: boolean; repeatEnd: boolean; ending: number[] | null }[] = [];
   for (const m of kids(part, 'measure')) {
-    const bar = { syms: [] as { sym: string; at: number }[], beats: 0, repeatStart: false, repeatEnd: false, ending: null as number[] | null };
+    const bar = { mel: [] as { at: number; dur: number; midi: number; tieStop: boolean }[], syms: [] as { sym: string; at: number }[], beats: 0, repeatStart: false, repeatEnd: false, ending: null as number[] | null };
     let pos = 0; // in divisions
     let maxPos = 0;
     let lastDur = 0;
@@ -191,6 +199,16 @@ export function leadSheetFromMusicXml(src: string): LeadSheet {
         }
       } else if (el.name === 'note') {
         const dur = Number(txt(el, 'duration') ?? 0);
+        // the melody: voice 1 of the first staff, the top note of a chord, ties merged later
+        const pitch = kid(el, 'pitch');
+        if (pitch && !kid(el, 'rest') && !kid(el, 'grace') && (txt(el, 'voice') ?? '1') === '1' && (txt(el, 'staff') ?? '1') === '1') {
+          const midi = 12 * (Number(txt(pitch, 'octave')) + 1) + ({ C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 } as Record<string, number>)[txt(pitch, 'step') ?? 'C'] + Number(txt(pitch, 'alter') ?? 0);
+          const scale = 4 / sig[1] / divisions;
+          if (kid(el, 'chord')) {
+            const last = bar.mel[bar.mel.length - 1];
+            if (last && midi > last.midi) last.midi = midi;
+          } else bar.mel.push({ at: pos * scale, dur: dur * scale, midi, tieStop: kids(el, 'tie').some((t) => t.attrs.type === 'stop') });
+        }
         if (kid(el, 'chord')) continue; // same onset as the previous note
         if (kid(el, 'grace')) continue;
         lastDur = dur;
@@ -220,7 +238,18 @@ export function leadSheetFromMusicXml(src: string): LeadSheet {
   // a bar with no chord carries the previous one
   for (let i = 0; i < bars.length; i++) if (bars[i] === '%' && i === 0) bars[i] = firstChord(raw) ?? 'C';
   const meter = sig[0] === 3 || sig[0] === 6 ? 3 : 4;
-  return { title, ...(composer ? { composer } : {}), text: chartText(bars), meter, ...(bpm ? { bpm } : {}), simplified };
+  // the melody in performance order (the head), ties joined
+  const melody: MelodyNote[] = [];
+  let off = 0;
+  for (const i of order) {
+    for (const n of raw[i].mel) {
+      const last = melody[melody.length - 1];
+      if (n.tieStop && last && last.midi === n.midi && Math.abs(last.beat + last.dur - (off + n.at)) < 1e-3) last.dur += n.dur;
+      else melody.push({ beat: off + n.at, dur: n.dur, midi: n.midi });
+    }
+    off += raw[i].beats;
+  }
+  return { title, ...(composer ? { composer } : {}), text: chartText(bars), meter, ...(bpm ? { bpm } : {}), ...(melody.length >= 4 ? { melody } : {}), simplified };
 }
 const firstChord = (raw: { syms: { sym: string }[] }[]) => raw.find((b) => b.syms.length)?.syms[0].sym;
 
