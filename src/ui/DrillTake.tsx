@@ -172,7 +172,8 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo }
   const bass = isBassDrill(drill);
   const shift = bass ? 12 : 0;
   const qk = qOf(drill);
-  const rhClef: 'treble' | 'bass' | 'tenor' = bass ? (drill.spec.kind === 'tenor' ? 'tenor' : 'bass') : 'treble';
+  // The upright's thumb position reads the treble clef (ABRSM Gr 8), also an octave above the sound.
+  const rhClef: 'treble' | 'bass' | 'tenor' = bass ? (drill.spec.kind === 'tenor' ? 'tenor' : drill.spec.kind === 'treble' ? 'treble' : 'bass') : 'treble';
   const rh = drill.notes.filter((n) => n.hand === 'R' && (upTo === undefined || n.beat < upTo - 1e-6));
   const byKey = new Map<string, NoteResult>();
   for (const r of result?.perNote ?? []) byKey.set(noteKey(r.exp), r);
@@ -242,7 +243,7 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo }
       return (
         <NoteStaff
           key={`${clef}${li}`}
-          notes={items.map((x) => (x.n ? x.n.pitch + (clef === 'treble' ? 0 : shift) : 71))}
+          notes={items.map((x) => (x.n ? x.n.pitch + shift : 71))}
           rests={items.map((x) => !x.n)}
           chord={false}
           keyPc={k}

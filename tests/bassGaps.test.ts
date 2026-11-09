@@ -137,6 +137,72 @@ describe('ear L7: the written transcription', () => {
   });
 });
 
+describe('upright: treble clef, studies, three octaves in more keys', () => {
+  const pcOf = (m: number) => ((m % 12) + 12) % 12;
+  it('treble-clef levels read the thumb register on the G and D strings, written an octave up into the treble staff', () => {
+    for (const id of ['b-up-read-5', 'b-up-read-6'])
+      for (const d of drillsOf(id)) {
+        expect(d.spec.tuning).toBe('upright');
+        expect(d.spec.kind).toBe('treble');
+        expect(d.show).toBe('staff');
+        expect(d.bow).toBe('arco');
+        expect(d.goal.bass?.cents).toBeLessThanOrEqual(10);
+        for (const n of d.notes) {
+          expect(n.string).toBeLessThanOrEqual(2);
+          expect(n.fret!).toBeGreaterThanOrEqual(id === 'b-up-read-5' ? 12 : 7);
+          // written (sounding + 12) inside / near the treble staff: G3 … C6
+          expect(n.pitch + 12).toBeGreaterThanOrEqual(55);
+          expect(n.pitch + 12).toBeLessThanOrEqual(84);
+        }
+        expect(pcOf(d.notes[d.notes.length - 1].pitch)).toBe(pcOf(d.spec.key + (d.spec.minor ? 0 : 0)));
+      }
+  });
+
+  it('studies per grade band: phrases end on the 5th then the tonic, bowed or pizz, read from the staff, intonation measured', () => {
+    for (const id of ['b-up-arco-7', 'b-up-arco-8', 'b-up-arco-9', 'b-up-pizz-4'])
+      for (const d of drillsOf(id)) {
+        const g = d.spec.option!;
+        const meter = g === 1 ? 3 : 4;
+        expect(d.meter).toBe(meter);
+        expect(d.beats).toBe((g === 2 ? 12 : 8) * meter);
+        expect(d.show).toBe('staff');
+        expect(d.bow).toBe(id.startsWith('b-up-pizz') ? 'pizz' : 'arco');
+        expect(d.goal.bass?.cents).toBeDefined();
+        const tonic = pcOf(d.spec.key);
+        const last = d.notes[d.notes.length - 1];
+        expect(pcOf(last.pitch), d.itemId).toBe(tonic);
+        const end4 = d.notes.filter((n) => n.beat < 4 * meter).pop()!;
+        expect(pcOf(end4.pitch - tonic), d.itemId).toBe(7);
+        // every bar is full (no gaps, no overlaps)
+        let t = 0;
+        for (const n of d.notes) {
+          expect(n.beat).toBeCloseTo(t, 6);
+          t = n.beat + n.dur;
+        }
+        expect(t).toBeCloseTo(d.beats, 6);
+        // range by grade: first position (≤ fret 5) for Gr 1–3; above it later
+        const maxFret = Math.max(...d.notes.map((n) => n.fret!));
+        if (g === 0) expect(maxFret).toBeLessThanOrEqual(7);
+      }
+    // studies are different per key (generated, not one tune transposed)
+    const [a, b] = levelDrills(levelById('b-up-arco-8'), order);
+    expect(a.notes.map((n) => n.beat)).not.toEqual(b.notes.map((n) => n.beat).slice(0, a.notes.length));
+  });
+
+  it('three-octave scales and arpeggios in F, F♯ and G reach the top without folding (fret ≤ 24)', () => {
+    for (const d of drillsOf('b-up-scales-10')) {
+      const ps = d.notes.map((n) => n.pitch);
+      const lo = Math.min(...ps);
+      expect(Math.max(...ps) - lo).toBe(36);
+      expect(Math.max(...d.notes.map((n) => n.fret!))).toBeLessThanOrEqual(24);
+      // strictly up, then strictly down
+      const top = ps.indexOf(Math.max(...ps));
+      for (let k = 1; k <= top; k++) expect(ps[k]).toBeGreaterThan(ps[k - 1]);
+      for (let k = top + 1; k < ps.length; k++) expect(ps[k]).toBeLessThan(ps[k - 1]);
+    }
+  });
+});
+
 describe('quick study: prep time', () => {
   it('read L12 gives 30 s to read before Play and plays with the band', () => {
     for (const d of levelDrills(levelById('b-read-12'), order)) {

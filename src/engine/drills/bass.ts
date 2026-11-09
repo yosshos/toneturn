@@ -50,7 +50,9 @@ const floorOf = (tu: Tuning): number => (tu.open.length >= 5 ? 28 : tu.open[tu.o
 /** The root of a pitch class in the bass register (E1 … D♯2). */
 export const rootOf = (tu: Tuning, pc: number): number => floorOf(tu) + mod(pc - floorOf(tu), 12);
 export const lowest = (tu: Tuning): number => tu.open[tu.open.length - 1];
-const highest = (tu: Tuning): number => tu.open[0] + MAXF;
+/** Highest fret: 21 on electric basses; 24 on the upright (the fingerboard to the double octave, ABRSM 3-octave scales). */
+const maxF = (tu: Tuning): number => (tu.id === 'upright' ? 24 : MAXF);
+const highest = (tu: Tuning): number => tu.open[0] + maxF(tu);
 /** Fold a pitch by octaves into the playable range. */
 export const fold = (tu: Tuning, p: number): number => {
   let x = p;
@@ -72,14 +74,14 @@ function placeLine(tu: Tuning, line: BN[], o: { pos?: number; open?: boolean; sp
   const meter = o.meter ?? 4;
   type C = { s: number; f: number };
   const candsOf = (x: BN): C[] => {
-    if (x.s !== undefined) return [{ s: x.s, f: x.f ?? clamp(x.p - tu.open[x.s - 1], 0, MAXF) }];
+    if (x.s !== undefined) return [{ s: x.s, f: x.f ?? clamp(x.p - tu.open[x.s - 1], 0, maxF(tu)) }];
     const p = fold(tu, x.p);
     const out: C[] = [];
     for (let s = 1; s <= n; s++) {
       const f = p - tu.open[s - 1];
-      if (f >= 0 && f <= MAXF) out.push({ s, f });
+      if (f >= 0 && f <= maxF(tu)) out.push({ s, f });
     }
-    return out.length ? out : [{ s: n, f: clamp(p - tu.open[n - 1], 0, MAXF) }];
+    return out.length ? out : [{ s: n, f: clamp(p - tu.open[n - 1], 0, maxF(tu)) }];
   };
   const own = (c: C) => (c.f === 0 ? (o.open === false ? 8 : 0.4) : 0) + (c.f > 12 ? 0.04 * (c.f - 12) : 0);
   const first = (c: C) => {
@@ -2313,6 +2315,13 @@ const EXAM: Record<string, [LevelExamTag['board'], string][]> = {
   'b-up-pos-1': [['ABRSM', '1']],
   'b-up-pos-6': [['ABRSM', '7–8']],
   'b-up-read-4': [['ABRSM', '7–8']],
+  'b-up-read-5': [['ABRSM', '8']],
+  'b-up-read-6': [['ABRSM', '8']],
+  'b-up-arco-7': [['ABRSM', '1–3']],
+  'b-up-arco-8': [['ABRSM', '4–5']],
+  'b-up-arco-9': [['ABRSM', '6–8']],
+  'b-up-pizz-4': [['ABRSM', '4–5']],
+  'b-up-scales-10': [['ABRSM', '7–8']],
 };
 
 type LFn = (fam: BassFamilyId, level: number, en: string, he: string, specs: SpecTemplate[], keys: GuitarLevelDef['keys'], tempo: [number, number], sub: string, genres?: GuitarStyle[]) => GuitarLevelDef;
@@ -2345,6 +2354,10 @@ function uprightFamilies(L: LFn, fam: FamFn): GuitarFamilyDef[] {
       L('b-up-arco', 4, 'Hooked bowing', 'קשת מחוברת', [AR('arco', { option: 3, perBeat: 1 })], G.slice(0, 3), [40, 66], 'dotted'),
       L('b-up-arco', 5, 'String crossing under one bow', 'מעבר מיתרים בקשת אחת', [AR('arco', { option: 4 })], [4], [50, 80], E8),
       L('b-up-arco', 6, 'Scales in rhythm', 'סולמות במקצב', [AR('arco', { option: 5 })], G, [50, 80], E8),
+      // ABRSM lists A–C are pieces: original studies in each grade band's style, bowed, read from the staff, measured.
+      L('b-up-arco', 7, 'Bowed study: Grades 1–3 style', 'אטיוד בקשת: סגנון שלבים 1–3', [AR('etude', { option: 0 })], [7, 2, 9], [50, 80], 'quarters / halves'),
+      L('b-up-arco', 8, 'Bowed study: Grades 4–5 style (3/4, slurs)', 'אטיוד בקשת: סגנון שלבים 4–5 (3/4, לגאטו)', [AR('etude', { option: 1 }), AR('etude', { option: 1, minor: true })], [5, 10, 7], [56, 88], E8),
+      L('b-up-arco', 9, 'Bowed study: Grades 6–8 style (shifts, 16ths)', 'אטיוד בקשת: סגנון שלבים 6–8 (מעברים, שש-עשריות)', [AR('etude', { option: 2 }), AR('etude', { option: 2, minor: true })], [7, 2, 4, 5], [60, 96], '16ths'),
     ]),
     fam('b-up-scales', 'Upright: scales and arpeggios', 'קונטרבס: סולמות וארפג׳יו', [
       L('b-up-scales', 1, 'One-octave scales', 'סולמות באוקטבה אחת', [SS('scales', { option: 0, perBeat: 1 })], [7, 2, 9], [40, 52], Qn),
@@ -2356,11 +2369,14 @@ function uprightFamilies(L: LFn, fam: FamFn): GuitarFamilyDef[] {
       L('b-up-scales', 7, 'Broken 3rds', 'טרצות שבורות', [SS('scales', { option: 6, perBeat: 1 })], [7, 2, 9, 5], [50, 69], Qn),
       L('b-up-scales', 8, 'Running 3rds', 'טרצות רצות', [SS('scales', { option: 7, perBeat: 1 })], [7, 2, 9, 5], [56, 76], Qn),
       L('b-up-scales', 9, 'Three-octave E', 'סולם E בשלוש אוקטבות', [SS('scales', { option: 8, perBeat: 1 })], [4], [56, 76], Qn),
+      // Three octaves wherever the fingerboard allows (the top note at most the G string's 24th place): F, F♯ and G too.
+      L('b-up-scales', 10, 'Three-octave scales and arpeggios: F, F♯, G', 'סולמות וארפג׳יו בשלוש אוקטבות: F, F♯, G', [SS('scales', { option: 8, perBeat: 1 }), SS('scales', { option: 9, perBeat: 1 })], [5, 6, 7], [56, 76], Qn),
     ]),
     fam('b-up-pizz', 'Upright: jazz pizzicato', 'קונטרבס: פיציקטו ג׳אזי', [
       L('b-up-pizz', 1, 'Long, even pizz quarters', 'רבעים ארוכים ושווים בפיציקטו', [PZ('pizz', { perBeat: 1 })], [7, 2, 9, 5], [80, 140], Qn),
       L('b-up-pizz', 2, 'Pizz over ii–V–I', 'פיציקטו על ii–V–I', [PZ('pizz', { perBeat: 1, option: 1 })], [0, 5, 10, 7], [90, 160], Qn),
       L('b-up-pizz', 3, 'Sustain at tempo', 'צליל מתמשך בטמפו', [PZ('pizz', { perBeat: 1, option: 2 })], [5, 10, 7, 0], [140, 200], Qn),
+      L('b-up-pizz', 4, 'Pizz study: Grades 4–5 style', 'אטיוד בפיציקטו: סגנון שלבים 4–5', [PZ('etude', { option: 1 })], [7, 2, 9, 5], [70, 110], E8),
     ]),
     fam('b-up-walk', 'Upright: walking', 'קונטרבס: ווקינג', [
       L('b-up-walk', 1, 'Two-feel roots and 5ths', 'בשתיים: יסודות וקווינטות', [WU('two-feel', { perBeat: 0.5 })], [5, 10], [80, 140], 'halves'),
@@ -2374,6 +2390,9 @@ function uprightFamilies(L: LFn, fam: FamFn): GuitarFamilyDef[] {
       L('b-up-read', 2, 'Half and first position', 'חצי מצב ומצב ראשון', [RU('keysig')], [5, 10, 3], [50, 72], E8),
       L('b-up-read', 3, 'Positions with shifts', 'מצבים עם מעברים', [RU('pos', { option: 0 }), RU('pos', { option: 1 })], [7, 2], [50, 72], E8),
       L('b-up-read', 4, 'Tenor clef: the upper register', 'מפתח טנור: האזור הגבוה', [RU('tenor')], [7, 2], [44, 66], E8),
+      // ABRSM Gr 8: the treble clef for thumb position (written an octave above the sound, like the bass clef).
+      L('b-up-read', 5, 'Treble clef: thumb position', 'מפתח סול: מצב אגודל', [RU('treble')], [7, 2], [40, 63], E8),
+      L('b-up-read', 6, 'Treble clef with shifts', 'מפתח סול עם מעברים', [RU('treble', { option: 1 }), RU('treble', { option: 1, minor: true })], [7, 2, 9], [40, 63], E8),
     ]),
   ];
   for (const f of out) f.upright = true;
