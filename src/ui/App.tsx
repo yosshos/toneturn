@@ -395,10 +395,6 @@ export function App() {
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', bg || '#FBF7FF');
   }, [themeId]);
 
-  // Narration voice preferences apply to the single shared player.
-  useEffect(() => {
-    tts.prefs = { gender: s.voiceGender, voices: s.voices };
-  }, [s.voiceGender, s.voices]);
   // Sound, vibration, microphone and MIDI preferences (Settings audit, 0.41) apply to the shared services.
   useEffect(() => {
     piano.setVolume(s.volume ?? 0.9);

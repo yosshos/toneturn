@@ -21,6 +21,8 @@ export interface PromptPlayer {
   unlock(): void;
   speak(text: string, lang: 'he' | 'en', signal: AbortSignal): Promise<void>;
   cancel(): void;
+  /** Optional: make lines ahead of time (a voice that generates speech hides its latency this way). */
+  prefetch?(texts: string[], lang: 'he' | 'en'): void;
   /** Which language the voice actually used (falls back when no voice exists). */
   resolvedLang(lang: 'he' | 'en'): 'he' | 'en' | null;
 }

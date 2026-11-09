@@ -1,9 +1,23 @@
-// Browser speechSynthesis behind the PromptPlayer interface.
+// The narrator behind the PromptPlayer interface.
+// 0.65 (owner): English is spoken by Kokoro (an open 82M voice model running on the device, see ./kokoro);
+// Hebrew is never spoken — its text types itself out. Whenever the voice isn't ready (first download, offline,
+// a device too slow for it) the line is read instead: the text stays on screen for a reading pause.
 
 import { Cancelled, type PromptPlayer } from '../game/adapters';
-import { chooseVoice, type GenderPref } from './voices';
 import { shown, speakable } from './speakable';
-import { readingMs, talkOn } from './talk';
+import { automated, readingMs, talkOn } from './talk';
+import { wantsKokoro } from './kokoro/decide';
+
+/** What the player needs from the narrator engine (KokoroNarrator; a fake in tests). */
+export interface Narrator {
+  readonly isReady: boolean;
+  readonly state: { state: 'off' | 'downloading' | 'ready' | 'unavailable' };
+  speed: number;
+  ensure(): Promise<boolean>;
+  speak(text: string, signal: AbortSignal, shownText?: string): Promise<void>;
+  prefetch(texts: string[]): void;
+  stop(): void;
+}
 
 /** Reading mode: no voice, just a pause long enough to read the line (abortable). */
 function readPause(text: string, signal: AbortSignal): Promise<void> {
@@ -22,96 +36,58 @@ function readPause(text: string, signal: AbortSignal): Promise<void> {
   });
 }
 
-export function listVoices(): SpeechSynthesisVoice[] {
-  return typeof speechSynthesis === 'undefined' ? [] : speechSynthesis.getVoices();
-}
-
-export function voicesReady(timeoutMs = 1500): Promise<SpeechSynthesisVoice[]> {
-  return new Promise((resolve) => {
-    const v = listVoices();
-    if (v.length || typeof speechSynthesis === 'undefined') return resolve(v);
-    const t = setTimeout(() => resolve(listVoices()), timeoutMs);
-    speechSynthesis.addEventListener(
-      'voiceschanged',
-      () => {
-        clearTimeout(t);
-        resolve(listVoices());
-      },
-      { once: true },
-    );
-  });
-}
-
-export interface VoicePrefs {
-  gender: GenderPref;
-  voices: { he: string | null; en: string | null };
-}
-
-export function pickVoice(lang: 'he' | 'en', prefs?: VoicePrefs): SpeechSynthesisVoice | null {
-  return chooseVoice(listVoices(), lang, prefs?.voices[lang] ?? null, prefs?.gender ?? 'any');
-}
-
 export class BrowserPromptPlayer implements PromptPlayer {
+  /** Narration speed (Settings: slow / normal / fast). */
   rate = 1.0;
-  prefs: VoicePrefs = { gender: 'any', voices: { he: null, en: null } };
+  /** The English voice; set by the app (services.ts). Without one every line is read. */
+  narrator: Narrator | null = null;
+  /** Speak even in reading mode, waiting for the voice to load (the preview in Settings). */
+  force = false;
+
+  /** Would an English line be spoken now? (TypedText pops and paces on this.) */
+  speaking(lang: 'he' | 'en'): boolean {
+    return wantsKokoro(lang, talkOn(), automated()) && !!this.narrator?.isReady;
+  }
 
   unlock() {
-    if (typeof speechSynthesis === 'undefined') return;
-    // A silent utterance inside the Start gesture unlocks speech on stricter browsers.
-    const u = new SpeechSynthesisUtterance(' ');
-    u.volume = 0;
-    speechSynthesis.speak(u);
-    void voicesReady();
+    // Start the download early when the narrator will be wanted (never for Hebrew, never in automated runs).
+    if (this.narrator && wantsKokoro('en', talkOn(), automated()) && this.narrator.state.state === 'off') void this.narrator.ensure();
   }
 
   resolvedLang(lang: 'he' | 'en'): 'he' | 'en' | null {
-    if (typeof speechSynthesis === 'undefined') return null;
-    if (pickVoice(lang, this.prefs)) return lang;
-    if (pickVoice('en', this.prefs)) return 'en';
-    return null;
+    return lang;
   }
 
   cancel() {
-    if (typeof speechSynthesis !== 'undefined') speechSynthesis.cancel();
+    this.narrator?.stop();
   }
 
-  /** Speak even in reading mode (the voice preview in Settings). */
-  force = false;
+  /** Make the next lines while this one plays (mini-lesson steps, the lesson intro). */
+  prefetch(raws: string[], lang: 'he' | 'en') {
+    if (!this.narrator?.isReady || !wantsKokoro(lang, talkOn(), automated())) return;
+    this.narrator.speed = this.rate;
+    this.narrator.prefetch(raws.map((r) => speakable(r, lang)));
+  }
 
-  speak(raw: string, lang: 'he' | 'en', signal: AbortSignal): Promise<void> {
-    if (signal.aborted) return Promise.reject(new Cancelled());
-    if (!raw.trim()) return Promise.resolve();
-    // 0.64 (owner): no narration in Hebrew — the text types itself out instead.
-    if (lang === 'he' || (!talkOn() && !this.force)) return readPause(raw, signal);
+  async speak(raw: string, lang: 'he' | 'en', signal: AbortSignal): Promise<void> {
+    if (signal.aborted) throw new Cancelled();
+    if (!raw.trim()) return;
+    const n = this.narrator;
+    const wanted = lang === 'en' && !automated() && (talkOn() || this.force);
+    if (!wanted || !n) return readPause(raw, signal);
+    n.speed = this.rate;
     const text = speakable(raw, lang);
-    if (typeof speechSynthesis === 'undefined' || !text.trim()) return Promise.resolve();
-    const voice = pickVoice(lang, this.prefs);
-    if (!voice) return Promise.resolve(); // caller shows the text; no voice for this language
-    return new Promise((resolve, reject) => {
-      const u = new SpeechSynthesisUtterance(text);
-      u.voice = voice;
-      u.lang = voice.lang;
-      u.rate = this.rate;
-      let done = false;
-      // Chrome occasionally never fires onend; bound the wait by text length.
-      const guard = setTimeout(() => finish(), 2500 + text.length * 120);
-      const finish = (err?: Error) => {
-        if (done) return;
-        done = true;
-        clearTimeout(guard);
-        signal.removeEventListener('abort', onAbort);
-        if (err) reject(err);
-        else resolve();
-      };
-      const onAbort = () => {
-        speechSynthesis.cancel();
-        finish(new Cancelled());
-      };
-      signal.addEventListener('abort', onAbort, { once: true });
-      u.onend = () => finish();
-      u.onerror = () => finish();
-      speechSynthesis.cancel();
-      speechSynthesis.speak(u);
-    });
+    if (!text.trim()) return;
+    if (!n.isReady) {
+      // First use: start the download; meanwhile (and if it can't load) the line is read.
+      const loading = n.ensure();
+      if (!this.force || !(await loading)) return readPause(raw, signal);
+    }
+    try {
+      await n.speak(text, signal, shown(raw));
+    } catch (e) {
+      if (e instanceof Cancelled || signal.aborted) throw new Cancelled();
+      return readPause(raw, signal); // the voice gave up (too slow / failed): read this line
+    }
   }
 }

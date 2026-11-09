@@ -3,9 +3,8 @@
 
 import { Glyph, glyphForEmoji } from './Glyph';
 import { Icon } from './icons';
-import { TalkToggle, useTalk } from './TalkToggle';
+import { TalkToggle, useNarration } from './TalkToggle';
 import { TypedText } from './TypedText';
-import { voiceOn } from '../speech/talk';
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { clearSlot, loadSlot, saveSlot } from '../storage/resume';
 import type { MiniLesson } from '../content/miniTypes';
@@ -59,8 +58,8 @@ export function MiniLessonPlayer({ t, settings, lesson, name, onFinish, startDee
   }, [i, phase]);
   const ctl = useRef<AbortController | null>(null);
   const typedDone = useRef<(() => void) | null>(null);
-  const [talk] = useTalk();
   const step = steps[i];
+  const { speaking, msPerWord } = useNarration(lang, personal(step.say[lang], name));
 
   const playExample = async (signal: AbortSignal) => {
     if (!step.play?.length) return;
@@ -76,10 +75,13 @@ export function MiniLessonPlayer({ t, settings, lesson, name, onFinish, startDee
     void (async () => {
       try {
         await piano.unlock();
+        tts.unlock(); // English + narrator on: the voice starts loading (lines are read until it's ready)
         if (step.playFirst) await playExample(c.signal);
         const text = personal(step.say[lang], name);
+        // 0.65: the voice makes the next two lines while this one plays (each line is made once per device).
+        tts.prefetch(steps.slice(i + 1, i + 3).map((s) => personal(s.say[lang], name)), lang);
         if (SIMULATED) await new Promise((r) => setTimeout(r, 250));
-        else if (!voiceOn(lang)) {
+        else if (!tts.speaking(lang)) {
           // 0.64 (owner): reading mode types the text out word by word (TypedText), then a moment to read it.
           await new Promise<void>((res) => {
             typedDone.current = res;
@@ -199,7 +201,7 @@ export function MiniLessonPlayer({ t, settings, lesson, name, onFinish, startDee
             <NotesView midis={step.show.notes} keyPc={step.show.key ? pc(step.show.key) : null} settings={settings} chord={step.show.chord} durs={step.show.durs} clef={step.show.clef} />
           )}
           <p className="mini-caption" aria-live="polite">
-            {SIMULATED ? personal(step.say[lang], name) : <TypedText key={`${deep}-${i}`} text={personal(step.say[lang], name)} sound={!talk || lang === 'he'} msPerWord={talk && lang === 'en' ? 260 : 120} onDone={() => typedDone.current?.()} />}
+            {SIMULATED ? personal(step.say[lang], name) : <TypedText key={`${deep}-${i}`} text={personal(step.say[lang], name)} sound={!speaking} msPerWord={speaking ? (msPerWord ?? 260) : 120} onDone={() => typedDone.current?.()} />}
           </p>
           {words.length > 0 && <TermChips words={words} lang={lang} active={term} onPick={explain} label={t.termsWhat} />}
           {term && <TermCard term={term} lang={lang} onReplay={() => void playSound(term.play)} onClose={() => setTerm(null)} closeLabel={t.termClose} />}

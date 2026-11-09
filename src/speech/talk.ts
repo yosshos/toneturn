@@ -6,7 +6,8 @@ const OLD_KEY = 'toneturn.intake.talk';
 
 const listeners = new Set<(on: boolean) => void>();
 
-function automated(): boolean {
+/** A test browser (Playwright): never narrates, never downloads the voice model. */
+export function automated(): boolean {
   return typeof navigator !== 'undefined' && !!navigator.webdriver;
 }
 
