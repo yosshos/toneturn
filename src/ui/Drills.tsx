@@ -306,8 +306,10 @@ const TOPIC_NAME: Record<DrillTopic, { en: string; he: string }> = {
 
 function Hub({ lang, ds, settings, items, head, onFamily, onRun, onSettings, onCreate, onTest, onInstrument, onVoice }: { onVoice?: () => void; lang: Lang; ds: DrillSettings; settings: Settings; items: Record<string, ItemState>; head: React.ReactNode; onFamily: (f: FamilyDef) => void; onRun: (q: Drill[]) => void; onSettings: () => void; onCreate: (edit?: CustomDrill) => void; onTest: () => void; onInstrument: (i: 'piano' | 'guitar' | 'bass') => void }) {
   const tx = T[lang];
-  const today = useMemo(() => todayDrills(ds, items, settings.drillStart ?? {}, settings.customDrills ?? []), [ds, items, settings.drillStart, settings.customDrills]);
-  const fams = shownFamilies(ds);
+  // N10: the bass tuning hides the low-B levels on a bass without a low B.
+  const bassTuning = bassTuningOf(settings);
+  const today = useMemo(() => todayDrills({ ...ds, bassTuning }, items, settings.drillStart ?? {}, settings.customDrills ?? []), [ds, bassTuning, items, settings.drillStart, settings.customDrills]);
+  const fams = shownFamilies({ ...ds, bassTuning });
   const [topicRaw, setTopicState] = useState<DrillTopic>(() => {
     try {
       return (sessionStorage.getItem('toneturn.drilltopic') as DrillTopic | null) ?? 'all';

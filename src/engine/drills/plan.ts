@@ -15,8 +15,18 @@ const GCAT = guitarCatalog();
 export const families = (instrument: Instrument = 'piano'): FamilyDef[] => (instrument === 'piano' ? CAT : GCAT.filter((f) => f.instruments.includes(instrument)));
 export const familyById = (id: FamilyId): FamilyDef | undefined => CAT.find((f) => f.id === id) ?? GCAT.find((f) => f.id === id);
 
-/** What the hub filters by: the piano emphasis, or the guitar instrument + style (genre). */
-export type ShowSettings = Pick<DrillSettings, 'emphasis'> & Partial<Pick<DrillSettings, 'instrument' | 'guitarStyle'>>;
+/** What the hub filters by: the piano emphasis, or the guitar instrument + style (genre); bass: the bass tuning. */
+export type ShowSettings = Pick<DrillSettings, 'emphasis'> & Partial<Pick<DrillSettings, 'instrument' | 'guitarStyle'>> & { bassTuning?: string };
+
+/** Levels written for a low B string (B13): on a bass without one (lowest open string above B0) they are hidden (N10). */
+export const LOW_B_LEVELS = ['b-walk-17', 'b-styles-14'];
+/** The bass tuning has a low B (B0 = 23; the default 4-string E1 = 28 and drop D's D1 = 26 don't). */
+export const hasLowB = (bassTuning?: string): boolean => {
+  const tu = tuningById(bassTuning ?? 'bass');
+  return tu.instrument === 'bass' && Math.min(...tu.open) <= 24;
+};
+/** Level ids hidden on this bass tuning (path and hub). */
+export const hiddenBassLevels = (bassTuning?: string): string[] => (hasLowB(bassTuning) ? [] : LOW_B_LEVELS);
 
 /**
  * The families the player's settings show. Piano (default): the emphasis (classical / jazz / both). Guitar / bass:
@@ -26,9 +36,10 @@ export function shownFamilies(settings: ShowSettings): FamilyDef[] {
   const inst = settings.instrument ?? 'piano';
   if (inst === 'piano') return CAT.filter((f) => settings.emphasis === 'both' || f.style === settings.emphasis);
   const style = settings.guitarStyle;
+  const hidden = inst === 'bass' ? hiddenBassLevels(settings.bassTuning) : [];
   // Retired families (the old g-bass starter) keep their ids for progress but are not shown.
   return GCAT.filter((f) => f.instruments.includes(inst) && !f.retired && guitarStyleMatch(f.genres, style))
-    .map((f): GuitarFamilyDef => ({ ...f, levels: f.levels.filter((l) => guitarStyleMatch(l.genres, style)) }))
+    .map((f): GuitarFamilyDef => ({ ...f, levels: f.levels.filter((l) => guitarStyleMatch(l.genres, style) && !hidden.includes(l.id)) }))
     .filter((f) => f.levels.length > 0);
 }
 
@@ -99,6 +110,9 @@ export function targetBpmOf(level: LevelDef | undefined, drill: Drill): number {
   // 3 clean takes on 2 days and never move a goal tempo.
   if (drill.untimed) return drill.startBpm;
   const range = (level as (LevelDef & { tempo?: [number, number] }) | undefined)?.tempo;
+  // Eighth-pulse items (7/8, 10/8: ♪ = bpm, N9) start in eighths while the level's range is in quarters: they climb
+  // the same ratio as the range from their own start, so they have a ladder too.
+  if (range && drill.pulse === 8 && range[0] > 0) return Math.max(drill.startBpm, Math.round((drill.startBpm * range[1]) / range[0]));
   if (range) return Math.max(drill.startBpm, range[1]);
   return Math.round(drill.startBpm * DEFAULT_TARGET_FACTOR);
 }
@@ -133,7 +147,7 @@ export function currentLevel(fam: FamilyDef, items: Record<string, ItemState>, o
 }
 
 /** Families the player has started (any take) — Today prefers them; new players get scales + fingers (+ harris for jazz). */
-export function activeFamilies(settings: DrillSettings, items: Record<string, ItemState>, start: Partial<Record<FamilyId, number>> = {}): FamilyDef[] {
+export function activeFamilies(settings: DrillSettings & { bassTuning?: string }, items: Record<string, ItemState>, start: Partial<Record<FamilyId, number>> = {}): FamilyDef[] {
   const shown = shownFamilies(settings);
   const used = shown.filter((f) => Object.values(items).some((s) => s.family === f.id && s.takes > 0) || start[f.id] !== undefined);
   if (used.length) return used;
@@ -148,7 +162,7 @@ export function activeFamilies(settings: DrillSettings, items: Record<string, It
 }
 
 /** Candidates for Today: the current level of each active family, plus the player's own drills (first 3 keys). */
-export function candidates(settings: DrillSettings, items: Record<string, ItemState>, start: Partial<Record<FamilyId, number>> = {}, customs: CustomDrill[] = []): Drill[] {
+export function candidates(settings: DrillSettings & { bassTuning?: string }, items: Record<string, ItemState>, start: Partial<Record<FamilyId, number>> = {}, customs: CustomDrill[] = []): Drill[] {
   const out: Drill[] = [];
   for (const f of activeFamilies(settings, items, start)) out.push(...levelDrills(currentLevel(f, items, settings.keyOrder, start[f.id]), settings.keyOrder));
   // The player's own drills (drill creator), for this instrument and included in Today: their first 3 keys.
@@ -157,7 +171,7 @@ export function candidates(settings: DrillSettings, items: Record<string, ItemSt
 }
 
 /** Today's technique items (spec AI §9) for the hub, the workout block and the path's drill steps. */
-export function todayDrills(settings: DrillSettings, items: Record<string, ItemState>, start: Partial<Record<FamilyId, number>> = {}, customs: CustomDrill[] = [], n = 5, now: number | string = Date.now()): TodayItem[] {
+export function todayDrills(settings: DrillSettings & { bassTuning?: string }, items: Record<string, ItemState>, start: Partial<Record<FamilyId, number>> = {}, customs: CustomDrill[] = [], n = 5, now: number | string = Date.now()): TodayItem[] {
   return todaysItems(items, candidates(settings, items, start, customs), n, now);
 }
 

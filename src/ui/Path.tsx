@@ -3,7 +3,7 @@
 // "back to my step" button (§10.1). Reduced motion: no glide, no stagger, no bounce.
 
 import { GLYPHS, type GlyphKind } from './Glyph';
-import { ladderFamiliesFor, withLadderFacts } from '../engine/ladderFacts';
+import { ladderFamiliesFor, ladderHiddenFor, withLadderFacts } from '../engine/ladderFacts';
 import { drillSettingsOf } from './Drills';
 import { Iso } from './Iso';
 import { courseInput } from '../engine/courses';
@@ -159,6 +159,7 @@ export function pathInputFrom(s: Settings, p: Progress, now = new Date()): PathI
   return {
     ...inp,
     ladderFamilies: families,
+    ladderHidden: ladderHiddenFor(course, s.bassTuning),
     facts: withLadderFacts(inp.facts, { families, items: p.drillItems ?? {}, order: ds.keyOrder, start: s.drillStart ?? {}, vocalPassed: p.vocal?.passed ?? [], at: now.toISOString() }),
   };
 }

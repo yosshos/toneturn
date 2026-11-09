@@ -4,7 +4,7 @@
 import type { CourseId } from './courses';
 import { catalog, type LevelDef } from './drills/generate';
 import { guitarCatalog } from './drills/guitar';
-import { levelDrills, levelStars, shownFamilies, targetBpmOf } from './drills/plan';
+import { hiddenBassLevels, levelDrills, levelStars, shownFamilies, targetBpmOf } from './drills/plan';
 import { itemPass } from './drills/ladder';
 import type { Drill, DrillSettings, FamilyId, ItemState } from './drills/types';
 import { VOCAL_PROGRAMS, type PathFacts } from './path';
@@ -29,6 +29,11 @@ export function ladderFamiliesFor(course: CourseId, ds: DrillSettings, bassTunin
   return shownFamilies({ emphasis: ds.emphasis, instrument, guitarStyle: ds.guitarStyle })
     .filter((f) => upright || !(f as { upright?: boolean }).upright)
     .map((f) => f.id);
+}
+
+/** Ladder levels the course's path leaves out (N10): the low-B levels on a bass without a low B. */
+export function ladderHiddenFor(course: CourseId, bassTuning?: string): string[] {
+  return course === 'bass' ? hiddenBassLevels(bassTuning) : [];
 }
 
 /**

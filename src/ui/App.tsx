@@ -68,7 +68,7 @@ import { shortName } from '../engine/pathNames';
 import { PathExtras } from './Tools';
 import { MicIcon } from './bits';
 import { STRINGS } from '../i18n/strings';
-import { dueReviews, gemsOf, lessonMastered, localDay, namingFor, ratingsOf, type Progress, type Settings, DEFAULT_SETTINGS, DEFAULT_SOUND, emptyProgress, migrateSettings } from '../storage/progress';
+import { bassTuningOf, dueReviews, gemsOf, lessonMastered, localDay, namingFor, ratingsOf, type Progress, type Settings, DEFAULT_SETTINGS, DEFAULT_SOUND, emptyProgress, migrateSettings } from '../storage/progress';
 import { cloudConfigured, currentUser, signInWithGoogle, onAuthChange, pullSettings, pushSettings, syncProgress, type CloudUser } from '../cloud/cloud';
 import { AccountCard, type SyncState } from './Account';
 import { DAILY_GOAL_XP, Home, lessonStates, TopBar } from './Home';
@@ -906,7 +906,7 @@ export function App() {
     go('drills');
   };
   const drillQueue = useMemo(
-    () => (route === 'drills' && (drillFrom.current === 'chart' || drillFrom.current === 'assign' || (drillFrom.current === 'path' && chartQueue.current)) ? chartQueue.current ?? undefined : route === 'drills' && (drillFrom.current === 'path' || drillFrom.current === 'workout') && settings && progress ? todayDrills(drillSettingsOf(settings), progress.drillItems ?? {}, settings.drillStart ?? {}, settings.customDrills ?? []).map((x) => x.drill) : undefined),
+    () => (route === 'drills' && (drillFrom.current === 'chart' || drillFrom.current === 'assign' || (drillFrom.current === 'path' && chartQueue.current)) ? chartQueue.current ?? undefined : route === 'drills' && (drillFrom.current === 'path' || drillFrom.current === 'workout') && settings && progress ? todayDrills({ ...drillSettingsOf(settings), bassTuning: bassTuningOf(settings) }, progress.drillItems ?? {}, settings.drillStart ?? {}, settings.customDrills ?? []).map((x) => x.drill) : undefined),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [route],
   );

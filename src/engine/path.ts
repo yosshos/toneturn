@@ -172,6 +172,8 @@ export interface PathInput {
   course?: CourseId;
   /** 0.61: the technique families / vocal programs this player's course path may use, in teaching order. Absent = no ladder steps. */
   ladderFamilies?: string[];
+  /** Ladder level ids left out of the path (N10: low-B levels on a bass without a low B). */
+  ladderHidden?: string[];
 }
 
 export interface PathView {
@@ -312,10 +314,11 @@ function ladderSteps(): PathStep[] {
 // ---------------------------------------------------------------- filters
 
 /** Steps this player's path can contain (areas, packs, instruments, singing). */
-export function eligible(s: PathStep, inp: Pick<PathInput, 'leaveOut' | 'packs' | 'plays' | 'track'> & Partial<Pick<PathInput, 'hidden' | 'noSing' | 'noMic' | 'course' | 'ladderFamilies'>>): boolean {
+export function eligible(s: PathStep, inp: Pick<PathInput, 'leaveOut' | 'packs' | 'plays' | 'track'> & Partial<Pick<PathInput, 'hidden' | 'noSing' | 'noMic' | 'course' | 'ladderFamilies' | 'ladderHidden'>>): boolean {
   if (inp.course && !inCourse(s, inp.course)) return false;
   // Ladder steps only where the course asked for them (and only for its families / programs).
   if (s.ladder && !inp.ladderFamilies?.includes(s.ladder.family)) return false;
+  if (s.ladder && inp.ladderHidden?.includes(s.ladder.ref)) return false;
   if (inp.leaveOut.includes(s.domain)) return false;
   if (s.sung && (inp.leaveOut.includes('voice') || inp.noSing)) return false;
   if (s.mic && inp.noMic) return false;

@@ -1,7 +1,9 @@
 // BASS_VALIDATION (second round) fixes: each test is a [run]-style check of one finding (N1 to N13).
 import { describe, expect, it } from 'vitest';
 import { applyTake, itemPass, newItem } from '../src/engine/drills/ladder';
-import { itemTargetBpm, levelDrills, levelOfDrill, levelStars } from '../src/engine/drills/plan';
+import { itemTargetBpm, levelDrills, levelOfDrill, levelStars, LOW_B_LEVELS, shownFamilies } from '../src/engine/drills/plan';
+import { ladderHiddenFor } from '../src/engine/ladderFacts';
+import { eligible, stepCatalogue } from '../src/engine/path';
 import { guitarCatalog, type GuitarLevelDef } from '../src/engine/drills/guitar';
 import { generate } from '../src/engine/drills/generate';
 import { BASS_PROBES, placeWalk } from '../src/engine/drills/bassProbes';
@@ -302,5 +304,34 @@ describe('N7 / N8 / A8 / B5: zone, ghost class, drift and landing gates', () => 
     expect(late.guitar.bass?.landings?.every((x) => x > 30)).toBe(true);
     expect(late.verdict).toBe('not');
     expect(JSON.stringify(late.why)).toMatch(/Landing on 1 after the fill/);
+  });
+});
+
+describe('N9 eighth-pulse items have a ladder', () => {
+  it('every 7/8 and 10/8 item starts below its target (the range ratio from its own start)', () => {
+    const odd = BASS.flatMap((f) => f.levels.flatMap((lv) => levelDrills(lv, order).filter((d) => d.pulse === 8).map((d) => ({ lv: lv as GuitarLevelDef, d }))));
+    expect(odd.length).toBeGreaterThanOrEqual(3);
+    for (const { lv, d } of odd) {
+      const t = itemTargetBpm(d);
+      expect(t, d.itemId).toBeGreaterThan(d.startBpm);
+      expect(t, d.itemId).toBe(Math.round((d.startBpm * lv.tempo![1]) / lv.tempo![0]));
+    }
+  });
+});
+
+describe('N10 low-B levels only with a low B', () => {
+  const ids = (t?: string) => shownFamilies({ emphasis: 'both', instrument: 'bass', bassTuning: t }).flatMap((f) => f.levels.map((l) => l.id));
+  it('hidden in the hub on 4-string and drop D, shown on 5- and 6-string', () => {
+    for (const t of [undefined, 'bass', 'bass-dropd']) for (const id of LOW_B_LEVELS) expect(ids(t), `${t}`).not.toContain(id);
+    for (const t of ['bass5', 'bass6']) for (const id of LOW_B_LEVELS) expect(ids(t), t).toContain(id);
+    expect(ids('bass')).toContain('b-walk-16');
+  });
+  it('left out of the bass path on a 4-string', () => {
+    const step = stepCatalogue().find((s) => s.id === 'tech:b-walk-17')!;
+    const base = { leaveOut: [], packs: [], plays: ['bass'], track: undefined, course: 'bass', ladderFamilies: ['b-walk'] } as unknown as Parameters<typeof eligible>[1];
+    expect(ladderHiddenFor('bass', 'bass')).toEqual(LOW_B_LEVELS);
+    expect(ladderHiddenFor('bass', 'bass5')).toEqual([]);
+    expect(eligible(step, { ...base, ladderHidden: ladderHiddenFor('bass', 'bass') })).toBe(false);
+    expect(eligible(step, { ...base, ladderHidden: ladderHiddenFor('bass', 'bass5') })).toBe(eligible(step, base));
   });
 });
