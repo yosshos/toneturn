@@ -1602,3 +1602,7 @@
 @keyframes ga-settle { from { transform: translateY(-6px); } to { transform: none; } }
 @media (prefers-reduced-motion: reduce) { :root[data-theme] .game-art .ga-settle { animation: none; } }
 :root[data-theme='dark'] .game-art { background: #fff; }
+/* tools: four equal tiles a row; names never break mid-word (English "Metronome") */
+:root[data-theme] .practice-hub .hub-tools { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+:root[data-theme] .practice-hub .hub-tool { min-width: 0; padding: 8px 2px; font-size: 0.72rem; justify-content: center; text-align: center; overflow: hidden; word-break: keep-all; overflow-wrap: normal; hyphens: none; }
+@media (min-width: 700px) { :root[data-theme] .practice-hub .hub-tools { grid-template-columns: repeat(7, minmax(0, 1fr)); } }
