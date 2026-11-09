@@ -2,7 +2,7 @@
 // numbers and roman numerals in LTR islands; a tier is always shown by shape + label, never by colour alone.
 
 import { useId, useMemo, useState, type MouseEvent, type ReactNode } from 'react';
-import { BADGE_CAT_NAME, BADGE_CATS, badgeProgress, badgeStates, FAMILY_NAME, SKILL_NAME, type Badge, type BadgeFamily, type BadgeCat, type BadgeInput, type BadgeLog, type BadgeState } from '../engine/badges';
+import { BADGE_CAT_NAME, BADGE_CATS, badgeInCourse, badgeProgress, badgeStates, FAMILY_NAME, SKILL_NAME, type Badge, type BadgeFamily, type BadgeCat, type BadgeInput, type BadgeLog, type BadgeState } from '../engine/badges';
 import {
   AREA_NAME,
   challengeFor,
@@ -21,6 +21,9 @@ import type { SkillId } from '../engine/lesson';
 import { shareCanvas } from './Stats';
 import { AreaGlyph, BadgeArt, METALS } from './BadgeArt';
 import '../badges.css';
+import { courseOf, type CourseId } from '../engine/courses';
+import { Glyph } from './Glyph';
+import { CourseLevelsRow } from './CourseLevels';
 
 type Lang = 'he' | 'en';
 type L = { en: string; he: string };
@@ -44,6 +47,8 @@ const BX = {
     { en: 'Gold', he: 'זהב' },
   ] as L[],
   earnedOn: { en: 'Earned', he: 'הושג' },
+  thisCourse: { en: 'This course', he: 'הקורס הזה' },
+  allCourses: { en: 'All courses', he: 'כל הקורסים' },
 };
 
 // ======================================================================= RankCrest
@@ -227,7 +232,7 @@ async function shareBadge(b: Badge, lang: Lang, svg?: SVGSVGElement | null) {
   );
 }
 
-export function BadgeTile({ s, lang, onShare }: { s: BadgeState; lang: Lang; onShare?: (b: Badge, svg?: SVGSVGElement | null) => void }) {
+export function BadgeTile({ s, lang, onShare, showCourse = true }: { s: BadgeState; lang: Lang; onShare?: (b: Badge, svg?: SVGSVGElement | null) => void; /** The small course chip (per-course achievements, 0.65). */ showCourse?: boolean }) {
   const { badge: b, check, got } = s;
   return (
     <li className={`bd-tile ${got ? 'got' : 'locked'} ${b.tone ? `tier-${b.tone}` : ''}`}>
@@ -235,6 +240,12 @@ export function BadgeTile({ s, lang, onShare }: { s: BadgeState; lang: Lang; onS
         <BadgeArt badge={b} earned={got} size={64} lang={lang} />
       </span>
       <b className="bd-name">{b.name[lang]}</b>
+      {showCourse && b.course && b.course !== 'general' && (
+        <small className="bd-course" data-badge-course={b.course}>
+          <Glyph kind={courseOf(b.course).glyph} color={courseOf(b.course).color} size={18} />
+          {courseOf(b.course).short[lang]}
+        </small>
+      )}
       <small className="bd-desc">{b.desc[lang]}</small>
       {b.tone && <small className="bd-tone">{TIER_NAME[b.tone][lang]}</small>}
       {!got && check.p > 0 && (
@@ -267,15 +278,30 @@ type Filter = 'all' | 'earned' | 'locked';
 /** Categories with many badges are grouped (by skill / family / area) in collapsible sections. */
 const GROUPED: BadgeCat[] = ['skill', 'sub', 'technique', 'area'];
 
-export function BadgesView({ lang, input, log, evidence, onOpenArea, share = true, earnedOnly = false }: { lang: Lang; input: BadgeInput; log?: BadgeLog; evidence?: Partial<Record<RankArea, Pick<AreaEvidence, 'answers' | 'needAnswers'>>>; onOpenArea?: (a: RankArea) => void; share?: boolean; /** Progress → Awards (owner 2026-11-07): only earned badges + the closest few; ranks and the challenge live on Overview. */ earnedOnly?: boolean }) {
-  const states = useMemo(() => badgeStates(input, log), [input, log]);
-  const close = useMemo(() => badgeProgress(input, 3, log), [input, log]);
+export function BadgesView({ lang, input, log, evidence, onOpenArea, share = true, earnedOnly = false, course, courses }: { lang: Lang; input: BadgeInput; log?: BadgeLog; evidence?: Partial<Record<RankArea, Pick<AreaEvidence, 'answers' | 'needAnswers'>>>; onOpenArea?: (a: RankArea) => void; share?: boolean; /** Progress → Awards (owner 2026-11-07): only earned badges + the closest few; ranks and the challenge live on Overview. */ earnedOnly?: boolean; /** Per course (owner 2026-11-09): the active course's badges + general ones, with an "all courses" toggle. */ course?: CourseId; /** My courses: their levels in a row at the top. */ courses?: CourseId[] }) {
+  const [allCourses, setAllCourses] = useState(false);
+  const only = course && !allCourses ? course : null;
+  const allStates = useMemo(() => badgeStates(input, log), [input, log]);
+  const states = useMemo(() => (only ? allStates.filter((x) => badgeInCourse(x.badge, only)) : allStates), [allStates, only]);
+  const close = useMemo(() => (only ? badgeProgress(input, 400, log).filter((x) => badgeInCourse(x.badge, only)).slice(0, 3) : badgeProgress(input, 3, log)), [input, log, only]);
   const [filter, setFilter] = useState<Filter>(earnedOnly ? 'earned' : 'all');
   const onShare = share ? (b: Badge, svg?: SVGSVGElement | null) => void shareBadge(b, lang, svg) : undefined;
   const shown = states.filter((s) => (filter === 'all' ? true : filter === 'earned' ? s.got : !s.got));
   const got = states.filter((s) => s.got).length;
   return (
     <div className="ps-view bd-view">
+      {courses && courses.length > 0 && <CourseLevelsRow courses={courses} ratings={input.ratings ?? {}} lang={lang} active={course} />}
+      {course && (
+        <div className="bd-course-bar">
+          <div className="seg small" role="radiogroup" aria-label={BX.title[lang]}>
+            {[false, true].map((all) => (
+              <button key={String(all)} type="button" role="radio" aria-checked={allCourses === all} className={allCourses === all ? 'on' : ''} onClick={() => setAllCourses(all)} data-badges-all={all ? '1' : '0'}>
+                {all ? BX.allCourses[lang] : `${BX.thisCourse[lang]} · ${courseOf(course).short[lang]}`}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       {!earnedOnly && <AreaRanks ranks={input.ranks} lang={lang} evidence={evidence} onOpen={onOpenArea} />}
       {!earnedOnly && <ChallengeCard input={input} lang={lang} />}
       <p className="field-hint">

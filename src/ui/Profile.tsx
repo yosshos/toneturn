@@ -10,6 +10,8 @@ import { checkNickname, NICK_WHY, suggestNicknames } from '../engine/nickname';
 import { COUNTRY_CODES, countryName, deviceCountry } from '../engine/country';
 import { effectivePrivacy } from '../engine/privacy';
 import type { Settings } from '../storage/progress';
+import type { Ratings } from '../engine/rating';
+import { CourseLevelsRow } from './CourseLevels';
 
 type Lang = 'en' | 'he';
 
@@ -406,7 +408,7 @@ export function PhotoCrop({ lang, src, onCancel, onDone }: { lang: Lang; src: st
 
 // ---------------------------------------------------------------- the profile card (Settings → Account, Today row)
 
-export function ProfileCard({ lang, s, onChange }: { lang: Lang; s: Settings; onChange: (p: Partial<Settings>) => void }) {
+export function ProfileCard({ lang, s, onChange, ratings }: { lang: Lang; s: Settings; onChange: (p: Partial<Settings>) => void; /** My level in each of my courses (0.65). */ ratings?: Ratings }) {
   const he = lang === 'he';
   const [open, setOpen] = useState<null | 'nick' | 'flag' | 'pic'>(null);
   return (
@@ -420,6 +422,7 @@ export function ProfileCard({ lang, s, onChange }: { lang: Lang; s: Settings; on
           <small>{s.country ? countryName(s.country, lang) : he ? 'בלי דגל' : 'No flag'}</small>
         </span>
       </div>
+      {ratings && <CourseLevelsRow courses={s.courses ?? ['ear']} ratings={ratings} lang={lang} active={s.activeCourse} />}
       <div className="pc-actions">
         <button className="btn small" onClick={() => setOpen('nick')} data-open-nick="1">
           {s.nickname ? (he ? 'שינוי כינוי' : 'Change nickname') : he ? 'בחירת כינוי' : 'Choose a nickname'}

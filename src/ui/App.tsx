@@ -1424,7 +1424,7 @@ export function App() {
         />
       )}
       {route === 'settings' && (
-        <SettingsScreen t={t} settings={s} onChange={updateSettings} onBack={() => go('home')} onPlans={() => go('plans')} onAdmin={plan?.admin ? () => go('admin') : undefined} onIntake={() => go('intake')} onMixer={openMixer} account={<AccountCard t={t} user={user} sync={sync} />} />
+        <SettingsScreen t={t} settings={s} ratings={ratingsOf(progress)} onChange={updateSettings} onBack={() => go('home')} onPlans={() => go('plans')} onAdmin={plan?.admin ? () => go('admin') : undefined} onIntake={() => go('intake')} onMixer={openMixer} account={<AccountCard t={t} user={user} sync={sync} />} />
       )}
       {route === 'diagnostics' && <Diagnostics t={t} settings={s} onBack={() => go('home')} />}
       {route === 'friends' && <FriendsScreen profileErr={profileErr} settings={s} t={t} user={user} sync={sync} progress={progress} streak={gems.streak.count} onBack={() => go('home')} onBestTier={(b) => b > (s.bestLeague ?? 0) && updateSettings({ bestLeague: b })} onLeagueSeen={(leagueSeen) => updateSettings({ leagueSeen })} classes={<ClassesScreen t={t} settings={s} user={user} onBack={() => go('friends')} onOpenLesson={(id) => openAssignment(id)} onOpenItem={openAssignItem} embedded />} />}
@@ -1456,7 +1456,7 @@ export function App() {
             </>
           }
           map={<SkillMap t={t} lang={s.uiLang} progress={progress} bestLeague={s.bestLeague} onBack={() => go('home')} onPractice={practiceSkill} onPlacement={openPlacement} />}
-          badges={<BadgesView lang={s.uiLang} input={badgeInputOf(progress, new Date(), s.uiLang === 'he' ? [5, 6] : undefined)} log={progress.badges} earnedOnly />}
+          badges={<BadgesView lang={s.uiLang} input={badgeInputOf(progress, new Date(), s.uiLang === 'he' ? [5, 6] : undefined)} log={progress.badges} earnedOnly course={s.activeCourse ?? 'ear'} courses={s.courses ?? ['ear']} />}
         />
       )}
       {consentThen && (
