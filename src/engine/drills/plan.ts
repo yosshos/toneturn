@@ -69,7 +69,25 @@ export function levelOfDrill(drill: Drill): LevelDef | undefined {
   const fam = familyById(drill.spec.family);
   if (!fam) return undefined;
   const sp = drill.spec as unknown as Record<string, unknown>;
-  return fam.levels.find((lv) => lv.specs.some((t) => Object.entries(t).every(([k, v]) => k === 'tempo' || JSON.stringify(sp[k]) === JSON.stringify(v))));
+  // Every template whose keys all equal the drill's spec matches; a template that is a subset of a later level's
+  // (b-pluck-1 ⊂ b-pluck-2, b-up-pizz-1 ⊂ 2 ⊂ 3 …) would match first, so take the most specific one: the template
+  // with the most matching keys. Generation adds keys of its own (instrument, tuning, hands), so an exact match on
+  // the union of keys can't be used. Levels that list their keys (b-up-scales-3 = scales-1/2's specs in B♭, E♭, E)
+  // match only their own keys.
+  let best: LevelDef | undefined;
+  let bestN = -1;
+  for (const lv of fam.levels) {
+    if (Array.isArray(lv.keys) && !lv.keys.includes(drill.spec.key)) continue;
+    for (const t of lv.specs) {
+      const es = Object.entries(t).filter(([k]) => k !== 'tempo' && k !== 'key');
+      if (!es.every(([k, v]) => JSON.stringify(sp[k]) === JSON.stringify(v))) continue;
+      if (es.length > bestN) {
+        best = lv;
+        bestN = es.length;
+      }
+    }
+  }
+  return best;
 }
 
 /**
