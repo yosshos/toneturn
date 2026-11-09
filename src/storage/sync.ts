@@ -16,7 +16,8 @@ import { mergeRanks } from '../engine/ranks';
 import { mergeBadgeLog } from '../engine/badges';
 
 export function rebuildProgress(results: LessonResult[], local?: Progress): Progress {
-  const rebuilt = results.reduce((p, r) => applyResult(p, r, new Date(r.completedAt)), emptyProgress());
+  // A rebuild starts from nothing: XP added take by take (technique) exists only in the results now, so count it.
+  const rebuilt = results.reduce((p, r) => applyResult(p, r.xpCounted ? { ...r, xpCounted: false } : r, new Date(r.completedAt)), emptyProgress());
   if (!local) return rebuilt;
   // Local-only data survives a rebuild: game bests, game-round ratings, puzzle medals, older snapshots.
   const gameEvents = (local.ratingEvents ?? []).filter((e) => e.id.startsWith('g:'));

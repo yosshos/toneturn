@@ -87,3 +87,13 @@ describe('technique and vocal ladders in the course path (0.61, owner)', () => {
     expect(q).toHaveLength(4);
   });
 });
+
+describe('technique XP reaches the server once (0.61)', () => {
+  it('a result whose XP was counted take by take adds no XP locally; a rebuild counts it', async () => {
+    const { applyResult, emptyProgress } = await import('../src/storage/progress');
+    const { rebuildProgress } = await import('../src/storage/sync');
+    const r = { lessonId: 'tech:scales-1', lessonVersion: 1, sessionId: 'tech-1', completedAt: '2026-11-09T10:00:00Z', firstTry: 4, total: 5, xp: 18, xpCounted: true, missed: [], items: [] };
+    expect(applyResult(emptyProgress(), r, new Date(r.completedAt)).xp).toBe(0);
+    expect(rebuildProgress([r]).xp).toBe(18);
+  });
+});

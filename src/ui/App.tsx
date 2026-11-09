@@ -842,6 +842,7 @@ export function App() {
     if (step.kind === 'tech' && step.ladder && settings && progress) {
       chartQueue.current = techQueue(step.ladder.ref, progress.drillItems ?? {}, drillSettingsOf(settings).keyOrder);
       drillFrom.current = 'path';
+      drillSessionXp.current = 0;
       return go('drills');
     }
     if (step.kind === 'vocal' && step.ladder) {
@@ -867,6 +868,8 @@ export function App() {
   };
   /** Technique drills opened from a path step or a workout block run today's items as a queue (spec AI §9). */
   const drillFrom = useRef<'path' | 'workout' | 'test' | 'chart' | 'assign' | null>(null);
+  /** XP of the technique takes since the queue opened (0.61: carried by the session's result to the server). */
+  const drillSessionXp = useRef(0);
   /** A progression from Charts practised as a drill (voicings / comping / stride). */
   const chartQueue = useRef<Drill[] | null>(null);
   /** The mixer returns to the screen it was opened from (Settings or Charts). */
@@ -890,14 +893,19 @@ export function App() {
   const drillQueueDone = (takes: number, clean: number) => {
     const from = drillFrom.current;
     drillFrom.current = null;
+    const xp = drillSessionXp.current;
+    drillSessionXp.current = 0;
+    // 0.61: a technique session from the path or the workout is one result in the history — the streak, the teacher's
+    // view and the server's weekly XP see it (its XP was already counted take by take on this device).
+    const result = (lessonId: string) =>
+      store.recordCompletion({ lessonId, lessonVersion: 1, sessionId: `tech-${Date.now()}`, completedAt: new Date().toISOString(), firstTry: clean, total: takes, xp, xpCounted: true, missed: [], items: [] });
+    if (from === 'workout' && takes > 0) void result('technique').then(setProgress);
     if (from === 'path' && pendingStep.current?.kind === 'tech') {
       // A technique level from the path: one result for the session (history → streak, teacher, workout, the step's stars).
       const ps = pendingStep.current;
       chartQueue.current = null;
       if (takes > 0)
-        void store
-          .recordCompletion({ lessonId: ps.id, lessonVersion: 1, sessionId: `tech-${Date.now()}`, completedAt: new Date().toISOString(), firstTry: clean, total: takes, xp: 0, missed: [], items: [] })
-          .then((p) => {
+        void result(ps.id).then((p) => {
             setProgress(p);
             notePathResult(p);
           });
@@ -1612,7 +1620,10 @@ export function App() {
             // Games and the vocal warm-up: the block counts as done when started (they run on their own screens).
             saveRun(addSession(wrun, b.minutes * 60000, Math.max(1, b.minutes), Math.max(1, b.minutes)));
             if (b.target.kind === 'game') {
-              if (b.target.game === 'drills') drillFrom.current = 'workout';
+              if (b.target.game === 'drills') {
+                drillFrom.current = 'workout';
+                drillSessionXp.current = 0;
+              }
               go(b.target.game as Route);
             }
             else go('vocal');
@@ -1713,7 +1724,10 @@ export function App() {
           settings={s}
           onSettings={updateSettings}
           items={progress.drillItems ?? {}}
-          onTake={(st, evs, xp, m) => void store.recordDrill(st, evs, xp, m).then(setProgress)}
+          onTake={(st, evs, xp, m) => {
+            drillSessionXp.current += xp;
+            void store.recordDrill(st, evs, xp, m).then(setProgress);
+          }}
           onBack={() => (drillFrom.current ? drillQueueDone(0, 0) : go('arcade'))}
           onVoice={s.noSing ? undefined : () => (setVocalWarmup(false), go('vocal'))}
           queue={drillQueue}
@@ -1732,7 +1746,10 @@ export function App() {
           settings={s}
           onSettings={updateSettings}
           items={progress.drillItems ?? {}}
-          onTake={(st, evs, xp, m) => void store.recordDrill(st, evs, xp, m).then(setProgress)}
+          onTake={(st, evs, xp, m) => {
+            drillSessionXp.current += xp;
+            void store.recordDrill(st, evs, xp, m).then(setProgress);
+          }}
           onBack={() => go('arcade')}
           songs
           onPieces={() => go('pieces')}

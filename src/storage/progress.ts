@@ -37,6 +37,9 @@ export interface LessonResult {
   missed: { questionId: string; key: string; answer: Answer; given: Answer[] }[];
   /** First-attempt results per rated item (ratings + review clearing). Absent on old results. */
   items?: { id: string; skill: RatingEvent['skill']; difficulty: number; correct: boolean; tag: string; score?: number; /** Spec AD: the skills this item trains, with weights. */ tags?: RatingEvent['tags']; timeMs?: number | null; /** Placement: the measured rating. */ set?: number; /** Placement 3.0: evidence the set counts as, and fast-converging answers after it. */ setN?: number; fast?: number; /** Vocal technique: the take's metric values (teacher view). */ m?: Partial<Record<MetricKey, number>> }[];
+  /** 0.61: the XP was already added take by take on this device (a technique session); the result carries it for
+   * the server (teacher, league), and a rebuild from the server counts it once. Never uploaded. */
+  xpCounted?: boolean;
   /** Weekly puzzle outcome (only for lessonId "weekly-puzzle"). */
   puzzle?: { week: string; band: string; medal: Medal };
 }
@@ -566,7 +569,7 @@ export function applyResult(p: Progress, r: LessonResult, now: Date): Progress {
     ...withEvents2,
     ...(unlocks ? { placementUnlocks: unlocks } : {}),
     snapshots: snapshot(withEvents2, now),
-    xp: p.xp + r.xp,
+    xp: p.xp + (r.xpCounted ? 0 : r.xp),
     applied: [...p.applied, eventId].slice(-500),
     lessons: {
       ...p.lessons,
@@ -821,7 +824,7 @@ export function addSessionStats(stats: Progress['stats'], r: LessonResult): NonN
   const day = localDay(new Date(r.completedAt));
   const s = stats ?? { days: [], goodSessions: 0, xpByDay: {} };
   const good = r.lessonId !== 'weekly-puzzle' && r.total > 0 && r.firstTry / r.total >= 0.8;
-  const xpByDay = { ...s.xpByDay, [day]: (s.xpByDay[day] ?? 0) + r.xp };
+  const xpByDay = { ...s.xpByDay, [day]: (s.xpByDay[day] ?? 0) + (r.xpCounted ? 0 : r.xp) };
   const keys = Object.keys(xpByDay).sort();
   if (keys.length > 800) for (const k of keys.slice(0, keys.length - 800)) delete xpByDay[k];
   return { days: s.days.includes(day) ? s.days : [...s.days, day].slice(-800), goodSessions: s.goodSessions + (good ? 1 : 0), xpByDay };
