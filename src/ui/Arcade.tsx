@@ -831,7 +831,7 @@ const VOICE_TX: Record<string, { en: [string, string]; he: [string, string] }> =
 };
 /** The drums course's own words on its rows (DRUMS_AUDIT I10). */
 const DRUMS_TX: Record<string, { en: [string, string]; he: [string, string] }> = {
-  drills: { en: ['Technique', 'Strokes, rudiments, grooves, fills, reading'], he: ['טכניקה', 'מכות, רודימנטים, גרובים, מעברים, קריאה'] },
+  drills: { en: ['Technique', 'Rudiments, grooves, fills'], he: ['טכניקה', 'רודימנטים, גרובים, מעברים'] },
   games: { en: ['Games', 'Rhythm games and the kit Highway'], he: ['משחקים', 'משחקי קצב והייווי למערכת'] },
 };
 const ROW_TX: Record<string, { en: [string, string]; he: [string, string] }> = {

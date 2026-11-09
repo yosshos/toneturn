@@ -291,6 +291,7 @@ export const VOCAL_PROGRAMS: { id: string; base: number; levels: { level: number
   { id: 'v-barry', base: 300, levels: BARRY_LEVELS, title: { en: 'Barry Harris lines', he: 'קווים של בארי האריס' } },
 ];
 
+const DRUM_LATER: Record<string, number> = { 'd-funk': 3, 'd-shuffle': 3, 'd-mideast': 3, 'd-indep': 2, 'd-feet': 2 };
 /** Every level of every technique family and vocal program as a path step (0.61, owner: technique inside the course path). */
 function ladderSteps(): PathStep[] {
   const out: PathStep[] = [];
@@ -302,8 +303,10 @@ function ladderSteps(): PathStep[] {
   for (const f of guitarCatalog()) {
     // Drums (0.65): the drum families are path steps of the drums course (forPlays 'drums' → inCourse).
     const inst = f.instruments.includes('guitar') ? 'guitar' : f.instruments.includes('drums') ? 'drums' : 'bass';
+    // Drums v2 families (DRUMS_AUDIT N1) come after the basics: their level 1 sits with the rock grooves' L3–L4.
+    const from = DRUM_LATER[f.id] ?? 0;
     f.levels.forEach((lv, i) =>
-      out.push({ id: `tech:${lv.id}`, kind: 'tech', ladder: { family: f.id, level: lv.level, ref: lv.id, instrument: inst }, skill: 'instrument', sub: `instrument/${inst === 'drums' ? 'drum' : inst}-tech`, domain: 'instrument', difficulty: diff(i), choices: 0, forPlays: [...f.instruments], title: { en: `${f.title.en} · ${lv.title.en}`, he: `${f.title.he} · ${lv.title.he}` } }),
+      out.push({ id: `tech:${lv.id}`, kind: 'tech', ladder: { family: f.id, level: lv.level, ref: lv.id, instrument: inst }, skill: 'instrument', sub: `instrument/${inst === 'drums' ? 'drum' : inst}-tech`, domain: 'instrument', difficulty: diff(i + from), choices: 0, forPlays: [...f.instruments], title: { en: `${f.title.en} · ${lv.title.en}`, he: `${f.title.he} · ${lv.title.he}` } }),
     );
   }
   for (const pr of VOCAL_PROGRAMS)

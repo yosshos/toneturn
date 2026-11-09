@@ -39,7 +39,9 @@ function secondTag(drill: Drill): Tags[number] | null {
   // Drums (DRUMS_CURRICULUM §4): time drills feed timing by their click, grooves and fills the steady beat, reading
   // the drum-kit reading sub-skill; every drum take is also a timing take (it is all time).
   if (f === 'd-time') return { skill: 'timing', sub: drill.click === '24' || drill.click === 'and' ? 'timing/backbeat' : drill.click === 'gap' ? 'timing/gap' : 'timing/subdivide', w: 0.4 };
-  if (f === 'd-rock' || f === 'd-fills') return { skill: 'timing', sub: 'timing/steady', w: 0.3 };
+  // Independence lines to read (DRUMS_AUDIT N1) feed kit reading; every other groove family the steady beat.
+  if (f === 'd-indep' && drill.show === 'staff') return { skill: 'rhythm-reading', sub: 'rhythm-reading/drums', w: 0.3 };
+  if (f === 'd-rock' || f === 'd-fills' || f === 'd-funk' || f === 'd-shuffle' || f === 'd-indep' || f === 'd-mideast' || f === 'd-feet') return { skill: 'timing', sub: 'timing/steady', w: 0.3 };
   if (f === 'd-read') return { skill: 'rhythm-reading', sub: drill.notes.some((n) => n.voice && n.voice !== 'snare') ? 'rhythm-reading/drums' : 'rhythm-reading/read', w: 0.4 };
   if (f.startsWith('d-')) return { skill: 'timing', sub: 'timing/subdivide', w: 0.3 };
   if (f === 'b-time') return { skill: 'timing', sub: drill.click === '24' || drill.click === 'and' ? 'timing/backbeat' : drill.click === 'one' || drill.click === 'fade' ? 'timing/gap' : 'timing/subdivide', w: 0.4 };

@@ -198,3 +198,61 @@ describe('the drums course across the app (everything connects)', () => {
     }
   });
 });
+
+describe('v2 families: funk, shuffle, independence, Middle-Eastern, feet', () => {
+  const at = (d: Drill, voice: string, bar = 0) => d.notes.filter((n) => n.voice === voice && n.beat >= bar * 4 - 1e-6 && n.beat < bar * 4 + 4 - 1e-6).map((n) => Math.round((n.beat - bar * 4) * 1000) / 1000);
+  it('funk L1: accents on 2 and 4 (right hand), ghosts on "e" / "a" (left hand); a practice pad can play it', () => {
+    const d = gen('d-funk', '1:ghosts', 0);
+    expect(d.drum?.mic).toBe(true);
+    expect(d.notes.filter((n) => n.accent).map((n) => n.beat % 4)).toEqual(Array(8).fill(0).map((_, i) => (i % 2 ? 3 : 1)));
+    for (const n of d.notes) expect(n.hand).toBe(n.accent ? 'R' : 'L');
+    expect(d.notes.filter((n) => n.ghost).every((n) => [0.25, 0.75].includes(n.beat % 1))).toBe(true);
+    expect(d.goal.drum?.ghost).toBe(0.85);
+  });
+  it('shuffle: the skip note sits on the third triplet; the double shuffle accents 2 and 4 with the left hand', () => {
+    const s = gen('d-shuffle', '2:shuffle', 0);
+    expect(at(s, 'hihat')).toEqual([0, 0.667, 1, 1.667, 2, 2.667, 3, 3.667]);
+    expect(at(s, 'snare')).toEqual([1, 3]);
+    const dbl = gen('d-shuffle', '4:double', 0);
+    expect(dbl.notes.filter((n) => n.voice === 'snare' && n.accent && n.beat < 4).map((n) => n.beat)).toEqual([1, 3]);
+    expect(dbl.notes.filter((n) => n.voice === 'snare').every((n) => n.hand === 'L')).toBe(true);
+  });
+  it('Middle-Eastern: maqsum D T . T D . T ., baladi D D . T D . T ., sa\'idi D T . D D . T ., malfuf D . . T . . T .', () => {
+    const m = gen('d-mideast', '1:maqsum', 1);
+    expect(at(m, 'kick')).toEqual([0, 2]);
+    expect(at(m, 'snare')).toEqual([0.5, 1.5, 3]);
+    const b = gen('d-mideast', '2:baladi', 0);
+    expect(at(b, 'kick')).toEqual([0, 0.5, 2]);
+    expect(at(b, 'snare')).toEqual([1.5, 3]);
+    const sa = gen('d-mideast', '2:baladi', 1);
+    expect(at(sa, 'kick')).toEqual([0, 1.5, 2]);
+    expect(at(sa, 'snare')).toEqual([0.5, 3]);
+    const mf = gen('d-mideast', '1:maqsum', 0);
+    expect(at(mf, 'snare')).toEqual([0.75, 1.5, 2.75, 3.5]);
+    // Ka: the soft left hand fills the empty 8ths; tak stays the right hand.
+    const ka = gen('d-mideast', '3:ka', 0);
+    for (const n of ka.notes.filter((x) => x.voice === 'snare')) expect(n.hand).toBe(n.ghost ? 'L' : 'R');
+    expect(ka.notes.filter((n) => n.ghost && n.beat < 4).map((n) => n.beat)).toEqual([1, 2.5, 3.5]);
+  });
+  it('independence lines are generated, deterministic, start every bar on 1 and differ between variants', () => {
+    const a = gen('d-indep', '2:kick8', 0);
+    expect(gen('d-indep', '2:kick8', 0).notes).toEqual(a.notes);
+    const kicks = (d: Drill) => d.notes.filter((n) => n.voice === 'kick').map((n) => n.beat).join(',');
+    expect(new Set([0, 1, 2, 3].map((o) => kicks(gen('d-indep', '2:kick8', o)))).size).toBeGreaterThan(2);
+    for (const lvKind of ['2:kick8', '3:kick16'])
+      for (let b = 0; b < 16; b += 4) expect(gen('d-indep', lvKind, 1).notes.some((n) => n.voice === 'kick' && n.beat === b)).toBe(true);
+    expect(gen('d-indep', '4:snare', 0).show).toBe('staff');
+  });
+  it('feet: the hi-hat foot chick on 2 and 4 is the left foot', () => {
+    const d = gen('d-feet', '1:chick', 0);
+    const p = d.notes.filter((n) => n.voice === 'hhPedal');
+    expect(p.filter((n) => n.beat < 4).map((n) => n.beat)).toEqual([1, 3]);
+    expect(p.every((n) => n.limb === 'LF')).toBe(true);
+  });
+  it('v2 families have their own path glyph and come after the basics on the path', () => {
+    const steps = stepCatalogue().filter((s) => s.ladder?.instrument === 'drums');
+    const diff = (ref: string) => steps.find((s) => s.ladder!.ref === ref)!.difficulty;
+    expect(diff('d-funk-1')).toBeGreaterThan(diff('d-rock-2'));
+    expect(diff('d-mideast-1')).toBeGreaterThan(diff('d-strokes-1'));
+  });
+});

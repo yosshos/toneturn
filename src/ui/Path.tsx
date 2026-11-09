@@ -216,11 +216,14 @@ const FAMILY_GLYPH: Record<string, GlyphKind> = {
   'g-fretting': 'guitar', 'g-picking': 'tempo', 'g-legato': 'contour', 'g-scales': 'scales', 'g-arps': 'chords', 'g-chords': 'chords', 'g-rhythm': 'rhythm', 'g-lead': 'improv', 'g-fingerstyle': 'guitar', 'g-flamenco': 'rhythm', 'g-jazz': 'prog', 'g-reading': 'sight', 'g-impro': 'improv', 'g-bass': 'bass',
   'b-pluck': 'bass', 'b-time': 'tempo', 'b-fret': 'scales', 'b-chord': 'chords', 'b-scale': 'scales', 'b-length': 'rhythm', 'b-pocket': 'groove', 'b-read': 'sight', 'b-styles': 'groove', 'b-ghost': 'ghost', 'b-walk': 'contour', 'b-legato': 'contour', 'b-pick': 'tempo', 'b-slap': 'rhythm', 'b-ear': 'intervals', 'b-up-pos': 'scales', 'b-up-arco': 'sing', 'b-up-scales': 'scales', 'b-up-pizz': 'bass', 'b-up-walk': 'contour', 'b-up-read': 'sight',
   'd-strokes': 'sticks', 'd-rolls': 'rudiment', 'd-diddles': 'paradiddle', 'd-time': 'pulse', 'd-rock': 'hihat', 'd-fills': 'fill', 'd-read': 'drumread',
+  'd-funk': 'ghost', 'd-shuffle': 'shuffle', 'd-indep': 'limbs', 'd-mideast': 'darbuka', 'd-feet': 'kick',
   'v-ladder': 'sing', 'v-modes': 'scales', 'v-sight': 'sight', 'v-harmony': 'chords', 'v-ornament': 'contour', 'v-barry': 'improv',
 };
 /** Instrument topics (they all used to share one chord icon). */
 const TOPIC_GLYPH: Record<string, GlyphKind> = {
   'key-notes': 'keys', 'fret-notes': 'guitar', 'string-notes': 'guitar', 'fret-chords': 'chords', 'play-back': 'echo', 'fret-intervals': 'intervals', 'fret-scales': 'scales', 'song-play': 'contour',
+  // Drums (DRUMS_AUDIT I4): kit reading on the drums path.
+  'drum-read': 'drumread',
   'pan-ear': 'mixer', 'space-ear': 'echo', 'eq-ear': 'eq', 'filter-ear': 'eq', 'dyn-ear': 'tempo', 'tone-hz': 'tune', 'width-ear': 'mixer',
 };
 function StepIcon({ step }: { step: PathStep }) {

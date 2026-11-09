@@ -220,7 +220,7 @@ export function KitCard({ kit, lang, onSetup }: { kit?: KitProfile; lang: Lang; 
   const status = !ready ? (lang === 'he' ? 'עוד לא הוגדרה מערכת' : 'No kit set up yet') : kit!.mic ? tx.pad : `${kit!.device ?? PRESETS[kit!.preset].name} · ${learned} ${tx.pads}`;
   return (
     <section className={`kit-card ${ready ? 'ready' : ''}`} data-kit-card={ready ? 'ready' : 'none'}>
-      <Glyph kind="drums" color="#FF5FA2" size={44} />
+      <Glyph kind="drums" color="#4CD07D" size={44} />
       <span className="kc-text">
         <b>{ready ? (kit!.mic ? tx.pad : lang === 'he' ? 'המערכת שלי' : 'My kit') : tx.title}</b>
         <small>{status}</small>
@@ -271,7 +271,7 @@ export function KitSetup({ lang, kit: kit0, latency, onSave, onLatency, onDone, 
       </ol>
       {step === 'connect' && (
         <section className="kit-step">
-          <Glyph kind="drums" color="#FF5FA2" size={72} shadow />
+          <Glyph kind="drums" color="#4CD07D" size={72} shadow />
           {!midi.supported ? <p className="field-hint">{tx.noMidi}</p> : devices && !devices.length ? <p className="field-hint warn">{tx.none}</p> : null}
           {midi.supported && (
             <button className="btn primary" onClick={() => void connect()} data-kit-connect="1">
@@ -302,7 +302,7 @@ export function KitSetup({ lang, kit: kit0, latency, onSave, onLatency, onDone, 
       )}
       {step === 'done' && (
         <section className="kit-step">
-          <Glyph kind="drums" color="#12C9B4" size={72} shadow />
+          <Glyph kind="drums" color="#4CD07D" size={72} shadow />
           <h2>{tx.done}</h2>
           {onTest && (
             <button className="btn primary" onClick={onTest} data-kit-test="1">
