@@ -254,7 +254,9 @@ export function App() {
     // 0.61: technique follows the course's instrument (keys → piano drills, guitar / bass → theirs).
     const inst = c === 'keys' ? 'piano' : c === 'guitar' || c === 'bass' ? c : null;
     updateSettings({ ...switchCourse(settings, c), ...(inst ? { drills: { ...drillSettingsOf(settings), instrument: inst } } : {}) });
-    go('home');
+    // 0.64 (owner): stay where you are — the same screen of the other course (only a screen that belongs to one
+    // exercise falls back to Today).
+    if (!['home', 'path', 'arcade', 'skills', 'friends', 'achievements', 'insights'].includes(route)) go('home');
   };
   /** First-try results per skill (the answer ladder, 0.61): the last 60 rated items of each skill, oldest first. */
   const recentBySkill = (p: Progress): Partial<Record<string, boolean[]>> => {

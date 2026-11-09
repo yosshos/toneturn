@@ -2,6 +2,7 @@
 // a sticky unit header, the glide to the current step, steps that rise in as they scroll into view, and a
 // "back to my step" button (§10.1). Reduced motion: no glide, no stagger, no bounce.
 
+import { GLYPHS, type GlyphKind } from './Glyph';
 import { ladderFamiliesFor, withLadderFacts } from '../engine/ladderFacts';
 import { drillSettingsOf } from './Drills';
 import { Iso } from './Iso';
@@ -208,6 +209,28 @@ export function nodeTitle(step: PathStep, s: Settings, lang: Lang): string {
 const ICON: Record<string, 'ear' | 'steps' | 'chord' | 'cadence' | 'mic' | 'map' | 'review' | 'puzzle' | 'drum'> = { pitch: 'ear', time: 'drum', memory: 'steps', voice: 'mic', reading: 'map', creative: 'puzzle', instrument: 'chord' };
 const iconOf = (step: PathStep) => (step.kind === 'tech' ? 'chord' : step.kind === 'vocal' ? 'mic' : step.kind === 'game' ? 'puzzle' : step.kind === 'review' ? 'review' : step.lesson ? (LESSON_META[step.lesson]?.icon ?? 'ear') : ICON[step.domain] ?? 'ear');
 
+/** A ladder level's symbol (0.64, owner: every technique / vocal family its own, like the ear course's steps). */
+const FAMILY_GLYPH: Record<string, GlyphKind> = {
+  scales: 'scales', arpeggios: 'chords', cadences: 'prog', fingers: 'keys', control: 'tempo', advanced: 'scales', harris: 'improv', voicings: 'chords', jazz: 'prog', accomp: 'rhythm',
+  'g-fretting': 'guitar', 'g-picking': 'tempo', 'g-legato': 'contour', 'g-scales': 'scales', 'g-arps': 'chords', 'g-chords': 'chords', 'g-rhythm': 'rhythm', 'g-lead': 'improv', 'g-fingerstyle': 'guitar', 'g-flamenco': 'rhythm', 'g-jazz': 'prog', 'g-reading': 'sight', 'g-impro': 'improv', 'g-bass': 'guitar',
+  'b-pluck': 'guitar', 'b-time': 'tempo', 'b-fret': 'scales', 'b-chord': 'chords', 'b-scale': 'scales', 'b-length': 'rhythm', 'b-pocket': 'groove', 'b-read': 'sight', 'b-styles': 'groove', 'b-ghost': 'ghost', 'b-walk': 'contour', 'b-legato': 'contour', 'b-pick': 'tempo', 'b-slap': 'rhythm', 'b-ear': 'intervals',
+  'v-ladder': 'sing', 'v-modes': 'scales', 'v-sight': 'sight', 'v-harmony': 'chords', 'v-ornament': 'contour', 'v-barry': 'improv',
+};
+/** Instrument topics (they all used to share one chord icon). */
+const TOPIC_GLYPH: Record<string, GlyphKind> = {
+  'key-notes': 'keys', 'fret-notes': 'guitar', 'string-notes': 'guitar', 'fret-chords': 'chords', 'play-back': 'echo', 'fret-intervals': 'intervals', 'fret-scales': 'scales', 'song-play': 'contour',
+  'pan-ear': 'mixer', 'space-ear': 'echo', 'eq-ear': 'eq', 'filter-ear': 'eq', 'dyn-ear': 'tempo', 'tone-hz': 'tune', 'width-ear': 'mixer',
+};
+function StepIcon({ step }: { step: PathStep }) {
+  const kind = step.ladder ? (FAMILY_GLYPH[step.ladder.family] ?? (step.kind === 'vocal' ? 'sing' : step.ladder.instrument === 'piano' ? 'keys' : 'guitar')) : step.topic ? TOPIC_GLYPH[step.topic] : undefined;
+  if (!kind) return <NodeIcon kind={iconOf(step)} />;
+  return (
+    <svg className="step-glyph" viewBox="-30 -27 60 54" width="30" height="27" aria-hidden="true">
+      {GLYPHS[kind]}
+    </svg>
+  );
+}
+
 const reduced = () => typeof document !== 'undefined' && (document.documentElement.dataset.motion === 'reduced' || (typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches));
 
 export function PathView2({
@@ -348,7 +371,7 @@ export function PathView2({
                   <path d="M5 12.5l5 5 9-10" fill="none" stroke="#fff" strokeWidth="3.6" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               ) : (
-                <NodeIcon kind={iconOf(x.step)} />
+                <StepIcon step={x.step} />
               )}
               {st === 'refresh' && <span className="refresh-medal">↻</span>}
             </span>
@@ -453,7 +476,7 @@ export function PathView2({
                 <div className="hist-steps">
                   {u.steps.map((x) => (
                     <button key={x.step.id} className="hist-step" style={{ ['--hue' as string]: DOMAIN_HUE[x.step.domain] }} onClick={() => onStep(x, u, 'practice')}>
-                      <NodeIcon kind={iconOf(x.step)} />
+                      <StepIcon step={x.step} />
                       <span dir="auto">{nodeTitle(x.step, settings, lang)}</span>
                     </button>
                   ))}
