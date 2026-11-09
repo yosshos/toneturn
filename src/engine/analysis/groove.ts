@@ -3,6 +3,8 @@
 // half of a phrase) a running mean offset (ms, − = early) and spread; the drift across a phrase (do you speed up?);
 // a weekly trend. Findings say *when* you rush or drag, and how steady you are. Pure.
 
+import type { Drill, TakeMetrics } from '../drills/types';
+
 export interface GStat {
   n: number;
   mean: number;
@@ -78,6 +80,28 @@ export function addPerformance(g: GrooveModel, onsets: number[], offsets: (numbe
   const keep = Object.keys(weeks).sort().slice(-26);
   return { v: 1, stats, weeks: Object.fromEntries(keep.map((k) => [k, weeks[k]])), drift, taps: g.taps + pts.length };
 }
+
+/**
+ * A drill take as a groove performance (BASS_AUDIT A14): one onset per written beat position (the first note there),
+ * with the take's measured offset; null when fewer than 4 notes were timed. Feed it to addPerformance so bass takes
+ * fill the groove trainer's per-subdivision stats.
+ */
+export function takeGroove(drill: Drill, m: TakeMetrics): { onsets: number[]; offsets: (number | null)[]; beatsPerBar: number } | null {
+  const by = new Map<number, { b: number; o: number | null }>();
+  m.perNote.forEach((r, i) => {
+    const b = drill.notes[i]?.beat ?? r.exp.beat;
+    const k = Math.round(b * 1e4);
+    const cur = by.get(k);
+    if (!cur) by.set(k, { b, o: r.dev });
+    else if (cur.o === null && r.dev !== null) cur.o = r.dev;
+  });
+  const xs = [...by.values()].sort((a, b) => a.b - b.b);
+  if (xs.filter((x) => x.o !== null).length < 4) return null;
+  return { onsets: xs.map((x) => x.b), offsets: xs.map((x) => x.o), beatsPerBar: drill.meter || 4 };
+}
+
+/** Bass takes (the bass course) feed the groove fingerprint. */
+export const feedsGroove = (drill: Drill): boolean => drill.spec.family.startsWith('b-');
 
 export interface GrooveFinding {
   kind: 'rush' | 'drag' | 'unsteady' | 'speeds-up' | 'slows-down' | 'steady';

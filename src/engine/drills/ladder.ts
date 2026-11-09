@@ -11,6 +11,37 @@ export interface LadderResult {
   state: ItemState;
   next: { bpm: number; action: LadderAction };
   message: { en: string; he: string };
+  /** The goal has reached the level's target tempo (it stops climbing there). */
+  targetReached?: boolean;
+}
+
+/** How a take was played (BASS_AUDIT A4): the level's target tempo for the item, and whether "Slower" was pressed. */
+export interface TakeOpts {
+  /** The level's target tempo (plan.itemTargetBpm); stored on the item. */
+  targetBpm?: number;
+  /** The player pressed "Slower" for this take: it never counts toward the level. */
+  slower?: boolean;
+}
+
+/** Level pass (A4): 3 clean takes at ≥ 95 % of the target tempo, on at least 2 different days. */
+export const PASS_TAKES = 3;
+export const PASS_DAYS = 2;
+export const PASS_SHARE = 0.95;
+
+/**
+ * Where an item stands for its level (A4): clean at the start tempo (a take counted at ≥ 95 % of it), and passed at
+ * the target (3 counted clean takes at ≥ 95 % of the target on ≥ 2 days). Only takes in `passLog` count — clean, at
+ * or above the ladder's goal, never after "Slower" — plus, for items older than the log, one take per day of the
+ * clean-tempo history.
+ */
+export function itemPass(st: ItemState | undefined, startBpm: number, targetBpm: number): { start: boolean; target: boolean; takes: number; days: number } {
+  if (!st) return { start: false, target: false, takes: 0, days: 0 };
+  const all = st.passLog ?? (st.history ?? []).map((h) => ({ at: h.at, bpm: h.bpm }));
+  const atT = all.filter((x) => x.bpm >= PASS_SHARE * targetBpm - 1e-9);
+  const days = new Set(atT.map((x) => x.at.slice(0, 10))).size;
+  const target = atT.length >= PASS_TAKES && days >= PASS_DAYS;
+  const start = target || all.some((x) => x.bpm >= PASS_SHARE * startBpm - 1e-9);
+  return { start, target, takes: atT.length, days };
 }
 
 const ALPHA = 0.3;
@@ -38,6 +69,7 @@ export function newItem(drill: Drill): ItemState {
     takes: 0,
     last: '',
     history: [],
+    passLog: [],
   };
 }
 
@@ -46,13 +78,23 @@ const worstCv = (m: TakeMetrics): number | null => {
   return xs.length ? Math.max(...xs) : null;
 };
 
-/** Apply one take: EWMAs, history, the ladder (3 clean → +1 step, 2 failed → −10 %) and the continuous modes. */
-export function applyTake(state: ItemState, metrics: TakeMetrics, bpm: number, at: string, settings: DrillSettings = DEFAULT_DRILL_SETTINGS): LadderResult {
+/**
+ * Apply one take: EWMAs, history, the ladder (3 clean → +1 step, 2 failed → −10 %) and the continuous modes. With a
+ * target tempo (opts / the item) the goal stops at the target ("level tempo reached"). A clean take at or above the
+ * goal, not after "Slower", goes into the pass log (A4).
+ */
+export function applyTake(state: ItemState, metrics: TakeMetrics, bpm: number, at: string, settings: DrillSettings = DEFAULT_DRILL_SETTINGS, opts: TakeOpts = {}): LadderResult {
   const s: ItemState = {
     ...state,
     ewma: { ...state.ewma },
     history: state.history.slice(),
+    // Older items (no log yet): their clean-tempo history becomes the log, one take per day.
+    passLog: state.passLog ? state.passLog.slice() : state.history.map((h) => ({ at: h.at, bpm: h.bpm })),
   };
+  if (opts.targetBpm && opts.targetBpm > 0) s.targetBpm = Math.round(opts.targetBpm);
+  const target = s.targetBpm;
+  /** The next goal after a raise, never past the target. */
+  const capped = (g: number) => (target ? Math.min(g, Math.max(target, s.goalBpm)) : g);
   const first = s.takes === 0;
   const upd = (k: keyof ItemState['ewma'], v: number | null) => {
     if (v === null || !Number.isFinite(v)) return;
@@ -79,6 +121,11 @@ export function applyTake(state: ItemState, metrics: TakeMetrics, bpm: number, a
       if (B >= lastH.bpm) s.history[s.history.length - 1] = { at, bpm: B, cv: cv ?? 0 };
     } else s.history.push({ at, bpm: B, cv: cv ?? 0 });
     if (s.history.length > 200) s.history.splice(0, s.history.length - 200);
+    // A4: only takes at the goal (or above, or already at the level's target), never after "Slower", count.
+    if ((atGoal || (target && bpm >= PASS_SHARE * target - 1e-9)) && !opts.slower) {
+      s.passLog!.push({ at, bpm: B });
+      if (s.passLog!.length > 60) s.passLog!.splice(0, s.passLog!.length - 60);
+    }
   }
 
   let action: LadderAction = 'again';
@@ -87,8 +134,15 @@ export function applyTake(state: ItemState, metrics: TakeMetrics, bpm: number, a
     s.fails = 0;
     if (atGoal) {
       s.streak += 1;
-      if (s.streak >= CLEAN_IN_A_ROW) {
-        s.goalBpm = Math.max(goal0, B) + ladderStep(Math.max(goal0, B));
+      if (s.streak >= CLEAN_IN_A_ROW && target && goal0 >= target) {
+        // The level's tempo: stay here (3 clean on 2 days pass the item).
+        s.streak = 0;
+        message = {
+          en: `Level tempo reached: ♩ ${goal0}`,
+          he: `הגעתם לטמפו של השלב: ♩ ${goal0}`,
+        };
+      } else if (s.streak >= CLEAN_IN_A_ROW) {
+        s.goalBpm = capped(Math.max(goal0, B) + ladderStep(Math.max(goal0, B)));
         s.streak = 0;
         action = 'raise';
         message = {
@@ -136,14 +190,16 @@ export function applyTake(state: ItemState, metrics: TakeMetrics, bpm: number, a
       if (settings.continuous === 'raise-tempo') {
         if (action !== 'raise') {
           const from = Math.max(goal0, B);
-          s.goalBpm = from + ladderStep(from);
+          s.goalBpm = capped(from + ladderStep(from));
           s.streak = 0;
         }
-        action = 'raise';
-        message = {
-          en: `Good — up to ♩ ${s.goalBpm}`,
-          he: `טוב — עולים ל-♩ ${s.goalBpm}`,
-        };
+        if (s.goalBpm > goal0) {
+          action = 'raise';
+          message = {
+            en: `Good — up to ♩ ${s.goalBpm}`,
+            he: `טוב — עולים ל-♩ ${s.goalBpm}`,
+          };
+        }
       } else if (settings.continuous === 'next-key') {
         action = 'next-key';
         message = { en: 'Good — next key', he: 'טוב — לטונליות הבאה' };
@@ -153,7 +209,9 @@ export function applyTake(state: ItemState, metrics: TakeMetrics, bpm: number, a
       }
     }
   }
-  return { state: s, next: { bpm: s.goalBpm, action }, message };
+  const res: LadderResult = { state: s, next: { bpm: s.goalBpm, action }, message };
+  if (target && s.goalBpm >= target) res.targetReached = true;
+  return res;
 }
 
 // ───────────────────────────── weakness and today's items ─────────────────────────────

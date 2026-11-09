@@ -2,12 +2,12 @@
 
 import type { PitchCapture, SingCaptureResult, SingOptions } from '../game/adapters';
 import type { SungFrame } from '../engine/sing';
-import { yin } from '../engine/yin';
+import { rms, spectralCentroid, yin } from '../engine/yin';
 import { openCapture, stopStream } from './mic';
 import { chromaFromSpectrum } from '../engine/chroma';
 
 export class BrowserPitchCapture implements PitchCapture {
-  async sing({ signal, maxMs = 4500, silenceMs = 4000, endSilenceMs, hopMs, onCapturing, onFrame, record, ignoreFirstMs = 0, chroma }: SingOptions): Promise<SingCaptureResult> {
+  async sing({ signal, maxMs = 4500, silenceMs = 4000, endSilenceMs, hopMs, onCapturing, onFrame, record, ignoreFirstMs = 0, chroma, minHz, fftSize, centroid }: SingOptions): Promise<SingCaptureResult> {
     if (signal.aborted) return { kind: 'aborted' };
     const r = await openCapture({ echoCancellation: false, noiseSuppression: false, autoGainControl: false });
     if (!r.ok) return { kind: 'error', error: r.error };
@@ -18,11 +18,14 @@ export class BrowserPitchCapture implements PitchCapture {
     const ctx = new AudioContext();
     const src = ctx.createMediaStreamSource(r.stream);
     const an = ctx.createAnalyser();
-    an.fftSize = 2048;
+    // Voice / guitar: 2048 samples. Bass (BASS_AUDIT A1): 4096, so a 31–41 Hz period fits the YIN lag range.
+    an.fftSize = fftSize === 4096 || fftSize === 8192 ? fftSize : 2048;
     src.connect(an);
     const buf = new Float32Array(an.fftSize);
+    // Loudness (onsets) stays on the newest 2048 samples, so a longer pitch window does not smear the attack.
+    const recent = an.fftSize > 2048 ? buf.subarray(an.fftSize - 2048) : buf;
     // A second, long analyser for chroma: 8192 points ≈ 6 Hz bins, enough to part the low guitar notes.
-    const anC = chroma ? ctx.createAnalyser() : null;
+    const anC = chroma || centroid ? ctx.createAnalyser() : null;
     if (anC) {
       anC.fftSize = 8192;
       anC.smoothingTimeConstant = 0;
@@ -65,12 +68,13 @@ export class BrowserPitchCapture implements PitchCapture {
       const timer = setInterval(() => {
         an.getFloatTimeDomainData(buf);
         const t = (performance.now() - t0) / 1000;
-        const y = yin(buf, ctx.sampleRate, { minRms: 0.008 });
+        const y = yin(buf, ctx.sampleRate, { minRms: 0.008, ...(minHz ? { minHz } : {}) });
         const quiet = t * 1000 < ignoreFirstMs;
-        const f: SungFrame = { t, hz: quiet ? null : y.hz, confidence: quiet ? 0 : y.confidence, rms: y.rms };
+        const f: SungFrame = { t, hz: quiet ? null : y.hz, confidence: quiet ? 0 : y.confidence, rms: recent === buf ? y.rms : rms(recent) };
         if (anC && spec && !quiet) {
           anC.getFloatFrequencyData(spec);
-          f.chroma = chromaFromSpectrum(spec, ctx.sampleRate, anC.fftSize);
+          if (chroma) f.chroma = chromaFromSpectrum(spec, ctx.sampleRate, anC.fftSize);
+          if (centroid) f.centroid = spectralCentroid(spec, ctx.sampleRate, anC.fftSize) ?? undefined;
         }
         frames.push(f);
         onFrame?.(f);

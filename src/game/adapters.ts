@@ -95,6 +95,12 @@ export interface SingOptions {
   ignoreFirstMs?: number;
   /** Also compute a chroma vector per frame from a long FFT (chord ring-check). */
   chroma?: boolean;
+  /** Lowest pitch searched (Hz). Default 70; bass drills pass 28 (22 on a 5- / 6-string), see yin.bassPitchOpts. */
+  minHz?: number;
+  /** Analyser window (samples). Default 2048; bass drills pass 4096 (≈ 85 ms at 48 kHz). */
+  fftSize?: number;
+  /** Also compute the spectral centroid (Hz) per frame (bass plucking zone / slap advice). */
+  centroid?: boolean;
 }
 
 export type SingCaptureResult =

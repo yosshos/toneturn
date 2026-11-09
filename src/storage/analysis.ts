@@ -27,11 +27,14 @@ export function recordTakeAnalysis(drill: Drill, m: TakeMetrics, bpm: number): P
     cache = addTake(cur, drill, m, bpm, new Date().toISOString());
     await kv.set('model', cache);
   }).catch(() => {});
+  // Bass takes also feed the groove fingerprint (BASS_AUDIT A14).
+  const g = feedsGroove(drill) ? takeGroove(drill, m) : null;
+  if (g) void recordGroove(g.onsets, g.offsets, bpm, g.beatsPerBar);
   return chain;
 }
 
 // ---------------------------------------------------------------- the groove fingerprint (0.50)
-import { addPerformance, emptyGroove, type GrooveModel } from '../engine/analysis/groove';
+import { addPerformance, emptyGroove, feedsGroove, takeGroove, type GrooveModel } from '../engine/analysis/groove';
 
 let gcache: GrooveModel | null = null;
 export async function loadGroove(): Promise<GrooveModel> {

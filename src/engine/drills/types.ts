@@ -206,6 +206,28 @@ export interface BassGoal {
   cents?: number;
   /** Advice only, never gates: slap/pop class shown to the player (A13). */
   slapAdvice?: boolean;
+  // ---- added by track A (A12) ----
+  /** Plucking zone (A12): the second half (bridge) must be brighter than the first (neck): centroid ratio ≥ this (e.g. 1.2). */
+  zone?: number;
+}
+
+/** Free-choice rule verdict (A5), per slot of the model line (TakeMetrics.rules). */
+export interface TakeRules {
+  kind: 'walk' | 'chordTones' | 'nearest';
+  /** Per slot: R / 3 / 5 / 7 / tension / chromatic / dominant / scale / other, or '-' when nothing was played. */
+  labels: string[];
+  /** Per slot: the note is allowed by the rules (false for a missing note). */
+  valid: boolean[];
+  /** Valid share of the played slots (0..1). */
+  validShare: number;
+  /** Chord changes that land on a chord tone (0..1). */
+  beat1Ct: number;
+  /** Share of notes repeating the note before (0..1). */
+  repeats: number;
+  /** Moves ≤ maxMove semitones (nearest), else null. */
+  moves: number | null;
+  /** The bar with the most invalid notes and its first invalid slot: the one-line "Why?" pointer (bar 0-based). */
+  worst: { slot: number; bar: number; beatInBar: number; chord: string; label: string } | null;
 }
 
 /** Level meta for bass (0.64): exam / bagrut mapping shown on the level and used by badges (B14). */
@@ -285,6 +307,8 @@ export interface TakeMetrics {
   octaveShift?: number;
   /** Pedalling drills (MIDI CC64): changes done right / total. */
   pedal?: { ok: number; total: number; pass: boolean };
+  /** Free-choice drills (goal.bass.rules, A5): per-slot labels and the worst bar for the "Why?" line. */
+  rules?: TakeRules;
 }
 
 /** Progress of one item (synced, small). */
@@ -307,6 +331,11 @@ export interface ItemState {
   last: string;
   /** Tempo history (date, clean bpm) for the trends. */
   history: { at: string; bpm: number; cv: number }[];
+  // ---- 0.64 level pass (BASS_AUDIT A4); absent on older items ----
+  /** The level's target tempo for this item (♩); the ladder's goal stops here ("level tempo reached"). */
+  targetBpm?: number;
+  /** Clean takes that count toward the level (at or above the goal, never after "Slower"): time and tempo, newest last. */
+  passLog?: { at: string; bpm: number }[];
 }
 
 /** The player's own drill (spec AI §12 owner request): a pattern in scale degrees, run through every key. */

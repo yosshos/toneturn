@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { courseInput, type CourseId } from '../src/engine/courses';
 import { buildPath, eligible, stepCatalogue, type PathInput } from '../src/engine/path';
 import { ladderFamiliesFor, techQueue, techStars, techLevel, withLadderFacts } from '../src/engine/ladderFacts';
-import { levelDrills } from '../src/engine/drills/plan';
-import { DEFAULT_DRILL_SETTINGS, type ItemState } from '../src/engine/drills/types';
+import { levelDrills, targetBpmOf } from '../src/engine/drills/plan';
+import { DEFAULT_DRILL_SETTINGS, type Drill, type ItemState } from '../src/engine/drills/types';
 
 const base: PathInput = {
   track: 'hobby',
@@ -24,6 +24,14 @@ const base: PathInput = {
   now: new Date('2026-11-09T10:00:00Z'),
 };
 const ds = DEFAULT_DRILL_SETTINGS;
+/** Items passed at their target: 3 clean takes at the target tempo on 2 days. */
+const passedItems = (drills: Drill[], target: (d: Drill) => number): Record<string, ItemState> =>
+  Object.fromEntries(
+    drills.map((d) => {
+      const t = target(d);
+      return [d.itemId, { itemId: d.itemId, family: d.spec.family, key: d.spec.key, hands: 'R', cleanBpm: t, history: [], passLog: [{ at: '2026-11-07T10:00:00Z', bpm: t }, { at: '2026-11-07T10:05:00Z', bpm: t }, { at: '2026-11-08T10:00:00Z', bpm: t }] } as unknown as ItemState];
+    }),
+  );
 const inputFor = (c: CourseId, facts: PathInput['facts'] = {}): PathInput => ({ ...courseInput(base, c), ladderFamilies: ladderFamiliesFor(c, ds), facts });
 
 describe('technique and vocal ladders in the course path (0.61, owner)', () => {
@@ -59,15 +67,21 @@ describe('technique and vocal ladders in the course path (0.61, owner)', () => {
     expect(u.steps.some((x) => x.step.kind === 'vocal' && x.step.ladder!.ref === '1')).toBe(true);
   });
 
-  it('only measured takes pass a level: stars from clean items; ✓ by the playing test below its start', () => {
+  it('only measured takes pass a level: stars from takes at the start / target tempo; ✓ by the playing test below its start', () => {
     const lv = techLevel('scales-1')!;
     const drills = levelDrills(lv, ds.keyOrder);
-    const clean = (n: number): Record<string, ItemState> =>
-      Object.fromEntries(drills.slice(0, n).map((d) => [d.itemId, { itemId: d.itemId, family: 'scales', key: 0, hands: 'R', cleanBpm: 80 } as unknown as ItemState]));
+    // 0.64 (A4): one clean take at the start tempo per item = 1 star at most; 3 clean at the target on 2 days pass an item.
+    const startClean = (n: number): Record<string, ItemState> =>
+      Object.fromEntries(drills.slice(0, n).map((d) => [d.itemId, { itemId: d.itemId, family: 'scales', key: 0, hands: 'R', cleanBpm: d.startBpm, history: [], passLog: [{ at: '2026-11-08T10:00:00Z', bpm: d.startBpm }] } as unknown as ItemState]));
+    const passed = (n: number) => passedItems(drills.slice(0, n), (d) => targetBpmOf(lv, d));
     expect(techStars(lv, {}, ds.keyOrder)).toBe(0);
-    expect(techStars(lv, clean(3), ds.keyOrder)).toBe(drills.length <= 3 ? 3 : 1);
-    expect(techStars(lv, clean(drills.length), ds.keyOrder)).toBe(3);
-    const f = withLadderFacts({}, { families: ['scales'], items: clean(drills.length), order: ds.keyOrder, start: { scales: 3 }, vocalPassed: [], at: '2026-11-09T10:00:00Z' });
+    expect(techStars(lv, startClean(3), ds.keyOrder)).toBe(1);
+    expect(techStars(lv, startClean(drills.length), ds.keyOrder)).toBe(1);
+    expect(techStars(lv, passed(Math.ceil(drills.length / 2)), ds.keyOrder)).toBe(2);
+    expect(techStars(lv, passed(drills.length), ds.keyOrder)).toBe(3);
+    // 1 star is progress only: the step is not done (no facts) until 2 stars.
+    expect(withLadderFacts({}, { families: ['scales'], items: startClean(drills.length), order: ds.keyOrder, start: {}, vocalPassed: [], at: '2026-11-09T10:00:00Z' }).steps?.['tech:scales-1']).toBeUndefined();
+    const f = withLadderFacts({}, { families: ['scales'], items: passed(drills.length), order: ds.keyOrder, start: { scales: 3 }, vocalPassed: [], at: '2026-11-09T10:00:00Z' });
     expect(f.steps?.['tech:scales-1']?.stars).toBe(3);
     expect(f.tests?.['tech:scales-2']).toBeTruthy();
     expect(f.tests?.['tech:scales-3']).toBeUndefined();
@@ -75,7 +89,7 @@ describe('technique and vocal ladders in the course path (0.61, owner)', () => {
 
   it('a level done opens the next level of its family on the path', () => {
     const lv = techLevel('scales-1')!;
-    const items = Object.fromEntries(levelDrills(lv, ds.keyOrder).map((d) => [d.itemId, { itemId: d.itemId, cleanBpm: 80 } as unknown as ItemState]));
+    const items = passedItems(levelDrills(lv, ds.keyOrder), (d) => targetBpmOf(lv, d));
     const facts = withLadderFacts({}, { families: ladderFamiliesFor('keys', ds), items, order: ds.keyOrder, start: {}, vocalPassed: [], at: '2026-11-09T10:00:00Z' });
     const u = buildPath(inputFor('keys', facts)).units.find((x) => x.status === 'current')!;
     const scales = u.steps.filter((x) => x.step.ladder?.family === 'scales');
