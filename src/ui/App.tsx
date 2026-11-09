@@ -1563,7 +1563,10 @@ export function App() {
             updateSettings({ ...res.patch, pathFacts: unfreezeIfEarly(s.pathFacts) });
             if (then === 'placement') {
               go('home');
-              window.setTimeout(() => openPlacement(), 0);
+              // Drums first: its level test is the kit setup + the playing probe, not the ear placement (keys / guitar /
+              // bass keep the ear placement, which continues into their technique section).
+              const drumsFirst = res.patch.activeCourse === 'drums';
+              window.setTimeout(() => (drumsFirst ? openTechTest() : openPlacement()), 0);
             } else {
               const first = personalOrder(res.intake.priorities, res.patch.track)[0];
               go('home');
@@ -1584,7 +1587,10 @@ export function App() {
             updateSettings({ ...res.patch, pathFacts: unfreezeIfEarly(s.pathFacts) });
             if (then === 'placement') {
               go('home');
-              window.setTimeout(() => openPlacement(), 0);
+              // Drums first: its level test is the kit setup + the playing probe, not the ear placement (keys / guitar /
+              // bass keep the ear placement, which continues into their technique section).
+              const drumsFirst = res.patch.activeCourse === 'drums';
+              window.setTimeout(() => (drumsFirst ? openTechTest() : openPlacement()), 0);
             } else if (then === 'basics') {
               const first = personalOrder(res.intake.priorities, res.patch.track)[0];
               go('home');

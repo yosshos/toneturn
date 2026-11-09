@@ -171,6 +171,8 @@ const COURSE_SETS: Partial<Record<CourseId, (SetKind | 'choir')[]>> = {
   exam: ['mixed', 'degrees', 'chords', 'intervals', 'modes', 'wrong-notes', 'truefalse', 'echo', 'beat'],
   voice: ['vocal-hold', 'choir', 'echo', 'intervals', 'degrees'],
   jazz: ['chords', 'modes', 'degrees', 'wrong-notes', 'mixed'],
+  // Drums (DRUMS_AUDIT I5): rhythm only — no chords, modes or intervals in a drummer's duel.
+  drums: ['beat'],
 };
 
 /** Keep a screen's set list to the course's (in the screen's order); an instrument course keeps them all. */

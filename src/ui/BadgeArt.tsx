@@ -531,6 +531,8 @@ export const GLYPHS: Record<string, Glyph> = {
       {p('M13.1 13.4V8.5', false)}
     </>
   ),
+  // Drums (DRUMS_AUDIT I2): a snare drum and two sticks.
+  'family:drums': () => p('M4 11c0 1.7 3.6 3 8 3s8-1.3 8-3-3.6-3-8-3-8 1.3-8 3z M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6 M8 13.7v6 M12 14v6.2 M16 13.7v6 M5 3l6.5 6.5 M19 3l-6.5 6.5'),
   'family:g-bass': () => (
     <>
       {/* bass clef */}

@@ -263,6 +263,8 @@ const GHOSTS: CellId[][] = [
 TOPIC_GEN['drum-read'] = {
   title: { en: 'Read the drum kit', he: 'לקרוא תופים' },
   skill: 'rhythm-reading',
+  // DRUMS_AUDIT I4: kit reading is the drums course's (courses are disjoint — it left the ear path for it).
+  forPlays: ['drums'],
   levels: [
     { en: 'Rock beat', he: 'ביט רוק' },
     { en: 'Kick variations', he: 'וריאציות בבס־דראם' },

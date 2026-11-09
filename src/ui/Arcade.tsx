@@ -829,6 +829,11 @@ const VOICE_TX: Record<string, { en: [string, string]; he: [string, string] }> =
   drills: { en: ['Vocal technique', 'Range, breath, long tones, agility'], he: ['טכניקה קולית', 'מנעד, נשימה, צליל ארוך, גמישות'] },
   songs: { en: ['Sing along', 'Real songs in your key, with a guide voice'], he: ['שירה עם שירים', 'שירים אמיתיים בטונליות שלך, עם קול מוביל'] },
 };
+/** The drums course's own words on its rows (DRUMS_AUDIT I10). */
+const DRUMS_TX: Record<string, { en: [string, string]; he: [string, string] }> = {
+  drills: { en: ['Technique', 'Strokes, rudiments, grooves, fills, reading'], he: ['טכניקה', 'מכות, רודימנטים, גרובים, מעברים, קריאה'] },
+  games: { en: ['Games', 'Rhythm games and the kit Highway'], he: ['משחקים', 'משחקי קצב והייווי למערכת'] },
+};
 const ROW_TX: Record<string, { en: [string, string]; he: [string, string] }> = {
   songs: { en: ['Songs', 'Play and sing real songs — by the chords you know'], he: ['שירים', 'לנגן ולשיר שירים אמיתיים — לפי האקורדים שאתם מכירים'] },
   pieces: { en: ['My pieces', 'Bring a score; the coach takes you to tempo'], he: ['היצירות שלי', 'מעלים תווים; המאמן מביא אתכם לטמפו'] },
@@ -924,7 +929,7 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
             {rows
               .filter((k) => k !== 'games' && hub[k as keyof PracticeHub])
               .map((k) => {
-                const tx = (course === 'voice' && VOICE_TX[k] ? VOICE_TX[k] : ROW_TX[k])[lang];
+                const tx = (course === 'voice' && VOICE_TX[k] ? VOICE_TX[k] : course === 'drums' && DRUMS_TX[k] ? DRUMS_TX[k] : ROW_TX[k])[lang];
                 return (
                   <button
                     key={k}
@@ -976,7 +981,7 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
           <section className="pt-tools" aria-label={HUB_TX.tools[lang]} data-hub-group="tools">
             <h2>{HUB_TX.tools[lang]}</h2>
             <div className="pt-tool-row">
-              {(['tuner', 'metronome', 'drone', 'groove', 'slowdown', 'mixer', 'log'] as const).filter((k) => hub[k]).map((k) => (
+              {(['tuner', 'metronome', 'drone', 'groove', 'slowdown', 'mixer', 'log'] as const).filter((k) => hub[k] && !(course === 'drums' && (k === 'tuner' || k === 'drone'))).map((k) => (
                 <button key={k} className="pt-tool" onClick={hub[k]} data-hub={k} aria-label={HUB_TX[k][lang]} title={HUB_TX[k][lang]}>
                   <HubIcon k={k} size={22} />
                   <small>{HUB_TX[k][lang]}</small>

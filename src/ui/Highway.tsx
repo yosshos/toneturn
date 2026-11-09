@@ -186,7 +186,8 @@ export function Highway({
   const MODES: HighwayMode[] = drumsCourse ? ['kit', 'tap'] : ['tap', 'pitch'];
 
   const [opts, setOpts] = useState<HighwayOptions>(
-    () => resumable?.opts ?? { mode: drumsCourse ? 'kit' : 'tap', level: 1, song: 1, bpm: 90, lanes: 3, keyPc: laneKeyPc(settings) },
+    // A run saved in another course may hold a mode this course doesn't offer (pitch in drums, kit elsewhere).
+    () => (resumable && MODES.includes(resumable.opts.mode) ? resumable.opts : resumable ? { ...resumable.opts, mode: MODES[0] } : null) ?? { mode: drumsCourse ? 'kit' : 'tap', level: 1, song: 1, bpm: 90, lanes: 3, keyPc: laneKeyPc(settings) },
   );
   const song = useMemo(() => highwaySong(opts), [opts]);
   const [stage, setStage] = useState<Stage>('setup');

@@ -8,6 +8,11 @@ import { levelDrills } from '../src/engine/drills/plan';
 import { generate } from '../src/engine/drills/generate';
 import { beamBeats, dotted, restsOf } from '../src/engine/drumNotation';
 import type { Drill } from '../src/engine/drills/types';
+import { BADGES, badgeInCourse } from '../src/engine/badges';
+import { courseSetKinds } from '../src/engine/courseSocial';
+import { dailyQuests } from '../src/engine/quests';
+import { stepCatalogue } from '../src/engine/path';
+import { inCourse } from '../src/engine/courses';
 
 const FAMS = drumFamilies();
 const all = (): { lv: DrumLevelDef; d: Drill }[] => FAMS.flatMap((f) => f.levels.flatMap((lv) => levelDrills(lv, 'fifths-up').map((d) => ({ lv, d }))));
@@ -159,5 +164,37 @@ describe('snare reading engraving', () => {
     expect(r).toEqual([{ beat: 0, kind: '8' }, { beat: 1, kind: 'q' }, { beat: 2, kind: '16' }, { beat: 3, kind: 'q' }]);
     // A dotted quarter covers the next beat's first half.
     expect(restsOf([{ beat: 0, dur: 1.5 }, { beat: 1.5, dur: 0.5 }], 0, 2)).toEqual([]);
+  });
+});
+
+describe('the drums course across the app (everything connects)', () => {
+  it('drum families have their own badges (milestones) in the drums course; instrument area badges show there too', () => {
+    const drum = BADGES.filter((b) => b.id.startsWith('tech:drums:'));
+    expect(new Set(drum.map((b) => b.group)).size).toBe(FAMS.length);
+    for (const b of drum) expect(b.course).toBe('drums');
+    expect(BADGES.some((b) => b.cat === 'area' && b.group === 'instrument' && badgeInCourse(b, 'drums'))).toBe(true);
+    expect(drum.every((b) => !badgeInCourse(b, 'keys'))).toBe(true);
+  });
+  it('duels in the drums course offer rhythm only', () => {
+    expect(courseSetKinds('drums', ['mixed', 'chords', 'intervals', 'beat', 'echo'] as never[])).toEqual(['beat']);
+  });
+  it('the rhythm quest counts measured drum takes (timing share); the technique quest wears the sticks', () => {
+    const at = '2026-11-09T10:00:00Z';
+    const ev = { at, skill: 'instrument', sub: 'instrument/drum-tech', correct: true, score: 0.9, tags: [{ skill: 'timing', sub: 'timing/steady', w: 0.3 }] };
+    const days = ['2026-11-06', '2026-11-07', '2026-11-08', '2026-11-09'];
+    const qs = days.flatMap((day) => dailyQuests({ day, course: 'drums', events: Array(5).fill({ ...ev, at: `${day}T10:00:00Z` }) as never[], sessions: [], stepsToday: 0, minutesToday: 0 }));
+    const tech = qs.find((x) => x.id === 'tech3');
+    if (tech) expect(tech.glyph).toBe('sticks');
+    const r = qs.find((x) => x.id === 'rhythm');
+    expect(r).toBeDefined();
+    expect(r!.now).toBe(5);
+  });
+  it('kit reading (drum-read) is a drums course topic, not an ear one', () => {
+    const dr = stepCatalogue().filter((s) => s.topic === 'drum-read');
+    expect(dr.length).toBeGreaterThan(0);
+    for (const s of dr) {
+      expect(inCourse(s, 'drums')).toBe(true);
+      expect(inCourse(s, 'ear')).toBe(false);
+    }
   });
 });
