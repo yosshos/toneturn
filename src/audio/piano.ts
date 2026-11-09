@@ -1732,7 +1732,8 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     if (!ctx) return Promise.reject(new Error('Audio not unlocked'));
     if (signal.aborted) return Promise.reject(new Cancelled());
     const t0 = ctx.currentTime + 0.12;
-    tl.clicks.forEach((c) => this.perc(c.accent ? 'accent' : 'click', t0 + c.t, c.soft ? 0.4 : undefined));
+    // A silent click still counts the beat (score cursor) but is not heard (bass click-displacement drills).
+    tl.clicks.forEach((c) => !c.silent && this.perc(c.accent ? 'accent' : 'click', t0 + c.t, c.soft ? 0.4 : undefined));
     tl.wood.forEach((w, i) => {
       const d = tl.drums?.[i];
       this.perc(d === 'k' ? 'kick' : d === 's' ? 'snare' : 'wood', t0 + w, 0.85);

@@ -15,6 +15,7 @@ import { piano } from './services';
 import { midi } from '../speech/midi';
 import { BrowserPitchCapture } from '../speech/pitchCapture';
 import { listenLoop } from './Flight';
+import { tuningById } from '../engine/fretboard';
 
 type Lang = 'he' | 'en';
 const TX = {
@@ -53,7 +54,7 @@ export function DrillTab({ drill, fingering = false, picking = false, result }: 
     const ms = result ? group.map((x) => markOf(byKey.get(noteKey(x)), timingMs)) : [];
     cols.push({ pos, dur: Math.max(0.25, n.dur), top: tech, bottom, mark: result ? WORSE.find((w) => ms.includes(w)) : undefined });
   }
-  const strings = drill.spec.instrument === 'bass' || drill.spec.family === 'g-bass' ? 4 : 6;
+  const strings = drill.spec.tuning ? tuningById(drill.spec.tuning).open.length : drill.spec.instrument === 'bass' || drill.spec.family === 'g-bass' || drill.spec.family.startsWith('b-') ? 4 : 6;
   const lines: (typeof cols)[] = [];
   for (let i = 0; i < Math.min(cols.length, 32); i += 8) lines.push(cols.slice(i, i + 8));
   return (
@@ -212,6 +213,19 @@ export function VelocityCurve({ m, lang }: { m: TakeMetrics; lang: Lang }) {
   );
 }
 
+/** Is click i (0 = the first count-in beat) heard? The count-in always is; after it, the drill's click mode decides. */
+function clickHeard(drill: Pick<Drill, 'meter' | 'click'>, i: number): boolean {
+  const m = drill.meter || 4;
+  if (i < m || !drill.click || drill.click === 'all') return true;
+  const beat = (i - m) % m;
+  const bar = Math.floor((i - m) / m);
+  if (drill.click === '24') return beat === 1 || beat === 3;
+  if (drill.click === 'one') return beat === 0;
+  if (drill.click === 'and') return false;
+  // 'fade': two bars every beat, two bars only on 1, then silence.
+  return bar < 2 || (bar < 4 && beat === 0);
+}
+
 /** Play a drill once: count-in, metronome, record; resolves with the analysis. */
 export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat }: { drill: Drill; bpm: number; lang: Lang; cal: DrillCalibration; onDone: (m: TakeMetrics, played: PlayedNote[]) => void; /** Beat index of the take (after the count-in; −1 when idle) — for a score cursor. */ onBeat?: (beat: number) => void }) {
   const tx = TX[lang];
@@ -225,8 +239,10 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat }: { drill: Dr
     const abort = new AbortController();
     ac.current = abort;
     const beatS = 60 / bpm;
-    const clicks = Array.from({ length: drill.meter + Math.ceil(drill.beats) + 1 }, (_, i) => ({ t: i * beatS, accent: i % drill.meter === 0 }));
-    const tl = { clicks, wood: [] as number[], responseAt: drill.meter * beatS, responseEnd: (drill.meter + drill.beats + 1) * beatS };
+    const clicks = Array.from({ length: drill.meter + Math.ceil(drill.beats) + 1 }, (_, i) => ({ t: i * beatS, accent: i % drill.meter === 0, silent: !clickHeard(drill, i) }));
+    // Click on the off-beats (bass time drills): a woodblock on every "and" after the count-in.
+    const wood = drill.click === 'and' ? Array.from({ length: Math.ceil(drill.beats) }, (_, k) => (drill.meter + k + 0.5) * beatS) : [];
+    const tl = { clicks, wood, responseAt: drill.meter * beatS, responseEnd: (drill.meter + drill.beats + 1) * beatS };
     let zero = 0;
     const notes: PlayedNote[] = [];
     const open = new Map<number, PlayedNote>();

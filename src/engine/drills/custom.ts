@@ -858,7 +858,7 @@ export function patternFromPlayed(notes: { pitch: number; on: number; off?: numb
 export function customFromDrill(d: Drill, id: string, createdAt: string, name?: string): CustomDrill | null {
   if (!d.notes.length) return null;
   const k = mod(d.spec.key, 12);
-  const guitar = d.spec.family.startsWith('g-') || d.spec.instrument === 'guitar' || d.spec.instrument === 'bass';
+  const guitar = d.spec.family.startsWith('g-') || d.spec.family.startsWith('b-') || d.spec.instrument === 'guitar' || d.spec.instrument === 'bass';
   const tries: ScaleType[] = [scaleTypeOf(d.spec), 'major', 'chromatic'];
   for (const scale of tries) {
     const ints = SCALE_INTERVALS[scale];
@@ -894,7 +894,7 @@ export function customFromDrill(d: Drill, id: string, createdAt: string, name?: 
     let lh: RichNote[] | null = [];
     let instrument: CustomDrill['instrument'];
     if (guitar) {
-      instrument = d.spec.instrument === 'bass' || d.spec.family === 'g-bass' ? 'bass' : 'guitar';
+      instrument = d.spec.instrument === 'bass' || d.spec.family === 'g-bass' || d.spec.family.startsWith('b-') ? 'bass' : 'guitar';
       const low = Math.min(...d.notes.map((n) => n.pitch));
       const tonic = low - mod(low - k, 12);
       rh = rowOf('R', tonic);

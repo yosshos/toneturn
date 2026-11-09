@@ -10,6 +10,7 @@
 import type { Drill, DrillCalibration, ExpNote, PlayedNote, TakeMetrics, Verdict } from './types';
 import { analyzeTake, expTimeMs, median } from './analyze';
 import { meanChroma, ringCheck } from '../chroma';
+import { crossingPenalty, ghostGapDb, kickLock, lengthClass, lengthMatch, loudSdDb, oddEvenAsym, releaseTime } from './bassAnalyze';
 
 /** One analysis frame from the microphone (times in ms relative to beat 0, latency removed). */
 export interface GFrame {
@@ -416,6 +417,8 @@ export interface GuitarExtras {
   /** Chord ring-check: chords judged, chords where every note rang, and how often each pitch class was missing. */
   ring: { chords: number; full: number; missing: Record<number, number> } | null;
   selfCheck: T2[];
+  /** Bass measures (drills with goal.bass): what was measured, null where it could not be. */
+  bass?: { asym: { ms: number; db: number | null } | null; loudSd: number | null; crossing: number | null; kick: { lock: number; stray: number } | null; lengths: number | null; ghostDb: number | null };
 }
 export type GuitarTakeMetrics = TakeMetrics & { guitar: GuitarExtras };
 
@@ -430,7 +433,8 @@ export function analyzeGuitarTake(drill: Drill, bpm: number, played: PlayedNote[
   const norm = normalizeGuitarTake(drill, bpm, played);
   // Without loudness (the plain pitch pipeline sends one velocity for every note) accents cannot be judged.
   const hasLoudness = new Set(played.map((p) => p.vel)).size > 1;
-  const judged: Drill = hasLoudness ? drill : { ...drill, notes: drill.notes.map((n) => (n.accent ? { ...n, accent: undefined } : n)) };
+  // The same holds for a dynamics shape (bass 16ths with a crescendo): pitch and timing are still judged.
+  const judged: Drill = hasLoudness ? drill : { ...drill, goal: drill.goal.dynamics ? { ...drill.goal, dynamics: undefined } : drill.goal, notes: drill.notes.map((n) => (n.accent ? { ...n, accent: undefined } : n)) };
   const m = analyzeTake(judged, bpm, norm.played, cal);
   const gs = groupsOf(drill, bpm);
   const extra: GuitarExtras = {
@@ -547,6 +551,69 @@ export function analyzeGuitarTake(drill: Drill, bpm: number, played: PlayedNote[
     factors.push({ verdict: extra.legatoRatio < 0.3 ? 'not' : 'almost', en: `Hammer-ons / pull-offs too quiet (${Math.round(extra.legatoRatio * 100)}% of picked)`, he: `ההקשות / המשיכות שקטות מדי (${Math.round(extra.legatoRatio * 100)}% מהנפרטים)` });
   if (extra.palmMuteShare !== null && extra.palmMuteShare < 0.75)
     factors.push({ verdict: extra.palmMuteShare < 0.5 ? 'not' : 'almost', en: `Palm mute not heard on ${Math.round((1 - extra.palmMuteShare) * 100)}% of notes`, he: `השתקת כף היד לא נשמעה ב-${Math.round((1 - extra.palmMuteShare) * 100)}% מהצלילים` });
+
+  // Bass pass rules (BASS_CURRICULUM §5) on top of pitch + timing.
+  const bg = drill.goal.bass;
+  if (bg) {
+    const hit = drill.notes.map((n, i) => ({ n, i, p: m.perNote[i].played })).filter((x) => x.p);
+    const loudOf = (on: number, vel: number) => (frames.length ? peakRms(frames, on) : vel);
+    const loud = hasLoudness || frames.length ? hit.map((x) => loudOf(x.p!.on, x.p!.vel)) : undefined;
+    const b: NonNullable<GuitarExtras['bass']> = { asym: null, loudSd: null, crossing: null, kick: null, lengths: null, ghostDb: null };
+    const worse = (v: number, lim: number) => (v > 1.5 * lim ? 'not' : 'almost') as Verdict;
+    if (bg.asym) {
+      b.asym = oddEvenAsym(
+        hit.map((x) => x.p!.on),
+        loud,
+      );
+      if (b.asym && (b.asym.ms > bg.asym.ms || (b.asym.db !== null && b.asym.db > bg.asym.db))) {
+        const over = b.asym.ms > bg.asym.ms;
+        factors.push({ verdict: over ? worse(b.asym.ms, bg.asym.ms) : worse(b.asym.db!, bg.asym.db), en: over ? `Uneven fingers: every second note ${Math.round(b.asym.ms)} ms off` : `Uneven fingers: every second note ${b.asym.db!.toFixed(1)} dB softer or louder`, he: over ? `אצבעות לא שוות: כל צליל שני זז ב-${Math.round(b.asym.ms)} ms` : `אצבעות לא שוות: כל צליל שני שונה ב-${b.asym.db!.toFixed(1)} dB` });
+      }
+    }
+    if (bg.loudSd && loud) {
+      b.loudSd = loudSdDb(loud);
+      if (b.loudSd !== null && b.loudSd > bg.loudSd) factors.push({ verdict: worse(b.loudSd, bg.loudSd), en: `Uneven volume (±${b.loudSd.toFixed(1)} dB)`, he: `עוצמה לא אחידה (±${b.loudSd.toFixed(1)} dB)` });
+    }
+    if (bg.crossing) {
+      b.crossing = crossingPenalty(
+        m.perNote.map((r) => r.dev),
+        drill.notes.map((n) => n.string),
+      );
+      if (b.crossing !== null && b.crossing > bg.crossing) factors.push({ verdict: worse(b.crossing, bg.crossing), en: `String crossings ${Math.round(b.crossing)} ms less steady than the rest`, he: `מעברי המיתרים פחות יציבים ב-${Math.round(b.crossing)} ms` });
+    }
+    if (bg.kick) {
+      const kicks = [...new Set(drill.notes.map((n) => expTimeMs(drill, n.beat, bpm)))];
+      b.kick = kickLock(
+        kicks,
+        norm.played.map((p) => p.on),
+        bg.kick,
+      );
+      const bars = Math.max(1, drill.beats / (drill.meter || 4));
+      if (b.kick.lock < 0.9 || b.kick.stray > bars) factors.push({ verdict: b.kick.lock < 0.75 ? 'not' : 'almost', en: `Locked with the kick on ${Math.round(b.kick.lock * 100)}% of hits (90% needed)`, he: `נעול עם הבס-דראם ב-${Math.round(b.kick.lock * 100)}% מהמכות (צריך 90%)` });
+    }
+    if (bg.lengths && frames.length) {
+      const res: { want: 'short' | 'full'; ratio: number }[] = [];
+      drill.notes.forEach((n, i) => {
+        const p = m.perNote[i].played;
+        const next = drill.notes.find((x) => x.beat > n.beat + 1e-6);
+        if (!p || !next) return;
+        const gapMs = expTimeMs(drill, next.beat, bpm) - expTimeMs(drill, n.beat, bpm);
+        if (gapMs <= 0) return;
+        res.push({ want: lengthClass(n.dur, next.beat - n.beat), ratio: releaseTime(frames, p.on, p.on + gapMs * 1.5) / gapMs });
+      });
+      b.lengths = lengthMatch(res);
+      if (b.lengths !== null && b.lengths < 0.85) factors.push({ verdict: b.lengths < 0.6 ? 'not' : 'almost', en: `Note lengths right on ${Math.round(b.lengths * 100)}% of notes (85% needed)`, he: `אורך הצליל נכון ב-${Math.round(b.lengths * 100)}% מהצלילים (צריך 85%)` });
+    }
+    if (bg.ghostDb && loud) {
+      const g = hit.map((x, k) => ({ dead: x.n.technique === 'dead', l: loud[k] }));
+      b.ghostDb = ghostGapDb(
+        g.filter((x) => x.dead).map((x) => x.l),
+        g.filter((x) => !x.dead).map((x) => x.l),
+      );
+      if (b.ghostDb !== null && b.ghostDb < bg.ghostDb) factors.push({ verdict: b.ghostDb < bg.ghostDb / 2 ? 'not' : 'almost', en: `Ghost notes only ${b.ghostDb.toFixed(1)} dB quieter (${bg.ghostDb} dB needed)`, he: `צלילי הרפאים שקטים רק ב-${b.ghostDb.toFixed(1)} dB (צריך ${bg.ghostDb})` });
+    }
+    extra.bass = b;
+  }
 
   let verdict = m.verdict;
   let why = m.why;

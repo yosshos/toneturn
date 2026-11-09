@@ -21,6 +21,10 @@ export const TUNINGS: Tuning[] = [
   { id: 'open-g', instrument: 'guitar', name: { en: 'Open G', he: 'Open G' }, open: [62, 59, 55, 50, 43, 38], fretted: true },
   { id: 'half-down', instrument: 'guitar', name: { en: 'Half step down', he: 'חצי טון למטה' }, open: [63, 58, 54, 49, 44, 39], fretted: true },
   { id: 'bass', instrument: 'bass', name: { en: 'Bass (EADG)', he: 'בס (EADG)' }, open: [43, 38, 33, 28], fretted: true },
+  // Bass course (BASS_CURRICULUM §10): 5-string (low B0 = 23), 6-string (high C3 = 48), drop-D 4-string (D1 = 26).
+  { id: 'bass5', instrument: 'bass', name: { en: '5-string bass (BEADG)', he: 'בס 5 מיתרים (BEADG)' }, open: [43, 38, 33, 28, 23], fretted: true },
+  { id: 'bass6', instrument: 'bass', name: { en: '6-string bass (BEADGC)', he: 'בס 6 מיתרים (BEADGC)' }, open: [48, 43, 38, 33, 28, 23], fretted: true },
+  { id: 'bass-dropd', instrument: 'bass', name: { en: 'Bass, drop D (DADG)', he: 'בס, Drop D (DADG)' }, open: [43, 38, 33, 26], fretted: true },
   { id: 'violin', instrument: 'violin', name: { en: 'Violin (GDAE)', he: 'כינור (GDAE)' }, open: [76, 69, 62, 55], fretted: false },
   { id: 'viola', instrument: 'viola', name: { en: 'Viola (CGDA)', he: 'ויולה (CGDA)' }, open: [69, 62, 55, 48], fretted: false },
   { id: 'cello', instrument: 'cello', name: { en: 'Cello (CGDA)', he: "צ'לו (CGDA)" }, open: [57, 50, 43, 36], fretted: false },

@@ -6,6 +6,7 @@ import { catalog, generate, keysInOrder, type FamilyDef, type LevelDef } from '.
 import { customIncluded, customKeys, customToDrill } from './custom';
 import { todaysItems, type TodayItem } from './ladder';
 import { guitarCatalog, guitarStyleMatch, type GuitarFamilyDef } from './guitar';
+import { tuningById } from '../fretboard';
 
 type Instrument = NonNullable<DrillSettings['instrument']>;
 const CAT = catalog();
@@ -25,7 +26,8 @@ export function shownFamilies(settings: ShowSettings): FamilyDef[] {
   const inst = settings.instrument ?? 'piano';
   if (inst === 'piano') return CAT.filter((f) => settings.emphasis === 'both' || f.style === settings.emphasis);
   const style = settings.guitarStyle;
-  return GCAT.filter((f) => f.instruments.includes(inst) && guitarStyleMatch(f.genres, style))
+  // Retired families (the old g-bass starter) keep their ids for progress but are not shown.
+  return GCAT.filter((f) => f.instruments.includes(inst) && !f.retired && guitarStyleMatch(f.genres, style))
     .map((f): GuitarFamilyDef => ({ ...f, levels: f.levels.filter((l) => guitarStyleMatch(l.genres, style)) }))
     .filter((f) => f.levels.length > 0);
 }
@@ -80,7 +82,7 @@ export function activeFamilies(settings: DrillSettings, items: Record<string, It
   if (used.length) return used;
   const inst = settings.instrument ?? 'piano';
   if (inst !== 'piano') {
-    const firstG: FamilyId[] = inst === 'bass' ? ['g-bass'] : ['g-fretting', 'g-chords', 'g-scales'];
+    const firstG: FamilyId[] = inst === 'bass' ? ['b-pluck', 'b-time'] : ['g-fretting', 'g-chords', 'g-scales'];
     const fs = shown.filter((f) => firstG.includes(f.id));
     return fs.length ? fs : shown.slice(0, 2);
   }
@@ -111,4 +113,13 @@ export function keyHeat(family: FamilyId, items: Record<string, ItemState>): num
     out[s.key] = Math.max(out[s.key], band);
   }
   return out;
+}
+
+/**
+ * The player's bass tuning on a run of drills (5-string, 6-string, drop D): bass-course drills without a tuning of
+ * their own are rebuilt on it. Their item ids ignore the tuning, so progress is the same item on any bass.
+ */
+export function withBassTuning(drills: Drill[], tuning: string | undefined): Drill[] {
+  if (!tuning || tuning === 'bass' || !tuningById(tuning) || tuningById(tuning).instrument !== 'bass' || tuningById(tuning).id !== tuning) return drills;
+  return drills.map((d) => (d.spec.family.startsWith('b-') && !d.spec.tuning ? gen({ ...d.spec, tuning }) : d));
 }

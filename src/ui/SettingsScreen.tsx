@@ -531,18 +531,24 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
                   <input type="checkbox" checked={!!s.leftHanded} onChange={(e) => onChange({ leftHanded: e.target.checked })} />
                   <span>{t.leftHanded}</span>
                 </label>
-                {s.instrument !== 'bass' && (
+                {(() => {
+                  // Bass: 4-string, 5-string, 6-string or drop D (the bass-course drills follow it); guitar: its tunings.
+                  const neck = s.instrument === 'bass' ? 'bass' : 'guitar';
+                  const list = TUNINGS.filter((x) => x.instrument === neck);
+                  const value = list.some((x) => x.id === s.tuning) ? s.tuning! : list[0].id;
+                  return (
                   <label className="field-row">
                     <span>{t.tuningTitle}</span>
-                    <select value={s.tuning ?? 'standard'} onChange={(e) => onChange({ tuning: e.target.value })}>
-                      {TUNINGS.filter((x) => x.instrument === 'guitar').map((x) => (
+                    <select value={value} onChange={(e) => onChange({ tuning: e.target.value })}>
+                      {list.map((x) => (
                         <option key={x.id} value={x.id}>
                           {x.name[s.uiLang]}
                         </option>
                       ))}
                     </select>
                   </label>
-                )}
+                  );
+                })()}
               </>
             )}
             <label className="toggle-row">

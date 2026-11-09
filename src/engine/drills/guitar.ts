@@ -8,6 +8,8 @@ import type { Drill, DrillGoal, DrillSettings, DrillSpec, ExpNote, FamilyId } fr
 import type { FamilyDef, LevelDef, SpecTemplate } from './generate';
 import { noteAt, tuningById, type Tuning } from '../fretboard';
 import { SONGBOOK, songChords, songNotes } from '../../content/songbook';
+import { bassFamilies, generateBass } from './bass';
+import { BASS_PROBES } from './bassProbes';
 
 export type GuitarStyle = NonNullable<DrillSettings['guitarStyle']>;
 export type GuitarTechnique = NonNullable<ExpNote['technique']>;
@@ -19,22 +21,27 @@ export interface GuitarFamilyDef extends FamilyDef {
   /** Genres this family belongs to ('all' families are always shown). */
   genres: GuitarStyle[];
   levels: GuitarLevelDef[];
+  /** Kept only so old progress / path ids stay valid; not shown in the hub or new course paths. */
+  retired?: boolean;
 }
 export interface GuitarLevelDef extends LevelDef {
   /** Genres of this level (rhythm guitar levels are per genre); absent = the family's genres. */
   genres?: GuitarStyle[];
+  /** Bass levels: start → target tempo (♩) and the subdivision, from BASS_CURRICULUM §5. */
+  tempo?: [number, number];
+  sub?: string;
 }
 
-type T2 = { en: string; he: string };
-const t = (en: string, he: string): T2 => ({ en, he });
-const mod = (n: number, m: number): number => ((n % m) + m) % m;
+export type T2 = { en: string; he: string };
+export const t = (en: string, he: string): T2 => ({ en, he });
+export const mod = (n: number, m: number): number => ((n % m) + m) % m;
 const r6 = (x: number): number => Math.round(x * 1e6) / 1e6;
-const clamp = (x: number, lo: number, hi: number): number => Math.max(lo, Math.min(hi, x));
+export const clamp = (x: number, lo: number, hi: number): number => Math.max(lo, Math.min(hi, x));
 
-const NAMES = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
-const SIG = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+export const NAMES = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
+export const SIG = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
 const MAJOR = [0, 2, 4, 5, 7, 9, 11];
-const SCALES: Record<string, number[]> = {
+export const SCALES: Record<string, number[]> = {
   major: MAJOR,
   minor: [0, 2, 3, 5, 7, 8, 10],
   harmonic: [0, 2, 3, 5, 7, 8, 11],
@@ -45,7 +52,7 @@ const SCALES: Record<string, number[]> = {
   phrygian: [0, 1, 3, 5, 7, 8, 10],
 };
 /** Mode n (0 ionian … 6 locrian) of the major scale, as intervals from its own tonic. */
-const modeInts = (n: number): number[] => MAJOR.map((_, i) => mod(MAJOR[(i + n) % 7] - MAJOR[n], 12));
+export const modeInts = (n: number): number[] => MAJOR.map((_, i) => mod(MAJOR[(i + n) % 7] - MAJOR[n], 12));
 const MODE_T = [
   t('Ionian', 'יוני'),
   t('Dorian', 'דורי'),
@@ -58,7 +65,7 @@ const MODE_T = [
 
 // ───────────────────────────── neck helpers ─────────────────────────────
 
-interface GN {
+export interface GN {
   s: number;
   f: number;
   tech?: GuitarTechnique;
@@ -69,13 +76,14 @@ interface GN {
   pos?: number;
   finger?: number;
 }
-interface Ev {
+export interface Ev {
   beat: number;
   dur: number;
   notes: GN[];
 }
 
-const tuningOf = (s: DrillSpec): Tuning => tuningById(s.tuning ?? (s.family === 'g-bass' || s.instrument === 'bass' ? 'bass' : 'standard'));
+const isBassFamily = (f: string): boolean => f === 'g-bass' || f.startsWith('b-');
+const tuningOf = (s: DrillSpec): Tuning => tuningById(s.tuning ?? (isBassFamily(s.family) || s.instrument === 'bass' ? 'bass' : 'standard'));
 /** Fret (0–11) of pitch class pc on a string. */
 const lowFret = (tu: Tuning, pc: number, str: number): number => mod(pc - tu.open[str - 1], 12);
 /** Same, but never the open string (1–12). */
@@ -327,7 +335,8 @@ export function guitarItemId(s: DrillSpec): string {
     ['ps', s.position],
     ['pb', s.perBeat],
     ['sw', s.swing],
-    ['tu', s.tuning],
+    // Bass course families: the tuning only moves notes between strings, so 4- and 5-string progress is one item.
+    ['tu', s.family.startsWith('b-') ? undefined : s.tuning],
     ['st', s.stretch],
     ['in', s.instrument],
   ];
@@ -335,7 +344,7 @@ export function guitarItemId(s: DrillSpec): string {
   return p.join(':');
 }
 
-interface Fin {
+export interface Fin {
   title: T2;
   bpm: number;
   goal?: Partial<DrillGoal>;
@@ -343,7 +352,7 @@ interface Fin {
   meter?: number;
   keySig?: string;
 }
-function finish(spec: DrillSpec, tu: Tuning, evs: Ev[], o: Fin): Drill {
+export function finish(spec: DrillSpec, tu: Tuning, evs: Ev[], o: Fin): Drill {
   autoPos(evs, spec.stretch ? 6 : 4);
   const notes: ExpNote[] = [];
   let cid = 0;
@@ -372,7 +381,7 @@ function finish(spec: DrillSpec, tu: Tuning, evs: Ev[], o: Fin): Drill {
   }
   notes.sort((a, b) => a.beat - b.beat || a.pitch - b.pitch);
   const beats = r6(Math.max(...notes.map((n) => n.beat + n.dur)));
-  const spec2: DrillSpec = { ...spec, instrument: spec.instrument ?? (spec.family === 'g-bass' ? 'bass' : 'guitar') };
+  const spec2: DrillSpec = { ...spec, instrument: spec.instrument ?? (isBassFamily(spec.family) ? 'bass' : 'guitar') };
   return {
     spec: spec2,
     itemId: guitarItemId(spec),
@@ -382,7 +391,7 @@ function finish(spec: DrillSpec, tu: Tuning, evs: Ev[], o: Fin): Drill {
     meter: o.meter ?? 4,
     keySig: o.keySig ?? SIG[mod(spec.key + (spec.minor ? 3 : 0), 12)],
     goal: { evenness: o.evenness ?? true, hands: false, ...(o.goal ?? {}) },
-    startBpm: clamp(Math.round(o.bpm), 40, 200),
+    startBpm: clamp(Math.round(spec.tempo ?? o.bpm), 40, 240),
   };
 }
 
@@ -414,7 +423,7 @@ export const PERMS: number[][] = (() => {
   return out;
 })();
 
-function genFretting(s: DrillSpec, tu: Tuning): Drill {
+export function genFretting(s: DrillSpec, tu: Tuning): Drill {
   const nStr = tu.open.length;
   const pb = s.perBeat ?? 2;
   const pos = lowFret1(tu, s.key, nStr);
@@ -1993,7 +2002,7 @@ function bassWalk(tu: Tuning, key: number, evs: Ev[], strings: number[], lowest:
 // ───────────────────────────── RD: reading by position ─────────────────────────────
 
 /** Small deterministic PRNG (mulberry32) seeded from a string. */
-function rng(seed: string): () => number {
+export function rng(seed: string): () => number {
   let h = 1779033703 ^ seed.length;
   for (let i = 0; i < seed.length; i++) h = Math.imul(h ^ seed.charCodeAt(i), 3432918353);
   let a = h >>> 0;
@@ -2128,7 +2137,7 @@ function genImpro(s: DrillSpec, tu: Tuning): Drill {
 /** Strings low → high: [n, n−1, …, 1]. */
 const range4 = (n: number): number[] => Array.from({ length: n }, (_, i) => n - i);
 
-function genBass(s: DrillSpec, tu: Tuning): Drill {
+export function genBass(s: DrillSpec, tu: Tuning): Drill {
   const key = mod(s.key, 12);
   const nStr = tu.open.length;
   const pb = s.perBeat ?? 2;
@@ -2328,6 +2337,7 @@ export function generateGuitar(spec: DrillSpec): Drill {
     case 'g-bass':
       return genBass(s, tu);
     default:
+      if (s.family.startsWith('b-')) return generateBass(s, tu);
       throw new Error(`Not a guitar family: ${s.family}`);
   }
 }
@@ -2484,7 +2494,10 @@ export function guitarCatalog(): GuitarFamilyDef[] {
       L('g-impro', 3, 'Chord-tone arpeggios through the form', 'ארפג׳יו צלילי אקורד לאורך הצורה', [I('targets-arp'), I('targets-arp', { option: 1 }), I('targets-arp', { option: 2 }), I('targets-arp', { option: 3 })], BLUES_KEYS),
       L('g-impro', 4, 'Guide tones through the form', 'צלילים מנחים לאורך הצורה', [I('targets-guide'), I('targets-guide', { option: 1 }), I('targets-guide', { option: 2 }), I('targets-guide', { option: 3 })], BLUES_KEYS),
     ]),
-    fam(
+    // The 0.4x starter bass family: superseded by the b-* course families below (BASS_CURRICULUM §10.1). Kept, retired,
+    // so old item ids, badges and frozen path units (tech:g-bass-*) stay valid.
+    {
+      ...fam(
       'g-bass',
       'Bass guitar',
       'גיטרה בס',
@@ -2500,6 +2513,10 @@ export function guitarCatalog(): GuitarFamilyDef[] {
       ],
       ['bass'],
     ),
+      retired: true,
+    },
+    // The bass course (BASS_CURRICULUM §5), in teaching order.
+    ...bassFamilies(),
   ];
 }
 
@@ -2513,11 +2530,20 @@ export function guitarStyleMatch(genres: GuitarStyle[] | undefined, style: Guita
  * Level-test probes for guitar (spec §9): one tempo staircase per main family. Each probe is a spec (key included);
  * the UI raises the tempo 15–20 % after each clean take, the last clean tempo seeds the family.
  */
-export const GUITAR_PROBES: { family: FamilyId; spec: DrillSpec; title: T2; instruments: ('guitar' | 'bass')[] }[] = [
+export interface TechProbe {
+  family: FamilyId;
+  spec: DrillSpec;
+  title: T2;
+  instruments: ('guitar' | 'bass')[];
+  /** Other families this probe also places (same level as the probed family, capped by their length). */
+  seeds?: FamilyId[];
+}
+export const GUITAR_PROBES: TechProbe[] = [
   { family: 'g-fretting', spec: { family: 'g-fretting', kind: 'spider', key: 9, hands: 'R', option: 0, instrument: 'guitar' }, title: t('Chromatic 1-2-3-4', 'כרומטי 1-2-3-4'), instruments: ['guitar'] },
   { family: 'g-scales', spec: { family: 'g-scales', kind: 'penta', key: 9, hands: 'R', position: 1, minor: true, instrument: 'guitar' }, title: t('A minor pentatonic box 1', 'פנטטוני לה מינור תיבה 1'), instruments: ['guitar'] },
   { family: 'g-chords', spec: { family: 'g-chords', kind: 'one-minute', key: 0, hands: 'R', option: 0, perBeat: 0.5, instrument: 'guitar' }, title: t('A ↔ D changes', 'החלפות A ↔ D'), instruments: ['guitar'] },
   { family: 'g-rhythm', spec: { family: 'g-rhythm', kind: 'eighths', key: 7, hands: 'R', instrument: 'guitar' }, title: t('Down-up 8ths', 'שמיניות למטה-למעלה'), instruments: ['guitar'] },
   { family: 'g-legato', spec: { family: 'g-legato', kind: 'trill', key: 9, hands: 'R', option: 0, instrument: 'guitar' }, title: t('Trill 1-2', 'טריל 1-2'), instruments: ['guitar'] },
-  { family: 'g-bass', spec: { family: 'g-bass', kind: 'major', key: 7, hands: 'R', instrument: 'bass' }, title: t('G major, one finger per fret', 'סול מז׳ור, אצבע לכל סריג'), instruments: ['bass'] },
+  // Bass (BASS_CURRICULUM §6): the course probes replace the old single g-bass probe.
+  ...BASS_PROBES,
 ];

@@ -6,7 +6,7 @@ import type { Drill, TakeMetrics } from './types';
 import { tempoBand } from './analyze';
 
 /** Guitar / bass drills ('g-' families) rate the guitar technique sub-skill. */
-export const isGuitarDrill = (drill: Drill): boolean => drill.spec.family.startsWith('g-') || drill.spec.instrument === 'guitar' || drill.spec.instrument === 'bass';
+export const isGuitarDrill = (drill: Drill): boolean => drill.spec.family.startsWith('g-') || drill.spec.family.startsWith('b-') || drill.spec.instrument === 'guitar' || drill.spec.instrument === 'bass';
 
 /** Difficulty of a take: the tempo band (T1–T7) on the rating scale 600–1600, + a little for hands together. */
 export function drillDifficulty(drill: Drill, m: TakeMetrics): number {

@@ -13,7 +13,7 @@
 //   season     monthly area challenges (ranks.ts)
 
 import type { SkillId } from './lesson';
-import type { FamilyId } from './drills/types';
+import type { BassFamilyId, FamilyId } from './drills/types';
 import { DOMAINS, PROVISIONAL_UNTIL, SKILLS, type DomainId, type Ratings } from './rating';
 import { SUB_SKILLS, type SubStat } from './taxonomy';
 import { addDays, type Counts, type InputKind, type Peaks, type StatsDays, type StatsHours } from './stats';
@@ -318,7 +318,8 @@ const subBadges: Badge[] = SUB_SKILLS.map((s, i) => {
 
 // ======================================================================= technique (families × 7 + specials)
 
-export type BadgeFamily = Exclude<FamilyId, 'custom'>;
+// Bass-course families (b-*) have no family badges yet: their level titles are a separate design pass.
+export type BadgeFamily = Exclude<FamilyId, 'custom' | BassFamilyId>;
 export const PIANO_BADGE_FAMILIES: BadgeFamily[] = ['scales', 'arpeggios', 'cadences', 'fingers', 'control', 'advanced', 'harris', 'jazz', 'voicings', 'accomp'];
 export const GUITAR_BADGE_FAMILIES: BadgeFamily[] = ['g-fretting', 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-lead', 'g-fingerstyle', 'g-flamenco', 'g-jazz', 'g-reading', 'g-impro', 'g-bass'];
 export const BADGE_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES, ...GUITAR_BADGE_FAMILIES];

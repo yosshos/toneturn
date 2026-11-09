@@ -2934,7 +2934,7 @@ function genWalkChanges(s: DrillSpec): Drill {
 
 /** Build the drill a spec describes (any family except 'custom', which goes through customToDrill). */
 export function generate(spec: DrillSpec): Drill {
-  if (spec.family.startsWith('g-')) return generateGuitar(spec);
+  if (spec.family.startsWith('g-') || spec.family.startsWith('b-')) return generateGuitar(spec);
   const s: DrillSpec = { ...spec, key: mod(spec.key, 12) };
   if (s.kind.startsWith('chart~')) return genChart(s);
   switch (s.kind) {

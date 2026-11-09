@@ -17,7 +17,7 @@ import type { FamilyDef, LevelDef } from '../engine/drills/generate';
 import { applyTake, familyLevel, newItem, type LadderResult } from '../engine/drills/ladder';
 import { customKeys, customToDrill } from '../engine/drills/custom';
 import { DrillCreator } from './DrillCreator';
-import { currentLevel, families as familiesOf, keyHeat, levelDone, levelKeys, shownFamilies, specDrills, todayDrills, levelDrills } from '../engine/drills/plan';
+import { currentLevel, families as familiesOf, keyHeat, levelDone, levelKeys, shownFamilies, specDrills, todayDrills, levelDrills, withBassTuning } from '../engine/drills/plan';
 import { generate } from '../engine/drills/generate';
 import { GUITAR_PROBES } from '../engine/drills/guitar';
 import { isGuitarDrill } from '../engine/drills/events';
@@ -121,6 +121,8 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
   const tx = T[lang];
   const ds = drillSettingsOf(settings);
   const [view, setView] = useState<View>(startTest ? { k: 'test' } : queue?.length ? { k: 'run', queue, i: 0, from: { k: 'hub' } } : songs ? { k: 'songs' } : { k: 'hub' });
+  // A 5- / 6-string or drop-D bass (Settings → tuning): the bass-course drills are placed on that neck.
+  const runQueue = useMemo(() => (view.k === 'run' ? withBassTuning(view.queue, settings.tuning) : []), [view, settings.tuning]);
   const head = (title: string, back: () => void) => (
     <header className="screen-head">
       <button className="icon-btn" onClick={back} aria-label="Back">
@@ -139,7 +141,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
           lang={lang}
           ds={ds}
           cal={calOf(settings)}
-          queue={view.queue}
+          queue={runQueue}
           start={view.i}
           items={items}
           onTake={onTake}
@@ -260,6 +262,8 @@ const TOPIC_OF: Record<string, Exclude<DrillTopic, 'all' | 'songs' | 'mine'>> = 
   cadences: 'chords', voicings: 'chords', accomp: 'chords', 'g-chords': 'chords', 'g-rhythm': 'chords',
   fingers: 'hands', control: 'hands', advanced: 'hands', 'g-fretting': 'hands', 'g-picking': 'hands', 'g-legato': 'hands', 'g-fingerstyle': 'hands',
   harris: 'styles', jazz: 'styles', 'g-lead': 'styles', 'g-flamenco': 'styles', 'g-jazz': 'styles', 'g-impro': 'styles',
+  // Bass course (unlisted b-* families fall under hands: pluck, fret, length, legato, pick, slap).
+  'b-scale': 'scales', 'b-read': 'scales', 'b-chord': 'chords', 'b-walk': 'chords', 'b-time': 'styles', 'b-pocket': 'styles', 'b-ghost': 'styles', 'b-styles': 'styles',
 };
 const TOPIC_NAME: Record<DrillTopic, { en: string; he: string }> = {
   all: { en: 'All', he: 'הכול' },
@@ -661,11 +665,11 @@ function TechLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, onOct
   const tx = T[lang];
   const inst = ds.instrument ?? 'piano';
   const probes = useMemo(() => {
-    if (inst !== 'piano') return GUITAR_PROBES.filter((p) => p.instruments.includes(inst)).map((p) => ({ id: p.family, drill: generate(p.spec) }));
+    if (inst !== 'piano') return GUITAR_PROBES.filter((p) => p.instruments.includes(inst)).map((p) => ({ id: p.family, drill: generate(p.spec), seeds: p.seeds ?? [] }));
     const fams: FamilyId[] = ds.emphasis === 'jazz' ? ['scales', 'harris'] : ds.emphasis === 'classical' ? ['scales', 'fingers'] : ['scales', 'fingers', 'harris'];
     return fams.map((id) => {
       const f = shownFamilies({ emphasis: 'both' }).find((x) => x.id === id)!;
-      return { id, drill: specDrills(f.levels[0], 0, ds.keyOrder).find((d) => d.spec.key === 0) ?? specDrills(f.levels[0], 0, ds.keyOrder)[0] };
+      return { id, drill: specDrills(f.levels[0], 0, ds.keyOrder).find((d) => d.spec.key === 0) ?? specDrills(f.levels[0], 0, ds.keyOrder)[0], seeds: [] as FamilyId[] };
     });
   }, [ds.emphasis, ds.keyOrder, inst]);
   const [p, setP] = useState(0);
@@ -684,6 +688,8 @@ function TechLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, onOct
       const lv: Record<string, number> = {};
       for (const pr of probes) lv[pr.id] = b[pr.id] ? Math.max(1, tempoBandOf(pr.drill, b[pr.id]) - 1) : 1;
       const vals = Object.values(lv);
+      // Bass (BASS_CURRICULUM §6): a probe also places the families it seeds.
+      for (const pr of probes) for (const sd of pr.seeds) if (lv[sd] === undefined) lv[sd] = lv[pr.id];
       const meanLv = vals.length ? vals.reduce((x, y) => x + y, 0) / vals.length : 1;
       for (const fam of familiesOf(inst)) start[fam.id] = Math.max(1, Math.min(fam.levels.length, Math.round(lv[fam.id] ?? meanLv - 1)));
       return onDone(start);

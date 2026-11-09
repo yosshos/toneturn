@@ -28,7 +28,11 @@ export type FamilyId =
   | 'g-jazz' // shells, drop 2 / 3, ii–V–I comping, guide tones, walking bass
   | 'g-reading' // reading by position
   | 'g-impro' // target notes over forms
-  | 'g-bass'; // bass guitar subset
+  | 'g-bass' // bass guitar subset (the 0.4x starter family; kept so old progress ids stay valid)
+  // Bass course (docs/research/BASS_CURRICULUM.md §5, F1–F14): instrument bass, pitches SOUNDING MIDI.
+  | BassFamilyId;
+
+export type BassFamilyId = 'b-pluck' | 'b-fret' | 'b-length' | 'b-time' | 'b-pocket' | 'b-ghost' | 'b-chord' | 'b-scale' | 'b-walk' | 'b-slap' | 'b-legato' | 'b-pick' | 'b-read' | 'b-styles';
 
 export type Dyn = 'pp' | 'p' | 'mp' | 'mf' | 'f' | 'ff';
 export type Articulation = 'legato' | 'staccato' | 'portato';
@@ -113,6 +117,8 @@ export interface DrillSpec {
   position?: number;
   /** Guitar: the drill needs a stretch wider than one finger per fret. */
   stretch?: boolean;
+  /** Suggested start tempo (♩) for a new item (bass levels: the level's start tempo). Not part of the item id. */
+  tempo?: number;
 }
 
 /** A generated drill: the notes to play and how it is judged. */
@@ -128,6 +134,8 @@ export interface Drill {
   notes: ExpNote[];
   /** Length in beats (the take ends one beat after). */
   beats: number;
+  /** Metronome after the count-in (bass time drills): every beat (default), only 2 and 4, only the off-beats, only beat 1, or a click that fades out. */
+  click?: 'all' | '24' | 'and' | 'one' | 'fade';
   /** Beats per bar (count-in = one bar). */
   meter: number;
   /** Key signature for the staff (major-key tonic name like 'Eb', or 'C' for none). */
@@ -155,6 +163,24 @@ export interface DrillGoal {
    * changes. Direct pedal: down with the chord, up before the next; legato (syncopated): up at the change, down just after.
    */
   pedal?: { style: 'direct' | 'legato'; changes: number[] };
+  /** Bass measures on top of pitch + timing (bassAnalyze.ts); each can only lower the verdict. */
+  bass?: BassGoal;
+}
+
+/** Bass-specific pass rules (BASS_CURRICULUM §4–§5). Absent = the default pitch + timing rule only. */
+export interface BassGoal {
+  /** Even fingers / strokes: odd vs even notes, |Δ IOI| ≤ ms and |Δ loudness| ≤ dB. */
+  asym?: { ms: number; db: number };
+  /** Loudness SD across the take ≤ dB (even plucking). */
+  loudSd?: number;
+  /** String-crossing penalty ≤ ms (mean |offset| on crossing notes − on same-string notes). */
+  crossing?: number;
+  /** Every note must line up with the kick (the line is the kick lane): ±ms window, share ≥ 0.9. */
+  kick?: number;
+  /** Note lengths: each note's release must match its written class (short / full), share ≥ 0.85. */
+  lengths?: boolean;
+  /** Ghost notes ≥ dB quieter than the pitched notes. */
+  ghostDb?: number;
 }
 
 /** A note the player played (latency already removed; times relative to beat 0 of the drill). */

@@ -46,9 +46,10 @@ describe('guitar drills: catalogue', () => {
     const cat = guitarCatalog();
     expect(cat.length).toBeGreaterThanOrEqual(12);
     for (const f of cat) {
-      expect(f.id.startsWith('g-')).toBe(true);
+      expect(/^[gb]-/.test(f.id)).toBe(true);
       expect(f.levels.length).toBeGreaterThan(0);
-      expect(f.levels.length).toBeLessThanOrEqual(7);
+      // Bass-course families (b-*, BASS_CURRICULUM §5) run up to 12 levels.
+      expect(f.levels.length).toBeLessThanOrEqual(f.id.startsWith('b-') ? 12 : 7);
       f.levels.forEach((l, i) => expect(l.level).toBe(i + 1));
     }
     expect(cat.find((f) => f.id === 'g-bass')?.instruments).toEqual(['bass']);
@@ -63,7 +64,7 @@ describe('guitar drills: catalogue', () => {
       if (!ok && bad.length < 20) bad.push(msg);
     };
     for (const { drill, spec } of DRILLS) {
-      const tu = tuningById(spec.tuning ?? drill.spec.tuning ?? (spec.family === 'g-bass' ? 'bass' : 'standard'));
+      const tu = tuningById(spec.tuning ?? drill.spec.tuning ?? (spec.family === 'g-bass' || spec.family.startsWith('b-') ? 'bass' : 'standard'));
       const id = drill.itemId;
       check(drill.notes.length > 0, `${id}: no notes`);
       check(drill.startBpm >= 40 && drill.startBpm <= 200, `${id}: start bpm ${drill.startBpm}`);
@@ -379,7 +380,8 @@ describe('guitar drills: plan', () => {
     const g = shownFamilies({ emphasis: 'both', instrument: 'guitar' });
     expect(g.length).toBeGreaterThan(10);
     expect(g.every((f) => f.id.startsWith('g-') && f.id !== 'g-bass')).toBe(true);
-    expect(shownFamilies({ emphasis: 'both', instrument: 'bass' }).map((f) => f.id)).toEqual(['g-bass']);
+    // Bass: the 14 course families; the old g-bass starter is retired (kept for old ids, not shown).
+    expect(shownFamilies({ emphasis: 'both', instrument: 'bass' }).map((f) => f.id)).toEqual(['b-pluck', 'b-time', 'b-fret', 'b-chord', 'b-scale', 'b-length', 'b-pocket', 'b-read', 'b-styles', 'b-ghost', 'b-walk', 'b-legato', 'b-pick', 'b-slap']);
     expect(familyById('g-legato')?.levels.length).toBeGreaterThan(0);
   });
 
