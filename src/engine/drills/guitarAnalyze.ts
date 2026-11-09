@@ -10,7 +10,7 @@
 import type { Drill, DrillCalibration, ExpNote, PlayedNote, TakeMetrics, TakeRules, Verdict } from './types';
 import { analyzeTake, bassThresholds, expTimeMs, median, npsOf, tempoBand } from './analyze';
 import { meanChroma, ringCheck } from '../chroma';
-import { centsOff, crossingPenalty, ghostGapDb, ioiDrift, kickLock, lengthClass, lengthMatch, loudSdDb, oddEvenAsym, overlapMs, pocketShare, releaseAccuracy, releaseTime, ringThrough, ruleCheck, shiftGap, slapClass, subBias, swingRatio, zoneShift } from './bassAnalyze';
+import { centsOff, crossingPenalty, ghostGapDb, ioiDrift, kickLock, lengthClass, lengthMatch, loudSdDb, oddEvenAsym, overlapMs, pocketShare, releaseAccuracy, releaseTime, ringThrough, ruleCheck, shiftGap, WALK_VARIETY, slapClass, subBias, swingRatio, zoneShift } from './bassAnalyze';
 import { tuningById } from '../fretboard';
 import { bassPitchOpts } from '../yin';
 
@@ -552,14 +552,24 @@ function applyRules(drill: Drill, bpm: number, played: PlayedNote[]): { judged: 
     used.add(best);
     return best;
   });
+  // N5: the written bars (before drill.freeFrom: read L8, read L12) are judged as written, note for note — their slots
+  // keep the written pitch (the shared analysis compares the played note with it) and the rules see the written note.
+  const written = (i: number) => drill.freeFrom !== undefined && drill.notes[i].beat < drill.freeFrom - 1e-6;
   const rep = ruleCheck(
     r.kind,
     r.chart,
-    drill.notes.map((n, i) => ({ pitch: slot[i] === null ? null : played[slot[i]!].pitch, beat: n.beat })),
+    drill.notes.map((n, i) => ({ pitch: written(i) ? (slot[i] === null ? null : n.pitch) : slot[i] === null ? null : played[slot[i]!].pitch, beat: n.beat })),
     drill.meter || 4,
     r.maxMove ?? 4,
   );
-  const notes = drill.notes.map((n, i) => (slot[i] === null ? n : { ...n, pitch: played[slot[i]!].pitch }));
+  if (drill.freeFrom !== undefined) {
+    drill.notes.forEach((_, i) => {
+      if (written(i)) rep.valid[i] = slot[i] !== null;
+    });
+    const pl = drill.notes.map((_, i) => i).filter((i) => slot[i] !== null);
+    rep.validShare = pl.length ? pl.filter((i) => rep.valid[i]).length / pl.length : 0;
+  }
+  const notes = drill.notes.map((n, i) => (slot[i] === null || written(i) ? n : { ...n, pitch: played[slot[i]!].pitch }));
   return { judged: { ...drill, notes, goal: { ...drill.goal, chordTonesOnBeats: undefined } }, rules: rep };
 }
 
@@ -624,6 +634,15 @@ export function analyzeGuitarTake(drill: Drill, bpm: number, played: PlayedNote[
       });
     if (R.kind === 'walk' && R.beat1Ct < 0.9)
       factors.push({ verdict: R.beat1Ct < 0.75 ? 'not' : 'almost', en: `A chord tone on ${Math.round(R.beat1Ct * 100)}% of the chord changes (90% needed)`, he: `צליל אקורד ב-${Math.round(R.beat1Ct * 100)}% מחילופי האקורדים (צריך 90%)` });
+    // N6: a free walking line needs variety — roots in alternating octaves are chord tones and never repeat exactly.
+    if (R.kind === 'walk' && R.nonRoot !== undefined && R.pcRepeats !== undefined && (R.nonRoot < WALK_VARIETY.nonRoot || R.pcRepeats > WALK_VARIETY.pcRepeats)) {
+      const fewOthers = R.nonRoot < WALK_VARIETY.nonRoot;
+      factors.push({
+        verdict: R.nonRoot < WALK_VARIETY.nonRoot / 2 || R.pcRepeats > 2 * WALK_VARIETY.pcRepeats ? 'not' : 'almost',
+        en: fewOthers ? `Mostly roots: only ${Math.round(R.nonRoot * 100)}% other notes (${Math.round(WALK_VARIETY.nonRoot * 100)}% needed) — add 3rds, 5ths and approach notes` : `The same note in another octave on ${Math.round(R.pcRepeats * 100)}% of the steps — walk to a new note`,
+        he: fewOthers ? `בעיקר יסודות: רק ${Math.round(R.nonRoot * 100)}% צלילים אחרים (צריך ${Math.round(WALK_VARIETY.nonRoot * 100)}%) — להוסיף טרצות, קווינטות וצלילי גישה` : `אותו צליל באוקטבה אחרת ב-${Math.round(R.pcRepeats * 100)}% מהצעדים — ללכת לצליל חדש`,
+      });
+    }
     const maxRep = drill.goal.bass?.rules?.maxRepeat ?? (R.kind === 'walk' ? 0.05 : 1);
     if (R.repeats > maxRep + 1e-9) factors.push({ verdict: R.repeats > 2 * maxRep + 0.05 ? 'not' : 'almost', en: `Repeated notes: ${Math.round(R.repeats * 100)}% (keep it moving)`, he: `צלילים חוזרים: ${Math.round(R.repeats * 100)}% (להמשיך לנוע)` });
     if (R.moves !== null && R.moves < 0.9) factors.push({ verdict: R.moves < 0.75 ? 'not' : 'almost', en: `Nearest chord tone on ${Math.round(R.moves * 100)}% of the moves (90% needed)`, he: `לצליל האקורד הקרוב ב-${Math.round(R.moves * 100)}% מהמעברים (צריך 90%)` });

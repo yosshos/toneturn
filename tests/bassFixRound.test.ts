@@ -5,7 +5,7 @@ import { itemTargetBpm, levelDrills, levelOfDrill, levelStars } from '../src/eng
 import { guitarCatalog, type GuitarLevelDef } from '../src/engine/drills/guitar';
 import { generate } from '../src/engine/drills/generate';
 import { BASS_PROBES, placeWalk } from '../src/engine/drills/bassProbes';
-import { walkProbeReport } from '../src/engine/drills/bassAnalyze';
+import { chartAt, chartPcs, walkProbeReport, WALK_VARIETY } from '../src/engine/drills/bassAnalyze';
 import { analyzeGuitarTake, captureOptsFor, onsetOptsFor, untimedPitch } from '../src/engine/drills/guitarAnalyze';
 import { expTimeMs } from '../src/engine/drills/analyze';
 import { yin } from '../src/engine/yin';
@@ -167,5 +167,67 @@ describe('N4 kick lock against the drum kick lane', () => {
   it('the whole line on time is locked with no strays', () => {
     const m = analyzeGuitarTake(d, bpm, playAll(d, bpm));
     expect(m.guitar.bass?.kick).toMatchObject({ lock: 1, stray: 0 });
+  });
+});
+
+/** The chord sounding at a slot of a rule drill, and another chord tone of it nearest the written pitch. */
+const otherChordTone = (d: Drill, n: ExpNote): number => {
+  const c = chartAt(d.goal.bass!.rules!.chart, n.beat).c;
+  const pcs = chartPcs(c).filter((p) => p !== ((n.pitch % 12) + 12) % 12);
+  const cands = pcs.flatMap((p) => [-2, -1, 0, 1].map((o) => n.pitch - (((n.pitch % 12) + 12) % 12) + p + 12 * o));
+  return cands.sort((a, b) => Math.abs(a - n.pitch) - Math.abs(b - n.pitch))[0];
+};
+const rootNear = (d: Drill, n: ExpNote): number => {
+  const r = ((chartAt(d.goal.bass!.rules!.chart, n.beat).c.root % 12) + 12) % 12;
+  const base = n.pitch - (((n.pitch % 12) + 12) % 12) + r;
+  return [base - 12, base, base + 12].sort((a, b) => Math.abs(a - n.pitch) - Math.abs(b - n.pitch))[0];
+};
+
+describe('N5 read L8 / L12: written bars note for note, free bars by the rules', () => {
+  for (const id of ['b-read-8', 'b-read-12']) {
+    const d = levelDrills(levelById(id), order).find((x) => x.freeFrom !== undefined && x.goal.bass?.rules)!;
+    const bpm = d.startBpm;
+    const isWritten = (n: ExpNote) => n.beat < d.freeFrom! - 1e-6;
+
+    it(`${id}: the written line is clean`, () => {
+      expect(analyzeGuitarTake(d, bpm, playAll(d, bpm)).verdict).toBe('clean');
+    });
+
+    it(`${id}: other chord tones in the free bars are clean`, () => {
+      expect(analyzeGuitarTake(d, bpm, playAll(d, bpm, (n) => (isWritten(n) ? {} : { pitch: otherChordTone(d, n) }))).verdict).toBe('clean');
+    });
+
+    it(`${id}: other chord tones in the WRITTEN bars are not`, () => {
+      const m = analyzeGuitarTake(d, bpm, playAll(d, bpm, (n) => (isWritten(n) ? { pitch: otherChordTone(d, n) } : {})));
+      expect(m.verdict).toBe('not');
+    });
+  }
+});
+
+describe('N6 free walking needs variety: roots in alternating octaves fail', () => {
+  const ids = ['b-walk-7', 'b-walk-11', 'b-walk-13', 'b-walk-16', 'b-up-walk-5'];
+  for (const id of ids) {
+    const lv = levelById(id);
+    it(`${id}: the model line is clean, roots in alternating octaves are not`, () => {
+      expect(lv).toBeTruthy();
+      for (const d of levelDrills(lv, order).filter((x) => x.goal.bass?.rules?.kind === 'walk').slice(0, 3)) {
+        const bpm = d.startBpm;
+        expect(analyzeGuitarTake(d, bpm, playAll(d, bpm)).verdict, d.itemId).toBe('clean');
+        const roots = analyzeGuitarTake(d, bpm, playAll(d, bpm, (n, i) => ({ pitch: rootNear(d, n) + (i % 2 ? 12 : 0) })));
+        expect(roots.verdict, d.itemId).not.toBe('clean');
+        expect(JSON.stringify(roots.why) + JSON.stringify(roots.rules)).toMatch(/Mostly roots|another octave|"nonRoot":0[,}]/);
+      }
+    });
+  }
+
+  it('every free walking model line in the bass course keeps the variety rule', () => {
+    const bad: string[] = [];
+    for (const f of BASS)
+      for (const lv of f.levels)
+        for (const d of levelDrills(lv, order).filter((x) => x.goal.bass?.rules?.kind === 'walk')) {
+          const R = analyzeGuitarTake(d, d.startBpm, playAll(d, d.startBpm)).rules!;
+          if (R.nonRoot! < WALK_VARIETY.nonRoot || R.pcRepeats! > WALK_VARIETY.pcRepeats) bad.push(`${d.itemId} nonRoot ${R.nonRoot} pcRep ${R.pcRepeats}`);
+        }
+    expect(bad).toEqual([]);
   });
 });

@@ -433,6 +433,10 @@ export function ruleCheck(kind: RuleKind, chart: RuleChart[], notes: RuleNote[],
   const played = notes.map((n, k) => ({ n, k })).filter((x) => x.n.pitch !== null);
   const ps = played.map((x) => x.n.pitch!);
   const repeats = ps.length > 1 ? ps.slice(1).filter((m, i) => m === ps[i]).length / (ps.length - 1) : 0;
+  // N6 variety: roots in alternating octaves are all chord tones and never an exact repeat, so walking also needs
+  // notes that aren't the root (3rds, 5ths, 7ths, tensions, approaches) and few same-pitch-class neighbours.
+  const pcRepeats = ps.length > 1 ? ps.slice(1).filter((m, i) => pc(m) === pc(ps[i])).length / (ps.length - 1) : 0;
+  const nonRoot = played.length ? played.filter((x) => labels[x.k] !== 'R' && labels[x.k] !== 'other').length / played.length : 0;
   // The worst bar: most invalid slots; its first invalid slot is the pointer.
   const bad = new Map<number, number[]>();
   notes.forEach((n, k) => {
@@ -456,10 +460,15 @@ export function ruleCheck(kind: RuleKind, chart: RuleChart[], notes: RuleNote[],
     validShare: played.length ? played.filter((x) => valid[x.k]).length / played.length : 0,
     beat1Ct: changes ? ctAtChange / changes : 1,
     repeats,
+    pcRepeats,
+    nonRoot,
     moves: kind === 'nearest' ? (movesN ? movesOk / movesN : 1) : null,
     worst,
   };
 }
+
+/** N6: the least variety a free walking line needs — non-root notes (chord tones, tensions, approaches) and at most this share of same-pitch-class neighbours. */
+export const WALK_VARIETY = { nonRoot: 0.3, pcRepeats: 0.25 };
 
 // ───────────────────────────── walking-bass rules ─────────────────────────────
 

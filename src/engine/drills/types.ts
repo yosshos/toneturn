@@ -270,6 +270,9 @@ export interface TakeRules {
   beat1Ct: number;
   /** Share of notes repeating the note before (0..1). */
   repeats: number;
+  /** N6: share of neighbours with the same pitch class (octave jumps included), and of played notes that aren't the root. */
+  pcRepeats?: number;
+  nonRoot?: number;
   /** Moves ≤ maxMove semitones (nearest), else null. */
   moves: number | null;
   /** The bar with the most invalid notes and its first invalid slot: the one-line "Why?" pointer (bar 0-based). */
