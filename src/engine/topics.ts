@@ -24,6 +24,7 @@ import './topicsSongs';
 import './topicsJazz';
 import './topicsProgGames';
 import './topicsGaps';
+import './topicsChartAnalysis';
 import { applyDepth } from './topicsDepth';
 
 // ================================================================ T. Barry Harris

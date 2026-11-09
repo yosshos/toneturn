@@ -388,6 +388,8 @@ export interface ChoiceQuestion extends QBase {
   show?: { midis: number[]; clef?: 'treble' | 'bass' | 'alto' | 'tenor'; chord?: boolean; key?: PitchClass | null };
   /** Text to show with the question (written theory). */
   text?: { en: string; he: string };
+  /** A lead sheet to read (chart analysis): the tune's name and its bars' chord symbols. */
+  chart?: { title: string; bars: string[] };
   /** An instrument picture to show with the question (spec AE): a neck with dots, a chord box, or keys. */
   diagram?: Diagram;
 }

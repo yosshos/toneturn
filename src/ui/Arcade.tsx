@@ -791,7 +791,7 @@ const ROW_TX: Record<string, { en: [string, string]; he: [string, string] }> = {
   puzzle: { en: ['Progression of the day', 'One daily puzzle to solve and share'], he: ['מהלך היום', 'חידה יומית לפתור ולשתף'] },
 };
 
-export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline, onGhost, onDaily, onPuzzle, onGame2, lang = 'en', hub }: { t: Strings; progress: Progress; onGame: (k: GameKind) => void; onTrueFalse: () => void; onDuel: () => void; onOnline: () => void; onGhost: () => void; onDaily: () => void; onPuzzle: () => void; onGame2?: (id: (typeof GAMES2)[number]['id']) => void; lang?: 'he' | 'en'; hub?: PracticeHub }) {
+export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline, onGhost, onDaily, onPuzzle, onGame2, lang = 'en', hub, status }: { status?: Partial<Record<string, string>>; t: Strings; progress: Progress; onGame: (k: GameKind) => void; onTrueFalse: () => void; onDuel: () => void; onOnline: () => void; onGhost: () => void; onDaily: () => void; onPuzzle: () => void; onGame2?: (id: (typeof GAMES2)[number]['id']) => void; lang?: 'he' | 'en'; hub?: PracticeHub }) {
   // Status of the weekly puzzle and the daily challenge (moved here from the old Home tools, 0.41).
   const daily = progress.daily?.[localDay(new Date())];
   const pz = progress.puzzles?.[weekId(new Date())];
@@ -870,6 +870,11 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
                         <b>{ROW_TX[k][lang][0]}</b>
                         <small>{ROW_TX[k][lang][1]}</small>
                       </span>
+                      {status?.[k] && (
+                        <span className="hub-status" data-hub-status={k}>
+                          {status[k]}
+                        </span>
+                      )}
                       <span className="hub-go flip-rtl" aria-hidden="true">
                         ›
                       </span>

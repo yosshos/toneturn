@@ -281,7 +281,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
   // Degree ↔ name questions: an unasked-for keyboard lets the player count to the answer — it waits for Hint (0.50.2).
   const keysAreHint = !answered && !q.aid && keyboardIsHint(q);
   const canHint = keysAreHint && !noHints(v.session.lesson.id);
-  const hideKeyboard = q.kind === 'rhythm-read' || q.kind === 'rhythm-dict' || keysAreHint;
+  const hideKeyboard = q.kind === 'rhythm-read' || q.kind === 'rhythm-dict' || keysAreHint || (q.kind === 'choice' && !!q.chart);
   const orbLabel =
     q.kind === 'degree'
       ? target
@@ -397,9 +397,22 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
             ) : q.kind === 'rhythm-read' ? (
               <ReadPrompt q={q} v={v} lang={lang} onTap={(ms) => ctrl.tapBeat(ms)} onRelease={(ms) => ctrl.tapRelease(ms)} t={t} onLane={(ms, lane) => ctrl.tapBeat(ms, lane)} />
             ) : (
-              q.kind === 'choice' && (q.text || q.show || q.diagram) ? (
+              q.kind === 'choice' && (q.text || q.show || q.diagram || q.chart) ? (
                 <div className="choice-show">
-                  {q.text && <p className="choice-text" dir="ltr">{q.text[lang]}</p>}
+                  {q.chart && (
+                    <figure className="chart-page" dir="ltr" aria-label={q.chart.title} data-chart-page="1">
+                      <figcaption>{q.chart.title}</figcaption>
+                      <ol className="cp-bars">
+                        {q.chart.bars.map((b, i) => (
+                          <li key={i}>
+                            <small>{i + 1}</small>
+                            <span>{b}</span>
+                          </li>
+                        ))}
+                      </ol>
+                    </figure>
+                  )}
+                  {q.text && <p className="choice-text" dir={/[֐-׿]/.test(q.text[lang]) ? 'rtl' : 'ltr'}>{q.text[lang]}</p>}
                   {q.show && <NoteStaff notes={q.show.midis} chord={!!q.show.chord} keyPc={q.show.key ?? null} clef={q.show.clef ?? 'treble'} />}
                   {q.diagram && <DiagramView d={q.diagram} settings={settings} />}
                 </div>

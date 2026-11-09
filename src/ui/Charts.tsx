@@ -11,7 +11,7 @@ import { IMPROV_LEVELS } from '../engine/charts';
 import { CHART_STYLES, CHART_TEMPLATES, STYLE_NAME, chartBacking, chordAtBeat, parseChart, transposeChart, type ChartStyle } from '../engine/charts';
 import type { Settings } from '../storage/progress';
 import { piano, SIMULATED } from './services';
-import { improvReportBy, type ImprovReport } from '../engine/perform';
+import { framesFromNotes, improvReportBy, type ImprovReport } from '../engine/perform';
 import { BleedGate } from '../engine/bleed';
 import { BrowserPitchCapture } from '../speech/pitchCapture';
 import type { SungFrame } from '../engine/sing';
@@ -406,8 +406,8 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
     // Notes for the rules: MIDI as played, or the microphone frames cut into notes. The listening bar does not count.
     const sung: PlayedNote[] = useMidi ? midiNotes : segmentNotes(shifted, { minSec: 0.07 }).map((n) => ({ start: n.start, end: n.end, midi: n.midi }));
     const judged = sung.filter((n) => n.start >= meter * beatS - 0.05);
-    const rep = useMidi ? improvReportBy([], pcsAt, bpm) : improvReportBy(shifted, pcsAt, bpm);
-    setReport(useMidi ? null : rep);
+    const rep = improvReportBy(useMidi ? framesFromNotes(midiNotes.filter((n) => n.start >= 0)) : shifted, pcsAt, bpm);
+    setReport(rep);
     const anyRule = !!(rules.note || rules.interval || rules.rhythm || rules.shape);
     const rr = anyRule ? checkRules(judged, parsed, meter, bpm, rules, scales, parsed.bars * loops) : null;
     setRulesRep(rr);

@@ -32,3 +32,16 @@ describe('the debrief after a chorus', () => {
     for (const c of CHALLENGES.filter((x) => x.level < 5)) expect(stepChallenge(c, 1), c.id).not.toBeNull();
   });
 });
+
+import { framesFromNotes, improvReportBy } from '../src/engine/perform';
+describe('MIDI takes get the musical report too', () => {
+  it('notes become frames that the same analysis reads', () => {
+    // C major arpeggio in quarters at 120 BPM over C: chord tones on the strong beats, ends on a chord tone
+    const notes = [60, 64, 67, 72, 67, 64, 60, 59, 60].map((m, i) => ({ start: i * 0.5, end: i * 0.5 + 0.4, midi: m }));
+    const rep = improvReportBy(framesFromNotes(notes), () => [0, 4, 7], 120);
+    expect(rep.notes).toBe(9);
+    expect(rep.endsOnChordTone).toBe(true);
+    expect(rep.strongChordTones).toBeGreaterThan(0.8);
+    expect(rep.rangeSemis).toBe(13);
+  });
+});

@@ -25,7 +25,7 @@ describe('topic generators (spec T–V)', () => {
           expect(q.choices).toContain(q.answer);
           expect(new Set(q.choices).size).toBe(q.choices.length);
           for (const c of q.choices) expect(q.names[c], `${topic} ${c}`).toBeTruthy();
-          expect(q.stimulus.length > 0 || !!q.text || !!q.show).toBe(true);
+          expect(q.stimulus.length > 0 || !!q.text || !!q.show || !!q.chart).toBe(true);
           if (q.stimulus.length) expect(renderStimulus(q.stimulus).length).toBeGreaterThan(0);
           const again = asChoice(T.gen(seed * 7919, level, 'x'));
           expect(again.answer).toBe(q.answer);

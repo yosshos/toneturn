@@ -1228,6 +1228,12 @@ export function App() {
       {route === 'arcade' && (
         <PlayScreen
           key={arcadeKey}
+          status={{
+            ...((s.myCharts ?? []).length ? { charts: s.uiLang === 'he' ? `${(s.myCharts ?? []).length} שמורים` : `${(s.myCharts ?? []).length} saved` } : {}),
+            ...((s.knownChords ?? []).length ? { songs: s.uiLang === 'he' ? `${(s.knownChords ?? []).length} אקורדים` : `${(s.knownChords ?? []).length} chords` } : {}),
+            ...(s.progPuzzle?.[localDay(new Date())] ? { puzzle: s.uiLang === 'he' ? 'שוחק היום' : 'Played today' } : {}),
+            ...(Object.keys(s.improvBest ?? {}).length ? { improv: s.uiLang === 'he' ? `${Object.keys(s.improvBest ?? {}).length} שלבים` : `${Object.keys(s.improvBest ?? {}).length} levels` } : {}),
+          }}
           t={t}
           progress={progress}
           onGame={(k) => {

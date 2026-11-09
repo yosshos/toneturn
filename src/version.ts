@@ -18,6 +18,20 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.57.0',
+    date: '2026-11-09',
+    en: [
+      'Read a lead sheet: a standard’s chords on the page — what key, where the ii–Vs are, what a chord does (dominant, secondary, tritone sub) — also in the jazz Bagrut, Jerusalem Academy jazz and Rimon mocks',
+      'Improvising on a MIDI keyboard now gets the musical report too (chord tones on strong beats, the ending, rhythm, range, approach notes)',
+      'Practice rows show where you stand: saved charts, the chords you know, today’s progression',
+    ],
+    he: [
+      'לקרוא ליד־שיט: האקורדים של סטנדרט על הדף — באיזה סולם, איפה ה־ii–V, מה אקורד עושה (דומיננטה, משנית, תחליף טריטון) — גם במבחני הדמה של בגרות ג׳אז, האקדמיה בירושלים (ג׳אז) ורימון',
+      'אלתור במקלדת MIDI מקבל עכשיו גם את הדוח המוזיקלי (צלילי אקורד על פעמות חזקות, הסיום, קצב, מנעד, צלילי גישה)',
+      'שורות התרגול מראות איפה אתם עומדים: מהלכים שמורים, האקורדים שאתם מכירים, מהלך היום',
+    ],
+  },
+  {
     version: '0.56.0',
     date: '2026-11-09',
     en: [

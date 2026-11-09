@@ -22,14 +22,6 @@ const pcOf = (n: number) => ((n % 12) + 12) % 12;
 const isMinor7 = (c: ChartChordEv) => c.iv.includes(3) && (c.iv.includes(10) || c.iv.includes(6));
 const isDom = (c: ChartChordEv) => c.iv.includes(4) && c.iv.includes(10);
 
-/** The chart as text on the page: "| Dm7 G7 | Cmaj7 |" in rows of four bars, bar numbers on each row. */
-function pageOf(text: string, maxBars: number): string {
-  const bars = text.replace(/\n/g, '|').split('|').map((b) => b.trim()).filter(Boolean).slice(0, maxBars);
-  const rows: string[] = [];
-  for (let i = 0; i < bars.length; i += 4) rows.push(`${i + 1}: | ${bars.slice(i, i + 4).join(' | ')} |`);
-  return rows.join('\n');
-}
-
 /** ii–V pairs: a minor 7th (or half-diminished) followed by a dominant a fourth up. Bars are 1-based. */
 export function twoFives(p: ParsedChart): { from: number; to: number }[] {
   const out: { from: number; to: number }[] = [];
@@ -76,9 +68,8 @@ TOPIC_GEN['chart-analysis'] = {
       const tune = pickR(rnd, TUNES);
       const s = STANDARD_CHANGES.find((x) => x.id === tune.id);
       if (!s) continue;
-      const page = pageOf(s.text, 16);
       const shown = parseChart(s.text.replace(/\n/g, '|').split('|').slice(0, 16).join('|'));
-      const text = { en: `${s.name}\n${page}`, he: `${s.name}\n${page}` };
+      const chart = { title: s.name, bars: s.text.replace(/\n/g, '|').split('|').map((b) => b.trim()).filter(Boolean).slice(0, 16) };
       if (L === 1) {
         const answer = `${tune.key}${tune.minor ? 'm' : ''}`;
         const others = shuffleR(rnd, [pcOf(tune.key + 7), pcOf(tune.key + 5), pcOf(tune.key + (tune.minor ? 3 : 9)), pcOf(tune.key + 2)]).slice(0, 3).map((k, i) => `${k}${(i === 2) !== !!tune.minor ? 'm' : ''}`);
@@ -87,7 +78,7 @@ TOPIC_GEN['chart-analysis'] = {
         return choiceQ({
           id, topic: 'chart-analysis', level, seed, skill: 'cadences', difficulty: 1300,
           ask: { en: 'What key is this tune in? Look where it comes to rest — and at its V.', he: 'באיזה סולם השיר? חפשו איפה הוא נח — ואת ה־V שלו.' },
-          text, names, answer, choices, stimulus: [],
+          chart, names, answer, choices, stimulus: [],
         });
       }
       if (L === 2) {
@@ -106,7 +97,7 @@ TOPIC_GEN['chart-analysis'] = {
         return choiceQ({
           id, topic: 'chart-analysis', level, seed, skill: 'cadences', difficulty: 1420,
           ask: { en: 'Which bars hold a ii–V (a minor 7th, then a dominant a fourth up)?', he: 'באילו תיבות יש ii–V (מינור 7, ואחריו דומיננטה קוורטה מעליו)?' },
-          text, names, answer, choices, stimulus: [],
+          chart, names, answer, choices, stimulus: [],
         });
       }
       const cands = shown.chords.map((c, i) => ({ c, next: shown.chords[i + 1], i })).filter((x) => x.next && functionOf(x.c, x.next, tune.key) !== null);
@@ -118,11 +109,11 @@ TOPIC_GEN['chart-analysis'] = {
       return choiceQ({
         id, topic: 'chart-analysis', level, seed, skill: 'cadences', difficulty: 1540,
         ask: { en: `Bar ${pick.c.bar + 1}: ${pick.c.sym} (then ${pick.next.sym}). What does it do in ${KEY_NAMES[tune.key]}${tune.minor ? ' minor' : ''}?`, he: `תיבה ${pick.c.bar + 1}: ${pick.c.sym} (ואחריו ${pick.next.sym}). מה הוא עושה ב־${KEY_HE[tune.key]}${tune.minor ? ' מינור' : ''}?` },
-        text, names, answer, choices, stimulus: [],
+        chart, names, answer, choices, stimulus: [],
       });
     }
     // never reached with the tunes above; a safe item
-    return choiceQ({ id, topic: 'chart-analysis', level, seed, skill: 'cadences', difficulty: 1300, ask: { en: 'What key?', he: 'איזה סולם?' }, text: { en: 'Dm7 | G7 | Cmaj7', he: 'Dm7 | G7 | Cmaj7' }, names: { '0': keyLabel(0), '7': keyLabel(7) }, answer: '0', choices: ['0', '7'], stimulus: [] });
+    return choiceQ({ id, topic: 'chart-analysis', level, seed, skill: 'cadences', difficulty: 1300, ask: { en: 'What key?', he: 'איזה סולם?' }, chart: { title: 'ii–V–I', bars: ['Dm7', 'G7', 'Cmaj7'] }, names: { '0': keyLabel(0), '7': keyLabel(7) }, answer: '0', choices: ['0', '7'], stimulus: [] });
   },
 };
 TOPIC_TAGS['chart-analysis'] = tg(['cadences', 'progression', 1]);

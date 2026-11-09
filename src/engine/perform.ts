@@ -93,6 +93,20 @@ export interface ImprovReport {
   tips: ('strong' | 'ending' | 'rhythm' | 'range' | 'approach')[];
 }
 
+/** Notes played on a MIDI keyboard as pitch frames (every 20 ms), so the same analysis serves both inputs (0.57). */
+export function framesFromNotes(notes: { start: number; end: number; midi: number }[], hop = 0.02): SungFrame[] {
+  const out: SungFrame[] = [];
+  const sorted = [...notes].sort((x, y) => x.start - y.start);
+  const end = sorted.reduce((m, n) => Math.max(m, n.end), 0);
+  for (let t = 0; t <= end + hop; t += hop) {
+    // the newest note sounding at t (a melody line: the top of overlaps is the last one struck)
+    const on = sorted.filter((n) => n.start <= t && n.end > t);
+    const n = on[on.length - 1];
+    out.push(n ? { t, hz: 440 * Math.pow(2, (n.midi - 69) / 12), confidence: 1, rms: 0.1 } : { t, hz: null, confidence: 0, rms: 0 });
+  }
+  return out;
+}
+
 /** Analyse an improvised take over a chart (frames timed from the first beat after the count-in). */
 export function improvReport(frames: SungFrame[], id: ChartId, key: number, bpm: number): ImprovReport {
   return improvReportBy(frames, (b) => chordPcs(key, chordAt(id, b)), bpm);

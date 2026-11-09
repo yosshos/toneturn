@@ -24,7 +24,7 @@ describe('lead-sheet analysis', () => {
         expect(q.choices, `L${level} s${s}`).toContain(q.answer);
         expect(new Set(q.choices).size).toBe(q.choices.length);
         expect(q.choices.length).toBeGreaterThanOrEqual(2);
-        expect(q.text?.en).toMatch(/\|/);
+        expect((q as { chart?: { bars: string[] } }).chart?.bars.length).toBeGreaterThan(3);
       }
   });
 });
