@@ -266,7 +266,7 @@ export function FriendsScreen({ t, user: realUser, sync, onBack, settings, onBes
               </section>
             </>
           )}
-          {tab === 'league' && <LeagueCard t={t} lang={lang} onBestTier={onBestTier} lastSeen={settings.leagueSeen} onSeen={onLeagueSeen} />}
+          {tab === 'league' && <LeagueCard t={t} lang={lang} onBestTier={onBestTier} lastSeen={settings.leagueSeen} onSeen={onLeagueSeen} history={progress?.history} />}
           {tab === 'class' && classes}
           {tab === 'duels' && <DuelsSection t={t} settings={settings} friends={friends.map((r) => ({ id: r.user_id, name: r.name }))} onPlaying={setDuelPlaying} />}
         </>

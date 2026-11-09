@@ -180,3 +180,11 @@ export function courseSetKinds<K extends SetKind | 'choir'>(course: CourseId, ki
   const out = kinds.filter((k) => mine.includes(k));
   return out.length ? out : kinds;
 }
+
+/** A screen's labelled set list kept to the course's sets (owner 2026-11-09: duels and rooms use the course's content). */
+export function forCourse<K extends SetKind | 'choir'>(course: CourseId, all: [K, string][]): [K, string][] {
+  const ok = courseSetKinds(course, all.map(([k]) => k));
+  return all.filter(([k]) => ok.includes(k));
+}
+/** The default set: mixed when the course has it, else its first. */
+export const firstKind = <K extends SetKind | 'choir'>(kinds: [K, string][]): K => kinds.find(([k]) => k === 'mixed')?.[0] ?? kinds[0][0];

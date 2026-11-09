@@ -5,6 +5,8 @@ import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'reac
 import { dailyBoard, submitDaily, type DailyBoard } from '../cloud/daily';
 import type { CloudUser } from '../cloud/cloud';
 import { dailySet, shareText, tournamentSet, type SetKind } from '../engine/tournament';
+import { firstKind, forCourse } from '../engine/courseSocial';
+import type { CourseId } from '../engine/courses';
 import type { Question } from '../engine/lesson';
 import { TournamentController, type TournamentView } from '../game/tournamentController';
 import { clearSlot, loadSlot, saveSlot } from '../storage/resume';
@@ -199,20 +201,20 @@ function ShareButton({ t, text }: { t: Strings; text: string }) {
 
 // ======================================================================= Duel setup
 
-export function DuelSetup({ t, onBack, onStart }: { t: Strings; onBack: () => void; onStart: (names: string[], kind: SetKind, rounds: number) => void }) {
+export function DuelSetup({ t, onBack, onStart, course = 'ear' }: { t: Strings; onBack: () => void; onStart: (names: string[], kind: SetKind, rounds: number) => void; /** Per course: the active course's question sets only. */ course?: CourseId }) {
+  const kinds = forCourse(course, [
+      ['mixed', t.setMixed],
+      ['degrees', t.skillNames.degrees],
+      ['chords', t.skillNames.chords],
+      ['intervals', t.skillNames.intervals],
+      ['modes', t.skillNames.modes],
+      ['wrong-notes', t.wrongNotesTitle],
+      ['truefalse', t.trueFalse],
+      ['beat', t.skillNames['rhythm-dictation']],
+    ]);
   const [names, setNames] = useState([`${t.playerN} 1`, `${t.playerN} 2`]);
-  const [kind, setKind] = useState<SetKind>('mixed');
+  const [kind, setKind] = useState<SetKind>(firstKind(kinds));
   const [rounds, setRounds] = useState(10);
-  const kinds: [SetKind, string][] = [
-    ['mixed', t.setMixed],
-    ['degrees', t.skillNames.degrees],
-    ['chords', t.skillNames.chords],
-    ['intervals', t.skillNames.intervals],
-    ['modes', t.skillNames.modes],
-    ['wrong-notes', t.wrongNotesTitle],
-    ['truefalse', t.trueFalse],
-    ['beat', t.skillNames['rhythm-dictation']],
-  ];
   return (
     <main className="panel-screen duel-setup">
       <header className="screen-head">
@@ -281,13 +283,7 @@ export function DuelScreen({ t, settings, names, kind, rounds, onExit, onRematch
 const ghostKey = (kind: SetKind, rounds: number) => `${kind}:${rounds}`;
 
 export function GhostScreen({ t, settings, progress, onBack, onProgress }: { t: Strings; settings: Settings; progress: Progress; onBack: () => void; onProgress: (p: Progress) => void }) {
-  const [kind, setKind] = useState<SetKind>('mixed');
-  const [rounds, setRounds] = useState(5);
-  const [run, setRun] = useState<{ key: number; seed: number; ghost?: GhostRun; resume?: TournamentView['results'] } | null>(null);
-  const savedRun = loadSlot<{ kind: SetKind; rounds: number; seed: number; ghost?: GhostRun; results: TournamentView['results'] }>('ghost');
-  const [note, setNote] = useState<string | null>(null);
-  const ghost = progress.ghosts?.[ghostKey(kind, rounds)];
-  const kinds: [SetKind, string][] = [
+  const kinds = forCourse(settings.activeCourse ?? 'ear', [
     ['mixed', t.setMixed],
     ['degrees', t.skillNames.degrees],
     ['chords', t.skillNames.chords],
@@ -296,7 +292,13 @@ export function GhostScreen({ t, settings, progress, onBack, onProgress }: { t: 
     ['wrong-notes', t.wrongNotesTitle],
     ['truefalse', t.trueFalse],
     ['beat', t.skillNames['rhythm-dictation']],
-  ];
+  ]);
+  const [kind, setKind] = useState<SetKind>(firstKind(kinds));
+  const [rounds, setRounds] = useState(5);
+  const [run, setRun] = useState<{ key: number; seed: number; ghost?: GhostRun; resume?: TournamentView['results'] } | null>(null);
+  const savedRun = loadSlot<{ kind: SetKind; rounds: number; seed: number; ghost?: GhostRun; results: TournamentView['results'] }>('ghost');
+  const [note, setNote] = useState<string | null>(null);
+  const ghost = progress.ghosts?.[ghostKey(kind, rounds)];
   if (run) {
     const items = tournamentSet(kind, rounds, run.seed);
     return (

@@ -1878,6 +1878,7 @@ export function App() {
       {route === 'duel' && (
         <DuelSetup
           t={t}
+          course={s.activeCourse}
           onBack={() => go('arcade')}
           onStart={(names, kind, rounds) => {
             setDuel({ names, kind, rounds });

@@ -1709,6 +1709,21 @@
 @keyframes v2-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { :root[data-theme] .splash .splash-slogan { animation: none; opacity: 1; } }
 
+/* ── Per-course community (0.65): my courses with their level, the league week's XP per course, badge course chips ── */
+:root[data-theme] .cl-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 2px; }
+:root[data-theme] .cl-item { display: inline-flex; align-items: center; gap: 6px; padding: 3px 8px 3px 4px; border: 2px solid var(--outline); border-radius: 999px; background: var(--card); color: var(--ink); font-weight: 600; font-size: 0.9rem; line-height: 1; }
+:root[data-theme] .cl-item.on { box-shadow: var(--shadow-s); }
+:root[data-theme] .cl-item .glyph svg { display: block; }
+:root[data-theme] .cl-dyn { min-width: 26px; height: 22px; padding: 0 5px; box-sizing: border-box; display: grid; place-items: center; border-radius: 8px; background: var(--lemon); color: var(--ink-c); border: 1.5px solid var(--ink-c); font: italic 700 0.9rem Georgia, 'Times New Roman', serif; }
+:root[data-theme] .cl-dyn.none { background: transparent; color: var(--ink-dim); font-style: normal; }
+:root[data-theme] .cl-xp { display: block; color: var(--ink-dim); font-size: 0.8rem; line-height: 1.35; overflow-wrap: anywhere; }
+:root[data-theme] .cl-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--outline); margin-inline-end: 3px; }
+:root[data-theme] .bd-course { display: inline-flex; align-items: center; gap: 4px; align-self: center; padding: 1px 7px 1px 2px; border: 1.5px solid var(--outline); border-radius: 999px; font-size: 0.72rem; font-weight: 600; color: var(--ink-soft); background: var(--card); }
+:root[data-theme] .bd-course-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0 8px; }
+:root[data-theme] .fr-level { min-width: 30px; height: 24px; padding: 0 6px; box-sizing: border-box; display: inline-grid; place-items: center; border-radius: 8px; background: var(--lemon); color: var(--ink-c); border: 1.5px solid var(--ink-c); font: italic 700 0.95rem Georgia, 'Times New Roman', serif; }
+:root[data-theme] .fr-level.none { background: transparent; color: var(--ink-dim); font-style: normal; }
+:root[data-theme] .fr-course-empty { display: flex; gap: 10px; align-items: center; color: var(--ink-dim); margin: 6px 0; }
+
 /* ── Progress overview (0.63, design board ProgressPhone): dynamics as level, the area radar, the week ── */
 :root[data-theme] .ov-card { background: var(--card, #fff); border: var(--stroke) solid var(--outline); border-radius: 20px; box-shadow: var(--shadow); padding: 14px 16px; margin-bottom: 14px; }
 :root[data-theme] .ov-head small { font-weight: 800; color: var(--ink-dim); font-size: 0.82rem; }
