@@ -21,7 +21,7 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.63.0',
     date: '2026-11-09',
     en: [
-      'The new look as it was drawn: Today with your daily goal, your league and today's quests; the path written on staves, with a final barline and a fermata for the unit test; Practice as colour tiles; Progress with your level from pp to ff, a radar of your areas and your week',
+      'The new look as it was drawn: Today with your daily goal, your league and today’s quests; the path written on staves, with a final barline and a fermata for the unit test; Practice as colour tiles; Progress with your level from pp to ff, a radar of your areas and your week',
       'The opening shows the name and the slogan; the app opens in the light look',
       'Bass: a full course of 14 technique families and 120 levels — plucking, time, chord tones, walking bass, pocket with the kick, ghost notes, slap and more — with 5- and 6-string and drop-D basses',
     ],
