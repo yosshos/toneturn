@@ -33,7 +33,7 @@ import {
 } from '../engine/highway';
 import { MAX_RHYTHM_LEVEL, type RhythmLevel } from '../engine/rhythm';
 import { displayNote, type PitchClass } from '../engine/pitch';
-import { namingFor, type Settings } from '../storage/progress';
+import { courseInstrumentOf, namingFor, type Settings } from '../storage/progress';
 import { midi as midiInput } from '../speech/midi';
 import { BrowserPitchCapture } from '../speech/pitchCapture';
 import { piano } from './services';
@@ -144,7 +144,7 @@ function useReducedMotion(settings: Settings) {
 }
 
 /** The key for pitch lanes: guitar / bass / strings in G, everything else in C. */
-const laneKeyPc = (s: Settings) => (s.instrument === 'guitar' || s.instrument === 'bass' || s.instrument === 'strings' ? 7 : 0);
+const laneKeyPc = (s: Settings) => (['guitar', 'bass', 'strings'].includes(courseInstrumentOf(s) ?? '') ? 7 : 0);
 const PC_NAMES: PitchClass[] = [
   { letter: 'C', acc: 0 },
   { letter: 'C', acc: 1 },

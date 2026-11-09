@@ -263,12 +263,105 @@ export const GLYPHS: Record<string, ReactNode> = {
       {head(14, 0, 5.5, 4)}
     </>
   ),
+  // Bass (0.65, final check): one symbol per bass family, so no two steps on the bass path share one.
+  /** Plucking hand: a string, two fingers, the stroke coming to rest. */
+  pluck: (
+    <g {...sw}>
+      <path d="M-26 10H26" strokeWidth={2.4} />
+      <path d="M-10 -20 C-12 -8 -10 2 -4 8M4 -22 C2 -10 4 0 10 6" />
+      <path d="M14 -4l8 4M15 4l8 0" strokeWidth={2.4} />
+    </g>
+  ),
+  /** The neck: strings, frets and a fretted dot. */
+  fretboard: (
+    <>
+      <g {...sw} strokeWidth={2.4}>
+        <path d="M-26 -12H26M-26 -4H26M-26 4H26M-26 12H26" />
+        <path d="M-14 -16V16M2 -16V16M18 -16V16" strokeWidth={3.2} />
+      </g>
+      <circle cx={-6} cy={-4} r={5} fill={I} />
+    </>
+  ),
+  /** Fretting hand: one finger per fret (1 2 4). */
+  fingers: (
+    <text x={0} y={8} textAnchor="middle" fontFamily="'Secular One', Rubik, sans-serif" fontSize={21} fill={I} direction="ltr" letterSpacing={1}>
+      1 2 4
+    </text>
+  ),
+  /** Note length: a held note and the stop that ends it. */
+  mute: (
+    <>
+      {head(-14, 4)}
+      <path d="M-6 4H14" stroke={I} strokeWidth={4} strokeLinecap="round" />
+      <path d="M20 -10V18" {...sw} strokeWidth={4} />
+    </>
+  ),
+  /** Walking: steps going somewhere — four quarter notes climbing. */
+  walk: (
+    <>
+      {head(-18, 14, 5, 3.6)}
+      {head(-6, 8, 5, 3.6)}
+      {head(6, 2, 5, 3.6)}
+      {head(18, -4, 5, 3.6)}
+      <path d="M-13 13V-10M-1 7V-16M11 1V-22M23 -5V-24" {...sw} strokeWidth={2.4} />
+    </>
+  ),
+  /** Legato: two notes under one slur. */
+  slur: (
+    <>
+      {head(-12, 10)}
+      {head(12, 2)}
+      <path d="M-20 -2 Q0 -24 22 -10" {...sw} />
+    </>
+  ),
+  /** A plectrum. */
+  pick: <path d="M0 20 C-10 8 -20 -4 -18 -12 C-16 -20 16 -20 18 -12 C20 -4 10 8 0 20Z" {...sw} strokeLinejoin="round" />,
+  /** Slap and pop: the T and P of bass notation. */
+  slap: (
+    <text x={0} y={9} textAnchor="middle" fontFamily="'Secular One', Rubik, sans-serif" fontSize={26} fill={I} direction="ltr" letterSpacing={2}>
+      T P
+    </text>
+  ),
+  /** Styles: a record. */
+  record: (
+    <g {...sw}>
+      <circle r={19} />
+      <circle r={11} strokeWidth={1.8} />
+      <circle r={3.5} fill={I} />
+    </g>
+  ),
+  /** Upright positions: a string and the shift from one hand position to the next. */
+  shift: (
+    <g {...sw}>
+      <path d="M-26 12H26" strokeWidth={2.4} />
+      <circle cx={-16} cy={12} r={4.5} fill={I} />
+      <circle cx={16} cy={12} r={4.5} fill={I} />
+      <path d="M-12 -2 Q0 -18 12 -2" />
+      <path d="M6 -6l6 4 2-7" strokeLinejoin="round" />
+    </g>
+  ),
+  /** Arco: the bow. */
+  bow: (
+    <g {...sw}>
+      <path d="M-24 14 22 -14" />
+      <path d="M-20 18 C-6 6 8 -4 24 -10" strokeWidth={1.8} />
+      <path d="M-24 14l4 4" strokeWidth={4} />
+    </g>
+  ),
+  /** Three-octave scales: a ladder up the fingerboard. */
+  ladder: <path d="M-12 20V-20M12 20V-20M-12 12H12M-12 2H12M-12 -8H12M-12 -18H12" {...sw} />,
+  /** Upright pizzicato. */
+  pizz: (
+    <text x={0} y={8} textAnchor="middle" fontFamily="Georgia, 'Times New Roman', serif" fontStyle="italic" fontWeight={700} fontSize={22} fill={I} direction="ltr">
+      pizz.
+    </text>
+  ),
 };
 export type GlyphKind = keyof typeof GLYPHS;
 
 /** Emoji left in content data → the closest symbol of our set (0.61: no emoji in the interface). */
 const EMOJI: Record<string, GlyphKind> = {
-  '🎸': 'guitar', '🪕': 'guitar', '🎻': 'guitar', '🎹': 'keys', '🎤': 'sing', '🗣': 'sing', '🥁': 'drums', '👂': 'intervals', '🎵': 'contour', '🎶': 'contour', '♪': 'contour', '♫': 'contour', '♩': 'rhythm',
+  '🎸': 'guitar', '𝄢': 'bass', '🪕': 'guitar', '🎻': 'guitar', '🎹': 'keys', '🎤': 'sing', '🗣': 'sing', '🥁': 'drums', '👂': 'intervals', '🎵': 'contour', '🎶': 'contour', '♪': 'contour', '♫': 'contour', '♩': 'rhythm',
   '🎼': 'sight', '📖': 'book', '📚': 'book', '🎓': 'book', '🧠': 'memory', '🧩': 'puzzle', '🎯': 'tune', '🎷': 'prog', '🎺': 'prog', '🔥': 'fire', '📅': 'calendar', '🗓': 'calendar', '⚔': 'duel', '👻': 'ghost',
   '🎛': 'eq', '🎚': 'mixer', '🛣': 'rhythm', '🕊': 'sing', '🕵': 'prog', '🏆': 'trophy', '🥇': 'trophy', '🏅': 'trophy', '🎖': 'trophy', '👑': 'trophy', '⭐': 'star', '🌟': 'star', '✨': 'star', '★': 'star',
   '🔑': 'theory', '♯': 'theory', '♭': 'theory', '📏': 'scales', '🪜': 'scales', '📈': 'scales', '🧭': 'tune', '🗺': 'contour', '⚡': 'tempo', '🏁': 'trophy', '🤝': 'person', '👥': 'person', '🧘': 'drone', '⏱': 'slow',

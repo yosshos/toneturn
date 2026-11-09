@@ -407,15 +407,22 @@ function courseAxes(course: CourseId, ratings: Parameters<typeof domainValue>[0]
       return { label: pr.title[lang].split(' ')[0], v: n ? n / pr.levels.length : null };
     });
   }
-  const fams = ladderFamiliesFor(course, DEFAULT_DRILL_SETTINGS).slice(0, 6);
+  const own = RADAR_FAMILIES[course];
+  const fams = own ? own.map((x) => x[0]) : ladderFamiliesFor(course, DEFAULT_DRILL_SETTINGS).slice(0, 6);
   const items = progress.drillItems ?? {};
-  return fams.map((id) => {
+  return fams.map((id, i) => {
     const f = familyById(id as FamilyId);
     const lv = f?.levels ?? [];
     const done = lv.filter((l) => techStars(l, items, DEFAULT_DRILL_SETTINGS.keyOrder) >= TECH_DONE_STARS).length;
-    return { label: (f?.title[lang] ?? id).split(/[ ,(—]/)[0], v: done ? done / Math.max(1, lv.length) : null };
+    const label = own ? own[i][lang === 'he' ? 1 : 2] : (f?.title[lang] ?? id).split(/[ ,(—]/)[0];
+    return { label, v: done ? done / Math.max(1, lv.length) : null };
   });
 }
+/** A course's six radar axes with short labels (final bass check: "Plucking hand" and "Fretting hand" both cut to
+ *  "יד" — two axes with one name). */
+const RADAR_FAMILIES: Partial<Record<CourseId, [family: string, he: string, en: string][]>> = {
+  bass: [['b-pluck', 'פריטה', 'Plucking'], ['b-fret', 'לחיצה', 'Fretting'], ['b-time', 'זמן', 'Time'], ['b-chord', 'הרמוניה', 'Harmony'], ['b-walk', 'ווקינג', 'Walking'], ['b-read', 'קריאה', 'Reading']],
+};
 const AREA_NAME_SHORT: Record<DomainId, { he: string; en: string }> = {
   pitch: { he: 'שמיעה', en: 'Ear' }, reading: { he: 'קריאה', en: 'Reading' }, time: { he: 'קצב', en: 'Rhythm' }, memory: { he: 'זיכרון', en: 'Memory' }, voice: { he: 'קול', en: 'Voice' }, creative: { he: 'הרמוניה', en: 'Harmony' }, instrument: { he: 'נגינה', en: 'Playing' },
 };

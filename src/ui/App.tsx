@@ -1105,6 +1105,9 @@ export function App() {
   };
 
   // Instrument sound (spec Q): load the chosen sample set (falls back to the classic piano on failure).
+  // Final bass check: the bass course's games, lessons and neck taps sound on the bass (unmarked notes up to C4).
+  const courseVoice = settings?.activeCourse === 'bass' ? 'bass' : null;
+  useEffect(() => piano.setCourseVoice(courseVoice), [courseVoice]);
   const soundId = settings?.sound ?? DEFAULT_SOUND;
   useEffect(() => {
     void piano.setSound(soundId);

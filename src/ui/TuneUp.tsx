@@ -3,7 +3,7 @@
 
 import { TuneUpArt } from './GameArt';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { centsLeft, isTuneUpSave, makeRounds, MAX_SCORE, midiHz, PEG_RANGE, ROUNDS, roundPoints, STRING_NAMES, toneHz, type TuneRound, type TuneUpSave } from '../engine/tuneUp';
+import { centsLeft, isTuneUpSave, makeRounds, MAX_SCORE, midiHz, PEG_RANGE, ROUNDS, roundPoints, stringNamesOf, toneHz, type TuneInst, type TuneRound, type TuneUpSave } from '../engine/tuneUp';
 import { G2Head, prefersCalm, type Game2Props } from './Flight';
 import { piano } from './services';
 
@@ -32,6 +32,8 @@ const TEXT = {
     again: 'Play again',
     back: 'Back',
     tuner: 'Now tune your real guitar',
+    blurbBass: 'One bass string is out of tune. It rings together with an in-tune reference — listen for the wobble (beats). Turn the peg until the wobble disappears.',
+    tunerBass: 'Now tune your real bass',
     best: 'Best',
     dragHint: 'Drag the peg sideways, or use the slider.',
   },
@@ -59,6 +61,8 @@ const TEXT = {
     again: 'לשחק שוב',
     back: 'חזרה',
     tuner: 'עכשיו כוונו את הגיטרה האמיתית',
+    blurbBass: 'מיתר אחד בבס לא מכוון. הוא מצלצל יחד עם מיתר ייחוס מכוון — הקשיבו לרעידה (פעימות). סובבו את המפתח עד שהרעידה נעלמת.',
+    tunerBass: 'עכשיו כוונו את הבס האמיתי',
     best: 'שיא',
     dragHint: 'גררו את המפתח הצידה, או השתמשו במחוון.',
   },
@@ -137,7 +141,9 @@ export function TuneUp({ lang, settings, saved, onSave, onExit, onResult, best }
   const [peg, setPeg] = useState(0);
   const [last, setLast] = useState<{ cents: number; points: number } | null>(null);
   const pair = useRef<StringPair | null>(null);
-  const rounds = useMemo(() => (game ? makeRounds(game.seed) : []), [game?.seed]);
+  // Final bass check: the bass course tunes the four bass strings.
+  const inst: TuneInst = settings.activeCourse === 'bass' ? 'bass' : 'guitar';
+  const rounds = useMemo(() => (game ? makeRounds(game.seed, undefined, inst) : []), [game?.seed, inst]);
   const shownIdx = game ? (phase === 'feedback' || phase === 'over' ? game.round - 1 : game.round) : 0;
   const round: TuneRound | undefined = rounds[shownIdx];
 
@@ -226,7 +232,7 @@ export function TuneUp({ lang, settings, saved, onSave, onExit, onResult, best }
       {phase === 'intro' && (
         <section className="g2-card">
           <TuneUpArt />
-          <p>{tx.blurb}</p>
+          <p>{inst === 'bass' ? tx.blurbBass : tx.blurb}</p>
           <p className="g2-dim">{tx.headphones}</p>
           {!!best && (
             <p className="g2-best">
@@ -259,7 +265,7 @@ export function TuneUp({ lang, settings, saved, onSave, onExit, onResult, best }
             })}
           </ol>
           <p className="g2-lead">
-            {tx.string(round.string, STRING_NAMES[round.string - 1])}
+            {tx.string(round.string, stringNamesOf(inst)[round.string - 1])}
             <br />
             <small className="g2-dim">{round.kind === 'harmonic' ? tx.refHarm(round.refString) : tx.refFret(round.refString, round.refFret)}</small>
           </p>
@@ -351,7 +357,7 @@ export function TuneUp({ lang, settings, saved, onSave, onExit, onResult, best }
             {tx.again}
           </button>
           <a className="btn" href="#/tuner">
-            {tx.tuner}
+            {inst === 'bass' ? tx.tunerBass : tx.tuner}
           </a>
           <button className="btn ghost" onClick={onExit}>
             {tx.back}

@@ -39,30 +39,39 @@ export function rng(seed: number): () => number {
 }
 
 /** Which reference a string can be tuned against with harmonics (pairs a fourth apart, not G–B, not low E). */
-export const harmonicOk = (s: number) => s === 1 || s === 3 || s === 4 || s === 5;
+export const harmonicOk = (s: number, inst: TuneInst = 'guitar') => (inst === 'bass' ? s >= 1 && s <= 3 : s === 1 || s === 3 || s === 4 || s === 5);
 
-export function roundFor(string: number, detune: number, kind: RefKind): TuneRound {
+/** Final bass check: the bass course tunes a 4-string bass (G D A E, all fourths — no B-string exception). */
+export type TuneInst = 'guitar' | 'bass';
+export const BASS_OPEN = [43, 38, 33, 28];
+export const BASS_STRING_NAMES = ['G', 'D', 'A', 'E'];
+export const openOf = (inst: TuneInst) => (inst === 'bass' ? BASS_OPEN : OPEN);
+export const stringNamesOf = (inst: TuneInst) => (inst === 'bass' ? BASS_STRING_NAMES : STRING_NAMES);
+
+export function roundFor(string: number, detune: number, kind: RefKind, inst: TuneInst = 'guitar'): TuneRound {
   const s = string;
-  if (kind === 'harmonic' && harmonicOk(s)) {
+  const open = openOf(inst);
+  const low = open.length;
+  if (kind === 'harmonic' && harmonicOk(s, inst)) {
     // 5th-fret harmonic on the lower string (+2 octaves) = 7th-fret harmonic on this string (+octave + 5th).
-    return { string: s, detune, kind, refMidi: OPEN[s] + 24, toneMidi: OPEN[s - 1] + 19, refString: s + 1, refFret: 5 };
+    return { string: s, detune, kind, refMidi: open[s] + 24, toneMidi: open[s - 1] + 19, refString: s + 1, refFret: 5 };
   }
-  if (s === 6) {
-    // Low E has no lower string: fret it at the 5th and match the open A.
-    return { string: 6, detune, kind: 'fret', refMidi: OPEN[4], toneMidi: OPEN[5] + 5, refString: 5, refFret: 0 };
+  if (s === low) {
+    // The lowest string has no lower one: fret it at the 5th and match the open string above.
+    return { string: s, detune, kind: 'fret', refMidi: open[low - 2], toneMidi: open[low - 1] + 5, refString: low - 1, refFret: 0 };
   }
-  const fret = s === 2 ? 4 : 5;
-  return { string: s, detune, kind: 'fret', refMidi: OPEN[s] + fret, toneMidi: OPEN[s - 1], refString: s + 1, refFret: fret };
+  const fret = inst === 'guitar' && s === 2 ? 4 : 5;
+  return { string: s, detune, kind: 'fret', refMidi: open[s] + fret, toneMidi: open[s - 1], refString: s + 1, refFret: fret };
 }
 
 /** 8 rounds: different strings in turn, detunes of 5–50 ¢ either way, harmonics on about a third. */
-export function makeRounds(seed: number, n = ROUNDS): TuneRound[] {
+export function makeRounds(seed: number, n = ROUNDS, inst: TuneInst = 'guitar'): TuneRound[] {
   const r = rng(seed);
   const out: TuneRound[] = [];
   let strings: number[] = [];
   for (let i = 0; i < n; i++) {
     if (!strings.length) {
-      strings = [1, 2, 3, 4, 5, 6];
+      strings = openOf(inst).map((_, i) => i + 1);
       for (let k = strings.length - 1; k > 0; k--) {
         const j = Math.floor(r() * (k + 1));
         [strings[k], strings[j]] = [strings[j], strings[k]];
@@ -74,8 +83,8 @@ export function makeRounds(seed: number, n = ROUNDS): TuneRound[] {
     const hi = i < 3 ? 50 : 30;
     const mag = Math.round(lo + r() * (hi - lo));
     const detune = r() < 0.5 ? -mag : mag;
-    const kind: RefKind = harmonicOk(s) && r() < 0.35 ? 'harmonic' : 'fret';
-    out.push(roundFor(s, detune, kind));
+    const kind: RefKind = harmonicOk(s, inst) && r() < 0.35 ? 'harmonic' : 'fret';
+    out.push(roundFor(s, detune, kind, inst));
   }
   return out;
 }

@@ -65,6 +65,15 @@ export function liveVelocity(v127: number, curve: LiveCurve): number {
   return Math.max(0.08, Math.min(1, y));
 }
 
+/** Which recorded instrument plays an event: its own mark, else the course's voice for notes in that voice's range. */
+export function voiceOf(e: Pick<NoteEvent, 'inst' | 'midi'>, course: 'bass' | null): 'bass' | undefined {
+  if (e.inst === 'bass') return 'bass';
+  if (e.inst) return undefined;
+  return course === 'bass' && e.midi <= BASS_VOICE_TOP ? 'bass' : undefined;
+}
+/** The highest note the course's bass voice takes (C4; the pizzicato set reaches about C♯4). */
+export const BASS_VOICE_TOP = 60;
+
 export class PianoEngine implements AudioEngine, RhythmAudio {
   private ctx: AudioContext | null = null;
   private pianoBus!: GainNode;
@@ -301,6 +310,14 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
       .then((b) => void this.extras.set(id, b))
       .catch(() => void this.extraFailed.set(id, Date.now()))
       .finally(() => this.extraLoads.delete(id));
+  }
+
+  /** The active course's own voice (final bass check): in the bass course, unmarked notes in the bass's range play on
+   *  the bass — games, lessons and neck taps sound like the instrument being learned. */
+  private courseVoice: 'bass' | null = null;
+  setCourseVoice(v: 'bass' | null) {
+    this.courseVoice = v;
+    if (v === 'bass' && this.ctx) void this.loadStems('bass-pizz');
   }
 
   /** Room reverb on the piano / bass (Settings could switch it off; the metronome and processed sounds never use it). */
@@ -1158,7 +1175,7 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
         this.hum(e.midi, e.velocity, t0 + e.start, e.duration);
         continue;
       }
-      if (!this.sample(e.midi, e.velocity, t0 + e.start, e.duration, e.inst === 'bass' ? 'bass' : undefined)) this.voice(e.midi, e.velocity, t0 + e.start, e.duration);
+      if (!this.sample(e.midi, e.velocity, t0 + e.start, e.duration, voiceOf(e, this.courseVoice))) this.voice(e.midi, e.velocity, t0 + e.start, e.duration);
       const lead = (t0 - ctx.currentTime) * 1000;
       later(lead + e.start * 1000, () => this.noteOn(e.midi));
       later(lead + (e.start + e.duration) * 1000, () => this.noteOff(e.midi));

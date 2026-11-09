@@ -11,7 +11,7 @@ import { gradePlace, placeKey } from '../engine/lesson';
 import { defaultTuning, INLAYS, noteAt, remapDots, tuningById, type NeckInstrument, type Tuning } from '../engine/fretboard';
 import { majorScale, pcValue, type PitchClass } from '../engine/pitch';
 import { spellMidi } from '../engine/aids';
-import { bassTuningOf, type Settings } from '../storage/progress';
+import { bassTuningOf, courseInstrumentOf, neckTuningOf, type Settings } from '../storage/progress';
 import { piano } from './services';
 
 type Lang = 'he' | 'en';
@@ -189,7 +189,7 @@ export function DiagramView({ d: d0, settings }: { d: Diagram; settings: Setting
   // B12: bass diagrams on the player's bass tuning (5 / 6-string, drop D); the dots, written for EADG, keep their pitch.
   const bassTu = d0.instrument === 'bass' ? tuningById(bassTuningOf(settings) ?? 'bass') : null;
   const d: Diagram = bassTu && d0.dots ? { ...d0, dots: remapDots(defaultTuning('bass'), bassTu, d0.dots) } : d0;
-  const tuning = bassTu ?? (d.instrument ? (d.instrument === 'guitar' ? tuningById(settings.tuning) : defaultTuning(d.instrument)) : tuningById(settings.tuning));
+  const tuning = bassTu ?? (d.instrument ? (d.instrument === 'guitar' ? tuningById(settings.tuning) : defaultTuning(d.instrument)) : tuningById(neckTuningOf(settings)));
   if (d.kind === 'box') return <ChordBox d={d} tuning={tuning} leftHanded={settings.leftHanded} />;
   if (d.kind === 'keys') return <KeysPad marks={(d.midis ?? []).map((m) => ({ m, tone: 'given' }))} lo={Math.min(48, ...(d.midis ?? [60]))} hi={Math.max(72, ...(d.midis ?? [60]))} />;
   const frets = (d.dots ?? []).map((p) => p.fret);
@@ -358,7 +358,7 @@ export function surfaceFor(q: PlaceQuestion, s: Settings): PlaceSurface {
 }
 
 function neckTuning(q: PlaceQuestion, s: Settings): Tuning {
-  const inst = (q.instrument && q.instrument !== 'keys' ? q.instrument : s.instrument === 'bass' ? 'bass' : s.instrument === 'strings' ? 'violin' : 'guitar') as NeckInstrument;
+  const inst = (q.instrument && q.instrument !== 'keys' ? q.instrument : courseInstrumentOf(s) === 'bass' ? 'bass' : s.instrument === 'strings' ? 'violin' : 'guitar') as NeckInstrument;
   // Topic items are written for standard tuning (guitar) and EADG (bass); the player's tuning is for the views only.
   return defaultTuning(inst);
 }
@@ -397,12 +397,13 @@ export function PlaceSurfaceView({ q, settings, lang, disabled, onSubmit, result
     sound([n.midi]);
   };
   // Spec AE §3.4: enter notes by playing — MIDI keys, or an acoustic instrument through the microphone.
-  const canPlay = !disabled && q.as === 'seq' && (!!settings.midiInput || (!!settings.instrument && settings.instrument !== 'voice'));
+  const canPlay = !disabled && q.as === 'seq' && (!!settings.midiInput || (!!courseInstrumentOf(settings) && courseInstrumentOf(settings) !== 'voice'));
   const [playing, setPlaying] = useState(false);
   const addRef = useRef(add);
   addRef.current = add;
   // Guitar and bass sound an octave below written: the app writes and grades written pitch.
-  const writtenShift = settings.instrument === 'guitar' || settings.instrument === 'bass' ? 12 : 0;
+  // The course decides (a keys player in the bass course plays a bass there).
+  const writtenShift = courseInstrumentOf(settings) === 'guitar' || courseInstrumentOf(settings) === 'bass' ? 12 : 0;
   const placeFromPlayed = (m: number) => {
     const w = m + writtenShift;
     if (surface === 'neck') {

@@ -1516,7 +1516,7 @@ function genLegatoB(s: DrillSpec, tu: Tuning): Drill {
       const line: BN[] = [];
       let b = 0;
       for (const fr of [12, 7, 5]) for (const str of lowToHigh(tu).slice(-4)) (line.push({ b, d: 1, p: 0, s: str, f: fr, tech: 'harmonic' }), (b += 1));
-      return drillOf(s, tu, line, { en: 'Natural harmonics: 12th, 7th, 5th fret', he: 'הרמוניות טבעיות: סריג 12, 7, 5', evenness: false });
+      return drillOf(s, tu, line, { en: 'Natural harmonics: 12th, 7th, 5th fret', he: 'הרמוניקים טבעיים: סריג 12, 7, 5', evenness: false });
     }
     case 'vib': {
       // Long notes with vibrato (fretted, never open).
@@ -2299,12 +2299,12 @@ export function bassFamilies(): GuitarFamilyDef[] {
       L('b-walk', 17, 'Walking in the low register (low B)', 'ווקינג באזור הנמוך (B נמוך)', [WK('lowb', { perBeat: 1 })], 'major', [90, 150], Qn),
       L('b-walk', 18, 'Standards III: forms, cycles and Coltrane changes', 'סטנדרטים 3: צורות, מעגלים ושינויי קולטריין', BASS_STD.map((x, i) => (i >= STD_FIRST ? WK('standard', { perBeat: x.feel === 'walk' ? 1 : 0.5, option: i }) : null)).filter((x): x is NonNullable<typeof x> => x !== null), [0], [90, 180], 'quarters / halves'),
     ]),
-    fam('b-legato', 'Slides, legato, harmonics', 'החלקות, לגאטו והרמוניות', [
+    fam('b-legato', 'Slides, legato, harmonics', 'החלקות, לגאטו והרמוניקים', [
       L('b-legato', 1, 'Slides into notes', 'החלקות אל הצלילים', [LG('slide')], K6, [70, 110], E8),
       L('b-legato', 2, 'Hammer-on and pull-off pairs', 'זוגות הקשה ומשיכה', [LG('hp')], K6, [60, 100], E8),
       L('b-legato', 3, 'Legato lines', 'קווי לגאטו', [LG('legline', { perBeat: 4 })], K4, [70, 110], S16),
       L('b-legato', 4, 'Sliding octave double stops', 'אוקטבות כפולות בהחלקה', [LG('octslide')], K6, [70, 100], E8),
-      L('b-legato', 5, 'Natural harmonics 12, 7, 5', 'הרמוניות טבעיות 12, 7, 5', [LG('harm', { perBeat: 1 })], OPEN, [60, 90], Qn),
+      L('b-legato', 5, 'Natural harmonics 12, 7, 5', 'הרמוניקים טבעיים 12, 7, 5', [LG('harm', { perBeat: 1 })], OPEN, [60, 90], Qn),
       L('b-legato', 6, 'Vibrato on long notes', 'ויברטו על צלילים ארוכים', [LG('vib', { perBeat: 0.5 })], K4, [60, 60], 'halves'),
       L('b-legato', 7, 'Pedal tones', 'צלילי עוגב', [LG('pedal', { perBeat: 4 })], K4, [80, 120], S16),
     ]),
@@ -2440,7 +2440,7 @@ function uprightFamilies(L: LFn, fam: FamFn): GuitarFamilyDef[] {
       L('b-up-pos', 2, 'First position', 'מצב ראשון', [PO('pos', { option: 1, perBeat: 1 })], [0], [50, 72], Qn),
       L('b-up-pos', 3, 'Second position', 'מצב שני', [PO('pos', { option: 2, perBeat: 1 })], [0], [50, 72], Qn),
       L('b-up-pos', 4, 'Third position', 'מצב שלישי', [PO('pos', { option: 3, perBeat: 1 })], [0], [50, 72], Qn),
-      L('b-up-pos', 5, 'Fourth position (to the octave harmonic)', 'מצב רביעי (עד ההרמוניה של האוקטבה)', [PO('pos', { option: 4, perBeat: 1 })], [0], [50, 72], Qn),
+      L('b-up-pos', 5, 'Fourth position (to the octave harmonic)', 'מצב רביעי (עד ההרמוניק של האוקטבה)', [PO('pos', { option: 4, perBeat: 1 })], [0], [50, 72], Qn),
       L('b-up-pos', 6, 'Thumb position: an introduction', 'מצב אגודל: היכרות', [PO('pos', { option: 5, perBeat: 1 })], [0], [40, 66], Qn),
     ]),
     fam('b-up-arco', 'Upright: bowing', 'קונטרבס: קשת', [
