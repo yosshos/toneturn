@@ -278,6 +278,10 @@ html[data-motion='reduced'] .drill-beat .beat-dot {
   grid-template-columns: minmax(0, 1fr);
   min-width: 0;
 }
+/* final bass check: the level-test intro card had its text against the border */
+.drill-opts.card {
+  padding: 14px 16px;
+}
 .heat-row {
   grid-template-columns: 32px repeat(var(--cols), minmax(0, 1fr));
 }

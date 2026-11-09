@@ -814,7 +814,7 @@ const BASS_BLURB: Record<string, { en: string; he: string }> = {
   tuneup: { en: 'Tune the four bass strings by ear.', he: 'מכוונים את ארבעת מיתרי הבס בשמיעה.' },
 };
 const BASS_TX: Record<string, { en: [string, string]; he: [string, string] }> = {
-  drills: { en: ['Technique', 'Plucking, groove, walking, reading — level by level'], he: ['טכניקה', 'פריטה, גרוב, ווקינג, קריאה — שלב אחר שלב'] },
+  drills: { en: ['Technique', 'Plucking, groove, walking, reading'], he: ['טכניקה', 'פריטה, גרוב, ווקינג וקריאה'] },
   songs: { en: ['Songs', 'Real tunes on the bass'], he: ['שירים', 'מנגינות אמיתיות על הבס'] },
 };
 /** The instrument tile's symbol per course. */
