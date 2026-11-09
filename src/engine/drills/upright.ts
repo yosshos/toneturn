@@ -106,15 +106,15 @@ export function generateUpright(s: DrillSpec, tu: Tuning): Drill {
     }
     case 'b-up-pizz': {
       // Jazz pizzicato sound: long, even quarters that sustain to the next note, with the ride.
-      const prog: [number, number][] = op === 1 ? [[2, 0], [7, 0], [0, 0], [0, 0]] : [[0, 0], [5, 0], [7, 0], [0, 0]];
+      const prog: [number, number][] = op === 1 ? [[2, 0], [7, 0], [0, 0], [0, 0]] : op === 2 ? [[0, 0], [5, 0], [0, 0], [0, 0], [5, 0], [5, 0], [0, 0], [0, 0], [7, 0], [5, 0], [0, 0], [7, 0]] : [[0, 0], [5, 0], [7, 0], [0, 0]];
       const line: BN[] = [];
       prog.forEach(([d], bar) => {
         const R = rootOf(tu, key + d);
         [R, R + 7, R + 12, R + 7].forEach((p, k) => line.push({ b: bar * 4 + k, d: 1, p, ct: true }));
       });
-      line.push({ b: 16, d: 2, p: rootOf(tu, key), ct: true });
+      line.push({ b: prog.length * 4, d: 2, p: rootOf(tu, key), ct: true });
       const chart = prog.map(([d]) => `${NAMES[mod(key + d, 12)]}${op === 1 && d === 2 ? 'm7' : op === 1 && d === 7 ? '7' : ''}`);
-      const d = drillOf(s, tu, line, { en: op === 1 ? 'Pizz quarters over ii–V–I, full length' : 'Pizz quarters, full length', he: op === 1 ? 'רבעים בפיציקטו על ii–V–I, באורך מלא' : 'רבעים בפיציקטו, באורך מלא', chart, bow: 'pizz', drums: { groove: 'swing' } });
+      const d = drillOf(s, tu, line, { en: op === 1 ? 'Pizz quarters over ii–V–I, full length' : op === 2 ? 'Pizz quarters through a blues, full length' : 'Pizz quarters, full length', he: op === 1 ? 'רבעים בפיציקטו על ii–V–I, באורך מלא' : op === 2 ? 'רבעים בפיציקטו לאורך בלוז, באורך מלא' : 'רבעים בפיציקטו, באורך מלא', chart, bow: 'pizz', drums: { groove: 'swing' } });
       return withCents(d, 15, { lengths: true, loudSd: 3 });
     }
     case 'b-up-walk': {

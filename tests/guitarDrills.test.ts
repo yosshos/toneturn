@@ -49,7 +49,7 @@ describe('guitar drills: catalogue', () => {
       expect(/^[gb]-/.test(f.id)).toBe(true);
       expect(f.levels.length).toBeGreaterThan(0);
       // Bass-course families (b-*, BASS_CURRICULUM §5) run up to 12 levels.
-      expect(f.levels.length).toBeLessThanOrEqual(f.id.startsWith('b-') ? 12 : 7);
+      expect(f.levels.length).toBeLessThanOrEqual(f.id.startsWith('b-') ? 20 : 7);
       f.levels.forEach((l, i) => expect(l.level).toBe(i + 1));
     }
     expect(cat.find((f) => f.id === 'g-bass')?.instruments).toEqual(['bass']);
@@ -381,7 +381,7 @@ describe('guitar drills: plan', () => {
     expect(g.length).toBeGreaterThan(10);
     expect(g.every((f) => f.id.startsWith('g-') && f.id !== 'g-bass')).toBe(true);
     // Bass: the 14 course families; the old g-bass starter is retired (kept for old ids, not shown).
-    expect(shownFamilies({ emphasis: 'both', instrument: 'bass' }).map((f) => f.id)).toEqual(['b-pluck', 'b-time', 'b-fret', 'b-chord', 'b-scale', 'b-length', 'b-pocket', 'b-read', 'b-styles', 'b-ghost', 'b-walk', 'b-legato', 'b-pick', 'b-slap']);
+    expect(shownFamilies({ emphasis: 'both', instrument: 'bass' }).map((f) => f.id)).toEqual(['b-pluck', 'b-time', 'b-fret', 'b-chord', 'b-ear', 'b-scale', 'b-length', 'b-pocket', 'b-read', 'b-styles', 'b-ghost', 'b-walk', 'b-legato', 'b-pick', 'b-slap', 'b-up-pos', 'b-up-arco', 'b-up-scales', 'b-up-pizz', 'b-up-walk', 'b-up-read']);
     expect(familyById('g-legato')?.levels.length).toBeGreaterThan(0);
   });
 

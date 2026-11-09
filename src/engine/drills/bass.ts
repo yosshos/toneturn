@@ -537,7 +537,7 @@ function genLength(s: DrillSpec, tu: Tuning): Drill {
         line.push({ b, d: 0.5, p: tu.open[lowStr - 1], s: lowStr, f: 0 });
         line.push({ b: b + 0.5, d: 0.5, ...hiNotes[k % 4] });
       }
-      line.push({ b: 16, d: 1, ...hiNotes[0] });
+      line.push({ b: 16, d: 1, ...hiNotes[3] });
       return drillOf(s, tu, alt(line), { en: 'Idle strings muted', he: 'השתקת מיתרים לא בשימוש', bass: { lengths: true, ringThrough: 0 } });
     }
     case 'release-and': {
@@ -919,23 +919,24 @@ function genChord(s: DrillSpec, tu: Tuning): Drill {
       return drillOf(s, tu, alt(line), { en: `${what.en} arpeggio: ${set.en}`, he: `ארפג׳יו ${what.he}: ${set.he}`, open: false, bass: { shiftGap: 40 } });
     }
     case 'hichords': {
-      // B15 (RSL Gr 7): high-register chords — 10ths and triad double stops above the 7th fret on the top strings.
+      // B15 (RSL Gr 7): high-register chords — op 0: 10ths (root low, the 10th three strings up), op 1: root and 7th
+      // two strings up (ii–V–I) — both with the root at the 5th fret or higher, one hand position each.
       const n = tu.open.length;
       const prog = op === 1 ? PROGS.jazz : PROGS.p1451;
+      const sLo = op === 1 ? Math.min(n, 3) : n;
+      const sHi = sLo - (op === 1 ? 2 : 3);
       const line: BN[] = [];
       prog.forEach((c, bar) => {
         const ints = QI[c[1]];
-        // Root on the 3rd-highest string (D on a 4-string) above fret 5, the 10th / 7th two strings up.
-        const sLo = Math.min(n, 3);
-        const f = mod(key + c[0] - tu.open[sLo - 1], 12) + (mod(key + c[0] - tu.open[sLo - 1], 12) < 5 ? 12 : 0);
-        const sHi = sLo - 2;
-        const third = noteAt(tu, sLo, f) + 12 + ints[1];
-        const top = op === 1 ? noteAt(tu, sLo, f) + 12 + (ints[3] ?? 12) : third;
+        const fk = mod(key + c[0] - tu.open[sLo - 1], 12);
+        const f = fk < 5 ? fk + 12 : fk;
+        const lo = noteAt(tu, sLo, f);
+        const top = lo + (op === 1 ? (ints[3] ?? 12) : 12 + ints[1]);
         const fHi = top - tu.open[sHi - 1];
-        const okHi = fHi >= 0 && fHi <= MAXF;
-        for (let k = 0; k < 2; k++) line.push({ b: bar * 4 + k * 2, d: 2, p: noteAt(tu, sLo, f), s: sLo, f, ct: true, ...(okHi ? { with: [{ s: sHi, f: fHi }] } : {}) });
+        const ok = sHi >= 1 && fHi >= 1 && Math.abs(fHi - f) <= 3;
+        for (let k = 0; k < 2; k++) line.push({ b: bar * 4 + k * 2, d: 2, p: lo, s: sLo, f, ct: true, ...(ok ? { with: [{ s: sHi, f: fHi }] } : {}) });
       });
-      return drillOf(s, tu, line, { en: op === 1 ? 'High-register chords: root and 7th (ii–V)' : 'High-register chords: 10ths', he: op === 1 ? 'אקורדים באזור הגבוה: יסוד וספטימה' : 'אקורדים באזור הגבוה: דצימות', chart: chartOf(key, prog), evenness: false, open: false });
+      return drillOf(s, tu, line, { en: op === 1 ? 'High-register chords: root and 7th (I–vi–ii–V)' : 'High-register chords: 10ths', he: op === 1 ? 'אקורדים באזור הגבוה: יסוד וספטימה' : 'אקורדים באזור הגבוה: דצימות', chart: chartOf(key, prog), evenness: false, open: false });
     }
     case 'ctline':
     case 'nearest': {
@@ -1136,7 +1137,8 @@ function feelLine(tu: Tuning, text: string, feel: Feel, seed: string): BN[] {
   for (const c of p.chords) {
     const b0 = c.bar * 4 + c.at;
     const R = rootOf(tu, c.bass);
-    const fiv = c.iv.includes(7) ? 7 : c.iv.includes(6) ? 6 : c.iv.includes(8) ? 8 : 7;
+    // The chord's 5th (♭5 / ♯5 when altered); a chord written without one (7alt) takes its 7th instead.
+    const fiv = c.iv.includes(7) ? 7 : c.iv.includes(6) ? 6 : c.iv.includes(8) ? 8 : c.iv.includes(10) ? 10 : (c.iv[1] ?? 0);
     const up = rootOf(tu, c.root) + fiv;
     const five = up - R > 9 ? up - 12 : up < R - 9 ? up + 12 : up;
     const f5 = five < lowest(tu) ? five + 12 : five;
@@ -1795,7 +1797,8 @@ function genStyle(s: DrillSpec, tu: Tuning): Drill {
     }
     case 8: {
       prog = PROGS.p145;
-      line = overProg(tu, key, prog, (R, _c, bar, next) => [...(bar === 0 ? [{ b: 0, d: 1.5, p: R }] : []), { b: 1.5, d: 1.5, p: R + 7 }, { b: 3, d: 1, p: bar === 3 ? rootOf(tu, key) : next, acc: true }]);
+      // The tumbao anticipates the next chord's root on beat 4 (marked: it belongs to the next bar's chord).
+      line = overProg(tu, key, prog, (R, _c, bar, next) => [...(bar === 0 ? [{ b: 0, d: 1.5, p: R }] : []), { b: 1.5, d: 1.5, p: R + 7 }, { b: 3, d: 1, p: next, acc: true, ct: false }]);
       break;
     }
     case 9:
@@ -2302,7 +2305,7 @@ function uprightFamilies(L: LFn, fam: FamFn): GuitarFamilyDef[] {
     fam('b-up-pizz', 'Upright: jazz pizzicato', 'קונטרבס: פיציקטו ג׳אזי', [
       L('b-up-pizz', 1, 'Long, even pizz quarters', 'רבעים ארוכים ושווים בפיציקטו', [PZ('pizz', { perBeat: 1 })], [7, 2, 9, 5], [80, 140], Qn),
       L('b-up-pizz', 2, 'Pizz over ii–V–I', 'פיציקטו על ii–V–I', [PZ('pizz', { perBeat: 1, option: 1 })], [0, 5, 10, 7], [90, 160], Qn),
-      L('b-up-pizz', 3, 'Sustain at tempo', 'צליל מתמשך בטמפו', [PZ('pizz', { perBeat: 1 }), PZ('pizz', { perBeat: 1, option: 1 })], [7, 2, 9, 5, 0, 10], [140, 200], Qn),
+      L('b-up-pizz', 3, 'Sustain at tempo', 'צליל מתמשך בטמפו', [PZ('pizz', { perBeat: 1, option: 2 })], [5, 10, 7, 0], [140, 200], Qn),
     ]),
     fam('b-up-walk', 'Upright: walking', 'קונטרבס: ווקינג', [
       L('b-up-walk', 1, 'Two-feel roots and 5ths', 'בשתיים: יסודות וקווינטות', [WU('two-feel', { perBeat: 0.5 })], [5, 10], [80, 140], 'halves'),
