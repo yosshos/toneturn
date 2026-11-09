@@ -1289,3 +1289,59 @@
 :root[data-theme='dark'] .breath.on {
   color: var(--lemon);
 }
+
+/* ---------------------------------------------------------------- opening: splash (logo + name) and welcome (the slogan, once) */
+:root[data-theme] .splash {
+  background: var(--purple);
+  color: #ffffff;
+}
+:root[data-theme] .splash .splash-word {
+  font-family: var(--display);
+  font-size: 2.4rem;
+  color: #ffffff;
+}
+:root[data-theme] .ob-welcome {
+  gap: 12px;
+}
+.ob-welcome .ob-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ob-welcome .ob-word {
+  font-family: var(--display);
+  font-size: 1.4rem;
+}
+.ob-welcome .ob-hero {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  min-height: 200px;
+}
+:root[data-theme] .ob-welcome h1 {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 2.3rem;
+  max-width: none;
+}
+.ob-welcome .ob-cta,
+.ob-welcome .ob-account {
+  width: 100%;
+  min-height: 54px;
+}
+:root[data-theme] .ob-progress i {
+  height: 8px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--accent) 16%, var(--card));
+}
+:root[data-theme] .ob-progress i.done {
+  background: var(--purple);
+}
+:root[data-theme] .ob-progress i.now {
+  background: var(--lemon);
+}
+:root[data-theme] .onboarding h1 {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 1.8rem;
+}

@@ -8,6 +8,7 @@
 //   3 questions — goal · instrument · starting point (everything else has sensible defaults; the full questionnaire stays
 //                 in Settings).
 //   Start    — Find my level (stop any time) or start from the beginning.
+import { Toni } from './Toni';
 import { COURSES, courseOf, type CourseId } from '../engine/courses';
 import { Glyph } from './Glyph';
 import { useEffect, useRef, useState } from 'react';
@@ -19,31 +20,31 @@ import { piano } from './services';
 
 type Lang = 'en' | 'he';
 
-/** The logo, drawn stroke by stroke (same geometry as bits.Logo). */
-export function SplashLogo({ size = 132 }: { size?: number }) {
+/** The logo, drawn stroke by stroke (same geometry as bits.Logo, v2: ink outline, flat fills). */
+export function SplashLogo({ size = 132, onDark = false }: { size?: number; onDark?: boolean }) {
+  const ink = '#1E1033';
+  const EAR = 'M226 206 C226 132 274 96 318 96 C380 96 420 146 420 208 C420 266 388 290 368 320 C348 350 358 404 304 418 C266 428 242 404 236 378';
+  const WAVE = 'M240 286 Q220 222 200 286 Q182 338 164 286 Q149 250 134 286 Q122 308 110 286';
+  const SEVEN = 'M272 186 L356 186 Q370 186 364 200 L312 330';
   return (
     <svg width={size} height={size} viewBox="60 60 420 420" aria-hidden="true" className="splash-logo">
-      <defs>
-        <linearGradient id="sp-ear" gradientUnits="userSpaceOnUse" x1="220" y1="90" x2="380" y2="430">
-          <stop offset="0" stopColor="#FFF1B8" />
-          <stop offset="0.45" stopColor="#FFC94D" />
-          <stop offset="1" stopColor="#FF8A5C" />
-        </linearGradient>
-      </defs>
-      <g transform="translate(256 256) scale(0.9) translate(-306 -256)">
-        <path className="sp-wave" pathLength={1} d="M 240 286 Q 220 222 200 286 Q 182 338 164 286 Q 149 250 134 286 Q 122 308 110 286" fill="none" stroke="#5CF2B5" strokeWidth="26" strokeLinecap="round" strokeLinejoin="round" />
-        <path className="sp-ear" pathLength={1} d="M 226 206 C 226 132 274 96 318 96 C 380 96 420 146 420 208 C 420 266 388 290 368 320 C 348 350 358 404 304 418 C 266 428 242 404 236 378" fill="none" stroke="url(#sp-ear)" strokeWidth="58" strokeLinecap="round" strokeLinejoin="round" />
-        <path className="sp-seven" pathLength={1} d="M 272 186 L 356 186 Q 370 186 364 200 L 312 330" fill="none" stroke="#FFFFFF" strokeWidth="24" strokeLinecap="round" strokeLinejoin="round" />
-        <circle className="sp-dot d0" cx="306" cy="366" r="16" fill="#FF6FB1" />
+      <g transform="translate(256 256) scale(0.86) translate(-306 -256)" fill="none" strokeLinecap="round" strokeLinejoin="round">
+        <path className="sp-wave" pathLength={1} d={WAVE} stroke={ink} strokeWidth="44" />
+        <path className="sp-wave" pathLength={1} d={WAVE} stroke="#12C9B4" strokeWidth="24" />
+        <path className="sp-ear" pathLength={1} d={EAR} stroke={onDark ? '#FFFFFF' : ink} strokeWidth="80" />
+        <path className="sp-ear" pathLength={1} d={EAR} stroke="#FFD43B" strokeWidth="56" />
+        <path className="sp-seven" pathLength={1} d={SEVEN} stroke={ink} strokeWidth="40" />
+        <path className="sp-seven" pathLength={1} d={SEVEN} stroke="#FFFFFF" strokeWidth="20" />
+        <circle className="sp-dot d0" cx="306" cy="370" r="20" fill="#FF5FA2" stroke={ink} strokeWidth="9" />
       </g>
-      <circle className="sp-dot d1" cx="428" cy="194" r="24" fill="#FF6FB1" />
-      <circle className="sp-dot d2" cx="428" cy="266" r="24" fill="#FF6FB1" />
+      <circle className="sp-dot d1" cx="430" cy="196" r="26" fill="#FF5FA2" stroke={ink} strokeWidth="9" />
+      <circle className="sp-dot d2" cx="430" cy="268" r="26" fill="#FF5FA2" stroke={ink} strokeWidth="9" />
     </svg>
   );
 }
 
 /** The opening: ~1.6 s, tap anywhere to skip. Calls onDone once. */
-export function Splash({ onDone }: { onDone: () => void }) {
+export function Splash({ onDone, lang = 'he' }: { onDone: () => void; lang?: Lang }) {
   const done = useRef(false);
   const finish = () => {
     if (done.current) return;
@@ -58,10 +59,8 @@ export function Splash({ onDone }: { onDone: () => void }) {
   }, []);
   return (
     <div className="splash" onPointerDown={finish} role="presentation" data-splash="1">
-      <SplashLogo />
-      <div className="splash-word" dir="ltr">
-        The 7<span className="wordmark-th">th</span> Sense
-      </div>
+      <SplashLogo onDark />
+      <div className="splash-word">{lang === 'he' ? 'החוש השביעי' : 'The 7th Sense'}</div>
     </div>
   );
 }
@@ -239,17 +238,20 @@ export function Onboarding({ lang, onDone, onSignIn }: { lang: Lang; onDone: (r:
 
       {step === 'welcome' && (
         <section className="ob-welcome">
-          <SplashLogo size={96} />
-          <div className="ob-word" dir="ltr">
-            The 7<span className="wordmark-th">th</span> Sense
+          <div className="ob-brand">
+            <SplashLogo size={44} />
+            <span className="ob-word">{lang === 'he' ? 'החוש השביעי' : 'The 7th Sense'}</span>
           </div>
-          <h1>{tx.promise}</h1>
-          <p>{tx.sub}</p>
+          <div className="ob-hero">
+            <Toni state="draw" size={200} />
+          </div>
+          <h1>{lang === 'he' ? 'לשמוע. להבין. לבצע.' : 'Hear. Understand. Perform.'}</h1>
+          <p>{lang === 'he' ? 'שמיעה, שירה ונגינה, עשר דקות ביום.' : 'Ear, voice and playing, ten minutes a day.'}</p>
           <div className="ob-actions">
             <button className="btn primary ob-cta" onClick={next} data-ob="start">
               {tx.start}
             </button>
-            <button className="link" onClick={onSignIn} data-ob="account">
+            <button className="btn ghost ob-account" onClick={onSignIn} data-ob="account">
               {tx.account}
             </button>
           </div>

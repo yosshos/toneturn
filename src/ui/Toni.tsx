@@ -20,7 +20,7 @@ const POSE: Record<ToniState, { flag: string; rot: number; eyes: Eyes; dx?: numb
   close: { flag: '#FF8A3D', rot: 20, eyes: 'open', dx: 2, brows: 'one', mouth: 'smirk' },
   wow: { flag: LILAC, rot: -40, eyes: 'wide', brows: 'raised', mouth: 'o' },
   sleepy: { flag: '#FFD43B', rot: 48, eyes: 'half', brows: '', mouth: 'sleep' },
-  draw: { flag: '#FFD43B', rot: 0, eyes: 'open', brows: 'determined', mouth: 'smile' },
+  draw: { flag: '#FFD43B', rot: 0, eyes: 'open', brows: 'raised', mouth: 'smile' },
   bye: { flag: '#FFD43B', rot: 0, eyes: 'happy', brows: '', mouth: 'smile' },
 };
 const S = { fill: 'none', stroke: INK, strokeWidth: 4.5, strokeLinecap: 'round' as const };

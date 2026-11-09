@@ -1130,7 +1130,7 @@ export function App() {
     <MiniGateContext.Provider value={gate}>
     <RefresherContext.Provider value={openRefresher}>
     <div className={`app ${isTab ? 'has-tabs' : ''} ${withSide ? 'with-side' : ''}`}>
-      {splash && <Splash onDone={() => setSplash(false)} />}
+      {splash && <Splash lang={s.uiLang} onDone={() => setSplash(false)} />}
       {withSide && <CommandPalette lang={s.uiLang} onPick={onPalette} />}
       {SIMULATED && <div className="sim-banner">{t.simulated}</div>}
       {withSide && <Sidebar route={route} lang={s.uiLang} onNav={sideNav} me={{ name: playerFirstName, streak: gems.streak.count, onOpen: () => go('settings') }} />}
