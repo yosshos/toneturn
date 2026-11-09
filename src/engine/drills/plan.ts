@@ -4,7 +4,7 @@
 import type { CustomDrill, Drill, DrillSettings, FamilyId, ItemState } from './types';
 import { catalog, generate, keysInOrder, type FamilyDef, type LevelDef } from './generate';
 import { customIncluded, customKeys, customToDrill } from './custom';
-import { todaysItems, type TodayItem } from './ladder';
+import { itemPass, todaysItems, type TodayItem } from './ladder';
 import { guitarCatalog, guitarStyleMatch, type GuitarFamilyDef } from './guitar';
 import { tuningById } from '../fretboard';
 
@@ -61,11 +61,47 @@ export function specDrills(level: LevelDef, specIndex: number, order: DrillSetti
   return levelKeys(level, order).map((key) => gen({ ...level.specs[specIndex], key }));
 }
 
-/** A level counts as done when ≥ 75 % of its items have a clean take. */
-export function levelDone(level: LevelDef, items: Record<string, ItemState>, order: DrillSettings['keyOrder']): boolean {
+/** Levels without a stated tempo range: the target is the start tempo + 25 % (about one tempo band). */
+export const DEFAULT_TARGET_FACTOR = 1.25;
+
+/** The level a drill belongs to: the level of its family with a spec template the drill was made from. */
+export function levelOfDrill(drill: Drill): LevelDef | undefined {
+  const fam = familyById(drill.spec.family);
+  if (!fam) return undefined;
+  const sp = drill.spec as unknown as Record<string, unknown>;
+  return fam.levels.find((lv) => lv.specs.some((t) => Object.entries(t).every(([k, v]) => k === 'tempo' || JSON.stringify(sp[k]) === JSON.stringify(v))));
+}
+
+/**
+ * The level's target tempo for one of its items (A4): the level's stated target (bass levels: `tempo[1]`, never below
+ * the item's own start), else the start tempo × DEFAULT_TARGET_FACTOR.
+ */
+export function targetBpmOf(level: LevelDef | undefined, drill: Drill): number {
+  const range = (level as (LevelDef & { tempo?: [number, number] }) | undefined)?.tempo;
+  if (range) return Math.max(drill.startBpm, range[1]);
+  return Math.round(drill.startBpm * DEFAULT_TARGET_FACTOR);
+}
+
+/** The target tempo of an item (pass it to ladder.applyTake as opts.targetBpm). */
+export const itemTargetBpm = (drill: Drill): number => targetBpmOf(levelOfDrill(drill), drill);
+
+/**
+ * Stars of a level from measured takes (A4): 1 = min(3, items) items clean at the start tempo, 2 = half the items
+ * passed at the target tempo (3 clean on 2 days, ladder.itemPass), 3 = 75 % passed. Self-report never counts.
+ */
+export function levelStars(level: LevelDef, items: Record<string, ItemState>, order: DrillSettings['keyOrder']): number {
   const ds = levelDrills(level, order);
-  const clean = ds.filter((d) => (items[d.itemId]?.cleanBpm ?? 0) > 0).length;
-  return ds.length > 0 && clean / ds.length >= 0.75;
+  if (!ds.length) return 0;
+  const ps = ds.map((d) => itemPass(items[d.itemId], d.startBpm, targetBpmOf(level, d)));
+  const passed = ps.filter((p) => p.target).length / ds.length;
+  if (passed >= 0.75 - 1e-9) return 3;
+  if (passed >= 0.5 - 1e-9) return 2;
+  return ps.filter((p) => p.start).length >= Math.min(3, ds.length) ? 1 : 0;
+}
+
+/** A level counts as done at 2 stars: half its items passed at the level's target tempo (the path's rule too). */
+export function levelDone(level: LevelDef, items: Record<string, ItemState>, order: DrillSettings['keyOrder']): boolean {
+  return levelStars(level, items, order) >= 2;
 }
 
 /** The level the player works on in a family: the first not-done level, never below the level test's start. */

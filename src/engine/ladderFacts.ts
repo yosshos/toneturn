@@ -4,7 +4,8 @@
 import type { CourseId } from './courses';
 import { catalog, type LevelDef } from './drills/generate';
 import { guitarCatalog } from './drills/guitar';
-import { levelDrills, shownFamilies } from './drills/plan';
+import { levelDrills, levelStars, shownFamilies, targetBpmOf } from './drills/plan';
+import { itemPass } from './drills/ladder';
 import type { Drill, DrillSettings, FamilyId, ItemState } from './drills/types';
 import { VOCAL_PROGRAMS, type PathFacts } from './path';
 
@@ -26,14 +27,16 @@ export function ladderFamiliesFor(course: CourseId, ds: DrillSettings): string[]
   return shownFamilies({ emphasis: ds.emphasis, instrument, guitarStyle: ds.guitarStyle }).map((f) => f.id);
 }
 
-/** Stars of a technique level from measured takes: 1 = three items clean, 2 = half the level, 3 = the level is done (75 %). */
+/**
+ * Stars of a technique level from measured takes (BASS_AUDIT A4, every instrument): 1 = three items clean at the start
+ * tempo, 2 = half the items passed at the level's target tempo (3 clean takes on 2 days), 3 = 75 % passed.
+ */
 export function techStars(level: LevelDef, items: Record<string, ItemState>, order: DrillSettings['keyOrder']): number {
-  const ds = levelDrills(level, order);
-  if (!ds.length) return 0;
-  const clean = ds.filter((d) => (items[d.itemId]?.cleanBpm ?? 0) > 0).length;
-  const r = clean / ds.length;
-  return r >= 0.75 ? 3 : r >= 0.5 ? 2 : clean >= Math.min(3, ds.length) ? 1 : 0;
+  return levelStars(level, items, order);
 }
+
+/** A technique step is done on the path at this many stars (1 star only shows progress). */
+export const TECH_DONE_STARS = 2;
 
 /** The path facts plus what the drills and the vocal programs measured (like lessons finished elsewhere). */
 export function withLadderFacts(
@@ -53,8 +56,9 @@ export function withLadderFacts(
       const id = `tech:${lv.id}`;
       // Levels below the playing test's start are ✓ by test (they stay open to practise).
       if (lv.level < start && !tests[id]) tests[id] = opts.at;
+      // The path marks a step done at any stars > 0, so a technique step's facts exist only from 2 stars.
       const st = techStars(lv, opts.items, opts.order);
-      if (st) set(id, st);
+      if (st >= TECH_DONE_STARS) set(id, st);
     }
   }
   for (const pr of VOCAL_PROGRAMS) {
@@ -67,12 +71,18 @@ export function withLadderFacts(
   return { ...f, steps, tests };
 }
 
-/** A path step's session for a technique level: its items not yet clean first (key order), then the least secure ones. */
+/**
+ * A path step's session for a technique level: its items not yet passed at the target tempo first (started ones before
+ * fresh ones, key order), then the passed ones, least secure first.
+ */
 export function techQueue(levelId: string, items: Record<string, ItemState>, order: DrillSettings['keyOrder'], n = 5): Drill[] {
   const lv = techLevel(levelId);
   if (!lv) return [];
   const ds = levelDrills(lv, order);
-  const fresh = ds.filter((d) => !((items[d.itemId]?.cleanBpm ?? 0) > 0));
-  const known = ds.filter((d) => (items[d.itemId]?.cleanBpm ?? 0) > 0).sort((a, b) => (items[a.itemId]?.cleanBpm ?? 0) - (items[b.itemId]?.cleanBpm ?? 0));
-  return [...fresh, ...known].slice(0, n);
+  const passed = (d: Drill) => itemPass(items[d.itemId], d.startBpm, targetBpmOf(lv, d)).target;
+  const open = ds.filter((d) => !passed(d));
+  const started = open.filter((d) => (items[d.itemId]?.cleanBpm ?? 0) > 0);
+  const fresh = open.filter((d) => !((items[d.itemId]?.cleanBpm ?? 0) > 0));
+  const known = ds.filter(passed).sort((a, b) => (items[a.itemId]?.cleanBpm ?? 0) - (items[b.itemId]?.cleanBpm ?? 0));
+  return [...started, ...fresh, ...known].slice(0, n);
 }
