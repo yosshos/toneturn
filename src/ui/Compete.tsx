@@ -10,10 +10,12 @@ import { tournamentSet } from '../engine/tournament';
 import type { Strings } from '../i18n/strings';
 import type { Settings } from '../storage/progress';
 import { TournamentPlay } from './Tournament';
+import { CourseXpLine } from './CourseLevels';
+import { courseSetKinds, type ResultLike } from '../engine/courseSocial';
 
 const fill = (s: string, v: Record<string, string | number>) => Object.entries(v).reduce((a, [k, x]) => a.replaceAll(`{${k}}`, String(x)), s);
 
-export function LeagueCard({ t, lang, onBestTier, lastSeen, onSeen }: { t: Strings; lang: 'he' | 'en'; onBestTier?: (tier: number) => void; /** League shown last time (spec Y.5). */ lastSeen?: number; onSeen?: (tier: number) => void }) {
+export function LeagueCard({ t, lang, onBestTier, lastSeen, onSeen, history }: { t: Strings; lang: 'he' | 'en'; onBestTier?: (tier: number) => void; /** League shown last time (spec Y.5). */ lastSeen?: number; onSeen?: (tier: number) => void; /** My results: this week's XP per course (the league stays one across courses). */ history?: ResultLike[] }) {
   const [league, setLeague] = useState<League | null>(null);
   const [move, setMove] = useState<{ from: number; to: number } | null>(null);
   useEffect(() => {
@@ -39,6 +41,7 @@ export function LeagueCard({ t, lang, onBestTier, lastSeen, onSeen }: { t: Strin
           <small className="league-kicker">{t.leagueTitle}</small>
           <h2 data-league-tier={league.tier}>{t.leagueTiers[league.tier - 1]}</h2>
           <p className="field-hint">{fill(t.leagueEnds, { d: days })}</p>
+          {history && <CourseXpLine history={history} endsAt={league.endsAt} lang={lang} />}
           <p className="league-goal">{league.tier < TOP_TIER ? fill(tierOf(league.tier).minXp > 1 ? t.leagueGoalXp : t.leagueGoal, { n: tierOf(league.tier).promote, xp: tierOf(league.tier).minXp, next: t.leagueTiers[league.tier] }) : t.leagueTop}</p>
         </div>
       </div>
@@ -71,7 +74,9 @@ const DUEL_KINDS: DuelKind[] = ['mixed', 'modes', 'wrong-notes', 'truefalse', 'c
 
 export function DuelsSection({ t, settings, friends, onPlaying }: { t: Strings; settings: Settings; friends: { id: string; name: string }[]; onPlaying: (on: boolean) => void }) {
   const [rows, setRows] = useState<DuelRow[]>([]);
-  const [kind, setKind] = useState<DuelKind>('mixed');
+  // Per course (owner 2026-11-09): the active course's question sets only.
+  const kinds = courseSetKinds(settings.activeCourse ?? 'ear', DUEL_KINDS);
+  const [kind, setKind] = useState<DuelKind>(kinds.includes('mixed') ? 'mixed' : kinds[0]);
   const [play, setPlay] = useState<{ id: string; kind: DuelKind; seed: number; rounds: number } | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const load = useCallback(() => void myDuels().then(setRows), []);
@@ -116,7 +121,7 @@ export function DuelsSection({ t, settings, friends, onPlaying }: { t: Strings; 
       {friends.length > 0 && (
         <>
           <div className="seg small" role="radiogroup" aria-label={t.questionsOn}>
-            {DUEL_KINDS.map((k) => (
+            {kinds.map((k) => (
               <button key={k} type="button" role="radio" aria-checked={kind === k} className={kind === k ? 'on' : ''} onClick={() => setKind(k)}>
                 {names[k]}
               </button>

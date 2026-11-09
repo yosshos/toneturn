@@ -9,7 +9,10 @@ import type { Strings } from '../i18n/strings';
 import { AccountCard, type SyncState } from './Account';
 import { CompareSheet, FriendsBoard, type FriendStats } from './Compare';
 import { Avatar } from './Profile';
-import type { Progress } from '../storage/progress';
+import { ratingsOf, type Progress } from '../storage/progress';
+import { courseOf, type CourseId } from '../engine/courses';
+import { courseLevel, friendsInCourse, type DynName } from '../engine/courseSocial';
+import { Glyph } from './Glyph';
 
 export function FriendsScreen({ t, user: realUser, sync, onBack, settings, onBestTier, onLeagueSeen, progress, streak = 0, classes, profileErr }: { profileErr?: string | null; classes?: React.ReactNode; t: Strings; user: CloudUser | null; sync: SyncState; onBack: () => void; settings: Settings; onBestTier?: (tier: number) => void; onLeagueSeen?: (tier: number) => void; progress?: Progress; streak?: number }) {
   // Dev-only layout preview with made-up friends (?demoFriends): never in a production build.
@@ -56,6 +59,11 @@ export function FriendsScreen({ t, user: realUser, sync, onBack, settings, onBes
   const maxWeek = Math.max(1, ...board.map((r) => r.week_xp ?? 0));
 
   const lang = settings.uiLang;
+  const he = lang === 'he';
+  // Per course (owner 2026-11-09): compare levels only with friends who take the active course.
+  const course = settings.activeCourse ?? 'ear';
+  const cdef = courseOf(course);
+  const [scope, setScope] = useState<'all' | 'course'>('all');
   type Tab = 'friends' | 'league' | 'duels' | 'class';
   const [tab, setTab] = useState<Tab>(() => {
     try {
@@ -158,7 +166,15 @@ export function FriendsScreen({ t, user: realUser, sync, onBack, settings, onBes
           {tab === 'friends' && (
             <>
               {realUser && <DuetsStrip lang={lang} friends={rows} />}
-              <section className="set-card fr-board">
+              <div className="seg small fr-scope" role="radiogroup" aria-label={he ? 'להשוות עם' : 'Compare with'}>
+                {(['all', 'course'] as const).map((k) => (
+                  <button key={k} type="button" role="radio" aria-checked={scope === k} className={scope === k ? 'on' : ''} onClick={() => setScope(k)} data-fr-scope={k}>
+                    {k === 'all' ? (he ? 'כל החברים' : 'All friends') : he ? `חברים ב${cdef.short.he}` : `Friends in ${cdef.short.en}`}
+                  </button>
+                ))}
+              </div>
+              {scope === 'course' && <CourseFriends rows={rows} course={course} myLevel={progress ? courseLevel(course, ratingsOf(progress)).name : null} lang={lang} settings={settings} you={t.you} />}
+              {scope === 'all' && <section className="set-card fr-board">
                 <div className="fr-board-head">
                   <h2>{sortBy === 'xp' ? t.thisWeek : t.overallRating}</h2>
                   <div className="fr-sort" role="radiogroup" aria-label={t.sortBy}>
@@ -217,7 +233,7 @@ export function FriendsScreen({ t, user: realUser, sync, onBack, settings, onBes
                   })}
                 </ol>
                 {board.length <= 1 && <p className="field-hint">{t.noFriends}</p>}
-              </section>
+              </section>}
 
               {progress && friends.length > 0 && (
                 <section className="set-card">
@@ -266,7 +282,7 @@ export function FriendsScreen({ t, user: realUser, sync, onBack, settings, onBes
               </section>
             </>
           )}
-          {tab === 'league' && <LeagueCard t={t} lang={lang} onBestTier={onBestTier} lastSeen={settings.leagueSeen} onSeen={onLeagueSeen} />}
+          {tab === 'league' && <LeagueCard t={t} lang={lang} onBestTier={onBestTier} lastSeen={settings.leagueSeen} onSeen={onLeagueSeen} history={progress?.history} />}
           {tab === 'class' && classes}
           {tab === 'duels' && <DuelsSection t={t} settings={settings} friends={friends.map((r) => ({ id: r.user_id, name: r.name }))} onPlaying={setDuelPlaying} />}
         </>
@@ -275,13 +291,58 @@ export function FriendsScreen({ t, user: realUser, sync, onBack, settings, onBes
   );
 }
 
+/** Me and the friends who take this course, by level (pp … ff). Older servers / apps: a friendly note instead. */
+function CourseFriends({ rows, course, myLevel, lang, settings, you }: { you: string; rows: FriendRow[]; course: CourseId; myLevel: DynName | null; lang: 'he' | 'en'; settings: Settings }) {
+  const he = lang === 'he';
+  const c = courseOf(course);
+  const v = friendsInCourse(rows, course, myLevel);
+  const others = v.rows.filter((r) => r.relation !== 'me');
+  return (
+    <section className="set-card fr-board fr-course" data-fr-course={course}>
+      <div className="fr-board-head">
+        <h2>{he ? `הדרגה ב${c.short.he}` : `Level in ${c.short.en}`}</h2>
+        <Glyph kind={c.glyph} color={c.color} size={30} />
+      </div>
+      {!v.known ? (
+        <p className="fr-course-empty" data-fr-course-empty="1">
+          {he ? 'הדרגות של החברים בכל קורס יופיעו אחרי שהם יעדכנו את האפליקציה.' : "Friends' course levels appear once they update the app."}
+        </p>
+      ) : (
+        <>
+          <ol className="fr-list">
+            {v.rows.map((r, i) => {
+              const mine = r.relation === 'me';
+              return (
+                <li key={r.user_id} className={`fr-row ${mine ? 'me' : ''}`}>
+                  <span className="fr-rank">{i + 1}</span>
+                  {mine ? <Avatar s={settings} size={34} /> : <FriendAvatar r={r} />}
+                  <span className="fr-main">
+                    <span className="fr-top">
+                      <b className="fr-name">{r.name}</b>
+                      {mine && <small className="fr-you">{you}</small>}
+                      <span className={`fr-level ${r.level ? '' : 'none'}`} dir="ltr">
+                        {r.level ?? '–'}
+                      </span>
+                    </span>
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
+          {others.length === 0 && <p className="field-hint">{he ? `עוד אין חברים שלומדים ${c.short.he}.` : `No friends take ${c.short.en} yet.`}</p>}
+        </>
+      )}
+    </section>
+  );
+}
+
 const DEMO = import.meta.env.DEV && typeof location !== 'undefined' && new URLSearchParams(location.search).has('demoFriends');
 const demo = (user_id: string, name: string, relation: FriendRow['relation'], week_xp: number, streak: number, lessons_done: number, rating: number): FriendRow => ({ user_id, name, relation, week_xp, total_xp: week_xp * 6, streak, lessons_done, best_melody: null, best_rhythm: null, last_active: null, rating, rating_provisional: false });
 const DEMO_USER = { id: 'demo', name: 'Demo' } as unknown as CloudUser;
 const demoRows = (): FriendRow[] => [
   demo('me', 'DorianShredder11', 'me', 420, 3, 12, 1414),
-  { ...demo('a', 'CodaFox42', 'friend', 610, 12, 40, 1288), avatar_icon: 'guitar', avatar_color: '#c9733a', country: 'IL' },
-  { ...demo('b', 'Mixolydia', 'friend', 180, 1, 7, 1102), avatar_icon: 'mic', country: 'FR' },
+  { ...demo('a', 'CodaFox42', 'friend', 610, 12, 40, 1288), avatar_icon: 'guitar', avatar_color: '#c9733a', country: 'IL', course_levels: { guitar: 'f', ear: 'mf' } },
+  { ...demo('b', 'Mixolydia', 'friend', 180, 1, 7, 1102), avatar_icon: 'mic', country: 'FR', course_levels: { voice: 'mp', ear: 'p' } },
   demo('c', 'BlueNoteBenjamin_TheLongName', 'friend', 95, 0, 3, 960),
   demo('d', 'Allegra', 'incoming', 0, 0, 0, 900),
   demo('e', 'Ostinato7', 'outgoing', 0, 0, 0, 900),

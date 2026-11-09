@@ -1,4 +1,5 @@
 import { TodayCards } from './TodayCards';
+import { courseLevels } from '../engine/courseSocial';
 import { techQueue, workoutCreditsStep } from '../engine/ladderFacts';
 import { CourseContext } from './courseContext';
 import { CourseSheet } from './CourseSwitcher';
@@ -464,12 +465,15 @@ export function App() {
   // Profile → server (SPEC-SOCIAL §1–§2, owner 2026-11-08: "no reason for it to stay on the device"): nickname, flag,
   // picture (icon + colour, or the cropped photo in storage), privacy and year of birth, a moment after any change.
   const [profileErr, setProfileErr] = useState<string | null>(null);
+  // My level per course (pp … ff) goes with the profile, so friends can compare per course (owner 2026-11-09).
+  const courseLevelsJson = useMemo(() => (settings ? JSON.stringify(courseLevels(settings.courses ?? ['ear'], ratingsOf(progress))) : ''), [settings, progress]);
   const sentProfile = useRef('');
   const sentPhoto = useRef<string | null | undefined>(undefined);
   useEffect(() => {
     if (!user || !settings) return;
     const st = settings;
-    const key = JSON.stringify([st.nickname, st.country, st.avatarIcon, st.avatarColor, !!st.avatarPhoto, st.privacy, st.birthYear]);
+    const levels = courseLevelsJson ? (JSON.parse(courseLevelsJson) as Record<string, string>) : undefined;
+    const key = JSON.stringify([st.nickname, st.country, st.avatarIcon, st.avatarColor, !!st.avatarPhoto, st.privacy, st.birthYear, courseLevelsJson]);
     const photoChanged = sentPhoto.current !== (st.avatarPhoto ?? null);
     if (key === sentProfile.current && !photoChanged) return;
     const id = setTimeout(() => {
@@ -485,6 +489,7 @@ export function App() {
             photo: !!st.avatarPhoto && !young,
             privacy: st.privacy ?? null,
             birthYear: st.birthYear ?? null,
+            courseLevels: levels,
           });
           sentProfile.current = key;
           sentPhoto.current = st.avatarPhoto ?? null;
@@ -503,7 +508,7 @@ export function App() {
       })();
     }, 1200);
     return () => clearTimeout(id);
-  }, [user, settings]);
+  }, [user, settings, courseLevelsJson]);
 
   // Where a tool (tuner, metronome, drone) was opened from — Practice tab or the menu — so Back returns there.
   const toolFrom = useRef<Route>('home');
@@ -888,7 +893,7 @@ export function App() {
     drillSessionXp.current = 0;
     drillSession.current = { takes: 0, clean: 0 };
     if (!t0) return null;
-    return store.recordCompletion({ lessonId, lessonVersion: 1, sessionId: `tech-${Date.now()}`, completedAt: new Date().toISOString(), firstTry: c0, total: t0, xp, xpCounted: true, missed: [], items: [] });
+    return store.recordCompletion({ lessonId, lessonVersion: 1, sessionId: `tech-${Date.now()}`, completedAt: new Date().toISOString(), firstTry: c0, total: t0, xp, xpCounted: true, missed: [], items: [], ...(settings?.activeCourse ? { course: settings.activeCourse } : {}) });
   };
   /** A progression from Charts practised as a drill (voicings / comping / stride). */
   const chartQueue = useRef<Drill[] | null>(null);
@@ -1424,7 +1429,7 @@ export function App() {
         />
       )}
       {route === 'settings' && (
-        <SettingsScreen t={t} settings={s} onChange={updateSettings} onBack={() => go('home')} onPlans={() => go('plans')} onAdmin={plan?.admin ? () => go('admin') : undefined} onIntake={() => go('intake')} onMixer={openMixer} account={<AccountCard t={t} user={user} sync={sync} />} />
+        <SettingsScreen t={t} settings={s} ratings={ratingsOf(progress)} onChange={updateSettings} onBack={() => go('home')} onPlans={() => go('plans')} onAdmin={plan?.admin ? () => go('admin') : undefined} onIntake={() => go('intake')} onMixer={openMixer} account={<AccountCard t={t} user={user} sync={sync} />} />
       )}
       {route === 'diagnostics' && <Diagnostics t={t} settings={s} onBack={() => go('home')} />}
       {route === 'friends' && <FriendsScreen profileErr={profileErr} settings={s} t={t} user={user} sync={sync} progress={progress} streak={gems.streak.count} onBack={() => go('home')} onBestTier={(b) => b > (s.bestLeague ?? 0) && updateSettings({ bestLeague: b })} onLeagueSeen={(leagueSeen) => updateSettings({ leagueSeen })} classes={<ClassesScreen t={t} settings={s} user={user} onBack={() => go('friends')} onOpenLesson={(id) => openAssignment(id)} onOpenItem={openAssignItem} embedded />} />}
@@ -1456,7 +1461,7 @@ export function App() {
             </>
           }
           map={<SkillMap t={t} lang={s.uiLang} progress={progress} bestLeague={s.bestLeague} onBack={() => go('home')} onPractice={practiceSkill} onPlacement={openPlacement} />}
-          badges={<BadgesView lang={s.uiLang} input={badgeInputOf(progress, new Date(), s.uiLang === 'he' ? [5, 6] : undefined)} log={progress.badges} earnedOnly />}
+          badges={<BadgesView lang={s.uiLang} input={badgeInputOf(progress, new Date(), s.uiLang === 'he' ? [5, 6] : undefined)} log={progress.badges} earnedOnly course={s.activeCourse ?? 'ear'} courses={s.courses ?? ['ear']} />}
         />
       )}
       {consentThen && (
@@ -1878,6 +1883,7 @@ export function App() {
       {route === 'duel' && (
         <DuelSetup
           t={t}
+          course={s.activeCourse}
           onBack={() => go('arcade')}
           onStart={(names, kind, rounds) => {
             setDuel({ names, kind, rounds });

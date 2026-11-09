@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { cloudConfigured, signInWithGoogle, type CloudUser } from '../cloud/cloud';
 import { normaliseCode, ROOM_CODE_RE, RoomError, supabaseRooms, type RoomBackend } from '../cloud/rooms';
 import { CHOIR_SEED, isChoirSeed, tournamentSet, type SetKind } from '../engine/tournament';
+import { firstKind, forCourse } from '../engine/courseSocial';
 import { displayNote, type PitchClass } from '../engine/pitch';
 import { createRoom, RoomController, type RoomStanding } from '../game/roomController';
 import { askTemplate, choiceLabel } from '../game/content';
@@ -44,7 +45,20 @@ export function OnlineScreen({ t, settings, user, initialCode, facts, onBack }: 
   const [roomId, setRoomId] = useState<string | null>(null);
   const [nick, setNick] = useState(() => (user?.name ?? '').split(' ')[0].slice(0, 16));
   const [code, setCode] = useState(normaliseCode(initialCode));
-  const [kind, setKind] = useState<SetKind | 'choir'>(facts ? 'truefalse' : 'mixed');
+  const kinds: [SetKind | 'choir', string][] = forCourse(facts ? 'ear' : (settings.activeCourse ?? 'ear'), [
+    ['mixed', t.setMixed],
+    ['degrees', t.skillNames.degrees],
+    ['chords', t.skillNames.chords],
+    ['intervals', t.skillNames.intervals],
+    ['modes', t.skillNames.modes],
+    ['wrong-notes', t.wrongNotesTitle],
+    ['truefalse', t.trueFalse],
+    ['echo', t.echoChain],
+    ['beat', t.skillNames['rhythm-dictation']],
+    ['vocal-hold', t.vocalHoldGame],
+    ['choir', t.choirGame],
+  ]);
+  const [kind, setKind] = useState<SetKind | 'choir'>(facts ? 'truefalse' : firstKind(kinds));
   const [factTopics, setFactTopics] = useState<FactTopic[]>(facts?.topics ?? SILENT_TOPICS.filter((x) => x !== 'trio'));
   const [factLevel, setFactLevel] = useState<FactLevel>(facts?.level ?? 1);
   const [rounds, setRounds] = useState(10);
@@ -61,19 +75,6 @@ export function OnlineScreen({ t, settings, user, initialCode, facts, onBack }: 
 
   const ready = FAKE_ROOMS || (cloudConfigured && user);
   const name = nick.trim() || t.you;
-  const kinds: [SetKind | 'choir', string][] = [
-    ['mixed', t.setMixed],
-    ['degrees', t.skillNames.degrees],
-    ['chords', t.skillNames.chords],
-    ['intervals', t.skillNames.intervals],
-    ['modes', t.skillNames.modes],
-    ['wrong-notes', t.wrongNotesTitle],
-    ['truefalse', t.trueFalse],
-    ['echo', t.echoChain],
-    ['beat', t.skillNames['rhythm-dictation']],
-    ['vocal-hold', t.vocalHoldGame],
-    ['choir', t.choirGame],
-  ];
   const run = async (f: (b: RoomBackend) => Promise<string>) => {
     if (!backend) return;
     setBusy(true);

@@ -4,7 +4,8 @@
 // numbers in LTR islands.
 
 import { useCourse } from './courseContext';
-import { COURSE_AREAS, courseOf, type CourseId } from '../engine/courses';
+import { courseOf, type CourseId } from '../engine/courses';
+import { courseLevel, DYN } from '../engine/courseSocial';
 import { ladderFamiliesFor, TECH_DONE_STARS, techStars } from '../engine/ladderFacts';
 import { familyById } from '../engine/drills/plan';
 import { DEFAULT_DRILL_SETTINGS, type FamilyId } from '../engine/drills/types';
@@ -316,29 +317,13 @@ export function TotalsTiles({ tot, lang }: { tot: FrameTotals; lang: Lang }) {
 }
 
 /** Overview: who you are now — overall level, areas and ranks, the month's challenge, your records. */
-/** Dynamics as the level (0.63, design board ProgressPhone): pp … ff from the overall rating. */
-const DYN: { name: string; from: number }[] = [
-  { name: 'pp', from: 0 },
-  { name: 'p', from: 800 },
-  { name: 'mp', from: 950 },
-  { name: 'mf', from: 1100 },
-  { name: 'f', from: 1250 },
-  { name: 'ff', from: 1400 },
-];
-
-function OverviewV2({ lang, ratings, r: overallR, days, progress }: { lang: 'he' | 'en'; ratings: Parameters<typeof domainValue>[0]; r: number | null; days: Record<string, { xp: number }> | undefined; progress: Progress }) {
+function OverviewV2({ lang, ratings, days, progress }: { lang: 'he' | 'en'; ratings: Parameters<typeof domainValue>[0]; days: Record<string, { xp: number }> | undefined; progress: Progress }) {
   const he = lang === 'he';
   // 0.64 (owner): Progress is the active course's — its level, its radar.
   const course = useCourse().active;
   const cdef = courseOf(course);
-  const dom = (d: DomainId) => domainValue(ratings, d);
-  const asR = (v: number | undefined) => (v === undefined ? null : Math.round(600 + v * 1000));
-  const r = course === 'ear' || course === 'exam' ? overallR : asR(dom(COURSE_AREAS[course][0])?.v);
+  const { r, i, next, into } = courseLevel(course, ratings);
   const axes = courseAxes(course, ratings, progress, lang);
-  const i = r === null ? -1 : DYN.reduce((a, d, k) => (r >= d.from ? k : a), 0);
-  const next = i >= 0 && i < DYN.length - 1 ? DYN[i + 1] : null;
-  const span = next && i >= 0 ? next.from - DYN[i].from : 1;
-  const into = next && r !== null && i >= 0 ? Math.max(0, Math.min(1, (r - DYN[i].from) / span)) : 1;
   const val = axes.map((a) => Math.max(0.12, Math.min(1, a.v ?? 0.12)));
   const AX = axes;
   const R = 92;
@@ -446,7 +431,7 @@ export function OverviewView(props: ProgressTabsProps) {
   const peak = ps.peaks?.overall;
   return (
     <div className="ps-view">
-      <OverviewV2 lang={lang} ratings={ratings} r={o?.r ?? null} days={ps.statsDays} progress={progress} />
+      <OverviewV2 lang={lang} ratings={ratings} days={ps.statsDays} progress={progress} />
       <section className="set-card ps-overall">
         <div className="ps-overall-head">
           <div>

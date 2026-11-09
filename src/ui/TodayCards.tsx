@@ -10,6 +10,7 @@ import { Glyph } from './Glyph';
 import { LeagueBadge } from './LeagueBadge';
 import type { Strings } from '../i18n/strings';
 import { WaveMeter } from './WaveMeter';
+import { CourseXpLine } from './CourseLevels';
 
 export function TodayCards({ t, settings, progress, goalXp, signedIn, onLeague }: { t: Strings; settings: Settings; progress: Progress; goalXp: number; signedIn: boolean; onLeague: () => void }) {
   const lang = settings.uiLang;
@@ -51,6 +52,7 @@ export function TodayCards({ t, settings, progress, goalXp, signedIn, onLeague }
                 <LeagueBadge tier={league.tier} size={26} title={t.leagueTiers[league.tier - 1]} />
                 <small>{he ? (days === 1 ? 'עוד יום' : days === 2 ? 'עוד יומיים' : `עוד ${days} ימים`) : `${days} days left`}</small>
               </span>
+              <CourseXpLine history={progress.history} endsAt={league.endsAt} lang={lang} />
             </>
           ) : (
             <>

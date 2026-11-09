@@ -21,6 +21,7 @@ import { midi } from '../speech/midi';
 import { LatencyCalibrate } from './LatencyCalibrate';
 import { AudioOutputPicker } from './AudioOutput';
 import { ProfileCard } from './Profile';
+import type { Ratings } from '../engine/rating';
 import { DEFAULT_PRIVACY, effectivePrivacy, type Preset, type Privacy, type Who } from '../engine/privacy';
 
 interface Props {
@@ -37,6 +38,8 @@ interface Props {
   onPlans?: () => void;
   /** The owner's control panel (admins only). */
   onAdmin?: () => void;
+  /** My ratings: the profile card shows my level in each course. */
+  ratings?: Ratings;
 }
 
 function Seg<T extends string>({
@@ -159,7 +162,7 @@ function MyPath({ t, s, onChange }: { t: Strings; s: Settings; onChange: (p: Par
   );
 }
 
-export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIntake, onMixer, onPlans, onAdmin }: Props) {
+export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIntake, onMixer, onPlans, onAdmin, ratings }: Props) {
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>(listVoices());
   useEffect(() => {
     void voicesReady().then(setVoices);
@@ -325,7 +328,7 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
       {(wide || sec || q) && (
       <div className="set-groups">
         <Group id="account" icon={<SetIcon k="account" />} title={t.account} sub={G.account[lang]}>
-          <ProfileCard lang={lang} s={s} onChange={onChange} />
+          <ProfileCard lang={lang} s={s} onChange={onChange} ratings={ratings} />
           {(onPlans || onAdmin) && (
             <div className="row" style={{ flexWrap: 'wrap', gap: 8 }}>
               {onPlans && (

@@ -22,6 +22,9 @@ export interface FriendRow {
   avatar_icon?: string | null;
   avatar_color?: string | null;
   has_photo?: boolean | null;
+  /** My level in each course, e.g. {"bass":"mf","ear":"f"} (20261127 migration; absent on older servers, null for
+   *  pending rows, {} until that player's app sends it). */
+  course_levels?: Record<string, string> | null;
 }
 
 export interface MyProfile {
@@ -169,13 +172,15 @@ export interface ProfilePatch {
   photo?: boolean | null;
   privacy?: unknown;
   birthYear?: number | null;
+  /** My level per course (pp … ff); undefined = not sent. */
+  courseLevels?: Record<string, string>;
 }
 
 /** Save my profile on the server. Throws 'nickname: taken' / 'nickname: once per 30 days' for the nickname. */
 export async function setProfile(p: ProfilePatch): Promise<void> {
   const sb = supabase();
   if (!sb) return;
-  const { error } = await sb.rpc('toneturn_set_profile', {
+  const args = {
     p_nickname: p.nickname ?? null,
     p_country: p.country === undefined ? null : (p.country ?? ''),
     p_icon: p.icon ?? null,
@@ -183,9 +188,19 @@ export async function setProfile(p: ProfilePatch): Promise<void> {
     p_photo: p.photo ?? null,
     p_privacy: p.privacy ?? null,
     p_birth_year: p.birthYear ?? null,
-  });
+  };
+  if (p.courseLevels) {
+    const { error } = await sb.rpc('toneturn_set_profile', { ...args, p_course_levels: p.courseLevels });
+    // A server before the course-levels migration has no such argument: save the rest as before.
+    if (!error) return;
+    if (!isMissingArg(error)) throw error;
+  }
+  const { error } = await sb.rpc('toneturn_set_profile', args);
   if (error) throw error;
 }
+
+/** PostgREST "no function with these arguments" (an older server). */
+export const isMissingArg = (e: { code?: string; message?: string }) => e.code === 'PGRST202' || /could not find the function|p_course_levels/i.test(e.message ?? '');
 
 /** Is a nickname free (case-insensitive)? null = can't tell (offline / signed out). */
 export async function nicknameFree(n: string): Promise<boolean | null> {
