@@ -1,6 +1,8 @@
 // 0.37 "night arcade" pieces (docs/ui-redesign.md): tab bar, level ring, what's-new gift, today's mission,
 // domain tiles, the path as a winding road, and the Play hub.
 
+import { useCourse } from './courseContext';
+import type { CourseId } from '../engine/courses';
 import { Icon } from './icons';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { levelOf } from '../engine/level';
@@ -625,6 +627,9 @@ export const GAMES2: { id: 'drills' | 'highway' | 'flight' | 'melodypuzzle' | 'n
 export interface PracticeHub {
   songs: () => void;
   drills: () => void;
+  /** Voice course (0.61): vocal technique and sing-along take the technique / songs rows. */
+  vocal?: () => void;
+  singalong?: () => void;
   lessons: () => void;
   tuner: () => void;
   metronome: () => void;
@@ -779,10 +784,26 @@ export const PRACTICE_GROUPS: { id: 'play' | 'train' | 'study'; name: { en: stri
   { id: 'train', name: { en: 'Train', he: 'להתאמן' }, items: ['drills', 'improv', 'games'] },
   { id: 'study', name: { en: 'Study', he: 'ללמוד' }, items: ['lessons', 'exams', 'puzzle'] },
 ];
+/** What Practice shows in each course (0.61, SPEC-COURSES): only the course's own rows; tools are shared. */
+export const COURSE_ROWS: Record<CourseId, string[]> = {
+  ear: ['lessons', 'puzzle', 'games'],
+  voice: ['drills', 'songs', 'games'],
+  keys: ['drills', 'pieces', 'songs', 'games'],
+  guitar: ['drills', 'songs', 'pieces', 'games'],
+  bass: ['drills', 'songs', 'games'],
+  jazz: ['charts', 'improv', 'games'],
+  exam: ['exams', 'lessons', 'puzzle', 'games'],
+};
+/** The games list opens on the course's own category. */
+export const COURSE_GAME_CAT: Record<CourseId, GameCat> = { ear: 'ear', voice: 'voice', keys: 'instrument', guitar: 'instrument', bass: 'instrument', jazz: 'ear', exam: 'read' };
+const VOICE_TX: Record<string, { en: [string, string]; he: [string, string] }> = {
+  drills: { en: ['Vocal technique', 'Range, breath, long tones, agility'], he: ['טכניקה קולית', 'מנעד, נשימה, צליל ארוך, גמישות'] },
+  songs: { en: ['Sing along', 'Real songs in your key, with a guide voice'], he: ['שירה עם שירים', 'שירים אמיתיים בטונליות שלך, עם קול מוביל'] },
+};
 const ROW_TX: Record<string, { en: [string, string]; he: [string, string] }> = {
   songs: { en: ['Songs', 'Play and sing real songs — by the chords you know'], he: ['שירים', 'לנגן ולשיר שירים אמיתיים — לפי האקורדים שאתם מכירים'] },
   pieces: { en: ['My pieces', 'Bring a score; the coach takes you to tempo'], he: ['היצירות שלי', 'מעלים תווים; המאמן מביא אתכם לטמפו'] },
-  charts: { en: ['Charts & lead sheets', 'Backing tracks, standards, import a lead sheet'], he: ['מהלכים וליד־שיטים', 'ליווי, סטנדרטים, ייבוא ליד־שיט'] },
+  charts: { en: ['Charts & lead sheets', 'Backing tracks, standards, import a lead sheet'], he: ['מהלכים ודפי אקורדים', 'ליווי, סטנדרטים, ייבוא דף אקורדים'] },
   drills: { en: ['Technique', 'Your instrument and your voice, level by level'], he: ['טכניקה', 'הכלי שלכם והקול שלכם, שלב אחר שלב'] },
   improv: { en: ['Improvise', 'Under rules, phrasing, trading fours'], he: ['אלתור', 'עם כללים, פרייזינג, חילופי ארבע'] },
   games: { en: ['Games', 'Ear, rhythm and memory games'], he: ['משחקים', 'משחקי שמיעה, קצב וזיכרון'] },
@@ -792,6 +813,8 @@ const ROW_TX: Record<string, { en: [string, string]; he: [string, string] }> = {
 };
 
 export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline, onGhost, onDaily, onPuzzle, onGame2, lang = 'en', hub, status }: { status?: Partial<Record<string, string>>; t: Strings; progress: Progress; onGame: (k: GameKind) => void; onTrueFalse: () => void; onDuel: () => void; onOnline: () => void; onGhost: () => void; onDaily: () => void; onPuzzle: () => void; onGame2?: (id: (typeof GAMES2)[number]['id']) => void; lang?: 'he' | 'en'; hub?: PracticeHub }) {
+  const course = useCourse().active;
+  const rows = COURSE_ROWS[course];
   // Status of the weekly puzzle and the daily challenge (moved here from the old Home tools, 0.41).
   const daily = progress.daily?.[localDay(new Date())];
   const pz = progress.puzzles?.[weekId(new Date())];
@@ -815,9 +838,9 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
   };
   const [cat, setCat] = useState<GameCat | 'all'>(() => {
     try {
-      return (sessionStorage.getItem('toneturn.playcat') as GameCat | 'all' | null) ?? 'all';
+      return (sessionStorage.getItem('toneturn.playcat') as GameCat | 'all' | null) ?? COURSE_GAME_CAT[course];
     } catch {
-      return 'all';
+      return COURSE_GAME_CAT[course];
     }
   });
   const pickCat = (c: GameCat | 'all') => {
@@ -855,20 +878,25 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
       )}
       {hub && !games && (
         <section className="practice-hub" data-practice-hub="1">
-          {PRACTICE_GROUPS.map((g) => (
+          {PRACTICE_GROUPS.filter((g) => g.items.some((k) => rows.includes(k))).map((g) => (
             <section key={g.id} className="hub-group" aria-label={g.name[lang]} data-hub-group={g.id} id={`practice-${g.id}`}>
               <h2 className="hub-group-h">{g.name[lang]}</h2>
               <div className="hub-rows">
                 {g.items
-                  .filter((k) => k === 'games' || hub[k as keyof PracticeHub])
+                  .filter((k) => rows.includes(k) && (k === 'games' || hub[k as keyof PracticeHub]))
                   .map((k) => (
-                    <button key={k} className="hub-row" onClick={k === 'games' ? () => showGames(true) : (hub[k as keyof PracticeHub] as () => void)} data-hub={k}>
+                    <button
+                      key={k}
+                      className="hub-row"
+                      onClick={k === 'games' ? () => showGames(true) : course === 'voice' && k === 'drills' && hub.vocal ? hub.vocal : course === 'voice' && k === 'songs' && hub.singalong ? hub.singalong : (hub[k as keyof PracticeHub] as () => void)}
+                      data-hub={k}
+                    >
                       <span className="hub-icon">
                         <HubIcon k={k} />
                       </span>
                       <span className="hub-text">
-                        <b>{ROW_TX[k][lang][0]}</b>
-                        <small>{ROW_TX[k][lang][1]}</small>
+                        <b>{(course === 'voice' && VOICE_TX[k] ? VOICE_TX[k] : ROW_TX[k])[lang][0]}</b>
+                        <small>{(course === 'voice' && VOICE_TX[k] ? VOICE_TX[k] : ROW_TX[k])[lang][1]}</small>
                       </span>
                       {status?.[k] && (
                         <span className="hub-status" data-hub-status={k}>

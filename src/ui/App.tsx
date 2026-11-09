@@ -1,6 +1,7 @@
 import { CourseContext } from './courseContext';
 import { CourseSheet } from './CourseSwitcher';
-import { switchCourse, type CourseId } from '../engine/courses';
+import { COURSE_AREAS, courseOf, switchCourse, type CourseId } from '../engine/courses';
+import { AREAS as INTAKE_AREAS } from '../engine/intake';
 import { miniForSkill } from '../content/refresher';
 import { CHALLENGES } from '../engine/improvRules';
 import { InsightsScreen } from './Insights';
@@ -954,7 +955,10 @@ export function App() {
   const tmplRaw = s.workoutTemplates?.[String(now0.getDay())] ?? s.workoutTemplates?.all ?? null;
   const suggestedWorkout = useMemo(() => {
     const tmpl = tmplRaw ? validateTemplate(tmplRaw, { leaveOut: s.pathLeaveOut ?? [], topics: new Set(Object.keys(TOPIC_GEN)), hidden: s.pathHidden ?? [], games: new Set(GAMES2.map((g) => g.id)) }) : null;
-    return suggestWorkout({ total: tmpl ? tmpl.reduce((a, b) => a + b.minutes, 0) : baseMinutes, goal: s.goal ?? 'general', priorities: (s.intake as Intake | null | undefined)?.priorities ?? null, leaveOut: s.pathLeaveOut ?? [], reviewsDue: new Set(dueReviews(progress.review, now0).map((r) => r.key)).size, singer: s.mode === 'voice' && !s.noSing && !s.noMic, view: pathView, template: tmpl, technique: s.drills?.inWorkout !== false && (!!s.midiInput || s.instrument === 'keys' || s.instrument === 'guitar' || s.instrument === 'bass' || ((s.intake as Intake | null | undefined)?.plays ?? []).includes('keys')) });
+    // 0.61 (SPEC-COURSES): the workout belongs to the active course — its own areas, its goal, its warm-ups only.
+    const course = courseOf(s.activeCourse);
+    const own = COURSE_AREAS[course.id];
+    return suggestWorkout({ total: tmpl ? tmpl.reduce((a, b) => a + b.minutes, 0) : baseMinutes, goal: course.goal, priorities: (s.intake as Intake | null | undefined)?.priorities ?? null, leaveOut: [...new Set([...(s.pathLeaveOut ?? []).filter((d) => course.id === 'ear' || course.id === 'exam' || !own.includes(d)), ...INTAKE_AREAS.filter((d) => !own.includes(d))])], reviewsDue: new Set(dueReviews(progress.review, now0).map((r) => r.key)).size, singer: course.id === 'voice' && !s.noMic, view: pathView, template: tmpl, technique: s.drills?.inWorkout !== false && (course.id === 'keys' || course.id === 'guitar' || course.id === 'bass') });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathView, baseMinutes, tmplRaw, s.goal, s.pathLeaveOut, s.pathHidden, s.mode, s.noSing, s.noMic, progress.review.length, today, progress.history.length]);
   const todayBlocks = s.workoutToday?.day === today ? s.workoutToday.blocks : suggestedWorkout;
@@ -1273,6 +1277,8 @@ export function App() {
           hub={{
             songs: () => go('songs'),
             drills: () => go('drills'),
+            vocal: () => go('vocal'),
+            singalong: () => go('singalong'),
             lessons: () => go('learned'),
             tuner: () => go('tuner'),
             metronome: () => go('metronome'),

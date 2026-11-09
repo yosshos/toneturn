@@ -3,6 +3,7 @@
 // path input of a course, the courses a player starts with, and switching (the active course's path facts live in
 // Settings.pathFacts so every existing caller keeps working; the others wait in pathFactsBy).
 import type { Goal, PathInput, PathStep, PathFacts, Pack } from './path';
+import type { DomainId } from './rating';
 
 export type CourseId = 'ear' | 'voice' | 'keys' | 'guitar' | 'bass' | 'jazz' | 'exam';
 
@@ -30,6 +31,17 @@ export const COURSES: CourseDef[] = [
 ];
 export const COURSE_IDS = COURSES.map((c) => c.id);
 export const courseOf = (id: string | null | undefined): CourseDef => COURSES.find((c) => c.id === id) ?? COURSES[0];
+
+/** The areas a course's workout may draw "area" blocks from (the path itself is already the course's). */
+export const COURSE_AREAS: Record<CourseId, DomainId[]> = {
+  ear: ['pitch', 'time', 'memory', 'reading'],
+  exam: ['pitch', 'time', 'memory', 'reading'],
+  voice: ['voice'],
+  keys: ['instrument'],
+  guitar: ['instrument'],
+  bass: ['instrument'],
+  jazz: ['creative'],
+};
 
 const INSTR: Record<string, CourseId> = { keys: 'keys', piano: 'keys', guitar: 'guitar', bass: 'bass' };
 
