@@ -62,6 +62,7 @@ const BY_COURSE: Record<CourseId, string[]> = {
   keys: ['tech3', 'steps2', 'min10'],
   guitar: ['tech3', 'steps2', 'min10'],
   bass: ['tech3', 'steps2', 'min10'],
+  drums: ['tech3', 'rhythm', 'steps2', 'min10'],
 };
 
 /** Today's two quests for the course. */

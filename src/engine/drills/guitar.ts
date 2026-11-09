@@ -10,6 +10,7 @@ import { noteAt, tuningById, type Tuning } from '../fretboard';
 import { SONGBOOK, songChords, songNotes } from '../../content/songbook';
 import { bassFamilies, generateBass } from './bass';
 import { BASS_PROBES } from './bassProbes';
+import { drumFamilies } from './drums';
 
 export type GuitarStyle = NonNullable<DrillSettings['guitarStyle']>;
 export type GuitarTechnique = NonNullable<ExpNote['technique']>;
@@ -17,7 +18,7 @@ export type Stroke = NonNullable<ExpNote['stroke']>;
 
 /** A guitar family: the piano FamilyDef plus the genres it serves and the instruments it is shown for. */
 export interface GuitarFamilyDef extends FamilyDef {
-  instruments: ('guitar' | 'bass')[];
+  instruments: ('guitar' | 'bass' | 'drums')[];
   /** Genres this family belongs to ('all' families are always shown). */
   genres: GuitarStyle[];
   levels: GuitarLevelDef[];
@@ -2521,6 +2522,8 @@ export function guitarCatalog(): GuitarFamilyDef[] {
     },
     // The bass course (BASS_CURRICULUM §5), in teaching order.
     ...bassFamilies(),
+    // The drums course v1 (DRUMS_CURRICULUM §4.3), in teaching order.
+    ...drumFamilies(),
   ];
 }
 

@@ -14,7 +14,7 @@ const ALL12 = Array.from({ length: 12 }, (_, i) => i);
 /** Every catalogue drill: each level spec through its keys (all 12 for 'major' / 'minor'). */
 function allDrills(): { drill: Drill; spec: DrillSpec }[] {
   const out: { drill: Drill; spec: DrillSpec }[] = [];
-  for (const f of guitarCatalog())
+  for (const f of guitarCatalog().filter((x) => !x.id.startsWith('d-')))
     for (const l of f.levels) {
       const keys = Array.isArray(l.keys) ? l.keys : ALL12;
       for (const k of keys)
@@ -47,10 +47,10 @@ describe('guitar drills: catalogue', () => {
     const cat = guitarCatalog();
     expect(cat.length).toBeGreaterThanOrEqual(12);
     for (const f of cat) {
-      expect(/^[gb]-/.test(f.id)).toBe(true);
+      expect(/^[gbd]-/.test(f.id)).toBe(true);
       expect(f.levels.length).toBeGreaterThan(0);
       // Bass-course families (b-*, BASS_CURRICULUM §5) run up to 12 levels.
-      expect(f.levels.length).toBeLessThanOrEqual(f.id.startsWith('b-') ? 20 : 7);
+      expect(f.levels.length).toBeLessThanOrEqual(f.id.startsWith('b-') || f.id.startsWith('d-') ? 20 : 7);
       f.levels.forEach((l, i) => expect(l.level).toBe(i + 1));
     }
     expect(cat.find((f) => f.id === 'g-bass')?.instruments).toEqual(['bass']);

@@ -236,7 +236,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
         <DrillCreator
           lang={lang}
           edit={view.edit}
-          instrument={ds.instrument ?? 'piano'}
+          instrument={ds.instrument === 'drums' ? 'piano' : (ds.instrument ?? 'piano')}
           settings={ds}
           onSave={(c) => {
             const list = (settings.customDrills ?? []).filter((x) => x.id !== c.id);
@@ -760,7 +760,7 @@ function TechLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, onOct
   const bassRes = useRef<Partial<Record<NonNullable<ReturnType<typeof probeSlot>>, BassProbeResult>>>({});
   const probes = useMemo(() => {
     if (inst === 'bass') return BASS_PROBES.map((p) => ({ id: p.family, drill: generate(p.spec), seeds: p.seeds ?? [], once: p.mode === 'once', slot: probeSlot(p) }));
-    if (inst !== 'piano') return GUITAR_PROBES.filter((p) => p.instruments.includes(inst)).map((p) => ({ id: p.family, drill: generate(p.spec), seeds: p.seeds ?? [], once: false, slot: null }));
+    if (inst !== 'piano') return GUITAR_PROBES.filter((p) => (p.instruments as string[]).includes(inst)).map((p) => ({ id: p.family, drill: generate(p.spec), seeds: p.seeds ?? [], once: false, slot: null }));
     const fams: FamilyId[] = ds.emphasis === 'jazz' ? ['scales', 'harris'] : ds.emphasis === 'classical' ? ['scales', 'fingers'] : ['scales', 'fingers', 'harris'];
     return fams.map((id) => {
       const f = shownFamilies({ emphasis: 'both' }).find((x) => x.id === id)!;
@@ -915,7 +915,8 @@ function OctaveFix({ lang, shift, current, onFix }: { lang: Lang; shift: number;
 
 /** The songbook: each public-domain song with its playable parts for the player's instrument. */
 function SongList({ lang, ds, onRun, known, onKnown }: { lang: Lang; ds: DrillSettings; onRun: (q: Drill[]) => void; known?: string[]; onKnown?: (k: string[]) => void }) {
-  const inst = ds.instrument ?? 'piano';
+  // Songs are melody / chords: drums have none (the drums course has no Songs row).
+  const inst = ds.instrument === 'drums' ? 'piano' : (ds.instrument ?? 'piano');
   const parts = inst === 'piano' ? (['melody', 'chords', 'both'] as const) : inst === 'bass' ? (['melody'] as const) : (['melody', 'chords'] as const);
   // Songbook by the chords you know (0.53): pick your chords; each song shows the key that fits them, or the one new chord.
   const he = lang === 'he';

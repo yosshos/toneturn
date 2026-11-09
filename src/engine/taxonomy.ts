@@ -139,6 +139,7 @@ export const SUB_SKILLS: SubSkill[] = [
   S('instrument', 'piano-tech', 'Piano technique', 'טכניקת פסנתר'),
   S('instrument', 'guitar-tech', 'Guitar technique', 'טכניקת גיטרה'),
   S('instrument', 'bass-tech', 'Bass technique', 'טכניקת בס'),
+  S('instrument', 'drum-tech', 'Drum technique', 'טכניקת תופים'),
   S('timbre', 'eq', 'Frequencies', 'תדרים'),
   S('timbre', 'space', 'Room and echo', 'חלל והד'),
   S('timbre', 'pan', 'Left, right, wide', 'שמאל, ימין, רוחב'),

@@ -30,7 +30,15 @@ export type FamilyId =
   | 'g-impro' // target notes over forms
   | 'g-bass' // bass guitar subset (the 0.4x starter family; kept so old progress ids stay valid)
   // Bass course (docs/research/BASS_CURRICULUM.md §5, F1–F14): instrument bass, pitches SOUNDING MIDI.
-  | BassFamilyId;
+  | BassFamilyId
+  // Drums course (docs/research/DRUMS_CURRICULUM.md §4, v1 = F1–F5, F9, F14): pitches are the GM drum notes of the voices.
+  | DrumFamilyId;
+
+export type DrumFamilyId = 'd-strokes' | 'd-rolls' | 'd-diddles' | 'd-time' | 'd-rock' | 'd-fills' | 'd-read';
+/** A drum voice (DRUMS_CURRICULUM §3): what a hit is, whatever note the kit sends for it. */
+export type DrumVoice = 'kick' | 'snare' | 'rim' | 'hihat' | 'hhOpen' | 'hhPedal' | 'ride' | 'crash' | 'tom1' | 'tom2' | 'tom3';
+/** The limb that plays a drum note (sticking R / L stays in `hand`; feet are RF / LF). */
+export type Limb = 'RH' | 'LH' | 'RF' | 'LF';
 
 export type BassFamilyId =
   | 'b-pluck'
@@ -108,6 +116,17 @@ export interface ExpNote {
   bendCents?: number;
   /** Guitar: picking-hand stroke (help only): pick down / up, or the finger p i m a c (c = little finger / pick+fingers). */
   stroke?: 'D' | 'U' | 'p' | 'i' | 'm' | 'a' | 'c';
+  // ---- drums (0.65): pitch = the voice's GM note; `hand` = the sticking (R / L) ----
+  /** Drums: the voice to hit. */
+  voice?: DrumVoice;
+  /** Drums: the limb (help + per-limb timing). */
+  limb?: Limb;
+  /** Drums: a ghost note (soft, in the player's ghost band). */
+  ghost?: boolean;
+  /** Drums: the dynamic of this stroke (three-level drills). */
+  dyn?: 'p' | 'mf' | 'f';
+  /** Drums: first / second stroke of a double (the second must be ≥ goal.drum.ratio × the first). */
+  dbl?: 1 | 2;
 }
 
 /** What a drill is: everything needed to generate its notes. */
@@ -131,8 +150,8 @@ export interface DrillSpec {
   swing?: boolean;
   /** Inversion / chord tone to start from / level-specific option. */
   option?: number;
-  /** Instrument of the drill (default piano; guitar families imply guitar / bass). */
-  instrument?: 'piano' | 'guitar' | 'bass';
+  /** Instrument of the drill (default piano; guitar families imply guitar / bass; 'd-' families drums). */
+  instrument?: 'piano' | 'guitar' | 'bass' | 'drums';
   /** Guitar: tuning id from fretboard.ts TUNINGS (default 'standard' / 'bass'). */
   tuning?: string;
   /** Guitar: position / shape option (e.g. pentatonic box 1–5, CAGED shape 0–4, 3NPS pattern 0–6). */
@@ -157,7 +176,9 @@ export interface Drill {
   /** Length in beats (the take ends one beat after). */
   beats: number;
   /** Metronome after the count-in (bass time drills): every beat (default), only 2 and 4, only the off-beats, only beat 1, or a click that fades out. */
-  click?: 'all' | '24' | 'and' | 'one' | 'fade';
+  click?: 'all' | '24' | 'and' | 'one' | 'fade' | 'gap';
+  /** Drums time drills (click 'gap'): bars with the click, then bars without, repeating (e.g. [2, 2], [1, 3]). */
+  gap?: [number, number];
   /** Beats per bar (count-in = one bar). */
   meter: number;
   /** Key signature for the staff (major-key tonic name like 'Eb', or 'C' for none). */
@@ -184,6 +205,16 @@ export interface Drill {
   untimed?: { maxMs: number };
   /** B16 upright track: bowed (arco) or plucked (pizz). */
   bow?: 'arco' | 'pizz';
+  /** Drums: what the drill needs and how it is shown (DRUMS_CURRICULUM §3.8, §4.1). */
+  drum?: DrumDrillInfo;
+}
+
+/** Drums: per-drill facts — the verdict tier, whether one surface (a practice pad by microphone) can play it. */
+export interface DrumDrillInfo {
+  /** Verdict tier (§4.1): 1 = beginner (L1–3), 2 = intermediate (L4–7), 3 = advanced (L8+). */
+  tier: 1 | 2 | 3;
+  /** One surface only (snare / pad): the microphone can measure it. Grooves and fills need MIDI. */
+  mic: boolean;
 }
 
 export interface DrillGoal {
@@ -205,6 +236,34 @@ export interface DrillGoal {
   pedal?: { style: 'direct' | 'legato'; changes: number[] };
   /** Bass measures on top of pitch + timing (bassAnalyze.ts); each can only lower the verdict. */
   bass?: BassGoal;
+  /** Drum measures on top of per-limb timing (drumAnalyze.ts); each can only lower the verdict. */
+  drum?: DrumGoal;
+}
+
+/** Drum pass rules (DRUMS_CURRICULUM §4.2): absent = the tier's timing / hit-rate / wrong-voice rules only. */
+export interface DrumGoal {
+  /** Velocity CV across the take ≤ this (even strokes, e.g. 0.15). */
+  velCv?: number;
+  /** R / L velocity balance: |mean R − mean L| / mean ≤ this (e.g. 0.1). */
+  balance?: number;
+  /** Notes marked `dyn` land in their band (p / mf / f, from the calibration): share ≥ this. */
+  levels?: number;
+  /** Accent gap ≥ this share of the player's soft → loud range (e.g. 0.35). */
+  accentGap?: number;
+  /** Taps (unaccented) velocity CV ≤ this. */
+  tapCv?: number;
+  /** Accents on the right notes (and only there): share ≥ this. */
+  accentPos?: number;
+  /** Ghost notes inside the ghost band: share ≥ this. */
+  ghost?: number;
+  /** Doubles: the second stroke ≥ this × the first (share of doubles ≥ 0.85). */
+  ratio?: number;
+  /** Hi-hat open / closed on the right steps (open-hat notes open, the others closed). */
+  hat?: boolean;
+  /** Landing after fills: the crash + kick on these beats within ±ms. */
+  landing?: { beats: number[]; ms: number };
+  /** Gap-click bars: the mean offset of the hits in the silent bars within ±ms. */
+  gapMs?: number;
 }
 
 /** Bass-specific pass rules (BASS_CURRICULUM §4–§5). Absent = the default pitch + timing rule only. */
@@ -362,6 +421,41 @@ export interface TakeMetrics {
   pedal?: { ok: number; total: number; pass: boolean };
   /** Free-choice drills (goal.bass.rules, A5): per-slot labels and the worst bar for the "Why?" line. */
   rules?: TakeRules;
+  /** Drums (drumAnalyze.ts): per-limb timing, wrong voices, dynamics, hat, landing. */
+  drum?: DrumMetrics;
+}
+
+/** What a drum take measured (DRUMS_CURRICULUM §3.6). */
+export interface DrumMetrics {
+  /** Per limb: mean signed offset (+ = late), SD, notes matched / expected. */
+  limbs: { limb: Limb; mean: number | null; sd: number | null; n: number; of: number }[];
+  /** Per voice: mean offset and notes matched / expected (for the one-line feedback). */
+  voices: { voice: DrumVoice; mean: number | null; n: number; of: number }[];
+  /** Hits inside the window / expected notes. */
+  hitRate: number;
+  /** Hits on another voice where a note was due (share of expected notes). */
+  wrongVoice: number;
+  /** Extra hits (no note due). */
+  extra: number;
+  /** The tier's window (ms) used for this take. */
+  windowMs: number;
+  velCv: number | null;
+  balance: number | null;
+  levels: number | null;
+  accentGap: number | null;
+  tapCv: number | null;
+  accentPos: number | null;
+  ghost: number | null;
+  ratio: number | null;
+  /** Open-hat steps played open, closed steps played closed (shares). */
+  hatOpen: number | null;
+  hatClosed: number | null;
+  /** Landing offsets after each fill (ms, null = no crash / kick there). */
+  landing: (number | null)[];
+  /** Mean offset in the silent click bars. */
+  gapMean: number | null;
+  /** The rules missed (ids), for the "Why?" expander. */
+  missed: string[];
 }
 
 /** Progress of one item (synced, small). */
@@ -455,7 +549,9 @@ export interface DrillSettings {
   inPath: boolean;
   inWorkout: boolean;
   /** Instrument of the Drills hub (default piano). */
-  instrument?: 'piano' | 'guitar' | 'bass';
+  instrument?: 'piano' | 'guitar' | 'bass' | 'drums';
+  /** Drums: notation (percussion staff) or lanes (default notation). */
+  drumView?: 'staff' | 'lanes';
   /** Guitar: genre filter (like the piano emphasis); 'all' or absent = every family. */
   guitarStyle?: 'all' | 'rock' | 'blues' | 'metal' | 'pop' | 'funk' | 'country' | 'jazz' | 'classical' | 'fingerstyle' | 'flamenco' | 'reggae' | 'latin';
   /** Guitar: what the drill shows — tab, notation, or both (default tab). */

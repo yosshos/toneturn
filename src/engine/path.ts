@@ -46,7 +46,7 @@ export interface PathStep {
   game?: string;
   /** 0.61 (owner): a level of a measured ladder — a technique family level ('tech') or a vocal program level ('vocal').
    * family = drill family id / vocal program; ref = the drill level id ("scales-3") or the vocal level number ("103"). */
-  ladder?: { family: string; level: number; ref: string; instrument?: 'piano' | 'guitar' | 'bass' };
+  ladder?: { family: string; level: number; ref: string; instrument?: 'piano' | 'guitar' | 'bass' | 'drums' };
   title: { en: string; he: string };
 }
 
@@ -299,10 +299,13 @@ function ladderSteps(): PathStep[] {
     f.levels.forEach((lv, i) =>
       out.push({ id: `tech:${lv.id}`, kind: 'tech', ladder: { family: f.id, level: lv.level, ref: lv.id, instrument: 'piano' }, skill: 'instrument', sub: 'instrument/piano-tech', domain: 'instrument', difficulty: diff(i), choices: 0, forPlays: ['keys', 'piano'], title: { en: `${f.title.en} · ${lv.title.en}`, he: `${f.title.he} · ${lv.title.he}` } }),
     );
-  for (const f of guitarCatalog())
+  for (const f of guitarCatalog()) {
+    // Drums (0.65): the drum families are path steps of the drums course (forPlays 'drums' → inCourse).
+    const inst = f.instruments.includes('guitar') ? 'guitar' : f.instruments.includes('drums') ? 'drums' : 'bass';
     f.levels.forEach((lv, i) =>
-      out.push({ id: `tech:${lv.id}`, kind: 'tech', ladder: { family: f.id, level: lv.level, ref: lv.id, instrument: f.instruments.includes('guitar') ? 'guitar' : 'bass' }, skill: 'instrument', sub: f.instruments.includes('guitar') ? 'instrument/guitar-tech' : 'instrument/bass-tech', domain: 'instrument', difficulty: diff(i), choices: 0, forPlays: [...f.instruments], title: { en: `${f.title.en} · ${lv.title.en}`, he: `${f.title.he} · ${lv.title.he}` } }),
+      out.push({ id: `tech:${lv.id}`, kind: 'tech', ladder: { family: f.id, level: lv.level, ref: lv.id, instrument: inst }, skill: 'instrument', sub: `instrument/${inst === 'drums' ? 'drum' : inst}-tech`, domain: 'instrument', difficulty: diff(i), choices: 0, forPlays: [...f.instruments], title: { en: `${f.title.en} · ${lv.title.en}`, he: `${f.title.he} · ${lv.title.he}` } }),
     );
+  }
   for (const pr of VOCAL_PROGRAMS)
     pr.levels.forEach((_, i) => {
       const n = pr.base + i + 1;
