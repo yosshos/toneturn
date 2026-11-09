@@ -53,7 +53,7 @@ export function buzz(kind: 'good' | 'bad') {
 // ---------------------------------------------------------------------------------------------- tab bar
 
 export type TabId = 'home' | 'path' | 'skills' | 'arcade' | 'friends';
-export const TAB_ROUTES: TabId[] = ['home', 'path', 'skills', 'arcade', 'friends']
+export const TAB_ROUTES: TabId[] = ['home', 'path', 'arcade', 'skills', 'friends']
 
 export const TAB_ICONS: Record<TabId, React.ReactNode> = {
   // Today (SPEC-TODAY): a calendar page showing today's date.
@@ -66,20 +66,21 @@ export const TAB_ICONS: Record<TabId, React.ReactNode> = {
       </text>
     </>
   ),
+  // 0.61: the path is a melody on a staff; Practice is two beamed notes.
   path: (
     <>
-      <circle cx="6" cy="18" r="2.4" />
-      <circle cx="18" cy="6" r="2.4" />
-      <path d="M8.4 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.6" />
+      <path d="M2 8h20M2 12h20M2 16h20" opacity=".45" />
+      <ellipse cx="7" cy="16" rx="2.4" ry="1.8" fill="currentColor" stroke="none" />
+      <ellipse cx="13" cy="12" rx="2.4" ry="1.8" fill="currentColor" stroke="none" />
+      <ellipse cx="19" cy="8" rx="2.4" ry="1.8" fill="currentColor" stroke="none" />
     </>
   ),
   skills: <path d="M5 21V12M12 21V4M19 21v-7" />,
   arcade: (
     <>
-      <rect x="2.5" y="7" width="19" height="11" rx="5" />
-      <path d="M7.5 10.5v4M5.5 12.5h4" />
-      <circle cx="15.5" cy="11.5" r="1" fill="currentColor" />
-      <circle cx="18" cy="13.5" r="1" fill="currentColor" />
+      <path d="M9 18V6l10-2v12" />
+      <circle cx="6.5" cy="18" r="2.5" fill="currentColor" />
+      <circle cx="16.5" cy="16" r="2.5" fill="currentColor" />
     </>
   ),
   friends: (

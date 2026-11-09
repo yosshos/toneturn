@@ -878,6 +878,9 @@ function markOf(v: LessonView, c: unknown): string {
 function FeedbackBanner({ v, t, lang, settings }: { v: LessonView; t: Strings; lang: 'he' | 'en'; settings: Settings }) {
   const f = v.feedback;
   const fk = f?.kind;
+  // 0.61 (owner 2026-11-09): one line of feedback; on a wrong answer the detail opens from "Why?".
+  const [why, setWhy] = useState(false);
+  useEffect(() => setWhy(false), [v.index, fk]);
   useEffect(() => {
     if (fk === 'correct' || fk === 'correct-retry') buzz('good');
     else if (fk === 'retry' || fk === 'reveal') buzz('bad');
@@ -918,15 +921,10 @@ function FeedbackBanner({ v, t, lang, settings }: { v: LessonView; t: Strings; l
     default:
       text = t.unclear;
   }
-  return (
-    <div className={`feedback ${f.kind}`} aria-live="assertive">
-      {(f.kind === 'correct' || f.kind === 'correct-retry') && (f.xp ?? 0) > 0 && (
-        <span className="xp-fly" dir="ltr" aria-hidden="true" key={`xp${v.index}`}>
-          +{f.xp} XP
-        </span>
-      )}
-      <b>{text}</b>
-      {f.coach && <span className="coach-line">💬 {f.coach}</span>}
+  const bad = f.kind === 'retry' || f.kind === 'reveal';
+  const detail = (
+    <>
+      {f.coach && <span className="coach-line">{f.coach}</span>}
       {f.sung && f.sung.cents !== null && (
         <small dir="ltr">
           {f.sung.cents > 0 ? '+' : ''}
@@ -940,6 +938,28 @@ function FeedbackBanner({ v, t, lang, settings }: { v: LessonView; t: Strings; l
           {t.heard}: “{v.heard}”
         </small>
       )}
+    </>
+  );
+  const hasDetail = !!(f.coach || f.readHits || (f.sung && f.sung.cents !== null) || v.heard || f.timeMs != null);
+  return (
+    <div className={`feedback ${f.kind} ${bad ? 'is-bad' : ''}`} aria-live="assertive">
+      {(f.kind === 'correct' || f.kind === 'correct-retry') && (f.xp ?? 0) > 0 && (
+        <span className="xp-fly" dir="ltr" aria-hidden="true" key={`xp${v.index}`}>
+          +{f.xp} XP
+        </span>
+      )}
+      <div className="fb-line">
+        <b>{text}</b>
+        {bad && hasDetail && (
+          <button className="why-btn" aria-expanded={why} onClick={() => setWhy((w) => !w)} data-why="1">
+            {lang === 'he' ? 'למה?' : 'Why?'}
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" aria-hidden="true">
+              <path d={why ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6'} />
+            </svg>
+          </button>
+        )}
+      </div>
+      {(!bad || why) && <div className={`fb-detail ${bad ? 'open' : ''}`}>{detail}</div>}
     </div>
   );
 }

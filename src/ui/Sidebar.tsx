@@ -80,53 +80,22 @@ const ICON = {
   collapse: I(<path d="M15 6l-6 6 6 6M20 4v16" />),
 };
 
+// 0.61 (SPEC-REDESIGN NavMap): the four screens of the active course first (their contents follow the course), then
+// what every course shares, then the tools. Songs, pieces, charts, technique… now live inside Practice, per course.
 const SECTIONS: Section[] = [
   { id: 'home', label: { en: 'Today', he: 'היום' }, icon: TAB_ICONS.home },
   { id: 'path', label: { en: 'Path', he: 'מסלול' }, icon: TAB_ICONS.path },
-  // Play / Train / Study (SPEC-IA-2, owner 2026-11-09): the same four groups as the Practice page
-  {
-    id: 'songs',
-    group: true,
-    label: { en: 'Play', he: 'לנגן' },
-    icon: ICON.play,
-    children: [
-      { id: 'songs', label: { en: 'Songs', he: 'שירים' } },
-      { id: 'pieces', label: { en: 'My pieces', he: 'היצירות שלי' } },
-      { id: 'charts', label: { en: 'Charts & lead sheets', he: 'מהלכים וליד־שיטים' } },
-    ],
-  },
-  {
-    id: 'drills',
-    group: true,
-    label: { en: 'Train', he: 'להתאמן' },
-    icon: ICON.train,
-    children: [
-      { id: 'drills', label: { en: 'Technique', he: 'טכניקה' } },
-      { id: 'improv', label: { en: 'Improvise', he: 'אלתור' } },
-      { id: 'gamelist', label: { en: 'Games', he: 'משחקים' } },
-    ],
-  },
-  {
-    id: 'learned',
-    group: true,
-    label: { en: 'Study', he: 'ללמוד' },
-    icon: ICON.cap,
-    children: [
-      { id: 'learned', label: { en: 'Lessons', he: 'שיעורים' } },
-      { id: 'exams', label: { en: 'Programs & exams', he: 'תכניות לימוד ומבחנים' } },
-      { id: 'puzzle', label: { en: 'Progression of the day', he: 'מהלך היום' } },
-    ],
-  },
+  { id: 'arcade', label: { en: 'Practice', he: 'תרגול' }, icon: TAB_ICONS.arcade },
   {
     id: 'skills',
     label: { en: 'Progress', he: 'התקדמות' },
     icon: TAB_ICONS.skills,
-    children: [
-      { id: 'insights', label: { en: 'Insights', he: 'תובנות' } },
-      { id: 'achievements', label: { en: 'Achievements', he: 'הישגים' } },
-    ],
+    children: [{ id: 'insights', label: { en: 'Insights', he: 'תובנות' } }],
   },
-  { id: 'friends', label: { en: 'Community', he: 'קהילה' }, icon: TAB_ICONS.friends },
+];
+const SHARED: Section[] = [
+  { id: 'friends', label: { en: 'Community & league', he: 'קהילה וליגה' }, icon: TAB_ICONS.friends },
+  { id: 'achievements', label: { en: 'Achievements', he: 'הישגים' }, icon: ICON.cap },
 ];
 const TOOLS: Section = {
   id: 'tuner',
@@ -146,8 +115,8 @@ const TOOLS: Section = {
 
 /** Which section a screen belongs to (for the highlight and the open section). */
 export function sectionOf(route: string): NavId | 'tools' | null {
-  for (const s of SECTIONS) if (s.id === route || s.children?.some((c) => c.id === route)) return s.id;
-  if (route === 'games' || route === 'arcade') return 'drills';
+  for (const s of [...SECTIONS, ...SHARED]) if (s.id === route || s.children?.some((c) => c.id === route)) return s.id;
+  if (['games', 'songs', 'pieces', 'charts', 'drills', 'improv', 'learned', 'exams', 'puzzle', 'vocal', 'singalong'].includes(route)) return 'arcade';
   if (TOOLS.children!.some((c) => c.id === route)) return 'tools';
   if (route === 'settings' || route === 'diagnostics') return route;
   return null;
@@ -249,7 +218,7 @@ export function Sidebar({ route, lang, onNav, badges, me }: { route: string; lan
     <nav className={`side-nav ${collapsed ? 'collapsed' : ''}`} aria-label={lang === 'he' ? 'ניווט' : 'Navigation'} data-side-nav="1">
       <div className="sn-brand" dir="ltr">
         <span className="sn-logo" aria-hidden="true">
-          <Logo bare size={32} />
+          <Logo bare size={32} onDark />
         </span>
         <span className="sn-label sn-word">
           The 7<span className="wordmark-th">th</span> Sense
@@ -265,25 +234,12 @@ export function Sidebar({ route, lang, onNav, badges, me }: { route: string; lan
         <kbd className="sn-label">Ctrl K</kbd>
       </button>
       <div className="sn-list">
+        <div className="sn-cap">{lang === 'he' ? 'הקורס' : 'Course'}</div>
         {SECTIONS.map((s) => section(s, s.id))}
+        <div className="sn-cap">{lang === 'he' ? 'של כולם' : 'Shared'}</div>
+        {SHARED.map((s) => section(s, s.id))}
         <div className="sn-hr" />
         {section(TOOLS, 'tools')}
-        <div className="sn-sec">
-          <div className="sn-row">
-            <button className="sn-item" onClick={() => onNav('placement')} title={lang === 'he' ? 'בדיקת רמה' : 'Find my level'} data-nav="placement">
-              {svg(ICON.check)}
-              <span className="sn-label">{lang === 'he' ? 'בדיקת רמה' : 'Find my level'}</span>
-            </button>
-          </div>
-        </div>
-        <div className={`sn-sec ${lit === 'diagnostics' ? 'on' : ''}`}>
-          <div className="sn-row">
-            <button className={`sn-item ${route === 'diagnostics' ? 'current' : ''}`} onClick={() => onNav('diagnostics')} title={lang === 'he' ? 'בדיקת מיקרופון וצליל' : 'Mic & sound check'} data-nav="diagnostics">
-              {svg(ICON.mic)}
-              <span className="sn-label">{lang === 'he' ? 'בדיקת מיקרופון וצליל' : 'Mic & sound check'}</span>
-            </button>
-          </div>
-        </div>
         <div className="sn-hr" />
         <div className={`sn-sec ${lit === 'settings' ? 'on' : ''}`}>
           <div className="sn-row">

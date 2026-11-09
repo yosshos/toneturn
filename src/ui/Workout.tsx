@@ -1,6 +1,9 @@
 // Today's workout (spec AH): the first card on Home, a calm editor (W17), and the run screen for blocks that are
 // not lessons (practice timer, game, vocal) plus the end summary with one-tap feedback (W11).
 
+import { Toni } from './Toni';
+import { Iso } from './Iso';
+import { WaveMeter } from './WaveMeter';
 import { Icon } from './icons';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Strings } from '../i18n/strings';
@@ -155,44 +158,57 @@ export function WorkoutCard({ t, lang, blocks, run, nextLine, edited, onStart, o
   const leftMin = run && !run.finished ? Math.ceil(runLeftMs(run) / 60000) : total(blocks);
   const at = run && !run.finished ? run.at : -1;
   const pct = goal ? Math.min(1, goal.todayXp / Math.max(1, goal.goalXp)) : 0;
+  // 0.61 (SPEC-REDESIGN, "Today"): the workout is the hero — purple, a staff behind, Toni, one lemon button.
+  const he = lang === 'he';
+  const bubble = active ? fill(tx.left, { m: leftMin }) : goal && goal.todayXp > 0 && pct < 1 ? (he ? 'עוד קצת, והיעד של היום מושלם.' : 'A little more and today’s goal is done.') : he ? 'מוכנים? בוא נתחיל.' : 'Ready? Let’s go.';
   return (
-    <section className="wk-card wk-calm" aria-label={tx.title}>
+    <section className="wk-card wk-hero" aria-label={tx.title}>
+      <svg className="wk-staff" viewBox="0 0 390 120" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M0 30H390M0 46H390M0 62H390M0 78H390M0 94H390" />
+      </svg>
       <div className="wk-head">
-        <small className="wk-kicker">
-          {tx.title} · <span dir="ltr">{total(blocks)} {tx.min}</span>
-        </small>
+        <div className="wk-toni">
+          <Toni state={active ? 'hint' : 'idle'} size={92} />
+          <span className="wk-bubble">{bubble}</span>
+        </div>
         <button className="icon-btn wk-edit" onClick={onEdit} aria-label={tx.edit}>
-          ✎
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M4 20h4L19 9l-4-4L4 16z" />
+          </svg>
         </button>
       </div>
-      {nextLine && <h2 className="wk-next">{nextLine}</h2>}
-      <ol className="wk-steps">
+      <h2 className="wk-title">
+        <Iso text={nextLine ?? tx.title} />
+      </h2>
+      <p className="wk-line">
         {blocks.map((b, i) => (
-          <li key={b.id} className={i < at ? 'done' : i === at || (at < 0 && i === 0) ? 'now' : ''}>
-            <span className="wk-n" aria-hidden="true">
-              {i < at ? '✓' : i + 1}
-            </span>
-            <span className="wk-label">{blockLabel(t, b.target, lang)}</span>
-            <span className="wk-m" dir="ltr">
-              {b.minutes}′
-            </span>
-          </li>
-        ))}
-      </ol>
-      <div className="wk-actions">
-        <button className="btn primary wk-start" data-continue="1" onClick={onStart}>
-          ▶ {active ? `${tx.cont} · ${fill(tx.left, { m: leftMin })}` : tx.start}
-        </button>
-        {goal && (
-          <span className="wk-ring" role="progressbar" aria-valuemin={0} aria-valuemax={goal.goalXp} aria-valuenow={Math.min(goal.todayXp, goal.goalXp)} aria-label={`${t.dailyGoal}: ${goal.todayXp}/${goal.goalXp} ${t.xp}`} style={{ ['--p' as string]: `${pct * 360}deg` }}>
-            <b dir="ltr">{goal.todayXp}</b>
-            <small dir="ltr">/{goal.goalXp}</small>
+          <span key={b.id} className={i < at ? 'done' : i === at || (at < 0 && i === 0) ? 'now' : ''}>
+            {i > 0 && ' · '}
+            {blockLabel(t, b.target, lang)}
           </span>
-        )}
-      </div>
+        ))}
+        <span>
+          {' · '}
+          {total(blocks)} {tx.min}
+        </span>
+      </p>
+      <button className="btn mega wk-start" data-continue="1" onClick={onStart}>
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+          <path d="M7 4v16l13-8z" fill="currentColor" />
+        </svg>
+        {active ? `${tx.cont} · ${fill(tx.left, { m: leftMin })}` : tx.start}
+      </button>
+      {goal && (
+        <div className="wk-goal" role="progressbar" aria-valuemin={0} aria-valuemax={goal.goalXp} aria-valuenow={Math.min(goal.todayXp, goal.goalXp)} aria-label={`${t.dailyGoal}: ${goal.todayXp}/${goal.goalXp} ${t.xp}`}>
+          <WaveMeter value={pct} />
+          <small dir="ltr">
+            {goal.todayXp}/{goal.goalXp} {t.xp}
+          </small>
+        </div>
+      )}
       {edited && (
         <button className="link wk-edited" onClick={onReset}>
-          ✎ {tx.edited} · {tx.reset}
+          {tx.edited} · {tx.reset}
         </button>
       )}
     </section>
