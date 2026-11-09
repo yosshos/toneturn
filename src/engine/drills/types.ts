@@ -181,6 +181,37 @@ export interface BassGoal {
   lengths?: boolean;
   /** Ghost notes ≥ dB quieter than the pitched notes. */
   ghostDb?: number;
+  // ---- 0.64 (BASS_AUDIT §5): shared contract between the measurement track (A) and the content track (B) ----
+  /** Expected dead notes must be unpitched/short and pitched notes pitched: share ≥ this (e.g. 0.9). */
+  ghostClass?: number;
+  /** Free-choice line judged by rules instead of note for note (A5); the chart the rules read. */
+  rules?: { kind: 'walk' | 'chordTones' | 'nearest'; chart: { chord: string; root: number; tones: number[]; beats: number }[]; maxRepeat?: number; maxMove?: number };
+  /** Pocket on purpose (A6): target offset per section in ms (+ = behind), share within ±12 ms ≥ 0.7. */
+  pocket?: number[];
+  /** Mean offset |timingMean| ≤ ms (no consistent rush/drag). */
+  meanMs?: number;
+  /** Silence before a shifted note ≤ ms (A8). */
+  shiftGap?: number;
+  /** IOI CV drift first vs last 2 bars ≤ ratio (stamina, A8). */
+  drift?: number;
+  /** Swing ratio target and tolerance (A8), 8ths or 16ths. */
+  swing?: { ratio: number; tol: number; sub: 8 | 16 };
+  /** Per-subdivision bias |mean| ≤ ms for each of these positions (A8). */
+  subBias?: number;
+  /** Note-length suite (A9): ring-through on rests allowed per 8 bars, release ±ms, overlap ≤ ms. */
+  release?: { ms: number };
+  ringThrough?: number;
+  overlap?: number;
+  /** Intonation (fretless / upright, B16): |cents| ≤ this on ≥ 85 % of notes. */
+  cents?: number;
+  /** Advice only, never gates: slap/pop class shown to the player (A13). */
+  slapAdvice?: boolean;
+}
+
+/** Level meta for bass (0.64): exam / bagrut mapping shown on the level and used by badges (B14). */
+export interface LevelExamTag {
+  board: 'RSL' | 'Trinity' | 'ABRSM' | 'Bagrut' | 'Berklee';
+  grade: string;
 }
 
 /** A note the player played (latency already removed; times relative to beat 0 of the drill). */
