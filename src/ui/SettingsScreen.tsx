@@ -10,9 +10,9 @@ import { TUNINGS } from '../engine/fretboard';
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { displayNote, pc, spokenNote } from '../engine/pitch';
 import type { Strings } from '../i18n/strings';
-import { catalogue, chooseVoice, type Gender } from '../speech/voices';
-import { listVoices, voicesReady } from '../speech/tts';
-import { DEFAULT_SOUND, bassTuningOf, namingFor, type Settings, type VoiceGender } from '../storage/progress';
+import { KOKORO_MB, type KokoroStatus } from '../speech/kokoro/decide';
+import { useNarratorStatus, useTalk } from './TalkToggle';
+import { DEFAULT_SOUND, bassTuningOf, namingFor, type Settings } from '../storage/progress';
 import { fillText, Note } from './bits';
 import { piano, store, tts } from './services';
 import { listMics } from '../speech/mic';
@@ -70,11 +70,15 @@ function Seg<T extends string>({
   );
 }
 
-const GenderGlyph = ({ g }: { g: Gender }) => (
-  <span className={`g-chip g-${g}`} aria-hidden="true">
-    {g === 'female' ? '♀' : g === 'male' ? '♂' : '◦'}
-  </span>
-);
+/** The Kokoro voice's status line (0.65): calm wording — when it can't run, lines are simply shown to read. */
+function kokoroLine(k: KokoroStatus, lang: 'he' | 'en'): string {
+  const he = lang === 'he';
+  const name = he ? 'Kokoro (על המכשיר)' : 'Kokoro (on device)';
+  if (k.state === 'downloading') return `${name} · ${he ? 'מוריד' : 'downloading'} ${k.pct}%`;
+  if (k.state === 'ready') return `${name} · ${he ? 'מוכן' : 'ready'}`;
+  if (k.state === 'unavailable') return `${name} · ${he ? 'לא זמין כרגע במכשיר הזה — השורות מוצגות לקריאה' : 'not available on this device right now — lines are shown to read'}`;
+  return `${name} · ${he ? `נטען בפעם הראשונה שהוא מדבר (כ-${KOKORO_MB} MB, פעם אחת)` : `loads the first time it speaks (about ${KOKORO_MB} MB, once)`}`;
+}
 
 /** Settings → My path (spec AF D4): goal, areas, packs, modes, hidden topics, rebuild; stats sharing (spec AG S9). */
 function MyPath({ t, s, onChange }: { t: Strings; s: Settings; onChange: (p: Partial<Settings>) => void }) {
@@ -163,49 +167,32 @@ function MyPath({ t, s, onChange }: { t: Strings; s: Settings; onChange: (p: Par
 }
 
 export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIntake, onMixer, onPlans, onAdmin, ratings }: Props) {
-  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>(listVoices());
-  useEffect(() => {
-    void voicesReady().then(setVoices);
-    if (typeof speechSynthesis === 'undefined') return;
-    const on = () => setVoices(listVoices());
-    speechSynthesis.addEventListener('voiceschanged', on);
-    return () => speechSynthesis.removeEventListener('voiceschanged', on);
-  }, []);
+  const [talk, setTalkOn] = useTalk();
+  const kokoro = useNarratorStatus();
+  const [busy, setBusy] = useState(false);
 
   const langs: ['he' | 'en', string][] = [
     ['en', t.english],
     ['he', t.hebrew],
   ];
   const narr = s.outputLang;
-  const list = catalogue(voices, narr);
-  const chosen = chooseVoice(voices, narr, s.voices[narr], s.voiceGender);
-  const genderMissing = s.voiceGender !== 'any' && !s.voices[narr] && !list.some((x) => x.gender === s.voiceGender);
 
   const bb = pc('Bb');
   const eb = pc('Eb');
   const uiNaming = namingFor(s.naming, s.uiLang);
   const narrNaming = namingFor(s.naming, narr);
 
-  const preview = (uri: string | null) => {
-    const prev = tts.prefs;
-    tts.prefs = { gender: s.voiceGender, voices: { ...s.voices, [narr]: uri } };
+  // The preview is always English (the only spoken language); the first one waits for the voice to load.
+  const preview = () => {
     tts.unlock();
-    const text = fillText(
-      narr === 'he'
-        ? 'הקשיבו. בסולם {k} מז׳ור, {n} הוא דרגה חמש.'
-        : 'Listen. In {k} major, {n} is degree five.',
-      spokenNote(bb, narrNaming, narr),
-      spokenNote(eb, narrNaming, narr),
-    );
+    const en = namingFor(s.naming, 'en');
+    const text = fillText('Listen. In {k} major, {n} is degree five.', spokenNote(bb, en, 'en'), spokenNote(eb, en, 'en'));
     tts.force = true; // a preview speaks even in reading mode
-    const done = tts.speak(text, narr, new AbortController().signal);
+    setBusy(true);
+    const done = tts.speak(text, 'en', new AbortController().signal);
     tts.force = false;
-    void done.finally(() => {
-      tts.prefs = prev;
-    });
+    void done.catch(() => {}).finally(() => setBusy(false));
   };
-
-  const genderLabel = (g: Gender) => (g === 'female' ? t.voiceFemale : g === 'male' ? t.voiceMale : t.voiceUnknown);
 
   const lang = s.uiLang;
   const G = GROUPS;
@@ -387,16 +374,15 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
 
           <section className="set-card">
             <h2>{t.secVoice}</h2>
-            <Seg<VoiceGender>
-              label={t.voiceType}
-              value={s.voiceGender}
-              options={[
-                ['any', t.voiceAny],
-                ['female', <>♀ {t.voiceFemale}</>],
-                ['male', <>♂ {t.voiceMale}</>],
-              ]}
-              onChange={(voiceGender) => onChange({ voiceGender, voices: { ...s.voices, [narr]: null } })}
-            />
+            {/* 0.65 (owner): one English voice, Kokoro, made on the device; Hebrew is read (typed text). No OS voice picker. */}
+            <label className="toggle-row">
+              <input type="checkbox" checked={talk} onChange={(e) => setTalkOn(e.target.checked)} data-narrator-toggle="1" />
+              <span>{lang === 'he' ? 'להשתמש בקריינית (באנגלית)' : 'Use the narrator'}</span>
+            </label>
+            <p className="field-hint" data-kokoro={kokoro.state} aria-live="polite">
+              {kokoroLine(kokoro, lang)}
+            </p>
+            {narr === 'he' && <p className="field-hint">{lang === 'he' ? 'בעברית אין קריינות: הטקסט מוקלד על המסך.' : 'Hebrew lines are read: the text types itself out on screen.'}</p>}
             <Seg
               label={lang === 'he' ? 'מהירות הקריינות' : 'Narration speed'}
               value={String(s.ttsRate ?? 1)}
@@ -407,59 +393,10 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
               ]}
               onChange={(v) => onChange({ ttsRate: Number(v) })}
             />
-            {list.length === 0 ? (
-              <p className="field-hint warn">{t.noVoices}</p>
-            ) : (
-              <>
-                {genderMissing && (
-                  <p className="field-hint warn">
-                    {t.noGenderVoice} {chosen?.name}
-                  </p>
-                )}
-                <p className="field-hint">
-                  {t.voiceFor}
-                  {narr === 'he' ? t.hebrew : t.english} · {list.length}
-                </p>
-                <ul className="voice-list" role="radiogroup" aria-label={t.secVoice}>
-                  <li className={!s.voices[narr] ? 'on' : ''}>
-                    <button role="radio" aria-checked={!s.voices[narr]} className="voice-pick" onClick={() => onChange({ voices: { ...s.voices, [narr]: null } })}>
-                      <span className="g-chip g-auto" aria-hidden="true">
-                        ★
-                      </span>
-                      <span className="v-text">
-                        <b>{t.voiceAuto}</b>
-                        <small>
-                          {t.voiceAutoHint}
-                          {chosen && !s.voices[narr] ? ` · ${chosen.name}` : ''}
-                        </small>
-                      </span>
-                    </button>
-                    <button className="btn small" onClick={() => preview(null)} aria-label={`${t.preview} ${t.voiceAuto}`}>
-                      ▶
-                    </button>
-                  </li>
-                  {list.map(({ voice, gender }) => {
-                    const on = s.voices[narr] === voice.voiceURI;
-                    return (
-                      <li key={voice.voiceURI} className={on ? 'on' : ''}>
-                        <button role="radio" aria-checked={on} className="voice-pick" onClick={() => onChange({ voices: { ...s.voices, [narr]: voice.voiceURI } })}>
-                          <GenderGlyph g={gender} />
-                          <span className="v-text">
-                            <b dir="ltr">{voice.name.replace(/^(Microsoft|Google)\s+/, '')}</b>
-                            <small>
-                              {genderLabel(gender)} · <span dir="ltr">{voice.lang}</span>
-                              {voice.localService ? '' : ' · online'}
-                            </small>
-                          </span>
-                        </button>
-                        <button className="btn small" onClick={() => preview(voice.voiceURI)} aria-label={`${t.preview} ${voice.name}`}>
-                          ▶
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </>
+            {talk && kokoro.state !== 'unavailable' && (
+              <button className="btn small" onClick={preview} disabled={busy} data-narrator-preview="1">
+                ▶ {t.preview}
+              </button>
             )}
           </section>
         </Group>
