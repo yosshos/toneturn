@@ -76,7 +76,6 @@ TOPIC_GEN['chart-analysis'] = {
       const tune = pickR(rnd, TUNES);
       const s = STANDARD_CHANGES.find((x) => x.id === tune.id);
       if (!s) continue;
-      const p = parseChart(s.text);
       const page = pageOf(s.text, 16);
       const shown = parseChart(s.text.replace(/\n/g, '|').split('|').slice(0, 16).join('|'));
       const text = { en: `${s.name}\n${page}`, he: `${s.name}\n${page}` };
@@ -88,7 +87,7 @@ TOPIC_GEN['chart-analysis'] = {
         return choiceQ({
           id, topic: 'chart-analysis', level, seed, skill: 'cadences', difficulty: 1300,
           ask: { en: 'What key is this tune in? Look where it comes to rest — and at its V.', he: 'באיזה סולם השיר? חפשו איפה הוא נח — ואת ה־V שלו.' },
-          text, names, answer, choices,
+          text, names, answer, choices, stimulus: [],
         });
       }
       if (L === 2) {
@@ -107,7 +106,7 @@ TOPIC_GEN['chart-analysis'] = {
         return choiceQ({
           id, topic: 'chart-analysis', level, seed, skill: 'cadences', difficulty: 1420,
           ask: { en: 'Which bars hold a ii–V (a minor 7th, then a dominant a fourth up)?', he: 'באילו תיבות יש ii–V (מינור 7, ואחריו דומיננטה קוורטה מעליו)?' },
-          text, names, answer, choices,
+          text, names, answer, choices, stimulus: [],
         });
       }
       const cands = shown.chords.map((c, i) => ({ c, next: shown.chords[i + 1], i })).filter((x) => x.next && functionOf(x.c, x.next, tune.key) !== null);
@@ -119,11 +118,11 @@ TOPIC_GEN['chart-analysis'] = {
       return choiceQ({
         id, topic: 'chart-analysis', level, seed, skill: 'cadences', difficulty: 1540,
         ask: { en: `Bar ${pick.c.bar + 1}: ${pick.c.sym} (then ${pick.next.sym}). What does it do in ${KEY_NAMES[tune.key]}${tune.minor ? ' minor' : ''}?`, he: `תיבה ${pick.c.bar + 1}: ${pick.c.sym} (ואחריו ${pick.next.sym}). מה הוא עושה ב־${KEY_HE[tune.key]}${tune.minor ? ' מינור' : ''}?` },
-        text, names, answer, choices,
+        text, names, answer, choices, stimulus: [],
       });
     }
     // never reached with the tunes above; a safe item
-    return choiceQ({ id, topic: 'chart-analysis', level, seed, skill: 'cadences', difficulty: 1300, ask: { en: 'What key?', he: 'איזה סולם?' }, text: { en: 'Dm7 | G7 | Cmaj7', he: 'Dm7 | G7 | Cmaj7' }, names: { '0': keyLabel(0), '7': keyLabel(7) }, answer: '0', choices: ['0', '7'] });
+    return choiceQ({ id, topic: 'chart-analysis', level, seed, skill: 'cadences', difficulty: 1300, ask: { en: 'What key?', he: 'איזה סולם?' }, text: { en: 'Dm7 | G7 | Cmaj7', he: 'Dm7 | G7 | Cmaj7' }, names: { '0': keyLabel(0), '7': keyLabel(7) }, answer: '0', choices: ['0', '7'], stimulus: [] });
   },
 };
 TOPIC_TAGS['chart-analysis'] = tg(['cadences', 'progression', 1]);
