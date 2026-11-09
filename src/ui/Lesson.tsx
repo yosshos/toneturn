@@ -1,3 +1,4 @@
+import { Toni, type ToniState } from './Toni';
 import { Icon } from './icons';
 import { buzz } from './Arcade';
 import { recordGroove } from '../storage/analysis';
@@ -785,9 +786,14 @@ function Orb({ v, label }: { v: LessonView; label: string }) {
   const target = q.kind === 'degree' ? q.targetMidi : -1;
   useEffect(() => piano.onNotes((a) => setActive(target >= 0 ? a.includes(target) && a.length === 1 : a.length > 0)), [target]);
   const fb = v.feedback?.kind;
+  // 0.61 (SPEC-REDESIGN): Toni listens while it sounds and reacts to the answer; the orb is a tilted note head.
+  const toni: ToniState = fb === 'correct' || fb === 'correct-retry' ? 'correct' : fb === 'reveal' ? 'wrong' : fb === 'retry' ? 'close' : active ? 'listen' : 'idle';
   return (
-    <div className={`orb ${active ? 'sounding' : ''} ${fb ?? ''}`}>
-      <span dir="ltr">{label}</span>
+    <div className="orb-row">
+      <Toni state={toni} size={84} />
+      <div className={`orb ${active ? 'sounding' : ''} ${fb ?? ''}`}>
+        <span dir="ltr">{label}</span>
+      </div>
     </div>
   );
 }

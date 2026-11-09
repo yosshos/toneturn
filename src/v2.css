@@ -962,6 +962,121 @@
   border: 2px solid var(--outline);
 }
 
+/* ---------------------------------------------------------------- exercise: Toni + the note-head orb, keyboard, staff, pace */
+.orb-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+:root[data-theme] .orb {
+  width: 132px;
+  height: 98px;
+  border-radius: 50%;
+  transform: rotate(-14deg);
+  background: var(--lemon);
+  color: var(--ink-c);
+  border: 3px solid var(--outline);
+  box-shadow: var(--sx) 5px 0 var(--outline);
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 2.4rem;
+  animation: none;
+}
+:root[data-theme] .orb > span {
+  transform: rotate(14deg);
+}
+:root[data-theme] .orb.sounding {
+  transform: rotate(-14deg) scale(1.06);
+  box-shadow: var(--sx) 5px 0 var(--outline), 0 0 0 10px color-mix(in srgb, var(--lemon) 35%, transparent);
+}
+:root[data-theme] .orb:is(.correct, .correct-retry) {
+  background: var(--teal);
+  animation: none;
+}
+:root[data-theme] .orb:is(.retry, .reveal) {
+  background: var(--pink);
+  animation: none;
+}
+:root[data-theme] .keyboard {
+  background: var(--outline);
+  border: var(--stroke) solid var(--outline);
+  border-radius: 14px;
+  box-shadow: var(--shadow-s);
+}
+:root[data-theme] .wk {
+  background: #ffffff;
+  border-inline-end: 2px solid var(--outline);
+}
+:root[data-theme] .bk {
+  background: var(--ink-c);
+}
+:root[data-theme] .wk.mark {
+  background: #efe7fb;
+}
+:root[data-theme] .bk.mark {
+  background: #4a3670;
+}
+:root[data-theme] .wk.lit {
+  background: var(--lemon);
+}
+:root[data-theme] .bk.lit {
+  background: var(--purple);
+}
+:root[data-theme] .note-staff {
+  background: #ffffff;
+  border: var(--stroke) solid var(--outline);
+  border-radius: 18px;
+}
+:root[data-theme] .pace-bar {
+  background: color-mix(in srgb, var(--accent) 12%, var(--card));
+  border-radius: 6px;
+}
+:root[data-theme] .pace-bar i {
+  background: var(--teal);
+}
+:root[data-theme] .rounds .pill {
+  background: color-mix(in srgb, var(--accent) 14%, var(--card));
+  border: 1.5px solid var(--line-strong);
+}
+:root[data-theme] .rounds .pill.current {
+  background: var(--lemon);
+  border-color: var(--outline);
+}
+:root[data-theme] .rounds .pill:is(.correct, .correct-retry) {
+  background: var(--teal);
+  border-color: var(--outline);
+}
+:root[data-theme] .rounds .pill:is(.revealed, .skipped) {
+  background: var(--pink);
+  border-color: var(--outline);
+}
+:root[data-theme] .feedback:is(.correct, .correct-retry) {
+  background: var(--teal);
+  color: var(--ink-c);
+  border: var(--stroke) solid var(--outline);
+}
+:root[data-theme] .feedback:is(.retry, .reveal) {
+  background: var(--pink);
+  color: var(--ink-c);
+  border: var(--stroke) solid var(--outline);
+}
+:root[data-theme] .feedback:is(.correct, .correct-retry, .retry, .reveal) {
+  padding: 10px 14px;
+  border-radius: 16px;
+  box-shadow: var(--shadow-s);
+}
+:root[data-theme] .feedback b,
+:root[data-theme] .feedback:is(.correct, .correct-retry, .retry, .reveal) b {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 1.25rem;
+  color: var(--ink-c);
+}
+:root[data-theme] .feedback:is(.correct, .correct-retry, .retry, .reveal) small {
+  color: var(--ink-c);
+}
+
 /* ---------------------------------------------------------------- menu sheet */
 :root[data-theme] .menu-sheet .menu-head h2 {
   font-size: 1.6rem;
