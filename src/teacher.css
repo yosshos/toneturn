@@ -181,3 +181,29 @@
 .sound-opts .field-row select, .sound-opts .field-row input { width: 100%; min-width: 0; }
 .sound-credits { list-style: none; padding: 0; margin: 10px 0 0; display: grid; gap: 2px; }
 .field-row.sound-opts { display: grid; gap: 4px; }
+
+/* ---- update and install in the top bar (0.60, owner 2026-11-09: "leftovers; they push the phone layout") */
+.hdr-action { position: relative; }
+.update-btn { color: var(--accent, var(--mint)); }
+.update-btn .hdr-label { display: none; }
+.update-btn .hdr-dot { position: absolute; top: 6px; inset-inline-end: 6px; width: 7px; height: 7px; border-radius: 50%; background: var(--accent, var(--mint)); box-shadow: 0 0 0 2px var(--bg, #14121c); animation: hdr-dot 2.4s ease-in-out infinite; }
+@keyframes hdr-dot { 50% { opacity: 0.45; } }
+@media (prefers-reduced-motion: reduce) { .update-btn .hdr-dot { animation: none; } }
+/* on a computer the update says so in a word, in a quiet outlined chip */
+@media (min-width: 700px) {
+  .update-btn { width: auto; padding: 0 12px 0 10px; gap: 6px; border: 1px solid color-mix(in srgb, var(--accent, var(--mint)) 55%, transparent); border-radius: 999px; font-size: 0.82rem; font-weight: 600; }
+  .update-btn .hdr-label { display: inline; }
+  .update-btn .hdr-dot { display: none; }
+}
+/* on a phone, while update / install show, the wordmark steps aside (the logo stays) — nothing wraps or jumps */
+@media (max-width: 459px) {
+  .topbar.pwa-up .wordmark { display: none; }
+}
+.update-btn { display: inline-flex; align-items: center; justify-content: center; }
+/* the wordmark stays on one line on a phone (stacked "The 7th / Sense" looked broken) */
+@media (max-width: 460px) {
+  .topbar .wordmark { display: block; white-space: nowrap; font-size: 1.05rem; line-height: 1.1; }
+}
+@media (max-width: 350px) {
+  .topbar .wordmark { display: none; }
+}

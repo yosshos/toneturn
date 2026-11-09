@@ -218,8 +218,10 @@ export function Home({ t, settings, progress, streak, onStreak, onPractice, onBu
  * same on every main tab (Today, Path, Progress, Play, Friends), never inside an exercise.
  */
 export function TopBar({ t, lang, streak, onStreak, whatsNew, headerExtra, onMenu }: { t: Strings; lang: 'he' | 'en'; streak: StreakState; onStreak: () => void; whatsNew: { unseen: boolean; onSeen: () => void }; headerExtra?: React.ReactNode; onMenu: () => void }) {
+  const p = useSyncExternalStore(pwa.subscribe, pwa.get);
+  const pwaUp = p.updateReady || (!p.installed && (p.canInstall || p.iosManual || import.meta.env.PROD));
   return (
-  <header className="topbar">
+  <header className={`topbar ${pwaUp ? 'pwa-up' : ''}`}>
     <div className="brand">
       <Logo bare size={40} />
       <span className="wordmark" dir="ltr">
@@ -347,15 +349,21 @@ function HeaderPwa({ t }: { t: Strings }) {
   return (
     <>
       {p.updateReady && (
-        <button className="update-pill" onClick={() => applyUpdate()} title={t.updateReady}>
-          <span aria-hidden="true">⟳</span> {t.updateShort}
+        <button className="icon-btn hdr-action update-btn" onClick={() => applyUpdate()} title={t.updateReady} aria-label={t.updateReady} data-update-btn="1">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3" />
+            <path d="M19.5 4.5v4h-4" />
+          </svg>
+          <span className="hdr-label">{t.updateShort}</span>
+          <span className="hdr-dot" aria-hidden="true" />
         </button>
       )}
       {!p.installed && (p.canInstall || p.iosManual || import.meta.env.PROD) && (
         <button
-          className="icon-btn install-btn"
+          className="icon-btn hdr-action install-btn"
           aria-label={t.installApp}
           title={t.installApp}
+          data-install-btn="1"
           onClick={() => (p.canInstall ? void promptInstall() : setHowTo(true))}
         >
           <InstallIcon />

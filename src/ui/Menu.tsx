@@ -1,6 +1,6 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { APP_BUILT, APP_COMMIT, APP_VERSION, CHANGELOG } from '../version';
-import { checkForUpdate, pwa } from '../pwa';
+import { applyUpdate, checkForUpdate, pwa } from '../pwa';
 import { disablePush, enablePush, pushStatus, updatePushPrefs, type PushStatus } from '../cloud/social';
 import type { CloudUser } from '../cloud/cloud';
 import { cloudConfigured } from '../cloud/cloud';
@@ -245,6 +245,11 @@ export function MenuSheet({ t, settings, user, onClose, onNavigate, onSettings }
             {APP_BUILT && <> · {new Date(APP_BUILT).toLocaleDateString(lang === 'he' ? 'he-IL' : 'en-GB')}</>}
           </p>
           <div className="row">
+            {p.updateReady && (
+              <button className="btn small" onClick={() => applyUpdate()} data-menu-update="1">
+                {t.updateReady} · {t.updateShort}
+              </button>
+            )}
             {p.swSupported && import.meta.env.PROD && !p.updateReady && (
               <button className="btn ghost small" disabled={p.checking} onClick={async () => setChecked(await checkForUpdate())}>
                 {p.checking ? t.checking : t.checkUpdates}

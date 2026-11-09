@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.60.0',
+    date: '2026-11-09',
+    en: ['Update and install now sit in the top bar like the other icons (a quiet dot when an update is waiting, a short label on a computer) and no longer push the phone layout; “update now” is in the menu too; the name stays on one line'],
+    he: ['עדכון והתקנה יושבים עכשיו בסרגל העליון כמו שאר האייקונים (נקודה שקטה כשמחכה עדכון, ותווית קצרה במחשב), ולא מזיזים יותר את התצוגה בטלפון; "לעדכן עכשיו" נמצא גם בתפריט; שם האפליקציה נשאר בשורה אחת'],
+  },
+  {
     version: '0.59.0',
     date: '2026-11-09',
     en: ['The vibraphone, marimba and upright piano now have their recorded dynamics too — three each, soft to loud (the vibraphone on soft mallets when you play softly, hard ones when you play out)'],

@@ -43,6 +43,10 @@ function set(p: Partial<PwaState>) {
   state = { ...state, ...p };
   listeners.forEach((l) => l());
 }
+if (typeof window !== 'undefined' && import.meta.env.DEV) {
+  const q = new URLSearchParams(location.search).get('pwa');
+  if (q) setTimeout(() => set({ updateReady: q.includes('update'), canInstall: q.includes('install'), installed: false }), 800);
+}
 export const pwa = {
   subscribe(fn: () => void) {
     listeners.add(fn);
