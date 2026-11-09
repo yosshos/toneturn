@@ -231,3 +231,105 @@ export function comping(p: ParsedChart, meter: number, total: number, style: 'sw
   }
   return out.filter((h) => h.beat >= 0 && h.beat < total);
 }
+
+/** Close triads / 7ths in the middle register (G3 … about C5) for pop, rock, funk and Latin comping (no rootless forms). */
+export function closeVoicings(c: ChartChordEv): number[][] {
+  const iv = Array.from(new Set(c.iv.map((x) => x % 12))).filter((x) => x !== 0);
+  const third = iv.find((x) => x === 3 || x === 4 || x === 5 || x === 2) ?? 4;
+  const fifth = iv.find((x) => x === 6 || x === 7 || x === 8) ?? 7;
+  const sev = iv.find((x) => x === 9 || x === 10 || x === 11);
+  const tones = [0, third, fifth, ...(sev !== undefined ? [sev] : [])];
+  const out: number[][] = [];
+  // every inversion, its lowest note between G3 and F4
+  for (let inv = 0; inv < tones.length; inv++) {
+    const order = [...tones.slice(inv), ...tones.slice(0, inv)];
+    for (let base = 55; base <= 65; base++) {
+      if (pc(base) !== pc(c.root + order[0])) continue;
+      const v = [base];
+      for (const x of order.slice(1)) {
+        let m = v[v.length - 1] + 1;
+        while (pc(m) !== pc(c.root + x)) m++;
+        v.push(m);
+      }
+      out.push(v);
+    }
+  }
+  return out.length ? out : [[60, 64, 67]];
+}
+
+/** Comping styles of the harmony band under bass drills (BASS_VALIDATION §3: styles, riffs, pieces with a band). */
+export type BandStyle = 'swing' | 'bossa' | 'ballad' | 'waltz' | 'pop' | 'rock' | 'funk' | 'reggae' | 'latin' | 'shuffle' | 'hold';
+type GrooveBandStyle = Exclude<BandStyle, 'swing' | 'bossa' | 'ballad' | 'waltz'>;
+
+const SW = 2 / 3;
+/** [beat, length, velocity] rhythm cells for one 4/4 bar per groove style (other meters hold each chord). */
+const CELLS: Record<GrooveBandStyle, [number, number, number][][]> = {
+  pop: [
+    [[0, 1.5, 0.36], [1.5, 1, 0.32], [2.5, 1.5, 0.34]],
+    [[0, 2, 0.36], [2, 2, 0.32]],
+    [[0, 0.5, 0.36], [1, 0.5, 0.3], [1.5, 1, 0.32], [3, 0.5, 0.3], [3.5, 0.5, 0.34]],
+  ],
+  rock: [
+    [[0, 0.45, 0.4], [0.5, 0.45, 0.3], [1, 0.45, 0.34], [1.5, 0.45, 0.3], [2, 0.45, 0.38], [2.5, 0.45, 0.3], [3, 0.45, 0.34], [3.5, 0.45, 0.3]],
+    [[0, 1.5, 0.4], [1.5, 2.5, 0.36]],
+  ],
+  funk: [
+    [[0, 0.2, 0.38], [0.75, 0.2, 0.3], [1.5, 0.2, 0.34], [2.25, 0.2, 0.3], [3, 0.2, 0.32], [3.5, 0.2, 0.34]],
+    [[0.5, 0.2, 0.34], [1, 0.2, 0.3], [1.75, 0.2, 0.32], [2.5, 0.2, 0.34], [3.25, 0.2, 0.3]],
+  ],
+  reggae: [
+    [[1, 0.3, 0.34], [3, 0.3, 0.34]],
+    [[0.5, 0.25, 0.3], [1.5, 0.25, 0.32], [2.5, 0.25, 0.3], [3.5, 0.25, 0.32]],
+  ],
+  latin: [
+    [[0, 0.4, 0.34], [0.5, 0.4, 0.3], [1.5, 0.4, 0.32], [2.5, 0.4, 0.3], [3, 0.4, 0.32], [3.5, 0.4, 0.34]],
+    [[0.5, 0.4, 0.32], [1, 0.4, 0.3], [2, 0.4, 0.32], [3, 0.4, 0.3], [3.5, 0.4, 0.34]],
+  ],
+  shuffle: [
+    [[1, 0.4, 0.34], [1 + SW, 0.3, 0.28], [3, 0.4, 0.34], [3 + SW, 0.3, 0.28]],
+    [[0, 0.6, 0.34], [1, 0.4, 0.3], [2, 0.6, 0.32], [3, 0.4, 0.3]],
+  ],
+  hold: [[[0, 3.9, 0.3]]],
+};
+
+/**
+ * The harmony band's comping for any style: the jazz styles go to `comping` (rootless voicings); the groove styles
+ * (pop, rock, funk, reggae, Latin, shuffle, a held pad) use close voicings led by voice leading and one rhythm cell a
+ * bar from the style's vocabulary. Every chord change gets a hit at its own beat. Pure and seeded.
+ */
+export function bandComping(p: ParsedChart, meter: number, total: number, style: BandStyle, seed: number): CompHit[] {
+  if (style === 'waltz' || ((style === 'swing' || style === 'bossa' || style === 'ballad') && meter === 4)) return comping(p, meter, total, style, seed);
+  const st: GrooveBandStyle = style === 'swing' || style === 'bossa' || style === 'ballad' ? 'hold' : style;
+  const r = rng(seed ^ 0x2545f491);
+  const out: CompHit[] = [];
+  let prev: number[] | null = null;
+  const voice = (c: ChartChordEv) => {
+    const v = voiceLead(closeVoicings(c), prev);
+    prev = v;
+    return v;
+  };
+  const bars = Math.ceil(total / meter - 1e-9);
+  let last = -1;
+  for (let bar = 0; bar < bars; bar++) {
+    const b0 = bar * meter;
+    const cells = meter === 4 ? CELLS[st] : [[[0, meter - 0.1, 0.3]] as [number, number, number][]];
+    let i = Math.floor(r() * cells.length);
+    if (i === last && cells.length > 1 && r() < 0.5) i = (i + 1) % cells.length;
+    last = i;
+    const hits: CompHit[] = [];
+    for (const [at, len, vel] of cells[i]) {
+      const c = chordAtBeat(p, meter, b0 + at);
+      if (c) hits.push({ beat: b0 + at, len, notes: [], vel: vel + r() * 0.04 });
+    }
+    // a chord that starts inside the bar with no hit on its beat gets one there; held hits stop at the change
+    for (let k = 1; k < meter; k++) {
+      const ck = chordAtBeat(p, meter, b0 + k);
+      if (!ck || ck === chordAtBeat(p, meter, b0 + k - 1)) continue;
+      for (const h of hits) if (h.beat < b0 + k && h.beat + h.len > b0 + k) h.len = b0 + k - h.beat - 0.05;
+      if (!hits.some((h) => Math.abs(h.beat - (b0 + k)) < 1e-6)) hits.push({ beat: b0 + k, len: 0.9, notes: [], vel: 0.32 });
+    }
+    hits.sort((a, b) => a.beat - b.beat);
+    for (const h of hits) out.push({ ...h, notes: voice(chordAtBeat(p, meter, h.beat)!) });
+  }
+  return out.filter((h) => h.beat >= 0 && h.beat < total);
+}

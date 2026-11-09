@@ -17,6 +17,7 @@ import { BrowserPitchCapture } from '../speech/pitchCapture';
 import { listenLoop } from './Flight';
 import { tuningById } from '../engine/fretboard';
 import { drumHits } from '../engine/drills/bass';
+import { bandHits } from '../engine/drills/bassBand';
 import type { NoteEvent } from '../engine/lesson';
 
 type Lang = 'he' | 'en';
@@ -171,7 +172,8 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo }
   const bass = isBassDrill(drill);
   const shift = bass ? 12 : 0;
   const qk = qOf(drill);
-  const rhClef: 'treble' | 'bass' | 'tenor' = bass ? (drill.spec.kind === 'tenor' ? 'tenor' : 'bass') : 'treble';
+  // The upright's thumb position reads the treble clef (ABRSM Gr 8), also an octave above the sound.
+  const rhClef: 'treble' | 'bass' | 'tenor' = bass ? (drill.spec.kind === 'tenor' ? 'tenor' : drill.spec.kind === 'treble' ? 'treble' : 'bass') : 'treble';
   const rh = drill.notes.filter((n) => n.hand === 'R' && (upTo === undefined || n.beat < upTo - 1e-6));
   const byKey = new Map<string, NoteResult>();
   for (const r of result?.perNote ?? []) byKey.set(noteKey(r.exp), r);
@@ -241,7 +243,7 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo }
       return (
         <NoteStaff
           key={`${clef}${li}`}
-          notes={items.map((x) => (x.n ? x.n.pitch + (clef === 'treble' ? 0 : shift) : 71))}
+          notes={items.map((x) => (x.n ? x.n.pitch + shift : 71))}
           rests={items.map((x) => !x.n)}
           chord={false}
           keyPc={k}
@@ -357,9 +359,27 @@ function backingEvents(drill: Drill, beatS: number, drums: boolean): NoteEvent[]
     const PERC = { k: 'kick', s: 'snare', h: 'hat', 'tom-hi': 'tom-hi', 'tom-lo': 'tom-lo', crash: 'crash' } as const;
     for (const h of drumHits(drill.drums, drill.beats, drill.meter, drill.pulse)) out.push({ midi: 36, start: at(h.beat), duration: 0.2, velocity: h.d === 'h' ? 0.4 : h.d === 'crash' ? 0.7 : 0.85, perc: PERC[h.d] });
   }
+  // The harmony band (bassBand.ts): comping on the same clock, only where the drums may play (headphones / MIDI).
+  if (drums) for (const h of bandHits(drill)) for (const m of h.notes) out.push({ midi: m, start: at(h.beat), duration: h.len * beatS, velocity: h.vel });
   for (const n of drill.listen?.notes ?? [])
     for (const m of n.midi) out.push(n.perc ? { midi: m, start: at(n.beat), duration: n.dur * beatS, velocity: 0.45, perc: n.perc } : { midi: m, start: at(n.beat), duration: n.dur * beatS, velocity: n.inst === 'bass' ? 0.85 : 0.5, ...(n.inst === 'bass' ? { inst: 'bass' as const } : {}) });
   return out;
+}
+
+/** Items whose prep time has run (or was skipped) in this session: prep comes once per item, not before every take. */
+const prepped = new Set<string>();
+/** RSL Quick Study Piece: a prep countdown before the first take of a drill with `prep` seconds. */
+function usePrep(drill: Drill): { left: number; skip: () => void } {
+  const [left, setLeft] = useState(() => (drill.prep && !prepped.has(drill.itemId) ? drill.prep : 0));
+  useEffect(() => {
+    if (left <= 0) {
+      if (drill.prep) prepped.add(drill.itemId);
+      return;
+    }
+    const t = window.setTimeout(() => setLeft((x) => x - 1), 1000);
+    return () => window.clearTimeout(t);
+  }, [left, drill.prep, drill.itemId]);
+  return { left, skip: () => setLeft(0) };
 }
 
 /** Play a drill once: count-in, metronome, record; resolves with the analysis. */
@@ -371,8 +391,9 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
   const useMidi = midi.devices.length > 0;
   useEffect(() => () => ac.current?.abort(), []);
   // B5: drums under the take only when the mic can't hear them (headphones, line-in, or a MIDI bass); else the click.
-  const drums = !!drill.drums && (useMidi || drumsOk === true);
-  const askDrums = !!drill.drums && !useMidi && drumsOk === undefined && !!onDrums;
+  const drums = !!(drill.drums || drill.band) && (useMidi || drumsOk === true);
+  const askDrums = !!(drill.drums || drill.band) && !useMidi && drumsOk === undefined && !!onDrums;
+  const prep = usePrep(drill);
   if (drill.untimed) return <UntimedTake drill={drill} lang={lang} cal={cal} onDone={onDone} />;
   const start = async () => {
     await piano.unlock();
@@ -513,15 +534,23 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
         {phase === 'count' ? `${tx.countIn} ${Math.max(1, drill.meter - beat)}` : phase === 'play' ? tx.go : `${drill.pulse === 8 ? '♪' : tx.bpm} = ${bpm}`}
         <span className={`beat-dot ${beat % drill.meter === 0 ? 'accent' : ''}`} key={beat} />
       </div>
-      {phase === 'ready' && drill.drums && !askDrums && !useMidi && onDrums && (
-        <button className="link drums-route" onClick={() => onDrums(!drumsOk)} data-drums={drums ? 'on' : 'off'}>
-          {drums ? (lang === 'he' ? 'תופים באוזניות · להחליף לקליק' : 'Drums in headphones · switch to the click') : lang === 'he' ? 'קליק ברמקול · יש לי אוזניות' : 'Click on the speaker · I have headphones'}
+      {phase === 'ready' && (drill.drums || drill.band) && !askDrums && !useMidi && onDrums && (
+        <button className="link drums-route" onClick={() => onDrums(!drumsOk)} data-drums={drums ? 'on' : 'off'} data-band={drill.band && drums ? drill.band.style : undefined}>
+          {drums ? (drill.band ? (lang === 'he' ? 'להקה באוזניות · להחליף לקליק' : 'Band in headphones · switch to the click') : lang === 'he' ? 'תופים באוזניות · להחליף לקליק' : 'Drums in headphones · switch to the click') : lang === 'he' ? 'קליק ברמקול · יש לי אוזניות' : 'Click on the speaker · I have headphones'}
         </button>
       )}
       {phase === 'ready' && askDrums ? (
         // B5: the headphones gate — where the sound goes, so the mic hears only the bass. Not a pass of anything.
         <div className="drums-gate" data-drums-gate="1">
-          <p className="field-hint">{lang === 'he' ? 'יש תופים בתרגיל הזה. כדי שהמיקרופון ישמע רק את הבס, התופים מתנגנים רק באוזניות או בחיבור קווי.' : 'This drill has drums. So the mic hears only your bass, they play only in headphones or over a line-in.'}</p>
+          <p className="field-hint">
+            {drill.band
+              ? lang === 'he'
+                ? 'בתרגיל הזה מנגנת להקה (תופים ופסנתר). כדי שהמיקרופון ישמע רק את הבס, היא מתנגנת רק באוזניות או בחיבור קווי.'
+                : 'A band plays in this drill (drums and piano). So the mic hears only your bass, it plays only in headphones or over a line-in.'
+              : lang === 'he'
+                ? 'יש תופים בתרגיל הזה. כדי שהמיקרופון ישמע רק את הבס, התופים מתנגנים רק באוזניות או בחיבור קווי.'
+                : 'This drill has drums. So the mic hears only your bass, they play only in headphones or over a line-in.'}
+          </p>
           <div className="drill-actions">
             <button className="btn primary" onClick={() => onDrums!(true)} data-drums-choice="headphones">
               {lang === 'he' ? 'אוזניות / חיבור קווי' : 'Headphones / line-in'}
@@ -530,6 +559,14 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
               {lang === 'he' ? 'רמקול: רק קליק' : 'Speaker: click only'}
             </button>
           </div>
+        </div>
+      ) : phase === 'ready' && prep.left > 0 ? (
+        // RSL Quick Study Piece: time to read the score first (the player may start sooner).
+        <div className="drill-prep" data-prep={prep.left}>
+          <p className="field-hint">{lang === 'he' ? `זמן הכנה: קראו את התווים · ${prep.left} שנ׳` : `Prep time: read the score · ${prep.left} s`}</p>
+          <button className="btn primary" onClick={prep.skip} data-prep-ready="1">
+            {lang === 'he' ? 'מוכנים' : 'Ready'}
+          </button>
         </div>
       ) : phase === 'ready' ? (
         <button className="btn mega" onClick={() => void start()} data-drill-play="1">

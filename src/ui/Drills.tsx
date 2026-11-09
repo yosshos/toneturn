@@ -27,6 +27,8 @@ import { isGuitarDrill } from '../engine/drills/events';
 import { drillEvents, drillXp } from '../engine/drills/events';
 import { bandOfBpm as tempoBandOf } from '../engine/drills/analyze';
 import { ChartView, DrillStaff, DrillTab, DrillTake, EarCard, MarkLegend, TakeResult } from './DrillTake';
+import { TranscribeWrite } from './BassWrite';
+import { withWritten } from '../engine/drills/bassEar';
 import { midi } from '../speech/midi';
 import { inputLatency } from '../engine/latency';
 import { LatencyCalibrate } from './LatencyCalibrate';
@@ -555,6 +557,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
   const session = useRef(Date.now().toString(36));
   const count = useRef({ takes: 0, clean: 0 });
   const [take, setTake] = useState(0);
+  const [writing, setWriting] = useState<{ m: TakeMetrics; p: PlayedNote[] } | null>(null);
   if (!drill)
     return (
       <section className="drill-result v-clean">
@@ -601,7 +604,9 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
       </p>
       <DrillScore drill={drill} ds={ds} result={res?.m} beat={res ? -1 : beat} lang={lang} />
       {res && <MarkLegend lang={lang} />}
-      {!res && <DrillTake key={`${drill.itemId}:${take}`} drill={drill} bpm={bpm} lang={lang} cal={cal} onDone={(m, p) => (setBeat(-1), done(m, p))} onBeat={setBeat} drumsOk={headphones} onDrums={onHeadphones} />}
+      {!res && !writing && <DrillTake key={`${drill.itemId}:${take}`} drill={drill} bpm={bpm} lang={lang} cal={cal} onDone={(m, p) => (setBeat(-1), drill.write ? setWriting({ m, p }) : done(m, p))} onBeat={setBeat} drumsOk={headphones} onDrums={onHeadphones} />}
+      {/* Ear L7: write the line after playing it; the written grade joins the take's verdict. */}
+      {!res && writing && <TranscribeWrite drill={drill} lang={lang} onDone={(g) => (setWriting(null), done(withWritten(writing.m, g), writing.p))} />}
       {res && (
         <>
           <p className="drill-ladder">{res.lad.message[lang]}</p>

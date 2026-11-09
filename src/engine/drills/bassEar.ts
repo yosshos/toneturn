@@ -7,7 +7,7 @@
 //
 // Pure and deterministic. Imports bass.ts helpers only inside functions (bass.ts ↔ guitar.ts load order).
 
-import type { Drill, DrillSpec } from './types';
+import type { Drill, DrillSpec, TakeMetrics } from './types';
 import type { Tuning } from '../fretboard';
 import { rng, mod, NAMES } from './guitar';
 import { alt, chartOf, drillOf, fold, QI, rootOf, textOf, type BN, type Prog, type Q } from './bass';
@@ -35,6 +35,7 @@ const ASK: Record<string, { en: string; he: string }> = {
   rhythm: tt('Hear a two-bar rhythm — echo it on the open E', 'שמעו מקצב של שתי תיבות — החזירו אותו על מיתר E פתוח'),
   melodic: tt('Hear a two-bar line — play it back', 'שמעו קו של שתי תיבות — נגנו אותו בחזרה'),
   transcribe: tt('Hear two bars of walking bass — play them back', 'שמעו שתי תיבות של ווקינג בס — נגנו אותן בחזרה'),
+  quality: tt('Hear a chord over its root — then play its arpeggio: root, 3rd, 5th, 7th', 'שמעו אקורד מעל היסוד שלו — ואז נגנו את הארפג׳יו שלו: יסוד, טרצה, קווינטה, ספטימה'),
   slash: tt('Hear the chords — play the BASS note of each (not always the root)', 'שמעו את האקורדים — נגנו את צליל הבס של כל אחד (לא תמיד היסוד)'),
 };
 
@@ -152,7 +153,29 @@ export function generateBassEar(s: DrillSpec, tu: Tuning): Drill {
         line.push({ b: 8 + w.beat, d: 1, p: m });
       }
       band(0, 8);
-      return finishEar(s, tu, line, notes, windows, 'transcribe', { en: 'Transcribe two bars of walking bass', he: 'תמלול שתי תיבות של ווקינג בס' }, chartOf(key, prog));
+      // Bagrut transcription: after playing it back, write the line (tap it on the neck), graded note for note.
+      const d = finishEar(s, tu, line, notes, windows, 'transcribe', { en: 'Transcribe two bars of walking bass', he: 'תמלול שתי תיבות של ווקינג בס' }, chartOf(key, prog));
+      return { ...d, write: { pitches: line.map((x) => x.p) } };
+    }
+    case 'quality': {
+      // RSL ear tests Gr 6–8 (chord quality): the band plays a chord over its root (a bar), then the player answers with
+      // its arpeggio R–3–5–7 in quarters — the quality decides the 3rd, 5th and 7th, so the answer is measured by pitch.
+      // Four rounds; op 0: maj7 / m7 / 7; op 1: with m7♭5 and dim7.
+      const pool: Q[] = op === 1 ? ['maj7', 'm7', '7', 'm7b5', 'dim7'] : ['maj7', 'm7', '7'];
+      const degs = [0, 5, 7, 9, 2];
+      let last: Q | null = null;
+      for (let r = 0; r < 4; r++) {
+        const b0 = r * 8;
+        let q = pool[Math.floor(rnd() * pool.length)];
+        if (q === last) q = pool[(pool.indexOf(q) + 1) % pool.length];
+        last = q;
+        const d = degs[Math.floor(rnd() * degs.length)];
+        const R = rootOf(tu, key + d);
+        notes.push({ beat: b0, dur: 3.8, midi: voicing(key + d, q), inst: 'piano' }, { beat: b0, dur: 3.8, midi: [R], inst: 'bass' });
+        band(b0, b0 + 4);
+        QI[q].forEach((x, k) => line.push({ b: b0 + 4 + k, d: 1, p: R + x, ct: true }));
+      }
+      return finishEar(s, tu, line, notes, windows, 'quality', op === 1 ? { en: 'Chord quality by ear: 7ths, half-diminished, diminished', he: 'סוג האקורד בשמיעה: ספטאקורדים, חצי-מוקטן ומוקטן' } : { en: 'Chord quality by ear: maj7, m7, 7', he: 'סוג האקורד בשמיעה: maj7, m7, 7' });
     }
     case 'slash': {
       // Inversions and slash bass by ear: piano chords over their bass notes (C – G/B – Am – C/G …), then play the bass line.
@@ -171,6 +194,29 @@ export function generateBassEar(s: DrillSpec, tu: Tuning): Drill {
     }
   }
   throw new Error(`Unknown b-ear kind ${s.kind}`);
+}
+
+/** A written transcription graded note for note: the same sounding pitch in the same slot (any string / fret). */
+export interface WrittenGrade {
+  ok: number;
+  total: number;
+  marks: boolean[];
+}
+export function gradeWritten(want: number[], got: number[]): WrittenGrade {
+  const marks = want.map((p, i) => got[i] === p);
+  return { ok: marks.filter(Boolean).length, total: want.length, marks };
+}
+
+/**
+ * The take's verdict with the written part (ear L7): the played answer AND the written one must be right. A wrong
+ * written note keeps a clean take from counting (it becomes "almost", with the slot named); it never raises a verdict.
+ */
+export function withWritten(m: TakeMetrics, g: WrittenGrade): TakeMetrics {
+  const written = { ok: g.ok, total: g.total };
+  if (g.ok === g.total) return { ...m, written };
+  const first = g.marks.findIndex((x) => !x);
+  const why = { en: `Written: ${g.ok}/${g.total} notes right — note ${first + 1} is off.`, he: `בכתב: ${g.ok}/${g.total} תווים נכונים — תו ${first + 1} לא נכון.` };
+  return { ...m, written, verdict: m.verdict === 'clean' ? 'almost' : m.verdict, why: m.verdict === 'clean' ? why : { en: `${m.why.en} ${why.en}`, he: `${m.why.he} ${why.he}` } };
 }
 
 function finishEar(s: DrillSpec, tu: Tuning, line: BN[], notes: LN[], windows: [number, number][], ask: string, name: { en: string; he: string }, chart?: string[]): Drill {

@@ -12,7 +12,8 @@ import type { SpecTemplate } from './generate';
 import { noteAt, type Tuning } from '../fretboard';
 import { finish, genFretting, rng, mod, clamp, NAMES, SIG, modeInts, SCALES, windowScale, type Ev, type GN, type GuitarFamilyDef, type GuitarLevelDef, type GuitarStyle, type T2 } from './guitar';
 import { parseChart } from '../charts';
-import { walkingBass, hashOf } from '../band';
+import { walkingBass, hashOf, type BandStyle } from '../band';
+import { bandStyleOf } from './bassBand';
 import { GROOVES } from '../grooves';
 import { STANDARD_CHANGES } from '../standards';
 import { generateBassEar } from './bassEar';
@@ -49,7 +50,9 @@ const floorOf = (tu: Tuning): number => (tu.open.length >= 5 ? 28 : tu.open[tu.o
 /** The root of a pitch class in the bass register (E1 … D♯2). */
 export const rootOf = (tu: Tuning, pc: number): number => floorOf(tu) + mod(pc - floorOf(tu), 12);
 export const lowest = (tu: Tuning): number => tu.open[tu.open.length - 1];
-const highest = (tu: Tuning): number => tu.open[0] + MAXF;
+/** Highest fret: 21 on electric basses; 24 on the upright (the fingerboard to the double octave, ABRSM 3-octave scales). */
+const maxF = (tu: Tuning): number => (tu.id === 'upright' ? 24 : MAXF);
+const highest = (tu: Tuning): number => tu.open[0] + maxF(tu);
 /** Fold a pitch by octaves into the playable range. */
 export const fold = (tu: Tuning, p: number): number => {
   let x = p;
@@ -71,14 +74,14 @@ function placeLine(tu: Tuning, line: BN[], o: { pos?: number; open?: boolean; sp
   const meter = o.meter ?? 4;
   type C = { s: number; f: number };
   const candsOf = (x: BN): C[] => {
-    if (x.s !== undefined) return [{ s: x.s, f: x.f ?? clamp(x.p - tu.open[x.s - 1], 0, MAXF) }];
+    if (x.s !== undefined) return [{ s: x.s, f: x.f ?? clamp(x.p - tu.open[x.s - 1], 0, maxF(tu)) }];
     const p = fold(tu, x.p);
     const out: C[] = [];
     for (let s = 1; s <= n; s++) {
       const f = p - tu.open[s - 1];
-      if (f >= 0 && f <= MAXF) out.push({ s, f });
+      if (f >= 0 && f <= maxF(tu)) out.push({ s, f });
     }
-    return out.length ? out : [{ s: n, f: clamp(p - tu.open[n - 1], 0, MAXF) }];
+    return out.length ? out : [{ s: n, f: clamp(p - tu.open[n - 1], 0, maxF(tu)) }];
   };
   const own = (c: C) => (c.f === 0 ? (o.open === false ? 8 : 0.4) : 0) + (c.f > 12 ? 0.04 * (c.f - 12) : 0);
   const first = (c: C) => {
@@ -211,6 +214,12 @@ interface Out {
   listen?: Drill['listen'];
   untimed?: Drill['untimed'];
   bow?: Drill['bow'];
+  /** The harmony band's style (default: from the drum groove), or false for drums only. */
+  band?: BandStyle | false;
+  /** Quick study: seconds to read before Play. */
+  prep?: number;
+  /** Ear transcription: write the line after playing it. */
+  write?: Drill['write'];
 }
 export function drillOf(s: DrillSpec, tu: Tuning, line: BN[], o: Out): Drill {
   const key = mod(s.key, 12);
@@ -224,12 +233,16 @@ export function drillOf(s: DrillSpec, tu: Tuning, line: BN[], o: Out): Drill {
   if (o.chart) d.chart = o.chart;
   if (o.click && o.click !== 'all') d.click = o.click;
   if (o.drums) d.drums = o.drums;
+  // The harmony band (bassBand.ts): every drill with drums and a chord chart gets the band's comping in the groove's style.
+  if (o.drums && d.chart?.some((c) => /[A-G]/.test(c)) && o.band !== false) d.band = { style: o.band ?? bandStyleOf(o.drums.groove) };
   if (o.show) d.show = o.show;
   if (o.freeFrom !== undefined) d.freeFrom = o.freeFrom;
   if (o.pulse) d.pulse = o.pulse;
   if (o.listen) d.listen = o.listen;
   if (o.untimed) d.untimed = o.untimed;
   if (o.bow) d.bow = o.bow;
+  if (o.prep) d.prep = o.prep;
+  if (o.write) d.write = o.write;
   return d;
 }
 
@@ -238,15 +251,21 @@ export function drillOf(s: DrillSpec, tu: Tuning, line: BN[], o: Out): Drill {
  * `fills` bars (snare 16ths into toms on beats 3–4, crash on the next 1). Beats from beat 0 of the drill.
  */
 export function drumHits(dr: NonNullable<Drill['drums']>, beats: number, meter = 4, pulse?: 8): { beat: number; d: 'k' | 's' | 'h' | 'tom-hi' | 'tom-lo' | 'crash' }[] {
-  const g = GROOVES.find((x) => x.id === dr.groove);
-  if (!g) return [];
+  const g0 = GROOVES.find((x) => x.id === dr.groove);
+  if (!g0) return [];
   const out: { beat: number; d: 'k' | 's' | 'h' | 'tom-hi' | 'tom-lo' | 'crash' }[] = [];
-  // One step in drill beats: eighth-note grooves (den 8, sub 2) step one eighth = one drill beat when the drill counts eighths.
-  const stepB = g.den === 8 && g.sub === 2 ? (pulse === 8 ? 1 : 0.5) : 1 / g.sub;
-  const steps = Math.round(meter / stepB);
   const bars = Math.ceil(beats / meter - 1e-9);
   const fills = new Set(dr.fills ?? []);
+  // Feel changes (pocket L7): the groove of a bar is the last section starting at or before it.
+  const grooveAt = (bar: number) => {
+    const sec = [...(dr.sections ?? [])].filter((x) => x.bar <= bar).sort((a, b) => b.bar - a.bar)[0];
+    return (sec && GROOVES.find((x) => x.id === sec.groove)) || g0;
+  };
   for (let bar = 0; bar < bars; bar++) {
+    const g = grooveAt(bar);
+    // One step in drill beats: eighth-note grooves (den 8, sub 2) step one eighth = one drill beat when the drill counts eighths.
+    const stepB = g.den === 8 && g.sub === 2 ? (pulse === 8 ? 1 : 0.5) : 1 / g.sub;
+    const steps = Math.round(meter / stepB);
     const b0 = bar * meter;
     if (fills.has(bar)) {
       // A fill: groove on the first half, then 16th snare into the toms, crash on the next bar's 1.
@@ -731,11 +750,12 @@ function genPocket(s: DrillSpec, tu: Tuning): Drill {
       return drillOf(s, tu, alt(line), { en: 'Pocket on purpose: on, 15 ms behind, 10 ms ahead', he: 'כיס מכוון: על הפעמה, 15 מ״ש מאחור, 10 מ״ש מקדימה', chart: chartOf(key, prog), bass: { kick: 25, pocket: [0, 15, -10] }, evenness: false, drums: { groove: 'rock-8b' } });
     }
     case 'halftime': {
-      // Four bars in time, four bars half-time.
-      const a = kickLine(tu, key, PROGS.pop, kickBeats('rock-8b'));
-      const b = kickLine(tu, key, PROGS.pop, kickBeats('half-time')).map((x) => ({ ...x, b: x.b + 16 }));
-      const line = [...a, ...b, endOn(tu, key, 32, 1)];
-      return drillOf(s, tu, alt(line), { en: 'Half-time feel change', he: 'מעבר לחצי זמן', chart: [...chartOf(key, PROGS.pop), ...chartOf(key, PROGS.pop)], bass: { kick: 25 }, evenness: false });
+      // Eight bars in time, then the drums go half-time for eight: two groove sections, the bass follows each kick lane.
+      const prog: Prog = [...PROGS.pop, ...PROGS.pop];
+      const a = kickLine(tu, key, prog, kickBeats('rock-8b'));
+      const b = kickLine(tu, key, prog, kickBeats('half-time')).map((x) => ({ ...x, b: x.b + 32 }));
+      const line = [...a, ...b, endOn(tu, key, 64, 1)];
+      return drillOf(s, tu, alt(line), { en: 'Half-time feel change: 8 bars in time, 8 half-time', he: 'מעבר לחצי זמן: 8 תיבות בזמן, 8 בחצי זמן', chart: [...chartOf(key, prog), ...chartOf(key, prog)], bass: { kick: 25 }, evenness: false, drums: { groove: 'rock-8b', sections: [{ bar: 8, groove: 'half-time' }] } });
     }
     case 'fills': {
       // Three bars of groove, a bar of space for the drummer's fill, land on 1. Twice.
@@ -1272,7 +1292,7 @@ export function genWalk(s: DrillSpec, tu: Tuning): Drill {
       for (const k of [0, 5, 10, 3, 0]) prog.push([mod(k + 2, 12), 'm7'], [mod(k + 7, 12), '7'], [k, 'maj7'], [k, 'maj7']);
       const line = refWalk(tu, textOf(key, prog), `b-walk:cycle:${key}`, false);
       line.push(endOn(tu, key, prog.length * 4, 2));
-      return drillOf(s, tu, alt(line), { en: 'ii–V–I up in 4ths and home', he: 'ii–V–I בעליות של קוורטות, וחזרה הביתה', chart: chartOf(key, prog), goal: { chordTonesOnBeats: true } });
+      return drillOf(s, tu, alt(line), { en: 'ii–V–I up in 4ths and home', he: 'ii–V–I בעליות של קוורטות, וחזרה הביתה', chart: chartOf(key, prog), goal: { chordTonesOnBeats: true }, drums: { groove: 'swing' } });
     }
     case 'rhythm': {
       // Rhythm changes, A section: two chords a bar.
@@ -1289,7 +1309,7 @@ export function genWalk(s: DrillSpec, tu: Tuning): Drill {
       const text = bars.map((b) => b.map((c) => chordName(key, c).replace('°7', 'dim7').replace('♭', 'b').replace('♯', '#')).join(' ')).join(' | ');
       const line = refWalk(tu, text, `b-walk:rhythm:${key}`, false);
       line.push(endOn(tu, key, 32, 2));
-      return drillOf(s, tu, alt(line), { en: 'Rhythm changes: two chords a bar', he: 'ריתם צ׳יינג׳ס: שני אקורדים בתיבה', chart: bars.map((b) => b.map((c) => chordName(key, c)).join(' ')), goal: { chordTonesOnBeats: true } });
+      return drillOf(s, tu, alt(line), { en: 'Rhythm changes: two chords a bar', he: 'ריתם צ׳יינג׳ס: שני אקורדים בתיבה', chart: bars.map((b) => b.map((c) => chordName(key, c)).join(' ')), goal: { chordTonesOnBeats: true }, drums: { groove: 'swing' } });
     }
     case 'standard': {
       // One chorus of a standard's changes in the tune's own key and feel (B13 / B18), chart only, judged by the rules.
@@ -1356,14 +1376,14 @@ export function genWalk(s: DrillSpec, tu: Tuning): Drill {
         return [...three, approach('chrom', three[2], tgt, bar)];
       }, [3]);
       line.push({ b: 32, d: 2, p: lowRoot(tu, key) ?? rootOf(tu, key) });
-      return drillOf(s, tu, alt(line), { en: 'Low register walk (low B on 5-string)', he: 'ווקינג באזור הנמוך (B נמוך בבס 5 מיתרים)', chart: chartOf(key, iivi), goal: { chordTonesOnBeats: true } });
+      return drillOf(s, tu, alt(line), { en: 'Low register walk (low B on 5-string)', he: 'ווקינג באזור הנמוך (B נמוך בבס 5 מיתרים)', chart: chartOf(key, iivi), goal: { chordTonesOnBeats: true }, drums: { groove: 'swing' } });
     }
     case 'two-four': {
       // A blues chorus in 2 (half notes), then a chorus in 4 (walking).
       const a = overProg(tu, key, blues, (R) => [{ b: 0, d: 2, p: R, ct: true }, { b: 2, d: 2, p: R + 7 > floorOf(tu) + 14 ? R - 5 : R + 7 }]);
       const b = refWalk(tu, textOf(key, blues), `b-walk:24:${key}`, false).map((x) => ({ ...x, b: x.b + 48 }));
       const line = [...a, ...b, endOn(tu, key, 96, 2)];
-      return drillOf(s, tu, alt(line), { en: 'Blues in 2, then in 4', he: 'בלוז בשתיים, ואז בארבע', chart: [...chartOf(key, blues), ...chartOf(key, blues)], evenness: false });
+      return drillOf(s, tu, alt(line), { en: 'Blues in 2, then in 4', he: 'בלוז בשתיים, ואז בארבע', chart: [...chartOf(key, blues), ...chartOf(key, blues)], evenness: false, drums: { groove: 'swing' } });
     }
   }
   throw new Error(`Unknown b-walk kind ${s.kind}`);
@@ -1679,7 +1699,7 @@ export function genRead(s: DrillSpec, tu: Tuning): Drill {
         bar >= 4 ? [0, 1, 2, 3].map((k) => ({ b: k, d: 1, p: R + [0, QI[c[1]][1], QI[c[1]][2], 12][k], ct: true })) : [0, 1, 1.5, 2, 3].map((b, k) => ({ b, d: k === 1 ? 0.5 : k === 2 ? 0.5 : 1, p: R + [0, 7, 12, 7, 0][k], ct: true })),
       );
       line.push(endOn(tu, key, 48, 1));
-      return drillOf(s, tu, alt(line), { en: 'Quick study: 4 written bars, then 8 of your own', he: 'לימוד מהיר: 4 תיבות כתובות, ואז 8 משלך', chart: chartOf(key, prog), show: 'chart', freeFrom: 16, evenness: false, bass: { rules: rulesOf(key, prog, 'chordTones') } });
+      return drillOf(s, tu, alt(line), { en: 'Quick study: 4 written bars, then 8 of your own', he: 'לימוד מהיר: 4 תיבות כתובות, ואז 8 משלך', chart: chartOf(key, prog), show: 'chart', freeFrom: 16, evenness: false, bass: { rules: rulesOf(key, prog, 'chordTones') }, drums: { groove: 'pop-1' }, prep: 30 });
     }
     case 'written': {
       // Two written bars, then six bars of chord tones (for now written out too).
@@ -1690,7 +1710,7 @@ export function genRead(s: DrillSpec, tu: Tuning): Drill {
       });
       line.push(endOn(tu, key, 32, 1));
       // B3 (RSL Gr 4–5 Improvisation & Interpretation): two written bars, then six free bars from the chords (rules).
-      return drillOf(s, tu, alt(line), { en: 'Written groove + your own continuation', he: 'גרוב כתוב + המשך משלך', chart: chartOf(key, prog), show: 'chart', freeFrom: 8, bass: { rules: rulesOf(key, prog, 'chordTones') } });
+      return drillOf(s, tu, alt(line), { en: 'Written groove + your own continuation', he: 'גרוב כתוב + המשך משלך', chart: chartOf(key, prog), show: 'chart', freeFrom: 8, bass: { rules: rulesOf(key, prog, 'chordTones') }, drums: { groove: 'pop-1' } });
     }
     case 'funkread': {
       const prog: Prog = [[0, 'm7'], [0, 'm7'], [5, '7'], [5, '7']];
@@ -1952,6 +1972,85 @@ function genStyle(s: DrillSpec, tu: Tuning): Drill {
   });
 }
 
+/**
+ * RSL / Trinity stylistic studies (BASS_VALIDATION §3, Gr 1–8): 8-bar studies that combine the grade's techniques in
+ * one style, played with the band. op 0 rock (Gr 1–3: 8ths, octave pumps, a slide into the change, real rests,
+ * accents); op 1 funk / slap (Gr 4–6: thumb, pops, ghosts, hammer-ons in 16ths); op 2 jazz (Gr 6–8: two bars walking,
+ * two bars of an upper-register fill in swung 8ths, repeated through the second half). Every note is written and judged
+ * note for note; dead notes must be dead.
+ */
+function genStudy(s: DrillSpec, tu: Tuning): Drill {
+  const key = mod(s.key, 12);
+  const op = (s.option ?? 0) % 3;
+  const rnd = rng(`b-styles:study:${key}:${op}`);
+  let line: BN[] = [];
+  let prog: Prog;
+  if (op === 0) {
+    prog = [...PROGS.rock, ...PROGS.rock];
+    line = overProg(tu, key, prog, (R, _c, bar, next) => {
+      if (bar % 4 === 1) return [...[0, 0.5, 1, 1.5].map((b, k): BN => ({ b, d: 0.5, p: k % 2 ? R + 12 : R, acc: k === 0 })), { b: 2, d: 0.5, p: R, acc: true }, { b: 3, d: 0.5, p: R + 7 }];
+      if (bar % 4 === 3) return [{ b: 0, d: 1, p: R, acc: true }, { b: 1, d: 0.5, p: R + 7 }, { b: 2, d: 0.5, p: R + 10 }, { b: 3, d: 0.5, p: next - 2 }, { b: 3.5, d: 0.5, p: next, tech: 'slide' as Tech, ct: false }];
+      return [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5].map((b, k) => ({ b, d: 0.5, p: R, acc: k === 0 || k === 4 }));
+    });
+  } else if (op === 1) {
+    prog = [[0, 'm7'], [0, 'm7'], [5, '7'], [0, 'm7'], [0, 'm7'], [0, 'm7'], [5, '7'], [7, '7']];
+    line = cellLine(tu, key, prog, rnd, 8, ['T.xP', 'T.HP', 'x.TP', 'T.T.', 'P.xT', 'T.xQ', 'TxP.'], 'T.xP');
+  } else {
+    prog = [...PROGS.iivi, ...PROGS.iivi];
+    const walk = refWalk(tu, textOf(key, PROGS.iivi), `b-styles:study:walk:${key}`, false).filter((x) => x.b < 8);
+    const fill = (b0: number, R: number, ints: number[]): BN[] => [0, 1, 2, 3].flatMap((beat) => [{ b: b0 + beat, d: 2 / 3, p: R + 12 + ints[(beat * 2) % ints.length] }, { b: b0 + beat + 2 / 3, d: 1 / 3, p: R + 12 + ints[(beat * 2 + 1) % ints.length] }]);
+    for (const half of [0, 16]) {
+      for (const x of walk) line.push({ ...x, b: x.b + half });
+      [2, 3].forEach((bar) => {
+        const c = prog[bar];
+        const R = rootOf(tu, key + c[0]);
+        line.push(...fill(half + bar * 4, R, [...QI[c[1]], 12, QI[c[1]][2]]));
+      });
+    }
+  }
+  line.push(endOn(tu, key, prog.length * 4, 1));
+  const T: T2[] = [tt('Stylistic study: rock (8 bars)', 'אטיוד סגנוני: רוק (8 תיבות)'), tt('Stylistic study: funk and slap (8 bars)', 'אטיוד סגנוני: פאנק וסלאפ (8 תיבות)'), tt('Stylistic study: jazz, upper register (8 bars)', 'אטיוד סגנוני: ג׳אז, אזור גבוה (8 תיבות)')];
+  const groove = ['rock-8b', 'funk-1', 'swing'][op];
+  const dead = line.some((x) => x.tech === 'dead');
+  return drillOf(s, tu, op === 0 ? alt(line) : line, {
+    ...T[op],
+    chart: chartOf(key, prog),
+    evenness: false,
+    open: op === 2 ? false : undefined,
+    bass: { ...(op === 0 ? { kick: 25 } : {}), ...(dead ? { ghostClass: 0.85 } : {}), ...(op === 1 ? { slapAdvice: true } : {}) },
+    drums: { groove },
+  });
+}
+
+/**
+ * Trinity session skills / RSL improvisation: improvise a bass part over a rock or pop chart read at sight (a new chart
+ * for every key and option), only the chart shown, judged by the chord-tone rules, with the band.
+ */
+function genSession(s: DrillSpec, tu: Tuning): Drill {
+  const key = mod(s.key, 12);
+  const op = s.option ?? 0;
+  const rnd = rng(`b-read:session:${key}:${op}`);
+  // op 0 rock charts (I–♭VII–IV, I–IV–V), op 1 pop charts (I–vi–IV–V, vi–IV–I–V, I–iii–IV–V); a new chart per key.
+  const pool: Prog[] = op === 1 ? [PROGS.pop, [[9, 'm'], [5, 'M'], [0, 'M'], [7, 'M']], [[0, 'M'], [4, 'm'], [5, 'M'], [7, 'M']]] : [PROGS.rock, PROGS.p145, PROGS.p1451, [[0, 'M'], [10, 'M'], [5, 'M'], [5, 'M']]];
+  const prog: Prog = [pool[Math.floor(rnd() * pool.length)], pool[Math.floor(rnd() * pool.length)]].flat();
+  prog.splice(prog.length - 2, 2, [7, 'M'], [0, 'M']);
+  // The model line (opt-in): rock 8ths on the root with an octave; pop root–5th–3rd with a push into the change.
+  const line = overProg(tu, key, prog, (R, c) =>
+    op === 1 ? [0, 1.5, 2, 3, 3.5].map((b, k) => ({ b, d: k === 0 ? 1.5 : 0.5 + (k === 2 ? 0.5 : 0), p: R + [0, 7, QI[c[1]][1], 7, 0][k], ct: true })) : [0, 1, 1.5, 2, 3].map((b, k) => ({ b, d: k === 1 || k === 2 ? 0.5 : 1, p: R + [0, 0, 12, QI[c[1]][2], QI[c[1]][1]][k], ct: true })),
+  );
+  line.push(endOn(tu, key, prog.length * 4, 1));
+  const groove = op === 1 ? 'pop-1' : 'rock-8';
+  return drillOf(s, tu, alt(line), {
+    en: op === 1 ? 'Session: improvise over a pop chart' : 'Session: improvise over a rock chart',
+    he: op === 1 ? 'סשן: אלתור על צ׳ארט פופ' : 'סשן: אלתור על צ׳ארט רוק',
+    chart: chartOf(key, prog),
+    show: 'chart',
+    evenness: false,
+    bass: { rules: rulesOf(key, prog, 'chordTones') },
+    drums: { groove },
+  });
+}
+
 /** Build a b-* drill (called from generateGuitar). */
 export function generateBass(s: DrillSpec, tu: Tuning): Drill {
   switch (s.family as BassFamilyId) {
@@ -1992,9 +2091,9 @@ export function generateBass(s: DrillSpec, tu: Tuning): Drill {
     case 'b-pick':
       return genPick(s, tu);
     case 'b-read':
-      return genRead(s, tu);
+      return s.kind === 'session' ? genSession(s, tu) : genRead(s, tu);
     case 'b-styles':
-      return genStyle(s, tu);
+      return s.kind === 'study' ? genStudy(s, tu) : genStyle(s, tu);
   }
   throw new Error(`Not a bass family: ${s.family}`);
 }
@@ -2101,6 +2200,8 @@ export function bassFamilies(): GuitarFamilyDef[] {
       L('b-ear', 6, 'Melodic recall: play it back', 'זיכרון מלודי: לנגן בחזרה', [EA('melodic')], K6, [60, 90], E8),
       L('b-ear', 7, 'Transcribe a walking line', 'לתמלל קו ווקינג', [EA('transcribe', { perBeat: 1 }), EA('transcribe', { perBeat: 1, option: 1 })], K6, [70, 110], Qn),
       L('b-ear', 8, 'Inversions and slash bass by ear', 'היפוכים ובס סלאש בשמיעה', [EA('slash', { perBeat: 0.5 }), EA('slash', { perBeat: 0.5, option: 1 })], K6, [60, 90], 'halves'),
+      // RSL ear tests Gr 6–8: chord quality, answered on the bass (its arpeggio), so it is measured.
+      L('b-ear', 9, 'Chord quality by ear: play its arpeggio', 'סוג האקורד בשמיעה: לנגן את הארפג׳יו שלו', [EA('quality', { perBeat: 1 }), EA('quality', { perBeat: 1, option: 1 })], K6, [60, 90], Qn),
     ]),
     fam('b-scale', 'Scales and modes', 'סולמות ומודוסים', [
       L('b-scale', 1, 'Minor and major pentatonic', 'פנטטוני מינור ומז׳ור', [SC('scale', { option: 8 }), SC('scale', { option: 9 })], K6, [70, 110], E8),
@@ -2146,6 +2247,8 @@ export function bassFamilies(): GuitarFamilyDef[] {
       L('b-read', 10, 'Nashville: the key switches on the repeat', 'נאשוויל: הסולם מתחלף בחזרה', [RD('nash-switch', { perBeat: 1 }), RD('nash-switch', { perBeat: 1, option: 1 })], 'major', [80, 110], Qn),
       L('b-read', 11, 'Chart roadmaps: repeats, endings, D.S.', 'מפות צ׳ארט: חזרות, סיומות, D.S.', [RD('roadmap', { perBeat: 1 }), RD('roadmap', { perBeat: 1, option: 1 })], K6, [80, 110], Qn),
       L('b-read', 12, 'Quick study: lead sheet with free bars', 'לימוד מהיר: לידשיט עם תיבות חופשיות', [RD('quick')], K6, [70, 100], E8),
+      // Trinity session skills / RSL improvisation over a rock or pop chart, with the band.
+      L('b-read', 13, 'Session skills: improvise over a rock / pop chart', 'מיומנויות סשן: אלתור על צ׳ארט רוק / פופ', [RD('session', { perBeat: 1 }), RD('session', { perBeat: 1, option: 1 })], K6, [80, 110], Qn),
     ]),
     fam('b-styles', 'Style vocabulary', 'אוצר מילים סגנוני', [
       L('b-styles', 1, 'Rock', 'רוק', [ST('style', { option: 0 })], K6, [90, 140], E8, ['rock', 'metal', 'pop']),
@@ -2162,6 +2265,10 @@ export function bassFamilies(): GuitarFamilyDef[] {
       L('b-styles', 12, 'Metal and odd meter', 'מטאל ומשקל אי-זוגי', [ST('style', { option: 11, tuning: 'bass-dropd' }), ST('style', { option: 12, tempo: 180 })], [2, 4], [120, 180], 'gallop / 7/8', ['metal', 'rock']),
       L('b-styles', 13, 'Middle Eastern: Hijaz ostinati', 'מזרחי: אוסטינטי בחיג׳אז', [ST('style', { option: 13 }), ST('style', { option: 14, tempo: 180 })], K4, [90, 120], E8, ['all']),
       L('b-styles', 14, 'Gospel in the low register (5-string)', 'גוספל באזור הנמוך (5 מיתרים)', [ST('style', { option: 15, perBeat: 4 })], K6, [70, 90], S16, ['funk', 'pop', 'jazz']),
+      // RSL / Trinity stylistic studies: 8 bars combining the grade's techniques, with the band.
+      L('b-styles', 15, 'Stylistic study: rock (Grades 1–3)', 'אטיוד סגנוני: רוק (שלבים 1–3)', [ST('study', { option: 0 })], K6, [80, 120], E8, ['rock', 'pop']),
+      L('b-styles', 16, 'Stylistic study: funk and slap (Grades 4–6)', 'אטיוד סגנוני: פאנק וסלאפ (שלבים 4–6)', [ST('study', { option: 1, perBeat: 4 })], K4, [70, 100], S16, ['funk']),
+      L('b-styles', 17, 'Stylistic study: jazz, upper register (Grades 6–8)', 'אטיוד סגנוני: ג׳אז, אזור גבוה (שלבים 6–8)', [ST('study', { option: 2, perBeat: 1 })], 'major', [90, 140], 'quarters / swung 8ths', ['jazz']),
     ]),
     fam('b-ghost', 'Ghost notes and 16th funk', 'צלילי רפאים ופאנק בשש-עשריות', [
       L('b-ghost', 1, 'Make a dead note', 'ליצור צליל מת', [GH('ghost8')], ANY, [70, 100], E8),
@@ -2242,7 +2349,7 @@ const EXAM: Record<string, [LevelExamTag['board'], string][]> = {
   'b-chord-11': [['RSL', '5']],
   'b-ear-3': [['RSL', '4']],
   'b-ear-4': [['RSL', '5–6']],
-  'b-read-8': [['RSL', '4–5'], ['Bagrut', 'improvisation']],
+  'b-read-8': [['RSL', '1–8: Improvisation & Interpretation'], ['Bagrut', 'improvisation']],
   'b-scale-4': [['RSL', '6']],
   'b-scale-10': [['RSL', '6']],
   'b-ghost-6': [['RSL', '6–8']],
@@ -2259,8 +2366,7 @@ const EXAM: Record<string, [LevelExamTag['board'], string][]> = {
   'b-chord-13': [['RSL', '8']],
   'b-time-10': [['RSL', '8']],
   'b-styles-12': [['RSL', '8']],
-  'b-walk-12': [['RSL', '8']],
-  'b-read-12': [['RSL', '6–8']],
+  'b-read-12': [['RSL', '6–8: Quick Study Piece']],
   'b-legato-1': [['Trinity', '2']],
   'b-length-1': [['Trinity', '2']],
   'b-pluck-6': [['Trinity', '2–4']],
@@ -2282,7 +2388,17 @@ const EXAM: Record<string, [LevelExamTag['board'], string][]> = {
   'b-walk-15': [['Bagrut', '2-chorus solo']],
   'b-walk-16': [['Bagrut', 'sight-read improvisation']],
   'b-styles-2': [['Bagrut', 'ballad']],
-  'b-styles-4': [['Bagrut', 'blues']],
+  'b-styles-4': [['RSL', '1–3'], ['Bagrut', 'blues']],
+  'b-styles-1': [['RSL', '1–3']],
+  'b-styles-3': [['RSL', '1–3']],
+  'b-styles-15': [['RSL', '1–3'], ['Trinity', '1–3']],
+  'b-styles-16': [['RSL', '4–6'], ['Trinity', '4–6']],
+  'b-styles-17': [['RSL', '6–8'], ['Trinity', '6–8']],
+  'b-read-13': [['Trinity', 'session: improvising'], ['RSL', 'improvisation']],
+  'b-ear-9': [['RSL', '6–8']],
+  'b-walk-12': [['RSL', '8'], ['Bagrut', 'fast piece with a band']],
+  'b-walk-13': [['Bagrut', 'pieces with a band']],
+  'b-walk-14': [['Bagrut', 'ballad / medium with a band']],
   'b-up-scales-1': [['ABRSM', '1']],
   'b-up-scales-2': [['ABRSM', '2']],
   'b-up-scales-3': [['ABRSM', '3']],
@@ -2295,6 +2411,13 @@ const EXAM: Record<string, [LevelExamTag['board'], string][]> = {
   'b-up-pos-1': [['ABRSM', '1']],
   'b-up-pos-6': [['ABRSM', '7–8']],
   'b-up-read-4': [['ABRSM', '7–8']],
+  'b-up-read-5': [['ABRSM', '8']],
+  'b-up-read-6': [['ABRSM', '8']],
+  'b-up-arco-7': [['ABRSM', '1–3']],
+  'b-up-arco-8': [['ABRSM', '4–5']],
+  'b-up-arco-9': [['ABRSM', '6–8']],
+  'b-up-pizz-4': [['ABRSM', '4–5']],
+  'b-up-scales-10': [['ABRSM', '7–8']],
 };
 
 type LFn = (fam: BassFamilyId, level: number, en: string, he: string, specs: SpecTemplate[], keys: GuitarLevelDef['keys'], tempo: [number, number], sub: string, genres?: GuitarStyle[]) => GuitarLevelDef;
@@ -2327,6 +2450,10 @@ function uprightFamilies(L: LFn, fam: FamFn): GuitarFamilyDef[] {
       L('b-up-arco', 4, 'Hooked bowing', 'קשת מחוברת', [AR('arco', { option: 3, perBeat: 1 })], G.slice(0, 3), [40, 66], 'dotted'),
       L('b-up-arco', 5, 'String crossing under one bow', 'מעבר מיתרים בקשת אחת', [AR('arco', { option: 4 })], [4], [50, 80], E8),
       L('b-up-arco', 6, 'Scales in rhythm', 'סולמות במקצב', [AR('arco', { option: 5 })], G, [50, 80], E8),
+      // ABRSM lists A–C are pieces: original studies in each grade band's style, bowed, read from the staff, measured.
+      L('b-up-arco', 7, 'Bowed study: Grades 1–3 style', 'אטיוד בקשת: סגנון שלבים 1–3', [AR('etude', { option: 0 })], [7, 2, 9], [50, 80], 'quarters / halves'),
+      L('b-up-arco', 8, 'Bowed study: Grades 4–5 style (3/4, slurs)', 'אטיוד בקשת: סגנון שלבים 4–5 (3/4, לגאטו)', [AR('etude', { option: 1 }), AR('etude', { option: 1, minor: true })], [5, 10, 7], [56, 88], E8),
+      L('b-up-arco', 9, 'Bowed study: Grades 6–8 style (shifts, 16ths)', 'אטיוד בקשת: סגנון שלבים 6–8 (מעברים, שש-עשריות)', [AR('etude', { option: 2 }), AR('etude', { option: 2, minor: true })], [7, 2, 4, 5], [60, 96], '16ths'),
     ]),
     fam('b-up-scales', 'Upright: scales and arpeggios', 'קונטרבס: סולמות וארפג׳יו', [
       L('b-up-scales', 1, 'One-octave scales', 'סולמות באוקטבה אחת', [SS('scales', { option: 0, perBeat: 1 })], [7, 2, 9], [40, 52], Qn),
@@ -2338,11 +2465,14 @@ function uprightFamilies(L: LFn, fam: FamFn): GuitarFamilyDef[] {
       L('b-up-scales', 7, 'Broken 3rds', 'טרצות שבורות', [SS('scales', { option: 6, perBeat: 1 })], [7, 2, 9, 5], [50, 69], Qn),
       L('b-up-scales', 8, 'Running 3rds', 'טרצות רצות', [SS('scales', { option: 7, perBeat: 1 })], [7, 2, 9, 5], [56, 76], Qn),
       L('b-up-scales', 9, 'Three-octave E', 'סולם E בשלוש אוקטבות', [SS('scales', { option: 8, perBeat: 1 })], [4], [56, 76], Qn),
+      // Three octaves wherever the fingerboard allows (the top note at most the G string's 24th place): F, F♯ and G too.
+      L('b-up-scales', 10, 'Three-octave scales and arpeggios: F, F♯, G', 'סולמות וארפג׳יו בשלוש אוקטבות: F, F♯, G', [SS('scales', { option: 8, perBeat: 1 }), SS('scales', { option: 9, perBeat: 1 })], [5, 6, 7], [56, 76], Qn),
     ]),
     fam('b-up-pizz', 'Upright: jazz pizzicato', 'קונטרבס: פיציקטו ג׳אזי', [
       L('b-up-pizz', 1, 'Long, even pizz quarters', 'רבעים ארוכים ושווים בפיציקטו', [PZ('pizz', { perBeat: 1 })], [7, 2, 9, 5], [80, 140], Qn),
       L('b-up-pizz', 2, 'Pizz over ii–V–I', 'פיציקטו על ii–V–I', [PZ('pizz', { perBeat: 1, option: 1 })], [0, 5, 10, 7], [90, 160], Qn),
       L('b-up-pizz', 3, 'Sustain at tempo', 'צליל מתמשך בטמפו', [PZ('pizz', { perBeat: 1, option: 2 })], [5, 10, 7, 0], [140, 200], Qn),
+      L('b-up-pizz', 4, 'Pizz study: Grades 4–5 style', 'אטיוד בפיציקטו: סגנון שלבים 4–5', [PZ('etude', { option: 1 })], [7, 2, 9, 5], [70, 110], E8),
     ]),
     fam('b-up-walk', 'Upright: walking', 'קונטרבס: ווקינג', [
       L('b-up-walk', 1, 'Two-feel roots and 5ths', 'בשתיים: יסודות וקווינטות', [WU('two-feel', { perBeat: 0.5 })], [5, 10], [80, 140], 'halves'),
@@ -2356,6 +2486,9 @@ function uprightFamilies(L: LFn, fam: FamFn): GuitarFamilyDef[] {
       L('b-up-read', 2, 'Half and first position', 'חצי מצב ומצב ראשון', [RU('keysig')], [5, 10, 3], [50, 72], E8),
       L('b-up-read', 3, 'Positions with shifts', 'מצבים עם מעברים', [RU('pos', { option: 0 }), RU('pos', { option: 1 })], [7, 2], [50, 72], E8),
       L('b-up-read', 4, 'Tenor clef: the upper register', 'מפתח טנור: האזור הגבוה', [RU('tenor')], [7, 2], [44, 66], E8),
+      // ABRSM Gr 8: the treble clef for thumb position (written an octave above the sound, like the bass clef).
+      L('b-up-read', 5, 'Treble clef: thumb position', 'מפתח סול: מצב אגודל', [RU('treble')], [7, 2], [40, 63], E8),
+      L('b-up-read', 6, 'Treble clef with shifts', 'מפתח סול עם מעברים', [RU('treble', { option: 1 }), RU('treble', { option: 1, minor: true })], [7, 2, 9], [40, 63], E8),
     ]),
   ];
   for (const f of out) f.upright = true;

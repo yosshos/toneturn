@@ -61,4 +61,35 @@ test.describe('bass course', () => {
     await expect(page.locator('[data-drill-play]')).toBeVisible();
     await fitsScreen(page);
   });
+
+  test('a style level plays with a band behind the same headphones gate; the speaker keeps the click', async ({ page }) => {
+    await open(page, 'b-styles', 'b-styles-1');
+    const gate = page.locator('[data-drums-gate]');
+    await expect(gate).toBeVisible();
+    await expect(gate).toContainText(/band/i);
+    await page.locator('[data-drums-choice="headphones"]').click();
+    await expect(page.locator('[data-drums="on"]')).toHaveAttribute('data-band', 'rock');
+    await page.locator('[data-drums="on"]').click();
+    await expect(page.locator('[data-drums="off"]')).toBeVisible();
+    await fitsScreen(page);
+  });
+
+  test('quick study: prep time to read before Play, skippable', async ({ page }) => {
+    await open(page, 'b-read', 'b-read-12');
+    await page.locator('[data-drums-choice="speaker"]').click();
+    await expect(page.locator('[data-prep]')).toBeVisible();
+    await expect(page.locator('[data-drill-play]')).toHaveCount(0);
+    await page.locator('[data-prep-ready]').click();
+    await expect(page.locator('[data-drill-play]')).toBeVisible();
+    await fitsScreen(page);
+  });
+
+  test('upright thumb position reads the treble clef; studies read from the staff — one screen each', async ({ page }) => {
+    await open(page, 'b-up-read', 'b-up-read-5');
+    await expect(page.locator('[data-drills="run"] .drill-staff[data-clef="treble"] svg').first()).toBeVisible();
+    await fitsScreen(page);
+    await open(page, 'b-up-arco', 'b-up-arco-9');
+    await expect(page.locator('[data-drills="run"] .drill-staff[data-clef="bass"] svg').first()).toBeVisible();
+    await fitsScreen(page);
+  });
 });

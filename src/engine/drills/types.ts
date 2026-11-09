@@ -168,7 +168,21 @@ export interface Drill {
   startBpm: number;
   // ---- added by the bass content track (B), 0.64: all optional, a drill without them runs as before ----
   /** B5: drums under the take (a GROOVES id), heard only with headphones / line-in / MIDI (else the click); bars in `fills` get a drum fill. */
-  drums?: { groove: string; fills?: number[] };
+  drums?: {
+    groove: string;
+    fills?: number[];
+    /** Feel changes (pocket L7): from bar `bar` (0-based) on, the drums play `groove` (e.g. 8 bars in time, then 8 half-time). */
+    sections?: { bar: number; groove: string }[];
+  };
+  /**
+   * The harmony band under the take (bassBand.ts): the band engine's comping over `chart` in `style`, on the take's
+   * clock. Like the drums it plays only with headphones / line-in / MIDI (else the click); it never changes the measure.
+   */
+  band?: { style: import('../band').BandStyle };
+  /** Quick Study Piece (RSL): seconds to study the score before Play opens (the player may start sooner). */
+  prep?: number;
+  /** Written transcription after the take (ear L7): the line's sounding pitches, entered on the neck and graded note for note. */
+  write?: { pitches: number[] };
   /**
    * B11 ear drills: what the band plays inside the take (beats from beat 0). The player answers in the other bars;
    * onsets inside `windows` (the band's bars) are ignored, so a speaker's sound is never taken for the answer.
@@ -362,6 +376,8 @@ export interface TakeMetrics {
   pedal?: { ok: number; total: number; pass: boolean };
   /** Free-choice drills (goal.bass.rules, A5): per-slot labels and the worst bar for the "Why?" line. */
   rules?: TakeRules;
+  /** Written transcription (ear L7): notes written right / total. */
+  written?: { ok: number; total: number };
 }
 
 /** Progress of one item (synced, small). */

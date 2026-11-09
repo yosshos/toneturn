@@ -8,7 +8,7 @@
 
 import type { BassGoal, Drill, DrillSpec } from './types';
 import { noteAt, type Tuning } from '../fretboard';
-import { guitarItemId, mod, modeInts, NAMES } from './guitar';
+import { guitarItemId, mod, modeInts, NAMES, rng, SIG, windowScale } from './guitar';
 import { drillOf, genRead, genWalk, rootOf, type BN } from './bass';
 
 /** EN / HE pair (local: bass.ts helpers can't run at module load). */
@@ -20,10 +20,123 @@ const POS_T = [tt('Half position', 'חצי מצב'), tt('First position', 'מצ�
 
 const withCents = (d: Drill, cents: number, extra: BassGoal = {}): Drill => ({ ...d, goal: { ...d.goal, bass: { ...(d.goal.bass ?? {}), ...extra, cents } } });
 
+/** Grade bands of the generated studies (ABRSM-style: lists A–C are pieces; these are original études in that style). */
+const ETUDE_T = [tt('Study in the Grade 1–3 style', 'אטיוד בסגנון שלבים 1–3'), tt('Study in the Grade 4–5 style', 'אטיוד בסגנון שלבים 4–5'), tt('Study in the Grade 6–8 style', 'אטיוד בסגנון שלבים 6–8')];
+
+/**
+ * An original study (étude) per ABRSM grade band, no chords: an 8-bar period (4 + 4, a half cadence on the 5th, the end
+ * on the tonic) — Gr 1–3 in first position, quarters and halves; Gr 4–5 in 3/4 up to the 10th with 8ths, dotted
+ * figures and slurred pairs; Gr 6–8 twelve bars up to the 12th (shifts toward thumb position) with 16th figures.
+ * Bowed (arco, slurs marked) or pizz. Generated from rules, seeded by key and grade.
+ */
+function genEtude(s: DrillSpec, tu: Tuning, bow: 'arco' | 'pizz'): Drill {
+  const key = mod(s.key, 12);
+  const g = Math.min(2, Math.max(0, s.option ?? 0));
+  const rnd = rng(`b-up-etude:${bow}:${key}:${g}:${s.minor ? 'm' : ''}`);
+  const meter = g === 1 ? 3 : 4;
+  const bars = g === 2 ? 12 : 8;
+  const ints = s.minor ? [0, 2, 3, 5, 7, 8, 11] : modeInts(0);
+  const R = rootOf(tu, key);
+  // Scale degrees as pitches from the tonic up to the grade's ceiling (octave / 10th / 12th).
+  const top = [12, 16, 19][g];
+  const deg: number[] = [];
+  for (let o = 0; o < 3; o++) for (const x of ints) if (x + 12 * o <= top) deg.push(R + x + 12 * o);
+  const CELLS: number[][][] = [
+    [[1, 1, 1, 1], [2, 1, 1], [1, 1, 2], [2, 2]],
+    [[1, 1, 1], [1.5, 0.5, 1], [0.5, 0.5, 1, 1], [1, 0.5, 0.5, 1], [2, 1]],
+    [[1, 1, 1, 1], [0.5, 0.5, 1, 1, 1], [0.25, 0.25, 0.25, 0.25, 1, 1, 1], [1.5, 0.5, 1, 1], [0.5, 0.5, 0.5, 0.5, 2]],
+  ];
+  const line: BN[] = [];
+  let i = 0;
+  let dir = 1;
+  for (let bar = 0; bar < bars; bar++) {
+    const b0 = bar * meter;
+    const cadence = bar === 3 || bar === bars - 1 || (g === 2 && bar === 7);
+    if (cadence) {
+      // the end of a phrase: the 5th (half cadence) or the tonic, held to the bar line (approached by step)
+      const goal = bar === bars - 1 ? 0 : deg.findIndex((p) => mod(p - R, 12) === 7);
+      const near = deg.map((_p, k) => ({ k, d: Math.abs(k - i) })).filter((x) => mod(deg[x.k] - deg[goal], 12) === 0).sort((a, b) => a.d - b.d)[0].k;
+      if (Math.abs(near - i) > 1) line.push({ b: b0, d: 1, p: deg[near + (near > i ? -1 : 1)] }), line.push({ b: b0 + 1, d: meter - 1, p: deg[near] });
+      else line.push({ b: b0, d: meter, p: deg[near] });
+      i = near;
+      continue;
+    }
+    const cell = CELLS[g].filter((c) => c.reduce((a, x) => a + x, 0) === meter);
+    const durs = cell[Math.floor(rnd() * cell.length)];
+    let b = b0;
+    for (const d of durs) {
+      line.push({ b, d, p: deg[i] });
+      b += d;
+      // mostly steps; a leap of a 3rd (Gr 4+) or an arpeggio 4th / 5th (Gr 6+); turn at the edges
+      const r = rnd();
+      const step = r < 0.7 ? 1 : r < 0.9 || g < 2 ? 2 : 3 + Math.floor(rnd() * 2);
+      if (rnd() < 0.25) dir = -dir;
+      if (i + dir * step < 0 || i + dir * step >= deg.length) dir = -dir;
+      i = Math.max(0, Math.min(deg.length - 1, i + dir * step));
+    }
+  }
+  // Bowing: one bow per note, alternating; from Gr 4 slurred pairs of short notes (the second marked as a slur).
+  let down = true;
+  const bowed: BN[] = line.map((x, k) => {
+    const slur = bow === 'arco' && g >= 1 && k > 0 && x.d <= 0.5 && line[k - 1].d <= 0.5 && !line[k - 1].tech && Math.floor(line[k - 1].b) === Math.floor(x.b);
+    if (!slur) down = !down;
+    return { ...x, st: bow === 'arco' ? (down ? 'U' : 'D') : 'i', ...(slur ? { tech: 'hammer' as const } : {}) };
+  });
+  // Gr 1–5 stay in the low positions (Simandl ½–IV): open strings where they fit, else the place nearest the hand,
+  // which moves only when it must (no place above the 7th semitone unless the note needs it).
+  if (g < 2) {
+    let hand = 2;
+    for (const x of bowed) {
+      const cands = tu.open.map((o, k) => ({ s: k + 1, f: x.p - o })).filter((c) => c.f >= 0 && c.f <= 12);
+      const cost = (c: { f: number }) => (c.f === 0 ? 0 : Math.abs(c.f - hand) + (c.f > 7 ? 6 : 0));
+      const best = cands.sort((a, b) => cost(a) - cost(b))[0];
+      if (!best) continue;
+      ((x.s = best.s), (x.f = best.f));
+      if (best.f > 0) hand = best.f;
+    }
+  }
+  const d = drillOf(s, tu, bowed, { ...ETUDE_T[g], meter, evenness: false, bow, show: 'staff', keySig: SIG[s.minor ? mod(key + 3, 12) : key], open: g > 0 ? false : undefined });
+  return withCents(d, g === 0 ? 12 : 8, { shiftGap: 60 });
+}
+
+/**
+ * Treble-clef reading for the upright's high register (ABRSM Gr 8: thumb position): melodies on the G and D strings
+ * from the octave up (op 0: thumb position, frets 12–17), or from the fourth position up with shifts (op 1: 7–19).
+ */
+function genTreble(s: DrillSpec, tu: Tuning): Drill {
+  const key = mod(s.key, 12);
+  const op = s.option ?? 0;
+  const rnd = rng(`b-up-treble:${key}:${op}`);
+  const [lo, hi] = op === 1 ? [7, 19] : [12, 17];
+  const set = windowScale(tu, key, s.minor ? modeInts(5) : modeInts(0), lo, hi, [1, 2]);
+  let i = Math.max(0, set.findIndex((x) => mod(noteAt(tu, x.s, x.f) - key, 12) === 0));
+  const line: BN[] = [];
+  const bars = 8;
+  let b = 0;
+  while (b < bars * 4 - 1e-9) {
+    const d = Number.isInteger(b) ? [2, 1, 1, 0.5][Math.floor(rnd() * 4)] : 0.5;
+    const dd = Math.min(d, (Math.floor(b / 4 + 1e-9) + 1) * 4 - b);
+    const x = set[i];
+    line.push({ b, d: dd, p: noteAt(tu, x.s, x.f), s: x.s, f: x.f });
+    b += dd;
+    i = Math.max(0, Math.min(set.length - 1, i + [-2, -1, -1, 1, 1, 2][Math.floor(rnd() * 6)]));
+  }
+  // End on the tonic nearest the last note (no leap at the end).
+  const tonics = set.map((x, k) => (mod(noteAt(tu, x.s, x.f) - key, 12) === 0 ? k : -1)).filter((k) => k >= 0);
+  const last = set.findIndex((x) => x.s === line[line.length - 1].s && x.f === line[line.length - 1].f);
+  const end = set[tonics.length ? tonics.sort((a, b) => Math.abs(a - last) - Math.abs(b - last))[0] : 0];
+  line.push({ b: bars * 4, d: 2, p: noteAt(tu, end.s, end.f), s: end.s, f: end.f });
+  const nm = op === 1 ? tt('Treble clef with shifts, up to thumb position', 'מפתח סול עם מעברים, עד מצב אגודל') : tt('Treble clef: thumb position', 'מפתח סול: מצב אגודל');
+  const d = drillOf(s, tu, line.map((x, k) => ({ ...x, st: k % 2 ? 'U' : 'D' })), { ...nm, evenness: false, bow: 'arco', show: 'staff', keySig: SIG[s.minor ? mod(key + 3, 12) : key], pos: lo });
+  return withCents(d, 10, { shiftGap: 60 });
+}
+
 export function generateUpright(s: DrillSpec, tu: Tuning): Drill {
   const key = mod(s.key, 12);
   const op = s.option ?? 0;
   const n = tu.open.length;
+  if (s.kind === 'etude') return genEtude(s, tu, s.family === 'b-up-pizz' ? 'pizz' : 'arco');
+  if (s.kind === 'treble') return genTreble(s, tu);
   switch (s.family) {
     case 'b-up-pos': {
       // Simandl 1-2-4 in one position on every string (up and back), long notes; thumb position on the two top strings.
@@ -72,14 +185,14 @@ export function generateUpright(s: DrillSpec, tu: Tuning): Drill {
     }
     case 'b-up-scales': {
       // ABRSM model: 1 → 2 → 3 octaves, arpeggios, dominant 7ths, diminished 7ths, broken and running 3rds.
-      const kinds = ['scale1', 'arp1', 'scale2', 'arp2', 'dom7', 'dim7', 'thirds-broken', 'thirds-run', 'scale3'];
+      const kinds = ['scale1', 'arp1', 'scale2', 'arp2', 'dom7', 'dim7', 'thirds-broken', 'thirds-run', 'scale3', 'arp3'];
       const k = kinds[op % kinds.length];
       const R = rootOf(tu, key);
       let ps: number[] = [];
       const maj = modeInts(0);
       const oct = (ints: number[], o: number) => [...Array.from({ length: o }, (_, i) => ints.map((x) => x + 12 * i)).flat(), 12 * o];
       if (k === 'scale1' || k === 'scale2' || k === 'scale3') ps = oct(maj, k === 'scale1' ? 1 : k === 'scale2' ? 2 : 3);
-      else if (k === 'arp1' || k === 'arp2') ps = oct([0, 4, 7], k === 'arp1' ? 1 : 2);
+      else if (k === 'arp1' || k === 'arp2' || k === 'arp3') ps = oct([0, 4, 7], k === 'arp1' ? 1 : k === 'arp2' ? 2 : 3);
       else if (k === 'dom7') ps = oct([0, 4, 7, 10], 1).map((x) => x + 7);
       else if (k === 'dim7') ps = oct([0, 3, 6, 9], 1);
       else {
@@ -100,6 +213,7 @@ export function generateUpright(s: DrillSpec, tu: Tuning): Drill {
         'thirds-broken': tt('Scale in broken 3rds', 'סולם בטרצות שבורות'),
         'thirds-run': tt('Running 3rds', 'טרצות רצות'),
         scale3: tt('Three-octave scale', 'סולם בשלוש אוקטבות'),
+        arp3: tt('Three-octave arpeggio', 'ארפג׳יו בשלוש אוקטבות'),
       };
       const d = drillOf(s, tu, line, { ...T[k], bow: 'arco', open: false, evenness: true });
       return withCents(d, k === 'scale1' || k === 'arp1' ? 12 : 8, { shiftGap: 60 });
