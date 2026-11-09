@@ -47,12 +47,27 @@ const ICON = {
     </>,
   ),
   chevron: I(<path d="M9 6l6 6-6 6" />),
+  cap: I(
+    <>
+      <path d="M3 9.5 12 5l9 4.5-9 4.5z" />
+      <path d="M7 11.5v4.2c1.4 1.3 3.1 1.9 5 1.9s3.6-.6 5-1.9v-4.2M21 9.5V15" />
+    </>,
+  ),
+  improv: I(
+    <>
+      <path d="M9 18V6l10-2v12" />
+      <circle cx="6.5" cy="18" r="2.5" />
+      <circle cx="16.5" cy="16" r="2.5" />
+    </>,
+  ),
   collapse: I(<path d="M15 6l-6 6 6 6M20 4v16" />),
 };
 
 const SECTIONS: Section[] = [
   { id: 'home', label: { en: 'Today', he: 'היום' }, icon: TAB_ICONS.home },
   { id: 'path', label: { en: 'Path', he: 'מסלול' }, icon: TAB_ICONS.path },
+  { id: 'improv', label: { en: 'Improvise', he: 'אלתור' }, icon: ICON.improv },
+  { id: 'exams', label: { en: 'Programs & exams', he: 'תכניות לימוד ומבחנים' }, icon: ICON.cap },
   {
     id: 'arcade',
     label: { en: 'Practice', he: 'תרגול' },
@@ -63,9 +78,7 @@ const SECTIONS: Section[] = [
       { id: 'learned', label: { en: 'Lessons', he: 'שיעורים' } },
       { id: 'pieces', label: { en: 'My pieces', he: 'היצירות שלי' } },
       { id: 'charts', label: { en: 'Chord charts', he: 'מהלכים' } },
-      { id: 'improv', label: { en: 'Improvisation studio', he: 'סטודיו לאלתור' } },
       { id: 'puzzle', label: { en: 'Progression of the day', he: 'מהלך היום' } },
-      { id: 'exams', label: { en: 'Exams: Bagrut & conservatory', he: 'מבחנים: בגרות וקונסרבטוריון' } },
     ],
   },
   {

@@ -8,6 +8,9 @@ import type { TeachingClass } from '../cloud/classes';
 import { EXTRA_ASSIGNABLE } from '../cloud/classes';
 import { assignItem, commentOn, createDigestLink, inboxOf, parseTopicRef, passed, readDigest, revokeDigestLink, type AssignItem, type AssignKind, type ClassDetail, type Digest, type Mark, type Strictness } from '../cloud/teacher';
 import { IMPROV_LEVELS } from '../engine/charts';
+import { CHALLENGES, CHALLENGE_GROUPS, type Challenge } from '../engine/improvRules';
+import { STANDARD_CHANGES } from '../engine/standards';
+import { rulesRef, rulesRefTitle } from './ImprovRules';
 import { chartKind, parseChartKind, RHYTHMS, RHYTHM_NAME, VOICINGS, VOICING_NAME } from '../engine/drills/chartDrills';
 import { catalog } from '../engine/drills/generate';
 import { LESSON_ORDER } from '../engine/lesson';
@@ -21,7 +24,7 @@ const TX = {
   en: {
     kind: 'What', lesson: 'Path lesson', topic: 'Topic level', drill: 'Technique level', chart: 'Chord chart', piece: 'Piece',
     level: 'Level', strict: 'Strictness', lenient: 'Lenient', moderate: 'Moderate', strictS: 'Strict', bpm: 'Target ♩', note: 'Note to the class',
-    due: 'Due', assign: 'Assign', voicing: 'Voicing', rhythm: 'Rhythm', mode: 'Mode', comp: 'Comp', improv: 'Improvise', pieceText: 'What to practice (piece, bars, tempo…)',
+    due: 'Due', assign: 'Assign', voicing: 'Voicing', rhythm: 'Rhythm', mode: 'Mode', comp: 'Comp', improv: 'Improvise', rules: 'Improvise under rules', challenge: 'Challenge', over: 'Over', pieceText: 'What to practice (piece, bars, tempo…)',
     inbox: 'To grade', inboxEmpty: 'Nothing new to grade.', score: 'score', min: 'min', commentPh: 'A short comment…', great: 'Great', good: 'Good', again: 'Again', send: 'Send',
     heat: 'Class map', heatHint: 'First-try accuracy per skill, 30 days · practice minutes this week', behind: 'behind', minutes: 'min 7d',
     mine: 'Your assignments', open: 'Open', teacherSays: 'Teacher', sent: 'Sent', pass: 'passed', try: 'not yet',
@@ -30,7 +33,7 @@ const TX = {
   he: {
     kind: 'מה', lesson: 'שיעור במסלול', topic: 'רמה בנושא', drill: 'רמה בטכניקה', chart: 'מהלך אקורדים', piece: 'יצירה',
     level: 'רמה', strict: 'קפדנות', lenient: 'מקלה', moderate: 'בינונית', strictS: 'קפדנית', bpm: 'טמפו יעד ♩', note: 'הערה לכיתה',
-    due: 'עד', assign: 'להטיל', voicing: 'קולות', rhythm: 'קצב', mode: 'מצב', comp: 'ליווי', improv: 'אלתור', pieceText: 'מה לתרגל (יצירה, תיבות, טמפו…)',
+    due: 'עד', assign: 'להטיל', voicing: 'קולות', rhythm: 'קצב', mode: 'מצב', comp: 'ליווי', improv: 'אלתור', rules: 'אלתור עם כללים', challenge: 'אתגר', over: 'על', pieceText: 'מה לתרגל (יצירה, תיבות, טמפו…)',
     inbox: 'לבדיקה', inboxEmpty: 'אין הגשות חדשות.', score: 'ציון', min: 'דק׳', commentPh: 'הערה קצרה…', great: 'מצוין', good: 'טוב', again: 'שוב', send: 'לשלוח',
     heat: 'מפת הכיתה', heatHint: 'דיוק בניסיון ראשון לכל מיומנות, 30 יום · דקות אימון השבוע', behind: 'מאחר בקצב', minutes: 'דק׳ 7 ימים',
     mine: 'המשימות שלך', open: 'לפתוח', teacherSays: 'המורה', sent: 'הוגש', pass: 'עבר', try: 'עוד לא',
@@ -51,6 +54,7 @@ export function itemTitle(a: Pick<AssignItem, 'kind' | 'lessonId' | 'ref'>, lang
     return id;
   }
   if (a.kind === 'chart') {
+    if (a.ref?.startsWith('rules:')) return `${rulesRefTitle(a.ref, lang)} · ${TX[lang].rules}`;
     const k = parseChartKind(a.ref ?? '');
     if (!k) return a.ref ?? '';
     const lv = /^lv:(\d+)$/.exec(k.ref);
@@ -75,14 +79,16 @@ export function AssignForm({ classId, lang, t, busy, onAssigned, onError }: { cl
   const [chartLv, setChartLv] = useState(IMPROV_LEVELS[0].n);
   const [voicing, setVoicing] = useState(VOICINGS[0]);
   const [rhythm, setRhythm] = useState(RHYTHMS[0]);
-  const [mode, setMode] = useState<'comp' | 'improv'>('comp');
+  const [mode, setMode] = useState<'comp' | 'improv' | 'rules'>('comp');
+  const [challenge, setChallenge] = useState(CHALLENGES[0].id);
+  const [src, setSrc] = useState('lv:1');
   const [piece, setPiece] = useState('');
   const [strict, setStrict] = useState<Strictness>('moderate');
   const [bpm, setBpm] = useState('');
   const [note, setNote] = useState('');
   const [due, setDue] = useState('');
   const ref =
-    kind === 'topic' ? `topic:${topic}:${topicLv}` : kind === 'drill' ? `drill:${drill}` : kind === 'chart' ? chartKind(`lv:${chartLv}`, voicing, rhythm, mode) : kind === 'piece' ? piece.trim() : null;
+    kind === 'topic' ? `topic:${topic}:${topicLv}` : kind === 'drill' ? `drill:${drill}` : kind === 'chart' ? (mode === 'rules' ? rulesRef(challenge, src) : chartKind(`lv:${chartLv}`, voicing, rhythm, mode)) : kind === 'piece' ? piece.trim() : null;
   const can = kind !== 'piece' || piece.trim().length > 0;
   const go = async () => {
     try {
@@ -149,17 +155,52 @@ export function AssignForm({ classId, lang, t, busy, onAssigned, onError }: { cl
       )}
       {kind === 'chart' && (
         <div className="af-grid">
-          <select value={chartLv} onChange={(e) => setChartLv(Number(e.target.value))} aria-label={tx.chart}>
-            {IMPROV_LEVELS.map((l) => (
-              <option key={l.n} value={l.n}>
-                {l.n}. {l.title[lang]}
-              </option>
-            ))}
-          </select>
-          <select value={mode} onChange={(e) => setMode(e.target.value as 'comp' | 'improv')} aria-label={tx.mode}>
+          <select value={mode} onChange={(e) => setMode(e.target.value as 'comp' | 'improv' | 'rules')} aria-label={tx.mode} data-assign-chart-mode="1">
             <option value="comp">{tx.comp}</option>
             <option value="improv">{tx.improv}</option>
+            <option value="rules">{tx.rules}</option>
           </select>
+          {mode === 'rules' ? (
+            <>
+              <select value={challenge} onChange={(e) => setChallenge(e.target.value)} aria-label={tx.challenge} data-assign-challenge="1">
+                {(Object.keys(CHALLENGE_GROUPS) as Challenge['group'][]).map((g) => (
+                  <optgroup key={g} label={CHALLENGE_GROUPS[g][lang]}>
+                    {CHALLENGES.filter((c) => c.group === g).map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.title[lang]}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+              <select value={src} onChange={(e) => setSrc(e.target.value)} aria-label={tx.over} data-assign-src="1">
+                <optgroup label={tx.chart}>
+                  {IMPROV_LEVELS.map((l) => (
+                    <option key={l.n} value={`lv:${l.n}`}>
+                      {l.n}. {l.title[lang]}
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label={lang === 'he' ? 'סטנדרטים' : 'Standards'}>
+                  {STANDARD_CHANGES.map((s) => (
+                    <option key={s.id} value={`std:${s.id}`}>
+                      {s.name} — {s.part[lang]}
+                    </option>
+                  ))}
+                </optgroup>
+              </select>
+            </>
+          ) : (
+            <select value={chartLv} onChange={(e) => setChartLv(Number(e.target.value))} aria-label={tx.chart}>
+              {IMPROV_LEVELS.map((l) => (
+                <option key={l.n} value={l.n}>
+                  {l.n}. {l.title[lang]}
+                </option>
+              ))}
+            </select>
+          )}
+          {mode !== 'rules' && (
+          <>
           <select value={voicing} onChange={(e) => setVoicing(e.target.value as typeof voicing)} aria-label={tx.voicing}>
             {VOICINGS.map((v) => (
               <option key={v} value={v}>
@@ -174,6 +215,8 @@ export function AssignForm({ classId, lang, t, busy, onAssigned, onError }: { cl
               </option>
             ))}
           </select>
+          </>
+          )}
         </div>
       )}
       {kind === 'piece' && <input value={piece} maxLength={200} onChange={(e) => setPiece(e.target.value)} placeholder={tx.pieceText} aria-label={tx.pieceText} />}

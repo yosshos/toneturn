@@ -21,7 +21,8 @@ import { DigestScreen } from './TeacherLoop';
 import { IMPROV_LEVELS } from '../engine/charts';
 import { PiecesScreen } from './Pieces';
 import { SlowDownScreen } from './SlowDown';
-import { ChartsScreen } from './Charts';
+import { ChartsScreen, type MyChart } from './Charts';
+import { chartOfRulesRef } from './ImprovRules';
 import { PracticeLogSheet } from './PracticeLog';
 import { makeLogResult, type LogKind } from '../engine/practiceLog';
 import { lazy, Suspense } from 'react';
@@ -466,8 +467,9 @@ export function App() {
 
   // Where a tool (tuner, metronome, drone) was opened from — Practice tab or the menu — so Back returns there.
   const toolFrom = useRef<Route>('home');
+  const chartInit = useRef<MyChart | null>(null);
   const go = (r: Route) => {
-    if ((r === 'tuner' || r === 'metronome' || r === 'drone' || r === 'charts' || r === 'slowdown' || r === 'groove' || r === 'vocal' || r === 'learned') && route !== r && route !== 'lesson' && route !== 'singalong' && route !== 'mixer') toolFrom.current = route === 'arcade' || route === 'path' || route === 'drills' || route === 'insights' ? route : 'home';
+    if ((r === 'tuner' || r === 'metronome' || r === 'drone' || r === 'charts' || r === 'slowdown' || r === 'groove' || r === 'vocal' || r === 'learned') && route !== r && route !== 'lesson' && route !== 'singalong' && route !== 'mixer') toolFrom.current = route === 'arcade' || route === 'path' || route === 'drills' || route === 'insights' || route === 'improv' || route === 'friends' || route === 'exams' ? route : 'home';
     location.hash = r === 'lesson' || r === 'game' ? `/${PLAY_HASH}` : r === 'home' ? '' : `/${r}`;
     setRoute(r);
   };
@@ -606,6 +608,13 @@ export function App() {
         chartQueue.current = levelDrills(lv, drillSettingsOf(settings).keyOrder);
         drillFrom.current = 'assign';
         return go('drills');
+      }
+    }
+    if (a.kind === 'chart' && a.ref?.startsWith('rules:')) {
+      const c = chartOfRulesRef(a.ref, s.uiLang);
+      if (c) {
+        chartInit.current = c;
+        return go('charts');
       }
     }
     if (a.kind === 'chart' && a.ref) {
@@ -1541,7 +1550,7 @@ export function App() {
           }}
         />
       )}
-      {route === 'improv' && <ImprovStudioScreen settings={s} onBack={() => go('arcade')} />}
+      {route === 'improv' && <ImprovStudioScreen settings={s} onBack={() => go('arcade')} onOpenChart={(c) => ((chartInit.current = c), go('charts'))} />}
       {route === 'exams' && (
         <ExamsScreen
           lang={s.uiLang}
@@ -1556,6 +1565,7 @@ export function App() {
       {route === 'mixer' && <MixerScreen settings={s} onChange={updateSettings} onBack={() => go(mixerFrom.current)} />}
       {route === 'slowdown' && <SlowDownScreen lang={s.uiLang} onBack={() => go(toolFrom.current)} />}
       {route === 'charts' && <ChartsScreen
+          initial={() => { const c = chartInit.current; chartInit.current = null; return c; }}
           settings={s}
           onChange={updateSettings}
           onBack={() => go(toolFrom.current)}
@@ -1566,6 +1576,8 @@ export function App() {
             go('drills');
           }}
           onImprov={(score, bpm, chords, level) => {
+            // an "improvise under rules" assignment: the take is the submission
+            if (activeAssign.current?.a.kind === 'chart' && activeAssign.current.a.ref?.startsWith('rules:')) submitAssign(score, { bpm, rules: true });
             if (level && score > (s.improvBest?.[level] ?? -1)) updateSettings({ improvBest: { ...(s.improvBest ?? {}), [level]: score } });
             const lv = level ? IMPROV_LEVELS.find((x) => x.id === level)?.n ?? 0 : 0;
             void store

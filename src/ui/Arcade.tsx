@@ -751,7 +751,7 @@ const HUB_TX = {
   groove: { en: 'Groove', he: 'גרוב' },
   improv: { en: 'Improvise', he: 'אלתור' },
   puzzle: { en: 'Daily progression', he: 'מהלך היום' },
-  exams: { en: 'Exams', he: 'מבחנים' },
+  exams: { en: 'Programs & exams', he: 'תכניות לימוד ומבחנים' },
   games: { en: ['Games', 'By type, topic and level'], he: ['משחקים', 'לפי סוג, נושא ורמה'] },
 };
 

@@ -18,6 +18,22 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.53.0',
+    date: '2026-11-09',
+    en: [
+      'Improvising under rules, much bigger: 51 rules in four families (notes, intervals, rhythm and now phrases), and a library of 51 challenges by level — from one-note swing to the bebop test — with a random challenge. Each rule explains itself',
+      'Import a lead sheet: MusicXML or .mxl from MuseScore, Sibelius, Finale or Dorico, an iReal Pro link or playlist, or plain chords / ChordPro. The chords become a chart to play over, under rules — no teacher needed',
+      'Standards: 36 sets of changes (most as the whole form) in eight groups — blues, rhythm changes, swing, ballads, bossa, modal, bebop, Coltrane',
+      'Study programs and exams, and Improvise, now have their own place in the menu; teachers can assign an improvisation challenge over any level or standard; My pieces also opens .mxl files',
+    ],
+    he: [
+      'אלתור עם כללים, הרבה יותר גדול: 51 כללים בארבע משפחות (צלילים, מרווחים, קצב ועכשיו גם משפטים), וספרייה של 51 אתגרים לפי רמה — מסווינג על צליל אחד ועד מבחן ביבופ — עם אתגר אקראי. כל כלל מוסבר',
+      'ייבוא ליד־שיט: MusicXML או ‎.mxl מ־MuseScore, ‏Sibelius, ‏Finale או Dorico, קישור או רשימה של iReal Pro, או אקורדים בטקסט / ChordPro. האקורדים הופכים למהלך לאלתר עליו עם כללים — בלי צורך במורה',
+      'סטנדרטים: 36 מהלכים (רובם בצורה המלאה) בשמונה קבוצות — בלוז, ריתם צ׳יינג׳ס, סווינג, בלדות, בוסה, מודאלי, ביבופ, קולטריין',
+      'לתכניות הלימוד והמבחנים ולאלתור יש עכשיו מקום משלהם בתפריט; מורים יכולים להטיל אתגר אלתור על כל שלב או סטנדרט; היצירות שלי פותחות גם קובצי ‎.mxl',
+    ],
+  },
+  {
     version: '0.52.0',
     date: '2026-11-09',
     en: [

@@ -10,8 +10,8 @@ import type { LessonDef, Question } from '../engine/lesson';
 
 type Lang = 'en' | 'he';
 const TX = {
-  en: { title: 'Exams', hint: 'Practise for the music Bagrut and conservatory entrance exams: every section of the exam, on its own or as a timed mock exam.', bagrut: 'Music Bagrut', cons: 'Conservatories & academies', sections: 'sections', min: 'min', mock: 'Mock exam', practise: 'Practice', back: 'Back', items: 'items', source: 'Based on the published requirements; times are our estimate where none are published.' },
-  he: { title: 'מבחנים', hint: 'הכנה לבגרות במוזיקה ולמבחני הכניסה לקונסרבטוריונים ולאקדמיות: כל חלק של הבחינה, לבד או כמבחן דמה עם זמן.', bagrut: 'בגרות במוזיקה', cons: 'קונסרבטוריונים ואקדמיות', sections: 'חלקים', min: 'דק׳', mock: 'מבחן דמה', practise: 'תרגול', back: 'חזרה', items: 'פריטים', source: 'לפי הדרישות שפורסמו; הזמנים הם הערכה שלנו כשלא פורסמו.' },
+  en: { title: 'Study programs & exams', hint: 'Practice for the music Bagrut and conservatory entrance exams: every section of the exam, on its own or as a timed mock exam.', bagrut: 'Music Bagrut', cons: 'Conservatories & academies', sections: 'sections', min: 'min', mock: 'Mock exam', practise: 'Practice', back: 'Back', items: 'items', source: 'Based on the published requirements; times are our estimate where none are published.' },
+  he: { title: 'תכניות לימוד ומבחנים', hint: 'הכנה לבגרות במוזיקה ולמבחני הכניסה לקונסרבטוריונים ולאקדמיות: כל חלק של הבחינה, לבד או כמבחן דמה עם זמן.', bagrut: 'בגרות במוזיקה', cons: 'קונסרבטוריונים ואקדמיות', sections: 'חלקים', min: 'דק׳', mock: 'מבחן דמה', practise: 'תרגול', back: 'חזרה', items: 'פריטים', source: 'לפי הדרישות שפורסמו; הזמנים הם הערכה שלנו כשלא פורסמו.' },
 };
 
 /** The mock exam as one lesson: every section's items in order (generated fresh each time). */

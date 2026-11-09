@@ -12,7 +12,7 @@ interface Props {
   settings: Settings;
   user: CloudUser | null;
   onClose: () => void;
-  onNavigate: (r: 'tuner' | 'metronome' | 'drone' | 'friends' | 'settings' | 'diagnostics' | 'games' | 'classes' | 'placement' | 'truefalse' | 'achievements' | 'studio') => void;
+  onNavigate: (r: 'tuner' | 'metronome' | 'drone' | 'friends' | 'settings' | 'diagnostics' | 'games' | 'classes' | 'placement' | 'truefalse' | 'achievements' | 'studio' | 'exams' | 'improv' | 'charts') => void;
   onSettings: (p: Partial<Settings>) => void;
 }
 
@@ -66,6 +66,19 @@ const MENU_ICON: Record<string, React.ReactNode> = {
       <path d="M3 12h2M7 8v8M11 5v14M15 8v8M19 10v4" />
     </>
   ),
+  note: (
+    <>
+      <path d="M9 18V6l10-2v12" />
+      <circle cx="6.5" cy="18" r="2.5" />
+      <circle cx="16.5" cy="16" r="2.5" />
+    </>
+  ),
+  chart: (
+    <>
+      <rect x="3.5" y="5" width="17" height="14" rx="2" />
+      <path d="M9 5v14M15 5v14M3.5 12h17" />
+    </>
+  ),
   mic: (
     <>
       <rect x="9" y="3" width="6" height="11" rx="3" />
@@ -117,6 +130,11 @@ export function MenuSheet({ t, settings, user, onClose, onNavigate, onSettings }
         {/* Grouped by what you do (owner 2026-11-08: the old list mixed the level test, settings and tools) */}
         {(
           [
+            [lang === 'he' ? 'ללמוד' : 'Learn', [
+              ['exams', 'class', lang === 'he' ? 'תכניות לימוד ומבחנים' : 'Study programs & exams'],
+              ['improv', 'note', lang === 'he' ? 'אלתור עם כללים' : 'Improvise under rules'],
+              ['charts', 'chart', lang === 'he' ? 'מהלכים וליד־שיטים' : 'Charts & lead sheets'],
+            ]],
             [lang === 'he' ? 'כלים' : 'Tools', [
               ['tuner', 'tuner', lang === 'he' ? 'טיונר' : 'Tuner'],
               ['metronome', 'metronome', lang === 'he' ? 'מטרונום' : 'Metronome'],

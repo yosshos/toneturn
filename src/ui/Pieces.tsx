@@ -3,6 +3,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { recordTakeAnalysis } from '../storage/analysis';
+import { unzipMxl } from '../engine/leadsheet';
 import { parseMidi, parseMusicXml, type Piece } from '../engine/piece/score';
 import { barMastery, initPlan, nextTask, planProgress, recordRep, startDay, type CoachEvent, type PlanState, type Task } from '../engine/piece/coach';
 import { barLabel, chunkDrill, repFromTake } from '../engine/piece/toDrill';
@@ -38,13 +39,13 @@ const savePieces = (ps: StoredPiece[]) => kv.set('all', ps);
 
 const TX = {
   en: {
-    title: 'My pieces', add: 'Add a piece', formats: 'MusicXML (.musicxml, .xml) or MIDI (.mid). From MuseScore: File → Export → MusicXML (uncompressed).', none: 'No pieces yet.', bad: 'This file could not be read:',
+    title: 'My pieces', add: 'Add a piece', formats: 'MusicXML (.musicxml, .xml, .mxl) or MIDI (.mid). From MuseScore: File → Export → MusicXML.', none: 'No pieces yet.', bad: 'This file could not be read:',
     setup: 'Set up', target: 'Target tempo', chunk: 'Bars per chunk', backward: 'Start from the end', start: 'Start practicing', back: 'Back', del: 'Delete', progress: 'learned',
     bars: 'bars', tempo: '♩ =', loop: 'Fix this bar', seam: 'The join', join: 'Put it together', warm: 'Warm-up', burst: 'One burst at full tempo', spot: 'The hard spot', chunk1: 'Next part', trouble: 'The bar that keeps tripping you',
     done: 'You can play the whole piece at the target tempo.', again: 'Again', minutes: 'min today',
   },
   he: {
-    title: 'היצירות שלי', add: 'להוסיף יצירה', formats: 'MusicXML (‏.musicxml, ‏.xml) או MIDI (‏.mid). ממיוזסקור: קובץ ← ייצוא ← MusicXML (לא דחוס).', none: 'עדיין אין יצירות.', bad: 'לא ניתן לקרוא את הקובץ:',
+    title: 'היצירות שלי', add: 'להוסיף יצירה', formats: 'MusicXML (‏.musicxml, ‏.xml, ‏.mxl) או MIDI (‏.mid). ממיוזסקור: קובץ ← ייצוא ← MusicXML.', none: 'עדיין אין יצירות.', bad: 'לא ניתן לקרוא את הקובץ:',
     setup: 'הגדרה', target: 'טמפו יעד', chunk: 'תיבות בכל קטע', backward: 'להתחיל מהסוף', start: 'להתחיל להתאמן', back: 'חזרה', del: 'מחיקה', progress: 'נלמד',
     bars: 'תיבות', tempo: '♩ =', loop: 'לתקן את התיבה הזו', seam: 'החיבור', join: 'לחבר הכול', warm: 'חימום', burst: 'פרץ אחד בטמפו המלא', spot: 'המקום הקשה', chunk1: 'החלק הבא', trouble: 'התיבה שחוזרת להכשיל',
     done: 'אתם מנגנים את כל היצירה בטמפו היעד.', again: 'שוב', minutes: 'דק׳ היום',
@@ -101,12 +102,14 @@ export function PiecesScreen({ settings, onBack, onMinutes }: { settings: Settin
     setErr(null);
     try {
       const name = f.name.replace(/\.[^.]+$/, '');
-      const piece = /\.(mid|midi)$/i.test(f.name) ? parseMidi(new Uint8Array(await f.arrayBuffer()), name) : parseMusicXml(await f.text());
+      const bytes = new Uint8Array(await f.arrayBuffer());
+      const zip = bytes[0] === 0x50 && bytes[1] === 0x4b; // .mxl is a zip
+      const piece = /\.(mid|midi)$/i.test(f.name) ? parseMidi(bytes, name) : parseMusicXml(zip ? await unzipMxl(bytes) : new TextDecoder().decode(bytes));
       if (piece.title === 'Untitled') piece.title = name;
       if (!piece.notes.length) throw new Error('no notes');
       setSetup({ piece, target: Math.round(piece.tempo ?? 100), size: 4, backward: false });
     } catch (e) {
-      setErr(`${tx.bad} ${f.name}${/\.mxl$/i.test(f.name) ? ' (.mxl → export uncompressed .musicxml)' : ''} — ${(e as Error).message}`);
+      setErr(`${tx.bad} ${f.name} — ${(e as Error).message}`);
     }
   };
   const begin = () => {
@@ -180,7 +183,7 @@ export function PiecesScreen({ settings, onBack, onMinutes }: { settings: Settin
       </header>
       <label className="btn pc-add">
         + {tx.add}
-        <input type="file" accept=".musicxml,.xml,.mid,.midi,application/vnd.recordare.musicxml+xml,audio/midi" hidden onChange={(e) => e.target.files?.[0] && void importFile(e.target.files[0])} data-piece-file="1" />
+        <input type="file" accept=".musicxml,.xml,.mxl,.mid,.midi,application/vnd.recordare.musicxml,application/vnd.recordare.musicxml+xml,audio/midi" hidden onChange={(e) => e.target.files?.[0] && void importFile(e.target.files[0])} data-piece-file="1" />
       </label>
       <p className="field-hint">{tx.formats}</p>
       {err && <p className="field-hint ch-err">{err}</p>}

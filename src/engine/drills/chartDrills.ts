@@ -69,7 +69,10 @@ export function chartRef(ref: string): ChartRef | null {
   }
   if (k === 'std') {
     const s = STANDARD_CHANGES.find((x) => x.id === id);
-    return s ? { text: s.text, title: { en: `${s.name} (${s.part.en})`, he: `${s.name} (${s.part.he})` }, bpm: s.bpm } : null;
+    // a technique drill on a long form takes its first section (the whole tune is for improvising)
+    const bars = s ? s.text.split('|') : [];
+    const text = bars.length > 16 ? bars.slice(0, 8).join('|') : s?.text;
+    return s && text ? { text, title: { en: `${s.name} (${s.part.en})`, he: `${s.name} (${s.part.he})` }, bpm: s.bpm } : null;
   }
   if (k === 'tpl') {
     const t = CHART_TEMPLATES.find((x) => x.id === id);

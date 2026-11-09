@@ -11,13 +11,16 @@ import type { NoteEvent } from '../engine/lesson';
 import type { Settings } from '../storage/progress';
 import { midi } from '../speech/midi';
 import { piano } from './services';
+import { ChallengeList } from './ImprovRules';
+import { STANDARD_CHANGES } from '../engine/standards';
+import type { MyChart } from './Charts';
 
 type Lang = 'en' | 'he';
-type Mode = 'phrasing' | 'vary' | 'trade';
+type Mode = 'rules' | 'phrasing' | 'vary' | 'trade';
 const TX = {
   en: {
-    title: 'Improvisation studio', phrasing: 'Phrasing', vary: 'Vary it', trade: 'Trading fours', chart: 'Chart', rule: 'Rule', start: 'Start', stop: 'Stop', tempo: 'Tempo', back: 'Back',
-    rules: { 'max-density': 'At most 2 notes a beat', 'phrase-bars': 'Phrases of two bars', 'rest-bar': 'A bar of rest between phrases' } as Record<string, string>,
+    title: 'Improvisation studio', rules: 'Rules', rulesHow: 'Improvise over a chart under rules — every note is checked. Choose a chart, then a challenge; or set your own rules in the chart.', chartFrom: 'Chart to play over', levels: 'Improvisation levels', standards: 'Standards', mine: 'My charts', phrasing: 'Phrasing', vary: 'Vary it', trade: 'Trading fours', chart: 'Chart', rule: 'Rule', start: 'Start', stop: 'Stop', tempo: 'Tempo', back: 'Back',
+    ruleNames: ['At most one note a beat', 'At most 2 notes a beat', 'Phrases of one bar', 'Phrases of two bars', 'Phrases of four bars', 'A bar of rest between phrases'],
     phrasingHow: 'Improvise over the band. Think in sentences: say something, then leave space. The rule shapes it.',
     varyHow: 'Listen to the phrase, then play it back changed as asked. Keep something of it — its shape or its rhythm.',
     tradeHow: 'You play four bars; the band and the app answer with your idea developed. Three rounds.',
@@ -26,8 +29,8 @@ const TX = {
     round: 'Round',
   },
   he: {
-    title: 'סטודיו לאלתור', phrasing: 'פרייזינג', vary: 'וריאציה', trade: 'חילופי ארבע', chart: 'מהלך', rule: 'חוק', start: 'להתחיל', stop: 'עצירה', tempo: 'טמפו', back: 'חזרה',
-    rules: { 'max-density': 'לכל היותר 2 צלילים לפעמה', 'phrase-bars': 'משפטים של שתי תיבות', 'rest-bar': 'תיבה של שקט בין משפטים' } as Record<string, string>,
+    title: 'סטודיו לאלתור', rules: 'אלתור עם כללים', rulesHow: 'מאלתרים מעל מהלך תחת כללים — כל צליל נבדק. בחרו מהלך ואז אתגר; או קבעו כללים משלכם בתוך המהלך.', chartFrom: 'מהלך לאלתר עליו', levels: 'שלבי אלתור', standards: 'סטנדרטים', mine: 'המהלכים שלי', phrasing: 'פרייזינג', vary: 'וריאציה', trade: 'חילופי ארבע', chart: 'מהלך', rule: 'חוק', start: 'להתחיל', stop: 'עצירה', tempo: 'טמפו', back: 'חזרה',
+    ruleNames: ['לכל היותר צליל אחד לפעמה', 'לכל היותר 2 צלילים לפעמה', 'משפטים של תיבה אחת', 'משפטים של שתי תיבות', 'משפטים של ארבע תיבות', 'תיבה של שקט בין משפטים'],
     phrasingHow: 'אלתרו מעל הלהקה. חשבו במשפטים: להגיד משהו, ואז להשאיר מקום. החוק מעצב את זה.',
     varyHow: 'הקשיבו למשפט, ואז נגנו אותו בחזרה בשינוי שהתבקש. שמרו משהו ממנו — הצורה או הקצב.',
     tradeHow: 'אתם מנגנים ארבע תיבות; הלהקה והאפליקציה עונות עם הרעיון שלכם בפיתוח. שלושה סבבים.',
@@ -38,8 +41,11 @@ const TX = {
 };
 
 const RULES: PhraseRule[] = [
+  { kind: 'max-density', perBeat: 1 },
   { kind: 'max-density', perBeat: 2 },
+  { kind: 'phrase-bars', bars: 1, meter: 4 },
   { kind: 'phrase-bars', bars: 2, meter: 4 },
+  { kind: 'phrase-bars', bars: 4, meter: 4 },
   { kind: 'rest-bar', meter: 4 },
 ];
 
@@ -56,10 +62,11 @@ function KeyStrip({ onKey }: { onKey: (m: number) => void }) {
   );
 }
 
-export function ImprovStudioScreen({ settings, onBack }: { settings: Settings; onBack: () => void }) {
+export function ImprovStudioScreen({ settings, onBack, onOpenChart }: { settings: Settings; onBack: () => void; onOpenChart?: (c: MyChart) => void }) {
   const lang: Lang = settings.uiLang;
   const tx = TX[lang];
-  const [mode, setMode] = useState<Mode>('phrasing');
+  const [mode, setMode] = useState<Mode>(onOpenChart ? 'rules' : 'phrasing');
+  const [src, setSrc] = useState('lv:4');
   const [lv, setLv] = useState(IMPROV_LEVELS[3].n);
   const [rule, setRule] = useState(0);
   const [bpm, setBpm] = useState(96);
@@ -221,14 +228,63 @@ export function ImprovStudioScreen({ settings, onBack }: { settings: Settings; o
         <h1>{tx.title}</h1>
       </header>
       <div className="chips" role="tablist">
-        {(['phrasing', 'vary', 'trade'] as const).map((m) => (
+        {((onOpenChart ? ['rules', 'phrasing', 'vary', 'trade'] : ['phrasing', 'vary', 'trade']) as Mode[]).map((m) => (
           <button key={m} role="tab" aria-selected={mode === m} className={`chip ${mode === m ? 'on' : ''}`} onClick={() => (stop(), setMode(m), setResult(null))} data-is-mode={m}>
             {tx[m]}
           </button>
         ))}
       </div>
-      <p className="field-hint">{mode === 'phrasing' ? tx.phrasingHow : mode === 'vary' ? tx.varyHow : tx.tradeHow}</p>
-      {mode !== 'vary' && (
+      <p className="field-hint">{mode === 'rules' ? tx.rulesHow : mode === 'phrasing' ? tx.phrasingHow : mode === 'vary' ? tx.varyHow : tx.tradeHow}</p>
+      {mode === 'rules' && onOpenChart && (
+        <>
+          <label className="field-row is-src">
+            <span>{tx.chartFrom}</span>
+            <select value={src} onChange={(e) => setSrc(e.target.value)} data-is-chart-src="1">
+              <optgroup label={tx.levels}>
+                {IMPROV_LEVELS.map((l) => (
+                  <option key={l.id} value={`lv:${l.n}`}>
+                    {l.n}. {l.title[lang]}
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label={tx.standards}>
+                {STANDARD_CHANGES.map((s) => (
+                  <option key={s.id} value={`std:${s.id}`}>
+                    {s.name} — {s.part[lang]}
+                  </option>
+                ))}
+              </optgroup>
+              {(settings.myCharts ?? []).length > 0 && (
+                <optgroup label={tx.mine}>
+                  {(settings.myCharts ?? []).map((c) => (
+                    <option key={c.id} value={`my:${c.id}`}>
+                      {c.title}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+            </select>
+          </label>
+          <ChallengeList
+            lang={lang}
+            onPick={(ch) => {
+              const id = `${Date.now()}`;
+              const [kind, key] = [src.slice(0, src.indexOf(':')), src.slice(src.indexOf(':') + 1)];
+              if (kind === 'my') {
+                const c = (settings.myCharts ?? []).find((x) => x.id === key);
+                if (c) return onOpenChart({ ...c, rules: ch.rules });
+              }
+              if (kind === 'std') {
+                const s = STANDARD_CHANGES.find((x) => x.id === key) ?? STANDARD_CHANGES[0];
+                return onOpenChart({ id, title: `${s.name} — ${ch.title[lang]}`, text: s.text, style: s.style, bpm: s.bpm, rules: ch.rules });
+              }
+              const L = IMPROV_LEVELS.find((x) => String(x.n) === key) ?? IMPROV_LEVELS[0];
+              onOpenChart({ id, title: `${L.title[lang]} — ${ch.title[lang]}`, text: L.text, style: L.style, bpm: L.bpm, rules: ch.rules, level: L.id });
+            }}
+          />
+        </>
+      )}
+      {mode !== 'vary' && mode !== 'rules' && (
         <label className="field-row">
           <span>{tx.chart}</span>
           <select value={lv} onChange={(e) => setLv(Number(e.target.value))} disabled={running}>
@@ -243,14 +299,14 @@ export function ImprovStudioScreen({ settings, onBack }: { settings: Settings; o
       {mode === 'phrasing' && (
         <div className="chips" role="radiogroup" aria-label={tx.rule}>
           {RULES.map((r, i) => (
-            <button key={r.kind} role="radio" aria-checked={rule === i} className={`chip ${rule === i ? 'on' : ''}`} onClick={() => setRule(i)} disabled={running}>
-              {tx.rules[r.kind]}
+            <button key={i} role="radio" aria-checked={rule === i} className={`chip ${rule === i ? 'on' : ''}`} onClick={() => setRule(i)} disabled={running} data-is-rule={r.kind}>
+              {tx.ruleNames[i]}
             </button>
           ))}
         </div>
       )}
       {mode === 'vary' && <p className="is-ask" data-is-ask={VARS[askIdx % VARS.length]}>{tx.asks[VARS[askIdx % VARS.length]]}</p>}
-      <div className="ch-step" dir="ltr">
+      {mode !== 'rules' && <div className="ch-step" dir="ltr">
         <small>{tx.tempo}</small>
         <button className="icon-btn" onClick={() => setBpm((b) => Math.max(50, b - 6))} disabled={running}>
           −
@@ -259,8 +315,8 @@ export function ImprovStudioScreen({ settings, onBack }: { settings: Settings; o
         <button className="icon-btn" onClick={() => setBpm((b) => Math.min(220, b + 6))} disabled={running}>
           +
         </button>
-      </div>
-      {running ? (
+      </div>}
+      {mode === 'rules' ? null : running ? (
         <button className="btn primary" onClick={stop}>
           ■ {tx.stop} {round ? `· ${tx.round} ${round}/3` : ''}
         </button>
@@ -269,7 +325,7 @@ export function ImprovStudioScreen({ settings, onBack }: { settings: Settings; o
           ▶ {tx.start}
         </button>
       )}
-      {midi.devices.length === 0 && (
+      {midi.devices.length === 0 && mode !== 'rules' && (
         <>
           <small className="field-hint">{tx.keys}</small>
           <KeyStrip onKey={onScreenKey} />

@@ -3,7 +3,7 @@
 
 import { Icon } from './icons';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { STANDARD_CHANGES } from '../engine/standards';
+import { STANDARD_CHANGES, STANDARD_GROUPS, type StandardGroup } from '../engine/standards';
 import { RHYTHMS, RHYTHM_NAME, STRIDES, VOICINGS, VOICING_NAME, chartKind, type ChartMode, type ChartVoicing, type CompRhythm } from '../engine/drills/chartDrills';
 import { IMPROV_LEVELS } from '../engine/charts';
 import { CHART_STYLES, CHART_TEMPLATES, STYLE_NAME, chartBacking, chordAtBeat, parseChart, transposeChart, type ChartStyle } from '../engine/charts';
@@ -17,7 +17,9 @@ import { useHeadphones } from './Perform';
 import { segmentNotes } from '../engine/memory';
 import { midi } from '../speech/midi';
 import { MODE_NAMES, type ModeId } from '../engine/modes';
-import { BAR_SCALES, INTERVAL_RULES, NOTE_RULES, RHYTHM_RULES, RULE_NAME, autoScale, checkRules, type PlayedNote, type RuleSet, type RulesReport } from '../engine/improvRules';
+import { BAR_SCALES, RULE_NAME, autoScale, checkRules, type PlayedNote, type RuleSet, type RulesReport } from '../engine/improvRules';
+import { LeadSheetImport, RulesPanel } from './ImprovRules';
+import { irealStyle, type LeadSheet } from '../engine/leadsheet';
 
 export interface MyChart {
   id: string;
@@ -49,11 +51,16 @@ const TX = {
 
 const newId = () => (typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`);
 
-export function ChartsScreen({ settings, onChange, onBack, onImprov, onDrill, onMixer }: { settings: Settings; onChange: (p: Partial<Settings>) => void; onBack: () => void; onImprov?: (score: number, bpm: number, chords: number, level?: string) => void; onDrill?: (kind: string, stride: boolean) => void; onMixer?: () => void }) {
+export function ChartsScreen({ settings, onChange, onBack, onImprov, onDrill, onMixer, initial }: { settings: Settings; onChange: (p: Partial<Settings>) => void; onBack: () => void; onImprov?: (score: number, bpm: number, chords: number, level?: string) => void; onDrill?: (kind: string, stride: boolean) => void; onMixer?: () => void; initial?: () => MyChart | null }) {
   const lang = settings.uiLang;
   const tx = TX[lang];
   const mine = settings.myCharts ?? [];
-  const [open, setOpen] = useState<MyChart | null>(null);
+  const [open, setOpen] = useState<MyChart | null>(() => initial?.() ?? null);
+  const addSheets = (sheets: LeadSheet[]) => {
+    const made: MyChart[] = sheets.map((l) => ({ id: newId(), title: l.title === 'Untitled' ? tx.untitled : l.title, text: l.text, style: l.meter === 3 ? 'waltz' : l.style ? (irealStyle(l.style) as ChartStyle) : 'swing', bpm: l.bpm && l.bpm > 30 ? l.bpm : 120 }));
+    onChange({ myCharts: [...made, ...mine].slice(0, 120) });
+    if (made.length === 1) setOpen(made[0]);
+  };
   if (open)
     return (
       <ChartPlayer
@@ -61,7 +68,7 @@ export function ChartsScreen({ settings, onChange, onBack, onImprov, onDrill, on
         chart={open}
         saved={mine.some((c) => c.id === open.id)}
         onSave={(c) => {
-          onChange({ myCharts: [c, ...mine.filter((x) => x.id !== c.id)].slice(0, 60) });
+          onChange({ myCharts: [c, ...mine.filter((x) => x.id !== c.id)].slice(0, 120) });
           setOpen(c);
         }}
         onDelete={() => {
@@ -82,7 +89,12 @@ export function ChartsScreen({ settings, onChange, onBack, onImprov, onDrill, on
         <h1>{tx.title}</h1>
         {onMixer && (
           <button className="icon-btn" onClick={onMixer} aria-label={lang === 'he' ? 'מיקסר' : 'Mixer'} data-charts-mixer="1">
-            🎚
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" aria-hidden="true">
+              <path d="M6 4v16M12 4v16M18 4v16" />
+              <rect x="4" y="13" width="4" height="3" rx="1" />
+              <rect x="10" y="7" width="4" height="3" rx="1" />
+              <rect x="16" y="11" width="4" height="3" rx="1" />
+            </svg>
           </button>
         )}
       </header>
@@ -108,6 +120,7 @@ export function ChartsScreen({ settings, onChange, onBack, onImprov, onDrill, on
           <p className="field-hint">{tx.empty}</p>
         )}
       </section>
+      <LeadSheetImport lang={lang} onAdd={addSheets} />
       <section className="set-card" data-improv-levels="1">
         <h2>{lang === 'he' ? 'אלתור — שלבים' : 'Improvise — levels'}</h2>
         <p className="field-hint">{lang === 'he' ? 'מהלכים שהולכים ונהיים קשים: מאקורד אחד ועד תחליפי טריטון, אלטרד וקולטריין. לכל שלב כללים מומלצים.' : 'Progressions that get harder: from one chord to tritone subs, altered dominants and Coltrane changes. Each level suggests rules.'}</p>
@@ -139,8 +152,12 @@ export function ChartsScreen({ settings, onChange, onBack, onImprov, onDrill, on
       </section>
       <section className="set-card" data-standards="1">
         <h2>{lang === 'he' ? 'מהלכים של סטנדרטים' : 'Standards’ changes'}</h2>
+        <p className="field-hint">{lang === 'he' ? `${STANDARD_CHANGES.length} מהלכים מוכנים, רובם בצורה המלאה. כל סטנדרט אחר נכנס דרך ייבוא ליד־שיט (למשל רשימות של iReal Pro).` : `${STANDARD_CHANGES.length} ready changes, most as the whole form. Any other standard comes in through Import a lead sheet (for example an iReal Pro playlist).`}</p>
+        {(Object.keys(STANDARD_GROUPS) as StandardGroup[]).map((g) => (
+        <details key={g} className="std-group" open={g === 'blues' || g === 'swing'}>
+        <summary>{STANDARD_GROUPS[g][lang]} <small dir="ltr">({STANDARD_CHANGES.filter((x) => x.group === g).length})</small></summary>
         <ul className="ch-list">
-          {STANDARD_CHANGES.map((t) => (
+          {STANDARD_CHANGES.filter((x) => x.group === g).map((t) => (
             <li key={t.id}>
               <button className="ch-row" onClick={() => setOpen({ id: newId(), title: `${t.name} — ${t.part[lang]}`, text: t.text, style: t.style, bpm: t.bpm })} data-standard={t.id}>
                 <b dir="ltr">{t.name}</b>
@@ -151,6 +168,8 @@ export function ChartsScreen({ settings, onChange, onBack, onImprov, onDrill, on
             </li>
           ))}
         </ul>
+        </details>
+        ))}
       </section>
       <section className="set-card">
         <h2>{tx.templates}</h2>
@@ -354,33 +373,7 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
           {tx.bad} <span dir="ltr">{parsed.errors.join(' ')}</span>
         </p>
       )}
-      <div className="ch-rules" aria-label={rx.rules}>
-        <b>{rx.rules}</b>
-        <select value={rules.note ?? ''} onChange={(e) => setRules({ ...rules, note: (e.target.value || null) as RuleSet['note'] })} aria-label={rx.notes} data-rule="note">
-          <option value="">{rx.notes}: {rx.free}</option>
-          {NOTE_RULES.map((r) => (
-            <option key={r} value={r}>
-              {RULE_NAME[r][lang]}
-            </option>
-          ))}
-        </select>
-        <select value={rules.interval ?? ''} onChange={(e) => setRules({ ...rules, interval: (e.target.value || null) as RuleSet['interval'] })} aria-label={rx.intervals} data-rule="interval">
-          <option value="">{rx.intervals}: {rx.free}</option>
-          {INTERVAL_RULES.map((r) => (
-            <option key={r} value={r}>
-              {RULE_NAME[r][lang]}
-            </option>
-          ))}
-        </select>
-        <select value={rules.rhythm ?? ''} onChange={(e) => setRules({ ...rules, rhythm: (e.target.value || null) as RuleSet['rhythm'] })} aria-label={rx.rhythm} data-rule="rhythm">
-          <option value="">{rx.rhythm}: {rx.free}</option>
-          {RHYTHM_RULES.map((r) => (
-            <option key={r} value={r}>
-              {RULE_NAME[r][lang]}
-            </option>
-          ))}
-        </select>
-      </div>
+      <RulesPanel lang={lang} rules={rules} onRules={setRules} disabled={playing} />
       {pickBar !== null && (
         <div className="ch-scalepick" role="dialog" aria-label={`${rx.barScale} ${pickBar + 1}`} data-scale-pick={pickBar}>
           <div className="ch-sp-head">

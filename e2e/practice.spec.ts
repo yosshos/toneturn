@@ -63,7 +63,7 @@ test.describe('practice hub', () => {
     await page.locator('[data-practise-voicing]').selectOption('drop2');
     await page.locator('[data-practise-go]').click();
     await expect(page.locator('.drill-run')).toBeVisible();
-    await expect(page.locator('.song-chart li')).toHaveCount(8);
+    await expect(page.locator('.song-chart li')).toHaveCount(32);
     await page.locator('.screen-head .icon-btn').first().click();
     await expect(page.locator('[data-standards]')).toBeVisible();
     await page.locator('.screen-head .icon-btn').first().click();
@@ -122,12 +122,29 @@ test.describe('practice hub', () => {
   test('menu groups and the Progress area sheet', async ({ page }) => {
     await page.goto('/?sim=1');
     await page.getByRole('button', { name: 'Menu' }).click();
-    await expect(page.locator('.menu-group-h')).toHaveText(['Tools', 'Check yourself', 'You']);
+    await expect(page.locator('.menu-group-h')).toHaveText(['Learn', 'Tools', 'Check yourself', 'You']);
     await page.locator('.menu-sheet .menu-head .icon-btn').click();
     await page.goto('/?sim=1#/skills');
     await page.locator('#ps-tab-overview').click();
     await page.locator('.domain-tile[data-domain="pitch"]').click();
     await expect(page.locator('[data-area-sheet="pitch"]')).toBeVisible();
     await expect(page.locator('[data-area-sheet] .as-skill').first()).toBeVisible();
+  });
+
+  test('0.53: a rules challenge from the studio opens the chart with its rules; a pasted lead sheet becomes a chart', async ({ page }) => {
+    await page.goto('/?unlock=all#/improv');
+    await page.locator('[data-is-chart-src]').selectOption('std:blue-bossa');
+    await page.locator('[data-challenge="bebop-test"]').click();
+    await expect(page.locator('[data-chart-player]')).toBeVisible();
+    await expect(page.locator('[data-rule="note"]')).toHaveValue('guide-beats');
+    await expect(page.locator('[data-rule="shape"]')).toHaveValue('end-chord-tone');
+    await page.locator('[data-challenges-open]').click();
+    await expect(page.locator('[data-challenge-library] [data-challenge]')).toHaveCount(51);
+    await page.locator('[data-challenge-library] [data-challenge="one-note-swing"]').click();
+    await expect(page.locator('[data-rule="note"]')).toHaveValue('one-note');
+    await page.locator('.screen-head .icon-btn').first().click();
+    await page.locator('[data-leadsheet-paste]').fill('[Am]words [F]more\n[C]and [G7]more');
+    await page.locator('[data-leadsheet-add]').click();
+    await expect(page.locator('[data-chart-text]')).toHaveValue('Am | F | C | G7');
   });
 });
