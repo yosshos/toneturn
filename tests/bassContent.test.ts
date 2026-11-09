@@ -340,3 +340,17 @@ describe('B14 / B15: exam tags and the new curriculum content', () => {
     expect(Math.min(...four.notes.map((n) => n.pitch))).toBeGreaterThanOrEqual(28);
   });
 });
+
+describe('B14: bass badges', () => {
+  it('every b-* family has milestone badges and the exam boards have exam badges, with the bass glyph group', async () => {
+    const { BADGES, BADGE_BY_ID } = await import('../src/engine/badges');
+    for (const f of BASS) {
+      const n = f.levels.length;
+      expect(BADGE_BY_ID[`tech:g-bass:${f.id}:${n}`], f.id).toBeDefined();
+      expect(BADGE_BY_ID[`tech:g-bass:${f.id}:${n}`].rule({ today: '2026-11-09', technique: { levels: { [f.id]: n } } }).done).toBe(true);
+    }
+    const exams = BADGES.filter((b) => b.id.startsWith('tech:g-bass:exam-'));
+    expect(exams.map((b) => b.id).sort()).toEqual(['tech:g-bass:exam-abrsm', 'tech:g-bass:exam-bagrut', 'tech:g-bass:exam-berklee', 'tech:g-bass:exam-rsl', 'tech:g-bass:exam-trinity']);
+    expect(exams.every((b) => !b.rule({ today: '2026-11-09' }).done)).toBe(true);
+  });
+});

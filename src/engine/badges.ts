@@ -14,6 +14,7 @@
 
 import type { SkillId } from './lesson';
 import type { BassFamilyId, FamilyId } from './drills/types';
+import { guitarCatalog, type GuitarLevelDef } from './drills/guitar';
 import { DOMAINS, PROVISIONAL_UNTIL, SKILLS, type DomainId, type Ratings } from './rating';
 import { SUB_SKILLS, type SubStat } from './taxonomy';
 import { addDays, type Counts, type InputKind, type Peaks, type StatsDays, type StatsHours } from './stats';
@@ -318,7 +319,7 @@ const subBadges: Badge[] = SUB_SKILLS.map((s, i) => {
 
 // ======================================================================= technique (families × 7 + specials)
 
-// Bass-course families (b-*) have no family badges yet: their level titles are a separate design pass.
+// Bass-course families (b-*) get milestone + exam badges (bassBadges below), not one title per level.
 export type BadgeFamily = Exclude<FamilyId, 'custom' | BassFamilyId>;
 export const PIANO_BADGE_FAMILIES: BadgeFamily[] = ['scales', 'arpeggios', 'cadences', 'fingers', 'control', 'advanced', 'harris', 'jazz', 'voicings', 'accomp'];
 export const GUITAR_BADGE_FAMILIES: BadgeFamily[] = ['g-fretting', 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-lead', 'g-fingerstyle', 'g-flamenco', 'g-jazz', 'g-reading', 'g-impro', 'g-bass'];
@@ -492,6 +493,49 @@ function guitarSpecials(): Badge[] {
   ];
 }
 
+
+// ---------------------------------------------------------------- bass course (0.64, BASS_AUDIT B14)
+// Family milestones for every b-* family (first steps, halfway, the whole family) and exam badges from the levels'
+// exam / bagrut tags. Ids live under `tech:g-bass:…` so they share the drawn bass glyph.
+function bassBadges(): Badge[] {
+  const fams = guitarCatalog().filter((f) => f.id.startsWith('b-'));
+  const out: Badge[] = [];
+  for (const f of fams) {
+    const n = f.levels.length;
+    const tiers = Array.from(new Set([Math.min(3, n), Math.ceil(n / 2), n])).sort((a, b) => a - b);
+    tiers.forEach((lv, i) => {
+      const what = lv === n ? { en: 'the whole family', he: 'כל המשפחה' } : i === 0 ? { en: 'first steps', he: 'צעדים ראשונים' } : { en: 'halfway', he: 'חצי הדרך' };
+      out.push({
+        id: `tech:g-bass:${f.id}:${lv}`,
+        cat: 'technique',
+        icon: '𝄢',
+        group: f.id,
+        tone: lv === n ? 'platinum' : i === 0 ? 'bronze' : 'gold',
+        name: { en: `${f.title.en}: ${what.en}`, he: `${f.title.he}: ${what.he}` },
+        desc: { en: `${f.title.en}: reach level ${lv} of ${n}.`, he: `${f.title.he}: להגיע לשלב ${lv} מתוך ${n}.` },
+        rule: (x: BadgeInput): BadgeCheck => count(x.technique?.levels?.[f.id] ?? 0, lv),
+      });
+    });
+  }
+  // Exam badges: every level tagged for the board reached.
+  const tagged = new Map<string, { fam: FamilyId; level: number }[]>();
+  for (const f of fams)
+    for (const l of f.levels as GuitarLevelDef[]) for (const e of l.exam ?? []) tagged.set(e.board, [...(tagged.get(e.board) ?? []), { fam: f.id, level: l.level }]);
+  const BOARD: Record<string, L> = { RSL: { en: 'RSL syllabus', he: 'תוכנית RSL' }, Trinity: { en: 'Trinity Rock & Pop', he: 'טריניטי רוק ופופ' }, ABRSM: { en: 'ABRSM double bass', he: 'ABRSM קונטרבס' }, Bagrut: { en: 'Bagrut, 5 units', he: 'בגרות, 5 יחידות' }, Berklee: { en: 'Berklee core', he: 'ליבת ברקלי' } };
+  for (const [board, ls] of tagged)
+    out.push({
+      id: `tech:g-bass:exam-${board.toLowerCase()}`,
+      cat: 'technique',
+      icon: '𝄢',
+      group: 'bass-exams',
+      tone: board === 'Bagrut' || board === 'ABRSM' ? 'diamond' : 'gold',
+      name: { en: `Exam ready: ${BOARD[board]?.en ?? board}`, he: `מוכנים למבחן: ${BOARD[board]?.he ?? board}` },
+      desc: { en: `Every bass level that covers the ${BOARD[board]?.en ?? board} requirements reached (${ls.length}).`, he: `כל שלבי הבס שמכסים את דרישות ${BOARD[board]?.he ?? board} הושגו (${ls.length}).` },
+      rule: (x: BadgeInput): BadgeCheck => count(ls.filter((t) => (x.technique?.levels?.[t.fam] ?? 0) >= t.level).length, ls.length),
+    });
+  return out;
+}
+
 const techniqueBadges: Badge[] = [
   ...BADGE_FAMILIES.flatMap((f) =>
     FAMILY_TITLES[f].map(([en, he], i) => {
@@ -570,6 +614,7 @@ const techniqueBadges: Badge[] = [
     rule: (x: BadgeInput): BadgeCheck => count(x.technique?.tempoRecords ?? 0, n),
   })),
   ...guitarSpecials(),
+  ...bassBadges(),
 ];
 
 // ======================================================================= specials
