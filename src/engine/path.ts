@@ -594,7 +594,8 @@ export function buildPath(inp: PathInput): PathView {
     }
     if (s.ladder && s.ladder.level > 1) {
       const prev = ladderPrev.get(s.id);
-      if (prev && !taken.has(prev) && !scheduled.has(prev)) return false;
+      // A previous level left out of this path (N10: low B on a 4-string) doesn't block the next one.
+      if (prev && all.some((x) => x.id === prev) && !taken.has(prev) && !scheduled.has(prev)) return false;
     }
     if (s.kind === 'lesson') for (const p of PREREQ[s.lesson!] ?? []) {
       const pid = `lesson:${p}`;

@@ -96,5 +96,10 @@ export const STANDARD_CHANGES: StandardChanges[] = [
   { id: 'minor-two-five-keys', group: 'bebop', name: 'Minor ii–V–i around the cycle', part: FULL, text: 'Dm7b5 | G7alt | Cm6 | Cm6 | Gm7b5 | C7alt | Fm6 | Fm6 | Cm7b5 | F7alt | Bbm6 | Bbm6 | Fm7b5 | Bb7alt | Ebm6 | Ebm6', style: 'swing', bpm: 132, level: 4 },
   // ---- Coltrane
   { id: 'giant', group: 'coltrane', name: 'Giant Steps', part: FULL, text: 'Bmaj7 D7 | Gmaj7 Bb7 | Ebmaj7 | Am7 D7 | Gmaj7 Bb7 | Ebmaj7 F#7 | Bmaj7 | Fm7 Bb7 | Ebmaj7 | Am7 D7 | Gmaj7 | C#m7 F#7 | Bmaj7 | Fm7 Bb7 | Ebmaj7 | C#m7 F#7', style: 'swing', bpm: 200, level: 5 },
+  // ---- common practice forms (0.64, written for the bass course: chord progressions only, no tune's melody)
+  { id: 'turnarounds-f', group: 'swing', name: 'I–vi–ii–V turnarounds in F', part: FULL, text: 'Fmaj7 Dm7 | Gm7 C7 | Am7 D7 | Gm7 C7 | Fmaj7 F7 | Bbmaj7 Eb7 | Am7 D7 | Gm7 C7', style: 'swing', bpm: 132, level: 2 },
+  { id: 'backdoor-g', group: 'swing', name: 'Backdoor ii–V study in G', part: FULL, text: 'Gmaj7 | Gmaj7 | Cm7 | F7 | Gmaj7 | Em7 | Am7 | D7 | Bm7 | E7 | Am7 | D7 | Cm7 | F7 | Gmaj7 | Am7 D7', style: 'swing', bpm: 126, level: 3 },
+  { id: 'sec-dominants-c', group: 'swing', name: 'Secondary dominants in C', part: FULL, text: 'Cmaj7 | A7 | Dm7 | G7 | Em7 | A7 | Dm7 G7 | Cmaj7 | E7 | E7 | Am7 | D7 | Dm7 | G7 | Cmaj7 A7 | Dm7 G7', style: 'swing', bpm: 140, level: 2 },
+  { id: 'modal-a', group: 'modal', name: 'Two-mode form in A (dorian, lydian)', part: AABA, text: 'Am7 | Am7 | Am7 | Am7 | Am7 | Am7 | Am7 | Am7 | Am7 | Am7 | Am7 | Am7 | Am7 | Am7 | Am7 | Am7 | Bbmaj7 | Bbmaj7 | Bbmaj7 | Bbmaj7 | Bbmaj7 | Bbmaj7 | Bbmaj7 | Bbmaj7 | Am7 | Am7 | Am7 | Am7 | Am7 | Am7 | Am7 | Am7', style: 'swing', bpm: 150, level: 2 },
   { id: 'giant-slow', group: 'coltrane', name: 'Giant Steps (slow practice)', part: FULL, text: 'Bmaj7 D7 | Gmaj7 Bb7 | Ebmaj7 | Am7 D7 | Gmaj7 Bb7 | Ebmaj7 F#7 | Bmaj7 | Fm7 Bb7 | Ebmaj7 | Am7 D7 | Gmaj7 | C#m7 F#7 | Bmaj7 | Fm7 Bb7 | Ebmaj7 | C#m7 F#7', style: 'swing', bpm: 110, level: 4 },
 ];

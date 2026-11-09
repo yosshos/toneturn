@@ -79,6 +79,8 @@ describe('bass course families', () => {
     // A genre filter keeps every family; only the style levels of other genres drop out.
     const rock = shownFamilies({ emphasis: 'both', instrument: 'bass', guitarStyle: 'rock' });
     expect(rock.find((f) => f.id === 'b-styles')!.levels.every((l) => (l as GuitarLevelDef).genres?.some((g) => g === 'rock' || g === 'all'))).toBe(true);
+    // 18 walking levels; the low-B one (L17) only on a bass with a low B (N10).
+    expect(shownFamilies({ emphasis: 'both', instrument: 'bass', guitarStyle: 'rock', bassTuning: 'bass5' }).find((f) => f.id === 'b-walk')!.levels.length).toBe(18);
     expect(rock.find((f) => f.id === 'b-walk')!.levels.length).toBe(17);
   });
 

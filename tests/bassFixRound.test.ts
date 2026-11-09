@@ -375,6 +375,23 @@ describe('B12 bass neck diagrams on the bass tuning', () => {
   });
 });
 
+describe('B18 standards: 36 tunes for bass walking, each with its feel', () => {
+  const std = ['b-walk-11', 'b-walk-13', 'b-walk-14', 'b-walk-18'].flatMap((id) => levelDrills(levelById(id), order)).filter((d) => d.spec.kind === 'standard');
+  it('36 distinct tunes across walk L11, L13, L14 and L18', () => {
+    expect(new Set(std.map((d) => d.spec.option)).size).toBe(36);
+    expect(new Set(std.map((d) => d.title.en.split(',')[0])).size).toBe(36);
+  });
+  it('each names its feel, plays the matching rule and is chart-only; the model line is clean', () => {
+    for (const d of std) {
+      expect(d.title.en, d.itemId).toMatch(/walking in 4|two-feel|bossa pattern|ballad in 2/);
+      expect(d.goal.bass?.rules?.kind, d.itemId).toBe(/walking in 4/.test(d.title.en) ? 'walk' : 'chordTones');
+      expect(d.show).toBe('chart');
+      expect(d.title.he.length).toBeGreaterThan(0);
+      expect(analyzeGuitarTake(d, d.startBpm, playAll(d, d.startBpm)).verdict, d.itemId).toBe('clean');
+    }
+  });
+});
+
 describe('N10 low-B levels only with a low B', () => {
   const ids = (t?: string) => shownFamilies({ emphasis: 'both', instrument: 'bass', bassTuning: t }).flatMap((f) => f.levels.map((l) => l.id));
   it('hidden in the hub on 4-string and drop D, shown on 5- and 6-string', () => {

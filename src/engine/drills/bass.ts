@@ -1140,7 +1140,23 @@ const BASS_STD: { id: string; key: number; minor?: boolean; feel: Feel }[] = [
   { id: 'minor-bossa', key: 9, minor: true, feel: 'bossa' },
   { id: 'so-what', key: 2, minor: true, feel: 'walk' },
   { id: 'cantaloupe', key: 5, minor: true, feel: 'two' },
+  // B18 (fix round): 13 more, to the doc's 36 — walk L18. Chord progressions only (standards.ts).
+  { id: 'blues-basic', key: 7, feel: 'walk' },
+  { id: 'rhythm-a', key: 10, feel: 'walk' },
+  { id: 'sec-dominants-c', key: 0, feel: 'walk' },
+  { id: 'miss-jones', key: 5, feel: 'walk' },
+  { id: 'two-five-keys', key: 0, feel: 'walk' },
+  { id: 'minor-two-five-keys', key: 0, minor: true, feel: 'walk' },
+  { id: 'giant', key: 11, feel: 'walk' },
+  { id: 'turnarounds-f', key: 5, feel: 'walk' },
+  { id: 'backdoor-g', key: 7, feel: 'walk' },
+  { id: 'ballad-ii-v', key: 3, feel: 'ballad' },
+  { id: 'maiden', key: 2, feel: 'two' },
+  { id: 'modal-a', key: 9, minor: true, feel: 'two' },
+  { id: 'dorian-vamp', key: 2, minor: true, feel: 'bossa' },
 ];
+/** The first standards (walk L11, L13, L14); the rest are walk L18. */
+const STD_FIRST = 23;
 /** Options of BASS_STD by feel (catalogue). */
 const stdOps = (pred: (f: Feel, i: number) => boolean): number[] => BASS_STD.map((x, i) => (pred(x.feel, i) ? i : -1)).filter((i) => i >= 0);
 /** A bass line for a chart in a feel: walking (the band's rules), two-feel / ballad halves, or the bossa figure. */
@@ -2169,11 +2185,12 @@ export function bassFamilies(): GuitarFamilyDef[] {
       L('b-walk', 11, 'Standards: one chorus', 'סטנדרטים: כורוס אחד', [0, 1, 2, 3].map((o) => WK('standard', { perBeat: 1, option: o })), [0], [100, 180], Qn),
       L('b-walk', 12, 'Up-tempo, in 2 and in 4', 'טמפו מהיר, בשתיים ובארבע', [WK('two-four', { perBeat: 1 })], [5, 10], [160, 240], 'halves / quarters'),
       // 0.64 (B18): more standards, each in its own key and feel; the bagrut solo and sight-read improvisation; low B.
-      L('b-walk', 13, 'More standards: walking in 4', 'עוד סטנדרטים: ווקינג בארבע', stdOps((f, i) => i >= 4 && f === 'walk').map((o) => WK('standard', { perBeat: 1, option: o })), [0], [100, 180], Qn),
-      L('b-walk', 14, 'Standards in 2, ballads and bossa', 'סטנדרטים בשתיים, בלדות ובוסה', stdOps((f, i) => i >= 4 && f !== 'walk').map((o) => WK('standard', { perBeat: 0.5, option: o })), [0], [70, 150], 'halves / bossa'),
+      L('b-walk', 13, 'More standards: walking in 4', 'עוד סטנדרטים: ווקינג בארבע', stdOps((f, i) => i >= 4 && i < STD_FIRST && f === 'walk').map((o) => WK('standard', { perBeat: 1, option: o })), [0], [100, 180], Qn),
+      L('b-walk', 14, 'Standards in 2, ballads and bossa', 'סטנדרטים בשתיים, בלדות ובוסה', stdOps((f, i) => i >= 4 && i < STD_FIRST && f !== 'walk').map((o) => WK('standard', { perBeat: 0.5, option: o })), [0], [70, 150], 'halves / bossa'),
       L('b-walk', 15, 'A two-chorus solo over the blues', 'סולו של שני כורוסים על בלוז', [WK('solo')], [5, 10, 7], [80, 140], E8),
       L('b-walk', 16, 'Sight-read and improvise the walk', 'קריאה ממבט ראשון ואלתור ווקינג', [WK('sight-impro', { perBeat: 1 }), WK('sight-impro', { perBeat: 1, option: 1 })], 'major', [90, 160], Qn),
       L('b-walk', 17, 'Walking in the low register (low B)', 'ווקינג באזור הנמוך (B נמוך)', [WK('lowb', { perBeat: 1 })], 'major', [90, 150], Qn),
+      L('b-walk', 18, 'Standards III: forms, cycles and Coltrane changes', 'סטנדרטים 3: צורות, מעגלים ושינויי קולטריין', BASS_STD.map((x, i) => (i >= STD_FIRST ? WK('standard', { perBeat: x.feel === 'walk' ? 1 : 0.5, option: i }) : null)).filter((x): x is NonNullable<typeof x> => x !== null), [0], [90, 180], 'quarters / halves'),
     ]),
     fam('b-legato', 'Slides, legato, harmonics', 'החלקות, לגאטו והרמוניות', [
       L('b-legato', 1, 'Slides into notes', 'החלקות אל הצלילים', [LG('slide')], K6, [70, 110], E8),
@@ -2255,6 +2272,7 @@ const EXAM: Record<string, [LevelExamTag['board'], string][]> = {
   'b-pick-5': [['Trinity', '7']],
   'b-walk-7': [['Trinity', 'session: improvising'], ['Berklee', 'walking core']],
   'b-walk-4': [['Berklee', 'walking core']],
+  'b-walk-18': [['Berklee', 'standards repertoire']],
   'b-walk-5': [['Berklee', 'walking core']],
   'b-walk-6': [['Berklee', 'walking core']],
   'b-read-9': [['Berklee', 'reading']],
