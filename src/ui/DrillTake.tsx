@@ -17,6 +17,9 @@ import { BrowserPitchCapture } from '../speech/pitchCapture';
 import { listenLoop } from './Flight';
 import { tuningById } from '../engine/fretboard';
 import { drumHits } from '../engine/drills/bass';
+import { isDrumDrill } from '../engine/drills/events';
+import { analyzeDrumTake, drumLimbLine, type DrumTakeHit } from '../engine/drills/drumAnalyze';
+import { VOICE_NOTE, type KitProfile } from '../engine/drumKit';
 import type { NoteEvent } from '../engine/lesson';
 
 type Lang = 'he' | 'en';
@@ -45,7 +48,7 @@ const qOf = (d: Drill): number => (d.pulse === 8 ? 0.5 : 1);
  * the whole drill is reachable and still fits one phone screen. Idle: small ‹ › page buttons; after a take it opens
  * on the first line with a mistake.
  */
-function useLineWindow(lines: number, beat: number, perLine: number, focus: number): { from: number; pager: React.ReactNode } {
+export function useLineWindow(lines: number, beat: number, perLine: number, focus: number): { from: number; pager: React.ReactNode } {
   const [page, setPage] = useState(0);
   const [lastFocus, setLastFocus] = useState(focus);
   if (focus !== lastFocus) {
@@ -335,11 +338,13 @@ export function VelocityCurve({ m, lang }: { m: TakeMetrics; lang: Lang }) {
 }
 
 /** Is click i (0 = the first count-in beat) heard? The count-in always is; after it, the drill's click mode decides. */
-function clickHeard(drill: Pick<Drill, 'meter' | 'click'>, i: number): boolean {
+function clickHeard(drill: Pick<Drill, 'meter' | 'click' | 'gap'>, i: number): boolean {
   const m = drill.meter || 4;
   if (i < m || !drill.click || drill.click === 'all') return true;
   const beat = (i - m) % m;
   const bar = Math.floor((i - m) / m);
+  // Drums gap click (DRUMS_CURRICULUM F4 L4–5): `on` bars with the click, `off` bars without, repeating.
+  if (drill.click === 'gap') return !drill.gap || bar % (drill.gap[0] + drill.gap[1]) < drill.gap[0];
   if (drill.click === '24') return beat === 1 || beat === 3;
   if (drill.click === 'one') return beat === 0;
   if (drill.click === 'and') return false;
@@ -363,12 +368,16 @@ function backingEvents(drill: Drill, beatS: number, drums: boolean): NoteEvent[]
 }
 
 /** Play a drill once: count-in, metronome, record; resolves with the analysis. */
-export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDrums }: { drill: Drill; bpm: number; lang: Lang; cal: DrillCalibration; onDone: (m: TakeMetrics, played: PlayedNote[]) => void; /** Beat index of the take (after the count-in; −1 when idle) — for a score cursor. */ onBeat?: (beat: number) => void; /** B5: headphones / line-in confirmed (undefined = never asked). An audio-routing choice only — it never passes anything. */ drumsOk?: boolean; onDrums?: (headphones: boolean) => void }) {
+export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDrums, kit }: { drill: Drill; bpm: number; lang: Lang; cal: DrillCalibration; onDone: (m: TakeMetrics, played: PlayedNote[]) => void; /** Beat index of the take (after the count-in; −1 when idle) — for a score cursor. */ onBeat?: (beat: number) => void; /** B5: headphones / line-in confirmed (undefined = never asked). An audio-routing choice only — it never passes anything. */ drumsOk?: boolean; onDrums?: (headphones: boolean) => void; /** Drums: the player's kit (map, velocity bands, practice-pad mode). */ kit?: KitProfile }) {
   const tx = TX[lang];
   const [phase, setPhase] = useState<'ready' | 'count' | 'play'>('ready');
   const [beat, setBeat] = useState(-1);
   const ac = useRef<AbortController | null>(null);
-  const useMidi = midi.devices.length > 0;
+  // Drums (0.65): an e-kit by MIDI, or a practice pad by microphone (single-surface items only — never self-report).
+  const drum = isDrumDrill(drill);
+  const drumMidi = drum && midi.devices.length > 0 && !kit?.mic;
+  const drumBlocked = drum && !drumMidi && !drill.drum?.mic;
+  const useMidi = drum ? drumMidi : midi.devices.length > 0;
   useEffect(() => () => ac.current?.abort(), []);
   // B5: drums under the take only when the mic can't hear them (headphones, line-in, or a MIDI bass); else the click.
   const drums = !!drill.drums && (useMidi || drumsOk === true);
@@ -401,6 +410,15 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
           pedalWas = d;
         })
       : null;
+    // Drum hits (MIDI drum mode, on for the take whatever course it was opened from): voice, velocity, hat openness.
+    const drumHitsIn: DrumTakeHit[] = [];
+    const prevMode = { drums: midi.opts.drums, kit: midi.opts.kit };
+    if (drumMidi) midi.setOptions({ drums: true, ...(kit ? { kit } : {}) });
+    const offHit = drumMidi
+      ? midi.onHit((h) => {
+          if (zero) drumHitsIn.push({ voice: h.voice, on: h.at - zero - cal.latencyMs, vel: h.vel, open: h.open, hat: h.hat });
+        })
+      : null;
     const offMidi = midi.onNote((m, on, at, vel) => {
       if (!zero) return;
       const t = at - zero - cal.latencyMs;
@@ -420,8 +438,10 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
     const guitar = isGuitarDrill(drill);
     const frames: GFrame[] = [];
     // Piano chords by microphone (0.49): frames with chroma, judged against the expected chords (score-informed).
-    const pianoChords = !guitar && !midi.devices.length && drill.notes.some((n) => n.chordId !== undefined);
-    if ((guitar || pianoChords) && !midi.devices.length) {
+    const pianoChords = !guitar && !drum && !midi.devices.length && drill.notes.some((n) => n.chordId !== undefined);
+    // A practice pad by microphone: energy onsets on the raw frames (no pitch).
+    const drumMic = drum && !drumMidi;
+    if (((guitar || pianoChords) && !midi.devices.length) || drumMic) {
       micStop = new AbortController();
       // Chords in the drill → also a chroma per frame, so the analysis can hear which strings rang (SPEC-0.48 §I1).
       const chords = drill.notes.some((n, i) => drill.notes.some((o, j) => j !== i && Math.abs(o.beat - n.beat) < 1e-4));
@@ -436,7 +456,7 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
         // BASS_AUDIT A1: bass hears down to low E / low B (28 / 22 Hz, a 4096-sample window, the spectral centroid).
         { chroma: chords, ...(captureOptsFor(drill) ?? {}) },
       );
-    } else if (!midi.devices.length) {
+    } else if (!midi.devices.length && !drum) {
       micStop = new AbortController();
       let cand: number | null = null;
       let since = 0;
@@ -481,13 +501,20 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
     } finally {
       offMidi();
       offCC?.();
+      offHit?.();
       micStop?.abort();
+      if (drumMidi) midi.setOptions(prevMode);
     }
     if (abort.signal.aborted) {
       setPhase('ready');
       return;
     }
     setPhase('ready');
+    if (drum) {
+      const hits: DrumTakeHit[] = drumMidi ? drumHitsIn : detectOnsets(frames, { refractoryMs: 35, ratio: 1.8 }).map((p) => ({ voice: null, on: p.on, vel: p.vel }));
+      const played: PlayedNote[] = hits.map((h) => ({ pitch: h.voice ? VOICE_NOTE[h.voice] : VOICE_NOTE.snare, on: h.on, off: null, vel: h.vel }));
+      return onDone(analyzeDrumTake(drill, bpm, hits, { kit, mic: !drumMidi }), played);
+    }
     if (guitar) {
       const heard = drill.listen ? frames.filter((f) => !inBand(f.t)) : frames;
       const played = (heard.length ? detectOnsets(heard, onsetOptsFor(drill)) : notes).filter((p) => !drill.listen || !inBand(p.on));
@@ -508,7 +535,12 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
   };
   return (
     <div className="drill-take">
-      {!useMidi && !isGuitarDrill(drill) && <p className="field-hint">{tx.midiOff}</p>}
+      {!useMidi && !isGuitarDrill(drill) && !drum && <p className="field-hint">{tx.midiOff}</p>}
+      {drumBlocked && (
+        <p className="kit-warn" data-drum-needs-kit="1">
+          {lang === 'he' ? 'התרגיל הזה צריך תופים אלקטרוניים (MIDI): המיקרופון שומע משטח אחד בלבד.' : 'This one needs an e-kit (MIDI): the microphone hears one surface only.'}
+        </p>
+      )}
       <div className={`drill-beat ${phase}`} aria-live="polite" dir="ltr">
         {phase === 'count' ? `${tx.countIn} ${Math.max(1, drill.meter - beat)}` : phase === 'play' ? tx.go : `${drill.pulse === 8 ? '♪' : tx.bpm} = ${bpm}`}
         <span className={`beat-dot ${beat % drill.meter === 0 ? 'accent' : ''}`} key={beat} />
@@ -532,7 +564,7 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
           </div>
         </div>
       ) : phase === 'ready' ? (
-        <button className="btn mega" onClick={() => void start()} data-drill-play="1">
+        <button className="btn mega" onClick={() => void start()} data-drill-play="1" disabled={drumBlocked}>
           ▶ {tx.play}
         </button>
       ) : (
@@ -555,6 +587,11 @@ export function TakeResult({ m, lang, onAgain, onSlower, onNext }: { m: TakeMetr
     <section className={`drill-result v-${m.verdict}`} aria-live="polite">
       <h2>{verdictText}</h2>
       <p className="drill-why">{m.why[lang]}</p>
+      {m.drum && (
+        <p className="drum-limbs" dir="auto" data-drum-limbs="1">
+          {drumLimbLine(m.drum, m.wrong, lang)}
+        </p>
+      )}
       <div className="drill-stats" dir="ltr">
         <span>
           <b>{Math.round(m.accuracy * 100)}%</b> {tx.notes}

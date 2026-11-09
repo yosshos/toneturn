@@ -299,6 +299,8 @@ export interface Settings {
   customDrills?: import('../engine/drills/types').CustomDrill[];
   /** Level test (technique section): the start level per family (spec AI §13). */
   drillStart?: Partial<Record<import('../engine/drills/types').FamilyId, number>>;
+  /** Drums course (0.65): the e-kit's learned map, hi-hat pedal range, per-pad velocity, or practice-pad (mic) mode. */
+  drumKit?: import('../engine/drumKit').KitProfile;
   /** Re-calibration offers declined (skill or area → ISO day): not offered again for 7 days (SPEC-PLACEMENT §6). */
   recalSnooze?: Record<string, string>;
   /** Keep one vocal take per exercise per week on this device for "then vs. now" (spec S.2). */

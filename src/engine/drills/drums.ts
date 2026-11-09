@@ -57,7 +57,10 @@ function bar(l: Lanes, sub: number, b0: number, o: { hatHands?: string; from?: n
       if ((o.from !== undefined && b < o.from - 1e-9) || (o.to !== undefined && b >= o.to - 1e-9)) return;
       const voice: DrumVoice = lane === 'h' && c === 'o' ? 'hhOpen' : LANE_VOICE[lane];
       const h: 'R' | 'L' = lane === 's' ? 'L' : lane === 'h' && hh ? hh[i % hh.length] : 'R';
-      out.push({ b: b0 + b, v: voice, h, acc: c === 'X' || undefined, ghost: c === 'g' || undefined, d: 1 / sub });
+      // Written length: to the lane's next hit (a kick on 1 and 3 is a quarter, not an 8th), at most a beat.
+      const nx = [...pat].findIndex((x, j) => j > i && x !== '.');
+      const d = Math.min(1, ((nx < 0 ? pat.length : nx) - i) / sub);
+      out.push({ b: b0 + b, v: voice, h, acc: c === 'X' || undefined, ghost: c === 'g' || undefined, d });
     });
   }
   return out;
@@ -497,7 +500,11 @@ function genRead(s: DrillSpec): Drill {
   }
   // Durations: up to the next onset (the staff draws dotted values and rests from these).
   hits.sort((a, b) => a.b - b.b);
-  hits.forEach((h, i) => (h.d = Math.min(2, (hits[i + 1]?.b ?? 16) - h.b)));
+  // Written lengths: to the next onset — quarters at most, dotted quarters in L2 (rests fill the rest).
+  hits.forEach((h, i) => {
+    const gap = (hits[i + 1]?.b ?? 16) - h.b;
+    h.d = lv === 2 && gap >= 1.5 && Number.isInteger(h.b) ? 1.5 : Math.min(1, gap);
+  });
   if (lv === 4) {
     // Markings: accents on some beats, ghost notes on some offbeats (velocity bands from the calibration).
     hits.forEach((h, i) => {
