@@ -1,3 +1,6 @@
+import { CourseContext } from './courseContext';
+import { CourseSheet } from './CourseSwitcher';
+import { switchCourse, type CourseId } from '../engine/courses';
 import { miniForSkill } from '../content/refresher';
 import { CHALLENGES } from '../engine/improvRules';
 import { InsightsScreen } from './Insights';
@@ -80,7 +83,7 @@ import { myClasses, openAssignments } from '../cloud/classes';
 import type { SetKind } from '../engine/tournament';
 import type { GameKind } from '../game/memoryGame';
 import { MenuSheet } from './Menu';
-import { DomainTiles, GAMES2, PlayScreen, TabBar, TAB_ROUTES, type TabId } from './Arcade';
+import { DomainTiles, GAMES2, PlayScreen, TabBar, TAB_ROUTES, WhatsNewButton, type TabId } from './Arcade';
 import { Tuner } from './Tuner';
 import { Metronome } from './Metronome';
 import { Drills, drillSettingsOf } from './Drills';
@@ -242,6 +245,12 @@ export function App() {
     const id = typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
     updateSettings({ purchases: [...purchases, { id, kind: 'cosmetic', item, day: localDay(new Date()) }], avatarFrame: item.replace(/^frame-/, '') });
   };
+  const pickCourse = (c: CourseId) => {
+    setCourseSheet(false);
+    if (!settings) return;
+    updateSettings(switchCourse(settings, c));
+    go('home');
+  };
   const buy = (kind: 'freeze' | 'repair') => {
     const purchases = settings?.purchases ?? [];
     if (!canBuy(kind, gems.balance, gems.streak)) return;
@@ -357,6 +366,10 @@ export function App() {
     return () => mq.removeEventListener('change', on);
   }, []);
   const themeId = resolvedTheme(appearance, prefersDark);
+  // Courses (0.61, SPEC-COURSES): one active course; the chrome reads it from CourseContext.
+  const [courseSheet, setCourseSheet] = useState(false);
+  const courseCtx = useMemo(() => ({ active: s.activeCourse ?? 'ear', mine: s.courses?.length ? s.courses : ['ear' as CourseId], open: () => setCourseSheet(true) }), [s.activeCourse, s.courses]);
+
   useEffect(() => {
     document.documentElement.dataset.theme = themeId;
     // The browser / phone status-bar colour follows the theme.
@@ -1099,6 +1112,7 @@ export function App() {
     );
 
   return (
+    <CourseContext.Provider value={courseCtx}>
     <MiniGateContext.Provider value={gate}>
     <RefresherContext.Provider value={openRefresher}>
     <div className={`app ${isTab ? 'has-tabs' : ''} ${withSide ? 'with-side' : ''}`}>
@@ -1400,6 +1414,12 @@ export function App() {
           t={t}
           settings={s}
           user={user}
+          extra={
+            <>
+              <WhatsNewButton t={t} lang={s.uiLang} unseen={news.length > 0} onSeen={() => updateSettings({ seenVersion: APP_VERSION })} />
+              <MonthReviewIcon t={t} lang={s.uiLang} progress={progress} seenMonth={s.monthReviewSeen} onSeen={(monthReviewSeen) => updateSettings({ monthReviewSeen })} />
+            </>
+          }
           onClose={() => setMenuOpen(false)}
           onSettings={updateSettings}
           onNavigate={(r) => {
@@ -1787,7 +1807,9 @@ export function App() {
       )}
       {isTab && !mini && <TabBar t={t} route={route as TabId} onGo={(r) => go(r)} />}
     </div>
+    {courseSheet && <CourseSheet mine={courseCtx.mine} active={courseCtx.active} lang={s.uiLang} onPick={pickCourse} onClose={() => setCourseSheet(false)} />}
     </RefresherContext.Provider>
     </MiniGateContext.Provider>
+    </CourseContext.Provider>
   );
 }

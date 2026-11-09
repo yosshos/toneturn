@@ -14,6 +14,8 @@ interface Props {
   onClose: () => void;
   onNavigate: (r: 'tuner' | 'metronome' | 'drone' | 'friends' | 'settings' | 'diagnostics' | 'games' | 'classes' | 'placement' | 'truefalse' | 'achievements' | 'studio' | 'exams' | 'improv' | 'charts' | 'groove' | 'slowdown') => void;
   onSettings: (p: Partial<Settings>) => void;
+  /** 0.61: what's new and the month review moved here from the top bar. */
+  extra?: React.ReactNode;
 }
 
 /** Line icons for the menu rows (mature, clean UI — owner 2026-11-07: the old grid looked bad). */
@@ -104,7 +106,7 @@ const MenuIcon = ({ k }: { k: string }) => (
   </svg>
 );
 
-export function MenuSheet({ t, settings, user, onClose, onNavigate, onSettings }: Props) {
+export function MenuSheet({ t, settings, user, onClose, onNavigate, onSettings, extra }: Props) {
   const p = useSyncExternalStore(pwa.subscribe, pwa.get);
   const [checked, setChecked] = useState<null | boolean>(null);
   const [push, setPush] = useState<PushStatus | null>(null);
@@ -134,6 +136,7 @@ export function MenuSheet({ t, settings, user, onClose, onNavigate, onSettings }
       <div className="sheet menu-sheet" role="dialog" aria-modal="true" aria-label={t.menu} onClick={(e) => e.stopPropagation()}>
         <div className="menu-head">
           <h2>{t.menu}</h2>
+          {extra && <div className="menu-extra">{extra}</div>}
           <button className="icon-btn" onClick={onClose} aria-label={t.back}>
             ✕
           </button>

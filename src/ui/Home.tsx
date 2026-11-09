@@ -1,4 +1,6 @@
 
+import { CourseChip } from './CourseSwitcher';
+import { useCourse } from './courseContext';
 import { DOMAINS, type DomainId } from '../engine/rating';
 import { StreakChip } from './Streak';
 import type { StreakState } from '../engine/streak';
@@ -10,8 +12,7 @@ import { personalOrder, type Intake } from '../engine/intake';
 import type { InputMode } from '../engine/session';
 import type { Strings } from '../i18n/strings';
 import type { Progress, Settings } from '../storage/progress';
-import { Logo, MicIcon, ModeSwitch } from './bits';
-import { WhatsNewButton } from './Arcade';
+import { MicIcon, ModeSwitch } from './bits';
 import { UNLOCK_ALL } from './services';
 
 /** Small line icons for the Home chrome (stroke = currentColor). */
@@ -217,32 +218,25 @@ export function Home({ t, settings, progress, streak, onStreak, onPractice, onBu
  * The app's top bar (owner 2026-11-07): logo, streak, what's new / gift, month review, install / update, menu — the
  * same on every main tab (Today, Path, Progress, Play, Friends), never inside an exercise.
  */
-export function TopBar({ t, lang, streak, onStreak, whatsNew, headerExtra, onMenu }: { t: Strings; lang: 'he' | 'en'; streak: StreakState; onStreak: () => void; whatsNew: { unseen: boolean; onSeen: () => void }; headerExtra?: React.ReactNode; onMenu: () => void }) {
+export function TopBar({ t, lang, streak, onStreak, whatsNew, onMenu }: { t: Strings; lang: 'he' | 'en'; streak: StreakState; onStreak: () => void; whatsNew: { unseen: boolean; onSeen: () => void }; headerExtra?: React.ReactNode; onMenu: () => void }) {
+  // 0.61 (SPEC-REDESIGN, NavMap): course · streak · menu. "What's new" and the month review live in the menu (a dot
+  // on the menu button says there is something new); update / install stay a small icon.
   const p = useSyncExternalStore(pwa.subscribe, pwa.get);
   const pwaUp = p.updateReady || (!p.installed && (p.canInstall || p.iosManual || import.meta.env.PROD));
+  const course = useCourse();
   return (
-  <header className={`topbar ${pwaUp ? 'pwa-up' : ''}`}>
-    <div className="brand">
-      <Logo bare size={40} />
-      <span className="wordmark" dir="ltr">
-        <span>
-          The 7<span className="wordmark-th">th</span>
-        </span>{' '}
-        <span className="wordmark-accent">Sense</span>
-      </span>
-    </div>
-    <div className="stats">
-      <StreakChip t={t} st={streak} onOpen={onStreak} />
-      <WhatsNewButton t={t} lang={lang} unseen={whatsNew.unseen} onSeen={whatsNew.onSeen} />
-      {headerExtra}
-      <HeaderPwa t={t} />
-      <button className="icon-btn menu-btn" onClick={onMenu} aria-label={t.menu}>
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" aria-hidden="true">
-          <path d="M4 7h16M4 12h16M4 17h16" />
-        </svg>
-      </button>
-    </div>
-  </header>
+    <header className={`topbar v2-topbar ${pwaUp ? 'pwa-up' : ''}`}>
+      <CourseChip active={course.active} lang={lang} onOpen={course.open} />
+      <div className="stats">
+        <StreakChip t={t} st={streak} onOpen={onStreak} />
+        <HeaderPwa t={t} />
+        <button className={`icon-btn menu-btn ${whatsNew.unseen ? 'has-dot' : ''}`} onClick={onMenu} aria-label={whatsNew.unseen ? `${t.menu} · ${lang === 'he' ? 'יש חדש' : 'something new'}` : t.menu}>
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" aria-hidden="true">
+            <path d="M4 7h16M4 12h16M4 17h10" />
+          </svg>
+        </button>
+      </div>
+    </header>
   );
 }
 

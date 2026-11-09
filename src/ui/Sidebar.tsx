@@ -2,6 +2,8 @@
 // 700 px wide. Sections with children expand in place (one at a time, following the current screen); Tools and Check
 // yourself group what the menu sheet held. The start side follows the language (right in Hebrew, left in English) —
 // all positioning is logical. Below 1100 px (or when collapsed) it is a narrow rail of icons with tooltips.
+import { CourseChip } from './CourseSwitcher';
+import { useCourse } from './courseContext';
 import { useEffect, useState } from 'react';
 import { TAB_ICONS, type TabId } from './Arcade';
 import { Logo } from './bits';
@@ -242,6 +244,7 @@ export function Sidebar({ route, lang, onNav, badges, me }: { route: string; lan
       </div>
     );
   };
+  const course = useCourse();
   return (
     <nav className={`side-nav ${collapsed ? 'collapsed' : ''}`} aria-label={lang === 'he' ? 'ניווט' : 'Navigation'} data-side-nav="1">
       <div className="sn-brand" dir="ltr">
@@ -252,6 +255,7 @@ export function Sidebar({ route, lang, onNav, badges, me }: { route: string; lan
           The 7<span className="wordmark-th">th</span> Sense
         </span>
       </div>
+      {!collapsed && <CourseChip active={course.active} lang={lang} onOpen={course.open} variant="side" />}
       <button className="sn-search sn-label-wrap" onClick={() => dispatchEvent(new Event('tt-open-search'))} title={lang === 'he' ? 'חיפוש (Ctrl K)' : 'Search (Ctrl K)'} data-nav-search="1">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
           <circle cx="11" cy="11" r="6.5" />
