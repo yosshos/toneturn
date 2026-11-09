@@ -807,12 +807,16 @@ export function analyzeGuitarTake(drill: Drill, bpm: number, played: PlayedNote[
       if (b.crossing !== null && b.crossing > bg.crossing) factors.push({ verdict: worse(b.crossing, bg.crossing), en: `String crossings ${Math.round(b.crossing)} ms less steady than the rest`, he: `מעברי המיתרים פחות יציבים ב-${Math.round(b.crossing)} ms` });
     }
     if (bg.kick) {
-      const kicks = [...new Set(drill.notes.map((n) => expTimeMs(drill, n.beat, bpm)))];
-      b.kick = kickLock(
-        kicks,
-        norm.played.map((p) => p.on),
-        bg.kick,
-      );
+      // B5 / N4: lock is measured against the DRUM kick lane when the drill has one — the kick hits the line is written
+      // to lock with (a lane kick with a written bass onset on it); strays are played onsets on no written note.
+      // Without a lane (no drums), the line itself is the kick lane, as before.
+      const written = [...new Set(drill.notes.map((n) => expTimeMs(drill, n.beat, bpm)))];
+      const lane = (bg.kickLane ?? []).map((k) => expTimeMs(drill, k, bpm));
+      const onWritten = lane.filter((k) => written.some((w) => Math.abs(w - k) <= 1));
+      const kicks = lane.length ? [...new Set(onWritten.length ? onWritten : lane)] : written;
+      const ons = norm.played.map((p) => p.on);
+      b.kick = kickLock(kicks, ons, bg.kick);
+      if (lane.length) b.kick.stray = kickLock(written, ons, bg.kick).stray;
       if (b.kick.lock < 0.9 || b.kick.stray > bars) factors.push({ verdict: b.kick.lock < 0.75 ? 'not' : 'almost', en: `Locked with the kick on ${Math.round(b.kick.lock * 100)}% of hits (90% needed)`, he: `נעול עם הבס-דראם ב-${Math.round(b.kick.lock * 100)}% מהמכות (צריך 90%)` });
     }
     // Sounded length of a played note (ms): mic = the energy release, MIDI = the note-off (A9, B19).

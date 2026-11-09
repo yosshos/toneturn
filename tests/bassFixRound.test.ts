@@ -6,9 +6,17 @@ import { guitarCatalog, type GuitarLevelDef } from '../src/engine/drills/guitar'
 import { generate } from '../src/engine/drills/generate';
 import { BASS_PROBES, placeWalk } from '../src/engine/drills/bassProbes';
 import { walkProbeReport } from '../src/engine/drills/bassAnalyze';
-import { captureOptsFor, onsetOptsFor, untimedPitch } from '../src/engine/drills/guitarAnalyze';
+import { analyzeGuitarTake, captureOptsFor, onsetOptsFor, untimedPitch } from '../src/engine/drills/guitarAnalyze';
+import { expTimeMs } from '../src/engine/drills/analyze';
 import { yin } from '../src/engine/yin';
-import { DEFAULT_DRILL_SETTINGS, type Drill, type ItemState, type TakeMetrics } from '../src/engine/drills/types';
+import { DEFAULT_DRILL_SETTINGS, type Drill, type ExpNote, type ItemState, type PlayedNote, type TakeMetrics } from '../src/engine/drills/types';
+
+/** Every written note played on time (f may shift a note or drop it with null). */
+const playAll = (d: Drill, bpm: number, f: (n: ExpNote, i: number) => Partial<PlayedNote> | null = () => ({})): PlayedNote[] =>
+  d.notes.flatMap((n, i) => {
+    const x = f(n, i);
+    return x === null ? [] : [{ pitch: n.pitch, on: expTimeMs(d, n.beat, bpm), off: null, vel: 80, ...x }];
+  });
 
 const take = (verdict: TakeMetrics['verdict']): TakeMetrics => ({ verdict, accuracy: 1, cvR: 0.02, cvL: null, timingSD: 10, velSD: null, handsAbs: null } as unknown as TakeMetrics);
 const order = DEFAULT_DRILL_SETTINGS.keyOrder;
@@ -128,5 +136,36 @@ describe('N3 untimed note finding (read L1)', () => {
       expect(st.goalBpm).toBe(d.startBpm);
       expect(itemPass(st, d.startBpm, t).target).toBe(true);
     }
+  });
+});
+
+describe('N4 kick lock against the drum kick lane', () => {
+  const onLane = (d: Drill, n: ExpNote) => (d.goal.bass!.kickLane ?? []).some((k) => Math.abs(k - n.beat) < 1e-6);
+  // A drill whose line has notes off the kick (styles / pocket grooves): the lane is not the line.
+  const d = BASS.flatMap((f) => f.levels)
+    .flatMap((lv) => levelDrills(lv, order).slice(0, 1))
+    .find((x) => x.goal.bass?.kick && x.goal.bass.kickLane?.length && x.notes.some((n) => !onLane(x, n)) && x.notes.filter((n) => onLane(x, n)).length >= 4)!;
+  const bpm = 90;
+
+  it('a groove drill with a kick lane that is not its line exists', () => {
+    expect(d).toBeTruthy();
+  });
+
+  it('follows the kick lane but not the notes: locked 100 % (the missing notes fail it, not the kick)', () => {
+    const m = analyzeGuitarTake(d, bpm, playAll(d, bpm, (n) => (onLane(d, n) ? {} : null)));
+    expect(m.guitar.bass?.kick?.lock).toBe(1);
+    expect(m.verdict).not.toBe('clean');
+  });
+
+  it('follows the notes but not the kick: every kick note 60 ms late is lock 0 and a "Locked with the kick" reason', () => {
+    const m = analyzeGuitarTake(d, bpm, playAll(d, bpm, (n) => (onLane(d, n) ? { on: expTimeMs(d, n.beat, bpm) + 60 } : {})));
+    expect(m.guitar.bass?.kick?.lock).toBe(0);
+    expect(m.verdict).not.toBe('clean');
+    expect(JSON.stringify(m.why)).toMatch(/Locked with the kick on 0%/);
+  });
+
+  it('the whole line on time is locked with no strays', () => {
+    const m = analyzeGuitarTake(d, bpm, playAll(d, bpm));
+    expect(m.guitar.bass?.kick).toMatchObject({ lock: 1, stray: 0 });
   });
 });
