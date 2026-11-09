@@ -1740,3 +1740,9 @@
 @media (prefers-reduced-motion: reduce) { :root[data-theme] .splash { animation: splash-out 0.5s ease 2.6s both; } :root[data-theme] .splash .splash-word { animation: none; } }
 :root[data-theme] .pt-tile { min-height: 156px; padding-top: 56px; }
 :root[data-theme] .pt-tile small { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+/* five stars on technique levels (0.64, owner): note heads; three opens the next level */
+:root[data-theme] .lvl-stars { display: inline-flex; gap: 3px; direction: ltr; }
+:root[data-theme] .lvl-stars i { width: 11px; height: 8px; border-radius: 50%; transform: rotate(-20deg); border: 1.5px solid var(--outline); background: var(--card); }
+:root[data-theme] .lvl-stars i.won { background: var(--lemon); }
+:root[data-theme] .lvl-stars i.won:nth-child(n+4) { background: var(--teal); }
+:root[data-theme] .path2 .road .sys .node.kind-tech .mini-stars { display: inline-flex; }

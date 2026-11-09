@@ -76,7 +76,7 @@ describe('the ladder with a target tempo', () => {
       for (const at of ['2026-11-07T11:00:00Z', '2026-11-07T11:05:00Z', '2026-11-08T11:00:00Z']) st = applyTake(st, take('clean'), t, at, DEFAULT_DRILL_SETTINGS, { targetBpm: t }).state;
       items[x.itemId] = st;
     }
-    expect(levelStars(pluck1, items, order)).toBe(3);
+    expect(levelStars(pluck1, items, order)).toBe(5);
     expect(levelDone(pluck1, items, order)).toBe(true);
   });
 

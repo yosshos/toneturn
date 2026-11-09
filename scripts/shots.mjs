@@ -52,6 +52,7 @@ const browser = await chromium.launch({ channel: 'chrome' });
 for (const w of which) {
   const ctx = await browser.newContext({ viewport: sizes[w], deviceScaleFactor: 1, colorScheme: process.env.SHOT_THEME === 'dark' ? 'dark' : 'light' });
   const page = await ctx.newPage();
+  if (process.env.SHOT_ERRORS) page.on('pageerror', (e) => console.log('PAGEERR', e.message.slice(0, 400)));
   if (seed) await seedDb(page);
   for (const h of hashes) {
     const q = seed ? '?unlock' : lang === 'en' ? '?sim=1&lang=en' : '?sim=1';

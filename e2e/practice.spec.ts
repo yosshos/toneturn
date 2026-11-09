@@ -32,10 +32,10 @@ test.describe('practice hub', () => {
     await expect(page.locator('[data-drills="songs"]')).toBeVisible();
     expect(await page.locator('.song-drills li').count()).toBeGreaterThanOrEqual(16);
     await page.locator('.screen-head .icon-btn').first().click();
+    // 0.64: technique in the guitar course is the guitar's only (no instrument switch there).
     await page.locator('[data-hub="drills"]').click();
-    await expect(page.locator('[data-inst="voice"]')).toBeVisible();
-    await page.locator('[data-inst="voice"]').click();
-    await expect(page).toHaveURL(/vocal/);
+    await expect(page.locator('[data-drills="hub"]')).toBeVisible();
+    await expect(page.locator('[data-inst]')).toHaveCount(0);
   });
 
   test('0.48 tools: charts, practice log, slow down, my pieces', async ({ page }) => {

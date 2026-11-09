@@ -17,7 +17,7 @@ import type { FamilyDef, LevelDef } from '../engine/drills/generate';
 import { applyTake, familyLevel, newItem, type LadderResult } from '../engine/drills/ladder';
 import { customKeys, customToDrill } from '../engine/drills/custom';
 import { DrillCreator } from './DrillCreator';
-import { currentLevel, families as familiesOf, keyHeat, levelDone, levelKeys, shownFamilies, specDrills, todayDrills, levelDrills, withBassTuning, itemTargetBpm } from '../engine/drills/plan';
+import { currentLevel, families as familiesOf, keyHeat, levelDone, levelStars, LEVEL_MAX_STARS, levelKeys, shownFamilies, specDrills, todayDrills, levelDrills, withBassTuning, itemTargetBpm } from '../engine/drills/plan';
 import { generate } from '../engine/drills/generate';
 import { GUITAR_PROBES, type GuitarLevelDef } from '../engine/drills/guitar';
 import { BASS_PROBES, placeBass, probeSlot, type BassProbeResult } from '../engine/drills/bassProbes';
@@ -76,9 +76,12 @@ const FAM_HUE: Partial<Record<FamilyId, string>> = { scales: 'var(--mint)', arpe
 const HANDS_TX: Record<Lang, Record<string, string>> = { en: { R: 'RH', L: 'LH', RL: 'HT' }, he: { R: 'ימין', L: 'שמאל', RL: 'ביחד' } };
 
 /** Drill settings with the instrument defaulting to the player's (guitar / bass players get guitar drills). */
-export function drillSettingsOf(s: Pick<Settings, 'drills' | 'instrument'>): DrillSettings {
+export function drillSettingsOf(s: Pick<Settings, 'drills' | 'instrument'> & { activeCourse?: Settings['activeCourse'] }): DrillSettings {
   const inst = s.instrument === 'guitar' ? 'guitar' : s.instrument === 'bass' ? 'bass' : 'piano';
-  return { ...DEFAULT_DRILL_SETTINGS, instrument: inst, ...(s.drills ?? {}) };
+  // 0.64: an instrument course decides the technique instrument (keys → piano, guitar, bass), however the course was reached.
+  const byCourse: DrillSettings['instrument'] | null = s.activeCourse === 'keys' ? 'piano' : s.activeCourse === 'guitar' ? 'guitar' : s.activeCourse === 'bass' ? 'bass' : null;
+  const out: DrillSettings = { ...DEFAULT_DRILL_SETTINGS, instrument: inst as DrillSettings['instrument'], ...(s.drills ?? {}) };
+  return byCourse ? { ...out, instrument: byCourse } : out;
 }
 
 /**
@@ -344,6 +347,8 @@ function Hub({ lang, ds, settings, items, head, onFamily, onRun, onSettings, onC
   return (
     <main className="drills-screen" data-drills="hub">
       {head}
+      {/* 0.64 (owner): in an instrument course technique is that instrument's only — no switching to another one here. */}
+      {!['keys', 'guitar', 'bass'].includes(settings.activeCourse ?? 'ear') && (
       <div className="chips drill-inst" role="radiogroup" aria-label={tx.instrument}>
         {(['piano', 'guitar', 'bass'] as const).map((i) => (
           <button key={i} role="radio" aria-checked={(ds.instrument ?? 'piano') === i} className={`chip ${(ds.instrument ?? 'piano') === i ? 'on' : ''}`} onClick={() => onInstrument(i)} data-inst={i}>
@@ -356,6 +361,7 @@ function Hub({ lang, ds, settings, items, head, onFamily, onRun, onSettings, onC
           </button>
         )}
       </div>
+      )}
       {!midi.devices.length && (ds.instrument ?? 'piano') === 'piano' && <p className="field-hint">{tx.noMidi}</p>}
       {!settings.drillStart && !Object.keys(items).length && (
         <button className="btn primary" onClick={onTest} data-drills-test="1">
@@ -457,13 +463,13 @@ export function HeatRow({ heat }: { heat: number[] }) {
 }
 
 function FamilyView({ lang, ds, f, items, start, onRun }: { lang: Lang; ds: DrillSettings; f: FamilyDef; items: Record<string, ItemState>; start?: number; onRun: (q: Drill[], i: number) => void }) {
-  const tx = T[lang];
   const cur = currentLevel(f, items, ds.keyOrder, start);
   const [open, setOpen] = useState<string>(cur.id);
   return (
     <div className="drill-levels">
       {f.levels.map((l) => {
         const done = levelDone(l, items, ds.keyOrder);
+        const stars = levelStars(l, items, ds.keyOrder);
         return (
           <div key={l.id} className="drill-level-block">
             <button className={`drill-level ${done ? 'done' : ''} ${l.id === cur.id ? 'current' : ''}`} onClick={() => setOpen(open === l.id ? '' : l.id)} aria-expanded={open === l.id} data-level={l.id}>
@@ -472,7 +478,12 @@ function FamilyView({ lang, ds, f, items, start, onRun }: { lang: Lang; ds: Dril
                 {l.title[lang]}
                 <LevelMeta l={l} lang={lang} />
               </span>
-              <span>{done ? `✓ ${tx.done}` : l.id === cur.id ? '●' : ''}</span>
+              {/* 0.64 (owner): five stars — 3 = three keys at the target tempo (done, the next level opens), 4 = half, 5 = all. */}
+              <span className="lvl-stars" aria-label={lang === 'he' ? `${stars} מתוך 5 כוכבים` : `${stars} of 5 stars`} data-level-stars={stars}>
+                {Array.from({ length: LEVEL_MAX_STARS }, (_, k) => (
+                  <i key={k} className={k < stars ? 'won' : ''} />
+                ))}
+              </span>
             </button>
             {open === l.id && <LevelGrid lang={lang} ds={ds} level={l} items={items} onRun={onRun} />}
           </div>
@@ -483,7 +494,7 @@ function FamilyView({ lang, ds, f, items, start, onRun }: { lang: Lang; ds: Dril
 }
 
 /** Bass levels (0.64): the level's tempo (start → target) and its exam / bagrut tags (B14), small and quiet. */
-const GRADE_HE: Record<string, string> = { 'session: playback': 'מיומנויות סשן: חיקוי', 'session: improvising': 'מיומנויות סשן: אלתור', 'walking core': 'ליבת הווקינג', reading: 'קריאה', 'time & groove': 'זמן וגרוב', transcription: 'תמלול', 'pieces with a band': 'יצירות עם להקה', '2-chorus solo': 'סולו של שני כורוסים', 'sight-read improvisation': 'אלתור מקריאה ראשונה', improvisation: 'אלתור', ballad: 'בלדה', blues: 'בלוז' };
+const GRADE_HE: Record<string, string> = { 'session: playback': 'מיומנויות סשן: חיקוי', 'session: improvising': 'מיומנויות סשן: אלתור', 'walking core': 'ליבת הווקינג', reading: 'קריאה', 'time & groove': 'זמן וגרוב', transcription: 'תמלול', 'pieces with a band': 'יצירות עם להקה', '2-chorus solo': 'סולו של שני סבבים', 'sight-read improvisation': 'אלתור מקריאה ראשונה', improvisation: 'אלתור', ballad: 'בלדה', blues: 'בלוז' };
 function LevelMeta({ l, lang }: { l: LevelDef; lang: Lang }) {
   const g = l as GuitarLevelDef;
   if (!g.tempo && !g.exam?.length) return null;

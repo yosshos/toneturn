@@ -4,7 +4,7 @@
 import type { CourseId } from './courses';
 import { catalog, type LevelDef } from './drills/generate';
 import { guitarCatalog } from './drills/guitar';
-import { hiddenBassLevels, levelDrills, levelStars, shownFamilies, targetBpmOf } from './drills/plan';
+import { hiddenBassLevels, LEVEL_DONE_STARS, levelDrills, levelStars, shownFamilies, targetBpmOf } from './drills/plan';
 import { itemPass } from './drills/ladder';
 import type { Drill, DrillSettings, FamilyId, ItemState } from './drills/types';
 import { stepStars, VOCAL_PROGRAMS, type PathFacts } from './path';
@@ -45,7 +45,7 @@ export function techStars(level: LevelDef, items: Record<string, ItemState>, ord
 }
 
 /** A technique step is done on the path at this many stars (1 star only shows progress). */
-export const TECH_DONE_STARS = 2;
+export const TECH_DONE_STARS = LEVEL_DONE_STARS;
 
 /**
  * N12: does a finished session credit its path step to the workout block (W2)? A technique step only when its level's

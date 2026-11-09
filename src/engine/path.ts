@@ -536,7 +536,7 @@ export function buildPath(inp: PathInput): PathView {
   const stateOf = (s: PathStep, extra?: Partial<UnitStep>): UnitStep => {
     const d = doneSteps[s.id];
     if (d && d.stars > 0) {
-      const mastered = d.stars >= 3 && (d.times ?? 1) >= 2 && !!d.firstAt && new Date(d.at).getTime() - new Date(d.firstAt).getTime() >= 3 * DAY;
+      const mastered = s.ladder ? d.stars >= 5 : d.stars >= 3 && (d.times ?? 1) >= 2 && !!d.firstAt && new Date(d.at).getTime() - new Date(d.firstAt).getTime() >= 3 * DAY;
       return { step: s, state: mastered ? 'mastered' : 'done', stars: d.stars, ...extra };
     }
     const v = verdict.get(s.id);

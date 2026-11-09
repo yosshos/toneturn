@@ -380,7 +380,7 @@ export function PathView2({
           <span className="node-text">
             {(st === 'done' || st === 'mastered') && (
               <span className="mini-stars" aria-label={`${x.stars ?? 0} ${tx.stars}`}>
-                {[0, 1, 2].map((s) => (
+                {(x.step.ladder && x.step.kind === 'tech' ? [0, 1, 2, 3, 4] : [0, 1, 2]).map((s) => (
                   <i key={s} className={s < (x.stars ?? 0) ? 'won' : ''} />
                 ))}
               </span>

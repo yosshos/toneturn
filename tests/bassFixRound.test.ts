@@ -55,7 +55,7 @@ describe('N1 levelOfDrill: every item maps back to its own level', () => {
       expect(itemPass(st, d.startBpm, itemTargetBpm(d)).target).toBe(true);
       items[d.itemId] = st;
     }
-    expect(levelStars(lv, items, order)).toBe(3);
+    expect(levelStars(lv, items, order)).toBe(5); // every item passed = all five stars (0.64)
   });
 });
 

@@ -1334,7 +1334,7 @@ export function genWalk(s: DrillSpec, tu: Tuning): Drill {
         rhythm.forEach(([b, d], k) => line.push({ b: bar * 4 + b, d, p: R + (k === 0 ? [0, 4, 7][Math.floor(rnd() * 3)] : sc[Math.floor(rnd() * sc.length)]), ct: k === 0 }));
       });
       line.push(endOn(tu, key, prog.length * 4, 2));
-      return drillOf(s, tu, alt(line), { en: 'Two-chorus solo over the blues', he: 'סולו של שני כורוסים על בלוז', chart: chartOf(key, prog), show: 'chart', evenness: false, bass: { rules: rulesOf(key, prog, 'chordTones', true) }, drums: { groove: 'swing' } });
+      return drillOf(s, tu, alt(line), { en: 'Two-chorus solo over the blues', he: 'סולו של שני סבבים על בלוז', chart: chartOf(key, prog), show: 'chart', evenness: false, bass: { rules: rulesOf(key, prog, 'chordTones', true) }, drums: { groove: 'swing' } });
     }
     case 'sight-impro': {
       // Bagrut: improvise a walking line over a progression read at sight — a new chart for every key and option.
@@ -2182,12 +2182,12 @@ export function bassFamilies(): GuitarFamilyDef[] {
       L('b-walk', 8, 'Ghosted skips and triplet drops', 'קפיצות רפאים וטריולות', [WK('skips', { perBeat: 1 })], [5, 10, 7, 0], [100, 160], 'quarters + triplets'),
       L('b-walk', 9, 'ii–V–I through all keys', 'ii–V–I בכל הסולמות', [WK('cycle', { perBeat: 1 })], 'major', [100, 180], Qn),
       L('b-walk', 10, 'Rhythm changes: two chords a bar', 'ריתם צ׳יינג׳ס: שני אקורדים בתיבה', [WK('rhythm', { perBeat: 1 })], [10, 3, 5], [100, 200], Qn),
-      L('b-walk', 11, 'Standards: one chorus', 'סטנדרטים: כורוס אחד', [0, 1, 2, 3].map((o) => WK('standard', { perBeat: 1, option: o })), [0], [100, 180], Qn),
+      L('b-walk', 11, 'Standards: one chorus', 'סטנדרטים: סבב אחד', [0, 1, 2, 3].map((o) => WK('standard', { perBeat: 1, option: o })), [0], [100, 180], Qn),
       L('b-walk', 12, 'Up-tempo, in 2 and in 4', 'טמפו מהיר, בשתיים ובארבע', [WK('two-four', { perBeat: 1 })], [5, 10], [160, 240], 'halves / quarters'),
       // 0.64 (B18): more standards, each in its own key and feel; the bagrut solo and sight-read improvisation; low B.
       L('b-walk', 13, 'More standards: walking in 4', 'עוד סטנדרטים: ווקינג בארבע', stdOps((f, i) => i >= 4 && i < STD_FIRST && f === 'walk').map((o) => WK('standard', { perBeat: 1, option: o })), [0], [100, 180], Qn),
       L('b-walk', 14, 'Standards in 2, ballads and bossa', 'סטנדרטים בשתיים, בלדות ובוסה', stdOps((f, i) => i >= 4 && i < STD_FIRST && f !== 'walk').map((o) => WK('standard', { perBeat: 0.5, option: o })), [0], [70, 150], 'halves / bossa'),
-      L('b-walk', 15, 'A two-chorus solo over the blues', 'סולו של שני כורוסים על בלוז', [WK('solo')], [5, 10, 7], [80, 140], E8),
+      L('b-walk', 15, 'A two-chorus solo over the blues', 'סולו של שני סבבים על בלוז', [WK('solo')], [5, 10, 7], [80, 140], E8),
       L('b-walk', 16, 'Sight-read and improvise the walk', 'קריאה ממבט ראשון ואלתור ווקינג', [WK('sight-impro', { perBeat: 1 }), WK('sight-impro', { perBeat: 1, option: 1 })], 'major', [90, 160], Qn),
       L('b-walk', 17, 'Walking in the low register (low B)', 'ווקינג באזור הנמוך (B נמוך)', [WK('lowb', { perBeat: 1 })], 'major', [90, 150], Qn),
       L('b-walk', 18, 'Standards III: forms, cycles and Coltrane changes', 'סטנדרטים 3: צורות, מעגלים ושינויי קולטריין', BASS_STD.map((x, i) => (i >= STD_FIRST ? WK('standard', { perBeat: x.feel === 'walk' ? 1 : 0.5, option: i }) : null)).filter((x): x is NonNullable<typeof x> => x !== null), [0], [90, 180], 'quarters / halves'),

@@ -18,6 +18,20 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.64.0',
+    date: '2026-11-09',
+    en: [
+      'Bass, complete: 15 families and more than 140 levels — plucking, time and pocket with a drummer (on headphones), chord tones, walking bass over 36 standards, ghost notes, slap, reading, bass ear and an upright track; 4-, 5- and 6-string, drop D, fretless and upright',
+      'Every level is passed by your playing only: low notes heard on a phone, notes judged by pitch, free walking judged by the rules; five stars per level — three keys at the target tempo open the next level, all twelve keys make five',
+      'Each course keeps to itself: its games, Practice and Progress, and switching course keeps you on the same screen; every step on every path has its own symbol',
+    ],
+    he: [
+      'בס, מלא: 15 משפחות ויותר מ־140 שלבים — פריטה, זמן וכיס עם מתופף (באוזניות), צלילי אקורד, ווקינג על 36 סטנדרטים, צלילי רפאים, סלאפ, קריאה, שמיעה לבס ומסלול קונטרבס; 4, 5 ו־6 מיתרים, דרופ D, פרטלס וקונטרבס',
+      'כל שלב עוברים רק בנגינה: צלילים נמוכים נשמעים גם בטלפון, תווים נבדקים לפי גובה, ווקינג חופשי לפי הכללים; חמישה כוכבים לשלב — שלושה סולמות בטמפו היעד פותחים את השלב הבא, כל שנים־עשר הם חמישה',
+      'כל קורס לעצמו: המשחקים, התרגול וההתקדמות שלו, והחלפת קורס משאירה אתכם באותו מסך; לכל צעד בכל מסלול סמל משלו',
+    ],
+  },
+  {
     version: '0.63.0',
     date: '2026-11-09',
     en: [

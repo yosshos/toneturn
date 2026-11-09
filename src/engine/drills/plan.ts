@@ -122,21 +122,28 @@ export const itemTargetBpm = (drill: Drill): number => targetBpmOf(levelOfDrill(
 
 /**
  * Stars of a level from measured takes (A4): 1 = min(3, items) items clean at the start tempo, 2 = half the items
- * passed at the target tempo (3 clean on 2 days, ladder.itemPass), 3 = 75 % passed. Self-report never counts.
+ * passed at the target tempo (3 clean on 2 days, ladder.itemPass); see the five-star scale below. Self-report never counts.
  */
 export function levelStars(level: LevelDef, items: Record<string, ItemState>, order: DrillSettings['keyOrder']): number {
   const ds = levelDrills(level, order);
   if (!ds.length) return 0;
   const ps = ds.map((d) => itemPass(items[d.itemId], d.startBpm, targetBpmOf(level, d)));
-  const passed = ps.filter((p) => p.target).length / ds.length;
-  if (passed >= 0.75 - 1e-9) return 3;
-  if (passed >= 0.5 - 1e-9) return 2;
+  const n = ps.filter((p) => p.target).length;
+  // 0.64 (owner): five stars. 5 = every key at the target tempo, 4 = half, 3 = three keys (the level counts as done —
+  // the next one opens — while the rest of the keys stay as work), 2 = a first key at target, 1 = three clean at start.
+  if (n >= ds.length) return 5;
+  if (n >= Math.ceil(ds.length / 2)) return 4;
+  if (n >= Math.min(3, ds.length)) return 3;
+  if (n >= 1) return 2;
   return ps.filter((p) => p.start).length >= Math.min(3, ds.length) ? 1 : 0;
 }
 
-/** A level counts as done at 2 stars: half its items passed at the level's target tempo (the path's rule too). */
+/** The most stars a technique level shows. */
+export const LEVEL_MAX_STARS = 5;
+/** A level counts as done at 3 stars: three keys passed at the target tempo (the path's rule too, owner 0.64). */
+export const LEVEL_DONE_STARS = 3;
 export function levelDone(level: LevelDef, items: Record<string, ItemState>, order: DrillSettings['keyOrder']): boolean {
-  return levelStars(level, items, order) >= 2;
+  return levelStars(level, items, order) >= LEVEL_DONE_STARS;
 }
 
 /** The level the player works on in a family: the first not-done level, never below the level test's start. */

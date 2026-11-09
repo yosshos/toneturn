@@ -5,7 +5,7 @@
 
 import { useCourse } from './courseContext';
 import { COURSE_AREAS, courseOf, type CourseId } from '../engine/courses';
-import { ladderFamiliesFor, techStars } from '../engine/ladderFacts';
+import { ladderFamiliesFor, TECH_DONE_STARS, techStars } from '../engine/ladderFacts';
 import { familyById } from '../engine/drills/plan';
 import { DEFAULT_DRILL_SETTINGS, type FamilyId } from '../engine/drills/types';
 import { VOCAL_PROGRAMS } from '../engine/path';
@@ -427,7 +427,7 @@ function courseAxes(course: CourseId, ratings: Parameters<typeof domainValue>[0]
   return fams.map((id) => {
     const f = familyById(id as FamilyId);
     const lv = f?.levels ?? [];
-    const done = lv.filter((l) => techStars(l, items, DEFAULT_DRILL_SETTINGS.keyOrder) >= 2).length;
+    const done = lv.filter((l) => techStars(l, items, DEFAULT_DRILL_SETTINGS.keyOrder) >= TECH_DONE_STARS).length;
     return { label: (f?.title[lang] ?? id).split(/[ ,(—]/)[0], v: done ? done / Math.max(1, lv.length) : null };
   });
 }

@@ -77,12 +77,15 @@ describe('technique and vocal ladders in the course path (0.61, owner)', () => {
     expect(techStars(lv, {}, ds.keyOrder)).toBe(0);
     expect(techStars(lv, startClean(3), ds.keyOrder)).toBe(1);
     expect(techStars(lv, startClean(drills.length), ds.keyOrder)).toBe(1);
-    expect(techStars(lv, passed(Math.ceil(drills.length / 2)), ds.keyOrder)).toBe(2);
-    expect(techStars(lv, passed(drills.length), ds.keyOrder)).toBe(3);
-    // 1 star is progress only: the step is not done (no facts) until 2 stars.
+    // Five stars (owner, 0.64): 2 = a first key at target, 3 = three keys (done), 4 = half, 5 = all.
+    expect(techStars(lv, passed(1), ds.keyOrder)).toBe(drills.length <= 1 ? 5 : 2);
+    expect(techStars(lv, passed(Math.min(3, drills.length)), ds.keyOrder)).toBeGreaterThanOrEqual(3);
+    expect(techStars(lv, passed(Math.ceil(drills.length / 2)), ds.keyOrder)).toBeGreaterThanOrEqual(drills.length >= 6 ? 4 : 3);
+    expect(techStars(lv, passed(drills.length), ds.keyOrder)).toBe(5);
+    // Below 3 stars is progress only: the step is not done (no facts) until three keys pass at the target.
     expect(withLadderFacts({}, { families: ['scales'], items: startClean(drills.length), order: ds.keyOrder, start: {}, vocalPassed: [], at: '2026-11-09T10:00:00Z' }).steps?.['tech:scales-1']).toBeUndefined();
     const f = withLadderFacts({}, { families: ['scales'], items: passed(drills.length), order: ds.keyOrder, start: { scales: 3 }, vocalPassed: [], at: '2026-11-09T10:00:00Z' });
-    expect(f.steps?.['tech:scales-1']?.stars).toBe(3);
+    expect(f.steps?.['tech:scales-1']?.stars).toBe(5);
     expect(f.tests?.['tech:scales-2']).toBeTruthy();
     expect(f.tests?.['tech:scales-3']).toBeUndefined();
   });
