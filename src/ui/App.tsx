@@ -888,7 +888,7 @@ export function App() {
     drillSessionXp.current = 0;
     drillSession.current = { takes: 0, clean: 0 };
     if (!t0) return null;
-    return store.recordCompletion({ lessonId, lessonVersion: 1, sessionId: `tech-${Date.now()}`, completedAt: new Date().toISOString(), firstTry: c0, total: t0, xp, xpCounted: true, missed: [], items: [] });
+    return store.recordCompletion({ lessonId, lessonVersion: 1, sessionId: `tech-${Date.now()}`, completedAt: new Date().toISOString(), firstTry: c0, total: t0, xp, xpCounted: true, missed: [], items: [], ...(settings?.activeCourse ? { course: settings.activeCourse } : {}) });
   };
   /** A progression from Charts practised as a drill (voicings / comping / stride). */
   const chartQueue = useRef<Drill[] | null>(null);

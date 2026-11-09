@@ -18,6 +18,7 @@ import { guitarCatalog, type GuitarLevelDef } from './drills/guitar';
 import { DOMAINS, PROVISIONAL_UNTIL, SKILLS, type DomainId, type Ratings } from './rating';
 import { SUB_SKILLS, type SubStat } from './taxonomy';
 import { addDays, type Counts, type InputKind, type Peaks, type StatsDays, type StatsHours } from './stats';
+import type { CourseId } from './courses';
 import { AREA_NAME, completedChallenges, RANK_AREAS, RANK_TIERS, TIER_NAME, tierStart, type RankArea, type Ranks, type RankTier } from './ranks';
 
 export type L = { en: string; he: string };
@@ -85,8 +86,14 @@ export interface Badge {
   group?: string;
   /** Crest colour. */
   tone?: RankTier;
+  /** 0.65 (owner, per course): the course the badge belongs to ('general' = streaks, days, seasons). Set for every
+   *  catalogue badge by badgeCourse. */
+  course?: BadgeCourse;
+  /** Other courses that show it too (a technique count shared by the three instruments, ear areas in Exams). */
+  alsoIn?: CourseId[];
   rule: (x: BadgeInput) => BadgeCheck;
 }
+export type BadgeCourse = CourseId | 'general';
 
 const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
 const count = (v: number, goal: number): BadgeCheck => ({ done: v >= goal, p: clamp01(v / goal), v: Math.min(v, goal), goal });
@@ -672,7 +679,58 @@ const seasonBadges: Badge[] = [
 
 // ======================================================================= catalogue + API
 
-export const BADGES: Badge[] = [...areaBadges, ...skillBadges, ...subBadges, ...techniqueBadges, ...specialBadges, ...seasonBadges];
+// ---------------------------------------------------------------- courses (0.65)
+
+const AREA_COURSE: Record<RankArea, { course: CourseId; alsoIn?: CourseId[] }> = {
+  pitch: { course: 'ear', alsoIn: ['exam'] },
+  time: { course: 'ear', alsoIn: ['exam'] },
+  memory: { course: 'ear', alsoIn: ['exam'] },
+  reading: { course: 'ear', alsoIn: ['exam'] },
+  voice: { course: 'voice' },
+  creative: { course: 'jazz' },
+  instrument: { course: 'keys', alsoIn: ['guitar', 'bass'] },
+  technique: { course: 'keys', alsoIn: ['guitar', 'bass'] },
+};
+/** Skills the Exams course is clearly about (theory, reading, dictation) and the Jazz course (chords, changes, modes). */
+const EXAM_SKILLS: SkillId[] = ['theory', 'notes', 'sight', 'dictation', 'cadences'];
+const JAZZ_SKILLS: SkillId[] = ['chords', 'cadences', 'modes', 'improv', 'transpose'];
+const isBassGroup = (g: string) => g === 'g-bass' || g === 'bass-exams' || g.startsWith('b-');
+
+/** Which course a badge belongs to: technique families → their instrument; vocal → voice; ear / theory skills → ear
+ *  (also shown in Exams / Jazz where clearly theirs); streaks, days and seasons → general. Pure. */
+export function badgeCourse(b: Pick<Badge, 'id' | 'cat' | 'group'>): { course: BadgeCourse; alsoIn?: CourseId[] } {
+  const g = b.group ?? '';
+  switch (b.cat) {
+    case 'special':
+    case 'season':
+      return { course: 'general' };
+    case 'area':
+      return AREA_COURSE[g as RankArea] ?? { course: 'general' };
+    case 'skill':
+    case 'sub': {
+      const d = domainOfSkill(g as SkillId);
+      if (d === 'voice') return { course: 'voice' };
+      if (d === 'instrument') return { course: 'keys', alsoIn: ['guitar', 'bass'] };
+      if (d === 'creative') return { course: 'jazz', alsoIn: ['ear'] };
+      const also = [...(EXAM_SKILLS.includes(g as SkillId) ? ['exam' as const] : []), ...(JAZZ_SKILLS.includes(g as SkillId) ? ['jazz' as const] : [])];
+      return { course: 'ear', alsoIn: also.length ? also : ['exam'] };
+    }
+    case 'technique': {
+      if (isBassGroup(g) || b.id.startsWith('tech:g-bass')) return { course: 'bass' };
+      if (g.startsWith('g-')) return { course: 'guitar' };
+      if ((PIANO_BADGE_FAMILIES as string[]).includes(g) || b.id.startsWith('tech:even-')) return { course: 'keys' };
+      // Clean takes, tempo records: any instrument.
+      return { course: 'keys', alsoIn: ['guitar', 'bass'] };
+    }
+  }
+}
+/** Is the badge shown in this course's achievements ('general' ones always are)? */
+export const badgeInCourse = (b: Pick<Badge, 'course' | 'alsoIn'>, c: CourseId): boolean => !b.course || b.course === 'general' || b.course === c || !!b.alsoIn?.includes(c);
+
+export const BADGES: Badge[] = [...areaBadges, ...skillBadges, ...subBadges, ...techniqueBadges, ...specialBadges, ...seasonBadges].map((b) => {
+  const c = badgeCourse(b);
+  return { ...b, course: c.course, ...(c.alsoIn ? { alsoIn: c.alsoIn } : {}) };
+});
 export const BADGE_BY_ID: Record<string, Badge> = Object.fromEntries(BADGES.map((b) => [b.id, b]));
 export const badgeCounts = (): Record<BadgeCat, number> => Object.fromEntries(BADGE_CATS.map((c) => [c, BADGES.filter((b) => b.cat === c).length])) as Record<BadgeCat, number>;
 

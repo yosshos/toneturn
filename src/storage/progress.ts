@@ -40,6 +40,9 @@ export interface LessonResult {
   /** 0.61: the XP was already added take by take on this device (a technique session); the result carries it for
    * the server (teacher, league), and a rebuild from the server counts it once. Never uploaded. */
   xpCounted?: boolean;
+  /** 0.65: the course the player was in (settings.activeCourse) — the league card's XP per course reads it where the
+   * content alone can't tell (generic technique, a practice log, ear topics shared by Ear and Exams). Local only. */
+  course?: import('../engine/courses').CourseId;
   /** Weekly puzzle outcome (only for lessonId "weekly-puzzle"). */
   puzzle?: { week: string; band: string; medal: Medal };
 }
@@ -773,7 +776,7 @@ export class ProgressStore {
   async recordVocal(r: LessonResult, takes: VocalTake[], opts: { passedLevel?: number | null; rangeMap?: Record<string, number> } = {}, now = new Date()): Promise<Progress> {
     const p = await this.loadProgress();
     if (p.applied.includes(`complete:${r.sessionId}`)) return p;
-    const next = applyResult(p, r, now);
+    const next = applyResult(p, await this.withCourse(r), now);
     const v: VocalProgress = next.vocal ?? { best: {}, passed: [], takes: [] };
     const best = { ...v.best };
     for (const t of takes) best[t.item] = Math.max(best[t.item] ?? 0, t.score);
@@ -809,6 +812,13 @@ export class ProgressStore {
     return next;
   }
 
+  /** Every recorded result carries the course the player was in (0.65, community per course). */
+  private async withCourse(r: LessonResult): Promise<LessonResult> {
+    if (r.course) return r;
+    const c = (await this.loadSettings()).activeCourse;
+    return c ? { ...r, course: c } : r;
+  }
+
   async saveProgress(p: Progress) {
     await this.kv.set('progress', p);
   }
@@ -820,7 +830,7 @@ export class ProgressStore {
   /** Read-modify-write; safe to call repeatedly for the same session. */
   async recordCompletion(r: LessonResult, now = new Date()): Promise<Progress> {
     const p = await this.loadProgress();
-    const next = applyResult(p, r, now);
+    const next = applyResult(p, await this.withCourse(r), now);
     if (next !== p) await this.kv.set('progress', next);
     return next;
   }
