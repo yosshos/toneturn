@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { courseLevel, courseLevels, courseOfResult, courseSetKinds, friendsInCourse, leagueWeekBounds, weeklyCourseXp, type ResultLike } from '../src/engine/courseSocial';
+import { isMissingArg } from '../src/cloud/social';
+import { courseLevel, courseLevels, courseOfResult, courseSetKinds, firstKind, forCourse, friendsInCourse, leagueWeekBounds, weeklyCourseXp, type ResultLike } from '../src/engine/courseSocial';
 import { inCourse } from '../src/engine/courses';
 import { stepCatalogue } from '../src/engine/path';
 import type { Ratings } from '../src/engine/rating';
@@ -150,5 +151,18 @@ describe('courseSetKinds', () => {
     expect(courseSetKinds('ear', [...all])).not.toContain('vocal-hold');
     expect(courseSetKinds('guitar', [...all])).toEqual([...all]);
     expect(courseSetKinds('jazz', ['mixed', 'chords', 'beat'])).toEqual(['mixed', 'chords']);
+  });
+  it('labelled lists: kept in order, default mixed else the first', () => {
+    const v = forCourse('voice', [['mixed', 'M'], ['intervals', 'I'], ['vocal-hold', 'V']]);
+    expect(v).toEqual([['intervals', 'I'], ['vocal-hold', 'V']]);
+    expect(firstKind(v)).toBe('intervals');
+    expect(firstKind(forCourse('ear', [['degrees', 'D'], ['mixed', 'M']]))).toBe('mixed');
+  });
+});
+
+describe('profile sync against an older server', () => {
+  it('recognises "no such argument" so the profile is saved without course levels', () => {
+    expect(isMissingArg({ code: 'PGRST202', message: 'Could not find the function public.toneturn_set_profile(p_course_levels)' })).toBe(true);
+    expect(isMissingArg({ message: 'nickname: taken' })).toBe(false);
   });
 });
