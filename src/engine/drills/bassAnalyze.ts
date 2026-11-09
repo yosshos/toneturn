@@ -511,9 +511,11 @@ export function walkRules(line: number[], chordAt: (beat: number) => WalkChord):
       const d = pc(m - nx.root);
       const ap: WalkLabel | null = d === 1 || d === 11 ? 'chromatic' : d === 7 ? 'dominant' : d === 2 || d === 10 ? 'scale' : null;
       pre++;
-      if (ap) {
+      // An approach is a note that is NOT a chord tone of its own chord (N2b): on Dm7–G7–C every root is a 5th above
+      // the next one, so a roots-only line would otherwise "approach" every change.
+      if (ap && (lab === 'other' || lab === 'tension')) {
         approaches++;
-        if (lab === 'other' || lab === 'tension') lab = ap;
+        lab = ap;
       }
     }
     if (isNew) {
@@ -532,4 +534,20 @@ export function walkRules(line: number[], chordAt: (beat: number) => WalkChord):
     range: line.length ? Math.max(...line) - Math.min(...line) : 0,
     worst,
   };
+}
+
+/**
+ * The placement walk task (B6, N2): one played pitch per beat (−100 = nothing) against the drill's rule chart, whose
+ * tones are intervals above the root (chartPcs reads them). Beat-1 chord tones, approach share, share of roots.
+ */
+export function walkProbeReport(chart: RuleChart[], line: number[]): { beat1Ct: number; approach: number; rootShare: number } {
+  const chords: { from: number; c: WalkChord }[] = [];
+  let at = 0;
+  for (const c of chart) {
+    chords.push({ from: at, c: { root: pc(c.root), iv: chartPcs(c).map((p) => pc(p - c.root)) } });
+    at += c.beats;
+  }
+  const chordAt = (b: number) => (chords.filter((x) => x.from <= b).pop() ?? chords[0]).c;
+  const rep = walkRules(line, chordAt);
+  return { beat1Ct: rep.beat1Ct, approach: rep.approach, rootShare: rep.labels.filter((l) => l === 'R').length / Math.max(1, rep.labels.length) };
 }

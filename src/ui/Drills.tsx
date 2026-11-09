@@ -21,7 +21,7 @@ import { currentLevel, families as familiesOf, keyHeat, levelDone, levelKeys, sh
 import { generate } from '../engine/drills/generate';
 import { GUITAR_PROBES, type GuitarLevelDef } from '../engine/drills/guitar';
 import { BASS_PROBES, placeBass, probeSlot, type BassProbeResult } from '../engine/drills/bassProbes';
-import { walkRules, type WalkChord } from '../engine/drills/bassAnalyze';
+import { walkProbeReport } from '../engine/drills/bassAnalyze';
 import { expTimeMs } from '../engine/drills/analyze';
 import { isGuitarDrill } from '../engine/drills/events';
 import { drillEvents, drillXp } from '../engine/drills/events';
@@ -725,24 +725,16 @@ function bassMeasure(slot: NonNullable<ReturnType<typeof probeSlot>>, drill: Dri
   if (slot === 'ear') out.acc = m.accuracy;
   const rules = drill.goal.bass?.rules;
   if (slot === 'walk' && rules) {
-    // The walking-rule report on what was played: one note per beat, the one nearest each beat.
-    const chords: { from: number; c: WalkChord }[] = [];
-    let at = 0;
-    for (const c of rules.chart) {
-      chords.push({ from: at, c: { root: c.root, iv: c.tones.map((t) => (((t - c.root) % 12) + 12) % 12) } });
-      at += c.beats;
-    }
-    const chordAt = (b: number) => (chords.filter((x) => x.from <= b).pop() ?? chords[0]).c;
+    // The walking-rule report on what was played: one note per beat, the one nearest each beat. The chart's tones are
+    // intervals (N2): walkProbeReport reads them as they are.
+    const beats = rules.chart.reduce((a, c) => a + c.beats, 0);
     const half = 30000 / bpm;
-    const line = Array.from({ length: at }, (_, b) => {
+    const line = Array.from({ length: beats }, (_, b) => {
       const t = expTimeMs(drill, b, bpm);
       const near = played.filter((x) => Math.abs(x.on - t) < half).sort((x, y) => Math.abs(x.on - t) - Math.abs(y.on - t))[0];
       return near ? near.pitch : -100;
     });
-    const rep = walkRules(line, chordAt);
-    out.beat1Ct = rep.beat1Ct;
-    out.approach = rep.approach;
-    out.rootShare = rep.labels.filter((l) => l === 'R').length / Math.max(1, rep.labels.length);
+    Object.assign(out, walkProbeReport(rules.chart, line));
   }
   return out;
 }

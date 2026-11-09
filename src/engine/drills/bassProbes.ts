@@ -127,11 +127,14 @@ export function placePluck(r: BassProbeResult): Partial<Record<FamilyId, number>
   return { 'b-pluck': 1 };
 }
 
-/** Task 4 (walk): beat-1 chord tones ≥ 90 % plus approaches → walk L7; chord tones, no approaches → L4; only roots → L2. */
+/**
+ * Task 4 (walk): beat-1 chord tones ≥ 90 % plus approaches (non-chord tones into the next root) and under half the
+ * beats on the root → walk L7; chord tones, no approaches → L4; only roots → L2.
+ */
 export function placeWalk(r: BassProbeResult): Partial<Record<FamilyId, number>> {
   const ct = r.beat1Ct ?? 0;
   const ap = r.approach ?? 0;
-  if (ct >= 0.9 && ap >= 0.25) return { 'b-walk': 7, 'b-chord': 8 };
+  if (ct >= 0.9 && ap >= 0.25 && (r.rootShare ?? 1) < 0.5) return { 'b-walk': 7, 'b-chord': 8 };
   if (ct >= 0.9 && (r.rootShare ?? 1) < 0.75) return { 'b-walk': 4, 'b-chord': 5 };
   if (ct >= 0.75) return { 'b-walk': 2, 'b-chord': 2 };
   return { 'b-walk': 1 };
