@@ -1046,7 +1046,7 @@ function Caption({ text }: { text: string | null }) {
   const [talk] = useTalk();
   return (
     <p className="caption" aria-live="polite">
-      {text && !SIMULATED ? <TypedText key={text} text={text} sound={!talk} msPerWord={talk ? 220 : 90} /> : (text ?? ' ')}
+      {text && !SIMULATED ? <TypedText key={text} text={text} sound={!talk || !/[a-z]/i.test(text)} msPerWord={talk && /[a-z]/i.test(text) ? 220 : 90} /> : (text ?? ' ')}
     </p>
   );
 }

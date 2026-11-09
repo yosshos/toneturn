@@ -81,7 +81,8 @@ export class BrowserPromptPlayer implements PromptPlayer {
   speak(raw: string, lang: 'he' | 'en', signal: AbortSignal): Promise<void> {
     if (signal.aborted) return Promise.reject(new Cancelled());
     if (!raw.trim()) return Promise.resolve();
-    if (!talkOn() && !this.force) return readPause(raw, signal);
+    // 0.64 (owner): no narration in Hebrew — the text types itself out instead.
+    if (lang === 'he' || (!talkOn() && !this.force)) return readPause(raw, signal);
     const text = speakable(raw, lang);
     if (typeof speechSynthesis === 'undefined' || !text.trim()) return Promise.resolve();
     const voice = pickVoice(lang, this.prefs);

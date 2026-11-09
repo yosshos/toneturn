@@ -18,6 +18,8 @@ export function useTalk(): [boolean, (on: boolean) => void] {
 
 export function TalkToggle({ lang }: { lang: 'he' | 'en' }) {
   const [on, set] = useTalk();
+  // 0.64 (owner): Hebrew has no narration (typed text with a pop), so there is nothing to switch.
+  if ((lang as string) === 'he') return null;
   const label = on ? (lang === 'he' ? 'הקריינית מדברת — לעבור לקריאה' : 'Narrator on — switch to reading') : lang === 'he' ? 'מצב קריאה — להפעיל את הקריינית' : 'Reading mode — turn the narrator on';
   return (
     <button type="button" className={`talk-toggle ${on ? 'on' : 'off'}`} aria-pressed={on} aria-label={label} title={label} data-talk={on ? 'on' : 'off'} onClick={() => set(!on)}>

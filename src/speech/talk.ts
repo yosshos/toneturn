@@ -49,3 +49,8 @@ export function readingMs(text: string): number {
   if (automated()) return 0;
   return Math.min(3200, 500 + text.length * 32);
 }
+
+/** 0.64 (owner): narration only in English (Kokoro voice); Hebrew is read — typed text with a soft pop per word. */
+export function voiceOn(lang: 'he' | 'en'): boolean {
+  return lang === 'en' && talkOn();
+}

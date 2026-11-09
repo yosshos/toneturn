@@ -5,7 +5,7 @@ import { Glyph, glyphForEmoji } from './Glyph';
 import { Icon } from './icons';
 import { TalkToggle, useTalk } from './TalkToggle';
 import { TypedText } from './TypedText';
-import { talkOn } from '../speech/talk';
+import { voiceOn } from '../speech/talk';
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { clearSlot, loadSlot, saveSlot } from '../storage/resume';
 import type { MiniLesson } from '../content/miniTypes';
@@ -79,7 +79,7 @@ export function MiniLessonPlayer({ t, settings, lesson, name, onFinish, startDee
         if (step.playFirst) await playExample(c.signal);
         const text = personal(step.say[lang], name);
         if (SIMULATED) await new Promise((r) => setTimeout(r, 250));
-        else if (!talkOn()) {
+        else if (!voiceOn(lang)) {
           // 0.64 (owner): reading mode types the text out word by word (TypedText), then a moment to read it.
           await new Promise<void>((res) => {
             typedDone.current = res;
@@ -199,7 +199,7 @@ export function MiniLessonPlayer({ t, settings, lesson, name, onFinish, startDee
             <NotesView midis={step.show.notes} keyPc={step.show.key ? pc(step.show.key) : null} settings={settings} chord={step.show.chord} durs={step.show.durs} clef={step.show.clef} />
           )}
           <p className="mini-caption" aria-live="polite">
-            {SIMULATED ? personal(step.say[lang], name) : <TypedText key={`${deep}-${i}`} text={personal(step.say[lang], name)} sound={!talk} msPerWord={talk ? 260 : 120} onDone={() => typedDone.current?.()} />}
+            {SIMULATED ? personal(step.say[lang], name) : <TypedText key={`${deep}-${i}`} text={personal(step.say[lang], name)} sound={!talk || lang === 'he'} msPerWord={talk && lang === 'en' ? 260 : 120} onDone={() => typedDone.current?.()} />}
           </p>
           {words.length > 0 && <TermChips words={words} lang={lang} active={term} onPick={explain} label={t.termsWhat} />}
           {term && <TermCard term={term} lang={lang} onReplay={() => void playSound(term.play)} onClose={() => setTerm(null)} closeLabel={t.termClose} />}
