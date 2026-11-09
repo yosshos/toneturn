@@ -42,8 +42,9 @@ export function ladderHiddenFor(course: CourseId, bassTuning?: string, drumMic?:
 }
 
 /**
- * Stars of a technique level from measured takes (BASS_AUDIT A4, every instrument): 1 = three items clean at the start
- * tempo, 2 = half the items passed at the level's target tempo (3 clean takes on 2 days), 3 = 75 % passed.
+ * Stars of a technique level from measured takes (every instrument, plan.levelStars): 1 = three items clean at the start
+ * tempo, 2 = a first item passed at the level's target tempo (3 clean takes on 2 days), 3 = three passed (the level is
+ * done), 4 = half, 5 = all.
  */
 export function techStars(level: LevelDef, items: Record<string, ItemState>, order: DrillSettings['keyOrder']): number {
   return levelStars(level, items, order);

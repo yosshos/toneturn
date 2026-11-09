@@ -13,6 +13,8 @@ import { TOPIC_GEN } from '../engine/topicKit';
 import { add, blockLeftMs, canRescale, coverage, LIMITS, moveTo, preset, remove, rescale, runLeftMs, setMinutes, total, type Block, type BlockTarget, type Preset, type WorkoutRun } from '../engine/workout2';
 import { DOMAINS, type DomainId } from '../engine/rating';
 import { DOMAIN_HUE, GAMES2 } from './Arcade';
+import { useCourse } from './courseContext';
+import { COURSE_AREAS } from '../engine/courses';
 import { piano } from './services';
 
 type Lang = 'he' | 'en';
@@ -215,6 +217,9 @@ export function WorkoutCard({ t, lang, blocks, run, nextLine, edited, onStart, o
   );
 }
 
+/** An area preset belongs to the courses that practise that area (no "voice focus" in the guitar course). */
+const PRESET_AREA: Partial<Record<Preset, DomainId>> = { ear: 'pitch', rhythm: 'time', reading: 'reading', voice: 'voice', instrument: 'instrument' };
+
 /** The editor (W17): sticky total, per block − / + · ✕ · drag; ⋯ for lock and swap; Add; presets; save as default. */
 export function WorkoutEditor({
   t,
@@ -245,6 +250,7 @@ export function WorkoutEditor({
   onCtx?: (c: { nomic: boolean; quiet: boolean; noinst: boolean }) => void;
 }) {
   const tx = W[lang];
+  const courseAreas = COURSE_AREAS[useCourse().active];
   const [bs, setBs] = useState<Block[]>(initial);
   const [undo, setUndo] = useState<{ prev: Block[]; text: string } | null>(null);
   const [menu, setMenu] = useState<string | null>(null);
@@ -409,7 +415,7 @@ export function WorkoutEditor({
       </button>
 
       <div className="wk-presets" role="group">
-        {(['suggested', 'ear', 'rhythm', 'reading', 'voice', 'instrument', 'mistakes', 'quick5'] as Preset[]).map((p) => (
+        {(['suggested', 'ear', 'rhythm', 'reading', 'voice', 'instrument', 'mistakes', 'quick5'] as Preset[]).filter((p) => !PRESET_AREA[p] || courseAreas.includes(PRESET_AREA[p]!)).map((p) => (
           <button key={p} className="chip" onClick={() => change(preset(p, T, suggested), tx.presets[p])}>
             {tx.presets[p]}
           </button>
