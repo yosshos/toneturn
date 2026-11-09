@@ -352,15 +352,19 @@ export function Flight({ lang, settings, saved, onSave, onExit, onResult, best }
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     cv.width = W * dpr;
     cv.height = H * dpr;
+    // 0.61 (SPEC-REDESIGN): a purple sky with a faint staff, gates as ink barlines with lemon caps, Toni flying
+    // and a trail of note heads behind him.
     const col = {
-      bg: cssVar('--bg-2', '#16182e'),
-      pillar: cssVar('--card-2', '#23254a'),
-      edge: cssVar('--hue-pitch', '#7c8cff'),
-      mint: cssVar('--mint', '#5cf2b5'),
-      gold: cssVar('--gold', '#ffc94d'),
-      red: cssVar('--red', '#ff6b5c'),
-      ink: cssVar('--ink', '#f4f1ff'),
-      dim: cssVar('--ink-dim', '#a9a6c9'),
+      bg: cssVar('--purple', '#6D28D9'),
+      pillar: '#1E1033',
+      edge: '#FFD43B',
+      mint: '#12C9B4',
+      gold: '#FFD43B',
+      red: '#FF5FA2',
+      ink: '#FFFFFF',
+      dim: '#C4B5FD',
+      lilac: '#A78BFA',
+      outline: '#1E1033',
     };
     const stars = Array.from({ length: 40 }, (_, i) => ({ x: (i * 197) % W, y: (i * 89) % (H - 20), r: (i % 3) * 0.5 + 0.6, d: 0.15 + (i % 4) * 0.12 }));
     const trail: number[] = [];
@@ -422,15 +426,15 @@ export function Flight({ lang, settings, saved, onSave, onExit, onResult, best }
         const semis = (((m - g.course.tonic) % 12) + 12) % 12;
         if (![0, 2, 4, 5, 7, 9, 11].includes(semis)) continue;
         ctx.strokeStyle = semis === 0 ? col.gold : col.dim;
-        ctx.globalAlpha = semis === 0 ? 0.35 : 0.12;
+        ctx.globalAlpha = semis === 0 ? 0.5 : 0.18;
         ctx.beginPath();
         ctx.moveTo(0, yOf(m));
         ctx.lineTo(W, yOf(m));
         ctx.stroke();
       }
       ctx.globalAlpha = 1;
-      // Gates.
-      ctx.font = '600 15px Rubik, system-ui, sans-serif';
+      // Gates: ink barlines with a lemon note-head cap at each lip; the degree in a white chip in the gap.
+      ctx.font = '400 24px "Secular One", Rubik, system-ui, sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       for (let i = Math.max(0, s.next - 2); i < s.next + 4; i++) {
@@ -440,51 +444,104 @@ export function Flight({ lang, settings, saved, onSave, onExit, onResult, best }
         if (sx < -PILLAR_W || sx > W + PILLAR_W) continue;
         const top = yOf(gt.center + gt.half);
         const bot = yOf(gt.center - gt.half);
+        const done = i < s.next;
+        ctx.globalAlpha = done ? 0.45 : 1;
         ctx.fillStyle = col.pillar;
         ctx.fillRect(sx - PILLAR_W / 2, -10, PILLAR_W, top + 10);
         ctx.fillRect(sx - PILLAR_W / 2, bot, PILLAR_W, H - bot + 10);
-        ctx.fillStyle = i < s.next ? col.dim : col.edge;
-        ctx.fillRect(sx - PILLAR_W / 2 - 4, top - 8, PILLAR_W + 8, 8);
-        ctx.fillRect(sx - PILLAR_W / 2 - 4, bot, PILLAR_W + 8, 8);
-        ctx.fillStyle = gt.semis === 0 ? col.gold : col.ink;
-        ctx.globalAlpha = i < s.next ? 0.4 : 0.9;
-        ctx.fillText(gateLabel(gt), sx, (top + bot) / 2);
+        for (const [cy, up] of [
+          [top - 7, 1],
+          [bot + 7, -1],
+        ] as const) {
+          ctx.save();
+          ctx.translate(sx, cy);
+          ctx.rotate(-0.35 * up);
+          ctx.beginPath();
+          ctx.ellipse(0, 0, PILLAR_W / 2 + 7, 8, 0, 0, Math.PI * 2);
+          ctx.fillStyle = gt.semis === 0 ? col.mint : col.edge;
+          ctx.fill();
+          ctx.lineWidth = 3;
+          ctx.strokeStyle = col.outline;
+          ctx.stroke();
+          ctx.restore();
+        }
+        const label = gateLabel(gt);
+        const mid = (top + bot) / 2;
+        const w = Math.max(40, ctx.measureText(label).width + 20);
+        ctx.fillStyle = '#FFFFFF';
+        ctx.strokeStyle = col.outline;
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.roundRect(sx - w / 2, mid - 17, w, 34, 17);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = col.outline;
+        ctx.fillText(label, sx, mid + 1);
         ctx.globalAlpha = 1;
       }
-      // Trail and bird.
-      ctx.strokeStyle = col.mint;
-      ctx.globalAlpha = 0.35;
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      trail.forEach((y, k) => {
-        const x = BIRD_X - (trail.length - 1 - k) * 4;
-        if (k === 0) ctx.moveTo(x, yOf(y));
-        else ctx.lineTo(x, yOf(y));
-      });
-      ctx.stroke();
-      ctx.globalAlpha = p === null ? 0.6 : 1;
+      // Trail: note heads left behind, fading out.
+      for (let k = trail.length - 1; k >= 0; k -= 5) {
+        const age = (trail.length - 1 - k) / trail.length;
+        const x = BIRD_X - (trail.length - 1 - k) * 5 - 22;
+        ctx.globalAlpha = 0.85 * (1 - age);
+        ctx.beginPath();
+        ctx.ellipse(x, yOf(trail[k]), 8, 6, -0.35, 0, Math.PI * 2);
+        ctx.fillStyle = (k / 5) % 2 < 1 ? col.gold : col.mint;
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = col.outline;
+        ctx.stroke();
+      }
+      // Toni: a lilac note head with a stem and a flapping flag.
+      ctx.globalAlpha = p === null ? 0.7 : 1;
       const by = yOf(s.y);
-      ctx.fillStyle = shake > 0 ? col.red : col.mint;
+      const flap = calm ? 0 : Math.sin(now / 90) * 0.5;
+      ctx.save();
+      ctx.translate(BIRD_X, by);
+      ctx.scale(1.45, 1.45);
+      ctx.translate(-BIRD_X, -by);
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = col.outline;
+      ctx.fillStyle = col.lilac;
       ctx.beginPath();
-      ctx.arc(BIRD_X, by, 13, 0, Math.PI * 2);
+      ctx.roundRect(BIRD_X + 7, by - 34, 6, 32, 3);
       ctx.fill();
-      const flap = calm ? 0 : Math.sin(now / 90) * 6;
-      ctx.fillStyle = col.ink;
+      ctx.stroke();
+      ctx.save();
+      ctx.translate(BIRD_X + 13, by - 32);
+      ctx.rotate(flap);
       ctx.beginPath();
-      ctx.moveTo(BIRD_X - 4, by);
-      ctx.lineTo(BIRD_X - 18, by - 8 + flap);
-      ctx.lineTo(BIRD_X - 10, by + 3);
+      ctx.moveTo(0, 0);
+      ctx.bezierCurveTo(14, 5, 17, 16, 8, 26);
+      ctx.bezierCurveTo(10, 16, 6, 11, 0, 10);
+      ctx.closePath();
+      ctx.fillStyle = shake > 0 ? col.red : col.gold;
       ctx.fill();
+      ctx.stroke();
+      ctx.restore();
       ctx.beginPath();
-      ctx.arc(BIRD_X + 6, by - 4, 2.5, 0, Math.PI * 2);
-      ctx.fillStyle = '#0f1020';
+      ctx.ellipse(BIRD_X, by, 15, 11.5, -0.35, 0, Math.PI * 2);
+      ctx.fillStyle = shake > 0 ? col.red : col.lilac;
       ctx.fill();
-      ctx.fillStyle = col.gold;
+      ctx.stroke();
+      for (const ex of [-4, 5]) {
+        ctx.beginPath();
+        ctx.arc(BIRD_X + ex, by - 2 - ex * 0.3, 3.4, 0, Math.PI * 2);
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fill();
+        ctx.lineWidth = 1.6;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(BIRD_X + ex + 1, by - 1.6 - ex * 0.3, 1.6, 0, Math.PI * 2);
+        ctx.fillStyle = col.outline;
+        ctx.fill();
+      }
       ctx.beginPath();
-      ctx.moveTo(BIRD_X + 12, by - 2);
-      ctx.lineTo(BIRD_X + 20, by + 1);
-      ctx.lineTo(BIRD_X + 12, by + 4);
-      ctx.fill();
+      ctx.arc(BIRD_X + 1, by + 4, 3.2, 0.15 * Math.PI, 0.85 * Math.PI);
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = col.outline;
+      ctx.stroke();
+      ctx.restore();
       ctx.globalAlpha = 1;
 
       if (now - hudAt > 120) {

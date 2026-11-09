@@ -1439,3 +1439,55 @@
 :root[data-theme][dir='rtl'] .sound-play svg { transform: none; }
 :root[data-theme] .sound-play:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
 :root[data-theme] .sound-play:disabled { opacity: 0.5; cursor: default; }
+
+/* True or false (0.61): the trio on a staff; the middle note rides the arc */
+:root[data-theme] svg.hero-art.trio-v2 { display: block; color: var(--ink-c); }
+:root[data-theme] .trio-v2 .trio-label { font: 400 22px 'Secular One', Rubik, sans-serif; fill: var(--ink-c); }
+:root[data-theme] .trio-v2 .trio-label.small { font-size: 16px; }
+:root[data-theme] .trio-v2 .deg-badge { font: 400 17px 'Secular One', Rubik, sans-serif; fill: var(--ink-c); }
+:root[data-theme] .trio-v2 .trio-badges { animation: v2-pop 0.25s ease-out both; animation-delay: 0.3s; }
+:root[data-theme] .trio-v2 .trio-heads { animation: v2-pop 0.2s ease-out both; }
+:root[data-theme='dark'] .trio-v2 g[stroke] { stroke: #fff; }
+:root[data-theme='dark'] .trio-v2 .arc { stroke: #fff; }
+@keyframes v2-pop { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: none; } }
+:root[data-theme] .trio-v2 .trio-heads, :root[data-theme] .trio-v2 .trio-badges { transform-box: fill-box; transform-origin: center; }
+@media (prefers-reduced-motion: reduce) { :root[data-theme] .trio-v2 * { animation: none !important; } }
+
+/* Rhythm Highway (0.61): a purple road ruled like a staff, notes as tilted note heads with stems, and the hit line
+   as a final double barline. */
+:root[data-theme] .hw-road { background: var(--purple); border: var(--stroke) solid var(--outline); box-shadow: var(--shadow); border-radius: 22px; }
+:root[data-theme] .hw-lane { border-inline-end: 2px solid rgb(255 255 255 / 0.18); }
+:root[data-theme] .hw-bar { background: rgb(255 255 255 / 0.22); height: 2px; }
+:root[data-theme] .hw-bar.sec { background: rgb(255 255 255 / 0.45); height: 3px; }
+:root[data-theme] .hw-note,
+:root[data-theme] .hw-road.lanes-1 .hw-note,
+:root[data-theme] .hw-road:not(.lanes-3):not(.lanes-4):not(.lanes-5) .hw-note {
+  left: calc((100% / var(--lanes, 1)) * (var(--i, 0) + 0.5) - 21px);
+  width: 42px;
+  height: 30px !important;
+  border-radius: 50%;
+  border: 3px solid var(--ink-c);
+  box-shadow: none;
+  background: var(--lemon);
+  transform: translateY(50%) rotate(-20deg);
+}
+:root[data-theme] .hw-note::after { content: ''; position: absolute; inset-inline-end: -1px; bottom: 50%; width: 4px; height: 34px; border-radius: 2px; background: var(--ink-c); transform: rotate(20deg); transform-origin: bottom; }
+:root[data-theme] .hw-note.lane-1 { background: var(--teal); }
+:root[data-theme] .hw-note.lane-2 { background: var(--pink); }
+:root[data-theme] .hw-note.lane-3 { background: var(--sky); }
+:root[data-theme] .hw-note.lane-4 { background: var(--lilac); }
+:root[data-theme] .hw-note.is-perfect,
+:root[data-theme] .hw-note.is-good { transform: translateY(50%) rotate(-20deg) scale(1.3); }
+:root[data-theme] .hw-hitline { height: 10px; margin-bottom: -5px; background: linear-gradient(180deg, #fff 0 3px, transparent 3px 5px, #fff 5px 10px); box-shadow: none; }
+:root[data-theme] .hw-flash { font-family: 'Secular One', Rubik, sans-serif; text-shadow: 0 2px 0 var(--ink-c); }
+:root[data-theme] .hw-flash.perfect { color: var(--lemon); }
+:root[data-theme] .hw-flash.good { color: var(--teal); }
+:root[data-theme] .hw-flash.miss, :root[data-theme] .hw-flash.wrong { color: var(--pink); }
+:root[data-theme] .hw-lane-labels b { font-family: 'Secular One', Rubik, sans-serif; font-weight: 400; color: #fff; }
+:root[data-theme] .hw-lane-labels small { color: var(--lemon); }
+:root[data-theme] .hw-stat.combo b { color: var(--purple); }
+/* Tap pads (rhythm games): lemon, ink outline, the hard shadow pressed in on tap */
+:root[data-theme] .tap-pad { background: var(--lemon); color: var(--ink-c); border: var(--stroke) solid var(--ink-c); box-shadow: var(--shadow); font-family: 'Secular One', Rubik, sans-serif; }
+:root[data-theme] .tap-pad.big, :root[data-theme] .tap-pad.big.live { background: var(--lemon); color: var(--ink-c); border: 3px solid var(--ink-c); box-shadow: var(--sx) 6px 0 var(--ink-c); }
+:root[data-theme] .tap-pad:active, :root[data-theme] .tap-pad.big:active { transform: translate(var(--sx), 4px); box-shadow: 0 0 0 var(--ink-c); }
+:root[data-theme] .tap-pad.odd { background: var(--pink); }
