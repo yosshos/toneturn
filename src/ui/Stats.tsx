@@ -3,6 +3,12 @@
 // bands, tooltips, a table view, ▲/▼ never colour alone; time axes left → right in both languages,
 // numbers in LTR islands.
 
+import { useCourse } from './courseContext';
+import { COURSE_AREAS, courseOf, type CourseId } from '../engine/courses';
+import { ladderFamiliesFor, techStars } from '../engine/ladderFacts';
+import { familyById } from '../engine/drills/plan';
+import { DEFAULT_DRILL_SETTINGS, type FamilyId } from '../engine/drills/types';
+import { VOCAL_PROGRAMS } from '../engine/path';
 import { Glyph, glyphForEmoji } from './Glyph';
 import { useMemo, useState, type ReactNode } from 'react';
 import { achievements, AWARD_CATEGORIES, closestToUnlock, tierName, type Achievement, type AchievementExtra, type AwardCategory, type ProgressStats, type TierName } from '../engine/achievements';
@@ -319,32 +325,28 @@ const DYN: { name: string; from: number }[] = [
   { name: 'f', from: 1250 },
   { name: 'ff', from: 1400 },
 ];
-const AXES: { id: DomainId; en: string; he: string }[] = [
-  { id: 'pitch', en: 'Ear', he: 'שמיעה' },
-  { id: 'reading', en: 'Reading', he: 'קריאה' },
-  { id: 'creative', en: 'Harmony', he: 'הרמוניה' },
-  { id: 'time', en: 'Rhythm', he: 'קצב' },
-  { id: 'memory', en: 'Memory', he: 'זיכרון' },
-  { id: 'instrument', en: 'Playing', he: 'נגינה' },
-];
 
-function OverviewV2({ lang, ratings, r, days }: { lang: 'he' | 'en'; ratings: Parameters<typeof domainValue>[0]; r: number | null; days: Record<string, { xp: number }> | undefined }) {
+function OverviewV2({ lang, ratings, r: overallR, days, progress }: { lang: 'he' | 'en'; ratings: Parameters<typeof domainValue>[0]; r: number | null; days: Record<string, { xp: number }> | undefined; progress: Progress }) {
   const he = lang === 'he';
+  // 0.64 (owner): Progress is the active course's — its level, its radar.
+  const course = useCourse().active;
+  const cdef = courseOf(course);
+  const dom = (d: DomainId) => domainValue(ratings, d);
+  const asR = (v: number | undefined) => (v === undefined ? null : Math.round(600 + v * 1000));
+  const r = course === 'ear' || course === 'exam' ? overallR : asR(dom(COURSE_AREAS[course][0])?.v);
+  const axes = courseAxes(course, ratings, progress, lang);
   const i = r === null ? -1 : DYN.reduce((a, d, k) => (r >= d.from ? k : a), 0);
   const next = i >= 0 && i < DYN.length - 1 ? DYN[i + 1] : null;
   const span = next && i >= 0 ? next.from - DYN[i].from : 1;
   const into = next && r !== null && i >= 0 ? Math.max(0, Math.min(1, (r - DYN[i].from) / span)) : 1;
-  // Radar: each area from 600 (centre) to 1600 (edge); areas not measured yet sit at a small radius.
-  const val = AXES.map((a) => {
-    const d = domainValue(ratings, a.id);
-    return d ? Math.max(0.12, Math.min(1, (d.v - 600) / 1000)) : 0.12;
-  });
+  const val = axes.map((a) => Math.max(0.12, Math.min(1, a.v ?? 0.12)));
+  const AX = axes;
   const R = 92;
   const pt = (k: number, f: number) => {
-    const ang = (Math.PI * 2 * k) / AXES.length - Math.PI / 2;
+    const ang = (Math.PI * 2 * k) / AX.length - Math.PI / 2;
     return [130 + Math.cos(ang) * R * f, 120 + Math.sin(ang) * R * f];
   };
-  const poly = (f: (k: number) => number) => AXES.map((_, k) => pt(k, f(k)).map((x) => x.toFixed(1)).join(',')).join(' ');
+  const poly = (f: (k: number) => number) => AX.map((_, k) => pt(k, f(k)).map((x) => x.toFixed(1)).join(',')).join(' ');
   const week = Array.from({ length: 7 }, (_, k) => {
     const d = new Date();
     d.setDate(d.getDate() - (6 - k));
@@ -357,7 +359,7 @@ function OverviewV2({ lang, ratings, r, days }: { lang: 'he' | 'en'; ratings: Pa
     <>
       <section className="ov-card ov-dyn" aria-label={he ? 'הדרגה' : 'Your level'}>
         <div className="ov-head">
-          <small>{he ? 'הדרגה שלך' : 'Your level'}</small>
+          <small>{he ? `הדרגה ב${cdef.short.he}` : `Your level in ${cdef.short.en}`}</small>
         </div>
         <div className="ov-chips" dir="ltr">
           {DYN.map((d, k) => (
@@ -372,16 +374,16 @@ function OverviewV2({ lang, ratings, r, days }: { lang: 'he' | 'en'; ratings: Pa
         </span>
       </section>
       <section className="ov-card ov-radar" aria-label={he ? 'התחומים שלך' : 'Your areas'}>
-        <svg viewBox="0 0 260 245" role="img" aria-label={AXES.map((a, k) => `${a[lang]} ${Math.round(val[k] * 100)}%`).join(', ')}>
+        <svg viewBox="0 0 260 245" role="img" aria-label={AX.map((a, k) => `${a.label} ${Math.round(val[k] * 100)}%`).join(', ')}>
           {[1, 0.66, 0.33].map((f) => (
             <polygon key={f} points={poly(() => f)} fill="none" stroke="var(--staff-line)" strokeWidth="1.5" />
           ))}
           <polygon points={poly((k) => val[k])} fill="var(--lemon)" stroke="var(--ink-c)" strokeWidth="3" strokeLinejoin="round" />
-          {AXES.map((a, k) => {
+          {AX.map((a, k) => {
             const [x, y] = pt(k, 1.22);
             return (
-              <text key={a.id} x={x} y={y + 4} textAnchor="middle" className="ov-axis">
-                {a[lang]}
+              <text key={a.label} x={x} y={y + 4} textAnchor="middle" className="ov-axis">
+                {a.label}
               </text>
             );
           })}
@@ -406,6 +408,33 @@ function OverviewV2({ lang, ratings, r, days }: { lang: 'he' | 'en'; ratings: Pa
   );
 }
 
+/** The radar of a course (0.64): ear & theory → its areas; an instrument → its technique families (share of levels
+ *  passed); voice → its vocal programs; jazz → harmony and improvising skills. Values 0..1, null = not started. */
+function courseAxes(course: CourseId, ratings: Parameters<typeof domainValue>[0], progress: Progress, lang: 'he' | 'en'): { label: string; v: number | null }[] {
+  const area = (d: DomainId) => ({ label: AREA_NAME_SHORT[d][lang], v: domainValue(ratings, d)?.v ?? null });
+  const skill = (k: SkillId, he: string, en: string) => ({ label: lang === 'he' ? he : en, v: ratings[k]?.n ? Math.max(0, Math.min(1, (ratings[k]!.r - 600) / 1000)) : null });
+  if (course === 'ear' || course === 'exam') return (['pitch', 'reading', 'time', 'memory', 'voice', 'creative'] as DomainId[]).map(area);
+  if (course === 'jazz') return [skill('improv', 'אלתור', 'Improv'), skill('chords', 'אקורדים', 'Chords'), skill('cadences', 'מהלכים', 'Changes'), skill('modes', 'מודוסים', 'Modes'), skill('transpose', 'טרנספוזיציה', 'Transpose'), skill('expression', 'הבעה', 'Expression')];
+  if (course === 'voice') {
+    const passed = progress.vocal?.passed ?? [];
+    return VOCAL_PROGRAMS.map((pr) => {
+      const n = pr.levels.filter((_, i) => passed.includes(pr.base + i + 1)).length;
+      return { label: pr.title[lang].split(' ')[0], v: n ? n / pr.levels.length : null };
+    });
+  }
+  const fams = ladderFamiliesFor(course, DEFAULT_DRILL_SETTINGS).slice(0, 6);
+  const items = progress.drillItems ?? {};
+  return fams.map((id) => {
+    const f = familyById(id as FamilyId);
+    const lv = f?.levels ?? [];
+    const done = lv.filter((l) => techStars(l, items, DEFAULT_DRILL_SETTINGS.keyOrder) >= 2).length;
+    return { label: (f?.title[lang] ?? id).split(/[ ,(—]/)[0], v: done ? done / Math.max(1, lv.length) : null };
+  });
+}
+const AREA_NAME_SHORT: Record<DomainId, { he: string; en: string }> = {
+  pitch: { he: 'שמיעה', en: 'Ear' }, reading: { he: 'קריאה', en: 'Reading' }, time: { he: 'קצב', en: 'Rhythm' }, memory: { he: 'זיכרון', en: 'Memory' }, voice: { he: 'קול', en: 'Voice' }, creative: { he: 'הרמוניה', en: 'Harmony' }, instrument: { he: 'נגינה', en: 'Playing' },
+};
+
 export function OverviewView(props: ProgressTabsProps) {
   const { t, lang, progress, leagueLevels, friendLevels } = props;
   const ps = P(progress);
@@ -417,7 +446,7 @@ export function OverviewView(props: ProgressTabsProps) {
   const peak = ps.peaks?.overall;
   return (
     <div className="ps-view">
-      <OverviewV2 lang={lang} ratings={ratings} r={o?.r ?? null} days={ps.statsDays} />
+      <OverviewV2 lang={lang} ratings={ratings} r={o?.r ?? null} days={ps.statsDays} progress={progress} />
       <section className="set-card ps-overall">
         <div className="ps-overall-head">
           <div>

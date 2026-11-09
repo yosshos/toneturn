@@ -1,3 +1,5 @@
+import { COURSE_AREAS } from '../engine/courses';
+import { useCourse } from './courseContext';
 import { LeagueBadge } from './LeagueBadge';
 import { chordTierForRating, tierOf } from '../engine/league';
 import { overallRating } from '../engine/rating';
@@ -31,9 +33,11 @@ export function SkillMap({
   onPlacement: (domain?: DomainId | null) => void;
   bestLeague?: number;
 }) {
+  const course = useCourse().active;
   const ratings = ratingsOf(progress);
-  const [sel, setSel] = useState<Axis>(() => weakestSkill(ratings));
-  const rec = weakestSkill(ratings);
+  const courseSkills = DOMAINS.filter((d) => COURSE_AREAS[course].includes(d.id)).flatMap((d) => d.skills).filter((k) => k !== 'absolute');
+  const [sel, setSel] = useState<Axis>(() => weakestSkill(ratings, courseSkills));
+  const rec = weakestSkill(ratings, courseSkills);
   const old = (progress.snapshots ?? []).at(-5);
   const anyMeasured = SKILLS.some((k) => (ratings[k]?.n ?? 0) > 0);
   const subs = foldSubs(progress.ratingEvents ?? []);
@@ -69,7 +73,7 @@ export function SkillMap({
       )}
 
       <section className="sm-areas" aria-label={t.skillMap}>
-        {DOMAINS.map((d) => {
+        {DOMAINS.filter((d) => COURSE_AREAS[course].includes(d.id)).map((d) => {
           const dv = domainValue(ratings, d.id);
           const measured = d.skills.filter((k) => (ratings[k]?.n ?? 0) > 0).length;
           return (

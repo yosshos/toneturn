@@ -1,6 +1,7 @@
 // 0.37 "night arcade" pieces (docs/ui-redesign.md): tab bar, level ring, what's-new gift, today's mission,
 // domain tiles, the path as a winding road, and the Play hub.
 
+import { COURSE_AREAS } from '../engine/courses';
 import { DOMAIN_COLOR, Glyph, type GlyphKind } from './Glyph';
 import { useCourse } from './courseContext';
 import type { CourseId } from '../engine/courses';
@@ -299,12 +300,14 @@ export function DomainTiles({
   const events = progress.ratingEvents ?? [];
   const weakest = weakestSkill(ratings);
   const [open, setOpen] = useState<DomainId | null>(null);
+  // 0.64 (owner): only the active course's areas.
+  const areas = COURSE_AREAS[useCourse().active];
   return (
     <section className="home-section domains" aria-label={t.domainsTitle}>
       <h2 className="home-h">{t.domainsTitle}</h2>
       <p className="field-hint">{t.domainsHint}</p>
       <div className="domain-grid">
-        {DOMAINS.map((d) => {
+        {DOMAINS.filter((d) => areas.includes(d.id)).map((d) => {
           const v = domainValue(ratings, d.id);
           const pick = weakestSkill(ratings, d.skills.filter((k) => k !== 'absolute'));
           const hot = d.skills.includes(weakest);
@@ -786,6 +789,18 @@ export const PRACTICE_GROUPS: { id: 'play' | 'train' | 'study'; name: { en: stri
   { id: 'train', name: { en: 'Train', he: 'להתאמן' }, items: ['drills', 'improv', 'games'] },
   { id: 'study', name: { en: 'Study', he: 'ללמוד' }, items: ['lessons', 'exams', 'puzzle'] },
 ];
+/** The games each course offers (0.64, owner: every bottom-tab screen is the course's — no guitar game in piano). */
+export const COURSE_GAMES: Record<CourseId, string[]> = {
+  ear: ['melody', 'rhythm', 'truefalse', 'ghost', 'duel', 'daily', 'rush-interval', 'rush-chord', 'rush-progression', 'highway', 'melodypuzzle', 'nametune', 'pitchmemory', 'rush-note', 'rush-keysig', 'peakhunter'],
+  exam: ['truefalse', 'ghost', 'duel', 'daily', 'rush-interval', 'rush-chord', 'rush-progression', 'highway', 'melodypuzzle', 'nametune', 'pitchmemory', 'rush-note', 'rush-keysig', 'melody', 'rhythm'],
+  jazz: ['rush-chord', 'rush-progression', 'rush-interval', 'truefalse', 'nametune', 'duel', 'daily'],
+  voice: ['flight', 'pitchmemory', 'melody', 'nametune', 'rush-interval'],
+  keys: ['drills', 'rush-note', 'rush-chord', 'rush-keysig', 'highway', 'melodypuzzle', 'rhythm'],
+  guitar: ['drills', 'rush-fretboard', 'tuneup', 'rush-chord', 'highway', 'rush-note', 'rhythm'],
+  bass: ['drills', 'rush-fretboard', 'tuneup', 'highway', 'rush-note', 'rhythm'],
+};
+/** The weekly puzzle and the live quiz rooms are ear & theory things. */
+const COURSE_SOCIAL: CourseId[] = ['ear', 'exam', 'jazz'];
 /** Practice tiles (0.63): a colour per row, and the game kinds each course shows as their own tiles. */
 const TILE_COLOR: Record<string, string> = { lessons: '#FF8A3D', puzzle: '#A78BFA', drills: '#FFD43B', songs: '#12C9B4', pieces: '#FF5FA2', charts: '#A78BFA', improv: '#6D28D9', exams: '#FF8A3D' };
 const COURSE_TILE_CATS: Partial<Record<CourseId, GameCat[]>> = { ear: ['ear', 'rhythm', 'memory', 'read'], exam: ['ear', 'read'], jazz: ['ear'], voice: ['voice'], keys: ['instrument'], guitar: ['instrument'], bass: ['instrument'] };
@@ -873,7 +888,9 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
     ...(onGame2 ? GAMES2.map((g) => ({ key: g.id, cat: g.cat, hue: g.hue, icon: g.icon, title: g[lang][0], blurb: g[lang][1], extra: progress.bests?.[g.id] ? best(progress.bests[g.id]) : <span className="new-chip">{t.newChip}</span>, onClick: () => onGame2(g.id) })) : []),
     { key: 'duel', hue: 'var(--hue-voice)', icon: '⚔', title: t.duel, blurb: t.duelBlurb, onClick: onDuel },
     { key: 'daily', hue: 'var(--hue-reading)', icon: '📅', title: t.dailyChallenge, blurb: daily ? `✓ ${t.dailyDone} · ${daily.points.toLocaleString()} ${t.points}` : t.dailyBlurb, onClick: onDaily },
-  ];
+  ].filter((c) => COURSE_GAMES[course].includes(c.key));
+  // A category remembered from another course that has no games here shows them all.
+  const catNow: GameCat | 'all' = cat !== 'all' && !cards.some((x) => (x.cat ?? CAT_OF[x.key] ?? 'social') === cat) ? 'all' : cat;
   return (
     <main className="play-screen">
       {hub && games ? (
@@ -961,6 +978,7 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
       )}
       {(!hub || games) && (
       <>
+      {COURSE_SOCIAL.includes(course) && (
       <button className="play-hero plain" onClick={onPuzzle}>
         <span className="ph-icon" aria-hidden="true">
           <CatIcon k="puzzle" />
@@ -973,22 +991,23 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
           <span className="flip-rtl">›</span>
         </span>
       </button>
+      )}
       <div className="play-cats" role="tablist" aria-label={lang === 'en' ? 'Game categories' : 'קטגוריות משחקים'}>
-        <button role="tab" aria-selected={cat === 'all'} className={`chip ${cat === 'all' ? 'on' : ''}`} data-cat="all" onClick={() => pickCat('all')}>
+        <button role="tab" aria-selected={catNow === 'all'} className={`chip ${catNow === 'all' ? 'on' : ''}`} data-cat="all" onClick={() => pickCat('all')}>
           {lang === 'en' ? 'All' : 'הכול'}
         </button>
-        {GAME_CATS.map((c) => (
-          <button key={c.id} role="tab" aria-selected={cat === c.id} className={`chip ${cat === c.id ? 'on' : ''}`} data-cat={c.id} onClick={() => pickCat(c.id)}>
+        {GAME_CATS.filter((c) => cards.some((x) => (x.cat ?? CAT_OF[x.key] ?? 'social') === c.id)).map((c) => (
+          <button key={c.id} role="tab" aria-selected={catNow === c.id} className={`chip ${catNow === c.id ? 'on' : ''}`} data-cat={c.id} onClick={() => pickCat(c.id)}>
             {c[lang]}
           </button>
         ))}
       </div>
-      {GAME_CATS.filter((c) => cat === 'all' || cat === c.id).map((gc) => {
+      {GAME_CATS.filter((c) => catNow === 'all' || catNow === c.id).map((gc) => {
         const list = cards.filter((c) => (c.cat ?? CAT_OF[c.key] ?? 'social') === gc.id);
         if (!list.length) return null;
         return (
           <section key={gc.id} className="play-section" aria-label={gc[lang]}>
-            {cat === 'all' && (
+            {catNow === 'all' && (
               <h2 className="play-cat-h">
                 {gc[lang]}
               </h2>
@@ -1008,6 +1027,7 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
           </section>
         );
       })}
+      {COURSE_SOCIAL.includes(course) && (
       <button className="live-card" onClick={onOnline}>
         <span className="live-icon" aria-hidden="true">
           <span className="live-ping" />
@@ -1019,6 +1039,7 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
         </span>
         <span className="live-go">{t.liveRoom}</span>
       </button>
+      )}
       </>
       )}
     </main>

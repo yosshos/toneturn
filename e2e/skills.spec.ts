@@ -69,7 +69,7 @@ test.describe('placement, Skill Map, review, weekly puzzle', () => {
 
     // Selecting an axis from the accessible list opens its diagnosis.
     // 0.42: areas are a list you open; the skill rows are inside.
-    await page.locator('[data-domain-list="pitch"] > summary').click();
+    await page.locator('[data-domain-list="pitch"]').evaluate((d) => ((d as HTMLDetailsElement).open = true)); // 0.64: may already be open (the course's weakest skill)
     await page.locator('[data-domain-list="pitch"]').getByRole('button', { name: /Harmony & progressions/ }).first().click();
     await expect(page.locator('.diag-panel h2')).toHaveText('Harmony & progressions');
 

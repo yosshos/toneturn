@@ -1738,3 +1738,5 @@
 :root[data-theme] .splash .splash-word { animation: sp-fade 0.8s ease 2s both; }
 :root[data-theme] .splash .splash-slogan { animation: v2-rise 0.8s ease-out 2.7s forwards; }
 @media (prefers-reduced-motion: reduce) { :root[data-theme] .splash { animation: splash-out 0.5s ease 2.6s both; } :root[data-theme] .splash .splash-word { animation: none; } }
+:root[data-theme] .pt-tile { min-height: 156px; padding-top: 56px; }
+:root[data-theme] .pt-tile small { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
