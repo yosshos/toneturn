@@ -1107,7 +1107,8 @@ export function App() {
   };
 
   // Instrument sound (spec Q): load the chosen sample set (falls back to the classic piano on failure).
-  const soundId = settings?.sound ?? DEFAULT_SOUND;
+  // The guitar course sounds like a guitar (0.66: a modelled plucked string; the piano before), whatever the piano sound.
+  const soundId = settings?.activeCourse === 'guitar' ? 'guitar' : (settings?.sound ?? DEFAULT_SOUND);
   useEffect(() => {
     void piano.setSound(soundId);
   }, [soundId]);
