@@ -95,6 +95,9 @@ export function levelOfDrill(drill: Drill): LevelDef | undefined {
  * the item's own start), else the start tempo × DEFAULT_TARGET_FACTOR.
  */
 export function targetBpmOf(level: LevelDef | undefined, drill: Drill): number {
+  // Untimed items (B10 note finding, N3) have no tempo: they are off the tempo ladder (target = start), so they pass on
+  // 3 clean takes on 2 days and never move a goal tempo.
+  if (drill.untimed) return drill.startBpm;
   const range = (level as (LevelDef & { tempo?: [number, number] }) | undefined)?.tempo;
   if (range) return Math.max(drill.startBpm, range[1]);
   return Math.round(drill.startBpm * DEFAULT_TARGET_FACTOR);

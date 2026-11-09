@@ -8,7 +8,7 @@ import { analyzeTake, tempoBand, thresholds } from '../engine/drills/analyze';
 import type { ExpNote, NoteResult } from '../engine/drills/types';
 import { NoteStaff, TabLine, type NoteMark } from './NoteViews';
 import { markOf } from '../engine/noteMarks';
-import { analyzeGuitarTake, captureOptsFor, detectOnsets, onsetOptsFor, type GFrame } from '../engine/drills/guitarAnalyze';
+import { analyzeGuitarTake, captureOptsFor, detectOnsets, onsetOptsFor, untimedPitch, type GFrame } from '../engine/drills/guitarAnalyze';
 import { isGuitarDrill } from '../engine/drills/events';
 import { analyzePedal, pedalDown, type PedalEvent } from '../engine/drills/pedal';
 import { piano } from './services';
@@ -656,17 +656,32 @@ function UntimedTake({ drill, lang, cal, onDone }: { drill: Drill; lang: Lang; c
       }
     }, 200);
     const offMidi = midi.onNote((m, on, at) => on && answer(m, at));
-    let cand: number | null = null;
-    let since = 0;
-    let last: number | null = null;
+    // N3: the bass capture (28 / 22 Hz floor, 4096 window) so E1–C2 are heard, and the bass pitch window (40–120 ms
+    // after the note starts) — the same options as the timed take.
+    let buf: { t: number; hz: number | null; conf: number }[] = [];
+    let held: number | null = null;
+    const win = onsetOptsFor(drill);
     if (!midi.devices.length)
-      void listenLoop(new BrowserPitchCapture(), abort.signal, (f) => {
-        const now = performance.now();
-        if (!f.hz || f.confidence < 0.85) return void ((cand = null), (last = null));
-        const m = Math.round(69 + 12 * Math.log2(f.hz / 440));
-        if (m !== cand) return void ((cand = m), (since = now));
-        if (now - since > 60 && m !== last) ((last = m), answer(m, since));
-      });
+      void listenLoop(
+        new BrowserPitchCapture(),
+        abort.signal,
+        (f) => {
+          const fr = { t: performance.now(), hz: f.hz, conf: f.confidence };
+          if (!f.hz || f.confidence < 0.85) {
+            held = null;
+            if (!buf.some((x) => x.hz)) return void (buf = []);
+          }
+          buf.push(fr);
+          const got = untimedPitch(buf, { ...win, held });
+          if (got) {
+            held = got.midi;
+            buf = [];
+            answer(got.midi, got.at);
+          }
+        },
+        undefined,
+        { ...(captureOptsFor(drill) ?? {}) },
+      );
     function finish() {
       window.clearInterval(giveUp);
       offMidi();

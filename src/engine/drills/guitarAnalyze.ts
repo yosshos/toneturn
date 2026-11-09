@@ -66,6 +66,25 @@ export function captureOptsFor(drill: Drill, tuning?: string): { minHz: number; 
 export const onsetOptsFor = (drill: Drill): { pitchFrom: number; pitchTo: number } => (isBassDrill(drill) ? { pitchFrom: 40, pitchTo: 120 } : { pitchFrom: 20, pitchTo: 80 });
 
 /**
+ * Untimed note finding (B10, N3): the note answered from mic frames since the prompt (or since the last answer). The
+ * first confident frame starts the note; the answer is the median pitch from pitchFrom to pitchTo ms after it (bass
+ * 40–120 ms, onsetOptsFor), read once a frame at or past pitchTo has arrived. `held` = the pitch just answered: it is
+ * skipped until the sound stops or changes, so a ringing note never answers the next prompt. Null = no answer yet.
+ */
+export function untimedPitch(frames: { t: number; hz: number | null; conf: number }[], opts: { pitchFrom: number; pitchTo: number; minConf?: number; held?: number | null }): { midi: number; at: number } | null {
+  const minConf = opts.minConf ?? 0.85;
+  const midiOf = (hz: number) => 69 + 12 * Math.log2(hz / 440);
+  const ok = (f: { hz: number | null; conf: number }) => !!f.hz && f.conf >= minConf && (opts.held == null || Math.round(midiOf(f.hz)) !== opts.held);
+  const start = frames.findIndex(ok);
+  if (start < 0) return null;
+  const t0 = frames[start].t;
+  if (frames[frames.length - 1].t < t0 + opts.pitchTo) return null;
+  const win = frames.slice(start).filter((f) => ok(f) && f.t >= t0 + opts.pitchFrom && f.t <= t0 + opts.pitchTo);
+  const hs = (win.length ? win : frames.slice(start).filter(ok)).map((f) => midiOf(f.hz!));
+  return hs.length ? { midi: Math.round(median(hs)), at: t0 } : null;
+}
+
+/**
  * Onsets from microphone frames: an energy rise (≥ ratio × the recent minimum, above the floor) starts a note; a new
  * stable pitch without an energy rise starts a legato note (hammer-on / pull-off / slide arrival). Pitch = the median
  * f0 20–80 ms after the onset (bass: 40–120 ms, see onsetOptsFor) when confident, else UNPITCHED. Velocity = peak RMS

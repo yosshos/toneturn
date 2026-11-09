@@ -6,6 +6,8 @@ import { guitarCatalog, type GuitarLevelDef } from '../src/engine/drills/guitar'
 import { generate } from '../src/engine/drills/generate';
 import { BASS_PROBES, placeWalk } from '../src/engine/drills/bassProbes';
 import { walkProbeReport } from '../src/engine/drills/bassAnalyze';
+import { captureOptsFor, onsetOptsFor, untimedPitch } from '../src/engine/drills/guitarAnalyze';
+import { yin } from '../src/engine/yin';
 import { DEFAULT_DRILL_SETTINGS, type Drill, type ItemState, type TakeMetrics } from '../src/engine/drills/types';
 
 const take = (verdict: TakeMetrics['verdict']): TakeMetrics => ({ verdict, accuracy: 1, cvR: 0.02, cvL: null, timingSD: 10, velSD: null, handsAbs: null } as unknown as TakeMetrics);
@@ -82,5 +84,49 @@ describe('N2 / N2b walking placement', () => {
     const r = walkProbeReport(chart, perBeat((b) => (b < beats - 1 && rootAt(b + 1) !== rootAt(b) ? rootAt(b + 1) - 1 : rootAt(b))));
     expect(r.rootShare).toBeGreaterThanOrEqual(0.5);
     expect(placeWalk(r)['b-walk']).toBeLessThan(7);
+  });
+});
+
+describe('N3 untimed note finding (read L1)', () => {
+  const SR = 48000;
+  const hzOf = (m: number) => 440 * 2 ** ((m - 69) / 12);
+  const tone = (midi: number, n: number) => {
+    const b = new Float32Array(n);
+    const amps = [1, 0.6, 0.4, 0.25, 0.15, 0.1];
+    for (let i = 0; i < n; i++) b[i] = 0.25 * amps.reduce((s, a, k) => s + a * Math.sin(2 * Math.PI * hzOf(midi) * (k + 1) * (i / SR) + 0.3 * k), 0);
+    return b;
+  };
+  const read1 = levelById('b-read-1');
+  const untimed = levelDrills(read1, order).filter((d) => d.untimed);
+
+  it('the untimed items exist and use the bass capture (28 Hz floor, 4096 window)', () => {
+    expect(untimed.length).toBeGreaterThan(0);
+    for (const d of untimed) expect(captureOptsFor(d)).toMatchObject({ minHz: 28, fftSize: 4096 });
+  });
+
+  it.each([28, 29, 31, 33, 36])('MIDI %i (E1 to C2) is answered through the untimed capture options; the guitar default hears nothing', (m) => {
+    const o = captureOptsFor(untimed[0])!;
+    const r = yin(tone(m, o.fftSize), SR, { minHz: o.minHz });
+    const frames = Array.from({ length: 10 }, (_, k) => ({ t: 1000 + 16 * k, hz: r.hz, conf: r.hz ? 0.95 : 0 }));
+    expect(untimedPitch(frames, { ...onsetOptsFor(untimed[0]) })?.midi).toBe(m);
+    expect(yin(tone(m, 2048), SR).hz).toBeNull();
+  });
+
+  it('a held note does not answer the next prompt; a new note does', () => {
+    const fr = (midi: number, t0: number) => Array.from({ length: 10 }, (_, k) => ({ t: t0 + 16 * k, hz: hzOf(midi), conf: 0.95 }));
+    expect(untimedPitch(fr(33, 0), { pitchFrom: 40, pitchTo: 120, held: 33 })).toBeNull();
+    expect(untimedPitch([...fr(33, 0), ...fr(36, 160)], { pitchFrom: 40, pitchTo: 120, held: 33 })?.midi).toBe(36);
+    expect(untimedPitch(fr(33, 0).slice(0, 3), { pitchFrom: 40, pitchTo: 120 })).toBeNull();
+  });
+
+  it('untimed items are off the tempo ladder: target = start, the goal never moves, 3 clean takes on 2 days pass', () => {
+    for (const d of untimed) {
+      const t = itemTargetBpm(d);
+      expect(t).toBe(d.startBpm);
+      let st: ItemState = newItem(d);
+      for (const at of ['2026-11-07T10:00:00Z', '2026-11-07T10:05:00Z', '2026-11-08T10:00:00Z']) st = applyTake(st, take('clean'), st.goalBpm, at, DEFAULT_DRILL_SETTINGS, { targetBpm: t }).state;
+      expect(st.goalBpm).toBe(d.startBpm);
+      expect(itemPass(st, d.startBpm, t).target).toBe(true);
+    }
   });
 });
