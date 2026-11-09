@@ -10,16 +10,16 @@ import type { Strings } from '../i18n/strings';
 const fmt = (s: string, v: Record<string, string | number>) => s.replace(/\{(\w+)\}/g, (_, k) => String(v[k] ?? ''));
 const reduced = () => document.documentElement.dataset.motion === 'reduced';
 
-/** The streak mark (0.61, SPEC-REDESIGN): a streak is counted in bars — a measure with a note, lemon once today is in.
+/** The streak mark (0.61, SPEC-REDESIGN): a streak is counted in bars — a measure with two notes, coloured once today is in.
  *  (The name stays Flame for the callers.) */
 export function Flame({ lit, size = 22 }: { lit: boolean; size?: number }) {
   return (
     <svg className={`flame bars ${lit ? 'lit' : 'cold'}`} width={size * 1.3} height={size} viewBox="0 0 30 22" aria-hidden="true">
-      {lit && <rect x="15" y="2" width="12" height="18" rx="2" fill="#FFD43B" />}
-      <path d="M2 5H28M2 9H28M2 13H28M2 17H28" stroke="currentColor" strokeWidth="1" opacity=".35" />
+      {/* 0.65 (owner): no pale-yellow block behind the mark — it made the chip unreadable. */}
+      <path d="M2 5H28M2 9H28M2 13H28M2 17H28" stroke="currentColor" strokeWidth="1.2" opacity={lit ? 0.5 : 0.35} />
       <path d="M2 2V20M15 2V20M28 2V20" stroke="currentColor" strokeWidth="2.2" />
-      <ellipse cx="8.5" cy="14" rx="3.4" ry="2.5" transform="rotate(-20 8.5 14)" fill={lit ? '#6D28D9' : 'currentColor'} opacity={lit ? 1 : 0.45} />
-      <ellipse cx="21.5" cy="9.5" rx="3.4" ry="2.5" transform="rotate(-20 21.5 9.5)" fill={lit ? '#1E1033' : 'currentColor'} opacity={lit ? 1 : 0.3} />
+      <ellipse cx="8.5" cy="14" rx="3.4" ry="2.5" transform="rotate(-20 8.5 14)" fill={lit ? 'var(--purple, #6D28D9)' : 'currentColor'} opacity={lit ? 1 : 0.45} />
+      <ellipse cx="21.5" cy="9.5" rx="3.4" ry="2.5" transform="rotate(-20 21.5 9.5)" fill={lit ? 'var(--coral, #FF8A3D)' : 'currentColor'} opacity={lit ? 1 : 0.3} />
     </svg>
   );
 }

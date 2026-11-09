@@ -136,7 +136,7 @@ export function OnlineScreen({ t, settings, user, initialCode, facts, onBack }: 
                 autoComplete="off"
                 onChange={(e) => setCode(normaliseCode(e.target.value))}
               />
-              <button className="btn primary" disabled={busy || !ROOM_CODE_RE.test(code)} onClick={() => run((b) => b.join(code, name))}>
+              <button className="btn primary" disabled={busy || !backend || !ROOM_CODE_RE.test(code)} onClick={() => run((b) => b.join(code, name))}>
                 {t.join}
               </button>
             </div>
@@ -173,7 +173,7 @@ export function OnlineScreen({ t, settings, user, initialCode, facts, onBack }: 
             </label>
             <button
               className="btn primary mega"
-              disabled={busy}
+              disabled={busy || !backend}
               onClick={() =>
                 run(async (b) => {
                   const r = kind === 'choir' ? await createRoom(b, 'vocal-hold', rounds, name, CHOIR_SEED + ((Math.random() * 2 ** 31) >>> 0), { hostScreen: bigScreen }) : await createRoom(b, kind, rounds, name, kind === 'truefalse' ? factSeed((Math.random() * 2 ** 32) >>> 0, factTopics, factLevel) : undefined, { hostScreen: bigScreen });

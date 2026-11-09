@@ -121,8 +121,11 @@
 .ico { display: inline-block; vertical-align: -0.15em; flex: none; }
 
 /* the streak flame: one flat colour, no gradient glow (grey until today is done) */
-:root:not([data-theme='violet']) .flame.lit { color: var(--coral); }
-:root:not([data-theme='violet']) .flame.cold { color: var(--ink-dim); }
-:root:not([data-theme='violet']) .flame path:first-of-type { fill: currentColor; }
-:root:not([data-theme='violet']) .flame path:last-of-type { display: none; }
+:root:not([data-theme='violet']) .flame:not(.bars).lit { color: var(--coral); }
+:root:not([data-theme='violet']) .flame:not(.bars).cold { color: var(--ink-dim); }
+:root:not([data-theme='violet']) .flame:not(.bars) path:first-of-type { fill: currentColor; }
+:root:not([data-theme='violet']) .flame:not(.bars) path:last-of-type { display: none; }
+/* 0.65: the bars mark (a measure with two notes) — ink lines, dimmer until today is in */
+.flame.bars.lit { color: var(--ink); filter: none; }
+.flame.bars.cold { color: var(--ink-soft); }
 :root:not([data-theme='violet']) .sc-flame .flame { width: 44px; height: 44px; }
