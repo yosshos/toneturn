@@ -18,6 +18,20 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.62.0',
+    date: '2026-11-09',
+    en: [
+      'Keys, guitar, bass and voice: every technique and vocal level is now a step on the course path, about half of each unit — passed only by what the app measures (MIDI or microphone)',
+      'Already playing? A short playing test sets your starting level in each technique family; instrument workouts warm up on your technique',
+      'Every technique session now counts for your streak, your teacher and the weekly league; bass is marked beta while its course grows',
+    ],
+    he: [
+      'קלידים, גיטרה, בס וקול: כל שלב טכניקה ושירה הוא עכשיו צעד במסלול של הקורס, בערך חצי מכל יחידה — ועוברים אותו רק במה שהאפליקציה מודדת (MIDI או מיקרופון)',
+      'כבר מנגנים? בדיקת נגינה קצרה קובעת מאיזה שלב מתחילים בכל משפחת טכניקה; האימון היומי בקורס כלי מתחיל בחימום טכניקה',
+      'כל אימון טכניקה נספר עכשיו לרצף, למורה ולליגה השבועית; הבס מסומן "בטא" בזמן שהקורס שלו גדל',
+    ],
+  },
+  {
     version: '0.61.0',
     date: '2026-11-09',
     en: [

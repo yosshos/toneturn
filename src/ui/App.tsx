@@ -843,6 +843,7 @@ export function App() {
       chartQueue.current = techQueue(step.ladder.ref, progress.drillItems ?? {}, drillSettingsOf(settings).keyOrder);
       drillFrom.current = 'path';
       drillSessionXp.current = 0;
+      drillSession.current = { takes: 0, clean: 0 };
       return go('drills');
     }
     if (step.kind === 'vocal' && step.ladder) {
@@ -868,8 +869,24 @@ export function App() {
   };
   /** Technique drills opened from a path step or a workout block run today's items as a queue (spec AI §9). */
   const drillFrom = useRef<'path' | 'workout' | 'test' | 'chart' | 'assign' | null>(null);
-  /** XP of the technique takes since the queue opened (0.61: carried by the session's result to the server). */
+  /** Technique takes since the session opened (0.61): their XP, count and clean count go to the server as one result. */
   const drillSessionXp = useRef(0);
+  const drillSession = useRef({ takes: 0, clean: 0 });
+  const noteTake = (xp: number, verdict?: string) => {
+    drillSessionXp.current += xp;
+    drillSession.current = { takes: drillSession.current.takes + 1, clean: drillSession.current.clean + (verdict === 'clean' ? 1 : 0) };
+  };
+  /** Every technique session — path, workout, free practice, songs, the playing test — is one result: the streak, the
+   * teacher's view and the server's weekly XP see it (its XP was already counted take by take on this device). */
+  const techResult = (lessonId: string, takes?: number, clean?: number) => {
+    const t0 = Math.max(takes ?? 0, drillSession.current.takes);
+    const c0 = Math.max(clean ?? 0, drillSession.current.clean);
+    const xp = drillSessionXp.current;
+    drillSessionXp.current = 0;
+    drillSession.current = { takes: 0, clean: 0 };
+    if (!t0) return null;
+    return store.recordCompletion({ lessonId, lessonVersion: 1, sessionId: `tech-${Date.now()}`, completedAt: new Date().toISOString(), firstTry: c0, total: t0, xp, xpCounted: true, missed: [], items: [] });
+  };
   /** A progression from Charts practised as a drill (voicings / comping / stride). */
   const chartQueue = useRef<Drill[] | null>(null);
   /** The mixer returns to the screen it was opened from (Settings or Charts). */
@@ -893,19 +910,14 @@ export function App() {
   const drillQueueDone = (takes: number, clean: number) => {
     const from = drillFrom.current;
     drillFrom.current = null;
-    const xp = drillSessionXp.current;
-    drillSessionXp.current = 0;
-    // 0.61: a technique session from the path or the workout is one result in the history — the streak, the teacher's
-    // view and the server's weekly XP see it (its XP was already counted take by take on this device).
-    const result = (lessonId: string) =>
-      store.recordCompletion({ lessonId, lessonVersion: 1, sessionId: `tech-${Date.now()}`, completedAt: new Date().toISOString(), firstTry: clean, total: takes, xp, xpCounted: true, missed: [], items: [] });
-    if (from === 'workout' && takes > 0) void result('technique').then(setProgress);
+    const tech = from === 'path' && pendingStep.current?.kind === 'tech' ? pendingStep.current : null;
+    const done = techResult(tech ? tech.id : from === 'assign' ? 'technique-assign' : 'technique', takes, clean);
+    if (done && !tech) void done.then(setProgress);
     if (from === 'path' && pendingStep.current?.kind === 'tech') {
       // A technique level from the path: one result for the session (history → streak, teacher, workout, the step's stars).
-      const ps = pendingStep.current;
       chartQueue.current = null;
-      if (takes > 0)
-        void result(ps.id).then((p) => {
+      if (done)
+        void done.then((p) => {
             setProgress(p);
             notePathResult(p);
           });
@@ -1623,6 +1635,7 @@ export function App() {
               if (b.target.game === 'drills') {
                 drillFrom.current = 'workout';
                 drillSessionXp.current = 0;
+                drillSession.current = { takes: 0, clean: 0 };
               }
               go(b.target.game as Route);
             }
@@ -1725,16 +1738,21 @@ export function App() {
           onSettings={updateSettings}
           items={progress.drillItems ?? {}}
           onTake={(st, evs, xp, m) => {
-            drillSessionXp.current += xp;
+            noteTake(xp, m?.verdict);
             void store.recordDrill(st, evs, xp, m).then(setProgress);
           }}
-          onBack={() => (drillFrom.current ? drillQueueDone(0, 0) : go('arcade'))}
+          onBack={() => {
+            if (drillFrom.current) return drillQueueDone(0, 0);
+            void techResult('technique')?.then(setProgress);
+            go('arcade');
+          }}
           onVoice={s.noSing ? undefined : () => (setVocalWarmup(false), go('vocal'))}
           queue={drillQueue}
           onQueueDone={drillQueueDone}
           startTest={drillFrom.current === 'test'}
           onTestDone={() => {
             drillFrom.current = null;
+            void techResult('technique-test')?.then(setProgress);
             go('path');
           }}
         />
@@ -1747,10 +1765,13 @@ export function App() {
           onSettings={updateSettings}
           items={progress.drillItems ?? {}}
           onTake={(st, evs, xp, m) => {
-            drillSessionXp.current += xp;
+            noteTake(xp, m?.verdict);
             void store.recordDrill(st, evs, xp, m).then(setProgress);
           }}
-          onBack={() => go('arcade')}
+          onBack={() => {
+            void techResult('technique-songs')?.then(setProgress);
+            go('arcade');
+          }}
           songs
           onPieces={() => go('pieces')}
           onSing={
