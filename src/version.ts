@@ -18,6 +18,20 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.63.0',
+    date: '2026-11-09',
+    en: [
+      'The new look as it was drawn: Today with your daily goal, your league and today's quests; the path written on staves, with a final barline and a fermata for the unit test; Practice as colour tiles; Progress with your level from pp to ff, a radar of your areas and your week',
+      'The opening shows the name and the slogan; the app opens in the light look',
+      'Bass: a full course of 14 technique families and 120 levels — plucking, time, chord tones, walking bass, pocket with the kick, ghost notes, slap and more — with 5- and 6-string and drop-D basses',
+    ],
+    he: [
+      'המראה החדש כפי שצויר: "היום" עם היעד היומי, הליגה ומשימות היום; המסלול כתוב על חמשות, עם קו סיום ופרמטה במבחן היחידה; תרגול כאריחים צבעוניים; התקדמות עם הדרגה שלכם מ־pp עד ff, רדאר של התחומים והשבוע שלכם',
+      'הפתיחה מציגה את השם והסלוגן; האפליקציה נפתחת במראה הבהיר',
+      'בס: קורס מלא של 14 משפחות טכניקה ו־120 שלבים — פריטה, זמן, צלילי אקורד, ווקינג בס, כיס עם התוף, צלילי רפאים, סלאפ ועוד — כולל בס 5 ו־6 מיתרים ודרופ D',
+    ],
+  },
+  {
     version: '0.62.0',
     date: '2026-11-09',
     en: [
