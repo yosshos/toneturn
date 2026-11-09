@@ -1972,6 +1972,85 @@ function genStyle(s: DrillSpec, tu: Tuning): Drill {
   });
 }
 
+/**
+ * RSL / Trinity stylistic studies (BASS_VALIDATION §3, Gr 1–8): 8-bar studies that combine the grade's techniques in
+ * one style, played with the band. op 0 rock (Gr 1–3: 8ths, octave pumps, a slide into the change, real rests,
+ * accents); op 1 funk / slap (Gr 4–6: thumb, pops, ghosts, hammer-ons in 16ths); op 2 jazz (Gr 6–8: two bars walking,
+ * two bars of an upper-register fill in swung 8ths, repeated through the second half). Every note is written and judged
+ * note for note; dead notes must be dead.
+ */
+function genStudy(s: DrillSpec, tu: Tuning): Drill {
+  const key = mod(s.key, 12);
+  const op = (s.option ?? 0) % 3;
+  const rnd = rng(`b-styles:study:${key}:${op}`);
+  let line: BN[] = [];
+  let prog: Prog;
+  if (op === 0) {
+    prog = [...PROGS.rock, ...PROGS.rock];
+    line = overProg(tu, key, prog, (R, _c, bar, next) => {
+      if (bar % 4 === 1) return [...[0, 0.5, 1, 1.5].map((b, k): BN => ({ b, d: 0.5, p: k % 2 ? R + 12 : R, acc: k === 0 })), { b: 2, d: 0.5, p: R, acc: true }, { b: 3, d: 0.5, p: R + 7 }];
+      if (bar % 4 === 3) return [{ b: 0, d: 1, p: R, acc: true }, { b: 1, d: 0.5, p: R + 7 }, { b: 2, d: 0.5, p: R + 10 }, { b: 3, d: 0.5, p: next - 2 }, { b: 3.5, d: 0.5, p: next, tech: 'slide' as Tech, ct: false }];
+      return [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5].map((b, k) => ({ b, d: 0.5, p: R, acc: k === 0 || k === 4 }));
+    });
+  } else if (op === 1) {
+    prog = [[0, 'm7'], [0, 'm7'], [5, '7'], [0, 'm7'], [0, 'm7'], [0, 'm7'], [5, '7'], [7, '7']];
+    line = cellLine(tu, key, prog, rnd, 8, ['T.xP', 'T.HP', 'x.TP', 'T.T.', 'P.xT', 'T.xQ', 'TxP.'], 'T.xP');
+  } else {
+    prog = [...PROGS.iivi, ...PROGS.iivi];
+    const walk = refWalk(tu, textOf(key, PROGS.iivi), `b-styles:study:walk:${key}`, false).filter((x) => x.b < 8);
+    const fill = (b0: number, R: number, ints: number[]): BN[] => [0, 1, 2, 3].flatMap((beat) => [{ b: b0 + beat, d: 2 / 3, p: R + 12 + ints[(beat * 2) % ints.length] }, { b: b0 + beat + 2 / 3, d: 1 / 3, p: R + 12 + ints[(beat * 2 + 1) % ints.length] }]);
+    for (const half of [0, 16]) {
+      for (const x of walk) line.push({ ...x, b: x.b + half });
+      [2, 3].forEach((bar) => {
+        const c = prog[bar];
+        const R = rootOf(tu, key + c[0]);
+        line.push(...fill(half + bar * 4, R, [...QI[c[1]], 12, QI[c[1]][2]]));
+      });
+    }
+  }
+  line.push(endOn(tu, key, prog.length * 4, 1));
+  const T: T2[] = [tt('Stylistic study: rock (8 bars)', 'אטיוד סגנוני: רוק (8 תיבות)'), tt('Stylistic study: funk and slap (8 bars)', 'אטיוד סגנוני: פאנק וסלאפ (8 תיבות)'), tt('Stylistic study: jazz, upper register (8 bars)', 'אטיוד סגנוני: ג׳אז, אזור גבוה (8 תיבות)')];
+  const groove = ['rock-8b', 'funk-1', 'swing'][op];
+  const dead = line.some((x) => x.tech === 'dead');
+  return drillOf(s, tu, op === 0 ? alt(line) : line, {
+    ...T[op],
+    chart: chartOf(key, prog),
+    evenness: false,
+    open: op === 2 ? false : undefined,
+    bass: { ...(op === 0 ? { kick: 25 } : {}), ...(dead ? { ghostClass: 0.85 } : {}), ...(op === 1 ? { slapAdvice: true } : {}) },
+    drums: { groove },
+  });
+}
+
+/**
+ * Trinity session skills / RSL improvisation: improvise a bass part over a rock or pop chart read at sight (a new chart
+ * for every key and option), only the chart shown, judged by the chord-tone rules, with the band.
+ */
+function genSession(s: DrillSpec, tu: Tuning): Drill {
+  const key = mod(s.key, 12);
+  const op = s.option ?? 0;
+  const rnd = rng(`b-read:session:${key}:${op}`);
+  // op 0 rock charts (I–♭VII–IV, I–IV–V), op 1 pop charts (I–vi–IV–V, vi–IV–I–V, I–iii–IV–V); a new chart per key.
+  const pool: Prog[] = op === 1 ? [PROGS.pop, [[9, 'm'], [5, 'M'], [0, 'M'], [7, 'M']], [[0, 'M'], [4, 'm'], [5, 'M'], [7, 'M']]] : [PROGS.rock, PROGS.p145, PROGS.p1451, [[0, 'M'], [10, 'M'], [5, 'M'], [5, 'M']]];
+  const prog: Prog = [pool[Math.floor(rnd() * pool.length)], pool[Math.floor(rnd() * pool.length)]].flat();
+  prog.splice(prog.length - 2, 2, [7, 'M'], [0, 'M']);
+  // The model line (opt-in): rock 8ths on the root with an octave; pop root–5th–3rd with a push into the change.
+  const line = overProg(tu, key, prog, (R, c) =>
+    op === 1 ? [0, 1.5, 2, 3, 3.5].map((b, k) => ({ b, d: k === 0 ? 1.5 : 0.5 + (k === 2 ? 0.5 : 0), p: R + [0, 7, QI[c[1]][1], 7, 0][k], ct: true })) : [0, 1, 1.5, 2, 3].map((b, k) => ({ b, d: k === 1 || k === 2 ? 0.5 : 1, p: R + [0, 0, 12, QI[c[1]][2], QI[c[1]][1]][k], ct: true })),
+  );
+  line.push(endOn(tu, key, prog.length * 4, 1));
+  const groove = op === 1 ? 'pop-1' : 'rock-8';
+  return drillOf(s, tu, alt(line), {
+    en: op === 1 ? 'Session: improvise over a pop chart' : 'Session: improvise over a rock chart',
+    he: op === 1 ? 'סשן: אלתור על צ׳ארט פופ' : 'סשן: אלתור על צ׳ארט רוק',
+    chart: chartOf(key, prog),
+    show: 'chart',
+    evenness: false,
+    bass: { rules: rulesOf(key, prog, 'chordTones') },
+    drums: { groove },
+  });
+}
+
 /** Build a b-* drill (called from generateGuitar). */
 export function generateBass(s: DrillSpec, tu: Tuning): Drill {
   switch (s.family as BassFamilyId) {
@@ -2012,9 +2091,9 @@ export function generateBass(s: DrillSpec, tu: Tuning): Drill {
     case 'b-pick':
       return genPick(s, tu);
     case 'b-read':
-      return genRead(s, tu);
+      return s.kind === 'session' ? genSession(s, tu) : genRead(s, tu);
     case 'b-styles':
-      return genStyle(s, tu);
+      return s.kind === 'study' ? genStudy(s, tu) : genStyle(s, tu);
   }
   throw new Error(`Not a bass family: ${s.family}`);
 }
@@ -2121,6 +2200,8 @@ export function bassFamilies(): GuitarFamilyDef[] {
       L('b-ear', 6, 'Melodic recall: play it back', 'זיכרון מלודי: לנגן בחזרה', [EA('melodic')], K6, [60, 90], E8),
       L('b-ear', 7, 'Transcribe a walking line', 'לתמלל קו ווקינג', [EA('transcribe', { perBeat: 1 }), EA('transcribe', { perBeat: 1, option: 1 })], K6, [70, 110], Qn),
       L('b-ear', 8, 'Inversions and slash bass by ear', 'היפוכים ובס סלאש בשמיעה', [EA('slash', { perBeat: 0.5 }), EA('slash', { perBeat: 0.5, option: 1 })], K6, [60, 90], 'halves'),
+      // RSL ear tests Gr 6–8: chord quality, answered on the bass (its arpeggio), so it is measured.
+      L('b-ear', 9, 'Chord quality by ear: play its arpeggio', 'סוג האקורד בשמיעה: לנגן את הארפג׳יו שלו', [EA('quality', { perBeat: 1 }), EA('quality', { perBeat: 1, option: 1 })], K6, [60, 90], Qn),
     ]),
     fam('b-scale', 'Scales and modes', 'סולמות ומודוסים', [
       L('b-scale', 1, 'Minor and major pentatonic', 'פנטטוני מינור ומז׳ור', [SC('scale', { option: 8 }), SC('scale', { option: 9 })], K6, [70, 110], E8),
@@ -2166,6 +2247,8 @@ export function bassFamilies(): GuitarFamilyDef[] {
       L('b-read', 10, 'Nashville: the key switches on the repeat', 'נאשוויל: הסולם מתחלף בחזרה', [RD('nash-switch', { perBeat: 1 }), RD('nash-switch', { perBeat: 1, option: 1 })], 'major', [80, 110], Qn),
       L('b-read', 11, 'Chart roadmaps: repeats, endings, D.S.', 'מפות צ׳ארט: חזרות, סיומות, D.S.', [RD('roadmap', { perBeat: 1 }), RD('roadmap', { perBeat: 1, option: 1 })], K6, [80, 110], Qn),
       L('b-read', 12, 'Quick study: lead sheet with free bars', 'לימוד מהיר: לידשיט עם תיבות חופשיות', [RD('quick')], K6, [70, 100], E8),
+      // Trinity session skills / RSL improvisation over a rock or pop chart, with the band.
+      L('b-read', 13, 'Session skills: improvise over a rock / pop chart', 'מיומנויות סשן: אלתור על צ׳ארט רוק / פופ', [RD('session', { perBeat: 1 }), RD('session', { perBeat: 1, option: 1 })], K6, [80, 110], Qn),
     ]),
     fam('b-styles', 'Style vocabulary', 'אוצר מילים סגנוני', [
       L('b-styles', 1, 'Rock', 'רוק', [ST('style', { option: 0 })], K6, [90, 140], E8, ['rock', 'metal', 'pop']),
@@ -2182,6 +2265,10 @@ export function bassFamilies(): GuitarFamilyDef[] {
       L('b-styles', 12, 'Metal and odd meter', 'מטאל ומשקל אי-זוגי', [ST('style', { option: 11, tuning: 'bass-dropd' }), ST('style', { option: 12, tempo: 180 })], [2, 4], [120, 180], 'gallop / 7/8', ['metal', 'rock']),
       L('b-styles', 13, 'Middle Eastern: Hijaz ostinati', 'מזרחי: אוסטינטי בחיג׳אז', [ST('style', { option: 13 }), ST('style', { option: 14, tempo: 180 })], K4, [90, 120], E8, ['all']),
       L('b-styles', 14, 'Gospel in the low register (5-string)', 'גוספל באזור הנמוך (5 מיתרים)', [ST('style', { option: 15, perBeat: 4 })], K6, [70, 90], S16, ['funk', 'pop', 'jazz']),
+      // RSL / Trinity stylistic studies: 8 bars combining the grade's techniques, with the band.
+      L('b-styles', 15, 'Stylistic study: rock (Grades 1–3)', 'אטיוד סגנוני: רוק (שלבים 1–3)', [ST('study', { option: 0 })], K6, [80, 120], E8, ['rock', 'pop']),
+      L('b-styles', 16, 'Stylistic study: funk and slap (Grades 4–6)', 'אטיוד סגנוני: פאנק וסלאפ (שלבים 4–6)', [ST('study', { option: 1, perBeat: 4 })], K4, [70, 100], S16, ['funk']),
+      L('b-styles', 17, 'Stylistic study: jazz, upper register (Grades 6–8)', 'אטיוד סגנוני: ג׳אז, אזור גבוה (שלבים 6–8)', [ST('study', { option: 2, perBeat: 1 })], 'major', [90, 140], 'quarters / swung 8ths', ['jazz']),
     ]),
     fam('b-ghost', 'Ghost notes and 16th funk', 'צלילי רפאים ופאנק בשש-עשריות', [
       L('b-ghost', 1, 'Make a dead note', 'ליצור צליל מת', [GH('ghost8')], ANY, [70, 100], E8),
@@ -2262,7 +2349,7 @@ const EXAM: Record<string, [LevelExamTag['board'], string][]> = {
   'b-chord-11': [['RSL', '5']],
   'b-ear-3': [['RSL', '4']],
   'b-ear-4': [['RSL', '5–6']],
-  'b-read-8': [['RSL', '4–5'], ['Bagrut', 'improvisation']],
+  'b-read-8': [['RSL', '1–8: Improvisation & Interpretation'], ['Bagrut', 'improvisation']],
   'b-scale-4': [['RSL', '6']],
   'b-scale-10': [['RSL', '6']],
   'b-ghost-6': [['RSL', '6–8']],
@@ -2279,8 +2366,7 @@ const EXAM: Record<string, [LevelExamTag['board'], string][]> = {
   'b-chord-13': [['RSL', '8']],
   'b-time-10': [['RSL', '8']],
   'b-styles-12': [['RSL', '8']],
-  'b-walk-12': [['RSL', '8']],
-  'b-read-12': [['RSL', '6–8']],
+  'b-read-12': [['RSL', '6–8: Quick Study Piece']],
   'b-legato-1': [['Trinity', '2']],
   'b-length-1': [['Trinity', '2']],
   'b-pluck-6': [['Trinity', '2–4']],
@@ -2302,7 +2388,17 @@ const EXAM: Record<string, [LevelExamTag['board'], string][]> = {
   'b-walk-15': [['Bagrut', '2-chorus solo']],
   'b-walk-16': [['Bagrut', 'sight-read improvisation']],
   'b-styles-2': [['Bagrut', 'ballad']],
-  'b-styles-4': [['Bagrut', 'blues']],
+  'b-styles-4': [['RSL', '1–3'], ['Bagrut', 'blues']],
+  'b-styles-1': [['RSL', '1–3']],
+  'b-styles-3': [['RSL', '1–3']],
+  'b-styles-15': [['RSL', '1–3'], ['Trinity', '1–3']],
+  'b-styles-16': [['RSL', '4–6'], ['Trinity', '4–6']],
+  'b-styles-17': [['RSL', '6–8'], ['Trinity', '6–8']],
+  'b-read-13': [['Trinity', 'session: improvising'], ['RSL', 'improvisation']],
+  'b-ear-9': [['RSL', '6–8']],
+  'b-walk-12': [['RSL', '8'], ['Bagrut', 'fast piece with a band']],
+  'b-walk-13': [['Bagrut', 'pieces with a band']],
+  'b-walk-14': [['Bagrut', 'ballad / medium with a band']],
   'b-up-scales-1': [['ABRSM', '1']],
   'b-up-scales-2': [['ABRSM', '2']],
   'b-up-scales-3': [['ABRSM', '3']],

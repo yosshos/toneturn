@@ -203,6 +203,98 @@ describe('upright: treble clef, studies, three octaves in more keys', () => {
   });
 });
 
+describe('RSL / Trinity / bagrut drills', () => {
+  const pcOf = (m: number) => ((m % 12) + 12) % 12;
+  it('stylistic studies: 8 bars combining the grade\'s techniques, with the band', () => {
+    for (const id of ['b-styles-15', 'b-styles-16', 'b-styles-17'])
+      for (const d of drillsOf(id)) {
+        expect(d.chart!.length, d.itemId).toBe(8);
+        expect(d.band, d.itemId).toBeTruthy();
+        expect(bandHits(d).length).toBeGreaterThan(8);
+        const tech = new Set(d.notes.map((n) => n.technique));
+        if (id === 'b-styles-15') {
+          expect(tech.has('slide'), d.itemId).toBe(true);
+          expect(d.notes.some((n) => n.accent)).toBe(true);
+          // real rests: some beat with no note sounding
+          const sounding = (b: number) => d.notes.some((n) => n.beat <= b + 1e-6 && n.beat + n.dur > b + 1e-6);
+          expect([...Array(32).keys()].some((q) => !sounding(q + 0.5))).toBe(true);
+        }
+        if (id === 'b-styles-16') {
+          expect(tech.has('dead'), d.itemId).toBe(true);
+          expect(d.goal.bass?.ghostClass).toBe(0.85);
+          expect(d.notes.some((n) => n.stroke === 'p') && d.notes.some((n) => n.stroke === 'i')).toBe(true);
+        }
+        if (id === 'b-styles-17') {
+          const low = Math.min(...d.notes.map((n) => n.pitch));
+          expect(Math.max(...d.notes.map((n) => n.pitch)) - low, d.itemId).toBeGreaterThanOrEqual(19);
+          expect(d.notes.some((n) => Math.abs((n.beat % 1) - 2 / 3) < 1e-6)).toBe(true); // swung 8ths
+        }
+      }
+  });
+
+  it('session skills: improvise over a rock / pop chart — chart only, chord-tone rules, the band, a new chart per key', () => {
+    const ds = drillsOf('b-read-13');
+    for (const d of ds) {
+      expect(d.show).toBe('chart');
+      expect(d.goal.bass?.rules?.kind).toBe('chordTones');
+      expect(d.band).toBeTruthy();
+      expect(d.chart!.slice(-2).map((c) => c.replace(/[^A-G♭♯]/g, '').length > 0)).toEqual([true, true]);
+    }
+    const charts = new Set(levelDrills(levelById('b-read-13'), order).map((d) => d.chart!.map((c, i) => `${i}:${c.length}`).join()));
+    expect(charts.size).toBeGreaterThan(1);
+  });
+
+  it('ear L9 chord quality: the answer is the arpeggio of the chord the band plays (its 3rd, 5th and 7th)', () => {
+    for (const d of drillsOf('b-ear-9', ['bass', 'bass5'])) {
+      const piano = d.listen!.notes.filter((n) => n.inst === 'piano');
+      expect(piano.length).toBe(4);
+      piano.forEach((ch, r) => {
+        const ans = d.notes.filter((n) => n.beat >= r * 8 + 4 && n.beat < r * 8 + 8).map((n) => pcOf(n.pitch));
+        expect(ans.length).toBe(4);
+        expect(new Set(ans)).toEqual(new Set(ch.midi.map(pcOf)));
+      });
+    }
+  });
+
+  it('every new level is tagged with its exam', () => {
+    const want: Record<string, string> = {
+      'b-styles-15': 'RSL',
+      'b-styles-16': 'RSL',
+      'b-styles-17': 'RSL',
+      'b-read-13': 'Trinity',
+      'b-ear-9': 'RSL',
+      'b-up-read-5': 'ABRSM',
+      'b-up-read-6': 'ABRSM',
+      'b-up-arco-7': 'ABRSM',
+      'b-up-arco-8': 'ABRSM',
+      'b-up-arco-9': 'ABRSM',
+      'b-up-pizz-4': 'ABRSM',
+      'b-up-scales-10': 'ABRSM',
+      'b-walk-13': 'Bagrut',
+      'b-walk-14': 'Bagrut',
+      'b-ear-7': 'Bagrut',
+      'b-walk-15': 'Bagrut',
+      'b-walk-16': 'Bagrut',
+    };
+    for (const [id, board] of Object.entries(want)) expect(levelById(id).exam?.map((e) => e.board), id).toContain(board);
+  });
+
+  it('every new level generates in all its keys on 4-, 5-, 6-string and drop D (the upright ones on the upright)', () => {
+    for (const id of ['b-styles-15', 'b-styles-16', 'b-styles-17', 'b-read-13', 'b-ear-9', 'b-pocket-7', 'b-up-read-5', 'b-up-read-6', 'b-up-arco-7', 'b-up-arco-8', 'b-up-arco-9', 'b-up-pizz-4', 'b-up-scales-10'])
+      for (const d of drillsOf(id)) {
+        const tu = d.spec.tuning ?? 'bass';
+        expect(d.notes.length, `${d.itemId} ${tu}`).toBeGreaterThan(3);
+        for (const n of d.notes) {
+          expect(n.fret!, d.itemId).toBeGreaterThanOrEqual(0);
+          expect(n.fret!, d.itemId).toBeLessThanOrEqual(24);
+        }
+        if (id.startsWith('b-up-')) expect(tu).toBe('upright');
+        expect(levelById(id).tempo![0]).toBeLessThanOrEqual(levelById(id).tempo![1]);
+        expect(/[֐-׿]/.test(d.title.he)).toBe(true);
+      }
+  });
+});
+
 describe('quick study: prep time', () => {
   it('read L12 gives 30 s to read before Play and plays with the band', () => {
     for (const d of levelDrills(levelById('b-read-12'), order)) {

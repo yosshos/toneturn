@@ -35,6 +35,7 @@ const ASK: Record<string, { en: string; he: string }> = {
   rhythm: tt('Hear a two-bar rhythm — echo it on the open E', 'שמעו מקצב של שתי תיבות — החזירו אותו על מיתר E פתוח'),
   melodic: tt('Hear a two-bar line — play it back', 'שמעו קו של שתי תיבות — נגנו אותו בחזרה'),
   transcribe: tt('Hear two bars of walking bass — play them back', 'שמעו שתי תיבות של ווקינג בס — נגנו אותן בחזרה'),
+  quality: tt('Hear a chord over its root — then play its arpeggio: root, 3rd, 5th, 7th', 'שמעו אקורד מעל היסוד שלו — ואז נגנו את הארפג׳יו שלו: יסוד, טרצה, קווינטה, ספטימה'),
   slash: tt('Hear the chords — play the BASS note of each (not always the root)', 'שמעו את האקורדים — נגנו את צליל הבס של כל אחד (לא תמיד היסוד)'),
 };
 
@@ -155,6 +156,26 @@ export function generateBassEar(s: DrillSpec, tu: Tuning): Drill {
       // Bagrut transcription: after playing it back, write the line (tap it on the neck), graded note for note.
       const d = finishEar(s, tu, line, notes, windows, 'transcribe', { en: 'Transcribe two bars of walking bass', he: 'תמלול שתי תיבות של ווקינג בס' }, chartOf(key, prog));
       return { ...d, write: { pitches: line.map((x) => x.p) } };
+    }
+    case 'quality': {
+      // RSL ear tests Gr 6–8 (chord quality): the band plays a chord over its root (a bar), then the player answers with
+      // its arpeggio R–3–5–7 in quarters — the quality decides the 3rd, 5th and 7th, so the answer is measured by pitch.
+      // Four rounds; op 0: maj7 / m7 / 7; op 1: with m7♭5 and dim7.
+      const pool: Q[] = op === 1 ? ['maj7', 'm7', '7', 'm7b5', 'dim7'] : ['maj7', 'm7', '7'];
+      const degs = [0, 5, 7, 9, 2];
+      let last: Q | null = null;
+      for (let r = 0; r < 4; r++) {
+        const b0 = r * 8;
+        let q = pool[Math.floor(rnd() * pool.length)];
+        if (q === last) q = pool[(pool.indexOf(q) + 1) % pool.length];
+        last = q;
+        const d = degs[Math.floor(rnd() * degs.length)];
+        const R = rootOf(tu, key + d);
+        notes.push({ beat: b0, dur: 3.8, midi: voicing(key + d, q), inst: 'piano' }, { beat: b0, dur: 3.8, midi: [R], inst: 'bass' });
+        band(b0, b0 + 4);
+        QI[q].forEach((x, k) => line.push({ b: b0 + 4 + k, d: 1, p: R + x, ct: true }));
+      }
+      return finishEar(s, tu, line, notes, windows, 'quality', op === 1 ? { en: 'Chord quality by ear: 7ths, half-diminished, diminished', he: 'סוג האקורד בשמיעה: ספטאקורדים, חצי-מוקטן ומוקטן' } : { en: 'Chord quality by ear: maj7, m7, 7', he: 'סוג האקורד בשמיעה: maj7, m7, 7' });
     }
     case 'slash': {
       // Inversions and slash bass by ear: piano chords over their bass notes (C – G/B – Am – C/G …), then play the bass line.
