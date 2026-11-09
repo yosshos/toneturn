@@ -42,6 +42,7 @@ import { isTimed } from '../engine/scoring';
 import { learnPace, loadPace } from '../storage/pace';
 import { paceBand, paceTarget } from '../engine/fluency';
 import { Burst, Keyboard, MicIcon, ModeSwitch, Note, PermissionPanel, withNote } from './bits';
+import { noteViewsOf } from './noteViewPref';
 import { Recap } from './Recap';
 import { RhythmStaff } from './RhythmStaff';
 import { buildPalette, CELLS, describe as describeRhythm, meterOf, onsetBeats, rhythmFromKey, rhythmKey, sameRhythm, totalBeats, type CellId, type Rhythm } from '../engine/rhythm';
@@ -291,7 +292,8 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
   // Place questions (spec AE §3.3): the surface is the answer pad; after the answer it shows yours and the right notes.
   const placeRec = isPlace ? v.session.records[v.index] : null;
   const placeLast = placeRec?.attempts.length ? String(placeRec.attempts[placeRec.attempts.length - 1].answer) : null;
-  const playing = !!settings.instrument && !['voice'].includes(settings.instrument);
+  // "Play", not "Sing": the player's instrument, or a line the question asks to play back on an instrument (guitar course).
+  const playing = (!!settings.instrument && !['voice'].includes(settings.instrument)) || (q.kind === 'sing-seq' && !!q.play);
   const showKeypad = v.stage === 'question' && !paused && !v.error && isSeq && (v.mode === 'buttons' || v.needsListenTap);
   const showRecord = v.stage === 'question' && !paused && !v.error && isSing && (v.mode === 'buttons' || v.needsListenTap);
   const awaiting = v.phase === 'listening';
@@ -459,7 +461,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
             )}
             <Burst on={celebrate} />
           </div>
-          {!hideKeyboard && !isPlace && <NoteViews q={q} views={settings.noteViews ?? ['keyboard', 'staff']} answered={answered} keysLive={keysLive} leftHanded={settings.leftHanded} marks={answered ? seqMarks(q, v.feedback?.answer) : undefined} />}
+          {!hideKeyboard && !isPlace && <NoteViews q={q} views={noteViewsOf(settings)} answered={answered} keysLive={keysLive} leftHanded={settings.leftHanded} marks={answered ? seqMarks(q, v.feedback?.answer) : undefined} />}
           {isPlace && q.kind === 'place' && v.stage === 'question' && !paused && !v.error && (
             <PlaceSurfaceView key={`${v.index}-${answered ? 'r' : 'q'}-${placeRec?.attempts.length ?? 0}`} q={q} settings={settings} lang={lang} disabled={!awaiting || answered} result={answered ? (placeLast ?? '') : null} onSubmit={(a) => ctrl.answer(a)} />
           )}

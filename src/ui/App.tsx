@@ -23,6 +23,7 @@ import { earIndex } from '../engine/rating';
 import { MixerScreen } from './Mixer';
 import type { Drill } from '../engine/drills/types';
 import { catalog, generate } from '../engine/drills/generate';
+import { guitarCatalog } from '../engine/drills/guitar';
 import { levelDrills } from '../engine/drills/plan';
 import { parseTopicRef, submitResult, type AssignItem } from '../cloud/teacher';
 import { DigestScreen } from './TeacherLoop';
@@ -650,7 +651,8 @@ export function App() {
     }
     if (a.kind === 'drill' && settings) {
       const id = (a.ref ?? '').replace(/^drill:/, '');
-      const lv = catalog().flatMap((f) => f.levels).find((l) => l.id === id);
+      // Any instrument's level (a guitar teacher assigns g-* levels; the piano catalogue alone missed them).
+      const lv = [...catalog(), ...guitarCatalog()].flatMap((f) => f.levels).find((l) => l.id === id);
       if (lv) {
         chartQueue.current = levelDrills(lv, drillSettingsOf(settings).keyOrder);
         drillFrom.current = 'assign';

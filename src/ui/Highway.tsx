@@ -144,7 +144,7 @@ function useReducedMotion(settings: Settings) {
 }
 
 /** The key for pitch lanes: guitar / bass / strings in G, everything else in C. */
-const laneKeyPc = (s: Settings) => (s.instrument === 'guitar' || s.instrument === 'bass' || s.instrument === 'strings' ? 7 : 0);
+const laneKeyPc = (s: Settings) => (s.activeCourse === 'guitar' || s.activeCourse === 'bass' || s.instrument === 'guitar' || s.instrument === 'bass' || s.instrument === 'strings' ? 7 : 0);
 const PC_NAMES: PitchClass[] = [
   { letter: 'C', acc: 0 },
   { letter: 'C', acc: 1 },

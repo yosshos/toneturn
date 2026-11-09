@@ -21,7 +21,9 @@ const noteName = (m: number, sol: boolean) => `${(sol ? NAMES_SOL : NAMES_EN)[((
 
 export function Tuner({ lang, settings, onChange, onBack }: { lang: Lang; settings: Settings; onChange: (p: Partial<Settings>) => void; onBack: () => void }) {
   const tx = TX[lang];
-  const preset = presetById(settings.tunerPreset ?? (settings.instrument === 'bass' ? 'bass' : settings.instrument === 'guitar' ? 'guitar' : 'chromatic'));
+  // No preset chosen yet: the active course's instrument (guitar / bass course), else the player's instrument.
+  const inst = settings.activeCourse === 'guitar' || settings.activeCourse === 'bass' ? settings.activeCourse : settings.instrument;
+  const preset = presetById(settings.tunerPreset ?? (inst === 'bass' ? 'bass' : inst === 'guitar' ? 'guitar' : 'chromatic'));
   const a4 = settings.a4 ?? 440;
   const sol = settings.naming === 'solfege' || (settings.naming === 'auto' && lang === 'he');
   const [lock, setLock] = useState<number | null>(null);

@@ -5,9 +5,10 @@ import type { PitchClass } from '../engine/pitch';
 import type { Settings } from '../storage/progress';
 import { Keyboard } from './bits';
 import { GuitarView, NoteStaff } from './NoteViews';
+import { noteViewsOf } from './noteViewPref';
 
 export function NotesView({ midis, keyPc, settings, chord = false, durs, clef }: { midis: number[]; keyPc: PitchClass | null; settings: Settings; chord?: boolean; durs?: number[]; clef?: 'treble' | 'bass' | 'alto' | 'tenor' }) {
-  const views: NoteView[] = settings.noteViews ?? ['keyboard', 'staff'];
+  const views: NoteView[] = noteViewsOf(settings);
   if (!midis.length) return <div className="notes-view empty" aria-hidden="true" />;
   const lo = Math.min(...midis);
   const hi = Math.max(...midis);

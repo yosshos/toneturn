@@ -241,7 +241,7 @@ export function stepCatalogue(): PathStep[] {
         difficulty: q.difficulty,
         choices: q.kind === 'choice' ? q.choices.length : 0,
         pack: PACK_TOPICS[topic] ?? (topic === 'absolute' ? 'absolute' : undefined),
-        forPlays: T.forPlays,
+        forPlays: T.levelPlays?.[level - 1] ?? T.forPlays,
         sung,
         mic,
         title: { en: `${T.title.en} · ${level}`, he: `${T.title.he} · ${level}` },

@@ -13,6 +13,7 @@ import { majorScale, pcValue, type PitchClass } from '../engine/pitch';
 import { spellMidi } from '../engine/aids';
 import { bassTuningOf, type Settings } from '../storage/progress';
 import { piano } from './services';
+import { courseInstrument, noteViewsOf, playedShift } from './noteViewPref';
 
 type Lang = 'he' | 'en';
 const T = {
@@ -353,7 +354,7 @@ export function surfaceFor(q: PlaceQuestion, s: Settings): PlaceSurface {
   if (q.surface) return q.surface;
   const pref = s.answerSurface ?? 'auto';
   if (pref !== 'auto') return pref;
-  const first = (s.noteViews ?? ['keyboard', 'staff'])[0];
+  const first = noteViewsOf(s)[0];
   return first === 'tab' ? 'neck' : first === 'staff' ? 'staff' : 'keys';
 }
 
@@ -397,12 +398,14 @@ export function PlaceSurfaceView({ q, settings, lang, disabled, onSubmit, result
     sound([n.midi]);
   };
   // Spec AE §3.4: enter notes by playing — MIDI keys, or an acoustic instrument through the microphone.
-  const canPlay = !disabled && q.as === 'seq' && (!!settings.midiInput || (!!settings.instrument && settings.instrument !== 'voice'));
+  // In the guitar / bass course the instrument is the course's, whatever the profile says (0.66 guitar audit).
+  const inst = courseInstrument(settings);
+  const canPlay = !disabled && q.as === 'seq' && (!!settings.midiInput || (!!inst && inst !== 'voice'));
   const [playing, setPlaying] = useState(false);
   const addRef = useRef(add);
   addRef.current = add;
-  // Guitar and bass sound an octave below written: the app writes and grades written pitch.
-  const writtenShift = settings.instrument === 'guitar' || settings.instrument === 'bass' ? 12 : 0;
+  // Before 0.66 a played neck answer was moved up an octave like a staff answer and marked wrong (playedShift).
+  const writtenShift = playedShift(inst, surface);
   const placeFromPlayed = (m: number) => {
     const w = m + writtenShift;
     if (surface === 'neck') {

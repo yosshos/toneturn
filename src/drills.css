@@ -223,6 +223,16 @@
   gap: 3px;
   align-items: center;
 }
+.heat-cap {
+  grid-column: 1 / -1;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-top: 4px;
+}
 .heat-cell {
   height: 26px;
   border-radius: 6px;
