@@ -606,6 +606,8 @@ export interface DrillSettings {
   /** Drums: notation (percussion staff) or lanes (default notation). */
   drumView?: 'staff' | 'lanes';
   /** Guitar: genre filter (like the piano emphasis); 'all' or absent = every family. */
+  /** Piano by microphone only (0.67, owner): levels that need MIDI (loudness, release, pedal) are hidden. */
+  pianoMicOnly?: boolean;
   guitarStyle?: 'all' | 'rock' | 'blues' | 'metal' | 'pop' | 'funk' | 'country' | 'jazz' | 'classical' | 'fingerstyle' | 'flamenco' | 'reggae' | 'latin';
   /** Guitar: what the drill shows — tab, notation, or both (default tab). */
   guitarView?: 'tab' | 'staff' | 'both';

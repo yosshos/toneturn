@@ -5,7 +5,7 @@ import type { CustomDrill, Drill, DrillSettings, FamilyId, ItemState } from './t
 import { catalog, generate, keysInOrder, type FamilyDef, type LevelDef } from './generate';
 import { customIncluded, customKeys, customToDrill } from './custom';
 import { itemPass, todaysItems, type TodayItem } from './ladder';
-import { notesPerBeat } from './analyze';
+import { micUnmeasurable, notesPerBeat } from './analyze';
 import { guitarCatalog, guitarStyleMatch, type GuitarFamilyDef } from './guitar';
 import { tuningById } from '../fretboard';
 import type { DrumFamilyDef } from './drums';
@@ -19,7 +19,7 @@ export const families = (instrument: Instrument = 'piano'): FamilyDef[] => (inst
 export const familyById = (id: FamilyId): FamilyDef | undefined => CAT.find((f) => f.id === id) ?? GCAT.find((f) => f.id === id);
 
 /** What the hub filters by: the piano emphasis, or the guitar instrument + style (genre); bass: the bass tuning. */
-export type ShowSettings = Pick<DrillSettings, 'emphasis'> & Partial<Pick<DrillSettings, 'instrument' | 'guitarStyle'>> & { bassTuning?: string; /** Drums by microphone: a practice pad (single-surface levels, DRUMS_CURRICULUM §3.8) or an acoustic kit (those + basic grooves). */ drumMic?: DrumMic };
+export type ShowSettings = Pick<DrillSettings, 'emphasis'> & Partial<Pick<DrillSettings, 'instrument' | 'guitarStyle' | 'pianoMicOnly'>> & { bassTuning?: string; /** Drums by microphone: a practice pad (single-surface levels, DRUMS_CURRICULUM §3.8) or an acoustic kit (those + basic grooves). */ drumMic?: DrumMic };
 /** The drums setup for the level filters (drumKit.drumMicOf): false / undefined = MIDI; true = a practice pad (old callers). */
 export type DrumMic = boolean | 'pad' | 'acoustic';
 
@@ -44,10 +44,33 @@ export const hiddenBassLevels = (bassTuning?: string): string[] => [...(hasLowB(
  * The families the player's settings show. Piano (default): the emphasis (classical / jazz / both). Guitar / bass:
  * the families of that instrument whose genres match the guitar style, each with only its matching levels.
  */
+let micHiddenCache: string[] | null = null;
+/** Piano levels a microphone can't measure (any item whose goal is loudness, release or the pedal — PIANO_AUDIT A2). */
+export function pianoMicHiddenLevels(): string[] {
+  if (micHiddenCache) return micHiddenCache;
+  const out: string[] = [];
+  for (const f of CAT)
+    for (const l of f.levels) {
+      let ds: Drill[] = [];
+      try {
+        ds = levelDrills(l, 'fifths-up');
+      } catch {
+        /* a level that can't generate here is not hidden */
+      }
+      if (ds.some((d) => micUnmeasurable(d).length > 0)) out.push(l.id);
+    }
+  return (micHiddenCache = out);
+}
+
 export function shownFamilies(settings: ShowSettings): FamilyDef[] {
   const inst = settings.instrument ?? 'piano';
-  // The pianist's ear (style 'both') belongs to every emphasis.
-  if (inst === 'piano') return CAT.filter((f) => settings.emphasis === 'both' || f.style === 'both' || f.style === settings.emphasis);
+  // The pianist's ear (style 'both') belongs to every emphasis. 0.67 (owner): "microphone only" hides the MIDI-only levels.
+  if (inst === 'piano') {
+    const fams = CAT.filter((f) => settings.emphasis === 'both' || f.style === 'both' || f.style === settings.emphasis);
+    if (!settings.pianoMicOnly) return fams;
+    const hidden = pianoMicHiddenLevels();
+    return fams.map((f) => ({ ...f, levels: f.levels.filter((l) => !hidden.includes(l.id)) })).filter((f) => f.levels.length > 0);
+  }
   // Drums: no genre filter (v1); by microphone a practice pad gets the single-surface levels, an acoustic kit those and the basic grooves.
   if (inst === 'drums') {
     const fams = GCAT.filter((f) => f.instruments.includes('drums'));

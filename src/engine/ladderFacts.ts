@@ -6,7 +6,7 @@ import { catalog, type LevelDef } from './drills/generate';
 import { guitarCatalog } from './drills/guitar';
 import { drumFamilies } from './drills/drums';
 import { kitHiddenLevels } from './drumAcoustic';
-import { hiddenBassLevels, type DrumMic, LEVEL_DONE_STARS, levelDrills, levelStars, shownFamilies, targetBpmOf } from './drills/plan';
+import { hiddenBassLevels, pianoMicHiddenLevels, type DrumMic, LEVEL_DONE_STARS, levelDrills, levelStars, shownFamilies, targetBpmOf } from './drills/plan';
 import { itemPass } from './drills/ladder';
 import type { Drill, DrillSettings, FamilyId, ItemState } from './drills/types';
 import { stepStars, VOCAL_PROGRAMS, type PathFacts } from './path';
@@ -37,8 +37,9 @@ export function ladderFamiliesFor(course: CourseId, ds: DrillSettings, bassTunin
  * Ladder levels the course's path leaves out (N10): the low-B levels on a bass without a low B; on drums played by
  * microphone, the levels that need an e-kit (a practice pad: grooves, fills, kit reading — DRUMS_CURRICULUM §3.8; an acoustic kit: all but ACOUSTIC_LEVELS).
  */
-export function ladderHiddenFor(course: CourseId, bassTuning?: string, drumMic?: DrumMic): string[] {
+export function ladderHiddenFor(course: CourseId, bassTuning?: string, drumMic?: DrumMic, pianoMicOnly?: boolean): string[] {
   if (course === 'drums') return kitHiddenLevels(drumFamilies(), drumMic);
+  if (course === 'keys') return pianoMicOnly ? pianoMicHiddenLevels() : [];
   return course === 'bass' ? hiddenBassLevels(bassTuning) : [];
 }
 

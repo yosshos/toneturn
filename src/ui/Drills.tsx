@@ -799,6 +799,13 @@ function DrillSettingsView({ lang, ds, onChange, onCalib }: { lang: Lang; ds: Dr
           </label>
         </>
       )}
+      {ds.instrument === 'piano' && (
+        // 0.67 (owner): a keyboard without MIDI — hide the levels the microphone can't measure.
+        <label className="row" data-piano-mic-only="1">
+          <input type="checkbox" checked={!!ds.pianoMicOnly} onChange={(e) => onChange({ pianoMicOnly: e.target.checked })} />{' '}
+          {lang === 'he' ? 'מיקרופון בלבד (בלי MIDI): להסתיר שלבים שצריכים MIDI' : 'Microphone only (no MIDI): hide levels that need MIDI'}
+        </label>
+      )}
       {toggle('inPath', tx.inPath)}
       {toggle('inWorkout', tx.inWorkout)}
       <button className="btn ghost" onClick={onCalib}>

@@ -162,7 +162,7 @@ export function pathInputFrom(s: Settings, p: Progress, now = new Date()): PathI
   return {
     ...inp,
     ladderFamilies: families,
-    ladderHidden: ladderHiddenFor(course, s.bassTuning, drumMicOf(s.drumKit)),
+    ladderHidden: ladderHiddenFor(course, s.bassTuning, drumMicOf(s.drumKit), !!s.drills?.pianoMicOnly),
     facts: withLadderFacts(inp.facts, { families, items: p.drillItems ?? {}, order: ds.keyOrder, start: s.drillStart ?? {}, vocalPassed: p.vocal?.passed ?? [], at: now.toISOString() }),
   };
 }
