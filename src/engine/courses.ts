@@ -18,7 +18,7 @@ export interface CourseDef {
   goal: Goal;
   /** What the course plays on (instrument-only steps). */
   plays: string[];
-  /** Still being built (0.61, owner: bass is beta until its curriculum is deepened). */
+  /** Still being built (0.61: bass was beta until its curriculum was deepened, out of beta in 0.66; drums still beta). */
   beta?: boolean;
   /** A short line on the course card (onboarding, course switcher): what the course needs. */
   note?: { he: string; en: string };
@@ -29,7 +29,7 @@ export const COURSES: CourseDef[] = [
   { id: 'voice', name: { he: 'שירה', en: 'Singing' }, short: { he: 'שירה', en: 'Voice' }, color: '#12C9B4', glyph: 'sing', goal: 'sing', plays: ['voice'] },
   { id: 'keys', name: { he: 'פסנתר וקלידים', en: 'Piano & keys' }, short: { he: 'פסנתר', en: 'Piano' }, color: '#FFD43B', glyph: 'keys', goal: 'general', plays: ['keys'] },
   { id: 'guitar', name: { he: 'גיטרה', en: 'Guitar' }, short: { he: 'גיטרה', en: 'Guitar' }, color: '#FFD43B', glyph: 'guitar', goal: 'guitar', plays: ['guitar'] },
-  { id: 'bass', name: { he: 'בס', en: 'Bass' }, short: { he: 'בס', en: 'Bass' }, color: '#FF5FA2', glyph: 'bass', goal: 'guitar', plays: ['bass'], beta: true },
+  { id: 'bass', name: { he: 'בס', en: 'Bass' }, short: { he: 'בס', en: 'Bass' }, color: '#FF5FA2', glyph: 'bass', goal: 'guitar', plays: ['bass'] },
   // 0.65 (DRUMS_CURRICULUM): measured on a MIDI e-kit, or a practice pad by microphone (single-surface items only).
   { id: 'drums', name: { he: 'תופים', en: 'Drums' }, short: { he: 'תופים', en: 'Drums' }, color: '#4CD07D', glyph: 'drums', goal: 'general', plays: ['drums'], beta: true, note: { en: 'Best with an e-kit by MIDI', he: 'הכי טוב עם תופים אלקטרוניים ב-MIDI' } },
   { id: 'jazz', name: { he: 'ג׳אז ואלתור', en: 'Jazz & improv' }, short: { he: 'ג׳אז', en: 'Jazz' }, color: '#A78BFA', glyph: 'prog', goal: 'jazz', plays: [] },

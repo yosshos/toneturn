@@ -34,7 +34,7 @@ export type FamilyId =
   // Drums course (docs/research/DRUMS_CURRICULUM.md §4, v1 = F1–F5, F9, F14): pitches are the GM drum notes of the voices.
   | DrumFamilyId;
 
-export type DrumFamilyId = 'd-strokes' | 'd-rolls' | 'd-diddles' | 'd-time' | 'd-rock' | 'd-fills' | 'd-read' | 'd-funk' | 'd-shuffle' | 'd-indep' | 'd-mideast' | 'd-feet';
+export type DrumFamilyId = 'd-strokes' | 'd-rolls' | 'd-diddles' | 'd-time' | 'd-rock' | 'd-fills' | 'd-read' | 'd-funk' | 'd-shuffle' | 'd-indep' | 'd-mideast' | 'd-feet' | 'd-ear' | 'd-jazz' | 'd-latin';
 /** A drum voice (DRUMS_CURRICULUM §3): what a hit is, whatever note the kit sends for it. */
 export type DrumVoice = 'kick' | 'snare' | 'rim' | 'hihat' | 'hhOpen' | 'hhPedal' | 'ride' | 'crash' | 'tom1' | 'tom2' | 'tom3';
 /** The limb that plays a drum note (sticking R / L stays in `hand`; feet are RF / LF). */
@@ -55,6 +55,9 @@ export type BassFamilyId =
   | 'b-pick'
   | 'b-read'
   | 'b-styles'
+  // 0.66: reading in positions (electric) and fills / solos on target notes.
+  | 'b-posread'
+  | 'b-impro'
   // 0.64 (track B): the bass-ear family F15 and the upright / double-bass track (BASS_CURRICULUM §5, §5.1).
   | 'b-ear'
   | 'b-up-pos'
@@ -127,6 +130,10 @@ export interface ExpNote {
   dyn?: 'p' | 'mf' | 'f';
   /** Drums: first / second stroke of a double (the second must be ≥ goal.drum.ratio × the first). */
   dbl?: 1 | 2;
+  /** Drums: grace notes before this stroke by the other hand — 1 = flam, 2 = drag (ruff). Not separate notes: the take's grace hits are measured against this one (goal.drum.flam). */
+  grace?: 1 | 2;
+  /** Drums: a swung skip note (jazz ride): judged by the swing ratio (goal.drum.swing), not against the triplet grid. */
+  swing?: boolean;
 }
 
 /** What a drill is: everything needed to generate its notes. */
@@ -199,7 +206,7 @@ export interface Drill {
    * The harmony band under the take (bassBand.ts): the band engine's comping over `chart` in `style`, on the take's
    * clock. Like the drums it plays only with headphones / line-in / MIDI (else the click); it never changes the measure.
    */
-  band?: { style: import('../band').BandStyle };
+  band?: { style: import('../band').BandStyle; /** Drums course: a bass line under the comping too (roots on the groove's kick, a walking line in swing). */ bass?: boolean; /** Beat ranges where the band lays out (a drum solo while trading 4s). */ rests?: [number, number][] };
   /** Quick Study Piece (RSL): seconds to study the score before Play opens (the player may start sooner). */
   prep?: number;
   /** Written transcription after the take (ear L7): the line's sounding pitches, entered on the neck and graded note for note. */
@@ -208,7 +215,14 @@ export interface Drill {
    * B11 ear drills: what the band plays inside the take (beats from beat 0). The player answers in the other bars;
    * onsets inside `windows` (the band's bars) are ignored, so a speaker's sound is never taken for the answer.
    */
-  listen?: { notes: { beat: number; dur: number; midi: number[]; inst?: 'bass' | 'piano'; perc?: 'kick' | 'snare' | 'hat' }[]; windows: [number, number][]; ask: { en: string; he: string } };
+  listen?: { notes: { beat: number; dur: number; midi: number[]; inst?: 'bass' | 'piano'; perc?: import('../lesson').PercKind; vel?: number }[]; windows: [number, number][]; ask: { en: string; he: string } };
+  /**
+   * Drums ear (d-ear): after the take, write what was heard — a step grid per voice (dictation), or pick the style's
+   * name. Graded like the bass transcription (withWritten): it can only lower the take's verdict.
+   */
+  drumWrite?: { kind: 'grid'; sub: number; beats: number; lanes: { voice: DrumVoice; steps: boolean[] }[] } | { kind: 'pick'; options: { en: string; he: string }[]; answer: number };
+  /** Eighth-pulse meters (pulse 8): the beat groups of a bar in eighths (9/8 = 2+2+2+3); the click sounds on each group's first eighth and the staff beams by group. */
+  groups?: number[];
   /** B3 / B10 / B11: what the score shows — notation only (reading), only the chord chart (free choice; a model line is opt-in), or nothing until the result (ear). */
   show?: 'staff' | 'chart' | 'none';
   /** B3: with show 'chart', the notes before this beat are written out (written bars, then free bars). */
@@ -278,6 +292,13 @@ export interface DrumGoal {
   landing?: { beats: number[]; ms: number };
   /** Gap-click bars: the mean offset of the hits in the silent bars within ±ms. */
   gapMs?: number;
+  /**
+   * Flams and drags (MIDI only): share of grace-note strokes in spec ≥ this — the grace hit(s) of the same drum 15–40 ms
+   * before the main stroke (a drag's two graces inside 80 ms) and softer than it; the flam gaps' SD ≤ 8 ms.
+   */
+  flam?: number;
+  /** Swing (jazz ride): the skip note's place inside the beat (0.5 straight … 0.75 dotted) has a median in [lo, hi] and an SD ≤ 0.07. */
+  swing?: { lo: number; hi: number };
 }
 
 /** Bass-specific pass rules (BASS_CURRICULUM §4–§5). Absent = the default pitch + timing rule only. */
@@ -297,8 +318,12 @@ export interface BassGoal {
   // ---- 0.64 (BASS_AUDIT §5): shared contract between the measurement track (A) and the content track (B) ----
   /** Expected dead notes must be unpitched/short and pitched notes pitched: share ≥ this (e.g. 0.9). */
   ghostClass?: number;
-  /** Free-choice line judged by rules instead of note for note (A5); the chart the rules read. */
-  rules?: { kind: 'walk' | 'chordTones' | 'nearest'; chart: { chord: string; root: number; tones: number[]; beats: number }[]; maxRepeat?: number; maxMove?: number };
+  /**
+   * Free-choice line judged by rules instead of note for note (A5); the chart the rules read. target (0.66): scale
+   * tones anywhere, and on every chord change a landing note — one of `land` (intervals above the root) when given,
+   * else a chord tone (`tones` then holds the chord scale).
+   */
+  rules?: { kind: 'walk' | 'chordTones' | 'nearest' | 'target'; chart: { chord: string; root: number; tones: number[]; beats: number; land?: number[] }[]; maxRepeat?: number; maxMove?: number };
   /** Pocket on purpose (A6): target offset per section in ms (+ = behind), share within ±12 ms ≥ 0.7. */
   pocket?: number[];
   /** Mean offset |timingMean| ≤ ms (no consistent rush/drag). */
@@ -336,7 +361,7 @@ export interface BassGoal {
 
 /** Free-choice rule verdict (A5), per slot of the model line (TakeMetrics.rules). */
 export interface TakeRules {
-  kind: 'walk' | 'chordTones' | 'nearest';
+  kind: 'walk' | 'chordTones' | 'nearest' | 'target';
   /** Per slot: R / 3 / 5 / 7 / tension / chromatic / dominant / scale / other, or '-' when nothing was played. */
   labels: string[];
   /** Per slot: the note is allowed by the rules (false for a missing note). */
@@ -470,6 +495,13 @@ export interface DrumMetrics {
   landing: (number | null)[];
   /** Mean offset in the silent click bars. */
   gapMean: number | null;
+  /** Flams / drags in spec (share), the flam gap mean and SD (ms). */
+  flam?: number | null;
+  flamGap?: number | null;
+  flamSd?: number | null;
+  /** Swing: median skip-note place in the beat and its SD. */
+  swing?: number | null;
+  swingSd?: number | null;
   /** The rules missed (ids), for the "Why?" expander. */
   missed: string[];
   /** Acoustic kit by microphone: share of the matched notes whose drum was not told apart (absent otherwise). */

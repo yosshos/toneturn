@@ -9,6 +9,8 @@ import type { SpecTemplate } from './generate';
 import type { GuitarFamilyDef, GuitarLevelDef, T2, TechProbe } from './guitar';
 import { VOICE_NOTE, limbOf } from '../drumKit';
 import { ACOUSTIC_LEVELS } from '../drumAcoustic';
+import { generateDrumEar } from './drumEar';
+import { drumBand, generateJazz, generateLatin } from './drumStyles';
 
 const t = (en: string, he: string): T2 => ({ en, he });
 const r6 = (x: number): number => Math.round(x * 1e6) / 1e6;
@@ -23,7 +25,7 @@ export interface DrumFamilyDef extends GuitarFamilyDef {
 }
 
 /** One hit while building a drill. */
-interface DH {
+export interface DH {
   b: number;
   v: DrumVoice;
   h?: 'R' | 'L';
@@ -32,23 +34,26 @@ interface DH {
   dyn?: 'p' | 'mf' | 'f';
   dbl?: 1 | 2;
   d?: number;
+  /** Grace notes before this stroke: 1 = flam, 2 = drag. */
+  grace?: 1 | 2;
+  swing?: boolean;
 }
 
 /** Sticking string → hands ("RLRR LRLL"). */
-const hands = (s: string): ('R' | 'L')[] => [...s.replace(/[^RL]/g, '')] as ('R' | 'L')[];
+export const hands = (s: string): ('R' | 'L')[] => [...s.replace(/[^RL]/g, '')] as ('R' | 'L')[];
 const flip = (s: string): string => s.replace(/[RL]/g, (c) => (c === 'R' ? 'L' : 'R'));
 
 /** A snare line: `n` strokes `step` beats apart from `from`, the sticking cycled. */
-function line(sticking: string, n: number, step: number, from = 0, extra: (i: number) => Partial<DH> = () => ({})): DH[] {
+export function line(sticking: string, n: number, step: number, from = 0, extra: (i: number) => Partial<DH> = () => ({})): DH[] {
   const hs = hands(sticking);
   return Array.from({ length: n }, (_, i) => ({ b: from + i * step, v: 'snare' as DrumVoice, h: hs[i % hs.length], d: step, ...extra(i) }));
 }
 
 /** Groove lanes, one character per step: x hit, X accent, g ghost, o open hat (hat lane), . rest. */
-type Lanes = Partial<Record<'h' | 'r' | 's' | 'k' | 'c' | 'p' | 't1' | 't2' | 't3', string>>;
-const LANE_VOICE: Record<keyof Lanes, DrumVoice> = { h: 'hihat', r: 'ride', s: 'snare', k: 'kick', c: 'crash', p: 'hhPedal', t1: 'tom1', t2: 'tom2', t3: 'tom3' };
+export type Lanes = Partial<Record<'h' | 'r' | 's' | 'k' | 'c' | 'p' | 't1' | 't2' | 't3' | 'rm', string>>;
+const LANE_VOICE: Record<keyof Lanes, DrumVoice> = { h: 'hihat', r: 'ride', s: 'snare', k: 'kick', c: 'crash', p: 'hhPedal', t1: 'tom1', t2: 'tom2', t3: 'tom3', rm: 'rim' };
 /** One bar of a groove from `b0`; `sub` steps per beat; `hatHands` = sticking for the hat lane (default all R). */
-function bar(l: Lanes, sub: number, b0: number, o: { hatHands?: string; from?: number; to?: number; sHand?: (i: number, c: string) => 'R' | 'L' } = {}): DH[] {
+export function bar(l: Lanes, sub: number, b0: number, o: { hatHands?: string; from?: number; to?: number; sHand?: (i: number, c: string) => 'R' | 'L'; maxD?: number } = {}): DH[] {
   const out: DH[] = [];
   const hh = o.hatHands ? hands(o.hatHands) : null;
   for (const [lane, pat] of Object.entries(l) as [keyof Lanes, string][]) {
@@ -58,19 +63,28 @@ function bar(l: Lanes, sub: number, b0: number, o: { hatHands?: string; from?: n
       if ((o.from !== undefined && b < o.from - 1e-9) || (o.to !== undefined && b >= o.to - 1e-9)) return;
       const voice: DrumVoice = lane === 'h' && c === 'o' ? 'hhOpen' : LANE_VOICE[lane];
       // Two hands on the hat (hatHands): the snare takes that step's hand, so the alternation never breaks (RLRL|R on 2).
-      const h: 'R' | 'L' = (lane === 's' || lane === 'h') && hh ? hh[i % hh.length] : lane === 's' ? (o.sHand ? o.sHand(i, c) : 'L') : 'R';
-      // Written length: to the lane's next hit (a kick on 1 and 3 is a quarter, not an 8th), at most a beat.
+      // The cross-stick (rim lane) is the left hand: the right keeps the ride / bell.
+      const h: 'R' | 'L' = (lane === 's' || lane === 'h') && hh ? hh[i % hh.length] : lane === 's' ? (o.sHand ? o.sHand(i, c) : 'L') : lane === 'rm' ? 'L' : 'R';
+      // Written length: to the lane's next hit (a kick on 1 and 3 is a quarter, not an 8th), at most a beat (`maxD`).
       const nx = [...pat].findIndex((x, j) => j > i && x !== '.');
-      const d = Math.min(1, ((nx < 0 ? pat.length : nx) - i) / sub);
+      const d = Math.min(o.maxD ?? 1, ((nx < 0 ? pat.length : nx) - i) / sub);
       out.push({ b: b0 + b, v: voice, h, acc: c === 'X' || undefined, ghost: c === 'g' || undefined, d });
     });
   }
   return out;
 }
-const rep = (n: number, f: (i: number) => DH[]): DH[] => Array.from({ length: n }, (_, i) => f(i)).flat();
+export const rep = (n: number, f: (i: number) => DH[]): DH[] => Array.from({ length: n }, (_, i) => f(i)).flat();
 
-interface Fin {
+export interface Fin {
   title: T2;
+  /** Beats per bar (default 4); with pulse 8 the beat is an eighth (9/8 = 9). */
+  meter?: number;
+  pulse?: 8;
+  groups?: number[];
+  band?: Drill['band'];
+  chart?: string[];
+  listen?: Drill['listen'];
+  drumWrite?: Drill['drumWrite'];
   bpm: number;
   bars: number;
   goal?: DrumGoal;
@@ -84,12 +98,12 @@ interface Fin {
 }
 /** Verdict tier from the level (§4.1): L1–3 beginner, L4–7 intermediate, L8+ advanced. */
 const tierOf = (level: number): 1 | 2 | 3 => (level <= 3 ? 1 : level <= 7 ? 2 : 3);
-const levelOfKind = (kind: string): number => Number(kind.split(':')[0]) || 1;
+export const levelOfKind = (kind: string): number => Number(kind.split(':')[0]) || 1;
 
 /** Stable id of a drum item: family, kind, variant. */
 export const drumItemId = (s: DrillSpec): string => `${s.family}:${s.kind}:${s.option ?? 0}`;
 
-function finish(spec: DrillSpec, hits: DH[], o: Fin): Drill {
+export function finish(spec: DrillSpec, hits: DH[], o: Fin): Drill {
   const notes: ExpNote[] = hits
     .map((x): ExpNote => {
       const n: ExpNote = { pitch: VOICE_NOTE[x.v], beat: r6(x.b), dur: r6(x.d ?? 0.5), hand: x.h ?? 'R', voice: x.v, limb: limbOf(x.v, x.h ?? 'R') };
@@ -97,10 +111,12 @@ function finish(spec: DrillSpec, hits: DH[], o: Fin): Drill {
       if (x.ghost) n.ghost = true;
       if (x.dyn) n.dyn = x.dyn;
       if (x.dbl) n.dbl = x.dbl;
+      if (x.grace) n.grace = x.grace;
+      if (x.swing) n.swing = true;
       return n;
     })
     .sort((a, b) => a.beat - b.beat || a.pitch - b.pitch);
-  const meter = 4;
+  const meter = o.meter ?? 4;
   return {
     spec: { ...spec, instrument: 'drums', key: 0 },
     itemId: drumItemId(spec),
@@ -115,6 +131,12 @@ function finish(spec: DrillSpec, hits: DH[], o: Fin): Drill {
     ...(o.gap ? { gap: o.gap } : {}),
     ...(o.show ? { show: o.show } : {}),
     ...(o.drums ? { drums: o.drums } : {}),
+    ...(o.pulse ? { pulse: o.pulse } : {}),
+    ...(o.groups ? { groups: o.groups } : {}),
+    ...(o.band ? { band: o.band } : {}),
+    ...(o.chart ? { chart: o.chart } : {}),
+    ...(o.listen ? { listen: o.listen } : {}),
+    ...(o.drumWrite ? { drumWrite: o.drumWrite } : {}),
     drum: { tier: tierOf(levelOfKind(spec.kind)), mic: o.mic },
   };
 }
@@ -253,12 +275,72 @@ function genDiddles(s: DrillSpec): Drill {
       const nm = [t('inverted', 'הפוך'), t('reverse', 'מהסוף'), t('inverted, lead left', 'הפוך, מובילים בשמאל')][op];
       return finish(s, line(st, 64, 0.25), { title: t(`Paradiddle · ${nm.en} · ${st.slice(0, 4)} ${st.slice(4)}`, `פאראדידל · ${nm.he} · ${st.slice(0, 4)} ${st.slice(4)}`), bpm: 60, bars: 4, mic: true });
     }
+    case 5:
+    case 6:
+    case 7:
+    case 8:
+    case 9:
+      return genGrace(s, lv, op);
     default: {
       // L4 double paradiddle / paradiddle-diddle in 8th triplets, accent on each group's first note.
       const st = ['RLRLRRLRLRLL', 'RLRRLL', 'LRLLRR'][op];
       const g = 6;
       const nm = [t('Double paradiddle', 'פאראדידל כפול'), t('Paradiddle-diddle', 'פאראדידל-דידל'), t('Paradiddle-diddle, lead left', 'פאראדידל-דידל, מובילים בשמאל')][op];
       return finish(s, line(st, 48, 1 / 3, 0, (i) => (i % g === 0 ? { acc: true } : {})), { title: t(`${nm.en} (triplets)`, `${nm.he} (טריולות)`), bpm: 60, bars: 4, mic: true, goal: { accentPos: 0.8 } });
+    }
+  }
+}
+
+// F3 L5–9 — flams and drags (PAS rudiments 20–31, 24, 25, 39; MIDI only: a microphone can't split a grace note from
+// its stroke). A stroke with `grace` has its grace note(s) by the other hand just before it — written lR / rL, llR / rrL.
+/** A sticking with grace marks: "fR" = flam on R (grace by L), "dR" = drag on R, ">" accents the next stroke. */
+function graced(pattern: string, n: number, step: number, from = 0): DH[] {
+  const toks = pattern.match(/[fd]?>?[RL]/g)!;
+  return Array.from({ length: n }, (_, i) => {
+    const tk = toks[i % toks.length];
+    const h = tk[tk.length - 1] as 'R' | 'L';
+    return { b: from + i * step, v: 'snare' as DrumVoice, h, d: step, ...(tk.startsWith('f') ? { grace: 1 as const } : tk.startsWith('d') ? { grace: 2 as const } : {}), ...(tk.includes('>') ? { acc: true } : {}) };
+  });
+}
+function genGrace(s: DrillSpec, lv: number, op: number): Drill {
+  const fin = (hits: DH[], en: string, he: string, bpm: number) => finish(s, hits, { title: t(en, he), bpm, bars: 4, mic: false, goal: { flam: 0.9 } });
+  switch (lv) {
+    case 5: {
+      // Alternating flams: lR rL — on quarters, on 8ths, and on 1 and 3 inside 8th taps.
+      if (op === 2) return fin(graced('fRLRLfRLRL', 32, 0.5), 'Flams on 1 and 3, 8th taps between', 'פלאמים על 1 ו-3, נקישות בשמיניות ביניהם', 50);
+      return fin(graced('fRfL', op === 0 ? 16 : 32, op === 0 ? 1 : 0.5), `Alternating flams · ${op === 0 ? 'quarters' : '8ths'}`, `פלאמים לסירוגין · ${op === 0 ? 'רבעים' : 'שמיניות'}`, 50);
+    }
+    case 6: {
+      // Flam accent (8th triplets: lR L R rL R L) and flam tap (16ths: lR R rL L).
+      if (op === 1) return fin(graced('f>RRf>LL', 64, 0.25), 'Flam tap · lR R rL L', 'פלאם טאפ · lR R rL L', 60);
+      const p = op === 0 ? 'f>RLRf>LRL' : 'f>LRLf>RLR';
+      return fin(graced(p, 48, 1 / 3), `Flam accent · ${op === 0 ? 'lR L R rL R L' : 'rL R L lR L R'}`, `פלאם אקסנט · ${op === 0 ? 'lR L R rL R L' : 'rL R L lR L R'}`, 60);
+    }
+    case 7: {
+      // Drags (ruffs): llR rrL on quarters, the single drag tap (llR L rrL R) in 8ths, drags on 2 and 4 in 8th taps.
+      if (op === 0) return fin(graced('dRdL', 16, 1), 'Drags on quarters · llR rrL', 'דראגים ברבעים · llR rrL', 60);
+      if (op === 1) return fin(graced('dRLdLR', 32, 0.5), 'Single drag tap · llR L rrL R', 'דראג טאפ בודד · llR L rrL R', 60);
+      return fin(graced('RLdRLRLdRL', 32, 0.5), 'Drags on 2 and 4, 8th taps', 'דראגים על 2 ו-4, נקישות בשמיניות', 60);
+    }
+    case 8: {
+      // Swiss army triplet (lR R L in 8th triplets) and the flam paradiddle (lR L R R rL R L L in 16ths).
+      if (op === 1) return fin(graced('f>RLRRf>LRLL', 64, 0.25), 'Flam paradiddle · lR L R R rL R L L', 'פלאם פאראדידל · lR L R R rL R L L', 60);
+      const p = op === 0 ? 'fRRL' : 'fLLR';
+      return fin(graced(p, 48, 1 / 3), `Swiss army triplet · ${op === 0 ? 'lR R L' : 'rL L R'}`, `טריולת הצבא השווייצרי · ${op === 0 ? 'lR R L' : 'rL L R'}`, 60);
+    }
+    default: {
+      // Single ratamacue: a drag into three strokes, the last accented — as 16ths (llR L R >L) or an 8th triplet into the
+      // next beat (llR L R | >L).
+      if (op === 0) {
+        const hits = rep(8, (k) => {
+          const a = k % 2 ? 'L' : 'R';
+          const b = a === 'R' ? 'L' : 'R';
+          return [...graced(`d${a}${b}${a}`, 3, 1 / 3, k * 2), { b: k * 2 + 1, v: 'snare' as DrumVoice, h: b, d: 1, acc: true }];
+        });
+        return fin(hits, 'Single ratamacue · triplet into the beat', 'רטמקיו בודד · טריולה אל הפעמה', 60);
+      }
+      const p = op === 1 ? 'dRLR>LdLRL>R' : 'dLRL>RdRLR>L';
+      return fin(graced(p, 64, 0.25), `Single ratamacue in 16ths · ${op === 1 ? 'llR L R L' : 'rrL R L R'}`, `רטמקיו בודד בשש-עשריות · ${op === 1 ? 'llR L R L' : 'rrL R L R'}`, 60);
     }
   }
 }
@@ -330,7 +412,8 @@ function grooveBars(l: Lanes, sub: number, bars: number, o: { hatHands?: string;
 function genRock(s: DrillSpec): Drill {
   const op = s.option ?? 0;
   const lv = levelOfKind(s.kind);
-  const fin = (hits: DH[], en: string, he: string, bpm: number, goal: DrumGoal = {}, tail = 0) => finish(s, hits, { title: t(en, he), bpm, bars: 8, mic: false, goal, tail, drums: undefined });
+  // 0.66: the band (bass on the kick + comping) under the grooves from level 2 on, behind the headphones gate.
+  const fin = (hits: DH[], en: string, he: string, bpm: number, goal: DrumGoal = {}, tail = 0) => finish(s, hits, { title: t(en, he), bpm, bars: 8, mic: false, goal, tail, drums: undefined, ...(lv >= 2 ? drumBand('rock', 8) : {}) });
   switch (lv) {
     case 1: {
       if (op === 1) return fin(grooveBars({ r: 'xxxxxxxx', s: '..x...x.', k: 'x...x...' }, 2, 8), 'Basic rock beat · ride 8ths', 'קצב רוק בסיסי · רייד בשמיניות', 70);
@@ -457,7 +540,7 @@ function genFills(s: DrillSpec): Drill {
 // ───────────────────────────── F14 reading ─────────────────────────────
 
 /** Deterministic random (per item) for the reading lines. */
-function rnd(seed: string): () => number {
+export function rnd(seed: string): () => number {
   let h = 2166136261;
   for (let i = 0; i < seed.length; i++) h = Math.imul(h ^ seed.charCodeAt(i), 16777619);
   return () => {
@@ -534,7 +617,7 @@ function genRead(s: DrillSpec): Drill {
 // ───────────────────────────── v2 families (DRUMS_AUDIT N1): F6, F7, F10, F12, F13 ─────────────────────────────
 
 /** `bars` bars of one groove bar. */
-const gb = (l: Lanes, sub: number, bars: number, o: Parameters<typeof bar>[3] = {}): DH[] => rep(bars, (k) => bar(l, sub, k * 4, o));
+export const gb = (l: Lanes, sub: number, bars: number, o: Parameters<typeof bar>[3] = {}): DH[] => rep(bars, (k) => bar(l, sub, k * 4, o));
 /** Hand to hand on the 16th grid: R on the beat and "&", L on "e" and "a". */
 const grid16 = (i: number): 'R' | 'L' => (i % 2 ? 'L' : 'R');
 const BB = '....x.......x...';
@@ -543,7 +626,7 @@ const BB = '....x.......x...';
 function genFunk(s: DrillSpec): Drill {
   const op = s.option ?? 0;
   const lv = levelOfKind(s.kind);
-  const fin = (hits: DH[], en: string, he: string, bpm: number, goal: DrumGoal, mic = false) => finish(s, hits, { title: t(en, he), bpm, bars: mic ? 4 : 8, mic, goal });
+  const fin = (hits: DH[], en: string, he: string, bpm: number, goal: DrumGoal, mic = false) => finish(s, hits, { title: t(en, he), bpm, bars: mic ? 4 : 8, mic, goal, ...(mic ? {} : drumBand('funk', 8)) });
   switch (lv) {
     case 1: {
       const sn = ['.g.gXg.g.g.gXg.g', '...gX..g...gX..g', '.gggX....gggX...'][op];
@@ -570,7 +653,7 @@ function genFunk(s: DrillSpec): Drill {
 function genShuffle(s: DrillSpec): Drill {
   const op = s.option ?? 0;
   const lv = levelOfKind(s.kind);
-  const fin = (hits: DH[], en: string, he: string, bpm: number, goal: DrumGoal = {}) => finish(s, hits, { title: t(en, he), bpm, bars: 8, mic: false, goal });
+  const fin = (hits: DH[], en: string, he: string, bpm: number, goal: DrumGoal = {}) => finish(s, hits, { title: t(en, he), bpm, bars: 8, mic: false, goal, ...drumBand('shuffle', 8) });
   const SN = '...x.....x..';
   switch (lv) {
     case 1: {
@@ -646,10 +729,46 @@ const ME: Record<'maqsum' | 'baladi' | 'saidi' | 'malfuf', { k: string; s: strin
   malfuf: { k: 'x.......x.......', s: '...x..x....x..x.', ka: '...x..x....x..x.', en: 'Malfuf', he: 'מלפוף' },
 };
 const takKa = (_i: number, c: string): 'R' | 'L' => (c === 'g' ? 'L' : 'R');
+/** Eighth-pulse meters: a written length never crosses its beat group (9/8 = 2+2+2+3: a dum on 1 is a quarter). */
+export function capToGroups(hits: DH[], meter: number, groups: number[]): DH[] {
+  const ends = groups.map((_, k) => groups.slice(0, k + 1).reduce((a, x) => a + x, 0));
+  return hits.map((h) => {
+    const pos = h.b - Math.floor(h.b / meter + 1e-9) * meter;
+    const end = ends.find((e) => e > pos + 1e-9) ?? meter;
+    return { ...h, d: Math.min(h.d ?? 1, end - pos) };
+  });
+}
+/** Ayyub (2/4, D--kD-T- in 16ths: dum 1, ka on the "a", dum 2, tak on its "&"), two cycles a 4/4 bar. */
+const AYYUB = { k: 'x...x...x...x...', s: '...g..x....g..x.' };
+/** Wahda kabira (4/4): one dum, the optional teks on the "&" of 2 and on 4 (Frishkopf, Arab durub chart). */
+const WAHDA = { k: 'x...............', s: '......x.....x...' };
+/**
+ * Odd meters, one character an eighth (Frishkopf's durub chart): karsilama 9/8 D.T.D.TT. (2+2+2+3), aqsaq 9/8 D.T.D.T.T
+ * (the last tek moved), dawr hindi 7/8 DTTD.T. (3+2+2), sama'i thaqil 10/8 D..T.DDT.. (3+2+2+3).
+ */
+const ODD: Record<'karsilama' | 'aqsaq' | 'hindi' | 'samai', { k: string; s: string; ka: string; groups: number[]; en: string; he: string }> = {
+  karsilama: { k: 'x...x....', s: '..x...xx.', ka: '.g.g....g', groups: [2, 2, 2, 3], en: 'Karsilama 9/8', he: 'קרשילמה 9/8' },
+  aqsaq: { k: 'x...x....', s: '..x...x.x', ka: '.g.g...g.', groups: [2, 2, 2, 3], en: 'Aqsaq 9/8', he: 'אקסאק 9/8' },
+  hindi: { k: 'x..x...', s: '.xx..x.', ka: '....g.g', groups: [3, 2, 2], en: 'Dawr hindi 7/8', he: 'דאוור הינדי 7/8' },
+  samai: { k: 'x....xx...', s: '...x...x..', ka: '.gg.g...gg', groups: [3, 2, 2, 3], en: "Sama'i thaqil 10/8", he: 'סמאעי תקיל 10/8' },
+};
+/** Chiftetelli (8 beats, slow; dum . tek tek . dum tek . | dum . dum . tek . . .) in 8ths over two 4/4 bars. */
+const CHIFTE = { k: 'x....x..x.x.....', s: '..xx..x.....x...', ka: '.g..g..g.g.g.g.g' };
+/** A Middle-Eastern band vamp (minor, the V7 for the leading tone). */
+const ME_CHART = ['Am', 'Am', 'Dm', 'E7'];
+const meBand = (bars: number) => ({ band: { style: 'pop' as const, bass: true }, chart: Array.from({ length: bars }, (_, i) => ME_CHART[i % 4]) });
+
 function genMideast(s: DrillSpec): Drill {
   const op = s.option ?? 0;
   const lv = levelOfKind(s.kind);
-  const fin = (hits: DH[], en: string, he: string, bpm: number, goal: DrumGoal = {}) => finish(s, hits, { title: t(en, he), bpm, bars: 8, mic: false, goal });
+  const fin = (hits: DH[], en: string, he: string, bpm: number, goal: DrumGoal = {}, band = false) => finish(s, hits, { title: t(en, he), bpm, bars: 8, mic: false, goal, ...(band ? meBand(8) : {}) });
+  const odd = (r: (typeof ODD)[keyof typeof ODD], withKa: boolean, bpm: number, bars = 8) => {
+    const m = r.k.length;
+    const l: Lanes = withKa ? { k: r.k, s: [...r.s].map((c, i) => (c === 'x' ? 'x' : r.ka[i])).join('') } : { k: r.k, s: r.s };
+    // One drill beat = one eighth (pulse 8): each bar is m beats; written lengths stop at the next stroke.
+    const hits = capToGroups(rep(bars, (b) => bar(l, 1, b * m, { sHand: takKa, maxD: 3 })), m, r.groups);
+    return finish(s, hits, { title: t(`${r.en}${withKa ? ' · with ka' : ''}`, `${r.he}${withKa ? ' · עם קה' : ''}`), bpm, bars, meter: m, pulse: 8, groups: r.groups, mic: false, goal: withKa ? { ghost: 0.8 } : {} });
+  };
   switch (lv) {
     case 1: {
       const r = [ME.malfuf, ME.maqsum, ME.maqsum][op];
@@ -668,10 +787,38 @@ function genMideast(s: DrillSpec): Drill {
       const r = [ME.maqsum, ME.baladi, ME.saidi][op];
       return fin(gb({ k: r.k, s: r.ka }, 4, 8, { sHand: takKa }), `${r.en} with ka (soft left hand)`, `${r.he} עם קה (יד שמאל רכה)`, 80, { ghost: 0.8 });
     }
-    default: {
+    case 4: {
       // The Mizrahi pop kit groove: the rhythm split on the kit — kick dums, snare taks, the hi-hat in 16ths.
       const r = [ME.maqsum, ME.baladi, ME.saidi][op];
-      return fin(gb({ h: 'xxxxxxxxxxxxxxxx', k: r.k, s: r.s }, 4, 8), `Mizrahi pop groove on the kit · ${r.en}`, `גרוב פופ מזרחי על המערכת · ${r.he}`, 90);
+      return fin(gb({ h: 'xxxxxxxxxxxxxxxx', k: r.k, s: r.s }, 4, 8), `Mizrahi pop groove on the kit · ${r.en}`, `גרוב פופ מזרחי על המערכת · ${r.he}`, 90, {}, true);
+    }
+    case 5: {
+      // Wahda (one dum a bar) and ayyub (the 2/4 zar groove), on kick and snare; ka = soft left hand.
+      if (op === 0) return fin(gb({ k: WAHDA.k, s: WAHDA.s }, 4, 8, { sHand: takKa }), 'Wahda: one dum a bar', 'וחדה: דום אחד בתיבה', 80);
+      const l: Lanes = op === 2 ? { t3: AYYUB.k, s: AYYUB.s } : { k: AYYUB.k, s: AYYUB.s };
+      return fin(gb(l, 4, 8, { sHand: takKa }), `Ayyub: dum, ka, dum, tak${op === 2 ? ' · dum on the floor tom' : ''}`, `איוב: דום, קה, דום, תק${op === 2 ? ' · הדום על טום הרצפה' : ''}`, 80, { ghost: 0.8 });
+    }
+    case 6: {
+      // Chiftetelli: the slow 8-beat cycle (two bars), then with ka in the gaps, then on the kit with the hi-hat.
+      const l: Lanes = op === 1 ? { k: CHIFTE.k, s: [...CHIFTE.s].map((c, i) => (c === 'x' ? 'x' : CHIFTE.ka[i])).join('') } : op === 2 ? { h: 'x'.repeat(16), k: CHIFTE.k, s: CHIFTE.s } : { k: CHIFTE.k, s: CHIFTE.s };
+      const hits = rep(4, (k) => bar(l, 2, k * 8, { sHand: takKa, maxD: 2 }));
+      const nm = [t('dum and tak', 'דום ותק'), t('with ka', 'עם קה'), t('on the kit, hi-hat 8ths', 'על המערכת, היי־האט בשמיניות')][op];
+      return fin(hits, `Chiftetelli · ${nm.en}`, `צ׳יפטטלי · ${nm.he}`, 60, op === 1 ? { ghost: 0.8 } : {});
+    }
+    case 7:
+      return op === 0 ? odd(ODD.karsilama, false, 200) : op === 1 ? odd(ODD.karsilama, true, 200) : odd(ODD.aqsaq, false, 200);
+    case 8:
+      return op === 0 ? odd(ODD.hindi, false, 180) : op === 1 ? odd(ODD.samai, false, 180) : odd(ODD.hindi, true, 180);
+    default: {
+      // Switch on cue: two bars each, the next rhythm on the 1 (the score shows where).
+      const order = [
+        [ME.maqsum, ME.saidi, AYYUB, ME.maqsum],
+        [ME.baladi, ME.maqsum, ME.saidi, AYYUB],
+        [AYYUB, ME.maqsum, ME.baladi, ME.saidi],
+      ][op];
+      const hits = rep(8, (b) => bar({ k: order[b >> 1].k, s: order[b >> 1].s.replace(/g/g, '.') }, 4, b * 4, { sHand: takKa }));
+      const nm = (r: { k: string; s: string; en?: string; he?: string }, en: boolean) => (r === AYYUB ? (en ? 'ayyub' : 'איוב') : en ? r.en!.toLowerCase() : r.he!);
+      return fin(hits, `Switch on cue · ${order.map((r) => nm(r, true)).join(' → ')}`, `החלפה לפי הסימן · ${order.map((r) => nm(r, false)).join(' ← ')}`, 90, {}, true);
     }
   }
 }
@@ -732,6 +879,12 @@ export function generateDrums(spec: DrillSpec): Drill {
       return genMideast(s);
     case 'd-feet':
       return genFeet(s);
+    case 'd-ear':
+      return generateDrumEar(s);
+    case 'd-jazz':
+      return generateJazz(s);
+    case 'd-latin':
+      return generateLatin(s);
     default:
       throw new Error(`Not a drum family: ${s.family}`);
   }
@@ -769,11 +922,17 @@ export function drumFamilies(): DrumFamilyDef[] {
       L('d-rolls', 5, 'Single-stroke four and seven', 'ארבע ושבע מכות בודדות', 'stroke4', 3, [70, 110], '1/16T', true),
       L('d-rolls', 6, '5-, 7- and 9-stroke rolls (open)', 'גלגולים של 5, 7 ו-9 מכות (פתוחים)', 'roll', 3, [70, 100], '1/16', true),
     ]),
-    fam('d-diddles', 'Paradiddles', 'פאראדידלים', [
+    fam('d-diddles', 'Paradiddles, flams, drags', 'פאראדידלים, פלאמים, דראגים', [
       L('d-diddles', 1, 'Single paradiddle', 'פאראדידל', 'para', 3, [60, 100], '1/16', true),
       L('d-diddles', 2, 'Paradiddle with accents', 'פאראדידל עם הדגשות', 'para-acc', 3, [70, 110], '1/16', true),
       L('d-diddles', 3, 'Inverted and reverse paradiddles', 'פאראדידל הפוך ומהסוף', 'inverted', 3, [60, 100], '1/16', true),
       L('d-diddles', 4, 'Double paradiddle, paradiddle-diddle', 'פאראדידל כפול, פאראדידל-דידל', 'double', 3, [60, 100], '1/8T', true),
+      // F3 L5–9 (0.66): flams and drags — MIDI only (the grace note is measured, 15–40 ms before the stroke).
+      L('d-diddles', 5, 'Flams', 'פלאמים', 'flam', 3, [50, 80], '1/4', false),
+      L('d-diddles', 6, 'Flam accent, flam tap', 'פלאם אקסנט, פלאם טאפ', 'flam-acc', 3, [60, 90], '1/8T', false),
+      L('d-diddles', 7, 'Drags and the single drag tap', 'דראגים ודראג טאפ', 'drag', 3, [60, 90], '1/8', false),
+      L('d-diddles', 8, 'Swiss army triplet, flam paradiddle', 'טריולת הצבא השווייצרי, פלאם פאראדידל', 'swiss', 3, [60, 100], '1/8T', false),
+      L('d-diddles', 9, 'Single ratamacue', 'רטמקיו בודד', 'ratamacue', 3, [60, 90], '1/8T', false),
     ]),
     fam('d-time', 'Time & subdivision', 'זמן וחלוקה', [
       L('d-time', 1, 'Quarters with the click', 'רבעים עם הקליק', 'pulse', 3, [60, 120], '1/4', true),
@@ -831,11 +990,47 @@ export function drumFamilies(): DrumFamilyDef[] {
       L('d-mideast', 2, "Baladi and sa'idi", 'בלדי וסעידי', 'baladi', 3, [80, 110], '1/16', false),
       L('d-mideast', 3, 'With ka: the soft left hand', 'עם קה: יד שמאל רכה', 'ka', 3, [80, 110], '1/16', false),
       L('d-mideast', 4, 'Mizrahi pop groove on the kit', 'גרוב פופ מזרחי על המערכת', 'kit', 3, [90, 115], '1/16', false),
+      // 0.66: wahda and ayyub, chiftetelli, the odd meters (♪ = eighths), switching on cue.
+      L('d-mideast', 5, 'Wahda and ayyub', 'וחדה ואיוב', 'ayyub', 3, [80, 120], '1/16', false),
+      L('d-mideast', 6, 'Chiftetelli', 'צ׳יפטטלי', 'chifte', 3, [60, 80], '1/8', false),
+      L('d-mideast', 7, 'Karsilama and aqsaq, 9/8', 'קרשילמה ואקסאק, 9/8', '98', 3, [200, 260], '1/8', false),
+      L('d-mideast', 8, '7/8 and 10/8', '7/8 ו-10/8', 'odd', 3, [180, 240], '1/8', false),
+      L('d-mideast', 9, 'Switch rhythms on cue', 'החלפת מקצבים לפי הסימן', 'switch', 3, [90, 110], '1/16', false),
     ]),
     fam('d-feet', 'Feet', 'רגליים', [
       L('d-feet', 1, 'Hi-hat foot on 2 and 4', 'רגל היי־האט על 2 ו-4', 'chick', 3, [70, 110], '1/4', false),
       L('d-feet', 2, 'Groove with the hi-hat foot', 'גרוב עם רגל ההיי־האט', 'groove', 3, [80, 110], '1/8', false),
       L('d-feet', 3, 'Kick 8ths under a groove', 'קיק בשמיניות מתחת לגרוב', 'kick8', 3, [60, 110], '1/8', false),
+    ]),
+    // 0.66: the drummer's ear (call and response, measured on the kit; L1–3 also on a pad), jazz (F8) and Latin (F11).
+    fam('d-ear', 'Drummer’s ear', 'שמיעה למתופפים', [
+      L('d-ear', 1, 'Echo a snare rhythm, 8ths', 'הד למקצב סנר, שמיניות', 'echo8', 3, [70, 100], '1/8', true),
+      L('d-ear', 2, 'Echo a snare rhythm, 16ths', 'הד למקצב סנר, שש-עשריות', 'echo16', 3, [60, 90], '1/16', true),
+      L('d-ear', 3, 'Snare dictation: play it, write it', 'הכתבה בסנר: לנגן ולכתוב', 'write', 3, [60, 80], '1/16', true),
+      L('d-ear', 4, 'Echo a groove', 'הד לגרוב', 'groove', 3, [70, 100], '1/8', false),
+      L('d-ear', 5, 'Echo a groove and fill, land on 1', 'הד לגרוב ומעבר, נחיתה על 1', 'fill', 3, [70, 100], '1/16', false),
+      L('d-ear', 6, 'Spot the change', 'לזהות את השינוי', 'spot', 4, [80, 110], '1/8', false),
+      L('d-ear', 7, 'Style by ear', 'סגנון בשמיעה', 'style', 6, [80, 100], 'mixed', false),
+      L('d-ear', 8, 'Groove dictation', 'הכתבת גרוב', 'kitwrite', 4, [70, 90], '1/8', false),
+    ]),
+    fam('d-jazz', 'Jazz', 'ג׳אז', [
+      L('d-jazz', 1, 'The ride pattern', 'תבנית הרייד', 'ride', 3, [100, 160], '1/8T', false),
+      L('d-jazz', 2, 'Hi-hat foot on 2 and 4', 'רגל היי־האט על 2 ו-4', 'foot', 3, [100, 160], '1/8T', false),
+      L('d-jazz', 3, 'Feathered kick', 'קיק מרוכך (פת׳רינג)', 'feather', 3, [100, 160], '1/8T', false),
+      L('d-jazz', 4, 'Comping on the snare', 'קומפינג בסנר', 'comp', 4, [110, 160], '1/8T', false),
+      L('d-jazz', 5, 'Comping, snare and kick', 'קומפינג, סנר וקיק', 'comp2', 4, [110, 160], '1/8T', false),
+      L('d-jazz', 6, 'Jazz waltz', 'ואלס ג׳אז', 'waltz', 3, [120, 170], '1/8T', false),
+      L('d-jazz', 7, 'Up-tempo 2-feel', 'טמפו מהיר בתחושת 2', 'up', 3, [180, 240], '1/8T', false),
+      L('d-jazz', 8, 'Trading 4s', 'חילופי 4', 'trade', 3, [120, 160], '1/8T', false),
+    ]),
+    fam('d-latin', 'Latin & Brazilian', 'לטיני וברזילאי', [
+      L('d-latin', 1, 'Bossa nova', 'בוסה נובה', 'bossa', 3, [110, 140], '1/8', false),
+      L('d-latin', 2, 'Samba', 'סמבה', 'samba', 3, [80, 110], '1/16', false),
+      L('d-latin', 3, 'Son and rumba clave', 'קלאבה סון ורומבה', 'clave', 3, [90, 120], '1/8', false),
+      L('d-latin', 4, 'Cascara and clave', 'קסקרה וקלאבה', 'cascara', 3, [90, 120], '1/8', false),
+      L('d-latin', 5, 'Cha-cha-chá bell', 'פעמון צ׳ה-צ׳ה-צ׳ה', 'chacha', 3, [100, 130], '1/8', false),
+      L('d-latin', 6, '6/8 bembé', 'במבה 6/8', 'bembe', 3, [240, 330], '1/8', false),
+      L('d-latin', 7, 'Baião', 'באיון', 'baiao', 3, [90, 120], '1/16', false),
     ]),
   ];
 }

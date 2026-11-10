@@ -1,7 +1,7 @@
 // BASS_VALIDATION (second round) fixes: each test is a [run]-style check of one finding (N1 to N13).
 import { describe, expect, it } from 'vitest';
 import { applyTake, itemPass, newItem } from '../src/engine/drills/ladder';
-import { itemTargetBpm, levelDrills, levelOfDrill, levelStars, LOW_B_LEVELS, shownFamilies } from '../src/engine/drills/plan';
+import { itemTargetBpm, levelDrills, levelOfDrill, levelStars, LOW_B_LEVELS, SIX_STRING_LEVELS, shownFamilies } from '../src/engine/drills/plan';
 import { ladderHiddenFor, withLadderFacts, workoutCreditsStep } from '../src/engine/ladderFacts';
 import { eligible, stepCatalogue, type PathFacts } from '../src/engine/path';
 import { guitarCatalog, type GuitarLevelDef } from '../src/engine/drills/guitar';
@@ -402,8 +402,9 @@ describe('N10 low-B levels only with a low B', () => {
   it('left out of the bass path on a 4-string', () => {
     const step = stepCatalogue().find((s) => s.id === 'tech:b-walk-17')!;
     const base = { leaveOut: [], packs: [], plays: ['bass'], track: undefined, course: 'bass', ladderFamilies: ['b-walk'] } as unknown as Parameters<typeof eligible>[1];
-    expect(ladderHiddenFor('bass', 'bass')).toEqual(LOW_B_LEVELS);
-    expect(ladderHiddenFor('bass', 'bass5')).toEqual([]);
+    expect(ladderHiddenFor('bass', 'bass')).toEqual([...LOW_B_LEVELS, ...SIX_STRING_LEVELS]);
+    expect(ladderHiddenFor('bass', 'bass5')).toEqual(SIX_STRING_LEVELS);
+    expect(ladderHiddenFor('bass', 'bass6')).toEqual([]);
     expect(eligible(step, { ...base, ladderHidden: ladderHiddenFor('bass', 'bass') })).toBe(false);
     expect(eligible(step, { ...base, ladderHidden: ladderHiddenFor('bass', 'bass5') })).toBe(eligible(step, base));
   });

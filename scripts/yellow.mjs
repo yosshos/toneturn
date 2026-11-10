@@ -15,7 +15,9 @@ for (const h of process.argv.slice(2)) {
     const f = (x) => { x /= 255; return x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4; };
     const lum = (c) => 0.2126 * f(c.r) + 0.7152 * f(c.g) + 0.0722 * f(c.b);
     const ratio = (a, b) => { const A = lum(a), B = lum(b); return (Math.max(A, B) + 0.05) / (Math.min(A, B) + 0.05); };
-    const bgOf = (el) => { for (let e = el; e; e = e.parentElement) { const cs = getComputedStyle(e); if (cs.backgroundImage && cs.backgroundImage !== 'none' && !cs.backgroundImage.includes('url')) return null; const c = parse(cs.backgroundColor); if (c && c.a > 0.5) return c; } return parse(getComputedStyle(document.body).backgroundColor); };
+    // A gradient background counts as its lightest stop (the worst case for dark text) and its darkest (for light text): use the average.
+    const gradOf = (img) => { const cs = [...img.matchAll(/rgba?\([^)]+\)/g)].map((m) => parse(m[0])).filter(Boolean); if (!cs.length) return null; const n = cs.length; return { r: cs.reduce((a, c) => a + c.r, 0) / n, g: cs.reduce((a, c) => a + c.g, 0) / n, b: cs.reduce((a, c) => a + c.b, 0) / n, a: 1 }; };
+    const bgOf = (el) => { for (let e = el; e; e = e.parentElement) { const cs = getComputedStyle(e); if (cs.backgroundImage && cs.backgroundImage !== 'none' && !cs.backgroundImage.includes('url') && cs.backgroundClip !== 'text' && cs.webkitBackgroundClip !== 'text') { const g = gradOf(cs.backgroundImage); if (g) return g; } const c = parse(cs.backgroundColor); if (c && c.a > 0.5) return c; } return parse(getComputedStyle(document.body).backgroundColor); };
     const yellow = (c) => c && c.r > 225 && c.g > 190 && c.b < 200 && c.r - c.b > 60;
     const out = [];
     const desc = (el) => `${el.tagName.toLowerCase()}.${String(el.className?.baseVal ?? el.className).slice(0, 40)} in ${(el.closest('[class]')?.parentElement?.className?.baseVal ?? el.closest('[class]')?.parentElement?.className ?? '').toString().slice(0, 30)}`;
@@ -33,6 +35,8 @@ for (const h of process.argv.slice(2)) {
         continue;
       }
       const own = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim().length > 0);
+      // Text painted by a gradient (background-clip: text): its stops are the text colour.
+      if (own && (cs.webkitTextFillColor === 'rgba(0, 0, 0, 0)' || cs.color === 'rgba(0, 0, 0, 0)') && cs.backgroundImage !== 'none') { const g = gradOf(cs.backgroundImage); const pb = bgOf(el.parentElement); if (g && pb) { const rr = ratio(g, pb); if (rr < 3) out.push(`gradient-text ratio=${rr.toFixed(2)} "${el.textContent.trim().slice(0, 25)}" ${desc(el)}`); } continue; }
       if (own) { const fg = parse(cs.color); const rr = ratio(fg, bg); if (rr < 3 || (yellow(bg) && rr < 4.5)) out.push(`text ${cs.color} on rgb(${bg.r},${bg.g},${bg.b}) ratio=${rr.toFixed(2)} "${el.textContent.trim().slice(0, 25)}" ${desc(el)}`); }
     }
     return out;

@@ -611,6 +611,138 @@ TOPIC_GEN['bass-shapes'] = {
 };
 TOPIC_TAGS['bass-shapes'] = (l) => (l === 3 ? tg(['instrument', 'fretboard', 0.6], ['cadences', 'progression', 0.4]) : tg(['instrument', 'fretboard', 0.6], ['chords', 'quality', 0.4]));
 
+// 0.66: the bass's own intervals as shapes. The bass is tuned in fourths all the way, so every shape holds on every
+// string pair (no G–B shift as on the guitar): the 4th is the same fret one string up, the 5th two frets up, the major
+// 3rd one fret back, the octave two strings up and two frets up, the 10th three strings up (minor: same fret, major: +1).
+TOPIC_GEN['bass-intervals'] = {
+  title: { en: 'Bass interval shapes', he: 'צורות מרווחים בבס' },
+  skill: 'instrument',
+  forPlays: ['bass'],
+  levels: [
+    { en: 'Octave shapes', he: 'צורות של אוקטבה' },
+    { en: '3rds, 4ths and 5ths across two strings', he: 'טרצות, קוורטות וקווינטות על שני מיתרים' },
+    { en: 'Every interval (all fourths: one shape everywhere)', he: 'כל המרווחים (הכול בקוורטות: צורה אחת בכל מקום)' },
+    { en: '10ths: from the E string to the G string', he: 'דצימות: ממיתר E למיתר G' },
+    { en: 'Hear it, find it from a given fret', he: 'לשמוע ולמצוא מסריג נתון' },
+  ],
+  gen(seed, level, id) {
+    const rnd = rng(seed);
+    const base = { id, topic: 'bass-intervals', level, seed, skill: 'instrument' as const, surface: 'neck' as const, instrument: 'bass' as const, match: 'exact' as const, as: 'seq' as const, difficulty: [950, 1100, 1250, 1350, 1400][level - 1] };
+    for (let tries = 0; ; tries++) {
+      // Level 1: up from the E or A string, or down from the D or G string (two strings down, two frets back).
+      const down = level === 1 && rnd() < 0.35;
+      const s = level === 1 ? (down ? pickR(rnd, [2, 1]) : pickR(rnd, [4, 3])) : level === 4 ? 4 : pickR(rnd, [4, 3, 2]);
+      const f = (level === 2 || level === 4 ? 2 : 1) + Math.floor(rnd() * 8);
+      const semis = level === 1 ? (down ? -12 : 12) : level === 2 ? pickR(rnd, [3, 4, 5, 7]) : level === 4 ? pickR(rnd, [15, 16]) : 1 + Math.floor(rnd() * 12);
+      const m = noteAt(BASS, s, f);
+      // Where the shape lands: the octave two strings away, the 10th on the G string, small intervals (up to a major 3rd) on the same
+      // string from level 3, the rest one string up.
+      const to = level === 1 ? (down ? s + 2 : s - 2) : level === 4 ? 1 : level >= 3 && semis <= 4 ? s : s - 1;
+      const f2 = m + semis - BASS.open[to - 1];
+      if ((f2 < 0 || f2 > 14 || to < 1 || to > 4) && tries < 60) continue;
+      const given = { str: s, fret: f };
+      const n = noteName(m);
+      const sn = strName(BASS, to);
+      if (level === 5) {
+        return placeQ({
+          ...base,
+          ask: { en: `The first note is here (string ${s}, fret ${f}). Listen, then find the second.`, he: `הצליל הראשון כאן (מיתר ${s}, סריג ${f}). הקשיבו, ומצאו את השני.` },
+          target: [m + semis],
+          neck: { dots: [given], frets: [0, 14] },
+          stimulus: [notesStim([m, m + semis], 0.8)],
+        });
+      }
+      const iv = level === 4 ? (semis === 16 ? { en: 'major 10th', he: 'דצימה גדולה' } : { en: 'minor 10th', he: 'דצימה קטנה' }) : IV[Math.abs(semis)];
+      return placeQ({
+        ...base,
+        ask:
+          level === 1
+            ? down
+              ? { en: `This is ${n.en} (string ${s}, fret ${f}). Find it an octave down, on ${sn.en}.`, he: `זה ${n.he} (מיתר ${s}, סריג ${f}). מצאו אותו אוקטבה למטה, על ${sn.he}.` }
+              : { en: `This is ${n.en} (string ${s}, fret ${f}). Find it an octave up, on ${sn.en}.`, he: `זה ${n.he} (מיתר ${s}, סריג ${f}). מצאו אותו אוקטבה למעלה, על ${sn.he}.` }
+            : { en: `From the dot, find the ${iv.en} above on ${sn.en}.`, he: `מהנקודה, מצאו את ה${iv.he} שמעליה על ${sn.he}.` },
+        target: [m + semis],
+        neck: { dots: [given], onString: to, frets: [0, 14] },
+        stimulus: [{ kind: 'note', midi: m, duration: 1 }],
+      });
+    }
+  },
+};
+TOPIC_TAGS['bass-intervals'] = tg(['instrument', 'shapes', 0.6], ['intervals', 'melodic', 0.4]);
+
+const PENTA_MIN = [0, 3, 5, 7, 10];
+/** Every note of a scale inside a fret window on a tuning, strings low → high, strictly rising (a box / position). */
+function scaleWindow(t: Tuning, rootPc: number, ints: number[], lo: number, hi: number): NeckPos[] {
+  const pcs = new Set(ints.map((i) => mod12(rootPc + i)));
+  const out: NeckPos[] = [];
+  let last = -Infinity;
+  for (let s = t.open.length; s >= 1; s--)
+    for (let f = Math.max(0, lo); f <= hi; f++) {
+      const p = noteAt(t, s, f);
+      if (pcs.has(mod12(p)) && p > last) {
+        out.push({ str: s, fret: f });
+        last = p;
+      }
+    }
+  return out;
+}
+/** Minor-pentatonic position n (1–5) on the bass: position n starts on the scale's n-th note on the E string (as b-scale 10). */
+export function bassPentaBox(n: number, rootPc: number, t: Tuning = BASS): NeckPos[] {
+  const low = t.open.length;
+  const f0 = mod12(rootPc + PENTA_MIN[(n - 1) % 5] - t.open[low - 1]) || 12;
+  const lo = f0 > 12 ? f0 - 12 : f0;
+  return scaleWindow(t, rootPc, PENTA_MIN, Math.max(0, lo - 1), lo + 3);
+}
+
+// 0.66: scale boxes on the bass (4-string EADG; the 3-notes-per-string patterns are a 6-string technique level, b-scale 11).
+TOPIC_GEN['bass-scales'] = {
+  title: { en: 'Scale boxes on the bass', he: 'בוקסים של סולמות בבס' },
+  skill: 'instrument',
+  forPlays: ['bass'],
+  levels: [
+    { en: 'Major scale from a root on the E or A string', he: "סולם מז'ור משורש על מיתר E או A" },
+    { en: 'Minor pentatonic, box 1 (for fills)', he: 'פנטטונית מינורית, בוקס 1 (למילויים)' },
+    { en: 'Which pentatonic box (1–5)?', he: 'איזה בוקס פנטטוני (1–5)?' },
+  ],
+  gen(seed, level, id) {
+    const rnd = rng(seed);
+    const diff = [1000, 1100, 1250][level - 1];
+    const base = { id, topic: 'bass-scales', level, seed, skill: 'instrument' as const, surface: 'neck' as const, match: 'exact' as const, difficulty: diff };
+    if (level === 1) {
+      // One octave in one hand position (one finger per fret): from E-string roots up to fret 7, A-string roots too.
+      const s = rnd() < 0.5 ? 4 : 3;
+      const f = 1 + Math.floor(rnd() * 7);
+      const r = noteAt(BASS, s, f);
+      const n = noteName(r);
+      const sn = strName(BASS, s);
+      return placeQ({ ...base, instrument: 'bass', ask: { en: `Play ${n.en} major, one octave up, from ${n.en} on ${sn.en}.`, he: `נגנו ${n.he} מז'ור, אוקטבה אחת למעלה, מ־${n.he} על ${sn.he}.` }, target: [...MAJ, 12].map((x) => r + x), as: 'seq', neck: { strings: [s, s - 1, s - 2], frets: [Math.max(0, f - 1), f + 4], dots: [{ str: s, fret: f }] } });
+    }
+    const root = Math.floor(rnd() * 12);
+    if (level === 2) {
+      const ps = bassPentaBox(1, root);
+      const fs = ps.map((p) => p.fret);
+      const n = rootName(root, true);
+      return placeQ({ ...base, instrument: 'bass', ask: { en: `Play ${n.en} minor pentatonic, box 1, lowest note to highest.`, he: `נגנו ${n.he} פנטטונית מינורית, בוקס 1, מהצליל הנמוך לגבוה.` }, target: midisAt(BASS, ps), as: 'seq', neck: { frets: [Math.max(0, Math.min(...fs) - 1), Math.max(...fs) + 1], dots: [ps[0]] } });
+    }
+    const box = 1 + Math.floor(rnd() * 5);
+    const ps = bassPentaBox(box, root);
+    const lo = Math.min(...ps.map((p) => p.fret));
+    const names: Names = {};
+    const choices = ['1', '2', '3', '4', '5'];
+    const words = ['one', 'two', 'three', 'four', 'five'];
+    choices.forEach((c, i) => (names[c] = nm(`Box ${c}`, `בוקס ${c}`, `box ${words[i]}`)));
+    const n = rootName(root, true);
+    return choiceQ({
+      id, topic: 'bass-scales', level, seed, skill: 'instrument', difficulty: diff,
+      ask: { en: `${n.en} minor pentatonic. Which box?`, he: `${n.he} פנטטונית מינורית. איזה בוקס?` },
+      names, answer: String(box), choices,
+      stimulus: [notesStim(midisAt(BASS, ps), 0.2)],
+      diagram: { kind: 'neck', instrument: 'bass', dots: ps.map((p) => ({ ...p, ...(mod12(noteAt(BASS, p.str, p.fret)) === root ? { root: true } : {}) })), baseFret: Math.max(1, lo - 1), frets: 6 },
+    });
+  },
+};
+TOPIC_TAGS['bass-scales'] = tg(['instrument', 'fretboard', 0.6], ['modes', 'scales', 0.4]);
+
 // ======================================================================= notes on the keys
 
 const KEY_CHORDS: { iv: number[]; en: string; he: string }[] = [

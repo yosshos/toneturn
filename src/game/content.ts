@@ -375,6 +375,8 @@ export function answerWord(_q: Question, a: Answer, l: Lang, nm: Naming = 'lette
   const asPc = typeof a === 'string' ? pcFromKey(a) : null;
   if (asPc) return spokenNote(asPc, nm, l);
   if (_q.kind === 'rhythm-dict' && typeof a === 'string') return describeRhythm(rhythmFromKey(a, _q.rhythm.bars), 'names', l);
+  // A tapped rhythm's 'answer' is the grade word: show the rhythm itself (0.66).
+  if (_q.kind === 'rhythm-read') return describeRhythm(_q.rhythm, 'names', l);
   const words: Record<string, Record<Lang, string>> = {
     maj: { en: 'major', he: "מז׳ור" },
     min: { en: 'minor', he: 'מינור' },
@@ -691,7 +693,12 @@ function revealCore(q: Question, l: Lang, nm: Naming): string {
     case 'run-id':
       return l === 'en' ? `It was ${answerWord(q, q.answer, l)}. Your answer, then the right one.` : `זה היה ${answerWord(q, q.answer, l)}. התשובה שלכם, ואז הנכונה.`;
     case 'rhythm-read':
-      return l === 'en' ? `Here is how it goes: ${unspoken(describeRhythm(q.rhythm, 'syllables', l))}.` : `ככה זה נשמע: ${unspoken(describeRhythm(q.rhythm, 'syllables', l))}.`;
+      {
+        // 0.66 (owner): a long passage ran under the buttons — the first two bars are enough to hear how it goes.
+        const bars = unspoken(describeRhythm(q.rhythm, 'syllables', l)).split(' | ');
+        const shown = bars.length > 2 ? `${bars.slice(0, 2).join(' | ')} …` : bars.join(' | ');
+        return l === 'en' ? `Here is how it goes: ${shown}` : `ככה זה נשמע: ${shown}`;
+      }
     case 'rhythm-dict':
       return l === 'en' ? `It was: ${describeRhythm(q.rhythm, 'names', l)}. Your rhythm, then the right one.` : `זה היה: ${describeRhythm(q.rhythm, 'names', l)}. הקצב שלכם, ואז הנכון.`;
     case 'degree':

@@ -24,6 +24,9 @@ export function GrooveTrainerScreen({ settings, onBack }: { settings: Settings; 
   const [bpm, setBpm] = useState(90);
   const [running, setRunning] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  /** 0.66 (owner): the first bar is a count-in — a woodblock, counted down on the pad. */
+  const [cd, setCd] = useState(0);
+  const onBeat = (i: number) => setCd(i < 4 ? 4 - i : 0);
   const [best, setBest] = useState(0);
   const [target, setTarget] = useState(0);
   const [meter, setMeter] = useState<{ mean: number; share: number } | null>(null);
@@ -59,8 +62,9 @@ export function GrooveTrainerScreen({ settings, onBack }: { settings: Settings; 
   const playClicks = async (beats: { b: number; accent: boolean; on: boolean }[], beatMs: number, c: AbortController, extra?: number[]) => {
     await piano.unlock();
     let t0 = 0;
-    const tl = { clicks: beats.filter((x) => x.on).map((x) => ({ t: (x.b * beatMs) / 1000, accent: x.accent })), wood: (extra ?? []).map((b) => (b * beatMs) / 1000), responseAt: 0, responseEnd: ((beats.length + 0.5) * beatMs) / 1000 };
-    await piano.playTimeline(tl, c.signal, undefined, (perf) => (t0 = perf)).catch(() => {});
+    const tl = { clicks: beats.filter((x) => x.on).map((x) => ({ t: (x.b * beatMs) / 1000, accent: x.accent, count: x.b < 4 })), wood: (extra ?? []).map((b) => (b * beatMs) / 1000), responseAt: 0, responseEnd: ((beats.length + 0.5) * beatMs) / 1000 };
+    await piano.playTimeline(tl, c.signal, onBeat, (perf) => (t0 = perf)).catch(() => {});
+    setCd(0);
     return t0;
   };
 
@@ -118,8 +122,9 @@ export function GrooveTrainerScreen({ settings, onBack }: { settings: Settings; 
       setMeter({ mean: ps.mean, share: ps.share });
     }, 250);
     await piano.unlock();
-    const tl = { clicks: beats.map((x) => ({ t: (x.b * beatMs) / 1000, accent: x.accent })), wood: [], responseAt: 0, responseEnd: ((beats.length + 0.5) * beatMs) / 1000 };
-    await piano.playTimeline(tl, c.signal, undefined, (perf) => (t0Ref.t = perf)).catch(() => {});
+    const tl = { clicks: beats.map((x) => ({ t: (x.b * beatMs) / 1000, accent: x.accent, count: x.b < 4 })), wood: [], responseAt: 0, responseEnd: ((beats.length + 0.5) * beatMs) / 1000 };
+    await piano.playTimeline(tl, c.signal, onBeat, (perf) => (t0Ref.t = perf)).catch(() => {});
+    setCd(0);
     clearInterval(live);
     const offs = matchTaps(taps.current, t0Ref.t, beatMs, beats.length);
     void recordGroove(beats.map((x) => x.b), offs, bpm, 4);
@@ -217,7 +222,13 @@ export function GrooveTrainerScreen({ settings, onBack }: { settings: Settings; 
         </div>
       )}
       <button className={`gt-pad ${flash ? 'hit' : ''}`} onPointerDown={tap} disabled={!running} aria-label={tx.tap} data-groove-pad="1">
-        {tx.tap}
+        {cd ? (
+          <span className="tap-countdown" key={`c${cd}`}>
+            {cd}
+          </span>
+        ) : (
+          tx.tap
+        )}
       </button>
       {running ? (
         <button className="btn mega" onClick={stop}>

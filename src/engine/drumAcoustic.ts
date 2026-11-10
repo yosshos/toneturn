@@ -376,9 +376,12 @@ export function buildCal(samples: Partial<Record<AcousticVoice, number[][]>>): {
 /**
  * Levels an acoustic kit by microphone can play and be measured on, besides every single-surface level: 2–4 voices
  * from kick / snare / toms / hat-ride-crash; no open-hat articulation, no hi-hat foot; ghost notes only where they sound
- * alone (between the hat strokes, or with no hat). Left out: rock 3 and 6 (open hat), rock-6 disco, funk 4 and the
- * double shuffle (ghosts under the hat), the feet levels 1–2 (hi-hat foot), kit reading (open hat items). New families
- * are left out until checked.
+ * alone (between the hat strokes, or with no hat). Left out: rock 3 and 6 (open hat), funk 4 and the double shuffle
+ * (ghosts under the hat), the feet levels 1–2 (hi-hat foot), kit reading (open hat items); flams and drags (two hits
+ * within 15–40 ms merge into one onset: MIDI only); jazz (swing ride with the hi-hat foot, cross-stick) and Latin
+ * (cross-stick clave, bell, hi-hat foot) — a cross-stick is not a snare to the microphone; the drummer's ear L6 (open
+ * hat) and L7 (style by ear: foot, cross-stick). Middle-Eastern L1–9 are dum (kick / floor tom), tak (snare), ka (a
+ * soft snare between) and at most a hi-hat: all in. New families are left out until checked.
  */
 export const ACOUSTIC_LEVELS = new Set([
   'd-rock-1', 'd-rock-2', 'd-rock-4', 'd-rock-5', 'd-rock-7', 'd-rock-8',
@@ -386,8 +389,9 @@ export const ACOUSTIC_LEVELS = new Set([
   'd-funk-2', 'd-funk-3',
   'd-shuffle-1', 'd-shuffle-2', 'd-shuffle-3',
   'd-indep-1', 'd-indep-2', 'd-indep-3', 'd-indep-4',
-  'd-mideast-1', 'd-mideast-2', 'd-mideast-3', 'd-mideast-4',
+  'd-mideast-1', 'd-mideast-2', 'd-mideast-3', 'd-mideast-4', 'd-mideast-5', 'd-mideast-6', 'd-mideast-7', 'd-mideast-8', 'd-mideast-9',
   'd-feet-3',
+  'd-ear-4', 'd-ear-5', 'd-ear-8',
 ]);
 /** A drum drill's level id (`d-rock-2`). */
 export const drumLevelId = (d: Pick<Drill, 'spec'>): string => `${d.spec.family}-${Number(String(d.spec.kind).split(':')[0]) || 1}`;

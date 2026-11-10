@@ -1429,11 +1429,11 @@ function genLead(s: DrillSpec, tu: Tuning): Drill {
             [3, 2, 1],
           ])
             push(2, ...set.map((st) => ({ s: st, f: fr, tech: 'harmonic' as GuitarTechnique, stroke: 'D' as Stroke })));
-        title = t('Harmonic chords at frets 12, 7, 5', 'אקורדי הרמוניות בסריגים 12, 7, 5');
+        title = t('Harmonic chords at frets 12, 7, 5', 'אקורדי הרמוניקים בסריגים 12, 7, 5');
       } else {
         const frets = op === 1 ? [4, 9, 7] : [12, 7, 5];
         for (const fr of frets) for (let st = 6; st >= 1; st--) push(1, { s: st, f: fr, tech: 'harmonic' });
-        title = op === 1 ? t('Natural harmonics at frets 4, 9, 7', 'הרמוניות טבעיות בסריגים 4, 9, 7') : t('Natural harmonics at frets 12, 7, 5', 'הרמוניות טבעיות בסריגים 12, 7, 5');
+        title = op === 1 ? t('Natural harmonics at frets 4, 9, 7', 'הרמוניקים טבעיים בסריגים 4, 9, 7') : t('Natural harmonics at frets 12, 7, 5', 'הרמוניקים טבעיים בסריגים 12, 7, 5');
       }
       return finish(s, tu, evs, { title, bpm: 60, evenness: true });
     }
@@ -2473,7 +2473,7 @@ export function guitarCatalog(): GuitarFamilyDef[] {
       L('g-rhythm', 7, 'Metal gallop and chugs (drop D)', 'גאלופ וצ׳אגים במטאל (Drop D)', [R('gallop'), R('chug')], [2, 4, 7, 9], ['metal']),
     ]),
     fam('g-lead', 'Lead techniques', 'טכניקות סולו', 'classical', ['rock', 'blues', 'metal', 'pop', 'country', 'funk'], [
-      L('g-lead', 1, 'Slides and natural harmonics', 'החלקות והרמוניות טבעיות', [E('slides'), E('harmonics'), E('slides', { option: 1 }), E('slides', { option: 2 }), E('harmonics', { option: 1 }), E('harmonics', { option: 2 })], GKEYS_MINOR.slice(0, 5)),
+      L('g-lead', 1, 'Slides and natural harmonics', 'החלקות והרמוניקים טבעיים', [E('slides'), E('harmonics'), E('slides', { option: 1 }), E('slides', { option: 2 }), E('harmonics', { option: 1 }), E('harmonics', { option: 2 })], GKEYS_MINOR.slice(0, 5)),
       L('g-lead', 2, 'Half-step bends to pitch', 'כיפופי חצי טון לגובה', [E('bend', { option: 1 })], GKEYS_MINOR.slice(0, 6)),
       L('g-lead', 3, 'Whole-step bends to pitch', 'כיפופי טון שלם לגובה', [E('bend', { option: 2 })], GKEYS_MINOR.slice(0, 6)),
       L('g-lead', 4, 'Bend and release, pre-bend, unison bends', 'כיפוף ושחרור, כיפוף מוקדם, כיפופי יוניסון', [E('bend', { option: 2, position: 1 }), E('prebend'), E('unison', { option: 0 }), E('unison', { option: 1 })], GKEYS_MINOR.slice(0, 6)),

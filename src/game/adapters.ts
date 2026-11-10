@@ -120,7 +120,7 @@ export interface PitchCapture {
 
 export interface RhythmTimelineLike {
   /** `soft`: a quieter click (under the player's own answer, so a knock microphone is not fooled). */
-  clicks: { t: number; accent: boolean; soft?: boolean; silent?: boolean }[];
+  clicks: { t: number; accent: boolean; soft?: boolean; silent?: boolean; /** A count-in click (heard as a woodblock, counted down on screen). */ count?: boolean }[];
   wood: number[];
   /** Kick ('k') or snare ('s') for each `wood` hit (Drum Echo); otherwise woodblock. */
   drums?: ('k' | 's')[];

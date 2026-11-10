@@ -2,7 +2,9 @@
 // staff, the app's drum sounds, the e-kit notice on the course card.
 import { describe, expect, it } from 'vitest';
 import { CHICK_MS, MidiInput, type DrumHitEvent } from '../src/speech/midi';
-import { KIT_NOTICE, VOICE_PERC, DRUM_VOICES, type KitProfile } from '../src/engine/drumKit';
+import { KIT_NOTICE, VOICE_PERC, VOICE_NOTE, DRUM_VOICES, type KitProfile } from '../src/engine/drumKit';
+import { analyzeDrumTake, type DrumTakeHit } from '../src/engine/drills/drumAnalyze';
+import { expTimeMs } from '../src/engine/drills/analyze';
 import { DRUM_PROBES, drumFamilies, drumProbes, generateDrums, GROOVE_REACH, placeDrums } from '../src/engine/drills/drums';
 import { barsPerLine } from '../src/engine/drumNotation';
 import { courseOf } from '../src/engine/courses';
@@ -71,6 +73,32 @@ describe('hi-hat foot without a pedal note (CC4 only)', () => {
   });
 });
 
+describe('the CC4 hi-hat foot covers every level with note 44 (feet, samba, jazz foot, waltz, bembé)', () => {
+  it('each pedal note played as a fast CC4 close is matched as the hi-hat foot', () => {
+    const gen = (sp: object) => generateDrums({ ...sp, key: 0 } as Parameters<typeof generateDrums>[0]);
+    const items = drumFamilies().flatMap((f) => f.levels).flatMap((l) => l.specs.map((sp) => ({ l, d: gen(sp) }))).filter(({ d }) => d.notes.some((n) => n.voice === 'hhPedal'));
+    expect([...new Set(items.map(({ l }) => l.id))]).toEqual(expect.arrayContaining(['d-feet-1', 'd-feet-2', 'd-jazz-2', 'd-jazz-6', 'd-latin-2']));
+    for (const { l, d } of items) {
+      const bpm = l.tempo![0];
+      const m = new MidiInput();
+      m.setOptions({ drums: true, kit: { preset: 'gm', map: {} } });
+      const hits: DrumTakeHit[] = [];
+      m.onHit((h) => hits.push({ voice: h.voice, on: h.at, vel: h.vel, open: h.open, hat: h.hat }));
+      // The kit sends no note 44: the foot is only the pedal's CC4 (lift 60 ms before, close on the note).
+      const evs: [number, number[]][] = [];
+      for (const n of d.notes) {
+        const t = expTimeMs(d, n.beat, bpm);
+        if (n.voice === 'hhPedal') evs.push([t - 60, [0xb9, 4, 0]], [t, [0xb9, 4, 127]]);
+        else evs.push([t, [0x99, VOICE_NOTE[n.voice!], 90]]);
+      }
+      evs.sort((a, b) => a[0] - b[0]).forEach(([t, b]) => m.message(b, t));
+      const r = analyzeDrumTake(d, bpm, hits);
+      const foot = r.drum!.voices.find((v) => v.voice === 'hhPedal')!;
+      expect(foot.n, l.id).toBe(foot.of);
+    }
+  });
+});
+
 describe('placement probe steps 6 (groove reach) and 9 (feet)', () => {
   const fams = drumFamilies().map((f) => ({ id: f.id, levels: f.levels.length }));
   it('the steps exist, play their family, and the groove reach steps need the basic groove first', () => {
@@ -100,9 +128,9 @@ describe('placement probe steps 6 (groove reach) and 9 (feet)', () => {
     expect([not['d-funk'], not['d-shuffle'], not['d-feet']]).toEqual([1, 1, 1]);
   });
   it('levels are capped to the family (a future jazz family is placed only when it exists)', () => {
-    const r = placeDrums({ groove: { verdict: 'clean' }, shuffle: { verdict: 'clean' }, feet: { verdict: 'clean' } }, [...fams, { id: 'd-jazz' as never, levels: 3 }]);
+    const r = placeDrums({ groove: { verdict: 'clean' }, shuffle: { verdict: 'clean' }, feet: { verdict: 'clean' } }, [...fams.filter((f) => f.id !== 'd-jazz'), { id: 'd-jazz' as never, levels: 3 }]);
     expect(r['d-jazz' as never]).toBe(2);
-    expect(placeDrums({}, fams)['d-jazz' as never]).toBeUndefined();
+    expect(placeDrums({}, fams.filter((f) => f.id !== 'd-jazz'))['d-jazz' as never]).toBeUndefined();
   });
 });
 

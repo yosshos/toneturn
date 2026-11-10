@@ -270,6 +270,28 @@ describe('acoustic kit: which levels', () => {
       }
     }
   });
+  it('the 0.66 content: the drummer ear echo / dictation and Middle-Eastern dum-tak are in; flams, jazz and Latin are not', () => {
+    for (const id of ['d-ear-4', 'd-ear-5', 'd-ear-8', 'd-mideast-5', 'd-mideast-7', 'd-mideast-9']) expect(ACOUSTIC_LEVELS.has(id), id).toBe(true);
+    const ac = kitLevels(fams, 'acoustic').flatMap((f) => f.levels.map((l) => l.id));
+    for (const id of ['d-ear-1', 'd-ear-2', 'd-ear-3']) expect(ac, id).toContain(id); // single-surface: also on a pad
+    for (const l of levels) {
+      if (!ACOUSTIC_LEVELS.has(l.id)) continue;
+      for (const sp of l.specs) {
+        const d = generateDrums({ ...sp, key: 0 } as Parameters<typeof generateDrums>[0]);
+        expect(d.notes.some((n) => n.grace || n.swing || n.voice === 'rim'), l.id).toBe(false);
+      }
+    }
+    for (const id of levels.map((l) => l.id).filter((x) => /^d-(jazz|latin)-/.test(x) || /^d-diddles-[5-9]$/.test(x))) expect(ac, id).not.toContain(id);
+  });
+  it('a Middle-Eastern take in 9/8 (karsilama, dum and tak) on the synthetic kit is clean', () => {
+    const { cal } = calibrate();
+    const d = generateDrums({ family: 'd-mideast', kind: levels.find((l) => l.id === 'd-mideast-7')!.specs[0].kind, option: 0, key: 0, hands: 'RL', instrument: 'drums' } as Parameters<typeof generateDrums>[0]);
+    const bpm = levels.find((l) => l.id === 'd-mideast-7')!.tempo![0];
+    const plain = { ...d, notes: d.notes.filter((n) => !n.ghost) };
+    const m = analyzeDrumTake(plain, bpm, acousticHits(acousticOnsets(playDrill(plain, bpm)), cal, drillAcousticVoices(plain, cal)), { acoustic: { toms: true } });
+    expect(m.drum!.wrongVoice).toBe(0);
+    expect(m.verdict, m.why.en).toBe('clean');
+  });
   it('setups: MIDI shows everything, a pad the single-surface levels, an acoustic kit those + the grooves', () => {
     const all = levels.length;
     const pad = kitLevels(fams, 'pad').flatMap((f) => f.levels);

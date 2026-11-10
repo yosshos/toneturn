@@ -28,7 +28,7 @@ export function CourseLevelsRow({ courses, ratings, lang, active }: { courses: C
     <div className="cl-row" role="list" aria-label={lang === 'he' ? 'הדרגה בכל קורס' : 'Your level in each course'}>
       {courses.map((c) => (
         <span role="listitem" key={c}>
-          <CourseLevelChip course={c} level={courseLevel(c, ratings).name} lang={lang} active={c === active} />
+          <CourseLevelChip course={c} level={courseLevel(c, ratings, courses).name} lang={lang} active={c === active} />
         </span>
       ))}
     </div>

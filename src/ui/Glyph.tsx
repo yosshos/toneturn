@@ -289,6 +289,31 @@ export const GLYPHS: Record<string, ReactNode> = {
       <path d="M-15 -15C-15 -3 -6 0 -5 6L-10 20H10L5 6C6 0 15 -3 15 -15" strokeLinejoin="round" />
     </g>
   ),
+  // Drums content (0.66): the drummer's ear (an ear and a stick), jazz (the ride with its skip-note triplet), Latin (two
+  // claves crossed).
+  drumear: (
+    <g {...sw}>
+      <path d="M-4 18C-14 18-18 10-18 2C-18-10-10-18 0-18S16-12 16-2C16 6 8 8 6 14" strokeLinejoin="round" />
+      <path d="M-8 2C-8-6-4-9 1-9S8-6 8-1" />
+      <path d="M10 -20 24 14" strokeWidth={4} />
+      <circle cx={10} cy={-20} r={3} fill={I} />
+    </g>
+  ),
+  ride: (
+    <>
+      <path d="M-24 -6 Q0 -18 24 -6 Q0 0 -24 -6Z" {...sw} strokeLinejoin="round" />
+      {head(-14, 14, 4.4, 3.2)}
+      {head(2, 14, 4.4, 3.2)}
+      {head(16, 14, 4.4, 3.2)}
+      <path d="M-12 2v10M4 2v10M18 2v10" {...sw} strokeWidth={2.4} />
+    </>
+  ),
+  clave: (
+    <g {...sw}>
+      <path d="M-20 -14 18 14" strokeWidth={7} strokeLinecap="round" />
+      <path d="M-18 14 20 -14" strokeWidth={7} strokeLinecap="round" />
+    </g>
+  ),
   // Guitar course (0.66): every technique family its own symbol, apart from the guitar topics' symbols.
   fingers1234: (
     <text x={0} y={7} textAnchor="middle" fontFamily="'Secular One', Rubik, sans-serif" fontSize={18} fill={I} direction="ltr" letterSpacing={0.5}>
@@ -435,6 +460,36 @@ export const GLYPHS: Record<string, ReactNode> = {
     <text x={0} y={8} textAnchor="middle" fontFamily="Georgia, 'Times New Roman', serif" fontStyle="italic" fontWeight={700} fontSize={22} fill={I} direction="ltr">
       pizz.
     </text>
+  ),
+  /** Bass interval shapes: the octave shape — two strings up, two frets up — joined. */
+  octave: (
+    <>
+      <g {...sw} strokeWidth={2.2}>
+        <path d="M-26 -14H26M-26 -5H26M-26 4H26M-26 13H26" />
+      </g>
+      <path d="M-10 13 L10 -5" {...sw} strokeWidth={3.4} />
+      <circle cx={-10} cy={13} r={5.2} fill={I} />
+      <circle cx={10} cy={-5} r={5.2} fill={I} />
+    </>
+  ),
+  /** Reading in positions: a position number over a bracket of four frets. */
+  position: (
+    <>
+      <text x={0} y={2} textAnchor="middle" fontFamily="Georgia, 'Times New Roman', serif" fontWeight={700} fontSize={20} fill={I} direction="ltr">
+        V
+      </text>
+      <path d="M-18 8V14H18V8" {...sw} strokeWidth={2.6} strokeLinejoin="round" />
+      <path d="M-6 14V9M6 14V9" {...sw} strokeWidth={2} />
+    </>
+  ),
+  /** Target notes: a fill that lands on the target. */
+  target: (
+    <>
+      <circle cx={10} cy={2} r={14} {...sw} strokeWidth={2.6} />
+      <circle cx={10} cy={2} r={6.5} {...sw} strokeWidth={2.6} />
+      <circle cx={10} cy={2} r={2.6} fill={I} />
+      <path d="M-26 -16 Q-14 -18 -8 -8 T4 0" {...sw} strokeWidth={2.8} />
+    </>
   ),
 };
 export type GlyphKind = keyof typeof GLYPHS;

@@ -6,7 +6,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Drill, DrumVoice, ExpNote, TakeMetrics } from '../engine/drills/types';
 import { markOf, type NoteMark } from '../engine/noteMarks';
-import { barsPerLine, beamBeats, dotted, restsOf, type RestKind } from '../engine/drumNotation';
+import { barsPerLine, beamBeats, dotted, eighthGroupOf, restsOf, type RestKind } from '../engine/drumNotation';
 import { calibrateVel, classOf, DEFAULT_KIT, kitKind, pedalRange, PRESETS, slowOutput, voiceOf, VOICE_NAME, wizardDone, wizardHit, wizardSkip, wizardStart, WIZARD_PADS, type AcousticCal, type AcousticVoice, type KitKind, type KitPreset, type KitProfile, type WizardState, KIT_NOTICE } from '../engine/drumKit';
 import { buildCal, CAL_HITS, CAL_ORDER, OnsetTracker } from '../engine/drumAcoustic';
 import { midi } from '../speech/midi';
@@ -37,7 +37,9 @@ function marksOf(result?: TakeMetrics | null): Map<string, NoteMark> {
 /** The drill's notes, two bars a line (one for dense rudiments), in a window of two lines that follows the take (B2, one screen). */
 export function DrumScore({ drill, view, result, beat = -1, lang }: { drill: Drill; view: 'staff' | 'lanes'; result?: TakeMetrics | null; beat?: number; lang: Lang }) {
   const meter = drill.meter || 4;
-  const bars = view === 'staff' ? barsPerLine(drill.notes, meter) : 2;
+  // Eighth-pulse meters: a drill beat is an eighth — measure the density in quarters.
+  const q = drill.pulse === 8 ? 0.5 : 1;
+  const bars = view === 'staff' ? barsPerLine(q === 1 ? drill.notes : drill.notes.map((n) => ({ beat: n.beat * q, voice: n.voice })), meter * q) : 2;
   const per = meter * bars;
   const lines = Math.max(1, Math.ceil(drill.beats / per - 1e-6));
   const marks = marksOf(result);
@@ -47,7 +49,7 @@ export function DrumScore({ drill, view, result, beat = -1, lang }: { drill: Dri
   return (
     <div className={`drum-score ${view}`} dir="ltr" data-drum-view={view} data-drum-lines={lines} data-drum-bars={bars}>
       {shown.map((li) =>
-        view === 'staff' ? <StaffLine key={li} drill={drill} line={li} per={per} bars={bars} marks={marks} beat={beat} sticking={!!drill.drum?.mic} /> : <LaneLine key={li} drill={drill} line={li} per={per} marks={marks} beat={beat} />,
+        view === 'staff' ? <StaffLine key={li} drill={drill} line={li} per={per} bars={bars} marks={marks} beat={beat} sticking={!!drill.drum?.mic || drill.notes.some((n) => n.grace)} /> : <LaneLine key={li} drill={drill} line={li} per={per} marks={marks} beat={beat} />,
       )}
       {pager}
       {view === 'lanes' && <p className="drum-key">{lang === 'he' ? 'עיגול גדול = הדגשה · עיגול חלול = רפאים · טבעת = היי־האט פתוח' : 'Big = accent · hollow = ghost · ring = open hat'}</p>}
@@ -78,11 +80,14 @@ function StaffLine({ drill, line, per, bars, marks, beat, sticking }: { drill: D
     stems.push(up ? { x, y1: Math.max(...ys), y2: Math.min(10, Math.min(...ys) - 20), up, beat: g[0].beat, dur: Math.min(...g.map((n) => n.dur)) } : { x, y1: Math.min(...ys), y2: Math.max(...ys) + 20, up, beat: g[0].beat, dur: Math.min(...g.map((n) => n.dur)) });
   }
   // Beams per beat (drumNotation): a primary beam over the 8ths and shorter, a second beam only between 16ths (a stub for
-  // a lone one), a flag for a lone short note, 3 / 6 over tuplets; quarters and longer stand alone.
+  // a lone one), a flag for a lone short note, 3 / 6 over tuplets; quarters and longer stand alone. Eighth-pulse meters
+  // (one drill beat = an eighth) are beamed in quarter-note units by their beat groups (9/8 = 2+2+2+3).
+  const q8 = drill.pulse === 8 ? 0.5 : 1;
+  const groupOf = drill.pulse === 8 ? eighthGroupOf(drill.meter, drill.groups ?? [drill.meter]) : undefined;
   const beams: React.ReactNode[] = [];
   for (const up of [true, false]) {
     const ss = stems.filter((x) => x.up === up);
-    for (const g of beamBeats(ss)) {
+    for (const g of beamBeats(q8 === 1 ? ss : ss.map((x) => ({ beat: x.beat * q8, dur: x.dur * q8 })), groupOf)) {
       const m = g.idx.map((i) => ss[i]);
       const y = up ? Math.min(...m.map((s) => s.y2)) : Math.max(...m.map((s) => s.y2));
       for (const s of m) s.y2 = y;
@@ -101,7 +106,7 @@ function StaffLine({ drill, line, per, bars, marks, beat, sticking }: { drill: D
   }
   // Rests for a one-voice line (reading, rudiments): whatever no note covers, on the 16th grid.
   const REST: Record<RestKind, string> = { q: '\u{1D13D}', '8': '\u{1D13E}', '16': '\u{1D13F}' };
-  const rests: React.ReactNode[] = ns.every((n) => n.voice === 'snare')
+  const rests: React.ReactNode[] = q8 === 1 && ns.every((n) => n.voice === 'snare')
     ? restsOf(drill.notes.filter((n) => n.voice === 'snare'), b0, b0 + per).map((r) => (
         <text key={`r${r.beat}`} x={xOf(r.beat)} y={r.kind === 'q' ? 47 : 44} className="dn-rest" textAnchor="middle" data-rest={r.kind}>
           {REST[r.kind]}
@@ -121,6 +126,12 @@ function StaffLine({ drill, line, per, bars, marks, beat, sticking }: { drill: D
           <rect x={13} y={36} width={3.5} height={16} />
         </g>
       )}
+      {line === 0 && (drill.pulse === 8 || drill.meter !== 4) && (
+        <text x={X0 + 2} y={23} className="dn-sig" data-time-sig={drill.pulse === 8 ? `${drill.meter}/8` : `${drill.meter}/4`}>
+          {drill.pulse === 8 ? `${drill.meter}/8` : `${drill.meter}/4`}
+          {drill.groups && drill.groups.length > 1 && drill.groups.some((g) => g !== drill.groups![0]) ? ` (${drill.groups.join('+')})` : ''}
+        </text>
+      )}
       {Array.from({ length: bars }, (_, k) => k + 1).map((k) => (
         <line key={`bar${k}`} x1={X0 - 4 + k * BAR_W} x2={X0 - 4 + k * BAR_W} y1={28} y2={60} className="dn-bar" />
       ))}
@@ -139,12 +150,27 @@ function StaffLine({ drill, line, per, bars, marks, beat, sticking }: { drill: D
           <g key={i} className={`dn ${m ?? ''}`} data-voice={n.voice}>
             {STEP[n.voice!] >= 10 && <line x1={x - 7} x2={x + 7} y1={20} y2={20} className="dn-line" />}
             {XHEAD.has(n.voice!) ? <path d={`M${x - 4} ${y - 4}l8 8M${x + 4} ${y - 4}l-8 8`} className="dn-x" /> : <ellipse cx={x} cy={y} rx={4.6} ry={3.4} transform={`rotate(-20 ${x} ${y})`} className="dn-head" />}
-            {dotted(n.dur) && <circle cx={x + 8} cy={y - 1} r={1.6} className="dn-dot" />}
+            {n.grace && (
+              // Grace note(s): small heads just before the stroke, the flam's with a slash.
+              <g className="dn-grace">
+                {Array.from({ length: n.grace }, (_, k) => (
+                  <ellipse key={k} cx={x - 9 - (n.grace! - 1 - k) * 5} cy={y - 1} rx={2.6} ry={2} transform={`rotate(-20 ${x - 9 - (n.grace! - 1 - k) * 5} ${y - 1})`} className="dn-head" />
+                ))}
+                <path d={`M${x - 7} ${y - 2}V${y - 14}`} className="dn-stem" />
+                {n.grace === 1 && <path d={`M${x - 11} ${y - 6}l7 -6`} className="dn-stem" />}
+              </g>
+            )}
+            {dotted(n.dur * q8) && <circle cx={x + 8} cy={y - 1} r={1.6} className="dn-dot" />}
             {n.ghost && <text x={x} y={y + 3.5} className="dn-ghost" textAnchor="middle">(  )</text>}
             {n.accent && <path d={`M${x - 4} ${isFoot(n.voice!) ? 82 : 6}l8 3-8 3`} className="dn-acc" />}
             {n.voice === 'hhOpen' && <circle cx={x} cy={7} r={2.6} className="dn-open" />}
             {dyn && <text x={x} y={90} className="dn-dyn">{dyn}</text>}
-            {sticking && !dyn && <text x={x} y={86} className="dn-stick" textAnchor="middle">{n.hand}</text>}
+            {sticking && !dyn && (
+              <text x={x} y={86} className="dn-stick" textAnchor="middle">
+                {n.grace ? (n.hand === 'R' ? 'l' : 'r').repeat(n.grace) : ''}
+                {n.hand}
+              </text>
+            )}
           </g>
         );
       })}

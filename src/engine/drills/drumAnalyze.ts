@@ -78,7 +78,11 @@ export function analyzeDrumTake(drill: Drill, bpm: number, hits0: DrumTakeHit[],
   const tier = drill.drum?.tier ?? 1;
   const T = DRUM_TIERS[tier];
   const W = drumWindow(drill, bpm);
-  const exp = drill.notes.map((n) => ({ n, t: expTimeMs(drill, n.beat, bpm) }));
+  const goal = drill.goal.drum ?? {};
+  // Swing (jazz ride): a skip note is matched at the middle of the allowed swing range, not on the written triplet.
+  const swMid = goal.swing ? (goal.swing.lo + goal.swing.hi) / 2 : 2 / 3;
+  const beatMsAt = (b: number) => expTimeMs(drill, Math.floor(b + 1e-6) + 1, bpm) - expTimeMs(drill, Math.floor(b + 1e-6), bpm);
+  const exp = drill.notes.map((n) => ({ n, t: n.swing && goal.swing ? expTimeMs(drill, Math.floor(n.beat + 1e-6), bpm) + swMid * beatMsAt(n.beat) : expTimeMs(drill, n.beat, bpm) }));
   const hits = [...hits0].filter((h) => Number.isFinite(h.on)).sort((a, b) => a.on - b.on);
   // In mic mode every hit is the one surface: match by time only. Acoustic: hat, ride and crash are one cymbal class;
   // without a calibrated tom the toms count as the snare.
@@ -87,6 +91,23 @@ export function analyzeDrumTake(drill: Drill, bpm: number, hits0: DrumTakeHit[],
     return c === 'hat' || c === 'ride' || c === 'crash' ? 'cym' : c === 'tom' && !ac!.toms ? 'snare' : c;
   };
   const cls = (v: DrumVoice | null | undefined) => (mic ? 'snare' : !v ? null : ac ? acCls(v) : classOf(v));
+  // Flams and drags (MIDI): a hit followed within 50 ms by another of the same drum is a grace note of that stroke -
+  // when an expected grace-note stroke is due there. Grace hits stay out of the matching (and are not "extra").
+  const graceOf = new Map<number, number[]>();
+  const graceHit = new Set<number>();
+  if (goal.flam !== undefined && !noMidi) {
+    const graceTimes = exp.filter((e) => e.n.grace).map((e) => e.t);
+    for (let j = 0; j < hits.length; j++) {
+      if (graceHit.has(j)) continue;
+      const chain = [j];
+      for (let k = j + 1; k < hits.length && hits[k].on - hits[chain[chain.length - 1]].on <= 50; k++) if (cls(hits[k].voice) === cls(hits[j].voice)) chain.push(k);
+      if (chain.length < 2) continue;
+      const main = chain[chain.length - 1];
+      if (!graceTimes.some((t) => Math.abs(hits[main].on - t) <= 60)) continue;
+      graceOf.set(main, chain.slice(0, -1));
+      for (const g of chain.slice(0, -1)) graceHit.add(g);
+    }
+  }
   const ts = [...new Set(exp.map((e) => Math.round(e.t)))].sort((a, b) => a - b);
   const gaps = ts.slice(1).map((x, i) => x - ts[i]).filter((g) => g > 1);
   const minIoi = gaps.length ? Math.min(...gaps) : 1000;
@@ -97,13 +118,14 @@ export function analyzeDrumTake(drill: Drill, bpm: number, hits0: DrumTakeHit[],
   const pairs: { i: number; j: number; d: number; k: number }[] = [];
   exp.forEach((e, i) =>
     hits.forEach((h, j) => {
+      if (graceHit.has(j)) return;
       const d = Math.abs(h.on - e.t);
       if (h.unsure && ac ? d <= W : d <= S && cls(h.voice) === cls(e.n.voice)) pairs.push({ i, j, d, k: h.unsure && ac ? d + W : d });
     }),
   );
   pairs.sort((a, b) => a.k - b.k);
   const mExp = new Map<number, number>();
-  const usedHit = new Set<number>();
+  const usedHit = new Set<number>(graceHit);
   for (const p of pairs) {
     if (mExp.has(p.i) || usedHit.has(p.j)) continue;
     mExp.set(p.i, p.j);
@@ -143,7 +165,8 @@ export function analyzeDrumTake(drill: Drill, bpm: number, hits0: DrumTakeHit[],
     const played: PlayedNote | null = h ? { pitch: h.voice ? VOICE_NOTE[h.voice] : e.n.pitch, on: h.on, off: null, vel: h.vel } : null;
     const dev = h ? h.on - e.t : null;
     const sameVoice = mExp.has(i) && (noMidi || !h?.voice || classOf(h.voice) !== 'tom' || h.voice === e.n.voice);
-    return { exp: e.n, played, dev, ok: !!h && mExp.has(i) && sameVoice && Math.abs(dev!) <= W };
+    const w = e.n.swing && goal.swing ? Math.max(W, 0.09 * beatMsAt(e.n.beat)) : W;
+    return { exp: e.n, played, dev, ok: !!h && mExp.has(i) && sameVoice && Math.abs(dev!) <= w };
   });
   const matched = perNote.map((r, i) => ({ r, i })).filter(({ i }) => mExp.has(i));
   const onTime = perNote.filter((r) => r.ok).length;
@@ -154,7 +177,8 @@ export function analyzeDrumTake(drill: Drill, bpm: number, hits0: DrumTakeHit[],
   const limbOfN = (i: number): Limb => exp[i].n.limb ?? (exp[i].n.hand === 'L' ? 'LH' : 'RH');
   const limbs = LIMBS.map((limb) => {
     const of = exp.filter((_, i) => limbOfN(i) === limb).length;
-    const ds = matched.filter(({ i }) => limbOfN(i) === limb).map(({ r }) => r.dev!);
+    // Swung skip notes are judged by the swing ratio, not by their place on the grid.
+    const ds = matched.filter(({ i }) => limbOfN(i) === limb && !(exp[i].n.swing && goal.swing)).map(({ r }) => r.dev!);
     return { limb, mean: mean(ds), sd: sdOf(ds), n: ds.length, of };
   }).filter((l) => l.of > 0);
   const voicesIn = [...new Set(exp.map((e) => e.n.voice).filter((v): v is DrumVoice => !!v))];
@@ -178,7 +202,6 @@ export function analyzeDrumTake(drill: Drill, bpm: number, hits0: DrumTakeHit[],
   // Velocity (MIDI, or mic peaks mapped to 1–127). A mic take without a level spread has no velocity data.
   const vels = matched.map(({ r }) => r.played!.vel);
   const velData = vels.length >= 3 && (!noMidi || vels.some((v) => v !== vels[0]));
-  const goal = drill.goal.drum ?? {};
   // Acoustic: no soft / loud calibration per drum — ghosts are judged against the same drum's other strokes in the take
   // (a ghost ≤ 44 % of their median strength, about −7 dB).
   const relRange = (v: DrumVoice): { soft: number; loud: number } | null => {
@@ -236,6 +259,50 @@ export function analyzeDrumTake(drill: Drill, bpm: number, hits0: DrumTakeHit[],
   const gapDevs = matched.filter(({ i }) => silentBar(drill, exp[i].n.beat)).map(({ r }) => r.dev!);
   const gapMean = drill.click === 'gap' ? mean(gapDevs) : null;
 
+  // Flams / drags: the grace hit(s) before each grace-note stroke - 15-40 ms before the main stroke (a drag's first
+  // grace within 80 ms), softer than it; the flam gaps even (SD).
+  let flam: number | null = null;
+  let flamGap: number | null = null;
+  let flamSd: number | null = null;
+  if (goal.flam !== undefined && !noMidi) {
+    const due = exp.map((e, i) => ({ e, i })).filter(({ e }) => e.n.grace);
+    const gaps: number[] = [];
+    let ok = 0;
+    for (const { e, i } of due) {
+      const j = mExp.get(i);
+      if (j === undefined) continue;
+      const gs = graceOf.get(j) ?? [];
+      if (gs.length !== e.n.grace) continue;
+      const main = hits[j];
+      const gap = main.on - hits[gs[gs.length - 1]].on;
+      if (e.n.grace === 1) gaps.push(gap);
+      const span = main.on - hits[gs[0]].on;
+      if (gap >= 15 && gap <= 40 && span <= (e.n.grace === 2 ? 80 : 40) && gs.every((g) => hits[g].vel < main.vel)) ok++;
+    }
+    flam = due.length ? ok / due.length : null;
+    flamGap = mean(gaps);
+    flamSd = sdOf(gaps);
+  }
+  // Swing: where the skip note falls inside its beat (played downbeat -> next played downbeat of the same voice).
+  let swing: number | null = null;
+  let swingSd: number | null = null;
+  if (goal.swing) {
+    const at = new Map<string, number>();
+    for (const { r, i } of matched) at.set(`${exp[i].n.voice}:${Math.round(exp[i].n.beat * 1000)}`, r.played!.on);
+    const rs: number[] = [];
+    for (const { r, i } of matched) {
+      if (!exp[i].n.swing) continue;
+      const b = Math.floor(exp[i].n.beat + 1e-6);
+      const a = at.get(`${exp[i].n.voice}:${b * 1000}`);
+      if (a === undefined) continue;
+      const c = at.get(`${exp[i].n.voice}:${(b + 1) * 1000}`);
+      const len = c !== undefined ? c - a : beatMsAt(b);
+      if (len > 1) rs.push((r.played!.on - a) / len);
+    }
+    swing = median(rs);
+    swingSd = sdOf(rs);
+  }
+
   // Rules → verdict.
   type Rule = { id: string; amt: number };
   const rules: Rule[] = [];
@@ -270,10 +337,20 @@ export function analyzeDrumTake(drill: Drill, bpm: number, hits0: DrumTakeHit[],
   }
   if (goal.landing) for (const [k, x] of landing.entries()) rules.push({ id: `landing:${k}`, amt: x === null ? 9 : Math.abs(x) > goal.landing.ms ? (Math.abs(x) - goal.landing.ms) / goal.landing.ms : 0 });
   if (goal.gapMs !== undefined) max('gap', gapMean === null ? null : Math.abs(gapMean), goal.gapMs);
+  if (goal.flam !== undefined && !mic) {
+    // Only measured practice counts: no grace-note stroke found at all is a miss, not a skipped rule.
+    rules.push({ id: 'flam', amt: flam === null ? 9 : flam < goal.flam ? (goal.flam - flam) / goal.flam : 0 });
+    max('flamSd', flamSd, 8);
+  }
+  if (goal.swing) {
+    const sw = goal.swing;
+    rules.push({ id: 'swing', amt: swing === null ? 9 : swing < sw.lo ? (sw.lo - swing) / 0.1 : swing > sw.hi ? (swing - sw.hi) / 0.1 : 0 });
+    max('swingSd', swingSd, 0.07);
+  }
   const missed = rules.filter((r) => r.amt > 0);
   const verdict: Verdict = !hits.length ? 'not' : !missed.length ? 'clean' : missed.length === 1 && missed[0].amt < 0.25 ? 'almost' : 'not';
 
-  const dm: DrumMetrics = { limbs, voices, hitRate, wrongVoice: wrong / nExp, extra, windowMs: Math.round(W), velCv, balance, levels, accentGap, tapCv, accentPos, ghost, ratio, hatOpen, hatClosed, landing, gapMean, missed: missed.sort((a, b) => b.amt - a.amt).map((r) => r.id), ...(unsure !== null ? { unsure } : {}) };
+  const dm: DrumMetrics = { limbs, voices, hitRate, wrongVoice: wrong / nExp, extra, windowMs: Math.round(W), velCv, balance, levels, accentGap, tapCv, accentPos, ghost, ratio, hatOpen, hatClosed, landing, gapMean, flam, flamGap, flamSd, swing, swingSd, missed: missed.sort((a, b) => b.amt - a.amt).map((r) => r.id), ...(unsure !== null ? { unsure } : {}) };
   return {
     bpm,
     nps: npsOf(drill, bpm),
@@ -367,6 +444,20 @@ export function drumWhy(d: DrumMetrics, v: Verdict): { en: string; he: string } 
       const x = d.landing[Number(arg)];
       return x === null ? { en: 'No crash + kick on the 1 after the fill.', he: 'אין קראש + קיק על ה-1 אחרי המעבר.' } : { en: `Landing on 1: ${ms(x)} ms ${x > 0 ? 'late' : 'early'}.`, he: `הנחיתה על 1: ${x > 0 ? 'מאחרת' : 'ממהרת'} ב-${ms(x)} מ״ש.` };
     }
+    case 'flam': {
+      const g = d.flamGap;
+      if (g === null || g === undefined) return { en: 'Grace note missing or flat — play it just before the main stroke.', he: 'תו החן חסר או שטוח — נגנו אותו רגע לפני המכה.' };
+      return g > 40 ? { en: `Grace note too early (${ms(g)} ms) — closer, 15–40 ms.`, he: `תו החן מוקדם מדי (${ms(g)} מ״ש) — קרוב יותר, 15–40 מ״ש.` } : g < 15 ? { en: `Flams too flat (${ms(g)} ms) — 15–40 ms apart.`, he: `הפלאמים שטוחים מדי (${ms(g)} מ״ש) — 15–40 מ״ש ביניהם.` } : { en: 'Grace note as loud as the main stroke — softer, lower.', he: 'תו החן חזק כמו המכה — רך ונמוך יותר.' };
+    }
+    case 'flamSd':
+      return { en: `Flam spacing uneven (±${ms(d.flamSd ?? 0)} ms).`, he: `מרווח הפלאמים לא אחיד (±${ms(d.flamSd ?? 0)} מ״ש).` };
+    case 'swing': {
+      const x = d.swing;
+      if (x === null || x === undefined) return { en: 'No swung skip notes measured.', he: 'לא נמדדו תווי דילוג בסווינג.' };
+      return x < 0.6 ? { en: `Swing too straight (${Math.round(x * 100)} %) — lean the skip note later.`, he: `הסווינג ישר מדי (${Math.round(x * 100)}%) — אחרו את תו הדילוג.` } : { en: `Swing too dotted (${Math.round(x * 100)} %) — skip note earlier.`, he: `הסווינג מנוקד מדי (${Math.round(x * 100)}%) — הקדימו את תו הדילוג.` };
+    }
+    case 'swingSd':
+      return { en: 'Swing feel not steady from beat to beat.', he: 'תחושת הסווינג לא יציבה בין הפעמות.' };
     case 'gap':
       return { en: `Without the click you drift ${ms(d.gapMean ?? 0)} ms ${(d.gapMean ?? 0) > 0 ? 'late' : 'early'}.`, he: `בלי הקליק אתם ${(d.gapMean ?? 0) > 0 ? 'נגררים' : 'ממהרים'} ב-${ms(d.gapMean ?? 0)} מ״ש.` };
     default:

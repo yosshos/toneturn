@@ -71,6 +71,8 @@ const SHORT: Record<string, L2> = {
   'fret-scales': { en: 'Neck scales', he: 'סולמות בצוואר' },
   'bass-notes': { en: 'Bass notes', he: 'תווים בבס' },
   'bass-shapes': { en: 'Bass shapes', he: 'צורות בבס' },
+  'bass-intervals': { en: 'Bass intervals', he: 'מרווחים בבס' },
+  'bass-scales': { en: 'Bass boxes', he: 'בוקסים בבס' },
   'key-notes': { en: 'Key notes', he: 'תווים בקלידים' },
   'staff-dictation': { en: 'Write it', he: 'לכתוב מנגינה' },
   'rhythm-build': { en: 'Build a rhythm', he: 'לבנות קצב' },
