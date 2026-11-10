@@ -173,3 +173,86 @@ How they are wired:
   15–40 ms grace, SD ≤ 8 ms.
 - **F4 L7–10:** slow time, pocket, click on 1, quintuplets.
 - **F5 L9–10, F9 L6–10, F14 L6–9:** play-alongs, set-ups, chart road maps.
+
+## 5. Built: drums content 0.66 (2026-11-10)
+
+Owner-approved order: the drummer's ear, Middle-Eastern completion, flams and drags, jazz, Latin, the band under
+grooves. 33 new levels (58 → 91 drum path steps), three new families, each with its own path symbol. Tests:
+`tests/drumContent.test.ts` (28), plus the human-take sweep in `tests/drumAudit.test.ts`, which now covers every new
+level (a steady take is clean at the target tempo, a sloppy one never is).
+
+### New families and levels
+
+| Family | Levels | Content | Pad (mic) |
+|---|---|---|---|
+| `d-ear` Drummer's ear (glyph: ear + stick) | 8 | **L1–2** echo a snare rhythm (8ths; 16ths with accents): one bar heard, one bar played, four rounds. **L3** snare dictation: hear twice, play twice, then write it on a 16-cell grid. **L4** echo a groove. **L5** echo a groove + fill, land crash + kick on 1. **L6** spot the change: A A A B, then play B twice. **L7** style by ear: hear 2 bars (unnamed), keep it going 4 bars, then pick the style from four names (6 items: rock, shuffle, funk, bossa, maqsum, swing). **L8** groove dictation: write hi-hat / snare / kick on an 8th grid (one item with a 16th kick) | L1–3 |
+| `d-jazz` Jazz, F8 (glyph: ride + triplet) | 8 | **L1** the ride pattern (spang, spang-a-lang). **L2** + the hi-hat foot on 2 & 4 (cross-stick on 4). **L3** feathered kick (kick quarters in the ghost band). **L4–5** comping: generated snare lines, then snare + kick lines, on triplet partials (beat or skip), the kick never under a snare; a new line per item. **L6** jazz waltz in 3/4 (ride 1, 2, skip, 3; foot on 2 or 2 & 3). **L7** up-tempo 2-feel ♩180 → 240. **L8** trading 4s: 4 bars time, 4 bars solo (free, unmeasured), crash + kick landing on the 1 ±25 ms; the band lays out in the solo bars | – |
+| `d-latin` Latin & Brazilian, F11 (glyph: crossed claves) | 7 | **L1** bossa nova (bossa clave 3-2 / 2-3 on the cross-stick, kick 1, &2, 3, &4). **L2** samba (feet first: kick on each beat and its "a", hi-hat foot on the "&"s; then snare 16ths accented on the "a", or ride 8ths). **L3** son clave 3-2, 2-3 and rumba clave on the cross-stick under ride quarters. **L4** cascara (2-3: 1 2 3 &3 &4 \| 1 2 &2 &3 &4, on the ride for the timbale shell) with the clave in the left hand, then the kick tumbao (&2, 4). **L5** the cha-cha-chá bell (bell quarters) over the clave. **L6** 6/8 bembé bell (x.x.xx.x.x.x), ♪ 240 → 330. **L7** baião (kick dotted-8th + 16th, cross-stick on 2 & 4) | – |
+
+Added to existing families:
+
+| Family | Levels | Content |
+|---|---|---|
+| `d-mideast` F12 | L5–9 | **L5** wahda (one dum; teks on &2 and 4) and ayyub (D--kD-T-, twice a bar; dum on the kick or the floor tom). **L6** chiftetelli (D.TT.DT. \| D.D.T..., 8th grid, slow), with ka, and on the kit with hi-hat 8ths. **L7** karsilama 9/8 (2+2+2+3: D.T.D.TT.), with ka, and aqsaq (the last tek moved). **L8** dawr hindi 7/8 (3+2+2: DTTD.T.), sama'i thaqil 10/8 (3+2+2+3: D..T.DDT..), hindi with ka. **L9** switching rhythms on cue, two bars each (maqsum → sa'idi → ayyub → maqsum and two other orders), with the band. Patterns checked against M. Frishkopf's Arab durub chart (U. of Alberta, 2009) and the Wikipedia dumbek notation for ayyub |
+| `d-diddles` F3 (renamed "Paradiddles, flams, drags") | L5–9 | **L5** alternating flams (quarters, 8ths, on 1 and 3 among 8th taps). **L6** flam accent (lR L R rL R L), flam tap (lR R rL L). **L7** drags on quarters (llR rrL), the single drag tap (llR L rrL R), drags on 2 & 4. **L8** Swiss army triplet (lR R L, and rL L R), flam paradiddle (lR L R R rL R L L). **L9** single ratamacue (as an 8th triplet into the accented beat, and as 16ths both leads). MIDI only. Stickings follow the PAS 40 |
+
+### Measurement (drumAnalyze)
+
+- **Flams and drags** (`goal.drum.flam`): before matching, a hit followed within 50 ms by another hit of the same
+  drum is taken as a grace note of that stroke, when a grace-note stroke is due there. The grace hits are then kept
+  out of the matching and out of "extra". A stroke is in spec when it has the right number of graces, the last one
+  15–40 ms before it (a drag's first within 80 ms), all softer than the stroke. The rule needs ≥ 90 % in spec and a
+  flam-gap SD ≤ 8 ms. No grace found at all counts as a miss, not a skipped rule. The "Why?" line names flat, early
+  or loud graces.
+- **Swing** (`goal.drum.swing`): the ride's skip notes (`swing: true`) are matched at the middle of the allowed range,
+  not on the written triplet. They are left out of the per-limb timing SD / mean and judged by where they fall inside
+  their beat (played downbeat → next played downbeat). The median must be in 58–72 % (52–70 % up-tempo), and the
+  SD ≤ 0.07. Straight 8ths and dotted swing both fail, with a one-line reason.
+- **Odd and compound meters** use the existing eighth pulse (`pulse: 8`; one drill beat = an eighth, ♪ = bpm).
+  New: `groups` (2+2+2+3 and so on). With groups, the click sounds only on each group's first eighth, in the count-in
+  too. Written lengths stop at the group's end. The staff beams by group and shows "9/8 (2+2+2+3)".
+- **Drum ear on a pad:** onsets inside the call's bars are dropped (the speaker's call is never the answer). Unlike
+  the bass, no tail is added after the call, because the answer's first stroke falls right on its end.
+
+### The band under grooves
+
+`drumBand()` adds `band: { style, bass: true }` and a 4-bar chart repeated over the take, from rock L2, funk L2,
+shuffle, Middle-Eastern L4 / L9, jazz and Latin (4/4 levels). Under the comping (`bandHits`), `bandBass()` plays the
+chord's root on every kick of the groove: the band's sound in reverse, so the bass locks with the drummer's kick. In
+swing / waltz it plays a walking line. `band.rests` mutes the band in the trading-4s solo bars. It plays only behind
+the existing gate (an e-kit by MIDI, or headphones / line-in confirmed). The gate is no longer offered on a kit-only
+drill without a kit, and it never changes what is measured.
+
+### UI
+
+- `DrumWrite.tsx`: the dictation grid (1–3 rows × 8 / 16 cells, counted 1 e & a) and the style pick. The grade joins
+  the take through `withDrumWrite`, which only ever lowers the verdict.
+- Ear drills in drums show the ear card ("Listen" / "You" bars) until the result.
+- The staff draws flams / drags as small grace heads (a slash on the flam) and shows the sticking for grace-note
+  levels (lR, llR).
+- Technique hub: a "Drummer's ear" topic. Jazz and Latin sit under Styles.
+- Rating: the ear family rates `rhythm-dictation/dictate` (the course's ear share through the instrument). Odd meters
+  rate `meter/odd`, the bembé `meter/compound`, jazz / Latin `timing/steady`.
+
+### Screens
+
+Every new level's run screen was checked at 390 × 844 in Hebrew and English: overflow 0 on all 33 levels. The
+dictation grid, snare grid and style pick were also checked after a stub-kit take. `e2e/drums.spec.ts` passes
+(6 / 6) on a separate port.
+
+### Not built or not verified
+
+- **Mambo bell and songo (F11)** are not built. No source I could verify gave their kit patterns, so I left them out
+  rather than guess. The cha-cha-chá level uses only what is certain (the bell's quarter notes over the clave).
+- **Cascara orientation** (2-3 = 1 2 3 &3 &4 | 1 2 &2 &3 &4) is the common teaching form. The sources found online
+  disagreed or were unreadable, so a drummer should confirm it.
+- **Kit adaptations** need a teacher's check: the baião cross-stick on 2 & 4, the samba hand parts, and the bembé
+  hi-hat foot. They are standard-looking kit versions but were not checked against a method book.
+- **Real-kit behaviour is not tested.** The flam detector has not been tried on a real e-kit. Some modules
+  double-trigger or merge hits closer than ~10 ms, and a flat flam may arrive as one note. The swing ranges also
+  need calibrating with drummers.
+- **Hi-hat foot (note 44):** samba feet, jazz foot 2 & 4 and the waltz still need a kit that sends note 44. This is
+  the P1 item above, owned by the kit-compatibility track.
+- **Brushes (F8 L9) and Mozambique (F11 L9)** are not built.
+- **The band's sound** was not listened to on a real kit. Volume against the e-kit and the bass register are
+  unverified; it plays through the app's piano / bass samples.

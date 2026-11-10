@@ -289,6 +289,31 @@ export const GLYPHS: Record<string, ReactNode> = {
       <path d="M-15 -15C-15 -3 -6 0 -5 6L-10 20H10L5 6C6 0 15 -3 15 -15" strokeLinejoin="round" />
     </g>
   ),
+  // Drums content (0.66): the drummer's ear (an ear and a stick), jazz (the ride with its skip-note triplet), Latin (two
+  // claves crossed).
+  drumear: (
+    <g {...sw}>
+      <path d="M-4 18C-14 18-18 10-18 2C-18-10-10-18 0-18S16-12 16-2C16 6 8 8 6 14" strokeLinejoin="round" />
+      <path d="M-8 2C-8-6-4-9 1-9S8-6 8-1" />
+      <path d="M10 -20 24 14" strokeWidth={4} />
+      <circle cx={10} cy={-20} r={3} fill={I} />
+    </g>
+  ),
+  ride: (
+    <>
+      <path d="M-24 -6 Q0 -18 24 -6 Q0 0 -24 -6Z" {...sw} strokeLinejoin="round" />
+      {head(-14, 14, 4.4, 3.2)}
+      {head(2, 14, 4.4, 3.2)}
+      {head(16, 14, 4.4, 3.2)}
+      <path d="M-12 2v10M4 2v10M18 2v10" {...sw} strokeWidth={2.4} />
+    </>
+  ),
+  clave: (
+    <g {...sw}>
+      <path d="M-20 -14 18 14" strokeWidth={7} strokeLinecap="round" />
+      <path d="M-18 14 20 -14" strokeWidth={7} strokeLinecap="round" />
+    </g>
+  ),
   // Guitar course (0.66): every technique family its own symbol, apart from the guitar topics' symbols.
   fingers1234: (
     <text x={0} y={7} textAnchor="middle" fontFamily="'Secular One', Rubik, sans-serif" fontSize={18} fill={I} direction="ltr" letterSpacing={0.5}>

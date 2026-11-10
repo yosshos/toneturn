@@ -486,6 +486,19 @@ button.heat-cell {
 .write-slots li.w-ok { border-color: #3ccf97; }
 .write-slots li.w-bad { border-color: #ff6b5c; }
 .write-answer { display: block; color: var(--ink-dim); }
+/* Drummer's ear (0.66): the dictation step grid and the style pick. */
+.drum-grid { display: grid; grid-template-columns: 26px repeat(var(--cells), minmax(0, 1fr)); gap: 3px; align-items: center; }
+.dg-name { font-size: 0.7rem; font-weight: 700; color: var(--ink-dim); }
+.dg-count { font-size: 0.65rem; text-align: center; color: var(--ink-dim); }
+.dg-cell { height: 30px; min-width: 0; padding: 0; border: 2px solid var(--line-strong); border-radius: 6px; background: var(--card); }
+.dg-cell.beat { border-color: var(--outline); }
+.dg-cell.on { background: var(--ink); }
+.dg-cell.ok { box-shadow: 0 0 0 2px #3ccf97 inset; }
+.dg-cell.bad { box-shadow: 0 0 0 2px #ff6b5c inset; }
+.drum-pick { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.drum-pick .btn { font-size: 0.95rem; padding: 8px 6px; }
+.drum-pick .pick-ok { border-color: #3ccf97; }
+.drum-pick .pick-bad { border-color: #ff6b5c; }
 .drums-route { justify-self: center; font-size: 0.85rem; }
 .level-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; font-size: 0.75rem; color: var(--ink-dim); }
 .level-meta .lm-exam { padding: 0 6px; border: 1.5px solid var(--line-strong); border-radius: 999px; }

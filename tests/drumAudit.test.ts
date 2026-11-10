@@ -27,15 +27,18 @@ function noise(seed: number): () => number {
 /** A human take: timing jitter `sd` ms, velocities in their bands with a little spread. */
 function humanHits(d: Drill, bpm: number, sd: number, seed = 7): DrumTakeHit[] {
   const g = noise(seed);
-  return d.notes.map((n) => {
+  return d.notes.flatMap((n) => {
     const base = n.ghost ? 34 : n.accent ? 116 : n.dyn === 'p' ? 44 : n.dyn === 'f' ? 114 : 78;
-    return {
+    const j = g() * sd;
+    // Flams / drags: grace hits 25 ms apart before the stroke (their gap jitters by 2 ms), soft.
+    const graces: DrumTakeHit[] = Array.from({ length: n.grace ?? 0 }, (_, k) => ({ voice: n.voice ?? 'snare', on: expTimeMs(d, n.beat, bpm) + j - (25 + g() * 2) * ((n.grace ?? 0) - k), vel: 40 }));
+    return [...graces, {
       voice: n.voice ?? 'snare',
-      on: expTimeMs(d, n.beat, bpm) + g() * sd,
+      on: expTimeMs(d, n.beat, bpm) + j,
       vel: Math.max(1, Math.min(127, Math.round(base + g() * (n.ghost ? 1.5 : 3)))),
       open: n.voice === 'hhOpen' ? 1 : 0,
       hat: n.voice === 'hhOpen' ? 'open' : n.voice === 'hihat' ? 'closed' : null,
-    };
+    } as DrumTakeHit];
   });
 }
 

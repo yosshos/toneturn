@@ -17,7 +17,7 @@ import { BrowserPitchCapture } from '../speech/pitchCapture';
 import { listenLoop } from './Flight';
 import { tuningById } from '../engine/fretboard';
 import { drumHits } from '../engine/drills/bass';
-import { bandHits } from '../engine/drills/bassBand';
+import { bandBass, bandHits } from '../engine/drills/bassBand';
 import { isDrumDrill } from '../engine/drills/events';
 import { analyzeDrumTake, drumLimbLine, type DrumTakeHit } from '../engine/drills/drumAnalyze';
 import { VOICE_NOTE, type KitProfile } from '../engine/drumKit';
@@ -340,8 +340,10 @@ export function VelocityCurve({ m, lang }: { m: TakeMetrics; lang: Lang }) {
 }
 
 /** Is click i (0 = the first count-in beat) heard? The count-in always is; after it, the drill's click mode decides. */
-function clickHeard(drill: Pick<Drill, 'meter' | 'click' | 'gap'>, i: number): boolean {
+function clickHeard(drill: Pick<Drill, 'meter' | 'click' | 'gap' | 'groups'>, i: number): boolean {
   const m = drill.meter || 4;
+  // Eighth-pulse meters with beat groups (9/8 = 2+2+2+3): the click on each group's first eighth only.
+  if (drill.groups && !groupStarts(drill.groups).includes(i % m)) return false;
   if (i < m || !drill.click || drill.click === 'all') return true;
   const beat = (i - m) % m;
   const bar = Math.floor((i - m) / m);
@@ -353,6 +355,9 @@ function clickHeard(drill: Pick<Drill, 'meter' | 'click' | 'gap'>, i: number): b
   // 'fade': two bars every beat, two bars only on 1, then silence.
   return bar < 2 || (bar < 4 && beat === 0);
 }
+
+/** The first eighth of each beat group (2+2+2+3 → 0, 2, 4, 6). */
+const groupStarts = (g: number[]): number[] => g.map((_, k) => g.slice(0, k).reduce((a, b) => a + b, 0));
 
 /** Play a drill once: count-in, metronome, record; resolves with the analysis. */
 /** The band part of a bass drill as audio events (B5 drums, B11 ear prompts), in seconds from the timeline's start. */
@@ -366,8 +371,10 @@ function backingEvents(drill: Drill, beatS: number, drums: boolean): NoteEvent[]
   }
   // The harmony band (bassBand.ts): comping on the same clock, only where the drums may play (headphones / MIDI).
   if (drums) for (const h of bandHits(drill)) for (const m of h.notes) out.push({ midi: m, start: at(h.beat), duration: h.len * beatS, velocity: h.vel, inst: 'piano' });
+  // Drums course: the band's bass line (roots on the groove's kick, or walking in swing).
+  if (drums) for (const n of bandBass(drill)) out.push({ midi: n.midi, start: at(n.beat), duration: n.len * beatS, velocity: n.vel, inst: 'bass' });
   for (const n of drill.listen?.notes ?? [])
-    for (const m of n.midi) out.push(n.perc ? { midi: m, start: at(n.beat), duration: n.dur * beatS, velocity: 0.45, perc: n.perc } : { midi: m, start: at(n.beat), duration: n.dur * beatS, velocity: n.inst === 'bass' ? 0.85 : 0.5, inst: n.inst === 'bass' ? ('bass' as const) : ('piano' as const) });
+    for (const m of n.midi) out.push(n.perc ? { midi: m, start: at(n.beat), duration: n.dur * beatS, velocity: n.vel ?? 0.45, perc: n.perc } : { midi: m, start: at(n.beat), duration: n.dur * beatS, velocity: n.inst === 'bass' ? 0.85 : 0.5, inst: n.inst === 'bass' ? ('bass' as const) : ('piano' as const) });
   return out;
 }
 
@@ -401,7 +408,8 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
   useEffect(() => () => ac.current?.abort(), []);
   // B5: drums under the take only when the mic can't hear them (headphones, line-in, or a MIDI bass); else the click.
   const drums = !!(drill.drums || drill.band) && (useMidi || drumsOk === true);
-  const askDrums = !!(drill.drums || drill.band) && !useMidi && drumsOk === undefined && !!onDrums;
+  // A kit-only drum drill without a kit is blocked: no headphones question for a band it can't play under.
+  const askDrums = !!(drill.drums || drill.band) && !useMidi && !drumBlocked && drumsOk === undefined && !!onDrums;
   const prep = usePrep(drill);
   if (drill.untimed) return <UntimedTake drill={drill} lang={lang} cal={cal} onDone={onDone} />;
   const start = async () => {
@@ -532,7 +540,10 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
     }
     setPhase('ready');
     if (drum) {
-      const hits: DrumTakeHit[] = drumMidi ? drumHitsIn : detectOnsets(frames, { refractoryMs: 35, ratio: 1.8 }).map((p) => ({ voice: null, on: p.on, vel: p.vel }));
+      // Ear drills: a speaker's call heard by the mic is never the answer — onsets inside the call's bars are dropped.
+      // The answer's first stroke falls right on the call's end, so (unlike a ringing bass note) no tail is added.
+      const inCall = (ms: number) => (drill.listen?.windows ?? []).some(([a, b]) => ms >= a * beatS * 1000 - 40 && ms < b * beatS * 1000 - 40);
+      const hits: DrumTakeHit[] = drumMidi ? drumHitsIn : detectOnsets(frames, { refractoryMs: 35, ratio: 1.8 }).filter((p) => !drill.listen || !inCall(p.on)).map((p) => ({ voice: null, on: p.on, vel: p.vel }));
       const played: PlayedNote[] = hits.map((h) => ({ pitch: h.voice ? VOICE_NOTE[h.voice] : VOICE_NOTE.snare, on: h.on, off: null, vel: h.vel }));
       return onDone(analyzeDrumTake(drill, bpm, hits, { kit, mic: !drumMidi }), played);
     }
@@ -566,7 +577,7 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
         {phase === 'count' ? `${tx.countIn} ${Math.max(1, drill.meter - beat)}` : phase === 'play' ? tx.go : `${drill.pulse === 8 ? '♪' : tx.bpm} = ${bpm}`}
         <span className={`beat-dot ${beat % drill.meter === 0 ? 'accent' : ''}`} key={beat} />
       </div>
-      {phase === 'ready' && (drill.drums || drill.band) && !askDrums && !useMidi && onDrums && (
+      {phase === 'ready' && (drill.drums || drill.band) && !askDrums && !useMidi && !drumBlocked && onDrums && (
         <button className="link drums-route" onClick={() => onDrums(!drumsOk)} data-drums={drums ? 'on' : 'off'} data-band={drill.band && drums ? drill.band.style : undefined}>
           {drums ? (drill.band ? (lang === 'he' ? 'להקה באוזניות · להחליף לקליק' : 'Band in headphones · switch to the click') : lang === 'he' ? 'תופים באוזניות · להחליף לקליק' : 'Drums in headphones · switch to the click') : lang === 'he' ? 'קליק ברמקול · יש לי אוזניות' : 'Click on the speaker · I have headphones'}
         </button>

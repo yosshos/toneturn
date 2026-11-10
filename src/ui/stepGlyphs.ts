@@ -10,6 +10,7 @@ export const FAMILY_GLYPH: Record<string, GlyphKind> = {
   'b-pluck': 'pluck', 'b-time': 'tempo', 'b-fret': 'fingers', 'b-chord': 'chords', 'b-scale': 'scales', 'b-length': 'mute', 'b-pocket': 'groove', 'b-read': 'bass', 'b-styles': 'record', 'b-ghost': 'ghost', 'b-walk': 'walk', 'b-legato': 'slur', 'b-pick': 'pick', 'b-slap': 'slap', 'b-ear': 'ear', 'b-up-pos': 'shift', 'b-up-arco': 'bow', 'b-up-scales': 'ladder', 'b-up-pizz': 'pizz', 'b-up-walk': 'improv', 'b-up-read': 'sight',
   'd-strokes': 'sticks', 'd-rolls': 'rudiment', 'd-diddles': 'paradiddle', 'd-time': 'pulse', 'd-rock': 'hihat', 'd-fills': 'fill', 'd-read': 'drumread',
   'd-funk': 'ghost', 'd-shuffle': 'shuffle', 'd-indep': 'limbs', 'd-mideast': 'darbuka', 'd-feet': 'kick',
+  'd-ear': 'drumear', 'd-jazz': 'ride', 'd-latin': 'clave',
   'v-ladder': 'sing', 'v-modes': 'scales', 'v-sight': 'sight', 'v-harmony': 'chords', 'v-ornament': 'contour', 'v-barry': 'improv',
 };
 /** Instrument topics (they all used to share one chord icon). */
