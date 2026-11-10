@@ -375,6 +375,8 @@ export function answerWord(_q: Question, a: Answer, l: Lang, nm: Naming = 'lette
   const asPc = typeof a === 'string' ? pcFromKey(a) : null;
   if (asPc) return spokenNote(asPc, nm, l);
   if (_q.kind === 'rhythm-dict' && typeof a === 'string') return describeRhythm(rhythmFromKey(a, _q.rhythm.bars), 'names', l);
+  // A tapped rhythm's 'answer' is the grade word: show the rhythm itself (0.66).
+  if (_q.kind === 'rhythm-read') return describeRhythm(_q.rhythm, 'names', l);
   const words: Record<string, Record<Lang, string>> = {
     maj: { en: 'major', he: "מז׳ור" },
     min: { en: 'minor', he: 'מינור' },

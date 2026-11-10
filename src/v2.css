@@ -1932,3 +1932,17 @@
 :root[data-theme] .path2 .road .sys .node[data-slot='1'] { --x: 46%; }
 :root[data-theme] .path2 .road .sys .node[data-slot='2'] { --x: 73%; }
 :root[data-theme] .path2 .road .sys .node .node-text b { overflow-wrap: anywhere; max-width: 108px; text-align: center; }
+
+/* 0.66 (owner): the count-in is visible — a big 4, 3, 2, 1 on the tap pad (and over drum lanes). */
+:root[data-theme] .tap-pad .tap-countdown,
+:root[data-theme] .lane-countdown { font-family: var(--display); font-size: 3.4rem; line-height: 1; color: var(--ink-c); animation: count-pop 0.35s ease-out; }
+:root[data-theme] .lane-countdown { text-align: center; margin: 0; font-size: 2.4rem; color: var(--ink); }
+@keyframes count-pop { from { transform: scale(1.5); opacity: 0.3; } to { transform: scale(1); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { :root[data-theme] .tap-pad .tap-countdown, :root[data-theme] .lane-countdown { animation: none; } }
+:root[data-theme] .gt-pad .tap-countdown { font-family: var(--display); font-size: 3rem; line-height: 1; animation: count-pop 0.35s ease-out; }
+/* 0.66 (owner): the lesson score is solid ink — the white-to-lemon gradient text was unreadable on the light card. */
+:root[data-theme] .fluency-score b { background: none; -webkit-background-clip: border-box; background-clip: border-box; color: var(--ink); -webkit-text-fill-color: currentColor; }
+:root[data-theme] .fluency-score.s3 b { filter: none; }
+
+/* 0.66: the 'hot' chip on lemon is ink, not amber (3.85:1) */
+:root[data-theme='light'] .hot-chip { color: var(--ink-c); }

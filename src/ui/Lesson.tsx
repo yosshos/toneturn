@@ -947,17 +947,20 @@ function FeedbackBanner({ v, t, lang, settings }: { v: LessonView; t: Strings; l
   const sungText = !f.sung
     ? ''
     : { accurate: t.singAccurate, sharp: t.singSharp, flat: t.singFlat, wrong: t.singWrong, unclear: t.unclear }[f.sung.status];
+  // A performed answer (tapping, playing) is graded 'accurate' / 'wrong' — that word is not an answer to show
+  // (0.66, owner: a miss said "It was: accurate").
+  const performed = f.answer === 'accurate' || f.answer === 'wrong';
   let text: string;
   switch (f.kind) {
     case 'correct':
     case 'correct-retry':
-      text = f.sung ? sungText : `${t.correct} ${ansText}`;
+      text = f.sung ? sungText : performed ? t.correct : `${t.correct} ${ansText}`;
       break;
     case 'retry':
       text = f.sung ? sungText : t.notQuite;
       break;
     case 'reveal':
-      text = q.kind === 'sing' ? t.listenToTarget : `${t.revealed}: ${ansText}`;
+      text = q.kind === 'sing' ? t.listenToTarget : performed ? (q.kind === 'rhythm-read' ? (lang === 'he' ? 'לא בדיוק בזמן' : 'Not quite in time') : t.notQuite) : `${t.revealed}: ${ansText}`;
       break;
     case 'skipped':
       text = t.skipped;
@@ -1276,6 +1279,11 @@ function ReadPrompt({ q, v, lang, onTap, onRelease, t, onLane }: { q: Extract<Qu
           </div>
         ))}
         <div className={`beat-light ${v.beat?.accent ? 'accent' : ''}`} key={v.beat?.n ?? -1} aria-hidden="true" />
+        {v.beat?.count ? (
+          <p className="lane-countdown" key={`c${v.beat.count}`} aria-live="assertive">
+            {v.beat.count}
+          </p>
+        ) : null}
         <div className="lane-pads" dir="ltr">
           {q.lanes.map((ln, i) => (
             <button
@@ -1300,7 +1308,7 @@ function ReadPrompt({ q, v, lang, onTap, onRelease, t, onLane }: { q: Extract<Qu
         {/* q.prompt is the question line itself (askTemplate) — not repeated here (one-screen fit). */}
         <p className="tempo-target" dir="ltr">♩ = {q.tempoGoal.bpm}</p>
         <div className={`beat-light ${v.beat?.accent ? 'accent' : ''}`} key={v.beat?.n ?? -1} aria-hidden="true" />
-        <TapPad live={v.phase === 'listening'} count={v.readTaps ?? 0} label={t.tapHere} hint={t.tapPadHint} beat={v.beat?.n ?? -1} accent={!!v.beat?.accent} onTap={onTap} onRelease={onRelease} />
+        <TapPad live={v.phase === 'listening'} count={v.readTaps ?? 0} label={t.tapHere} hint={t.tapPadHint} beat={v.beat?.n ?? -1} accent={!!v.beat?.accent} onTap={onTap} onRelease={onRelease} countdown={v.beat?.count} />
       </div>
     );
   }
@@ -1314,7 +1322,7 @@ function ReadPrompt({ q, v, lang, onTap, onRelease, t, onLane }: { q: Extract<Qu
         </p>
       )}
       <div className={`beat-light ${v.beat?.accent ? 'accent' : ''}`} key={v.beat?.n ?? -1} aria-hidden="true" />
-      <TapPad live={v.phase === 'listening'} count={v.readTaps ?? 0} label={t.tapHere} hint={t.tapPadHint} beat={v.beat?.n ?? -1} accent={!!v.beat?.accent} onTap={onTap} onRelease={onRelease} />
+      <TapPad live={v.phase === 'listening'} count={v.readTaps ?? 0} label={t.tapHere} hint={t.tapPadHint} beat={v.beat?.n ?? -1} accent={!!v.beat?.accent} onTap={onTap} onRelease={onRelease} countdown={v.beat?.count} />
     </div>
   );
 }
@@ -1344,7 +1352,7 @@ function ReadStrip({ hits, extra, t }: { hits: (number | null)[]; extra: number;
  * The big tap pad for rhythmic input (product owner): full width, tall, a ripple on every tap and a glow
  * on every metronome beat. Pointer and Space both count; hold for long notes.
  */
-export function TapPad({ live, count, label, hint, beat, accent, onTap, onRelease }: { live: boolean; count: number; label: string; hint?: string; beat: number; accent: boolean; onTap: (ms: number) => void; onRelease?: (ms: number) => void }) {
+export function TapPad({ live, count, label, hint, beat, accent, onTap, onRelease, countdown }: { live: boolean; count: number; label: string; hint?: string; beat: number; accent: boolean; onTap: (ms: number) => void; onRelease?: (ms: number) => void; /** 0.66: the count-in, shown big (4, 3, 2, 1). */ countdown?: number }) {
   const [ripples, setRipples] = useState<{ id: number; x: number; y: number }[]>([]);
   return (
     <button
@@ -1365,8 +1373,14 @@ export function TapPad({ live, count, label, hint, beat, accent, onTap, onReleas
       {ripples.map((p) => (
         <span key={p.id} className="tap-ripple" style={{ left: p.x, top: p.y }} aria-hidden="true" />
       ))}
-      <span className="tap-label">{label}</span>
-      {hint && <small className="tap-hint">{hint}</small>}
+      {countdown ? (
+        <span className="tap-countdown" key={`c${countdown}`} aria-live="assertive">
+          {countdown}
+        </span>
+      ) : (
+        <span className="tap-label">{label}</span>
+      )}
+      {hint && !countdown && <small className="tap-hint">{hint}</small>}
       <small className="tap-count" dir="ltr">{count ? count : ''}</small>
     </button>
   );

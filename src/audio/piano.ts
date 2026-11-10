@@ -1792,7 +1792,8 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     if (signal.aborted) return Promise.reject(new Cancelled());
     const t0 = ctx.currentTime + 0.12;
     // A silent click still counts the beat (score cursor) but is not heard (bass click-displacement drills).
-    tl.clicks.forEach((c) => !c.silent && this.perc(c.accent ? 'accent' : 'click', t0 + c.t, c.soft ? 0.4 : undefined));
+    // 0.66 (owner): the count-in sounds different from the clicks that follow (a woodblock), so you know when to start.
+    tl.clicks.forEach((c) => !c.silent && this.perc(c.count ? 'wood' : c.accent ? 'accent' : 'click', t0 + c.t, c.soft ? 0.4 : c.count ? 0.95 : undefined));
     tl.wood.forEach((w, i) => {
       const d = tl.drums?.[i];
       this.perc(d === 'k' ? 'kick' : d === 's' ? 'snare' : 'wood', t0 + w, 0.85);

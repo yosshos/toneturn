@@ -105,7 +105,8 @@ export interface LessonView {
     coach?: string;
   } | null;
   /** Metronome light while a rhythm is being performed. */
-  beat: { i: number; accent: boolean; n: number } | null;
+  /** `count`: beats left in the count-in (4, 3, 2, 1), 0 once the passage starts. */
+  beat: { i: number; accent: boolean; n: number; count?: number } | null;
   /** Taps / "ta" onsets registered so far in the current performance. */
   readTaps: number;
   /** performance.now() when beat 1 of the current performance is heard (null outside a performance). */
@@ -935,6 +936,7 @@ export class LessonController {
         this.patch({ mic: 'capturing' });
       }
       let n = 0;
+      const countN = q.tempoGoal ? 0 : countInPulses(meterOf(q.rhythm));
       this.readOpen = true;
       try {
         await this.ad.audio.playTimeline(
@@ -942,12 +944,14 @@ export class LessonController {
             // Spec AE: tempo from memory (no reference), or clicks in a pattern (backbeat, gaps …).
             if (q.tempoGoal) return tempoTimeline(q.tempoGoal);
             const tl = readTimeline(q.rhythm, q.bpm, q.silentAfterBars);
-            if (!q.clicks) return tl;
             const per = countInPulses(meterOf(q.rhythm));
-            return { ...tl, clicks: applyClicks(tl.clicks, q.clicks, per, per) };
+            // The first bar is the count-in: marked, so it sounds and shows as one (0.66, owner).
+            const mark = (cs: typeof tl.clicks) => cs.map((c, i) => (i < per ? { ...c, count: true } : c));
+            if (!q.clicks) return { ...tl, clicks: mark(tl.clicks) };
+            return { ...tl, clicks: mark(applyClicks(tl.clicks, q.clicks, per, per)) };
           })(),
           signal,
-          (i, accent) => this.patch({ beat: { i, accent, n: n++ } }),
+          (i, accent) => this.patch({ beat: { i, accent, n: n++, count: i < countN ? countN - i : 0 } }),
           (perf) => {
             this.readStart = perf;
             this.patch({ readStartPerf: perf });
