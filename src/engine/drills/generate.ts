@@ -138,22 +138,36 @@ export const MINOR_FINGERING: Record<number, FingRow> = {
   5: F_ROW,
 };
 
-function fingRowFor(type: ScaleType, key: number): FingRow | null {
+/**
+ * Melodic minor going up where it differs from the harmonic row (PIANO_AUDIT C1): F♯ and C♯ have a black 6th and 7th
+ * going up, so the RH thumb moves to the 3rd and the raised 7th (2 3 1 2 3 4 1 2, as F♯ / D♭ major). Every other key
+ * keeps its harmonic-minor row; the LH rows hold in every key.
+ */
+const MELODIC_UP_RH: Record<number, number[]> = {
+  6: [2, 3, 1, 2, 3, 4, 1, 2],
+  1: [2, 3, 1, 2, 3, 4, 1, 2],
+};
+
+/**
+ * The fingering row of a scale in one direction. Natural minor (and melodic minor coming down, which is natural) uses
+ * the harmonic-minor rows: the changed 7th is a white key in every key where the thumb falls on it, and checked key by
+ * key in PIANO_AUDIT §2 (C1).
+ */
+function fingRowFor(type: ScaleType, key: number, down = false): FingRow | null {
   const k = mod(key, 12);
   if (type === 'major') return MAJOR_FINGERING[k];
-  if (type === 'harmonic') return MINOR_FINGERING[k];
-  // Melodic / natural minor: only the white-key minors are certain (same as harmonic); others omitted.
-  if ((type === 'melodic' || type === 'natural') && [9, 4, 2, 7, 0].includes(k)) return WHITE;
+  if (type === 'harmonic' || type === 'natural') return MINOR_FINGERING[k];
+  if (type === 'melodic') return !down && MELODIC_UP_RH[k] ? { r: MELODIC_UP_RH[k], l: MINOR_FINGERING[k].l } : MINOR_FINGERING[k];
   return null;
 }
 
-/** Finger for scale index k of one hand's run (kLo / kHi = lowest / highest index the hand plays). */
-function scaleFinger(row: FingRow, hand: Hand, k: number, kLo: number, kHi: number): number {
+/** Finger for scale index k of one hand's run (kLo / kHi = lowest / highest index the hand plays). `turn` = the row going down (the top note starts the way down). */
+function scaleFinger(row: FingRow, hand: Hand, k: number, kLo: number, kHi: number, turn: FingRow = row): number {
   const f = hand === 'R' ? row.r : row.l;
   const d = mod(k, 7);
   if (d !== 0) return f[d];
   if (k === kLo) return f[0];
-  if (k === kHi) return f[7];
+  if (k === kHi) return (hand === 'R' ? turn.r : turn.l)[7];
   // A tonic in the middle of a run: RH keeps the thumb only when the scale starts with it (e.g. B♭: 4).
   return hand === 'R' ? (f[0] === 1 ? 1 : f[7]) : f[7];
 }
@@ -348,7 +362,8 @@ function finish(spec: DrillSpec, buf: Buf, ttl: T2, goal: DrillGoal, startBpm: n
     meter,
     keySig: keySig ?? keySigOf(spec),
     goal,
-    startBpm,
+    // A level's exam-based start speed (PIANO_AUDIT T1) comes in as the spec's tempo.
+    startBpm: spec.tempo ?? startBpm,
   };
 }
 
@@ -425,7 +440,14 @@ function genScale(s: DrillSpec): Drill {
   // LH alone over 2+ octaves sits an octave lower (C2–C4 region).
   if (s.hands === 'L' && oct >= 2 && oct < 3 && !octavesKind) tL = base - 24;
   if (octavesKind && oct < 3) tL = pitchIn(s.key, 31);
+  // PIANO_AUDIT C3: hands-together octaves had the LH's top note on the RH's bottom key (C1–C2 under C2–C3 shared C2).
+  // Two octaves apart, so the hands never share a key.
+  if (octavesKind && s.hands === 'RL') {
+    tR = pitchIn(s.key, 52);
+    tL = tR - 24;
+  }
   const row = type === 'chromatic' ? null : fingRowFor(type, s.key);
+  const rowDown = type === 'chromatic' ? null : fingRowFor(type, s.key, true);
   const handsUsed: Hand[] = s.hands === 'RL' ? ['R', 'L'] : [s.hands];
   const kOf = (h: Hand, i: number) => (h === 'R' ? path[i][0] + oR : path[i][1] + oL);
   const range = (h: Hand) => {
@@ -446,10 +468,12 @@ function genScale(s: DrillSpec): Drill {
       let finger: number | undefined;
       if (octavesKind) finger = undefined;
       else if (type === 'chromatic') finger = chromaticFinger(h, p, i === 0);
-      else if (row && seven) {
+      else if (row && rowDown && seven) {
         const [lo, hi] = ranges[h];
-        // Endpoints that are not tonics take the cycle finger (scales a 3rd / 6th apart).
-        finger = scaleFinger(row, h, k, mod(lo, 7) === 0 ? lo : Number.NaN, mod(hi, 7) === 0 ? hi : Number.NaN);
+        // Endpoints that are not tonics take the cycle finger (scales a 3rd / 6th apart). Melodic minor: the row of the
+        // direction the hand is moving (the LH in contrary motion moves down while the RH goes up).
+        const goingDown = down || (pk === null && path.length > 1 && kOf(h, 1) < k);
+        finger = scaleFinger(goingDown ? rowDown : row, h, k, mod(lo, 7) === 0 ? lo : Number.NaN, mod(hi, 7) === 0 ? hi : Number.NaN, rowDown);
       }
       if (octavesKind) {
         const top = p + 12;
@@ -812,16 +836,65 @@ const CAD_T: Record<string, T2> = {
 };
 const TOP_T = [t('root on top', 'יסוד למעלה'), t('3rd on top', 'טרצה למעלה'), t('5th on top', 'קווינטה למעלה')];
 
+/** Parallel 5ths / octaves (or unisons) between any two voices of two successive sonorities (same voice count, by position). */
+export function parallelsBetween(a: number[], b: number[]): number {
+  let n = 0;
+  for (let x = 0; x < a.length; x++)
+    for (let y = x + 1; y < a.length; y++) {
+      if (a[x] === b[x] || a[y] === b[y]) continue;
+      const i1 = mod(a[y] - a[x], 12);
+      const i2 = mod(b[y] - b[x], 12);
+      if (i1 === i2 && (i1 === 0 || i1 === 7)) n++;
+    }
+  return n;
+}
+
+/**
+ * The RH chord of a cadence step (PIANO_AUDIT C2): three notes inside [lo, hi] within an octave, from the chord's pitch
+ * classes (one may be doubled when the bass has the missing one: V7–vi doubles the 3rd), as close to the last chord
+ * as possible and never in parallel 5ths / octaves with the bass or between the voices. Before this, the nearest
+ * close position moved I–IV–V in parallel with the bass (F A C → G B D over F → G).
+ */
+function cadenceVoicing(pcs: number[], bass: number, prev: number[], prevBass: number, lo: number, hi: number, lead: number): number[] {
+  const want = new Set(pcs.map((p) => mod(p, 12)));
+  const keys: number[] = [];
+  for (let p = lo; p <= hi; p++) if (want.has(mod(p, 12))) keys.push(p);
+  let best: number[] = prev;
+  let bestCost = Infinity;
+  for (let i = 0; i < keys.length; i++)
+    for (let j = i + 1; j < keys.length; j++)
+      for (let k = j + 1; k < keys.length; k++) {
+        const v = [keys[i], keys[j], keys[k]];
+        if (v[2] - v[0] > 12) continue;
+        const have = new Set([...v, bass].map((p) => mod(p, 12)));
+        if ([...want].some((p) => !have.has(p))) continue;
+        const distinct = new Set(v.map((p) => mod(p, 12))).size;
+        const move = v.reduce((a, p, q) => a + Math.abs(p - prev[q]), 0);
+        const par = parallelsBetween([prevBass, ...prev], [bass, ...v]);
+        // A doubled leading tone (the key's 7th degree) is avoided; a doubled note is a little worse than three.
+        const lt = v.filter((p) => mod(p, 12) === mod(lead, 12)).length > 1 ? 1 : 0;
+        const cost = move + par * 100 + lt * 50 + (distinct < 3 ? 3 : 0);
+        if (cost < bestCost) {
+          bestCost = cost;
+          best = v;
+        }
+      }
+  return best;
+}
+
 function genCadence(s: DrillSpec): Drill {
   const key = mod(s.key, 12);
   const prog = cadenceProg(s.kind, !!s.minor);
   const pos = Math.min(2, Math.max(0, s.option ?? 0));
   let prev: number[] | null = null;
+  let prevBass = 0;
   const evs: ChordEv[] = prog.map((c, i) => {
     const pcs = c.rh.map((p) => p + key);
-    const v = prev ? voiceNear(pcs, prev, 57, 81) : voiceNear(pcs, null, 57, 81, prog[0].rh[pos] + key, 72);
-    prev = v;
     const bassP = pitchIn(c.bass + key, 41);
+    // Later chords may go down to F3 so a step up in the bass can always be met by contrary motion.
+    const v = prev ? cadenceVoicing(pcs, bassP, prev, prevBass, Math.max(53, bassP + 3), 81, key + 11) : voiceNear(pcs, null, 57, 81, prog[0].rh[pos] + key, 72);
+    prev = v;
+    prevBass = bassP;
     const notes: SN[] = [];
     if (s.hands !== 'R') notes.push({ pitch: bassP, hand: 'L' });
     if (s.hands !== 'L') for (const p of v) notes.push({ pitch: p, hand: 'R' });
@@ -2467,8 +2540,10 @@ function genVelocity(s: DrillSpec): Drill {
   const IV = [5, 9, 0];
   const V7 = [7, 11, 2, 5];
   let prevL: number[] | null = null;
-  const lhChord = (pcs: number[], b: number, d: number) => {
-    const v: number[] = prevL ? voiceNear(pcs.map((p) => p + key), prevL, 43, 60) : voiceNear(pcs.map((p) => p + key), null, 43, 60, undefined, 52);
+  // PIANO_AUDIT C3: the LH chord stays under the RH's lowest note of the bar (the run below the tonic shared keys with it).
+  const lhChord = (pcs: number[], b: number, d: number, under = 61) => {
+    const hi = Math.min(60, under - 1);
+    const v: number[] = prevL ? voiceNear(pcs.map((p) => p + key), prevL, hi - 17, hi) : voiceNear(pcs.map((p) => p + key), null, hi - 17, hi, undefined, hi - 8);
     prevL = v;
     buf.add(b, d, v.map((p) => ({ pitch: p, hand: 'L' as Hand })));
   };
@@ -2494,8 +2569,9 @@ function genVelocity(s: DrillSpec): Drill {
     for (let bar = 0; bar < 4; bar++) {
       runs[bar % 2].forEach((k, i) => buf.add(bar * 4 + i / 4, 0.25, [{ pitch: degPitch(base, maj, k), hand: 'R' }]));
       const ch = bar % 2 === 0 ? I : V7;
-      lhChord(ch, bar * 4, 2);
-      lhChord(ch, bar * 4 + 2, 2);
+      const low = Math.min(...runs[bar % 2].map((k) => degPitch(base, maj, k)));
+      lhChord(ch, bar * 4, 2, low);
+      lhChord(ch, bar * 4 + 2, 2, low);
     }
     buf.add(16, 1, [{ pitch: base, hand: 'R' }]);
     lhChord(I, 16, 1);
@@ -2934,10 +3010,235 @@ function genWalkChanges(s: DrillSpec): Drill {
 // ───────────────────────────── dispatch ─────────────────────────────
 
 /** Build the drill a spec describes (any family except 'custom', which goes through customToDrill). */
+// ───────────────────────────── k-ear: the pianist's ear (PIANO_AUDIT §3) ─────────────────────────────
+//
+// Call and response inside one take, as the bass ear (b-ear) and the drummer's ear (d-ear): the app's piano plays the
+// call (`listen`), the player answers ON THE KEYS in the bars after it. Every answer is measured by what is played
+// (MIDI notes, or the microphone's chroma, score-informed) — never by a tap. The answer is matched by pitch class (any
+// octave), each note or chord as its own set, so a melody played an octave up still counts. The written answer stays
+// hidden until the result. All material is generated (seeded per key and option), nothing copied.
+
+type EarListen = NonNullable<Drill['listen']>;
+const EAR_PROGS = [
+  [0, 3, 4, 0],
+  [0, 5, 3, 4],
+  [0, 4, 5, 3],
+  [5, 3, 0, 4],
+  [0, 1, 4, 0],
+  [0, 3, 0, 4],
+];
+const EAR_RHYTHMS = [
+  [0, 1, 2, 2.5, 3, 4, 5, 6],
+  [0, 0.5, 1, 2, 3, 4, 4.5, 5, 6],
+  [0, 1, 1.5, 2, 3, 4, 6],
+  [0, 1, 2, 3, 4, 5, 5.5, 6],
+];
+
+/** The level's tempo for every k-ear item (♩): a calm call, the same pace to answer in. */
+export const KEYS_EAR_TEMPO: [number, number] = [72, 88];
+/** The placement probe for the pianist's ear: three notes by step, played back (ear L2), in C. */
+export const KEYS_EAR_PROBE: DrillSpec = { family: 'k-ear', kind: 'echo-motif', key: 0, hands: 'R', tempo: 72 };
+
+function genKeysEar(s: DrillSpec): Drill {
+  const key = mod(s.key, 12);
+  const op = s.option ?? 0;
+  const rnd = rng(`k-ear:${s.kind}:${key}:${op}`);
+  const pick = <X,>(xs: X[]): X => xs[Math.floor(rnd() * xs.length)];
+  const tonic = pitchIn(key, 60);
+  const maj = SCALE_INTERVALS.major;
+  const deg = (d: number) => degPitch(tonic, maj, d);
+  /** A diatonic triad (degree 0–6) in close position around middle C, and its bass an octave and more below. */
+  const triad = (d: number) => [0, 2, 4].map((x) => deg(d + x)).map((p) => pitchIn(p, 55)).sort((a, b) => a - b);
+  const bassOf = (d: number) => pitchIn(deg(d), 40);
+  const notes: EarListen['notes'] = [];
+  const windows: [number, number][] = [];
+  const evs: ChordEv[] = [];
+  const call = (beat: number, dur: number, midi: number[]) => notes.push({ beat, dur, midi, inst: 'piano' });
+  const ans = (beat: number, dur: number, pitches: number[], hand: Hand = 'R', required = pitches) =>
+    evs.push({ beat, dur, notes: pitches.map((p) => ({ pitch: p, hand })), required, allowed: [...required, ...pitches] });
+  /** The key: I–IV–V–I in quarters (one bar). */
+  const cadenceBar = (b0: number) => {
+    [0, 3, 4, 0].forEach((d, i) => call(b0 + i, 0.9, [bassOf(d), ...triad(d)]));
+    windows.push([b0, b0 + 4]);
+  };
+  let ask: T2;
+  let name: T2;
+  switch (s.kind) {
+    case 'echo-note': {
+      // Four rounds: I and V under beats 1–2, the note on beat 3 (half note); play it in the next bar.
+      for (let r = 0; r < 4; r++) {
+        const b0 = r * 8;
+        call(b0, 0.9, [bassOf(0), ...triad(0)]);
+        call(b0 + 1, 0.9, [bassOf(4), ...triad(4)]);
+        const p = deg(Math.floor(rnd() * 8));
+        call(b0 + 2, 1.8, [p]);
+        windows.push([b0, b0 + 4]);
+        ans(b0 + 4, 4, [p]);
+      }
+      ask = t('Hear the key, then a note — play the note', 'שמעו את הסולם ואז צליל — נגנו את הצליל');
+      name = t('One note in the key', 'צליל אחד בסולם');
+      break;
+    }
+    case 'echo-motif': {
+      // The key, then four rounds: three notes by step in quarters; play them back in the next bar.
+      cadenceBar(0);
+      for (let r = 0; r < 4; r++) {
+        const b0 = 4 + r * 8;
+        let d = Math.floor(rnd() * 6);
+        const ds = [d];
+        for (let i = 1; i < 3; i++) {
+          d = Math.max(0, Math.min(7, d + (op === 1 ? pick([-2, -1, 1, 2]) : pick([-1, 1]))));
+          ds.push(d);
+        }
+        ds.forEach((x, i) => call(b0 + i, 0.9, [deg(x)]));
+        windows.push([b0, b0 + 4]);
+        ds.forEach((x, i) => ans(b0 + 4 + i, i === 2 ? 2 : 1, [deg(x)]));
+      }
+      ask = t('Hear three notes — play them back', 'שמעו שלושה צלילים — נגנו אותם בחזרה');
+      name = op === 1 ? t('Three notes with skips', 'שלושה צלילים עם דילוגים') : t('Three notes by step', 'שלושה צלילים בצעדים');
+      break;
+    }
+    case 'echo-melody': {
+      // The key, then two rounds: a two-bar diatonic melody (8ths and quarters, leaps up to a 5th), echoed.
+      cadenceBar(0);
+      for (let r = 0; r < 2; r++) {
+        const b0 = 4 + r * 16;
+        const rh = pick(EAR_RHYTHMS);
+        let d = pick([0, 2, 4, 7]);
+        rh.forEach((at, i) => {
+          const dur = (rh[i + 1] ?? 8) - at;
+          const p = deg(d);
+          call(b0 + at, Math.min(dur, 2) * 0.9, [p]);
+          ans(b0 + 8 + at, dur, [p]);
+          const step = op === 1 ? pick([-4, -2, -1, 1, 2, 3, 4]) : pick([-2, -1, -1, 1, 1, 2]);
+          d = Math.max(-1, Math.min(9, d + step));
+          if (i === rh.length - 2) d = pick([0, 2, 4, 7]);
+        });
+        windows.push([b0, b0 + 8]);
+      }
+      ask = t('Hear two bars — play them back', 'שמעו שתי תיבות — נגנו אותן בחזרה');
+      name = op === 1 ? t('A two-bar melody with leaps', 'מנגינה של שתי תיבות עם קפיצות') : t('A two-bar melody', 'מנגינה של שתי תיבות');
+      break;
+    }
+    case 'intervals': {
+      // Four rounds: two notes (melodic, op 0 up; op 1 up or down; op 2 together) — play both.
+      for (let r = 0; r < 4; r++) {
+        const b0 = r * 8;
+        const lo = 55 + Math.floor(rnd() * 12);
+        const semis = 1 + Math.floor(rnd() * 12);
+        const down = op === 1 && rnd() < 0.5;
+        const a = down ? lo + semis : lo;
+        const b = down ? lo : lo + semis;
+        if (op === 2) call(b0, 3.6, [a, b]);
+        else {
+          call(b0, 1.8, [a]);
+          call(b0 + 2, 1.8, [b]);
+        }
+        windows.push([b0, b0 + 4]);
+        if (op === 2) ans(b0 + 4, 4, [Math.min(a, b), Math.max(a, b)]);
+        else {
+          ans(b0 + 4, 2, [a]);
+          ans(b0 + 6, 2, [b]);
+        }
+      }
+      ask = op === 2 ? t('Hear two notes together — play both', 'שמעו שני צלילים יחד — נגנו את שניהם') : t('Hear two notes — play both, in order', 'שמעו שני צלילים — נגנו את שניהם, לפי הסדר');
+      name = op === 2 ? t('Intervals together', 'מרווחים הרמוניים') : op === 1 ? t('Intervals up and down', 'מרווחים למעלה ולמטה') : t('Intervals up', 'מרווחים למעלה');
+      break;
+    }
+    case 'bass-line': {
+      // Four chords (op 1: with inversions, the bass moving by step) — then play their bass notes with the LH.
+      const prog = pick(EAR_PROGS);
+      const inv = op === 1 ? [0, 2, 0, 1] : [0, 0, 0, 0];
+      prog.forEach((d, i) => {
+        const b = bassOf(d + inv[i]);
+        call(i * 4, 3.8, [b, ...triad(d)]);
+        ans(16 + i * 4, 4, [b], 'L');
+      });
+      windows.push([0, 16]);
+      ask = t('Hear four chords — play their bass notes with the left hand', 'שמעו ארבעה אקורדים — נגנו את צלילי הבס ביד שמאל');
+      name = op === 1 ? t('The bass line, with inversions', 'קו הבס, עם היפוכים') : t('The bass line of four chords', 'קו הבס של ארבעה אקורדים');
+      break;
+    }
+    case 'chords': {
+      // Two rounds: four chords in half notes (op 1: with V7 and ii7) — play them back, any voicing.
+      for (let r = 0; r < 2; r++) {
+        const b0 = r * 16;
+        const prog = pick(EAR_PROGS);
+        prog.forEach((d, i) => {
+          const seventh = op === 1 && (d === 4 || d === 1);
+          const pcs = seventh ? [...triad(d), pitchIn(deg(d + 6), 55)] : triad(d);
+          call(b0 + i * 2, 1.8, [bassOf(d), ...pcs]);
+          ans(b0 + 8 + i * 2, 2, voiceNear(pcs, null, 55, 72), 'R', [...pcs, bassOf(d)]);
+        });
+        windows.push([b0, b0 + 8]);
+      }
+      ask = t('Hear four chords — play them back (any voicing)', 'שמעו ארבעה אקורדים — נגנו אותם בחזרה (בכל קול)');
+      name = op === 1 ? t('A progression with 7th chords', 'מהלך עם ספטאקורדים') : t('A progression of triads', 'מהלך של משולשים');
+      break;
+    }
+    case 'harmonise': {
+      // A melody of four notes, one a bar, each fitting only one of I, IV, V (3, 6, 7, 2, 4 → I, IV, V, V, IV), ending
+      // on the 3rd over I. Answer: the chord under each note (both hands as you like).
+      const pool: [number, number][] = [
+        [2, 0],
+        [5, 3],
+        [6, 4],
+        [1, 4],
+        [3, 3],
+      ];
+      const mel: [number, number][] = [];
+      while (mel.length < 3) {
+        const x = pick(pool);
+        if (!mel.length || mel[mel.length - 1][1] !== x[1]) mel.push(x);
+      }
+      mel.push([2, 0]);
+      let prevV: number[] | null = null;
+      mel.forEach(([md, cd], i) => {
+        call(i * 4, 3.6, [pitchIn(deg(md), 67)]);
+        const pcs = triad(cd);
+        const v: number[] = prevV ? voiceNear(pcs, prevV, 55, 76) : voiceNear(pcs, null, 55, 76, deg(md));
+        prevV = v;
+        // The bass in the LH, the chord in the RH, moving smoothly (any voicing passes: pitch classes).
+        evs.push({ beat: 16 + i * 4, dur: 4, notes: [{ pitch: bassOf(cd), hand: 'L' }, ...v.map((p) => ({ pitch: p, hand: 'R' as Hand }))], required: pcs, allowed: pcs });
+      });
+      windows.push([0, 16]);
+      ask = t('Hear a melody — play a chord under each note: I, IV or V', 'שמעו מנגינה — נגנו אקורד מתחת לכל צליל: I, IV או V');
+      name = t('Harmonise a melody with I, IV, V', 'הרמון מנגינה ב-I, IV, V');
+      break;
+    }
+    case 'transpose': {
+      // Hear a two-bar melody in the key (the key first), then play it in another key, from the note named.
+      const to = mod(key + (op === 1 ? 5 : 7), 12);
+      cadenceBar(0);
+      const rh = pick(EAR_RHYTHMS);
+      let d = 0;
+      const t2 = pitchIn(to, 60);
+      rh.forEach((at, i) => {
+        const dur = (rh[i + 1] ?? 8) - at;
+        call(4 + at, Math.min(dur, 2) * 0.9, [deg(d)]);
+        ans(12 + at, dur, [degPitch(t2, maj, d)]);
+        d = Math.max(0, Math.min(7, d + pick([-2, -1, 1, 1, 2])));
+        if (i === rh.length - 2) d = pick([0, 2, 4]);
+      });
+      windows.push([4, 12]);
+      const first = keyName(to);
+      ask = t(`Hear two bars in ${keyName(key)} — play them in ${first}, from ${first}`, `שמעו שתי תיבות ב-${keyName(key)} — נגנו אותן ב-${first}, מ-${first}`);
+      name = op === 1 ? t('Transpose a melody up a 4th', 'טרנספוזיציה של מנגינה קוורטה למעלה') : t('Transpose a melody up a 5th', 'טרנספוזיציה של מנגינה קווינטה למעלה');
+      break;
+    }
+    default:
+      throw new Error(`Unknown k-ear kind ${s.kind}`);
+  }
+  const ttl = { en: `${name.en} · ${keyName(key)}`, he: `${name.he} · ${keyName(key)}` };
+  const d = chordDrill({ ...s, key }, evs, ttl, KEYS_EAR_TEMPO[0], {}, SIG[key]);
+  return { ...d, show: 'none', listen: { notes, windows, ask } };
+}
+
 export function generate(spec: DrillSpec): Drill {
   if (spec.family.startsWith('d-')) return generateDrums(spec);
   if (spec.family.startsWith('g-') || spec.family.startsWith('b-')) return generateGuitar(spec);
   const s: DrillSpec = { ...spec, key: mod(spec.key, 12) };
+  if (s.family === 'k-ear') return genKeysEar(s);
   if (s.kind.startsWith('chart~')) return genChart(s);
   switch (s.kind) {
     case 'scale':
@@ -3065,23 +3366,45 @@ export interface LevelDef {
   specs: SpecTemplate[];
   /** Key list: minor keys order, major keys order, or fixed keys (e.g. C, G, F at C1). */
   keys: 'major' | 'minor' | number[];
+  /**
+   * Piano (PIANO_AUDIT T1): start → target speed in notes per second, from the exam grade the level matches
+   * (ABRSM minimum speeds). Items start at the first (their `tempo`) and the level's target is the second, whatever the
+   * item's note value. Levels without it: the generator's start tempo × 1.25.
+   */
+  nps?: [number, number];
+  /** A fixed start → target tempo (♩) for every item (the pianist's ear: a calm call, no speed ladder to climb). */
+  tempo?: [number, number];
 }
+
+/** The ABRSM recommended minimum speeds, in notes per second (scales / arpeggios, Grades 1–8; ♩ in 8ths to G3, 16ths from G4). */
+export const EXAM_NPS = {
+  scales: [2.0, 2.2, 2.67, 3.47, 4.2, 5.07, 5.33, 5.87],
+  arpeggios: [2.3, 2.1, 2.3, 2.53, 2.93, 3.33, 3.73, 4.4],
+} as const;
 export interface FamilyDef {
   id: FamilyId;
   title: T2;
-  style: 'classical' | 'jazz';
+  /** 'both': shown with either emphasis (the pianist's ear). */
+  style: 'classical' | 'jazz' | 'both';
   levels: LevelDef[];
 }
 
 /** Families → ordered levels → spec templates (spec §4–§5). */
 export function catalog(): FamilyDef[] {
-  const L = (fam: string, level: number, en: string, he: string, specs: SpecTemplate[], keys: LevelDef['keys'] = 'major'): LevelDef => ({
+  const L = (fam: string, level: number, en: string, he: string, specs: SpecTemplate[], keys: LevelDef['keys'] = 'major', nps?: [number, number]): LevelDef => ({
     id: `${fam}-${level}`,
     level,
     title: t(en, he),
-    specs,
+    // The start speed as each item's tempo (♩ = nps × 60 ÷ notes a beat; 8ths unless the item says otherwise).
+    specs: nps ? specs.map((x) => ({ ...x, tempo: Math.max(40, Math.round((nps[0] * 60) / (x.perBeat ?? 2))) })) : specs,
     keys,
+    ...(nps ? { nps } : {}),
   });
+  // The pianist's ear: one tempo range for every level.
+  const E = (level: number, en: string, he: string, specs: SpecTemplate[], keys: number[]): LevelDef => ({ id: `k-ear-${level}`, level, title: t(en, he), specs: specs.map((x) => ({ ...x, tempo: KEYS_EAR_TEMPO[0] })), keys, tempo: KEYS_EAR_TEMPO });
+  const ke = (kind: string, option?: number): SpecTemplate => ({ family: 'k-ear', kind, hands: 'R', ...(option !== undefined ? { option } : {}) });
+  const SN = EXAM_NPS.scales;
+  const AN = EXAM_NPS.arpeggios;
   const sc = (o: Partial<SpecTemplate>): SpecTemplate => ({
     family: 'scales',
     kind: 'scale',
@@ -3179,6 +3502,7 @@ export function catalog(): FamilyDef[] {
           'מינור מלודי וטבעי',
           [sc({ hands: 'RL', minor: true, scale: 'melodic', octaves: 2 }), sc({ hands: 'RL', minor: true, scale: 'natural', octaves: 2 })],
           'minor',
+          [SN[2], SN[3]],
         ),
         L('scales', 7, 'Chromatic', 'כרומטי', [
           ...HS({ scale: 'chromatic', octaves: 2 }),
@@ -3188,13 +3512,13 @@ export function catalog(): FamilyDef[] {
             octaves: 2,
             motion: 'contrary',
           }),
-        ]),
+        ], 'major', [SN[1], SN[3]]),
         L('scales', 8, 'A 3rd, 6th and 10th apart', 'בהפרש טרצה, סקסטה ודצימה', [
           sc({ hands: 'RL', motion: 'third' }),
           sc({ hands: 'RL', motion: 'sixth' }),
           sc({ hands: 'RL', motion: 'tenth' }),
-        ]),
-        L('scales', 9, 'Formula pattern', 'תבנית פורמולה', [sc({ hands: 'RL', motion: 'formula', octaves: 2 })]),
+        ], 'major', [SN[2], SN[4]]),
+        L('scales', 9, 'Formula pattern', 'תבנית פורמולה', [sc({ hands: 'RL', motion: 'formula', octaves: 2 })], 'major', [SN[2], SN[4]]),
         L('scales', 10, '4 octaves in 16ths', '4 אוקטבות בשש-עשריות', [
           sc({ hands: 'RL', octaves: 4, perBeat: 4 }),
           sc({
@@ -3204,13 +3528,13 @@ export function catalog(): FamilyDef[] {
             minor: true,
             scale: 'harmonic',
           }),
-        ]),
+        ], 'major', [SN[3], SN[7]]),
         L('scales', 11, 'Rhythm variants', 'וריאציות קצב', [
           sc({ hands: 'RL', variant: 'dotted' }),
           sc({ hands: 'RL', variant: 'rev-dotted' }),
           sc({ hands: 'RL', variant: 'groups3', perBeat: 3 }),
           sc({ hands: 'RL', variant: 'accent-shift', perBeat: 4 }),
-        ]),
+        ], 'major', [SN[1], SN[3]]),
         L('scales', 12, 'Jazz scales', "סולמות ג'אז", [
           sc({ scale: 'mixolydian' }),
           sc({ scale: 'bebop-dom' }),
@@ -3231,6 +3555,7 @@ export function catalog(): FamilyDef[] {
             sc({ hands: 'RL', minor: true, scale: 'melodic', octaves: 2, motion: 'contrary' }),
           ],
           'minor',
+          [SN[2], SN[4]],
         ),
         L('scales', 14, 'Chromatic a minor 3rd and a major 6th apart; 3 octaves', 'כרומטי בהפרש טרצה קטנה וסקסטה גדולה; 3 אוקטבות', [
           sc({ hands: 'RL', scale: 'chromatic', motion: 'third' }),
@@ -3238,8 +3563,8 @@ export function catalog(): FamilyDef[] {
           sc({ hands: 'RL', octaves: 3 }),
           sc({ hands: 'RL', octaves: 3, minor: true, scale: 'harmonic' }),
           sc({ hands: 'RL', octaves: 3, scale: 'chromatic' }),
-        ]),
-        L('scales', 15, 'Melodic and natural minor, each hand', 'מינור מלודי וטבעי, כל יד', [...HS({ minor: true, scale: 'melodic', octaves: 2 }), ...HS({ minor: true, scale: 'natural', octaves: 2 })], 'minor'),
+        ], 'major', [SN[3], SN[5]]),
+        L('scales', 15, 'Melodic and natural minor, each hand', 'מינור מלודי וטבעי, כל יד', [...HS({ minor: true, scale: 'melodic', octaves: 2 }), ...HS({ minor: true, scale: 'natural', octaves: 2 })], 'minor', [SN[2], SN[3]]),
       ],
     },
     {
@@ -3272,7 +3597,7 @@ export function catalog(): FamilyDef[] {
         L('arpeggios', 6, '4 octaves, contrary motion', '4 אוקטבות, תנועה נגדית', [
           ar({ hands: 'RL', octaves: 4, perBeat: 4 }),
           ar({ hands: 'RL', octaves: 2, motion: 'contrary' }),
-        ]),
+        ], 'major', [AN[4], AN[7]]),
         L('arpeggios', 7, 'maj7 / m7 / ø7 (jazz)', "maj7 / m7 / ø7 (ג'אז)", [ar({ kind: 'arp-maj7' }), ar({ kind: 'arp-m7' }), ar({ kind: 'arp-hd7' })], cyc4),
         L('arpeggios', 8, 'Broken chords through the inversions', 'אקורדים שבורים דרך ההיפוכים', [
           ar({ kind: 'broken' }),
@@ -3292,7 +3617,7 @@ export function catalog(): FamilyDef[] {
           ar({ kind: 'arp-dom7', option: 2 }),
           ar({ kind: 'arp-dom7', option: 3 }),
           ar({ kind: 'arp-dom7', hands: 'RL', option: 1 }),
-        ]),
+        ], 'major', [AN[3], AN[5]]),
         L(
           'arpeggios',
           11,
@@ -3300,6 +3625,7 @@ export function catalog(): FamilyDef[] {
           'ספטאקורד מוקטן מכל צליל',
           [ar({ kind: 'arp-dim7', option: 1 }), ar({ kind: 'arp-dim7', option: 2 }), ar({ kind: 'arp-dim7', option: 3 }), ar({ kind: 'arp-dim7', hands: 'L' })],
           'minor',
+          [AN[3], AN[5]],
         ),
         L('arpeggios', 12, '3 octaves hands together; jazz 7ths hands together', '3 אוקטבות בידיים יחד; ספטאקורדי ג׳אז בידיים יחד', [
           ar({ hands: 'RL', octaves: 3 }),
@@ -3307,7 +3633,7 @@ export function catalog(): FamilyDef[] {
           ar({ kind: 'arp-maj7', hands: 'RL' }),
           ar({ kind: 'arp-m7', hands: 'RL' }),
           ar({ kind: 'arp-hd7', hands: 'RL' }),
-        ]),
+        ], 'major', [AN[4], AN[6]]),
         L('arpeggios', 13, 'Blocked chords through the inversions', 'אקורדים סגורים דרך ההיפוכים', [ar({ kind: 'blocked' }), ar({ kind: 'blocked', hands: 'L' }), ar({ kind: 'blocked', hands: 'RL' })]),
         L(
           'arpeggios',
@@ -3388,14 +3714,14 @@ export function catalog(): FamilyDef[] {
         L('fingers', 6, 'Hanon in all keys, 16ths', 'האנון בכל הסולמות, שש-עשריות', [
           f({ kind: 'hanon-1', hands: 'RL', perBeat: 4 }),
           f({ kind: 'hanon-style', hands: 'RL', option: 2, perBeat: 4 }),
-        ]),
+        ], 'major', [SN[3], AN[7]]),
         L('fingers', 7, 'Hanon Part II 39–43 (scales and arpeggios)', 'האנון חלק ב׳ 39–43 (סולמות וארפג׳יו)', [
           sc({ hands: 'RL', perBeat: 4 }),
           sc({ hands: 'RL', perBeat: 4, scale: 'chromatic' }),
           ar({ hands: 'RL', perBeat: 4 }),
           ar({ kind: 'arp-dim7', hands: 'RL', perBeat: 4 }),
           ar({ kind: 'arp-dom7', hands: 'RL', perBeat: 4 }),
-        ]),
+        ], 'major', [SN[3], AN[7]]),
         L(
           'fingers',
           8,
@@ -3445,7 +3771,7 @@ export function catalog(): FamilyDef[] {
           f({ kind: 'hanon-style', hands: 'RL', option: 3, perBeat: 4 }),
           f({ kind: 'hanon-style', hands: 'RL', option: 5, perBeat: 4 }),
           f({ kind: 'hanon-style', hands: 'RL', option: 6, perBeat: 4 }),
-        ]),
+        ], 'major', [SN[3], SN[5]]),
       ],
     },
     {
@@ -3655,7 +3981,7 @@ export function catalog(): FamilyDef[] {
         L('voicings', 13, 'Rootless A / B through the progressions', 'בלי יסוד A / B לאורך המהלכים', [cv('lv:two-five-one', 'rootless-a'), cv('lv:two-five-one', 'rootless-b'), cv('lv:minor-two-five', 'rootless'), cv('lv:turnaround', 'rootless'), cv('lv:tritone-subs', 'rootless'), cv('lv:extensions', 'rootless')], [0, 5, 10, 3]),
         L('voicings', 14, 'Comping rhythms on standards', 'מקצבי ליווי על סטנדרטים', [cv('std:autumn', 'rootless', 'charleston'), cv('std:fly', 'rootless', 'reverse'), cv('std:satin', 'shell', 'garland'), cv('std:blue-bossa', 'rootless', 'anticip'), cv('std:a-train', 'shell', 'four')], [0]),
         L('voicings', 15, 'Drop 2, drop 3 and block chords on standards', 'דרופ 2, דרופ 3 ואקורדי בלוק על סטנדרטים', [cv('std:autumn', 'drop2'), cv('std:attya', 'drop2', 'charleston'), cv('std:fly', 'drop3'), cv('std:satin', 'block'), cv('std:solar', 'drop2', 'reverse')], [0]),
-        L('voicings', 16, 'Open, two-handed, quartal and upper structures', 'פתוח, שתי ידיים, קוורטלי ו־Upper structure', [cv('lv:two-five-one', 'open'), cv('std:autumn', 'two-hand'), cv('std:so-what', 'quartal'), cv('lv:altered-chain', 'upper'), cv('std:ladybird', 'two-hand', 'charleston'), cv('lv:coltrane', 'open')], [0]),
+        L('voicings', 16, 'Open, two-handed, quartal and upper structures', 'פתוח, שתי ידיים, קוורטלי ומשולשי מבנה עליון', [cv('lv:two-five-one', 'open'), cv('std:autumn', 'two-hand'), cv('std:so-what', 'quartal'), cv('lv:altered-chain', 'upper'), cv('std:ladybird', 'two-hand', 'charleston'), cv('lv:coltrane', 'open')], [0]),
         L('voicings', 17, 'Left hand comps, right hand improvises', 'יד שמאל מלווה, יד ימין מאלתרת', [cv('lv:two-five-one', 'rootless', 'charleston', 'improv'), cv('lv:blues', 'shell', 'charleston', 'improv'), cv('std:autumn', 'rootless', 'reverse', 'improv'), cv('std:bird-blues', 'rootless', 'charleston', 'improv'), cv('lv:rhythm-changes', 'shell', 'garland', 'improv'), cv('std:giant', 'guide', 'whole', 'improv')], [0]),
       ],
     },
@@ -3742,13 +4068,28 @@ export function catalog(): FamilyDef[] {
           m('boogie', { option: 1, swing: true }),
           m('bossa', { hands: 'RL' }),
         ], [2, 9, 4, 10, 3, 8, 1, 11]),
-        L('accomp', 11, 'Stride: tenths', 'סטרייד: דסימות', [st('tpl:fifties', 'stride-tenth'), st('lv:turnaround', 'stride-tenth')], [0, 7, 5, 2]),
-        L('accomp', 12, 'Stride: broken tenths', 'סטרייד: דסימות שבורות', [st('tpl:fifties', 'stride-broken'), st('lv:turnaround', 'stride-broken')], [0, 7, 5, 10]),
+        L('accomp', 11, 'Stride: tenths', 'סטרייד: דצימות', [st('tpl:fifties', 'stride-tenth'), st('lv:turnaround', 'stride-tenth')], [0, 7, 5, 2]),
+        L('accomp', 12, 'Stride: broken tenths', 'סטרייד: דצימות שבורות', [st('tpl:fifties', 'stride-broken'), st('lv:turnaround', 'stride-broken')], [0, 7, 5, 10]),
         L('accomp', 13, 'Stride: the bass walks to the next chord', 'סטרייד: הבס הולך לאקורד הבא', [st('lv:blues', 'stride-walk'), st('lv:turnaround', 'stride-walk')], [0, 5, 10]),
         L('accomp', 14, 'Stride through the blues and rhythm changes', 'סטרייד בבלוז ובריתם צ׳יינג׳ס', [st('lv:blues', 'stride-octave'), st('lv:rhythm-changes', 'stride-single'), st('std:rhythm-bridge', 'stride-tenth')], [0, 5]),
         L('accomp', 15, 'Stride on standards', 'סטרייד על סטנדרטים', [st('std:a-train', 'stride-tenth'), st('std:satin', 'stride-octave'), st('std:fly', 'stride-broken'), st('std:attya', 'stride-tenth')], [0]),
         L('accomp', 16, 'Stride with the right hand free', 'סטרייד עם יד ימין חופשית', [st('lv:blues', 'stride-tenth', 'improv'), st('std:a-train', 'stride-octave', 'improv'), st('lv:turnaround', 'stride-walk', 'improv')], [0]),
         L('accomp', 17, 'Stride in all keys, up to tempo', 'סטרייד בכל הסולמות, עד הטמפו', [st('lv:two-five-one', 'stride-tenth'), st('lv:turnaround', 'stride-broken')], [0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5]),
+      ],
+    },
+    {
+      id: 'k-ear',
+      title: t("Pianist's ear", 'אוזן של פסנתרן'),
+      style: 'both',
+      levels: [
+        E(1, 'One note in the key', 'צליל אחד בסולם', [ke('echo-note')], [0, 7, 5, 2, 9]),
+        E(2, 'Three notes, by step and with skips', 'שלושה צלילים, בצעדים ובדילוגים', [ke('echo-motif'), ke('echo-motif', 1)], [0, 7, 5, 2, 9]),
+        E(3, 'Intervals up, down and together', 'מרווחים למעלה, למטה ויחד', [ke('intervals'), ke('intervals', 1), ke('intervals', 2)], [0, 5, 7]),
+        E(4, 'A two-bar melody', 'מנגינה של שתי תיבות', [ke('echo-melody'), ke('echo-melody', 1)], [0, 7, 5, 2, 10]),
+        E(5, 'The bass line of four chords', 'קו הבס של ארבעה אקורדים', [{ ...ke('bass-line'), hands: 'L' }, { ...ke('bass-line', 1), hands: 'L' }], [0, 7, 5, 2, 9]),
+        E(6, 'A progression by ear', 'מהלך אקורדים בשמיעה', [ke('chords'), ke('chords', 1)], [0, 7, 5, 2, 10]),
+        E(7, 'Harmonise a melody with I, IV, V', 'הרמון מנגינה ב-I, IV, V', [{ ...ke('harmonise'), hands: 'RL' }], [0, 7, 5, 2, 10, 9]),
+        E(8, 'Transpose a melody', 'טרנספוזיציה של מנגינה', [ke('transpose'), ke('transpose', 1)], [0, 7, 5, 2, 10, 3]),
       ],
     },
   ];

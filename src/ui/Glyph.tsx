@@ -491,6 +491,61 @@ export const GLYPHS: Record<string, ReactNode> = {
       <path d="M-26 -16 Q-14 -18 -8 -8 T4 0" {...sw} strokeWidth={2.8} />
     </>
   ),
+  // PIANO_AUDIT: the keys path's own symbols.
+  /** Touch and control: a crescendo hairpin. */
+  hairpin: <path d="M22 -13 L-22 0 L22 13" {...sw} strokeWidth={3.2} strokeLinejoin="round" />,
+  /** Left-hand voicings: a stacked chord held by a bracket (the hand's span). */
+  voicing: (
+    <>
+      {head(4, 14)}
+      {head(4, 3)}
+      {head(4, -8)}
+      <path d="M-14 -16H-20V20H-14" {...sw} strokeWidth={3} strokeLinejoin="round" />
+    </>
+  ),
+  /** The pianist's ear: an ear over three keys. */
+  keysear: (
+    <g {...sw}>
+      <path d="M-9 -2 C-9 -16 11 -18 12 -4 C13 4 5 6 4 12" strokeWidth={2.8} />
+      <path d="M-3 -3 C-3 -9 6 -9 6 -3" strokeWidth={2.4} />
+      <rect x={-22} y={14} width={44} height={9} rx={2} strokeWidth={2.4} />
+      <path d="M-7 14v9M7 14v9" strokeWidth={2} />
+    </g>
+  ),
+  /** Reading both clefs: two staves joined by a brace line. */
+  clefs: (
+    <>
+      <path d="M-18 -18H22M-18 -12H22M-18 -6H22M-18 6H22M-18 12H22M-18 18H22" stroke={I} strokeWidth={1.8} />
+      <path d="M-22 -19V19" stroke={I} strokeWidth={3.4} strokeLinecap="round" />
+      {head(2, -12, 5, 3.6)}
+      {head(10, 12, 5, 3.6)}
+    </>
+  ),
+  /** Chords as shapes on the keys: three dots on a keyboard. */
+  keychord: (
+    <>
+      <g {...sw} strokeWidth={2.8}>
+        <rect x={-22} y={-14} width={44} height={28} rx={3} />
+        <path d="M-11 -14v28M0 -14v28M11 -14v28" strokeWidth={1.8} />
+      </g>
+      <circle cx={-16.5} cy={7} r={3.6} fill={I} />
+      <circle cx={-5.5} cy={7} r={3.6} fill={I} />
+      <circle cx={16.5} cy={7} r={3.6} fill={I} />
+    </>
+  ),
+  /** Scales as shapes on the keys: a rising run of dots over a keyboard. */
+  keyscale: (
+    <>
+      <g {...sw} strokeWidth={2.6}>
+        <rect x={-22} y={2} width={44} height={16} rx={2.5} />
+        <path d="M-11 2v16M0 2v16M11 2v16" strokeWidth={1.8} />
+      </g>
+      <circle cx={-16} cy={-4} r={3.2} fill={I} />
+      <circle cx={-5.5} cy={-9} r={3.2} fill={I} />
+      <circle cx={5.5} cy={-14} r={3.2} fill={I} />
+      <circle cx={16} cy={-19} r={3.2} fill={I} />
+    </>
+  ),
 };
 export type GlyphKind = keyof typeof GLYPHS;
 

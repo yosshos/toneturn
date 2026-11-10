@@ -39,8 +39,8 @@ export const VOICING_NAME: Record<ChartVoicing, Bi> = {
   block: { en: 'Block chords (locked hands)', he: 'אקורדי בלוק (ידיים נעולות)' },
   'stride-single': { en: 'Stride: single bass', he: 'סטרייד: בס בודד' },
   'stride-octave': { en: 'Stride: octave bass', he: 'סטרייד: בס באוקטבות' },
-  'stride-tenth': { en: 'Stride: tenths', he: 'סטרייד: דסימות' },
-  'stride-broken': { en: 'Stride: broken tenths', he: 'סטרייד: דסימות שבורות' },
+  'stride-tenth': { en: 'Stride: tenths', he: 'סטרייד: דצימות' },
+  'stride-broken': { en: 'Stride: broken tenths', he: 'סטרייד: דצימות שבורות' },
   'stride-walk': { en: 'Stride: walking bass on 3', he: 'סטרייד: בס הולך על 3' },
 };
 export const RHYTHM_NAME: Record<CompRhythm, Bi> = {

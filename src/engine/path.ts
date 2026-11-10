@@ -293,13 +293,19 @@ export const VOCAL_PROGRAMS: { id: string; base: number; levels: { level: number
 
 // Bass 0.66: position reading after the first reading levels, fills and target-note solos once chords and scales are in.
 const DRUM_LATER: Record<string, number> = { 'd-funk': 3, 'd-shuffle': 3, 'd-mideast': 3, 'd-indep': 2, 'd-feet': 2, 'd-ear': 1, 'd-jazz': 4, 'd-latin': 4, 'b-posread': 2, 'b-impro': 4 };
+/**
+ * PIANO_AUDIT I2: every piano family's level 1 sat at the same difficulty as scales L1 — octaves (advanced L1), Barry
+ * Harris lines and rootless voicings came in the first unit. Now the basics lead (scales, five-finger, the pianist's
+ * ear, Alberti / cadences one step later) and the jazz and advanced families start after a few scale levels.
+ */
+export const KEYS_LATER: Record<string, number> = { scales: 0, fingers: 0, 'k-ear': 0, arpeggios: 1, cadences: 1, control: 1, accomp: 2, voicings: 3, harris: 4, jazz: 4, advanced: 6 };
 /** Every level of every technique family and vocal program as a path step (0.61, owner: technique inside the course path). */
 function ladderSteps(): PathStep[] {
   const out: PathStep[] = [];
   const diff = (i: number) => 700 + i * 70;
   for (const f of catalog())
     f.levels.forEach((lv, i) =>
-      out.push({ id: `tech:${lv.id}`, kind: 'tech', ladder: { family: f.id, level: lv.level, ref: lv.id, instrument: 'piano' }, skill: 'instrument', sub: 'instrument/piano-tech', domain: 'instrument', difficulty: diff(i), choices: 0, forPlays: ['keys', 'piano'], title: { en: `${f.title.en} · ${lv.title.en}`, he: `${f.title.he} · ${lv.title.he}` } }),
+      out.push({ id: `tech:${lv.id}`, kind: 'tech', ladder: { family: f.id, level: lv.level, ref: lv.id, instrument: 'piano' }, skill: 'instrument', sub: 'instrument/piano-tech', domain: 'instrument', difficulty: diff(i + (KEYS_LATER[f.id] ?? 0)), choices: 0, forPlays: ['keys', 'piano'], title: { en: `${f.title.en} · ${lv.title.en}`, he: `${f.title.he} · ${lv.title.he}` } }),
     );
   for (const f of guitarCatalog()) {
     // Drums (0.65): the drum families are path steps of the drums course (forPlays 'drums' → inCourse).

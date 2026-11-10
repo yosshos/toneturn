@@ -745,6 +745,177 @@ LESSONS.push(
   },
 );
 
+// PIANO_AUDIT §3: the piano's own topics — both clefs, chords as shapes, scales as shapes.
+LESSONS.push(
+  {
+    id: 'key-read',
+    area: 'play',
+    emoji: '𝄞',
+    title: { en: 'Reading both clefs', he: 'קריאה בשני המפתחות' },
+    takeaway: { en: 'Treble clef for the right hand, bass clef for the left. Middle C sits on a ledger line between them.', he: 'מפתח סול ליד ימין, מפתח פה ליד שמאל. דו האמצעי יושב על קו עזר ביניהם.' },
+    steps: [
+      {
+        say: { en: 'Hi {name}! Piano music has two staves: the treble clef on top, the bass clef below. Middle C, C4, sits on one short line between them.', he: 'היי {name}! לפסנתר יש שתי חמשות: מפתח סול למעלה, מפתח פה למטה. דו האמצעי, C4, יושב על קו קצר אחד ביניהן.' },
+        play: [notes([60], 1)],
+        show: { notes: [60] },
+      },
+      {
+        say: { en: 'Treble clef lines, bottom to top: E, G, B, D, F. The spaces spell F, A, C, E.', he: 'הקווים במפתח סול, מלמטה למעלה: מי, סול, סי, רה, פה. הרווחים: פה, לה, דו, מי.' },
+        play: [notes([64, 67, 71, 74, 77], 0.45)],
+        show: { notes: [64, 67, 71, 74, 77] },
+      },
+      {
+        say: { en: 'Bass clef lines, bottom to top: G, B, D, F, A. The clef’s two dots hug the F line.', he: 'הקווים במפתח פה, מלמטה למעלה: סול, סי, רה, פה, לה. שתי הנקודות של המפתח עוטפות את קו הפה.' },
+        play: [notes([43, 47, 50, 53, 57], 0.45)],
+        show: { text: { en: 'G B D F A', he: 'סול סי רה פה לה' } },
+      },
+      {
+        say: { en: 'A note on the staff is one exact key. G on the treble staff’s second line is G4, the G just above middle C.', he: 'תו על החמשה הוא קליד אחד מדויק. סול על הקו השני בחמשת סול הוא G4, הסול שמעל דו האמצעי.' },
+        play: [notes([60, 67], 0.7)],
+        show: { notes: [67] },
+      },
+      {
+        say: { en: 'Your turn: I show a note, you find that exact key — the right octave counts.', he: 'תורכם: אני מראה תו, ואתם מוצאים בדיוק את הקליד הזה — האוקטבה חשובה.' },
+        show: { text: { en: 'C4 = middle C', he: 'C4 = דו האמצעי' } },
+      },
+    ],
+    more: [
+      {
+        say: { en: 'Landmarks beat counting: treble G (line 2), middle C, bass F (line 4). Read every other note from the nearest one.', he: 'נקודות ציון עדיפות על ספירה: סול במפתח סול (קו 2), דו האמצעי, פה במפתח פה (קו 4). קוראים כל תו מהקרוב אליו.' },
+        play: [notes([67, 60, 53], 0.6)],
+      },
+      {
+        say: { en: 'Ledger lines continue the staff. A3 under the treble staff is the same key as A3 on the bass staff’s top line.', he: 'קווי עזר ממשיכים את החמשה. לה 3 מתחת לחמשת סול הוא אותו קליד כמו לה 3 על הקו העליון בחמשת פה.' },
+        play: [notes([57], 0.8)],
+      },
+      {
+        say: { en: 'A sharp raises the note to the next key on the right, a flat lowers it to the left — often a black key, not always: E sharp is F.', he: 'דיאז מעלה את התו לקליד הבא מימין, במול מוריד לשמאל — לרוב קליד שחור, לא תמיד: מי דיאז הוא פה.' },
+      },
+      {
+        say: { en: 'The usual mistake is reading the bass clef as if it were treble — everything a third off. Say the clef before the note.', he: 'הטעות הנפוצה היא לקרוא מפתח פה כאילו היה מפתח סול — הכול זז בטרצה. אמרו את המפתח לפני התו.' },
+      },
+      {
+        say: { en: 'Two notes stacked on the staff sound together. Read the lower one, then count the lines and spaces up to the other: line to line is a third, line to space a second or a fourth.', he: 'שני תווים זה מעל זה בחמשה נשמעים יחד. קוראים את התחתון, וסופרים קווים ורווחים עד העליון: מקו לקו זו טרצה, מקו לרווח סקונדה או קוורטה.' },
+        play: [chord([60, 64]), rest(0.2), chord([60, 67])],
+      },
+      {
+        say: { en: 'To keep: landmark notes, the clef first, then the octave. Five minutes a day turns counting into seeing.', he: 'מה לזכור: תווי ציון, קודם המפתח ואז האוקטבה. חמש דקות ביום הופכות ספירה לראייה.' },
+        show: { text: { en: 'G4 · C4 · F3', he: 'G4 · C4 · F3' } },
+      },
+    ],
+  },
+  {
+    id: 'key-shapes',
+    area: 'play',
+    emoji: '𝄞',
+    title: { en: 'Chords as shapes', he: 'אקורדים כצורות' },
+    takeaway: { en: 'A triad is two thirds stacked. Major: 4 then 3 half steps; minor: 3 then 4. Inversions move the bottom note to the top.', he: 'משולש הוא שתי טרצות זו על זו. מז׳ור: 4 ואז 3 חצאי טונים; מינור: 3 ואז 4. היפוך מעביר את הצליל התחתון למעלה.' },
+    steps: [
+      {
+        say: { en: 'Hi {name}! A major triad: root, four half steps up, three more. On C: C, E, G.', he: 'היי {name}! משולש מז׳ורי: יסוד, ארבעה חצאי טונים למעלה, ועוד שלושה. על דו: דו, מי, סול.' },
+        play: [chord([60, 64, 67])],
+        show: { notes: [60, 64, 67] },
+      },
+      {
+        say: { en: 'Minor swaps them: three, then four. C, E flat, G. Diminished is three and three; augmented four and four.', he: 'במינור הסדר מתהפך: שלושה ואז ארבעה. דו, מי במול, סול. מוקטן הוא שלושה ושלושה; מוגדל ארבעה וארבעה.' },
+        play: [chord([60, 63, 67]), rest(0.3), chord([60, 63, 66])],
+      },
+      {
+        say: { en: 'Move the root to the top and you get the 1st inversion: E, G, C — written C/E. Once more: the 2nd inversion, G, C, E.', he: 'מעבירים את היסוד למעלה ומקבלים היפוך ראשון: מי, סול, דו — נכתב C/E. עוד פעם: היפוך שני, סול, דו, מי.' },
+        play: [chord([64, 67, 72]), rest(0.3), chord([67, 72, 76])],
+      },
+      {
+        say: { en: 'A slash name tells you the bottom note: C/E is a C chord with E in the bass. Find the bass first, then the rest above it.', he: 'שם עם קו נטוי אומר מה הצליל התחתון: C/E הוא אקורד דו עם מי בבס. מוצאים קודם את הבס, ואז את השאר מעליו.' },
+        play: [chord([52, 60, 67])],
+      },
+      {
+        say: { en: 'Your turn: I give the bottom note and the chord, you build it on the keys.', he: 'תורכם: אני נותן את הצליל התחתון ואת האקורד, ואתם בונים אותו על הקלידים.' },
+        show: { text: { en: '4 + 3 = major · 3 + 4 = minor', he: '4 + 3 = מז׳ור · 3 + 4 = מינור' } },
+      },
+    ],
+    more: [
+      {
+        say: { en: 'Seventh chords add one more third: maj7 C E G B, dominant 7 C E G B flat, m7 C E flat G B flat, half-diminished C E flat G flat B flat.', he: 'ספטאקורד מוסיף עוד טרצה: maj7 דו מי סול סי, דומיננטי 7 דו מי סול סי במול, m7 דו מי במול סול סי במול, חצי מוקטן דו מי במול סול במול סי במול.' },
+        play: [chord([60, 64, 67, 71]), rest(0.2), chord([60, 64, 67, 70])],
+      },
+      {
+        say: { en: 'Jazz pianists play shells in the left hand: root, 3rd and 7th — the notes that name the chord. The 5th can go.', he: 'פסנתרני ג׳אז מנגנים קונכיות ביד שמאל: יסוד, טרצה וספטימה — הצלילים שקובעים את האקורד. אפשר לוותר על הקווינטה.' },
+        play: [chord([50, 53, 60]), rest(0.2), chord([43, 53, 59])],
+      },
+      {
+        say: { en: 'The usual mistake is counting white keys instead of half steps. Every key counts, black or white.', he: 'הטעות הנפוצה היא לספור קלידים לבנים במקום חצאי טונים. כל קליד נספר, שחור או לבן.' },
+      },
+      {
+        say: { en: 'Inversions keep the hand still: from C to F to G, move only the notes that must move. C E G, C F A, B D G.', he: 'היפוכים משאירים את היד במקום: מדו לפה לסול, מזיזים רק את הצלילים שחייבים לזוז. דו מי סול, דו פה לה, סי רה סול.' },
+        play: [chord([60, 64, 67], 0.9), chord([60, 65, 69], 0.9), chord([59, 62, 67], 0.9)],
+      },
+      {
+        say: { en: 'Black-key roots look strange but follow the same counts. D flat major: D flat, F, A flat. Feel the shape, then say the names.', he: 'יסודות על קלידים שחורים נראים מוזר אבל נספרים אותו דבר. רה במול מז׳ור: רה במול, פה, לה במול. מרגישים את הצורה, ואז אומרים את השמות.' },
+        play: [chord([61, 65, 68])],
+      },
+      {
+        say: { en: 'To keep: count half steps, name the bass first, and let the hand keep its place. The technique drills then play the same shapes through every key.', he: 'מה לזכור: סופרים חצאי טונים, קובעים קודם את הבס, ונותנים ליד להישאר במקומה. תרגילי הטכניקה מנגנים אחר כך את אותן צורות בכל הסולמות.' },
+        show: { text: { en: 'bass · 3rd · 5th', he: 'בס · טרצה · קווינטה' } },
+      },
+    ],
+  },
+  {
+    id: 'key-scales',
+    area: 'play',
+    emoji: '𝄞',
+    title: { en: 'Scales as shapes', he: 'סולמות כצורות' },
+    takeaway: { en: 'A major scale is whole, whole, half, whole, whole, whole, half. Every key has its own pattern of black and white.', he: 'סולם מז׳ור הוא טון, טון, חצי, טון, טון, טון, חצי. לכל סולם תבנית משלו של שחורים ולבנים.' },
+    steps: [
+      {
+        say: { en: 'Hi {name}! C major uses only white keys. Notice the two half steps, where no black key sits between: E to F, and B to C. Everywhere else the scale moves by a whole step.', he: 'היי {name}! דו מז׳ור משתמש רק בקלידים לבנים. שימו לב לשני חצאי הטונים, במקום שאין ביניהם קליד שחור: מי לפה, וסי לדו. בכל מקום אחר הסולם זז בטון שלם.' },
+        play: [notes([60, 62, 64, 65, 67, 69, 71, 72], 0.35)],
+        show: { notes: [60, 62, 64, 65, 67, 69, 71, 72] },
+      },
+      {
+        say: { en: 'Start on G and keep the same pattern: one black key appears, F sharp.', he: 'מתחילים מסול ושומרים על אותה תבנית: מופיע קליד שחור אחד, פה דיאז.' },
+        play: [notes([55, 57, 59, 60, 62, 64, 66, 67], 0.35)],
+      },
+      {
+        say: { en: 'Harmonic minor raises the 7th: A minor gets G sharp, a step and a half above F.', he: 'מינור הרמוני מעלה את הדרגה השביעית: לה מינור מקבל סול דיאז, טון וחצי מעל פה.' },
+        play: [notes([57, 59, 60, 62, 64, 65, 68, 69], 0.35)],
+      },
+      {
+        say: { en: 'Each new sharp key adds one black key: D major has F sharp and C sharp. Keep the pattern and the keys follow.', he: 'כל סולם דיאזים חדש מוסיף קליד שחור אחד: לרה מז׳ור יש פה דיאז ודו דיאז. שומרים על התבנית והקלידים באים מעצמם.' },
+        play: [notes([62, 64, 66, 67, 69, 71, 73, 74], 0.35)],
+      },
+      {
+        say: { en: 'Your turn: I give the first note, you play the whole octave up, in order.', he: 'תורכם: אני נותן את הצליל הראשון, ואתם מנגנים את כל האוקטבה למעלה, לפי הסדר.' },
+        show: { text: { en: 'T T ½ T T T ½', he: 'ט ט ½ ט ט ט ½' } },
+      },
+    ],
+    more: [
+      {
+        say: { en: 'Melodic minor going up raises the 6th and the 7th; it comes down as natural minor, with both lowered again. Exams ask for it in both directions.', he: 'מינור מלודי בעלייה מעלה את הדרגות השישית והשביעית; בירידה הוא חוזר להיות מינור טבעי, ושתיהן יורדות שוב. בבחינות מבקשים אותו בשני הכיוונים.' },
+        play: [notes([57, 59, 60, 62, 64, 66, 68, 69], 0.35)],
+      },
+      {
+        say: { en: 'Modes start the major pattern elsewhere: dorian is minor with a raised 6th, mixolydian major with a lowered 7th, lydian major with a raised 4th.', he: 'מודוסים מתחילים את תבנית המז׳ור במקום אחר: דורי הוא מינור עם שישית מוגבהת, מיקסולידי מז׳ור עם שביעית מונמכת, לידי מז׳ור עם רביעית מוגבהת.' },
+        play: [notes([62, 64, 65, 67, 69, 71, 72, 74], 0.35)],
+      },
+      {
+        say: { en: 'The usual mistake is guessing from the look of C major. Count the steps, then check the key signature.', he: 'הטעות הנפוצה היא לנחש לפי המראה של דו מז׳ור. ספרו את הצעדים, ואז בדקו את סימני ההיתק.' },
+      },
+      {
+        say: { en: 'Flat keys work the other way: F major has one black key, B flat; B flat major adds E flat, and each flat key after it adds one more flat.', he: 'סולמות במולים עובדים הפוך: לפה מז׳ור יש קליד שחור אחד, סי במול; סי במול מז׳ור מוסיף מי במול, וכל סולם במולים אחריו מוסיף עוד במול.' },
+        play: [notes([65, 67, 69, 70, 72, 74, 76, 77], 0.35)],
+      },
+      {
+        say: { en: 'Each scale also has its own thumb places. In most white-key scales the right-hand thumb plays the tonic and the 4th; in flat keys it waits for the first white key.', he: 'לכל סולם יש גם מקומות אגודל משלו. ברוב הסולמות מקלידים לבנים האגודל של יד ימין מנגן את הטוניקה ואת הדרגה הרביעית; בסולמות במולים הוא מחכה לקליד הלבן הראשון.' },
+        play: [notes([60, 62, 64, 65], 0.4)],
+      },
+      {
+        say: { en: 'To keep: the step pattern decides every note. Play each new scale slowly, saying the names, before you add speed in the technique drills.', he: 'מה לזכור: תבנית הצעדים קובעת כל צליל. נגנו כל סולם חדש לאט, אמרו את השמות, ורק אז הוסיפו מהירות בתרגילי הטכניקה.' },
+        show: { text: { en: 'T T ½ T T T ½', he: 'ט ט ½ ט ט ט ½' } },
+      },
+    ],
+  },
+);
+
 /** Unit id ("topic:<id>") → mini-lesson id. */
 export const UNITS: Record<string, string> = {
   'topic:play-back': 'play-back',
@@ -758,4 +929,7 @@ export const UNITS: Record<string, string> = {
   'topic:bass-intervals': 'bass-intervals',
   'topic:bass-scales': 'bass-scales',
   'topic:key-notes': 'key-notes',
+  'topic:key-read': 'key-read',
+  'topic:key-shapes': 'key-shapes',
+  'topic:key-scales': 'key-scales',
 };
