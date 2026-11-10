@@ -3,7 +3,7 @@
 import { describe, expect, it } from 'vitest';
 import { catalog, generate, KEYS_EAR_PROBE, KEYS_EAR_TEMPO } from '../src/engine/drills/generate';
 import { analyzeTake } from '../src/engine/drills/analyze';
-import { levelDrills, shownFamilies, targetBpmOf } from '../src/engine/drills/plan';
+import { activeFamilies, levelDrills, shownFamilies, targetBpmOf } from '../src/engine/drills/plan';
 import { drillEvents } from '../src/engine/drills/events';
 import { DEFAULT_DRILL_SETTINGS, type Drill } from '../src/engine/drills/types';
 import { courseInput } from '../src/engine/courses';
@@ -106,6 +106,9 @@ describe("the pianist's ear: measured by what is played", () => {
     expect(tag('bass-line')).toBe('dictation/bass');
     expect(tag('harmonise')).toBe('cadences/harmonize');
     expect(tag('transpose')).toBe('transpose/pitch');
+  });
+  it("a new piano player's Today has ear items with every emphasis", () => {
+    for (const emphasis of ['classical', 'jazz', 'both'] as const) expect(activeFamilies({ ...DEFAULT_DRILL_SETTINGS, emphasis, instrument: 'piano' }, {}).map((f) => f.id)).toContain('k-ear');
   });
   it('the placement probe is a real ear item', () => {
     const d = generate(KEYS_EAR_PROBE);

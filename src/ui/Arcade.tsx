@@ -822,6 +822,11 @@ const BASS_TX: Record<string, { en: [string, string]; he: [string, string] }> = 
   drills: { en: ['Technique', 'Plucking, groove, walking, reading'], he: ['טכניקה', 'פריטה, גרוב, ווקינג וקריאה'] },
   songs: { en: ['Songs', 'Real tunes on the bass'], he: ['שירים', 'מנגינות אמיתיות על הבס'] },
 };
+/** The keys course's own words on its rows (PIANO_AUDIT I7: "your instrument" and "play and sing" were generic). */
+const KEYS_TX: Record<string, { en: [string, string]; he: [string, string] }> = {
+  drills: { en: ['Technique', 'Scales, chords, the ear — measured on the keys'], he: ['טכניקה', 'סולמות, אקורדים ושמיעה — במדידה על הקלידים'] },
+  songs: { en: ['Songs', 'Real tunes on the keys, by their chords'], he: ['שירים', 'מנגינות אמיתיות על הקלידים, לפי האקורדים'] },
+};
 /** The instrument tile's symbol per course. */
 const INSTRUMENT_TILE: Partial<Record<CourseId, GlyphKind>> = { drums: 'drums', bass: 'bass', guitar: 'guitar' };
 /** The weekly puzzle and the live quiz rooms are ear & theory things. */
@@ -949,7 +954,7 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
             {rows
               .filter((k) => k !== 'games' && hub[k as keyof PracticeHub])
               .map((k) => {
-                const tx = (course === 'voice' && VOICE_TX[k] ? VOICE_TX[k] : course === 'drums' && DRUMS_TX[k] ? DRUMS_TX[k] : course === 'bass' && BASS_TX[k] ? BASS_TX[k] : k === 'drills' && (course === 'keys' || course === 'guitar' || course === 'bass') ? INSTR_DRILLS_TX : ROW_TX[k])[lang];
+                const tx = (course === 'voice' && VOICE_TX[k] ? VOICE_TX[k] : course === 'drums' && DRUMS_TX[k] ? DRUMS_TX[k] : course === 'bass' && BASS_TX[k] ? BASS_TX[k] : course === 'keys' && KEYS_TX[k] ? KEYS_TX[k] : k === 'drills' && (course === 'keys' || course === 'guitar' || course === 'bass') ? INSTR_DRILLS_TX : ROW_TX[k])[lang];
                 return (
                   <button
                     key={k}

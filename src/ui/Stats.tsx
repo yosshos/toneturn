@@ -425,6 +425,8 @@ function courseAxes(course: CourseId, ratings: Parameters<typeof domainValue>[0]
  *  "יד" — two axes with one name). */
 const RADAR_FAMILIES: Partial<Record<CourseId, [family: string, he: string, en: string][]>> = {
   bass: [['b-pluck', 'פריטה', 'Plucking'], ['b-fret', 'לחיצה', 'Fretting'], ['b-time', 'זמן', 'Time'], ['b-chord', 'הרמוניה', 'Harmony'], ['b-walk', 'ווקינג', 'Walking'], ['b-read', 'קריאה', 'Reading']],
+  // PIANO_AUDIT I4: the first six catalogue families left the ear out and put "advanced" on the radar of a beginner.
+  keys: [['scales', 'סולמות', 'Scales'], ['arpeggios', 'ארפג׳יו', 'Arpeggios'], ['fingers', 'אצבעות', 'Fingers'], ['control', 'מגע', 'Touch'], ['cadences', 'הרמוניה', 'Harmony'], ['k-ear', 'שמיעה', 'Ear']],
 };
 const AREA_NAME_SHORT: Record<DomainId, { he: string; en: string }> = {
   pitch: { he: 'שמיעה', en: 'Ear' }, reading: { he: 'קריאה', en: 'Reading' }, time: { he: 'קצב', en: 'Rhythm' }, memory: { he: 'זיכרון', en: 'Memory' }, voice: { he: 'קול', en: 'Voice' }, creative: { he: 'הרמוניה', en: 'Harmony' }, instrument: { he: 'נגינה', en: 'Playing' },

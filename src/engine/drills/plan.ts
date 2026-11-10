@@ -191,7 +191,8 @@ export function activeFamilies(settings: DrillSettings & { bassTuning?: string; 
     const fs = shown.filter((f) => firstG.includes(f.id));
     return fs.length ? fs : shown.slice(0, 2);
   }
-  const first: FamilyId[] = settings.emphasis === 'jazz' ? ['harris', 'voicings'] : settings.emphasis === 'classical' ? ['scales', 'fingers'] : ['scales', 'fingers', 'harris'];
+  // PIANO_AUDIT §3: the pianist's ear from day one, with every emphasis.
+  const first: FamilyId[] = settings.emphasis === 'jazz' ? ['harris', 'voicings', 'k-ear'] : settings.emphasis === 'classical' ? ['scales', 'fingers', 'k-ear'] : ['scales', 'fingers', 'harris', 'k-ear'];
   return shown.filter((f) => first.includes(f.id));
 }
 

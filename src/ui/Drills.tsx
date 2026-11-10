@@ -80,7 +80,7 @@ const takeInfo = (d: Drill, m: TakeMetrics) => {
 export const DEFAULT_CAL: DrillCalibration = { latencyMs: 0, velMin: 20, velMax: 120 };
 /** The drill calibration with the input's calibrated delay (MIDI when a keyboard is connected, else the microphone). */
 const calOf = (s: Settings): DrillCalibration => ({ ...DEFAULT_CAL, ...(s.drillCal ?? {}), latencyMs: inputLatency(s, midi.devices.length ? 'midi' : 'mic') });
-const FAM_HUE: Partial<Record<FamilyId, string>> = { scales: 'var(--mint)', arpeggios: '#7c8cff', cadences: '#c38cff', fingers: 'var(--gold)', control: '#ff8a5c', advanced: '#ff6b9a', harris: '#5cd6ff', jazz: '#5cffb0', voicings: '#ffd15c', accomp: '#b0ff5c', custom: '#e0e0ff' };
+const FAM_HUE: Partial<Record<FamilyId, string>> = { scales: 'var(--mint)', arpeggios: '#7c8cff', cadences: '#c38cff', fingers: 'var(--gold)', control: '#ff8a5c', advanced: '#ff6b9a', harris: '#5cd6ff', jazz: '#5cffb0', voicings: '#ffd15c', accomp: '#b0ff5c', 'k-ear': '#8fb8ff', custom: '#e0e0ff' };
 const HANDS_TX: Record<Lang, Record<string, string>> = { en: { R: 'RH', L: 'LH', RL: 'HT' }, he: { R: 'ימין', L: 'שמאל', RL: 'ביחד' } };
 
 /** Drill settings with the instrument defaulting to the player's (guitar / bass players get guitar drills). */
@@ -381,11 +381,13 @@ function Hub({ lang, ds, settings, items, head, onFamily, onRun, onSettings, onC
   // Drums: no songbook or drill creator (melody / chords) — the course's own families only.
   const topics: DrillTopic[] = drums ? ['all', ...famTopics] : ['all', ...famTopics, 'songs', 'mine'];
   const topic: DrillTopic = topics.includes(topicRaw) ? topicRaw : 'all';
+  const piano = (ds.instrument ?? 'piano') === 'piano';
   const famCard = (f: FamilyDef) => {
     const lv = familyLevel(items, f.id);
     // Drums: no keys and no tempo bands — the level worked on of the family's levels, and a pip per level done.
-    // Bass / guitar (final bass check): their families have 4–18 levels, not the piano's 7 — same card.
-    if (drums || ds.instrument === 'bass' || ds.instrument === 'guitar') {
+    // Bass / guitar (final bass check): their families have 4–18 levels, not the piano's 7 — same card. Piano too
+    // (PIANO_AUDIT I6: its families have 7–17 levels; "level 2.3 / 7" was the tempo band), with its key heat row.
+    {
       const cur = currentLevel(f, items, ds.keyOrder, settings.drillStart?.[f.id]);
       return (
         <button key={f.id} className="drill-family" style={drums ? undefined : { ['--hue' as string]: FAM_HUE[f.id] }} onClick={() => onFamily(f)} data-family={f.id}>
@@ -398,18 +400,10 @@ function Hub({ lang, ds, settings, items, head, onFamily, onRun, onSettings, onC
               <i key={l.id} className={levelDone(l, items, ds.keyOrder) ? 'on' : l.id === cur.id ? 'now' : ''} />
             ))}
           </span>
+          {piano && lv > 0 && <HeatRow heat={keyHeat(f.id, items)} />}
         </button>
       );
     }
-    return (
-      <button key={f.id} className="drill-family" style={{ ['--hue' as string]: FAM_HUE[f.id] }} onClick={() => onFamily(f)} data-family={f.id}>
-        <b>{f.title[lang]}</b>
-        <small>
-          {tx.level} <span className="lvl">{lv ? lv.toFixed(1) : '—'}</span> / 7
-        </small>
-        <HeatRow heat={keyHeat(f.id, items)} />
-      </button>
-    );
   };
   const show = (x: DrillTopic) => topic === 'all' || topic === x;
   return (
