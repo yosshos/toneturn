@@ -11,6 +11,7 @@ import type { Answer } from '../engine/lesson';
 import { BrowserMicAccess } from '../speech/mic';
 import { BrowserPromptPlayer } from '../speech/tts';
 import { browserKokoroDeps, KokoroNarrator } from '../speech/kokoro/engine';
+import { browserFilesDeps, VoiceFiles } from '../speech/voice/files';
 import { WebSpeechTranscriber } from '../speech/webspeech';
 import { ProgressStore } from '../storage/progress';
 import { defaultKV, memoryKV } from '../storage/kv';
@@ -25,7 +26,12 @@ export const piano = new PianoEngine();
 export const tts = new BrowserPromptPlayer();
 /** The English voice (Kokoro, on the device). Nothing loads until an English line is wanted; the simulator never speaks. */
 export const narrator = new KokoroNarrator(browserKokoroDeps(() => piano.voiceOut()));
-if (!SIMULATED) tts.narrator = narrator;
+/** The same voice, pre-recorded for every line known ahead of time (public/voice/en, 0.66). */
+export const recordings = new VoiceFiles(browserFilesDeps(import.meta.env.BASE_URL ?? '/', () => piano.voiceOut(), () => piano.volume));
+if (!SIMULATED) {
+  tts.narrator = narrator;
+  tts.recordings = recordings;
+}
 // Simulated runs never touch real progress.
 export const store = new ProgressStore(SIMULATED ? memoryKV() : defaultKV());
 

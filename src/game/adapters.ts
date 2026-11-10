@@ -19,7 +19,8 @@ export interface AudioEngine {
 
 export interface PromptPlayer {
   unlock(): void;
-  speak(text: string, lang: 'he' | 'en', signal: AbortSignal): Promise<void>;
+  /** `variant`: the line as recorded when `text` is personalised (the player's name is left out of recordings). */
+  speak(text: string, lang: 'he' | 'en', signal: AbortSignal, variant?: string): Promise<void>;
   cancel(): void;
   /** Optional: make lines ahead of time (a voice that generates speech hides its latency this way). */
   prefetch?(texts: string[], lang: 'he' | 'en'): void;

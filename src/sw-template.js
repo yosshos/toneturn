@@ -16,7 +16,9 @@ const SAMPLES = 'toneturn-samples-v1';
  */
 const VOICE = 'toneturn-voice-v1';
 const VOICE_FILES = __VOICE_FILES__;
-const isVoiceFile = (p) => /\/assets\/(kokoroWorker-[^/]*\.js|ort-wasm[^/]*\.wasm)$/.test(p);
+/** Pre-recorded narrator lines (public/voice/en/*.mp3), fetched one by one when spoken. */
+const LINES = 'toneturn-lines-v1';
+const isVoiceFile =(p) => /\/assets\/(kokoroWorker-[^/]*\.js|ort-wasm[^/]*\.wasm)$/.test(p);
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(PRECACHE)));
@@ -32,7 +34,7 @@ self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches
       .keys()
-      .then((ks) => Promise.all(ks.filter((k) => k.startsWith('toneturn-') && k !== CACHE && k !== SAMPLES && k !== VOICE).map((k) => caches.delete(k))))
+      .then((ks) => Promise.all(ks.filter((k) => k.startsWith('toneturn-') && k !== CACHE && k !== SAMPLES && k !== VOICE && k !== LINES).map((k) => caches.delete(k))))
       // narrator files of older builds leave the device
       .then(() => caches.open(VOICE))
       .then((c) => c.keys().then((reqs) => Promise.all(reqs.filter((r) => !VOICE_FILES.includes(new URL(r.url).pathname)).map((r) => c.delete(r)))))
@@ -50,6 +52,31 @@ self.addEventListener('fetch', (e) => {
   if (url.origin !== location.origin) return;
   if (req.mode === 'navigate') {
     e.respondWith(fetch(req).catch(() => caches.match(BASE + 'index.html')));
+    return;
+  }
+  if (url.pathname.startsWith(BASE + 'voice/')) {
+    // Pre-recorded narration (0.66): each line's MP3 is named by a hash of its text, so cache-first and kept across
+    // versions; the manifest (which lines exist) is network-first.
+    e.respondWith(
+      caches.open(LINES).then((c) =>
+        url.pathname.endsWith('manifest.json')
+          ? fetch(req)
+              .then((res) => {
+                if (res.ok) c.put(req, res.clone());
+                return res;
+              })
+              .catch(() => c.match(req))
+          : c.match(req).then(
+              (hit) =>
+                hit ||
+                fetch(req).then((res) => {
+                  // an <audio> element may ask for a byte range (206): only whole files are kept
+                  if (res.status === 200) c.put(req, res.clone()).catch(() => {});
+                  return res;
+                }),
+            ),
+      ),
+    );
     return;
   }
   if (isVoiceFile(url.pathname)) {
