@@ -5,7 +5,8 @@ import type { CourseId } from './courses';
 import { catalog, type LevelDef } from './drills/generate';
 import { guitarCatalog } from './drills/guitar';
 import { drumFamilies } from './drills/drums';
-import { hiddenBassLevels, LEVEL_DONE_STARS, levelDrills, levelStars, shownFamilies, targetBpmOf } from './drills/plan';
+import { kitHiddenLevels } from './drumAcoustic';
+import { hiddenBassLevels, type DrumMic, LEVEL_DONE_STARS, levelDrills, levelStars, shownFamilies, targetBpmOf } from './drills/plan';
 import { itemPass } from './drills/ladder';
 import type { Drill, DrillSettings, FamilyId, ItemState } from './drills/types';
 import { stepStars, VOCAL_PROGRAMS, type PathFacts } from './path';
@@ -21,7 +22,7 @@ export function techLevel(id: string): LevelDef | undefined {
 }
 
 /** The families / programs a course's path teaches, in teaching order. Other courses: none. */
-export function ladderFamiliesFor(course: CourseId, ds: DrillSettings, bassTuning?: string, drumMic?: boolean): string[] {
+export function ladderFamiliesFor(course: CourseId, ds: DrillSettings, bassTuning?: string, drumMic?: DrumMic): string[] {
   if (course === 'voice') return VOCAL_PROGRAMS.map((p) => p.id);
   const instrument = course === 'keys' ? 'piano' : course === 'guitar' ? 'guitar' : course === 'bass' ? 'bass' : course === 'drums' ? 'drums' : null;
   if (!instrument) return [];
@@ -34,10 +35,10 @@ export function ladderFamiliesFor(course: CourseId, ds: DrillSettings, bassTunin
 
 /**
  * Ladder levels the course's path leaves out (N10): the low-B levels on a bass without a low B; on drums played by
- * microphone (a practice pad), the levels that need a kit (grooves, fills, kit reading — DRUMS_CURRICULUM §3.8).
+ * microphone, the levels that need an e-kit (a practice pad: grooves, fills, kit reading — DRUMS_CURRICULUM §3.8; an acoustic kit: all but ACOUSTIC_LEVELS).
  */
-export function ladderHiddenFor(course: CourseId, bassTuning?: string, drumMic?: boolean): string[] {
-  if (course === 'drums') return drumMic ? drumFamilies().flatMap((f) => f.levels.filter((l) => !l.mic).map((l) => l.id)) : [];
+export function ladderHiddenFor(course: CourseId, bassTuning?: string, drumMic?: DrumMic): string[] {
+  if (course === 'drums') return kitHiddenLevels(drumFamilies(), drumMic);
   return course === 'bass' ? hiddenBassLevels(bassTuning) : [];
 }
 

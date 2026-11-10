@@ -23,6 +23,7 @@ import { earIndex } from '../engine/rating';
 import { MixerScreen } from './Mixer';
 import type { Drill } from '../engine/drills/types';
 import { catalog, generate } from '../engine/drills/generate';
+import { drumMicOf, VOICE_PERC } from '../engine/drumKit';
 import { guitarCatalog } from '../engine/drills/guitar';
 import { levelDrills } from '../engine/drills/plan';
 import { parseTopicRef, submitResult, type AssignItem } from '../cloud/teacher';
@@ -445,6 +446,26 @@ export function App() {
       piano.liveAllOff();
     };
   }, [s.midiInput, s.midiSound, s.computerKeys, s.activeCourse]);
+  // Drums: pad controllers without a sound module — the app plays the kit's sound on each hit (kit card, default off).
+  const drumSounds = s.activeCourse === 'drums' && !!s.drumKit?.sounds && !s.drumKit?.mic;
+  useEffect(() => {
+    if (!drumSounds) return;
+    piano.preloadKit();
+    const off = midi.onHit((h) => {
+      if (!h.voice) return;
+      const kind = VOICE_PERC[h.voice];
+      if (piano.context) piano.liveDrum(kind, h.vel);
+      else void piano.unlock().then(() => piano.liveDrum(kind, h.vel), () => {});
+    });
+    const wake = () => {
+      if (!piano.audioRunning) void piano.unlock().catch(() => {});
+    };
+    addEventListener('pointerdown', wake, true);
+    return () => {
+      off();
+      removeEventListener('pointerdown', wake, true);
+    };
+  }, [drumSounds]);
   // The computer keyboard as a piano (opt-in, Settings → MIDI).
   useEffect(() => (s.computerKeys ? startComputerKeys(midi) : undefined), [s.computerKeys]);
 
@@ -911,7 +932,7 @@ export function App() {
     go('drills');
   };
   const drillQueue = useMemo(
-    () => (route === 'drills' && (drillFrom.current === 'chart' || drillFrom.current === 'assign' || (drillFrom.current === 'path' && chartQueue.current)) ? chartQueue.current ?? undefined : route === 'drills' && (drillFrom.current === 'path' || drillFrom.current === 'workout') && settings && progress ? todayDrills({ ...drillSettingsOf(settings), bassTuning: bassTuningOf(settings), drumMic: settings.drumKit?.mic }, progress.drillItems ?? {}, settings.drillStart ?? {}, settings.customDrills ?? []).map((x) => x.drill) : undefined),
+    () => (route === 'drills' && (drillFrom.current === 'chart' || drillFrom.current === 'assign' || (drillFrom.current === 'path' && chartQueue.current)) ? chartQueue.current ?? undefined : route === 'drills' && (drillFrom.current === 'path' || drillFrom.current === 'workout') && settings && progress ? todayDrills({ ...drillSettingsOf(settings), bassTuning: bassTuningOf(settings), drumMic: drumMicOf(settings.drumKit) }, progress.drillItems ?? {}, settings.drillStart ?? {}, settings.customDrills ?? []).map((x) => x.drill) : undefined),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [route],
   );

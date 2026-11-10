@@ -12,6 +12,8 @@ export interface SungFrame {
   chroma?: number[];
   /** Spectral centroid (Hz) when the capture was asked for it (bass plucking zone / slap advice). */
   centroid?: number;
+  /** Octave band powers (drumAcoustic.BAND_EDGES) when asked for: an acoustic drum kit by microphone. */
+  bands?: number[];
 }
 
 export type SungStatus = 'accurate' | 'sharp' | 'flat' | 'wrong' | 'unclear';

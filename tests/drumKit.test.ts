@@ -48,7 +48,9 @@ describe('MIDI drum mode (DRUMS_CURRICULUM §3.5)', () => {
     expect(hits[2].voice).toBe('hihat');
     m.message([0xb9, 4, 127], 25);
     m.message([0x99, 46, 90], 30); // open-hat note with the pedal down: closed
-    expect(hits[3]).toMatchObject({ voice: 'hihat', hat: 'closed' });
+    // (The fast close at 25 ms is also a hi-hat foot chick from CC4 — 0.66.)
+    expect(hits.map((h) => h.voice).slice(3)).toEqual(['hhPedal', 'hihat']);
+    expect(hits[4]).toMatchObject({ voice: 'hihat', hat: 'closed' });
     expect(m.cc4).toBe(127);
   });
   it('chokes (poly pressure 0xA0) reach choke listeners; CC4 still reaches CC listeners', () => {

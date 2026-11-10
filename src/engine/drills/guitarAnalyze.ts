@@ -27,6 +27,8 @@ export interface GFrame {
   centroid?: number;
   /** 12-bin chroma (C = 0, max 1), optional — the chord ring-check (SPEC-0.48 §I1). */
   chroma?: number[];
+  /** Octave band powers, optional — an acoustic drum kit (drumAcoustic.ts). */
+  bands?: number[];
 }
 
 /** Pitch of an onset whose pitch could not be read (strum noise, muted chuck). */

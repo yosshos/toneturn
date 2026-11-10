@@ -66,14 +66,50 @@ export interface KitProfile {
   cc4?: { closed: number; open: number };
   /** Soft / loud stroke medians per voice (velocity 1–127, or a mic peak mapped to it). */
   vel?: Partial<Record<DrumVoice, { soft: number; loud: number }>>;
-  /** Practice-pad mode: the microphone hears one surface; only mic-OK items are offered. */
+  /** Microphone mode (a practice pad, or an acoustic kit): no MIDI; only mic-OK items are offered. */
   mic?: boolean;
+  /** What the player plays on (the kit card's choice). Absent = from `mic` (old profiles): MIDI or a practice pad. */
+  kind?: KitKind;
+  /** Acoustic kit by microphone: the per-player band templates of each drum (drumAcoustic.ts calibration). */
+  acoustic?: AcousticCal;
+  /** Pad controllers without a sound module: the app plays a drum sound on every hit (default off). */
+  sounds?: boolean;
   /** The device the wizard ran on. */
   device?: string;
   /** Wizard finished (else the drums Technique offers it first). */
   done?: boolean;
 }
 export const DEFAULT_KIT: KitProfile = { preset: 'gm', map: {} };
+
+/** The owner's notice (0.66): the drums course is built for an e-kit by MIDI. Shown on the course card, the kit card and the path top. */
+export const KIT_NOTICE = {
+  en: 'Drums works best with an electronic kit connected by MIDI. Recommended for the full course and accurate assessment.',
+  he: 'קורס התופים עובד הכי טוב עם תופים אלקטרוניים המחוברים ב-MIDI. מומלץ לכל התוכן ולמדידה מדויקת.',
+};
+
+/** The kit card's three setups: an e-kit by MIDI (recommended), an acoustic kit by microphone, a practice pad by microphone. */
+export type KitKind = 'midi' | 'acoustic' | 'pad';
+/** The drums an acoustic kit's microphone tells apart (DRUMS_AUDIT §5): ride and crash count as the hat (a cymbal). */
+export type AcousticVoice = 'kick' | 'snare' | 'tom' | 'hat';
+/** Per-player calibration: each drum's band-power rise at the strength it was calibrated (4 hits each, the median). */
+export interface AcousticCal {
+  tpl: Partial<Record<AcousticVoice, number[]>>;
+}
+/** The setup in use. An acoustic kit counts only once calibrated (kick, snare and hat); until then it is a pad. */
+export function kitKind(k?: KitProfile | null): KitKind {
+  if (!k?.mic) return 'midi';
+  return k.kind === 'acoustic' && k.acoustic?.tpl.kick && k.acoustic.tpl.snare && k.acoustic.tpl.hat ? 'acoustic' : 'pad';
+}
+/** For the level filters: false = MIDI (everything), 'pad' = single-surface levels, 'acoustic' = those + basic grooves. */
+export const drumMicOf = (k?: KitProfile | null): false | 'pad' | 'acoustic' => {
+  const x = kitKind(k);
+  return x === 'midi' ? false : x;
+};
+
+/** The app's own drum sound for a voice (the "play drum sounds" option): the recorded kit's pieces (PercKind names). */
+export const VOICE_PERC: Record<DrumVoice, 'kick' | 'snare' | 'rim' | 'hat' | 'hat-open' | 'hat-foot' | 'ride' | 'crash' | 'tom-hi' | 'tom-lo'> = {
+  kick: 'kick', snare: 'snare', rim: 'rim', hihat: 'hat', hhOpen: 'hat-open', hhPedal: 'hat-foot', ride: 'ride', crash: 'crash', tom1: 'tom-hi', tom2: 'tom-hi', tom3: 'tom-lo',
+};
 
 /** The voice a raw note plays on this kit (learned → preset → GM), or null for an unmapped note. */
 export function voiceOf(note: number, kit: KitProfile = DEFAULT_KIT): DrumVoice | null {

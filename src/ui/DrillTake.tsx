@@ -20,7 +20,8 @@ import { drumHits } from '../engine/drills/bass';
 import { bandHits } from '../engine/drills/bassBand';
 import { isDrumDrill } from '../engine/drills/events';
 import { analyzeDrumTake, drumLimbLine, type DrumTakeHit } from '../engine/drills/drumAnalyze';
-import { VOICE_NOTE, type KitProfile } from '../engine/drumKit';
+import { kitKind, VOICE_NOTE, type KitProfile } from '../engine/drumKit';
+import { acousticHits, acousticOk, acousticOnsets } from '../engine/drumAcoustic';
 import type { NoteEvent } from '../engine/lesson';
 
 type Lang = 'he' | 'en';
@@ -396,7 +397,12 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
   // Drums (0.65): an e-kit by MIDI, or a practice pad by microphone (single-surface items only — never self-report).
   const drum = isDrumDrill(drill);
   const drumMidi = drum && midi.devices.length > 0 && !kit?.mic;
-  const drumBlocked = drum && !drumMidi && !drill.drum?.mic;
+  // An acoustic kit by microphone (calibrated): the basic groove levels, drums told apart by their sound (drumAcoustic).
+  const acKit = drum && !drumMidi && kitKind(kit) === 'acoustic';
+  const acoustic = acKit && !drill.drum?.mic && acousticOk(drill);
+  const drumBlocked = drum && !drumMidi && !drill.drum?.mic && !acoustic;
+  // A take whose drums were mostly not told apart: not counted (no pass, no fail) — the reason, and play again.
+  const [voided, setVoided] = useState<{ en: string; he: string } | null>(null);
   const useMidi = drum ? drumMidi : midi.devices.length > 0;
   useEffect(() => () => ac.current?.abort(), []);
   // B5: drums under the take only when the mic can't hear them (headphones, line-in, or a MIDI bass); else the click.
@@ -471,11 +477,11 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
         micStop.signal,
         (f) => {
           if (!zero) return;
-          frames.push({ t: performance.now() - zero - cal.latencyMs, hz: f.hz, conf: f.confidence, rms: f.rms, chroma: f.chroma, centroid: f.centroid });
+          frames.push({ t: performance.now() - zero - cal.latencyMs, hz: f.hz, conf: f.confidence, rms: f.rms, chroma: f.chroma, centroid: f.centroid, bands: f.bands });
         },
         undefined,
         // BASS_AUDIT A1: bass hears down to low E / low B (28 / 22 Hz, a 4096-sample window, the spectral centroid).
-        { chroma: chords, ...(captureOptsFor(drill) ?? {}) },
+        { chroma: chords && !drum, ...(captureOptsFor(drill) ?? {}), ...(acoustic ? { bands: true } : {}) },
       );
     } else if (!midi.devices.length && !drum) {
       micStop = new AbortController();
@@ -531,6 +537,14 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
       return;
     }
     setPhase('ready');
+    if (drum && acoustic && kit?.acoustic) {
+      const hits = acousticHits(acousticOnsets(frames), kit.acoustic);
+      const played: PlayedNote[] = hits.map((h) => ({ pitch: h.voice ? VOICE_NOTE[h.voice] : VOICE_NOTE.snare, on: h.on, off: null, vel: h.vel }));
+      const m = analyzeDrumTake(drill, bpm, hits, { kit, acoustic: { toms: !!kit.acoustic.tpl.tom } });
+      if (m.drum?.missed.includes('unsure')) return setVoided(m.why);
+      setVoided(null);
+      return onDone(m, played);
+    }
     if (drum) {
       const hits: DrumTakeHit[] = drumMidi ? drumHitsIn : detectOnsets(frames, { refractoryMs: 35, ratio: 1.8 }).map((p) => ({ voice: null, on: p.on, vel: p.vel }));
       const played: PlayedNote[] = hits.map((h) => ({ pitch: h.voice ? VOICE_NOTE[h.voice] : VOICE_NOTE.snare, on: h.on, off: null, vel: h.vel }));
@@ -559,7 +573,13 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
       {!useMidi && !isGuitarDrill(drill) && !drum && <p className="field-hint">{tx.midiOff}</p>}
       {drumBlocked && (
         <p className="kit-warn" data-drum-needs-kit="1">
-          {lang === 'he' ? 'התרגיל הזה צריך תופים אלקטרוניים (MIDI): המיקרופון שומע משטח אחד בלבד.' : 'This one needs an e-kit (MIDI): the microphone hears one surface only.'}
+          {acKit
+            ? lang === 'he'
+              ? 'התרגיל הזה צריך תופים אלקטרוניים (MIDI): במערכת אקוסטית המיקרופון לא מודד אותו.'
+              : 'This one needs an e-kit (MIDI): on an acoustic kit the microphone can’t measure it.'
+            : lang === 'he'
+              ? 'התרגיל הזה צריך תופים אלקטרוניים (MIDI): המיקרופון שומע משטח אחד בלבד.'
+              : 'This one needs an e-kit (MIDI): the microphone hears one surface only.'}
         </p>
       )}
       <div className={`drill-beat ${phase}`} aria-live="polite" dir="ltr">
@@ -605,9 +625,16 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
           </button>
         </div>
       ) : phase === 'ready' ? (
-        <button className="btn mega" onClick={() => void start()} data-drill-play="1" disabled={drumBlocked}>
-          ▶ {tx.play}
-        </button>
+        <>
+          {voided && (
+            <p className="kit-warn" data-drum-unsure="1">
+              {voided[lang]} {lang === 'he' ? 'קרבו את המיקרופון לתופים, או כיילו שוב בכרטיס המערכת.' : 'Move the mic closer, or calibrate again on the kit card.'}
+            </p>
+          )}
+          <button className="btn mega" onClick={() => void start()} data-drill-play="1" disabled={drumBlocked}>
+            ▶ {tx.play}
+          </button>
+        </>
       ) : (
         <button className="btn mega ghost" onClick={() => ac.current?.abort()}>
           ■ {tx.stop}

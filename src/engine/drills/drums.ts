@@ -8,6 +8,7 @@ import type { Drill, DrillSpec, DrumGoal, DrumVoice, ExpNote, FamilyId, DrumFami
 import type { SpecTemplate } from './generate';
 import type { GuitarFamilyDef, GuitarLevelDef, T2, TechProbe } from './guitar';
 import { VOICE_NOTE, limbOf } from '../drumKit';
+import { ACOUSTIC_LEVELS } from '../drumAcoustic';
 
 const t = (en: string, he: string): T2 => ({ en, he });
 const r6 = (x: number): number => Math.round(x * 1e6) / 1e6;
@@ -846,7 +847,7 @@ export function micLevels(fams: DrumFamilyDef[]): DrumFamilyDef[] {
 
 // ───────────────────────────── placement probe (§5) ─────────────────────────────
 
-export type DrumSlot = 'pulse' | 'hands' | 'doubles' | 'diddle' | 'dynamics' | 'groove' | 'fill' | 'read';
+export type DrumSlot = 'pulse' | 'hands' | 'doubles' | 'diddle' | 'dynamics' | 'groove' | 'funk' | 'shuffle' | 'fill' | 'read' | 'feet';
 export type DrumProbe = TechProbe & { slot: DrumSlot; mode?: 'once'; mic: boolean; tempo: number };
 const P = (slot: DrumSlot, family: DrumFamilyId, kind: string, option: number, tempo: number, title: T2, mic: boolean, once = true): DrumProbe => ({
   slot,
@@ -858,7 +859,11 @@ const P = (slot: DrumSlot, family: DrumFamilyId, kind: string, option: number, t
   tempo,
   ...(once ? { mode: 'once' as const } : {}),
 });
-/** The adaptive probe (~2.5 min): steps 1–5, 7, 8 of §5 (6 and 9 are v2 families). Mic mode runs the snare steps. */
+/**
+ * The adaptive probe (~3 min): the steps of §5. Step 6 "groove reach" is two short takes — funk with ghosts and the
+ * shuffle — run only after the basic groove was clean or almost (the UI skips them otherwise); step 9 "feet" is the
+ * hi-hat foot on 2 and 4 (MIDI only). Mic mode runs the snare steps.
+ */
 export const DRUM_PROBES: DrumProbe[] = [
   P('pulse', 'd-time', '4:gap22', 1, 80, t('Pulse: quarters through a gap in the click', 'דופק: רבעים דרך חור בקליק'), true),
   P('hands', 'd-rolls', '2:singles16', 0, 70, t('Hands: single strokes, faster each time', 'ידיים: מכות בודדות, מהר יותר בכל פעם'), true, false),
@@ -866,13 +871,22 @@ export const DRUM_PROBES: DrumProbe[] = [
   P('diddle', 'd-diddles', '1:para', 0, 80, t('Paradiddle', 'פאראדידל'), true),
   P('dynamics', 'd-strokes', '4:accent', 0, 80, t('Dynamics: accents and taps', 'דינמיקה: הדגשות ונקישות'), true),
   P('groove', 'd-rock', '1:rock', 0, 95, t('Basic groove', 'גרוב בסיסי'), false),
+  P('funk', 'd-funk', '2:hat', 0, 85, t('Groove reach: funk with ghost notes', 'טווח גרוב: פאנק עם תווי רפאים'), false),
+  P('shuffle', 'd-shuffle', '2:shuffle', 0, 100, t('Groove reach: the shuffle', 'טווח גרוב: שאפל'), false),
   P('fill', 'd-fills', '3:fill4', 0, 80, t('Fill and land on 1', 'מעבר ונחיתה על 1'), false),
   P('read', 'd-read', '5:kit', 0, 80, t('Read a kit groove', 'לקרוא גרוב למערכת'), false),
+  P('feet', 'd-feet', '1:chick', 1, 80, t('Feet: hi-hat foot on 2 and 4', 'רגליים: רגל היי־האט על 2 ו-4'), false),
 ];
-/** The probes for this setup: mic mode runs the single-surface ones, reading on the snare. */
-export function drumProbes(mic: boolean): DrumProbe[] {
+/** Probe steps that need the basic groove first (a "not" there skips them). */
+export const GROOVE_REACH: DrumSlot[] = ['funk', 'shuffle'];
+/**
+ * The probes for this setup: mic mode runs the single-surface ones, reading on the snare; an acoustic kit (mic) adds
+ * the groove steps its microphone can measure (drumAcoustic.ACOUSTIC_LEVELS).
+ */
+export function drumProbes(mic: boolean, acoustic = false): DrumProbe[] {
   if (!mic) return DRUM_PROBES;
-  return [...DRUM_PROBES.filter((p) => p.mic), P('read', 'd-read', '1:read', 0, 70, t('Read a snare line', 'לקרוא שורה לסנר'), true)];
+  const lv = (p: DrumProbe) => `${p.spec.family}-${Number(p.spec.kind.split(':')[0]) || 1}`;
+  return [...DRUM_PROBES.filter((p) => p.mic || (acoustic && ACOUSTIC_LEVELS.has(lv(p)))), P('read', 'd-read', '1:read', 0, 70, t('Read a snare line', 'לקרוא שורה לסנר'), true)];
 }
 
 /** What a probe take measured (only measured values — no self-report). */
@@ -916,7 +930,15 @@ export function placeDrums(r: Partial<Record<DrumSlot, DrumProbeResult>>, famili
   cap('d-fills', v('fill') === 'clean' ? 4 : v('fill') === 'almost' ? 2 : 1);
   // F14: kit reading clean → L5; snare reading clean → L3; almost → L2.
   cap('d-read', v('read') === 'clean' ? (r.read?.kit ? 5 : 3) : v('read') === 'almost' ? 2 : 1);
-  // v2 families (no probe step yet): level 1; independence one level on from a clean basic groove.
+  // Step 6, groove reach: funk with ghosts (F6 L2 content) clean → L3, almost → L2; the shuffle (F7 L2) clean → L3,
+  // almost → L2. Not run (the basic groove failed) or not → L1.
+  cap('d-funk', v('funk') === 'clean' ? 3 : v('funk') === 'almost' ? 2 : 1);
+  cap('d-shuffle', v('shuffle') === 'clean' ? 3 : v('shuffle') === 'almost' ? 2 : 1);
+  // Step 9, feet: the hi-hat foot on 2 & 4 (F13 L1 content) clean → L2; with a clean basic groove too (the kick) → L3.
+  cap('d-feet', v('feet') === 'clean' ? (v('groove') === 'clean' ? 3 : 2) : 1);
+  // F8 jazz, when built: the shuffle's triplet feel and the hi-hat foot both clean → L2.
+  cap('d-jazz' as FamilyId, v('shuffle') === 'clean' && v('feet') === 'clean' ? 2 : 1);
+  // Independence one level on from a clean basic groove.
   cap('d-indep', v('groove') === 'clean' ? 2 : 1);
   for (const f of families) if (out[f.id] === undefined && String(f.id).startsWith('d-')) cap(f.id, 1);
   return out;

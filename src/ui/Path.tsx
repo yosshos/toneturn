@@ -154,12 +154,12 @@ export function pathInputFrom(s: Settings, p: Progress, now = new Date()): PathI
   const inp = courseInput(base, course);
   // 0.61 (owner): an instrument / voice course teaches its technique ladders as path steps, passed only by measured takes.
   const ds = drillSettingsOf(s);
-  const families = s.drills?.inPath === false ? [] : ladderFamiliesFor(course, ds, s.bassTuning, s.drumKit?.mic);
+  const families = s.drills?.inPath === false ? [] : ladderFamiliesFor(course, ds, s.bassTuning, drumMicOf(s.drumKit));
   if (!families.length) return inp;
   return {
     ...inp,
     ladderFamilies: families,
-    ladderHidden: ladderHiddenFor(course, s.bassTuning, s.drumKit?.mic),
+    ladderHidden: ladderHiddenFor(course, s.bassTuning, drumMicOf(s.drumKit)),
     facts: withLadderFacts(inp.facts, { families, items: p.drillItems ?? {}, order: ds.keyOrder, start: s.drillStart ?? {}, vocalPassed: p.vocal?.passed ?? [], at: now.toISOString() }),
   };
 }
@@ -211,6 +211,8 @@ const ICON: Record<string, 'ear' | 'steps' | 'chord' | 'cadence' | 'mic' | 'map'
 const iconOf = (step: PathStep) => (step.kind === 'tech' ? 'chord' : step.kind === 'vocal' ? 'mic' : step.kind === 'game' ? 'puzzle' : step.kind === 'review' ? 'review' : step.lesson ? (LESSON_META[step.lesson]?.icon ?? 'ear') : ICON[step.domain] ?? 'ear');
 
 import { FAMILY_GLYPH, GAME_STEP_GLYPH, TOPIC_GLYPH } from './stepGlyphs';
+import { drumMicOf } from '../engine/drumKit';
+import { KitNotice } from './DrumViews';
 
 function StepIcon({ step }: { step: PathStep }) {
   const kind = step.ladder ? (FAMILY_GLYPH[step.ladder.family] ?? (step.kind === 'vocal' ? 'sing' : step.ladder.instrument === 'piano' ? 'keys' : step.ladder.instrument === 'drums' ? 'drums' : 'guitar')) : step.topic ? TOPIC_GLYPH[step.topic] : step.kind === 'game' && step.game ? GAME_STEP_GLYPH[step.game] : undefined;
@@ -425,6 +427,9 @@ export function PathView2({
           <small dir="auto">{fill(tx.sectionKnown, { p: Math.round(secStats.total ? (100 * secStats.known) / secStats.total : 0) })}</small>
         </div>
       </header>
+
+      {/* 0.66 (owner): the drums course is built for an e-kit by MIDI — said at the top until one is set up. */}
+      {(settings.activeCourse ?? 'ear') === 'drums' && <KitNotice kit={settings.drumKit} lang={lang} className="path-kit-notice" />}
 
       {onTechTest && (
         <div className="path-techtest" data-tech-test="1">

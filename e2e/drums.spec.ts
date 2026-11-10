@@ -184,4 +184,67 @@ test.describe('drums course', () => {
     await expect(page.locator('[data-hw-mode="kit"]')).toHaveAttribute('aria-checked', 'true');
     await fitsScreen(page);
   });
+
+  // 0.66 (DRUMS_AUDIT §5): the e-kit notice, the kit card's setups, an acoustic kit by microphone, dense rudiments.
+  test('the e-kit notice: on the path top and the kit card until an e-kit is set up; the setups on the kit card', async ({ page }) => {
+    await seed(page);
+    await page.goto('/?unlock#/path');
+    await expect(page.locator('[data-kit-notice="none"]')).toContainText('MIDI');
+    await page.goto('about:blank');
+    await page.goto('/?unlock#/drills');
+    await expect(page.locator('[data-kit-card] [data-kit-notice]')).toBeVisible();
+    for (const k of ['midi', 'acoustic', 'pad']) await expect(page.locator(`[data-kit-kind-pick="${k}"]`)).toBeVisible();
+    // Picking the acoustic kit goes straight to its setup (latency, then the drums' calibration).
+    await page.locator('[data-kit-kind-pick="acoustic"]').click();
+    await expect(page.locator('[data-kit-step="latency"]')).toBeVisible();
+    // A ready e-kit: no notice, the app-sounds option instead.
+    await seed(page, { kit: { preset: 'gm', map: { 38: 'snare' }, done: true, device: 'Test Kit' } });
+    await page.goto('/?unlock#/drills');
+    await expect(page.locator('[data-kit-card="ready"][data-kit-kind="midi"]')).toBeVisible();
+    await expect(page.locator('[data-kit-notice]')).toHaveCount(0);
+    await expect(page.locator('[data-kit-sounds="off"]')).toBeVisible();
+    await page.locator('[data-kit-sounds] input').check();
+    await expect(page.locator('[data-kit-sounds="on"]')).toBeVisible();
+    await page.goto('about:blank');
+    await page.goto('/?unlock#/path');
+    await expect(page.locator('[data-kit-notice]')).toHaveCount(0);
+  });
+
+  test('an acoustic kit by microphone: the basic grooves are offered and playable, open-hat levels are not', async ({ page }) => {
+    const tpl = { kick: [9, 9, 3, 1, 0.3, 0.1, 0.05, 0.02], snare: [0.2, 1, 3, 3, 2, 2, 1, 0.5], hat: [0.01, 0.01, 0.02, 0.05, 0.2, 1, 3, 4] };
+    await seed(page, { kit: { preset: 'gm', map: {}, mic: true, kind: 'acoustic', acoustic: { tpl }, done: true } });
+    await page.goto('/?unlock#/drills');
+    await expect(page.locator('[data-kit-card="ready"][data-kit-kind="acoustic"]')).toBeVisible();
+    await expect(page.locator('[data-kit-notice="acoustic"]')).toBeVisible();
+    await expect(page.locator('[data-topic="grooves"]')).toBeVisible();
+    await openLevel(page, 'd-rock', 'd-rock-1');
+    await expect(page.locator('[data-drum-needs-kit]')).toHaveCount(0);
+    await expect(page.locator('[data-drill-play]')).toBeEnabled();
+    await fitsScreen(page);
+    await page.goto('about:blank');
+    await page.goto('/?unlock#/drills');
+    await page.locator('[data-topic="all"]').click();
+    await page.locator('[data-family="d-rock"]').click();
+    await expect(page.locator('[data-level="d-rock-1"]')).toBeVisible();
+    await expect(page.locator('[data-level="d-rock-3"]')).toHaveCount(0);
+  });
+
+  test('dense rudiments (16th triplets) are one bar a line, still one screen', async ({ page }) => {
+    await seed(page, { kit: { preset: 'gm', map: {}, mic: true, done: true } });
+    await openLevel(page, 'd-rolls', 'd-rolls-5');
+    await expect(page.locator('.drum-score[data-drum-bars="1"]')).toBeVisible();
+    await fitsScreen(page);
+  });
+
+  test('onboarding: picking drums shows the e-kit recommendation', async ({ page }) => {
+    await page.goto('/?sim=1&welcome=1&lang=en');
+    await page.locator('[data-ob="start"]').click();
+    await page.locator('[data-ob="listen"]').click();
+    await expect(page.locator('[data-ob="taste-0"]')).toBeEnabled({ timeout: 10_000 });
+    await page.locator('[data-ob="taste-0"]').click();
+    await page.locator('[data-ob="taste-next"]').click();
+    await expect(page.locator('[data-course-note="drums"]')).toHaveCount(0);
+    await page.locator('[data-ob="course-drums"]').click();
+    await expect(page.locator('[data-course-note="drums"]')).toContainText('MIDI');
+  });
 });

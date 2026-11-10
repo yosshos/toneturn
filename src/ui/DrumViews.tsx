@@ -6,9 +6,12 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Drill, DrumVoice, ExpNote, TakeMetrics } from '../engine/drills/types';
 import { markOf, type NoteMark } from '../engine/noteMarks';
-import { beamBeats, dotted, restsOf, type RestKind } from '../engine/drumNotation';
-import { calibrateVel, classOf, DEFAULT_KIT, pedalRange, PRESETS, slowOutput, voiceOf, VOICE_NAME, wizardDone, wizardHit, wizardSkip, wizardStart, WIZARD_PADS, type KitPreset, type KitProfile, type WizardState } from '../engine/drumKit';
+import { barsPerLine, beamBeats, dotted, restsOf, type RestKind } from '../engine/drumNotation';
+import { calibrateVel, classOf, DEFAULT_KIT, kitKind, pedalRange, PRESETS, slowOutput, voiceOf, VOICE_NAME, wizardDone, wizardHit, wizardSkip, wizardStart, WIZARD_PADS, type AcousticCal, type AcousticVoice, type KitKind, type KitPreset, type KitProfile, type WizardState, KIT_NOTICE } from '../engine/drumKit';
+import { buildCal, CAL_HITS, CAL_ORDER, OnsetTracker } from '../engine/drumAcoustic';
 import { midi } from '../speech/midi';
+import { BrowserPitchCapture } from '../speech/pitchCapture';
+import { listenLoop } from './Flight';
 import { Glyph, type GlyphKind } from './Glyph';
 import { LatencyCalibrate, type LatencyValues } from './LatencyCalibrate';
 import { useLineWindow } from './DrillTake';
@@ -31,19 +34,20 @@ function marksOf(result?: TakeMetrics | null): Map<string, NoteMark> {
   return out;
 }
 
-/** The drill's notes, two bars a line, in a window of two lines that follows the take (B2, one screen). */
+/** The drill's notes, two bars a line (one for dense rudiments), in a window of two lines that follows the take (B2, one screen). */
 export function DrumScore({ drill, view, result, beat = -1, lang }: { drill: Drill; view: 'staff' | 'lanes'; result?: TakeMetrics | null; beat?: number; lang: Lang }) {
   const meter = drill.meter || 4;
-  const per = meter * 2;
+  const bars = view === 'staff' ? barsPerLine(drill.notes, meter) : 2;
+  const per = meter * bars;
   const lines = Math.max(1, Math.ceil(drill.beats / per - 1e-6));
   const marks = marksOf(result);
   const firstBad = result ? drill.notes.findIndex((n) => (marks.get(noteKey(n)) ?? 'ok') !== 'ok') : -1;
   const { from, pager } = useLineWindow(lines, beat, per, firstBad >= 0 ? Math.floor(drill.notes[firstBad].beat / per) : 0);
   const shown = Array.from({ length: Math.min(2, lines - from) }, (_, i) => from + i);
   return (
-    <div className={`drum-score ${view}`} dir="ltr" data-drum-view={view} data-drum-lines={lines}>
+    <div className={`drum-score ${view}`} dir="ltr" data-drum-view={view} data-drum-lines={lines} data-drum-bars={bars}>
       {shown.map((li) =>
-        view === 'staff' ? <StaffLine key={li} drill={drill} line={li} per={per} marks={marks} beat={beat} sticking={!!drill.drum?.mic} /> : <LaneLine key={li} drill={drill} line={li} per={per} marks={marks} beat={beat} />,
+        view === 'staff' ? <StaffLine key={li} drill={drill} line={li} per={per} bars={bars} marks={marks} beat={beat} sticking={!!drill.drum?.mic} /> : <LaneLine key={li} drill={drill} line={li} per={per} marks={marks} beat={beat} />,
       )}
       {pager}
       {view === 'lanes' && <p className="drum-key">{lang === 'he' ? 'עיגול גדול = הדגשה · עיגול חלול = רפאים · טבעת = היי־האט פתוח' : 'Big = accent · hollow = ghost · ring = open hat'}</p>}
@@ -53,13 +57,13 @@ export function DrumScore({ drill, view, result, beat = -1, lang }: { drill: Dri
 
 const W = 340;
 const X0 = 30;
-const BAR_W = (W - X0 - 8) / 2;
 const yOf = (step: number) => 60 - step * 4;
 
-function StaffLine({ drill, line, per, marks, beat, sticking }: { drill: Drill; line: number; per: number; marks: Map<string, NoteMark>; beat: number; sticking: boolean }) {
+function StaffLine({ drill, line, per, bars, marks, beat, sticking }: { drill: Drill; line: number; per: number; bars: 1 | 2; marks: Map<string, NoteMark>; beat: number; sticking: boolean }) {
   const b0 = line * per;
+  const BAR_W = (W - X0 - 8) / bars;
   const ns = drill.notes.filter((n) => n.beat >= b0 - 1e-6 && n.beat < b0 + per - 1e-6 && n.voice);
-  const xOf = (b: number) => X0 + 10 +((b - b0) / per) * (2 * BAR_W - 14);
+  const xOf = (b: number) => X0 + 10 + ((b - b0) / per) * (W - X0 - 8 - 14);
   // Onsets → stems: hands up, feet down.
   const groups = new Map<string, ExpNote[]>();
   for (const n of ns) {
@@ -117,7 +121,7 @@ function StaffLine({ drill, line, per, marks, beat, sticking }: { drill: Drill; 
           <rect x={13} y={36} width={3.5} height={16} />
         </g>
       )}
-      {[1, 2].map((k) => (
+      {Array.from({ length: bars }, (_, k) => k + 1).map((k) => (
         <line key={`bar${k}`} x1={X0 - 4 + k * BAR_W} x2={X0 - 4 + k * BAR_W} y1={28} y2={60} className="dn-bar" />
       ))}
       {stems.map((s, i) => (
@@ -188,7 +192,7 @@ function LaneLine({ drill, line, per, marks, beat }: { drill: Drill; line: numbe
 
 // ───────────────────────────── kit connect & mapping wizard ─────────────────────────────
 
-type Step = 'connect' | 'map' | 'pedal' | 'vel' | 'latency' | 'done';
+type Step = 'connect' | 'map' | 'pedal' | 'vel' | 'latency' | 'acal' | 'done';
 const TX = {
   en: {
     title: 'Set up your kit', connect: 'Connect my e-kit (USB-MIDI)', pad: 'Practice pad (microphone)', padHint: 'One surface by microphone: strokes, rudiments, time and snare reading. Grooves and fills need an e-kit.',
@@ -199,6 +203,8 @@ const TX = {
     vel: 'Soft and loud', soft: 'Play 8 soft strokes on the snare', loud: 'Now 8 loud strokes on the snare', velBad: 'Soft and loud came out too close — once more, softer and louder.',
     latency: 'Latency', slow: 'That is a lot of delay — Bluetooth? Use wired headphones or the kit’s jack, then measure again.',
     done: 'Your kit is ready', test: 'Find my level (2–3 min)', start: 'To the drills', pads: 'pads learned',
+    acoustic: 'Acoustic kit (microphone)', acousticHint: 'Kick, snare, toms and cymbals told apart by sound: the basic grooves and fills. Less accurate than MIDI.',
+    acal: 'Teach the app your drums', acalHint: 'Phone 1–2 m from the kit. Normal strength.', acalBad: 'Some drums sounded alike. Move the phone and try again.', acalTom: 'The tom sounded like the snare: toms count as the snare.', again2: 'Again', acalOk: 'told apart', micErr: 'The microphone is not available.',
   },
   he: {
     title: 'הגדרת המערכת', connect: 'לחבר תופים אלקטרוניים (USB-MIDI)', pad: 'פד אימון (מיקרופון)', padHint: 'משטח אחד דרך המיקרופון: מכות, רודימנטים, זמן וקריאה לסנר. גרובים ומעברים דורשים תופים אלקטרוניים.',
@@ -209,33 +215,94 @@ const TX = {
     vel: 'חלש וחזק', soft: 'נגנו 8 מכות חלשות על הסנר', loud: 'עכשיו 8 מכות חזקות על הסנר', velBad: 'החלש והחזק יצאו קרובים מדי — עוד פעם, חלש יותר וחזק יותר.',
     latency: 'השהיה', slow: 'זו השהיה גדולה — בלוטות׳? עברו לאוזניות חוטיות או לשקע של המודול ומדדו שוב.',
     done: 'המערכת מוכנה', test: 'למצוא את הרמה שלי (2–3 דק׳)', start: 'לתרגילים', pads: 'פדים נלמדו',
+    acoustic: 'מערכת אקוסטית (מיקרופון)', acousticHint: 'בס־תוף, סנר, טומים ומצלתיים מזוהים לפי הצליל: הגרובים והמעברים הבסיסיים. פחות מדויק מ-MIDI.',
+    acal: 'ללמד את האפליקציה את התופים', acalHint: 'הטלפון במרחק 1–2 מ׳ מהמערכת. מכות בעוצמה רגילה.', acalBad: 'חלק מהתופים נשמעו דומים. הזיזו את הטלפון ונסו שוב.', acalTom: 'הטום נשמע כמו הסנר: הטומים ייספרו כסנר.', again2: 'שוב', acalOk: 'זוהו נכון', micErr: 'המיקרופון לא זמין.',
   },
 };
 
-/** The kit card on the drums Technique page: what is connected, and set up / change. */
-export function KitCard({ kit, lang, onSetup }: { kit?: KitProfile; lang: Lang; onSetup: () => void }) {
+/** What a microphone setup covers (one line under the notice). */
+const KIND_SCOPE: Record<KitKind, { en: string; he: string }> = {
+  midi: { en: '', he: '' },
+  acoustic: { en: 'By microphone: strokes, rudiments, time, snare reading, and the basic grooves and fills.', he: 'במיקרופון: מכות, רודימנטים, זמן, קריאה לסנר, וגרובים ומעברים בסיסיים.' },
+  pad: { en: 'By microphone: strokes, rudiments, time and snare reading.', he: 'במיקרופון: מכות, רודימנטים, זמן וקריאה לסנר.' },
+};
+
+/** The notice where it matters (kit card, path top): shown until an e-kit is set up; says what a mic setup covers. */
+export function KitNotice({ kit, lang, className = '' }: { kit?: KitProfile; lang: Lang; className?: string }) {
+  const kind = kitKind(kit);
+  if (kit?.done && kind === 'midi') return null;
+  const scope = kit?.done ? KIND_SCOPE[kind][lang] : '';
+  return (
+    <p className={`kit-notice ${className}`} data-kit-notice={kit?.done ? kind : 'none'}>
+      <b>{KIT_NOTICE[lang]}</b>
+      {scope && <small>{scope}</small>}
+    </p>
+  );
+}
+
+const KIND_NAME: Record<KitKind, { en: string; he: string }> = {
+  midi: { en: 'E-kit (MIDI)', he: 'אלקטרוניים (MIDI)' },
+  acoustic: { en: 'Acoustic kit', he: 'מערכת אקוסטית' },
+  pad: { en: 'Practice pad', he: 'פד אימון' },
+};
+
+/** The kit card on the drums Technique page: the setup (e-kit / acoustic kit / practice pad), its status, the notice. */
+export function KitCard({ kit, lang, onSetup, onKit }: { kit?: KitProfile; lang: Lang; onSetup: (kind?: KitKind) => void; onKit?: (k: KitProfile) => void }) {
   const tx = TX[lang];
   const ready = !!kit?.done;
+  const kind = kitKind(kit);
+  // The chosen setup: an acoustic kit still waiting for its calibration shows as acoustic (not yet usable).
+  const chosen: KitKind = kit?.kind === 'acoustic' && kit.mic ? 'acoustic' : kind;
   const learned = Object.keys(kit?.map ?? {}).length;
-  const status = !ready ? (lang === 'he' ? 'עוד לא הוגדרה מערכת' : 'No kit set up yet') : kit!.mic ? tx.pad : `${kit!.device ?? PRESETS[kit!.preset].name} · ${learned} ${tx.pads}`;
+  const he = lang === 'he';
+  const status = !ready
+    ? he ? 'עוד לא הוגדרה מערכת' : 'No kit set up yet'
+    : chosen === 'acoustic'
+      ? kind === 'acoustic'
+        ? he ? 'מיקרופון · התופים כוילו' : 'Microphone · drums calibrated'
+        : he ? 'מיקרופון · צריך כיול' : 'Microphone · needs calibrating'
+      : kind === 'pad'
+        ? tx.pad
+        : `${kit!.device ?? PRESETS[kit!.preset].name} · ${learned} ${tx.pads}`;
   return (
-    <section className={`kit-card ${ready ? 'ready' : ''}`} data-kit-card={ready ? 'ready' : 'none'}>
-      <Glyph kind="drums" color="#4CD07D" size={44} />
-      <span className="kc-text">
-        <b>{ready ? (kit!.mic ? tx.pad : lang === 'he' ? 'המערכת שלי' : 'My kit') : tx.title}</b>
-        <small>{status}</small>
-      </span>
-      <button className={`btn small ${ready ? 'ghost' : 'primary'}`} onClick={onSetup} data-kit-setup="1">
-        {ready ? (lang === 'he' ? 'שינוי' : 'Change') : lang === 'he' ? 'להתחיל' : 'Start'}
-      </button>
+    <section className={`kit-card ${ready ? 'ready' : ''}`} data-kit-card={ready ? 'ready' : 'none'} data-kit-kind={chosen}>
+      <div className="kc-row">
+        <Glyph kind="drums" color="#4CD07D" size={44} />
+        <span className="kc-text">
+          <b>{ready ? KIND_NAME[chosen][lang] : tx.title}</b>
+          <small>{status}</small>
+        </span>
+        <button className={`btn small ${ready ? 'ghost' : 'primary'}`} onClick={() => onSetup(ready ? chosen : undefined)} data-kit-setup="1">
+          {ready ? (he ? 'שינוי' : 'Change') : he ? 'להתחיל' : 'Start'}
+        </button>
+      </div>
+      <div className="chips kit-kinds" role="radiogroup" aria-label={he ? 'על מה מנגנים' : 'What you play on'}>
+        {(['midi', 'acoustic', 'pad'] as KitKind[]).map((k) => (
+          <button key={k} role="radio" aria-checked={ready && chosen === k} className={`chip ${ready && chosen === k ? 'on' : ''}`} onClick={() => onSetup(k)} data-kit-kind-pick={k}>
+            {KIND_NAME[k][lang]}
+          </button>
+        ))}
+      </div>
+      <KitNotice kit={kit} lang={lang} />
+      {ready && kind === 'midi' && onKit && (
+        <label className="kit-sounds" data-kit-sounds={kit!.sounds ? 'on' : 'off'}>
+          <input type="checkbox" checked={!!kit!.sounds} onChange={(e) => onKit({ ...kit!, sounds: e.target.checked })} />
+          <span>
+            {he ? 'האפליקציה מנגנת את צלילי התופים' : 'The app plays the drum sounds'}
+            <small>{he ? 'לפדים בלי מודול צליל' : 'For pads without a sound module'}</small>
+          </span>
+        </label>
+      )}
     </section>
   );
 }
 
-export function KitSetup({ lang, kit: kit0, latency, onSave, onLatency, onDone, onTest }: { lang: Lang; kit?: KitProfile; latency: LatencyValues; onSave: (k: KitProfile) => void; onLatency: (p: LatencyValues) => void; onDone: () => void; onTest?: () => void }) {
+export function KitSetup({ lang, kit: kit0, latency, onSave, onLatency, onDone, onTest, start }: { lang: Lang; kit?: KitProfile; latency: LatencyValues; onSave: (k: KitProfile) => void; onLatency: (p: LatencyValues) => void; onDone: () => void; onTest?: () => void; /** Picked on the kit card: go straight to that setup. */ start?: KitKind }) {
   const tx = TX[lang];
-  const [step, setStep] = useState<Step>('connect');
-  const [kit, setKit] = useState<KitProfile>(() => ({ ...DEFAULT_KIT, ...(kit0 ?? {}), done: false }));
+  // A setup picked on the kit card: the acoustic kit / pad start at the latency (the pick is saved at once).
+  const first: Step = start === 'acoustic' || start === 'pad' ? 'latency' : 'connect';
+  const [step, setStep] = useState<Step>(first);
+  const [kit, setKit] = useState<KitProfile>(() => ({ ...DEFAULT_KIT, ...(kit0 ?? {}), ...(start === 'acoustic' ? { mic: true, kind: 'acoustic' as const } : start === 'pad' ? { mic: true, kind: 'pad' as const } : {}), done: false }));
   const [devices, setDevices] = useState<string[] | null>(null);
   const save = (p: Partial<KitProfile>) =>
     setKit((k) => {
@@ -248,7 +315,7 @@ export function KitSetup({ lang, kit: kit0, latency, onSave, onLatency, onDone, 
       const ds = await midi.enable();
       setDevices(ds);
       if (ds.length) {
-        save({ mic: false, device: ds[0] });
+        save({ mic: false, kind: 'midi', device: ds[0] });
         setStep('map');
       }
     } catch {
@@ -256,10 +323,14 @@ export function KitSetup({ lang, kit: kit0, latency, onSave, onLatency, onDone, 
     }
   };
   const usePad = () => {
-    save({ mic: true });
+    save({ mic: true, kind: 'pad' });
     setStep('latency');
   };
-  const order: Step[] = kit.mic ? ['connect', 'latency', 'done'] : ['connect', 'map', 'pedal', 'vel', 'latency', 'done'];
+  const useAcoustic = () => {
+    save({ mic: true, kind: 'acoustic' });
+    setStep('latency');
+  };
+  const order: Step[] = !kit.mic ? ['connect', 'map', 'pedal', 'vel', 'latency', 'done'] : kit.kind === 'acoustic' ? ['connect', 'latency', 'acal', 'done'] : ['connect', 'latency', 'done'];
   const next = () => setStep(order[Math.min(order.length - 1, order.indexOf(step) + 1)]);
   const bt = slowOutput(kit.mic ? (latency.micLatencyMs ?? 0) : (latency.midiLatencyMs ?? 0));
   return (
@@ -278,6 +349,13 @@ export function KitSetup({ lang, kit: kit0, latency, onSave, onLatency, onDone, 
               {devices && !devices.length ? tx.retry : tx.connect}
             </button>
           )}
+          <p className="kit-notice" data-kit-notice="connect">
+            <b>{KIT_NOTICE[lang]}</b>
+          </p>
+          <button className="btn ghost" onClick={useAcoustic} data-kit-acoustic="1">
+            {tx.acoustic}
+          </button>
+          <p className="field-hint small">{tx.acousticHint}</p>
           <button className="btn ghost" onClick={usePad} data-kit-pad="1">
             {tx.pad}
           </button>
@@ -300,6 +378,7 @@ export function KitSetup({ lang, kit: kit0, latency, onSave, onLatency, onDone, 
           </button>
         </section>
       )}
+      {step === 'acal' && <AcousticCalStep lang={lang} onDone={(cal) => (save({ acoustic: cal, done: true }), next())} onSkip={next} />}
       {step === 'done' && (
         <section className="kit-step">
           <Glyph kind="drums" color="#4CD07D" size={72} shadow />
@@ -467,6 +546,108 @@ function VelStep({ lang, kit, onDone }: { lang: Lang; kit: KitProfile; onDone: (
       {bad && <p className="field-hint warn">{tx.velBad}</p>}
       <button className="btn ghost" onClick={() => onDone(null)} data-kit-next="vel">
         {lang === 'he' ? 'דילוג' : 'Skip'}
+      </button>
+    </section>
+  );
+}
+
+/**
+ * The acoustic kit calibration (DRUMS_AUDIT §5): kick, snare, a tom (may be skipped), the closed hi-hat — 4 hits each
+ * by microphone; each drum's band template, then a check that the hits come out as the drum asked for.
+ */
+function AcousticCalStep({ lang, onDone, onSkip }: { lang: Lang; onDone: (cal: AcousticCal) => void; onSkip: () => void }) {
+  const tx = TX[lang];
+  const [i, setI] = useState(0);
+  const [n, setN] = useState(0);
+  const [res, setRes] = useState<ReturnType<typeof buildCal> | null>(null);
+  const [err, setErr] = useState(false);
+  const [run, setRun] = useState(0);
+  const samples = useRef<Partial<Record<AcousticVoice, number[][]>>>({});
+  const step = useRef(0);
+  const quietUntil = useRef(0);
+  const advance = () => {
+    step.current++;
+    // The last drum still rings: half a second before the next one is heard.
+    quietUntil.current = performance.now() + 500;
+    setN(0);
+    if (step.current >= CAL_ORDER.length) setRes(buildCal(samples.current));
+    else setI(step.current);
+  };
+  useEffect(() => {
+    const stop = new AbortController();
+    const tr = new OnsetTracker();
+    void listenLoop(
+      new BrowserPitchCapture(),
+      stop.signal,
+      (f) => {
+        if (!f.bands || step.current >= CAL_ORDER.length) return;
+        const o = tr.push({ t: performance.now(), bands: f.bands });
+        if (!o || o.t < quietUntil.current) return;
+        const v = CAL_ORDER[step.current].voice;
+        const arr = (samples.current[v] ??= []);
+        arr.push(o.x);
+        setN(arr.length);
+        if (arr.length >= CAL_HITS) advance();
+      },
+      undefined,
+      { bands: true },
+    ).then((e) => e && setErr(true));
+    return () => stop.abort();
+  }, [run]); // eslint-disable-line react-hooks/exhaustive-deps
+  const again = () => {
+    samples.current = {};
+    step.current = 0;
+    quietUntil.current = 0;
+    setI(0);
+    setN(0);
+    setRes(null);
+    setRun((x) => x + 1);
+  };
+  if (res)
+    return (
+      <section className="kit-step" data-kit-acal={res.ok ? 'ok' : 'bad'}>
+        <h2>{tx.acal}</h2>
+        <p dir="auto">
+          {Math.round(res.acc * 100)}% {tx.acalOk}
+        </p>
+        {res.droppedTom && <p className="field-hint">{tx.acalTom}</p>}
+        {res.ok ? (
+          <button className="btn primary" onClick={() => onDone(res.cal)} data-kit-next="acal">
+            {tx.next}
+          </button>
+        ) : (
+          <>
+            <p className="kit-warn">{tx.acalBad}</p>
+            <button className="btn primary" onClick={again} data-kit-acal-again="1">
+              {tx.again2}
+            </button>
+          </>
+        )}
+      </section>
+    );
+  const cur = CAL_ORDER[i];
+  const glyph: Record<AcousticVoice, GlyphKind> = { kick: 'kick', snare: 'snare', tom: 'toms', hat: 'hihat' };
+  return (
+    <section className="kit-step" data-kit-acal-now={cur.voice}>
+      <h2>{tx.acal}</h2>
+      <p className="field-hint small">{tx.acalHint}</p>
+      {err && <p className="kit-warn">{tx.micErr}</p>}
+      <div className="kit-pad">
+        <Glyph kind={glyph[cur.voice]} color="#4CD07D" size={84} shadow />
+        <b>{cur.prompt[lang]}</b>
+        <span className="kit-dots" aria-label={`${n} / ${CAL_HITS}`}>
+          {Array.from({ length: CAL_HITS }, (_, k) => (
+            <i key={k} className={k < n ? 'on' : ''} />
+          ))}
+        </span>
+      </div>
+      {cur.optional && (
+        <button className="btn ghost" onClick={advance} data-kit-skip="1">
+          {tx.skip}
+        </button>
+      )}
+      <button className="btn ghost" onClick={onSkip} data-kit-acal-skip="1">
+        {lang === 'he' ? 'אחר כך (עד אז: כמו פד אימון)' : 'Later (until then: like a practice pad)'}
       </button>
     </section>
   );

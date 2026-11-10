@@ -804,6 +804,20 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     }
     return ir;
   }
+  /**
+   * A live drum hit (drums course, "play drum sounds from the app" for pad controllers without a sound module): the
+   * recorded kit's piece now (+3 ms, the same lead as live keys), its layer from the velocity. Loads the kit on first use.
+   */
+  liveDrum(kind: PercKind, velocity127: number) {
+    const ctx = this.ctx;
+    if (!ctx) return;
+    if (ctx.state !== 'running') void ctx.resume().catch(() => {});
+    this.perc(kind, ctx.currentTime + 0.003, Math.max(0.1, Math.min(1, velocity127 / 127)));
+  }
+  /** Start loading the recorded kit (so the first live hit already has its sample). */
+  preloadKit() {
+    void this.loadStems('drums-jazz');
+  }
   liveNote(m: number, on: boolean, velocity127: number) {
     const ctx = this.ctx;
     if (!ctx) return;

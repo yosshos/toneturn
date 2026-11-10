@@ -35,6 +35,7 @@ export function CourseSheet({ mine, active, lang, onPick, onClose }: { mine: Cou
             {c.name[lang]}
             {c.beta && <span className="beta-chip">{he ? 'בטא' : 'Beta'}</span>}
           </b>
+          {c.note && <small className="course-note" data-course-note={c.id}>{c.note[lang]}</small>}
           {isNew && <small>{he ? 'מתחילים במבחן מיקום קצר, או מההתחלה' : 'Starts with a short placement test, or from the beginning'}</small>}
         </span>
         {on && (

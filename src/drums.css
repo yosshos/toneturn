@@ -4,8 +4,8 @@
 /* ---------------------------------------------------------------- kit card */
 .kit-card {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  gap: 8px;
   padding: 10px 12px;
   border: var(--stroke) solid var(--outline);
   border-radius: var(--radius);
@@ -26,6 +26,74 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* 0.66: the setup choice (e-kit / acoustic kit / practice pad), the e-kit notice, the app's drum sounds. */
+.kit-card .kc-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.kit-kinds {
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.kit-kinds .chip {
+  font-size: 0.82rem;
+  padding: 4px 10px;
+}
+.kit-notice {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 8px 12px;
+  border: 2px solid var(--outline);
+  border-inline-start-width: 6px;
+  border-inline-start-color: #2f9e5b;
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--ink);
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+.kit-notice b {
+  font-weight: 700;
+}
+.kit-notice small {
+  color: var(--ink-dim);
+  font-size: 0.8rem;
+}
+.kit-step .kit-notice {
+  max-width: 360px;
+  text-align: start;
+}
+.path-kit-notice {
+  margin: 0 0 10px;
+}
+.kit-sounds {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+.kit-sounds input {
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  accent-color: #2f9e5b;
+}
+.kit-sounds span {
+  display: flex;
+  flex-direction: column;
+}
+.kit-sounds small {
+  color: var(--ink-dim);
+}
+.course-note {
+  color: var(--ink-dim);
+  font-size: 0.8rem;
 }
 
 /* ---------------------------------------------------------------- setup wizard (one screen per step) */

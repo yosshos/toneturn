@@ -7,7 +7,8 @@ import { customIncluded, customKeys, customToDrill } from './custom';
 import { itemPass, todaysItems, type TodayItem } from './ladder';
 import { guitarCatalog, guitarStyleMatch, type GuitarFamilyDef } from './guitar';
 import { tuningById } from '../fretboard';
-import { micLevels, type DrumFamilyDef } from './drums';
+import type { DrumFamilyDef } from './drums';
+import { kitLevels } from '../drumAcoustic';
 
 type Instrument = NonNullable<DrillSettings['instrument']>;
 const CAT = catalog();
@@ -17,7 +18,9 @@ export const families = (instrument: Instrument = 'piano'): FamilyDef[] => (inst
 export const familyById = (id: FamilyId): FamilyDef | undefined => CAT.find((f) => f.id === id) ?? GCAT.find((f) => f.id === id);
 
 /** What the hub filters by: the piano emphasis, or the guitar instrument + style (genre); bass: the bass tuning. */
-export type ShowSettings = Pick<DrillSettings, 'emphasis'> & Partial<Pick<DrillSettings, 'instrument' | 'guitarStyle'>> & { bassTuning?: string; /** Drums by microphone (a practice pad): only single-surface levels (DRUMS_CURRICULUM §3.8). */ drumMic?: boolean };
+export type ShowSettings = Pick<DrillSettings, 'emphasis'> & Partial<Pick<DrillSettings, 'instrument' | 'guitarStyle'>> & { bassTuning?: string; /** Drums by microphone: a practice pad (single-surface levels, DRUMS_CURRICULUM §3.8) or an acoustic kit (those + basic grooves). */ drumMic?: DrumMic };
+/** The drums setup for the level filters (drumKit.drumMicOf): false / undefined = MIDI; true = a practice pad (old callers). */
+export type DrumMic = boolean | 'pad' | 'acoustic';
 
 /** Levels written for a low B string (B13): on a bass without one (lowest open string above B0) they are hidden (N10). */
 export const LOW_B_LEVELS = ['b-walk-17', 'b-styles-14'];
@@ -36,10 +39,10 @@ export const hiddenBassLevels = (bassTuning?: string): string[] => (hasLowB(bass
 export function shownFamilies(settings: ShowSettings): FamilyDef[] {
   const inst = settings.instrument ?? 'piano';
   if (inst === 'piano') return CAT.filter((f) => settings.emphasis === 'both' || f.style === settings.emphasis);
-  // Drums: no genre filter (v1); a practice pad by microphone gets only the single-surface levels.
+  // Drums: no genre filter (v1); by microphone a practice pad gets the single-surface levels, an acoustic kit those and the basic grooves.
   if (inst === 'drums') {
     const fams = GCAT.filter((f) => f.instruments.includes('drums'));
-    return settings.drumMic ? micLevels(fams as DrumFamilyDef[]) : fams;
+    return settings.drumMic ? kitLevels(fams as DrumFamilyDef[], settings.drumMic) : fams;
   }
   const style = settings.guitarStyle;
   const hidden = inst === 'bass' ? hiddenBassLevels(settings.bassTuning) : [];
@@ -166,7 +169,7 @@ export function currentLevel(fam: FamilyDef, items: Record<string, ItemState>, o
 }
 
 /** Families the player has started (any take) — Today prefers them; new players get scales + fingers (+ harris for jazz). */
-export function activeFamilies(settings: DrillSettings & { bassTuning?: string; drumMic?: boolean }, items: Record<string, ItemState>, start: Partial<Record<FamilyId, number>> = {}): FamilyDef[] {
+export function activeFamilies(settings: DrillSettings & { bassTuning?: string; drumMic?: DrumMic }, items: Record<string, ItemState>, start: Partial<Record<FamilyId, number>> = {}): FamilyDef[] {
   const shown = shownFamilies(settings);
   const used = shown.filter((f) => Object.values(items).some((s) => s.family === f.id && s.takes > 0) || start[f.id] !== undefined);
   if (used.length) return used;
@@ -181,7 +184,7 @@ export function activeFamilies(settings: DrillSettings & { bassTuning?: string; 
 }
 
 /** Candidates for Today: the current level of each active family, plus the player's own drills (first 3 keys). */
-export function candidates(settings: DrillSettings & { bassTuning?: string; drumMic?: boolean }, items: Record<string, ItemState>, start: Partial<Record<FamilyId, number>> = {}, customs: CustomDrill[] = []): Drill[] {
+export function candidates(settings: DrillSettings & { bassTuning?: string; drumMic?: DrumMic }, items: Record<string, ItemState>, start: Partial<Record<FamilyId, number>> = {}, customs: CustomDrill[] = []): Drill[] {
   const out: Drill[] = [];
   for (const f of activeFamilies(settings, items, start)) out.push(...levelDrills(currentLevel(f, items, settings.keyOrder, start[f.id]), settings.keyOrder));
   // The player's own drills (drill creator), for this instrument and included in Today: their first 3 keys.
@@ -191,7 +194,7 @@ export function candidates(settings: DrillSettings & { bassTuning?: string; drum
 }
 
 /** Today's technique items (spec AI §9) for the hub, the workout block and the path's drill steps. */
-export function todayDrills(settings: DrillSettings & { bassTuning?: string; drumMic?: boolean }, items: Record<string, ItemState>, start: Partial<Record<FamilyId, number>> = {}, customs: CustomDrill[] = [], n = 5, now: number | string = Date.now()): TodayItem[] {
+export function todayDrills(settings: DrillSettings & { bassTuning?: string; drumMic?: DrumMic }, items: Record<string, ItemState>, start: Partial<Record<FamilyId, number>> = {}, customs: CustomDrill[] = [], n = 5, now: number | string = Date.now()): TodayItem[] {
   return todaysItems(items, candidates(settings, items, start, customs), n, now);
 }
 

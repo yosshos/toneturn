@@ -103,6 +103,8 @@ export interface SingOptions {
   fftSize?: number;
   /** Also compute the spectral centroid (Hz) per frame (bass plucking zone / slap advice). */
   centroid?: boolean;
+  /** Also compute octave band powers per frame (an acoustic drum kit: which drum was hit). */
+  bands?: boolean;
 }
 
 export type SingCaptureResult =

@@ -5,9 +5,10 @@ import type { SungFrame } from '../engine/sing';
 import { rms, spectralCentroid, yin } from '../engine/yin';
 import { openCapture, stopStream } from './mic';
 import { chromaFromSpectrum } from '../engine/chroma';
+import { bandPowersFromDb } from '../engine/drumAcoustic';
 
 export class BrowserPitchCapture implements PitchCapture {
-  async sing({ signal, maxMs = 4500, silenceMs = 4000, endSilenceMs, hopMs, onCapturing, onFrame, record, ignoreFirstMs = 0, chroma, minHz, fftSize, centroid }: SingOptions): Promise<SingCaptureResult> {
+  async sing({ signal, maxMs = 4500, silenceMs = 4000, endSilenceMs, hopMs, onCapturing, onFrame, record, ignoreFirstMs = 0, chroma, minHz, fftSize, centroid, bands }: SingOptions): Promise<SingCaptureResult> {
     if (signal.aborted) return { kind: 'aborted' };
     const r = await openCapture({ echoCancellation: false, noiseSuppression: false, autoGainControl: false });
     if (!r.ok) return { kind: 'error', error: r.error };
@@ -32,6 +33,14 @@ export class BrowserPitchCapture implements PitchCapture {
       src.connect(anC);
     }
     const spec = anC ? new Float32Array(anC.frequencyBinCount) : null;
+    // Drum bands (an acoustic kit): a short analyser with no smoothing, so each frame shows only the newest ~43 ms.
+    const anB = bands ? ctx.createAnalyser() : null;
+    if (anB) {
+      anB.fftSize = 2048;
+      anB.smoothingTimeConstant = 0;
+      src.connect(anB);
+    }
+    const specB = anB ? new Float32Array(anB.frequencyBinCount) : null;
     const frames: SungFrame[] = [];
     const chunks: Blob[] = [];
     let rec: MediaRecorder | null = null;
@@ -75,6 +84,10 @@ export class BrowserPitchCapture implements PitchCapture {
           anC.getFloatFrequencyData(spec);
           if (chroma) f.chroma = chromaFromSpectrum(spec, ctx.sampleRate, anC.fftSize);
           if (centroid) f.centroid = spectralCentroid(spec, ctx.sampleRate, anC.fftSize) ?? undefined;
+        }
+        if (anB && specB && !quiet) {
+          anB.getFloatFrequencyData(specB);
+          f.bands = bandPowersFromDb(specB, ctx.sampleRate, anB.fftSize);
         }
         frames.push(f);
         onFrame?.(f);

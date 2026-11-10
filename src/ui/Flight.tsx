@@ -63,7 +63,7 @@ const midiOf = (hz: number) => 69 + 12 * Math.log2(hz / 440);
  * Keep listening (long capture windows) until aborted. In the simulator (?sim=1) frames follow `simTarget`.
  * Resolves with an error when the microphone cannot be opened.
  */
-export async function listenLoop(cap: PitchCapture, signal: AbortSignal, onFrame: (f: SungFrame) => void, simTarget?: () => number | null, opts: { chroma?: boolean; minHz?: number; fftSize?: number; centroid?: boolean } = {}): Promise<AccessError | null> {
+export async function listenLoop(cap: PitchCapture, signal: AbortSignal, onFrame: (f: SungFrame) => void, simTarget?: () => number | null, opts: { chroma?: boolean; minHz?: number; fftSize?: number; centroid?: boolean; bands?: boolean } = {}): Promise<AccessError | null> {
   if (SIMULATED) {
     let t = 0;
     await new Promise<void>((resolve) => {
@@ -80,7 +80,7 @@ export async function listenLoop(cap: PitchCapture, signal: AbortSignal, onFrame
     return null;
   }
   while (!signal.aborted) {
-    const r = await cap.sing({ signal, maxMs: 120_000, silenceMs: 120_000, endSilenceMs: 120_000, hopMs: 25, onFrame, chroma: opts.chroma, minHz: opts.minHz, fftSize: opts.fftSize, centroid: opts.centroid });
+    const r = await cap.sing({ signal, maxMs: 120_000, silenceMs: 120_000, endSilenceMs: 120_000, hopMs: 25, onFrame, chroma: opts.chroma, minHz: opts.minHz, fftSize: opts.fftSize, centroid: opts.centroid, bands: opts.bands });
     if (r.kind === 'error') return r.error;
     if (r.kind === 'aborted') return null;
   }

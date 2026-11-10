@@ -472,6 +472,8 @@ export interface DrumMetrics {
   gapMean: number | null;
   /** The rules missed (ids), for the "Why?" expander. */
   missed: string[];
+  /** Acoustic kit by microphone: share of the matched notes whose drum was not told apart (absent otherwise). */
+  unsure?: number;
 }
 
 /** Progress of one item (synced, small). */

@@ -251,7 +251,7 @@ describe('five stars on a drum level (0.64 scale)', () => {
 describe('drum placement probe (§5)', () => {
   const fams = FAMS.map((f) => ({ id: f.id, levels: f.levels.length }));
   it('runs the v1 steps (≈ 2.5 min); mic mode runs the snare steps with snare reading', () => {
-    expect(DRUM_PROBES.map((p) => p.slot)).toEqual(['pulse', 'hands', 'doubles', 'diddle', 'dynamics', 'groove', 'fill', 'read']);
+    expect(DRUM_PROBES.map((p) => p.slot)).toEqual(['pulse', 'hands', 'doubles', 'diddle', 'dynamics', 'groove', 'funk', 'shuffle', 'fill', 'read', 'feet']);
     const mic = drumProbes(true);
     expect(mic.map((p) => p.slot)).toEqual(['pulse', 'hands', 'doubles', 'diddle', 'dynamics', 'read']);
     expect(mic.every((p) => generate(p.spec).drum?.mic)).toBe(true);

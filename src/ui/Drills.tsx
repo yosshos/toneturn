@@ -33,7 +33,8 @@ import { midi } from '../speech/midi';
 import { inputLatency } from '../engine/latency';
 import { LatencyCalibrate } from './LatencyCalibrate';
 import { DrumScore, KitCard, KitSetup } from './DrumViews';
-import { drumProbes, placeDrums, type DrumProbeResult, type DrumSlot } from '../engine/drills/drums';
+import { drumMicOf, kitKind, type KitKind } from '../engine/drumKit';
+import { drumProbes, GROOVE_REACH, placeDrums, type DrumProbeResult, type DrumSlot } from '../engine/drills/drums';
 import { isDrumDrill } from '../engine/drills/events';
 
 type Lang = 'he' | 'en';
@@ -143,7 +144,7 @@ export interface DrillsProps {
   onPieces?: () => void;
 }
 
-type View = { k: 'test' } | { k: 'hub' } | { k: 'songs' } | { k: 'family'; f: FamilyDef } | { k: 'run'; queue: Drill[]; i: number; from: View } | { k: 'settings' } | { k: 'calib' } | { k: 'creator'; edit?: CustomDrill } | { k: 'kit'; then?: 'test' };
+type View = { k: 'test' } | { k: 'hub' } | { k: 'songs' } | { k: 'family'; f: FamilyDef } | { k: 'run'; queue: Drill[]; i: number; from: View } | { k: 'settings' } | { k: 'calib' } | { k: 'creator'; edit?: CustomDrill } | { k: 'kit'; then?: 'test'; start?: KitKind };
 
 export function Drills({ lang, settings, onSettings, items, onTake, onBack, queue, onQueueDone, startTest, onTestDone, songs, onSing, onVoice, onPieces }: DrillsProps) {
   const tx = T[lang];
@@ -228,6 +229,8 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
       <main className="drills-screen" data-drills="kit">
         {head(lang === 'he' ? 'הגדרת המערכת' : 'Set up your kit', () => setView({ k: 'hub' }))}
         <KitSetup
+          key={view.start ?? 'connect'}
+          start={view.start}
           lang={lang}
           kit={settings.drumKit}
           latency={settings}
@@ -300,7 +303,8 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
       onTest={() => setView(ds.instrument === 'drums' && !settings.drumKit?.done ? { k: 'kit' } : { k: 'test' })}
       onInstrument={(i) => setDs({ instrument: i })}
       onVoice={onVoice}
-      onKit={() => setView({ k: 'kit' })}
+      onKit={(start) => setView({ k: 'kit', start })}
+      onKitSave={(k) => onSettings({ drumKit: k })}
     />
   );
 }
@@ -340,12 +344,12 @@ const TOPIC_NAME: Record<DrillTopic, { en: string; he: string }> = {
 /** A topic's name; the drums course has no jazz under "styles" (DRUMS_AUDIT N1). */
 const topicName = (k: DrillTopic, drums: boolean): { en: string; he: string } => (drums && k === 'styles' ? { en: 'Styles', he: 'סגנונות' } : TOPIC_NAME[k]);
 
-function Hub({ lang, ds, settings, items, head, onFamily, onRun, onSettings, onCreate, onTest, onInstrument, onVoice, onKit }: { onKit?: () => void; onVoice?: () => void; lang: Lang; ds: DrillSettings; settings: Settings; items: Record<string, ItemState>; head: React.ReactNode; onFamily: (f: FamilyDef) => void; onRun: (q: Drill[]) => void; onSettings: () => void; onCreate: (edit?: CustomDrill) => void; onTest: () => void; onInstrument: (i: 'piano' | 'guitar' | 'bass' | 'drums') => void }) {
+function Hub({ lang, ds, settings, items, head, onFamily, onRun, onSettings, onCreate, onTest, onInstrument, onVoice, onKit, onKitSave }: { onKit?: (start?: KitKind) => void; onKitSave?: (k: NonNullable<Settings['drumKit']>) => void; onVoice?: () => void; lang: Lang; ds: DrillSettings; settings: Settings; items: Record<string, ItemState>; head: React.ReactNode; onFamily: (f: FamilyDef) => void; onRun: (q: Drill[]) => void; onSettings: () => void; onCreate: (edit?: CustomDrill) => void; onTest: () => void; onInstrument: (i: 'piano' | 'guitar' | 'bass' | 'drums') => void }) {
   const tx = T[lang];
   // N10: the bass tuning hides the low-B levels on a bass without a low B.
   const bassTuning = bassTuningOf(settings);
   const drums = ds.instrument === 'drums';
-  const drumMic = drums && !!settings.drumKit?.mic;
+  const drumMic = drums && drumMicOf(settings.drumKit);
   const today = useMemo(() => todayDrills({ ...ds, bassTuning, drumMic }, items, settings.drillStart ?? {}, settings.customDrills ?? []), [ds, bassTuning, drumMic, items, settings.drillStart, settings.customDrills]);
   const fams = shownFamilies({ ...ds, bassTuning, drumMic });
   const [topicRaw, setTopicState] = useState<DrillTopic>(() => {
@@ -417,7 +421,7 @@ function Hub({ lang, ds, settings, items, head, onFamily, onRun, onSettings, onC
       </div>
       )}
       {!midi.devices.length && (ds.instrument ?? 'piano') === 'piano' && <p className="field-hint">{tx.noMidi}</p>}
-      {drums && onKit && <KitCard kit={settings.drumKit} lang={lang} onSetup={onKit} />}
+      {drums && onKit && <KitCard kit={settings.drumKit} lang={lang} onSetup={onKit} onKit={onKitSave} />}
       {!settings.drillStart && !Object.keys(items).length && (
         <button className="btn primary" onClick={onTest} data-drills-test="1">
           {tx.test}
@@ -872,11 +876,13 @@ function TechLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, onOct
   // Drums (DRUMS_CURRICULUM §5): the adaptive probe — single takes, a staircase for the hands; a failed easy step
   // skips the harder ones of its family. Mic mode (a practice pad) runs the single-surface steps.
   const drumMic = inst === 'drums' && (!!kit?.mic || !midi.devices.length);
+  // An acoustic kit by microphone also runs the groove steps its microphone can measure.
+  const drumAcoustic = drumMic && kitKind(kit) === 'acoustic';
   const drumRes = useRef<Partial<Record<DrumSlot, DrumProbeResult>>>({});
   // Bass (B6, 0.64): measured tasks with the doc's decision rules (bassProbes.ts), some a single take.
   const bassRes = useRef<Partial<Record<NonNullable<ReturnType<typeof probeSlot>>, BassProbeResult>>>({});
   const probes = useMemo(() => {
-    if (inst === 'drums') return drumProbes(drumMic).map((p) => ({ id: p.slot as string, drill: generate(p.spec), seeds: [] as FamilyId[], once: p.mode === 'once', slot: null }));
+    if (inst === 'drums') return drumProbes(drumMic, drumAcoustic).map((p) => ({ id: p.slot as string, drill: generate(p.spec), seeds: [] as FamilyId[], once: p.mode === 'once', slot: null }));
     if (inst === 'bass') return BASS_PROBES.map((p) => ({ id: p.family, drill: generate(p.spec), seeds: p.seeds ?? [], once: p.mode === 'once', slot: probeSlot(p) }));
     if (inst !== 'piano') return GUITAR_PROBES.filter((p) => (p.instruments as string[]).includes(inst)).map((p) => ({ id: p.family, drill: generate(p.spec), seeds: p.seeds ?? [], once: false, slot: null }));
     const fams: FamilyId[] = ds.emphasis === 'jazz' ? ['scales', 'harris'] : ds.emphasis === 'classical' ? ['scales', 'fingers'] : ['scales', 'fingers', 'harris'];
@@ -884,7 +890,7 @@ function TechLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, onOct
       const f = shownFamilies({ emphasis: 'both' }).find((x) => x.id === id)!;
       return { id, drill: specDrills(f.levels[0], 0, ds.keyOrder).find((d) => d.spec.key === 0) ?? specDrills(f.levels[0], 0, ds.keyOrder)[0], seeds: [] as FamilyId[], once: false, slot: null };
     });
-  }, [ds.emphasis, ds.keyOrder, inst, drumMic]);
+  }, [ds.emphasis, ds.keyOrder, inst, drumMic, drumAcoustic]);
   const [p, setP] = useState(0);
   const [bpm, setBpm] = useState(() => probes[0].drill.startBpm);
   const [best, setBest] = useState<Record<string, number>>({});
@@ -949,7 +955,9 @@ function TechLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, onOct
     bisected.current = false;
     // Drums: hands never clean → skip the doubles and the paradiddle (harder steps of the same families).
     let q = p + 1;
-    while (inst === 'drums' && q < probes.length && !b.hands && (probes[q].id === 'doubles' || probes[q].id === 'diddle')) q++;
+    // Groove reach (funk, shuffle) only after the basic groove was clean or almost.
+    const skip = (id: string) => (!b.hands && (id === 'doubles' || id === 'diddle')) || (GROOVE_REACH.includes(id as DrumSlot) && (drumRes.current.groove?.verdict ?? 'not') === 'not');
+    while (inst === 'drums' && q < probes.length && skip(probes[q].id)) q++;
     if (q >= probes.length) return finish(b);
     setP(q);
     setBpm(probes[q].drill.startBpm);

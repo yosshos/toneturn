@@ -3,7 +3,13 @@
 
 import type { SungFrame } from '../engine/sing';
 import type { PitchCapture, SingCaptureResult, SingOptions } from '../game/adapters';
-import { DEFAULT_KIT, hatState, hatVoice, openness, voiceOf, type DrumVoice, type HatState, type KitProfile } from '../engine/drumKit';
+import { DEFAULT_KIT, hatState, hatVoice, openness, voiceOf, VOICE_NOTE, type DrumVoice, type HatState, type KitProfile } from '../engine/drumKit';
+
+/**
+ * The hi-hat foot from CC4 alone (DRUMS_CURRICULUM §3.3, DRUMS_AUDIT P1): kits that send no pedal note still close the
+ * pedal fast for a "chick" — openness from ≥ 0.35 to closed (< 0.2) within this many ms is a pedal hit.
+ */
+export const CHICK_MS = 150;
 
 type NoteListener = (midi: number, on: boolean, at: number, velocity: number) => void;
 /** Control change (CC64 sustain, CC67 soft…): controller number, value 0–127, timestamp. */
@@ -49,8 +55,13 @@ export class MidiInput {
   /** Latest CC4 value (drum mode), null until the kit sends one. */
   cc4: number | null = null;
   private lastHit: { note: number; vel: number; at: number } | null = null;
+  /** The pedal from CC4: when the hat was last open, whether the kit sends a pedal note itself, the last emitted chick. */
+  private pedal = { openAt: null as number | null, noteSeen: false, lastNote: -Infinity, lastChick: -Infinity };
   setOptions(o: Partial<MidiInput['opts']>) {
-    if (o.drums === false || (o.drums && !this.opts.drums)) this.cc4 = null;
+    if (o.drums === false || (o.drums && !this.opts.drums)) {
+      this.cc4 = null;
+      this.pedal = { openAt: null, noteSeen: false, lastNote: -Infinity, lastChick: -Infinity };
+    }
     this.opts = { ...this.opts, ...o };
     this.bind();
   }
@@ -128,6 +139,12 @@ export class MidiInput {
       if (!lh || v >= (lh.vel ?? 0) || Math.abs(at - lh.at) > 3) this.lastHit = { note, vel: v, at };
       const open = this.cc4 === null ? null : openness(this.cc4, this.opts.kit);
       const v0 = voiceOf(note, this.opts.kit);
+      if (v0 === 'hhPedal') {
+        // The kit sends its own pedal note: stop making chicks from CC4; drop the note that doubles one just made.
+        this.pedal.noteSeen = true;
+        this.pedal.lastNote = at;
+        if (at - this.pedal.lastChick <= 40) return;
+      }
       const voice = v0 ? hatVoice(v0, open) : null;
       const hit: DrumHitEvent = { note, voice, vel: v, at, open, hat: voice === 'hihat' || voice === 'hhOpen' ? (open === null ? (voice === 'hhOpen' ? 'open' : 'closed') : hatState(open)) : null };
       this.held.set(note, at);
@@ -137,11 +154,36 @@ export class MidiInput {
       // Kits send short or meaningless note-offs: they only clear the held set, never end a hit.
       if (this.held.delete(note)) this.listeners.forEach((l) => l(note, false, at, 0));
     } else if (cmd === 0xb0) {
-      if (note === 4) this.cc4 = v;
+      if (note === 4) {
+        this.pedalFromCc(v, at);
+        this.cc4 = v;
+      }
       this.ccListeners.forEach((l) => l(note, v, at));
     } else if (cmd === 0xa0) {
       this.chokeListeners.forEach((l) => l(note, v, at));
     }
+  }
+
+  /** A fast CC4 close is the hi-hat foot (note 44) on kits that send no pedal note. */
+  private pedalFromCc(v: number, at: number) {
+    const o = openness(v, this.opts.kit);
+    const was = this.cc4 === null ? null : openness(this.cc4, this.opts.kit);
+    if (o >= 0.35) {
+      this.pedal.openAt = at;
+      return;
+    }
+    const p = this.pedal;
+    if (o >= 0.2 || was === null || was < 0.2 || p.openAt === null || at - p.openAt > CHICK_MS) return;
+    const dt = at - p.openAt;
+    p.openAt = null;
+    if (p.noteSeen || at - p.lastNote <= 40) return;
+    p.lastChick = at;
+    // Faster closing = a firmer chick (velocity 40–110).
+    const vel = Math.round(110 - 70 * Math.max(0, Math.min(1, dt / CHICK_MS)));
+    const note = VOICE_NOTE.hhPedal;
+    const hit: DrumHitEvent = { note, voice: 'hhPedal', vel, at, open: o, hat: null };
+    this.listeners.forEach((l) => l(note, true, at, vel));
+    this.hitListeners.forEach((l) => l(hit));
   }
 
   private hitListeners = new Set<HitListener>();

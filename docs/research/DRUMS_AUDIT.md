@@ -142,9 +142,7 @@ How they are wired:
 - **Per-course level for drums.** `courseLevel` uses the shared `instrument` rating, so the drums pp…ff level (and
   what friends see) includes piano or guitar playing. Bass has the same problem. This is a shared-design fix: rate
   from the `instrument/drum-tech` sub, which needs a per-sub rating in `Ratings`.
-- **Hi-hat foot without note 44.** F13 L1–L2 need a pedal "chick" note. Most kits send GM 44, but a kit that reports
-  the pedal only as CC4 can't play these levels yet. `midi.ts` should emit `hhPedal` on a fast CC4 close, or the hub
-  should hide those levels when the kit map has no pedal.
+- ~~**Hi-hat foot without note 44.**~~ Done in §5 (a fast CC4 close is the chick).
 - **Calibrate the tier numbers with real drummers.** They are still §4.1 defaults: windows, SD, hit rate, ghost band
   ≤ soft × 1.1, accent ≥ loud × 0.9.
 
@@ -153,10 +151,8 @@ How they are wired:
 - **More ear-side content in the drums path.** Beat echo, the groove trainer, rhythm dictation, gap-click and
   backbeat topics live in Practice or in the ear course; courses are disjoint by design. A drums pack or a
   `forPlays: ['drums']` copy of a few time topics needs an owner decision on sharing.
-- **Placement probe steps 6 and 9.** These are "groove reach" (funk with ghosts, or swing + foot) and "feet". They
-  would place F6, F7, F8 and F13 instead of starting them at level 1.
-- **Dense rudiments on the staff.** Sextuplets and 16th triplets at 4 bars per screen are cramped; spacing is linear
-  in time. Spacing by note count, or one bar per line for those levels, would read better.
+- ~~**Placement probe steps 6 and 9.**~~ Done in §5.
+- ~~**Dense rudiments on the staff.**~~ Done in §5 (one bar a line).
 - **Shuffle notation.** Shuffles are written in triplets, which is correct. Many charts write swung 8ths with a
   "swing" marking; offering that option is a reading-style choice.
 - **Practice tile glyphs** are drawn white on the category colour, for all courses. The ink outline keeps them
@@ -173,3 +169,104 @@ How they are wired:
   15–40 ms grace, SD ≤ 8 ms.
 - **F4 L7–10:** slow time, pocket, click on 1, quintuplets.
 - **F5 L9–10, F9 L6–10, F14 L6–9:** play-alongs, set-ups, chart road maps.
+
+## 5. Compatibility, measurement and kit handling (2026-11-10)
+
+Tests: `tests/drumAcoustic.test.ts` (21, synthetic audio), `tests/drumCompat.test.ts` (15), four new cases in
+`e2e/drums.spec.ts` (10 pass on a separate port). `tests/drumKit.test.ts` and `tests/drums.test.ts` were updated for
+the CC4 chick and the new probe steps.
+
+### 5.1 The e-kit notice (owner)
+
+"The drums course works best with an electronic kit connected by MIDI; recommended for the full course and accurate
+assessment" (`drumKit.KIT_NOTICE`, he + en, no emoji) is shown:
+
+- on the course card: the onboarding course grid (once drums is picked) and the course switcher (short line, `CourseDef.note`);
+- on the kit card at the top of the drums Technique hub, and on the kit setup's first screen;
+- at the top of the drums path.
+
+On the kit card and the path it stays until an e-kit is set up; with a microphone setup it adds one line on what that
+setup covers.
+
+### 5.2 Kit type on the kit card
+
+Three setups: **E-kit (MIDI)**, **Acoustic kit** (microphone), **Practice pad** (microphone). `KitProfile.kind` holds
+the choice; old profiles keep working (`mic: true` = pad). `kitKind()` and `drumMicOf()` feed the level filters
+(`kitLevels` / `kitHiddenLevels` in `drumAcoustic.ts`), the path, the workout and the placement probe. An acoustic kit
+counts as acoustic only once calibrated (until then it is a pad).
+
+### 5.3 Acoustic kit by microphone (`src/engine/drumAcoustic.ts`)
+
+Best effort, and honest about it:
+
+- **Capture.** The mic capture can add 8 octave band powers per frame (40 Hz – 12 kHz) from a 2048-point analyser with
+  no smoothing (`SingOptions.bands`).
+- **Onsets.** The summed log rise over the bands against the middle of the last three frames, with each band's
+  20th-percentile floor, a 2 dB dead zone, and caps on the 1–3-bin low bands. A ringing band is compared with its newest
+  frame (so a hat 150 ms after a snare still shows). Re-arm hysteresis and a 35 ms refractory time. The feature is each
+  band's peak over three frames, minus the frames before.
+- **Calibration.** Kick, snare, a tom (can be skipped) and the closed hi-hat, 4 hits each, on the kit setup's last
+  step. The per-band median is the template. The step checks that ≥ 80 % of the calibration hits come out as the drum
+  asked for, and drops a tom that sounds like the snare (toms then count as the snare).
+- **Classification.** Non-negative least squares over the templates (every subset, at most four). It is
+  score-informed: only the drums the drill uses. The coefficient is the drum's strength, which gives the velocity. A
+  drum near the presence threshold, a residual > 35 %, or a snare/tom split makes the hit **unsure**.
+- **Analysis.** `analyzeDrumTake(…, { acoustic })` uses the classes kick / snare / tom / cymbal (hat = ride = crash):
+  - An unsure hit may match any note inside the window: its timing is measured, its drum is not. It is never a wrong drum.
+  - With > 20 % of matched notes unsure, the rule `unsure` fires and `DrillTake` drops the take: no pass, no fail, and
+    the player is told why and asked to move the mic or calibrate again.
+  - Ghost notes are judged against the same drum's other strokes in the take (≤ 44 % of their median).
+  - Hat openness and the hi-hat foot cannot be heard, so a level that needs them gets `unmeasurable` and never passes.
+- **Levels.** `ACOUSTIC_LEVELS`, besides every single-surface level:
+  - rock 1, 2, 4, 5, 7, 8;
+  - fills 1–3;
+  - funk 2–3 (the ghosts sit between the hat strokes);
+  - shuffle 1–3;
+  - independence 1–4;
+  - Middle-Eastern 1–4;
+  - feet 3.
+
+  Left out: open-hat levels (rock 3, 6, kit reading), ghosts under the hat (funk 4, the double shuffle) and the hi-hat
+  foot (feet 1–2). New families stay out until checked. A test checks every listed level against these rules.
+- **Probe.** On an acoustic kit the probe adds the groove steps it can measure (basic groove, funk, shuffle, fill).
+
+### 5.4 Hi-hat foot from CC4 (`midi.ts`)
+
+In drum mode, a CC4 close from ≥ 0.35 open to closed (< 0.2) within 150 ms emits an `hhPedal` hit on note 44. Faster
+closes give a firmer velocity. Once the kit sends its own pedal note, the CC4 chicks stop, and a pedal note within 40 ms
+of a chick is dropped, so one stroke never counts twice. The learned pedal range is used. F13 L1–2 now work on
+CC4-only kits.
+
+### 5.5 Drum sounds from the app
+
+On the kit card, for a ready e-kit: "The app plays the drum sounds" (default off), for pad controllers without a sound
+module. Each MIDI hit plays the recorded kit's piece (`VOICE_PERC` → `piano.liveDrum`) at +3 ms, the same lead as live
+keys. The kit preloads when the option is on; synthesized stand-ins play until it has loaded.
+
+### 5.6 Placement probe steps 6 and 9
+
+- **Step 6, groove reach:** funk with ghosts (F6 L2 at ♩85) and the shuffle (F7 L2 at ♩100). Both run only after the
+  basic groove was clean or almost. Clean places the family at L3, almost at L2.
+- **Step 9, feet:** the hi-hat foot on 2 and 4 under snare quarters (F13 L1 at ♩80). Clean places F13 at L2, or L3 when
+  the basic groove was also clean.
+- **F8 jazz:** placed at L2 when the shuffle and the feet steps were both clean. This applies only once the family
+  exists (`cap` ignores missing families).
+
+### 5.7 Dense rudiments on the staff
+
+`drumNotation.barsPerLine`: one bar per line when the hands' notes come faster than 16ths (16th triplets, sextuplets)
+or a bar holds more than 16 of them. The window still shows two lines, so the screen does not grow. Rolls L5 (the
+seven and the 16th-triplet four) now read clearly at 390 × 844 with overflow 0.
+
+### 5.8 Not verified / needs a real kit
+
+- **Acoustic classification on real drums.** It is tested only with synthetic drums (sine-sweep kick, tone + noise
+  snare, low tom, high-passed noise hat) at 32 kHz, with room noise.
+- **Thresholds to tune on real kits.** Onset threshold 1.25, presence 8 % / 0.005, residual 35 %, unsure share 20 %.
+  Also needs checking: room echo, phone mics with AGC that can't be turned off, and loud cymbal wash.
+- **Timing by microphone.** It is quantized to the 25 ms capture hop, the same as pad mode. The mic latency
+  calibration takes out the average lateness.
+- **The CC4 chick on real hardware.** The 150 ms / 0.35 thresholds are a guess; Roland and Yamaha send note 44 as
+  well, which is handled by the de-duplication.
+- **App drum sounds.** The latency of the app's drum sounds on Windows / Android output has not been measured.
+

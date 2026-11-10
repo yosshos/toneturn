@@ -103,3 +103,20 @@ export function restsOf(notes: StemIn[], from: number, to: number): { beat: numb
   }
   return out;
 }
+
+/**
+ * Bars per staff line (DRUMS_AUDIT P2, dense rudiments): two, but one when the hands' notes come faster than 16ths
+ * (16th triplets, sextuplets) or a bar holds more than 16 of them — at two bars a line those heads touch on a phone. The
+ * score window still shows two lines, so the screen does not grow (it pages through more lines instead).
+ */
+export function barsPerLine(notes: { beat: number; voice?: string }[], meter = 4): 1 | 2 {
+  const onsets = [...new Set(notes.filter((n) => n.voice !== 'kick' && n.voice !== 'hhPedal').map((n) => Math.round(n.beat * 1e4) / 1e4))].sort((a, b) => a - b);
+  const perBar = new Map<number, number>();
+  for (const b of onsets) {
+    const k = Math.floor(b / meter + EPS);
+    perBar.set(k, (perBar.get(k) ?? 0) + 1);
+  }
+  if ([...perBar.values()].some((n) => n > 16)) return 1;
+  for (let i = 1; i < onsets.length; i++) if (onsets[i] - onsets[i - 1] < 0.25 - EPS) return 1;
+  return 2;
+}

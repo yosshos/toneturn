@@ -10,6 +10,7 @@
 //   Start    — Find my level (stop any time) or start from the beginning.
 import { Toni } from './Toni';
 import { COURSES, courseOf, type CourseId } from '../engine/courses';
+import { KIT_NOTICE } from '../engine/drumKit';
 import { Glyph } from './Glyph';
 import { useEffect, useRef, useState } from 'react';
 import { intakeSettings, trackOf, type Intake, type Level4 } from '../engine/intake';
@@ -312,6 +313,12 @@ export function Onboarding({ lang, onDone, onSignIn }: { lang: Lang; onDone: (r:
               );
             })}
           </div>
+          {/* 0.66 (owner): a course's need, shown once it is picked (drums: an e-kit by MIDI is recommended). */}
+          {COURSES.filter((c) => c.note && picked.includes(c.id)).map((c) => (
+            <p key={c.id} className="kit-notice ob-course-note" data-course-note={c.id}>
+              <b>{c.id === 'drums' ? KIT_NOTICE[lang] : c.note![lang]}</b>
+            </p>
+          ))}
           <button className="btn primary ob-next" disabled={!picked.length} onClick={next} data-ob="courses-next">
             {lang === 'he' ? 'המשך' : 'Continue'}
           </button>

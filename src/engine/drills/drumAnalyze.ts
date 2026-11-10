@@ -14,7 +14,12 @@ export interface DrumTakeHit {
   vel: number;
   open?: number | null;
   hat?: HatState | null;
+  /** Acoustic kit by microphone: the drum was not told apart with confidence (drumAcoustic.ts). */
+  unsure?: boolean;
 }
+
+/** Above this share of matched notes heard only as "unsure", an acoustic take is not counted (neither pass nor fail). */
+export const MAX_UNSURE = 0.2;
 
 /** The tier thresholds (§4.1 ⚙ defaults, to calibrate with drummers). */
 export const DRUM_TIERS: Record<1 | 2 | 3, { window: number; hit: number; sd: number; mean: number; wrong: number }> = {
@@ -65,29 +70,38 @@ const silentBar = (drill: Drill, beat: number): boolean => {
 
 const LIMBS: Limb[] = ['RH', 'LH', 'RF', 'LF'];
 
-export function analyzeDrumTake(drill: Drill, bpm: number, hits0: DrumTakeHit[], opts: { kit?: KitProfile; mic?: boolean } = {}): TakeMetrics {
-  const mic = !!opts.mic;
+export function analyzeDrumTake(drill: Drill, bpm: number, hits0: DrumTakeHit[], opts: { kit?: KitProfile; mic?: boolean; acoustic?: { toms: boolean } } = {}): TakeMetrics {
+  // An acoustic kit by microphone: drums told apart by their sound (classes kick / snare / tom / cymbal), not one surface.
+  const ac = opts.acoustic ?? null;
+  const mic = !!opts.mic && !ac;
+  const noMidi = mic || !!ac;
   const tier = drill.drum?.tier ?? 1;
   const T = DRUM_TIERS[tier];
   const W = drumWindow(drill, bpm);
   const exp = drill.notes.map((n) => ({ n, t: expTimeMs(drill, n.beat, bpm) }));
   const hits = [...hits0].filter((h) => Number.isFinite(h.on)).sort((a, b) => a.on - b.on);
-  // In mic mode every hit is the one surface: match by time only.
-  const cls = (v: DrumVoice | null | undefined) => (mic ? 'snare' : v ? classOf(v) : null);
+  // In mic mode every hit is the one surface: match by time only. Acoustic: hat, ride and crash are one cymbal class;
+  // without a calibrated tom the toms count as the snare.
+  const acCls = (v: DrumVoice): string => {
+    const c = classOf(v);
+    return c === 'hat' || c === 'ride' || c === 'crash' ? 'cym' : c === 'tom' && !ac!.toms ? 'snare' : c;
+  };
+  const cls = (v: DrumVoice | null | undefined) => (mic ? 'snare' : !v ? null : ac ? acCls(v) : classOf(v));
   const ts = [...new Set(exp.map((e) => Math.round(e.t)))].sort((a, b) => a - b);
   const gaps = ts.slice(1).map((x, i) => x - ts[i]).filter((g) => g > 1);
   const minIoi = gaps.length ? Math.min(...gaps) : 1000;
   const S = Math.max(W * 1.6, Math.min(0.48 * minIoi, 120));
 
-  // Greedy nearest matching, by voice class.
-  const pairs: { i: number; j: number; d: number }[] = [];
+  // Greedy nearest matching, by voice class. An unsure hit (acoustic) may stand for any drum inside the window: its
+  // timing is measured, its drum is not (counted below, never as a wrong drum); sure hits are preferred.
+  const pairs: { i: number; j: number; d: number; k: number }[] = [];
   exp.forEach((e, i) =>
     hits.forEach((h, j) => {
       const d = Math.abs(h.on - e.t);
-      if (d <= S && cls(h.voice) === cls(e.n.voice)) pairs.push({ i, j, d });
+      if (h.unsure && ac ? d <= W : d <= S && cls(h.voice) === cls(e.n.voice)) pairs.push({ i, j, d, k: h.unsure && ac ? d + W : d });
     }),
   );
-  pairs.sort((a, b) => a.d - b.d);
+  pairs.sort((a, b) => a.k - b.k);
   const mExp = new Map<number, number>();
   const usedHit = new Set<number>();
   for (const p of pairs) {
@@ -103,7 +117,7 @@ export function analyzeDrumTake(drill: Drill, bpm: number, hits0: DrumTakeHit[],
     let best = -1;
     let bd = Infinity;
     hits.forEach((h, j) => {
-      if (usedHit.has(j)) return;
+      if (usedHit.has(j) || h.unsure) return;
       const d = Math.abs(h.on - e.t);
       if (d <= W && d < bd) {
         best = j;
@@ -117,15 +131,18 @@ export function analyzeDrumTake(drill: Drill, bpm: number, hits0: DrumTakeHit[],
     }
   });
   // A tom for another tom (same class) is also the wrong voice.
-  for (const [i, j] of mExp) if (!mic && exp[i].n.voice && hits[j].voice && classOf(exp[i].n.voice!) === 'tom' && hits[j].voice !== exp[i].n.voice) wrong++;
-  const extra = hits.length - usedHit.size;
+  for (const [i, j] of mExp) if (!noMidi && exp[i].n.voice && hits[j].voice && classOf(exp[i].n.voice!) === 'tom' && hits[j].voice !== exp[i].n.voice) wrong++;
+  const extra = hits.filter((h, j) => !usedHit.has(j) && !h.unsure).length;
+  // Acoustic: the share of matched notes whose drum was not told apart.
+  const unsureN = ac ? [...mExp.values()].filter((j) => hits[j].unsure).length : 0;
+  const unsure = ac ? (mExp.size ? unsureN / mExp.size : hits.length ? 1 : 0) : null;
 
   const perNote: NoteResult[] = exp.map((e, i) => {
     const j = mExp.get(i) ?? wrongAt.get(i);
     const h = j === undefined ? null : hits[j];
     const played: PlayedNote | null = h ? { pitch: h.voice ? VOICE_NOTE[h.voice] : e.n.pitch, on: h.on, off: null, vel: h.vel } : null;
     const dev = h ? h.on - e.t : null;
-    const sameVoice = mExp.has(i) && (mic || !h?.voice || classOf(h.voice) !== 'tom' || h.voice === e.n.voice);
+    const sameVoice = mExp.has(i) && (noMidi || !h?.voice || classOf(h.voice) !== 'tom' || h.voice === e.n.voice);
     return { exp: e.n, played, dev, ok: !!h && mExp.has(i) && sameVoice && Math.abs(dev!) <= W };
   });
   const matched = perNote.map((r, i) => ({ r, i })).filter(({ i }) => mExp.has(i));
@@ -160,9 +177,16 @@ export function analyzeDrumTake(drill: Drill, bpm: number, hits0: DrumTakeHit[],
 
   // Velocity (MIDI, or mic peaks mapped to 1–127). A mic take without a level spread has no velocity data.
   const vels = matched.map(({ r }) => r.played!.vel);
-  const velData = vels.length >= 3 && (!mic || vels.some((v) => v !== vels[0]));
+  const velData = vels.length >= 3 && (!noMidi || vels.some((v) => v !== vels[0]));
   const goal = drill.goal.drum ?? {};
-  const rng = (i: number) => velRange(opts.kit, exp[i].n.voice ?? 'snare');
+  // Acoustic: no soft / loud calibration per drum — ghosts are judged against the same drum's other strokes in the take
+  // (a ghost ≤ 44 % of their median strength, about −7 dB).
+  const relRange = (v: DrumVoice): { soft: number; loud: number } | null => {
+    const vs = matched.filter(({ i }) => !exp[i].n.ghost && exp[i].n.voice && acCls(exp[i].n.voice!) === acCls(v)).map(({ r }) => r.played!.vel);
+    const m = median(vs);
+    return m === null || vs.length < 2 ? null : { soft: 0.4 * m, loud: m };
+  };
+  const rng = (i: number) => (ac ? relRange(exp[i].n.voice ?? 'snare') ?? velRange(opts.kit, exp[i].n.voice ?? 'snare') : velRange(opts.kit, exp[i].n.voice ?? 'snare'));
   const accV = matched.filter(({ i }) => exp[i].n.accent).map(({ r }) => r.played!.vel);
   const tapV = matched.filter(({ i }) => !exp[i].n.accent && !exp[i].n.ghost).map(({ r }) => r.played!.vel);
   const range0 = velRange(opts.kit, drill.notes[0]?.voice ?? 'snare');
@@ -200,8 +224,8 @@ export function analyzeDrumTake(drill: Drill, bpm: number, hits0: DrumTakeHit[],
   const isOpen = (j: number) => hits[j].voice === 'hhOpen' || hits[j].hat === 'open' || hits[j].hat === 'half';
   const openSteps = hatIdx.filter((i) => exp[i].n.voice === 'hhOpen');
   const closedSteps = hatIdx.filter((i) => exp[i].n.voice === 'hihat');
-  const hatOpen = !mic && openSteps.length ? openSteps.filter((i) => mExp.has(i) && isOpen(mExp.get(i)!)).length / openSteps.length : null;
-  const hatClosed = !mic && openSteps.length && closedSteps.length ? closedSteps.filter((i) => mExp.has(i) && !(hits[mExp.get(i)!].voice === 'hhOpen' || hits[mExp.get(i)!].hat === 'open')).length / Math.max(1, closedSteps.filter((i) => mExp.has(i)).length) : null;
+  const hatOpen = !noMidi && openSteps.length ? openSteps.filter((i) => mExp.has(i) && isOpen(mExp.get(i)!)).length / openSteps.length : null;
+  const hatClosed = !noMidi && openSteps.length && closedSteps.length ? closedSteps.filter((i) => mExp.has(i) && !(hits[mExp.get(i)!].voice === 'hhOpen' || hits[mExp.get(i)!].hat === 'open')).length / Math.max(1, closedSteps.filter((i) => mExp.has(i)).length) : null;
   // Landing on 1 after fills: the crash and the kick on that beat (mean offset), null when either is missing.
   const landing = (goal.landing?.beats ?? []).map((b) => {
     const at = exp.map((_, i) => i).filter((i) => Math.abs(exp[i].n.beat - b) < 1e-6 && (exp[i].n.voice === 'crash' || exp[i].n.voice === 'kick'));
@@ -228,6 +252,10 @@ export function analyzeDrumTake(drill: Drill, bpm: number, hits0: DrumTakeHit[],
   // every peak the same) — it used to skip those rules and pass on timing alone.
   const velGoal = [goal.velCv, goal.balance, goal.levels, goal.accentGap, goal.tapCv, goal.accentPos, goal.ghost, goal.ratio].some((x) => x !== undefined);
   if (velGoal && !velData && hits.length) rules.push({ id: 'noVel', amt: 9 });
+  // Without MIDI the hi-hat's openness and the hi-hat foot are not heard: such a level never passes by microphone.
+  if (ac && (goal.hat || exp.some((e) => e.n.voice === 'hhPedal'))) rules.push({ id: 'unmeasurable', amt: 9 });
+  // Acoustic: too many drums not told apart — the take is not counted (DrillTake drops it; rule kept for the record).
+  if (unsure !== null && unsure > MAX_UNSURE && hits.length) rules.push({ id: 'unsure', amt: 99 });
   if (goal.velCv !== undefined) max('velCv', velCv, goal.velCv);
   if (goal.balance !== undefined) max('balance', balance, goal.balance);
   if (goal.levels !== undefined) min('levels', levels, goal.levels);
@@ -245,7 +273,7 @@ export function analyzeDrumTake(drill: Drill, bpm: number, hits0: DrumTakeHit[],
   const missed = rules.filter((r) => r.amt > 0);
   const verdict: Verdict = !hits.length ? 'not' : !missed.length ? 'clean' : missed.length === 1 && missed[0].amt < 0.25 ? 'almost' : 'not';
 
-  const dm: DrumMetrics = { limbs, voices, hitRate, wrongVoice: wrong / nExp, extra, windowMs: Math.round(W), velCv, balance, levels, accentGap, tapCv, accentPos, ghost, ratio, hatOpen, hatClosed, landing, gapMean, missed: missed.sort((a, b) => b.amt - a.amt).map((r) => r.id) };
+  const dm: DrumMetrics = { limbs, voices, hitRate, wrongVoice: wrong / nExp, extra, windowMs: Math.round(W), velCv, balance, levels, accentGap, tapCv, accentPos, ghost, ratio, hatOpen, hatClosed, landing, gapMean, missed: missed.sort((a, b) => b.amt - a.amt).map((r) => r.id), ...(unsure !== null ? { unsure } : {}) };
   return {
     bpm,
     nps: npsOf(drill, bpm),
@@ -307,6 +335,12 @@ export function drumWhy(d: DrumMetrics, v: Verdict): { en: string; he: string } 
     }
     case 'sd':
       return limb ? { en: `${LIMB_NAME[limb.limb].en} uneven (±${Math.round(limb.sd ?? 0)} ms).`, he: `${LIMB_NAME[limb.limb].he} לא אחידה (±${Math.round(limb.sd ?? 0)} מ״ש).` } : { en: 'Uneven timing.', he: 'תזמון לא אחיד.' };
+    case 'unsure': {
+      const p = Math.round((d.unsure ?? 1) * 100);
+      return { en: `Drums not told apart on ${p} % of the hits — not counted.`, he: `לא זוהה איזה תוף ב-${p}% מהמכות — לא נספר.` };
+    }
+    case 'unmeasurable':
+      return { en: 'The hi-hat pedal is not heard by microphone — this one needs an e-kit.', he: 'פדל ההיי־האט לא נשמע במיקרופון — כאן צריך תופים אלקטרוניים.' };
     case 'noVel':
       return { en: 'No loudness measured — raise the mic level.', he: 'לא נמדדה עוצמה — הגבירו את המיקרופון.' };
     case 'velCv':
