@@ -100,7 +100,7 @@ export function browserFilesDeps(base: string, webAudio: () => { ctx: AudioConte
     if (!g) throw new Error('no audio');
     if (g.ctx.state !== 'running') {
       await Promise.race([g.ctx.resume().catch(() => {}), new Promise((r) => setTimeout(r, 300))]);
-      if (g.ctx.state !== 'running') throw new Error('audio locked'); // never wait on a line that can't sound
+      if ((g.ctx.state as string) !== 'running') throw new Error('audio locked'); // never wait on a line that can't sound
     }
     const buf = await g.ctx.decodeAudioData(await (await fetch(url)).arrayBuffer());
     if (signal.aborted) throw new Cancelled();
