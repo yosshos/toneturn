@@ -461,6 +461,36 @@ export const GLYPHS: Record<string, ReactNode> = {
       pizz.
     </text>
   ),
+  /** Bass interval shapes: the octave shape — two strings up, two frets up — joined. */
+  octave: (
+    <>
+      <g {...sw} strokeWidth={2.2}>
+        <path d="M-26 -14H26M-26 -5H26M-26 4H26M-26 13H26" />
+      </g>
+      <path d="M-10 13 L10 -5" {...sw} strokeWidth={3.4} />
+      <circle cx={-10} cy={13} r={5.2} fill={I} />
+      <circle cx={10} cy={-5} r={5.2} fill={I} />
+    </>
+  ),
+  /** Reading in positions: a position number over a bracket of four frets. */
+  position: (
+    <>
+      <text x={0} y={2} textAnchor="middle" fontFamily="Georgia, 'Times New Roman', serif" fontWeight={700} fontSize={20} fill={I} direction="ltr">
+        V
+      </text>
+      <path d="M-18 8V14H18V8" {...sw} strokeWidth={2.6} strokeLinejoin="round" />
+      <path d="M-6 14V9M6 14V9" {...sw} strokeWidth={2} />
+    </>
+  ),
+  /** Target notes: a fill that lands on the target. */
+  target: (
+    <>
+      <circle cx={10} cy={2} r={14} {...sw} strokeWidth={2.6} />
+      <circle cx={10} cy={2} r={6.5} {...sw} strokeWidth={2.6} />
+      <circle cx={10} cy={2} r={2.6} fill={I} />
+      <path d="M-26 -16 Q-14 -18 -8 -8 T4 0" {...sw} strokeWidth={2.8} />
+    </>
+  ),
 };
 export type GlyphKind = keyof typeof GLYPHS;
 

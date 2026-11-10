@@ -629,6 +629,122 @@ export const LESSONS: MiniLesson[] = [
   },
 ];
 
+
+// 0.66: the bass's own interval shapes and scale boxes (topics bass-intervals, bass-scales).
+LESSONS.push(
+  {
+    id: 'bass-intervals',
+    area: 'play',
+    emoji: '𝄢',
+    title: { en: 'Bass interval shapes', he: 'צורות מרווחים בבס' },
+    takeaway: { en: 'The bass is tuned in fourths, so each interval is one shape on every pair of strings.', he: 'הבס מכוון בקוורטות, ולכן כל מרווח הוא צורה אחת על כל זוג מיתרים.' },
+    steps: [
+      {
+        say: { en: 'Hi {name}! Every bass string is a fourth above the one below it. So a shape you learn once works on every pair of strings.', he: 'היי {name}! כל מיתר בבס גבוה בקוורטה מהמיתר שמתחתיו. לכן צורה שלומדים פעם אחת עובדת על כל זוג מיתרים.' },
+        play: [notes([28, 33, 38, 43], 0.6)],
+        show: { text: { en: 'E A D G: fourths', he: 'E A D G: קוורטות' } },
+      },
+      {
+        say: { en: 'The octave: two strings up and two frets up. G on the E string at fret 3, and G on the D string at fret 5.', he: 'האוקטבה: שני מיתרים למעלה ושני סריגים קדימה. G על מיתר E בסריג 3, ו־G על מיתר D בסריג 5.' },
+        play: [notes([31, 43], 0.7)],
+        show: { text: { en: 'octave: +2 strings, +2 frets', he: 'אוקטבה: ‎+2 מיתרים, ‎+2 סריגים' } },
+      },
+      {
+        say: { en: 'One string up: the same fret is a fourth, two frets up is a fifth.', he: 'מיתר אחד למעלה: אותו סריג הוא קוורטה, שני סריגים קדימה הם קווינטה.' },
+        play: [notes([31, 36], 0.5), rest(0.2), notes([31, 38], 0.5)],
+        show: { text: { en: '4th = same fret · 5th = +2', he: 'קוורטה = אותו סריג · קווינטה = ‎+2' } },
+      },
+      {
+        say: { en: 'Thirds sit one string up and back toward the nut: one fret back for a major third, two frets back for a minor third.', he: 'טרצות יושבות מיתר אחד למעלה ואחורה לכיוון האוכף: סריג אחד אחורה לטרצה גדולה, שניים לטרצה קטנה.' },
+        play: [notes([31, 35], 0.5), rest(0.2), notes([31, 34], 0.5)],
+        show: { text: { en: 'major 3rd = −1 · minor 3rd = −2', he: 'טרצה גדולה = ‎−1 · טרצה קטנה = ‎−2' } },
+      },
+      {
+        say: { en: 'Your turn: I give you a dot on the neck and an interval, and you tap where it lands. Say the interval as you find it.', he: 'תורכם: אני נותן נקודה על הצוואר ומרווח, ואתם מקישים איפה הוא נוחת. אמרו את המרווח כשאתם מוצאים אותו.' },
+      },
+    ],
+    more: [
+      {
+        say: { en: 'Small intervals stay on one string: a half step is the next fret, a whole step is two frets.', he: 'מרווחים קטנים נשארים על מיתר אחד: חצי טון הוא הסריג הבא, טון שלם הוא שני סריגים.' },
+        play: [notes([33, 34, 36], 0.5)],
+      },
+      {
+        say: { en: 'Sixths and sevenths sit one string up and further toward the body: a major sixth four frets up, a minor seventh five, a major seventh six.', he: 'סקסטות וספטימות יושבות מיתר אחד למעלה ורחוק יותר לכיוון הגוף: סקסטה גדולה ארבעה סריגים קדימה, ספטימה קטנה חמישה, ספטימה גדולה שישה.' },
+        play: [notes([31, 40], 0.5), rest(0.2), notes([31, 41], 0.5)],
+      },
+      {
+        say: { en: 'The tenth is a bassist’s favourite: from the E string to the G string, the same fret gives a minor tenth and one fret up a major tenth.', he: 'הדצימה אהובה על בסיסטים: ממיתר E למיתר G, אותו סריג נותן דצימה קטנה וסריג אחד קדימה דצימה גדולה.' },
+        play: [notes([31, 47], 0.7)],
+        show: { text: { en: 'G → B: major 10th', he: 'G ← B: דצימה גדולה' } },
+      },
+      {
+        say: { en: 'On a guitar the G and B strings break the pattern and every shape shifts there. On the bass nothing breaks it: there is no shift to remember.', he: 'בגיטרה המיתרים G ו־B שוברים את הדפוס וכל צורה זזה שם. בבס שום דבר לא שובר אותו: אין הזזה לזכור.' },
+      },
+      {
+        say: { en: 'The usual mistake is counting frets one by one. Look at the shape instead: the hand learns the distance, and the ear checks it.', he: 'הטעות הנפוצה היא לספור סריגים אחד אחד. מסתכלים על הצורה במקום: היד לומדת את המרחק, והאוזן בודקת אותו.' },
+      },
+      {
+        say: { en: 'To keep: octave two over and two up, fifth one over and two up, fourth straight across. Practise them from every root on the E and A strings.', he: 'מה לזכור: אוקטבה שניים מעל ושניים קדימה, קווינטה אחד מעל ושניים קדימה, קוורטה ישר מעל. תרגלו אותן מכל שורש על מיתרי E ו־A.' },
+        show: { text: { en: '8 · 5 · 4', he: '8 · 5 · 4' } },
+      },
+    ],
+  },
+  {
+    id: 'bass-scales',
+    area: 'play',
+    emoji: '𝄢',
+    title: { en: 'Scale boxes on the bass', he: 'בוקסים של סולמות בבס' },
+    takeaway: { en: 'One finger per fret, four frets: the major scale and each pentatonic box fit under one hand.', he: 'אצבע לכל סריג, ארבעה סריגים: הסולם המז׳ורי וכל בוקס פנטטוני נכנסים מתחת ליד אחת.' },
+    steps: [
+      {
+        say: { en: 'Hi {name}! Put your second finger on the root, on the E or the A string. With one finger per fret, the whole major scale is under your hand.', he: 'היי {name}! שימו את האצבע השנייה על השורש, על מיתר E או A. באצבע לכל סריג, כל הסולם המז׳ורי מתחת ליד.' },
+        play: [notes([31, 33, 35, 36, 38, 40, 42, 43], 0.35)],
+        show: { text: { en: 'G major from fret 3', he: 'G מז׳ור מסריג 3' } },
+      },
+      {
+        say: { en: 'The fingering is the same in every key: two notes on the root string, then three, then three. Move the hand and the key moves with it.', he: 'האצבוע זהה בכל סולם: שני צלילים על מיתר השורש, אחר כך שלושה, ועוד שלושה. מזיזים את היד והסולם זז איתה.' },
+        play: [notes([33, 35, 37, 38, 40, 42, 44, 45], 0.35)],
+        show: { text: { en: '2 4 · 1 2 4 · 1 3 4', he: '2 4 · 1 2 4 · 1 3 4' } },
+      },
+      {
+        say: { en: 'The minor pentatonic, box 1: the root under your first finger, two notes on each string. Most bass fills live in this box.', he: 'הפנטטונית המינורית, בוקס 1: השורש מתחת לאצבע הראשונה, שני צלילים על כל מיתר. רוב המילויים בבס גרים בבוקס הזה.' },
+        play: [notes([33, 36, 38, 40, 43, 45], 0.35)],
+        show: { text: { en: 'A C D E G A', he: 'A C D E G A' } },
+      },
+      {
+        say: { en: 'There are five boxes. Each one starts on the next note of the scale on the E string, and they link up the neck.', he: 'יש חמישה בוקסים. כל אחד מתחיל בצליל הבא של הסולם על מיתר E, והם מתחברים לאורך הצוואר.' },
+        play: [notes([36, 38, 40, 43, 45, 48], 0.35)],
+      },
+      {
+        say: { en: 'Your turn: play the scales from the root I show you, then look at a box and name it.', he: 'תורכם: נגנו את הסולמות מהשורש שאני מראה, ואז הסתכלו על בוקס ותנו לו שם.' },
+      },
+    ],
+    more: [
+      {
+        say: { en: 'On a bass, a box keeps its shape on every pair of strings, because all the strings are a fourth apart.', he: 'בבס, בוקס שומר על הצורה שלו על כל זוג מיתרים, כי כל המיתרים רחוקים קוורטה זה מזה.' },
+      },
+      {
+        say: { en: 'A fill is three or four notes from the box that lead into the next chord. Fall from above into its root, or into its third.', he: 'מילוי הוא שלושה או ארבעה צלילים מהבוקס שמובילים לאקורד הבא. נופלים מלמעלה אל השורש שלו, או אל הטרצה שלו.' },
+        play: [notes([43, 40, 38, 36, 33], 0.3)],
+      },
+      {
+        say: { en: 'The same box serves a major key too: A minor pentatonic and C major pentatonic have the same five notes. Over a C chord, aim for C, E and G inside it.', he: 'אותו בוקס משרת גם סולם מז׳ורי: לפנטטונית של A מינור ולפנטטונית של C מז׳ור יש אותם חמישה צלילים. מעל אקורד C, מכוונים ל־C, ‏E ו־G שבתוכו.' },
+        play: [notes([36, 38, 40, 43, 45], 0.3)],
+      },
+      {
+        say: { en: 'The usual mistake is playing the box only up and down. Play it in small groups, skip notes, and always say where the root is.', he: 'הטעות הנפוצה היא לנגן את הבוקס רק למעלה ולמטה. נגנו אותו בקבוצות קטנות, דלגו על צלילים, ותמיד דעו איפה השורש.' },
+      },
+      {
+        say: { en: 'On a six-string bass, three notes per string run a scale across the neck without moving the hand. That has its own technique level.', he: 'בבס של שישה מיתרים, שלושה צלילים בכל מיתר מריצים סולם לרוחב הצוואר בלי להזיז את היד. יש לזה שלב טכניקה משלו.' },
+      },
+      {
+        say: { en: 'To keep: one finger per fret, the root under finger two for the major scale and under finger one for the pentatonic box. Five slow minutes a day are enough.', he: 'מה לזכור: אצבע לכל סריג, השורש מתחת לאצבע שתיים בסולם המז׳ורי ומתחת לאצבע אחת בבוקס הפנטטוני. חמש דקות איטיות ביום מספיקות.' },
+        show: { text: { en: 'major: 2 · penta: 1', he: 'מז׳ור: 2 · פנטטוני: 1' } },
+      },
+    ],
+  },
+);
+
 /** Unit id ("topic:<id>") → mini-lesson id. */
 export const UNITS: Record<string, string> = {
   'topic:play-back': 'play-back',
@@ -639,5 +755,7 @@ export const UNITS: Record<string, string> = {
   'topic:fret-scales': 'fret-scales',
   'topic:bass-notes': 'bass-notes',
   'topic:bass-shapes': 'bass-shapes',
+  'topic:bass-intervals': 'bass-intervals',
+  'topic:bass-scales': 'bass-scales',
   'topic:key-notes': 'key-notes',
 };

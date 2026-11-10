@@ -635,6 +635,9 @@ export function analyzeGuitarTake(drill: Drill, bpm: number, played: PlayedNote[
         en: w && at ? `${Math.round(R.validShare * 100)}% of the notes fit — ${at.en}: ${nm(w.slot).en} doesn't fit ${w.chord}` : `${Math.round(R.validShare * 100)}% of the notes fit the chords`,
         he: w && at ? `${Math.round(R.validShare * 100)}% מהצלילים מתאימים — ${at.he}: ${nm(w.slot).he} לא מתאים ל־${w.chord}` : `${Math.round(R.validShare * 100)}% מהצלילים מתאימים לאקורדים`,
       });
+    // Target notes (0.66): each chord change lands on its target (the root, the 3rd, a guide tone …).
+    if (R.kind === 'target' && R.beat1Ct < 0.9)
+      factors.push({ verdict: R.beat1Ct < 0.75 ? 'not' : 'almost', en: `Landed on the target on ${Math.round(R.beat1Ct * 100)}% of the chord changes (90% needed)`, he: `נחיתה על צליל המטרה ב-${Math.round(R.beat1Ct * 100)}% מחילופי האקורדים (צריך 90%)` });
     if (R.kind === 'walk' && R.beat1Ct < 0.9)
       factors.push({ verdict: R.beat1Ct < 0.75 ? 'not' : 'almost', en: `A chord tone on ${Math.round(R.beat1Ct * 100)}% of the chord changes (90% needed)`, he: `צליל אקורד ב-${Math.round(R.beat1Ct * 100)}% מחילופי האקורדים (צריך 90%)` });
     // N6: a free walking line needs variety — roots in alternating octaves are chord tones and never repeat exactly.

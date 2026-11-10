@@ -12,7 +12,7 @@ const EXEMPT = new Set(['time-signatures', 'voice-leading', 'tempo', 'bh-keys',
   // 0.38: motor drills (repetition is the training; there is no answer to remember) …
   'click-subdivide', 'click-backbeat', 'gap-click', 'tempo-memory', 'poly-tap', 'drum-read', 'sight-tap',
   // … finite instrument geography (7 white keys, 12 frets a string) and fixed reference bands by design.
-  'fret-notes', 'string-notes', 'fret-chords', 'fret-scales', 'key-notes', 'tone-hz', 'bass-notes', 'bass-shapes',
+  'fret-notes', 'string-notes', 'fret-chords', 'fret-scales', 'key-notes', 'tone-hz', 'bass-notes', 'bass-shapes', 'bass-intervals', 'bass-scales',
   // 0.50.1: swing on drums — a few swing ratios × tempi; the melody that used to vary it is gone on purpose.
   'swing-ratio']);
 /** Single levels: tapping the Middle-Eastern cycles (a drill), and "what made it sadder" (4 fixed changes × the music). */

@@ -114,6 +114,9 @@ export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs, 
       const stave = new VF.Stave(4, 10, width - 8);
       stave.addClef(clef).addKeySignature(keySpec(keyPc));
       if (timeSig && meter && durs) stave.addTimeSignature(sig ?? `${meter}/4`);
+      // Ledger lines as strong as the notes (VexFlow's default #444 at 1.4 px read faint once the staff is scaled down,
+      // e.g. Note Rush's C4 above the bass staff).
+      stave.setDefaultLedgerLineStyle({ strokeStyle: '#1f1f24', lineWidth: 2.2 });
       stave.setContext(ctx).draw();
       const sn = chord
         ? [new VF.StaveNote({ keys: notes.map((m) => vfKey(m, keyPc)), duration: 'w', clef })]

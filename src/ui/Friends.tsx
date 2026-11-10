@@ -173,7 +173,7 @@ export function FriendsScreen({ t, user: realUser, sync, onBack, settings, onBes
                   </button>
                 ))}
               </div>
-              {scope === 'course' && <CourseFriends rows={rows} course={course} myLevel={progress ? courseLevel(course, ratingsOf(progress)).name : null} lang={lang} settings={settings} you={t.you} />}
+              {scope === 'course' && <CourseFriends rows={rows} course={course} myLevel={progress ? courseLevel(course, ratingsOf(progress), settings.courses).name : null} lang={lang} settings={settings} you={t.you} />}
               {scope === 'all' && <section className="set-card fr-board">
                 <div className="fr-board-head">
                   <h2>{sortBy === 'xp' ? t.thisWeek : t.overallRating}</h2>
