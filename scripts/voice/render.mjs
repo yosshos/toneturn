@@ -5,7 +5,7 @@
 //   node scripts/voice/render.mjs [--device cpu|dml] [--dtype fp32|q8] [--limit N] [--src mini,intro,...]
 // MP3, mono, 24 kHz, 32 kbps (MPEG-2 layer III): plays everywhere (iOS Safari too), ~4 KB per second of speech.
 
-import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { KokoroTTS } from 'kokoro-js';
 import { Mp3Encoder } from '@breezystack/lamejs';
@@ -18,6 +18,9 @@ const DEVICE = arg('device', 'cpu');
 const DTYPE = arg('dtype', 'fp32');
 const LIMIT = Number(arg('limit', Infinity));
 const SRC = arg('src', null)?.split(',');
+// --shard k/n: this process renders every n-th line (run n processes side by side); each writes its own part file
+// and merges all parts into manifest.json on every save.
+const [SHARD, SHARDS] = (arg('shard', '0/1')).split('/').map(Number);
 const VOICE = 'af_heart';
 const MODEL = 'k82m-v1';
 const KBPS = 32;
@@ -28,15 +31,27 @@ mkdirSync(OUT, { recursive: true });
 const manifest = existsSync(MANIFEST) ? JSON.parse(readFileSync(MANIFEST, 'utf8')) : { v: 1, voice: VOICE, model: MODEL, files: {} };
 if (manifest.voice !== VOICE || manifest.model !== MODEL) throw new Error('manifest is for another voice/model: clear public/voice/en first');
 
+const PART = path.join(OUT, `manifest.part${SHARD}.json`);
+const readJson = (p) => (existsSync(p) ? JSON.parse(readFileSync(p, 'utf8')) : null);
+const parts = () => readdirSync(OUT).filter((f) => /^manifest\.part\d+\.json$/.test(f)).map((f) => readJson(path.join(OUT, f))?.files ?? {});
+for (const p of parts()) Object.assign(manifest.files, p);
+const mine = readJson(PART)?.files ?? {};
+
 const lines = JSON.parse(readFileSync(new URL('./.lines.json', import.meta.url), 'utf8'));
-const todo = lines.filter((l) => !manifest.files[l.key] && (!SRC || SRC.includes(l.src))).slice(0, LIMIT);
+const todo = lines.filter((l, i) => i % SHARDS === SHARD && !manifest.files[l.key] && (!SRC || SRC.includes(l.src))).slice(0, LIMIT);
 console.log(`${lines.length} lines, ${Object.keys(manifest.files).length} rendered, ${todo.length} to do (${DEVICE}, ${DTYPE})`);
 if (!todo.length) process.exit(0);
 
+const write = (p, files) => {
+  const tmp = `${p}.${process.pid}.tmp`;
+  writeFileSync(tmp, JSON.stringify({ v: 1, voice: VOICE, model: MODEL, files: Object.fromEntries(Object.entries(files).sort()) }));
+  renameSync(tmp, p);
+};
 const save = () => {
-  const tmp = MANIFEST + '.tmp';
-  writeFileSync(tmp, JSON.stringify({ ...manifest, files: Object.fromEntries(Object.entries(manifest.files).sort()) }));
-  renameSync(tmp, MANIFEST);
+  write(PART, mine);
+  const all = { ...(readJson(MANIFEST)?.files ?? {}) };
+  for (const p of parts()) Object.assign(all, p);
+  write(MANIFEST, all);
 };
 
 function mp3(f32, sr) {
@@ -85,6 +100,7 @@ for (const l of todo) {
   writeFileSync(path.join(OUT, `${l.key}.mp3`), mp3(f32, sr));
   const ms = Math.round((1000 * n) / sr);
   manifest.files[l.key] = ms;
+  mine[l.key] = ms;
   audioMs += ms;
   done++;
   if (done % 10 === 0 || done === todo.length) {

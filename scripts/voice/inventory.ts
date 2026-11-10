@@ -32,3 +32,9 @@ const mins = (rs: typeof out) => (words(rs) / 150).toFixed(1); // ~150 spoken wo
 for (const s of order) console.log(`${s.padEnd(10)} ${String(count(s).length).padStart(6)} lines  ~${mins(count(s))} min`);
 console.log(`total      ${String(out.length).padStart(6)} lines  ~${mins(out)} min`);
 console.log(`lesson lines: ${distinct(harvestLessons(SEEDS)).length} with ${SEEDS} seeds, ${half} with ${Math.floor(SEEDS / 2)}`);
+// saturation per family: a family whose count stops growing with more seeds is finite (and worth recording)
+const fam = (seeds: number) => {
+  const d = distinct(harvestLessons(seeds));
+  return Object.fromEntries(['intro', 'go', 'prompt', 'feedback'].map((s) => [s, d.filter((l) => l.src === s).length]));
+};
+console.log('per family (½ seeds → all seeds):', JSON.stringify(fam(Math.floor(SEEDS / 2))), '→', JSON.stringify(fam(SEEDS)));
