@@ -72,6 +72,21 @@ function mp3(f32, sr) {
   return Buffer.concat(parts);
 }
 
+/** Whole sentences, packed up to ~220 characters per generation. */
+function pieces(text) {
+  if (text.length <= 220) return [text];
+  const out = [];
+  let cur = '';
+  for (const s of text.split(/(?<=[.!?:;])\s+/)) {
+    if (cur && cur.length + s.length + 1 > 220) {
+      out.push(cur);
+      cur = s;
+    } else cur = cur ? `${cur} ${s}` : s;
+  }
+  if (cur) out.push(cur);
+  return out;
+}
+
 const tts = await KokoroTTS.from_pretrained('onnx-community/Kokoro-82M-v1.0-ONNX', { dtype: DTYPE, device: DEVICE });
 const t0 = Date.now();
 let audioMs = 0;
@@ -80,13 +95,9 @@ for (const l of todo) {
   // long lines go sentence by sentence (the model takes ≤ 510 phoneme tokens at a time)
   const chunks = [];
   let sr = 24000;
-  if (l.say.length > 220) {
-    for await (const c of tts.stream(l.say, { voice: VOICE, speed: 1 })) {
-      chunks.push(c.audio.audio);
-      sr = c.audio.sampling_rate;
-    }
-  } else {
-    const a = await tts.generate(l.say, { voice: VOICE, speed: 1 });
+  // (kokoro-js' stream() never settles on a plain string here, so long lines are split by sentence ourselves)
+  for (const part of pieces(l.say)) {
+    const a = await tts.generate(part, { voice: VOICE, speed: 1 });
     chunks.push(a.audio);
     sr = a.sampling_rate;
   }
