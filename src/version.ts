@@ -18,6 +18,22 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.67.0',
+    date: '2026-11-10',
+    en: [
+      'Exam prep is now a mode of the Ear & theory course (the separate Exams course is gone; your progress moved with it)',
+      'Piano: a pianist’s ear (hear it, play it back, harmonise, transpose), reading both clefs, chords and scales as shapes',
+      'Piano: exam-grade target tempos, fingerings for every minor scale, cadences without parallel fifths, fairer timing at fast tempos',
+      'Piano by microphone only: hide the levels that need MIDI (Technique settings)',
+    ],
+    he: [
+      'הכנה לבגרות היא עכשיו מצב בתוך קורס השמיעה והתיאוריה (קורס הבחינות הנפרד ירד; ההתקדמות עברה איתו)',
+      'פסנתר: שמיעה לפסנתרנים (לשמוע, לנגן בחזרה, להרמן, להעביר טונליות), קריאה בשני המפתחות, אקורדים וסולמות כצורות',
+      'פסנתר: טמפו יעד לפי דרגות הבחינה, אצבוע לכל סולם מינור, קדנצות בלי קווינטות מקבילות, תזמון הוגן בטמפו מהיר',
+      'פסנתר במיקרופון בלבד: להסתיר שלבים שצריכים MIDI (בהגדרות הטכניקה)',
+    ],
+  },
+  {
     version: '0.66.0',
     date: '2026-11-10',
     en: [
