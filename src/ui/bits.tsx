@@ -48,7 +48,6 @@ export function Logo({ size = 44, bare = false, onDark = false }: { size?: numbe
         <path d={EAR} stroke="#FFD43B" strokeWidth="56" />
         <path d={SEVEN} stroke={ink} strokeWidth="40" />
         <path d={SEVEN} stroke="#FFFFFF" strokeWidth="20" />
-        <circle cx="306" cy="370" r="20" fill="#FF5FA2" stroke={ink} strokeWidth="9" />
       </g>
       <circle className="logo-spark" cx="430" cy="196" r="26" fill="#FF5FA2" stroke={ink} strokeWidth="9" />
       <circle cx="430" cy="268" r="26" fill="#FF5FA2" stroke={ink} strokeWidth="9" />

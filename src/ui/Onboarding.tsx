@@ -36,7 +36,6 @@ export function SplashLogo({ size = 132, onDark = false }: { size?: number; onDa
         <path className="sp-ear" pathLength={1} d={EAR} stroke="#FFD43B" strokeWidth="56" />
         <path className="sp-seven" pathLength={1} d={SEVEN} stroke={ink} strokeWidth="40" />
         <path className="sp-seven" pathLength={1} d={SEVEN} stroke="#FFFFFF" strokeWidth="20" />
-        <circle className="sp-dot d0" cx="306" cy="370" r="20" fill="#FF5FA2" stroke={ink} strokeWidth="9" />
       </g>
       <circle className="sp-dot d1" cx="430" cy="196" r="26" fill="#FF5FA2" stroke={ink} strokeWidth="9" />
       <circle className="sp-dot d2" cx="430" cy="268" r="26" fill="#FF5FA2" stroke={ink} strokeWidth="9" />
