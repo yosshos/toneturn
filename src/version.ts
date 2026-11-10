@@ -18,6 +18,16 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.68.0',
+    date: '2026-11-10',
+    en: [
+      'English narration on every phone: the quick lessons, lesson intros and the memory game speak in a natural recorded voice (no download of a voice model); lines made on the fly are still shown to read',
+    ],
+    he: [
+      'קריינות באנגלית בכל טלפון: השיעורונים, פתיחות השיעורים ומשחק הזיכרון מדברים בקול מוקלט טבעי (בלי להוריד מודל קול); שורות שנוצרות תוך כדי עדיין מוצגות לקריאה',
+    ],
+  },
+  {
     version: '0.67.0',
     date: '2026-11-10',
     en: [

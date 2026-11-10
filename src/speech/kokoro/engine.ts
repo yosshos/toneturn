@@ -74,6 +74,15 @@ export class KokoroNarrator {
     return this.status.state === 'ready';
   }
 
+  /**
+   * Worth loading here? Only with a usable WebGPU adapter and no Data Saver (0.66): on the CPU (WASM) it runs
+   * several times slower than real time on phones, and the pre-recorded lines already cover the lessons.
+   */
+  async worthLoading(): Promise<boolean> {
+    if (this.deps.saveData()) return false;
+    return this.deps.hasWebGpu().catch(() => false);
+  }
+
   /** Start loading (once). Resolves true when the voice can speak, false when it fell back to reading. */
   ensure(): Promise<boolean> {
     if (this.ready) return this.ready;

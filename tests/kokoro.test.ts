@@ -262,6 +262,7 @@ describe('the prompt player', () => {
     speak: Mock<(text: string, signal: AbortSignal, shownText?: string) => Promise<void>>;
     prefetch: Mock<(texts: string[]) => void>;
     stop: Mock<() => void>;
+    worthLoading: Mock<() => Promise<boolean>>;
     isReady: boolean;
     state: { state: 'off' | 'ready' };
     speed: number;
@@ -270,7 +271,7 @@ describe('the prompt player', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     setTalk(true);
-    n = { ensure: vi.fn(async () => true), speak: vi.fn(async () => {}), prefetch: vi.fn(), stop: vi.fn(), isReady: true, state: { state: 'ready' }, speed: 1 };
+    n = { ensure: vi.fn(async () => true), speak: vi.fn(async () => {}), prefetch: vi.fn(), stop: vi.fn(), worthLoading: vi.fn(async () => true), isReady: true, state: { state: 'ready' }, speed: 1 };
     p = new BrowserPromptPlayer();
     p.narrator = n;
   });
@@ -308,6 +309,17 @@ describe('the prompt player', () => {
     await vi.runAllTimersAsync();
     await done;
     expect(n.ensure).toHaveBeenCalledTimes(1);
+    expect(n.speak).not.toHaveBeenCalled();
+  });
+
+  it('never downloads the on-device model where it would be slow (no WebGPU): the line is read', async () => {
+    n.isReady = false;
+    n.state = { state: 'off' };
+    n.worthLoading = vi.fn(async () => false);
+    const done = p.speak('Listen.', 'en', new AbortController().signal);
+    await vi.runAllTimersAsync();
+    await done;
+    expect(n.ensure).not.toHaveBeenCalled();
     expect(n.speak).not.toHaveBeenCalled();
   });
 

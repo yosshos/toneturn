@@ -13,7 +13,8 @@ import type { Strings } from '../i18n/strings';
 import { KOKORO_MB, type KokoroStatus } from '../speech/kokoro/decide';
 import { useNarratorStatus, useTalk } from './TalkToggle';
 import { DEFAULT_SOUND, bassTuningOf, namingFor, type Settings } from '../storage/progress';
-import { fillText, Note } from './bits';
+import { Note } from './bits';
+import { previewText } from '../speech/voice/preview';
 import { piano, store, tts } from './services';
 import { listMics } from '../speech/mic';
 import { APP_THEMES, appearanceOf } from './themes';
@@ -73,7 +74,10 @@ function Seg<T extends string>({
 /** The Kokoro voice's status line (0.65): calm wording — when it can't run, lines are simply shown to read. */
 function kokoroLine(k: KokoroStatus, lang: 'he' | 'en'): string {
   const he = lang === 'he';
-  const name = he ? 'Kokoro (על המכשיר)' : 'Kokoro (on device)';
+  // 0.66: lesson lines are pre-recorded in the same voice; the on-device model only runs where it's fast (WebGPU).
+  const rec = he ? 'קול Kokoro · שורות השיעורים מוקלטות מראש ונטענות לפי הצורך' : 'Kokoro voice · lesson lines are pre-recorded and load as needed';
+  if (k.state === 'off') return `${rec}. ${he ? 'שורות אחרות: על המכשיר כשהוא מהיר מספיק, אחרת לקריאה.' : 'Other lines: made on this device when it’s fast enough, otherwise shown to read.'}`;
+  const name = he ? `${rec}. על המכשיר` : `${rec}. On this device`;
   if (k.state === 'downloading' && k.pct >= 100) return `${name} · ${he ? 'מתכונן…' : 'getting ready…'}`;
   if (k.state === 'downloading') return `${name} · ${he ? 'מוריד' : 'downloading'} ${k.pct}%${k.mb ? ` ${he ? 'מתוך' : 'of'} ${k.mb} MB` : ''}`;
   if (k.state === 'ready') return `${name} · ${he ? 'מוכן' : 'ready'}`;
@@ -191,7 +195,6 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
   const narr = s.outputLang;
 
   const bb = pc('Bb');
-  const eb = pc('Eb');
   const uiNaming = namingFor(s.naming, s.uiLang);
   const narrNaming = namingFor(s.naming, narr);
 
@@ -199,7 +202,7 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
   const preview = () => {
     tts.unlock();
     const en = namingFor(s.naming, 'en');
-    const text = fillText('Listen. In {k} major, {n} is degree five.', spokenNote(bb, en, 'en'), spokenNote(eb, en, 'en'));
+    const text = previewText(en); // pre-recorded (src/speech/voice/lines.ts)
     tts.force = true; // a preview speaks even in reading mode
     setBusy(true);
     const done = tts.speak(text, 'en', new AbortController().signal);
