@@ -44,7 +44,7 @@ TOPIC_GEN['basics-highlow'] = {
     return choiceQ({
       id, topic: 'basics-highlow', level, seed, skill: 'pitch', difficulty: [700, 820, 960][level - 1],
       ask: { en: 'Is the second note higher or lower?', he: 'הצליל השני גבוה יותר או נמוך יותר?' },
-      names: { higher: nm('Higher ⬆', 'גבוה יותר ⬆', 'higher', 'up', 'גבוה', 'למעלה'), lower: nm('Lower ⬇', 'נמוך יותר ⬇', 'lower', 'down', 'נמוך', 'למטה'), same: nm('The same =', 'אותו צליל =', 'same', 'the same', 'אותו', 'זהה') },
+      names: { higher: nm('Higher ↑', 'גבוה יותר ↑', 'higher', 'up', 'גבוה', 'למעלה'), lower: nm('Lower ↓', 'נמוך יותר ↓', 'lower', 'down', 'נמוך', 'למטה'), same: nm('The same =', 'אותו צליל =', 'same', 'the same', 'אותו', 'זהה') },
       answer, choices: opts, stimulus: [notesStim([a, b], 0.9)], choiceStim: Object.fromEntries(opts.map((o) => [o, play(o)])),
     });
   },
@@ -247,7 +247,7 @@ TOPIC_GEN['transpose'] = {
       const stim: Stimulus[] = [notesStim(midisIn(pc(from), degs), 0.42), rest(1), ...vers.flatMap((v, i) => [{ kind: 'marker' as const, n: i + 1 }, rest(0.25), notesStim(midisIn(pc(to), v.d), 0.42), rest(0.7)])];
       return choiceQ({
         id, topic: 'transpose', level, seed, skill: 'transpose', difficulty: 1300,
-        ask: { en: 'A tune — then three versions in another key. Which one is the same tune?', he: 'מנגינה — ואחריה שלוש גרסאות בסולם אחר. איזו מהן היא אותה מנגינה?' },
+        ask: { en: 'Which version is the same tune, transposed?', he: 'איזו גרסה היא אותה מנגינה, בסולם אחר?' },
         names: { v1: nm('First', 'הראשונה', 'one', 'first', 'אחת', 'ראשונה'), v2: nm('Second', 'השנייה', 'two', 'second', 'שתיים', 'שנייה'), v3: nm('Third', 'השלישית', 'three', 'third', 'שלוש', 'שלישית') },
         answer: ans, choices: ['v1', 'v2', 'v3'], stimulus: stim,
       });

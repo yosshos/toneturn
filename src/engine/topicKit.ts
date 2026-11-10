@@ -45,6 +45,21 @@ const PC_FLAT = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'G♭', 'G', 'A♭', 'A', '
 const PC_HE = ['דו', 'רה במול', 'רה', 'מי במול', 'מי', 'פה', 'סול במול', 'סול', 'לה במול', 'לה', 'סי במול', 'סי'];
 export const pcName = (pc: number) => PC_FLAT[((pc % 12) + 12) % 12];
 export const pcNameHe = (pc: number) => PC_HE[((pc % 12) + 12) % 12];
+const PC_SHARP = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
+const PC_SHARP_HE = ['דו', 'דו דיאז', 'רה', 'רה דיאז', 'מי', 'פה', 'פה דיאז', 'סול', 'סול דיאז', 'לה', 'לה דיאז', 'סי'];
+/** Major keys written with sharps (G D A E B F♯). */
+const SHARP_MAJOR = [7, 2, 9, 4, 11, 6];
+/**
+ * A note spelled as the key writes it (EAR_THEORY_AUDIT: "the leading note G♭ in G major" — pcName is flats only).
+ * `tonic` is the major key's tonic (a minor key: pass its relative major). F♯ major spells pc 5 as E♯.
+ */
+export function pcNameKey(pc: number, tonic: number, he = false): string {
+  const p = ((pc % 12) + 12) % 12;
+  const t = ((tonic % 12) + 12) % 12;
+  if (!SHARP_MAJOR.includes(t)) return he ? PC_HE[p] : PC_FLAT[p];
+  if (t === 6 && p === 5) return he ? 'מי דיאז' : 'E♯';
+  return he ? PC_SHARP_HE[p] : PC_SHARP[p];
+}
 export const chordStim = (midis: number[], duration = 1.4): Stimulus => ({ kind: 'chord', midis, duration });
 export const notesStim = (midis: number[], each = 0.38): Stimulus => ({ kind: 'notes', midis, each });
 

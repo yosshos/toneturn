@@ -154,7 +154,7 @@ TOPIC_GEN['chorale-rn'] = {
     const keyNames = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
     return choiceQ({
       id, topic: 'chorale-rn', level, seed, skill: 'cadences', difficulty: 1250 + 110 * L,
-      ask: { en: `A chorale phrase of ${phrase.length} chords. Chord ${at + 1} (played again at the end, and shown) — which is it?`, he: `משפט כורל של ${phrase.length} אקורדים. אקורד ${at + 1} (מושמע שוב בסוף, ומוצג) — מה הוא?` },
+      ask: { en: `Chorale phrase: which is chord ${at + 1}?`, he: `משפט כורל: מהו אקורד ${at + 1}?` },
       text: { en: `${keyNames[key]} ${minor ? 'minor' : 'major'} · chord ${at + 1} of ${phrase.length}`, he: `סולם ${keyNames[key]} ${minor ? 'מינור' : 'מז׳ור'} · אקורד ${at + 1} מתוך ${phrase.length}` },
       show: { midis: voiced[at], chord: true, clef: 'bass' },
       names, answer, choices, stimulus,

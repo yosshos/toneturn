@@ -164,7 +164,7 @@ TOPIC_GEN['bh-block'] = {
       const b = blockAt(tonic, minor, step);
       return choiceQ({
         id, topic: 'bh-block', level, seed, skill: 'chords', difficulty: 1250,
-        ask: { en: 'The 6 chord, then one block chord from the scale: a 6 chord or a diminished chord?', he: 'אקורד ה־6, ואז אקורד בלוק אחד מהסולם: אקורד 6 או דימיניש?' },
+        ask: { en: 'A block chord: 6 chord or diminished?', he: 'אקורד בלוק: 6 או דימיניש?' },
         names: names2, answer: b.six ? 'six' : 'dim', choices: ['six', 'dim'], stimulus: [ref, rest(0.4), chordStim(b.midis, 1.4)],
       });
     }
@@ -173,7 +173,7 @@ TOPIC_GEN['bh-block'] = {
       const run = Array.from({ length: stop + 1 }, (_, k) => chordStim(blockAt(tonic, minor, k).midis, k === stop ? 1.5 : 0.42));
       return choiceQ({
         id, topic: 'bh-block', level, seed, skill: 'chords', difficulty: 1350,
-        ask: { en: 'Block chords up the scale — they stop on a 6 chord or on a diminished chord?', he: 'אקורדי בלוק במעלה הסולם — הם נעצרים על אקורד 6 או על דימיניש?' },
+        ask: { en: 'They stop on a 6 chord or a diminished?', he: 'הם נעצרים על 6 או על דימיניש?' },
         names: names2, answer: blockAt(tonic, minor, stop).six ? 'six' : 'dim', choices: ['six', 'dim'], stimulus: run,
       });
     }

@@ -367,7 +367,7 @@ TOPIC_GEN['rhythm-errors'] = {
     const written: Rhythm = { beatsPerBar: 4, bars, cells };
     const ask: Bi =
       L === 3
-        ? { en: 'Read the rhythm, then listen: one beat is a little off — played dotted instead of even, or a note comes early. Which beat?', he: 'קראו את המקצב ואז הקשיבו: פעמה אחת קצת לא מדויקת — מנוגנת מנוקדת במקום שווה, או שצליל מגיע מוקדם. איזו פעמה?' }
+        ? { en: 'Read, then listen: one beat is slightly off. Which?', he: 'קראו ואז הקשיבו: פעמה אחת קצת לא מדויקת. איזו?' }
         : { en: 'Read the rhythm, then listen: one beat is played differently. Which beat?', he: 'קראו את המקצב ואז הקשיבו: פעמה אחת מנוגנת אחרת. איזו פעמה?' };
     return choiceQ({
       id, topic: 'rhythm-errors', level, seed, skill: 'rhythm-reading', difficulty: [1050, 1200, 1400][L - 1],
@@ -445,7 +445,7 @@ TOPIC_GEN['tempo-react'] = {
     const answer = pickR(rnd, keys);
     return choiceQ({
       id, topic: 'tempo-react', level, seed, skill: 'tempo', difficulty: L === 1 ? 1100 : 1400,
-      ask: L === 1 ? { en: 'Count the bars (the kick is beat 1). In which bar does the tempo change?', he: 'ספרו תיבות (הבס־דראם הוא פעמה 1). באיזו תיבה הטמפו משתנה?' } : { en: 'Count the bars. The tempo changes only a little — in which bar?', he: 'ספרו תיבות. הטמפו משתנה רק קצת — באיזו תיבה?' },
+      ask: L === 1 ? { en: 'In which bar does the tempo change?', he: 'באיזו תיבה הטמפו משתנה?' } : { en: 'Count the bars. The tempo changes only a little — in which bar?', he: 'ספרו תיבות. הטמפו משתנה רק קצת — באיזו תיבה?' },
       names, answer, choices: keys, stimulus: [make(answer)], choiceStim: Object.fromEntries(keys.map((k) => [k, [make(k)]])),
     });
   },
@@ -635,7 +635,7 @@ deepen('syncopation', [
     };
     const pushed = 2 + Math.floor(rnd() * 3);
     const names: Names = { '2': nm('Beat 2', 'פעמה 2', 'two'), '3': nm('Beat 3', 'פעמה 3', 'three'), '4': nm('Beat 4', 'פעמה 4', 'four') };
-    return choiceQ({ id, topic: 'syncopation', level, seed, skill: 'rhythm-dictation', difficulty: 1450, ask: { en: 'One note comes a sixteenth early (in both bars). Which beat does it belong to?', he: 'צליל אחד מגיע שש־עשרית מוקדם (בשתי התיבות). לאיזו פעמה הוא שייך?' }, names, answer: String(pushed), choices: ['2', '3', '4'], stimulus: [make(pushed)], choiceStim: { '2': [make(2)], '3': [make(3)], '4': [make(4)] } });
+    return choiceQ({ id, topic: 'syncopation', level, seed, skill: 'rhythm-dictation', difficulty: 1450, ask: { en: 'One note is a sixteenth early. Which beat?', he: 'צליל אחד מוקדם בשש־עשרית. איזו פעמה?' }, names, answer: String(pushed), choices: ['2', '3', '4'], stimulus: [make(pushed)], choiceStim: { '2': [make(2)], '3': [make(3)], '4': [make(4)] } });
   }
   const make = (bar: number) => {
     const out: NoteEvent[] = [];
@@ -650,7 +650,7 @@ deepen('syncopation', [
   const keys = ['b2', 'b3', 'b4'];
   const answer = pickR(rnd, keys);
   const names: Names = { b2: nm('Bar 2', 'תיבה 2', 'bar two'), b3: nm('Bar 3', 'תיבה 3', 'bar three'), b4: nm('Bar 4', 'תיבה 4', 'bar four') };
-  return choiceQ({ id, topic: 'syncopation', level, seed, skill: 'rhythm-dictation', difficulty: 1550, ask: { en: 'Four bars. One bar\'s beat 1 arrives early — on the "and" of 4 before it. Which bar?', he: 'ארבע תיבות. פעמה 1 של אחת התיבות מגיעה מוקדם — על ה״וְ״ של 4 שלפניה. איזו תיבה?' }, names, answer, choices: keys, stimulus: [make(Number(answer.slice(1)) - 1)], choiceStim: Object.fromEntries(keys.map((k) => [k, [make(Number(k.slice(1)) - 1)]])) });
+  return choiceQ({ id, topic: 'syncopation', level, seed, skill: 'rhythm-dictation', difficulty: 1550, ask: { en: 'Four bars. One bar\'s beat 1 arrives early — on the "and" of 4 before it. Which bar?', he: 'פעמה 1 אחת מוקדמת. באיזו תיבה?' }, names, answer, choices: keys, stimulus: [make(Number(answer.slice(1)) - 1)], choiceStim: Object.fromEntries(keys.map((k) => [k, [make(Number(k.slice(1)) - 1)]])) });
 });
 
 // ---------------------------------------------------------------- downbeat 3–4
@@ -682,7 +682,7 @@ deepen('downbeat', [
       '2': nm('Two pick-up notes', 'שני צלילי הקדמה', 'two', 'two notes'),
       '3': nm('Three pick-up notes', 'שלושה צלילי הקדמה', 'three', 'three notes'),
     };
-    return choiceQ({ id, topic: 'downbeat', level, seed, skill: 'meter', difficulty: 1300, ask: { en: 'The tune starts with a pick-up before beat 1. How many notes come before beat 1?', he: 'המנגינה מתחילה בהקדמה לפני פעמה 1. כמה צלילים באים לפני פעמה 1?' }, names, answer, choices: pool, stimulus: [make(Number(answer))], choiceStim: Object.fromEntries(pool.map((k) => [k, [make(Number(k))]])) });
+    return choiceQ({ id, topic: 'downbeat', level, seed, skill: 'meter', difficulty: 1300, ask: { en: 'How many pick-up notes before beat 1?', he: 'כמה צלילי הקדמה לפני פעמה 1?' }, names, answer, choices: pool, stimulus: [make(Number(answer))], choiceStim: Object.fromEntries(pool.map((k) => [k, [make(Number(k))]])) });
   }
   const six = rnd() < 0.5;
   const per = six ? 6 : 3;

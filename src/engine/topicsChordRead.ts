@@ -72,14 +72,17 @@ export interface Chord {
   inv: number;
 }
 
+/** EAR_THEORY_AUDIT: minor-family chords on C♯ / G♯ are written that way (C♯m, G♯m7, not D♭m with F♭). */
+const MINORISH: QId[] = ['min', 'm7', 'm9', 'dim', 'm7b5', 'dim7'];
+const rootOf = (c: Chord): Sp => (MINORISH.includes(c.q) && c.root === 1 ? S(0, 1) : MINORISH.includes(c.q) && c.root === 8 ? S(4, 1) : ROOTS[c.root]);
 const tone = (c: Chord, j: number): Sp => {
-  const r = ROOTS[c.root];
+  const r = rootOf(c);
   const l = (r.l + Q[c.q].steps[j]) % 7;
   const a = mod12(c.root + Q[c.q].ivs[j] - NAT[l] + 6) - 6;
   return { l, a };
 };
 export function chordName(c: Chord): { en: string; he: string; say?: string[] } {
-  const r = ROOTS[c.root];
+  const r = rootOf(c);
   const d = Q[c.q];
   const b = c.inv ? tone(c, c.inv) : null;
   const en = `${spEn(r)}${d.en}${b ? `/${spEn(b)}` : ''}`;

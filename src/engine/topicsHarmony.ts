@@ -103,10 +103,10 @@ TOPIC_GEN['voicings'] = {
     } else {
       voicing = { shell: [r - 12, r - 8, r - 2], rootless: [r - 8, r - 3, r - 2, r + 2], quartal: [r - 12, r - 7, r - 2, r + 3, r + 7], ust: [r - 12, r - 8, r - 2, r + 2, r + 6, r + 9] };
       names = {
-        shell: nm('Shell (1-3-7)', 'Shell (1-3-7)', 'shell', 'shell voicing', 'של וויסינג'),
+        shell: nm('Shell (1-3-7)', 'שלד (1-3-7)', 'shell', 'shell voicing', 'של וויסינג'),
         rootless: nm('Rootless', 'בלי שורש', 'rootless voicing', 'without root'),
         quartal: nm('Quartal (fourths)', 'קוורטלי (קוורטות)', 'quartal', 'fourths', 'so what', 'קוורטות'),
-        ust: nm('Upper-structure triad', 'Upper structure', 'אפר סטרקצ׳ר', 'upper structure', 'triad on top', 'upper structure triad'),
+        ust: nm('Upper-structure triad', 'משולש עליון (אפר סטרקצ׳ר)', 'אפר סטרקצ׳ר', 'upper structure', 'triad on top', 'upper structure triad'),
       };
       ask = { en: 'Which kind of voicing?', he: 'איזה סוג וויסינג?' };
     }

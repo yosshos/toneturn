@@ -6,6 +6,7 @@
 //                  the chord in a bar, the melody's first notes (the four steps are the four levels).
 import type { ChoiceQuestion, Stimulus } from './lesson';
 import { TOPIC_GEN, rng, pickR, shuffleR, choiceQ, chordStim, nm } from './topicKit';
+import { pc } from './pitch';
 
 const Q = { maj: [0, 4, 7], min: [0, 3, 7], dim: [0, 3, 6], dom7: [0, 4, 7, 10], m7: [0, 3, 7, 10], maj7: [0, 4, 7, 11] } as const;
 type Qual = keyof typeof Q;
@@ -25,7 +26,7 @@ const play = (key: number, chords: Ch[], each = 0.85): Stimulus[] => chords.map(
 const RN: Record<string, Ch> = {
   I: [0, 'maj'], ii: [2, 'min'], iii: [4, 'min'], IV: [5, 'maj'], V: [7, 'maj'], vi: [9, 'min'], 'vii°': [11, 'dim'],
   V7: [7, 'dom7'], ii7: [2, 'm7'], Imaj7: [0, 'maj7'], 'bVII': [10, 'maj'], 'bVI': [8, 'maj'], iv: [5, 'min'],
-  'V/vi': [4, 'maj'], 'V7/V': [2, 'dom7'], 'bII7': [1, 'dom7'], 'vi7': [9, 'm7'], 'iii7': [4, 'm7'], IV7: [5, 'maj7'],
+  'V/vi': [4, 'maj'], 'V7/V': [2, 'dom7'], 'bII7': [1, 'dom7'], 'vi7': [9, 'm7'], 'iii7': [4, 'm7'], IVmaj7: [5, 'maj7'],
 };
 const rn = (s: string): Ch => RN[s];
 const NAMES: Record<string, ReturnType<typeof nm>> = Object.fromEntries(Object.keys(RN).map((k) => [k, nm(k.replace('b', '♭'), k.replace('b', '♭'), k)]));
@@ -78,18 +79,18 @@ TOPIC_GEN['where-home'] = {
 // ---------------------------------------------------------------- what comes next?
 
 const NEXT: { from: string[]; next: string; wrong: string[]; level: number }[] = [
-  { from: ['I', 'V', 'vi'], next: 'IV', wrong: ['ii', 'iii', 'V'], level: 1 },
-  { from: ['I', 'vi', 'IV'], next: 'V', wrong: ['ii', 'iii', 'I'], level: 1 },
+  { from: ['I', 'V', 'vi'], next: 'IV', wrong: ['ii', 'vii°', 'V'], level: 1 },
+  { from: ['I', 'vi', 'IV'], next: 'V', wrong: ['iii', 'vii°', 'vi'], level: 1 },
   { from: ['vi', 'IV', 'I'], next: 'V', wrong: ['ii', 'iii', 'vi'], level: 1 },
-  { from: ['I', 'IV', 'V'], next: 'I', wrong: ['ii', 'vi', 'iii'], level: 1 },
-  { from: ['ii7', 'V7'], next: 'Imaj7', wrong: ['vi7', 'IV7', 'iii7'], level: 2 },
-  { from: ['Imaj7', 'vi7', 'ii7'], next: 'V7', wrong: ['IV7', 'iii7', 'Imaj7'], level: 2 },
-  { from: ['iii7', 'vi7', 'ii7'], next: 'V7', wrong: ['Imaj7', 'IV7', 'iii7'], level: 2 },
+  { from: ['I', 'IV', 'V'], next: 'I', wrong: ['ii', 'iii', 'vii°'], level: 1 },
+  { from: ['ii7', 'V7'], next: 'Imaj7', wrong: ['vi7', 'IVmaj7', 'iii7'], level: 2 },
+  { from: ['Imaj7', 'vi7', 'ii7'], next: 'V7', wrong: ['IVmaj7', 'iii7', 'Imaj7'], level: 2 },
+  { from: ['iii7', 'vi7', 'ii7'], next: 'V7', wrong: ['Imaj7', 'IVmaj7', 'iii7'], level: 2 },
   { from: ['I', 'bVI', 'bVII'], next: 'I', wrong: ['IV', 'V', 'vi'], level: 3 },
   { from: ['I', 'IV', 'iv'], next: 'I', wrong: ['V', 'vi', 'ii'], level: 3 },
   { from: ['I', 'V/vi'], next: 'vi', wrong: ['IV', 'ii', 'I'], level: 3 },
   { from: ['I', 'V7/V'], next: 'V7', wrong: ['IV', 'vi', 'ii'], level: 3 },
-  { from: ['ii7', 'bII7'], next: 'Imaj7', wrong: ['vi7', 'IV7', 'V7'], level: 3 },
+  { from: ['ii7', 'bII7'], next: 'Imaj7', wrong: ['vi7', 'IVmaj7', 'V7'], level: 3 },
 ];
 
 TOPIC_GEN['next-chord'] = {
@@ -129,8 +130,15 @@ export const SWAPS: { base: string[]; at: number; sub: string; level: number; wh
   { base: ['I', 'IV', 'V', 'I'], at: 3, sub: 'vi', level: 1, what: nm('I → vi (deceptive)', 'I → vi (הטעיה)', 'deceptive') },
   { base: ['ii7', 'V7', 'Imaj7', 'Imaj7'], at: 1, sub: 'bII7', level: 2, what: nm('V7 → ♭II7 (tritone sub)', 'V7 → ♭II7 (תחליף טריטון)', 'tritone sub') },
   { base: ['Imaj7', 'vi7', 'ii7', 'V7'], at: 1, sub: 'V/vi', level: 2, what: nm('vi7 → VI7 (secondary dominant)', 'vi7 → VI7 (דומיננטה משנית)', 'secondary dominant') },
-  { base: ['Imaj7', 'IV7', 'ii7', 'V7'], at: 1, sub: 'iv', level: 3, what: nm('IV → iv (borrowed)', 'IV → iv (שאול)', 'minor four', 'borrowed') },
+  // EAR_THEORY_AUDIT: level 2 always changed chord 2 (both swaps at index 1) — now every position occurs.
+  { base: ['Imaj7', 'vi7', 'ii7', 'V7'], at: 3, sub: 'bII7', level: 2, what: nm('V7 → ♭II7 (tritone sub)', 'V7 → ♭II7 (תחליף טריטון)', 'tritone sub') },
+  { base: ['Imaj7', 'vi7', 'ii7', 'V7'], at: 0, sub: 'iii7', level: 2, what: nm('Imaj7 → iii7', 'Imaj7 → iii7', 'three for one') },
+  { base: ['Imaj7', 'vi7', 'ii7', 'V7'], at: 2, sub: 'IVmaj7', level: 2, what: nm('ii7 → IVmaj7', 'ii7 → IVmaj7', 'four for two') },
+  { base: ['Imaj7', 'IVmaj7', 'ii7', 'V7'], at: 1, sub: 'iv', level: 3, what: nm('IV → iv (borrowed)', 'IV → iv (שאול)', 'minor four', 'borrowed') },
   { base: ['I', 'IV', 'V', 'I'], at: 2, sub: 'bVII', level: 3, what: nm('V → ♭VII', 'V → ♭VII', 'flat seven') },
+  { base: ['I', 'vi', 'IV', 'V'], at: 2, sub: 'iv', level: 3, what: nm('IV → iv (borrowed)', 'IV → iv (שאול)', 'minor four', 'borrowed') },
+  { base: ['I', 'V', 'vi', 'IV'], at: 3, sub: 'bVI', level: 3, what: nm('IV → ♭VI (borrowed)', 'IV → ♭VI (שאול)', 'flat six', 'borrowed') },
+  { base: ['I', 'IV', 'I', 'V'], at: 0, sub: 'vi', level: 3, what: nm('I → vi', 'I → vi', 'six for one') },
 ];
 
 TOPIC_GEN['reharm-swap'] = {
@@ -211,13 +219,17 @@ TOPIC_GEN['figure-out'] = {
     const t = tune(rnd);
     const stim = tuneStim(key, t);
     if (level === 1) {
-      // Which degree does the tune end on — and so where is home? Choices: four scale notes as degrees.
+      // Which degree does the tune end on? EAR_THEORY_AUDIT: the tune always ended on 1, so "1" was always right —
+      // now it ends on a tone of its last chord (1, 2, 3 or 5), after the home chord sets the key.
+      const lastTones: Record<string, number[]> = { I: [1, 3, 5], IV: [1], V: [2, 5], vi: [1, 3] };
+      const end = pickR(rnd, lastTones[t.chords[t.chords.length - 1]] ?? [1]);
+      const t1 = { ...t, mel: [...t.mel.slice(0, -1), end] };
       const choices = ['1', '3', '5', '2'];
       const names: ChoiceQuestion['names'] = { 1: nm('1 (home)', '1 (בית)', 'one', 'home'), 3: nm('3', '3', 'three'), 5: nm('5', '5', 'five'), 2: nm('2', '2', 'two') };
       return choiceQ({
         id, topic: 'figure-out', level, seed, skill: 'dictation', difficulty: 1000,
-        ask: { en: 'A short tune. On which degree does the melody end?', he: 'שיר קצר. על איזו דרגה המנגינה מסתיימת?' },
-        names, answer: '1', choices: shuffleR(rnd, choices), stimulus: stim,
+        ask: { en: 'Which degree does the tune end on?', he: 'על איזו דרגה המנגינה נגמרת?' },
+        names, answer: String(end), choices: shuffleR(rnd, choices), stimulus: [{ kind: 'cadence', key: pc(KEYS_EN[mod12(key)]) }, { kind: 'rest', duration: 0.5 }, ...tuneStim(key, t1)],
       });
     }
     if (level === 2) {

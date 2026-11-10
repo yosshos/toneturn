@@ -4,7 +4,7 @@
 // melodic transformations, Nashville numbers, and expression (dynamics, articulation, mood). Pure, seeded.
 
 import type { ChoiceQuestion, NoteEvent, Stimulus } from './lesson';
-import { TOPIC_GEN, rng, pickR, shuffleR, choiceQ, nm, pcName, pcNameHe } from './topicKit';
+import { TOPIC_GEN, rng, pickR, shuffleR, choiceQ, nm, pcName, pcNameHe, pcNameKey } from './topicKit';
 
 type Names = ChoiceQuestion['names'];
 const rest = (duration: number): Stimulus => ({ kind: 'rest', duration });
@@ -244,7 +244,7 @@ TOPIC_GEN['compound-intervals'] = {
       names[k] = nm(COMPOUND[k][1], COMPOUND[k][2], ...COMPOUND[k][3]);
       choiceStim[k] = [play(k)];
     }
-    return choiceQ({ id, topic: 'compound-intervals', level, seed, skill: 'intervals', difficulty: [1350, 1480, 1620][level - 1], ask: { en: 'More than an octave apart — which interval?', he: 'יותר מאוקטבה — איזה מרווח?' }, names, answer, choices: pool, stimulus: [play(answer)], choiceStim });
+    return choiceQ({ id, topic: 'compound-intervals', level, seed, skill: 'intervals', difficulty: [1350, 1480, 1620][level - 1], ask: { en: 'An octave or wider — which interval?', he: 'אוקטבה או יותר — איזה מרווח?' }, names, answer, choices: pool, stimulus: [play(answer)], choiceStim });
   },
 };
 
@@ -410,7 +410,7 @@ TOPIC_GEN['meter-feel'] = {
     };
     choiceStim.yes = [mk(true)];
     choiceStim.no = [mk(false)];
-    return choiceQ({ id, topic: 'meter-feel', level, seed, skill: 'meter', difficulty: 1550, ask: { en: 'A waltz heading to its ending — do two bars turn into one big bar of three (hemiola)?', he: 'ואלס לקראת הסוף — האם שתי תיבות הופכות לתיבה גדולה אחת של שלוש (המיולה)?' }, names, answer, choices: ['yes', 'no'], stimulus: choiceStim[answer], choiceStim });
+    return choiceQ({ id, topic: 'meter-feel', level, seed, skill: 'meter', difficulty: 1550, ask: { en: 'Near the end: a hemiola, or not?', he: 'לקראת הסוף: המיולה, או לא?' }, names, answer, choices: ['yes', 'no'], stimulus: choiceStim[answer], choiceStim });
   },
 };
 
@@ -440,7 +440,7 @@ TOPIC_GEN['downbeat'] = {
     const ord = ['1st', '2nd', '3rd', '4th'];
     const ordHe = ['הראשון', 'השני', 'השלישי', 'הרביעי'];
     for (let i = 1; i <= 4; i++) names[String(i)] = nm(`The ${ord[i - 1]} note`, `הצליל ${ordHe[i - 1]}`, String(i), ord[i - 1]);
-    return choiceQ({ id, topic: 'downbeat', level, seed, skill: 'meter', difficulty: level === 1 ? 1000 : 1200, ask: { en: 'Four beats to a bar, starting anywhere. Which of the first four notes is beat 1?', he: 'ארבע פעמות בתיבה, מתחילים באמצע. איזה מארבעת הצלילים הראשונים הוא פעמה 1?' }, names, answer, choices: ['1', '2', '3', '4'], stimulus: [ev(out, 9 * q + 0.2)] });
+    return choiceQ({ id, topic: 'downbeat', level, seed, skill: 'meter', difficulty: level === 1 ? 1000 : 1200, ask: { en: 'Which of the first four notes is beat 1?', he: 'איזה מארבעת הצלילים הראשונים הוא פעמה 1?' }, names, answer, choices: ['1', '2', '3', '4'], stimulus: [ev(out, 9 * q + 0.2)] });
   },
 };
 
@@ -465,7 +465,7 @@ TOPIC_GEN['syncopation'] = {
         out.push(N(64, b === pushed ? t - q / 2 : t, q * (b === pushed ? 1.4 : 0.9), 0.85));
       }
     const names: Names = { '2': nm('Beat 2', 'פעמה 2', 'two'), '3': nm('Beat 3', 'פעמה 3', 'three'), '4': nm('Beat 4', 'פעמה 4', 'four') };
-    return choiceQ({ id, topic: 'syncopation', level, seed, skill: 'rhythm-dictation', difficulty: level === 1 ? 1200 : 1350, ask: { en: 'One note comes half a beat early (a push). Which beat does it belong to?', he: 'צליל אחד מגיע חצי פעמה מוקדם (דחיפה). לאיזו פעמה הוא שייך?' }, names, answer: String(pushed), choices: ['2', '3', '4'], stimulus: [ev(out, 8 * q + 0.3)] });
+    return choiceQ({ id, topic: 'syncopation', level, seed, skill: 'rhythm-dictation', difficulty: level === 1 ? 1200 : 1350, ask: { en: 'One note is pushed early. Which beat?', he: 'צליל אחד נדחף מוקדם. איזו פעמה?' }, names, answer: String(pushed), choices: ['2', '3', '4'], stimulus: [ev(out, 8 * q + 0.3)] });
   },
 };
 
@@ -596,8 +596,9 @@ TOPIC_GEN['voice-leading'] = {
   gen(seed, level, id) {
     const rnd = rng(seed);
     const key = pickR(rnd, [0, 7, 2, 5, 10]);
-    const nmOf = (pc: number) => pcName(pc);
-    const nmHe = (pc: number) => pcNameHe(pc);
+    // EAR_THEORY_AUDIT: spelled in the key (G major's leading note is F♯, not G♭).
+    const nmOf = (pc: number) => pcNameKey(pc, key);
+    const nmHe = (pc: number) => pcNameKey(pc, key, true);
     if (level === 1) {
       const lt = (key + 11) % 12;
       const opts = shuffleR(rnd, [key, (key + 9) % 12, (key + 7) % 12, (key + 2) % 12]);
@@ -634,7 +635,7 @@ const deg2pc = (key: number, deg: number) => (key + MAJ[deg - 1]) % 12;
 const chordName = (key: number, r: string) => {
   const d = { I: 1, ii: 2, iii: 3, IV: 4, V: 5, vi: 6 }[r]!;
   const minor = r === r.toLowerCase();
-  return pcName(deg2pc(key, d)) + (minor ? 'm' : '');
+  return pcNameKey(deg2pc(key, d), key) + (minor ? 'm' : ''); // spelled in the key (A major: F♯m, not G♭m)
 };
 TOPIC_GEN['nashville'] = {
   title: { en: 'Numbers to chords (Nashville)', he: 'ממספרים לאקורדים (נאשוויל)' },
@@ -697,7 +698,7 @@ TOPIC_GEN['melodic-transform'] = {
         names[letters[i]] = label(i);
         choiceStim[letters[i]] = [notes(o, 0.36)];
       });
-      return choiceQ({ id, topic: 'melodic-transform', level, seed, skill: 'transpose', difficulty: 1150, ask: { en: 'The motif, then one step higher. Which version continues it one more step up (in the key)?', he: 'המוטיב, ואז צעד אחד למעלה. איזו גרסה ממשיכה עוד צעד למעלה (בתוך הסולם)?' }, names, answer: letters[opts.indexOf(right)], choices: letters, stimulus: [notes(step(0), 0.36), rest(0.3), notes(step(1), 0.36)], choiceStim });
+      return choiceQ({ id, topic: 'melodic-transform', level, seed, skill: 'transpose', difficulty: 1150, ask: { en: 'Which version continues the sequence?', he: 'איזו גרסה ממשיכה את הסקוונצה?' }, names, answer: letters[opts.indexOf(right)], choices: letters, stimulus: [notes(step(0), 0.36), rest(0.3), notes(step(1), 0.36)], choiceStim });
     }
     if (level === 2) {
       const tune = [1, 2, 3, 4, 5, 3, 1];
@@ -708,7 +709,7 @@ TOPIC_GEN['melodic-transform'] = {
         names[letters[i]] = label(i);
         choiceStim[letters[i]] = [notes(o, 0.34)];
       });
-      return choiceQ({ id, topic: 'melodic-transform', level, seed, skill: 'transpose', difficulty: 1350, ask: { en: 'A tune in major. Which version is the same tune in minor, on the same home note?', he: 'מנגינה במז׳ור. איזו גרסה היא אותה מנגינה במינור, על אותו צליל בית?' }, names, answer: letters[opts.indexOf(right)], choices: letters, stimulus: [notes(maj, 0.34)], choiceStim });
+      return choiceQ({ id, topic: 'melodic-transform', level, seed, skill: 'transpose', difficulty: 1350, ask: { en: 'Which version is the tune in minor?', he: 'איזו גרסה היא המנגינה במינור?' }, names, answer: letters[opts.indexOf(right)], choices: letters, stimulus: [notes(maj, 0.34)], choiceStim });
     }
     if (level === 4) {
       const tune = [1, 2, 3, 4, 5, 6, 5, 3, 1];
@@ -724,7 +725,7 @@ TOPIC_GEN['melodic-transform'] = {
         names[k] = nm(MODES[k][1], MODES[k][2], ...MODES[k][3]);
         choiceStim[k] = [notes(tune.map((d) => degMidi(tonic, d)), 0.3), rest(0.3), notes(tune.map((d) => degMidi(tonic, d, MODES[k][0])), 0.3)];
       }
-      return choiceQ({ id, topic: 'melodic-transform', level, seed, skill: 'transpose', difficulty: 1620, ask: { en: 'A tune in major, then the same tune moved into a mode (same home note). Which mode?', he: 'מנגינה במז׳ור, ואז אותה מנגינה במודוס (אותו צליל בית). איזה מודוס?' }, names, answer, choices: pool, stimulus: choiceStim[answer], choiceStim });
+      return choiceQ({ id, topic: 'melodic-transform', level, seed, skill: 'transpose', difficulty: 1620, ask: { en: 'The tune moved into a mode. Which?', he: 'המנגינה עברה למודוס. איזה?' }, names, answer, choices: pool, stimulus: choiceStim[answer], choiceStim });
     }
     const base = [0, 4, 2, 7, 5].map((x) => tonic + x);
     const kinds: Record<string, [number[], string, string, string[]]> = {
@@ -783,7 +784,7 @@ TOPIC_GEN['rhythm-transform'] = {
       names['32'] = nm('3-2 clave', 'קלאבה 3-2', 'three two');
       names['23'] = nm('2-3 clave', 'קלאבה 2-3', 'two three');
       for (const k of ['32', '23']) choiceStim[k] = [hits(pat(k), 32, 2, 0.12, 76 - 4, 4)];
-      return choiceQ({ id, topic: 'rhythm-transform', level, seed, skill: 'transpose', difficulty: 1400, ask: { en: 'Son clave over two bars. Which bar has the three hits — the first (3-2) or the second (2-3)?', he: 'קלאבת סון על פני שתי תיבות. באיזו תיבה שלוש המכות — בראשונה (3-2) או בשנייה (2-3)?' }, names, answer, choices: ['32', '23'], stimulus: choiceStim[answer], choiceStim });
+      return choiceQ({ id, topic: 'rhythm-transform', level, seed, skill: 'transpose', difficulty: 1400, ask: { en: 'Son clave: 3-2 or 2-3?', he: 'קלאבת סון: 3-2 או 2-3?' }, names, answer, choices: ['32', '23'], stimulus: choiceStim[answer], choiceStim });
     }
     if (level === 3) {
       // A 3-eighth figure repeated in 4/4: which beat does its 3rd repetition start on?
@@ -797,7 +798,7 @@ TOPIC_GEN['rhythm-transform'] = {
       names.b4 = nm('Beat 4', 'פעמה 4', 'four');
       names.b1and = nm('The “and” of 1, bar 2', 'ה"ו" של 1, תיבה 2', 'and of one');
       names.b3 = nm('Beat 3, bar 2', 'פעמה 3, תיבה 2', 'three of bar two');
-      return choiceQ({ id, topic: 'rhythm-transform', level, seed, skill: 'transpose', difficulty: 1600, ask: { en: 'A 3-eighth figure repeats over 4/4. Where does the high note (its last start) land?', he: 'דמות של 3 שמיניות חוזרת על 4/4. איפה נוחת הצליל הגבוה (ההתחלה האחרונה)?' }, names, answer, choices: ['b4', 'b1and', 'b3'], stimulus: [ev(out, 16 * e + 0.3)] });
+      return choiceQ({ id, topic: 'rhythm-transform', level, seed, skill: 'transpose', difficulty: 1600, ask: { en: 'A 3-eighth figure over 4/4. Where does the high note land?', he: 'דמות של 3 שמיניות על 4/4. איפה נוחת הצליל הגבוה?' }, names, answer, choices: ['b4', 'b1and', 'b3'], stimulus: [ev(out, 16 * e + 0.3)] });
     }
     // Metric modulation: old tempo T; "new quarter = old dotted quarter" (2/3 T) or "= old eighth" (2T) or "= old triplet-quarter" (3/2 T).
     const T = pickR(rnd, [60, 80, 90, 120]);

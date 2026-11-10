@@ -117,7 +117,7 @@ TOPIC_GEN['bh-keys'] = {
     const keys = ['same', 'up3', 'tritone', 'down3'];
     return choiceQ({
       id, topic: 'bh-keys', level, seed, skill: 'cadences', difficulty: 1350,
-      ask: { en: 'First the reference resolution, then another from the same diminished chord: where did it go?', he: 'קודם הפתרון לדוגמה, ואחר כך עוד אחד מאותו דימיניש: לאן הוא הלך?' },
+      ask: { en: 'The same diminished, a second resolution. Where to?', he: 'אותו דימיניש, פתרון שני. לאן?' },
       names: {
         same: { en: 'The same key', he: 'אותו סולם', say: ['same'] },
         up3: { en: 'A minor third up', he: 'טרצה קטנה למעלה', say: ['minor third up', 'up'] },
@@ -304,14 +304,17 @@ TOPIC_GEN['bh-six-over'] = {
       choiceStim[`s${k}`] = [chordStim([bass, ...six], 1.6)];
     });
     const ear = level === 3;
+    // EAR_THEORY_AUDIT: the four 6 chords used to play in key order, so the right one was always heard first.
+    // Now they play in the buttons' order, each after its marker.
+    const choices = shuffleR(rnd, ['s0', 's1', 's2', 's3']);
     return choiceQ({
       id, topic: 'bh-six-over', level, seed, skill: ear ? 'chords' : 'theory', difficulty: 1300 + 100 * level,
       ask: ear
-        ? { en: 'Hear the chord, then four 6 chords over its bass: which one does Barry use?', he: 'שמעו את האקורד, ואז ארבעה אקורדי 6 מעל הבס שלו: באיזה בארי משתמש?' }
+        ? { en: 'The chord, then four 6 chords over its bass. Which fits?', he: 'האקורד, ואז ארבעה אקורדי 6 מעל הבס שלו. איזה מתאים?' }
         : { en: `Over ${pcName(root)}${o.en}, which 6 chord does Barry play?`, he: `מעל ${pcNameHe(root)} ${o.he}, איזה אקורד 6 בארי מנגן?` },
       text: ear ? undefined : { en: `${pcName(root)}${o.en}`, he: `${pcNameHe(root)} ${o.he}` },
-      names, answer: 's0', choices: shuffleR(rnd, ['s0', 's1', 's2', 's3']),
-      stimulus: ear ? [chordStim([bass, ...chordMidis], 1.6), { kind: 'rest', duration: 0.4 }, ...['s0', 's1', 's2', 's3'].flatMap((k) => [...choiceStim[k], { kind: 'rest' as const, duration: 0.25 }])] : [],
+      names, answer: 's0', choices,
+      stimulus: ear ? [chordStim([bass, ...chordMidis], 1.6), { kind: 'rest', duration: 0.4 }, ...choices.flatMap((k, i) => [{ kind: 'marker' as const, n: i + 1 }, ...choiceStim[k], { kind: 'rest' as const, duration: 0.25 }])] : [],
       choiceStim,
     });
   },
@@ -342,11 +345,11 @@ TOPIC_GEN['bh-lines'] = {
     ];
     if (level === 1) {
       const deg = pickR(rnd, [1, 3, 5, 7]);
-      const withIt = rnd() < 0.75;
+      const withIt = rnd() < 0.5; // EAR_THEORY_AUDIT: was 75 %, so "yes" was right three times in four
       const line = barryLine(deg, withIt ? 'one' : 'none');
       return choiceQ({
         id, topic: 'bh-lines', level, seed, skill: 'sequences', difficulty: 1350,
-        ask: { en: 'A dominant line from a chord tone: was the half step between 1 and ♭7 added?', he: 'קו דומיננט מצליל אקורד: האם נוסף חצי הטון בין 1 ל־♭7?' },
+        ask: { en: 'Was the half step between 1 and ♭7 added?', he: 'האם נוסף חצי הטון בין 1 ל־♭7?' },
         names: { one: RULE_LABEL.one, none: RULE_LABEL.none }, answer: withIt ? 'one' : 'none', choices: ['one', 'none'], stimulus: play(line),
         choiceStim: { one: play(barryLine(deg, 'one')), none: play(barryLine(deg, 'none')) },
       });

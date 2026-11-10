@@ -77,7 +77,7 @@ TOPIC_GEN['chart-analysis'] = {
         const names = Object.fromEntries(choices.map((c) => [c, keyLabel(Number(c.replace('m', '')), c.endsWith('m'))]));
         return choiceQ({
           id, topic: 'chart-analysis', level, seed, skill: 'cadences', difficulty: 1300,
-          ask: { en: 'What key is this tune in? Look where it comes to rest — and at its V.', he: 'באיזה סולם השיר? חפשו איפה הוא נח — ואת ה־V שלו.' },
+          ask: { en: 'What key is this tune in?', he: 'באיזה סולם השיר?' },
           chart, names, answer, choices, stimulus: [],
         });
       }

@@ -144,7 +144,7 @@ function audScale(seed: number, id: string): ChoiceQuestion {
   for (const x of cands) names[String(x)] = nm(x === 8 ? 'Degree 8 (the high 1)' : `Degree ${x}`, x === 8 ? 'דרגה 8 (ה־1 הגבוה)' : `דרגה ${x}`, WORDS[x]);
   return choiceQ({
     id, topic: 'audiation', level: 2, seed, skill: 'sequences', difficulty: 1150,
-    ask: { en: `The key, then a scale going ${up ? 'up' : 'down'}. It goes silent (the clicks go on) and comes back. On which degree?`, he: `הסולם נשמע, ואז סולם ${up ? 'עולה' : 'יורד'}. הוא נעלם (הקליקים ממשיכים) וחוזר. על איזו דרגה?` },
+    ask: { en: `A scale ${up ? 'rises' : 'falls'}, goes silent, returns. Which degree?`, he: `סולם ${up ? 'עולה' : 'יורד'}, נעלם וחוזר. איזו דרגה?` },
     names, answer: String(d), choices: cands.map(String), stimulus: [ev(cad.events, cad.length), rest(0.3), ev(out, len)],
   });
 }
@@ -181,7 +181,7 @@ function audSequence(seed: number, id: string): ChoiceQuestion {
   });
   return choiceQ({
     id, topic: 'audiation', level: 3, seed, skill: 'sequences', difficulty: 1300,
-    ask: { en: `A pattern moves ${dir > 0 ? 'up' : 'down'} a step every bar, goes silent for a bar, then comes back. Which version comes back in time and in tune?`, he: `תבנית ${dir > 0 ? 'עולה' : 'יורדת'} צעד בכל תיבה, נעלמת לתיבה אחת וחוזרת. איזו גרסה חוזרת בזמן ובגובה הנכון?` },
+    ask: { en: `A pattern ${dir > 0 ? 'climbs' : 'falls'}, goes silent, returns. Which return is right?`, he: `תבנית ${dir > 0 ? 'עולה' : 'יורדת'}, נעלמת וחוזרת. איזו חזרה נכונה?` },
     names, answer: keys[order.indexOf('ok')], choices: keys, stimulus, choiceStim,
   });
 }
@@ -245,7 +245,7 @@ function audProgression(seed: number, id: string): ChoiceQuestion {
   for (const r of loop) names[r] = nm(RN_NAMES[r][0], RN_NAMES[r][1], RN_NAMES[r][2]);
   return choiceQ({
     id, topic: 'audiation', level: 5, seed, skill: 'sequences', difficulty: 1450,
-    ask: { en: 'The loop plays, then again — silent for two chords (keep it going in your head). Which chord comes back?', he: 'הלופ מתנגן, ושוב — שני אקורדים בשקט (המשיכו אותו בראש). איזה אקורד חוזר?' },
+    ask: { en: 'The loop goes silent for two chords. Which chord returns?', he: 'הלופ שותק לשני אקורדים. איזה אקורד חוזר?' },
     names, answer, choices: loop.slice(), stimulus: [ev(out, (seq.length - 1) * each + 2.4)],
   });
 }
@@ -310,7 +310,7 @@ TOPIC_GEN['triads'] = {
         names[k] = nm(INV3[k][0], INV3[k][1], ...INV3[k][2]);
         choiceStim[k] = blockArp(closeChord(root, TRI[qual].iv, i));
       });
-      return choiceQ({ id, topic: 'triads', level, seed, skill: 'chords', difficulty: 1250, ask: { en: `A ${TRI[qual].en.toLowerCase()} triad. Which note is in the bass: root position, first or second inversion?`, he: `משולש ${TRI[qual].he}. איזה צליל בבס: מצב יסודי, היפוך ראשון או שני?` }, names, answer: keys[inv], choices: keys, stimulus: choiceStim[keys[inv]], choiceStim });
+      return choiceQ({ id, topic: 'triads', level, seed, skill: 'chords', difficulty: 1250, ask: { en: `A ${TRI[qual].en.toLowerCase()} triad — which position?`, he: `משולש ${TRI[qual].he} — באיזה מצב?` }, names, answer: keys[inv], choices: keys, stimulus: choiceStim[keys[inv]], choiceStim });
     }
     if (level === 5) {
       const qual = pickR(rnd, ['maj', 'min']);
@@ -685,7 +685,7 @@ TOPIC_GEN['song-form'] = {
         b9: nm('Bar 9', 'תיבה 9', 'bar nine', 'nine'),
         turn: nm('The turnaround (bars 11–12)', 'הטרנאראונד (תיבות 11–12)', 'turnaround'),
       };
-      return choiceQ({ ...base, difficulty: 1300, ask: { en: 'A 12-bar blues starts at the top (after the count-in) and stops. Where in the form did it stop?', he: 'בלוז של 12 תיבות מתחיל מההתחלה (אחרי הספירה) ונעצר. איפה בצורה הוא נעצר?' }, names, answer, choices: keys, stimulus: [sf(arrange([sec, sec], { tonic: tonic - 5, bpm: 168, groove: 'shuffle', countIn: true, stopAfterBars: bars[answer] }))] });
+      return choiceQ({ ...base, difficulty: 1300, ask: { en: 'A 12-bar blues stops. Which bar?', he: 'בלוז של 12 תיבות נעצר. באיזו תיבה?' }, names, answer, choices: keys, stimulus: [sf(arrange([sec, sec], { tonic: tonic - 5, bpm: 168, groove: 'shuffle', countIn: true, stopAfterBars: bars[answer] }))] });
     }
     if (level === 4) {
       const keys = ['a1', 'a2', 'b', 'a3'];
@@ -908,7 +908,7 @@ function modulationDeep(seed: number, level: number, id: string): ChoiceQuestion
   }
   return choiceQ({
     id, topic: 'modulation', level: level + 3, seed, skill: 'cadences', difficulty: fromMinor ? 1520 : 1580,
-    ask: fromMinor ? { en: 'The first phrase is in a minor key. Where does the second one go?', he: 'המשפט הראשון בסולם מינורי. לאן הולך השני?' } : { en: 'The first phrase sets home. Which closely related key does the second one go to?', he: 'המשפט הראשון קובע את הבית. לאיזה סולם קרוב הולך השני?' },
+    ask: fromMinor ? { en: 'The first phrase is in a minor key. Where does the second one go?', he: 'המשפט הראשון בסולם מינורי. לאן הולך השני?' } : { en: 'Which related key does phrase 2 go to?', he: 'לאיזה סולם קרוב הולך משפט 2?' },
     names, answer, choices: offered, stimulus: choiceStim[answer], choiceStim,
   });
 }
