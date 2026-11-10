@@ -46,7 +46,8 @@ export const hiddenBassLevels = (bassTuning?: string): string[] => [...(hasLowB(
  */
 export function shownFamilies(settings: ShowSettings): FamilyDef[] {
   const inst = settings.instrument ?? 'piano';
-  if (inst === 'piano') return CAT.filter((f) => settings.emphasis === 'both' || f.style === settings.emphasis);
+  // The pianist's ear (style 'both') belongs to every emphasis.
+  if (inst === 'piano') return CAT.filter((f) => settings.emphasis === 'both' || f.style === 'both' || f.style === settings.emphasis);
   // Drums: no genre filter (v1); by microphone a practice pad gets the single-surface levels, an acoustic kit those and the basic grooves.
   if (inst === 'drums') {
     const fams = GCAT.filter((f) => f.instruments.includes('drums'));

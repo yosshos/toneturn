@@ -155,7 +155,12 @@ function align(drill: Drill, bpm: number, played: PlayedNote[]): Align {
     for (const i of c.idx) {
       const e = exp[i];
       let j = members.find((m) => !taken.has(m) && played[m].pitch === e.pitch);
-      if (j === undefined) j = members.find((m) => !taken.has(m) && mod12(played[m].pitch) === mod12(e.pitch));
+      // Any octave (PIANO_AUDIT A5): the same pitch class nearest in pitch, so an LH bass an octave up isn't paired with
+      // the RH's note of that name (which scrambled the voice-leading measure).
+      if (j === undefined)
+        j = members
+          .filter((m) => !taken.has(m) && mod12(played[m].pitch) === mod12(e.pitch))
+          .sort((a, b) => Math.abs(played[a].pitch - e.pitch) - Math.abs(played[b].pitch - e.pitch))[0];
       if (j !== undefined) {
         taken.add(j);
         match[i] = j;

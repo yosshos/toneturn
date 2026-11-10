@@ -13,6 +13,7 @@ export type FamilyId =
   | 'jazz' // J (shells, rootless, guide tones, patterns)
   | 'voicings' // V (LH voicings and changes)
   | 'accomp' // M (stride, walking, boogie, Alberti)
+  | 'k-ear' // the pianist's ear: hear it, play it back on the keys (PIANO_AUDIT §3)
   | 'custom' // the player's own drills
   // Guitar (docs/SPEC-GUITAR-TECHNIQUE.md): pitches are SOUNDING MIDI; notes carry string / fret.
   | 'g-fretting' // spider / chromatic permutations, stretches, shifts

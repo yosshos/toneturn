@@ -52,6 +52,21 @@ function secondTag(drill: Drill): Tags[number] | null {
   if (f === 'b-pocket') return { skill: 'timing', sub: 'timing/steady', w: 0.4 };
   if (f === 'b-walk') return { skill: 'cadences', sub: 'cadences/progression', w: 0.3 };
   if (f === 'b-chord') return { skill: 'theory', sub: 'theory/harmony', w: 0.3 };
+  // The pianist's ear (PIANO_AUDIT §3): the ear share through the keys, by what the level asks to hear.
+  if (f === 'k-ear') {
+    const k = drill.spec.kind;
+    if (k === 'intervals') return { skill: 'intervals', sub: drill.spec.option === 2 ? 'intervals/harmonic' : 'intervals/melodic', w: 0.5 };
+    if (k === 'bass-line') return { skill: 'dictation', sub: 'dictation/bass', w: 0.5 };
+    if (k === 'chords') return { skill: 'cadences', sub: 'cadences/progression', w: 0.5 };
+    if (k === 'harmonise') return { skill: 'cadences', sub: 'cadences/harmonize', w: 0.5 };
+    if (k === 'transpose') return { skill: 'transpose', sub: 'transpose/pitch', w: 0.5 };
+    return { skill: 'sequences', sub: 'sequences/melody', w: 0.5 };
+  }
+  // Piano harmony and reading families (PIANO_AUDIT I3): cadences, voicings, Barry Harris, sight-reading.
+  if (f === 'cadences') return { skill: 'cadences', sub: 'cadences/cadence', w: 0.3 };
+  if (f === 'voicings') return { skill: 'chords', sub: 'chords/voicing', w: 0.3 };
+  if (f === 'harris') return { skill: 'chords', sub: 'chords/barry', w: 0.2 };
+  if (f === 'control' && drill.spec.kind === 'reading') return { skill: 'sight', sub: 'sight/read', w: 0.4 };
   if (drill.goal.evenness) return { skill: 'timing', sub: 'timing/subdivide', w: 0.2 };
   return null;
 }

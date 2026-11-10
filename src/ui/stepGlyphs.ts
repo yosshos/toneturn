@@ -4,7 +4,9 @@ import type { GlyphKind } from './Glyph';
 
 /** A ladder level's symbol (0.64, owner: every technique / vocal family its own, like the ear course's steps). */
 export const FAMILY_GLYPH: Record<string, GlyphKind> = {
-  scales: 'scales', arpeggios: 'chords', cadences: 'prog', fingers: 'keys', control: 'tempo', advanced: 'scales', harris: 'improv', voicings: 'chords', jazz: 'prog', accomp: 'rhythm',
+  // PIANO_AUDIT I1: the keys path had four symbols twice (scales / advanced, chords / voicings, prog / jazz, keys /
+  // the key-notes topic) and accomp shared Highway's rhythm. Every piano family now has its own.
+  scales: 'scales', arpeggios: 'arp', cadences: 'prog', fingers: 'fingers1234', control: 'hairpin', advanced: 'octave', harris: 'improv', voicings: 'voicing', jazz: 'target', accomp: 'walk', 'k-ear': 'keysear',
   'g-fretting': 'fingers1234', 'g-picking': 'pick', 'g-legato': 'slur', 'g-scales': 'box', 'g-arps': 'arp', 'g-chords': 'chordbox', 'g-rhythm': 'strum', 'g-lead': 'bend', 'g-fingerstyle': 'pima', 'g-flamenco': 'fan', 'g-jazz': 'prog', 'g-reading': 'sight', 'g-impro': 'improv', 'g-bass': 'bass',
   // Bass (final check): 21 families, 21 symbols — the electric and the upright track share one path on an upright.
   'b-posread': 'position', 'b-impro': 'target',
@@ -21,6 +23,8 @@ export const TOPIC_GLYPH: Record<string, GlyphKind> = {
   'drum-read': 'drumread',
   'pan-ear': 'mixer', 'space-ear': 'echo', 'eq-ear': 'eq', 'filter-ear': 'eq', 'dyn-ear': 'tempo', 'tone-hz': 'tune', 'width-ear': 'mixer',
   'bass-notes': 'name', 'bass-shapes': 'intervals', 'bass-intervals': 'octave', 'bass-scales': 'box',
+  // PIANO_AUDIT §3: the piano's own topics.
+  'key-read': 'clefs', 'key-shapes': 'keychord', 'key-scales': 'keyscale',
 };
 /** Games sitting in a unit (they all used to be one puzzle piece). */
 export const GAME_STEP_GLYPH: Record<string, GlyphKind> = {

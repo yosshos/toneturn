@@ -327,7 +327,8 @@ const subBadges: Badge[] = SUB_SKILLS.map((s, i) => {
 // ======================================================================= technique (families × 7 + specials)
 
 // Bass-course families (b-*) get milestone + exam badges (bassBadges below), not one title per level.
-export type BadgeFamily = Exclude<FamilyId, 'custom' | BassFamilyId | DrumFamilyId>;
+// The pianist's ear (k-ear) gets milestones by items played back clean (keysEarBadges), not tempo-band titles.
+export type BadgeFamily = Exclude<FamilyId, 'custom' | BassFamilyId | DrumFamilyId | 'k-ear'>;
 export const PIANO_BADGE_FAMILIES: BadgeFamily[] = ['scales', 'arpeggios', 'cadences', 'fingers', 'control', 'advanced', 'harris', 'jazz', 'voicings', 'accomp'];
 export const GUITAR_BADGE_FAMILIES: BadgeFamily[] = ['g-fretting', 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-lead', 'g-fingerstyle', 'g-flamenco', 'g-jazz', 'g-reading', 'g-impro', 'g-bass'];
 export const BADGE_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES, ...GUITAR_BADGE_FAMILIES];
@@ -568,7 +569,41 @@ function drumBadges(): Badge[] {
   return out;
 }
 
+// ---------------------------------------------------------------- the pianist's ear (PIANO_AUDIT §3)
+// Its levels are call-and-response at one calm tempo, so a tempo band says nothing: the milestones count the
+// different items (kind × option, 14 in all) played back clean at least once — first steps, halfway, all of them.
+export const KEYS_EAR_ITEMS = 15;
+function keysEarBadges(): Badge[] {
+  const tiers: [number, { en: string; he: string }, Badge['tone']][] = [
+    [3, { en: 'first steps', he: 'צעדים ראשונים' }, 'bronze'],
+    [7, { en: 'halfway', he: 'חצי הדרך' }, 'gold'],
+    [KEYS_EAR_ITEMS, { en: 'the whole family', he: 'כל המשפחה' }, 'platinum'],
+  ];
+  return tiers.map(([n, what, tone]) => ({
+    id: `tech:k-ear:${n}`,
+    cat: 'technique' as const,
+    icon: '𝄞',
+    group: 'k-ear',
+    tone,
+    name: { en: `Pianist's ear: ${what.en}`, he: `אוזן של פסנתרן: ${what.he}` },
+    desc: { en: `Play back ${n} of the ${KEYS_EAR_ITEMS} ear items cleanly.`, he: `לנגן בחזרה נקי ${n} מתוך ${KEYS_EAR_ITEMS} תרגילי השמיעה.` },
+    rule: (x: BadgeInput): BadgeCheck => count(keysEarClean(x.technique?.cleanItems), n),
+  }));
+}
+/** Different k-ear items (kind × option) with a clean take: "k-ear:echo-motif:7:R:op1" → "echo-motif:1". */
+export function keysEarClean(clean: Record<string, number> | undefined): number {
+  const kinds = new Set<string>();
+  for (const id of Object.keys(clean ?? {})) {
+    const parts = id.split(':');
+    if (parts[0] !== 'k-ear') continue;
+    const op = parts.find((x) => /^op\d+$/.test(x)) ?? 'op0';
+    kinds.add(`${parts[1]}:${op}`);
+  }
+  return kinds.size;
+}
+
 const techniqueBadges: Badge[] = [
+  ...keysEarBadges(),
   ...BADGE_FAMILIES.flatMap((f) =>
     FAMILY_TITLES[f].map(([en, he], i) => {
       const lv = i + 1;
@@ -745,7 +780,7 @@ export function badgeCourse(b: Pick<Badge, 'id' | 'cat' | 'group'>): { course: B
       if (isBassGroup(g) || b.id.startsWith('tech:g-bass')) return { course: 'bass' };
       if (g.startsWith('d-') || b.id.startsWith('tech:drums:')) return { course: 'drums' };
       if (g.startsWith('g-')) return { course: 'guitar' };
-      if ((PIANO_BADGE_FAMILIES as string[]).includes(g) || b.id.startsWith('tech:even-')) return { course: 'keys' };
+      if ((PIANO_BADGE_FAMILIES as string[]).includes(g) || g === 'k-ear' || b.id.startsWith('tech:even-')) return { course: 'keys' };
       // Clean takes, tempo records: any instrument.
       return { course: 'keys', alsoIn: ['guitar', 'bass', 'drums'] };
     }

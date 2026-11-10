@@ -795,3 +795,142 @@ TOPIC_GEN['key-notes'] = {
   },
 };
 TOPIC_TAGS['key-notes'] = (l) => (l >= 4 ? tg(['instrument', 'keyboard', 0.7], ['theory', 'spelling', 0.3]) : tg(['instrument', 'keyboard', 0.7], ['notes', 'names', 0.3]));
+
+// ======================================================================= the piano's own topics (PIANO_AUDIT §3)
+// The keys course had three instrument topics (notes on the keys, play it back, play a song). These add reading both
+// clefs, chords as shapes and scales as shapes — answered on the keyboard (tap or MIDI), graded note for note.
+
+/** A note drawn on a staff: find it on the keys (exact octave). Middle C is C4. */
+TOPIC_GEN['key-read'] = {
+  title: { en: 'Reading both clefs', he: 'קריאה בשני המפתחות' },
+  skill: 'instrument',
+  forPlays: ['keys'],
+  levels: [
+    { en: 'Treble clef', he: 'מפתח סול' },
+    { en: 'Bass clef', he: 'מפתח פה' },
+    { en: 'Ledger lines, both clefs', he: 'קווי עזר, בשני המפתחות' },
+    { en: 'Sharps and flats', he: 'דיאזים ובמולים' },
+    { en: 'Two notes at once', he: 'שני צלילים יחד' },
+  ],
+  gen(seed, level, id) {
+    const rnd = rng(seed);
+    const base = { id, topic: 'key-read', level, seed, skill: 'instrument' as const, surface: 'keys' as const, instrument: 'keys' as const, match: 'exact' as const, difficulty: [850, 950, 1050, 1150, 1250][level - 1] };
+    const naturals = (lo: number, hi: number) => Array.from({ length: hi - lo + 1 }, (_, i) => lo + i).filter((m) => NATURAL.has(mod12(m)));
+    // On the staff: treble C4–G5, bass F2–B3 (one ledger line at most at the edges).
+    const RANGE = { treble: [60, 79], bass: [41, 59] } as const;
+    const clef: 'treble' | 'bass' = level === 1 ? 'treble' : level === 2 ? 'bass' : rnd() < 0.5 ? 'treble' : 'bass';
+    const clefHe = clef === 'treble' ? 'מפתח סול' : 'מפתח פה';
+    if (level === 5) {
+      const lo = pickR(rnd, naturals(RANGE[clef][0], RANGE[clef][1] - 7));
+      const hi = lo + pickR(rnd, [3, 4, 5, 7, 8, 9, 12]);
+      return placeQ({ ...base, ask: { en: `Play both notes (${clef} clef).`, he: `נגנו את שני הצלילים (${clefHe}).` }, target: [lo, hi], as: 'set', given: { midis: [lo, hi], clef, key: null, chord: true } });
+    }
+    let m: number;
+    if (level <= 2) m = pickR(rnd, naturals(RANGE[clef][0], RANGE[clef][1]));
+    else if (level === 3) m = pickR(rnd, clef === 'treble' ? [...naturals(55, 59), ...naturals(81, 86)] : [...naturals(33, 40), ...naturals(60, 64)]);
+    else m = pickR(rnd, Array.from({ length: RANGE[clef][1] - RANGE[clef][0] + 1 }, (_, i) => RANGE[clef][0] + i).filter((x) => !NATURAL.has(mod12(x))));
+    return placeQ({ ...base, ask: { en: `Find this note on the keys (${clef} clef).`, he: `מצאו את התו על הקלידים (${clefHe}).` }, target: [m], as: 'seq', given: { midis: [m], clef, key: null } });
+  },
+};
+TOPIC_TAGS['key-read'] = tg(['instrument', 'keyboard', 0.5], ['notes', 'staff', 0.5]);
+
+const TRIADS: { iv: number[]; en: string; he: string; sym: string }[] = [
+  { iv: [0, 4, 7], en: 'major', he: "מז'ור", sym: '' },
+  { iv: [0, 3, 7], en: 'minor', he: 'מינור', sym: 'm' },
+  { iv: [0, 3, 6], en: 'diminished', he: 'מוקטן', sym: '°' },
+  { iv: [0, 4, 8], en: 'augmented', he: 'מוגדל', sym: '+' },
+];
+const SEVENTHS: { iv: number[]; sym: string }[] = [
+  { iv: [0, 4, 7, 11], sym: 'maj7' },
+  { iv: [0, 4, 7, 10], sym: '7' },
+  { iv: [0, 3, 7, 10], sym: 'm7' },
+  { iv: [0, 3, 6, 10], sym: 'm7♭5' },
+];
+const INV_NAME: Bi[] = [
+  { en: 'root position', he: 'מצב יסודי' },
+  { en: '1st inversion', he: 'היפוך ראשון' },
+  { en: '2nd inversion', he: 'היפוך שני' },
+  { en: '3rd inversion', he: 'היפוך שלישי' },
+];
+/** The chord's notes from the bass up, inversion `inv`, the bass at `bass`. */
+const stackFrom = (iv: number[], inv: number, bass: number): number[] => {
+  const xs = [...iv.slice(inv), ...iv.slice(0, inv).map((x) => x + 12)];
+  return xs.map((x) => bass + x - xs[0]);
+};
+
+/** Chords as shapes on the keys: triads from any key, inversions, sevenths, LH shells. */
+TOPIC_GEN['key-shapes'] = {
+  title: { en: 'Chords as shapes', he: 'אקורדים כצורות' },
+  skill: 'instrument',
+  forPlays: ['keys'],
+  levels: [
+    { en: 'Major and minor triads', he: "משולשים מז'וריים ומינוריים" },
+    { en: 'Triads from black keys, diminished, augmented', he: 'משולשים מקלידים שחורים, מוקטן, מוגדל' },
+    { en: 'Inversions', he: 'היפוכים' },
+    { en: 'Seventh chords in every inversion', he: 'ספטאקורדים בכל היפוך' },
+    { en: 'Left-hand shells', he: 'קונכיות ביד שמאל' },
+  ],
+  gen(seed, level, id) {
+    const rnd = rng(seed);
+    const base = { id, topic: 'key-shapes', level, seed, skill: 'instrument' as const, surface: 'keys' as const, instrument: 'keys' as const, match: 'exact' as const, as: 'set' as const, difficulty: [900, 1000, 1100, 1200, 1300][level - 1] };
+    const root = level === 1 ? pickR(rnd, [0, 2, 4, 5, 7, 9]) : Math.floor(rnd() * 12);
+    if (level <= 3) {
+      const c = level === 1 ? TRIADS[Math.floor(rnd() * 2)] : pickR(rnd, TRIADS);
+      const inv = level === 3 ? pickR(rnd, [1, 2]) : 0;
+      const bassPc = mod12(root + c.iv[inv]);
+      const bass = placeInRange(bassPc, 55, 66);
+      const name: Bi = { en: `${pcName(root)} ${c.en}`, he: `${pcNameHe(root)} ${c.he}` };
+      const slash: Bi = inv ? { en: ` (${pcName(root)}${c.sym}/${pcName(bassPc)}), ${INV_NAME[inv].en}`, he: ` (${pcName(root)}${c.sym}/${pcName(bassPc)}), ${INV_NAME[inv].he}` } : { en: '', he: '' };
+      return placeQ({ ...base, ask: { en: `Build ${name.en}${slash.en} from the note given.`, he: `בנו ${name.he}${slash.he} מהצליל הנתון.` }, target: stackFrom(c.iv, inv, bass), given: { midis: [bass], key: null } });
+    }
+    if (level === 4) {
+      const c = pickR(rnd, SEVENTHS);
+      const inv = Math.floor(rnd() * 4);
+      const bassPc = mod12(root + c.iv[inv]);
+      const bass = placeInRange(bassPc, 55, 64);
+      const sym = `${pcName(root)}${c.sym}`;
+      return placeQ({ ...base, ask: { en: `Build ${sym}, ${INV_NAME[inv].en}, from the note given.`, he: `בנו ${sym}, ${INV_NAME[inv].he}, מהצליל הנתון.` }, target: stackFrom(c.iv, inv, bass), given: { midis: [bass], key: null } });
+    }
+    // 5: shells for ii–V–I chords. A = root, 3rd, 7th; B = root, 7th, then the 3rd an octave up. Root in F2–E3.
+    const c = pickR(rnd, SEVENTHS.slice(0, 3));
+    const r = placeInRange(root, 41, 52);
+    const b = rnd() < 0.5;
+    const target = b ? [r, r + c.iv[3], r + c.iv[1] + 12] : [r, r + c.iv[1], r + c.iv[3]];
+    const sym = `${pcName(root)}${c.sym}`;
+    return placeQ({ ...base, ask: b ? { en: `Left-hand shell of ${sym}: root, 7th, then the 3rd on top.`, he: `קונכייה של ${sym} ביד שמאל: יסוד, ספטימה, והטרצה למעלה.` } : { en: `Left-hand shell of ${sym}: root, 3rd, 7th.`, he: `קונכייה של ${sym} ביד שמאל: יסוד, טרצה, ספטימה.` }, target, given: { midis: [r], key: null, clef: 'bass' } });
+  },
+};
+TOPIC_TAGS['key-shapes'] = (l) => (l >= 4 ? tg(['instrument', 'keyboard', 0.6], ['chords', 'voicing', 0.4]) : tg(['instrument', 'keyboard', 0.6], ['theory', 'spelling', 0.4]));
+
+const KEY_SCALES: { iv: number[]; en: string; he: string }[] = [
+  { iv: [0, 2, 4, 5, 7, 9, 11, 12], en: 'major', he: "מז'ור" },
+  { iv: [0, 2, 3, 5, 7, 8, 11, 12], en: 'harmonic minor', he: 'מינור הרמוני' },
+  { iv: [0, 2, 3, 5, 7, 9, 11, 12], en: 'melodic minor (going up)', he: 'מינור מלודי (בעלייה)' },
+  { iv: [0, 2, 3, 5, 7, 9, 10, 12], en: 'dorian', he: 'דורי' },
+  { iv: [0, 2, 4, 5, 7, 9, 10, 12], en: 'mixolydian', he: 'מיקסולידי' },
+  { iv: [0, 2, 4, 6, 7, 9, 11, 12], en: 'lydian', he: 'לידי' },
+];
+/** Scales as shapes on the keys: every note of one octave, up from the tonic. */
+TOPIC_GEN['key-scales'] = {
+  title: { en: 'Scales as shapes', he: 'סולמות כצורות' },
+  skill: 'instrument',
+  forPlays: ['keys'],
+  levels: [
+    { en: 'Major scales from white keys', he: "סולמות מז'ור מקלידים לבנים" },
+    { en: 'Major scales from every key', he: "סולמות מז'ור מכל קליד" },
+    { en: 'Harmonic minor', he: 'מינור הרמוני' },
+    { en: 'Melodic minor', he: 'מינור מלודי' },
+    { en: 'Modes: dorian, mixolydian, lydian', he: 'מודוסים: דורי, מיקסולידי, לידי' },
+  ],
+  gen(seed, level, id) {
+    const rnd = rng(seed);
+    const base = { id, topic: 'key-scales', level, seed, skill: 'instrument' as const, surface: 'keys' as const, instrument: 'keys' as const, match: 'exact' as const, as: 'seq' as const, difficulty: [900, 1000, 1100, 1200, 1300][level - 1] };
+    const root = level === 1 ? pickR(rnd, [0, 2, 4, 5, 7, 9, 11]) : Math.floor(rnd() * 12);
+    const sc = level <= 2 ? KEY_SCALES[0] : level === 3 ? KEY_SCALES[1] : level === 4 ? KEY_SCALES[2] : pickR(rnd, KEY_SCALES.slice(3));
+    const tonic = placeInRange(root, 55, 66);
+    // Minor scales are named with sharps where usual (C♯, F♯, G♯ minor).
+    const n = noteName(root, (level === 3 || level === 4) && [1, 6, 8].includes(mod12(root)));
+    return placeQ({ ...base, ask: { en: `Play ${n.en} ${sc.en}, one octave up from the note given.`, he: `נגנו ${n.he} ${sc.he}, אוקטבה אחת למעלה מהצליל הנתון.` }, target: sc.iv.map((x) => tonic + x), given: { midis: [tonic], key: null } });
+  },
+};
+TOPIC_TAGS['key-scales'] = tg(['instrument', 'keyboard', 0.6], ['modes', 'scales', 0.4]);
