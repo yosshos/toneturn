@@ -14,6 +14,10 @@ export type FamilyId =
   | 'voicings' // V (LH voicings and changes)
   | 'accomp' // M (stride, walking, boogie, Alberti)
   | 'k-ear' // the pianist's ear: hear it, play it back on the keys (PIANO_AUDIT §3)
+  // PIANO_JAZZ (2026-11-10): Barry Harris harmony (6th-diminished), bebop lines over forms and trading, jazz-piano harmony.
+  | 'k-sixdim'
+  | 'k-bebop'
+  | 'k-reharm'
   | 'custom' // the player's own drills
   // Guitar (docs/SPEC-GUITAR-TECHNIQUE.md): pitches are SOUNDING MIDI; notes carry string / fret.
   | 'g-fretting' // spider / chromatic permutations, stretches, shifts
@@ -92,6 +96,11 @@ export interface ExpNote {
   accent?: boolean;
   /** Chord tone of the current harmony (Barry Harris, improvisation checks). */
   chordTone?: boolean;
+  /**
+   * PIANO_JAZZ (trading fours): a landing inside the player's free bars — any of these pitch classes (the chord's tones),
+   * any octave, near this beat. The written pitch is only the model line's note.
+   */
+  land?: number[];
   /** Guitar / bass: string (1 = highest-sounding) and fret (0 = open). */
   string?: number;
   fret?: number;
@@ -267,6 +276,13 @@ export interface DrillGoal {
   bass?: BassGoal;
   /** Drum measures on top of per-limb timing (drumAnalyze.ts); each can only lower the verdict. */
   drum?: DrumGoal;
+  /**
+   * PIANO_JAZZ: free bars (trading fours with the band). Inside `windows` (beats) the player plays their own line: it
+   * is not matched note for note. The written notes there are landings (ExpNote.land); the other notes played must sit
+   * in the chord's scale or approach the next note by a half step (`scale`, pitch classes per stretch of beats), and
+   * there must be at least `minPerBar` notes a bar. `model` is a line that passes (the band's style; tests play it).
+   */
+  free?: { windows: [number, number][]; scale: { from: number; to: number; pcs: number[] }[]; minPerBar: number; model: { beat: number; dur: number; pitch: number }[] };
 }
 
 /** Drum pass rules (DRUMS_CURRICULUM §4.2): absent = the tier's timing / hit-rate / wrong-voice rules only. */

@@ -77,6 +77,8 @@ const SHORT: Record<string, L2> = {
   'key-read': { en: 'Both clefs', he: 'שני המפתחות' },
   'key-shapes': { en: 'Chord shapes', he: 'צורות אקורד' },
   'key-scales': { en: 'Scale shapes', he: 'צורות סולם' },
+  'key-sixdim': { en: 'Barry Harris chords', he: 'אקורדי בארי האריס' },
+  'key-jazz': { en: 'Jazz chords', he: 'אקורדי ג׳אז' },
   'staff-dictation': { en: 'Write it', he: 'לכתוב מנגינה' },
   'rhythm-build': { en: 'Build a rhythm', he: 'לבנות קצב' },
   'bass-dictation': { en: 'Write the bass', he: 'לכתוב בס' },

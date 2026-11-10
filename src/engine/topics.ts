@@ -14,6 +14,8 @@ import './topicsSkills';
 import './topicsAD';
 // 0.38 (spec AE): new topics and deeper levels for existing ones (wrappers run after the base topics).
 import './topicsInstrument';
+// PIANO_JAZZ: Barry Harris shapes and jazz chords on the keys.
+import './topicsPianoJazz';
 import './topicsWritten';
 import './topicsHarmony2';
 import './topicsPitch2';

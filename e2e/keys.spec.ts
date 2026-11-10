@@ -38,7 +38,9 @@ const openLevel = async (page: Page, family: string, level: string) => {
 };
 
 const FAMS: [string, number][] = [
-  ['scales', 15], ['arpeggios', 14], ['cadences', 7], ['fingers', 14], ['control', 12], ['advanced', 8], ['harris', 13], ['voicings', 17], ['jazz', 10], ['accomp', 17], ['k-ear', 8],
+  ['scales', 15], ['arpeggios', 14], ['cadences', 7], ['fingers', 14], ['control', 12], ['advanced', 8], ['harris', 15], ['voicings', 17], ['jazz', 10], ['accomp', 17], ['k-ear', 8],
+  // PIANO_JAZZ: Barry Harris harmony, bebop lines and trading, jazz-piano harmony.
+  ['k-sixdim', 9], ['k-bebop', 8], ['k-reharm', 7],
 ];
 
 test.describe('keys course', () => {
@@ -52,6 +54,16 @@ test.describe('keys course', () => {
     await openLevel(page, 'k-ear', 'k-ear-4');
     await expect(page.locator('[data-ear-card]')).toBeVisible();
     await expect(page.locator('.drill-staff, svg.staff')).toHaveCount(0);
+    expect(await overflow(page)).toBeLessThanOrEqual(4);
+  });
+
+  test('trading fours: the card shows Listen / You bars with their chords, not the notes', async ({ page }) => {
+    await seed(page);
+    await page.goto('/?unlock#/drills');
+    await expect(page.locator('[data-topic="styles"]')).toContainText('Jazz piano');
+    await openLevel(page, 'k-bebop', 'k-bebop-8');
+    await expect(page.locator('[data-ear-card]')).toBeVisible();
+    await expect(page.locator('.ear-bars .ear-chord').first()).toBeVisible();
     expect(await overflow(page)).toBeLessThanOrEqual(4);
   });
 

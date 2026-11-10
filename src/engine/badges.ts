@@ -329,7 +329,7 @@ const subBadges: Badge[] = SUB_SKILLS.map((s, i) => {
 // Bass-course families (b-*) get milestone + exam badges (bassBadges below), not one title per level.
 // The pianist's ear (k-ear) gets milestones by items played back clean (keysEarBadges), not tempo-band titles.
 export type BadgeFamily = Exclude<FamilyId, 'custom' | BassFamilyId | DrumFamilyId | 'k-ear'>;
-export const PIANO_BADGE_FAMILIES: BadgeFamily[] = ['scales', 'arpeggios', 'cadences', 'fingers', 'control', 'advanced', 'harris', 'jazz', 'voicings', 'accomp'];
+export const PIANO_BADGE_FAMILIES: BadgeFamily[] = ['scales', 'arpeggios', 'cadences', 'fingers', 'control', 'advanced', 'harris', 'jazz', 'voicings', 'accomp', 'k-sixdim', 'k-bebop', 'k-reharm'];
 export const GUITAR_BADGE_FAMILIES: BadgeFamily[] = ['g-fretting', 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-lead', 'g-fingerstyle', 'g-flamenco', 'g-jazz', 'g-reading', 'g-impro', 'g-bass'];
 export const BADGE_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES, ...GUITAR_BADGE_FAMILIES];
 /** Families whose levels together cover all 12 keys: one "Around the Clock" badge each (guitar list checked against guitarCatalog in tests). */
@@ -345,6 +345,9 @@ export const FAMILY_NAME: Record<BadgeFamily, L> = {
   jazz: { en: 'Jazz patterns', he: 'תבניות ג׳אז' },
   voicings: { en: 'Voicings', he: 'וויסינגים' },
   accomp: { en: 'Accompaniment', he: 'ליווי' },
+  'k-sixdim': { en: 'Barry Harris harmony', he: 'ההרמוניה של בארי האריס' },
+  'k-bebop': { en: 'Bebop lines', he: 'קווי ביבופ' },
+  'k-reharm': { en: 'Jazz piano harmony', he: 'הרמוניה של פסנתר ג׳אז' },
   'g-fretting': { en: 'Fretting hand', he: 'היד הלוחצת' },
   'g-picking': { en: 'Picking', he: 'פריטה' },
   'g-legato': { en: 'Legato', he: 'לגאטו' },
@@ -371,6 +374,9 @@ const FAMILY_ICON: Record<BadgeFamily, string> = {
   jazz: '🎷',
   voicings: '🎨',
   accomp: '🚂',
+  'k-sixdim': '°7',
+  'k-bebop': '♪',
+  'k-reharm': '♭9',
   'g-fretting': '🕷️',
   'g-picking': '🔻',
   'g-legato': '〰️',
@@ -397,6 +403,10 @@ const FAMILY_TITLES: Record<BadgeFamily, [string, string][]> = {
   harris: [['Sixth-Diminished Rookie', 'טירון שש־מוקטן'], ['Scale-Rule Student', 'תלמיד חוקי הסולם'], ['Bebop Walker', 'הולך ביבופ'], ['Chord-Tone Lander', 'נוחת על צלילי אקורד'], ['Harris Disciple', 'תלמיד של בארי'], ['Bebop Professor', 'פרופסור לביבופ'], ["Barry's Heir", 'היורש של בארי']],
   jazz: [['Shell Starter', 'מתחיל בשלדים'], ['Guide-Tone Guide', 'מורה דרך לצלילים מנחים'], ['Rootless Rambler', 'נווד בלי שורש'], ['ii-V-I Voyager', 'נוסע ii-V-I'], ['Lick Librarian', 'ספרן הליקים'], ['Changes Chaser', 'רודף המהלכים'], ['Jazz Virtuoso', 'וירטואוז הג׳אז']],
   voicings: [['Left-Hand Lookout', 'תצפית יד שמאל'], ['Shape Holder', 'מחזיק צורות'], ['Smooth Changer', 'מחליף חלק'], ['Drop-2 Dropper', 'מפיל דרופ־2'], ['Voicing Weaver', 'אורג וויסינגים'], ['Color Palette', 'פלטת צבעים'], ['Voicing Virtuoso', 'וירטואוז הוויסינגים']],
+  // PIANO_JAZZ: one title for each of the first seven levels.
+  'k-sixdim': [['Scale-of-Chords Climber', 'מטפס סולם האקורדים'], ['Borrower', 'שואל מהמוקטן'], ['Oblique Mover', 'נע באלכסון'], ['Spread Builder', 'בונה הפריסות'], ['Passing-Chord Weaver', 'אורג האקורדים העוברים'], ['Minor-Sixth Mover', 'מניע המינור שש'], ['Diminished Alchemist', 'אלכימאי המוקטן']],
+  'k-bebop': [['Changes Runner', 'רץ על המהלכים'], ['Minor-Key Hunter', 'צייד המינור'], ['Altered Explorer', 'חוקר האלטרד'], ['Blues Liner', 'מותח קווי בלוז'], ['Rhythm Racer', 'דוהר הריתם'], ['Standards Player', 'נגן הסטנדרטים'], ['Two-Handed Bopper', 'בופר בשתי ידיים']],
+  'k-reharm': [['Altered Colourist', 'צבעי האלטרד'], ['Minor-Cadence Maker', 'עושה הקדנצה המינורית'], ['Ballad Voicer', 'מעצב הבלדות'], ['Reharmoniser', 'מחדש ההרמוניה'], ['Modal Comper', 'המלווה המודאלי'], ['Solo Pianist', 'פסנתרן סולו'], ['Harmony Master', 'אמן ההרמוניה']],
   accomp: [['Oom-Pah Starter', 'אום־פה מתחיל'], ['Alberti Apprentice', 'שוליית אלברטי'], ['Boogie Walker', 'הולך בוגי'], ['Walking-Bass Wanderer', 'נווד הבס המהלך'], ['Stride Strider', 'צועד הסטרייד'], ['One-Person Band', 'להקת איש אחד'], ['Groove Engine', 'מנוע הגרוב']],
   'g-fretting': [['Fret Crawler', 'זוחל על הסריגים'], ['Finger Shuffler', 'מערבב אצבעות'], ['Wall Spider', 'עכביש על הקיר'], ['Neck Climber', 'מטפס הצוואר'], ['Permutation Machine', 'מכונת התמורות'], ['Rubber Hand', 'יד מגומי']],
   'g-picking': [['Down-Up Rookie', 'טירון למטה־למעלה'], ['String Hopper', 'קופץ מיתרים'], ['Economy Class', 'מחלקת תיירים'], ['String Skipper', 'מדלג המיתרים'], ['Hummingbird', 'יונק הדבש'], ['Sweep Sorcerer', 'מכשף הסוויפ'], ['Chicken Picker', 'מנקר כמו תרנגול']],

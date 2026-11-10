@@ -546,6 +546,68 @@ export const GLYPHS: Record<string, ReactNode> = {
       <circle cx={16} cy={-19} r={3.2} fill={I} />
     </>
   ),
+  // PIANO_JAZZ: the jazz-piano families and topics.
+  /** Barry Harris harmony: a four-note block chord beside the diminished circle. */
+  sixdim: (
+    <>
+      {head(-6, 15, 5.4, 3.8)}
+      {head(-6, 6, 5.4, 3.8)}
+      {head(-6, -3, 5.4, 3.8)}
+      {head(-6, -12, 5.4, 3.8)}
+      <path d="M0 13V-24" {...sw} strokeWidth={2.8} />
+      <circle cx={15} cy={-8} r={6} {...sw} strokeWidth={2.8} />
+    </>
+  ),
+  /** Bebop lines: four beamed 8ths running down to a landing note. */
+  bebop: (
+    <>
+      {head(-20, -4, 4.6, 3.3)}
+      {head(-10, 1, 4.6, 3.3)}
+      {head(0, 6, 4.6, 3.3)}
+      {head(10, 11, 4.6, 3.3)}
+      <path d="M-16 -5V-22M-6 0V-18M4 5V-14M14 10V-10" {...sw} strokeWidth={2.4} />
+      <path d="M-16 -22L14 -10" stroke={I} strokeWidth={5} />
+      <circle cx={22} cy={17} r={3.4} fill={I} />
+    </>
+  ),
+  /** Jazz-piano harmony: one chord turning into another (a substitution). */
+  reharm: (
+    <>
+      {head(-14, 12, 5, 3.6)}
+      {head(-14, 2, 5, 3.6)}
+      {head(14, 15, 5, 3.6)}
+      {head(14, 5, 5, 3.6)}
+      {head(14, -5, 5, 3.6)}
+      <path d="M-16 -8 C-12 -24 8 -24 12 -14" {...sw} strokeWidth={2.6} />
+      <path d="M6 -16 L12 -13 L14 -20" {...sw} strokeWidth={2.6} strokeLinejoin="round" />
+    </>
+  ),
+  /** Barry Harris shapes on the keys: a keyboard with a small diminished circle above. */
+  keydim: (
+    <>
+      <g {...sw} strokeWidth={2.6}>
+        <rect x={-22} y={0} width={44} height={18} rx={2.5} />
+        <path d="M-11 0v18M0 0v18M11 0v18" strokeWidth={1.8} />
+      </g>
+      <circle cx={-16.5} cy={11} r={3} fill={I} />
+      <circle cx={5.5} cy={11} r={3} fill={I} />
+      <circle cx={0} cy={-12} r={7} {...sw} strokeWidth={2.8} />
+    </>
+  ),
+  /** Jazz chords as shapes: dots spread over two hands' keys, a gap between them. */
+  keyjazz: (
+    <>
+      <g {...sw} strokeWidth={2.6}>
+        <rect x={-24} y={-6} width={20} height={22} rx={2.5} />
+        <rect x={4} y={-6} width={20} height={22} rx={2.5} />
+      </g>
+      <circle cx={-18} cy={8} r={3} fill={I} />
+      <circle cx={-10} cy={8} r={3} fill={I} />
+      <circle cx={10} cy={8} r={3} fill={I} />
+      <circle cx={18} cy={8} r={3} fill={I} />
+      <circle cx={14} cy={-16} r={3} fill={I} />
+    </>
+  ),
 };
 export type GlyphKind = keyof typeof GLYPHS;
 

@@ -294,11 +294,17 @@ export const VOCAL_PROGRAMS: { id: string; base: number; levels: { level: number
 // Bass 0.66: position reading after the first reading levels, fills and target-note solos once chords and scales are in.
 const DRUM_LATER: Record<string, number> = { 'd-funk': 3, 'd-shuffle': 3, 'd-mideast': 3, 'd-indep': 2, 'd-feet': 2, 'd-ear': 1, 'd-jazz': 4, 'd-latin': 4, 'b-posread': 2, 'b-impro': 4 };
 /**
+ * PIANO_JAZZ: the jazz-piano families come after the lines and voicings they build on — Barry Harris harmony after the
+ * Harris lines' block chords, bebop lines after guide tones and the first Harris lines, jazz-piano harmony after the
+ * rootless voicings. (With the jazz emphasis the classical families are hidden, so they arrive sooner on that path.)
+ */
+const KEYS_JAZZ_LATER: Record<string, number> = { 'k-sixdim': 9, 'k-bebop': 6, 'k-reharm': 6 };
+/**
  * PIANO_AUDIT I2: every piano family's level 1 sat at the same difficulty as scales L1 — octaves (advanced L1), Barry
  * Harris lines and rootless voicings came in the first unit. Now the basics lead (scales, five-finger, the pianist's
  * ear, Alberti / cadences one step later) and the jazz and advanced families start after a few scale levels.
  */
-export const KEYS_LATER: Record<string, number> = { scales: 0, fingers: 0, 'k-ear': 0, arpeggios: 1, cadences: 1, control: 1, accomp: 2, voicings: 3, harris: 4, jazz: 4, advanced: 6 };
+export const KEYS_LATER: Record<string, number> = { scales: 0, fingers: 0, 'k-ear': 0, arpeggios: 1, cadences: 1, control: 1, accomp: 2, voicings: 3, harris: 4, jazz: 4, advanced: 6, ...KEYS_JAZZ_LATER };
 /** Every level of every technique family and vocal program as a path step (0.61, owner: technique inside the course path). */
 function ladderSteps(): PathStep[] {
   const out: PathStep[] = [];
