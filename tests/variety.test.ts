@@ -18,7 +18,8 @@ const EXEMPT = new Set(['time-signatures', 'voice-leading', 'tempo', 'bh-keys',
   // 0.50.1: swing on drums — a few swing ratios × tempi; the melody that used to vary it is gone on purpose.
   'swing-ratio']);
 /** Single levels: tapping the Middle-Eastern cycles (a drill), and "what made it sadder" (4 fixed changes × the music). */
-const EXEMPT_LEVEL = new Set(['eastern-rhythm L5', 'mood L4']);
+// prog-meter L5 (metric modulation): a few tempo ratios × three start tempos, finite by design.
+const EXEMPT_LEVEL = new Set(['eastern-rhythm L5', 'mood L4', 'prog-meter L5']);
 
 describe('item variety', () => {
   it('every practice topic level yields at least 20 different items in 120 draws', () => {
