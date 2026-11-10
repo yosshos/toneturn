@@ -17,7 +17,8 @@ const arg = (name, dflt) => {
 const DEVICE = arg('device', 'cpu');
 const DTYPE = arg('dtype', 'fp32');
 const LIMIT = Number(arg('limit', Infinity));
-const SRC = arg('src', null)?.split(',');
+// Default: only the fixed lines the app plays from files (prompts / feedback are made per question and are never shipped — 0.69).
+const SRC = (arg('src', null) ?? 'mini,mini-name,intro,go,preview,memory,other').split(',');
 // --shard k/n: this process renders every n-th line (run n processes side by side); each writes its own part file
 // and merges all parts into manifest.json on every save.
 const [SHARD, SHARDS] = (arg('shard', '0/1')).split('/').map(Number);
