@@ -18,6 +18,26 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.66.0',
+    date: '2026-11-10',
+    en: [
+      'Drums: a drummer’s ear, more Middle-Eastern rhythms (9/8, 7/8, 10/8), flams and drags, jazz and Latin, and a band under the grooves',
+      'Drums work best on an electronic kit by MIDI; an acoustic kit by microphone now covers the basic grooves (beta), and the hi-hat foot works on more kits',
+      'Bass: interval shapes, scale boxes, reading in positions, fills and target notes, more plucking patterns; out of beta',
+      'Your level per course counts only that instrument’s playing',
+      'Tapping exercises count you in (4 3 2 1 on the pad); a missed tap says so plainly; the lesson score is readable',
+      'Path units show your progress (steps done) instead of coloured dots',
+    ],
+    he: [
+      'תופים: שמיעה למתופפים, עוד מקצבים מזרחיים (9/8, 7/8, 10/8), פלאמים ודראגים, ג׳אז ולטיני, ולהקה מתחת לגרובים',
+      'התופים עובדים הכי טוב על מערכת אלקטרונית ב־MIDI; מערכת אקוסטית דרך מיקרופון מכסה עכשיו את הגרובים הבסיסיים (בטא), ופדל ההיי־האט עובד ביותר מערכות',
+      'בס: מרווחים כצורות, תיבות סולם, קריאה בפוזיציות, מילויים וצלילי מטרה, עוד תבניות פריטה; יצא מבטא',
+      'הרמה בכל קורס סופרת רק את הנגינה בכלי שלו',
+      'בתרגילי הקשה יש ספירה (4 3 2 1 על הפד); החטאה נאמרת בפשטות; ציון השיעור קריא',
+      'יחידות במסלול מראות את ההתקדמות (צעדים שעשיתם) במקום נקודות צבעוניות',
+    ],
+  },
+  {
     version: '0.65.0',
     date: '2026-11-10',
     en: [
