@@ -1912,3 +1912,23 @@
 :root[data-theme] .ob-course.on {
   background: color-mix(in srgb, var(--purple) 12%, var(--card));
 }
+
+/* 0.66 (owner): unit progress instead of area dots; titles never break inside a word; on a phone the test-out button sits under
+   the title so the title keeps the width. */
+:root[data-theme] .unit-banner .unit-prog { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+:root[data-theme] .unit-banner .up-bar { flex: 1; max-width: 140px; height: 8px; border-radius: 99px; background: rgba(255, 255, 255, 0.7); border: 1.5px solid var(--ink-c); overflow: hidden; }
+:root[data-theme] .unit-banner .up-bar i { display: block; height: 100%; background: var(--ink-c); }
+:root[data-theme] .unit-banner .up-n { font-weight: 800; font-size: 0.8rem; color: var(--ink-c); }
+:root[data-theme] .unit-banner b { overflow-wrap: normal; word-break: normal; hyphens: none; line-height: 1.15; }
+@media (max-width: 520px) {
+  :root[data-theme] .path2 .unit-banner { flex-wrap: wrap; }
+  :root[data-theme] .path2 .unit-banner .unit-copy { flex: 1 1 calc(100% - 60px); }
+  :root[data-theme] .path2 .unit-banner .test-out { margin-inline-start: 54px; }
+}
+/* labels at the staff's edges stay on screen */
+:root[data-theme] .path2 .road .sys .node { width: 112px; }
+:root[data-theme] .path2 .road .sys .node .node-btn { width: 112px; }
+:root[data-theme] .path2 .road .sys .node[data-slot='0'] { --x: 19%; }
+:root[data-theme] .path2 .road .sys .node[data-slot='1'] { --x: 46%; }
+:root[data-theme] .path2 .road .sys .node[data-slot='2'] { --x: 73%; }
+:root[data-theme] .path2 .road .sys .node .node-text b { overflow-wrap: anywhere; max-width: 108px; text-align: center; }

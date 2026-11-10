@@ -499,11 +499,23 @@ export function PathView2({
                     {fill(tx.unit, { n: u.no ?? u.n })} · <span dir="ltr">{fill(tx.around, { d: u.difficulty })}</span>
                   </small>
                   <b>{th ? th.name[lang] : tx.section[u.section]}</b>
-                  <span className="unit-areas" aria-hidden="true">
-                    {u.areas.map((a) => (
-                      <i key={a} style={{ background: DOMAIN_HUE[a] }} />
-                    ))}
-                  </span>
+                  {/* 0.66 (owner): the unit shows its progress (steps done / steps) — the old row of area-colour dots read as
+                      stars that were "lit" before starting. */}
+                  {(() => {
+                    const total = u.steps.length;
+                    const done = u.steps.filter((x) => x.state === 'done' || x.state === 'mastered' || x.state === 'tested').length;
+                    return (
+                      <span className="unit-prog" data-unit-done={done} data-unit-total={total}>
+                        <span className="up-bar" aria-hidden="true">
+                          <i style={{ width: `${total ? Math.round((100 * done) / total) : 0}%` }} />
+                        </span>
+                        <span className="up-n" dir="ltr">
+                          {done}/{total}
+                        </span>
+                        <span className="sr-only">{lang === 'he' ? `${done} מתוך ${total} צעדים` : `${done} of ${total} steps`}</span>
+                      </span>
+                    );
+                  })()}
                 </span>
                 {u.status === 'projected' ? (
                   <button className="btn small ghost test-out" onClick={() => onTestOut(u)}>
