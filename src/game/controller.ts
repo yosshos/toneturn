@@ -30,7 +30,7 @@ import {
 import { evaluateSung, type SungResult } from '../engine/sing';
 import { gradeSungSequence } from '../engine/memory';
 import { gradeReading,
-  gradeHolds, readTimeline, countInPulses, meterOf } from '../engine/rhythm';
+  gradeHolds, readTimeline, countInPulses, meterOf, onsetBeats } from '../engine/rhythm';
 import { applyClicks, gradeLanes, gradeTempo, tempoTimeline } from '../engine/clicks';
 import { accuracyFor, type Modality } from '../engine/scoring';
 import type { PaceProfile } from '../engine/fluency';
@@ -984,10 +984,32 @@ export class LessonController {
         if (await this.evaluate(pass ? 'accurate' : 'wrong', signal, undefined, { timeMs: null, modality, accuracy, precision: gl?.precision ?? gt?.steadiness ?? 0 })) return;
         continue;
       }
-      const g = gradeReading(q.rhythm, q.bpm, this.readTaps, q.level);
+      // 0.69 (owner: taps on the beat marked late): a STEADY offset is the device's audio delay (Bluetooth, some
+      // Androids), not the player's time — when every tap is late (or early) by about the same amount, grade the
+      // taps with that delay taken out and say so. A wobbly offset stays the player's.
+      let taps = this.readTaps;
+      let delayNote: number | null = null;
+      {
+        const beatMs = 60000 / q.bpm;
+        const onsMs = onsetBeats(q.rhythm).map((b) => b * beatMs);
+        const offs = taps.map((t) => onsMs.reduce((best, o) => (Math.abs(t - o) < Math.abs(best) ? t - o : best), Infinity)).filter((x) => Number.isFinite(x));
+        if (offs.length >= Math.max(4, Math.round(onsMs.length * 0.6))) {
+          const sorted = [...offs].sort((a, b) => a - b);
+          const med = sorted[Math.floor(sorted.length / 2)];
+          const mad = [...offs.map((x) => Math.abs(x - med))].sort((a, b) => a - b)[Math.floor(offs.length / 2)];
+          if (Math.abs(med) >= 50 && Math.abs(med) <= 320 && mad <= 45) {
+            taps = taps.map((t) => Math.round(t - med));
+            delayNote = Math.round(med);
+          }
+        }
+      }
+      const g = gradeReading(q.rhythm, q.bpm, taps, q.level);
+      if (delayNote !== null)
+        this.patch({ caption: this.cfg.outputLang === 'he' ? `ההקשות היו קבועות ב־${Math.abs(delayNote)} מ״ש ${delayNote > 0 ? 'אחרי' : 'לפני'} הקליק — כנראה השהיית שמע במכשיר (למשל בלוטות׳). הוצאנו אותה; כדאי לכייל בהגדרות.` : `Your taps were a steady ${Math.abs(delayNote)} ms ${delayNote > 0 ? 'behind' : 'ahead of'} the click — likely audio delay (e.g. Bluetooth). We took it out; calibrate in Settings.` });
       // Hold-to-sustain: only when the pad was pressed and released (not voice / knock onsets).
-      const presses = this.readTaps.map((down) => ({ down, up: this.readUps.find((u) => u > down) ?? null }));
-      const holds = this.readUps.length >= Math.ceil(this.readTaps.length / 2) ? gradeHolds(q.rhythm, q.bpm, presses) : { judged: 0, held: 0 };
+      const shift = delayNote ?? 0;
+      const presses = this.readTaps.map((down) => ({ down: down - shift, up: (this.readUps.find((u) => u > down) ?? null) === null ? null : this.readUps.find((u) => u > down)! - shift }));
+      const holds = this.readUps.length >= Math.ceil(taps.length / 2) ? gradeHolds(q.rhythm, q.bpm, presses) : { judged: 0, held: 0 };
       if (holds.judged > 0) {
         g.accuracy = Math.round((0.85 * g.accuracy + 0.15 * (holds.held / holds.judged)) * 1000) / 1000;
         this.patch({ caption: `${holds.held}/${holds.judged} ${this.cfg.outputLang === 'he' ? 'צלילים ארוכים הוחזקו נכון' : 'long notes held right'}` });
