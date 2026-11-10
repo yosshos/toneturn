@@ -146,7 +146,7 @@ describe('the line inventory', () => {
 
   // When the recordings are committed, every static line must have one (render with npm run voice:render).
   const MANIFEST = 'public/voice/en/manifest.json';
-  it.skipIf(!existsSync(MANIFEST) || !process.env.VOICE_COMPLETE)('every static line is recorded', () => {
+  it.skipIf(!existsSync(MANIFEST))('every static line is recorded', () => {
     const m = JSON.parse(readFileSync(MANIFEST, 'utf8')) as VoiceManifest;
     const missing = distinct([...miniLines(), ...previewLines(), ...memoryLines()]).filter((l) => !lookup(m, l.text));
     expect(missing.map((l) => l.text)).toEqual([]);
