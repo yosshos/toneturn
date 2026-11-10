@@ -56,6 +56,8 @@ const POOL: Record<string, Make> = {
   tech3: (d) => ({ id: 'tech3', title: { en: '3 technique sessions', he: '3 אימוני טכניקה' }, now: d.sessions.filter((s) => s.startsWith('tech') || s.startsWith('technique')).length, target: 3, color: '#FFD43B', glyph: d.course === 'drums' ? 'sticks' : d.course === 'guitar' ? 'guitar' : d.course === 'bass' ? 'bass' : 'keys' }),
   // Exam prep (0.67): what the Bagrut and entrance exams test — theory, reading, dictation, cadences.
   theory5: (d) => ({ id: 'theory5', title: { en: '5 exam-topic answers right', he: '5 תשובות נכונות בנושאי בחינה' }, now: d.events.filter((e) => sameDay(e.at, d.day) && e.set === undefined && EXAM_SKILLS.includes(e.skill) && (e.score ?? (e.correct ? 1 : 0)) >= 0.7).length, target: 5, color: '#FF8A3D', glyph: 'scales' }),
+  // Jazz (EAR_THEORY_AUDIT): harmony by ear — chords, changes, reharmonization, lines.
+  harmony5: (d) => ({ id: 'harmony5', title: { en: '5 harmony answers right', he: '5 תשובות הרמוניה נכונות' }, now: d.events.filter((e) => sameDay(e.at, d.day) && e.set === undefined && ['chords', 'cadences', 'sequences', 'dictation'].includes(e.skill) && (e.score ?? (e.correct ? 1 : 0)) >= 0.7).length, target: 5, color: '#A78BFA', glyph: 'scales' }),
   // Drums (DRUMS_AUDIT I8): a measured drum take is rated 'instrument' with a timing share — it counts here.
   rhythm: (d) => ({ id: 'rhythm', title: d.course === 'drums' ? { en: 'Rhythm right 5 times', he: 'קצב נכון 5 פעמים' } : { en: '5 rhythm answers right', he: '5 תשובות קצב נכונות' }, now: d.events.filter((e) => sameDay(e.at, d.day) && e.set === undefined && (/rhythm|timing|tempo|meter/.test(e.skill) || (d.course === 'drums' && !!e.tags?.some((x) => /rhythm|timing/.test(x.skill)))) && (e.score ?? (e.correct ? 1 : 0)) >= 0.7).length, target: 5, color: '#FF5FA2', glyph: 'rhythm' }),
 };
@@ -63,7 +65,7 @@ const POOL: Record<string, Make> = {
 /** Which quests a course offers (first one rotates with the day). */
 const BY_COURSE: Record<CourseId, string[]> = {
   ear: ['run10', 'steps2', 'rhythm', 'min10'],
-  jazz: ['steps2', 'run10', 'min10'],
+  jazz: ['harmony5', 'steps2', 'run10', 'min10'],
   voice: ['sing3', 'steps2', 'min10'],
   keys: ['tech3', 'steps2', 'min10'],
   guitar: ['tech3', 'steps2', 'min10'],
