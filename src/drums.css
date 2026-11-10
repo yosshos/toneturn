@@ -178,6 +178,7 @@
 }
 .dn-tup,
 .dn-dyn,
+.dn-sig,
 .dn-stick {
   fill: var(--ink-soft);
   font: 600 9px var(--font);

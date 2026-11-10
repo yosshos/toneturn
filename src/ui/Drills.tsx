@@ -28,6 +28,8 @@ import { drillEvents, drillXp } from '../engine/drills/events';
 import { bandOfBpm as tempoBandOf } from '../engine/drills/analyze';
 import { ChartView, DrillStaff, DrillTab, DrillTake, EarCard, MarkLegend, TakeResult } from './DrillTake';
 import { TranscribeWrite } from './BassWrite';
+import { DrumWrite } from './DrumWrite';
+import { withDrumWrite } from '../engine/drills/drumEar';
 import { withWritten } from '../engine/drills/bassEar';
 import { midi } from '../speech/midi';
 import { inputLatency } from '../engine/latency';
@@ -96,6 +98,8 @@ export function drillSettingsOf(s: Pick<Settings, 'drills' | 'instrument'> & { a
  */
 export function DrillScore({ drill, ds, result, beat = -1, lang = 'en' }: { drill: Drill; ds: DrillSettings; result?: TakeMetrics | null; beat?: number; lang?: Lang }) {
   const [model, setModel] = useState(false);
+  // Ear drills (bass B11, the drummer's ear): what to do and which bars are yours, until the result.
+  if (drill.show === 'none' && !result && (isDrumDrill(drill) || isGuitarDrill(drill))) return <EarCard drill={drill} beat={beat} lang={lang} />;
   // Drums (0.65): a percussion staff (reading always), or lanes by the setting.
   if (isDrumDrill(drill)) return <DrumScore drill={drill} view={drill.show === 'staff' ? 'staff' : (ds.drumView ?? 'staff')} result={result} beat={beat} lang={lang} />;
   if (!isGuitarDrill(drill)) return <DrillStaff drill={drill} fingering={ds.showFingering} result={result} />;
@@ -320,6 +324,8 @@ const TOPIC_OF: Record<string, Exclude<DrillTopic, 'all' | 'songs' | 'mine'>> = 
   'd-strokes': 'hands', 'd-rolls': 'hands', 'd-diddles': 'hands', 'd-time': 'time', 'd-rock': 'grooves', 'd-fills': 'grooves', 'd-read': 'reading',
   // Drums v2 families (DRUMS_AUDIT N1): styles (funk, shuffle, Middle-Eastern), coordination with the grooves.
   'd-funk': 'styles', 'd-shuffle': 'styles', 'd-mideast': 'styles', 'd-indep': 'grooves', 'd-feet': 'grooves',
+  // Drums content (0.66): the drummer's ear has its own topic; jazz and Latin are styles.
+  'd-ear': 'ear', 'd-jazz': 'styles', 'd-latin': 'styles',
   'b-up-pos': 'upright', 'b-up-arco': 'upright', 'b-up-scales': 'upright', 'b-up-pizz': 'upright', 'b-up-walk': 'upright', 'b-up-read': 'upright',
 };
 const TOPIC_NAME: Record<DrillTopic, { en: string; he: string }> = {
@@ -338,7 +344,7 @@ const TOPIC_NAME: Record<DrillTopic, { en: string; he: string }> = {
 };
 
 /** A topic's name; the drums course has no jazz under "styles" (DRUMS_AUDIT N1). */
-const topicName = (k: DrillTopic, drums: boolean): { en: string; he: string } => (drums && k === 'styles' ? { en: 'Styles', he: 'סגנונות' } : TOPIC_NAME[k]);
+const topicName = (k: DrillTopic, drums: boolean): { en: string; he: string } => (drums && k === 'styles' ? { en: 'Styles', he: 'סגנונות' } : drums && k === 'ear' ? { en: 'Drummer’s ear', he: 'שמיעה למתופפים' } : TOPIC_NAME[k]);
 
 function Hub({ lang, ds, settings, items, head, onFamily, onRun, onSettings, onCreate, onTest, onInstrument, onVoice, onKit }: { onKit?: () => void; onVoice?: () => void; lang: Lang; ds: DrillSettings; settings: Settings; items: Record<string, ItemState>; head: React.ReactNode; onFamily: (f: FamilyDef) => void; onRun: (q: Drill[]) => void; onSettings: () => void; onCreate: (edit?: CustomDrill) => void; onTest: () => void; onInstrument: (i: 'piano' | 'guitar' | 'bass' | 'drums') => void }) {
   const tx = T[lang];
@@ -688,9 +694,10 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
       </p>
       <DrillScore drill={drill} ds={ds} result={res?.m} beat={res ? -1 : beat} lang={lang} />
       {res && <MarkLegend lang={lang} />}
-      {!res && !writing && <DrillTake key={`${drill.itemId}:${take}`} drill={drill} bpm={bpm} lang={lang} cal={cal} onDone={(m, p) => (setBeat(-1), drill.write ? setWriting({ m, p }) : done(m, p))} onBeat={setBeat} drumsOk={headphones} onDrums={onHeadphones} kit={kit} />}
+      {!res && !writing && <DrillTake key={`${drill.itemId}:${take}`} drill={drill} bpm={bpm} lang={lang} cal={cal} onDone={(m, p) => (setBeat(-1), drill.write || drill.drumWrite ? setWriting({ m, p }) : done(m, p))} onBeat={setBeat} drumsOk={headphones} onDrums={onHeadphones} kit={kit} />}
       {/* Ear L7: write the line after playing it; the written grade joins the take's verdict. */}
-      {!res && writing && <TranscribeWrite drill={drill} lang={lang} onDone={(g) => (setWriting(null), done(withWritten(writing.m, g), writing.p))} />}
+      {!res && writing && !drill.drumWrite && <TranscribeWrite drill={drill} lang={lang} onDone={(g) => (setWriting(null), done(withWritten(writing.m, g), writing.p))} />}
+      {!res && writing && drill.drumWrite && <DrumWrite drill={drill} lang={lang} onDone={(g) => (setWriting(null), done(withDrumWrite(writing.m, g, drill), writing.p))} />}
       {res && (
         <>
           <p className="drill-ladder">{res.lad.message[lang]}</p>

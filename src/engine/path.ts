@@ -291,7 +291,7 @@ export const VOCAL_PROGRAMS: { id: string; base: number; levels: { level: number
   { id: 'v-barry', base: 300, levels: BARRY_LEVELS, title: { en: 'Barry Harris lines', he: 'קווים של בארי האריס' } },
 ];
 
-const DRUM_LATER: Record<string, number> = { 'd-funk': 3, 'd-shuffle': 3, 'd-mideast': 3, 'd-indep': 2, 'd-feet': 2 };
+const DRUM_LATER: Record<string, number> = { 'd-funk': 3, 'd-shuffle': 3, 'd-mideast': 3, 'd-indep': 2, 'd-feet': 2, 'd-ear': 1, 'd-jazz': 4, 'd-latin': 4 };
 /** Every level of every technique family and vocal program as a path step (0.61, owner: technique inside the course path). */
 function ladderSteps(): PathStep[] {
   const out: PathStep[] = [];

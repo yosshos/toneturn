@@ -41,7 +41,11 @@ function secondTag(drill: Drill): Tags[number] | null {
   if (f === 'd-time') return { skill: 'timing', sub: drill.click === '24' || drill.click === 'and' ? 'timing/backbeat' : drill.click === 'gap' ? 'timing/gap' : 'timing/subdivide', w: 0.4 };
   // Independence lines to read (DRUMS_AUDIT N1) feed kit reading; every other groove family the steady beat.
   if (f === 'd-indep' && drill.show === 'staff') return { skill: 'rhythm-reading', sub: 'rhythm-reading/drums', w: 0.3 };
-  if (f === 'd-rock' || f === 'd-fills' || f === 'd-funk' || f === 'd-shuffle' || f === 'd-indep' || f === 'd-mideast' || f === 'd-feet') return { skill: 'timing', sub: 'timing/steady', w: 0.3 };
+  // The drummer's ear (hear it, play it back, write it): the course's ear share, through the instrument.
+  if (f === 'd-ear') return { skill: 'rhythm-dictation', sub: 'rhythm-dictation/dictate', w: 0.5 };
+  // Odd and compound meters (9/8, 7/8, 10/8, 6/8 bembé) feed meter.
+  if ((f === 'd-mideast' || f === 'd-latin') && drill.pulse === 8) return { skill: 'meter', sub: drill.meter % 3 === 0 && drill.groups?.every((g) => g === 3) ? 'meter/compound' : 'meter/odd', w: 0.3 };
+  if (f === 'd-rock' || f === 'd-fills' || f === 'd-funk' || f === 'd-shuffle' || f === 'd-indep' || f === 'd-mideast' || f === 'd-feet' || f === 'd-jazz' || f === 'd-latin') return { skill: 'timing', sub: 'timing/steady', w: 0.3 };
   if (f === 'd-read') return { skill: 'rhythm-reading', sub: drill.notes.some((n) => n.voice && n.voice !== 'snare') ? 'rhythm-reading/drums' : 'rhythm-reading/read', w: 0.4 };
   if (f.startsWith('d-')) return { skill: 'timing', sub: 'timing/subdivide', w: 0.3 };
   if (f === 'b-time') return { skill: 'timing', sub: drill.click === '24' || drill.click === 'and' ? 'timing/backbeat' : drill.click === 'one' || drill.click === 'fade' ? 'timing/gap' : 'timing/subdivide', w: 0.4 };

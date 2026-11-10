@@ -28,12 +28,16 @@ export interface BeatBeams {
 
 const is16 = (d: number) => d <= 0.26;
 
-/** The beams of each beat (stems of one direction). Quarter-or-longer notes are never beamed. */
-export function beamBeats(stems: StemIn[]): BeatBeams[] {
+/**
+ * The beams of each beat (stems of one direction). Quarter-or-longer notes are never beamed. `groupOf` (eighth-pulse
+ * meters): the start of the beam group a position belongs to (9/8 = 2+2+2+3 beams eighths in twos and a three), in the
+ * same quarter-note units as the stems.
+ */
+export function beamBeats(stems: StemIn[], groupOf?: (beat: number) => number): BeatBeams[] {
   const byBeat = new Map<number, number[]>();
   stems.forEach((s, i) => {
     if (s.dur >= 0.99) return;
-    const bt = Math.floor(s.beat + EPS);
+    const bt = groupOf ? groupOf(s.beat) : Math.floor(s.beat + EPS);
     byBeat.set(bt, [...(byBeat.get(bt) ?? []), i]);
   });
   const out: BeatBeams[] = [];
@@ -102,4 +106,19 @@ export function restsOf(notes: StemIn[], from: number, to: number): { beat: numb
     }
   }
   return out;
+}
+
+/**
+ * Eighth-pulse meters (7/8, 9/8, 10/8, 6/8): the beam-group start (in quarter notes) of a position given in quarter notes,
+ * for a bar of `meter` eighths grouped as `groups` (e.g. [2, 2, 2, 3]).
+ */
+export function eighthGroupOf(meter: number, groups: number[]): (q: number) => number {
+  const starts = groups.map((_, k) => groups.slice(0, k).reduce((a, b) => a + b, 0));
+  return (q: number) => {
+    const e = q * 2 + EPS;
+    const barN = Math.floor(e / meter);
+    const pos = e - barN * meter;
+    const g = [...starts].reverse().find((x) => x <= pos) ?? 0;
+    return (barN * meter + g) / 2;
+  };
 }
