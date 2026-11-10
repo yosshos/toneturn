@@ -196,10 +196,10 @@ const ROOTLESS: Record<'maj7' | 'm7' | 'dom7', { a: number[]; b: number[]; n: Bi
 };
 /** Upper-structure triads over a dominant: the triad's root above the chord root, and what its notes are. */
 const UST: Record<string, { at: number; tri: number[]; n: ReturnType<typeof nm> }> = {
-  II: { at: 2, tri: [0, 4, 7], n: nm('II triad (9 ♯11 13)', 'משולש II (9 ♯11 13)', 'two', 'two triad') },
-  bVI: { at: 8, tri: [0, 4, 7], n: nm('♭VI triad (♭13 1 ♯9)', 'משולש ♭VI (♭13 1 ♯9)', 'flat six', 'flat six triad') },
-  VI: { at: 9, tri: [0, 4, 7], n: nm('VI triad (13 ♭9 3)', 'משולש VI (13 ♭9 3)', 'six', 'six triad') },
-  bV: { at: 6, tri: [0, 4, 7], n: nm('♭V triad (♯11 ♭7 ♭9)', 'משולש ♭V (♯11 ♭7 ♭9)', 'flat five', 'flat five triad') },
+  II: { at: 2, tri: [0, 4, 7], n: nm('II (9 ♯11 13)', 'II (9 ♯11 13)', 'two', 'two triad') },
+  bVI: { at: 8, tri: [0, 4, 7], n: nm('♭VI (♭13 1 ♯9)', '♭VI (♭13 1 ♯9)', 'flat six', 'flat six triad') },
+  VI: { at: 9, tri: [0, 4, 7], n: nm('VI (13 ♭9 3)', 'VI (13 ♭9 3)', 'six', 'six triad') },
+  bV: { at: 6, tri: [0, 4, 7], n: nm('♭V (♯11 ♭7 ♭9)', '♭V (♯11 ♭7 ♭9)', 'flat five', 'flat five triad') },
 };
 deepen(
   'voicings',
@@ -331,10 +331,10 @@ const GROUPS: Record<string, { g: number[]; n: ReturnType<typeof nm> }> = {
 };
 const RATIO: Record<string, { r: number; pivot: number; n: ReturnType<typeof nm> }> = {
   // pivot: the old pulse's subdivision (in old beats) that becomes the new beat
-  up32: { r: 3 / 2, pivot: 2 / 3, n: nm('Faster ×3/2', 'מהר יותר ×3/2', 'three halves', 'triplets') },
-  up43: { r: 4 / 3, pivot: 3 / 4, n: nm('Faster ×4/3', 'מהר יותר ×4/3', 'four thirds', 'dotted eighth') },
-  dn23: { r: 2 / 3, pivot: 3 / 2, n: nm('Slower ×2/3', 'לאט יותר ×2/3', 'two thirds', 'dotted quarter') },
-  dn34: { r: 3 / 4, pivot: 4 / 3, n: nm('Slower ×3/4', 'לאט יותר ×3/4', 'three quarters') },
+  up32: { r: 3 / 2, pivot: 2 / 3, n: nm('Tempo ×3/2', 'טמפו פי 3/2', 'three halves', 'triplets') },
+  up43: { r: 4 / 3, pivot: 3 / 4, n: nm('Tempo ×4/3', 'טמפו פי 4/3', 'four thirds', 'dotted eighth') },
+  dn23: { r: 2 / 3, pivot: 3 / 2, n: nm('Tempo ×2/3', 'טמפו פי 2/3', 'two thirds', 'dotted quarter') },
+  dn34: { r: 3 / 4, pivot: 4 / 3, n: nm('Tempo ×3/4', 'טמפו פי 3/4', 'three quarters') },
 };
 TOPIC_GEN['prog-meter'] = {
   title: { en: 'Prog & odd-time grooves', he: 'גרוב פרוג ומשקלים מורכבים' },
@@ -411,8 +411,8 @@ const CHANGES: Record<string, Prog>[] = [
   },
   {
     iiv: P(nm('ii–V–I', 'ii–V–I', 'two five one'), [2, 'm9', 2], [7, 'nine', 2], [0, 'maj9', 4]),
-    tri: P(nm('Tritone sub (ii–♭II7–I)', 'תחליף טריטון (ii–♭II7–I)', 'tritone'), [2, 'm9', 2], [1, 's11', 2], [0, 'maj9', 4]),
-    back: P(nm('Backdoor (iv–♭VII7–I)', 'דלת אחורית (iv–♭VII7–I)', 'backdoor'), [5, 'm9', 2], [10, 'nine', 2], [0, 'maj9', 4]),
+    tri: P(nm('Tritone sub (ii–♭II7–I)', 'תחליף טריטון', 'tritone'), [2, 'm9', 2], [1, 's11', 2], [0, 'maj9', 4]),
+    back: P(nm('Backdoor (iv–♭VII7–I)', 'דלת אחורית', 'backdoor'), [5, 'm9', 2], [10, 'nine', 2], [0, 'maj9', 4]),
   },
   {
     // ii–V–I, then the next ii–V: where does it point?
@@ -430,7 +430,7 @@ const CHANGES: Record<string, Prog>[] = [
     iiø: P(nm('iiø7', 'iiø7', 'half diminished two'), [0, 'maj9', 4], [2, 'm7b5', 4], [0, 'maj9', 4]),
   },
   {
-    colt: P(nm('Coltrane changes (keys a major 3rd apart)', 'שינויי קולטריין (סולמות במרחק טרצה גדולה)', 'coltrane', 'giant steps'), [0, 'maj7', 2], [3, 'dom7', 2], [8, 'maj7', 2], [11, 'dom7', 2], [4, 'maj7', 2], [7, 'dom7', 2], [0, 'maj7', 4]),
+    colt: P(nm('Coltrane changes', 'שינויי קולטריין', 'coltrane', 'giant steps'), [0, 'maj7', 2], [3, 'dom7', 2], [8, 'maj7', 2], [11, 'dom7', 2], [4, 'maj7', 2], [7, 'dom7', 2], [0, 'maj7', 4]),
     iivi: P(nm('ii–Vs in one key', 'ii–V בסולם אחד', 'one key'), [0, 'maj7', 2], [9, 'm7', 2], [2, 'm7', 2], [7, 'dom7', 2], [4, 'm7', 2], [2, 'm7', 2], [7, 'dom7', 2], [0, 'maj7', 4]),
     chrom: P(nm('Dominants falling by half steps', 'דומיננטים יורדים בחצאי טונים', 'chromatic', 'tritone chain'), [0, 'maj7', 2], [6, 'dom7', 2], [5, 'dom7', 2], [4, 'dom7', 2], [3, 'dom7', 2], [2, 'dom7', 2], [1, 'dom7', 2], [0, 'maj7', 4]),
     cycle: P(nm('Dominants around the cycle of 5ths', 'דומיננטים במעגל הקווינטות', 'cycle', 'dominant cycle'), [0, 'maj7', 2], [11, 'dom7', 2], [4, 'dom7', 2], [9, 'dom7', 2], [2, 'dom7', 2], [7, 'dom7', 2], [0, 'maj7', 4]),
@@ -470,10 +470,10 @@ TOPIC_TAGS['jazz-changes'] = tg(['cadences', 'progression', 0.7], ['chords', 'se
 
 const BASE: [number, JQId, number][] = [[0, 'maj7', 4], [9, 'm7', 4], [2, 'm7', 4], [7, 'dom7', 4], [0, 'maj7', 4]];
 const REHARM: Record<string, { ch: [number, JQId, number][]; n: ReturnType<typeof nm> }> = {
-  tritone: { ch: [[0, 'maj7', 4], [9, 'm7', 4], [2, 'm7', 4], [1, 'dom7', 4], [0, 'maj7', 4]], n: nm('Tritone sub (V7 → ♭II7)', 'תחליף טריטון (V7 → ♭II7)', 'tritone', 'tritone sub') },
-  secdom: { ch: [[0, 'maj7', 4], [9, 'dom7', 4], [2, 'm7', 4], [7, 'dom7', 4], [0, 'maj7', 4]], n: nm('Secondary dominant (vi7 → VI7)', 'דומיננטה משנית (vi7 → VI7)', 'secondary dominant') },
-  backdoor: { ch: [[0, 'maj7', 4], [9, 'm7', 4], [5, 'm7', 4], [10, 'dom7', 4], [0, 'maj7', 4]], n: nm('Backdoor (iv7–♭VII7)', 'דלת אחורית (iv7–♭VII7)', 'backdoor') },
-  dimpass: { ch: [[0, 'maj7', 4], [1, 'dim7', 4], [2, 'm7', 4], [7, 'dom7', 4], [0, 'maj7', 4]], n: nm('Diminished passing chord (♯I°7)', 'אקורד מעבר מוקטן (♯I°7)', 'diminished', 'passing') },
+  tritone: { ch: [[0, 'maj7', 4], [9, 'm7', 4], [2, 'm7', 4], [1, 'dom7', 4], [0, 'maj7', 4]], n: nm('Tritone sub (V7 → ♭II7)', 'תחליף טריטון', 'tritone', 'tritone sub') },
+  secdom: { ch: [[0, 'maj7', 4], [9, 'dom7', 4], [2, 'm7', 4], [7, 'dom7', 4], [0, 'maj7', 4]], n: nm('Secondary dominant (vi7 → VI7)', 'דומיננטה משנית', 'secondary dominant') },
+  backdoor: { ch: [[0, 'maj7', 4], [9, 'm7', 4], [5, 'm7', 4], [10, 'dom7', 4], [0, 'maj7', 4]], n: nm('Backdoor (iv7–♭VII7)', 'דלת אחורית', 'backdoor') },
+  dimpass: { ch: [[0, 'maj7', 4], [1, 'dim7', 4], [2, 'm7', 4], [7, 'dom7', 4], [0, 'maj7', 4]], n: nm('Diminished passing chord (♯I°7)', 'אקורד מעבר מוקטן', 'diminished', 'passing') },
   coltrane: { ch: [[0, 'maj7', 4], [9, 'm7', 4], [2, 'm7', 2], [3, 'dom7', 2], [8, 'maj7', 2], [11, 'dom7', 2], [4, 'maj7', 2], [7, 'dom7', 2], [0, 'maj7', 4]], n: nm('Coltrane substitution', 'תחליף קולטריין', 'coltrane') },
 };
 const REHARM_LEVELS = [['tritone', 'secdom'], ['tritone', 'secdom', 'backdoor'], ['tritone', 'secdom', 'backdoor', 'dimpass'], ['tritone', 'secdom', 'backdoor', 'dimpass', 'coltrane']];
@@ -722,7 +722,7 @@ const FORMS: Record<string, { ch: [number, JQId, number][]; n: ReturnType<typeof
     n: nm('Bird blues (Parker changes)', 'בלוז של בירד (מהלכי פארקר)', 'bird blues', 'parker'),
   },
   rcA: { ch: [[0, 'maj7', 2], [9, 'dom7', 2], [2, 'm7', 2], [7, 'dom7', 2], [4, 'm7', 2], [9, 'dom7', 2], [2, 'm7', 2], [7, 'dom7', 2], [0, 'dom7', 2], [0, 'dom7', 2], [5, 'maj7', 2], [6, 'dim7', 2], [4, 'm7', 2], [9, 'dom7', 2], [2, 'm7', 2], [7, 'dom7', 2]], n: nm('An A section', 'חלק A', 'a', 'a section') },
-  rcB: { ch: BL([[4, 'dom7'], [4, 'dom7'], [9, 'dom7'], [9, 'dom7'], [2, 'dom7'], [2, 'dom7'], [7, 'dom7'], [7, 'dom7']]), n: nm('The bridge (III7–VI7–II7–V7)', 'הגשר (III7–VI7–II7–V7)', 'bridge', 'b') },
+  rcB: { ch: BL([[4, 'dom7'], [4, 'dom7'], [9, 'dom7'], [9, 'dom7'], [2, 'dom7'], [2, 'dom7'], [7, 'dom7'], [7, 'dom7']]), n: nm('The bridge (III7–VI7–II7–V7)', 'הגשר', 'bridge', 'b') },
 };
 TOPIC_GEN['jazz-form'] = {
   title: { en: 'Jazz forms', he: 'צורות בג׳אז' },

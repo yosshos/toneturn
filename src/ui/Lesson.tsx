@@ -526,9 +526,11 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
                         <NoteStaff {...staffOf(c)!} />
                       </span>
                     ) : (
-                      <b>{lb.big}</b>
+                      // EAR_THEORY_AUDIT: a label with no Hebrew letters ("♭7 1 2 3", "7–3–7", "♭9") reads left to right
+                      // even in the Hebrew interface — otherwise the RTL paragraph reverses the order and shows "7♭".
+                      <b dir={typeof lb.big === 'string' && !/[֐-׿]/.test(lb.big) ? 'ltr' : undefined}>{lb.big}</b>
                     )}
-                    {fmt !== 'staff' && <small>{lb.small}</small>}
+                    {fmt !== 'staff' && <small dir={lb.small && !/[֐-׿]/.test(lb.small) ? 'ltr' : undefined}>{lb.small}</small>}
                     {fmt === 'hint' && staffOf(c) && (
                       <span className="answer-hint" dir="ltr" aria-hidden="true">
                         <NoteStaff {...staffOf(c)!} />
