@@ -1,6 +1,6 @@
 // Synthetic human piano takes for the PIANO_AUDIT tests (shared by pianoAudit.test.ts and pianoEar.test.ts).
 import { expTimeMs, npsOf } from '../src/engine/drills/analyze';
-import type { Drill, PlayedNote } from '../src/engine/drills/types';
+import type { Drill, ExpNote, PlayedNote } from '../src/engine/drills/types';
 
 /** Seeded normal noise. */
 export function noise(seed: number): () => number {
@@ -24,7 +24,9 @@ export function humanTake(d: Drill, bpm: number, sd: number, seed = 7, shift = 0
   const onAt = new Map<string, number>();
   const out: PlayedNote[] = [];
   const top = Math.max(...d.notes.map((n) => n.pitch));
-  const ordered = d.notes.slice().sort((a, b) => a.beat - b.beat);
+  // PIANO_JAZZ trading fours: in the free bars the pianist plays the model line (its landings are the written notes).
+  const model = (d.goal.free?.model ?? []).filter((m) => !d.notes.some((n) => Math.abs(n.beat - m.beat) < 1e-6)).map((m) => ({ pitch: m.pitch, beat: m.beat, dur: m.dur, hand: 'R' as const }));
+  const ordered: (Pick<ExpNote, 'pitch' | 'beat' | 'dur' | 'hand'> & Partial<ExpNote>)[] = [...d.notes, ...model].sort((a, b) => a.beat - b.beat);
   ordered.forEach((n) => {
     const k = `${n.pitch}:${n.beat}`;
     if (seen.has(k)) return;

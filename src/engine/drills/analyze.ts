@@ -124,6 +124,19 @@ function align(drill: Drill, bpm: number, played: PlayedNote[]): Align {
   const used = new Set<number>();
   let wrong = 0;
 
+  // 0) PIANO_JAZZ landings in free bars (trading fours): any of the chord's tones, any octave, within a quarter beat —
+  // the nearest such note in time; a note there of another pitch class is matched but wrong.
+  exp.forEach((e, i) => {
+    if (!e.land) return;
+    const near = valid.filter((j) => !used.has(j) && Math.abs(played[j].on - T[i]) <= beatMs / 4).sort((a, b) => Math.abs(played[a].on - T[i]) - Math.abs(played[b].on - T[i]));
+    const good = near.filter((j) => e.land!.includes(mod12(played[j].pitch)));
+    const j = good[0] ?? near[0];
+    if (j === undefined) return;
+    used.add(j);
+    match[i] = j;
+    ok[i] = good.length > 0;
+  });
+
   // 1) Chord-set mode (voicings, cadences): any voicing of the allowed pitch classes.
   const sets = new Map((drill.goal.chordSets ?? []).map((c) => [c.chordId, c]));
   const groups = new Map<number, number[]>();
@@ -172,7 +185,7 @@ function align(drill: Drill, bpm: number, played: PlayedNote[]): Align {
   // 2) Pitch mode: global greedy by |deviation| within ±½ beat.
   const pairs: [number, number, number][] = [];
   exp.forEach((e, i) => {
-    if (e.chordId !== undefined && sets.has(e.chordId)) return;
+    if ((e.chordId !== undefined && sets.has(e.chordId)) || e.land) return;
     for (const j of valid)
       if (!used.has(j) && played[j].pitch === e.pitch && Math.abs(played[j].on - T[i]) <= beatMs / 2 + EPS) pairs.push([Math.abs(played[j].on - T[i]), i, j]);
   });
@@ -186,15 +199,58 @@ function align(drill: Drill, bpm: number, played: PlayedNote[]): Align {
   }
   // A unison shared by both hands (contrary motion start) is one key press.
   exp.forEach((e, i) => {
-    if (match[i] !== null || (e.chordId !== undefined && sets.has(e.chordId))) return;
+    if (match[i] !== null || (e.chordId !== undefined && sets.has(e.chordId)) || e.land) return;
     const twin = exp.findIndex((o, k) => k !== i && match[k] !== null && o.pitch === e.pitch && Math.abs(o.beat - e.beat) < EPS);
     if (twin >= 0) {
       match[i] = match[twin];
       ok[i] = true;
     }
   });
-  for (const j of valid) if (!used.has(j) && !takenJ.has(j)) wrong++;
+  // Free bars: the player's own notes are judged by freeStats, never "wrong".
+  for (const j of valid) if (!used.has(j) && !takenJ.has(j) && !inFreeBars(drill, bpm, played[j].on)) wrong++;
   return { match, ok, wrong, valid };
+}
+
+/** PIANO_JAZZ: is a played onset (ms) inside the player's free bars (from a quarter beat before each window)? */
+function inFreeBars(drill: Drill, bpm: number, on: number): boolean {
+  const fr = drill.goal.free;
+  if (!fr) return false;
+  const q = 15000 / bpm;
+  return fr.windows.some(([a, b]) => on >= expTimeMs(drill, a, bpm) - q && on < expTimeMs(drill, b, bpm) - q);
+}
+
+/**
+ * PIANO_JAZZ: the free bars of a trade. A note counts as inside when its pitch class is in the chord's scale at its
+ * beat (or the half beat after: an anticipation), or when it moves by a half step to the next note that is. Bars
+ * with fewer than `minPerBar` notes a bar (laying out instead of trading) are counted too.
+ */
+export function freeStats(drill: Drill, bpm: number, played: PlayedNote[]): { n: number; out: number; thinBars: number } | null {
+  const fr = drill.goal.free;
+  if (!fr) return null;
+  const beatMs = 60000 / bpm;
+  const ns = played.filter((p) => inFreeBars(drill, bpm, p.on)).sort((a, b) => a.on - b.on);
+  const pcsAt = (beat: number): number[] => fr.scale.find((x) => beat >= x.from - 1e-6 && beat < x.to - 1e-6)?.pcs ?? [];
+  const inside = (p: PlayedNote) => {
+    const b = p.on / beatMs;
+    return pcsAt(b).includes(mod12(p.pitch)) || pcsAt(b + 0.5).includes(mod12(p.pitch));
+  };
+  let out = 0;
+  ns.forEach((p, k) => {
+    if (inside(p)) return;
+    const nx = ns[k + 1];
+    if (nx && nx.on - p.on <= beatMs * 1.05 && Math.abs(nx.pitch - p.pitch) === 1 && inside(nx)) return;
+    out++;
+  });
+  let thinBars = 0;
+  const meter = drill.meter || 4;
+  for (const [a, b] of fr.windows) {
+    const lo = expTimeMs(drill, a, bpm) - beatMs / 4;
+    const hi = expTimeMs(drill, b, bpm) - beatMs / 4;
+    const cnt = ns.filter((p) => p.on >= lo && p.on < hi).length;
+    const bars = (b - a) / meter;
+    if (cnt < fr.minPerBar * bars) thinBars += Math.ceil((fr.minPerBar * bars - cnt) / fr.minPerBar);
+  }
+  return { n: ns.length, out, thinBars };
 }
 
 // ───────────────────────────── per-hand onset series ─────────────────────────────
@@ -639,6 +695,22 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
       he: `הובלת קולות קופצנית (${r1(voiceLeading)} חצאי טון לקול)`,
     });
   }
+  // PIANO_JAZZ: the free bars of a trade — inside the changes, and really played.
+  const fs = freeStats(drill, bpm, played);
+  if (fs) {
+    if (fs.thinBars > 0)
+      F.push({
+        sev: 1 + fs.thinBars,
+        en: `Too few notes in your bars (${fs.thinBars} bar${fs.thinBars === 1 ? '' : 's'} nearly empty)`,
+        he: `מעט מדי צלילים בתיבות שלכם (${fs.thinBars} תיבות כמעט ריקות)`,
+      });
+    if (fs.n >= 4 && fs.out > 0)
+      F.push({
+        sev: fs.out / fs.n / 0.15,
+        en: `Notes outside the chords (${pct(fs.out / fs.n)}% of your line)`,
+        he: `צלילים מחוץ לאקורדים (${pct(fs.out / fs.n)}% מהקו שלכם)`,
+      });
+  }
   if (hesitations > 0)
     F.push({
       sev: hesitations === 1 ? 1.4 : 2,
@@ -657,7 +729,7 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
     });
 
   // Barry Harris lines are judged by the goal (chord tones on the beats), so small line changes are allowed.
-  const harris = drill.spec.family === 'harris' && goal.chordTonesOnBeats && chordToneOnBeats === 1;
+  const harris = (drill.spec.family === 'harris' || drill.spec.family === 'k-bebop') && goal.chordTonesOnBeats && chordToneOnBeats === 1;
   const accClean = harris ? accuracy >= 0.9 && wrong <= Math.ceil(0.1 * nExp) : accuracy >= 1 - EPS && wrong === 0;
   const accAlmost = accuracy >= (harris ? 0.85 : 0.95) && wrong <= Math.max(1, Math.round((harris ? 0.15 : 0.05) * nExp));
   const others = F.filter((f) => !(harris && f.en.includes('wrong,')));

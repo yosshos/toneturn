@@ -480,6 +480,8 @@ button.heat-cell {
 .ear-bars li.band { background: var(--bg-2); color: var(--ink-dim); }
 .ear-bars li.you { background: var(--card); color: var(--ink); }
 .ear-bars li.now { background: var(--now); color: var(--ink); }
+/* PIANO_JAZZ trading fours: the bar's chords, small, under Listen / You. */
+.ear-bars li .ear-chord { display: block; font-size: 0.7rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
 .drums-gate { display: grid; gap: 8px; }
 .drill-prep { display: grid; gap: 8px; justify-items: center; }
 .write-slots li { flex: 1 0 68px; font-size: 0.75rem; }

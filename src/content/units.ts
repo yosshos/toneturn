@@ -3,6 +3,7 @@
 //   tabs: "perform:<tab>" · games: "game:<id>"
 
 import { UNITS as INSTRUMENT } from './mini/instrument';
+import { UNITS as PIANO_JAZZ } from './mini/pianoJazz';
 import { UNITS as WRITTEN } from './mini/written';
 import { UNITS as HARMONY2 } from './mini/harmony2';
 import { UNITS as PITCH2 } from './mini/pitch2';
@@ -14,6 +15,7 @@ import { UNITS as JAZZ_EAR } from './mini/jazzEar';
 export const UNIT_LESSON: Record<string, string> = {
   // 0.38 (spec AE): each area file maps its own topics.
   ...INSTRUMENT,
+  ...PIANO_JAZZ,
   ...WRITTEN,
   ...HARMONY2,
   ...PITCH2,

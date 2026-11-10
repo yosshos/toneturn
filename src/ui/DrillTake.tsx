@@ -163,6 +163,8 @@ export function EarCard({ drill, beat = -1, lang }: { drill: Drill; beat?: numbe
         {Array.from({ length: bars }, (_, i) => (
           <li key={i} className={`${band(i) ? 'band' : 'you'} ${i === cur ? 'now' : ''}`}>
             {band(i) ? (lang === 'he' ? 'הקשבה' : 'Listen') : lang === 'he' ? 'אתם' : 'You'}
+            {/* PIANO_JAZZ trading fours: the bar's chords under the label. */}
+            {drill.chart?.[i] && <small className="ear-chord">{drill.chart[i]}</small>}
           </li>
         ))}
       </ol>

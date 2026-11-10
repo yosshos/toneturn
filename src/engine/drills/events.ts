@@ -66,6 +66,16 @@ function secondTag(drill: Drill): Tags[number] | null {
   if (f === 'cadences') return { skill: 'cadences', sub: 'cadences/cadence', w: 0.3 };
   if (f === 'voicings') return { skill: 'chords', sub: 'chords/voicing', w: 0.3 };
   if (f === 'harris') return { skill: 'chords', sub: 'chords/barry', w: 0.2 };
+  // PIANO_JAZZ: Barry Harris harmony, jazz-piano harmony (voicings; reharmonising rates progressions), bebop lines
+  // (playing along; trading fours is call and response).
+  if (f === 'k-sixdim') return { skill: 'chords', sub: 'chords/barry', w: 0.3 };
+  if (f === 'k-reharm') {
+    const k = drill.spec.kind;
+    if (k === 'rh-reharm') return { skill: 'cadences', sub: 'cadences/progression', w: 0.3 };
+    if (k === 'rh-altered' || k === 'rh-minor') return { skill: 'chords', sub: 'chords/extension', w: 0.3 };
+    return { skill: 'chords', sub: 'chords/voicing', w: 0.3 };
+  }
+  if (f === 'k-bebop') return { skill: 'improv', sub: drill.spec.kind === 'bb-trade' ? 'improv/answer' : 'improv/play', w: 0.3 };
   if (f === 'control' && drill.spec.kind === 'reading') return { skill: 'sight', sub: 'sight/read', w: 0.4 };
   if (drill.goal.evenness) return { skill: 'timing', sub: 'timing/subdivide', w: 0.2 };
   return null;
