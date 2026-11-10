@@ -123,7 +123,7 @@ function eqGen(seed: number, level: number, id: string): ChoiceQuestion {
       }
     const answer = pickR(rnd, choices);
     const freq = (c: string) => bands.find((b) => b[0] === c.split('-')[1])![1];
-    return make(T, id, seed, level, 1300, abItem({ en: 'A is the plain mix, B went through an EQ. Boost or cut, and where?', he: 'A הוא המיקס הנקי, B עבר אקולייזר. הגברה או הנמכה, ואיפה?' }, names, choices, answer, S(base, {}), (c) => S(base, { eq: [peak(freq(c), c.startsWith('boost') ? 9 : -12, 1.2)] })));
+    return make(T, id, seed, level, 1300, abItem({ en: 'B went through an EQ. Boost or cut, where?', he: 'B עבר EQ. הגברה או הנמכה, ואיפה?' }, names, choices, answer, S(base, {}), (c) => S(base, { eq: [peak(freq(c), c.startsWith('boost') ? 9 : -12, 1.2)] })));
   }
   if (level === 5) {
     const i = Math.floor(rnd() * THIRD.length);
@@ -172,7 +172,7 @@ TOPIC_GEN['filter-ear'] = {
       const base: Base = { source: 'pink', seed: seedOf(rnd) };
       const f = pickR(rnd, [1000, 1600, 2000]);
       const names: Names = { highpass: nm('High-pass (thinner)', 'היי-פאס (דק יותר)', 'high pass', 'high-pass', 'thinner'), lowpass: nm('Low-pass (darker)', 'לואו-פאס (כהה יותר)', 'low pass', 'low-pass', 'darker') };
-      return make(T, id, seed, level, 900, abItem({ en: 'A is plain, B went through a filter. Did it cut the lows (high-pass) or the highs (low-pass)?', he: 'A נקי, B עבר פילטר. הוא חתך את הנמוכים (היי-פאס) או את הגבוהים (לואו-פאס)?' }, names, ['highpass', 'lowpass'], type, S(base, {}), (c) => S(base, { eq: [filt(f, c as 'highpass' | 'lowpass')] })));
+      return make(T, id, seed, level, 900, abItem({ en: 'B is filtered. High-pass or low-pass?', he: 'B מסונן. היי-פאס או לואו-פאס?' }, names, ['highpass', 'lowpass'], type, S(base, {}), (c) => S(base, { eq: [filt(f, c as 'highpass' | 'lowpass')] })));
     }
     const base: Base = level === 2 ? { source: 'pink', seed: seedOf(rnd) } : { source: 'loop', seed: seedOf(rnd), bpm: bpmOf(rnd) };
     const text: Bi = { en: `A ${tEn} filter`, he: `פילטר ${tHe}` };
@@ -277,12 +277,12 @@ TOPIC_GEN['space-ear'] = {
       const ver: Record<string, FxChain> = { longer: { reverb: { decay: Math.round(d * 2 * 10) / 10, mix: 0.45 } }, shorter: { reverb: { decay: Math.round((d / 2) * 10) / 10, mix: 0.45 } } };
       const names: Names = { longer: nm('Longer decay', 'זנב ארוך יותר', 'longer', 'long'), shorter: nm('Shorter decay', 'זנב קצר יותר', 'shorter', 'short') };
       const base = pickR(rnd, [drums, voice]);
-      return make(T, id, seed, level, 1400, abItem({ en: 'Listen to the tail after the sound stops. Is B\'s reverb shorter or longer than A\'s?', he: 'הקשיבו לזנב אחרי שהסאונד נעצר. הריוורב של B קצר יותר או ארוך יותר מזה של A?' }, names, ['longer', 'shorter'], rnd() < 0.5 ? 'longer' : 'shorter', S(base, A), (c) => S(base, ver[c], A)));
+      return make(T, id, seed, level, 1400, abItem({ en: 'Listen to the tail after the sound stops. Is B\'s reverb shorter or longer than A\'s?', he: 'הזנב של B: קצר או ארוך מזה של A?' }, names, ['longer', 'shorter'], rnd() < 0.5 ? 'longer' : 'shorter', S(base, A), (c) => S(base, ver[c], A)));
     }
     const pd: Record<string, number> = { none: 0, short: 0.06, long: 0.15 };
     const names: Names = { none: nm('No pre-delay', 'בלי פרי-דיליי', 'none', 'no pre delay'), short: nm('Short pre-delay (60 ms)', 'פרי-דיליי קצר (60 מ״ש)', 'short'), long: nm('Long pre-delay (150 ms)', 'פרי-דיליי ארוך (150 מ״ש)', 'long') };
     const choices = ['none', 'short', 'long'];
-    return make(T, id, seed, level, 1500, oneItem({ en: 'Does the reverb start right with each hit, or a moment later? How long is the pre-delay?', he: 'הריוורב מתחיל מיד עם כל מכה, או רגע אחרי? כמה ארוך הפרי-דיליי?' }, names, choices, pickR(rnd, choices), (c) => S(drums, { reverb: { decay: 1.6, mix: 0.5, predelay: pd[c] } })));
+    return make(T, id, seed, level, 1500, oneItem({ en: 'How long is the pre-delay?', he: 'כמה ארוך הפרי-דיליי?' }, names, choices, pickR(rnd, choices), (c) => S(drums, { reverb: { decay: 1.6, mix: 0.5, predelay: pd[c] } })));
   },
 };
 
@@ -383,7 +383,7 @@ TOPIC_GEN['dyn-ear'] = {
     const drums: Base = { source: 'drums', seed: seedOf(rnd), bpm: bpmOf(rnd) };
     if (level === 1) {
       const names: Names = { comp: nm('Compressed', 'דחוס', 'compressed', 'compression'), none: nm('Not compressed', 'לא דחוס', 'not compressed', 'same', 'no') };
-      return make(T, id, seed, level, 950, abItem({ en: 'A is the raw drum loop. Is B compressed (hits squashed, the room comes up), or the same?', he: 'A הוא לופ התופים הגולמי. B דחוס (המכות נמעכות, החלל עולה), או זהה?' }, names, ['comp', 'none'], rnd() < 0.5 ? 'comp' : 'none', S(drums, {}), (c) => S(drums, c === 'comp' ? { comp: HEAVY } : {})));
+      return make(T, id, seed, level, 950, abItem({ en: 'Is B compressed, or the same?', he: 'B דחוס, או זהה?' }, names, ['comp', 'none'], rnd() < 0.5 ? 'comp' : 'none', S(drums, {}), (c) => S(drums, c === 'comp' ? { comp: HEAVY } : {})));
     }
     if (level === 2) {
       const ch: Record<string, FxChain> = { none: {}, light: { comp: { threshold: -18, ratio: 3, attack: 0.01, release: 0.15 } }, heavy: { comp: HEAVY } };
@@ -411,7 +411,7 @@ TOPIC_GEN['dyn-ear'] = {
     if (level === 5) {
       const ch: Record<string, FxChain> = { fast: { comp: { threshold: -30, ratio: 8, attack: 0.001, release: 0.1 } }, slow: { comp: { threshold: -30, ratio: 8, attack: 0.04, release: 0.1 } } };
       const names: Names = { fast: nm('Fast attack (hits squashed)', 'אטאק מהיר (המכות נמעכות)', 'fast'), slow: nm('Slow attack (hits punch through)', 'אטאק איטי (המכות בולטות)', 'slow') };
-      return make(T, id, seed, level, 1450, abItem({ en: 'A is raw, B is compressed. Is the attack fast (the hit is squashed) or slow (the hit punches through)?', he: 'A גולמי, B דחוס. האטאק מהיר (המכה נמעכת) או איטי (המכה בולטת)?' }, names, ['fast', 'slow'], rnd() < 0.5 ? 'fast' : 'slow', S(drums, {}), (c) => S(drums, ch[c])));
+      return make(T, id, seed, level, 1450, abItem({ en: 'B is compressed. Fast attack or slow?', he: 'B דחוס. אטאק מהיר או איטי?' }, names, ['fast', 'slow'], rnd() < 0.5 ? 'fast' : 'slow', S(drums, {}), (c) => S(drums, ch[c])));
     }
     // L6 — match it: the compressor threshold (ratio 6:1) is the setting.
     const ths = [-12, -20, -28, -36];

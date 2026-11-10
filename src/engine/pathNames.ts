@@ -131,6 +131,14 @@ const SHORT: Record<string, L2> = {
   'reharm-swap': { en: 'Which chord changed?', he: 'איזה אקורד השתנה?' },
   'figure-out': { en: 'Figure it out', he: 'לפענח לבד' },
   'guide-tones': { en: 'Guide tones', he: 'צלילים מנחים' },
+  // EAR_THEORY_AUDIT
+  'modes-ear': { en: 'Modes', he: 'מודוסים' },
+  'prog-meter': { en: 'Odd grooves', he: 'גרוב מורכב' },
+  'jazz-changes': { en: 'The changes', he: 'המהלך' },
+  'reharm-spot': { en: 'Reharm', he: 'רה־הרמון' },
+  'guide-line': { en: 'Guide line', he: 'קו מנחה' },
+  'jazz-phrase': { en: 'Transcribe', he: 'תמלול' },
+  'jazz-form': { en: 'Jazz forms', he: 'צורות ג׳אז' },
   // lessons
   'basics-shape': { en: 'Melody shape', he: 'צורת מנגינה' },
   'rhythm-shift': { en: 'Move the rhythm', he: 'הזזת קצב' },

@@ -9,6 +9,7 @@ import { UNITS as PITCH2 } from './mini/pitch2';
 import { UNITS as TIME2 } from './mini/time2';
 import { UNITS as SOUND } from './mini/sound';
 import { UNITS as CHORDREAD } from './mini/chordread';
+import { UNITS as JAZZ_EAR } from './mini/jazzEar';
 
 export const UNIT_LESSON: Record<string, string> = {
   // 0.38 (spec AE): each area file maps its own topics.
@@ -19,6 +20,7 @@ export const UNIT_LESSON: Record<string, string> = {
   ...TIME2,
   ...SOUND,
   ...CHORDREAD,
+  ...JAZZ_EAR,
   // Learning path
   'bflat-two-homes': 'bflat-two-homes',
   'degrees-135': 'degrees-135',

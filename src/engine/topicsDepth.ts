@@ -79,7 +79,7 @@ deepen(
     const answer = pickR(rnd, Object.keys(second));
     return choiceQ({
       id, topic: 'form', level, seed, skill: 'form', difficulty: 1550,
-      ask: { en: 'Is the second phrase a repeat, a variation, or the same tune moved higher (a sequence)?', he: 'המשפט השני חוזר, וריאציה, או אותה מנגינה מוזזת למעלה (סקוונצה)?' },
+      ask: { en: 'Phrase 2: repeat, variation or sequence?', he: 'משפט 2: חזרה, וריאציה או סקוונצה?' },
       names: { same: nm('A repeat', 'חזרה', 'repeat', 'same'), varied: nm('A variation', 'וריאציה', 'variation'), moved: nm('Moved higher (sequence)', 'מוזז למעלה (סקוונצה)', 'sequence', 'moved', 'higher') },
       answer, choices: ['same', 'varied', 'moved'], stimulus: choiceStim[answer], choiceStim,
     });
@@ -161,7 +161,7 @@ deepen(
     const answer = REL[(((b.home - a.home) % 12) + 12) % 12];
     return choiceQ({
       id, topic: 'bh-keys', level, seed, skill: 'cadences', difficulty: 1450 + 100 * k,
-      ask: { en: 'Now the diminished chord rises to minor 6 chords: where did the second one land?', he: 'עכשיו הדימיניש עולה לאקורדי מינור 6: לאן נחת השני?' },
+      ask: { en: 'Up to minor 6 chords. Where did the second land?', he: 'עולים לאקורדי מינור 6. לאן נחת השני?' },
       names: REL_NAMES, answer, choices: ['same', 'up3', 'tritone', 'down3'], stimulus: [...a.stim, { kind: 'rest', duration: 0.7 }, ...b.stim],
     });
   },

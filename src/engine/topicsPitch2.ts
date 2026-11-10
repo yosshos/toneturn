@@ -262,7 +262,7 @@ deepen(
 
 /** The modes of melodic minor and the chord each one goes with (symbols keep the root in the prompt). */
 const MM: Record<string, { sym: string; tones: number[]; name: ReturnType<typeof nm> }> = {
-  melmin: { sym: 'min(maj7)', tones: [0, 3, 7, 11, 14], name: nm('Melodic minor', 'מינור מלודי', 'melodic minor', 'jazz minor') },
+  melmin: { sym: 'm(maj7)', tones: [0, 3, 7, 11, 14], name: nm('Melodic minor', 'מינור מלודי', 'melodic minor', 'jazz minor') },
   lydaug: { sym: 'maj7♯5', tones: [0, 4, 8, 11, 18], name: nm('Lydian augmented', 'לידי מוגדל', 'lydian augmented', 'lydian sharp five') },
   lydom: { sym: '7♯11', tones: [0, 4, 10, 14, 18], name: nm('Lydian dominant', 'לידי דומיננטי', 'lydian dominant', 'lydian flat seven', 'overtone') },
   mixb6: { sym: '7♭13', tones: [0, 4, 10, 14, 20], name: nm('Mixolydian ♭6', 'מיקסולידי ♭6', 'mixolydian flat six', 'aeolian dominant') },
@@ -467,7 +467,7 @@ deepen('bh-tone', [{ en: 'Descending: where did the run stop?', he: 'ביריד�
   const out: NoteEvent[] = line.map((m, i) => N(m, i * 0.28, i === line.length - 1 ? 1.2 : 0.26, 0.78));
   return choiceQ({
     id, topic: 'bh-tone', level: 2, seed, skill: 'chords', difficulty: 1300,
-    ask: { en: 'The 6 chord, its diminished chord, then the scale runs down and stops: on a note of which chord?', he: 'אקורד ה־6, הדימיניש שלו, ואז הסולם יורד ונעצר: על צליל של איזה אקורד?' },
+    ask: { en: 'The scale runs down and stops. Whose note?', he: 'הסולם יורד ונעצר. צליל של איזה אקורד?' },
     names: { six: nm('The 6 chord', 'אקורד ה־6', 'six', 'sixth', 'major six', 'שש'), dim: nm('The diminished chord', 'הדימיניש', 'diminished', 'dim', 'דימיניש', 'מוקטן') },
     answer: fromSix ? 'six' : 'dim', choices: ['six', 'dim'],
     stimulus: [chordStim(six, 1), chordStim(dim, 1), rest(0.4), ev(out, line.length * 0.28 + 1.1)],

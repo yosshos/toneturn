@@ -50,6 +50,7 @@ export const SUB_SKILLS: SubSkill[] = [
   S('cadences', 'harmonize', 'Harmonizing a melody', 'הרמון מנגינה'),
   S('cadences', 'nct', 'Notes outside the chord', 'צלילים מחוץ לאקורד'),
   S('cadences', 'dictation', 'Harmonic dictation', 'הכתבה הרמונית'),
+  S('cadences', 'reharm', 'Reharmonization', 'רה־הרמוניזציה'),
   S('modes', 'modes', 'Church modes', 'מודוסים'),
   S('modes', 'scales', 'Scale types', 'סוגי סולמות'),
   S('modes', 'maqam', 'Maqamat', 'מקאמים'),

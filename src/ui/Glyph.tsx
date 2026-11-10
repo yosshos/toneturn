@@ -1,6 +1,7 @@
 // The note-head symbol set (0.61, SPEC-REDESIGN): every exercise type and domain sits inside a tilted note head
 // on its domain colour, with an ink outline. Same drawings as the design canvas ("What makes it ours").
 import type { ReactNode } from 'react';
+import { LESSON_MARK, TOPIC_MARK } from './stepMarks';
 
 const I = '#1E1033';
 const sw = { stroke: I, strokeWidth: 3.2, strokeLinecap: 'round' as const, fill: 'none' };
@@ -547,6 +548,18 @@ export const GLYPHS: Record<string, ReactNode> = {
     </>
   ),
 };
+/** A short music mark in the note head (EAR_THEORY_AUDIT: one per ear / jazz path step, src/ui/stepMarks.ts). */
+const mark = (s: string) => {
+  const n = Array.from(s).length;
+  const size = n <= 2 ? 24 : n === 3 ? 20 : n === 4 ? 16 : 13;
+  return (
+    <text x={0} y={size * 0.36} textAnchor="middle" fontFamily="'Secular One', Rubik, 'Noto Music', sans-serif" fontSize={size} fill={I} direction="ltr" letterSpacing={n >= 4 ? -0.4 : 0}>
+      {s}
+    </text>
+  );
+};
+for (const [k, s] of Object.entries(TOPIC_MARK)) GLYPHS[`m:${k}`] = mark(s);
+for (const [k, s] of Object.entries(LESSON_MARK)) GLYPHS[`m:lesson:${k}`] = mark(s);
 export type GlyphKind = keyof typeof GLYPHS;
 
 /** Emoji left in content data → the closest symbol of our set (0.61: no emoji in the interface). */

@@ -31,12 +31,12 @@ export const LESSONS: MiniLesson[] = [
       {
         say: { en: 'Now two notes. The second one goes up — it is higher. Listen once more and feel your ears "lift".', he: 'עכשיו שני צלילים. השני עולה — הוא גבוה יותר. הקשיבו שוב ותרגישו איך האוזניים "מתרוממות".' },
         play: [notes([60, 67], 0.8), rest(0.5), notes([60, 67], 0.8)],
-        show: { notes: [60, 67], text: { en: 'higher ⬆', he: 'גבוה יותר ⬆' } },
+        show: { notes: [60, 67], text: { en: 'higher ↑', he: 'גבוה יותר ↑' } },
       },
       {
         say: { en: 'And this time it goes down — lower. Big jumps are easy; small steps take a little practice. That is what we train.', he: 'והפעם הוא יורד — נמוך יותר. קפיצות גדולות קלות; צעדים קטנים דורשים קצת תרגול. את זה נאמן.' },
         play: [notes([67, 60], 0.8), rest(0.5), notes([64, 62], 0.8)],
-        show: { notes: [67, 60], text: { en: 'lower ⬇', he: 'נמוך יותר ⬇' } },
+        show: { notes: [67, 60], text: { en: 'lower ↓', he: 'נמוך יותר ↓' } },
       },
       {
         say: { en: 'Two short tunes can be the same or different. Here, one note changed in the second tune. Did you catch it?', he: 'שתי מנגינות קצרות יכולות להיות זהות או שונות. כאן צליל אחד השתנה במנגינה השנייה. תפסתם?' },
@@ -45,7 +45,7 @@ export const LESSONS: MiniLesson[] = [
       },
       {
         say: { en: 'Your turn! Higher or lower, then same or different. No words to learn — just listen. Your ears already know more than you think.', he: 'תורכם! גבוה או נמוך, ואחר כך אותו דבר או שונה. אין מילים ללמוד — רק להקשיב. האוזניים שלכם כבר יודעות יותר ממה שאתם חושבים.' },
-        show: { text: { en: '⬆ ⬇ =', he: '⬆ ⬇ =' } },
+        show: { text: { en: '↑ ↓ =', he: '↑ ↓ =' } },
       },
     ],
     more: [
@@ -67,7 +67,7 @@ export const LESSONS: MiniLesson[] = [
       {
         say: { en: 'How to compare two notes: hum them softly after you hear them. You will feel your throat work a little harder for the higher one. Many people also move a hand up or down with the sound — try it.', he: 'איך משווים שני צלילים: זמזמו אותם בשקט אחרי ששמעתם. תרגישו שהגרון עובד קצת יותר קשה בשביל הגבוה. הרבה אנשים גם מזיזים יד למעלה או למטה עם הצליל — נסו.' },
         play: [notes([57, 62], 0.9), rest(0.5), notes([62, 57], 0.9)],
-        show: { notes: [57, 62], text: { en: '⬆ then ⬇', he: '⬆ ואז ⬇' } },
+        show: { notes: [57, 62], text: { en: '↑ then ↓', he: '↑ ואז ↓' } },
       },
       {
         say: { en: 'The closer two notes are, the harder they are to tell apart. The smallest step on a piano is from one key to the very next one — called a semitone, or half step. Here is a big jump, then a semitone.', he: 'ככל ששני צלילים קרובים יותר, קשה יותר להבחין ביניהם. הצעד הכי קטן בפסנתר הוא מקליד אחד לזה שממש לידו — זה נקרא חצי טון. הנה קפיצה גדולה, ואז חצי טון.' },

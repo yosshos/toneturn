@@ -20,7 +20,7 @@ const ABSOLUTE_TOPIC = /abs|register|range|sight|transpos|tempo|bpm|bh-keys|key-
 /** A choice label that names a pitch ("B♭", "F#m7", "C major") or a tempo. */
 const PITCH_NAME = /(^|[\s(/])[A-G](?:[♭♯b#])?(?=$|[\s)m7/+°ø-]|maj|min|dim|aug|sus)/;
 /** In the question text: a pitch only with an accidental, a chord suffix or "major/minor" ("A rhythm" is not the note A). */
-const PITCH_IN_TEXT = /(^|[\s(])[A-G](?:[♭♯b#]|m7|maj|min|dim|7|\/[A-G]| major| minor| flat| sharp)/;
+const PITCH_IN_TEXT = /(^|[\s(])[A-G](?:[♭♯b#]|m7|m\(|maj|min|dim|7|\/[A-G]| major| minor| flat| sharp)/;
 /** Absolute tempo (faster/slower than the other sound is relative and survives a tempo change). */
 const TEMPO_WORD = /bpm|tempo|טמפו/i;
 

@@ -134,7 +134,7 @@ export const THEMES: { id: string; name: { en: string; he: string }; subs: strin
   { id: 'pulse', name: { en: 'Pulse & meter', he: 'דופק ומשקל' }, subs: ['meter/', 'tempo/', 'timing/subdivide', 'timing/backbeat', 'timing/gap', 'rhythm-reading/read'] },
   { id: 'chords', name: { en: 'Building chords', he: 'לבנות אקורדים' }, subs: ['chords/inversion', 'chords/seventh', 'chords/extension', 'instrument/shapes', 'theory/spelling', 'singing/harmony'] },
   { id: 'memory', name: { en: 'Remember & write', he: 'לזכור ולכתוב' }, subs: ['sequences/', 'rhythm/memory', 'dictation/', 'sequences/inner'] },
-  { id: 'harmony', name: { en: 'Harmony moves', he: 'הרמוניה בתנועה' }, subs: ['cadences/progression', 'cadences/modulation', 'cadences/harmonize', 'cadences/chromatic', 'dictation/bass'] },
+  { id: 'harmony', name: { en: 'Harmony moves', he: 'הרמוניה בתנועה' }, subs: ['cadences/progression', 'cadences/modulation', 'cadences/harmonize', 'cadences/chromatic', 'cadences/reharm', 'dictation/bass'] },
   { id: 'groove', name: { en: 'Groove & feel', he: 'גרוב ותחושה' }, subs: ['rhythm-dictation/', 'transpose/displacement', 'transpose/rhythmic', 'timing/poly', 'rhythm-reading/drums'] },
   { id: 'read', name: { en: 'Read & transform', he: 'לקרוא ולהזיז' }, subs: ['notes/', 'theory/', 'sight/', 'transpose/'] },
   { id: 'sound', name: { en: 'Color & sound', he: 'צבע וסאונד' }, subs: ['expression/', 'form/', 'timbre/', 'chords/voicing', 'improv/'] },
@@ -203,6 +203,8 @@ export const sectionOf = (d: number): Section => (d < 900 ? 'beginner' : d < 115
 
 const PACK_TOPICS: Record<string, Pack> = {
   'bh-scale': 'jazz', 'bh-tone': 'jazz', 'bh-convert': 'jazz', 'bh-convert-2': 'jazz', 'bh-keys': 'jazz', 'bh-six-over': 'jazz', 'bh-lines': 'jazz', 'bh-pivot': 'jazz', 'bh-brothers': 'jazz', 'bh-family': 'jazz', 'bh-block': 'jazz', comping: 'jazz', turnarounds: 'jazz', 'guide-tones': 'jazz', 'chromatic-added': 'jazz', 'chord-scale': 'jazz', 'swing-ratio': 'jazz',
+  // EAR_THEORY_AUDIT: the advanced jazz ear (the Jazz & improv course).
+  'jazz-changes': 'jazz', 'reharm-spot': 'jazz', 'guide-line': 'jazz', 'jazz-phrase': 'jazz', 'jazz-form': 'jazz',
   maqam: 'maqam', 'eastern-rhythm': 'maqam',
   'set-classes': 'post-tonal', counterpoint: 'post-tonal',
   'eq-ear': 'production', 'space-ear': 'production', 'pan-ear': 'production', 'dyn-ear': 'production', 'filter-ear': 'production', 'tone-hz': 'production', 'width-ear': 'production',

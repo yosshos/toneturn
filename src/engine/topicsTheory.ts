@@ -66,7 +66,7 @@ const MAJOR_KEYS: Key[] = [
 const relMinor = (k: Key): Sp => spellAbove(k.tonic, 6, 9)!;
 const pcOf = (s: Sp): PitchClass => ({ letter: LET[s.l], acc: s.a as PitchClass['acc'] });
 const keyName = (s: Sp, minor: boolean) => nm(`${spEn(s)} ${minor ? 'minor' : 'major'}`, `${spHe(s)} ${minor ? 'מינור' : 'מז׳ור'}`, `${spSay(s)} ${minor ? 'minor' : 'major'}`);
-const sigName = (n: number) => (n === 0 ? nm('No sharps or flats', 'בלי סימנים', 'none', 'nothing', 'בלי') : nm(`${Math.abs(n)} ${n > 0 ? (n === 1 ? 'sharp' : 'sharps') : n === -1 ? 'flat' : 'flats'}`, `${Math.abs(n)} ${n > 0 ? 'דיאזים' : 'במולים'}`, `${['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven'][Math.abs(n)]} ${n > 0 ? 'sharp' : 'flat'}`));
+const sigName = (n: number) => (n === 0 ? nm('No sharps or flats', 'בלי סימנים', 'none', 'nothing', 'בלי') : nm(`${Math.abs(n)} ${n > 0 ? (n === 1 ? 'sharp' : 'sharps') : n === -1 ? 'flat' : 'flats'}`, Math.abs(n) === 1 ? (n > 0 ? 'דיאז אחד' : 'במול אחד') : `${Math.abs(n)} ${n > 0 ? 'דיאזים' : 'במולים'}`, `${['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven'][Math.abs(n)]} ${n > 0 ? 'sharp' : 'flat'}`));
 const tonicMidi = (s: Sp) => 60 + spPc(s);
 
 TOPIC_GEN['key-signatures'] = {

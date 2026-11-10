@@ -208,6 +208,14 @@ const TOPIC_CONTRAST: Record<string, { en: string; he: string }> = {
   'figure-out': { en: 'One step at a time: first home, then the bass, then the chords, then the tune.', he: 'צעד אחר צעד: קודם הבית, אחר כך הבס, אחר כך האקורדים, ואז המנגינה.' },
   'guide-tones': { en: 'Follow only the top voice: does it hold, then fall a half step, or fall first?', he: 'עקבו רק אחרי הקול העליון: הוא נשאר ואז יורד חצי טון, או יורד קודם?' },
   'chromatic-added': { en: 'Sing the plain scale in your head along with it — the extra note sticks out.', he: 'שירו בראש את הסולם הרגיל יחד איתו — הצליל הנוסף בולט.' },
+  // EAR_THEORY_AUDIT
+  'modes-ear': { en: 'Bright or dark first (the 3rd), then find the one note that differs from plain major or minor.', he: 'קודם בהיר או כהה (הטרצה), ואז מצאו את הצליל האחד ששונה ממז׳ור או ממינור רגיל.' },
+  'prog-meter': { en: 'Follow the snare: count the gaps between its hits, not every eighth.', he: 'עקבו אחרי הסנר: ספרו את המרווחים בין המכות שלו, לא כל שמינית.' },
+  'jazz-changes': { en: 'Bass first: fourths up is a ii–V, a half step down a tritone sub, a whole step up the backdoor.', he: 'קודם הבס: קוורטות למעלה זה ii–V, חצי טון למטה תחליף טריטון, טון שלם למעלה דלת אחורית.' },
+  'reharm-spot': { en: 'Follow the bass in both versions: where it moves differently is where the trick is.', he: 'עקבו אחרי הבס בשתי הגרסאות: איפה שהוא זז אחרת, שם הטריק.' },
+  'guide-line': { en: 'Read the chords, then follow only the top note: does it hold or fall a half step?', he: 'קראו את האקורדים, ועקבו רק אחרי הצליל העליון: הוא נשאר או יורד חצי טון?' },
+  'jazz-phrase': { en: 'Hum the bass, place the first note against it, then follow steps and leaps.', he: 'זמזמו את הבס, מקמו מולו את הצליל הראשון, ואז עקבו אחרי צעדים וקפיצות.' },
+  'jazz-form': { en: 'How fast do the chords change, and are they minor or dominant?', he: 'כמה מהר האקורדים מתחלפים, והאם הם מינוריים או דומיננטיים?' },
 };
 
 export interface SessionInsight {

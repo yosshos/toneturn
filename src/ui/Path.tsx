@@ -213,12 +213,12 @@ export function nodeTitle(step: PathStep, s: Settings, lang: Lang): string {
 const ICON: Record<string, 'ear' | 'steps' | 'chord' | 'cadence' | 'mic' | 'map' | 'review' | 'puzzle' | 'drum'> = { pitch: 'ear', time: 'drum', memory: 'steps', voice: 'mic', reading: 'map', creative: 'puzzle', instrument: 'chord' };
 const iconOf = (step: PathStep) => (step.kind === 'tech' ? 'chord' : step.kind === 'vocal' ? 'mic' : step.kind === 'game' ? 'puzzle' : step.kind === 'review' ? 'review' : step.lesson ? (LESSON_META[step.lesson]?.icon ?? 'ear') : ICON[step.domain] ?? 'ear');
 
-import { FAMILY_GLYPH, GAME_STEP_GLYPH, TOPIC_GLYPH } from './stepGlyphs';
+import { FAMILY_GLYPH, GAME_STEP_GLYPH, LESSON_GLYPH, TOPIC_GLYPH } from './stepGlyphs';
 import { drumMicOf } from '../engine/drumKit';
 import { KitNotice } from './DrumViews';
 
 function StepIcon({ step }: { step: PathStep }) {
-  const kind = step.ladder ? (FAMILY_GLYPH[step.ladder.family] ?? (step.kind === 'vocal' ? 'sing' : step.ladder.instrument === 'piano' ? 'keys' : step.ladder.instrument === 'drums' ? 'drums' : 'guitar')) : step.topic ? TOPIC_GLYPH[step.topic] : step.kind === 'game' && step.game ? GAME_STEP_GLYPH[step.game] : undefined;
+  const kind = step.ladder ? (FAMILY_GLYPH[step.ladder.family] ?? (step.kind === 'vocal' ? 'sing' : step.ladder.instrument === 'piano' ? 'keys' : step.ladder.instrument === 'drums' ? 'drums' : 'guitar')) : step.topic ? TOPIC_GLYPH[step.topic] : step.lesson ? LESSON_GLYPH[step.lesson] : step.kind === 'game' && step.game ? GAME_STEP_GLYPH[step.game] : undefined;
   if (!kind) return <NodeIcon kind={iconOf(step)} />;
   return (
     <svg className="step-glyph" viewBox="-30 -27 60 54" width="30" height="27" aria-hidden="true">

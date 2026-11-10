@@ -34,6 +34,7 @@ export const SUB_PREREQ: Record<string, string[]> = {
   'transpose/displacement': ['rhythm-reading/read'],
   'transpose/rhythmic': ['rhythm-dictation/dictate'],
   'cadences/modulation': ['cadences/cadence'],
+  'cadences/reharm': ['cadences/progression'],
   'cadences/harmonize': ['chords/quality'],
   'cadences/nct': ['cadences/cadence'],
   'meter/compound': ['meter/count'],
