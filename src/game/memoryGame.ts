@@ -116,7 +116,7 @@ export interface GameView {
   simulated: boolean;
 }
 
-const T = {
+export const T = {
   en: {
     turn: (name: string, n: number, kind: GameKind) => `${name}, your turn. ${n} ${kind === 'melody' ? 'notes' : 'beats'}.`,
     soloTurn: (n: number, kind: GameKind) => `${n} ${kind === 'melody' ? 'notes' : 'beats'}.`,

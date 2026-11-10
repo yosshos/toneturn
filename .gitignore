@@ -10,3 +10,6 @@ playwright-report
 .vapid*
 scripts/.daily-keys.mjs
 scripts/.daily-keys.log
+scripts/voice/.inventory.mjs
+scripts/voice/.inventory.log
+scripts/voice/.lines.json

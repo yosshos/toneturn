@@ -17,8 +17,8 @@ import type { Settings } from '../storage/progress';
 import { NotesView } from './NotesView';
 import { piano, SIMULATED, tts } from './services';
 
-/** `{name}` → the player's first name, or nothing ("Hey {name}!" → "Hey!"). */
-export const personal = (text: string, name: string | null) => text.replace(/\s*\{name\}/g, name ? ` ${name}` : '').replace(/\s+([!?.,])/g, '$1');
+import { personal } from '../content/personal';
+export { personal };
 
 /** Opens a unit's mini-lesson first when it has not been learned yet (provided by App). */
 export const MiniGateContext = createContext<(unit: string | null, start: () => void) => void>((_, start) => start());
@@ -60,7 +60,7 @@ export function MiniLessonPlayer({ t, settings, lesson, name, onFinish, startDee
   const typedDone = useRef<(() => void) | null>(null);
   const typedFinished = useRef(false);
   const step = steps[i];
-  const { speaking, msPerWord } = useNarration(lang, personal(step.say[lang], name));
+  const { speaking, msPerWord } = useNarration(lang, personal(step.say[lang], name), personal(step.say[lang], null));
 
   const playExample = async (signal: AbortSignal) => {
     if (!step.play?.length) return;
@@ -78,13 +78,15 @@ export function MiniLessonPlayer({ t, settings, lesson, name, onFinish, startDee
     void (async () => {
       try {
         await piano.unlock();
-        tts.unlock(); // English + narrator on: the voice starts loading (lines are read until it's ready)
+        await tts.prepare(lang); // English + narrator on: the list of pre-recorded lines (tiny, once)
         if (step.playFirst) await playExample(c.signal);
         const text = personal(step.say[lang], name);
-        // 0.65: the voice makes the next two lines while this one plays (each line is made once per device).
-        tts.prefetch(steps.slice(i + 1, i + 3).map((s) => personal(s.say[lang], name)), lang);
+        // 0.66: recordings leave the player's name out ("Great, Dana!" is heard as "Great!", shown with the name).
+        const recorded = personal(step.say[lang], null);
+        // the next two lines get ready while this one plays
+        tts.prefetch(steps.slice(i + 1, i + 3).map((s) => personal(s.say[lang], null)), lang);
         if (SIMULATED) await new Promise((r) => setTimeout(r, 250));
-        else if (!tts.speaking(lang)) {
+        else if (!tts.speaksLine(text, lang, recorded)) {
           // 0.64 (owner): reading mode types the text out word by word (TypedText), then a moment to read it.
           // The text may already have finished typing (unlocking audio / an example can take a moment).
           if (!typedFinished.current)
@@ -93,7 +95,7 @@ export function MiniLessonPlayer({ t, settings, lesson, name, onFinish, startDee
               c.signal.addEventListener('abort', () => res());
             });
           await new Promise((r) => setTimeout(r, 700 + Math.min(2500, text.split(/\s+/).length * 60)));
-        } else await tts.speak(text, lang, c.signal);
+        } else await tts.speak(text, lang, c.signal, recorded);
         if (!step.playFirst) await playExample(c.signal);
         if (c.signal.aborted) return;
         heard.current.add(i);
