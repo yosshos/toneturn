@@ -557,7 +557,7 @@ export function App() {
   };
   /** Find my level: every skill, or one domain (the voice domain always sings). */
   /** Placement 3.0: skills already measured start the search from their rating (fewer questions on a retake). */
-  const measuredPriors = (): Partial<Record<SkillId, number>> => Object.fromEntries(Object.entries(ratingsOf(progress)).filter(([, r]) => r && evidence(r) === 'measured').map(([k, r]) => [k, Math.round(r!.r)]));
+  const measuredPriors = (): Partial<Record<SkillId, number>> => Object.fromEntries(Object.entries(ratingsOf(progress)).filter(([k, r]) => !k.includes('/') && r && evidence(r) === 'measured').map(([k, r]) => [k, Math.round(r!.r)]));
   // A placement left half-way (back button, swipe back, reload) continues where it stopped (playtesting, 0.35.2).
   const resumePlacement = (v: SavedSession) => openGenerated(v.lesson, (st) => adaptPlacement(st, v.seed!), false, { key: PLACEMENT_KEY, title: t.findLevel, seed: v.seed, resume: v });
   const startPlacement = (seed: number, def: LessonDef) => openGenerated(def, (st) => adaptPlacement(st, seed), false, { key: PLACEMENT_KEY, title: t.findLevel, seed });

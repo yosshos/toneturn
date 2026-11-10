@@ -291,7 +291,8 @@ export const VOCAL_PROGRAMS: { id: string; base: number; levels: { level: number
   { id: 'v-barry', base: 300, levels: BARRY_LEVELS, title: { en: 'Barry Harris lines', he: 'קווים של בארי האריס' } },
 ];
 
-const DRUM_LATER: Record<string, number> = { 'd-funk': 3, 'd-shuffle': 3, 'd-mideast': 3, 'd-indep': 2, 'd-feet': 2 };
+// Bass 0.66: position reading after the first reading levels, fills and target-note solos once chords and scales are in.
+const DRUM_LATER: Record<string, number> = { 'd-funk': 3, 'd-shuffle': 3, 'd-mideast': 3, 'd-indep': 2, 'd-feet': 2, 'b-posread': 2, 'b-impro': 4 };
 /** Every level of every technique family and vocal program as a path step (0.61, owner: technique inside the course path). */
 function ladderSteps(): PathStep[] {
   const out: PathStep[] = [];

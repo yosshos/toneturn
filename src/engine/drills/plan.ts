@@ -26,8 +26,15 @@ export const hasLowB = (bassTuning?: string): boolean => {
   const tu = tuningById(bassTuning ?? 'bass');
   return tu.instrument === 'bass' && Math.min(...tu.open) <= 24;
 };
+/** Levels written for six strings (0.66: three notes per string across the neck): only on a 6-string bass. */
+export const SIX_STRING_LEVELS = ['b-scale-11'];
+/** The bass tuning has six strings. */
+export const isSixString = (bassTuning?: string): boolean => {
+  const tu = tuningById(bassTuning ?? 'bass');
+  return tu.instrument === 'bass' && tu.open.length >= 6;
+};
 /** Level ids hidden on this bass tuning (path and hub). */
-export const hiddenBassLevels = (bassTuning?: string): string[] => (hasLowB(bassTuning) ? [] : LOW_B_LEVELS);
+export const hiddenBassLevels = (bassTuning?: string): string[] => [...(hasLowB(bassTuning) ? [] : LOW_B_LEVELS), ...(isSixString(bassTuning) ? [] : SIX_STRING_LEVELS)];
 
 /**
  * The families the player's settings show. Piano (default): the emphasis (classical / jazz / both). Guitar / bass:

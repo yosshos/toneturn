@@ -84,6 +84,23 @@ test.describe('bass course', () => {
     await fitsScreen(page);
   });
 
+  test('0.66: target-note solos show the chart only; position reading is in the bass clef; picking patterns — one screen each', async ({ page }) => {
+    await open(page, 'b-impro', 'b-impro-5');
+    await page.locator('[data-drums-choice="speaker"]').click();
+    await expect(page.locator('[data-chart-only]')).toBeVisible();
+    await fitsScreen(page);
+    await open(page, 'b-posread', 'b-posread-1');
+    await expect(page.locator('[data-drills="run"] .drill-staff[data-clef="bass"] svg').first()).toBeVisible();
+    await fitsScreen(page);
+    await open(page, 'b-posread', 'b-posread-6');
+    await expect(page.locator('[data-drills="run"] .drill-staff[data-clef="bass"] svg').first()).toBeVisible();
+    await fitsScreen(page);
+    for (const [f, l] of [['b-pick', 'b-pick-7'], ['b-pluck', 'b-pluck-11']]) {
+      await open(page, f, l);
+      await fitsScreen(page);
+    }
+  });
+
   test('upright thumb position reads the treble clef; studies read from the staff — one screen each', async ({ page }) => {
     await open(page, 'b-up-read', 'b-up-read-5');
     await expect(page.locator('[data-drills="run"] .drill-staff[data-clef="treble"] svg').first()).toBeVisible();

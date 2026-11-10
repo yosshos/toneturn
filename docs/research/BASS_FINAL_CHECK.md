@@ -93,3 +93,65 @@ all b-* and b-up-* families. The two intended single-tempo levels (pluck L9 zone
   span more than 5 frets in a bar. They are meant to shift.
 - **Old progress:** path facts for `topic:fret-chords:*` and `topic:fret-scales:*` from the bass course no longer show
   on the bass path. The owner is the only user, so there is no migration.
+
+## 0.66: bass content round, per-course level, out of beta (2026-11-10)
+
+Branch `worktree-agent-a2f5f31565f4af73c`, on top of 0.65.0. Tests: `tests/bassRound066.test.ts` (16), plus updated
+family-order and hidden-level tests. e2e: `e2e/bass.spec.ts` 8/8 green on its own port (5205), with a new test for
+the new levels. Phone shots (390 × 844, seeded bass-course player): every new drill and both new topics scroll 0.
+
+### Bass versions of the guitar content
+
+All of it is the bass's own material, written for the bass tuning, drawn on the bass neck (or the bass clef) and
+measured by playing, like the rest of the course.
+
+| What | Where | Notes |
+|---|---|---|
+| **Interval shapes** | topic `bass-intervals` (5 levels) | Octave shapes (up from E/A, down from D/G), 3rds/4ths/5ths across two strings, every interval (all fourths, so one shape everywhere and no G–B shift), 10ths from the E to the G string, and hear it and find it from a given fret. Own quick lesson, path name "מרווחים בבס", symbol `octave` (new). |
+| **Scale boxes** | topic `bass-scales` (3 levels) | Major scale from a root on the E or A string (one finger per fret), minor pentatonic box 1 (for fills), and which box (1–5, the same five positions as b-scale 10). Own quick lesson, path name "בוקסים בבס", symbol `box`. |
+| **3 notes per string** | `b-scale-11`, 6-string only | Major and natural minor across six strings, up and back. Hidden on 4- and 5-string basses (`SIX_STRING_LEVELS`, path and hub), like the low-B levels. |
+| **Reading in positions** | new family `b-posread` (6 levels) | The low range with ledger lines below the staff, positions II, V and VII (whole family stays inside the 4-fret window), a shift at the bar line, and the upper register (IX, XII) above the staff. Bass clef, measured as a reading take. Symbol `position` (new); hub topic "reading"; path from level 3 of the others on. |
+| **Fills and target notes** | new family `b-impro` (6 levels) | Fills that land on the root, then on the 3rd (pop and rock, drummer fills in the same bars); two-bar answers over a minor vamp; a pentatonic solo with a chord tone on every change; a blues solo landing on 3rds and 7ths; ii–V–I (and minor ii–V–i) with guide tones on the changes. It leads up to `b-walk-15` (the two-chorus blues solo). Chart only, band and drums behind. Symbol `target` (new); hub topic "styles"; path from level 5 of the others on. |
+| **Picking-hand patterns** | `b-pluck` 10–12, `b-pick` 6–8 | Fingers: string-skipping patterns (R–8–5, R–8–♭7), three fingers i m a in triplets (up and down), thumb on the low strings with i and m on the octave and 10th. Pick: string skipping with strict alternation, economy strokes over an arpeggio (down going up, up going down), inside and outside picking in 16ths. |
+
+**Measuring target notes.** A new free-choice rule, `target` (`bassAnalyze.ruleCheck`): any note of the chord's scale
+is allowed (and a chromatic approach to the next root), and the first note of each chord must be one of its targets
+(`land`, intervals above the root). `beat1Ct` is the landing share; under 90% is a factor on the result ("נחיתה על
+צליל המטרה ב-…%"). A test checks that every model line passes its own rules and that a take landing on roots instead
+of 3rds/7ths is marked down.
+
+Family badges (first steps, halfway, whole family, with the bass clef symbol), the Today / workout candidates and the
+level grid come from the existing bass wiring for every `b-*` family. XP / league attribution is checked by test:
+`tech:b-posread-*`, `tech:b-impro-*`, `topic:bass-intervals:*` and `topic:bass-scales:*` all count for bass.
+
+### Per-course level
+
+`courseLevel` used the shared `instrument` area, so drums, bass, guitar and piano takes moved each other's level.
+Now `Ratings` also keeps one rating per instrument technique sub (`instrument/piano-tech`, `guitar-tech`,
+`bass-tech`, `drum-tech`), updated from each take's tag (every technique take already carried its instrument's sub).
+Piano, guitar, bass and drums read their own; voice and jazz keep their area; ear and exam the overall rating.
+
+- **Migration:** the sub ratings are folded from the stored events, so they rebuild on the next load. Only a base
+  trimmed before 0.66 (more than 3000 events) lacks them. Then the shared rating still stands for the course, but
+  only when it is the player's one instrument course.
+- **No DB change:** `profiles.course_levels` is the same jsonb.
+- **Known gap:** instrument topics (bass-notes, bass-intervals, …) are tagged `instrument/fretboard` / `shapes`, which
+  is shared with the guitar, so they don't move the per-course level. Only technique takes do.
+
+### Small fixes
+
+- Bass family names: "יד ימין (פריטה)" → **"פריטה"**, "יד שמאל (לחיצה)" → **"יד לוחצת"**. "מכות רפאים ביד שמאל" →
+  "ביד הלוחצת" (slap 3 and its item). A test bans "יד ימין / שמאל" in bass titles.
+- The bass course is **out of beta** (`courses.ts`). Drums stays beta.
+- Guitar harmonics: "הרמוניות" → **"הרמוניקים"** in g-lead L1 and the harmonics items. A test checks it.
+- `NoteStaff` ledger lines: VexFlow's default (#444, 1.4 px) read faint once scaled down. They are now drawn at
+  2.2 px in the note colour.
+
+### Not verified
+
+- **The ledger-line fix:** the code is in, but I didn't catch a Note Rush item with a ledger line in the automated
+  run. The drill staff (a different renderer) shows ledger lines fine.
+- **On a device:** the new levels were not played on a real bass. That covers the target-rule pass rates for real
+  improvised takes (the model line and a wrong-target take are tested) and the 6-string level on a real 6-string
+  tuning setting.
+- **The guitar path** still has `fret-chords` L6–7 and `fret-scales` L5 as before.

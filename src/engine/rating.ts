@@ -73,7 +73,17 @@ const kFor = (b: SkillRating) => (b.n < PROVISIONAL_UNTIL || (b.fast ?? 0) > 0 ?
 /** The fast window shrinks by one per rated answer (the field disappears at 0). */
 const tick = (b: SkillRating): { fast?: number } => ((b.fast ?? 0) > 1 ? { fast: b.fast! - 1 } : {});
 
-export type Ratings = Partial<Record<SkillId, SkillRating>>;
+/**
+ * Per-instrument technique ratings (0.66, per-course level): the instrument sub-skills of the instrument courses get a
+ * rating of their own beside the shared `instrument` skill, so a drummer's takes never move the bass course's level.
+ * Folded from the events' tags (every technique take is tagged with its instrument's sub), so existing events rebuild
+ * them on the next load; only a base trimmed before 0.66 lacks them (courseLevel falls back there).
+ */
+export const COURSE_SUBS = ['instrument/piano-tech', 'instrument/guitar-tech', 'instrument/bass-tech', 'instrument/drum-tech'] as const;
+export type CourseSub = (typeof COURSE_SUBS)[number];
+const isCourseSub = (x: string | undefined): x is CourseSub => !!x && (COURSE_SUBS as readonly string[]).includes(x);
+
+export type Ratings = Partial<Record<SkillId | CourseSub, SkillRating>>;
 
 /**
  * Success ceiling (owner 2026-11-07: "I did well, but not on the hardest exercises"): a success never lifts a
@@ -119,6 +129,8 @@ export const BLAME_LAMBDA = 0.5;
 
 /** Apply one event to a ratings map (returns the skills it changed). Mutates `out`. */
 export function applyEvent(out: Ratings, e: RatingEvent): SkillId[] {
+  // The instrument sub of the course (a technique take): its own rating, the classic one-skill update on the whole take.
+  if (e.set === undefined) for (const sub of new Set((e.tags ?? []).map((t) => t.sub).filter(isCourseSub))) out[sub] = rate(out[sub], e);
   const tags = (e.tags ?? []).filter((t) => t.w > 0);
   if (e.set !== undefined || tags.length <= 1) {
     out[e.skill] = rate(out[e.skill], e);

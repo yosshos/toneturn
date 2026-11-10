@@ -3,7 +3,7 @@
 // same scale as Progress → Overview), friends who take a course, and the duel / room question sets of a course.
 import { COURSE_AREAS, COURSE_IDS, inCourse, type CourseId } from './courses';
 import { stepCatalogue, type PathStep } from './path';
-import { domainValue, overallRating, type Ratings } from './rating';
+import { COURSE_SUBS, domainValue, overallRating, type CourseSub, type Ratings } from './rating';
 import type { SetKind } from './tournament';
 
 /** The fields of a result this module reads (LessonResult without the storage import cycle). */
@@ -115,10 +115,34 @@ export interface CourseLevel {
   into: number;
 }
 
-/** A course's level: ear & exam → the overall rating; the others → their area (voice, instrument, creative). */
-export function courseLevel(course: CourseId, ratings: Ratings): CourseLevel {
-  const asR = (v: number | undefined) => (v === undefined ? null : Math.round(600 + v * 1000));
-  const r = course === 'ear' || course === 'exam' ? (overallRating(ratings)?.r ?? null) : asR(domainValue(ratings, COURSE_AREAS[course][0])?.v);
+/** The instrument courses rated on their own technique sub (0.66): piano, guitar, bass, drums. */
+export const COURSE_SUB: Partial<Record<CourseId, CourseSub>> = { keys: 'instrument/piano-tech', guitar: 'instrument/guitar-tech', bass: 'instrument/bass-tech', drums: 'instrument/drum-tech' };
+
+/** A course's rating on the 600-1600 scale (null = not measured yet). */
+export function courseRating(course: CourseId, ratings: Ratings, courses?: CourseId[]): number | null {
+  if (course === 'ear' || course === 'exam') return overallRating(ratings)?.r ?? null;
+  const sub = COURSE_SUB[course];
+  if (sub) {
+    const own = ratings[sub];
+    if (own && own.n > 0) return Math.round(own.r);
+    // Migration: ratings folded before 0.66 (a trimmed base) have no per-instrument subs. Then the shared instrument
+    // area still stands for the course, but only when it is the player's one instrument course, so two instruments
+    // never mix. Once any instrument sub is rated, every course reads its own.
+    const legacy = !COURSE_SUBS.some((k) => (ratings[k]?.n ?? 0) > 0);
+    const instrCourses = (courses ?? [course]).filter((c) => COURSE_SUB[c]);
+    if (!legacy || instrCourses.length !== 1 || instrCourses[0] !== course) return null;
+  }
+  const v = domainValue(ratings, COURSE_AREAS[course][0])?.v;
+  return v === undefined ? null : Math.round(600 + v * 1000);
+}
+
+/**
+ * A course's level: ear & exam -> the overall rating; piano, guitar, bass and drums -> their own technique rating
+ * (instrument/<x>-tech, so one instrument's playing never moves another's level); voice and jazz -> their area.
+ * `courses` (the player's courses) only matters for old data without per-instrument ratings.
+ */
+export function courseLevel(course: CourseId, ratings: Ratings, courses?: CourseId[]): CourseLevel {
+  const r = courseRating(course, ratings, courses);
   const i = r === null ? -1 : DYN.reduce((a, d, k) => (r >= d.from ? k : a), 0);
   const next = i >= 0 && i < DYN.length - 1 ? DYN[i + 1] : null;
   const span = next && i >= 0 ? next.from - DYN[i].from : 1;
@@ -126,11 +150,11 @@ export function courseLevel(course: CourseId, ratings: Ratings): CourseLevel {
   return { r, i, name: i >= 0 ? DYN[i].name : null, next, into };
 }
 
-/** The level name of each of my courses (measured ones only) — what friends see ({"bass":"mf","ear":"f"}). */
+/** The level name of each of my courses (measured ones only) - what friends see ({"bass":"mf","ear":"f"}). */
 export function courseLevels(courses: CourseId[], ratings: Ratings): Partial<Record<CourseId, DynName>> {
   const out: Partial<Record<CourseId, DynName>> = {};
   for (const c of courses) {
-    const n = courseLevel(c, ratings).name;
+    const n = courseLevel(c, ratings, courses).name;
     if (n) out[c] = n;
   }
   return out;

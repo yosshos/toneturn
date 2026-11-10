@@ -320,9 +320,9 @@ export function TotalsTiles({ tot, lang }: { tot: FrameTotals; lang: Lang }) {
 function OverviewV2({ lang, ratings, days, progress }: { lang: 'he' | 'en'; ratings: Parameters<typeof domainValue>[0]; days: Record<string, { xp: number }> | undefined; progress: Progress }) {
   const he = lang === 'he';
   // 0.64 (owner): Progress is the active course's — its level, its radar.
-  const course = useCourse().active;
+  const { active: course, mine } = useCourse();
   const cdef = courseOf(course);
-  const { r, i, next, into } = courseLevel(course, ratings);
+  const { r, i, next, into } = courseLevel(course, ratings, mine);
   const axes = courseAxes(course, ratings, progress, lang);
   const val = axes.map((a) => Math.max(0.12, Math.min(1, a.v ?? 0.12)));
   const AX = axes;

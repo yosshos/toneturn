@@ -55,6 +55,9 @@ export type BassFamilyId =
   | 'b-pick'
   | 'b-read'
   | 'b-styles'
+  // 0.66: reading in positions (electric) and fills / solos on target notes.
+  | 'b-posread'
+  | 'b-impro'
   // 0.64 (track B): the bass-ear family F15 and the upright / double-bass track (BASS_CURRICULUM §5, §5.1).
   | 'b-ear'
   | 'b-up-pos'
@@ -297,8 +300,12 @@ export interface BassGoal {
   // ---- 0.64 (BASS_AUDIT §5): shared contract between the measurement track (A) and the content track (B) ----
   /** Expected dead notes must be unpitched/short and pitched notes pitched: share ≥ this (e.g. 0.9). */
   ghostClass?: number;
-  /** Free-choice line judged by rules instead of note for note (A5); the chart the rules read. */
-  rules?: { kind: 'walk' | 'chordTones' | 'nearest'; chart: { chord: string; root: number; tones: number[]; beats: number }[]; maxRepeat?: number; maxMove?: number };
+  /**
+   * Free-choice line judged by rules instead of note for note (A5); the chart the rules read. target (0.66): scale
+   * tones anywhere, and on every chord change a landing note — one of `land` (intervals above the root) when given,
+   * else a chord tone (`tones` then holds the chord scale).
+   */
+  rules?: { kind: 'walk' | 'chordTones' | 'nearest' | 'target'; chart: { chord: string; root: number; tones: number[]; beats: number; land?: number[] }[]; maxRepeat?: number; maxMove?: number };
   /** Pocket on purpose (A6): target offset per section in ms (+ = behind), share within ±12 ms ≥ 0.7. */
   pocket?: number[];
   /** Mean offset |timingMean| ≤ ms (no consistent rush/drag). */
@@ -336,7 +343,7 @@ export interface BassGoal {
 
 /** Free-choice rule verdict (A5), per slot of the model line (TakeMetrics.rules). */
 export interface TakeRules {
-  kind: 'walk' | 'chordTones' | 'nearest';
+  kind: 'walk' | 'chordTones' | 'nearest' | 'target';
   /** Per slot: R / 3 / 5 / 7 / tension / chromatic / dominant / scale / other, or '-' when nothing was played. */
   labels: string[];
   /** Per slot: the note is allowed by the rules (false for a missing note). */

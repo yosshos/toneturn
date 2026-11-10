@@ -359,7 +359,7 @@ export function slapClass(frames: GFrame[], on: number, medianPeak: number): Sla
 
 // ───────────────────────────── free-choice rules (A5) ─────────────────────────────
 
-export type RuleKind = 'walk' | 'chordTones' | 'nearest';
+export type RuleKind = 'walk' | 'chordTones' | 'nearest' | 'target';
 export interface RuleChart {
   chord: string;
   root: number;
@@ -370,7 +370,11 @@ export interface RuleChart {
   tones: number[];
   /** Length in beats. */
   beats: number;
+  /** target rules (0.66): the notes to land on at this chord's first beat, as intervals above the root. */
+  land?: number[];
 }
+/** Without a `land` list a target line lands on any chord tone (root, 3rd, 5th or 7th, any quality). */
+const LAND_ANY = [0, 3, 4, 6, 7, 8, 10, 11];
 export interface RuleNote {
   /** Played pitch at this slot, or null when nothing was played. */
   pitch: number | null;
@@ -403,7 +407,8 @@ export function chartAt(chart: RuleChart[], beat: number): { c: RuleChart; start
  * Judge a free-choice line by rules (A5) instead of note for note. walk: a chord tone on each chord change, chord
  * tones / tensions elsewhere, and on the last note before a change an approach to the next root (chromatic, dominant
  * or scale step) or a chord tone. chordTones: chord tones only (a chromatic approach to the next root allowed on the
- * last note before a change). nearest: chord tones, and moves ≤ maxMove semitones.
+ * last note before a change). nearest: chord tones, and moves ≤ maxMove semitones. target (0.66, fills and solos):
+ * the chart's tones are the chord scale, and the first note of each chord must land on a target (`land`).
  */
 export function ruleCheck(kind: RuleKind, chart: RuleChart[], notes: RuleNote[], meter: number, maxMove = 4): RuleReport {
   const labels: string[] = [];
@@ -441,6 +446,21 @@ export function ruleCheck(kind: RuleKind, chart: RuleChart[], notes: RuleNote[],
         ok = ok || !!ap;
       }
       if (isNew) ok = isCt;
+    } else if (kind === 'target') {
+      ok = isCt;
+      if (!ok && beforeChange) {
+        const d = pc(n.pitch - nx.c.root);
+        if (d === 1 || d === 11) {
+          lab = 'chromatic';
+          ok = true;
+        }
+      }
+      if (isNew) {
+        const landed = (cur.c.land ?? LAND_ANY).includes(rel);
+        ok = landed;
+        if (landed) ctAtChange++;
+        changes++;
+      }
     } else {
       ok = isCt;
       if (!ok && beforeChange) {
@@ -455,7 +475,7 @@ export function ruleCheck(kind: RuleKind, chart: RuleChart[], notes: RuleNote[],
         if (Math.abs(n.pitch - prevPitch) <= maxMove) movesOk++;
       }
     }
-    if (isNew) {
+    if (isNew && kind !== 'target') {
       changes++;
       if (isCt) ctAtChange++;
     }
