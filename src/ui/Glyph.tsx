@@ -613,7 +613,8 @@ export const GLYPHS: Record<string, ReactNode> = {
 /** A short music mark in the note head (EAR_THEORY_AUDIT: one per ear / jazz path step, src/ui/stepMarks.ts). */
 const mark = (s: string) => {
   const n = Array.from(s).length;
-  const size = n <= 2 ? 24 : n === 3 ? 20 : n === 4 ? 16 : 13;
+  // 0.69 (owner): readable on a phone — the old 13–16 drew 4–5 letter marks about 5 px tall in the node.
+  const size = n <= 2 ? 40 : n === 3 ? 34 : n === 4 ? 28 : 24;
   return (
     <text x={0} y={size * 0.36} textAnchor="middle" fontFamily="'Secular One', Rubik, 'Noto Music', sans-serif" fontSize={size} fill={I} direction="ltr" letterSpacing={n >= 4 ? -0.4 : 0}>
       {s}

@@ -2005,3 +2005,11 @@
 :root[data-theme] .tc-exam .tx-weak { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 :root[data-theme] .tc-exam .tx-weak .chip { font-size: 0.8rem; }
 :root[data-theme] .tc-exam .tx-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 2px; }
+
+/* 0.69 (owner: a step cut off at the edge and off-centre): a node is centred on its slot by a negative inline-start margin
+   of half its width — the margin follows the node's own direction, so Hebrew (slots from the right) and English (from the
+   left) both centre, whatever the root's dir attribute says. No translate any more. */
+:root[data-theme] .path2 .road .sys .node,
+:root[data-theme][dir='rtl'] .path2 .road .sys .node,
+:root[data-theme][dir='ltr'] .path2 .road .sys .node { translate: none; margin-inline-start: -56px; width: 112px; }
+:root[data-theme] .path2 .road .sys .node .node-text b { overflow-wrap: normal; word-break: normal; max-width: 112px; }
