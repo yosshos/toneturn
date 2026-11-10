@@ -5,6 +5,7 @@ import type { CustomDrill, Drill, DrillSettings, FamilyId, ItemState } from './t
 import { catalog, generate, keysInOrder, type FamilyDef, type LevelDef } from './generate';
 import { customIncluded, customKeys, customToDrill } from './custom';
 import { itemPass, todaysItems, type TodayItem } from './ladder';
+import { notesPerBeat } from './analyze';
 import { guitarCatalog, guitarStyleMatch, type GuitarFamilyDef } from './guitar';
 import { tuningById } from '../fretboard';
 import type { DrumFamilyDef } from './drums';
@@ -136,6 +137,9 @@ export function targetBpmOf(level: LevelDef | undefined, drill: Drill): number {
   // the same ratio as the range from their own start, so they have a ladder too.
   if (range && drill.pulse === 8 && range[0] > 0) return Math.max(drill.startBpm, Math.round((drill.startBpm * range[1]) / range[0]));
   if (range) return Math.max(drill.startBpm, range[1]);
+  // Piano levels with an exam speed (PIANO_AUDIT T1): the target in notes per second, whatever the item's note value.
+  const nps = level?.nps;
+  if (nps) return Math.max(drill.startBpm, Math.min(240, Math.round((nps[1] * 60) / notesPerBeat(drill))));
   return Math.round(drill.startBpm * DEFAULT_TARGET_FACTOR);
 }
 

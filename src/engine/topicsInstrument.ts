@@ -766,7 +766,7 @@ TOPIC_GEN['key-notes'] = {
     { en: 'Black keys (both names)', he: 'קלידים שחורים (שני השמות)' },
     { en: 'A note in a named octave (middle C = C4)', he: 'צליל באוקטבה מסוימת (דו האמצעי = C4)' },
     { en: 'Build an interval', he: 'לבנות מרווח' },
-    { en: 'Build a triad or a seventh chord', he: 'לבנות טריאדה או אקורד ספטים' },
+    { en: 'Build a triad or a seventh chord', he: 'לבנות משולש או ספטאקורד' },
   ],
   gen(seed, level, id) {
     const rnd = rng(seed);

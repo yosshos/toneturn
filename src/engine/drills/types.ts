@@ -416,6 +416,8 @@ export interface NoteResult {
 
 /** Everything measured in one take (spec AI §6). Missing metrics are null (not applicable to the drill). */
 export interface TakeMetrics {
+  /** Piano by microphone (PIANO_AUDIT A2): what the goal needs that the mic can't measure — the take doesn't count. */
+  unmeasured?: ('dynamics' | 'articulation' | 'pedal')[];
   bpm: number;
   nps: number;
   accuracy: number;

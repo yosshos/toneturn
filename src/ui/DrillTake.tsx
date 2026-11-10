@@ -4,7 +4,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { scoreInformedNotes } from '../engine/drills/pianoMic';
 import type { Drill, PlayedNote, TakeMetrics, DrillCalibration } from '../engine/drills/types';
-import { analyzeTake, tempoBand, thresholds } from '../engine/drills/analyze';
+import { analyzeTake, micUnmeasurable, tempoBand, thresholds } from '../engine/drills/analyze';
 import type { ExpNote, NoteResult } from '../engine/drills/types';
 import { NoteStaff, TabLine, type NoteMark } from './NoteViews';
 import { markOf } from '../engine/noteMarks';
@@ -411,6 +411,8 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
   // A take whose drums were mostly not told apart: not counted (no pass, no fail) — the reason, and play again.
   const [voided, setVoided] = useState<{ en: string; he: string } | null>(null);
   const useMidi = drum ? drumMidi : midi.devices.length > 0;
+  // PIANO_AUDIT A2: a piano drill whose goal is loudness, release or the pedal needs MIDI (the mic would pass it on notes alone).
+  const pianoBlocked = !drum && !isGuitarDrill(drill) && !useMidi && micUnmeasurable(drill).length > 0;
   useEffect(() => () => ac.current?.abort(), []);
   // B5: drums under the take only when the mic can't hear them (headphones, line-in, or a MIDI bass); else the click.
   const drums = !!(drill.drums || drill.band) && (useMidi || drumsOk === true);
@@ -569,18 +571,23 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
       const played = (heard.length ? detectOnsets(heard, onsetOptsFor(drill)) : notes).filter((p) => !drill.listen || !inBand(p.on));
       return onDone(analyzeGuitarTake(drill, bpm, played, cal, heard), played);
     }
+    // PIANO_AUDIT A2: the microphone is flagged so a loudness / release / pedal goal can't pass on notes alone.
+    const pianoMicTake = !midi.devices.length;
+    // Pianist's ear (k-ear): notes inside the call's bars are the app's call (or noodling), never the answer.
+    const answer = (ps: PlayedNote[]) => (drill.listen ? ps.filter((p) => !inBand(p.on)) : ps);
     if (pianoChords) {
-      const played = scoreInformedNotes(drill, bpm, frames);
-      return onDone(analyzeTake(drill, bpm, played, cal), played);
+      const played = answer(scoreInformedNotes(drill, bpm, frames));
+      return onDone(analyzeTake(drill, bpm, played, cal, { mic: true }), played);
     }
-    const m = analyzeTake(drill, bpm, notes, cal);
+    const heardNotes = answer(notes);
+    const m = analyzeTake(drill, bpm, heardNotes, cal, { mic: pianoMicTake });
     if (drill.goal.pedal && midi.devices.length) {
       const pr = analyzePedal(drill.goal.pedal, pedal, bpm);
       m.pedal = { ok: pr.ok, total: pr.total, pass: pr.pass };
       if (!pr.pass && m.verdict === 'clean') m.verdict = 'almost';
       if (!pr.pass || m.verdict === 'clean') m.why = pr.why;
     }
-    onDone(m, notes);
+    onDone(m, heardNotes);
   };
   return (
     <div className="drill-take">
@@ -594,6 +601,11 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
             : lang === 'he'
               ? 'התרגיל הזה צריך תופים אלקטרוניים (MIDI): המיקרופון שומע משטח אחד בלבד.'
               : 'This one needs an e-kit (MIDI): the microphone hears one surface only.'}
+        </p>
+      )}
+      {pianoBlocked && (
+        <p className="kit-warn" data-piano-needs-midi="1">
+          {lang === 'he' ? 'התרגיל הזה צריך מקלדת MIDI: המיקרופון לא מודד עוצמה, שחרור קלידים או פדל.' : 'This one needs a MIDI keyboard: the microphone can’t measure loudness, key release or the pedal.'}
         </p>
       )}
       <div className={`drill-beat ${phase}`} aria-live="polite" dir="ltr">
@@ -645,7 +657,7 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
               {voided[lang]} {lang === 'he' ? 'קרבו את המיקרופון לתופים, או כיילו שוב בכרטיס המערכת.' : 'Move the mic closer, or calibrate again on the kit card.'}
             </p>
           )}
-          <button className="btn mega" onClick={() => void start()} data-drill-play="1" disabled={drumBlocked}>
+          <button className="btn mega" onClick={() => void start()} data-drill-play="1" disabled={drumBlocked || pianoBlocked}>
             ▶ {tx.play}
           </button>
         </>

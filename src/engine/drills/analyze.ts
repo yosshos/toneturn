@@ -236,10 +236,28 @@ export function bassThresholds(band: number, mic: boolean): { cv: number; sd: nu
 }
 
 /**
- * Measure one take against a drill and give the verdict with the worst factor. `opts.thresholds` overrides the
- * tempo-band CV / SD limits (bass, A7).
+ * The smallest IOI spread (ms, SD of the inter-onset intervals) the evenness rule asks for (PIANO_AUDIT A1). A CV
+ * alone asked 3 % of a 16th at T5+ — 5 ms at ♩ = 88, below the ~6 ms just-noticeable timing shift (Friberg & Sundberg
+ * 1995) and far below what professional pianists play (Jabusch et al. 2004) — so no human take could pass a fast level.
+ * The limit is now max(CV × IOI, this floor). By microphone the 25 ms frame clock alone gives ~10 ms of IOI spread.
  */
-export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], cal?: DrillCalibration, opts: { thresholds?: { cv: number; sd: number } } = {}): TakeMetrics {
+export const IOI_FLOOR_MS = { midi: 12, mic: 25 } as const;
+
+/** What a microphone can't measure on a piano drill: loudness (dynamics, accents, voicing, balance), key release (articulation) and the pedal. */
+export function micUnmeasurable(drill: Pick<Drill, 'goal' | 'notes'>): ('dynamics' | 'articulation' | 'pedal')[] {
+  const out: ('dynamics' | 'articulation' | 'pedal')[] = [];
+  if (drill.goal.dynamics || drill.notes.some((n) => n.accent)) out.push('dynamics');
+  if (drill.goal.articulation) out.push('articulation');
+  if (drill.goal.pedal) out.push('pedal');
+  return out;
+}
+
+/**
+ * Measure one take against a drill and give the verdict with the worst factor. `opts.thresholds` overrides the
+ * tempo-band CV / SD limits (bass, A7). `opts.mic`: the piano was heard by the microphone (no velocity, no key
+ * release): looser timing limits, and a drill whose goal needs MIDI never passes (only measured practice counts).
+ */
+export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], cal?: DrillCalibration, opts: { thresholds?: { cv: number; sd: number }; mic?: boolean } = {}): TakeMetrics {
   // Improv mode: the right hand above the split plays freely and is checked elsewhere (against the chord-scales).
   const played = drill.freeAbove !== undefined ? played0.filter((p) => p.pitch < drill.freeAbove!) : played0;
   const exp = drill.notes;
@@ -254,7 +272,19 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
   const dev = exp.map((_, i) => (match[i] !== null ? played[match[i]!].on - T[i] : null));
   const devs = dev.filter((d): d is number => d !== null);
   const timingMean = devs.length ? mean(devs) : null;
-  const timingSD = devs.length >= 3 ? sd(devs) : null;
+  // PIANO_AUDIT A4: the SD over the onsets (a chord's notes are one onset, at their mean), not over the notes — four
+  // notes of one chord counted as four samples made 3 chords look like 12 and halved a sloppy take's SD.
+  const onsetDev = new Map<string, number[]>();
+  exp.forEach((n, i) => {
+    if (dev[i] === null) return;
+    const k = `${n.hand}:${Math.round(n.beat * 1e4)}`;
+    onsetDev.set(k, [...(onsetDev.get(k) ?? []), dev[i]!]);
+  });
+  const onsetDevs = [...onsetDev.values()].map(mean);
+  // Sample SD (n − 1): a drill of 3–5 chords has only that many onsets.
+  const timingSD = onsetDevs.length >= 3 ? sd(onsetDevs) * Math.sqrt(onsetDevs.length / (onsetDevs.length - 1)) : null;
+  // The onset farthest from the take's own mean (a late chord in a short drill is heard, whatever the SD says).
+  const worstOnset = onsetDevs.length >= 3 ? Math.max(...onsetDevs.map((x) => Math.abs(x - mean(onsetDevs)))) : null;
 
   // Evenness: IOI ratio (played ÷ written) per hand, CV of the ratios.
   const ioiRatio: (number | undefined)[] = exp.map(() => undefined);
@@ -287,8 +317,11 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
       }
     }
     if (goal.evenness) {
-      const vals = rs.map((x) => x.r);
-      cv[h] = sd(vals) / mean(vals);
+      // The spread of the IOI errors in ms against the mean IOI (PIANO_AUDIT A1). For even notes this is the IOI CV;
+      // in dotted / mixed rhythms a short note's error no longer weighs 3× (the old ratio CV failed a steady dotted take).
+      const dts = rs.map((x) => x.o.t - x.prev.t);
+      const errs = rs.map((x, k) => x.r * dts[k] - med * dts[k]);
+      cv[h] = sd(errs) / (med * mean(dts));
     }
   }
 
@@ -452,6 +485,15 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
   // Tempo band and thresholds.
   const nps = npsOf(drill, bpm);
   const th = { ...thresholds(tempoBand(nps)), ...(opts.thresholds ?? {}) };
+  // By microphone (no thresholds of its own): the frame clock's limits, as the bass by mic (A7).
+  if (opts.mic && !opts.thresholds) {
+    th.sd = Math.max(th.sd, 28);
+    th.hands = Math.max(th.hands, 35);
+  }
+  // A1: the evenness limit never asks for less IOI spread than the floor (ms) at the take's written IOI. (Callers with
+  // their own limits — the bass, A7 — keep them.)
+  const ioiMs = 1000 / Math.max(0.1, nps);
+  if (!opts.thresholds) th.cv = Math.max(th.cv, IOI_FLOOR_MS[opts.mic ? 'mic' : 'midi'] / ioiMs);
 
   // Factors (severity > 1 = misses the goal; ≤ 1.5 = almost).
   const F: Factor[] = [];
@@ -489,6 +531,12 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
       sev: timingSD / th.sd,
       en: `Timing unsteady (SD ${Math.round(timingSD)} ms)`,
       he: `תזמון לא יציב (סטיית תקן ${Math.round(timingSD)} ms)`,
+    });
+  if (worstOnset !== null && worstOnset > 2.5 * th.sd)
+    F.push({
+      sev: worstOnset / (2.5 * th.sd),
+      en: `One note far off the beat (${Math.round(worstOnset)} ms)`,
+      he: `צליל אחד רחוק מהפעמה (${Math.round(worstOnset)} ms)`,
     });
   if (goal.hands && handsAbs !== null) {
     const lead = (handsMean ?? 0) > 0 ? 'LH' : 'RH';
@@ -593,6 +641,16 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
       he: `${hesitations} היסוסים`,
     });
 
+  // A2: by microphone every note sounds at velocity 64 with no release, so a loudness / articulation / pedal goal would
+  // pass on the notes alone (an "even p" take "in band" at 64). Such a take is not measured and never passes.
+  const unmeasured = opts.mic ? micUnmeasurable(drill) : [];
+  if (unmeasured.length)
+    F.push({
+      sev: 999,
+      en: `Needs a MIDI keyboard: the microphone can't measure ${unmeasured.map((x) => ({ dynamics: 'loudness', articulation: 'key release', pedal: 'the pedal' })[x]).join(' or ')}`,
+      he: `צריך מקלדת MIDI: המיקרופון לא מודד ${unmeasured.map((x) => ({ dynamics: 'עוצמה', articulation: 'שחרור קלידים', pedal: 'פדל' })[x]).join(' או ')}`,
+    });
+
   // Barry Harris lines are judged by the goal (chord tones on the beats), so small line changes are allowed.
   const harris = drill.spec.family === 'harris' && goal.chordTonesOnBeats && chordToneOnBeats === 1;
   const accClean = harris ? accuracy >= 0.9 && wrong <= Math.ceil(0.1 * nExp) : accuracy >= 1 - EPS && wrong === 0;
@@ -679,5 +737,6 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
     verdict,
     why,
     ...(octaveShift !== undefined ? { octaveShift } : {}),
+    ...(unmeasured.length ? { unmeasured } : {}),
   };
 }
