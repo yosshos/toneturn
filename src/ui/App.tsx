@@ -3,7 +3,7 @@ import { courseLevels } from '../engine/courseSocial';
 import { techQueue, workoutCreditsStep } from '../engine/ladderFacts';
 import { CourseContext } from './courseContext';
 import { CourseSheet } from './CourseSwitcher';
-import { COURSE_AREAS, courseOf, switchCourse, type CourseId } from '../engine/courses';
+import { COURSE_AREAS, courseGoal, courseOf, switchCourse, type CourseId } from '../engine/courses';
 import { AREAS as INTAKE_AREAS } from '../engine/intake';
 import { miniForSkill } from '../content/refresher';
 import { CHALLENGES } from '../engine/improvRules';
@@ -16,6 +16,7 @@ import { TodayAside } from './Asides';
 import { ProgPuzzleScreen } from './ProgPuzzle';
 import { ImprovStudioScreen } from './ImprovStudio';
 import { ExamsScreen, mockExamLesson } from './Exams';
+import type { ExamDef } from '../content/bagrut';
 import { AdminScreen, CoolDownSheet, PlansScreen } from './Plans';
 import { coolDown, loadPricing, myPlan, type MyPlan, type Pricing } from '../cloud/pricing';
 import { GrooveTrainerScreen } from './GrooveTrainer';
@@ -388,7 +389,11 @@ export function App() {
   const themeId = resolvedTheme(appearance, prefersDark);
   // Courses (0.61, SPEC-COURSES): one active course; the chrome reads it from CourseContext.
   const [courseSheet, setCourseSheet] = useState(false);
-  const courseCtx = useMemo(() => ({ active: s.activeCourse ?? 'ear', mine: s.courses?.length ? s.courses : ['ear' as CourseId], open: () => setCourseSheet(true) }), [s.activeCourse, s.courses]);
+  const courseCtx = useMemo(
+    () => ({ active: s.activeCourse ?? 'ear', mine: s.courses?.length ? s.courses : ['ear' as CourseId], open: () => setCourseSheet(true), examPrep: !!s.examPrep, setExamPrep: (on: boolean) => updateSettings({ examPrep: on }) }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [s.activeCourse, s.courses, s.examPrep],
+  );
 
   useEffect(() => {
     document.documentElement.dataset.theme = themeId;
@@ -623,6 +628,8 @@ export function App() {
   const openAbsolute = (level: number) => gate('absolute-pitch', () => openGenerated(absoluteLesson(level, Date.now() >>> 0), undefined, false, { key: `absolute:${level}`, title: `${t.skillNames.absolute} · ${level}` }));
   const openTopic = (topic: string, level: number) =>
     gate(`topic:${topic}`, () => openGenerated(topicLesson(topic, level, Date.now() >>> 0), undefined, false, { key: `topic:${topic}:${level}`, title: `${TOPIC_GEN[topic]?.title[s.uiLang] ?? topic} · ${TOPIC_GEN[topic]?.levels[level - 1]?.[s.uiLang] ?? level}`, brief: briefFor(topic, level) }));
+  /** A mock exam (Programs & exams, and Today's exam-prep card): every section in order, resumable. */
+  const openMock = (e: ExamDef) => openGenerated(mockExamLesson(e), undefined, false, { key: `exam:${e.id}`, title: e.title[s.uiLang] });
   // Deep link to a topic level (#/topic/<id>/<level>): opens that practice directly — used by the e2e checks and, later,
   // by challenge links (SPEC-SOCIAL §8).
   const openTopicRef = useRef(openTopic);
@@ -1057,9 +1064,9 @@ export function App() {
     // 0.61 (SPEC-COURSES): the workout belongs to the active course — its own areas, its goal, its warm-ups only.
     const course = courseOf(s.activeCourse);
     const own = COURSE_AREAS[course.id];
-    return suggestWorkout({ total: tmpl ? tmpl.reduce((a, b) => a + b.minutes, 0) : baseMinutes, goal: course.goal, priorities: (s.intake as Intake | null | undefined)?.priorities ?? null, leaveOut: [...new Set([...(s.pathLeaveOut ?? []).filter((d) => course.id === 'ear' || course.id === 'exam' || !own.includes(d)), ...INTAKE_AREAS.filter((d) => !own.includes(d))])], reviewsDue: new Set(dueReviews(progress.review, now0).map((r) => r.key)).size, singer: course.id === 'voice' && !s.noMic, view: pathView, template: tmpl, technique: s.drills?.inWorkout !== false && (course.id === 'keys' || course.id === 'guitar' || course.id === 'bass' || course.id === 'drums') });
+    return suggestWorkout({ total: tmpl ? tmpl.reduce((a, b) => a + b.minutes, 0) : baseMinutes, goal: courseGoal(course.id, !!s.examPrep), priorities: (s.intake as Intake | null | undefined)?.priorities ?? null, leaveOut: [...new Set([...(s.pathLeaveOut ?? []).filter((d) => course.id === 'ear' || !own.includes(d)), ...INTAKE_AREAS.filter((d) => !own.includes(d))])], reviewsDue: new Set(dueReviews(progress.review, now0).map((r) => r.key)).size, singer: course.id === 'voice' && !s.noMic, view: pathView, template: tmpl, technique: s.drills?.inWorkout !== false && (course.id === 'keys' || course.id === 'guitar' || course.id === 'bass' || course.id === 'drums') });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathView, baseMinutes, tmplRaw, s.goal, s.pathLeaveOut, s.pathHidden, s.mode, s.noSing, s.noMic, progress.review.length, today, progress.history.length]);
+  }, [pathView, baseMinutes, tmplRaw, s.goal, s.examPrep, s.pathLeaveOut, s.pathHidden, s.mode, s.noSing, s.noMic, progress.review.length, today, progress.history.length]);
   const todayBlocks = s.workoutToday?.day === today ? s.workoutToday.blocks : suggestedWorkout;
   const [wrun, setWrun] = useState<WorkoutRun | null>(() => loadSlot<WorkoutRun>(`workout:${today}`)?.data ?? null);
   const wrunRef = useRef(wrun);
@@ -1270,7 +1277,17 @@ export function App() {
               onReset={() => updateSettings({ workoutToday: undefined })}
             />
           }
-          today={<TodayCards t={t} settings={s} progress={progress} goalXp={s.dailyGoal ?? DAILY_GOAL_XP} signedIn={!!user} onLeague={() => go('friends')} />}
+          today={
+            <TodayCards
+              t={t}
+              settings={s}
+              progress={progress}
+              goalXp={s.dailyGoal ?? DAILY_GOAL_XP}
+              signedIn={!!user}
+              onLeague={() => go('friends')}
+              exam={{ mock: openMock, practise: (topic, level) => openTopic(topic, level), all: () => go('exams') }}
+            />
+          }
           headerExtra={<MonthReviewIcon t={t} lang={s.uiLang} progress={progress} seenMonth={s.monthReviewSeen} onSeen={(monthReviewSeen) => updateSettings({ monthReviewSeen })} />}
           streak={gems.streak}
           onStreak={() => setStreakOpen(true)}
@@ -1583,7 +1600,7 @@ export function App() {
           lang={s.uiLang}
           onSignIn={() => void signInWithGoogle()}
           onDone={(res, then) => {
-            updateSettings({ ...res.patch, pathFacts: unfreezeIfEarly(s.pathFacts) });
+            updateSettings({ ...res.patch, pathFacts: unfreezeIfEarly(res.patch.pathFacts ?? s.pathFacts) });
             if (then === 'placement') {
               go('home');
               // Drums first: its level test is the kit setup + the playing probe, not the ear placement (keys / guitar /
@@ -1607,7 +1624,7 @@ export function App() {
             go('home');
           }}
           onDone={(res, then) => {
-            updateSettings({ ...res.patch, pathFacts: unfreezeIfEarly(s.pathFacts) });
+            updateSettings({ ...res.patch, pathFacts: unfreezeIfEarly(res.patch.pathFacts ?? s.pathFacts) });
             if (then === 'placement') {
               go('home');
               // Drums first: its level test is the kit setup + the playing probe, not the ear placement (keys / guitar /
@@ -1736,7 +1753,7 @@ export function App() {
           lang={s.uiLang}
           onBack={() => go('arcade')}
           onPractise={(topic, level) => openTopic(topic, level)}
-          onMock={(e) => openGenerated(mockExamLesson(e), undefined, false, { key: `exam:${e.id}`, title: e.title[s.uiLang] })}
+          onMock={openMock}
         />
       )}
       {route === 'plans' && <PlansScreen lang={s.uiLang} onBack={() => go('settings')} />}

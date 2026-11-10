@@ -44,8 +44,8 @@ describe('technique and vocal ladders in the course path (0.61, owner)', () => {
     expect(new Set(all.map((s) => s.id)).size).toBe(all.length);
   });
 
-  it('ladder steps stay out of the ear, exam and jazz courses', () => {
-    for (const c of ['ear', 'exam', 'jazz'] as CourseId[]) {
+  it('ladder steps stay out of the ear and jazz courses', () => {
+    for (const c of ['ear', 'jazz'] as CourseId[]) {
       const inp = inputFor(c);
       expect(stepCatalogue().filter((s) => s.ladder && eligible(s, inp)), c).toHaveLength(0);
     }

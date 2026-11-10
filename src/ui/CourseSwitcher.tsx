@@ -68,3 +68,17 @@ export function CourseSheet({ mine, active, lang, onPick, onClose }: { mine: Cou
     </div>
   );
 }
+
+/** 0.67 (owner 2026-11-10): exam prep is a mode of the Ear course (was the Exams course). A small switch on the Ear
+ *  course's Path and Practice headers; Settings → learning has the same switch. */
+export const EXAM_PREP_NAME = { he: 'הכנה לבגרות', en: 'Exam prep' } as const;
+export function ExamPrepSwitch({ on, lang, onChange }: { on: boolean; lang: Lang; onChange: (on: boolean) => void }) {
+  return (
+    <button type="button" role="switch" aria-checked={on} className={`exam-switch ${on ? 'on' : ''}`} onClick={() => onChange(!on)} data-exam-prep={on ? 'on' : 'off'}>
+      <span className="es-track" aria-hidden="true">
+        <i />
+      </span>
+      <span className="es-label">{EXAM_PREP_NAME[lang]}</span>
+    </button>
+  );
+}

@@ -17,6 +17,8 @@ export interface Quest {
 interface QuestDay {
   day: string;
   course: CourseId;
+  /** The Ear course in exam-prep mode (0.67): a theory quest leads. */
+  examPrep?: boolean;
   events: RatingEvent[];
   /** Today's finished sessions (lesson ids). */
   sessions: string[];
@@ -44,12 +46,16 @@ export function bestRun(events: RatingEvent[], day: string): number {
 }
 
 type Make = (d: QuestDay) => Quest;
+/** The skills the exams test most (the exam goal's boosts, engine/path.ts GOAL_BOOST.exam, plus reading). */
+const EXAM_SKILLS: string[] = ['theory', 'notes', 'sight', 'dictation', 'cadences', 'rhythm-dictation'];
 const POOL: Record<string, Make> = {
   run10: (d) => ({ id: 'run10', title: { en: '10 right answers in a row', he: '10 תשובות נכונות ברצף' }, now: bestRun(d.events, d.day), target: 10, color: '#3AB8FF', glyph: 'intervals' }),
   steps2: (d) => ({ id: 'steps2', title: { en: 'Finish 2 path steps', he: 'לסיים 2 צעדים במסלול' }, now: d.stepsToday, target: 2, color: '#FFD43B', glyph: 'scales' }),
   min10: (d) => ({ id: 'min10', title: { en: 'Practise 10 minutes', he: 'להתאמן 10 דקות' }, now: Math.round(d.minutesToday), target: 10, color: '#12C9B4', glyph: 'tempo' }),
   sing3: (d) => ({ id: 'sing3', title: { en: 'Sing 3 melodies', he: 'לשיר 3 מנגינות' }, now: d.sessions.filter((s) => /sing|vocal/.test(s)).length, target: 3, color: '#12C9B4', glyph: 'sing' }),
   tech3: (d) => ({ id: 'tech3', title: { en: '3 technique sessions', he: '3 אימוני טכניקה' }, now: d.sessions.filter((s) => s.startsWith('tech') || s.startsWith('technique')).length, target: 3, color: '#FFD43B', glyph: d.course === 'drums' ? 'sticks' : d.course === 'guitar' ? 'guitar' : d.course === 'bass' ? 'bass' : 'keys' }),
+  // Exam prep (0.67): what the Bagrut and entrance exams test — theory, reading, dictation, cadences.
+  theory5: (d) => ({ id: 'theory5', title: { en: '5 exam-topic answers right', he: '5 תשובות נכונות בנושאי בחינה' }, now: d.events.filter((e) => sameDay(e.at, d.day) && e.set === undefined && EXAM_SKILLS.includes(e.skill) && (e.score ?? (e.correct ? 1 : 0)) >= 0.7).length, target: 5, color: '#FF8A3D', glyph: 'scales' }),
   // Drums (DRUMS_AUDIT I8): a measured drum take is rated 'instrument' with a timing share — it counts here.
   rhythm: (d) => ({ id: 'rhythm', title: d.course === 'drums' ? { en: 'Rhythm right 5 times', he: 'קצב נכון 5 פעמים' } : { en: '5 rhythm answers right', he: '5 תשובות קצב נכונות' }, now: d.events.filter((e) => sameDay(e.at, d.day) && e.set === undefined && (/rhythm|timing|tempo|meter/.test(e.skill) || (d.course === 'drums' && !!e.tags?.some((x) => /rhythm|timing/.test(x.skill)))) && (e.score ?? (e.correct ? 1 : 0)) >= 0.7).length, target: 5, color: '#FF5FA2', glyph: 'rhythm' }),
 };
@@ -57,7 +63,6 @@ const POOL: Record<string, Make> = {
 /** Which quests a course offers (first one rotates with the day). */
 const BY_COURSE: Record<CourseId, string[]> = {
   ear: ['run10', 'steps2', 'rhythm', 'min10'],
-  exam: ['run10', 'steps2', 'rhythm', 'min10'],
   jazz: ['steps2', 'run10', 'min10'],
   voice: ['sing3', 'steps2', 'min10'],
   keys: ['tech3', 'steps2', 'min10'],
@@ -66,12 +71,16 @@ const BY_COURSE: Record<CourseId, string[]> = {
   drums: ['tech3', 'rhythm', 'steps2', 'min10'],
 };
 
+/** The Ear course in exam-prep mode: the exam-topic quest every day, the other one rotates. */
+const EXAM_PREP = ['steps2', 'run10', 'min10'];
+
 /** Today's two quests for the course. */
 export function dailyQuests(d: QuestDay): Quest[] {
-  const ids = BY_COURSE[d.course] ?? BY_COURSE.ear;
+  const prep = d.course === 'ear' && !!d.examPrep;
+  const ids = prep ? EXAM_PREP : (BY_COURSE[d.course] ?? BY_COURSE.ear);
   const n = [...d.day].reduce((a, c) => a + c.charCodeAt(0), 0);
-  const first = ids[n % ids.length];
-  const second = ids[(n + 1) % ids.length];
+  const first = prep ? 'theory5' : ids[n % ids.length];
+  const second = prep ? ids[n % ids.length] : ids[(n + 1) % ids.length];
   return [first, second].map((id) => {
     const q = POOL[id](d);
     return { ...q, now: Math.min(q.now, q.target) };

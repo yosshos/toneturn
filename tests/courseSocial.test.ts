@@ -27,8 +27,9 @@ describe('courseOfResult', () => {
   it('topics and lessons go through the step catalogue + inCourse', () => {
     const ear = cat.find((s) => s.kind === 'topic' && inCourse(s, 'ear'))!;
     expect(courseOfResult(res(ear.id))).toBe('ear');
-    // Shared by ear and exam: the stored course decides.
-    expect(courseOfResult(res(ear.id, { course: 'exam' }))).toBe('exam');
+    // 0.67: a result stored in the old Exams course counts for Ear.
+    expect(courseOfResult(res(ear.id, { course: 'exam' }))).toBe('ear');
+    expect(courseOfResult(res('practice-log', { course: 'exam' }))).toBe('ear');
     const sung = cat.find((s) => s.kind === 'topic' && inCourse(s, 'voice'));
     if (sung) expect(courseOfResult(res(sung.id))).toBe('voice');
     const lesson = cat.find((s) => s.kind === 'lesson' && inCourse(s, 'ear'))!;
@@ -109,7 +110,9 @@ describe('badge course tags', () => {
     expect(byId('area:pitch:bronze').course).toBe('ear');
     expect(BADGES.find((b) => b.cat === 'skill' && b.group === 'singing')!.course).toBe('voice');
     expect(BADGES.find((b) => b.cat === 'skill' && b.group === 'intervals')!.course).toBe('ear');
-    expect(badgeCourse({ id: 'x', cat: 'skill', group: 'theory' })).toEqual({ course: 'ear', alsoIn: ['exam'] });
+    expect(badgeCourse({ id: 'x', cat: 'skill', group: 'theory' })).toEqual({ course: 'ear' });
+    expect(badgeCourse({ id: 'x', cat: 'skill', group: 'cadences' })).toEqual({ course: 'ear', alsoIn: ['jazz'] });
+    expect(BADGES.some((b) => (b.alsoIn as string[] | undefined)?.includes('exam') || (b.course as string) === 'exam')).toBe(false);
   });
   it('the course filter shows the course + general (+ shared ones)', () => {
     const guitar = BADGES.filter((b) => badgeInCourse(b, 'guitar'));
@@ -117,7 +120,7 @@ describe('badge course tags', () => {
     expect(guitar.some((b) => b.id === 'tech:scales:1')).toBe(false);
     expect(guitar.some((b) => b.id === 'tech:clean-10')).toBe(true);
     expect(guitar.some((b) => b.id === 'area:pitch:bronze')).toBe(false);
-    expect(BADGES.filter((b) => badgeInCourse(b, 'exam')).some((b) => b.id === 'area:pitch:bronze')).toBe(true);
+    expect(BADGES.filter((b) => badgeInCourse(b, 'ear')).some((b) => b.id === 'area:pitch:bronze')).toBe(true);
   });
 });
 

@@ -4,6 +4,9 @@
 import { COURSE_AREAS } from '../engine/courses';
 import { DOMAIN_COLOR, Glyph, type GlyphKind } from './Glyph';
 import { useCourse } from './courseContext';
+import { ExamPrepSwitch } from './CourseSwitcher';
+import { COURSE_GAMES, COURSE_ROWS, courseRows } from './courseRows';
+export { COURSE_GAMES, COURSE_ROWS, courseRows };
 import type { CourseId } from '../engine/courses';
 import { Icon } from './icons';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
@@ -789,18 +792,6 @@ export const PRACTICE_GROUPS: { id: 'play' | 'train' | 'study'; name: { en: stri
   { id: 'train', name: { en: 'Train', he: 'להתאמן' }, items: ['drills', 'improv', 'games'] },
   { id: 'study', name: { en: 'Study', he: 'ללמוד' }, items: ['lessons', 'exams', 'puzzle'] },
 ];
-/** The games each course offers (0.64, owner: every bottom-tab screen is the course's — no guitar game in piano). */
-export const COURSE_GAMES: Record<CourseId, string[]> = {
-  ear: ['melody', 'rhythm', 'truefalse', 'ghost', 'duel', 'daily', 'rush-interval', 'rush-chord', 'rush-progression', 'highway', 'melodypuzzle', 'nametune', 'pitchmemory', 'rush-note', 'rush-keysig', 'peakhunter'],
-  exam: ['truefalse', 'ghost', 'duel', 'daily', 'rush-interval', 'rush-chord', 'rush-progression', 'highway', 'melodypuzzle', 'nametune', 'pitchmemory', 'rush-note', 'rush-keysig', 'melody', 'rhythm'],
-  jazz: ['rush-chord', 'rush-progression', 'rush-interval', 'truefalse', 'nametune', 'duel', 'daily'],
-  voice: ['flight', 'pitchmemory', 'melody', 'nametune', 'rush-interval'],
-  keys: ['drills', 'rush-note', 'rush-chord', 'rush-keysig', 'highway', 'melodypuzzle', 'rhythm'],
-  guitar: ['drills', 'rush-fretboard', 'tuneup', 'rush-chord', 'highway', 'rush-note', 'rhythm'],
-  bass: ['drills', 'rush-fretboard', 'tuneup', 'highway', 'rush-note', 'rhythm'],
-  // 0.65: technique on the kit, Highway with drum lanes, beat echo, the groove trainer.
-  drums: ['drills', 'highway', 'rhythm', 'groove'],
-};
 /** An instrument course's own words on shared game cards (the shared text is the piano's: Hanon, Barry Harris, MIDI). */
 const COURSE_BLURB: Partial<Record<CourseId, Record<string, { en: string; he: string }>>> = {
   guitar: { drills: { en: 'Scales, chords, picking and legato — measured on your guitar.', he: 'סולמות, אקורדים, פריטה ולגאטו — נמדדים בגיטרה שלכם.' } },
@@ -825,24 +816,13 @@ const BASS_TX: Record<string, { en: [string, string]; he: [string, string] }> = 
 /** The instrument tile's symbol per course. */
 const INSTRUMENT_TILE: Partial<Record<CourseId, GlyphKind>> = { drums: 'drums', bass: 'bass', guitar: 'guitar' };
 /** The weekly puzzle and the live quiz rooms are ear & theory things. */
-const COURSE_SOCIAL: CourseId[] = ['ear', 'exam', 'jazz'];
+const COURSE_SOCIAL: CourseId[] = ['ear', 'jazz'];
 /** Practice tiles (0.63): a colour per row, and the game kinds each course shows as their own tiles. */
 const TILE_COLOR: Record<string, string> = { lessons: '#FF8A3D', puzzle: '#A78BFA', drills: '#FFD43B', songs: '#12C9B4', pieces: '#FF5FA2', charts: '#A78BFA', improv: '#6D28D9', exams: '#FF8A3D' };
-const COURSE_TILE_CATS: Partial<Record<CourseId, GameCat[]>> = { ear: ['ear', 'rhythm', 'memory', 'read'], exam: ['ear', 'read'], jazz: ['ear'], voice: ['voice'], keys: ['instrument'], guitar: ['instrument'], bass: ['instrument'], drums: ['instrument', 'rhythm'] };
+const COURSE_TILE_CATS: Partial<Record<CourseId, GameCat[]>> = { ear: ['ear', 'rhythm', 'memory', 'read'], jazz: ['ear'], voice: ['voice'], keys: ['instrument'], guitar: ['instrument'], bass: ['instrument'], drums: ['instrument', 'rhythm'] };
 const CAT_GLYPH: Record<GameCat, GlyphKind> = { ear: 'intervals', rhythm: 'rhythm', memory: 'memory', read: 'sight', voice: 'sing', instrument: 'keys', social: 'duel' };
-/** What Practice shows in each course (0.61, SPEC-COURSES): only the course's own rows; tools are shared. */
-export const COURSE_ROWS: Record<CourseId, string[]> = {
-  ear: ['lessons', 'puzzle', 'games'],
-  voice: ['drills', 'songs', 'games'],
-  keys: ['drills', 'pieces', 'songs', 'games'],
-  guitar: ['drills', 'songs', 'pieces', 'games'],
-  bass: ['drills', 'songs', 'games'],
-  drums: ['drills', 'games'],
-  jazz: ['charts', 'improv', 'games'],
-  exam: ['exams', 'lessons', 'puzzle', 'games'],
-};
 /** The games list opens on the course's own category. */
-export const COURSE_GAME_CAT: Record<CourseId, GameCat> = { ear: 'ear', voice: 'voice', keys: 'instrument', guitar: 'instrument', bass: 'instrument', drums: 'instrument', jazz: 'ear', exam: 'read' };
+export const COURSE_GAME_CAT: Record<CourseId, GameCat> = { ear: 'ear', voice: 'voice', keys: 'instrument', guitar: 'instrument', bass: 'instrument', drums: 'instrument', jazz: 'ear' };
 const VOICE_TX: Record<string, { en: [string, string]; he: [string, string] }> = {
   drills: { en: ['Vocal technique', 'Range, breath, long tones, agility'], he: ['טכניקה קולית', 'מנעד, נשימה, צליל ארוך, גמישות'] },
   songs: { en: ['Sing along', 'Real songs in your key, with a guide voice'], he: ['שירה עם שירים', 'שירים אמיתיים בטונליות שלך, עם קול מוביל'] },
@@ -874,8 +854,8 @@ const GAME_GLYPH: Record<string, GlyphKind> = {
 const CAT_COLOR: Record<string, string> = { ear: DOMAIN_COLOR.ear, rhythm: DOMAIN_COLOR.rhythm, memory: DOMAIN_COLOR.harmony, read: DOMAIN_COLOR.theory, voice: DOMAIN_COLOR.voice, instrument: DOMAIN_COLOR.play, social: '#EDE6F7' };
 
 export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline, onGhost, onDaily, onPuzzle, onGame2, lang = 'en', hub, status }: { status?: Partial<Record<string, string>>; t: Strings; progress: Progress; onGame: (k: GameKind) => void; onTrueFalse: () => void; onDuel: () => void; onOnline: () => void; onGhost: () => void; onDaily: () => void; onPuzzle: () => void; onGame2?: (id: (typeof GAMES2)[number]['id']) => void; lang?: 'he' | 'en'; hub?: PracticeHub }) {
-  const course = useCourse().active;
-  const rows = COURSE_ROWS[course];
+  const { active: course, examPrep, setExamPrep } = useCourse();
+  const rows = courseRows(course, examPrep);
   // Status of the weekly puzzle and the daily challenge (moved here from the old Home tools, 0.41).
   const daily = progress.daily?.[localDay(new Date())];
   const pz = progress.puzzles?.[weekId(new Date())];
@@ -939,6 +919,11 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
         <>
           <h1 className="screen-title">{t.playTitle}</h1>
           {!hub && <p className="field-hint">{t.playHint}</p>}
+          {hub && course === 'ear' && (
+            <div className="exam-head-row">
+              <ExamPrepSwitch on={examPrep} lang={lang} onChange={setExamPrep} />
+            </div>
+          )}
         </>
       )}
       {hub && !games && (

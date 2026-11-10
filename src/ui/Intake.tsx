@@ -3,6 +3,7 @@
 // clean view, the voice range (sung gently — never strained) and the player's own order of practice areas,
 // which reorders the path (src/engine/intake.ts).
 
+import { switchCourse } from '../engine/courses';
 import { Icon } from './icons';
 import { setTalk, talkOn } from '../speech/talk';
 import { useEffect, useRef, useState } from 'react';
@@ -306,6 +307,9 @@ export function IntakeScreen({ t, settings, onDone, onSkip }: { t: Strings; sett
     const patch: Partial<Settings> = { intake, track: s.track, cleanView: s.cleanView, miniLessons: s.miniLessons, ...(s.noteViews ? { noteViews: s.noteViews } : {}) };
     // The path (spec AF D2 / D4) and the instrument (spec AE §6.1).
     patch.goal = intake.goal;
+    // 0.67: "Exam prep" is the Ear course in exam-prep mode (the Exams course is gone): turn it on and go to Ear.
+    if (intake.goal === 'exam') Object.assign(patch, switchCourse(settings, 'ear'), { examPrep: true });
+    else if (settings.goal === 'exam') patch.examPrep = false;
     patch.pathLeaveOut = intake.leaveOut;
     patch.pathPacks = intake.packs;
     patch.noSing = intake.noSing;

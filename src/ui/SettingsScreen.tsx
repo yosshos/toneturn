@@ -95,13 +95,24 @@ function MyPath({ t, s, onChange }: { t: Strings; s: Settings; onChange: (p: Par
       <h2>{L.title}</h2>
       <label className="field-row">
         <span>{L.goal}</span>
-        <select value={s.goal ?? 'general'} onChange={(e) => onChange({ goal: e.target.value as Goal, pathPacks: undefined })}>
+        <select
+          value={s.goal ?? 'general'}
+          onChange={(e) => {
+            const goal = e.target.value as Goal;
+            // 0.67: the exam goal is the Ear course's exam-prep mode (on with it, off when leaving it).
+            onChange({ goal, pathPacks: undefined, ...(goal === 'exam' ? { examPrep: true } : s.goal === 'exam' ? { examPrep: false } : {}) });
+          }}
+        >
           {GOALS.map((g) => (
             <option key={g} value={g}>
               <Glyph kind={glyphForEmoji(GOAL_NAMES[g].icon)} color="#A78BFA" size={28} /> {GOAL_NAMES[g][lang]}
             </option>
           ))}
         </select>
+      </label>
+      <label className="toggle-row" data-exam-prep-setting="1">
+        <input type="checkbox" checked={!!s.examPrep} onChange={(e) => onChange({ examPrep: e.target.checked })} />
+        <span>{lang === 'he' ? 'הכנה לבגרות (בקורס שמיעה ותיאוריה)' : 'Exam prep (in the Ear & theory course)'}</span>
       </label>
       <h3 className="intake-sub">{q.leaveAreas}</h3>
       <div className="intake-chips">

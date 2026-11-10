@@ -1,7 +1,7 @@
 // Community and achievements per course (owner 2026-11-09). Pure: which course a result belongs to, this week's XP
 // per course (the league stays one across courses, its card shows the split), the level of a course (pp … ff, the
 // same scale as Progress → Overview), friends who take a course, and the duel / room question sets of a course.
-import { COURSE_AREAS, COURSE_IDS, inCourse, type CourseId } from './courses';
+import { COURSE_AREAS, COURSE_IDS, inCourse, LEGACY_EXAM, normCourse, type CourseId } from './courses';
 import { stepCatalogue, type PathStep } from './path';
 import { COURSE_SUBS, domainValue, overallRating, type CourseSub, type Ratings } from './rating';
 import type { SetKind } from './tournament';
@@ -11,8 +11,8 @@ export interface ResultLike {
   lessonId: string;
   completedAt: string;
   xp: number;
-  /** The course the player was in when the result was recorded (0.65+). */
-  course?: CourseId;
+  /** The course the player was in when the result was recorded (0.65+; results from before 0.67 may say 'exam' = ear). */
+  course?: CourseId | typeof LEGACY_EXAM;
   items?: { tag: string; skill?: string }[];
 }
 
@@ -66,8 +66,10 @@ function candidates(r: ResultLike): CourseId[] {
  */
 export function courseOfResult(r: ResultLike): CourseId {
   const c = candidates(r);
-  if (r.course && (!c.length || c.includes(r.course))) return r.course;
-  return c[0] ?? r.course ?? 'ear';
+  // 0.67: a result recorded in the old Exams course counts for Ear (exam prep is the Ear course's mode).
+  const rc = normCourse(r.course);
+  if (rc && (!c.length || c.includes(rc))) return rc;
+  return c[0] ?? rc ?? 'ear';
 }
 
 /** XP per course between two instants (the league week), biggest first, courses with 0 left out. */
@@ -120,7 +122,7 @@ export const COURSE_SUB: Partial<Record<CourseId, CourseSub>> = { keys: 'instrum
 
 /** A course's rating on the 600-1600 scale (null = not measured yet). */
 export function courseRating(course: CourseId, ratings: Ratings, courses?: CourseId[]): number | null {
-  if (course === 'ear' || course === 'exam') return overallRating(ratings)?.r ?? null;
+  if (course === 'ear') return overallRating(ratings)?.r ?? null;
   const sub = COURSE_SUB[course];
   if (sub) {
     const own = ratings[sub];
@@ -137,7 +139,7 @@ export function courseRating(course: CourseId, ratings: Ratings, courses?: Cours
 }
 
 /**
- * A course's level: ear & exam -> the overall rating; piano, guitar, bass and drums -> their own technique rating
+ * A course's level: ear (with or without exam prep) -> the overall rating; piano, guitar, bass and drums -> their own technique rating
  * (instrument/<x>-tech, so one instrument's playing never moves another's level); voice and jazz -> their area.
  * `courses` (the player's courses) only matters for old data without per-instrument ratings.
  */
@@ -177,10 +179,12 @@ export function friendsInCourse<T extends CourseFriendRow>(rows: T[], course: Co
   const rank = (n: DynName | null | undefined) => (n ? DYN_NAMES.indexOf(n) : -1);
   const friends = rows.filter((r) => r.relation === 'friend');
   const known = friends.some((r) => r.course_levels && Object.keys(r.course_levels).length > 0);
+  // 0.67: a friend on an older app may still send an 'exam' level: it is the Ear course's (the same rating).
+  const levelOf = (cl: Record<string, string> | null | undefined): string | undefined => cl?.[course] ?? (course === 'ear' ? cl?.[LEGACY_EXAM] : undefined);
   const out = rows
-    .filter((r) => r.relation === 'me' || (r.relation === 'friend' && !!r.course_levels && course in r.course_levels))
+    .filter((r) => r.relation === 'me' || (r.relation === 'friend' && levelOf(r.course_levels) !== undefined))
     .map((r) => {
-      const raw = r.relation === 'me' ? myLevel : (r.course_levels?.[course] as DynName | undefined);
+      const raw = r.relation === 'me' ? myLevel : (levelOf(r.course_levels) as DynName | undefined);
       return { ...r, level: raw && DYN_NAMES.includes(raw) ? raw : null };
     })
     .sort((a, b) => rank(b.level) - rank(a.level) || a.name.localeCompare(b.name));
@@ -192,7 +196,6 @@ export function friendsInCourse<T extends CourseFriendRow>(rows: T[], course: Co
 /** The question sets that train a course (null = the course has no sets of its own: everything stays offered). */
 const COURSE_SETS: Partial<Record<CourseId, (SetKind | 'choir')[]>> = {
   ear: ['mixed', 'degrees', 'chords', 'intervals', 'modes', 'wrong-notes', 'truefalse', 'echo', 'beat'],
-  exam: ['mixed', 'degrees', 'chords', 'intervals', 'modes', 'wrong-notes', 'truefalse', 'echo', 'beat'],
   voice: ['vocal-hold', 'choir', 'echo', 'intervals', 'degrees'],
   jazz: ['chords', 'modes', 'degrees', 'wrong-notes', 'mixed'],
   // Drums (DRUMS_AUDIT I5): rhythm only — no chords, modes or intervals in a drummer's duel.

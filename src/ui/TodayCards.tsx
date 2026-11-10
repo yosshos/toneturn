@@ -11,8 +11,50 @@ import { LeagueBadge } from './LeagueBadge';
 import type { Strings } from '../i18n/strings';
 import { WaveMeter } from './WaveMeter';
 import { CourseXpLine } from './CourseLevels';
+import { examCard } from '../engine/examPrep';
+import type { ExamDef } from '../content/bagrut';
+import { EXAM_PREP_NAME } from './CourseSwitcher';
 
-export function TodayCards({ t, settings, progress, goalXp, signedIn, onLeague }: { t: Strings; settings: Settings; progress: Progress; goalXp: number; signedIn: boolean; onLeague: () => void }) {
+/** What the exam-prep card opens (0.67): the next mock, a weak section's topic, the full exams list. */
+export interface ExamActions {
+  mock: (e: ExamDef) => void;
+  practise: (topic: string, level: number) => void;
+  all: () => void;
+}
+
+/** Exam prep (0.67, the Ear course's mode): the next mock exam and the weakest sections of the last one. */
+function ExamPrepCard({ progress, lang, on }: { progress: Progress; lang: 'he' | 'en'; on: ExamActions }) {
+  const he = lang === 'he';
+  const c = examCard(progress.history);
+  const last = c.lastAt ? new Date(c.lastAt).toLocaleDateString(he ? 'he-IL' : 'en-GB', { day: 'numeric', month: 'short' }) : null;
+  return (
+    <section className="tc-card tc-exam" aria-label={EXAM_PREP_NAME[lang]} data-today-exam={c.exam.id}>
+      <small>{EXAM_PREP_NAME[lang]}</small>
+      <b>{c.exam.title[lang]}</b>
+      <small className="tc-hint">{last ? (he ? `מבחן דמה אחרון: ${last}` : `Last mock: ${last}`) : he ? 'עוד לא נבחנתם' : 'No mock yet'}</small>
+      {c.weak.length > 0 && (
+        <div className="tx-weak">
+          <small>{he ? 'לחזק:' : 'Work on:'}</small>
+          {c.weak.map((w) => (
+            <button key={w.section.id} type="button" className="chip" onClick={() => on.practise(w.section.topic, w.section.level)} data-exam-weak={w.section.id}>
+              {w.section.title[lang]}
+            </button>
+          ))}
+        </div>
+      )}
+      <span className="tx-actions">
+        <button type="button" className="btn primary small" onClick={() => on.mock(c.exam)} data-today-mock="1">
+          {he ? 'מבחן דמה' : 'Mock exam'} · {c.minutes} {he ? 'דק׳' : 'min'}
+        </button>
+        <button type="button" className="link" onClick={on.all}>
+          {he ? 'כל המבחנים' : 'All exams'}
+        </button>
+      </span>
+    </section>
+  );
+}
+
+export function TodayCards({ t, settings, progress, goalXp, signedIn, onLeague, exam }: { t: Strings; settings: Settings; progress: Progress; goalXp: number; signedIn: boolean; onLeague: () => void; exam?: ExamActions }) {
   const lang = settings.uiLang;
   const he = lang === 'he';
   const day = localDay(new Date());
@@ -21,7 +63,9 @@ export function TodayCards({ t, settings, progress, goalXp, signedIn, onLeague }
   const minutes = (progress.statsDays?.[day]?.ms ?? 0) / 60000;
   const facts = settings.pathFacts?.steps ?? {};
   const stepsToday = Object.values(facts).filter((f) => f.at && localDay(new Date(f.at)) === day).length;
-  const quests = dailyQuests({ day, course: (settings.activeCourse ?? 'ear') as CourseId, events: progress.ratingEvents ?? [], sessions: today.map((h) => h.lessonId), stepsToday, minutesToday: minutes });
+  const course = (settings.activeCourse ?? 'ear') as CourseId;
+  const examPrep = course === 'ear' && !!settings.examPrep;
+  const quests = dailyQuests({ day, course, examPrep, events: progress.ratingEvents ?? [], sessions: today.map((h) => h.lessonId), stepsToday, minutesToday: minutes });
 
   const [league, setLeague] = useState<League | null>(null);
   useEffect(() => {
@@ -62,6 +106,7 @@ export function TodayCards({ t, settings, progress, goalXp, signedIn, onLeague }
           )}
         </button>
       </section>
+      {examPrep && exam && <ExamPrepCard progress={progress} lang={lang} on={exam} />}
       <section className="today-quests" aria-labelledby="tq-title">
         <div className="tq-head">
           <h2 id="tq-title">{he ? 'משימות היום' : "Today's quests"}</h2>

@@ -1,7 +1,7 @@
 // Local progress + settings. XP and completion writes are idempotent by event id,
 // so a repeated callback or an app resume can never award points twice.
 
-import { coursesFromProfile } from '../engine/courses';
+import { coursesFromProfile, migrateExamCourse } from '../engine/courses';
 import { placementResults } from '../engine/placement';
 import { isLog, logMinutes } from '../engine/practiceLog';
 import type { MetricKey, VibratoStyle, VoiceRange } from '../engine/vocal';
@@ -278,6 +278,9 @@ export interface Settings {
   activeCourse?: import('../engine/courses').CourseId;
   pathFactsBy?: Partial<Record<import('../engine/courses').CourseId, import('../engine/path').PathFacts>>;
   pathKeepBy?: Partial<Record<import('../engine/courses').CourseId, string[]>>;
+  /** 0.67 (owner 2026-11-10): the Ear course's exam-prep mode (was the separate "Exams" course): exam-weighted path
+   *  and workout, mock exams first on Practice, an exam card on Today. */
+  examPrep?: boolean;
   /** The next step ids last shown (to tell the player when a rebuild changed them). */
   pathSeen?: string[];
   // ---- stats (spec AG) ----
@@ -411,11 +414,13 @@ export function courseInstrumentOf(s: Pick<Settings, 'instrument' | 'activeCours
 
 /** 0.61 (SPEC-COURSES): a player from before courses gets them from the goal and instruments they chose; the mixed
  *  path's facts stay with the course that matches the goal (the active one). Nothing is lost. */
-export function withCourses(s: Settings): Settings {
+export function withCourses(s0: Settings): Settings {
+  // 0.67: the old "Exams" course → the Ear course with exam prep on (engine/courses.ts migrateExamCourse).
+  const s = migrateExamCourse(s0);
   if (s.courses?.length && s.activeCourse) return s;
   const plays = [...((s.intake as { plays?: string[] } | null | undefined)?.plays ?? []), ...(s.instrument && !['voice', 'C', 'Bb', 'Eb', 'F'].includes(s.instrument) ? [s.instrument] : [])];
-  const { courses, active } = coursesFromProfile(s.goal, plays);
-  return { ...s, courses: s.courses?.length ? s.courses : courses, activeCourse: s.activeCourse ?? active };
+  const { courses, active, examPrep } = coursesFromProfile(s.goal, plays);
+  return { ...s, courses: s.courses?.length ? s.courses : courses, activeCourse: s.activeCourse ?? active, ...(examPrep && s.examPrep === undefined ? { examPrep } : {}) };
 }
 
 export const emptyProgress = (): Progress => ({

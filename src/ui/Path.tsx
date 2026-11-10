@@ -7,6 +7,8 @@ import { ladderFamiliesFor, ladderHiddenFor, withLadderFacts } from '../engine/l
 import { drillSettingsOf } from './Drills';
 import { Iso } from './Iso';
 import { courseInput } from '../engine/courses';
+import { useCourse } from './courseContext';
+import { ExamPrepSwitch } from './CourseSwitcher';
 import { Icon } from './icons';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { shortName } from '../engine/pathNames';
@@ -151,7 +153,8 @@ export function pathInputFrom(s: Settings, p: Progress, now = new Date()): PathI
   };
   // 0.61: the path is the active course's (SPEC-COURSES).
   const course = s.activeCourse ?? 'ear';
-  const inp = courseInput(base, course);
+  // 0.67: the Ear course in exam-prep mode weighs the path by what the exams test (the old Exams course).
+  const inp = courseInput(base, course, !!s.examPrep);
   // 0.61 (owner): an instrument / voice course teaches its technique ladders as path steps, passed only by measured takes.
   const ds = drillSettingsOf(s);
   const families = s.drills?.inPath === false ? [] : ladderFamiliesFor(course, ds, s.bassTuning, drumMicOf(s.drumKit));
@@ -170,7 +173,7 @@ export function usePathView(s: Settings, p: Progress): PathView {
   return useMemo(
     () => buildPath(pathInputFrom(s, p)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [s.activeCourse, s.intake, s.track, s.goal, s.pathHidden, s.noSing, s.noMic, s.pathLeaveOut, s.pathPacks, s.pathFacts, s.pathKeep, s.midiInput, s.instrument, s.drills, s.drillStart, s.bassTuning, s.drumKit, p.ratingEvents?.length, p.review.length, p.lessons, p.drillItems, p.vocal, day],
+    [s.activeCourse, s.examPrep, s.intake, s.track, s.goal, s.pathHidden, s.noSing, s.noMic, s.pathLeaveOut, s.pathPacks, s.pathFacts, s.pathKeep, s.midiInput, s.instrument, s.drills, s.drillStart, s.bassTuning, s.drumKit, p.ratingEvents?.length, p.review.length, p.lessons, p.drillItems, p.vocal, day],
   );
 }
 
@@ -256,6 +259,7 @@ export function PathView2({
 }) {
   const lang = settings.uiLang;
   const tx = TX[lang];
+  const courseCtx = useCourse();
   void progress;
   const [sheet, setSheet] = useState<{ x: UnitStep; unit: PathUnit } | null>(null);
   const [away, setAway] = useState<0 | 1 | -1>(0);
@@ -419,6 +423,11 @@ export function PathView2({
             {view.progress.done + view.progress.checked}/{view.progress.total}
           </span>
         </div>
+        {(settings.activeCourse ?? 'ear') === 'ear' && (
+          <div className="exam-head-row">
+            <ExamPrepSwitch on={courseCtx.examPrep} lang={lang} onChange={courseCtx.setExamPrep} />
+          </div>
+        )}
         <div className="section-bar" style={{ ['--p' as string]: `${secStats.total ? (100 * secStats.known) / secStats.total : 0}%` }}>
           <b>{tx.section[section]}</b>
           <span className="sec-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(secStats.total ? (100 * secStats.known) / secStats.total : 0)} aria-label={tx.section[section]}>

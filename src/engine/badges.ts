@@ -708,22 +708,21 @@ const seasonBadges: Badge[] = [
 // ---------------------------------------------------------------- courses (0.65)
 
 const AREA_COURSE: Record<RankArea, { course: CourseId; alsoIn?: CourseId[] }> = {
-  pitch: { course: 'ear', alsoIn: ['exam'] },
-  time: { course: 'ear', alsoIn: ['exam'] },
-  memory: { course: 'ear', alsoIn: ['exam'] },
-  reading: { course: 'ear', alsoIn: ['exam'] },
+  pitch: { course: 'ear' },
+  time: { course: 'ear' },
+  memory: { course: 'ear' },
+  reading: { course: 'ear' },
   voice: { course: 'voice' },
   creative: { course: 'jazz' },
   instrument: { course: 'keys', alsoIn: ['guitar', 'bass', 'drums'] },
   technique: { course: 'keys', alsoIn: ['guitar', 'bass', 'drums'] },
 };
-/** Skills the Exams course is clearly about (theory, reading, dictation) and the Jazz course (chords, changes, modes). */
-const EXAM_SKILLS: SkillId[] = ['theory', 'notes', 'sight', 'dictation', 'cadences'];
+/** Skills the Jazz course is clearly about (chords, changes, modes); exam prep is a mode of the Ear course (0.67). */
 const JAZZ_SKILLS: SkillId[] = ['chords', 'cadences', 'modes', 'improv', 'transpose'];
 const isBassGroup = (g: string) => g === 'g-bass' || g === 'bass-exams' || g.startsWith('b-');
 
 /** Which course a badge belongs to: technique families → their instrument; vocal → voice; ear / theory skills → ear
- *  (also shown in Exams / Jazz where clearly theirs); streaks, days and seasons → general. Pure. */
+ *  (also shown in Jazz where clearly theirs); streaks, days and seasons → general. Pure. */
 export function badgeCourse(b: Pick<Badge, 'id' | 'cat' | 'group'>): { course: BadgeCourse; alsoIn?: CourseId[] } {
   const g = b.group ?? '';
   switch (b.cat) {
@@ -738,8 +737,7 @@ export function badgeCourse(b: Pick<Badge, 'id' | 'cat' | 'group'>): { course: B
       if (d === 'voice') return { course: 'voice' };
       if (d === 'instrument') return { course: 'keys', alsoIn: ['guitar', 'bass', 'drums'] };
       if (d === 'creative') return { course: 'jazz', alsoIn: ['ear'] };
-      const also = [...(EXAM_SKILLS.includes(g as SkillId) ? ['exam' as const] : []), ...(JAZZ_SKILLS.includes(g as SkillId) ? ['jazz' as const] : [])];
-      return { course: 'ear', alsoIn: also.length ? also : ['exam'] };
+      return JAZZ_SKILLS.includes(g as SkillId) ? { course: 'ear', alsoIn: ['jazz'] } : { course: 'ear' };
     }
     case 'technique': {
       if (isBassGroup(g) || b.id.startsWith('tech:g-bass')) return { course: 'bass' };

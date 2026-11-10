@@ -1946,3 +1946,62 @@
 
 /* 0.66: the 'hot' chip on lemon is ink, not amber (3.85:1) */
 :root[data-theme='light'] .hot-chip { color: var(--ink-c); }
+
+/* 0.67: the Ear course's exam-prep switch (Path and Practice headers). Small chrome, not an exercise button. */
+.exam-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding-block: 4px;
+  padding-inline: 6px 12px;
+  border: 1.5px solid var(--outline);
+  border-radius: 99px;
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.exam-switch .es-track {
+  position: relative;
+  width: 34px;
+  height: 20px;
+  border-radius: 99px;
+  background: var(--ink-dim);
+  flex: none;
+  transition: background 0.15s;
+}
+.exam-switch .es-track i {
+  position: absolute;
+  top: 2px;
+  inset-inline-start: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #ffffff;
+  transition: inset-inline-start 0.15s;
+}
+.exam-switch.on .es-track {
+  background: #c2410c;
+}
+.exam-switch.on .es-track i {
+  inset-inline-start: 16px;
+}
+.exam-switch:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+.exam-head-row {
+  display: flex;
+  justify-content: flex-start;
+  margin: 6px 0 2px;
+}
+/* 0.67: Today's exam-prep card (the Ear course in exam-prep mode). */
+:root[data-theme] .tc-exam { margin-top: 12px; }
+:root[data-theme] .tc-exam > b { font-weight: 800; font-size: 1rem; }
+:root[data-theme] .tc-exam .tx-weak { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+:root[data-theme] .tc-exam .tx-weak .chip { font-size: 0.8rem; }
+:root[data-theme] .tc-exam .tx-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 2px; }

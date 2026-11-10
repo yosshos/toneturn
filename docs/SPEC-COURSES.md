@@ -21,7 +21,7 @@ From now on the app has **courses**:
 | `guitar` | גיטרה | The same for guitar (SPEC-GUITAR-TECHNIQUE), including the fretboard topics. |
 | `bass` | בס | The same for bass. |
 | `jazz` | ג׳אז ואלתור | The `jazz` pack, the creative domain (improv), improv-rules challenges, lead sheets and standards. |
-| `exam` | בגרות ומבחני כניסה | `content/bagrut.ts` and the exam goal: a curriculum-ordered path with mock exams. |
+| ~~`exam`~~ | ~~בגרות ומבחני כניסה~~ | **0.67 (owner 2026-11-10): no longer a course.** Exam prep ("הכנה לבגרות") is a mode of the Ear course (`Settings.examPrep`): exam-goal path and workout weighting, mock exams first on Practice, an exam card and an exam-topic quest on Today. Old `exam` data migrates to Ear with the mode on (`migrateExamCourse`). |
 
 **Still open:** `maqam`, `production`, `absolute` and `post-tonal` stay packs inside `ear` for now. Each can become its own course later.
 
@@ -34,7 +34,7 @@ From now on the app has **courses**:
    - `plays` includes keys, guitar or bass → that instrument course;
    - goal `sing`, or voice in `plays` → `voice`;
    - goal `jazz` → `jazz`;
-   - goal `exam` → `exam`.
+   - goal `exam` → `ear` with exam prep on (0.67).
 
    Each done step moves to the course that owns it. The active course is the one that matches the goal.
 4. **Jazz and Bagrut are full courses**, not packs inside another course.
