@@ -1,6 +1,7 @@
 // The symbol of every path step (moved out of Path.tsx in the final bass check so tests can read it): technique and
 // vocal families, instrument topics and the games that sit in a unit.
 import type { GlyphKind } from './Glyph';
+import { LESSON_DRAWN, LESSON_MARK, TOPIC_DRAWN, TOPIC_MARK } from './stepMarks';
 
 /** A ladder level's symbol (0.64, owner: every technique / vocal family its own, like the ear course's steps). */
 export const FAMILY_GLYPH: Record<string, GlyphKind> = {
@@ -30,3 +31,10 @@ export const TOPIC_GLYPH: Record<string, GlyphKind> = {
 export const GAME_STEP_GLYPH: Record<string, GlyphKind> = {
   'rush-interval': 'intervals', 'rush-chord': 'chords', 'rush-progression': 'prog', highway: 'rhythm', melodypuzzle: 'puzzle', nametune: 'name', flight: 'sing', 'rush-note': 'sight', 'rush-keysig': 'theory', 'rush-fretboard': 'fretboard', peakhunter: 'eq', drills: 'scales',
 };
+
+// EAR_THEORY_AUDIT: every topic and lesson of the Ear & theory and Jazz & improv paths has its own symbol — a drawn one
+// or a short mark (src/ui/stepMarks.ts) — instead of the five domain icons (the sound topics no longer share eq / mixer).
+for (const k of Object.keys(TOPIC_MARK)) TOPIC_GLYPH[k] = `m:${k}`;
+Object.assign(TOPIC_GLYPH, TOPIC_DRAWN);
+/** A hand-made lesson's symbol on the path. */
+export const LESSON_GLYPH: Record<string, GlyphKind> = { ...Object.fromEntries(Object.keys(LESSON_MARK).map((k) => [k, `m:lesson:${k}`])), ...LESSON_DRAWN };

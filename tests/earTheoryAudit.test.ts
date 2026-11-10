@@ -6,6 +6,31 @@ import { genTopic, TOPIC_GEN, asChoice, pcNameKey } from '../src/engine/topicKit
 import { courseInput } from '../src/engine/courses';
 import { eligible, stepCatalogue, type PathInput } from '../src/engine/path';
 import type { ChoiceQuestion } from '../src/engine/lesson';
+import { GAME_STEP_GLYPH, LESSON_GLYPH, TOPIC_GLYPH } from '../src/ui/stepGlyphs';
+import { GLYPHS } from '../src/ui/Glyph';
+import { LESSON_MARK, TOPIC_MARK } from '../src/ui/stepMarks';
+
+describe('every step of the ear and jazz paths has its own symbol', () => {
+  for (const c of ['ear', 'jazz'] as const) {
+    it(`${c}: drawn, and no two kinds of step share one (nor a unit game's)`, () => {
+      const seen = new Map<string, string>();
+      for (const s of stepCatalogue().filter((x) => eligible(x, courseInput(base, c)))) {
+        if (!s.topic && !s.lesson) continue;
+        const g = s.topic ? TOPIC_GLYPH[s.topic] : LESSON_GLYPH[s.lesson!];
+        const who = s.topic ? `topic ${s.topic}` : `lesson ${s.lesson}`;
+        expect(g, who).toBeDefined();
+        expect(GLYPHS[g], `${who}: ${g}`).toBeDefined();
+        // what the eye sees: the mark's text, or the drawn symbol
+        const look = g.startsWith('m:lesson:') ? `text ${LESSON_MARK[g.slice(9)]}` : g.startsWith('m:') ? `text ${TOPIC_MARK[g.slice(2)]}` : g;
+        const prev = seen.get(look);
+        if (prev && prev !== who) throw new Error(`${who} and ${prev} share ${look}`);
+        seen.set(look, who);
+      }
+      for (const game of Object.values(GAME_STEP_GLYPH)) expect(seen.has(game), `game symbol ${game} ↔ ${seen.get(game)}`).toBe(false);
+      expect(seen.size).toBeGreaterThan(c === 'ear' ? 90 : 30);
+    });
+  }
+});
 
 const base: PathInput = {
   track: 'pro', goal: 'general', hidden: [], noSing: false, noMic: false, priorities: null, leaveOut: [],

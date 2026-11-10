@@ -25,6 +25,7 @@ import './topicsJazz';
 import './topicsProgGames';
 import './topicsGaps';
 import './topicsChartAnalysis';
+import './topicsJazzEar'; // EAR_THEORY_AUDIT: advanced jazz ear and prog rhythm
 import { applyDepth } from './topicsDepth';
 
 // ================================================================ T. Barry Harris
