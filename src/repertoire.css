@@ -1,0 +1,57 @@
+/* Repertoire (docs/SPEC-REPERTOIRE.md): goal header, four tier tabs, items by what they teach — one phone screen. */
+.rep-screen { display: flex; flex-direction: column; gap: 10px; padding-bottom: 16px; }
+.rep-goal {
+  display: flex; flex-direction: column; align-items: stretch; gap: 4px; text-align: start;
+  padding: 12px 14px; border-radius: 16px; border: 1.5px solid var(--outline, #2b2140);
+  background: var(--card, #fff); color: var(--ink, #1d1530); font: inherit; cursor: pointer;
+}
+.rep-goal:disabled { cursor: default; }
+.rep-goal small { color: var(--ink-dim, #6b6380); font-weight: 700; }
+.rep-goal b { font-size: 1.1rem; }
+.rep-bar { display: block; height: 8px; border-radius: 4px; background: var(--card-2, #eee8f5); overflow: hidden; }
+.rep-bar i { display: block; height: 100%; border-radius: 4px; background: var(--teal, #12c9b4); }
+.rep-goal-foot { display: flex; justify-content: space-between; gap: 8px; font-size: 0.85rem; color: var(--ink-dim, #6b6380); }
+.rep-goal-foot > span:first-child { font-weight: 800; font-variant-numeric: tabular-nums; color: var(--ink, #1d1530); }
+.rep-next { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rep-tiers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.rep-tier {
+  display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 6px 2px; min-height: 64px;
+  border-radius: 12px; border: 1.5px solid var(--stroke, #d9d2e6); background: var(--card, #fff);
+  color: var(--ink, #1d1530); font: inherit; cursor: pointer;
+}
+.rep-tier b { font-size: 1rem; }
+.rep-tier span { font-size: 0.72rem; line-height: 1.15; text-align: center; font-weight: 700; }
+.rep-tier small { font-size: 0.72rem; color: var(--ink-dim, #6b6380); font-variant-numeric: tabular-nums; }
+.rep-tier.on { border-color: var(--outline, #2b2140); background: var(--card-2, #eee8f5); }
+.rep-tier-blurb { margin: 0; font-size: 0.85rem; color: var(--ink-dim, #6b6380); }
+.rep-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.rep-row {
+  width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; text-align: start;
+  padding: 9px 12px; border-radius: 12px; border: 1.5px solid var(--stroke, #d9d2e6);
+  background: var(--card, #fff); color: var(--ink, #1d1530); font: inherit; cursor: pointer;
+}
+.rep-row-text { display: flex; flex-direction: column; min-width: 0; }
+.rep-row-text b { font-size: 0.95rem; line-height: 1.2; }
+.rep-row-text small { color: var(--ink-dim, #6b6380); font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rep-mark {
+  flex: none; min-width: 34px; height: 26px; border-radius: 13px; display: grid; place-items: center;
+  font-size: 0.78rem; font-weight: 800; font-variant-numeric: tabular-nums; border: 1.5px solid var(--stroke, #d9d2e6);
+}
+.rep-mark.learned { background: var(--teal, #12c9b4); border-color: var(--teal, #12c9b4); color: #08332d; }
+.rep-mark.started { color: var(--ink, #1d1530); }
+.rep-songbook { align-self: center; font-size: 0.85rem; }
+.rep-kicker { margin: 0; font-size: 0.8rem; font-weight: 700; color: var(--ink-dim, #6b6380); }
+.rep-teaches { margin: 0; font-size: 1.25rem; line-height: 1.25; }
+.rep-status { font-size: 0.9rem; font-weight: 700; }
+.rep-status.learned { color: var(--teal, #0d8f80); }
+.rep-leads { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 10px 12px; border-radius: 12px; background: var(--card-2, #eee8f5); }
+.rep-leads small { font-weight: 700; color: var(--ink-dim, #6b6380); }
+.rep-leads p { margin: 0; font-size: 0.92rem; line-height: 1.35; }
+.rep-from { display: flex; flex-wrap: wrap; gap: 6px; }
+.rep-ways { display: flex; flex-direction: column; gap: 8px; }
+.rep-ways .btn { width: 100%; }
+.rep-refs:empty { display: none; }
+.rep-legal { margin: 0; font-size: 0.75rem; color: var(--ink-dim, #6b6380); }
+/* Today: the repertoire's next goal */
+.tc-rep { display: flex; flex-direction: column; gap: 4px; text-align: start; font: inherit; color: inherit; cursor: pointer; width: 100%; }
+.tc-rep .rep-bar { margin-top: 2px; }

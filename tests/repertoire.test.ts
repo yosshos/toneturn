@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { TOPIC_GEN } from '../src/engine/topics';
 import { techLevel } from '../src/engine/ladderFacts';
+import { vocalLevelByRef } from '../src/engine/voiceFamilies';
+import { voiceSong } from '../src/engine/voiceSongs';
 import { SONGBOOK } from '../src/content/songbook';
 import { STANDARD_CHANGES } from '../src/engine/standards';
 import { bassStandardSpec } from '../src/engine/drills/bass';
@@ -45,11 +47,14 @@ describe('repertoire catalogue', () => {
         const r = repRefs(it);
         for (const s of r.songs) expect(SONGBOOK.some((x) => x.id === s), `${c}:${it.id} song ${s}`).toBe(true);
         for (const s of r.standards) expect(STANDARD_CHANGES.some((x) => x.id === s), `${c}:${it.id} std ${s}`).toBe(true);
+        for (const n of r.vocal) expect(vocalLevelByRef(n), `${c}:${it.id} vocal ${n}`).toBeDefined();
+        if (c === 'voice' && it.ref) expect(voiceSong(it.ref.id), `${c}:${it.id}`).toBeDefined();
         for (const l of r.levels) expect(techLevel(l), `${c}:${it.id} level ${l}`).toBeDefined();
         for (const t of r.topics) expect(TOPIC_GEN[t.topic]?.levels.length ?? 0, `${c}:${it.id} topic ${t.topic}`).toBeGreaterThanOrEqual(t.level);
         for (const w of it.ways) if (w.k === 'bassStd') expect(bassStandardSpec(w.std), `${c}:${it.id} bass std ${w.std}`).not.toBeNull();
         // melodies only from the public-domain songbook; standards are chord-only charts
         if (it.legal === 'pd') expect(it.ref?.kind).toBe('song');
+        if (it.legal === 'pd' && c !== 'voice') expect(SONGBOOK.some((x) => x.id === it.ref?.id)).toBe(true);
         if (it.legal === 'chords') expect(r.songs).toEqual([]);
       }
   });
@@ -64,7 +69,7 @@ describe('repertoire catalogue', () => {
   });
   it('drums and voice open only their own kinds of practice', () => {
     for (const it of repertoireFor('drums')) for (const w of it.ways) expect(['level', 'chart']).toContain(w.k);
-    for (const it of repertoireFor('voice')) for (const w of it.ways) expect(['sing', 'topic']).toContain(w.k);
+    for (const it of repertoireFor('voice')) for (const w of it.ways) expect(['vocal', 'topic']).toContain(w.k);
   });
 });
 

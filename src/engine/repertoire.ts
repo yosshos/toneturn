@@ -11,6 +11,7 @@
 import type { CourseId } from './courses';
 import { SONGBOOK } from '../content/songbook';
 import { STANDARD_CHANGES } from './standards';
+import { voiceSong } from './voiceSongs';
 import type { ChartVoicing, CompRhythm } from './drills/chartDrills';
 
 type Bi = { en: string; he: string };
@@ -27,8 +28,8 @@ export const REP_TIERS: { n: RepTier; name: Bi; blurb: Bi }[] = [
 export type RepWay =
   /** A songbook song as a drill (piano melody / chords / both; guitar strummed chords or melody; bass melody). */
   | { k: 'song'; song: string; part: 'melody' | 'chords' | 'both' }
-  /** Sing a songbook song along a guide, scored by pitch (voice). */
-  | { k: 'sing'; song: string }
+  /** A vocal level (voice course): songs with the band, standards, scat — each phrase scored. */
+  | { k: 'vocal'; level: number }
   /** A standard's changes as a piano drill (voicings and a comping rhythm, or stride). */
   | { k: 'chartDrill'; std: string; voicing: ChartVoicing; rhythm: CompRhythm }
   /** A standard's changes walked on the bass, judged by the walking rules. */
@@ -192,20 +193,29 @@ const EAR: RepItem[] = [
   O('odd-ear', 4, b('Prog and odd-time grooves', 'גרוב פרוג ומשקלים מורכבים'), b('5/4, 9/8 and 11/8 groupings', 'חלוקות של 5/4, 9/8 ו־11/8'), [T('prog-meter', 1), T('prog-meter', 2), T('prog-meter', 3)], undefined, { standard: true }),
 ];
 
+// Voice (0.70.1 voice course): the band sing-along levels (F13 songs with the band, F14 standards, F15 scat) — each
+// item opens its vocal level, which sings the song with the band and scores every phrase.
+const V = (n: number): RepWay => ({ k: 'vocal', level: n });
+/** A band song of the voice course (songbook = public domain; ours = written for the app). */
+const VS = (id: string, tier: RepTier, teaches: Bi, ways: RepWay[], leads?: RepItem['leads'], extra: Partial<RepItem> = {}): RepItem => {
+  const vs = voiceSong(id);
+  return { id, tier, title: vs?.title ?? songTitle(id), teaches, ways, legal: vs && 'tier' in vs && vs.tier === 'own' ? 'own' : 'pd', ref: { kind: 'song', id }, ...(leads ? { leads } : {}), ...extra };
+};
 const VOICE: RepItem[] = [
-  S('twinkle', 1, b('Steps and a leap of a fifth', 'צעדים וקפיצת קווינטה'), [{ k: 'sing', song: 'twinkle' }], TO.i4v('roots-i4v')),
-  S('ode', 1, b('Stepwise melody, steady breath', 'מנגינה בצעדים, נשימה יציבה'), [{ k: 'sing', song: 'ode' }]),
-  S('hevenu', 1, b('A minor tune with a lift', 'מנגינה במינור עם התרוממות'), [{ k: 'sing', song: 'hevenu' }], TO.minorIv('arps')),
-  S('amazing', 1, b('Long phrases in 3/4', 'פראזות ארוכות ב־3/4'), [{ k: 'sing', song: 'amazing' }]),
-  O('roots-i4v', 2, b('The roots of I, IV and V', 'השורשים של I, IV ו־V'), b('Sing the bass of the blues', 'לשיר את הבס של הבלוז'), [T('sing-intervals', 6)], TO.blues('arps')),
-  O('arps', 2, b('Chord arpeggios', 'ארפג׳יו של אקורדים'), b('Sing the tones of a named chord', 'לשיר את הצלילים של אקורד בשמו'), [T('sing-intervals', 5)], TO.iiv('saints')),
-  S('swing-low', 2, b('The spiritual: the root of the blues', 'הספיריטואל: השורש של הבלוז'), [{ k: 'sing', song: 'swing-low' }], TO.i7iv('saints')),
-  S('saints', 3, b('A New Orleans standard', 'סטנדרט מניו אורלינס'), [{ k: 'sing', song: 'saints' }], undefined, { standard: true }),
-  S('greensleeves', 3, b('A modal ballad (Coltrane recorded it)', 'בלדה מודאלית (קולטריין הקליט אותה)'), [{ k: 'sing', song: 'greensleeves' }], undefined, { standard: true }),
-  S('brahms-lullaby', 3, b('A ballad: legato and soft dynamics', 'בלדה: לגאטו ודינמיקה רכה'), [{ k: 'sing', song: 'brahms-lullaby' }], undefined, { standard: true }),
-  O('long-phrases', 4, b('Longer phrases, rhythm graded', 'פראזות ארוכות יותר, עם ציון לקצב'), b('Two phrases at once, in time', 'שתי פראזות ברצף, בזמן'), [T('song-sing', 4), T('song-sing', 5)], undefined, { standard: true }),
-  S('fur-elise', 4, b('Chromatic neighbours and wide leaps', 'שכנים כרומטיים וקפיצות רחבות'), [{ k: 'sing', song: 'fur-elise' }], undefined, { standard: true }),
-  O('scat-vocab', 4, b('Scat vocabulary: inside the key', 'אוצר מילים לסקאט: בתוך הסולם'), b('Start a line from any note of the key', 'להתחיל קו מכל צליל בסולם'), [T('sing-intervals', 4), T('sing-intervals', 5)], undefined, { standard: true }),
+  VS('twinkle', 1, b('One phrase over a pop groove', 'פראזה אחת מעל גרוב פופ'), [V(1301), V(1303)], TO.i4v('blue-window')),
+  VS('ode', 1, b('Two phrases, rhythm graded', 'שתי פראזות, עם ציון לקצב'), [V(1302)]),
+  VS('morning-line', 1, b('Verse and chorus on I–V–vi–IV', 'בית ופזמון על I–V–vi–IV'), [V(1301), V(1303)], TO.vi('guide-tones')),
+  VS('greensleeves', 1, b('A minor key, a longer song', 'סולם מינורי, שיר ארוך יותר'), [V(1306)], TO.minor('corner-light')),
+  VS('blue-window', 2, b('A 12-bar blues head', 'ראש של בלוז 12 תיבות'), [V(1401)], TO.i7iv('saints-jazz')),
+  O('roots-i4v', 2, b('The roots of I, IV and V', 'השורשים של I, IV ו־V'), b('Sing the bass of the blues', 'לשיר את הבס של הבלוז'), [T('sing-intervals', 6)], TO.blues('blue-window')),
+  O('guide-tones', 2, b('Guide tones through ii–V–I', 'צלילים מנחים לאורך ii–V–I'), b('3rds and 7ths over the band', 'טרצות וספטימות מעל הלהקה'), [V(1502)], TO.autumn('corner-light')),
+  VS('saints-jazz', 3, b('A New Orleans head, as written', 'ראש בסגנון ניו אורלינס, כפי שנכתב'), [V(1402), V(1403)], undefined, { standard: true }),
+  VS('swing-low-jazz', 3, b('A spiritual in swing, then as a ballad', 'שיר רוחני בסווינג, ואז כבלדה'), [V(1402), V(1405)], undefined, { standard: true }),
+  VS('corner-light', 3, b('Laid back over a minor ii–V cycle', 'מאחורי הפעמה, על מעגל ii–V מינורי'), [V(1404)], undefined, { standard: true }),
+  VS('slow-harbor', 3, b('A ballad: one breath per phrase', 'בלדה: נשימה אחת לפראזה'), [V(1405)], undefined, { standard: true }),
+  VS('rio-gray', 3, b('Bossa nova: straight eighths, soft', 'בוסה נובה: שמיניות ישרות, ברכות'), [V(1406)], undefined, { standard: true }),
+  VS('fast-tracks', 4, b('Rhythm changes A at 160–180', 'ריתם צ׳יינג׳ס A ב־160–180'), [V(1407)], undefined, { standard: true }),
+  O('scat-landing', 4, b('Scat: land on chord tones', 'סקאט: נחיתה על צלילי אקורד'), b('Free lines over ii–V–I and the blues', 'קווים חופשיים מעל ii–V–I ובלוז'), [V(1503), V(1504)], undefined, { standard: true }),
 ];
 
 const GUITAR: RepItem[] = [
@@ -386,8 +396,8 @@ export function wayLabel(w: RepWay, course: CourseId): Bi {
       if (course === 'guitar') return w.part === 'chords' ? b('Strum the chords', 'לפרוט את האקורדים') : b('Play the melody', 'לנגן את המנגינה');
       if (course === 'bass') return b('Play the melody', 'לנגן את המנגינה');
       return w.part === 'both' ? b('Both hands', 'שתי ידיים') : w.part === 'chords' ? b('Chords (left hand)', 'אקורדים (יד שמאל)') : b('Melody (right hand)', 'מנגינה (יד ימין)');
-    case 'sing':
-      return b('Sing along', 'לשיר עם השיר');
+    case 'vocal':
+      return b('Sing with the band', 'לשיר עם הלהקה');
     case 'chartDrill':
       return w.voicing.startsWith('stride') ? b('Stride left hand', 'יד שמאל בסטרייד') : w.voicing === 'quartal' ? b('Quartal voicings', 'וויסינג קוורטלי') : w.voicing === 'rootless' ? b('Rootless voicings, comping', 'וויסינג בלי יסוד, ליווי') : w.voicing === 'shell' ? b('Shell voicings', 'שלדים (שלושה צלילים)') : w.voicing === 'guide' ? b('Guide tones, comping', 'צלילים מנחים, ליווי') : b('Voicings', 'וויסינגים');
     case 'bassStd':
@@ -402,13 +412,14 @@ export function wayLabel(w: RepWay, course: CourseId): Bi {
 }
 
 /** Every standard / song / level / topic an item uses (for tests and the spec). */
-export function repRefs(it: RepItem): { songs: string[]; standards: string[]; levels: string[]; topics: { topic: string; level: number }[] } {
-  const out = { songs: [] as string[], standards: [] as string[], levels: [] as string[], topics: [] as { topic: string; level: number }[] };
+export function repRefs(it: RepItem): { songs: string[]; standards: string[]; levels: string[]; topics: { topic: string; level: number }[]; vocal: number[] } {
+  const out = { songs: [] as string[], standards: [] as string[], levels: [] as string[], topics: [] as { topic: string; level: number }[], vocal: [] as number[] };
   for (const w of it.ways) {
-    if (w.k === 'song' || w.k === 'sing') out.songs.push(w.song);
+    if (w.k === 'song') out.songs.push(w.song);
     else if (w.k === 'chartDrill' || w.k === 'bassStd' || w.k === 'chart') out.standards.push(w.std);
     else if (w.k === 'level') out.levels.push(w.ref);
     else if (w.k === 'topic') out.topics.push({ topic: w.topic, level: w.level });
+    else if (w.k === 'vocal') out.vocal.push(w.level);
   }
   return out;
 }
