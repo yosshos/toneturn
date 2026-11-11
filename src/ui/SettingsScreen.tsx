@@ -201,6 +201,7 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
 
   // The preview is always English (the only spoken language); the first one waits for the voice to load.
   const preview = () => {
+    void piano.unlock().catch(() => {}); // inside the tap: recordings play through the app's audio (files.ts)
     tts.unlock();
     const en = namingFor(s.naming, 'en');
     const text = previewText(en); // pre-recorded (src/speech/voice/lines.ts)

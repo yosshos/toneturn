@@ -15,6 +15,7 @@ import {
   rushAnswer,
   rushLadder,
   rushResult,
+  rushHears,
   rushTick,
   RUSH_MS,
   START_LIVES,
@@ -106,8 +107,8 @@ const BLURB: Record<RushMode, Bi> = {
 
 const tx = (b: Bi, lang: Lang) => b[lang];
 const ear = (m: RushMode) => m === 'interval' || m === 'progression';
-/** Does this item sound? Ear games always; a tier's heard rung in Key Signature Rush (modes, chord-scales) too. */
-const hears = (m: RushMode, it: RushItem | null) => ear(m) || (m === 'keysig' && it?.kind === 'choice' && it.q.topic !== 'key-signatures' && it.q.stimulus.length > 0);
+/** Does this item sound? (engine/rush: ear games; Chord Rush keys / guitar pictures; Key Signature Rush heard rungs.) */
+const hears = rushHears;
 
 interface Feedback {
   correct: boolean;

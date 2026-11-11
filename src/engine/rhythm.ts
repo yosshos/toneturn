@@ -398,8 +398,18 @@ export function describeShort(r: Rhythm, lang: 'he' | 'en'): string {
     if (last && last.c === c) last.n++;
     else runs.push({ c, n: 1 });
   }
-  const parts = runs.slice(0, 4).map(({ c, n }) => (n > 1 ? `${NAMES[c][lang]} ×${n}` : NAMES[c][lang]));
-  return parts.join(', ') + (runs.length > 4 ? ' …' : '');
+  // Groups while the text stays about eight words (a cell's name can itself be three words: "eighth, two sixteenths").
+  const parts: string[] = [];
+  let ws = 0;
+  for (const { c, n } of runs) {
+    const name = NAMES[c]?.[lang] ?? String(c); // (an unparsed answer keeps its text)
+    const p = n > 1 ? `${name} ×${n}` : name;
+    const w = p.split(/\s+/).length;
+    if (parts.length && (parts.length >= 4 || ws + w > 8)) break;
+    parts.push(p);
+    ws += w;
+  }
+  return parts.join(', ') + (parts.length < runs.length ? ' …' : '');
 }
 
 /** Spoken description → cells (names or syllables, English or Hebrew). Null when unparseable. */
