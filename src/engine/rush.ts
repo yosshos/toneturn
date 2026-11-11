@@ -7,19 +7,26 @@
 import type { ChoiceQuestion } from './lesson';
 import { TOPIC_GEN, genTopic, rng } from './topicKit';
 import './topics';
+import './topicsAdvGames'; // 0.70: game-only topics (voicing types, melodic-minor modes, standards, altered reading, ii–V chains)
 import { chordReadItem, type ChordPictureFilter } from './topicsChordRead';
 import { noteAt, tuningById, type Tuning } from './fretboard';
 import type { DynName } from './courseSocial';
 
-export type RushMode = 'chord' | 'note' | 'fretboard' | 'interval' | 'keysig' | 'progression';
-export const RUSH_MODES: RushMode[] = ['chord', 'note', 'fretboard', 'interval', 'keysig', 'progression'];
+export type RushMode = 'chord' | 'note' | 'fretboard' | 'interval' | 'keysig' | 'progression' | 'voicing' | 'scale' | 'standard';
+export const RUSH_MODES: RushMode[] = ['chord', 'note', 'fretboard', 'interval', 'keysig', 'progression', 'voicing', 'scale', 'standard'];
 export type RushPicture = 'neck' | 'keys' | 'staff' | 'mixed';
 
 export const RUSH_MS = 60_000;
 export const WRONG_COST_MS = 2_000;
 export const START_LIVES = 3;
 export const POINTS = 10;
-export const isStreak = (m: RushMode) => m === 'progression';
+/** Streak modes (3 lives, no clock): Progression Detective, Voicing Spy (0.70). */
+export const isStreak = (m: RushMode) => m === 'progression' || m === 'voicing';
+/** Rounds mode (0.70, Name That Standard): ROUNDS items, no clock, faster answers score more. */
+export const isRounds = (m: RushMode) => m === 'standard';
+export const ROUNDS = 10;
+/** Points of a right answer in rounds mode: 10 within 2 s, falling to 5 at 12 s. */
+export const roundPoints = (ms: number) => Math.round(POINTS * (1 - 0.5 * Math.max(0, Math.min(1, (ms - 2000) / 10000))));
 /** Right answers needed for the next level. */
 export const levelEvery = (m: RushMode) => (isStreak(m) ? 3 : 5);
 /** Score multiplier for a combo (right answers in a row, counting this one). */
@@ -69,6 +76,15 @@ export function rushLadder(mode: RushMode): Rung[] {
     case 'progression':
       l = byDifficulty([...rungsOf('progressions'), ...rungsOf('harmonic-dictation')]);
       break;
+    case 'voicing':
+      l = [...rungsOf('voicing-type'), ...rungsOf('voicings')];
+      break;
+    case 'scale':
+      l = byDifficulty([...rungsOf('scale-types'), ...rungsOf('modes-ear'), ...rungsOf('mm-modes')]);
+      break;
+    case 'standard':
+      l = rungsOf('name-standard');
+      break;
     case 'fretboard':
       l = FRET_LEVELS.map((name, i) => ({ topic: 'fretboard', level: i + 1, name }));
       break;
@@ -105,7 +121,7 @@ export type RushItem =
  *  drawn picture — keys, neck or chord box — sounds as an arpeggio (the staff is reading only, its stimulus is
  *  empty); in Key Signature Rush a tier's heard rung (modes, chord-scales). */
 export function rushHears(m: RushMode, it: RushItem | null): boolean {
-  if (m === 'interval' || m === 'progression') return true;
+  if (m === 'interval' || m === 'progression' || m === 'voicing' || m === 'scale' || m === 'standard') return true;
   if (it?.kind !== 'choice' || !it.q.stimulus.length) return false;
   if (m === 'chord') return !!it.q.diagram;
   return m === 'keysig' && it.q.topic !== 'key-signatures';
@@ -241,7 +257,8 @@ export interface RushState {
 
 export function newRush(opts: RushOptions): RushState {
   const level = Math.max(1, Math.min(maxOf(opts), Math.round(opts.startLevel) || 1));
-  return { v: 1, opts: { ...opts, startLevel: level }, i: 0, level, atLevel: 0, right: 0, wrong: 0, combo: 0, maxCombo: 0, score: 0, timeLeftMs: isStreak(opts.mode) ? 0 : RUSH_MS, lives: isStreak(opts.mode) ? START_LIVES : 0, over: false };
+  const clockless = isStreak(opts.mode) || isRounds(opts.mode);
+  return { v: 1, opts: { ...opts, startLevel: level }, i: 0, level, atLevel: 0, right: 0, wrong: 0, combo: 0, maxCombo: 0, score: 0, timeLeftMs: clockless ? 0 : RUSH_MS, lives: isStreak(opts.mode) ? START_LIVES : 0, over: false };
 }
 
 export const currentItem = (s: RushState): RushItem => rushItem(s.opts, s.i, s.level, s.prevKey);
@@ -254,8 +271,8 @@ export interface RushStep {
   burst: number | null;
 }
 
-/** Apply an answer. `key` = the answered item's key (computed when omitted). */
-export function rushAnswer(s: RushState, correct: boolean, key?: string): RushStep {
+/** Apply an answer. `key` = the answered item's key (computed when omitted); `ms` = answer time (rounds mode scores speed). */
+export function rushAnswer(s: RushState, correct: boolean, key?: string, ms?: number): RushStep {
   if (s.over) return { state: s, gained: 0, levelUp: false, burst: null };
   const k = key ?? currentItem(s).key;
   const n: RushState = { ...s, i: s.i + 1, prevKey: k };
@@ -268,7 +285,7 @@ export function rushAnswer(s: RushState, correct: boolean, key?: string): RushSt
     n.maxCombo = Math.max(n.maxCombo, n.combo);
     const m = comboMult(n.combo);
     if (m > comboMult(n.combo - 1)) burst = m;
-    gained = Math.round(POINTS * m);
+    gained = Math.round((isRounds(s.opts.mode) ? roundPoints(ms ?? 0) : POINTS) * m);
     n.score += gained;
     n.atLevel++;
     if (n.atLevel >= levelEvery(s.opts.mode) && n.level < maxOf(s.opts)) {
@@ -279,7 +296,9 @@ export function rushAnswer(s: RushState, correct: boolean, key?: string): RushSt
   } else {
     n.wrong++;
     n.combo = 0;
-    if (isStreak(s.opts.mode)) {
+    if (isRounds(s.opts.mode)) {
+      /* a wrong round scores nothing */
+    } else if (isStreak(s.opts.mode)) {
       n.lives = Math.max(0, n.lives - 1);
       if (n.lives === 0) n.over = true;
     } else {
@@ -287,12 +306,13 @@ export function rushAnswer(s: RushState, correct: boolean, key?: string): RushSt
       if (n.timeLeftMs === 0) n.over = true;
     }
   }
+  if (isRounds(s.opts.mode) && n.i >= ROUNDS) n.over = true;
   return { state: n, gained, levelUp, burst };
 }
 
 /** Let time pass (timed modes only). */
 export function rushTick(s: RushState, ms: number): RushState {
-  if (s.over || isStreak(s.opts.mode) || ms <= 0) return s;
+  if (s.over || isStreak(s.opts.mode) || isRounds(s.opts.mode) || ms <= 0) return s;
   const t = Math.max(0, s.timeLeftMs - ms);
   return { ...s, timeLeftMs: t, over: t === 0 };
 }

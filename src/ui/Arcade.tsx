@@ -616,7 +616,7 @@ export const GAME_CATS: { id: GameCat; icon: string; en: string; he: string }[] 
   { id: 'instrument', icon: '🎸', en: 'Instrument & sound', he: 'כלי וסאונד' },
   { id: 'social', icon: '⚔', en: 'Against others', he: 'מול אחרים' },
 ];
-export const GAMES2: { id: 'drills' | 'highway' | 'flight' | 'melodypuzzle' | 'nametune' | 'tuneup' | 'pitchmemory' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'peakhunter'; icon: string; hue: string; cat: GameCat; en: [string, string]; he: [string, string] }[] = [
+export const GAMES2: { id: 'drills' | 'highway' | 'flight' | 'melodypuzzle' | 'nametune' | 'tuneup' | 'pitchmemory' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'peakhunter' | 'rush-voicing' | 'rush-scale' | 'rush-standard' | 'reharm' | 'transcribe' | 'bhtime' | 'riffecho' | 'polylock'; icon: string; hue: string; cat: GameCat; en: [string, string]; he: [string, string] }[] = [
   { id: 'rush-chord', icon: '🎹', hue: 'var(--hue-pitch)', cat: 'read', en: ['Chord Rush', 'Name chords on the neck, keys or staff — 60 seconds.'], he: ['מרוץ אקורדים', 'זהו אקורדים על הצוואר, הקלידים או החמשה — 60 שניות.'] },
   { id: 'rush-note', icon: '𝄞', hue: 'var(--hue-reading)', cat: 'read', en: ['Note Rush', 'Read notes off the staff as fast as you can.'], he: ['מרוץ תווים', 'קראו תווים מהחמשה הכי מהר שאפשר.'] },
   { id: 'rush-keysig', icon: '♯', hue: 'var(--hue-reading)', cat: 'read', en: ['Key Signature Rush', 'Sharps and flats → the key, fast.'], he: ['מרוץ סימני מפתח', 'דיאזים ובמולים → הסולם, מהר.'] },
@@ -631,6 +631,15 @@ export const GAMES2: { id: 'drills' | 'highway' | 'flight' | 'melodypuzzle' | 'n
   { id: 'drills', icon: '🎹', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Technique', 'Scales, Hanon, Barry Harris, voicings — with a tempo ladder and a MIDI analysis.'], he: ['טכניקה', 'סולמות, האנון, בארי האריס, וויסינגים — עם סולם טמפו וניתוח MIDI.'] },
   { id: 'tuneup', icon: '🎸', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Tune-up', 'Turn the peg until the beats disappear.'], he: ['כיוון', 'סובבו את המפתח עד שהפעימות נעלמות.'] },
   { id: 'pitchmemory', icon: '🎯', hue: 'var(--hue-creative)', cat: 'ear', en: ['Pitch Memory', 'Once a day: your note, from memory.'], he: ['זיכרון צליל', 'פעם ביום: הצליל שלכם, מהזיכרון.'] },
+  // 0.70: advanced games for jazz and complex music (open at mp).
+  { id: 'rush-voicing', icon: '', hue: 'var(--hue-pitch)', cat: 'ear', en: ['Voicing Spy', 'Hear a chord, name its voicing: close, drop 2, rootless, quartal.'], he: ['מרגל הוויסינגים', 'שומעים אקורד, מזהים את הוויסינג: צפוף, דרופ 2, בלי שורש, קוורטלי.'] },
+  { id: 'reharm', icon: '', hue: 'var(--hue-pitch)', cat: 'ear', en: ['Reharm Spotter', 'Original, then reharmonised: find the bar, name the substitution.'], he: ['גלאי הרה־הרמוניזציה', 'המקור ואז ההרמוניה החדשה: מוצאים את התיבה, נותנים שם לתחליף.'] },
+  { id: 'rush-standard', icon: '', hue: 'var(--hue-pitch)', cat: 'memory', en: ['Name That Standard', 'Hear the changes, name the tune — 10 rounds.'], he: ['זהו את הסטנדרט', 'שומעים את המהלך, מזהים את השיר — 10 סיבובים.'] },
+  { id: 'rush-scale', icon: '', hue: 'var(--hue-pitch)', cat: 'ear', en: ['Scale & Mode Rush', 'Hear a scale or mode, name it — 60 seconds.'], he: ['מרוץ סולמות ומודוסים', 'שומעים סולם או מודוס, נותנים שם — 60 שניות.'] },
+  { id: 'transcribe', icon: '', hue: 'var(--hue-memory)', cat: 'memory', en: ['Transcription Race', 'Hear a phrase, write it on the keys — fast and right.'], he: ['מרוץ התמלול', 'שומעים משפט, כותבים אותו על הקלידים — מהר ונכון.'] },
+  { id: 'bhtime', icon: '', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Barry Harris in Time', 'Play 8th-note lines over the changes — measured.'], he: ['בארי האריס בזמן', 'מנגנים קווי שמיניות מעל המהלך — במדידה.'] },
+  { id: 'riffecho', icon: '', hue: 'var(--hue-time)', cat: 'rhythm', en: ['Odd-Meter Riff Echo', 'Hear a riff in 5, 7 or 11 — play it back.'], he: ['הד ריפים במשקל אי־זוגי', 'שומעים ריף ב־5, 7 או 11 — מנגנים אותו בחזרה.'] },
+  { id: 'polylock', icon: '', hue: 'var(--hue-time)', cat: 'rhythm', en: ['Polyrhythm Lock', 'Two hands, two pulses: 3 against 2 up to 7 against 4.'], he: ['נעילת פולי־ריתם', 'שתי ידיים, שתי פעימות: 3 נגד 2 ועד 7 נגד 4.'] },
 ];
 
 /** Practice tab hub (owner 2026-11-08): songs, technique and singing get their own place above the games, with the tools. */
@@ -857,10 +866,11 @@ const ROW_TX: Record<string, { en: [string, string]; he: [string, string] }> = {
 const GAME_GLYPH: Record<string, GlyphKind> = {
   melody: 'echo', rhythm: 'rhythm', truefalse: 'theory', ghost: 'ghost', duel: 'duel', daily: 'calendar', 'rush-chord': 'chords', 'rush-note': 'sight', 'rush-keysig': 'theory', 'rush-interval': 'intervals',
   'rush-progression': 'prog', 'rush-fretboard': 'guitar', peakhunter: 'eq', highway: 'rhythm', flight: 'sing', melodypuzzle: 'puzzle', nametune: 'name', drills: 'scales', tuneup: 'tune', pitchmemory: 'memory', groove: 'groove',
+  'rush-voicing': 'voicingspy', reharm: 'reharm', 'rush-standard': 'standard', 'rush-scale': 'scalerush', transcribe: 'transcribe', bhtime: 'bhtime', riffecho: 'riff', polylock: 'polylock',
 };
 const CAT_COLOR: Record<string, string> = { ear: DOMAIN_COLOR.ear, rhythm: DOMAIN_COLOR.rhythm, memory: DOMAIN_COLOR.harmony, read: DOMAIN_COLOR.theory, voice: DOMAIN_COLOR.voice, instrument: DOMAIN_COLOR.play, social: '#EDE6F7' };
 
-export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline, onGhost, onDaily, onPuzzle, onGame2, lang = 'en', hub, status }: { status?: Partial<Record<string, string>>; t: Strings; progress: Progress; onGame: (k: GameKind) => void; onTrueFalse: () => void; onDuel: () => void; onOnline: () => void; onGhost: () => void; onDaily: () => void; onPuzzle: () => void; onGame2?: (id: (typeof GAMES2)[number]['id']) => void; lang?: 'he' | 'en'; hub?: PracticeHub }) {
+export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline, onGhost, onDaily, onPuzzle, onGame2, onBoard, lang = 'en', hub, status }: { onBoard?: () => void; status?: Partial<Record<string, string>>; t: Strings; progress: Progress; onGame: (k: GameKind) => void; onTrueFalse: () => void; onDuel: () => void; onOnline: () => void; onGhost: () => void; onDaily: () => void; onPuzzle: () => void; onGame2?: (id: (typeof GAMES2)[number]['id']) => void; lang?: 'he' | 'en'; hub?: PracticeHub }) {
   const { active: course, examPrep, setExamPrep } = useCourse();
   const rows = courseRows(course, examPrep);
   // Status of the weekly puzzle and the daily challenge (moved here from the old Home tools, 0.41).
@@ -930,6 +940,11 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
             <span className="flip-rtl">‹</span>
           </button>
           <h1>{HUB_TX.games[lang][0]}</h1>
+          {onBoard && (
+            <button className="icon-btn" onClick={onBoard} aria-label={lang === 'he' ? 'לוח המשחקים' : 'Game board'} title={lang === 'he' ? 'לוח המשחקים' : 'Game board'} data-open-board>
+              <Glyph kind="board" color="#EDE6F7" size={30} />
+            </button>
+          )}
         </header>
       ) : (
         <>

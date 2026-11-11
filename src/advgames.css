@@ -1,0 +1,119 @@
+/* 0.70 advanced games (Reharm Spotter, Transcription Race, Barry Harris in Time, Riff Echo, Polyrhythm Lock) and the
+   game board. Tokens from styles.css; logical properties only (LTR + RTL). Every play screen fits 390 × 844. */
+
+/* ---------------------------------------------------------------- game board */
+.gboard-card {
+  gap: 10px;
+}
+.gboard-pick {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+}
+.gboard-pick select {
+  flex: 1;
+  min-inline-size: 0;
+  min-block-size: 40px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--card-2);
+  color: var(--ink);
+  font: inherit;
+  padding-inline: 10px;
+}
+.gboard .tier-chip {
+  position: relative;
+}
+.gboard-dot {
+  position: absolute;
+  inset-block-end: 3px;
+  inset-inline-start: 50%;
+  inline-size: 5px;
+  block-size: 5px;
+  border-radius: 50%;
+  background: var(--mint);
+  transform: translateX(-50%);
+}
+.gboard-note {
+  margin: 0;
+}
+.gboard-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.gboard-list li {
+  display: grid;
+  grid-template-columns: 2ch 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--card-2);
+}
+.gboard-list li.me {
+  outline: 2px solid var(--mint);
+}
+.gboard-list b {
+  color: var(--ink-dim);
+}
+.gboard-list em {
+  font-style: normal;
+  font-weight: 800;
+}
+.gboard-mine {
+  margin: 0;
+}
+
+/* ---------------------------------------------------------------- shared play bits */
+.adv-hud {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.adv-hud span {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  padding: 6px 4px;
+  border-radius: 10px;
+  background: var(--card-2);
+}
+.adv-hud small {
+  color: var(--ink-dim);
+  font-size: 0.75rem;
+}
+.adv-hud b {
+  font-size: 1.1rem;
+}
+.adv-line {
+  margin: 0;
+  min-block-size: 1.4em;
+  text-align: center;
+  font-weight: 700;
+}
+.adv-line.ok {
+  color: var(--mint);
+}
+.adv-line.bad {
+  color: var(--red);
+}
+.adv-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.adv-grid .btn {
+  min-block-size: 48px;
+}
+.adv-grid .btn.ok {
+  outline: 3px solid var(--mint);
+}
+.adv-grid .btn.bad {
+  outline: 3px solid var(--red);
+}

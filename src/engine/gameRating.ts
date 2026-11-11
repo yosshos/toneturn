@@ -37,6 +37,15 @@ const GAMES: Record<string, { tags: (d: Record<string, unknown>) => Tag[]; diff:
   'rush-interval': { tags: (d) => { const r = rungOf(d); return (r ? (r[0] === 'intervals-all' && r[1] === 3) || (r[0] === 'compound-intervals' && r[1] === 3) : Number(d.level) === 3) ? T('intervals', 'harmonic') : T('intervals', 'melodic'); }, diff: (d) => 950 + 120 * (Number(d.level) || 1) },
   'rush-keysig': { tags: () => T('theory', 'keys'), diff: (d) => 900 + 130 * (Number(d.level) || 1) },
   'rush-progression': { tags: () => T2(['cadences', 'progression', 0.7], ['cadences', 'dictation', 0.3]), diff: (d) => 1050 + 120 * (Number(d.level) || 1) },
+  // 0.70 advanced games (they always run at a tier, so `diff` is only a fallback).
+  'rush-voicing': { tags: () => T('chords', 'voicing'), diff: () => 1200 },
+  'rush-scale': { tags: () => T('modes', 'scales'), diff: () => 1150 },
+  'rush-standard': { tags: () => T2(['cadences', 'standards', 0.7], ['form', 'standards', 0.3]), diff: () => 1250 },
+  reharm: { tags: () => T('cadences', 'reharm'), diff: () => 1300 },
+  transcribe: { tags: () => T2(['dictation', 'melodic', 0.7], ['sequences', 'melody', 0.3]), diff: () => 1200 },
+  bhtime: { tags: () => T2(['improv', 'bh-lines', 0.6], ['timing', 'precision', 0.4]), diff: () => 1250 },
+  riffecho: { tags: (d) => T2(['meter', 'odd', 0.5], ['instrument', d.input === 'kit' ? 'drum-echo' : 'echo', 0.5]), diff: () => 1200 },
+  polylock: { tags: () => T2(['timing', 'poly', 0.6], ['rhythm', 'poly', 0.4]), diff: () => 1200 },
 };
 
 /** Normalised accuracy 0..1 of a finished game from what it reports. */
@@ -54,6 +63,8 @@ export function gameAccuracy(game: string, score: number, d: Record<string, unkn
     return g + miss ? g / (g + miss) : 0;
   }
   if (game === 'melodypuzzle' || game === 'melody-puzzle') return Math.max(0, Math.min(1, score / (n('max') ?? Math.max(1, (n('puzzles') ?? 6) * 100))));
+  // 0.70 measured games report their accuracy (0..100 or 0..1).
+  if (n('accuracy') !== null) return Math.max(0, Math.min(1, n('accuracy')! > 1 ? n('accuracy')! / 100 : n('accuracy')!));
   return Math.max(0, Math.min(1, score / 100));
 }
 
