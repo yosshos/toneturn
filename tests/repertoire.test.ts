@@ -108,3 +108,17 @@ describe('repertoire results and the goal', () => {
     }
   });
 });
+
+describe('bass standards open the standards ladder (old one-chorus levels retired, owner 2026-11-11)', () => {
+  it('every bass repertoire standard on the ladder builds a b-std drill', () => {
+    let n = 0;
+    for (const it of repertoireFor('bass'))
+      for (const w of it.ways)
+        if (w.k === 'bassStd') {
+          const d = repDrills(w, 'bass');
+          expect(d.length, `${it.id}`).toBe(1);
+          if (d[0].spec.family === 'b-std') n++;
+        }
+    expect(n).toBeGreaterThan(0);
+  });
+});

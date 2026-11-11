@@ -80,9 +80,10 @@ describe('bass course families', () => {
     // A genre filter keeps every family; only the style levels of other genres drop out.
     const rock = shownFamilies({ emphasis: 'both', instrument: 'bass', guitarStyle: 'rock' });
     expect(rock.find((f) => f.id === 'b-styles')!.levels.every((l) => (l as GuitarLevelDef).genres?.some((g) => g === 'rock' || g === 'all'))).toBe(true);
-    // 20 walking levels (19–20 the jazz waltz, BASS_NICHE_PLAN J5); the low-B one (L17) only on a bass with a low B (N10).
-    expect(shownFamilies({ emphasis: 'both', instrument: 'bass', guitarStyle: 'rock', bassTuning: 'bass5' }).find((f) => f.id === 'b-walk')!.levels.length).toBe(20);
-    expect(rock.find((f) => f.id === 'b-walk')!.levels.length).toBe(19);
+    // 20 walking levels (19–20 the jazz waltz, BASS_NICHE_PLAN J5) less the 4 old standards levels retired for the ladder
+    // (11/13/14/18, owner 2026-11-11); the low-B one (L17) only on a bass with a low B (N10).
+    expect(shownFamilies({ emphasis: 'both', instrument: 'bass', guitarStyle: 'rock', bassTuning: 'bass5' }).find((f) => f.id === 'b-walk')!.levels.length).toBe(16);
+    expect(rock.find((f) => f.id === 'b-walk')!.levels.length).toBe(15);
   });
 
   it('the tuning only moves notes: item ids ignore it, withBassTuning rebuilds on the player\'s bass', () => {

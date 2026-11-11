@@ -7,6 +7,7 @@ import type { Drill, DrillSettings, ItemState } from './drills/types';
 import { generate } from './drills/generate';
 import { songDrill } from './drills/songDrills';
 import { bassStandardSpec } from './drills/bass';
+import { STD_LADDER } from './drills/bassNiche2';
 import { decodeGuitarStd, guitarStdOption, guitarStdTempo } from './drills/guitarJazz';
 import { techQueue } from './ladderFacts';
 import { SONGBOOK } from '../content/songbook';
@@ -29,6 +30,9 @@ export function repDrills(w: RepWay, course: CourseId, items: Record<string, Ite
       return [generate({ family: w.voicing.startsWith('stride') ? 'accomp' : 'voicings', kind, key: 0, hands: 'L', swing: true })];
     }
     case 'bassStd': {
+      // The standards ladder (b-std) first: the old one-chorus levels are retired (owner 2026-11-11), the ladder carries them.
+      const li = STD_LADDER.findIndex((x) => x.id === w.std);
+      if (li >= 0) return [generate({ family: 'b-std', kind: 'tier', key: 0, hands: 'R', instrument: 'bass', option: li, perBeat: STD_LADDER[li].feel === 'walk' ? 1 : 0.5 })];
       const sp = bassStandardSpec(w.std);
       if (!sp) return [];
       return [generate({ family: 'b-walk', kind: 'standard', key: 0, hands: 'R', instrument: 'bass', option: sp.option, perBeat: sp.perBeat })];
