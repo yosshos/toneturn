@@ -640,6 +640,8 @@ export const GAMES2: { id: 'drills' | 'highway' | 'flight' | 'melodypuzzle' | 'n
 /** Practice tab hub (owner 2026-11-08): songs, technique and singing get their own place above the games, with the tools. */
 export interface PracticeHub {
   songs: () => void;
+  /** Repertoire (SPEC-REPERTOIRE): the road from simple tunes to standards, per course. */
+  repertoire?: () => void;
   drills: () => void;
   /** Voice course (0.61): vocal technique and sing-along take the technique / songs rows. */
   vocal?: () => void;
@@ -662,6 +664,12 @@ export interface PracticeHub {
   mixer?: () => void;
 }
 const HUB_PATHS: Record<string, React.ReactNode> = {
+  repertoire: (
+    <>
+      <path d="M4 19h16" />
+      <path d="M6 19V9M10 19V6M14 19v-8M18 19V4" />
+    </>
+  ),
   songs: (
     <>
       <path d="M9 18V5l11-2v13" />
@@ -794,7 +802,7 @@ const HUB_TX = {
 
 /** The Practice page (SPEC-IA-2, owner 2026-11-09): four groups by what you do — play, train, study — and the tools. */
 export const PRACTICE_GROUPS: { id: 'play' | 'train' | 'study'; name: { en: string; he: string }; items: string[] }[] = [
-  { id: 'play', name: { en: 'Play', he: 'לנגן' }, items: ['songs', 'pieces', 'charts'] },
+  { id: 'play', name: { en: 'Play', he: 'לנגן' }, items: ['repertoire', 'songs', 'pieces', 'charts'] },
   { id: 'train', name: { en: 'Train', he: 'להתאמן' }, items: ['drills', 'improv', 'games'] },
   { id: 'study', name: { en: 'Study', he: 'ללמוד' }, items: ['lessons', 'exams', 'puzzle'] },
 ];
@@ -829,7 +837,7 @@ const INSTRUMENT_TILE: Partial<Record<CourseId, GlyphKind>> = { drums: 'drums', 
 /** The weekly puzzle and the live quiz rooms are ear & theory things. */
 const COURSE_SOCIAL: CourseId[] = ['ear', 'jazz'];
 /** Practice tiles (0.63): a colour per row, and the game kinds each course shows as their own tiles. */
-const TILE_COLOR: Record<string, string> = { lessons: '#FF8A3D', puzzle: '#A78BFA', drills: '#FFD43B', songs: '#12C9B4', pieces: '#FF5FA2', charts: '#A78BFA', improv: '#6D28D9', exams: '#FF8A3D' };
+const TILE_COLOR: Record<string, string> = { repertoire: '#12C9B4', lessons: '#FF8A3D', puzzle: '#A78BFA', drills: '#FFD43B', songs: '#12C9B4', pieces: '#FF5FA2', charts: '#A78BFA', improv: '#6D28D9', exams: '#FF8A3D' };
 const COURSE_TILE_CATS: Partial<Record<CourseId, GameCat[]>> = { ear: ['ear', 'rhythm', 'memory', 'read'], jazz: ['ear'], voice: ['voice'], keys: ['instrument'], guitar: ['instrument'], bass: ['instrument'], drums: ['instrument', 'rhythm'] };
 const CAT_GLYPH: Record<GameCat, GlyphKind> = { ear: 'intervals', rhythm: 'rhythm', memory: 'memory', read: 'sight', voice: 'sing', instrument: 'keys', social: 'duel' };
 /** The games list opens on the course's own category. */
@@ -846,6 +854,7 @@ const DRUMS_TX: Record<string, { en: [string, string]; he: [string, string] }> =
 /** Technique in an instrument course: the instrument only ("and your voice" is the voice course's). */
 const INSTR_DRILLS_TX: { en: [string, string]; he: [string, string] } = { en: ['Technique', 'Your instrument, level by level — measured'], he: ['טכניקה', 'הכלי שלכם, שלב אחר שלב — במדידה'] };
 const ROW_TX: Record<string, { en: [string, string]; he: [string, string] }> = {
+  repertoire: { en: ['Repertoire', 'From simple tunes to standards'], he: ['רפרטואר', 'ממנגינות פשוטות לסטנדרטים'] },
   songs: { en: ['Songs', 'Play and sing real songs — by the chords you know'], he: ['שירים', 'לנגן ולשיר שירים אמיתיים — לפי האקורדים שאתם מכירים'] },
   pieces: { en: ['My pieces', 'Bring a score; the coach takes you to tempo'], he: ['היצירות שלי', 'מעלים תווים; המאמן מביא אתכם לטמפו'] },
   charts: { en: ['Charts & lead sheets', 'Backing tracks, standards, import a lead sheet'], he: ['מהלכים ודפי אקורדים', 'ליווי, סטנדרטים, ייבוא דף אקורדים'] },

@@ -139,12 +139,16 @@ import { overallRating } from '../engine/rating';
 import { APP_VERSION, unseenChanges } from '../version';
 import { params, piano, setMidiEnabled, SIMULATED, store, tts } from './services';
 import { midi } from '../speech/midi';
+import { RepertoireScreen } from './Repertoire';
+import { isRepLesson, repGoal, repResult, repResults, type RepItem, type RepWay } from '../engine/repertoire';
+import { isDrillWay, repDrills } from '../engine/repertoireDrills';
+import { STANDARD_CHANGES } from '../engine/standards';
 import { setPreferredMic } from '../speech/mic';
 
 /** Screens that play the band (0.69: its sets load here, and only here on Lite / Standard). */
 const BAND_ROUTES = new Set<string>(['charts', 'improv', 'groove', 'metronome', 'mixer', 'slowdown', 'perform', 'highway', 'drills', 'workoutrun', 'land', 'groove-echo', 'odd-echo']);
 
-type Route = 'intake' | 'studio' | 'home' | 'path' | 'arcade' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong' | 'perform' | 'learned' | 'tuner' | 'metronome' | 'songs' | 'drills' | 'workout' | 'workoutrun' | 'peakhunter' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'flight' | 'pitchmemory' | 'nametune' | 'tuneup' | 'highway' | 'melodypuzzle' | 'charts' | 'slowdown' | 'pieces' | 'mixer' | 'insights' | 'groove' | 'welcome' | 'coursestart' | 'puzzle' | 'improv' | 'exams' | 'plans' | 'admin' | 'land' | 'groove-echo' | 'odd-echo';
+type Route = 'intake' | 'studio' | 'home' | 'path' | 'arcade' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong' | 'perform' | 'learned' | 'tuner' | 'metronome' | 'songs' | 'repertoire' | 'drills' | 'workout' | 'workoutrun' | 'peakhunter' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'flight' | 'pitchmemory' | 'nametune' | 'tuneup' | 'highway' | 'melodypuzzle' | 'charts' | 'slowdown' | 'pieces' | 'mixer' | 'insights' | 'groove' | 'welcome' | 'coursestart' | 'puzzle' | 'improv' | 'exams' | 'plans' | 'admin' | 'land' | 'groove-echo' | 'odd-echo';
 /** Invite links: #/online/CODE */
 const onlineCodeFromHash = () => (/^#\/?online\/(\w+)/.exec(location.hash)?.[1] ?? '');
 const PLAY_HASH = 'play';
@@ -156,7 +160,7 @@ const enterPlay = () => {
 };
 const routeFromHash = (): Route => {
   const h = location.hash.replace(/^#\/?/, '').replace(/^online\/.*$/, 'online').replace(/^settings\/.*$/, 'settings');
-  return (['path', 'arcade', 'settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong', 'perform', 'learned', 'studio', 'intake', 'tuner', 'metronome', 'songs', 'drills', 'workout', 'workoutrun', 'peakhunter', 'rush-chord', 'rush-note', 'rush-fretboard', 'rush-interval', 'rush-keysig', 'rush-progression', 'flight', 'pitchmemory', 'nametune', 'tuneup', 'highway', 'melodypuzzle', 'charts', 'slowdown', 'pieces', 'mixer', 'insights', 'groove', 'welcome', 'coursestart', 'puzzle', 'improv', 'exams', 'plans', 'admin', 'land', 'groove-echo', 'odd-echo'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
+  return (['path', 'arcade', 'settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong', 'perform', 'learned', 'studio', 'intake', 'tuner', 'metronome', 'songs', 'repertoire', 'drills', 'workout', 'workoutrun', 'peakhunter', 'rush-chord', 'rush-note', 'rush-fretboard', 'rush-interval', 'rush-keysig', 'rush-progression', 'flight', 'pitchmemory', 'nametune', 'tuneup', 'highway', 'melodypuzzle', 'charts', 'slowdown', 'pieces', 'mixer', 'insights', 'groove', 'welcome', 'coursestart', 'puzzle', 'improv', 'exams', 'plans', 'admin', 'land', 'groove-echo', 'odd-echo'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
 };
 
 /** The level a generated modes lesson was made at (from its first question's pool size). */
@@ -997,7 +1001,7 @@ export function App() {
     openGenerated(def, undefined, false, { key: `testout:${unit.id}`, title: s.uiLang === 'en' ? 'Test out' : 'מבחן מעבר' });
   };
   /** Technique drills opened from a path step or a workout block run today's items as a queue (spec AI §9). */
-  const drillFrom = useRef<'path' | 'workout' | 'test' | 'chart' | 'assign' | 'taste' | null>(null);
+  const drillFrom = useRef<'path' | 'workout' | 'test' | 'chart' | 'assign' | 'taste' | 'repertoire' | null>(null);
   /** Technique takes since the session opened (0.61): their XP, count and clean count go to the server as one result. */
   const drillSessionXp = useRef(0);
   const drillSession = useRef({ takes: 0, clean: 0 });
@@ -1018,6 +1022,53 @@ export function App() {
   };
   /** A progression from Charts practised as a drill (voicings / comping / stride). */
   const chartQueue = useRef<Drill[] | null>(null);
+  /** Repertoire (SPEC-REPERTOIRE): the item being practised (its result is recorded when the practice ends) and the
+   *  item page to come back to. */
+  const repOpen = useRef<{ course: CourseId; id: string; after: string | null; kind: 'drill' | 'session' | 'chart' } | null>(null);
+  const repShown = useRef<string | null>(null);
+  const openRepWay = (item: RepItem, way: RepWay) => {
+    if (!settings || !progress) return;
+    const course = (settings.activeCourse ?? 'ear') as CourseId;
+    const after = lastSession();
+    repShown.current = item.id;
+    if (isDrillWay(way)) {
+      const q = repDrills(way, course, progress.drillItems ?? {}, drillSettingsOf(settings).keyOrder);
+      if (!q.length) return;
+      chartQueue.current = q;
+      drillFrom.current = 'repertoire';
+      drillSessionXp.current = 0;
+      drillSession.current = { takes: 0, clean: 0 };
+      repOpen.current = { course, id: item.id, after, kind: 'drill' };
+      return go('drills');
+    }
+    if (way.k === 'chart') {
+      const st = STANDARD_CHANGES.find((x) => x.id === way.std);
+      if (!st) return;
+      repOpen.current = { course, id: item.id, after, kind: 'chart' };
+      chartInit.current = { id: `rep-${st.id}`, title: `${item.title[settings.uiLang]} — ${st.part[settings.uiLang]}`, text: st.text, style: st.style, bpm: st.bpm };
+      toolFrom.current = 'repertoire';
+      return go('charts');
+    }
+    if (way.k === 'topic') {
+      repOpen.current = { course, id: item.id, after, kind: 'session' };
+      return openTopic(way.topic, way.level);
+    }
+    if (way.k === 'vocal') {
+      repOpen.current = { course, id: item.id, after, kind: 'session' };
+      toolFrom.current = 'repertoire';
+      setVocalWarmup(false);
+      setVocalLevel(way.level);
+      return go('vocal');
+    }
+  };
+  /** A lesson / vocal session opened from the repertoire finished: its first-try share is the item's score. */
+  const noteRepSession = (p: Progress) => {
+    const rp = repOpen.current;
+    const r = p.history[p.history.length - 1];
+    if (!rp || rp.kind !== 'session' || !r || r.sessionId === rp.after || isRepLesson(r.lessonId) || r.total <= 0) return;
+    repOpen.current = null;
+    void store.recordCompletion(repResult(rp.course, rp.id, r.firstTry / r.total, 0, new Date(), true)).then(setProgress);
+  };
   /** The mixer returns to the screen it was opened from (Settings or Charts). */
   const mixerFrom = useRef<Route>('settings');
   const openMixer = () => {
@@ -1032,7 +1083,7 @@ export function App() {
     go('drills');
   };
   const drillQueue = useMemo(
-    () => (route === 'drills' && (drillFrom.current === 'chart' || drillFrom.current === 'assign' || drillFrom.current === 'taste' || (drillFrom.current === 'path' && chartQueue.current)) ? chartQueue.current ?? undefined : route === 'drills' && (drillFrom.current === 'path' || drillFrom.current === 'workout') && settings && progress ? todayDrills({ ...drillSettingsOf(settings), bassTuning: bassTuningOf(settings), drumMic: drumMicOf(settings.drumKit) }, progress.drillItems ?? {}, settings.drillStart ?? {}, settings.customDrills ?? []).map((x) => x.drill) : undefined),
+    () => (route === 'drills' && (drillFrom.current === 'chart' || drillFrom.current === 'assign' || drillFrom.current === 'taste' || drillFrom.current === 'repertoire' || (drillFrom.current === 'path' && chartQueue.current)) ? chartQueue.current ?? undefined : route === 'drills' && (drillFrom.current === 'path' || drillFrom.current === 'workout') && settings && progress ? todayDrills({ ...drillSettingsOf(settings), bassTuning: bassTuningOf(settings), drumMic: drumMicOf(settings.drumKit) }, progress.drillItems ?? {}, settings.drillStart ?? {}, settings.customDrills ?? []).map((x) => x.drill) : undefined),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [route],
   );
@@ -1040,6 +1091,19 @@ export function App() {
     const from = drillFrom.current;
     drillFrom.current = null;
     if (from === 'taste') return tasteDrillsDone(takes, clean);
+    if (from === 'repertoire') {
+      // A repertoire item practised as drills: one result for the item (score = clean takes / takes), with the course.
+      chartQueue.current = null;
+      const rp = repOpen.current;
+      repOpen.current = null;
+      const t0 = Math.max(takes, drillSession.current.takes);
+      const c0 = Math.max(clean, drillSession.current.clean);
+      const xp = drillSessionXp.current;
+      drillSessionXp.current = 0;
+      drillSession.current = { takes: 0, clean: 0 };
+      if (rp && t0 > 0) void store.recordCompletion(repResult(rp.course, rp.id, c0 / t0, xp, new Date(), true)).then(setProgress);
+      return go('repertoire');
+    }
     const tech = from === 'path' && pendingStep.current?.kind === 'tech' ? pendingStep.current : null;
     const done = techResult(tech ? tech.id : from === 'assign' ? 'technique-assign' : 'technique', takes, clean);
     if (done && !tech) void done.then(setProgress);
@@ -1188,6 +1252,7 @@ export function App() {
   const seenPlacement = useRef<string | null>(null);
   /** After a session: a path step's stars (P10), or a test-out's ✓ by test (P16). */
   const notePathResult = (p: Progress) => {
+    noteRepSession(p);
     const lastR = p.history[p.history.length - 1];
     // An assigned lesson / topic just finished: its result goes to the teacher (0.52).
     const asg = activeAssign.current;
@@ -1543,6 +1608,7 @@ export function App() {
               signedIn={!!user}
               onLeague={() => go('friends')}
               exam={{ mock: openMock, practise: (topic, level) => openTopic(topic, level), all: () => go('exams') }}
+              onRepertoire={(id) => ((repShown.current = id ?? null), go('repertoire'))}
             />
           }
           headerExtra={<MonthReviewIcon t={t} lang={s.uiLang} progress={progress} seenMonth={s.monthReviewSeen} onSeen={(monthReviewSeen) => updateSettings({ monthReviewSeen })} />}
@@ -1654,6 +1720,10 @@ export function App() {
           key={arcadeKey}
           status={{
             ...((s.myCharts ?? []).length ? { charts: s.uiLang === 'he' ? `${(s.myCharts ?? []).length} שמורים` : `${(s.myCharts ?? []).length} saved` } : {}),
+            repertoire: (() => {
+              const g = repGoal(s.activeCourse ?? 'ear', repResults(progress.lessons, s.activeCourse ?? 'ear'));
+              return `${g.title[s.uiLang]} · ${g.now}/${g.target}`;
+            })(),
             ...((s.knownChords ?? []).length ? { songs: s.uiLang === 'he' ? `${(s.knownChords ?? []).length} אקורדים` : `${(s.knownChords ?? []).length} chords` } : {}),
             ...(s.progPuzzle?.[localDay(new Date())] ? { puzzle: s.uiLang === 'he' ? 'שוחק היום' : 'Played today' } : {}),
             ...(Object.keys(s.challengeBest ?? {}).length ? { improv: `${Object.values(s.challengeBest ?? {}).filter((x) => x >= 0.85).length}/${CHALLENGES.length}` } : {}),
@@ -1673,6 +1743,7 @@ export function App() {
           lang={s.uiLang}
           hub={{
             songs: () => go('songs'),
+            repertoire: () => ((repShown.current = null), go('repertoire')),
             drills: () => go('drills'),
             vocal: () => go('vocal'),
             singalong: () => go('singalong'),
@@ -2093,6 +2164,12 @@ export function App() {
             go('drills');
           }}
           onImprov={(score, bpm, chords, level, challenge) => {
+            // A standard opened from the repertoire: the take is the item's result.
+            const rp = repOpen.current;
+            if (rp && rp.kind === 'chart') {
+              repOpen.current = null;
+              void store.recordCompletion(repResult(rp.course, rp.id, score, Math.round(score * 12))).then(setProgress);
+            }
             if (challenge && score > (s.challengeBest?.[challenge] ?? -1)) updateSettings({ challengeBest: { ...(s.challengeBest ?? {}), [challenge]: score } });
             // an "improvise under rules" assignment: the take is the submission
             if (activeAssign.current?.a.kind === 'chart' && activeAssign.current.a.ref?.startsWith('rules:')) submitAssign(score, { bpm, rules: true });
@@ -2143,6 +2220,19 @@ export function App() {
           }}
         />
       )}
+      {route === 'repertoire' && (
+        <RepertoireScreen
+          key={`rep-${s.activeCourse ?? 'ear'}`}
+          lang={s.uiLang}
+          course={(s.activeCourse ?? 'ear') as CourseId}
+          lessons={progress.lessons}
+          initialItem={repShown.current}
+          onItem={(id) => (repShown.current = id)}
+          onBack={() => ((repShown.current = null), go('arcade'))}
+          onWay={openRepWay}
+          onSongbook={['keys', 'guitar', 'bass'].includes(s.activeCourse ?? 'ear') ? () => go('songs') : undefined}
+        />
+      )}
       {route === 'songs' && (
         <Drills
           key="songs"
@@ -2156,7 +2246,7 @@ export function App() {
           }}
           onBack={() => {
             void techResult('technique-songs')?.then(setProgress);
-            go('arcade');
+            go('repertoire');
           }}
           songs
           onPieces={() => go('pieces')}

@@ -27,10 +27,16 @@ test.describe('practice hub', () => {
     // The guitar course brings songs and technique.
     await switchCourse(page, 'guitar');
     await page.goto('/?sim=1#/arcade');
-    for (const k of ['songs', 'drills']) await expect(page.locator(`[data-hub="${k}"]`)).toBeVisible();
-    await page.locator('[data-hub="songs"]').click();
+    for (const k of ['repertoire', 'drills']) await expect(page.locator(`[data-hub="${k}"]`)).toBeVisible();
+    // 0.70: Songs became Repertoire (four tiers); the full songbook is a link on it.
+    await page.locator('[data-hub="repertoire"]').click();
+    await expect(page.locator('[data-repertoire="guitar"]')).toBeVisible();
+    await expect(page.locator('[data-rep-tier]')).toHaveCount(4);
+    await page.locator('[data-rep-songbook]').click();
     await expect(page.locator('[data-drills="songs"]')).toBeVisible();
     expect(await page.locator('.song-drills li').count()).toBeGreaterThanOrEqual(16);
+    await page.locator('.screen-head .icon-btn').first().click();
+    await expect(page.locator('[data-repertoire="guitar"]')).toBeVisible();
     await page.locator('.screen-head .icon-btn').first().click();
     // 0.64: technique in the guitar course is the guitar's only (no instrument switch there).
     await page.locator('[data-hub="drills"]').click();
@@ -99,7 +105,7 @@ test.describe('practice hub', () => {
     // My pieces from Songs (keys course): import a small MusicXML, set up, practise screen with the first chunk.
     await switchCourse(page, 'keys');
     await page.goto('/?sim=1#/arcade');
-    await page.locator('[data-hub="songs"]').click();
+    await page.goto('/?sim=1#/songs');
     await page.locator('[data-pieces-open]').click();
     const bars = Array.from({ length: 8 }, (_, i) => `<measure number="${i + 1}">${i === 0 ? '<attributes><divisions>1</divisions><time><beats>4</beats><beat-type>4</beat-type></time></attributes>' : ''}${'<note><pitch><step>C</step><octave>5</octave></pitch><duration>1</duration></note>'.repeat(4)}</measure>`).join('');
     const xml = `<?xml version="1.0"?><score-partwise><work><work-title>E2E Study</work-title></work><part-list><score-part id="P1"/></part-list><part id="P1">${bars}</part></score-partwise>`;

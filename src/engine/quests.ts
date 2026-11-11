@@ -3,6 +3,7 @@
 
 import type { CourseId } from './courses';
 import type { RatingEvent } from './rating';
+import { parseRepLesson, repItem } from './repertoire';
 
 export interface Quest {
   id: string;
@@ -64,18 +65,21 @@ const POOL: Record<string, Make> = {
   // Game tiers (GAMES_TIERS_PLAN §5.2): meet the goal of your level in a game; clear a level.
   tierPass2: (d) => ({ id: 'tierPass2', title: { en: "Meet a game level's goal twice", he: 'לעמוד פעמיים ביעד של רמה במשחק' }, now: (d.tierRuns ?? []).filter((r) => r.pass && sameDay(r.at, d.day)).length, target: 2, color: '#3AB8FF', glyph: 'scales' }),
   tierClear: (d) => ({ id: 'tierClear', title: { en: 'Clear a level in any game', he: 'לעבור רמה באחד המשחקים' }, now: (d.tierRuns ?? []).filter((r) => r.cleared && sameDay(r.at, d.day)).length, target: 1, color: '#FFD43B', glyph: 'scales' }),
+  // Repertoire (SPEC-REPERTOIRE): a piece of the course's repertoire, and one from Blues & progressions.
+  rep1: (d) => ({ id: 'rep1', title: { en: 'Practise a repertoire piece', he: 'להתאמן על יצירה מהרפרטואר' }, now: d.sessions.filter((s) => parseRepLesson(s)?.course === d.course).length, target: 1, color: '#12C9B4', glyph: 'scales' }),
+  rep2: (d) => ({ id: 'rep2', title: { en: 'A piece from Blues & progressions', he: 'יצירה מבלוז ומהלכים' }, now: d.sessions.filter((s) => { const r = parseRepLesson(s); return !!r && r.course === d.course && repItem(r.course, r.id)?.tier === 2; }).length, target: 1, color: '#A78BFA', glyph: 'scales' }),
   rhythm: (d) => ({ id: 'rhythm', title: d.course === 'drums' ? { en: 'Rhythm right 5 times', he: 'קצב נכון 5 פעמים' } : { en: '5 rhythm answers right', he: '5 תשובות קצב נכונות' }, now: d.events.filter((e) => sameDay(e.at, d.day) && e.set === undefined && (/rhythm|timing|tempo|meter/.test(e.skill) || (d.course === 'drums' && !!e.tags?.some((x) => /rhythm|timing/.test(x.skill)))) && (e.score ?? (e.correct ? 1 : 0)) >= 0.7).length, target: 5, color: '#FF5FA2', glyph: 'rhythm' }),
 };
 
 /** Which quests a course offers (first one rotates with the day). */
 const BY_COURSE: Record<CourseId, string[]> = {
-  ear: ['run10', 'steps2', 'rhythm', 'min10', 'tierPass2'],
-  jazz: ['harmony5', 'steps2', 'run10', 'min10', 'tierClear'],
-  voice: ['sing3', 'steps2', 'min10', 'tierPass2'],
-  keys: ['tech3', 'steps2', 'min10'],
-  guitar: ['tech3', 'steps2', 'min10'],
-  bass: ['tech3', 'steps2', 'min10'],
-  drums: ['tech3', 'rhythm', 'steps2', 'min10'],
+  ear: ['run10', 'steps2', 'rhythm', 'min10', 'tierPass2', 'rep1'],
+  jazz: ['harmony5', 'steps2', 'run10', 'min10', 'tierClear', 'rep2'],
+  voice: ['sing3', 'steps2', 'min10', 'tierPass2', 'rep1'],
+  keys: ['tech3', 'steps2', 'min10', 'rep1', 'rep2'],
+  guitar: ['tech3', 'steps2', 'min10', 'rep1', 'rep2'],
+  bass: ['tech3', 'steps2', 'min10', 'rep1', 'rep2'],
+  drums: ['tech3', 'rhythm', 'steps2', 'min10', 'rep1'],
 };
 
 /** The Ear course in exam-prep mode: the exam-topic quest every day, the other one rotates. */
