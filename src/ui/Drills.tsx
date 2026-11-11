@@ -19,9 +19,14 @@ import { customKeys, customToDrill } from '../engine/drills/custom';
 import { DrillCreator } from './DrillCreator';
 import { currentLevel, families as familiesOf, keyHeat, levelDone, levelStars, LEVEL_MAX_STARS, levelKeys, shownFamilies, specDrills, todayDrills, levelDrills, withBassTuning, itemTargetBpm } from '../engine/drills/plan';
 import { generate, KEYS_EAR_PROBE } from '../engine/drills/generate';
-import { GUITAR_PROBES, type GuitarLevelDef } from '../engine/drills/guitar';
+import { GUITAR_PROBES, type GuitarFamilyDef, type GuitarLevelDef } from '../engine/drills/guitar';
+import { GUITAR_PROBE_STEPS, guitarProbesFor, placeGuitar, probeRuns, type GuitarProbe } from '../engine/drills/guitarProbes';
 import { guitarAddOnsOf } from '../engine/drills/guitarMeta';
 import { GuitarAddOnPicker } from './GuitarAddOns';
+import { FAMILY_LESSON } from '../content/mini/guitar';
+import { MINI_LESSONS } from '../content/minilessons';
+import { MiniLessonPlayer } from './MiniLesson';
+import { STRINGS } from '../i18n/strings';
 import { BASS_PROBES, placeBass, probeSlot, type BassProbeResult } from '../engine/drills/bassProbes';
 import { walkProbeReport } from '../engine/drills/bassAnalyze';
 import { expTimeMs } from '../engine/drills/analyze';
@@ -296,6 +301,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
     return (
       <main className="drills-screen" data-drills="family">
         {head(view.f.title[lang], () => setView({ k: 'hub' }))}
+        <FamilyLesson family={view.f.id} settings={settings} />
         <FamilyView lang={lang} ds={ds} f={view.f} items={items} start={settings.drillStart?.[view.f.id]} onRun={(q, i) => setView({ k: 'run', queue: q, i, from: view })} />
       </main>
     );
@@ -309,6 +315,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
       onFamily={(f) => setView({ k: 'family', f })}
       onRun={(q) => setView({ k: 'run', queue: q, i: 0, from: { k: 'hub' } })}
       onSettings={() => setView({ k: 'settings' })}
+      onAddOns={(v) => setDs({ guitarAddOns: v })}
       onCreate={(edit) => setView({ k: 'creator', edit })}
       onTest={() => setView(ds.instrument === 'drums' && !settings.drumKit?.done ? { k: 'kit' } : { k: 'test' })}
       onInstrument={(i) => setDs({ instrument: i })}
@@ -361,7 +368,7 @@ const TOPIC_NAME: Record<DrillTopic, { en: string; he: string }> = {
 const topicName = (k: DrillTopic, drums: boolean, piano = false): { en: string; he: string } =>
   drums && k === 'styles' ? { en: 'Styles', he: 'סגנונות' } : drums && k === 'ear' ? { en: 'Drummer’s ear', he: 'שמיעה למתופפים' } : piano && k === 'ear' ? { en: 'Pianist’s ear', he: 'שמיעה לפסנתרנים' } : piano && k === 'styles' ? { en: 'Jazz piano', he: 'פסנתר ג׳אז' } : TOPIC_NAME[k];
 
-function Hub({ lang, ds, settings, items, head, onFamily, onRun, onSettings, onCreate, onTest, onInstrument, onVoice, onKit, onKitSave }: { onKit?: (start?: KitKind) => void; onKitSave?: (k: NonNullable<Settings['drumKit']>) => void; onVoice?: () => void; lang: Lang; ds: DrillSettings; settings: Settings; items: Record<string, ItemState>; head: React.ReactNode; onFamily: (f: FamilyDef) => void; onRun: (q: Drill[]) => void; onSettings: () => void; onCreate: (edit?: CustomDrill) => void; onTest: () => void; onInstrument: (i: 'piano' | 'guitar' | 'bass' | 'drums') => void }) {
+function Hub({ lang, ds, settings, items, head, onFamily, onRun, onSettings, onCreate, onTest, onInstrument, onVoice, onKit, onKitSave, onAddOns }: { onAddOns?: (v: NonNullable<DrillSettings['guitarAddOns']>) => void; onKit?: (start?: KitKind) => void; onKitSave?: (k: NonNullable<Settings['drumKit']>) => void; onVoice?: () => void; lang: Lang; ds: DrillSettings; settings: Settings; items: Record<string, ItemState>; head: React.ReactNode; onFamily: (f: FamilyDef) => void; onRun: (q: Drill[]) => void; onSettings: () => void; onCreate: (edit?: CustomDrill) => void; onTest: () => void; onInstrument: (i: 'piano' | 'guitar' | 'bass' | 'drums') => void }) {
   const tx = T[lang];
   // N10: the bass tuning hides the low-B levels on a bass without a low B.
   const bassTuning = bassTuningOf(settings);
@@ -416,6 +423,15 @@ function Hub({ lang, ds, settings, items, head, onFamily, onRun, onSettings, onC
   return (
     <main className="drills-screen" data-drills="hub">
       {head}
+      {/* GUITAR_DEEPENING §5: the start of the guitar course — choose the add-ons once (they stay in the settings). */}
+      {ds.instrument === 'guitar' && settings.drills?.guitarAddOns === undefined && onAddOns && (
+        <div className="card g-addons-first" data-guitar-addons-first="1">
+          <GuitarAddOnPicker value={guitarAddOnsOf(ds)} onChange={onAddOns} lang={lang} />
+          <button className="btn" onClick={() => onAddOns(guitarAddOnsOf(ds))} data-addons-done="1">
+            {lang === 'he' ? 'שמירה' : 'Save'}
+          </button>
+        </div>
+      )}
       {/* 0.64 (owner): in an instrument course technique is that instrument's only — no switching to another one here. */}
       {!['keys', 'guitar', 'bass', 'drums'].includes(settings.activeCourse ?? 'ear') && (
       <div className="chips drill-inst" role="radiogroup" aria-label={tx.instrument}>
@@ -532,6 +548,23 @@ export function HeatRow({ heat }: { heat: number[] }) {
   );
 }
 
+/** GUITAR_DEEPENING: the quick lesson behind a new guitar family (ear, comping, Barry Harris, prog), opened on demand. */
+function FamilyLesson({ family, settings }: { family: string; settings: Settings }) {
+  const [open, setOpen] = useState(false);
+  const id = FAMILY_LESSON[family];
+  const lesson = id ? MINI_LESSONS[id] : undefined;
+  if (!lesson) return null;
+  const lang = settings.uiLang;
+  return (
+    <>
+      <button className="btn ghost family-lesson" onClick={() => setOpen(true)} data-family-lesson={lesson.id}>
+        {lang === 'he' ? 'שיעור קצר' : 'Quick lesson'}: {lesson.title[lang]}
+      </button>
+      {open && <MiniLessonPlayer t={STRINGS[lang]} settings={settings} lesson={lesson} name={null} onFinish={() => setOpen(false)} />}
+    </>
+  );
+}
+
 function FamilyView({ lang, ds, f, items, start, onRun }: { lang: Lang; ds: DrillSettings; f: FamilyDef; items: Record<string, ItemState>; start?: number; onRun: (q: Drill[], i: number) => void }) {
   const cur = currentLevel(f, items, ds.keyOrder, start);
   const [open, setOpen] = useState<string>(cur.id);
@@ -570,7 +603,7 @@ function LevelMeta({ l, lang }: { l: LevelDef; lang: Lang }) {
   if (!g.tempo && !g.exam?.length) return null;
   return (
     <small className="level-meta" dir="ltr" data-level-exam={g.exam?.map((e) => `${e.board} ${e.grade}`).join(', ') || undefined}>
-      {g.tempo && <span className="lm-tempo">♩ {g.tempo[0]}→{g.tempo[1]}</span>}
+      {g.tempo && <span className="lm-tempo">{g.sub?.startsWith('♪') ? '♪' : '♩'} {g.tempo[0]}→{g.tempo[1]}</span>}
       {g.exam?.map((e) => (
         <span key={`${e.board}${e.grade}`} className="lm-exam">
           {e.board === 'Bagrut' && lang === 'he' ? 'בגרות' : e.board} {lang === 'he' ? (GRADE_HE[e.grade] ?? e.grade) : e.grade}
@@ -908,6 +941,8 @@ function TechLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, onOct
   const probes = useMemo(() => {
     if (inst === 'drums') return drumProbes(drumMic, drumAcoustic).map((p) => ({ id: p.slot as string, drill: generate(p.spec), seeds: [] as FamilyId[], once: p.mode === 'once', slot: null }));
     if (inst === 'bass') return BASS_PROBES.map((p) => ({ id: p.family, drill: generate(p.spec), seeds: p.seeds ?? [], once: p.mode === 'once', slot: probeSlot(p) }));
+    // GUITAR_DEEPENING §7: a step for every guitar family, add-on steps for the chosen add-ons, harder steps adaptive.
+    if (inst === 'guitar') return guitarProbesFor(guitarAddOnsOf(ds)).map((p) => ({ id: p.id, drill: generate(p.spec), seeds: [] as FamilyId[], once: p.mode === 'once', slot: null }));
     if (inst !== 'piano') return GUITAR_PROBES.filter((p) => (p.instruments as string[]).includes(inst)).map((p) => ({ id: p.family, drill: generate(p.spec), seeds: p.seeds ?? [], once: false, slot: null }));
     // PIANO_JAZZ: a jazz player is also probed on a bebop line over ii–V–I (its tempo places the bebop lines).
     const fams: FamilyId[] = ds.emphasis === 'jazz' ? ['scales', 'harris', 'k-bebop'] : ds.emphasis === 'classical' ? ['scales', 'fingers'] : ['scales', 'fingers', 'harris'];
@@ -942,6 +977,7 @@ function TechLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, onOct
       if (placed.tuning && onBassTuning) onBassTuning(placed.tuning);
       return onDone(placed.start);
     }
+    if (inst === 'guitar') return onDone(placeGuitar(b, familiesOf('guitar').map((f) => ({ id: f.id, levels: f.levels.length, addOn: (f as GuitarFamilyDef).addOn })), guitarAddOnsOf(ds)));
     if (inst !== 'piano') {
       // Guitar / bass: each probed family from its staircase; the rest one below the mean of the probed ones.
       const lv: Record<string, number> = {};
@@ -990,6 +1026,8 @@ function TechLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, onOct
     // Groove reach (funk, shuffle) only after the basic groove was clean or almost.
     const skip = (id: string) => (!b.hands && (id === 'doubles' || id === 'diddle')) || (GROOVE_REACH.includes(id as DrumSlot) && (drumRes.current.groove?.verdict ?? 'not') === 'not');
     while (inst === 'drums' && q < probes.length && skip(probes[q].id)) q++;
+    // Guitar (§7): a harder step only after its easier one was clean.
+    while (inst === 'guitar' && q < probes.length && !probeRuns(GUITAR_PROBE_STEPS.find((x) => x.id === probes[q].id) ?? { after: undefined } as GuitarProbe, b)) q++;
     if (q >= probes.length) return finish(b);
     setP(q);
     setBpm(probes[q].drill.startBpm);

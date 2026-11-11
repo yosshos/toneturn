@@ -167,7 +167,7 @@ export function generateJazz2(s: DrillSpec, tu: Tuning): Drill | null {
         evs.push({ beat: half * 2, dur: 2, notes: v.map((x) => ({ ...x, stroke: 'D' as const, tech: 'strum-down' as const, ...(noteAt(tu, x.s, x.f) === top ? { acc: true } : {}) })) });
         if (half < 4) syms.push(NAMES[mod(key + d, 12)] + symOf({ iv }));
       }
-      const d = finish(s, tu, evs, { title: t(`Chord melody: our melody on top, drop-2 on strings ${strs.join('-')} · ${NAMES[key]}`, `אקורד-מלודיה: המנגינה שלנו למעלה, דרופ 2 על מיתרים ${strs.join('-')} · ${NAMES[key]}`), bpm: 60, evenness: false });
+      const d = finish(s, tu, evs, { title: t(`Chord melody: our melody on top, drop-2 on strings ${Math.min(...strs)}–${Math.max(...strs)} · ${NAMES[key]}`, `אקורד-מלודיה: המנגינה שלנו למעלה, דרופ 2 על מיתרים ${Math.min(...strs)}–${Math.max(...strs)} · ${NAMES[key]}`), bpm: 60, evenness: false });
       return { ...d, chart: [...syms, ...syms].reduce<string[]>((acc, x, i) => (i % 2 === 0 ? [...acc, x] : [...acc.slice(0, -1), `${acc[acc.length - 1]} ${x}`]), []) };
     }
     case 'rhythm-changes': {
@@ -298,7 +298,7 @@ export function generateHarris(s: DrillSpec, tu: Tuning): Drill {
         tops.push(v);
       }
       upDown(tops).forEach((v, i) => evs.push({ beat: i, dur: 1, notes: strum(v) }));
-      title = t(`Scale of chords: ${NAMES[key]}${minor ? 'm6' : '6'} and the diminished between, drop-2 on strings ${strs.join('-')}`, `סולם האקורדים: ${NAMES[key]}${minor ? 'm6' : '6'} והמוקטן שביניהם, דרופ 2 על מיתרים ${strs.join('-')}`);
+      title = t(`Scale of chords: ${NAMES[key]}${minor ? 'm6' : '6'} and the diminished between, drop-2 on strings ${Math.min(...strs)}–${Math.max(...strs)}`, `סולם האקורדים: ${NAMES[key]}${minor ? 'm6' : '6'} והמוקטן שביניהם, דרופ 2 על מיתרים ${Math.min(...strs)}–${Math.max(...strs)}`);
       bpm = 80;
       break;
     }

@@ -174,3 +174,15 @@ export function itemTempo(meta: GuitarLevelMeta, s: SpecTemplate, genStart: numb
   if (npb > subNpb(meta.sub) + 0.01 && genStart < a) return { tempo: genStart, target: Math.round((b * genStart) / a) };
   return { tempo: a };
 }
+
+/**
+ * The guitar course's voice (§8): a fixed choice, else by the add-ons — prog or jazz → the clean electric (neck
+ * pickup), fingerstyle or flamenco → nylon, otherwise the steel-string acoustic.
+ */
+export function guitarVoiceOf(choice: 'auto' | 'steel' | 'nylon' | 'electric' | undefined, addOns: GuitarAddOn[]): 'steel' | 'nylon' | 'electric' {
+  if (choice && choice !== 'auto') return choice;
+  if (addOns.includes('prog') || addOns.includes('jazz')) return 'electric';
+  if (addOns.includes('fingerstyle') || addOns.includes('flamenco')) return 'nylon';
+  return 'steel';
+}
+

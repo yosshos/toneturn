@@ -3,9 +3,11 @@
 import { describe, expect, it } from 'vitest';
 import { generate } from '../src/engine/drills/generate';
 import { expTimeMs, IOI_FLOOR_MS, npsOf, tempoBand, thresholds } from '../src/engine/drills/analyze';
-import { analyzeGuitarTake } from '../src/engine/drills/guitarAnalyze';
+import { analyzeGuitarTake, type GFrame } from '../src/engine/drills/guitarAnalyze';
+import { QUALITY_INTS } from '../src/engine/chordRecognize';
 import { guitarCatalog, MAX_FRET, rng, type GuitarFamilyDef, type GuitarLevelDef } from '../src/engine/drills/guitar';
 import { GUITAR_META, guitarAddOnsOf } from '../src/engine/drills/guitarMeta';
+import { guitarProbesFor, placeGuitar, probeRuns } from '../src/engine/drills/guitarProbes';
 import { shownFamilies, targetBpmOf } from '../src/engine/drills/plan';
 import { eligible, guitarPathDifficulty, stepCatalogue } from '../src/engine/path';
 import { courseInput } from '../src/engine/courses';
@@ -134,6 +136,53 @@ describe("guitar deepening: the guitarist's ear", () => {
       }
     }
   });
+  it('ear 8, strum it: the closed-set recognizer names the strummed chord; a wrong chord is not clean, an unclear one asks again', () => {
+    const d = generate({ family: 'g-ear', kind: 'quality', key: 7, hands: 'R', option: 2, instrument: 'guitar' } as DrillSpec);
+    expect(d.recognize?.length).toBe(4);
+    const bpm = d.startBpm;
+    const played = take(d, bpm);
+    const chordOns = [...new Set(d.notes.map((n) => n.beat))].map((b) => expTimeMs(d, b, bpm));
+    const framesFor = (pcsOf: (k: number) => number[] | null): GFrame[] => {
+      const out: GFrame[] = [];
+      for (let t = 0; t < expTimeMs(d, d.beats, bpm); t += 20) {
+        const k = chordOns.findIndex((on, i) => t >= on && (i === chordOns.length - 1 || t < chordOns[i + 1]));
+        const pcs = k >= 0 ? pcsOf(k) : null;
+        const chroma = Array.from({ length: 12 }, (_, i) => (pcs ? (pcs.includes(i) ? 1 : 0.05) : 0.3));
+        out.push({ t, hz: null, rms: 0.2, chroma });
+      }
+      return out;
+    };
+    const right = (k: number) => {
+      const r = d.recognize![k];
+      const c = r.candidates[r.answer];
+      return QUALITY_INTS[c.quality].map((i) => (c.root + i) % 12);
+    };
+    const m = analyzeGuitarTake(d, bpm, played, undefined, framesFor(right));
+    expect(m.guitar.recognized).toMatchObject({ ok: 4, wrong: 0, unsure: 0 });
+    expect(m.verdict).toBe('clean');
+    // Strummed a different chord of the pool each time → not clean, and the line names it.
+    const wrong = (k: number) => {
+      const r = d.recognize![k];
+      const c = r.candidates[(r.answer + 1) % r.candidates.length];
+      return QUALITY_INTS[c.quality].map((i) => (c.root + i) % 12);
+    };
+    const mw = analyzeGuitarTake(d, bpm, played, undefined, framesFor(wrong));
+    expect(mw.verdict).toBe('not');
+    expect(mw.why.en).toMatch(/Another chord/);
+    // Noise (a flat chroma) → never a guess: "play it again".
+    const mu = analyzeGuitarTake(d, bpm, played, undefined, framesFor(() => null));
+    expect(mu.guitar.recognized!.unsure).toBe(4);
+    expect(mu.verdict).not.toBe('clean');
+  });
+
+  it('the key is never named where it is the answer (find the tonic, find the key)', () => {
+    for (const kind of ['tonic', 'key'])
+      for (const key of ALL12) {
+        const d = generate({ family: 'g-ear', kind, key, hands: 'R', instrument: 'guitar' } as DrillSpec);
+        expect(/ · [A-G]/.test(d.title.en) || / · [A-G]/.test(d.title.he), d.title.en).toBe(false);
+      }
+  });
+
   it('a wrong answer is not clean (the 5th instead of the tonic)', () => {
     const d = generate({ ...ear.levels[0].specs[0], key: 0 } as DrillSpec);
     const played = take(d, d.startBpm).map((p) => ({ ...p, pitch: p.pitch + 7 }));
@@ -213,3 +262,34 @@ describe('guitar deepening: the core path and add-ons (§5, owner 2026-11-11)', 
     expect(guitarPathDifficulty('g-fretting', 0)).toBe(700);
   });
 });
+
+describe('guitar deepening: placement probes for every family (§7)', () => {
+  const fams = GUITAR.map((f) => ({ id: f.id, levels: f.levels.length, addOn: f.addOn }));
+  it('a step for every core family; add-on steps only when chosen; every step generates', () => {
+    const core = guitarProbesFor([]);
+    expect(new Set(core.map((p) => p.family))).toEqual(new Set(['g-fretting', 'g-picking', 'g-chords', 'g-rhythm', 'g-scales', 'g-legato', 'g-arps', 'g-lead', 'g-reading', 'g-ear', 'g-impro']));
+    const all = guitarProbesFor(['jazz', 'flamenco', 'fingerstyle', 'prog']);
+    expect(all.map((p) => p.family)).toEqual(expect.arrayContaining(['g-jazz', 'g-harris', 'g-prog', 'g-fingerstyle', 'g-flamenco']));
+    for (const p of all) expect(generate(p.spec).notes.length, p.id).toBeGreaterThan(0);
+  });
+  it('places each family from its step, harder steps only after the easier one, the rest from the mean', () => {
+    const none = placeGuitar({}, fams);
+    expect(Object.values(none).every((v) => v === 1)).toBe(true);
+    // The barre step never runs without a clean A ↔ D first.
+    const barreOnly = placeGuitar({ 'g-chords-barre': 60 }, fams);
+    expect(barreOnly['g-chords']).toBe(1);
+    const strong = placeGuitar({ 'g-fretting': 100, 'g-chords': 90, 'g-chords-barre': 60, 'g-scales': 100, 'g-scales-major': 90, 'g-rhythm': 90, 'g-picking': 95, 'g-legato': 75, 'g-arps': 95, 'g-lead': 60, 'g-reading': 70, 'g-ear': 85, 'g-impro': 90 }, fams);
+    expect(strong['g-fretting']).toBe(5);
+    expect(strong['g-chords']).toBe(5);
+    expect(strong['g-scales']).toBe(5);
+    expect(strong['g-rhythm']).toBe(2);
+    expect(strong['g-lead']).toBe(3);
+    expect(strong['g-ear']).toBe(3);
+    // Add-on families start at 1 unless their own step was clean.
+    expect(strong['g-jazz']).toBe(1);
+    expect(placeGuitar({ 'g-jazz': 120 }, fams, ['jazz'])['g-jazz']).toBe(3);
+    expect(placeGuitar({ 'g-jazz': 120 }, fams, [])['g-jazz']).toBe(1);
+    expect(probeRuns(guitarProbesFor([]).find((p) => p.id === 'g-lead-vib')!, { 'g-lead': 0 })).toBe(false);
+  });
+});
+

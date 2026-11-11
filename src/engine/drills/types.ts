@@ -269,6 +269,12 @@ export interface Drill {
   unison?: UnisonPart;
   /** A road map: named sections driving the band (style, feel, stops), measured per section (roadmap.ts). */
   form?: import('./roadmap').FormPlan;
+  /**
+   * GUITAR_DEEPENING §6 (closed-set chord recognizer): per chord of the drill, in order, the candidates the player may
+   * have strummed and the index of the right one. The microphone's chroma names the chord among them (any voicing);
+   * a wrong chord is "not", an unclear one asks to play it again. Without chroma it is not measured.
+   */
+  recognize?: { candidates: { root: number; quality: import('../chordRecognize').ChordQuality; bass?: number }[]; answer: number }[];
 }
 
 /** A unison part: the band's bass / guitar / keys play `line` (or the drill's own notes moved by `transpose`). */

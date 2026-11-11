@@ -49,6 +49,7 @@ const AvatarStudio = lazy(() => import('./AvatarStudio'));
 import { MiniGateContext, MiniLessonPlayer, RefresherContext } from './MiniLesson';
 import { LearnedScreen, learnedCount } from './Learned';
 import { lessonForUnit, MINI_LESSONS } from '../content/minilessons';
+import { guitarAddOnsOf, guitarVoiceOf } from '../engine/drills/guitarMeta';
 import type { MiniLesson } from '../content/miniTypes';
 import { PerformScreen } from './Perform';
 import { topicLesson, TOPIC_GEN } from '../engine/topics';
@@ -1175,6 +1176,9 @@ export function App() {
   useEffect(() => {
     void piano.setSound(soundId);
   }, [soundId]);
+  // GUITAR_DEEPENING §8: the modelled guitar's voice (steel / nylon / clean electric), by the add-ons or the player's choice.
+  const guitarVoice = settings ? guitarVoiceOf(settings.guitarVoice, guitarAddOnsOf(settings.drills ?? {}, settings.courses)) : 'steel';
+  useEffect(() => piano.setGuitarVoice(guitarVoice), [guitarVoice]);
   // Sound quality (0.69): Lite / Standard / Studio by device, or the player's choice (the 0.54 grand detail maps onto it).
   const soundQuality = settings ? qualityOf(settings) : 'auto';
   useEffect(() => piano.setQuality(soundQuality), [soundQuality]);

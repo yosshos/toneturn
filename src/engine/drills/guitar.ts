@@ -16,6 +16,7 @@ import { core2Levels, generateCore2 } from './guitarCore2';
 import { generateGuitarProg, guitarProgFamily } from './guitarProg';
 import { generateGuitarEar } from './guitarEar';
 import { generateHarris, generateJazz2 } from './guitarJazz';
+import { GUITAR_PROBE_STEPS } from './guitarProbes';
 
 export type GuitarStyle = NonNullable<DrillSettings['guitarStyle']>;
 export type GuitarTechnique = NonNullable<ExpNote['technique']>;
@@ -2567,7 +2568,7 @@ export function guitarCatalog(): GuitarFamilyDef[] {
       LT('g-ear', 5, 'Riff recall: single notes and power chords', 'זיכרון ריף: צלילים בודדים ואקורדי פאוור', [GE('riff', { option: 0 }), GE('riff', { option: 1 })], [4, 9, 7, 2, 0, 5], [80, 110], '8ths', 4),
       LT('g-ear', 6, 'Root finder: I, IV, V, vi', 'מוצא היסודות: I, IV, V, vi', [GE('roots', { option: 0 })], GKEYS_MAJOR, [80, 100], 'halves', 4),
       LT('g-ear', 7, 'Root finder: ii, iii, V7, ♭VII', 'מוצא היסודות: ii, iii, V7, ♭VII', [GE('roots', { option: 1 })], GKEYS_MAJOR, [80, 100], 'halves', 7),
-      LT('g-ear', 8, 'Chord quality by ear', 'סוג האקורד בשמיעה', [GE('quality', { option: 0 }), GE('quality', { option: 1 })], GKEYS_MAJOR.slice(0, 8), [60, 90], 'quarters', 6),
+      LT('g-ear', 8, 'Chord quality by ear', 'סוג האקורד בשמיעה', [GE('quality', { option: 0 }), GE('quality', { option: 1 }), GE('quality', { option: 2 })], GKEYS_MAJOR.slice(0, 8), [60, 90], 'quarters', 6),
       LT('g-ear', 9, 'Find the key, then its pentatonic', 'למצוא את הסולם, ואז את הפנטטוני שלו', [GE('key', { option: 0 }), GE('key', { option: 1 })], GKEYS_MAJOR, [70, 90], '8ths', 5),
       LT('g-ear', 10, 'Transcribe a line', 'תמלול קו', [GE('transcribe', { option: 0 }), GE('transcribe', { option: 1 })], BLUES_KEYS, [70, 100], '8ths', 9),
     ]),
@@ -2669,11 +2670,7 @@ export interface TechProbe {
   seeds?: FamilyId[];
 }
 export const GUITAR_PROBES: TechProbe[] = [
-  { family: 'g-fretting', spec: { family: 'g-fretting', kind: 'spider', key: 9, hands: 'R', option: 0, instrument: 'guitar' }, title: t('Chromatic 1-2-3-4', 'כרומטי 1-2-3-4'), instruments: ['guitar'] },
-  { family: 'g-scales', spec: { family: 'g-scales', kind: 'penta', key: 9, hands: 'R', position: 1, minor: true, instrument: 'guitar' }, title: t('A minor pentatonic box 1', 'פנטטוני לה מינור תיבה 1'), instruments: ['guitar'] },
-  { family: 'g-chords', spec: { family: 'g-chords', kind: 'one-minute', key: 0, hands: 'R', option: 0, perBeat: 0.5, instrument: 'guitar' }, title: t('A ↔ D changes', 'החלפות A ↔ D'), instruments: ['guitar'] },
-  { family: 'g-rhythm', spec: { family: 'g-rhythm', kind: 'eighths', key: 7, hands: 'R', instrument: 'guitar' }, title: t('Down-up 8ths', 'שמיניות למטה-למעלה'), instruments: ['guitar'] },
-  { family: 'g-legato', spec: { family: 'g-legato', kind: 'trill', key: 9, hands: 'R', option: 0, instrument: 'guitar' }, title: t('Trill 1-2', 'טריל 1-2'), instruments: ['guitar'] },
-  // Bass (BASS_CURRICULUM §6): the course probes replace the old single g-bass probe.
+  // GUITAR_DEEPENING §7: a step for every guitar family (guitarProbes.ts; add-on steps only for the chosen add-ons).
+  ...GUITAR_PROBE_STEPS,
   ...BASS_PROBES,
 ];

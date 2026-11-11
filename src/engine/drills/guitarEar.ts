@@ -10,7 +10,8 @@
 import type { Drill, DrillSpec } from './types';
 import type { PercKind } from '../lesson';
 import type { Tuning } from '../fretboard';
-import { finish, mod, place, rng, NAMES, type Ev, type GN } from './guitar';
+import { chordShape, finish, mod, place, rng, strumNotes, NAMES, type Ev, type GN, type Q } from './guitar';
+import type { ChordQuality } from '../chordRecognize';
 /** EN / HE pair (local: guitar.ts helpers can't run at module load). */
 const t = (en: string, he: string) => ({ en, he });
 import { noteAt } from '../fretboard';
@@ -44,6 +45,7 @@ const ASK: Record<string, { en: string; he: string }> = {
   rhythm: t('Hear two bars of strumming — echo the rhythm on muted strings', 'שמעו שתי תיבות של פריטה — החזירו את המקצב על מיתרים מושתקים'),
   riff: t('Hear a riff on the low strings — play it back (power chords count by their root)', 'שמעו ריף על המיתרים הנמוכים — נגנו אותו בחזרה (אקורד פאוור נספר לפי היסוד)'),
   roots: t('Hear four bars of chords — then play their roots on strings 6 and 5, two per bar', 'שמעו ארבע תיבות של אקורדים — ואז נגנו את היסודות על מיתרים 6 ו-5, שניים בתיבה'),
+  qualityStrum: t('Hear a chord over its root — then strum that chord (any shape)', 'שמעו אקורד מעל היסוד שלו — ואז פרטו את האקורד הזה (בכל צורה)'),
   quality: t('Hear a chord over its root — then play its arpeggio from that root', 'שמעו אקורד מעל היסוד שלו — ואז נגנו את הארפג׳יו שלו מאותו יסוד'),
   key: t('Hear a groove in an unknown key — play the tonic, then pentatonic box 1 up and down', 'שמעו גרוב בסולם לא ידוע — נגנו את הטוניקה, ואז תיבה 1 של הפנטטוני למעלה ולמטה'),
   transcribe: t('Hear two bars of a line — play them back note for note', 'שמעו שתי תיבות של קו — נגנו אותן בחזרה תו אחר תו'),
@@ -79,6 +81,7 @@ export function generateGuitarEar(s: DrillSpec, tu: Tuning): Drill {
     evs.push({ beat, dur, notes: ns });
   };
   let chart: string[] | undefined;
+  const recognize: NonNullable<Drill['recognize']> = [];
   let name: { en: string; he: string };
   let ask: string;
   let bpm = 75;
@@ -243,8 +246,21 @@ export function generateGuitarEar(s: DrillSpec, tu: Tuning): Drill {
         const R = lowRoot(key + pick(degs));
         call.push({ beat: b0, dur: 2.8, midi: voicing(R, q), inst: 'piano' }, { beat: b0, dur: 2.8, midi: [R - 12], inst: 'bass' });
         band(b0, b0 + 4);
+        if (op === 2) {
+          // Strum it (GUITAR_DEEPENING §6): the chord in any voicing — the closed-set recognizer names it among the pool.
+          const sh = chordShape(R, q as Q);
+          evs.push({ beat: b0 + 4, dur: 4, notes: strumNotes(sh, 'strum-down', 'D') });
+          recognize.push({ candidates: pool.map((x) => ({ root: mod(R, 12), quality: x as ChordQuality })), answer: pool.indexOf(q) });
+          continue;
+        }
         const ivs = QI[q];
         ivs.forEach((x, k2) => answer(b0 + 4 + k2, k2 === ivs.length - 1 ? 4 - k2 : 1, [R + x], { ct: true }));
+      }
+      if (op === 2) {
+        name = t('Chord quality by ear: strum the chord you hear', 'סוג האקורד בשמיעה: לפרוט את האקורד ששומעים');
+        ask = 'qualityStrum';
+        bpm = 60;
+        break;
       }
       name = op === 1 ? t('Chord quality by ear: 7ths, half-diminished, diminished', 'סוג האקורד בשמיעה: ספטאקורדים, חצי-מוקטן ומוקטן') : t('Chord quality by ear: triads and 7ths', 'סוג האקורד בשמיעה: משולשים וספטאקורדים');
       ask = 'quality';
@@ -320,7 +336,11 @@ export function generateGuitarEar(s: DrillSpec, tu: Tuning): Drill {
     default:
       throw new Error(`Unknown g-ear kind ${s.kind}`);
   }
-  const d = finish(s, tu, evs, { title: t(`${name.en} · ${NAMES[key]}`, `${name.he} · ${NAMES[key]}`), bpm, evenness: false });
+  // The key is the answer in L1 and L9 (find the tonic / the key): never in their title. Elsewhere it is a variant
+  // name (an item per key); the answer stays hidden until the result anyway.
+  const hideKey = s.kind === 'tonic' || s.kind === 'key';
+  const v = hideKey ? ` · ${op + 1}` : ` · ${NAMES[key]}`;
+  const d = finish(s, tu, evs, { title: t(`${name.en}${hideKey ? '' : v}`, `${name.he}${hideKey ? '' : v}`), bpm, evenness: false, keySig: 'C' });
   // Every call note sits inside a window; the drill runs to the end of the last answer.
-  return { ...d, show: 'none', ...(chart ? { chart } : {}), listen: { notes: call.sort((a, b) => a.beat - b.beat), windows, ask: ASK[ask] } };
+  return { ...d, show: 'none', ...(chart ? { chart } : {}), ...(recognize.length ? { recognize } : {}), listen: { notes: call.sort((a, b) => a.beat - b.beat), windows, ask: ASK[ask] } };
 }
