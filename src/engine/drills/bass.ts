@@ -15,6 +15,7 @@ import { parseChart } from '../charts';
 import { walkingBass, hashOf, type BandStyle } from '../band';
 import { bandStyleOf } from './bassBand';
 import { GROOVES } from '../grooves';
+import { constantBars, drumHitsOnBars } from './bandTimeline';
 import { STANDARD_CHANGES } from '../standards';
 import { generateBassEar } from './bassEar';
 import { generateUpright } from './upright';
@@ -294,42 +295,8 @@ export function drillOf(s: DrillSpec, tu: Tuning, line: BN[], o: Out): Drill {
  * `fills` bars (snare 16ths into toms on beats 3–4, crash on the next 1). Beats from beat 0 of the drill.
  */
 export function drumHits(dr: NonNullable<Drill['drums']>, beats: number, meter = 4, pulse?: 8): { beat: number; d: 'k' | 's' | 'h' | 'tom-hi' | 'tom-lo' | 'crash' }[] {
-  const g0 = GROOVES.find((x) => x.id === dr.groove);
-  if (!g0) return [];
-  const out: { beat: number; d: 'k' | 's' | 'h' | 'tom-hi' | 'tom-lo' | 'crash' }[] = [];
-  const bars = Math.ceil(beats / meter - 1e-9);
-  const fills = new Set(dr.fills ?? []);
-  // Feel changes (pocket L7): the groove of a bar is the last section starting at or before it.
-  const grooveAt = (bar: number) => {
-    const sec = [...(dr.sections ?? [])].filter((x) => x.bar <= bar).sort((a, b) => b.bar - a.bar)[0];
-    return (sec && GROOVES.find((x) => x.id === sec.groove)) || g0;
-  };
-  for (let bar = 0; bar < bars; bar++) {
-    const g = grooveAt(bar);
-    // One step in drill beats: eighth-note grooves (den 8, sub 2) step one eighth = one drill beat when the drill counts eighths.
-    const stepB = g.den === 8 && g.sub === 2 ? (pulse === 8 ? 1 : 0.5) : 1 / g.sub;
-    const steps = Math.round(meter / stepB);
-    const b0 = bar * meter;
-    if (fills.has(bar)) {
-      // A fill: groove on the first half, then 16th snare into the toms, crash on the next bar's 1.
-      const half = meter / 2;
-      for (let i = 0; i < steps && i * stepB < half; i++) {
-        if (g.k[i % g.k.length] === 'x') out.push({ beat: b0 + i * stepB, d: 'k' });
-        if (g.s[i % g.s.length] === 'x') out.push({ beat: b0 + i * stepB, d: 's' });
-      }
-      for (let q = 0; q < half * 4; q++) out.push({ beat: b0 + half + q / 4, d: q < half * 2 ? 's' : q < half * 3 ? 'tom-hi' : 'tom-lo' });
-      if (b0 + meter < beats) out.push({ beat: b0 + meter, d: 'crash' });
-      continue;
-    }
-    for (let i = 0; i < steps; i++) {
-      const at = b0 + i * stepB;
-      if (at >= beats - 1e-9) break;
-      if (g.k[i % g.k.length] === 'x') out.push({ beat: at, d: 'k' });
-      if (g.s[i % g.s.length] === 'x') out.push({ beat: at, d: 's' });
-      if (g.h[i % g.h.length] === 'x') out.push({ beat: at, d: 'h' });
-    }
-  }
-  return out;
+  // The constant grid; timeline drills (mixed meters, polymeter) use bandTimeline.ts drillDrumHits.
+  return drumHitsOnBars(dr, constantBars(beats, meter), beats, pulse);
 }
 
 /** Repeat a one-bar figure over a progression: fig(rootPitch, chord, bar) → notes relative to the bar. */

@@ -10,8 +10,9 @@
 import type { Drill, DrillCalibration, ExpNote, PlayedNote, TakeMetrics, TakeRules, Verdict } from './types';
 import { analyzeTake, bassThresholds, expTimeMs, median, npsOf, tempoBand } from './analyze';
 import { meanChroma, ringCheck } from '../chroma';
-import { barDrift, centsOff, crossingPenalty, fillLandings, ghostGapDb, ioiDrift, kickLock, lengthClass, lengthMatch, loudSdDb, oddEvenAsym, overlapMs, pocketShare, releaseAccuracy, releaseTime, ringThrough, ruleCheck, shiftGap, WALK_VARIETY, slapClass, subBias, swingRatio, zoneShift } from './bassAnalyze';
+import { barDrift, centsOff, doubleStopMatch, swingWalk, crossingPenalty, fillLandings, ghostGapDb, ioiDrift, kickLock, lengthClass, lengthMatch, loudSdDb, oddEvenAsym, overlapMs, pocketShare, releaseAccuracy, releaseTime, ringThrough, ruleCheck, shiftGap, WALK_VARIETY, slapClass, subBias, swingRatio, zoneShift } from './bassAnalyze';
 import { tuningById } from '../fretboard';
+import { drillDrumHits } from './bandTimeline';
 import { bassPitchOpts } from '../yin';
 
 /** One analysis frame from the microphone (times in ms relative to beat 0, latency removed). */
@@ -524,6 +525,10 @@ export interface BassMeasures {
   zone: number | null;
   /** A13 (advice only): share of thumb notes heard as thumb, pop notes heard as pop. */
   slap: { thumb: number | null; pop: number | null } | null;
+  /** Walking swing (goal.bass.swingWalk): long quarters, placement vs the ride, drift over choruses. */
+  swingWalk?: import('./bassAnalyze').SwingWalk;
+  /** Double-stops by chroma (goal.bass.doubleStops). */
+  doubleStops?: { share: number; per: { ok: boolean; missing: number[]; extra: number[] }[] } | null;
 }
 export type GuitarTakeMetrics = TakeMetrics & { guitar: GuitarExtras };
 
@@ -566,6 +571,7 @@ function applyRules(drill: Drill, bpm: number, played: PlayedNote[]): { judged: 
     drill.notes.map((n, i) => ({ pitch: written(i) ? (slot[i] === null ? null : n.pitch) : slot[i] === null ? null : played[slot[i]!].pitch, beat: n.beat })),
     drill.meter || 4,
     r.maxMove ?? 4,
+    { every: r.every, anticipate: r.anticipate },
   );
   if (drill.freeFrom !== undefined) {
     drill.notes.forEach((_, i) => {
@@ -642,6 +648,12 @@ export function analyzeGuitarTake(drill: Drill, bpm: number, played: PlayedNote[
       factors.push({ verdict: R.beat1Ct < 0.75 ? 'not' : 'almost', en: `Landed on the target on ${Math.round(R.beat1Ct * 100)}% of the chord changes (90% needed)`, he: `נחיתה על צליל המטרה ב-${Math.round(R.beat1Ct * 100)}% מחילופי האקורדים (צריך 90%)` });
     if (R.kind === 'walk' && R.beat1Ct < 0.9)
       factors.push({ verdict: R.beat1Ct < 0.75 ? 'not' : 'almost', en: `A chord tone on ${Math.round(R.beat1Ct * 100)}% of the chord changes (90% needed)`, he: `צליל אקורד ב-${Math.round(R.beat1Ct * 100)}% מחילופי האקורדים (צריך 90%)` });
+    // Barry Harris (downbeatCt): a chord tone on every downbeat.
+    if (R.kind === 'downbeatCt' && R.downbeat !== undefined && R.downbeat < 0.9)
+      factors.push({ verdict: R.downbeat < 0.75 ? 'not' : 'almost', en: `A chord tone on ${Math.round(R.downbeat * 100)}% of the downbeats (90% needed)`, he: `צליל אקורד ב-${Math.round(R.downbeat * 100)}% מהפעמות החזקות (צריך 90%)` });
+    // Anticipated landings (tumbao, Latin jazz): the next chord's note an 8th early.
+    if (R.anticipated !== undefined && R.anticipated < 0.9)
+      factors.push({ verdict: R.anticipated < 0.75 ? 'not' : 'almost', en: `The next chord anticipated on ${Math.round(R.anticipated * 100)}% of the changes (90% needed) — land an 8th early`, he: `האקורד הבא הוקדם ב-${Math.round(R.anticipated * 100)}% מהחילופים (צריך 90%) — לנחות שמינית מוקדם` });
     // N6: a free walking line needs variety — roots in alternating octaves are chord tones and never repeat exactly.
     if (R.kind === 'walk' && R.nonRoot !== undefined && R.pcRepeats !== undefined && (R.nonRoot < WALK_VARIETY.nonRoot || R.pcRepeats > WALK_VARIETY.pcRepeats)) {
       const fewOthers = R.nonRoot < WALK_VARIETY.nonRoot;
@@ -959,6 +971,42 @@ export function analyzeGuitarTake(drill: Drill, bpm: number, played: PlayedNote[
       const w = Object.entries(b.subBias).sort((p, q) => Math.abs(q[1]) - Math.abs(p[1]))[0];
       const SUB: Record<string, { en: string; he: string }> = { beat: { en: 'on the beat', he: 'על הפעמה' }, '8': { en: 'on the "and"', he: 'על ה"וְ"' }, '16': { en: 'on the 16ths', he: 'על השש-עשריות' }, trip: { en: 'on the triplets', he: 'על הטריולות' } };
       if (w && Math.abs(w[1]) > bg.subBias) factors.push({ verdict: worse(Math.abs(w[1]), bg.subBias), en: `${w[1] > 0 ? 'Late' : 'Early'} ${SUB[w[0]].en} (${Math.round(Math.abs(w[1]))} ms)`, he: `${w[1] > 0 ? 'מאחרים' : 'מקדימים'} ${SUB[w[0]].he} (${Math.round(Math.abs(w[1]))} ms)` });
+    }
+    // Walking swing (b-swing): long quarters, placement vs the ride, no drift over the choruses.
+    if (bg.swingWalk) {
+      const sw = bg.swingWalk;
+      const ride = drill.drums ? drillDrumHits(drill).filter((h) => h.d === 'h').map((h) => ms(h.beat)) : drill.notes.filter((n) => Math.abs(n.beat - Math.round(n.beat)) < 1e-6).map((n) => ms(n.beat));
+      const notes = drill.notes
+        .map((n, i) => ({ n, i, p: m.perNote[i].played }))
+        .filter((x) => x.p)
+        .map((x) => {
+          const nb = nextBeat(x.i);
+          const until = nb === null ? x.p!.on + ms(x.n.beat + x.n.dur) - ms(x.n.beat) : x.p!.on + ms(nb) - ms(x.n.beat);
+          return { beat: x.n.beat, on: x.p!.on, len: soundedMs(x.p!, until), beatMs: ms(x.n.beat + 1) - ms(x.n.beat) };
+        });
+      b.swingWalk = swingWalk(notes, ride, sw.chorusBeats ?? drill.beats, sw.long ?? 0.85);
+      const W = b.swingWalk;
+      if (sw.long && W.long !== null && W.long < 0.85)
+        factors.push({ verdict: W.long < 0.6 ? 'not' : 'almost', en: `Long quarters on ${Math.round(W.long * 100)}% of the notes (85% needed) — let each note ring to the next`, he: `רבעים ארוכים ב-${Math.round(W.long * 100)}% מהצלילים (צריך 85%) — לתת לכל צליל לצלצל עד הבא` });
+      if (sw.ride && W.ride && (W.ride.mean < sw.ride[0] || W.ride.mean > sw.ride[1])) {
+        const ahead = W.ride.mean < sw.ride[0];
+        const lim = ahead ? sw.ride[0] : sw.ride[1];
+        factors.push({ verdict: Math.abs(W.ride.mean - lim) > 15 ? 'not' : 'almost', en: `${Math.round(Math.abs(W.ride.mean))} ms ${W.ride.mean < 0 ? 'ahead of' : 'behind'} the ride (aim ${sw.ride[0]}…${sw.ride[1]} ms)`, he: `${Math.round(Math.abs(W.ride.mean))} ms ${W.ride.mean < 0 ? 'לפני' : 'אחרי'} הרייד (המטרה ${sw.ride[0]}…${sw.ride[1]} ms)` });
+      }
+      if (sw.drift && W.drift && Math.abs(W.drift.drift) > sw.drift)
+        factors.push({ verdict: Math.abs(W.drift.drift) > 2 * sw.drift ? 'not' : 'almost', en: `${W.drift.drift > 0 ? 'Slowed down' : 'Sped up'} ${Math.round(Math.abs(W.drift.drift) * 1000) / 10}% from the first chorus to the last (${Math.round(sw.drift * 100)}% allowed)`, he: `${W.drift.drift > 0 ? 'האטה' : 'האצה'} של ${Math.round(Math.abs(W.drift.drift) * 1000) / 10}% מהסבב הראשון לאחרון (מותר ${Math.round(sw.drift * 100)}%)` });
+    }
+    // Double-stops / shells (b-ext): every chord's notes ring (chroma), no foreign note.
+    if (bg.doubleStops !== undefined) {
+      const ids = [...new Set(drill.notes.filter((n) => n.chordId !== undefined).map((n) => n.chordId!))];
+      const chords = ids.map((id) => {
+        const ns = drill.notes.filter((n) => n.chordId === id);
+        const at = Math.min(...ns.map((n) => n.beat));
+        return { pcs: ns.map((n) => n.pitch), on: ms(at), until: ms(at + Math.max(...ns.map((n) => n.dur))) };
+      });
+      b.doubleStops = doubleStopMatch(frames, chords);
+      if (b.doubleStops && b.doubleStops.share < bg.doubleStops)
+        factors.push({ verdict: b.doubleStops.share < bg.doubleStops - 0.2 ? 'not' : 'almost', en: `Both notes rang on ${Math.round(b.doubleStops.share * 100)}% of the double-stops (${Math.round(bg.doubleStops * 100)}% needed)`, he: `שני הצלילים צלצלו ב-${Math.round(b.doubleStops.share * 100)}% מהצלילים הכפולים (צריך ${Math.round(bg.doubleStops * 100)}%)` });
     }
     // A9: note-length suite.
     if (bg.ringThrough !== undefined) {
