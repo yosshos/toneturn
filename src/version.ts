@@ -18,6 +18,18 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.74.0',
+    date: '2026-11-11',
+    en: [
+      'My song, in every course: open your own recording, loop and slow a section, play or sing along — measured against its beat, melody or bass line where the app can hear them clearly',
+      'Your recordings stay on this device: rename, delete, and see your last score per course',
+    ],
+    he: [
+      'השיר שלי, בכל קורס: פותחים הקלטה שלכם, מלופפים ומאטים קטע, ומנגנים או שרים יחד איתה — נמדד מול הפעמה, המנגינה או קו הבס כשהאפליקציה שומעת אותם בבירור',
+      'ההקלטות נשארות במכשיר: שינוי שם, מחיקה, והציון האחרון בכל קורס',
+    ],
+  },
+  {
     version: '0.73.1',
     date: '2026-11-11',
     en: ['Bass: the standards ladder replaces the four old one-chorus standards levels; repertoire standards open the ladder'],
