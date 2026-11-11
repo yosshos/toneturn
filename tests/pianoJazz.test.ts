@@ -26,10 +26,10 @@ const allKeys = (d: { spec: Drill['spec'] }) => Array.from({ length: 12 }, (_, k
 
 describe('PIANO_JAZZ content', () => {
   it('three new families (9 + 8 + 7 levels) and two more Harris line levels, each item generating in every key', () => {
-    expect(CAT.find((f) => f.id === 'k-sixdim')!.levels).toHaveLength(9);
-    expect(CAT.find((f) => f.id === 'k-bebop')!.levels).toHaveLength(8);
-    expect(CAT.find((f) => f.id === 'k-reharm')!.levels).toHaveLength(7);
-    expect(CAT.find((f) => f.id === 'harris')!.levels).toHaveLength(15);
+    expect(CAT.find((f) => f.id === 'k-sixdim')!.levels).toHaveLength(10);
+    expect(CAT.find((f) => f.id === 'k-bebop')!.levels).toHaveLength(10);
+    expect(CAT.find((f) => f.id === 'k-reharm')!.levels).toHaveLength(8);
+    expect(CAT.find((f) => f.id === 'harris')!.levels).toHaveLength(18);
     for (const lv of jazzLevels())
       for (const sp of lv.specs)
         for (let key = 0; key < 12; key++) {

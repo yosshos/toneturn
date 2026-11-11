@@ -50,6 +50,7 @@ const TX = {
     quick: 'Quick check',
     refresh: 'Needs a refresh',
     probe: 'A short probe',
+    bonus: 'Bonus',
     close: 'Close',
     findLevel: 'Find my level',
     updated: 'Your path was updated',
@@ -85,6 +86,7 @@ const TX = {
     quick: 'בדיקה קצרה',
     refresh: 'צריך רענון',
     probe: 'בדיקה קצרה ראשונה',
+    bonus: 'בונוס',
     close: 'סגירה',
     findLevel: 'למצוא את הרמה שלי',
     updated: 'המסלול שלכם עודכן',
@@ -146,7 +148,8 @@ export function pathInputFrom(s: Settings, p: Progress, now = new Date()): PathI
     minutes: (intake?.minutes ?? 10) as 5 | 10 | 20,
     ratings: ratingsOf(p),
     events: p.ratingEvents ?? [],
-    facts: withLessonFacts(s.pathFacts ?? {}, p),
+    // PIANO_JAZZ P2: repertoire results are done repertoire steps (measured on the item's own practice).
+    facts: withRepFacts(withLessonFacts(s.pathFacts ?? {}, p), p.lessons),
     keep: s.pathKeep ?? [],
     reviewDue: new Set(dueReviews(p.review, now).map((r) => r.key)).size,
     now,
@@ -213,12 +216,13 @@ export function nodeTitle(step: PathStep, s: Settings, lang: Lang): string {
 const ICON: Record<string, 'ear' | 'steps' | 'chord' | 'cadence' | 'mic' | 'map' | 'review' | 'puzzle' | 'drum'> = { pitch: 'ear', time: 'drum', memory: 'steps', voice: 'mic', reading: 'map', creative: 'puzzle', instrument: 'chord' };
 const iconOf = (step: PathStep) => (step.kind === 'tech' ? 'chord' : step.kind === 'vocal' ? 'mic' : step.kind === 'game' ? 'puzzle' : step.kind === 'review' ? 'review' : step.lesson ? (LESSON_META[step.lesson]?.icon ?? 'ear') : ICON[step.domain] ?? 'ear');
 
-import { FAMILY_GLYPH, GAME_STEP_GLYPH, LESSON_GLYPH, TOPIC_GLYPH } from './stepGlyphs';
+import { BONUS_STEP_GLYPH, FAMILY_GLYPH, GAME_STEP_GLYPH, LESSON_GLYPH, TOPIC_GLYPH } from './stepGlyphs';
 import { drumMicOf } from '../engine/drumKit';
 import { KitNotice } from './DrumViews';
+import { withRepFacts } from '../engine/pathBonus';
 
 function StepIcon({ step }: { step: PathStep }) {
-  const kind = step.ladder ? (FAMILY_GLYPH[step.ladder.family] ?? (step.kind === 'vocal' ? 'sing' : step.ladder.instrument === 'piano' ? 'keys' : step.ladder.instrument === 'drums' ? 'drums' : 'guitar')) : step.topic ? TOPIC_GLYPH[step.topic] : step.lesson ? LESSON_GLYPH[step.lesson] : step.kind === 'game' && step.game ? GAME_STEP_GLYPH[step.game] : undefined;
+  const kind = step.ladder ? (FAMILY_GLYPH[step.ladder.family] ?? (step.kind === 'vocal' ? 'sing' : step.ladder.instrument === 'piano' ? 'keys' : step.ladder.instrument === 'drums' ? 'drums' : 'guitar')) : step.topic ? TOPIC_GLYPH[step.topic] : step.lesson ? LESSON_GLYPH[step.lesson] : step.kind === 'game' && step.game ? ((step.bonus ? BONUS_STEP_GLYPH[step.game] : undefined) ?? GAME_STEP_GLYPH[step.game]) : undefined;
   if (!kind) return <NodeIcon kind={iconOf(step)} />;
   return (
     <svg className="step-glyph" viewBox="-30 -27 60 54" width="30" height="27" aria-hidden="true">
@@ -390,6 +394,7 @@ export function PathView2({
             {isCur && <small className="node-go">{lang === 'he' ? 'לגעת כדי להתחיל' : 'Tap to start'}</small>}
             {isCur && x.probe && <small className="node-tag">{tx.probe}</small>}
             {st === 'quick' && <small className="node-tag">{tx.quick}</small>}
+            {x.step.bonus && st !== 'done' && st !== 'mastered' && <small className="node-tag" data-bonus="1">{tx.bonus}</small>}
             {st === 'refresh' && <small className="node-tag">{tx.refresh}</small>}
           </span>
         </button>
@@ -520,8 +525,11 @@ export function PathView2({
                   {/* 0.66 (owner): the unit shows its progress (steps done / steps) — the old row of area-colour dots read as
                       stars that were "lit" before starting. */}
                   {(() => {
-                    const total = u.steps.length;
-                    const done = u.steps.filter((x) => x.state === 'done' || x.state === 'mastered' || x.state === 'tested').length;
+                    // An optional bonus step counts only once it is done (it never holds a unit back).
+                    const isDone = (x: UnitStep) => x.state === 'done' || x.state === 'mastered' || x.state === 'tested';
+                    const counted = u.steps.filter((x) => !x.step.bonus || isDone(x));
+                    const total = counted.length;
+                    const done = counted.filter(isDone).length;
                     return (
                       <span className="unit-prog" data-unit-done={done} data-unit-total={total}>
                         <span className="up-bar" aria-hidden="true">

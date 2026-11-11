@@ -860,6 +860,36 @@ Object.assign(GLYPHS, {
   ),
   dsform: mark('D.S.'),
 });
+// PIANO_JAZZ P2 path wiring: a repertoire step (a lead sheet with a bookmark), the Transcription Race as a bonus step
+// (a staff with a stopwatch — the transcription coach keeps its pencil) and the Reharm Spotter as a bonus step (a chord,
+// a magnifier on the changed one — the k-reharm family keeps its chord-to-chord arrow).
+Object.assign(GLYPHS, {
+  repstep: (
+    <g {...sw} strokeWidth={2.6} strokeLinejoin="round">
+      <path d="M-16 -22 H16 V22 H-16 Z" />
+      <path d="M-10 -12 H10 M-10 -4 H10 M-10 4 H4" strokeWidth={2} />
+      <path d="M6 22 V10 L10 14 L14 10 V22" fill={I} />
+    </g>
+  ),
+  txrace: (
+    <>
+      <path d="M-26 -2H4M-26 6H4M-26 14H4" stroke={I} strokeWidth={1.6} />
+      {head(-14, 10, 5, 3.8)}
+      <circle cx={14} cy={-6} r={11} {...sw} strokeWidth={2.6} />
+      <path d="M14 -6 V-12 M14 -6 L19 -2 M11 -21 H17" {...sw} strokeWidth={2.4} />
+    </>
+  ),
+  reharmspot: (
+    <>
+      {head(-16, 10, 5.5, 4)}
+      {head(-16, 0, 5.5, 4)}
+      {head(4, 4, 5.5, 4)}
+      {head(4, -6, 5.5, 4)}
+      <circle cx={4} cy={-1} r={12} {...sw} strokeWidth={2.4} />
+      <path d="M13 8 L22 17" {...sw} strokeWidth={3.4} />
+    </>
+  ),
+});
 export type GlyphKind = keyof typeof GLYPHS;
 
 /** Emoji left in content data → the closest symbol of our set (0.61: no emoji in the interface). */

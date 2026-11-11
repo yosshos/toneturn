@@ -45,7 +45,14 @@ export const GAME_STEP_GLYPH: Record<string, GlyphKind> = {
   'rush-interval': 'intervals', 'rush-chord': 'chords', 'rush-progression': 'prog', highway: 'rhythm', melodypuzzle: 'puzzle', nametune: 'name', flight: 'sing', 'rush-note': 'sight', 'rush-keysig': 'theory', 'rush-fretboard': 'fretboard', peakhunter: 'eq', drills: 'scales', licks: 'lick', transcribe: 'transcribe',
   // Drum games P1 (DRUMS_NICHE_PLAN §3).
   land: 'landit', 'groove-echo': 'grooveecho', 'odd-echo': 'oddecho', 'time-lock': 'timelock', 'ghost-control': 'ghostctl',
+  // PIANO_JAZZ P2: repertoire steps and the advanced games as bonus steps (their Arcade symbols).
+  repertoire: 'repstep', 'rush-voicing': 'voicingspy', 'rush-scale': 'scalerush', 'rush-standard': 'standard', reharm: 'reharmspot', bhtime: 'bhtime', riffecho: 'riff', polylock: 'polylock',
 };
+/**
+ * A bonus step's symbol where its game id is shared with another step kind: the Transcription Race (route 'transcribe')
+ * vs the transcription coach's steps (game 'transcribe', a level).
+ */
+export const BONUS_STEP_GLYPH: Record<string, GlyphKind> = { transcribe: 'txrace' };
 
 // EAR_THEORY_AUDIT: every topic and lesson of the Ear & theory and Jazz & improv paths has its own symbol — a drawn one
 // or a short mark (src/ui/stepMarks.ts) — instead of the five domain icons (the sound topics no longer share eq / mixer).

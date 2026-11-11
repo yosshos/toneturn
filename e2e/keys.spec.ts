@@ -38,9 +38,9 @@ const openLevel = async (page: Page, family: string, level: string) => {
 };
 
 const FAMS: [string, number][] = [
-  ['scales', 15], ['arpeggios', 14], ['cadences', 7], ['fingers', 14], ['control', 12], ['advanced', 8], ['harris', 15], ['voicings', 17], ['jazz', 10], ['accomp', 17], ['k-ear', 8],
+  ['scales', 15], ['arpeggios', 14], ['cadences', 7], ['fingers', 14], ['control', 12], ['advanced', 8], ['harris', 18], ['voicings', 17], ['jazz', 10], ['accomp', 18], ['k-ear', 8],
   // PIANO_JAZZ: Barry Harris harmony, bebop lines and trading, jazz-piano harmony.
-  ['k-sixdim', 9], ['k-bebop', 8], ['k-reharm', 7],
+  ['k-sixdim', 10], ['k-bebop', 10], ['k-reharm', 8],
 ];
 
 test.describe('keys course', () => {

@@ -997,14 +997,21 @@ export function App() {
     }
     // A game inside the unit (0.38): its result is recorded as the step's stars when the game ends.
     if (step.kind === 'game' && step.game) {
+      // PIANO_JAZZ P2: a repertoire step opens the item's page; its stars come from the item's measured result.
+      if (step.game === 'repertoire' && step.rep) {
+        pendingStep.current = null;
+        repShown.current = step.rep.id;
+        return go('repertoire');
+      }
       if (step.game === 'drills') drillFrom.current = 'path';
       // Licks / transcription steps open on their level; the screen reports the step's stars when the player leaves.
-      if (step.game === 'licks' || step.game === 'transcribe') {
+      // (A bonus step with game 'transcribe' is the Transcription Race, not the coach.)
+      if ((step.game === 'licks' || step.game === 'transcribe') && !step.bonus) {
         measuredStep.current = { id: step.id, level: step.level ?? 1 };
         drillSessionXp.current = 0;
         drillSession.current = { takes: 0, clean: 0 };
       }
-      return go((step.game === 'transcribe' ? 'transcribe-coach' : step.game) as Route);
+      return go((step.game === 'transcribe' && !step.bonus ? 'transcribe-coach' : step.game) as Route);
     }
     const how = mode === 'practice' ? 'step' : x.probe ? 'probe' : x.state === 'quick' ? 'quick' : 'step';
     const def = stepSession(step, seed, how);
