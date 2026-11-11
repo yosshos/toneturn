@@ -7,11 +7,11 @@ const TX = {
   en: { title: 'Slow down', pick: 'Open an audio file', hint: 'Your own recordings only. The file stays on this device.', speed: 'Speed', setA: 'Set A', setB: 'Set B', clear: 'Clear loop', back: 'Back', play: 'Play', pause: 'Pause', other: 'Another file', loop: 'Loop' },
   he: { title: 'האטה', pick: 'לפתוח קובץ שמע', hint: 'רק הקלטות שלכם. הקובץ נשאר במכשיר.', speed: 'מהירות', setA: 'נקודה A', setB: 'נקודה B', clear: 'לבטל לופ', back: 'חזרה', play: 'לנגן', pause: 'השהיה', other: 'קובץ אחר', loop: 'לופ' },
 };
-const SPEEDS = [0.5, 0.6, 0.7, 0.75, 0.8, 0.9, 1];
-const fmt = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+export const SPEEDS = [0.5, 0.6, 0.7, 0.75, 0.8, 0.9, 1];
+export const fmt = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 
 /** Peaks of an audio buffer for a small waveform (one max per column). */
-function peaks(buf: AudioBuffer, n: number): number[] {
+export function peaks(buf: AudioBuffer, n: number): number[] {
   const d = buf.getChannelData(0);
   const step = Math.max(1, Math.floor(d.length / n));
   const out: number[] = [];
@@ -22,6 +22,34 @@ function peaks(buf: AudioBuffer, n: number): number[] {
   }
   const max = Math.max(0.0001, ...out);
   return out.map((x) => x / max);
+}
+
+/** The waveform with the A–B loop and the playhead; click to seek (shared with "My song", SPEC-MY-SONG). */
+export function LoopWave({ wave, dur, t, a, b, onSeek, marks }: { wave: number[]; dur: number; t: number; a: number | null; b: number | null; onSeek: (s: number) => void; /** Section starts (s), drawn as thin lines. */ marks?: number[] }) {
+  const frac = (x: number | null) => (x === null || !dur ? 0 : (100 * x) / dur);
+  return (
+    <div
+      className="sd-wave"
+      dir="ltr"
+      role="slider"
+      aria-valuemin={0}
+      aria-valuemax={Math.round(dur)}
+      aria-valuenow={Math.round(t)}
+      tabIndex={0}
+      onClick={(e) => {
+        const r = e.currentTarget.getBoundingClientRect();
+        onSeek(((e.clientX - r.left) / r.width) * dur);
+      }}
+      onKeyDown={(e) => (e.key === 'ArrowRight' ? onSeek(t + 5) : e.key === 'ArrowLeft' ? onSeek(t - 5) : null)}
+    >
+      {wave.map((p, i) => (
+        <span key={i} style={{ height: `${Math.max(4, p * 100)}%` }} />
+      ))}
+      {marks?.map((m, i) => <i key={i} className="sd-mark" style={{ left: `${frac(m)}%` }} />)}
+      {a !== null && b !== null && <i className="sd-loop" style={{ left: `${frac(a)}%`, width: `${frac(b) - frac(a)}%` }} />}
+      <i className="sd-head" style={{ left: `${frac(t)}%` }} />
+    </div>
+  );
 }
 
 export function SlowDownScreen({ lang, onBack }: { lang: 'en' | 'he'; onBack: () => void }) {
@@ -90,7 +118,6 @@ export function SlowDownScreen({ lang, onBack }: { lang: 'en' | 'he'; onBack: ()
   const seek = (x: number) => {
     if (audio.current && dur) audio.current.currentTime = Math.max(0, Math.min(dur, x));
   };
-  const frac = (x: number | null) => (x === null || !dur ? 0 : (100 * x) / dur);
   return (
     <main className="panel-screen slowdown" data-slowdown="1">
       <header className="screen-head">
@@ -110,26 +137,7 @@ export function SlowDownScreen({ lang, onBack }: { lang: 'en' | 'he'; onBack: ()
           <p className="sd-name" dir="auto">
             {name}
           </p>
-          <div
-            className="sd-wave"
-            dir="ltr"
-            role="slider"
-            aria-valuemin={0}
-            aria-valuemax={Math.round(dur)}
-            aria-valuenow={Math.round(t)}
-            tabIndex={0}
-            onClick={(e) => {
-              const r = e.currentTarget.getBoundingClientRect();
-              seek(((e.clientX - r.left) / r.width) * dur);
-            }}
-            onKeyDown={(e) => (e.key === 'ArrowRight' ? seek(t + 5) : e.key === 'ArrowLeft' ? seek(t - 5) : null)}
-          >
-            {wave.map((p, i) => (
-              <span key={i} style={{ height: `${Math.max(4, p * 100)}%` }} />
-            ))}
-            {a !== null && b !== null && <i className="sd-loop" style={{ left: `${frac(a)}%`, width: `${frac(b) - frac(a)}%` }} />}
-            <i className="sd-head" style={{ left: `${frac(t)}%` }} />
-          </div>
+          <LoopWave wave={wave} dur={dur} t={t} a={a} b={b} onSeek={seek} />
           <div className="sd-time" dir="ltr">
             <span>{fmt(t)}</span>
             <span>{fmt(dur)}</span>

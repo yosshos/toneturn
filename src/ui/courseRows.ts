@@ -16,15 +16,16 @@ export const COURSE_GAMES: Record<CourseId, string[]> = {
 };
 /** What Practice shows in each course (0.61, SPEC-COURSES): only the course's own rows; tools are shared.
  *  0.70 (SPEC-REPERTOIRE): "Songs" became "Repertoire" — the road from simple tunes to standards — in every course.
- *  Licks and the transcription coach (SPEC-LICKS-TRANSCRIPTION) sit in every course that plays or sings lines. */
+ *  Licks and the transcription coach (SPEC-LICKS-TRANSCRIPTION) sit in every course that plays or sings lines.
+ *  SPEC-MY-SONG: "My song" (practise over your own recording, measured) in every course. */
 export const COURSE_ROWS: Record<CourseId, string[]> = {
-  ear: ['lessons', 'repertoire', 'puzzle', 'games'],
-  voice: ['drills', 'repertoire', 'licks', 'transcribe', 'games'],
-  keys: ['drills', 'repertoire', 'pieces', 'licks', 'transcribe', 'games'],
-  guitar: ['drills', 'repertoire', 'pieces', 'licks', 'transcribe', 'games'],
-  bass: ['drills', 'repertoire', 'licks', 'transcribe', 'games'],
-  drums: ['drills', 'repertoire', 'games'],
-  jazz: ['repertoire', 'charts', 'improv', 'licks', 'transcribe', 'games'],
+  ear: ['lessons', 'repertoire', 'puzzle', 'mysong', 'games'],
+  voice: ['drills', 'repertoire', 'licks', 'transcribe', 'mysong', 'games'],
+  keys: ['drills', 'repertoire', 'pieces', 'licks', 'transcribe', 'mysong', 'games'],
+  guitar: ['drills', 'repertoire', 'pieces', 'licks', 'transcribe', 'mysong', 'games'],
+  bass: ['drills', 'repertoire', 'licks', 'transcribe', 'mysong', 'games'],
+  drums: ['drills', 'repertoire', 'mysong', 'games'],
+  jazz: ['repertoire', 'charts', 'improv', 'licks', 'transcribe', 'mysong', 'games'],
 };
 /** 0.67: the Ear course in exam-prep mode (was the Exams course) puts the mock exams first. */
 export const EXAM_PREP_ROWS = ['exams', 'lessons', 'puzzle', 'games'];

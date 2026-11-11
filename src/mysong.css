@@ -1,0 +1,218 @@
+/* "My song" in every course (SPEC-MY-SONG): the library and the practice screens. One phone screen, no scroll. */
+
+.ms-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ms-screen h1 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ms-lib {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ms-lib h2 {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--ink-soft);
+}
+.ms-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  /* A long library scrolls inside its own box; the screen itself stays one screen. */
+  max-height: 46vh;
+  overflow-y: auto;
+}
+.ms-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+}
+.ms-row.ask {
+  flex-wrap: wrap;
+  font-size: 0.92rem;
+}
+.ms-row.ask span {
+  flex: 1 1 100%;
+}
+.ms-open {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  background: none;
+  border: 0;
+  padding: 2px 0;
+  color: var(--ink);
+  text-align: start;
+  cursor: pointer;
+}
+.ms-open b {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ms-open small {
+  color: var(--ink-dim);
+}
+.ms-name-input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--line-strong);
+  background: var(--card-2);
+  color: var(--ink);
+  font: inherit;
+}
+.ms-add {
+  align-self: flex-start;
+  cursor: pointer;
+}
+.btn.danger {
+  background: #b42318;
+  color: #ffffff;
+}
+.ms-busy {
+  margin: 12px 0;
+}
+.ms-plan {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  border-inline-start: 3px solid var(--accent, var(--mint));
+  padding-inline-start: 8px;
+}
+.ms-bpm {
+  display: inline-block;
+  margin-inline-start: 8px;
+  color: var(--ink-dim);
+  white-space: nowrap;
+}
+.ms-plan.none {
+  border-color: var(--line-strong);
+  color: var(--ink-dim);
+}
+.sd-wave .sd-mark {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: color-mix(in srgb, var(--ink) 30%, transparent);
+  pointer-events: none;
+}
+.ms-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.92rem;
+  color: var(--ink-soft);
+}
+.ms-speeds {
+  justify-content: center;
+}
+.ms-hp {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.92rem;
+  color: var(--ink-soft);
+}
+.ms-result {
+  border-radius: 14px;
+  padding: 10px 12px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  text-align: center;
+}
+.ms-result p {
+  margin: 4px 0 0;
+}
+.ms-result.v-clean {
+  border-color: color-mix(in srgb, var(--mint, #12c9b4) 60%, transparent);
+}
+.ms-result.v-not,
+.ms-result.v-unclear {
+  border-color: var(--line-strong);
+}
+.ms-score {
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+.ms-bars {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  color: var(--ink-soft);
+  font-size: 0.92rem;
+}
+.ms-why {
+  color: var(--ink-dim);
+  font-size: 0.92rem;
+}
+.ms-xp {
+  font-weight: 700;
+}
+.ms-cue {
+  text-align: center;
+  margin: 0;
+}
+.ms-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: auto;
+}
+.ms-actions .btn.mega {
+  flex: 1 1 60%;
+}
+.ms-finish {
+  align-self: center;
+}
+.ms-toast {
+  position: fixed;
+  inset-inline: 16px;
+  top: 12px;
+  z-index: 30;
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--card-2);
+  color: var(--ink);
+  border: 1px solid var(--line-strong);
+  text-align: center;
+  animation: ms-toast 3.2s ease forwards;
+}
+@keyframes ms-toast {
+  0%,
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ms-toast {
+    animation-duration: 3.2s;
+    animation-timing-function: steps(1, end);
+  }
+}

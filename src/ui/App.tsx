@@ -36,6 +36,7 @@ import { DigestScreen } from './TeacherLoop';
 import { IMPROV_LEVELS } from '../engine/charts';
 import { PiecesScreen } from './Pieces';
 import { SlowDownScreen } from './SlowDown';
+import { MySongScreen } from './MySong';
 import { ChartsScreen, type MyChart } from './Charts';
 import { chartOfRulesRef } from './ImprovRules';
 import { PracticeLogSheet } from './PracticeLog';
@@ -160,7 +161,7 @@ import { setPreferredMic } from '../speech/mic';
 /** Screens that play the band (0.69: its sets load here, and only here on Lite / Standard). */
 const BAND_ROUTES = new Set<string>(['charts', 'improv', 'groove', 'metronome', 'mixer', 'slowdown', 'perform', 'highway', 'drills', 'workoutrun', 'land', 'groove-echo', 'odd-echo', 'time-lock', 'ghost-control']);
 
-type Route = 'intake' | 'studio' | 'home' | 'path' | 'arcade' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong' | 'perform' | 'learned' | 'tuner' | 'metronome' | 'songs' | 'repertoire' | 'drills' | 'workout' | 'workoutrun' | 'peakhunter' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'rush-voicing' | 'rush-scale' | 'rush-standard' | 'reharm' | 'transcribe' | 'bhtime' | 'riffecho' | 'polylock' | 'gameboard' | 'flight' | 'pitchmemory' | 'nametune' | 'tuneup' | 'highway' | 'melodypuzzle' | 'charts' | 'slowdown' | 'pieces' | 'mixer' | 'insights' | 'groove' | 'welcome' | 'coursestart' | 'puzzle' | 'improv' | 'exams' | 'plans' | 'admin' | 'land' | 'groove-echo' | 'odd-echo' | 'time-lock' | 'ghost-control' | 'licks' | 'transcribe-coach' | 'chordfinder';
+type Route = 'intake' | 'studio' | 'home' | 'path' | 'arcade' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong' | 'perform' | 'learned' | 'tuner' | 'metronome' | 'songs' | 'repertoire' | 'drills' | 'workout' | 'workoutrun' | 'peakhunter' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'rush-voicing' | 'rush-scale' | 'rush-standard' | 'reharm' | 'transcribe' | 'bhtime' | 'riffecho' | 'polylock' | 'gameboard' | 'flight' | 'pitchmemory' | 'nametune' | 'tuneup' | 'highway' | 'melodypuzzle' | 'charts' | 'slowdown' | 'pieces' | 'mixer' | 'insights' | 'groove' | 'welcome' | 'coursestart' | 'puzzle' | 'improv' | 'exams' | 'plans' | 'admin' | 'land' | 'groove-echo' | 'odd-echo' | 'time-lock' | 'ghost-control' | 'licks' | 'transcribe-coach' | 'chordfinder' | 'mysong';
 /** Invite links: #/online/CODE */
 const onlineCodeFromHash = () => (/^#\/?online\/(\w+)/.exec(location.hash)?.[1] ?? '');
 const PLAY_HASH = 'play';
@@ -172,7 +173,7 @@ const enterPlay = () => {
 };
 const routeFromHash = (): Route => {
   const h = location.hash.replace(/^#\/?/, '').replace(/^online\/.*$/, 'online').replace(/^settings\/.*$/, 'settings');
-  return (['path', 'arcade', 'settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong', 'perform', 'learned', 'studio', 'intake', 'tuner', 'metronome', 'songs', 'repertoire', 'drills', 'workout', 'workoutrun', 'peakhunter', 'rush-chord', 'rush-note', 'rush-fretboard', 'rush-interval', 'rush-keysig', 'rush-progression', 'rush-voicing', 'rush-scale', 'rush-standard', 'reharm', 'transcribe', 'bhtime', 'riffecho', 'polylock', 'gameboard', 'flight', 'pitchmemory', 'nametune', 'tuneup', 'highway', 'melodypuzzle', 'charts', 'slowdown', 'pieces', 'mixer', 'insights', 'groove', 'welcome', 'coursestart', 'puzzle', 'improv', 'exams', 'plans', 'admin', 'land', 'groove-echo', 'odd-echo', 'time-lock', 'ghost-control', 'licks', 'transcribe-coach', 'chordfinder'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
+  return (['path', 'arcade', 'settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong', 'perform', 'learned', 'studio', 'intake', 'tuner', 'metronome', 'songs', 'repertoire', 'drills', 'workout', 'workoutrun', 'peakhunter', 'rush-chord', 'rush-note', 'rush-fretboard', 'rush-interval', 'rush-keysig', 'rush-progression', 'rush-voicing', 'rush-scale', 'rush-standard', 'reharm', 'transcribe', 'bhtime', 'riffecho', 'polylock', 'gameboard', 'flight', 'pitchmemory', 'nametune', 'tuneup', 'highway', 'melodypuzzle', 'charts', 'slowdown', 'pieces', 'mixer', 'insights', 'groove', 'welcome', 'coursestart', 'puzzle', 'improv', 'exams', 'plans', 'admin', 'land', 'groove-echo', 'odd-echo', 'time-lock', 'ghost-control', 'licks', 'transcribe-coach', 'chordfinder', 'mysong'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
 };
 
 /** The level a generated modes lesson was made at (from its first question's pool size). */
@@ -1820,6 +1821,12 @@ export function App() {
             exams: () => go('exams'),
             pieces: () => go('pieces'),
             mixer: openMixer,
+            // SPEC-MY-SONG: the singer's own song is voice level 1308; every other course opens its play-along /
+            // transcription screen, with its quick lesson the first time.
+            mysong:
+              s.activeCourse === 'voice'
+                ? () => (setVocalWarmup(false), setVocalLevel(1308), (toolFrom.current = 'arcade'), go('vocal'))
+                : () => gate(s.activeCourse === 'ear' || s.activeCourse === 'jazz' ? 'game:mysong-ear' : 'game:mysong', () => go('mysong')),
           }}
           onOnline={() => {
             setOnlineFacts(null);
@@ -2263,6 +2270,21 @@ export function App() {
       {cool && <CoolDownSheet lang={s.uiLang} minutes={pricing?.free.dailyMinutes ?? 20} onPlans={() => (setCool(false), go('plans'))} onClose={() => setCool(false)} />}
       {route === 'mixer' && <MixerScreen settings={s} onChange={updateSettings} onBack={() => go(mixerFrom.current)} />}
       {route === 'slowdown' && <SlowDownScreen lang={s.uiLang} onBack={() => go(toolFrom.current)} />}
+      {route === 'mysong' && (
+        <MySongScreen
+          lang={s.uiLang}
+          settings={s}
+          course={(s.activeCourse ?? 'ear') as CourseId}
+          onSettings={updateSettings}
+          onBack={() => go('arcade')}
+          onResult={(r) => {
+            // One measured session: XP, streak, daily goal, league (per course) and the rated items.
+            void store
+              .recordCompletion({ lessonId: `my-song-${r.course}`, lessonVersion: 1, sessionId: r.sessionId, completedAt: new Date().toISOString(), firstTry: r.firstTry, total: r.total, xp: r.xp, missed: [], items: r.items, course: r.course })
+              .then(setProgress);
+          }}
+        />
+      )}
       {route === 'charts' && <ChartsScreen
           initial={() => { const c = chartInit.current; chartInit.current = null; return c; }}
           settings={s}

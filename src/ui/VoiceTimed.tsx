@@ -23,6 +23,7 @@ import { Follower, restAdvice, sungLine, synthRubato, synthTrade, tradeOpening, 
 import type { PNote } from '../engine/improvPhrasing';
 import { NoteStaff } from './NoteViews';
 import { MySongPick } from './VoiceMySong';
+import { noteSongScore } from './MySong';
 import { pc } from '../engine/pitch';
 import { METRIC_NAMES, MOTIF_KIND_NAMES, SCAT_INSTR, SONG_INSTR, TIME_INSTR, VT } from '../content/voiceCourseText';
 import { keepTake } from '../storage/takes';
@@ -76,7 +77,7 @@ export function TimedSession({ t, settings, range, level, items, onExit, onProgr
   const [loop, setLoop] = useState<{ phrase: number; scale: number } | null>(null);
   const [calDone, setCalDone] = useState(settings.micLatencyMs !== undefined || SIMULATED);
   const [summary, setSummary] = useState<{ score: number; passed: boolean; rest?: string } | null>(null);
-  const [mine, setMine] = useState<{ plan: SongPlan; buffer: AudioBuffer } | null>(null);
+  const [mine, setMine] = useState<{ plan: SongPlan; buffer: AudioBuffer; id?: string } | null>(null);
   const best = useRef<Record<string, { score: number; take: VocalTake }>>({});
   const ctl = useRef<AbortController | null>(null);
   const stopped = useRef(false);
@@ -129,6 +130,8 @@ export function TimedSession({ t, settings, range, level, items, onExit, onProgr
     piano.cue(tk.grade.unclear ? 'wrong' : tk.grade.score >= lvDef.pass ? 'correct' : 'wrong');
     // A loop is practice: only whole takes count for the level.
     if (!tk.grade.unclear && !loop) {
+      // SPEC-MY-SONG: the stored song keeps the singer's last score.
+      if (item.song?.mine && mine?.id) void noteSongScore(mine.id, 'voice', tk.grade.score);
       const m: VocalTake['m'] = {};
       for (const x of tk.grade.metrics) if (m[x.key] === undefined) m[x.key] = x.value;
       const vt: VocalTake = { at: new Date().toISOString(), item: item.id, level, score: tk.grade.score, m };
@@ -221,7 +224,7 @@ export function TimedSession({ t, settings, range, level, items, onExit, onProgr
           </button>
           <h1>{title}</h1>
         </header>
-        <MySongPick lang={lang} range={range} onReady={(plan, buffer) => setMine({ plan, buffer })} />
+        <MySongPick lang={lang} range={range} onReady={(plan, buffer, id) => setMine({ plan, buffer, id })} />
       </main>
     );
 

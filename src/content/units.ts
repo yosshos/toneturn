@@ -192,6 +192,9 @@ export const UNIT_LESSON: Record<string, string> = {
   'game:transcribe': 'transcribe-coach',
   // GUITAR_DEEPENING §6.3: the chord finder (guitar Tools).
   'game:chordfinder': 'g-chord-finder',
+  // SPEC-MY-SONG: practise over your own recording (play along; transcribe in ear / jazz).
+  'game:mysong': 'my-song',
+  'game:mysong-ear': 'my-song-ear',
 };
 
 const VOICE_UNIT: Record<number, string> = { 6: 'vocal:breath', 7: 'vocal:drift', 8: 'vocal:registers', 9: 'vocal:dynamics', 10: 'vocal:jazz-vibrato', 11: 'vocal:time', 12: 'vocal:ear', 13: 'vocal:band', 14: 'vocal:standards', 15: 'vocal:scat', 16: 'vocal:bebop', 17: 'vocal:harmony-more', 18: 'vocal:inflect', 19: 'vocal:sight', 20: 'vocal:scales' };

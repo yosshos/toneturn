@@ -6,6 +6,7 @@ import { DOMAIN_COLOR, Glyph, type GlyphKind } from './Glyph';
 import { useCourse } from './courseContext';
 import { ExamPrepSwitch } from './CourseSwitcher';
 import { COURSE_GAMES, COURSE_ROWS, courseRows } from './courseRows';
+import { MS_TILE } from '../content/mySongText';
 export { COURSE_GAMES, COURSE_ROWS, courseRows };
 import type { CourseId } from '../engine/courses';
 import { Icon } from './icons';
@@ -679,6 +680,8 @@ export interface PracticeHub {
   exams?: () => void;
   pieces?: () => void;
   mixer?: () => void;
+  /** SPEC-MY-SONG: practise over your own recording, measured with the course's own machinery. */
+  mysong?: () => void;
 }
 const HUB_PATHS: Record<string, React.ReactNode> = {
   repertoire: (
@@ -805,6 +808,14 @@ const HUB_PATHS: Record<string, React.ReactNode> = {
       <rect x="16" y="11" width="4" height="3" rx="1" />
     </>
   ),
+  mysong: (
+    <>
+      <path d="M9 17V5l10-2v12" />
+      <circle cx="6.5" cy="17" r="2.5" />
+      <circle cx="16.5" cy="15" r="2.5" />
+      <path d="M3 21h7" />
+    </>
+  ),
   games: (
     <>
       <rect x="2.5" y="7" width="19" height="11" rx="5.5" />
@@ -842,7 +853,7 @@ const HUB_TX = {
 
 /** The Practice page (SPEC-IA-2, owner 2026-11-09): four groups by what you do — play, train, study — and the tools. */
 export const PRACTICE_GROUPS: { id: 'play' | 'train' | 'study'; name: { en: string; he: string }; items: string[] }[] = [
-  { id: 'play', name: { en: 'Play', he: 'לנגן' }, items: ['repertoire', 'songs', 'pieces', 'charts'] },
+  { id: 'play', name: { en: 'Play', he: 'לנגן' }, items: ['repertoire', 'songs', 'pieces', 'charts', 'mysong'] },
   { id: 'train', name: { en: 'Train', he: 'להתאמן' }, items: ['drills', 'improv', 'licks', 'transcribe', 'games'] },
   { id: 'study', name: { en: 'Study', he: 'ללמוד' }, items: ['lessons', 'exams', 'puzzle'] },
 ];
@@ -877,7 +888,7 @@ const INSTRUMENT_TILE: Partial<Record<CourseId, GlyphKind>> = { drums: 'drums', 
 /** The weekly puzzle and the live quiz rooms are ear & theory things. */
 const COURSE_SOCIAL: CourseId[] = ['ear', 'jazz'];
 /** Practice tiles (0.63): a colour per row, and the game kinds each course shows as their own tiles. */
-const TILE_COLOR: Record<string, string> = { repertoire: '#12C9B4', lessons: '#FF8A3D', puzzle: '#A78BFA', drills: '#FFD43B', songs: '#12C9B4', pieces: '#FF5FA2', charts: '#A78BFA', improv: '#6D28D9', exams: '#FF8A3D', licks: '#A78BFA', transcribe: '#3AB8FF' };
+const TILE_COLOR: Record<string, string> = { repertoire: '#12C9B4', lessons: '#FF8A3D', puzzle: '#A78BFA', drills: '#FFD43B', songs: '#12C9B4', pieces: '#FF5FA2', charts: '#A78BFA', improv: '#6D28D9', exams: '#FF8A3D', licks: '#A78BFA', transcribe: '#3AB8FF', mysong: '#FF8A3D' };
 const COURSE_TILE_CATS: Partial<Record<CourseId, GameCat[]>> = { ear: ['ear', 'rhythm', 'memory', 'read'], jazz: ['ear'], voice: ['voice'], keys: ['instrument'], guitar: ['instrument'], bass: ['instrument'], drums: ['instrument', 'rhythm'] };
 const CAT_GLYPH: Record<GameCat, GlyphKind> = { ear: 'intervals', rhythm: 'rhythm', memory: 'memory', read: 'sight', voice: 'sing', instrument: 'keys', social: 'duel' };
 /** The games list opens on the course's own category. */
@@ -906,6 +917,12 @@ const ROW_TX: Record<string, { en: [string, string]; he: [string, string] }> = {
   lessons: { en: ['Lessons', 'Short theory lessons by topic'], he: ['שיעורים', 'שיעורי תיאוריה קצרים לפי נושא'] },
   exams: { en: ['Programs & exams', 'Bagrut and conservatory entrance, section by section'], he: ['תכניות לימוד ומבחנים', 'בגרות ומבחני כניסה לקונסרבטוריון, חלק אחר חלק'] },
   puzzle: { en: ['Progression of the day', 'One daily puzzle to solve and share'], he: ['מהלך היום', 'חידה יומית לפתור ולשתף'] },
+};
+
+/** The My song tile's words per course (SPEC-MY-SONG). */
+const mySongTx = (c: CourseId): { en: [string, string]; he: [string, string] } => {
+  const b = MS_TILE[c === 'drums' ? 'drums' : c === 'ear' || c === 'jazz' ? 'ear' : c === 'voice' ? 'voice' : 'play'];
+  return { en: ['My song', b.en], he: ['השיר שלי', b.he] };
 };
 
 /** Each game's note-head symbol and its category colour (0.61, SPEC-REDESIGN: no emoji). */
@@ -1011,7 +1028,7 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
             {rows
               .filter((k) => k !== 'games' && hub[k as keyof PracticeHub])
               .map((k) => {
-                const tx = (course === 'voice' && VOICE_TX[k] ? VOICE_TX[k] : course === 'drums' && DRUMS_TX[k] ? DRUMS_TX[k] : course === 'bass' && BASS_TX[k] ? BASS_TX[k] : course === 'keys' && KEYS_TX[k] ? KEYS_TX[k] : k === 'drills' && (course === 'keys' || course === 'guitar' || course === 'bass') ? INSTR_DRILLS_TX : ROW_TX[k])[lang];
+                const tx = (k === 'mysong' ? mySongTx(course) : course === 'voice' && VOICE_TX[k] ? VOICE_TX[k] : course === 'drums' && DRUMS_TX[k] ? DRUMS_TX[k] : course === 'bass' && BASS_TX[k] ? BASS_TX[k] : course === 'keys' && KEYS_TX[k] ? KEYS_TX[k] : k === 'drills' && (course === 'keys' || course === 'guitar' || course === 'bass') ? INSTR_DRILLS_TX : ROW_TX[k])[lang];
                 return (
                   <button
                     key={k}
