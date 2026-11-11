@@ -139,7 +139,7 @@ grant execute on function public.toneturn_daily_submit_band(date, text, int, tex
 
 -- ===================================================================== game boards: best per game × tier per week
 
-create table if not exists public.toneturn_game_bests (
+create table if not exists public.toneturn_game_tier_bests (
   user_id uuid not null default auth.uid() references auth.users (id) on delete cascade,
   game text not null check (game ~ '^[a-z0-9]+(-[a-z0-9]+)*$' and char_length(game) <= 32),
   tier smallint not null check (tier between 0 and 5),
@@ -148,9 +148,9 @@ create table if not exists public.toneturn_game_bests (
   updated_at timestamptz not null default now(),
   primary key (user_id, game, tier, week)
 );
-create index if not exists toneturn_game_bests_board on public.toneturn_game_bests (game, tier, week, best desc);
-alter table public.toneturn_game_bests enable row level security;
-revoke all on public.toneturn_game_bests from anon, authenticated;
+create index if not exists toneturn_game_tier_bests_board on public.toneturn_game_tier_bests (game, tier, week, best desc);
+alter table public.toneturn_game_tier_bests enable row level security;
+revoke all on public.toneturn_game_tier_bests from anon, authenticated;
 
 -- Keep the better score of the week (UTC week starting Monday).
 create or replace function public.toneturn_game_best_submit(p_game text, p_tier int, p_score int)
@@ -160,9 +160,9 @@ declare
   wk date := date_trunc('week', now() at time zone 'utc')::date;
 begin
   if me is null then raise exception 'sign in first'; end if;
-  insert into public.toneturn_game_bests (user_id, game, tier, week, best)
+  insert into public.toneturn_game_tier_bests (user_id, game, tier, week, best)
   values (me, p_game, p_tier, wk, greatest(0, least(100000, p_score)))
-  on conflict (user_id, game, tier, week) do update set best = greatest(public.toneturn_game_bests.best, excluded.best), updated_at = now();
+  on conflict (user_id, game, tier, week) do update set best = greatest(public.toneturn_game_tier_bests.best, excluded.best), updated_at = now();
 end $$;
 
 -- Me and my friends at this game and tier this week, best first (no public global board yet: privacy first).
@@ -170,7 +170,7 @@ create or replace function public.toneturn_game_board(p_game text, p_tier int)
 returns jsonb language sql stable security definer set search_path = '' as $$
   select coalesce(jsonb_agg(jsonb_build_object('name', coalesce(nullif(p.display_name, ''), 'Player'), 'best', b.best, 'me', b.user_id = (select auth.uid()))
     order by b.best desc, b.updated_at), '[]'::jsonb)
-  from public.toneturn_game_bests b
+  from public.toneturn_game_tier_bests b
   left join public.toneturn_profiles p on p.id = b.user_id
   where b.game = p_game and b.tier = p_tier and b.week = date_trunc('week', now() at time zone 'utc')::date
     and (b.user_id = (select auth.uid()) or exists (
