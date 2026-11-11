@@ -1201,7 +1201,7 @@ const FEEL_T: Record<Feel, T2> = { walk: tt('walking in 4', 'ווקינג באר
  * B13 / B18: standards for the walking levels — the changes from standards.ts (chord progressions only), each with the
  * tune's real key and the bass feel it calls for. The first four keep their option numbers (walk L11).
  */
-const BASS_STD: { id: string; key: number; minor?: boolean; feel: Feel }[] = [
+export const BASS_STD: { id: string; key: number; minor?: boolean; feel: Feel }[] = [
   { id: 'fly', key: 0, feel: 'walk' },
   { id: 'blue-bossa', key: 0, minor: true, feel: 'bossa' },
   { id: 'tune-up', key: 2, feel: 'walk' },
