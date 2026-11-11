@@ -1,5 +1,5 @@
 -- ToneTurn / The 7th Sense — Groove-off: drum duels (docs/research/DRUMS_NICHE_PLAN.md §3, P2).
--- NOT APPLIED YET: the owner applies migrations after a dry run. The client works without it: creating a 'groove'
+-- APPLIED 2026-11-11 (dry run first). The client also works without it: creating a 'groove'
 -- duel fails on the kind check and the Groove-off screen falls back to a local challenge code.
 --
 -- A groove duel is an ordinary friend duel with kind 'groove'. Its keys are round markers ('r1' … 'r3'); a player's
