@@ -93,3 +93,8 @@
 .cs-ladder li.past i { background: color-mix(in srgb, var(--purple, var(--mint)) 55%, var(--card-2)); }
 .cs-next.primary, .cs-chips .chip.on { border-color: var(--purple, var(--mint)); }
 .cs-hero-extra { display: grid; justify-items: center; gap: 10px; margin-top: 12px; }
+/* BASS_NICHE_PLAN X2: the bass player's direction (jazz / prog / both) on the welcome card. */
+.cs-track { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; font-size: 0.9rem; color: var(--ink-soft); }
+.cs-track .chips { display: flex; gap: 6px; }
+.cs-track .chip { padding: 6px 12px; border: 1.5px solid var(--line-strong); border-radius: 999px; font-size: 0.88rem; color: var(--ink); }
+.cs-track .chip.on { border-color: var(--purple, var(--mint)); background: color-mix(in srgb, var(--purple, var(--mint)) 12%, var(--card)); }

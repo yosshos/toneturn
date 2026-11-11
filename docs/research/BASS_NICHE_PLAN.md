@@ -282,4 +282,50 @@ Not built / not verified:
 - The track is chosen in Drills settings only, not in the bass intake (X2, P2).
 - The seven quick lessons' English lines need recordings (`tests/voiceFiles` "every static line is recorded" fails
   until then).
-- P2 items (J5–J7, P4–P6, E5–E6, X2) are not started.
+- P2 items (J5–J7, P4–P6, E5–E6, X2) are not started. (Built since: §9.)
+
+---
+
+## 9. Implemented (P2, 2026-11-11)
+
+Code: `src/engine/drills/bassNiche2.ts` (b-walk 19–20, `b-std`, `b-up-walk` 6–9, `b-ext`, b-impro 15–18, b-pick 9–10,
+the set-list badge data), `bassEar.ts` (b-ear 20–21), `bass.ts` / `upright.ts` (catalogue and dispatch),
+`src/ui/RoadMap.tsx` (the road-map strip), `CourseStart.tsx` (the track in the bass welcome), tests in
+`tests/bassNiche2.test.ts`. 27 new levels: 2 new families with 13 levels, and 14 levels added to five families.
+
+| Item | Levels | Measured by |
+|---|---|---|
+| J5 | `b-walk` 19 jazz waltz (I–vi–ii–V–iii–VI–ii–V; minor i–iv–ii°–V) 120→180 · 20 a blues-waltz chorus (the `blues-waltz` changes in the level's key) 120→200 | walk rules on a 3/4 chart (`parseChart(text, 3)`, the band's walker in 3), the `jazz-waltz` groove |
+| J6 | `b-std` 1–5 (jazz track): T1 blues and modal 100→160 · T2 rhythm changes and ii–V tunes 120→200 · T3 minor, bossas, ballads 80→160 · T4 bebop up-tempo 200→280 · T5 Coltrane changes and moving keys 120→200. 40 charts (`STD_LADDER`): the 36 walking standards regrouped plus five new practice forms in `standards.ts` (an up-tempo AABA with a ii–V-cycle bridge, a bebop form on I–VI7–II7–V7, Coltrane substitutions on a ii–V–I, a minor ballad with a line cliché, a ballad with back-cycling dominants; chord progressions only, listed in `NO_REFERENCE`) | walk rules (chord tones in 2-feel / bossa / ballad); walking choruses of 16+ bars also `swingWalk` long quarters + drift ≤ 2 % between the halves (the long-form drift check, X3). Badge "Set list" (`tech:g-bass:setlist`) |
+| J7 | `b-up-walk` 6 standards on the upright (5 tunes) 100→180 · 7 up-tempo pizz walking 160→260 · 8 a solo in thumb position (A2…D4, guide tones) 90→150 · 9 an arco head-style line (guide tones in halves) 60→90 | the upright tuning's cents gate (±15 / ±20 up-tempo / ±12 arco) + walk rules / swing-time measures / target rules + swing ratio |
+| P4 | `b-ext` 1 natural harmonics 12-7-5-4-3 · 2 harmonic chords and a harmonic melody · 3 artificial harmonics (the tab shows the touch point, fret + 12) · 4 tapping R-5-8-10 over I–vi–ii–V · 5 tapped arpeggios through ii–V–I · 6 double-stops (10ths; root–7th shells) · 7 comping shells in the Charleston rhythm · 8 fretless intonation (`bass-fretless`: slide into the guide tone, hold, vibrato) | pitch per note (the 3rd-fret harmonic = 2 octaves + a 5th, added to `guitar.ts finish`); timing / evenness for tapping (hands not seen: self-check, §6); `doubleStops` 0.8 chroma for 2, 6, 7 (mic only); cents ±12 for 8 (shown only on a fretless or an upright tuning) |
+| P5 | `b-impro` 15 fusion vamps (Lydian, sus) · 16 constant structure (maj7♯11 chords, II/I slash triads) · 17 altered lines (minor ii–V7alt–i) · 18 upper-structure triads on the dominant (II, ♭VI), all 16ths 70→110 | `target` rules with a scale per chord (landing on chord tones; the UST bars land on the triad), straight 16ths, evenness |
+| P6 | `b-pick` 9 down-strokes for two minutes (100 bars at 200) 150→200 · 10 palm-muted alternate 16ths 120→150 | timing, the evenness of the last bars against the first (`drift` 0.15) for 9; stroke asymmetry for 10 |
+| E5 | `b-ear` 20 hear an odd-meter groove (7/8 in 3 rotations, 9/8 in 2), play a root on each group start; the count-in is ungrouped and the click off, so the grouping is only heard · 21 hear a metric modulation (triplet ♩ → ♩, dotted ♪ → ♩) and play quarters on the new beat, alone | onset timing on the time map (per-bar groups; a tempo map from the answer bar), hidden answers |
+| X2 | the bass welcome card (course start) asks the direction — both / jazz / prog-fusion — and writes `bassTrack` (the same setting as Drills → Track) | — |
+| UI | road-map strip (`RoadMapStrip`): any drill with a `form` (b-jform 1–7) shows its sections as blocks sized by bars, the bar being played lit, and a cue line one bar before each new section ("B — in 4", "Stops — stop-time hits") | — |
+
+Wiring: symbols `setlist` and `harmonics`; path placement (`b-std` after walk 11, `b-ext` after legato 5; the new
+levels of existing families sit at the end of their family); teaching order (`b-std` after `b-latin`, `b-ext` after
+`b-legato`); `BASS_TRACK['b-std'] = 'jazz'`, `b-ext` on both tracks; rating tags (progressions; chord voicing / fine
+pitch / subdivision by kind; meter by ear); Practice-hub topic; automatic family milestone badges; exam tags; two quick
+lessons (`src/content/mini/bassNiche2.ts`) opening the two families' first steps. Tests: every level in every key on
+4/5/6 strings; model lines keep their rules; steady synthetic takes clean at start and target tempo, sloppy never; per
+level a failing take (a non-chord tone on the waltz's 1, a dragging second half, a wrong note on each fusion change, the
+old tempo after the modulation); the 3rd-fret harmonic's pitch; double-stops as chords; the road-map strip's cue.
+
+Not built / not verified (P2):
+
+- **E6** (transcribe from your own recording, measured): not built. It needs beat tracking of the recording (size L,
+  P3). The Slow-down screen already loops and slows a recording, unmeasured, so it does not count.
+- **The walker and 6th chords**: band.ts's walking line treats m6 / 6 chords as 7th chords (an F on Gm6). The ladder
+  repairs such notes to the nearest chord tone; the old `b-walk` standards levels (L11/13/14/18) are unchanged and 7 of
+  their model lines keep only 95–99 % of their own rules (Autumn Leaves, Fly Me to the Moon, Blues in F, All the Things,
+  There Will Never Be Another You, Stella, the minor ii–V–i cycle). Fix in band.ts (shared with piano / jazz) or reuse the
+  ladder's repair — owner's call.
+- **Patterns to check with a teacher**: the artificial-harmonic and tapping fingerings are self-check (§6); comping
+  shells on the bass are root–7th only (no 3–7 shells).
+- **Real takes**: synthetic MIDI takes only; harmonic pitch detection on a real bass (the 4th / 3rd fret partials are
+  quiet), double-stop chroma and the fretless cents gate are untested on a real instrument.
+- The track is asked on the welcome card only (and in Drills); the scheduler's weighting is the track filter itself.
+- The two new quick lessons' English lines need recordings (`tests/voiceFiles` fails until then).

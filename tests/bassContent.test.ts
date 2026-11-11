@@ -215,11 +215,11 @@ describe('B5 / B7 / B9: drums, meters, swing', () => {
 });
 
 describe('B11: the bass-ear family', () => {
-  it('19 levels (L9 chord quality, L10–19 from BASS_NICHE_PLAN E1–E4), after b-chord in the course order; every drill has a band part, hidden answers and answer bars after it', () => {
+  it('21 levels (L9 chord quality, L10–19 from BASS_NICHE_PLAN E1–E4, L20–21 E5), after b-chord in the course order; every drill has a band part, hidden answers and answer bars after it', () => {
     const ids = BASS.map((f) => f.id);
     expect(ids.indexOf('b-ear')).toBe(ids.indexOf('b-chord') + 1);
-    expect(BASS.find((f) => f.id === 'b-ear')!.levels.length).toBe(19);
-    for (let n = 1; n <= 19; n++)
+    expect(BASS.find((f) => f.id === 'b-ear')!.levels.length).toBe(21);
+    for (let n = 1; n <= 21; n++)
       for (const d of allDrills('b-ear', n, ['bass', 'bass5'])) {
         expect(d.show).toBe('none');
         expect(d.listen!.notes.length).toBeGreaterThan(0);

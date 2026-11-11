@@ -7,6 +7,7 @@ import { customIncluded, customKeys, customToDrill } from './custom';
 import { itemPass, todaysItems, type TodayItem } from './ladder';
 import { micUnmeasurable, notesPerBeat } from './analyze';
 import { inBassTrack } from './bassNiche';
+import { FRETLESS_LEVELS } from './bassNiche2';
 import { guitarCatalog, guitarLevelShown, guitarStyleMatch, type GuitarFamilyDef } from './guitar';
 import { tuningById } from '../fretboard';
 import type { DrumFamilyDef } from './drums';
@@ -39,7 +40,12 @@ export const isSixString = (bassTuning?: string): boolean => {
   return tu.instrument === 'bass' && tu.open.length >= 6;
 };
 /** Level ids hidden on this bass tuning (path and hub). */
-export const hiddenBassLevels = (bassTuning?: string): string[] => [...(hasLowB(bassTuning) ? [] : LOW_B_LEVELS), ...(isSixString(bassTuning) ? [] : SIX_STRING_LEVELS)];
+export const hiddenBassLevels = (bassTuning?: string): string[] => [...(hasLowB(bassTuning) ? [] : LOW_B_LEVELS), ...(isSixString(bassTuning) ? [] : SIX_STRING_LEVELS), ...(isFretlessBass(bassTuning) ? [] : FRETLESS_LEVELS)];
+/** BASS_NICHE_PLAN P4: the fretless-intonation level shows only on a fretless bass or an upright (unfretted tunings). */
+export const isFretlessBass = (bassTuning?: string): boolean => {
+  const tu = tuningById(bassTuning ?? 'bass');
+  return tu.instrument === 'bass' && tu.fretted === false;
+};
 
 /**
  * The families the player's settings show. Piano (default): the emphasis (classical / jazz / both). Guitar / bass:

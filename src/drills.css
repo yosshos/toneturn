@@ -514,3 +514,19 @@ button.heat-cell {
 .g-addon input { margin-top: 3px; flex: none; }
 .g-addons-first { display: grid; gap: 10px; margin-bottom: 12px; }
 .g-addons-first .btn { justify-self: start; }
+
+/* The road-map strip (BASS_NICHE_PLAN J4, PROG_ENGINE §4): sections as blocks, the bar being played lit, a cue a bar ahead. */
+.roadmap { margin: 0; display: grid; gap: 4px; }
+.rm-strip { display: flex; gap: 3px; width: 100%; }
+.rm-sec { flex-basis: 0; min-width: 0; display: grid; gap: 3px; padding: 3px 4px 4px; border: 1.5px solid var(--line-strong); border-radius: 8px; background: var(--card); }
+.rm-sec b { font-size: 11px; line-height: 1.1; color: var(--ink-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rm-sec.now { border-color: var(--accent); }
+.rm-sec.now b { color: var(--ink); }
+.rm-sec.past { opacity: 0.6; }
+.rm-sec.k-bridge, .rm-sec.k-solo { background: var(--paper); }
+.rm-bars { display: flex; gap: 1px; height: 6px; }
+.rm-bars i { flex: 1; border-radius: 2px; background: var(--line); }
+.rm-bars i.done { background: var(--line-strong); }
+.rm-bars i.on { background: var(--accent); }
+.rm-cue { min-height: 18px; font-size: 13px; color: var(--ink); text-align: center; }
+.rm-cue small { color: var(--ink-dim); font-size: 11px; margin-inline-end: 4px; }

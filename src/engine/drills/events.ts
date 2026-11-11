@@ -78,6 +78,18 @@ function secondTag(drill: Drill): Tags[number] | null {
     if (k === 'motion' || k === 'secdom' || k === 'where' || k === 'dropin' || k === 'bridge') return { skill: 'cadences', sub: 'cadences/progression', w: 0.5 };
     if (k === 'transcribe-long') return { skill: 'dictation', sub: 'dictation/bass', w: 0.5 };
     if (k === 'riff-ear') return { skill: 'rhythm-dictation', sub: 'rhythm-dictation/dictate', w: 0.5 };
+    // BASS_NICHE_PLAN E5: the grouping of an odd meter, the new beat after a modulation.
+    if (k === 'groups-ear') return { skill: 'meter', sub: 'meter/odd', w: 0.5 };
+    if (k === 'mod-ear') return { skill: 'timing', sub: 'timing/subdivide', w: 0.5 };
+  }
+  // BASS_NICHE_PLAN P2: the standards ladder reads progressions; extended techniques — chords for double-stops and
+  // comping, fine pitch for harmonics and the fretless, subdivision for tapping.
+  if (f === 'b-std') return { skill: 'cadences', sub: 'cadences/progression', w: 0.3 };
+  if (f === 'b-ext') {
+    const k = drill.spec.kind;
+    if (k === 'dstop' || k === 'comp' || k === 'harm-chord') return { skill: 'chords', sub: 'chords/voicing', w: 0.3 };
+    if (k === 'tap' || k === 'tap-iivi') return { skill: 'timing', sub: 'timing/subdivide', w: 0.3 };
+    return { skill: 'pitch', sub: 'pitch/fine', w: 0.3 };
   }
   // The pianist's ear (PIANO_AUDIT §3): the ear share through the keys, by what the level asks to hear.
   if (f === 'k-ear') {

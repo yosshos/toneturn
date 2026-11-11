@@ -383,7 +383,7 @@ export function finish(spec: DrillSpec, tu: Tuning, evs: Ev[], o: Fin): Drill {
   for (const e of evs) {
     const id = e.notes.length > 1 ? ++cid : undefined;
     for (const g of e.notes) {
-      const base = g.tech === 'harmonic' ? tu.open[g.s - 1] + (g.f === 12 ? 12 : g.f === 7 ? 19 : g.f === 5 ? 24 : g.f === 4 || g.f === 9 ? 28 : g.f) : noteAt(tu, g.s, g.f);
+      const base = g.tech === 'harmonic' ? tu.open[g.s - 1] + (g.f === 12 ? 12 : g.f === 7 ? 19 : g.f === 5 ? 24 : g.f === 4 || g.f === 9 ? 28 : g.f === 3 ? 31 : g.f) : noteAt(tu, g.s, g.f);
       const n: ExpNote = {
         pitch: base + (g.tech === 'prebend' ? Math.round((g.bend ?? 0) / 100) : 0),
         beat: r6(e.beat),
