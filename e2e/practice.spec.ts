@@ -19,7 +19,7 @@ test.describe('practice hub', () => {
     await page.locator('.screen-head .icon-btn').click();
     await page.locator('[data-hub="games"]').click();
     await expect(page.locator('.play-hero')).toBeVisible();
-    await page.locator('.play-screen .screen-head .icon-btn').click();
+    await page.locator('.play-screen .screen-head .icon-btn').first().click();
     await page.locator('[data-hub="metronome"]').click();
     await expect(page.locator('[data-metro-play]')).toBeVisible();
     await page.locator('.screen-head .icon-btn').first().click();

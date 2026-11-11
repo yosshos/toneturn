@@ -18,6 +18,24 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.72.0',
+    date: '2026-11-11',
+    en: [
+      'Repertoire in every course: four tiers from foundations to advanced, a next goal, and every piece measured',
+      'Lick trainer: 27 jazz licks in 12 keys and 4 tempos, review, and "Use it" over the band',
+      'Transcription coach: hear, slow down, play it back, write it as degrees, then take it to 12 keys',
+      'Eight advanced games: Voicing Spy, Scale & Mode Rush, Name That Standard, Reharm Spotter, Transcription Race, Barry Harris in Time, Odd-Meter Riff Echo, Polyrhythm Lock',
+      'Top-tier game content (altered chords, ii–V chains, odd meters, polyrhythms, 12 echo pads) and a weekly game board with friends',
+    ],
+    he: [
+      'רפרטואר בכל קורס: ארבע דרגות מיסודות ועד מתקדם, יעד הבא, וכל יצירה נמדדת',
+      'מאמן ליקים: 27 ליקים של ג׳אז ב־12 סולמות וב־4 טמפו, חזרה, ו״להשתמש בזה״ עם הלהקה',
+      'מאמן תמלול: לשמוע, להאט, לנגן בחזרה, לכתוב כדרגות ולהעביר ל־12 סולמות',
+      'שמונה משחקים מתקדמים: מרגל הווייסינגים, ראש סולמות ומודוסים, נחשו את הסטנדרט, מזהה הרה־הרמוניזציה, מרוץ התמלול, בארי האריס בזמן, אקו ריפים במשקל אי־זוגי, נעילת פולי־ריתמוס',
+      'תוכן לדרגות העליונות במשחקים (אקורדים אלטרד, שרשראות ii–V, משקלים אי־זוגיים, פולי־ריתמוס, 12 פדים) ולוח שיאים שבועי עם חברים',
+    ],
+  },
+  {
     version: '0.71.0',
     date: '2026-11-11',
     en: [
