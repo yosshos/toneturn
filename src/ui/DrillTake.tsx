@@ -632,7 +632,7 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
         </button>
       )}
       {phase === 'ready' && askDrums ? (
-        // B5: the headphones gate — where the sound goes, so the mic hears only the bass. Not a pass of anything.
+        // B5: the headphones gate — where the sound goes, so the mic hears only the player's instrument. Not a pass of anything.
         <div className="drums-gate" data-drums-gate="1">
           <p className="field-hint">
             {drum
@@ -641,11 +641,11 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
                 : 'A backing groove plays in this drill. So the mic hears only your pad, it plays only in headphones or over a line-in.'
               : drill.band
               ? lang === 'he'
-                ? 'בתרגיל הזה מנגנת להקה (תופים ופסנתר). כדי שהמיקרופון ישמע רק את הבס, היא מתנגנת רק באוזניות או בחיבור קווי.'
-                : 'A band plays in this drill (drums and piano). So the mic hears only your bass, it plays only in headphones or over a line-in.'
+                ? `בתרגיל הזה מנגנת להקה. כדי שהמיקרופון ישמע רק את ${isBassDrill(drill) ? 'הבס' : drill.spec.instrument === 'guitar' ? 'הגיטרה' : drill.sung ? 'הקול שלכם' : 'הפסנתר'}, היא מתנגנת רק באוזניות או בחיבור קווי.`
+                : `A band plays in this drill. So the mic hears only your ${isBassDrill(drill) ? 'bass' : drill.spec.instrument === 'guitar' ? 'guitar' : drill.sung ? 'voice' : 'piano'}, it plays only in headphones or over a line-in.`
               : lang === 'he'
-                ? 'יש תופים בתרגיל הזה. כדי שהמיקרופון ישמע רק את הבס, התופים מתנגנים רק באוזניות או בחיבור קווי.'
-                : 'This drill has drums. So the mic hears only your bass, they play only in headphones or over a line-in.'}
+                ? `יש תופים בתרגיל הזה. כדי שהמיקרופון ישמע רק את ${isBassDrill(drill) ? 'הבס' : drill.spec.instrument === 'guitar' ? 'הגיטרה' : drill.sung ? 'הקול שלכם' : 'הפסנתר'}, התופים מתנגנים רק באוזניות או בחיבור קווי.`
+                : `This drill has drums. So the mic hears only your ${isBassDrill(drill) ? 'bass' : drill.spec.instrument === 'guitar' ? 'guitar' : drill.sung ? 'voice' : 'piano'}, they play only in headphones or over a line-in.`}
           </p>
           <div className="drill-actions">
             <button className="btn primary" onClick={() => onDrums!(true)} data-drums-choice="headphones">
