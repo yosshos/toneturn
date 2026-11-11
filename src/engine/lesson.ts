@@ -392,6 +392,11 @@ export interface ChoiceQuestion extends QBase {
   chart?: { title: string; bars: string[] };
   /** An instrument picture to show with the question (spec AE): a neck with dots, a chord box, or keys. */
   diagram?: Diagram;
+  /**
+   * GUITAR_DEEPENING (song chords): the choices are chords — a guitarist may answer by strumming. Each choice's chord
+   * (root pitch class, quality); the strum is recognised among these only (closed set), the buttons stay as fallback.
+   */
+  strum?: Record<string, { root: number; quality: 'M' | 'm' | '7' }>;
 }
 
 /** A drawn instrument picture (spec AE §3.1). Strings are numbered from the highest (1). */
