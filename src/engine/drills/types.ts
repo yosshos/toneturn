@@ -19,6 +19,9 @@ export type FamilyId =
   | 'k-bebop'
   | 'k-reharm'
   | 'custom' // the player's own drills
+  // Licks & transcription (docs/SPEC-LICKS-TRANSCRIPTION.md): lick items per key / instrument, transcribed phrases.
+  | 'licks'
+  | 'transcribe'
   // Guitar (docs/SPEC-GUITAR-TECHNIQUE.md): pitches are SOUNDING MIDI; notes carry string / fret.
   | 'g-fretting' // spider / chromatic permutations, stretches, shifts
   | 'g-picking' // alternate, string changes, skipping, tremolo, sweep, hybrid
