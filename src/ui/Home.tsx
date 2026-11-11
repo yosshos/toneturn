@@ -52,6 +52,10 @@ interface Props {
   onMenu: () => void;
   /** Things to resume (placement, last session), the freeze toast, the catch-up card. */
   news: React.ReactNode;
+  /** SPEC-COURSE-START: the active course has not started yet — its first-run hero ("Start: <taste>") replaces Today. */
+  startHero?: React.ReactNode;
+  /** Under the hero: "Or start from lesson 1" (the ear course, before its welcome card is answered). */
+  startLessonLink?: boolean;
 }
 
 export const DAILY_GOAL_XP = 30;
@@ -92,7 +96,7 @@ export const TOTALS: Partial<Record<LessonId, number>> = { 'bflat-two-homes': 3,
  * one small Find my level button. Everything else moved to its own place (Path: topics and practice rooms; Play:
  * puzzles and challenges; Progress: areas and ranks; Settings: account). First run keeps the welcome hero.
  */
-export function Home({ t, settings, progress, streak, onStreak, onPractice, onButtonsInstead, onMode, whatsNew, onPlacement, onMenu, news, assigned, headerExtra, workout, aside, today }: Props) {
+export function Home({ t, settings, progress, streak, onStreak, onPractice, onButtonsInstead, onMode, whatsNew, onPlacement, onMenu, news, assigned, headerExtra, workout, aside, today, startHero, startLessonLink }: Props) {
   const [consentFor, setConsentFor] = useState<LessonId | null>(null);
   const [levelSheet, setLevelSheet] = useState(false);
   const lang = settings.uiLang;
@@ -116,7 +120,20 @@ export function Home({ t, settings, progress, streak, onStreak, onPractice, onBu
 
       {news}
 
-      {firstRun ? (
+      {startHero ? (
+        <>
+          {startHero}
+          {/* How to answer (voice-first), and — before the ear course's welcome is answered — the classic first lesson. */}
+          <div className="cs-hero-extra">
+            <ModeSwitch mode={settings.mode} onChange={onMode} t={t} />
+            {startLessonLink && (
+              <button className="link start-from-one" onClick={() => start(next)}>
+                {t.startFromLessonOne}
+              </button>
+            )}
+          </div>
+        </>
+      ) : firstRun ? (
         <section className="hero first-run">
           <div className="hero-copy">
             <h1>{t.firstRunTitle}</h1>

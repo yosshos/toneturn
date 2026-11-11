@@ -67,7 +67,8 @@ test.describe('drums course', () => {
     await expect(page.locator('[data-ob="course-drums"]')).toHaveAttribute('aria-pressed', 'true');
     await expect(page.locator('[data-ob="course-bass"]')).toHaveCount(0);
     await page.locator('[data-ob="courses-next"]').click();
-    await expect(page.locator('[data-ob="level-0"]')).toBeVisible();
+    // SPEC-COURSE-START: the drums course opens with its welcome card (no placement).
+    await expect(page.locator('[data-course-start="welcome"][data-cs-course="drums"]')).toBeVisible();
   });
 
   test('Technique: kit card, drum topics and families, no songs or keys; a groove drill on one screen in notation and lanes', async ({ page }) => {
