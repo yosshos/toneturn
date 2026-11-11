@@ -310,6 +310,16 @@ const KEYS_JAZZ_LATER: Record<string, number> = { 'k-sixdim': 9, 'k-bebop': 6, '
  * ear, Alberti / cadences one step later) and the jazz and advanced families start after a few scale levels.
  */
 export const KEYS_LATER: Record<string, number> = { scales: 0, fingers: 0, 'k-ear': 0, arpeggios: 1, cadences: 1, control: 1, accomp: 2, voicings: 3, harris: 4, jazz: 4, advanced: 6, ...KEYS_JAZZ_LATER };
+/**
+ * VOICE_CURRICULUM §8: every vocal program's level 1 sat at diff(0) = 700 — Barry Harris L1, harmony L1 and modes L1
+ * next to "hold a note" L1. Now the families start by stage (A Song Singer → D Jazz Artist): breath, pitch and songs
+ * first, Barry Harris after the scat and standards families have begun. The old program ids keep a place too.
+ */
+export const VOICE_LATER: Record<string, number> = {
+  'v-breath': 0, 'v-pitch': 0, 'v-songs': 0, 'v-range': 1, 'v-time': 1, 'v-ear': 1, 'v-dyn': 2, 'v-scale': 2, 'v-sight': 2,
+  'v-vib': 3, 'v-agility': 3, 'v-harmony': 3, 'v-inflect': 4, 'v-standards': 4, 'v-scat': 5, 'v-barry': 6,
+  'v-ladder': 0, 'v-modes': 2, 'v-ornament': 4,
+};
 /** Every level of every technique family and vocal program as a path step (0.61, owner: technique inside the course path). */
 function ladderSteps(): PathStep[] {
   const out: PathStep[] = [];
@@ -330,7 +340,7 @@ function ladderSteps(): PathStep[] {
   for (const pr of VOCAL_PROGRAMS)
     pr.levels.forEach((_, i) => {
       const n = pr.base + i + 1;
-      out.push({ id: `vocal:${n}`, kind: 'vocal', ladder: { family: pr.id, level: i + 1, ref: String(n) }, skill: 'singing', sub: 'singing/vocal-ladder', domain: 'voice', difficulty: diff(i), choices: 0, sung: true, mic: true, title: { en: `${pr.title.en} · ${i + 1}`, he: `${pr.title.he} · ${i + 1}` } });
+      out.push({ id: `vocal:${n}`, kind: 'vocal', ladder: { family: pr.id, level: i + 1, ref: String(n) }, skill: 'singing', sub: 'singing/vocal-ladder', domain: 'voice', difficulty: diff(i + (VOICE_LATER[pr.id] ?? 0)), choices: 0, sung: true, mic: true, title: { en: `${pr.title.en} · ${i + 1}`, he: `${pr.title.he} · ${i + 1}` } });
     });
   return out;
 }
