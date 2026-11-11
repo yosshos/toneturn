@@ -701,7 +701,7 @@ function genBarry(s: DrillSpec, tu: Tuning): Drill {
 
 /** The b-impro kinds built here (levels 7–14). */
 export const IMPRO_NICHE = ['enclose', 'bebop-scale', 'iivi-keys', 'altered', 'modal', 'rhythm-solo', 'std-solo', 'trade4'];
-const STD_SOLO: { id: string; key: number; minor?: boolean }[] = [
+export const STD_SOLO: { id: string; key: number; minor?: boolean }[] = [
   { id: 'fly', key: 0 },
   { id: 'autumn', key: 7, minor: true },
   { id: 'tune-up', key: 2 },

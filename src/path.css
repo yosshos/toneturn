@@ -2306,3 +2306,25 @@ button.chip.on {
 /* MIDI keys through the app (0.50) */
 .midi-sound { display: grid; gap: 10px; margin: 6px 0 4px; }
 .midi-sound .btn.small { justify-self: start; }
+
+/* Listen to the original (0.69.2, owner 2026-11-11): small link buttons to a standard's reference recordings. */
+.listen-orig { display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); min-width: 0; }
+.listen-orig.compact { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 8px; }
+.listen-orig .lo-label { color: var(--ink-dim); font-size: 0.8rem; }
+.listen-orig .lo-label b { color: var(--ink); font-weight: 600; }
+.listen-orig .lo-rec { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.listen-orig .lo-meta { color: var(--ink); font-size: 0.82rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.listen-orig .lo-note { color: var(--ink-dim); font-size: 0.78rem; }
+.listen-orig .lo-key { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 0.8rem; color: var(--ink-dim); }
+.listen-orig .lo-key b { color: var(--ink); font-weight: 600; }
+.listen-orig.compact .lo-key { font-size: 0.75rem; }
+.lo-links { display: inline-flex; gap: 6px; flex: none; }
+.lo-btn { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--ink); text-decoration: none; }
+.lo-btn:hover, .lo-btn:focus-visible { border-color: var(--ink-dim); }
+.listen-orig.compact .lo-btn { width: 28px; height: 28px; }
+.charts .ch-list li.ch-std { display: flex; align-items: center; gap: 8px; border-top: 1px solid var(--line); }
+.charts .ch-list li.ch-std:first-child { border-top: 0; }
+.charts .ch-list li.ch-std .ch-row { border-top: 0; flex: 1; min-width: 0; }
+.drill-refs { display: flex; flex-direction: column; gap: 6px; margin: 6px 0; }
+.drill-refs summary { cursor: pointer; color: var(--ink-dim); font-size: 0.85rem; }
+.drill-refs .dr-tune { font-size: 0.8rem; color: var(--ink-dim); margin: 6px 0 2px; }

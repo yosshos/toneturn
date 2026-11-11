@@ -258,7 +258,7 @@ export function LeadSheetImport({ lang, onAdd }: { lang: Lang; onAdd: (sheets: L
 export function rulesRef(challenge: string, src: string): string {
   return `rules:${challenge}@${src}`;
 }
-export function chartOfRulesRef(ref: string, lang: Lang): { id: string; title: string; text: string; style: import('../engine/charts').ChartStyle; bpm: number; rules: RuleSet; level?: string } | null {
+export function chartOfRulesRef(ref: string, lang: Lang): { id: string; title: string; text: string; style: import('../engine/charts').ChartStyle; bpm: number; rules: RuleSet; level?: string; std?: string } | null {
   const m = /^rules:([\w-]+)@(lv|std):([\w-]+)$/.exec(ref);
   if (!m) return null;
   const ch = CHALLENGES.find((c) => c.id === m[1]);
@@ -266,7 +266,7 @@ export function chartOfRulesRef(ref: string, lang: Lang): { id: string; title: s
   const id = `assign-${Date.now()}`;
   if (m[2] === 'std') {
     const s = STANDARD_CHANGES.find((x) => x.id === m[3]);
-    return s ? { id, title: `${s.name} — ${ch.title[lang]}`, text: s.text, style: s.style, bpm: s.bpm, rules: ch.rules } : null;
+    return s ? { id, title: `${s.name} — ${ch.title[lang]}`, text: s.text, style: s.style, bpm: s.bpm, rules: ch.rules, std: s.id } : null;
   }
   const L = IMPROV_LEVELS.find((x) => String(x.n) === m[3]);
   return L ? { id, title: `${L.title[lang]} — ${ch.title[lang]}`, text: L.text, style: L.style, bpm: L.bpm, rules: ch.rules, level: L.id } : null;

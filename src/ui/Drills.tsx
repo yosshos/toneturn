@@ -46,6 +46,9 @@ import { DrumScore, KitCard, KitSetup } from './DrumViews';
 import { drumMicOf, kitKind, type KitKind } from '../engine/drumKit';
 import { drumProbes, GROOVE_REACH, placeDrums, type DrumProbeResult, type DrumSlot } from '../engine/drills/drums';
 import { isDrumDrill } from '../engine/drills/events';
+import { standardIdOfSpec, standardOfSpec } from '../engine/drills/standardRef';
+import { ListenOriginal } from './ListenOriginal';
+import { referenceOf } from '../content/references';
 
 type Lang = 'he' | 'en';
 const T = {
@@ -655,6 +658,7 @@ function LevelGrid({ lang, ds, level, items, onRun }: { lang: Lang; ds: DrillSet
       <button className="btn primary" onClick={() => onRun(levelDrills(level, ds.keyOrder), 0)} data-level-start={level.id}>
         ▶ {tx.allKeys}
       </button>
+      <LevelRefs level={level} lang={lang} />
       <div className="heat">
         {level.specs.map((s, si) => {
           const row = specDrills(level, si, ds.keyOrder);
@@ -678,6 +682,35 @@ function LevelGrid({ lang, ds, level, items, onRun }: { lang: Lang; ds: DrillSet
         })}
       </div>
     </div>
+  );
+}
+
+/** The reference recordings of the standards a level is built on (owner 2026-11-11): one or two shown, more folded. */
+function LevelRefs({ level, lang }: { level: LevelDef; lang: Lang }) {
+  const ids = [...new Set(level.specs.map((s) => standardIdOfSpec(s)).filter((x): x is string => !!x && !!referenceOf(x)))];
+  if (!ids.length) return null;
+  if (ids.length <= 2)
+    return (
+      <div className="drill-refs" data-level-refs={ids.length}>
+        {ids.map((id) => (
+          <ListenOriginal key={id} id={id} lang={lang} />
+        ))}
+      </div>
+    );
+  return (
+    <details className="drill-refs" data-level-refs={ids.length}>
+      <summary>
+        {lang === 'he' ? 'הקלטות מקור' : 'Original recordings'} <small dir="ltr">({ids.length})</small>
+      </summary>
+      {ids.map((id) => (
+        <div key={id}>
+          <p className="dr-tune" dir="ltr">
+            {referenceOf(id)?.title}
+          </p>
+          <ListenOriginal id={id} lang={lang} compact />
+        </div>
+      ))}
+    </details>
   );
 }
 
@@ -735,11 +768,13 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
       window.setTimeout(() => (setRes(null), setBpm(lad.next.bpm), setTake((t) => t + 1)), 1400);
     } else setBpm(lad.next.bpm);
   };
+  const std = standardOfSpec(drill.spec);
   return (
     <div className="drill-run" data-drill={drill.itemId}>
       <p className="drill-goal">
         {i + 1} / {queue.length} · <span dir="ltr">{drill.pulse === 8 ? '♪' : '♩'} {bpm}</span>
       </p>
+      {std && <ListenOriginal id={std.ref.id} lang={lang} practiceKey={std.key} compact />}
       <DrillScore drill={drill} ds={ds} result={res?.m} beat={res ? -1 : beat} lang={lang} />
       {res && <MarkLegend lang={lang} />}
       {!res && !writing && <DrillTake key={`${drill.itemId}:${take}`} drill={drill} bpm={bpm} lang={lang} cal={cal} onDone={(m, p) => (setBeat(-1), drill.write || drill.drumWrite ? setWriting({ m, p }) : done(m, p))} onBeat={setBeat} drumsOk={headphones} onDrums={onHeadphones} kit={kit} />}
