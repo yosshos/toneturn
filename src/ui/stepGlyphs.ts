@@ -10,14 +10,23 @@ export const FAMILY_GLYPH: Record<string, GlyphKind> = {
   scales: 'scales', arpeggios: 'arp', cadences: 'prog', fingers: 'fingers1234', control: 'hairpin', advanced: 'octave', harris: 'improv', voicings: 'voicing', jazz: 'target', accomp: 'walk', 'k-ear': 'keysear',
   // PIANO_JAZZ: the jazz-piano families.
   'k-sixdim': 'sixdim', 'k-bebop': 'bebop', 'k-reharm': 'reharm',
+  // GUITAR_DEEPENING: the guitarist's ear, Barry Harris on the neck, prog / fusion.
+  'g-ear': 'guitarear', 'g-harris': 'sixdim', 'g-prog': 'oddmeter',
   'g-fretting': 'fingers1234', 'g-picking': 'pick', 'g-legato': 'slur', 'g-scales': 'box', 'g-arps': 'arp', 'g-chords': 'chordbox', 'g-rhythm': 'strum', 'g-lead': 'bend', 'g-fingerstyle': 'pima', 'g-flamenco': 'fan', 'g-jazz': 'prog', 'g-reading': 'sight', 'g-impro': 'improv', 'g-bass': 'bass',
   // Bass (final check): 21 families, 21 symbols — the electric and the upright track share one path on an upright.
   'b-posread': 'position', 'b-impro': 'target',
+  // BASS_NICHE_PLAN P1: the jazz track and the prog track.
+  'b-swing': 'swingtime', 'b-barry': 'barrybass', 'b-jform': 'roadmap', 'b-latin': 'tumbao', 'b-odd': 'oddmeter', 'b-poly': 'polymeter', 'b-prog': 'unison',
   'b-pluck': 'pluck', 'b-time': 'tempo', 'b-fret': 'fingers', 'b-chord': 'chords', 'b-scale': 'scales', 'b-length': 'mute', 'b-pocket': 'groove', 'b-read': 'bass', 'b-styles': 'record', 'b-ghost': 'ghost', 'b-walk': 'walk', 'b-legato': 'slur', 'b-pick': 'pick', 'b-slap': 'slap', 'b-ear': 'ear', 'b-up-pos': 'shift', 'b-up-arco': 'bow', 'b-up-scales': 'ladder', 'b-up-pizz': 'pizz', 'b-up-walk': 'improv', 'b-up-read': 'sight',
   'd-strokes': 'sticks', 'd-rolls': 'rudiment', 'd-diddles': 'paradiddle', 'd-time': 'pulse', 'd-rock': 'hihat', 'd-fills': 'fill', 'd-read': 'drumread',
   'd-funk': 'ghost', 'd-shuffle': 'shuffle', 'd-indep': 'limbs', 'd-mideast': 'darbuka', 'd-feet': 'kick',
   'd-ear': 'drumear', 'd-jazz': 'ride', 'd-latin': 'clave',
-  'v-ladder': 'sing', 'v-modes': 'scales', 'v-sight': 'sight', 'v-harmony': 'chords', 'v-ornament': 'contour', 'v-barry': 'improv',
+  // DRUMS_NICHE_PLAN P1: songs, prog / fusion, counting, the drum key, song form.
+  'd-song': 'roadmap', 'd-prog': 'progmeter', 'd-count': 'counting', 'd-notation': 'drumkey', 'd-form': 'dsform',
+  'v-ladder': 'sing', 'v-modes': 'scales', 'v-sight': 'sight', 'v-harmony': 'chords', 'v-ornament': 'contour', 'v-barry': 'sixdim',
+  // VOICE_CURRICULUM: the 15 families + Barry Harris, one symbol each on the voice path.
+  'v-breath': 'breath', 'v-pitch': 'tune', 'v-songs': 'mic', 'v-range': 'octave', 'v-time': 'pulse', 'v-ear': 'echo', 'v-dyn': 'hairpin', 'v-scale': 'scales',
+  'v-vib': 'sing', 'v-agility': 'bebop', 'v-inflect': 'contour', 'v-standards': 'prog', 'v-scat': 'improv',
 };
 /** Instrument topics (they all used to share one chord icon). */
 export const TOPIC_GLYPH: Record<string, GlyphKind> = {
@@ -34,6 +43,8 @@ export const TOPIC_GLYPH: Record<string, GlyphKind> = {
 /** Games sitting in a unit (they all used to be one puzzle piece). */
 export const GAME_STEP_GLYPH: Record<string, GlyphKind> = {
   'rush-interval': 'intervals', 'rush-chord': 'chords', 'rush-progression': 'prog', highway: 'rhythm', melodypuzzle: 'puzzle', nametune: 'name', flight: 'sing', 'rush-note': 'sight', 'rush-keysig': 'theory', 'rush-fretboard': 'fretboard', peakhunter: 'eq', drills: 'scales',
+  // Drum games P1 (DRUMS_NICHE_PLAN §3).
+  land: 'landit', 'groove-echo': 'grooveecho', 'odd-echo': 'oddecho',
 };
 
 // EAR_THEORY_AUDIT: every topic and lesson of the Ear & theory and Jazz & improv paths has its own symbol — a drawn one

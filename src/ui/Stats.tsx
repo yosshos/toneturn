@@ -402,9 +402,19 @@ function courseAxes(course: CourseId, ratings: Parameters<typeof domainValue>[0]
   if (course === 'jazz') return [skill('improv', 'אלתור', 'Improv'), skill('chords', 'אקורדים', 'Chords'), skill('cadences', 'מהלכים', 'Changes'), skill('modes', 'מודוסים', 'Modes'), skill('transpose', 'טרנספוזיציה', 'Transpose'), skill('expression', 'הבעה', 'Expression')];
   if (course === 'voice') {
     const passed = progress.vocal?.passed ?? [];
-    return VOCAL_PROGRAMS.map((pr) => {
-      const n = pr.levels.filter((_, i) => passed.includes(pr.base + i + 1)).length;
-      return { label: pr.title[lang].split(' ')[0], v: n ? n / pr.levels.length : null };
+    // VOICE_CURRICULUM: the 16 families on six axes (the five meters of every take, plus jazz).
+    const AXES: [string[], string, string][] = [
+      [['v-pitch', 'v-ear', 'v-harmony'], 'גובה', 'Pitch'],
+      [['v-time', 'v-agility'], 'זמן', 'Time'],
+      [['v-breath', 'v-range'], 'נשימה', 'Breath'],
+      [['v-dyn', 'v-vib', 'v-inflect'], 'צבע', 'Shape'],
+      [['v-songs', 'v-sight', 'v-scale'], 'שירים', 'Songs'],
+      [['v-standards', 'v-scat', 'v-barry'], 'ג׳אז', 'Jazz'],
+    ];
+    return AXES.map(([ids, he, en]) => {
+      const refs = VOCAL_PROGRAMS.filter((pr) => ids.includes(pr.id)).flatMap((pr) => pr.refs);
+      const n = refs.filter((r) => passed.includes(r)).length;
+      return { label: lang === 'he' ? he : en, v: n ? n / Math.max(1, refs.length) : null };
     });
   }
   // Drums: the seven core families (reading too — it fell off at six, DRUMS_AUDIT I11); bass has its own six.

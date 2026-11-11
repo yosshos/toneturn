@@ -2082,3 +2082,12 @@ main.lesson.await-next .read-prompt .beat-light { display: none; }
 .toni.s-draw .t-body { animation: t-bob 2.6s ease-in-out 0.9s infinite; }
 .toni.s-draw .t-flag { animation: t-unfurl 0.9s cubic-bezier(0.3, 1.5, 0.5, 1) 1, t-sway 2.6s ease-in-out 0.9s infinite; }
 .toni.s-bye .t-body { animation: t-bob 2.6s ease-in-out infinite; }
+
+/* 0.70 (owner): the passage's length while it plays — sounding parts as bars, a running marker. */
+:root[data-theme] .listen-strip { position: relative; height: 10px; margin: 6px auto 4px; width: min(100%, 420px); border-radius: 99px; background: var(--card-2, #efeaf8); overflow: hidden; }
+:root[data-theme] .listen-strip .ls-part { position: absolute; top: 2px; bottom: 2px; border-radius: 99px; background: color-mix(in srgb, var(--purple) 35%, transparent); }
+:root[data-theme] .listen-strip .ls-tick { position: absolute; top: 1px; bottom: 1px; border-radius: 2px; background: var(--ink-soft); }
+:root[data-theme] .listen-strip .ls-cursor { position: absolute; top: 0; bottom: 0; width: 3px; margin-inline-start: -1px; background: var(--ink); border-radius: 2px; animation: ls-run linear forwards; }
+:root[data-theme][dir='rtl'] .listen-strip { direction: ltr; }
+@keyframes ls-run { from { left: 0; } to { left: 100%; } }
+@media (prefers-reduced-motion: reduce) { :root[data-theme] .listen-strip .ls-cursor { animation: none; left: 0; } }

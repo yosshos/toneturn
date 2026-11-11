@@ -17,7 +17,7 @@ type LN = NonNullable<Drill['listen']>['notes'][number];
 
 const PERC: Record<DrumVoice, PercKind> = { kick: 'kick', snare: 'snare', rim: 'rim', hihat: 'hat', hhOpen: 'hat-open', hhPedal: 'hat-foot', ride: 'ride', crash: 'crash', tom1: 'tom-hi', tom2: 'tom-hi', tom3: 'tom-lo' };
 /** The app's drum sounds for a call: accents louder, ghosts soft. */
-const callOf = (hits: DH[]): LN[] =>
+export const callOf = (hits: DH[]): LN[] =>
   hits.map((h) => ({ beat: h.b, dur: Math.min(h.d ?? 0.5, 0.5), midi: [VOICE_NOTE[h.v]], perc: h.ghost && h.v === 'snare' ? 'snare-soft' : PERC[h.v], vel: h.acc ? 0.8 : h.ghost ? 0.25 : h.v === 'hihat' || h.v === 'ride' ? 0.4 : 0.6 }));
 const shift = (hits: DH[], b0: number): DH[] => hits.map((h) => ({ ...h, b: h.b + b0 }));
 

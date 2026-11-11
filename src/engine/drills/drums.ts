@@ -11,6 +11,9 @@ import { VOICE_NOTE, limbOf } from '../drumKit';
 import { ACOUSTIC_LEVELS } from '../drumAcoustic';
 import { generateDrumEar } from './drumEar';
 import { drumBand, generateJazz, generateLatin } from './drumStyles';
+import { generateSong } from './drumSong';
+import { generateProg } from './drumProg';
+import { generateCount, generateForm, generateNotation, generateReadMore } from './drumTheory';
 
 const t = (en: string, he: string): T2 => ({ en, he });
 const r6 = (x: number): number => Math.round(x * 1e6) / 1e6;
@@ -570,6 +573,8 @@ const READ_KIT: Lanes[][] = [
 function genRead(s: DrillSpec): Drill {
   const op = s.option ?? 0;
   const lv = levelOfKind(s.kind);
+  // DRUMS_NICHE_PLAN §4: reading levels 6–10 (swing / triplets, 16th kick + ghosts, tom fills, odd meters, at sight).
+  if (lv >= 6) return generateReadMore(s);
   if (lv === 5) {
     const g = READ_KIT[op];
     const hits = rep(4, (k) => bar(g[k % 2], 2, k * 4));
@@ -885,6 +890,16 @@ export function generateDrums(spec: DrillSpec): Drill {
       return generateJazz(s);
     case 'd-latin':
       return generateLatin(s);
+    case 'd-song':
+      return generateSong(s);
+    case 'd-prog':
+      return generateProg(s);
+    case 'd-count':
+      return generateCount(s);
+    case 'd-notation':
+      return generateNotation(s);
+    case 'd-form':
+      return generateForm(s);
     default:
       throw new Error(`Not a drum family: ${s.family}`);
   }
@@ -965,6 +980,12 @@ export function drumFamilies(): DrumFamilyDef[] {
       L('d-read', 3, 'Snare: 16th groupings', 'סנר: קבוצות של שש-עשריות', 'read', 4, [60, 80], '1/16', true),
       L('d-read', 4, 'Snare: triplets, accents, ghost notes', 'סנר: טריולות, הדגשות ותווי רפאים', 'read', 4, [60, 80], 'mixed', true),
       L('d-read', 5, 'Kit notation: read a groove', 'תווים למערכת: לקרוא גרוב', 'kit', 4, [80, 80], '1/8', false),
+      // DRUMS_NICHE_PLAN §4: reading 6–10.
+      L('d-read', 6, 'Triplets and swung 8ths', 'טריולות ושמיניות בסווינג', 'swing', 3, [70, 100], '1/8T', true),
+      L('d-read', 7, 'The 16th kick and ghost notes', 'קיק בשש-עשריות ותווי רפאים', 'kick16', 4, [60, 90], '1/16', false),
+      L('d-read', 8, 'Tom fills with sticking', 'מעברים בטומים עם אצבוע', 'toms', 3, [60, 100], '1/16', false),
+      L('d-read', 9, 'Odd meters with group beams', 'משקלים מוזרים וקבוצות', 'odd', 4, [160, 240], '1/8', false),
+      L('d-read', 10, 'A groove and fill at sight', 'גרוב ומעבר מהדף', 'sight', 4, [70, 100], 'mixed', false),
     ]),
     // v2 families (DRUMS_AUDIT N1): F6 L1–4, F7 L1–4, F10 L1–4, F12 (own order: dum/tak, baladi/sa'idi, ka, the kit groove), F13 L1–3.
     fam('d-funk', 'Funk & ghost notes', 'פאנק ותווי רפאים', [
@@ -1022,6 +1043,11 @@ export function drumFamilies(): DrumFamilyDef[] {
       L('d-jazz', 6, 'Jazz waltz', 'ואלס ג׳אז', 'waltz', 3, [120, 170], '1/8T', false),
       L('d-jazz', 7, 'Up-tempo 2-feel', 'טמפו מהיר בתחושת 2', 'up', 3, [180, 240], '1/8T', false),
       L('d-jazz', 8, 'Trading 4s', 'חילופי 4', 'trade', 3, [120, 160], '1/8T', false),
+      // DRUMS_NICHE_PLAN §6.1 (P2): jazz 9–12 on the song engine.
+      L('d-jazz', 9, 'Brushes ballad (taps scored)', 'בלדה במברשות (הנקישות נמדדות)', 'brushes', 3, [56, 76], '1/8T', false),
+      L('d-jazz', 10, 'Comping over a form', 'קומפינג על צורה', 'formcomp', 3, [110, 160], '1/8T', false),
+      L('d-jazz', 11, 'Set-ups and ensemble hits', 'הכנות ומכות להקה', 'setups', 3, [120, 170], '1/8T', false),
+      L('d-jazz', 12, 'Broken time, 2 to 4, trading 8s', 'זמן שבור, מ-2 ל-4, חילופי 8', 'twofour', 3, [240, 300], '1/8T', false),
     ]),
     fam('d-latin', 'Latin & Brazilian', 'לטיני וברזילאי', [
       L('d-latin', 1, 'Bossa nova', 'בוסה נובה', 'bossa', 3, [110, 140], '1/8', false),
@@ -1031,6 +1057,50 @@ export function drumFamilies(): DrumFamilyDef[] {
       L('d-latin', 5, 'Cha-cha-chá bell', 'פעמון צ׳ה-צ׳ה-צ׳ה', 'chacha', 3, [100, 130], '1/8', false),
       L('d-latin', 6, '6/8 bembé', 'במבה 6/8', 'bembe', 3, [240, 330], '1/8', false),
       L('d-latin', 7, 'Baião', 'באיון', 'baiao', 3, [90, 120], '1/16', false),
+    ]),
+    // DRUMS_NICHE_PLAN (P1, 2026-11-11): songs and song forms, prog / fusion, reading and theory played on the kit.
+    fam('d-song', 'Songs and song forms', 'שירים וצורות שיר', [
+      L('d-song', 1, 'Verse to chorus, on the cue', 'מבית לפזמון, לפי הסימן', 'switch', 3, [80, 110], '1/8', false),
+      L('d-song', 2, 'A fill at every section end', 'מעבר בסוף כל קטע', 'fills', 3, [80, 110], '1/16', false),
+      L('d-song', 3, 'The full pop form', 'צורת פופ מלאה', 'form', 3, [85, 115], '1/16', false),
+      L('d-song', 4, 'Stops and band hits', 'סטופים ומכות להקה', 'hits', 3, [90, 120], '1/8', false),
+      L('d-song', 5, 'Read the road map', 'לקרוא את מפת הדרך', 'roadmap', 3, [80, 110], '1/16', false),
+      L('d-song', 6, 'The dynamics arc', 'הקשת הדינמית', 'dynamics', 3, [80, 110], '1/16', false),
+      L('d-song', 7, 'Style songs: shuffle, funk, Mizrahi', 'שירים בסגנון: שאפל, פאנק, מזרחי', 'style', 3, [80, 105], 'mixed', false),
+      L('d-song', 8, 'Your song: a chord chart you type', 'השיר שלכם: תרשים אקורדים שמקלידים', 'own', 3, [80, 110], '1/16', false),
+    ]),
+    fam('d-prog', 'Prog & fusion', 'פרוג ופיוז׳ן', [
+      L('d-prog', 1, 'Odd-meter rock grooves', 'גרובי רוק במשקל מוזר', 'odd', 3, [180, 260], '1/8', false),
+      L('d-prog', 2, '9/8, 11/8, 13/8, changing groupings', '9/8, 11/8, 13/8, קבוצות מתחלפות', 'long', 4, [180, 260], '1/8', false),
+      L('d-prog', 3, 'Groupings across the bar line', 'קבוצות מעבר לקו התיבה', 'groups', 3, [60, 100], '1/16', false),
+      L('d-prog', 4, 'Polymeter', 'פולימטר', 'poly', 3, [80, 110], '1/8', false),
+      L('d-prog', 5, 'Polyrhythm between limbs', 'פולירית׳ם בין הגפיים', 'ratio', 3, [60, 90], 'mixed', false),
+      L('d-prog', 6, 'Metric modulation', 'מודולציה מטרית', 'modulate', 3, [80, 110], 'mixed', false),
+      L('d-prog', 7, 'Linear grooves and fills', 'גרובים ומעברים ליניאריים', 'linear', 3, [70, 110], '1/16', false),
+      L('d-prog', 8, 'Displaced grooves', 'גרובים מוזזים', 'displace', 3, [80, 110], '1/16', false),
+      L('d-prog', 9, 'Quintuplets, sextuplets, six-stroke rolls', 'חמישיות, שישיות, גלגול שש מכות', 'tuplets', 3, [60, 90], 'mixed', false),
+      L('d-prog', 10, 'A prog song in changing meters', 'שיר פרוג במשקלים מתחלפים', 'song', 3, [180, 240], '1/8', false),
+    ]),
+    fam('d-count', 'Counting and meter', 'ספירה ומשקל', [
+      L('d-count', 1, 'Simple and compound meters', 'משקלים פשוטים ומורכבים', 'compound', 3, [160, 220], '1/8', true),
+      L('d-count', 2, '6/8 or 3/4: the accents decide', '6/8 או 3/4: ההדגשות מכריעות', '68', 3, [160, 220], '1/8', true),
+      L('d-count', 3, '7/8: 2+2+3 or 3+2+2', '7/8: 2+2+3 או 3+2+2', '78', 3, [160, 220], '1/8', true),
+      L('d-count', 4, 'Read a time-signature change', 'לקרוא שינוי משקל', 'change', 4, [70, 110], '1/8', false),
+      L('d-count', 5, 'Count rests through the bars', 'לספור הפסקות לאורך התיבות', 'rests', 3, [70, 100], '1/8', true),
+    ]),
+    fam('d-notation', 'Drum notation', 'כתב התופים', [
+      L('d-notation', 1, 'The drum key', 'מפתח התופים', 'key', 4, [50, 80], '1/4', false),
+      L('d-notation', 2, 'Noteheads: x, round, open hat', 'ראשי תווים: x, עגול, היי־האט פתוח', 'heads', 3, [60, 90], '1/8', false),
+      L('d-notation', 3, 'Accents, ghosts, flams, drags', 'הדגשות, רפאים, פלאמים, דראגים', 'marks', 3, [50, 80], '1/16', false),
+      L('d-notation', 4, 'Tremolo slashes', 'קווי טרמולו', 'trem', 3, [50, 80], 'mixed', true),
+      L('d-notation', 5, 'Repeat bars and multi-bar rests', 'סימני חזרה והפסקות ארוכות', 'repeat', 3, [70, 100], '1/8', false),
+    ]),
+    fam('d-form', 'Song form', 'צורת השיר', [
+      L('d-form', 1, 'Crash on each section start', 'קראש בכל פתיחת קטע', 'starts', 3, [80, 110], '1/8', false),
+      L('d-form', 2, 'Section lengths: 4, 8, 12, 16', 'אורכי קטעים: 4, 8, 12, 16', 'lengths', 3, [80, 110], '1/8', false),
+      L('d-form', 3, 'The 12-bar blues', 'בלוז של 12 תיבות', 'blues', 3, [80, 110], '1/8T', false),
+      L('d-form', 4, 'AABA: the 32-bar form', 'AABA: הצורה של 32 תיבות', 'aaba', 3, [120, 160], '1/8T', false),
+      L('d-form', 5, 'Repeats and endings', 'חזרות וסיומות', 'endings', 3, [80, 110], '1/8', false),
     ]),
   ];
 }

@@ -123,7 +123,7 @@ describe('guitar technique badges', () => {
     expect(GUITAR_BADGE_FAMILIES.slice().sort()).toEqual(cat.map((f) => f.id).sort());
     for (const f of cat) {
       expect(familyLevelCount(f.id), f.id).toBe(f.levels.length);
-      expect(f.levels.length).toBeLessThanOrEqual(7);
+      expect(f.levels.length).toBeLessThanOrEqual(12);
       for (let lv = 1; lv <= f.levels.length; lv++) {
         const b = BADGE_BY_ID[`tech:${f.id}:${lv}`];
         expect(b, `${f.id}:${lv}`).toBeDefined();
