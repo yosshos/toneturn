@@ -617,7 +617,7 @@ export const GAME_CATS: { id: GameCat; icon: string; en: string; he: string }[] 
   { id: 'instrument', icon: '🎸', en: 'Instrument & sound', he: 'כלי וסאונד' },
   { id: 'social', icon: '⚔', en: 'Against others', he: 'מול אחרים' },
 ];
-export const GAMES2: { id: 'drills' | 'highway' | 'flight' | 'melodypuzzle' | 'nametune' | 'tuneup' | 'pitchmemory' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'peakhunter' | 'rush-voicing' | 'rush-scale' | 'rush-standard' | 'reharm' | 'transcribe' | 'bhtime' | 'riffecho' | 'polylock' | 'land' | 'groove-echo' | 'odd-echo' | 'time-lock' | 'ghost-control'; icon: string; hue: string; cat: GameCat; en: [string, string]; he: [string, string] }[] = [
+export const GAMES2: { id: 'drills' | 'highway' | 'flight' | 'melodypuzzle' | 'nametune' | 'tuneup' | 'pitchmemory' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'peakhunter' | 'rush-voicing' | 'rush-scale' | 'rush-standard' | 'reharm' | 'transcribe' | 'bhtime' | 'riffecho' | 'polylock' | 'land' | 'groove-echo' | 'odd-echo' | 'time-lock' | 'ghost-control' | 'rudiment-rush' | 'groove-off'; icon: string; hue: string; cat: GameCat; en: [string, string]; he: [string, string] }[] = [
   { id: 'rush-chord', icon: '🎹', hue: 'var(--hue-pitch)', cat: 'read', en: ['Chord Rush', 'Name chords on the neck, keys or staff — 60 seconds.'], he: ['מרוץ אקורדים', 'זהו אקורדים על הצוואר, הקלידים או החמשה — 60 שניות.'] },
   { id: 'rush-note', icon: '𝄞', hue: 'var(--hue-reading)', cat: 'read', en: ['Note Rush', 'Read notes off the staff as fast as you can.'], he: ['מרוץ תווים', 'קראו תווים מהחמשה הכי מהר שאפשר.'] },
   { id: 'rush-keysig', icon: '♯', hue: 'var(--hue-reading)', cat: 'read', en: ['Key Signature Rush', 'Sharps and flats → the key, fast.'], he: ['מרוץ סימני מפתח', 'דיאזים ובמולים → הסולם, מהר.'] },
@@ -648,6 +648,8 @@ export const GAMES2: { id: 'drills' | 'highway' | 'flight' | 'melodypuzzle' | 'n
   // DRUMS_NICHE_PLAN P2: one surface (a pad by microphone too).
   { id: 'time-lock', icon: '', hue: 'var(--hue-time)', cat: 'rhythm', en: ['Time Lock', 'The click drops out for longer each round — keep the time.'], he: ['נעילת זמן', 'הקליק נעלם לזמן ארוך יותר בכל סבב — שמרו על הזמן.'] },
   { id: 'ghost-control', icon: '', hue: 'var(--hue-time)', cat: 'instrument', en: ['Ghost Control', 'Accents, normal strokes and ghost notes — each in its band.'], he: ['שליטה ברפאים', 'הדגשות, מכות רגילות ותווי רפאים — כל אחת בעוצמה שלה.'] },
+  { id: 'rudiment-rush', icon: '', hue: 'var(--hue-time)', cat: 'instrument', en: ['Rudiment Rush', 'Two clean bars of a rudiment — faster after every pass.'], he: ['מרוץ רודימנטים', 'שתי תיבות נקיות של רודימנט — מהר יותר אחרי כל מעבר.'] },
+  { id: 'groove-off', icon: '', hue: 'var(--hue-time)', cat: 'social', en: ['Groove-off', 'The same three grooves for you and a friend — measured, at your own time.'], he: ['קרב גרובים', 'אותם שלושה גרובים לכם ולחבר — במדידה, כל אחד בזמנו.'] },
 ];
 
 /** Practice tab hub (owner 2026-11-08): songs, technique and singing get their own place above the games, with the tools. */
@@ -930,6 +932,7 @@ const GAME_GLYPH: Record<string, GlyphKind> = {
   melody: 'echo', rhythm: 'rhythm', truefalse: 'theory', ghost: 'ghost', duel: 'duel', daily: 'calendar', 'rush-chord': 'chords', 'rush-note': 'sight', 'rush-keysig': 'theory', 'rush-interval': 'intervals',
   'rush-progression': 'prog', 'rush-fretboard': 'guitar', peakhunter: 'eq', highway: 'rhythm', flight: 'sing', melodypuzzle: 'puzzle', nametune: 'name', drills: 'scales', tuneup: 'tune', pitchmemory: 'memory', groove: 'groove',
   'rush-voicing': 'voicingspy', reharm: 'reharm', 'rush-standard': 'standard', 'rush-scale': 'scalerush', transcribe: 'transcribe', bhtime: 'bhtime', riffecho: 'riff', polylock: 'polylock',
+  'rudiment-rush': 'rudrush', 'groove-off': 'grooveoff',
 };
 const CAT_COLOR: Record<string, string> = { ear: DOMAIN_COLOR.ear, rhythm: DOMAIN_COLOR.rhythm, memory: DOMAIN_COLOR.harmony, read: DOMAIN_COLOR.theory, voice: DOMAIN_COLOR.voice, instrument: DOMAIN_COLOR.play, social: '#EDE6F7' };
 

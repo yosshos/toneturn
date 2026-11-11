@@ -316,6 +316,44 @@ test.describe('drums course', () => {
         await expect(page.locator('.drum-score').first()).toBeVisible();
         await fitsScreen(page);
       });
+    // DRUMS P2 rest: mambo / songo / Mozambique (with the teacher-check note), Rudiment Rush, Groove-off.
+    for (const [lv, lang] of [
+      ['d-latin-8', 'en'],
+      ['d-latin-9', 'he'],
+      ['d-latin-10', 'en'],
+    ] as const)
+      test(`${lv} (${lang}) fits one screen and says the pattern is not teacher-checked yet`, async ({ page }) => {
+        await stubKit(page);
+        await seed(page, { kit: eKit, lang });
+        await openLevel(page, 'd-latin', lv);
+        await expect(page.locator('[data-teacher-check]').first()).toBeVisible();
+        await fitsScreen(page);
+      });
+    test('Rudiment Rush: the sticking zones on the setup, then the first round fits one screen', async ({ page }) => {
+      await stubKit(page);
+      await seed(page, { kit: eKit });
+      await page.goto('/?unlock#/rudiment-rush');
+      await expect(page.locator('[data-dg-zones="hat-snare"]')).toBeVisible();
+      await page.locator('[data-zone="head-rim"]').click();
+      await expect(page.locator('[data-dg-zones="head-rim"]')).toBeVisible();
+      await fitsScreen(page);
+      await page.locator('[data-dg-start]').click();
+      await expect(page.locator('[data-dg-round="1"]')).toBeVisible();
+      await fitsScreen(page);
+    });
+    test('Groove-off: the drum level, a local challenge code, the first round fits one screen', async ({ page }) => {
+      await stubKit(page);
+      await seed(page, { kit: eKit, lang: 'he' });
+      await page.goto('/?unlock#/groove-off');
+      await expect(page.locator('[data-groove-off="home"] [data-go-level="pp"]')).toBeVisible();
+      await fitsScreen(page);
+      await page.locator('#go-code').fill('nonsense');
+      await page.locator('.go-enter button[type="submit"]').click();
+      await expect(page.locator('.go-enter .form-error')).toBeVisible();
+      await page.locator('[data-go-new]').click();
+      await expect(page.locator('[data-groove-off="play"][data-dg-round="1"]')).toBeVisible();
+      await fitsScreen(page);
+    });
     for (const g of ['time-lock', 'ghost-control'])
       test(`drum game ${g} fits one screen, setup and the first round`, async ({ page }) => {
         await stubKit(page);

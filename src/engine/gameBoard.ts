@@ -62,4 +62,6 @@ export const GAME_TITLES: Record<string, { en: string; he: string }> = {
   'odd-echo': { en: 'Odd-meter Echo', he: 'הד משקלים אי־זוגיים' },
   'time-lock': { en: 'Time Lock', he: 'נעילת זמן' },
   'ghost-control': { en: 'Ghost Control', he: 'שליטה ברפאים' },
+  'rudiment-rush': { en: 'Rudiment Rush', he: 'מרוץ רודימנטים' },
+  'groove-off': { en: 'Groove-off', he: 'קרב גרובים' },
 };

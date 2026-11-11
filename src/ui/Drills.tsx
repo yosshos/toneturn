@@ -652,6 +652,11 @@ function LevelGrid({ lang, ds, level, items, onRun }: { lang: Lang; ds: DrillSet
         <button className="btn primary" onClick={() => onRun(row, 0)} data-level-start={level.id}>
           ▶ {lang === 'he' ? 'כל הווריאציות' : 'All variations'}
         </button>
+        {(level as { needsTeacherCheck?: boolean }).needsTeacherCheck && (
+          <small className="field-hint teacher-check" data-teacher-check="1">
+            {lang === 'he' ? 'התבנית עוד לא נבדקה בידי מורה.' : 'Pattern not yet teacher-checked.'}
+          </small>
+        )}
         <div className="heat drum-variants">
           {row.map((d, i) => {
             const st = items[d.itemId];

@@ -293,7 +293,7 @@ function fills(s: DrillSpec, lv: number): Drill {
   switch (lv) {
     case 6: {
       // Flam / accent fills into an anticipation: the crash + kick on the "&" of 4, then nothing on the next 1. A crash
-      // choke (aftertouch on most e-kits) is not measured.
+      // choke (aftertouch on most e-kits) is measured when the kit sends it.
       const hits: DH[] = [];
       const lands: number[] = [];
       for (let ph = 0; ph < 2; ph++) {
@@ -312,8 +312,9 @@ function fills(s: DrillSpec, lv: number): Drill {
         hits.push({ b: land, v: 'crash', h: 'R', d: 0.5 }, { b: land, v: 'kick', h: 'R', d: 0.5 });
       }
       const nm = [t('flams on the snare', 'פלאמים על הסנר'), t('accents down the toms', 'הדגשות במורד הטומים'), t('flams around the kit', 'פלאמים סביב המערכת')][op];
-      const goal: DrumGoal = { landing: { beats: lands, ms: 20 }, ...(op === 1 ? { accentPos: 0.85, accentVoices: ['tom1', 'tom2', 'tom3'] as DrumVoice[] } : { flam: 0.85 }) };
-      return finish(s, hits, { title: t(`Fill into the "&" of 4 · ${nm.en}`, `מעבר אל ה"וְ" של 4 · ${nm.he}`), bpm: 80, bars: 8, mic: false, goal });
+      // The choke (drumChoke.ts): each crash grabbed by the next 1 — measured only on a kit that sends chokes.
+      const goal: DrumGoal = { landing: { beats: lands, ms: 20 }, choke: { beats: lands, by: 0.5 }, ...(op === 1 ? { accentPos: 0.85, accentVoices: ['tom1', 'tom2', 'tom3'] as DrumVoice[] } : { flam: 0.85 }) };
+      return finish(s, hits, { title: t(`Fill into the "&" of 4 · ${nm.en}`, `מעבר אל ה"וְ" של 4 · ${nm.he}`), bpm: 80, bars: 8, tail: 1, mic: false, goal });
     }
     case 7: {
       // The fill length called: four phrases, each ending in a fill of 1, 2 or 4 beats (seeded) — read it, land on 1.

@@ -857,6 +857,22 @@ Object.assign(GLYPHS, {
     </g>
   ),
 });
+// DRUMS P2: Rudiment Rush (two sticks crossed over a rising tempo line), Groove-off (two bars facing, a "vs" gap).
+Object.assign(GLYPHS, {
+  rudrush: (
+    <g {...sw} strokeWidth={2.6}>
+      <path d="M-20 -16L8 12M20 -16L-8 12" />
+      <path d="M-24 20h12l8 -6h10l8 -6h10" strokeWidth={2} strokeLinejoin="round" />
+    </g>
+  ),
+  grooveoff: (
+    <g {...sw} strokeWidth={2.6}>
+      <path d="M-26 -6h18M-26 6h18M-22 -6v12M-14 -6v12" />
+      <path d="M8 -6h18M8 6h18M12 -6v12M20 -6v12" />
+      <path d="M-2 -14v28" strokeDasharray="3 4" strokeWidth={2} />
+    </g>
+  ),
+});
 // Drums niche families (DRUMS_NICHE_PLAN P1): songs (the road map — section blocks, one lit), prog (7/8), counting
 // ("1 & a"), the drum key (a staff with an x head over a round one), song form (D.S.).
 Object.assign(GLYPHS, {

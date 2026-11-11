@@ -46,7 +46,7 @@ export const TOPIC_GLYPH: Record<string, GlyphKind> = {
 export const GAME_STEP_GLYPH: Record<string, GlyphKind> = {
   'rush-interval': 'intervals', 'rush-chord': 'chords', 'rush-progression': 'prog', highway: 'rhythm', melodypuzzle: 'puzzle', nametune: 'name', flight: 'sing', 'rush-note': 'sight', 'rush-keysig': 'theory', 'rush-fretboard': 'fretboard', peakhunter: 'eq', drills: 'scales', licks: 'lick', transcribe: 'transcribe',
   // Drum games P1 (DRUMS_NICHE_PLAN §3).
-  land: 'landit', 'groove-echo': 'grooveecho', 'odd-echo': 'oddecho', 'time-lock': 'timelock', 'ghost-control': 'ghostctl',
+  land: 'landit', 'groove-echo': 'grooveecho', 'odd-echo': 'oddecho', 'time-lock': 'timelock', 'ghost-control': 'ghostctl', 'rudiment-rush': 'rudrush', 'groove-off': 'grooveoff',
   // PIANO_JAZZ P2: repertoire steps and the advanced games as bonus steps (their Arcade symbols).
   repertoire: 'repstep', 'rush-voicing': 'voicingspy', 'rush-scale': 'scalerush', 'rush-standard': 'standard', reharm: 'reharmspot', bhtime: 'bhtime', riffecho: 'riff', polylock: 'polylock',
 };

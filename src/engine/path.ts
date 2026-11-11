@@ -926,6 +926,7 @@ export const GAME_STEPS: Record<string, { domain: DomainId; skill: SkillId; sub:
   // DRUMS_NICHE_PLAN P2: Time Lock and Ghost Control.
   'time-lock': { domain: 'instrument', skill: 'instrument', sub: 'drum-tech', title: { en: 'Time Lock', he: 'נעילת זמן' }, forPlays: ['drums'] },
   'ghost-control': { domain: 'instrument', skill: 'instrument', sub: 'drum-tech', title: { en: 'Ghost Control', he: 'שליטה ברפאים' }, forPlays: ['drums'] },
+  'rudiment-rush': { domain: 'instrument', skill: 'instrument', sub: 'drum-tech', title: { en: 'Rudiment Rush', he: 'מרוץ רודימנטים' }, forPlays: ['drums'] },
 };
 const AREA_GAMES: Record<DomainId, string[]> = {
   pitch: ['rush-interval', 'rush-chord', 'rush-progression'],
@@ -934,7 +935,7 @@ const AREA_GAMES: Record<DomainId, string[]> = {
   voice: ['flight'],
   reading: ['rush-note', 'rush-keysig'],
   creative: ['rush-chord'],
-  instrument: ['drills', 'rush-fretboard', 'peakhunter', 'land', 'groove-echo', 'odd-echo', 'time-lock', 'ghost-control'],
+  instrument: ['drills', 'rush-fretboard', 'peakhunter', 'land', 'groove-echo', 'odd-echo', 'time-lock', 'ghost-control', 'rudiment-rush'],
 };
 /** The game for a unit's leading area (rotating by unit number; mic / instrument / pack rules apply). */
 export function gameForArea(area: DomainId, n: number, inp: Pick<PathInput, 'noMic' | 'noSing' | 'plays' | 'packs'> & { noDrills?: boolean; course?: CourseId }): string | null {

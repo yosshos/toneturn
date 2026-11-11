@@ -23,6 +23,8 @@ const r6 = (x: number): number => Math.round(x * 1e6) / 1e6;
 export interface DrumLevelDef extends GuitarLevelDef {
   /** Every item of the level is single-surface: offered in microphone (practice pad) mode. */
   mic: boolean;
+  /** Our own transcription of a traditional pattern a teacher has not checked yet (the take's page says so). */
+  needsTeacherCheck?: boolean;
 }
 export interface DrumFamilyDef extends GuitarFamilyDef {
   levels: DrumLevelDef[];
@@ -1095,6 +1097,10 @@ export function drumFamilies(): DrumFamilyDef[] {
       L('d-latin', 5, 'Cha-cha-chá bell', 'פעמון צ׳ה-צ׳ה-צ׳ה', 'chacha', 3, [100, 130], '1/8', false),
       L('d-latin', 6, '6/8 bembé', 'במבה 6/8', 'bembe', 3, [240, 330], '1/8', false),
       L('d-latin', 7, 'Baião', 'באיון', 'baiao', 3, [90, 120], '1/16', false),
+      // DRUMS_NICHE_PLAN §6.2 (owner 2026-11-11): our own transcriptions, marked until a teacher checks them.
+      { ...L('d-latin', 8, 'Mambo bell over the clave', 'פעמון מאמבו מעל הקלאבה', 'mambo', 3, [100, 140], '1/8', false), needsTeacherCheck: true },
+      { ...L('d-latin', 9, 'Songo', 'סונגו', 'songo', 3, [90, 120], '1/16', false), needsTeacherCheck: true },
+      { ...L('d-latin', 10, 'Mozambique', 'מוזמביק', 'mozambique', 3, [90, 120], '1/16', false), needsTeacherCheck: true },
     ]),
     // DRUMS_NICHE_PLAN (P1, 2026-11-11): songs and song forms, prog / fusion, reading and theory played on the kit.
     fam('d-song', 'Songs and song forms', 'שירים וצורות שיר', [
