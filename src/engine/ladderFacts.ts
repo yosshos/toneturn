@@ -101,10 +101,7 @@ export function withLadderFacts(
   }
   for (const pr of VOCAL_PROGRAMS) {
     if (!opts.families.includes(pr.id)) continue;
-    pr.levels.forEach((_, i) => {
-      const n = pr.base + i + 1;
-      if (opts.vocalPassed.includes(n)) set(`vocal:${n}`, 3);
-    });
+    for (const n of pr.refs) if (opts.vocalPassed.includes(n)) set(`vocal:${n}`, 3);
   }
   return { ...f, steps, tests };
 }

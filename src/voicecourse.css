@@ -1,0 +1,164 @@
+/* The voice course (VOICE_CURRICULUM): family list and the timed takes. One phone screen, no scroll in a take. */
+.vtimed .vocal-instr {
+  font-size: 0.98rem;
+  line-height: 1.35;
+}
+.vt-strip {
+  display: grid;
+  gap: 3px;
+  margin: 8px 0;
+  direction: ltr;
+}
+.vt-strip span {
+  height: 16px;
+  border-radius: 4px;
+  background: var(--card-2);
+  opacity: 0.55;
+}
+.vt-strip span.beat {
+  opacity: 0.85;
+}
+.vt-strip span.bar {
+  box-shadow: inset 2px 0 0 var(--ink-dim);
+}
+.vt-strip span.hit {
+  background: var(--mint);
+  opacity: 1;
+}
+.vt-strip span.call.hit {
+  background: var(--gold);
+}
+.vt-strip span.silent {
+  background: transparent;
+  outline: 1px dashed var(--line);
+}
+.vt-strip span.silent.hit {
+  background: color-mix(in srgb, var(--mint) 45%, transparent);
+}
+.vt-strip span.now {
+  transform: scaleY(1.35);
+}
+.vt-chords {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+.vt-chords li {
+  padding: 6px 2px;
+  border-radius: 10px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  background: var(--card-2);
+  border: 1px solid var(--line);
+}
+.vt-chords li.now {
+  border-color: var(--mint);
+  background: color-mix(in srgb, var(--mint) 22%, var(--card-2));
+}
+.vt-chords li.ok {
+  border-color: var(--mint);
+}
+.vt-chords li.off {
+  border-color: var(--rose, #e5484d);
+}
+.vt-phrases {
+  list-style: none;
+  padding: 0;
+  margin: 6px 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.vt-phrases li {
+  flex: 1 1 64px;
+  display: grid;
+  gap: 2px;
+  padding: 6px 8px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  font-size: 0.82rem;
+  text-align: center;
+}
+.vt-phrases li.good {
+  border-color: var(--mint);
+}
+.vt-phrases li.weak {
+  border-color: var(--rose, #e5484d);
+}
+.vt-hp {
+  font-size: 0.88rem;
+  margin: 2px 0;
+}
+.vt-foot {
+  margin-top: 6px;
+  font-size: 0.8rem;
+}
+.vtimed .sing-roll {
+  width: 100%;
+  height: 120px;
+}
+.vtimed .take-card {
+  padding: 10px 12px;
+}
+
+/* The family list on the singing screen */
+.vfam-list {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0;
+  display: grid;
+  gap: 8px;
+}
+.vfam {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--card);
+  overflow: hidden;
+}
+.vfam > button.vfam-head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: none;
+  border: 0;
+  color: var(--ink);
+  text-align: start;
+  cursor: pointer;
+}
+.vfam-head .vfam-text {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+}
+.vfam-head small {
+  color: var(--ink-dim);
+}
+.vfam-bar {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--card-2);
+  overflow: hidden;
+  margin-top: 3px;
+}
+.vfam-bar span {
+  display: block;
+  height: 100%;
+  background: var(--mint);
+}
+.vfam .vocal-levels {
+  margin: 0;
+  padding: 0 10px 10px;
+}
+.vstage {
+  margin: 14px 0 4px;
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
+  color: var(--ink-soft);
+  font-weight: 700;
+}

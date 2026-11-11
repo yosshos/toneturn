@@ -20,6 +20,7 @@ import { SUB_SKILLS, type SubStat } from './taxonomy';
 import { addDays, type Counts, type InputKind, type Peaks, type StatsDays, type StatsHours } from './stats';
 import type { CourseId } from './courses';
 import { tiersCleared, topCleared, type GameTiers } from './gameTiers';
+import { VOICE_FAMILIES } from './voiceFamilies';
 import { COURSE_GAMES } from '../ui/courseRows';
 import { AREA_NAME, completedChallenges, RANK_AREAS, RANK_TIERS, TIER_NAME, tierStart, type RankArea, type Ranks, type RankTier } from './ranks';
 
@@ -56,6 +57,8 @@ export interface BadgeInput {
   workoutDays?: string[];
   /** Game tiers (GAMES_TIERS_PLAN §5.2): the highest tier cleared per game. */
   gameTiers?: GameTiers;
+  /** Vocal levels passed (progress.vocal.passed): the voice course's family and milestone badges. */
+  vocalPassed?: number[];
   technique?: {
     /** Family level 0–7 (drills engine, e.g. familyLevel(states, f)). */
     levels?: Partial<Record<FamilyId, number>>;
@@ -583,6 +586,39 @@ function drumBadges(): Badge[] {
   return out;
 }
 
+// ---------------------------------------------------------------- voice course (VOICE_CURRICULUM)
+// Family milestones for each of the 16 voice families (first steps, halfway, the whole family) and the four stage
+// milestones of §6: Song Singer → Musician Singer → Jazz Singer → Jazz Artist. Measured singing only (levels passed).
+function voiceBadges(): Badge[] {
+  const out: Badge[] = [];
+  for (const f of VOICE_FAMILIES) {
+    const n = f.refs.length;
+    const tiers = Array.from(new Set([Math.min(2, n), Math.ceil(n / 2), n])).sort((a, b) => a - b);
+    tiers.forEach((k, i) => {
+      const what = k === n ? { en: 'the whole family', he: 'כל המשפחה' } : i === 0 ? { en: 'first steps', he: 'צעדים ראשונים' } : { en: 'halfway', he: 'חצי הדרך' };
+      out.push({
+        id: `tech:voice:${f.id}:${k}`,
+        cat: 'technique',
+        icon: '🎤',
+        group: f.id,
+        tone: k === n ? 'platinum' : i === 0 ? 'bronze' : 'gold',
+        name: { en: `${f.title.en}: ${what.en}`, he: `${f.title.he}: ${what.he}` },
+        desc: { en: `${f.title.en}: pass ${k} of its ${n} levels.`, he: `${f.title.he}: לעבור ${k} מתוך ${n} השלבים.` },
+        rule: (x: BadgeInput): BadgeCheck => count(f.refs.filter((r) => x.vocalPassed?.includes(r)).length, k),
+      });
+    });
+  }
+  const MILESTONES: [string, L, L, number[], RankTier][] = [
+    ['song-singer', { en: 'Song Singer', he: 'זמר שירים' }, { en: 'A whole song with the band, every phrase passed.', he: 'שיר שלם עם הלהקה, כל משפט עבר.' }, [1303], 'gold'],
+    ['musician-singer', { en: 'Musician Singer', he: 'זמר מוזיקאי' }, { en: 'Eight bars alone without drifting, swing eighths, and sight-singing level 5.', he: 'שמונה תיבות לבד בלי זחילה, שמיניות בסווינג, ושירה מתווים בשלב 5.' }, [703, 1104, 405], 'platinum'],
+    ['jazz-singer', { en: 'Jazz Singer', he: 'זמר ג׳אז' }, { en: 'A ballad, and scat that lands on chord tones.', he: 'בלדה, וסקאט שנוחת על צלילי אקורד.' }, [1405, 1503], 'diamond'],
+    ['jazz-artist', { en: 'Jazz Artist', he: 'אמן ג׳אז' }, { en: 'Rhythm changes at tempo, chromatic approach in scat, and the Barry Harris lines.', he: 'ריתם צ׳יינג׳ס בטמפו, גישה כרומטית בסקאט, וקווי בארי האריס.' }, [1407, 1504, 307], 'master'],
+  ];
+  for (const [id, name, desc, refs, tone] of MILESTONES)
+    out.push({ id: `tech:voice:milestone:${id}`, cat: 'technique', icon: '🎤', group: 'voice-milestones', tone, name, desc, rule: (x: BadgeInput): BadgeCheck => count(refs.filter((r) => x.vocalPassed?.includes(r)).length, refs.length) });
+  return out;
+}
+
 // ---------------------------------------------------------------- the pianist's ear (PIANO_AUDIT §3)
 // Its levels are call-and-response at one calm tempo, so a tempo band says nothing: the milestones count the
 // different items (kind × option, 14 in all) played back clean at least once — first steps, halfway, all of them.
@@ -697,6 +733,7 @@ const techniqueBadges: Badge[] = [
   ...guitarSpecials(),
   ...bassBadges(),
   ...drumBadges(),
+  ...voiceBadges(),
 ];
 
 // ======================================================================= specials
@@ -809,6 +846,7 @@ export function badgeCourse(b: Pick<Badge, 'id' | 'cat' | 'group'>): { course: B
       return JAZZ_SKILLS.includes(g as SkillId) ? { course: 'ear', alsoIn: ['jazz'] } : { course: 'ear' };
     }
     case 'technique': {
+      if (g.startsWith('v-') || g === 'voice-milestones' || b.id.startsWith('tech:voice:')) return { course: 'voice' };
       if (isBassGroup(g) || b.id.startsWith('tech:g-bass')) return { course: 'bass' };
       if (g.startsWith('d-') || b.id.startsWith('tech:drums:')) return { course: 'drums' };
       if (g.startsWith('g-')) return { course: 'guitar' };

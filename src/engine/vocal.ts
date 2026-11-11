@@ -512,7 +512,31 @@ export type MetricKey =
   | 'references'
   | 'ornament'
   | 'ornamentSpeed'
-  | 'curve';
+  | 'curve'
+  // VOICE_CURRICULUM families (voiceTime / voiceSongs / vocalMore)
+  | 'onset'
+  | 'spread'
+  | 'coverage'
+  | 'swing'
+  | 'lateness'
+  | 'entry'
+  | 'reentry'
+  | 'target'
+  | 'phrases'
+  | 'breath'
+  | 'tuneDrift'
+  | 'noteError'
+  | 'chorus'
+  | 'moved'
+  | 'kept'
+  | 'guide'
+  | 'landingTones'
+  | 'approach'
+  | 'accent'
+  | 'arc'
+  | 'break'
+  | 'shape'
+  | 'steady';
 
 export interface MetricScore {
   key: MetricKey;
@@ -524,7 +548,70 @@ export interface MetricScore {
 
 // ------------------------------------------------------------------ the ladder (P.2)
 
-export type VocalKind = 'hold' | 'straight' | 'vibrato-delayed' | 'vibrato-onoff' | 'vibrato-steady' | 'range' | 'messa' | 'glide' | 'melody' | 'leap' | 'rhythmic' | 'staccato' | 'scale' | 'vibrato-rate' | 'vibrato-width' | 'vibrato-alternate' | 'vibrato-notes' | 'vibrato-register' | 'vibrato-messa' | 'harmony-hold' | 'harmony-line' | 'sight' | 'ornament' | 'dynamic';
+export type VocalKind = 'hold' | 'straight' | 'vibrato-delayed' | 'vibrato-onoff' | 'vibrato-steady' | 'range' | 'messa' | 'glide' | 'melody' | 'leap' | 'rhythmic' | 'staccato' | 'scale' | 'vibrato-rate' | 'vibrato-width' | 'vibrato-alternate' | 'vibrato-notes' | 'vibrato-register' | 'vibrato-messa' | 'harmony-hold' | 'harmony-line' | 'sight' | 'ornament' | 'dynamic' | TimedKind | MoreKind;
+
+/** VOICE_CURRICULUM: kinds sung against a clock (clicks or the band) — run by the timed session (VoiceTimed.tsx). */
+export type TimedKind = 'time' | 'song' | 'scat';
+/** VOICE_CURRICULUM: further held / phrase kinds of the new families (graded in vocalMore.ts). */
+export type MoreKind = 'breath-hold' | 'breath-phrase' | 'breath-plan' | 'fine-tune' | 'drift-phrase' | 'siren' | 'terraced-scale' | 'edge' | 'terraced' | 'accents' | 'arc' | 'vibrato-jazz' | 'vibrato-widen' | 'inflect';
+export const TIMED_KINDS: VocalKind[] = ['time', 'song', 'scat'];
+
+/** Time feel items (F7, scat L1): where the singer's "dah"s go against clicks. */
+export interface TimeSpec {
+  bpm: number;
+  meter: number;
+  /** Bars after the count-in. */
+  bars: number;
+  /** Target onsets, in beats from the first beat after the count-in. */
+  hits: number[];
+  feel: 'on' | 'entry' | 'anticipate' | 'swing' | 'behind' | 'back' | 'clock' | 'call';
+  /** Clicks only on these beats of each bar (0-based); default every beat. */
+  clickOn?: number[];
+  /** Beats [from, to) without clicks (the inner clock). */
+  silent?: [number, number];
+  /** Back-phrasing: the written onsets (beats) and the beat of the target note to catch. */
+  written?: number[];
+  target?: number;
+  /** Call and response: the app's call (beats) is played first, the singer copies it `answerAt` beats later. */
+  call?: number[];
+  answerAt?: number;
+}
+/** Band songs (F13, F14, F2 unaccompanied): a song of src/content/voiceSongs.ts or the songbook, phrase by phrase. */
+export interface SongSpec {
+  id: string;
+  /** Phrase indices [from, to] (default: the whole song). */
+  phrases?: [number, number];
+  /** false = unaccompanied: only a count-in and the key. */
+  band: boolean;
+  /** Time graded (onsets of clear notes). */
+  rhythm: boolean;
+  /** Every phrase at or above this (the pass rule). */
+  need: number;
+  bpm?: number;
+  /** Pitch tolerance (cents), default 50. */
+  tol?: number;
+  /** Chorus at least 3 dB louder than the verse. */
+  chorus?: boolean;
+  /** Unaccompanied rules: drift and the median note error (cents). */
+  drift?: { max: number; median: number };
+  /** Laid back: the mean 40–120 ms late, spread ≤ 40 ms (8 or more onsets). */
+  feel?: 'behind';
+  /** Interpreted: keep the long notes, move at least 30 % of the onsets. */
+  interpret?: boolean;
+  /** One pass, no loops (the recital card). */
+  recital?: boolean;
+  /** Ballad / bossa: steady long notes (no wobble), and no vibrato when `straight`. */
+  longNotes?: 'steady' | 'straight';
+}
+/** Scat (F15): improvised or chosen notes over the band, graded on pitch, rhythm and landing — never the syllables. */
+export interface ScatSpec {
+  mode: 'guide' | 'landing' | 'approach';
+  chart: string;
+  style: 'swing' | 'bossa' | 'ballad';
+  bpm: number;
+  /** Times through the chart. */
+  loops?: number;
+}
 
 export interface VocalItem {
   id: string;
@@ -569,7 +656,33 @@ export interface VocalItem {
   bh?: { mode: 'name' | 'degree' | 'free' | 'resolve' | 'six' | 'dim' | 'chromatic'; kind?: 'dom7' | 'm6' | 'maj6'; rootOffset?: number; degree?: number; dir?: 'up' | 'down'; dim?: number[] };
   /** Scales and modes: sing up in one scale and (optionally) down in another, from a named tonic. */
   scale?: ScaleSpec;
+  /** VOICE_CURRICULUM families: a timed item, a band song, scat, or a further held / phrase item. */
+  time?: TimeSpec;
+  song?: SongSpec;
+  scat?: ScatSpec;
+  more?: MoreSpec;
   difficulty: number;
+}
+
+/** Options of the further kinds (vocalMore.ts). */
+export interface MoreSpec {
+  /** Breath plan: breathe after these notes (0-based) and nowhere else. */
+  breathAfter?: number[];
+  /** Only the final share of the hold is graded double (breath-hold). */
+  finalShare?: number;
+  /** Loudness: per-note targets (0 = soft … 2 = loud) for terraced / arc; accented notes for accents. */
+  levels?: number[];
+  accents?: boolean[];
+  /** Chord tone / tension asked for (its name: "3", "7", "9", "♯11" …). */
+  tone?: string;
+  /** Inflection shape. */
+  shape?: 'scoop' | 'fall' | 'bend' | 'ghost';
+  /** Range edge: semitones above the top of the range. */
+  above?: number;
+  /** Repetitions of a figure at rising loudness (terraced scale). */
+  reps?: number;
+  /** A harmony hold sung with no vibrato at all (close harmony, F5 L7). */
+  straight?: boolean;
 }
 
 export { MODE_STEPS, type ModeId } from './modes';
@@ -1087,7 +1200,9 @@ export const atRange = (range: VoiceRange, p: number, margin = 1) => Math.round(
 
 /** Target notes for an item in this voice. */
 export function itemTargets(item: VocalItem, range: VoiceRange): number[] {
-  if (item.kind === 'range' || item.kind === 'vibrato-register') return (item.at as number[]).map((p) => atRange(range, p));
+  if (item.kind === 'range' || item.kind === 'vibrato-register' || item.kind === 'siren') return (item.at as number[]).map((p) => atRange(range, p));
+  // Range extension (F3 L5): just above the top of the range, on purpose.
+  if (item.kind === 'edge') return [range.high + (item.more?.above ?? 1)];
   if (item.kind === 'scale' && item.scale) {
     const t = scaleTonic(item.scale, range) ?? { midi: atRange(range, 0), name: item.scale.tonic };
     return scaleSteps(item.scale).map((st) => t.midi + st);
@@ -1103,6 +1218,7 @@ export function itemTargets(item: VocalItem, range: VoiceRange): number[] {
 
 /** Whether every note of the item fits in this range. */
 export function itemFits(item: VocalItem, range: VoiceRange): boolean {
+  if (item.kind === 'edge') return true;
   return itemTargets(item, range).every((m) => m >= range.low && m <= range.high);
 }
 
@@ -1121,16 +1237,16 @@ export interface TakeGrade {
   glide?: GlideMetrics;
 }
 
-const M = (key: MetricKey, value: number, unit: MetricScore['unit'], score: number, weight: number): MetricScore => ({ key, value: Math.round(value * 10) / 10, unit, score, weight });
+export const M = (key: MetricKey, value: number, unit: MetricScore['unit'], score: number, weight: number): MetricScore => ({ key, value: Math.round(value * 10) / 10, unit, score, weight });
 
-function finish(metrics: MetricScore[], extra: Partial<TakeGrade>): TakeGrade {
+export function finish(metrics: MetricScore[], extra: Partial<TakeGrade>): TakeGrade {
   const w = metrics.reduce((a, m) => a + m.weight, 0) || 1;
   const score = metrics.reduce((a, m) => a + m.score * m.weight, 0) / w;
   const weakest = metrics.length ? metrics.reduce((a, m) => (m.score < a.score ? m : a)).key : null;
   return { unclear: false, score: Math.round(score * 1000) / 1000, metrics, weakest, ...extra };
 }
 
-const UNCLEAR: TakeGrade = { unclear: true, score: 0, metrics: [], weakest: null };
+export const UNCLEAR: TakeGrade = { unclear: true, score: 0, metrics: [], weakest: null };
 
 /** Grade one hold-type take (hold, straight, vibrato, messa). On-demand rate / width gate the score. */
 export function gradeHold(item: VocalItem, frames: SungFrame[], target: number, style: VibratoStyle = 'pop'): TakeGrade {
@@ -1323,7 +1439,7 @@ export function gradeTake(item: VocalItem, frames: SungFrame[], range: VoiceRang
         const g = gradeHold({ ...item, kind: 'hold' }, frames, nearestMidi(frames), style); // intonation against the chosen semitone
         return { ...g, chordMade: r };
       }
-      return gradeHold({ ...item, kind: 'hold' }, frames, targets[0], style);
+      return gradeHold({ ...item, kind: item.more?.straight ? 'straight' : 'hold' }, frames, targets[0], style);
     }
     case 'harmony-line':
       return gradeMelody({ ...item, kind: 'rhythmic' }, frames, targets);

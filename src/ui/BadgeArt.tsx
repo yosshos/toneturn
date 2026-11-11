@@ -1140,3 +1140,6 @@ export function AreaGlyph({ area, size = 18 }: { area: RankArea; size?: number }
 
 /** Tier colour for particles and glows. */
 export const tierGlow = (t: RankTier | undefined) => METALS[t ?? 'gold'].glow;
+
+// VOICE_CURRICULUM: the voice course's family and milestone badges (tech:voice:…) share the singing glyph.
+registerFamilyGlyph('voice', GLYPHS['skill:singing']);

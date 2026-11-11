@@ -609,6 +609,23 @@ export const GLYPHS: Record<string, ReactNode> = {
       <circle cx={14} cy={-16} r={3} fill={I} />
     </>
   ),
+  // VOICE_CURRICULUM: the voice course's own families.
+  /** Breath & sustain: three air streams, the middle one longest (one long breath). */
+  breath: (
+    <g {...sw}>
+      <path d="M-24 -10 Q-6 -16 10 -10" />
+      <path d="M-24 0 Q2 -6 24 0" strokeWidth={3.6} />
+      <path d="M-24 10 Q-6 4 10 10" />
+    </g>
+  ),
+  /** Songs with the band: a microphone on its stand. */
+  mic: (
+    <g {...sw}>
+      <rect x={-6} y={-22} width={12} height={20} rx={6} fill={I} />
+      <path d="M-12 -8 Q-12 8 0 8 Q12 8 12 -8" />
+      <path d="M0 8V20M-9 20H9" />
+    </g>
+  ),
 };
 /** A short music mark in the note head (EAR_THEORY_AUDIT: one per ear / jazz path step, src/ui/stepMarks.ts). */
 const mark = (s: string) => {
