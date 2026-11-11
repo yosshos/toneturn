@@ -18,6 +18,22 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.69.1',
+    date: '2026-11-11',
+    en: [
+      'English narration plays through the app’s own sound (it was silent on some phones); Diagnostics shows why if it still can’t',
+      'Keyboard pictures show their notes again, and Chord Rush plays the chord',
+      'Find my level follows the course (piano, guitar, bass, drums: their playing test; singing: the voice test)',
+      'Summaries stay short for every kind of question',
+    ],
+    he: [
+      'הקריינות באנגלית מושמעת דרך הסאונד של האפליקציה (בחלק מהטלפונים היא לא נשמעה); באבחון מוצג למה אם עדיין לא',
+      'תמונות המקלדת מראות שוב את התווים, ומרוץ האקורדים משמיע את האקורד',
+      '"מציאת הרמה שלי" לפי הקורס (פסנתר, גיטרה, בס, תופים: מבחן הנגינה שלהם; שירה: מבחן הקול)',
+      'הסיכומים נשארים קצרים בכל סוג שאלה',
+    ],
+  },
+  {
     version: '0.69.0',
     date: '2026-11-11',
     en: [
