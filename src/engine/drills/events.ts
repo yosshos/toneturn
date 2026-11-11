@@ -52,6 +52,25 @@ function secondTag(drill: Drill): Tags[number] | null {
   if (f === 'b-pocket') return { skill: 'timing', sub: 'timing/steady', w: 0.4 };
   if (f === 'b-walk') return { skill: 'cadences', sub: 'cadences/progression', w: 0.3 };
   if (f === 'b-chord') return { skill: 'theory', sub: 'theory/harmony', w: 0.3 };
+  // BASS_NICHE_PLAN P1: swing time and Latin feel the steady beat; odd meters, polymeter and odd-meter riffs meter;
+  // metric modulation and displacement subdividing; Barry Harris lines the Barry sub; form the progression; solos
+  // improvisation (trading 4s: call and response); the new ear levels their ear skill through the bass.
+  if (f === 'b-swing') return { skill: 'timing', sub: 'timing/steady', w: 0.4 };
+  if (f === 'b-latin') return drill.meter % 3 === 0 && drill.pulse === 8 ? { skill: 'meter', sub: 'meter/compound', w: 0.3 } : { skill: 'timing', sub: 'timing/steady', w: 0.3 };
+  if (f === 'b-odd') return drill.spec.kind === 'displace' ? { skill: 'timing', sub: 'timing/subdivide', w: 0.4 } : { skill: 'meter', sub: 'meter/odd', w: 0.4 };
+  if (f === 'b-poly') return drill.tempoMap?.length || drill.spec.kind === 'four3' ? { skill: 'timing', sub: 'timing/subdivide', w: 0.4 } : { skill: 'meter', sub: 'meter/odd', w: 0.4 };
+  if (f === 'b-prog') return drill.pulse === 8 ? { skill: 'meter', sub: 'meter/odd', w: 0.3 } : { skill: 'timing', sub: 'timing/steady', w: 0.3 };
+  if (f === 'b-barry') return { skill: 'chords', sub: 'chords/barry', w: 0.3 };
+  if (f === 'b-jform') return { skill: 'cadences', sub: 'cadences/progression', w: 0.3 };
+  if (f === 'b-impro' && (drill.spec.kind === 'trade4' || drill.spec.kind === 'answer')) return { skill: 'improv', sub: 'improv/answer', w: 0.3 };
+  if (f === 'b-impro') return { skill: 'improv', sub: 'improv/play', w: 0.3 };
+  if (f === 'b-ear') {
+    const k = drill.spec.kind;
+    if (k === 'quality2' || k === 'quality3') return { skill: 'chords', sub: 'chords/extension', w: 0.5 };
+    if (k === 'motion' || k === 'secdom' || k === 'where' || k === 'dropin' || k === 'bridge') return { skill: 'cadences', sub: 'cadences/progression', w: 0.5 };
+    if (k === 'transcribe-long') return { skill: 'dictation', sub: 'dictation/bass', w: 0.5 };
+    if (k === 'riff-ear') return { skill: 'rhythm-dictation', sub: 'rhythm-dictation/dictate', w: 0.5 };
+  }
   // The pianist's ear (PIANO_AUDIT §3): the ear share through the keys, by what the level asks to hear.
   if (f === 'k-ear') {
     const k = drill.spec.kind;

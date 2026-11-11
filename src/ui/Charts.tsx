@@ -21,6 +21,7 @@ import { midi } from '../speech/midi';
 import { MODE_NAMES, type ModeId } from '../engine/modes';
 import { BAR_SCALES, RULE_NAME, autoScale, challengeOf, checkRules, type PlayedNote, type RuleSet, type RulesReport } from '../engine/improvRules';
 import { LeadSheetImport, RulesPanel } from './ImprovRules';
+import { improvCaptureOpts } from '../engine/drills/bassNiche';
 import { irealStyle, type LeadSheet } from '../engine/leadsheet';
 
 export interface MyChart {
@@ -69,6 +70,7 @@ export function ChartsScreen({ settings, onChange, onBack, onImprov, onDrill, on
     return (
       <ChartPlayer
         lang={lang}
+        capture={improvCaptureOpts(settings)}
         chart={open}
         saved={mine.some((c) => c.id === open.id)}
         onSave={(c) => {
@@ -193,7 +195,7 @@ export function ChartsScreen({ settings, onChange, onBack, onImprov, onDrill, on
   );
 }
 
-function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, onDrill, best }: { best?: Record<string, number>; lang: 'en' | 'he'; chart: MyChart; saved: boolean; onSave: (c: MyChart) => void; onDelete: () => void; onBack: () => void; onImprov?: (score: number, bpm: number, chords: number, level?: string, challenge?: string) => void; onDrill?: (kind: string, stride: boolean) => void }) {
+function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, onDrill, best, capture }: { best?: Record<string, number>; /** BASS_NICHE_PLAN J3b: the bass's low-register capture in the bass course (E1 = 41 Hz). */ capture?: { minHz: number; fftSize: number } | null; lang: 'en' | 'he'; chart: MyChart; saved: boolean; onSave: (c: MyChart) => void; onDelete: () => void; onBack: () => void; onImprov?: (score: number, bpm: number, chords: number, level?: string, challenge?: string) => void; onDrill?: (kind: string, stride: boolean) => void }) {
   const tx = TX[lang];
   const ix = IMP[lang];
   const [headphones, setHeadphones] = useHeadphones();
@@ -374,6 +376,7 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
         maxMs: b.length * 1000,
         silenceMs: 600_000,
         hopMs: 20,
+        ...(capture ?? {}),
         onFrame: (f) => {
           if (f.t < listenFrom) return gate?.calibrate(f);
           if (gate && f.t - listenFrom < 0.03) gate.finishCalibration();

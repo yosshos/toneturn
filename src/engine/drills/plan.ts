@@ -6,6 +6,7 @@ import { catalog, generate, keysInOrder, type FamilyDef, type LevelDef } from '.
 import { customIncluded, customKeys, customToDrill } from './custom';
 import { itemPass, todaysItems, type TodayItem } from './ladder';
 import { micUnmeasurable, notesPerBeat } from './analyze';
+import { inBassTrack } from './bassNiche';
 import { guitarCatalog, guitarStyleMatch, type GuitarFamilyDef } from './guitar';
 import { tuningById } from '../fretboard';
 import type { DrumFamilyDef } from './drums';
@@ -19,7 +20,7 @@ export const families = (instrument: Instrument = 'piano'): FamilyDef[] => (inst
 export const familyById = (id: FamilyId): FamilyDef | undefined => CAT.find((f) => f.id === id) ?? GCAT.find((f) => f.id === id);
 
 /** What the hub filters by: the piano emphasis, or the guitar instrument + style (genre); bass: the bass tuning. */
-export type ShowSettings = Pick<DrillSettings, 'emphasis'> & Partial<Pick<DrillSettings, 'instrument' | 'guitarStyle' | 'pianoMicOnly'>> & { bassTuning?: string; /** Drums by microphone: a practice pad (single-surface levels, DRUMS_CURRICULUM §3.8) or an acoustic kit (those + basic grooves). */ drumMic?: DrumMic };
+export type ShowSettings = Pick<DrillSettings, 'emphasis'> & Partial<Pick<DrillSettings, 'instrument' | 'guitarStyle' | 'pianoMicOnly' | 'bassTrack'>> & { bassTuning?: string; /** Drums by microphone: a practice pad (single-surface levels, DRUMS_CURRICULUM §3.8) or an acoustic kit (those + basic grooves). */ drumMic?: DrumMic };
 /** The drums setup for the level filters (drumKit.drumMicOf): false / undefined = MIDI; true = a practice pad (old callers). */
 export type DrumMic = boolean | 'pad' | 'acoustic';
 
@@ -79,7 +80,8 @@ export function shownFamilies(settings: ShowSettings): FamilyDef[] {
   const style = settings.guitarStyle;
   const hidden = inst === 'bass' ? hiddenBassLevels(settings.bassTuning) : [];
   // Retired families (the old g-bass starter) keep their ids for progress but are not shown.
-  return GCAT.filter((f) => f.instruments.includes(inst) && !f.retired && guitarStyleMatch(f.genres, style))
+  // Bass (BASS_NICHE_PLAN): the jazz / prog families open by the player's track (jazz, prog or both).
+  return GCAT.filter((f) => f.instruments.includes(inst) && !f.retired && guitarStyleMatch(f.genres, style) && (inst !== 'bass' || inBassTrack(f.id, settings.bassTrack)))
     .map((f): GuitarFamilyDef => ({ ...f, levels: f.levels.filter((l) => guitarStyleMatch(l.genres, style) && !hidden.includes(l.id)) }))
     .filter((f) => f.levels.length > 0);
 }

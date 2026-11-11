@@ -464,6 +464,15 @@ export function ruleCheck(kind: RuleKind, chart: RuleChart[], notes: RuleNote[],
           ok = true;
         }
       }
+      // Passing notes (bass b-impro 7+: enclosures, chromatic passing): a note outside the scale a step or less from
+      // the next note played.
+      if (!ok && opts.passing) {
+        const nextP = k + 1 < notes.length ? notes[k + 1].pitch : null;
+        if (nextP !== null && Math.abs(nextP - n.pitch) <= opts.passing) {
+          lab = 'chromatic';
+          ok = true;
+        }
+      }
       if (isNew) {
         const landed = (cur.c.land ?? LAND_ANY).includes(rel);
         ok = landed;
@@ -563,6 +572,8 @@ export interface RuleOpts {
   every?: number;
   /** target: landings this many beats before each chord change (0.5 = an 8th early). */
   anticipate?: number;
+  /** target: a note outside the scale is a passing note when the next note is at most this many semitones away. */
+  passing?: number;
 }
 
 /** N6: the least variety a free walking line needs — non-root notes (chord tones, tensions, approaches) and at most this share of same-pitch-class neighbours. */

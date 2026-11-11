@@ -112,6 +112,8 @@ export const GROOVES: Groove[] = [
   G('songo', 'Songo', 'סונגו', 'latin', 4, 4, 4, 110, '...x..x....x..x.', '..o.x..o..x..o..', 'x.x.x.x.x.x.x.x.', undefined, { rimAs: 'cowbell' }),
   G('cha-cha', 'Cha-cha', 'צ׳ה־צ׳ה', 'latin', 4, 4, 2, 120, 'x...x...', '..x...xx', 'x.x.x.x.', undefined, { hatAs: 'cowbell' }),
   G('clave-32', 'Son clave 3-2', 'קלאבה 3-2', 'latin', 4, 4, 4, 100, 'x.......x.......', '................', 'x.x.x.x.x.x.x.x.', 'x..x...x..x.x...'),
+  // Bass b-latin 2 (BASS_NICHE_PLAN L1): the same clave from its 2 side (the 3-2 bar turned round).
+  G('clave-23', 'Son clave 2-3', 'קלאבה 2-3', 'latin', 4, 4, 4, 100, 'x.......x.......', '................', 'x.x.x.x.x.x.x.x.', '..x.x...x..x...x'),
   G('tumbao', 'Tumbao (bass drum)', 'טומבאו', 'latin', 4, 4, 4, 100, '......x.......x.', '................', 'x.x.x.x.x.x.x.x.', '..x.x.....x.x...'),
   // world
   G('maqsum', 'Maqsum', 'מקסום', 'world', 4, 4, 4, 100, 'x.....x.x.......', '....x.......x...', 'x.x.x.x.x.x.x.x.'),

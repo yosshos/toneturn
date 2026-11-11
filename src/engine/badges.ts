@@ -15,6 +15,7 @@
 import type { SkillId } from './lesson';
 import type { BassFamilyId, DrumFamilyId, FamilyId } from './drills/types';
 import { guitarCatalog, type GuitarLevelDef } from './drills/guitar';
+import { BASS_SUMMITS } from './drills/bassNiche';
 import { DOMAINS, PROVISIONAL_UNTIL, SKILLS, type DomainId, type Ratings } from './rating';
 import { SUB_SKILLS, type SubStat } from './taxonomy';
 import { addDays, type Counts, type InputKind, type Peaks, type StatsDays, type StatsHours } from './stats';
@@ -555,6 +556,20 @@ function bassBadges(): Badge[] {
       desc: { en: `Every bass level that covers the ${BOARD[board]?.en ?? board} requirements reached (${ls.length}).`, he: `כל שלבי הבס שמכסים את דרישות ${BOARD[board]?.he ?? board} הושגו (${ls.length}).` },
       rule: (x: BadgeInput): BadgeCheck => count(ls.filter((t) => (x.technique?.levels?.[t.fam] ?? 0) >= t.level).length, ls.length),
     });
+  // BASS_NICHE_PLAN X1: the two summits of the bass path — every capstone level of the jazz / prog standard reached.
+  for (const [track, sm] of Object.entries(BASS_SUMMITS)) {
+    const caps = sm.levels.map((id) => ({ fam: id.replace(/-\d+$/, '') as FamilyId, level: Number(id.match(/-(\d+)$/)![1]) }));
+    out.push({
+      id: `tech:g-bass:summit-${track}`,
+      cat: 'technique',
+      icon: '𝄢',
+      group: 'bass-exams',
+      tone: 'diamond',
+      name: { en: `Summit: ${sm.title.en}`, he: `פסגה: ${sm.title.he}` },
+      desc: { en: `Every capstone level of the ${sm.title.en.toLowerCase()} reached (${caps.length}).`, he: `כל שלבי השיא של ${sm.title.he} הושגו (${caps.length}).` },
+      rule: (x: BadgeInput): BadgeCheck => count(caps.filter((t) => (x.technique?.levels?.[t.fam] ?? 0) >= t.level).length, caps.length),
+    });
+  }
   return out;
 }
 

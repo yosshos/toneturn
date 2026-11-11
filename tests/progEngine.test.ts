@@ -2,7 +2,7 @@
 // (polymeter, unison, sections), the road map, and the new analysis rules. Plus: old drills are untouched.
 import { describe, expect, it } from 'vitest';
 import { barBeats, beamGroupAt, buildTimeMap, clickPlan, defaultGroups, groupStartsOf, hasTimeline, legacyClickHeard, metricRatio, MODULATIONS, parseMeter, staffLines, timeMapOf, withBarPlan } from '../src/engine/drills/timeline';
-import { bandBars, drillBandHits, drillDrumHits, realignBeat, unisonLine } from '../src/engine/drills/bandTimeline';
+import { bandBars, bandOnTimeline, drillBandHits, drillDrumHits, realignBeat, unisonLine } from '../src/engine/drills/bandTimeline';
 import { applyForm, analyzeForm, expandForm, type FormPlan } from '../src/engine/drills/roadmap';
 import { groupAccent, notePositions, tempoChecks, unisonLock, withProg } from '../src/engine/drills/progAnalyze';
 import { analyzeTake, expTimeMs } from '../src/engine/drills/analyze';
@@ -81,7 +81,8 @@ describe('the click plan', () => {
     const drills: Drill[] = [
       ...drumFamilies().flatMap((f) => f.levels.flatMap((lv) => levelDrills(lv, 'fifths-up').slice(0, 2))),
       ...guitarCatalog().flatMap((f) => f.levels.flatMap((lv) => levelDrills(lv, 'fifths-up').slice(0, 1))),
-    ];
+      // Levels built on the engine itself (the bass jazz / prog families: meters, tempo maps, forms) are not old drills.
+    ].filter((d) => !hasTimeline(d));
     expect(drills.length).toBeGreaterThan(200);
     for (const d of drills) {
       expect(hasTimeline(d), d.itemId).toBe(false);
@@ -211,7 +212,7 @@ describe('the band on the timeline', () => {
     const drills = guitarCatalog()
       .filter((f) => f.id.startsWith('b-'))
       .flatMap((f) => f.levels.flatMap((lv) => levelDrills(lv, 'fifths-up').slice(0, 1)))
-      .filter((d) => d.drums || d.band);
+      .filter((d) => (d.drums || d.band) && !bandOnTimeline(d));
     expect(drills.length).toBeGreaterThan(10);
     for (const d of drills) {
       if (d.drums) expect(drillDrumHits(d), d.itemId).toEqual(drumHits(d.drums, d.beats, d.meter, d.pulse));

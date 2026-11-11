@@ -13,6 +13,8 @@ export const FAMILY_GLYPH: Record<string, GlyphKind> = {
   'g-fretting': 'fingers1234', 'g-picking': 'pick', 'g-legato': 'slur', 'g-scales': 'box', 'g-arps': 'arp', 'g-chords': 'chordbox', 'g-rhythm': 'strum', 'g-lead': 'bend', 'g-fingerstyle': 'pima', 'g-flamenco': 'fan', 'g-jazz': 'prog', 'g-reading': 'sight', 'g-impro': 'improv', 'g-bass': 'bass',
   // Bass (final check): 21 families, 21 symbols — the electric and the upright track share one path on an upright.
   'b-posread': 'position', 'b-impro': 'target',
+  // BASS_NICHE_PLAN P1: the jazz track and the prog track.
+  'b-swing': 'swingtime', 'b-barry': 'barrybass', 'b-jform': 'roadmap', 'b-latin': 'tumbao', 'b-odd': 'oddmeter', 'b-poly': 'polymeter', 'b-prog': 'unison',
   'b-pluck': 'pluck', 'b-time': 'tempo', 'b-fret': 'fingers', 'b-chord': 'chords', 'b-scale': 'scales', 'b-length': 'mute', 'b-pocket': 'groove', 'b-read': 'bass', 'b-styles': 'record', 'b-ghost': 'ghost', 'b-walk': 'walk', 'b-legato': 'slur', 'b-pick': 'pick', 'b-slap': 'slap', 'b-ear': 'ear', 'b-up-pos': 'shift', 'b-up-arco': 'bow', 'b-up-scales': 'ladder', 'b-up-pizz': 'pizz', 'b-up-walk': 'improv', 'b-up-read': 'sight',
   'd-strokes': 'sticks', 'd-rolls': 'rudiment', 'd-diddles': 'paradiddle', 'd-time': 'pulse', 'd-rock': 'hihat', 'd-fills': 'fill', 'd-read': 'drumread',
   'd-funk': 'ghost', 'd-shuffle': 'shuffle', 'd-indep': 'limbs', 'd-mideast': 'darbuka', 'd-feet': 'kick',

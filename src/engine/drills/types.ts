@@ -63,6 +63,15 @@ export type BassFamilyId =
   // 0.66: reading in positions (electric) and fills / solos on target notes.
   | 'b-posread'
   | 'b-impro'
+  // BASS_NICHE_PLAN P1: the jazz track (swing time, Barry Harris, form, Afro-Cuban) and the prog track (odd meters,
+  // riffs and unisons, polymeter and metric modulation).
+  | 'b-swing'
+  | 'b-barry'
+  | 'b-jform'
+  | 'b-latin'
+  | 'b-odd'
+  | 'b-prog'
+  | 'b-poly'
   // 0.64 (track B): the bass-ear family F15 and the upright / double-bass track (BASS_CURRICULUM §5, §5.1).
   | 'b-ear'
   | 'b-up-pos'
@@ -388,6 +397,8 @@ export interface BassGoal {
     every?: number;
     /** target: each chord's landing sounds this many beats EARLY (0.5 = an 8th: the anticipated "and" of 4 in a tumbao). */
     anticipate?: number;
+    /** target: a note outside the scale passes when the next note is at most this many semitones away (enclosures, chromatic passing). */
+    passing?: number;
   };
   /** Walking swing (b-swing): long quarters (each ≥ `long` × the beat, e.g. 0.85), placement vs the ride (ms, + = behind) in [lo, hi], drift over choruses ≤ `drift` (tempo share, e.g. 0.02). */
   swingWalk?: { long?: number; ride?: [number, number]; drift?: number; chorusBeats?: number };
@@ -682,6 +693,8 @@ export interface DrillSettings {
   /** Guitar: genre filter (like the piano emphasis); 'all' or absent = every family. */
   /** Piano by microphone only (0.67, owner): levels that need MIDI (loudness, release, pedal) are hidden. */
   pianoMicOnly?: boolean;
+  /** Bass (BASS_NICHE_PLAN): the track the jazz / prog families open by — jazz, prog or both (absent = both). */
+  bassTrack?: 'jazz' | 'prog' | 'both';
   guitarStyle?: 'all' | 'rock' | 'blues' | 'metal' | 'pop' | 'funk' | 'country' | 'jazz' | 'classical' | 'fingerstyle' | 'flamenco' | 'reggae' | 'latin';
   /** Guitar: what the drill shows — tab, notation, or both (default tab). */
   guitarView?: 'tab' | 'staff' | 'both';
