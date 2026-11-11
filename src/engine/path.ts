@@ -853,6 +853,10 @@ export const GAME_STEPS: Record<string, { domain: DomainId; skill: SkillId; sub:
   'rush-fretboard': { domain: 'instrument', skill: 'instrument', sub: 'fretboard', title: { en: 'Fretboard Sprint', he: 'ספרינט צוואר' }, forPlays: ['guitar', 'bass'] },
   peakhunter: { domain: 'instrument', skill: 'timbre', sub: 'eq', title: { en: 'Peak Hunter', he: 'צייד הפיקים' } },
   drills: { domain: 'instrument', skill: 'instrument', sub: 'piano-tech', title: { en: 'Technique drills', he: 'תרגילי טכניקה' }, forPlays: ['keys', 'piano', 'guitar', 'bass'] },
+  // Drum games P1 (DRUMS_NICHE_PLAN §3): measured takes on the kit, in the drums course's instrument units.
+  land: { domain: 'instrument', skill: 'instrument', sub: 'drum-tech', title: { en: 'Land It', he: 'לנחות על 1' }, forPlays: ['drums'] },
+  'groove-echo': { domain: 'instrument', skill: 'instrument', sub: 'drum-tech', title: { en: 'Groove Echo', he: 'הד לגרוב' }, forPlays: ['drums'] },
+  'odd-echo': { domain: 'instrument', skill: 'instrument', sub: 'drum-tech', title: { en: 'Odd-meter Echo', he: 'הד במשקל מוזר' }, forPlays: ['drums'] },
 };
 const AREA_GAMES: Record<DomainId, string[]> = {
   pitch: ['rush-interval', 'rush-chord', 'rush-progression'],
@@ -861,7 +865,7 @@ const AREA_GAMES: Record<DomainId, string[]> = {
   voice: ['flight'],
   reading: ['rush-note', 'rush-keysig'],
   creative: ['rush-chord'],
-  instrument: ['drills', 'rush-fretboard', 'peakhunter'],
+  instrument: ['drills', 'rush-fretboard', 'peakhunter', 'land', 'groove-echo', 'odd-echo'],
 };
 /** The game for a unit's leading area (rotating by unit number; mic / instrument / pack rules apply). */
 export function gameForArea(area: DomainId, n: number, inp: Pick<PathInput, 'noMic' | 'noSing' | 'plays' | 'packs'> & { noDrills?: boolean; course?: CourseId }): string | null {

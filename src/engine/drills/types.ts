@@ -39,7 +39,9 @@ export type FamilyId =
   // Drums course (docs/research/DRUMS_CURRICULUM.md §4, v1 = F1–F5, F9, F14): pitches are the GM drum notes of the voices.
   | DrumFamilyId;
 
-export type DrumFamilyId = 'd-strokes' | 'd-rolls' | 'd-diddles' | 'd-time' | 'd-rock' | 'd-fills' | 'd-read' | 'd-funk' | 'd-shuffle' | 'd-indep' | 'd-mideast' | 'd-feet' | 'd-ear' | 'd-jazz' | 'd-latin';
+export type DrumFamilyId = 'd-strokes' | 'd-rolls' | 'd-diddles' | 'd-time' | 'd-rock' | 'd-fills' | 'd-read' | 'd-funk' | 'd-shuffle' | 'd-indep' | 'd-mideast' | 'd-feet' | 'd-ear' | 'd-jazz' | 'd-latin'
+  // DRUMS_NICHE_PLAN (P1): songs and song forms, prog / fusion, and reading / theory played on the kit.
+  | 'd-song' | 'd-prog' | 'd-count' | 'd-notation' | 'd-form';
 /** A drum voice (DRUMS_CURRICULUM §3): what a hit is, whatever note the kit sends for it. */
 export type DrumVoice = 'kick' | 'snare' | 'rim' | 'hihat' | 'hhOpen' | 'hhPedal' | 'ride' | 'crash' | 'tom1' | 'tom2' | 'tom3';
 /** The limb that plays a drum note (sticking R / L stays in `hand`; feet are RF / LF). */

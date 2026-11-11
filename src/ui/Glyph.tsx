@@ -623,6 +623,25 @@ const mark = (s: string) => {
 };
 for (const [k, s] of Object.entries(TOPIC_MARK)) GLYPHS[`m:${k}`] = mark(s);
 for (const [k, s] of Object.entries(LESSON_MARK)) GLYPHS[`m:lesson:${k}`] = mark(s);
+// Drum games P1 (DRUMS_NICHE_PLAN §3): Land It (a crash over an arrow down to the 1), Groove Echo (two bars, the second
+// an echo), Odd-meter Echo (its grouping as a mark).
+Object.assign(GLYPHS, {
+  landit: (
+    <g {...sw}>
+      <path d="M-20 -14 Q0 -24 20 -14 Q0 -8 -20 -14Z" strokeLinejoin="round" />
+      <path d="M0 -6V14M-7 7l7 7 7-7" strokeLinejoin="round" />
+      <text x={14} y={20} fontFamily="'Secular One', Rubik, sans-serif" fontSize={14} fill={I} stroke="none" direction="ltr">1</text>
+    </g>
+  ),
+  grooveecho: (
+    <g {...sw} strokeWidth={2.8}>
+      <path d="M-24 4h18M2 4h18" />
+      <path d="M-20 4v-12M-12 4v-12M6 4v-12M14 4v-12" strokeWidth={2.2} />
+      <path d="M-8 16 Q4 24 18 14M14 10l4 4-5 3" strokeLinejoin="round" />
+    </g>
+  ),
+  oddecho: mark('2+3'),
+});
 export type GlyphKind = keyof typeof GLYPHS;
 
 /** Emoji left in content data → the closest symbol of our set (0.61: no emoji in the interface). */

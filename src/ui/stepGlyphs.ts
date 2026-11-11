@@ -34,6 +34,8 @@ export const TOPIC_GLYPH: Record<string, GlyphKind> = {
 /** Games sitting in a unit (they all used to be one puzzle piece). */
 export const GAME_STEP_GLYPH: Record<string, GlyphKind> = {
   'rush-interval': 'intervals', 'rush-chord': 'chords', 'rush-progression': 'prog', highway: 'rhythm', melodypuzzle: 'puzzle', nametune: 'name', flight: 'sing', 'rush-note': 'sight', 'rush-keysig': 'theory', 'rush-fretboard': 'fretboard', peakhunter: 'eq', drills: 'scales',
+  // Drum games P1 (DRUMS_NICHE_PLAN §3).
+  land: 'landit', 'groove-echo': 'grooveecho', 'odd-echo': 'oddecho',
 };
 
 // EAR_THEORY_AUDIT: every topic and lesson of the Ear & theory and Jazz & improv paths has its own symbol — a drawn one
