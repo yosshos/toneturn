@@ -318,6 +318,8 @@ Not built / not verified (P2):
 
 - **E6** (transcribe from your own recording, measured): not built. It needs beat tracking of the recording (size L,
   P3). The Slow-down screen already loops and slows a recording, unmeasured, so it does not count.
+  *Update 2026-11-11: covered by "My song" (docs/SPEC-MY-SONG.md) — the bass course plays along with its own recording,
+  timed against the tracked beat and checked against the extracted bass line when that came out confidently.*
 - **The walker and 6th chords**: band.ts's walking line treats m6 / 6 chords as 7th chords (an F on Gm6). The ladder
   repairs such notes to the nearest chord tone; the old `b-walk` standards levels (L11/13/14/18) are unchanged and 7 of
   their model lines keep only 95–99 % of their own rules (Autumn Leaves, Fly Me to the Moon, Blues in F, All the Things,
