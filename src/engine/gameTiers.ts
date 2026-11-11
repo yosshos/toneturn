@@ -100,7 +100,8 @@ export const GAME_TIERS: Record<string, GameTierSpec> = {
       mp: { label: L('Up and down', 'עולים ויורדים'), rungs: [...r('intervals-all', 2), ...r('intervals-all', 4)] },
       mf: { label: L('Together (harmonic) and down', 'יחד (הרמוני) ויורדים'), rungs: r('intervals-all', 4, 3) },
       f: { label: L('Compound: 9ths and 10ths', 'מורכבים: נונות ודצימות'), rungs: [...r('intervals-all', 3), ...r('compound-intervals', 1, 2)] },
-      ff: { label: L('Everything to the 12th, together', 'הכול עד הדואודצימה, יחד'), rungs: [...r('compound-intervals', 2, 3)], todo: 'two intervals in a row (3-note cell); jazz names ♭9 ♯11 ♭13; 1.2 s notes, no replay' },
+      // 0.75: the cells and jazz names (engine/topicsTopTiers.ts) — quick notes, no replay, 8 options
+      ff: { label: L('To the 12th, 3-note cells, jazz names (♭9 ♯11 ♭13)', 'עד הדואודצימה, תאי 3 צלילים, שמות ג׳אז (♭9 ♯11 ♭13)'), rungs: [...r('compound-intervals', 3), ...r('interval-cells', 1, 2)] },
     }),
   },
   'rush-chord': {
@@ -165,7 +166,8 @@ export const GAME_TIERS: Record<string, GameTierSpec> = {
       mp: { label: L('Sharps and flats, low strings', 'דיאזים ובמולים, מיתרים נמוכים'), rungs: r('fretboard', 2, 3) },
       mf: { label: L('Every note, every string', 'כל התווים, כל המיתרים'), rungs: r('fretboard', 3, 4) },
       f: { label: L('The exact pitch (octave)', 'הגובה המדויק (אוקטבה)'), rungs: r('fretboard', 4, 5) },
-      ff: { label: L('The exact pitch, fast', 'הגובה המדויק, מהר'), rungs: r('fretboard', 5), todo: 'chord tones from a named chord ("the 3rd of B♭7 on string 3"), drop-2/3 tones, intervals across the G–B shift; bass: walking approach notes' },
+      // 0.75: chord tones of a named chord on one string, then tensions and approach notes (rush.ts chordToneTarget)
+      ff: { label: L('Chord tones on a string, tensions, approach notes', 'צלילי אקורד על מיתר, טנשנים, צלילי גישה'), rungs: r('fretboard', 5, 6, 7) },
     }),
   },
   highway: {
@@ -191,7 +193,8 @@ export const GAME_TIERS: Record<string, GameTierSpec> = {
       mp: { label: L('All seven degrees', 'כל שבע הדרגות'), params: { pads: 'full', bpm: 90 }, target: 6 },
       mf: { label: L('Seven degrees + ♭3 and ♭7', 'שבע דרגות + ♭3 ו־♭7'), params: { pads: 'blue', bpm: 100 }, target: 7 },
       f: { label: L('All twelve notes', 'כל שנים־עשר הצלילים'), params: { pads: 'chroma', bpm: 110 }, target: 7 },
-      ff: { label: L('All twelve notes, fast, long chains', 'כל שנים־עשר הצלילים, מהר, שרשראות ארוכות'), params: { pads: 'chroma', bpm: 120 }, target: 9, todo: 'no pads shown: answer on the instrument / voice only' },
+      // 0.75: no pads — the answer comes from the voice or an instrument (microphone) only (Games.tsx noPads)
+      ff: { label: L('All twelve, no pads: sing or play it back', 'כל השנים־עשר, בלי פדים: לשיר או לנגן בחזרה'), params: { pads: 'chroma', bpm: 120, noPads: true }, target: 9 },
     },
   },
   rhythm: {
@@ -203,8 +206,9 @@ export const GAME_TIERS: Record<string, GameTierSpec> = {
       p: { label: L('A little faster', 'קצת יותר מהר'), params: { bpm: 85, swing: false }, target: 6 },
       mp: { label: L('Medium', 'בינוני'), params: { bpm: 95, swing: false }, target: 6 },
       mf: { label: L('Swing', 'סווינג'), params: { bpm: 100, swing: true }, target: 7 },
-      f: { label: L('Fast', 'מהר'), params: { bpm: 110, swing: false }, target: 8, todo: 'triplets, 3/4 and 6/8 phrases' },
-      ff: { label: L('Fast swing', 'סווינג מהיר'), params: { bpm: 125, swing: true }, target: 9, todo: '5/8, 7/8 phrases and displaced (+1 sixteenth) patterns' },
+      // 0.75: f = 3/4 with triplets, ff = 5/8 · 7/8 on an 8th pulse with a 16th displacement (memory.ts meterPattern)
+      f: { label: L('3/4 with triplets', '3/4 עם טריולות'), params: { bpm: 100, swing: false, meter: 'triplet' }, target: 8 },
+      ff: { label: L('5/8 and 7/8, displaced 16ths', '5/8 ו־7/8, שש־עשריות מוזזות'), params: { bpm: 110, swing: false, meter: 'odd' }, target: 9 },
     },
   },
   melodypuzzle: {

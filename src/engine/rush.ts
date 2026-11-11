@@ -8,6 +8,7 @@ import type { ChoiceQuestion } from './lesson';
 import { TOPIC_GEN, genTopic, rng } from './topicKit';
 import './topics';
 import './topicsAdvGames'; // 0.70: game-only topics (voicing types, melodic-minor modes, standards, altered reading, ii–V chains)
+import './topicsTopTiers'; // 0.75: Interval Sprint ff (cells, jazz names)
 import { chordReadItem, type ChordPictureFilter } from './topicsChordRead';
 import { noteAt, tuningById, type Tuning } from './fretboard';
 import type { DynName } from './courseSocial';
@@ -64,6 +65,9 @@ export const FRET_LEVELS: { en: string; he: string }[] = [
   { en: 'Sharps and flats, the two lowest strings', he: 'דיאזים ובמולים, שני המיתרים הנמוכים' },
   { en: 'Every note, every string', he: 'כל התווים, כל המיתרים' },
   { en: 'The exact pitch (with its octave)', he: 'הגובה המדויק (עם האוקטבה)' },
+  // 0.75 (Fretboard ff): chord tones of a named chord on one string; then tensions and approach notes
+  { en: 'Chord tones: the 3rd of B♭7 on string 3', he: 'צלילי אקורד: הטרצה של B♭7 על מיתר 3' },
+  { en: 'Tensions and approach notes', he: 'טנשנים וצלילי גישה' },
 ];
 
 const ladderCache = new Map<RushMode, Rung[]>();
@@ -144,6 +148,9 @@ export type RushItem =
 /** Does this item sound (auto-played when shown, a Play button to replay)? The ear games always; in Chord Rush a
  *  drawn picture — keys, neck or chord box — sounds as an arpeggio (the staff is reading only, its stimulus is
  *  empty); in Key Signature Rush a tier's heard rung (modes, chord-scales). */
+/** Interval Sprint ff (0.75): the cells and jazz names sound once — no replay. */
+export const rushNoReplay = (it: RushItem | null): boolean => it?.kind === 'choice' && it.q.topic === 'interval-cells';
+
 export function rushHears(m: RushMode, it: RushItem | null): boolean {
   if (m === 'interval' || m === 'progression' || m === 'voicing' || m === 'scale' || m === 'standard') return true;
   if (it?.kind !== 'choice' || !it.q.stimulus.length) return false;
@@ -186,7 +193,60 @@ function noteName(pc: number, sharp: boolean, octave?: number): { en: string; he
   return { en: `${LET[l]}${a > 0 ? '♯' : a < 0 ? '♭' : ''}${o}`, he: `${HE_LET[l]}${a > 0 ? ' דיאז' : a < 0 ? ' במול' : ''}${o ? ` ${o}` : ''}` };
 }
 
+// Fretboard ff (0.75): a degree of a named chord, found on one string (any fret 0–12).
+const CT_QUAL: { sym: string; iv: Record<string, number> }[] = [
+  { sym: 'maj7', iv: { '1': 0, '3': 4, '5': 7, '7': 11 } },
+  { sym: '7', iv: { '1': 0, '3': 4, '5': 7, '♭7': 10 } },
+  { sym: 'm7', iv: { '1': 0, '♭3': 3, '5': 7, '♭7': 10 } },
+  { sym: 'm7♭5', iv: { '1': 0, '♭3': 3, '♭5': 6, '♭7': 10 } },
+];
+const DEG_NAME: Record<string, { en: string; he: string }> = {
+  '1': { en: 'root', he: 'השורש' },
+  '3': { en: '3rd', he: 'הטרצה' },
+  '♭3': { en: '♭3rd', he: 'הטרצה הקטנה' },
+  '5': { en: '5th', he: 'הקווינטה' },
+  '♭5': { en: '♭5th', he: 'הקווינטה המוקטנת' },
+  '7': { en: '7th', he: 'הספטימה' },
+  '♭7': { en: '♭7th', he: 'הספטימה הקטנה' },
+  '♭9': { en: '♭9', he: 'ה־♭9' },
+  '9': { en: '9th', he: 'הנונה' },
+  '♯9': { en: '♯9', he: 'ה־♯9' },
+  '♯11': { en: '♯11', he: 'ה־♯11' },
+  '♭13': { en: '♭13', he: 'ה־♭13' },
+  '13': { en: '13th', he: 'הטרצדצימה' },
+};
+const TENSION: Record<string, number> = { '♭9': 1, '9': 2, '♯9': 3, '♯11': 6, '♭13': 8, '13': 9 };
+const FLAT_ROOT = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'G♭', 'G', 'A♭', 'A', 'B♭', 'B'];
+/** Levels 6–7: "the 3rd of B♭7 on string 3"; at 7 also tensions over a dominant and half-step approaches to the root. */
+export function chordToneTarget(seed: number, level: number, tuning: Tuning): FretTarget {
+  const rnd = rng(seed ^ 0x5bd1e995);
+  const n = tuning.open.length;
+  const str = 1 + Math.floor(rnd() * n);
+  const root = Math.floor(rnd() * 12);
+  const r = FLAT_ROOT[root];
+  const s = (en: string, he: string) => ({ en, he });
+  if (level >= 7 && rnd() < 0.6) {
+    if (rnd() < 0.5) {
+      // a tension of a dominant
+      const t = Object.keys(TENSION)[Math.floor(rnd() * 6)];
+      const pc = (root + TENSION[t]) % 12;
+      return { pc, strings: [str], frets: [0, 12], name: s(`${DEG_NAME[t].en} of ${r}7`, `${DEG_NAME[t].he} של ${r}7`) };
+    }
+    // an approach note: a half step below / above the root of the next chord
+    const q = CT_QUAL[Math.floor(rnd() * CT_QUAL.length)];
+    const below = rnd() < 0.6;
+    const pc = (root + (below ? 11 : 1)) % 12;
+    return { pc, strings: [str], frets: [0, 12], name: s(`a half step ${below ? 'below' : 'above'} the root of ${r}${q.sym}`, `חצי טון ${below ? 'מתחת' : 'מעל'} לשורש של ${r}${q.sym}`) };
+  }
+  const q = CT_QUAL[Math.floor(rnd() * CT_QUAL.length)];
+  const degs = Object.keys(q.iv).filter((d) => d !== '1' || rnd() < 0.3);
+  const d = degs[Math.floor(rnd() * degs.length)];
+  const pc = (root + q.iv[d]) % 12;
+  return { pc, strings: [str], frets: [0, 12], name: s(`${DEG_NAME[d].en} of ${r}${q.sym}`, `${DEG_NAME[d].he} של ${r}${q.sym}`) };
+}
+
 export function fretTarget(seed: number, level: number, tuning: Tuning): FretTarget {
+  if (level >= 6) return chordToneTarget(seed, Math.min(7, level), tuning);
   const rnd = rng(seed);
   const n = tuning.open.length;
   const all = Array.from({ length: n }, (_, i) => i + 1);

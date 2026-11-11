@@ -14,6 +14,8 @@ import {
   swingPattern,
   type PadSet,
   rhythmPattern,
+  meterPattern,
+  type EchoMeter,
   drumPattern,
   type Drum,
   rhythmTimeline,
@@ -62,6 +64,8 @@ export interface GameConfig {
   pads?: PadSet;
   /** Beat Echo on a drum kit: kick-and-snare phrases, answered on two pads. */
   drums?: boolean;
+  /** 0.75 (Beat Echo f / ff tiers): 3/4 with triplets, or 5/8 · 7/8 on an 8th-note pulse. */
+  meter?: EchoMeter;
 }
 
 export interface GameAdapters {
@@ -318,8 +322,9 @@ export class MemoryGameController {
       const solo = m.players.length === 1;
       const seq = this.cfg.kind === 'melody' ? melodySequence(seed, m.length, this.view.melody!.pads.length) : [];
       const speed = this.cfg.ladder ? ladderFactor(m.length, START_LENGTH[this.cfg.kind]) : 1;
-      const base = this.cfg.kind === 'rhythm' ? rhythmPattern(seed, m.length, Math.min(160, Math.round((this.cfg.bpm ?? 90) * speed))) : null;
-      const swung = base && this.cfg.swing ? swingPattern(base) : base;
+      const rbpm = Math.min(160, Math.round((this.cfg.bpm ?? 90) * speed));
+      const base = this.cfg.kind === 'rhythm' ? (this.cfg.meter ? meterPattern(seed, m.length, rbpm, this.cfg.meter) : rhythmPattern(seed, m.length, rbpm)) : null;
+      const swung = base && this.cfg.swing && !this.cfg.meter ? swingPattern(base) : base;
       const pattern = swung && this.cfg.drums ? drumPattern(swung, seed) : swung;
       if (this.view.melody) this.view.melody.noteSec = Math.max(0.28, 0.6 / speed);
       this.responseStart = null;

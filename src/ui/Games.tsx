@@ -2,7 +2,7 @@ import { DOMAIN_COLOR, Glyph } from './Glyph';
 import { EchoArt } from './GameArt';
 import { NotesView } from './NotesView';
 import { TalkToggle } from './TalkToggle';
-import { padLabel, type PadSet } from '../engine/memory';
+import { padLabel, type EchoMeter, type PadSet } from '../engine/memory';
 import '../advgames.css';
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { displayNote } from '../engine/pitch';
@@ -30,9 +30,16 @@ export interface GameSetupValue {
   drums?: boolean;
   /** Level tier (GAMES_TIERS_PLAN): pads, tempo and swing come from it; solo runs count toward clearing it. */
   tier?: DynName;
+  /** 0.75: Beat Echo f / ff meters (from the tier). */
+  meter?: EchoMeter;
 }
 
 // ======================================================================= setup
+
+const NO_PADS_HINT = {
+  en: 'No pads at this level: sing it back or play it on your instrument (microphone).',
+  he: 'ברמה הזאת אין פדים: שירו בחזרה או נגנו על הכלי (מיקרופון).',
+};
 
 export function GameSetup({
   t,
@@ -85,6 +92,9 @@ export function GameSetup({
     if (tiers) setTier(startTier(tiers(k)));
   };
   const inputs: [GameInput, string][] = kind === 'melody' ? [['pads', t.inPads], ['sing', t.inSing]] : [['tap', t.inTap], ['knock', t.inKnock]];
+  // 0.75: Echo ff shows no pads — the answer comes from the voice or an instrument (the microphone) only.
+  const noPads = kind === 'melody' && !!tinfo && !!tierDef(kind, tier)?.params?.noPads;
+  const effInput: GameInput = noPads ? 'sing' : input;
 
   return (
     <main className={`panel-screen game-setup ${tinfo ? 'tiered' : ''}`}>
@@ -125,14 +135,14 @@ export function GameSetup({
           <legend>{t.answerWith}</legend>
           <div className="seg" role="radiogroup" aria-label={t.answerWith}>
             {inputs.map(([v, l]) => (
-              <button key={v} type="button" role="radio" aria-checked={input === v} className={input === v ? 'on' : ''} onClick={() => setInput(v)}>
+              <button key={v} type="button" role="radio" aria-checked={effInput === v} className={effInput === v ? 'on' : ''} disabled={noPads && v === 'pads'} onClick={() => setInput(v)}>
                 {(v === 'sing' || v === 'knock') && <MicIcon />} {l}
               </button>
             ))}
           </div>
           {input === 'knock' && <p className="field-hint">{t.knockHint}</p>}
           {kind === 'rhythm' && input === 'tap' && <Calibrate t={t} latency={settings.tapLatencyMs} onDone={(ms) => onSettings({ tapLatencyMs: ms })} />}
-          {input === 'sing' && <p className="field-hint">{t.singHint}</p>}
+          {effInput === 'sing' && <p className="field-hint">{noPads ? NO_PADS_HINT[settings.uiLang] : t.singHint}</p>}
         </fieldset>
 
         {tinfo && <TierChips lang={settings.uiLang} info={tinfo} value={tier} onChange={setTier} game={kind} />}
@@ -183,7 +193,7 @@ export function GameSetup({
       </section>
 
       <section className="set-card">
-        {kind === 'melody' && input === 'sing' && (
+        {kind === 'melody' && effInput === 'sing' && (
           <fieldset className="seg-field">
             <legend>{t.echoTolerance}</legend>
             <div className="seg" role="radiogroup" aria-label={t.echoTolerance}>
@@ -257,7 +267,7 @@ export function GameSetup({
           const tp = tinfo ? tierDef(kind, tier)?.params : undefined;
           onStart({
             kind,
-            input,
+            input: effInput,
             players: count === 1 ? [ps[0] || t.playerN] : ps,
             bpm: tp ? Number(tp.bpm) : bpm,
             ladder,
@@ -265,6 +275,7 @@ export function GameSetup({
             pads: tp && kind === 'melody' ? (tp.pads as PadSet) : pads,
             drums: kind === 'rhythm' && input === 'tap' && drums,
             ...(tinfo ? { tier } : {}),
+            ...(tp && kind === 'rhythm' && (tp.meter === 'triplet' || tp.meter === 'odd') ? { meter: tp.meter as EchoMeter } : {}),
           });
         }}
       >
@@ -319,6 +330,7 @@ export function GameScreen({
         swing: setup.swing,
         pads: setup.pads,
         drums: setup.drums,
+        ...(setup.meter ? { meter: setup.meter } : {}),
         tolCents: settings.echoTolerance ?? 80,
         latencyMs: settings.tapLatencyMs,
         voiceRange: settings.voiceRange,
@@ -485,6 +497,11 @@ export function GameScreen({
           {v.kind === 'rhythm' && (
             <>
               <div className={`beat-light ${v.beat?.accent ? 'accent' : ''}`} key={v.beat?.n ?? -1} aria-hidden="true" />
+              {v.pattern?.meter && (
+                <p className="hint beat-meter" dir="ltr">
+                  {v.pattern.meter}
+                </p>
+              )}
               <BeatGrid v={v} t={t} />
               {v.input === 'tap' && drums ? (
                 <div className="drum-pads" dir="ltr">
