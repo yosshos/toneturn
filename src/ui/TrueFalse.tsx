@@ -15,6 +15,8 @@ import type { Strings } from '../i18n/strings';
 import { namingFor, type Progress, type Settings } from '../storage/progress';
 import { piano, store } from './services';
 import { TrioArt } from './TrioArt';
+import { TierChips } from './TierChips';
+import { startTier, tierDef, tierDifficulty, type DynName, type TierInfo } from '../engine/gameTiers';
 import { PLAYER_COLORS } from '../engine/match';
 
 type Mode = 'solo' | 'duel' | 'online';
@@ -86,7 +88,7 @@ function Why({ fact, t, lang }: { fact: Fact; t: Strings; lang: 'he' | 'en' }) {
 }
 
 /** Topics (several) and a level: used by the game and by online rooms. */
-export function FactPicker({ t, lang, topics, onTopics, level, onLevel }: { t: Strings; lang: 'he' | 'en'; topics: FactTopic[]; onTopics: (x: FactTopic[]) => void; level: FactLevel; onLevel: (l: FactLevel) => void }) {
+export function FactPicker({ t, lang, topics, onTopics, level, onLevel, levelSlot }: { t: Strings; lang: 'he' | 'en'; topics: FactTopic[]; onTopics: (x: FactTopic[]) => void; level: FactLevel; onLevel: (l: FactLevel) => void; /** Level tiers replace the easy / medium / hard selector (GAMES_TIERS_PLAN). */ levelSlot?: React.ReactNode }) {
   const toggle = (id: FactTopic) => {
     const nx = topics.includes(id) ? topics.filter((x) => x !== id) : [...topics, id];
     if (nx.length) onTopics(nx);
@@ -110,6 +112,7 @@ export function FactPicker({ t, lang, topics, onTopics, level, onLevel }: { t: S
           ))}
         </div>
       </fieldset>
+      {levelSlot ?? (
       <fieldset className="seg-field">
         <legend>{t.tfLevelLabel}</legend>
         <div className="seg" role="radiogroup" aria-label={t.tfLevelLabel}>
@@ -120,6 +123,7 @@ export function FactPicker({ t, lang, topics, onTopics, level, onLevel }: { t: S
           ))}
         </div>
       </fieldset>
+      )}
     </>
   );
 }
@@ -131,6 +135,7 @@ export function TrueFalseScreen({
   onBack,
   onProgress,
   onOnline,
+  tier: tierInfo,
 }: {
   t: Strings;
   settings: Settings;
@@ -138,11 +143,18 @@ export function TrueFalseScreen({
   onBack: () => void;
   onProgress: (p: Progress) => void;
   onOnline: (topics: FactTopic[], level: FactLevel) => void;
+  tier?: TierInfo;
 }) {
   const lang = settings.uiLang;
   const [mode, setMode] = useState<Mode>('solo');
   const [topics, setTopicsRaw] = useState<FactTopic[]>(savedTopics);
-  const [level, setLevel] = useState<FactLevel>(1);
+  const [tier, setTierRaw] = useState<DynName>(() => (tierInfo ? startTier(tierInfo) : 'pp'));
+  const levelOf = (x: DynName) => (tierDef('truefalse', x)?.levels?.[0] ?? 1) as FactLevel;
+  const [level, setLevel] = useState<FactLevel>(() => (tierInfo ? levelOf(startTier(tierInfo)) : 1));
+  const setTier = (x: DynName) => {
+    setTierRaw(x);
+    setLevel(levelOf(x));
+  };
   const [run, setRun] = useState<number | null>(null);
   const setTopics = (x: FactTopic[]) => {
     setTopicsRaw(x);
@@ -158,7 +170,7 @@ export function TrueFalseScreen({
   const savedSolo = loadSlot<SoloSave>(TF_SOLO);
   if (run !== null)
     return mode === 'solo' ? (
-      <SoloRun key={run} t={t} settings={settings} topics={topics} level={level} best={progress.tfBest?.[bestKey] ?? 0} bestKey={bestKey} resume={resume ? savedSolo?.data : undefined} onProgress={onProgress} onExit={() => setRun(null)} onAgain={() => (setResume(false), setRun((r) => (r ?? 0) + 1))} />
+      <SoloRun key={run} t={t} settings={settings} topics={topics} level={level} tier={tierInfo ? tier : undefined} best={progress.tfBest?.[bestKey] ?? 0} bestKey={bestKey} resume={resume ? savedSolo?.data : undefined} onProgress={onProgress} onExit={() => setRun(null)} onAgain={() => (setResume(false), setRun((r) => (r ?? 0) + 1))} />
     ) : (
       <DuelRun key={run} t={t} settings={settings} topics={topics} level={level} onExit={() => setRun(null)} onAgain={() => setRun((r) => (r ?? 0) + 1)} />
     );
@@ -173,7 +185,7 @@ export function TrueFalseScreen({
       </header>
       <p className="field-hint">{t.tfHint}</p>
       <section className="set-card">
-        <FactPicker t={t} lang={lang} topics={topics} onTopics={setTopics} level={level} onLevel={setLevel} />
+        <FactPicker t={t} lang={lang} topics={topics} onTopics={setTopics} level={level} onLevel={setLevel} levelSlot={tierInfo && mode === 'solo' ? <TierChips lang={lang} info={tierInfo} value={tier} onChange={setTier} game="truefalse" /> : undefined} />
         <fieldset className="seg-field">
           <legend>{t.players}</legend>
           <div className="seg" role="radiogroup" aria-label={t.players}>
@@ -217,7 +229,7 @@ export function TrueFalseScreen({
   );
 }
 
-function SoloRun({ t, settings, topics, level, best, bestKey, resume, onProgress, onExit, onAgain }: { t: Strings; settings: Settings; topics: FactTopic[]; level: FactLevel; best: number; bestKey: string; resume?: SoloSave; onProgress: (p: Progress) => void; onExit: () => void; onAgain: () => void }) {
+function SoloRun({ t, settings, topics, level, tier, best, bestKey, resume, onProgress, onExit, onAgain }: { t: Strings; settings: Settings; topics: FactTopic[]; level: FactLevel; tier?: DynName; best: number; bestKey: string; resume?: SoloSave; onProgress: (p: Progress) => void; onExit: () => void; onAgain: () => void }) {
   const lang = settings.uiLang;
   const nm = namingFor(settings.naming, lang);
   const seed = useMemo(() => resume?.seed ?? (Date.now() ^ (Math.random() * 1e9)) >>> 0, [resume]);
@@ -256,7 +268,12 @@ function SoloRun({ t, settings, topics, level, best, bestKey, resume, onProgress
   useEffect(() => {
     if (left > 0 || over) return;
     clearSlot(TF_SOLO);
-    void store.recordTrueFalse(bestKey, score, events.current).then(({ progress, best: isBest }) => {
+    void store.recordTrueFalse(bestKey, score, events.current).then(async ({ progress, best: isBest }) => {
+      // A tiered run (GAMES_TIERS_PLAN): the tier's rule and the game's XP.
+      if (tier) {
+        const right = events.current.filter((e) => e.correct).length;
+        progress = await store.recordTierRun('truefalse', tier, score, { right, wrong: events.current.length - right }, String(seed));
+      }
       onProgress(progress);
       setOver({ best: isBest });
       piano.cue('complete');
@@ -266,7 +283,7 @@ function SoloRun({ t, settings, topics, level, best, bestKey, resume, onProgress
   const answer = (said: boolean) => {
     if (flash || over || left <= 0) return;
     const ok = said === fact.truth;
-    events.current.push({ id: `g:tf:${seed}:${answered.current++}`, skill: fact.skill, difficulty: fact.trio ? 1000 + 100 * fact.trio.level : factDifficulty(level), correct: ok, at: new Date().toISOString() });
+    events.current.push({ id: `g:tf:${seed}:${answered.current++}`, skill: fact.skill, difficulty: tier ? tierDifficulty(tier) : fact.trio ? 1000 + 100 * fact.trio.level : factDifficulty(level), correct: ok, at: new Date().toISOString() });
     if (ok) {
       setScore((s) => s + tfPoints(streak));
       setStreak((s) => s + 1);

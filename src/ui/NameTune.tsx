@@ -4,6 +4,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { isTuneSave, makeRounds, MAX_SCORE, ROUNDS, roundPoints, songEvents, type TuneSave } from '../engine/nameTune';
 import { songById, SONGS } from '../engine/songs';
 import { G2Head, type Game2Props } from './Flight';
+import { TierChips } from './TierChips';
+import { startTier, tierAllowed, tierDef, type DynName } from '../engine/gameTiers';
 import { piano } from './services';
 
 const TEXT = {
@@ -53,12 +55,13 @@ const TEXT = {
 
 type Phase = 'intro' | 'ask' | 'feedback' | 'over';
 
-export function NameTune({ lang, saved, onSave, onExit, onResult, best }: Game2Props) {
+export function NameTune({ lang, saved, onSave, onExit, onResult, best, tier: tierInfo }: Game2Props) {
   const tx = TEXT[lang];
   const sv = isTuneSave(saved) && saved.round < ROUNDS ? saved : null;
   const [phase, setPhase] = useState<Phase>('intro');
   const [game, setGame] = useState<TuneSave | null>(null);
   const [pick, setPick] = useState<{ id: string; points: number } | null>(null);
+  const [tier, setTier] = useState<DynName>(() => (sv?.tier && tierInfo && tierAllowed(tierInfo, sv.tier) ? sv.tier : tierInfo ? startTier(tierInfo) : 'pp'));
   const ctl = useRef<AbortController | null>(null);
   const t0 = useRef(0);
   const rounds = useMemo(() => (game ? makeRounds(game.seed, SONGS) : []), [game?.seed]);
@@ -76,7 +79,10 @@ export function NameTune({ lang, saved, onSave, onExit, onResult, best }: Game2P
     const c = new AbortController();
     ctl.current = c;
     await piano.unlock();
-    const song = songById(round.songId)!;
+    const full = songById(round.songId)!;
+    // A tier plays fewer notes of the opening (GAMES_TIERS_PLAN: 8 → 3).
+    const n = Number(tierDef('nametune', game?.tier ?? 'pp')?.params?.notes ?? 0);
+    const song = n > 0 ? { ...full, degrees: full.degrees.slice(0, n), beats: full.beats.slice(0, n) } : full;
     const { events, length } = songEvents(song, round.tonic);
     if (resetClock) t0.current = performance.now();
     try {
@@ -93,7 +99,7 @@ export function NameTune({ lang, saved, onSave, onExit, onResult, best }: Game2P
   }, [phase, game?.round, game?.seed]);
 
   const begin = (resume: boolean) => {
-    const g: TuneSave = resume && sv ? sv : { v: 1, seed: (Date.now() ^ (Math.random() * 1e9)) >>> 0, round: 0, score: 0, answers: [] };
+    const g: TuneSave = resume && sv ? sv : { v: 1, seed: (Date.now() ^ (Math.random() * 1e9)) >>> 0, round: 0, score: 0, answers: [], ...(tierInfo ? { tier } : {}) };
     setGame(g);
     onSave(g);
     setPick(null);
@@ -111,7 +117,7 @@ export function NameTune({ lang, saved, onSave, onExit, onResult, best }: Game2P
     setGame(g);
     if (g.round >= ROUNDS) {
       onSave(null);
-      onResult({ game: 'name-tune', score: g.score, detail: { answers: g.answers, max: MAX_SCORE } });
+      onResult({ game: 'name-tune', score: g.score, detail: { answers: g.answers, max: MAX_SCORE, right: g.answers.filter((a) => a.points > 0).length, wrong: g.answers.filter((a) => !a.points).length, ...(g.tier ? { tier: g.tier } : {}) } });
     } else onSave(g);
     setPhase('feedback');
   };
@@ -146,6 +152,7 @@ export function NameTune({ lang, saved, onSave, onExit, onResult, best }: Game2P
       {phase === 'intro' && (
         <section className="g2-card">
           <p>{tx.blurb}</p>
+          {tierInfo && !sv && <TierChips lang={lang} info={tierInfo} value={tier} onChange={setTier} game="nametune" />}
           {!!best && (
             <p className="g2-best">
               {tx.best}: <b dir="ltr">{best}</b>

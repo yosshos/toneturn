@@ -6,6 +6,13 @@
 
 import type { RatingEvent } from './rating';
 import type { SkillId } from './lesson';
+import { isTier, runDifficulty } from './gameTiers';
+
+/** The topic level a Rush run ended on (tiered runs report it as "topic#level"), as [topic, level]. */
+const rungOf = (d: Record<string, unknown>): [string, number] | null => {
+  const m = typeof d.rung === 'string' ? /^(.+)#(\d+)$/.exec(d.rung) : null;
+  return m ? [m[1], Number(m[2])] : null;
+};
 
 type Tag = { skill: SkillId; sub: string; w: number };
 const T = (skill: SkillId, sub: string): Tag[] => [{ skill, sub: `${skill}/${sub}`, w: 1 }];
@@ -24,10 +31,10 @@ const GAMES: Record<string, { tags: (d: Record<string, unknown>) => Tag[]; diff:
   tuneup: { tags: () => T('pitch', 'in-tune'), diff: () => 1300 },
   pitchmemory: { tags: () => T('absolute', 'name'), diff: () => 1400 },
   peakhunter: { tags: () => T('timbre', 'eq'), diff: (d) => 1000 + 150 * (Number(d.level) || 1) },
-  'rush-chord': { tags: (d) => (Number(d.level) >= 4 ? T('chords', 'inversion') : T('chords', 'quality')), diff: (d) => 900 + 100 * (Number(d.level) || 1) },
+  'rush-chord': { tags: (d) => ((rungOf(d)?.[1] ?? Number(d.level)) >= 4 ? T('chords', 'inversion') : T('chords', 'quality')), diff: (d) => 900 + 100 * (Number(d.level) || 1) },
   'rush-note': { tags: () => T('notes', 'staff'), diff: (d) => 900 + 120 * (Number(d.level) || 1) },
   'rush-fretboard': { tags: () => T('instrument', 'fretboard'), diff: (d) => 850 + 120 * (Number(d.level) || 1) },
-  'rush-interval': { tags: (d) => (Number(d.level) === 3 ? T('intervals', 'harmonic') : T('intervals', 'melodic')), diff: (d) => 950 + 120 * (Number(d.level) || 1) },
+  'rush-interval': { tags: (d) => { const r = rungOf(d); return (r ? (r[0] === 'intervals-all' && r[1] === 3) || (r[0] === 'compound-intervals' && r[1] === 3) : Number(d.level) === 3) ? T('intervals', 'harmonic') : T('intervals', 'melodic'); }, diff: (d) => 950 + 120 * (Number(d.level) || 1) },
   'rush-keysig': { tags: () => T('theory', 'keys'), diff: (d) => 900 + 130 * (Number(d.level) || 1) },
   'rush-progression': { tags: () => T2(['cadences', 'progression', 0.7], ['cadences', 'dictation', 0.3]), diff: (d) => 1050 + 120 * (Number(d.level) || 1) },
 };
@@ -62,7 +69,8 @@ export function gameEvents(game: string, score: number, detail: unknown, at: str
   if (game === 'flight' && d.input === 'touch') return [];
   const tags = g.tags(d);
   const skill = tags[0].skill;
-  const difficulty = Math.round(g.diff(d));
+  // Tiered runs (engine/gameTiers.ts): the tier's rating band, so an ff run is ff evidence.
+  const difficulty = isTier(d.tier) ? runDifficulty(game, d.tier, d) : Math.round(g.diff(d));
   const out: RatingEvent[] = [];
   const right = typeof d.right === 'number' ? (d.right as number) : null;
   const wrong = typeof d.wrong === 'number' ? (d.wrong as number) : null;

@@ -168,6 +168,8 @@ export interface PeakSave {
   seed: number;
   level: PeakLevel;
   answers: PeakAnswer[];
+  /** Level tier of the run (GAMES_TIERS_PLAN). */
+  tier?: import('./courseSocial').DynName;
 }
 
 export function isPeakSave(x: unknown): x is PeakSave {

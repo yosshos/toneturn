@@ -112,6 +112,8 @@ import { awardName, MonthReviewIcon, ProgressTabs } from './Stats';
 import { achievements, earnAwards, firstLaunchAwards } from '../engine/achievements';
 import { bumpCount } from '../engine/stats';
 import { gameAccuracy } from '../engine/gameRating';
+import '../tiers.css';
+import { TIERS, clearsRun, isTier, tierStepStars, tierInfo, tierKey, type DynName, type TierInfo } from '../engine/gameTiers';
 import { Flight } from './Flight';
 import { NameTune } from './NameTune';
 import { TuneUp } from './TuneUp';
@@ -158,6 +160,17 @@ export function App() {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [progress, setProgress] = useState<Progress>(emptyProgress());
   const [progressReady, setProgressReady] = useState(false);
+  // "mf cleared — f opens" (GAMES_TIERS_PLAN §2.3): one line for a few seconds after a run clears a tier.
+  const [tierToast, setTierToast] = useState<{ tier: DynName; next: DynName | null } | null>(null);
+  useEffect(() => {
+    const c = progress.lastTierClear;
+    if (!c) return;
+    const i = TIERS.indexOf(c.tier);
+    setTierToast({ tier: c.tier, next: i < TIERS.length - 1 ? TIERS[i + 1] : null });
+    void store.consumeTierClear();
+    const id = window.setTimeout(() => setTierToast(null), 3500);
+    return () => clearTimeout(id);
+  }, [progress.lastTierClear]);
   const [vocalWarmup, setVocalWarmup] = useState(false);
   const [route, setRoute] = useState<Route>(routeFromHash());
   const [lessonKey, setLessonKey] = useState(0);
@@ -836,7 +849,7 @@ export function App() {
   // ---- the learning path (spec AF) ----
   const pathView = usePathView(s, progress);
   /** The step being played from the path: its result is recorded when the session completes. */
-  const pendingStep = useRef<{ id: string; kind: PathStep['kind']; after: string | null; testOut?: string[] } | null>(null);
+  const pendingStep = useRef<{ id: string; kind: PathStep['kind']; after: string | null; testOut?: string[]; /** A game step's tier (GAMES_TIERS_PLAN §5.2). */ tier?: DynName } | null>(null);
   // A unit becomes current → frozen as a fact (P9).
   useEffect(() => {
     const f = pathView.freeze;
@@ -865,7 +878,7 @@ export function App() {
   };
   const openPathStep = (x: UnitStep, unit: PathUnit, mode: 'step' | 'practice') => {
     const step = x.step;
-    pendingStep.current = { id: step.id, kind: step.kind, after: lastSession() };
+    pendingStep.current = { id: step.id, kind: step.kind, after: lastSession(), ...(step.kind === 'game' && step.tier ? { tier: step.tier } : {}) };
     const title = stepTitle(step, s, s.uiLang);
     const seed = (Date.now() ^ (Math.random() * 1e9)) >>> 0;
     if (step.kind === 'lesson' && step.lesson) return s.mode === 'voice' && !s.voiceConsent ? setConsentThen(() => () => openLesson(step.lesson!)) : openLesson(step.lesson);
@@ -990,9 +1003,17 @@ export function App() {
     const ps = pendingStep.current;
     if (!ps || ps.kind !== 'game' || !ps.id.endsWith(`:${game}`) || !settings) return;
     pendingStep.current = null;
-    const acc = gameAccuracy(game, score, (detail ?? {}) as Record<string, unknown>);
-    const stars = acc >= 0.95 ? 3 : acc >= 0.8 ? 2 : acc >= 0.6 ? 1 : 0;
+    const d = (detail ?? {}) as Record<string, unknown>;
+    const acc = gameAccuracy(game, score, d);
+    // A step with a tier (GAMES_TIERS_PLAN): 3 stars when the run met the rule at that tier or above, else at most 2.
+    const stars = ps.tier ? tierStepStars(ps.tier, isTier(d.tier) ? d.tier : null, isTier(d.tier) && clearsRun(game, d.tier, score, d), acc) : acc >= 0.95 ? 3 : acc >= 0.8 ? 2 : acc >= 0.6 ? 1 : 0;
     updateSettings({ pathFacts: recordStep(settings.pathFacts ?? {}, ps.id, stars, new Date().toISOString()) });
+  };
+  /** The tier a game opens at (GAMES_TIERS_PLAN §2.2); a path game step asks for its own tier. */
+  const tierFor = (g: string): TierInfo => {
+    const info = tierInfo(g, ratingsOf(progress), progress.gameTiers?.[tierKey(g)], s.activeCourse ?? 'ear', s.courses);
+    const ps = pendingStep.current;
+    return ps && ps.kind === 'game' && ps.tier && ps.id.endsWith(`:${g}`) ? { ...info, forced: ps.tier } : info;
   };
   /** P14: after the questionnaire or the level test, a current unit under half done is rebuilt. */
   const unfreezeIfEarly = (facts: Settings['pathFacts']): Settings['pathFacts'] => {
@@ -1569,6 +1590,7 @@ export function App() {
           onSettings={updateSettings}
           onBack={() => go('arcade')}
           onTrueFalse={() => gate('game:truefalse', () => go('truefalse'))}
+          tiers={(k) => tierFor(k)}
           onStart={(v) =>
             gate(v.kind === 'melody' ? 'game:echo' : 'game:beat', () => {
               void piano.unlock(); // the Start gesture
@@ -1585,6 +1607,7 @@ export function App() {
           t={t}
           settings={s}
           progress={progress}
+          tier={tierFor('truefalse')}
           onBack={() => go('arcade')}
           onProgress={setProgress}
           onOnline={(topics, level) => {
@@ -1864,6 +1887,7 @@ export function App() {
               noteGameStep(g, r.score, r.detail);
             }}
             best={progress.bests?.[g]}
+            tier={tierFor(g)}
           />
         );
       })}
@@ -1882,6 +1906,7 @@ export function App() {
             noteGameStep(g, r.score, r.detail);
           },
           best: progress.bests?.[g],
+          tier: tierFor(g),
         };
         if (g === 'flight') return <Flight key={g} {...props} />;
         if (g === 'nametune') return <NameTune key={g} {...props} />;
@@ -1965,6 +1990,20 @@ export function App() {
       )}
       {isTab && !mini && <TabBar t={t} route={route as TabId} onGo={(r) => go(r)} />}
     </div>
+    {tierToast && (
+      <p className="tier-toast" role="status" data-tier-toast={tierToast.tier}>
+        {s.uiLang === 'he' ? (
+          <>
+            עברתם את <i className="dyn">{tierToast.tier}</i>
+            {tierToast.next ? <> — נפתחת <i className="dyn">{tierToast.next}</i></> : null}
+          </>
+        ) : (
+          <>
+            <i className="dyn">{tierToast.tier}</i> cleared{tierToast.next ? <> — <i className="dyn">{tierToast.next}</i> opens</> : null}
+          </>
+        )}
+      </p>
+    )}
     {courseSheet && <CourseSheet mine={courseCtx.mine} active={courseCtx.active} lang={s.uiLang} onPick={pickCourse} onClose={() => setCourseSheet(false)} />}
     </RefresherContext.Provider>
     </MiniGateContext.Provider>

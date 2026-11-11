@@ -14,6 +14,8 @@ import { namingFor, type Progress, type Settings } from '../storage/progress';
 import { MicIcon, Note, PermissionPanel } from './bits';
 import { makeGameAdapters, piano, store } from './services';
 import { calibrationOffset } from '../engine/memory';
+import { TierChips } from './TierChips';
+import { startTier, tierDef, type DynName, type TierInfo } from '../engine/gameTiers';
 
 export interface GameSetupValue {
   kind: GameKind;
@@ -25,6 +27,8 @@ export interface GameSetupValue {
   pads?: PadSet;
   /** Beat Echo on a kit: kick-and-snare phrases, two pads. */
   drums?: boolean;
+  /** Level tier (GAMES_TIERS_PLAN): pads, tempo and swing come from it; solo runs count toward clearing it. */
+  tier?: DynName;
 }
 
 // ======================================================================= setup
@@ -38,6 +42,7 @@ export function GameSetup({
   settings,
   onSettings,
   onTrueFalse,
+  tiers,
 }: {
   t: Strings;
   initialKind: GameKind;
@@ -47,6 +52,8 @@ export function GameSetup({
   onStart: (v: GameSetupValue) => void;
   settings: Settings;
   onSettings: (p: Partial<Settings>) => void;
+  /** Level tiers per game (melody / rhythm). */
+  tiers?: (k: GameKind) => TierInfo;
 }) {
   const [kind, setKind] = useState<GameKind>(initialKind);
   const [input, setInput] = useState<GameInput>(initialKind === 'melody' ? 'pads' : 'tap');
@@ -55,6 +62,8 @@ export function GameSetup({
   const [swing, setSwing] = useState(false);
   const [drums, setDrums] = useState(true);
   const [pads, setPads] = useState<PadSet>('basic');
+  const [tier, setTier] = useState<DynName>(() => (tiers ? startTier(tiers(initialKind)) : 'pp'));
+  const tinfo = tiers ? tiers(kind) : null;
   const resumeGame = loadSlot<{ setup: GameSetupValue; match: Match }>(`game:${kind}`);
   // (solo games only are ever saved)
   const [names, setNames] = useState<string[]>(() => {
@@ -72,6 +81,7 @@ export function GameSetup({
   const pickKind = (k: GameKind) => {
     setKind(k);
     setInput(k === 'melody' ? 'pads' : 'tap');
+    if (tiers) setTier(startTier(tiers(k)));
   };
   const inputs: [GameInput, string][] = kind === 'melody' ? [['pads', t.inPads], ['sing', t.inSing]] : [['tap', t.inTap], ['knock', t.inKnock]];
 
@@ -124,7 +134,8 @@ export function GameSetup({
           {input === 'sing' && <p className="field-hint">{t.singHint}</p>}
         </fieldset>
 
-        {kind === 'rhythm' && (
+        {tinfo && <TierChips lang={settings.uiLang} info={tinfo} value={tier} onChange={setTier} game={kind} />}
+        {kind === 'rhythm' && !tinfo && (
           <fieldset className="seg-field">
             <legend>{t.tempo}</legend>
             <div className="seg" role="radiogroup" aria-label={t.tempo}>
@@ -190,6 +201,7 @@ export function GameSetup({
             <small className="field-hint">{t.tempoLadderHint}</small>
           </span>
         </label>
+        {!tinfo && (
         <label className="toggle-row">
           <input type="checkbox" checked={swing} onChange={(e) => setSwing(e.target.checked)} />
           <span>
@@ -197,6 +209,7 @@ export function GameSetup({
             <small className="field-hint">{t.swingFeelHint}</small>
           </span>
         </label>
+        )}
         {kind === 'rhythm' && input === 'tap' && (
           <label className="toggle-row">
             <input type="checkbox" checked={drums} onChange={(e) => setDrums(e.target.checked)} data-drums-toggle />
@@ -206,7 +219,7 @@ export function GameSetup({
             </span>
           </label>
         )}
-        {kind === 'melody' && (
+        {kind === 'melody' && !tinfo && (
           <fieldset className="seg-field">
             <legend>{t.padSet}</legend>
             <div className="seg" role="radiogroup" aria-label={t.padSet}>
@@ -240,7 +253,18 @@ export function GameSetup({
           } catch {
             /* ignore */
           }
-          onStart({ kind, input, players: count === 1 ? [ps[0] || t.playerN] : ps, bpm, ladder, swing, pads, drums: kind === 'rhythm' && input === 'tap' && drums });
+          const tp = tinfo ? tierDef(kind, tier)?.params : undefined;
+          onStart({
+            kind,
+            input,
+            players: count === 1 ? [ps[0] || t.playerN] : ps,
+            bpm: tp ? Number(tp.bpm) : bpm,
+            ladder,
+            swing: tp ? !!tp.swing : swing,
+            pads: tp && kind === 'melody' ? (tp.pads as PadSet) : pads,
+            drums: kind === 'rhythm' && input === 'tap' && drums,
+            ...(tinfo ? { tier } : {}),
+          });
         }}
       >
         {t.play}
@@ -310,7 +334,7 @@ export function GameScreen({
           void (async () => {
             let p = await store.recordGameBest(kind, best);
             // Solo games rate the player's skill; shared-device games don't know who "you" are.
-            if (m.players.length === 1) p = await store.recordGameRounds(kind, seed, rounds);
+            if (m.players.length === 1) p = await store.recordGameRounds(kind, seed, rounds, undefined, setup.tier);
             onProgress(p);
           })();
         },

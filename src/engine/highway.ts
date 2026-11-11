@@ -21,6 +21,8 @@ export interface HighwayOptions {
   keyPc?: number;
   /** Default 8. */
   bars?: number;
+  /** Level tier of the run (GAMES_TIERS_PLAN): sets the level per song chip and the tempo. */
+  tier?: import('./courseSocial').DynName;
 }
 
 export interface HighwayNote {

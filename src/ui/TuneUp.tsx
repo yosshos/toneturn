@@ -5,6 +5,8 @@ import { TuneUpArt } from './GameArt';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { centsLeft, isTuneUpSave, makeRounds, MAX_SCORE, midiHz, PEG_RANGE, ROUNDS, roundPoints, stringNamesOf, toneHz, type TuneInst, type TuneRound, type TuneUpSave } from '../engine/tuneUp';
 import { G2Head, prefersCalm, type Game2Props } from './Flight';
+import { TierChips } from './TierChips';
+import { startTier, tierAllowed, tierDef, type DynName } from '../engine/gameTiers';
 import { piano } from './services';
 
 const TEXT = {
@@ -132,7 +134,7 @@ class StringPair {
   }
 }
 
-export function TuneUp({ lang, settings, saved, onSave, onExit, onResult, best }: Game2Props) {
+export function TuneUp({ lang, settings, saved, onSave, onExit, onResult, best, tier: tierInfo }: Game2Props) {
   const tx = TEXT[lang];
   const calm = prefersCalm(settings);
   const sv = isTuneUpSave(saved) && saved.round < ROUNDS ? saved : null;
@@ -140,10 +142,15 @@ export function TuneUp({ lang, settings, saved, onSave, onExit, onResult, best }
   const [game, setGame] = useState<TuneUpSave | null>(null);
   const [peg, setPeg] = useState(0);
   const [last, setLast] = useState<{ cents: number; points: number } | null>(null);
+  const [tier, setTier] = useState<DynName>(() => (sv?.tier && tierInfo && tierAllowed(tierInfo, sv.tier) ? sv.tier : tierInfo ? startTier(tierInfo) : 'pp'));
   const pair = useRef<StringPair | null>(null);
   // Final bass check: the bass course tunes the four bass strings.
   const inst: TuneInst = settings.activeCourse === 'bass' ? 'bass' : 'guitar';
-  const rounds = useMemo(() => (game ? makeRounds(game.seed, undefined, inst) : []), [game?.seed, inst]);
+  const rounds = useMemo(() => {
+    if (!game) return [];
+    const p = game.tier ? tierDef('tuneup', game.tier)?.params : undefined;
+    return makeRounds(game.seed, undefined, inst, p ? { lo: Number(p.lo), hi: Number(p.hi) } : undefined);
+  }, [game?.seed, game?.tier, inst]);
   const shownIdx = game ? (phase === 'feedback' || phase === 'over' ? game.round - 1 : game.round) : 0;
   const round: TuneRound | undefined = rounds[shownIdx];
 
@@ -177,7 +184,7 @@ export function TuneUp({ lang, settings, saved, onSave, onExit, onResult, best }
   };
 
   const begin = (resume: boolean) => {
-    const g: TuneUpSave = resume && sv ? sv : { v: 1, seed: (Date.now() ^ (Math.random() * 1e9)) >>> 0, round: 0, score: 0, errors: [] };
+    const g: TuneUpSave = resume && sv ? sv : { v: 1, seed: (Date.now() ^ (Math.random() * 1e9)) >>> 0, round: 0, score: 0, errors: [], ...(tierInfo ? { tier } : {}) };
     setGame(g);
     onSave(g);
     setPeg(0);
@@ -197,7 +204,7 @@ export function TuneUp({ lang, settings, saved, onSave, onExit, onResult, best }
     if (g.round >= ROUNDS) {
       onSave(null);
       const mean = g.errors.reduce((a, c) => a + Math.abs(c), 0) / g.errors.length;
-      onResult({ game: 'tune-up', score: g.score, detail: { errors: g.errors, meanCents: Math.round(mean * 10) / 10, max: MAX_SCORE } });
+      onResult({ game: 'tune-up', score: g.score, detail: { errors: g.errors, meanCents: Math.round(mean * 10) / 10, max: MAX_SCORE, ...(g.tier ? { tier: g.tier } : {}) } });
     } else onSave(g);
     setPhase('feedback');
   };
@@ -234,6 +241,7 @@ export function TuneUp({ lang, settings, saved, onSave, onExit, onResult, best }
           <TuneUpArt />
           <p>{inst === 'bass' ? tx.blurbBass : tx.blurb}</p>
           <p className="g2-dim">{tx.headphones}</p>
+          {tierInfo && !sv && <TierChips lang={lang} info={tierInfo} value={tier} onChange={setTier} game="tuneup" />}
           {!!best && (
             <p className="g2-best">
               {tx.best}: <b dir="ltr">{best}</b>
