@@ -653,3 +653,61 @@ and the spirituals. F10 L1/L3/L5 and F13 L1 remain topics on the path (not vocal
 **Unverified**: real-microphone behaviour of the onset engine and the band sync (`heardTime` + calibrated delay) on
 phones, the bleed gate against a full band on a speaker, and the Hebrew copy by a native reviewer. The new quick
 lessons' English narration is not recorded yet (`tests/voiceFiles` "every static line is recorded" fails until then).
+
+
+## Implemented (P2)
+
+Second build (2026-11-11): every item of "Not built yet" above, the sung licks' timing tolerance, and the rest
+reminder. Only the microphone grades (pitch, onsets, relative loudness); syllables and words are never scored. New
+engine code: `src/engine/voiceP2.ts` (quarter tones, motif, trading, the colla voce follower, the rest reminder),
+`src/engine/voiceMySong.ts` (melody from the singer's own recording), song rules in `voiceGrade.ts`, the take screen
+in `src/ui/VoiceTimed.tsx` (+ `VoiceMySong.tsx`). Tests: `tests/voiceP2.test.ts` (24), e2e `e2e/voiceP2.spec.ts`.
+
+| Level | Family · L | What is sung | Measured, pass rule |
+|---|---|---|---|
+| 704 | F2 L7 quarter tones | chromatic neighbours, then jins Rast, Bayati, Sikah (fractional MIDI), each note on its own "da" | notes split at short silences / ⅓-semitone moves; quarter tones ≤ 15 ¢ on average, 80 % of notes ≤ 25 ¢ |
+| 1903 | F9 L8 reading with the band | four own 8-bar melodies, the band plays only the chords, the melody is never played; staff instead of the note roll | per phrase pitch + time (the song grader), 0.55 |
+| 1904 | F9 L9 jazz lead sheet | three own swing lead sheets: chord symbols above the staff, swung eighths, syncopation, ties (`~` in the notation; one sung note, a drawn tie) | as L8, 0.55 |
+| 1308 | F13 L8 my song | the singer's own recording, opened on the device (never uploaded): melody taken out offline (YIN on a 4× decimated copy, semitone grid of the recording's own tuning, phrases at breaths), then sung along with the recording (headphones required) | per phrase pitch + time vs the extracted line, 0.7; no loops |
+| 1408 | F14 L6 colla voce | the band waits: the first note and chord, then a chord pad changes when the singer reaches each bar's first note (live `Follower`: ±70 ¢ held 3 frames, a repeated pitch needs a fresh attack, a skipped note is passed) | notes reached in tune per phrase ≥ 0.7, follow ≥ 80 %; no clock |
+| 1409 | F14 L9 full AABA | own 32-bar AABA *Lantern Street* as written; then the same with the last A interpreted | as written every section ≥ 0.72; interpreted item: A A B timed, last A kept ≥ 85 % + moved ≥ 30 % |
+| 1410 | F14 L10 blues call and response | own 12-bar *Call and Answer*: the singer sings 2-bar calls, the band plays our answer line in the gaps | per phrase + a fall (≥ 150 ¢ drop within 0.45 s of the phrase end) on all but one phrase, 0.7 |
+| 1507 | F15 L2 motif | a 3-note cell played in bars 1–2, developed over 6 bars | `motifReturns` with the cell as motif: two different developments (repeat, sequence, inversion, displacement, rhythm) |
+| 1508 | F15 L3 embellish the head | Saints (PD) and Blue Window | long notes kept ≥ 80 %, notes added ≥ 20 % |
+| 1509 | F15 L7 bebop accents | the two bebop lines | swing ratio in the tempo band, off-beat attack ≥ 1.5 dB louder than on-beat, per-phrase pitch; 0.65 |
+| 1510 | F15 L10 trading twos and fours | blues at 140 (twos, 1 chorus) and 160 (fours, 2 choruses); the app's first turn is a chord-tone line, each later app turn is computed live from the singer's previous turn (`tradeAnswer`: their cell sequenced and inverted) | per singer turn: chord tones on strong beats ≥ 60 %, onsets on the swung-eighth grid, ≥ 3 notes in every turn, an idea returns (own motif, or the app's cell picked up) |
+
+Placement: the new levels sit where they teach — motif and embellishing right after call and response, bebop accents
+before tensions, colla voce after the ballad, my song before the performance take, quarter tones and the reading
+levels at their families' ends. Old levels keep their numbers and keep opening by number (`n − 1` passed), so nothing
+open before is locked. Every level is a path step (`vocal:<n>`), rates its family's tags (trading → improv/answer,
+motif → improv/play, reading → sight), counts toward the family badges, and records XP like the other timed levels.
+
+**Sung licks** (`src/engine/licks.ts`, `analyze.ts`): the voice ran through the piano-by-microphone limits (onset SD
+≤ 28 ms, a "hesitation" at 1.5 × an interval) — tighter than a sung onset can be measured (±25–40 ms, §4). A sung lick
+now carries `sung: true` and is analysed with `VOICE_TIMING` (SD ≤ 40 ms, worst onset 100 ms, hesitation at 1.8 ×);
+the pitch rule is unchanged, and it is always treated as microphone input (a connected MIDI keyboard no longer makes a
+singer's take use MIDI limits). Tested: a ±35 ms sung take passes as a voice and fails with the instrument limits; a
+±100 ms take still fails.
+
+**Rest reminder** (vocal health): sung minutes today (from the kept takes' item lengths) and a tiring check (the last
+three takes' stability ≥ 8 ¢ worse than the first three within the hour) show a one-line break suggestion on the
+voice home and on the level summary after about 30 minutes. Never a score.
+
+**Quick lessons**: `voice-reading` (reading with the band, lead sheets, quarter tones) and `voice-trading` (motif,
+embellishing, bebop accents, trading, colla voce, call and response, my song), opened before those levels
+(`units.ts` per-level map).
+
+**Jazz-course taste (trading twos)**: the sung trading-twos item now exists (1510 item 1). It was *not* wired into
+the jazz course's "I play well" taste: tastes run before setup, when no voice range is known, and the jazz course is
+not voice-only (an instrumentalist would be asked to sing). Owner decision whether a singer's jazz taste should open it.
+
+**Still not built**: F14 L9's rubato verse before the chorus (colla voce exists as its own level); "returns to the
+bar" timing after a colla voce phrase; bar-accurate band following (the pad changes on the bar's first sung note, it
+does not stretch a groove); Tier 1A standards (no period transcriptions available here); F10 L1/L3/L5 and F13 L1
+remain topics.
+
+**Unverified**: everything live on a real phone — the follower and the trading replies' timing (`setTimeout` +
+`heardTime`, about ±20 ms), my-song extraction on real recordings (clean on synthetic audio; a band mix will give
+gaps), quarter-tone splitting of a real voice; Hebrew copy by a native reviewer; the two new lessons' English
+narration is not recorded (`tests/voiceFiles` fails on the new lines until then).

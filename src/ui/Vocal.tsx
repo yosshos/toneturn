@@ -59,7 +59,8 @@ import { TIMED_KINDS } from '../engine/vocal';
 import { familyOfRef, isNewLevel, NEW_LEVEL_NAMES, VOICE_FAMILIES, vocalLevelByRef, voiceItemTags } from '../engine/voiceFamilies';
 import { gradeMore, moreReference, simulateMore, MORE_KINDS } from '../engine/vocalMore';
 import { MORE_INSTR, METRIC_NAMES, TONE_NAMES, VT } from '../content/voiceCourseText';
-import { TimedSession } from './VoiceTimed';
+import { restTakes, TimedSession } from './VoiceTimed';
+import { restAdvice } from '../engine/voiceP2';
 import { VoiceProbe } from './VoiceProbe';
 import { Glyph, DOMAIN_COLOR } from './Glyph';
 import { FAMILY_GLYPH } from './stepGlyphs';
@@ -375,6 +376,16 @@ export function VocalScreen({ t, settings, progress, onSettings, onProgress, onB
       </header>
       <p className="field-hint">{t.vocalBlurb}</p>
       <p className="care-note">{t.vocalCare}</p>
+      {(() => {
+        // Vocal health: sung minutes today, or a tiring voice, suggest a break (a reminder, never a score).
+        const ad = restAdvice(restTakes(v.takes), new Date());
+        const lang = settings.uiLang === 'en' ? 'en' : 'he';
+        return ad.suggest ? (
+          <p className="care-note" data-rest-note="1">
+            {ad.tired ? VT.restTired[lang] : VT.restSuggest[lang].replace('{m}', String(ad.minutes))}
+          </p>
+        ) : null;
+      })()}
 
       <section className="set-card">
         <h2>{t.vocalRangeTitle}</h2>
@@ -1056,7 +1067,7 @@ function VocalSession({
         </div>
       ) : (
       <p className="vocal-targets" dir="ltr">
-        {(hidden ? shownTargets.slice(0, 1) : shownTargets).map((m) => noteLabel(m, settings)).join(' – ')}
+        {(hidden ? shownTargets.slice(0, 1) : shownTargets).map((m) => (Math.abs(m - Math.round(m)) > 0.2 ? `${noteLabel(Math.ceil(m), settings)}¼↓` : noteLabel(m, settings))).join(' – ')}
       </p>
       )}
       {phase !== 'result' && (item.kind === 'hold' || item.kind === 'straight' || item.kind.startsWith('vibrato') || item.kind === 'messa' || item.kind === 'range' || item.kind === 'dynamic' || item.kind === 'breath-hold' || item.kind === 'fine-tune' || item.kind === 'edge') && (

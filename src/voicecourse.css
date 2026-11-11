@@ -173,3 +173,33 @@
 .vtimed .roll-compact .sing-roll {
   height: 70px;
 }
+
+/* VOICE_CURRICULUM P2: reading over the band and jazz lead sheets (F9 L8–L9) — four bars a line, chords above. */
+.vt-sheet {
+  display: grid;
+  gap: 4px;
+  margin: 6px 0;
+}
+.vt-sheet-line .note-staff {
+  padding: 2px 4px;
+}
+.vt-sheet-line .note-staff svg {
+  width: 100%;
+  height: auto;
+  max-height: 104px;
+}
+.vt-sheet-chords {
+  list-style: none;
+  padding: 0 8px 0 64px;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+.vt-mine label.btn {
+  display: inline-flex;
+  justify-content: center;
+  cursor: pointer;
+}

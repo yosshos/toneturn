@@ -334,6 +334,7 @@ export function lickDrill(l: Lick, key: number, inst: LickInstrument = 'piano', 
     goal,
     startBpm: lickStart(l),
     chart: lickChart(l, k),
+    ...(inst === 'voice' ? { sung: true } : {}),
     ...(o.band ? { band: { style: 'swing' as const, bass: true } } : {}),
   };
 }

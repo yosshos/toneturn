@@ -295,8 +295,43 @@ export const SCAT_MORE_LEVELS: VocalLevel[] = [
   lv(1506, 0.56, [{ ...SCAT('landing', 'Cmaj7 | Am7 | Dm7 | G7 | Em7 | A7b9 | Dm7 | G7', 120, 1600), scat: { mode: 'landing', chart: 'Cmaj7 | Am7 | Dm7 | G7 | Em7 | A7b9 | Dm7 | G7', style: 'bossa', bpm: 120 } }, SCAT('landing', 'Cm7 | Fm7 | Cm7 | Cm7 | Fm7 | Fm7 | Cm7 | Cm7 | Ab7 | G7 | Cm7 | G7', 120, 1650)]),
 ];
 
+// ---------------------------------------------------------------- P2: the levels left out of the first build
+
+const P2SCAT = (sc: NonNullable<VocalItem['scat']>, difficulty: number): Item => ({ kind: 'scat', seconds: 30, reference: 'before', scat: sc, difficulty });
+const MICRO = (steps: number[], difficulty: number, at = 0.4): Item => ({ kind: 'micro', seconds: steps.length * 0.85 + 1, reference: 'before', at, steps, noteSecs: steps.map(() => 0.85), difficulty });
+
+/** F2 L7: chromatic neighbours, then the quarter tones of the maqam (Rast, Bayati, Sikah) — each note on its own syllable. */
+export const MICRO_LEVELS: VocalLevel[] = [lv(704, 0.55, [MICRO([0, 1, 0, -1, 0], 1250), MICRO([0, 2, 3.5, 5, 3.5, 2, 0], 1350), MICRO([0, 1.5, 3, 5, 3, 1.5, 0], 1400), MICRO([0, 1.5, 3.5, 1.5, 0], 1450)])];
+
+/** F9 L8–L9: reading over the band (the melody is never played), then jazz lead sheets with chord symbols. */
+export const READ_LEVELS: VocalLevel[] = [
+  lv(1903, 0.55, [SONG('read-first-light', { band: true, rhythm: true, need: 0.55, read: 'band' }, 1300), SONG('read-quiet-road', { band: true, rhythm: true, need: 0.55, read: 'band' }, 1300), SONG('read-grey-morning', { band: true, rhythm: true, need: 0.55, read: 'band' }, 1350), SONG('read-three-steps', { band: true, rhythm: true, need: 0.55, read: 'band' }, 1350)]),
+  lv(1904, 0.55, [SONG('lead-night-walk', { band: true, rhythm: true, need: 0.55, read: 'lead' }, 1450), SONG('lead-corner-swing', { band: true, rhythm: true, need: 0.55, read: 'lead' }, 1500), SONG('lead-late-train', { band: true, rhythm: true, need: 0.55, read: 'lead' }, 1500)]),
+];
+
+/** F13 L8: my song — the singer's own recording, its melody taken from the audio on the device. */
+export const MY_SONG_LEVELS: VocalLevel[] = [lv(1308, 0.7, [{ kind: 'song', seconds: 60, reference: 'before', song: { id: 'mine', band: true, rhythm: true, need: 0.7, mine: true }, difficulty: 1300 }])];
+
+/** F14 L6 colla voce, L9 a full AABA (the last A interpreted), L10 a blues in call and response with falls. */
+export const STANDARD_MORE_LEVELS: VocalLevel[] = [
+  lv(1408, 0.7, [SONG('slow-harbor', { band: true, rhythm: false, need: 0.7, rubato: true }, 1500), SONG('corner-light', { band: true, rhythm: false, need: 0.7, rubato: true }, 1550)]),
+  lv(1409, 0.72, [SONG('lantern-street', { band: true, rhythm: true, need: 0.72 }, 1600), SONG('lantern-street', { band: true, rhythm: true, need: 0.72, interpretFrom: 3 }, 1650)]),
+  lv(1410, 0.7, [SONG('call-and-answer', { band: true, rhythm: true, need: 0.7, falls: true }, 1600), SONG('call-and-answer', { band: true, rhythm: true, need: 0.7, falls: true, bpm: 120 }, 1650)]),
+];
+
+/** F15 L2 motif, L3 embellishing a head, L7 bebop syllable accents, L10 trading twos and fours. */
+export const SCAT_P2_LEVELS: VocalLevel[] = [
+  lv(1507, 0.56, [
+    P2SCAT({ mode: 'motif', chart: 'Cmaj7 | Cmaj7 | Dm7 | G7 | Cmaj7 | Am7 | Dm7 | G7', style: 'swing', bpm: 100, cell: [[0, 0, 1], [1, 2, 1], [2, 4, 2]] }, 1300),
+    P2SCAT({ mode: 'motif', chart: 'Dm7 | G7 | Cmaj7 | Cmaj7 | Dm7 | G7 | Cmaj7 | Cmaj7', style: 'swing', bpm: 112, cell: [[0.5, 7, 0.5], [1, 9, 1], [2, 4, 2]] }, 1350),
+  ]),
+  lv(1508, 0.6, [SONG('saints-jazz', { phrases: [0, 1], band: true, rhythm: false, need: 0.55, embellish: true }, 1400), SONG('blue-window', { band: true, rhythm: false, need: 0.55, embellish: true }, 1450)]),
+  lv(1509, 0.65, [SONG('bop-line', { band: true, rhythm: true, need: 0.65, tol: 45, bop: true }, 1550), SONG('bop-line-2', { band: true, rhythm: true, need: 0.65, tol: 45, bop: true }, 1600)]),
+  lv(1510, 0.56, [P2SCAT({ mode: 'trade', chart: BLUES, style: 'swing', bpm: 140, turn: 2 }, 1600), P2SCAT({ mode: 'trade', chart: BLUES, style: 'swing', bpm: 160, turn: 4, loops: 2 }, 1700)]),
+];
+
 /** Every new level of the families. */
-export const NEW_LEVELS: VocalLevel[] = [...SIGHT_MORE_LEVELS, ...ARPEGGIO_LEVELS, ...SCAT_MORE_LEVELS, ...BREATH_LEVELS, ...PITCH_LEVELS, ...RANGE_LEVELS, ...DYN_LEVELS, ...VIB_LEVELS, ...TIME_LEVELS, ...EAR_LEVELS, ...SONG_LEVELS, ...STANDARD_LEVELS, ...SCAT_LEVELS, ...AGILITY_LEVELS, ...HARMONY_MORE_LEVELS, ...INFLECT_LEVELS];
+export const NEW_LEVELS: VocalLevel[] = [...MICRO_LEVELS, ...READ_LEVELS, ...MY_SONG_LEVELS, ...STANDARD_MORE_LEVELS, ...SCAT_P2_LEVELS, ...SIGHT_MORE_LEVELS, ...ARPEGGIO_LEVELS, ...SCAT_MORE_LEVELS, ...BREATH_LEVELS, ...PITCH_LEVELS, ...RANGE_LEVELS, ...DYN_LEVELS, ...VIB_LEVELS, ...TIME_LEVELS, ...EAR_LEVELS, ...SONG_LEVELS, ...STANDARD_LEVELS, ...SCAT_LEVELS, ...AGILITY_LEVELS, ...HARMONY_MORE_LEVELS, ...INFLECT_LEVELS];
 
 // ---------------------------------------------------------------- the families
 
@@ -314,21 +349,22 @@ const nums = (base: number, levels: VocalLevel[]) => levels.map((_, i) => base +
 /** The 15 families + Barry Harris, in teaching order (= path order: the first ones open first). */
 export const VOICE_FAMILIES: VoiceFamily[] = [
   // The on-ramp first (owner: "every great jazz singer can sing a simple song perfectly — start here"), with the breath.
-  { id: 'v-songs', title: { en: 'Songs with the band', he: 'שירים עם להקה' }, refs: SONG_LEVELS.map((l) => l.level), stage: 'A' },
+  // P2 levels sit where they teach (my song before the performance take); old levels keep opening by number.
+  { id: 'v-songs', title: { en: 'Songs with the band', he: 'שירים עם להקה' }, refs: [...SONG_LEVELS.slice(0, -1).map((l) => l.level), 1308, ...SONG_LEVELS.slice(-1).map((l) => l.level)], stage: 'A' },
   { id: 'v-breath', title: { en: 'Breath & sustain', he: 'נשימה והחזקה' }, refs: [1, ...BREATH_LEVELS.map((l) => l.level)], stage: 'A' },
-  { id: 'v-pitch', title: { en: 'Pitch & intonation', he: 'גובה ואינטונציה' }, refs: [2, 7, ...PITCH_LEVELS.map((l) => l.level)], stage: 'A' },
+  { id: 'v-pitch', title: { en: 'Pitch & intonation', he: 'גובה ואינטונציה' }, refs: [2, 7, ...PITCH_LEVELS.map((l) => l.level), 704], stage: 'A' },
   { id: 'v-range', title: { en: 'Range & registers', he: 'מנעד ורגיסטרים' }, refs: [4, 6, ...RANGE_LEVELS.map((l) => l.level)], stage: 'A' },
   { id: 'v-time', title: { en: 'Time feel', he: 'תחושת זמן' }, refs: [9, ...TIME_LEVELS.map((l) => l.level)], stage: 'A' },
   { id: 'v-ear', title: { en: "The singer's ear", he: 'האוזן של הזמר' }, refs: [8, ...EAR_LEVELS.map((l) => l.level)], stage: 'A' },
   { id: 'v-dyn', title: { en: 'Dynamics', he: 'דינמיקה' }, refs: [901, 5, ...DYN_LEVELS.slice(1).map((l) => l.level)], stage: 'B' },
   { id: 'v-scale', title: { en: 'Scales & modes', he: 'סולמות ומודוסים בשירה' }, refs: [...nums(100, MODE_LEVELS), ...ARPEGGIO_LEVELS.map((l) => l.level)], stage: 'B' },
-  { id: 'v-sight', title: { en: 'Sight-singing', he: 'שירה מתווים' }, refs: [...nums(400, SIGHT_LEVELS), ...SIGHT_MORE_LEVELS.map((l) => l.level)], stage: 'B' },
+  { id: 'v-sight', title: { en: 'Sight-singing', he: 'שירה מתווים' }, refs: [...nums(400, SIGHT_LEVELS), ...SIGHT_MORE_LEVELS.map((l) => l.level), ...READ_LEVELS.map((l) => l.level)], stage: 'B' },
   { id: 'v-vib', title: { en: 'Vibrato control', he: 'שליטה בוויברטו' }, refs: [3, 10, 11, ...VIB_LEVELS.map((l) => l.level)], stage: 'B' },
   { id: 'v-agility', title: { en: 'Agility & bebop lines', he: 'גמישות וקווי ביבופ' }, refs: AGILITY_LEVELS.map((l) => l.level), stage: 'C' },
   { id: 'v-harmony', title: { en: 'Harmony singing', he: 'שירה בהרמוניה' }, refs: [...nums(200, HARMONY_LEVELS), ...HARMONY_MORE_LEVELS.map((l) => l.level)], stage: 'B' },
   { id: 'v-inflect', title: { en: 'Ornaments & inflections', he: 'קישוטים וגוונים' }, refs: [...nums(500, ORNAMENT_LEVELS), ...INFLECT_LEVELS.map((l) => l.level)], stage: 'C' },
-  { id: 'v-standards', title: { en: 'Standards & ballads', he: 'סטנדרטים ובלדות' }, refs: STANDARD_LEVELS.map((l) => l.level), stage: 'C' },
-  { id: 'v-scat', title: { en: 'Scat & improvisation', he: 'סקאט ואלתור' }, refs: [...SCAT_LEVELS, ...SCAT_MORE_LEVELS].map((l) => l.level), stage: 'C' },
+  { id: 'v-standards', title: { en: 'Standards & ballads', he: 'סטנדרטים ובלדות' }, refs: [1401, 1402, 1403, 1404, 1405, 1408, 1406, 1407, 1409, 1410], stage: 'C' },
+  { id: 'v-scat', title: { en: 'Scat & improvisation', he: 'סקאט ואלתור' }, refs: [1501, 1507, 1508, 1502, 1503, 1504, 1509, 1505, 1506, 1510], stage: 'C' },
   { id: 'v-barry', title: { en: 'Barry Harris lines', he: 'קווים של בארי האריס' }, refs: nums(300, BARRY_LEVELS), stage: 'D' },
 ];
 
@@ -410,6 +446,17 @@ export const NEW_LEVEL_NAMES: Record<number, Bi> = {
   1902: { en: 'Chromatic notes', he: 'צלילים כרומטיים' },
   2001: { en: 'Arpeggios', he: 'ארפג׳יו' },
   1602: { en: 'Bebop at 160', he: 'ביבופ ב־160' },
+  704: { en: 'Quarter tones', he: 'רבעי טונים' },
+  1903: { en: 'Reading with the band', he: 'קריאה עם הלהקה' },
+  1904: { en: 'A jazz lead sheet', he: 'דף אקורדים בג׳אז' },
+  1308: { en: 'My song', he: 'השיר שלי' },
+  1408: { en: 'Colla voce: the band follows you', he: 'קולה ווצ׳ה: הלהקה הולכת אחריכם' },
+  1409: { en: 'A whole AABA chorus', he: 'כורוס שלם בשלושה חלקי A וגשר' },
+  1410: { en: 'Blues call and response', he: 'בלוז בקריאה ותשובה' },
+  1507: { en: 'Develop a motif', he: 'לפתח מוטיב' },
+  1508: { en: 'Embellish the head', he: 'לקשט את הנושא' },
+  1509: { en: 'Bebop accents', he: 'הדגשות ביבופ' },
+  1510: { en: 'Trading twos and fours', he: 'חילופי שתיים וארבע' },
 };
 
 // ---------------------------------------------------------------- rating tags of the new families
@@ -428,6 +475,8 @@ export function voiceItemTags(level: number, item: Pick<VocalItem, 'kind' | 'sca
     case 'v-standards':
       return { skill: 'singing', tags: T3(['singing', 'songs', 0.5], ['rhythm-dictation', 'feel', 0.2], ['timing', 'precision', 0.15], ['expression', 'articulation', 0.15]) };
     case 'v-scat':
+      if (item.scat?.mode === 'trade') return { skill: 'improv', tags: T3(['improv', 'answer', 0.5], ['improv', 'play', 0.3], ['timing', 'precision', 0.2]) };
+      if (item.scat?.mode === 'motif') return { skill: 'improv', tags: T3(['improv', 'play', 0.7], ['improv', 'answer', 0.3]) };
       if (item.kind === 'time') return { skill: 'improv', tags: T3(['improv', 'answer', 0.6], ['timing', 'precision', 0.4]) };
       return { skill: 'improv', tags: T3(['improv', 'play', 0.6], ['singing', 'harmony', 0.25], ['chords', 'quality', 0.15]) };
     case 'v-pitch':
