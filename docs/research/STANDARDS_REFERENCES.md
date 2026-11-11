@@ -85,8 +85,9 @@ test checks that every chart in `standards.ts` is in exactly one of the two list
 ### Not covered
 
 - The songbook (`src/content/songbook.ts`, `src/engine/songs.ts`) holds public-domain folk, children's and classical
-  melodies, not jazz standards. The guitar, drums and voice courses don't use named standards. Their jazz levels run on
-  generic ii–V–I, blues and groove forms.
+  melodies, not jazz standards.
+- Voice F14 "Standards & ballads" (0.70, `voiceFamilies.ts`) sings our own contrafacts (blue-window, corner-light…) and
+  public-domain spirituals, not the copyrighted standards, so there is no original to link. Drums use no named standards.
 - `src/engine/charts.ts` templates and improvisation levels are generic progressions.
 - Ear questions on lead-sheet analysis (`topicsChartAnalysis.ts`) use the same standards. The row isn't shown inside a
   question, to keep one question per screen. The tunes are linked from Charts and the levels.
@@ -97,5 +98,8 @@ test checks that every chart in `standards.ts` is in exactly one of the two list
   "Practise in X") at the top of the chart player. The player's practice key follows its own ♭/♯ transposition.
 - **Improvisation studio → Rules**: under the chart picker when a standard is chosen. Charts opened from there or from a
   teacher's rules assignment keep the link.
-- **Drills (piano voicings / stride levels, bass walking levels)**: on the expanded level page (one or two references shown,
+- **Drills**: piano voicings / stride levels (`chart~std:`), bass walking standards (b-walk L11/13/14/18), bass solo chorus on
+  a standard (b-impro L13), bass Latin jazz (b-latin L9: Blue Bossa / Song for My Father), bass rhythm-changes lines
+  (up-tempo and bebop odd options, rhythm-solo: linked to Oleo), guitar comping on standards (g-jazz L8) and chord-scale
+  lines (g-impro L5). The resolver is `src/engine/drills/standardRef.ts`. Placement: on the expanded level page (one or two references shown,
   more folded under "Original recordings (n)"), and as a one-line compact row above the score on the run screen.

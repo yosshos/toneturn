@@ -5,6 +5,9 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { NO_REFERENCE, REFERENCES, keyLabel, referenceOf } from '../src/content/references';
 import { STANDARD_CHANGES } from '../src/engine/standards';
 import { BASS_STD } from '../src/engine/drills/bass';
+import { STD_SOLO } from '../src/engine/drills/bassNiche';
+import { JAZZ_STANDARDS } from '../src/engine/drills/guitarJazz';
+import { CORE2_STANDARDS } from '../src/engine/drills/guitarCore2';
 import { standardIdOfSpec, standardOfSpec } from '../src/engine/drills/standardRef';
 import { ListenIcons, ListenOriginal } from '../src/ui/ListenOriginal';
 
@@ -20,6 +23,8 @@ describe('reference recordings data', () => {
 
   it('every standard used by a level (bass walking, piano chart drills) is in standards.ts, and the named tunes all have references', () => {
     for (const b of BASS_STD) expect(STANDARD_CHANGES.some((s) => s.id === b.id), b.id).toBe(true);
+    // 0.70: bass solo chorus, guitar comping and chord-scale lines on standards — all named tunes, all referenced
+    for (const id of [...STD_SOLO.map((x) => x.id), ...JAZZ_STANDARDS, ...CORE2_STANDARDS, 'song-father', 'blue-bossa', 'rhythm-a']) expect(referenceOf(id), id).not.toBeNull();
     const src = readFileSync('src/engine/drills/generate.ts', 'utf8');
     const used = [...src.matchAll(/'std:([\w-]+)'/g)].map((m) => m[1]);
     expect(used.length).toBeGreaterThan(5);
@@ -48,7 +53,7 @@ describe('reference recordings data', () => {
   });
 
   it('the app key of each reference matches the key the bass levels measure in', () => {
-    for (const b of BASS_STD) {
+    for (const b of [...BASS_STD, ...STD_SOLO]) {
       const r = REFERENCES[b.id];
       if (!r) continue;
       expect(r.appKey.pc, b.id).toBe(b.key);
@@ -72,6 +77,13 @@ describe('which standard a drill practises', () => {
     expect(p?.key.pc).toBe(2);
     const b = standardOfSpec({ family: 'b-walk', kind: 'standard', option: BASS_STD.findIndex((x) => x.id === 'ipanema'), key: 0 });
     expect(b?.key.pc).toBe(5);
+    expect(standardIdOfSpec({ family: 'b-impro', kind: 'std-solo', option: 1 })).toBe(STD_SOLO[1].id);
+    expect(standardIdOfSpec({ family: 'b-latin', kind: 'latin-jazz', option: 1 })).toBe('song-father');
+    expect(standardOfSpec({ family: 'b-impro', kind: 'rhythm-solo', key: 3 })?.key.pc).toBe(3);
+    expect(standardIdOfSpec({ family: 'b-swing', kind: 'uptempo', option: 0 })).toBeNull();
+    expect(standardIdOfSpec({ family: 'g-impro', kind: 'chord-scale', option: 0 })).toBe(CORE2_STANDARDS[0]);
+    expect(standardIdOfSpec({ family: 'g-jazz', kind: 'comp-std', option: 2 })).toBe(JAZZ_STANDARDS[1]);
+    expect(standardOfSpec({ family: 'g-impro', kind: 'chord-scale', option: 0, key: 5 })?.key.pc).toBe((REFERENCES[CORE2_STANDARDS[0]].appKey.pc + 5) % 12);
   });
 });
 
