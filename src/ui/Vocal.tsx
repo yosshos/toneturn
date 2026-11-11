@@ -33,15 +33,9 @@ import {
   synthMelody,
   tipFor,
   VOCAL_LEVELS,
-  LADDER,
   synthVibratoPhrase,
   vibratoConsistency,
-  MODE_LEVELS,
-  HARMONY_LEVELS,
-  BARRY_LEVELS,
-  SIGHT_LEVELS,
   sightKeyName,
-  ORNAMENT_LEVELS,
   ornamentNotes,
   synthOrnament,
   synthDynamic,
@@ -61,6 +55,14 @@ import { pc } from '../engine/pitch';
 import { BrowserPitchCapture } from '../speech/pitchCapture';
 import { namingFor, type LessonResult, type Progress, type Settings, type VocalTake } from '../storage/progress';
 import { piano, SIMULATED, store } from './services';
+import { TIMED_KINDS } from '../engine/vocal';
+import { familyOfRef, isNewLevel, NEW_LEVEL_NAMES, VOICE_FAMILIES, vocalLevelByRef, voiceItemTags } from '../engine/voiceFamilies';
+import { gradeMore, moreReference, simulateMore, MORE_KINDS } from '../engine/vocalMore';
+import { MORE_INSTR, METRIC_NAMES, TONE_NAMES, VT } from '../content/voiceCourseText';
+import { TimedSession } from './VoiceTimed';
+import { VoiceProbe } from './VoiceProbe';
+import { Glyph, DOMAIN_COLOR } from './Glyph';
+import { FAMILY_GLYPH } from './stepGlyphs';
 
 const fill = (s: string, v: Record<string, string | number>) => Object.entries(v).reduce((a, [k, x]) => a.replaceAll(`{${k}}`, String(x)), s);
 
@@ -79,7 +81,21 @@ export const HARMONY_BASE = 200;
 export const BARRY_BASE = 300;
 export const SIGHT_BASE = 400;
 export const ORNAMENT_BASE = 500;
-export const levelDef = (level: number) => (level > ORNAMENT_BASE ? ORNAMENT_LEVELS[level - ORNAMENT_BASE - 1] : level > SIGHT_BASE ? SIGHT_LEVELS[level - SIGHT_BASE - 1] : level > BARRY_BASE ? BARRY_LEVELS[level - BARRY_BASE - 1] : level > HARMONY_BASE ? HARMONY_LEVELS[level - HARMONY_BASE - 1] : level > MODES_BASE ? MODE_LEVELS[level - MODES_BASE - 1] : LADDER[level - 1]);
+/** A vocal level by its number: the old programs (1–11, 101–108, 201–205, 301–307, 401–405, 501–504) and the new
+ *  families of the voice course (600 and up, VOICE_CURRICULUM). */
+export const levelDef = (level: number) => vocalLevelByRef(level)!;
+/** A level sung against a clock (time feel, songs with the band, scat): the timed session runs it. */
+export const isTimedLevel = (level: number) => !!vocalLevelByRef(level)?.items.some((it) => TIMED_KINDS.includes(it.kind));
+/** The name of any level (old programs by their own lists, new ones from the families). */
+export function levelName(level: number, t: Strings, lang: 'he' | 'en'): string {
+  if (isNewLevel(level)) return NEW_LEVEL_NAMES[level]?.[lang] ?? String(level);
+  if (level > ORNAMENT_BASE) return t.ornLevelNames[level - ORNAMENT_BASE - 1];
+  if (level > SIGHT_BASE) return t.sightLevelNames[level - SIGHT_BASE - 1];
+  if (level > BARRY_BASE) return t.barryLevelNames[level - BARRY_BASE - 1];
+  if (level > HARMONY_BASE) return t.harmonyLevelNames[level - HARMONY_BASE - 1];
+  if (level > MODES_BASE) return t.modesLevelNames[level - MODES_BASE - 1];
+  return t.vocalLevelNames[level - 1];
+}
 
 // ------------------------------------------------------------------ live pitch trace
 
@@ -129,12 +145,13 @@ export function PitchTrace({ frames, targets, seconds, label, fold = true, bands
 // ------------------------------------------------------------------ metric card
 
 function MetricBars({ t, g }: { t: Strings; g: TakeGrade }) {
+  const lang = t.back === 'Back' ? 'en' : 'he';
   const shown = [...g.metrics].sort((a, b) => b.weight - a.weight).filter((m, i, a) => a.findIndex((x) => x.key === m.key) === i).slice(0, 4);
   return (
     <ul className="metric-bars">
       {shown.map((m) => (
         <li key={m.key} className={m.score >= 0.8 ? 'good' : m.score >= 0.5 ? 'fair' : 'weak'}>
-          <span className="metric-name">{t.metricNames[m.key] ?? m.key}</span>
+          <span className="metric-name">{(t.metricNames as Record<string, string>)[m.key] ?? METRIC_NAMES[m.key]?.[lang] ?? m.key}</span>
           <span className="metric-val" dir="ltr">
             {m.unit === '%' ? `${Math.round(m.value)}%` : `${m.value > 0 && (m.unit === '¢' || m.unit === '¢/s') ? '+' : ''}${m.value} ${m.unit}`}
           </span>
@@ -174,6 +191,8 @@ const multiNote = (it: VocalItem) => it.kind === 'range' || it.kind === 'vibrato
 // ------------------------------------------------------------------ simulator takes
 
 function simulatedFrames(item: VocalItem, targets: number[], noteIdx: number): SungFrame[] {
+  const more = simulateMore(item, targets);
+  if (more) return more;
   switch (item.kind) {
     case 'glide':
       return synthGlide(targets[0], targets[1], item.seconds - 0.5);
@@ -226,6 +245,8 @@ function simulatedFrames(item: VocalItem, targets: number[], noteIdx: number): S
 
 /** The reference: what the app plays before (or under) the take. */
 function referenceEvents(item: VocalItem, targets: number[]): { events: NoteEvent[]; length: number } {
+  const more = moreReference(item, targets);
+  if (more) return more;
   if (item.kind === 'melody' || item.kind === 'leap' || item.kind === 'rhythmic' || item.kind === 'staccato') {
     const d = item.bpm ? 60 / item.bpm / (item.perBeat ?? 1) : 0.55;
     const events = targets.map((m, i) => ({ midi: m, start: i * d, duration: item.kind === 'staccato' ? d * 0.5 : d * 0.95, velocity: 0.7 }));
@@ -281,7 +302,15 @@ export function warmupItems(passed: number[]): VocalItem[] {
 type View =
   | { kind: 'home' }
   | { kind: 'range' }
-  | { kind: 'session'; level: number | 'warmup'; items: VocalItem[] };
+  | { kind: 'session'; level: number | 'warmup'; items: VocalItem[] }
+  | { kind: 'timed'; level: number; items: VocalItem[] }
+  | { kind: 'probe' };
+
+/** The view that opens a level: timed levels (clicks / band) in the timed session, the rest in the vocal session. */
+const openLevel = (level: number, range: VoiceRange): View => {
+  const items = levelDef(level).items.filter((it) => itemFits(it, range));
+  return isTimedLevel(level) ? { kind: 'timed', level, items: levelDef(level).items } : { kind: 'session', level, items };
+};
 
 interface Props {
   t: Strings;
@@ -300,12 +329,24 @@ interface Props {
 export function VocalScreen({ t, settings, progress, onSettings, onProgress, onBack, onRuns, onSingAlong, startWarmup, startLevel }: Props) {
   const gate = useMiniGate();
   const v = progress.vocal ?? { best: {}, passed: [], takes: [] };
-  const [view, setView] = useState<View>(() => (startLevel && levelDef(startLevel) ? { kind: 'session', level: startLevel, items: levelDef(startLevel).items.filter((it) => itemFits(it, settings.voiceRange ?? DEFAULT_RANGE)) } : startWarmup ? { kind: 'session', level: 'warmup', items: warmupItems(v.passed).filter((it) => itemFits(it, range)) } : { kind: 'home' }));
+  // The simulator (screenshots, e2e) can open any level directly: ?sim=1&vlevel=1101#/vocal.
+  const simLevel = SIMULATED && typeof location !== 'undefined' ? Number(new URLSearchParams(location.search).get('vlevel')) || 0 : 0;
+  if (simLevel && !startLevel) startLevel = simLevel;
+  const [view, setView] = useState<View>(() => (startLevel && vocalLevelByRef(startLevel) ? openLevel(startLevel, settings.voiceRange ?? DEFAULT_RANGE) : startWarmup ? { kind: 'session', level: 'warmup', items: warmupItems(v.passed).filter((it) => itemFits(it, settings.voiceRange ?? DEFAULT_RANGE)) } : { kind: 'home' }));
   const range = settings.voiceRange ?? DEFAULT_RANGE;
   const style: VibratoStyle = settings.vibratoStyle ?? 'pop';
+  const [openFam, setOpenFam] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem('toneturn.voiceFamily');
+    } catch {
+      return null;
+    }
+  });
 
   if (view.kind === 'range')
     return <RangeCalibration t={t} settings={settings} onDone={(r) => (r && onSettings({ voiceRange: r }), setView({ kind: 'home' }))} />;
+  if (view.kind === 'probe') return <VoiceProbe settings={settings} range={range} onBack={() => setView({ kind: 'home' })} onDone={(starts) => (onSettings({ drillStart: { ...(settings.drillStart ?? {}), ...starts } as Settings['drillStart'] }), setView({ kind: 'home' }))} />;
+  if (view.kind === 'timed') return <TimedSession t={t} settings={settings} range={range} level={view.level} items={view.items} onExit={() => setView({ kind: 'home' })} onProgress={onProgress} onSettings={onSettings} />;
   if (view.kind === 'session')
     return (
       <VocalSession
@@ -320,11 +361,6 @@ export function VocalScreen({ t, settings, progress, onSettings, onProgress, onB
       />
     );
 
-  const unlocked = (lv: number) => lv === 1 || v.passed.includes(lv - 1);
-  const levelBest = (lv: number) => {
-    const items = LADDER[lv - 1]?.items ?? [];
-    return items.length ? items.reduce((a, it) => a + (v.best[it.id] ?? 0), 0) / items.length : 0;
-  };
   const midis = Array.from({ length: 49 }, (_, i) => 36 + i);
   const rangeMap = Object.entries(v.rangeMap ?? {})
     .map(([m, s]) => ({ m: Number(m), s }))
@@ -391,144 +427,18 @@ export function VocalScreen({ t, settings, progress, onSettings, onProgress, onB
         </button>
       )}
 
-      <ol className="vocal-levels">
-        {Array.from({ length: VOCAL_TOP_LEVEL }, (_, i) => i + 1).map((lv) => {
-          const open = unlocked(lv);
-          const passed = v.passed.includes(lv);
-          const best = levelBest(lv);
-          return (
-            <li key={lv}>
-              <button
-                className={`vocal-level ${passed ? 'passed' : ''} ${open ? '' : 'locked'}`}
-                disabled={!open}
-                onClick={() => (lv === VOCAL_TOP_LEVEL ? onRuns() : gate(vocalUnit(lv), () => setView({ kind: 'session', level: lv, items: LADDER[lv - 1].items.filter((it) => itemFits(it, range)) })))}
-              >
-                <span className="lv-num">{lv}</span>
-                <span className="lv-text">
-                  <b>{t.vocalLevelNames[lv - 1]}</b>
-                  <small>{passed ? `✓ ${t.vocalPassed}` : !open ? <><Icon k="lock" /> {t.vocalLocked}</> : best > 0 ? `${Math.round(best * 100)}%` : fill(t.vocalLevel, { n: lv })}</small>
-                </span>
-              </button>
-            </li>
-          );
-        })}
-      </ol>
-
-      <section className="set-card">
-        <h2>{t.modesTitle}</h2>
-        <p className="field-hint">{t.modesBlurb}</p>
-        <ol className="vocal-levels">
-          {MODE_LEVELS.map((lvDef, i) => {
-            const lv = MODES_BASE + i + 1;
-            const open = i === 0 || v.passed.includes(lv - 1);
-            const passed = v.passed.includes(lv);
-            const best = lvDef.items.reduce((a, it) => a + (v.best[it.id] ?? 0), 0) / lvDef.items.length;
-            return (
-              <li key={lv}>
-                <button className={`vocal-level ${passed ? 'passed' : ''} ${open ? '' : 'locked'}`} disabled={!open} onClick={() => gate(vocalUnit(lv), () => setView({ kind: 'session', level: lv, items: lvDef.items.filter((it) => itemFits(it, range)) }))}>
-                  <span className="lv-num">{i + 1}</span>
-                  <span className="lv-text">
-                    <b>{t.modesLevelNames[i]}</b>
-                    <small>{passed ? `✓ ${t.vocalPassed}` : !open ? <><Icon k="lock" /> {t.vocalLocked}</> : best > 0 ? `${Math.round(best * 100)}%` : fill(t.vocalLevel, { n: i + 1 })}</small>
-                  </span>
-                </button>
-              </li>
-            );
-          })}
-        </ol>
-      </section>
-
-      <section className="set-card">
-        <h2>{t.ornTitle}</h2>
-        <p className="field-hint">{t.ornBlurb}</p>
-        <ol className="vocal-levels">
-          {ORNAMENT_LEVELS.map((lvDef, i) => {
-            const lv = ORNAMENT_BASE + i + 1;
-            const open = i === 0 || v.passed.includes(lv - 1);
-            const passed = v.passed.includes(lv);
-            return (
-              <li key={lv}>
-                <button className={`vocal-level ${passed ? 'passed' : ''} ${open ? '' : 'locked'}`} disabled={!open} data-orn={i + 1} onClick={() => gate(vocalUnit(lv), () => setView({ kind: 'session', level: lv, items: lvDef.items.filter((it) => itemFits(it, range)) }))}>
-                  <span className="lv-num">{i + 1}</span>
-                  <span className="lv-text">
-                    <b>{t.ornLevelNames[i]}</b>
-                    <small>{passed ? `✓ ${t.vocalPassed}` : !open ? <><Icon k="lock" /> {t.vocalLocked}</> : fill(t.vocalLevel, { n: i + 1 })}</small>
-                  </span>
-                </button>
-              </li>
-            );
-          })}
-        </ol>
-      </section>
-
-      <section className="set-card">
-        <h2>{t.sightTitle}</h2>
-        <p className="field-hint">{t.sightBlurb}</p>
-        <ol className="vocal-levels">
-          {SIGHT_LEVELS.map((lvDef, i) => {
-            const lv = SIGHT_BASE + i + 1;
-            const open = i === 0 || v.passed.includes(lv - 1);
-            const passed = v.passed.includes(lv);
-            return (
-              <li key={lv}>
-                <button className={`vocal-level ${passed ? 'passed' : ''} ${open ? '' : 'locked'}`} disabled={!open} data-sight={i + 1} onClick={() => gate(vocalUnit(lv), () => setView({ kind: 'session', level: lv, items: lvDef.items.filter((it) => itemFits(it, range)) }))}>
-                  <span className="lv-num">{i + 1}</span>
-                  <span className="lv-text">
-                    <b>{t.sightLevelNames[i]}</b>
-                    <small>{passed ? `✓ ${t.vocalPassed}` : !open ? <><Icon k="lock" /> {t.vocalLocked}</> : fill(t.vocalLevel, { n: i + 1 })}</small>
-                  </span>
-                </button>
-              </li>
-            );
-          })}
-        </ol>
-      </section>
-
-      <section className="set-card">
-        <h2>{t.barryTitle}</h2>
-        <p className="field-hint">{t.barryBlurb}</p>
-        <ol className="vocal-levels">
-          {BARRY_LEVELS.map((lvDef, i) => {
-            const lv = BARRY_BASE + i + 1;
-            const open = i === 0 || v.passed.includes(lv - 1);
-            const passed = v.passed.includes(lv);
-            return (
-              <li key={lv}>
-                <button className={`vocal-level ${passed ? 'passed' : ''} ${open ? '' : 'locked'}`} disabled={!open} onClick={() => gate(vocalUnit(lv), () => setView({ kind: 'session', level: lv, items: lvDef.items.filter((it) => itemFits(it, range)) }))}>
-                  <span className="lv-num">{i + 1}</span>
-                  <span className="lv-text">
-                    <b>{t.barryLevelNames[i]}</b>
-                    <small>{passed ? `✓ ${t.vocalPassed}` : !open ? <><Icon k="lock" /> {t.vocalLocked}</> : fill(t.vocalLevel, { n: i + 1 })}</small>
-                  </span>
-                </button>
-              </li>
-            );
-          })}
-        </ol>
-      </section>
-
-      <section className="set-card">
-        <h2>{t.harmonyTitle}</h2>
-        <p className="field-hint">{t.harmonyBlurb}</p>
-        <ol className="vocal-levels">
-          {HARMONY_LEVELS.map((lvDef, i) => {
-            const lv = HARMONY_BASE + i + 1;
-            const open = i === 0 || v.passed.includes(lv - 1);
-            const passed = v.passed.includes(lv);
-            return (
-              <li key={lv}>
-                <button className={`vocal-level ${passed ? 'passed' : ''} ${open ? '' : 'locked'}`} disabled={!open} onClick={() => gate(vocalUnit(lv), () => setView({ kind: 'session', level: lv, items: lvDef.items.filter((it) => itemFits(it, range)) }))}>
-                  <span className="lv-num">{i + 1}</span>
-                  <span className="lv-text">
-                    <b>{t.harmonyLevelNames[i]}</b>
-                    <small>{passed ? `✓ ${t.vocalPassed}` : !open ? <><Icon k="lock" /> {t.vocalLocked}</> : <><Icon k="phones" /> {t.headphonesNeeded}</>}</small>
-                  </span>
-                </button>
-              </li>
-            );
-          })}
-        </ol>
-      </section>
+      <button className="tool-card warmup-card" data-voice-probe="1" onClick={() => setView({ kind: 'probe' })}>
+        <b>{VT.probe[settings.uiLang === 'en' ? 'en' : 'he']}</b>
+        <small>{VT.probeHint[settings.uiLang === 'en' ? 'en' : 'he']}</small>
+      </button>
+      <VoiceFamilies t={t} settings={settings} passed={v.passed} best={v.best} open={openFam} onOpen={(id) => {
+        setOpenFam(id);
+        try {
+          if (id) localStorage.setItem('toneturn.voiceFamily', id);
+        } catch {
+          /* private mode */
+        }
+      }} onLevel={(lv) => (lv === VOCAL_TOP_LEVEL ? onRuns() : gate(vocalUnit(lv), () => setView(openLevel(lv, range))))} onRuns={onRuns} />
 
       {rangeMap.length > 0 && (
         <section className="set-card">
@@ -559,6 +469,81 @@ export function VocalScreen({ t, settings, progress, onSettings, onProgress, onB
         {settings.keepTakes && <ThenAndNow t={t} refresh={v.takes.length} />}
       </section>
     </main>
+  );
+}
+
+/**
+ * The voice course's families (VOICE_CURRICULUM §5), grouped by stage. Old levels sit in their family by number (a
+ * display map — never renumbered), so every level passed or open before stays passed or open.
+ */
+function VoiceFamilies({ t, settings, passed, best, open, onOpen, onLevel, onRuns }: { t: Strings; settings: Settings; passed: number[]; best: Record<string, number>; open: string | null; onOpen: (id: string | null) => void; onLevel: (lv: number) => void; onRuns: () => void }) {
+  const lang = settings.uiLang === 'en' ? 'en' : 'he';
+  const stages = ['A', 'B', 'C', 'D'] as const;
+  const levelBest = (n: number) => {
+    const items = vocalLevelByRef(n)?.items ?? [];
+    return items.length ? items.reduce((a, it) => a + (best[it.id] ?? 0), 0) / items.length : 0;
+  };
+  return (
+    <section className="vfam-wrap">
+      <h2>{VT.families[lang]}</h2>
+      <p className="field-hint">{VT.familiesHint[lang]}</p>
+      {stages.map((st) => (
+        <div key={st}>
+          <p className="vstage">{VT.stage[st][lang]}</p>
+          <ol className="vfam-list">
+            {VOICE_FAMILIES.filter((f) => f.stage === st).map((f) => {
+              const done = f.refs.filter((n) => passed.includes(n)).length;
+              const isOpen = open === f.id;
+              return (
+                <li key={f.id} className="vfam" data-family={f.id}>
+                  <button className="vfam-head" aria-expanded={isOpen} onClick={() => onOpen(isOpen ? null : f.id)}>
+                    <Glyph kind={FAMILY_GLYPH[f.id] ?? 'sing'} color={DOMAIN_COLOR.voice} size={38} />
+                    <span className="vfam-text">
+                      <b>{f.title[lang]}</b>
+                      <small>{fill(VT.levelsOf[lang], { done, n: f.refs.length + (f.id === 'v-agility' ? 8 : 0) })}</small>
+                      <span className="vfam-bar" aria-hidden="true">
+                        <span style={{ width: `${Math.round((done / Math.max(1, f.refs.length)) * 100)}%` }} />
+                      </span>
+                    </span>
+                  </button>
+                  {isOpen && (
+                    <ol className="vocal-levels">
+                      {f.id === 'v-agility' && (
+                        <li>
+                          <button className="vocal-level" onClick={onRuns}>
+                            <span className="lv-num">↯</span>
+                            <span className="lv-text">
+                              <b>{VT.runsCard[lang]}</b>
+                            </span>
+                          </button>
+                        </li>
+                      )}
+                      {f.refs.map((n, i) => {
+                        const ok = passed.includes(n);
+                        const unlocked = i === 0 || passed.includes(f.refs[i - 1]) || passed.includes(n - 1);
+                        const b = levelBest(n);
+                        const harmony = (n > HARMONY_BASE && n < BARRY_BASE) || (n > 1700 && n < 1800);
+                        return (
+                          <li key={n}>
+                            <button className={`vocal-level ${ok ? 'passed' : ''} ${unlocked ? '' : 'locked'}`} disabled={!unlocked} data-vlevel={n} onClick={() => onLevel(n)}>
+                              <span className="lv-num">{i + 1}</span>
+                              <span className="lv-text">
+                                <b>{levelName(n, t, lang)}</b>
+                                <small>{ok ? `✓ ${t.vocalPassed}` : !unlocked ? <><Icon k="lock" /> {t.vocalLocked}</> : harmony ? <><Icon k="phones" /> {t.headphonesNeeded}</> : b > 0 ? `${Math.round(b * 100)}%` : fill(t.vocalLevel, { n: i + 1 })}</small>
+                              </span>
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ol>
+                  )}
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+      ))}
+    </section>
   );
 }
 
@@ -737,7 +722,7 @@ function VocalSession({
     setPhase('listening');
     const acc = itemAccompaniment(item, range);
     const chordsAbs = item.chords ? item.chords.map((ch) => ch.map((x) => targets[0] - (item.steps?.[0] ?? 0) + x)) : null;
-    const melodic = ['melody', 'leap', 'rhythmic', 'staccato', 'glide', 'harmony-line', 'sight'].includes(item.kind);
+    const melodic = ['melody', 'leap', 'rhythmic', 'staccato', 'glide', 'harmony-line', 'sight', 'breath-phrase', 'breath-plan', 'drift-phrase', 'siren', 'terraced-scale', 'terraced', 'accents', 'arc'].includes(item.kind) || (item.kind === 'inflect' && item.more?.shape === 'ghost');
     // The app keeps sounding while the player sings (harmony, a held reference): without headphones the
     // microphone hears it too — a bleed gate learns its level first and drops it (spec P.0).
     const sounding = item.kind === 'harmony-hold' || item.kind === 'harmony-line' || item.reference === 'during';
@@ -757,7 +742,8 @@ function VocalSession({
       if (onset === null && f.hz && f.confidence >= 0.8) {
         onset = f.t;
         setOnsetAt(f.t);
-        if (item.reference === 'during' && !headphones && !item.kind.startsWith('harmony')) piano.stopDrone();
+        // Fine tuning sings INTO the drone: it keeps sounding (the bleed gate keeps it out of the measurement).
+        if (item.reference === 'during' && !headphones && !item.kind.startsWith('harmony') && item.kind !== 'fine-tune') piano.stopDrone();
       }
       if (buf.length % 3 === 0) setFrames(buf.slice());
     };
@@ -862,7 +848,7 @@ function VocalSession({
     clearInterval(tick);
     piano.stopDrone();
     setFrames(got ?? []);
-    const g = got ? gradeTake(item, got, range, style, noteIdx) : { unclear: true, score: 0, metrics: [], weakest: null };
+    const g = got ? (MORE_KINDS.includes(item.kind) ? gradeMore(item, got, range) : gradeTake(item, got, range, style, noteIdx)) : { unclear: true, score: 0, metrics: [], weakest: null };
     setGrade(g);
     if (audio) setAudioUrl(URL.createObjectURL(audio));
     if (audio && settings.keepTakes && !g.unclear) void keepTake({ item: item.kind === 'range' || item.kind === 'vibrato-register' ? `${item.id}#${noteIdx}` : item.id, week: weekId(new Date()), score: g.score, at: new Date().toISOString(), blob: audio });
@@ -902,7 +888,7 @@ function VocalSession({
     const rated = perItem.filter((x) => Object.keys(best.current).some((k) => k === x.it.id || k.startsWith(`${x.it.id}#`)));
     const now = new Date().toISOString();
     const r: LessonResult = {
-      lessonId: typeof level === 'number' ? (level > ORNAMENT_BASE ? `vocal-orn-${level - ORNAMENT_BASE}` : level > SIGHT_BASE ? `vocal-sight-${level - SIGHT_BASE}` : level > BARRY_BASE ? `vocal-barry-${level - BARRY_BASE}` : level > HARMONY_BASE ? `vocal-harmony-${level - HARMONY_BASE}` : level > MODES_BASE ? `vocal-modes-${level - MODES_BASE}` : `vocal-${level}`) : 'vocal-warmup',
+      lessonId: typeof level === 'number' ? (isNewLevel(level) ? `vocal-f-${level}` : level > ORNAMENT_BASE ? `vocal-orn-${level - ORNAMENT_BASE}` : level > SIGHT_BASE ? `vocal-sight-${level - SIGHT_BASE}` : level > BARRY_BASE ? `vocal-barry-${level - BARRY_BASE}` : level > HARMONY_BASE ? `vocal-harmony-${level - HARMONY_BASE}` : level > MODES_BASE ? `vocal-modes-${level - MODES_BASE}` : `vocal-${level}`) : 'vocal-warmup',
       lessonVersion: 1,
       sessionId,
       completedAt: now,
@@ -913,7 +899,12 @@ function VocalSession({
       missed: [],
       items: [
         // Harmony singing measures singing in tune; sight-singing measures reading; the rest vocal technique.
-        ...rated.map((x) => ({ id: `${sessionId}:${x.it.id}`, skill: (typeof level === 'number' && level > SIGHT_BASE && level < ORNAMENT_BASE ? 'sight' : typeof level === 'number' && level > HARMONY_BASE && level < BARRY_BASE ? 'singing' : 'technique') as SkillId, difficulty: x.it.difficulty, correct: x.score >= 0.6, tag: `vocal:${x.it.id}`, score: x.score, m: best.current[x.it.id]?.take.m, tags: vocalTags((typeof level === 'number' && level > SIGHT_BASE && level < ORNAMENT_BASE ? 'sight' : typeof level === 'number' && level > HARMONY_BASE && level < BARRY_BASE ? 'singing' : 'technique') as SkillId, x.it.kind, typeof level === 'number' && level > ORNAMENT_BASE) })),
+        // The voice course's new families: their own skills and rating tags (voiceItemTags).
+        ...rated.filter(() => typeof level === 'number' && isNewLevel(level)).map((x) => {
+          const tg = voiceItemTags(level as number, x.it);
+          return { id: `${sessionId}:${x.it.id}`, skill: tg.skill, difficulty: x.it.difficulty, correct: x.score >= 0.6, tag: `vocal:${x.it.id}`, score: x.score, m: best.current[x.it.id]?.take.m, tags: tg.tags };
+        }),
+        ...rated.filter(() => !(typeof level === 'number' && isNewLevel(level))).map((x) => ({ id: `${sessionId}:${x.it.id}`, skill: (typeof level === 'number' && level > SIGHT_BASE && level < ORNAMENT_BASE ? 'sight' : typeof level === 'number' && level > HARMONY_BASE && level < BARRY_BASE ? 'singing' : 'technique') as SkillId, difficulty: x.it.difficulty, correct: x.score >= 0.6, tag: `vocal:${x.it.id}`, score: x.score, m: best.current[x.it.id]?.take.m, tags: vocalTags((typeof level === 'number' && level > SIGHT_BASE && level < ORNAMENT_BASE ? 'sight' : typeof level === 'number' && level > HARMONY_BASE && level < BARRY_BASE ? 'singing' : 'technique') as SkillId, x.it.kind, typeof level === 'number' && level > ORNAMENT_BASE) })),
         // Melodic memory (spec P.9): the right notes, less for every extra listen to the reference.
         ...rated
           .filter((x) => memoryItem(x.it) && best.current[x.it.id])
@@ -987,7 +978,7 @@ function VocalSession({
   })();
   // Scales asked by name: only the tonic is shown until the take is graded (the notes are the task).
   const hidden = item.kind === 'scale' && item.scale?.hear === 'tonic' && phase !== 'result';
-  const title = level === 'warmup' ? t.vocalWarmup : level > ORNAMENT_BASE ? `${t.ornTitle} · ${t.ornLevelNames[level - ORNAMENT_BASE - 1]}` : level > SIGHT_BASE ? `${t.sightTitle} · ${t.sightLevelNames[level - SIGHT_BASE - 1]}` : level > BARRY_BASE ? `${t.barryTitle} · ${t.barryLevelNames[level - BARRY_BASE - 1]}` : level > HARMONY_BASE ? `${t.harmonyTitle} · ${t.harmonyLevelNames[level - HARMONY_BASE - 1]}` : level > MODES_BASE ? `${t.modesTitle} · ${t.modesLevelNames[level - MODES_BASE - 1]}` : `${fill(t.vocalLevel, { n: level })} · ${t.vocalLevelNames[level - 1]}`;
+  const title = level === 'warmup' ? t.vocalWarmup : isNewLevel(level) ? levelName(level, t, settings.uiLang === 'en' ? 'en' : 'he') : level > ORNAMENT_BASE ? `${t.ornTitle} · ${t.ornLevelNames[level - ORNAMENT_BASE - 1]}` : level > SIGHT_BASE ? `${t.sightTitle} · ${t.sightLevelNames[level - SIGHT_BASE - 1]}` : level > BARRY_BASE ? `${t.barryTitle} · ${t.barryLevelNames[level - BARRY_BASE - 1]}` : level > HARMONY_BASE ? `${t.harmonyTitle} · ${t.harmonyLevelNames[level - HARMONY_BASE - 1]}` : level > MODES_BASE ? `${t.modesTitle} · ${t.modesLevelNames[level - MODES_BASE - 1]}` : `${fill(t.vocalLevel, { n: level })} · ${t.vocalLevelNames[level - 1]}`;
 
   if (phase === 'summary' && summary)
     return (
@@ -1014,10 +1005,11 @@ function VocalSession({
         <h1>{title}</h1>
       </header>
       <p className="field-hint">
+        {typeof level === 'number' && isNewLevel(level) && `${familyOfRef(level)?.title[settings.uiLang === 'en' ? 'en' : 'he'] ?? ''} · `}
         {fill(t.vocalItemOf, { i: i + 1, n: items.length })}
         {noteCount > 1 && ` · ${fill(t.vocalNoteOf, { i: noteIdx + 1, n: noteCount })}`}
       </p>
-      <p className="vocal-instr">
+      {phase !== 'result' && <p className="vocal-instr">
         {item.kind === 'scale' && item.scale
           ? (() => {
               const tn = scaleTonic(item.scale, range);
@@ -1038,10 +1030,14 @@ function VocalSession({
             ? t.ornInstr[item.orn ?? 'grace']
           : item.kind === 'dynamic'
             ? t.dynInstr[item.curve ?? 'cresc']
+          : MORE_KINDS.includes(item.kind)
+            ? fill(MORE_INSTR[item.kind === 'inflect' ? item.more?.shape ?? 'scoop' : item.kind]?.[settings.uiLang === 'en' ? 'en' : 'he'] ?? '', { s: item.seconds })
+          : item.kind === 'harmony-hold' && item.more?.tone
+            ? fill(MORE_INSTR.tone[settings.uiLang === 'en' ? 'en' : 'he'], { tone: TONE_NAMES[item.more.tone]?.[settings.uiLang === 'en' ? 'en' : 'he'] ?? item.more.tone }) + (item.more.straight ? ` ${MORE_INSTR.straightTone[settings.uiLang === 'en' ? 'en' : 'he']}` : '')
           : item.kind === 'harmony-hold' && item.accompany?.length === 1
             ? fill(item.accompany[0] < 0 ? t.holdIntervalAbove : t.holdIntervalBelow, { iv: t.intervalNames[String(Math.abs(item.accompany[0]))] ?? '' })
             : fill(t.vocalInstr[item.kind] ?? '', { s: item.seconds, on: item.cueOn ?? 2, off: item.cueOff ?? 5, rate: item.vibRate ?? '', width: item.vibWidth === 'wide' ? t.vocalWide : t.vocalNarrow })}
-      </p>
+      </p>}
       {item.kind === 'vibrato-notes' && (
         <p className="vib-notes" dir="ltr" aria-label={t.vocalVibMarks}>
           {targets.map((m, k) => (
@@ -1055,7 +1051,7 @@ function VocalSession({
       {item.kind === 'vibrato-rate' && phase === 'singing' && <div className="vib-pulse" style={{ animationDuration: `${1 / (item.vibRate ?? 5.5)}s` }} aria-hidden="true" />}
       {isSight(item) ? (
         <div className="sight-score">
-          <NotesView midis={shownTargets} keyPc={pc(sightKeyName(item, shownTargets[0]))} settings={settings} durs={item.durs} />
+          <NotesView midis={shownTargets} keyPc={pc(sightKeyName(item, shownTargets[0]))} settings={settings} durs={item.durs} clef={item.more?.clef ?? (range.low <= 45 ? 'bass' : undefined)} />
           <small className="field-hint">♩ = {item.bpm ?? 72}</small>
         </div>
       ) : (
@@ -1063,9 +1059,9 @@ function VocalSession({
         {(hidden ? shownTargets.slice(0, 1) : shownTargets).map((m) => noteLabel(m, settings)).join(' – ')}
       </p>
       )}
-      {(item.kind === 'hold' || item.kind === 'straight' || item.kind.startsWith('vibrato') || item.kind === 'messa' || item.kind === 'range' || item.kind === 'dynamic') && (
+      {phase !== 'result' && (item.kind === 'hold' || item.kind === 'straight' || item.kind.startsWith('vibrato') || item.kind === 'messa' || item.kind === 'range' || item.kind === 'dynamic' || item.kind === 'breath-hold' || item.kind === 'fine-tune' || item.kind === 'edge') && (
         <div className="hold-meter" aria-hidden="true">
-          <span style={{ width: `${Math.min(100, ((sinceOnset ?? (phase === 'result' ? item.seconds : 0)) / item.seconds) * 100)}%` }} />
+          <span style={{ width: `${Math.min(100, ((sinceOnset ?? 0) / item.seconds) * 100)}%` }} />
           <small>{fill(t.vocalHoldFor, { s: item.seconds })}</small>
         </div>
       )}
@@ -1074,7 +1070,9 @@ function VocalSession({
           {cue}
         </p>
       )}
+      <div className={phase === 'result' ? 'trace-compact' : undefined}>
       <PitchTrace frames={frames} targets={shownTargets} bands={hidden ? shownTargets.slice(0, 1) : undefined} seconds={item.seconds} label={`${(hidden ? shownTargets.slice(0, 1) : shownTargets).map((m) => noteLabel(m, settings)).join(' – ')}`} />
+      </div>
       {item.reference === 'during' && (
         <label className="toggle-row">
           <input
@@ -1107,7 +1105,6 @@ function VocalSession({
               {item.bh?.mode === 'free' && !grade.chordMade && <p className="take-remark">{t.barryNotHalfStep}</p>}
               {remarkLine && <p className="take-remark"><Icon k="target" /> {remarkLine}</p>}
               {tipKey && <p className="take-tip"><Icon k="tip" /> {t.vocalTips[tipKey]}</p>}
-              <NotesView midis={shownTargets} keyPc={null} settings={settings} />
               {memoryItem(item) && refs > 0 && <p className="field-hint"><Icon k="repeat" /> {fill(t.refCost, { n: refs, p: Math.round((1 - memoryFactor(refs)) * 100) })}</p>}
             </>
           )}

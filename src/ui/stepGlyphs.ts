@@ -21,7 +21,10 @@ export const FAMILY_GLYPH: Record<string, GlyphKind> = {
   'd-ear': 'drumear', 'd-jazz': 'ride', 'd-latin': 'clave',
   // DRUMS_NICHE_PLAN P1: songs, prog / fusion, counting, the drum key, song form.
   'd-song': 'roadmap', 'd-prog': 'progmeter', 'd-count': 'counting', 'd-notation': 'drumkey', 'd-form': 'dsform',
-  'v-ladder': 'sing', 'v-modes': 'scales', 'v-sight': 'sight', 'v-harmony': 'chords', 'v-ornament': 'contour', 'v-barry': 'improv',
+  'v-ladder': 'sing', 'v-modes': 'scales', 'v-sight': 'sight', 'v-harmony': 'chords', 'v-ornament': 'contour', 'v-barry': 'sixdim',
+  // VOICE_CURRICULUM: the 15 families + Barry Harris, one symbol each on the voice path.
+  'v-breath': 'breath', 'v-pitch': 'tune', 'v-songs': 'mic', 'v-range': 'octave', 'v-time': 'pulse', 'v-ear': 'echo', 'v-dyn': 'hairpin', 'v-scale': 'scales',
+  'v-vib': 'sing', 'v-agility': 'bebop', 'v-inflect': 'contour', 'v-standards': 'prog', 'v-scat': 'improv',
 };
 /** Instrument topics (they all used to share one chord icon). */
 export const TOPIC_GLYPH: Record<string, GlyphKind> = {
