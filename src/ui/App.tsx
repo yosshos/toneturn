@@ -1467,7 +1467,7 @@ export function App() {
                   draft={intakeDraft}
                   onIntake={() => go('intake')}
                   onMeasure={() => openCatchUpPlacement(pending.unmeasured)}
-                  onFindLevel={() => (s.activeCourse === 'drums' ? openTechTest() : openPlacement())}
+                  onFindLevel={() => (instrumentCourse ? openTechTest() : s.activeCourse === 'voice' ? openPlacement('voice') : openPlacement())}
                   onHide={() => updateSettings({ catchUpHidden: catchUpKey })}
                 />
               )}
@@ -1486,7 +1486,7 @@ export function App() {
           }}
         />
       )}
-      {route === 'path' && <PathView2 t={t} settings={s} progress={progress} view={pathView} onStep={openFromPath} onTestOut={openTestOut} onPlacement={() => (instrumentCourse ? openTechTest() : openPlacement())} onTechTest={instrumentCourse && !s.drillStart && !Object.keys(progress.drillItems ?? {}).length ? openTechTest : undefined} onSettings={updateSettings} onLesson={(id) => {
+      {route === 'path' && <PathView2 t={t} settings={s} progress={progress} view={pathView} onStep={openFromPath} onTestOut={openTestOut} onPlacement={() => (instrumentCourse ? openTechTest() : s.activeCourse === 'voice' ? openPlacement('voice') : openPlacement())} onTechTest={instrumentCourse && !s.drillStart && !Object.keys(progress.drillItems ?? {}).length ? openTechTest : undefined} onSettings={updateSettings} onLesson={(id) => {
         openFrom.current.path = true;
         workoutPending.current = null;
         return s.mode === 'voice' && !s.voiceConsent ? setConsentThen(() => () => openLesson(id)) : openLesson(id);
