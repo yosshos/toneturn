@@ -18,6 +18,20 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.71.0',
+    date: '2026-11-11',
+    en: [
+      'A new course starts with music, not a test: a welcome card, a quick sound check, a short taste lesson with the band and your first measured result',
+      'Tell us where you are (new, a bit, well): players who play well get the level test right after the taste',
+      'Set a daily goal and reminder on the first result, and pick an optional personal goal the path tracks',
+    ],
+    he: [
+      'קורס חדש מתחיל במוזיקה, לא במבחן: כרטיס פתיחה, בדיקת סאונד קצרה, שיעור טעימה עם הלהקה והתוצאה המדודה הראשונה',
+      'מספרים איפה אתם (חדשים, קצת, טוב): מי שמנגן טוב מקבל את בדיקת הרמה מיד אחרי הטעימה',
+      'יעד יומי ותזכורת במסך התוצאה הראשונה, ויעד אישי לבחירה שהמסלול עוקב אחריו',
+    ],
+  },
+  {
     version: '0.70.2',
     date: '2026-11-11',
     en: [
