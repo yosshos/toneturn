@@ -9,6 +9,8 @@ import { chordAtBeat, parseChart, transposeChart } from './charts';
 import { improvReportBy, type ImprovReport } from './perform';
 import { hzToMidi } from './pitch';
 import { segmentNotes } from './memory';
+import { gradeMotif, gradeRubato, gradeTrade, tradeOpening, tradeTurns, type TradeTurn } from './voiceP2';
+import type { PNote } from './improvPhrasing';
 
 /** The level's own rule dominates: a take that misses it cannot pass on the other metrics. */
 const gated = (g: TakeGrade, key: number): TakeGrade => ({ ...g, score: Math.round(g.score * (0.4 + 0.6 * key) * 1000) / 1000 });
@@ -96,7 +98,7 @@ export interface SongResult {
 /** A band-song take of bars [from, to] (frames from the first sung bar, delay removed). */
 export function gradeSong(item: VocalItem, frames: SungFrame[], plan: SongPlan, from: number, to: number): SongResult {
   const s = item.song!;
-  const g = gradeSongTake(frames, plan, { fromBar: from, toBar: to, tol: s.tol, rhythm: s.rhythm, need: s.need });
+  const g = s.interpretFrom !== undefined ? gradeSplitTake(frames, plan, from, to, s.interpretFrom, s) : gradeSongTake(frames, plan, { fromBar: from, toBar: to, tol: s.tol, rhythm: s.rhythm, need: s.need });
   if (!g.phrases.length || g.phrases.every((p) => p.sung === 0)) return { grade: UNCLEAR, song: g };
   const out: MetricScore[] = [M('phrases', g.mean * 100, '%', g.mean, 4)];
   const worst = g.phrases.reduce((w, p) => Math.min(w, p.score), 1);
@@ -126,6 +128,34 @@ export function gradeSong(item: VocalItem, frames: SungFrame[], plan: SongPlan, 
     out.push(M('moved', it.moved * 100, '%', reachScore(it.moved, 0.3), 2.5));
     if (it.kept < 0.85 || it.moved < 0.3) ok = false;
   }
+  if (s.interpretFrom !== undefined) {
+    const ph = plan.phrases[s.interpretFrom];
+    if (ph && ph.fromBar >= from && ph.toBar <= to) {
+      const shift = (ph.fromBar - from) * plan.meter * plan.beat;
+      const it = interpretation(frames.map((f) => ({ ...f, t: f.t - shift })), plan, ph.fromBar, ph.toBar);
+      out.push(M('kept', it.kept * 100, '%', reachScore(it.kept, 0.85), 2.5));
+      out.push(M('moved', it.moved * 100, '%', reachScore(it.moved, 0.3), 2.5));
+      if (it.kept < 0.85 || it.moved < 0.3) ok = false;
+    }
+  }
+  if (s.embellish) {
+    const e = embellishment(frames, plan, from, to);
+    out.push(M('kept', e.kept * 100, '%', reachScore(e.kept, 0.8), 2.5));
+    out.push(M('added', e.added * 100, '%', reachScore(e.added, 0.2), 2.5));
+    if (e.kept < 0.8 || e.added < 0.2) ok = false;
+  }
+  if (s.bop) {
+    const b = bopAccents(frames, plan, from, to);
+    const [lo, hi] = swingBand(plan.bpm);
+    out.push(M('swing', b.ratio, '%', b.pairs >= 3 ? inBandScore(b.ratio, [lo, hi], 0.4) : 0, 2));
+    out.push(M('lift', b.lift, 'dB', reachScore(b.lift, 1.5), 2.5));
+    if (b.pairs < 3 || b.ratio < lo - 0.2 || b.lift < 1.5) ok = false;
+  }
+  if (s.falls) {
+    const f = phraseFalls(frames, plan, from, to);
+    out.push(M('falls', f.falls, '%', reachScore(f.falls, Math.max(1, f.phrases - 1)), 2.5));
+    if (f.falls < Math.max(1, f.phrases - 1)) ok = false;
+  }
   if (s.longNotes) {
     const st = longNoteSteadiness(frames, plan, from, to, s.longNotes === 'straight');
     if (st !== null) {
@@ -138,6 +168,25 @@ export function gradeSong(item: VocalItem, frames: SungFrame[], plan: SongPlan, 
   score = Math.min(score, base.score);
   if (!ok) score = Math.min(score, s.need - 0.01);
   return { grade: { ...base, score: Math.round(score * 1000) / 1000 }, song: g };
+}
+
+/**
+ * F14 L6, colla voce: no clock — the follower's path through the melody (the band changed chords as the singer
+ * reached each bar); every phrase scored on the notes reached and in tune. Breath and time are free here.
+ */
+export function gradeRubatoSong(item: VocalItem, frames: SungFrame[], plan: SongPlan, from: number, to: number): SongResult & { follow: number } {
+  const s = item.song!;
+  const sel = plan.notes.filter((n) => n.bar >= from && n.bar <= to);
+  const r = gradeRubato(frames, sel.map((n) => n.midi), sel.map((n) => n.phrase), s.tol ?? 50);
+  const phrases = r.phrases.map((p) => ({ i: p.i, pitch: p.score, time: null, breath: 1, score: p.score, sung: p.reached, notes: p.notes }));
+  const mean = phrases.length ? phrases.reduce((a, p) => a + p.score, 0) / phrases.length : 0;
+  const r3 = (x: number) => Math.round(x * 1000) / 1000;
+  const song: SongGrade = { phrases, score: r3(phrases.some((p) => p.score < s.need) ? Math.min(mean, s.need - 0.01) : mean), mean: r3(mean), weakest: phrases.length ? phrases.reduce((w, p) => (p.score < w.score ? p : w), phrases[0]).i : 0, feel: null, drift: null, chorusDb: null, notePitch: r.cents.map((c) => (c === null ? null : Math.abs(c) <= (s.tol ?? 50) ? 1 : 0)) };
+  if (r.follow === 0) return { grade: UNCLEAR, song, follow: 0 };
+  const base = finish([M('phrases', mean * 100, '%', mean, 4), M('follow', r.follow * 100, '%', reachScore(r.follow, 0.9), 2)], {});
+  let score = Math.min(song.score, base.score);
+  if (r.follow < 0.8) score = Math.min(score, s.need - 0.01);
+  return { grade: { ...base, score: r3(score) }, song, follow: r.follow };
 }
 
 /**
@@ -177,11 +226,118 @@ export function longNoteSteadiness(frames: SungFrame[], plan: SongPlan, from: nu
   return Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 1000) / 1000;
 }
 
+// ---------------------------------------------------------------- P2 song rules (F14 L9–L10, F15 L3, F15 L7)
+
+/** F14 L9: the phrases before `split` graded as written (time counts), the rest interpreted (no time grid, pitch only). */
+function gradeSplitTake(frames: SungFrame[], plan: SongPlan, from: number, to: number, split: number, s: NonNullable<VocalItem['song']>): SongGrade {
+  const ph = plan.phrases[split];
+  if (!ph || ph.fromBar <= from || ph.fromBar > to) return gradeSongTake(frames, plan, { fromBar: from, toBar: to, tol: s.tol, rhythm: s.rhythm, need: s.need });
+  const a = gradeSongTake(frames, plan, { fromBar: from, toBar: ph.fromBar - 1, tol: s.tol, rhythm: s.rhythm, need: s.need });
+  const shift = (ph.fromBar - from) * plan.meter * plan.beat;
+  const b = gradeSongTake(frames.map((f) => ({ ...f, t: f.t - shift })), plan, { fromBar: ph.fromBar, toBar: to, tol: s.tol ?? 60, rhythm: false, need: s.need - 0.1 });
+  const phrases = [...a.phrases, ...b.phrases];
+  const mean = phrases.length ? phrases.reduce((x, p) => x + p.score, 0) / phrases.length : 0;
+  const capped = a.phrases.some((p) => p.score < s.need) || b.phrases.some((p) => p.score < s.need - 0.1) ? Math.min(mean, s.need - 0.01) : mean;
+  const r3 = (x: number) => Math.round(x * 1000) / 1000;
+  const weakest = phrases.length ? phrases.reduce((w, p) => (p.score < w.score ? p : w), phrases[0]).i : 0;
+  return { ...a, phrases, score: r3(capped), mean: r3(mean), weakest, notePitch: [...a.notePitch, ...b.notePitch] };
+}
+
+/**
+ * F15 L3, embellishing a head: the long notes (2 beats or more, and each phrase's last) still sung where they are
+ * written (± half a beat), and at least 20 % more notes than written (neighbours, approaches, turns).
+ */
+export function embellishment(frames: SungFrame[], plan: SongPlan, from: number, to: number): { kept: number; added: number } {
+  const { kept } = interpretation(frames, plan, from, to);
+  const written = plan.notes.filter((n) => n.bar >= from && n.bar <= to).length;
+  const sung = segmentNotes(frames, { minSec: 0.08 }).length;
+  return { kept, added: written ? Math.max(0, (sung - written) / written) : 0 };
+}
+
+/**
+ * F15 L7, bebop syllable phrasing: the swing ratio of the sung eighths, and the accent on the off-beats (the
+ * "doo-BAH"): the median attack loudness of the notes that start on an off-beat minus that of the on-beat ones (dB).
+ */
+export function bopAccents(frames: SungFrame[], plan: SongPlan, from: number, to: number): { ratio: number; pairs: number; lift: number } {
+  const beats = (to - from + 1) * plan.meter;
+  const all = [...voiceOnsets(frames), ...pitchMoves(frames)].sort((a, b) => a - b).filter((t, i, a) => i === 0 || t - a[i - 1] > 0.08);
+  const sw = swingRatioOf(all, plan.beat, beats);
+  const db = (r: number) => 20 * Math.log10(Math.max(1e-5, r));
+  const offs: number[] = [];
+  const downs: number[] = [];
+  for (const n of segmentNotes(frames, { minSec: 0.08 })) {
+    const b = n.start / plan.beat;
+    const f = b - Math.floor(b);
+    const xs = frames.filter((x) => x.t >= n.start && x.t <= Math.min(n.end, n.start + 0.12) && x.hz).map((x) => db(x.rms));
+    if (xs.length < 2) continue;
+    const peak = Math.max(...xs);
+    if (f >= 0.4 && f <= 0.85) offs.push(peak);
+    else if (f < 0.2 || f > 0.9) downs.push(peak);
+  }
+  const med = (xs: number[]) => [...xs].sort((a, b) => a - b)[xs.length >> 1];
+  const lift = offs.length >= 2 && downs.length >= 2 ? Math.round((med(offs) - med(downs)) * 10) / 10 : 0;
+  return { ratio: sw.ratio, pairs: sw.pairs, lift };
+}
+/** Legato note changes as onsets (a sung eighth line is often one breath). */
+function pitchMoves(frames: SungFrame[]): number[] {
+  const out: number[] = [];
+  let prev: number | null = null;
+  let run = 0;
+  let at = 0;
+  for (const f of frames) {
+    if (!f.hz || f.confidence < 0.75) {
+      // a short dip (a consonant) keeps the last pitch: the next note is still a move
+      run = 0;
+      continue;
+    }
+    const m = Math.round(hzToMidi(f.hz));
+    if (prev === null) {
+      prev = m;
+      continue;
+    }
+    if (m !== prev) {
+      if (run === 0) at = f.t;
+      run++;
+      if (run >= 3) {
+        out.push(at);
+        prev = m;
+        run = 0;
+      }
+    } else run = 0;
+  }
+  return out;
+}
+
+/**
+ * F14 L10: a fall-off at the end of each sung phrase — the voice drops 150 ¢ or more under the phrase's last note
+ * within 0.45 s of its written end (the jazz "fall"). Counted per phrase.
+ */
+export function phraseFalls(frames: SungFrame[], plan: SongPlan, from: number, to: number): { falls: number; phrases: number } {
+  const base = from * plan.meter * plan.beat;
+  let falls = 0;
+  let n = 0;
+  for (const ph of plan.phrases) {
+    if (ph.toBar < from || ph.fromBar > to || !ph.notes.length) continue;
+    const last = plan.notes[ph.notes[ph.notes.length - 1]];
+    const end = last.start + last.dur - base;
+    n++;
+    const tail = frames.filter((f) => f.t >= end - 0.45 && f.t <= end + 0.4 && f.hz && f.confidence >= 0.7).map((f) => (hzToMidi(f.hz!) - last.midi) * 100);
+    if (tail.length < 4) continue;
+    const k = Math.round([...tail].sort((a, b) => a - b)[tail.length >> 1] / 1200) * 1200;
+    if (Math.min(...tail.map((c) => c - k)) <= -150) falls++;
+  }
+  return { falls, phrases: n };
+}
+
 // ---------------------------------------------------------------- scat (F15)
 
 export interface ScatResult {
   grade: TakeGrade;
   report?: ImprovReport;
+  /** F15 L2: the developments heard (repeat, sequence, inversion, displaced, rhythm). */
+  kinds?: string[];
+  /** F15 L10: notes per singer turn. */
+  turns?: number[];
   /** Guide tones: per half-note slot, right / wrong / not sung. */
   slots?: ('ok' | 'off' | null)[];
 }
@@ -233,6 +389,18 @@ export function gradeScat(item: VocalItem, frames: SungFrame[], tonicPc: number)
   const beat = 60 / sc.bpm;
   const ch = scatChart(item, tonicPc);
   if (frames.filter((f) => f.hz && f.confidence >= 0.8).length < 20) return { grade: UNCLEAR };
+  if (sc.mode === 'motif') {
+    const cell = motifCell(item, scatCentre(tonicPc, frames));
+    const r = gradeMotif(cell, frames, beat, MOTIF_ANSWER_AT);
+    return { grade: r.grade, kinds: r.kinds };
+  }
+  if (sc.mode === 'trade') {
+    const turns = scatTurns(item);
+    const centre = scatCentre(tonicPc, frames);
+    const opening = tradeOpening(ch.pcsAt, centre, 0, (sc.turn ?? 4) * 4);
+    const r = gradeTrade(frames, turns, ch.pcsAt, sc.bpm, [opening]);
+    return { grade: r.grade, turns: r.turns };
+  }
   if (sc.mode === 'guide') {
     const slots: ('ok' | 'off' | null)[] = [];
     for (let b = 0; b < ch.beats; b += 2) {
@@ -262,4 +430,31 @@ export function gradeScat(item: VocalItem, frames: SungFrame[], tonicPc: number)
   }
   out.push(M('coverage', r.notes, '%', reachScore(r.notes, ch.beats / 2), 0.5));
   return { grade: finish(out, {}), report: r };
+}
+
+// ---------------------------------------------------------------- F15 L2 motif, F15 L10 trading (shared with the take screen)
+
+/** The motif cell is played in the first two bars; the singer answers from bar 3. */
+export const MOTIF_ANSWER_AT = 8;
+
+/** The pitch the app's lines sit around: the scat tonic in the singer's middle (the median of what was sung, else near C4). */
+export function scatCentre(tonicPc: number, frames?: SungFrame[], fallback?: number): number {
+  const ref = fallback ?? 60;
+  const base = ref - 6 + (((tonicPc - (ref - 6)) % 12) + 12) % 12;
+  const ms = (frames ?? []).filter((f) => f.hz && f.confidence >= 0.8).map((f) => hzToMidi(f.hz!));
+  if (ms.length < 20) return base;
+  const mid = [...ms].sort((a, b) => a - b)[ms.length >> 1];
+  return base + Math.round((mid - base) / 12) * 12;
+}
+
+/** The motif cell of an item as notes (beats from the take's first bar). */
+export function motifCell(item: VocalItem, centre: number): PNote[] {
+  return (item.scat?.cell ?? []).map(([beat, st, dur]) => ({ beat, dur, midi: centre + st }));
+}
+
+/** The turns of a trading item (app first). */
+export function scatTurns(item: VocalItem): TradeTurn[] {
+  const sc = item.scat!;
+  const bars = parseChart(sc.chart, 4).bars * (sc.loops ?? 1);
+  return tradeTurns(bars, sc.turn ?? 4);
 }

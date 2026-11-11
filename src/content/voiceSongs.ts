@@ -28,6 +28,8 @@ export interface VoiceSong {
   bpm: number;
   /** The form, shown on the brief ("12-bar blues", "AABA, A section"). */
   form?: { en: string; he: string };
+  /** The band's answers between the sung calls (same notation, rests where the singer sings; F14 L10). */
+  answer?: string;
 }
 
 const OWN = { en: 'Written for The 7th Sense', he: 'נכתב עבור החוש השביעי' };
@@ -243,4 +245,148 @@ export const JAZZ_HEADS: VoiceSong[] = [
   },
 ];
 
-export const VOICE_SONGS: VoiceSong[] = [...POP_SONGS, ...JAZZ_HEADS];
+/**
+ * VOICE_CURRICULUM P2. Reading melodies (F9 L8: read over the band, never heard first) and lead sheets (F9 L9: swung
+ * eighths, syncopation, ties written "~"), an AABA chorus (F14 L9) and a 12-bar blues call and response with the
+ * band's answers (F14 L10). All written for The 7th Sense (2026-11-11); none quotes an existing melody.
+ */
+export const P2_SONGS: VoiceSong[] = [
+  {
+    id: 'read-first-light',
+    title: { en: 'First Light', he: 'אור ראשון' },
+    credit: OWN,
+    tier: 'own',
+    meter: 4,
+    melody: '1 2 3h | 5h 3h | 4 3 2 1 | 2w | 3 4 5h | 6h 5h | 4 2 7, 2 | 1w',
+    chart: 'C | C | F | G | C | F | Dm G | C',
+    phrases: [4],
+    level: 2,
+    style: 'ballad',
+    bpm: 80,
+    form: { en: 'Reading, 8 bars', he: 'קריאה, 8 תיבות' },
+  },
+  {
+    id: 'read-quiet-road',
+    title: { en: 'Quiet Road', he: 'דרך שקטה' },
+    credit: OWN,
+    tier: 'own',
+    meter: 4,
+    melody: "5 3 1 3 | 4h 2h | 3 1 6, 1 | 7,w | 1 3 5 1' | 7h 5h | 6 4 2 7, | 1w",
+    chart: 'C | Dm | Am | G | C | Em | F G | C',
+    phrases: [4],
+    level: 2,
+    style: 'pop',
+    bpm: 84,
+    form: { en: 'Reading, 8 bars', he: 'קריאה, 8 תיבות' },
+  },
+  {
+    id: 'read-grey-morning',
+    title: { en: 'Grey Morning', he: 'בוקר אפור' },
+    credit: OWN,
+    tier: 'own',
+    meter: 4,
+    minor: true,
+    melody: '1 3 5h | 4 3 2h | 3 4 5 6 | 5w | 6 5 4 3 | 2 3 4h | 3 2 7#, 2 | 1w',
+    chart: 'Cm | Fm G | Cm | Cm | Fm | Bb | Cm G | Cm',
+    phrases: [4],
+    level: 3,
+    style: 'ballad',
+    bpm: 76,
+    form: { en: 'Reading in minor, 8 bars', he: 'קריאה במינור, 8 תיבות' },
+  },
+  {
+    id: 'read-three-steps',
+    title: { en: 'Three Steps', he: 'שלושה צעדים' },
+    credit: OWN,
+    tier: 'own',
+    meter: 4,
+    melody: '1q. 2e 3h | 5q. 4e 3h | 2 3 4 2 | 5,w | 1q. 2e 3 5 | 6h 5h | 4 2 3 2 | 1w',
+    chart: 'C | C | Dm | G | C | F | G7 | C',
+    phrases: [4],
+    level: 3,
+    style: 'pop',
+    bpm: 84,
+    form: { en: 'Reading dotted rhythms, 8 bars', he: 'קריאת מקצבים מנוקדים, 8 תיבות' },
+  },
+  {
+    id: 'lead-night-walk',
+    title: { en: 'Night Walk', he: 'הליכת לילה' },
+    credit: OWN,
+    tier: 'own',
+    meter: 4,
+    melody: "r 3 5 6~ | 6h r 5 | 3e 5e 6e 1'e~ 1'h | rw | r 3 5 6~ | 6h r 1' | 7e 6e 5e 3e~ 3h | rw",
+    chart: 'C6 | A7 | Dm7 | G7 | C6 | A7 | Dm7 G7 | C6',
+    phrases: [4],
+    level: 4,
+    style: 'swing',
+    bpm: 104,
+    form: { en: 'Lead sheet: ties and swung eighths', he: 'דף אקורדים: קשתות ושמיניות בסווינג' },
+  },
+  {
+    id: 'lead-corner-swing',
+    title: { en: 'Corner Swing', he: 'סווינג בפינה' },
+    credit: OWN,
+    tier: 'own',
+    meter: 4,
+    melody: "1 3 5 6e 1'e~ | 1'h. r | 7 6 5 3e 2e~ | 2w | 3 5 6 1'e 2'e~ | 2'h 1' 6 | 5e 3e 5e 6e~ 6 5 | 1w",
+    chart: 'Cmaj7 | Am7 | Dm7 | G7 | Cmaj7 | Dm7 | G7 | C6',
+    phrases: [4],
+    level: 4,
+    style: 'swing',
+    bpm: 112,
+    form: { en: 'Lead sheet: anticipations over the bar', he: 'דף אקורדים: הקדמות מעבר לתיבה' },
+  },
+  {
+    id: 'lead-late-train',
+    title: { en: 'Late Train', he: 'רכבת מאוחרת' },
+    credit: OWN,
+    tier: 'own',
+    meter: 4,
+    melody: "5 3b 1 r | 3b 1 7b,h | r 5 7b 5 | 3b 1h. | 4 6 1' r | 7b 6 4h | 3e 1e 3be 1e~ 1h | rw",
+    chart: 'C7 | C7 | F7 | C7 | F7 | F7 | C7 G7 | C7',
+    phrases: [4],
+    level: 4,
+    style: 'swing',
+    bpm: 100,
+    form: { en: 'Lead sheet: blue notes', he: 'דף אקורדים: צלילי בלוז' },
+  },
+  {
+    id: 'lantern-street',
+    title: { en: 'Lantern Street', he: 'רחוב הפנסים' },
+    credit: OWN,
+    tier: 'own',
+    meter: 4,
+    melody:
+      "1 2 3 5 | 6h 5h | 4 3 2 4 | 7,w | 3 5 7 2' | 6h 1#h | 2 4 6 5 | 3w | " +
+      "1 2 3 5 | 6h 5h | 4 3 2 4 | 7,w | 3 5 7 2' | 6h 1#h | 2 4 6 5 | 1w | " +
+      "4 5 6 7b | 1'h 6h | 5 4 3 4 | 6w | 1' 6 5 3 | 2h 4#h | 2 4 6 1' | 7w | " +
+      "1 2 3 5 | 6h 5h | 4 3 2 4 | 7,w | 3 5 7 2' | 6h 1#h | 2 4 6 5 | 1w",
+    chart:
+      'Cmaj7 | Am7 | Dm7 | G7 | Em7 | A7 | Dm7 G7 | Cmaj7 | ' +
+      'Cmaj7 | Am7 | Dm7 | G7 | Em7 | A7 | Dm7 G7 | Cmaj7 | ' +
+      'Gm7 | C7 | Fmaj7 | Fmaj7 | Am7 | D7 | Dm7 | G7 | ' +
+      'Cmaj7 | Am7 | Dm7 | G7 | Em7 | A7 | Dm7 G7 | C6',
+    phrases: [8, 16, 24],
+    level: 4,
+    style: 'swing',
+    bpm: 132,
+    form: { en: 'AABA, 32 bars', he: 'AABA, 32 תיבות' },
+  },
+  {
+    id: 'call-and-answer',
+    title: { en: 'Call and Answer', he: 'קריאה ותשובה' },
+    credit: OWN,
+    tier: 'own',
+    meter: 4,
+    melody: "5 3b 3 5 | 7b 5h. | rw | rw | 1' 7b 6 4 | 3b 1h. | rw | rw | 2 4 6 1' | 7b 5h. | rw | rw",
+    answer: "rw | rw | r 1' 7b 5 | 3b 1h. | rw | rw | r 6 5 3b | 1w | rw | rw | r 5 3b 1 | 1w",
+    chart: 'C7 | F7 | C7 | C7 | F7 | F7 | C7 | A7 | Dm7 | G7 | C7 A7 | Dm7 G7',
+    phrases: [4, 8],
+    level: 4,
+    style: 'swing',
+    bpm: 108,
+    form: { en: '12-bar blues, call and response', he: 'בלוז של 12 תיבות, קריאה ותשובה' },
+  },
+];
+
+export const VOICE_SONGS: VoiceSong[] = [...POP_SONGS, ...JAZZ_HEADS, ...P2_SONGS];
