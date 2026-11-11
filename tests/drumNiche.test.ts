@@ -22,7 +22,7 @@ import { ACOUSTIC_LEVELS } from '../src/engine/drumAcoustic';
 
 const NEW = ['d-song', 'd-prog', 'd-count', 'd-notation', 'd-form'];
 const FAMS = drumFamilies();
-const levels = (): DrumLevelDef[] => FAMS.flatMap((f) => (NEW.includes(f.id) ? f.levels : f.id === 'd-read' ? f.levels.filter((l) => l.level >= 6) : []));
+const levels = (): DrumLevelDef[] => FAMS.flatMap((f) => (NEW.includes(f.id) ? f.levels : f.id === 'd-read' ? f.levels.filter((l) => l.level >= 6) : f.id === 'd-jazz' ? f.levels.filter((l) => l.level >= 9) : []));
 const gen = (family: string, kind: string, option = 0) => generate({ family: family as never, kind, option, key: 0, hands: 'RL', instrument: 'drums' });
 
 function noise(seed: number): () => number {
@@ -269,5 +269,34 @@ describe('reading and theory on the kit', () => {
     expect(d.form?.order).toEqual([0, 0, 1, 0, 2]);
     expect(d.notes.some((n) => n.swing)).toBe(true);
     expect(d.goal.drum?.swing).toBeTruthy();
+  });
+});
+
+describe('jazz 9–12 (P2) on the song engine', () => {
+  it('brushes: only the taps (and feet) are written and scored — the sweep is never a note', () => {
+    const d = gen('d-jazz', '9:brushes', 0);
+    expect(new Set(d.notes.map((n) => n.voice))).toEqual(new Set(['snare', 'hhPedal']));
+    expect(d.notes.some((n) => n.swing)).toBe(true);
+    expect(d.title.en).toMatch(/not scored/);
+  });
+  it('comping over a form: the second blues chorus is busier, a landing on each chorus', () => {
+    const d = gen('d-jazz', '10:formcomp', 0);
+    const sn = (a: number, b: number) => d.notes.filter((n) => n.voice === 'snare' && n.beat >= a && n.beat < b).length;
+    expect(sn(48, 96)).toBeGreaterThan(sn(0, 48));
+    expect(d.goal.drum?.landing?.beats).toContain(48);
+  });
+  it('set-ups before the ensemble hits sit on the triplet partials', () => {
+    const d = gen('d-jazz', '11:setups', 0);
+    const zones = d.goal.drum!.song!.fills!.filter(([a, b]) => b - a < 1);
+    expect(zones.length).toBeGreaterThan(0);
+    for (const [a, b] of zones) expect(b - a).toBeCloseTo(2 / 3, 6);
+  });
+  it('2 → 4 and trading 8s: the solo section has no written notes, the landing after it is measured', () => {
+    const d = gen('d-jazz', '12:twofour', 0);
+    expect(d.form!.order).toEqual([0, 1, 0, 2, 3]);
+    const soloStart = (8 + 8 + 8) * 4;
+    // Only the crash + kick that opens the solo (the end of the last A) is written inside it.
+    expect(d.notes.filter((n) => n.beat > soloStart + 1e-6 && n.beat < soloStart + 32).length).toBe(0);
+    expect(d.goal.drum?.landing?.beats).toContain(soloStart + 32);
   });
 });

@@ -44,6 +44,10 @@ export interface SongSection {
   lanes?: Lanes;
   /** The groove of the odd bars when it is a two-bar pattern (chiftetelli). */
   lanes2?: Lanes;
+  /** A groove that changes bar by bar (jazz comping): the lanes of bar `b` of the section (overrides lanes / lanes2). */
+  laneFn?: (b: number) => Lanes;
+  /** Swing: the set-up before each hit on the triplet partials (two triplet 8ths before), not straight 8ths. */
+  tripSetup?: boolean;
   sub?: number;
   /** Chords, one per bar (cycled). */
   chart: string[];
@@ -177,7 +181,7 @@ export function buildSong(spec: DrillSpec, secs: SongSection[], o: SongOpts): Dr
           const at = sp.startBeat + h;
           out.push({ b: at, v: 'crash', h: 'R', d: 0.5, acc: true }, { b: at, v: 'kick', h: 'R', d: 0.5 });
           const prev = Math.max(sp.startBeat - 1, ...s.hits.filter((x) => x < h - 1e-9).map((x) => sp.startBeat + x + 0.5));
-          const step = at - prev >= 1 ? 0.5 : 0.25;
+          const step = s.tripSetup ? 1 / 3 : at - prev >= 1 ? 0.5 : 0.25;
           if (at - 2 * step >= prev - 1e-9 && at - 2 * step >= sp.startBeat - 1e-9) {
             out.push({ b: at - 2 * step, v: 'snare', h: 'R', d: step }, { b: at - step, v: 'snare', h: 'L', d: step });
             fills.push([at - 2 * step, at]);
@@ -186,7 +190,7 @@ export function buildSong(spec: DrillSpec, secs: SongSection[], o: SongOpts): Dr
         continue;
       }
       const fillHere = b === sp.bars - 1 && nextSec?.fillBefore ? (nextSec.fillBefore === true ? FILL_KINDS[Math.floor(r() * FILL_KINDS.length)] : nextSec.fillBefore) : null;
-      const lanes = (b % 2 && s.lanes2) || s.lanes || {};
+      const lanes = s.laneFn?.(b) ?? ((b % 2 && s.lanes2) || s.lanes || {});
       const sub = s.sub ?? 2;
       if (fillHere) {
         const from = barLen === 4 ? FILL_FROM[fillHere] : barLen - Math.min(4, Math.max(2, Math.round(barLen / 3)));

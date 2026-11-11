@@ -121,8 +121,15 @@ export function DrumRoadMap({ drill, beat, lang }: { drill: Drill; beat: number;
     return (
       <div className="drum-road written" data-roadmap="written">
         {signs.map((s, i) => (
-          <span key={i} className="road-sign">
-            {signText(s, lang)}
+          <span key={i} className="road-sign" dir="ltr">
+            {signText(s, lang)
+              .split(' ')
+              .map((w, j) => (
+                <span key={j}>
+                  {j ? ' ' : ''}
+                  {/[א-ת]/.test(w) ? <bdi>{w}</bdi> : w}
+                </span>
+              ))}
           </span>
         ))}
         <b className="road-bar" aria-live="off">
@@ -138,7 +145,7 @@ export function DrumRoadMap({ drill, beat, lang }: { drill: Drill; beat: number;
   return (
     <div className="drum-road" data-roadmap="live" data-road-section={cur?.name ?? ''}>
       {spans.map((s, i) => (
-        <span key={i} className={`road-block ${i === k ? 'on' : ''} ${i < k ? 'past' : ''}`} style={{ flexGrow: Math.max(1, s.bars) }}>
+        <span key={i} className={`road-block ${i === k ? 'on' : ''} ${i < k ? 'past' : ''}`} style={{ flexGrow: Math.max(1, s.bars) }} dir={lang === 'he' ? 'rtl' : 'ltr'}>
           {sectionName(s.name, lang)}
           <small>{s.bars}</small>
         </span>
@@ -272,8 +279,10 @@ function StaffLine({ drill, notes, line, geo, marks, beat, sticking }: { drill: 
   const cursor = beat >= b0 && beat < b0 + per ? xOf(beat) : null;
   const groupSizes = (b: LineGeo['bars'][number]) => (b.groups ?? []).map((g, i, xs) => (xs[i + 1] ?? b.len) - g);
   const constSig = line === 0 && !hasTimeline(drill) && (drill.pulse === 8 || drill.meter !== 4);
+  // Signatures and the swing marking sit in a strip above the staff (clear of the beams and accents).
+  const top = constSig || (line === 0 && drill.drum?.swing8) || (hasTimeline(drill) && geo.bars.some((b) => b.sig)) ? 12 : 0;
   return (
-    <svg className="drum-staff" viewBox={`0 0 ${W} 92`} role="img" aria-label="drum notation">
+    <svg className="drum-staff" viewBox={`0 ${-top} ${W} ${92 + top}`} role="img" aria-label="drum notation">
       {[0, 1, 2, 3, 4].map((i) => (
         <line key={i} x1={X0 - 4} x2={W - 4} y1={28 + i * 8} y2={28 + i * 8} className="dn-line" />
       ))}
@@ -284,12 +293,12 @@ function StaffLine({ drill, notes, line, geo, marks, beat, sticking }: { drill: 
         </g>
       )}
       {line === 0 && drill.drum?.swing8 && (
-        <text x={W - 6} y={10} className="dn-sig" textAnchor="end" data-swing-mark="1">
+        <text x={W - 6} y={-3} className="dn-sig" textAnchor="end" data-swing-mark="1">
           Swing ♫ = ♪³
         </text>
       )}
       {constSig && (
-        <text x={X0 + 2} y={23} className="dn-sig" data-time-sig={drill.pulse === 8 ? `${drill.meter}/8` : `${drill.meter}/4`}>
+        <text x={X0 + 2} y={-3} className="dn-sig" data-time-sig={drill.pulse === 8 ? `${drill.meter}/8` : `${drill.meter}/4`}>
           {drill.pulse === 8 ? `${drill.meter}/8` : `${drill.meter}/4`}
           {drill.groups && drill.groups.length > 1 && drill.groups.some((g) => g !== drill.groups![0]) ? ` (${drill.groups.join('+')})` : ''}
         </text>
@@ -298,7 +307,7 @@ function StaffLine({ drill, notes, line, geo, marks, beat, sticking }: { drill: 
         geo.bars
           .filter((b) => b.sig)
           .map((b) => (
-            <text key={`sig${b.index}`} x={Math.max(X0 + 2, xBar(b.from) + 3)} y={23} className="dn-sig" data-time-sig={b.sig}>
+            <text key={`sig${b.index}`} x={Math.max(X0 + 2, xBar(b.from) + 3)} y={-3} className="dn-sig" data-time-sig={b.sig}>
               {b.sig}
               {groupSizes(b).length > 1 && groupSizes(b).some((g, _i, xs) => g !== xs[0]) ? ` (${groupSizes(b).join('+')})` : ''}
             </text>

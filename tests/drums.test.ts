@@ -10,7 +10,7 @@ import { DEFAULT_DRILL_SETTINGS, type Drill, type ItemState } from '../src/engin
 import { VOICE_NOTE } from '../src/engine/drumKit';
 
 const FAMS = drumFamilies();
-const V1: Record<string, number> = { 'd-strokes': 5, 'd-rolls': 6, 'd-diddles': 9, 'd-time': 6, 'd-rock': 8, 'd-fills': 5, 'd-read': 10, 'd-funk': 4, 'd-shuffle': 4, 'd-indep': 4, 'd-mideast': 9, 'd-feet': 3, 'd-ear': 8, 'd-jazz': 8, 'd-latin': 7, 'd-song': 8, 'd-prog': 10, 'd-count': 5, 'd-notation': 5, 'd-form': 5 };
+const V1: Record<string, number> = { 'd-strokes': 5, 'd-rolls': 6, 'd-diddles': 9, 'd-time': 6, 'd-rock': 8, 'd-fills': 5, 'd-read': 10, 'd-funk': 4, 'd-shuffle': 4, 'd-indep': 4, 'd-mideast': 9, 'd-feet': 3, 'd-ear': 8, 'd-jazz': 12, 'd-latin': 7, 'd-song': 8, 'd-prog': 10, 'd-count': 5, 'd-notation': 5, 'd-form': 5 };
 const HE = /[֐-׿]/;
 const allDrills = (): { lv: DrumLevelDef; d: Drill }[] => FAMS.flatMap((f) => f.levels.flatMap((lv) => levelDrills(lv, 'fifths-up').map((d) => ({ lv, d }))));
 

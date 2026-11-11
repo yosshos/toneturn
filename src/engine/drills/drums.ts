@@ -1043,6 +1043,11 @@ export function drumFamilies(): DrumFamilyDef[] {
       L('d-jazz', 6, 'Jazz waltz', 'ואלס ג׳אז', 'waltz', 3, [120, 170], '1/8T', false),
       L('d-jazz', 7, 'Up-tempo 2-feel', 'טמפו מהיר בתחושת 2', 'up', 3, [180, 240], '1/8T', false),
       L('d-jazz', 8, 'Trading 4s', 'חילופי 4', 'trade', 3, [120, 160], '1/8T', false),
+      // DRUMS_NICHE_PLAN §6.1 (P2): jazz 9–12 on the song engine.
+      L('d-jazz', 9, 'Brushes ballad (taps scored)', 'בלדה במברשות (הנקישות נמדדות)', 'brushes', 3, [56, 76], '1/8T', false),
+      L('d-jazz', 10, 'Comping over a form', 'קומפינג על צורה', 'formcomp', 3, [110, 160], '1/8T', false),
+      L('d-jazz', 11, 'Set-ups and ensemble hits', 'הכנות ומכות להקה', 'setups', 3, [120, 170], '1/8T', false),
+      L('d-jazz', 12, 'Broken time, 2 to 4, trading 8s', 'זמן שבור, מ-2 ל-4, חילופי 8', 'twofour', 3, [240, 300], '1/8T', false),
     ]),
     fam('d-latin', 'Latin & Brazilian', 'לטיני וברזילאי', [
       L('d-latin', 1, 'Bossa nova', 'בוסה נובה', 'bossa', 3, [110, 140], '1/8', false),
