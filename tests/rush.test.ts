@@ -142,6 +142,7 @@ describe('rush: items', () => {
         expect(it.key, `${mode} #${i}`).not.toBe(prev);
         prev = it.key;
         s = rushAnswer(s, true, it.key).state;
+        if (s.over) break; // rounds mode (Name That Standard) ends after 10
       }
     }
   });
@@ -152,7 +153,7 @@ describe('rush: items', () => {
           const it = rushItem({ mode, seed: 11, startLevel: 1, picture: 'mixed' }, i, level);
           if (it.kind === 'choice') {
             expect(it.q.choices).toContain(it.q.answer);
-            if (mode === 'interval' || mode === 'progression') expect(it.q.stimulus.length, `${mode} L${level}`).toBeGreaterThan(0);
+            if (mode === 'interval' || mode === 'progression' || mode === 'voicing' || mode === 'scale' || mode === 'standard') expect(it.q.stimulus.length, `${mode} L${level}`).toBeGreaterThan(0);
             else expect(!!(it.q.show || it.q.diagram || it.q.text), `${mode} L${level}`).toBe(true);
           } else expect(mode).toBe('fretboard');
         }

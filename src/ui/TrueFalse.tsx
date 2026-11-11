@@ -170,7 +170,7 @@ export function TrueFalseScreen({
   const savedSolo = loadSlot<SoloSave>(TF_SOLO);
   if (run !== null)
     return mode === 'solo' ? (
-      <SoloRun key={run} t={t} settings={settings} topics={topics} level={level} tier={tierInfo ? tier : undefined} best={progress.tfBest?.[bestKey] ?? 0} bestKey={bestKey} resume={resume ? savedSolo?.data : undefined} onProgress={onProgress} onExit={() => setRun(null)} onAgain={() => (setResume(false), setRun((r) => (r ?? 0) + 1))} />
+      <SoloRun key={run} t={t} settings={settings} topics={tierInfo && tierDef('truefalse', tier)?.params?.jazz && topics.length && !topics.includes('jazz') ? [...topics, 'jazz'] : topics} level={level} tier={tierInfo ? tier : undefined} best={progress.tfBest?.[bestKey] ?? 0} bestKey={bestKey} resume={resume ? savedSolo?.data : undefined} onProgress={onProgress} onExit={() => setRun(null)} onAgain={() => (setResume(false), setRun((r) => (r ?? 0) + 1))} />
     ) : (
       <DuelRun key={run} t={t} settings={settings} topics={topics} level={level} onExit={() => setRun(null)} onAgain={() => setRun((r) => (r ?? 0) + 1)} />
     );

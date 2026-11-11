@@ -1896,7 +1896,18 @@ export function App() {
         />
       )}
       {route === 'insights' && <InsightsScreen lang={s.uiLang} progress={progress} onBack={() => go('skills')} onTopic={(id, lv) => openTopic(id, lv)} onDrills={() => go('drills')} onPieces={() => go('pieces')} onGroove={() => go('groove')} />}
-      {route === 'groove' && <GrooveTrainerScreen settings={s} onBack={() => go(toolFrom.current)} />}
+      {route === 'groove' && (
+        <GrooveTrainerScreen
+          settings={s}
+          onBack={() => go(toolFrom.current)}
+          tier={tierFor('groove')}
+          onResult={(r) => {
+            void store.recordGame2('groove', r.score, undefined, r.detail).then(setProgress);
+            noteGameBest('groove', r.score, r.detail);
+            noteGameStep('groove', r.score, r.detail);
+          }}
+        />
+      )}
       {route === 'puzzle' && (
         <ProgPuzzleScreen
           settings={s}

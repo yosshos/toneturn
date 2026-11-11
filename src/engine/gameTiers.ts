@@ -178,7 +178,7 @@ export const GAME_TIERS: Record<string, GameTierSpec> = {
       mp: { label: L('Dotted notes, sixteenths', 'מנוקדים, שש־עשריות'), levels: [3, 4, 4], params: { bpm: 95, pitch: [2], kit: [3], lanes: 4 }, target: 90 },
       mf: { label: L('Syncopation', 'סינקופות'), levels: [5], params: { bpm: 105, pitch: [3], kit: [4], lanes: 4 }, target: 90 },
       f: { label: L('Triplets, 3/4 · 6/8, swing', 'טריולות, 3/4 · 6/8, סווינג'), levels: [6, 7, 8], params: { bpm: 120, pitch: [4], kit: [5, 6, 6], lanes: 5 }, target: 90 },
-      ff: { label: L('Everything, fast', 'הכול, מהר'), levels: [7, 8, 8], params: { bpm: 140, pitch: [4], kit: [6], lanes: 5 }, target: 92, todo: 'R9 odd meters (5/8, 7/8, 9/8, 11/8), R10 polyrhythm lanes, displaced figures; kit level 7 (odd-meter grooves, linear fills, double kick)' },
+      ff: { label: L('Odd meters, polyrhythm; kit: 7/8, double kick, half-time shuffle', 'משקלים אי־זוגיים, פולי־ריתם; מערכת: 7/8, קיק כפול, שאפל חצי־זמן'), levels: [9, 10, 9], params: { bpm: 140, pitch: [4], kit: [7], lanes: 5 }, target: 92 },
     },
   },
   melody: {
@@ -189,9 +189,9 @@ export const GAME_TIERS: Record<string, GameTierSpec> = {
       pp: { label: L('Four pads: 1 2 3 5', 'ארבעה פדים: 1 2 3 5'), params: { pads: 'basic', bpm: 80 }, target: 5 },
       p: { label: L('Pentatonic pads', 'פדים פנטטוניים'), params: { pads: 'penta', bpm: 85 }, target: 6 },
       mp: { label: L('All seven degrees', 'כל שבע הדרגות'), params: { pads: 'full', bpm: 90 }, target: 6 },
-      mf: { label: L('Seven degrees, faster', 'שבע דרגות, מהר יותר'), params: { pads: 'full', bpm: 100 }, target: 7 },
-      f: { label: L('Seven degrees, long chains', 'שבע דרגות, שרשראות ארוכות'), params: { pads: 'full', bpm: 110 }, target: 8, todo: 'chromatic 12 pads, minor key' },
-      ff: { label: L('Seven degrees, fastest', 'שבע דרגות, הכי מהר'), params: { pads: 'full', bpm: 120 }, target: 9, todo: 'no pads shown: answer on the instrument / voice only, bebop chromatic approach notes' },
+      mf: { label: L('Seven degrees + ♭3 and ♭7', 'שבע דרגות + ♭3 ו־♭7'), params: { pads: 'blue', bpm: 100 }, target: 7 },
+      f: { label: L('All twelve notes', 'כל שנים־עשר הצלילים'), params: { pads: 'chroma', bpm: 110 }, target: 7 },
+      ff: { label: L('All twelve notes, fast, long chains', 'כל שנים־עשר הצלילים, מהר, שרשראות ארוכות'), params: { pads: 'chroma', bpm: 120 }, target: 9, todo: 'no pads shown: answer on the instrument / voice only' },
     },
   },
   rhythm: {
@@ -239,11 +239,11 @@ export const GAME_TIERS: Record<string, GameTierSpec> = {
     clear: 'accuracy',
     tiers: {
       pp: { label: L('The whole opening', 'הפתיחה כולה'), params: { notes: 0 }, target: 85 },
-      p: { label: L('Six notes', 'שישה צלילים'), params: { notes: 6 }, target: 85, todo: 'more PD folk / spirituals / Hebrew PD folk (per-song legal check)' },
-      mp: { label: L('Five notes', 'חמישה צלילים'), params: { notes: 5 }, target: 85, todo: 'PD classical themes (Beethoven, Mozart, Bach, Dvořák, Grieg, Brahms, Tchaikovsky)' },
-      mf: { label: L('Four notes', 'ארבעה צלילים'), params: { notes: 4 }, target: 85, todo: 'ragtime / marches / parlour (Joplin, Sousa, Foster)' },
-      f: { label: L('Three notes', 'שלושה צלילים'), params: { notes: 3 }, target: 80, todo: 'started mid-phrase, in minor' },
-      ff: { label: L('Three notes, fast', 'שלושה צלילים, מהר'), params: { notes: 3 }, target: 90, todo: 'hand-off to Name That Standard (by its changes)' },
+      p: { label: L('More folk songs and spirituals, six notes', 'עוד שירי עם וספיריטואלס, שישה צלילים'), params: { notes: 6 }, target: 85 },
+      mp: { label: L('Classical themes, five notes', 'נושאים קלאסיים, חמישה צלילים'), params: { notes: 5 }, target: 85 },
+      mf: { label: L('Ragtime, Foster, waltzes, four notes', 'רגטיים, פוסטר, ואלסים, ארבעה צלילים'), params: { notes: 4 }, target: 85 },
+      f: { label: L('Everything, in minor, four notes', 'הכול, במינור, ארבעה צלילים'), params: { notes: 4, minor: true }, target: 80, todo: 'started mid-phrase' },
+      ff: { label: L('Everything, three notes (next: Name That Standard)', 'הכול, שלושה צלילים (הבא: זהו את הסטנדרט)'), params: { notes: 3 }, target: 90 },
     },
   },
   truefalse: {
@@ -256,7 +256,7 @@ export const GAME_TIERS: Record<string, GameTierSpec> = {
       mp: { label: L('Medium', 'בינוני'), levels: [2], target: 12 },
       mf: { label: L('Medium, faster', 'בינוני, מהר יותר'), levels: [2], target: 16 },
       f: { label: L('Modes, harmony, jazz', 'מודוסים, הרמוניה, ג׳אז'), levels: [3], target: 12 },
-      ff: { label: L('Hard, fast', 'קשה, מהר'), levels: [3], target: 16, todo: 'jazz-harmony facts (Barry Harris rules, tritone sub, chord-scales, upper structures), 5 s per statement' },
+      ff: { label: L('Hard + jazz harmony: upper structures, chord-scales, Barry Harris', 'קשה + הרמוניית ג׳אז: מבנים עליונים, סולמות־אקורד, בארי האריס'), levels: [3], params: { jazz: true }, target: 16, todo: '5 s per statement' },
     },
   },
   peakhunter: {
@@ -303,12 +303,13 @@ export const GAME_TIERS: Record<string, GameTierSpec> = {
     source: () => 'timing',
     clear: 'timing',
     tiers: {
-      pp: { label: L('1 silent bar', 'תיבה שקטה אחת'), params: { bars: 1, bpm: 90 } },
-      p: { label: L('2 silent bars', '2 תיבות שקטות'), params: { bars: 2, bpm: 90 } },
-      mp: { label: L('4 silent bars', '4 תיבות שקטות'), params: { bars: 4, bpm: 90 } },
-      mf: { label: L('4 bars at 60', '4 תיבות ב־60'), params: { bars: 4, bpm: 60 } },
-      f: { label: L('8 bars', '8 תיבות'), params: { bars: 8, bpm: 90 } },
-      ff: { label: L('8 bars, slow', '8 תיבות, לאט'), params: { bars: 8, bpm: 60 }, todo: 'odd meter / a tempo change to hold; pocket vs a pushing band; match a played swing feel' },
+      pp: { label: L('1 silent bar', 'תיבה שקטה אחת'), params: { bars: 1, bpm: 90 }, target: 85 },
+      p: { label: L('2 silent bars', '2 תיבות שקטות'), params: { bars: 2, bpm: 90 }, target: 85 },
+      mp: { label: L('4 silent bars', '4 תיבות שקטות'), params: { bars: 4, bpm: 90 }, target: 85 },
+      mf: { label: L('4 bars at 60', '4 תיבות ב־60'), params: { bars: 4, bpm: 60 }, target: 85 },
+      f: { label: L('8 bars', '8 תיבות'), params: { bars: 8, bpm: 90 }, target: 85 },
+      ff: { label: L('8 bars, slow', '8 תיבות, לאט'), params: { bars: 8, bpm: 60 }, target: 85, todo: 'odd meter / a tempo change to hold; pocket vs a pushing band; match a played swing feel' },
+      // 0.70: the level test (GrooveTrainer 'Level test' tab) scores accuracy 0..100; cleared at 85.
     },
   },
   // Drum games P1 (DRUMS_NICHE_PLAN §3; rounds in engine/drumGames.ts): five measured takes on the kit, cleared at the
@@ -671,6 +672,8 @@ export function clearsRun(game: string, tier: DynName, score: number, detail: un
       return (num(d, 'right') ?? 0) >= cases;
     }
     case 'timing': {
+      // on-screen taps of a played-instrument game are practice (measured input only)
+      if (d.input === 'touch' && (game === 'bhtime' || game === 'riffecho')) return false;
       const acc = num(d, 'accuracy') ?? score;
       return acc >= (target || 90);
     }

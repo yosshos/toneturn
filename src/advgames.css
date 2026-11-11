@@ -117,3 +117,14 @@
 .adv-grid .btn.bad {
   outline: 3px solid var(--red);
 }
+
+/* ---------------------------------------------------------------- Echo Chain chromatic pads (0.70, f / ff) */
+.pads.many,
+.pads.neutral.many {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.pads.many .pad {
+  aspect-ratio: 1.35 / 1;
+  border-radius: 16px;
+}

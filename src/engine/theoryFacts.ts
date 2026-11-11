@@ -456,6 +456,8 @@ const GEN: Record<Exclude<FactTopic, 'trio' | 'trio-ear'>, (lv: FactLevel, r: Rn
       if (!truth && coin(r)) shown[0] = `${nn(sc[1])}7`;
       return fact('jazz', 2, 'theory', truth, { en: `The ii–V–I in ${k} major is ${shown.join(' – ')}`, he: `ה־ii–V–I ב־${k} מז׳ור הוא ${shown.join(' – ')}` }, { en: `${k}: ${real.join(' – ')}`, he: `${k}: ${real.join(' – ')}` });
     }
+    // 0.70 (Truth or Bluff ff): generated jazz-harmony facts — upper structures, chord-scales, Barry Harris.
+    if (r() < 0.5) return jazzHarmFact(r);
     if (coin(r)) {
       const root = N_(pick(r, ['C', 'G', 'D', 'F', 'B♭', 'E♭', 'A']));
       const real = common(up(root, 4, 6)); // a tritone away, by its everyday name (B7, not C♭7)
@@ -476,6 +478,39 @@ const GEN: Record<Exclude<FactTopic, 'trio' | 'trio-ear'>, (lv: FactLevel, r: Rn
     ]);
   },
 };
+
+// ---------------------------------------------------------------- jazz harmony (0.70)
+
+const US_FACTS: [number, string, string][] = [
+  [2, '9, ♯11 and 13', '9, ♯11 ו־13'],
+  [3, '♯9, 5 and ♭7', '♯9, 5 ו־♭7'],
+  [6, '♭5, ♭7 and ♭9', '♭5, ♭7 ו־♭9'],
+  [8, '♭13, the root and ♯9', '♭13, השורש ו־♯9'],
+  [9, '13, ♭9 and 3', '13, ♭9 ו־3'],
+];
+/** A generated jazz-harmony statement (upper-structure triads, melodic-minor chord-scales, the 6th-diminished scale). */
+export function jazzHarmFact(r: Rnd): Fact {
+  const R = pick(r, [0, 2, 3, 5, 7, 8, 10]);
+  const k = Math.floor(r() * 3);
+  if (k === 0) {
+    const real = pick(r, US_FACTS);
+    const shown = coin(r) ? real : pick(r, US_FACTS.filter((x) => x !== real));
+    const sym = `${COMMON[(R + real[0]) % 12]}/${COMMON[R]}7`;
+    return fact('jazz', 3, 'theory', shown === real, { en: `${sym} puts the ${shown[1]} on top`, he: `${sym} מוסיף למעלה את ${shown[2]}` }, { en: `${sym}: the triad on ${COMMON[(R + real[0]) % 12]} = ${real[1]} of ${COMMON[R]}7`, he: `${sym}: המשולש על ${COMMON[(R + real[0]) % 12]} = ${real[2]} של ${COMMON[R]}7` });
+  }
+  if (k === 1) {
+    // altered on R7 = melodic minor a half step up; lydian dominant on R7 = melodic minor a 5th up
+    const alt = coin(r);
+    const real = COMMON[(R + (alt ? 1 : 7)) % 12];
+    const c = claim(r, real, alt ? [COMMON[(R + 11) % 12], COMMON[(R + 2) % 12]] : [COMMON[(R + 5) % 12], COMMON[(R + 2) % 12]]);
+    const mode = alt ? { en: 'altered scale', he: 'הסולם האלטרד' } : { en: 'lydian dominant', he: 'הלידי הדומיננטי' };
+    return fact('jazz', 3, 'theory', c.truth, { en: `The ${mode.en} on ${COMMON[R]}7 has the notes of ${c.shown} melodic minor`, he: `ל${mode.he} על ${COMMON[R]}7 יש את הצלילים של ${c.shown} מינור מלודי` }, { en: alt ? `Altered = the 7th mode of melodic minor: ${COMMON[R]} altered = ${real} melodic minor` : `Lydian dominant = the 4th mode: ${COMMON[R]} lydian dominant = ${real} melodic minor`, he: alt ? `אלטרד = המודוס השביעי של מינור מלודי: ${COMMON[R]} אלטרד = ${real} מינור מלודי` : `לידי דומיננטי = המודוס הרביעי: ${COMMON[R]} לידי דומיננטי = ${real} מינור מלודי` });
+  }
+  // the diminished chord of the major 6th-diminished scale sits on its 7th
+  const real = COMMON[(R + 11) % 12];
+  const c = claim(r, real, [COMMON[(R + 1) % 12], COMMON[(R + 2) % 12]]);
+  return fact('jazz', 3, 'theory', c.truth, { en: `In Barry Harris's ${COMMON[R]}6-diminished scale, the diminished chord is ${c.shown}°7`, he: `בסולם 6 דימיניש של בארי האריס ב־${COMMON[R]}, האקורד המוקטן הוא ${c.shown}°7` }, { en: `${COMMON[R]}6 alternates with ${real}°7, built on the 7th`, he: `${COMMON[R]}6 מתחלף עם ${real}°7, שנבנה על הספטימה` });
+}
 
 // ---------------------------------------------------------------- items, questions, sets
 

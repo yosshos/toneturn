@@ -1,0 +1,85 @@
+/* Odd-Meter Riff Echo (0.70, src/ui/RiffEcho.tsx): meter, a strip of eighth cells in their groups. Fits 390 × 844. */
+.riff-meter {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 14px;
+  font-family: var(--display);
+}
+.riff-sig {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 1.9rem;
+  line-height: 1.05;
+}
+.riff-sig small {
+  font-family: var(--font);
+  font-size: 0.85rem;
+  color: var(--ink-dim);
+}
+.riff-bpm {
+  color: var(--ink-dim);
+  font-family: var(--font);
+}
+.riff-strip {
+  display: flex;
+  gap: 8px;
+}
+.riff-bar {
+  display: flex;
+  gap: 3px;
+  flex-basis: 0;
+  min-inline-size: 0;
+  padding-inline-start: 6px;
+  border-inline-start: 2px solid var(--ink-dim);
+}
+.riff-group {
+  display: flex;
+  gap: 2px;
+  flex-basis: 0;
+  min-inline-size: 0;
+}
+.riff-group.shown {
+  padding: 2px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--mint) 12%, transparent);
+}
+.riff-cell {
+  flex: 1;
+  min-inline-size: 0;
+  block-size: 34px;
+  border-radius: 4px;
+  background: var(--card-2);
+  border: 1px solid var(--line);
+}
+.riff-cell.note {
+  background: color-mix(in srgb, var(--ink) 28%, var(--card-2));
+}
+.riff-cell.acc {
+  background: color-mix(in srgb, var(--ink) 50%, var(--card-2));
+}
+.riff-cell.now {
+  outline: 2px solid var(--gold);
+}
+.riff-cell.hit {
+  background: var(--mint);
+}
+.riff-cell.pitch {
+  background: var(--gold);
+}
+.riff-cell.miss {
+  background: var(--red);
+}
+.riff-detail {
+  margin: 0;
+  text-align: center;
+}
+.riff-actions {
+  gap: 10px;
+}
+.riff-final {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.2rem;
+}

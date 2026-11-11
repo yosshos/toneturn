@@ -1,0 +1,96 @@
+/* Barry Harris in Time (0.70, src/ui/BhInTime.tsx). Logical properties; bars and keys stay LTR. Fits 390 × 844. */
+.bht {
+  gap: 12px;
+}
+.bht-input {
+  margin: 0;
+}
+.bht-bars {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr));
+  gap: 6px;
+}
+.bht-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 4px;
+  border-radius: 10px;
+  background: var(--card-2);
+  border: 2px solid transparent;
+  min-inline-size: 0;
+  transition: border-color 0.12s, background 0.12s;
+}
+.bht-bar b {
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+.bht-bar small {
+  color: var(--ink-dim);
+  font-size: 0.75rem;
+}
+.bht-bar em {
+  font-style: normal;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+.bht-bar.on {
+  border-color: var(--gold);
+  background: var(--card);
+}
+.bht-bar.v-good {
+  border-color: var(--mint);
+}
+.bht-bar.v-good em {
+  color: var(--mint);
+}
+.bht-bar.v-ok em {
+  color: var(--gold);
+}
+.bht-bar.v-off {
+  border-color: var(--red);
+}
+.bht-bar.v-off em {
+  color: var(--red);
+}
+.bht-line {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.bht-notes {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 4px;
+}
+.bht-notes span {
+  text-align: center;
+  padding: 6px 0;
+  border-radius: 8px;
+  background: var(--card-2);
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+.bht-notes span.beat {
+  font-weight: 800;
+  outline: 1px solid var(--line);
+}
+.bht-review {
+  gap: 10px;
+}
+.bht-acc {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin: 0;
+}
+.bht-acc b {
+  font-size: 2rem;
+}
+.bht-keys {
+  height: 110px;
+}
+.g2-calm .bht-bar {
+  transition: none;
+}

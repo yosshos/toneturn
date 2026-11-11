@@ -10,17 +10,21 @@ import { recordGroove } from '../storage/analysis';
 import type { Settings } from '../storage/progress';
 import { midi } from '../speech/midi';
 import { piano } from './services';
+import { TierChips } from './TierChips';
+import { startTier, tierAllowed, type DynName, type TierInfo } from '../engine/gameTiers';
+import { grooveTierPlan, grooveTierScore } from '../engine/grooveTier';
 
-type Mode = 'fade' | 'pocket' | 'swing';
+type Mode = 'fade' | 'pocket' | 'swing' | 'level';
 const TX = {
-  en: { title: 'Groove trainer', fade: 'Fading click', pocket: 'Pocket', swing: 'Swing dial', fadeHow: 'Tap every beat. The click drops out for 1, then 2, then 3 bars… keep the time.', pocketHow: 'Tap every beat, placed on purpose: ahead (push), on, or behind (lay back).', swingHow: 'Listen to the eighths, set the dial to their swing, then tap them the same way.', start: 'Start', stop: 'Stop', tap: 'Tap', held: 'silent bars held', best: 'best', target: 'Target', push: 'push', on: 'on', lay: 'lay back', inPocket: 'in the pocket', yourMean: 'your average', ratio: 'Swing', check: 'Check', yours: 'you played', right: 'It was', tempo: 'Tempo', back: 'Back', listen: 'Listen' },
-  he: { title: 'מאמן גרוב', fade: 'הקליק הנעלם', pocket: 'כיס', swing: 'חוגת סווינג', fadeHow: 'הקישו כל פעמה. הקליק נעלם לתיבה, אחר כך לשתיים, לשלוש… שמרו על הזמן.', pocketHow: 'הקישו כל פעמה, במיקום מכוון: מלפנים (דוחפים), עליה, או מאחור (נשענים).', swingHow: 'הקשיבו לשמיניות, כוונו את החוגה לסווינג שלהן, ואז הקישו אותן באותה צורה.', start: 'להתחיל', stop: 'עצירה', tap: 'הקשה', held: 'תיבות שקטות שהחזקתם', best: 'שיא', target: 'מטרה', push: 'דוחפים', on: 'על הפעמה', lay: 'נשענים', inPocket: 'בתוך הכיס', yourMean: 'הממוצע שלכם', ratio: 'סווינג', check: 'לבדוק', yours: 'ניגנתם', right: 'זה היה', tempo: 'טמפו', back: 'חזרה', listen: 'להקשיב' },
+  en: { title: 'Groove trainer', fade: 'Fading click', pocket: 'Pocket', swing: 'Swing dial', fadeHow: 'Tap every beat. The click drops out for 1, then 2, then 3 bars… keep the time.', pocketHow: 'Tap every beat, placed on purpose: ahead (push), on, or behind (lay back).', swingHow: 'Listen to the eighths, set the dial to their swing, then tap them the same way.', start: 'Start', stop: 'Stop', tap: 'Tap', held: 'silent bars held', best: 'best', target: 'Target', push: 'push', on: 'on', lay: 'lay back', inPocket: 'in the pocket', yourMean: 'your average', ratio: 'Swing', check: 'Check', yours: 'you played', right: 'It was', tempo: 'Tempo', back: 'Back', listen: 'Listen', level: 'Level test', levelHow: 'Two bars with the click, then silence for the level\'s bars — keep tapping quarters; the click comes back to check you.', silent: 'silent beats in time', late: 'the time drifted' },
+  he: { title: 'מאמן גרוב', fade: 'הקליק הנעלם', pocket: 'כיס', swing: 'חוגת סווינג', fadeHow: 'הקישו כל פעמה. הקליק נעלם לתיבה, אחר כך לשתיים, לשלוש… שמרו על הזמן.', pocketHow: 'הקישו כל פעמה, במיקום מכוון: מלפנים (דוחפים), עליה, או מאחור (נשענים).', swingHow: 'הקשיבו לשמיניות, כוונו את החוגה לסווינג שלהן, ואז הקישו אותן באותה צורה.', start: 'להתחיל', stop: 'עצירה', tap: 'הקשה', held: 'תיבות שקטות שהחזקתם', best: 'שיא', target: 'מטרה', push: 'דוחפים', on: 'על הפעמה', lay: 'נשענים', inPocket: 'בתוך הכיס', yourMean: 'הממוצע שלכם', ratio: 'סווינג', check: 'לבדוק', yours: 'ניגנתם', right: 'זה היה', tempo: 'טמפו', back: 'חזרה', listen: 'להקשיב', level: 'מבחן רמה', levelHow: 'שתי תיבות עם קליק, ואז שקט למספר התיבות של הרמה — המשיכו להקיש רבעים; הקליק חוזר לבדוק.', silent: 'פעמות שקטות בזמן', late: 'הזמן זז' },
 };
 
-export function GrooveTrainerScreen({ settings, onBack }: { settings: Settings; onBack: () => void }) {
+export function GrooveTrainerScreen({ settings, onBack, tier: tierInfo, onResult }: { settings: Settings; onBack: () => void; /** 0.70: the level test (tiers, rating, XP). */ tier?: TierInfo; onResult?: (r: { game: 'groove'; score: number; detail: Record<string, unknown> }) => void }) {
   const lang = settings.uiLang;
   const tx = TX[lang];
   const [mode, setMode] = useState<Mode>('fade');
+  const [tier, setTier] = useState<DynName>(() => (tierInfo ? startTier(tierInfo) : 'pp'));
   const [bpm, setBpm] = useState(90);
   const [running, setRunning] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -155,6 +159,30 @@ export function GrooveTrainerScreen({ settings, onBack }: { settings: Settings; 
     setMsg(`${tx.right} ${Math.round(hidden * 100)}% · ${tx.ratio} ${Math.round(dial * 100)}% · ${tx.yours} ${r === null ? '—' : `${Math.round(r * 100)}%`}`);
   };
 
+  /** The level test: the fading click at the tier's silent bars and tempo, scored once (GAMES_TIERS_PLAN §2.4). */
+  const runLevel = async () => {
+    if (!tierInfo || !tierAllowed(tierInfo, tier)) return;
+    const c = new AbortController();
+    ctl.current = c;
+    taps.current = [];
+    setRunning(true);
+    setMsg(null);
+    const plan = grooveTierPlan(tier);
+    const beatMs = 60000 / plan.bpm;
+    const beats: { b: number; accent: boolean; on: boolean }[] = [];
+    plan.plan.forEach((on, bar) => {
+      for (let k = 0; k < plan.beatsPerBar; k++) beats.push({ b: bar * plan.beatsPerBar + k, accent: k === 0, on });
+    });
+    const t0 = await playClicks(beats, beatMs, c);
+    setRunning(false);
+    if (c.signal.aborted) return;
+    const offs = matchTaps(taps.current, t0, beatMs, beats.length);
+    void recordGroove(beats.map((x) => x.b), offs, plan.bpm, plan.beatsPerBar);
+    const sc = grooveTierScore(plan, offs, beatMs);
+    setMsg(`${sc.hits}/${sc.beats} ${tx.silent}${sc.meanAbs !== null ? ` · ±${sc.meanAbs} ms` : ''}${sc.landed ? '' : ` · ${tx.late}`} · ${sc.accuracy}%`);
+    onResult?.({ game: 'groove', score: sc.accuracy, detail: { tier, accuracy: sc.accuracy, hits: sc.hits, beats: sc.beats, meanAbs: sc.meanAbs, landed: sc.landed, bars: plan.bars, bpm: plan.bpm, rounds: 4 } });
+  };
+
   const stop = () => {
     ctl.current?.abort();
     setRunning(false);
@@ -168,14 +196,15 @@ export function GrooveTrainerScreen({ settings, onBack }: { settings: Settings; 
         <h1>{tx.title}</h1>
       </header>
       <div className="chips" role="tablist">
-        {(['fade', 'pocket', 'swing'] as const).map((m) => (
+        {(['fade', 'pocket', 'swing', ...(tierInfo ? (['level'] as const) : [])] as const).map((m) => (
           <button key={m} role="tab" aria-selected={mode === m} className={`chip ${mode === m ? 'on' : ''}`} onClick={() => (stop(), setMode(m), setMsg(null), setMeter(null))} data-groove-mode={m}>
             {tx[m]}
           </button>
         ))}
       </div>
-      <p className="field-hint">{mode === 'fade' ? tx.fadeHow : mode === 'pocket' ? tx.pocketHow : tx.swingHow}</p>
-      <div className="ch-step gt-tempo" dir="ltr">
+      <p className="field-hint">{mode === 'fade' ? tx.fadeHow : mode === 'pocket' ? tx.pocketHow : mode === 'level' ? tx.levelHow : tx.swingHow}</p>
+      {mode === 'level' && tierInfo && <TierChips lang={lang} info={tierInfo} value={tier} onChange={(x) => !running && setTier(x)} game="groove" />}
+      <div className="ch-step gt-tempo" dir="ltr" hidden={mode === 'level'}>
         <small>{tx.tempo}</small>
         <button className="icon-btn" onClick={() => setBpm((b) => Math.max(50, b - 5))} disabled={running}>
           −
@@ -235,7 +264,7 @@ export function GrooveTrainerScreen({ settings, onBack }: { settings: Settings; 
           ■ {tx.stop}
         </button>
       ) : (
-        <button className="btn mega" onClick={() => void (mode === 'fade' ? runFade() : mode === 'pocket' ? runPocket() : runSwingTap())} data-groove-start="1">
+        <button className="btn mega" onClick={() => void (mode === 'fade' ? runFade() : mode === 'pocket' ? runPocket() : mode === 'level' ? runLevel() : runSwingTap())} data-groove-start="1">
           ▶ {tx.start}
         </button>
       )}

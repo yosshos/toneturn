@@ -918,7 +918,7 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
   const { mine } = useCourse();
   const ratingsNow = ratingsOf(progress);
   const tierChip = (key: string) => {
-    if (!tierSpec(key) || key === 'duel' || key === 'daily' || key === 'ghost' || key === 'groove') return null;
+    if (!tierSpec(key) || key === 'duel' || key === 'daily' || key === 'ghost') return null;
     const st = progress.gameTiers?.[tierKey(key)];
     const c = tierCard(tierInfo(key, ratingsNow, st, course, mine), st);
     return <TierBadge lang={lang} tier={c.tier} next={c.next} into={c.into} isNew={c.isNew} />;

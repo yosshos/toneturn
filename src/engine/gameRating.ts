@@ -42,6 +42,8 @@ const GAMES: Record<string, { tags: (d: Record<string, unknown>) => Tag[]; diff:
   'rush-scale': { tags: () => T('modes', 'scales'), diff: () => 1150 },
   'rush-standard': { tags: () => T2(['cadences', 'standards', 0.7], ['form', 'standards', 0.3]), diff: () => 1250 },
   reharm: { tags: () => T('cadences', 'reharm'), diff: () => 1300 },
+  // The groove trainer's level test (0.70): time held through silent bars.
+  groove: { tags: () => T2(['timing', 'pocket', 0.5], ['tempo', 'hold', 0.5]), diff: (d) => 900 + 60 * (Number(d.bars) || 1) },
   transcribe: { tags: () => T2(['dictation', 'melodic', 0.7], ['sequences', 'melody', 0.3]), diff: () => 1200 },
   bhtime: { tags: () => T2(['improv', 'bh-lines', 0.6], ['timing', 'precision', 0.4]), diff: () => 1250 },
   riffecho: { tags: (d) => T2(['meter', 'odd', 0.5], ['instrument', d.input === 'kit' ? 'drum-echo' : 'echo', 0.5]), diff: () => 1200 },
