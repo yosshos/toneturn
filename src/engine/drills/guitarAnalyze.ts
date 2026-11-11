@@ -571,7 +571,7 @@ function applyRules(drill: Drill, bpm: number, played: PlayedNote[]): { judged: 
     drill.notes.map((n, i) => ({ pitch: written(i) ? (slot[i] === null ? null : n.pitch) : slot[i] === null ? null : played[slot[i]!].pitch, beat: n.beat })),
     drill.meter || 4,
     r.maxMove ?? 4,
-    { every: r.every, anticipate: r.anticipate },
+    { every: r.every, anticipate: r.anticipate, passing: r.passing },
   );
   if (drill.freeFrom !== undefined) {
     drill.notes.forEach((_, i) => {

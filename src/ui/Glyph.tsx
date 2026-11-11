@@ -492,6 +492,68 @@ export const GLYPHS: Record<string, ReactNode> = {
       <path d="M-26 -16 Q-14 -18 -8 -8 T4 0" {...sw} strokeWidth={2.8} />
     </>
   ),
+  // BASS_NICHE_PLAN (P1): the bass course's jazz and prog families.
+  /** Swing time: a long note and a short one under a triplet bracket. */
+  swingtime: (
+    <>
+      {head(-12, 13, 6.2, 4.4)}
+      {head(12, 13, 4.6, 3.3)}
+      <path d="M-6 11V-12M16 11V-12" {...sw} strokeWidth={2.6} />
+      <path d="M16 -12 L24 -4" {...sw} strokeWidth={2.6} />
+      <path d="M-14 -16 Q2 -26 18 -16" {...sw} strokeWidth={2.4} />
+      <circle cx={2} cy={-22} r={2.4} fill={I} />
+    </>
+  ),
+  /** Barry Harris on the bass: the 6th chord and its diminished partner. */
+  barrybass: (
+    <text x={0} y={10} textAnchor="middle" fontFamily="Georgia, 'Times New Roman', serif" fontWeight={700} fontSize={30} fill={I} direction="ltr">
+      6°
+    </text>
+  ),
+  /** Form and arrangement: the road map A A B A, the bridge a different block. */
+  roadmap: (
+    <g {...sw} strokeWidth={2.6} strokeLinejoin="round">
+      <rect x={-26} y={-6} width={11} height={16} rx={2} />
+      <rect x={-12} y={-6} width={11} height={16} rx={2} />
+      <rect x={2} y={-14} width={11} height={24} rx={2} fill={I} />
+      <rect x={16} y={-6} width={11} height={16} rx={2} />
+    </g>
+  ),
+  /** Afro-Cuban bass: a conga drum. */
+  tumbao: (
+    <g {...sw} strokeWidth={2.8} strokeLinejoin="round">
+      <ellipse cx={0} cy={-14} rx={12} ry={4.5} />
+      <path d="M-12 -14 Q-17 2 -9 20 H9 Q17 2 12 -14" />
+      <path d="M-14 -2 H14" strokeWidth={2} />
+    </g>
+  ),
+  /** Odd meters: a 7 over an 8. */
+  oddmeter: (
+    <>
+      <text x={0} y={-2} textAnchor="middle" fontFamily="Georgia, 'Times New Roman', serif" fontWeight={700} fontSize={22} fill={I} direction="ltr">
+        7
+      </text>
+      <text x={0} y={20} textAnchor="middle" fontFamily="Georgia, 'Times New Roman', serif" fontWeight={700} fontSize={22} fill={I} direction="ltr">
+        8
+      </text>
+    </>
+  ),
+  /** Polymeter: two cycles of different lengths turning together. */
+  polymeter: (
+    <>
+      <circle cx={-9} cy={2} r={13} {...sw} strokeWidth={2.6} />
+      <circle cx={12} cy={2} r={10} {...sw} strokeWidth={2.6} />
+      <circle cx={-9} cy={-11} r={3} fill={I} />
+      <circle cx={12} cy={-8} r={3} fill={I} />
+    </>
+  ),
+  /** Riffs and unisons: one riff line doubled. */
+  unison: (
+    <g {...sw} strokeWidth={3} strokeLinejoin="round">
+      <path d="M-24 -4 L-14 -14 L-4 -4 L6 -14 L16 -4 L24 -10" />
+      <path d="M-24 12 L-14 2 L-4 12 L6 2 L16 12 L24 6" />
+    </g>
+  ),
   // PIANO_AUDIT: the keys path's own symbols.
   /** Touch and control: a crescendo hairpin. */
   hairpin: <path d="M22 -13 L-22 0 L22 13" {...sw} strokeWidth={3.2} strokeLinejoin="round" />,

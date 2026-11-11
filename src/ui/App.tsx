@@ -936,7 +936,8 @@ export function App() {
       drillFrom.current = 'path';
       drillSessionXp.current = 0;
       drillSession.current = { takes: 0, clean: 0 };
-      return go('drills');
+      // BASS_NICHE_PLAN: a family with a quick lesson ("tech:<family>") opens with it the first time.
+      return gate(`tech:${step.ladder.family}`, () => go('drills'));
     }
     if (step.kind === 'vocal' && step.ladder) {
       toolFrom.current = 'path';

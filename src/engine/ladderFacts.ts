@@ -28,7 +28,7 @@ export function ladderFamiliesFor(course: CourseId, ds: DrillSettings, bassTunin
   if (!instrument) return [];
   // The upright track only for an upright / fretless bass (BASS_AUDIT B16); its families otherwise stay in Drills.
   const upright = bassTuning === 'upright' || bassTuning === 'bass-fretless';
-  return shownFamilies({ emphasis: ds.emphasis, instrument, guitarStyle: ds.guitarStyle, drumMic })
+  return shownFamilies({ emphasis: ds.emphasis, instrument, guitarStyle: ds.guitarStyle, drumMic, bassTrack: ds.bassTrack })
     .filter((f) => upright || !(f as { upright?: boolean }).upright)
     .map((f) => f.id);
 }

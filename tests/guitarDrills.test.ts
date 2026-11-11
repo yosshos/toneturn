@@ -68,7 +68,8 @@ describe('guitar drills: catalogue', () => {
       const tu = tuningById(spec.tuning ?? drill.spec.tuning ?? (spec.family === 'g-bass' || spec.family.startsWith('b-') ? 'bass' : 'standard'));
       const id = drill.itemId;
       check(drill.notes.length > 0, `${id}: no notes`);
-      check(drill.startBpm >= 40 && drill.startBpm <= 200, `${id}: start bpm ${drill.startBpm}`);
+      // Up-tempo swing (b-swing 6–7, BASS_NICHE_PLAN J1) starts at 220–240.
+      check(drill.startBpm >= 40 && drill.startBpm <= (spec.family === 'b-swing' ? 240 : 200), `${id}: start bpm ${drill.startBpm}`);
       check(drill.title.en.length > 0 && drill.title.he.length > 0, `${id}: title`);
       const stretch = !!drill.spec.stretch;
       for (const n of drill.notes) {
@@ -265,6 +266,9 @@ describe('guitar drills: analysis', () => {
     for (const { drill: d } of DRILLS) {
       // Pocket on purpose (A6) asks to sit behind / ahead of the grid: an on-grid take is rightly not clean (tested in bassMeasure).
       if (d.goal.bass?.pocket?.some((x) => x !== 0)) continue;
+      // Placement on purpose against the ride (b-swing 2–3): a take on the grid is not what the level asks.
+      const ride = d.goal.bass?.swingWalk?.ride;
+      if (ride && (ride[0] > 0 || ride[1] < 0)) continue;
       const m = analyzeGuitarTake(d, d.startBpm, perfect(d, d.startBpm));
       expect(m.verdict, `${d.itemId}: ${m.why.en}`).toBe('clean');
       // A ghosted triplet skip right before a beat can pair with the beat's onset (one note in a walking chorus).
@@ -387,7 +391,7 @@ describe('guitar drills: plan', () => {
     expect(g.length).toBeGreaterThan(10);
     expect(g.every((f) => f.id.startsWith('g-') && f.id !== 'g-bass')).toBe(true);
     // Bass: the 14 course families; the old g-bass starter is retired (kept for old ids, not shown).
-    expect(shownFamilies({ emphasis: 'both', instrument: 'bass' }).map((f) => f.id)).toEqual(['b-pluck', 'b-time', 'b-fret', 'b-chord', 'b-ear', 'b-scale', 'b-length', 'b-pocket', 'b-read', 'b-posread', 'b-styles', 'b-ghost', 'b-walk', 'b-impro', 'b-legato', 'b-pick', 'b-slap', 'b-up-pos', 'b-up-arco', 'b-up-scales', 'b-up-pizz', 'b-up-walk', 'b-up-read']);
+    expect(shownFamilies({ emphasis: 'both', instrument: 'bass' }).map((f) => f.id)).toEqual(['b-pluck', 'b-time', 'b-fret', 'b-chord', 'b-ear', 'b-scale', 'b-length', 'b-pocket', 'b-read', 'b-posread', 'b-styles', 'b-ghost', 'b-walk', 'b-impro', 'b-swing', 'b-barry', 'b-jform', 'b-latin', 'b-legato', 'b-pick', 'b-odd', 'b-prog', 'b-poly', 'b-slap', 'b-up-pos', 'b-up-arco', 'b-up-scales', 'b-up-pizz', 'b-up-walk', 'b-up-read']);
     expect(familyById('g-legato')?.levels.length).toBeGreaterThan(0);
   });
 

@@ -78,7 +78,7 @@ describe('N2 / N2b walking placement', () => {
   it("the probe's own model line places at walk L7 / chord L8", () => {
     const r = walkProbeReport(chart, perBeat(modelAt));
     expect(r.beat1Ct).toBeGreaterThanOrEqual(0.9);
-    expect(placeWalk(r)).toEqual({ 'b-walk': 7, 'b-chord': 8 });
+    expect(placeWalk(r)).toEqual({ 'b-walk': 7, 'b-chord': 8, 'b-swing': 2 });
   });
 
   it('roots only (same octave or alternating octaves) is placed no higher than walk L2', () => {
