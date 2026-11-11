@@ -15,7 +15,7 @@ import { ADDON_FAMILY, examOfGrade, GUITAR_META, guitarAddOnsOf, itemTempo } fro
 import { core2Levels, generateCore2 } from './guitarCore2';
 import { generateGuitarProg, guitarProgFamily } from './guitarProg';
 import { generateGuitarEar } from './guitarEar';
-import { generateHarris, generateJazz2 } from './guitarJazz';
+import { generateHarris, generateJazz2, GUITAR_STD, guitarStdOption, guitarStdTempo } from './guitarJazz';
 import { GUITAR_PROBE_STEPS } from './guitarProbes';
 
 export type GuitarStyle = NonNullable<DrillSettings['guitarStyle']>;
@@ -2542,6 +2542,11 @@ export function guitarCatalog(): GuitarFamilyDef[] {
       LT('g-jazz', 10, 'Chord melody: our melody on top of drop-2 voicings', 'אקורד-מלודיה: המנגינה שלנו מעל קולות דרופ 2', range(4).map((o) => J('chord-melody', { option: o })), CYC4.slice(0, 6), [60, 90], 'halves', 8),
       LT('g-jazz', 11, 'Rhythm changes and tritone substitutions: shells and drop-3', 'ריתם צ׳יינג׳ס ותחליפי טריטון: קונכיות ודרופ 3', range(4).map((o) => J('rhythm-changes', { option: o, swing: true })), [10, 3, 8, 0, 5, 7], [140, 200], 'swing quarters', 8),
       LT('g-jazz', 12, 'Solo-guitar texture: walking bass with guide tones above', 'מרקם של גיטרת סולו: בס מהלך עם צלילים מנחים מעליו', [J('solo-texture', { option: 0, swing: true }), J('solo-texture', { option: 1, swing: true })], CYC4, [80, 120], 'quarters + 8ths', 9),
+      // GUITAR_DEEPENING P2: comp a whole standard's chart, in its own key, each at its own tempo (the repertoire's guitar standards).
+      LT('g-jazz', 13, 'Comp a whole standard: the full chart with the band', 'ליווי סטנדרט שלם: כל דף האקורדים עם הלהקה', GUITAR_STD.map((x) => {
+        const [a, b] = guitarStdTempo(x.id);
+        return J('comp-chart', { option: guitarStdOption(x.id)!, swing: x.rhythm !== 'bossa', tempo: a, target: b });
+      }), [0], [80, 140], 'swing quarters', 7),
     ]),
     // Barry Harris on the neck (GUITAR_DEEPENING §4.2, barry.ts): the jazz add-on.
     fam('g-harris', 'Barry Harris on guitar', 'בארי האריס בגיטרה', 'jazz', ['jazz'], [

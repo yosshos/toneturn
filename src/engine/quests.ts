@@ -80,7 +80,7 @@ const BY_COURSE: Record<CourseId, string[]> = {
   jazz: ['harmony5', 'steps2', 'run10', 'min10', 'tierClear', 'rep2', 'lick3', 'tx2'],
   voice: ['sing3', 'steps2', 'min10', 'tierPass2', 'rep1', 'tx2'],
   keys: ['tech3', 'steps2', 'min10', 'rep1', 'rep2', 'lick3'],
-  guitar: ['tech3', 'steps2', 'min10', 'rep1', 'rep2'],
+  guitar: ['tech3', 'steps2', 'min10', 'rep1', 'rep2', 'lick3'],
   bass: ['tech3', 'steps2', 'min10', 'rep1', 'rep2', 'lick3'],
   drums: ['tech3', 'rhythm', 'steps2', 'min10', 'rep1'],
 };

@@ -7,11 +7,12 @@ import type { Drill, DrillSettings, ItemState } from './drills/types';
 import { generate } from './drills/generate';
 import { songDrill } from './drills/songDrills';
 import { bassStandardSpec } from './drills/bass';
+import { decodeGuitarStd, guitarStdOption, guitarStdTempo } from './drills/guitarJazz';
 import { techQueue } from './ladderFacts';
 import { SONGBOOK } from '../content/songbook';
 
 /** Does this way run on the Drills screen? */
-export const isDrillWay = (w: RepWay): boolean => w.k === 'song' || w.k === 'chartDrill' || w.k === 'bassStd' || w.k === 'level';
+export const isDrillWay = (w: RepWay): boolean => w.k === 'song' || w.k === 'chartDrill' || w.k === 'bassStd' || w.k === 'level' || w.k === 'guitarStd';
 
 /** The drills of a way (empty when it can't build one, or it isn't a drill way). */
 export function repDrills(w: RepWay, course: CourseId, items: Record<string, ItemState> = {}, keyOrder: DrillSettings['keyOrder'] = 'fifths-up'): Drill[] {
@@ -31,6 +32,12 @@ export function repDrills(w: RepWay, course: CourseId, items: Record<string, Ite
       const sp = bassStandardSpec(w.std);
       if (!sp) return [];
       return [generate({ family: 'b-walk', kind: 'standard', key: 0, hands: 'R', instrument: 'bass', option: sp.option, perBeat: sp.perBeat })];
+    }
+    case 'guitarStd': {
+      // The standard's whole chart on the guitar (g-jazz 13): its own key, the tune's feel unless the way names one.
+      const option = guitarStdOption(w.std, w.voicing, w.rhythm);
+      if (option === null) return [];
+      return [generate({ family: 'g-jazz', kind: 'comp-chart', key: 0, hands: 'R', instrument: 'guitar', option, ...(decodeGuitarStd(option).rhythm !== 'bossa' ? { swing: true } : {}), tempo: guitarStdTempo(w.std)[0] })];
     }
     case 'level':
       return techQueue(w.ref, items, keyOrder, 4);

@@ -68,6 +68,105 @@ function symOf(c: Pick<ChartChordEv, 'iv'>): string {
   return g.seventh === 11 ? 'maj7' : g.seventh === 9 ? '6' : '7';
 }
 
+// ───────────────────────────── comp a whole standard (repertoire, P2) ─────────────────────────────
+
+/**
+ * The guitar repertoire's charts (GUITAR_DEEPENING P2): a drill that comps one standard's whole chart (chords only,
+ * standards.ts) — the repertoire item opens it instead of a generic jazz level. Default feel per tune; the voicing and
+ * rhythm are the option: option = index · 10 + voicing · 5 + rhythm.
+ */
+export const GUITAR_STD: { id: string; rhythm: GuitarStdRhythm; voicing: GuitarStdVoicing }[] = [
+  { id: 'blues-basic', rhythm: 'shuffle', voicing: 'shell' },
+  { id: 'minor-blues', rhythm: 'charleston', voicing: 'shell' },
+  { id: 'two-five-keys', rhythm: 'four', voicing: 'shell' },
+  { id: 'blues-f', rhythm: 'charleston', voicing: 'shell' },
+  { id: 'autumn', rhythm: 'charleston', voicing: 'drop2' },
+  { id: 'blue-bossa', rhythm: 'bossa', voicing: 'drop2' },
+  { id: 'fly', rhythm: 'four', voicing: 'drop2' },
+  { id: 'so-what', rhythm: 'charleston', voicing: 'drop2' },
+  { id: 'a-train', rhythm: 'charleston', voicing: 'shell' },
+  { id: 'rhythm-full', rhythm: 'four', voicing: 'shell' },
+  { id: 'bird-blues', rhythm: 'charleston', voicing: 'drop2' },
+  { id: 'giant-slow', rhythm: 'four', voicing: 'shell' },
+];
+/** Hebrew names of the charts (tune titles stay in Latin letters, as players say them). */
+const STD_NAME_HE: Record<string, string> = {
+  'blues-basic': 'בלוז 12 תיבות',
+  'minor-blues': 'בלוז מינורי',
+  'two-five-keys': 'ii–V–I בכל הסולמות',
+  'blues-f': 'בלוז ג׳אז ב־F',
+  'rhythm-full': 'ריתם צ׳יינג׳ס',
+  'bird-blues': 'בלוז בירד',
+  'giant-slow': 'Giant Steps (לאט)',
+};
+export type GuitarStdVoicing = 'shell' | 'drop2';
+export type GuitarStdRhythm = 'charleston' | 'four' | 'anticip' | 'bossa' | 'shuffle';
+const STD_VOICINGS: GuitarStdVoicing[] = ['shell', 'drop2'];
+const STD_RHYTHMS: GuitarStdRhythm[] = ['charleston', 'four', 'anticip', 'bossa', 'shuffle'];
+/** Comping hits per bar (beat, length). */
+const STD_HITS: Record<GuitarStdRhythm, { en: string; he: string; hits: [number, number][] }> = {
+  charleston: { en: 'Charleston', he: 'צ׳רלסטון', hits: [[0, 1.5], [1.5, 2.5]] },
+  four: { en: 'four to the bar', he: 'ארבע לתיבה', hits: [[0, 1], [1, 1], [2, 1], [3, 1]] },
+  anticip: { en: 'anticipations', he: 'הקדמות', hits: [[0, 2], [3.5, 0.5]] },
+  bossa: { en: 'bossa', he: 'בוסה', hits: [[0, 1.5], [1.5, 1], [3, 1]] },
+  shuffle: { en: 'shuffle on 2 and 4', he: 'שאפל על 2 ו-4', hits: [[1, 1], [3, 1]] },
+};
+/** The option of a standard in a voicing and rhythm (null when the standard has no guitar chart). */
+export function guitarStdOption(id: string, voicing?: GuitarStdVoicing, rhythm?: GuitarStdRhythm): number | null {
+  const i = GUITAR_STD.findIndex((x) => x.id === id);
+  if (i < 0) return null;
+  return i * 10 + STD_VOICINGS.indexOf(voicing ?? GUITAR_STD[i].voicing) * 5 + STD_RHYTHMS.indexOf(rhythm ?? GUITAR_STD[i].rhythm);
+}
+export function decodeGuitarStd(op: number): { id: string; voicing: GuitarStdVoicing; rhythm: GuitarStdRhythm } {
+  const i = Math.max(0, Math.floor(op / 10)) % GUITAR_STD.length;
+  return { id: GUITAR_STD[i].id, voicing: STD_VOICINGS[Math.floor((op % 10) / 5)] ?? 'shell', rhythm: STD_RHYTHMS[op % 5] ?? 'charleston' };
+}
+/** Practice tempo (start, target) of a standard's chart: about 60 % of its chart tempo up to the tempo (cap 180). */
+export function guitarStdTempo(id: string): [number, number] {
+  const bpm = STANDARD_CHANGES.find((x) => x.id === id)?.bpm ?? 120;
+  const target = Math.min(180, bpm);
+  return [Math.max(60, Math.round((target * 0.6) / 5) * 5), target];
+}
+
+function compChart(s: DrillSpec, tu: Tuning): Drill {
+  const key = mod(s.key, 12);
+  const { id, voicing, rhythm } = decodeGuitarStd(s.option ?? 0);
+  const std = STANDARD_CHANGES.find((x) => x.id === id) ?? STANDARD_CHANGES[0];
+  const p = parseChart(std.text);
+  const bars = Math.max(1, ...p.chords.map((c) => c.bar + 1));
+  const ch = chartOf(id, key, bars);
+  const rh = STD_HITS[rhythm];
+  const evs: Ev[] = [];
+  let near = 5;
+  let top = -1;
+  for (const c of ch.chords) {
+    // A plain triad in the chart (Bb, Eb) is comped as a 6th chord, as jazz guitarists do — never an added maj7.
+    const g0 = guideOf(c);
+    const plain = !c.iv.some((i) => [9, 10, 11].includes(mod(i, 12)));
+    const g = plain ? { ...g0, seventh: 9, four: [0, g0.third, g0.four[2], 9] } : g0;
+    let v: P[];
+    if (voicing === 'drop2') {
+      const cands = drop2Voicings(tu, g.four.map((x) => c.root + x), [4, 3, 2, 1], 13);
+      // Voice-led: the top voice moves as little as it can from chord to chord.
+      v = top < 0 || !cands.length ? nearestVoicing(cands, near) : cands.reduce((a, b) => (Math.abs(topOf(tu, b) - top) + 0.3 * Math.abs(lowFretOf(b) - near) < Math.abs(topOf(tu, a) - top) + 0.3 * Math.abs(lowFretOf(a) - near) ? b : a));
+      top = topOf(tu, v);
+    } else v = shellAt(tu, c.root, g.third, g.seventh, near);
+    near = lowFretOf(v);
+    const start = c.bar * 4 + c.at;
+    for (const [b, len] of rh.hits) {
+      if (b >= c.at + c.beats - 1e-6 || b < c.at - 1e-6) continue;
+      const bt = c.bar * 4 + b;
+      evs.push({ beat: bt, dur: Math.min(len, start + c.beats - bt), notes: strum(v) });
+    }
+    if (!evs.some((e) => e.beat >= start - 1e-6 && e.beat < start + c.beats - 1e-6)) evs.push({ beat: start, dur: Math.min(c.beats, 1.5), notes: strum(v) });
+  }
+  const vEn = voicing === 'drop2' ? 'drop-2, voice-led' : 'shells';
+  const vHe = voicing === 'drop2' ? 'דרופ 2, הובלת קולות' : 'קונכיות';
+  const d = finish(s, tu, evs, { title: t(`${std.name}: the whole chart (${bars} bars), ${vEn}, ${rh.en}`, `${STD_NAME_HE[id] ?? std.name}: כל דף האקורדים (${bars} תיבות), ${vHe}, ${rh.he}`), bpm: guitarStdTempo(id)[0], evenness: false, keySig: 'C' });
+  const band = rhythm === 'bossa' || std.style === 'bossa' ? 'bossa' : rhythm === 'shuffle' ? 'shuffle' : 'swing';
+  return { ...d, chart: ch.syms, drums: { groove: band }, band: { style: band, bass: true } };
+}
+
 /** Standards for the comping levels (ids in standards.ts; chords only). */
 export const JAZZ_STANDARDS = ['autumn', 'blue-bossa', 'tune-up', 'satin', 'fly', 'stella'];
 const exists = (id: string) => STANDARD_CHANGES.some((x) => x.id === id);
@@ -84,6 +183,8 @@ export function generateJazz2(s: DrillSpec, tu: Tuning): Drill | null {
   const op = s.option ?? 0;
   const evs: Ev[] = [];
   switch (s.kind) {
+    case 'comp-chart':
+      return compChart(s, tu);
     case 'comp-std': {
       // L8: shells (even options) or drop-2 (odd) through a standard's first 8 bars, in one comping rhythm, with the band.
       const ids = JAZZ_STANDARDS.filter(exists);

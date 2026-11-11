@@ -672,6 +672,8 @@ export interface PracticeHub {
   improv?: () => void;
   /** Licks in 12 keys and the transcription coach (SPEC-LICKS-TRANSCRIPTION). */
   licks?: () => void;
+  /** Chord finder (guitar course, GUITAR_DEEPENING §6.3): strum → name, name → shapes. */
+  chordfinder?: () => void;
   transcribe?: () => void;
   puzzle?: () => void;
   exams?: () => void;
@@ -788,6 +790,13 @@ const HUB_PATHS: Record<string, React.ReactNode> = {
       <path d="M9 9.5h6M9 13h6M9 16.5h3.5" />
     </>
   ),
+  chordfinder: (
+    <>
+      <rect x="6" y="3" width="12" height="18" rx="2" />
+      <path d="M9 3v18M12 3v18M15 3v18M6 8h12M6 13h12" />
+      <circle cx="12" cy="10.5" r="1.6" fill="currentColor" />
+    </>
+  ),
   mixer: (
     <>
       <path d="M6 4v16M12 4v16M18 4v16" />
@@ -827,6 +836,7 @@ const HUB_TX = {
   exams: { en: 'Programs & exams', he: 'תכניות לימוד ומבחנים' },
   pieces: { en: 'My pieces', he: 'היצירות שלי' },
   mixer: { en: 'Mixer', he: 'מיקסר' },
+  chordfinder: { en: 'Chord finder', he: 'מאתר אקורדים' },
   games: { en: ['Games', 'By type, topic and level'], he: ['משחקים', 'לפי סוג, נושא ורמה'] },
 };
 
@@ -1053,7 +1063,7 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
           <section className="pt-tools" aria-label={HUB_TX.tools[lang]} data-hub-group="tools">
             <h2>{HUB_TX.tools[lang]}</h2>
             <div className="pt-tool-row">
-              {(['tuner', 'metronome', 'drone', 'groove', 'slowdown', 'mixer', 'log'] as const).filter((k) => hub[k] && !(course === 'drums' && (k === 'tuner' || k === 'drone'))).map((k) => (
+              {(['tuner', 'chordfinder', 'metronome', 'drone', 'groove', 'slowdown', 'mixer', 'log'] as const).filter((k) => hub[k] && !(course === 'drums' && (k === 'tuner' || k === 'drone'))).map((k) => (
                 <button key={k} className="pt-tool" onClick={hub[k]} data-hub={k} aria-label={HUB_TX[k][lang]} title={HUB_TX[k][lang]}>
                   <HubIcon k={k} size={22} />
                   <small>{HUB_TX[k][lang]}</small>

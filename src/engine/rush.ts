@@ -11,10 +11,22 @@ import './topicsAdvGames'; // 0.70: game-only topics (voicing types, melodic-min
 import { chordReadItem, type ChordPictureFilter } from './topicsChordRead';
 import { noteAt, tuningById, type Tuning } from './fretboard';
 import type { DynName } from './courseSocial';
+import { chordSymbol, chordWords, shapesFor, strumCandidates, type ChordShape } from './chordFinder';
+import type { ChordCandidate, ChordQuality } from './chordRecognize';
 
 export type RushMode = 'chord' | 'note' | 'fretboard' | 'interval' | 'keysig' | 'progression' | 'voicing' | 'scale' | 'standard';
 export const RUSH_MODES: RushMode[] = ['chord', 'note', 'fretboard', 'interval', 'keysig', 'progression', 'voicing', 'scale', 'standard'];
-export type RushPicture = 'neck' | 'keys' | 'staff' | 'mixed';
+export type RushPicture = 'neck' | 'keys' | 'staff' | 'mixed' | 'play';
+/** Chord Rush, played (GUITAR_DEEPENING §6): the chord's name appears, the player strums it on the guitar and the
+ *  closed-set recognizer decides. Its own ladder (open chords → sevenths in every key). */
+export const isPlayed = (o: { mode: RushMode; picture?: RushPicture }) => o.mode === 'chord' && o.picture === 'play';
+export const PLAY_LEVELS: { en: string; he: string }[] = [
+  { en: 'Open chords: C A G E D, Am Em Dm', he: 'אקורדים פתוחים: C A G E D, Am Em Dm' },
+  { en: 'Open sevenths: A7 D7 E7 G7, Am7 Em7 Dm7', he: 'ספטאקורדים פתוחים: A7 D7 E7 G7, Am7 Em7 Dm7' },
+  { en: 'Barre chords in every key: major and minor', he: 'אקורדי ברה בכל הסולמות: מז׳ור ומינור' },
+  { en: 'Seventh chords in every key: 7, maj7, m7', he: 'ספטאקורדים בכל הסולמות: 7, maj7, m7' },
+  { en: 'Jazz colours: m7♭5, °7, sus', he: 'צבעים של ג׳אז: m7♭5, °7, sus' },
+];
 
 export const RUSH_MS = 60_000;
 export const WRONG_COST_MS = 2_000;
@@ -95,11 +107,12 @@ export function rushLadder(mode: RushMode): Rung[] {
 export const rushMaxLevel = (mode: RushMode) => rushLadder(mode).length;
 
 /** A run's own ladder: the tier's rungs (engine/gameTiers.ts) when it has a tier, else the game's whole ladder. */
-export function ladderOf(o: Pick<RushOptions, 'mode' | 'rungs'>): Rung[] {
+export function ladderOf(o: Pick<RushOptions, 'mode' | 'rungs'> & { picture?: RushPicture }): Rung[] {
+  if (isPlayed(o)) return PLAY_LEVELS.map((name, i) => ({ topic: 'chord-play', level: i + 1, name }));
   if (!o.rungs?.length) return rushLadder(o.mode);
   return o.rungs.map((x) => ({ topic: x.topic, level: x.level, name: x.topic === 'fretboard' ? (FRET_LEVELS[x.level - 1] ?? FRET_LEVELS[0]) : (TOPIC_GEN[x.topic]?.levels[x.level - 1] ?? { en: x.topic, he: x.topic }) }));
 }
-const maxOf = (o: Pick<RushOptions, 'mode' | 'rungs'>) => ladderOf(o).length;
+const maxOf = (o: Pick<RushOptions, 'mode' | 'rungs' | 'picture'>) => ladderOf(o).length;
 
 // ---------------------------------------------------------------- items
 
@@ -113,9 +126,20 @@ export interface FretTarget {
   frets: [number, number];
   name: { en: string; he: string };
 }
+/** Strum the named chord (played Chord Rush): the recognizer's closed set is the target and its confusers. */
+export interface StrumTarget {
+  chord: ChordCandidate;
+  symbol: string;
+  name: { en: string; he: string };
+  candidates: ChordCandidate[];
+  answer: number;
+  /** A shape to show after a miss. */
+  shape?: ChordShape;
+}
 export type RushItem =
   | { kind: 'choice'; key: string; q: ChoiceQuestion }
-  | { kind: 'fret'; key: string; target: FretTarget };
+  | { kind: 'fret'; key: string; target: FretTarget }
+  | { kind: 'strum'; key: string; target: StrumTarget };
 
 /** Does this item sound (auto-played when shown, a Play button to replay)? The ear games always; in Chord Rush a
  *  drawn picture — keys, neck or chord box — sounds as an arpeggio (the staff is reading only, its stimulus is
@@ -205,16 +229,35 @@ export function fretAnswers(t: FretTarget, tuning: Tuning): { str: number; fret:
   return out;
 }
 
+const OPEN_POOL: [number, ChordQuality][] = [[0, 'M'], [9, 'M'], [7, 'M'], [4, 'M'], [2, 'M'], [9, 'm'], [4, 'm'], [2, 'm']];
+const OPEN7_POOL: [number, ChordQuality][] = [[9, '7'], [2, '7'], [4, '7'], [7, '7'], [0, '7'], [11, '7'], [9, 'm7'], [4, 'm7'], [2, 'm7']];
+/** The chord to strum at a played-Chord-Rush level. */
+export function strumTarget(seed: number, level: number): StrumTarget {
+  const rnd = rng(seed);
+  const any = (qs: ChordQuality[]): [number, ChordQuality] => [Math.floor(rnd() * 12), qs[Math.floor(rnd() * qs.length)]];
+  const lv = Math.max(1, Math.min(PLAY_LEVELS.length, level));
+  const both = [...OPEN_POOL, ...OPEN7_POOL];
+  const [root, quality] =
+    lv === 1 ? OPEN_POOL[Math.floor(rnd() * OPEN_POOL.length)] : lv === 2 ? both[Math.floor(rnd() * both.length)] : lv === 3 ? any(['M', 'm']) : lv === 4 ? any(['7', 'maj7', 'm7']) : any(['m7b5', 'dim7', 'sus2', 'sus4', '7', 'm7']);
+  const chord = { root, quality };
+  const { candidates, answer } = strumCandidates(chord);
+  return { chord, symbol: chordSymbol(chord), name: chordWords(chord), candidates, answer, shape: shapesFor(root, quality)[0] };
+}
+
 function makeItem(o: RushOptions, seed: number, level: number, id: string): RushItem {
   const lad = ladderOf(o);
   const rung = lad[Math.max(0, Math.min(lad.length, level) - 1)];
+  if (isPlayed(o)) {
+    const target = strumTarget(seed, rung.level);
+    return { kind: 'strum', key: `strum:${target.symbol}`, target };
+  }
   if (o.mode === 'fretboard') {
     const target = fretTarget(seed, rung.level, tuningById(o.tuning));
     return { kind: 'fret', key: `fret:${target.midi ?? target.pc}:${target.strings.join('')}`, target };
   }
   let q: ChoiceQuestion;
   if (o.mode === 'chord' && rung.topic === 'chord-read') {
-    const pic: ChordPictureFilter | undefined = !o.picture || o.picture === 'mixed' ? undefined : o.picture;
+    const pic: ChordPictureFilter | undefined = !o.picture || o.picture === 'mixed' || o.picture === 'play' ? undefined : o.picture;
     q = chordReadItem(seed, rung.level, id, pic);
   } else {
     const g = genTopic(rung.topic, seed, rung.level, id);
@@ -320,12 +363,12 @@ export function rushTick(s: RushState, ms: number): RushState {
 export interface RushResult {
   game: `rush-${RushMode}`;
   score: number;
-  detail: { right: number; wrong: number; maxCombo: number; level: number; tier?: DynName; rungs?: number; rung?: string };
+  detail: { right: number; wrong: number; maxCombo: number; level: number; tier?: DynName; rungs?: number; rung?: string; /** Played Chord Rush: strummed on the guitar. */ played?: true };
 }
 export const rushResult = (s: RushState): RushResult => {
   const lad = ladderOf(s.opts);
   const rung = lad[s.level - 1];
-  return { game: `rush-${s.opts.mode}`, score: s.score, detail: { right: s.right, wrong: s.wrong, maxCombo: s.maxCombo, level: s.level, ...(s.opts.tier ? { tier: s.opts.tier, rungs: lad.length, rung: rung ? `${rung.topic}#${rung.level}` : undefined } : {}) } };
+  return { game: `rush-${s.opts.mode}`, score: s.score, detail: { right: s.right, wrong: s.wrong, maxCombo: s.maxCombo, level: s.level, ...(isPlayed(s.opts) ? { played: true as const } : {}), ...(s.opts.tier ? { tier: s.opts.tier, rungs: lad.length, rung: rung ? `${rung.topic}#${rung.level}` : undefined } : {}) } };
 };
 
 /** A saved Progression Detective run (resume after Back / reload). */

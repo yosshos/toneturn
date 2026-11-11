@@ -10,6 +10,8 @@ import {
   fretAnswers,
   gradeFret,
   isRushSaved,
+  isPlayed,
+  ladderOf,
   isStreak,
   isRounds,
   ROUNDS,
@@ -35,6 +37,8 @@ import { G2Head, prefersCalm } from './Flight';
 import { piano } from './services';
 import { TierChips } from './TierChips';
 import { startTier, tierAllowed, tierDef, type DynName, type TierInfo } from '../engine/gameTiers';
+import { judgeStrum } from '../engine/chordFinder';
+import { useStrums } from './strumListen';
 
 type Lang = 'he' | 'en';
 type Bi = { en: string; he: string };
@@ -69,7 +73,14 @@ const T = {
   back: { en: 'Back', he: 'חזרה' },
   startAt: { en: 'Start at level', he: 'להתחיל ברמה' },
   picture: { en: 'Draw the chords on', he: 'לצייר את האקורדים על' },
-  pics: { keys: { en: 'Keys', he: 'קלידים' }, staff: { en: 'Staff', he: 'חמשה' }, neck: { en: 'Guitar', he: 'גיטרה' }, mixed: { en: 'Mixed', he: 'מעורב' } } as Record<RushPicture, Bi>,
+  pics: { keys: { en: 'Keys', he: 'קלידים' }, staff: { en: 'Staff', he: 'חמשה' }, neck: { en: 'Guitar', he: 'גיטרה' }, mixed: { en: 'Mixed', he: 'מעורב' }, play: { en: 'Strum it', he: 'לפרוט' } } as Record<RushPicture, Bi>,
+  playHint: { en: 'Strum it: the chord name appears — play it on your guitar, clean tone, every string. The microphone decides.', he: 'לפרוט: מופיע שם של אקורד — נגנו אותו בגיטרה, צליל נקי, כל המיתרים. המיקרופון מחליט.' },
+  strumIt: { en: 'Strum', he: 'פרטו' },
+  listening: { en: 'Listening', he: 'מקשיבים' },
+  strumAgain: { en: 'Not clear — strum it again', he: 'לא ברור — פרטו שוב' },
+  heard: { en: 'Heard', he: 'נשמע' },
+  skip: { en: 'Skip', he: 'דילוג' },
+  micOff: { en: 'The microphone is not available. Allow it for this site and try again.', he: 'המיקרופון לא זמין. אפשרו אותו לאתר ונסו שוב.' },
   start: { en: 'Start', he: 'להתחיל' },
   cont: { en: 'Continue', he: 'להמשיך' },
   newGame: { en: 'New game', he: 'משחק חדש' },
@@ -124,6 +135,8 @@ const hears = rushHears;
 interface Feedback {
   correct: boolean;
   chosen?: string;
+  /** Played Chord Rush: what the recognizer heard. */
+  heard?: string;
   tap?: { str: number; fret: number };
 }
 
@@ -145,6 +158,11 @@ export function Rush({ lang, settings, mode, saved, onSave, onExit, onResult, be
   const [startLevel, setStartLevel] = useState(mode === 'note' && settings.activeCourse === 'bass' ? 2 : 1);
   // The course's own instrument first: chords on the neck in the guitar course, on the keys in the piano course.
   const [picture, setPicture] = useState<RushPicture>(settings.activeCourse === 'guitar' ? 'neck' : settings.activeCourse === 'keys' ? 'keys' : 'mixed');
+  // Played Chord Rush (guitar course): its own ladder, no level tiers.
+  const played = isPlayed({ mode, picture });
+  const shownLadder = played ? ladderOf({ mode, picture }) : ladder;
+  const [again, setAgain] = useState(0);
+  const [micErr, setMicErr] = useState(false);
   const [tier, setTier] = useState<DynName>(() => (resumable?.opts.tier && tierInfo && tierAllowed(tierInfo, resumable.opts.tier) ? resumable.opts.tier : tierInfo ? startTier(tierInfo) : 'pp'));
   const [st, setSt] = useState<RushState | null>(null);
   const [item, setItem] = useState<RushItem | null>(null);
@@ -229,7 +247,7 @@ export function Rush({ lang, settings, mode, saved, onSave, onExit, onResult, be
     return mode === 'note' && settings.activeCourse === 'bass' && tier === 'pp' ? [{ topic: 'note-reading', level: 2 }] : rs;
   };
   const startNew = () =>
-    begin(newRush({ mode, seed: (Date.now() ^ Math.floor(Math.random() * 1e9)) >>> 0, startLevel: tierInfo ? 1 : startLevel, picture: mode === 'chord' ? picture : undefined, tuning: tuningId, ...(tierInfo ? { tier, rungs: tierRungs() } : {}) }));
+    begin(newRush({ mode, seed: (Date.now() ^ Math.floor(Math.random() * 1e9)) >>> 0, startLevel: tierInfo && !played ? 1 : Math.min(startLevel, shownLadder.length), picture: mode === 'chord' ? picture : undefined, tuning: tuningId, ...(tierInfo && !played ? { tier, rungs: tierRungs() } : {}) }));
 
   // The clock (timed modes): 10 ticks a second, paused while feedback shows.
   useEffect(() => {
@@ -292,6 +310,18 @@ export function Rush({ lang, settings, mode, saved, onSave, onExit, onResult, be
     if (!item || item.kind !== 'choice') return;
     answer(c === item.q.answer, { correct: c === item.q.answer, chosen: c });
   };
+  // Played Chord Rush: the microphone listens while a strum item shows; an unclear strum asks again (no penalty).
+  useStrums(
+    stage === 'play' && item?.kind === 'strum',
+    (frames) => {
+      if (!item || item.kind !== 'strum' || busy.current) return;
+      const v = judgeStrum(frames, item.target.chord);
+      if (v.verdict === 'again') return setAgain((n) => n + 1);
+      setAgain(0);
+      answer(v.verdict === 'right', { correct: v.verdict === 'right', heard: v.heard });
+    },
+    () => setMicErr(true),
+  );
   const tap = (str: number, fret: number) => {
     if (!item || item.kind !== 'fret' || busy.current) return;
     const m = noteAt(tuning, str, fret);
@@ -344,7 +374,7 @@ export function Rush({ lang, settings, mode, saved, onSave, onExit, onResult, be
             <fieldset className="rush-field">
               <legend>{tx(T.picture, lang)}</legend>
               <div className="rush-seg" role="radiogroup">
-                {(['keys', 'staff', 'neck', 'mixed'] as RushPicture[]).map((p) => (
+                {(['keys', 'staff', 'neck', 'mixed', ...(settings.activeCourse === 'guitar' ? ['play'] : [])] as RushPicture[]).map((p) => (
                   <button key={p} type="button" role="radio" aria-checked={picture === p} className={`rush-opt ${picture === p ? 'on' : ''}`} onClick={() => setPicture(p)}>
                     {tx(T.pics[p], lang)}
                   </button>
@@ -352,19 +382,21 @@ export function Rush({ lang, settings, mode, saved, onSave, onExit, onResult, be
               </div>
             </fieldset>
           )}
-          {tierInfo ? (
+          {tierInfo && !played ? (
             <TierChips lang={lang} info={tierInfo} value={tier} onChange={setTier} game={`rush-${mode}`} />
           ) : (
           <fieldset className="rush-field">
             <legend>{tx(T.startAt, lang)}</legend>
-            <div className="rush-levels" role="radiogroup">
-              {ladder.map((r, i) => (
-                <button key={i} type="button" role="radio" aria-checked={startLevel === i + 1} className={`rush-lvl ${startLevel === i + 1 ? 'on' : ''}`} onClick={() => setStartLevel(i + 1)}>
+            <div className={`rush-levels ${played ? 'compact' : ''}`} role="radiogroup">
+              {shownLadder.map((r, i) => (
+                <button key={i} type="button" role="radio" aria-checked={startLevel === i + 1} aria-label={played ? `${i + 1}. ${tx(r.name, lang)}` : undefined} className={`rush-lvl ${startLevel === i + 1 ? 'on' : ''}`} onClick={() => setStartLevel(i + 1)}>
                   <b>{i + 1}</b>
-                  <span>{tx(r.name, lang)}</span>
+                  {!played && <span>{tx(r.name, lang)}</span>}
                 </button>
               ))}
             </div>
+            {/* Played: five numbered chips, the chosen level's name under them (one screen). */}
+            {played && <p className="rush-lvl-name">{tx(shownLadder[Math.min(startLevel, shownLadder.length) - 1].name, lang)}</p>}
           </fieldset>
           )}
           {best ? (
@@ -373,7 +405,13 @@ export function Rush({ lang, settings, mode, saved, onSave, onExit, onResult, be
             </p>
           ) : null}
           <p className="g2-dim">
-            {mode !== 'fretboard' && tx(T.keysHint, lang)} {ear(mode) && tx(T.earHint, lang)} {mode === 'chord' && (picture === 'neck' || picture === 'mixed') && tx(T.tuningNote, lang)}
+            {played ? (
+              tx(T.playHint, lang)
+            ) : (
+              <>
+                {mode !== 'fretboard' && tx(T.keysHint, lang)} {ear(mode) && tx(T.earHint, lang)} {mode === 'chord' && (picture === 'neck' || picture === 'mixed') && tx(T.tuningNote, lang)}
+              </>
+            )}
           </p>
           <div className="g2-row">
             {resumable ? (
@@ -509,7 +547,7 @@ export function Rush({ lang, settings, mode, saved, onSave, onExit, onResult, be
             {tx(T.levelUp, lang)}
           </span>
         )}
-        {item.kind === 'choice' ? <ChoicePrompt item={item} mode={mode} lang={lang} settings={settings} onReplay={() => void playStim(item.q.stimulus)} /> : <FretPrompt item={item} lang={lang} />}
+        {item.kind === 'choice' ? <ChoicePrompt item={item} mode={mode} lang={lang} settings={settings} onReplay={() => void playStim(item.q.stimulus)} /> : item.kind === 'strum' ? <StrumPrompt item={item} lang={lang} settings={settings} fb={fb} again={again} micErr={micErr} /> : <FretPrompt item={item} lang={lang} />}
       </section>
 
       {item.kind === 'choice' ? (
@@ -532,12 +570,18 @@ export function Rush({ lang, settings, mode, saved, onSave, onExit, onResult, be
             );
           })}
         </div>
+      ) : item.kind === 'strum' ? (
+        <div className="rush-strum-actions">
+          <button type="button" className="btn small ghost" disabled={!!fb} onClick={() => answer(false, { correct: false })}>
+            {tx(T.skip, lang)}
+          </button>
+        </div>
       ) : (
         <FretBoard item={item} fb={fb} settings={settings} onTap={tap} lang={lang} />
       )}
 
       <p className="rush-live" aria-live="assertive">
-        {fb ? (fb.correct ? tx(T.rightFb, lang) : item.kind === 'choice' ? `${tx(T.answerWas, lang)} ${item.q.names[item.q.answer][lang]}` : `${tx(T.answerWas, lang)} ${tx(item.target.name, lang)}`) : ''}
+        {fb ? (fb.correct ? tx(T.rightFb, lang) : item.kind === 'choice' ? `${tx(T.answerWas, lang)} ${item.q.names[item.q.answer][lang]}` : item.kind === 'strum' ? (fb.heard ? `${tx(T.heard, lang)}: ${fb.heard}` : '') : `${tx(T.answerWas, lang)} ${tx(item.target.name, lang)}`) : ''}
       </p>
     </main>
   );
@@ -564,6 +608,37 @@ function ChoicePrompt({ item, mode, lang, settings, onReplay }: { item: Extract<
         <button type="button" className="btn rush-replay" onClick={onReplay}>
           <span aria-hidden="true">▶</span> {T.play[lang]}
         </button>
+      )}
+    </>
+  );
+}
+
+function StrumPrompt({ item, lang, settings, fb, again, micErr }: { item: Extract<RushItem, { kind: 'strum' }>; lang: Lang; settings: Settings; fb: Feedback | null; again: number; micErr: boolean }) {
+  const t = item.target;
+  const miss = !!fb && !fb.correct;
+  return (
+    <>
+      <p className="rush-ask">{T.strumIt[lang]}</p>
+      <p className="rush-target">
+        <b dir="ltr">{t.symbol}</b>
+        <small>{t.name[lang]}</small>
+      </p>
+      {miss && t.shape ? (
+        <div className="rush-pic" dir="ltr">
+          <DiagramView d={{ kind: 'box', instrument: 'guitar', ...t.shape.box, frets: 4 }} settings={{ ...settings, tuning: 'standard' }} />
+        </div>
+      ) : (
+        <p className={`rush-listen ${again ? 'again' : ''}`} role="status" key={again}>
+          {micErr ? (
+            T.micOff[lang]
+          ) : again ? (
+            T.strumAgain[lang]
+          ) : (
+            <>
+              <span className="rush-mic-dot" aria-hidden="true" /> {T.listening[lang]}
+            </>
+          )}
+        </p>
       )}
     </>
   );
