@@ -262,8 +262,41 @@ export const INFLECT_LEVELS: VocalLevel[] = [
   lv(1802, 0.55, [INF('bend', 0.45, 1450), INF('bend', 0.55, 1450), INF('ghost', 0.4, 1450, [0, 2, 4]), INF('ghost', 0.4, 1500, [7, 5, 4])]),
 ];
 
+// ---------------------------------------------------------------- F9 sight-singing (1900) and F8 arpeggios (2000)
+
+const SIGHTX = (steps: number[], durs: number[], bpm: number, difficulty: number, clef?: 'bass'): Item => ({ kind: 'sight', seconds: 12, reference: 'before', at: 0.3, steps, durs, bpm, ...(clef ? { more: { clef } } : {}), difficulty });
+export const SIGHT_MORE_LEVELS: VocalLevel[] = [
+  // L6: bass clef for low voices (the same reading as L3–L5)
+  lv(1901, 0.56, SIGHT_LEVELS.slice(2, 5).map((l, k) => ({ ...l.items[k], more: { clef: 'bass' as const } })).map(({ id: _id, level: _lv, ...it }) => it)),
+  // L7: chromatic neighbours and passing notes
+  lv(1902, 0.55, [
+    SIGHTX([0, 2, 4, 5, 6, 7, 9, 7, 6, 7], [1, 1, 1, 0.5, 0.5, 1, 1, 0.5, 0.5, 2], 76, 1450),
+    SIGHTX([7, 6, 7, 4, 3, 4, 0, 1, 2, 0], [1, 0.5, 0.5, 1, 0.5, 0.5, 1, 0.5, 0.5, 2], 76, 1500),
+    SIGHTX([0, 3, 2, 3, 5, 6, 7, 8, 7, 5, 3, 0], [1, 0.5, 0.5, 1, 1, 0.5, 0.5, 1, 1, 1, 1, 2], 80, 1550),
+  ]),
+];
+export const ARPEGGIO_LEVELS: VocalLevel[] = [
+  // Arpeggios as a technical exercise (RSL lists them): triads, sevenths, ninths
+  lv(2001, 0.6, [
+    { kind: 'melody', seconds: 7, reference: 'before', at: 0.2, steps: [0, 4, 7, 12, 7, 4, 0], difficulty: 1150 },
+    { kind: 'melody', seconds: 7, reference: 'before', at: 0.2, steps: [0, 3, 7, 12, 7, 3, 0], difficulty: 1150 },
+    { kind: 'melody', seconds: 8, reference: 'before', at: 0.15, steps: [0, 4, 7, 10, 12, 10, 7, 4, 0], difficulty: 1250 },
+    { kind: 'melody', seconds: 8, reference: 'before', at: 0.15, steps: [0, 3, 7, 10, 12, 10, 7, 3, 0], difficulty: 1250 },
+    { kind: 'melody', seconds: 9, reference: 'before', at: 0.1, steps: [0, 4, 7, 11, 14, 11, 7, 4, 0], difficulty: 1350 },
+  ]),
+];
+
+// ---------------------------------------------------------------- F15 scat, further (1505–1506)
+
+export const SCAT_MORE_LEVELS: VocalLevel[] = [
+  // L8: tensions in the line — the 9 and the 13 on dominants, ♯11 on major sevenths, on strong beats
+  lv(1505, 0.56, [SCAT('tensions', 'Dm7 | G7 | Cmaj7 | Cmaj7 | Em7 | A7 | Dm7 | G7', 112, 1600), SCAT('tensions', BLUES, 120, 1650)]),
+  // L9: style — a bossa (straight) and a minor blues (swing), landing on chord tones in each
+  lv(1506, 0.56, [{ ...SCAT('landing', 'Cmaj7 | Am7 | Dm7 | G7 | Em7 | A7b9 | Dm7 | G7', 120, 1600), scat: { mode: 'landing', chart: 'Cmaj7 | Am7 | Dm7 | G7 | Em7 | A7b9 | Dm7 | G7', style: 'bossa', bpm: 120 } }, SCAT('landing', 'Cm7 | Fm7 | Cm7 | Cm7 | Fm7 | Fm7 | Cm7 | Cm7 | Ab7 | G7 | Cm7 | G7', 120, 1650)]),
+];
+
 /** Every new level of the families. */
-export const NEW_LEVELS: VocalLevel[] = [...BREATH_LEVELS, ...PITCH_LEVELS, ...RANGE_LEVELS, ...DYN_LEVELS, ...VIB_LEVELS, ...TIME_LEVELS, ...EAR_LEVELS, ...SONG_LEVELS, ...STANDARD_LEVELS, ...SCAT_LEVELS, ...AGILITY_LEVELS, ...HARMONY_MORE_LEVELS, ...INFLECT_LEVELS];
+export const NEW_LEVELS: VocalLevel[] = [...SIGHT_MORE_LEVELS, ...ARPEGGIO_LEVELS, ...SCAT_MORE_LEVELS, ...BREATH_LEVELS, ...PITCH_LEVELS, ...RANGE_LEVELS, ...DYN_LEVELS, ...VIB_LEVELS, ...TIME_LEVELS, ...EAR_LEVELS, ...SONG_LEVELS, ...STANDARD_LEVELS, ...SCAT_LEVELS, ...AGILITY_LEVELS, ...HARMONY_MORE_LEVELS, ...INFLECT_LEVELS];
 
 // ---------------------------------------------------------------- the families
 
@@ -280,21 +313,22 @@ const nums = (base: number, levels: VocalLevel[]) => levels.map((_, i) => base +
 
 /** The 15 families + Barry Harris, in teaching order (= path order: the first ones open first). */
 export const VOICE_FAMILIES: VoiceFamily[] = [
+  // The on-ramp first (owner: "every great jazz singer can sing a simple song perfectly — start here"), with the breath.
+  { id: 'v-songs', title: { en: 'Songs with the band', he: 'שירים עם להקה' }, refs: SONG_LEVELS.map((l) => l.level), stage: 'A' },
   { id: 'v-breath', title: { en: 'Breath & sustain', he: 'נשימה והחזקה' }, refs: [1, ...BREATH_LEVELS.map((l) => l.level)], stage: 'A' },
   { id: 'v-pitch', title: { en: 'Pitch & intonation', he: 'גובה ואינטונציה' }, refs: [2, 7, ...PITCH_LEVELS.map((l) => l.level)], stage: 'A' },
-  { id: 'v-songs', title: { en: 'Songs with the band', he: 'שירים עם להקה' }, refs: SONG_LEVELS.map((l) => l.level), stage: 'A' },
   { id: 'v-range', title: { en: 'Range & registers', he: 'מנעד ורגיסטרים' }, refs: [4, 6, ...RANGE_LEVELS.map((l) => l.level)], stage: 'A' },
   { id: 'v-time', title: { en: 'Time feel', he: 'תחושת זמן' }, refs: [9, ...TIME_LEVELS.map((l) => l.level)], stage: 'A' },
   { id: 'v-ear', title: { en: "The singer's ear", he: 'האוזן של הזמר' }, refs: [8, ...EAR_LEVELS.map((l) => l.level)], stage: 'A' },
   { id: 'v-dyn', title: { en: 'Dynamics', he: 'דינמיקה' }, refs: [901, 5, ...DYN_LEVELS.slice(1).map((l) => l.level)], stage: 'B' },
-  { id: 'v-scale', title: { en: 'Scales & modes', he: 'סולמות ומודוסים בשירה' }, refs: nums(100, MODE_LEVELS), stage: 'B' },
-  { id: 'v-sight', title: { en: 'Sight-singing', he: 'שירה מתווים' }, refs: nums(400, SIGHT_LEVELS), stage: 'B' },
+  { id: 'v-scale', title: { en: 'Scales & modes', he: 'סולמות ומודוסים בשירה' }, refs: [...nums(100, MODE_LEVELS), ...ARPEGGIO_LEVELS.map((l) => l.level)], stage: 'B' },
+  { id: 'v-sight', title: { en: 'Sight-singing', he: 'שירה מתווים' }, refs: [...nums(400, SIGHT_LEVELS), ...SIGHT_MORE_LEVELS.map((l) => l.level)], stage: 'B' },
   { id: 'v-vib', title: { en: 'Vibrato control', he: 'שליטה בוויברטו' }, refs: [3, 10, 11, ...VIB_LEVELS.map((l) => l.level)], stage: 'B' },
   { id: 'v-agility', title: { en: 'Agility & bebop lines', he: 'גמישות וקווי ביבופ' }, refs: AGILITY_LEVELS.map((l) => l.level), stage: 'C' },
   { id: 'v-harmony', title: { en: 'Harmony singing', he: 'שירה בהרמוניה' }, refs: [...nums(200, HARMONY_LEVELS), ...HARMONY_MORE_LEVELS.map((l) => l.level)], stage: 'B' },
   { id: 'v-inflect', title: { en: 'Ornaments & inflections', he: 'קישוטים וגוונים' }, refs: [...nums(500, ORNAMENT_LEVELS), ...INFLECT_LEVELS.map((l) => l.level)], stage: 'C' },
   { id: 'v-standards', title: { en: 'Standards & ballads', he: 'סטנדרטים ובלדות' }, refs: STANDARD_LEVELS.map((l) => l.level), stage: 'C' },
-  { id: 'v-scat', title: { en: 'Scat & improvisation', he: 'סקאט ואלתור' }, refs: SCAT_LEVELS.map((l) => l.level), stage: 'C' },
+  { id: 'v-scat', title: { en: 'Scat & improvisation', he: 'סקאט ואלתור' }, refs: [...SCAT_LEVELS, ...SCAT_MORE_LEVELS].map((l) => l.level), stage: 'C' },
   { id: 'v-barry', title: { en: 'Barry Harris lines', he: 'קווים של בארי האריס' }, refs: nums(300, BARRY_LEVELS), stage: 'D' },
 ];
 
@@ -370,6 +404,11 @@ export const NEW_LEVEL_NAMES: Record<number, Bi> = {
   1503: { en: 'Landing on chord tones', he: 'נחיתה על צלילי אקורד' },
   1504: { en: 'Chromatic approach', he: 'גישה כרומטית' },
   1601: { en: 'A bebop line', he: 'קו ביבופ' },
+  1505: { en: 'Tensions in the line', he: 'מתחים בקו' },
+  1506: { en: 'Two styles: bossa and blues', he: 'שני סגנונות: בוסה ובלוז' },
+  1901: { en: 'Reading in the bass clef', he: 'קריאה במפתח פה' },
+  1902: { en: 'Chromatic notes', he: 'צלילים כרומטיים' },
+  2001: { en: 'Arpeggios', he: 'ארפג׳יו' },
   1602: { en: 'Bebop at 160', he: 'ביבופ ב־160' },
 };
 

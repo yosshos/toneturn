@@ -162,3 +162,14 @@
   color: var(--ink-soft);
   font-weight: 700;
 }
+
+/* One phone screen: after a take the trace shrinks and the result card takes the room. */
+.trace-compact .pitch-trace svg {
+  height: 64px;
+}
+.vocal .take-card .metric-bars {
+  margin: 4px 0;
+}
+.vtimed .roll-compact .sing-roll {
+  height: 70px;
+}

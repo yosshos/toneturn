@@ -14,7 +14,7 @@ import { BleedGate } from '../engine/bleed';
 import { atRange, type TakeGrade, type VocalItem, type VoiceRange } from '../engine/vocal';
 import type { SungFrame } from '../engine/sing';
 import type { NoteEvent } from '../engine/lesson';
-import { chartBacking, parseChart, transposeChart } from '../engine/charts';
+import { chartBacking, chordAtBeat, parseChart, transposeChart } from '../engine/charts';
 import { songBacking, songPlan, voiceSong, type SongGrade, type SongPlan } from '../engine/voiceSongs';
 import { feelVerdict, swingBand, synthDahs, synthLine, voiceOnsets, type TimeFeel } from '../engine/voiceTime';
 import { gradeScat, gradeSong, gradeTime, scatChart } from '../engine/voiceGrade';
@@ -75,7 +75,8 @@ export function TimedSession({ t, settings, range, level, items, onExit, onProgr
   const needsTiming = item?.kind === 'time' || (item?.kind === 'song' && (item.song?.rhythm || item.song?.feel || item.song?.interpret)) || item?.kind === 'scat';
 
   if (!item || !lvDef) return null;
-  const title = `${L(familyOfRef(level)?.title ?? { en: '', he: '' })} · ${L(NEW_LEVEL_NAMES[level] ?? { en: String(level), he: String(level) })}`;
+  const title = L(NEW_LEVEL_NAMES[level] ?? { en: String(level), he: String(level) });
+  const family = L(familyOfRef(level)?.title ?? { en: '', he: '' });
 
   const run = async () => {
     ctl.current?.abort();
@@ -213,14 +214,14 @@ export function TimedSession({ t, settings, range, level, items, onExit, onProgr
         <h1>{title}</h1>
       </header>
       <p className="field-hint">
-        {fill(L(VT.itemOf), { i: i + 1, n: items.length })}
+        {family} · {fill(L(VT.itemOf), { i: i + 1, n: items.length })}
         {songTitle && ` · ${songTitle}`}
         {loop && ` · ${fill(L(VT.phrase), { n: loop.phrase + 1 })} · ${Math.round(loop.scale * 100)}%`}
       </p>
-      <p className="vocal-instr">{instr}</p>
+      {phase !== 'result' && <p className="vocal-instr">{instr}</p>}
       {item.kind === 'time' && item.time && <BeatStrip item={item} beatNow={busy ? beatNow : -1} />}
       {item.kind === 'scat' && item.scat && <ChordStrip item={item} tonicPc={tonicPc} beatNow={busy ? beatNow : -1} slots={take?.slots} />}
-      {shownNotes && shownNotes.length > 0 && <SingRoll notes={shownNotes} frames={frames} now={busy || phase === 'result' ? now : 0} />}
+      {shownNotes && shownNotes.length > 0 && phase === 'result' ? <div className="roll-compact"><SingRoll notes={shownNotes} frames={frames} now={now} /></div> : shownNotes && shownNotes.length > 0 && <SingRoll notes={shownNotes} frames={frames} now={busy || phase === 'result' ? now : 0} />}
       {phase === 'count' && <p className="vocal-cue vib">{item.time?.call ? L(VT.listenCall) : L(VT.countIn)}</p>}
       {phase === 'singing' && item.time?.call && <p className="vocal-cue">{beatNow >= (item.time.answerAt ?? 8) ? L(VT.yourTurn) : L(VT.listenCall)}</p>}
 
@@ -251,7 +252,7 @@ export function TimedSession({ t, settings, range, level, items, onExit, onProgr
         </section>
       )}
 
-      {item.kind !== 'time' && (
+      {item.kind !== 'time' && item.song?.band !== false && phase !== 'result' && (
         <label className="toggle-row vt-hp">
           <input
             type="checkbox"
@@ -504,7 +505,7 @@ function Bars({ g, lang, t }: { g: TakeGrade; lang: Lang; t: Strings }) {
         <li key={m.key} className={m.score >= 0.8 ? 'good' : m.score >= 0.5 ? 'fair' : 'weak'}>
           <span className="metric-name">{name(m.key)}</span>
           <span className="metric-val" dir="ltr">
-            {m.key === 'swing' ? `${m.value} : 1` : m.unit === '%' ? `${Math.round(m.value)}%` : `${m.value > 0 && m.unit !== 'dB' ? '+' : ''}${m.value} ${m.unit === 'ms' ? 'ms' : m.unit}`}
+            {m.key === 'swing' ? `${m.value} : 1` : m.key === 'tensions' ? `${m.value} / 3` : m.unit === '%' ? `${Math.round(m.value)}%` : `${m.value > 0 && m.unit !== 'dB' ? '+' : ''}${m.value} ${m.unit === 'ms' ? 'ms' : m.unit}`}
           </span>
           <span className="metric-bar" aria-hidden="true">
             <span style={{ width: `${Math.round(m.score * 100)}%` }} />
@@ -556,7 +557,9 @@ function simulate(item: VocalItem, plan: SongPlan | null, span: { from: number; 
     const near = (pc: number) => mid + ((((pc - mid) % 12) + 18) % 12) - 6;
     const notes = [];
     for (let b = 0; b < ch.beats; b += item.scat.mode === 'guide' ? 2 : 1) {
-      const pcs = item.scat.mode === 'guide' ? ch.guideAt(b) : ch.pcsAt(b);
+      const c = chordAtBeat(ch.parsed, 4, b);
+      const ten = item.scat.mode === 'tensions' && b % 2 === 0 && c && c.iv.includes(10) ? [(c.root + 2) % 12] : null;
+      const pcs = ten ?? (item.scat.mode === 'guide' ? ch.guideAt(b) : ch.pcsAt(b));
       notes.push({ midi: near(pcs[item.scat.mode === 'guide' ? (b / 2) % 2 : 1] ?? pcs[0]), start: b * beat, dur: (item.scat.mode === 'guide' ? 2 : 1) * beat * 0.9 });
     }
     return synthLine(notes);

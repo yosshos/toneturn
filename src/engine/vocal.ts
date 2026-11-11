@@ -536,7 +536,8 @@ export type MetricKey =
   | 'arc'
   | 'break'
   | 'shape'
-  | 'steady';
+  | 'steady'
+  | 'tensions';
 
 export interface MetricScore {
   key: MetricKey;
@@ -605,7 +606,7 @@ export interface SongSpec {
 }
 /** Scat (F15): improvised or chosen notes over the band, graded on pitch, rhythm and landing — never the syllables. */
 export interface ScatSpec {
-  mode: 'guide' | 'landing' | 'approach';
+  mode: 'guide' | 'landing' | 'approach' | 'tensions';
   chart: string;
   style: 'swing' | 'bossa' | 'ballad';
   bpm: number;
@@ -683,6 +684,8 @@ export interface MoreSpec {
   reps?: number;
   /** A harmony hold sung with no vibrato at all (close harmony, F5 L7). */
   straight?: boolean;
+  /** Sight-singing in this clef (F9 L6, low voices). */
+  clef?: 'bass';
 }
 
 export { MODE_STEPS, type ModeId } from './modes';

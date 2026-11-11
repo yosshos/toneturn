@@ -8,6 +8,7 @@ import { gradeSongTake, type SongGrade, type SongPlan } from './voiceSongs';
 import { chordAtBeat, parseChart, transposeChart } from './charts';
 import { improvReportBy, type ImprovReport } from './perform';
 import { hzToMidi } from './pitch';
+import { segmentNotes } from './memory';
 
 /** The level's own rule dominates: a take that misses it cannot pass on the other metrics. */
 const gated = (g: TakeGrade, key: number): TakeGrade => ({ ...g, score: Math.round(g.score * (0.4 + 0.6 * key) * 1000) / 1000 });
@@ -203,6 +204,30 @@ export function scatChart(item: VocalItem, tonicPc: number) {
   return { parsed: p, beats: p.bars * 4 * (sc.loops ?? 1), pcsAt, guideAt };
 }
 
+/**
+ * F15 L8: tensions placed on purpose — notes that start on a strong beat (1 or 3) over a dominant seventh and are its
+ * 9th or 13th, or over a major seventh and are its ♯11. Counted per take (the level asks for three or more).
+ */
+export function tensionsOnStrongBeats(frames: SungFrame[], item: VocalItem, tonicPc: number): number {
+  const sc = item.scat!;
+  const beat = 60 / sc.bpm;
+  const ch = scatChart(item, tonicPc);
+  let n = 0;
+  for (const note of segmentNotes(frames, { minSec: 0.09 })) {
+    const b = note.start / beat;
+    const near = Math.round(b);
+    if (Math.abs(b - near) > 0.25 || near % 2 !== 0) continue;
+    const c = chordAtBeat(ch.parsed, 4, near);
+    if (!c) continue;
+    const pc = ((Math.round(note.midi) % 12) + 12) % 12;
+    const rel = (pc - c.root + 12) % 12;
+    const dom = c.iv.includes(4) && c.iv.includes(10);
+    const maj7 = c.iv.includes(4) && c.iv.includes(11);
+    if ((dom && (rel === 2 || rel === 9)) || (maj7 && rel === 6)) n++;
+  }
+  return n;
+}
+
 export function gradeScat(item: VocalItem, frames: SungFrame[], tonicPc: number): ScatResult {
   const sc = item.scat!;
   const beat = 60 / sc.bpm;
@@ -228,8 +253,13 @@ export function gradeScat(item: VocalItem, frames: SungFrame[], tonicPc: number)
   }
   const r = improvReportBy(frames, ch.pcsAt, sc.bpm);
   if (r.notes < 3) return { grade: UNCLEAR, report: r };
-  const out: MetricScore[] = [M('landingTones', r.strongChordTones * 100, '%', reachScore(r.strongChordTones, 0.7), 3), M('landing', r.endsOnChordTone ? 100 : 0, '%', r.endsOnChordTone ? 1 : 0, 1.5)];
+  // Tensions on strong beats are on purpose in L8: there the landing rule is the tensions' own count.
+  const out: MetricScore[] = sc.mode === 'tensions' ? [M('landing', r.endsOnChordTone ? 100 : 0, '%', r.endsOnChordTone ? 1 : 0, 1.5)] : [M('landingTones', r.strongChordTones * 100, '%', reachScore(r.strongChordTones, 0.7), 3), M('landing', r.endsOnChordTone ? 100 : 0, '%', r.endsOnChordTone ? 1 : 0, 1.5)];
   if (sc.mode === 'approach') out.push(M('approach', r.chromaticApproaches * 100, '%', reachScore(r.chromaticApproaches, 0.4), 3));
+  if (sc.mode === 'tensions') {
+    const t = tensionsOnStrongBeats(frames, item, tonicPc);
+    out.push(M('tensions', t, '%', reachScore(t, 3), 3));
+  }
   out.push(M('coverage', r.notes, '%', reachScore(r.notes, ch.beats / 2), 0.5));
   return { grade: finish(out, {}), report: r };
 }

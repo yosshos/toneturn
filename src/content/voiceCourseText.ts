@@ -88,6 +88,7 @@ export const SCAT_INSTR = {
   guide: { en: 'Sing a 3rd or a 7th of each chord, a half note each. Any syllable — only the note counts.', he: 'שירו טרצה או ספטימה של כל אקורד, חצי תו לכל אחד. כל הברה — רק הצליל נחשב.' },
   landing: { en: 'Improvise freely, but land a chord tone on beat 1 of every chord, and end on one.', he: 'אלתרו בחופשיות, אבל נחתו על צליל אקורד בפעמה 1 של כל אקורד, וסיימו על אחד.' },
   approach: { en: 'Reach chord tones from a half step above or below.', he: 'הגיעו לצלילי האקורד מחצי טון מעל או מתחת.' },
+  tensions: { en: 'Put a 9th or a 13th on a strong beat over the dominants (a ♯11 over major sevenths) — three or more.', he: 'שימו נונה או טרצדצימה בפעמה חזקה מעל הדומיננטות (אונדצימה מוגדלת מעל מז׳ור ספט) — שלוש ומעלה.' },
 } as const;
 
 /** Names of the new metrics (the old ones are in i18n/strings.ts metricNames). */
@@ -115,6 +116,7 @@ export const METRIC_NAMES: Record<string, Bi> = {
   break: { en: 'Smooth register', he: 'מעבר רגיסטר חלק' },
   shape: { en: 'Shape', he: 'צורה' },
   steady: { en: 'Steady long notes', he: 'צלילים ארוכים יציבים' },
+  tensions: { en: 'Tensions placed', he: 'מתחים שהונחו' },
 };
 
 /** How each further held / phrase item is sung ({s} = seconds). */

@@ -142,7 +142,7 @@ describe('the voice families (VOICE_CURRICULUM §5, §9)', () => {
   });
   it('stages: Barry Harris last, songs, breath and pitch first', () => {
     expect(VOICE_FAMILIES[VOICE_FAMILIES.length - 1].id).toBe('v-barry');
-    expect(VOICE_FAMILIES.slice(0, 3).map((f) => f.id)).toEqual(['v-breath', 'v-pitch', 'v-songs']);
+    expect(VOICE_FAMILIES.slice(0, 3).map((f) => f.id)).toEqual(['v-songs', 'v-breath', 'v-pitch']);
   });
 });
 

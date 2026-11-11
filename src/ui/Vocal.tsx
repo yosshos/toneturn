@@ -978,7 +978,7 @@ function VocalSession({
   })();
   // Scales asked by name: only the tonic is shown until the take is graded (the notes are the task).
   const hidden = item.kind === 'scale' && item.scale?.hear === 'tonic' && phase !== 'result';
-  const title = level === 'warmup' ? t.vocalWarmup : isNewLevel(level) ? `${familyOfRef(level)?.title[settings.uiLang === 'en' ? 'en' : 'he'] ?? ''} · ${levelName(level, t, settings.uiLang === 'en' ? 'en' : 'he')}` : level > ORNAMENT_BASE ? `${t.ornTitle} · ${t.ornLevelNames[level - ORNAMENT_BASE - 1]}` : level > SIGHT_BASE ? `${t.sightTitle} · ${t.sightLevelNames[level - SIGHT_BASE - 1]}` : level > BARRY_BASE ? `${t.barryTitle} · ${t.barryLevelNames[level - BARRY_BASE - 1]}` : level > HARMONY_BASE ? `${t.harmonyTitle} · ${t.harmonyLevelNames[level - HARMONY_BASE - 1]}` : level > MODES_BASE ? `${t.modesTitle} · ${t.modesLevelNames[level - MODES_BASE - 1]}` : `${fill(t.vocalLevel, { n: level })} · ${t.vocalLevelNames[level - 1]}`;
+  const title = level === 'warmup' ? t.vocalWarmup : isNewLevel(level) ? levelName(level, t, settings.uiLang === 'en' ? 'en' : 'he') : level > ORNAMENT_BASE ? `${t.ornTitle} · ${t.ornLevelNames[level - ORNAMENT_BASE - 1]}` : level > SIGHT_BASE ? `${t.sightTitle} · ${t.sightLevelNames[level - SIGHT_BASE - 1]}` : level > BARRY_BASE ? `${t.barryTitle} · ${t.barryLevelNames[level - BARRY_BASE - 1]}` : level > HARMONY_BASE ? `${t.harmonyTitle} · ${t.harmonyLevelNames[level - HARMONY_BASE - 1]}` : level > MODES_BASE ? `${t.modesTitle} · ${t.modesLevelNames[level - MODES_BASE - 1]}` : `${fill(t.vocalLevel, { n: level })} · ${t.vocalLevelNames[level - 1]}`;
 
   if (phase === 'summary' && summary)
     return (
@@ -1005,10 +1005,11 @@ function VocalSession({
         <h1>{title}</h1>
       </header>
       <p className="field-hint">
+        {typeof level === 'number' && isNewLevel(level) && `${familyOfRef(level)?.title[settings.uiLang === 'en' ? 'en' : 'he'] ?? ''} · `}
         {fill(t.vocalItemOf, { i: i + 1, n: items.length })}
         {noteCount > 1 && ` · ${fill(t.vocalNoteOf, { i: noteIdx + 1, n: noteCount })}`}
       </p>
-      <p className="vocal-instr">
+      {phase !== 'result' && <p className="vocal-instr">
         {item.kind === 'scale' && item.scale
           ? (() => {
               const tn = scaleTonic(item.scale, range);
@@ -1036,7 +1037,7 @@ function VocalSession({
           : item.kind === 'harmony-hold' && item.accompany?.length === 1
             ? fill(item.accompany[0] < 0 ? t.holdIntervalAbove : t.holdIntervalBelow, { iv: t.intervalNames[String(Math.abs(item.accompany[0]))] ?? '' })
             : fill(t.vocalInstr[item.kind] ?? '', { s: item.seconds, on: item.cueOn ?? 2, off: item.cueOff ?? 5, rate: item.vibRate ?? '', width: item.vibWidth === 'wide' ? t.vocalWide : t.vocalNarrow })}
-      </p>
+      </p>}
       {item.kind === 'vibrato-notes' && (
         <p className="vib-notes" dir="ltr" aria-label={t.vocalVibMarks}>
           {targets.map((m, k) => (
@@ -1050,7 +1051,7 @@ function VocalSession({
       {item.kind === 'vibrato-rate' && phase === 'singing' && <div className="vib-pulse" style={{ animationDuration: `${1 / (item.vibRate ?? 5.5)}s` }} aria-hidden="true" />}
       {isSight(item) ? (
         <div className="sight-score">
-          <NotesView midis={shownTargets} keyPc={pc(sightKeyName(item, shownTargets[0]))} settings={settings} durs={item.durs} />
+          <NotesView midis={shownTargets} keyPc={pc(sightKeyName(item, shownTargets[0]))} settings={settings} durs={item.durs} clef={item.more?.clef ?? (range.low <= 45 ? 'bass' : undefined)} />
           <small className="field-hint">♩ = {item.bpm ?? 72}</small>
         </div>
       ) : (
@@ -1058,9 +1059,9 @@ function VocalSession({
         {(hidden ? shownTargets.slice(0, 1) : shownTargets).map((m) => noteLabel(m, settings)).join(' – ')}
       </p>
       )}
-      {(item.kind === 'hold' || item.kind === 'straight' || item.kind.startsWith('vibrato') || item.kind === 'messa' || item.kind === 'range' || item.kind === 'dynamic' || item.kind === 'breath-hold' || item.kind === 'fine-tune' || item.kind === 'edge') && (
+      {phase !== 'result' && (item.kind === 'hold' || item.kind === 'straight' || item.kind.startsWith('vibrato') || item.kind === 'messa' || item.kind === 'range' || item.kind === 'dynamic' || item.kind === 'breath-hold' || item.kind === 'fine-tune' || item.kind === 'edge') && (
         <div className="hold-meter" aria-hidden="true">
-          <span style={{ width: `${Math.min(100, ((sinceOnset ?? (phase === 'result' ? item.seconds : 0)) / item.seconds) * 100)}%` }} />
+          <span style={{ width: `${Math.min(100, ((sinceOnset ?? 0) / item.seconds) * 100)}%` }} />
           <small>{fill(t.vocalHoldFor, { s: item.seconds })}</small>
         </div>
       )}
@@ -1069,7 +1070,9 @@ function VocalSession({
           {cue}
         </p>
       )}
+      <div className={phase === 'result' ? 'trace-compact' : undefined}>
       <PitchTrace frames={frames} targets={shownTargets} bands={hidden ? shownTargets.slice(0, 1) : undefined} seconds={item.seconds} label={`${(hidden ? shownTargets.slice(0, 1) : shownTargets).map((m) => noteLabel(m, settings)).join(' – ')}`} />
+      </div>
       {item.reference === 'during' && (
         <label className="toggle-row">
           <input
@@ -1102,7 +1105,6 @@ function VocalSession({
               {item.bh?.mode === 'free' && !grade.chordMade && <p className="take-remark">{t.barryNotHalfStep}</p>}
               {remarkLine && <p className="take-remark"><Icon k="target" /> {remarkLine}</p>}
               {tipKey && <p className="take-tip"><Icon k="tip" /> {t.vocalTips[tipKey]}</p>}
-              <NotesView midis={shownTargets} keyPc={null} settings={settings} />
               {memoryItem(item) && refs > 0 && <p className="field-hint"><Icon k="repeat" /> {fill(t.refCost, { n: refs, p: Math.round((1 - memoryFactor(refs)) * 100) })}</p>}
             </>
           )}
