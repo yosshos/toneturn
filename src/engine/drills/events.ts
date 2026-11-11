@@ -45,6 +45,14 @@ function secondTag(drill: Drill): Tags[number] | null {
   if (f === 'd-ear') return { skill: 'rhythm-dictation', sub: 'rhythm-dictation/dictate', w: 0.5 };
   // Odd and compound meters (9/8, 7/8, 10/8, 6/8 bembé) feed meter.
   if ((f === 'd-mideast' || f === 'd-latin') && drill.pulse === 8) return { skill: 'meter', sub: drill.meter % 3 === 0 && drill.groups?.every((g) => g === 3) ? 'meter/compound' : 'meter/odd', w: 0.3 };
+  // DRUMS_NICHE_PLAN P1: songs and song forms feed song form (and the steady beat as every groove); prog feeds odd
+  // meters (eighth pulse or changing meters), polyrhythm, else the steady beat; counting feeds meter; notation and
+  // reading feed kit reading.
+  if (f === 'd-form') return { skill: 'form', sub: 'form/song', w: 0.3 };
+  if (f === 'd-song') return { skill: 'timing', sub: 'timing/steady', w: 0.3 };
+  if (f === 'd-prog') return drill.pulse === 8 || drill.meters?.some((m) => m.meter.den === 8) ? { skill: 'meter', sub: 'meter/odd', w: 0.3 } : drill.goal.drum?.poly ? { skill: 'rhythm-dictation', sub: 'rhythm-dictation/poly', w: 0.3 } : { skill: 'timing', sub: 'timing/steady', w: 0.3 };
+  if (f === 'd-count') return { skill: 'meter', sub: drill.notes.length && drill.meters?.some((m) => m.meter.den === 8 && m.meter.num % 3 !== 0) ? 'meter/odd' : drill.pulse === 8 ? 'meter/compound' : 'meter/count', w: 0.4 };
+  if (f === 'd-notation') return { skill: 'rhythm-reading', sub: drill.notes.some((n) => n.voice && n.voice !== 'snare') ? 'rhythm-reading/drums' : 'rhythm-reading/read', w: 0.4 };
   if (f === 'd-rock' || f === 'd-fills' || f === 'd-funk' || f === 'd-shuffle' || f === 'd-indep' || f === 'd-mideast' || f === 'd-feet' || f === 'd-jazz' || f === 'd-latin') return { skill: 'timing', sub: 'timing/steady', w: 0.3 };
   if (f === 'd-read') return { skill: 'rhythm-reading', sub: drill.notes.some((n) => n.voice && n.voice !== 'snare') ? 'rhythm-reading/drums' : 'rhythm-reading/read', w: 0.4 };
   if (f.startsWith('d-')) return { skill: 'timing', sub: 'timing/subdivide', w: 0.3 };

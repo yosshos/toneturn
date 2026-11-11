@@ -303,7 +303,10 @@ export const VOCAL_PROGRAMS: { id: string; base: number; levels: { level: number
  * meters after time 10, riffs and unisons after odd 2, polymeter after odd 4.
  */
 const BASS_NICHE_LATER: Record<string, number> = { 'b-swing': 7, 'b-barry': 10, 'b-jform': 11, 'b-latin': 9, 'b-odd': 10, 'b-prog': 12, 'b-poly': 14 };
-const DRUM_LATER: Record<string, number> = { 'd-funk': 3, 'd-shuffle': 3, 'd-mideast': 3, 'd-indep': 2, 'd-feet': 2, 'd-ear': 1, 'd-jazz': 4, 'd-latin': 4, 'b-posread': 2, 'b-impro': 4, ...BASS_NICHE_LATER };
+const DRUM_LATER: Record<string, number> = { 'd-funk': 3, 'd-shuffle': 3, 'd-mideast': 3, 'd-indep': 2, 'd-feet': 2, 'd-ear': 1, 'd-jazz': 4, 'd-latin': 4, 'b-posread': 2, 'b-impro': 4,
+  // DRUMS_NICHE_PLAN P1: the drum key and counting early, songs once grooves and fills are in, prog after funk, shuffle,
+  // independence and the Middle-Eastern odd meters (plan §5: DRUM_LATER['d-prog'] = 6).
+  'd-notation': 1, 'd-count': 2, 'd-form': 3, 'd-song': 4, 'd-prog': 6, ...BASS_NICHE_LATER };
 /**
  * PIANO_JAZZ: the jazz-piano families come after the lines and voicings they build on — Barry Harris harmony after the
  * Harris lines' block chords, bebop lines after guide tones and the first Harris lines, jazz-piano harmony after the
@@ -859,6 +862,10 @@ export const GAME_STEPS: Record<string, { domain: DomainId; skill: SkillId; sub:
   'rush-fretboard': { domain: 'instrument', skill: 'instrument', sub: 'fretboard', title: { en: 'Fretboard Sprint', he: 'ספרינט צוואר' }, forPlays: ['guitar', 'bass'] },
   peakhunter: { domain: 'instrument', skill: 'timbre', sub: 'eq', title: { en: 'Peak Hunter', he: 'צייד הפיקים' } },
   drills: { domain: 'instrument', skill: 'instrument', sub: 'piano-tech', title: { en: 'Technique drills', he: 'תרגילי טכניקה' }, forPlays: ['keys', 'piano', 'guitar', 'bass'] },
+  // Drum games P1 (DRUMS_NICHE_PLAN §3): measured takes on the kit, in the drums course's instrument units.
+  land: { domain: 'instrument', skill: 'instrument', sub: 'drum-tech', title: { en: 'Land It', he: 'לנחות על 1' }, forPlays: ['drums'] },
+  'groove-echo': { domain: 'instrument', skill: 'instrument', sub: 'drum-tech', title: { en: 'Groove Echo', he: 'הד לגרוב' }, forPlays: ['drums'] },
+  'odd-echo': { domain: 'instrument', skill: 'instrument', sub: 'drum-tech', title: { en: 'Odd-meter Echo', he: 'הד במשקל מוזר' }, forPlays: ['drums'] },
 };
 const AREA_GAMES: Record<DomainId, string[]> = {
   pitch: ['rush-interval', 'rush-chord', 'rush-progression'],
@@ -867,7 +874,7 @@ const AREA_GAMES: Record<DomainId, string[]> = {
   voice: ['flight'],
   reading: ['rush-note', 'rush-keysig'],
   creative: ['rush-chord'],
-  instrument: ['drills', 'rush-fretboard', 'peakhunter'],
+  instrument: ['drills', 'rush-fretboard', 'peakhunter', 'land', 'groove-echo', 'odd-echo'],
 };
 /** The game for a unit's leading area (rotating by unit number; mic / instrument / pack rules apply). */
 export function gameForArea(area: DomainId, n: number, inp: Pick<PathInput, 'noMic' | 'noSing' | 'plays' | 'packs'> & { noDrills?: boolean; course?: CourseId }): string | null {

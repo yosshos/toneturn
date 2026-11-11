@@ -12,6 +12,7 @@ import { UNITS as SOUND } from './mini/sound';
 import { UNITS as CHORDREAD } from './mini/chordread';
 import { UNITS as JAZZ_EAR } from './mini/jazzEar';
 import { UNITS as BASS_NICHE } from './mini/bassNiche';
+import { UNITS as DRUMS } from './mini/drums';
 
 export const UNIT_LESSON: Record<string, string> = {
   // 0.38 (spec AE): each area file maps its own topics.
@@ -26,6 +27,8 @@ export const UNIT_LESSON: Record<string, string> = {
   ...JAZZ_EAR,
   // BASS_NICHE_PLAN: a technique family's first step ("tech:<family>") opens with its quick lesson.
   ...BASS_NICHE,
+  // DRUMS_NICHE_PLAN P1: the drums niche families open with their quick lesson ("tech:<family>").
+  ...DRUMS,
   // Learning path
   'bflat-two-homes': 'bflat-two-homes',
   'degrees-135': 'degrees-135',

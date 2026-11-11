@@ -39,7 +39,9 @@ export type FamilyId =
   // Drums course (docs/research/DRUMS_CURRICULUM.md §4, v1 = F1–F5, F9, F14): pitches are the GM drum notes of the voices.
   | DrumFamilyId;
 
-export type DrumFamilyId = 'd-strokes' | 'd-rolls' | 'd-diddles' | 'd-time' | 'd-rock' | 'd-fills' | 'd-read' | 'd-funk' | 'd-shuffle' | 'd-indep' | 'd-mideast' | 'd-feet' | 'd-ear' | 'd-jazz' | 'd-latin';
+export type DrumFamilyId = 'd-strokes' | 'd-rolls' | 'd-diddles' | 'd-time' | 'd-rock' | 'd-fills' | 'd-read' | 'd-funk' | 'd-shuffle' | 'd-indep' | 'd-mideast' | 'd-feet' | 'd-ear' | 'd-jazz' | 'd-latin'
+  // DRUMS_NICHE_PLAN (P1): songs and song forms, prog / fusion, and reading / theory played on the kit.
+  | 'd-song' | 'd-prog' | 'd-count' | 'd-notation' | 'd-form';
 /** A drum voice (DRUMS_CURRICULUM §3): what a hit is, whatever note the kit sends for it. */
 export type DrumVoice = 'kick' | 'snare' | 'rim' | 'hihat' | 'hhOpen' | 'hhPedal' | 'ride' | 'crash' | 'tom1' | 'tom2' | 'tom3';
 /** The limb that plays a drum note (sticking R / L stays in `hand`; feet are RF / LF). */
@@ -287,6 +289,22 @@ export interface DrumDrillInfo {
   tier: 1 | 2 | 3;
   /** One surface only (snare / pad): the microphone can measure it. Grooves and fills need MIDI. */
   mic: boolean;
+  /** Show the sticking under the staff (tom fills with sticking marks); shown only, never graded. */
+  sticking?: boolean;
+  /** Swung skip notes (written on the triplet) are drawn as straight 8ths under a "Swing" marking. */
+  swing8?: boolean;
+  /**
+   * Road map above the score (drill.form): 'live' lights the current section and cues the next one bar ahead;
+   * 'written' shows the chart's signs (repeats, endings, D.S. al coda) and the bar count only — the player follows them.
+   */
+  roadmap?: 'live' | 'written';
+  /** The written chart for 'written' road maps: one label per written block, in reading order ("‖: Verse", "1.", "D.S. al Coda"). */
+  chartSigns?: string[];
+  /** Tremolo slashes (reading): written as one head with `slashes` strokes over [beat, beat + dur); the notes are the strokes played. */
+  trem?: { beat: number; dur: number; slashes: 1 | 2 | 3 }[];
+  /** Repeat-bar signs (bar indices drawn as %) and multi-bar rests (first bar, number of bars) in the notation. */
+  repeatBars?: number[];
+  mbRests?: { bar: number; n: number }[];
 }
 
 export interface DrillGoal {
@@ -364,6 +382,27 @@ export interface DrumGoal {
   flam?: number;
   /** Swing (jazz ride): the skip note's place inside the beat (0.5 straight … 0.75 dotted) has a median in [lo, hi] and an SD ≤ 0.07. */
   swing?: { lo: number; hi: number };
+  // ---- DRUMS_NICHE_PLAN P1 (d-prog, d-song): the drum rules the prog engine left open ----
+  /**
+   * Linear grooves (d-prog 7): no two limbs together. Two played hits of different drums within `ms` of each other where
+   * the part writes a single note count as a coincidence; their share of the hits must stay ≤ `max` (⚙ 15 ms, 0).
+   */
+  linear?: { ms: number; max: number };
+  /** Accent positions judged on these voices only (an accented hi-hat line over kick and snare: d-prog 2–3). */
+  accentVoices?: DrumVoice[];
+  /**
+   * Polyrhythm between limbs (d-prog 5): the played tempo of lane `a` against lane `b` (median played ÷ written IOI of
+   * each lane) must match within `tol` (the written ratio is built in: 3:2 played as 3:2 gives 1).
+   */
+  poly?: { a: DrumVoice[]; b: DrumVoice[]; tol: number };
+  /**
+   * Songs (d-song, d-form): every section of `drill.form` with ≥ `section` of its notes on time; the fill zones
+   * (beat ranges before section starts) with ≥ `fill` of their notes played; the dynamics arc — the median velocity of
+   * the `hi` beat ranges ≥ `ratio` × that of the `lo` ranges (⚙ 1.15).
+   */
+  song?: { section: number; fills?: [number, number][]; fill?: number; arc?: { lo: [number, number][]; hi: [number, number][]; ratio: number }[]; /** Tempo drift per section (least-squares, sections of ≥ 2 bars) ≤ this (⚙ 0.02). */ drift?: number };
+  /** Metric modulation (d-prog 6, 10): at each change of the tempo map, the played ratio (two bars each side, least squares) within ±tol of the written one. */
+  modulation?: { tol: number };
 }
 
 /** Bass-specific pass rules (BASS_CURRICULUM §4–§5). Absent = the default pitch + timing rule only. */
@@ -594,6 +633,14 @@ export interface DrumMetrics {
   missed: string[];
   /** Acoustic kit by microphone: share of the matched notes whose drum was not told apart (absent otherwise). */
   unsure?: number;
+  /** Linear grooves: coincidences (two limbs together where one note is written) as a share of the hits. */
+  coincide?: number | null;
+  /** Polyrhythm: |played lane ratio ÷ written − 1|. */
+  polyErr?: number | null;
+  /** Songs: per section (play order) the share on time and the median velocity; fill zones played; arc ratios. */
+  song?: { sections: { name: string; hit: number; vel: number | null; /** Played ÷ written tempo (> 1 = rushing). */ tempo?: number }[]; fills: number | null; arc: (number | null)[] };
+  /** Metric modulation: per tempo change, played ratio ÷ written − 1 (> 0 = the new tempo too fast; 9 = not measured). */
+  modErr?: number[];
 }
 
 /** Progress of one item (synced, small). */

@@ -79,9 +79,13 @@ describe('meters', () => {
 describe('the click plan', () => {
   it('old drills: the same clicks as the old DrillTake rule, for every drum and bass / guitar level drill', () => {
     const drills: Drill[] = [
-      ...drumFamilies().flatMap((f) => f.levels.flatMap((lv) => levelDrills(lv, 'fifths-up').slice(0, 2))),
-      ...guitarCatalog().flatMap((f) => f.levels.flatMap((lv) => levelDrills(lv, 'fifths-up').slice(0, 1))),
-      // Levels built on the engine itself (the bass jazz / prog families: meters, tempo maps, forms) are not old drills.
+      // The drums niche families (DRUMS_NICHE_PLAN P1) are built on the timeline on purpose: the old drum families only.
+      ...drumFamilies()
+        .filter((f) => !['d-song', 'd-prog', 'd-count', 'd-notation', 'd-form'].includes(f.id))
+        .flatMap((f) => f.levels.filter((lv) => !(f.id === 'd-jazz' && lv.level >= 9)).flatMap((lv) => levelDrills(lv, 'fifths-up').slice(0, 2))),
+      ...guitarCatalog()
+        .filter((f) => !['d-song', 'd-prog', 'd-count', 'd-notation', 'd-form'].includes(f.id))
+        .flatMap((f) => f.levels.filter((lv) => !(f.id === 'd-jazz' && lv.level >= 9)).flatMap((lv) => levelDrills(lv, 'fifths-up').slice(0, 1))),
     ].filter((d) => !hasTimeline(d));
     expect(drills.length).toBeGreaterThan(200);
     for (const d of drills) {

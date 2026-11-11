@@ -37,6 +37,10 @@ const GAMES: Record<string, { tags: (d: Record<string, unknown>) => Tag[]; diff:
   'rush-interval': { tags: (d) => { const r = rungOf(d); return (r ? (r[0] === 'intervals-all' && r[1] === 3) || (r[0] === 'compound-intervals' && r[1] === 3) : Number(d.level) === 3) ? T('intervals', 'harmonic') : T('intervals', 'melodic'); }, diff: (d) => 950 + 120 * (Number(d.level) || 1) },
   'rush-keysig': { tags: () => T('theory', 'keys'), diff: (d) => 900 + 130 * (Number(d.level) || 1) },
   'rush-progression': { tags: () => T2(['cadences', 'progression', 0.7], ['cadences', 'dictation', 0.3]), diff: (d) => 1050 + 120 * (Number(d.level) || 1) },
+  // Drum games P1 (DRUMS_NICHE_PLAN §3): measured takes on the kit — the drummer's technique, plus time / meter / ear.
+  land: { tags: () => T2(['instrument', 'drum-tech', 0.7], ['timing', 'steady', 0.3]), diff: () => 1000 },
+  'groove-echo': { tags: () => T2(['instrument', 'drum-tech', 0.5], ['rhythm-dictation', 'dictate', 0.5]), diff: () => 1000 },
+  'odd-echo': { tags: () => T2(['instrument', 'drum-tech', 0.5], ['meter', 'odd', 0.5]), diff: () => 1100 },
 };
 
 /** Normalised accuracy 0..1 of a finished game from what it reports. */
