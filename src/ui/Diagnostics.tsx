@@ -10,7 +10,9 @@ import { MicProbe, type ProbeReading } from '../speech/mic';
 import { useNarratorStatus } from './TalkToggle';
 import { getRecognitionCtor, WebSpeechTranscriber } from '../speech/webspeech';
 import type { Settings } from '../storage/progress';
-import { narrator, piano, tts } from './services';
+import { narrator, piano, recordings, tts } from './services';
+import { previewText } from '../speech/voice/preview';
+import { lastVoiceFailure } from '../speech/voice/files';
 import { SoundDiagnostics } from './SoundQuality';
 
 type Status = 'idle' | 'running' | 'ok' | 'fail';
@@ -151,9 +153,17 @@ export function Diagnostics({ t, settings, onBack }: { t: Strings; settings: Set
     tts.unlock();
     const k = narrator.state;
     add(`tts ${l}: ${l === 'he' ? 'Hebrew is read (no voice)' : `Kokoro ${k.state}${k.state === 'downloading' ? ` ${k.pct}%` : ''}${k.rtf ? ` · RTF ${k.rtf.toFixed(2)}` : ''}${k.device ? ` · ${k.device}` : ''}`}`);
+    if (l === 'en') void piano.unlock().catch(() => {});
     tts.force = true;
-    void tts.speak(l === 'he' ? 'סי במול הוא דרגה חמש במי במול מז׳ור' : 'B flat is degree five in E flat major', l, new AbortController().signal);
+    // English: the Settings preview line, which is pre-recorded — this checks the recordings an Android phone plays.
+    const line = l === 'he' ? 'סי במול הוא דרגה חמש במי במול מז׳ור' : previewText('letter');
+    const t0 = performance.now();
+    const done = tts.speak(line, l, new AbortController().signal);
     tts.force = false;
+    if (l === 'en')
+      void done.finally(() =>
+        add(`recordings: ${recordings.loaded ? 'list loaded' : 'list NOT loaded'} · ${recordings.has(line) ? 'line recorded' : 'line not recorded'} · audio ${piano.context?.state ?? 'none'} · ${Math.round(performance.now() - t0)} ms${lastVoiceFailure ? ` · last failure: ${lastVoiceFailure}` : ''}`),
+      );
   };
 
   const report = () =>

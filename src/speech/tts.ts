@@ -10,6 +10,10 @@ import { shown, speakable } from './speakable';
 import { automated, readingMs, talkOn } from './talk';
 import { wantsKokoro } from './kokoro/decide';
 
+/** How long the first English line waits for the list of recordings (a phone on a slow network; 0.66–0.68: 1.5 s,
+ *  after which the line was read instead of played). */
+export const MANIFEST_WAIT_MS = 4000;
+
 /** What the player needs from the narrator engine (KokoroNarrator; a fake in tests). */
 export interface Narrator {
   readonly isReady: boolean;
@@ -82,7 +86,7 @@ export class BrowserPromptPlayer implements PromptPlayer {
   async prepare(lang: 'he' | 'en'): Promise<void> {
     const rec = this.recordings;
     if (!rec || rec.loaded || !this.wanted(lang)) return;
-    await Promise.race([rec.load(), new Promise((r) => setTimeout(r, 1500))]);
+    await Promise.race([rec.load(), new Promise((r) => setTimeout(r, MANIFEST_WAIT_MS))]);
   }
 
   unlock() {
@@ -124,7 +128,7 @@ export class BrowserPromptPlayer implements PromptPlayer {
     // 1. a recording (the manifest is tiny; on the very first line wait for it briefly)
     const rec = this.recordings;
     if (rec) {
-      if (!rec.loaded) await Promise.race([rec.load(), new Promise((r) => setTimeout(r, 1500))]);
+      if (!rec.loaded) await Promise.race([rec.load(), new Promise((r) => setTimeout(r, MANIFEST_WAIT_MS))]);
       for (const v of variant && variant !== raw ? [raw, variant] : [raw]) if (rec.has(v) && (await rec.speak(v, this.rate, signal, shown(raw)))) return;
     }
     // 2. on-device Kokoro, only where it's fast
