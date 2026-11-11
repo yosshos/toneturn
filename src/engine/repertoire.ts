@@ -90,7 +90,9 @@ const stdTitle = (id: string): Bi => {
   const part = s.part.en.startsWith('Whole') ? null : s.part;
   return { en: part ? `${s.name} (${part.en})` : s.name, he: (STD_HE[id] ?? s.name) + (part && !STD_HE[id] ? ` (${part.he})` : '') };
 };
-const b = (en: string, he: string): Bi => ({ en, he });
+/** Hebrew text: chord sequences (I–vi–IV–V, ii–V–I) are isolated left-to-right (and kept unbroken) so the right-to-left line keeps their order. */
+const isolateChords = (he: string) => he.replace(/[A-Za-z0-9♭♯#°ø+]+(?:[–-][A-Za-z0-9♭♯#°ø+]+)+/g, (m) => '⁦' + m.replace(/[–-]/g, (d) => d + '⁠') + '⁩');
+const b = (en: string, he: string): Bi => ({ en, he: isolateChords(he) });
 
 /** A songbook tune (public domain). */
 const S = (id: string, tier: RepTier, teaches: Bi, ways: RepWay[], leads?: RepItem['leads'], extra: Partial<RepItem> = {}): RepItem => ({ id, tier, title: songTitle(id), teaches, ways, legal: 'pd', ref: { kind: 'song', id }, ...(leads ? { leads } : {}), ...extra });
