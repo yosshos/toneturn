@@ -16,6 +16,7 @@ import type { SkillId } from './lesson';
 import type { BassFamilyId, DrumFamilyId, FamilyId } from './drills/types';
 import { guitarCatalog, type GuitarLevelDef } from './drills/guitar';
 import { BASS_SUMMITS } from './drills/bassNiche';
+import { SETLIST } from './drills/bassNiche2';
 import { DOMAINS, PROVISIONAL_UNTIL, SKILLS, type DomainId, type Ratings } from './rating';
 import { SUB_SKILLS, type SubStat } from './taxonomy';
 import { addDays, type Counts, type InputKind, type Peaks, type StatsDays, type StatsHours } from './stats';
@@ -613,6 +614,17 @@ function bassBadges(): Badge[] {
       rule: (x: BadgeInput): BadgeCheck => count(caps.filter((t) => (x.technique?.levels?.[t.fam] ?? 0) >= t.level).length, caps.length),
     });
   }
+  // BASS_NICHE_PLAN J6: the set list — every tier of the standards ladder reached (one step per tier).
+  out.push({
+    id: 'tech:g-bass:setlist',
+    cat: 'technique',
+    icon: '𝄢',
+    group: 'bass-exams',
+    tone: 'platinum',
+    name: { en: SETLIST.title.en, he: SETLIST.title.he },
+    desc: { en: `Every tier of the standards ladder reached (${SETLIST.levels.length}).`, he: `כל הדרגות של סולם הסטנדרטים הושגו (${SETLIST.levels.length}).` },
+    rule: (x: BadgeInput): BadgeCheck => count(x.technique?.levels?.['b-std' as FamilyId] ?? 0, SETLIST.levels.length),
+  });
   return out;
 }
 

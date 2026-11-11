@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { applyTake, itemPass, newItem } from '../src/engine/drills/ladder';
 import { itemTargetBpm, levelDrills, levelOfDrill, levelStars, LOW_B_LEVELS, SIX_STRING_LEVELS, shownFamilies } from '../src/engine/drills/plan';
+import { FRETLESS_LEVELS } from '../src/engine/drills/bassNiche2';
 import { ladderHiddenFor, withLadderFacts, workoutCreditsStep } from '../src/engine/ladderFacts';
 import { eligible, stepCatalogue, type PathFacts } from '../src/engine/path';
 import { guitarCatalog, type GuitarLevelDef } from '../src/engine/drills/guitar';
@@ -402,9 +403,10 @@ describe('N10 low-B levels only with a low B', () => {
   it('left out of the bass path on a 4-string', () => {
     const step = stepCatalogue().find((s) => s.id === 'tech:b-walk-17')!;
     const base = { leaveOut: [], packs: [], plays: ['bass'], track: undefined, course: 'bass', ladderFamilies: ['b-walk'] } as unknown as Parameters<typeof eligible>[1];
-    expect(ladderHiddenFor('bass', 'bass')).toEqual([...LOW_B_LEVELS, ...SIX_STRING_LEVELS]);
-    expect(ladderHiddenFor('bass', 'bass5')).toEqual(SIX_STRING_LEVELS);
-    expect(ladderHiddenFor('bass', 'bass6')).toEqual([]);
+    // BASS_NICHE_PLAN P4: the fretless level is hidden on every fretted bass.
+    expect(ladderHiddenFor('bass', 'bass')).toEqual([...LOW_B_LEVELS, ...SIX_STRING_LEVELS, ...FRETLESS_LEVELS]);
+    expect(ladderHiddenFor('bass', 'bass5')).toEqual([...SIX_STRING_LEVELS, ...FRETLESS_LEVELS]);
+    expect(ladderHiddenFor('bass', 'bass6')).toEqual(FRETLESS_LEVELS);
     expect(eligible(step, { ...base, ladderHidden: ladderHiddenFor('bass', 'bass') })).toBe(false);
     expect(eligible(step, { ...base, ladderHidden: ladderHiddenFor('bass', 'bass5') })).toBe(eligible(step, base));
   });

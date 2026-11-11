@@ -120,6 +120,12 @@ export const NO_REFERENCE: Record<string, string> = {
   'sec-dominants-c': 'secondary dominants study',
   'modal-a': 'two-mode practice form',
   'dorian-vamp': 'two-chord vamp',
+  // BASS_NICHE_PLAN J6: practice forms written for the standards ladder (no tune's changes).
+  'fast-aaba-cycle': 'up-tempo AABA practice form',
+  'bebop-form': 'bebop practice form on secondary dominants',
+  'coltrane-subs': 'Coltrane substitution study',
+  'ballad-cliche': 'minor ballad practice form',
+  'ballad-backcycle': 'ballad back-cycling study',
 };
 
 export const referenceOf = (id: string | undefined | null): StandardRef | null => (id ? REFERENCES[id] ?? null : null);

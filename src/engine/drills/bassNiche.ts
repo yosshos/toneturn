@@ -37,6 +37,8 @@ export const BASS_TRACK: Partial<Record<BassFamilyId, 'jazz' | 'prog'>> = {
   'b-odd': 'prog',
   'b-prog': 'prog',
   'b-poly': 'prog',
+  // P2: the standards ladder is jazz; extended techniques (b-ext) stay on both tracks (fusion is both).
+  'b-std': 'jazz',
 };
 /** Is a bass family shown for the player's track (absent / 'both' = every family)? */
 export const inBassTrack = (family: string, track?: 'jazz' | 'prog' | 'both'): boolean => !track || track === 'both' || !BASS_TRACK[family as BassFamilyId] || BASS_TRACK[family as BassFamilyId] === track;
@@ -64,7 +66,7 @@ export function improvCaptureOpts(s: { activeCourse?: string; instrument?: strin
 // ───────────────────────────── chords and lines ─────────────────────────────
 
 /** A chord of a line: root pitch class, chord tones and scale (intervals above the root), length, name, landing set. */
-interface LC {
+export interface LC {
   root: number;
   ct: number[];
   sc: number[];
@@ -72,7 +74,7 @@ interface LC {
   name: string;
   land?: number[];
 }
-const SC: Record<string, number[]> = {
+export const SC: Record<string, number[]> = {
   ion: [0, 2, 4, 5, 7, 9, 11],
   lyd: [0, 2, 4, 6, 7, 9, 11],
   mix: [0, 2, 4, 5, 7, 9, 10],
@@ -86,7 +88,7 @@ const SC: Record<string, number[]> = {
   wt: [0, 2, 4, 6, 8, 10],
 };
 /** The chord scale a chord's tones imply (major 7 → Ionian, 7 → Mixolydian or altered, m7 → Dorian, …). */
-function scaleOf(ct: number[]): number[] {
+export function scaleOf(ct: number[]): number[] {
   const h = (x: number) => ct.includes(x);
   let s: number[];
   if (h(3) && h(6) && h(9)) s = SC.dim;
@@ -102,17 +104,17 @@ function scaleOf(ct: number[]): number[] {
 }
 const QSC: Partial<Record<Q, number[]>> = { M: SC.ion, m: SC.aeo, '7': SC.mix, m7: SC.dor, maj7: SC.ion, m7b5: SC.loc, dim7: SC.dim };
 /** Chords from scale-step chords in a key (one chord per `beats`). */
-function lcOf(key: number, prog: Prog, beats = 4): LC[] {
+export function lcOf(key: number, prog: Prog, beats = 4): LC[] {
   return prog.map((c) => ({ root: pc(key + c[0]), ct: QI[c[1]].map(pc), sc: QSC[c[1]] ?? scaleOf(QI[c[1]]), beats, name: chordName(key, c) }));
 }
 /** Chords from a chart text (standards, charts with slash chords and alterations). */
-function lcText(text: string): LC[] {
+export function lcText(text: string): LC[] {
   return parseChart(text).chords.map((c) => {
     const ct = uniq([0, pc(c.bass - c.root), ...c.iv.map(pc)]);
     return { root: pc(c.root), ct, sc: scaleOf(ct), beats: c.beats, name: c.sym };
   });
 }
-const textOfLc = (cs: LC[]): string => {
+export const textOfLc = (cs: LC[]): string => {
   // One bar per 4 beats (two 2-beat chords share a bar).
   const bars: string[] = [];
   let cur: string[] = [];
@@ -129,7 +131,7 @@ const textOfLc = (cs: LC[]): string => {
   return bars.join(' | ');
 };
 /** The chart shown above the notes: one string per bar. */
-function chartLc(cs: LC[], beatsPerBar = 4): string[] {
+export function chartLc(cs: LC[], beatsPerBar = 4): string[] {
   const bars: string[] = [];
   let at = 0;
   for (const c of cs) {
@@ -141,7 +143,7 @@ function chartLc(cs: LC[], beatsPerBar = 4): string[] {
   return bars.map((x) => x ?? '%');
 }
 /** The rule chart of a line: chord tones for walk / downbeatCt, the chord scale (+ landings) for target. */
-function rulesFor(cs: LC[], kind: Rules['kind'], extra: Partial<Rules> = {}): Rules {
+export function rulesFor(cs: LC[], kind: Rules['kind'], extra: Partial<Rules> = {}): Rules {
   return {
     kind,
     chart: cs.map((c) => ({ chord: c.name, root: c.root, tones: kind === 'target' ? uniq([...c.sc, ...c.ct]) : c.ct, beats: c.beats, ...(c.land ? { land: c.land } : {}) })),
@@ -150,11 +152,11 @@ function rulesFor(cs: LC[], kind: Rules['kind'], extra: Partial<Rules> = {}): Ru
   };
 }
 /** Guide tones (3rd and 7th; a 6th chord's 6th) of a chord as intervals. */
-const guideOf = (c: LC): number[] => {
+export const guideOf = (c: LC): number[] => {
   const g = c.ct.filter((x) => x === 3 || x === 4 || x === 10 || x === 11 || (x === 9 && !c.ct.includes(10) && !c.ct.includes(11)));
   return g.length ? g : c.ct;
 };
-const pitchesIn = (root: number, ints: number[], lo: number, hi: number): number[] => {
+export const pitchesIn = (root: number, ints: number[], lo: number, hi: number): number[] => {
   const out: number[] = [];
   for (let p = lo; p <= hi; p++) if (ints.includes(pc(p - root))) out.push(p);
   return out;
@@ -166,7 +168,7 @@ const pitchesIn = (root: number, ints: number[], lo: number, hi: number): number
  * a whole step of the next note. `guide`: the first note of each chord is its 3rd or 7th. `enclose`: the last two
  * 8ths before a change enclose the next target (a scale tone above, the half step below). Ends on the first chord.
  */
-function ctLine(cs: LC[], rnd: () => number, o: { per: 1 | 2; every: number; lo: number; hi: number; from?: number; guide?: boolean; enclose?: boolean; b0?: number }): BN[] {
+export function ctLine(cs: LC[], rnd: () => number, o: { per: 1 | 2; every: number; lo: number; hi: number; from?: number; guide?: boolean; enclose?: boolean; b0?: number }): BN[] {
   const starts: number[] = [];
   let total = 0;
   for (const c of cs) {
@@ -256,7 +258,7 @@ function twoFeel(tu: Tuning, cs: LC[], b0 = 0): BN[] {
   return out;
 }
 /** The band's walking line for chords (refWalk), from beat b0. */
-const walkOf = (tu: Tuning, cs: LC[], seed: string, b0 = 0): BN[] => refWalk(tu, textOfLc(cs), seed, false).map((x) => ({ ...x, b: x.b + b0 }));
+export const walkOf = (tu: Tuning, cs: LC[], seed: string, b0 = 0): BN[] => refWalk(tu, textOfLc(cs), seed, false).map((x) => ({ ...x, b: x.b + b0 }));
 /**
  * A walking line from chord tones (for charts the band's walker doesn't voice by the rules, e.g. passing diminished
  * chords): each chord's root, two more of its chord tones moving up or down, and on the last beat a chromatic
@@ -280,8 +282,8 @@ function ctWalk(tu: Tuning, cs: LC[]): BN[] {
   });
   return out;
 }
-const repeatLc = (cs: LC[], n: number): LC[] => Array.from({ length: n }, () => cs).flat();
-const closeOn = (tu: Tuning, pcRoot: number, at: number, d = 2): BN => ({ b: at, d, p: rootOf(tu, pcRoot), ct: true });
+export const repeatLc = (cs: LC[], n: number): LC[] => Array.from({ length: n }, () => cs).flat();
+export const closeOn = (tu: Tuning, pcRoot: number, at: number, d = 2): BN => ({ b: at, d, p: rootOf(tu, pcRoot), ct: true });
 
 // ───────────────────────────── J1: b-swing — swing time ─────────────────────────────
 
@@ -335,8 +337,8 @@ function genSwing(s: DrillSpec, tu: Tuning): Drill {
   }
   throw new Error(`Unknown b-swing kind ${s.kind}`);
 }
-const transposeLc = (c: LC, by: number): LC => ({ ...c, root: pc(c.root + by), name: transposeName(c.name, by) });
-const transposeName = (sym: string, by: number): string => {
+export const transposeLc = (c: LC, by: number): LC => ({ ...c, root: pc(c.root + by), name: transposeName(c.name, by) });
+export const transposeName = (sym: string, by: number): string => {
   const m = /^([A-G][b#♭♯]?)(.*)$/.exec(sym);
   if (!m) return sym;
   const L: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };

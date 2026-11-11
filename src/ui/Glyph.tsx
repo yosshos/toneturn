@@ -554,6 +554,26 @@ export const GLYPHS: Record<string, ReactNode> = {
       <path d="M-24 12 L-14 2 L-4 12 L6 2 L16 12 L24 6" />
     </g>
   ),
+  // BASS_NICHE_PLAN (P2): the standards ladder and extended techniques.
+  /** Standards ladder: a set list — a page of tune lines, the top ones ticked. */
+  setlist: (
+    <g {...sw} strokeWidth={2.6} strokeLinejoin="round">
+      <rect x={-18} y={-24} width={36} height={48} rx={3} />
+      <path d="M-11 -12 L-7 -8 L-1 -16" />
+      <path d="M3 -12 H12" />
+      <path d="M-11 0 L-7 4 L-1 -4" />
+      <path d="M3 0 H12" />
+      <path d="M-10 12 H12" />
+    </g>
+  ),
+  /** Extended techniques: a string with a harmonic node (diamond) above it. */
+  harmonics: (
+    <g {...sw} strokeWidth={2.8} strokeLinejoin="round">
+      <path d="M-26 10 H26" />
+      <path d="M0 -20 L9 -9 L0 2 L-9 -9 Z" fill={I} />
+      <path d="M-26 10 Q-13 2 0 10 T26 10" strokeWidth={2} />
+    </g>
+  ),
   // PIANO_AUDIT: the keys path's own symbols.
   /** Touch and control: a crescendo hairpin. */
   hairpin: <path d="M22 -13 L-22 0 L22 13" {...sw} strokeWidth={3.2} strokeLinejoin="round" />,

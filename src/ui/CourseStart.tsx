@@ -63,9 +63,14 @@ function Head({ lang, onBack, step, of }: { lang: Lang; onBack: () => void; step
 }
 
 /** Step 1: what this course gets you, the ladder, and "Where are you?". */
-export function CourseWelcome({ course, lang, report, onReport, onBack }: { course: CourseId; lang: Lang; report?: SelfReport; onReport: (r: SelfReport) => void; onBack: () => void }) {
+/** BASS_NICHE_PLAN X2: the bass player's direction — it opens the jazz or the prog families on the path (both = all). */
+export type BassTrack = 'jazz' | 'prog' | 'both';
+const TRACK_T: Record<BassTrack, T2> = { both: { en: 'Both', he: 'שניהם' }, jazz: { en: 'Jazz', he: 'ג׳אז' }, prog: { en: 'Prog / fusion', he: 'פרוג / פיוז׳ן' } };
+
+export function CourseWelcome({ course, lang, report, onReport, onBack, track, onTrack }: { course: CourseId; lang: Lang; report?: SelfReport; onReport: (r: SelfReport) => void; onBack: () => void; /** Bass: the chosen direction (absent = both). */ track?: BassTrack; onTrack?: (t: BassTrack) => void }) {
   const def = courseOf(course);
   const [picked, setPicked] = useState<SelfReport | null>(report ?? null);
+  const [tr, setTr] = useState<BassTrack>(track ?? 'both');
   return (
     <main className="onboarding cs-screen cs-welcome" data-course-start="welcome" data-cs-course={course}>
       <Head lang={lang} onBack={onBack} step={0} of={3} />
@@ -76,6 +81,28 @@ export function CourseWelcome({ course, lang, report, onReport, onBack }: { cour
       </div>
       <h1>{L(lang, PROMISE[course])}</h1>
       <Ladder course={course} lang={lang} />
+      {course === 'bass' && onTrack && (
+        <div className="cs-track" data-cs-track={tr}>
+          <span>{lang === 'he' ? 'הכיוון שלכם' : 'Your direction'}</span>
+          <div className="chips" role="radiogroup" aria-label={lang === 'he' ? 'הכיוון שלכם' : 'Your direction'}>
+            {(['both', 'jazz', 'prog'] as const).map((v) => (
+              <button
+                key={v}
+                role="radio"
+                aria-checked={tr === v}
+                className={`chip ${tr === v ? 'on' : ''}`}
+                data-cs-track-pick={v}
+                onClick={() => {
+                  setTr(v);
+                  onTrack(v);
+                }}
+              >
+                {L(lang, TRACK_T[v])}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       <h2 className="cs-q">{lang === 'he' ? 'איפה אתם?' : 'Where are you?'}</h2>
       <div className="ob-choices" role="radiogroup">
         {reportOptions(course, lang).map((o) => (

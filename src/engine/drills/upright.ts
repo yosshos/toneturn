@@ -10,6 +10,7 @@ import type { BassGoal, Drill, DrillSpec } from './types';
 import { noteAt, type Tuning } from '../fretboard';
 import { guitarItemId, mod, modeInts, rng, SIG, windowScale } from './guitar';
 import { drillOf, genRead, genWalk, rootOf, spell, type BN } from './bass';
+import { generateUprightNiche, UP_WALK_NICHE } from './bassNiche2';
 
 /** EN / HE pair (local: bass.ts helpers can't run at module load). */
 const tt = (en: string, he: string) => ({ en, he });
@@ -236,6 +237,8 @@ export function generateUpright(s: DrillSpec, tu: Tuning): Drill {
       return withCents(d, 15, { lengths: true, loudSd: 3 });
     }
     case 'b-up-walk': {
+      // BASS_NICHE_PLAN J7: levels 6–9 (standards, up-tempo, thumb-position solo, arco head) are built in bassNiche2.ts.
+      if (UP_WALK_NICHE.includes(s.kind)) return generateUprightNiche(s, tu);
       // F9 on the upright: the same walking levels, with intonation and pizz.
       const d = genWalk({ ...s, family: 'b-walk' }, tu);
       return withCents({ ...d, spec: { ...d.spec, family: s.family }, itemId: guitarItemId(s), bow: 'pizz' }, 15);

@@ -20,6 +20,7 @@ import { STANDARD_CHANGES } from '../standards';
 import { generateBassEar } from './bassEar';
 import { generateUpright } from './upright';
 import { generateBassNiche, IMPRO_NICHE, improNicheLevels, jazzFamilies, NICHE_EXAM, progFamilies } from './bassNiche';
+import { extFamily, fusionLevels, generateBassNiche2, IMPRO_FUSION, NICHE2_EXAM, PICK_NICHE, pickTopLevels, standardsFamily, uprightTopLevels, WALK_NICHE, waltzLevels } from './bassNiche2';
 import type { LevelExamTag } from './types';
 
 export const tt = (en: string, he: string): T2 => ({ en, he });
@@ -191,7 +192,7 @@ export const PROGS: Record<string, Prog> = {
 };
 export const BLUES: Prog = [0, 5, 0, 0, 5, 5, 0, 0, 7, 5, 0, 7].map((d): [number, Q] => [d, '7']);
 /** Final bass check: descriptive standards' names in Hebrew (tune titles stay as they are). */
-const STD_NAME_HE: Record<string, string> = {
+export const STD_NAME_HE: Record<string, string> = {
   'Backdoor ii–V study in G': 'אטיוד ii–V אחורי ב־G',
   'Ballad turnarounds in E♭': 'טרנאראונדים של בלדה ב־E♭',
   'Basic 12-bar blues in G': 'בלוז בסיסי של 12 תיבות ב־G',
@@ -211,6 +212,12 @@ const STD_NAME_HE: Record<string, string> = {
   'Two-mode form in A (dorian, lydian)': 'צורה בשני מודוסים ב־A (דורי, לידי)',
   'ii–V–I through all twelve keys': 'ii–V–I בכל שנים־עשר הסולמות',
   'Chameleon (vamp)': 'Chameleon (וואמפ)',
+  // BASS_NICHE_PLAN J6: the standards ladder's practice forms.
+  'Up-tempo AABA with a ii–V cycle bridge': 'AABA מהיר עם גשר במעגל ii–V',
+  'Bebop form on I–VI7–II7–V7 changes': 'צורת ביבופ על I–VI7–II7–V7',
+  'Coltrane substitutions on a ii–V–I': 'תחליפי קולטריין על ii–V–I',
+  'Minor ballad with a line cliché': 'בלדה מינורית עם קו כרומטי יורד',
+  'Ballad with back-cycling dominants': 'בלדה עם דומיננטות במעגל לאחור',
 };
 /** Final bass check: note names spelled for the key — sharps in G D A E B F♯ (C♯m, not D♭m, in E major), flats elsewhere. */
 const SHARP_NAMES = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
@@ -1188,7 +1195,7 @@ export function rulesOf(key: number, prog: Prog, kind: 'walk' | 'chordTones' | '
   return { kind, chart, ...(kind === 'walk' ? { maxRepeat: 0.05 } : {}), ...(kind === 'nearest' ? { maxMove: 4 } : {}) };
 }
 /** The same from a chart text (standards): one entry per chord as written. */
-function rulesFromText(text: string, kind: 'walk' | 'chordTones' | 'nearest'): NonNullable<BassGoal['rules']> {
+export function rulesFromText(text: string, kind: 'walk' | 'chordTones' | 'nearest'): NonNullable<BassGoal['rules']> {
   const p = parseChart(text);
   const chart: RuleChart = p.chords.map((c) => ({ chord: c.sym, root: mod(c.root, 12), tones: Array.from(new Set([0, mod(c.bass - c.root, 12), ...c.iv.map((x) => mod(x, 12))])), beats: c.beats })); // intervals above the root
   return { kind, chart, ...(kind === 'walk' ? { maxRepeat: 0.05 } : {}) };
@@ -1196,8 +1203,8 @@ function rulesFromText(text: string, kind: 'walk' | 'chordTones' | 'nearest'): N
 /** B13: the root in the low register of a 5- / 6-string or drop-D bass (from its lowest string); null on a plain 4-string. */
 const lowRoot = (tu: Tuning, pc: number): number | null => (lowest(tu) < 28 ? lowest(tu) + mod(pc - lowest(tu), 12) : null);
 
-type Feel = 'walk' | 'two' | 'bossa' | 'ballad';
-const FEEL_T: Record<Feel, T2> = { walk: tt('walking in 4', 'ווקינג בארבע'), two: tt('two-feel', 'בתחושה של שתיים'), bossa: tt('bossa pattern', 'תבנית בוסה'), ballad: tt('ballad in 2', 'בלדה בשתיים') };
+export type Feel = 'walk' | 'two' | 'bossa' | 'ballad';
+export const FEEL_T: Record<Feel, T2> = { walk: tt('walking in 4', 'ווקינג בארבע'), two: tt('two-feel', 'בתחושה של שתיים'), bossa: tt('bossa pattern', 'תבנית בוסה'), ballad: tt('ballad in 2', 'בלדה בשתיים') };
 /**
  * B13 / B18: standards for the walking levels — the changes from standards.ts (chord progressions only), each with the
  * tune's real key and the bass feel it calls for. The first four keep their option numbers (walk L11).
@@ -1251,7 +1258,7 @@ export function bassStandardSpec(id: string): { option: number; perBeat: number 
 /** Options of BASS_STD by feel (catalogue). */
 const stdOps = (pred: (f: Feel, i: number) => boolean): number[] => BASS_STD.map((x, i) => (pred(x.feel, i) ? i : -1)).filter((i) => i >= 0);
 /** A bass line for a chart in a feel: walking (the band's rules), two-feel / ballad halves, or the bossa figure. */
-function feelLine(tu: Tuning, text: string, feel: Feel, seed: string): BN[] {
+export function feelLine(tu: Tuning, text: string, feel: Feel, seed: string): BN[] {
   if (feel === 'walk') return refWalk(tu, text, seed, false);
   const p = parseChart(text);
   const out: BN[] = [];
@@ -2409,7 +2416,8 @@ export function generateBass(s: DrillSpec, tu: Tuning): Drill {
     case 'b-scale':
       return genScale(s, tu);
     case 'b-walk':
-      return genWalk(s, tu);
+      // BASS_NICHE_PLAN J5: jazz-waltz walking (bassNiche2.ts).
+      return WALK_NICHE.includes(s.kind) ? generateBassNiche2(s, tu) : genWalk(s, tu);
     case 'b-slap': {
       // Slap / pop class is advice only (A13); the ghost hits of the ghost-slap pattern are classified (A3).
       const d = genSlap(s, tu);
@@ -2427,7 +2435,7 @@ export function generateBass(s: DrillSpec, tu: Tuning): Drill {
     case 'b-legato':
       return genLegatoB(s, tu);
     case 'b-pick':
-      return genPick(s, tu);
+      return PICK_NICHE.includes(s.kind) ? generateBassNiche2(s, tu) : genPick(s, tu);
     case 'b-read':
       return s.kind === 'session' ? genSession(s, tu) : genRead(s, tu);
     case 'b-styles':
@@ -2435,7 +2443,7 @@ export function generateBass(s: DrillSpec, tu: Tuning): Drill {
     case 'b-posread':
       return genPosRead(s, tu);
     case 'b-impro':
-      return IMPRO_NICHE.includes(s.kind) ? generateBassNiche(s, tu) : genImproB(s, tu);
+      return IMPRO_NICHE.includes(s.kind) ? generateBassNiche(s, tu) : IMPRO_FUSION.includes(s.kind) ? generateBassNiche2(s, tu) : genImproB(s, tu);
     // BASS_NICHE_PLAN P1: the jazz and prog families (bassNiche.ts).
     case 'b-swing':
     case 'b-barry':
@@ -2445,6 +2453,10 @@ export function generateBass(s: DrillSpec, tu: Tuning): Drill {
     case 'b-prog':
     case 'b-poly':
       return generateBassNiche(s, tu);
+    // BASS_NICHE_PLAN P2: the standards ladder and extended techniques (bassNiche2.ts).
+    case 'b-std':
+    case 'b-ext':
+      return generateBassNiche2(s, tu);
   }
   throw new Error(`Not a bass family: ${s.family}`);
 }
@@ -2570,6 +2582,9 @@ export function bassFamilies(): GuitarFamilyDef[] {
       L('b-ear', 17, 'Play back 4 bars of walking', 'לנגן בחזרה 4 תיבות של ווקינג', [EA('transcribe-long', { perBeat: 1 })], K6, [80, 140], Qn),
       L('b-ear', 18, 'Play back 8 bars, or a bebop phrase', 'לנגן בחזרה 8 תיבות, או משפט ביבופ', [EA('transcribe-long', { perBeat: 1, option: 1 }), EA('transcribe-long', { option: 2 })], K6, [80, 120], 'quarters / 8ths'),
       L('b-ear', 19, 'Play back a 7/8 riff or a tumbao', 'לנגן בחזרה ריף ב־7/8 או טומבאו', [EA('riff-ear', { tempo: 160 }), EA('riff-ear', { option: 1 })], [4, 9, 2, 7], [70, 100], '8ths'),
+      // BASS_NICHE_PLAN E5: meter by ear — the groove's grouping, the new beat after a metric modulation.
+      L('b-ear', 20, 'Hear the grouping: roots on the group starts', 'לשמוע את החלוקה: יסודות בתחילת כל קבוצה', [EA('groups-ear'), EA('groups-ear', { option: 1 })], [4, 9, 2, 7], [160, 220], '8ths (♪ = beat)'),
+      L('b-ear', 21, 'Hear a metric modulation: play the new beat', 'לשמוע מודולציה מטרית: לנגן את הפעמה החדשה', [EA('mod-ear', { perBeat: 1 }), EA('mod-ear', { perBeat: 1, option: 1 })], [4, 9, 2, 7], [70, 100], 'quarters'),
     ]),
     fam('b-scale', 'Scales and modes', 'סולמות ומודוסים', [
       L('b-scale', 1, 'Minor and major pentatonic', 'פנטטוני מינור ומז׳ור', [SC('scale', { option: 8 }), SC('scale', { option: 9 })], K6, [70, 110], E8),
@@ -2677,6 +2692,8 @@ export function bassFamilies(): GuitarFamilyDef[] {
       L('b-walk', 16, 'Sight-read and improvise the walk', 'קריאה ממבט ראשון ואלתור ווקינג', [WK('sight-impro', { perBeat: 1 }), WK('sight-impro', { perBeat: 1, option: 1 })], 'major', [90, 160], Qn),
       L('b-walk', 17, 'Walking in the low register (low B)', 'ווקינג באזור הנמוך (B נמוך)', [WK('lowb', { perBeat: 1 })], 'major', [90, 150], Qn),
       L('b-walk', 18, 'Standards III: forms, cycles and Coltrane changes', 'סטנדרטים 3: צורות, מעגלים ושינויי קולטריין', BASS_STD.map((x, i) => (i >= STD_FIRST ? WK('standard', { perBeat: x.feel === 'walk' ? 1 : 0.5, option: i }) : null)).filter((x): x is NonNullable<typeof x> => x !== null), [0], [90, 180], 'quarters / halves'),
+      // BASS_NICHE_PLAN J5: walking in 3/4 (a jazz waltz, the blues waltz).
+      ...waltzLevels(L),
     ]),
     // 0.66: fills and short solos that land on chord tones — a ladder up to the walk family's two-chorus blues solo.
     fam('b-impro', 'Fills and target notes', 'מילויים וצלילי מטרה', [
@@ -2689,9 +2706,13 @@ export function bassFamilies(): GuitarFamilyDef[] {
       L('b-impro', 6, 'ii–V–I: guide tones on the changes', 'ii–V–I: צלילים מנחים בחילופים', [IM('iivi-guide', { swing: true }), IM('iivi-guide', { option: 1, swing: true })], 'major', [80, 140], 'swung 8ths'),
       // BASS_NICHE_PLAN J3: bebop and chord-scale solos, up to a chorus on a standard and trading 4s.
       ...improNicheLevels(L),
+      // BASS_NICHE_PLAN P5: fusion harmony lines in 16ths.
+      ...fusionLevels(L),
     ]),
     // The jazz track (BASS_NICHE_PLAN J1, J2, J4, L1): opens with a jazz or both track.
     ...jazzFamilies(L, fam),
+    // BASS_NICHE_PLAN J6: the graded standards ladder (jazz track).
+    standardsFamily(L, fam),
     fam('b-legato', 'Slides, legato, harmonics', 'החלקות, לגאטו והרמוניקים', [
       L('b-legato', 1, 'Slides into notes', 'החלקות אל הצלילים', [LG('slide')], K6, [70, 110], E8),
       L('b-legato', 2, 'Hammer-on and pull-off pairs', 'זוגות הקשה ומשיכה', [LG('hp')], K6, [60, 100], E8),
@@ -2701,6 +2722,8 @@ export function bassFamilies(): GuitarFamilyDef[] {
       L('b-legato', 6, 'Vibrato on long notes', 'ויברטו על צלילים ארוכים', [LG('vib', { perBeat: 0.5 })], K4, [60, 60], 'halves'),
       L('b-legato', 7, 'Pedal tones', 'צלילי עוגב', [LG('pedal', { perBeat: 4 })], K4, [80, 120], S16),
     ]),
+    // BASS_NICHE_PLAN P4: extended techniques (harmonics, tapping, double-stops, comping, fretless).
+    extFamily(L, fam),
     fam('b-pick', 'Pick technique', 'נגינה במפרט', [
       L('b-pick', 1, 'Down-stroke 8ths', 'שמיניות במכות למטה', [PI('down8')], ANY, [80, 150], E8),
       L('b-pick', 2, 'Alternate picking in 16ths', 'פריטה מתחלפת בשש-עשריות', [PI('alt16', { perBeat: 4 })], ANY, [70, 120], S16),
@@ -2711,6 +2734,8 @@ export function bassFamilies(): GuitarFamilyDef[] {
       L('b-pick', 6, 'String skipping with the pick', 'דילוג מיתרים במפרט', [PI('pskip')], K6, [70, 120], E8),
       L('b-pick', 7, 'Economy strokes across the strings', 'מכות חסכוניות לרוחב המיתרים', [PI('psweep')], K6, [70, 120], E8),
       L('b-pick', 8, 'Inside and outside picking in 16ths', 'פריטה פנימית וחיצונית בשש-עשריות', [PI('pinout', { perBeat: 4, minor: true }), PI('pinout', { perBeat: 4, minor: true, option: 1 })], K4, [60, 100], S16),
+      // BASS_NICHE_PLAN P6: the rock stamina top.
+      ...pickTopLevels(L),
     ]),
     // The prog track (BASS_NICHE_PLAN P1, P2, P3): opens with a prog or both track.
     ...progFamilies(L, fam),
@@ -2728,7 +2753,7 @@ export function bassFamilies(): GuitarFamilyDef[] {
     ...uprightFamilies(L, fam),
   ];
   // B14: exam / bagrut mapping per level (BASS_AUDIT §3), shown on the level card and used by the badges.
-  for (const f of fams) for (const l of f.levels) if (EXAM[l.id] || NICHE_EXAM[l.id]) l.exam = (EXAM[l.id] ?? (NICHE_EXAM[l.id] as [LevelExamTag['board'], string][])).map(([board, grade]) => ({ board, grade }));
+  for (const f of fams) for (const l of f.levels) if (EXAM[l.id] || NICHE_EXAM[l.id] || NICHE2_EXAM[l.id]) l.exam = (EXAM[l.id] ?? ((NICHE_EXAM[l.id] ?? NICHE2_EXAM[l.id]) as [LevelExamTag['board'], string][])).map(([board, grade]) => ({ board, grade }));
   return fams;
 }
 
@@ -2879,6 +2904,8 @@ function uprightFamilies(L: LFn, fam: FamFn): GuitarFamilyDef[] {
       L('b-up-walk', 3, 'Arpeggio walk', 'הליכת ארפג׳יו', [WU('arpwalk', { perBeat: 1 })], [5, 10, 7, 0], [90, 150], Qn),
       L('b-up-walk', 4, 'Chromatic approach', 'גישה כרומטית', [WU('chrom', { perBeat: 1 })], 'major', [90, 150], Qn),
       L('b-up-walk', 5, 'Free walking (blues)', 'ווקינג חופשי (בלוז)', [WU('free', { perBeat: 1 })], [5, 10, 7, 0], [100, 160], Qn),
+      // BASS_NICHE_PLAN J7: the upright jazz top (standards in tune, up-tempo pizz, a thumb-position solo, an arco head).
+      ...uprightTopLevels(L),
     ]),
     fam('b-up-read', 'Upright: reading by position', 'קונטרבס: קריאה לפי מצבים', [
       L('b-up-read', 1, 'First position melodies', 'מנגינות במצב ראשון', [RU('melody'), RU('melody', { minor: true })], [0, 7, 5], [50, 72], E8),

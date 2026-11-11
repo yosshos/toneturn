@@ -81,6 +81,9 @@ export type BassFamilyId =
   | 'b-odd'
   | 'b-prog'
   | 'b-poly'
+  // BASS_NICHE_PLAN P2: the graded standards ladder (jazz track) and extended techniques (both tracks).
+  | 'b-std'
+  | 'b-ext'
   // 0.64 (track B): the bass-ear family F15 and the upright / double-bass track (BASS_CURRICULUM §5, §5.1).
   | 'b-ear'
   | 'b-up-pos'

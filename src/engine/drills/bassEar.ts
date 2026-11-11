@@ -11,7 +11,7 @@ import type { Drill, DrillSpec, TakeMetrics } from './types';
 import type { Tuning } from '../fretboard';
 import { rng, mod } from './guitar';
 import { alt, chartOf, drillOf, fold, PROGS, QI, rootOf, spell, textOf, type BN, type Prog, type Q } from './bass';
-import { withBarPlan } from './timeline';
+import { MODULATIONS, withBarPlan } from './timeline';
 import { barryLine } from '../barry';
 type T2l = { en: string; he: string };
 
@@ -48,6 +48,8 @@ const ASK: Record<string, { en: string; he: string }> = {
   dropin: tt('The band starts somewhere in the blues — play the next four roots', 'הלהקה מתחילה איפשהו בבלוז — נגנו את ארבעת היסודות הבאים'),
   bridge: tt('Hear a whole chorus — then play the bridge’s roots', 'שמעו סבב שלם — ואז נגנו את היסודות של הגשר'),
   'riff-ear': tt('Hear a two-bar riff — play it back', 'שמעו ריף של שתי תיבות — נגנו אותו בחזרה'),
+  'groups-ear': tt('Hear the groove’s accents — play a root on each group start', 'שמעו את ההדגשות של הגרוב — נגנו יסוד בתחילת כל קבוצה'),
+  'mod-ear': tt('Hear the beat change — play quarters on the new beat', 'שמעו את הפעמה משתנה — נגנו רבעים בפעמה החדשה'),
 };
 
 /** Build a b-ear drill. */
@@ -365,6 +367,51 @@ export function generateBassEar(s: DrillSpec, tu: Tuning): Drill {
         band(r * 16, r * 16 + 8);
       }
       return finishEar(s, tu, line, notes, windows, 'riff-ear', { en: 'Play back a tumbao', he: 'לנגן בחזרה טומבאו' });
+    }
+    case 'groups-ear': {
+      // E5 (meter by ear): the drums play two bars of an odd-meter groove (kick on 1, snare on the other group starts,
+      // hats on every 8th); then a root on each group start for two bars. Two rounds, each grouping drawn by the seed:
+      // op 0 7/8 (2+2+3, 3+2+2, 2+3+2), op 1 9/8 (2+2+2+3, 3+3+3). The click is off and the count-in ungrouped.
+      const num = op % 2 ? 9 : 7;
+      const GS = num === 7 ? [[2, 2, 3], [3, 2, 2], [2, 3, 2]] : [[2, 2, 2, 3], [3, 3, 3]];
+      const R = rootOf(tu, key);
+      const flat = `${num}/8 ${Array.from({ length: num }, () => 1).join('+')}`;
+      const plan: string[] = [];
+      let last = -1;
+      for (let r = 0; r < 2; r++) {
+        let gi = Math.floor(rnd() * GS.length);
+        if (gi === last) gi = (gi + 1) % GS.length;
+        last = gi;
+        const g = GS[gi];
+        const starts = g.map((_, i) => g.slice(0, i).reduce((a, b) => a + b, 0));
+        const b0 = r * 4 * num;
+        for (let bar = 0; bar < 2; bar++)
+          for (let i = 0; i < num; i++) {
+            const at = b0 + bar * num + i;
+            notes.push({ beat: at, dur: 0.2, midi: [42], perc: 'hat' });
+            if (i === 0) notes.push({ beat: at, dur: 0.3, midi: [36], perc: 'kick' });
+            else if (starts.includes(i)) notes.push({ beat: at, dur: 0.3, midi: [38], perc: 'snare' });
+          }
+        band(b0, b0 + 2 * num);
+        for (let bar = 2; bar < 4; bar++) starts.forEach((st, i) => line.push({ b: b0 + bar * num + st, d: g[i], p: R, acc: i === 0 }));
+        plan.push(flat, flat, `${num}/8 ${g.join('+')}`, `${num}/8 ${g.join('+')}`);
+      }
+      const d0 = drillOf(s, tu, alt(line), { en: num === 7 ? 'Hear the grouping of a 7/8 groove' : 'Hear the grouping of a 9/8 groove', he: num === 7 ? 'לשמוע את החלוקה של גרוב ב־7/8' : 'לשמוע את החלוקה של גרוב ב־9/8', meter: num, pulse: 8, show: 'none', evenness: false, click: 'gap', listen: { notes, windows, ask: ASK['groups-ear'] } });
+      return { ...withBarPlan(d0, plan), gap: [0, 1] };
+    }
+    case 'mod-ear': {
+      // E5: two bars of quarters (kick and hats), a bar of the pivot rhythm (accented: triplet quarters, op 0, or
+      // dotted 8ths, op 1); from the next bar that note value is the beat — play two bars of roots on it, alone.
+      const trip = op % 2 === 0;
+      const ratio = trip ? MODULATIONS.tripletQuarterToQuarter : MODULATIONS.dottedEighthToQuarter;
+      const R = rootOf(tu, key);
+      for (let b = 0; b < 8; b++) notes.push({ beat: b, dur: 0.2, midi: [42], perc: 'hat' }, ...(b % 4 === 0 ? [{ beat: b, dur: 0.3, midi: [36], perc: 'kick' as const }] : []));
+      const piv = trip ? [0, 2 / 3, 4 / 3, 2, 8 / 3, 10 / 3] : [0, 0.75, 1.5, 2.25, 3, 3.75];
+      for (const x of piv) notes.push({ beat: 8 + x, dur: 0.2, midi: [37], perc: 'rim', vel: 0.7 }, { beat: 8 + x, dur: 0.3, midi: [R + 12], inst: 'bass' });
+      band(0, 12);
+      for (let b = 0; b < 8; b++) line.push({ b: 12 + b, d: 1, p: b % 4 === 0 ? R : trip ? (b % 2 ? R + 7 : R + 12) : b % 2 ? R + 10 : R + 7, acc: b % 4 === 0 });
+      const d0 = drillOf(s, tu, alt(line), { en: trip ? 'Metric modulation by ear: the triplet quarter becomes the beat' : 'Metric modulation by ear: the dotted 8th becomes the beat', he: trip ? 'מודולציה מטרית בשמיעה: רבע הטריולה נעשה הפעמה' : 'מודולציה מטרית בשמיעה: השמינית המנוקדת נעשית הפעמה', show: 'none', evenness: false, click: 'gap', listen: { notes, windows, ask: ASK['mod-ear'] } });
+      return { ...withBarPlan(d0, [['4/4', 5]], [{ bar: 3, ratio }]), gap: [0, 1] };
     }
     case 'slash': {
       // Inversions and slash bass by ear: piano chords over their bass notes (C – G/B – Am – C/G …), then play the bass line.

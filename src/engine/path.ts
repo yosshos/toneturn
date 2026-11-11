@@ -306,7 +306,9 @@ export const VOCAL_PROGRAMS: { id: string; refs: number[]; title: { en: string; 
  * on): swing time after walk 7, Barry Harris after walk 9 and impro 6, form after walk 11, Latin from styles 9; odd
  * meters after time 10, riffs and unisons after odd 2, polymeter after odd 4.
  */
-const BASS_NICHE_LATER: Record<string, number> = { 'b-swing': 7, 'b-barry': 10, 'b-jform': 11, 'b-latin': 9, 'b-odd': 10, 'b-prog': 12, 'b-poly': 14 };
+const BASS_NICHE_LATER: Record<string, number> = { 'b-swing': 7, 'b-barry': 10, 'b-jform': 11, 'b-latin': 9, 'b-odd': 10, 'b-prog': 12, 'b-poly': 14,
+  // P2: the standards ladder after walk 11 (the first standards), extended techniques after legato 5 (harmonics).
+  'b-std': 11, 'b-ext': 5 };
 const DRUM_LATER: Record<string, number> = { 'd-funk': 3, 'd-shuffle': 3, 'd-mideast': 3, 'd-indep': 2, 'd-feet': 2, 'd-ear': 1, 'd-jazz': 4, 'd-latin': 4, 'b-posread': 2, 'b-impro': 4,
   // DRUMS_NICHE_PLAN P1: the drum key and counting early, songs once grooves and fills are in, prog after funk, shuffle,
   // independence and the Middle-Eastern odd meters (plan §5: DRUM_LATER['d-prog'] = 6).

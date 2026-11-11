@@ -8,7 +8,7 @@ import { analyzeGuitarTake, type GFrame } from '../src/engine/drills/guitarAnaly
 import { expTimeMs } from '../src/engine/drills/analyze';
 import type { Drill, PlayedNote } from '../src/engine/drills/types';
 
-const ORDER = ['b-pluck', 'b-time', 'b-fret', 'b-chord', 'b-ear', 'b-scale', 'b-length', 'b-pocket', 'b-read', 'b-posread', 'b-styles', 'b-ghost', 'b-walk', 'b-impro', 'b-swing', 'b-barry', 'b-jform', 'b-latin', 'b-legato', 'b-pick', 'b-odd', 'b-prog', 'b-poly', 'b-slap', 'b-up-pos', 'b-up-arco', 'b-up-scales', 'b-up-pizz', 'b-up-walk', 'b-up-read'];
+const ORDER = ['b-pluck', 'b-time', 'b-fret', 'b-chord', 'b-ear', 'b-scale', 'b-length', 'b-pocket', 'b-read', 'b-posread', 'b-styles', 'b-ghost', 'b-walk', 'b-impro', 'b-swing', 'b-barry', 'b-jform', 'b-latin', 'b-std', 'b-legato', 'b-ext', 'b-pick', 'b-odd', 'b-prog', 'b-poly', 'b-slap', 'b-up-pos', 'b-up-arco', 'b-up-scales', 'b-up-pizz', 'b-up-walk', 'b-up-read'];
 const BASS = guitarCatalog().filter((f) => f.id.startsWith('b-'));
 const TUNE_IDS = ['bass', 'bass5', 'bass6', 'bass-dropd'];
 
@@ -57,7 +57,8 @@ describe('bass course families', () => {
                 expect(n.fret, where).toBeGreaterThanOrEqual(0);
                 expect(n.fret, where).toBeLessThanOrEqual(24);
                 expect(n.pitch, where).toBeGreaterThanOrEqual(tu.open[tu.open.length - 1]);
-                expect(n.pitch, where).toBeLessThanOrEqual(tu.open[0] + 24);
+                // Harmonics (b-ext 1–2) sound above the fretted range: the 4th and 3rd fret partials.
+                if (n.technique !== 'harmonic') expect(n.pitch, where).toBeLessThanOrEqual(tu.open[0] + 24);
                 expect(n.beat, where).toBeGreaterThanOrEqual(0);
                 expect(n.dur, where).toBeGreaterThan(0);
                 if (n.technique !== 'harmonic') expect(n.pitch, where).toBe(tu.open[n.string! - 1] + n.fret!);
@@ -79,9 +80,9 @@ describe('bass course families', () => {
     // A genre filter keeps every family; only the style levels of other genres drop out.
     const rock = shownFamilies({ emphasis: 'both', instrument: 'bass', guitarStyle: 'rock' });
     expect(rock.find((f) => f.id === 'b-styles')!.levels.every((l) => (l as GuitarLevelDef).genres?.some((g) => g === 'rock' || g === 'all'))).toBe(true);
-    // 18 walking levels; the low-B one (L17) only on a bass with a low B (N10).
-    expect(shownFamilies({ emphasis: 'both', instrument: 'bass', guitarStyle: 'rock', bassTuning: 'bass5' }).find((f) => f.id === 'b-walk')!.levels.length).toBe(18);
-    expect(rock.find((f) => f.id === 'b-walk')!.levels.length).toBe(17);
+    // 20 walking levels (19–20 the jazz waltz, BASS_NICHE_PLAN J5); the low-B one (L17) only on a bass with a low B (N10).
+    expect(shownFamilies({ emphasis: 'both', instrument: 'bass', guitarStyle: 'rock', bassTuning: 'bass5' }).find((f) => f.id === 'b-walk')!.levels.length).toBe(20);
+    expect(rock.find((f) => f.id === 'b-walk')!.levels.length).toBe(19);
   });
 
   it('the tuning only moves notes: item ids ignore it, withBassTuning rebuilds on the player\'s bass', () => {
