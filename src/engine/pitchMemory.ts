@@ -10,6 +10,29 @@ export interface MemoryEntry {
   cents: number;
   /** The target pitch class, 0–11 (9 = A). */
   note: number;
+  /** ff (0.75): a second note, a named interval above, also from memory — its own error. `cents` is then the larger
+   *  of the two errors (signed), so the day's window holds both notes. */
+  second?: { note: number; cents: number; semis: number; first: number };
+}
+
+// ---------------------------------------------------------------- ff: two notes (0.75)
+export const DAY_INTERVALS: { semis: number; en: string; he: string }[] = [
+  { semis: 3, en: 'a minor 3rd up', he: 'טרצה קטנה למעלה' },
+  { semis: 4, en: 'a major 3rd up', he: 'טרצה גדולה למעלה' },
+  { semis: 5, en: 'a perfect 4th up', he: 'קוורטה זכה למעלה' },
+  { semis: 6, en: 'a tritone up', he: 'טריטון למעלה' },
+  { semis: 7, en: 'a perfect 5th up', he: 'קווינטה זכה למעלה' },
+  { semis: 8, en: 'a minor 6th up', he: 'סקסטה קטנה למעלה' },
+  { semis: 9, en: 'a major 6th up', he: 'סקסטה גדולה למעלה' },
+  { semis: 10, en: 'a minor 7th up', he: 'ספטימה קטנה למעלה' },
+];
+const dayHash = (day: string, salt: number) => [...day].reduce((a, c) => (Math.imul(a, 31) + c.charCodeAt(0)) >>> 0, salt);
+/** The interval of the day (the same all day). */
+export const dayInterval = (day: string) => DAY_INTERVALS[dayHash(day, 13) % DAY_INTERVALS.length];
+/** A two-note entry: both errors kept, `cents` = the larger one (signed). */
+export function twoNoteEntry(day: string, note: number, c1: number, semis: number, c2: number): MemoryEntry {
+  const n2 = (note + semis) % 12;
+  return { day, note, cents: Math.abs(c2) > Math.abs(c1) ? c2 : c1, second: { note: n2, cents: c2, semis, first: c1 } };
 }
 
 export const DEFAULT_NOTE = 9;

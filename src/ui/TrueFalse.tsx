@@ -170,7 +170,7 @@ export function TrueFalseScreen({
   const savedSolo = loadSlot<SoloSave>(TF_SOLO);
   if (run !== null)
     return mode === 'solo' ? (
-      <SoloRun key={run} t={t} settings={settings} topics={tierInfo && tierDef('truefalse', tier)?.params?.jazz && topics.length && !topics.includes('jazz') ? [...topics, 'jazz'] : topics} level={level} tier={tierInfo ? tier : undefined} best={progress.tfBest?.[bestKey] ?? 0} bestKey={bestKey} resume={resume ? savedSolo?.data : undefined} onProgress={onProgress} onExit={() => setRun(null)} onAgain={() => (setResume(false), setRun((r) => (r ?? 0) + 1))} />
+      <SoloRun key={run} t={t} settings={settings} topics={tierInfo && tierDef('truefalse', tier)?.params?.jazz && topics.length && !topics.includes('jazz') ? [...topics, 'jazz'] : topics} level={level} tier={tierInfo ? tier : undefined} perMs={tierInfo ? Number(tierDef('truefalse', tier)?.params?.perMs ?? 0) || undefined : undefined} best={progress.tfBest?.[bestKey] ?? 0} bestKey={bestKey} resume={resume ? savedSolo?.data : undefined} onProgress={onProgress} onExit={() => setRun(null)} onAgain={() => (setResume(false), setRun((r) => (r ?? 0) + 1))} />
     ) : (
       <DuelRun key={run} t={t} settings={settings} topics={topics} level={level} onExit={() => setRun(null)} onAgain={() => setRun((r) => (r ?? 0) + 1)} />
     );
@@ -229,7 +229,7 @@ export function TrueFalseScreen({
   );
 }
 
-function SoloRun({ t, settings, topics, level, tier, best, bestKey, resume, onProgress, onExit, onAgain }: { t: Strings; settings: Settings; topics: FactTopic[]; level: FactLevel; tier?: DynName; best: number; bestKey: string; resume?: SoloSave; onProgress: (p: Progress) => void; onExit: () => void; onAgain: () => void }) {
+function SoloRun({ t, settings, topics, level, tier, perMs, best, bestKey, resume, onProgress, onExit, onAgain }: { t: Strings; settings: Settings; topics: FactTopic[]; level: FactLevel; tier?: DynName; /** ff (0.75): seconds per statement — an unanswered one counts as a miss. */ perMs?: number; best: number; bestKey: string; resume?: SoloSave; onProgress: (p: Progress) => void; onExit: () => void; onAgain: () => void }) {
   const lang = settings.uiLang;
   const nm = namingFor(settings.naming, lang);
   const seed = useMemo(() => resume?.seed ?? (Date.now() ^ (Math.random() * 1e9)) >>> 0, [resume]);
@@ -302,6 +302,16 @@ function SoloRun({ t, settings, topics, level, tier, best, bestKey, resume, onPr
     }, pause);
   };
 
+  // ff: each statement has its own clock (from when it shows; the pause after an answer is not counted).
+  const shownAt = useRef(performance.now());
+  useEffect(() => {
+    shownAt.current = performance.now();
+  }, [n]);
+  const stLeft = perMs ? Math.max(0, perMs - (now - shownAt.current)) : null;
+  useEffect(() => {
+    if (stLeft === 0 && !flash && !over && left > 0) answer(!fact.truth);
+  });
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 't') answer(true);
@@ -348,6 +358,11 @@ function SoloRun({ t, settings, topics, level, tier, best, bestKey, resume, onPr
       <div className="time-bar" aria-hidden="true">
         <span style={{ width: `${Math.min(100, (left / TF_RUN_MS) * 100)}%` }} />
       </div>
+      {perMs && stLeft !== null && (
+        <div className="time-bar tf-per" aria-hidden="true" data-tf-per>
+          <span style={{ width: `${flash ? 0 : Math.min(100, (stLeft / perMs) * 100)}%` }} />
+        </div>
+      )}
       <Statement fact={fact} n={n} nm={nm} lang={lang} />
       <p className="tf-ask">{fact.trio ? t.tfAskTrio : t.tfAsk}</p>
       {flash && !flash.ok && <Why fact={fact} t={t} lang={lang} />}

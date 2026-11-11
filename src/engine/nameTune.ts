@@ -51,6 +51,18 @@ export function makeRounds(seed: number, songs: readonly SongOpening[], n = ROUN
   });
 }
 
+/**
+ * 0.75 (tier f): `n` notes of an opening from note `from` (0 = the start). With `mid`, the start moves 1–3 notes into
+ * the phrase (seeded by the round: the same each replay), never so far that fewer than `n` notes are left.
+ */
+export function openingSlice(s: SongOpening, n: number, mid = false, salt = 0): SongOpening {
+  const len = s.beats.length;
+  const take = n > 0 ? Math.min(n, len) : len;
+  const room = Math.max(0, len - take);
+  const from = mid && room > 0 ? 1 + (Math.abs(salt) % Math.min(3, room)) : 0;
+  return { ...s, degrees: s.degrees.slice(from, from + take), beats: s.beats.slice(from, from + take), ...(s.semis ? { semis: s.semis.slice(from, from + take) } : {}) };
+}
+
 /** The opening as note events at `bpm` (beats from the song). */
 export function songEvents(s: SongOpening, tonic: number, bpm = 108): { events: NoteEvent[]; length: number } {
   const beat = 60 / bpm;

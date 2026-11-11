@@ -5,8 +5,14 @@
 
 import { fxSpec, needsHeadphones, type FxFilter, type FxSource, type FxSpec } from './fx';
 
-export type PeakLevel = 1 | 2 | 3;
-export const PEAK_LEVELS: readonly PeakLevel[] = [1, 2, 3];
+/** 4 (0.75, the ff tier): third-octave neighbours on a full mix, narrow and subtle, and the amount (+3 / +6 / +9 dB). */
+export type PeakLevel = 1 | 2 | 3 | 4;
+export const PEAK_LEVELS: readonly PeakLevel[] = [1, 2, 3, 4];
+/** Level 4: the boosts to tell apart. */
+export const AMOUNTS = [3, 6, 9] as const;
+/** Level 4: a wrong amount keeps this share of the round's points. */
+export const AMOUNT_MISS = 0.6;
+export const asksAmount = (l: PeakLevel) => l === 4;
 export const PEAK_ROUNDS = 10;
 /** Points for a round inside the full-credit zone. */
 export const PEAK_MAX_POINTS = 100;
@@ -57,7 +63,7 @@ export function rng(seed: number): () => number {
 const pick = <T>(rnd: () => number, list: readonly T[]): T => list[Math.floor(rnd() * list.length)];
 
 /** Allowed answers on this level (null = free slider). */
-export const bandsOf = (level: PeakLevel): readonly number[] | null => (level === 1 ? OCTAVE_BANDS : level === 2 ? THIRD_BANDS : null);
+export const bandsOf = (level: PeakLevel): readonly number[] | null => (level === 1 ? OCTAVE_BANDS : level === 2 || level === 4 ? THIRD_BANDS : null);
 
 /** The ten rounds of a game. Consecutive rounds never repeat a band (and free rounds sit ≥ ½ octave apart). */
 export function makeRounds(seed: number, level: PeakLevel, n = PEAK_ROUNDS): PeakRound[] {
@@ -71,14 +77,15 @@ export function makeRounds(seed: number, level: PeakLevel, n = PEAK_ROUNDS): Pea
       freq = bands ? pick(rnd, bands) : Math.round(PEAK_MIN_HZ * 2 ** (rnd() * Math.log2(PEAK_MAX_HZ / PEAK_MIN_HZ)));
       if (prev === undefined || (bands ? freq !== prev : octavesBetween(freq, prev) >= 0.5)) break;
     }
-    const source: PeakRound['source'] = level === 3 ? 'loop' : level === 2 ? pick(rnd, ['pink', 'loop', 'drums'] as const) : pick(rnd, ['pink', 'pink', 'drums'] as const);
+    const source: PeakRound['source'] = level >= 3 ? 'loop' : level === 2 ? pick(rnd, ['pink', 'loop', 'drums'] as const) : pick(rnd, ['pink', 'pink', 'drums'] as const);
     const r: PeakRound = {
       level,
       source,
       seed: Math.floor(rnd() * 2 ** 31),
       freq,
-      gain: level === 3 ? 6 : level === 2 ? pick(rnd, [9, 12]) : 12,
-      q: level === 1 ? 1.4 : level === 2 ? 2.5 : 1.8,
+      gain: level === 4 ? pick(rnd, AMOUNTS) : level === 3 ? 6 : level === 2 ? pick(rnd, [9, 12]) : 12,
+      // level 4: a third-octave-wide bell (Q ≈ 4.3), so the neighbours really are different
+      q: level === 1 ? 1.4 : level === 2 ? 2.5 : level === 4 ? 4.3 : 1.8,
     };
     if (source !== 'pink') r.bpm = 96 + Math.floor(rnd() * 5) * 6;
     out.push(r);
@@ -160,6 +167,9 @@ export interface PeakAnswer {
   guess: number;
   points: number;
   octaves: number;
+  /** Level 4: the amount picked (dB) and whether it was right. */
+  amount?: number;
+  amountOk?: boolean;
 }
 
 export interface PeakSave {
@@ -190,10 +200,12 @@ export function isPeakSave(x: unknown): x is PeakSave {
 export const newSave = (seed: number, level: PeakLevel): PeakSave => ({ v: 1, kind: 'peakhunter', seed, level, answers: [] });
 
 /** Record the guess for the current round. */
-export function answer(save: PeakSave, rounds: readonly PeakRound[], guessHz: number): { save: PeakSave; result: PeakAnswer } {
+export function answer(save: PeakSave, rounds: readonly PeakRound[], guessHz: number, amountDb?: number): { save: PeakSave; result: PeakAnswer } {
   const r = rounds[save.answers.length];
   const g = snapHz(guessHz, save.level);
-  const result: PeakAnswer = { guess: g, points: pointsFor(g, r.freq), octaves: Math.round(octavesBetween(g, r.freq) * 1000) / 1000 };
+  const pts = pointsFor(g, r.freq);
+  const amt = asksAmount(save.level) && typeof amountDb === 'number' ? { amount: amountDb, amountOk: amountDb === r.gain } : null;
+  const result: PeakAnswer = { guess: g, points: amt && !amt.amountOk ? Math.round(pts * AMOUNT_MISS) : pts, octaves: Math.round(octavesBetween(g, r.freq) * 1000) / 1000, ...(amt ?? {}) };
   return { save: { ...save, answers: [...save.answers, result] }, result };
 }
 
@@ -202,3 +214,8 @@ export const meanOctavesOf = (answers: readonly PeakAnswer[]): number =>
   answers.length ? Math.round((answers.reduce((s, a) => s + a.octaves, 0) / answers.length) * 1000) / 1000 : 0;
 
 export const isBest = (score: number, best: number | undefined): boolean => score > 0 && score > (best ?? 0);
+/** Level 4: share of rounds with the right amount, 0..1 (null when no round asked for it). */
+export function amountShareOf(answers: readonly PeakAnswer[]): number | null {
+  const xs = answers.filter((a) => typeof a.amountOk === 'boolean');
+  return xs.length ? Math.round((xs.filter((a) => a.amountOk).length / xs.length) * 100) / 100 : null;
+}

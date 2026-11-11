@@ -86,6 +86,12 @@ TOPIC_GEN['interval-cells'] = {
         const [x, y] = c.split(',').map(Number);
         if (x !== 0 && y !== 0 && y !== -x) set.add(c);
       }
+      // top up (rare): moves a little further off, then any cell sharing a move
+      for (let t = 0; set.size < 8 && t < 200; t++) {
+        const x = t < 100 ? near(a, (t % 2 ? 1 : -1) * (3 + (t % 3))) ?? a : step();
+        const y = t < 100 ? b : step();
+        if (x !== 0 && y !== 0 && y !== -x) set.add(cellKey(x, y));
+      }
       const choices = shuffleR(rnd, [...set]);
       const base = 60 + Math.floor(rnd() * 7);
       for (const c of choices) {

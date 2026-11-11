@@ -221,7 +221,8 @@ export const GAME_TIERS: Record<string, GameTierSpec> = {
       mp: { label: L('Five and six notes', 'חמישה ושישה צלילים'), levels: [4, 5], target: 85 },
       mf: { label: L('Minor', 'מינור'), levels: [6, 6], target: 85 },
       f: { label: L('Chromatic notes', 'צלילים כרומטיים'), levels: [7, 7], target: 85 },
-      ff: { label: L('Eight notes, chromatic', 'שמונה צלילים, כרומטי'), levels: [8, 8], target: 85, todo: 'chromatic jazz lines (enclosures, bebop passing tones), bass clef' },
+      // 0.75: then jazz lines (melodyPuzzle.ts level 9: enclosures, bebop passing tones, half in the bass register)
+      ff: { label: L('Eight notes, then jazz lines: enclosures, bebop', 'שמונה צלילים, ואז קווי ג׳אז: עטיפות, ביבופ'), levels: [8, 9], target: 85 },
     },
   },
   flight: {
@@ -234,7 +235,8 @@ export const GAME_TIERS: Record<string, GameTierSpec> = {
       mp: { label: L('Leaps', 'קפיצות'), levels: [2], target: 30 },
       mf: { label: L('Leaps, longer flight', 'קפיצות, טיסה ארוכה'), levels: [2], target: 40 },
       f: { label: L('Chromatic', 'כרומטי'), levels: [3], target: 30 },
-      ff: { label: L('Chromatic, longer flight', 'כרומטי, טיסה ארוכה'), levels: [3], target: 45, todo: 'drone off (tonic once), 25 ¢ gates, jazz degrees over a sounding chord' },
+      // 0.75: flight.ts level 4 — the chord sounds once (no drone), ±25 ¢ gates on 9 ♯11 13 ♭7
+      ff: { label: L('No drone, 25 ¢ gates, jazz degrees', 'בלי בורדון, שערים של 25 ¢, דרגות ג׳אז'), levels: [4], target: 30 },
     },
   },
   nametune: {
@@ -246,7 +248,8 @@ export const GAME_TIERS: Record<string, GameTierSpec> = {
       p: { label: L('More folk songs and spirituals, six notes', 'עוד שירי עם וספיריטואלס, שישה צלילים'), params: { notes: 6 }, target: 85 },
       mp: { label: L('Classical themes, five notes', 'נושאים קלאסיים, חמישה צלילים'), params: { notes: 5 }, target: 85 },
       mf: { label: L('Ragtime, Foster, waltzes, four notes', 'רגטיים, פוסטר, ואלסים, ארבעה צלילים'), params: { notes: 4 }, target: 85 },
-      f: { label: L('Everything, in minor, four notes', 'הכול, במינור, ארבעה צלילים'), params: { notes: 4, minor: true }, target: 80, todo: 'started mid-phrase' },
+      // 0.75: started mid-phrase (nameTune.ts openingSlice)
+      f: { label: L('Everything, in minor, four notes from mid-phrase', 'הכול, במינור, ארבעה צלילים מאמצע המשפט'), params: { notes: 4, minor: true, mid: true }, target: 80 },
       ff: { label: L('Everything, three notes (next: Name That Standard)', 'הכול, שלושה צלילים (הבא: זהו את הסטנדרט)'), params: { notes: 3 }, target: 90 },
     },
   },
@@ -260,7 +263,8 @@ export const GAME_TIERS: Record<string, GameTierSpec> = {
       mp: { label: L('Medium', 'בינוני'), levels: [2], target: 12 },
       mf: { label: L('Medium, faster', 'בינוני, מהר יותר'), levels: [2], target: 16 },
       f: { label: L('Modes, harmony, jazz', 'מודוסים, הרמוניה, ג׳אז'), levels: [3], target: 12 },
-      ff: { label: L('Hard + jazz harmony: upper structures, chord-scales, Barry Harris', 'קשה + הרמוניית ג׳אז: מבנים עליונים, סולמות־אקורד, בארי האריס'), levels: [3], params: { jazz: true }, target: 16, todo: '5 s per statement' },
+      // 0.75: 5 s per statement (TrueFalse.tsx perMs) — an unanswered one counts as a miss
+      ff: { label: L('Hard + jazz harmony, 5 s a statement', 'קשה + הרמוניית ג׳אז, 5 שניות לטענה'), levels: [3], params: { jazz: true, perMs: 5000 }, target: 16 },
     },
   },
   peakhunter: {
@@ -273,7 +277,8 @@ export const GAME_TIERS: Record<string, GameTierSpec> = {
       mp: { label: L('Octave bands', 'פסי אוקטבה'), levels: [2], target: 75 },
       mf: { label: L('Octave bands, closer', 'פסי אוקטבה, מדויק יותר'), levels: [2], target: 85 },
       f: { label: L('Narrow bands', 'פסים צרים'), levels: [3], target: 75 },
-      ff: { label: L('Narrow bands, closer', 'פסים צרים, מדויק יותר'), levels: [3], target: 85, todo: 'third-octave neighbours, the amount (eq-ear 5–7) on a full mix' },
+      // 0.75: peakHunter.ts level 4 — third-octave neighbours on a full mix, and the amount (+3 / +6 / +9 dB)
+      ff: { label: L('Third-octave neighbours and the amount, full mix', 'שכנים בשליש אוקטבה והכמות, מיקס מלא'), levels: [4], target: 85 },
     },
   },
   tuneup: {
@@ -286,7 +291,8 @@ export const GAME_TIERS: Record<string, GameTierSpec> = {
       mp: { label: L('15–25 cents', '15–25 סנט'), params: { lo: 15, hi: 25 }, target: 85 },
       mf: { label: L('10–15 cents', '10–15 סנט'), params: { lo: 10, hi: 15 }, target: 85 },
       f: { label: L('6–10 cents', '6–10 סנט'), params: { lo: 6, hi: 10 }, target: 88 },
-      ff: { label: L('4–6 cents', '4–6 סנט'), params: { lo: 4, hi: 6 }, target: 90, todo: 'tune a string to a sounding chord (no unison reference)' },
+      // 0.75: against a sounding chord, no unison reference (tuneUp.ts chordRound)
+      ff: { label: L('4–6 cents, against a sounding chord', '4–6 סנט, מול אקורד שמצלצל'), params: { lo: 4, hi: 6, chord: true }, target: 90 },
     },
   },
   pitchmemory: {
@@ -299,7 +305,8 @@ export const GAME_TIERS: Record<string, GameTierSpec> = {
       mp: { label: L('Within 50 cents', 'עד 50 סנט'), params: { cents: 50 } },
       mf: { label: L('Within 35 cents', 'עד 35 סנט'), params: { cents: 35 } },
       f: { label: L('Within 25 cents', 'עד 25 סנט'), params: { cents: 25 } },
-      ff: { label: L('Within 15 cents', 'עד 15 סנט'), params: { cents: 15 }, todo: 'two notes (a named interval from memory)' },
+      // 0.75: two notes — the note of the day, then a named interval above it, both from memory (both within 15 ¢)
+      ff: { label: L('Two notes: a named interval, within 15 cents', 'שני צלילים: מרווח בשמו, עד 15 סנט'), params: { cents: 15, two: true } },
     },
   },
   groove: {
@@ -312,7 +319,8 @@ export const GAME_TIERS: Record<string, GameTierSpec> = {
       mp: { label: L('4 silent bars', '4 תיבות שקטות'), params: { bars: 4, bpm: 90 }, target: 85 },
       mf: { label: L('4 bars at 60', '4 תיבות ב־60'), params: { bars: 4, bpm: 60 }, target: 85 },
       f: { label: L('8 bars', '8 תיבות'), params: { bars: 8, bpm: 90 }, target: 85 },
-      ff: { label: L('8 bars, slow', '8 תיבות, לאט'), params: { bars: 8, bpm: 60 }, target: 85, todo: 'odd meter / a tempo change to hold; pocket vs a pushing band; match a played swing feel' },
+      // 0.75: four parts (grooveTier.ts GROOVE_FF_PARTS): 8 slow bars, 7/8 fade, lay back vs a pushing band, swing match
+      ff: { label: L('8 bars slow; 7/8, lay back, swing match', '8 תיבות לאט; 7/8, להישען, סווינג תואם'), params: { bars: 8, bpm: 60 }, target: 85 },
       // 0.70: the level test (GrooveTrainer 'Level test' tab) scores accuracy 0..100; cleared at 85.
     },
   },
@@ -715,7 +723,9 @@ export function clearsRun(game: string, tier: DynName, score: number, detail: un
       }
       if (game === 'peakhunter') {
         const oct = num(d, 'meanOctaves');
-        return oct !== null && 1 - oct >= target / 100;
+        // ff (0.75) also asks the amount: 7 of 10 right
+        const amt = num(d, 'amount');
+        return oct !== null && 1 - oct >= target / 100 && (amt === null || amt >= 0.7);
       }
       return runAccuracy(score, d) >= target / 100;
     }

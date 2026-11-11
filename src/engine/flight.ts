@@ -3,7 +3,8 @@
 // leaps, 3 = chromatic. The course is generated from a seed (deterministic), so a checkpoint (every 10
 // gates) is enough to resume after Back / reload. Pure: no browser APIs.
 
-export type FlightLevel = 1 | 2 | 3;
+/** 4 (0.75, the ff tier): no drone (the chord sounds once), ±25 ¢ gates on jazz degrees (lydian dominant). */
+export type FlightLevel = 1 | 2 | 3 | 4;
 
 export interface FlightRange {
   /** MIDI, lowest comfortable note. */
@@ -67,11 +68,16 @@ export const CHECKPOINT_EVERY = 10;
 /** Gates per level before the course moves to the next level. */
 export const GATES_PER_LEVEL = 30;
 
-export const LEVELS: Record<FlightLevel, { half: number; speed: number; chromatic: boolean }> = {
+export const LEVELS: Record<FlightLevel, { half: number; speed: number; chromatic: boolean; jazz?: boolean }> = {
   1: { half: 1.5, speed: 110, chromatic: false },
   2: { half: 0.9, speed: 125, chromatic: false },
   3: { half: 0.65, speed: 135, chromatic: true },
+  4: { half: 0.25, speed: 125, chromatic: false, jazz: true },
 };
+/** Level 4 has no drone: the chord sounds once at the start (and after a pause). */
+export const droneless = (l: FlightLevel) => l === 4;
+/** Jazz degrees of level 4: 1 3 5 ♭7 with 9, ♯11, 13 (lydian dominant). */
+const JAZZ_DEG = [0, 2, 4, 6, 7, 9, 10];
 /** Reduced motion: a slower course (spec §10.4). */
 export const CALM_SPEED = 0.75;
 
@@ -89,7 +95,7 @@ export function rng(seed: number): () => number {
   };
 }
 
-export const levelAt = (start: FlightLevel, i: number): FlightLevel => Math.min(3, start + Math.floor(i / GATES_PER_LEVEL)) as FlightLevel;
+export const levelAt = (start: FlightLevel, i: number): FlightLevel => (start >= 4 ? 4 : (Math.min(3, start + Math.floor(i / GATES_PER_LEVEL)) as FlightLevel));
 
 /** The label inside a gap: the degree ("5") or a chromatic degree ("♭3"). */
 export const gateLabel = (g: Gate): string => CHROMA[((g.semis % 12) + 12) % 12];
@@ -131,11 +137,11 @@ export function makeCourse(seed: number, startLevel: FlightLevel, range: FlightR
 }
 
 /** Notes the gates may sit on (inside the comfortable range). */
-function pool(c: Course, chromatic: boolean): number[] {
+function pool(c: Course, chromatic: boolean, jazz = false): number[] {
   const out: number[] = [];
   for (let m = c.range.low; m <= c.range.high; m++) {
     const s = (((m - c.tonic) % 12) + 12) % 12;
-    if (chromatic || MAJOR.includes(s)) out.push(m);
+    if (chromatic || (jazz ? JAZZ_DEG : MAJOR).includes(s)) out.push(m);
   }
   return out;
 }
@@ -146,7 +152,7 @@ export function ensureGates(c: Course, n: number): Gate[] {
     const i = c.gates.length;
     const level = levelAt(c.startLevel, i);
     const cfg = LEVELS[level];
-    const notes = pool(c, cfg.chromatic);
+    const notes = pool(c, cfg.chromatic, !!cfg.jazz);
     const r = rng((c.seed ^ Math.imul(i + 1, 0x9e3779b1)) >>> 0);
     let center: number;
     if (i === 0) center = c.tonic;
@@ -156,7 +162,7 @@ export function ensureGates(c: Course, n: number): Gate[] {
       if (k < 0) k = notes.reduce((best, m, j) => (Math.abs(m - prev) < Math.abs(notes[best] - prev) ? j : best), 0);
       let move: number;
       if (level === 1) move = r() < 0.2 ? 0 : r() < 0.5 ? -1 : 1;
-      else if (level === 2) move = (1 + Math.floor(r() * 4)) * (r() < 0.5 ? -1 : 1); // a step up to a 5th
+      else if (level === 2 || level === 4) move = (1 + Math.floor(r() * 4)) * (r() < 0.5 ? -1 : 1); // a step up to a 5th
       else move = (1 + Math.floor(r() * 7)) * (r() < 0.5 ? -1 : 1); // up to 7 semitones
       let j = k + move;
       if (j < 0 || j >= notes.length) j = k - move; // bounce off the edge of the range
@@ -181,7 +187,7 @@ export const checkpointOf = (c: Course, s: FlightState): FlightCheckpoint => ({ 
 
 export function isCheckpoint(v: unknown): v is FlightCheckpoint {
   const o = v as FlightCheckpoint | null;
-  return !!o && o.v === 1 && typeof o.seed === 'number' && typeof o.next === 'number' && typeof o.passed === 'number' && typeof o.lives === 'number' && typeof o.range?.low === 'number' && typeof o.range?.high === 'number' && [1, 2, 3].includes(o.startLevel);
+  return !!o && o.v === 1 && typeof o.seed === 'number' && typeof o.next === 'number' && typeof o.passed === 'number' && typeof o.lives === 'number' && typeof o.range?.low === 'number' && typeof o.range?.high === 'number' && [1, 2, 3, 4].includes(o.startLevel);
 }
 
 /** Bird speed (units/s) at the current gate. */
@@ -229,6 +235,8 @@ export const scoreOf = (s: FlightState) => distanceOf(s) + s.passed * 10;
 
 /** Drone notes for the course (tonic + fifth, an octave under the tonic gate). */
 export const droneOf = (c: Course) => [c.tonic - 12, c.tonic - 5];
+/** Level 4: the chord the jazz degrees sit on (a dominant 9 ♯11: root, 3, ♭7, 9, ♯11), sounded once. */
+export const jazzChordOf = (c: Course) => [c.tonic - 12, c.tonic - 8, c.tonic - 2, c.tonic + 2, c.tonic + 6];
 
 /**
  * Touch / keyboard steering (no microphone): the next note one scale step above (dir 1) or below (−1) `midi`
