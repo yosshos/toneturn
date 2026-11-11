@@ -1,4 +1,5 @@
 import { TodayCards } from './TodayCards';
+import { qualityOf } from '../audio/quality';
 import { courseLevels } from '../engine/courseSocial';
 import { techQueue, workoutCreditsStep } from '../engine/ladderFacts';
 import { CourseContext } from './courseContext';
@@ -131,6 +132,9 @@ import { APP_VERSION, unseenChanges } from '../version';
 import { params, piano, setMidiEnabled, SIMULATED, store, tts } from './services';
 import { midi } from '../speech/midi';
 import { setPreferredMic } from '../speech/mic';
+
+/** Screens that play the band (0.69: its sets load here, and only here on Lite / Standard). */
+const BAND_ROUTES = new Set<string>(['charts', 'improv', 'groove', 'metronome', 'mixer', 'slowdown', 'perform', 'highway', 'drills', 'workoutrun']);
 
 type Route = 'intake' | 'studio' | 'home' | 'path' | 'arcade' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong' | 'perform' | 'learned' | 'tuner' | 'metronome' | 'songs' | 'drills' | 'workout' | 'workoutrun' | 'peakhunter' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'flight' | 'pitchmemory' | 'nametune' | 'tuneup' | 'highway' | 'melodypuzzle' | 'charts' | 'slowdown' | 'pieces' | 'mixer' | 'insights' | 'groove' | 'welcome' | 'puzzle' | 'improv' | 'exams' | 'plans' | 'admin';
 /** Invite links: #/online/CODE */
@@ -426,8 +430,9 @@ export function App() {
   useEffect(() => {
     // An e-kit's module plays its own drums: no piano notes for kit hits in the drums course.
     if ((!s.midiInput && !s.computerKeys) || s.midiSound === false || s.activeCourse === 'drums') return;
-    const offN = midi.onNote((m, on, _at, vel) => (piano.context ? piano.liveNote(m, on, vel) : void piano.unlock().then(() => piano.liveNote(m, on, vel), () => {})));
-    const offC = midi.onCC((cc, v) => piano.liveControl(cc, v));
+    // 0.69: the sound is the first listener (before any screen reacts), started from the key's own MIDI timestamp.
+    const offN = midi.onNote((m, on, at, vel) => (piano.context ? piano.liveNote(m, on, vel, at) : void piano.unlock().then(() => piano.liveNote(m, on, vel), () => {})), { first: true });
+    const offC = midi.onCC((cc, v) => piano.liveControl(cc, v), { first: true });
     // A keyboard unplugged mid-note, or the app sent to the background: no note may keep sounding.
     const offS = midi.onState(() => piano.liveAllOff());
     const onVis = () => document.hidden && piano.liveAllOff();
@@ -456,12 +461,15 @@ export function App() {
   useEffect(() => {
     if (!drumSounds) return;
     piano.preloadKit();
-    const off = midi.onHit((h) => {
-      if (!h.voice) return;
-      const kind = VOICE_PERC[h.voice];
-      if (piano.context) piano.liveDrum(kind, h.vel);
-      else void piano.unlock().then(() => piano.liveDrum(kind, h.vel), () => {});
-    });
+    const off = midi.onHit(
+      (h) => {
+        if (!h.voice) return;
+        const kind = VOICE_PERC[h.voice];
+        if (piano.context) piano.liveDrum(kind, h.vel, h.at);
+        else void piano.unlock().then(() => piano.liveDrum(kind, h.vel), () => {});
+      },
+      { first: true },
+    );
     const wake = () => {
       if (!piano.audioRunning) void piano.unlock().catch(() => {});
     };
@@ -469,6 +477,7 @@ export function App() {
     return () => {
       off();
       removeEventListener('pointerdown', wake, true);
+      piano.setScene({ drumsLive: false });
     };
   }, [drumSounds]);
   // The computer keyboard as a piano (opt-in, Settings → MIDI).
@@ -1139,8 +1148,15 @@ export function App() {
   useEffect(() => {
     void piano.setSound(soundId);
   }, [soundId]);
-  const pianoDetail = settings?.pianoDetail ?? 'auto';
-  useEffect(() => piano.setPianoDetail(pianoDetail), [pianoDetail]);
+  // Sound quality (0.69): Lite / Standard / Studio by device, or the player's choice (the 0.54 grand detail maps onto it).
+  const soundQuality = settings ? qualityOf(settings) : 'auto';
+  useEffect(() => piano.setQuality(soundQuality), [soundQuality]);
+  const latencyMode = settings?.audioLatency ?? 'auto';
+  useEffect(() => piano.setLatencyMode(latencyMode), [latencyMode]);
+  // Only the screens with a band load the band (drums + bass): charts, improv, grooves, the metronome's kit, the mixer,
+  // and the drums and bass courses everywhere. Elsewhere its sets are let go after a while (Lite / Standard).
+  const bandScene = BAND_ROUTES.has(route) || settings?.activeCourse === 'drums' || settings?.activeCourse === 'bass';
+  useEffect(() => piano.setScene({ band: bandScene }), [bandScene]);
   const organReg = settings?.organReg ?? 'jazz';
   const organFast = !!settings?.organFast;
   useEffect(() => piano.setOrgan({ reg: organReg, fast: organFast }), [organReg, organFast]);

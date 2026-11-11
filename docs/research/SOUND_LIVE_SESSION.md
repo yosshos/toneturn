@@ -713,3 +713,80 @@ That is what they will ask about.
 - [Datseris et al. 2019][datseris]
 - [Honing & de Haas 2008](https://mcg.uva.nl/mcg-2023/papers/honing-haas-2008.pdf)
 - [ICMC/SMC 2014 comping][icmc14]
+
+---
+
+## 7. Built: Phase 0 (memory safety) and Phase 1 (live-play latency), 2026-11-11
+
+### 7.1 Tiers (`src/audio/quality.ts`)
+
+| | Lite | Standard | Studio |
+|---|---|---|---|
+| Automatic picks it for | Data Saver / 2g–3g, `deviceMemory` < 4, ≤ 2 cores, iOS ≤ 15 | **every iPhone and iPad** (UA, plus "Macintosh + touch" for iPad desktop mode), Android, 4 GB computers | computers (Mac Safari, which hides `deviceMemory`, too) |
+| Grand layers | 4 (v03, v08, v11, v14), **mono** | 5 (v03, v07, v10, v12, v15), stereo | all 16, stereo |
+| Grand tail | 4 s, equal-power fade | 6 s | full |
+| Release resonance | off (release noise and pedal kept, mono) | on, mono | on, stereo |
+| Band (jazz kit, pizz bass) | mono, 2.5 s cap; loaded per screen | mono kit, 3.5 s cap; loaded per screen | as before; preloaded 1.5 s after unlock |
+| Decode rate | 32 kHz | 32 kHz | the context's rate (48 kHz), as before |
+| Budget (decoded) | 150 MB | 300 MB | 1,600 MB (the 16-layer grand alone is 1.23 GB) |
+| Idle sets let go after | 2 min | 4 min | 20 min |
+
+- **Settings → Sound → Sound quality**: Automatic (shows which tier) / Lite / Standard / Studio, one line on what each
+  keeps, a warning for Studio on an iPhone, and "in memory now: X of Y MB · piano layers ready". It replaces the 0.54
+  "Grand piano detail" card; a stored `pianoDetail` maps onto it (full → Studio, light → Standard).
+- **Loading per screen.** `piano.setScene({ band })` from App: charts, improv, grooves, metronome, mixer, slowdown,
+  perform, highway, drills, workout run, and the drums and bass courses. Elsewhere the band isn't loaded (Lite/Standard)
+  and idles out. Lessons with a drum item still load the kit lazily on its first hit (synth stand-ins for that hit).
+- **Unloading.** A `MemoryLedger` counts `length × channels × 4` per set and when each was last played. Every 30 s, sets
+  not played for the tier's idle time are let go, except the pinned ones: the chosen sound's sets, the drone, the
+  tiny one-shots, and what the screen asked for. Past the budget, unpinned sets that haven't played in 15 s are let go
+  first; a set that still doesn't fit is refused and the nearest loaded layer (or the synth) stands in. The chosen
+  sound always loads.
+- **The old 23-note grand** (115 MB at 48 kHz) is let go as soon as the first velocity layer is in. After that it can
+  never play, so Studio sounds exactly as before.
+- **Diagnostics → "Sound: memory and latency"**: the tier, decode rate, total / budget / peak, every set with its size and
+  idle time, and a load log (loaded / released / refused, with the reason). Dev builds also log each event to the
+  console and expose the engine as `window.__sound`.
+- **Bug found while measuring:** `setBandDrums('jazz')` runs at start-up before there is an AudioContext. `loadStems`
+  then cached a resolved `false`, so **the recorded jazz kit never loaded in a fresh session** (stand-ins played) unless
+  the drums were re-chosen in Settings. Fixed: with no context, nothing is cached.
+- Credits for the CC BY sets (Salamander, Wurlitzer) are visible in Settings → Sound (checked, P0-4).
+
+### 7.2 Measured decoded memory (Chromium, the real engine)
+
+Measured in a dev build at a 48 kHz context: grand chosen and all of the tier's layers loaded, then a band screen opened.
+
+| | Grand + release sounds | + band (kit + pizz bass) | Before 0.69 |
+|---|---|---|---|
+| Lite | 66 MB | **134 MB** | — |
+| Standard | 206 MB | **286 MB** | — |
+| Studio | 1,276 MB | **1,462 MB** | **1,577 MB** (plus the old grand's 115 MB). Every iPhone got this. |
+
+Load time for the tier's grand from the local server: Lite ~8 s, Standard ~9–26 s, Studio ~26 s (cold).
+
+### 7.3 Live play (Phase 1)
+
+- **The sound comes first.** `midi.onNote / onCC / onHit(cb, { first: true })`: the app's sound is called before any
+  screen's listener. The on-screen key highlight for live notes moves to the next animation frame (`emitSoon`), so no
+  React work sits between key and sound.
+- **The MIDI timestamp.** Live keys start 4 ms after the event's `timeStamp`, and e-kit hits 6 ms after
+  (`liveStart`). Main-thread jitter becomes a constant delay. A stale or foreign timestamp (> 40 ms, negative)
+  plays at once, as before.
+- **Settings → MIDI → Live play latency**: Normal (`'interactive'`) or Low (`latencyHint: 0`). It applies after a
+  reload, with a Reload button. On iOS the hint says it has no effect there (Safari ignores it). There is no underrun
+  detector yet; that needs the worklet sampler (Phase 4).
+- **Bluetooth warning** in MIDI settings and Diagnostics. It shows when `baseLatency + outputLatency` ≥ 150 ms, or when
+  the output device's name looks wireless (AirPods, Buds, WH-1000, "Bluetooth", …; names need the mic permission).
+- **Diagnostics latency test**: 10 clicks at 60 bpm; tap or press a MIDI key on each. The taps are compared with when
+  the click was *scheduled*, so the figure is the whole loop a live player feels, which catches the Bluetooth delay
+  the OS hides. It also shows how much of that the browser reports for output.
+- **iOS**: the MIDI panel says up front that iPhone/iPad have no browser with Web MIDI.
+
+### 7.4 Not verified
+
+- **A real iPhone/iPad**: the iOS detection (UA strings in tests only), 32 kHz `OfflineAudioContext` decode on Safari
+  (falls back to the context rate if the constructor throws), and whether Standard's ~290 MB is safe on 3–4 GB
+  iPhones. Lite is ~135 MB if not.
+- `latencyHint: 0` on real Windows / Android hardware (glitches?), and the Bluetooth heuristics on real devices.
+- Not done: the velocity-tracked low-pass and micro-detune (Phase 1 item 4, a sound change, left for Phase 2 auditions);
+  `build-grand.py` per-tier files (the tiers are applied at decode time instead, with no new downloads).

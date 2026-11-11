@@ -18,7 +18,8 @@ import { renderFx } from './fx';
 import { layerGain, layerOf, RoundRobin, WURLI_LAYERS, wurliGain } from './layers';
 import { Leslie, organKey, REGISTRATIONS, type Registration } from './organ';
 import { autoPan, epKey } from './epiano';
-import { damperTau, layerFor, lightDevice, loadOrder, nearestLoaded, NO_DAMPER_FROM, releaseNoiseGain, releaseResGain, targetDb, vel127, type GrandLayer } from './grand';
+import { damperTau, layerFor, nearestLoaded, NO_DAMPER_FROM, releaseNoiseGain, releaseResGain, targetDb, vel127, type GrandLayer } from './grand';
+import { bufferBytes, fadeGain, grandLayerSet, grandLoadOrder, latencyHintOf, liveStart, MemoryLedger, tailCut, TIERS, tierOf, type LatencyMode, type SoundQuality, type SoundTier } from './quality';
 import { pluckSamples } from './pluck';
 
 interface Voice {
@@ -56,6 +57,21 @@ const PERC_PIECE: Partial<Record<PercKind, string>> = {
   kick: 'kick', snare: 'snare', 'snare-soft': 'snare', hat: 'hat', ride: 'ride', 'ride-bell': 'ride-bell', 'hat-foot': 'hat-foot',
   'hat-open': 'hat-open', rim: 'rim', crash: 'crash', 'tom-hi': 'tom-hi', 'tom-lo': 'tom-lo',
 };
+
+const MB = 1024 * 1024;
+/** Live notes start this long after the key's own MIDI timestamp (s): jitter of a busy page becomes a constant delay. */
+const LIVE_LEAD_KEYS = 0.004;
+const LIVE_LEAD_DRUMS = 0.006;
+
+/** One line of the sound-memory log (Diagnostics): what was decoded or let go, and the total after it. */
+export interface MemoryEvent {
+  t: number;
+  id: string;
+  mb: number;
+  totalMb: number;
+  what: 'loaded' | 'released' | 'refused';
+  why?: string;
+}
 
 /** Touch response of the MIDI keys (like a keyboard's velocity curve): light = soft touch already sounds full. */
 export type LiveCurve = 'light' | 'normal' | 'heavy' | 'fixed';
@@ -106,6 +122,8 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
   /** Instrument sound (spec Q): 'classic' = the synthesised piano; otherwise a sample set from /samples. */
   private sound = 'classic';
   private bank: { id: string; notes: number[]; buffers: Map<number, AudioBuffer> } | null = null;
+  /** The sample set the bank was decoded from ('wurli-mp' for the Wurlitzer, 'vibes-2' for the vibraphone …). */
+  private bankSet: string | null = null;
   private sampleBus!: GainNode;
   /** Processed sounds (spec AE `fx`): straight to the master (past the limiter, so compression items stay honest). */
   private master!: GainNode;
@@ -147,13 +165,13 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
   setSound(id: string, onProgress?: (done: number, total: number) => void): Promise<boolean> {
     this.sound = id;
     if (id === 'classic') {
-      this.bank = null;
+      this.setBank(null, null);
       return Promise.resolve(true);
     }
     if (this.bank?.id === id) return Promise.resolve(true);
     // modelled instruments: nothing to download
     if (id === 'tonewheel' || id === 'tine' || id === 'guitar') {
-      this.bank = { id, notes: [], buffers: new Map() };
+      this.setBank({ id, notes: [], buffers: new Map() }, null);
       return Promise.resolve(true);
     }
     const load = (async () => {
@@ -161,7 +179,10 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
         // the Wurlitzer: its mp layer is the base, the other dynamics load behind it
         const lay = LAYERED[id];
         const baseSet = lay ? lay.sets[1] : null;
-        const bank = id === 'wurli' ? { ...(await this.loadSet('wurli-mp', onProgress)), id: 'wurli' } : baseSet ? { ...(await this.loadSet(baseSet, onProgress)), id } : await this.loadSet(id, onProgress);
+        // the chosen sound always loads (force): what doesn't fit is the band or an earlier sound, let go first
+        const setId = id === 'wurli' ? 'wurli-mp' : (baseSet ?? id);
+        const loaded = this.extras.get(setId) ?? (await this.loadSet(setId, onProgress, true));
+        const bank = { ...loaded, id };
         if (lay && baseSet) {
           this.extras.set(baseSet, { ...bank, id: baseSet });
           for (const l of lay.sets) this.loadExtra(l);
@@ -172,15 +193,23 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
           for (const l of WURLI_LAYERS) this.loadExtra(l.id);
         }
         if (this.sound !== id) return false; // changed meanwhile
-        this.bank = bank;
+        this.setBank(bank, setId);
         if (id === 'grand') void this.prefetchGrand();
         return true;
       } catch {
-        if (this.sound === id) this.bank = null;
+        if (this.sound === id) this.setBank(null, null);
         return false;
       }
     })();
     return load;
+  }
+
+  /** Swap the bank; the earlier sound's own set is let go at once when nothing else holds it (its layers idle out). */
+  private setBank(bank: SampleBank | null, setId: string | null) {
+    const old = this.bankSet;
+    this.bank = bank;
+    this.bankSet = setId;
+    if (old && old !== setId && !this.extras.has(old) && this.droneBank?.id !== old) this.release(old, 'sound changed');
   }
 
   private manifestP: Promise<Record<string, SetInfo>> | null = null;
@@ -197,22 +226,218 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     return this.manifestP;
   }
 
-  // ---- the 16-layer concert grand (0.54)
+  // ---- sound quality tiers and decoded memory (0.69, SOUND_LIVE_SESSION.md Phase 0)
+  private quality: SoundQuality = 'auto';
+  private tier: SoundTier = tierOf('auto');
+  private ledger = new MemoryLedger();
+  private memLog: MemoryEvent[] = [];
+  /** Screens that use the band (charts, improv, grooves …): its sets load now and stay while the screen is open. */
+  private bandScene = false;
+  /** The drums course with the app playing the kit: the jazz kit stays loaded. */
+  private drumsLive = false;
+  private sweepTimer: ReturnType<typeof setInterval> | null = null;
+  /**
+   * Settings → Sound → quality: Lite / Standard / Studio, or Automatic (this device's tier). A change lets go of every
+   * set decoded for the old tier and loads the chosen sound again for the new one.
+   */
+  setQuality(q: SoundQuality) {
+    this.quality = q;
+    const t = tierOf(q);
+    if (t === this.tier) return;
+    this.tier = t;
+    // (sets decode without a context too — the grand starts loading before the first tap — so this never waits for one)
+    for (const { id } of this.ledger.list()) if (id !== 'perc' && !id.startsWith('kit:')) this.release(id, 'tier');
+    const sound = this.sound;
+    const drone = this.droneBank?.id;
+    if (this.bank && this.bankSet) {
+      this.bank = null;
+      this.bankSet = null;
+      this.sound = '';
+      void this.setSound(sound);
+    } else if (sound === 'grand') void this.prefetchGrand();
+    if (drone) {
+      this.droneBank = null;
+      void this.setDroneSound(drone);
+    }
+    this.loadScene();
+  }
+  get soundTier(): SoundTier {
+    return this.tier;
+  }
+  /** What the engine holds now (Diagnostics, Settings): the tier, its budget, the decoded total, set by set. */
+  soundMemory() {
+    return {
+      quality: this.quality,
+      tier: this.tier,
+      budgetMB: TIERS[this.tier].budgetMB,
+      totalMB: this.ledger.total / MB,
+      peakMB: this.ledger.peak / MB,
+      rate: TIERS[this.tier].rate ?? this.ctx?.sampleRate ?? null,
+      sets: this.ledger.list().map((x) => ({ id: x.id, mb: x.bytes / MB, idleS: Math.round((performance.now() - x.used) / 1000) })),
+      log: [...this.memLog],
+    };
+  }
+  /** The screen asks for its instruments: the band (drums + bass) on charts, improv, grooves, the band courses. */
+  setScene(s: { band?: boolean; drumsLive?: boolean }) {
+    if (s.band !== undefined) this.bandScene = s.band;
+    if (s.drumsLive !== undefined) this.drumsLive = s.drumsLive;
+    this.loadScene();
+  }
+  private loadScene() {
+    if (!this.ctx) return;
+    if ((this.bandScene || this.drumsLive) && this.bandDrums === 'jazz') void this.loadStems('drums-jazz');
+    if (this.bandScene || this.courseVoice === 'bass') void this.loadStems('bass-pizz');
+  }
+  private log(e: Omit<MemoryEvent, 't' | 'totalMb'>) {
+    const ev = { ...e, t: Math.round(performance.now()), totalMb: Math.round((this.ledger.total / MB) * 10) / 10 };
+    this.memLog.push(ev);
+    if (this.memLog.length > 60) this.memLog.shift();
+    if (import.meta.env?.DEV) console.debug(`[sound ${this.tier}] ${e.what} ${e.id} ${e.mb.toFixed(1)} MB${e.why ? ` (${e.why})` : ''} → ${ev.totalMb} MB`);
+  }
+  /** The sets the chosen sound plays from (never let go while it is chosen). */
+  private soundSets(): Set<string> {
+    const id = this.sound;
+    const out = new Set<string>([id]);
+    if (this.bankSet) out.add(this.bankSet);
+    if (id === 'grand') {
+      for (const l of this.grandAllowed()) out.add(l.id);
+      for (const r of ['grand-rel', 'grand-resL', 'grand-resS', 'grand-pedal']) out.add(r);
+    }
+    if (id === 'wurli') for (const l of WURLI_LAYERS) out.add(l.id);
+    for (const l of LAYERED[id]?.sets ?? []) out.add(l);
+    return out;
+  }
+  /** Sets that must stay: the tiny one-shots, the chosen sound's, the drone's, and what the screen asked for. */
+  private pinned(id: string): boolean {
+    if (id === 'perc' || id.startsWith('kit:') || id === 'bass') return true;
+    if (this.soundSets().has(id) || this.droneBank?.id === id) return true;
+    if (id === 'drums-jazz' && (this.bandScene || this.drumsLive || this.kit === 'jazz')) return true;
+    if (id === 'bass-pizz' && (this.bandScene || this.courseVoice === 'bass')) return true;
+    return false;
+  }
+  private touch(id: string) {
+    this.ledger.touch(id, performance.now());
+  }
+  /** Let a decoded set go (a note still sounding keeps its own buffer until it ends). */
+  private release(id: string, why: string) {
+    const held = this.ledger.list().find((x) => x.id === id);
+    this.extras.delete(id);
+    this.stems.delete(id);
+    this.stemLoads.delete(id);
+    if (this.droneBank?.id === id && why === 'tier') this.droneBank = null;
+    this.ledger.remove(id);
+    if (held) this.log({ id, mb: held.bytes / MB, what: 'released', why });
+  }
+  /** Every half minute: let go of sets not played for the tier's idle time (nothing the sound or screen needs). */
+  private sweep() {
+    const T = TIERS[this.tier];
+    for (const id of this.ledger.idle(performance.now(), T.idleMs, (x) => this.pinned(x))) this.release(id, 'idle');
+  }
+  /**
+   * Room for one more set under the tier's budget: let go of what isn't pinned or recently played. False when it
+   * still doesn't fit (the caller stands in with a neighbouring layer or the synthesised sound).
+   */
+  private admit(id: string, force = false): boolean {
+    const budget = TIERS[this.tier].budgetMB * MB;
+    if (this.ledger.total < budget) return true;
+    const now = performance.now();
+    const recent = new Set(this.ledger.list().filter((x) => now - x.used < 15_000).map((x) => x.id));
+    for (const x of this.ledger.toFit(0, budget - 1, (k) => this.pinned(k) || recent.has(k))) this.release(x, 'budget');
+    if (this.ledger.total < budget || force) return true;
+    this.log({ id, mb: 0, what: 'refused', why: 'budget' });
+    return false;
+  }
+
+  /** How a set is decoded on this tier: its rate, its longest sample, mono or not. */
+  private treatment(id: string): { rate: number | null; tail: number; mono: boolean } {
+    const T = TIERS[this.tier];
+    if (id === 'grand' || /^grand-v\d\d$/.test(id)) return { rate: T.rate, tail: T.grandTail, mono: T.monoGrand };
+    if (id.startsWith('grand-')) return { rate: T.rate, tail: T.bandTail, mono: T.monoRelease };
+    if (id === 'drums-jazz' || id === 'bass-pizz' || id === 'bass') return { rate: T.rate, tail: T.bandTail, mono: T.monoBand };
+    return { rate: T.rate, tail: Infinity, mono: false };
+  }
+  private decoders = new Map<number, BaseAudioContext>();
+  private decoderAt(rate: number): BaseAudioContext | null {
+    let d = this.decoders.get(rate);
+    if (!d) {
+      try {
+        d = new OfflineAudioContext(2, 1, rate);
+      } catch {
+        return null; // this browser can't make a context at that rate: decode at the playing rate
+      }
+      this.decoders.set(rate, d);
+    }
+    return d;
+  }
+  /**
+   * Decode one sample for set `id` the way this tier keeps it. Studio: as before 0.69 (the playing rate, the whole
+   * recording). Lite / Standard: at 32 kHz (the source node resamples on playback), the tail capped with an
+   * equal-power fade, and folded to mono where the tier says.
+   */
+  private async decode(id: string, data: ArrayBuffer): Promise<AudioBuffer> {
+    const tr = this.treatment(id);
+    const ctx = this.ctx;
+    const low = tr.rate && (!ctx || tr.rate < ctx.sampleRate) ? this.decoderAt(tr.rate) : null;
+    // Decode at the playing rate otherwise: decoding into a 22 kHz context (as before 0.54) cut everything above 11 kHz.
+    const decoder: BaseAudioContext = low ?? ctx ?? this.decoderAt(48000) ?? new OfflineAudioContext(2, 1, 48000);
+    const buf = await decoder.decodeAudioData(data);
+    const { keep, fade } = tailCut(buf.length, buf.sampleRate, tr.tail);
+    const fold = tr.mono && buf.numberOfChannels > 1;
+    if (keep === buf.length && !fold) return buf;
+    const chans = fold ? 1 : buf.numberOfChannels;
+    const out = (ctx ?? decoder).createBuffer(chans, keep, buf.sampleRate);
+    const src = Array.from({ length: buf.numberOfChannels }, (_, c) => buf.getChannelData(c));
+    for (let c = 0; c < chans; c++) {
+      const d = out.getChannelData(c);
+      if (fold) {
+        const n = src.length;
+        for (let i = 0; i < keep; i++) {
+          let x = 0;
+          for (let k = 0; k < n; k++) x += src[k][i];
+          d[i] = x / n;
+        }
+      } else d.set(src[c].subarray(0, keep));
+      for (let i = keep - fade; i < keep; i++) d[i] *= fadeGain(i - (keep - fade), fade);
+    }
+    return out;
+  }
+  private added(id: string, buffers: Iterable<AudioBuffer>) {
+    let bytes = 0;
+    for (const b of buffers) bytes += bufferBytes(b);
+    this.ledger.add(id, bytes, performance.now());
+    this.log({ id, mb: bytes / MB, what: 'loaded' });
+    // over the budget now: let go of what isn't pinned or recently played (the set just added counts as recent)
+    const budget = TIERS[this.tier].budgetMB * MB;
+    if (this.ledger.total > budget) {
+      const now = performance.now();
+      for (const x of this.ledger.toFit(0, budget, (k) => this.pinned(k) || now - (this.ledger.list().find((e) => e.id === k)?.used ?? 0) < 15_000)) this.release(x, 'budget');
+    }
+  }
+
+  // ---- the 16-layer concert grand (0.54); the tier keeps a subset of its layers (0.69)
   private grandLayers: GrandLayer[] | null = null;
   private grandInfo: Record<string, SetInfo> = {};
-  /** 'auto' = every layer on a computer, eight on a light phone; or set by the player. */
-  private pianoDetail: 'auto' | 'full' | 'light' = 'auto';
-  setPianoDetail(d: 'auto' | 'full' | 'light') {
-    this.pianoDetail = d;
-    if (this.bank?.id === 'grand') void this.prefetchGrand();
+  /** The grand's layers this tier keeps. */
+  private grandAllowed(): GrandLayer[] {
+    const L = this.grandLayers ?? [];
+    return grandLayerSet(L.length, this.tier).map((i) => L[i]);
   }
-  /** How many of the grand's layers are ready (for Settings). */
+  private grandAllowedIdx: { tier: SoundTier; n: number; set: Set<number> } | null = null;
+  private allowedIdx(n: number): Set<number> {
+    const c = this.grandAllowedIdx;
+    if (c && c.tier === this.tier && c.n === n) return c.set;
+    const set = new Set(grandLayerSet(n, this.tier));
+    this.grandAllowedIdx = { tier: this.tier, n, set };
+    return set;
+  }
+  /** How many of the grand's layers (of this tier's) are ready (for Settings). */
   get grandReady(): { loaded: number; total: number } {
-    const ids = this.grandLayers?.map((l) => l.id) ?? [];
+    const ids = this.grandAllowed().map((l) => l.id);
     return { loaded: ids.filter((id) => this.extras.has(id)).length, total: ids.length };
   }
-  private prefetching = false;
-  /** Load the grand's layers in the background, the everyday ones first, then its release and pedal sounds. */
+  /** Each prefetch run has a number; a newer run (another tier, the grand chosen again) ends the older one. */
+  private prefetchGen = 0;
+  /** Load the tier's grand layers in the background, the everyday ones first, then its release and pedal sounds. */
   private async prefetchGrand() {
     try {
       const sets = await this.sets();
@@ -221,21 +446,32 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
         .filter((k) => /^grand-v\d\d$/.test(k))
         .sort()
         .map((id) => ({ id, lovel: sets[id].lovel ?? 1, db: sets[id].db ?? 0 }));
-      if (this.prefetching || !this.grandLayers.length) return;
-      this.prefetching = true;
-      const light = this.pianoDetail === 'light' || (this.pianoDetail === 'auto' && lightDevice());
-      const order = loadOrder(this.grandLayers.length, light).map((i) => this.grandLayers![i].id);
+      if (!this.grandLayers.length) return;
+      const gen = ++this.prefetchGen;
+      const tier = this.tier;
+      const order = grandLoadOrder(this.grandLayers.length, tier).map((i) => this.grandLayers![i].id);
       const extrasAfter = 2; // release and pedal sounds right after the two everyday layers
+      const rel = ['grand-rel', ...(TIERS[tier].releaseRes ? ['grand-resL', 'grand-resS'] : []), 'grand-pedal'];
       for (let k = 0; k < order.length; k++) {
-        if (this.bank?.id !== 'grand') break;
+        if (this.bank?.id !== 'grand' || this.tier !== tier || gen !== this.prefetchGen) break;
         await this.loadNow(order[k]);
-        if (k + 1 === extrasAfter) for (const id of ['grand-rel', 'grand-resL', 'grand-resS', 'grand-pedal']) if (sets[id]) await this.loadNow(id);
+        this.dropGrandBase();
+        if (k + 1 === Math.min(extrasAfter, order.length)) for (const id of rel) if (sets[id]) await this.loadNow(id);
       }
     } catch {
       /* offline: the layers that loaded play, the rest stand in */
-    } finally {
-      this.prefetching = false;
     }
+  }
+  /**
+   * The old 23-note grand loads first so the first notes sound at once; once a layer is in, it never plays again
+   * (every note finds a layer), so its buffers (~115 MB at 48 kHz) are let go.
+   */
+  private dropGrandBase() {
+    const b = this.bank;
+    if (b?.id !== 'grand' || !this.grandLayers?.some((l) => this.extras.has(l.id)) || this.droneBank === b) return;
+    if (!b.buffers.size) return;
+    this.bank = { ...b, buffers: new Map() };
+    if (this.bankSet === 'grand' && !this.extras.has('grand')) this.release('grand', 'replaced by its layers');
   }
   /** Load a set into `extras` now (awaitable; shares the in-flight guard with loadExtra). */
   private async loadNow(id: string) {
@@ -250,23 +486,25 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     }
   }
 
-  /** Load a sample set (shared by instrument sounds and the drone). */
-  private async loadSet(id: string, onProgress?: (done: number, total: number) => void) {
+  /** Load a sample set (shared by instrument sounds and the drone), decoded for this tier and counted. */
+  private async loadSet(id: string, onProgress?: (done: number, total: number) => void, force = false) {
     const base = import.meta.env.BASE_URL ?? '/';
     const set = (await this.sets())[id];
     if (!set) throw new Error('no set');
-    // Decode at the playing rate: decoding into a 22 kHz context (as before 0.54) cut everything above 11 kHz.
-    const decoder: BaseAudioContext = this.ctx ?? new OfflineAudioContext(2, 1, 48000);
+    if (!this.admit(id, force)) throw new Error('over the memory budget');
+    const tier = this.tier;
     const buffers = new Map<number, AudioBuffer>();
     let done = 0;
     await Promise.all(
       set.notes.map(async (m) => {
         const res = await fetch(`${base}samples/${id}/${m}.${set.ext}`);
         if (!res.ok) throw new Error(String(res.status));
-        buffers.set(m, await decoder.decodeAudioData(await res.arrayBuffer()));
+        buffers.set(m, await this.decode(id, await res.arrayBuffer()));
         onProgress?.(++done, set.notes.length);
       }),
     );
+    if (tier !== this.tier) throw new Error('tier changed');
+    this.added(id, buffers.values());
     return { id, notes: set.notes, buffers };
   }
 
@@ -282,7 +520,7 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     }
     if (this.droneBank?.id === id) return true;
     try {
-      this.droneBank = this.bank?.id === id ? this.bank : await this.loadSet(id, onProgress);
+      this.droneBank = this.bank?.id === id ? this.bank : await this.loadSet(id, onProgress, true);
       return true;
     } catch {
       this.droneBank = null;
@@ -336,6 +574,7 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
       void this.loadStems('bass-pizz');
       const bass = this.extras.get('bass');
       if (bass) {
+        this.touch('bass');
         // Pizzicato upright bass (one mf layer): a gentle gain with velocity; out of its range the piano plays.
         const ok = this.playBuf(bass, midi, start, dur, 0.3 + 0.47 * velocity, 4, this.bassBus);
         if (ok) return true;
@@ -361,8 +600,11 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
       const L = this.grandLayers;
       const v = vel127(velocity);
       const want = layerFor(L, v);
-      if (!this.extras.has(L[want].id)) this.loadExtra(L[want].id);
-      const i = nearestLoaded(L.length, want, (k) => this.extras.has(L[k].id));
+      // this tier's layers only (all 16 on Studio): the nearest kept one is asked for, the nearest loaded one plays
+      const keep = this.allowedIdx(L.length);
+      const ask = keep.has(want) ? want : nearestLoaded(L.length, want, (k) => keep.has(k));
+      if (ask >= 0 && !this.extras.has(L[ask].id)) this.loadExtra(L[ask].id);
+      const i = nearestLoaded(L.length, want, (k) => keep.has(k) && this.extras.has(L[k].id));
       if (i >= 0) return this.playGrand(this.extras.get(L[i].id)!, midi, start, dur, v, Math.pow(10, (targetDb(L, v) - L[i].db) / 20) * GRAND_TRIM);
     }
     // Soft notes (expression exercises) really get soft; everything at 0.45 and up sounds as before.
@@ -406,6 +648,7 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     const nearest = bank.notes.reduce((a, b) => (Math.abs(b - midi) < Math.abs(a - midi) ? b : a));
     const buf = bank.buffers.get(nearest);
     if (!buf) return false;
+    this.touch(bank.id);
     const src = ctx.createBufferSource();
     src.buffer = buf;
     const cents = (Math.random() * 2 - 1) * 2;
@@ -474,6 +717,9 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
   private stemLoads = new Map<string, Promise<boolean>>();
   private info: Record<string, SetInfo & { pieces?: Record<string, { layers: string[][]; db: number[] }>; layers?: { dyn: string; notes: number[]; rr: number; db: number }[] }> = {};
   private loadStems(id: string): Promise<boolean> {
+    // No context yet (the band's drums are chosen at start-up, before the first tap): nothing is cached, so the
+    // next call after unlock really loads. (Before 0.69 a resolved "false" stayed cached and the kit never loaded.)
+    if (!this.ctx) return Promise.resolve(false);
     let p = this.stemLoads.get(id);
     if (!p) {
       p = (async () => {
@@ -485,14 +731,21 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
           const set = sets[id];
           if (!set) return false;
           this.info[id] = set;
+          if (!this.admit(id, this.pinned(id))) {
+            this.stemLoads.delete(id);
+            return false;
+          }
+          const tier = this.tier;
           const m = new Map<string, AudioBuffer>();
           await Promise.all(
             (set.notes as unknown as string[]).map(async (s) => {
               const r = await fetch(`${base}samples/${id}/${s}.${set.ext}`);
-              if (r.ok) m.set(s, await ctx.decodeAudioData(await r.arrayBuffer()));
+              if (r.ok) m.set(s, await this.decode(id, await r.arrayBuffer()));
             }),
           );
+          if (tier !== this.tier || this.stemLoads.get(id) !== p) return false; // the tier changed meanwhile
           this.stems.set(id, m);
+          this.added(id, m.values());
           return true;
         } catch {
           this.stemLoads.delete(id);
@@ -522,6 +775,7 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
       void this.loadStems('drums-jazz');
       return false;
     }
+    this.touch('drums-jazz');
     const i = layerOf(v, P.layers.length);
     const list = P.layers[i];
     const buf = bufs.get(list[this.rr.pick(`${piece}:${i}`, list.length)]);
@@ -542,6 +796,7 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     const L = this.info['bass-pizz']?.layers;
     const bufs = this.stems.get('bass-pizz');
     if (!ctx || !L || !bufs) return false;
+    this.touch('bass-pizz');
     const i = layerOf(v, L.length);
     const layer = L[i];
     const near = layer.notes.reduce((a, b) => (Math.abs(b - midi) < Math.abs(a - midi) ? b : a));
@@ -808,17 +1063,23 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
    * A live drum hit (drums course, "play drum sounds from the app" for pad controllers without a sound module): the
    * recorded kit's piece now (+3 ms, the same lead as live keys), its layer from the velocity. Loads the kit on first use.
    */
-  liveDrum(kind: PercKind, velocity127: number) {
+  liveDrum(kind: PercKind, velocity127: number, at?: number) {
     const ctx = this.ctx;
     if (!ctx) return;
     if (ctx.state !== 'running') void ctx.resume().catch(() => {});
-    this.perc(kind, ctx.currentTime + 0.003, Math.max(0.1, Math.min(1, velocity127 / 127)));
+    // 0.69: from the hit's own MIDI timestamp (a constant 6 ms after it), so a busy page adds no jitter to a fill
+    this.perc(kind, liveStart(ctx.currentTime, PianoEngine.age(at), LIVE_LEAD_DRUMS), Math.max(0.1, Math.min(1, velocity127 / 127)));
+  }
+  /** Seconds since a performance.now() timestamp; null when there is none. */
+  private static age(at: number | undefined): number | null {
+    return at === undefined || typeof performance === 'undefined' ? null : (performance.now() - at) / 1000;
   }
   /** Start loading the recorded kit (so the first live hit already has its sample). */
   preloadKit() {
+    this.setScene({ drumsLive: true });
     void this.loadStems('drums-jazz');
   }
-  liveNote(m: number, on: boolean, velocity127: number) {
+  liveNote(m: number, on: boolean, velocity127: number, at?: number) {
     const ctx = this.ctx;
     if (!ctx) return;
     // A phone that was in the background (or a context made before any tap) may be suspended: wake it on each key.
@@ -828,18 +1089,19 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
       this.ensureLiveBuses();
       let vel = liveVelocity(velocity127, this.liveOpts.curve);
       if (this.liveSoft) vel *= 0.72;
-      const at = ctx.currentTime + 0.003;
+      // 0.69: a constant 4 ms after the key's MIDI timestamp (was "now + 3 ms": main-thread jitter became timing jitter)
+      const start = liveStart(ctx.currentTime, PianoEngine.age(at), LIVE_LEAD_KEYS);
       const before = new Set(this.voices);
       this.liveRoute = true;
       try {
-        if (!this.sample(m, vel, at, 20)) this.voice(m, vel, at, 20);
+        if (!this.sample(m, vel, start, 20)) this.voice(m, vel, start, 20);
       } finally {
         this.liveRoute = false;
       }
       const v = [...this.voices].find((x) => !before.has(x));
       if (v) this.live.set(m, v);
       this.liveHeld.add(m);
-      this.noteOn(m);
+      this.noteOn(m, true);
       // polyphony: let go of the oldest notes that are no longer held
       if (this.live.size > PianoEngine.LIVE_MAX) {
         for (const k of [...this.live.keys()]) {
@@ -895,7 +1157,7 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
       const dt = quick ? tau : damperTau(m);
       if (!quick) this.grandRelease(m, v.grand.v, t, t - v.grand.t0, this.liveSampleBus ?? undefined);
       if (!Number.isFinite(dt)) {
-        this.noteOff(m);
+        this.noteOff(m, true);
         return;
       }
       tau = dt;
@@ -910,7 +1172,7 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
         /* already stopped */
       }
     }
-    this.noteOff(m);
+    this.noteOff(m, true);
   }
 
   // The output device (0.52): an audio interface such as a MIDI keyboard with a headphone jack can become the system
@@ -944,19 +1206,47 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     return this.ctx && this.master ? { ctx: this.ctx, out: this.master } : null;
   }
 
+  /** The latency hint asked for (Settings), and the one the running context was made with (it can't change). */
+  private latencyMode: LatencyMode = 'auto';
+  private ctxLatency: LatencyMode | null = null;
+  setLatencyMode(m: LatencyMode) {
+    this.latencyMode = m;
+  }
+  /** True when the setting differs from the running context: it applies after a reload. */
+  get latencyPending(): boolean {
+    return this.ctxLatency !== null && this.ctxLatency !== this.latencyMode;
+  }
+  /** The output's timing as the browser reports it (Diagnostics; Bluetooth is often under-reported). */
+  latencyInfo(): { mode: LatencyMode | null; sampleRate: number | null; baseMs: number | null; outputMs: number | null; running: boolean } {
+    const ctx = this.ctx as (AudioContext & { outputLatency?: number }) | null;
+    const ms = (x: number | undefined) => (x === undefined || !Number.isFinite(x) ? null : Math.round(x * 1000 * 10) / 10);
+    return { mode: this.ctxLatency, sampleRate: ctx?.sampleRate ?? null, baseMs: ms(ctx?.baseLatency), outputMs: ms(ctx?.outputLatency), running: ctx?.state === 'running' };
+  }
+
   async unlock(): Promise<void> {
     if (!this.ctx) {
       const Ctor = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      this.ctx = new Ctor({ latencyHint: 'interactive' });
+      // Settings → MIDI → live play latency: 'low' asks for the smallest buffer (Chromium/Firefox; Safari ignores it).
+      try {
+        this.ctx = new Ctor({ latencyHint: latencyHintOf(this.latencyMode) });
+      } catch {
+        this.ctx = new Ctor({ latencyHint: 'interactive' });
+      }
+      this.ctxLatency = this.latencyMode;
       this.build(this.ctx);
       void this.loadPerc();
       void this.loadKit(this.kit);
       this.loadExtra('bass'); // small (≈0.4 MB), so backing tracks have it from their first note
-      // the band (0.55): the jazz kit (≈5.6 MB) and the pizzicato bass (≈2 MB) load in the background
+      // the band (0.55): the jazz kit and the pizzicato bass. Studio loads them in the background as before; Lite and
+      // Standard only when a screen or course asks (0.69: ~190 MB decoded at 48 kHz, on every device, was too much).
       setTimeout(() => {
-        if (this.bandDrums === 'jazz') void this.loadStems('drums-jazz');
-        void this.loadStems('bass-pizz');
+        if (TIERS[this.tier].preloadBand) {
+          if (this.bandDrums === 'jazz') void this.loadStems('drums-jazz');
+          void this.loadStems('bass-pizz');
+        }
+        this.loadScene();
       }, 1500);
+      this.sweepTimer ??= setInterval(() => this.sweep(), 30_000);
     }
     if (this.sinkId !== null) void this.setOutputDevice(this.sinkId);
     if (this.ctx.state !== 'running') await this.ctx.resume();
@@ -1440,7 +1730,7 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
             /* the classic kit plays this piece */
           }
         }),
-      ).then(() => undefined);
+      ).then(() => this.added(`kit:${kit}`, ids.map((id) => this.kitBank.get(`${kit}:${id}`)).filter((b): b is AudioBuffer => !!b)));
       this.kitLoads.set(kit, p);
     }
     return p;
@@ -1460,6 +1750,7 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
         }
       }),
     );
+    this.added('perc', this.percBank.values());
   }
 
   /** A recorded one-shot; false when it isn't loaded (yet). */
@@ -1841,15 +2132,29 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     };
   }
 
-  private noteOn(m: number) {
+  /** `live`: from a MIDI key — the on-screen keys follow on the next frame, so no UI work sits on the sound's path. */
+  private noteOn(m: number, live = false) {
     this.active.set(m, (this.active.get(m) ?? 0) + 1);
-    this.emit();
+    if (live) this.emitSoon();
+    else this.emit();
   }
-  private noteOff(m: number) {
+  private noteOff(m: number, live = false) {
     const c = (this.active.get(m) ?? 1) - 1;
     if (c <= 0) this.active.delete(m);
     else this.active.set(m, c);
-    this.emit();
+    if (live) this.emitSoon();
+    else this.emit();
+  }
+  private emitQueued = false;
+  private emitSoon() {
+    if (this.emitQueued) return;
+    this.emitQueued = true;
+    const run = () => {
+      this.emitQueued = false;
+      this.emit();
+    };
+    if (typeof requestAnimationFrame === 'function' && typeof document !== 'undefined' && !document.hidden) requestAnimationFrame(run);
+    else setTimeout(run, 0);
   }
   private emit() {
     const list = [...this.active.keys()];

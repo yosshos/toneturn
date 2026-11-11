@@ -187,9 +187,9 @@ export class MidiInput {
   }
 
   private hitListeners = new Set<HitListener>();
-  /** Drum hits (drum mode only). */
-  onHit(cb: HitListener) {
-    this.hitListeners.add(cb);
+  /** Drum hits (drum mode only). `first`: called before the other listeners (the app's own sound). */
+  onHit(cb: HitListener, o?: { first?: boolean }) {
+    this.hitListeners = first(this.hitListeners, cb, o);
     return () => {
       this.hitListeners.delete(cb);
     };
@@ -216,15 +216,19 @@ export class MidiInput {
     return best;
   }
 
-  onNote(cb: NoteListener) {
-    this.listeners.add(cb);
+  /**
+   * Note on/off. `first` (0.69, the live sound): called before every other listener, so the key sounds before any
+   * screen reacts to it.
+   */
+  onNote(cb: NoteListener, o?: { first?: boolean }) {
+    this.listeners = first(this.listeners, cb, o);
     return () => {
       this.listeners.delete(cb);
     };
   }
   private ccListeners = new Set<CcListener>();
-  onCC(cb: CcListener) {
-    this.ccListeners.add(cb);
+  onCC(cb: CcListener, o?: { first?: boolean }) {
+    this.ccListeners = first(this.ccListeners, cb, o);
     return () => {
       this.ccListeners.delete(cb);
     };
@@ -235,6 +239,12 @@ export class MidiInput {
       this.stateListeners.delete(cb);
     };
   }
+}
+
+/** A listener set with `cb` added — at the front when `first`. */
+function first<T>(set: Set<T>, cb: T, o?: { first?: boolean }): Set<T> {
+  if (!o?.first) return set.add(cb);
+  return new Set([cb, ...set]);
 }
 
 export const midi = new MidiInput();
