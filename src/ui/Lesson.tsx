@@ -73,6 +73,8 @@ interface Props {
   /** When the session completes (clears saved progress). */
   onDone?: () => void;
   nextLabel?: string;
+  /** A second action under the main one (the recap of a path step inside a workout: Continue workout). */
+  secondary?: { label: string; open: () => void };
   /** Current skill ratings (for automatic aids). */
   ratings?: Ratings;
   /** The player's first name, for personal feedback. */
@@ -85,7 +87,7 @@ interface Props {
 
 const targetMidiOf = (q: Question) => (q.kind === 'degree' || q.kind === 'sing' || q.kind === 'note-name' ? q.targetMidi : q.kind === 'sing-seq' || q.kind === 'sing-run' ? q.midis[0] : 60);
 
-export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit, onAgain, onNext, onProgress, lessonDef, adapt, resume, onStep, onDone, nextLabel, ratings, playerName, onSettings, brief, onHideTopic, onKeepStep, recent }: Props) {
+export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit, onAgain, onNext, onProgress, lessonDef, adapt, resume, onStep, onDone, nextLabel, secondary, ratings, playerName, onSettings, brief, onHideTopic, onKeepStep, recent }: Props) {
   const [phones, setPhones] = useState(!!settings.headphones);
   const ctrlRef = useRef<LessonController | null>(null);
   const [change, setChange] = useState<{ change: RatingChange; peakBefore: number | null } | null>(null);
@@ -244,6 +246,15 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
     return () => window.removeEventListener('keydown', onKey);
   }, [ctrl]);
 
+  // The answer clock starts when this turn's answer buttons are on screen and enabled (playtesting 0.68): the frame
+  // after they paint, not when the question appeared or while the sound was still playing.
+  const listeningTurn = v.stage === 'question' && v.phase === 'listening' ? v.session.turn : -1;
+  useEffect(() => {
+    if (listeningTurn < 0) return;
+    const id = requestAnimationFrame(() => ctrl.answerReady());
+    return () => cancelAnimationFrame(id);
+  }, [ctrl, listeningTurn]);
+
   const lang = settings.uiLang;
   const nm = namingFor(settings.naming, lang);
   const lesson = v.session.lesson;
@@ -275,7 +286,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
   if (v.stage === 'complete') {
     return (
       <>
-        <Recap t={t} view={v} settings={settings} onReplay={(i) => ctrl.replayQuestion(i)} onCompare={(i) => ctrl.compareQuestion(i)} onAgain={onAgain} onHome={onExit} onNext={onNext} nextLabel={nextLabel} rating={change} xpTotals={xpTotals} playerName={playerName ?? null} />
+        <Recap covered={!!streakMoment} t={t} view={v} settings={settings} onReplay={(i) => ctrl.replayQuestion(i)} onCompare={(i) => ctrl.compareQuestion(i)} onAgain={onAgain} onHome={onExit} onNext={onNext} nextLabel={nextLabel} secondary={secondary} rating={change} xpTotals={xpTotals} playerName={playerName ?? null} />
         {streakMoment && (
           <StreakCelebration t={t} before={streakMoment.before} after={streakMoment.after} gemsGained={streakMoment.gems} today={localDay(new Date())} onDone={() => setStreakMoment(null)} />
         )}
@@ -335,7 +346,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
   const placementSkill = isStaircase ? (/^p:([a-z-]+):/.exec(q.id)?.[1] as SkillId | undefined) : undefined;
 
   return (
-    <main className={`lesson stage-${v.stage} phase-${v.phase} kind-${q.kind} ${isStaircase ? 'with-meter' : ''}`}>
+    <main className={`lesson stage-${v.stage} phase-${v.phase} kind-${q.kind} ${isStaircase ? 'with-meter' : ''} ${v.awaitNext ? 'await-next' : ''}`}>
       <InARow records={v.session.records} lang={lang} />
       {isStaircase && <PlacementMeter s={v.session} t={t} />}
       <header className="lesson-top">
@@ -492,15 +503,10 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
           <PaceBar v={v} t={t} />
           <Listening v={v} t={t} hint={hintText(q, lang, v.mode === 'voice' && !v.needsListenTap)} />
           <FeedbackBanner v={v} t={t} lang={lang} settings={settings} />
-          {v.awaitNext && (
+          {v.awaitNext && v.canCompare && (
             <div className="fb-actions" data-await-next="1">
-              {v.canCompare && (
-                <button className="btn ghost" onClick={() => ctrl.compareNow()} data-compare-now="1">
-                  {lang === 'he' ? '⇄ השוואה: שלכם מול הנכון' : '⇄ Compare: yours vs the right one'}
-                </button>
-              )}
-              <button className="btn primary" onClick={() => ctrl.next()} data-continue="1" autoFocus>
-                {lang === 'he' ? 'המשך' : 'Continue'}
+              <button className="btn ghost" onClick={() => ctrl.compareNow()} data-compare-now="1">
+                {lang === 'he' ? '⇄ השוואה: שלכם מול הנכון' : '⇄ Compare: yours vs the right one'}
               </button>
             </div>
           )}
@@ -556,7 +562,14 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
             </button>
           )}
           <Caption text={v.caption} />
-          <div className="controls">
+          <div className={`controls ${v.awaitNext ? 'with-continue' : ''}`}>
+            {/* 0.68.1 (owner): Continue sits in the bottom bar itself, above Repeat / Skip — the sticky bar can no
+                longer cover it, nor it the bar's buttons. */}
+            {v.awaitNext && (
+              <button className="btn primary ctl-continue" onClick={() => ctrl.next()} data-continue="1" data-await-next="1" autoFocus>
+                {lang === 'he' ? 'המשך' : 'Continue'}
+              </button>
+            )}
             <button className="btn small ctl-btn" onClick={() => ctrl.repeat()}>
               <CtlIcon k="repeat" /> {t.repeat}
             </button>

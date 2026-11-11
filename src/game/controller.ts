@@ -181,6 +181,9 @@ export class LessonController {
   private clockStart: number | null = null;
   private restartClockAtListen = false;
   private tapAt: number | null = null;
+  /** When the answer surface of this turn was painted and enabled (reported by the UI). Playtesting 0.68: the answer
+   * clock must not run while the buttons are still disabled or not yet on screen. */
+  private readyAt: { turn: number; at: number } | null = null;
   /** Rhythm reading: perf time of beat 1 and the taps collected for the current performance. */
   private readStart: number | null = null;
   private readTaps: number[] = [];
@@ -328,6 +331,13 @@ export class LessonController {
   /** The last misunderstood voice answer in this turn (taught by the next tap). */
   private unclearHeard: { turn: number; kind: string; heard: string[] } | null = null;
 
+  /** The UI: this turn's answer buttons are painted and enabled now — the answer clock starts no earlier. */
+  answerReady() {
+    if (this.s.phase !== 'listening' || this.view.stage !== 'question') return;
+    if (this.readyAt?.turn === this.s.turn) return;
+    this.readyAt = { turn: this.s.turn, at: this.now() };
+  }
+
   answer(answer: Answer) {
     const w = this.waiter;
     if (!w || w.turn !== this.s.turn) return;
@@ -427,11 +437,21 @@ export class LessonController {
   }
 
   repeat() {
-    if (this.view.stage !== 'question' || this.s.phase === 'paused') return;
-    if (this.view.awaitNext) return this.sidePlay(currentQuestion(this.s).stimulus);
+    if (this.s.phase === 'paused') return;
+    // During the intro: hear the current intro step again (it used to be a dead button there — 0.68.1).
+    if (this.view.stage === 'intro') return this.restart((sig) => this.runAll(sig, { resumeIntro: true }));
+    if (this.view.stage !== 'question') return;
+    // While waiting for Continue: hear the question again. Items whose sound comes from the performance timeline
+    // (rhythm tapping: stimulus []) replay their reference rhythm instead — Repeat is never a dead button (0.68.1).
+    if (this.view.awaitNext) return this.sidePlay(this.repeatStimulus(currentQuestion(this.s)));
     if (isResolved(this.s.records[this.s.index])) return;
     this.s = noteReplay(this.s);
     this.restart((sig) => this.runAll(sig, { replayOnly: true }));
+  }
+
+  /** The sound Repeat plays: the question's own, or (nothing to play, e.g. a rhythm to tap) its reference. */
+  private repeatStimulus(q: Question): Stimulus[] {
+    return renderStimulus(q.stimulus).events.length ? q.stimulus : explainStimulus(q);
   }
 
   skip() {
@@ -550,7 +570,9 @@ export class LessonController {
   /** Response time for an answer given at `at`, or null when the clock isn't reliable. */
   private elapsed(at: number | null): number | null {
     if (at === null || this.clockStart === null) return null;
-    const t = at - this.clockStart;
+    // From whichever is later: the end of the sound, or the moment the answer buttons were enabled on screen.
+    const ready = this.readyAt && this.readyAt.turn === this.s.turn ? Math.min(this.readyAt.at, at) : null;
+    const t = at - (ready !== null ? Math.max(this.clockStart, ready) : this.clockStart);
     return t >= 0 ? Math.round(t) : null;
   }
 

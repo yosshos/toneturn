@@ -130,7 +130,7 @@ describe('daily leaderboard parity with the server', () => {
     const sql = readFileSync('supabase/seed/daily_keys.sql', 'utf-8');
     const { DAILY_VERSION } = await import('../src/engine/tournament');
     for (const day of ['2026-11-04', '2027-02-28', '2027-12-31', '2028-12-31']) {
-      const m = new RegExp(String.raw`\('${day}', (\d+), array\[(.*?)\]\)`).exec(sql);
+      const m = new RegExp(String.raw`\('${day}', 'soft', (\d+), array\[(.*?)\]\)`).exec(sql);
       expect(m, day).not.toBeNull();
       expect(Number(m![1])).toBe(DAILY_VERSION);
       expect(m![2].split(',').map((s) => s.replace(/'/g, ''))).toEqual(dailySet(day).map((q) => String(q.answer)));
