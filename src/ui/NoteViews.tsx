@@ -103,7 +103,7 @@ const MARK_COLOR = new Proxy(MARK_RG, { get: (o, k: string) => (typeof document 
 /** Symbols under marked notes so the result is never colour-only. */
 const MARK_SYM: Record<Exclude<NoteMark, undefined>, string> = { ok: '', timing: '~', wrong: '✕', missed: '○' };
 
-export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs, marks, rests, meter, timeSig, sig, bars }: { notes: number[]; chord: boolean; keyPc: PitchClass | null; labels?: string[]; clef?: 'treble' | 'bass' | 'alto' | 'tenor'; durs?: number[]; marks?: NoteMark[]; /** Rests: true where the item is a rest of durs[i] (its note value is ignored). */ rests?: boolean[]; /** Beats per bar: draws bar lines between bars (with durs). */ meter?: number; /** Show the time signature (first line of a passage). */ timeSig?: boolean; /** The time signature text when it is not meter/4 (eighth-note meters: '7/8'). */ sig?: string; /** Mixed meters (prog timeline): the line's bars in quarter notes; a bar with `sig` writes its new time signature after the bar line. Overrides `meter` for the bar lines. */ bars?: { len: number; sig?: string }[] }) {
+export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs, marks, rests, meter, timeSig, sig, bars, ties }: { notes: number[]; chord: boolean; keyPc: PitchClass | null; labels?: string[]; clef?: 'treble' | 'bass' | 'alto' | 'tenor'; durs?: number[]; marks?: NoteMark[]; /** Rests: true where the item is a rest of durs[i] (its note value is ignored). */ rests?: boolean[]; /** Beats per bar: draws bar lines between bars (with durs). */ meter?: number; /** Show the time signature (first line of a passage). */ timeSig?: boolean; /** The time signature text when it is not meter/4 (eighth-note meters: '7/8'). */ sig?: string; /** Mixed meters (prog timeline): the line's bars in quarter notes; a bar with `sig` writes its new time signature after the bar line. Overrides `meter` for the bar lines. */ bars?: { len: number; sig?: string }[]; /** Ties: true where a note is tied to the next one (lead sheets). */ ties?: boolean[] }) {
   const { ref, failed } = useSvg(
     (VF, el) => {
       const n = chord ? 1 : notes.length;
@@ -160,8 +160,9 @@ export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs, 
       new VF.Formatter().joinVoices([voice]).format([voice], width - (timeSig ? 110 : 90));
       voice.draw(ctx, stave);
       beams.forEach((bm) => bm.setContext(ctx).draw());
+      if (!chord && ties) ties.forEach((t, i) => t && sn[i + 1] && new VF.StaveTie({ first_note: sn[i], last_note: sn[i + 1], first_indices: [0], last_indices: [0] }).setContext(ctx).draw());
     },
-    [notes.join(','), chord, keySpec(keyPc), (labels ?? []).join(','), clef, (durs ?? []).join(','), (marks ?? []).join(','), sig, (bars ?? []).map((b) => `${b.len}${b.sig ?? ''}`).join(',')],
+    [notes.join(','), chord, keySpec(keyPc), (labels ?? []).join(','), clef, (durs ?? []).join(','), (marks ?? []).join(','), sig, (bars ?? []).map((b) => `${b.len}${b.sig ?? ''}`).join(','), (ties ?? []).join(',')],
   );
   return (
     <div className="note-staff" role="img" aria-label={notes.map((m, i) => `${vfKey(m, keyPc)}${marks?.[i] ? ` ${marks[i]}` : ''}`).join(' ')}>

@@ -537,7 +537,14 @@ export type MetricKey =
   | 'break'
   | 'shape'
   | 'steady'
-  | 'tensions';
+  | 'tensions'
+  // VOICE_CURRICULUM P2 (voiceP2.ts)
+  | 'develop'
+  | 'added'
+  | 'follow'
+  | 'falls'
+  | 'motif'
+  | 'lift';
 
 export interface MetricScore {
   key: MetricKey;
@@ -554,7 +561,7 @@ export type VocalKind = 'hold' | 'straight' | 'vibrato-delayed' | 'vibrato-onoff
 /** VOICE_CURRICULUM: kinds sung against a clock (clicks or the band) — run by the timed session (VoiceTimed.tsx). */
 export type TimedKind = 'time' | 'song' | 'scat';
 /** VOICE_CURRICULUM: further held / phrase kinds of the new families (graded in vocalMore.ts). */
-export type MoreKind = 'breath-hold' | 'breath-phrase' | 'breath-plan' | 'fine-tune' | 'drift-phrase' | 'siren' | 'terraced-scale' | 'edge' | 'terraced' | 'accents' | 'arc' | 'vibrato-jazz' | 'vibrato-widen' | 'inflect';
+export type MoreKind = 'breath-hold' | 'breath-phrase' | 'breath-plan' | 'fine-tune' | 'drift-phrase' | 'siren' | 'terraced-scale' | 'edge' | 'terraced' | 'accents' | 'arc' | 'vibrato-jazz' | 'vibrato-widen' | 'inflect' | 'micro';
 export const TIMED_KINDS: VocalKind[] = ['time', 'song', 'scat'];
 
 /** Time feel items (F7, scat L1): where the singer's "dah"s go against clicks. */
@@ -603,10 +610,28 @@ export interface SongSpec {
   recital?: boolean;
   /** Ballad / bossa: steady long notes (no wobble), and no vibrato when `straight`. */
   longNotes?: 'steady' | 'straight';
+  /** VOICE_CURRICULUM P2. Sight-reading over the band (F9 L8 'band') or from a jazz lead sheet with chord symbols (F9 L9 'lead'): the staff instead of the note roll, no melody guide. */
+  read?: 'band' | 'lead';
+  /** F15 L3: embellish the head — keep the long notes, add neighbours and approaches (≥ 20 % more notes). */
+  embellish?: boolean;
+  /** F15 L7: bebop syllable phrasing — swung eighths and the off-beats accented. */
+  bop?: boolean;
+  /** F14 L9: from this phrase on, the head is interpreted (the earlier phrases as written). */
+  interpretFrom?: number;
+  /** F14 L6: colla voce — no clock; the band follows the singer's notes (chords change when the bar's first note is sung). */
+  rubato?: boolean;
+  /** F14 L10: a fall-off at the end of every sung phrase (2 of 3 or more). */
+  falls?: boolean;
+  /** F13 L8: the singer's own recording (loaded on the device, its melody extracted). */
+  mine?: boolean;
 }
 /** Scat (F15): improvised or chosen notes over the band, graded on pitch, rhythm and landing — never the syllables. */
 export interface ScatSpec {
-  mode: 'guide' | 'landing' | 'approach' | 'tensions';
+  mode: 'guide' | 'landing' | 'approach' | 'tensions' | 'motif' | 'trade';
+  /** F15 L2 motif: the given cell [beat, semitones from the tonic, beats], played in the first two bars; the singer develops it after. */
+  cell?: [number, number, number][];
+  /** F15 L10 trading: bars per turn (2 or 4); the app takes the first turn. */
+  turn?: number;
   chart: string;
   style: 'swing' | 'bossa' | 'ballad';
   bpm: number;

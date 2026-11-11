@@ -200,4 +200,53 @@ export const LESSONS: MiniLesson[] = [
       { say: { en: "To recap: copy the rhythm first, sing the guide tones through the changes, land a chord tone on every beat one, and approach it by a half step.", he: "לסיכום: קודם מעתיקים את המקצב, שרים את הצלילים המנחים דרך האקורדים, נוחתים על צליל אקורד בכל פעמה אחת, ומגיעים אליו בחצי טון." } },
     ],
   },
+  // ------------------------------------------------------------------ P2: F9 L8–L9 reading, F2 L7 quarter tones
+  {
+    id: 'voice-reading',
+    area: 'voice',
+    emoji: '🎤',
+    title: { en: 'Reading with the band, and the notes between the keys', he: 'קריאה עם הלהקה, והצלילים שבין הקלידים' },
+    takeaway: { en: 'Read the melody while the band plays only the chords; on a lead sheet swing the eighths and hold the ties. Quarter tones are sung note by note.', he: 'קוראים את המנגינה בזמן שהלהקה מנגנת רק אקורדים; בדף אקורדים שרים את השמיניות בסווינג ומחזיקים את הקשתות. רבעי טונים שרים צליל אחרי צליל.' },
+    steps: [
+      { say: { en: 'Now the melody is never played to you. The band gives the chords and the count-in — the notes come from the page.', he: 'עכשיו המנגינה לא מתנגנת לכם. הלהקה נותנת את האקורדים ואת הספירה — הצלילים באים מהדף.' }, play: [chord([48, 52, 55], 1.4), chord([53, 57, 60], 1.4)] },
+      { say: { en: 'The trick: hear the first note against the first chord before you start. It is usually the root, the 3rd or the 5th.', he: 'הטריק: שמעו את הצליל הראשון מול האקורד הראשון לפני שמתחילים. בדרך כלל זה השורש, הטרצה או הקווינטה.' }, play: [chord([48, 52, 55], 1.2), note(64, 1)] },
+      { say: { en: 'A lead sheet is the jazz page: the melody, with chord symbols above. Eighth notes are swung, long-short.', he: 'דף אקורדים הוא הדף של הג׳אז: המנגינה, עם סימני אקורדים מעליה. השמיניות בסווינג, ארוך־קצר.' }, play: [clicksAnd(112, 4, swung(4), 67, [1, 3])] },
+      { say: { en: 'A tie joins two notes into one: sing it once and hold it through. A note tied over the bar line is an anticipation.', he: 'קשת מחברת שני צלילים לצליל אחד: שרים אותו פעם אחת ומחזיקים. צליל שקשור מעבר לקו התיבה הוא הקדמה.' }, play: [seq([[60, 0.5], [64, 0.5], [67, 1.6]])] },
+      { say: { en: 'And the notes between the piano keys: a quarter tone is half a semitone — the colour of the maqam.', he: 'והצלילים שבין קלידי הפסנתר: רבע טון הוא חצי מחצי טון — הצבע של המקאם.' }, play: [seq([[60, 0.6], [62, 0.6], [63.5, 0.9], [65, 0.6]])], show: { text: { en: 'Rast: C D E¼↓ F', he: 'ראסט: דו רה מי¼↓ פה' } } },
+      { say: { en: 'Sing each of those notes on its own "da", so the microphone hears every one. The quarter tones must sit within fifteen cents.', he: 'שירו כל אחד מהצלילים האלה על "דה" משלו, כדי שהמיקרופון ישמע כל אחד. רבעי הטונים צריכים לשבת בטווח של חמישה־עשר סנט.' }, play: [seq([[62, 0.5], [-1, 0.12], [63.5, 0.5], [-1, 0.12], [65, 0.6]])] },
+    ],
+    more: [
+      { say: { en: 'Low voices read in the bass clef: the app switches by itself when your range starts at A2 or lower.', he: 'קולות נמוכים קוראים במפתח פה: האפליקציה מחליפה לבד כשהמנעד שלכם מתחיל בלה 2 או נמוך יותר.' } },
+      { say: { en: 'Look one bar ahead while you sing. Your eyes lead, your voice follows. Read the shape first — up by step, down by a leap — then the exact notes.', he: 'הסתכלו תיבה אחת קדימה בזמן ששרים. העיניים מובילות, הקול הולך אחריהן. קראו קודם את הצורה — עולה בצעד, יורד בקפיצה — ואז את הצלילים המדויקים.' }, play: [seq([[60, 0.4], [62, 0.4], [64, 0.4], [65, 0.4], [60, 0.8]])] },
+      { say: { en: 'Each phrase is scored on pitch and on time against the written rhythm, exactly as with the songs.', he: 'כל משפט מקבל ציון על הגובה ועל הזמן מול המקצב הכתוב, בדיוק כמו בשירים.' } },
+      { say: { en: 'Maqam players place quarter tones a little differently from town to town; the app takes the exact middle, so stay close to it. Listen: Bayati starts on a neutral step, between a half step and a whole step.', he: 'נגני מקאם ממקמים רבעי טונים קצת אחרת מעיר לעיר; האפליקציה לוקחת את האמצע המדויק, אז הישארו קרובים אליו. הקשיבו: ביאתי מתחיל בצעד נייטרלי, בין חצי טון לטון שלם.' }, play: [seq([[62, 0.5], [63.5, 0.5], [65, 0.5], [67, 0.8]])] },
+      { say: { en: "A common mistake is to stop when a note goes wrong. Keep going with the band, and fix it on the next take.", he: "טעות נפוצה היא לעצור כשצליל משתבש. המשיכו עם הלהקה, ותתקנו בטייק הבא." } },
+      { say: { en: "To recap: hear the first note in the chord, read a bar ahead, swing the eighths, hold the ties, and give each quarter tone its own syllable.", he: "לסיכום: שומעים את הצליל הראשון באקורד, קוראים תיבה קדימה, שרים שמיניות בסווינג, מחזיקים קשתות, ונותנים לכל רבע טון הברה משלו." } },
+    ],
+  },
+  // ------------------------------------------------------------------ P2: F15 L2–L3, L7, L10 and F14 L6, L9–L10
+  {
+    id: 'voice-trading',
+    area: 'voice',
+    emoji: '🎤',
+    title: { en: 'Talking with the band: motifs, trading, colla voce', he: 'לדבר עם הלהקה: מוטיבים, חילופים, קולה ווצ׳ה' },
+    takeaway: { en: 'Develop a motif, embellish a head, accent the off-beats, trade twos and fours — and lead the band when it follows you.', he: 'מפתחים מוטיב, מקשטים נושא, מדגישים את הפעמות החלשות, מחליפים שתיים וארבע — ומובילים את הלהקה כשהיא הולכת אחריכם.' },
+    steps: [
+      { say: { en: 'A motif is a small idea of three notes. Repeat it, move it up a step, or start it later — the listener follows the story.', he: 'מוטיב הוא רעיון קטן של שלושה צלילים. חזרו עליו, הזיזו אותו צעד למעלה, או התחילו אותו מאוחר יותר — המאזין עוקב אחרי הסיפור.' }, play: [seq([[60, 0.5], [62, 0.5], [64, 1], [-1, 0.5], [62, 0.5], [64, 0.5], [65, 1]])] },
+      { say: { en: 'Embellishing a head keeps its long notes and adds neighbours around them. The melody stays recognisable.', he: 'לקשט נושא זה לשמור על הצלילים הארוכים ולהוסיף סביבם שכנים. המנגינה נשארת מזוהה.' }, play: [seq([[64, 1.2], [-1, 0.2], [64, 0.4], [66, 0.2], [64, 0.6]])] },
+      { say: { en: 'Bebop syllables put the weight on the off-beat: doo-BAH, doo-BAH. The microphone hears that accent as loudness.', he: 'הברות ביבופ שמות את המשקל על הפעמה החלשה: דו־בה, דו־בה. המיקרופון שומע את ההדגשה הזאת כעוצמה.' }, play: [seq([[62, 0.33, 0.5], [64, 0.17, 0.85], [65, 0.33, 0.5], [67, 0.17, 0.85]])] },
+      { say: { en: 'Trading: the band plays two or four bars, you answer in yours. Its next answer picks up your idea — pick up its idea too.', he: 'חילופים: הלהקה מנגנת שתיים או ארבע תיבות, ואתם עונים בתיבות שלכם. התשובה הבאה שלה לוקחת את הרעיון שלכם — קחו גם אתם את הרעיון שלה.' } },
+      { say: { en: 'Colla voce means "with the voice": you sing freely and the band changes chords when you reach each bar.', he: 'קולה ווצ׳ה פירושו "עם הקול": אתם שרים בחופשיות והלהקה מחליפה אקורד כשאתם מגיעים לכל תיבה.' }, play: [chord([48, 52, 55, 59], 2.2)] },
+      { say: { en: 'In a blues call and response, sing the call, let its last note fall, and leave space for the band to answer.', he: 'בבלוז של קריאה ותשובה, שירו את הקריאה, תנו לצליל האחרון ליפול, והשאירו מקום ללהקה לענות.' }, play: [seq([[67, 0.5], [63, 0.5], [64, 0.5], [67, 0.9], [66, 0.1], [64, 0.1], [61, 0.2]])] },
+    ],
+    more: [
+      { say: { en: 'Two different developments of the motif pass the level: a repeat and a sequence, or a sequence and a shift in time.', he: 'שני פיתוחים שונים של המוטיב מעבירים את השלב: חזרה וסקוונצה, או סקוונצה והזזה בזמן.' }, play: [seq([[64, 0.4], [67, 0.4], [69, 0.8], [-1, 0.4], [66, 0.4], [69, 0.4], [71, 0.8]])] },
+      { say: { en: 'In trading, every turn must be used: at least three notes. Chord tones on the strong beats, and the eighths on the swing grid.', he: 'בחילופים, צריך להשתמש בכל תור: לפחות שלושה צלילים. צלילי אקורד בפעמות החזקות, והשמיניות על רשת הסווינג.' } },
+      { say: { en: 'In the AABA chorus, the first three sections are sung as written; only the last A is yours to interpret.', he: 'בכורוס AABA, שלושת החלקים הראשונים מושרים כפי שנכתבו; רק ה־A האחרון שלכם לפרש.' } },
+      { say: { en: 'In colla voce, take your time but keep each phrase in tune: only the notes you reach in tune count.', he: 'בקולה ווצ׳ה, קחו את הזמן אבל שמרו על כל משפט מדויק: נחשבים רק הצלילים שמגיעים אליהם מדויק.' }, play: [seq([[64, 1.2], [62, 0.6], [61, 1.4]])] },
+      { say: { en: 'Your own song: open a recording of yourself, with the voice clear. The app finds its melody and scores you against it, phrase by phrase.', he: 'השיר שלכם: פתחו הקלטה של עצמכם, עם קול ברור. האפליקציה מוצאת את המנגינה שלה ונותנת ציון מולה, משפט אחרי משפט.' } },
+      { say: { en: "A common mistake is to start a new idea in every turn. Keep one idea and change it a little — that is a conversation.", he: "טעות נפוצה היא להתחיל רעיון חדש בכל תור. שמרו על רעיון אחד ושנו אותו קצת — זאת שיחה." } },
+      { say: { en: "To recap: develop one motif, keep the long notes when you embellish, accent the off-beats, use every turn, and let the band follow you in a ballad.", he: "לסיכום: מפתחים מוטיב אחד, שומרים על הצלילים הארוכים כשמקשטים, מדגישים את הפעמות החלשות, משתמשים בכל תור, ונותנים ללהקה ללכת אחריכם בבלדה." } },
+    ],
+  },
 ];

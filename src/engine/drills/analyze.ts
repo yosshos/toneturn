@@ -307,6 +307,14 @@ export function bassThresholds(band: number, mic: boolean): { cv: number; sd: nu
  */
 export const IOI_FLOOR_MS = { midi: 12, mic: 25 } as const;
 
+/**
+ * VOICE_CURRICULUM P2: a sung onset is only good to about ±25–40 ms on a phone (the attack of a consonant, the
+ * settling of a pitch after a legato move), and a sung eighth line is often legato — so a sung take (licks on the
+ * voice) keeps the pitch rule but gets the voice's timing limits: onset SD ≤ 40 ms (worst onset 2.5 × that) and a
+ * hesitation only when an interval is 1.8 × its share (an instrument: 1.5).
+ */
+export const VOICE_TIMING = { sd: 40, hesitation: 1.8 } as const;
+
 /** What a microphone can't measure on a piano drill: loudness (dynamics, accents, voicing, balance), key release (articulation) and the pedal. */
 export function micUnmeasurable(drill: Pick<Drill, 'goal' | 'notes'>): ('dynamics' | 'articulation' | 'pedal')[] {
   const out: ('dynamics' | 'articulation' | 'pedal')[] = [];
@@ -321,7 +329,7 @@ export function micUnmeasurable(drill: Pick<Drill, 'goal' | 'notes'>): ('dynamic
  * tempo-band CV / SD limits (bass, A7). `opts.mic`: the piano was heard by the microphone (no velocity, no key
  * release): looser timing limits, and a drill whose goal needs MIDI never passes (only measured practice counts).
  */
-export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], cal?: DrillCalibration, opts: { thresholds?: { cv: number; sd: number }; mic?: boolean } = {}): TakeMetrics {
+export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], cal?: DrillCalibration, opts: { thresholds?: { cv: number; sd: number }; mic?: boolean; voice?: boolean } = {}): TakeMetrics {
   // Improv mode: the right hand above the split plays freely and is checked elsewhere (against the chord-scales).
   const played = drill.freeAbove !== undefined ? played0.filter((p) => p.pitch < drill.freeAbove!) : played0;
   const exp = drill.notes;
@@ -374,7 +382,7 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
     for (const x of rs) {
       const rel = med > 0 ? x.r / med : 1;
       for (const i of x.o.idx) ioiRatio[i] = rel;
-      if (rel > 1.5) hesitations++;
+      if (rel > (opts.voice ? VOICE_TIMING.hesitation : 1.5)) hesitations++;
       if (goal.evenness && rel > 1.15) {
         const thumb = !fingered || x.o.idx.some((i) => exp[i].finger === 1) || x.prev.idx.some((i) => exp[i].finger === 1);
         if (thumb) glitches.push(x.o.idx[0]);
@@ -554,6 +562,7 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
     th.sd = Math.max(th.sd, 28);
     th.hands = Math.max(th.hands, 35);
   }
+  if (opts.voice) th.sd = Math.max(th.sd, VOICE_TIMING.sd);
   // A1: the evenness limit never asks for less IOI spread than the floor (ms) at the take's written IOI. (Callers with
   // their own limits — the bass, A7 — keep them.)
   const ioiMs = 1000 / Math.max(0.1, nps);

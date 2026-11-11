@@ -208,6 +208,8 @@ export interface DrillSpec {
 
 /** A generated drill: the notes to play and how it is judged. */
 export interface Drill {
+  /** Sung, not played (licks on the voice course): the microphone hears a voice, graded with the voice's timing tolerance (VOICE_TIMING). */
+  sung?: boolean;
   /** Songs (songDrills.ts): chord names per bar, shown above the staff as a chart. */
   chart?: string[];
   /** Chart drills, improv mode (owner 2026-11-08): notes at or above this pitch are the free right hand — not graded. */

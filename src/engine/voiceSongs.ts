@@ -85,7 +85,9 @@ export interface SongPlan {
 
 /** The song in a key that fits the range (whole melody inside when it can), at `bpm` (default the song's). */
 export function songPlan(song: VoiceSong, range: VoiceRange, bpm = song.bpm): SongPlan {
-  const ns = songNotes({ id: song.id, melody: song.melody, meter: song.meter, minor: song.minor });
+  // A token ending in "~" is tied to the next note (lead sheets, F9 L9): one sung note across both.
+  const ties = tieFlags(song.melody);
+  const ns = songNotes({ id: song.id, melody: song.melody.replace(/~/g, ''), meter: song.meter, minor: song.minor });
   const semis = ns.map((n) => n.semi).filter((x): x is number => x !== null);
   const lo = Math.min(...semis);
   const hi = Math.max(...semis);
@@ -105,9 +107,15 @@ export function songPlan(song: VoiceSong, range: VoiceRange, bpm = song.bpm): So
     const f = b - Math.floor(b);
     return Math.abs(f - 0.5) < 1e-6 ? Math.floor(b) + 2 / 3 : b;
   };
-  for (const n of ns) {
+  for (const [ti, n] of ns.entries()) {
     if (n.semi === null) {
       prevRest = true;
+      continue;
+    }
+    const tied = ti > 0 && ties[ti - 1] && notes.length && ns[ti - 1].semi === n.semi;
+    if (tied) {
+      const last = notes[notes.length - 1];
+      last.dur = at(n.at + n.beats) * beat - last.start;
       continue;
     }
     const phrase = phraseOfBar(n.bar);
@@ -124,6 +132,26 @@ export function songPlan(song: VoiceSong, range: VoiceRange, bpm = song.bpm): So
   const tpc = ((tonic % 12) + 12) % 12;
   const chartBars = transposeChart(song.chart, tpc).split('|').map((b) => b.trim());
   return { song, tonic, bpm, beat, meter: song.meter, bars, notes, phrases, chartBars };
+}
+
+/** Per melody token: is it tied to the next one ("~")? */
+export function tieFlags(melody: string): boolean[] {
+  return melody
+    .split('|')
+    .flatMap((b) => b.trim().split(/\s+/).filter(Boolean))
+    .map((t) => t.endsWith('~'));
+}
+
+/** A song as written, for the staff (F9 L8–L9): every token in order with its pitch in the sung key, length, rest and tie. */
+export function sheetNotes(song: VoiceSong, tonic: number): { midi: number; beats: number; rest: boolean; tie: boolean; bar: number }[] {
+  const ties = tieFlags(song.melody);
+  return songNotes({ id: song.id, melody: song.melody.replace(/~/g, ''), meter: song.meter, minor: song.minor }).map((n, i) => ({
+    midi: n.semi === null ? tonic : tonic + n.semi,
+    beats: n.beats,
+    rest: n.semi === null,
+    tie: !!ties[i],
+    bar: n.bar,
+  }));
 }
 
 export interface Backing {
@@ -159,6 +187,16 @@ export function songBacking(plan: SongPlan, o: { fromBar?: number; toBar?: numbe
     events = [...clicks, ...chord];
   } else {
     events = chartBacking(p, style, plan.bpm, 1, m, { countIn: true }).events;
+  }
+  // F14 L10: the band's answers between the singer's calls (an own line in the song's notation, in the gaps).
+  if (plan.song.answer && o.band !== false) {
+    const sw = style === 'swing';
+    const at = (b: number) => (sw && Math.abs(b - Math.floor(b) - 0.5) < 1e-6 ? Math.floor(b) + 2 / 3 : b);
+    const base = from * m;
+    for (const n of songNotes({ id: `${plan.song.id}-answer`, melody: plan.song.answer, meter: m, minor: plan.song.minor })) {
+      if (n.semi === null || n.bar < from || n.bar > to) continue;
+      events.push({ midi: plan.tonic + n.semi, start: lead + (at(n.at) - base) * plan.beat, duration: Math.max(0.08, (at(n.at + n.beats) - at(n.at)) * plan.beat * 0.9), velocity: 0.62 });
+    }
   }
   if (o.guide) {
     const t0 = plan.notes.find((n) => n.bar >= from)?.start ?? 0;

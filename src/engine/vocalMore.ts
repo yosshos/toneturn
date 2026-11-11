@@ -8,9 +8,10 @@
 import type { NoteEvent } from './lesson';
 import type { SungFrame } from './sing';
 import { hzToMidi, midiToHz } from './pitch';
+import { gradeMicro, synthDetached } from './voiceP2';
 import { bandScore, finish, holdMetrics, inBandScore, M, melodyMetrics, reachScore, UNCLEAR, gradeMelody, type MetricScore, type TakeGrade, type VocalItem, type VocalKind, type VoiceRange, itemTargets, synthHold, synthMelody, gradeHold } from './vocal';
 
-export const MORE_KINDS: VocalKind[] = ['breath-hold', 'breath-phrase', 'breath-plan', 'fine-tune', 'drift-phrase', 'siren', 'terraced-scale', 'edge', 'terraced', 'accents', 'arc', 'vibrato-jazz', 'vibrato-widen', 'inflect'];
+export const MORE_KINDS: VocalKind[] = ['breath-hold', 'breath-phrase', 'breath-plan', 'fine-tune', 'drift-phrase', 'siren', 'terraced-scale', 'edge', 'terraced', 'accents', 'arc', 'vibrato-jazz', 'vibrato-widen', 'inflect', 'micro'];
 
 const voiced = (f: SungFrame) => !!f.hz && f.confidence >= 0.8 && f.hz > 55 && f.hz < 1400;
 const db = (r: number) => 20 * Math.log10(Math.max(1e-5, r));
@@ -274,6 +275,8 @@ export function gradeMore(item: VocalItem, frames: SungFrame[], range: VoiceRang
         { hold: h },
       );
     }
+    case 'micro':
+      return gradeMicro(frames, tg);
     case 'inflect': {
       const shape = item.more?.shape ?? 'scoop';
       if (shape === 'ghost') {
@@ -346,6 +349,7 @@ export function simulateMore(item: VocalItem, targets: number[]): SungFrame[] | 
     }
     return out;
   }
+  if (item.kind === 'micro') return synthDetached(targets, { noteSec: Math.max(0.45, (item.noteSecs?.[0] ?? 0.7) - 0.12) });
   if (item.kind === 'vibrato-jazz') return synthHold(targets[0], { seconds: item.seconds + 0.3, vibRate: 5.4, vibExtent: 24, vibFrom: (item.cueOn ?? item.seconds * 0.66) + 0.05 });
   if (item.kind === 'vibrato-widen') {
     const n = Math.round((item.seconds + 0.3) * 50);

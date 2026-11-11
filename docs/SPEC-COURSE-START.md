@@ -133,7 +133,9 @@ optional one-tap personal goal; (3) the daily goal + reminder prompt on the firs
 ### Not built / left for later
 - The day-3 "real music moment" (a full chorus with the band) and Toni on it.
 - Jazz "A bit / Well" tastes are listening tastes (guide tones, comping, changes, forms); trading 2s needs an instrument
-  and stays in the jazz piano path.
+  and stays in the jazz piano path. A sung trading-twos item now exists in the voice course (scat level 1510,
+  VOICE_CURRICULUM "Implemented (P2)"); it is not the jazz taste, because tastes run before a voice range is known and
+  the jazz course is not voice-only (owner decision).
 - The "First session" mark is a screen medal, not a catalogue badge (the badge catalogue is shared with other work).
 - The echo-phrase prompt ("Listen, then sing it back.") is a new spoken line; it is not in public/voice yet.
 - Drums setup reuses the full kit wizard (no shorter form yet); playing tastes were verified up to the take screen in
