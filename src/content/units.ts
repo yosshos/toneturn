@@ -172,6 +172,9 @@ export const UNIT_LESSON: Record<string, string> = {
   'vocal:bebop': 'voice-time',
   'vocal:harmony-more': 'vocal-harmony',
   'vocal:inflect': 'voice-dynamics',
+  // VOICE_CURRICULUM P2: reading over the band + quarter tones, and talking with the band (motif, trading, colla voce).
+  'vocal:reading': 'voice-reading',
+  'vocal:trading': 'voice-trading',
   // Play & improvise
   'perform:backing': 'perform-backing',
   'perform:improv': 'perform-improv',
@@ -189,9 +192,13 @@ export const UNIT_LESSON: Record<string, string> = {
 
 const VOICE_UNIT: Record<number, string> = { 6: 'vocal:breath', 7: 'vocal:drift', 8: 'vocal:registers', 9: 'vocal:dynamics', 10: 'vocal:jazz-vibrato', 11: 'vocal:time', 12: 'vocal:ear', 13: 'vocal:band', 14: 'vocal:standards', 15: 'vocal:scat', 16: 'vocal:bebop', 17: 'vocal:harmony-more', 18: 'vocal:inflect', 19: 'vocal:sight', 20: 'vocal:scales' };
 
+const VOICE_LEVEL_UNIT: Record<number, string> = { 704: 'vocal:reading', 1903: 'vocal:reading', 1904: 'vocal:reading', 1408: 'vocal:trading', 1409: 'vocal:trading', 1410: 'vocal:trading', 1507: 'vocal:trading', 1508: 'vocal:trading', 1509: 'vocal:trading', 1510: 'vocal:trading' };
+
 /** The vocal track a vocal level belongs to (level numbers: see Vocal.tsx bases). */
 export function vocalUnit(level: number | 'warmup'): string | null {
   if (level === 'warmup') return null;
+  // VOICE_CURRICULUM P2 levels with their own lesson (before the number base).
+  if (VOICE_LEVEL_UNIT[level]) return VOICE_LEVEL_UNIT[level];
   // VOICE_CURRICULUM: new family levels by their number base.
   if (level >= 600) return VOICE_UNIT[Math.floor(level / 100)] ?? null;
   if (level > 500) return 'vocal:ornaments';
