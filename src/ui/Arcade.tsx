@@ -616,7 +616,7 @@ export const GAME_CATS: { id: GameCat; icon: string; en: string; he: string }[] 
   { id: 'instrument', icon: '🎸', en: 'Instrument & sound', he: 'כלי וסאונד' },
   { id: 'social', icon: '⚔', en: 'Against others', he: 'מול אחרים' },
 ];
-export const GAMES2: { id: 'drills' | 'highway' | 'flight' | 'melodypuzzle' | 'nametune' | 'tuneup' | 'pitchmemory' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'peakhunter'; icon: string; hue: string; cat: GameCat; en: [string, string]; he: [string, string] }[] = [
+export const GAMES2: { id: 'drills' | 'highway' | 'flight' | 'melodypuzzle' | 'nametune' | 'tuneup' | 'pitchmemory' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'peakhunter' | 'land' | 'groove-echo' | 'odd-echo'; icon: string; hue: string; cat: GameCat; en: [string, string]; he: [string, string] }[] = [
   { id: 'rush-chord', icon: '🎹', hue: 'var(--hue-pitch)', cat: 'read', en: ['Chord Rush', 'Name chords on the neck, keys or staff — 60 seconds.'], he: ['מרוץ אקורדים', 'זהו אקורדים על הצוואר, הקלידים או החמשה — 60 שניות.'] },
   { id: 'rush-note', icon: '𝄞', hue: 'var(--hue-reading)', cat: 'read', en: ['Note Rush', 'Read notes off the staff as fast as you can.'], he: ['מרוץ תווים', 'קראו תווים מהחמשה הכי מהר שאפשר.'] },
   { id: 'rush-keysig', icon: '♯', hue: 'var(--hue-reading)', cat: 'read', en: ['Key Signature Rush', 'Sharps and flats → the key, fast.'], he: ['מרוץ סימני מפתח', 'דיאזים ובמולים → הסולם, מהר.'] },
@@ -631,6 +631,10 @@ export const GAMES2: { id: 'drills' | 'highway' | 'flight' | 'melodypuzzle' | 'n
   { id: 'drills', icon: '🎹', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Technique', 'Scales, Hanon, Barry Harris, voicings — with a tempo ladder and a MIDI analysis.'], he: ['טכניקה', 'סולמות, האנון, בארי האריס, וויסינגים — עם סולם טמפו וניתוח MIDI.'] },
   { id: 'tuneup', icon: '🎸', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Tune-up', 'Turn the peg until the beats disappear.'], he: ['כיוון', 'סובבו את המפתח עד שהפעימות נעלמות.'] },
   { id: 'pitchmemory', icon: '🎯', hue: 'var(--hue-creative)', cat: 'ear', en: ['Pitch Memory', 'Once a day: your note, from memory.'], he: ['זיכרון צליל', 'פעם ביום: הצליל שלכם, מהזיכרון.'] },
+  // Drum games P1 (DRUMS_NICHE_PLAN §3): only in the drums course (COURSE_GAMES).
+  { id: 'land', icon: '', hue: 'var(--hue-time)', cat: 'instrument', en: ['Land It', 'A fill is called one bar ahead — play it, land crash + kick on 1.'], he: ['לנחות על 1', 'מעבר נקרא תיבה מראש — נגנו אותו ונחתו בקראש + קיק על 1.'] },
+  { id: 'groove-echo', icon: '', hue: 'var(--hue-time)', cat: 'rhythm', en: ['Groove Echo', 'Hear a groove, play it back on the kit.'], he: ['הד לגרוב', 'שומעים גרוב ומנגנים אותו בחזרה על המערכת.'] },
+  { id: 'odd-echo', icon: '', hue: 'var(--hue-time)', cat: 'rhythm', en: ['Odd-meter Echo', 'One bar of 7/8 or 9/8 — 2+2+3 or 3+2+2? Play it back.'], he: ['הד במשקל מוזר', 'תיבה של 7/8 או 9/8 — 2+2+3 או 3+2+2? נגנו אותה בחזרה.'] },
 ];
 
 /** Practice tab hub (owner 2026-11-08): songs, technique and singing get their own place above the games, with the tools. */

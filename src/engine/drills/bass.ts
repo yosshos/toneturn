@@ -19,6 +19,7 @@ import { constantBars, drumHitsOnBars } from './bandTimeline';
 import { STANDARD_CHANGES } from '../standards';
 import { generateBassEar } from './bassEar';
 import { generateUpright } from './upright';
+import { generateBassNiche, IMPRO_NICHE, improNicheLevels, jazzFamilies, NICHE_EXAM, progFamilies } from './bassNiche';
 import type { LevelExamTag } from './types';
 
 export const tt = (en: string, he: string): T2 => ({ en, he });
@@ -2434,7 +2435,16 @@ export function generateBass(s: DrillSpec, tu: Tuning): Drill {
     case 'b-posread':
       return genPosRead(s, tu);
     case 'b-impro':
-      return genImproB(s, tu);
+      return IMPRO_NICHE.includes(s.kind) ? generateBassNiche(s, tu) : genImproB(s, tu);
+    // BASS_NICHE_PLAN P1: the jazz and prog families (bassNiche.ts).
+    case 'b-swing':
+    case 'b-barry':
+    case 'b-jform':
+    case 'b-latin':
+    case 'b-odd':
+    case 'b-prog':
+    case 'b-poly':
+      return generateBassNiche(s, tu);
   }
   throw new Error(`Not a bass family: ${s.family}`);
 }
@@ -2549,6 +2559,17 @@ export function bassFamilies(): GuitarFamilyDef[] {
       L('b-ear', 8, 'Inversions and slash bass by ear', 'היפוכים ובס סלאש בשמיעה', [EA('slash', { perBeat: 0.5 }), EA('slash', { perBeat: 0.5, option: 1 })], K6, [60, 90], 'halves'),
       // RSL ear tests Gr 6–8: chord quality, answered on the bass (its arpeggio), so it is measured.
       L('b-ear', 9, 'Chord quality by ear: play its arpeggio', 'סוג האקורד בשמיעה: לנגן את הארפג׳יו שלו', [EA('quality', { perBeat: 1 }), EA('quality', { perBeat: 1, option: 1 })], K6, [60, 90], Qn),
+      // BASS_NICHE_PLAN E1–E4: wider qualities, harmonic motion, form ("where am I"), longer play-back.
+      L('b-ear', 10, 'Chord quality: 6ths, sus, minor-major', 'סוג האקורד: סקסטות, sus, מינור-מז׳ור', [EA('quality2', { perBeat: 1 })], K6, [60, 90], Qn),
+      L('b-ear', 11, 'Chord quality: altered dominants and ♯11', 'סוג האקורד: דומיננטות אלטרד ו־♯11', [EA('quality3', { perBeat: 1 })], K6, [60, 90], Qn),
+      L('b-ear', 12, 'Cadences by the bass: ii–V, backdoor, tritone sub', 'קדנצות לפי הבס: ii–V, דלת אחורית, תחליף טריטון', [EA('motion', { perBeat: 0.25 })], [0, 5, 7, 10, 3], [70, 100], 'whole notes'),
+      L('b-ear', 13, 'Secondary dominants and passing diminished', 'דומיננטות משניות ומוקטן עובר', [EA('secdom', { perBeat: 0.25 })], [0, 5, 7, 10, 3], [70, 100], 'whole notes'),
+      L('b-ear', 14, 'Where am I? Play the next section', 'איפה אני? לנגן את הקטע הבא', [EA('where', { perBeat: 0.5 }), EA('where', { perBeat: 0.5, option: 1 })], [5, 10, 0, 7], [80, 120], 'halves'),
+      L('b-ear', 15, 'The band drops in: find your place', 'הלהקה נכנסת באמצע: למצוא את המקום', [EA('dropin', { perBeat: 0.5 })], [5, 10, 0, 7], [80, 120], 'halves'),
+      L('b-ear', 16, 'Hear a chorus, play the bridge', 'לשמוע סבב, לנגן את הגשר', [EA('bridge', { perBeat: 0.5 })], [5, 10, 0, 7], [80, 120], 'halves'),
+      L('b-ear', 17, 'Play back 4 bars of walking', 'לנגן בחזרה 4 תיבות של ווקינג', [EA('transcribe-long', { perBeat: 1 })], K6, [80, 140], Qn),
+      L('b-ear', 18, 'Play back 8 bars, or a bebop phrase', 'לנגן בחזרה 8 תיבות, או משפט ביבופ', [EA('transcribe-long', { perBeat: 1, option: 1 }), EA('transcribe-long', { option: 2 })], K6, [80, 120], 'quarters / 8ths'),
+      L('b-ear', 19, 'Play back a 7/8 riff or a tumbao', 'לנגן בחזרה ריף ב־7/8 או טומבאו', [EA('riff-ear', { tempo: 160 }), EA('riff-ear', { option: 1 })], [4, 9, 2, 7], [70, 100], '8ths'),
     ]),
     fam('b-scale', 'Scales and modes', 'סולמות ומודוסים', [
       L('b-scale', 1, 'Minor and major pentatonic', 'פנטטוני מינור ומז׳ור', [SC('scale', { option: 8 }), SC('scale', { option: 9 })], K6, [70, 110], E8),
@@ -2663,9 +2684,14 @@ export function bassFamilies(): GuitarFamilyDef[] {
       L('b-impro', 2, 'Fills that land on the 3rd', 'מילויים שנוחתים על הטרצה', [0, 1].map((o) => IM('fill-third', { option: o })), K6, [70, 110], E8),
       L('b-impro', 3, 'Two-bar answers over a vamp', 'תשובות של שתי תיבות על וואמפ', [IM('answer')], K4, [80, 100], E8),
       L('b-impro', 4, 'Pentatonic solo: chord tones on the changes', 'סולו פנטטוני: צלילי אקורד בחילופים', [0, 1, 2].map((o) => IM('penta-solo', { option: o })), K6, [70, 110], E8),
-      L('b-impro', 5, 'Blues solo: land on 3rds and 7ths', 'סולו בלוז: נחיתה על טרצות וספטימות', [IM('blues-guide'), IM('blues-guide', { option: 1 })], [5, 10, 7, 0], [70, 120], 'swung 8ths'),
-      L('b-impro', 6, 'ii–V–I: guide tones on the changes', 'ii–V–I: צלילים מנחים בחילופים', [IM('iivi-guide'), IM('iivi-guide', { option: 1 })], 'major', [80, 140], 'swung 8ths'),
+      // BASS_NICHE_PLAN X3: labelled swung, now swung and measured (the "and" at 2/3 of the beat, swing ratio 1.5–2.1).
+      L('b-impro', 5, 'Blues solo: land on 3rds and 7ths', 'סולו בלוז: נחיתה על טרצות וספטימות', [IM('blues-guide', { swing: true }), IM('blues-guide', { option: 1, swing: true })], [5, 10, 7, 0], [70, 120], 'swung 8ths'),
+      L('b-impro', 6, 'ii–V–I: guide tones on the changes', 'ii–V–I: צלילים מנחים בחילופים', [IM('iivi-guide', { swing: true }), IM('iivi-guide', { option: 1, swing: true })], 'major', [80, 140], 'swung 8ths'),
+      // BASS_NICHE_PLAN J3: bebop and chord-scale solos, up to a chorus on a standard and trading 4s.
+      ...improNicheLevels(L),
     ]),
+    // The jazz track (BASS_NICHE_PLAN J1, J2, J4, L1): opens with a jazz or both track.
+    ...jazzFamilies(L, fam),
     fam('b-legato', 'Slides, legato, harmonics', 'החלקות, לגאטו והרמוניקים', [
       L('b-legato', 1, 'Slides into notes', 'החלקות אל הצלילים', [LG('slide')], K6, [70, 110], E8),
       L('b-legato', 2, 'Hammer-on and pull-off pairs', 'זוגות הקשה ומשיכה', [LG('hp')], K6, [60, 100], E8),
@@ -2686,6 +2712,8 @@ export function bassFamilies(): GuitarFamilyDef[] {
       L('b-pick', 7, 'Economy strokes across the strings', 'מכות חסכוניות לרוחב המיתרים', [PI('psweep')], K6, [70, 120], E8),
       L('b-pick', 8, 'Inside and outside picking in 16ths', 'פריטה פנימית וחיצונית בשש-עשריות', [PI('pinout', { perBeat: 4, minor: true }), PI('pinout', { perBeat: 4, minor: true, option: 1 })], K4, [60, 100], S16),
     ]),
+    // The prog track (BASS_NICHE_PLAN P1, P2, P3): opens with a prog or both track.
+    ...progFamilies(L, fam),
     fam('b-slap', 'Slap and pop', 'סלאפ ופופ', [
       L('b-slap', 1, 'Thumb on open strings', 'אגודל על מיתרים פתוחים', [SL('thumb')], OPEN, [60, 100], E8),
       L('b-slap', 2, 'Octave slap and pop', 'סלאפ ופופ באוקטבות', [SL('octpop')], 'major', [60, 100], E8),
@@ -2700,7 +2728,7 @@ export function bassFamilies(): GuitarFamilyDef[] {
     ...uprightFamilies(L, fam),
   ];
   // B14: exam / bagrut mapping per level (BASS_AUDIT §3), shown on the level card and used by the badges.
-  for (const f of fams) for (const l of f.levels) if (EXAM[l.id]) l.exam = EXAM[l.id].map(([board, grade]) => ({ board, grade }));
+  for (const f of fams) for (const l of f.levels) if (EXAM[l.id] || NICHE_EXAM[l.id]) l.exam = (EXAM[l.id] ?? (NICHE_EXAM[l.id] as [LevelExamTag['board'], string][])).map(([board, grade]) => ({ board, grade }));
   return fams;
 }
 

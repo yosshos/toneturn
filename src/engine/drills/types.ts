@@ -33,13 +33,19 @@ export type FamilyId =
   | 'g-jazz' // shells, drop 2 / 3, ii–V–I comping, guide tones, walking bass
   | 'g-reading' // reading by position
   | 'g-impro' // target notes over forms
+  // GUITAR_DEEPENING (2026-11-11): the guitarist's ear, Barry Harris on the neck, prog / fusion.
+  | 'g-ear' // call and response, answered on the guitar
+  | 'g-harris' // Barry Harris applied to guitar (barry.ts)
+  | 'g-prog' // odd meters, polyrhythm, metric modulation, fusion lines, unisons (prog engine)
   | 'g-bass' // bass guitar subset (the 0.4x starter family; kept so old progress ids stay valid)
   // Bass course (docs/research/BASS_CURRICULUM.md §5, F1–F14): instrument bass, pitches SOUNDING MIDI.
   | BassFamilyId
   // Drums course (docs/research/DRUMS_CURRICULUM.md §4, v1 = F1–F5, F9, F14): pitches are the GM drum notes of the voices.
   | DrumFamilyId;
 
-export type DrumFamilyId = 'd-strokes' | 'd-rolls' | 'd-diddles' | 'd-time' | 'd-rock' | 'd-fills' | 'd-read' | 'd-funk' | 'd-shuffle' | 'd-indep' | 'd-mideast' | 'd-feet' | 'd-ear' | 'd-jazz' | 'd-latin';
+export type DrumFamilyId = 'd-strokes' | 'd-rolls' | 'd-diddles' | 'd-time' | 'd-rock' | 'd-fills' | 'd-read' | 'd-funk' | 'd-shuffle' | 'd-indep' | 'd-mideast' | 'd-feet' | 'd-ear' | 'd-jazz' | 'd-latin'
+  // DRUMS_NICHE_PLAN (P1): songs and song forms, prog / fusion, and reading / theory played on the kit.
+  | 'd-song' | 'd-prog' | 'd-count' | 'd-notation' | 'd-form';
 /** A drum voice (DRUMS_CURRICULUM §3): what a hit is, whatever note the kit sends for it. */
 export type DrumVoice = 'kick' | 'snare' | 'rim' | 'hihat' | 'hhOpen' | 'hhPedal' | 'ride' | 'crash' | 'tom1' | 'tom2' | 'tom3';
 /** The limb that plays a drum note (sticking R / L stays in `hand`; feet are RF / LF). */
@@ -63,6 +69,15 @@ export type BassFamilyId =
   // 0.66: reading in positions (electric) and fills / solos on target notes.
   | 'b-posread'
   | 'b-impro'
+  // BASS_NICHE_PLAN P1: the jazz track (swing time, Barry Harris, form, Afro-Cuban) and the prog track (odd meters,
+  // riffs and unisons, polymeter and metric modulation).
+  | 'b-swing'
+  | 'b-barry'
+  | 'b-jform'
+  | 'b-latin'
+  | 'b-odd'
+  | 'b-prog'
+  | 'b-poly'
   // 0.64 (track B): the bass-ear family F15 and the upright / double-bass track (BASS_CURRICULUM §5, §5.1).
   | 'b-ear'
   | 'b-up-pos'
@@ -177,6 +192,12 @@ export interface DrillSpec {
   stretch?: boolean;
   /** Suggested start tempo (♩) for a new item (bass levels: the level's start tempo). Not part of the item id. */
   tempo?: number;
+  /**
+   * GUITAR_DEEPENING §2.2: this item's own target tempo (♩), preferred over the level's range — items of one level whose
+   * natural tempo differs (reggae / ska, the flamenco palos). Equal to `tempo` = off the ladder (an untimed ring check,
+   * harmonics, vibrato): it passes on 3 clean takes on 2 days at its start. Not part of the item id.
+   */
+  target?: number;
 }
 
 /** A generated drill: the notes to play and how it is judged. */
@@ -259,6 +280,12 @@ export interface Drill {
   unison?: UnisonPart;
   /** A road map: named sections driving the band (style, feel, stops), measured per section (roadmap.ts). */
   form?: import('./roadmap').FormPlan;
+  /**
+   * GUITAR_DEEPENING §6 (closed-set chord recognizer): per chord of the drill, in order, the candidates the player may
+   * have strummed and the index of the right one. The microphone's chroma names the chord among them (any voicing);
+   * a wrong chord is "not", an unclear one asks to play it again. Without chroma it is not measured.
+   */
+  recognize?: { candidates: { root: number; quality: import('../chordRecognize').ChordQuality; bass?: number }[]; answer: number }[];
 }
 
 /** A unison part: the band's bass / guitar / keys play `line` (or the drill's own notes moved by `transpose`). */
@@ -278,6 +305,22 @@ export interface DrumDrillInfo {
   tier: 1 | 2 | 3;
   /** One surface only (snare / pad): the microphone can measure it. Grooves and fills need MIDI. */
   mic: boolean;
+  /** Show the sticking under the staff (tom fills with sticking marks); shown only, never graded. */
+  sticking?: boolean;
+  /** Swung skip notes (written on the triplet) are drawn as straight 8ths under a "Swing" marking. */
+  swing8?: boolean;
+  /**
+   * Road map above the score (drill.form): 'live' lights the current section and cues the next one bar ahead;
+   * 'written' shows the chart's signs (repeats, endings, D.S. al coda) and the bar count only — the player follows them.
+   */
+  roadmap?: 'live' | 'written';
+  /** The written chart for 'written' road maps: one label per written block, in reading order ("‖: Verse", "1.", "D.S. al Coda"). */
+  chartSigns?: string[];
+  /** Tremolo slashes (reading): written as one head with `slashes` strokes over [beat, beat + dur); the notes are the strokes played. */
+  trem?: { beat: number; dur: number; slashes: 1 | 2 | 3 }[];
+  /** Repeat-bar signs (bar indices drawn as %) and multi-bar rests (first bar, number of bars) in the notation. */
+  repeatBars?: number[];
+  mbRests?: { bar: number; n: number }[];
 }
 
 export interface DrillGoal {
@@ -355,6 +398,27 @@ export interface DrumGoal {
   flam?: number;
   /** Swing (jazz ride): the skip note's place inside the beat (0.5 straight … 0.75 dotted) has a median in [lo, hi] and an SD ≤ 0.07. */
   swing?: { lo: number; hi: number };
+  // ---- DRUMS_NICHE_PLAN P1 (d-prog, d-song): the drum rules the prog engine left open ----
+  /**
+   * Linear grooves (d-prog 7): no two limbs together. Two played hits of different drums within `ms` of each other where
+   * the part writes a single note count as a coincidence; their share of the hits must stay ≤ `max` (⚙ 15 ms, 0).
+   */
+  linear?: { ms: number; max: number };
+  /** Accent positions judged on these voices only (an accented hi-hat line over kick and snare: d-prog 2–3). */
+  accentVoices?: DrumVoice[];
+  /**
+   * Polyrhythm between limbs (d-prog 5): the played tempo of lane `a` against lane `b` (median played ÷ written IOI of
+   * each lane) must match within `tol` (the written ratio is built in: 3:2 played as 3:2 gives 1).
+   */
+  poly?: { a: DrumVoice[]; b: DrumVoice[]; tol: number };
+  /**
+   * Songs (d-song, d-form): every section of `drill.form` with ≥ `section` of its notes on time; the fill zones
+   * (beat ranges before section starts) with ≥ `fill` of their notes played; the dynamics arc — the median velocity of
+   * the `hi` beat ranges ≥ `ratio` × that of the `lo` ranges (⚙ 1.15).
+   */
+  song?: { section: number; fills?: [number, number][]; fill?: number; arc?: { lo: [number, number][]; hi: [number, number][]; ratio: number }[]; /** Tempo drift per section (least-squares, sections of ≥ 2 bars) ≤ this (⚙ 0.02). */ drift?: number };
+  /** Metric modulation (d-prog 6, 10): at each change of the tempo map, the played ratio (two bars each side, least squares) within ±tol of the written one. */
+  modulation?: { tol: number };
 }
 
 /** Bass-specific pass rules (BASS_CURRICULUM §4–§5). Absent = the default pitch + timing rule only. */
@@ -388,6 +452,8 @@ export interface BassGoal {
     every?: number;
     /** target: each chord's landing sounds this many beats EARLY (0.5 = an 8th: the anticipated "and" of 4 in a tumbao). */
     anticipate?: number;
+    /** target: a note outside the scale passes when the next note is at most this many semitones away (enclosures, chromatic passing). */
+    passing?: number;
   };
   /** Walking swing (b-swing): long quarters (each ≥ `long` × the beat, e.g. 0.85), placement vs the ride (ms, + = behind) in [lo, hi], drift over choruses ≤ `drift` (tempo share, e.g. 0.02). */
   swingWalk?: { long?: number; ride?: [number, number]; drift?: number; chorusBeats?: number };
@@ -583,6 +649,14 @@ export interface DrumMetrics {
   missed: string[];
   /** Acoustic kit by microphone: share of the matched notes whose drum was not told apart (absent otherwise). */
   unsure?: number;
+  /** Linear grooves: coincidences (two limbs together where one note is written) as a share of the hits. */
+  coincide?: number | null;
+  /** Polyrhythm: |played lane ratio ÷ written − 1|. */
+  polyErr?: number | null;
+  /** Songs: per section (play order) the share on time and the median velocity; fill zones played; arc ratios. */
+  song?: { sections: { name: string; hit: number; vel: number | null; /** Played ÷ written tempo (> 1 = rushing). */ tempo?: number }[]; fills: number | null; arc: (number | null)[] };
+  /** Metric modulation: per tempo change, played ratio ÷ written − 1 (> 0 = the new tempo too fast; 9 = not measured). */
+  modErr?: number[];
 }
 
 /** Progress of one item (synced, small). */
@@ -682,10 +756,19 @@ export interface DrillSettings {
   /** Guitar: genre filter (like the piano emphasis); 'all' or absent = every family. */
   /** Piano by microphone only (0.67, owner): levels that need MIDI (loudness, release, pedal) are hidden. */
   pianoMicOnly?: boolean;
+  /** Bass (BASS_NICHE_PLAN): the track the jazz / prog families open by — jazz, prog or both (absent = both). */
+  bassTrack?: 'jazz' | 'prog' | 'both';
   guitarStyle?: 'all' | 'rock' | 'blues' | 'metal' | 'pop' | 'funk' | 'country' | 'jazz' | 'classical' | 'fingerstyle' | 'flamenco' | 'reggae' | 'latin';
   /** Guitar: what the drill shows — tab, notation, or both (default tab). */
   guitarView?: 'tab' | 'staff' | 'both';
   /** Guitar: show the picking-hand strokes (↓ ↑, p i m a) under the tab instead of the fretting fingers. */
   showPicking?: boolean;
+  /**
+   * Guitar (GUITAR_DEEPENING §5, owner 2026-11-11): the core path is always on; these add-ons add their families and
+   * levels. Absent = migrated from the old `guitarStyle` (guitar.ts guitarAddOnsOf). The bass course still reads guitarStyle.
+   */
+  guitarAddOns?: GuitarAddOn[];
 }
+/** Guitar add-ons (tick boxes): jazz (g-jazz, g-harris, impro 5–6, bossa / Freddie Green), flamenco, fingerstyle / classical, prog / fusion. */
+export type GuitarAddOn = 'jazz' | 'flamenco' | 'fingerstyle' | 'prog';
 export const DEFAULT_DRILL_SETTINGS: DrillSettings = { showFingering: true, keyOrder: 'fifths-up', continuous: 'off', continuousAccuracy: 0.95, emphasis: 'both', inPath: true, inWorkout: true };

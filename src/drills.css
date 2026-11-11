@@ -505,3 +505,12 @@ button.heat-cell {
 .level-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; font-size: 0.75rem; color: var(--ink-dim); }
 .level-meta .lm-exam { padding: 0 6px; border: 1.5px solid var(--line-strong); border-radius: 999px; }
 .drill-take.untimed { display: grid; gap: 10px; justify-items: center; }
+
+/* GUITAR_DEEPENING §5: the guitar add-on tick boxes (Technique hub start card, Technique settings, Settings). */
+.g-addons { border: 0; padding: 0; margin: 0; display: grid; gap: 8px; min-width: 0; }
+.g-addons legend { padding: 0; font-weight: 700; margin-bottom: 4px; }
+.g-addons legend small, .g-addon small { display: block; font-weight: 400; opacity: 0.75; font-size: 0.85em; line-height: 1.3; }
+.g-addon { display: flex; align-items: flex-start; gap: 10px; }
+.g-addon input { margin-top: 3px; flex: none; }
+.g-addons-first { display: grid; gap: 10px; margin-bottom: 12px; }
+.g-addons-first .btn { justify-self: start; }

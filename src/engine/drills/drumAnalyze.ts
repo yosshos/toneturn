@@ -6,6 +6,8 @@
 import type { Drill, DrumMetrics, DrumVoice, Limb, NoteResult, PlayedNote, TakeMetrics, Verdict } from './types';
 import { expTimeMs, npsOf } from './analyze';
 import { classOf, inDynBand, velBand, velRange, VOICE_NAME, VOICE_NOTE, type HatState, type KitProfile } from '../drumKit';
+import { expandForm } from './roadmap';
+import { timeMapOf } from './timeline';
 
 /** One hit of a take (latency removed; ms from beat 0 of the drill). */
 export interface DrumTakeHit {
@@ -210,8 +212,10 @@ export function analyzeDrumTake(drill: Drill, bpm: number, hits0: DrumTakeHit[],
     return m === null || vs.length < 2 ? null : { soft: 0.4 * m, loud: m };
   };
   const rng = (i: number) => (ac ? relRange(exp[i].n.voice ?? 'snare') ?? velRange(opts.kit, exp[i].n.voice ?? 'snare') : velRange(opts.kit, exp[i].n.voice ?? 'snare'));
-  const accV = matched.filter(({ i }) => exp[i].n.accent).map(({ r }) => r.played!.vel);
-  const tapV = matched.filter(({ i }) => !exp[i].n.accent && !exp[i].n.ghost).map(({ r }) => r.played!.vel);
+  // d-prog: accents read on one line (the hi-hat) when the goal names its voices; else on every note as before.
+  const accOn = (i: number) => !goal.accentVoices || (!!exp[i].n.voice && goal.accentVoices.includes(exp[i].n.voice!));
+  const accV = matched.filter(({ i }) => exp[i].n.accent && accOn(i)).map(({ r }) => r.played!.vel);
+  const tapV = matched.filter(({ i }) => !exp[i].n.accent && !exp[i].n.ghost && accOn(i)).map(({ r }) => r.played!.vel);
   const range0 = velRange(opts.kit, drill.notes[0]?.voice ?? 'snare');
   const span = Math.max(1, range0.loud - range0.soft);
   const velCv = velData ? cvOf(vels) : null;
@@ -226,7 +230,7 @@ export function analyzeDrumTake(drill: Drill, bpm: number, hits0: DrumTakeHit[],
   const tapCv = velData && tapV.length >= 3 ? cvOf(tapV) : null;
   // Accent positions: a stroke counts as accented above the take's own midpoint (or the calibration's, without a gap).
   const thr = mA !== null && mT !== null && mA - mT >= 8 ? (mA + mT) / 2 : range0.soft + 0.55 * span;
-  const accN = matched.filter(({ i }) => !exp[i].n.ghost);
+  const accN = matched.filter(({ i }) => !exp[i].n.ghost && accOn(i));
   const accentPos = velData && accV.length ? accN.filter(({ r, i }) => r.played!.vel >= thr === !!exp[i].n.accent).length / Math.max(1, accN.length) : null;
   const ghN = matched.filter(({ i }) => exp[i].n.ghost);
   const ghostMissing = exp.filter((e, i) => e.n.ghost && !mExp.has(i)).length;
@@ -303,6 +307,91 @@ export function analyzeDrumTake(drill: Drill, bpm: number, hits0: DrumTakeHit[],
     swingSd = sdOf(rs);
   }
 
+  // Linear grooves (d-prog 7): two drums together where the part writes one note. MIDI only (by microphone two hits
+  // that close merge into one onset, so a coincidence can't be heard — those takes measure the timing alone).
+  let coincide: number | null = null;
+  if (goal.linear && !noMidi) {
+    const writtenTwo = (t: number) => exp.filter((e) => Math.abs(e.t - t) <= goal.linear!.ms + 5).length >= 2;
+    const hs = hits.filter((_, j) => !graceHit.has(j));
+    let n = 0;
+    for (let a = 0; a < hs.length; a++)
+      for (let b = a + 1; b < hs.length && hs[b].on - hs[a].on <= goal.linear.ms; b++)
+        if (hs[a].voice !== hs[b].voice && !writtenTwo((hs[a].on + hs[b].on) / 2)) {
+          n++;
+          break;
+        }
+    coincide = hs.length ? n / hs.length : null;
+  }
+  // Polyrhythm between limbs (d-prog 5): each lane's played tempo (median played ÷ written IOI of consecutive matched
+  // notes of the lane); the two lanes must agree, so 3 against 2 is played as 3 against 2.
+  let polyErr: number | null = null;
+  if (goal.poly) {
+    const laneTempo = (vs: DrumVoice[]): number | null => {
+      const xs = matched.filter(({ i }) => exp[i].n.voice && vs.includes(exp[i].n.voice!)).map(({ r, i }) => ({ on: r.played!.on, t: exp[i].t })).sort((a, b) => a.t - b.t);
+      const rs: number[] = [];
+      for (let k = 1; k < xs.length; k++) {
+        const w = xs[k].t - xs[k - 1].t;
+        const p = xs[k].on - xs[k - 1].on;
+        if (w > 1 && p > 0) rs.push(p / w);
+      }
+      return rs.length >= 3 ? median(rs) : null;
+    };
+    const a = laneTempo(goal.poly.a);
+    const b = laneTempo(goal.poly.b);
+    polyErr = a !== null && b !== null && b > 0 ? Math.abs(a / b - 1) : null;
+  }
+  // Songs (d-song, d-form): per section of the form (play order) the share on time; fills before section starts; the
+  // dynamics arc between parts of the form.
+  let song: DrumMetrics['song'] | undefined;
+  const inRange = (b: number, [x, y]: [number, number]) => b >= x - 1e-6 && b < y - 1e-6;
+  // Played tempo over a beat range: the least-squares slope of played onset against written time (1 = in tempo, < 1 =
+  // rushing). A slope over the whole range is far steadier than note-to-note ratios under normal human jitter.
+  const slopeIn = (z: [number, number]): number | null => {
+    const ps = matched.filter(({ i }) => inRange(exp[i].n.beat, z)).map(({ r, i }) => ({ t: exp[i].t, on: r.played!.on }));
+    if (ps.length < 6) return null;
+    const mt = mean(ps.map((p) => p.t))!;
+    const mo = mean(ps.map((p) => p.on))!;
+    const vt = ps.reduce((a, p) => a + (p.t - mt) ** 2, 0);
+    if (vt < 1) return null;
+    return ps.reduce((a, p) => a + (p.t - mt) * (p.on - mo), 0) / vt;
+  };
+  // Metric modulation (d-prog 6, 10): the played tempo ratio at each change of the tempo map (two bars each side).
+  let modErr: number[] | undefined;
+  if (goal.modulation && drill.tempoMap?.length) {
+    const tm = timeMapOf(drill, bpm);
+    modErr = drill.tempoMap.map((c) => {
+      const b = tm.bars[c.bar];
+      if (!b) return 9;
+      const before = slopeIn([tm.bars[Math.max(0, c.bar - 2)].start, b.start]);
+      const lastAfter = tm.bars[Math.min(tm.bars.length - 1, c.bar + 1)];
+      const after = slopeIn([b.start, lastAfter.start + lastAfter.beats]);
+      // slope = played ms ÷ written ms: equal slopes = the written ratio kept; after < before = the new tempo too fast.
+      return before !== null && after !== null && after > 0 ? before / after - 1 : 9;
+    });
+  }
+  if (goal.song) {
+    const spans = drill.form ? expandForm(drill.form, drill.pulse) : [];
+    const sections = spans.map((sp) => {
+      const idx = exp.map((_, i) => i).filter((i) => inRange(exp[i].n.beat, [sp.startBeat, sp.startBeat + sp.beats]));
+      const vs = idx.filter((i) => mExp.has(i)).map((i) => perNote[i].played!.vel);
+      const slope = sp.bars >= 2 ? slopeIn([sp.startBeat, sp.startBeat + sp.beats]) : null;
+      return { name: sp.name, hit: idx.length ? idx.filter((i) => perNote[i].ok).length / idx.length : 1, vel: velData && vs.length ? median(vs) : null, ...(slope !== null ? { tempo: 1 / slope } : {}) };
+    });
+    const fz = goal.song.fills ?? [];
+    const fIdx = exp.map((_, i) => i).filter((i) => fz.some((z) => inRange(exp[i].n.beat, z)));
+    const fills = fIdx.length ? fIdx.filter((i) => mExp.has(i)).length / fIdx.length : null;
+    const medIn = (zs: [number, number][]) => {
+      const vs = matched.filter(({ i }) => zs.some((z) => inRange(exp[i].n.beat, z)) && !exp[i].n.ghost).map(({ r }) => r.played!.vel);
+      return velData && vs.length >= 3 ? median(vs) : null;
+    };
+    const arc = (goal.song.arc ?? []).map((a) => {
+      const lo = medIn(a.lo);
+      const hi = medIn(a.hi);
+      return lo !== null && hi !== null && lo > 0 ? hi / lo : null;
+    });
+    song = { sections, fills, arc };
+  }
+
   // Rules → verdict.
   type Rule = { id: string; amt: number };
   const rules: Rule[] = [];
@@ -347,10 +436,28 @@ export function analyzeDrumTake(drill: Drill, bpm: number, hits0: DrumTakeHit[],
     rules.push({ id: 'swing', amt: swing === null ? 9 : swing < sw.lo ? (sw.lo - swing) / 0.1 : swing > sw.hi ? (swing - sw.hi) / 0.1 : 0 });
     max('swingSd', swingSd, 0.07);
   }
+  // Linear: one coincidence in ~60 hits is "almost", more is "not" (amt in tenths of a percent… 10 % = 1).
+  if (goal.linear && coincide !== null) rules.push({ id: 'linear', amt: coincide > goal.linear.max ? (coincide - goal.linear.max) / 0.1 : 0 });
+  // Polyrhythm: a lane ratio that can't be measured (too few notes of a lane) is a miss — only measured practice counts.
+  if (goal.poly) rules.push({ id: 'poly', amt: polyErr === null ? 9 : polyErr > goal.poly.tol ? (polyErr - goal.poly.tol) / goal.poly.tol : 0 });
+  if (modErr) modErr.forEach((x, k) => rules.push({ id: `mod:${k}`, amt: Math.abs(x) > goal.modulation!.tol ? (Math.abs(x) - goal.modulation!.tol) / goal.modulation!.tol : 0 }));
+  if (goal.song && song) {
+    song.sections.forEach((s, k) => min(`section:${k}`, s.hit, goal.song!.section));
+    if (goal.song.drift !== undefined) {
+      const worst = song.sections.reduce<{ k: number; d: number } | null>((a, s, k) => (s.tempo === undefined ? a : !a || Math.abs(s.tempo - 1) > a.d ? { k, d: Math.abs(s.tempo - 1) } : a), null);
+      if (worst) rules.push({ id: `drift:${worst.k}`, amt: worst.d > goal.song.drift ? (worst.d - goal.song.drift) / goal.song.drift : 0 });
+    }
+    if (goal.song.fills?.length) min('fills', song.fills, goal.song.fill ?? 0.75);
+    if (goal.song.arc?.length) {
+      // Loudness goals never pass without loudness data (velGoal above treats them like the other velocity rules).
+      if (!velData && hits.length) rules.push({ id: 'noVel', amt: 9 });
+      song.arc.forEach((x, k) => rules.push({ id: `arc:${k}`, amt: x === null ? 9 : x < goal.song!.arc![k].ratio ? (goal.song!.arc![k].ratio - x) / (goal.song!.arc![k].ratio - 1) : 0 }));
+    }
+  }
   const missed = rules.filter((r) => r.amt > 0);
   const verdict: Verdict = !hits.length ? 'not' : !missed.length ? 'clean' : missed.length === 1 && missed[0].amt < 0.25 ? 'almost' : 'not';
 
-  const dm: DrumMetrics = { limbs, voices, hitRate, wrongVoice: wrong / nExp, extra, windowMs: Math.round(W), velCv, balance, levels, accentGap, tapCv, accentPos, ghost, ratio, hatOpen, hatClosed, landing, gapMean, flam, flamGap, flamSd, swing, swingSd, missed: missed.sort((a, b) => b.amt - a.amt).map((r) => r.id), ...(unsure !== null ? { unsure } : {}) };
+  const dm: DrumMetrics = { limbs, voices, hitRate, wrongVoice: wrong / nExp, extra, windowMs: Math.round(W), velCv, balance, levels, accentGap, tapCv, accentPos, ghost, ratio, hatOpen, hatClosed, landing, gapMean, flam, flamGap, flamSd, swing, swingSd, missed: missed.sort((a, b) => b.amt - a.amt).map((r) => r.id), ...(unsure !== null ? { unsure } : {}), ...(goal.linear ? { coincide } : {}), ...(goal.poly ? { polyErr } : {}), ...(song ? { song } : {}), ...(modErr ? { modErr } : {}) };
   return {
     bpm,
     nps: npsOf(drill, bpm),
@@ -382,6 +489,10 @@ export function analyzeDrumTake(drill: Drill, bpm: number, hits0: DrumTakeHit[],
     drum: dm,
   };
 }
+
+/** Section names of a song in Hebrew (the road map's names; unknown names stay as written). */
+const SECTION_HE: Record<string, string> = { Intro: 'פתיחה', Verse: 'בית', 'Pre-chorus': 'קדם־פזמון', Chorus: 'פזמון', Bridge: 'גשר', Breakdown: 'שבירה', Solo: 'סולו', Outro: 'סיום', Ending: 'סיום', Hits: 'מכות', Stop: 'סטופ', Head: 'נושא', Vamp: 'וואמפ', Coda: 'קודה', Blues: 'בלוז', Riff: 'ריף', '1st ending': 'סיום ראשון', '2nd ending': 'סיום שני', Fine: 'סוף' };
+const sectionHe = (n: string) => SECTION_HE[n] ?? n;
 
 const LIMB_NAME: Record<Limb, { en: string; he: string }> = { RH: { en: 'right hand', he: 'יד ימין' }, LH: { en: 'left hand', he: 'יד שמאל' }, RF: { en: 'kick foot', he: 'רגל הקיק' }, LF: { en: 'hi-hat foot', he: 'רגל ההיי־האט' } };
 const ms = (x: number) => `${Math.round(Math.abs(x))}`;
@@ -458,6 +569,29 @@ export function drumWhy(d: DrumMetrics, v: Verdict): { en: string; he: string } 
     }
     case 'swingSd':
       return { en: 'Swing feel not steady from beat to beat.', he: 'תחושת הסווינג לא יציבה בין הפעמות.' };
+    case 'linear':
+      return { en: `Two limbs together on ${Math.round((d.coincide ?? 0) * 100)} % of the hits — linear: one at a time.`, he: `שתי גפיים יחד ב-${Math.round((d.coincide ?? 0) * 100)}% מהמכות — ליניארי: אחת בכל פעם.` };
+    case 'poly':
+      return d.polyErr === null || d.polyErr === undefined ? { en: 'Not enough notes in one of the two lanes to measure the ratio.', he: 'אין מספיק מכות באחד המסלולים כדי למדוד את היחס.' } : { en: `The two limbs drift apart: ratio off by ${Math.round(d.polyErr * 100)} %.`, he: `שתי הגפיים נפרדות: היחס סוטה ב-${Math.round(d.polyErr * 100)}%.` };
+    case 'section': {
+      const s = d.song?.sections[Number(arg)];
+      return s ? { en: `${s.name}: ${Math.round(s.hit * 100)} % on time.`, he: `${sectionHe(s.name)}: ${Math.round(s.hit * 100)}% בזמן.` } : { en: 'One section not in time.', he: 'קטע אחד לא בזמן.' };
+    }
+    case 'drift': {
+      const s = d.song?.sections[Number(arg)];
+      const x = s?.tempo ?? 1;
+      return { en: `${x > 1 ? 'Rushed' : 'Dragged'} ${Math.round(Math.abs(x - 1) * 1000) / 10} % in the ${s?.name ?? 'section'} (2 % allowed).`, he: `${x > 1 ? 'האצה' : 'האטה'} של ${Math.round(Math.abs(x - 1) * 1000) / 10}% ב${s ? sectionHe(s.name) : 'קטע'} (מותר 2%).` };
+    }
+    case 'mod': {
+      const x = d.modErr?.[Number(arg)] ?? 9;
+      return x >= 9 ? { en: 'The tempo change could not be measured — keep playing through it.', he: 'שינוי הטמפו לא נמדד — להמשיך לנגן דרכו.' } : { en: `New tempo ${Math.round(Math.abs(x) * 1000) / 10} % ${x > 0 ? 'too fast' : 'too slow'} after the change.`, he: `הטמפו החדש ${x > 0 ? 'מהיר' : 'איטי'} מדי ב-${Math.round(Math.abs(x) * 1000) / 10}% אחרי השינוי.` };
+    }
+    case 'fills':
+      return { en: `Fills before the section starts: ${Math.round((d.song?.fills ?? 0) * 100)} % played.`, he: `מעברים לפני פתיחות הקטעים: ${Math.round((d.song?.fills ?? 0) * 100)}% נוגנו.` };
+    case 'arc': {
+      const x = d.song?.arc[Number(arg)];
+      return x === null || x === undefined ? { en: 'No loudness measured for the dynamics.', he: 'לא נמדדה עוצמה לדינמיקה.' } : { en: `Not enough contrast: the loud part only ${Math.round((x - 1) * 100)} % louder.`, he: `אין מספיק ניגוד: החלק החזק רק ${Math.round((x - 1) * 100)}% חזק יותר.` };
+    }
     case 'gap':
       return { en: `Without the click you drift ${ms(d.gapMean ?? 0)} ms ${(d.gapMean ?? 0) > 0 ? 'late' : 'early'}.`, he: `בלי הקליק אתם ${(d.gapMean ?? 0) > 0 ? 'נגררים' : 'ממהרים'} ב-${ms(d.gapMean ?? 0)} מ״ש.` };
     default:

@@ -107,7 +107,7 @@ describe('new bass families and levels (0.66)', () => {
     expect(d('b-posread-1')).toBeGreaterThan(d('b-read-1'));
   });
   it('every new level builds in every key, on the neck (frets 0–21)', () => {
-    const ids = [...levelsOf('b-posread'), ...levelsOf('b-impro')].map((l) => l.id).concat(['b-pluck-10', 'b-pluck-11', 'b-pluck-12', 'b-pick-6', 'b-pick-7', 'b-pick-8']);
+    const ids = [...levelsOf('b-posread'), ...levelsOf('b-impro').filter((l) => l.level <= 6)].map((l) => l.id).concat(['b-pluck-10', 'b-pluck-11', 'b-pluck-12', 'b-pick-6', 'b-pick-7', 'b-pick-8']);
     for (const id of ids)
       for (const d of levelDrills(lv(id), 'fifths-up')) {
         expect(d.notes.length, id).toBeGreaterThan(8);
@@ -116,7 +116,8 @@ describe('new bass families and levels (0.66)', () => {
       }
   });
   it('every fill / solo model line keeps its own rules: scale tones, and the target on every change', () => {
-    for (const l of levelsOf('b-impro'))
+    // Levels 1–6 (0.66); 7–14 (BASS_NICHE_PLAN) have their own rules (downbeats, passing notes): tests/bassNiche.test.ts.
+    for (const l of levelsOf('b-impro').filter((x) => x.level <= 6))
       for (const d of levelDrills(l, 'fifths-up')) {
         const r = d.goal.bass!.rules!;
         expect(r.kind).toBe('target');
