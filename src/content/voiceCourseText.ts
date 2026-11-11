@@ -60,7 +60,36 @@ export const VT = {
   chordsNow: { en: 'Chords', he: 'אקורדים' },
   probe: { en: 'Find my voice level', he: 'מציאת הרמה בשירה' },
   probeHint: { en: 'About 2½ minutes: your path then starts where you are.', he: 'כשתיים וחצי דקות: המסלול יתחיל איפה שאתם נמצאים.' },
+  // P2
+  appTurn: { en: 'The band’s turn — listen', he: 'התור של הלהקה — הקשיבו' },
+  motifListen: { en: 'Listen to the motif…', he: 'הקשיבו למוטיב…' },
+  motifKinds: { en: 'Heard: {k}', he: 'נשמע: {k}' },
+  motifNone: { en: 'The motif did not come back — repeat it, move it up or down, or shift it in time.', he: 'המוטיב לא חזר — חזרו עליו, הזיזו אותו למעלה או למטה, או הזיזו אותו בזמן.' },
+  turnsLine: { en: 'Notes in your turns: {n}', he: 'צלילים בתורות שלכם: {n}' },
+  followLine: { en: 'The band followed {p}% of your notes', he: 'הלהקה הלכה אחרי {p}% מהצלילים שלכם' },
+  fallsLine: { en: 'Falls at the phrase ends: {k} of {n}', he: 'נפילות בסופי המשפטים: {k} מתוך {n}' },
+  readTempo: { en: 'Read it — the melody is not played. ♩ = {bpm}', he: 'קראו — המנגינה לא מתנגנת. ♩ = {bpm}' },
+  rubatoGo: { en: 'Start when you are ready — the band waits for you', he: 'התחילו כשאתם מוכנים — הלהקה מחכה לכם' },
+  mineTitle: { en: 'Your own recording', he: 'ההקלטה שלכם' },
+  minePick: { en: 'Open an audio file', he: 'לפתוח קובץ שמע' },
+  mineHint: { en: 'Your own recording only, with the voice clear (a cappella, or voice and one instrument). The file stays on this device.', he: 'רק הקלטה שלכם, עם קול ברור (בלי ליווי, או קול וכלי אחד). הקובץ נשאר במכשיר.' },
+  mineWorking: { en: 'Finding the melody…', he: 'מוצאים את המנגינה…' },
+  mineFound: { en: '{n} notes in {p} phrases found. Sing along with the recording — headphones needed.', he: 'נמצאו {n} צלילים ב־{p} משפטים. שירו יחד עם ההקלטה — צריך אוזניות.' },
+  mineNone: { en: 'No clear melody was found. Try a recording where the voice is louder.', he: 'לא נמצאה מנגינה ברורה. נסו הקלטה שבה הקול חזק יותר.' },
+  mineOther: { en: 'Another file', he: 'קובץ אחר' },
+  mineNeedsHp: { en: 'Turn on "headphones" first: the recording must stay out of the microphone.', he: 'סמנו קודם "אוזניות": ההקלטה לא צריכה להיכנס למיקרופון.' },
+  restSuggest: { en: 'About {m} minutes sung today — give your voice a break soon.', he: 'כ־{m} דקות שירה היום — תנו לקול הפסקה בקרוב.' },
+  restTired: { en: 'Your notes are getting less steady — a good moment for a break and some water.', he: 'הצלילים נעשים פחות יציבים — רגע טוב להפסקה ולקצת מים.' },
 } as const;
+
+/** Names of the developments of a motif (F15 L2). */
+export const MOTIF_KIND_NAMES: Record<string, Bi> = {
+  exact: { en: 'repeated', he: 'חזרה' },
+  sequence: { en: 'sequenced', he: 'סקוונצה' },
+  inversion: { en: 'inverted', he: 'היפוך' },
+  displaced: { en: 'displaced', he: 'הזזה בזמן' },
+  rhythm: { en: 'rhythm kept', he: 'אותו מקצב' },
+};
 
 /** How each timed item is sung (the brief line). */
 export const TIME_INSTR: Record<string, Bi> = {
@@ -82,6 +111,14 @@ export const SONG_INSTR = {
   steady: { en: 'A ballad: long, steady notes and one breath per phrase.', he: 'בלדה: צלילים ארוכים ויציבים ונשימה אחת לכל משפט.' },
   straight: { en: 'Bossa: straight eighths, soft, and no vibrato on the long notes.', he: 'בוסה: שמיניות ישרות, ברכות, ובלי ויברטו בצלילים הארוכים.' },
   chorus: { en: 'Lift the chorus: sing it louder than the verse.', he: 'הרימו את הפזמון: שירו אותו חזק יותר מהבית.' },
+  readBand: { en: 'Read the melody and sing it with the band — it is never played to you.', he: 'קראו את המנגינה ושירו אותה עם הלהקה — היא לא מתנגנת לכם.' },
+  readLead: { en: 'A lead sheet: read the melody under the chords, swing the eighths, hold the tied notes.', he: 'דף אקורדים: קראו את המנגינה מתחת לאקורדים, נגנו את השמיניות בסווינג, והחזיקו את הצלילים הקשורים.' },
+  embellish: { en: 'Embellish the head: keep its long notes, add neighbours and approaches around them.', he: 'קשטו את הנושא: שמרו על הצלילים הארוכים, והוסיפו סביבם שכנים וגישות.' },
+  bop: { en: 'Swing the eighths and accent the off-beats: "doo-BAH".', he: 'שירו את השמיניות בסווינג והדגישו את הפעמות החלשות: "דו־בה".' },
+  rubato: { en: 'Colla voce: sing freely, in your own time. The band changes chords when you reach each bar.', he: 'קולה ווצ׳ה: שירו בחופשיות, בזמן שלכם. הלהקה מחליפה אקורד כשאתם מגיעים לכל תיבה.' },
+  interpretLast: { en: 'Sing the first three sections as written, then make the last A yours — keep its long notes.', he: 'שירו את שלושת החלקים הראשונים כפי שנכתבו, ואז עשו את ה־A האחרון שלכם — שמרו על הצלילים הארוכים.' },
+  falls: { en: 'Sing each call, let its last note fall off, and leave the answer to the band.', he: 'שירו כל קריאה, תנו לצליל האחרון שלה ליפול, והשאירו את התשובה ללהקה.' },
+  mine: { en: 'Sing with your recording. Each phrase is scored on pitch and time against its melody.', he: 'שירו עם ההקלטה שלכם. כל משפט מקבל ציון על גובה וזמן מול המנגינה שלה.' },
 } as const;
 
 export const SCAT_INSTR = {
@@ -89,6 +126,8 @@ export const SCAT_INSTR = {
   landing: { en: 'Improvise freely, but land a chord tone on beat 1 of every chord, and end on one.', he: 'אלתרו בחופשיות, אבל נחתו על צליל אקורד בפעמה 1 של כל אקורד, וסיימו על אחד.' },
   approach: { en: 'Reach chord tones from a half step above or below.', he: 'הגיעו לצלילי האקורד מחצי טון מעל או מתחת.' },
   tensions: { en: 'Put a 9th or a 13th on a strong beat over the dominants (a ♯11 over major sevenths) — three or more.', he: 'שימו נונה או טרצדצימה בפעמה חזקה מעל הדומיננטות (אונדצימה מוגדלת מעל מז׳ור ספט) — שלוש ומעלה.' },
+  motif: { en: 'Hear the three-note motif, then develop it: repeat it, move it up or down, shift it in time — two different ways.', he: 'שמעו את המוטיב של שלושה צלילים, ואז פתחו אותו: חזרו עליו, הזיזו אותו למעלה או למטה, הזיזו אותו בזמן — בשתי דרכים שונות.' },
+  trade: { en: 'Trade with the band: it plays, you answer in your turn — chord tones on the strong beats, and pick up an idea.', he: 'החליפו עם הלהקה: היא מנגנת, אתם עונים בתור שלכם — צלילי אקורד בפעמות החזקות, וקחו רעיון והמשיכו אותו.' },
 } as const;
 
 /** Names of the new metrics (the old ones are in i18n/strings.ts metricNames). */
@@ -117,6 +156,12 @@ export const METRIC_NAMES: Record<string, Bi> = {
   shape: { en: 'Shape', he: 'צורה' },
   steady: { en: 'Steady long notes', he: 'צלילים ארוכים יציבים' },
   tensions: { en: 'Tensions placed', he: 'מתחים שהונחו' },
+  develop: { en: 'Developments', he: 'פיתוחים' },
+  added: { en: 'Notes added', he: 'צלילים שנוספו' },
+  follow: { en: 'Band followed', he: 'הלהקה עקבה' },
+  falls: { en: 'Falls', he: 'נפילות' },
+  motif: { en: 'An idea returns', he: 'רעיון שחוזר' },
+  lift: { en: 'Off-beat accent', he: 'הדגשה בפעמה החלשה' },
 };
 
 /** How each further held / phrase item is sung ({s} = seconds). */
@@ -138,6 +183,7 @@ export const MORE_INSTR: Record<string, Bi> = {
   fall: { en: 'Hold the note, then let it fall off at the end — a long drop down.', he: 'החזיקו את הצליל, ואז תנו לו ליפול בסוף — ירידה ארוכה למטה.' },
   bend: { en: 'Start a half step under the note and bend up into it — a slide, not a jump.', he: 'התחילו חצי טון מתחת לצליל וכופפו אליו — החלקה, לא קפיצה.' },
   ghost: { en: 'Three notes: the middle one ghosted — much softer, but still there.', he: 'שלושה צלילים: האמצעי רפאים — חלש בהרבה, אבל עדיין שם.' },
+  micro: { en: 'Hear the line, then sing it note by note, each on its own "da". ¼↓ = a quarter tone low.', he: 'שמעו את הקו, ואז שירו אותו צליל אחרי צליל, כל אחד על "דה" משלו. ¼↓ = רבע טון נמוך.' },
   tone: { en: 'The chord sounds: sing {tone}.', he: 'האקורד נשמע: שירו את {tone}.' },
   straightTone: { en: 'No vibrato at all while the chord sounds.', he: 'בלי ויברטו בכלל בזמן שהאקורד נשמע.' },
 };

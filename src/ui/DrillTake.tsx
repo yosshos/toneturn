@@ -593,7 +593,8 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
       return done(analyzeTake(drill, bpm, played, cal, { mic: true }), played);
     }
     const heardNotes = answer(notes);
-    const m = analyzeTake(drill, bpm, heardNotes, cal, { mic: pianoMicTake });
+    // Sung licks (the voice course): the voice's timing tolerance, always by microphone.
+    const m = analyzeTake(drill, bpm, heardNotes, cal, { mic: pianoMicTake || !!drill.sung, voice: !!drill.sung });
     if (drill.goal.pedal && midi.devices.length) {
       const pr = analyzePedal(drill.goal.pedal, pedal, bpm);
       m.pedal = { ok: pr.ok, total: pr.total, pass: pr.pass };
