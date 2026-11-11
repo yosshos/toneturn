@@ -38,6 +38,7 @@ export function badgeInputOf(p: Progress, now: Date, weekendDays?: number[]): Ba
     statsHours: p.statsHours,
     counts: p.counts,
     days: [...practiceDays(p)],
+    gameTiers: p.gameTiers,
     weekendDays,
     technique: { levels: tech.levels, keysClean: tech.keysClean, cleanItems: tech.cleanItems, bestEvenCv: p.counts?.evenCv ?? null, cleanTakes: p.counts?.drillClean ?? 0, tempoRecords: p.counts?.tempoRecords ?? 0 },
   };

@@ -5,6 +5,7 @@ import { LeagueBadge, LeagueLadder } from './LeagueBadge';
 import { LADDER, tierOf, TOP_TIER } from '../engine/league';
 import { piano } from './services';
 import { useCallback, useEffect, useState } from 'react';
+import { seedTier, tierSeed, type DynName } from '../engine/gameTiers';
 import { createDuel, leagueZone, myDuels, myLeague, submitDuel, type DuelKind, type DuelRow, type League } from '../cloud/compete';
 import { tournamentSet } from '../engine/tournament';
 import type { Strings } from '../i18n/strings';
@@ -70,9 +71,9 @@ export function LeagueCard({ t, lang, onBestTier, lastSeen, onSeen, history }: {
   );
 }
 
-const DUEL_KINDS: DuelKind[] = ['mixed', 'modes', 'wrong-notes', 'truefalse', 'chords', 'intervals'];
+const DUEL_KINDS: DuelKind[] = ['mixed', 'modes', 'wrong-notes', 'truefalse', 'chords', 'intervals', 'jazz'];
 
-export function DuelsSection({ t, settings, friends, onPlaying }: { t: Strings; settings: Settings; friends: { id: string; name: string }[]; onPlaying: (on: boolean) => void }) {
+export function DuelsSection({ t, settings, friends, onPlaying, tier = 'pp' }: { t: Strings; settings: Settings; friends: { id: string; name: string }[]; onPlaying: (on: boolean) => void; /** The challenger's level tier (GAMES_TIERS_PLAN §5.1): rides in the duel's seed. */ tier?: DynName }) {
   const [rows, setRows] = useState<DuelRow[]>([]);
   // Per course (owner 2026-11-09): the active course's question sets only.
   const kinds = courseSetKinds(settings.activeCourse ?? 'ear', DUEL_KINDS);
@@ -81,7 +82,7 @@ export function DuelsSection({ t, settings, friends, onPlaying }: { t: Strings; 
   const [msg, setMsg] = useState<string | null>(null);
   const load = useCallback(() => void myDuels().then(setRows), []);
   useEffect(load, [load]);
-  const names: Record<string, string> = { mixed: t.setMixed, modes: t.skillNames.modes, 'wrong-notes': t.wrongNotesTitle, truefalse: t.trueFalse, chords: t.skillNames.chords, intervals: t.skillNames.intervals, degrees: t.skillNames.degrees, beat: t.skillNames['rhythm-dictation'] };
+  const names: Record<string, string> = { mixed: t.setMixed, modes: t.skillNames.modes, 'wrong-notes': t.wrongNotesTitle, truefalse: t.trueFalse, chords: t.skillNames.chords, intervals: t.skillNames.intervals, degrees: t.skillNames.degrees, beat: t.skillNames['rhythm-dictation'], jazz: settings.uiLang === 'he' ? 'הרמוניית ג׳אז' : 'Jazz harmony' };
 
   if (play) {
     const items = tournamentSet(play.kind, play.rounds, play.seed);
@@ -106,7 +107,7 @@ export function DuelsSection({ t, settings, friends, onPlaying }: { t: Strings; 
   }
   const start = async (opponent: string) => {
     try {
-      const d = await createDuel(opponent, kind);
+      const d = await createDuel(opponent, kind, tierSeed((Math.random() * 2 ** 32) >>> 0, tier));
       if (!d) return;
       onPlaying(true);
       setPlay({ id: d.id, kind, seed: d.seed, rounds: 3 });
@@ -144,7 +145,7 @@ export function DuelsSection({ t, settings, friends, onPlaying }: { t: Strings; 
           {rows.map((d) => (
             <li key={d.id}>
               <span>
-                {d.iChallenged ? '→' : '←'} {d.other} · {names[d.kind]}
+                {d.iChallenged ? '→' : '←'} {d.other} · {names[d.kind]} · <i className="dyn">{seedTier(d.seed)}</i>
               </span>
               {d.myPoints === null ? (
                 <button

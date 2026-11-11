@@ -25,6 +25,8 @@ interface QuestDay {
   /** Path steps finished today. */
   stepsToday: number;
   minutesToday: number;
+  /** Tiered game runs (GAMES_TIERS_PLAN §5.2): quests can ask for a level's goal. */
+  tierRuns?: { game: string; tier: string; pass: boolean; cleared?: boolean; at: string }[];
 }
 
 const sameDay = (iso: string, day: string) => {
@@ -59,14 +61,17 @@ const POOL: Record<string, Make> = {
   // Jazz (EAR_THEORY_AUDIT): harmony by ear — chords, changes, reharmonization, lines.
   harmony5: (d) => ({ id: 'harmony5', title: { en: '5 harmony answers right', he: '5 תשובות הרמוניה נכונות' }, now: d.events.filter((e) => sameDay(e.at, d.day) && e.set === undefined && ['chords', 'cadences', 'sequences', 'dictation'].includes(e.skill) && (e.score ?? (e.correct ? 1 : 0)) >= 0.7).length, target: 5, color: '#A78BFA', glyph: 'scales' }),
   // Drums (DRUMS_AUDIT I8): a measured drum take is rated 'instrument' with a timing share — it counts here.
+  // Game tiers (GAMES_TIERS_PLAN §5.2): meet the goal of your level in a game; clear a level.
+  tierPass2: (d) => ({ id: 'tierPass2', title: { en: "Meet a game level's goal twice", he: 'לעמוד פעמיים ביעד של רמה במשחק' }, now: (d.tierRuns ?? []).filter((r) => r.pass && sameDay(r.at, d.day)).length, target: 2, color: '#3AB8FF', glyph: 'scales' }),
+  tierClear: (d) => ({ id: 'tierClear', title: { en: 'Clear a level in any game', he: 'לעבור רמה באחד המשחקים' }, now: (d.tierRuns ?? []).filter((r) => r.cleared && sameDay(r.at, d.day)).length, target: 1, color: '#FFD43B', glyph: 'scales' }),
   rhythm: (d) => ({ id: 'rhythm', title: d.course === 'drums' ? { en: 'Rhythm right 5 times', he: 'קצב נכון 5 פעמים' } : { en: '5 rhythm answers right', he: '5 תשובות קצב נכונות' }, now: d.events.filter((e) => sameDay(e.at, d.day) && e.set === undefined && (/rhythm|timing|tempo|meter/.test(e.skill) || (d.course === 'drums' && !!e.tags?.some((x) => /rhythm|timing/.test(x.skill)))) && (e.score ?? (e.correct ? 1 : 0)) >= 0.7).length, target: 5, color: '#FF5FA2', glyph: 'rhythm' }),
 };
 
 /** Which quests a course offers (first one rotates with the day). */
 const BY_COURSE: Record<CourseId, string[]> = {
-  ear: ['run10', 'steps2', 'rhythm', 'min10'],
-  jazz: ['harmony5', 'steps2', 'run10', 'min10'],
-  voice: ['sing3', 'steps2', 'min10'],
+  ear: ['run10', 'steps2', 'rhythm', 'min10', 'tierPass2'],
+  jazz: ['harmony5', 'steps2', 'run10', 'min10', 'tierClear'],
+  voice: ['sing3', 'steps2', 'min10', 'tierPass2'],
   keys: ['tech3', 'steps2', 'min10'],
   guitar: ['tech3', 'steps2', 'min10'],
   bass: ['tech3', 'steps2', 'min10'],

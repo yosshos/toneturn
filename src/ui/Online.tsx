@@ -4,6 +4,8 @@ import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { cloudConfigured, signInWithGoogle, type CloudUser } from '../cloud/cloud';
 import { normaliseCode, ROOM_CODE_RE, RoomError, supabaseRooms, type RoomBackend } from '../cloud/rooms';
 import { CHOIR_SEED, isChoirSeed, tournamentSet, type SetKind } from '../engine/tournament';
+import { startTier, tierSeed, type DynName, type TierInfo } from '../engine/gameTiers';
+import { TierChips } from './TierChips';
 import { firstKind, forCourse } from '../engine/courseSocial';
 import { displayNote, type PitchClass } from '../engine/pitch';
 import { createRoom, RoomController, type RoomStanding } from '../game/roomController';
@@ -40,7 +42,8 @@ function errorText(t: Strings, e: unknown) {
   return code === 'not-found' ? t.roomNotFound : code === 'started' ? t.roomStarted : code === 'full' ? t.roomFull : code === 'sign-in' ? t.signInToPlay : t.roomError;
 }
 
-export function OnlineScreen({ t, settings, user, initialCode, facts, onBack }: { t: Strings; settings: Settings; user: CloudUser | null; initialCode: string; facts?: { topics: FactTopic[]; level: FactLevel } | null; onBack: () => void }) {
+export function OnlineScreen({ t, settings, user, initialCode, facts, onBack, tier: tierInfo }: { t: Strings; settings: Settings; user: CloudUser | null; initialCode: string; facts?: { topics: FactTopic[]; level: FactLevel } | null; onBack: () => void; /** The host's level tier (rides in the room seed). */ tier?: TierInfo }) {
+  const [tier, setTier] = useState<DynName>(() => (tierInfo ? startTier(tierInfo) : 'pp'));
   const [backend, setBackend] = useState<RoomBackend | null>(null);
   const [roomId, setRoomId] = useState<string | null>(null);
   const [nick, setNick] = useState(() => (user?.name ?? '').split(' ')[0].slice(0, 16));
@@ -57,6 +60,7 @@ export function OnlineScreen({ t, settings, user, initialCode, facts, onBack }: 
     ['beat', t.skillNames['rhythm-dictation']],
     ['vocal-hold', t.vocalHoldGame],
     ['choir', t.choirGame],
+    ['jazz', settings.uiLang === 'he' ? 'הרמוניית ג׳אז' : 'Jazz harmony'],
   ]);
   const [kind, setKind] = useState<SetKind | 'choir'>(facts ? 'truefalse' : firstKind(kinds));
   const [factTopics, setFactTopics] = useState<FactTopic[]>(facts?.topics ?? SILENT_TOPICS.filter((x) => x !== 'trio'));
@@ -154,6 +158,7 @@ export function OnlineScreen({ t, settings, user, initialCode, facts, onBack }: 
               </div>
             </fieldset>
             {kind === 'truefalse' && <FactPicker t={t} lang={settings.uiLang} topics={factTopics} onTopics={setFactTopics} level={factLevel} onLevel={setFactLevel} />}
+            {tierInfo && kind !== 'truefalse' && kind !== 'choir' && kind !== 'vocal-hold' && <TierChips lang={settings.uiLang} info={tierInfo} value={tier} onChange={setTier} game="online" />}
             <fieldset className="seg-field">
               <legend>{t.roundsLabel}</legend>
               <div className="seg" role="radiogroup" aria-label={t.roundsLabel}>
@@ -176,7 +181,7 @@ export function OnlineScreen({ t, settings, user, initialCode, facts, onBack }: 
               disabled={busy || !backend}
               onClick={() =>
                 run(async (b) => {
-                  const r = kind === 'choir' ? await createRoom(b, 'vocal-hold', rounds, name, CHOIR_SEED + ((Math.random() * 2 ** 31) >>> 0), { hostScreen: bigScreen }) : await createRoom(b, kind, rounds, name, kind === 'truefalse' ? factSeed((Math.random() * 2 ** 32) >>> 0, factTopics, factLevel) : undefined, { hostScreen: bigScreen });
+                  const r = kind === 'choir' ? await createRoom(b, 'vocal-hold', rounds, name, CHOIR_SEED + ((Math.random() * 2 ** 31) >>> 0), { hostScreen: bigScreen }) : await createRoom(b, kind, rounds, name, kind === 'truefalse' ? factSeed((Math.random() * 2 ** 32) >>> 0, factTopics, factLevel) : tierSeed((Math.random() * 2 ** 32) >>> 0, tier), { hostScreen: bigScreen });
                   if (FAKE_ROOMS && fakeServer) {
                     const room = fakeServer.rooms.get(r.id)!;
                     const items = tournamentSet(room.kind, room.rounds, room.seed);

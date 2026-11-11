@@ -113,7 +113,8 @@ import { achievements, earnAwards, firstLaunchAwards } from '../engine/achieveme
 import { bumpCount } from '../engine/stats';
 import { gameAccuracy } from '../engine/gameRating';
 import '../tiers.css';
-import { TIERS, clearsRun, isTier, tierStepStars, tierInfo, tierKey, type DynName, type TierInfo } from '../engine/gameTiers';
+import { submitGameBest } from '../cloud/compete';
+import { socialInfo, TIERS, clearsRun, isTier, tierStepStars, tierInfo, tierKey, type DynName, type TierInfo } from '../engine/gameTiers';
 import { Flight } from './Flight';
 import { NameTune } from './NameTune';
 import { TuneUp } from './TuneUp';
@@ -184,7 +185,7 @@ export function App() {
   const [onlineKey, setOnlineKey] = useState(0);
   /** Truth or Bluff → online: the room starts with these topics and level. */
   const [onlineFacts, setOnlineFacts] = useState<{ topics: FactTopic[]; level: FactLevel } | null>(null);
-  const [duel, setDuel] = useState<{ names: string[]; kind: SetKind; rounds: number } | null>(null);
+  const [duel, setDuel] = useState<{ names: string[]; kind: SetKind; rounds: number; tier?: DynName } | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [arcadeKey, setArcadeKey] = useState(0);
   // Pricing (0.54): public prices and the free tier's limit; my plan (signed in). The cool-down shows when a free
@@ -1014,6 +1015,11 @@ export function App() {
     const info = tierInfo(g, ratingsOf(progress), progress.gameTiers?.[tierKey(g)], s.activeCourse ?? 'ear', s.courses);
     const ps = pendingStep.current;
     return ps && ps.kind === 'game' && ps.tier && ps.id.endsWith(`:${g}`) ? { ...info, forced: ps.tier } : info;
+  };
+  /** A tiered run's score goes to the week's game board (friends, per tier) when signed in. */
+  const noteGameBest = (g: string, score: number, detail: unknown) => {
+    const tier = (detail as { tier?: unknown } | null)?.tier;
+    if (user && isTier(tier)) void submitGameBest(g, tier, score);
   };
   /** P14: after the questionnaire or the level test, a current unit under half done is rebuilt. */
   const unfreezeIfEarly = (facts: Settings['pathFacts']): Settings['pathFacts'] => {
@@ -1884,6 +1890,7 @@ export function App() {
             onExit={() => go('arcade')}
             onResult={(r: { game: string; score: number; detail?: unknown }) => {
               void store.recordGame2(g, r.score, undefined, (r.detail ?? {}) as Record<string, unknown>).then(setProgress);
+            noteGameBest(g, r.score, r.detail);
               noteGameStep(g, r.score, r.detail);
             }}
             best={progress.bests?.[g]}
@@ -1903,6 +1910,7 @@ export function App() {
           onExit: () => go('arcade'),
           onResult: (r: { score: number; detail?: unknown }) => {
             void store.recordGame2(g, r.score, undefined, (r.detail ?? {}) as Record<string, unknown>).then(setProgress);
+            noteGameBest(g, r.score, r.detail);
             noteGameStep(g, r.score, r.detail);
           },
           best: progress.bests?.[g],
@@ -1950,16 +1958,18 @@ export function App() {
         />
       )}
       {route === 'online' && (
-        <OnlineScreen key={`${onlineKey}-${user?.id ?? ''}`} t={t} settings={s} user={user} initialCode={onlineCode} facts={onlineFacts} onBack={() => go('arcade')} />
+        <OnlineScreen key={`${onlineKey}-${user?.id ?? ''}`} t={t} settings={s} user={user} initialCode={onlineCode} facts={onlineFacts} onBack={() => go('arcade')} tier={socialInfo(ratingsOf(progress), s.activeCourse ?? 'ear', progress.gameTiers?.online, s.courses)} />
       )}
       {route === 'daily' && <DailyScreen t={t} settings={s} progress={progress} user={user} onBack={() => go('home')} onProgress={setProgress} />}
       {route === 'duel' && (
         <DuelSetup
           t={t}
           course={s.activeCourse}
+          lang={s.uiLang}
+          tier={socialInfo(ratingsOf(progress), s.activeCourse ?? 'ear', progress.gameTiers?.duel, s.courses)}
           onBack={() => go('arcade')}
-          onStart={(names, kind, rounds) => {
-            setDuel({ names, kind, rounds });
+          onStart={(names, kind, rounds, tier) => {
+            setDuel({ names, kind, rounds, ...(tier ? { tier } : {}) });
             setGameKey((k) => k + 1);
             enterPlay();
             setRoute('duelplay');

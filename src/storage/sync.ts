@@ -50,6 +50,7 @@ export function rebuildProgress(results: LessonResult[], local?: Progress): Prog
     // Game tiers and the game-XP cap are local (the XP itself is in the results and comes back with them).
     gameTiers: local.gameTiers,
     gameXpDays: local.gameXpDays,
+    tierRuns: local.tierRuns,
   };
 }
 

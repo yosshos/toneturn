@@ -65,7 +65,7 @@ export function TodayCards({ t, settings, progress, goalXp, signedIn, onLeague, 
   const stepsToday = Object.values(facts).filter((f) => f.at && localDay(new Date(f.at)) === day).length;
   const course = (settings.activeCourse ?? 'ear') as CourseId;
   const examPrep = course === 'ear' && !!settings.examPrep;
-  const quests = dailyQuests({ day, course, examPrep, events: progress.ratingEvents ?? [], sessions: today.map((h) => h.lessonId), stepsToday, minutesToday: minutes });
+  const quests = dailyQuests({ day, course, examPrep, events: progress.ratingEvents ?? [], sessions: today.map((h) => h.lessonId), stepsToday, minutesToday: minutes, tierRuns: progress.tierRuns });
 
   const [league, setLeague] = useState<League | null>(null);
   useEffect(() => {

@@ -19,6 +19,8 @@ import { DOMAINS, PROVISIONAL_UNTIL, SKILLS, type DomainId, type Ratings } from 
 import { SUB_SKILLS, type SubStat } from './taxonomy';
 import { addDays, type Counts, type InputKind, type Peaks, type StatsDays, type StatsHours } from './stats';
 import type { CourseId } from './courses';
+import { tiersCleared, topCleared, type GameTiers } from './gameTiers';
+import { COURSE_GAMES } from '../ui/courseRows';
 import { AREA_NAME, completedChallenges, RANK_AREAS, RANK_TIERS, TIER_NAME, tierStart, type RankArea, type Ranks, type RankTier } from './ranks';
 
 export type L = { en: string; he: string };
@@ -52,6 +54,8 @@ export interface BadgeInput {
   weekendDays?: number[];
   /** Days a daily workout was completed (local). */
   workoutDays?: string[];
+  /** Game tiers (GAMES_TIERS_PLAN §5.2): the highest tier cleared per game. */
+  gameTiers?: GameTiers;
   technique?: {
     /** Family level 0–7 (drills engine, e.g. familyLevel(states, f)). */
     levels?: Partial<Record<FamilyId, number>>;
@@ -708,7 +712,24 @@ const sp = (id: string, icon: string, tone: RankTier, en: string, he: string, de
 });
 const rankedAreas = (x: BadgeInput, minDiv: number) => DOMAINS.filter((d) => (x.ranks?.[d.id]?.best ?? -1) >= minDiv).length;
 
+// Game tiers (GAMES_TIERS_PLAN §5.2): clearing levels in games; per course, f and ff in three of its games.
+const TIER_TONE: Record<string, RankTier> = { mf: 'silver', f: 'gold', ff: 'diamond' };
+const COURSE_TIER_NAME: Record<CourseId, L> = { ear: { en: 'Ear', he: 'שמיעה' }, jazz: { en: 'Jazz', he: 'ג׳אז' }, voice: { en: 'Voice', he: 'קול' }, keys: { en: 'Piano', he: 'פסנתר' }, guitar: { en: 'Guitar', he: 'גיטרה' }, bass: { en: 'Bass', he: 'בס' }, drums: { en: 'Drums', he: 'תופים' } };
+const tierBadges = (): Badge[] => [
+  sp('tier-first', '◆', 'bronze', 'First Level', 'רמה ראשונה', 'Clear a level in any game.', 'לעבור רמה באחד המשחקים.', (x) => count(topCleared(x.gameTiers) ? 1 : 0, 1)),
+  ...(['mf', 'f', 'ff'] as const).map((t) =>
+    sp(`tier-${t}`, '◆', TIER_TONE[t], `Plays ${t}`, `מנגנים ${t}`, `Clear ${t} in any game.`, `לעבור את ${t} באחד המשחקים.`, (x) => count(tiersCleared(x.gameTiers, Object.keys(x.gameTiers ?? {}), t) ? 1 : 0, 1)),
+  ),
+  ...(Object.keys(COURSE_GAMES) as CourseId[]).flatMap((c) =>
+    (['f', 'ff'] as const).map((t) => ({
+      ...sp(`tierc:${c}:${t}`, '◆', TIER_TONE[t], `${COURSE_TIER_NAME[c].en} games at ${t}`, `משחקי ${COURSE_TIER_NAME[c].he} ב־${t}`, `Clear ${t} in 3 games of the course.`, `לעבור את ${t} ב־3 משחקים של הקורס.`, (x) => count(tiersCleared(x.gameTiers, COURSE_GAMES[c], t), 3)),
+      group: c,
+    })),
+  ),
+];
+
 const specialBadges: Badge[] = [
+  ...tierBadges(),
   sp('hat-trick', '🎩', 'bronze', 'Hat Trick', 'שלושער', 'Practice 3 days in a row.', 'להתאמן 3 ימים ברצף.', (_x, d) => count(d.bestStreak, 3)),
   sp('fortnight', '🔥', 'silver', 'Fortnight Fever', 'קדחת השבועיים', 'Practice 14 days in a row.', 'להתאמן 14 ימים ברצף.', (_x, d) => count(d.bestStreak, 14)),
   sp('half-century', '🎯', 'gold', 'Half-Century', 'חצי מאה', 'Practice 50 days in a row.', 'להתאמן 50 ימים ברצף.', (_x, d) => count(d.bestStreak, 50)),
@@ -772,6 +793,9 @@ export function badgeCourse(b: Pick<Badge, 'id' | 'cat' | 'group'>): { course: B
   const g = b.group ?? '';
   switch (b.cat) {
     case 'special':
+      // Per-course game-tier badges belong to their course.
+      if (b.id.startsWith('special:tierc:')) return { course: g as CourseId };
+      return { course: 'general' };
     case 'season':
       return { course: 'general' };
     case 'area':

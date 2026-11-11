@@ -118,3 +118,40 @@
   font-weight: 600;
   text-align: center;
 }
+
+/* One phone screen with the tier row (e2e/games-fit.spec.ts, 390×844): the social and memory-game setups get
+   denser choice rows. */
+.duel-setup .seg button,
+.ghost-setup .seg button,
+.tf-setup .seg button,
+.game-setup .seg button {
+  min-height: 40px;
+}
+.duel-setup .name-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.duel-setup .name-list .name-row input {
+  min-width: 0;
+  width: 100%;
+}
+.tf-setup .tf-topics .chip {
+  min-height: 34px;
+  padding: 4px 10px;
+  font-size: 0.85rem;
+}
+.duel-setup .set-card,
+.ghost-setup .set-card,
+.tf-setup .set-card {
+  gap: 10px;
+  padding: 12px 14px;
+}
+.duel-setup .seg-field legend,
+.ghost-setup .seg-field legend,
+.tf-setup .seg-field legend {
+  margin-bottom: 4px;
+}
+.game-setup.tiered .game-card small {
+  display: none;
+}

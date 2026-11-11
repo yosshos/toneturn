@@ -102,6 +102,8 @@ export interface Progress {
   gameXpDays?: Record<string, number>;
   /** The last tier a run cleared (the one-line message on the next screen). */
   lastTierClear?: { game: string; tier: DynName; at: string };
+  /** Recent tiered runs (quests read today's; badges read the cleared state). */
+  tierRuns?: { game: string; tier: DynName; pass: boolean; cleared?: boolean; at: string }[];
 }
 
 export interface VocalTake {
@@ -664,7 +666,8 @@ export function applyGameRun(
   const xp = Math.min(gameXp(run.game, run.tier, run.score, run.detail), gameXpLeft(today));
   const days = { ...(p.gameXpDays ?? {}), [day]: today + xp };
   for (const k of Object.keys(days).sort().slice(0, -60)) delete days[k];
-  let next: Progress = { ...p, gameTiers: { ...(p.gameTiers ?? {}), [key]: state }, gameXpDays: days, ...(newlyCleared ? { lastTierClear: { game: key, tier: newlyCleared, at } } : {}) };
+  const tierRuns = [...(p.tierRuns ?? []), { game: key, tier: run.tier, pass, ...(newlyCleared ? { cleared: true } : {}), at }].slice(-60);
+  let next: Progress = { ...p, gameTiers: { ...(p.gameTiers ?? {}), [key]: state }, gameXpDays: days, tierRuns, ...(newlyCleared ? { lastTierClear: { game: key, tier: newlyCleared, at } } : {}) };
   if (xp > 0) {
     const d = (run.detail && typeof run.detail === 'object' ? run.detail : {}) as Record<string, unknown>;
     const answered = (typeof d.right === 'number' ? d.right : 0) + (typeof d.wrong === 'number' ? d.wrong : 0);

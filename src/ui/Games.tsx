@@ -86,7 +86,7 @@ export function GameSetup({
   const inputs: [GameInput, string][] = kind === 'melody' ? [['pads', t.inPads], ['sing', t.inSing]] : [['tap', t.inTap], ['knock', t.inKnock]];
 
   return (
-    <main className="panel-screen game-setup">
+    <main className={`panel-screen game-setup ${tinfo ? 'tiered' : ''}`}>
       <header className="screen-head">
         <button className="icon-btn" onClick={onBack} aria-label={t.back}>
           <span className="flip-rtl">←</span>
@@ -94,7 +94,7 @@ export function GameSetup({
         <h1>{t.games}</h1>
       </header>
 
-      <EchoArt kind={kind} />
+      {!tinfo && <EchoArt kind={kind} />}
       <div className="game-cards" role="radiogroup" aria-label={t.games}>
         {(['melody', 'rhythm'] as const).map((k) => (
           <button key={k} role="radio" aria-checked={kind === k} className={`game-card ${k} ${kind === k ? 'on' : ''}`} onClick={() => pickKind(k)}>
@@ -109,7 +109,7 @@ export function GameSetup({
           </button>
         ))}
       </div>
-      {onTrueFalse && (
+      {onTrueFalse && !tinfo && (
         <button className="game-card truefalse games-tf" onClick={onTrueFalse}>
           <span className="duel-icon" aria-hidden="true">
             ✓✗

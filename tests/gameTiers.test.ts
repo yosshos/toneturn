@@ -24,6 +24,8 @@ import { TOPIC_GEN } from '../src/engine/topicKit';
 import '../src/engine/topics';
 import { applyGameRun, emptyProgress } from '../src/storage/progress';
 import type { Ratings } from '../src/engine/rating';
+import { dailySet, tournamentSet } from '../src/engine/tournament';
+import { BADGE_BY_ID, earnedBadges } from '../src/engine/badges';
 
 const R = (r: number, n: number): Ratings => ({ chords: { r, n, rd: 0 } as never });
 
@@ -142,6 +144,32 @@ describe('game tiers', () => {
     expect(seedTier(0xe3000000 ^ 0x40000000)).toBe('pp');
     expect(seedTier(tierSeed(0xe3001234, 'pp'))).toBe('pp');
     expect(seedTier(2 ** 33)).toBe('pp');
+  });
+
+  it('social sets: the seed tier picks harder items, at most 4 choices; pp seeds keep the original items', () => {
+    const base = 987654321 & 0xffffff;
+    const pp = tournamentSet('chords', 6, tierSeed(base, 'pp'));
+    expect(pp.every((q) => q.kind === 'quality')).toBe(true);
+    for (const t of DYN_NAMES)
+      for (const kind of ['mixed', 'chords', 'intervals', 'degrees', 'modes', 'beat', 'echo', 'truefalse', 'wrong-notes', 'jazz'] as const) {
+        const set = tournamentSet(kind, 6, tierSeed(base + 11, t));
+        expect(set).toHaveLength(6);
+        for (const q of set) if (q.kind === 'choice') expect(q.choices.length).toBeLessThanOrEqual(4);
+      }
+    const ff = tournamentSet('chords', 6, tierSeed(base, 'ff'));
+    expect(ff.some((q) => q.kind === 'choice')).toBe(true);
+    for (const b of ['soft', 'mid', 'loud'] as const) expect(dailySet('2026-11-10', b)).toHaveLength(5);
+    expect(dailySet('2026-11-10', 'soft').map((q) => q.answer)).toEqual(dailySet('2026-11-10').map((q) => q.answer));
+  });
+
+  it('tier badges', () => {
+    const tiers = { 'rush-chord': { cleared: 'ff' as const, recent: {}, best: {}, runs: 3 }, 'rush-progression': { cleared: 'f' as const, recent: {}, best: {}, runs: 3 }, 'rush-interval': { cleared: 'f' as const, recent: {}, best: {}, runs: 3 } };
+    const got = earnedBadges({ today: '2026-11-10', gameTiers: tiers }).map((b) => b.id);
+    expect(got).toContain('special:tier-first');
+    expect(got).toContain('special:tier-ff');
+    expect(got).toContain('special:tierc:jazz:f');
+    expect(got).not.toContain('special:tierc:jazz:ff');
+    expect(BADGE_BY_ID['special:tierc:jazz:f'].course).toBe('jazz');
   });
 
   it('daily bands', () => {
