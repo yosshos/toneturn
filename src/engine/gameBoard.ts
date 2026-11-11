@@ -60,4 +60,6 @@ export const GAME_TITLES: Record<string, { en: string; he: string }> = {
   land: { en: 'Land It', he: 'נחיתה' },
   'groove-echo': { en: 'Groove Echo', he: 'הד גרוב' },
   'odd-echo': { en: 'Odd-meter Echo', he: 'הד משקלים אי־זוגיים' },
+  'time-lock': { en: 'Time Lock', he: 'נעילת זמן' },
+  'ghost-control': { en: 'Ghost Control', he: 'שליטה ברפאים' },
 };

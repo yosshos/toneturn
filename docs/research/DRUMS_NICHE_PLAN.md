@@ -431,3 +431,90 @@ types.
 - How the road map, the game screens and the Your song card look and feel on a real phone with a real kit. Screens
   were checked in headless Chrome at 390 × 844 (Hebrew and English). The takes were measured with synthetic hits
   only.
+
+---
+
+## Implemented (P2)
+
+The rest of the curriculum (§6.3) is built, plus two P2 games, a few quick lessons and the short kit setup at the
+course start. The drums course now has **20 families and 166 levels** (it had 133). Mambo, songo and Mozambique are
+**still not built**: a teacher has to check the patterns first (§6.2).
+
+### The 34 levels (`drills/drumMore.ts`)
+
+33 levels are new; the 34th, F14 L6 (a kit groove + fill), is `d-read` 10. Levels are numbered without gaps (the
+placement caps by the level count), so the absorbed curriculum levels shift the numbers: F6 L6–9 are `d-funk` 5–8
+(F6 L5 linear funk is `d-prog` 7), F9 L7–9 are `d-fills` 6–8 (F9 L6 is `d-prog` 7), F10 L9 is `d-indep` 8 (F10 L8 is
+`d-prog` 5).
+
+| Family | Levels | What |
+|---|---|---|
+| `d-strokes` | 6–8 | accented triplets (alternating, right alone, left alone) · crescendo / decrescendo on 16ths (measured velocity line) · ghosts against accents |
+| `d-rolls` | 7–10 | triplets ↔ 16ths at each bar line · speed ladder (16th singles ♩100 → 120, the ladder's best clean tempo is the record) · endurance, 48 bars of 16ths (about 2 minutes) · double-stroke roll 16ths → 32nds |
+| `d-diddles` | 10 | the paradiddle on the kit (right hand hat or ride, left snare, kick on the beats; the double paradiddle in triplets) |
+| `d-time` | 7–9 | slow time ♩50 · the pocket: 10 ms behind, 10 ms ahead, or behind / on / ahead two bars each · the click on 1 only, then on every other 1 |
+| `d-rock` | 9 | punk 8ths for about 2 minutes (hat, ride, the skank beat) |
+| `d-funk` | 5–8 | open-hat barks on the "a" · the shuffle with ghost notes · boom-bap with the snare 15 ms behind · go-go and second line (swung 16ths written as sextuplets) |
+| `d-shuffle` | 5–8 | the swing-ratio dial (55 / 62 / 67 %, written straight under "Swing") · reggae one-drop · steppers and rockers · the half-time shuffle |
+| `d-fills` | 6–8 | flam / accent fills into a crash on the "&" of 4 (the choke is not measured) · the fill length read off the score (1, 2 or 4 beats, seeded per item) · your own fill in empty beats, scored on the landing |
+| `d-indep` | 5–8 | ostinato hands with the kick reading, then the line moved to the snare · three-way jazz (ride, foot 2 & 4, snare reads triplets) · four-way: samba or baião feet, the snare reads · clave over the groove with the kick tumbao |
+| `d-feet` | 4–8 | kick doubles · the foot splash on the "&" · double pedal, alternating 16ths · double bass 16ths for about a minute · double bass triplets and the gallop |
+| `d-read` | 11 | an exam-style unseen: 8 bars, a louder second half, fills closing bars 4 and 8, 30 s to study |
+
+F6 L7 and F7 L8 both said "half-time shuffle". `d-funk` 6 is the full-time shuffle with ghost notes; `d-shuffle` 8
+is the half-time shuffle.
+
+### New measures (`drumAnalyze.ts`, `DrumGoal`)
+
+- **`swell`** (crescendo / decrescendo): per zone, the velocity's least-squares line must go the right way with
+  R² ≥ 0.8 ⚙ and rise over at least half the soft → loud range ⚙.
+- **`pocket`**: the target sits `ms` off the grid, per zone, per voice (the lazy snare) or for every note. The share of
+  those notes within ±8 ms ⚙ of the target must be ≥ 70 % ⚙. The tier timing rules are judged against the target too.
+- **`endure`**: the timing SD of the last third ≤ 1.3 × that of the first ⚙, and the tempo over the take within ±2 %.
+- **`alt`** (two feet on one pad): odd against even strokes. The velocity gap must be ≤ 10 % ⚙ and the gaps' CV ≤ 12 % ⚙.
+- **`impro`**: at least 3 hits in each empty zone. A ±25 ms landing after a two-beat fill also catches a rush of about
+  2 %.
+- The click on 1 with a gap (`click: 'one'`, `gap: [1, 1]`) now sounds only on the 1 of the bars the gap leaves on
+  (`timeline.ts`); the silent bars are measured like the gap click.
+
+### Around the content
+
+- Path steps, family badges, Technique hub and workout pick the new levels up through their families. The rating
+  tags are by family (`d-time` with the click on 1 → `timing/gap`).
+- No new level joins `ACOUSTIC_LEVELS`. The microphone (pad) levels are single-surface: `d-strokes` 6–8, `d-rolls`
+  7–10 and `d-time` 7–9.
+- **Quick lessons** (`content/mini/drumsMore.ts`): the pocket and the swing dial, reggae, and two feet on the kick. Each
+  opens before the first level that needs it (`tech:<level id>`). `App.tsx` now checks a level unit before the family
+  unit. The English narration is not recorded yet, so `voiceFiles` fails until it is.
+- **Games** (P2, `engine/drumGames.ts`), on one surface and so playable on a pad by microphone too:
+  - **Time Lock**: the click drops out for 1 → 8 bars, and the score is the mean drift in the silent bars (±30 → 15 ms
+    by tier).
+  - **Ghost Control**: accents, taps and ghost notes on the snare, judged by velocity band.
+  - Both are wired in everywhere: tiers, rating tags, path game steps, the Practice games, the drums course games,
+    their own symbols (`timelock`, `ghostctl`) and the game board.
+- **Kit setup at the course start**: `KitSetup quick` is the short form. It learns snare, kick and hi-hat only (the rest
+  of the kit comes from the preset / GM map) and skips the pedal and velocity steps. A note on the pad step says
+  these and every pad can be fine-tuned later. The kit card shows "Quick setup", and its button is "Finish setup", which runs the
+  full wizard.
+- **Tests**:
+  - `tests/drumMore.test.ts`: catalogue and contiguity; every note inside its bar; lanes sum to at most the meter;
+    perfect, human and sloppy takes; a failing take for each new measure; the click plan; the quick wizard.
+  - `e2e/drums.spec.ts`: eight new levels in Hebrew and English at 390 × 844, the two games, and the short setup in the
+    course start.
+
+### Not built
+
+- Mambo, songo, Mozambique (teacher check). Rudiment Rush (it needs a two-zone sticking mode per module) and the
+  Groove-off duel (it needs the per-course drum level first). `drum-style` (optional).
+- The crash choke (F9 L7): aftertouch differs per module.
+- The splash vs the chick on the hi-hat pedal (F13 L5): only the pedal's timing is measured.
+- A per-player speed record shown on the level, beyond the ladder's best clean tempo.
+
+### Not verified (needs a real kit, §7)
+
+- Every ⚙ above: swell R² 0.8 / range 0.5, the pocket's ±8 ms / 70 %, the endurance rise of 30 %, the double-pedal
+  10 % / 12 %. The Time Lock windows too.
+- How the pocket behaves with real MIDI and microphone latency: the target is only 10–15 ms. Calibrate the latency
+  first.
+- Double pedal and double bass need a real double pedal.
+- The takes were measured with synthetic hits only.

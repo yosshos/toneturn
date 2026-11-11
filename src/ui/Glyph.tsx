@@ -820,6 +820,22 @@ Object.assign(GLYPHS, {
     </g>
   ),
   oddecho: mark('2+3'),
+  // DRUMS P2 games: Time Lock (a click wave, then a gap, then the click back), Ghost Control (three heads, small to large).
+  timelock: (
+    <g {...sw} strokeWidth={2.6}>
+      <path d="M-24 6v-12M-16 6v-12" />
+      <path d="M-8 0h16" strokeDasharray="3 4" />
+      <path d="M16 6v-12M24 6v-12" />
+      <path d="M-24 16h48" strokeWidth={2} />
+    </g>
+  ),
+  ghostctl: (
+    <g {...sw} strokeWidth={2.4}>
+      <circle cx={-16} cy={6} r={3.5} />
+      <circle cx={0} cy={2} r={6} />
+      <circle cx={18} cy={-4} r={9} fill={I} />
+    </g>
+  ),
 });
 // Drums niche families (DRUMS_NICHE_PLAN P1): songs (the road map — section blocks, one lit), prog (7/8), counting
 // ("1 & a"), the drum key (a staff with an x head over a round one), song form (D.S.).

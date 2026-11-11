@@ -2,6 +2,7 @@
 // sticking (PAS), groove placement, reading durations, and the engraving rules of the percussion staff.
 import { describe, expect, it } from 'vitest';
 import { drumFamilies, type DrumLevelDef } from '../src/engine/drills/drums';
+import { MORE_FROM } from '../src/engine/drills/drumMore';
 import { analyzeDrumTake, DRUM_TIERS, drumWindow, type DrumTakeHit } from '../src/engine/drills/drumAnalyze';
 import { expTimeMs } from '../src/engine/drills/analyze';
 import { levelDrills } from '../src/engine/drills/plan';
@@ -15,7 +16,8 @@ import { stepCatalogue } from '../src/engine/path';
 import { inCourse } from '../src/engine/courses';
 
 const FAMS = drumFamilies();
-const all = (): { lv: DrumLevelDef; d: Drill }[] => FAMS.flatMap((f) => f.levels.flatMap((lv) => levelDrills(lv, 'fifths-up').map((d) => ({ lv, d }))));
+// DRUMS P2 levels (drumMore.ts) are swept with their own rule-aware takes in tests/drumMore.test.ts.
+const all = (): { lv: DrumLevelDef; d: Drill }[] => FAMS.flatMap((f) => f.levels.filter((lv) => lv.level < (MORE_FROM[f.id] ?? 99)).flatMap((lv) => levelDrills(lv, 'fifths-up').map((d) => ({ lv, d }))));
 const gen = (family: string, kind: string, option: number) => generate({ family: family as never, kind, option, key: 0, hands: 'RL', instrument: 'drums' });
 
 /** Seeded normal noise. */
@@ -110,7 +112,7 @@ describe('grooves put the voices where the title says', () => {
       for (const d of levelDrills(lv, 'fifths-up')) {
         const sn = at(d, 'snare', 1);
         if (/Half-time/.test(d.title.en)) expect(sn).toEqual([2]);
-        else if (/Double-time/.test(d.title.en)) expect(sn).toEqual([0.5, 1.5, 2.5, 3.5]);
+        else if (/Double-time|skank/.test(d.title.en)) expect(sn).toEqual([0.5, 1.5, 2.5, 3.5]);
         else expect(sn, d.itemId).toEqual(expect.arrayContaining([1, 3]));
       }
   });

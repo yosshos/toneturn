@@ -78,6 +78,11 @@ export interface KitProfile {
   device?: string;
   /** Wizard finished (else the drums Technique offers it first). */
   done?: boolean;
+  /**
+   * The short setup at the course start (SPEC-COURSE-START): only snare, kick and hi-hat learned, the pedal and the
+   * soft / loud strokes left at the preset's defaults. The kit card offers the full setup to finish it.
+   */
+  quick?: boolean;
 }
 export const DEFAULT_KIT: KitProfile = { preset: 'gm', map: {} };
 
@@ -196,17 +201,19 @@ export interface WizardState {
   /** Something to tell the player about the last hit. */
   note?: 'again' | 'taken' | 'learned';
 }
+/** The short course-start setup learns only these (the rest of the kit comes from the preset / GM map). */
+export const QUICK_PADS: WizardPad[] = WIZARD_PADS.filter((p) => p.voice === 'snare' || p.voice === 'kick' || p.voice === 'hihat');
 export const wizardStart = (): WizardState => ({ step: 0, heard: [], map: {}, hatByCc: false });
-export const wizardDone = (s: WizardState): boolean => s.step >= WIZARD_PADS.length;
+export const wizardDone = (s: WizardState, pads: WizardPad[] = WIZARD_PADS): boolean => s.step >= pads.length;
 
 /**
  * One hit during the wizard. Two hits on the same note learn the current pad and move on. A note already learned for
  * another pad: the open hat on the closed hat's note means "one hat note + CC4" (learned, flagged); anything else is
  * refused ("taken") so a stray kick can't become the crash.
  */
-export function wizardHit(s: WizardState, note: number, vel: number): WizardState {
-  if (wizardDone(s) || vel <= 0) return s;
-  const pad = WIZARD_PADS[s.step];
+export function wizardHit(s: WizardState, note: number, vel: number, pads: WizardPad[] = WIZARD_PADS): WizardState {
+  if (wizardDone(s, pads) || vel <= 0) return s;
+  const pad = pads[s.step];
   const owner = s.map[note];
   if (owner && owner !== pad.voice) {
     if (pad.voice === 'hhOpen' && owner === 'hihat') return { ...s, step: s.step + 1, heard: [], hatByCc: true, note: 'learned' };
@@ -218,8 +225,8 @@ export function wizardHit(s: WizardState, note: number, vel: number): WizardStat
   return { ...s, step: s.step + 1, heard: [], map: { ...s.map, [note]: pad.voice }, note: 'learned' };
 }
 /** Skip an optional pad. */
-export function wizardSkip(s: WizardState): WizardState {
-  if (wizardDone(s) || !WIZARD_PADS[s.step].optional) return s;
+export function wizardSkip(s: WizardState, pads: WizardPad[] = WIZARD_PADS): WizardState {
+  if (wizardDone(s, pads) || !pads[s.step].optional) return s;
   return { ...s, step: s.step + 1, heard: [], note: undefined };
 }
 

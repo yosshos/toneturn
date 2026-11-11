@@ -353,6 +353,33 @@ export const GAME_TIERS: Record<string, GameTierSpec> = {
       ff: { label: L('13/8 and 15/8', '13/8 ו־15/8'), params: { bpm: 240, meters: [13, 15] }, target: 80 },
     },
   },
+  // DRUMS_NICHE_PLAN P2 (§3): Time Lock and Ghost Control (engine/drumGames.ts), one surface — a pad by microphone too.
+  'time-lock': {
+    game: 'time-lock',
+    source: () => 'instrument/drum-tech',
+    clear: 'accuracy',
+    tiers: {
+      pp: { label: L('1–2 silent bars, ♩70, ±30 ms', '1–2 תיבות שקטות, ♩70, ±30 מ״ש'), params: { bpm: 70, ms: 30 }, target: 80 },
+      p: { label: L('2–4 silent bars, ♩80, ±26 ms', '2–4 תיבות שקטות, ♩80, ±26 מ״ש'), params: { bpm: 80, ms: 26 }, target: 80 },
+      mp: { label: L('4 silent bars, ♩90, ±22 ms', '4 תיבות שקטות, ♩90, ±22 מ״ש'), params: { bpm: 90, ms: 22 }, target: 80 },
+      mf: { label: L('4–8 silent bars, 16ths, ±20 ms', '4–8 תיבות שקטות, שש-עשריות, ±20 מ״ש'), params: { bpm: 95, ms: 20 }, target: 80 },
+      f: { label: L('8 silent bars, ♩100, ±18 ms', '8 תיבות שקטות, ♩100, ±18 מ״ש'), params: { bpm: 100, ms: 18 }, target: 80 },
+      ff: { label: L('8 silent bars, ♩110, ±15 ms', '8 תיבות שקטות, ♩110, ±15 מ״ש'), params: { bpm: 110, ms: 15 }, target: 80 },
+    },
+  },
+  'ghost-control': {
+    game: 'ghost-control',
+    source: () => 'instrument/drum-tech',
+    clear: 'accuracy',
+    tiers: {
+      pp: { label: L('Accents and taps, 8ths, ♩70', 'הדגשות ונקישות, שמיניות, ♩70'), params: { bpm: 70 }, target: 80 },
+      p: { label: L('Accents and taps, 8ths, ♩75', 'הדגשות ונקישות, שמיניות, ♩75'), params: { bpm: 75 }, target: 80 },
+      mp: { label: L('+ ghost notes, 16ths, ♩80', '+ תווי רפאים, שש-עשריות, ♩80'), params: { bpm: 80 }, target: 80 },
+      mf: { label: L('Three bands, 16ths, ♩85', 'שלוש עוצמות, שש-עשריות, ♩85'), params: { bpm: 85 }, target: 80 },
+      f: { label: L('Accents off the beat, ♩90', 'הדגשות מחוץ לפעמה, ♩90'), params: { bpm: 90 }, target: 80 },
+      ff: { label: L('Three bands, ♩100', 'שלוש עוצמות, ♩100'), params: { bpm: 100 }, target: 80 },
+    },
+  },
 };
 
 // ---------------------------------------------------------------- advanced games (P2 rest + P3, 0.70)

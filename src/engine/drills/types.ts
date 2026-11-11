@@ -422,6 +422,27 @@ export interface DrumGoal {
   song?: { section: number; fills?: [number, number][]; fill?: number; arc?: { lo: [number, number][]; hi: [number, number][]; ratio: number }[]; /** Tempo drift per section (least-squares, sections of ≥ 2 bars) ≤ this (⚙ 0.02). */ drift?: number };
   /** Metric modulation (d-prog 6, 10): at each change of the tempo map, the played ratio (two bars each side, least squares) within ±tol of the written one. */
   modulation?: { tol: number };
+  // ---- DRUMS_NICHE_PLAN P2 (the rest of the curriculum, §6.3) ----
+  /**
+   * Crescendo / decrescendo (d-strokes 7): in each zone of beats [from, to) the velocity's least-squares line rises
+   * (dir 1) or falls (dir −1), with R² ≥ `r2` and a rise over the zone ≥ `range` × the soft → loud span (⚙ 0.8, 0.5).
+   */
+  swell?: { zones: { from: number; to: number; dir: 1 | -1 }[]; r2: number; range: number };
+  /**
+   * The pocket (d-time 8, d-funk 8): notes expected `ms` off the grid (+ = behind the beat) — per zone of beats, or only
+   * on some voices (the lazy snare), else every note. The share of those notes within ±`tol` ms of their target must
+   * be ≥ `share` (⚙ 8 ms, 0.7); the other timing rules are judged against the target too.
+   */
+  pocket?: { ms?: number; voices?: DrumVoice[]; zones?: { from: number; to: number; ms: number }[]; tol: number; share: number };
+  /** Endurance (d-rolls 9, d-rock 9, d-feet 7): the timing SD of the last third ≤ (1 + rise) × the first third's, and the tempo over the take (least squares) within ±drift. */
+  endure?: { rise: number; drift: number };
+  /**
+   * Two feet on one pad (double pedal, d-feet 6–8): the notes of `voices` alternate feet, which the kit can't tell apart
+   * — so odd against even strokes: |Δ mean velocity| / mean ≤ `vel`, and the CV of their gaps (played ÷ written) ≤ `cv`.
+   */
+  alt?: { voices: DrumVoice[]; vel: number; cv: number };
+  /** Improvised zones (d-fills 9): beat ranges with nothing written, where at least `min` hits (any drums) must be played. */
+  impro?: { zones: [number, number][]; min: number };
 }
 
 /** Bass-specific pass rules (BASS_CURRICULUM §4–§5). Absent = the default pitch + timing rule only. */
@@ -660,6 +681,17 @@ export interface DrumMetrics {
   song?: { sections: { name: string; hit: number; vel: number | null; /** Played ÷ written tempo (> 1 = rushing). */ tempo?: number }[]; fills: number | null; arc: (number | null)[] };
   /** Metric modulation: per tempo change, played ratio ÷ written − 1 (> 0 = the new tempo too fast; 9 = not measured). */
   modErr?: number[];
+  /** Swell zones: R² of the velocity line and its rise over the zone (share of the soft → loud span, signed by the zone's direction). */
+  swell?: { r2: number | null; rise: number | null }[];
+  /** Pocket: share of the pocket notes within ±tol of their target, and their mean offset from the grid (ms). */
+  pocket?: number | null;
+  pocketMean?: number | null;
+  /** Endurance: SD rise last third ÷ first third − 1, and the played ÷ written tempo over the take. */
+  endure?: { rise: number | null; tempo: number | null };
+  /** Double pedal: odd / even velocity gap (share of the mean) and the gaps' CV. */
+  alt?: { vel: number | null; cv: number | null };
+  /** Improvised zones: hits played in each. */
+  impro?: number[];
 }
 
 /** Progress of one item (synced, small). */

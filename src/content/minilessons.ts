@@ -24,10 +24,11 @@ import { LESSONS as PROG_GAMES } from './mini/progGames';
 import { LESSONS as JAZZ_EAR } from './mini/jazzEar';
 import { LESSONS as BASS_NICHE } from './mini/bassNiche';
 import { LESSONS as DRUMS } from './mini/drums';
+import { LESSONS as DRUMS_MORE } from './mini/drumsMore';
 import { LESSONS as VOICE_COURSE } from './mini/voiceCourse';
 import { LESSONS as GUITAR } from './mini/guitar';
 
-export const MINI_LESSONS: Record<string, MiniLesson> = Object.fromEntries([...EXAMPLE, ...PATH, ...RHYTHM, ...JAZZ, ...THEORY_EAR, ...VOICE, ...SKILLS, ...MEMORY_LESSONS, ...BASICS, ...AD, ...INSTRUMENT, ...WRITTEN, ...HARMONY2, ...PITCH2, ...TIME2, ...SOUND, ...CHORDREAD, ...PROG_GAMES, ...JAZZ_EAR, ...PIANO_JAZZ, ...LICKS, ...BASS_NICHE, ...DRUMS, ...VOICE_COURSE, ...GUITAR].map((l) => [l.id, l]));
+export const MINI_LESSONS: Record<string, MiniLesson> = Object.fromEntries([...EXAMPLE, ...PATH, ...RHYTHM, ...JAZZ, ...THEORY_EAR, ...VOICE, ...SKILLS, ...MEMORY_LESSONS, ...BASICS, ...AD, ...INSTRUMENT, ...WRITTEN, ...HARMONY2, ...PITCH2, ...TIME2, ...SOUND, ...CHORDREAD, ...PROG_GAMES, ...JAZZ_EAR, ...PIANO_JAZZ, ...LICKS, ...BASS_NICHE, ...DRUMS, ...DRUMS_MORE, ...VOICE_COURSE, ...GUITAR].map((l) => [l.id, l]));
 
 /** The mini-lesson that opens a unit, if there is one. */
 export const lessonForUnit = (unit: string): MiniLesson | null => MINI_LESSONS[UNIT_LESSON[unit] ?? ''] ?? null;

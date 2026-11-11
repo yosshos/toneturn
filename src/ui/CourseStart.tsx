@@ -180,7 +180,8 @@ export function CourseSetup({ course, lang, settings, onSettings, onDone, onBack
     return (
       <main className="onboarding cs-screen cs-setup" data-course-start="setup" data-cs-course={course}>
         <Head lang={lang} onBack={onBack} step={1} of={3} />
-        <KitSetup lang={lang} kit={settings.drumKit} latency={settings} onSave={(k) => onSettings({ drumKit: k, ...(k.mic ? {} : { midiInput: true }) })} onLatency={(p) => onSettings(p)} onDone={() => onDone(false)} />
+        {/* The short form (three pads, no pedal / velocity steps); the kit card finishes it later. */}
+        <KitSetup quick lang={lang} kit={settings.drumKit} latency={settings} onSave={(k) => onSettings({ drumKit: k, ...(k.mic ? {} : { midiInput: true }) })} onLatency={(p) => onSettings(p)} onDone={() => onDone(false)} />
         {skip}
       </main>
     );

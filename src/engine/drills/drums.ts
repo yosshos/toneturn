@@ -14,6 +14,7 @@ import { drumBand, generateJazz, generateLatin } from './drumStyles';
 import { generateSong } from './drumSong';
 import { generateProg } from './drumProg';
 import { generateCount, generateForm, generateNotation, generateReadMore } from './drumTheory';
+import { generateMore } from './drumMore';
 
 const t = (en: string, he: string): T2 => ({ en, he });
 const r6 = (x: number): number => Math.round(x * 1e6) / 1e6;
@@ -859,6 +860,9 @@ export const isDrumFamily = (f: string): boolean => f.startsWith('d-');
 /** Build a drum drill (any 'd-' family). */
 export function generateDrums(spec: DrillSpec): Drill {
   const s: DrillSpec = { ...spec, key: 0, instrument: 'drums' };
+  // DRUMS_NICHE_PLAN P2: the rest of the curriculum (drumMore.MORE_FROM: the levels past each family's first ones).
+  const more = generateMore(s);
+  if (more) return more;
   switch (s.family as DrumFamilyId) {
     case 'd-strokes':
       return genStrokes(s);
@@ -928,6 +932,10 @@ export function drumFamilies(): DrumFamilyDef[] {
       L('d-strokes', 3, 'Three dynamics on cue (p, mf, f)', 'שלוש עוצמות לפי הסימן (p, mf, f)', 'levels', 3, [70, 70], '1/8', true),
       L('d-strokes', 4, 'Accent and taps', 'הדגשה ונקישות', 'accent', 3, [60, 100], '1/16', true),
       L('d-strokes', 5, 'Moving accent', 'הדגשה נודדת', 'moving', 4, [60, 90], '1/16', true),
+      // DRUMS_NICHE_PLAN P2 (§6.3): the rest of the curriculum, drumMore.ts.
+      L('d-strokes', 6, 'Accented triplets', 'טריולות עם הדגשה', 'triplets', 3, [60, 100], '1/8T', true),
+      L('d-strokes', 7, 'Crescendo and decrescendo', 'קרשנדו ודקרשנדו', 'swell', 3, [70, 70], '1/16', true),
+      L('d-strokes', 8, 'Ghosts against accents', 'רפאים מול הדגשות', 'duel', 3, [70, 110], '1/16', true),
     ]),
     fam('d-rolls', 'Singles, doubles, rolls', 'בודדות, כפולות, גלגולים', [
       L('d-rolls', 1, 'Single strokes in 8ths', 'מכות בודדות בשמיניות', 'singles8', 3, [60, 100], '1/8', true),
@@ -936,6 +944,10 @@ export function drumFamilies(): DrumFamilyDef[] {
       L('d-rolls', 4, 'Double strokes in 16ths', 'מכות כפולות בשש-עשריות', 'doubles16', 3, [70, 110], '1/16', true),
       L('d-rolls', 5, 'Single-stroke four and seven', 'ארבע ושבע מכות בודדות', 'stroke4', 3, [70, 110], '1/16T', true),
       L('d-rolls', 6, '5-, 7- and 9-stroke rolls (open)', 'גלגולים של 5, 7 ו-9 מכות (פתוחים)', 'roll', 3, [70, 100], '1/16', true),
+      L('d-rolls', 7, 'Triplets and 16ths, switching', 'טריולות ושש-עשריות לסירוגין', 'switch', 3, [70, 110], 'mixed', true),
+      L('d-rolls', 8, 'Speed ladder', 'סולם מהירות', 'speed', 3, [100, 120], '1/16', true),
+      L('d-rolls', 9, 'Endurance: about 2 minutes', 'סיבולת: כ-2 דקות', 'endure', 3, [90, 120], '1/16', true),
+      L('d-rolls', 10, 'Double-stroke roll, 16ths to 32nds', 'גלגול כפולות, משש-עשריות לשלושים-ושתיים', 'roll32', 3, [60, 100], '1/32', true),
     ]),
     fam('d-diddles', 'Paradiddles, flams, drags', 'פאראדידלים, פלאמים, דראגים', [
       L('d-diddles', 1, 'Single paradiddle', 'פאראדידל', 'para', 3, [60, 100], '1/16', true),
@@ -948,6 +960,7 @@ export function drumFamilies(): DrumFamilyDef[] {
       L('d-diddles', 7, 'Drags and the single drag tap', 'דראגים ודראג טאפ', 'drag', 3, [60, 90], '1/8', false),
       L('d-diddles', 8, 'Swiss army triplet, flam paradiddle', 'טריולת הצבא השווייצרי, פלאם פאראדידל', 'swiss', 3, [60, 100], '1/8T', false),
       L('d-diddles', 9, 'Single ratamacue', 'רטמקיו בודד', 'ratamacue', 3, [60, 90], '1/8T', false),
+      L('d-diddles', 10, 'The paradiddle on the kit', 'הפאראדידל על המערכת', 'kit', 3, [70, 100], '1/16', false),
     ]),
     fam('d-time', 'Time & subdivision', 'זמן וחלוקה', [
       L('d-time', 1, 'Quarters with the click', 'רבעים עם הקליק', 'pulse', 3, [60, 120], '1/4', true),
@@ -956,6 +969,9 @@ export function drumFamilies(): DrumFamilyDef[] {
       L('d-time', 4, 'Gap click: 2 bars on, 2 off', 'קליק עם חורים: 2 תיבות עם, 2 בלי', 'gap22', 3, [70, 100], '1/8', true),
       L('d-time', 5, 'Gap click: 1 bar on, 3 off', 'קליק עם חורים: תיבה עם, 3 בלי', 'gap13', 3, [70, 100], '1/8', true),
       L('d-time', 6, 'Click on the "&" only', 'קליק רק על ה"וְ"', 'offclick', 3, [70, 110], '1/8', true),
+      L('d-time', 7, 'Slow time, ♩ 50', 'זמן איטי, ♩ 50', 'slow', 3, [50, 50], '1/8', true),
+      L('d-time', 8, 'The pocket: behind, on, ahead', 'הכיס: מאחור, בדיוק, מלפנים', 'pocket', 3, [90, 90], '1/8', true),
+      L('d-time', 9, 'The click on 1 only', 'קליק רק על 1', 'one', 3, [80, 120], '1/16', true),
     ]),
     fam('d-rock', 'Rock & pop grooves', 'גרובים של רוק ופופ', [
       L('d-rock', 1, 'Basic rock beat', 'קצב רוק בסיסי', 'rock', 3, [70, 110], '1/8', false),
@@ -966,6 +982,7 @@ export function drumFamilies(): DrumFamilyDef[] {
       L('d-rock', 6, 'Half-time, double-time, four on the floor', 'חצי זמן, זמן כפול, ארבע על הרצפה', 'feel', 3, [80, 130], '1/8', false),
       L('d-rock', 7, 'Pop with a 16th kick', 'פופ עם קיק בשש-עשריות', 'pop16', 3, [85, 110], '1/16', false),
       L('d-rock', 8, 'Groove + fill every 4th bar', 'גרוב + מעבר כל תיבה רביעית', 'fill', 3, [80, 120], 'mixed', false),
+      L('d-rock', 9, 'Punk: fast 8ths for 2 minutes', 'פאנק: שמיניות מהירות 2 דקות', 'punk', 3, [150, 180], '1/8', false),
     ]),
     fam('d-fills', 'Fills & landing', 'מעברים ונחיתה', [
       L('d-fills', 1, 'One-beat fill, land on 1', 'מעבר של פעמה, נחיתה על 1', 'fill1', 3, [70, 110], '1/8', false),
@@ -973,6 +990,9 @@ export function drumFamilies(): DrumFamilyDef[] {
       L('d-fills', 3, 'One-bar fill around the kit', 'מעבר של תיבה סביב המערכת', 'fill4', 3, [70, 110], '1/16', false),
       L('d-fills', 4, 'Triplet fills', 'מעברים בטריולות', 'fill3', 3, [70, 110], '1/8T', false),
       L('d-fills', 5, 'Fills from the "&" of 3', 'מעברים מה"וְ" של 3', 'offbeat', 3, [80, 110], '1/16', false),
+      L('d-fills', 6, 'Flam and accent fills into the "&" of 4', 'מעברי פלאם והדגשה אל ה"וְ" של 4', 'antic', 3, [80, 110], '1/16', false),
+      L('d-fills', 7, 'Read the fill length', 'לקרוא את אורך המעבר', 'call', 4, [80, 110], '1/16', false),
+      L('d-fills', 8, 'Your own fill, land on 1', 'מעבר משלכם, נחיתה על 1', 'free', 3, [90, 130], 'mixed', false),
     ]),
     fam('d-read', 'Reading', 'קריאת תווים', [
       L('d-read', 1, 'Snare: quarters, 8ths, rests', 'סנר: רבעים, שמיניות, הפסקות', 'read', 4, [70, 90], '1/8', true),
@@ -986,6 +1006,7 @@ export function drumFamilies(): DrumFamilyDef[] {
       L('d-read', 8, 'Tom fills with sticking', 'מעברים בטומים עם אצבוע', 'toms', 3, [60, 100], '1/16', false),
       L('d-read', 9, 'Odd meters with group beams', 'משקלים מוזרים וקבוצות', 'odd', 4, [160, 240], '1/8', false),
       L('d-read', 10, 'A groove and fill at sight', 'גרוב ומעבר מהדף', 'sight', 4, [70, 100], 'mixed', false),
+      L('d-read', 11, 'Unseen: 8 bars, exam style', 'קריאה מהדף: 8 תיבות בסגנון בחינה', 'exam', 4, [70, 100], 'mixed', false),
     ]),
     // v2 families (DRUMS_AUDIT N1): F6 L1–4, F7 L1–4, F10 L1–4, F12 (own order: dum/tak, baladi/sa'idi, ka, the kit groove), F13 L1–3.
     fam('d-funk', 'Funk & ghost notes', 'פאנק ותווי רפאים', [
@@ -993,18 +1014,30 @@ export function drumFamilies(): DrumFamilyDef[] {
       L('d-funk', 2, 'Ghost notes with hi-hat 8ths', 'רפאים עם היי־האט בשמיניות', 'hat', 3, [70, 95], '1/16', false),
       L('d-funk', 3, 'Add a syncopated kick', 'מוסיפים קיק מסונכפ', 'kick', 3, [70, 95], '1/16', false),
       L('d-funk', 4, '16th hi-hat funk with ghosts', 'פאנק עם היי־האט בשש-עשריות', 'hat16', 3, [70, 100], '1/16', false),
+      L('d-funk', 5, 'Open-hat barks', 'פתיחות היי־האט', 'barks', 3, [80, 100], '1/16', false),
+      L('d-funk', 6, 'Shuffle with ghost notes', 'שאפל עם תווי רפאים', 'shufghost', 3, [70, 90], '1/8T', false),
+      L('d-funk', 7, 'Boom-bap: the lazy snare', 'בום־בפ: הסנר העצלן', 'boombap', 3, [85, 95], '1/16', false),
+      L('d-funk', 8, 'Go-go and second line', 'גו־גו וסקנד ליין', 'gogo', 3, [90, 110], '1/16', false),
     ]),
     fam('d-shuffle', 'Shuffle & triplet feels', 'שאפל ותחושת טריולות', [
       L('d-shuffle', 1, 'Triplets on the hat, snare 2 and 4', 'טריולות בהיי־האט, סנר על 2 ו-4', 'triplets', 3, [60, 90], '1/8T', false),
       L('d-shuffle', 2, 'Shuffle', 'שאפל', 'shuffle', 3, [80, 120], '1/8T', false),
       L('d-shuffle', 3, 'Slow blues, 12/8 feel', 'בלוז איטי בתחושת 12/8', 'blues', 3, [50, 66], '1/8T', false),
       L('d-shuffle', 4, 'Double shuffle', 'שאפל כפול', 'double', 3, [100, 140], '1/8T', false),
+      L('d-shuffle', 5, 'The swing-ratio dial', 'חוגת יחס הסווינג', 'dial', 3, [100, 100], '1/8', false),
+      L('d-shuffle', 6, 'Reggae one-drop', 'רגאיי וואן־דרופ', 'onedrop', 3, [70, 85], '1/8T', false),
+      L('d-shuffle', 7, 'Steppers and rockers', 'סטפרס ורוקרס', 'steppers', 3, [70, 90], '1/8', false),
+      L('d-shuffle', 8, 'Half-time shuffle', 'שאפל בחצי זמן', 'halftime', 3, [70, 90], '1/8T', false),
     ]),
     fam('d-indep', 'Independence', 'עצמאות גפיים', [
       L('d-indep', 1, 'Hands and feet together', 'ידיים ורגליים יחד', 'unison', 3, [60, 100], '1/8', false),
       L('d-indep', 2, 'Read the kick in 8ths', 'לקרוא את הקיק בשמיניות', 'kick8', 4, [60, 100], '1/8', false),
       L('d-indep', 3, 'Read the kick in 16ths', 'לקרוא את הקיק בשש-עשריות', 'kick16', 4, [60, 90], '1/16', false),
       L('d-indep', 4, 'Read the snare over hat and kick', 'לקרוא את הסנר מעל היי־האט וקיק', 'snare', 4, [60, 100], '1/16', false),
+      L('d-indep', 5, 'Ostinato and a reading limb', 'אוסטינטו וגפה קוראת', 'ostinato', 3, [60, 90], '1/16', false),
+      L('d-indep', 6, 'Three-way jazz', 'ג׳אז בשלוש גפיים', 'threeway', 3, [90, 140], '1/8T', false),
+      L('d-indep', 7, 'Four-way: Brazilian feet', 'ארבע גפיים: רגליים ברזילאיות', 'fourway', 3, [70, 100], '1/16', false),
+      L('d-indep', 8, 'Clave over the groove', 'קלאבה מעל הגרוב', 'clave', 3, [80, 110], '1/8', false),
     ]),
     fam('d-mideast', 'Middle-Eastern & Mizrahi', 'מקצבים מזרחיים', [
       L('d-mideast', 1, 'Malfuf and maqsum: dum and tak', 'מלפוף ומקסום: דום ותק', 'maqsum', 3, [80, 110], '1/16', false),
@@ -1022,6 +1055,11 @@ export function drumFamilies(): DrumFamilyDef[] {
       L('d-feet', 1, 'Hi-hat foot on 2 and 4', 'רגל היי־האט על 2 ו-4', 'chick', 3, [70, 110], '1/4', false),
       L('d-feet', 2, 'Groove with the hi-hat foot', 'גרוב עם רגל ההיי־האט', 'groove', 3, [80, 110], '1/8', false),
       L('d-feet', 3, 'Kick 8ths under a groove', 'קיק בשמיניות מתחת לגרוב', 'kick8', 3, [60, 110], '1/8', false),
+      L('d-feet', 4, 'Kick doubles', 'כפולות בקיק', 'kdouble', 3, [60, 100], '1/16', false),
+      L('d-feet', 5, 'Foot splash on the "&"', 'ספלאש ברגל על ה"וְ"', 'splash', 3, [80, 110], '1/8', false),
+      L('d-feet', 6, 'Double pedal: alternating 16ths', 'דאבל פדל: שש-עשריות לסירוגין', 'dpedal', 3, [80, 140], '1/16', false),
+      L('d-feet', 7, 'Double bass 16ths, a minute', 'דאבל בס בשש-עשריות, דקה', 'dbass', 3, [100, 160], '1/16', false),
+      L('d-feet', 8, 'Double bass triplets and gallops', 'דאבל בס בטריולות וגאלופ', 'gallop', 3, [100, 150], '1/8T', false),
     ]),
     // 0.66: the drummer's ear (call and response, measured on the kit; L1–3 also on a pad), jazz (F8) and Latin (F11).
     fam('d-ear', 'Drummer’s ear', 'שמיעה למתופפים', [

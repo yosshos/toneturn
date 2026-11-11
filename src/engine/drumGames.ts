@@ -9,8 +9,10 @@ import { bar, finish, rep, rnd, type DH, type Lanes } from './drills/drums';
 import { callOf } from './drills/drumEar';
 import { DYN_NAMES, tierIndex, type DynName } from './gameTiers';
 
-export type DrumGameId = 'land' | 'groove-echo' | 'odd-echo';
-export const DRUM_GAMES: DrumGameId[] = ['land', 'groove-echo', 'odd-echo'];
+// DRUMS_NICHE_PLAN P2 (§3): Time Lock (the click drops out for longer and longer) and Ghost Control (three dynamic
+// bands on one surface) — both played on a pad by microphone too.
+export type DrumGameId = 'land' | 'groove-echo' | 'odd-echo' | 'time-lock' | 'ghost-control';
+export const DRUM_GAMES: DrumGameId[] = ['land', 'groove-echo', 'odd-echo', 'time-lock', 'ghost-control'];
 export const isDrumGame = (g: string): g is DrumGameId => (DRUM_GAMES as string[]).includes(g);
 /** Rounds in one run. */
 export const DRUM_GAME_ROUNDS = 5;
@@ -31,10 +33,12 @@ export interface DrumRound {
   landings?: number[];
   /** Odd-meter Echo: the bar's meter and grouping (the answer). */
   odd?: { num: number; groups: number[] };
+  /** Time Lock: the bars with the click and the silent bars that follow, and the allowed drift (ms). */
+  lock?: { on: number; off: number; ms: number };
 }
 
 const spec = (game: DrumGameId, tier: DynName, round: number, seed: number): DrillSpec => ({
-  family: game === 'land' ? 'd-fills' : 'd-ear',
+  family: game === 'land' ? 'd-fills' : game === 'time-lock' ? 'd-time' : game === 'ghost-control' ? 'd-strokes' : 'd-ear',
   kind: `game:${game}:${tier}:${round}:${seed >>> 0}`,
   key: 0,
   hands: 'RL',
@@ -214,8 +218,70 @@ export function oddEchoRound(tier: DynName, round: number, seed: number): DrumRo
   return { game: 'odd-echo', tier, round, drill: withTier(d, tier, true), bpm, odd: { num, groups } };
 }
 
+// ───────────────────────────── Time Lock (P2) ─────────────────────────────
+
+/** Silent bars per round, by tier (the click is back for one bar at the end). */
+const LOCK_OFF: Record<DynName, number[]> = { pp: [1, 1, 2, 2, 2], p: [2, 2, 2, 4, 4], mp: [2, 4, 4, 4, 4], mf: [4, 4, 4, 8, 8], f: [4, 8, 8, 8, 8], ff: [8, 8, 8, 8, 8] };
+const LOCK_BPM = [70, 80, 90, 95, 100, 110];
+const LOCK_MS = [30, 26, 22, 20, 18, 15];
+
+export function timeLockRound(tier: DynName, round: number, seed: number): DrumRound {
+  const ti = tierIndex(tier);
+  const r = rnd(`lock:${tier}:${round}:${seed}`);
+  const off = LOCK_OFF[tier][Math.min(round, 4)];
+  const on = 2;
+  const bars = on + off + 1;
+  // 8ths on one surface (a pad by microphone works), the beat accented on half the rounds; 16ths from mf.
+  const step = ti >= 3 && r() < 0.5 ? 0.25 : 0.5;
+  const acc = r() < 0.5;
+  const hits: DH[] = Array.from({ length: Math.round((bars * 4) / step) }, (_, i) => ({ b: i * step, v: 'snare' as DrumVoice, h: (i % 2 ? 'L' : 'R') as 'R' | 'L', d: step, ...(acc && Math.abs((i * step) % 1) < 1e-9 ? { acc: true } : {}) }));
+  const bpm = LOCK_BPM[ti] + 2 * round;
+  const d = finish(spec('time-lock', tier, round, seed), hits, {
+    title: t(`Time Lock · ${off} silent bar${off > 1 ? 's' : ''}`, `נעילת זמן · ${off === 1 ? 'תיבה שקטה אחת' : `${off} תיבות שקטות`}`),
+    bpm,
+    bars,
+    mic: true,
+    click: 'gap',
+    gap: [on, off],
+    goal: { gapMs: LOCK_MS[ti] },
+  });
+  return { game: 'time-lock', tier, round, drill: withTier(d, tier, true), bpm, lock: { on, off, ms: LOCK_MS[ti] } };
+}
+
+// ───────────────────────────── Ghost Control (P2) ─────────────────────────────
+
+const GHOST_BPM = [70, 75, 80, 85, 90, 100];
+/** Ghost Control: a snare line with three dynamic bands — accents, normal strokes, ghosts (pp / p: accents and taps). */
+export function ghostControlRound(tier: DynName, round: number, seed: number): DrumRound {
+  const ti = tierIndex(tier);
+  const r = rnd(`ghost:${tier}:${round}:${seed}`);
+  const step = ti >= 2 ? 0.25 : 0.5;
+  const n = Math.round(16 / step);
+  const perBeat = Math.round(1 / step);
+  const hits: DH[] = Array.from({ length: n }, (_, i) => {
+    const onBeat = i % perBeat === 0;
+    // pp / p: an accent or a tap; from mp: ghosts too, more of them and off the beat at the top tiers.
+    const x = r();
+    const mark = ti <= 1 ? (onBeat && x < 0.6 ? 'acc' : 'tap') : onBeat ? (x < 0.55 ? 'acc' : x < 0.8 ? 'tap' : 'ghost') : x < (ti >= 4 ? 0.2 : 0.1) ? 'acc' : x < 0.6 ? 'ghost' : 'tap';
+    return { b: i * step, v: 'snare' as DrumVoice, h: (i % 2 ? 'L' : 'R') as 'R' | 'L', d: step, ...(mark === 'acc' ? { acc: true } : mark === 'ghost' ? { ghost: true } : {}) };
+  });
+  // Every bar starts with an accent, and the line has at least one of each band it asks for.
+  for (let b = 0; b < 4; b++) Object.assign(hits[b * 4 * perBeat], { acc: true, ghost: undefined });
+  const bpm = GHOST_BPM[ti] + 2 * round;
+  const hasGhost = hits.some((h) => h.ghost);
+  const d = finish(spec('ghost-control', tier, round, seed), hits, {
+    title: t(`Ghost Control · ${ti <= 1 ? 'accents and taps' : 'accents, taps, ghosts'}`, `שליטה ברפאים · ${ti <= 1 ? 'הדגשות ונקישות' : 'הדגשות, נקישות, רפאים'}`),
+    bpm,
+    bars: 4,
+    mic: true,
+    show: 'staff',
+    goal: { accentPos: 0.85, ...(hasGhost ? { ghost: 0.8 } : {}) },
+  });
+  return { game: 'ghost-control', tier, round, drill: withTier(d, tier, true), bpm };
+}
+
 export function drumRound(game: DrumGameId, tier: DynName, round: number, seed: number): DrumRound {
-  return game === 'land' ? landRound(tier, round, seed) : game === 'groove-echo' ? grooveEchoRound(tier, round, seed) : oddEchoRound(tier, round, seed);
+  return game === 'land' ? landRound(tier, round, seed) : game === 'groove-echo' ? grooveEchoRound(tier, round, seed) : game === 'time-lock' ? timeLockRound(tier, round, seed) : game === 'ghost-control' ? ghostControlRound(tier, round, seed) : oddEchoRound(tier, round, seed);
 }
 
 // ───────────────────────────── scoring ─────────────────────────────
@@ -281,6 +347,14 @@ export function scoreRound(r: DrumRound, m: TakeMetrics): RoundScore {
               : t(`Landed · ±${Math.round(mean ?? 0)} ms.`, `נחיתה · ±${Math.round(mean ?? 0)} מ״ש.`);
     return { ok, points, line };
   }
+  if (r.game === 'time-lock' && r.lock) {
+    // Score = how close the silent bars stayed to the click (the mean offset there), the take itself not "not".
+    const g = m.drum?.gapMean ?? null;
+    const ok = g !== null && Math.abs(g) <= r.lock.ms && m.verdict !== 'not';
+    const points = ok ? Math.max(10, Math.round(100 - Math.abs(g!) * 2)) : 0;
+    const line = g === null ? t('Nothing measured in the silent bars — keep playing through them.', 'לא נמדד דבר בתיבות השקטות — המשיכו לנגן דרכן.') : ok ? t(`Locked · ${Math.round(Math.abs(g))} ms ${g > 0 ? 'late' : 'early'} over ${r.lock.off} silent bar${r.lock.off > 1 ? 's' : ''}.`, `נעול · ${Math.round(Math.abs(g))} מ״ש ${g > 0 ? 'איחור' : 'הקדמה'} לאורך ${r.lock.off} תיבות שקטות.`) : Math.abs(g) > r.lock.ms ? t(`Drifted ${Math.round(Math.abs(g))} ms ${g > 0 ? 'late' : 'early'} without the click (±${r.lock.ms}).`, `נדדתם ${Math.round(Math.abs(g))} מ״ש ${g > 0 ? 'אחורה' : 'קדימה'} בלי הקליק (±${r.lock.ms}).`) : m.why;
+    return { ok, points, line };
+  }
   const ok = m.verdict !== 'not';
   const points = m.verdict === 'clean' ? 100 : m.verdict === 'almost' ? 70 : 0;
   if (r.game === 'odd-echo' && r.odd) {
@@ -316,10 +390,14 @@ export const DRUM_GAME_NAME: Record<DrumGameId, Bi> = {
   land: t('Land It', 'לנחות על 1'),
   'groove-echo': t('Groove Echo', 'הד לגרוב'),
   'odd-echo': t('Odd-meter Echo', 'הד במשקל מוזר'),
+  'time-lock': t('Time Lock', 'נעילת זמן'),
+  'ghost-control': t('Ghost Control', 'שליטה ברפאים'),
 };
 export const DRUM_GAME_BLURB: Record<DrumGameId, Bi> = {
   land: t('A fill is called one bar ahead. Play it, land crash + kick on 1.', 'מעבר נקרא תיבה מראש. נגנו אותו, ונחתו בקראש + קיק על 1.'),
   'groove-echo': t('Hear a groove, play it back on the kit. The styles rise with your level.', 'שומעים גרוב ומנגנים אותו בחזרה על המערכת. הסגנונות עולים עם הרמה.'),
   'odd-echo': t('One bar of 5/8, 7/8, 9/8 … — 2+2+3 or 3+2+2? Play it back with its accents.', 'תיבה של 5/8, 7/8, 9/8 … — 2+2+3 או 3+2+2? נגנו אותה בחזרה עם ההדגשות.'),
+  'time-lock': t('The click drops out for 1, 2, 4, then 8 bars. Keep the time until it comes back.', 'הקליק נעלם ל-1, 2, 4 ואז 8 תיבות. שמרו על הזמן עד שהוא חוזר.'),
+  'ghost-control': t('Accents, normal strokes and ghost notes on one drum: hit each in its band.', 'הדגשות, מכות רגילות ותווי רפאים על תוף אחד: כל מכה בעוצמה שלה.'),
 };
 export { DYN_NAMES };

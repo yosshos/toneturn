@@ -64,7 +64,8 @@ export function drumWindow(drill: Drill, bpm: number): number {
 
 /** Silent click bars (click 'gap'): bar index → no click. */
 const silentBar = (drill: Drill, beat: number): boolean => {
-  if (drill.click !== 'gap' || !drill.gap) return false;
+  // P2: the click on 1 only, every other bar ('one' + gap, d-time 9) has silent bars too.
+  if ((drill.click !== 'gap' && drill.click !== 'one') || !drill.gap) return false;
   const [on, off] = drill.gap;
   const bar = Math.floor(beat / (drill.meter || 4) + 1e-9);
   return bar % (on + off) >= on;
@@ -84,7 +85,15 @@ export function analyzeDrumTake(drill: Drill, bpm: number, hits0: DrumTakeHit[],
   // Swing (jazz ride): a skip note is matched at the middle of the allowed swing range, not on the written triplet.
   const swMid = goal.swing ? (goal.swing.lo + goal.swing.hi) / 2 : 2 / 3;
   const beatMsAt = (b: number) => expTimeMs(drill, Math.floor(b + 1e-6) + 1, bpm) - expTimeMs(drill, Math.floor(b + 1e-6), bpm);
-  const exp = drill.notes.map((n) => ({ n, t: n.swing && goal.swing ? expTimeMs(drill, Math.floor(n.beat + 1e-6), bpm) + swMid * beatMsAt(n.beat) : expTimeMs(drill, n.beat, bpm) }));
+  // The pocket (P2): a note's target sits `ms` off the grid (+ = behind) — by zone of beats, by voice, or every note.
+  const pk = goal.pocket;
+  const pocketOf = (n: Drill['notes'][number]): number | null => {
+    if (!pk) return null;
+    if (pk.zones) return pk.zones.find((z) => n.beat >= z.from - 1e-6 && n.beat < z.to - 1e-6)?.ms ?? null;
+    if (pk.voices) return n.voice && pk.voices.includes(n.voice) ? (pk.ms ?? 0) : null;
+    return pk.ms ?? 0;
+  };
+  const exp = drill.notes.map((n) => ({ n, t: (n.swing && goal.swing ? expTimeMs(drill, Math.floor(n.beat + 1e-6), bpm) + swMid * beatMsAt(n.beat) : expTimeMs(drill, n.beat, bpm)) + (pocketOf(n) ?? 0) }));
   const hits = [...hits0].filter((h) => Number.isFinite(h.on)).sort((a, b) => a.on - b.on);
   // In mic mode every hit is the one surface: match by time only. Acoustic: hat, ride and crash are one cymbal class;
   // without a calibrated tom the toms count as the snare.
@@ -261,7 +270,7 @@ export function analyzeDrumTake(drill: Drill, bpm: number, hits0: DrumTakeHit[],
   });
   // The silent click bars.
   const gapDevs = matched.filter(({ i }) => silentBar(drill, exp[i].n.beat)).map(({ r }) => r.dev!);
-  const gapMean = drill.click === 'gap' ? mean(gapDevs) : null;
+  const gapMean = drill.click === 'gap' || (drill.click === 'one' && drill.gap) ? mean(gapDevs) : null;
 
   // Flams / drags: the grace hit(s) before each grace-note stroke - 15-40 ms before the main stroke (a drag's first
   // grace within 80 ms), softer than it; the flam gaps even (SD).
@@ -369,6 +378,68 @@ export function analyzeDrumTake(drill: Drill, bpm: number, hits0: DrumTakeHit[],
       return before !== null && after !== null && after > 0 ? before / after - 1 : 9;
     });
   }
+  // ---- P2 (the rest of the curriculum) ----
+  // Crescendo / decrescendo: the velocity line per zone (R², rise over the zone as a share of the soft → loud span).
+  let swell: DrumMetrics['swell'];
+  if (goal.swell) {
+    swell = goal.swell.zones.map((z) => {
+      const ps = matched.filter(({ i }) => inRange(exp[i].n.beat, [z.from, z.to])).map(({ r, i }) => ({ x: exp[i].n.beat, y: r.played!.vel }));
+      if (!velData || ps.length < 6) return { r2: null, rise: null };
+      const mx = mean(ps.map((p) => p.x))!;
+      const my = mean(ps.map((p) => p.y))!;
+      const sxx = ps.reduce((a, p) => a + (p.x - mx) ** 2, 0);
+      const syy = ps.reduce((a, p) => a + (p.y - my) ** 2, 0);
+      const sxy = ps.reduce((a, p) => a + (p.x - mx) * (p.y - my), 0);
+      if (sxx < 1e-9) return { r2: null, rise: null };
+      const slope = sxy / sxx;
+      return { r2: syy > 1e-9 ? (sxy * sxy) / (sxx * syy) : 0, rise: (z.dir * slope * (z.to - z.from)) / span };
+    });
+  }
+  // The pocket: the share of the pocket notes within ±tol of their target (dev is already measured from the target).
+  let pocket: number | null = null;
+  let pocketMean: number | null = null;
+  if (pk) {
+    const idx = exp.map((_, i) => i).filter((i) => pocketOf(exp[i].n) !== null);
+    const ok = idx.filter((i) => mExp.has(i) && Math.abs(perNote[i].dev!) <= pk.tol).length;
+    pocket = idx.length ? ok / idx.length : null;
+    pocketMean = mean(idx.filter((i) => mExp.has(i)).map((i) => perNote[i].dev! + pocketOf(exp[i].n)!));
+  }
+  // Endurance: does the timing hold to the end (SD of the last third against the first), and the tempo over the take.
+  let endure: DrumMetrics['endure'];
+  if (goal.endure) {
+    const byT = [...matched].sort((a, b) => exp[a.i].t - exp[b.i].t).map(({ r }) => r.dev!);
+    const k = Math.floor(byT.length / 3);
+    const s1 = k >= 6 ? sdOf(byT.slice(0, k)) : null;
+    const s3 = k >= 6 ? sdOf(byT.slice(byT.length - k)) : null;
+    const sl = slopeIn([0, drill.beats + 1]);
+    endure = { rise: s1 !== null && s3 !== null ? s3 / Math.max(s1, 0.4 * T.sd) - 1 : null, tempo: sl ? 1 / sl : null };
+  }
+  // Double pedal: odd against even strokes of the alternating voices (velocity gap, gap evenness).
+  let alt: DrumMetrics['alt'];
+  if (goal.alt) {
+    const idx = exp.map((_, i) => i).filter((i) => exp[i].n.voice && goal.alt!.voices.includes(exp[i].n.voice!)).sort((a, b) => exp[a].t - exp[b].t);
+    const odd = idx.filter((i, k) => k % 2 === 0 && mExp.has(i)).map((i) => perNote[i].played!.vel);
+    const even = idx.filter((i, k) => k % 2 === 1 && mExp.has(i)).map((i) => perNote[i].played!.vel);
+    const vel = velData && odd.length >= 3 && even.length >= 3 ? Math.abs(mean(odd)! - mean(even)!) / mean([...odd, ...even])! : null;
+    const rs: number[] = [];
+    for (let k = 1; k < idx.length; k++) {
+      const a = idx[k - 1];
+      const b = idx[k];
+      if (!mExp.has(a) || !mExp.has(b)) continue;
+      const w = exp[b].t - exp[a].t;
+      if (w > 1) rs.push((perNote[b].played!.on - perNote[a].played!.on) / w);
+    }
+    alt = { vel, cv: rs.length >= 6 ? cvOf(rs) : null };
+  }
+  // Improvised zones: the hits played inside each (not matched to a written note).
+  let impro: number[] | undefined;
+  if (goal.impro) {
+    impro = goal.impro.zones.map(([a, b]) => {
+      const t0 = expTimeMs(drill, a, bpm) - W / 2;
+      const t1 = expTimeMs(drill, b, bpm) - W / 2;
+      return hits.filter((h, j) => !usedHit.has(j) && h.on >= t0 && h.on < t1).length;
+    });
+  }
   if (goal.song) {
     const spans = drill.form ? expandForm(drill.form, drill.pulse) : [];
     const sections = spans.map((sp) => {
@@ -406,7 +477,7 @@ export function analyzeDrumTake(drill: Drill, bpm: number, hits0: DrumTakeHit[],
   }
   // Only measured practice counts: a level about loudness never passes on a take without loudness data (a mic with
   // every peak the same) — it used to skip those rules and pass on timing alone.
-  const velGoal = [goal.velCv, goal.balance, goal.levels, goal.accentGap, goal.tapCv, goal.accentPos, goal.ghost, goal.ratio].some((x) => x !== undefined);
+  const velGoal = [goal.velCv, goal.balance, goal.levels, goal.accentGap, goal.tapCv, goal.accentPos, goal.ghost, goal.ratio, goal.swell, goal.alt].some((x) => x !== undefined);
   if (velGoal && !velData && hits.length) rules.push({ id: 'noVel', amt: 9 });
   // Without MIDI the hi-hat's openness and the hi-hat foot are not heard: such a level never passes by microphone.
   if (ac && (goal.hat || exp.some((e) => e.n.voice === 'hhPedal'))) rules.push({ id: 'unmeasurable', amt: 9 });
@@ -454,10 +525,27 @@ export function analyzeDrumTake(drill: Drill, bpm: number, hits0: DrumTakeHit[],
       song.arc.forEach((x, k) => rules.push({ id: `arc:${k}`, amt: x === null ? 9 : x < goal.song!.arc![k].ratio ? (goal.song!.arc![k].ratio - x) / (goal.song!.arc![k].ratio - 1) : 0 }));
     }
   }
+  // P2 rules. A zone that can't be measured (too few notes) is a miss: only measured practice counts.
+  if (goal.swell && swell)
+    swell.forEach((z, k) => {
+      const g = goal.swell!;
+      const a = z.r2 === null || z.rise === null || z.rise <= 0 ? 9 : Math.max(z.r2 < g.r2 ? (g.r2 - z.r2) / g.r2 : 0, z.rise < g.range ? (g.range - z.rise) / g.range : 0);
+      rules.push({ id: `swell:${k}`, amt: a });
+    });
+  if (pk) rules.push({ id: 'pocket', amt: pocket === null ? 9 : pocket < pk.share ? (pk.share - pocket) / pk.share : 0 });
+  if (goal.endure && endure) {
+    max('endure', endure.rise, goal.endure.rise);
+    if (endure.tempo !== null) rules.push({ id: 'endureTempo', amt: Math.abs(endure.tempo - 1) > goal.endure.drift ? (Math.abs(endure.tempo - 1) - goal.endure.drift) / goal.endure.drift : 0 });
+  }
+  if (goal.alt && alt) {
+    max('altVel', alt.vel, goal.alt.vel);
+    max('altCv', alt.cv, goal.alt.cv);
+  }
+  if (goal.impro && impro) impro.forEach((n, k) => rules.push({ id: `impro:${k}`, amt: n < goal.impro!.min ? (goal.impro!.min - n) / goal.impro!.min : 0 }));
   const missed = rules.filter((r) => r.amt > 0);
   const verdict: Verdict = !hits.length ? 'not' : !missed.length ? 'clean' : missed.length === 1 && missed[0].amt < 0.25 ? 'almost' : 'not';
 
-  const dm: DrumMetrics = { limbs, voices, hitRate, wrongVoice: wrong / nExp, extra, windowMs: Math.round(W), velCv, balance, levels, accentGap, tapCv, accentPos, ghost, ratio, hatOpen, hatClosed, landing, gapMean, flam, flamGap, flamSd, swing, swingSd, missed: missed.sort((a, b) => b.amt - a.amt).map((r) => r.id), ...(unsure !== null ? { unsure } : {}), ...(goal.linear ? { coincide } : {}), ...(goal.poly ? { polyErr } : {}), ...(song ? { song } : {}), ...(modErr ? { modErr } : {}) };
+  const dm: DrumMetrics = { limbs, voices, hitRate, wrongVoice: wrong / nExp, extra, windowMs: Math.round(W), velCv, balance, levels, accentGap, tapCv, accentPos, ghost, ratio, hatOpen, hatClosed, landing, gapMean, flam, flamGap, flamSd, swing, swingSd, missed: missed.sort((a, b) => b.amt - a.amt).map((r) => r.id), ...(unsure !== null ? { unsure } : {}), ...(goal.linear ? { coincide } : {}), ...(goal.poly ? { polyErr } : {}), ...(song ? { song } : {}), ...(modErr ? { modErr } : {}), ...(swell ? { swell } : {}), ...(pk ? { pocket, pocketMean } : {}), ...(endure ? { endure } : {}), ...(alt ? { alt } : {}), ...(impro ? { impro } : {}) };
   return {
     bpm,
     nps: npsOf(drill, bpm),
@@ -592,6 +680,26 @@ export function drumWhy(d: DrumMetrics, v: Verdict): { en: string; he: string } 
       const x = d.song?.arc[Number(arg)];
       return x === null || x === undefined ? { en: 'No loudness measured for the dynamics.', he: 'לא נמדדה עוצמה לדינמיקה.' } : { en: `Not enough contrast: the loud part only ${Math.round((x - 1) * 100)} % louder.`, he: `אין מספיק ניגוד: החלק החזק רק ${Math.round((x - 1) * 100)}% חזק יותר.` };
     }
+    case 'swell': {
+      const z = d.swell?.[Number(arg)];
+      return !z || z.rise === null ? { en: 'No loudness measured for the swell.', he: 'לא נמדדה עוצמה להתעצמות.' } : z.rise <= 0 ? { en: 'The swell went the wrong way.', he: 'ההתעצמות הלכה לכיוון ההפוך.' } : (z.r2 ?? 0) < 0.8 ? { en: 'The swell is not smooth — each stroke a little louder (or softer) than the last.', he: 'ההתעצמות לא חלקה — כל מכה קצת חזקה (או חלשה) מהקודמת.' } : { en: `The swell is too small (${Math.round(z.rise * 100)} % of your range).`, he: `ההתעצמות קטנה מדי (${Math.round(z.rise * 100)}% מהטווח שלכם).` };
+    }
+    case 'pocket': {
+      const m = d.pocketMean;
+      return m === null || m === undefined ? { en: 'The pocket could not be measured.', he: 'הכיס לא נמדד.' } : { en: `In the pocket ${Math.round((d.pocket ?? 0) * 100)} % — you sit ${ms(m)} ms ${m > 0 ? 'behind' : 'ahead of'} the grid.`, he: `בכיס ${Math.round((d.pocket ?? 0) * 100)}% — אתם ${ms(m)} מ״ש ${m > 0 ? 'מאחורי' : 'לפני'} הרשת.` };
+    }
+    case 'endure':
+      return { en: `The timing loosens towards the end (+${Math.round((d.endure?.rise ?? 0) * 100)} %).`, he: `התזמון מתרופף לקראת הסוף (+${Math.round((d.endure?.rise ?? 0) * 100)}%).` };
+    case 'endureTempo': {
+      const x = d.endure?.tempo ?? 1;
+      return { en: `${x > 1 ? 'Rushed' : 'Dragged'} ${Math.round(Math.abs(x - 1) * 1000) / 10} % over the take.`, he: `${x > 1 ? 'האצה' : 'האטה'} של ${Math.round(Math.abs(x - 1) * 1000) / 10}% לאורך הנגינה.` };
+    }
+    case 'altVel':
+      return { en: 'One foot louder than the other.', he: 'רגל אחת חזקה מהשנייה.' };
+    case 'altCv':
+      return { en: 'The feet are not even — one comes early, the other late.', he: 'הרגליים לא אחידות — אחת מקדימה והשנייה מאחרת.' };
+    case 'impro':
+      return { en: 'Play a fill in the empty beats.', he: 'נגנו מעבר בפעמות הריקות.' };
     case 'gap':
       return { en: `Without the click you drift ${ms(d.gapMean ?? 0)} ms ${(d.gapMean ?? 0) > 0 ? 'late' : 'early'}.`, he: `בלי הקליק אתם ${(d.gapMean ?? 0) > 0 ? 'נגררים' : 'ממהרים'} ב-${ms(d.gapMean ?? 0)} מ״ש.` };
     default:

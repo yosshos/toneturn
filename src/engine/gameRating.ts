@@ -52,6 +52,9 @@ const GAMES: Record<string, { tags: (d: Record<string, unknown>) => Tag[]; diff:
   land: { tags: () => T2(['instrument', 'drum-tech', 0.7], ['timing', 'steady', 0.3]), diff: () => 1000 },
   'groove-echo': { tags: () => T2(['instrument', 'drum-tech', 0.5], ['rhythm-dictation', 'dictate', 0.5]), diff: () => 1000 },
   'odd-echo': { tags: () => T2(['instrument', 'drum-tech', 0.5], ['meter', 'odd', 0.5]), diff: () => 1100 },
+  // DRUMS P2: Time Lock feeds the inner clock (the gap), Ghost Control the dynamics on the drum.
+  'time-lock': { tags: () => T2(['instrument', 'drum-tech', 0.5], ['timing', 'gap', 0.5]), diff: () => 1000 },
+  'ghost-control': { tags: () => T2(['instrument', 'drum-tech', 0.8], ['timing', 'steady', 0.2]), diff: () => 1000 },
 };
 
 /** Normalised accuracy 0..1 of a finished game from what it reports. */

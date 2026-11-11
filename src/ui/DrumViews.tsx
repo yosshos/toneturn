@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { Drill, DrumVoice, ExpNote, TakeMetrics } from '../engine/drills/types';
 import { markOf, type NoteMark } from '../engine/noteMarks';
 import { barsPerLine, beamBeats, dotted, eighthGroupOf, restsOf, type RestKind } from '../engine/drumNotation';
-import { calibrateVel, classOf, DEFAULT_KIT, kitKind, pedalRange, PRESETS, slowOutput, voiceOf, VOICE_NAME, wizardDone, wizardHit, wizardSkip, wizardStart, WIZARD_PADS, type AcousticCal, type AcousticVoice, type KitKind, type KitPreset, type KitProfile, type WizardState, KIT_NOTICE } from '../engine/drumKit';
+import { calibrateVel, classOf, DEFAULT_KIT, kitKind, pedalRange, PRESETS, slowOutput, voiceOf, VOICE_NAME, wizardDone, wizardHit, wizardSkip, wizardStart, WIZARD_PADS, QUICK_PADS, type WizardPad, type AcousticCal, type AcousticVoice, type KitKind, type KitPreset, type KitProfile, type WizardState, KIT_NOTICE } from '../engine/drumKit';
 import { buildCal, CAL_HITS, CAL_ORDER, OnsetTracker } from '../engine/drumAcoustic';
 import { midi } from '../speech/midi';
 import { BrowserPitchCapture } from '../speech/pitchCapture';
@@ -421,6 +421,7 @@ const TX = {
     done: 'Your kit is ready', test: 'Find my level (2–3 min)', start: 'To the drills', pads: 'pads learned',
     acoustic: 'Acoustic kit (microphone)', acousticHint: 'Kick, snare, toms and cymbals told apart by sound: the basic grooves and fills. Less accurate than MIDI.',
     acal: 'Teach the app your drums', acalHint: 'Phone 1–2 m from the kit. Normal strength.', acalBad: 'Some drums sounded alike. Move the phone and try again.', acalTom: 'The tom sounded like the snare: toms count as the snare.', again2: 'Again', acalOk: 'told apart', micErr: 'The microphone is not available.',
+    quickMap: 'Three pads to start', quickRest: 'The other pads come from the kit brand. The pedal, soft and loud strokes and every pad can be fine-tuned later on the kit card.', quickCard: 'Quick setup · finish it for every pad', finish: 'Finish setup',
   },
   he: {
     title: 'הגדרת המערכת', connect: 'לחבר תופים אלקטרוניים (USB-MIDI)', pad: 'פד אימון (מיקרופון)', padHint: 'משטח אחד דרך המיקרופון: מכות, רודימנטים, זמן וקריאה לסנר. גרובים ומעברים דורשים תופים אלקטרוניים.',
@@ -433,6 +434,7 @@ const TX = {
     done: 'המערכת מוכנה', test: 'למצוא את הרמה שלי (2–3 דק׳)', start: 'לתרגילים', pads: 'פדים נלמדו',
     acoustic: 'מערכת אקוסטית (מיקרופון)', acousticHint: 'בס־תוף, סנר, טומים ומצלתיים מזוהים לפי הצליל: הגרובים והמעברים הבסיסיים. פחות מדויק מ-MIDI.',
     acal: 'ללמד את האפליקציה את התופים', acalHint: 'הטלפון במרחק 1–2 מ׳ מהמערכת. מכות בעוצמה רגילה.', acalBad: 'חלק מהתופים נשמעו דומים. הזיזו את הטלפון ונסו שוב.', acalTom: 'הטום נשמע כמו הסנר: הטומים ייספרו כסנר.', again2: 'שוב', acalOk: 'זוהו נכון', micErr: 'המיקרופון לא זמין.',
+    quickMap: 'שלושה פדים להתחלה', quickRest: 'שאר הפדים לפי היצרן. את הפדל, המכות החלשות והחזקות וכל הפדים אפשר לכוונן אחר כך בכרטיס המערכת.', quickCard: 'הגדרה מהירה · להשלים לכל הפדים', finish: 'להשלים הגדרה',
   },
 };
 
@@ -479,7 +481,9 @@ export function KitCard({ kit, lang, onSetup, onKit }: { kit?: KitProfile; lang:
         : he ? 'מיקרופון · צריך כיול' : 'Microphone · needs calibrating'
       : kind === 'pad'
         ? tx.pad
-        : `${kit!.device ?? PRESETS[kit!.preset].name} · ${learned} ${tx.pads}`;
+        : kit!.quick
+          ? `${kit!.device ?? PRESETS[kit!.preset].name} · ${tx.quickCard}`
+          : `${kit!.device ?? PRESETS[kit!.preset].name} · ${learned} ${tx.pads}`;
   return (
     <section className={`kit-card ${ready ? 'ready' : ''}`} data-kit-card={ready ? 'ready' : 'none'} data-kit-kind={chosen}>
       <div className="kc-row">
@@ -489,7 +493,7 @@ export function KitCard({ kit, lang, onSetup, onKit }: { kit?: KitProfile; lang:
           <small>{status}</small>
         </span>
         <button className={`btn small ${ready ? 'ghost' : 'primary'}`} onClick={() => onSetup(ready ? chosen : undefined)} data-kit-setup="1">
-          {ready ? (he ? 'שינוי' : 'Change') : he ? 'להתחיל' : 'Start'}
+          {ready ? (kind === 'midi' && kit!.quick ? tx.finish : he ? 'שינוי' : 'Change') : he ? 'להתחיל' : 'Start'}
         </button>
       </div>
       <div className="chips kit-kinds" role="radiogroup" aria-label={he ? 'על מה מנגנים' : 'What you play on'}>
@@ -513,7 +517,7 @@ export function KitCard({ kit, lang, onSetup, onKit }: { kit?: KitProfile; lang:
   );
 }
 
-export function KitSetup({ lang, kit: kit0, latency, onSave, onLatency, onDone, onTest, start }: { lang: Lang; kit?: KitProfile; latency: LatencyValues; onSave: (k: KitProfile) => void; onLatency: (p: LatencyValues) => void; onDone: () => void; onTest?: () => void; /** Picked on the kit card: go straight to that setup. */ start?: KitKind }) {
+export function KitSetup({ lang, kit: kit0, latency, onSave, onLatency, onDone, onTest, start, quick }: { lang: Lang; kit?: KitProfile; latency: LatencyValues; onSave: (k: KitProfile) => void; onLatency: (p: LatencyValues) => void; onDone: () => void; onTest?: () => void; /** Picked on the kit card: go straight to that setup. */ start?: KitKind; /** The short course-start form: three pads, no pedal / velocity steps (SPEC-COURSE-START). */ quick?: boolean }) {
   const tx = TX[lang];
   // A setup picked on the kit card: the acoustic kit / pad start at the latency (the pick is saved at once).
   const first: Step = start === 'acoustic' || start === 'pad' ? 'latency' : 'connect';
@@ -531,7 +535,7 @@ export function KitSetup({ lang, kit: kit0, latency, onSave, onLatency, onDone, 
       const ds = await midi.enable();
       setDevices(ds);
       if (ds.length) {
-        save({ mic: false, kind: 'midi', device: ds[0] });
+        save({ mic: false, kind: 'midi', device: ds[0], quick: !!quick });
         setStep('map');
       }
     } catch {
@@ -546,11 +550,11 @@ export function KitSetup({ lang, kit: kit0, latency, onSave, onLatency, onDone, 
     save({ mic: true, kind: 'acoustic' });
     setStep('latency');
   };
-  const order: Step[] = !kit.mic ? ['connect', 'map', 'pedal', 'vel', 'latency', 'done'] : kit.kind === 'acoustic' ? ['connect', 'latency', 'acal', 'done'] : ['connect', 'latency', 'done'];
+  const order: Step[] = !kit.mic ? (quick ? ['connect', 'map', 'latency', 'done'] : ['connect', 'map', 'pedal', 'vel', 'latency', 'done']) : kit.kind === 'acoustic' ? ['connect', 'latency', 'acal', 'done'] : ['connect', 'latency', 'done'];
   const next = () => setStep(order[Math.min(order.length - 1, order.indexOf(step) + 1)]);
   const bt = slowOutput(kit.mic ? (latency.micLatencyMs ?? 0) : (latency.midiLatencyMs ?? 0));
   return (
-    <div className="kit-setup" data-kit-step={step}>
+    <div className="kit-setup" data-kit-step={step} data-kit-quick={quick ? '1' : undefined}>
       <ol className="kit-steps" aria-hidden="true">
         {order.slice(0, -1).map((s) => (
           <li key={s} className={s === step ? 'now' : order.indexOf(s) < order.indexOf(step) ? 'past' : ''} />
@@ -581,7 +585,7 @@ export function KitSetup({ lang, kit: kit0, latency, onSave, onLatency, onDone, 
           </p>
         </section>
       )}
-      {step === 'map' && <MapStep lang={lang} kit={kit} onPreset={(p) => save({ preset: p })} onDone={(map) => (save({ map }), next())} />}
+      {step === 'map' && <MapStep lang={lang} kit={kit} pads={quick ? QUICK_PADS : WIZARD_PADS} onPreset={(p) => save({ preset: p })} onDone={(map) => (save({ map }), next())} />}
       {step === 'pedal' && <PedalStep lang={lang} onDone={(cc4) => (cc4 && save({ cc4 }), next())} />}
       {step === 'vel' && <VelStep lang={lang} kit={kit} onDone={(r) => (r && save({ vel: { ...(kit.vel ?? {}), snare: r } }), next())} />}
       {step === 'latency' && (
@@ -613,7 +617,7 @@ export function KitSetup({ lang, kit: kit0, latency, onSave, onLatency, onDone, 
   );
 }
 
-function MapStep({ lang, kit, onPreset, onDone }: { lang: Lang; kit: KitProfile; onPreset: (p: KitPreset) => void; onDone: (map: KitProfile['map']) => void }) {
+function MapStep({ lang, kit, pads = WIZARD_PADS, onPreset, onDone }: { lang: Lang; kit: KitProfile; pads?: WizardPad[]; onPreset: (p: KitPreset) => void; onDone: (map: KitProfile['map']) => void }) {
   const tx = TX[lang];
   const [w, setW] = useState<WizardState>(wizardStart);
   const ref = useRef(w);
@@ -625,9 +629,9 @@ function MapStep({ lang, kit, onPreset, onDone }: { lang: Lang; kit: KitProfile;
     midi.setOptions({ drums: true });
     const off = midi.onNote((note, on, _at, vel) => {
       if (!on) return;
-      const n = wizardHit(ref.current, note, vel);
+      const n = wizardHit(ref.current, note, vel, pads);
       setW(n);
-      if (n.note === 'learned') setFlash(WIZARD_PADS[ref.current.step].voice);
+      if (n.note === 'learned') setFlash(pads[ref.current.step].voice);
     });
     return () => {
       off();
@@ -635,13 +639,14 @@ function MapStep({ lang, kit, onPreset, onDone }: { lang: Lang; kit: KitProfile;
     };
   }, []);
   useEffect(() => {
-    if (wizardDone(w)) onDone(w.map);
+    if (wizardDone(w, pads)) onDone(w.map);
   }, [w]); // eslint-disable-line react-hooks/exhaustive-deps
-  if (wizardDone(w)) return null;
-  const pad = WIZARD_PADS[w.step];
+  if (wizardDone(w, pads)) return null;
+  const pad = pads[w.step];
+  const short = pads.length < WIZARD_PADS.length;
   return (
     <section className="kit-step">
-      <h2>{tx.map}</h2>
+      <h2>{short ? tx.quickMap : tx.map}</h2>
       <div className="chips kit-presets" role="radiogroup" aria-label={tx.preset}>
         {(Object.keys(PRESETS) as KitPreset[]).map((p) => (
           <button key={p} role="radio" aria-checked={kit.preset === p} className={`chip ${kit.preset === p ? 'on' : ''}`} onClick={() => onPreset(p)}>
@@ -661,7 +666,7 @@ function MapStep({ lang, kit, onPreset, onDone }: { lang: Lang; kit: KitProfile;
       {w.note === 'again' && <p className="field-hint warn">{tx.again}</p>}
       {w.note === 'taken' && <p className="field-hint warn">{tx.taken}</p>}
       <ul className="kit-learned" dir="ltr">
-        {WIZARD_PADS.slice(0, w.step).map((p) => {
+        {pads.slice(0, w.step).map((p) => {
           const note = Object.entries(w.map).find(([, v]) => v === p.voice)?.[0];
           return (
             <li key={p.voice} className={flash === p.voice ? 'flash' : ''}>
@@ -670,8 +675,9 @@ function MapStep({ lang, kit, onPreset, onDone }: { lang: Lang; kit: KitProfile;
           );
         })}
       </ul>
+      {short && <p className="field-hint small" data-kit-quick-rest="1">{tx.quickRest}</p>}
       {pad.optional && (
-        <button className="btn ghost" onClick={() => setW(wizardSkip(w))} data-kit-skip="1">
+        <button className="btn ghost" onClick={() => setW(wizardSkip(w, pads))} data-kit-skip="1">
           {tx.skip}
         </button>
       )}

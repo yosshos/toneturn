@@ -295,6 +295,65 @@ test.describe('drums course', () => {
       });
   });
 
+  // DRUMS_NICHE_PLAN P2: the rest of the curriculum (drumMore.ts) and the short kit setup at the course start.
+  test.describe('the rest of the curriculum at 390 × 844', () => {
+    test.use({ viewport: { width: 390, height: 844 } });
+    const eKit = { preset: 'gm', map: {}, device: 'Test Kit', done: true };
+    for (const [fam, lv, lang] of [
+      ['d-rolls', 'd-rolls-9', 'en'],
+      ['d-funk', 'd-funk-8', 'he'],
+      ['d-shuffle', 'd-shuffle-5', 'en'],
+      ['d-fills', 'd-fills-8', 'he'],
+      ['d-read', 'd-read-11', 'en'],
+      ['d-feet', 'd-feet-7', 'en'],
+      ['d-time', 'd-time-8', 'he'],
+      ['d-indep', 'd-indep-6', 'en'],
+    ] as const)
+      test(`${lv} (${lang}) fits one screen`, async ({ page }) => {
+        await stubKit(page);
+        await seed(page, { kit: eKit, lang });
+        await openLevel(page, fam, lv);
+        await expect(page.locator('.drum-score').first()).toBeVisible();
+        await fitsScreen(page);
+      });
+    for (const g of ['time-lock', 'ghost-control'])
+      test(`drum game ${g} fits one screen, setup and the first round`, async ({ page }) => {
+        await stubKit(page);
+        await seed(page, { kit: eKit });
+        await page.goto(`/?unlock#/${g}`);
+        await expect(page.locator(`[data-drum-game="${g}"]`)).toBeVisible();
+        await fitsScreen(page);
+        await page.locator('[data-dg-start]').click();
+        await expect(page.locator('[data-dg-round="1"]')).toBeVisible();
+        await fitsScreen(page);
+      });
+    test('course start: the short kit setup learns three pads and skips the pedal and velocity steps', async ({ page }) => {
+      await stubKit(page);
+      await page.goto('/?sim=1&welcome=1&lang=en');
+      await page.locator('[data-ob="start"]').click();
+      await page.locator('[data-ob="listen"]').click();
+      await expect(page.locator('[data-ob="taste-0"]')).toBeEnabled({ timeout: 10_000 });
+      await page.locator('[data-ob="taste-0"]').click();
+      await page.locator('[data-ob="taste-next"]').click();
+      await page.locator('[data-ob="course-drums"]').click();
+      await page.locator('[data-ob="courses-next"]').click();
+      await page.locator('[data-report="new"]').click();
+      await expect(page.locator('[data-course-start="setup"] [data-kit-quick="1"]')).toBeVisible();
+      await page.locator('[data-kit-connect]').click();
+      await expect(page.locator('[data-kit-step="map"]')).toBeVisible();
+      // The "fine-tune later on the kit card" note.
+      await expect(page.locator('[data-kit-quick-rest]')).toBeVisible();
+      await fitsScreen(page);
+      for (const n of [38, 38, 36, 36, 42, 42]) await hit(page, n);
+      // No pedal or velocity step: straight to the latency.
+      await expect(page.locator('[data-kit-step="latency"]')).toBeVisible();
+      await fitsScreen(page);
+      await page.locator('[data-kit-next="latency"]').click();
+      // The kit is saved: the course moves on to its first taste.
+      await expect(page.locator('[data-course-start="setup"]')).toHaveCount(0);
+    });
+  });
+
   test('onboarding: picking drums shows the e-kit recommendation', async ({ page }) => {
     await page.goto('/?sim=1&welcome=1&lang=en');
     await page.locator('[data-ob="start"]').click();

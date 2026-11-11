@@ -12,7 +12,7 @@ export const COURSE_GAMES: Record<CourseId, string[]> = {
   bass: ['drills', 'rush-fretboard', 'tuneup', 'highway', 'rush-note', 'rhythm', 'riffecho'],
   // 0.65: technique on the kit, Highway with drum lanes, beat echo, the groove trainer.
   // DRUMS_NICHE_PLAN §3 (P1): Land It, Groove Echo, Odd-meter Echo — measured takes on the kit.
-  drums: ['drills', 'highway', 'rhythm', 'groove', 'land', 'groove-echo', 'odd-echo', 'polylock'],
+  drums: ['drills', 'highway', 'rhythm', 'groove', 'land', 'groove-echo', 'odd-echo', 'polylock', 'time-lock', 'ghost-control'],
 };
 /** What Practice shows in each course (0.61, SPEC-COURSES): only the course's own rows; tools are shared.
  *  0.70 (SPEC-REPERTOIRE): "Songs" became "Repertoire" — the road from simple tunes to standards — in every course.

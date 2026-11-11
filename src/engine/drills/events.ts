@@ -38,7 +38,7 @@ function secondTag(drill: Drill): Tags[number] | null {
   const f = drill.spec.family;
   // Drums (DRUMS_CURRICULUM §4): time drills feed timing by their click, grooves and fills the steady beat, reading
   // the drum-kit reading sub-skill; every drum take is also a timing take (it is all time).
-  if (f === 'd-time') return { skill: 'timing', sub: drill.click === '24' || drill.click === 'and' ? 'timing/backbeat' : drill.click === 'gap' ? 'timing/gap' : 'timing/subdivide', w: 0.4 };
+  if (f === 'd-time') return { skill: 'timing', sub: drill.click === '24' || drill.click === 'and' ? 'timing/backbeat' : drill.click === 'gap' || drill.click === 'one' ? 'timing/gap' : 'timing/subdivide', w: 0.4 };
   // Independence lines to read (DRUMS_AUDIT N1) feed kit reading; every other groove family the steady beat.
   if (f === 'd-indep' && drill.show === 'staff') return { skill: 'rhythm-reading', sub: 'rhythm-reading/drums', w: 0.3 };
   // The drummer's ear (hear it, play it back, write it): the course's ear share, through the instrument.

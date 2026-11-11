@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { generate } from '../src/engine/drills/generate';
 import { guitarCatalog } from '../src/engine/drills/guitar';
 import { DRUM_PROBES, drumFamilies, drumProbes, placeDrums, type DrumLevelDef } from '../src/engine/drills/drums';
+import { MORE_FROM } from '../src/engine/drills/drumMore';
 import { analyzeDrumTake, drumLimbLine, drumWindow, type DrumTakeHit } from '../src/engine/drills/drumAnalyze';
 import { expTimeMs } from '../src/engine/drills/analyze';
 import { familyById, levelDrills, levelOfDrill, levelStars, LEVEL_DONE_STARS, shownFamilies, targetBpmOf, todayDrills } from '../src/engine/drills/plan';
@@ -10,9 +11,10 @@ import { DEFAULT_DRILL_SETTINGS, type Drill, type ItemState } from '../src/engin
 import { VOICE_NOTE } from '../src/engine/drumKit';
 
 const FAMS = drumFamilies();
-const V1: Record<string, number> = { 'd-strokes': 5, 'd-rolls': 6, 'd-diddles': 9, 'd-time': 6, 'd-rock': 8, 'd-fills': 5, 'd-read': 10, 'd-funk': 4, 'd-shuffle': 4, 'd-indep': 4, 'd-mideast': 9, 'd-feet': 3, 'd-ear': 8, 'd-jazz': 12, 'd-latin': 7, 'd-song': 8, 'd-prog': 10, 'd-count': 5, 'd-notation': 5, 'd-form': 5 };
+// DRUMS P2 (drumMore.ts) added the rest of the curriculum: strokes 8, rolls 10, diddles 10, time 9, rock 9, fills 8, read 11, funk 8, shuffle 8, indep 8, feet 8.
+const V1: Record<string, number> = { 'd-strokes': 8, 'd-rolls': 10, 'd-diddles': 10, 'd-time': 9, 'd-rock': 9, 'd-fills': 8, 'd-read': 11, 'd-funk': 8, 'd-shuffle': 8, 'd-indep': 8, 'd-mideast': 9, 'd-feet': 8, 'd-ear': 8, 'd-jazz': 12, 'd-latin': 7, 'd-song': 8, 'd-prog': 10, 'd-count': 5, 'd-notation': 5, 'd-form': 5 };
 const HE = /[֐-׿]/;
-const allDrills = (): { lv: DrumLevelDef; d: Drill }[] => FAMS.flatMap((f) => f.levels.flatMap((lv) => levelDrills(lv, 'fifths-up').map((d) => ({ lv, d }))));
+const allDrills = (): { lv: DrumLevelDef; d: Drill }[] => FAMS.flatMap((f) => f.levels.filter((lv) => lv.level < (MORE_FROM[f.id] ?? 99)).flatMap((lv) => levelDrills(lv, 'fifths-up').map((d) => ({ lv, d }))));
 
 /** A perfect take: every note on time, the right voice, velocities in their bands, the hat open where written. */
 export function perfectHits(d: Drill, bpm: number): DrumTakeHit[] {
@@ -40,7 +42,7 @@ describe('drums v1 catalogue (DRUMS_CURRICULUM §4.3)', () => {
     }
     // In the shared catalogue, found by id, and only for the drums instrument.
     expect(guitarCatalog().filter((f) => f.id.startsWith('d-')).length).toBe(20);
-    expect(familyById('d-rock')?.levels.length).toBe(8);
+    expect(familyById('d-rock')?.levels.length).toBe(9);
     expect(shownFamilies({ emphasis: 'both', instrument: 'drums' }).map((f) => f.id)).toEqual(Object.keys(V1));
     expect(shownFamilies({ emphasis: 'both', instrument: 'bass' }).some((f) => f.id.startsWith('d-'))).toBe(false);
   });
