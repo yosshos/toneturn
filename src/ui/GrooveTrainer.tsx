@@ -12,12 +12,12 @@ import { midi } from '../speech/midi';
 import { piano } from './services';
 import { TierChips } from './TierChips';
 import { startTier, tierAllowed, type DynName, type TierInfo } from '../engine/gameTiers';
-import { grooveTierPlan, grooveTierScore } from '../engine/grooveTier';
+import { accentsOf, BAND_PUSH_MS, GROOVE_FF_PARTS, grooveTierPlan, grooveTierScore, hiddenSwing, POCKET_BARS, POCKET_BPM, pocketPartScore, SWING_BPM, swingPartScore, type GrooveFfPart } from '../engine/grooveTier';
 
 type Mode = 'fade' | 'pocket' | 'swing' | 'level';
 const TX = {
-  en: { title: 'Groove trainer', fade: 'Fading click', pocket: 'Pocket', swing: 'Swing dial', fadeHow: 'Tap every beat. The click drops out for 1, then 2, then 3 bars… keep the time.', pocketHow: 'Tap every beat, placed on purpose: ahead (push), on, or behind (lay back).', swingHow: 'Listen to the eighths, set the dial to their swing, then tap them the same way.', start: 'Start', stop: 'Stop', tap: 'Tap', held: 'silent bars held', best: 'best', target: 'Target', push: 'push', on: 'on', lay: 'lay back', inPocket: 'in the pocket', yourMean: 'your average', ratio: 'Swing', check: 'Check', yours: 'you played', right: 'It was', tempo: 'Tempo', back: 'Back', listen: 'Listen', level: 'Level test', levelHow: 'Two bars with the click, then silence for the level\'s bars — keep tapping quarters; the click comes back to check you.', silent: 'silent beats in time', late: 'the time drifted' },
-  he: { title: 'מאמן גרוב', fade: 'הקליק הנעלם', pocket: 'כיס', swing: 'חוגת סווינג', fadeHow: 'הקישו כל פעמה. הקליק נעלם לתיבה, אחר כך לשתיים, לשלוש… שמרו על הזמן.', pocketHow: 'הקישו כל פעמה, במיקום מכוון: מלפנים (דוחפים), עליה, או מאחור (נשענים).', swingHow: 'הקשיבו לשמיניות, כוונו את החוגה לסווינג שלהן, ואז הקישו אותן באותה צורה.', start: 'להתחיל', stop: 'עצירה', tap: 'הקשה', held: 'תיבות שקטות שהחזקתם', best: 'שיא', target: 'מטרה', push: 'דוחפים', on: 'על הפעמה', lay: 'נשענים', inPocket: 'בתוך הכיס', yourMean: 'הממוצע שלכם', ratio: 'סווינג', check: 'לבדוק', yours: 'ניגנתם', right: 'זה היה', tempo: 'טמפו', back: 'חזרה', listen: 'להקשיב', level: 'מבחן רמה', levelHow: 'שתי תיבות עם קליק, ואז שקט למספר התיבות של הרמה — המשיכו להקיש רבעים; הקליק חוזר לבדוק.', silent: 'פעמות שקטות בזמן', late: 'הזמן זז' },
+  en: { title: 'Groove trainer', fade: 'Fading click', pocket: 'Pocket', swing: 'Swing dial', fadeHow: 'Tap every beat. The click drops out for 1, then 2, then 3 bars… keep the time.', pocketHow: 'Tap every beat, placed on purpose: ahead (push), on, or behind (lay back).', swingHow: 'Listen to the eighths, set the dial to their swing, then tap them the same way.', start: 'Start', stop: 'Stop', tap: 'Tap', held: 'silent bars held', best: 'best', target: 'Target', push: 'push', on: 'on', lay: 'lay back', inPocket: 'in the pocket', yourMean: 'your average', ratio: 'Swing', check: 'Check', yours: 'you played', right: 'It was', tempo: 'Tempo', back: 'Back', listen: 'Listen', level: 'Level test', levelHow: 'Two bars with the click, then silence for the level\'s bars — keep tapping quarters; the click comes back to check you.', silent: 'silent beats in time', late: 'the time drifted', ffParts: 'Part', slow8: '8 bars', odd: '7/8 fade', layBack: 'Lay back', swingMatch: 'Swing match', oddHow: '7/8 (2+2+3) on the 8th pulse: tap every 8th; four bars go silent.', layHow: 'The band pushes ahead. Sit 30 ms behind it — eight bars.', swingMatchHow: 'Two bars of swung 8ths, then the click alone: tap 8ths with the same swing for four bars.', pocketOf: 'in the pocket', swingWas: 'it was', swingYours: 'yours' },
+  he: { title: 'מאמן גרוב', fade: 'הקליק הנעלם', pocket: 'כיס', swing: 'חוגת סווינג', fadeHow: 'הקישו כל פעמה. הקליק נעלם לתיבה, אחר כך לשתיים, לשלוש… שמרו על הזמן.', pocketHow: 'הקישו כל פעמה, במיקום מכוון: מלפנים (דוחפים), עליה, או מאחור (נשענים).', swingHow: 'הקשיבו לשמיניות, כוונו את החוגה לסווינג שלהן, ואז הקישו אותן באותה צורה.', start: 'להתחיל', stop: 'עצירה', tap: 'הקשה', held: 'תיבות שקטות שהחזקתם', best: 'שיא', target: 'מטרה', push: 'דוחפים', on: 'על הפעמה', lay: 'נשענים', inPocket: 'בתוך הכיס', yourMean: 'הממוצע שלכם', ratio: 'סווינג', check: 'לבדוק', yours: 'ניגנתם', right: 'זה היה', tempo: 'טמפו', back: 'חזרה', listen: 'להקשיב', level: 'מבחן רמה', levelHow: 'שתי תיבות עם קליק, ואז שקט למספר התיבות של הרמה — המשיכו להקיש רבעים; הקליק חוזר לבדוק.', silent: 'פעמות שקטות בזמן', late: 'הזמן זז', ffParts: 'חלק', slow8: '8 תיבות', odd: 'שקט ב־7/8', layBack: 'להישען', swingMatch: 'סווינג תואם', oddHow: '7/8 (2+2+3) על פעמת השמינית: הקישו כל שמינית; ארבע תיבות נעלמות.', layHow: 'הלהקה דוחפת קדימה. שבו 30 מ״ש מאחוריה — שמונה תיבות.', swingMatchHow: 'שתי תיבות של שמיניות בסווינג, ואז רק הקליק: הקישו שמיניות באותו סווינג ארבע תיבות.', pocketOf: 'בתוך הכיס', swingWas: 'היה', swingYours: 'שלכם' },
 };
 
 export function GrooveTrainerScreen({ settings, onBack, tier: tierInfo, onResult }: { settings: Settings; onBack: () => void; /** 0.70: the level test (tiers, rating, XP). */ tier?: TierInfo; onResult?: (r: { game: 'groove'; score: number; detail: Record<string, unknown> }) => void }) {
@@ -37,6 +37,7 @@ export function GrooveTrainerScreen({ settings, onBack, tier: tierInfo, onResult
   const [dial, setDial] = useState(0.6);
   const [hidden, setHidden] = useState(0.66);
   const [flash, setFlash] = useState(false);
+  const [part, setPart] = useState<GrooveFfPart>('slow');
   const taps = useRef<number[]>([]);
   const ctl = useRef<AbortController | null>(null);
   const lat = settings.tapLatencyMs ?? 0;
@@ -167,11 +168,13 @@ export function GrooveTrainerScreen({ settings, onBack, tier: tierInfo, onResult
     taps.current = [];
     setRunning(true);
     setMsg(null);
-    const plan = grooveTierPlan(tier);
+    if (tier === 'ff' && (part === 'pocket' || part === 'swing')) return runFfPart(c, part);
+    const plan = grooveTierPlan(tier, tier === 'ff' ? part : undefined);
     const beatMs = 60000 / plan.bpm;
+    const acc = accentsOf(plan);
     const beats: { b: number; accent: boolean; on: boolean }[] = [];
     plan.plan.forEach((on, bar) => {
-      for (let k = 0; k < plan.beatsPerBar; k++) beats.push({ b: bar * plan.beatsPerBar + k, accent: k === 0, on });
+      for (let k = 0; k < plan.beatsPerBar; k++) beats.push({ b: bar * plan.beatsPerBar + k, accent: acc.includes(k), on });
     });
     const t0 = await playClicks(beats, beatMs, c);
     setRunning(false);
@@ -180,7 +183,38 @@ export function GrooveTrainerScreen({ settings, onBack, tier: tierInfo, onResult
     void recordGroove(beats.map((x) => x.b), offs, plan.bpm, plan.beatsPerBar);
     const sc = grooveTierScore(plan, offs, beatMs);
     setMsg(`${sc.hits}/${sc.beats} ${tx.silent}${sc.meanAbs !== null ? ` · ±${sc.meanAbs} ms` : ''}${sc.landed ? '' : ` · ${tx.late}`} · ${sc.accuracy}%`);
-    onResult?.({ game: 'groove', score: sc.accuracy, detail: { tier, accuracy: sc.accuracy, hits: sc.hits, beats: sc.beats, meanAbs: sc.meanAbs, landed: sc.landed, bars: plan.bars, bpm: plan.bpm, rounds: 4 } });
+    onResult?.({ game: 'groove', score: sc.accuracy, detail: { tier, accuracy: sc.accuracy, hits: sc.hits, beats: sc.beats, meanAbs: sc.meanAbs, landed: sc.landed, bars: plan.bars, bpm: plan.bpm, rounds: 4, ...(tier === 'ff' ? { part } : {}) } });
+  };
+
+  /** ff pocket / swing parts (0.75): one measured run each, scored 0..100 like the fade. */
+  const runFfPart = async (c: AbortController, p: GrooveFfPart) => {
+    if (p === 'pocket') {
+      const beatMs = 60000 / POCKET_BPM;
+      const n = POCKET_BARS * 4;
+      // the count-in bar is the click; from bar 2 only the band (woodblock hits pushed 15 ms ahead) plays
+      const beats = Array.from({ length: n }, (_, b) => ({ b, accent: b % 4 === 0, on: b < 4 }));
+      const push = BAND_PUSH_MS / beatMs;
+      const t0 = await playClicks(beats, beatMs, c, Array.from({ length: n - 4 }, (_, k) => k + 4 - push));
+      setRunning(false);
+      if (c.signal.aborted) return;
+      const offs = matchTaps(taps.current, t0 - BAND_PUSH_MS, beatMs, n);
+      const sc = pocketPartScore(offs);
+      setMsg(`${Math.round(sc.share * 100)}% ${tx.pocketOf} · ${tx.yourMean} ${sc.mean > 0 ? '+' : ''}${sc.mean} ms · ${sc.accuracy}%`);
+      onResult?.({ game: 'groove', score: sc.accuracy, detail: { tier, part: p, accuracy: sc.accuracy, meanMs: sc.mean, bpm: POCKET_BPM, rounds: 4 } });
+      return;
+    }
+    const beatMs = 60000 / SWING_BPM;
+    const ratio = hiddenSwing((Date.now() / 1000) >>> 0);
+    // bar 1 count-in, bars 2–3 the swung 8ths (heard), bars 4–7 the click alone: the player's 8ths
+    const beats = Array.from({ length: 28 }, (_, b) => ({ b, accent: b % 4 === 0, on: true }));
+    const wood = Array.from({ length: 8 }, (_, k) => [k + 4, k + 4 + ratio]).flat();
+    const t0 = await playClicks(beats, beatMs, c, wood);
+    setRunning(false);
+    if (c.signal.aborted) return;
+    const r = swingOf(taps.current.filter((t) => t > t0 + 12 * beatMs - 50), t0, beatMs);
+    const acc = swingPartScore(ratio, r);
+    setMsg(`${tx.swingWas} ${Math.round(ratio * 100)}% · ${tx.swingYours} ${r === null ? '—' : `${Math.round(r * 100)}%`} · ${acc}%`);
+    onResult?.({ game: 'groove', score: acc, detail: { tier, part: p, accuracy: acc, ratio, played: r, bpm: SWING_BPM, rounds: 4 } });
   };
 
   const stop = () => {
@@ -202,8 +236,17 @@ export function GrooveTrainerScreen({ settings, onBack, tier: tierInfo, onResult
           </button>
         ))}
       </div>
-      <p className="field-hint">{mode === 'fade' ? tx.fadeHow : mode === 'pocket' ? tx.pocketHow : mode === 'level' ? tx.levelHow : tx.swingHow}</p>
+      <p className="field-hint">{mode === 'fade' ? tx.fadeHow : mode === 'pocket' ? tx.pocketHow : mode === 'level' ? (tier === 'ff' && part !== 'slow' ? (part === 'odd' ? tx.oddHow : part === 'pocket' ? tx.layHow : tx.swingMatchHow) : tx.levelHow) : tx.swingHow}</p>
       {mode === 'level' && tierInfo && <TierChips lang={lang} info={tierInfo} value={tier} onChange={(x) => !running && setTier(x)} game="groove" />}
+      {mode === 'level' && tier === 'ff' && (
+          <div className="chips gt-target" role="radiogroup" aria-label={tx.ffParts} data-groove-parts>
+            {GROOVE_FF_PARTS.map((x) => (
+              <button key={x} role="radio" aria-checked={part === x} className={`chip ${part === x ? 'on' : ''}`} onClick={() => setPart(x)} disabled={running} data-groove-part={x}>
+                {x === 'slow' ? tx.slow8 : x === 'odd' ? tx.odd : x === 'pocket' ? tx.layBack : tx.swingMatch}
+              </button>
+            ))}
+          </div>
+      )}
       <div className="ch-step gt-tempo" dir="ltr" hidden={mode === 'level'}>
         <small>{tx.tempo}</small>
         <button className="icon-btn" onClick={() => setBpm((b) => Math.max(50, b - 5))} disabled={running}>

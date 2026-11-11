@@ -7,6 +7,8 @@ import {
   checkpointOf,
   distanceOf,
   droneOf,
+  droneless,
+  jazzChordOf,
   ensureGates,
   flightRange,
   foldPitch,
@@ -158,7 +160,8 @@ const TEXT = {
     title: 'Voice Flight',
     blurb: 'A drone sets the key. Sing — or play — to fly through the gaps: higher notes fly higher. Each gap sits on a scale degree.',
     level: 'Start at',
-    levels: { 1: 'Steps · wide gates', 2: 'Leaps · narrow gates', 3: 'Chromatic' } as Record<FlightLevel, string>,
+    levels: { 1: 'Steps · wide gates', 2: 'Leaps · narrow gates', 3: 'Chromatic', 4: 'No drone · jazz degrees' } as Record<FlightLevel, string>,
+    noDrone: 'No drone: the chord sounds once — hold the key in your ear.',
     start: 'Start',
     cont: (n: number) => `Continue from gate ${n}`,
     newGame: 'New flight',
@@ -188,7 +191,8 @@ const TEXT = {
     title: 'מעוף קולי',
     blurb: 'צליל ממושך (דרון) קובע את הסולם. שירו — או נגנו — כדי לעוף דרך הפתחים: צליל גבוה יותר מעיף גבוה יותר. כל פתח יושב על דרגה בסולם.',
     level: 'להתחיל ב',
-    levels: { 1: 'צעדים · פתחים רחבים', 2: 'קפיצות · פתחים צרים', 3: 'כרומטי' } as Record<FlightLevel, string>,
+    levels: { 1: 'צעדים · פתחים רחבים', 2: 'קפיצות · פתחים צרים', 3: 'כרומטי', 4: 'בלי בורדון · דרגות ג׳אז' } as Record<FlightLevel, string>,
+    noDrone: 'בלי בורדון: האקורד נשמע פעם אחת — החזיקו את הסולם באוזן.',
     start: 'להתחיל',
     cont: (n: number) => `להמשיך משער ${n}`,
     newGame: 'מעוף חדש',
@@ -280,9 +284,19 @@ export function Flight({ lang, settings, saved, onSave, onExit, onResult, best, 
   const startListening = async () => {
     const g = game.current!;
     await piano.unlock();
-    piano.startDrone(droneOf(g.course), 0.12);
     const c = new AbortController();
     ctl.current = c;
+    // ff (level 4): no drone — the chord sounds once, then the key lives in the player's ear
+    // (heard before the microphone opens, so the chord does not set the room level)
+    if (droneless(g.course.startLevel)) {
+      try {
+        await piano.play(jazzChordOf(g.course).map((midi, k) => ({ midi, start: k * 0.06, duration: 2.2, velocity: 0.5 })), 2.6, c.signal);
+      } catch {
+        /* stopped */
+      }
+      if (c.signal.aborted) return;
+    }
+    else piano.startDrone(droneOf(g.course), 0.12);
     ready.current = false;
     pitch.current = { midi: null, at: 0 };
     if (touchRef.current) {
@@ -582,7 +596,7 @@ export function Flight({ lang, settings, saved, onSave, onExit, onResult, best, 
       const dir = e.code === 'ArrowUp' || e.code === 'KeyW' ? 1 : e.code === 'ArrowDown' || e.code === 'KeyS' ? -1 : 0;
       if (!dir) return;
       e.preventDefault();
-      const chromatic = levelAt(g.course.startLevel, g.s.next) === 3;
+      const chromatic = levelAt(g.course.startLevel, g.s.next) >= 3;
       steer.current = scaleStep(g.course, steer.current ?? g.s.y, dir, chromatic);
     };
     window.addEventListener('keydown', onKey);
@@ -630,7 +644,7 @@ export function Flight({ lang, settings, saved, onSave, onExit, onResult, best, 
             <input type="checkbox" checked={touch} onChange={(e) => setTouch(e.target.checked)} data-touch-toggle />
             <span>{tx.touchMode}</span>
           </label>
-          <p className="g2-dim">{touch ? tx.hintTouch : settings.midiInput ? tx.hintMidi : tx.hintVoice}</p>
+          <p className="g2-dim">{level === 4 ? tx.noDrone : touch ? tx.hintTouch : settings.midiInput ? tx.hintMidi : tx.hintVoice}</p>
           {!!best && (
             <p className="g2-best">
               {tx.best}: <b dir="ltr">{best}</b>

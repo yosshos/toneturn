@@ -240,6 +240,11 @@ export interface RhythmPattern {
   onsets: number[];
   /** Drum Echo: which drum plays each onset (kick or snare); absent = one sound. */
   drums?: Drum[];
+  /** 0.75 (Beat Echo f / ff): beats grouped (3/4 = [3], 7/8 = [2, 2, 3] …), accents and the count-in follow them. */
+  groups?: number[];
+  /** The meter's name for the screen ("7/8 · 2+2+3") and one bar's groups. */
+  meter?: string;
+  bar?: number[];
 }
 
 export type Drum = 'k' | 's';
@@ -298,6 +303,62 @@ export function rhythmPattern(seed: number, beats: number, bpm = 90): RhythmPatt
 }
 
 export const beatSec = (bpm: number) => 60 / bpm;
+
+// ---------------------------------------------------------------- 0.75: Beat Echo f / ff meters
+// f ('triplet'): 3/4 bars with triplet cells (1-trip-let, 1 – let). ff ('odd'): the pulse is the 8th note at twice the
+// tempo, in 5/8 (3+2, 2+3) or 7/8 (2+2+3, 3+2+2) bars; every group start sounds (the meter is heard), some other 8ths,
+// and from 6 pulses one onset displaced by a 16th (half a pulse). The chain length counts beats (f) or 8ths (ff).
+export type EchoMeter = 'triplet' | 'odd';
+const CELLS_TRIP: Cell[] = [[0], [0, 1 / 3, 2 / 3], [0, 2 / 3], [0, 0.5], [], [1 / 3, 2 / 3]];
+const ODD_BARS: { groups: number[]; name: string }[] = [
+  { groups: [3, 2], name: '5/8 · 3+2' },
+  { groups: [2, 3], name: '5/8 · 2+3' },
+  { groups: [2, 2, 3], name: '7/8 · 2+2+3' },
+  { groups: [3, 2, 2], name: '7/8 · 3+2+2' },
+];
+/** Group sizes covering `n` beats: whole bars of `bar`, the last one cut short. */
+export function groupsFor(bar: number[], n: number): number[] {
+  const out: number[] = [];
+  let left = n;
+  for (let k = 0; left > 0; k++) {
+    const g = Math.min(left, bar[k % bar.length]);
+    out.push(g);
+    left -= g;
+  }
+  return out;
+}
+export function meterPattern(seed: number, beats: number, bpm: number, meter: EchoMeter): RhythmPattern {
+  const rnd = mulberry32(seed ^ 0x0dd);
+  if (meter === 'triplet') {
+    const onsets: number[] = [];
+    for (let b = 0; b < beats; b++) {
+      const cell = b === 0 ? (rnd() < 0.5 ? [0] : [0, 1 / 3, 2 / 3]) : CELLS_TRIP[Math.floor(rnd() * CELLS_TRIP.length)];
+      cell.forEach((f) => onsets.push(b + f));
+    }
+    return { bpm, beats, onsets, groups: groupsFor([3], beats), meter: '3/4', bar: [3] };
+  }
+  const bar = ODD_BARS[Math.floor(rnd() * ODD_BARS.length)];
+  const groups = groupsFor(bar.groups, beats);
+  const starts = new Set<number>();
+  groups.reduce((at, g) => (starts.add(at), at + g), 0);
+  const onsets: number[] = [];
+  for (let k = 0; k < beats; k++) if (starts.has(k) || rnd() < 0.4) onsets.push(k);
+  if (beats >= 6) {
+    const inner = onsets.filter((o) => !starts.has(o) && o + 0.5 < beats);
+    if (inner.length) {
+      const o = inner[Math.floor(rnd() * inner.length)];
+      onsets[onsets.indexOf(o)] = o + 0.5;
+    }
+  }
+  return { bpm: Math.min(320, bpm * 2), beats, onsets: onsets.sort((a, b) => a - b), groups, meter: bar.name, bar: bar.groups };
+}
+/** Beat indices that start a group (accented), or [0] without groups. */
+export function groupStarts(p: Pick<RhythmPattern, 'groups'>): number[] {
+  if (!p.groups?.length) return [0];
+  const out: number[] = [];
+  p.groups.reduce((at, g) => (out.push(at), at + g), 0);
+  return out;
+}
 
 export interface RhythmGrade {
   pass: boolean;
@@ -363,7 +424,9 @@ export interface RhythmTimeline {
   responseEnd: number;
 }
 
-export function rhythmTimeline(p: RhythmPattern, countIn = 4): RhythmTimeline {
+export function rhythmTimeline(p: RhythmPattern, countIn0 = 4): RhythmTimeline {
+  if (p.groups?.length) return groupedTimeline(p);
+  const countIn = countIn0;
   const b = beatSec(p.bpm);
   const clicks: RhythmTimeline['clicks'] = [];
   for (let i = 0; i < countIn; i++) clicks.push({ t: i * b, accent: i === 0 });
@@ -376,6 +439,29 @@ export function rhythmTimeline(p: RhythmPattern, countIn = 4): RhythmTimeline {
   const responseAt = secondIn + countIn * b;
   // …and under the player's echo too (playtesting 0.37: the beat must not vanish when it is your turn), softer.
   for (let i = 0; i < p.beats; i++) clicks.push({ t: responseAt + i * b, accent: i === 0, soft: true });
+  return { clicks, wood, ...(p.drums ? { drums: p.drums } : {}), responseAt, responseEnd: responseAt + p.beats * b + b * 0.6 };
+}
+
+/** 0.75: a grouped pattern's timeline — one bar of count-in (its group starts accented), the pulse under the demo and
+ *  the echo accented on group starts too, so 7/8 sounds like 2+2+3. */
+function groupedTimeline(p: RhythmPattern): RhythmTimeline {
+  const b = beatSec(p.bpm);
+  const bar = p.bar ?? p.groups!;
+  // the count-in: whole bars of the meter, at least 4 pulses (two bars of 3/4)
+  const len = Math.max(1, bar.reduce((a, c) => a + c, 0));
+  const first = groupsFor(bar, len * Math.ceil(4 / len));
+  const countIn = first.reduce((a, c) => a + c, 0);
+  const inStarts = new Set(groupStarts({ groups: first }));
+  const starts = new Set(groupStarts(p));
+  const clicks: RhythmTimeline['clicks'] = [];
+  for (let i = 0; i < countIn; i++) clicks.push({ t: i * b, accent: inStarts.has(i) });
+  const patStart = countIn * b;
+  for (let i = 0; i < p.beats; i++) clicks.push({ t: patStart + i * b, accent: false, ...(starts.has(i) ? {} : { soft: true }) });
+  const wood = p.onsets.map((o) => patStart + o * b);
+  const secondIn = patStart + p.beats * b;
+  for (let i = 0; i < countIn; i++) clicks.push({ t: secondIn + i * b, accent: inStarts.has(i) });
+  const responseAt = secondIn + countIn * b;
+  for (let i = 0; i < p.beats; i++) clicks.push({ t: responseAt + i * b, accent: starts.has(i), soft: true });
   return { clicks, wood, ...(p.drums ? { drums: p.drums } : {}), responseAt, responseEnd: responseAt + p.beats * b + b * 0.6 };
 }
 

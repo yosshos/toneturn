@@ -489,9 +489,38 @@ Owner decision applied: advanced games open at mp; pp and p stay on the tier row
 | Game board | `engine/gameBoard.ts`, `ui/GameBoard.tsx` (route `gameboard`, icon button on the games list header) | Best per game × tier this week, me + friends from `toneturn_game_board`; my local best fills in; signed out = this device's bests. |
 | Shared | `engine/gameTiers.ts` (8 specs, `minTier`, streak `params.cases`, touch never clears bhtime / riffecho), `gameRating.ts` (tags), `Arcade.tsx` GAMES2, `courseRows.ts`, `Glyph.tsx` (voicingspy, reharm, standard, scalerush, transcribe, bhtime, riff, polylock, board), `ui/gameProps.ts`, `advgames.css` | Tests: `tests/advGames.test.ts`, `bhInTime`, `polyLock`, `riffEcho`, `reharmSpot`, `transcribeRace`. E2E: `e2e/adv-games-fit.spec.ts` (setup + play + board at 390×844, en / he). |
 
-Still `todo`: interval cells and jazz names (Interval Sprint ff), Fretboard chord tones, pad-less Echo ff, odd-meter
+Still `todo` after 0.70 (most built in 0.75, below): interval cells and jazz names (Interval Sprint ff), Fretboard chord tones, pad-less Echo ff, odd-meter
 Beat Echo, jazz Melody Puzzle lines, Flight ff, Peak Hunter eq-ear 5–7, Tune-up to a chord, Pitch Memory two notes,
 Truth or Bluff 5 s clock, Groove ff (odd meter / pocket vs band / swing match), Name That Tune "mid-phrase" start, Kit
 Read Rush, Sing the Interval Sprint, Fill & Land / Name That Groove, the keys / guitar / bass instrument shells (Play
 It Back, Voicing Sprint, Chord Change Race, Walk the Changes, Roots by Ear, Harmony Hold), placement skip from cleared
 tiers. The advanced games are not path steps yet (`path.ts` GAME_STEPS / AREA_GAMES unchanged).
+
+### 0.75 — the remaining `todo` rows (2026-11-11, branch worktree-agent-a27536cbdca363558)
+
+No tier row carries `todo` any more (`tests/topTiers.test.ts` checks it). Seeds unchanged: no topic id renamed, new
+content rides on new game-only topics / levels / tier params.
+
+| Part | Where | Notes |
+|---|---|---|
+| Transcription Race rhythm | `engine/transcribeRace.ts` `gradeRhythm`, `onsetBeats`, `withRhythm`, `runRhythm`; `ui/TranscribeRace.tsx` | Every entry keeps its onset (taps: `tapLatencyMs`, MIDI: the note's own time − `midiLatencyMs`). Onsets are fitted to the phrase's beats (swung 8ths at ⅔) on the player's own pulse, 0.5–2× the phrase tempo; robust fit (every pair of entries proposes a line, the one most onsets agree with wins, then least squares on those), so one hesitation costs only the notes it moved. In time = within an 8th (mp/mf) or a quarter beat (f/ff). Phrase accuracy = notes × (0.6 + 0.4 × rhythm), the transcription coach's weighting; the result carries `rhythm`. Old saves without onsets grade pitch only. |
+| Interval Sprint ff | `engine/topicsTopTiers.ts` `interval-cells` 1–2 (registered by `rush.ts`), `rush.ts` `rushNoReplay`, `rush.css` `.n8` | 1: two intervals in a row (3 notes, 0.4 s each), 8 options (one move a half / whole step off or flipped). 2: root then a compound tension by its jazz name (♭9 9 ♯9 3 11 ♯11 ♭13 13). No replay for either (button and Space hidden). ff = `compound-intervals#3` + cells 1–2. |
+| Fretboard ff | `rush.ts` `chordToneTarget` (fretboard levels 6–7, `FRET_LEVELS`) | 6: "the 3rd of B♭7" on one named string (maj7 / 7 / m7 / m7♭5, any degree). 7: + tensions of a dominant (♭9 9 ♯9 ♯11 ♭13 13) and half-step approach notes to a chord's root (the bass walking idea). Guitar and bass tunings. ff = fretboard 5, 6, 7. Not built: drop-2/3 voicing tones, intervals across the G–B shift. |
+| Echo ff without pads | `Games.tsx` (`noPads` tier param) | ff forces the microphone answer (voice or instrument) and disables the pad option; 12 chromatic degrees, 120. No MIDI input in Echo yet. |
+| Beat Echo f / ff meters | `engine/memory.ts` `meterPattern`, `groupsFor`, `groupStarts`, grouped `rhythmTimeline`; `game/memoryGame.ts` `meter`; `Games.tsx` (meter line on the play screen) | f: 3/4 with triplet cells (count-in two 3/4 bars). ff: the 8th note is the pulse (tempo × 2) in 5/8 (3+2, 2+3) or 7/8 (2+2+3, 3+2+2); every group start sounds, one onset displaced by a 16th from 6 pulses; count-in, demo pulse and echo pulse accent the group starts. The chain counts beats (f) or 8ths (ff). |
+| Melody Puzzle ff | `engine/melodyPuzzle.ts` level 9 `jazzLine`, `nextLevel(…, max)`; `ui/MelodyPuzzle.tsx` | 8-note bebop lines from rules (enclosures of 3 / 5, major bebop ♭6, dominant bebop, chromatic fall 7 → 5); half of them an octave lower (the puzzle has no staff, so "bass clef" = the bass register). ff levels [8, 9]; free runs still stop at 8. |
+| Flight ff | `engine/flight.ts` level 4 (`droneless`, `jazzChordOf`), `ui/Flight.tsx` | No drone: a dominant 9♯11 chord sounds once before the microphone opens; ±25 ¢ gates on 1 3 5 ♭7 9 ♯11 13; target 30 gates. |
+| Peak Hunter ff | `engine/peakHunter.ts` level 4 (`AMOUNTS`, `asksAmount`, `amountShareOf`), `ui/PeakHunter.tsx` | Third-octave grid, Q 4.3, the loop (full mix), boost +3 / +6 / +9 dB; the player also picks the amount (a wrong amount keeps 60 % of the points). Clear: 85 % frequency closeness and 7 of 10 amounts. |
+| Tune-up ff | `engine/tuneUp.ts` `chordRound` (`RefKind 'chord'`), `ui/TuneUp.tsx` | The reference is a sounding major / minor chord in which the string is the root or the 5th; the chord holds the string an octave up (octaves are exact in equal temperament), never the unison. 4–6 ¢. |
+| Pitch Memory ff | `engine/pitchMemory.ts` `dayInterval`, `twoNoteEntry`; `ui/PitchMemory.tsx` | Two takes: the note of the day, then the interval of the day above it (m3 … m7), both from memory; the entry keeps both errors, `cents` = the larger, so the 15 ¢ window holds both. |
+| Truth or Bluff ff | `ui/TrueFalse.tsx` `perMs` (tier param 5000) | Each statement has its own 5 s clock (a thin bar under the run clock); an unanswered one counts as a miss (−2 s, streak reset). |
+| Groove ff parts | `engine/grooveTier.ts` (`GROOVE_FF_PARTS`, `pocketPartScore`, `swingPartScore`, `hiddenSwing`, odd plan), `ui/GrooveTrainer.tsx` | ff picks a part per run (any part counts; clear = 2 of the last 3 runs ≥ 85): 8 slow bars (as before) · 7/8 fade (2+2+3 on the 8th pulse, 4 silent bars) · lay back 30 ms against a band that pushes 15 ms ahead (8 bars, ±15 ms) · swing match (two bars of swung 8ths at a hidden 55–72 %, then four bars alone; full marks within 2 %, none at 12 %). Not built: a tempo change to hold. |
+| Name That Tune f | `engine/nameTune.ts` `openingSlice` | f starts 1–3 notes into the opening (the same for every replay of a round). |
+
+Still not built (new games — each needs a route in `App.tsx`, which other agents are editing in parallel, so left for
+a later pass): Kit Read Rush, Sing the Interval Sprint, Name That Groove, the keys / guitar / bass instrument shells
+(Play It Back, Voicing Sprint, Chord Change Race, Walk the Changes, Roots by Ear, Harmony Hold), placement skip from
+cleared tiers, the advanced games as path steps. Fill & Land exists as the drums agent's `land`. Not verified on a
+device: everything above was checked by `tsc` and unit tests only (no Playwright run, no listening test) — the
+screens that gained a row (Peak Hunter ff amount, Groove ff parts, Truth or Bluff ff clock, Beat Echo meter line)
+need the 390×844 fit check.

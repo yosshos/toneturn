@@ -10,7 +10,8 @@ export const STRING_NAMES = ['E', 'B', 'G', 'D', 'A', 'E'];
 /** How far the peg can turn either way (cents) — wider than any detune, so the answer is never at an end. */
 export const PEG_RANGE = 70;
 
-export type RefKind = 'fret' | 'harmonic';
+/** 'chord' (0.75, the ff tier): no unison — the string is tuned against a sounding chord it belongs to. */
+export type RefKind = 'fret' | 'harmonic' | 'chord';
 
 export interface TuneRound {
   /** The detuned string, 1–6. */
@@ -25,6 +26,21 @@ export interface TuneRound {
   /** Description: which string / fret makes the reference. */
   refString: number;
   refFret: number;
+  /** 'chord': the sounding chord (MIDI) and its name ("A", "Am"); the string is its root or its 5th. */
+  chord?: number[];
+  chordName?: string;
+}
+
+const PC_NAME = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
+/**
+ * A round against a chord (ff): the string is the chord's root or its 5th; the chord holds the string's note an
+ * octave up (octaves are exact, so its beats lead to the right pitch), never the same note — no unison reference.
+ */
+export function chordRound(string: number, detune: number, asFifth: boolean, minor: boolean, inst: TuneInst = 'guitar'): TuneRound {
+  const t = openOf(inst)[string - 1];
+  const root = asFifth ? t + 5 : t + 12;
+  const chord = asFifth ? [root, root + (minor ? 3 : 4), t + 12] : [root, root + (minor ? 3 : 4), root + 7];
+  return { string, detune, kind: 'chord', refMidi: t + 12, toneMidi: t, refString: string, refFret: 0, chord, chordName: `${PC_NAME[root % 12]}${minor ? 'm' : ''}` };
 }
 
 export function rng(seed: number): () => number {
@@ -65,7 +81,7 @@ export function roundFor(string: number, detune: number, kind: RefKind, inst: Tu
 }
 
 /** 8 rounds: different strings in turn, detunes of 5–50 ¢ either way, harmonics on about a third. */
-export function makeRounds(seed: number, n = ROUNDS, inst: TuneInst = 'guitar', range?: { lo: number; hi: number }): TuneRound[] {
+export function makeRounds(seed: number, n = ROUNDS, inst: TuneInst = 'guitar', range?: { lo: number; hi: number }, chords = false): TuneRound[] {
   const r = rng(seed);
   const out: TuneRound[] = [];
   let strings: number[] = [];
@@ -84,6 +100,10 @@ export function makeRounds(seed: number, n = ROUNDS, inst: TuneInst = 'guitar', 
     const hi = range ? range.hi : i < 3 ? 50 : 30;
     const mag = Math.round(lo + r() * (hi - lo));
     const detune = r() < 0.5 ? -mag : mag;
+    if (chords) {
+      out.push(chordRound(s, detune, r() < 0.5, r() < 0.4, inst));
+      continue;
+    }
     const kind: RefKind = harmonicOk(s, inst) && r() < 0.35 ? 'harmonic' : 'fret';
     out.push(roundFor(s, detune, kind, inst));
   }

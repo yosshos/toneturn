@@ -21,6 +21,7 @@ const TEXT = {
     string: (s: number, n: string) => `String ${s} (${n})`,
     refFret: (s: number, f: number) => (f ? `against string ${s} at fret ${f}` : `fretted at 5, against open string ${s}`),
     refHarm: (s: number) => `harmonics: 5th fret on string ${s}, 7th fret on this one`,
+    refChord: (c: string) => `against a sounding ${c} chord — no unison, listen to the whole chord`,
     peg: 'Tuning peg',
     pluck: 'Pluck again',
     done: 'In tune',
@@ -50,6 +51,7 @@ const TEXT = {
     string: (s: number, n: string) => `מיתר ${s} (${n})`,
     refFret: (s: number, f: number) => (f ? `מול מיתר ${s} בשריג ${f}` : `לחוץ בשריג 5, מול מיתר ${s} פתוח`),
     refHarm: (s: number) => `הרמוניקים: שריג 5 במיתר ${s}, שריג 7 במיתר הזה`,
+    refChord: (c: string) => `מול אקורד ${c} שמצלצל — בלי יוניסון, הקשיבו לאקורד כולו`,
     peg: 'מפתח כיוון',
     pluck: 'לפרוט שוב',
     done: 'מכוון',
@@ -79,7 +81,7 @@ class StringPair {
   private master: GainNode | null = null;
   constructor(private ctx: AudioContext) {}
 
-  start(refHz: number, hz: number, harmonic: boolean) {
+  start(refHz: number | number[], hz: number, harmonic: boolean) {
     this.stop();
     const ctx = this.ctx;
     const master = ctx.createGain();
@@ -110,7 +112,11 @@ class StringPair {
       this.nodes.push({ osc, gain: g });
       return osc;
     };
-    voice(refHz);
+    // a chord reference (0.75): each chord note a little softer, so the string still stands out
+    if (Array.isArray(refHz)) {
+      master.gain.value = 0.11;
+      refHz.forEach((f) => voice(f));
+    } else voice(refHz);
     this.tone = voice(hz);
   }
 
@@ -149,7 +155,7 @@ export function TuneUp({ lang, settings, saved, onSave, onExit, onResult, best, 
   const rounds = useMemo(() => {
     if (!game) return [];
     const p = game.tier ? tierDef('tuneup', game.tier)?.params : undefined;
-    return makeRounds(game.seed, undefined, inst, p ? { lo: Number(p.lo), hi: Number(p.hi) } : undefined);
+    return makeRounds(game.seed, undefined, inst, p ? { lo: Number(p.lo), hi: Number(p.hi) } : undefined, !!p?.chord);
   }, [game?.seed, game?.tier, inst]);
   const shownIdx = game ? (phase === 'feedback' || phase === 'over' ? game.round - 1 : game.round) : 0;
   const round: TuneRound | undefined = rounds[shownIdx];
@@ -169,7 +175,7 @@ export function TuneUp({ lang, settings, saved, onSave, onExit, onResult, best, 
     const ctx = piano.context;
     if (!ctx) return;
     pair.current ??= new StringPair(ctx);
-    pair.current.start(midiHz(r.refMidi), toneHz(r, p), r.kind === 'harmonic');
+    pair.current.start(r.chord ? r.chord.map(midiHz) : midiHz(r.refMidi), toneHz(r, p), r.kind === 'harmonic');
   };
 
   useEffect(() => {
@@ -275,7 +281,7 @@ export function TuneUp({ lang, settings, saved, onSave, onExit, onResult, best, 
           <p className="g2-lead">
             {tx.string(round.string, stringNamesOf(inst)[round.string - 1])}
             <br />
-            <small className="g2-dim">{round.kind === 'harmonic' ? tx.refHarm(round.refString) : tx.refFret(round.refString, round.refFret)}</small>
+            <small className="g2-dim">{round.kind === 'chord' ? tx.refChord(round.chordName ?? '') : round.kind === 'harmonic' ? tx.refHarm(round.refString) : tx.refFret(round.refString, round.refFret)}</small>
           </p>
 
           <div

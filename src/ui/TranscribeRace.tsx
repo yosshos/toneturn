@@ -14,6 +14,7 @@ import {
   PHRASES,
   runAccuracy,
   runDone,
+  runRhythm,
   runScore,
   submitPhrase,
   transcribeResult,
@@ -34,7 +35,7 @@ const TX = {
     title: 'Transcription Race',
     back: 'Back',
     blurb: 'A short phrase plays after two clicks. Write it note by note on the keys (or your MIDI keyboard), then submit.',
-    rules: 'Five phrases. Points for every note in its place, more for a fast answer. Replays cost a little of the bonus.',
+    rules: 'Five phrases. Points for each note in place and in time (any steady tempo); speed adds a bonus, replays cost some.',
     start: 'Play',
     cont: (n: number) => `Continue · phrase ${n}`,
     newGame: 'New game',
@@ -48,8 +49,10 @@ const TX = {
     next: 'Next phrase',
     finish: 'See results',
     notes: (a: number, n: number) => `${a} / ${n} notes`,
-    write: 'Tap the notes in order',
+    write: 'Tap the notes in order, in rhythm',
     got: (ok: number, n: number, p: number) => `${ok} of ${n} notes · +${p}`,
+    rhythm: (ok: number, n: number) => `rhythm ${ok}/${n}`,
+    rhythmLabel: 'Rhythm',
     answer: 'The phrase',
     keys: 'Keys',
     over: 'Five phrases',
@@ -61,7 +64,7 @@ const TX = {
     title: 'מרוץ התמלול',
     back: 'חזרה',
     blurb: 'משפט קצר מתנגן אחרי שני קליקים. כתבו אותו צליל אחר צליל על הקלידים (או במקלדת MIDI) ושלחו.',
-    rules: 'חמישה משפטים. נקודות על כל צליל במקומו, ויותר על תשובה מהירה. השמעה חוזרת עולה מעט מהבונוס.',
+    rules: 'חמישה משפטים. נקודות על כל צליל במקומו ובזמן (בכל טמפו יציב); מהירות מוסיפה בונוס, השמעה חוזרת עולה מעט.',
     start: 'לנגן',
     cont: (n: number) => `להמשיך · משפט ${n}`,
     newGame: 'משחק חדש',
@@ -75,8 +78,10 @@ const TX = {
     next: 'למשפט הבא',
     finish: 'לתוצאות',
     notes: (a: number, n: number) => `${a} / ${n} צלילים`,
-    write: 'הקישו את הצלילים לפי הסדר',
+    write: 'הקישו את הצלילים לפי הסדר, בקצב',
     got: (ok: number, n: number, p: number) => `${ok} מתוך ${n} צלילים · +${p}`,
+    rhythm: (ok: number, n: number) => `קצב ${ok}/${n}`,
+    rhythmLabel: 'קצב',
     answer: 'המשפט',
     keys: 'קלידים',
     over: 'חמישה משפטים',
@@ -95,8 +100,11 @@ export function TranscribeRace({ lang, settings, saved, onSave, onExit, onResult
   const [phase, setPhase] = useState<Phase>('setup');
   const [tier, setTier] = useState<DynName>(() => (resumable && tierInfo && tierAllowed(tierInfo, resumable.tier) ? resumable.tier : tierInfo ? startTier(tierInfo) : 'mp'));
   const [run, setRun] = useState<TranscribeSave | null>(null);
-  const [entered, setEntered] = useState<number[]>([]);
-  const [last, setLast] = useState<{ ok: number; points: number; phrase: Phrase } | null>(null);
+  // each entry with its onset (ms, latency-corrected for its input) — the rhythm grade reads them
+  const [entries, setEntries] = useState<{ m: number; t: number }[]>([]);
+  const entered = entries.map((e) => e.m);
+  const setEntered = (f: (e: { m: number; t: number }[]) => { m: number; t: number }[]) => setEntries(f);
+  const [last, setLast] = useState<{ ok: number; points: number; phrase: Phrase; rOk: number | null; rN: number } | null>(null);
   const [record, setRecord] = useState(false);
   const [playing, setPlaying] = useState(false);
   const ac = useRef<AbortController | null>(null);
@@ -137,15 +145,12 @@ export function TranscribeRace({ lang, settings, saved, onSave, onExit, onResult
     void sound([phraseStim(p, r.bpm)]);
   };
 
-  const add = useCallback(
-    (m: number) => {
-      if (phaseRef.current !== 'write') return;
-      setEntered((e) => (e.length >= 12 ? e : [...e, m]));
-    },
-    [],
-  );
+  const add = useCallback((m: number, t: number) => {
+    if (phaseRef.current !== 'write') return;
+    setEntries((e) => (e.length >= 12 ? e : [...e, { m, t }]));
+  }, []);
   const tapKey = (m: number) => {
-    add(m);
+    add(m, performance.now() - (settings.tapLatencyMs ?? 0));
     void sound([{ kind: 'note', midi: m, duration: 0.45 }], false);
   };
 
@@ -157,17 +162,17 @@ export function TranscribeRace({ lang, settings, saved, onSave, onExit, onResult
     void midiInput
       .enable()
       .then(() => {
-        if (live) unsub = midiInput.onNote((note, on) => on && note >= KEY_LO - 12 && note <= KEY_HI + 12 && add(note));
+        if (live) unsub = midiInput.onNote((note, on, at) => on && note >= KEY_LO - 12 && note <= KEY_HI + 12 && add(note, (at || performance.now()) - (settings.midiLatencyMs ?? 0)));
       })
       .catch(() => {});
     return () => {
       live = false;
       unsub?.();
     };
-  }, [phase, add]);
+  }, [phase, add, settings.midiLatencyMs]);
 
   const startPhrase = (r: TranscribeSave) => {
-    setEntered([]);
+    setEntries([]);
     setLast(null);
     replays.current = 0;
     shownAt.current = performance.now();
@@ -191,9 +196,10 @@ export function TranscribeRace({ lang, settings, saved, onSave, onExit, onResult
   const submit = () => {
     if (!run || phase !== 'write') return;
     stop();
-    const r = submitPhrase(run, entered, performance.now() - shownAt.current, replays.current);
+    const r = submitPhrase(run, entered, performance.now() - shownAt.current, replays.current, entries.map((e) => e.t));
     setRun(r.save);
-    setLast({ ok: r.phrase.midis.filter((m, k) => entered[k] === m).length, points: r.points, phrase: r.phrase });
+    const rMarks = r.rhythm ? r.rhythm.marks.filter((x) => x !== null) : [];
+    setLast({ ok: r.phrase.midis.filter((m, k) => entered[k] === m).length, points: r.points, phrase: r.phrase, rOk: r.rhythm ? rMarks.filter(Boolean).length : null, rN: rMarks.length });
     if (!runDone(r.save)) onSave(r.save);
     setPhase('reveal');
   };
@@ -282,6 +288,12 @@ export function TranscribeRace({ lang, settings, saved, onSave, onExit, onResult
               <small>{tx.accuracy}</small>
               <b dir="ltr">{runAccuracy(run)}%</b>
             </span>
+            {runRhythm(run) !== null && (
+              <span>
+                <small>{tx.rhythmLabel}</small>
+                <b dir="ltr">{runRhythm(run)}%</b>
+              </span>
+            )}
             <span>
               <small>{tx.best}</small>
               <b dir="ltr">{Math.max(best ?? 0, runScore(run))}</b>
@@ -336,8 +348,8 @@ export function TranscribeRace({ lang, settings, saved, onSave, onExit, onResult
       <div className="tr-staff" dir="ltr" aria-label={done ? tx.answer : tx.write}>
         {staffNotes.length ? <NoteStaff notes={staffNotes} chord={false} keyPc={null} /> : <p className="g2-dim tr-empty">{tx.write}</p>}
       </div>
-      <p className={`adv-line ${done ? (last && last.ok === n ? 'ok' : 'bad') : ''}`} aria-live="polite">
-        {done && last ? tx.got(last.ok, n, last.points) : tx.notes(entered.length, n)}
+      <p className={`adv-line ${done ? (last && last.ok === n && (last.rOk === null || last.rOk === last.rN) ? 'ok' : 'bad') : ''}`} aria-live="polite">
+        {done && last ? `${tx.got(last.ok, n, last.points)}${last.rOk !== null && last.rN > 1 ? ` · ${tx.rhythm(last.rOk, last.rN)}` : ''}` : tx.notes(entered.length, n)}
       </p>
 
       {done ? (

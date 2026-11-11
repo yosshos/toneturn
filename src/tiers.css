@@ -155,3 +155,13 @@
 .game-setup.tiered .game-card small {
   display: none;
 }
+
+/* 0.75: Truth or Bluff ff — the per-statement clock under the run's clock */
+.time-bar.tf-per {
+  height: 4px;
+  margin-top: 4px;
+  opacity: 0.75;
+}
+.time-bar.tf-per > span {
+  transition: width 0.1s linear;
+}

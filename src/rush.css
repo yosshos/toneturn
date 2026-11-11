@@ -503,3 +503,15 @@
   color: var(--ink-soft);
   font-size: 0.9rem;
 }
+
+/* 0.75: Interval Sprint ff — 8 short answers in two rows of four */
+.rush-answers.n8 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.rush-answers.n8 .rush-ans {
+  min-height: 56px;
+  padding: 10px 4px;
+  font-size: 0.92rem;
+  white-space: nowrap;
+}

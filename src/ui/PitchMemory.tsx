@@ -1,7 +1,7 @@
 // Pitch Memory (spec AE §8): once a day, sing or play your note with no reference; error in cents; 30-day trend.
 
 import { useEffect, useRef, useState } from 'react';
-import { centsToNote, dayKey, DEFAULT_NOTE, doneOn, meanAbs, memoryScore, takePitch, trend, type MemoryEntry } from '../engine/pitchMemory';
+import { centsToNote, dayInterval, dayKey, DEFAULT_NOTE, doneOn, meanAbs, memoryScore, takePitch, trend, twoNoteEntry, type MemoryEntry } from '../engine/pitchMemory';
 import { displayNote, pc } from '../engine/pitch';
 import type { SungFrame } from '../engine/sing';
 import type { AccessError } from '../game/adapters';
@@ -33,6 +33,9 @@ const TEXT = {
     noData: 'Your first day — the trend starts here.',
     back: 'Back',
     days: 'days',
+    twoNotes: (iv: string) => `Two notes today: your note, then ${iv} — both from memory.`,
+    thenIv: (iv: string, n: string) => `Now ${iv}: ${n}. Sing or play it and hold it.`,
+    first: 'First note',
   },
   he: {
     title: 'זיכרון צליל',
@@ -53,6 +56,9 @@ const TEXT = {
     noData: 'היום הראשון — המגמה מתחילה כאן.',
     back: 'חזרה',
     days: 'ימים',
+    twoNotes: (iv: string) => `היום שני צלילים: הצליל שלכם, ואז ${iv} — שניהם מהזיכרון.`,
+    thenIv: (iv: string, n: string) => `עכשיו ${iv}: ${n}. שירו או נגנו והחזיקו.`,
+    first: 'צליל ראשון',
   },
 };
 
@@ -80,12 +86,17 @@ export function PitchMemory({
   const appNote = tierInfo && tierIndex(tier) >= 3 ? [...today].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7) % 12 : null;
   const [picked, setNote] = useState<number>(log.length ? log[log.length - 1].note : DEFAULT_NOTE);
   const note = appNote ?? picked;
+  // ff (0.75): two notes — the note of the day, then the interval of the day above it, both from memory
+  const two = !!tierInfo && tier === 'ff';
+  const iv = dayInterval(today);
+  const [first, setFirst] = useState<number | null>(null);
   const [phase, setPhase] = useState<Phase>('idle');
   const [err, setErr] = useState<AccessError | null>(null);
   const ctl = useRef<AbortController | null>(null);
   useEffect(() => () => ctl.current?.abort(), []);
 
   const name = (n: number) => displayNote(pc(NAMES[n]), nm, lang);
+  const fmtC = (c: number) => `${c > 0 ? '+' : ''}${Math.round(c)}¢`;
 
   const listen = async () => {
     setPhase('listening');
@@ -94,7 +105,7 @@ export function PitchMemory({
     let frames: SungFrame[] | null = null;
     if (SIMULATED) {
       // Simulator: an A eight cents sharp.
-      frames = Array.from({ length: 60 }, (_, i) => ({ t: i / 30, hz: 440 * 2 ** ((note - 9 + 0.08) / 12), confidence: 0.95, rms: 0.1 }));
+      frames = Array.from({ length: 60 }, (_, i) => ({ t: i / 30, hz: 440 * 2 ** ((note + (two && first !== null ? iv.semis : 0) - 9 + 0.08) / 12), confidence: 0.95, rms: 0.1 }));
     } else {
       const r = await pitchCaptureFor(settings).sing({ signal: c.signal, maxMs: 7000, silenceMs: 6000 });
       if (r.kind === 'aborted') return;
@@ -107,7 +118,13 @@ export function PitchMemory({
     }
     const m = frames ? takePitch(frames) : null;
     if (m === null) return setPhase('silence');
-    const entry: MemoryEntry = { day: today, cents: centsToNote(m, note), note };
+    if (two && first === null) {
+      setFirst(centsToNote(m, note));
+      setPhase('idle');
+      return;
+    }
+    const entry: MemoryEntry = two && first !== null ? twoNoteEntry(today, note, first, iv.semis, centsToNote(m, (note + iv.semis) % 12)) : { day: today, cents: centsToNote(m, note), note };
+    setFirst(null);
     setMine(entry);
     onLog(entry);
     onSave(null);
@@ -140,13 +157,19 @@ export function PitchMemory({
             {done.cents > 0 ? '+' : ''}
             {Math.round(done.cents)}¢
           </p>
+          {done.second && (
+            <p className="g2-dim" dir="ltr">
+              {name(done.note)} {fmtC(done.second.first)} · {name(done.second.note)} {fmtC(done.second.cents)}
+            </p>
+          )}
           <p>{Math.abs(done.cents) <= 5 ? tx.spotOn : done.cents > 0 ? tx.sharp : tx.flat}</p>
           <p className="g2-dim">{tx.tomorrow}</p>
         </section>
       ) : (
         <section className="g2-card">
           <p>{tx.blurb}</p>
-          {tierInfo && <TierChips lang={lang} info={tierInfo} value={tier} onChange={setTier} game="pitchmemory" />}
+          {tierInfo && first === null && <TierChips lang={lang} info={tierInfo} value={tier} onChange={setTier} game="pitchmemory" />}
+          {two && first === null && <p className="g2-dim">{tx.twoNotes(iv[lang])}</p>}
           {appNote === null && (
           <fieldset className="seg-field">
             <legend>{tx.note}</legend>
@@ -159,7 +182,18 @@ export function PitchMemory({
             </div>
           </fieldset>
           )}
-          <p className="g2-lead">{tx.think(name(note))}</p>
+          {two && first !== null ? (
+            <p className="g2-lead">
+              <small className="g2-dim" dir="ltr">
+                {tx.first}: {name(note)} {first > 0 ? '+' : ''}
+                {Math.round(first)}¢
+              </small>
+              <br />
+              {tx.thenIv(iv[lang], name((note + iv.semis) % 12))}
+            </p>
+          ) : (
+            <p className="g2-lead">{tx.think(name(note))}</p>
+          )}
           {phase === 'listening' ? (
             <p className="g2-listen" aria-live="polite">
               <span className="g2-pulse" aria-hidden="true" /> {tx.listening}
