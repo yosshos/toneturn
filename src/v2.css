@@ -2005,3 +2005,14 @@
 :root[data-theme] .tc-exam .tx-weak { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 :root[data-theme] .tc-exam .tx-weak .chip { font-size: 0.8rem; }
 :root[data-theme] .tc-exam .tx-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 2px; }
+/* 0.68.1 (owner): after a wrong answer, Continue lives in the sticky bottom bar, on its own row above Repeat / Skip /
+   Refresh — the bar can't cover it and it can't cover the bar. A rhythm item's tap pad shrinks once the take is over,
+   so the whole screen still fits a 390 × 844 phone. */
+main.lesson .stage .controls.with-continue { flex-wrap: wrap; row-gap: 8px; }
+main.lesson .stage .controls .ctl-continue { flex: 1 0 100%; max-width: 420px; margin-inline: auto; min-height: 48px; }
+main.lesson.await-next .read-prompt .tap-pad.big { min-height: 76px; }
+main.lesson.await-next .read-prompt .tap-pad.big .tap-hint { display: none; }
+main.lesson.await-next .read-prompt .beat-light { display: none; }
+/* 0.68.1: a recap card's animations (Toni, the level bar's fill, the stars) wait until the card is first shown. */
+.recap-pages > .rp.rp-wait,
+.recap-pages > .rp.rp-wait * { animation-play-state: paused !important; }

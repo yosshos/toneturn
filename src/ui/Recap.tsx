@@ -37,13 +37,27 @@ interface Props {
   playerName?: string | null;
   /** Total XP before and after this session (level bar); null until saved. */
   xpTotals?: { before: number; after: number } | null;
+  /** Something covers the recap (the streak screen): its animations wait until it is uncovered. */
+  covered?: boolean;
 }
 
-export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome, onNext, nextLabel, rating, playerName, xpTotals }: Props) {
+export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome, onNext, nextLabel, rating, playerName, xpTotals, covered = false }: Props) {
   const s = view.session;
   const sm = summary(s);
+  const [page, setPage] = useState(0);
+  // 0.68.1 (owner: "the level bar doesn't fill, Toni doesn't move"): the cards sit side by side in a pager, so their
+  // CSS animations used to run (and end) off screen or under the streak screen. A card's animations wait (paused)
+  // until it is first shown; the count-ups start then too.
+  const [shown, setShown] = useState<number[]>([]);
+  const visible = covered ? -1 : page;
+  useEffect(() => {
+    if (visible >= 0) setShown((xs) => (xs.includes(visible) ? xs : [...xs, visible]));
+  }, [visible]);
+  const on = (k: number) => (shown.includes(k) ? 'rp-on' : 'rp-wait');
+  const on0 = shown.includes(0);
   const [xp, setXp] = useState(0);
   useEffect(() => {
+    if (!on0) return;
     if (document.documentElement.dataset.motion === 'reduced') return setXp(sm.xp);
     let raf = 0;
     const t0 = performance.now();
@@ -59,11 +73,10 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
       cancelAnimationFrame(raf);
       clearTimeout(done);
     };
-  }, [sm.xp]);
+  }, [sm.xp, on0]);
 
   const lang = settings.uiLang;
   const nm = namingFor(settings.naming, lang);
-  const [page, setPage] = useState(0);
   const pagesRef = useRef<HTMLDivElement>(null);
   const meta = LESSON_META[s.lesson.id];
   const bb = displayNote({ letter: 'B', acc: -1 }, nm, lang);
@@ -127,7 +140,7 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
           if (k !== page) setPage(k);
         }}
       >
-      <section className="rp rp-cele" aria-label={t.recapTitle}>
+      <section className={`rp rp-cele ${on(0)}`} aria-label={t.recapTitle}>
       {/* 0.61 (SPEC-REDESIGN): the lesson ends on a final barline with a fermata, and Toni celebrates. */}
       <div className="recap-art" aria-hidden="true">
         <svg className="recap-staff" viewBox="0 0 365 120" preserveAspectRatio="xMidYMid meet">
@@ -155,7 +168,7 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
         );
       })()}
       <div className={`fluency-score s${stars}`} data-score={fl.score} aria-label={`${t.sectionScore}: ${fl.score}`}>
-        <ScoreCount value={fl.score} />
+        <ScoreCount value={fl.score} run={on0} />
         <small>{t.sectionScore}</small>
       </div>
       <div className="stars" aria-label={`${stars} ${t.stars}`}>
@@ -185,7 +198,7 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
 
       </section>
       {hasProgress && (
-      <section className="rp rp-progress" aria-label={lang === 'he' ? 'ההתקדמות שלך' : 'Your progress'}>
+      <section className={`rp rp-progress ${on(1)}`} aria-label={lang === 'he' ? 'ההתקדמות שלך' : 'Your progress'}>
       <div className="rp-toni" aria-hidden="true">
         <Toni state="wow" size={96} />
       </div>
@@ -208,7 +221,7 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
       </section>
       )}
 
-      <section className="rp rp-answers" aria-label={lang === 'he' ? 'התשובות שלך' : 'Your answers'}>
+      <section className={`rp rp-answers ${on(hasProgress ? 2 : 1)}`} aria-label={lang === 'he' ? 'התשובות שלך' : 'Your answers'}>
       <ol className="recap-list">
         {s.lesson.questions.map((q, i) => {
           const r = s.records[i];
@@ -310,9 +323,10 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
 }
 
 /** The section score counting up (lands on the final value even if frames are paused). */
-function ScoreCount({ value }: { value: number }) {
+function ScoreCount({ value, run = true }: { value: number; run?: boolean }) {
   const [v, setV] = useState(0);
   useEffect(() => {
+    if (!run) return;
     if (document.documentElement.dataset.motion === 'reduced') return setV(value);
     let raf = 0;
     const t0 = performance.now();
@@ -327,7 +341,7 @@ function ScoreCount({ value }: { value: number }) {
       cancelAnimationFrame(raf);
       clearTimeout(done);
     };
-  }, [value]);
+  }, [value, run]);
   return <b dir="ltr">{v}</b>;
 }
 

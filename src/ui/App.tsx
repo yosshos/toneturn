@@ -102,7 +102,7 @@ import type { RankChange } from '../engine/ranks';
 import type { Badge } from '../engine/badges';
 import { BadgeUnlock, RankUpUnlock } from './BadgeUnlock';
 import { todayDrills } from '../engine/drills/plan';
-import { WorkoutCard, WorkoutEditor, WorkoutRunScreen } from './Workout';
+import { blockLabel, WorkoutCard, WorkoutEditor, WorkoutRunScreen } from './Workout';
 import { addSession, nextBlock, nextForBlock, runLeftMs, startRun, suggestWorkout, validateTemplate, type Block, type BlockTarget, type WorkoutRun } from '../engine/workout2';
 import { subPriorities } from '../engine/scheduler';
 import { foldSubs } from '../engine/taxonomy';
@@ -615,9 +615,14 @@ export function App() {
     }
     go(r);
   };
-  const openReview = () => {
+  /** Can the due mistakes be rebuilt as a review session? (Due tags from old lessons may not rebuild — 0.68.1.) */
+  const canReview = () => reviewLesson(progress.review, 1) !== null;
+  /** The review of due mistakes; never a dead tap (0.68.1, owner): when none of the due items can be rebuilt, the
+   * weakest skill's practice opens instead. */
+  const openReview = (fallback: SkillId = weakestSkill(ratingsOf(progress))) => {
     const def = reviewLesson(progress.review, Date.now() >>> 0);
-    if (def) openGenerated(def, undefined, false, { key: 'review', title: t.review });
+    if (def) return openGenerated(def, undefined, false, { key: 'review', title: t.review });
+    practiceSkill(fallback);
   };
   const openPuzzle = () => {
     const week = weekId(new Date());
@@ -743,12 +748,13 @@ export function App() {
   };
 
   const openLesson = (id: LessonId) => (cooled() ? undefined : gate(id, () => openLessonNow(id)));
+  const lessonTitle = (id: LessonId) => (LESSON_META[id]?.title[s.uiLang] ?? id).replace(/\{[nk]\}/g, displayNote(pc('Bb'), namingFor(s.naming, s.uiLang), s.uiLang));
   const openLessonNow = (id: LessonId) => {
     void piano.unlock(); // inside the Start gesture
     setGenerated(null);
     const key = `path:${id}`;
     const saved = loadSession(key);
-    setSlot({ key, title: (LESSON_META[id]?.title[s.uiLang] ?? id).replace(/\{[nk]\}/g, displayNote(pc('Bb'), namingFor(s.naming, s.uiLang), s.uiLang)), resume: saved ?? undefined });
+    setSlot({ key, title: lessonTitle(id), resume: saved ?? undefined });
     setLessonId(id);
     setLessonKey((k) => k + 1);
     setAutoStart(true);
@@ -895,7 +901,10 @@ export function App() {
     }
     const how = mode === 'practice' ? 'step' : x.probe ? 'probe' : x.state === 'quick' ? 'quick' : 'step';
     const def = stepSession(step, seed, how);
-    if (def) gate(`topic:${step.topic}`, () => openGenerated(def, undefined, false, { key: `pathstep:${step.id}`, title, brief: step.topic ? briefFor(step.topic, step.level ?? 1, x.state === 'tested' ? { keepStep: step.id } : {}) : undefined }));
+    if (def) return gate(`topic:${step.topic}`, () => openGenerated(def, undefined, false, { key: `pathstep:${step.id}`, title, brief: step.topic ? briefFor(step.topic, step.level ?? 1, x.state === 'tested' ? { keepStep: step.id } : {}) : undefined }));
+    // A step that can't build a session (0.68.1): never a dead tap — practise its skill instead.
+    pendingStep.current = null;
+    practiceSkill(step.skill);
   };
   const openTestOut = (unit: PathUnit) => {
     const seed = (Date.now() ^ (Math.random() * 1e9)) >>> 0;
@@ -1084,27 +1093,67 @@ export function App() {
     bs
       .map((b) => (((wctx.nomic || wctx.quiet) && b.target.kind === 'vocal') || (wctx.quiet && b.target.kind === 'game') ? { ...b, target: { kind: 'warmup' } as BlockTarget } : b))
       .filter((b) => !(wctx.noinst && b.target.kind === 'practice'));
-  const runCurrent = (r: WorkoutRun) => {
-    if (r.finished || !r.blocks[r.at]) return go('workoutrun');
+  /** "Again" on a generated session's recap (0.68.1): the same kind of session again — it used to open the weekly
+   * puzzle for every topic / path-step session. */
+  const againGenerated = () => {
+    const k = slot?.key ?? '';
+    const tm = /^topic:([a-z0-9-]+):(\d+)$/.exec(k);
+    if (tm && TOPIC_GEN[tm[1]]) return openTopic(tm[1], Number(tm[2]));
+    if (k.startsWith('puzzle:')) return openPuzzle();
+    if (k.startsWith('absolute:')) return openAbsolute(Number(k.split(':')[1]) || 1);
+    if (k.startsWith('pathstep:')) {
+      const id = k.slice(9);
+      const unit = pathView.units.find((u) => u.steps.some((x) => x.step.id === id));
+      const x = unit?.steps.find((y) => y.step.id === id);
+      if (unit && x && x.step.kind !== 'check') return openPathStep(x, unit, 'practice');
+    }
+    if (generated) openGenerated(generated.def, generated.adapt, false, { key: k || undefined, title: slot?.title });
+  };
+  /** What a skill's practice opens, named (the workout card shows it). */
+  const skillOpen = (k: SkillId): { title: string; open: () => void } => {
+    const rec = recommendFor(k, ratingsOf(progress), (id) => lessonMastered(progress, id));
+    const title = rec.kind === 'topic' ? `${TOPIC_GEN[rec.topic]?.title[s.uiLang] ?? rec.topic} · ${rec.level}` : rec.kind === 'lesson' ? lessonTitle(rec.lessonId) : (t.skillNames[k] ?? k);
+    return { title, open: () => practiceSkill(k) };
+  };
+  /** Can this path step build something to open? */
+  const stepOpens = (st: UnitStep['step']) =>
+    st.kind === 'review' ? canReview() : st.kind === 'topic' ? !!st.topic && !!TOPIC_GEN[st.topic] : st.kind === 'lesson' ? !!st.lesson : st.kind === 'tech' || st.kind === 'vocal' ? !!st.ladder : st.kind === 'game' ? !!st.game : st.kind === 'check';
+  /**
+   * What the workout's Continue opens for the block in progress (0.68.1, owner: "Continue does nothing" and "the card
+   * says Gap click but a harmony exercise opens"). One decision for both the Home card's title and runCurrent, and
+   * every branch ends in something that opens: due mistakes that can't be rebuilt, a path step that can't build a
+   * session, or no open step fall back to the block's (or the weakest) skill.
+   */
+  const workoutNext = (r: WorkoutRun): { title: string; open: () => void } | null => {
     const b = r.blocks[r.at];
-    const t = b.target;
-    if (t.kind === 'game' || t.kind === 'vocal' || t.kind === 'practice') return go('workoutrun');
-    workoutPending.current = { t0: Date.now() };
-    if (t.kind === 'warmup' || t.kind === 'mistakes') {
-      const due = new Set(dueReviews(progress.review, new Date()).map((x) => x.key)).size;
-      if (due > 0) return openReview();
-      return practiceSkill(weakestSkill(ratingsOf(progress)));
+    if (r.finished || !b) return null;
+    const tg = b.target;
+    if (tg.kind === 'game' || tg.kind === 'vocal' || tg.kind === 'practice') return { title: blockLabel(t, tg, s.uiLang), open: () => go('workoutrun') };
+    const ratings = ratingsOf(progress);
+    if (tg.kind === 'warmup' || tg.kind === 'mistakes') {
+      if (dueReviews(progress.review, new Date()).length > 0 && canReview()) return { title: t.review, open: () => openReview() };
+      return skillOpen(weakestSkill(ratings));
     }
     const nx = nextForBlock(b, pathView, new Set(r.steps));
     if (nx && 'step' in nx) {
-      const unit = pathView.units.find((u) => u.id === nx.unitId)!;
-      return openPathStep(nx.step, unit, 'step');
+      const unit = pathView.units.find((u) => u.id === nx.unitId);
+      if (unit && stepOpens(nx.step.step)) return { title: nodeTitle(nx.step.step, s, s.uiLang), open: () => openPathStep(nx.step, unit, 'step') };
     }
-    // Free practice (§9.1.3): the area's / skill's weakest skill, or the topic at its first open level.
-    if (t.kind === 'area') return practiceSkill(weakestSkill(ratingsOf(progress), DOMAINS.find((d) => d.id === t.area)!.skills));
-    if (t.kind === 'skill') return practiceSkill(t.skill);
-    if (t.kind === 'topic') return openTopic(t.topic, 1);
-    return openPathStep(pathView.current ?? pathView.units[0].steps[0], pathView.units.find((u) => u.status === 'current') ?? pathView.units[0], 'step');
+    // Free practice (§9.1.3): the area's / skill's weakest skill, or the topic at its first level.
+    if (tg.kind === 'area') return skillOpen(weakestSkill(ratings, DOMAINS.find((d) => d.id === tg.area)?.skills));
+    if (tg.kind === 'skill') return skillOpen(tg.skill);
+    if (tg.kind === 'topic' && TOPIC_GEN[tg.topic]) return { title: `${TOPIC_GEN[tg.topic].title[s.uiLang]} · 1`, open: () => openTopic(tg.topic, 1) };
+    const cur = pathView.current;
+    const unit = pathView.units.find((u) => u.status === 'current');
+    if (cur && unit && stepOpens(cur.step)) return { title: nodeTitle(cur.step, s, s.uiLang), open: () => openPathStep(cur, unit, 'step') };
+    return skillOpen(weakestSkill(ratings));
+  };
+  const runCurrent = (r: WorkoutRun) => {
+    const nx = workoutNext(r);
+    const tg = r.blocks[r.at]?.target;
+    if (!nx || !tg || tg.kind === 'game' || tg.kind === 'vocal' || tg.kind === 'practice') return go('workoutrun');
+    workoutPending.current = { t0: Date.now() };
+    nx.open();
   };
   const startWorkout = () => {
     void piano.unlock();
@@ -1270,7 +1319,7 @@ export function App() {
               blocks={wrun && wrun.day === today && !wrun.finished ? wrun.blocks : todayBlocks}
               run={wrun && wrun.day === today ? wrun : null}
               view={pathView}
-              nextLine={pathView.current ? nodeTitle(pathView.current.step, s, s.uiLang) : null}
+              nextLine={workoutNext(wrun && wrun.day === today && !wrun.finished ? wrun : startRun(today, withContext(todayBlocks)))?.title ?? null}
               edited={s.workoutToday?.day === today}
               onStart={() => (s.mode === 'voice' && !s.voiceConsent ? setConsentThen(() => () => startWorkout()) : startWorkout())}
               onEdit={() => go('workout')}
@@ -1361,7 +1410,7 @@ export function App() {
               onModes={openModes}
               onWrongNotes={openWrongNotes}
               onAbsolute={openAbsolute}
-              onReview={openReview}
+              onReview={() => openReview()}
               onRuns={openRuns}
               onDrone={() => go('drone')}
               onPerform={() => gate('perform:backing', () => go('perform'))}
@@ -1441,7 +1490,7 @@ export function App() {
             }
             go('home');
           }}
-          onAgain={() => (generated?.def.id === 'placement' ? openPlacement(generated.def.placementDomain ?? null, true) : generated?.def.id === 'review' ? openReview() : generated?.def.id === 'modes' ? openModes(modesAgainLevel(generated.def)) : generated?.def.id === 'wrong-notes' ? openWrongNotes(wrongLevel) : generated ? openPuzzle() : openLesson(lessonId))}
+          onAgain={() => (generated?.def.id === 'placement' ? openPlacement(generated.def.placementDomain ?? null, true) : generated?.def.id === 'review' ? openReview() : generated?.def.id === 'modes' ? openModes(modesAgainLevel(generated.def)) : generated?.def.id === 'wrong-notes' ? openWrongNotes(wrongLevel) : generated ? againGenerated() : openLesson(lessonId))}
           brief={slot?.brief}
           onHideTopic={slot?.brief?.topic ? () => {
             updateSettings({ pathHidden: [...new Set([...(s.pathHidden ?? []), slot.brief!.topic!])] });
@@ -1690,6 +1739,8 @@ export function App() {
           run={wrun}
           onGo={() => {
             const b = wrun.blocks[wrun.at];
+            // Any other block (this screen restored on a path / area / warm-up block): open it as Continue would.
+            if (b.target.kind !== 'game' && b.target.kind !== 'vocal') return runCurrent(wrun);
             // Games and the vocal warm-up: the block counts as done when started (they run on their own screens).
             saveRun(addSession(wrun, b.minutes * 60000, Math.max(1, b.minutes), Math.max(1, b.minutes)));
             if (b.target.kind === 'game') {
