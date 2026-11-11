@@ -21,6 +21,7 @@ import { APP_THEMES, appearanceOf } from './themes';
 import { midi } from '../speech/midi';
 import { LatencyCalibrate } from './LatencyCalibrate';
 import { AudioOutputPicker } from './AudioOutput';
+import { LiveLatencySetting, MidiIosNote, SoundQualitySetting } from './SoundQuality';
 import { ProfileCard } from './Profile';
 import type { Ratings } from '../engine/rating';
 import { DEFAULT_PRIVACY, effectivePrivacy, type Preset, type Privacy, type Who } from '../engine/privacy';
@@ -583,7 +584,7 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
           </section>
           <SoundSetting t={t} s={s} onChange={onChange} />
           <section className="set-card"><DroneSoundSetting t={t} value={s.droneSound ?? 'soft'} onChange={(droneSound) => onChange({ droneSound })} /></section>
-          {(s.sound ?? DEFAULT_SOUND) === 'grand' && <GrandDetail lang={s.uiLang} value={s.pianoDetail ?? 'auto'} onChange={(pianoDetail) => onChange({ pianoDetail })} />}
+          <SoundQualitySetting lang={s.uiLang} s={s} onChange={onChange} />
           {onMixer && (
             <button className="btn ghost mx-open" onClick={onMixer} data-open-mixer="1">
               {s.uiLang === 'he' ? 'מיקסר: עוצמות, אקולייזר ואפקטים' : 'Mixer: levels, EQ and effects'}
@@ -959,6 +960,7 @@ function MidiPanel({ t, lang, on, onChange, naming, s, onSettings }: { t: String
           </small>
         </span>
       </label>
+      <MidiIosNote lang={lang} />
       {status && (
         <p className="field-hint warn" role="status">
           {status}
@@ -1010,6 +1012,7 @@ function MidiPanel({ t, lang, on, onChange, naming, s, onSettings }: { t: String
                   ]}
                   onChange={(v) => onSettings({ midiCurve: v as 'light' | 'normal' | 'heavy' | 'fixed' })}
                 />
+                <LiveLatencySetting lang={lang} s={s} onChange={onSettings} />
                 <button className="btn ghost small" onClick={() => piano.liveAllOff()} data-midi-panic="1">
                   {he ? 'השתקת צלילים תקועים' : 'Stop stuck notes'}
                 </button>
@@ -1117,7 +1120,7 @@ function SoundSetting({ t, s, onChange }: { t: Strings; s: Settings; onChange: (
     <>
       <section className="set-card sound-card" data-sound-card="1">
         <h2>{t.soundTitle}</h2>
-        <p className="field-hint">{he ? "הכלי שמנגן בכל התרגילים. כלים מוקלטים נטענים פעם אחת ונשמרים במכשיר (פסנתר הכנף בפירוט מלא: עד כ־47MB, ברקע); הממודלים לא צריכים הורדה." : "The instrument for every exercise. Recorded ones load once and stay on the device (the full grand: up to about 47 MB, in the background); modelled ones need no download."}</p>
+        <p className="field-hint">{he ? "הכלי שמנגן בכל התרגילים. כלים מוקלטים נטענים פעם אחת ונשמרים במכשיר (פסנתר הכנף בפירוט מלא: עד כ־47MB, ברקע — ״איכות הצליל״ למטה קובעת כמה ממנו); הממודלים לא צריכים הורדה." : "The instrument for every exercise. Recorded ones load once and stay on the device (the full grand: up to about 47 MB, in the background — Sound quality below sets how much of it); modelled ones need no download."}</p>
         {SOUND_GROUPS.map((g) => (
           <div key={g.id} className="sound-group" role="radiogroup" aria-label={g.name[lang]}>
             <h3 className="sound-group-h">{g.name[lang]}</h3>
@@ -1255,43 +1258,6 @@ function SoundSetting({ t, s, onChange }: { t: Strings; s: Settings; onChange: (
         <p className="field-hint">{he ? 'בס: קונטרבס בפיציקטו — 3 עוצמות ו־4 פריטות מתחלפות לכל צליל.' : 'Bass: a double bass, pizzicato — 3 dynamics and 4 alternating plucks per note.'}</p>
       </section>
     </>
-  );
-}
-
-/** The concert grand's detail: how many velocity layers this device keeps (each layer ≈ 2–3 MB, loaded once). */
-function GrandDetail({ lang, value, onChange }: { lang: 'en' | 'he'; value: 'auto' | 'full' | 'light'; onChange: (v: 'auto' | 'full' | 'light') => void }) {
-  const he = lang === 'he';
-  const [ready, setReady] = useState(piano.grandReady);
-  useEffect(() => {
-    const id = setInterval(() => setReady(piano.grandReady), 1000);
-    return () => clearInterval(id);
-  }, []);
-  const opts = [
-    ['auto', he ? 'אוטומטי' : 'Automatic'],
-    ['full', he ? 'מלא — 16 שכבות' : 'Full — 16 layers'],
-    ['light', he ? 'חסכוני — 8 שכבות' : 'Light — 8 layers'],
-  ] as const;
-  return (
-    <section className="set-card" data-grand-detail="1">
-      <h2>{he ? 'הפסנתר: רמת פירוט' : 'Grand piano detail'}</h2>
-      <p className="field-hint">
-        {he
-          ? 'פסנתר כנף מוקלט ב־16 עוצמות נגינה, עם צליל השחרור של כל קליד, תהודת המיתרים והפדל. השכבות נטענות ברקע פעם אחת ונשמרות במכשיר. "אוטומטי" טוען את כולן במחשב ושמונה בטלפון חסכוני.'
-          : 'A concert grand recorded at 16 dynamics, with each key’s release, string resonance and the pedal. Layers load once in the background and stay on the device. Automatic loads all of them on a computer and eight on a light phone.'}
-      </p>
-      <div className="chips" role="radiogroup" aria-label={he ? 'רמת פירוט' : 'Detail'}>
-        {opts.map(([id, label]) => (
-          <button key={id} role="radio" aria-checked={value === id} className={`chip ${value === id ? 'on' : ''}`} onClick={() => onChange(id)} data-grand-detail-opt={id}>
-            {label}
-          </button>
-        ))}
-      </div>
-      {ready.total > 0 && (
-        <small className="field-hint" dir="auto" data-grand-ready={ready.loaded}>
-          {he ? `שכבות מוכנות: ${ready.loaded} מתוך ${ready.total}` : `Layers ready: ${ready.loaded} of ${ready.total}`}
-        </small>
-      )}
-    </section>
   );
 }
 

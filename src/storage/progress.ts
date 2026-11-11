@@ -323,6 +323,10 @@ export interface Settings {
   sound?: string;
   /** The concert grand's detail (0.54): 'auto' = all 16 layers on a computer, 8 on a light phone. */
   pianoDetail?: 'auto' | 'full' | 'light';
+  /** Sound quality (0.69): how much decoded audio a session may hold — 'auto' picks by device (Standard on iPhone/iPad). */
+  soundQuality?: import('../audio/quality').SoundQuality;
+  /** Live play latency (0.69): 'low' asks the browser for its smallest output buffer (applies after a reload). */
+  audioLatency?: import('../audio/quality').LatencyMode;
   /** The tonewheel organ (0.55): registration and rotating-speaker speed; the tine piano's tremolo (0–1); the band's drums. */
   organReg?: string;
   organFast?: boolean;

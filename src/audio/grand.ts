@@ -74,18 +74,10 @@ export function releaseNoiseGain(v: number): number {
   return Math.pow(10, -37 / 20) * (0.18 + (0.82 * v) / 127);
 }
 
-/** The order the layers load in: the everyday ones first; a light device stops after eight. */
+/** The order the layers load in: the everyday ones first; a light device stops after eight (0.54; since 0.69 the tiers in quality.ts choose the layers). */
 export function loadOrder(n: number, light: boolean): number[] {
   // indices of a 16-layer set
   const pref = [10, 7, 12, 4, 14, 8, 5, 2, 11, 9, 13, 15, 6, 3, 1, 0];
   const all = pref.filter((i) => i < n);
   return light ? all.slice(0, 8) : all;
-}
-
-/** A light device: data saver, a slow connection or little memory. */
-export function lightDevice(): boolean {
-  if (typeof navigator === 'undefined') return false;
-  const c = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
-  const mem = (navigator as Navigator & { deviceMemory?: number }).deviceMemory;
-  return !!c?.saveData || /(^|-)2g|3g/.test(c?.effectiveType ?? '') || (mem !== undefined && mem <= 2);
 }

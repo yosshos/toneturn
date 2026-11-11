@@ -11,6 +11,7 @@ import { useNarratorStatus } from './TalkToggle';
 import { getRecognitionCtor, WebSpeechTranscriber } from '../speech/webspeech';
 import type { Settings } from '../storage/progress';
 import { narrator, piano, tts } from './services';
+import { SoundDiagnostics } from './SoundQuality';
 
 type Status = 'idle' | 'running' | 'ok' | 'fail';
 interface LogLine {
@@ -241,6 +242,8 @@ export function Diagnostics({ t, settings, onBack }: { t: Strings; settings: Set
           <Badge s={audioOk} />
         </div>
       </section>
+
+      <SoundDiagnostics lang={lang} sinkId={settings.audioOutput} />
 
       <section className="diag-card">
         <h2>3 · {t.stageCapture}</h2>

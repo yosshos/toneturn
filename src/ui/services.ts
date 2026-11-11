@@ -22,6 +22,8 @@ export const SIMULATED = params.has('sim');
 export const UNLOCK_ALL = params.get('unlock') === 'all';
 
 export const piano = new PianoEngine();
+// Dev builds only: the engine on `window.__sound` for measuring decoded memory per tier (SOUND_LIVE_SESSION.md §7).
+if (import.meta.env.DEV && typeof window !== 'undefined') (window as unknown as { __sound?: PianoEngine }).__sound = piano;
 /** One narration player for the whole app so voice settings apply everywhere. */
 export const tts = new BrowserPromptPlayer();
 /** The English voice (Kokoro, on the device). Nothing loads until an English line is wanted; the simulator never speaks. */
