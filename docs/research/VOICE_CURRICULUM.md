@@ -739,8 +739,14 @@ audiation → sequences/inner, the song echo → singing/songs) and the quick le
 chord-tones lesson, 1309 → songs with the band).
 
 **Still not built**: Tier 1A standards (no period transcriptions here). A colla voce section in the middle of a song
-(free – tempo – free) is not offered; only free then tempo. The audiation and echo melodies are fixed (placed in the
-singer's range), not generated per session.
+(free – tempo – free) is not offered; only free then tempo.
+
+**No memorizable items (follow-up)**: the echo (1203) and audiation (1205) melodies are generated fresh every session
+(`sessionEarItem` in `voiceEar.ts`, seeded, applied when the level opens), item ids unchanged. Echo: as many notes and
+the same rhythm as the fixed item, diatonic, no leap wider than its widest, its span plus at most a whole step, no note
+repeated straight after itself, ending on the tonic. Audiation: a motif of the same length from a pool, a start degree
+and a direction; the third bar is never played. The fixed melodies stay as the templates and test fixtures. Intervals
+(1204) and the song echoes (1309) keep their content (the interval is placed in the range; the songs are the task).
 
 **Unverified**: on a real phone — the stretched groove's feel (scheduling by `heardTime` when a note is recognised,
 about 60 ms after the sung onset plus the mic delay; a due event is played at once when it is up to 250 ms late), the
