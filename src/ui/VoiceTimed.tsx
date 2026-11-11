@@ -17,15 +17,15 @@ import type { NoteEvent } from '../engine/lesson';
 import { chartBacking, chordAtBeat, parseChart, transposeChart } from '../engine/charts';
 import { sheetNotes, songBacking, songPlan, voiceSong, type SongGrade, type SongPlan } from '../engine/voiceSongs';
 import { feelVerdict, swingBand, synthDahs, synthLine, voiceOnsets, type TimeFeel } from '../engine/voiceTime';
-import { gradeRubatoSong, gradeScat, gradeSong, gradeTime, MOTIF_ANSWER_AT, motifCell, phraseFalls, scatCentre, scatChart, scatTurns } from '../engine/voiceGrade';
+import { collaParts, gradeCollaSong, gradeRubatoSong, gradeScat, gradeSong, gradeTime, MOTIF_ANSWER_AT, motifCell, phraseFalls, scatCentre, scatChart, scatTurns } from '../engine/voiceGrade';
 import { familyOfRef, NEW_LEVEL_NAMES, vocalLevelByRef, voiceItemTags } from '../engine/voiceFamilies';
-import { Follower, restAdvice, sungLine, synthRubato, synthTrade, tradeOpening, tradeReply, type RestTake } from '../engine/voiceP2';
+import { Follower, paceOf, rejoinAt, restAdvice, stretchSegment, sungLine, synthColla, synthRubato, synthTrade, tradeOpening, tradeReply, type RestTake } from '../engine/voiceP2';
 import type { PNote } from '../engine/improvPhrasing';
 import { NoteStaff } from './NoteViews';
 import { MySongPick } from './VoiceMySong';
 import { noteSongScore } from './MySong';
 import { pc } from '../engine/pitch';
-import { METRIC_NAMES, MOTIF_KIND_NAMES, SCAT_INSTR, SONG_INSTR, TIME_INSTR, VT } from '../content/voiceCourseText';
+import { COLLA_TEXT, METRIC_NAMES, MOTIF_KIND_NAMES, SCAT_INSTR, SONG_INSTR, TIME_INSTR, VT } from '../content/voiceCourseText';
 import { keepTake } from '../storage/takes';
 import { weekId } from '../engine/adaptive';
 import type { LessonResult, Progress, Settings, VocalTake } from '../storage/progress';
@@ -56,6 +56,8 @@ interface Take {
   turns?: number[];
   follow?: number;
   falls?: { falls: number; phrases: number };
+  /** P3 colla voce then in time: the re-entry's offset from the written downbeat (s), null = not back on the bar. */
+  reentry?: number | null;
 }
 
 /** Sung minutes and the tiring check from the kept takes (the rest reminder; never a score). */
@@ -78,6 +80,8 @@ export function TimedSession({ t, settings, range, level, items, onExit, onProgr
   const [calDone, setCalDone] = useState(settings.micLatencyMs !== undefined || SIMULATED);
   const [summary, setSummary] = useState<{ score: number; passed: boolean; rest?: string } | null>(null);
   const [mine, setMine] = useState<{ plan: SongPlan; buffer: AudioBuffer; id?: string } | null>(null);
+  /** P3 colla voce then in time: where the take is (free, the band's count-in, in time). */
+  const [colla, setColla] = useState<'free' | 'count' | 'tempo' | null>(null);
   const best = useRef<Record<string, { score: number; take: VocalTake }>>({});
   const ctl = useRef<AbortController | null>(null);
   const stopped = useRef(false);
@@ -104,10 +108,12 @@ export function TimedSession({ t, settings, range, level, items, onExit, onProgr
     setFrames([]);
     setNow(0);
     setPhase('count');
+    setColla(null);
     let tick: ReturnType<typeof setInterval> | undefined;
     const res = await captureTimed({
       item, plan, span, range, tonicPc, settings, headphones, guide, loop, signal: c.signal, stopped, mine: mine?.buffer ?? null,
       onFrames: setFrames,
+      onCue: setColla,
       onClock: (zero, beat) => {
         tick = setInterval(() => {
           const s = (performance.now() - zero) / 1000;
@@ -119,6 +125,7 @@ export function TimedSession({ t, settings, range, level, items, onExit, onProgr
     });
     clearInterval(tick);
     setBeatNow(-1);
+    setColla(null);
     if (!res) {
       setPhase('ready');
       return;
@@ -233,6 +240,7 @@ export function TimedSession({ t, settings, range, level, items, onExit, onProgr
     if (item.kind === 'scat') return L(SCAT_INSTR[item.scat!.mode]);
     const s = item.song!;
     if (s.mine) return L(SONG_INSTR.mine);
+    if (s.freeUntil !== undefined) return L(s.id.endsWith('-verse') ? COLLA_TEXT.verse : COLLA_TEXT.instr);
     if (s.rubato) return L(SONG_INSTR.rubato);
     if (s.read) return L(s.read === 'lead' ? SONG_INSTR.readLead : SONG_INSTR.readBand);
     if (s.embellish) return L(SONG_INSTR.embellish);
@@ -277,11 +285,12 @@ export function TimedSession({ t, settings, range, level, items, onExit, onProgr
       ) : (
         shownNotes && shownNotes.length > 0 && <SingRoll notes={shownNotes} frames={frames} now={busy || phase === 'result' ? now : 0} />
       )}
-      {phase === 'count' && <p className="vocal-cue vib">{item.time?.call ? L(VT.listenCall) : item.song?.rubato ? L(VT.rubatoGo) : L(VT.countIn)}</p>}
+      {phase === 'count' && <p className="vocal-cue vib">{item.time?.call ? L(VT.listenCall) : item.song?.rubato || item.song?.freeUntil !== undefined ? L(VT.rubatoGo) : L(VT.countIn)}</p>}
       {phase === 'singing' && item.time?.call && <p className="vocal-cue">{beatNow >= (item.time.answerAt ?? 8) ? L(VT.yourTurn) : L(VT.listenCall)}</p>}
       {phase === 'singing' && item.scat?.mode === 'motif' && <p className="vocal-cue">{beatNow >= MOTIF_ANSWER_AT ? L(VT.yourTurn) : L(VT.motifListen)}</p>}
       {phase === 'singing' && item.scat?.mode === 'trade' && <p className="vocal-cue" data-trade-turn={scatTurns(item).find((x) => beatNow >= x.from && beatNow < x.to)?.who ?? ''}>{scatTurns(item).find((x) => beatNow >= x.from && beatNow < x.to)?.who === 'you' ? L(VT.yourTurn) : L(VT.appTurn)}</p>}
       {phase === 'singing' && item.song?.rubato && <p className="vocal-cue">{L(VT.singing)}</p>}
+      {phase === 'singing' && item.song?.freeUntil !== undefined && <p className={`vocal-cue ${colla === 'count' ? 'vib' : ''}`} data-colla={colla ?? 'free'}>{L(COLLA_TEXT[colla ?? 'free'])}</p>}
 
       {phase === 'result' && take && (
         <section className="take-card vt-result" aria-live="polite">
@@ -330,7 +339,7 @@ export function TimedSession({ t, settings, range, level, items, onExit, onProgr
           </span>
         </label>
       )}
-      {item.kind === 'song' && item.song?.band && headphones && !item.song.recital && !item.song.read && !item.song.rubato && !item.song.mine && (
+      {item.kind === 'song' && item.song?.band && headphones && !item.song.recital && !item.song.read && !item.song.rubato && !item.song.mine && item.song.freeUntil === undefined && (
         <label className="toggle-row vt-hp">
           <input type="checkbox" checked={guide} disabled={busy} onChange={(e) => setGuide(e.target.checked)} />
           <span>{L(VT.guide)}</span>
@@ -352,7 +361,7 @@ export function TimedSession({ t, settings, range, level, items, onExit, onProgr
         {phase === 'result' && take && (
           <>
             {/* Songs: loop the weakest phrase slower, then at full tempo, then the whole song again (piece-coach ladder). */}
-            {take.song && !item.song?.recital && !item.song?.rubato && !item.song?.mine && !loop && weak && weak.score < need && plan && plan.phrases.length > 1 && (
+            {take.song && !item.song?.recital && !item.song?.rubato && !item.song?.mine && item.song?.freeUntil === undefined && !loop && weak && weak.score < need && plan && plan.phrases.length > 1 && (
               <button className="btn ghost" onClick={() => (setLoop({ phrase: weak.i, scale: 0.9 }), setPhase('ready'))}>
                 ↻ {fill(L(VT.loopWeak), { n: weak.i + 1 })}
               </button>
@@ -422,6 +431,8 @@ export async function captureTimed(a: {
   onClock: (zeroPerfMs: number, beatSec: number) => void;
   /** F13 L8: the singer's recording (played instead of the band). */
   mine?: AudioBuffer | null;
+  /** P3 colla voce then in time: the take's stage as it changes (free → the band's count-in → in time). */
+  onCue?: (c: 'free' | 'count' | 'tempo') => void;
 }): Promise<{ frames: SungFrame[]; take: Take } | null> {
   const { item, plan, span, range, tonicPc, settings, headphones } = a;
   // An inner signal: the follower (colla voce) ends the take itself when the last note is reached.
@@ -442,6 +453,8 @@ export async function captureTimed(a: {
   let length = 0;
   let gatePitches: number[] = [];
   let beat = 0.5;
+  /** P3 colla voce then in time: the downbeat where the band came back in (take clock, s). */
+  let rejoin: number | null = null;
   if (item.kind === 'time' && item.time) {
     const ts = item.time;
     beat = 60 / ts.bpm;
@@ -458,6 +471,59 @@ export async function captureTimed(a: {
   } else if (item.kind === 'song' && plan && span && item.song?.mine) {
     beat = plan.beat;
     length = Math.min(a.mine?.duration ?? 60, 75) + 0.6;
+  } else if (item.kind === 'song' && plan && span && item.song?.freeUntil !== undefined) {
+    // P3, colla voce then in time: the band follows the singer through the free phrases — its groove stretched to the
+    // singer's pace, note by note — holds the last free chord, counts one bar and comes back in, in the song's groove.
+    const m = plan.meter;
+    const { split, free, lastBeats } = collaParts(plan, span.from, span.to, item.song.freeUntil);
+    beat = plan.beat;
+    lead = 1.2;
+    const fb = free.map((n) => n.start / plan.beat - span.from * m);
+    const barsText = (a0: number, b0: number) => {
+      const bs = plan.chartBars.slice(a0, b0 + 1);
+      if (bs[0] === '%' || !bs[0]) bs[0] = plan.chartBars.slice(0, a0 + 1).reverse().find((b) => b && b !== '%') ?? 'C';
+      return bs.join(' | ');
+    };
+    // The free bars' groove on beats (a soft ballad comp, brushes), stretched live.
+    const fg = chartBacking(parseChart(barsText(span.from, split - 1), m), 'ballad', plan.bpm, 1, m, { countIn: false });
+    const groove = fg.events.map((ev) => ({ beat: ev.start / plan.beat, ev: { ...ev, velocity: ev.velocity * 0.8 } }));
+    // The tempo section: a count-in bar, then the bars in the song's own groove.
+    const tb = chartBacking(parseChart(barsText(split, span.to), m), plan.song.style, plan.bpm, 1, m, { countIn: true });
+    const tempoLen = (span.to - split + 1) * m * plan.beat;
+    events = [{ midi: free[0].midi, start: 0, duration: 0.9, velocity: 0.6 }, ...padAt(plan, span.from, 1.0, 2.4)];
+    length = free.reduce((x, n) => x + n.dur, 0) * 2 + 8 + (Math.max(1, lastBeats) + m) * plan.beat + tempoLen + 1.5;
+    gatePitches = [...new Set([...fg.events, ...tb.events].filter((e) => !e.perc).map((e) => e.midi).concat(plan.chartBars.flatMap((_, b) => padAt(plan, b, 0, 1).map((e) => e.midi))))];
+    const fw = new Follower(free.map((n) => n.midi));
+    let spb = plan.beat;
+    let prev: { t: number; b: number } | null = null;
+    let seg: AbortController | null = null;
+    signal.addEventListener('abort', () => seg?.abort());
+    a.onCue?.('free');
+    live = (f) => {
+      const k = fw.push(f);
+      if (k !== null) {
+        const t = fw.matched[fw.matched.length - 1].t;
+        if (prev && fb[k] > prev.b) spb = paceOf(spb, t - prev.t, fb[k] - prev.b, plan.beat);
+        prev = { t, b: fb[k] };
+        const clockNow = (piano.heardTime((piano.audioNow() ?? 0) + 0.06) - zero) / 1000;
+        seg?.abort();
+        seg = new AbortController();
+        const last = k >= free.length - 1;
+        // The last free note: the chord is held (a fermata) while the singer holds the note.
+        const raw = last ? padAt(plan, free[k].bar, 0, (Math.max(1, lastBeats) + m) * plan.beat + 0.4) : stretchSegment(groove, fb[k], fb[k + 1], spb, plan.beat, t - clockNow);
+        // The note began a moment ago (it is recognised after a few frames): what was due then sounds now.
+        const evs = raw.filter((e) => e.start > -0.25).map((e) => (e.start < 0 ? { ...e, start: 0 } : e));
+        if (evs.length) void piano.play(evs, Math.max(...evs.map((e) => e.start + e.duration)) + 0.3, seg.signal).catch(() => {});
+        if (last && rejoin === null) {
+          const rj = rejoinAt(t, lastBeats, plan.beat, m);
+          rejoin = rj.downbeat;
+          void piano.play(tb.events.map((e) => ({ ...e, start: e.start + rj.count - clockNow })).filter((e) => e.start >= 0), rj.count - clockNow + tb.length + 0.5, signal).catch(() => {});
+          setTimeout(() => !signal.aborted && a.onCue?.('count'), Math.max(0, (rj.count - clockNow) * 1000));
+          setTimeout(() => !signal.aborted && a.onCue?.('tempo'), Math.max(0, (rj.downbeat - clockNow) * 1000));
+        }
+      }
+      if (rejoin !== null && f.t > rejoin + tempoLen + 0.8) endTake();
+    };
   } else if (item.kind === 'song' && plan && span && item.song?.rubato) {
     // Colla voce: the first note and the first chord, then the band waits for the singer (no count-in, no clock).
     const sel = plan.notes.filter((n) => n.bar >= span.from && n.bar <= span.to);
@@ -524,7 +590,11 @@ export async function captureTimed(a: {
   if (SIMULATED) {
     zero = performance.now() + 400;
     a.onClock(zero, beat);
-    got = simulate(item, plan, span, range, tonicPc);
+    if (item.kind === 'song' && plan && span && item.song?.freeUntil !== undefined) {
+      const sc = simulateColla(item, plan, span);
+      got = sc.frames;
+      rejoin = sc.rejoin;
+    } else got = simulate(item, plan, span, range, tonicPc);
     await new Promise((r) => setTimeout(r, 1200));
   } else {
     let started: () => void = () => {};
@@ -590,6 +660,9 @@ export async function captureTimed(a: {
   if (item.kind === 'time') {
     const res = gradeTime(item, voiceOnsets(got));
     take = { grade: res.grade, feel: res.feel, swing: res.swing };
+  } else if (item.kind === 'song' && plan && span && item.song?.freeUntil !== undefined) {
+    const res = gradeCollaSong(item, got, plan, span.from, span.to, rejoin);
+    take = { grade: res.grade, song: res.song, follow: res.follow, reentry: res.reentry, feel: res.song.feel };
   } else if (item.kind === 'song' && plan && span && item.song?.rubato) {
     const res = gradeRubatoSong(item, got, plan, span.from, span.to);
     take = { grade: res.grade, song: res.song, follow: res.follow };
@@ -672,6 +745,7 @@ function FeelLine({ take, item, lang }: { take: Take; item: VocalItem; lang: Lan
   if (take.kinds) lines.push(take.kinds.length ? fill(L(VT.motifKinds), { k: take.kinds.map((k) => L(MOTIF_KIND_NAMES[k] ?? { en: k, he: k })).join(', ') }) : L(VT.motifNone));
   if (take.turns) lines.push(fill(L(VT.turnsLine), { n: take.turns.join(' · ') }));
   if (take.follow !== undefined) lines.push(fill(L(VT.followLine), { p: Math.round(take.follow * 100) }));
+  if (take.reentry !== undefined) lines.push(take.reentry === null ? L(COLLA_TEXT.missed) : fill(L(COLLA_TEXT.back), { ms: Math.abs(Math.round(take.reentry * 1000)), dir: take.reentry >= 0 ? L(VT.late) : L(VT.early) }));
   if (take.falls) lines.push(fill(L(VT.fallsLine), { k: take.falls.falls, n: take.falls.phrases }));
   return lines.length ? (
     <p className="take-remark">
@@ -728,6 +802,12 @@ function simulate(item: VocalItem, plan: SongPlan | null, span: { from: number; 
     return synthLine(notes);
   }
   return [];
+}
+
+/** P3 colla voce then in time (the simulator): the free notes a little slower than written, then back on the bar. */
+function simulateColla(item: VocalItem, plan: SongPlan, span: { from: number; to: number }) {
+  const { free, tempo, lastBeats } = collaParts(plan, span.from, span.to, item.song!.freeUntil!);
+  return synthColla(free.map((n) => ({ midi: n.midi, secs: n.dur * 1.15 })), tempo, lastBeats, plan.beat, plan.meter);
 }
 
 /** A sustained chord of one bar (colla voce): the chart's first chord in the bar, mid register, with a bass root. */

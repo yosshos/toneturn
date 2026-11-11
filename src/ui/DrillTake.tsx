@@ -642,6 +642,12 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
           {drums ? (drill.band ? (lang === 'he' ? 'להקה באוזניות · להחליף לקליק' : 'Band in headphones · switch to the click') : lang === 'he' ? 'תופים באוזניות · להחליף לקליק' : 'Drums in headphones · switch to the click') : lang === 'he' ? 'קליק ברמקול · יש לי אוזניות' : 'Click on the speaker · I have headphones'}
         </button>
       )}
+      {phase === 'ready' && drill.goal.free && drill.band && !drums && !askDrums && !drumBlocked && (
+        // Trading (PIANO_JAZZ P2 / guitar g-impro 7): by mic on a speaker the band stays out under your bars — say why.
+        <p className="field-hint" data-trade-silent="1">
+          {lang === 'he' ? 'בתיבות שלכם הלהקה שותקת, כדי שהמיקרופון ישמע רק אתכם. עם אוזניות או MIDI היא מלווה אתכם.' : 'The band lays out under your bars so the mic hears only you. With headphones or MIDI it comps for you.'}
+        </p>
+      )}
       {phase === 'ready' && askDrums ? (
         // B5: the headphones gate — where the sound goes, so the mic hears only the player's instrument. Not a pass of anything.
         <div className="drums-gate" data-drums-gate="1">

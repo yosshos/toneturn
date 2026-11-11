@@ -4057,6 +4057,18 @@ function genTrade(s: DrillSpec): Drill {
     beats: 64,
     show: 'none',
     chart: chartOf(bars, key),
+    // PIANO_JAZZ P2: under your bars the band comps (bass and comping) and the drums keep swinging — heard only with
+    // MIDI or headphones (DrillTake); by microphone on a speaker it stays out there, so the mic hears only you. In its
+    // own bars the band's phrase and shells (listen) already sound, so the comping rests there.
+    band: {
+      style: 'swing',
+      bass: true,
+      rests: [
+        [0, 16],
+        [32, 48],
+      ],
+    },
+    drums: { groove: 'swing' },
     listen: {
       notes: listen,
       windows: [
