@@ -392,6 +392,34 @@ export const GAME_TIERS: Record<string, GameTierSpec> = {
       ff: { label: L('Three bands, ♩100', 'שלוש עוצמות, ♩100'), params: { bpm: 100 }, target: 80 },
     },
   },
+  // Rudiment Rush (rudimentRush.ts): two clean bars a round, faster after every pass; sticking graded in two zones.
+  'rudiment-rush': {
+    game: 'rudiment-rush',
+    source: () => 'instrument/drum-tech',
+    clear: 'accuracy',
+    tiers: {
+      pp: { label: L('Singles and doubles in 8ths, ♩60 up', 'בודדות וכפולות בשמיניות, מ־♩60'), params: { bpm: 60 }, target: 80 },
+      p: { label: L('16ths and the paradiddle, ♩66 up', 'שש־עשריות ופאראדידל, מ־♩66'), params: { bpm: 66 }, target: 80 },
+      mp: { label: L('Paradiddle family, ♩70 up', 'משפחת הפאראדידל, מ־♩70'), params: { bpm: 70 }, target: 80 },
+      mf: { label: L('Triplet diddles, 5- and 6-stroke rolls', 'דידלים בטריולות, גלגולי 5 ו־6'), params: { bpm: 72 }, target: 80 },
+      f: { label: L('7- and 9-stroke rolls, triple paradiddle', 'גלגולי 7 ו־9, פאראדידל משולש'), params: { bpm: 80 }, target: 80 },
+      ff: { label: L('Mixed, ♩90 up', 'מעורב, מ־♩90'), params: { bpm: 90 }, target: 80 },
+    },
+  },
+  // Groove-off (grooveOff.ts): the drum duel. Its tier is the challenger's drum level from the ladder (in the seed).
+  'groove-off': {
+    game: 'groove-off',
+    source: () => 'instrument/drum-tech',
+    clear: 'social',
+    tiers: {
+      pp: { label: L('Rock grooves', 'גרובי רוק'), target: 80 },
+      p: { label: L('Rock, funk, the shuffle', 'רוק, פאנק, שאפל'), target: 80 },
+      mp: { label: L('Funk, shuffle, maqsum, bossa', 'פאנק, שאפל, מקסום, בוסה'), target: 80 },
+      mf: { label: L('16th funk, samba, clave, jazz ride', 'פאנק בשש־עשריות, סמבה, קלאבה, רייד ג׳אז'), target: 80 },
+      f: { label: L('Barks, cascara, jazz, wahda', 'פתיחות, קסקרה, ג׳אז, וחדה'), target: 80 },
+      ff: { label: L('Go-go, bembé, baião, 9/8', 'גו־גו, במבה, באיון, 9/8'), target: 80 },
+    },
+  },
 };
 
 // ---------------------------------------------------------------- advanced games (P2 rest + P3, 0.70)

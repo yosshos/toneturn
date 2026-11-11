@@ -85,12 +85,32 @@ Bass plan item E6 (transcribe from your own recording) is covered (docs/research
 
 - No chord extraction from the recording (only beat, melody, bass line); keys / guitar are checked against the melody,
   not against chords or comping.
-- Meter is assumed to be 4 for sections (no downbeat detection); the beat grid itself does not need it.
+- Meter: only 3/4 is told apart (below); everything else is assumed to be 4 for sections (no 6/8, 5/4, 7/8; a
+  6/8 tracked on the dotted quarter reads as 2-beat groups and gets 4-beat sections).
 - Pitch on a full band mix is often unconfident — then timing only, and the screen says so.
 - Polyphonic playing is heard monophonically (the strongest pitch); chords played on keys / guitar are judged by
   timing and their top pitch.
 - Not verified on a real phone with real songs: timing calibration, the output latency of Bluetooth headphones, the
   analysis time of a long file on an older phone (≈ 240 s analysed, yields every few hundred frames).
-- No "write it as degrees" step in the ear version (play / sing back only).
+- The degrees are named from a major key (the key finder is a major-profile match): a minor song is written in its
+  relative major's degrees (6 = the minor tonic).
+- 3/4 detection is verified on synthetic recordings only (a kick-on-1 waltz; rock and click tracks stay 4), not on
+  real songs. It is deliberately strict: when unsure the sections stay four bars of four, as before.
+
+## 7. Added 2026-11-11 (second pass)
+
+- **Write it as degrees (ear / jazz).** After a phrase is played or sung back, "Write it" opens the transcription
+  coach's degrees step on the same screen: the key ("Key: F major"), one slot per note, the 12-degree pad (1 … 7 with
+  ♭ / ♯), Undo, Check — graded note by note with `gradeDegrees`, the right degree shown under each wrong one. The
+  phrase's take then carries the writing: the coach's stars (`phraseStars`: 3 = played back clean and written right)
+  and score 0.6 playback + 0.4 written (`phraseTake(…, written)`), replacing that phrase's play-back take in the session
+  (so XP, the dictation rating and the song's score include it). Listen stays available; Next / Again after the check.
+- **3/4 sections.** The beat grid now looks at the accents (`beatAccents`: low-band ≲ 200 Hz onset after each beat +
+  half the broadband onset; `meterOf`: the accent autocorrelation at 3 beats must beat 2 and 4 beats by a margin, and
+  6 beats must agree; at least 18 beats; only on a confident beat). A clear waltz gets `meter: 3` and its `downbeat`,
+  and its sections are four bars of three (eight above 150 BPM) from the downbeat; the play-along shows "· 3/4" next to
+  the tempo. `ANALYSIS_VERSION` 2: stored songs are analysed again on open. Tests in tests/beatTrack.test.ts and
+  tests/mySong.test.ts.
+- The degrees step and the 3/4 label have no e2e yet (unit-tested; Playwright not run on that pass).
 - E2E: e2e/mysong.spec.ts (keys / drums with a synthetic WAV and Chrome's fake microphone, the guitar tile, rename /
   delete, ear in the simulator) and voiceP2's 1308 test pass at 390 × 844 without scrolling.

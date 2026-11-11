@@ -12,7 +12,7 @@ import { VOICE_NOTE } from '../src/engine/drumKit';
 
 const FAMS = drumFamilies();
 // DRUMS P2 (drumMore.ts) added the rest of the curriculum: strokes 8, rolls 10, diddles 10, time 9, rock 9, fills 8, read 11, funk 8, shuffle 8, indep 8, feet 8.
-const V1: Record<string, number> = { 'd-strokes': 8, 'd-rolls': 10, 'd-diddles': 10, 'd-time': 9, 'd-rock': 9, 'd-fills': 8, 'd-read': 11, 'd-funk': 8, 'd-shuffle': 8, 'd-indep': 8, 'd-mideast': 9, 'd-feet': 8, 'd-ear': 8, 'd-jazz': 12, 'd-latin': 7, 'd-song': 8, 'd-prog': 10, 'd-count': 5, 'd-notation': 5, 'd-form': 5 };
+const V1: Record<string, number> = { 'd-strokes': 8, 'd-rolls': 10, 'd-diddles': 10, 'd-time': 9, 'd-rock': 9, 'd-fills': 8, 'd-read': 11, 'd-funk': 8, 'd-shuffle': 8, 'd-indep': 8, 'd-mideast': 9, 'd-feet': 8, 'd-ear': 8, 'd-jazz': 12, 'd-latin': 10, 'd-song': 8, 'd-prog': 10, 'd-count': 5, 'd-notation': 5, 'd-form': 5 };
 const HE = /[֐-׿]/;
 const allDrills = (): { lv: DrumLevelDef; d: Drill }[] => FAMS.flatMap((f) => f.levels.filter((lv) => lv.level < (MORE_FROM[f.id] ?? 99)).flatMap((lv) => levelDrills(lv, 'fifths-up').map((d) => ({ lv, d }))));
 

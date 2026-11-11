@@ -22,6 +22,7 @@ import { clickPlan, hasTimeline, staffLines, timeMapOf } from '../engine/drills/
 import { withProg } from '../engine/drills/progAnalyze';
 import { isDrumDrill } from '../engine/drills/events';
 import { analyzeDrumTake, drumLimbLine, type DrumTakeHit } from '../engine/drills/drumAnalyze';
+import { withChoke } from '../engine/drills/drumChoke';
 import { kitKind, VOICE_NOTE, type KitProfile } from '../engine/drumKit';
 import { acousticHits, acousticOk, acousticOnsets, drillAcousticVoices } from '../engine/drumAcoustic';
 import type { NoteEvent } from '../engine/lesson';
@@ -469,6 +470,14 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
           if (zero) drumHitsIn.push({ voice: h.voice, on: h.at - zero - cal.latencyMs, vel: h.vel, open: h.open, hat: h.hat });
         })
       : null;
+    // Crash chokes (drumChoke.ts): the kit's pressure messages, when it sends them.
+    const chokesIn: number[] = [];
+    const offChoke =
+      drumMidi && drill.goal.drum?.choke
+        ? midi.onChoke((_n, pressure, at) => {
+            if (zero && pressure >= 64) chokesIn.push(at - zero - cal.latencyMs);
+          })
+        : null;
     const offMidi = midi.onNote((m, on, at, vel) => {
       if (!zero) return;
       const t = at - zero - cal.latencyMs;
@@ -552,6 +561,7 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
       offMidi();
       offCC?.();
       offHit?.();
+      offChoke?.();
       micStop?.abort();
       if (drumMidi) midi.setOptions(prevMode);
     }
@@ -577,7 +587,8 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
       const inCall = (ms: number) => (drill.listen?.windows ?? []).some(([a, b]) => ms >= bms(a) - 40 && ms < bms(b) - 40);
       const hits: DrumTakeHit[] = drumMidi ? drumHitsIn : detectOnsets(frames, { refractoryMs: 35, ratio: 1.8 }).filter((p) => !drill.listen || !inCall(p.on)).map((p) => ({ voice: null, on: p.on, vel: p.vel }));
       const played: PlayedNote[] = hits.map((h) => ({ pitch: h.voice ? VOICE_NOTE[h.voice] : VOICE_NOTE.snare, on: h.on, off: null, vel: h.vel }));
-      return done(analyzeDrumTake(drill, bpm, hits, { kit, mic: !drumMidi }), played);
+      const dm = analyzeDrumTake(drill, bpm, hits, { kit, mic: !drumMidi });
+      return done(drumMidi ? withChoke(dm, drill, bpm, chokesIn) : dm, played);
     }
     if (guitar) {
       const heard = drill.listen ? frames.filter((f) => !inBand(f.t)) : frames;
@@ -631,6 +642,12 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
           {drums ? (drill.band ? (lang === 'he' ? 'להקה באוזניות · להחליף לקליק' : 'Band in headphones · switch to the click') : lang === 'he' ? 'תופים באוזניות · להחליף לקליק' : 'Drums in headphones · switch to the click') : lang === 'he' ? 'קליק ברמקול · יש לי אוזניות' : 'Click on the speaker · I have headphones'}
         </button>
       )}
+      {phase === 'ready' && drill.goal.free && drill.band && !drums && !askDrums && !drumBlocked && (
+        // Trading (PIANO_JAZZ P2 / guitar g-impro 7): by mic on a speaker the band stays out under your bars — say why.
+        <p className="field-hint" data-trade-silent="1">
+          {lang === 'he' ? 'בתיבות שלכם הלהקה שותקת, כדי שהמיקרופון ישמע רק אתכם. עם אוזניות או MIDI היא מלווה אתכם.' : 'The band lays out under your bars so the mic hears only you. With headphones or MIDI it comps for you.'}
+        </p>
+      )}
       {phase === 'ready' && askDrums ? (
         // B5: the headphones gate — where the sound goes, so the mic hears only the player's instrument. Not a pass of anything.
         <div className="drums-gate" data-drums-gate="1">
@@ -669,6 +686,11 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
           {voided && (
             <p className="kit-warn" data-drum-unsure="1">
               {voided[lang]} {lang === 'he' ? 'קרבו את המיקרופון לתופים, או כיילו שוב בכרטיס המערכת.' : 'Move the mic closer, or calibrate again on the kit card.'}
+            </p>
+          )}
+          {drill.drum?.teacherCheck && (
+            <p className="field-hint teacher-check" data-teacher-check="1">
+              {lang === 'he' ? 'התבנית עוד לא נבדקה בידי מורה.' : 'Pattern not yet teacher-checked.'}
             </p>
           )}
           <button className="btn mega" onClick={() => void start()} data-drill-play="1" disabled={drumBlocked || pianoBlocked}>

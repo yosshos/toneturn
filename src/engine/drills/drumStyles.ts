@@ -10,6 +10,7 @@ import type { Drill, DrillSpec, DrumGoal } from './types';
 import type { BandStyle } from '../band';
 import { bar, capToGroups, finish, gb, levelOfKind, rep, rnd, type DH, type Lanes } from './drums';
 import { generateJazzMore } from './drumJazz';
+import { generateLatinMore } from './drumLatin2';
 
 const t = (en: string, he: string) => ({ en, he });
 
@@ -160,6 +161,8 @@ const two = (l: Lanes, sub: number, bars: number): DH[] => rep(bars / 2, (k) => 
 export function generateLatin(s: DrillSpec): Drill {
   const op = s.option ?? 0;
   const lv = levelOfKind(s.kind);
+  // DRUMS_NICHE_PLAN §6.2 (owner 2026-11-11): mambo, songo, Mozambique — awaiting a teacher's check (drumLatin2.ts).
+  if (lv >= 8) return generateLatinMore(s);
   const fin = (hits: DH[], en: string, he: string, bpm: number, style: BandStyle | null = 'latin', goal: DrumGoal = {}) => finish(s, hits, { title: t(en, he), bpm, bars: 8, mic: false, goal, ...(style ? drumBand(style, 8) : {}) });
   switch (lv) {
     case 1: {

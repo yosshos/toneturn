@@ -14,7 +14,7 @@ import { piano, SIMULATED } from './services';
 import { LoopWave, SPEEDS, fmt, peaks } from './SlowDown';
 import { pitchCaptureFor } from './Flight';
 import { DrillTake } from './DrillTake';
-import { calOf, lickInstrumentOf } from './LickTrainer';
+import { calOf, lickInstrumentOf, Stars } from './LickTrainer';
 import { MS } from '../content/mySongText';
 import { analyseRecording, ANALYSIS_VERSION, beatsOk, demoSong, gradePlayAlong, measurePlan, melodyKey, mixDown, phraseOfMine, phraseTake, sessionResult, takeOnsets, timeStretch, transcribePhrases, type PlayAlongGrade, type SongAnalysis, type TakeLog } from '../engine/mySong';
 import { acousticOnsets } from '../engine/drumAcoustic';
@@ -22,6 +22,9 @@ import { segmentNotes } from '../engine/memory';
 import { bassPitchOpts } from '../engine/yin';
 import { inputLatency } from '../engine/latency';
 import { comparePhrase, heardOfPlayed, type PhraseResult } from '../engine/transcribe';
+import { DEGREE_NAMES, gradeDegrees, phraseStars } from '../engine/transcribe';
+import { keyName } from '../engine/drills/generate';
+import '../licks.css';
 import { lickDrill, lickFromPhrase } from '../engine/licks';
 import { clearMySession, cleanName, deviceSongStore, loadMySession, MAX_FILE_BYTES, MAX_SECONDS, memorySongStore, newSongId, roomFor, saveMySession, songName, storageEstimate, type MySession, type SongMeta, type SongStore, type StoredSong } from '../storage/mySongs';
 
@@ -495,6 +498,7 @@ function PlayAlong({ lang, settings, course, o, session, onSession, onFinish, on
         {analysis.beats && plan.timing && (
           <span dir="ltr" className="ms-bpm">
             {fill(L(MS.bpm), { bpm: Math.round(analysis.beats.bpm) })}
+            {analysis.beats.meter === 3 ? ` · ${L(MS.waltz)}` : ''}
           </span>
         )}
       </p>
@@ -594,8 +598,11 @@ function TranscribeMine({ lang, settings, course, o, session, onSession, onFinis
   const phrase0 = useMemo(() => (P ? phraseOfMine(P, key, bpm, `ms-${o.song.id}-${i}`) : null), [P, key, bpm, o.song.id, i]);
   const drill = useMemo(() => (phrase0 ? { ...lickDrill(lickFromPhrase(phrase0.id, phrase0.title, key, phrase0.notes, null), key, inst, { range: settings.voiceRange ?? null }), show: 'none' as const } : null), [phrase0, key, inst, settings.voiceRange]);
   const phrase = useMemo(() => (phrase0 && drill ? { ...phrase0, notes: drill.notes.map((n) => ({ midi: n.pitch, beat: n.beat, dur: n.dur })) } : null), [phrase0, drill]);
-  const [step, setStep] = useState<'hear' | 'back' | 'result'>('hear');
+  const [step, setStep] = useState<'hear' | 'back' | 'result' | 'write'>('hear');
   const [res, setRes] = useState<PhraseResult | null>(null);
+  // The degrees step (the transcription coach's): written degrees (semitones above the key) and their grade.
+  const [written, setWritten] = useState<number[]>([]);
+  const [grade, setGrade] = useState<ReturnType<typeof gradeDegrees> | null>(null);
   const [t, setT] = useState(P?.start ?? 0);
   const [playing, setPlaying] = useState(false);
   const [take, setTake] = useState(0);
@@ -634,6 +641,8 @@ function TranscribeMine({ lang, settings, course, o, session, onSession, onFinis
     stop();
     setRes(null);
     setStep('hear');
+    setWritten([]);
+    setGrade(null);
     const n = Math.max(0, Math.min(phrases.length - 1, k));
     setT(phrases[n].start);
     onSession({ ...session, section: n });
@@ -641,6 +650,8 @@ function TranscribeMine({ lang, settings, course, o, session, onSession, onFinis
   const done = (played: PlayedNote[]) => {
     const r = comparePhrase(phrase, heardOfPlayed(played), phrase.bpm);
     setRes(r);
+    setWritten([]);
+    setGrade(null);
     setStep('result');
     piano.cue(r.verdict === 'not' ? 'wrong' : 'correct');
     onSession({ ...session, takes: [...session.takes, phraseTake(i, phrase, r, speed, new Date().toISOString(), session.sessionId)] });
@@ -664,7 +675,7 @@ function TranscribeMine({ lang, settings, course, o, session, onSession, onFinis
           ›
         </button>
       </div>
-      {step !== 'back' && <Speeds speed={speed} lang={lang} onSpeed={(s) => (stop(), onSession({ ...session, speed: s }))} />}
+      {step !== 'back' && step !== 'write' && <Speeds speed={speed} lang={lang} onSpeed={(s) => (stop(), onSession({ ...session, speed: s }))} />}
       {step === 'back' && <DrillTake key={`${phrase.id}:${take}`} drill={drill} bpm={phrase.bpm} lang={lang} cal={calOf(settings)} drumsOk={settings.headphones} onDone={(_m, played) => done(played)} />}
       {step === 'result' && res && (
         <section className={`ms-result v-${res.verdict}`} data-ms-verdict={res.verdict} aria-live="polite">
@@ -680,7 +691,65 @@ function TranscribeMine({ lang, settings, course, o, session, onSession, onFinis
           <p className="ms-why">{res.why[lang]}</p>
         </section>
       )}
+      {step === 'write' && res && (
+        <section className="ms-write" data-ms-write={grade ? 'graded' : written.length}>
+          <p className="field-hint">
+            {L(MS.writeHow)} <span dir="ltr">{fill(L(MS.keyOf), { k: keyName(phrase.key, false) })}</span>
+          </p>
+          <ol className="tx-written" dir="ltr">
+            {phrase.notes.map((n, k) => (
+              <li key={k} className={grade ? (grade.marks[k] ? 'ok' : 'bad') : k === written.length ? 'now' : ''}>
+                {written[k] !== undefined ? DEGREE_NAMES[written[k]] : '·'}
+                {grade && !grade.marks[k] && <small> {DEGREE_NAMES[(((n.midi - phrase.key) % 12) + 12) % 12]}</small>}
+              </li>
+            ))}
+          </ol>
+          {!grade ? (
+            <div className="tx-pad" dir="ltr">
+              {DEGREE_NAMES.map((d, k) => (
+                <button key={d} className="tx-deg" onClick={() => written.length < phrase.notes.length && setWritten([...written, k])} data-ms-deg={k}>
+                  {d}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="ms-bars" data-ms-written={`${grade.ok}/${grade.total}`}>
+              {fill(L(MS.written), { ok: grade.ok, n: grade.total })} <Stars n={phraseStars(res, grade)} of={3} />
+            </p>
+          )}
+        </section>
+      )}
       <div className="ms-actions">
+        {step === 'write' && !grade && (
+          <>
+            <button className="btn ghost" disabled={!written.length} onClick={() => setWritten(written.slice(0, -1))}>
+              {L(MS.undo)}
+            </button>
+            <button
+              className="btn mega"
+              disabled={written.length < phrase.notes.length}
+              onClick={() => {
+                if (!res) return;
+                const g = gradeDegrees(phrase, written);
+                setGrade(g);
+                piano.cue(g.ok === g.total ? 'correct' : 'wrong');
+                // The phrase's take now carries the writing (the coach's stars and score): it replaces the play-back take.
+                const t0 = phraseTake(i, phrase, res, speed, new Date().toISOString(), session.sessionId, g);
+                const last = session.takes.length - 1;
+                const takes = last >= 0 && session.takes[last].section === i ? [...session.takes.slice(0, last), t0] : [...session.takes, t0];
+                onSession({ ...session, takes });
+              }}
+              data-ms-check="1"
+            >
+              {L(MS.check)}
+            </button>
+          </>
+        )}
+        {step === 'result' && (
+          <button className="btn ghost" onClick={() => (stop(), setStep('write'))} data-ms-to-write="1">
+            {L(MS.toWrite)}
+          </button>
+        )}
         {step !== 'back' &&
           (playing ? (
             <button className="btn ghost" onClick={stop}>
@@ -691,14 +760,14 @@ function TranscribeMine({ lang, settings, course, o, session, onSession, onFinis
               {L(MS.listen)}
             </button>
           ))}
-        {step === 'result' && i < phrases.length - 1 && (
+        {(step === 'result' || (step === 'write' && grade)) && i < phrases.length - 1 && (
           <button className="btn ghost" onClick={() => go(i + 1)} data-ms-next="1">
             {L(MS.next)}
           </button>
         )}
-        {step !== 'back' && (
+        {step !== 'back' && !(step === 'write' && !grade) && (
           <button className="btn mega" onClick={() => (stop(), setRes(null), setTake((k) => k + 1), setStep('back'))} data-ms-take="1">
-            {step === 'result' ? L(MS.again) : L(MS.singBack)}
+            {step === 'result' || step === 'write' ? L(MS.again) : L(MS.singBack)}
           </button>
         )}
         {step === 'back' && (

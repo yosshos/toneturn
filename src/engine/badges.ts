@@ -61,6 +61,8 @@ export interface BadgeInput {
   gameTiers?: GameTiers;
   /** Repertoire (SPEC-REPERTOIRE): standards learned per course (tiers 3–4) and advanced pieces learned (tier 4). */
   repertoire?: Partial<Record<CourseId, { standards: number; advanced: number }>>;
+  /** SPEC-COURSE-START: courses whose measured first win was recorded (Settings.courseStart, never for migrated players). */
+  firstWins?: CourseId[];
   /** Vocal levels passed (progress.vocal.passed): the voice course's family and milestone badges. */
   vocalPassed?: number[];
   technique?: {
@@ -438,7 +440,7 @@ const FAMILY_TITLES: Record<BadgeFamily, [string, string][]> = {
   'g-flamenco': [['Fan Opener', 'פותח המניפה'], ['Rasgueado Storm', 'סערת ראסגאדו'], ['Machine-Gun Fingers', 'אצבעות מקלע'], ['Thumb of Fire', 'אגודל של אש'], ['Duende Keeper', 'שומר הדואנדה']],
   'g-jazz': [['Shell Comper', 'מלווה בקונכיות'], ['Drop-2 Diver', 'צולל דרופ 2'], ['Drop-3 Explorer', 'חוקר דרופ 3'], ['Smooth Voice-Leader', 'מוביל קולות חלק'], ['Guide-Tone Tracker', 'גשש הצלילים המובילים'], ['Bass-Line Walker', 'מטייל קו הבס'], ['Chord-Melody Poet', 'משורר האקורד־מלודיה'], ['Standards Comper', 'מלווה הסטנדרטים'], ['Voice-Leading Ear', 'אוזן הובלת הקולות'], ['Chord-Melody Arranger', 'מעבד האקורד-מלודיה'], ['Rhythm-Changes Comper', 'מלווה הריתם צ׳יינג׳ס'], ['Solo Guitarist', 'גיטריסט סולו'], ['Whole-Chart Comper', 'מלווה של צורה שלמה']],
   'g-reading': [['First-Position Reader', 'קורא במצב ראשון'], ['Six-String Reader', 'קורא שישה מיתרים'], ['Position Shifter', 'מחליף מצבים'], ['Seventh-Fret Scholar', 'מלומד הסריג השביעי'], ['Twelfth-Fret Navigator', 'נווט הסריג ה־12'], ['Chart Reader', 'קורא הצ׳ארטים'], ['Two-Position Reader', 'קורא בשני מצבים'], ['Lead-Sheet Reader', 'קורא דפי התווים']],
-  'g-impro': [['Root Finder', 'מוצא השורשים'], ['Third Eye', 'העין השלישית'], ['Chord-Tone Painter', 'צייר צלילי האקורד'], ['Blues Storyteller', 'מספר סיפורי בלוז'], ['Chord-Scale Player', 'נגן סולם-אקורד'], ['Motif Developer', 'מפתח המוטיבים']],
+  'g-impro': [['Root Finder', 'מוצא השורשים'], ['Third Eye', 'העין השלישית'], ['Chord-Tone Painter', 'צייר צלילי האקורד'], ['Blues Storyteller', 'מספר סיפורי בלוז'], ['Chord-Scale Player', 'נגן סולם-אקורד'], ['Motif Developer', 'מפתח המוטיבים'], ['Trading Partner', 'שותף לחילופים']],
   // GUITAR_DEEPENING (2026-11-11): one serious title per new level.
   'g-ear': [['Tonic Finder', 'מוצא הטוניקה'], ['One-Bar Echo', 'הד של תיבה'], ['Two-Bar Echo', 'הד של שתי תיבות'], ['Rhythm Reader', 'קורא המקצב'], ['Riff Catcher', 'תופס הריפים'], ['Root Hearer', 'שומע היסודות'], ['Harmonic Ear', 'אוזן הרמונית'], ['Quality Judge', 'מזהה הסוגים'], ['Key Finder', 'מוצא הסולם'], ['Transcriber', 'המתמלל']],
   'g-harris': [['Sixth-Diminished Guitarist', 'גיטריסט שש-מוקטן'], ['Scale-of-Chords Player', 'נגן סולם האקורדים'], ['Half-Step Ruler', 'שליט חצי הטון'], ['Three-to-Nine Player', 'נגן שלוש עד תשע'], ['Enclosure Player', 'נגן הכיתורים'], ["Barry's Guitarist", 'הגיטריסט של בארי']],
@@ -841,7 +843,15 @@ const repBadges = (): Badge[] =>
     { ...sp(`rep:${c}:advanced`, '♪', 'diamond', `${COURSE_TIER_NAME[c].en}: advanced repertoire`, `${COURSE_TIER_NAME[c].he}: רפרטואר מתקדם`, 'Learn a piece from the Advanced tier.', 'ללמוד יצירה מהשלב המתקדם.', (x) => count(x.repertoire?.[c]?.advanced ?? 0, 1)), group: c },
   ]);
 
+// First session (SPEC-COURSE-START): per course, the measured first win of its taste lesson.
+const firstBadges = (): Badge[] =>
+  (Object.keys(COURSE_TIER_NAME) as CourseId[]).map((c) => ({
+    ...sp(`first:${c}`, '◆', 'bronze', `${COURSE_TIER_NAME[c].en}: first session`, `${COURSE_TIER_NAME[c].he}: שיעור ראשון`, 'Finish the first session of the course with a measured result.', 'לסיים את השיעור הראשון בקורס עם תוצאה מדודה.', (x) => count(x.firstWins?.includes(c) ? 1 : 0, 1)),
+    group: c,
+  }));
+
 const specialBadges: Badge[] = [
+  ...firstBadges(),
   ...tierBadges(),
   ...repBadges(),
   sp('hat-trick', '🎩', 'bronze', 'Hat Trick', 'שלושער', 'Practice 3 days in a row.', 'להתאמן 3 ימים ברצף.', (_x, d) => count(d.bestStreak, 3)),
@@ -908,6 +918,7 @@ export function badgeCourse(b: Pick<Badge, 'id' | 'cat' | 'group'>): { course: B
   switch (b.cat) {
     case 'special':
       // Per-course game-tier badges belong to their course.
+      if (b.id.startsWith('special:first:')) return { course: g as CourseId };
       if (b.id.startsWith('special:tierc:') || b.id.startsWith('special:rep:')) return { course: g as CourseId };
       return { course: 'general' };
     case 'season':

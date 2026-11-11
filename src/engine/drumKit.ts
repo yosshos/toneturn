@@ -83,6 +83,8 @@ export interface KitProfile {
    * soft / loud strokes left at the preset's defaults. The kit card offers the full setup to finish it.
    */
   quick?: boolean;
+  /** Rudiment Rush's two-zone sticking mode on this kit (rudimentRush.ts StickZones; absent = the setup's first). */
+  zones?: import('./rudimentRush').StickZones;
 }
 export const DEFAULT_KIT: KitProfile = { preset: 'gm', map: {} };
 

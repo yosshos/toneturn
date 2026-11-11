@@ -12,6 +12,7 @@ import { bandScore, finish, M, reachScore, UNCLEAR, type MetricScore, type TakeG
 import { motifReturns, developmentScore, tradeAnswer, type PNote, type Transform } from './improvPhrasing';
 import { improvReportBy } from './perform';
 import { voiceOnsets } from './voiceTime';
+import type { NoteEvent } from './lesson';
 
 const fold = (c: number) => ((((c + 600) % 1200) + 1200) % 1200) - 600;
 const voiced = (f: SungFrame) => !!f.hz && f.confidence >= 0.8 && f.hz > 55 && f.hz < 1400;
@@ -375,4 +376,72 @@ export function restAdvice(takes: RestTake[], now: Date): { minutes: number; tir
     tired = last - first >= 8;
   }
   return { minutes, tired, suggest: minutes >= 30 || tired };
+}
+
+// ---------------------------------------------------------------- F14 L6 / L9 (P3): back to the bar, a groove that stretches
+
+/**
+ * Where the band comes back in after a colla voce section: the singer's last free note is held for its written length
+ * (at least one beat) at the song's tempo, then the band counts one bar and the tempo section starts on the next
+ * downbeat. Times on the take's clock (s).
+ */
+export function rejoinAt(lastReach: number, lastBeats: number, beat: number, meter: number): { count: number; downbeat: number } {
+  const count = lastReach + Math.max(1, lastBeats) * beat;
+  return { count, downbeat: count + meter * beat };
+}
+
+/**
+ * The singer's pace (seconds per written beat) after a reached note: the time since the previous reached note over
+ * the written beats between them, kept within ½× to 2× the song's beat, smoothed half-and-half with the last pace.
+ */
+export function paceOf(prev: number, dt: number, dBeats: number, nominal: number): number {
+  if (!(dBeats > 0) || !(dt > 0)) return prev;
+  const raw = Math.max(nominal * 0.5, Math.min(nominal * 2, dt / dBeats));
+  return 0.5 * prev + 0.5 * raw;
+}
+
+/**
+ * One stretch of the band's groove (colla voce): the events whose beat lies in [from, to), placed from `at` seconds
+ * at the singer's pace `spb` (lengths scaled by the same factor) — the bass, the comping and the brushes wait for the
+ * singer's next note instead of a clock.
+ */
+export function stretchSegment(groove: { beat: number; ev: NoteEvent }[], from: number, to: number, spb: number, nominal: number, at: number): NoteEvent[] {
+  const k = spb / nominal;
+  return groove.filter((g) => g.beat >= from - 1e-6 && g.beat < to - 1e-6).map((g) => ({ ...g.ev, start: at + (g.beat - from) * spb, duration: Math.max(0.04, g.ev.duration * k) }));
+}
+
+/**
+ * Back on the bar (F14 L6 "returns to the bar"): of the sung onsets from one beat before the written re-entry to
+ * 1½ beats after it, the one closest to it — its offset in seconds (+ late); null when nothing starts there.
+ */
+export function reentryOffset(onsets: number[], written: number, beat: number): number | null {
+  const c = onsets.filter((t) => t >= written - beat && t <= written + 1.5 * beat);
+  if (!c.length) return null;
+  const best = c.reduce((a, t) => (Math.abs(t - written) < Math.abs(a - written) ? t : a));
+  return Math.round((best - written) * 1000) / 1000;
+}
+
+/**
+ * A colla voce section and then the tempo section (the simulator, tests): the free notes sung rubato, the band's
+ * rejoin found from the follower as live, then the tempo notes (start s from the rejoin downbeat) `late` seconds off.
+ */
+export function synthColla(free: { midi: number; secs: number }[], tempo: { midi: number; start: number; dur: number }[], lastBeats: number, beat: number, meter: number, o: { late?: number; cents?: number } = {}): { frames: SungFrame[]; rejoin: number } {
+  const a = synthRubato(free.map((x) => x.midi), free.map((x) => x.secs), { cents: o.cents });
+  const fw = new Follower(free.map((x) => x.midi));
+  for (const f of a) fw.push(f);
+  const last = fw.matched.length ? fw.matched[fw.matched.length - 1].t : a.length ? a[a.length - 1].t : 0;
+  const { count, downbeat } = rejoinAt(last, lastBeats, beat, meter);
+  const out = a.filter((f) => f.t < count);
+  const late = o.late ?? 0;
+  const end = tempo.length ? downbeat + late + tempo[tempo.length - 1].start + tempo[tempo.length - 1].dur + 0.3 : downbeat;
+  for (let t = count; t <= end; t += 0.01) {
+    const n = tempo.find((x) => t >= downbeat + late + x.start && t < downbeat + late + x.start + x.dur);
+    if (!n) {
+      out.push({ t, hz: null, confidence: 0, rms: 0.002 });
+      continue;
+    }
+    const dip = t - (downbeat + late + n.start) < 0.03;
+    out.push({ t, hz: midiToHz(n.midi + (o.cents ?? 0) / 100), confidence: dip ? 0.5 : 0.95, rms: dip ? 0.01 : 0.12 });
+  }
+  return { frames: out, rejoin: downbeat };
 }

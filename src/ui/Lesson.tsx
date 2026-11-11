@@ -42,7 +42,8 @@ import { isTimed } from '../engine/scoring';
 import { learnPace, loadPace } from '../storage/pace';
 import { paceBand, paceTarget } from '../engine/fluency';
 import { Burst, Keyboard, MicIcon, ModeSwitch, Note, PermissionPanel, withNote } from './bits';
-import { noteViewsOf } from './noteViewPref';
+import { courseInstrument, noteViewsOf } from './noteViewPref';
+import { StrumChoice } from './StrumChoice';
 import { Recap } from './Recap';
 import { RhythmStaff } from './RhythmStaff';
 import { buildPalette, CELLS, describe as describeRhythm, meterOf, onsetBeats, rhythmFromKey, rhythmKey, sameRhythm, totalBeats, type CellId, type Rhythm } from '../engine/rhythm';
@@ -550,6 +551,10 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
                 );
               })}
             </div>
+          )}
+          {showButtons && q.kind === 'choice' && q.strum && courseInstrument(settings) === 'guitar' && !settings.midiInput && (
+            // Song chords (GUITAR_DEEPENING): strum the answer; the buttons above stay as the fallback.
+            <StrumChoice q={q} lang={lang} disabled={!awaiting} onAnswer={(c) => ctrl.answer(c)} />
           )}
           {showKeypad && q.kind === 'name-seq' && (
             <NameKeypad key={`${v.index}-${v.session.turn}`} t={t} length={q.degrees.length} keys={q.choices.map(String)} lang={lang} nm={nm} disabled={!awaiting} onSubmit={(a) => ctrl.answer(a)} />
