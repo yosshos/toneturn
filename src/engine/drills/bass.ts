@@ -1202,7 +1202,7 @@ const FEEL_T: Record<Feel, T2> = { walk: tt('walking in 4', 'ווקינג באר
  * B13 / B18: standards for the walking levels — the changes from standards.ts (chord progressions only), each with the
  * tune's real key and the bass feel it calls for. The first four keep their option numbers (walk L11).
  */
-const BASS_STD: { id: string; key: number; minor?: boolean; feel: Feel }[] = [
+export const BASS_STD: { id: string; key: number; minor?: boolean; feel: Feel }[] = [
   { id: 'fly', key: 0, feel: 'walk' },
   { id: 'blue-bossa', key: 0, minor: true, feel: 'bossa' },
   { id: 'tune-up', key: 2, feel: 'walk' },
@@ -1243,6 +1243,11 @@ const BASS_STD: { id: string; key: number; minor?: boolean; feel: Feel }[] = [
 ];
 /** The first standards (walk L11, L13, L14); the rest are walk L18. */
 const STD_FIRST = 23;
+/** Repertoire (0.70): the standards the walk family can play, and the option / notes-per-beat of one (null when absent). */
+export function bassStandardSpec(id: string): { option: number; perBeat: number } | null {
+  const i = BASS_STD.findIndex((x) => x.id === id);
+  return i < 0 ? null : { option: i, perBeat: BASS_STD[i].feel === 'walk' ? 1 : 0.5 };
+}
 /** Options of BASS_STD by feel (catalogue). */
 const stdOps = (pred: (f: Feel, i: number) => boolean): number[] => BASS_STD.map((x, i) => (pred(x.feel, i) ? i : -1)).filter((i) => i >= 0);
 /** A bass line for a chart in a feel: walking (the band's rules), two-feel / ballad halves, or the bossa figure. */

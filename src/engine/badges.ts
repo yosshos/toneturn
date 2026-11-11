@@ -58,6 +58,8 @@ export interface BadgeInput {
   workoutDays?: string[];
   /** Game tiers (GAMES_TIERS_PLAN §5.2): the highest tier cleared per game. */
   gameTiers?: GameTiers;
+  /** Repertoire (SPEC-REPERTOIRE): standards learned per course (tiers 3–4) and advanced pieces learned (tier 4). */
+  repertoire?: Partial<Record<CourseId, { standards: number; advanced: number }>>;
   /** Vocal levels passed (progress.vocal.passed): the voice course's family and milestone badges. */
   vocalPassed?: number[];
   technique?: {
@@ -819,8 +821,17 @@ const tierBadges = (): Badge[] => [
   ),
 ];
 
+// Repertoire (SPEC-REPERTOIRE): per course, the first standard learned (never for simple tunes), five, an advanced piece.
+const repBadges = (): Badge[] =>
+  (Object.keys(COURSE_TIER_NAME) as CourseId[]).flatMap((c) => [
+    { ...sp(`rep:${c}:first-standard`, '♪', 'silver', `${COURSE_TIER_NAME[c].en}: first standard`, `${COURSE_TIER_NAME[c].he}: הסטנדרט הראשון`, 'Learn your first standard in the repertoire (80% or better).', 'ללמוד את הסטנדרט הראשון ברפרטואר (80% ומעלה).', (x) => count(x.repertoire?.[c]?.standards ?? 0, 1)), group: c },
+    { ...sp(`rep:${c}:five-standards`, '♪', 'gold', `${COURSE_TIER_NAME[c].en}: five standards`, `${COURSE_TIER_NAME[c].he}: חמישה סטנדרטים`, 'Learn five standards in the repertoire.', 'ללמוד חמישה סטנדרטים ברפרטואר.', (x) => count(x.repertoire?.[c]?.standards ?? 0, 5)), group: c },
+    { ...sp(`rep:${c}:advanced`, '♪', 'diamond', `${COURSE_TIER_NAME[c].en}: advanced repertoire`, `${COURSE_TIER_NAME[c].he}: רפרטואר מתקדם`, 'Learn a piece from the Advanced tier.', 'ללמוד יצירה מהשלב המתקדם.', (x) => count(x.repertoire?.[c]?.advanced ?? 0, 1)), group: c },
+  ]);
+
 const specialBadges: Badge[] = [
   ...tierBadges(),
+  ...repBadges(),
   sp('hat-trick', '🎩', 'bronze', 'Hat Trick', 'שלושער', 'Practice 3 days in a row.', 'להתאמן 3 ימים ברצף.', (_x, d) => count(d.bestStreak, 3)),
   sp('fortnight', '🔥', 'silver', 'Fortnight Fever', 'קדחת השבועיים', 'Practice 14 days in a row.', 'להתאמן 14 ימים ברצף.', (_x, d) => count(d.bestStreak, 14)),
   sp('half-century', '🎯', 'gold', 'Half-Century', 'חצי מאה', 'Practice 50 days in a row.', 'להתאמן 50 ימים ברצף.', (_x, d) => count(d.bestStreak, 50)),
@@ -885,7 +896,7 @@ export function badgeCourse(b: Pick<Badge, 'id' | 'cat' | 'group'>): { course: B
   switch (b.cat) {
     case 'special':
       // Per-course game-tier badges belong to their course.
-      if (b.id.startsWith('special:tierc:')) return { course: g as CourseId };
+      if (b.id.startsWith('special:tierc:') || b.id.startsWith('special:rep:')) return { course: g as CourseId };
       return { course: 'general' };
     case 'season':
       return { course: 'general' };

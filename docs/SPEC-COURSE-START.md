@@ -77,3 +77,64 @@ experience and a few real tries, and only then a level test.
 1. Self-report wording and whether "I play well" should open the level test right after the taste (recommended) or keep the path default.
 2. The personal goal: optional one tap (recommended) or skip for now.
 3. Day-1 daily-goal and reminder prompt: on the first win screen (recommended) or later.
+
+## Owner decisions (2026-11-11)
+All three recommendations approved: (1) "I play well" is offered the level test right after the taste lesson; (2) an
+optional one-tap personal goal; (3) the daily goal + reminder prompt on the first-win screen.
+
+## Implemented (2026-11-11)
+- **State** — `Settings.courseStart[course]` (`src/engine/courseStart.ts`): welcome + self-report, setup (done or
+  skipped), taste opened / done, the measured first win, win seen, level-offer snooze, personal goal. Pure stage machine
+  `stageOf` (welcome → setup → taste → win → done) and transitions; unit tests in `tests/courseStart.test.ts`.
+- **Migration** — `migrateCourseStart`: any course with progress (path facts or tests, a result carrying the course,
+  results from before courses = ear, technique items of the course's families, vocal levels) and no start state is
+  marked `legacy` once settings and progress load: those players never see the welcome. A course with a start state is
+  never touched.
+- **Onboarding** — the level and "how to begin" steps are gone; after the course grid the first course opens its
+  welcome card (route `coursestart`). Its self-report also sets the quick questionnaire's level (New 0 / A bit 1 /
+  Well 2). No placement opens automatically. The full questionnaire's explicit "Find my level" opens the course's own test.
+- **Welcome card** — the course's promise, the destination ladder (4 rungs per course), Toni, "Where are you?"
+  (New to this / I play-sing-know a bit / I play-sing-know it well).
+- **Setup as a musical moment** (`src/ui/CourseStart.tsx`): keys — play any key (MIDI or the microphone), a chord
+  answers; guitar / bass — pluck the low string, the note and a cents needle, a power chord answers; voice — sing any
+  note, Toni echoes it; ear / jazz — a ii–V–I sound check, then headphones or speaker (saved as `headphones`); drums — the
+  kit wizard (`KitSetup`). Always skippable; skipped when already checked (MIDI on, kit done, range set, headphones
+  answered, or the same check done in another course — ear and jazz share it).
+- **Taste lessons** (`src/engine/tasteLessons.ts`, table in `courseStart.ts`), 7 courses × 3 reports, generated with
+  existing engines and own material: question tastes from the topic generators and the basics' moments (tap over a
+  groove, echo a note, echo a 3-note phrase, public-domain songbook items); playing tastes are the first items of real
+  technique levels (cadences-1, voicings-6 in F, g-chords-2/4, g-jazz-4, b-time-1, b-chord-2, b-walk-3, d-rock-1,
+  d-fills-1, d-shuffle-2, d-funk-2) plus a 4-bar C–D–E–G melody for new pianists, each with the band engine under it
+  (style + chart + bass / drums where the drill had none). A practice pad by microphone gets the single-surface time drills.
+  Takes count on the ladder (drillItems), results go to history (streak, XP, league) as any session.
+- **Never lose progress** — question tastes save after every answer (`taste:<course>` slot) and resume; an abandoned
+  playing taste keeps "Continue: <taste>" on Home and Path; the welcome / setup / win route survives a reload.
+- **First win** — Toni, "First session done", the measured line (questions: right first time / total; playing: bars with
+  the band · clean takes · best note accuracy), a "First session" medal (drawn, no emoji), XP, streak day; then the
+  three choices with one highlighted by the report (Continue the path for New / A bit, Find my level first for Well),
+  the daily goal sheet (5 / 10 / 15 / 25 min = 10 / 20 / 30 / 50 XP, reminder hour, push when signed in), and the
+  optional personal goal (two per course, N path steps in W weeks; the Path header shows its progress).
+- **Home / Path** — while a course has not started, Home shows its hero ("Start the course" → "Start: <taste>" →
+  "Continue: <taste>" → "See your first result") with Find my level second for "well"; the answer-mode switch stays
+  under it (and, for the ear course before its welcome is answered, "Or start from lesson 1"). The Path shows a compact
+  hero on top. Adding / switching to a never-played course opens its welcome card.
+- **Level-test offer** — card on Home and Path after the first session for "well", after session 3 for the rest; "Not
+  now" hides it for 3 days; gone once the course's test (placement / playing test / technique start levels) is taken.
+  The old "Already playing?" technique card on the Path is kept only for migrated players.
+- **Sessions 2–3** — a first-week card on Home offers the current unit's probe steps (one per skill, at most two; else
+  the current step), as normal path steps.
+- **Path header** — the personal goal's progress, else "Next goal: <next rung>" of the ladder.
+- **Tests** — `tests/courseStart.test.ts` (stage machine, setup skipping, migration, timing, probes, goals, every taste
+  builds; the band plays under every playing taste; the F-blues chart matches the shells); `e2e/coursestart.spec.ts`
+  (ear end to end with the win, daily goal and personal goal; "well" highlights Find my level; keys / guitar / drums /
+  voice / jazz up to the taste and its "Continue"; a second course with setup skipped). Onboarding, drums, app, skills
+  and intake e2e specs updated for the new first run.
+
+### Not built / left for later
+- The day-3 "real music moment" (a full chorus with the band) and Toni on it.
+- Jazz "A bit / Well" tastes are listening tastes (guide tones, comping, changes, forms); trading 2s needs an instrument
+  and stays in the jazz piano path.
+- The "First session" mark is a screen medal, not a catalogue badge (the badge catalogue is shared with other work).
+- The echo-phrase prompt ("Listen, then sing it back.") is a new spoken line; it is not in public/voice yet.
+- Drums setup reuses the full kit wizard (no shorter form yet); playing tastes were verified up to the take screen in
+  e2e (a full take needs a real instrument or the fake-MIDI harness of drums/keys specs).

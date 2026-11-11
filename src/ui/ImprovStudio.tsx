@@ -13,6 +13,7 @@ import { midi } from '../speech/midi';
 import { piano } from './services';
 import { ChallengeList } from './ImprovRules';
 import { STANDARD_CHANGES } from '../engine/standards';
+import { ListenOriginal } from './ListenOriginal';
 import type { MyChart } from './Charts';
 import { UseIt, lickInstrumentOf } from './LickTrainer';
 import { lickById } from '../engine/licks';
@@ -270,6 +271,7 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed }
               )}
             </select>
           </label>
+          {src.startsWith('std:') && <ListenOriginal id={src.slice(4)} lang={lang} />}
           <ChallengeList
             best={settings.challengeBest}
             lang={lang}
@@ -282,7 +284,7 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed }
               }
               if (kind === 'std') {
                 const s = STANDARD_CHANGES.find((x) => x.id === key) ?? STANDARD_CHANGES[0];
-                return onOpenChart({ id, title: `${s.name} — ${ch.title[lang]}`, text: s.text, style: s.style, bpm: s.bpm, rules: ch.rules });
+                return onOpenChart({ id, title: `${s.name} — ${ch.title[lang]}`, text: s.text, style: s.style, bpm: s.bpm, rules: ch.rules, std: s.id });
               }
               const L = IMPROV_LEVELS.find((x) => String(x.n) === key) ?? IMPROV_LEVELS[0];
               onOpenChart({ id, title: `${L.title[lang]} — ${ch.title[lang]}`, text: L.text, style: L.style, bpm: L.bpm, rules: ch.rules, level: L.id });

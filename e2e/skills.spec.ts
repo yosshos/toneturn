@@ -14,9 +14,10 @@ test.describe('placement, Skill Map, review, weekly puzzle', () => {
 
   test('placement adapts, then the Skill Map shows measured skills and a recommendation; review appears', async ({ page }) => {
     await page.goto('/?sim=1');
-    // First visit: finding your level is the default step.
-    await expect(page.getByRole('heading', { name: 'Let’s find your level' })).toBeVisible();
-    await page.locator('.first-run-cta').click();
+    // SPEC-COURSE-START: the first visit starts the course; Find my level stays one tap away on the path.
+    await expect(page.locator('[data-course-hero]')).toBeVisible();
+    await page.locator('.tab[data-tab="path"]').click();
+    await page.getByRole('button', { name: 'Find my level' }).last().click();
     await page.getByRole('button', { name: 'Use my voice & start' }).click();
     await expect(page.locator('.intro-card')).toHaveCount(0); // no intro for placement
     // Rhythm reading item: tap whatever rhythm is shown, on time (the simulator has no hands).

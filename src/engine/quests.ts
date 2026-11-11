@@ -3,6 +3,7 @@
 
 import type { CourseId } from './courses';
 import type { RatingEvent } from './rating';
+import { parseRepLesson, repItem } from './repertoire';
 
 export interface Quest {
   id: string;
@@ -67,18 +68,21 @@ const POOL: Record<string, Make> = {
   // Licks & transcription (SPEC-LICKS-TRANSCRIPTION): measured takes only — clean lick takes, transcribed phrases.
   lick3: (d) => ({ id: 'lick3', title: { en: '3 clean lick takes', he: '3 ביצועים נקיים של ליקים' }, now: d.events.filter((e) => sameDay(e.at, d.day) && e.id.startsWith('g:lick:') && e.correct).length, target: 3, color: '#A78BFA', glyph: 'lick' }),
   tx2: (d) => ({ id: 'tx2', title: { en: 'Transcribe 2 phrases', he: 'לתמלל 2 משפטים' }, now: d.events.filter((e) => sameDay(e.at, d.day) && e.id.startsWith('g:tx:') && (e.score ?? 0) >= 0.7).length, target: 2, color: '#3AB8FF', glyph: 'transcribe' }),
+  // Repertoire (SPEC-REPERTOIRE): a piece of the course's repertoire, and one from Blues & progressions.
+  rep1: (d) => ({ id: 'rep1', title: { en: 'Practise a repertoire piece', he: 'להתאמן על יצירה מהרפרטואר' }, now: d.sessions.filter((s) => parseRepLesson(s)?.course === d.course).length, target: 1, color: '#12C9B4', glyph: 'scales' }),
+  rep2: (d) => ({ id: 'rep2', title: { en: 'A piece from Blues & progressions', he: 'יצירה מבלוז ומהלכים' }, now: d.sessions.filter((s) => { const r = parseRepLesson(s); return !!r && r.course === d.course && repItem(r.course, r.id)?.tier === 2; }).length, target: 1, color: '#A78BFA', glyph: 'scales' }),
   rhythm: (d) => ({ id: 'rhythm', title: d.course === 'drums' ? { en: 'Rhythm right 5 times', he: 'קצב נכון 5 פעמים' } : { en: '5 rhythm answers right', he: '5 תשובות קצב נכונות' }, now: d.events.filter((e) => sameDay(e.at, d.day) && e.set === undefined && (/rhythm|timing|tempo|meter/.test(e.skill) || (d.course === 'drums' && !!e.tags?.some((x) => /rhythm|timing/.test(x.skill)))) && (e.score ?? (e.correct ? 1 : 0)) >= 0.7).length, target: 5, color: '#FF5FA2', glyph: 'rhythm' }),
 };
 
 /** Which quests a course offers (first one rotates with the day). */
 const BY_COURSE: Record<CourseId, string[]> = {
-  ear: ['run10', 'steps2', 'rhythm', 'min10', 'tierPass2'],
-  jazz: ['harmony5', 'steps2', 'run10', 'min10', 'tierClear', 'lick3', 'tx2'],
-  voice: ['sing3', 'steps2', 'min10', 'tierPass2', 'tx2'],
-  keys: ['tech3', 'steps2', 'min10', 'lick3'],
-  guitar: ['tech3', 'steps2', 'min10', 'lick3'],
-  bass: ['tech3', 'steps2', 'min10', 'lick3'],
-  drums: ['tech3', 'rhythm', 'steps2', 'min10'],
+  ear: ['run10', 'steps2', 'rhythm', 'min10', 'tierPass2', 'rep1'],
+  jazz: ['harmony5', 'steps2', 'run10', 'min10', 'tierClear', 'rep2', 'lick3', 'tx2'],
+  voice: ['sing3', 'steps2', 'min10', 'tierPass2', 'rep1', 'tx2'],
+  keys: ['tech3', 'steps2', 'min10', 'rep1', 'rep2', 'lick3'],
+  guitar: ['tech3', 'steps2', 'min10', 'rep1', 'rep2'],
+  bass: ['tech3', 'steps2', 'min10', 'rep1', 'rep2', 'lick3'],
+  drums: ['tech3', 'rhythm', 'steps2', 'min10', 'rep1'],
 };
 
 /** The Ear course in exam-prep mode: the exam-topic quest every day, the other one rotates. */

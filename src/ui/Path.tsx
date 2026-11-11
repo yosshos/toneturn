@@ -241,6 +241,7 @@ export function PathView2({
   onLesson,
   extras,
   onTechTest,
+  top,
 }: {
   t: Strings;
   settings: Settings;
@@ -256,6 +257,8 @@ export function PathView2({
   extras?: React.ReactNode;
   /** An instrument course whose player never took the playing test (0.61): open it. */
   onTechTest?: () => void;
+  /** SPEC-COURSE-START: under the header — the course-start hero, the level-test offer, the goal line. */
+  top?: React.ReactNode;
 }) {
   const lang = settings.uiLang;
   const tx = TX[lang];
@@ -437,6 +440,7 @@ export function PathView2({
         </div>
       </header>
 
+      {top}
       {/* 0.66 (owner): the drums course is built for an e-kit by MIDI — said at the top until one is set up. */}
       {(settings.activeCourse ?? 'ear') === 'drums' && <KitNotice kit={settings.drumKit} lang={lang} className="path-kit-notice" />}
 

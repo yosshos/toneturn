@@ -5,9 +5,9 @@
 //   Splash   — the logo draws itself (the ear, the clef-7, the wave), the name fades in; tap to skip; reduced motion = still.
 //   Welcome  — one line of promise · Start · I already have an account.
 //   Taste    — two notes: which one was higher? (a first, real win before any question)
-//   3 questions — goal · instrument · starting point (everything else has sensible defaults; the full questionnaire stays
-//                 in Settings).
-//   Start    — Find my level (stop any time) or start from the beginning.
+//   Courses  — what to learn (everything else has sensible defaults; the full questionnaire stays in Settings).
+//   Then the first course starts (SPEC-COURSE-START, 2026-11-11): its welcome card asks "Where are you?" (that also sets
+//   the level here), the setup is a musical moment, a taste lesson, a measured first win — no level test before music.
 import { Toni } from './Toni';
 import { COURSES, courseOf, type CourseId } from '../engine/courses';
 import { KIT_NOTICE } from '../engine/drumKit';
@@ -121,16 +121,10 @@ const TX = {
   },
 };
 
-const LEVEL_OPTS: { v: Level4; en: string; he: string; en2: string; he2: string }[] = [
-  { v: 0, en: 'New to music', he: 'חדשים במוזיקה', en2: 'I love listening', he2: 'אוהבים להקשיב' },
-  { v: 1, en: 'I play or sing for fun', he: 'מנגנים או שרים להנאה', en2: 'No formal study', he2: 'בלי לימודים מסודרים' },
-  { v: 2, en: 'I have studied music', he: 'למדתי מוזיקה', en2: 'Lessons, theory, reading', he2: 'שיעורים, תיאוריה, קריאה' },
-  { v: 3, en: 'Professional / music student', he: 'מקצוענים / סטודנטים למוזיקה', en2: 'Skip the basics', he2: 'בלי הבסיס' },
-];
-
-type Step = 'welcome' | 'taste' | 'courses' | 'level' | 'start';
-// 0.61 (SPEC-COURSES): "goal" and "instrument" became one step — the courses. Level and start are for the first course.
-const ORDER: Step[] = ['welcome', 'taste', 'courses', 'level', 'start'];
+type Step = 'welcome' | 'taste' | 'courses';
+// 0.61 (SPEC-COURSES): "goal" and "instrument" became one step — the courses. SPEC-COURSE-START: the level and "how to
+// begin" moved into the first course's welcome card.
+const ORDER: Step[] = ['welcome', 'taste', 'courses'];
 
 /** The intake built from the three answers (the rest: defaults; the full questionnaire stays in Settings). */
 export function quickIntake(goal: Goal, inst: string, music: Level4): IntakeResult {
@@ -160,19 +154,25 @@ export function quickIntake(goal: Goal, inst: string, music: Level4): IntakeResu
   return { intake, patch };
 }
 
-export function Onboarding({ lang, onDone, onSignIn }: { lang: Lang; onDone: (r: IntakeResult, then: 'placement' | 'basics') => void; onSignIn: () => void }) {
+/** The intake for a set of courses at a music level: the goal follows the first course, the instrument the first
+ *  instrument course (onboarding, and the first course's self-report that refines the level). */
+export function onboardingIntake(picked: CourseId[], music: Level4): IntakeResult {
+  const first = picked[0] ?? 'ear';
+  const inst = picked.find((c) => c === 'keys' || c === 'guitar' || c === 'bass' || c === 'drums') ?? (picked.includes('voice') ? 'voice' : 'none');
+  return quickIntake(courseOf(first).goal, inst, music);
+}
+
+export function Onboarding({ lang, onDone, onSignIn }: { lang: Lang; onDone: (r: IntakeResult) => void; onSignIn: () => void }) {
   const tx = TX[lang];
   const [step, setStep] = useState<Step>('welcome');
   const [picked, setPicked] = useState<CourseId[]>([]);
   const first = picked[0] ?? 'ear';
-  const goal: Goal = courseOf(first).goal;
-  const inst = picked.find((c) => c === 'keys' || c === 'guitar' || c === 'bass' || c === 'drums') ?? (picked.includes('voice') ? 'voice' : 'none');
   const togglePick = (c: CourseId) => setPicked((p) => (p.includes(c) ? p.filter((x) => x !== c) : [...p, c]));
-  const finish = (then: 'placement' | 'basics') => {
-    const r = quickIntake(goal, inst, level ?? 0);
-    onDone({ ...r, patch: { ...r.patch, courses: picked.length ? picked : ['ear'], activeCourse: first } }, then);
+  // The first course starts with its welcome card; its "Where are you?" refines the level (0 until then).
+  const finish = () => {
+    const r = onboardingIntake(picked, 0);
+    onDone({ ...r, patch: { ...r.patch, courses: picked.length ? picked : ['ear'], activeCourse: first, courseStart: { [first]: { fromOnboarding: true } } } });
   };
-  const [level, setLevel] = useState<Level4 | null>(null);
   const [taste, setTaste] = useState<{ hi: 0 | 1; heard: boolean; said: 'right' | 'wrong' | null }>(() => ({ hi: Math.random() < 0.5 ? 0 : 1, heard: false, said: null }));
   const i = ORDER.indexOf(step);
   const next = () => setStep(ORDER[Math.min(ORDER.length - 1, i + 1)]);
@@ -197,27 +197,6 @@ export function Onboarding({ lang, onDone, onSignIn }: { lang: Lang; onDone: (r:
     setTaste((t) => ({ ...t, heard: true }));
   };
   const answerTaste = (k: 0 | 1) => setTaste((t) => ({ ...t, said: k === t.hi ? 'right' : 'wrong' }));
-
-  const choice = <T,>(items: { v: T; label: string; sub?: string }[], value: T | null, set: (v: T) => void, data: string) => (
-    <div className="ob-choices" role="radiogroup">
-      {items.map((o) => (
-        <button
-          key={String(o.v)}
-          role="radio"
-          aria-checked={value === o.v}
-          className={`ob-choice ${value === o.v ? 'on' : ''}`}
-          onClick={() => {
-            set(o.v);
-            setTimeout(next, 180);
-          }}
-          data-ob={`${data}-${String(o.v)}`}
-        >
-          <b>{o.label}</b>
-          {o.sub && <small>{o.sub}</small>}
-        </button>
-      ))}
-    </div>
-  );
 
   return (
     <main className={`onboarding ob-${step}`} data-onboarding={step}>
@@ -318,31 +297,9 @@ export function Onboarding({ lang, onDone, onSignIn }: { lang: Lang; onDone: (r:
               <b>{c.id === 'drums' ? KIT_NOTICE[lang] : c.note![lang]}</b>
             </p>
           ))}
-          <button className="btn primary ob-next" disabled={!picked.length} onClick={next} data-ob="courses-next">
+          <button className="btn primary ob-next" disabled={!picked.length} onClick={finish} data-ob="courses-next">
             {lang === 'he' ? 'המשך' : 'Continue'}
           </button>
-        </section>
-      )}
-      {step === 'level' && (
-        <section>
-          <h1>{tx.levelQ}</h1>
-          {choice(LEVEL_OPTS.map((o) => ({ v: o.v, label: o[lang], sub: lang === 'he' ? o.he2 : o.en2 })), level, setLevel, 'level')}
-        </section>
-      )}
-      {step === 'start' && (
-        <section>
-          <h1>{tx.startQ}</h1>
-          <div className="ob-choices">
-            <button className="ob-choice big" onClick={() => finish('placement')} data-ob="placement">
-              <b>{tx.findLevel}</b>
-              <small>{tx.findHint}</small>
-            </button>
-            <button className="ob-choice big" onClick={() => finish('basics')} data-ob="basics">
-              <b>{tx.basics}</b>
-              <small>{tx.basicsHint}</small>
-            </button>
-          </div>
-          <p className="field-hint ob-later">{tx.later}</p>
         </section>
       )}
     </main>

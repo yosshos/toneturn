@@ -58,7 +58,7 @@ Stars per phrase: 3 = played back clean and written right. A level's stars = 3-s
 - **Ratings**: lick takes rate `improv/vocab` (0.6) + the instrument or `singing/sequence` (0.4); phrases rate
   `dictation/transcribe` (0.6) + `sequences/melody`; *Use it* rates `improv/vocab` + `improv/play`. New sub-skills in
   `taxonomy.ts`.
-- **Quests**: `lick3` (3 clean lick takes — jazz, keys, guitar, bass), `tx2` (2 phrases ≥ 70 % — jazz, voice).
+- **Quests**: `lick3` (3 clean lick takes — jazz, keys, bass), `tx2` (2 phrases ≥ 70 % — jazz, voice).
 - **Badges** (technique, Jazz + the instrument courses): First Words, Vocabulary (10 licks), All Around the Cycle (one
   lick clean in 12 keys), Took It Down, Bebop Ears (a level-8 phrase clean). Own art in `BadgeArt.tsx`.
 - **Workout**: with licks due, a 2-minute *Lick review* block after the path block (not in Drums / Ear, not with a saved

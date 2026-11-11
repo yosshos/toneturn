@@ -792,6 +792,14 @@ export const GLYPHS: Record<string, Glyph> = {
       {p('M21.5 4v16', false)}
     </>
   ),
+  // Repertoire (SPEC-REPERTOIRE): a lead sheet — two stave lines, bar lines and a chord slash.
+  'special:rep': () => (
+    <>
+      {p('M3 9h18M3 15h18')}
+      {p('M3 6v12M21 6v12', false)}
+      {p('M9 17 L14 7')}
+    </>
+  ),
   'special:half-century': ({ bg }) => (
     <>
       {flame(true)}
@@ -957,6 +965,7 @@ export function resolveGlyph(b: Pick<Badge, 'id' | 'cat' | 'group'>): { key: str
   if (key.startsWith('family:g-')) return { key, glyph: GLYPHS['family:guitar'], fallback: false };
   if (key.startsWith('family:b-')) return { key, glyph: GLYPHS['family:bass'], fallback: false };
   if (key.startsWith('special:tier')) return { key, glyph: GLYPHS['special:tier'], fallback: false };
+  if (key.startsWith('special:rep:')) return { key, glyph: GLYPHS['special:rep'], fallback: false };
   return { key, glyph: FALLBACK, fallback: true };
 }
 
