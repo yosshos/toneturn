@@ -58,6 +58,8 @@ export interface BadgeInput {
   workoutDays?: string[];
   /** Game tiers (GAMES_TIERS_PLAN §5.2): the highest tier cleared per game. */
   gameTiers?: GameTiers;
+  /** Repertoire (SPEC-REPERTOIRE): standards learned per course (tiers 3–4) and advanced pieces learned (tier 4). */
+  repertoire?: Partial<Record<CourseId, { standards: number; advanced: number }>>;
   /** Vocal levels passed (progress.vocal.passed): the voice course's family and milestone badges. */
   vocalPassed?: number[];
   technique?: {
@@ -336,7 +338,7 @@ const subBadges: Badge[] = SUB_SKILLS.map((s, i) => {
 
 // Bass-course families (b-*) get milestone + exam badges (bassBadges below), not one title per level.
 // The pianist's ear (k-ear) gets milestones by items played back clean (keysEarBadges), not tempo-band titles.
-export type BadgeFamily = Exclude<FamilyId, 'custom' | BassFamilyId | DrumFamilyId | 'k-ear'>;
+export type BadgeFamily = Exclude<FamilyId, 'custom' | BassFamilyId | DrumFamilyId | 'k-ear' | 'licks' | 'transcribe'>;
 export const PIANO_BADGE_FAMILIES: BadgeFamily[] = ['scales', 'arpeggios', 'cadences', 'fingers', 'control', 'advanced', 'harris', 'jazz', 'voicings', 'accomp', 'k-sixdim', 'k-bebop', 'k-reharm'];
 export const GUITAR_BADGE_FAMILIES: BadgeFamily[] = ['g-fretting', 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-lead', 'g-fingerstyle', 'g-flamenco', 'g-jazz', 'g-reading', 'g-impro', 'g-bass', 'g-ear', 'g-harris', 'g-prog'];
 export const BADGE_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES, ...GUITAR_BADGE_FAMILIES];
@@ -445,6 +447,33 @@ const FAMILY_TITLES: Record<BadgeFamily, [string, string][]> = {
 /** Number of level badges of a family (piano 7; guitar = its guitarCatalog levels). */
 export const familyLevelCount = (f: string): number => FAMILY_TITLES[f as BadgeFamily]?.length ?? 7;
 const levelTone = (lv: number): RankTier => (lv >= 7 ? 'master' : RANK_TIERS[Math.min(4, Math.floor((lv - 1) / 1.25))]);
+
+// ---------------------------------------------------------------- licks & transcription (SPEC-LICKS-TRANSCRIPTION)
+/** Lick items with a clean take: lick id + instrument → the keys (pitch classes) played clean. */
+export function lickKeysClean(x: BadgeInput): Map<string, Set<number>> {
+  const m = new Map<string, Set<number>>();
+  for (const [id, bpm] of Object.entries(x.technique?.cleanItems ?? {})) {
+    if (!id.startsWith('lick:') || !(bpm > 0)) continue;
+    const [, lick, inst, key] = id.split(':');
+    const k = `${lick}:${inst}`;
+    if (!m.has(k)) m.set(k, new Set());
+    m.get(k)!.add(Number(key));
+  }
+  return m;
+}
+function lickBadges(): Badge[] {
+  const licks = (x: BadgeInput) => new Set([...lickKeysClean(x).keys()].map((k) => k.split(':')[0])).size;
+  const maxKeys = (x: BadgeInput) => Math.max(0, ...[...lickKeysClean(x).values()].map((s) => s.size));
+  const txLevel = (x: BadgeInput) => Math.max(0, ...Object.entries(x.technique?.cleanItems ?? {}).filter(([id, b]) => id.startsWith('tx:L') && b > 0).map(([id]) => Number(id.slice(4)) || 0));
+  const B = (id: string, tone: RankTier, en: string, he: string, den: string, dhe: string, group: 'licks' | 'transcribe', rule: (x: BadgeInput) => BadgeCheck): Badge => ({ id: `tech:${id}`, cat: 'technique', icon: group === 'licks' ? '🎷' : '🎼', group, tone, name: { en, he }, desc: { en: den, he: dhe }, rule });
+  return [
+    B('lick-first', 'bronze', 'First Words', 'מילים ראשונות', 'A clean take of a lick.', 'ביצוע נקי של ליק.', 'licks', (x) => count(licks(x), 1)),
+    B('lick-10', 'gold', 'Vocabulary', 'אוצר מילים', 'Clean takes of 10 different licks.', 'ביצועים נקיים של 10 ליקים שונים.', 'licks', (x) => count(licks(x), 10)),
+    B('lick-12keys', 'platinum', 'All Around the Cycle', 'סביב כל המעגל', 'One lick played clean in all 12 keys.', 'ליק אחד נקי בכל 12 הסולמות.', 'licks', (x) => count(maxKeys(x), 12)),
+    B('tx-first', 'bronze', 'Took It Down', 'רשמתי את זה', 'Play back a transcribed phrase clean.', 'לנגן בחזרה נקי משפט שתמללתם.', 'transcribe', (x) => count(txLevel(x) > 0 ? 1 : 0, 1)),
+    B('tx-bebop', 'diamond', 'Bebop Ears', 'אוזני ביבופ', 'Play back a 4-bar bebop phrase clean, by ear.', 'לנגן בחזרה נקי משפט ביבופ של 4 תיבות, בשמיעה.', 'transcribe', (x) => count(txLevel(x) >= 8 ? 1 : 0, 1)),
+  ];
+}
 
 // ---------------------------------------------------------------- guitar specials (spec AI-G §12), from technique.cleanItems
 
@@ -760,6 +789,7 @@ const techniqueBadges: Badge[] = [
   ...bassBadges(),
   ...drumBadges(),
   ...voiceBadges(),
+  ...lickBadges(),
 ];
 
 // ======================================================================= specials
@@ -791,8 +821,17 @@ const tierBadges = (): Badge[] => [
   ),
 ];
 
+// Repertoire (SPEC-REPERTOIRE): per course, the first standard learned (never for simple tunes), five, an advanced piece.
+const repBadges = (): Badge[] =>
+  (Object.keys(COURSE_TIER_NAME) as CourseId[]).flatMap((c) => [
+    { ...sp(`rep:${c}:first-standard`, '♪', 'silver', `${COURSE_TIER_NAME[c].en}: first standard`, `${COURSE_TIER_NAME[c].he}: הסטנדרט הראשון`, 'Learn your first standard in the repertoire (80% or better).', 'ללמוד את הסטנדרט הראשון ברפרטואר (80% ומעלה).', (x) => count(x.repertoire?.[c]?.standards ?? 0, 1)), group: c },
+    { ...sp(`rep:${c}:five-standards`, '♪', 'gold', `${COURSE_TIER_NAME[c].en}: five standards`, `${COURSE_TIER_NAME[c].he}: חמישה סטנדרטים`, 'Learn five standards in the repertoire.', 'ללמוד חמישה סטנדרטים ברפרטואר.', (x) => count(x.repertoire?.[c]?.standards ?? 0, 5)), group: c },
+    { ...sp(`rep:${c}:advanced`, '♪', 'diamond', `${COURSE_TIER_NAME[c].en}: advanced repertoire`, `${COURSE_TIER_NAME[c].he}: רפרטואר מתקדם`, 'Learn a piece from the Advanced tier.', 'ללמוד יצירה מהשלב המתקדם.', (x) => count(x.repertoire?.[c]?.advanced ?? 0, 1)), group: c },
+  ]);
+
 const specialBadges: Badge[] = [
   ...tierBadges(),
+  ...repBadges(),
   sp('hat-trick', '🎩', 'bronze', 'Hat Trick', 'שלושער', 'Practice 3 days in a row.', 'להתאמן 3 ימים ברצף.', (_x, d) => count(d.bestStreak, 3)),
   sp('fortnight', '🔥', 'silver', 'Fortnight Fever', 'קדחת השבועיים', 'Practice 14 days in a row.', 'להתאמן 14 ימים ברצף.', (_x, d) => count(d.bestStreak, 14)),
   sp('half-century', '🎯', 'gold', 'Half-Century', 'חצי מאה', 'Practice 50 days in a row.', 'להתאמן 50 ימים ברצף.', (_x, d) => count(d.bestStreak, 50)),
@@ -857,7 +896,7 @@ export function badgeCourse(b: Pick<Badge, 'id' | 'cat' | 'group'>): { course: B
   switch (b.cat) {
     case 'special':
       // Per-course game-tier badges belong to their course.
-      if (b.id.startsWith('special:tierc:')) return { course: g as CourseId };
+      if (b.id.startsWith('special:tierc:') || b.id.startsWith('special:rep:')) return { course: g as CourseId };
       return { course: 'general' };
     case 'season':
       return { course: 'general' };
@@ -872,6 +911,8 @@ export function badgeCourse(b: Pick<Badge, 'id' | 'cat' | 'group'>): { course: B
       return JAZZ_SKILLS.includes(g as SkillId) ? { course: 'ear', alsoIn: ['jazz'] } : { course: 'ear' };
     }
     case 'technique': {
+      // Licks & transcription: the Jazz course's, shown in every course that plays or sings lines.
+      if (g === 'licks' || g === 'transcribe') return { course: 'jazz', alsoIn: ['keys', 'guitar', 'bass', 'voice'] };
       if (g.startsWith('v-') || g === 'voice-milestones' || b.id.startsWith('tech:voice:')) return { course: 'voice' };
       if (isBassGroup(g) || b.id.startsWith('tech:g-bass')) return { course: 'bass' };
       if (g.startsWith('d-') || b.id.startsWith('tech:drums:')) return { course: 'drums' };

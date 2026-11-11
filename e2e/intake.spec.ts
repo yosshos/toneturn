@@ -51,8 +51,8 @@ test.describe('intake questionnaire', () => {
     const sw = await page.evaluate(() => document.documentElement.scrollWidth);
     expect(sw).toBeLessThanOrEqual(375);
     await page.locator('[data-plan="home"]').click();
-    // Home: the path follows the order (rhythm first); the hero offers the basics first.
-    await expect(page.locator('.first-run-cta')).toContainText('להתחיל מהבסיס');
+    // Home: the path follows the order (rhythm first); the hero starts the course (SPEC-COURSE-START).
+    await expect(page.locator('.first-run-cta')).toContainText('להתחיל את הקורס');
     await page.locator('.tab[data-tab="path"]').click();
     // The spiral path: rhythm (ranked first) is in the first unit; "creative" (left out) is not.
     await expect(page.locator('.road .node').filter({ hasText: /קצב|פעמה/ }).first()).toBeVisible();

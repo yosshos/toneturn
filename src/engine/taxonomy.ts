@@ -104,6 +104,7 @@ export const SUB_SKILLS: SubSkill[] = [
   // creative & applied
   S('improv', 'answer', 'Call and response', 'שאלה ותשובה'),
   S('improv', 'play', 'Playing along', 'נגינה עם ליווי'),
+  S('improv', 'vocab', 'Vocabulary in 12 keys', 'אוצר מילים ב-12 סולמות'),
   S('transpose', 'pitch', 'Transposing melodies', 'טרנספוזיציה של מנגינות'),
   S('transpose', 'written', 'Written transposition', 'טרנספוזיציה בכתב'),
   S('transpose', 'chords', 'Transposing progressions', 'טרנספוזיציה של מהלכים'),
@@ -132,6 +133,7 @@ export const SUB_SKILLS: SubSkill[] = [
   S('dictation', 'rhythm', 'Building the rhythm', 'בניית מקצב'),
   S('dictation', 'two-part', 'Two voices', 'שני קולות'),
   S('dictation', 'bass', 'Writing the bass', 'כתיבת הבס'),
+  S('dictation', 'transcribe', 'Transcribing by ear', 'תמלול בשמיעה'),
   S('instrument', 'echo', 'Playing it back', 'לנגן בחזרה'),
   S('instrument', 'songs', 'Playing songs', 'נגינת שירים'),
   S('instrument', 'fretboard', 'Notes on the neck', 'תווים על הצוואר'),

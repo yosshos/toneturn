@@ -280,6 +280,7 @@ export function stepCatalogue(): PathStep[] {
     }
   }
   out.push(...ladderSteps());
+  out.push(...measuredSteps());
   out.sort((a, b) => a.difficulty - b.difficulty || a.id.localeCompare(b.id));
   CATALOGUE = out;
   CAT_KEY = key;
@@ -354,6 +355,31 @@ function ladderSteps(): PathStep[] {
     pr.refs.forEach((n, i) => {
       out.push({ id: `vocal:${n}`, kind: 'vocal', ladder: { family: pr.id, level: i + 1, ref: String(n) }, skill: 'singing', sub: 'singing/vocal-ladder', domain: 'voice', difficulty: diff(i + (VOICE_LATER[pr.id] ?? 0)), choices: 0, sung: true, mic: true, title: { en: `${pr.title.en} · ${i + 1}`, he: `${pr.title.he} · ${i + 1}` } });
     });
+  return out;
+}
+
+/**
+ * Licks and transcription (SPEC-LICKS-TRANSCRIPTION): a few measured steps per course — game steps that open the lick
+ * trainer / the transcription coach on a level. Jazz: the vocabulary (creative) and transcription (jazz pack); keys,
+ * guitar, bass: on the instrument; voice: sung. They pass only by measured playing (checkStep), like the ladders.
+ */
+export const MEASURED_STEP_LEVELS: Record<'licks' | 'transcribe', Record<'jazz' | 'keys' | 'guitar' | 'bass' | 'voice', number[]>> = {
+  licks: { jazz: [1, 2, 3, 4], keys: [1, 2, 3], guitar: [1, 2, 3], bass: [1, 2], voice: [1, 2] },
+  transcribe: { jazz: [4, 5, 6, 7, 8], keys: [2, 4, 6], guitar: [2, 4, 6], bass: [2, 4], voice: [1, 3, 5] },
+};
+function measuredSteps(): PathStep[] {
+  const out: PathStep[] = [];
+  const T = { licks: { en: 'Licks', he: 'ליקים' }, transcribe: { en: 'Transcribe', he: 'תמלול' } };
+  for (const game of ['licks', 'transcribe'] as const)
+    for (const [course, levels] of Object.entries(MEASURED_STEP_LEVELS[game]))
+      for (const level of levels) {
+        const base = { id: `${game}:${course}:${level}`, kind: 'game' as const, game, level, choices: 0, title: { en: `${T[game].en} · ${level}`, he: `${T[game].he} · ${level}` } };
+        const difficulty = game === 'licks' ? 880 + level * 120 : 820 + level * 95;
+        if (course === 'jazz')
+          out.push(game === 'licks' ? { ...base, skill: 'improv', sub: 'improv/vocab', domain: 'creative', difficulty } : { ...base, skill: 'dictation', sub: 'dictation/transcribe', domain: 'memory', pack: 'jazz', difficulty });
+        else if (course === 'voice') out.push({ ...base, skill: 'singing', sub: 'singing/sequence', domain: 'voice', difficulty, sung: true, mic: true });
+        else out.push({ ...base, skill: 'instrument', sub: `instrument/${course === 'keys' ? 'piano' : course}-tech`, domain: 'instrument', difficulty, forPlays: course === 'keys' ? ['keys', 'piano'] : [course] });
+      }
   return out;
 }
 
@@ -469,6 +495,8 @@ export function checkStep(s: PathStep, inp: PathInput, subs: Map<string, SubEvid
   // Ladder steps are passed only by measured playing / singing (owner, 0.61) — never by rating evidence.
   if (s.ladder) return inp.facts.tests?.[s.id] ? { state: 'tested', why: { en: '✓ from your playing test', he: '✓ ממבחן הנגינה' } } : { state: null };
   if (s.kind === 'check' || s.kind === 'review') return { state: null };
+  // Licks / transcription steps: only measured playing passes them (never rating evidence from elsewhere).
+  if (s.game === 'licks' || s.game === 'transcribe') return { state: null };
   if (inp.keep.includes(s.id)) return { state: null };
   const ev = subs.get(s.sub);
   const F = frontierOf(s.skill, inp) + subNudge(ev);

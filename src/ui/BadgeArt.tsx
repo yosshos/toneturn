@@ -725,6 +725,45 @@ export const GLYPHS: Record<string, Glyph> = {
       {p('M5.5 10.5v8 M9.8 10.5v8 M14.2 10.5v8 M18.5 10.5v8 M3 21.5h18')}
     </>
   ),
+  // Licks & transcription (SPEC-LICKS-TRANSCRIPTION).
+  'tech:lick-first': () => (
+    <>
+      {head(6, 16)}
+      {head(12, 11)}
+      {p('M8.4 15.5V6 M14.4 10.5V3 M8.4 6 L14.4 3')}
+    </>
+  ),
+  'tech:lick-10': () => (
+    <>
+      {head(4.5, 17, 2.2)}
+      {head(10, 13, 2.2)}
+      {head(15.5, 9, 2.2)}
+      {p('M6.6 16.5V8 M12.1 12.5V5 M17.6 8.5V2.5 M6.6 8 L17.6 2.5')}
+      {p('M3 21h18')}
+    </>
+  ),
+  'tech:lick-12keys': () => (
+    <>
+      <circle cx="12" cy="12" r="9" strokeDasharray="2.2 2.5" />
+      {head(10, 14)}
+      {p('M12.4 13.5V6')}
+      {dot(12, 3, 1.2)}
+    </>
+  ),
+  'tech:tx-first': () => (
+    <>
+      {p('M6 10a5 5 0 0 1 10 0c0 3-3 3-3 6a2 2 0 0 1-4 0')}
+      {p('M3 21h18')}
+      {head(18.5, 17.5, 2)}
+    </>
+  ),
+  'tech:tx-bebop': () => (
+    <>
+      {p('M5 9a5 5 0 0 1 10 0c0 3-3 3-3 6a2 2 0 0 1-4 0')}
+      {star5(18.5, 6, 3.6)}
+      {p('M3 21h18')}
+    </>
+  ),
   'tech:tempo-1': () => p('M2.5 6 L11 12 L2.5 18 Z M12.5 6 L21 12 L12.5 18 Z', true),
   'tech:tempo-25': () => (
     <>
@@ -751,6 +790,14 @@ export const GLYPHS: Record<string, Glyph> = {
     <>
       {p('M3 12 L20 6 M3 12 L20 18')}
       {p('M21.5 4v16', false)}
+    </>
+  ),
+  // Repertoire (SPEC-REPERTOIRE): a lead sheet — two stave lines, bar lines and a chord slash.
+  'special:rep': () => (
+    <>
+      {p('M3 9h18M3 15h18')}
+      {p('M3 6v12M21 6v12', false)}
+      {p('M9 17 L14 7')}
     </>
   ),
   'special:half-century': ({ bg }) => (
@@ -918,6 +965,7 @@ export function resolveGlyph(b: Pick<Badge, 'id' | 'cat' | 'group'>): { key: str
   if (key.startsWith('family:g-')) return { key, glyph: GLYPHS['family:guitar'], fallback: false };
   if (key.startsWith('family:b-')) return { key, glyph: GLYPHS['family:bass'], fallback: false };
   if (key.startsWith('special:tier')) return { key, glyph: GLYPHS['special:tier'], fallback: false };
+  if (key.startsWith('special:rep:')) return { key, glyph: GLYPHS['special:rep'], fallback: false };
   return { key, glyph: FALLBACK, fallback: true };
 }
 

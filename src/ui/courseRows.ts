@@ -14,15 +14,17 @@ export const COURSE_GAMES: Record<CourseId, string[]> = {
   // DRUMS_NICHE_PLAN §3 (P1): Land It, Groove Echo, Odd-meter Echo — measured takes on the kit.
   drums: ['drills', 'highway', 'rhythm', 'groove', 'land', 'groove-echo', 'odd-echo', 'polylock'],
 };
-/** What Practice shows in each course (0.61, SPEC-COURSES): only the course's own rows; tools are shared. */
+/** What Practice shows in each course (0.61, SPEC-COURSES): only the course's own rows; tools are shared.
+ *  0.70 (SPEC-REPERTOIRE): "Songs" became "Repertoire" — the road from simple tunes to standards — in every course.
+ *  Licks and the transcription coach (SPEC-LICKS-TRANSCRIPTION) sit in every course that plays or sings lines. */
 export const COURSE_ROWS: Record<CourseId, string[]> = {
-  ear: ['lessons', 'puzzle', 'games'],
-  voice: ['drills', 'songs', 'games'],
-  keys: ['drills', 'pieces', 'songs', 'games'],
-  guitar: ['drills', 'songs', 'pieces', 'games'],
-  bass: ['drills', 'songs', 'games'],
-  drums: ['drills', 'games'],
-  jazz: ['charts', 'improv', 'games'],
+  ear: ['lessons', 'repertoire', 'puzzle', 'games'],
+  voice: ['drills', 'repertoire', 'licks', 'transcribe', 'games'],
+  keys: ['drills', 'repertoire', 'pieces', 'licks', 'transcribe', 'games'],
+  guitar: ['drills', 'repertoire', 'pieces', 'licks', 'transcribe', 'games'],
+  bass: ['drills', 'repertoire', 'licks', 'transcribe', 'games'],
+  drums: ['drills', 'repertoire', 'games'],
+  jazz: ['repertoire', 'charts', 'improv', 'licks', 'transcribe', 'games'],
 };
 /** 0.67: the Ear course in exam-prep mode (was the Exams course) puts the mock exams first. */
 export const EXAM_PREP_ROWS = ['exams', 'lessons', 'puzzle', 'games'];

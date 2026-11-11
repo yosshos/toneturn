@@ -22,8 +22,9 @@ test.describe('home & language', () => {
     await page.goto('/');
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
     await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
-    // First visit: finding your level is the default step; lesson 1 is one tap away.
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Let’s find your level');
+    // First visit (SPEC-COURSE-START): the course's first-run hero starts the course; lesson 1 is one tap away.
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(/^Hear what is going on in the music/);
+    await expect(page.locator('[data-course-start-cta]')).toHaveText('Start the course');
     await expect(page.getByRole('button', { name: 'Or start from lesson 1' })).toBeVisible();
     await expect(page.getByRole('radio', { name: 'Voice' })).toHaveAttribute('aria-checked', 'true');
     // Touch targets on the main actions are at least 44px tall.
@@ -38,7 +39,7 @@ test.describe('home & language', () => {
     await page.getByRole('radio', { name: 'עברית' }).first().click();
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
     await page.goto('/');
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText('בואו נמצא את הרמה שלכם');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(/^לשמוע מה קורה במוזיקה/);
     // persisted
     await page.reload();
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');

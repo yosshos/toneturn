@@ -99,7 +99,7 @@ import { NEW_LEVELS, NEW_LEVEL_NAMES, VOICE_FAMILIES, vocalLevelByRef, voiceItem
 import { gradeMore, simulateMore, MORE_KINDS, breakOf } from '../src/engine/vocalMore';
 import { gradeScat, gradeTime } from '../src/engine/voiceGrade';
 import { SUB_BY_ID } from '../src/engine/taxonomy';
-import { FAMILY_GLYPH, LESSON_GLYPH, TOPIC_GLYPH } from '../src/ui/stepGlyphs';
+import { FAMILY_GLYPH, GAME_STEP_GLYPH, LESSON_GLYPH, TOPIC_GLYPH } from '../src/ui/stepGlyphs';
 import { GLYPHS } from '../src/ui/Glyph';
 import { inCourse } from '../src/engine/courses';
 import '../src/engine/topics';
@@ -119,8 +119,9 @@ describe('the voice families (VOICE_CURRICULUM §5, §9)', () => {
     const steps = stepCatalogue().filter((s) => inCourse(s, 'voice'));
     const bySource = new Map<string, string>();
     for (const s of steps) {
-      const src = s.ladder ? `f:${s.ladder.family}` : s.topic ? `t:${s.topic}` : s.lesson ? `l:${s.lesson}` : s.id;
-      const g = s.ladder ? FAMILY_GLYPH[s.ladder.family] : s.topic ? TOPIC_GLYPH[s.topic] : s.lesson ? LESSON_GLYPH[s.lesson] : undefined;
+      // Licks / transcription steps (SPEC-LICKS-TRANSCRIPTION): one symbol per game, shared by its levels.
+      const src = s.ladder ? `f:${s.ladder.family}` : s.topic ? `t:${s.topic}` : s.lesson ? `l:${s.lesson}` : s.game ? `g:${s.game}` : s.id;
+      const g = s.ladder ? FAMILY_GLYPH[s.ladder.family] : s.topic ? TOPIC_GLYPH[s.topic] : s.lesson ? LESSON_GLYPH[s.lesson] : s.game ? GAME_STEP_GLYPH[s.game] : undefined;
       expect(g, src).toBeDefined();
       bySource.set(src, g!);
     }

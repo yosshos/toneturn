@@ -8,6 +8,18 @@ import { earnBadges, type Badge, type BadgeInput } from './badges';
 import { familyLevel } from './drills/ladder';
 import type { FamilyId, ItemState } from './drills/types';
 import { localDay } from './stats';
+import { REPERTOIRE, repCounts, repResults } from './repertoire';
+import type { CourseId } from './courses';
+
+/** Standards (tiers 3 and 4) and advanced pieces learned per course, from the repertoire results in progress.lessons. */
+export function repertoireOf(p: Progress): Partial<Record<CourseId, { standards: number; advanced: number }>> {
+  const out: Partial<Record<CourseId, { standards: number; advanced: number }>> = {};
+  for (const c of Object.keys(REPERTOIRE) as CourseId[]) {
+    const k = repCounts(c, repResults(p.lessons, c));
+    if (k.standards || k.tier[4]) out[c] = { standards: k.standards, advanced: k.tier[4] };
+  }
+  return out;
+}
 
 
 export function techniqueOf(items: Record<string, ItemState> | undefined): TechniqueInput & { keysClean: Partial<Record<FamilyId, number>>; cleanItems: Record<string, number> } {
@@ -39,6 +51,7 @@ export function badgeInputOf(p: Progress, now: Date, weekendDays?: number[]): Ba
     counts: p.counts,
     days: [...practiceDays(p)],
     gameTiers: p.gameTiers,
+    repertoire: repertoireOf(p),
     vocalPassed: p.vocal?.passed,
     weekendDays,
     technique: { levels: tech.levels, keysClean: tech.keysClean, cleanItems: tech.cleanItems, bestEvenCv: p.counts?.evenCv ?? null, cleanTakes: p.counts?.drillClean ?? 0, tempoRecords: p.counts?.tempoRecords ?? 0 },

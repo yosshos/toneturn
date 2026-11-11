@@ -14,6 +14,8 @@ import { CourseXpLine } from './CourseLevels';
 import { examCard } from '../engine/examPrep';
 import type { ExamDef } from '../content/bagrut';
 import { EXAM_PREP_NAME } from './CourseSwitcher';
+import { repGoal, repResults } from '../engine/repertoire';
+import '../repertoire.css';
 
 /** What the exam-prep card opens (0.67): the next mock, a weak section's topic, the full exams list. */
 export interface ExamActions {
@@ -54,7 +56,28 @@ function ExamPrepCard({ progress, lang, on }: { progress: Progress; lang: 'he' |
   );
 }
 
-export function TodayCards({ t, settings, progress, goalXp, signedIn, onLeague, exam }: { t: Strings; settings: Settings; progress: Progress; goalXp: number; signedIn: boolean; onLeague: () => void; exam?: ExamActions }) {
+/** Repertoire (SPEC-REPERTOIRE): the course's next goal on the road to standards, and the piece to play next. */
+function RepGoalCard({ progress, course, lang, onOpen }: { progress: Progress; course: CourseId; lang: 'he' | 'en'; onOpen: (itemId?: string) => void }) {
+  const he = lang === 'he';
+  const g = repGoal(course, repResults(progress.lessons, course));
+  return (
+    <button type="button" className="tc-card tc-rep" onClick={() => onOpen(g.next?.id)} data-today-rep={g.id}>
+      <small>{he ? 'היעד הבא ברפרטואר' : 'Next repertoire goal'}</small>
+      <b>{g.title[lang]}</b>
+      <span className="rep-bar" aria-hidden="true">
+        <i style={{ width: `${(100 * g.now) / Math.max(1, g.target)}%` }} />
+      </span>
+      <small className="tc-hint">
+        <span dir="ltr">
+          {g.now}/{g.target}
+        </span>
+        {g.next ? ` · ${he ? 'הבא:' : 'Next:'} ${g.next.teaches[lang]}` : ''}
+      </small>
+    </button>
+  );
+}
+
+export function TodayCards({ t, settings, progress, goalXp, signedIn, onLeague, exam, onRepertoire }: { t: Strings; settings: Settings; progress: Progress; goalXp: number; signedIn: boolean; onLeague: () => void; exam?: ExamActions; onRepertoire?: (itemId?: string) => void }) {
   const lang = settings.uiLang;
   const he = lang === 'he';
   const day = localDay(new Date());
@@ -107,6 +130,7 @@ export function TodayCards({ t, settings, progress, goalXp, signedIn, onLeague, 
         </button>
       </section>
       {examPrep && exam && <ExamPrepCard progress={progress} lang={lang} on={exam} />}
+      {onRepertoire && !examPrep && <RepGoalCard progress={progress} course={course} lang={lang} onOpen={onRepertoire} />}
       <section className="today-quests" aria-labelledby="tq-title">
         <div className="tq-head">
           <h2 id="tq-title">{he ? 'משימות היום' : "Today's quests"}</h2>
