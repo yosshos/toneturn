@@ -18,6 +18,18 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.70.2',
+    date: '2026-11-11',
+    en: [
+      'Listen to the original: every standard links a classic recording on Spotify and YouTube, with its key',
+      'Charts offer "Practise in" the recording key when it differs from the chart',
+    ],
+    he: [
+      'האזנה למקור: לכל סטנדרט קישור לביצוע מוביל בספוטיפיי וביוטיוב, עם הסולם שלו',
+      'בדפי האקורדים אפשר להתאמן בסולם של ההקלטה כשהוא שונה מהדף',
+    ],
+  },
+  {
     version: '0.70.1',
     date: '2026-11-11',
     en: [

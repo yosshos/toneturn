@@ -1,8 +1,9 @@
 import { expect, test } from '@playwright/test';
 
 // 0.52: the first minute — the logo draws itself, a welcome with one promise, a first taste (which note was higher),
-// three questions, then where to start. The full questionnaire stays in Settings (?intake for its own test).
-test('splash → welcome → taste → three questions → the first lesson', async ({ page }) => {
+// the courses, then the first course starts with its welcome card (SPEC-COURSE-START). The full questionnaire stays in
+// Settings (?intake for its own test).
+test('splash → welcome → taste → courses → the first course: welcome card and setup', async ({ page }) => {
   await page.goto('/?sim=1&welcome=1&splash=1&lang=en');
   await expect(page.locator('[data-splash]')).toBeVisible();
   await expect(page.locator('[data-splash]')).toBeHidden({ timeout: 9000 });
@@ -19,10 +20,12 @@ test('splash → welcome → taste → three questions → the first lesson', as
   await page.locator('[data-ob="course-ear"]').click();
   await page.locator('[data-ob="course-guitar"]').click();
   await page.locator('[data-ob="courses-next"]').click();
-  await page.locator('[data-ob="level-0"]').click();
-  await expect(page.locator('[data-onboarding="start"]')).toBeVisible();
-  await page.locator('[data-ob="basics"]').click();
-  await expect(page.locator('main.lesson, .mini-player, .gate').first()).toBeVisible({ timeout: 15_000 });
+  // SPEC-COURSE-START: no placement after choosing — the first course's welcome card, then its setup (a sound check).
+  await expect(page.locator('[data-course-start="welcome"][data-cs-course="ear"]')).toBeVisible();
+  await page.locator('[data-report="new"]').click();
+  await expect(page.locator('[data-course-start="setup"]')).toBeVisible();
+  await page.locator('[data-setup-skip]').click();
+  await expect(page.locator('main.lesson, .mini-player, .gate, [aria-labelledby="consent2-title"]').first()).toBeVisible({ timeout: 15_000 });
 });
 
 test('the parent digest page: an unknown link says so, without menus', async ({ page }) => {

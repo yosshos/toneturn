@@ -287,6 +287,9 @@ export interface Settings {
   activeCourse?: import('../engine/courses').CourseId;
   pathFactsBy?: Partial<Record<import('../engine/courses').CourseId, import('../engine/path').PathFacts>>;
   pathKeepBy?: Partial<Record<import('../engine/courses').CourseId, string[]>>;
+  /** SPEC-COURSE-START (2026-11-11): how each course started — welcome and self-report, setup, taste, first win,
+   *  level-test offer, personal goal (engine/courseStart.ts). Existing players' courses are migrated as legacy. */
+  courseStart?: import('../engine/courseStart').CourseStartMap;
   /** 0.67 (owner 2026-11-10): the Ear course's exam-prep mode (was the separate "Exams" course): exam-weighted path
    *  and workout, mock exams first on Practice, an exam card on Today. */
   examPrep?: boolean;

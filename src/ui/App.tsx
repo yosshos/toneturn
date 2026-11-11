@@ -10,7 +10,7 @@ import { miniForSkill } from '../content/refresher';
 import { CHALLENGES } from '../engine/improvRules';
 import { InsightsScreen } from './Insights';
 import { Sidebar, type NavId } from './Sidebar';
-import { Onboarding, Splash } from './Onboarding';
+import { Onboarding, onboardingIntake, Splash } from './Onboarding';
 import { CommandPalette, type PaletteHit } from './CommandPalette';
 import { startComputerKeys } from '../speech/computerKeys';
 import { TodayAside } from './Asides';
@@ -130,7 +130,10 @@ import { loadSlot, saveSlot } from '../storage/resume';
 import { nodeTitle, PathView2, stepTitle, usePathView } from './Path';
 import { checkpointSession, recordStep, stepSession, stepStars, testOutPassed, testOutSession, type PathStep, type PathUnit, type UnitStep } from '../engine/path';
 import { FriendsScreen } from './Friends';
-import { reportGameBest, reportRating, reportStreakDays, setProfile, uploadAvatar } from '../cloud/social';
+import { enablePush, reportGameBest, reportRating, reportStreakDays, setProfile, uploadAvatar } from '../cloud/social';
+import { courseHasProgress, firstWeekDay, levelOfReport, levelTested, markSetup, markTasteDone, markTasteOpened, markWinSeen, migrateCourseStart, offerDue, pickProbes, reportCourse, sessionsSince, setPersonalGoal, setupNeeded, snoozeOffer, stageOf, goalById, tasteFor, type CourseStartMap, type ProgressFacts, type SelfReport } from '../engine/courseStart';
+import { tasteDrills, tasteLesson } from '../engine/tasteLessons';
+import { CourseGoalLine, CourseSetup, CourseStartHero, CourseWelcome, FirstWeekCard, FirstWin, LevelOfferCard } from './CourseStart';
 import { isYoung } from '../engine/privacy';
 import { overallRating } from '../engine/rating';
 import { APP_VERSION, unseenChanges } from '../version';
@@ -145,7 +148,7 @@ import { setPreferredMic } from '../speech/mic';
 /** Screens that play the band (0.69: its sets load here, and only here on Lite / Standard). */
 const BAND_ROUTES = new Set<string>(['charts', 'improv', 'groove', 'metronome', 'mixer', 'slowdown', 'perform', 'highway', 'drills', 'workoutrun', 'land', 'groove-echo', 'odd-echo']);
 
-type Route = 'intake' | 'studio' | 'home' | 'path' | 'arcade' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong' | 'perform' | 'learned' | 'tuner' | 'metronome' | 'songs' | 'repertoire' | 'drills' | 'workout' | 'workoutrun' | 'peakhunter' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'flight' | 'pitchmemory' | 'nametune' | 'tuneup' | 'highway' | 'melodypuzzle' | 'charts' | 'slowdown' | 'pieces' | 'mixer' | 'insights' | 'groove' | 'welcome' | 'puzzle' | 'improv' | 'exams' | 'plans' | 'admin' | 'land' | 'groove-echo' | 'odd-echo';
+type Route = 'intake' | 'studio' | 'home' | 'path' | 'arcade' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong' | 'perform' | 'learned' | 'tuner' | 'metronome' | 'songs' | 'repertoire' | 'drills' | 'workout' | 'workoutrun' | 'peakhunter' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'flight' | 'pitchmemory' | 'nametune' | 'tuneup' | 'highway' | 'melodypuzzle' | 'charts' | 'slowdown' | 'pieces' | 'mixer' | 'insights' | 'groove' | 'welcome' | 'coursestart' | 'puzzle' | 'improv' | 'exams' | 'plans' | 'admin' | 'land' | 'groove-echo' | 'odd-echo';
 /** Invite links: #/online/CODE */
 const onlineCodeFromHash = () => (/^#\/?online\/(\w+)/.exec(location.hash)?.[1] ?? '');
 const PLAY_HASH = 'play';
@@ -157,7 +160,7 @@ const enterPlay = () => {
 };
 const routeFromHash = (): Route => {
   const h = location.hash.replace(/^#\/?/, '').replace(/^online\/.*$/, 'online').replace(/^settings\/.*$/, 'settings');
-  return (['path', 'arcade', 'settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong', 'perform', 'learned', 'studio', 'intake', 'tuner', 'metronome', 'songs', 'repertoire', 'drills', 'workout', 'workoutrun', 'peakhunter', 'rush-chord', 'rush-note', 'rush-fretboard', 'rush-interval', 'rush-keysig', 'rush-progression', 'flight', 'pitchmemory', 'nametune', 'tuneup', 'highway', 'melodypuzzle', 'charts', 'slowdown', 'pieces', 'mixer', 'insights', 'groove', 'welcome', 'puzzle', 'improv', 'exams', 'plans', 'admin', 'land', 'groove-echo', 'odd-echo'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
+  return (['path', 'arcade', 'settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong', 'perform', 'learned', 'studio', 'intake', 'tuner', 'metronome', 'songs', 'repertoire', 'drills', 'workout', 'workoutrun', 'peakhunter', 'rush-chord', 'rush-note', 'rush-fretboard', 'rush-interval', 'rush-keysig', 'rush-progression', 'flight', 'pitchmemory', 'nametune', 'tuneup', 'highway', 'melodypuzzle', 'charts', 'slowdown', 'pieces', 'mixer', 'insights', 'groove', 'welcome', 'coursestart', 'puzzle', 'improv', 'exams', 'plans', 'admin', 'land', 'groove-echo', 'odd-echo'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
 };
 
 /** The level a generated modes lesson was made at (from its first question's pool size). */
@@ -166,6 +169,17 @@ const modesAgainLevel = (def: { questions: { choices: unknown[]; difficulty: num
   const i = MODE_ID_LEVELS.findIndex((_, k) => d < (MODE_ID_LEVELS[k + 1]?.base ?? Infinity));
   return Math.max(1, i + 1);
 };
+
+/** What says a course was already played (SPEC-COURSE-START migration): path facts, results, technique, vocal levels. */
+const courseFactsOf = (s: Settings, p: Progress): ProgressFacts => ({
+  activeCourse: s.activeCourse,
+  pathFacts: s.pathFacts,
+  pathFactsBy: s.pathFactsBy,
+  history: p.history,
+  lessonsDone: Object.values(p.lessons).filter((l) => (l?.completions ?? 0) > 0).length,
+  drillFamilies: [...new Set(Object.values(p.drillItems ?? {}).map((x) => x.family as string))],
+  vocalPassed: p.vocal?.passed?.length ?? 0,
+});
 
 export function App() {
   const [settings, setSettings] = useState<Settings | null>(null);
@@ -285,6 +299,8 @@ export function App() {
     // 0.64 (owner): stay where you are — the same screen of the other course (only a screen that belongs to one
     // exercise falls back to Today).
     if (!['home', 'path', 'arcade', 'skills', 'friends', 'achievements', 'insights'].includes(route)) go('home');
+    // SPEC-COURSE-START: a course never started (and never played) opens with its own welcome card.
+    if (c !== (settings.activeCourse ?? 'ear') && !settings.courseStart?.[c] && !courseHasProgress(c, courseFactsOf(settings, progress))) go('coursestart');
   };
   /** First-try results per skill (the answer ladder, 0.61): the last 60 rated items of each skill, oldest first. */
   const recentBySkill = (p: Progress): Partial<Record<string, boolean[]>> => {
@@ -507,6 +523,21 @@ export function App() {
     (patch: Partial<Settings>) => {
       setSettings((prev) => {
         const next = { ...(prev ?? DEFAULT_SETTINGS), ...patch };
+        void store.saveSettings(next);
+        if (user) void pushSettings(user.id, next).catch(() => {});
+        return next;
+      });
+    },
+    [user],
+  );
+  /** SPEC-COURSE-START: one step of a course's start, applied to the latest state (several can land in one tap). */
+  const updateCourseStart = useCallback(
+    (fn: (m: CourseStartMap | undefined) => CourseStartMap | undefined) => {
+      setSettings((prev) => {
+        const base = prev ?? DEFAULT_SETTINGS;
+        const cs = fn(base.courseStart);
+        if (cs === base.courseStart) return prev;
+        const next = { ...base, courseStart: cs };
         void store.saveSettings(next);
         if (user) void pushSettings(user.id, next).catch(() => {});
         return next;
@@ -970,7 +1001,7 @@ export function App() {
     openGenerated(def, undefined, false, { key: `testout:${unit.id}`, title: s.uiLang === 'en' ? 'Test out' : 'מבחן מעבר' });
   };
   /** Technique drills opened from a path step or a workout block run today's items as a queue (spec AI §9). */
-  const drillFrom = useRef<'path' | 'workout' | 'test' | 'chart' | 'assign' | 'repertoire' | null>(null);
+  const drillFrom = useRef<'path' | 'workout' | 'test' | 'chart' | 'assign' | 'taste' | 'repertoire' | null>(null);
   /** Technique takes since the session opened (0.61): their XP, count and clean count go to the server as one result. */
   const drillSessionXp = useRef(0);
   const drillSession = useRef({ takes: 0, clean: 0 });
@@ -1052,13 +1083,14 @@ export function App() {
     go('drills');
   };
   const drillQueue = useMemo(
-    () => (route === 'drills' && (drillFrom.current === 'chart' || drillFrom.current === 'assign' || drillFrom.current === 'repertoire' || (drillFrom.current === 'path' && chartQueue.current)) ? chartQueue.current ?? undefined : route === 'drills' && (drillFrom.current === 'path' || drillFrom.current === 'workout') && settings && progress ? todayDrills({ ...drillSettingsOf(settings), bassTuning: bassTuningOf(settings), drumMic: drumMicOf(settings.drumKit) }, progress.drillItems ?? {}, settings.drillStart ?? {}, settings.customDrills ?? []).map((x) => x.drill) : undefined),
+    () => (route === 'drills' && (drillFrom.current === 'chart' || drillFrom.current === 'assign' || drillFrom.current === 'taste' || drillFrom.current === 'repertoire' || (drillFrom.current === 'path' && chartQueue.current)) ? chartQueue.current ?? undefined : route === 'drills' && (drillFrom.current === 'path' || drillFrom.current === 'workout') && settings && progress ? todayDrills({ ...drillSettingsOf(settings), bassTuning: bassTuningOf(settings), drumMic: drumMicOf(settings.drumKit) }, progress.drillItems ?? {}, settings.drillStart ?? {}, settings.customDrills ?? []).map((x) => x.drill) : undefined),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [route],
   );
   const drillQueueDone = (takes: number, clean: number) => {
     const from = drillFrom.current;
     drillFrom.current = null;
+    if (from === 'taste') return tasteDrillsDone(takes, clean);
     if (from === 'repertoire') {
       // A repertoire item practised as drills: one result for the item (score = clean takes / takes), with the course.
       chartQueue.current = null;
@@ -1111,6 +1143,82 @@ export function App() {
     }
     go(from === 'workout' ? 'workoutrun' : 'arcade');
   };
+
+  // ---- How a course starts (docs/SPEC-COURSE-START.md): welcome → setup → taste → first win → what next ----
+  const activeC: CourseId = settings?.activeCourse ?? 'ear';
+  const cStart = settings?.courseStart?.[activeC];
+  const cStage = settings ? stageOf(cStart, setupNeeded(activeC, settings)) : 'done';
+  const [csWelcomeAgain, setCsWelcomeAgain] = useState(false);
+  /** The taste's takes (playing tastes): best note accuracy and bars played, for the measured first win. */
+  const tasteTake = useRef({ acc: 0, bars: 0 });
+  /** Find my level, per course: the playing test (instruments), the voice placement, the ear placement (ear / jazz). */
+  const findLevel = () => (instrumentCourse ? openTechTest() : s.activeCourse === 'voice' ? openPlacement('voice') : openPlacement());
+  const startTaste = (report?: SelfReport) => {
+    if (!settings) return;
+    const c = activeC;
+    const def = tasteFor(c, report ?? cStart?.report);
+    updateCourseStart((m) => markTasteOpened(m, c, new Date().toISOString()));
+    setCsWelcomeAgain(false);
+    if (def.run.kind === 'lesson') {
+      // Saved after every answer under taste:<course>: an abandoned taste continues where it stopped.
+      openGenerated(tasteLesson(def, (Date.now() ^ (Math.random() * 1e9)) >>> 0), undefined, false, { key: `taste:${c}`, title: def.title[s.uiLang] });
+      return;
+    }
+    chartQueue.current = tasteDrills(def, { drumPad: drumMicOf(settings.drumKit) === 'pad' });
+    tasteTake.current = { acc: 0, bars: 0 };
+    drillSessionXp.current = 0;
+    drillSession.current = { takes: 0, clean: 0 };
+    drillFrom.current = 'taste';
+    go('drills');
+  };
+  const tasteDrillsDone = (takes: number, clean: number) => {
+    const c = activeC;
+    const t0 = Math.max(takes, drillSession.current.takes);
+    const c0 = Math.max(clean, drillSession.current.clean);
+    const xp = drillSessionXp.current;
+    const x = tasteTake.current;
+    chartQueue.current = null;
+    const done = techResult('technique', t0, c0);
+    if (done) void done.then(setProgress);
+    // Only measured practice counts: a taste left before its first take stays "continue" on Home and Path.
+    if (t0 > 0) {
+      updateCourseStart((m) => markTasteDone(m, c, { kind: 'drills', takes: t0, clean: c0, ...(x.acc > 0 ? { acc: x.acc } : {}), bars: x.bars, xp }, new Date().toISOString()));
+      return go('coursestart');
+    }
+    go('home');
+  };
+  /** Home / Path first-run CTA: the welcome card and setup, or straight into the taste (an abandoned one resumes). */
+  const continueCourseStart = () => (cStage === 'taste' ? startTaste() : go('coursestart'));
+  const onCourseReport = (r: SelfReport) => {
+    if (!settings) return;
+    const c = activeC;
+    updateCourseStart((m) => reportCourse(m, c, r, new Date().toISOString()));
+    // Onboarding's first course: the self-report is the quick questionnaire's level (it was asked here, not there).
+    if (cStart?.fromOnboarding && !cStart.report) {
+      const ir = onboardingIntake(settings.courses?.length ? settings.courses : [c], levelOfReport(r));
+      updateSettings({ ...ir.patch, pathFacts: unfreezeIfEarly(settings.pathFacts) });
+    }
+    setCsWelcomeAgain(false);
+    if (!(setupNeeded(c, settings) && !cStart?.setupAt)) startTaste(r);
+  };
+  const csNow = () => new Date().toISOString();
+  const leaveWin = (then: () => void) => {
+    updateCourseStart((m) => markWinSeen(m, activeC, csNow()));
+    then();
+  };
+  // Existing players: a course with progress and no start state counts as started — never the welcome (once loaded).
+  useEffect(() => {
+    if (!settings || !progressReady) return;
+    const m = migrateCourseStart(settings.courseStart, settings.courses?.length ? settings.courses : [settings.activeCourse ?? 'ear'], courseFactsOf(settings, progress));
+    if (m !== settings.courseStart) updateCourseStart(() => m);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [progressReady, settings?.courses, settings?.activeCourse, progress.history.length]);
+  // The course-start screen shows only welcome / setup / the first win; anything else goes back to Today.
+  useEffect(() => {
+    if (route === 'coursestart' && settings && (cStage === 'done' || (cStage === 'taste' && !csWelcomeAgain))) go('home');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [route, cStage, csWelcomeAgain]);
+
   /** A game step of the path (0.38): stars from the game's accuracy (≥ 60 % = 1, 80 % = 2, 95 % = 3). */
   const noteGameStep = (game: string, score: number, detail: unknown) => {
     const ps = pendingStep.current;
@@ -1390,7 +1498,14 @@ export function App() {
   const blockNow = wrun && !wrun.finished ? wrun.blocks[wrun.at] : undefined;
   const pathFitsBlock = !!pathStepNow && !!blockNow && (blockNow.target.kind === 'path' || (blockNow.target.kind === 'area' && blockNow.target.area === pathStepNow.domain));
   const workoutAction = workoutLive && (origin.workout || pathFitsBlock) ? { label: s.uiLang === 'en' ? `Continue workout · ${Math.ceil(runLeftMs(wrun!) / 60000)} min` : `להמשיך באימון · ${Math.ceil(runLeftMs(wrun!) / 60000)} דק׳`, open: () => runCurrent(wrunRef.current!) } : null;
-  const recapNext: { label?: string; open: (() => void) | null; secondary?: { label: string; open: () => void } } = origin.path
+  // SPEC-COURSE-START: the level-test offer (after the first session for "well", after session 3 for the rest) and the
+  // first-week card (sessions 2–3 weave in the path's probe steps).
+  const csSessions = sessionsSince(progress.history, activeC, cStart?.tasteDoneAt);
+  const csOffer = offerDue(cStart, csSessions, levelTested(activeC, progress.history, Object.keys(s.drillStart ?? {})), localDay(new Date()));
+  const csDay = firstWeekDay(cStart, csSessions);
+  const recapNext: { label?: string; open: (() => void) | null; secondary?: { label: string; open: () => void } } = slot?.key.startsWith('taste:')
+    ? { label: s.uiLang === 'en' ? 'See your first result' : 'לתוצאה הראשונה', open: () => go('coursestart') }
+    : origin.path
     ? { label: s.uiLang === 'en' ? 'Next step' : 'לשלב הבא', open: openNextStep, secondary: workoutAction ?? undefined }
     : workoutAction
       ? { label: workoutAction.label, open: workoutAction.open }
@@ -1400,7 +1515,7 @@ export function App() {
 
   const isTab = (TAB_ROUTES as string[]).includes(route);
   // The side menu (SPEC-DESKTOP): shown from 700 px wide by CSS; not during the first questionnaire or the studio.
-  const withSide = route !== 'intake' && route !== 'welcome' && route !== 'studio' && !mini;
+  const withSide = route !== 'intake' && route !== 'welcome' && route !== 'coursestart' && route !== 'studio' && !mini;
   const onPalette = (h: PaletteHit) => {
     if (h.kind === 'nav') return sideNav(h.id);
     if (h.kind === 'topic') return openTopic(h.id, 1);
@@ -1502,8 +1617,12 @@ export function App() {
           onMenu={() => setMenuOpen(true)}
           assigned={user && assigned.length ? <AssignedCard t={t} items={assigned} lang={s.uiLang} onOpen={(id) => openAssignment(id)} /> : null}
           aside={<TodayAside lang={s.uiLang} progress={progress} streak={gems.streak.count} puzzleRows={s.progPuzzle?.[localDay(new Date())]?.rows} onPuzzle={() => go('puzzle')} onDaily={() => go('daily')} onExams={() => go('exams')} onImprov={() => go('improv')} />}
+          startLessonLink={activeC === 'ear' && cStage === 'welcome'}
+          startHero={cStage !== 'done' ? <CourseStartHero course={activeC} lang={s.uiLang} stage={cStage} cs={cStart} onStart={continueCourseStart} onFindLevel={findLevel} /> : undefined}
           news={
             <>
+              {csOffer && <LevelOfferCard lang={s.uiLang} onFind={findLevel} onLater={() => updateCourseStart((m) => snoozeOffer(m, activeC, localDay(new Date())))} />}
+              {csDay && cStage === 'done' && <FirstWeekCard lang={s.uiLang} day={csDay} picks={pickProbes(pathView.units)} onOpen={(x, unit) => openFromPath(x, unit, 'step')} />}
               {(progress.ratingEvents?.length ?? 0) > 0 && <NickPrompt lang={s.uiLang} s={s} onChange={updateSettings} />}
               {lastFreeze && settings?.seenFreezeDay !== lastFreeze && gems.streak.count > 0 && (
                 <FreezeToast t={t} count={gems.streak.count} onClose={() => updateSettings({ seenFreezeDay: lastFreeze })} />
@@ -1558,7 +1677,16 @@ export function App() {
           }}
         />
       )}
-      {route === 'path' && <PathView2 t={t} settings={s} progress={progress} view={pathView} onStep={openFromPath} onTestOut={openTestOut} onPlacement={() => (instrumentCourse ? openTechTest() : s.activeCourse === 'voice' ? openPlacement('voice') : openPlacement())} onTechTest={instrumentCourse && !s.drillStart && !Object.keys(progress.drillItems ?? {}).length ? openTechTest : undefined} onSettings={updateSettings} onLesson={(id) => {
+      {route === 'path' && <PathView2 t={t} settings={s} progress={progress} view={pathView} onStep={openFromPath} onTestOut={openTestOut} onPlacement={() => (instrumentCourse ? openTechTest() : s.activeCourse === 'voice' ? openPlacement('voice') : openPlacement())} onTechTest={instrumentCourse && cStart?.legacy && !s.drillStart && !Object.keys(progress.drillItems ?? {}).length ? openTechTest : undefined} onSettings={updateSettings} top={
+        cStage !== 'done' ? (
+          <CourseStartHero course={activeC} lang={s.uiLang} stage={cStage} cs={cStart} onStart={continueCourseStart} onFindLevel={findLevel} compact />
+        ) : (
+          <>
+            {csOffer && <LevelOfferCard lang={s.uiLang} onFind={findLevel} onLater={() => updateCourseStart((m) => snoozeOffer(m, activeC, localDay(new Date())))} />}
+            <CourseGoalLine course={activeC} lang={s.uiLang} cs={cStart} facts={s.pathFacts} section={pathView.units.find((u) => u.status === 'current')?.section} />
+          </>
+        )
+      } onLesson={(id) => {
         openFrom.current.path = true;
         workoutPending.current = null;
         return s.mode === 'voice' && !s.voiceConsent ? setConsentThen(() => () => openLesson(id)) : openLesson(id);
@@ -1683,6 +1811,10 @@ export function App() {
           onProgress={(p) => {
             setProgress(p);
             notePathResult(p);
+            // A course's taste lesson finished: its measured first win (the first one only), then the win screen.
+            const tc = slot?.key.startsWith('taste:') ? (slot.key.slice(6) as CourseId) : null;
+            const r = p.history[p.history.length - 1];
+            if (tc && r) updateCourseStart((m) => markTasteDone(m, tc, { kind: 'lesson', right: r.firstTry, total: r.total, xp: r.xp }, r.completedAt));
             if (user) void runSync();
           }}
           onSettings={updateSettings}
@@ -1815,23 +1947,57 @@ export function App() {
           }}
         />
       )}
+      {route === 'coursestart' &&
+        (cStage === 'welcome' || csWelcomeAgain ? (
+          <CourseWelcome key={activeC} course={activeC} lang={s.uiLang} report={cStart?.report} onReport={onCourseReport} onBack={() => (csWelcomeAgain ? setCsWelcomeAgain(false) : go('home'))} />
+        ) : cStage === 'setup' ? (
+          <CourseSetup
+            key={activeC}
+            course={activeC}
+            lang={s.uiLang}
+            settings={s}
+            onSettings={updateSettings}
+            onBack={() => setCsWelcomeAgain(true)}
+            onDone={(skipped) => {
+              updateCourseStart((m) => markSetup(m, activeC, csNow(), skipped));
+              startTaste();
+            }}
+          />
+        ) : cStage === 'win' && cStart ? (
+          <FirstWin
+            course={activeC}
+            lang={s.uiLang}
+            cs={cStart}
+            streak={gems.streak.count}
+            dailyGoal={s.dailyGoal}
+            reminderHour={s.reminderHour}
+            onPath={() => leaveWin(() => go('path'))}
+            onFindLevel={() => leaveWin(findLevel)}
+            onDailyGoal={(xp) => updateSettings({ dailyGoal: xp })}
+            onReminder={async (h) => {
+              updateSettings({ reminderHour: h });
+              if (!user) return 'signin';
+              try {
+                const st = await enablePush(s.outputLang, h);
+                return st === 'on' ? 'on' : st === 'denied' ? 'denied' : 'unsupported';
+              } catch {
+                return 'error';
+              }
+            }}
+            onPersonalGoal={(id) => {
+              const g = id ? goalById(activeC, id) : null;
+              updateCourseStart((m) => setPersonalGoal(m, activeC, g ? { id: g.id, at: csNow(), weeks: g.weeks, steps: g.steps } : null));
+            }}
+          />
+        ) : null)}
       {route === 'welcome' && (
         <Onboarding
           lang={s.uiLang}
           onSignIn={() => void signInWithGoogle()}
-          onDone={(res, then) => {
-            updateSettings({ ...res.patch, pathFacts: unfreezeIfEarly(res.patch.pathFacts ?? s.pathFacts) });
-            if (then === 'placement') {
-              go('home');
-              // Drums first: its level test is the kit setup + the playing probe, not the ear placement (keys / guitar /
-              // bass keep the ear placement, which continues into their technique section).
-              const drumsFirst = res.patch.activeCourse === 'drums';
-              window.setTimeout(() => (drumsFirst ? openTechTest() : openPlacement()), 0);
-            } else {
-              const first = personalOrder(res.intake.priorities, res.patch.track)[0];
-              go('home');
-              window.setTimeout(() => openLesson(first), 0);
-            }
+          onDone={(res) => {
+            // SPEC-COURSE-START: no level test before any music — the first course opens with its welcome card.
+            updateSettings({ ...res.patch, courseStart: { ...(s.courseStart ?? {}), ...(res.patch.courseStart ?? {}) }, pathFacts: unfreezeIfEarly(res.patch.pathFacts ?? s.pathFacts) });
+            go('coursestart');
           }}
         />
       )}
@@ -1845,16 +2011,19 @@ export function App() {
           }}
           onDone={(res, then) => {
             updateSettings({ ...res.patch, pathFacts: unfreezeIfEarly(res.patch.pathFacts ?? s.pathFacts) });
+            const c = (res.patch.activeCourse ?? activeC) as CourseId;
             if (then === 'placement') {
+              // Chosen explicitly in the full questionnaire: the course's own level test (SPEC-COURSE-START, level test).
               go('home');
-              // Drums first: its level test is the kit setup + the playing probe, not the ear placement (keys / guitar /
-              // bass keep the ear placement, which continues into their technique section).
-              const drumsFirst = res.patch.activeCourse === 'drums';
-              window.setTimeout(() => (drumsFirst ? openTechTest() : openPlacement()), 0);
+              window.setTimeout(() => (['keys', 'guitar', 'bass', 'drums'].includes(c) ? openTechTest() : c === 'voice' ? openPlacement('voice') : openPlacement()), 0);
             } else if (then === 'basics') {
-              const first = personalOrder(res.intake.priorities, res.patch.track)[0];
               go('home');
-              window.setTimeout(() => openLesson(first), 0);
+              // A course not started yet starts with its welcome card and taste; a started one with the first lesson.
+              if (stageOf(s.courseStart?.[c], setupNeeded(c, s)) !== 'done') window.setTimeout(() => go('coursestart'), 0);
+              else {
+                const first = personalOrder(res.intake.priorities, res.patch.track)[0];
+                window.setTimeout(() => openLesson(first), 0);
+              }
             } else go('home');
           }}
         />
@@ -2028,6 +2197,11 @@ export function App() {
           items={progress.drillItems ?? {}}
           onTake={(st, evs, xp, m) => {
             noteTake(xp, m?.verdict);
+            if (drillFrom.current === 'taste') {
+              // The taste's measured win: best note accuracy and the bars played with the band.
+              const d = chartQueue.current?.find((x) => x.itemId === st.itemId) ?? chartQueue.current?.[0];
+              tasteTake.current = { acc: Math.max(tasteTake.current.acc, st.ewma.acc), bars: tasteTake.current.bars + (d ? Math.round(d.beats / (d.meter || 4)) : 0) };
+            }
             void store.recordDrill(st, evs, xp, m).then(setProgress);
           }}
           onBack={() => {
