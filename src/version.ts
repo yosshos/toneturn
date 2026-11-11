@@ -18,6 +18,18 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.70.1',
+    date: '2026-11-11',
+    en: [
+      'While a passage plays, a thin strip shows how long it is and where you are in it',
+      'Rhythm questions (rhythm memory and the like) show no keyboard',
+    ],
+    he: [
+      'בזמן שקטע מתנגן, פס דק מראה את האורך שלו ואיפה אתם בתוכו',
+      'בשאלות קצב (זיכרון קצבי וכדומה) לא מופיעה מקלדת',
+    ],
+  },
+  {
     version: '0.70.0',
     date: '2026-11-11',
     en: [
