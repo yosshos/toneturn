@@ -20,6 +20,8 @@ import { DrillCreator } from './DrillCreator';
 import { currentLevel, families as familiesOf, keyHeat, levelDone, levelStars, LEVEL_MAX_STARS, levelKeys, shownFamilies, specDrills, todayDrills, levelDrills, withBassTuning, itemTargetBpm } from '../engine/drills/plan';
 import { generate, KEYS_EAR_PROBE } from '../engine/drills/generate';
 import { GUITAR_PROBES, type GuitarLevelDef } from '../engine/drills/guitar';
+import { guitarAddOnsOf } from '../engine/drills/guitarMeta';
+import { GuitarAddOnPicker } from './GuitarAddOns';
 import { BASS_PROBES, placeBass, probeSlot, type BassProbeResult } from '../engine/drills/bassProbes';
 import { walkProbeReport } from '../engine/drills/bassAnalyze';
 import { expTimeMs } from '../engine/drills/analyze';
@@ -84,11 +86,14 @@ const FAM_HUE: Partial<Record<FamilyId, string>> = { scales: 'var(--mint)', arpe
 const HANDS_TX: Record<Lang, Record<string, string>> = { en: { R: 'RH', L: 'LH', RL: 'HT' }, he: { R: 'ימין', L: 'שמאל', RL: 'ביחד' } };
 
 /** Drill settings with the instrument defaulting to the player's (guitar / bass players get guitar drills). */
-export function drillSettingsOf(s: Pick<Settings, 'drills' | 'instrument'> & { activeCourse?: Settings['activeCourse'] }): DrillSettings {
+export function drillSettingsOf(s: Pick<Settings, 'drills' | 'instrument'> & { activeCourse?: Settings['activeCourse']; courses?: Settings['courses'] }): DrillSettings {
   const inst = s.instrument === 'guitar' ? 'guitar' : s.instrument === 'bass' ? 'bass' : 'piano';
   // 0.64: an instrument course decides the technique instrument (keys → piano, guitar, bass), however the course was reached.
   const byCourse: DrillSettings['instrument'] | null = s.activeCourse === 'keys' ? 'piano' : s.activeCourse === 'guitar' ? 'guitar' : s.activeCourse === 'bass' ? 'bass' : s.activeCourse === 'drums' ? 'drums' : null;
-  const out: DrillSettings = { ...DEFAULT_DRILL_SETTINGS, instrument: inst as DrillSettings['instrument'], ...(s.drills ?? {}) };
+  const out0: DrillSettings = { ...DEFAULT_DRILL_SETTINGS, instrument: inst as DrillSettings['instrument'], ...(s.drills ?? {}) };
+  // GUITAR_DEEPENING §5 (owner 2026-11-11): the guitar add-ons, migrated from the old single style when never set
+  // (jazz pre-ticked for a player who also takes the Jazz course).
+  const out: DrillSettings = { ...out0, guitarAddOns: guitarAddOnsOf(out0, s.courses) };
   return byCourse ? { ...out, instrument: byCourse } : out;
 }
 
@@ -333,6 +338,8 @@ const TOPIC_OF: Record<string, Exclude<DrillTopic, 'all' | 'songs' | 'mine'>> = 
   'd-ear': 'ear', 'd-jazz': 'styles', 'd-latin': 'styles',
   // PIANO_AUDIT §3: the pianist's ear has its own topic; piano sight-reading sits under reading.
   'k-ear': 'ear',
+  // GUITAR_DEEPENING: the guitarist's ear has the ear topic; Barry Harris and prog / fusion are styles.
+  'g-ear': 'ear', 'g-harris': 'styles', 'g-prog': 'styles',
   'b-up-pos': 'upright', 'b-up-arco': 'upright', 'b-up-scales': 'upright', 'b-up-pizz': 'upright', 'b-up-walk': 'upright', 'b-up-read': 'upright',
 };
 const TOPIC_NAME: Record<DrillTopic, { en: string; he: string }> = {
@@ -786,10 +793,15 @@ function DrillSettingsView({ lang, ds, onChange, onCalib }: { lang: Lang; ds: Dr
         </div>
       ) : (
         <>
-          <div className="row">
-            <span>{tx.gStyle}</span>
-            {seg('guitarStyle', tx.gStyles)}
-          </div>
+          {ds.instrument === 'guitar' ? (
+            // GUITAR_DEEPENING §5: the guitar picks add-ons (the core is always on); the bass keeps its style filter.
+            <GuitarAddOnPicker value={guitarAddOnsOf(ds)} onChange={(v) => onChange({ guitarAddOns: v })} lang={lang} />
+          ) : (
+            <div className="row">
+              <span>{tx.gStyle}</span>
+              {seg('guitarStyle', tx.gStyles)}
+            </div>
+          )}
           <div className="row">
             <span>{tx.gView}</span>
             {seg('guitarView', tx.gViews)}

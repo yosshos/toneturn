@@ -4,13 +4,18 @@
 // Every note carries string / fret; `pos` = index-finger fret of the hand position; `finger` = fretting-hand finger
 // 1–4 (help only, never graded); `stroke` = picking hand (help only: pick direction cannot be heard).
 
-import type { Drill, DrillGoal, DrillSettings, DrillSpec, ExpNote, FamilyId, LevelExamTag } from './types';
+import type { Drill, DrillGoal, DrillSettings, DrillSpec, ExpNote, FamilyId, GuitarAddOn, LevelExamTag } from './types';
 import type { FamilyDef, LevelDef, SpecTemplate } from './generate';
 import { noteAt, tuningById, type Tuning } from '../fretboard';
 import { SONGBOOK, songChords, songNotes } from '../../content/songbook';
 import { bassFamilies, generateBass } from './bass';
 import { BASS_PROBES } from './bassProbes';
 import { drumFamilies } from './drums';
+import { ADDON_FAMILY, examOfGrade, GUITAR_META, guitarAddOnsOf, itemTempo } from './guitarMeta';
+import { core2Levels, generateCore2 } from './guitarCore2';
+import { generateGuitarProg, guitarProgFamily } from './guitarProg';
+import { generateGuitarEar } from './guitarEar';
+import { generateHarris, generateJazz2 } from './guitarJazz';
 
 export type GuitarStyle = NonNullable<DrillSettings['guitarStyle']>;
 export type GuitarTechnique = NonNullable<ExpNote['technique']>;
@@ -26,6 +31,8 @@ export interface GuitarFamilyDef extends FamilyDef {
   retired?: boolean;
   /** Bass: the upright / double-bass track (BASS_CURRICULUM §5.1), a secondary track grouped on its own. */
   upright?: boolean;
+  /** Guitar (GUITAR_DEEPENING §5): the add-on this whole family belongs to; absent = core. */
+  addOn?: GuitarAddOn;
 }
 export interface GuitarLevelDef extends LevelDef {
   /** Genres of this level (rhythm guitar levels are per genre); absent = the family's genres. */
@@ -35,6 +42,12 @@ export interface GuitarLevelDef extends LevelDef {
   sub?: string;
   /** Bass: exam / bagrut mapping of the level (BASS_AUDIT §3), shown on the level card and used by badges. */
   exam?: LevelExamTag[];
+  /** Guitar (GUITAR_DEEPENING §2.3): the RSL-equivalent grade, 0 = Debut … 8, 9 = beyond grade 8. Orders the path. */
+  grade?: number;
+  /** Guitar: an add-on level inside a core family (rhythm 6 → jazz, picking 8–9 / legato 8 → prog); absent = the family's. */
+  addOn?: GuitarAddOn;
+  /** Guitar: a country level (owner 2026-11-11: country is not core) — shown only with the country flavour. */
+  country?: boolean;
 }
 
 export type T2 = { en: string; he: string };
@@ -45,7 +58,7 @@ export const clamp = (x: number, lo: number, hi: number): number => Math.max(lo,
 
 export const NAMES = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
 export const SIG = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
-const MAJOR = [0, 2, 4, 5, 7, 9, 11];
+export const MAJOR = [0, 2, 4, 5, 7, 9, 11];
 export const SCALES: Record<string, number[]> = {
   major: MAJOR,
   minor: [0, 2, 3, 5, 7, 8, 10],
@@ -90,9 +103,9 @@ export interface Ev {
 const isBassFamily = (f: string): boolean => f === 'g-bass' || f.startsWith('b-');
 const tuningOf = (s: DrillSpec): Tuning => tuningById(s.tuning ?? (isBassFamily(s.family) || s.instrument === 'bass' ? 'bass' : 'standard'));
 /** Fret (0–11) of pitch class pc on a string. */
-const lowFret = (tu: Tuning, pc: number, str: number): number => mod(pc - tu.open[str - 1], 12);
+export const lowFret = (tu: Tuning, pc: number, str: number): number => mod(pc - tu.open[str - 1], 12);
 /** Same, but never the open string (1–12). */
-const lowFret1 = (tu: Tuning, pc: number, str: number): number => lowFret(tu, pc, str) || 12;
+export const lowFret1 = (tu: Tuning, pc: number, str: number): number => lowFret(tu, pc, str) || 12;
 
 /** Every note of a scale inside a fret window, strings low → high, strictly rising (a "position" / "box"). */
 export function windowScale(tu: Tuning, tonic: number, ints: number[], lo: number, hi: number, strings?: number[]): { s: number; f: number }[] {
@@ -136,7 +149,7 @@ function npsFingers(fs: number[]): number[] {
   return [1, b - a === 1 ? 2 : c - b === 1 ? 3 : 2, 4];
 }
 
-const upDown = <T>(xs: T[]): T[] => [...xs, ...xs.slice(0, -1).reverse()];
+export const upDown = <T>(xs: T[]): T[] => [...xs, ...xs.slice(0, -1).reverse()];
 
 /** The highest fret a drill asks for: most electric guitars have 21–22 frets (24 only on some). */
 export const MAX_FRET = 22;
@@ -144,7 +157,7 @@ export const MAX_FRET = 22;
 export const HARMONICS_KEY = 9;
 
 /** Find a place for a pitch on the given strings with the fret inside [lo, hi]. */
-function place(tu: Tuning, pitch: number, strings: number[], lo: number, hi: number): { s: number; f: number } | null {
+export function place(tu: Tuning, pitch: number, strings: number[], lo: number, hi: number): { s: number; f: number } | null {
   for (const s of strings) {
     const f = pitch - tu.open[s - 1];
     if (f >= lo && f <= hi) return { s, f };
@@ -154,13 +167,13 @@ function place(tu: Tuning, pitch: number, strings: number[], lo: number, hi: num
 
 // ───────────────────────────── chord shapes ─────────────────────────────
 
-type Q = 'M' | 'm' | '7' | 'm7' | 'maj7' | '5' | '9' | 'sus2' | 'sus4' | 'add9';
+export type Q = 'M' | 'm' | '7' | 'm7' | 'maj7' | '5' | '9' | 'sus2' | 'sus4' | 'add9';
 interface Shape {
   dots: { s: number; f: number; finger?: number }[];
   root: number;
   name: string;
 }
-const Q_NAME: Record<Q, string> = { M: '', m: 'm', '7': '7', m7: 'm7', maj7: 'maj7', '5': '5', '9': '9', sus2: 'sus2', sus4: 'sus4', add9: 'add9' };
+export const Q_NAME: Record<Q, string> = { M: '', m: 'm', '7': '7', m7: 'm7', maj7: 'maj7', '5': '5', '9': '9', sus2: 'sus2', sus4: 'sus4', add9: 'add9' };
 
 /** Open chords: shape (low → high, x = muted) and fingers. */
 const OPEN: Record<string, [string, string]> = {
@@ -278,7 +291,7 @@ export function drop2Voicings(tu: Tuning, pcs: number[], strings: number[], hi =
 }
 
 /** Shell voicing (root on string 6: R-7-3 on 6-4-3; root on string 5: R-3-7 on 5-4-3), Freddie Green style. */
-function shell(tu: Tuning, root: number, q: Q, rootStr: 5 | 6, near: number): { s: number; f: number }[] {
+export function shell(tu: Tuning, root: number, q: Q, rootStr: 5 | 6, near: number): { s: number; f: number }[] {
   let rf = lowFret(tu, root, rootStr);
   while (rf + 12 <= 13 && Math.abs(rf + 12 - near) < Math.abs(rf - near)) rf += 12;
   if (rf < 2) rf += 12; // the 3rd / 7th sit up to 2 frets below the root
@@ -291,11 +304,11 @@ function shell(tu: Tuning, root: number, q: Q, rootStr: 5 | 6, near: number): { 
 
 // ───────────────────────────── building a drill ─────────────────────────────
 
-const seqEv = (gns: GN[], unit: number, start = 0, lastDur?: number): Ev[] =>
+export const seqEv = (gns: GN[], unit: number, start = 0, lastDur?: number): Ev[] =>
   gns.map((g, i) => ({ beat: start + i * unit, dur: i === gns.length - 1 ? (lastDur ?? Math.max(unit, 1)) : unit, notes: [g] }));
 
 /** Alternate pick strokes D U D U … */
-const alt = (gns: GN[], first: Stroke = 'D'): GN[] => gns.map((g, i) => ({ ...g, stroke: g.stroke ?? (i % 2 === 0 ? first : first === 'D' ? 'U' : 'D') }));
+export const alt = (gns: GN[], first: Stroke = 'D'): GN[] => gns.map((g, i) => ({ ...g, stroke: g.stroke ?? (i % 2 === 0 ? first : first === 'D' ? 'U' : 'D') }));
 
 /** Hand positions for single notes without one: greedy chunks whose fret span ≤ limit; fingers spread 1–4. */
 function autoPos(evs: Ev[], limit: number): void {
@@ -684,7 +697,7 @@ function genPicking(s: DrillSpec, tu: Tuning): Drill {
 }
 
 /** Three close triads on strings 3-2-1 (string 3 first), the one nearest `near`. */
-function top3Triads(tu: Tuning, pcs: number[], near: number): { s: number; f: number }[] {
+export function top3Triads(tu: Tuning, pcs: number[], near: number): { s: number; f: number }[] {
   const want = new Set(pcs.map((p) => mod(p, 12)));
   let best: { s: number; f: number }[] | null = null;
   let bestD = Infinity;
@@ -825,7 +838,7 @@ function genLegato(s: DrillSpec, tu: Tuning): Drill {
 const CAGED_OFF = [-1, 1, 4, 6, 9];
 const CAGED_NAMES = ['E', 'D', 'C', 'A', 'G'];
 
-function cagedWindow(tu: Tuning, key: number, shape: number): [number, number] {
+export function cagedWindow(tu: Tuning, key: number, shape: number): [number, number] {
   const lo = mod(lowFret(tu, key, tu.open.length) + CAGED_OFF[shape % 5], 12);
   return [lo, lo + 4];
 }
@@ -945,7 +958,7 @@ function genScales(s: DrillSpec, tu: Tuning): Drill {
 
 // ───────────────────────────── A: arpeggios ─────────────────────────────
 
-const SEV_KINDS: { q: Q | 'm7b5' | 'dim7' | 'alt'; ints: number[]; name: string }[] = [
+export const SEV_KINDS: { q: Q | 'm7b5' | 'dim7' | 'alt'; ints: number[]; name: string }[] = [
   { q: 'maj7', ints: [0, 4, 7, 11], name: 'maj7' },
   { q: '7', ints: [0, 4, 7, 10], name: '7' },
   { q: 'm7', ints: [0, 3, 7, 10], name: 'm7' },
@@ -1116,7 +1129,7 @@ export const CHANGE_PAIRS: [number, number][] = [
   [7, 3],
 ];
 
-const strumNotes = (sh: Shape, tech: GuitarTechnique, stroke: Stroke, top = false): GN[] =>
+export const strumNotes = (sh: Shape, tech: GuitarTechnique, stroke: Stroke, top = false): GN[] =>
   sh.dots.filter((d) => !top || d.s <= 3).map((d) => ({ s: d.s, f: d.f, finger: d.finger, tech, stroke }));
 
 function chordCheck(sh: Shape): Ev[] {
@@ -1250,7 +1263,7 @@ function genChords(s: DrillSpec, tu: Tuning): Drill {
 }
 
 /** Power chord R-5-8 on the lowest string where it sits at fret 0–9 (drop D: one finger on strings 6-5-4). */
-function powerShape(tu: Tuning, root: number): GN[] {
+export function powerShape(tu: Tuning, root: number): GN[] {
   const r = mod(root, 12);
   if (tu.id === 'drop-d') {
     const f = lowFret(tu, r, 6);
@@ -1814,13 +1827,13 @@ function genFlamenco(s: DrillSpec, tu: Tuning): Drill {
 
 // ───────────────────────────── J: jazz guitar ─────────────────────────────
 
-const IIVI: [number, Q, number[]][] = [
+export const IIVI: [number, Q, number[]][] = [
   [2, 'm7', [0, 3, 7, 10]],
   [7, '7', [0, 4, 7, 10]],
   [0, 'maj7', [0, 4, 7, 11]],
 ];
 
-function nearestVoicing(cands: { s: number; f: number }[][], near: number): { s: number; f: number }[] {
+export function nearestVoicing(cands: { s: number; f: number }[][], near: number): { s: number; f: number }[] {
   return cands.reduce((a, b) => (Math.abs(Math.min(...b.map((p) => p.f)) - near) < Math.abs(Math.min(...a.map((p) => p.f)) - near) ? b : a));
 }
 
@@ -1991,7 +2004,7 @@ function genJazz(s: DrillSpec, tu: Tuning): Drill {
 }
 
 /** Walking bass over ii–V–I (2 bars I): R – 3 – 5 – chromatic approach to the next root (nearest octave), low strings. */
-function bassWalk(tu: Tuning, key: number, evs: Ev[], strings: number[], lowest: number): void {
+export function bassWalk(tu: Tuning, key: number, evs: Ev[], strings: number[], lowest: number): void {
   const chords: [number, number][] = [
     [key + 2, 3],
     [key + 7, 4],
@@ -2331,7 +2344,16 @@ export function generateGuitar(spec: DrillSpec): Drill {
   // Natural harmonics sit at fixed frets: one item for every key of its level (plan.levelDrills keeps it once).
   const s: DrillSpec = { ...spec, key: spec.family === 'g-lead' && spec.kind === 'harmonics' ? HARMONICS_KEY : mod(spec.key, 12) };
   const tu = tuningOf(s);
+  // GUITAR_DEEPENING §4.1 (Batch C): the new core kinds live in guitarCore2.ts.
+  const more = generateCore2(s, tu);
+  if (more) return more;
   switch (s.family) {
+    case 'g-ear':
+      return generateGuitarEar(s, tu);
+    case 'g-harris':
+      return generateHarris(s, tu);
+    case 'g-prog':
+      return generateGuitarProg(s, tu);
     case 'g-fretting':
       return genFretting(s, tu);
     case 'g-picking':
@@ -2353,7 +2375,7 @@ export function generateGuitar(spec: DrillSpec): Drill {
     case 'g-flamenco':
       return genFlamenco(s, tu);
     case 'g-jazz':
-      return genJazz(s, tu);
+      return generateJazz2(s, tu) ?? genJazz(s, tu);
     case 'g-reading':
       return genReading(s, tu);
     case 'g-impro':
@@ -2412,7 +2434,16 @@ export function guitarCatalog(): GuitarFamilyDef[] {
     levels,
   });
   const range = (n: number, from = 0) => Array.from({ length: n }, (_, i) => i + from);
-  return [
+  // GUITAR_DEEPENING: levels with their own start → target (♩), subdivision and grade (the new families and levels).
+  const LT = (fam: string, level: number, en: string, he: string, specs: SpecTemplate[], keys: LevelDef['keys'], tempo: [number, number], sub: string, grade: number): GuitarLevelDef => ({
+    ...L(fam, level, en, he, specs.map((x) => ({ ...x, tempo: x.tempo ?? tempo[0] })), keys),
+    tempo,
+    sub,
+    grade,
+  });
+  const GE = sp('g-ear');
+  const H = sp('g-harris');
+  const list: GuitarFamilyDef[] = [
     fam('g-fretting', 'Fretting hand', 'יד לוחצת', 'classical', ['all'], [
       L('g-fretting', 1, 'Chromatic 1-2-3-4, fret 5 → 1', 'כרומטי 1-2-3-4, סריג 5 ← 1', [F('spider', { option: 0 })], POS_5_TO_1),
       L('g-fretting', 2, 'Finger permutations (1243, 1324, 1342 …)', 'תמורות אצבעות (1243, 1324, 1342 …)', range(5, 1).map((o) => F('spider', { option: o })), [9]),
@@ -2484,7 +2515,7 @@ export function guitarCatalog(): GuitarFamilyDef[] {
     fam('g-fingerstyle', 'Fingerstyle', 'פריטת אצבעות', 'classical', ['fingerstyle', 'classical', 'country', 'pop'], [
       L('g-fingerstyle', 1, 'Thumb bass and p-i-m-a', 'בס אגודל ו-p-i-m-a', [FS('thumb'), FS('pima', { option: 0 })], [0, 7, 9]),
       L('g-fingerstyle', 2, 'Basic arpeggio patterns', 'תבניות ארפג׳יו בסיסיות', [1, 2, 3].map((o) => FS('pima', { option: o })), [0, 7, 9, 4, 2]),
-      L('g-fingerstyle', 3, 'Giuliani-style right-hand patterns', 'תבניות יד ימין בסגנון ג׳וליאני', range(6, 4).map((o) => FS('pima', { option: o })), [0, 9, 4]),
+      L('g-fingerstyle', 3, 'Giuliani-style right-hand patterns', 'תבניות יד ימין בסגנון ג׳וליאני', range(5, 4).map((o) => FS('pima', { option: o })), [0, 9, 4]),
       L('g-fingerstyle', 4, 'Travis picking', 'פריטת טראוויס', [FS('travis'), FS('pima', { option: 9 })], [0, 7, 2, 9, 4], ['fingerstyle', 'country', 'pop']),
       L('g-fingerstyle', 5, 'Rest stroke and free stroke scales; slurs (ligados); campanella', 'סולמות במכה נשענת וחופשית; לגאדו; קמפנלה', [...range(4).map((o) => FS('scale-stroke', { option: o })), FS('ligado', { option: 0 }), FS('ligado', { option: 1 }), FS('campanella')], GKEYS_MAJOR, ['classical', 'fingerstyle']),
       L('g-fingerstyle', 6, 'Tremolo p-a-m-i', 'טרמולו p-a-m-i', [FS('tremolo')], [9, 4, 0], ['classical']),
@@ -2504,6 +2535,21 @@ export function guitarCatalog(): GuitarFamilyDef[] {
       L('g-jazz', 5, 'Guide-tone lines', 'קווי צלילים מנחים', [J('guide-tones', { option: 0 }), J('guide-tones', { option: 1 })], CYC4),
       L('g-jazz', 6, 'Walking bass on guitar', 'בס מהלך על גיטרה', [J('walking')], CYC4),
       L('g-jazz', 7, 'Harmonized scale in drop-2 (chord melody) and octaves', 'סולם מהורמן בדרופ 2 (אקורד-מלודיה) ואוקטבות', [J('harmonized'), J('octaves')], CYC4.slice(0, 6)),
+      // GUITAR_DEEPENING §4.2: jazz for the niche.
+      LT('g-jazz', 8, 'Comping on standards: shells and drop-2 in Charleston, four and anticipations, with the band', 'ליווי על סטנדרטים: קונכיות ודרופ 2 בצ׳רלסטון, ארבע והקדמות, עם הלהקה', range(6).map((o) => J('comp-std', { option: o, swing: true })), [0, 5, 7, 10], [100, 160], 'swing quarters', 6),
+      LT('g-jazz', 9, 'Voice leading by ear and by hand: guide tones, then drop-2 by step', 'הובלת קולות בשמיעה וביד: צלילים מנחים, ואז דרופ 2 בצעדים', [J('vl-ear', { option: 0 }), J('vl-ear', { option: 1 })], CYC4, [70, 100], 'halves', 7),
+      LT('g-jazz', 10, 'Chord melody: our melody on top of drop-2 voicings', 'אקורד-מלודיה: המנגינה שלנו מעל קולות דרופ 2', range(4).map((o) => J('chord-melody', { option: o })), CYC4.slice(0, 6), [60, 90], 'halves', 8),
+      LT('g-jazz', 11, 'Rhythm changes and tritone substitutions: shells and drop-3', 'ריתם צ׳יינג׳ס ותחליפי טריטון: קונכיות ודרופ 3', range(4).map((o) => J('rhythm-changes', { option: o, swing: true })), [10, 3, 8, 0, 5, 7], [140, 200], 'swing quarters', 8),
+      LT('g-jazz', 12, 'Solo-guitar texture: walking bass with guide tones above', 'מרקם של גיטרת סולו: בס מהלך עם צלילים מנחים מעליו', [J('solo-texture', { option: 0, swing: true }), J('solo-texture', { option: 1, swing: true })], CYC4, [80, 120], 'quarters + 8ths', 9),
+    ]),
+    // Barry Harris on the neck (GUITAR_DEEPENING §4.2, barry.ts): the jazz add-on.
+    fam('g-harris', 'Barry Harris on guitar', 'בארי האריס בגיטרה', 'jazz', ['jazz'], [
+      LT('g-harris', 1, '6th-diminished scales in two positions', 'סולמות שש-מוקטן בשני מצבים', range(4).map((o) => H('sixdim-scale', { option: o, swing: true })), CYC4, [80, 160], 'swing 8ths', 6),
+      LT('g-harris', 2, 'The scale of chords: the 6 chord and the diminished, drop-2', 'סולם האקורדים: אקורד ה-6 והמוקטן, דרופ 2', range(3).map((o) => H('sixdim-chords', { option: o })), CYC4, [80, 160], 'quarters', 7),
+      LT('g-harris', 3, 'The dominant scale with the half-step rules', 'סולם הדומיננטה עם חוקי חצי הטון', range(7).map((o) => H('dom-scale', { option: o, swing: true })), CYC4, [80, 160], 'swing 8ths', 7),
+      LT('g-harris', 4, 'Triads off the degrees, "3 to 9", pivots', 'משולשים מכל דרגה, "3 עד 9", פיבוטים', range(3).map((o) => H('triads-3to9', { option: o, swing: true })), CYC4, [100, 180], 'swing 8ths', 8),
+      LT('g-harris', 5, 'Half step below and enclosures: ii–V–I lines in 12 keys', 'חצי טון מתחת וכיתורים: קווי ii–V–I ב-12 סולמות', [H('enclosure', { option: 0, swing: true }), H('enclosure', { option: 1, swing: true })], CYC4, [100, 180], 'swing 8ths', 8),
+      LT('g-harris', 6, 'The brothers and the minor 6ths from one diminished chord', 'האחים ומינור 6 מאקורד מוקטן אחד', [H('brothers', { option: 0, swing: true }), H('brothers', { option: 1, swing: true })], CYC4, [100, 180], 'swing 8ths', 9),
     ]),
     fam('g-reading', 'Reading by position', 'קריאה לפי מצבים', 'classical', ['all'], [
       L('g-reading', 1, 'Position I, strings 1–3', 'מצב I, מיתרים 1–3', [RD('position', { position: 1, option: 1 })], [0]),
@@ -2512,12 +2558,27 @@ export function guitarCatalog(): GuitarFamilyDef[] {
       L('g-reading', 4, 'Position VII and mixed rhythms', 'מצב VII ומקצבים מעורבים', [RD('position', { position: 7 }), RD('position', { position: 5, perBeat: 2 })], [0, 7, 2, 9, 5, 10]),
       L('g-reading', 5, 'Positions IX and XII', 'מצבים IX ו-XII', [RD('position', { position: 9 }), RD('position', { position: 12, perBeat: 2 })], GKEYS_MAJOR),
     ]),
+    // The guitarist's ear (GUITAR_DEEPENING §3): call and response, answered on the guitar (core).
+    fam('g-ear', "The guitarist's ear", 'השמיעה של הגיטריסט', 'classical', ['all'], [
+      LT('g-ear', 1, 'Find the tonic', 'למצוא את הטוניקה', [GE('tonic')], GKEYS_MAJOR, [70, 90], 'whole notes', 1),
+      LT('g-ear', 2, 'Melodic recall: one bar', 'זיכרון מלודי: תיבה אחת', range(3).map((o) => GE('melodic1', { option: o })), GKEYS_MINOR.slice(0, 8), [75, 90], 'quarters / 8ths', 2),
+      LT('g-ear', 3, 'Melodic recall: two bars over the drums', 'זיכרון מלודי: שתי תיבות מעל התופים', range(4).map((o) => GE('melodic2', { option: o })), GKEYS_MAJOR, [80, 90], 'quarters / 8ths', 4),
+      LT('g-ear', 4, 'Rhythm recall on muted strings', 'זיכרון מקצב על מיתרים מושתקים', [GE('rhythm', { option: 0 }), GE('rhythm', { option: 1 })], [7, 0, 2, 9, 4], [80, 100], '8ths / 16ths', 3),
+      LT('g-ear', 5, 'Riff recall: single notes and power chords', 'זיכרון ריף: צלילים בודדים ואקורדי פאוור', [GE('riff', { option: 0 }), GE('riff', { option: 1 })], [4, 9, 7, 2, 0, 5], [80, 110], '8ths', 4),
+      LT('g-ear', 6, 'Root finder: I, IV, V, vi', 'מוצא היסודות: I, IV, V, vi', [GE('roots', { option: 0 })], GKEYS_MAJOR, [80, 100], 'halves', 4),
+      LT('g-ear', 7, 'Root finder: ii, iii, V7, ♭VII', 'מוצא היסודות: ii, iii, V7, ♭VII', [GE('roots', { option: 1 })], GKEYS_MAJOR, [80, 100], 'halves', 7),
+      LT('g-ear', 8, 'Chord quality by ear', 'סוג האקורד בשמיעה', [GE('quality', { option: 0 }), GE('quality', { option: 1 })], GKEYS_MAJOR.slice(0, 8), [60, 90], 'quarters', 6),
+      LT('g-ear', 9, 'Find the key, then its pentatonic', 'למצוא את הסולם, ואז את הפנטטוני שלו', [GE('key', { option: 0 }), GE('key', { option: 1 })], GKEYS_MAJOR, [70, 90], '8ths', 5),
+      LT('g-ear', 10, 'Transcribe a line', 'תמלול קו', [GE('transcribe', { option: 0 }), GE('transcribe', { option: 1 })], BLUES_KEYS, [70, 100], '8ths', 9),
+    ]),
     fam('g-impro', 'Improvising: target notes', 'אלתור: צלילי מטרה', 'jazz', ['blues', 'rock', 'jazz', 'all'], [
       L('g-impro', 1, 'Roots on beat 1: blues, minor blues, ii–V–I, a standard', 'יסודות על 1: בלוז, בלוז מינורי, ii–V–I, סטנדרט', [I('targets-root'), I('targets-root', { option: 1 }), I('targets-root', { option: 2 }), I('targets-root', { option: 3 })], BLUES_KEYS),
       L('g-impro', 2, '3rds on beat 1 through the forms', 'טרצות על 1 לאורך הצורות', [I('targets-third'), I('targets-third', { option: 1 }), I('targets-third', { option: 2 }), I('targets-third', { option: 3 })], BLUES_KEYS),
       L('g-impro', 3, 'Chord-tone arpeggios through the form', 'ארפג׳יו צלילי אקורד לאורך הצורה', [I('targets-arp'), I('targets-arp', { option: 1 }), I('targets-arp', { option: 2 }), I('targets-arp', { option: 3 })], BLUES_KEYS),
       L('g-impro', 4, 'Guide tones through the form', 'צלילים מנחים לאורך הצורה', [I('targets-guide'), I('targets-guide', { option: 1 }), I('targets-guide', { option: 2 }), I('targets-guide', { option: 3 })], BLUES_KEYS),
     ]),
+    // Prog / fusion (GUITAR_DEEPENING §4.3, the prog engine): the prog add-on.
+    guitarProgFamily(),
     // The 0.4x starter bass family: superseded by the b-* course families below (BASS_CURRICULUM §10.1). Kept, retired,
     // so old item ids, badges and frozen path units (tech:g-bass-*) stay valid.
     {
@@ -2544,6 +2605,49 @@ export function guitarCatalog(): GuitarFamilyDef[] {
     // The drums course v1 (DRUMS_CURRICULUM §4.3), in teaching order.
     ...drumFamilies(),
   ];
+  return list.map((f) => (f.instruments.includes('guitar') && !f.retired ? applyGuitarMeta(f) : f));
+}
+
+/** Distinct onsets per beat of a drill (notes per beat, chords counted once). */
+const onsetsPerBeat = (d: Drill): number => new Set(d.notes.map((n) => n.beat)).size / Math.max(1, d.beats);
+
+/**
+ * GUITAR_DEEPENING §2 / §5 on a guitar family: the Batch C levels appended, then every level's start → target, sub,
+ * grade, RSL tag and add-on (the family's, or the level's own), and each item's start (and own target where it
+ * differs from the level's).
+ */
+function applyGuitarMeta(f: GuitarFamilyDef): GuitarFamilyDef {
+  const extra = core2Levels()[f.id] ?? [];
+  const famAddOn = f.addOn ?? ADDON_FAMILY[f.id];
+  const levels = [...f.levels, ...extra].map((lv): GuitarLevelDef => {
+    const meta = GUITAR_META[lv.id];
+    if (!meta) {
+      const grade = lv.grade ?? 5;
+      const addOn = lv.addOn ?? famAddOn;
+      return { ...lv, grade, exam: lv.exam ?? examOfGrade(grade), ...(addOn ? { addOn } : {}) };
+    }
+    const key0 = Array.isArray(lv.keys) ? lv.keys[0] : 0;
+    const specs = lv.specs.map((x) => {
+      const d = generateGuitar({ ...x, key: key0 });
+      const it = itemTempo(meta, x, d.startBpm, onsetsPerBeat(d));
+      return { ...x, ...(it.tempo !== undefined ? { tempo: it.tempo } : {}), ...(it.target !== undefined && it.target !== meta.tempo[1] ? { target: it.target } : {}) };
+    });
+    const addOn = meta.addOn ?? lv.addOn ?? famAddOn;
+    return { ...lv, specs, tempo: meta.tempo, sub: meta.sub, grade: meta.grade, exam: examOfGrade(meta.grade), ...(addOn ? { addOn } : {}), ...(meta.country ? { country: true } : {}) };
+  });
+  return { ...f, levels, ...(famAddOn ? { addOn: famAddOn } : {}) };
+}
+
+/**
+ * Guitar levels a player's settings show (GUITAR_DEEPENING §5, owner 2026-11-11): the core always; an add-on family or
+ * level only when its add-on is ticked; country levels only with the country flavour (the old style 'country').
+ */
+export function guitarLevelShown(f: GuitarFamilyDef, lv: GuitarLevelDef, ds: Pick<DrillSettings, 'guitarAddOns' | 'guitarStyle'>): boolean {
+  const addOns = guitarAddOnsOf(ds);
+  const a = lv.addOn ?? f.addOn;
+  if (a && !addOns.includes(a)) return false;
+  if (lv.country && ds.guitarStyle !== 'country') return false;
+  return true;
 }
 
 /** Is this family / level shown for a guitar style filter? */

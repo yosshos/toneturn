@@ -540,6 +540,35 @@ export const GLYPHS: Record<string, Glyph> = {
       {p('M13.1 13.4V8.5', false)}
     </>
   ),
+  // GUITAR_DEEPENING: the guitarist's ear (an ear over three strings), Barry Harris on the neck (a chord and the
+  // diminished circle on the strings), prog (a 7/8 bar of three groups).
+  'family:g-ear': () => (
+    <>
+      {p('M8 10c0-4 2.5-6 5-6s5 2 5 5.5c0 3-2.5 3.6-3 6 M11 10c0-1.6 1-2.6 2.2-2.6s2.2 1 2.2 2.4')}
+      <path d="M2 17.5h20 M2 20h20 M2 22.5h20" strokeWidth={0.9} />
+    </>
+  ),
+  'family:g-harris': () => (
+    <>
+      <path d="M2 5h20 M2 10h20 M2 15h20 M2 20h20" strokeWidth={0.8} />
+      {dot(6, 15, 1.8)}
+      {dot(9, 10, 1.8)}
+      {dot(6, 5, 1.8)}
+      <circle cx={17} cy={12.5} r={3.6} fill="none" />
+      {p('M17 8.9v-2.4', false)}
+    </>
+  ),
+  'family:g-prog': () => (
+    <>
+      {p('M2 20h20 M2 4v16 M22 4v16')}
+      {head(5, 15, 2)}
+      {head(9, 15, 2)}
+      {head(13, 13, 2)}
+      {head(17, 13, 2)}
+      {head(20, 11, 1.8)}
+      {p('M6.8 14.4V7 M10.8 14.4V7 M6.8 7h4 M14.8 12.4V5 M18.8 12.4V5 M21.6 10.4V5 M14.8 5h6.8', false)}
+    </>
+  ),
   // The pianist's ear (PIANO_AUDIT §3): an ear over three keys.
   // PIANO_JAZZ: a block chord beside the diminished circle; a running line to a landing; one chord turning into another.
   'family:k-sixdim': () => (

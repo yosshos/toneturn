@@ -3,7 +3,7 @@
 
 import type { CourseId } from './courses';
 import { catalog, type LevelDef } from './drills/generate';
-import { guitarCatalog } from './drills/guitar';
+import { guitarCatalog, guitarLevelShown } from './drills/guitar';
 import { drumFamilies } from './drills/drums';
 import { kitHiddenLevels } from './drumAcoustic';
 import { hiddenBassLevels, pianoMicHiddenLevels, type DrumMic, LEVEL_DONE_STARS, levelDrills, levelStars, shownFamilies, targetBpmOf } from './drills/plan';
@@ -28,7 +28,7 @@ export function ladderFamiliesFor(course: CourseId, ds: DrillSettings, bassTunin
   if (!instrument) return [];
   // The upright track only for an upright / fretless bass (BASS_AUDIT B16); its families otherwise stay in Drills.
   const upright = bassTuning === 'upright' || bassTuning === 'bass-fretless';
-  return shownFamilies({ emphasis: ds.emphasis, instrument, guitarStyle: ds.guitarStyle, drumMic })
+  return shownFamilies({ emphasis: ds.emphasis, instrument, guitarStyle: ds.guitarStyle, guitarAddOns: ds.guitarAddOns, drumMic })
     .filter((f) => upright || !(f as { upright?: boolean }).upright)
     .map((f) => f.id);
 }
@@ -37,8 +37,11 @@ export function ladderFamiliesFor(course: CourseId, ds: DrillSettings, bassTunin
  * Ladder levels the course's path leaves out (N10): the low-B levels on a bass without a low B; on drums played by
  * microphone, the levels that need an e-kit (a practice pad: grooves, fills, kit reading — DRUMS_CURRICULUM §3.8; an acoustic kit: all but ACOUSTIC_LEVELS).
  */
-export function ladderHiddenFor(course: CourseId, bassTuning?: string, drumMic?: DrumMic, pianoMicOnly?: boolean): string[] {
+export function ladderHiddenFor(course: CourseId, bassTuning?: string, drumMic?: DrumMic, pianoMicOnly?: boolean, ds?: Pick<DrillSettings, 'guitarAddOns' | 'guitarStyle'>): string[] {
   if (course === 'drums') return kitHiddenLevels(drumFamilies(), drumMic);
+  // Guitar (GUITAR_DEEPENING §5): add-on levels inside core families (bossa / Freddie Green, prog picking, chord-scale
+  // impro) and country levels, unless chosen. Whole add-on families are already left out by ladderFamiliesFor.
+  if (course === 'guitar') return guitarCatalog().filter((f) => f.instruments.includes('guitar') && !f.retired).flatMap((f) => f.levels.filter((l) => !guitarLevelShown(f, l, ds ?? {})).map((l) => l.id));
   if (course === 'keys') return pianoMicOnly ? pianoMicHiddenLevels() : [];
   return course === 'bass' ? hiddenBassLevels(bassTuning) : [];
 }

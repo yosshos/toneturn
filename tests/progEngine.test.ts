@@ -80,7 +80,8 @@ describe('the click plan', () => {
   it('old drills: the same clicks as the old DrillTake rule, for every drum and bass / guitar level drill', () => {
     const drills: Drill[] = [
       ...drumFamilies().flatMap((f) => f.levels.flatMap((lv) => levelDrills(lv, 'fifths-up').slice(0, 2))),
-      ...guitarCatalog().flatMap((f) => f.levels.flatMap((lv) => levelDrills(lv, 'fifths-up').slice(0, 1))),
+      // g-prog (GUITAR_DEEPENING §4.3) is built on the timeline on purpose: not an old drill.
+      ...guitarCatalog().filter((f) => f.id !== 'g-prog').flatMap((f) => f.levels.flatMap((lv) => levelDrills(lv, 'fifths-up').slice(0, 1))),
     ];
     expect(drills.length).toBeGreaterThan(200);
     for (const d of drills) {

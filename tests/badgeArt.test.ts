@@ -34,7 +34,7 @@ describe('glyph registry', () => {
   it('level pips follow the family length', () => {
     const b = BADGES.find((x) => x.id === 'tech:g-impro:2')!;
     const html = renderToStaticMarkup(h(BadgeArt, { badge: b, earned: true }));
-    expect([...html.matchAll(/cy="13.2"/g)].length).toBe(4);
+    expect([...html.matchAll(/cy="13.2"/g)].length).toBe(6);
   });
   it('unknown guitar families get the guitar glyph, and new families can register one', () => {
     const g = resolveGlyph({ id: 'tech:g-strum:1', cat: 'technique', group: 'g-strum' });

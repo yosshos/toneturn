@@ -334,10 +334,10 @@ const subBadges: Badge[] = SUB_SKILLS.map((s, i) => {
 // The pianist's ear (k-ear) gets milestones by items played back clean (keysEarBadges), not tempo-band titles.
 export type BadgeFamily = Exclude<FamilyId, 'custom' | BassFamilyId | DrumFamilyId | 'k-ear'>;
 export const PIANO_BADGE_FAMILIES: BadgeFamily[] = ['scales', 'arpeggios', 'cadences', 'fingers', 'control', 'advanced', 'harris', 'jazz', 'voicings', 'accomp', 'k-sixdim', 'k-bebop', 'k-reharm'];
-export const GUITAR_BADGE_FAMILIES: BadgeFamily[] = ['g-fretting', 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-lead', 'g-fingerstyle', 'g-flamenco', 'g-jazz', 'g-reading', 'g-impro', 'g-bass'];
+export const GUITAR_BADGE_FAMILIES: BadgeFamily[] = ['g-fretting', 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-lead', 'g-fingerstyle', 'g-flamenco', 'g-jazz', 'g-reading', 'g-impro', 'g-bass', 'g-ear', 'g-harris', 'g-prog'];
 export const BADGE_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES, ...GUITAR_BADGE_FAMILIES];
 /** Families whose levels together cover all 12 keys: one "Around the Clock" badge each (guitar list checked against guitarCatalog in tests). */
-export const KEYS_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES, 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-fingerstyle', 'g-jazz', 'g-reading', 'g-bass'];
+export const KEYS_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES, 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-fingerstyle', 'g-jazz', 'g-reading', 'g-bass', 'g-ear', 'g-harris'];
 export const FAMILY_NAME: Record<BadgeFamily, L> = {
   scales: { en: 'Scales', he: 'סולמות' },
   arpeggios: { en: 'Arpeggios', he: 'ארפג׳ים' },
@@ -366,6 +366,9 @@ export const FAMILY_NAME: Record<BadgeFamily, L> = {
   'g-reading': { en: 'Reading by position', he: 'קריאה לפי מצבים' },
   'g-impro': { en: 'Target-note improvising', he: 'אלתור בצלילי מטרה' },
   'g-bass': { en: 'Bass guitar', he: 'גיטרה בס' },
+  'g-ear': { en: "The guitarist's ear", he: 'השמיעה של הגיטריסט' },
+  'g-harris': { en: 'Barry Harris on guitar', he: 'בארי האריס בגיטרה' },
+  'g-prog': { en: 'Prog and fusion', he: 'פרוג ופיוז׳ן' },
 };
 const FAMILY_ICON: Record<BadgeFamily, string> = {
   scales: '🪜',
@@ -395,6 +398,10 @@ const FAMILY_ICON: Record<BadgeFamily, string> = {
   'g-reading': '📑',
   'g-impro': '🗣️',
   'g-bass': '🎚️',
+  // GUITAR_DEEPENING: text marks, no emoji (mature UI).
+  'g-ear': 'ear',
+  'g-harris': '6°',
+  'g-prog': '7/8',
 };
 // One title per catalogue level (piano 7; guitar as many as guitarCatalog has — tests check the counts).
 const FAMILY_TITLES: Record<BadgeFamily, [string, string][]> = {
@@ -413,18 +420,22 @@ const FAMILY_TITLES: Record<BadgeFamily, [string, string][]> = {
   'k-reharm': [['Altered Colourist', 'צבעי האלטרד'], ['Minor-Cadence Maker', 'עושה הקדנצה המינורית'], ['Ballad Voicer', 'מעצב הבלדות'], ['Reharmoniser', 'מחדש ההרמוניה'], ['Modal Comper', 'המלווה המודאלי'], ['Solo Pianist', 'פסנתרן סולו'], ['Harmony Master', 'אמן ההרמוניה']],
   accomp: [['Oom-Pah Starter', 'אום־פה מתחיל'], ['Alberti Apprentice', 'שוליית אלברטי'], ['Boogie Walker', 'הולך בוגי'], ['Walking-Bass Wanderer', 'נווד הבס המהלך'], ['Stride Strider', 'צועד הסטרייד'], ['One-Person Band', 'להקת איש אחד'], ['Groove Engine', 'מנוע הגרוב']],
   'g-fretting': [['Fret Crawler', 'זוחל על הסריגים'], ['Finger Shuffler', 'מערבב אצבעות'], ['Wall Spider', 'עכביש על הקיר'], ['Neck Climber', 'מטפס הצוואר'], ['Permutation Machine', 'מכונת התמורות'], ['Rubber Hand', 'יד מגומי']],
-  'g-picking': [['Down-Up Rookie', 'טירון למטה־למעלה'], ['String Hopper', 'קופץ מיתרים'], ['Economy Class', 'מחלקת תיירים'], ['String Skipper', 'מדלג המיתרים'], ['Hummingbird', 'יונק הדבש'], ['Sweep Sorcerer', 'מכשף הסוויפ'], ['Chicken Picker', 'מנקר כמו תרנגול']],
-  'g-legato': [['Little Hammer', 'פטיש קטן'], ['String Puller', 'מושך בחוטים'], ['Trill Seeker', 'מחפש טרילים'], ['Smooth Operator', 'זורם כמו מים'], ['Silk Fingers', 'אצבעות של משי'], ['Fretboard Tap Dancer', 'רקדן סטפס על הצוואר']],
-  'g-scales': [['Box One Resident', 'דייר תיבה 1'], ['Box Hopper', 'קופץ בין תיבות'], ['Blue Note Finder', 'מוצא התו הכחול'], ['Position Player', 'נגן המצבים'], ['Cage Breaker', 'פורץ הכלוב'], ['Neck Sprinter', 'ספרינטר הצוואר'], ['Fretboard Cartographer', 'ממפה הצוואר']],
-  'g-arps': [['Triad Picker', 'מלקט משולשים'], ['Shape Collector', 'אספן צורות'], ['String-Set Surfer', 'גולש קבוצות המיתרים'], ['Seventh Heaven', 'ברקיע השביעי'], ['Changes Weaver', 'אורג המהלכים']],
+  'g-picking': [['Down-Up Rookie', 'טירון למטה־למעלה'], ['String Hopper', 'קופץ מיתרים'], ['Economy Class', 'מחלקת תיירים'], ['String Skipper', 'מדלג המיתרים'], ['Hummingbird', 'יונק הדבש'], ['Sweep Sorcerer', 'מכשף הסוויפ'], ['Chicken Picker', 'מנקר כמו תרנגול'], ['Sweep Architect', 'אדריכל הסוויפ'], ['Fusion Picker', 'פורט הפיוז׳ן']],
+  'g-legato': [['Little Hammer', 'פטיש קטן'], ['String Puller', 'מושך בחוטים'], ['Trill Seeker', 'מחפש טרילים'], ['Smooth Operator', 'זורם כמו מים'], ['Silk Fingers', 'אצבעות של משי'], ['Fretboard Tap Dancer', 'רקדן סטפס על הצוואר'], ['Shifting Legato', 'לגאטו נודד'], ['Eight-Finger Tapper', 'טאפינג בשמונה אצבעות']],
+  'g-scales': [['Box One Resident', 'דייר תיבה 1'], ['Box Hopper', 'קופץ בין תיבות'], ['Blue Note Finder', 'מוצא התו הכחול'], ['Position Player', 'נגן המצבים'], ['Cage Breaker', 'פורץ הכלוב'], ['Neck Sprinter', 'ספרינטר הצוואר'], ['Fretboard Cartographer', 'ממפה הצוואר'], ['Position Connector', 'מחבר המצבים'], ['Whole-Neck Runner', 'רץ לאורך הצוואר'], ['Interval Sequencer', 'רצפי מרווחים']],
+  'g-arps': [['Triad Picker', 'מלקט משולשים'], ['Shape Collector', 'אספן צורות'], ['String-Set Surfer', 'גולש קבוצות המיתרים'], ['Seventh Heaven', 'ברקיע השביעי'], ['Changes Weaver', 'אורג המהלכים'], ['Five-Shape Sevenths', 'ספטימות בחמש צורות'], ['Upper-Structure Player', 'נגן המבנה העליון']],
   'g-chords': [['Campfire Strummer', 'גיטריסט של מדורות'], ['Minute Changer', 'מחליף בדקה'], ['Quick-Change Artist', 'אמן ההחלפה המהירה'], ['Power-Chord Rocker', 'רוקר הפאוור־קורד'], ['Barre Raiser', 'מרים הברה'], ['Barre Hopper', 'קופץ ברה'], ['Neck Conqueror', 'כובש הצוואר']],
-  'g-rhythm': [['Strum Starter', 'מתחיל לפרוט'], ['Old Faithful', 'הוותיק הנאמן'], ['Boom-Chick Cowboy', 'בוקר הבום־צ׳יק'], ['Offbeat Rasta', 'ראסטה של האופ־ביט'], ['Funk Machine', 'מכונת הפאנק'], ['Bossa Breeze', 'בריזה של בוסה'], ['Gallop Rider', 'רוכב הגאלופ']],
-  'g-lead': [['Slide Glider', 'גולש הסלייד'], ['Gentle Bender', 'מכופף עדין'], ['Full-Step Bender', 'מכופף טון שלם'], ['Rubber-Band Bender', 'מכופף הגומייה'], ['Vibrato Voice', 'ויברטו עם נשמה'], ['Double-Stop Duo', 'צמד הצלילים הכפולים'], ['Blues King', 'מלך הבלוז']],
+  'g-rhythm': [['Strum Starter', 'מתחיל לפרוט'], ['Old Faithful', 'הוותיק הנאמן'], ['Boom-Chick Cowboy', 'בוקר הבום־צ׳יק'], ['Offbeat Rasta', 'ראסטה של האופ־ביט'], ['Funk Machine', 'מכונת הפאנק'], ['Bossa Breeze', 'בריזה של בוסה'], ['Gallop Rider', 'רוכב הגאלופ'], ['Riff Builder', 'בונה הריפים'], ['Neo-Soul Hands', 'ידיים של ניאו-סול'], ['Maqsum Strummer', 'פורט המקסום']],
+  'g-lead': [['Slide Glider', 'גולש הסלייד'], ['Gentle Bender', 'מכופף עדין'], ['Full-Step Bender', 'מכופף טון שלם'], ['Rubber-Band Bender', 'מכופף הגומייה'], ['Vibrato Voice', 'ויברטו עם נשמה'], ['Double-Stop Duo', 'צמד הצלילים הכפולים'], ['Blues King', 'מלך הבלוז'], ['Phrase Bender', 'מכופף המשפטים'], ['Hybrid Soloist', 'סולן משולב'], ['Pinch and Steel', 'צביטה ופלדה']],
   'g-fingerstyle': [['Thumb Drummer', 'אגודל מתופף'], ['Finger Harpist', 'נבלאי האצבעות'], ["Giuliani's Pupil", 'תלמיד של ג׳וליאני'], ['Travis Traveler', 'נוסע בטראוויס'], ['Classical Touch', 'מגע קלאסי'], ['Alhambra Dreamer', 'חולם באלהמברה']],
   'g-flamenco': [['Fan Opener', 'פותח המניפה'], ['Rasgueado Storm', 'סערת ראסגאדו'], ['Machine-Gun Fingers', 'אצבעות מקלע'], ['Thumb of Fire', 'אגודל של אש'], ['Duende Keeper', 'שומר הדואנדה']],
-  'g-jazz': [['Shell Comper', 'מלווה בקונכיות'], ['Drop-2 Diver', 'צולל דרופ 2'], ['Drop-3 Explorer', 'חוקר דרופ 3'], ['Smooth Voice-Leader', 'מוביל קולות חלק'], ['Guide-Tone Tracker', 'גשש הצלילים המובילים'], ['Bass-Line Walker', 'מטייל קו הבס'], ['Chord-Melody Poet', 'משורר האקורד־מלודיה']],
-  'g-reading': [['First-Position Reader', 'קורא במצב ראשון'], ['Six-String Reader', 'קורא שישה מיתרים'], ['Position Shifter', 'מחליף מצבים'], ['Seventh-Fret Scholar', 'מלומד הסריג השביעי'], ['Twelfth-Fret Navigator', 'נווט הסריג ה־12']],
-  'g-impro': [['Root Finder', 'מוצא השורשים'], ['Third Eye', 'העין השלישית'], ['Chord-Tone Painter', 'צייר צלילי האקורד'], ['Blues Storyteller', 'מספר סיפורי בלוז']],
+  'g-jazz': [['Shell Comper', 'מלווה בקונכיות'], ['Drop-2 Diver', 'צולל דרופ 2'], ['Drop-3 Explorer', 'חוקר דרופ 3'], ['Smooth Voice-Leader', 'מוביל קולות חלק'], ['Guide-Tone Tracker', 'גשש הצלילים המובילים'], ['Bass-Line Walker', 'מטייל קו הבס'], ['Chord-Melody Poet', 'משורר האקורד־מלודיה'], ['Standards Comper', 'מלווה הסטנדרטים'], ['Voice-Leading Ear', 'אוזן הובלת הקולות'], ['Chord-Melody Arranger', 'מעבד האקורד-מלודיה'], ['Rhythm-Changes Comper', 'מלווה הריתם צ׳יינג׳ס'], ['Solo Guitarist', 'גיטריסט סולו']],
+  'g-reading': [['First-Position Reader', 'קורא במצב ראשון'], ['Six-String Reader', 'קורא שישה מיתרים'], ['Position Shifter', 'מחליף מצבים'], ['Seventh-Fret Scholar', 'מלומד הסריג השביעי'], ['Twelfth-Fret Navigator', 'נווט הסריג ה־12'], ['Chart Reader', 'קורא הצ׳ארטים'], ['Two-Position Reader', 'קורא בשני מצבים'], ['Lead-Sheet Reader', 'קורא דפי התווים']],
+  'g-impro': [['Root Finder', 'מוצא השורשים'], ['Third Eye', 'העין השלישית'], ['Chord-Tone Painter', 'צייר צלילי האקורד'], ['Blues Storyteller', 'מספר סיפורי בלוז'], ['Chord-Scale Player', 'נגן סולם-אקורד'], ['Motif Developer', 'מפתח המוטיבים']],
+  // GUITAR_DEEPENING (2026-11-11): one serious title per new level.
+  'g-ear': [['Tonic Finder', 'מוצא הטוניקה'], ['One-Bar Echo', 'הד של תיבה'], ['Two-Bar Echo', 'הד של שתי תיבות'], ['Rhythm Reader', 'קורא המקצב'], ['Riff Catcher', 'תופס הריפים'], ['Root Hearer', 'שומע היסודות'], ['Harmonic Ear', 'אוזן הרמונית'], ['Quality Judge', 'מזהה הסוגים'], ['Key Finder', 'מוצא הסולם'], ['Transcriber', 'המתמלל']],
+  'g-harris': [['Sixth-Diminished Guitarist', 'גיטריסט שש-מוקטן'], ['Scale-of-Chords Player', 'נגן סולם האקורדים'], ['Half-Step Ruler', 'שליט חצי הטון'], ['Three-to-Nine Player', 'נגן שלוש עד תשע'], ['Enclosure Player', 'נגן הכיתורים'], ["Barry's Guitarist", 'הגיטריסט של בארי']],
+  'g-prog': [['Odd-Meter Rider', 'רוכב המשקלים'], ['Grouping Shifter', 'מחליף הקבוצות'], ['Bar-Line Lander', 'נוחת על קו התיבה'], ['Polyrhythm Player', 'נגן הפוליריתמיקה'], ['Tempo Shifter', 'מחליף הטמפו'], ['Modal Riffer', 'ריפים מודאליים'], ['Fusion Liner', 'קווי פיוז׳ן'], ['Unison Locker', 'נועל היוניסון']],
   'g-bass': [['Low-End Rookie', 'טירון הצד הנמוך'], ['Four-String Climber', 'מטפס ארבעה מיתרים'], ['Groove Anchor', 'עוגן הגרוב'], ['Chord Outliner', 'משרטט האקורדים'], ['Disco Bouncer', 'הקופצן של הדיסקו'], ['Walking Bassist', 'בסיסט מהלך']],
 };
 /** Number of level badges of a family (piano 7; guitar = its guitarCatalog levels). */

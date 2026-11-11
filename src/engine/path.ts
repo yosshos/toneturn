@@ -310,6 +310,10 @@ const KEYS_JAZZ_LATER: Record<string, number> = { 'k-sixdim': 9, 'k-bebop': 6, '
  * ear, Alberti / cadences one step later) and the jazz and advanced families start after a few scale levels.
  */
 export const KEYS_LATER: Record<string, number> = { scales: 0, fingers: 0, 'k-ear': 0, arpeggios: 1, cadences: 1, control: 1, accomp: 2, voicings: 3, harris: 4, jazz: 4, advanced: 6, ...KEYS_JAZZ_LATER };
+/** Guitar families' teaching rank inside a grade (GUITAR_DEEPENING §5): the hands and chords first, the ear and improvising after. */
+export const GUITAR_RANK: Record<string, number> = { 'g-fretting': 0, 'g-chords': 1, 'g-rhythm': 2, 'g-fingerstyle': 2, 'g-picking': 3, 'g-flamenco': 3, 'g-scales': 4, 'g-jazz': 4, 'g-ear': 5, 'g-prog': 5, 'g-legato': 6, 'g-harris': 6, 'g-lead': 7, 'g-arps': 8, 'g-reading': 9, 'g-impro': 10 };
+/** A guitar level's path difficulty from its grade (0 = Debut … 9 = beyond grade 8): 700 + 90·grade + 8·rank (rank ≤ 10, so a grade always outranks the rank). */
+export const guitarPathDifficulty = (family: string, grade: number): number => 700 + 90 * grade + 8 * (GUITAR_RANK[family] ?? 5);
 /** Every level of every technique family and vocal program as a path step (0.61, owner: technique inside the course path). */
 function ladderSteps(): PathStep[] {
   const out: PathStep[] = [];
@@ -323,8 +327,11 @@ function ladderSteps(): PathStep[] {
     const inst = f.instruments.includes('guitar') ? 'guitar' : f.instruments.includes('drums') ? 'drums' : 'bass';
     // Drums v2 families (DRUMS_AUDIT N1) come after the basics: their level 1 sits with the rock grooves' L3–L4.
     const from = DRUM_LATER[f.id] ?? 0;
+    // GUITAR_DEEPENING §5 (owner 2026-11-11): guitar levels sit by their RSL-equivalent grade, families interleaved
+    // inside a grade by teaching rank (sweep picking at grade 8 after 3nps scales at 7; 3nps picking with 3nps scales).
+    const gDiff = (lv: { grade?: number }, i: number) => (inst === 'guitar' && lv.grade !== undefined ? guitarPathDifficulty(f.id, lv.grade) : diff(i + from));
     f.levels.forEach((lv, i) =>
-      out.push({ id: `tech:${lv.id}`, kind: 'tech', ladder: { family: f.id, level: lv.level, ref: lv.id, instrument: inst }, skill: 'instrument', sub: `instrument/${inst === 'drums' ? 'drum' : inst}-tech`, domain: 'instrument', difficulty: diff(i + from), choices: 0, forPlays: [...f.instruments], title: { en: `${f.title.en} · ${lv.title.en}`, he: `${f.title.he} · ${lv.title.he}` } }),
+      out.push({ id: `tech:${lv.id}`, kind: 'tech', ladder: { family: f.id, level: lv.level, ref: lv.id, instrument: inst }, skill: 'instrument', sub: `instrument/${inst === 'drums' ? 'drum' : inst}-tech`, domain: 'instrument', difficulty: gDiff(lv as { grade?: number }, i), choices: 0, forPlays: [...f.instruments], title: { en: `${f.title.en} · ${lv.title.en}`, he: `${f.title.he} · ${lv.title.he}` } }),
     );
   }
   for (const pr of VOCAL_PROGRAMS)

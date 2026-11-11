@@ -6,7 +6,7 @@ import { catalog, generate, keysInOrder, type FamilyDef, type LevelDef } from '.
 import { customIncluded, customKeys, customToDrill } from './custom';
 import { itemPass, todaysItems, type TodayItem } from './ladder';
 import { micUnmeasurable, notesPerBeat } from './analyze';
-import { guitarCatalog, guitarStyleMatch, type GuitarFamilyDef } from './guitar';
+import { guitarCatalog, guitarLevelShown, guitarStyleMatch, type GuitarFamilyDef } from './guitar';
 import { tuningById } from '../fretboard';
 import type { DrumFamilyDef } from './drums';
 import { kitLevels } from '../drumAcoustic';
@@ -19,7 +19,7 @@ export const families = (instrument: Instrument = 'piano'): FamilyDef[] => (inst
 export const familyById = (id: FamilyId): FamilyDef | undefined => CAT.find((f) => f.id === id) ?? GCAT.find((f) => f.id === id);
 
 /** What the hub filters by: the piano emphasis, or the guitar instrument + style (genre); bass: the bass tuning. */
-export type ShowSettings = Pick<DrillSettings, 'emphasis'> & Partial<Pick<DrillSettings, 'instrument' | 'guitarStyle' | 'pianoMicOnly'>> & { bassTuning?: string; /** Drums by microphone: a practice pad (single-surface levels, DRUMS_CURRICULUM §3.8) or an acoustic kit (those + basic grooves). */ drumMic?: DrumMic };
+export type ShowSettings = Pick<DrillSettings, 'emphasis'> & Partial<Pick<DrillSettings, 'instrument' | 'guitarStyle' | 'pianoMicOnly' | 'guitarAddOns'>> & { bassTuning?: string; /** Drums by microphone: a practice pad (single-surface levels, DRUMS_CURRICULUM §3.8) or an acoustic kit (those + basic grooves). */ drumMic?: DrumMic };
 /** The drums setup for the level filters (drumKit.drumMicOf): false / undefined = MIDI; true = a practice pad (old callers). */
 export type DrumMic = boolean | 'pad' | 'acoustic';
 
@@ -76,6 +76,12 @@ export function shownFamilies(settings: ShowSettings): FamilyDef[] {
     const fams = GCAT.filter((f) => f.instruments.includes('drums'));
     return settings.drumMic ? kitLevels(fams as DrumFamilyDef[], settings.drumMic) : fams;
   }
+  // Guitar (GUITAR_DEEPENING §5, owner 2026-11-11): the core always, add-on families / levels only when ticked
+  // (guitarAddOns, migrated from the old single style); the old style no longer filters guitar genres.
+  if (inst === 'guitar')
+    return GCAT.filter((f) => f.instruments.includes('guitar') && !f.retired)
+      .map((f): GuitarFamilyDef => ({ ...f, levels: f.levels.filter((l) => guitarLevelShown(f, l, settings)) }))
+      .filter((f) => f.levels.length > 0);
   const style = settings.guitarStyle;
   const hidden = inst === 'bass' ? hiddenBassLevels(settings.bassTuning) : [];
   // Retired families (the old g-bass starter) keep their ids for progress but are not shown.
@@ -137,7 +143,7 @@ export function levelOfDrill(drill: Drill): LevelDef | undefined {
   for (const lv of fam.levels) {
     if (Array.isArray(lv.keys) && !lv.keys.includes(drill.spec.key)) continue;
     for (const t of lv.specs) {
-      const es = Object.entries(t).filter(([k]) => k !== 'tempo' && k !== 'key');
+      const es = Object.entries(t).filter(([k]) => k !== 'tempo' && k !== 'target' && k !== 'key');
       if (!es.every(([k, v]) => JSON.stringify(sp[k]) === JSON.stringify(v))) continue;
       if (es.length > bestN) {
         best = lv;
@@ -156,6 +162,8 @@ export function targetBpmOf(level: LevelDef | undefined, drill: Drill): number {
   // Untimed items (B10 note finding, N3) have no tempo: they are off the tempo ladder (target = start), so they pass on
   // 3 clean takes on 2 days and never move a goal tempo.
   if (drill.untimed) return drill.startBpm;
+  // GUITAR_DEEPENING §2.2: an item's own target (never below its start); equal to the start = off the ladder.
+  if (drill.spec.target !== undefined) return Math.max(drill.startBpm, drill.spec.target);
   const range = (level as (LevelDef & { tempo?: [number, number] }) | undefined)?.tempo;
   // Eighth-pulse items (7/8, 10/8: ♪ = bpm, N9) start in eighths while the level's range is in quarters: they climb
   // the same ratio as the range from their own start, so they have a ladder too.

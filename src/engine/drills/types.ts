@@ -33,6 +33,10 @@ export type FamilyId =
   | 'g-jazz' // shells, drop 2 / 3, ii–V–I comping, guide tones, walking bass
   | 'g-reading' // reading by position
   | 'g-impro' // target notes over forms
+  // GUITAR_DEEPENING (2026-11-11): the guitarist's ear, Barry Harris on the neck, prog / fusion.
+  | 'g-ear' // call and response, answered on the guitar
+  | 'g-harris' // Barry Harris applied to guitar (barry.ts)
+  | 'g-prog' // odd meters, polyrhythm, metric modulation, fusion lines, unisons (prog engine)
   | 'g-bass' // bass guitar subset (the 0.4x starter family; kept so old progress ids stay valid)
   // Bass course (docs/research/BASS_CURRICULUM.md §5, F1–F14): instrument bass, pitches SOUNDING MIDI.
   | BassFamilyId
@@ -177,6 +181,12 @@ export interface DrillSpec {
   stretch?: boolean;
   /** Suggested start tempo (♩) for a new item (bass levels: the level's start tempo). Not part of the item id. */
   tempo?: number;
+  /**
+   * GUITAR_DEEPENING §2.2: this item's own target tempo (♩), preferred over the level's range — items of one level whose
+   * natural tempo differs (reggae / ska, the flamenco palos). Equal to `tempo` = off the ladder (an untimed ring check,
+   * harmonics, vibrato): it passes on 3 clean takes on 2 days at its start. Not part of the item id.
+   */
+  target?: number;
 }
 
 /** A generated drill: the notes to play and how it is judged. */
@@ -687,5 +697,12 @@ export interface DrillSettings {
   guitarView?: 'tab' | 'staff' | 'both';
   /** Guitar: show the picking-hand strokes (↓ ↑, p i m a) under the tab instead of the fretting fingers. */
   showPicking?: boolean;
+  /**
+   * Guitar (GUITAR_DEEPENING §5, owner 2026-11-11): the core path is always on; these add-ons add their families and
+   * levels. Absent = migrated from the old `guitarStyle` (guitar.ts guitarAddOnsOf). The bass course still reads guitarStyle.
+   */
+  guitarAddOns?: GuitarAddOn[];
 }
+/** Guitar add-ons (tick boxes): jazz (g-jazz, g-harris, impro 5–6, bossa / Freddie Green), flamenco, fingerstyle / classical, prog / fusion. */
+export type GuitarAddOn = 'jazz' | 'flamenco' | 'fingerstyle' | 'prog';
 export const DEFAULT_DRILL_SETTINGS: DrillSettings = { showFingering: true, keyOrder: 'fifths-up', continuous: 'off', continuousAccuracy: 0.95, emphasis: 'both', inPath: true, inWorkout: true };
