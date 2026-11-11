@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.73.1',
+    date: '2026-11-11',
+    en: ['Bass: the standards ladder replaces the four old one-chorus standards levels; repertoire standards open the ladder'],
+    he: ['בס: סולם הסטנדרטים מחליף את ארבעת שלבי הסטנדרטים הישנים, ויצירות הרפרטואר פותחות את הסולם'],
+  },
+  {
     version: '0.73.0',
     date: '2026-11-11',
     en: [
