@@ -13,6 +13,7 @@ import { SONGBOOK } from '../content/songbook';
 import { STANDARD_CHANGES } from './standards';
 import { voiceSong } from './voiceSongs';
 import type { ChartVoicing, CompRhythm } from './drills/chartDrills';
+import type { GuitarStdRhythm, GuitarStdVoicing } from './drills/guitarJazz';
 
 type Bi = { en: string; he: string };
 
@@ -34,6 +35,8 @@ export type RepWay =
   | { k: 'chartDrill'; std: string; voicing: ChartVoicing; rhythm: CompRhythm }
   /** A standard's changes walked on the bass, judged by the walking rules. */
   | { k: 'bassStd'; std: string }
+  /** A standard's whole chart comped on the guitar (g-jazz 13, GUITAR_DEEPENING P2); default voicing / rhythm per tune. */
+  | { k: 'guitarStd'; std: string; voicing?: GuitarStdVoicing; rhythm?: GuitarStdRhythm }
   /** A technique level as a queue (a groove, a comping level, a style). */
   | { k: 'level'; ref: string }
   /** Play along / improvise over the standard in Charts (backing band; the take is rated). */
@@ -106,6 +109,7 @@ const T = (topic: string, level: number): RepWay => ({ k: 'topic', topic, level 
 const CH = (id: string): RepWay => ({ k: 'chart', std: id });
 const PIANO = (id: string, voicing: ChartVoicing = 'shell', rhythm: CompRhythm = 'whole'): RepWay => ({ k: 'chartDrill', std: id, voicing, rhythm });
 const BASS = (id: string): RepWay => ({ k: 'bassStd', std: id });
+const GS = (id: string): RepWay => ({ k: 'guitarStd', std: id });
 
 // Shared "leads to" lines (true musical facts about our charts).
 const TO = {
@@ -226,18 +230,18 @@ const GUITAR: RepItem[] = [
   S('saints', 1, b('I–I7–IV: the blues move', 'I–I7–IV: התנועה של הבלוז'), [{ k: 'song', song: 'saints', part: 'chords' }, { k: 'song', song: 'saints', part: 'melody' }], TO.i7iv('blues-basic')),
   S('greensleeves', 1, b('A minor key in 3/4', 'סולם מינורי ב־3/4'), [{ k: 'song', song: 'greensleeves', part: 'chords' }, { k: 'song', song: 'greensleeves', part: 'melody' }], TO.minor('minor-blues')),
   O('strums', 1, b('Strumming patterns', 'דפוסי פריטה'), b('Quarters, down-up 8ths and the waltz', 'רבעים, שמיניות למטה־למעלה וואלס'), [L('g-rhythm-1'), L('g-rhythm-2')]),
-  C('blues-basic', 2, b('The 12-bar blues and the shuffle', 'בלוז 12 תיבות והשאפל'), [L('g-rhythm-3'), L('g-impro-1'), CH('blues-basic')], TO.blues('blues-f')),
-  C('minor-blues', 2, b('Minor blues: roots on beat 1', 'בלוז מינורי: יסודות על 1'), [L('g-impro-1'), CH('minor-blues')], TO.minorIiv('blue-bossa')),
-  C('two-five-keys', 2, b('Shell voicings: ii–V–I', 'קונכיות: ii–V–I'), [L('g-jazz-1'), CH('two-five-keys')], TO.autumn('autumn')),
-  C('blues-f', 2, b('The jazz blues: 3rds on beat 1', 'בלוז ג׳אז: טרצות על 1'), [L('g-impro-2'), CH('blues-f')], TO.jazzBlues('bird-blues')),
-  C('autumn', 3, b('Major and minor ii–V–I, comped', 'ii–V–I מז׳ורי ומינורי, בליווי'), [L('g-jazz-1'), L('g-jazz-4'), CH('autumn')]),
-  C('blue-bossa', 3, b('Bossa comping and a key change', 'ליווי בוסה ומעבר סולם'), [L('g-rhythm-6'), CH('blue-bossa')]),
-  C('fly', 3, b('Drop-2 voicings around the cycle', 'וויסינג דרופ 2 במעגל'), [L('g-jazz-2'), CH('fly')]),
-  C('so-what', 3, b('Modal: one chord, many bars', 'מודאלי: אקורד אחד, הרבה תיבות'), [L('g-impro-3'), CH('so-what')]),
-  C('a-train', 3, b('Guide-tone lines through an AABA', 'קווי צלילים מנחים לאורך AABA'), [L('g-jazz-5'), CH('a-train')]),
-  C('rhythm-full', 4, b('Rhythm changes: drop-2 ii–Vs at tempo', 'ריתם צ׳יינג׳ס: ii–V בדרופ 2 בטמפו'), [L('g-jazz-4'), CH('rhythm-full')]),
-  C('bird-blues', 4, b('Bird blues: guide tones through the form', 'בלוז בירד: צלילים מנחים לאורך הצורה'), [L('g-impro-4'), CH('bird-blues')]),
-  C('giant', 4, b('Coltrane changes: chord melody and guide tones', 'קולטריין צ׳יינג׳ס: אקורד־מלודיה וצלילים מנחים'), [L('g-jazz-7'), CH('giant-slow')]),
+  C('blues-basic', 2, b('The 12-bar blues and the shuffle', 'בלוז 12 תיבות והשאפל'), [GS('blues-basic'), L('g-rhythm-3'), L('g-impro-1'), CH('blues-basic')], TO.blues('blues-f')),
+  C('minor-blues', 2, b('Minor blues: roots on beat 1', 'בלוז מינורי: יסודות על 1'), [GS('minor-blues'), L('g-impro-1'), CH('minor-blues')], TO.minorIiv('blue-bossa')),
+  C('two-five-keys', 2, b('Shell voicings: ii–V–I', 'קונכיות: ii–V–I'), [GS('two-five-keys'), L('g-jazz-1'), CH('two-five-keys')], TO.autumn('autumn')),
+  C('blues-f', 2, b('The jazz blues: 3rds on beat 1', 'בלוז ג׳אז: טרצות על 1'), [GS('blues-f'), L('g-impro-2'), CH('blues-f')], TO.jazzBlues('bird-blues')),
+  C('autumn', 3, b('Major and minor ii–V–I, comped', 'ii–V–I מז׳ורי ומינורי, בליווי'), [GS('autumn'), L('g-jazz-1'), L('g-jazz-4'), CH('autumn')]),
+  C('blue-bossa', 3, b('Bossa comping and a key change', 'ליווי בוסה ומעבר סולם'), [GS('blue-bossa'), L('g-rhythm-6'), CH('blue-bossa')]),
+  C('fly', 3, b('Drop-2 voicings around the cycle', 'וויסינג דרופ 2 במעגל'), [GS('fly'), L('g-jazz-2'), CH('fly')]),
+  C('so-what', 3, b('Modal: one chord, many bars', 'מודאלי: אקורד אחד, הרבה תיבות'), [GS('so-what'), L('g-impro-3'), CH('so-what')]),
+  C('a-train', 3, b('Guide-tone lines through an AABA', 'קווי צלילים מנחים לאורך AABA'), [GS('a-train'), L('g-jazz-5'), CH('a-train')]),
+  C('rhythm-full', 4, b('Rhythm changes: drop-2 ii–Vs at tempo', 'ריתם צ׳יינג׳ס: ii–V בדרופ 2 בטמפו'), [GS('rhythm-full'), L('g-jazz-4'), CH('rhythm-full')]),
+  C('bird-blues', 4, b('Bird blues: guide tones through the form', 'בלוז בירד: צלילים מנחים לאורך הצורה'), [GS('bird-blues'), L('g-impro-4'), CH('bird-blues')]),
+  C('giant', 4, b('Coltrane changes: chord melody and guide tones', 'קולטריין צ׳יינג׳ס: אקורד־מלודיה וצלילים מנחים'), [GS('giant-slow'), L('g-jazz-7'), CH('giant-slow')]),
   O('compas', 4, b('12-beat compás', 'קומפאס של 12 פעמות'), b('Odd groupings: 3+3+2+2+2', 'חלוקות לא זוגיות: 3+3+2+2+2'), [L('g-flamenco-5')], undefined, { standard: true }),
 ];
 
@@ -404,6 +408,8 @@ export function wayLabel(w: RepWay, course: CourseId): Bi {
       return w.voicing.startsWith('stride') ? b('Stride left hand', 'יד שמאל בסטרייד') : w.voicing === 'quartal' ? b('Quartal voicings', 'וויסינג קוורטלי') : w.voicing === 'rootless' ? b('Rootless voicings, comping', 'וויסינג בלי יסוד, ליווי') : w.voicing === 'shell' ? b('Shell voicings', 'שלדים (שלושה צלילים)') : w.voicing === 'guide' ? b('Guide tones, comping', 'צלילים מנחים, ליווי') : b('Voicings', 'וויסינגים');
     case 'bassStd':
       return b('Walk the changes', 'ווקינג על המהלך');
+    case 'guitarStd':
+      return b('Comp the whole chart', 'ללוות את כל דף האקורדים');
     case 'level':
       return b('Technique level', 'שלב טכניקה');
     case 'chart':
@@ -418,7 +424,7 @@ export function repRefs(it: RepItem): { songs: string[]; standards: string[]; le
   const out = { songs: [] as string[], standards: [] as string[], levels: [] as string[], topics: [] as { topic: string; level: number }[], vocal: [] as number[] };
   for (const w of it.ways) {
     if (w.k === 'song') out.songs.push(w.song);
-    else if (w.k === 'chartDrill' || w.k === 'bassStd' || w.k === 'chart') out.standards.push(w.std);
+    else if (w.k === 'chartDrill' || w.k === 'bassStd' || w.k === 'chart' || w.k === 'guitarStd') out.standards.push(w.std);
     else if (w.k === 'level') out.levels.push(w.ref);
     else if (w.k === 'topic') out.topics.push({ topic: w.topic, level: w.level });
     else if (w.k === 'vocal') out.vocal.push(w.level);

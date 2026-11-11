@@ -101,7 +101,7 @@ describe('guitar audit: course wiring', () => {
   });
 
   it("the technique quest shows the course's instrument", () => {
-    const d = { day: '2026-11-09', course: 'guitar' as const, events: [], sessions: [], stepsToday: 0, minutesToday: 0 };
+    const d = { day: '2026-11-15', course: 'guitar' as const, events: [], sessions: [], stepsToday: 0, minutesToday: 0 };
     const q = dailyQuests(d as never).find((x) => x.id === 'tech3');
     expect(q?.glyph).toBe('guitar');
   });

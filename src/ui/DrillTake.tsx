@@ -103,15 +103,31 @@ export function DrillTab({ drill, fingering = false, picking = false, result, be
   const strings = drill.spec.tuning ? tuningById(drill.spec.tuning).open.length : isBassDrill(drill) ? 4 : 6;
   // B2 (0.64): the whole drill, two bars a line (bar lines where the music has them), in a window that follows the beat.
   const perLine = (drill.meter || 4) * 2;
+  // Mixed meters (prog timeline, GUITAR_DEEPENING P2): lines of whole bars from the time map, bar lines at each bar's
+  // real length and the time signature where it changes — not a constant bar.
+  const sl = hasTimeline(drill) ? staffLines(drill, 8) : null;
+  const lineOf = (at: number) => (sl ? Math.max(0, sl.findIndex((l) => at * k < l.to - 1e-6)) : Math.floor(at / perLine + 1e-6));
   const lines: (typeof cols)[] = [];
-  for (const c of cols) (lines[Math.floor(c.at / perLine + 1e-6)] ??= []).push(c);
-  for (let i = 0; i < lines.length; i++) lines[i] ??= [];
+  for (const c of cols) (lines[lineOf(c.at)] ??= []).push(c);
+  for (let i = 0; i < Math.max(lines.length, sl?.length ?? 0); i++) lines[i] ??= [];
   const firstBad = result ? lines.findIndex((l) => l.some((c) => c.mark && c.mark !== 'ok')) : -1;
-  const { from, pager } = useLineWindow(lines.length, beat, perLine, Math.max(0, firstBad));
+  // The window follows the running beat by line (a timeline's lines differ in length).
+  const lineBeat = sl && beat >= 0 ? Math.max(0, lineOf(beat)) * perLine : beat;
+  const { from, pager } = useLineWindow(lines.length, lineBeat, perLine, Math.max(0, firstBad));
   return (
-    <div className="drill-staff drill-tab" data-tab-lines={lines.length}>
+    <div className="drill-staff drill-tab" data-tab-lines={lines.length} {...(sl ? { 'data-tab-bars': sl.map((l) => l.bars.map((b) => b.cur).join(' ')).join(' | ') } : {})}>
       {lines.slice(from, from + 2).map((l, i) =>
-        l.length ? <TabLine key={from + i} cols={l.map(({ mark: _m, at: _a, ...c }) => c)} marks={result ? l.map((c) => c.mark) : undefined} strings={strings} /> : <div key={from + i} className="tab-rest-line" />,
+        l.length ? (
+          <TabLine
+            key={from + i}
+            cols={l.map(({ mark: _m, at: _a, ...c }) => c)}
+            marks={result ? l.map((c) => c.mark) : undefined}
+            strings={strings}
+            {...(sl?.[from + i] ? { bars: sl[from + i].bars.map((b, j) => ({ len: b.len, sig: b.sig ?? (from + i === 0 && j === 0 ? b.cur : undefined) })), at: l.map((c) => c.at * k - sl[from + i].from) } : {})}
+          />
+        ) : (
+          <div key={from + i} className="tab-rest-line" />
+        ),
       )}
       {pager}
     </div>

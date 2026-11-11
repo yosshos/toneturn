@@ -172,7 +172,7 @@ export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs, 
 }
 
 /** One line of tablature with given string/fret positions (drills): chords stack, a mark above (h p / b ~ PM X …), result colours. */
-export function TabLine({ cols, marks, strings = 6 }: { cols: { pos: { str: number; fret: number | 'x' }[]; dur: number; top?: string; bottom?: string }[]; marks?: NoteMark[]; strings?: number }) {
+export function TabLine({ cols, marks, strings = 6, bars, at }: { cols: { pos: { str: number; fret: number | 'x' }[]; dur: number; top?: string; bottom?: string }[]; marks?: NoteMark[]; strings?: number; /** Mixed meters: the line's bars (quarter notes) — a bar line at each bar's end, its time signature written where it changes. */ bars?: { len: number; sig?: string }[]; /** With `bars`: each column's start in quarter notes from the line's start. */ at?: number[] }) {
   const { ref, failed } = useSvg(
     (VF, el) => {
       const width = Math.max(220, 60 + cols.length * 40);
@@ -182,10 +182,16 @@ export function TabLine({ cols, marks, strings = 6 }: { cols: { pos: { str: numb
       const stave = new VF.TabStave(4, 0, width - 8, { num_lines: strings });
       stave.addTabGlyph();
       stave.setContext(ctx).draw();
+      // Mixed meters: which bar each column starts, so a bar line goes before the first column of every later bar and
+      // the new signature rides on that column (above the technique mark).
+      const ends = bars && at ? bars.map((_, k) => bars.slice(0, k + 1).reduce((a, b) => a + b.len, 0)) : null;
+      const barOf = (i: number) => (ends && at ? Math.max(0, ends.findIndex((e) => at[i] < e - 1e-6)) : 0);
       const tn = cols.map((c, i) => {
         const b = c.dur;
         const n = new VF.TabNote({ positions: c.pos, duration: b >= 4 ? 'w' : b >= 2 ? 'h' : b >= 1 ? 'q' : b >= 0.5 ? '8' : '16' });
-        if (c.top) n.addModifier(new VF.Annotation(c.top).setVerticalJustification(VF.Annotation.VerticalJustify.TOP), 0);
+        const firstOfBar = !!ends && (i === 0 || barOf(i) !== barOf(i - 1));
+        const sig = firstOfBar ? bars![barOf(i)]?.sig : undefined;
+        if (sig || c.top) n.addModifier(new VF.Annotation([sig, c.top].filter(Boolean).join(' ')).setVerticalJustification(VF.Annotation.VerticalJustify.TOP), 0);
         const mk = marks?.[i];
         const lab = mk && MARK_SYM[mk] ? MARK_SYM[mk] : c.bottom;
         if (lab) n.addModifier(new VF.Annotation(lab).setVerticalJustification(VF.Annotation.VerticalJustify.BOTTOM), 0);
@@ -193,11 +199,18 @@ export function TabLine({ cols, marks, strings = 6 }: { cols: { pos: { str: numb
         return n;
       });
       const voice = new VF.Voice({ num_beats: Math.max(1, Math.ceil(cols.reduce((a, c) => a + c.dur, 0))), beat_value: 4 }).setMode(VF.Voice.Mode.SOFT);
-      voice.addTickables(tn);
+      if (ends) {
+        const ticks: InstanceType<typeof VF.TabNote | typeof VF.BarNote>[] = [];
+        tn.forEach((n, i) => {
+          if (i > 0 && barOf(i) !== barOf(i - 1)) ticks.push(new VF.BarNote());
+          ticks.push(n);
+        });
+        voice.addTickables(ticks);
+      } else voice.addTickables(tn);
       new VF.Formatter().joinVoices([voice]).format([voice], width - 60);
       voice.draw(ctx, stave);
     },
-    [JSON.stringify(cols), (marks ?? []).join(','), strings],
+    [JSON.stringify(cols), (marks ?? []).join(','), strings, JSON.stringify(bars ?? null), (at ?? []).join(',')],
   );
   return (
     <div className="guitar-tab" role="img" aria-label={cols.map((c, i) => c.pos.map((p) => `${p.str}/${p.fret}`).join('+') + (marks?.[i] ? ` ${marks[i]}` : '')).join(' ')}>

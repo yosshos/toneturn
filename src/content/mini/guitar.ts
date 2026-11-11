@@ -239,5 +239,63 @@ export const LESSONS: MiniLesson[] = [
   },
 ];
 
+// GUITAR_DEEPENING §6 P2: the chord finder (Tools), strummed answers on the neck topics and Chord Rush played.
+LESSONS.push({
+  id: 'g-chord-finder',
+  area: 'play',
+  emoji: '',
+  title: { en: 'The chord finder: strum it, the app names it', he: 'מאתר האקורדים: פורטים, והאפליקציה נותנת שם' },
+  takeaway: { en: 'Strum one chord with a clean tone and let it ring: the app names it, or says it is not sure. It never guesses.', he: 'פורטים אקורד אחד בצליל נקי ונותנים לו להדהד: האפליקציה נותנת לו שם, או אומרת שהיא לא בטוחה. היא אף פעם לא מנחשת.' },
+  steps: [
+    {
+      say: { en: 'Hi {name}! Strum a chord once and let every string ring. The app listens to the first half second and names the chord.', he: 'היי {name}! פורטים אקורד פעם אחת ונותנים לכל המיתרים להדהד. האפליקציה מקשיבה לחצי השנייה הראשונה ונותנת לאקורד שם.' },
+      play: [chord([45, 52, 57, 60, 64], 1.6)],
+    },
+    {
+      say: { en: 'It hears every note and the lowest one. A minor with E in the bass is A minor over E.', he: 'היא שומעת כל צליל ואת הנמוך ביותר. לה מינור עם מי בבס הוא לה מינור על מי.' },
+      play: [chord([40, 45, 52, 57, 60], 1.4)],
+      show: { text: { en: 'Am · Am/E', he: 'Am · Am/E' } },
+    },
+    {
+      say: { en: 'When two names are close it says so and offers both. A string that did not ring is named, so you can fix the finger.', he: 'כששני שמות קרובים היא אומרת את זה ומציעה את שניהם. מיתר שלא צלצל מקבל שם, כדי שתתקנו את האצבע.' },
+      show: { text: { en: 'sure · not sure · not ringing', he: 'בטוח · לא בטוח · לא מצלצל' } },
+    },
+    {
+      say: { en: 'The other way round: pick a name and see every shape on the neck. Tap a shape to hear it.', he: 'ולהפך: בוחרים שם ורואים כל צורה על הצוואר. מקישים על צורה כדי לשמוע אותה.' },
+      play: [chord([48, 55, 58, 64], 1.2), chord([48, 52, 58, 62], 1.2)],
+    },
+    {
+      say: { en: 'The same ear works in the lessons and in Chord Rush: when a chord is asked, you can strum it instead of tapping the neck.', he: 'אותה אוזן עובדת בשיעורים ובמרוץ האקורדים: כששואלים על אקורד, אפשר לפרוט אותו במקום להקיש על הצוואר.' },
+      show: { text: { en: 'clean tone · every string · let it ring', he: 'צליל נקי · כל המיתרים · לתת להדהד' } },
+    },
+  ],
+  more: [
+    {
+      say: { en: 'How it hears: a chord is a set of pitch classes. The app folds every note into twelve bins, one per note name, and compares that picture with the picture of each chord it knows.', he: 'איך היא שומעת: אקורד הוא קבוצה של שמות צלילים. האפליקציה מקפלת כל צליל לשנים־עשר תאים, אחד לכל שם של צליל, ומשווה את התמונה הזאת לתמונה של כל אקורד שהיא מכירה.' },
+      play: [chord([48, 52, 55, 60, 64], 1.4)],
+    },
+    {
+      say: { en: 'A plucked string also sounds its overtones. The third overtone of E is a B, so a plain C chord can look a little like C major 7. The app only names the 7th when it really rings.', he: 'מיתר פרוט משמיע גם את הצלילים העיליים שלו. הצליל העילי השלישי של מי הוא סי, ולכן אקורד דו פשוט יכול להיראות קצת כמו דו מז׳ור 7. האפליקציה נותנת שם לספטימה רק כשהיא באמת מצלצלת.' },
+      play: [chord([48, 52, 55, 60, 64], 1.2), chord([48, 52, 55, 59, 64], 1.2)],
+    },
+    {
+      say: { en: 'The lowest note decides the bass. Play C with E on the low string and you get C over E, a first inversion. Mute the low string and the root takes the bass again.', he: 'הצליל הנמוך ביותר קובע את הבס. מנגנים דו עם מי במיתר הנמוך ומקבלים דו על מי, היפוך ראשון. משתיקים את המיתר הנמוך והיסוד חוזר לבס.' },
+      play: [chord([40, 48, 55, 60, 64], 1.2), chord([48, 52, 55, 60, 64], 1.2)],
+    },
+    {
+      say: { en: 'A common mistake is a buzzing or muted string. The answer still comes, but the app lists the note that did not ring, so you know which finger to move.', he: 'טעות נפוצה היא מיתר שמזמזם או מושתק. התשובה עדיין מגיעה, אבל האפליקציה מציינת את הצליל שלא צלצל, כדי שתדעו איזו אצבע להזיז.' },
+      show: { text: { en: 'not ringing: G', he: 'לא מצלצל: G' } },
+    },
+    {
+      say: { en: 'Distortion and a band from the phone speaker blur the picture. Use a clean tone and headphones for the backing, and strum once rather than a long pattern.', he: 'דיסטורשן ולהקה מרמקול הטלפון מטשטשים את התמונה. משתמשים בצליל נקי ובאוזניות לליווי, ופורטים פעם אחת במקום דפוס ארוך.' },
+      show: { text: { en: 'clean · headphones · one strum', he: 'נקי · אוזניות · פריטה אחת' } },
+    },
+    {
+      say: { en: 'Use the shapes page to learn a new chord in every position: open, the E shape on string six, the A shape on string five and drop-2 for sevenths. Strum each one and check the name.', he: 'משתמשים בדף הצורות כדי ללמוד אקורד חדש בכל מצב: פתוח, צורת E על מיתר שש, צורת A על מיתר חמש ודרופ 2 לספטאקורדים. פורטים כל אחת ובודקים את השם.' },
+      play: [chord([53, 57, 60, 64], 1.2), chord([41, 48, 52, 57, 60], 1.2)],
+    },
+  ],
+});
+
 /** The quick lesson behind each new guitar family (opened from its page in Technique). */
 export const FAMILY_LESSON: Record<string, string> = { 'g-ear': 'g-ear-echo', 'g-jazz': 'g-jazz-comp', 'g-harris': 'g-harris-neck', 'g-prog': 'g-prog-meter' };

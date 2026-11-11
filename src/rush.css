@@ -448,3 +448,44 @@
     transition: none;
   }
 }
+
+/* Played Chord Rush (strum it): the listening line under the chord name, and the skip button. */
+.rush-listen {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: var(--ink-soft);
+  font-size: 1rem;
+  min-height: 2.5rem;
+}
+.rush-listen.again {
+  color: var(--accent);
+  font-weight: 600;
+}
+.rush-mic-dot {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: var(--ok);
+  animation: rush-mic 1.4s ease-in-out infinite;
+}
+@keyframes rush-mic {
+  50% {
+    opacity: 0.35;
+  }
+}
+.rush-strum-actions {
+  display: flex;
+  justify-content: center;
+  padding: 0.5rem 0 1rem;
+}
+.rush.calm .rush-mic-dot {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rush-mic-dot {
+    animation: none;
+  }
+}

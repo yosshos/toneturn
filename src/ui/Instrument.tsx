@@ -14,6 +14,8 @@ import { spellMidi } from '../engine/aids';
 import { bassTuningOf, courseInstrumentOf, neckTuningOf, type Settings } from '../storage/progress';
 import { piano } from './services';
 import { courseInstrument, noteViewsOf, playedShift } from './noteViewPref';
+import { heardMidis, identifyChord, judgeStrum } from '../engine/chordFinder';
+import { useStrums } from './strumListen';
 
 type Lang = 'he' | 'en';
 const T = {
@@ -23,6 +25,10 @@ const T = {
   playIn: { en: 'Play it on my instrument', he: 'לנגן על הכלי שלי' },
   listening: { en: 'Listening — play one note at a time', he: 'מקשיבים — נגנו צליל אחד בכל פעם' },
   stopPlay: { en: 'Stop listening', he: 'להפסיק להקשיב' },
+  strumIn: { en: 'Strum it on my guitar', he: 'לפרוט על הגיטרה שלי' },
+  strumListening: { en: 'Listening — strum the chord once, every string ringing', he: 'מקשיבים — פרטו את האקורד פעם אחת, כל המיתרים מצלצלים' },
+  strumAgain: { en: 'Not clear — strum it again, a clean tone', he: 'לא ברור — פרטו שוב, צליל נקי' },
+  strumMic: { en: 'The microphone is not available.', he: 'המיקרופון לא זמין.' },
   mute: { en: 'Mute between notes, no pedal.', he: 'השתיקו בין הצלילים, בלי פדל.' },
   done: { en: 'Done', he: 'סיימתי' },
   entered: { en: 'Your notes', he: 'התווים שלכם' },
@@ -447,6 +453,30 @@ export function PlaceSurfaceView({ q, settings, lang, disabled, onSubmit, result
   useEffect(() => {
     if (disabled) setPlaying(false);
   }, [disabled]);
+  // GUITAR_DEEPENING §6: a chord on the neck (a set of 3+ notes) can be answered by strumming it — the closed-set
+  // recognizer decides whether the asked chord sounded (any voicing; an inversion question checks the bass too).
+  const target = useMemo(() => (q.as === 'set' && q.target.length >= 3 ? identifyChord(q.target) : null), [q]);
+  const canStrum = !disabled && surface === 'neck' && !!target && inst === 'guitar' && !settings.midiInput;
+  const needBass = /inversion|root position|היפוך|מצב יסודי/.test(q.ask.en + q.ask.he) && !/any inversion|כל היפוך/.test(q.ask.en + q.ask.he);
+  const [strumming, setStrumming] = useState(false);
+  const [strumMsg, setStrumMsg] = useState<'again' | 'mic' | null>(null);
+  useEffect(() => {
+    if (disabled) setStrumming(false);
+  }, [disabled]);
+  useStrums(
+    strumming && canStrum,
+    (frames) => {
+      if (!target) return;
+      const v = judgeStrum(frames, target, needBass);
+      if (v.verdict === 'again') return setStrumMsg('again');
+      setStrumMsg(null);
+      setStrumming(false);
+      // Right: the asked chord sounded — the canonical answer. Wrong: the chord heard, as notes (graded wrong).
+      if (v.verdict === 'right') onSubmit(placeKey(q, q.target));
+      else onSubmit(placeKey(q, heardMidis(v.heardChord, q.target)));
+    },
+    () => setStrumMsg('mic'),
+  );
   const graded = result ? gradePlace(q, result) : null;
   const marks: PlaceMark[] = graded?.marks ?? [];
   const tone = (i: number): StaffNote['tone'] => (graded ? (marks[i] === 'ok' ? 'ok' : marks[i] === 'rhythm' ? 'rhythm' : 'wrong') : i < givenFirst.length ? 'given' : 'mine');
@@ -538,6 +568,18 @@ export function PlaceSurfaceView({ q, settings, lang, disabled, onSubmit, result
         <span>{T.entered[lang]}: </span>
         <span dir="ltr">{notes.length ? notes.map((n) => (q.match === 'pc' ? NAMES[n.midi % 12] : midiName(n.midi))).join(' · ') : T.none[lang]}</span>
       </p>
+      {canStrum && (
+        <div className="place-play place-strum">
+          <button type="button" className={`btn small ${strumming ? 'primary' : ''}`} aria-pressed={strumming} onClick={() => (setStrumMsg(null), setStrumming((v) => !v))}>
+            {strumming ? T.stopPlay[lang] : T.strumIn[lang]}
+          </button>
+          {strumming && (
+            <small className="field-hint" role="status">
+              {strumMsg === 'again' ? T.strumAgain[lang] : strumMsg === 'mic' ? T.strumMic[lang] : T.strumListening[lang]}
+            </small>
+          )}
+        </div>
+      )}
       {canPlay && (
         <div className="place-play">
           <button type="button" className={`btn small ${playing ? 'primary' : ''}`} aria-pressed={playing} onClick={() => setPlaying((v) => !v)}>

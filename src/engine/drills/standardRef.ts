@@ -7,7 +7,7 @@ import { referenceOf, type RecKey, type StandardRef } from '../../content/refere
 import { STANDARD_CHANGES } from '../standards';
 import { BASS_STD } from './bass';
 import { STD_SOLO } from './bassNiche';
-import { JAZZ_STANDARDS } from './guitarJazz';
+import { JAZZ_STANDARDS, decodeGuitarStd } from './guitarJazz';
 import { CORE2_STANDARDS } from './guitarCore2';
 import type { DrillSpec } from './types';
 
@@ -34,6 +34,7 @@ function resolve(s: SpecLike): { id: string; mode: KeyMode } | null {
     const id = at(ids, Math.floor(op / 2));
     return id ? { id, mode: 'shift' } : null;
   }
+  if (fam === 'g-jazz' && s.kind === 'comp-chart') return { id: decodeGuitarStd(op).id, mode: 'shift' };
   if (fam === 'g-impro' && s.kind === 'chord-scale') {
     const id = at(CORE2_STANDARDS, op);
     return id ? { id, mode: 'shift' } : null;
