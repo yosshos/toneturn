@@ -116,10 +116,10 @@ describe('hold-to-sustain (G.5)', () => {
     const { gradeHolds } = await import('../src/engine/rhythm');
     const r = { beatsPerBar: 4, bars: 1, cells: ['h', 'q', 'q'] } as const;
     const rr = { ...r, cells: [...r.cells] } as Parameters<typeof gradeHolds>[0];
-    // 60 BPM: half note = 2000 ms, quarters 1000 ms each.
+    // 60 BPM: half note = 2000 ms, quarters 1000 ms each. 0.69: only notes longer than a beat are judged (the half).
     const good = gradeHolds(rr, 60, [{ down: 0, up: 1800 }, { down: 2000, up: 2700 }, { down: 3000, up: 3800 }]);
-    expect(good).toEqual({ judged: 3, held: 3 });
+    expect(good).toEqual({ judged: 1, held: 1 });
     const short = gradeHolds(rr, 60, [{ down: 0, up: 300 }, { down: 2000, up: 2200 }, { down: 3000, up: 3900 }]);
-    expect(short.held).toBe(1);
+    expect(short).toEqual({ judged: 1, held: 0 });
   });
 });

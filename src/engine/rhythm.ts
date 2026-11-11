@@ -305,7 +305,8 @@ export function gradeReading(r: Rhythm, bpm: number, tapsMs: number[], level: Rh
  */
 export function gradeHolds(r: Rhythm, bpm: number, presses: { down: number; up: number | null }[]): { judged: number; held: number } {
   const beatMs = 60_000 / bpm;
-  const evs = events(r).filter((e) => !e.rest && e.dur >= TPQ);
+  // 0.69 (owner): only notes LONGER than a beat are "long" — a quarter in "tap every beat" was judged on a 375 ms hold and cost 15 %.
+  const evs = events(r).filter((e) => !e.rest && e.dur > TPQ);
   let judged = 0;
   let held = 0;
   for (const e of evs) {
