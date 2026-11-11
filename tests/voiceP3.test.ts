@@ -8,7 +8,7 @@ import { paceOf, reentryOffset, rejoinAt, stretchSegment, synthColla } from '../
 import { collaParts, gradeCollaSong } from '../src/engine/voiceGrade';
 import { songPlan, voiceSong } from '../src/engine/voiceSongs';
 import { synthLine } from '../src/engine/voiceTime';
-import { earReference, earReplayNote, earShown } from '../src/engine/voiceEar';
+import { earReference, earReplayNote, earShown, sessionEarItem } from '../src/engine/voiceEar';
 import { stepCatalogue } from '../src/engine/path';
 import { withLadderFacts } from '../src/engine/ladderFacts';
 import type { NoteEvent } from '../src/engine/lesson';
@@ -96,6 +96,38 @@ describe('the ear items: what is played, what is shown, how they are graded', ()
     const ec = item(1203, 1);
     const er = earReference(ec, itemTargets(ec, R))!;
     expect(new Set(er.events.map((e) => Math.round(e.duration * 100))).size).toBeGreaterThan(1);
+  });
+  it('echo and audiation are fresh every session (seeded): same id, rhythm and difficulty band; clean takes pass', () => {
+    for (const lv of [1203, 1205]) {
+      const def = vocalLevelByRef(lv)!;
+      for (const fixed of def.items) {
+        const seen = new Set<string>();
+        for (let seed = 1; seed <= 40; seed++) {
+          const it = sessionEarItem(fixed, seed);
+          expect(it.id).toBe(fixed.id);
+          expect(sessionEarItem(fixed, seed).steps).toEqual(it.steps); // deterministic per seed
+          const st = it.steps!;
+          seen.add(st.join(','));
+          expect(st.length).toBe(fixed.steps!.length);
+          expect(st.every((x, i) => i === 0 || x !== st[i - 1]), `${it.id} ${seed}`).toBe(true);
+          if (lv === 1203) {
+            expect(it.noteSecs).toEqual(fixed.noteSecs);
+            const leap = (xs: number[]) => Math.max(2, ...xs.slice(1).map((x, i) => Math.abs(x - xs[i])));
+            expect(leap(st)).toBeLessThanOrEqual(leap(fixed.steps!));
+            expect(Math.max(...st) - Math.min(...st)).toBeLessThanOrEqual(Math.max(...fixed.steps!) - Math.min(...fixed.steps!) + 2);
+            expect([0, 12]).toContain(st[st.length - 1]);
+          } else {
+            expect(it.ear!.lead!.length).toBe(2 * st.length);
+            expect(it.noteSecs![0]).toBeCloseTo(fixed.noteSecs![0], 5);
+          }
+          if (seed <= 5) expect(take(it).score, `${it.id} ${seed}`).toBeGreaterThanOrEqual(def.pass);
+        }
+        expect(seen.size, fixed.id).toBeGreaterThan(3);
+      }
+    }
+    // intervals and the song echoes keep their own content
+    expect(sessionEarItem(item(1204), 3)).toBe(item(1204));
+    expect(sessionEarItem(item(1309), 3)).toBe(item(1309));
   });
   it('F13 L1 echoes the first phrase of public-domain songs, repeated notes joined (the echo is graded on pitch)', () => {
     const ids = SONG_ECHO_LEVELS[0].items.map((x) => x.ear?.song);

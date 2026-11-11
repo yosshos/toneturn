@@ -57,7 +57,7 @@ import { namingFor, type LessonResult, type Progress, type Settings, type VocalT
 import { piano, SIMULATED, store } from './services';
 import { TIMED_KINDS } from '../engine/vocal';
 import { familyOfRef, isNewLevel, NEW_LEVEL_NAMES, VOICE_FAMILIES, vocalLevelByRef, voiceItemTags, voiceLevelUnlocked } from '../engine/voiceFamilies';
-import { earInstruction, earReference, earReplayNote, earShown } from '../engine/voiceEar';
+import { earInstruction, earReference, earReplayNote, earShown, sessionEarItem } from '../engine/voiceEar';
 import { gradeMore, moreReference, simulateMore, MORE_KINDS } from '../engine/vocalMore';
 import { MORE_INSTR, METRIC_NAMES, TONE_NAMES, VT } from '../content/voiceCourseText';
 import { restTakes, TimedSession } from './VoiceTimed';
@@ -312,7 +312,9 @@ type View =
 
 /** The view that opens a level: timed levels (clicks / band) in the timed session, the rest in the vocal session. */
 const openLevel = (level: number, range: VoiceRange): View => {
-  const items = levelDef(level).items.filter((it) => itemFits(it, range));
+  // Echo and audiation items get a fresh melody every session (no memorizable items); ids stay.
+  const seed = Date.now() >>> 0;
+  const items = levelDef(level).items.map((it) => sessionEarItem(it, seed)).filter((it) => itemFits(it, range));
   return isTimedLevel(level) ? { kind: 'timed', level, items: levelDef(level).items } : { kind: 'session', level, items };
 };
 
