@@ -17,6 +17,8 @@ export const FAMILY_GLYPH: Record<string, GlyphKind> = {
   'd-strokes': 'sticks', 'd-rolls': 'rudiment', 'd-diddles': 'paradiddle', 'd-time': 'pulse', 'd-rock': 'hihat', 'd-fills': 'fill', 'd-read': 'drumread',
   'd-funk': 'ghost', 'd-shuffle': 'shuffle', 'd-indep': 'limbs', 'd-mideast': 'darbuka', 'd-feet': 'kick',
   'd-ear': 'drumear', 'd-jazz': 'ride', 'd-latin': 'clave',
+  // DRUMS_NICHE_PLAN P1: songs, prog / fusion, counting, the drum key, song form.
+  'd-song': 'roadmap', 'd-prog': 'progmeter', 'd-count': 'counting', 'd-notation': 'drumkey', 'd-form': 'dsform',
   'v-ladder': 'sing', 'v-modes': 'scales', 'v-sight': 'sight', 'v-harmony': 'chords', 'v-ornament': 'contour', 'v-barry': 'improv',
 };
 /** Instrument topics (they all used to share one chord icon). */
