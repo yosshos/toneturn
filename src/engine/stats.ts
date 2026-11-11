@@ -371,7 +371,8 @@ export function statsAfterResult(st: StatsState, r: ResultLike, after: Ratings):
   const d = next.statsDays![day];
   next.statsDays![day] = { ...d, xp: d.xp + r.xp, sessions: d.sessions + 1, ms: d.ms + Math.max(0, r.durationMs ?? 0) };
   const counts = { ...(next.counts ?? {}) };
-  if (r.lessonId !== 'placement' && r.lessonId !== 'weekly-puzzle') counts.lessons = (counts.lessons ?? 0) + 1;
+  // Game results (lesson id 'game-…', games' XP) are not lessons.
+  if (r.lessonId !== 'placement' && r.lessonId !== 'weekly-puzzle' && !r.lessonId.startsWith('game-')) counts.lessons = (counts.lessons ?? 0) + 1;
   const perfect = r.total >= 3 && r.firstTry === r.total;
   if (perfect) counts.perfect = (counts.perfect ?? 0) + 1;
   const records = { ...(next.records ?? {}) };

@@ -4,6 +4,27 @@
 
 import { supabase } from './cloud';
 import { tournamentSet, type SetKind } from '../engine/tournament';
+import { tierIndex, tierKey, type DynName } from '../engine/gameTiers';
+
+/** A game's best of the week at a tier (GAMES_TIERS_PLAN §5.1 game boards). Silent until migration
+ *  20261128000000_toneturn_game_tiers.sql is applied (the RPC is missing → nothing happens). */
+export async function submitGameBest(game: string, tier: DynName, score: number): Promise<void> {
+  const sb = supabase();
+  if (!sb || !(score > 0)) return;
+  try {
+    await sb.rpc('toneturn_game_best_submit', { p_game: tierKey(game), p_tier: tierIndex(tier), p_score: Math.round(score) });
+  } catch {
+    /* older server */
+  }
+}
+
+/** Me and my friends at a game and tier this week (null when the server has no game boards yet). */
+export async function gameBoard(game: string, tier: DynName): Promise<{ name: string; best: number; me: boolean }[] | null> {
+  const sb = supabase();
+  if (!sb) return null;
+  const { data, error } = await sb.rpc('toneturn_game_board', { p_game: tierKey(game), p_tier: tierIndex(tier) });
+  return error ? null : (data as { name: string; best: number; me: boolean }[]);
+}
 
 export interface LeagueMember {
   name: string;
@@ -31,7 +52,7 @@ export async function myLeague(): Promise<League | null> {
 }
 
 
-export type DuelKind = Extract<SetKind, 'mixed' | 'degrees' | 'chords' | 'intervals' | 'modes' | 'wrong-notes' | 'truefalse' | 'beat'>;
+export type DuelKind = Extract<SetKind, 'mixed' | 'degrees' | 'chords' | 'intervals' | 'modes' | 'wrong-notes' | 'truefalse' | 'beat' | 'jazz'>;
 export interface DuelRow {
   id: string;
   kind: DuelKind;

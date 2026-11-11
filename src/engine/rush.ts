@@ -9,6 +9,7 @@ import { TOPIC_GEN, genTopic, rng } from './topicKit';
 import './topics';
 import { chordReadItem, type ChordPictureFilter } from './topicsChordRead';
 import { noteAt, tuningById, type Tuning } from './fretboard';
+import type { DynName } from './courseSocial';
 
 export type RushMode = 'chord' | 'note' | 'fretboard' | 'interval' | 'keysig' | 'progression';
 export const RUSH_MODES: RushMode[] = ['chord', 'note', 'fretboard', 'interval', 'keysig', 'progression'];
@@ -77,6 +78,13 @@ export function rushLadder(mode: RushMode): Rung[] {
 }
 export const rushMaxLevel = (mode: RushMode) => rushLadder(mode).length;
 
+/** A run's own ladder: the tier's rungs (engine/gameTiers.ts) when it has a tier, else the game's whole ladder. */
+export function ladderOf(o: Pick<RushOptions, 'mode' | 'rungs'>): Rung[] {
+  if (!o.rungs?.length) return rushLadder(o.mode);
+  return o.rungs.map((x) => ({ topic: x.topic, level: x.level, name: x.topic === 'fretboard' ? (FRET_LEVELS[x.level - 1] ?? FRET_LEVELS[0]) : (TOPIC_GEN[x.topic]?.levels[x.level - 1] ?? { en: x.topic, he: x.topic }) }));
+}
+const maxOf = (o: Pick<RushOptions, 'mode' | 'rungs'>) => ladderOf(o).length;
+
 // ---------------------------------------------------------------- items
 
 /** Find the named note on the neck: any matching place on the allowed strings and frets is right. */
@@ -101,6 +109,9 @@ export interface RushOptions {
   picture?: RushPicture;
   /** Fretboard mode: the player's tuning id (src/engine/fretboard.ts). */
   tuning?: string;
+  /** Level tier (pp … ff): the run climbs only inside the tier's rungs. */
+  tier?: DynName;
+  rungs?: { topic: string; level: number }[];
 }
 
 /** A well-mixed seed for item i (attempt a avoids an immediate repeat). */
@@ -169,13 +180,14 @@ export function fretAnswers(t: FretTarget, tuning: Tuning): { str: number; fret:
 }
 
 function makeItem(o: RushOptions, seed: number, level: number, id: string): RushItem {
-  const rung = rushLadder(o.mode)[Math.max(0, Math.min(rushMaxLevel(o.mode), level) - 1)];
+  const lad = ladderOf(o);
+  const rung = lad[Math.max(0, Math.min(lad.length, level) - 1)];
   if (o.mode === 'fretboard') {
     const target = fretTarget(seed, rung.level, tuningById(o.tuning));
     return { kind: 'fret', key: `fret:${target.midi ?? target.pc}:${target.strings.join('')}`, target };
   }
   let q: ChoiceQuestion;
-  if (o.mode === 'chord') {
+  if (o.mode === 'chord' && rung.topic === 'chord-read') {
     const pic: ChordPictureFilter | undefined = !o.picture || o.picture === 'mixed' ? undefined : o.picture;
     q = chordReadItem(seed, rung.level, id, pic);
   } else {
@@ -218,7 +230,7 @@ export interface RushState {
 }
 
 export function newRush(opts: RushOptions): RushState {
-  const level = Math.max(1, Math.min(rushMaxLevel(opts.mode), Math.round(opts.startLevel) || 1));
+  const level = Math.max(1, Math.min(maxOf(opts), Math.round(opts.startLevel) || 1));
   return { v: 1, opts: { ...opts, startLevel: level }, i: 0, level, atLevel: 0, right: 0, wrong: 0, combo: 0, maxCombo: 0, score: 0, timeLeftMs: isStreak(opts.mode) ? 0 : RUSH_MS, lives: isStreak(opts.mode) ? START_LIVES : 0, over: false };
 }
 
@@ -249,7 +261,7 @@ export function rushAnswer(s: RushState, correct: boolean, key?: string): RushSt
     gained = Math.round(POINTS * m);
     n.score += gained;
     n.atLevel++;
-    if (n.atLevel >= levelEvery(s.opts.mode) && n.level < rushMaxLevel(s.opts.mode)) {
+    if (n.atLevel >= levelEvery(s.opts.mode) && n.level < maxOf(s.opts)) {
       n.level++;
       n.atLevel = 0;
       levelUp = true;
@@ -278,9 +290,13 @@ export function rushTick(s: RushState, ms: number): RushState {
 export interface RushResult {
   game: `rush-${RushMode}`;
   score: number;
-  detail: { right: number; wrong: number; maxCombo: number; level: number };
+  detail: { right: number; wrong: number; maxCombo: number; level: number; tier?: DynName; rungs?: number; rung?: string };
 }
-export const rushResult = (s: RushState): RushResult => ({ game: `rush-${s.opts.mode}`, score: s.score, detail: { right: s.right, wrong: s.wrong, maxCombo: s.maxCombo, level: s.level } });
+export const rushResult = (s: RushState): RushResult => {
+  const lad = ladderOf(s.opts);
+  const rung = lad[s.level - 1];
+  return { game: `rush-${s.opts.mode}`, score: s.score, detail: { right: s.right, wrong: s.wrong, maxCombo: s.maxCombo, level: s.level, ...(s.opts.tier ? { tier: s.opts.tier, rungs: lad.length, rung: rung ? `${rung.topic}#${rung.level}` : undefined } : {}) } };
+};
 
 /** A saved Progression Detective run (resume after Back / reload). */
 export interface RushSaved {

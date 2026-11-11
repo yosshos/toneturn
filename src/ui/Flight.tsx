@@ -28,6 +28,8 @@ import {
 import type { SungFrame } from '../engine/sing';
 import type { AccessError, PitchCapture } from '../game/adapters';
 import { MidiPitchCapture } from '../speech/midi';
+import { startTier, tierDef, type DynName, type TierInfo } from '../engine/gameTiers';
+import { TierChips } from './TierChips';
 import { BrowserPitchCapture } from '../speech/pitchCapture';
 import type { Settings } from '../storage/progress';
 import { piano, SIMULATED } from './services';
@@ -47,6 +49,8 @@ export interface Game2Props {
   onResult: (r: Game2Result) => void;
   /** Personal best to show (optional; the caller keeps it). */
   best?: number;
+  /** Level tiers (GAMES_TIERS_PLAN): which tier opens and how far up the player may pick. */
+  tier?: TierInfo;
 }
 
 // ------------------------------------------------------------------ shared bits (also used by the other games)
@@ -227,7 +231,7 @@ function cssVar(name: string, fallback: string) {
   }
 }
 
-export function Flight({ lang, settings, saved, onSave, onExit, onResult, best }: Game2Props) {
+export function Flight({ lang, settings, saved, onSave, onExit, onResult, best, tier: tierInfo }: Game2Props) {
   const tx = TEXT[lang];
   const calm = prefersCalm(settings);
   const input = settings.midiInput ? 'midi' : settings.instrument && settings.instrument !== 'voice' ? 'instrument' : 'voice';
@@ -235,7 +239,14 @@ export function Flight({ lang, settings, saved, onSave, onExit, onResult, best }
   const cp = isCheckpoint(saved) ? saved : null;
 
   const [phase, setPhase] = useState<Phase>('setup');
-  const [level, setLevel] = useState<FlightLevel>(1);
+  const [tier, setTierRaw] = useState<DynName>(() => (tierInfo ? startTier(tierInfo) : 'pp'));
+  const tierRef = useRef(tier);
+  const [level, setLevel] = useState<FlightLevel>(() => (tierInfo ? ((tierDef('flight', startTier(tierInfo))?.levels?.[0] ?? 1) as FlightLevel) : 1));
+  const setTier = (t: DynName) => {
+    setTierRaw(t);
+    tierRef.current = t;
+    setLevel((tierDef('flight', t)?.levels?.[0] ?? 1) as FlightLevel);
+  };
   const [hud, setHud] = useState({ score: 0, gates: 0, lives: START_LIVES, level: 1 as FlightLevel, distance: 0 });
   const [toast, setToast] = useState<string | null>(null);
   const [listening, setListening] = useState<'quiet' | 'live' | 'off'>('off');
@@ -395,7 +406,7 @@ export function Flight({ lang, settings, saved, onSave, onExit, onResult, best }
           if (e === 'over') {
             const score = scoreOf(g.s);
             onSave(null);
-            onResult({ game: 'flight', score, detail: { gates: g.s.passed, distance: distanceOf(g.s), startLevel: g.course.startLevel, level: levelAt(g.course.startLevel, g.s.next), input: touchRef.current ? 'touch' : input } });
+            onResult({ game: 'flight', score, detail: { gates: g.s.passed, distance: distanceOf(g.s), startLevel: g.course.startLevel, level: levelAt(g.course.startLevel, g.s.next), input: touchRef.current ? 'touch' : input, ...(tierInfo ? { tier: tierRef.current } : {}) } });
             stopAudio();
             setHud({ score, gates: g.s.passed, lives: 0, level: levelAt(g.course.startLevel, g.s.next), distance: distanceOf(g.s) });
             setPhase('over');
@@ -601,6 +612,9 @@ export function Flight({ lang, settings, saved, onSave, onExit, onResult, best }
       {phase === 'setup' && (
         <section className="g2-card">
           <p>{tx.blurb}</p>
+          {tierInfo ? (
+            <TierChips lang={lang} info={tierInfo} value={tier} onChange={setTier} game="flight" />
+          ) : (
           <fieldset className="seg-field">
             <legend>{tx.level}</legend>
             <div className="seg g2-seg" role="radiogroup" aria-label={tx.level}>
@@ -611,6 +625,7 @@ export function Flight({ lang, settings, saved, onSave, onExit, onResult, best }
               ))}
             </div>
           </fieldset>
+          )}
           <label className="toggle-row">
             <input type="checkbox" checked={touch} onChange={(e) => setTouch(e.target.checked)} data-touch-toggle />
             <span>{tx.touchMode}</span>

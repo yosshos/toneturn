@@ -195,9 +195,9 @@ export function friendsInCourse<T extends CourseFriendRow>(rows: T[], course: Co
 
 /** The question sets that train a course (null = the course has no sets of its own: everything stays offered). */
 const COURSE_SETS: Partial<Record<CourseId, (SetKind | 'choir')[]>> = {
-  ear: ['mixed', 'degrees', 'chords', 'intervals', 'modes', 'wrong-notes', 'truefalse', 'echo', 'beat'],
+  ear: ['mixed', 'degrees', 'chords', 'intervals', 'modes', 'wrong-notes', 'truefalse', 'echo', 'beat', 'jazz'],
   voice: ['vocal-hold', 'choir', 'echo', 'intervals', 'degrees'],
-  jazz: ['chords', 'modes', 'degrees', 'wrong-notes', 'mixed'],
+  jazz: ['jazz', 'chords', 'modes', 'degrees', 'wrong-notes', 'mixed'],
   // Drums (DRUMS_AUDIT I5): rhythm only — no chords, modes or intervals in a drummer's duel.
   drums: ['beat'],
 };

@@ -10,6 +10,7 @@ import { AccountCard, type SyncState } from './Account';
 import { CompareSheet, FriendsBoard, type FriendStats } from './Compare';
 import { Avatar } from './Profile';
 import { ratingsOf, type Progress } from '../storage/progress';
+import { socialInfo } from '../engine/gameTiers';
 import { courseOf, type CourseId } from '../engine/courses';
 import { courseLevel, friendsInCourse, type DynName } from '../engine/courseSocial';
 import { Glyph } from './Glyph';
@@ -284,7 +285,7 @@ export function FriendsScreen({ t, user: realUser, sync, onBack, settings, onBes
           )}
           {tab === 'league' && <LeagueCard t={t} lang={lang} onBestTier={onBestTier} lastSeen={settings.leagueSeen} onSeen={onLeagueSeen} history={progress?.history} />}
           {tab === 'class' && classes}
-          {tab === 'duels' && <DuelsSection t={t} settings={settings} friends={friends.map((r) => ({ id: r.user_id, name: r.name }))} onPlaying={setDuelPlaying} />}
+          {tab === 'duels' && <DuelsSection t={t} settings={settings} friends={friends.map((r) => ({ id: r.user_id, name: r.name }))} onPlaying={setDuelPlaying} tier={progress ? socialInfo(ratingsOf(progress), settings.activeCourse ?? 'ear', progress.gameTiers?.duel, settings.courses).open : 'pp'} />}
         </>
       )}
     </main>

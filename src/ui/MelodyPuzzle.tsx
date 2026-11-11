@@ -19,6 +19,8 @@ import {
 import { displayNote } from '../engine/pitch';
 import { namingFor, type Settings } from '../storage/progress';
 import { piano } from './services';
+import { TierChips } from './TierChips';
+import { startTier, tierDef, type DynName, type TierInfo } from '../engine/gameTiers';
 
 type Lang = 'he' | 'en';
 type Text = { en: string; he: string };
@@ -42,6 +44,8 @@ export interface PuzzleSaved {
   wrong: boolean[] | null;
   /** Level → highest reached (for the result). */
   topLevel: PuzzleLevel;
+  /** Level tier of the run (GAMES_TIERS_PLAN): the run climbs only inside the tier's levels. */
+  tier?: DynName;
 }
 
 export function isPuzzleSaved(x: unknown): x is PuzzleSaved {
@@ -113,6 +117,7 @@ export function MelodyPuzzle({
   onSave,
   onExit,
   onResult,
+  tier: tierInfo,
 }: {
   lang: Lang;
   settings: Settings;
@@ -120,11 +125,18 @@ export function MelodyPuzzle({
   onSave: (state: unknown | null) => void;
   onExit: () => void;
   onResult: (r: { game: 'highway' | 'melody-puzzle'; score: number; detail?: unknown }) => void;
+  tier?: TierInfo;
 }) {
   const tx = (o: Text) => o[lang];
   const resumable = isPuzzleSaved(saved) ? saved : null;
   const [stage, setStage] = useState<'intro' | 'play' | 'done'>('intro');
-  const [startLevel, setStartLevel] = useState<PuzzleLevel>(resumable?.level ?? 1);
+  const [tier, setTierRaw] = useState<DynName>(() => (tierInfo ? startTier(tierInfo) : 'pp'));
+  const tierLevels = (t: DynName) => (tierDef('melodypuzzle', t)?.levels ?? [1, 8]) as PuzzleLevel[];
+  const [startLevel, setStartLevel] = useState<PuzzleLevel>(resumable?.level ?? (tierInfo ? tierLevels(startTier(tierInfo))[0] : 1));
+  const setTier = (t: DynName) => {
+    setTierRaw(t);
+    setStartLevel(tierLevels(t)[0]);
+  };
   const [labels, setLabels] = useState<'degrees' | 'names'>(resumable?.labels ?? 'degrees');
   const [st, setSt] = useState<PuzzleSaved | null>(null);
   const [activeSlot, setActiveSlot] = useState<number | null>(null);
@@ -234,10 +246,13 @@ export function MelodyPuzzle({
     if (index >= PUZZLES_PER_RUN) {
       setStage('done');
       onSave(null);
-      onResult({ game: 'melody-puzzle', score: st.score, detail: { puzzles: PUZZLES_PER_RUN, startLevel, topLevel: st.topLevel, labels: st.labels } });
+      onResult({ game: 'melody-puzzle', score: st.score, detail: { puzzles: PUZZLES_PER_RUN, startLevel, topLevel: st.topLevel, labels: st.labels, ...(st.tier ? { tier: st.tier, max: PUZZLES_PER_RUN * 100 } : {}) } });
       return;
     }
-    const nl = nextLevel(st.level, st.streak);
+    const n0 = nextLevel(st.level, st.streak);
+    // A tier keeps the run inside its levels.
+    const cap = st.tier ? tierLevels(st.tier)[tierLevels(st.tier).length - 1] : MAX_PUZZLE_LEVEL;
+    const nl = { ...n0, level: Math.min(n0.level, cap) as PuzzleLevel };
     const base: PuzzleSaved = { ...st, index, level: nl.level, streak: nl.streak, topLevel: Math.max(st.topLevel, nl.level) as PuzzleLevel, plays: 0, checks: 0, elapsedMs: 0, solved: false, revealed: false, wrong: null, placed: [] };
     const p = puzzleAt(base.level, puzzleSeed(base));
     const s2 = { ...base, placed: p.answer.map(() => null) };
@@ -320,6 +335,9 @@ export function MelodyPuzzle({
               ))}
             </div>
           </fieldset>
+          {tierInfo ? (
+            <TierChips lang={lang} info={tierInfo} value={tier} onChange={setTier} game="melodypuzzle" />
+          ) : (
           <fieldset className="seg-field">
             <legend>{tx(T.level)}</legend>
             <div className="mp-levels" role="radiogroup" aria-label={tx(T.level)}>
@@ -331,6 +349,7 @@ export function MelodyPuzzle({
               ))}
             </div>
           </fieldset>
+          )}
           <p className="field-hint">{tx(T.howTo)}</p>
         </section>
         {resumable && (
@@ -348,7 +367,7 @@ export function MelodyPuzzle({
           className={`btn ${resumable ? 'ghost' : 'primary mega'}`}
           data-start-puzzle="1"
           onClick={() => {
-            const s = fresh((Date.now() ^ (Math.random() * 1e9)) >>> 0, startLevel, labels);
+            const s: PuzzleSaved = { ...fresh((Date.now() ^ (Math.random() * 1e9)) >>> 0, startLevel, labels), ...(tierInfo ? { tier } : {}) };
             begin(s);
             onSave(s);
           }}

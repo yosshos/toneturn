@@ -29,6 +29,8 @@ import { RankCrest } from './Badges';
 import { areaProgress, divFloor, divisionFor, MASTER_DIV, rankLabel, techniqueProgress, type RankProgress } from '../engine/ranks';
 import { techniqueOf } from '../engine/rankBadges';
 import type { GameKind } from '../game/memoryGame';
+import { tierCard, tierInfo, tierKey, tierSpec } from '../engine/gameTiers';
+import { TierBadge } from './TierChips';
 
 const fill = (s: string, v: Record<string, string | number>) => Object.entries(v).reduce((a, [k, x]) => a.replaceAll(`{${k}}`, String(x)), s);
 
@@ -898,6 +900,15 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
     }
   };
   const CAT_OF: Record<string, GameCat> = { melody: 'memory', rhythm: 'rhythm', truefalse: 'read', ghost: 'social', duel: 'social', daily: 'social' };
+  // "Your level · next" on every game card (GAMES_TIERS_PLAN §2.2); social sets use the course level instead.
+  const { mine } = useCourse();
+  const ratingsNow = ratingsOf(progress);
+  const tierChip = (key: string) => {
+    if (!tierSpec(key) || key === 'duel' || key === 'daily' || key === 'ghost' || key === 'groove') return null;
+    const st = progress.gameTiers?.[tierKey(key)];
+    const c = tierCard(tierInfo(key, ratingsNow, st, course, mine), st);
+    return <TierBadge lang={lang} tier={c.tier} next={c.next} into={c.into} isNew={c.isNew} />;
+  };
   const cards: { key: string; hue: string; icon: React.ReactNode; title: string; blurb: string; extra?: React.ReactNode; onClick: () => void; cat?: GameCat }[] = [
     { key: 'melody', hue: 'var(--hue-memory)', icon: <GameIcon kind="melody" />, title: t.echoChain, blurb: t.echoChainBlurb, extra: best(progress.games?.melody), onClick: () => onGame('melody') },
     { key: 'rhythm', hue: 'var(--hue-time)', icon: <GameIcon kind="rhythm" />, title: t.beatEcho, blurb: t.beatEchoBlurb, extra: best(progress.games?.rhythm), onClick: () => onGame('rhythm') },
@@ -1046,6 +1057,7 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
                   <b>{c.title}</b>
                   <small>{c.blurb}</small>
                   {c.extra}
+                  {tierChip(c.key)}
                 </button>
               ))}
             </div>

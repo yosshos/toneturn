@@ -7,6 +7,8 @@ import type { SungFrame } from '../engine/sing';
 import type { AccessError } from '../game/adapters';
 import { namingFor } from '../storage/progress';
 import { G2Head, MicProblem, pitchCaptureFor, type Game2Props } from './Flight';
+import { TierChips } from './TierChips';
+import { startTier, tierIndex, type DynName } from '../engine/gameTiers';
 import { SIMULATED } from './services';
 
 const NAMES = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
@@ -64,6 +66,7 @@ export function PitchMemory({
   onResult,
   log,
   onLog,
+  tier: tierInfo,
 }: Game2Props & { log: MemoryEntry[]; onLog: (e: MemoryEntry) => void }) {
   const tx = TEXT[lang];
   const nm = namingFor(settings.naming, lang);
@@ -72,7 +75,11 @@ export function PitchMemory({
   // Today's take: from the log, or the one just sung (before the caller's log comes back).
   const done = doneOn(log, today) ?? (mine?.day === today ? mine : null);
   const fullLog = mine && !doneOn(log, mine.day) ? [...log, mine] : log;
-  const [note, setNote] = useState<number>(log.length ? log[log.length - 1].note : DEFAULT_NOTE);
+  const [tier, setTier] = useState<DynName>(() => (tierInfo ? startTier(tierInfo) : 'pp'));
+  // From mf the app picks the note of the day (GAMES_TIERS_PLAN): the same for the whole day.
+  const appNote = tierInfo && tierIndex(tier) >= 3 ? [...today].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7) % 12 : null;
+  const [picked, setNote] = useState<number>(log.length ? log[log.length - 1].note : DEFAULT_NOTE);
+  const note = appNote ?? picked;
   const [phase, setPhase] = useState<Phase>('idle');
   const [err, setErr] = useState<AccessError | null>(null);
   const ctl = useRef<AbortController | null>(null);
@@ -104,7 +111,7 @@ export function PitchMemory({
     setMine(entry);
     onLog(entry);
     onSave(null);
-    onResult({ game: 'pitch-memory', score: memoryScore(entry.cents), detail: entry });
+    onResult({ game: 'pitch-memory', score: memoryScore(entry.cents), detail: { ...entry, ...(tierInfo ? { tier } : {}) } });
     setPhase('idle');
   };
 
@@ -139,6 +146,8 @@ export function PitchMemory({
       ) : (
         <section className="g2-card">
           <p>{tx.blurb}</p>
+          {tierInfo && <TierChips lang={lang} info={tierInfo} value={tier} onChange={setTier} game="pitchmemory" />}
+          {appNote === null && (
           <fieldset className="seg-field">
             <legend>{tx.note}</legend>
             <div className="g2-notes" role="radiogroup" aria-label={tx.note}>
@@ -149,6 +158,7 @@ export function PitchMemory({
               ))}
             </div>
           </fieldset>
+          )}
           <p className="g2-lead">{tx.think(name(note))}</p>
           {phase === 'listening' ? (
             <p className="g2-listen" aria-live="polite">

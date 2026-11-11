@@ -404,3 +404,62 @@ Sizes are rough line counts (code + tests). Always `npx tsc -b` before commit; d
 2. Game XP cap: 100 XP a day from games acceptable, or should games stay lower than lessons (e.g. 50)?
 3. Daily challenge: three bands (soft / mid / loud) instead of one set for everyone — OK?
 4. Advanced-only games: hide pp–p entirely, or show them with "opens at mp" (a goal to aim for)?
+
+---
+
+## Implemented (2026-11-11, branch worktree-agent-ad26c0e8d81d2bfa8)
+
+Owner decisions applied: one tier above the open tier may be played (rated, counts toward clearing it); game XP
+capped at 100 a day; the daily challenge has three bands (soft / mid / loud); advanced games show "opens at …"
+(`minTier` in the spec; no advanced game exists yet, so nothing uses it today).
+
+### P1 — built
+
+| Part | Where | Notes |
+|---|---|---|
+| Tier engine | `src/engine/gameTiers.ts` | Tables for 17 games + social sets; `tierInfo` (rating of the game's source skill, one tier lower while provisional or when only the course rating is known, never below cleared + 1), `tierAllowed` / `lockReason` ("clear mp first"), `afterRun` (2 of the last 3 runs clear; no demotion), `clearsRun` per rule type, `gameXp` (× 1.0 … 1.5, max 25), `tierDifficulty` (pp 650–800 … ff 1400–1600), `tierCard`, seed / band helpers. Own copy of the DYN names / thresholds (import cycle); a test checks they equal `DYN`. |
+| Rush ladders by tier | `src/engine/rush.ts` | `RushOptions.tier` + `rungs`; the run climbs only inside the tier's rungs; result carries `tier`, `rungs`, `rung`. Key Signature Rush plays the sound of heard rungs (modes, chord-scales). |
+| Rated difficulty | `src/engine/gameRating.ts` | A tiered run is rated in its tier's band (Rush: by the rung reached); tags read the rung. Echo / Beat Echo rounds too (`recordGameRounds(…, tier)`), Truth or Bluff events too. |
+| Storage, XP | `src/storage/progress.ts` (`applyGameRun`, `recordTierRun`, `consumeTierClear`), `sync.ts`, `stats.ts` | `progress.gameTiers`, `gameXpDays` (cap), `tierRuns` (quests), `lastTierClear`. XP goes into a result `game-<id>` with the course → league (server sums results), daily goal, per-course split. first_try 0 / total ≥ 2 to pass the server's checks and stay out of "good sessions"; not counted as lessons. |
+| Setup screens | `src/ui/TierChips.tsx`, `src/tiers.css`; Rush, Highway (tier sets level per song chip, tempo, pitch lanes; tempo / lanes / level chips removed), Echo / Beat Echo (pads, tempo, swing from the tier), Melody Puzzle (run capped inside the tier), Flight, Peak Hunter, Name That Tune (notes 8 → 3), Tune-up (detune range), Pitch Memory (cents window; from mf the app picks the note of the day), Truth or Bluff (tier replaces the stage selector) | Six buttons pp…ff, open tier outlined, cleared tiers dotted, one line for the tier's content. |
+| Cards | `src/ui/Arcade.tsx` | `TierBadge`: tier, thin bar (never full below ff), "next …" / "new". |
+| Tier-cleared line | `src/ui/App.tsx` | "mf cleared — f opens" toast, 3.5 s. |
+| Path | `src/engine/path.ts`, `App.tsx` | Game steps carry `tier` (band of the step's difficulty); the game opens there (allowed even above open + 1); 3 stars only when the rule is met at that tier or above, else accuracy, at most 2. |
+| One-screen check | `e2e/games-fit.spec.ts` | 18 setups × en / he at 390×844: six tier buttons and the Start button without vertical scroll. Passes (run on port 5217 with a temporary config). Echo / Beat Echo setup lost the art and the Truth-or-Bluff shortcut when tiered; duel / ghost / Truth-or-Bluff setups got denser rows. |
+| Tests | `tests/gameTiers.test.ts` | bands = DYN, opening rules, allowed / locked, clearing, rules, XP + cap + idempotence, every rung exists, tiered Rush stays in rungs and rates in band, step stars, seed tier, social sets, daily bands, tier badges. |
+
+### P2 items done (the cheap ones)
+
+| Part | Where |
+|---|---|
+| Social per tier, tier in the seed (top byte 0xE1…0xE5 = p…ff; other seeds = pp, so old duels keep their items) | `gameTiers.tierSeed / seedTier`, `tournament.ts` (`tournamentItem(…, tier)`, `TIER_TOPICS`), duel on one device (tier picker), ghost (picker, key `kind:rounds:tier`, pp keeps the old key), online rooms (host picker), async friend duels (challenger's open tier; the list shows the tier) |
+| Daily in three bands | `dailySet(day, band)` (soft = the original set), `DailyScreen` band picker (own band + one above, from the course level), `cloud/daily.ts` `submitDailyBand` / `dailyBoardBand`, `scripts/daily-keys.ts` writes all three bands |
+| Jazz question set | `SetKind 'jazz'` (sevenths → extensions → turnarounds → voicings → altered), in the Ear and Jazz courses' duels / rooms / ghost |
+| Game boards | `cloud/compete.ts` `submitGameBest` (called after every tiered run when signed in) / `gameBoard`; **no board UI yet** |
+| XP for daily, ghost, Truth or Bluff | `recordTierRun` |
+| Quests | `tierPass2` ("meet a game level's goal twice": ear, voice), `tierClear` ("clear a level in any game": jazz) |
+| Badges | `special:tier-first`, `special:tier-mf/f/ff`, per course `special:tierc:<course>:f` / `:ff` (3 games of the course); glyph: a crescendo hairpin |
+| Workout | the workout's game block (Highway) opens the game at the player's open tier (the default) |
+
+### Migration (not applied)
+
+`supabase/migrations/20261128000000_toneturn_game_tiers.sql`: `tier` on `toneturn_duels` / `toneturn_rooms` as a
+column generated from the seed (no RPC change); 'jazz' in `toneturn_rooms_kind_check` and `toneturn_duels_kind_check`;
+daily `band` on keys / results, keys PK `(day, band)`, results PK `(user_id, day, band)`, new
+`toneturn_daily_submit_band` / `toneturn_daily_board_band`, the old daily RPCs become the soft band;
+`toneturn_game_bests` + `toneturn_game_best_submit` / `toneturn_game_board` (friends only). After applying: run
+`npm run daily-keys` into `supabase/seed/daily_keys.sql` and seed it (mid / loud keys). Until then: mid / loud daily
+results stay local (board shows its error line), jazz rooms / async jazz duels fail to create, game bests are dropped
+silently; everything else works.
+
+### Not built (content marked `todo` in the tables)
+
+Interval cells and jazz names (ff); altered / upper-structure chord reading; backdoor, ii–V chains, Coltrane cycles;
+Fretboard chord tones; Highway R9 odd meters / R10 polyrhythm / kit level 7; chromatic Echo pads and pad-less ff;
+odd-meter Beat Echo; jazz Melody Puzzle lines; Flight ff (drone off, 25 ¢, jazz degrees); the Name That Tune PD
+catalogue (p … f reuse the 10 folk songs with fewer notes); Truth or Bluff jazz facts; Peak Hunter eq-ear 5–7; Tune-up
+to a chord; Pitch Memory two-note ff; Groove trainer tiers (spec only, no UI, no rating events yet); game board UI;
+Kit Read Rush, Scale & Mode Rush, Sing the Interval Sprint, Name That Standard, Voicing Spy, and all P3 games. Clear
+rules simplified: timing games need ≥ 90 % accuracy (not "≤ 15 % good on two songs"); Pitch Memory uses 2 of the last
+3 days, not 5 of 7; Progression Detective needs 3 × rungs cases (a run always ends at 0 lives). Local duels on one
+device give no XP (two players, one device).

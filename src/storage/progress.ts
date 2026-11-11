@@ -19,6 +19,7 @@ export const compactTags = (tags: Tag[]): Tag[] | undefined => (tags.length ? ta
 import { SKILLS, type RatingEvent, type Ratings } from '../engine/rating';
 import { bumpCount, foldFromMemo, statsAfterEvents, statsAfterResult, trimIntoBase } from '../engine/stats';
 import { gameEvents } from '../engine/gameRating';
+import { afterRun, clearsRun, gameXp, gameXpLeft, isTier, tierDifficulty, tierKey, type DailyBand, type DynName, type GameTiers } from '../engine/gameTiers';
 import { medalFor, weekId, type Medal } from '../engine/adaptive';
 import type { Naming } from '../engine/pitch';
 import type { KV } from './kv';
@@ -95,6 +96,14 @@ export interface Progress {
   pitchMemory?: { day: string; cents: number; note: number }[];
   /** Technique drills: progress per item (spec AI §10). */
   drillItems?: Record<string, import('../engine/drills/types').ItemState>;
+  /** Game tiers (GAMES_TIERS_PLAN): cleared tier, last runs and bests per tier, per game. */
+  gameTiers?: GameTiers;
+  /** XP games gave per local day (the 100-a-day cap). */
+  gameXpDays?: Record<string, number>;
+  /** The last tier a run cleared (the one-line message on the next screen). */
+  lastTierClear?: { game: string; tier: DynName; at: string };
+  /** Recent tiered runs (quests read today's; badges read the cleared state). */
+  tierRuns?: { game: string; tier: DynName; pass: boolean; cleared?: boolean; at: string }[];
 }
 
 export interface VocalTake {
@@ -445,6 +454,8 @@ export interface DailyRecord {
   answers?: (string | null)[];
   times?: (number | null)[];
   submitted?: boolean;
+  /** The daily band played (absent = soft, the set from before bands). */
+  band?: DailyBand;
 }
 
 /** A review-queue item with a Leitner box: due again after 0, 1, 3, 7, 16, 35 days (spaced repetition). */
@@ -634,6 +645,45 @@ export function applyResult(p: Progress, r: LessonResult, now: Date): Progress {
   };
 }
 
+/** Lesson ids of game results (they carry a game's XP to the league, the daily goal and the course split). */
+export const GAME_RESULT_PREFIX = 'game-';
+export const isGameResult = (lessonId: string) => lessonId.startsWith(GAME_RESULT_PREFIX);
+
+/**
+ * A finished game at a tier (GAMES_TIERS_PLAN P1): the tier state moves (2 of the last 3 runs clear it, no
+ * demotion), and the game's XP (× tier, at most 25, at most 100 a day from games) is recorded as a result with the
+ * course, so the weekly league, the daily goal ring and the per-course split see games. Pure and idempotent by `runId`.
+ */
+export function applyGameRun(
+  p: Progress,
+  run: { game: string; tier: DynName; score: number; detail?: unknown; runId: string; course?: import('../engine/courses').CourseId; pass?: boolean },
+  now = new Date(),
+): { progress: Progress; xp: number; cleared: DynName | null; pass: boolean } {
+  const key = tierKey(run.game);
+  const eventId = `complete:game:${run.runId}`;
+  if (p.applied.includes(eventId)) return { progress: p, xp: 0, cleared: null, pass: false };
+  const pass = run.pass ?? clearsRun(run.game, run.tier, run.score, run.detail);
+  const at = now.toISOString();
+  const { state, newlyCleared } = afterRun(p.gameTiers?.[key], run.tier, pass, run.score, at);
+  const day = localDay(now);
+  const today = p.gameXpDays?.[day] ?? 0;
+  const xp = Math.min(gameXp(run.game, run.tier, run.score, run.detail), gameXpLeft(today));
+  const days = { ...(p.gameXpDays ?? {}), [day]: today + xp };
+  for (const k of Object.keys(days).sort().slice(0, -60)) delete days[k];
+  const tierRuns = [...(p.tierRuns ?? []), { game: key, tier: run.tier, pass, ...(newlyCleared ? { cleared: true } : {}), at }].slice(-60);
+  let next: Progress = { ...p, gameTiers: { ...(p.gameTiers ?? {}), [key]: state }, gameXpDays: days, tierRuns, ...(newlyCleared ? { lastTierClear: { game: key, tier: newlyCleared, at } } : {}) };
+  if (xp > 0) {
+    const d = (run.detail && typeof run.detail === 'object' ? run.detail : {}) as Record<string, unknown>;
+    const answered = (typeof d.right === 'number' ? d.right : 0) + (typeof d.wrong === 'number' ? d.wrong : 0);
+    // The server's plausibility checks: 1 ≤ total ≤ 50, xp ≤ 20 × total; first_try 0 keeps games out of "good
+    // sessions" and perfect counts. The id matches the server's lesson-id pattern (lowercase words and dashes).
+    const r: LessonResult = { lessonId: `${GAME_RESULT_PREFIX}${key}`, lessonVersion: 1, sessionId: `game:${run.runId}`.slice(0, 64), completedAt: at, firstTry: 0, total: Math.max(2, Math.min(50, answered || 2)), xp, missed: [], ...(run.course ? { course: run.course } : {}) };
+    next = applyResult(next, r, now);
+  }
+  if (!next.applied.includes(eventId)) next = { ...next, applied: [...next.applied, eventId].slice(-500) };
+  return { progress: next, xp, cleared: newlyCleared, pass };
+}
+
 export class ProgressStore {
   constructor(private kv: KV) {}
 
@@ -652,16 +702,18 @@ export class ProgressStore {
     seed: number,
     log: { length: number; pass: boolean; memoryPass?: boolean; precision?: number | null; timingDifficulty?: number }[],
     now = new Date(),
+    tier?: DynName,
   ): Promise<Progress> {
     const p = await this.loadProgress();
     const at = now.toISOString();
     const events: RatingEvent[] = [];
     log.forEach((x, i) => {
       // Memory: melodic → 'sequences'; rhythmic → 'rhythm' (judged with a lenient timing window).
+      // A tiered run (GAMES_TIERS_PLAN): the tier's band, rising with the chain length inside it.
       events.push({
         id: `g:${kind}:${seed}:${i}`,
         skill: kind === 'melody' ? 'sequences' : 'rhythm',
-        difficulty: 760 + 70 * x.length,
+        difficulty: tier ? tierDifficulty(tier, Math.max(0, x.length - 3), 6) : 760 + 70 * x.length,
         correct: kind === 'rhythm' && x.memoryPass !== undefined ? x.memoryPass : x.pass,
         at,
       });
@@ -674,10 +726,20 @@ export class ProgressStore {
     const fresh = events.filter((e) => !have.has(e.id));
     if (!fresh.length) return p;
     const next0: Progress = { ...p, ...withEvents(p, fresh) };
-    const next: Progress = { ...next0, ...statsAfterEvents(p, fresh, ratingsOf(next0)) };
+    let next: Progress = { ...next0, ...statsAfterEvents(p, fresh, ratingsOf(next0)) };
     next.snapshots = snapshot(next, now);
+    if (tier) {
+      // The chain the player reached (the longest round remembered) is the tier rule's measure.
+      const best = log.reduce((a, x) => ((kind === 'rhythm' && x.memoryPass !== undefined ? x.memoryPass : x.pass) ? Math.max(a, x.length) : a), 0);
+      next = applyGameRun(next, { game: kind, tier, score: best, detail: { best, rounds: log.length }, runId: `${kind}-${seed}`, course: await this.course() }, now).progress;
+    }
     await this.kv.set('progress', next);
     return next;
+  }
+
+  /** The course the player is in (results and game XP carry it). */
+  private async course(): Promise<import('../engine/courses').CourseId | undefined> {
+    return (await this.loadSettings()).activeCourse;
   }
 
   /** Best score of a 0.38 game (spec AE §8), plus Pitch Memory log entries. */
@@ -725,9 +787,29 @@ export class ProgressStore {
     const evs = gameEvents(game, score, memory ? { ...(detail ?? {}), cents: memory.cents } : detail, at, Date.now().toString(36)).filter((e) => !(p.ratingEvents ?? []).some((x) => x.id === e.id));
     const base: Progress = { ...p, bests, ...(pitchMemory ? { pitchMemory } : {}), ...(counts ? { counts } : {}) };
     const next0: Progress = evs.length ? { ...base, ...withEvents(p, evs) } : base;
-    const next: Progress = evs.length ? { ...next0, ...statsAfterEvents(base, evs, ratingsOf(next0)) } : next0;
+    let next: Progress = evs.length ? { ...next0, ...statsAfterEvents(base, evs, ratingsOf(next0)) } : next0;
     if (evs.length) next.snapshots = snapshot(next, new Date());
+    // A tiered run (GAMES_TIERS_PLAN P1): the tier state, and the game's XP with the course.
+    if (isTier(d.tier)) next = applyGameRun(next, { game, tier: d.tier, score, detail: d, runId: `${game}-${typeof d.runId === 'string' ? d.runId : Date.now().toString(36)}`, course: await this.course() }).progress;
     await this.kv.set('progress', next);
+    return next;
+  }
+
+  /** Mark the last tier-cleared message as shown. */
+  async consumeTierClear(): Promise<Progress> {
+    const p = await this.loadProgress();
+    if (!p.lastTierClear) return p;
+    const next = { ...p };
+    delete next.lastTierClear;
+    await this.kv.set('progress', next);
+    return next;
+  }
+
+  /** A tiered run of a game that keeps no score of its own here (Truth or Bluff, ghost, daily). */
+  async recordTierRun(game: string, tier: DynName, score: number, detail: Record<string, unknown>, runId: string, now = new Date()): Promise<Progress> {
+    const p = await this.loadProgress();
+    const next = applyGameRun(p, { game, tier, score, detail, runId: `${game}-${runId}`, course: await this.course() }, now).progress;
+    if (next !== p) await this.kv.set('progress', next);
     return next;
   }
 

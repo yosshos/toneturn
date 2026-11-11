@@ -30,6 +30,8 @@ import { DiagramView, Neck, type NeckDot } from './Instrument';
 import { NoteStaff } from './NoteViews';
 import { G2Head, prefersCalm } from './Flight';
 import { piano } from './services';
+import { TierChips } from './TierChips';
+import { startTier, tierAllowed, tierDef, type DynName, type TierInfo } from '../engine/gameTiers';
 
 type Lang = 'he' | 'en';
 type Bi = { en: string; he: string };
@@ -43,6 +45,8 @@ export interface RushProps {
   onExit: () => void;
   onResult: (r: { game: string; score: number; detail?: unknown }) => void;
   best?: number;
+  /** Level tiers (GAMES_TIERS_PLAN): which tier opens and how far up the player may pick. */
+  tier?: TierInfo;
 }
 
 /** Cards for the games list: route id, icon, hue, names. */
@@ -102,6 +106,8 @@ const BLURB: Record<RushMode, Bi> = {
 
 const tx = (b: Bi, lang: Lang) => b[lang];
 const ear = (m: RushMode) => m === 'interval' || m === 'progression';
+/** Does this item sound? Ear games always; a tier's heard rung in Key Signature Rush (modes, chord-scales) too. */
+const hears = (m: RushMode, it: RushItem | null) => ear(m) || (m === 'keysig' && it?.kind === 'choice' && it.q.topic !== 'key-signatures' && it.q.stimulus.length > 0);
 
 interface Feedback {
   correct: boolean;
@@ -109,7 +115,7 @@ interface Feedback {
   tap?: { str: number; fret: number };
 }
 
-export function Rush({ lang, settings, mode, saved, onSave, onExit, onResult, best }: RushProps) {
+export function Rush({ lang, settings, mode, saved, onSave, onExit, onResult, best, tier: tierInfo }: RushProps) {
   const title = RUSH_GAMES.find((g) => g.mode === mode)![lang][0];
   const ladder = rushLadder(mode);
   const calm = prefersCalm(settings);
@@ -124,6 +130,7 @@ export function Rush({ lang, settings, mode, saved, onSave, onExit, onResult, be
   const [startLevel, setStartLevel] = useState(mode === 'note' && settings.activeCourse === 'bass' ? 2 : 1);
   // The course's own instrument first: chords on the neck in the guitar course, on the keys in the piano course.
   const [picture, setPicture] = useState<RushPicture>(settings.activeCourse === 'guitar' ? 'neck' : settings.activeCourse === 'keys' ? 'keys' : 'mixed');
+  const [tier, setTier] = useState<DynName>(() => (resumable?.opts.tier && tierInfo && tierAllowed(tierInfo, resumable.opts.tier) ? resumable.opts.tier : tierInfo ? startTier(tierInfo) : 'pp'));
   const [st, setSt] = useState<RushState | null>(null);
   const [item, setItem] = useState<RushItem | null>(null);
   const [fb, setFb] = useState<Feedback | null>(null);
@@ -196,9 +203,15 @@ export function Rush({ lang, settings, mode, saved, onSave, onExit, onResult, be
     const it = currentItem(s);
     setItem(it);
     setStage('play');
-    if (ear(mode) && it.kind === 'choice') void playStim(it.q.stimulus);
+    if (hears(mode, it) && it.kind === 'choice') void playStim(it.q.stimulus);
   };
-  const startNew = () => begin(newRush({ mode, seed: (Date.now() ^ Math.floor(Math.random() * 1e9)) >>> 0, startLevel, picture: mode === 'chord' ? picture : undefined, tuning: tuningId }));
+  const tierRungs = () => {
+    const rs = tierDef(`rush-${mode}`, tier)?.rungs ?? [];
+    // Note Rush in the bass course: its first tier reads the bass clef.
+    return mode === 'note' && settings.activeCourse === 'bass' && tier === 'pp' ? [{ topic: 'note-reading', level: 2 }] : rs;
+  };
+  const startNew = () =>
+    begin(newRush({ mode, seed: (Date.now() ^ Math.floor(Math.random() * 1e9)) >>> 0, startLevel: tierInfo ? 1 : startLevel, picture: mode === 'chord' ? picture : undefined, tuning: tuningId, ...(tierInfo ? { tier, rungs: tierRungs() } : {}) }));
 
   // The clock (timed modes): 10 ticks a second, paused while feedback shows.
   useEffect(() => {
@@ -250,7 +263,7 @@ export function Rush({ lang, settings, mode, saved, onSave, onExit, onResult, be
         setItem(next);
         setFb(null);
         busy.current = false;
-        if (ear(mode) && next.kind === 'choice') void playStim(next.q.stimulus);
+        if (hears(mode, next) && next.kind === 'choice') void playStim(next.q.stimulus);
       },
       correct ? 320 : streak ? 1600 : 950,
     );
@@ -285,7 +298,7 @@ export function Rush({ lang, settings, mode, saved, onSave, onExit, onResult, be
           }
           return;
         }
-        if (e.code === 'Space' && ear(mode)) {
+        if (e.code === 'Space' && hears(mode, item)) {
           e.preventDefault();
           void playStim(item.q.stimulus);
         }
@@ -320,6 +333,9 @@ export function Rush({ lang, settings, mode, saved, onSave, onExit, onResult, be
               </div>
             </fieldset>
           )}
+          {tierInfo ? (
+            <TierChips lang={lang} info={tierInfo} value={tier} onChange={setTier} game={`rush-${mode}`} />
+          ) : (
           <fieldset className="rush-field">
             <legend>{tx(T.startAt, lang)}</legend>
             <div className="rush-levels" role="radiogroup">
@@ -331,6 +347,7 @@ export function Rush({ lang, settings, mode, saved, onSave, onExit, onResult, be
               ))}
             </div>
           </fieldset>
+          )}
           {best ? (
             <p className="rush-best">
               {tx(T.best, lang)}: <b>{best}</b>
@@ -517,7 +534,7 @@ function ChoicePrompt({ item, mode, lang, settings, onReplay }: { item: Extract<
         {/* chord-read guitar pictures are built in standard tuning */}
         {q.diagram && <DiagramView d={q.diagram} settings={mode === 'chord' ? { ...settings, tuning: 'standard' } : settings} />}
       </div>
-      {ear(mode) && (
+      {hears(mode, item) && (
         <button type="button" className="btn rush-replay" onClick={onReplay}>
           <span aria-hidden="true">▶</span> {T.play[lang]}
         </button>

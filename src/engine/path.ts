@@ -13,6 +13,7 @@ import { LESSON_ORDER, makeLesson, type LessonDef, type LessonId, type Question,
 import { TOPIC_GEN, genTopic, topicLesson } from './topicKit';
 import type { Track } from './intake';
 import { inCourse, type CourseId } from './courses';
+import { stepTier, tierSpec } from './gameTiers';
 import { catalog } from './drills/generate';
 import { guitarCatalog } from './drills/guitar';
 import { BARRY_LEVELS, HARMONY_LEVELS, LADDER, MODE_LEVELS, ORNAMENT_LEVELS, SIGHT_LEVELS } from './vocal';
@@ -44,6 +45,8 @@ export interface PathStep {
   mic?: boolean;
   /** A game step (product owner, 0.38: games inside units): the game's route id. */
   game?: string;
+  /** A game step's tier (GAMES_TIERS_PLAN §5.2): the band of the step's difficulty; the step opens it, 3 stars = its rule met. */
+  tier?: import('./gameTiers').DynName;
   /** 0.61 (owner): a level of a measured ladder — a technique family level ('tech') or a vocal program level ('vocal').
    * family = drill family id / vocal program; ref = the drill level id ("scales-3") or the vocal level number ("103"). */
   ladder?: { family: string; level: number; ref: string; instrument?: 'piano' | 'guitar' | 'bass' | 'drums' };
@@ -830,7 +833,7 @@ function virtualStep(id: string, unitId: string, from: PathStep[] = []): PathSte
     const game = id.split(':')[2];
     const g = GAME_STEPS[game];
     const d = median(from.map((s) => s.difficulty)) || 1000;
-    return { id, kind: 'game', game, skill: g?.skill ?? 'degrees', sub: `${g?.skill ?? 'degrees'}/${g?.sub ?? 'diatonic'}`, domain: g?.domain ?? 'pitch', difficulty: d, choices: 0, title: g?.title ?? { en: game, he: game } };
+    return { id, kind: 'game', game, ...(tierSpec(game) ? { tier: stepTier(d) } : {}), skill: g?.skill ?? 'degrees', sub: `${g?.skill ?? 'degrees'}/${g?.sub ?? 'diatonic'}`, domain: g?.domain ?? 'pitch', difficulty: d, choices: 0, title: g?.title ?? { en: game, he: game } };
   }
   void unitId;
   return null;

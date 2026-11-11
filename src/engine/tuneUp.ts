@@ -65,7 +65,7 @@ export function roundFor(string: number, detune: number, kind: RefKind, inst: Tu
 }
 
 /** 8 rounds: different strings in turn, detunes of 5–50 ¢ either way, harmonics on about a third. */
-export function makeRounds(seed: number, n = ROUNDS, inst: TuneInst = 'guitar'): TuneRound[] {
+export function makeRounds(seed: number, n = ROUNDS, inst: TuneInst = 'guitar', range?: { lo: number; hi: number }): TuneRound[] {
   const r = rng(seed);
   const out: TuneRound[] = [];
   let strings: number[] = [];
@@ -79,8 +79,9 @@ export function makeRounds(seed: number, n = ROUNDS, inst: TuneInst = 'guitar'):
     }
     const s = strings.pop()!;
     // Harder as the game goes on: early rounds are far out, later ones closer.
-    const lo = i < 3 ? 25 : 5;
-    const hi = i < 3 ? 50 : 30;
+    // A level tier fixes the detune range (GAMES_TIERS_PLAN: 30–50 ¢ at pp … 4–6 ¢ at ff).
+    const lo = range ? range.lo : i < 3 ? 25 : 5;
+    const hi = range ? range.hi : i < 3 ? 50 : 30;
     const mag = Math.round(lo + r() * (hi - lo));
     const detune = r() < 0.5 ? -mag : mag;
     const kind: RefKind = harmonicOk(s, inst) && r() < 0.35 ? 'harmonic' : 'fret';
@@ -111,6 +112,8 @@ export interface TuneUpSave {
   round: number;
   score: number;
   errors: number[];
+  /** Level tier of the run (GAMES_TIERS_PLAN). */
+  tier?: import('./courseSocial').DynName;
 }
 
 export function isTuneUpSave(v: unknown): v is TuneUpSave {

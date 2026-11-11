@@ -30,12 +30,14 @@ import {
 } from '../engine/peakHunter';
 import type { Settings } from '../storage/progress';
 import { G2Head, prefersCalm } from './Flight';
+import { TierChips } from './TierChips';
+import { startTier, tierAllowed, tierDef, type DynName, type TierInfo } from '../engine/gameTiers';
 import { piano } from './services';
 
 export interface PeakHunterResult {
   game: 'peakhunter';
   score: number;
-  detail: { rounds: number; meanOctaves: number; level: PeakLevel };
+  detail: { rounds: number; meanOctaves: number; level: PeakLevel; tier?: DynName };
 }
 export interface PeakHunterProps {
   lang: 'he' | 'en';
@@ -45,6 +47,7 @@ export interface PeakHunterProps {
   onExit: () => void;
   onResult: (r: PeakHunterResult) => void;
   best?: number;
+  tier?: TierInfo;
 }
 
 const TEXT = {
@@ -121,13 +124,18 @@ const at = (p: number): CSSProperties => ({ ['--p' as string]: p }) as CSSProper
 
 type Phase = 'setup' | 'guess' | 'reveal' | 'over';
 
-export function PeakHunter({ lang, settings, saved, onSave, onExit, onResult, best }: PeakHunterProps) {
+export function PeakHunter({ lang, settings, saved, onSave, onExit, onResult, best, tier: tierInfo }: PeakHunterProps) {
   const tx = TEXT[lang];
   const calm = prefersCalm(settings);
   const resumable = isPeakSave(saved) ? saved : null;
 
   const [phase, setPhase] = useState<Phase>('setup');
-  const [level, setLevel] = useState<PeakLevel>(resumable?.level ?? 1);
+  const [tier, setTierRaw] = useState<DynName>(() => (resumable?.tier && tierInfo && tierAllowed(tierInfo, resumable.tier) ? resumable.tier : tierInfo ? startTier(tierInfo) : 'pp'));
+  const [level, setLevel] = useState<PeakLevel>(resumable?.level ?? (tierInfo ? ((tierDef('peakhunter', startTier(tierInfo))?.levels?.[0] ?? 1) as PeakLevel) : 1));
+  const setTier = (t: DynName) => {
+    setTierRaw(t);
+    setLevel((tierDef('peakhunter', t)?.levels?.[0] ?? 1) as PeakLevel);
+  };
   const [game, setGame] = useState<PeakSave | null>(null);
   const [guess, setGuess] = useState(1000);
   const [last, setLast] = useState<PeakAnswer | null>(null);
@@ -184,7 +192,7 @@ export function PeakHunter({ lang, settings, saved, onSave, onExit, onResult, be
 
   const begin = (resume: boolean) => {
     stop();
-    const g = resume && resumable ? resumable : newSave((Date.now() ^ (Math.random() * 1e9)) >>> 0, level);
+    const g = resume && resumable ? resumable : { ...newSave((Date.now() ^ (Math.random() * 1e9)) >>> 0, level), ...(tierInfo ? { tier } : {}) };
     setGame(g);
     setLevel(g.level);
     setGuess(snapHz(1000, g.level));
@@ -213,7 +221,7 @@ export function PeakHunter({ lang, settings, saved, onSave, onExit, onResult, be
       const mean = meanOctavesOf(game.answers);
       setFinal({ score, mean, answers: game.answers, record: isBest(score, best) });
       onSave(null);
-      onResult({ game: 'peakhunter', score, detail: { rounds: game.answers.length, meanOctaves: mean, level: game.level } });
+      onResult({ game: 'peakhunter', score, detail: { rounds: game.answers.length, meanOctaves: mean, level: game.level, ...(game.tier ? { tier: game.tier } : {}) } });
       setPhase('over');
       return;
     }
@@ -269,6 +277,9 @@ export function PeakHunter({ lang, settings, saved, onSave, onExit, onResult, be
       {phase === 'setup' && (
         <section className="g2-card">
           <p>{tx.blurb}</p>
+          {tierInfo ? (
+            <TierChips lang={lang} info={tierInfo} value={tier} onChange={setTier} game="peakhunter" />
+          ) : (
           <fieldset className="seg-field">
             <legend>{tx.level}</legend>
             <div className="seg g2-seg" role="radiogroup" aria-label={tx.level}>
@@ -279,6 +290,7 @@ export function PeakHunter({ lang, settings, saved, onSave, onExit, onResult, be
               ))}
             </div>
           </fieldset>
+          )}
           {!!best && (
             <p className="g2-best">
               {tx.best}: <b dir="ltr">{best}</b>

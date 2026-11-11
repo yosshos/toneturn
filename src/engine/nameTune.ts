@@ -83,6 +83,8 @@ export interface TuneSave {
   score: number;
   /** Per answered round: chosen id and points. */
   answers: { pick: string; points: number; ms: number }[];
+  /** Level tier of the run (GAMES_TIERS_PLAN). */
+  tier?: import('./courseSocial').DynName;
 }
 
 export function isTuneSave(v: unknown): v is TuneSave {

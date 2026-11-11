@@ -37,6 +37,18 @@ import { courseInstrumentOf, namingFor, type Settings } from '../storage/progres
 import { midi as midiInput } from '../speech/midi';
 import { BrowserPitchCapture } from '../speech/pitchCapture';
 import { piano } from './services';
+import { TierChips } from './TierChips';
+import { startTier, tierDef, type DynName, type TierInfo } from '../engine/gameTiers';
+
+/** A tier sets the level of each song chip (its levels in turn), the tempo and the pitch lanes (GAMES_TIERS_PLAN). */
+function withTier(o: HighwayOptions, t: DynName | undefined): HighwayOptions {
+  const d = t ? tierDef('highway', t) : null;
+  if (!t || !d) return o;
+  const p = d.params ?? {};
+  const lv = (o.mode === 'pitch' ? (p.pitch as number[]) : o.mode === 'kit' ? (p.kit as number[]) : d.levels) ?? [1];
+  const level = lv[Math.max(0, Math.min(lv.length - 1, o.song - 1))] as RhythmLevel;
+  return { ...o, tier: t, level, bpm: Number(p.bpm ?? o.bpm), ...(o.mode === 'pitch' ? { lanes: Number(p.lanes ?? 3) as 3 | 4 | 5 } : {}) };
+}
 
 type Lang = 'he' | 'en';
 type Text = { en: string; he: string };
@@ -169,6 +181,7 @@ export function Highway({
   onSave,
   onExit,
   onResult,
+  tier: tierInfo,
 }: {
   lang: Lang;
   settings: Settings;
@@ -176,6 +189,7 @@ export function Highway({
   onSave: (state: unknown | null) => void;
   onExit: () => void;
   onResult: (r: { game: 'highway' | 'melody-puzzle'; score: number; detail?: unknown }) => void;
+  tier?: TierInfo;
 }) {
   const tx = (o: Text) => o[lang];
   const resumable = isHighwaySaved(saved) ? saved : null;
@@ -187,7 +201,9 @@ export function Highway({
 
   const [opts, setOpts] = useState<HighwayOptions>(
     // A run saved in another course may hold a mode this course doesn't offer (pitch in drums, kit elsewhere).
-    () => (resumable && MODES.includes(resumable.opts.mode) ? resumable.opts : resumable ? { ...resumable.opts, mode: MODES[0] } : null) ?? { mode: drumsCourse ? 'kit' : 'tap', level: 1, song: 1, bpm: 90, lanes: 3, keyPc: laneKeyPc(settings) },
+    () =>
+      (resumable && MODES.includes(resumable.opts.mode) ? resumable.opts : resumable ? { ...resumable.opts, mode: MODES[0] } : null) ??
+      withTier({ mode: drumsCourse ? 'kit' : 'tap', level: 1, song: 1, bpm: 90, lanes: 3, keyPc: laneKeyPc(settings) }, tierInfo ? startTier(tierInfo) : undefined),
   );
   const song = useMemo(() => highwaySong(opts), [opts]);
   const [stage, setStage] = useState<Stage>('setup');
@@ -255,7 +271,7 @@ export function Highway({
     onResult({
       game: 'highway',
       score: sum.accuracy,
-      detail: { songId: s.id, mode: s.opts.mode, level: s.opts.level, bpm: s.opts.bpm, lanes: s.opts.lanes, newBest: best, ...sum },
+      detail: { songId: s.id, mode: s.opts.mode, level: s.opts.level, bpm: s.opts.bpm, lanes: s.opts.lanes, newBest: best, ...sum, ...(s.opts.tier ? { tier: s.opts.tier } : {}) },
     });
   }, [onResult, onSave]);
 
@@ -427,7 +443,7 @@ export function Highway({
         const n = { ...o, ...p };
         if (n.mode === 'pitch' && n.level > PITCH_MAX_LEVEL) n.level = PITCH_MAX_LEVEL;
         if (n.mode === 'kit' && n.level > KIT_MAX_LEVEL) n.level = KIT_MAX_LEVEL as RhythmLevel;
-        return n;
+        return n.tier ? withTier(n, n.tier) : n;
       });
     return (
       <main className="panel-screen g3 hw-setup">
@@ -450,6 +466,9 @@ export function Highway({
             <p className="field-hint">{opts.mode === 'tap' ? tx(T.tapHint) : opts.mode === 'kit' ? tx(T.kitHint) : useMidi ? tx(T.midiHint) : tx(T.pitchHint)}</p>
             {opts.mode === 'tap' && !settings.tapLatencyMs && <p className="field-hint warn">{tx(T.calibrate)}</p>}
           </fieldset>
+          {tierInfo ? (
+            <TierChips lang={lang} info={tierInfo} value={opts.tier ?? startTier(tierInfo)} onChange={(t) => set({ tier: t })} game="highway" />
+          ) : (
           <fieldset className="seg-field">
             <legend>{tx(T.level)}</legend>
             <div className="g3-chips" role="radiogroup" aria-label={tx(T.level)}>
@@ -460,6 +479,7 @@ export function Highway({
               ))}
             </div>
           </fieldset>
+          )}
           <fieldset className="seg-field">
             <legend>{tx(T.song)}</legend>
             <div className="g3-chips" role="radiogroup" aria-label={tx(T.song)}>
@@ -478,6 +498,7 @@ export function Highway({
               })}
             </div>
           </fieldset>
+          {!tierInfo && (
           <fieldset className="seg-field">
             <legend>{tx(T.tempo)}</legend>
             <div className="seg" role="radiogroup" aria-label={tx(T.tempo)}>
@@ -494,7 +515,8 @@ export function Highway({
               ))}
             </div>
           </fieldset>
-          {opts.mode === 'pitch' && (
+          )}
+          {opts.mode === 'pitch' && !tierInfo && (
             <fieldset className="seg-field">
               <legend>{tx(T.lanes)}</legend>
               <div className="seg" role="radiogroup" aria-label={tx(T.lanes)}>

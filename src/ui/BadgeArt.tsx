@@ -717,6 +717,13 @@ export const GLYPHS: Record<string, Glyph> = {
     </>
   ),
   'special:fortnight': () => flame(),
+  // Game tiers (GAMES_TIERS_PLAN): a crescendo hairpin over a bar line — getting louder, level by level.
+  'special:tier': () => (
+    <>
+      {p('M3 12 L20 6 M3 12 L20 18')}
+      {p('M21.5 4v16', false)}
+    </>
+  ),
   'special:half-century': ({ bg }) => (
     <>
       {flame(true)}
@@ -881,6 +888,7 @@ export function resolveGlyph(b: Pick<Badge, 'id' | 'cat' | 'group'>): { key: str
   // Guitar drill families ('g-…') and any other unknown family: the generic guitar / note glyph.
   if (key.startsWith('family:g-')) return { key, glyph: GLYPHS['family:guitar'], fallback: false };
   if (key.startsWith('family:b-')) return { key, glyph: GLYPHS['family:bass'], fallback: false };
+  if (key.startsWith('special:tier')) return { key, glyph: GLYPHS['special:tier'], fallback: false };
   return { key, glyph: FALLBACK, fallback: true };
 }
 

@@ -2,7 +2,9 @@ import { Icon } from './icons';
 import { LevelStatsLine } from './LevelStats';
 import { RatingBadge } from './Rating';
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
-import { dailyBoard, submitDaily, type DailyBoard } from '../cloud/daily';
+import { dailyBoardBand, submitDailyBand, type DailyBoard } from '../cloud/daily';
+import { BAND_NAMES, bandOfTier, bandsOpen, bandTiers, socialInfo, startTier, tierSeed, type DailyBand, type DynName, type TierInfo } from '../engine/gameTiers';
+import { TierChips } from './TierChips';
 import type { CloudUser } from '../cloud/cloud';
 import { dailySet, shareText, tournamentSet, type SetKind } from '../engine/tournament';
 import { firstKind, forCourse } from '../engine/courseSocial';
@@ -12,7 +14,7 @@ import { TournamentController, type TournamentView } from '../game/tournamentCon
 import { clearSlot, loadSlot, saveSlot } from '../storage/resume';
 import { askTemplate, choiceLabel } from '../game/content';
 import type { Strings } from '../i18n/strings';
-import { localDay, namingFor, type GhostRun, type Progress, type Settings } from '../storage/progress';
+import { localDay, namingFor, ratingsOf, type GhostRun, type Progress, type Settings } from '../storage/progress';
 import { displayNote, type PitchClass } from '../engine/pitch';
 import { withNote } from './bits';
 import { piano, store, tts } from './services';
@@ -42,7 +44,11 @@ export function DailyScreen({
   const [practice, setPractice] = useState(false);
   const [board, setBoard] = useState<DailyBoard | null>(null);
   const [boardErr, setBoardErr] = useState(false);
-  const items = useMemo(() => dailySet(day), [day]);
+  // Three bands (owner 2026-11-10): the player's own (from the course level) and one above.
+  const own = bandOfTier(socialInfo(ratingsOf(progress), settings.activeCourse ?? 'ear', undefined, settings.courses).open);
+  const open = bandsOpen(own);
+  const [band, setBand] = useState<DailyBand>(() => (done?.band && open.includes(done.band) ? done.band : own));
+  const items = useMemo(() => dailySet(day, band), [day, band]);
 
   // Upload the first play once signed in (also after playing signed out), then show the board.
   useEffect(() => {
@@ -52,9 +58,9 @@ export function DailyScreen({
       try {
         let b: DailyBoard | null;
         if (done && !done.submitted && done.answers && done.times) {
-          b = await submitDaily(day, done.answers, done.times);
+          b = await submitDailyBand(day, done.band ?? 'soft', done.answers, done.times);
           onProgress(await store.markDailySubmitted(day));
-        } else b = await dailyBoard(day);
+        } else b = await dailyBoardBand(day, done?.band ?? band);
         if (live) {
           setBoard(b);
           setBoardErr(false);
@@ -68,11 +74,12 @@ export function DailyScreen({
       live = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, playing, done?.submitted, done?.points, day]);
+  }, [user, playing, done?.submitted, done?.points, day, band]);
 
   // Leaving half-way keeps the rounds played (playtesting, 0.35.3).
-  const slotKey = `daily:${day}:${practice ? 'practice' : 'scored'}`;
-  const saved = loadSlot<{ results: TournamentView['results'] }>(`daily:${day}:${done ? 'practice' : 'scored'}`);
+  const bk = band === 'soft' ? '' : `:${band}`;
+  const slotKey = `daily:${day}${bk}:${practice ? 'practice' : 'scored'}`;
+  const saved = loadSlot<{ results: TournamentView['results'] }>(`daily:${day}${bk}:${done ? 'practice' : 'scored'}`);
   if (playing) {
     const resume = loadSlot<{ results: TournamentView['results'] }>(slotKey);
     return (
@@ -91,7 +98,12 @@ export function DailyScreen({
           // Only the first play of the day counts; later plays are practice.
           const answers = v.results.map((r) => (r.answers[0].answer === null ? null : String(r.answers[0].answer)));
           const times = v.results.map((r) => r.answers[0].timeMs);
-          if (!practice) void store.recordDaily(day, points, text, { answers, times }).then(onProgress);
+          if (!practice)
+            void store.recordDaily(day, points, text, { answers, times, ...(band !== 'soft' ? { band } : {}) }).then(async () => {
+              // The daily's XP (GAMES_TIERS_PLAN): right answers × the band's tier.
+              const right = v.results.filter((r) => r.answers[0].correct).length;
+              onProgress(await store.recordTierRun('daily', bandTiers(band)[0], points, { right, wrong: v.results.length - right }, `${day}-${band}`));
+            });
         }}
         shareDay={day}
       />
@@ -110,6 +122,15 @@ export function DailyScreen({
         <p className="daily-date" dir="ltr">
           {day}
         </p>
+        {!done && (
+          <div className="seg" role="radiogroup" aria-label={settings.uiLang === 'he' ? 'עוצמה' : 'Band'} data-daily-bands="1">
+            {open.map((b) => (
+              <button key={b} type="button" role="radio" aria-checked={band === b} className={band === b ? 'on' : ''} onClick={() => setBand(b)} data-band={b}>
+                {BAND_NAMES[b][settings.uiLang]}
+              </button>
+            ))}
+          </div>
+        )}
         {done ? (
           <>
             <pre className="share-card" dir="ltr">
@@ -201,7 +222,8 @@ function ShareButton({ t, text }: { t: Strings; text: string }) {
 
 // ======================================================================= Duel setup
 
-export function DuelSetup({ t, onBack, onStart, course = 'ear' }: { t: Strings; onBack: () => void; onStart: (names: string[], kind: SetKind, rounds: number) => void; /** Per course: the active course's question sets only. */ course?: CourseId }) {
+export function DuelSetup({ t, onBack, onStart, course = 'ear', tier: tierInfo, lang = 'en' }: { t: Strings; onBack: () => void; onStart: (names: string[], kind: SetKind, rounds: number, tier?: DynName) => void; /** Per course: the active course's question sets only. */ course?: CourseId; tier?: TierInfo; lang?: 'he' | 'en' }) {
+  const [tier, setTier] = useState<DynName>(() => (tierInfo ? startTier(tierInfo) : 'pp'));
   const kinds = forCourse(course, [
       ['mixed', t.setMixed],
       ['degrees', t.skillNames.degrees],
@@ -211,6 +233,7 @@ export function DuelSetup({ t, onBack, onStart, course = 'ear' }: { t: Strings; 
       ['wrong-notes', t.wrongNotesTitle],
       ['truefalse', t.trueFalse],
       ['beat', t.skillNames['rhythm-dictation']],
+      ['jazz', JAZZ_SET[lang]],
     ]);
   const [names, setNames] = useState([`${t.playerN} 1`, `${t.playerN} 2`]);
   const [kind, setKind] = useState<SetKind>(firstKind(kinds));
@@ -243,6 +266,7 @@ export function DuelSetup({ t, onBack, onStart, course = 'ear' }: { t: Strings; 
             ))}
           </div>
         </fieldset>
+        {tierInfo && <TierChips lang={lang} info={tierInfo} value={tier} onChange={setTier} game="duel" />}
         <fieldset className="seg-field">
           <legend>{t.roundsLabel}</legend>
           <div className="seg" role="radiogroup" aria-label={t.roundsLabel}>
@@ -262,6 +286,7 @@ export function DuelSetup({ t, onBack, onStart, course = 'ear' }: { t: Strings; 
             names.map((n, i) => n.trim() || `${t.playerN} ${i + 1}`),
             kind,
             rounds,
+            tierInfo ? tier : undefined,
           );
         }}
       >
@@ -272,15 +297,18 @@ export function DuelSetup({ t, onBack, onStart, course = 'ear' }: { t: Strings; 
 }
 
 // A duel on one device is not saved: leaving a game against someone means losing it (product owner).
-export function DuelScreen({ t, settings, names, kind, rounds, onExit, onRematch }: { t: Strings; settings: Settings; names: string[]; kind: SetKind; rounds: number; onExit: () => void; onRematch: () => void }) {
-  const seed = useMemo(() => (Date.now() ^ (Math.random() * 1e9)) >>> 0, []);
+export function DuelScreen({ t, settings, names, kind, rounds, onExit, onRematch, tier = 'pp' }: { t: Strings; settings: Settings; names: string[]; kind: SetKind; rounds: number; onExit: () => void; onRematch: () => void; tier?: DynName }) {
+  // The tier rides in the seed (engine/gameTiers.ts): both players get that tier's items.
+  const seed = useMemo(() => tierSeed((Date.now() ^ (Math.random() * 1e9)) >>> 0, tier), [tier]);
   const items = useMemo(() => tournamentSet(kind, rounds, seed), [kind, rounds, seed]);
   return <TournamentPlay t={t} settings={settings} items={items} players={names} onExit={onExit} onRematch={onRematch} />;
 }
 
 // ======================================================================= Ghost race
 
-const ghostKey = (kind: SetKind, rounds: number) => `${kind}:${rounds}`;
+/** A ghost per set and tier (pp keeps the key from before tiers). */
+const ghostKey = (kind: SetKind, rounds: number, tier: DynName = 'pp') => (tier === 'pp' ? `${kind}:${rounds}` : `${kind}:${rounds}:${tier}`);
+const JAZZ_SET = { en: 'Jazz harmony', he: 'הרמוניית ג׳אז' };
 
 export function GhostScreen({ t, settings, progress, onBack, onProgress }: { t: Strings; settings: Settings; progress: Progress; onBack: () => void; onProgress: (p: Progress) => void }) {
   const kinds = forCourse(settings.activeCourse ?? 'ear', [
@@ -292,13 +320,16 @@ export function GhostScreen({ t, settings, progress, onBack, onProgress }: { t: 
     ['wrong-notes', t.wrongNotesTitle],
     ['truefalse', t.trueFalse],
     ['beat', t.skillNames['rhythm-dictation']],
+    ['jazz', JAZZ_SET[settings.uiLang]],
   ]);
   const [kind, setKind] = useState<SetKind>(firstKind(kinds));
   const [rounds, setRounds] = useState(5);
+  const tierInfo = socialInfo(ratingsOf(progress), settings.activeCourse ?? 'ear', progress.gameTiers?.ghost, settings.courses);
+  const [tier, setTier] = useState<DynName>(() => startTier(tierInfo));
   const [run, setRun] = useState<{ key: number; seed: number; ghost?: GhostRun; resume?: TournamentView['results'] } | null>(null);
   const savedRun = loadSlot<{ kind: SetKind; rounds: number; seed: number; ghost?: GhostRun; results: TournamentView['results'] }>('ghost');
   const [note, setNote] = useState<string | null>(null);
-  const ghost = progress.ghosts?.[ghostKey(kind, rounds)];
+  const ghost = progress.ghosts?.[ghostKey(kind, rounds, tier)];
   if (run) {
     const items = tournamentSet(kind, rounds, run.seed);
     return (
@@ -318,14 +349,16 @@ export function GhostScreen({ t, settings, progress, onBack, onProgress }: { t: 
         }}
         onRematch={() => {
           setNote(null);
-          const g = progress.ghosts?.[ghostKey(kind, rounds)];
+          const g = progress.ghosts?.[ghostKey(kind, rounds, tier)];
           setRun({ key: run.key + 1, seed: g?.seed ?? run.seed, ghost: g });
         }}
         onOver={(v) => {
           clearSlot('ghost');
           const me = v.standings.find((s) => s.player === 0)!;
           const answers = v.results.map((r) => ({ answer: r.answers[0].answer, timeMs: r.answers[0].timeMs }));
-          void store.recordGhost(ghostKey(kind, rounds), { seed: run.seed, points: me.points, answers, at: new Date().toISOString() }).then(({ progress: p, kept }) => {
+          void store.recordGhost(ghostKey(kind, rounds, tier), { seed: run.seed, points: me.points, answers, at: new Date().toISOString() }).then(async ({ progress: p, kept }) => {
+            const right = v.results.filter((r) => r.answers[0].correct).length;
+            p = await store.recordTierRun('ghost', tier, me.points, { right, wrong: v.results.length - right }, `${run.seed}-${run.key}-${Date.now().toString(36)}`);
             onProgress(p);
             setNote(!run.ghost ? t.ghostSet : kept ? t.ghostBeaten : t.ghostNotBeaten);
           });
@@ -363,6 +396,7 @@ export function GhostScreen({ t, settings, progress, onBack, onProgress }: { t: 
             ))}
           </div>
         </fieldset>
+        <TierChips lang={settings.uiLang} info={tierInfo} value={tier} onChange={setTier} game="ghost" />
         <p className="ghost-best" dir="auto">
           {ghost ? `${t.ghostBest}: ${ghost.points.toLocaleString(settings.uiLang)} ${t.points}` : t.ghostNone}
         </p>
@@ -386,7 +420,7 @@ export function GhostScreen({ t, settings, progress, onBack, onProgress }: { t: 
         onClick={() => {
           void piano.unlock();
           clearSlot('ghost');
-          setRun({ key: 1, seed: ghost?.seed ?? (Date.now() ^ (Math.random() * 1e9)) >>> 0, ghost });
+          setRun({ key: 1, seed: ghost?.seed ?? tierSeed((Date.now() ^ (Math.random() * 1e9)) >>> 0, tier), ghost });
         }}
       >
         {ghost ? t.raceGhost : t.setGhost}
