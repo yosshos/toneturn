@@ -323,7 +323,9 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
   const keysAreHint = !answered && !q.aid && keyboardIsHint(q);
   const canHint = keysAreHint && !noHints(v.session.lesson.id);
   // 0.70 (owner): a rhythm / time question (rhythm memory, meter, tempo…) shows no keyboard — it means nothing there.
-  const timeQuestion = 'skill' in q && typeof q.skill === 'string' && domainOf(q.skill as never) === 'time';
+  // A question whose sound has no pitched notes (rhythms, markers, rests, percussion events) is about time, not keys.
+  const pitchless = (q.stimulus ?? []).length > 0 && (q.stimulus ?? []).every((el) => el.kind === 'rhythm' || el.kind === 'rest' || el.kind === 'marker' || (el.kind === 'events' && el.events.every((e) => !!e.perc)));
+  const timeQuestion = pitchless || ('skill' in q && typeof q.skill === 'string' && domainOf(q.skill as never) === 'time');
   const hideKeyboard = q.kind === 'rhythm-read' || q.kind === 'rhythm-dict' || timeQuestion || keysAreHint || (q.kind === 'choice' && !!q.chart);
   const orbLabel =
     q.kind === 'degree'
@@ -563,6 +565,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
               <MicIcon /> {t.listenAgain}
             </button>
           )}
+          {v.listen && <ListenStrip key={v.listen.id} l={v.listen} />}
           <Caption text={v.caption} />
           <div className={`controls ${v.awaitNext ? 'with-continue' : ''}`}>
             {/* 0.68.1 (owner): Continue sits in the bottom bar itself, above Repeat / Skip — the sticky bar can no
@@ -1400,6 +1403,19 @@ export function TapPad({ live, count, label, hint, beat, accent, onTap, onReleas
       {hint && !countdown && <small className="tap-hint">{hint}</small>}
       <small className="tap-count" dir="ltr">{count ? count : ''}</small>
     </button>
+  );
+}
+
+/** 0.70 (owner): while a passage plays, a thin strip shows its length (sounding parts, rests as gaps) and a running marker. */
+function ListenStrip({ l }: { l: { id: number; total: number; parts: { s: number; e: number }[] } }) {
+  if (l.total < 1.2) return null;
+  return (
+    <div className="listen-strip" aria-hidden="true">
+      {l.parts.map((p, i) => (
+        <i key={i} className={p.e - p.s < 0.3 ? 'ls-tick' : 'ls-part'} style={{ left: `${(100 * p.s) / l.total}%`, width: `${Math.max(0.8, (100 * (p.e - p.s)) / l.total)}%` }} />
+      ))}
+      <b className="ls-cursor" style={{ animationDuration: `${l.total}s` }} />
+    </div>
   );
 }
 
