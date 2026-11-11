@@ -120,7 +120,7 @@ describe('game tiers', () => {
     const now = new Date('2026-11-10T10:00:00');
     let total = 0;
     for (let i = 0; i < 8; i++) {
-      const r = applyGameRun(p, { game: 'rush-chord', tier: 'ff', score: 300, detail: { right: 30, wrong: 0, level: 2 }, runId: `r${i}`, course: 'jazz' }, now);
+      const r = applyGameRun(p, { game: 'rush-chord', tier: 'ff', score: 300, detail: { right: 30, wrong: 0, level: 4 }, runId: `r${i}`, course: 'jazz' }, now);
       p = r.progress;
       total += r.xp;
     }

@@ -11,6 +11,8 @@ import {
   gradeFret,
   isRushSaved,
   isStreak,
+  isRounds,
+  ROUNDS,
   newRush,
   rushAnswer,
   rushLadder,
@@ -58,6 +60,9 @@ export const RUSH_GAMES: { mode: RushMode; icon: string; hue: string; en: [strin
   { mode: 'interval', icon: '↕', hue: 'var(--hue-pitch)', en: ['Interval Rush', 'Name intervals by ear against the clock.'], he: ['מרוץ מרווחים', 'מזהים מרווחים בשמיעה נגד השעון.'] },
   { mode: 'keysig', icon: '♯', hue: 'var(--hue-reading)', en: ['Key Signature Rush', 'Which key is it? 60 seconds.'], he: ['מרוץ סימני היתק', 'איזה סולם זה? 60 שניות.'] },
   { mode: 'progression', icon: '🔍', hue: 'var(--hue-creative)', en: ['Progression Detective', 'Name the chord progression. Three lives.'], he: ['בלש המהלכים', 'מזהים את מהלך האקורדים. שלושה חיים.'] },
+  { mode: 'voicing', icon: '', hue: 'var(--hue-pitch)', en: ['Voicing Spy', 'Hear a chord, name its voicing. Three lives.'], he: ['מרגל הוויסינגים', 'שומעים אקורד, מזהים את הוויסינג. שלושה חיים.'] },
+  { mode: 'scale', icon: '', hue: 'var(--hue-pitch)', en: ['Scale & Mode Rush', 'Hear a scale or mode, name it — 60 seconds.'], he: ['מרוץ סולמות ומודוסים', 'שומעים סולם או מודוס, נותנים שם — 60 שניות.'] },
+  { mode: 'standard', icon: '', hue: 'var(--hue-pitch)', en: ['Name That Standard', 'Hear the changes, name the tune — 10 rounds.'], he: ['זהו את הסטנדרט', 'שומעים את המהלך, מזהים את השיר — 10 סיבובים.'] },
 ];
 
 const T = {
@@ -92,6 +97,9 @@ const T = {
   keysHint: { en: 'Keys 1–4 answer.', he: 'מקשים 1–4 עונים.' },
   earHint: { en: 'Space plays it again.', he: 'רווח משמיע שוב.' },
   timedRules: { en: '60 seconds. 5 right in a row: ×1.5, 10 in a row: ×2. A wrong answer costs 2 seconds.', he: '60 שניות. 5 נכונות ברצף: ×1.5, ‏10 ברצף: ×2. תשובה שגויה עולה 2 שניות.' },
+  roundsRules: { en: '10 rounds, no clock. The faster you answer, the more it scores.', he: '10 סיבובים, בלי שעון. ככל שעונים מהר יותר, הניקוד גבוה יותר.' },
+  round: { en: 'Round', he: 'סיבוב' },
+  tenDone: { en: 'Ten rounds', he: 'עשרה סיבובים' },
   streakRules: { en: 'No clock — three lives. Every 3 right answers the cases get harder.', he: 'בלי שעון — שלושה חיים. כל 3 תשובות נכונות התיקים נעשים קשים יותר.' },
   tuningNote: { en: 'Guitar pictures use standard tuning.', he: 'תמונות הגיטרה בכיוון סטנדרטי.' },
 };
@@ -103,10 +111,13 @@ const BLURB: Record<RushMode, Bi> = {
   interval: { en: 'Two notes. Which interval? Answer by ear, fast.', he: 'שני צלילים. איזה מרווח? עונים בשמיעה, מהר.' },
   keysig: { en: 'A key signature. Which key is it?', he: 'סימן היתק. איזה סולם זה?' },
   progression: { en: 'Listen to the chords and name the progression. Every case solved makes the next one harder.', he: 'הקשיבו לאקורדים וזהו את המהלך. כל תיק שנפתר מקשה את הבא.' },
+  voicing: { en: 'One chord, played then broken up low to high. How is it voiced?', he: 'אקורד אחד, נשמע ואז מפורק מלמטה למעלה. איך הוא מחולק?' },
+  scale: { en: 'A scale or mode, up and down. Name it.', he: 'סולם או מודוס, עולה ויורד. מה שמו?' },
+  standard: { en: 'Four bars of a standard’s changes, comped by the band — no melody. Which tune?', he: 'ארבע תיבות מהמהלך של סטנדרט, בליווי הלהקה — בלי מנגינה. איזה שיר?' },
 };
 
 const tx = (b: Bi, lang: Lang) => b[lang];
-const ear = (m: RushMode) => m === 'interval' || m === 'progression';
+const ear = (m: RushMode) => m === 'interval' || m === 'progression' || m === 'voicing' || m === 'scale' || m === 'standard';
 /** Does this item sound? (engine/rush: ear games; Chord Rush keys / guitar pictures; Key Signature Rush heard rungs.) */
 const hears = rushHears;
 
@@ -121,10 +132,13 @@ export function Rush({ lang, settings, mode, saved, onSave, onExit, onResult, be
   const ladder = rushLadder(mode);
   const calm = prefersCalm(settings);
   const streak = isStreak(mode);
+  const rounds = isRounds(mode);
+  /** Runs that save after every answer (resume after Back / reload). */
+  const saving = streak || rounds;
   // The bass course drills the bass neck (its own tuning), every other course the guitar's.
   const tuningId = mode === 'fretboard' ? neckTuningOf(settings) : undefined;
   const tuning = tuningById(tuningId);
-  const resumable = streak && isRushSaved(saved, mode) ? saved.state : null;
+  const resumable = saving && isRushSaved(saved, mode) ? saved.state : null;
 
   const [stage, setStage] = useState<'setup' | 'play' | 'over'>('setup');
   // Note Rush in the bass course starts on the bass clef (level 2).
@@ -146,6 +160,8 @@ export function Rush({ lang, settings, mode, saved, onSave, onExit, onResult, be
   const timers = useRef<number[]>([]);
   const popN = useRef(0);
   const finished = useRef(false);
+  /** When the current item appeared (rounds mode scores the answer time). */
+  const shownAt = useRef(0);
 
   const setState = (s: RushState) => {
     stRef.current = s;
@@ -187,11 +203,11 @@ export function Rush({ lang, settings, mode, saved, onSave, onExit, onResult, be
       busy.current = true;
       stopAudio();
       setNewBest(s.score > 0 && s.score > (best ?? 0));
-      if (streak) onSave(null);
+      if (saving) onSave(null);
       onResult(rushResult(s));
       setStage('over');
     },
-    [best, onResult, onSave, streak],
+    [best, onResult, onSave, saving],
   );
 
   const begin = (s: RushState) => {
@@ -204,6 +220,7 @@ export function Rush({ lang, settings, mode, saved, onSave, onExit, onResult, be
     const it = currentItem(s);
     setItem(it);
     setStage('play');
+    shownAt.current = performance.now();
     if (hears(mode, it) && it.kind === 'choice') void playStim(it.q.stimulus);
   };
   const tierRungs = () => {
@@ -216,7 +233,7 @@ export function Rush({ lang, settings, mode, saved, onSave, onExit, onResult, be
 
   // The clock (timed modes): 10 ticks a second, paused while feedback shows.
   useEffect(() => {
-    if (stage !== 'play' || streak) return;
+    if (stage !== 'play' || streak || rounds) return;
     let last = performance.now();
     const id = window.setInterval(() => {
       const now = performance.now();
@@ -229,14 +246,14 @@ export function Rush({ lang, settings, mode, saved, onSave, onExit, onResult, be
       if (n.over) finish(n);
     }, 100);
     return () => clearInterval(id);
-  }, [stage, streak, finish]);
+  }, [stage, streak, rounds, finish]);
 
   /** Record an answer: score now, the next item after a short look at the feedback. */
   const answer = (correct: boolean, f: Feedback) => {
     const s = stRef.current;
     if (!s || !item || busy.current || s.over) return;
     busy.current = true;
-    const step = rushAnswer(s, correct, item.key);
+    const step = rushAnswer(s, correct, item.key, performance.now() - shownAt.current);
     setState(step.state);
     setFb(f);
     popN.current++;
@@ -249,7 +266,7 @@ export function Rush({ lang, settings, mode, saved, onSave, onExit, onResult, be
       setLvlUp((x) => x + 1);
       later(() => setLvlUp(0), 1300);
     }
-    if (streak && !step.state.over) onSave({ v: 1, game: 'rush', state: step.state });
+    if (saving && !step.state.over) onSave({ v: 1, game: 'rush', state: step.state });
     if (!correct && navigator.vibrate && !calm) {
       try {
         navigator.vibrate(25);
@@ -264,9 +281,10 @@ export function Rush({ lang, settings, mode, saved, onSave, onExit, onResult, be
         setItem(next);
         setFb(null);
         busy.current = false;
+        shownAt.current = performance.now();
         if (hears(mode, next) && next.kind === 'choice') void playStim(next.q.stimulus);
       },
-      correct ? 320 : streak ? 1600 : 950,
+      correct ? 320 : saving ? 1600 : 950,
     );
   };
 
@@ -321,7 +339,7 @@ export function Rush({ lang, settings, mode, saved, onSave, onExit, onResult, be
         <G2Head title={title} backLabel={tx(T.back, lang)} onBack={exit} />
         <section className="g2-card rush-card">
           <p>{tx(BLURB[mode], lang)}</p>
-          <p className="g2-dim">{tx(streak ? T.streakRules : T.timedRules, lang)}</p>
+          <p className="g2-dim">{tx(streak ? T.streakRules : rounds ? T.roundsRules : T.timedRules, lang)}</p>
           {mode === 'chord' && (
             <fieldset className="rush-field">
               <legend>{tx(T.picture, lang)}</legend>
@@ -384,7 +402,7 @@ export function Rush({ lang, settings, mode, saved, onSave, onExit, onResult, be
       <main className={`rush rush-over ${calm ? 'calm' : ''}`}>
         <G2Head title={title} backLabel={tx(T.back, lang)} onBack={exit} />
         <section className="g2-card rush-card rush-result" aria-live="polite">
-          <h2>{tx(streak ? T.caseClosed : T.timeUp, lang)}</h2>
+          <h2>{tx(streak ? T.caseClosed : rounds ? T.tenDone : T.timeUp, lang)}</h2>
           <p className="rush-final">
             <span>{tx(T.score, lang)}</span>
             <b>{st.score}</b>
@@ -441,6 +459,13 @@ export function Rush({ lang, settings, mode, saved, onSave, onExit, onResult, be
                 ,
               </span>
             ))}
+          </div>
+        ) : rounds ? (
+          <div className="rush-score rush-rounds" aria-label={`${tx(T.round, lang)} ${Math.min(ROUNDS, st.i + 1)}/${ROUNDS}`}>
+            <small>{tx(T.round, lang)}</small>
+            <b dir="ltr">
+              {Math.min(ROUNDS, st.i + 1)}/{ROUNDS}
+            </b>
           </div>
         ) : (
           <div className={`rush-clock ${secs <= 10 ? 'low' : ''}`} role="timer" aria-label={`${tx(T.time, lang)}: ${secs}`}>

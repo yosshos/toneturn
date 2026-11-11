@@ -1,0 +1,38 @@
+/* Transcription Race (0.70). One phone screen: the staff, one line, three tools, the keys. */
+.tr-play {
+  gap: 10px;
+}
+.tr-staff {
+  min-block-size: 112px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius);
+  background: var(--card);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+.tr-staff svg {
+  max-inline-size: 100%;
+  block-size: auto;
+}
+.tr-empty {
+  margin: 0;
+}
+.tr-tools {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.3fr;
+  gap: 8px;
+}
+.tr-tools .btn {
+  min-block-size: 46px;
+}
+.tr-tools .btn.on {
+  outline: 2px solid var(--mint);
+}
+.tr-play .keys-pad {
+  block-size: 130px;
+}
+.tr-play .keys-pad .mk.mine {
+  background: var(--mint);
+}

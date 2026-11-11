@@ -5,13 +5,19 @@
 
 import { mulberry32, type NoteEvent } from './lesson';
 import { barBeats, compound, events, meterOf, readTolerance, rhythmAt, TPQ, type Rhythm, type RhythmLevel } from './rhythm';
+import { defaultGroups, parseMeter } from './drills/timeline';
+
+/** Highway levels: the rhythm levels R1–R8, plus (0.70, ff) R9 odd meters and R10 polyrhythm (tap mode); kit levels 1–7. */
+export type HighwayLevel = RhythmLevel | 9 | 10;
+export const ODD_LEVEL = 9;
+export const POLY_LEVEL = 10;
 
 export type HighwayMode = 'tap' | 'pitch' | 'kit';
 export type HitGrade = 'perfect' | 'good' | 'miss';
 
 export interface HighwayOptions {
   mode: HighwayMode;
-  level: RhythmLevel;
+  level: HighwayLevel;
   /** Song number within the level (1..SONGS_PER_LEVEL): a fixed seed, so "per-song best" means the same song. */
   song: number;
   bpm: number;
@@ -53,6 +59,10 @@ export interface HighwaySong {
   /** One midi per lane (pitch mode), low to high; [] in tap mode. */
   laneMidis: number[];
   laneDegrees: number[];
+  /** Odd-meter songs (R9, kit 7): the bar's grouping in eighths (2+2+3 …); the backing accents each group start. */
+  groups?: number[];
+  /** Shown with the song: "7/8 · 2+2+3", "3:2" … */
+  meterLabel?: string;
 }
 
 export const SONGS_PER_LEVEL = 3;
@@ -86,7 +96,7 @@ export function kitLaneOf(voice: string | null | undefined): number | null {
   return null;
 }
 /** Kit mode has its own grooves: levels 1–6 (quarter hats → 16th hats, kick variations, fills at section ends). */
-export const KIT_MAX_LEVEL = 6;
+export const KIT_MAX_LEVEL = 7;
 /** One bar of a kit-mode groove, as [lane, beat] pairs. Level and a seeded choice pick the variation. */
 function kitBar(level: number, rnd: () => number, fill: boolean, crash: boolean): [number, number][] {
   const out: [number, number][] = [];
@@ -107,10 +117,11 @@ function kitBar(level: number, rnd: () => number, fill: boolean, crash: boolean)
 }
 
 export function highwaySong(o: HighwayOptions): HighwaySong {
-  if (o.mode === 'kit') return kitSong(o);
+  if (o.mode === 'kit') return o.level >= 7 ? kit7Song(o) : kitSong(o);
+  if (o.level >= ODD_LEVEL) return o.level === POLY_LEVEL ? polySong(o) : oddSong(o);
   const bars = o.bars ?? 8;
   const seed = songSeed(o);
-  const rhythm = rhythmAt(o.level, bars, seed);
+  const rhythm = rhythmAt(o.level as RhythmLevel, bars, seed);
   const beatsPerBar = barBeats(meterOf(rhythm));
   const beatMs = 60000 / o.bpm;
   const rnd = mulberry32(seed ^ 0x1a2e);
@@ -185,6 +196,110 @@ function kitSong(o: HighwayOptions): HighwaySong {
   return { id: songId(o), opts: o, rhythm, beatsPerBar, beatMs, bars, sectionBars: SECTION_BARS, sections: Math.ceil(bars / SECTION_BARS), lengthMs: Math.round(bars * beatsPerBar * beatMs), notes, laneMidis, laneDegrees: [] };
 }
 
+// ---------------------------------------------------------------- R9 odd meters, R10 polyrhythm, kit 7 (0.70, ff)
+// Bars and groupings come from the shared prog engine (drills/timeline.ts parseMeter / defaultGroups, PROG_ENGINE.md).
+
+/** The odd meters of R9 (eighth-note bars, grouped). */
+export const ODD_METERS = ['5/8', '5/8 2+3', '7/8', '7/8 3+2+2', '9/8 2+2+2+3', '11/8'];
+/** The ratios of R10: [notes against, the beat count of one cycle in quarter notes]. */
+export const POLY_RATIOS: [number, number][] = [[3, 2], [4, 3], [3, 4], [5, 4]];
+
+function finishSong(o: HighwayOptions, rhythm: Rhythm, beatsPerBar: number, bars: number, onsets: number[], extra: { groups?: number[]; meterLabel: string; lanes?: number[]; laneMidis?: number[] }): HighwaySong {
+  const beatMs = 60000 / o.bpm;
+  const sorted = onsets.map((b, k) => [b, extra.lanes?.[k] ?? 0] as [number, number]).sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const notes: HighwayNote[] = sorted.map(([beat, lane], i) => {
+    const bar = Math.floor(beat / beatsPerBar + 1e-9);
+    return { i, beat, ms: Math.round(beat * beatMs), durMs: Math.round(0.4 * beatMs), bar, section: Math.floor(bar / SECTION_BARS), lane, midi: extra.laneMidis ? extra.laneMidis[lane] : null };
+  });
+  return { id: songId(o), opts: o, rhythm, beatsPerBar, beatMs, bars, sectionBars: SECTION_BARS, sections: Math.ceil(bars / SECTION_BARS), lengthMs: Math.round(bars * beatsPerBar * beatMs), notes, laneMidis: extra.laneMidis ?? [], laneDegrees: [], groups: extra.groups, meterLabel: extra.meterLabel };
+}
+
+/** R9: one odd meter per song; every group start is a note, the eighths between are filled by chance (fewer at speed). */
+function oddSong(o: HighwayOptions): HighwaySong {
+  const bars = o.bars ?? 8;
+  const seed = songSeed(o);
+  const rnd = mulberry32(seed ^ 0x0dd5);
+  const m = parseMeter(ODD_METERS[(o.song - 1 + Math.floor(rnd() * ODD_METERS.length)) % ODD_METERS.length]);
+  const groups = m.groups ?? defaultGroups(m.num, m.den) ?? [m.num];
+  const beatsPerBar = m.num / 2;
+  const fill = o.bpm >= 150 ? 0.25 : 0.45;
+  const onsets: number[] = [];
+  for (let bar = 0; bar < bars; bar++) {
+    let e = 0;
+    for (const g of groups) {
+      for (let k = 0; k < g; k++, e++) if (k === 0 || rnd() < fill) onsets.push(bar * beatsPerBar + e / 2);
+    }
+  }
+  const rhythm: Rhythm = { beatsPerBar, bars, cells: [] };
+  return finishSong(o, rhythm, beatsPerBar, bars, onsets, { groups, meterLabel: `${m.num}/${m.den} · ${groups.join('+')}` });
+}
+
+/** R10: a polyrhythm read as its composite (both hands' notes on one road): 3:2, 4:3, 3:4, 5:4 per song. */
+function polySong(o: HighwayOptions): HighwaySong {
+  const bars = o.bars ?? 8;
+  const [a, b] = POLY_RATIOS[(o.song - 1) % POLY_RATIOS.length];
+  const beatsPerBar = b;
+  const onsets = new Set<number>();
+  for (let bar = 0; bar < bars; bar++) {
+    for (let i = 0; i < a; i++) onsets.add(Math.round((bar * b + (i * b) / a) * 1000) / 1000);
+    for (let j = 0; j < b; j++) onsets.add(bar * b + j);
+  }
+  const rhythm: Rhythm = { beatsPerBar, bars, cells: [] };
+  return finishSong(o, rhythm, beatsPerBar, bars, [...onsets], { meterLabel: `${a}:${b}` });
+}
+
+/** Kit level 7: odd-meter grooves (7/8, 5/8), double-kick 16ths, half-time shuffle; linear fills at section ends. */
+function kit7Song(o: HighwayOptions): HighwaySong {
+  const bars = o.bars ?? 8;
+  const seed = songSeed(o);
+  const rnd = mulberry32(seed ^ 0x7c17);
+  const style = (['odd7', 'dbl', 'half', 'odd5'] as const)[(o.song - 1 + Math.floor(rnd() * 4)) % 4];
+  const m = style === 'odd7' ? parseMeter('7/8 2+2+3') : style === 'odd5' ? parseMeter('5/8 3+2') : null;
+  const groups = m?.groups;
+  const beatsPerBar = m ? m.num / 2 : 4;
+  const laneMidis = KIT_LANES.map((l) => KIT_LANE_NOTE[l]);
+  const hits: [number, number][] = [];
+  for (let bar = 0; bar < bars; bar++) {
+    const t0 = bar * beatsPerBar;
+    const fill = bar % SECTION_BARS === SECTION_BARS - 1 && bar < bars - 1;
+    const crash = bar % SECTION_BARS === 0 && bar > 0;
+    if (crash) hits.push([4, t0]);
+    if (m && groups) {
+      // hats on every eighth, kick on the bar's 1, snare on the later group starts; the fill is linear (one limb at a time)
+      let e = 0;
+      const end = fill ? groups[0] : m.num;
+      groups.forEach((g, gi) => {
+        for (let k = 0; k < g; k++, e++) {
+          if (e >= end) continue;
+          if (!(crash && e === 0)) hits.push([0, t0 + e / 2]);
+          if (k === 0) hits.push([gi === 0 ? 2 : 1, t0 + e / 2]);
+        }
+      });
+      if (fill) for (let x = end * 2, i = 0; x < m.num * 2; x++, i++) hits.push([[1, 3, 2][i % 3], t0 + x / 4]);
+    } else if (style === 'dbl') {
+      // 16th double kick under 8th hats, backbeat; the fill: 16th snare / tom / kick, linear
+      const end = fill ? 3 : 4;
+      for (let x = 0; x < end * 2; x++) if (!(crash && x === 0)) hits.push([0, t0 + x / 2]);
+      for (let x = 0; x < end * 4; x++) if (x >= 8 || x % 4 === 0) hits.push([2, t0 + x / 4]);
+      for (const sn of [1, 3]) if (sn < end) hits.push([1, t0 + sn]);
+      if (fill) for (let x = 12, i = 0; x < 16; x++, i++) hits.push([[1, 3, 2, 3][i], t0 + x / 4]);
+    } else {
+      // half-time shuffle: triplet hats (middle partial left out), kick on 1, snare on 3, a ghost before it
+      const end = fill ? 3 : 4;
+      for (let q = 0; q < end; q++) {
+        if (!(crash && q === 0)) hits.push([0, t0 + q]);
+        hits.push([0, t0 + q + 2 / 3]);
+      }
+      hits.push([2, t0]);
+      if (2 < end) hits.push([1, t0 + 2]);
+      if (rnd() < 0.6 && end > 3) hits.push([2, t0 + 3 + 2 / 3]);
+      if (fill) for (let x = 0; x < 3; x++) hits.push([[1, 3, 3][x], t0 + 3 + x / 3]);
+    }
+  }
+  const rhythm: Rhythm = { beatsPerBar, bars, cells: [] };
+  return finishSong(o, rhythm, beatsPerBar, bars, hits.map((h) => h[1]), { groups, meterLabel: m ? `${m.num}/${m.den} · ${groups!.join('+')}` : style === 'dbl' ? '4/4 · double kick' : '4/4 · half-time shuffle', lanes: hits.map((h) => h[0]), laneMidis });
+}
+
 export const sectionStartMs = (s: HighwaySong, section: number) => Math.round(section * s.sectionBars * s.beatsPerBar * s.beatMs);
 
 // ---------------------------------------------------------------- hit windows
@@ -198,9 +313,11 @@ export interface HitWindows {
  * Windows from the rhythm level's reading tolerance (spec G.5): good = the tolerance, perfect = under half of
  * it. Pitch lanes are wider: pitch detection needs a few frames before it names a note.
  */
-export function hitWindows(level: RhythmLevel, bpm: number, mode: HighwayMode = 'tap'): HitWindows {
+export function hitWindows(level: HighwayLevel, bpm: number, mode: HighwayMode = 'tap'): HitWindows {
   // Kit mode: MIDI time stamps, the rhythm-level tolerance of a level-1 reading (generous for four limbs).
-  const tol = readTolerance(mode === 'kit' ? (Math.min(level, 3) as RhythmLevel) : level, bpm);
+  // R9 reads eighths (as R4), R10 triplet-like gaps (as R6).
+  const read = (level === ODD_LEVEL ? 4 : level === POLY_LEVEL ? 6 : level) as RhythmLevel;
+  const tol = readTolerance(mode === 'kit' ? (Math.min(level, 3) as RhythmLevel) : read, bpm);
   const k = mode === 'pitch' ? 1.6 : 1;
   return { perfect: Math.round(Math.max(28, tol * 0.45) * k), good: Math.round(tol * k) };
 }
@@ -393,6 +510,22 @@ export function backingTrack(s: HighwaySong, fromSection = 0, opts: { bass?: boo
   const extras: NoteEvent[] = [];
   const keyPc = (((s.opts.keyPc ?? 0) % 12) + 12) % 12;
   const loop = [0, 5, 7, 0];
+  if (s.groups) {
+    // Odd meters (R9, kit 7): count-in on the group starts; kick on the bar's 1, snare on the other group starts.
+    const g = s.groups;
+    const ei = beat / 2;
+    const starts = g.map((_, i) => g.slice(0, i).reduce((x, y) => x + y, 0));
+    const oddClicks = starts.map((e, i) => ({ t: e * ei, accent: i === 0 }));
+    for (let b = firstBar; b < s.bars; b++) {
+      const t0 = responseAt + (b - firstBar) * per * beat;
+      if (opts.drums !== false) {
+        starts.forEach((e, i) => kit.push({ t: t0 + e * ei, d: i === 0 ? 'k' : 's' }));
+        for (let e = 0; e < per * 2; e++) extras.push({ midi: 0, start: t0 + e * ei, duration: 0.04, velocity: starts.includes(e) ? 0.5 : 0.32, perc: 'hat' });
+      }
+      if (opts.bass !== false) extras.push({ midi: 36 + ((keyPc + loop[b % 4]) % 12), start: t0, duration: per * beat * 0.9, velocity: 0.55 });
+    }
+    return { clicks: oddClicks, kit, extras, responseAt, responseEnd: responseAt + (s.bars - firstBar) * per * beat + 0.4 };
+  }
   for (let b = firstBar; b < s.bars; b++) {
     const t0 = responseAt + (b - firstBar) * per * beat;
     // Kit mode: the player is the drummer — the band brings only the bass.

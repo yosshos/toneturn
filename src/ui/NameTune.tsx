@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { isTuneSave, makeRounds, MAX_SCORE, ROUNDS, roundPoints, songEvents, type TuneSave } from '../engine/nameTune';
-import { songById, SONGS } from '../engine/songs';
+import { minorMutation, tuneById, tuneCatalogue } from '../engine/pdTunes';
 import { G2Head, type Game2Props } from './Flight';
 import { TierChips } from './TierChips';
 import { startTier, tierAllowed, tierDef, type DynName } from '../engine/gameTiers';
@@ -64,7 +64,7 @@ export function NameTune({ lang, saved, onSave, onExit, onResult, best, tier: ti
   const [tier, setTier] = useState<DynName>(() => (sv?.tier && tierInfo && tierAllowed(tierInfo, sv.tier) ? sv.tier : tierInfo ? startTier(tierInfo) : 'pp'));
   const ctl = useRef<AbortController | null>(null);
   const t0 = useRef(0);
-  const rounds = useMemo(() => (game ? makeRounds(game.seed, SONGS) : []), [game?.seed]);
+  const rounds = useMemo(() => (game ? makeRounds(game.seed, tuneCatalogue(game.tier ?? 'pp')) : []), [game?.seed, game?.tier]);
   const round = game ? rounds[game.round] : null;
 
   const stop = () => {
@@ -79,10 +79,12 @@ export function NameTune({ lang, saved, onSave, onExit, onResult, best, tier: ti
     const c = new AbortController();
     ctl.current = c;
     await piano.unlock();
-    const full = songById(round.songId)!;
+    const params = tierDef('nametune', game?.tier ?? 'pp')?.params ?? {};
+    // f: the opening in minor (a major tune with its 3rd, 6th and 7th lowered)
+    const full = params.minor ? minorMutation(tuneById(round.songId)!) : tuneById(round.songId)!;
     // A tier plays fewer notes of the opening (GAMES_TIERS_PLAN: 8 → 3).
-    const n = Number(tierDef('nametune', game?.tier ?? 'pp')?.params?.notes ?? 0);
-    const song = n > 0 ? { ...full, degrees: full.degrees.slice(0, n), beats: full.beats.slice(0, n) } : full;
+    const n = Number(params.notes ?? 0);
+    const song = n > 0 ? { ...full, degrees: full.degrees.slice(0, n), beats: full.beats.slice(0, n), ...(full.semis ? { semis: full.semis.slice(0, n) } : {}) } : full;
     const { events, length } = songEvents(song, round.tonic);
     if (resetClock) t0.current = performance.now();
     try {
@@ -130,7 +132,7 @@ export function NameTune({ lang, saved, onSave, onExit, onResult, best, tier: ti
 
   // The answered round is the previous one while showing feedback.
   const shown = phase === 'feedback' && game ? rounds[game.round - 1] : round;
-  const title = (id: string) => songById(id)?.title[lang] ?? id;
+  const title = (id: string) => tuneById(id)?.title[lang] ?? id;
 
   return (
     <main className="panel-screen g2 g2-tune" data-game="name-tune" data-phase={phase}>

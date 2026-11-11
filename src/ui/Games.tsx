@@ -2,7 +2,8 @@ import { DOMAIN_COLOR, Glyph } from './Glyph';
 import { EchoArt } from './GameArt';
 import { NotesView } from './NotesView';
 import { TalkToggle } from './TalkToggle';
-import type { PadSet } from '../engine/memory';
+import { padLabel, type PadSet } from '../engine/memory';
+import '../advgames.css';
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { displayNote } from '../engine/pitch';
 import { PLAYER_COLORS } from '../engine/match';
@@ -446,7 +447,7 @@ export function GameScreen({
               </div>
               <EchoStaff v={v} settings={settings} />
               {v.input === 'pads' && (
-              <div className="pads neutral">
+              <div className={`pads neutral ${v.melody.pads.length > 7 ? 'many' : ''}`}>
                 {v.melody.pads.map((p, i) => (
                   <button
                     key={i}
@@ -456,9 +457,9 @@ export function GameScreen({
                       e.preventDefault();
                       c.tapPad(i);
                     }}
-                    aria-label={`${p.degree} ${displayNote(p.note, nm, lang)}`}
+                    aria-label={`${padLabel(p.degree)} ${displayNote(p.note, nm, lang)}`}
                   >
-                    <b>{p.degree}</b>
+                    <b>{padLabel(p.degree)}</b>
                     <small>
                       <Note>{displayNote(p.note, nm, lang)}</Note>
                     </small>

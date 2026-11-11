@@ -55,9 +55,9 @@ export function makeRounds(seed: number, songs: readonly SongOpening[], n = ROUN
 export function songEvents(s: SongOpening, tonic: number, bpm = 108): { events: NoteEvent[]; length: number } {
   const beat = 60 / bpm;
   let t = 0;
-  const events: NoteEvent[] = s.degrees.map((d, i) => {
-    const deg = d - 1;
-    const midi = tonic + MAJOR[((deg % 7) + 7) % 7] + 12 * Math.floor(deg / 7);
+  const steps = s.semis ?? s.degrees.map((d) => MAJOR[(((d - 1) % 7) + 7) % 7] + 12 * Math.floor((d - 1) / 7));
+  const events: NoteEvent[] = steps.map((st, i) => {
+    const midi = tonic + st;
     const dur = (s.beats[i] ?? 1) * beat;
     const e: NoteEvent = { midi, start: t, duration: dur * 0.92, velocity: i === 0 ? 0.8 : 0.7 };
     t += dur;

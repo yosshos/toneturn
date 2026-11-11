@@ -1,0 +1,56 @@
+/* Reharm Spotter (0.70). One phone screen: listen buttons, the bar strip, four names, one line. */
+.rh-play {
+  gap: 10px;
+}
+.rh-listen {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+.rh-listen .btn {
+  min-block-size: 44px;
+  padding-inline: 6px;
+}
+.rh-listen .btn.on {
+  outline: 2px solid var(--mint);
+}
+.rh-status {
+  margin: 0;
+  min-block-size: 1.4em;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.rh-bars {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+.rh-bar {
+  min-block-size: 46px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--card-2);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 800;
+  font-size: 1.05rem;
+  cursor: pointer;
+}
+.rh-bar.on {
+  outline: 3px solid var(--gold);
+}
+.rh-bar.ok {
+  outline: 3px solid var(--mint);
+}
+.rh-bar.bad {
+  outline: 3px solid var(--red);
+}
+.rh-ask {
+  margin: 0;
+  font-weight: 700;
+}
+.rh-names .btn {
+  font-size: 0.9rem;
+  line-height: 1.2;
+  white-space: normal;
+}

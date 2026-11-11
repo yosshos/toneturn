@@ -675,6 +675,12 @@ export function Highway({
             {section + 1}/{s.sections}
           </b>
         </div>
+        {s.meterLabel && (
+          <div className="hw-stat" data-hw-meter>
+            <small>{lang === 'he' ? 'משקל' : 'Meter'}</small>
+            <b dir="ltr">{s.meterLabel}</b>
+          </div>
+        )}
       </header>
 
       {stage === 'paused' ? (

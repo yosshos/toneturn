@@ -1,0 +1,115 @@
+/* Polyrhythm Lock (0.70, src/ui/PolyLock.tsx): the ratio, an 8-bar strip, two big pads. Fits 390 × 844. */
+.poly-ratio {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--display);
+}
+.poly-ratio b {
+  font-size: 2.6rem;
+  line-height: 1;
+}
+.poly-ratio span {
+  font-size: 2rem;
+  color: var(--ink-dim);
+}
+.poly-ratio small {
+  margin-inline-start: 12px;
+  color: var(--ink-dim);
+}
+.poly-bars {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 4px;
+}
+.poly-bars span {
+  block-size: 10px;
+  border-radius: 4px;
+  background: var(--card-2);
+  border: 1px solid var(--line);
+}
+.poly-bars span.guide {
+  background: color-mix(in srgb, var(--mint) 25%, var(--card-2));
+}
+.poly-bars span.swap {
+  border-inline-start: 3px solid var(--gold);
+}
+.poly-bars span.now {
+  background: var(--mint);
+}
+.poly-pads {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  flex: 1;
+  min-block-size: 0;
+}
+.poly-pad {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-block-size: 220px;
+  max-block-size: 340px;
+  border-radius: 18px;
+  border: 2px solid var(--line);
+  background: var(--card-2);
+  color: var(--ink);
+  font: inherit;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: pointer;
+}
+.poly-pad b {
+  font-size: 1.2rem;
+}
+.poly-pad small {
+  font-size: 2rem;
+  font-family: var(--display);
+  color: var(--ink-dim);
+}
+.poly-pad em {
+  font-style: normal;
+  font-size: 0.85rem;
+  text-align: center;
+  color: var(--ink-dim);
+  padding-inline: 6px;
+}
+.poly-pad.pad-L {
+  border-color: color-mix(in srgb, var(--hue-time, #ff5fa2) 60%, var(--line));
+}
+.poly-pad.pad-R {
+  border-color: color-mix(in srgb, var(--mint) 60%, var(--line));
+}
+.poly-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: currentColor;
+  opacity: 0;
+  animation: poly-flash 0.18s ease-out;
+  pointer-events: none;
+}
+@keyframes poly-flash {
+  from {
+    opacity: 0.18;
+  }
+  to {
+    opacity: 0;
+  }
+}
+.poly-final {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.2rem;
+}
+@media (max-height: 700px) {
+  .poly-pad {
+    min-block-size: 160px;
+  }
+}

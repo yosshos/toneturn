@@ -129,6 +129,14 @@ import { MelodyPuzzle } from './MelodyPuzzle';
 import { PitchMemory } from './PitchMemory';
 import { PeakHunter } from './PeakHunter';
 import { Rush } from './Rush';
+import { ReharmSpot } from './ReharmSpot';
+import { TranscribeRace } from './TranscribeRace';
+import { BhInTime } from './BhInTime';
+import { RiffEcho } from './RiffEcho';
+import { PolyLock } from './PolyLock';
+import { GameBoard } from './GameBoard';
+import { GAME_TITLES } from '../engine/gameBoard';
+import { COURSE_GAMES } from './courseRows';
 import { loadSlot, saveSlot } from '../storage/resume';
 import { nodeTitle, PathView2, stepTitle, usePathView } from './Path';
 import { checkpointSession, recordStep, stepSession, stepStars, testOutPassed, testOutSession, type PathStep, type PathUnit, type UnitStep } from '../engine/path';
@@ -151,7 +159,7 @@ import { setPreferredMic } from '../speech/mic';
 /** Screens that play the band (0.69: its sets load here, and only here on Lite / Standard). */
 const BAND_ROUTES = new Set<string>(['charts', 'improv', 'groove', 'metronome', 'mixer', 'slowdown', 'perform', 'highway', 'drills', 'workoutrun', 'land', 'groove-echo', 'odd-echo']);
 
-type Route = 'intake' | 'studio' | 'home' | 'path' | 'arcade' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong' | 'perform' | 'learned' | 'tuner' | 'metronome' | 'songs' | 'repertoire' | 'drills' | 'workout' | 'workoutrun' | 'peakhunter' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'flight' | 'pitchmemory' | 'nametune' | 'tuneup' | 'highway' | 'melodypuzzle' | 'charts' | 'slowdown' | 'pieces' | 'mixer' | 'insights' | 'groove' | 'welcome' | 'coursestart' | 'puzzle' | 'improv' | 'exams' | 'plans' | 'admin' | 'land' | 'groove-echo' | 'odd-echo' | 'licks' | 'transcribe';
+type Route = 'intake' | 'studio' | 'home' | 'path' | 'arcade' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong' | 'perform' | 'learned' | 'tuner' | 'metronome' | 'songs' | 'repertoire' | 'drills' | 'workout' | 'workoutrun' | 'peakhunter' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'rush-voicing' | 'rush-scale' | 'rush-standard' | 'reharm' | 'transcribe' | 'bhtime' | 'riffecho' | 'polylock' | 'gameboard' | 'flight' | 'pitchmemory' | 'nametune' | 'tuneup' | 'highway' | 'melodypuzzle' | 'charts' | 'slowdown' | 'pieces' | 'mixer' | 'insights' | 'groove' | 'welcome' | 'coursestart' | 'puzzle' | 'improv' | 'exams' | 'plans' | 'admin' | 'land' | 'groove-echo' | 'odd-echo' | 'licks' | 'transcribe';
 /** Invite links: #/online/CODE */
 const onlineCodeFromHash = () => (/^#\/?online\/(\w+)/.exec(location.hash)?.[1] ?? '');
 const PLAY_HASH = 'play';
@@ -163,7 +171,7 @@ const enterPlay = () => {
 };
 const routeFromHash = (): Route => {
   const h = location.hash.replace(/^#\/?/, '').replace(/^online\/.*$/, 'online').replace(/^settings\/.*$/, 'settings');
-  return (['path', 'arcade', 'settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong', 'perform', 'learned', 'studio', 'intake', 'tuner', 'metronome', 'songs', 'repertoire', 'drills', 'workout', 'workoutrun', 'peakhunter', 'rush-chord', 'rush-note', 'rush-fretboard', 'rush-interval', 'rush-keysig', 'rush-progression', 'flight', 'pitchmemory', 'nametune', 'tuneup', 'highway', 'melodypuzzle', 'charts', 'slowdown', 'pieces', 'mixer', 'insights', 'groove', 'welcome', 'coursestart', 'puzzle', 'improv', 'exams', 'plans', 'admin', 'land', 'groove-echo', 'odd-echo', 'licks', 'transcribe'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
+  return (['path', 'arcade', 'settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong', 'perform', 'learned', 'studio', 'intake', 'tuner', 'metronome', 'songs', 'repertoire', 'drills', 'workout', 'workoutrun', 'peakhunter', 'rush-chord', 'rush-note', 'rush-fretboard', 'rush-interval', 'rush-keysig', 'rush-progression', 'rush-voicing', 'rush-scale', 'rush-standard', 'reharm', 'transcribe', 'bhtime', 'riffecho', 'polylock', 'gameboard', 'flight', 'pitchmemory', 'nametune', 'tuneup', 'highway', 'melodypuzzle', 'charts', 'slowdown', 'pieces', 'mixer', 'insights', 'groove', 'welcome', 'coursestart', 'puzzle', 'improv', 'exams', 'plans', 'admin', 'land', 'groove-echo', 'odd-echo', 'licks', 'transcribe'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
 };
 
 /** The level a generated modes lesson was made at (from its first question's pool size). */
@@ -1766,6 +1774,7 @@ export function App() {
           onDaily={() => go('daily')}
           onPuzzle={openPuzzle}
           onGame2={(id) => go(id)}
+          onBoard={() => go('gameboard')}
           lang={s.uiLang}
           hub={{
             songs: () => go('songs'),
@@ -2156,7 +2165,18 @@ export function App() {
         />
       )}
       {route === 'insights' && <InsightsScreen lang={s.uiLang} progress={progress} onBack={() => go('skills')} onTopic={(id, lv) => openTopic(id, lv)} onDrills={() => go('drills')} onPieces={() => go('pieces')} onGroove={() => go('groove')} />}
-      {route === 'groove' && <GrooveTrainerScreen settings={s} onBack={() => go(toolFrom.current)} />}
+      {route === 'groove' && (
+        <GrooveTrainerScreen
+          settings={s}
+          onBack={() => go(toolFrom.current)}
+          tier={tierFor('groove')}
+          onResult={(r) => {
+            void store.recordGame2('groove', r.score, undefined, r.detail).then(setProgress);
+            noteGameBest('groove', r.score, r.detail);
+            noteGameStep('groove', r.score, r.detail);
+          }}
+        />
+      )}
       {route === 'puzzle' && (
         <ProgPuzzleScreen
           settings={s}
@@ -2329,7 +2349,7 @@ export function App() {
           }
         />
       )}
-      {(['chord', 'note', 'fretboard', 'interval', 'keysig', 'progression'] as const).map((mode) => {
+      {(['chord', 'note', 'fretboard', 'interval', 'keysig', 'progression', 'voicing', 'scale', 'standard'] as const).map((mode) => {
         const g = `rush-${mode}` as Route;
         if (route !== g) return null;
         const key = `game:${g}`;
@@ -2352,7 +2372,7 @@ export function App() {
           />
         );
       })}
-      {(['flight', 'nametune', 'tuneup', 'highway', 'melodypuzzle', 'pitchmemory', 'peakhunter'] as const).map((g) => {
+      {(['flight', 'nametune', 'tuneup', 'highway', 'melodypuzzle', 'pitchmemory', 'peakhunter', 'reharm', 'transcribe', 'bhtime', 'riffecho', 'polylock'] as const).map((g) => {
         if (route !== g) return null;
         const key = `game:${g === 'melodypuzzle' ? 'melody-puzzle' : g}`;
         const title = GAMES2.find((x) => x.id === g)![s.uiLang][0];
@@ -2376,8 +2396,24 @@ export function App() {
         if (g === 'highway') return <Highway key={g} {...props} />;
         if (g === 'melodypuzzle') return <MelodyPuzzle key={g} {...props} />;
         if (g === 'peakhunter') return <PeakHunter key={g} {...props} />;
+        if (g === 'reharm') return <ReharmSpot key={g} {...props} />;
+        if (g === 'transcribe') return <TranscribeRace key={g} {...props} />;
+        if (g === 'bhtime') return <BhInTime key={g} {...props} />;
+        if (g === 'riffecho') return <RiffEcho key={g} {...props} />;
+        if (g === 'polylock') return <PolyLock key={g} {...props} />;
         return <PitchMemory key={g} {...props} log={progress.pitchMemory ?? []} onLog={(e) => void store.recordGame2('pitchmemory', Math.max(0, 100 - Math.abs(e.cents)), e).then(setProgress)} />;
       })}
+      {route === 'gameboard' && (
+        <GameBoard
+          lang={s.uiLang}
+          progress={progress}
+          games={COURSE_GAMES[s.activeCourse ?? 'ear']}
+          titleOf={(g) => GAMES2.find((x) => x.id === g)?.[s.uiLang][0] ?? GAME_TITLES[g]?.[s.uiLang] ?? g}
+          tierFor={tierFor}
+          signedIn={!!user}
+          onBack={() => go('arcade')}
+        />
+      )}
       {(['land', 'groove-echo', 'odd-echo'] as const).map((g) => {
         // Drum games P1 (DRUMS_NICHE_PLAN §3): measured takes on the kit, tiers / XP / path like every game.
         if (route !== g) return null;

@@ -717,6 +717,78 @@ export const GLYPHS: Record<string, ReactNode> = {
     </g>
   ),
 };
+// 0.70: the advanced games (GAMES_TIERS_PLAN §4) and the game board, one symbol each.
+Object.assign(GLYPHS, {
+  // a spread voicing: the second note from the top dropped an octave
+  voicingspy: (
+    <>
+      {head(-8, 15, 6, 4.4)}
+      {head(4, -1, 6, 4.4)}
+      {head(4, -11, 6, 4.4)}
+      {head(4, -21, 6, 4.4)}
+      <path d="M-2 15 V-1" stroke={I} strokeWidth={2} strokeDasharray="3 3" />
+    </>
+  ),
+  // one chord, an arrow, another chord
+  reharm: (
+    <>
+      {head(-16, 8, 5.5, 4)}
+      {head(-16, -2, 5.5, 4)}
+      {head(16, 4, 5.5, 4)}
+      {head(16, -6, 5.5, 4)}
+      <path d="M-7 2 H6 M2 -3 L7 2 L2 7" {...sw} strokeWidth={2.8} strokeLinejoin="round" />
+    </>
+  ),
+  standard: (
+    <>
+      <rect x={-20} y={-20} width={40} height={40} rx={3} {...sw} strokeWidth={2.6} />
+      <text x={0} y={7} textAnchor="middle" fontFamily="'Secular One', Rubik, sans-serif" fontSize={19} fill={I} direction="ltr">
+        Δ7
+      </text>
+    </>
+  ),
+  scalerush: (
+    <>
+      {head(-14, 14, 5, 3.8)}
+      {head(-4, 6, 5, 3.8)}
+      {head(6, -2, 5, 3.8)}
+      {head(16, -10, 5, 3.8)}
+      <path d="M-26 -14 H-14 M-28 -6 H-18" {...sw} strokeWidth={2.4} />
+    </>
+  ),
+  transcribe: (
+    <>
+      <path d="M-26 -6H22M-26 2H22M-26 10H22" stroke={I} strokeWidth={1.6} />
+      {head(-14, 6, 5, 3.8)}
+      <path d="M2 18 L22 -18 L26 -14 L6 20 Z" {...sw} strokeWidth={2.6} strokeLinejoin="round" />
+    </>
+  ),
+  bhtime: (
+    <text x={0} y={9} textAnchor="middle" fontFamily="'Secular One', Rubik, sans-serif" fontSize={26} fill={I} direction="ltr">
+      6°
+    </text>
+  ),
+  riff: (
+    <text x={0} y={9} textAnchor="middle" fontFamily="'Secular One', Rubik, sans-serif" fontSize={24} fill={I} direction="ltr">
+      7/8
+    </text>
+  ),
+  polylock: (
+    <>
+      <circle cx={-18} cy={-9} r={4} fill={I} />
+      <circle cx={0} cy={-9} r={4} fill={I} />
+      <circle cx={18} cy={-9} r={4} fill={I} />
+      <circle cx={-18} cy={11} r={4} fill={I} />
+      <circle cx={9} cy={11} r={4} fill={I} />
+      <path d="M-26 1 H26" stroke={I} strokeWidth={1.6} />
+    </>
+  ),
+  board: (
+    <g {...sw} strokeWidth={2.8} strokeLinejoin="round">
+      <path d="M-24 18 V2 H-8 V18 M-8 18 V-12 H8 V18 M8 18 V-2 H24 V18 Z" />
+    </g>
+  ),
+} satisfies Record<string, ReactNode>);
 /** A short music mark in the note head (EAR_THEORY_AUDIT: one per ear / jazz path step, src/ui/stepMarks.ts). */
 const mark = (s: string) => {
   const n = Array.from(s).length;

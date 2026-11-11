@@ -31,7 +31,7 @@ export function melodyGame(seed: number, degrees = [1, 2, 3, 5], range?: { low: 
   if (range) {
     // Sung pads sit inside the player's range (spec P.0): the octave of the tonic whose pads fit, nearest the
     // centre; when this key has no such octave, the first other key that does.
-    const top = Math.max(...degrees.map((d) => [0, 2, 4, 5, 7, 9, 11][d - 1]));
+    const top = Math.max(...degrees.map((d) => padSemis(d)));
     const centre = (range.low + range.high - top) / 2;
     const fitFor = (k: PitchClass) => {
       const t0 = placeInRange(pcValue(k), 55, 66);
@@ -48,10 +48,15 @@ export function melodyGame(seed: number, degrees = [1, 2, 3, 5], range?: { low: 
     }
   }
   const scale = majorScale(key);
-  const steps = [0, 2, 4, 5, 7, 9, 11];
+  // chromatic pads (x.5): the next degree flattened (♯4 for 4.5)
+  const noteOf = (d: number): PitchClass => {
+    if (d % 1 === 0) return scale[d - 1];
+    const base = d === 4.5 ? scale[3] : scale[Math.ceil(d) - 1];
+    return { letter: base.letter, acc: Math.max(-2, Math.min(2, base.acc + (d === 4.5 ? 1 : -1))) as PitchClass['acc'] };
+  };
   return {
     key,
-    pads: degrees.map((d) => ({ degree: d, midi: tonic + steps[d - 1], note: scale[d - 1] })),
+    pads: degrees.map((d) => ({ degree: d, midi: tonic + padSemis(d), note: noteOf(d) })),
     noteSec: 0.6,
   };
 }
@@ -265,7 +270,15 @@ export function drumPattern(p: RhythmPattern, seed: number): RhythmPattern {
 export const ladderFactor = (length: number, start: number) => Math.min(1.6, 1 + 0.08 * Math.floor(Math.max(0, length - start) / 3));
 
 /** Pad sets for Echo Chain (spec C.1): degrees 1 2 3 5 → pentatonic → the full major scale. */
-export const PAD_SETS = { basic: [1, 2, 3, 5], penta: [1, 2, 3, 5, 6], full: [1, 2, 3, 4, 5, 6, 7] } as const;
+// 0.70 (top tiers): 'blue' adds ♭3 and ♭7 to the major scale; 'chroma' is all twelve (x.5 = the chromatic note between).
+export const PAD_SETS = { basic: [1, 2, 3, 5], penta: [1, 2, 3, 5, 6], full: [1, 2, 3, 4, 5, 6, 7], blue: [1, 2, 2.5, 3, 4, 5, 6, 6.5, 7], chroma: [1, 1.5, 2, 2.5, 3, 4, 4.5, 5, 5.5, 6, 6.5, 7] } as const;
+/** A pad's label: 1 … 7, chromatic pads as ♭2 ♭3 ♯4 ♭6 ♭7. */
+export const padLabel = (d: number): string => (d % 1 === 0 ? String(d) : d === 4.5 ? '♯4' : `♭${Math.ceil(d)}`);
+/** Semitones above the tonic of a (possibly chromatic) pad degree. */
+export const padSemis = (d: number): number => {
+  const steps = [0, 2, 4, 5, 7, 9, 11];
+  return d % 1 === 0 ? steps[d - 1] : d === 4.5 ? 6 : steps[Math.ceil(d) - 1] - 1;
+};
 export type PadSet = keyof typeof PAD_SETS;
 
 /** Swing (call and response with swing feel): off-beat eighths land a third of a beat late. */

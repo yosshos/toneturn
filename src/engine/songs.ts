@@ -10,6 +10,8 @@ export interface SongOpening {
   degrees: number[];
   /** Note lengths in beats. */
   beats: number[];
+  /** Chromatic / minor openings (0.70 PD catalogue, engine/pdTunes.ts): semitones above the tonic, used instead of `degrees`. */
+  semis?: number[];
 }
 
 export const SONGS: SongOpening[] = [
