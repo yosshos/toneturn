@@ -563,6 +563,13 @@ export function App() {
     void piano.unlock();
     setMini({ lesson, then: after });
   };
+  /** Where the session about to open came from: the workout (runCurrent) and / or the path screen. Read by the recap. */
+  const openFrom = useRef<{ path: boolean }>({ path: false });
+  const [origin, setOrigin] = useState<{ workout: boolean; path: boolean }>({ workout: false, path: false });
+  const noteOrigin = () => {
+    setOrigin({ workout: !!workoutPending.current, path: openFrom.current.path });
+    openFrom.current.path = false;
+  };
   /** Open a generated session in its save slot: an unfinished one in the same slot continues instead. */
   const openGenerated = (def: LessonDef, adapt?: (s: SessionState) => Question[] | null, consented = false, extra: { key?: string; title?: string; seed?: number; resume?: SavedSession; brief?: Brief } = {}) => {
     if (!extra.resume && cooled()) return;
@@ -573,6 +580,7 @@ export function App() {
     void piano.unlock();
     const key = extra.key ?? def.id;
     const saved = extra.resume ?? (extra.seed === undefined ? loadSession(key) : null);
+    noteOrigin();
     setGenerated({ def: saved ? saved.lesson : def, adapt });
     setSlot({ key, title: extra.title ?? saved?.title ?? '', seed: extra.seed, resume: saved ?? undefined, brief: saved ? undefined : extra.brief });
     setLessonId(def.id);
@@ -752,6 +760,7 @@ export function App() {
   const openLessonNow = (id: LessonId) => {
     void piano.unlock(); // inside the Start gesture
     setGenerated(null);
+    noteOrigin();
     const key = `path:${id}`;
     const saved = loadSession(key);
     setSlot({ key, title: lessonTitle(id), resume: saved ?? undefined });
@@ -869,9 +878,27 @@ export function App() {
     }
     go('skills');
   };
+  /** The path step opened last (the recap's "Next step" skips it even before its stars are saved). */
+  const lastStepId = useRef<string | null>(null);
+  /** A step opened from the path screen (or its recap's "Next step") — not from the workout. */
+  const openFromPath = (x: UnitStep, unit: PathUnit, mode: 'step' | 'practice') => {
+    openFrom.current.path = true;
+    workoutPending.current = null;
+    openPathStep(x, unit, mode);
+  };
+  /** The recap's "Next step" (0.68.1, owner): the next open step of the current unit, through the normal opener. */
+  const openNextStep = () => {
+    const nx = nextForBlock({ id: 'next', target: { kind: 'path' }, minutes: 1 }, pathView, new Set(lastStepId.current ? [lastStepId.current] : []));
+    if (nx && 'step' in nx) {
+      const unit = pathView.units.find((u) => u.id === nx.unitId);
+      if (unit && stepOpens(nx.step.step)) return openFromPath(nx.step, unit, 'step');
+    }
+    go('path');
+  };
   const openPathStep = (x: UnitStep, unit: PathUnit, mode: 'step' | 'practice') => {
     const step = x.step;
     pendingStep.current = { id: step.id, kind: step.kind, after: lastSession() };
+    lastStepId.current = step.id;
     const title = stepTitle(step, s, s.uiLang);
     const seed = (Date.now() ^ (Math.random() * 1e9)) >>> 0;
     if (step.kind === 'lesson' && step.lesson) return s.mode === 'voice' && !s.voiceConsent ? setConsentThen(() => () => openLesson(step.lesson!)) : openLesson(step.lesson);
@@ -1153,6 +1180,7 @@ export function App() {
     const tg = r.blocks[r.at]?.target;
     if (!nx || !tg || tg.kind === 'game' || tg.kind === 'vocal' || tg.kind === 'practice') return go('workoutrun');
     workoutPending.current = { t0: Date.now() };
+    openFrom.current.path = false;
     nx.open();
   };
   const startWorkout = () => {
@@ -1239,6 +1267,22 @@ export function App() {
   const idx = order.indexOf(lessonId);
   const nextId = order[idx + 1];
   const canNext = nextId && states[nextId] !== 'locked';
+  // The recap's actions (0.68.1, owner): a path session → "Next step" (and "Continue workout" as a second button only
+  // when the session belongs to a workout in progress); a workout block → "Continue workout"; other generated sessions
+  // (practice topic, review, level test) → the Skill Map; a hand-made lesson → the next lesson.
+  const workoutLive = !!wrun && !wrun.finished && wrun.day === today;
+  // A path step started from the path screen still counts for the workout when it fits the block in progress (W2).
+  const pathStepNow = origin.path && lastStepId.current ? pathView.units.flatMap((u) => u.steps).find((x) => x.step.id === lastStepId.current)?.step : null;
+  const blockNow = wrun && !wrun.finished ? wrun.blocks[wrun.at] : undefined;
+  const pathFitsBlock = !!pathStepNow && !!blockNow && (blockNow.target.kind === 'path' || (blockNow.target.kind === 'area' && blockNow.target.area === pathStepNow.domain));
+  const workoutAction = workoutLive && (origin.workout || pathFitsBlock) ? { label: s.uiLang === 'en' ? `Continue workout · ${Math.ceil(runLeftMs(wrun!) / 60000)} min` : `להמשיך באימון · ${Math.ceil(runLeftMs(wrun!) / 60000)} דק׳`, open: () => runCurrent(wrunRef.current!) } : null;
+  const recapNext: { label?: string; open: (() => void) | null; secondary?: { label: string; open: () => void } } = origin.path
+    ? { label: s.uiLang === 'en' ? 'Next step' : 'לשלב הבא', open: openNextStep, secondary: workoutAction ?? undefined }
+    : workoutAction
+      ? { label: workoutAction.label, open: workoutAction.open }
+      : generated
+        ? { label: t.seeSkillMap, open: () => openSkillMap() }
+        : { open: canNext ? () => openLesson(nextId) : null };
 
   const isTab = (TAB_ROUTES as string[]).includes(route);
   // The side menu (SPEC-DESKTOP): shown from 700 px wide by CSS; not during the first questionnaire or the studio.
@@ -1399,7 +1443,11 @@ export function App() {
           }}
         />
       )}
-      {route === 'path' && <PathView2 t={t} settings={s} progress={progress} view={pathView} onStep={openPathStep} onTestOut={openTestOut} onPlacement={() => (instrumentCourse ? openTechTest() : openPlacement())} onTechTest={instrumentCourse && !s.drillStart && !Object.keys(progress.drillItems ?? {}).length ? openTechTest : undefined} onSettings={updateSettings} onLesson={(id) => (s.mode === 'voice' && !s.voiceConsent ? setConsentThen(() => () => openLesson(id)) : openLesson(id))}
+      {route === 'path' && <PathView2 t={t} settings={s} progress={progress} view={pathView} onStep={openFromPath} onTestOut={openTestOut} onPlacement={() => (instrumentCourse ? openTechTest() : openPlacement())} onTechTest={instrumentCourse && !s.drillStart && !Object.keys(progress.drillItems ?? {}).length ? openTechTest : undefined} onSettings={updateSettings} onLesson={(id) => {
+        openFrom.current.path = true;
+        workoutPending.current = null;
+        return s.mode === 'voice' && !s.voiceConsent ? setConsentThen(() => () => openLesson(id)) : openLesson(id);
+      }}
           extras={
             <PathExtras
               t={t}
@@ -1507,10 +1555,11 @@ export function App() {
             if (st.records.filter((r) => r.attempts.length).length === 5) void store.markPracticeDay().then(setProgress);
           }}
           onDone={slot ? () => clearSession(slot.key) : undefined}
-          nextLabel={wrun && !wrun.finished && wrun.day === today ? (s.uiLang === 'en' ? `Continue workout · ${Math.ceil(runLeftMs(wrun) / 60000)} min` : `להמשיך באימון · ${Math.ceil(runLeftMs(wrun) / 60000)} דק׳`) : generated ? t.seeSkillMap : undefined}
+          nextLabel={recapNext.label}
+          secondary={recapNext.secondary}
           ratings={ratingsOf(progress)}
           recent={recentBySkill(progress)}
-          onNext={wrun && !wrun.finished && wrun.day === today ? () => runCurrent(wrunRef.current!) : generated ? () => openSkillMap() : canNext ? () => openLesson(nextId) : null}
+          onNext={recapNext.open}
           onProgress={(p) => {
             setProgress(p);
             notePathResult(p);

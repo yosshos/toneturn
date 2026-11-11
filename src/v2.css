@@ -2016,3 +2016,23 @@ main.lesson.await-next .read-prompt .beat-light { display: none; }
 /* 0.68.1: a recap card's animations (Toni, the level bar's fill, the stars) wait until the card is first shown. */
 .recap-pages > .rp.rp-wait,
 .recap-pages > .rp.rp-wait * { animation-play-state: paused !important; }
+/* 0.68.1 (owner: "Toni is often frozen"): every state keeps a gentle motion after its one-shot gesture — the gesture
+   plays once, then a slow bob / sway / breath carries on (a second animation, delayed by the gesture's length). Eyes
+   blink in every awake state. Reduced motion still stops it all (rule above: data-motion='reduced'). */
+.toni:not(.s-sleepy):not(.s-correct):not(.s-streak):not(.s-bye) .t-eye { animation: t-blink 4.5s infinite; }
+.toni.s-think .t-body { animation: t-bob 3.2s ease-in-out infinite; }
+.toni.s-hint .t-body { animation: t-bob 2.8s ease-in-out infinite; }
+.toni.s-listen .t-flag { animation: t-sway 3s ease-in-out infinite; }
+.toni.s-correct .t-body { animation: t-hop 0.9s cubic-bezier(0.3, 0.7, 0.4, 1) 1, t-bob 2.6s ease-in-out 0.9s infinite; }
+.toni.s-correct .t-flag { animation: t-raise 0.9s ease-out 1, t-wave 1.6s ease-in-out 0.9s infinite; }
+.toni.s-streak .t-body { animation: t-spin 1.2s cubic-bezier(0.5, 0, 0.3, 1) 1, t-bob 2.4s ease-in-out 1.2s infinite; }
+.toni.s-streak .t-flag { animation: t-wave 0.9s ease-in-out infinite; }
+.toni.s-wrong .t-body { animation: t-no 1.2s ease-in-out 1, t-breathe 3.6s ease-in-out 1.2s infinite; }
+.toni.s-wrong .t-flag { animation: t-droop 1.2s cubic-bezier(0.4, 1.6, 0.5, 1) 1, t-sway 3.6s ease-in-out 1.2s infinite; }
+.toni.s-close .t-body { animation: t-bob 3s ease-in-out infinite; }
+.toni.s-close .t-flag { animation: t-tap 1s ease-in-out 2, t-sway 3s ease-in-out 2s infinite; }
+.toni.s-wow .t-body { animation: t-back 1.2s ease-out 1, t-bob 2.8s ease-in-out 1.2s infinite; }
+.toni.s-wow .t-flag { animation: t-sway 2.8s ease-in-out infinite; }
+.toni.s-draw .t-body { animation: t-bob 2.6s ease-in-out 0.9s infinite; }
+.toni.s-draw .t-flag { animation: t-unfurl 0.9s cubic-bezier(0.3, 1.5, 0.5, 1) 1, t-sway 2.6s ease-in-out 0.9s infinite; }
+.toni.s-bye .t-body { animation: t-bob 2.6s ease-in-out infinite; }

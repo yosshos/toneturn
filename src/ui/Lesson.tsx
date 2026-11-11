@@ -73,6 +73,8 @@ interface Props {
   /** When the session completes (clears saved progress). */
   onDone?: () => void;
   nextLabel?: string;
+  /** A second action under the main one (the recap of a path step inside a workout: Continue workout). */
+  secondary?: { label: string; open: () => void };
   /** Current skill ratings (for automatic aids). */
   ratings?: Ratings;
   /** The player's first name, for personal feedback. */
@@ -85,7 +87,7 @@ interface Props {
 
 const targetMidiOf = (q: Question) => (q.kind === 'degree' || q.kind === 'sing' || q.kind === 'note-name' ? q.targetMidi : q.kind === 'sing-seq' || q.kind === 'sing-run' ? q.midis[0] : 60);
 
-export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit, onAgain, onNext, onProgress, lessonDef, adapt, resume, onStep, onDone, nextLabel, ratings, playerName, onSettings, brief, onHideTopic, onKeepStep, recent }: Props) {
+export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit, onAgain, onNext, onProgress, lessonDef, adapt, resume, onStep, onDone, nextLabel, secondary, ratings, playerName, onSettings, brief, onHideTopic, onKeepStep, recent }: Props) {
   const [phones, setPhones] = useState(!!settings.headphones);
   const ctrlRef = useRef<LessonController | null>(null);
   const [change, setChange] = useState<{ change: RatingChange; peakBefore: number | null } | null>(null);
@@ -284,7 +286,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
   if (v.stage === 'complete') {
     return (
       <>
-        <Recap covered={!!streakMoment} t={t} view={v} settings={settings} onReplay={(i) => ctrl.replayQuestion(i)} onCompare={(i) => ctrl.compareQuestion(i)} onAgain={onAgain} onHome={onExit} onNext={onNext} nextLabel={nextLabel} rating={change} xpTotals={xpTotals} playerName={playerName ?? null} />
+        <Recap covered={!!streakMoment} t={t} view={v} settings={settings} onReplay={(i) => ctrl.replayQuestion(i)} onCompare={(i) => ctrl.compareQuestion(i)} onAgain={onAgain} onHome={onExit} onNext={onNext} nextLabel={nextLabel} secondary={secondary} rating={change} xpTotals={xpTotals} playerName={playerName ?? null} />
         {streakMoment && (
           <StreakCelebration t={t} before={streakMoment.before} after={streakMoment.after} gemsGained={streakMoment.gems} today={localDay(new Date())} onDone={() => setStreakMoment(null)} />
         )}

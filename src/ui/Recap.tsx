@@ -30,6 +30,8 @@ interface Props {
   onHome: () => void;
   onNext: (() => void) | null;
   nextLabel?: string;
+  /** A second action under the main one (the recap of a path step inside a workout: Continue workout). */
+  secondary?: { label: string; open: () => void };
   /** Rating change of this session (spec L.3); null until saved. */
   rating?: { change: RatingChange; peakBefore: number | null } | null;
   /** Play your (wrong) answer, then the right one. */
@@ -41,7 +43,7 @@ interface Props {
   covered?: boolean;
 }
 
-export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome, onNext, nextLabel, rating, playerName, xpTotals, covered = false }: Props) {
+export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome, onNext, nextLabel, secondary, rating, playerName, xpTotals, covered = false }: Props) {
   const s = view.session;
   const sm = summary(s);
   const [page, setPage] = useState(0);
@@ -295,6 +297,11 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
         {onNext && (
           <button className="btn mega" onClick={onNext}>
             {nextLabel ?? t.nextLesson} <span className="flip-rtl">→</span>
+          </button>
+        )}
+        {secondary && (
+          <button className="btn" onClick={secondary.open} data-recap-secondary="1">
+            {secondary.label} <span className="flip-rtl">→</span>
           </button>
         )}
         <button className={onNext ? 'btn' : 'btn mega'} onClick={onAgain}>
