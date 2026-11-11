@@ -107,6 +107,8 @@ export interface LessonView {
   /** Metronome light while a rhythm is being performed. */
   /** `count`: beats left in the count-in (4, 3, 2, 1), 0 once the passage starts. */
   beat: { i: number; accent: boolean; n: number; count?: number } | null;
+  /** 0.70 (owner): what is playing now — its total length and the sounding parts (s, e in seconds), for a running marker. */
+  listen: { id: number; total: number; parts: { s: number; e: number }[] } | null;
   /** Taps / "ta" onsets registered so far in the current performance. */
   readTaps: number;
   /** performance.now() when beat 1 of the current performance is heard (null outside a performance). */
@@ -223,6 +225,7 @@ export class LessonController {
       needsListenTap: false,
       singLive: null,
       beat: null,
+      listen: null,
       readTaps: 0,
       readStartPerf: null,
       simulated: ad.simulated,
@@ -558,9 +561,23 @@ export class LessonController {
     throwIfAborted(signal);
   }
 
+  private listenId = 0;
   private async playStim(stim: Stimulus[], signal: AbortSignal) {
     const { events, length } = renderStimulus(stim);
-    await this.ad.audio.play(events, length, signal);
+    // The sounding parts in time (rests are gaps), so the screen can show how long the passage is and where we are.
+    const parts: { s: number; e: number }[] = [];
+    let t = 0;
+    for (const el of stim) {
+      const d = el.kind === 'rest' ? el.duration : renderStimulus([el]).length;
+      if (el.kind !== 'rest' && d > 0) parts.push({ s: t, e: t + d });
+      t += d;
+    }
+    this.patch({ listen: { id: ++this.listenId, total: Math.max(length, t), parts } });
+    try {
+      await this.ad.audio.play(events, length, signal);
+    } finally {
+      this.patch({ listen: null });
+    }
     throwIfAborted(signal);
     // The answer clock starts when the stimulus has finished being heard (spec J.4).
     this.clockStart = this.now();

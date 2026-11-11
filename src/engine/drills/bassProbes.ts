@@ -134,7 +134,8 @@ export function placePluck(r: BassProbeResult): Partial<Record<FamilyId, number>
 export function placeWalk(r: BassProbeResult): Partial<Record<FamilyId, number>> {
   const ct = r.beat1Ct ?? 0;
   const ap = r.approach ?? 0;
-  if (ct >= 0.9 && ap >= 0.25 && (r.rootShare ?? 1) < 0.5) return { 'b-walk': 7, 'b-chord': 8 };
+  // BASS_NICHE_PLAN: a walker past the approach levels starts swing time at L2 (long quarters are taken as known).
+  if (ct >= 0.9 && ap >= 0.25 && (r.rootShare ?? 1) < 0.5) return { 'b-walk': 7, 'b-chord': 8, 'b-swing': 2 };
   if (ct >= 0.9 && (r.rootShare ?? 1) < 0.75) return { 'b-walk': 4, 'b-chord': 5 };
   if (ct >= 0.75) return { 'b-walk': 2, 'b-chord': 2 };
   return { 'b-walk': 1 };

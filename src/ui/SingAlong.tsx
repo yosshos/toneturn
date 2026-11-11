@@ -20,7 +20,7 @@ const BPM = 84;
 /** Usual major-key spelling for a tonic pitch class. */
 const KEY_NAMES = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
 
-function Roll({ notes, frames, now }: { notes: RollNote[]; frames: SungFrame[]; now: number }) {
+export function SingRoll({ notes, frames, now }: { notes: RollNote[]; frames: SungFrame[]; now: number }) {
   const W = 320;
   const H = 150;
   const lo = Math.min(...notes.map((n) => n.midi)) - 3;
@@ -162,7 +162,7 @@ export function SingAlongScreen({ t, settings, onBack }: { t: Strings; settings:
       <p className="field-hint" dir="ltr">
         {noteLabel(tl.tonic, settings, keyPc)} · ♩ = {BPM}
       </p>
-      <Roll notes={tl.notes} frames={frames} now={phase === 'pick' || phase === 'ready' ? 0 : now} />
+      <SingRoll notes={tl.notes} frames={frames} now={phase === 'pick' || phase === 'ready' ? 0 : now} />
       <NotesView midis={tl.notes.map((n) => n.midi)} keyPc={keyPc} settings={settings} />
       {phase === 'count' && <p className="vocal-cue vib">1 · 2 · 3 · 4</p>}
       {grade && (

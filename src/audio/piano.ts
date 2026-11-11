@@ -20,7 +20,7 @@ import { Leslie, organKey, REGISTRATIONS, type Registration } from './organ';
 import { autoPan, epKey } from './epiano';
 import { damperTau, layerFor, nearestLoaded, NO_DAMPER_FROM, releaseNoiseGain, releaseResGain, targetDb, vel127, type GrandLayer } from './grand';
 import { bufferBytes, fadeGain, grandLayerSet, grandLoadOrder, latencyHintOf, liveStart, MemoryLedger, tailCut, TIERS, tierOf, type LatencyMode, type SoundQuality, type SoundTier } from './quality';
-import { pluckSamples } from './pluck';
+import { guitarVoiceSamples, type GuitarVoice } from './pluck';
 
 interface Voice {
   out: GainNode;
@@ -847,12 +847,19 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
 
   /** The modelled guitar (0.66, the guitar course's sound): one Karplus–Strong buffer per note, made on first use. */
   private guitarBufs = new Map<number, { buf: AudioBuffer; rate: number }>();
+  /** GUITAR_DEEPENING §8: which modelled guitar plays (steel default; nylon, clean electric). */
+  private guitarVoice: GuitarVoice = 'steel';
+  setGuitarVoice(v: GuitarVoice): void {
+    if (v === this.guitarVoice) return;
+    this.guitarVoice = v;
+    this.guitarBufs.clear();
+  }
   private playGuitar(midi: number, v: number, start: number, dur: number): boolean {
     const ctx = this.ctx;
     if (!ctx || midi < 28 || midi > 100) return false;
     let g = this.guitarBufs.get(midi);
     if (!g) {
-      const { data, rate } = pluckSamples(midi, ctx.sampleRate);
+      const { data, rate } = guitarVoiceSamples(midi, ctx.sampleRate, this.guitarVoice);
       const buf = ctx.createBuffer(1, data.length, ctx.sampleRate);
       buf.getChannelData(0).set(data);
       g = { buf, rate };

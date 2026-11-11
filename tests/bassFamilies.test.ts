@@ -8,7 +8,7 @@ import { analyzeGuitarTake, type GFrame } from '../src/engine/drills/guitarAnaly
 import { expTimeMs } from '../src/engine/drills/analyze';
 import type { Drill, PlayedNote } from '../src/engine/drills/types';
 
-const ORDER = ['b-pluck', 'b-time', 'b-fret', 'b-chord', 'b-ear', 'b-scale', 'b-length', 'b-pocket', 'b-read', 'b-posread', 'b-styles', 'b-ghost', 'b-walk', 'b-impro', 'b-legato', 'b-pick', 'b-slap', 'b-up-pos', 'b-up-arco', 'b-up-scales', 'b-up-pizz', 'b-up-walk', 'b-up-read'];
+const ORDER = ['b-pluck', 'b-time', 'b-fret', 'b-chord', 'b-ear', 'b-scale', 'b-length', 'b-pocket', 'b-read', 'b-posread', 'b-styles', 'b-ghost', 'b-walk', 'b-impro', 'b-swing', 'b-barry', 'b-jform', 'b-latin', 'b-legato', 'b-pick', 'b-odd', 'b-prog', 'b-poly', 'b-slap', 'b-up-pos', 'b-up-arco', 'b-up-scales', 'b-up-pizz', 'b-up-walk', 'b-up-read'];
 const BASS = guitarCatalog().filter((f) => f.id.startsWith('b-'));
 const TUNE_IDS = ['bass', 'bass5', 'bass6', 'bass-dropd'];
 

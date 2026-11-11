@@ -23,7 +23,7 @@ export interface BeatBeams {
   /** Second-beam stubs: member position and direction. */
   stubs: { at: number; dir: 1 | -1 }[];
   /** Tuplet number over members from..to (positions in idx). */
-  tuplet?: { n: 3 | 6; from: number; to: number };
+  tuplet?: { n: 3 | 5 | 6; from: number; to: number };
 }
 
 const is16 = (d: number) => d <= 0.26;
@@ -48,7 +48,10 @@ export function beamBeats(stems: StemIn[], groupOf?: (beat: number) => number): 
     let tuplet: BeatBeams['tuplet'];
     const odd = offs.map((o) => onGrid(o, 1 / 6) && !onGrid(o, 1 / 3) && !onGrid(o, 0.25));
     const third = offs.map((o) => !onGrid(o, 0.25) && onGrid(o, 1 / 3));
-    if (odd.some(Boolean)) {
+    // DRUMS_NICHE_PLAN d-prog 9: quintuplets (fifths of the beat off the 16th grid) get a 5 over the beat.
+    const fifth = offs.map((o) => !onGrid(o, 0.25) && onGrid(o, 1 / 5));
+    if (fifth.some(Boolean)) tuplet = { n: 5, from: 0, to: idx.length - 1 };
+    else if (odd.some(Boolean)) {
       const lo = offs.some((o, k) => odd[k] && o < 0.5);
       const hi = offs.some((o, k) => odd[k] && o > 0.5);
       const pos = offs.map((_, k) => k).filter((k) => (lo && hi) || (lo ? offs[k] < 0.5 - EPS : offs[k] >= 0.5 - EPS));

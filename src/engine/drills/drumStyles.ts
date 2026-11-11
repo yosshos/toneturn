@@ -9,6 +9,7 @@
 import type { Drill, DrillSpec, DrumGoal } from './types';
 import type { BandStyle } from '../band';
 import { bar, capToGroups, finish, gb, levelOfKind, rep, rnd, type DH, type Lanes } from './drums';
+import { generateJazzMore } from './drumJazz';
 
 const t = (en: string, he: string) => ({ en, he });
 
@@ -70,6 +71,8 @@ const perBar = (bars: number, f: (b: number) => Lanes, sub: number, meter = 4): 
 export function generateJazz(s: DrillSpec): Drill {
   const op = s.option ?? 0;
   const lv = levelOfKind(s.kind);
+  // DRUMS_NICHE_PLAN §6.1 (P2): brushes, comping over a form, set-ups and hits, the 2 → 4 switch (drumJazz.ts).
+  if (lv >= 9) return generateJazzMore(s);
   const fin = (hits: DH[], en: string, he: string, bpm: number, o: { goal?: DrumGoal; meter?: number; fast?: boolean; band?: Pick<Drill, 'band' | 'chart'>; tail?: number } = {}) => {
     const hs = swung(hits);
     const swingGoal = hs.some((h) => h.swing) ? { swing: o.fast ? SWING_FAST : SWING } : {};

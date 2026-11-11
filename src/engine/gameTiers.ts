@@ -311,6 +311,47 @@ export const GAME_TIERS: Record<string, GameTierSpec> = {
       ff: { label: L('8 bars, slow', '8 תיבות, לאט'), params: { bars: 8, bpm: 60 }, todo: 'odd meter / a tempo change to hold; pocket vs a pushing band; match a played swing feel' },
     },
   },
+  // Drum games P1 (DRUMS_NICHE_PLAN §3; rounds in engine/drumGames.ts): five measured takes on the kit, cleared at the
+  // target share of rounds passed.
+  land: {
+    game: 'land',
+    source: () => 'instrument/drum-tech',
+    clear: 'accuracy',
+    tiers: {
+      pp: { label: L('1- and 2-beat fills, ♩70, ±30 ms', 'מעברים של 1–2 פעמות, ♩70, ±30 מ״ש'), params: { bpm: 70, ms: 30 }, target: 80 },
+      p: { label: L('1- and 2-beat fills, ♩80, ±27 ms', 'מעברים של 1–2 פעמות, ♩80, ±27 מ״ש'), params: { bpm: 80, ms: 27 }, target: 80 },
+      mp: { label: L('+ a whole-bar fill, ♩90', '+ מעבר של תיבה, ♩90'), params: { bpm: 90, ms: 24 }, target: 80 },
+      mf: { label: L('16th hi-hat groove, ♩100', 'גרוב היי־האט בשש-עשריות, ♩100'), params: { bpm: 100, ms: 22 }, target: 80 },
+      f: { label: L('Long fills, ♩110, ±20 ms', 'מעברים ארוכים, ♩110, ±20 מ״ש'), params: { bpm: 110, ms: 20 }, target: 80 },
+      ff: { label: L('Triplet and 16th fills, ♩120, ±18 ms', 'מעברים בטריולות ובשש-עשריות, ♩120, ±18 מ״ש'), params: { bpm: 120, ms: 18 }, target: 80 },
+    },
+  },
+  'groove-echo': {
+    game: 'groove-echo',
+    source: () => 'instrument/drum-tech',
+    clear: 'accuracy',
+    tiers: {
+      pp: { label: L('Rock 8ths', 'רוק בשמיניות'), params: { bpm: 70 }, target: 80 },
+      p: { label: L('Rock, kick variations', 'רוק, וריאציות קיק'), params: { bpm: 80 }, target: 80 },
+      mp: { label: L('16th hi-hat, ghost notes', 'היי־האט בשש-עשריות, רפאים'), params: { bpm: 85 }, target: 80 },
+      mf: { label: L('Shuffle', 'שאפל'), params: { bpm: 90 }, target: 80 },
+      f: { label: L('Bossa nova, maqsum', 'בוסה נובה, מקסום'), params: { bpm: 95 }, target: 80 },
+      ff: { label: L('Two bars with a fill', 'שתי תיבות עם מעבר'), params: { bpm: 100 }, target: 80 },
+    },
+  },
+  'odd-echo': {
+    game: 'odd-echo',
+    source: () => 'instrument/drum-tech',
+    clear: 'accuracy',
+    tiers: {
+      pp: { label: L('5/8: 3+2 or 2+3', '5/8: 3+2 או 2+3'), params: { bpm: 180, meters: [5] }, target: 80 },
+      p: { label: L('7/8: 2+2+3 or 3+2+2', '7/8: 2+2+3 או 3+2+2'), params: { bpm: 190, meters: [7] }, target: 80 },
+      mp: { label: L('7/8: three groupings', '7/8: שלוש חלוקות'), params: { bpm: 200, meters: [7] }, target: 80 },
+      mf: { label: L('9/8: 2+2+2+3 or 3+3+3', '9/8: 2+2+2+3 או 3+3+3'), params: { bpm: 210, meters: [9] }, target: 80 },
+      f: { label: L('11/8 and 9/8', '11/8 ו־9/8'), params: { bpm: 220, meters: [11, 9] }, target: 80 },
+      ff: { label: L('13/8 and 15/8', '13/8 ו־15/8'), params: { bpm: 240, meters: [13, 15] }, target: 80 },
+    },
+  },
 };
 
 // Social sets (duel, ghost, rooms, daily): the tier picks the items (engine/tournament.ts tournamentItem).
