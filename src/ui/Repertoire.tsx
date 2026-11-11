@@ -5,6 +5,7 @@
 import { useState } from 'react';
 import type { CourseId } from '../engine/courses';
 import { REP_TIERS, repGoal, repItem, repLeadsFrom, repResults, repStatus, repertoireFor, tierName, wayLabel, type RepItem, type RepTier, type RepWay } from '../engine/repertoire';
+import { ListenOriginal } from './ListenOriginal';
 import '../repertoire.css';
 
 type Lang = 'he' | 'en';
@@ -162,9 +163,12 @@ function ItemPage({ lang, course, item, res, onBack, onOpen, onWay }: { lang: La
           </button>
         ))}
       </div>
-      {/* Slot for the "Listen to the original" row (src/content/references.ts, built by another task): when it lands,
-          render <ReferenceRow kind={item.ref.kind} id={item.ref.id} /> here. TODO(references). */}
-      {item.ref && <div className="rep-refs" data-rep-ref={`${item.ref.kind}:${item.ref.id}`} />}
+      {/* "Listen to the original" (src/content/references.ts, 0.70.2): standards only — the songbook tunes have no entry. */}
+      {item.ref?.kind === 'standard' && (
+        <div className="rep-refs" data-rep-ref={item.ref.id}>
+          <ListenOriginal id={item.ref.id} lang={lang} compact />
+        </div>
+      )}
       <p className="rep-legal">
         {item.legal === 'pd' ? (he ? 'מנגינה מנחלת הכלל' : 'Public-domain melody') : item.legal === 'chords' ? (he ? 'מהלך אקורדים בלבד — בלי המנגינה' : 'Chord changes only — no melody') : he ? 'חומר מקורי של האפליקציה' : 'Our own material'}
       </p>

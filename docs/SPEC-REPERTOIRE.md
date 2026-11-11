@@ -14,7 +14,7 @@ Owner concept (2026-11-10): the niche is sophisticated music. Simple songs are t
   - Tier and "Standard" kicker, what it teaches, and status ("Best 64% · learned at 80%").
   - **Where it leads**, with a chip to that item. For example: "This progression is the start of Autumn Leaves (Cm7–F7–B♭maj7)" or "II7 going to V: bars 3–4 of Take the A Train". When an item has no "leads to", the page shows "Comes from" chips instead.
   - The **ways to practise**. The first is the main one.
-  - An empty slot for the "Listen to the original" row.
+  - The "Listen to the original" row (Spotify / YouTube) for standards.
   - A legal line: public-domain melody / chord changes only / our own material.
 - **Today**: a **Next repertoire goal** card under the daily-goal and league cards (hidden in exam-prep mode). It opens the next item.
 
@@ -82,7 +82,7 @@ Owner concept (2026-11-10): the niche is sophisticated music. Simple songs are t
 
 ## Not built / follow-ups
 
-- **"Listen to the original"**: `src/content/references.ts` did not exist when this was finished. Every item page has a slot, `<div class="rep-refs" data-rep-ref="standard:autumn">`, with a TODO to render the references row there using `item.ref` (`{ kind: 'song' | 'standard', id }`).
+- **"Listen to the original"**: rendered. `src/content/references.ts` arrived with 0.70.2, so an item that refers to a standard (`item.ref.kind === 'standard'`) shows the `ListenOriginal` row (compact). Songbook tunes and our own material have no entry, so nothing is shown for them.
 - **Path steps pointing to repertoire items**: not added to the path generator. The hooks are in place (`repItem`, `repLessonId`, and `openRepWay` in App), so a path step kind `rep` can open an item and read its result.
 - A guitar way that comps a specific standard's chart does not exist. Guitar standards use the closest guitar levels (shells / drop-2 / guide tones / bossa) plus the Charts play-along.
 - Ear and jazz "standards" items use topics that draw from many standards, not only the named one. The named chart is offered as the play-along.
