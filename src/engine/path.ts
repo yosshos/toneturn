@@ -297,7 +297,10 @@ export const VOCAL_PROGRAMS: { id: string; base: number; levels: { level: number
 ];
 
 // Bass 0.66: position reading after the first reading levels, fills and target-note solos once chords and scales are in.
-const DRUM_LATER: Record<string, number> = { 'd-funk': 3, 'd-shuffle': 3, 'd-mideast': 3, 'd-indep': 2, 'd-feet': 2, 'd-ear': 1, 'd-jazz': 4, 'd-latin': 4, 'b-posread': 2, 'b-impro': 4 };
+const DRUM_LATER: Record<string, number> = { 'd-funk': 3, 'd-shuffle': 3, 'd-mideast': 3, 'd-indep': 2, 'd-feet': 2, 'd-ear': 1, 'd-jazz': 4, 'd-latin': 4, 'b-posread': 2, 'b-impro': 4,
+  // DRUMS_NICHE_PLAN P1: the drum key and counting early, songs once grooves and fills are in, prog after funk, shuffle,
+  // independence and the Middle-Eastern odd meters (plan §5: DRUM_LATER['d-prog'] = 6).
+  'd-notation': 1, 'd-count': 2, 'd-form': 3, 'd-song': 4, 'd-prog': 6 };
 /**
  * PIANO_JAZZ: the jazz-piano families come after the lines and voicings they build on — Barry Harris harmony after the
  * Harris lines' block chords, bebop lines after guide tones and the first Harris lines, jazz-piano harmony after the

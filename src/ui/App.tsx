@@ -904,7 +904,8 @@ export function App() {
       drillFrom.current = 'path';
       drillSessionXp.current = 0;
       drillSession.current = { takes: 0, clean: 0 };
-      return go('drills');
+      // A family with its own quick lesson (the drums niche families) opens with it the first time.
+      return gate(`tech:${step.ladder.family}`, () => go('drills'));
     }
     if (step.kind === 'vocal' && step.ladder) {
       toolFrom.current = 'path';

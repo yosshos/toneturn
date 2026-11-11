@@ -34,6 +34,7 @@ import { withWritten } from '../engine/drills/bassEar';
 import { midi } from '../speech/midi';
 import { inputLatency } from '../engine/latency';
 import { LatencyCalibrate } from './LatencyCalibrate';
+import { DrumSongCard } from './DrumSongCard';
 import { DrumScore, KitCard, KitSetup } from './DrumViews';
 import { drumMicOf, kitKind, type KitKind } from '../engine/drumKit';
 import { drumProbes, GROOVE_REACH, placeDrums, type DrumProbeResult, type DrumSlot } from '../engine/drills/drums';
@@ -331,6 +332,9 @@ const TOPIC_OF: Record<string, Exclude<DrillTopic, 'all' | 'songs' | 'mine'>> = 
   'd-funk': 'styles', 'd-shuffle': 'styles', 'd-mideast': 'styles', 'd-indep': 'grooves', 'd-feet': 'grooves',
   // Drums content (0.66): the drummer's ear has its own topic; jazz and Latin are styles.
   'd-ear': 'ear', 'd-jazz': 'styles', 'd-latin': 'styles',
+  // DRUMS_NICHE_PLAN P1: songs with the grooves and fills, prog with the styles, counting with time, notation and song
+  // form with reading.
+  'd-song': 'grooves', 'd-prog': 'styles', 'd-count': 'time', 'd-notation': 'reading', 'd-form': 'reading',
   // PIANO_AUDIT §3: the pianist's ear has its own topic; piano sight-reading sits under reading.
   'k-ear': 'ear',
   'b-up-pos': 'upright', 'b-up-arco': 'upright', 'b-up-scales': 'upright', 'b-up-pizz': 'upright', 'b-up-walk': 'upright', 'b-up-read': 'upright',
@@ -426,6 +430,8 @@ function Hub({ lang, ds, settings, items, head, onFamily, onRun, onSettings, onC
       )}
       {!midi.devices.length && (ds.instrument ?? 'piano') === 'piano' && <p className="field-hint">{tx.noMidi}</p>}
       {drums && onKit && <KitCard kit={settings.drumKit} lang={lang} onSetup={onKit} onKit={onKitSave} />}
+      {/* DRUMS_NICHE_PLAN d-song L8: drum your own song's form over a typed chord chart. */}
+      {drums && <DrumSongCard lang={lang} onRun={onRun} />}
       {!settings.drillStart && !Object.keys(items).length && (
         <button className="btn primary" onClick={onTest} data-drills-test="1">
           {tx.test}
