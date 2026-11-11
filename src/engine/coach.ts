@@ -223,6 +223,8 @@ export interface SessionInsight {
   text: string;
 }
 
+const SEQUENCE_KINDS = new Set<Question['kind']>(['degree-seq', 'name-seq', 'sing-seq', 'sing-run', 'rhythm-read', 'rhythm-dict', 'place']);
+
 /** The confusion that came up most, or praise. `misses`: [right answer, given] per wrong try. */
 export function sessionInsight(qs: Question[], misses: { q: number; given: Answer }[], firstTry: number, total: number, l: Lang, name: string | null): SessionInsight {
   if (total > 0 && firstTry === total)
@@ -231,6 +233,9 @@ export function sessionInsight(qs: Question[], misses: { q: number; given: Answe
   for (const m of misses) {
     const q = qs[m.q];
     if (!q || String(m.given) === String(q.answer)) continue;
+    // A 'pair' of whole sequences / dictations / entered notes is no pair to learn from, and its raw key
+    // ("1-3-5-6-4-2-…", "60:1.62:0.5…") would blow the line up (0.69): only short answers make a pair.
+    if (SEQUENCE_KINDS.has(q.kind) || String(q.answer).length > 24) continue;
     const key = `${q.kind}:${pairKey(String(q.answer), String(m.given))}`;
     const cur = pairs.get(key);
     pairs.set(key, { q, given: m.given, n: (cur?.n ?? 0) + 1 });
@@ -238,8 +243,15 @@ export function sessionInsight(qs: Question[], misses: { q: number; given: Answe
   const top = [...pairs.values()].sort((a, b) => b.n - a.n)[0];
   if (top && top.n >= 2) {
     const name2 = (v: Answer) => (top.q.kind === 'choice' ? (top.q.names[String(v)]?.[l] ?? String(v)) : top.q.kind === 'quality' ? ({ maj: l === 'en' ? 'major' : 'מז׳ור', min: l === 'en' ? 'minor' : 'מינור', dim: l === 'en' ? 'diminished' : 'מוקטן', aug: l === 'en' ? 'augmented' : 'מוגדל' } as Record<string, string>)[String(v)] ?? String(v) : String(v));
-    const why = revealCoach(top.q, top.given, l);
-    const head = l === 'en' ? `Your tricky pair today: ${name2(top.q.answer)} vs ${name2(top.given)} (${top.n} times).` : `הזוג המבלבל שלכם היום: ${name2(top.q.answer)} מול ${name2(top.given)} (${top.n} פעמים).`;
+    // A few words per name (a spelled chord is five note names): the line stays short (0.69).
+    const cut = (v: Answer) => {
+      const items = name2(v).split(' – ');
+      if (items.length > 1) return items.length > 5 ? `${items.slice(0, 5).join(' – ')} …` : items.join(' – ');
+      const ws = name2(v).split(/\s+/);
+      return ws.length > 6 ? `${ws.slice(0, 6).join(' ')} …` : ws.join(' ');
+    };
+    const head = l === 'en' ? `Your tricky pair today: ${cut(top.q.answer)} vs ${cut(top.given)} (${top.n} times).` : `הזוג המבלבל שלכם היום: ${cut(top.q.answer)} מול ${cut(top.given)} (${top.n} פעמים).`;
+    const why = head.split(/\s+/).length <= 14 ? revealCoach(top.q, top.given, l) : null;
     return { kind: 'pair', text: why ? `${head} ${why}` : head };
   }
   const pct = total ? firstTry / total : 0;
