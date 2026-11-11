@@ -7,6 +7,7 @@
 // NOTE: this module and guitar.ts import each other. Nothing here may use a guitar.ts export at module top level
 // (only inside functions), and guitar.ts only calls into this module from inside functions.
 
+import { ruleSafe } from './bassRuleSafe';
 import type { BassGoal, Drill, DrillGoal, DrillSpec, FamilyId, BassFamilyId } from './types';
 import type { SpecTemplate } from './generate';
 import { noteAt, type Tuning } from '../fretboard';
@@ -1393,7 +1394,8 @@ export function genWalk(s: DrillSpec, tu: Tuning): Drill {
       // One chorus of a standard's changes in the tune's own key and feel (B13 / B18), chart only, judged by the rules.
       const std = BASS_STD[op % BASS_STD.length];
       const st = STANDARD_CHANGES.find((x) => x.id === std.id) ?? STANDARD_CHANGES[0];
-      const line = feelLine(tu, st.text, std.feel, `b-walk:std:${st.id}`);
+      // The walker can pick a note the chart's own rules refuse (a 7th on a 6th chord): keep the line rule-safe.
+      const line = ruleSafe((k) => feelLine(tu, st.text, std.feel, k ? `b-std:${st.id}:${k}` : `b-walk:std:${st.id}`), rulesFromText(st.text, std.feel === 'walk' ? 'walk' : 'chordTones'), 4);
       const bars = st.text.split('|').map((x) => x.trim());
       const home = rootOf(tu, std.key);
       line.push({ b: bars.length * 4, d: 2, p: home, ct: true });

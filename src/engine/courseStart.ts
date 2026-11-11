@@ -364,7 +364,7 @@ export interface TasteDrillPick {
   band?: { style: 'pop' | 'rock' | 'swing' | 'shuffle' | 'funk'; chart: string[]; bass?: boolean; drums?: string };
 }
 
-export type TasteRun = { kind: 'lesson'; items: TasteItem[] } | { kind: 'drills'; picks: TasteDrillPick[] } | { kind: 'melody' };
+export type TasteRun = { kind: 'lesson'; items: TasteItem[] } | { kind: 'drills'; picks: TasteDrillPick[] } | { kind: 'melody' } | { kind: 'vocal'; level: number };
 
 export interface TasteDef {
   id: string;
@@ -473,6 +473,23 @@ export const TASTES: Record<CourseId, Record<SelfReport, TasteDef>> = {
   },
 };
 
-export const tasteFor = (c: CourseId, r: SelfReport | undefined): TasteDef => TASTES[c][r ?? 'new'];
+/** Who takes the jazz course's "I play well" taste: a singer sings it, a pianist or bassist plays it (owner 2026-11-11:
+ * "a singer has to sing, as a player has to play"); anyone else hears it. */
+export type JazzWho = 'voice' | 'keys' | 'bass' | null;
+const JAZZ_WELL: Record<'voice' | 'keys' | 'bass', TasteDef> = {
+  voice: T('jazz', 'well', 'Trade 2s with the band', 'חילופי שתיים עם הלהקה', 'Scat two bars, the band answers, over a swing blues.', 'סקאט של שתי תיבות, הלהקה עונה, על בלוז בסווינג.', { kind: 'vocal', level: 1510 }),
+  keys: T('jazz', 'well', 'Trade 4s with the band', 'חילופי ארבע עם הלהקה', 'Play four bars of a line, the band answers.', 'לנגן ארבע תיבות של קו, והלהקה עונה.', { kind: 'drills', picks: [{ level: 'k-bebop-8', items: [0] }] }),
+  bass: T('jazz', 'well', 'Trade 4s with the drums', 'חילופי ארבע עם התופים', 'Walk, then take four bars while the drums answer.', 'ווקינג, ואז ארבע תיבות שלכם והתופים עונים.', { kind: 'drills', picks: [{ level: 'b-impro-14', items: [0] }] }),
+};
+/** The jazz taste's player, from the courses and what the player said they play (voice wins only without an instrument). */
+export function jazzWho(courses: string[], plays: string[], instrument?: string, midi?: boolean): JazzWho {
+  const all = new Set([...courses, ...plays, ...(instrument ? [instrument] : []), ...(midi ? ['keys'] : [])]);
+  if (all.has('keys') || all.has('piano')) return 'keys';
+  if (all.has('bass')) return 'bass';
+  if (all.has('voice') && !all.has('guitar') && !all.has('drums')) return 'voice';
+  return null;
+}
+export const tasteFor = (c: CourseId, r: SelfReport | undefined, who: JazzWho = null): TasteDef =>
+  c === 'jazz' && r === 'well' && who ? JAZZ_WELL[who] : TASTES[c][r ?? 'new'];
 /** The quick questionnaire's music level for a self-report (onboarding's first course). */
 export const levelOfReport = (r: SelfReport): 0 | 1 | 2 => (r === 'new' ? 0 : r === 'bit' ? 1 : 2);

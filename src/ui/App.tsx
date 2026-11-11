@@ -143,7 +143,7 @@ import { nodeTitle, PathView2, stepTitle, usePathView } from './Path';
 import { checkpointSession, recordStep, stepSession, stepStars, testOutPassed, testOutSession, type PathStep, type PathUnit, type UnitStep } from '../engine/path';
 import { FriendsScreen } from './Friends';
 import { enablePush, reportGameBest, reportRating, reportStreakDays, setProfile, uploadAvatar } from '../cloud/social';
-import { courseHasProgress, firstWeekDay, levelOfReport, levelTested, markSetup, markTasteDone, markTasteOpened, markWinSeen, migrateCourseStart, offerDue, pickProbes, reportCourse, sessionsSince, setPersonalGoal, setupNeeded, snoozeOffer, stageOf, goalById, tasteFor, type CourseStartMap, type ProgressFacts, type SelfReport } from '../engine/courseStart';
+import { courseHasProgress, firstWeekDay, levelOfReport, levelTested, markSetup, markTasteDone, markTasteOpened, markWinSeen, migrateCourseStart, offerDue, pickProbes, reportCourse, sessionsSince, setPersonalGoal, setupNeeded, snoozeOffer, stageOf, goalById, tasteFor, jazzWho, type CourseStartMap, type ProgressFacts, type SelfReport } from '../engine/courseStart';
 import { tasteDrills, tasteLesson } from '../engine/tasteLessons';
 import { CourseGoalLine, CourseSetup, CourseStartHero, CourseWelcome, FirstWeekCard, FirstWin, LevelOfferCard } from './CourseStart';
 import { isYoung } from '../engine/privacy';
@@ -1196,12 +1196,24 @@ export function App() {
   const tasteTake = useRef({ acc: 0, bars: 0 });
   /** Find my level, per course: the playing test (instruments), the voice placement, the ear placement (ear / jazz). */
   const findLevel = () => (instrumentCourse ? openTechTest() : s.activeCourse === 'voice' ? openPlacement('voice') : openPlacement());
+  /** The jazz "I play well" taste: sung by a singer, played by a pianist or bassist (owner 2026-11-11). */
+  const tasteWho = jazzWho(s.courses ?? [], s.intake?.plays ?? [], s.instrument, !!s.midiInput);
+  /** A sung taste in progress (the vocal level's result is its first win). */
+  const tasteVocal = useRef<{ course: CourseId; level: number; since: string } | null>(null);
   const startTaste = (report?: SelfReport) => {
     if (!settings) return;
     const c = activeC;
-    const def = tasteFor(c, report ?? cStart?.report);
+    const def = tasteFor(c, report ?? cStart?.report, tasteWho);
     updateCourseStart((m) => markTasteOpened(m, c, new Date().toISOString()));
     setCsWelcomeAgain(false);
+    if (def.run.kind === 'vocal') {
+      tasteVocal.current = { course: c, level: def.run.level, since: new Date().toISOString() };
+      toolFrom.current = 'home';
+      setVocalWarmup(false);
+      setVocalLevel(def.run.level);
+      go('vocal');
+      return;
+    }
     if (def.run.kind === 'lesson') {
       // Saved after every answer under taste:<course>: an abandoned taste continues where it stopped.
       openGenerated(tasteLesson(def, (Date.now() ^ (Math.random() * 1e9)) >>> 0), undefined, false, { key: `taste:${c}`, title: def.title[s.uiLang] });
@@ -1661,7 +1673,7 @@ export function App() {
           assigned={user && assigned.length ? <AssignedCard t={t} items={assigned} lang={s.uiLang} onOpen={(id) => openAssignment(id)} /> : null}
           aside={<TodayAside lang={s.uiLang} progress={progress} streak={gems.streak.count} puzzleRows={s.progPuzzle?.[localDay(new Date())]?.rows} onPuzzle={() => go('puzzle')} onDaily={() => go('daily')} onExams={() => go('exams')} onImprov={() => go('improv')} />}
           startLessonLink={activeC === 'ear' && cStage === 'welcome'}
-          startHero={cStage !== 'done' ? <CourseStartHero course={activeC} lang={s.uiLang} stage={cStage} cs={cStart} onStart={continueCourseStart} onFindLevel={findLevel} /> : undefined}
+          startHero={cStage !== 'done' ? <CourseStartHero course={activeC} lang={s.uiLang} stage={cStage} cs={cStart} who={tasteWho} onStart={continueCourseStart} onFindLevel={findLevel} /> : undefined}
           news={
             <>
               {csOffer && <LevelOfferCard lang={s.uiLang} onFind={findLevel} onLater={() => updateCourseStart((m) => snoozeOffer(m, activeC, localDay(new Date())))} />}
@@ -1722,7 +1734,7 @@ export function App() {
       )}
       {route === 'path' && <PathView2 t={t} settings={s} progress={progress} view={pathView} onStep={openFromPath} onTestOut={openTestOut} onPlacement={() => (instrumentCourse ? openTechTest() : s.activeCourse === 'voice' ? openPlacement('voice') : openPlacement())} onTechTest={instrumentCourse && cStart?.legacy && !s.drillStart && !Object.keys(progress.drillItems ?? {}).length ? openTechTest : undefined} onSettings={updateSettings} top={
         cStage !== 'done' ? (
-          <CourseStartHero course={activeC} lang={s.uiLang} stage={cStage} cs={cStart} onStart={continueCourseStart} onFindLevel={findLevel} compact />
+          <CourseStartHero course={activeC} lang={s.uiLang} stage={cStage} cs={cStart} who={tasteWho} onStart={continueCourseStart} onFindLevel={findLevel} compact />
         ) : (
           <>
             {csOffer && <LevelOfferCard lang={s.uiLang} onFind={findLevel} onLater={() => updateCourseStart((m) => snoozeOffer(m, activeC, localDay(new Date())))} />}
@@ -2472,8 +2484,21 @@ export function App() {
           onProgress={(p) => {
             setProgress(p);
             notePathResult(p);
+            // A sung taste: its first measured result is the course's first win.
+            const tv = tasteVocal.current;
+            if (tv) {
+              const r = [...p.history].reverse().find((x) => x.completedAt >= tv.since && x.lessonId.startsWith('vocal') && x.lessonId.endsWith(String(tv.level)));
+              if (r) {
+                tasteVocal.current = null;
+                updateCourseStart((m) => markTasteDone(m, tv.course, { kind: 'lesson', right: r.firstTry, total: r.total, xp: r.xp }, r.completedAt));
+                toolFrom.current = 'coursestart';
+              }
+            }
           }}
-          onBack={() => go(toolFrom.current)}
+          onBack={() => {
+            tasteVocal.current = null;
+            go(toolFrom.current);
+          }}
           onRuns={openRuns}
           onSingAlong={() => gate('vocal:singalong', () => go('singalong'))}
           startWarmup={vocalWarmup}

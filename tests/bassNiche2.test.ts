@@ -131,6 +131,16 @@ describe('BASS_NICHE_PLAN P2: the new levels', () => {
       }
   });
 
+  it('the old b-walk standards keep their own rules too (6th chords no longer walked as 7ths)', () => {
+    for (const l of levelsOf('b-walk').filter((x) => [11, 13, 14, 18].includes(x.level)))
+      for (const d of levelDrills(l, 'fifths-up')) {
+        const r = d.goal.bass?.rules;
+        if (!r) continue;
+        const rep = ruleCheck(r.kind, r.chart, d.notes.map((n) => ({ pitch: n.pitch, beat: n.beat })), d.meter || 4, r.maxMove ?? 4, { every: r.every, anticipate: r.anticipate, passing: r.passing });
+        expect(rep.validShare, `${d.itemId}: ${rep.labels.join(' ')}`).toBe(1);
+      }
+  });
+
   it('a steady take passes at the start and the target tempo; a sloppy one never', () => {
     const fails: string[] = [];
     for (const l of P2_LEVELS())

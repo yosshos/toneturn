@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { COURSE_IDS, type CourseId } from '../src/engine/courses';
 import {
+  tasteFor,
+  jazzWho,
   courseHasProgress,
   firstWeekDay,
   goalProgress,
@@ -235,5 +237,25 @@ describe('course start: content', () => {
   it('a practice pad gets single-surface drums', () => {
     const ds = tasteDrills(TASTES.drums.new, { drumPad: true });
     expect(ds.every((d) => d.drum?.mic)).toBe(true);
+  });
+});
+
+describe('jazz "I play well": a singer sings it, a player plays it (owner 2026-11-11)', () => {
+  it('picks the player from courses and instruments', () => {
+    expect(jazzWho(['jazz', 'voice'], [])).toBe('voice');
+    expect(jazzWho(['jazz'], ['voice', 'keys'])).toBe('keys');
+    expect(jazzWho(['jazz', 'bass'], [])).toBe('bass');
+    expect(jazzWho(['jazz'], [], undefined, true)).toBe('keys');
+    expect(jazzWho(['jazz', 'ear'], [])).toBe(null);
+  });
+  it('the singer gets the sung trading level; players get a playable trading drill; others keep the listening taste', () => {
+    expect(tasteFor('jazz', 'well', 'voice').run).toEqual({ kind: 'vocal', level: 1510 });
+    for (const who of ['keys', 'bass'] as const) {
+      const def = tasteFor('jazz', 'well', who);
+      expect(def.run.kind).toBe('drills');
+      expect(tasteDrills(def).length, who).toBeGreaterThan(0);
+    }
+    expect(tasteFor('jazz', 'well', null).run.kind).toBe('lesson');
+    expect(tasteFor('jazz', 'bit', 'voice').run.kind).toBe('lesson');
   });
 });

@@ -3,7 +3,7 @@
 // hero "Start: <taste>", the level-test offer, the first-week card, the goal line). One phone screen each, no emoji.
 import { useEffect, useRef, useState } from 'react';
 import { courseOf, type CourseId } from '../engine/courses';
-import { LADDER, PERSONAL_GOALS, PROMISE, goalById, goalProgress, rungOf, tasteFor, type CourseStartState, type SelfReport, type Stage, type TasteDef } from '../engine/courseStart';
+import { LADDER, PERSONAL_GOALS, PROMISE, goalById, goalProgress, rungOf, tasteFor, type CourseStartState, type JazzWho, type SelfReport, type Stage, type TasteDef } from '../engine/courseStart';
 import type { PathFacts, PathUnit, UnitStep } from '../engine/path';
 import type { Settings } from '../storage/progress';
 import { BrowserPitchCapture } from '../speech/pitchCapture';
@@ -520,10 +520,10 @@ export function FirstWin({
 }
 
 /** Home / Path first run: "Start: <taste>" (Find my level second for "I play well"), the course and its ladder. */
-export function CourseStartHero({ course, lang, stage, cs, onStart, onFindLevel, compact = false }: { course: CourseId; lang: Lang; stage: Stage; cs?: CourseStartState; onStart: () => void; onFindLevel: () => void; compact?: boolean }) {
+export function CourseStartHero({ course, lang, stage, cs, who = null, onStart, onFindLevel, compact = false }: { course: CourseId; lang: Lang; stage: Stage; cs?: CourseStartState; who?: JazzWho; onStart: () => void; onFindLevel: () => void; compact?: boolean }) {
   const he = lang === 'he';
   const def = courseOf(course);
-  const taste: TasteDef | null = cs?.report ? tasteFor(course, cs.report) : null;
+  const taste: TasteDef | null = cs?.report ? tasteFor(course, cs.report, who) : null;
   const label =
     stage === 'win'
       ? he ? 'לתוצאה הראשונה שלכם' : 'See your first result'

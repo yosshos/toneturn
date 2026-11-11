@@ -18,6 +18,26 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.73.0',
+    date: '2026-11-11',
+    en: [
+      'Bass: jazz waltz, a standards ladder of 40 charts, upright jazz, extended techniques (harmonics, tapping), fusion lines, rock stamina, meter by ear and a road-map strip on form drills',
+      'Guitar: a chord finder (strum → name, name → shapes), answer chord questions and Chord Rush by strumming, tab in mixed meters, and comping whole standards',
+      'Drums: 33 new levels (rolls, pocket, funk and reggae, double pedal, independence…), Time Lock and Ghost Control games, a quick kit setup',
+      'Voice: quarter tones, sight-reading with the band, jazz lead sheets, sing over your own recording, colla voce, trading twos and fours',
+      'Piano: chromatic Barry Harris lines, whole forms (rhythm changes, minor blues, Coltrane matrix), stride with a melody; repertoire pieces and bonus games on the path',
+      'Jazz course, "I play well": singers trade 2s by singing, pianists and bassists by playing',
+    ],
+    he: [
+      'בס: וולס ג׳אז, סולם סטנדרטים של 40 דפים, ג׳אז בקונטרבס, טכניקות מורחבות (הרמוניקים, טאפינג), קווי פיוז׳ן, סיבולת ברוק, משקל בשמיעה ופס מבנה בתרגילי צורה',
+      'גיטרה: מאתר אקורדים (פריטה → שם, שם → צורות), לענות על שאלות אקורדים וב־Chord Rush בפריטה, טאבים במשקלים מעורבים וליווי של סטנדרטים שלמים',
+      'תופים: 33 שלבים חדשים (רולים, פוקט, פאנק ורגאיי, פדל כפול, עצמאות…), המשחקים Time Lock ו־Ghost Control והגדרת ערכה מהירה',
+      'שירה: רבעי טונים, קריאה מהדף עם הלהקה, דפי אקורדים בג׳אז, לשיר על ההקלטה שלכם, קולה ווצ׳ה, חילופי שתיים וארבע',
+      'פסנתר: קווי בארי האריס כרומטיים, צורות שלמות (ריתם צ׳יינג׳ס, בלוז מינורי, מטריצת קולטריין), סטרייד עם מנגינה; יצירות רפרטואר ומשחקי בונוס במסלול',
+      'קורס הג׳אז, "מנגנים טוב": זמרים מחליפים שתיים בשירה, פסנתרנים ובסיסטים בנגינה',
+    ],
+  },
+  {
     version: '0.72.0',
     date: '2026-11-11',
     en: [
