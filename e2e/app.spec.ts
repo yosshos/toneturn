@@ -169,7 +169,7 @@ test.describe('settings', () => {
     // 0.65: one English voice (Kokoro, on the device) with its status and an on/off switch; no OS voice picker.
     await expect(page.locator('.voice-list')).toHaveCount(0);
     const status = page.locator('[data-kokoro]');
-    await expect(status).toContainText('Kokoro (on device)');
+    await expect(status).toContainText('Kokoro voice');
     await expect(status).toHaveAttribute('data-kokoro', 'off');
     const use = page.locator('[data-narrator-toggle]');
     await use.check();
