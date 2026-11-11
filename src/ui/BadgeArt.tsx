@@ -792,6 +792,16 @@ export const GLYPHS: Record<string, Glyph> = {
       {p('M21.5 4v16', false)}
     </>
   ),
+  // First session (SPEC-COURSE-START): the downbeat — a bar line, one note on beat 1 and its tick.
+  'special:first': () => (
+    <>
+      {p('M3 5v14')}
+      {p('M3 12h18', false)}
+      <ellipse cx="9.5" cy="15" rx="2.6" ry="2" fill={F} stroke="none" />
+      {p('M12 15V6')}
+      {p('M15 9.5l2.2 2.2L21 7')}
+    </>
+  ),
   // Repertoire (SPEC-REPERTOIRE): a lead sheet — two stave lines, bar lines and a chord slash.
   'special:rep': () => (
     <>
@@ -966,6 +976,7 @@ export function resolveGlyph(b: Pick<Badge, 'id' | 'cat' | 'group'>): { key: str
   if (key.startsWith('family:b-')) return { key, glyph: GLYPHS['family:bass'], fallback: false };
   if (key.startsWith('special:tier')) return { key, glyph: GLYPHS['special:tier'], fallback: false };
   if (key.startsWith('special:rep:')) return { key, glyph: GLYPHS['special:rep'], fallback: false };
+  if (key.startsWith('special:first:')) return { key, glyph: GLYPHS['special:first'], fallback: false };
   return { key, glyph: FALLBACK, fallback: true };
 }
 
