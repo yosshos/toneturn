@@ -10,7 +10,7 @@ import { compareStimulus, pcFromKey } from '../engine/lesson';
 import { songById } from '../engine/songs';
 import { summary } from '../engine/session';
 import type { LessonView } from '../game/controller';
-import { describe as describeRhythm } from '../engine/rhythm';
+import { describeShort } from '../engine/rhythm';
 import { answerWord, choiceLabel, giveText, LESSON_META, questionBadge } from '../game/content';
 import type { Strings } from '../i18n/strings';
 import { namingFor, type Settings } from '../storage/progress';
@@ -226,7 +226,7 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
                 : q.kind === 'note-name'
                   ? displayNote(q.target, nm, lang)
                   : q.kind === 'rhythm-read'
-                    ? describeRhythm(q.rhythm, 'names', lang)
+                    ? describeShort(q.rhythm, lang)
                   : q.kind === 'degree-seq'
                 ? q.answer.split('-').join(' ')
                 : typeof q.answer === 'number'

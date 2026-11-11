@@ -14,7 +14,7 @@ import { parseMode, parseNamedChoice, parseTrueFalse } from '../engine/parser';
 import { TOPIC_GEN } from '../engine/topics';
 import { describeRun } from '../engine/runs';
 import { narration, vary, type Lang } from './narration';
-import { describe as describeRhythm, parseRhythmWords, rhythmFromKey, rhythmKey, sameRhythm, type CellId } from '../engine/rhythm';
+import { describe as describeRhythm, describeShort, parseRhythmWords, rhythmFromKey, rhythmKey, sameRhythm, type CellId } from '../engine/rhythm';
 
 const NUM: Record<Lang, Record<number, string>> = {
   en: { 1: 'one', 2: 'two', 3: 'three', 4: 'four', 5: 'five', 6: 'six', 7: 'seven' },
@@ -376,7 +376,7 @@ export function answerWord(_q: Question, a: Answer, l: Lang, nm: Naming = 'lette
   if (asPc) return spokenNote(asPc, nm, l);
   if (_q.kind === 'rhythm-dict' && typeof a === 'string') return describeRhythm(rhythmFromKey(a, _q.rhythm.bars), 'names', l);
   // A tapped rhythm's 'answer' is the grade word: show the rhythm itself (0.66).
-  if (_q.kind === 'rhythm-read') return describeRhythm(_q.rhythm, 'names', l);
+  if (_q.kind === 'rhythm-read') return describeShort(_q.rhythm, l);
   const words: Record<string, Record<Lang, string>> = {
     maj: { en: 'major', he: "מז׳ור" },
     min: { en: 'minor', he: 'מינור' },

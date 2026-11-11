@@ -389,6 +389,19 @@ export function describe(r: Rhythm, words: RhythmWords, lang: 'he' | 'en'): stri
   return (prefix ? `${prefix}: ` : '') + bars.join(' | ');
 }
 
+/** A rhythm in a few words for summaries (0.69, owner: six bars of quarters were 24 words): runs of the same cell
+ *  collapse ("quarter ×24"), and after 4 groups the rest is "…". */
+export function describeShort(r: Rhythm, lang: 'he' | 'en'): string {
+  const runs: { c: CellId; n: number }[] = [];
+  for (const c of r.cells) {
+    const last = runs[runs.length - 1];
+    if (last && last.c === c) last.n++;
+    else runs.push({ c, n: 1 });
+  }
+  const parts = runs.slice(0, 4).map(({ c, n }) => (n > 1 ? `${NAMES[c][lang]} ×${n}` : NAMES[c][lang]));
+  return parts.join(', ') + (runs.length > 4 ? ' …' : '');
+}
+
 /** Spoken description → cells (names or syllables, English or Hebrew). Null when unparseable. */
 export function parseRhythmWords(text: string, meter?: Meter): CellId[] | null {
   const t = ` ${text
