@@ -333,6 +333,8 @@ export interface Settings {
   mixer?: Partial<import('../audio/mixer').MixerSettings>;
   /** Instrument sound for every exercise (spec Q): 'classic' (synth) or a sample set id. */
   sound?: string;
+  /** GUITAR_DEEPENING §8: the guitar course's voice — auto (by the add-ons: prog / jazz → clean electric, fingerstyle / flamenco → nylon, else steel) or a fixed one. */
+  guitarVoice?: 'auto' | 'steel' | 'nylon' | 'electric';
   /** The concert grand's detail (0.54): 'auto' = all 16 layers on a computer, 8 on a light phone. */
   pianoDetail?: 'auto' | 'full' | 'light';
   /** Sound quality (0.69): how much decoded audio a session may hold — 'auto' picks by device (Standard on iPhone/iPad). */

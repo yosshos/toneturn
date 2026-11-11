@@ -229,3 +229,57 @@ a jazz player isn't sent through all of prog and vice versa.
   [Soundbrenner: groupings](https://www.soundbrenner.com/blogs/articles/make-odd-time-signatures-groove-not-counting).
   No bass-specific metric-modulation course was found; P2's content is built from general rhythm pedagogy.
 - Earlier bass research in this repo: `BASS_CURRICULUM.md` §11 (RSL, Trinity, ABRSM, Friedland, Wooten, SBL, TalkingBass, …).
+
+---
+
+## 8. Implemented (P1, 2026-11-11)
+
+Code: `src/engine/drills/bassNiche.ts` (the new families, b-impro 7–14, track filter, summits, the improv capture),
+`bassEar.ts` (b-ear 10–19), `bass.ts` (catalogue and dispatch), tests in `tests/bassNiche.test.ts` (+ `tests/bassTake.ts`).
+70 new levels: 7 families with 52 levels, b-impro 7–14 (8), b-ear 10–19 (10). Built on the prog engine
+(`PROG_ENGINE.md`): `withBarPlan` meters, tempo maps, `bandMeter`, `unison`, `applyForm`, the `downbeatCt` /
+`anticipate` / `swingWalk` rules.
+
+| Item | Family / levels | Measured by |
+|---|---|---|
+| J1 | `b-swing` 1–7: long quarters 100→160 · on top 120→180 · centred / laid back 120→180 · drums drop out 140→200 · three choruses 160→220 · up-tempo walk (blues, rhythm changes) 220→280 · in 2 then in 4 240→320 | walk rules + `swingWalk` (long ≥ 85 %, ride window −20…−10 / ±6 / +6…+16 ms, chorus drift ≤ 2 %) |
+| J2 | `b-barry` 1–6: 6th-diminished scale (major, minor) · passing diminished in a walk · half-step rules from 1/3 and 5/7 · the rule in a walk (1 and 3) · pivots · a chorus of bebop lines (ii–V–I, rhythm A) | note for note (L1); walk rules (L2); `downbeatCt` every 1 / every 2 (L3–6); only `barry.ts` lines whose downbeats are chord tones are used |
+| J3 | `b-impro` 7–14: enclosures (major, minor) · bebop scales · ii–V–I in 12 keys · minor ii–V–i altered · modal vamps (Dorian, Lydian, sus) · rhythm-changes chorus · a standard's chorus (5 tunes) · trading 4s | `target` rules with guide-tone landings and the new `passing` option (a non-scale note a step or less from the next); bebop scales `downbeatCt`; swing ratio 1.8 ± 0.3; trading: the band lays out in the drum bars, re-entry on 1 within 40 ms (`landing`) |
+| J3b | constraint improvisation (Charts / RulesPanel) on a bass | `improvCaptureOpts`: YIN down to 28 Hz (22 with a low B), 4096 frame, in the bass course |
+| J4 | `b-jform` 1–7: two-feel with skips and pushes · AABA 2→4 on the bridge · pedal intro / interlude · stop-time hits · tag ending ×3 + hit · Latin A / swing B · a whole tune (head in 2, 2 choruses, out-head) | `applyForm` road map (drums and band per section) + `goal.prog.form` (no lost bars, section starts ±40 ms, drift ≤ 2 %); lines written per section |
+| L1 | `b-latin` 1–9: tumbao 3-2 · tumbao 2-3 over i–V7 · tumbao over montuno changes (free) · cha-cha · songo · Mozambique · Afro-Cuban 6/8 · partido alto / baião · Latin jazz on Blue Bossa / Song for My Father (free) | written lines (a note on 1 is an extra note); montuno: `target` + `anticipate: 1` (the next root on 4); Latin jazz: `anticipate: 0.5`; new groove `clave-23` |
+| P1 | `b-odd` 1–8: 5/4 3+2 / 2+3 · 7/8 rotations · 9/8 · 11/8 · 13/8 and 15/8 · odd groupings over 4/4 (3+3+2 8ths, 3+3+3+3+4 16ths) · mixed meters (7/8–4/4, 4/4–3/4–2/4) · displacement (8th, 16th) | timing on the time map (per-bar meters, drums per bar), `groupAccent` 0.3 (0.25 mixed) and the accent check |
+| P2 | `b-poly` 1–7: 5-note and 7-note riffs over 4/4 · dotted quarters (3:2) · 4:3 over 3/4 · metric modulation triplet ♩ → ♩ and dotted ♪ → ♩ · 7/8 riff vs 4/4 drums | `bandMeter` 4/4 under the riff's meter; `tempoRatio` ±2 % with the new 1 within 30 ms |
+| P3 | `b-prog` 1–8: pick riffs over a pedal (16ths) · unison with the guitar · octave / 5th unisons · 16th unison runs (chromatic, whole-tone, diminished) · odd-meter unisons · sequenced riff · ostinato under moving chords · 16-bar étude (7/8 riff, unison line, pedal) | `unison` band part + `goal.prog.unison` (|mean| ≤ 12 ms, SD ≤ 18 ms); group accents in the odd meters |
+| E1–E4 | `b-ear` 10–19: 6ths / sus / m(maj7) · 7♭9 / 7♯9 / maj7♯11 / 7alt · cadences by the bass (ii–V, backdoor, tritone sub) · secondary dominants and passing dim · where am I (blues bars 9–12, the bridge after A A) · the band drops in anywhere · a chorus then the bridge · 4 bars (and written) · 8 bars or a Barry line · 7/8 riff or tumbao | the answer played on the bass (pitch + timing), hidden until the result |
+| X1 | summits | `BASS_SUMMITS` (jazz: swing 5–7, Barry 6, impro 13–14, jform 7; prog: odd 4/5/7, prog 8, poly 5/7) and two diamond badges `tech:g-bass:summit-jazz / -prog` |
+| X3 | fixes | b-impro 5–6 are swung now (`swing: true`: the "and" at 2/3, swing ratio checked; item ids gained `:sw`, so their old progress starts over); ImprovRules bass capture (above) |
+| Track | owner decision | `DrillSettings.bassTrack` (jazz / prog / both, default both) — Drills settings "Track" chips on the bass; `BASS_TRACK` filters the jazz families (swing, Barry, form, Latin) and the prog families (odd, prog, poly) out of the hub and the path; b-impro and b-ear are on both |
+
+Wiring: own symbols (`swingtime`, `barrybass`, `roadmap`, `tumbao`, `oddmeter`, `unison`, `polymeter`), path
+placement after each family's prerequisite (`BASS_NICHE_LATER` in `path.ts`), teaching order (jazz families after
+b-impro, prog families after b-pick), rating tags (`events.ts`: steady, meter odd / compound, subdivide, Barry,
+progression, improv play / answer, the ear levels' own skills), Technique hub topics, family milestone badges (automatic)
+and exam tags, the walk placement probe seeds `b-swing` 2, seven quick lessons (`src/content/mini/bassNiche.ts`) that
+open each family's first path step (`gate('tech:<family>')` in App.tsx). Tests: every level in every key on 4/5/6
+strings; model lines keep their rules; a steady synthetic MIDI take (6 ms jitter, ride offset where asked) is clean at
+the start and target tempo of every item checked, a sloppy one (45 ms; ear: half the answers a half step off) never;
+per family a failing take (short notes, flat accents, the old tempo after a modulation, 30 ms behind the unison, a
+lost bar, no anticipation, a non-chord tone on the downbeat, straight 8ths, a late re-entry). One phone screen 390 × 844
+checked with a temporary Playwright spec on one level of each family.
+
+Not built / not verified:
+
+- **Patterns to check with a teacher**: the cha-cha, songo, Mozambique, Afro 6/8, partido alto and baião bass lines are
+  generated from general descriptions (as the drums plan defers Mozambique / songo for a teacher's check). The drums
+  under Mozambique use `songo`, under partido alto / baião `samba` (no own grooves yet).
+- **Road-map strip UI** (sections as blocks, the current bar lit, a cue a bar ahead) is not built; b-jform drills show
+  the notation / tab and the result's form report only.
+- **Real takes**: everything is checked on synthetic MIDI takes. The ride placement windows assume a calibrated audio
+  delay; mic takes of 16th unisons and up-tempo walking (280–320) are untested on a real bass.
+- No entry from the bass hub into the constraint-improvisation screen (it is reached from Practice → charts; only its
+  capture was fixed). The Perform screen's improv capture is unchanged.
+- The track is chosen in Drills settings only, not in the bass intake (X2, P2).
+- The seven quick lessons' English lines need recordings (`tests/voiceFiles` "every static line is recorded" fails
+  until then).
+- P2 items (J5–J7, P4–P6, E5–E6, X2) are not started.

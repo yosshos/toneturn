@@ -101,6 +101,16 @@ export type RushItem =
   | { kind: 'choice'; key: string; q: ChoiceQuestion }
   | { kind: 'fret'; key: string; target: FretTarget };
 
+/** Does this item sound (auto-played when shown, a Play button to replay)? The ear games always; in Chord Rush a
+ *  drawn picture — keys, neck or chord box — sounds as an arpeggio (the staff is reading only, its stimulus is
+ *  empty); in Key Signature Rush a tier's heard rung (modes, chord-scales). */
+export function rushHears(m: RushMode, it: RushItem | null): boolean {
+  if (m === 'interval' || m === 'progression') return true;
+  if (it?.kind !== 'choice' || !it.q.stimulus.length) return false;
+  if (m === 'chord') return !!it.q.diagram;
+  return m === 'keysig' && it.q.topic !== 'key-signatures';
+}
+
 export interface RushOptions {
   mode: RushMode;
   seed: number;

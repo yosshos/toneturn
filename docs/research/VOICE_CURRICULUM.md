@@ -578,3 +578,78 @@ inflections, arpeggio items, my-song extraction).
 - Vibrato: [Manfredi et al. 2015, operatic and jazz singers](https://read.qxmd.com/read/25795355/automatic-assessment-of-acoustic-parameters-of-the-singing-voice-application-to-professional-western-operatic-and-jazz-singers), [Kuhlewind 2014 thesis](https://www.fon.hum.uva.nl/theses/FlorianKuhlewindMA2014.pdf)
 - Swing microtiming: [Nelias et al. 2022, Communications Physics](https://www.nature.com/articles/s42005-022-00995-z)
 - Copyright: docs/research/MUSIC_SOURCES_LEGAL.md (US ≤ 1930 PD; life + 70 in Israel/EU)
+
+---
+
+## Implemented (2026-11-11, voice course build)
+
+Built on the worktree branch in four commits (V1–V4). Everything below is graded only from the microphone (pitch,
+onsets, relative loudness, vibrato); syllables, words, tone colour and register mode are explained, never scored.
+
+**Build order, as planned**
+
+1. **`VOICE_LATER`** (`src/engine/path.ts`): family offsets by stage; Barry Harris L1 now sits 6 steps after "hold a
+   note" L1 (test in `tests/voiceCourse.test.ts`).
+2. **Onset engine + F7 time feel** (`src/engine/voiceTime.ts`, `voiceGrade.ts`): sung onsets (attack after a dip or
+   voicing start, sung frames only, so speaker clicks do not count), time feel against a grid after the calibrated mic
+   delay, "laid back" judged only as the mean of 8+ onsets, swing ratio of articulated pairs with a tempo-dependent
+   band, back-phrasing, the inner clock. `v-time` L2–L8 (1101–1107); the first timed take asks for the mic-delay
+   calibration once (LatencyCalibrate, skippable with the usual 70 ms).
+3. **Sing-along over the band, per phrase** (`src/engine/voiceSongs.ts`, `src/ui/VoiceTimed.tsx`): any of the 40
+   songbook songs (2/4–4/4 and waltzes; 6/8 Für Elise excluded) or our own songs, placed in the range, backed by the
+   band engine (`chartBacking`, mature grooves: pop / bossa / rock / ballad / waltz), with a count-in and an intro bar
+   where the bleed gate learns the band (headphones recommended). Each phrase scored pitch 50 / time 30 / breath 20;
+   the weakest phrase loops at 90 %, then full tempo, then the whole song (loops are practice, only whole takes count);
+   every phrase must pass. Swing songs are sung swung (off-beat eighths at 2/3). `v-songs` L2–L7 + the performance
+   take (1301–1307). Four own pop songs in `src/content/voiceSongs.ts` (verse + chorus; the chorus-louder rule ≥ 3 dB).
+4. **Drift levels** (`v-pitch` 701 fine tuning into a drone, 702 back to the tonic, 703 eight bars unaccompanied,
+   705 a minor song ≤ 10 ¢ drift): `driftOf` = last phrase's offset − first's, note error inside each phrase.
+5. **Standards** `v-standards` L1–L5, L7, L8 (1401–1407): own contrafacts (*Blue Window* 12-bar blues, *Corner Light*
+   minor ii–V cycle, *Slow Harbor* ballad, *Rio Gray* bossa, *Fast Tracks* rhythm changes, *Minor Street* minor blues)
+   and two PD spirituals (Saints, Swing Low) with our own jazz charts. Interpreted head (long notes kept ≥ 85 %,
+   ≥ 30 % onsets moved), laid-back chorus (mean 40–120 ms, spread ≤ 40 ms), ballad / bossa long notes steady
+   (no vibrato for bossa).
+6. **Scat** `v-scat` L1 call and response, L4 guide tones (per half note ∈ {3, 7} ± 30 ¢), L5 chord-tone landing,
+   L6 chromatic approach (`improvReportBy`), and further L8 tensions on strong beats, L9 two styles (1501–1506).
+
+**Further families (P2, much of P3)**: `v-breath` 601–605 (10 s hold with the last quarter double, phrase on one
+breath, breath plan, 16 s ballad phrase, 20 s fading); `v-range` 801–804 (siren with the break detector `breakOf`,
+5 notes through the break at 3 loudnesses, the range edge, octave-and-a-fifth on one breath); `v-dyn` 901–904
+(cresc/decresc/swell, terraced, accents, phrase arc); `v-vib` 1001–1005 (late narrow jazz vibrato, phrase-end
+vibrato, widening terminal vibrato, straight tone in harmony, consistency over 5 notes); `v-ear` 1201–1202 (named
+chord tones, tensions 9/11/13/♭9/♯11); `v-harmony` 1701–1703 (backing pad, guide-tone line over moving chords,
+close-harmony middle part); `v-inflect` 1801–1802 (scoop, fall, blue-note bend, ghost note); `v-agility` 1601–1602
+(bebop lines at 120 / 160, plus a link to the 8 run levels); `v-sight` 1901 bass clef, 1902 chromatic notes (sight
+items now also switch to the bass clef automatically when the range's low note is A2 or lower); `v-scale` 2001
+arpeggios (a new level instead of changing the mode levels' items, so no one's progress moves).
+
+**Families and migration**: `src/engine/voiceFamilies.ts` holds the 15 families + Barry Harris as a display map
+(family → level numbers). Every old level keeps its number, step id `vocal:<n>` and facts; it is re-homed exactly
+once (tested). `VOCAL_PROGRAMS` is now the families in stage order, so the path opens breath, pitch and songs first.
+The singing screen lists families by stage (Song Singer → Musician Singer → Jazz Singer → Jazz Artist); a level opens
+when the previous level of its family *or* the old previous number passed, so nothing open before is locked.
+New levels: 61, old: 40 → 101 vocal levels on the voice path, plus the 8 run levels and the voice topics.
+
+**Placement probe** (`src/ui/VoiceProbe.tsx`, about 2½ min): a held note, three echoes, four bars on the click, a
+phrase with the band, and a guide-tone line only when those pass. `probeStarts` moves a family one or two levels on
+from a clear pass (≥ 0.85; jazz-experienced singers skip Stage A's first levels); saved per family in `drillStart`,
+the earlier levels become ✓ by test in `withLadderFacts` (open to practise, never "done").
+
+**Connections**: own glyph per family (new drawn `breath` and `mic`; Barry Harris now `sixdim`, scat `improv`), marks
+for the voice topics and lessons so every voice-path step has its own symbol (tested unique); family badges (first
+steps / halfway / whole) and the four milestone badges; rating tags per family (`voiceItemTags`, real sub-skills);
+seven quick lessons with in-depth parts (`src/content/mini/voiceCourse.ts`: breath + registers, drift + chord tones,
+shaping, time feel + bebop, songs with the band, standards, scat); the voice radar shows six axes (pitch, time,
+breath, shape, songs, jazz). After a take the result card replaces the instruction and the trace shrinks (one phone
+screen).
+
+**Not built yet**: F2 L7 quarter tones; F9 L8 sight-singing with accompaniment and L9 jazz lead-sheet reading;
+F13 L8 "my song" (melody extraction from the user's audio); F14 L6 colla voce (the band following the singer),
+L9 full AABA and L10 blues call and response; F15 L2 motif, L3 embellishing a head, L7 bebop syllable accents and
+L10 trading fours; the sung-minutes rest reminder. Tier 1A standards (Love Me or Leave Me, Mean to Me …) need a
+transcription from period sheet music, which was not available here — the standards levels use our contrafacts
+and the spirituals. F10 L1/L3/L5 and F13 L1 remain topics on the path (not vocal levels).
+
+**Unverified**: real-microphone behaviour of the onset engine and the band sync (`heardTime` + calibrated delay) on
+phones, the bleed gate against a full band on a speaker, and the Hebrew copy by a native reviewer. The new quick
+lessons' English narration is not recorded yet (`tests/voiceFiles` "every static line is recorded" fails until then).

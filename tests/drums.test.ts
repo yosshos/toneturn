@@ -10,7 +10,7 @@ import { DEFAULT_DRILL_SETTINGS, type Drill, type ItemState } from '../src/engin
 import { VOICE_NOTE } from '../src/engine/drumKit';
 
 const FAMS = drumFamilies();
-const V1: Record<string, number> = { 'd-strokes': 5, 'd-rolls': 6, 'd-diddles': 9, 'd-time': 6, 'd-rock': 8, 'd-fills': 5, 'd-read': 5, 'd-funk': 4, 'd-shuffle': 4, 'd-indep': 4, 'd-mideast': 9, 'd-feet': 3, 'd-ear': 8, 'd-jazz': 8, 'd-latin': 7 };
+const V1: Record<string, number> = { 'd-strokes': 5, 'd-rolls': 6, 'd-diddles': 9, 'd-time': 6, 'd-rock': 8, 'd-fills': 5, 'd-read': 10, 'd-funk': 4, 'd-shuffle': 4, 'd-indep': 4, 'd-mideast': 9, 'd-feet': 3, 'd-ear': 8, 'd-jazz': 12, 'd-latin': 7, 'd-song': 8, 'd-prog': 10, 'd-count': 5, 'd-notation': 5, 'd-form': 5 };
 const HE = /[֐-׿]/;
 const allDrills = (): { lv: DrumLevelDef; d: Drill }[] => FAMS.flatMap((f) => f.levels.flatMap((lv) => levelDrills(lv, 'fifths-up').map((d) => ({ lv, d }))));
 
@@ -39,7 +39,7 @@ describe('drums v1 catalogue (DRUMS_CURRICULUM §4.3)', () => {
       expect(HE.test(f.title.he)).toBe(true);
     }
     // In the shared catalogue, found by id, and only for the drums instrument.
-    expect(guitarCatalog().filter((f) => f.id.startsWith('d-')).length).toBe(15);
+    expect(guitarCatalog().filter((f) => f.id.startsWith('d-')).length).toBe(20);
     expect(familyById('d-rock')?.levels.length).toBe(8);
     expect(shownFamilies({ emphasis: 'both', instrument: 'drums' }).map((f) => f.id)).toEqual(Object.keys(V1));
     expect(shownFamilies({ emphasis: 'both', instrument: 'bass' }).some((f) => f.id.startsWith('d-'))).toBe(false);
@@ -78,8 +78,8 @@ describe('drums v1 catalogue (DRUMS_CURRICULUM §4.3)', () => {
       if (lv.mic) expect(d.notes.every((n) => n.voice === 'snare'), d.itemId).toBe(true);
     }
     const mic = shownFamilies({ emphasis: 'both', instrument: 'drums', drumMic: true });
-    expect(mic.map((f) => f.id)).toEqual(['d-strokes', 'd-rolls', 'd-diddles', 'd-time', 'd-read', 'd-funk', 'd-ear']);
-    expect(mic.find((f) => f.id === 'd-read')!.levels.length).toBe(4);
+    expect(mic.map((f) => f.id)).toEqual(['d-strokes', 'd-rolls', 'd-diddles', 'd-time', 'd-read', 'd-funk', 'd-ear', 'd-count', 'd-notation']);
+    expect(mic.find((f) => f.id === 'd-read')!.levels.length).toBe(5);
   });
 
   it('tiers follow the level (L1–3 beginner, L4–7 intermediate, L8 advanced); fills land on 1 with crash + kick', () => {

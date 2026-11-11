@@ -13,6 +13,9 @@ import type { Strings } from '../i18n/strings';
 import { KOKORO_MB, type KokoroStatus } from '../speech/kokoro/decide';
 import { useNarratorStatus, useTalk } from './TalkToggle';
 import { DEFAULT_SOUND, bassTuningOf, namingFor, type Settings } from '../storage/progress';
+import { DEFAULT_DRILL_SETTINGS } from '../engine/drills/types';
+import { guitarAddOnsOf } from '../engine/drills/guitarMeta';
+import { GuitarAddOnPicker } from './GuitarAddOns';
 import { Note } from './bits';
 import { previewText } from '../speech/voice/preview';
 import { piano, store, tts } from './services';
@@ -201,6 +204,7 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
 
   // The preview is always English (the only spoken language); the first one waits for the voice to load.
   const preview = () => {
+    void piano.unlock().catch(() => {}); // inside the tap: recordings play through the app's audio (files.ts)
     tts.unlock();
     const en = namingFor(s.naming, 'en');
     const text = previewText(en); // pre-recorded (src/speech/voice/lines.ts)
@@ -508,6 +512,23 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
                   </label>
                   );
                 })()}
+                {/* GUITAR_DEEPENING §5: the guitar course's add-ons, changeable here any time. */}
+                {(s.activeCourse === 'guitar' || (s.courses ?? []).includes('guitar')) && (
+                  <>
+                    <GuitarAddOnPicker value={guitarAddOnsOf(s.drills ?? {}, s.courses)} onChange={(v) => onChange({ drills: { ...DEFAULT_DRILL_SETTINGS, ...(s.drills ?? {}), guitarAddOns: v } })} lang={s.uiLang} />
+                    {/* GUITAR_DEEPENING §8: the modelled guitar's voice (auto follows the add-ons). */}
+                    <label className="field-row">
+                      <span>{s.uiLang === 'he' ? 'צליל הגיטרה' : 'Guitar sound'}</span>
+                      <select value={s.guitarVoice ?? 'auto'} onChange={(e) => onChange({ guitarVoice: e.target.value as NonNullable<Settings['guitarVoice']> })} data-guitar-voice="1">
+                        {(['auto', 'steel', 'nylon', 'electric'] as const).map((v) => (
+                          <option key={v} value={v}>
+                            {{ auto: { en: 'By the add-ons', he: 'לפי התוספות' }, steel: { en: 'Steel-string acoustic', he: 'אקוסטית מיתרי פלדה' }, nylon: { en: 'Nylon-string classical', he: 'קלאסית מיתרי ניילון' }, electric: { en: 'Clean electric', he: 'חשמלית נקייה' } }[v][s.uiLang]}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </>
+                )}
               </>
             )}
             <label className="toggle-row">

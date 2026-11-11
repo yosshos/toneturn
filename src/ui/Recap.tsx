@@ -6,12 +6,11 @@ import { RatingCard } from './Rating';
 import type { RatingChange } from '../engine/rating';
 import { useEffect, useRef, useState } from 'react';
 import { displayNote } from '../engine/pitch';
-import { compareStimulus, pcFromKey } from '../engine/lesson';
+import { compareStimulus } from '../engine/lesson';
 import { songById } from '../engine/songs';
 import { summary } from '../engine/session';
 import type { LessonView } from '../game/controller';
-import { describeShort } from '../engine/rhythm';
-import { answerWord, choiceLabel, giveText, LESSON_META, questionBadge } from '../game/content';
+import { answerShort, capItems, capWords, choiceLabel, giveText, LESSON_META, questionBadge } from '../game/content';
 import type { Strings } from '../i18n/strings';
 import { namingFor, type Settings } from '../storage/progress';
 import { levelOf } from '../engine/level';
@@ -92,7 +91,7 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
     const b = questionBadge(q, lang, nm);
     rec = (
       <>
-        {t.review}: {b.key && <Note>{displayNote(b.key, nm, lang)}</Note>} {b.text} → <b>{q.kind === 'sing' ? `${t.round} ${missed + 1}` : answerWord(q, q.answer, lang)}</b>
+        {t.review}: {b.key && <Note>{displayNote(b.key, nm, lang)}</Note>} {b.text} → <b>{q.kind === 'sing' ? `${t.round} ${missed + 1}` : answerShort(q, q.answer, lang, nm)}</b>
         {s.lesson.id === 'bflat-two-homes' && (
           <>
             <br />
@@ -229,24 +228,21 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
           const r = s.records[i];
           const ok = r.outcome === 'correct' || r.outcome === 'correct-retry';
           const b = questionBadge(q, lang, nm);
+          // A few words however long the item (sequences, dictations, entered notes: answerShort / capWords).
           const ans0 =
             q.kind === 'sing'
               ? `${t.singNow} ${q.promptBy === 'name' ? displayNote(q.target, nm, lang) : q.degree}`
               : q.kind === 'sing-seq'
-                ? `${t.singNow} ${q.degrees.join(' ')}`
-                : q.kind === 'name-seq'
-                  ? q.names.map((k) => { const p = pcFromKey(k); return p ? displayNote(p, nm, lang) : k; }).join(' ')
+                ? `${t.singNow} ${answerShort(q, q.answer, lang, nm)}`
                 : q.kind === 'sing-run'
                   ? `${t.singNow} · ${q.run.offsets.length} × ${q.run.nps}/s`
                 : q.kind === 'note-name'
                   ? displayNote(q.target, nm, lang)
-                  : q.kind === 'rhythm-read'
-                    ? describeShort(q.rhythm, lang)
-                  : q.kind === 'degree-seq'
-                ? q.answer.split('-').join(' ')
+                  : q.kind === 'name-seq' || q.kind === 'rhythm-read' || q.kind === 'rhythm-dict' || q.kind === 'degree-seq' || q.kind === 'place'
+                    ? answerShort(q, q.answer, lang, nm)
                 : typeof q.answer === 'number'
                   ? String(q.answer)
-                  : choiceLabel(q, q.answer, lang).small || choiceLabel(q, q.answer, lang).big;
+                  : capWords(choiceLabel(q, q.answer, lang, nm).small || choiceLabel(q, q.answer, lang, nm).big);
           const song = (q.kind === 'degree-seq' || q.kind === 'sing-seq') && q.song ? songById(q.song) : undefined;
           const ans = song ? `${ans0} · ♪ ${song.title[lang]}` : ans0;
           return (
@@ -265,7 +261,7 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
               <span className="recap-given">
                 {r.attempts.length > 0 && (
                   <>
-                    {t.yourAnswer}: {r.attempts.map((a) => giveText(q, a.answer, lang, nm)).join(', ')}
+                    {t.yourAnswer}: {capItems([...new Set(r.attempts.map((a) => giveText(q, a.answer, lang, nm)))], ', ', 3)}
                   </>
                 )}
               </span>

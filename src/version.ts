@@ -18,6 +18,52 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.70.1',
+    date: '2026-11-11',
+    en: [
+      'While a passage plays, a thin strip shows how long it is and where you are in it',
+      'Rhythm questions (rhythm memory and the like) show no keyboard',
+    ],
+    he: [
+      'בזמן שקטע מתנגן, פס דק מראה את האורך שלו ואיפה אתם בתוכו',
+      'בשאלות קצב (זיכרון קצבי וכדומה) לא מופיעה מקלדת',
+    ],
+  },
+  {
+    version: '0.70.0',
+    date: '2026-11-11',
+    en: [
+      'Bass for jazz and prog: measured swing, Barry Harris, form and arrangement, Latin, odd meters, unisons with the band, polymeter, solos up to trading fours; choose your track (jazz / prog / both)',
+      'Guitar, 79 → 128 levels: exam-grade target tempos, a core path with add-ons (jazz, flamenco, fingerstyle, prog), a guitarist’s ear, jazz and Barry Harris, prog, a chord recognizer, nylon and electric sounds',
+      'Drums, 91 → 133 levels: songs in sections (verse, chorus, road maps, your own chart), prog meters and polyrhythms, reading played on the kit, three new games, jazz with brushes',
+      'Singing, about 100 levels in four stages: timing feel, songs with the band scored per phrase, pitch drift, standards, scat, a placement test',
+      'Rhythm questions no longer show a keyboard',
+    ],
+    he: [
+      'בס לג׳אז ולפרוג: סווינג נמדד, ברי האריס, צורה ועיבוד, לטיני, משקלים אי־זוגיים, יוניסונים עם הלהקה, פולימטר, סולואים עד טריידינג; בוחרים מסלול (ג׳אז / פרוג / שניהם)',
+      'גיטרה, 79 → 128 שלבים: טמפו יעד לפי דרגות בחינה, מסלול ליבה עם תוספות (ג׳אז, פלמנקו, פינגרסטייל, פרוג), שמיעה לגיטריסטים, ג׳אז וברי האריס, פרוג, מזהה אקורדים, צלילי ניילון וחשמלית',
+      'תופים, 91 → 133 שלבים: שירים לפי חלקים (בית, פזמון, מפות דרך, צ׳ארט משלך), משקלי פרוג ופולי־ריתמוס, קריאה שמנוגנת על המערכת, שלושה משחקים חדשים, ג׳אז עם מברשות',
+      'שירה, כ־100 שלבים בארבע תחנות: תחושת זמן, שירים עם להקה וציון לכל משפט, סטיית גובה, סטנדרטים, סקאט, מבחן מיקום',
+      'בשאלות קצב כבר לא מופיעה מקלדת',
+    ],
+  },
+  {
+    version: '0.69.1',
+    date: '2026-11-11',
+    en: [
+      'English narration plays through the app’s own sound (it was silent on some phones); Diagnostics shows why if it still can’t',
+      'Keyboard pictures show their notes again, and Chord Rush plays the chord',
+      'Find my level follows the course (piano, guitar, bass, drums: their playing test; singing: the voice test)',
+      'Summaries stay short for every kind of question',
+    ],
+    he: [
+      'הקריינות באנגלית מושמעת דרך הסאונד של האפליקציה (בחלק מהטלפונים היא לא נשמעה); באבחון מוצג למה אם עדיין לא',
+      'תמונות המקלדת מראות שוב את התווים, ומרוץ האקורדים משמיע את האקורד',
+      '"מציאת הרמה שלי" לפי הקורס (פסנתר, גיטרה, בס, תופים: מבחן הנגינה שלהם; שירה: מבחן הקול)',
+      'הסיכומים נשארים קצרים בכל סוג שאלה',
+    ],
+  },
+  {
     version: '0.69.0',
     date: '2026-11-11',
     en: [

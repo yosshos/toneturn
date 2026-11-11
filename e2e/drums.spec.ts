@@ -237,6 +237,64 @@ test.describe('drums course', () => {
     await fitsScreen(page);
   });
 
+  // DRUMS_NICHE_PLAN P1: songs with the road map, prog meters, notation signs, the drum games — one phone screen each.
+  test.describe('niche families at 390 × 844', () => {
+    test.use({ viewport: { width: 390, height: 844 } });
+    const eKit = { preset: 'gm', map: {}, device: 'Test Kit', done: true };
+    test('a song: the road map above the score, the take on one screen', async ({ page }) => {
+      await stubKit(page);
+      await seed(page, { kit: eKit });
+      await openLevel(page, 'd-song', 'd-song-3');
+      await expect(page.locator('[data-roadmap="live"]')).toBeVisible();
+      await expect(page.locator('.drum-road .road-block')).toHaveCount(7);
+      await fitsScreen(page);
+    });
+    test('road-map reading shows the written signs only', async ({ page }) => {
+      await stubKit(page);
+      await seed(page, { kit: eKit });
+      await openLevel(page, 'd-song', 'd-song-5');
+      await expect(page.locator('[data-roadmap="written"]')).toContainText('D.S. al Coda');
+      await fitsScreen(page);
+    });
+    test('the prog song writes each meter change on the staff', async ({ page }) => {
+      await stubKit(page);
+      await seed(page, { kit: eKit });
+      await openLevel(page, 'd-prog', 'd-prog-10');
+      await expect(page.locator('[data-time-sig="7/8"]').first()).toBeVisible();
+      await fitsScreen(page);
+    });
+    test('notation: tremolo slashes and repeat signs', async ({ page }) => {
+      await stubKit(page);
+      await seed(page, { kit: eKit });
+      await openLevel(page, 'd-notation', 'd-notation-4');
+      await expect(page.locator('[data-trem]').first()).toBeVisible();
+      await fitsScreen(page);
+      await openLevel(page, 'd-notation', 'd-notation-5');
+      await expect(page.locator('[data-repeat-bar]').first()).toBeVisible();
+      await fitsScreen(page);
+    });
+    test('your song: a typed chord chart opens as a take', async ({ page }) => {
+      await stubKit(page);
+      await seed(page, { kit: eKit });
+      await page.goto('/?unlock#/drills');
+      await page.locator('[data-drum-song="open"]').click();
+      await page.locator('#drum-song-text').fill('Verse 4: Am F C G\nChorus 4: F G C C\n= 96');
+      await expect(page.locator('[data-drum-song-parse="ok"]')).toBeVisible();
+      await page.locator('[data-drum-song-play]').click();
+      await expect(page.locator('[data-drills="run"]')).toBeVisible();
+      await expect(page.locator('[data-roadmap="live"]')).toBeVisible();
+      await fitsScreen(page);
+    });
+    for (const g of ['land', 'groove-echo', 'odd-echo'])
+      test(`drum game ${g} fits one screen`, async ({ page }) => {
+        await stubKit(page);
+        await seed(page, { kit: eKit });
+        await page.goto(`/?unlock#/${g}`);
+        await expect(page.locator('main')).toBeVisible();
+        await fitsScreen(page);
+      });
+  });
+
   test('onboarding: picking drums shows the e-kit recommendation', async ({ page }) => {
     await page.goto('/?sim=1&welcome=1&lang=en');
     await page.locator('[data-ob="start"]').click();

@@ -11,6 +11,8 @@ import { UNITS as TIME2 } from './mini/time2';
 import { UNITS as SOUND } from './mini/sound';
 import { UNITS as CHORDREAD } from './mini/chordread';
 import { UNITS as JAZZ_EAR } from './mini/jazzEar';
+import { UNITS as BASS_NICHE } from './mini/bassNiche';
+import { UNITS as DRUMS } from './mini/drums';
 
 export const UNIT_LESSON: Record<string, string> = {
   // 0.38 (spec AE): each area file maps its own topics.
@@ -23,6 +25,10 @@ export const UNIT_LESSON: Record<string, string> = {
   ...SOUND,
   ...CHORDREAD,
   ...JAZZ_EAR,
+  // BASS_NICHE_PLAN: a technique family's first step ("tech:<family>") opens with its quick lesson.
+  ...BASS_NICHE,
+  // DRUMS_NICHE_PLAN P1: the drums niche families open with their quick lesson ("tech:<family>").
+  ...DRUMS,
   // Learning path
   'bflat-two-homes': 'bflat-two-homes',
   'degrees-135': 'degrees-135',
@@ -149,6 +155,20 @@ export const UNIT_LESSON: Record<string, string> = {
   'vocal:sight': 'vocal-sight',
   'vocal:ornaments': 'vocal-ornaments',
   'vocal:singalong': 'songs',
+  // VOICE_CURRICULUM: the voice course's new families (src/content/mini/voiceCourse.ts).
+  'vocal:breath': 'voice-breath',
+  'vocal:drift': 'voice-drift',
+  'vocal:registers': 'voice-breath',
+  'vocal:dynamics': 'voice-dynamics',
+  'vocal:jazz-vibrato': 'voice-dynamics',
+  'vocal:time': 'voice-time',
+  'vocal:ear': 'voice-drift',
+  'vocal:band': 'voice-band',
+  'vocal:standards': 'voice-standards',
+  'vocal:scat': 'voice-scat',
+  'vocal:bebop': 'voice-time',
+  'vocal:harmony-more': 'vocal-harmony',
+  'vocal:inflect': 'voice-dynamics',
   // Play & improvise
   'perform:backing': 'perform-backing',
   'perform:improv': 'perform-improv',
@@ -161,9 +181,13 @@ export const UNIT_LESSON: Record<string, string> = {
   'game:truefalse': 'game-truefalse',
 };
 
+const VOICE_UNIT: Record<number, string> = { 6: 'vocal:breath', 7: 'vocal:drift', 8: 'vocal:registers', 9: 'vocal:dynamics', 10: 'vocal:jazz-vibrato', 11: 'vocal:time', 12: 'vocal:ear', 13: 'vocal:band', 14: 'vocal:standards', 15: 'vocal:scat', 16: 'vocal:bebop', 17: 'vocal:harmony-more', 18: 'vocal:inflect', 19: 'vocal:sight', 20: 'vocal:scales' };
+
 /** The vocal track a vocal level belongs to (level numbers: see Vocal.tsx bases). */
 export function vocalUnit(level: number | 'warmup'): string | null {
   if (level === 'warmup') return null;
+  // VOICE_CURRICULUM: new family levels by their number base.
+  if (level >= 600) return VOICE_UNIT[Math.floor(level / 100)] ?? null;
   if (level > 500) return 'vocal:ornaments';
   if (level > 400) return 'vocal:sight';
   if (level > 300) return 'vocal:barry';

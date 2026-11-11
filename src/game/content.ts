@@ -3,6 +3,7 @@
 
 import { unspoken } from '../speech/speakable';
 import { learnedAnswer } from '../engine/learnedVoice';
+import { spellMidi } from '../engine/aids';
 import { pcFromKey, placeKey, type Answer, type IntroStep, type LessonDef, type LessonId, type Question } from '../engine/lesson';
 import { displayNote, pcValue, spokenMajorKey, spokenNote, type Naming, type PitchClass } from '../engine/pitch';
 import type { SungResult } from '../engine/sing';
@@ -365,6 +366,58 @@ export function introGo(lesson: LessonDef, l: Lang): string {
 
 const namesWords = (keys: string[], nm: Naming, l: Lang) => keys.map((k) => { const p = pcFromKey(k); return p ? spokenNote(p, nm, l) : k; }).join(', ');
 const namesShown = (keys: string[], nm: Naming, l: Lang) => keys.map((k) => { const p = pcFromKey(k); return p ? displayNote(p, nm, l) : k; }).join(' – ');
+
+// ---------------------------------------------------------------- summaries (recap rows, review hint, coach)
+// 0.69 (owner: a recap row of a 6-bar rhythm listed 24 words): anything that grows with the item — sequences,
+// dictations, entered notes — reads in a few words in summaries; the full answer stays in the exercise and its
+// spoken feedback.
+
+/** Items a summary shows before "…". */
+export const SUMMARY_ITEMS = 6;
+/** Words a summary text keeps before "…". */
+export const SUMMARY_WORDS = 8;
+
+/** The first few items, then "…". */
+export function capItems(items: string[], sep = ' ', max = SUMMARY_ITEMS): string {
+  return items.length > max ? `${items.slice(0, max).join(sep)} …` : items.join(sep);
+}
+/** A text cut to a few words, then "…". A list of notes ("C♯ – E♯ – G♯ – B") is cut by notes, not words. */
+export function capWords(text: string, max = SUMMARY_WORDS): string {
+  if (text.includes(' – ')) return capItems(text.split(' – '), ' – ', 5);
+  const ws = text.split(/\s+/).filter(Boolean);
+  return ws.length > max ? `${ws.slice(0, max).join(' ')} …` : text;
+}
+
+/** Entered notes (a place question's key, "60:1.64:0.5" / "0.4.7") as note names in the player's naming. */
+function placeNames(q: Extract<Question, { kind: 'place' }>, key: string, nm: Naming, l: Lang): string[] {
+  if (!key) return [];
+  const keyPc = q.staff?.key ?? null;
+  return key.split('.').map((x) => {
+    const m = Number(x.split(':')[0]);
+    if (!Number.isFinite(m)) return x;
+    const s = spellMidi(q.match === 'pc' ? 60 + m : m, keyPc);
+    return displayNote({ letter: s.letter as PitchClass['letter'], acc: s.acc }, nm, l);
+  });
+}
+
+/** An answer (right or given) in a few words, for summaries. */
+export function answerShort(q: Question, a: Answer, l: Lang, nm: Naming = 'letter'): string {
+  switch (q.kind) {
+    case 'degree-seq':
+      return capItems(String(a).split('-'));
+    case 'name-seq':
+      return capItems(String(a).split('.').map((k) => { const p = pcFromKey(k); return p ? displayNote(p, nm, l) : k; }));
+    case 'sing-seq':
+      return capItems(q.degrees.map(String));
+    case 'rhythm-read':
+      return describeShort(q.rhythm, l);
+    case 'rhythm-dict':
+      return typeof a === 'string' ? describeShort(rhythmFromKey(a, q.rhythm.bars), l) : String(a);
+    case 'place':
+      return capItems(placeNames(q, String(a), nm, l));
+  }
+  return capWords(answerWord(q, a, l, nm));
+}
 
 export function answerWord(_q: Question, a: Answer, l: Lang, nm: Naming = 'letter'): string {
   if (typeof a === 'number') return deg(a, l);
@@ -980,7 +1033,8 @@ export function questionBadge(q: Question, l: Lang, nm: Naming): { key?: PitchCl
 export function giveText(q: Question, a: Answer, l: Lang, nm: Naming = 'letter'): string {
   const asPc = typeof a === 'string' ? pcFromKey(a) : null;
   if (asPc) return displayNote(asPc, nm, l);
-  if (q.kind === 'rhythm-dict') return describeRhythm(rhythmFromKey(String(a), q.rhythm.bars), 'syllables', l);
+  // (a summary: a few words however long the item — answerShort)
+  if (q.kind === 'rhythm-dict') return answerShort(q, a, l, nm);
   if (q.kind === 'rhythm-read') return a === 'accurate' ? (l === 'en' ? 'in time' : 'בזמן') : l === 'en' ? 'off' : 'לא מדויק';
   if (q.kind === 'sing' || q.kind === 'sing-seq' || q.kind === 'sing-run') {
     const m: Record<string, Record<Lang, string>> = {
@@ -991,9 +1045,10 @@ export function giveText(q: Question, a: Answer, l: Lang, nm: Naming = 'letter')
     };
     return m[String(a)]?.[l] ?? String(a);
   }
-  if (q.kind === 'degree-seq') return String(a).split('-').join(' ');
-  if (q.kind === 'name-seq') return namesShown(String(a).split('.'), nm, l);
-  return typeof a === 'number' ? String(a) : choiceLabel(q, a, l).small;
+  if (q.kind === 'degree-seq' || q.kind === 'name-seq' || q.kind === 'place') return answerShort(q, a, l, nm);
+  if (typeof a === 'number') return String(a);
+  const lb = choiceLabel(q, a, l, nm);
+  return capWords(lb.small || lb.big);
 }
 
 /**
