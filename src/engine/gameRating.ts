@@ -46,6 +46,10 @@ const GAMES: Record<string, { tags: (d: Record<string, unknown>) => Tag[]; diff:
   bhtime: { tags: () => T2(['improv', 'bh-lines', 0.6], ['timing', 'precision', 0.4]), diff: () => 1250 },
   riffecho: { tags: (d) => T2(['meter', 'odd', 0.5], ['instrument', d.input === 'kit' ? 'drum-echo' : 'echo', 0.5]), diff: () => 1200 },
   polylock: { tags: () => T2(['timing', 'poly', 0.6], ['rhythm', 'poly', 0.4]), diff: () => 1200 },
+  // Drum games P1 (DRUMS_NICHE_PLAN §3): measured takes on the kit — the drummer's technique, plus time / meter / ear.
+  land: { tags: () => T2(['instrument', 'drum-tech', 0.7], ['timing', 'steady', 0.3]), diff: () => 1000 },
+  'groove-echo': { tags: () => T2(['instrument', 'drum-tech', 0.5], ['rhythm-dictation', 'dictate', 0.5]), diff: () => 1000 },
+  'odd-echo': { tags: () => T2(['instrument', 'drum-tech', 0.5], ['meter', 'odd', 0.5]), diff: () => 1100 },
 };
 
 /** Normalised accuracy 0..1 of a finished game from what it reports. */

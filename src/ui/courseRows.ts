@@ -11,7 +11,8 @@ export const COURSE_GAMES: Record<CourseId, string[]> = {
   guitar: ['drills', 'rush-fretboard', 'tuneup', 'rush-chord', 'highway', 'rush-note', 'rhythm', 'rush-voicing', 'riffecho'],
   bass: ['drills', 'rush-fretboard', 'tuneup', 'highway', 'rush-note', 'rhythm', 'riffecho'],
   // 0.65: technique on the kit, Highway with drum lanes, beat echo, the groove trainer.
-  drums: ['drills', 'highway', 'rhythm', 'groove', 'polylock'],
+  // DRUMS_NICHE_PLAN §3 (P1): Land It, Groove Echo, Odd-meter Echo — measured takes on the kit.
+  drums: ['drills', 'highway', 'rhythm', 'groove', 'land', 'groove-echo', 'odd-echo', 'polylock'],
 };
 /** What Practice shows in each course (0.61, SPEC-COURSES): only the course's own rows; tools are shared. */
 export const COURSE_ROWS: Record<CourseId, string[]> = {

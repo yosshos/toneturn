@@ -342,3 +342,92 @@ Build them once, in `types.ts` / `drills/events.ts` and the metronome, before ei
   Alberta, 2009).
 - RSL / Rockschool syllabus structure (ear tests, sight reading, the quick-study piece) as read for the guitar plan:
   https://cloud.rslawards.com/file/download/rockschoolguitar2012syllabusnew.pdf. RSL drums follows the same exam shape.
+
+---
+
+## Implemented (2026-11-11)
+
+P1 is built, and P2 jazz 9–12 too. The drums course now has **20 families and 133 levels** (it had 15 and 91).
+Mambo, songo and Mozambique are still not built: a teacher has to check the patterns first. No commercial recording
+is used anywhere. Every band is generated from a chord chart, and "Your song" is a chord-only chart that the player
+types.
+
+### Content
+
+| Item | Where | What |
+|---|---|---|
+| `d-song` (8) | `drills/drumSong.ts` | <ul><li>L1 verse → chorus, on the cue</li><li>L2 a fill at every section end</li><li>L3 the full pop form (intro, verse, pre-chorus, chorus, half-time bridge, chorus, ending)</li><li>L4 stops and band hits: crash + kick on each hit, a snare set-up before it, a stop-time section</li><li>L5 reading the road map: repeats and D.S. al Coda, or 1st / 2nd endings and D.C. al Fine. The road map shows the signs only.</li><li>L6 the dynamics arc: verse mf, chorus f, breakdown p</li><li>L7 style songs: a 12-bar shuffle, a funk vamp with a breakdown, a Mizrahi song (maqsum → baladi → chiftetelli)</li><li>L8 your song: a typed chart (`Verse 8: Am F C G` / `= 96`), with three demo charts as the level items and a **Your song** card on the drums Technique hub</li></ul>Section lengths, kick figures, fills and charts are seeded per item. |
+| Song builder | `drumSong.ts` `buildSong` | Writes a section plan (roadmap.ts `FormPlan`) as the drum part, section by section: grooves, a fill in the bar before a marked section, crash + kick on each section's 1, hits, stop-time, an ending. The band is the comping plus a bass on the kick from the chart; `tacet` and bass rests cover breakdowns. `d-form`, `d-jazz` 10–12 and the prog song use it as well. |
+| `d-prog` (10) | `drills/drumProg.ts` | <ul><li>L1 7/8 and 5/4 rock, the backbeat placed by group</li><li>L2 9/8, 11/8 and 13/8, plus 8/8 alternating 3+3+2 / 2+3+3 bar by bar, with an accented hi-hat</li><li>L3 16th groupings of 3 and 5 across the bar line</li><li>L4 polymeter: a 7/8, 3/4 or 5/8 cycle over 4/4, the band's bass in unison with the cycle</li><li>L5 polyrhythm between limbs, per beat: 3:2, 4:3, 5:4</li><li>L6 metric modulation (tempo map: × 3/2, × 4/3, × 2/3)</li><li>L7 linear grooves and an R L L K tom fill</li><li>L8 displaced backbeat (by a 16th or an 8th) and a displaced cymbal</li><li>L9 quintuplets, sextuplets, six-stroke roll fills</li><li>L10 a prog song: a 7/8 (or 5/8) riff with the band in unison, a 4/4 chorus, a bridge modulated × 4/3, the riff back at the first tempo</li></ul> |
+| Reading 6–10 | `drills/drumTheory.ts` | <ul><li>`d-read` 6 triplets, the shuffle written out, and "swing" (straight 8ths under a Swing marking, played and measured swung)</li><li>7 a 16th kick with ghost notes</li><li>8 tom fills with sticking (shown, not graded)</li><li>9 7/8 and 9/8 with group beams</li><li>10 a 4-bar groove + fill at sight, with 20 s to study it</li></ul> |
+| `d-count` (5) | `drumTheory.ts` | Simple vs compound; 6/8 vs 3/4 with the signature changing every 2 bars; 7/8 2+2+3 vs 3+2+2 as written; time-signature changes in a groove; counting rests through multi-bar rests with the click thinning out. |
+| `d-notation` (5) | `drumTheory.ts` | The drum key (any drum on each beat, played); noteheads (x, round, open-hat circle); accents and ghosts, flams, drags; tremolo slashes (1, 2, 3); repeat bars and multi-bar rests. |
+| `d-form` (5) | `drumTheory.ts` | A crash on each section start, the lengths read off a written chart (4 / 8, then 4–16); the 12-bar blues (two choruses); AABA on the swing ride; repeats with 1st / 2nd endings. |
+| `d-jazz` 9–12 (P2) | `drills/drumJazz.ts` | <ul><li>9 brushes ballad: the taps are scored (timing, swing, feathered kick); the sweep is shown in the title and never scored</li><li>10 comping over a blues (busier in the 2nd chorus, snare or snare + kick) or over AABA (busier into the bridge)</li><li>11 set-ups and ensemble hits, with triplet set-ups</li><li>12 a 2-feel in A, 4 in the bridge, trading 8s (band out, only the landing measured), ♩240–300</li></ul> |
+| Games | `engine/drumGames.ts`, `ui/DrumGame.tsx` | <ul><li>Land It: the fill length is called one bar ahead; scored on the landing, the groove resuming and no rush in the fill</li><li>Groove Echo: styles rise with the tier</li><li>Odd-meter Echo: 5/8 to 15/8, accents on the group starts, played on the kit</li></ul>Each has six tiers in `gameTiers.ts` (rated from drum technique, accuracy clear), is in `COURSE_GAMES.drums` and the Practice games, is a path game step on the drums path, has its own symbol and rating tags, and gives XP and runs through the tier clear rules. |
+
+### Measurement (`drumAnalyze.ts`, the drum rules the prog engine left open)
+
+- **Linear** (`goal.drum.linear` ⚙ 15 ms, max 0): two drums within 15 ms where the part writes one note count as a
+  coincidence. Their share of the hits gives the verdict: about 1 in 60 is "almost", more is "not". MIDI only,
+  because a microphone merges hits that close together.
+- **Limb ratio** (`goal.drum.poly` ⚙ ±4 %): each lane's played tempo (the median played ÷ written IOI) must match the
+  other lane's.
+- **Songs** (`goal.drum.song`), each checked separately:
+  - every section of the form needs ≥ 85 % of its notes on time;
+  - ≥ 75 % of the fill-zone notes must be played;
+  - the dynamics arc: the median velocity of the loud part ≥ 1.15 × the soft part's ⚙;
+  - drift: each section's tempo (a least-squares slope) within ±2 %.
+- **Landings and hits** use `goal.drum.landing` (crash + kick, ±25 ms ⚙).
+- **Lost bars** come from the shared `analyzeForm` (`goal.prog.form = { lost: 0 }`).
+- **Metric modulation** (`goal.drum.modulation` ⚙ ±2 %): the played ratio at each change of the tempo map, measured
+  with least-squares slopes over two bars on each side. The shared `tempoChecks` / `analyzeForm` drift
+  (note-to-note IOI medians) failed steady human takes (jitter at 45 % of the tier SD) at 2–3 %. The drum side
+  therefore uses its own slope measure and does not set `goal.prog.tempoRatio` or the form `drift` / `landMs`. The
+  bass and guitar agents may want the same.
+- **Accents on one line** (`goal.drum.accentVoices`): an accented hi-hat over kick and snare is judged on the hat
+  only.
+- **Notation** (`drumNotation.ts`, `DrumViews.tsx`):
+  - quintuplets get a 5, and tuplets (3 / 5 / 6) now have a bracket;
+  - mixed meters with signatures where they change (in a strip above the staff);
+  - tremolo slashes, repeat-bar signs and multi-bar rests;
+  - the Swing marking;
+  - sticking on tom fills;
+  - the **road map** above the score. Live mode lights the current section and cues the next one a bar ahead.
+    Written mode shows the chart's signs and the bar count only.
+
+### Around the content
+
+- Every new family is wired in everywhere else:
+  - path symbols, all unique on the drums path: `roadmap`, `progmeter`, `counting`, `drumkey`, `dsform`, and
+    `landit`, `grooveecho`, `oddecho` for the games;
+  - Hebrew and English titles;
+  - path order (`DRUM_LATER`: notation 1, count 2, form 3, song 4, prog 6);
+  - Technique hub topics;
+  - family badges (automatic);
+  - rating tags (form/song, meter odd / compound / count, rhythm-dictation/poly, kit reading).
+- **Quick lessons** (`content/mini/drums.ts`, a core part and an in-depth part each) cover drumming a song, prog and
+  fusion time, counting meters, drum notation, and song form. They open before a family's first path step
+  (`gate('tech:<family>')`, a one-line change in `App.tsx` `openPathStep`). Their English narration is not recorded
+  yet, so `voiceFiles` "every static line is recorded" fails until it is.
+- **Acoustic kit / pad:** no new level is added to `ACOUSTIC_LEVELS` before a real-kit check. Single-surface levels
+  stay on a practice pad by microphone: `d-read` 6, `d-count` 1, 2, 3 and 5, `d-notation` 4, and Odd-meter Echo.
+- **Tests:**
+  - `tests/drumNiche.test.ts` runs perfect and human take sweeps (jitter 0.45 × the tier SD, 2 seeds) through the drum
+    analysis + `withProg`, plus a sloppy take. It also checks: a skipped bar is a lost bar, a late chorus landing, rushing,
+    a missing fill, flat dynamics, a coincidence, limb drift, the modulation error, the tuplet numbers, the typed song
+    and jazz 9–12.
+  - `tests/drumGames.test.ts`.
+  - `e2e/drums.spec.ts` checks one phone screen at 390 × 844 for a song, road-map reading, the prog song, notation
+    signs, Your song, and the three games.
+
+### Not verified (needs a real kit, §7)
+
+- All the ⚙ thresholds above: the 15 ms coincidence window, the ±4 % limb ratio, ±2 % drift and modulation, the 1.15
+  arc, ±25 ms landings, and the 85 % section share. The game windows too (Land It ±30 → 18 ms, the 0.98 rush limit).
+- Brushes on e-kits and by microphone; the sweep is unscored on purpose.
+- The band's bass line reads a constant bar, so the prog song uses a unison bass on the riff instead (no walking bass
+  in mixed meters).
+- How the road map, the game screens and the Your song card look and feel on a real phone with a real kit. Screens
+  were checked in headless Chrome at 390 × 844 (Hebrew and English). The takes were measured with synthetic hits
+  only.

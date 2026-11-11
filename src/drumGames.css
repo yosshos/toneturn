@@ -1,0 +1,12 @@
+/* Drum games P1 (src/ui/DrumGame.tsx): one phone screen per round — status, cue, a two-line score, the take. */
+.dg-screen .set-card { display: flex; flex-direction: column; gap: 12px; }
+.dg-play { display: flex; flex-direction: column; gap: 8px; }
+.dg-status { margin: 0; }
+.dg-cue { margin: 0; font-weight: 600; min-height: 1.4em; text-align: center; }
+.dg-cue[data-dg-cue='1'] { color: var(--accent, #6d28d9); }
+.dg-score { max-height: 44vh; overflow: hidden; }
+.dg-result { display: flex; flex-direction: column; gap: 8px; align-items: stretch; }
+.dg-result .dg-line { margin: 0; text-align: center; }
+.dg-result.bad .dg-line { color: var(--bad, #b42318); }
+.dg-big { font-size: 2.6rem; font-weight: 700; text-align: center; margin: 0; }
+.dg-actions { display: flex; gap: 8px; justify-content: center; }

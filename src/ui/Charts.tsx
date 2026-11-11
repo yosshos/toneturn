@@ -21,7 +21,10 @@ import { midi } from '../speech/midi';
 import { MODE_NAMES, type ModeId } from '../engine/modes';
 import { BAR_SCALES, RULE_NAME, autoScale, challengeOf, checkRules, type PlayedNote, type RuleSet, type RulesReport } from '../engine/improvRules';
 import { LeadSheetImport, RulesPanel } from './ImprovRules';
+import { improvCaptureOpts } from '../engine/drills/bassNiche';
 import { irealStyle, type LeadSheet } from '../engine/leadsheet';
+import { ListenIcons, ListenOriginal } from './ListenOriginal';
+import { referenceOf } from '../content/references';
 
 export interface MyChart {
   id: string;
@@ -36,6 +39,16 @@ export interface MyChart {
   melody?: { b: number; d: number; m: number }[];
   /** An improvisation level this chart came from (best scores are kept per level). */
   level?: string;
+  /** The standard (standards.ts id) this chart came from: its reference recordings are linked (owner 2026-11-11). */
+  std?: string;
+}
+
+const PC: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+/** The pitch class of a chart's first chord root (null when it has none). */
+export function firstRootPc(text: string): number | null {
+  const m = /(?:^|[\s|])([A-G])([#♯b♭]?)/.exec(text);
+  if (!m) return null;
+  return (PC[m[1]] + (m[2] === '#' || m[2] === '♯' ? 1 : m[2] ? -1 : 0) + 12) % 12;
 }
 
 const RX = {
@@ -69,6 +82,7 @@ export function ChartsScreen({ settings, onChange, onBack, onImprov, onDrill, on
     return (
       <ChartPlayer
         lang={lang}
+        capture={improvCaptureOpts(settings)}
         chart={open}
         saved={mine.some((c) => c.id === open.id)}
         onSave={(c) => {
@@ -163,13 +177,14 @@ export function ChartsScreen({ settings, onChange, onBack, onImprov, onDrill, on
         <summary>{STANDARD_GROUPS[g][lang]} <small dir="ltr">({STANDARD_CHANGES.filter((x) => x.group === g).length})</small></summary>
         <ul className="ch-list">
           {STANDARD_CHANGES.filter((x) => x.group === g).map((t) => (
-            <li key={t.id}>
-              <button className="ch-row" onClick={() => setOpen({ id: newId(), title: `${t.name} — ${t.part[lang]}`, text: t.text, style: t.style, bpm: t.bpm })} data-standard={t.id}>
+            <li key={t.id} className="ch-std">
+              <button className="ch-row" onClick={() => setOpen({ id: newId(), title: `${t.name} — ${t.part[lang]}`, text: t.text, style: t.style, bpm: t.bpm, std: t.id })} data-standard={t.id}>
                 <b dir="ltr">{t.name}</b>
                 <small>
                   {t.part[lang]} · {'★'.repeat(t.level)}
                 </small>
               </button>
+              <ListenIcons id={t.id} lang={lang} />
             </li>
           ))}
         </ul>
@@ -193,7 +208,7 @@ export function ChartsScreen({ settings, onChange, onBack, onImprov, onDrill, on
   );
 }
 
-function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, onDrill, best }: { best?: Record<string, number>; lang: 'en' | 'he'; chart: MyChart; saved: boolean; onSave: (c: MyChart) => void; onDelete: () => void; onBack: () => void; onImprov?: (score: number, bpm: number, chords: number, level?: string, challenge?: string) => void; onDrill?: (kind: string, stride: boolean) => void }) {
+function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, onDrill, best, capture }: { best?: Record<string, number>; /** BASS_NICHE_PLAN J3b: the bass's low-register capture in the bass course (E1 = 41 Hz). */ capture?: { minHz: number; fftSize: number } | null; lang: 'en' | 'he'; chart: MyChart; saved: boolean; onSave: (c: MyChart) => void; onDelete: () => void; onBack: () => void; onImprov?: (score: number, bpm: number, chords: number, level?: string, challenge?: string) => void; onDrill?: (kind: string, stride: boolean) => void }) {
   const tx = TX[lang];
   const ix = IMP[lang];
   const [headphones, setHeadphones] = useHeadphones();
@@ -374,6 +389,7 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
         maxMs: b.length * 1000,
         silenceMs: 600_000,
         hopMs: 20,
+        ...(capture ?? {}),
         onFrame: (f) => {
           if (f.t < listenFrom) return gate?.calibrate(f);
           if (gate && f.t - listenFrom < 0.03) gate.finishCalibration();
@@ -418,6 +434,12 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
   const pct = (x: number) => `${Math.round(x * 100)}%`;
   const cur = beat >= 0 ? chordAtBeat(parsed, meter, beat) : null;
   const curBar = beat >= 0 ? Math.floor(beat / meter) : -1;
+  // Reference recordings: the practice key follows the chart's transposition (its first root against the standard's).
+  const stdRef = referenceOf(chart.std);
+  const stdText = chart.std ? STANDARD_CHANGES.find((x) => x.id === chart.std)?.text : undefined;
+  const r0 = stdText ? firstRootPc(stdText) : null;
+  const r1 = firstRootPc(text);
+  const practiceKey = stdRef ? { ...stdRef.appKey, pc: r0 !== null && r1 !== null ? (((stdRef.appKey.pc + r1 - r0) % 12) + 12) % 12 : stdRef.appKey.pc } : undefined;
   const barChords = Array.from({ length: parsed.bars }, (_, i) => parsed.chords.filter((c) => c.bar === i));
   return (
     <main className="panel-screen charts ch-play" data-chart-player="1">
@@ -427,6 +449,23 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
         </button>
         <input className="ch-title" value={title} onChange={(e) => setTitle(e.target.value.slice(0, 40))} aria-label={tx.name} />
       </header>
+      {stdRef && (
+        <ListenOriginal
+          id={chart.std}
+          lang={lang}
+          practiceKey={practiceKey}
+          onPractiseIn={
+            playing
+              ? undefined
+              : (pc) => {
+                  const d = (((pc - (practiceKey?.pc ?? pc)) % 12) + 18) % 12 - 6;
+                  if (!d) return;
+                  setText((t) => transposeChart(t, d));
+                  setMelody((ms) => ms.map((n) => ({ ...n, m: n.m + d })));
+                }
+          }
+        />
+      )}
       <div className="ch-grid" dir="ltr" style={{ ['--cols' as string]: Math.min(4, Math.max(1, parsed.bars)) }}>
         {barChords.map((cs, i) => (
           <span

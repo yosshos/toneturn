@@ -616,7 +616,7 @@ export const GAME_CATS: { id: GameCat; icon: string; en: string; he: string }[] 
   { id: 'instrument', icon: '🎸', en: 'Instrument & sound', he: 'כלי וסאונד' },
   { id: 'social', icon: '⚔', en: 'Against others', he: 'מול אחרים' },
 ];
-export const GAMES2: { id: 'drills' | 'highway' | 'flight' | 'melodypuzzle' | 'nametune' | 'tuneup' | 'pitchmemory' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'peakhunter' | 'rush-voicing' | 'rush-scale' | 'rush-standard' | 'reharm' | 'transcribe' | 'bhtime' | 'riffecho' | 'polylock'; icon: string; hue: string; cat: GameCat; en: [string, string]; he: [string, string] }[] = [
+export const GAMES2: { id: 'drills' | 'highway' | 'flight' | 'melodypuzzle' | 'nametune' | 'tuneup' | 'pitchmemory' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'peakhunter' | 'rush-voicing' | 'rush-scale' | 'rush-standard' | 'reharm' | 'transcribe' | 'bhtime' | 'riffecho' | 'polylock' | 'land' | 'groove-echo' | 'odd-echo'; icon: string; hue: string; cat: GameCat; en: [string, string]; he: [string, string] }[] = [
   { id: 'rush-chord', icon: '🎹', hue: 'var(--hue-pitch)', cat: 'read', en: ['Chord Rush', 'Name chords on the neck, keys or staff — 60 seconds.'], he: ['מרוץ אקורדים', 'זהו אקורדים על הצוואר, הקלידים או החמשה — 60 שניות.'] },
   { id: 'rush-note', icon: '𝄞', hue: 'var(--hue-reading)', cat: 'read', en: ['Note Rush', 'Read notes off the staff as fast as you can.'], he: ['מרוץ תווים', 'קראו תווים מהחמשה הכי מהר שאפשר.'] },
   { id: 'rush-keysig', icon: '♯', hue: 'var(--hue-reading)', cat: 'read', en: ['Key Signature Rush', 'Sharps and flats → the key, fast.'], he: ['מרוץ סימני מפתח', 'דיאזים ובמולים → הסולם, מהר.'] },
@@ -640,6 +640,10 @@ export const GAMES2: { id: 'drills' | 'highway' | 'flight' | 'melodypuzzle' | 'n
   { id: 'bhtime', icon: '', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Barry Harris in Time', 'Play 8th-note lines over the changes — measured.'], he: ['בארי האריס בזמן', 'מנגנים קווי שמיניות מעל המהלך — במדידה.'] },
   { id: 'riffecho', icon: '', hue: 'var(--hue-time)', cat: 'rhythm', en: ['Odd-Meter Riff Echo', 'Hear a riff in 5, 7 or 11 — play it back.'], he: ['הד ריפים במשקל אי־זוגי', 'שומעים ריף ב־5, 7 או 11 — מנגנים אותו בחזרה.'] },
   { id: 'polylock', icon: '', hue: 'var(--hue-time)', cat: 'rhythm', en: ['Polyrhythm Lock', 'Two hands, two pulses: 3 against 2 up to 7 against 4.'], he: ['נעילת פולי־ריתם', 'שתי ידיים, שתי פעימות: 3 נגד 2 ועד 7 נגד 4.'] },
+  // Drum games P1 (DRUMS_NICHE_PLAN §3): only in the drums course (COURSE_GAMES).
+  { id: 'land', icon: '', hue: 'var(--hue-time)', cat: 'instrument', en: ['Land It', 'A fill is called one bar ahead — play it, land crash + kick on 1.'], he: ['לנחות על 1', 'מעבר נקרא תיבה מראש — נגנו אותו ונחתו בקראש + קיק על 1.'] },
+  { id: 'groove-echo', icon: '', hue: 'var(--hue-time)', cat: 'rhythm', en: ['Groove Echo', 'Hear a groove, play it back on the kit.'], he: ['הד לגרוב', 'שומעים גרוב ומנגנים אותו בחזרה על המערכת.'] },
+  { id: 'odd-echo', icon: '', hue: 'var(--hue-time)', cat: 'rhythm', en: ['Odd-meter Echo', 'One bar of 7/8 or 9/8 — 2+2+3 or 3+2+2? Play it back.'], he: ['הד במשקל מוזר', 'תיבה של 7/8 או 9/8 — 2+2+3 או 3+2+2? נגנו אותה בחזרה.'] },
 ];
 
 /** Practice tab hub (owner 2026-11-08): songs, technique and singing get their own place above the games, with the tools. */

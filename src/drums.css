@@ -427,3 +427,59 @@
   min-width: 64px;
   line-height: 1.15;
 }
+
+/* ---------------------------------------------------------------- road map (DRUMS_NICHE_PLAN §2.2): one row above the score */
+.drum-road {
+  display: flex;
+  align-items: stretch;
+  gap: 3px;
+  min-width: 0;
+  padding: 0 2px 4px;
+  font: 600 11px var(--font);
+}
+.drum-road .road-block {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  padding: 3px 4px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--card-2);
+  color: var(--ink);
+  text-align: center;
+}
+.drum-road .road-block small {
+  margin-inline-start: 3px;
+  color: var(--ink-soft);
+  font-weight: 500;
+}
+.drum-road .road-block.past {
+  opacity: 0.55;
+}
+.drum-road .road-block.on {
+  border-color: var(--purple);
+  background: color-mix(in srgb, var(--purple) 14%, var(--card));
+}
+.drum-road .road-cue,
+.drum-road .road-bar {
+  flex: 0 0 auto;
+  align-self: center;
+  padding: 2px 6px;
+  border-radius: 8px;
+  background: var(--ink);
+  color: var(--card);
+  white-space: nowrap;
+}
+.drum-road.written {
+  flex-wrap: wrap;
+}
+.drum-road .road-sign {
+  padding: 2px 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--card-2);
+  color: var(--ink);
+  white-space: nowrap;
+}

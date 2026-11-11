@@ -113,6 +113,11 @@ export const TOPIC_MARK: Record<string, string> = {
   'guide-line': '7–3',
   'jazz-phrase': 'lick',
   'jazz-form': '12',
+  // VOICE_CURRICULUM: the voice path's topics (each its own mark next to the 16 vocal families).
+  'sing-intervals': 'P5↑',
+  'song-sing': 'tune',
+  'sight-tap': '♪+♩',
+  'sight-modulate': 'mod.',
 };
 
 /** Topics that keep a drawn symbol (GLYPHS) instead of a mark. */
@@ -162,6 +167,13 @@ export const LESSON_MARK: Record<string, string> = {
   'rhythm-shift': 'shift',
   transpose: 'trp',
   'basics-beat': '♩♩',
+  // VOICE_CURRICULUM: the voice path's lessons.
+  'basics-voice': 'la',
+  runs: 'run',
+  'sing-names': 'C4?',
+  'sing-home-five': '1·5',
+  'chord-tones': 'ch.t',
+  'sing-degrees': 'deg',
 };
 /** Lessons that keep a drawn symbol. */
 export const LESSON_DRAWN: Record<string, string> = {

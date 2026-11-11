@@ -15,6 +15,9 @@ import { listenLoop } from './Flight';
 import { Glyph, type GlyphKind } from './Glyph';
 import { LatencyCalibrate, type LatencyValues } from './LatencyCalibrate';
 import { useLineWindow } from './DrillTake';
+import { beamGroupAt, hasTimeline, staffLines, timeMapOf } from '../engine/drills/timeline';
+import { expandForm } from '../engine/drills/roadmap';
+import { SECTION_HE, sectionName } from '../engine/drills/drumSong';
 
 type Lang = 'he' | 'en';
 
@@ -34,25 +37,128 @@ function marksOf(result?: TakeMetrics | null): Map<string, NoteMark> {
   return out;
 }
 
+/** One line of the score: its drill-beat range and bars (a time signature where it changes, beam groups for x/8 bars). */
+interface LineGeo {
+  from: number;
+  to: number;
+  bars: { from: number; len: number; index: number; sig?: string; groups?: number[] }[];
+}
+/**
+ * The score's lines. Constant-meter drills: `bars` bars a line, as before. Timeline drills (mixed meters, a tempo map,
+ * songs): whole bars up to two 4/4 bars a line (one when dense), a signature where the meter changes.
+ */
+function scoreLines(drill: Drill, bars: 1 | 2): LineGeo[] {
+  if (!hasTimeline(drill)) {
+    const meter = drill.meter || 4;
+    const per = meter * bars;
+    const n = Math.max(1, Math.ceil(drill.beats / per - 1e-6));
+    return Array.from({ length: n }, (_, li) => ({ from: li * per, to: (li + 1) * per, bars: Array.from({ length: bars }, (_, k) => ({ from: li * per + k * meter, len: meter, index: li * bars + k })) }));
+  }
+  const q = drill.pulse === 8 ? 0.5 : 1;
+  const changes = (drill.meters?.length ?? 0) > 1;
+  let index = 0;
+  return staffLines(drill, bars === 1 ? 4 : 8).map((l) => ({
+    from: l.from / q,
+    to: l.to / q,
+    bars: l.bars.map((b) => ({ from: b.from / q, len: b.len / q, index: index++, ...(b.sig && (changes || b.sig !== '4/4') ? { sig: b.sig } : {}), ...(b.groups ? { groups: b.groups.map((g) => g / q) } : {}) })),
+  }));
+}
+
+/** A note as drawn: swung skip notes written straight (drum.swing8), tremolo strokes folded into one head. */
+type ShownNote = ExpNote & { key: string; trem?: 1 | 2 | 3; hidden?: boolean };
+function shownNotes(drill: Drill): ShownNote[] {
+  const trem = drill.drum?.trem ?? [];
+  return drill.notes.map((n) => {
+    const key = noteKey(n);
+    const t = trem.find((x) => n.beat >= x.beat - 1e-6 && n.beat < x.beat + x.dur - 1e-6);
+    if (t) return Math.abs(n.beat - t.beat) < 1e-6 ? { ...n, key, dur: t.dur, trem: t.slashes } : { ...n, key, hidden: true };
+    if (drill.drum?.swing8 && n.swing) return { ...n, key, beat: Math.floor(n.beat + 1e-6) + 0.5, dur: 0.5 };
+    return { ...n, key };
+  });
+}
+
 /** The drill's notes, two bars a line (one for dense rudiments), in a window of two lines that follows the take (B2, one screen). */
 export function DrumScore({ drill, view, result, beat = -1, lang }: { drill: Drill; view: 'staff' | 'lanes'; result?: TakeMetrics | null; beat?: number; lang: Lang }) {
   const meter = drill.meter || 4;
   // Eighth-pulse meters: a drill beat is an eighth — measure the density in quarters.
   const q = drill.pulse === 8 ? 0.5 : 1;
   const bars = view === 'staff' ? barsPerLine(q === 1 ? drill.notes : drill.notes.map((n) => ({ beat: n.beat * q, voice: n.voice })), meter * q) : 2;
-  const per = meter * bars;
-  const lines = Math.max(1, Math.ceil(drill.beats / per - 1e-6));
+  const geo = scoreLines(drill, bars);
+  const lines = geo.length;
+  const lineOf = (b: number) => Math.max(0, geo.findIndex((l) => b >= l.from - 1e-6 && b < l.to - 1e-6));
   const marks = marksOf(result);
   const firstBad = result ? drill.notes.findIndex((n) => (marks.get(noteKey(n)) ?? 'ok') !== 'ok') : -1;
-  const { from, pager } = useLineWindow(lines, beat, per, firstBad >= 0 ? Math.floor(drill.notes[firstBad].beat / per) : 0);
+  // The window follows the line the take is in (lines may differ in length on a timeline drill).
+  const { from, pager } = useLineWindow(lines, beat >= 0 ? lineOf(beat) : -1, 1, firstBad >= 0 ? lineOf(drill.notes[firstBad].beat) : 0);
   const shown = Array.from({ length: Math.min(2, lines - from) }, (_, i) => from + i);
+  const notes = shownNotes(drill);
   return (
     <div className={`drum-score ${view}`} dir="ltr" data-drum-view={view} data-drum-lines={lines} data-drum-bars={bars}>
+      {drill.form && <DrumRoadMap drill={drill} beat={beat} lang={lang} />}
       {shown.map((li) =>
-        view === 'staff' ? <StaffLine key={li} drill={drill} line={li} per={per} bars={bars} marks={marks} beat={beat} sticking={!!drill.drum?.mic || drill.notes.some((n) => n.grace)} /> : <LaneLine key={li} drill={drill} line={li} per={per} marks={marks} beat={beat} />,
+        view === 'staff' ? <StaffLine key={li} drill={drill} notes={notes} line={li} geo={geo[li]} marks={marks} beat={beat} sticking={!!drill.drum?.mic || !!drill.drum?.sticking || drill.notes.some((n) => n.grace)} /> : <LaneLine key={li} drill={drill} line={li} geo={geo[li]} marks={marks} beat={beat} />,
       )}
       {pager}
       {view === 'lanes' && <p className="drum-key">{lang === 'he' ? 'עיגול גדול = הדגשה · עיגול חלול = רפאים · טבעת = היי־האט פתוח' : 'Big = accent · hollow = ghost · ring = open hat'}</p>}
+    </div>
+  );
+}
+
+/** Words of the road map's signs in Hebrew (the symbols stay). */
+const signText = (s: string, lang: Lang): string => (lang === 'he' ? s.split(' ').map((w) => (w !== 'Coda' && SECTION_HE[w] ? SECTION_HE[w] : w)).join(' ') : s);
+
+/**
+ * The road map (DRUMS_NICHE_PLAN §2.2): one row of section blocks above the score. Live: the current section lit, the
+ * next one cued one bar ahead ("→ Chorus"), the bar in the section. Written (road-map reading): the chart's signs and
+ * the bar count only — the player follows the repeats, endings and D.S. on their own.
+ */
+export function DrumRoadMap({ drill, beat, lang }: { drill: Drill; beat: number; lang: Lang }) {
+  const spans = expandForm(drill.form!, drill.pulse);
+  const tm = timeMapOf(drill, 60);
+  const bar = beat >= 0 ? tm.barAt(beat).index : -1;
+  if (drill.drum?.roadmap === 'written') {
+    const signs = drill.drum.chartSigns ?? spans.map((s) => `${s.name} ${s.bars}`);
+    return (
+      <div className="drum-road written" data-roadmap="written">
+        {signs.map((s, i) => (
+          <span key={i} className="road-sign" dir="ltr">
+            {signText(s, lang)
+              .split(' ')
+              .map((w, j) => (
+                <span key={j}>
+                  {j ? ' ' : ''}
+                  {/[א-ת]/.test(w) ? <bdi>{w}</bdi> : w}
+                </span>
+              ))}
+          </span>
+        ))}
+        <b className="road-bar" aria-live="off">
+          {bar >= 0 ? `${lang === 'he' ? 'תיבה' : 'Bar'} ${bar + 1}` : `${spans.reduce((a, s) => a + s.bars, 0)} ${lang === 'he' ? 'תיבות' : 'bars'}`}
+        </b>
+      </div>
+    );
+  }
+  const k = bar >= 0 ? spans.findIndex((s) => bar >= s.startBar && bar < s.startBar + s.bars) : -1;
+  const cur = k >= 0 ? spans[k] : null;
+  const next = k >= 0 ? spans[k + 1] : null;
+  const cue = cur && next && bar === cur.startBar + cur.bars - 1 ? next : null;
+  return (
+    <div className="drum-road" data-roadmap="live" data-road-section={cur?.name ?? ''}>
+      {spans.map((s, i) => (
+        <span key={i} className={`road-block ${i === k ? 'on' : ''} ${i < k ? 'past' : ''}`} style={{ flexGrow: Math.max(1, s.bars) }} dir={lang === 'he' ? 'rtl' : 'ltr'}>
+          {sectionName(s.name, lang)}
+          <small>{s.bars}</small>
+        </span>
+      ))}
+      {cue ? (
+        <b className="road-cue" data-road-cue={cue.name}>
+          → {sectionName(cue.name, lang)}
+        </b>
+      ) : cur ? (
+        <b className="road-bar">
+          {bar - cur.startBar + 1}/{cur.bars}
+        </b>
+      ) : null}
     </div>
   );
 }
@@ -61,32 +167,40 @@ const W = 340;
 const X0 = 30;
 const yOf = (step: number) => 60 - step * 4;
 
-function StaffLine({ drill, line, per, bars, marks, beat, sticking }: { drill: Drill; line: number; per: number; bars: 1 | 2; marks: Map<string, NoteMark>; beat: number; sticking: boolean }) {
-  const b0 = line * per;
-  const BAR_W = (W - X0 - 8) / bars;
-  const ns = drill.notes.filter((n) => n.beat >= b0 - 1e-6 && n.beat < b0 + per - 1e-6 && n.voice);
+function StaffLine({ drill, notes, line, geo, marks, beat, sticking }: { drill: Drill; notes: ShownNote[]; line: number; geo: LineGeo; marks: Map<string, NoteMark>; beat: number; sticking: boolean }) {
+  const b0 = geo.from;
+  const per = geo.to - geo.from;
+  const repeat = new Set(drill.drum?.repeatBars ?? []);
+  const rests = drill.drum?.mbRests ?? [];
+  const inRest = (bi: number) => rests.some((r) => bi >= r.bar && bi < r.bar + r.n);
+  const barOf = (b: number) => geo.bars.find((x) => b >= x.from - 1e-6 && b < x.from + x.len - 1e-6);
+  const ns = notes.filter((n) => n.beat >= b0 - 1e-6 && n.beat < b0 + per - 1e-6 && n.voice && !n.hidden && !(barOf(n.beat) && repeat.has(barOf(n.beat)!.index)));
   const xOf = (b: number) => X0 + 10 + ((b - b0) / per) * (W - X0 - 8 - 14);
+  const xBar = (b: number) => X0 - 4 + ((b - b0) / per) * (W - X0);
   // Onsets → stems: hands up, feet down.
-  const groups = new Map<string, ExpNote[]>();
+  const groups = new Map<string, ShownNote[]>();
   for (const n of ns) {
     const k = `${isFoot(n.voice!) ? 'd' : 'u'}:${n.beat}`;
     groups.set(k, [...(groups.get(k) ?? []), n]);
   }
-  const stems: { x: number; y1: number; y2: number; up: boolean; beat: number; dur: number }[] = [];
+  const stems: { x: number; y1: number; y2: number; up: boolean; beat: number; dur: number; trem?: 1 | 2 | 3 }[] = [];
   for (const [k, g] of groups) {
     const up = k.startsWith('u');
     const ys = g.map((n) => yOf(STEP[n.voice!]));
     const x = xOf(g[0].beat) + (up ? 4.5 : -4.5);
-    stems.push(up ? { x, y1: Math.max(...ys), y2: Math.min(10, Math.min(...ys) - 20), up, beat: g[0].beat, dur: Math.min(...g.map((n) => n.dur)) } : { x, y1: Math.min(...ys), y2: Math.max(...ys) + 20, up, beat: g[0].beat, dur: Math.min(...g.map((n) => n.dur)) });
+    const dur = Math.min(...g.map((n) => n.dur));
+    const trem = g.find((n) => n.trem)?.trem;
+    stems.push(up ? { x, y1: Math.max(...ys), y2: Math.min(10, Math.min(...ys) - 20), up, beat: g[0].beat, dur, trem } : { x, y1: Math.min(...ys), y2: Math.max(...ys) + 20, up, beat: g[0].beat, dur, trem });
   }
   // Beams per beat (drumNotation): a primary beam over the 8ths and shorter, a second beam only between 16ths (a stub for
-  // a lone one), a flag for a lone short note, 3 / 6 over tuplets; quarters and longer stand alone. Eighth-pulse meters
-  // (one drill beat = an eighth) are beamed in quarter-note units by their beat groups (9/8 = 2+2+2+3).
+  // a lone one), a flag for a lone short note, 3 / 5 / 6 under a bracket over tuplets; quarters and longer stand alone.
+  // Eighth-pulse meters (one drill beat = an eighth) are beamed in quarter-note units by their beat groups (9/8 =
+  // 2+2+2+3); timeline drills by each bar's own groups.
   const q8 = drill.pulse === 8 ? 0.5 : 1;
-  const groupOf = drill.pulse === 8 ? eighthGroupOf(drill.meter, drill.groups ?? [drill.meter]) : undefined;
+  const groupOf = hasTimeline(drill) ? (x: number) => beamGroupAt(drill, x) : drill.pulse === 8 ? eighthGroupOf(drill.meter, drill.groups ?? [drill.meter]) : undefined;
   const beams: React.ReactNode[] = [];
   for (const up of [true, false]) {
-    const ss = stems.filter((x) => x.up === up);
+    const ss = stems.filter((x) => x.up === up && !x.trem);
     for (const g of beamBeats(q8 === 1 ? ss : ss.map((x) => ({ beat: x.beat * q8, dur: x.dur * q8 })), groupOf)) {
       const m = g.idx.map((i) => ss[i]);
       const y = up ? Math.min(...m.map((s) => s.y2)) : Math.max(...m.map((s) => s.y2));
@@ -101,22 +215,74 @@ function StaffLine({ drill, line, per, bars, marks, beat, sticking }: { drill: D
         for (const [a, b] of g.second) beams.push(<line key={`b2${key}${a}`} x1={m[a].x} x2={m[b].x} y1={y + dy} y2={y + dy} className="dn-beam" />);
         for (const st of g.stubs) beams.push(<line key={`bs${key}${st.at}`} x1={m[st.at].x} x2={m[st.at].x + st.dir * 6} y1={y + dy} y2={y + dy} className="dn-beam" />);
       }
-      if (g.tuplet) beams.push(<text key={`t${key}`} x={(m[g.tuplet.from].x + m[g.tuplet.to].x) / 2} y={up ? y - 3 : y + 10} className="dn-tup" textAnchor="middle">{g.tuplet.n}</text>);
+      if (g.tuplet) {
+        // The tuplet number in a bracket over (under) its notes.
+        const xa = m[g.tuplet.from].x - 2;
+        const xb = m[g.tuplet.to].x + 2;
+        const yb = up ? y - 6 : y + 6;
+        const mid = (xa + xb) / 2;
+        beams.push(<path key={`tb${key}`} d={up ? `M${xa} ${yb + 3}V${yb}H${mid - 4}M${mid + 4} ${yb}H${xb}V${yb + 3}` : `M${xa} ${yb - 3}V${yb}H${mid - 4}M${mid + 4} ${yb}H${xb}V${yb - 3}`} className="dn-stem dn-tup-br" />);
+        beams.push(<text key={`t${key}`} x={mid} y={up ? yb + 3 : yb + 3} className="dn-tup" textAnchor="middle" data-tuplet={g.tuplet.n}>{g.tuplet.n}</text>);
+      }
     }
   }
-  // Rests for a one-voice line (reading, rudiments): whatever no note covers, on the 16th grid.
+  // Tremolo slashes across the stem (one written head for the strokes).
+  for (const s of stems.filter((x) => x.trem)) {
+    const ym = (s.y1 + s.y2) / 2;
+    for (let k = 0; k < s.trem!; k++) beams.push(<line key={`tr${s.beat}${k}`} x1={s.x - 4} x2={s.x + 4} y1={ym + 3 + k * 4 - 1} y2={ym - 1 + k * 4 - 1} className="dn-beam dn-trem" data-trem={s.trem} />);
+  }
+  // Rests for a one-voice line (reading, rudiments): whatever no note covers, on the 16th grid (not in repeat or
+  // multi-bar-rest bars: those have their own signs).
   const REST: Record<RestKind, string> = { q: '\u{1D13D}', '8': '\u{1D13E}', '16': '\u{1D13F}' };
-  const rests: React.ReactNode[] = q8 === 1 && ns.every((n) => n.voice === 'snare')
-    ? restsOf(drill.notes.filter((n) => n.voice === 'snare'), b0, b0 + per).map((r) => (
-        <text key={`r${r.beat}`} x={xOf(r.beat)} y={r.kind === 'q' ? 47 : 44} className="dn-rest" textAnchor="middle" data-rest={r.kind}>
-          {REST[r.kind]}
-        </text>
-      ))
-    : [];
+  const restMarks: React.ReactNode[] =
+    q8 === 1 && ns.every((n) => n.voice === 'snare') && !drill.drum?.trem
+      ? restsOf(drill.notes.filter((n) => n.voice === 'snare'), b0, b0 + per)
+          .filter((r) => {
+            const bb = barOf(r.beat);
+            return !bb || (!inRest(bb.index) && !repeat.has(bb.index));
+          })
+          .map((r) => (
+            <text key={`r${r.beat}`} x={xOf(r.beat)} y={r.kind === 'q' ? 47 : 44} className="dn-rest" textAnchor="middle" data-rest={r.kind}>
+              {REST[r.kind]}
+            </text>
+          ))
+      : [];
+  // Repeat-bar signs and multi-bar rests.
+  const signs: React.ReactNode[] = [];
+  for (const b of geo.bars) {
+    const xm = (xBar(b.from) + xBar(b.from + b.len)) / 2;
+    if (repeat.has(b.index))
+      signs.push(
+        <g key={`rp${b.index}`} className="dn-repeat" data-repeat-bar={b.index}>
+          <path d={`M${xm - 7} 50L${xm + 7} 38`} className="dn-beam" />
+          <circle cx={xm - 6} cy={40} r={1.8} className="dn-head" />
+          <circle cx={xm + 6} cy={48} r={1.8} className="dn-head" />
+        </g>,
+      );
+    const r = rests.find((x) => x.bar === b.index);
+    if (r) {
+      const end = geo.bars.find((x) => x.index === r.bar + r.n - 1) ?? b;
+      const xa = xBar(b.from) + 8;
+      const xb = xBar(end.from + end.len) - 8;
+      signs.push(
+        <g key={`mr${b.index}`} className="dn-mbrest" data-mb-rest={r.n}>
+          <path d={`M${xa} 40V48M${xb} 40V48`} className="dn-stem" />
+          <line x1={xa} x2={xb} y1={44} y2={44} className="dn-beam" strokeWidth={5} />
+          <text x={(xa + xb) / 2} y={24} className="dn-sig" textAnchor="middle">
+            {r.n}
+          </text>
+        </g>,
+      );
+    }
+  }
   let lastDyn: string | undefined;
   const cursor = beat >= b0 && beat < b0 + per ? xOf(beat) : null;
+  const groupSizes = (b: LineGeo['bars'][number]) => (b.groups ?? []).map((g, i, xs) => (xs[i + 1] ?? b.len) - g);
+  const constSig = line === 0 && !hasTimeline(drill) && (drill.pulse === 8 || drill.meter !== 4);
+  // Signatures and the swing marking sit in a strip above the staff (clear of the beams and accents).
+  const top = constSig || (line === 0 && drill.drum?.swing8) || (hasTimeline(drill) && geo.bars.some((b) => b.sig)) ? 12 : 0;
   return (
-    <svg className="drum-staff" viewBox={`0 0 ${W} 92`} role="img" aria-label="drum notation">
+    <svg className="drum-staff" viewBox={`0 ${-top} ${W} ${92 + top}`} role="img" aria-label="drum notation">
       {[0, 1, 2, 3, 4].map((i) => (
         <line key={i} x1={X0 - 4} x2={W - 4} y1={28 + i * 8} y2={28 + i * 8} className="dn-line" />
       ))}
@@ -126,30 +292,52 @@ function StaffLine({ drill, line, per, bars, marks, beat, sticking }: { drill: D
           <rect x={13} y={36} width={3.5} height={16} />
         </g>
       )}
-      {line === 0 && (drill.pulse === 8 || drill.meter !== 4) && (
-        <text x={X0 + 2} y={23} className="dn-sig" data-time-sig={drill.pulse === 8 ? `${drill.meter}/8` : `${drill.meter}/4`}>
+      {line === 0 && drill.drum?.swing8 && (
+        <text x={W - 6} y={-3} className="dn-sig" textAnchor="end" data-swing-mark="1">
+          Swing ♫ = ♪³
+        </text>
+      )}
+      {constSig && (
+        <text x={X0 + 2} y={-3} className="dn-sig" data-time-sig={drill.pulse === 8 ? `${drill.meter}/8` : `${drill.meter}/4`}>
           {drill.pulse === 8 ? `${drill.meter}/8` : `${drill.meter}/4`}
           {drill.groups && drill.groups.length > 1 && drill.groups.some((g) => g !== drill.groups![0]) ? ` (${drill.groups.join('+')})` : ''}
         </text>
       )}
-      {Array.from({ length: bars }, (_, k) => k + 1).map((k) => (
-        <line key={`bar${k}`} x1={X0 - 4 + k * BAR_W} x2={X0 - 4 + k * BAR_W} y1={28} y2={60} className="dn-bar" />
+      {hasTimeline(drill) &&
+        geo.bars
+          .filter((b) => b.sig)
+          .map((b) => (
+            <text key={`sig${b.index}`} x={Math.max(X0 + 2, xBar(b.from) + 3)} y={-3} className="dn-sig" data-time-sig={b.sig}>
+              {b.sig}
+              {groupSizes(b).length > 1 && groupSizes(b).some((g, _i, xs) => g !== xs[0]) ? ` (${groupSizes(b).join('+')})` : ''}
+            </text>
+          ))}
+      {geo.bars.map((b) => (
+        <line key={`bar${b.index}`} x1={xBar(b.from + b.len)} x2={xBar(b.from + b.len)} y1={28} y2={60} className="dn-bar" />
       ))}
       {stems.map((s, i) => (
         <line key={`s${i}`} x1={s.x} x2={s.x} y1={s.y1} y2={s.y2} className="dn-stem" />
       ))}
       {beams}
-      {rests}
+      {restMarks}
+      {signs}
       {ns.map((n, i) => {
         const x = xOf(n.beat);
         const y = yOf(STEP[n.voice!]);
-        const m = marks.get(noteKey(n));
+        const m = marks.get(n.key);
         const dyn = n.dyn && n.dyn !== lastDyn ? n.dyn : undefined;
         if (n.dyn) lastDyn = n.dyn;
+        const half = n.trem && n.dur >= 2 && !XHEAD.has(n.voice!);
         return (
           <g key={i} className={`dn ${m ?? ''}`} data-voice={n.voice}>
             {STEP[n.voice!] >= 10 && <line x1={x - 7} x2={x + 7} y1={20} y2={20} className="dn-line" />}
-            {XHEAD.has(n.voice!) ? <path d={`M${x - 4} ${y - 4}l8 8M${x + 4} ${y - 4}l-8 8`} className="dn-x" /> : <ellipse cx={x} cy={y} rx={4.6} ry={3.4} transform={`rotate(-20 ${x} ${y})`} className="dn-head" />}
+            {XHEAD.has(n.voice!) ? (
+              <path d={`M${x - 4} ${y - 4}l8 8M${x + 4} ${y - 4}l-8 8`} className="dn-x" />
+            ) : half ? (
+              <ellipse cx={x} cy={y} rx={4.6} ry={3.4} transform={`rotate(-20 ${x} ${y})`} className="dn-stem" />
+            ) : (
+              <ellipse cx={x} cy={y} rx={4.6} ry={3.4} transform={`rotate(-20 ${x} ${y})`} className="dn-head" />
+            )}
             {n.grace && (
               // Grace note(s): small heads just before the stroke, the flam's with a slash.
               <g className="dn-grace">
@@ -183,16 +371,18 @@ const LANE_ORDER: DrumVoice[] = ['crash', 'ride', 'hihat', 'tom1', 'snare', 'tom
 const LANE_SHORT: Record<DrumVoice, string> = { crash: 'CR', ride: 'RD', hihat: 'HH', hhOpen: 'HH', tom1: 'T1', snare: 'SN', rim: 'SN', tom2: 'T2', tom3: 'FT', kick: 'BD', hhPedal: 'HF' };
 const laneOf = (v: DrumVoice): DrumVoice => (v === 'hhOpen' ? 'hihat' : v === 'rim' ? 'snare' : v);
 
-function LaneLine({ drill, line, per, marks, beat }: { drill: Drill; line: number; per: number; marks: Map<string, NoteMark>; beat: number }) {
+function LaneLine({ drill, line, geo, marks, beat }: { drill: Drill; line: number; geo: LineGeo; marks: Map<string, NoteMark>; beat: number }) {
   const lanes = LANE_ORDER.filter((v) => drill.notes.some((n) => n.voice && laneOf(n.voice) === v));
-  const b0 = line * per;
+  const b0 = geo.from;
+  const per = geo.to - geo.from;
   const ns = drill.notes.filter((n) => n.beat >= b0 - 1e-6 && n.beat < b0 + per - 1e-6 && n.voice);
   const H = 14;
   const h = lanes.length * H + 6;
   const xOf = (b: number) => X0 + 6 + ((b - b0) / per) * (W - X0 - 16);
   const cursor = beat >= b0 && beat < b0 + per ? xOf(beat) : null;
+  const barStarts = new Set(geo.bars.map((b) => Math.round(b.from * 1e4)));
   return (
-    <svg className="drum-lanes" viewBox={`0 0 ${W} ${h}`} role="img" aria-label="drum lanes">
+    <svg className="drum-lanes" viewBox={`0 0 ${W} ${h}`} role="img" aria-label="drum lanes" data-line={line}>
       {lanes.map((v, i) => (
         <g key={v}>
           <rect x={X0} y={3 + i * H} width={W - X0 - 4} height={H - 2} rx={4} className={`dl-lane l-${classOf(v)}`} />
@@ -201,8 +391,8 @@ function LaneLine({ drill, line, per, marks, beat }: { drill: Drill; line: numbe
           </text>
         </g>
       ))}
-      {Array.from({ length: per + 1 }, (_, k) => (
-        <line key={k} x1={xOf(b0 + k)} x2={xOf(b0 + k)} y1={2} y2={h - 2} className={k % (drill.meter || 4) === 0 ? 'dl-bar' : 'dl-beat'} />
+      {Array.from({ length: Math.round(per) + 1 }, (_, k) => (
+        <line key={k} x1={xOf(b0 + k)} x2={xOf(b0 + k)} y1={2} y2={h - 2} className={barStarts.has(Math.round((b0 + k) * 1e4)) || k === Math.round(per) ? 'dl-bar' : 'dl-beat'} />
       ))}
       {ns.map((n, i) => {
         const li = lanes.indexOf(laneOf(n.voice!));

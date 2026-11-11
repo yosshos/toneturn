@@ -16,7 +16,7 @@ import { inCourse, type CourseId } from './courses';
 import { stepTier, tierSpec } from './gameTiers';
 import { catalog } from './drills/generate';
 import { guitarCatalog } from './drills/guitar';
-import { BARRY_LEVELS, HARMONY_LEVELS, LADDER, MODE_LEVELS, ORNAMENT_LEVELS, SIGHT_LEVELS } from './vocal';
+import { VOICE_FAMILIES } from './voiceFamilies';
 
 // ---------------------------------------------------------------- types
 
@@ -286,18 +286,24 @@ export function stepCatalogue(): PathStep[] {
   return out;
 }
 
-/** Vocal programs (0.61): level number bases, in teaching order (same numbering as the Vocal screen). */
-export const VOCAL_PROGRAMS: { id: string; base: number; levels: { level: number }[]; title: { en: string; he: string } }[] = [
-  { id: 'v-ladder', base: 0, levels: LADDER, title: { en: 'Vocal technique', he: 'טכניקה קולית' } },
-  { id: 'v-modes', base: 100, levels: MODE_LEVELS, title: { en: 'Scales & modes', he: 'סולמות ומודוסים' } },
-  { id: 'v-sight', base: 400, levels: SIGHT_LEVELS, title: { en: 'Sight-singing', he: 'שירה מתווים' } },
-  { id: 'v-harmony', base: 200, levels: HARMONY_LEVELS, title: { en: 'Harmony singing', he: 'שירה בהרמוניה' } },
-  { id: 'v-ornament', base: 500, levels: ORNAMENT_LEVELS, title: { en: 'Ornaments', he: 'קישוטים' } },
-  { id: 'v-barry', base: 300, levels: BARRY_LEVELS, title: { en: 'Barry Harris lines', he: 'קווים של בארי האריס' } },
-];
+/**
+ * Vocal families (VOICE_CURRICULUM §5, replacing the six 0.61 programs): each lists its level numbers in teaching
+ * order — the old levels re-homed by number (their step ids `vocal:<n>` and facts are unchanged), the new ones too.
+ * In teaching order: the path opens the first families first.
+ */
+export const VOCAL_PROGRAMS: { id: string; refs: number[]; title: { en: string; he: string } }[] = VOICE_FAMILIES.map((f) => ({ id: f.id, refs: f.refs, title: f.title }));
 
 // Bass 0.66: position reading after the first reading levels, fills and target-note solos once chords and scales are in.
-const DRUM_LATER: Record<string, number> = { 'd-funk': 3, 'd-shuffle': 3, 'd-mideast': 3, 'd-indep': 2, 'd-feet': 2, 'd-ear': 1, 'd-jazz': 4, 'd-latin': 4, 'b-posread': 2, 'b-impro': 4 };
+/**
+ * BASS_NICHE_PLAN (P1): where the jazz and prog families start on the bass path (level 1 sits with the level it builds
+ * on): swing time after walk 7, Barry Harris after walk 9 and impro 6, form after walk 11, Latin from styles 9; odd
+ * meters after time 10, riffs and unisons after odd 2, polymeter after odd 4.
+ */
+const BASS_NICHE_LATER: Record<string, number> = { 'b-swing': 7, 'b-barry': 10, 'b-jform': 11, 'b-latin': 9, 'b-odd': 10, 'b-prog': 12, 'b-poly': 14 };
+const DRUM_LATER: Record<string, number> = { 'd-funk': 3, 'd-shuffle': 3, 'd-mideast': 3, 'd-indep': 2, 'd-feet': 2, 'd-ear': 1, 'd-jazz': 4, 'd-latin': 4, 'b-posread': 2, 'b-impro': 4,
+  // DRUMS_NICHE_PLAN P1: the drum key and counting early, songs once grooves and fills are in, prog after funk, shuffle,
+  // independence and the Middle-Eastern odd meters (plan §5: DRUM_LATER['d-prog'] = 6).
+  'd-notation': 1, 'd-count': 2, 'd-form': 3, 'd-song': 4, 'd-prog': 6, ...BASS_NICHE_LATER };
 /**
  * PIANO_JAZZ: the jazz-piano families come after the lines and voicings they build on — Barry Harris harmony after the
  * Harris lines' block chords, bebop lines after guide tones and the first Harris lines, jazz-piano harmony after the
@@ -310,6 +316,20 @@ const KEYS_JAZZ_LATER: Record<string, number> = { 'k-sixdim': 9, 'k-bebop': 6, '
  * ear, Alberti / cadences one step later) and the jazz and advanced families start after a few scale levels.
  */
 export const KEYS_LATER: Record<string, number> = { scales: 0, fingers: 0, 'k-ear': 0, arpeggios: 1, cadences: 1, control: 1, accomp: 2, voicings: 3, harris: 4, jazz: 4, advanced: 6, ...KEYS_JAZZ_LATER };
+/**
+ * VOICE_CURRICULUM §8: every vocal program's level 1 sat at diff(0) = 700 — Barry Harris L1, harmony L1 and modes L1
+ * next to "hold a note" L1. Now the families start by stage (A Song Singer → D Jazz Artist): breath, pitch and songs
+ * first, Barry Harris after the scat and standards families have begun. The old program ids keep a place too.
+ */
+export const VOICE_LATER: Record<string, number> = {
+  'v-breath': 0, 'v-pitch': 0, 'v-songs': 0, 'v-range': 1, 'v-time': 1, 'v-ear': 1, 'v-dyn': 2, 'v-scale': 2, 'v-sight': 2,
+  'v-vib': 3, 'v-agility': 3, 'v-harmony': 3, 'v-inflect': 4, 'v-standards': 4, 'v-scat': 5, 'v-barry': 6,
+  'v-ladder': 0, 'v-modes': 2, 'v-ornament': 4,
+};
+/** Guitar families' teaching rank inside a grade (GUITAR_DEEPENING §5): the hands and chords first, the ear and improvising after. */
+export const GUITAR_RANK: Record<string, number> = { 'g-fretting': 0, 'g-chords': 1, 'g-rhythm': 2, 'g-fingerstyle': 2, 'g-picking': 3, 'g-flamenco': 3, 'g-scales': 4, 'g-jazz': 4, 'g-ear': 5, 'g-prog': 5, 'g-legato': 6, 'g-harris': 6, 'g-lead': 7, 'g-arps': 8, 'g-reading': 9, 'g-impro': 10 };
+/** A guitar level's path difficulty from its grade (0 = Debut … 9 = beyond grade 8): 700 + 90·grade + 8·rank (rank ≤ 10, so a grade always outranks the rank). */
+export const guitarPathDifficulty = (family: string, grade: number): number => 700 + 90 * grade + 8 * (GUITAR_RANK[family] ?? 5);
 /** Every level of every technique family and vocal program as a path step (0.61, owner: technique inside the course path). */
 function ladderSteps(): PathStep[] {
   const out: PathStep[] = [];
@@ -323,14 +343,16 @@ function ladderSteps(): PathStep[] {
     const inst = f.instruments.includes('guitar') ? 'guitar' : f.instruments.includes('drums') ? 'drums' : 'bass';
     // Drums v2 families (DRUMS_AUDIT N1) come after the basics: their level 1 sits with the rock grooves' L3–L4.
     const from = DRUM_LATER[f.id] ?? 0;
+    // GUITAR_DEEPENING §5 (owner 2026-11-11): guitar levels sit by their RSL-equivalent grade, families interleaved
+    // inside a grade by teaching rank (sweep picking at grade 8 after 3nps scales at 7; 3nps picking with 3nps scales).
+    const gDiff = (lv: { grade?: number }, i: number) => (inst === 'guitar' && lv.grade !== undefined ? guitarPathDifficulty(f.id, lv.grade) : diff(i + from));
     f.levels.forEach((lv, i) =>
-      out.push({ id: `tech:${lv.id}`, kind: 'tech', ladder: { family: f.id, level: lv.level, ref: lv.id, instrument: inst }, skill: 'instrument', sub: `instrument/${inst === 'drums' ? 'drum' : inst}-tech`, domain: 'instrument', difficulty: diff(i + from), choices: 0, forPlays: [...f.instruments], title: { en: `${f.title.en} · ${lv.title.en}`, he: `${f.title.he} · ${lv.title.he}` } }),
+      out.push({ id: `tech:${lv.id}`, kind: 'tech', ladder: { family: f.id, level: lv.level, ref: lv.id, instrument: inst }, skill: 'instrument', sub: `instrument/${inst === 'drums' ? 'drum' : inst}-tech`, domain: 'instrument', difficulty: gDiff(lv as { grade?: number }, i), choices: 0, forPlays: [...f.instruments], title: { en: `${f.title.en} · ${lv.title.en}`, he: `${f.title.he} · ${lv.title.he}` } }),
     );
   }
   for (const pr of VOCAL_PROGRAMS)
-    pr.levels.forEach((_, i) => {
-      const n = pr.base + i + 1;
-      out.push({ id: `vocal:${n}`, kind: 'vocal', ladder: { family: pr.id, level: i + 1, ref: String(n) }, skill: 'singing', sub: 'singing/vocal-ladder', domain: 'voice', difficulty: diff(i), choices: 0, sung: true, mic: true, title: { en: `${pr.title.en} · ${i + 1}`, he: `${pr.title.he} · ${i + 1}` } });
+    pr.refs.forEach((n, i) => {
+      out.push({ id: `vocal:${n}`, kind: 'vocal', ladder: { family: pr.id, level: i + 1, ref: String(n) }, skill: 'singing', sub: 'singing/vocal-ladder', domain: 'voice', difficulty: diff(i + (VOICE_LATER[pr.id] ?? 0)), choices: 0, sung: true, mic: true, title: { en: `${pr.title.en} · ${i + 1}`, he: `${pr.title.he} · ${i + 1}` } });
     });
   return out;
 }
@@ -853,6 +875,10 @@ export const GAME_STEPS: Record<string, { domain: DomainId; skill: SkillId; sub:
   'rush-fretboard': { domain: 'instrument', skill: 'instrument', sub: 'fretboard', title: { en: 'Fretboard Sprint', he: 'ספרינט צוואר' }, forPlays: ['guitar', 'bass'] },
   peakhunter: { domain: 'instrument', skill: 'timbre', sub: 'eq', title: { en: 'Peak Hunter', he: 'צייד הפיקים' } },
   drills: { domain: 'instrument', skill: 'instrument', sub: 'piano-tech', title: { en: 'Technique drills', he: 'תרגילי טכניקה' }, forPlays: ['keys', 'piano', 'guitar', 'bass'] },
+  // Drum games P1 (DRUMS_NICHE_PLAN §3): measured takes on the kit, in the drums course's instrument units.
+  land: { domain: 'instrument', skill: 'instrument', sub: 'drum-tech', title: { en: 'Land It', he: 'לנחות על 1' }, forPlays: ['drums'] },
+  'groove-echo': { domain: 'instrument', skill: 'instrument', sub: 'drum-tech', title: { en: 'Groove Echo', he: 'הד לגרוב' }, forPlays: ['drums'] },
+  'odd-echo': { domain: 'instrument', skill: 'instrument', sub: 'drum-tech', title: { en: 'Odd-meter Echo', he: 'הד במשקל מוזר' }, forPlays: ['drums'] },
 };
 const AREA_GAMES: Record<DomainId, string[]> = {
   pitch: ['rush-interval', 'rush-chord', 'rush-progression'],
@@ -861,7 +887,7 @@ const AREA_GAMES: Record<DomainId, string[]> = {
   voice: ['flight'],
   reading: ['rush-note', 'rush-keysig'],
   creative: ['rush-chord'],
-  instrument: ['drills', 'rush-fretboard', 'peakhunter'],
+  instrument: ['drills', 'rush-fretboard', 'peakhunter', 'land', 'groove-echo', 'odd-echo'],
 };
 /** The game for a unit's leading area (rotating by unit number; mic / instrument / pack rules apply). */
 export function gameForArea(area: DomainId, n: number, inp: Pick<PathInput, 'noMic' | 'noSing' | 'plays' | 'packs'> & { noDrills?: boolean; course?: CourseId }): string | null {

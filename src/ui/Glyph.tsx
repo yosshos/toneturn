@@ -492,6 +492,68 @@ export const GLYPHS: Record<string, ReactNode> = {
       <path d="M-26 -16 Q-14 -18 -8 -8 T4 0" {...sw} strokeWidth={2.8} />
     </>
   ),
+  // BASS_NICHE_PLAN (P1): the bass course's jazz and prog families.
+  /** Swing time: a long note and a short one under a triplet bracket. */
+  swingtime: (
+    <>
+      {head(-12, 13, 6.2, 4.4)}
+      {head(12, 13, 4.6, 3.3)}
+      <path d="M-6 11V-12M16 11V-12" {...sw} strokeWidth={2.6} />
+      <path d="M16 -12 L24 -4" {...sw} strokeWidth={2.6} />
+      <path d="M-14 -16 Q2 -26 18 -16" {...sw} strokeWidth={2.4} />
+      <circle cx={2} cy={-22} r={2.4} fill={I} />
+    </>
+  ),
+  /** Barry Harris on the bass: the 6th chord and its diminished partner. */
+  barrybass: (
+    <text x={0} y={10} textAnchor="middle" fontFamily="Georgia, 'Times New Roman', serif" fontWeight={700} fontSize={30} fill={I} direction="ltr">
+      6°
+    </text>
+  ),
+  /** Form and arrangement: the road map A A B A, the bridge a different block. */
+  roadmap: (
+    <g {...sw} strokeWidth={2.6} strokeLinejoin="round">
+      <rect x={-26} y={-6} width={11} height={16} rx={2} />
+      <rect x={-12} y={-6} width={11} height={16} rx={2} />
+      <rect x={2} y={-14} width={11} height={24} rx={2} fill={I} />
+      <rect x={16} y={-6} width={11} height={16} rx={2} />
+    </g>
+  ),
+  /** Afro-Cuban bass: a conga drum. */
+  tumbao: (
+    <g {...sw} strokeWidth={2.8} strokeLinejoin="round">
+      <ellipse cx={0} cy={-14} rx={12} ry={4.5} />
+      <path d="M-12 -14 Q-17 2 -9 20 H9 Q17 2 12 -14" />
+      <path d="M-14 -2 H14" strokeWidth={2} />
+    </g>
+  ),
+  /** Odd meters: a 7 over an 8. */
+  oddmeter: (
+    <>
+      <text x={0} y={-2} textAnchor="middle" fontFamily="Georgia, 'Times New Roman', serif" fontWeight={700} fontSize={22} fill={I} direction="ltr">
+        7
+      </text>
+      <text x={0} y={20} textAnchor="middle" fontFamily="Georgia, 'Times New Roman', serif" fontWeight={700} fontSize={22} fill={I} direction="ltr">
+        8
+      </text>
+    </>
+  ),
+  /** Polymeter: two cycles of different lengths turning together. */
+  polymeter: (
+    <>
+      <circle cx={-9} cy={2} r={13} {...sw} strokeWidth={2.6} />
+      <circle cx={12} cy={2} r={10} {...sw} strokeWidth={2.6} />
+      <circle cx={-9} cy={-11} r={3} fill={I} />
+      <circle cx={12} cy={-8} r={3} fill={I} />
+    </>
+  ),
+  /** Riffs and unisons: one riff line doubled. */
+  unison: (
+    <g {...sw} strokeWidth={3} strokeLinejoin="round">
+      <path d="M-24 -4 L-14 -14 L-4 -4 L6 -14 L16 -4 L24 -10" />
+      <path d="M-24 12 L-14 2 L-4 12 L6 2 L16 12 L24 6" />
+    </g>
+  ),
   // PIANO_AUDIT: the keys path's own symbols.
   /** Touch and control: a crescendo hairpin. */
   hairpin: <path d="M22 -13 L-22 0 L22 13" {...sw} strokeWidth={3.2} strokeLinejoin="round" />,
@@ -511,6 +573,14 @@ export const GLYPHS: Record<string, ReactNode> = {
       <path d="M-3 -3 C-3 -9 6 -9 6 -3" strokeWidth={2.4} />
       <rect x={-22} y={14} width={44} height={9} rx={2} strokeWidth={2.4} />
       <path d="M-7 14v9M7 14v9" strokeWidth={2} />
+    </g>
+  ),
+  /** GUITAR_DEEPENING: the guitarist's ear — an ear over three strings. */
+  guitarear: (
+    <g {...sw}>
+      <path d="M-9 -6 C-9 -20 11 -22 12 -8 C13 0 5 2 4 8" strokeWidth={2.8} />
+      <path d="M-3 -7 C-3 -13 6 -13 6 -7" strokeWidth={2.4} />
+      <path d="M-22 13H22M-22 18H22M-22 23H22" strokeWidth={1.8} />
     </g>
   ),
   /** Reading both clefs: two staves joined by a brace line. */
@@ -609,6 +679,23 @@ export const GLYPHS: Record<string, ReactNode> = {
       <circle cx={14} cy={-16} r={3} fill={I} />
     </>
   ),
+  // VOICE_CURRICULUM: the voice course's own families.
+  /** Breath & sustain: three air streams, the middle one longest (one long breath). */
+  breath: (
+    <g {...sw}>
+      <path d="M-24 -10 Q-6 -16 10 -10" />
+      <path d="M-24 0 Q2 -6 24 0" strokeWidth={3.6} />
+      <path d="M-24 10 Q-6 4 10 10" />
+    </g>
+  ),
+  /** Songs with the band: a microphone on its stand. */
+  mic: (
+    <g {...sw}>
+      <rect x={-6} y={-22} width={12} height={20} rx={6} fill={I} />
+      <path d="M-12 -8 Q-12 8 0 8 Q12 8 12 -8" />
+      <path d="M0 8V20M-9 20H9" />
+    </g>
+  ),
 };
 // 0.70: the advanced games (GAMES_TIERS_PLAN §4) and the game board, one symbol each.
 Object.assign(GLYPHS, {
@@ -695,6 +782,48 @@ const mark = (s: string) => {
 };
 for (const [k, s] of Object.entries(TOPIC_MARK)) GLYPHS[`m:${k}`] = mark(s);
 for (const [k, s] of Object.entries(LESSON_MARK)) GLYPHS[`m:lesson:${k}`] = mark(s);
+// Drum games P1 (DRUMS_NICHE_PLAN §3): Land It (a crash over an arrow down to the 1), Groove Echo (two bars, the second
+// an echo), Odd-meter Echo (its grouping as a mark).
+Object.assign(GLYPHS, {
+  landit: (
+    <g {...sw}>
+      <path d="M-20 -14 Q0 -24 20 -14 Q0 -8 -20 -14Z" strokeLinejoin="round" />
+      <path d="M0 -6V14M-7 7l7 7 7-7" strokeLinejoin="round" />
+      <text x={14} y={20} fontFamily="'Secular One', Rubik, sans-serif" fontSize={14} fill={I} stroke="none" direction="ltr">1</text>
+    </g>
+  ),
+  grooveecho: (
+    <g {...sw} strokeWidth={2.8}>
+      <path d="M-24 4h18M2 4h18" />
+      <path d="M-20 4v-12M-12 4v-12M6 4v-12M14 4v-12" strokeWidth={2.2} />
+      <path d="M-8 16 Q4 24 18 14M14 10l4 4-5 3" strokeLinejoin="round" />
+    </g>
+  ),
+  oddecho: mark('2+3'),
+});
+// Drums niche families (DRUMS_NICHE_PLAN P1): songs (the road map — section blocks, one lit), prog (7/8), counting
+// ("1 & a"), the drum key (a staff with an x head over a round one), song form (D.S.).
+Object.assign(GLYPHS, {
+  roadmap: (
+    <g {...sw} strokeWidth={2.6}>
+      <rect x={-24} y={-8} width={13} height={16} rx={2} />
+      <rect x={-7} y={-8} width={13} height={16} rx={2} fill={I} />
+      <rect x={10} y={-8} width={13} height={16} rx={2} />
+      <path d="M-17 16h34M11 12l6 4-6 4" strokeLinejoin="round" />
+    </g>
+  ),
+  progmeter: mark('7/8'),
+  counting: mark('1&a'),
+  drumkey: (
+    <g {...sw} strokeWidth={2.2}>
+      <path d="M-24 -12h48M-24 -4h48M-24 4h48M-24 12h48" />
+      <path d="M-14 -20l8 8M-6 -20l-8 8" strokeWidth={3} />
+      <ellipse cx={8} cy={0} rx={6} ry={4.4} transform="rotate(-20 8 0)" fill={I} />
+      <ellipse cx={-4} cy={16} rx={6} ry={4.4} transform="rotate(-20 -4 16)" fill={I} />
+    </g>
+  ),
+  dsform: mark('D.S.'),
+});
 export type GlyphKind = keyof typeof GLYPHS;
 
 /** Emoji left in content data → the closest symbol of our set (0.61: no emoji in the interface). */
