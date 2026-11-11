@@ -226,6 +226,21 @@ export function judgeStrum(frames: StrumFrame[], target: ChordCandidate, needBas
   return { verdict: right ? 'right' : 'wrong', heard: chordSymbol(heard), heardChord: heard, missing: r.missing };
 }
 
+/**
+ * A strum among a question's chord choices (song chords: "which chord is under this bar?"): closed set over the
+ * choices only, so a strum names one of them or is "again" (not clear). Returns the index of the choice heard.
+ */
+export function strumAmong(frames: StrumFrame[], choices: ChordCandidate[]): { verdict: 'ok' | 'again'; index?: number; heard?: string; missing: number[] } {
+  const w = strumWindow(frames);
+  if (!w || !choices.length) return { verdict: 'again', missing: [] };
+  const ids = choices.map(({ root, quality }) => ({ root: pc12(root), quality }));
+  const r = recognizeFromChroma(w.chroma, w.bass, ids);
+  if (r.status !== 'ok' || !r.best) return { verdict: 'again', missing: r.missing };
+  const index = ids.findIndex((c) => c.root === r.best!.root && c.quality === r.best!.quality);
+  if (index < 0) return { verdict: 'again', missing: r.missing };
+  return { verdict: 'ok', index, heard: chordSymbol(ids[index]), missing: r.missing };
+}
+
 /** The notes of a heard chord near a target voicing (a wrong strummed answer, entered as what was heard): its bass
  *  (or root) at the target's lowest note's octave, the rest stacked above. Never equal to the target's notes. */
 export function heardMidis(heard: ChordCandidate | undefined, target: number[]): number[] {

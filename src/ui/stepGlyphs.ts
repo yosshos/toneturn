@@ -41,6 +41,8 @@ export const TOPIC_GLYPH: Record<string, GlyphKind> = {
   'key-read': 'clefs', 'key-shapes': 'keychord', 'key-scales': 'keyscale',
   // PIANO_JAZZ: Barry Harris shapes and jazz chords on the keys.
   'key-sixdim': 'keydim', 'key-jazz': 'keyjazz',
+  // GUITAR_DEEPENING: the song's chords, strummed (a melody line over a strummed chord).
+  'song-strum': 'songstrum',
 };
 /** Games sitting in a unit (they all used to be one puzzle piece). */
 export const GAME_STEP_GLYPH: Record<string, GlyphKind> = {

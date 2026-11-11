@@ -910,6 +910,18 @@ Object.assign(GLYPHS, {
     </>
   ),
 });
+// GUITAR_DEEPENING: the song's chords, strummed — a melody line above, a three-note chord with a down-strum arrow.
+Object.assign(GLYPHS, {
+  songstrum: (
+    <>
+      <path d="M-24 -14 L-14 -20 L-4 -12 L6 -18" {...sw} strokeWidth={2.6} strokeLinejoin="round" />
+      {head(-8, 16, 5.5, 4)}
+      {head(-8, 7, 5.5, 4)}
+      {head(-8, -2, 5.5, 4)}
+      <path d="M14 -6 V18 M8 12 L14 18 L20 12" {...sw} strokeWidth={2.8} strokeLinejoin="round" />
+    </>
+  ),
+});
 export type GlyphKind = keyof typeof GLYPHS;
 
 /** Emoji left in content data → the closest symbol of our set (0.61: no emoji in the interface). */
