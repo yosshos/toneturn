@@ -41,7 +41,7 @@ const SUBS: [MetroSettings['sub'], string][] = [
   [3, '3'],
   [4, '♬'],
 ];
-const BEATS = [2, 3, 4, 5, 6, 7, 9, 12];
+const BEATS = [2, 3, 4, 5, 6, 7, 9, 11, 12, 13, 15];
 const fill = (s: string, v: Record<string, string | number>) => s.replace(/\{(\w+)\}/g, (_, k) => String(v[k] ?? ''));
 
 export function Metronome({ lang, settings, onChange, onBack }: { lang: Lang; settings: Settings; onChange: (p: Partial<Settings>) => void; onBack: () => void }) {
@@ -260,7 +260,7 @@ export function Metronome({ lang, settings, onChange, onBack }: { lang: Lang; se
         </svg>
         <div className="mt-beats" role="group" aria-label={TX.accentHint[lang]}>
           {Array.from({ length: beats }, (_, i) => (
-            <button key={i} type="button" className={`mt-dot a${groove ? 1 : m.accents[i] ?? 1} ${beat === i ? 'now' : ''}`} onClick={() => !groove && cycleAccent(i)} disabled={!!groove} aria-label={`${i + 1}`} data-beat={i} />
+            <button key={i} type="button" className={`mt-dot a${groove ? (groove.groups ? defaultAccents(groove.beats, groove.den, groove.groups)[i] ?? 1 : 1) : m.accents[i] ?? 1} ${beat === i ? 'now' : ''}`} onClick={() => !groove && cycleAccent(i)} disabled={!!groove} aria-label={`${i + 1}`} data-beat={i} />
           ))}
         </div>
       </div>

@@ -359,7 +359,7 @@ export function slapClass(frames: GFrame[], on: number, medianPeak: number): Sla
 
 // ───────────────────────────── free-choice rules (A5) ─────────────────────────────
 
-export type RuleKind = 'walk' | 'chordTones' | 'nearest' | 'target';
+export type RuleKind = 'walk' | 'chordTones' | 'nearest' | 'target' | 'downbeatCt';
 export interface RuleChart {
   chord: string;
   root: number;
@@ -410,27 +410,36 @@ export function chartAt(chart: RuleChart[], beat: number): { c: RuleChart; start
  * last note before a change). nearest: chord tones, and moves ≤ maxMove semitones. target (0.66, fills and solos):
  * the chart's tones are the chord scale, and the first note of each chord must land on a target (`land`).
  */
-export function ruleCheck(kind: RuleKind, chart: RuleChart[], notes: RuleNote[], meter: number, maxMove = 4): RuleReport {
+export function ruleCheck(kind: RuleKind, chart: RuleChart[], notes: RuleNote[], meter: number, maxMove = 4, opts: RuleOpts = {}): RuleReport {
   const labels: string[] = [];
   const valid: boolean[] = [];
   let changes = 0;
   let ctAtChange = 0;
   let movesOk = 0;
   let movesN = 0;
+  let downN = 0;
+  let downCt = 0;
+  let early = 0;
   let prevPitch: number | null = null;
+  const ant = kind === 'target' && opts.anticipate ? opts.anticipate : 0;
+  const every = opts.every ?? 1;
   notes.forEach((n, k) => {
     if (n.pitch === null) {
       labels.push('-');
       valid.push(false);
       return;
     }
-    const cur = chartAt(chart, n.beat);
+    // Anticipation (target + anticipate): a note `ant` beats before a chord change belongs to the NEW chord and is its
+    // landing; the downbeat after it is an ordinary note (a tumbao leaves beat 1 empty anyway).
+    const antHere = ant > 0 && n.beat + ant > 1e-6 && Math.abs(chartAt(chart, n.beat + ant).start - (n.beat + ant)) < 1e-6;
+    const eff = antHere ? n.beat + ant : n.beat;
+    const cur = chartAt(chart, eff);
     const ct = chartPcs(cur.c);
     const rel = pc(n.pitch - cur.c.root);
     const nextBeat = k + 1 < notes.length ? notes[k + 1].beat : n.beat + 1;
-    const nx = chartAt(chart, nextBeat);
+    const nx = chartAt(chart, nextBeat + (ant > 0 && Math.abs(chartAt(chart, nextBeat + ant).start - (nextBeat + ant)) < 1e-6 ? ant : 0));
     const beforeChange = k + 1 < notes.length && nx.i !== cur.i;
-    const isNew = Math.abs(n.beat - cur.start) < 1e-6;
+    const isNew = antHere || (Math.abs(n.beat - cur.start) < 1e-6 && !(ant > 0 && n.beat > 1e-6));
     let lab = 'other';
     if (rel === 0) lab = 'R';
     else if (ct.includes(pc(n.pitch))) lab = rel === 3 || rel === 4 ? '3' : rel === 6 || rel === 7 || rel === 8 ? '5' : rel >= 9 ? '7' : 'tension';
@@ -459,7 +468,21 @@ export function ruleCheck(kind: RuleKind, chart: RuleChart[], notes: RuleNote[],
         const landed = (cur.c.land ?? LAND_ANY).includes(rel);
         ok = landed;
         if (landed) ctAtChange++;
+        if (landed && antHere) early++;
         changes++;
+      }
+    } else if (kind === 'downbeatCt') {
+      // Barry Harris: a chord tone on every downbeat; between them scale tones, tensions or a chromatic step to the
+      // next note (the half-step rule's passing notes).
+      const down = Math.abs(n.beat / every - Math.round(n.beat / every)) < 1e-6;
+      if (down) {
+        downN++;
+        if (isCt) downCt++;
+        ok = isCt;
+      } else {
+        const nextP = k + 1 < notes.length ? notes[k + 1].pitch : null;
+        ok = lab !== 'other' || (nextP !== null && Math.abs(nextP - n.pitch) <= 2);
+        if (lab === 'other' && ok) lab = 'chromatic';
       }
     } else {
       ok = isCt;
@@ -517,7 +540,29 @@ export function ruleCheck(kind: RuleKind, chart: RuleChart[], notes: RuleNote[],
     nonRoot,
     moves: kind === 'nearest' ? (movesN ? movesOk / movesN : 1) : null,
     worst,
+    ...(kind === 'downbeatCt' ? { downbeat: downN ? downCt / downN : 1 } : {}),
+    ...(ant > 0 ? { anticipated: anticipatedShare(chart, notes, ant, early) } : {}),
   };
+}
+
+/** Chord changes after beat 0 inside the line, and the share of them landed early (missing slots count as missed). */
+function anticipatedShare(chart: RuleChart[], notes: RuleNote[], ant: number, early: number): number {
+  if (!notes.length) return 1;
+  const end = Math.max(...notes.map((n) => n.beat)) + ant;
+  let n = 0;
+  for (let b = 0, i = 0; b <= end + 1e-6 && i < 10000; i++) {
+    b += chart[i % chart.length]?.beats ?? Infinity;
+    if (b <= end + 1e-6) n++;
+  }
+  return n ? Math.min(1, early / n) : 1;
+}
+
+/** Options of `ruleCheck`: the downbeat spacing (downbeatCt) and the anticipation of target landings. */
+export interface RuleOpts {
+  /** downbeatCt: downbeats every this many beats (default 1). */
+  every?: number;
+  /** target: landings this many beats before each chord change (0.5 = an 8th early). */
+  anticipate?: number;
 }
 
 /** N6: the least variety a free walking line needs — non-root notes (chord tones, tensions, approaches) and at most this share of same-pitch-class neighbours. */
@@ -612,4 +657,93 @@ export function walkProbeReport(chart: RuleChart[], line: number[]): { beat1Ct: 
   const chordAt = (b: number) => (chords.filter((x) => x.from <= b).pop() ?? chords[0]).c;
   const rep = walkRules(line, chordAt);
   return { beat1Ct: rep.beat1Ct, approach: rep.approach, rootShare: rep.labels.filter((l) => l === 'R').length / Math.max(1, rep.labels.length) };
+}
+
+// ───────────────────────────── walking swing (b-swing, PROG_ENGINE §5) ─────────────────────────────
+
+/** Share of notes sounding at least `min` × their beat (long quarters: ≥ 0.85). Lengths and beats in ms. Null when empty. */
+export function longShare(lens: (number | null)[], beatMs: number[] | number, min = 0.85): number | null {
+  const xs = lens.map((l, i) => ({ l, b: typeof beatMs === 'number' ? beatMs : beatMs[i] })).filter((x): x is { l: number; b: number } => x.l !== null && x.b > 0);
+  return xs.length ? xs.filter((x) => x.l >= min * x.b - 1e-9).length / xs.length : null;
+}
+
+/**
+ * Placement vs the ride (ms, + = the bass behind the cymbal): each onset paired with the nearest ride hit within
+ * `tol` ms. Mean, SD and how many were paired; null with fewer than 4 pairs.
+ */
+export function ridePlacement(onsets: number[], ride: number[], tol = 90): { mean: number; sd: number; n: number } | null {
+  const offs: number[] = [];
+  for (const o of onsets) {
+    let best = Infinity;
+    for (const r of ride) if (Math.abs(o - r) < Math.abs(best)) best = o - r;
+    if (Math.abs(best) <= tol) offs.push(best);
+  }
+  if (offs.length < 4) return null;
+  const m = mean(offs);
+  return { mean: m, sd: Math.sqrt(mean(offs.map((x) => (x - m) ** 2))), n: offs.length };
+}
+
+/**
+ * Tempo drift over choruses: the played beat length of each chorus (median of IOI ÷ written beats, ms) and the change
+ * from the first chorus to the last as a share (+ = slower, dragging; − = rushing). Null under 2 measurable choruses.
+ */
+export function chorusDrift(pts: { beat: number; on: number }[], chorusBeats: number): { beatMs: number[]; drift: number } | null {
+  const s = [...pts].sort((a, b) => a.beat - b.beat);
+  const by = new Map<number, number[]>();
+  for (let i = 1; i < s.length; i++) {
+    const d = s[i].beat - s[i - 1].beat;
+    if (d <= 1e-6 || d > 2) continue;
+    const c = Math.floor(s[i - 1].beat / chorusBeats + 1e-9);
+    by.set(c, [...(by.get(c) ?? []), (s[i].on - s[i - 1].on) / d]);
+  }
+  const cs = [...by.entries()].filter(([, xs]) => xs.length >= 3).sort((a, b) => a[0] - b[0]);
+  if (cs.length < 2) return null;
+  const beatMs = cs.map(([, xs]) => median(xs));
+  return { beatMs, drift: (beatMs[beatMs.length - 1] - beatMs[0]) / beatMs[0] };
+}
+
+export interface SwingWalk {
+  long: number | null;
+  ride: { mean: number; sd: number; n: number } | null;
+  drift: { beatMs: number[]; drift: number } | null;
+}
+/** The walking-swing suite in one call: long quarters, placement vs the ride, drift over choruses (each null when not measurable). */
+export function swingWalk(notes: { beat: number; on: number; len: number | null; beatMs: number }[], ride: number[], chorusBeats: number, long = 0.85): SwingWalk {
+  return {
+    long: longShare(
+      notes.map((n) => n.len),
+      notes.map((n) => n.beatMs),
+      long,
+    ),
+    ride: ridePlacement(
+      notes.map((n) => n.on),
+      ride,
+    ),
+    drift: chorusDrift(notes, chorusBeats),
+  };
+}
+
+// ───────────────────────────── double-stops and shells by chroma (b-ext) ─────────────────────────────
+
+/**
+ * Chord matching for double-stops / shells: for each expected chord (pitch classes, onset, end in ms) the mean chroma
+ * of the frames 50–400 ms after its onset must hold every pitch class (≥ `present` × the strongest class) and no
+ * strong foreign class (≥ `extra`). Per chord ok / missing / extra; `share` = chords fully right. Null without chroma.
+ */
+export function doubleStopMatch(frames: GFrame[], chords: { pcs: number[]; on: number; until: number }[], present = 0.25, extra = 0.6): { share: number; per: { ok: boolean; missing: number[]; extra: number[] }[] } | null {
+  if (!frames.some((f) => f.chroma)) return null;
+  const per = chords.map((c) => {
+    const want = new Set(c.pcs.map(pc));
+    const win = frames.filter((f) => f.chroma && f.t >= c.on + 50 && f.t <= Math.min(c.until, c.on + 400) && f.rms > 0.005);
+    if (!win.length) return { ok: false, missing: [...want], extra: [] as number[] };
+    const acc = new Array<number>(12).fill(0);
+    for (const f of win) for (let i = 0; i < 12; i++) acc[i] += f.chroma![i];
+    const mx = Math.max(...acc);
+    const ch = mx > 0 ? acc.map((x) => x / mx) : acc;
+    const missing = [...want].filter((p) => ch[p] < present);
+    const ex: number[] = [];
+    for (let p = 0; p < 12; p++) if (!want.has(p) && ch[p] >= extra) ex.push(p);
+    return { ok: !missing.length && !ex.length, missing, extra: ex };
+  });
+  return { share: per.length ? per.filter((p) => p.ok).length / per.length : 0, per };
 }

@@ -216,7 +216,7 @@ export interface Drill {
    * The harmony band under the take (bassBand.ts): the band engine's comping over `chart` in `style`, on the take's
    * clock. Like the drums it plays only with headphones / line-in / MIDI (else the click); it never changes the measure.
    */
-  band?: { style: import('../band').BandStyle; /** Drums course: a bass line under the comping too (roots on the groove's kick, a walking line in swing). */ bass?: boolean; /** Beat ranges where the band lays out (a drum solo while trading 4s). */ rests?: [number, number][] };
+  band?: { style: import('../band').BandStyle; /** Drums course: a bass line under the comping too (roots on the groove's kick, a walking line in swing). */ bass?: boolean; /** Beat ranges where the band lays out (a drum solo while trading 4s). */ rests?: [number, number][]; /** Road map: from bar `bar` (the band's bars) on, the band plays `style` ('tacet' = lays out, e.g. a drum solo; 'stop' = stop-time: one short hit on each 1). */ sections?: { bar: number; style: import('../band').BandStyle | 'tacet' | 'stop' }[] };
   /** Quick Study Piece (RSL): seconds to study the score before Play opens (the player may start sooner). */
   prep?: number;
   /** Written transcription after the take (ear L7): the line's sounding pitches, entered on the neck and graded note for note. */
@@ -245,6 +245,31 @@ export interface Drill {
   bow?: 'arco' | 'pizz';
   /** Drums: what the drill needs and how it is shown (DRUMS_CURRICULUM §3.8, §4.1). */
   drum?: DrumDrillInfo;
+  // ---- the prog / band engine (docs/research/PROG_ENGINE.md): all optional; a drill without them runs as before ----
+  /**
+   * Meter per bar (mixed meters, groupings): from each change's bar on, bars are in its meter. `meter` stays the
+   * FIRST bar's length in drill beats (the count-in). Build with timeline.ts `withBarPlan`.
+   */
+  meters?: import('./timeline').MeterChange[];
+  /** Tempo map (metric modulation): from each change's bar on, tempo = the tempo before × ratio. The take's bpm is the first bar's. */
+  tempoMap?: import('./timeline').TempoChange[];
+  /** Polymeter: the band (drums + comping) counts its own bars in this meter (e.g. band in 4/4, the riff in 7/8); same beat clock. */
+  bandMeter?: import('./timeline').MeterSpec;
+  /** The band doubles a written line with the player (a unison riff), separate from the comping. */
+  unison?: UnisonPart;
+  /** A road map: named sections driving the band (style, feel, stops), measured per section (roadmap.ts). */
+  form?: import('./roadmap').FormPlan;
+}
+
+/** A unison part: the band's bass / guitar / keys play `line` (or the drill's own notes moved by `transpose`). */
+export interface UnisonPart {
+  inst: 'bass' | 'guitar' | 'keys';
+  /** The written line (drill beats); absent = the drill's notes. */
+  line?: { beat: number; dur: number; midi: number }[];
+  /** Semitones added to the line (−12 = an octave below, −5 = a 5th below for 5th-below unisons). */
+  transpose?: number;
+  /** Velocity 0..1 (default 0.7). */
+  vel?: number;
 }
 
 /** Drums: per-drill facts — the verdict tier, whether one surface (a practice pad by microphone) can play it. */
@@ -282,7 +307,21 @@ export interface DrillGoal {
    * in the chord's scale or approach the next note by a half step (`scale`, pitch classes per stretch of beats), and
    * there must be at least `minPerBar` notes a bar. `model` is a line that passes (the band's style; tests play it).
    */
+  /** The prog engine's measures (progAnalyze.ts `withProg`); each can only lower the verdict. */
+  prog?: ProgGoal;
   free?: { windows: [number, number][]; scale: { from: number; to: number; pcs: number[] }[]; minPerBar: number; model: { beat: number; dur: number; pitch: number }[] };
+}
+
+/** Prog pass rules (PROG_ENGINE.md): metric modulation, unison lock, the road map. Absent fields are not checked. */
+export interface ProgGoal {
+  /** Tempo changes: the played tempo ratio within this share of the written one (0.02 = ±2 %), and the new 1 within ±landMs. */
+  tempoRatio?: { tol: number; landMs?: number };
+  /** Unison with the band: |mean offset| ≤ mean ms and SD ≤ sd ms against the band's line (12 / 18). */
+  unison?: { mean: number; sd: number };
+  /** Road map: lost bars allowed (0), the section starts landed within ±landMs, tempo drift across the form ≤ drift (0.02). */
+  form?: { lost?: number; landMs?: number; drift?: number };
+  /** Accent on the group starts (odd meters): the group-start notes louder than the others by ≥ this share of the velocity range. */
+  groupAccent?: number;
 }
 
 /** Drum pass rules (DRUMS_CURRICULUM §4.2): absent = the tier's timing / hit-rate / wrong-voice rules only. */
@@ -340,7 +379,20 @@ export interface BassGoal {
    * tones anywhere, and on every chord change a landing note — one of `land` (intervals above the root) when given,
    * else a chord tone (`tones` then holds the chord scale).
    */
-  rules?: { kind: 'walk' | 'chordTones' | 'nearest' | 'target'; chart: { chord: string; root: number; tones: number[]; beats: number; land?: number[] }[]; maxRepeat?: number; maxMove?: number };
+  rules?: {
+    kind: 'walk' | 'chordTones' | 'nearest' | 'target' | 'downbeatCt';
+    chart: { chord: string; root: number; tones: number[]; beats: number; land?: number[] }[];
+    maxRepeat?: number;
+    maxMove?: number;
+    /** downbeatCt (Barry Harris): the downbeats are every `every` beats (1 = each beat in an 8th line, 2 = beats 1 and 3 of a quarter walk). */
+    every?: number;
+    /** target: each chord's landing sounds this many beats EARLY (0.5 = an 8th: the anticipated "and" of 4 in a tumbao). */
+    anticipate?: number;
+  };
+  /** Walking swing (b-swing): long quarters (each ≥ `long` × the beat, e.g. 0.85), placement vs the ride (ms, + = behind) in [lo, hi], drift over choruses ≤ `drift` (tempo share, e.g. 0.02). */
+  swingWalk?: { long?: number; ride?: [number, number]; drift?: number; chorusBeats?: number };
+  /** Double-stops / shells by chroma (b-ext 6–7): share of chords ringing all their notes ≥ this (e.g. 0.8). */
+  doubleStops?: number;
   /** Pocket on purpose (A6): target offset per section in ms (+ = behind), share within ±12 ms ≥ 0.7. */
   pocket?: number[];
   /** Mean offset |timingMean| ≤ ms (no consistent rush/drag). */
@@ -378,7 +430,11 @@ export interface BassGoal {
 
 /** Free-choice rule verdict (A5), per slot of the model line (TakeMetrics.rules). */
 export interface TakeRules {
-  kind: 'walk' | 'chordTones' | 'nearest' | 'target';
+  kind: 'walk' | 'chordTones' | 'nearest' | 'target' | 'downbeatCt';
+  /** downbeatCt: share of the downbeats played on a chord tone. */
+  downbeat?: number;
+  /** target with `anticipate`: share of chord changes whose landing came early (on the anticipation). */
+  anticipated?: number;
   /** Per slot: R / 3 / 5 / 7 / tension / chromatic / dominant / scale / other, or '-' when nothing was played. */
   labels: string[];
   /** Per slot: the note is allowed by the rules (false for a missing note). */
@@ -483,6 +539,8 @@ export interface TakeMetrics {
   written?: { ok: number; total: number };
   /** Drums (drumAnalyze.ts): per-limb timing, wrong voices, dynamics, hat, landing. */
   drum?: DrumMetrics;
+  /** The prog engine (progAnalyze.ts): tempo-ratio checks, unison lock, the road-map report. */
+  prog?: import('./progAnalyze').ProgMetrics;
 }
 
 /** What a drum take measured (DRUMS_CURRICULUM §3.6). */

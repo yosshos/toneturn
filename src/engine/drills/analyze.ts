@@ -3,6 +3,7 @@
 
 import type { Drill, DrillCalibration, DynamicsGoal, ExpNote, Hand, NoteResult, PlayedNote, TakeMetrics, Verdict } from './types';
 import { vlDistance } from './generate';
+import { hasTimeline, timeMapOf, timelineMs } from './timeline';
 
 const mod12 = (n: number): number => ((n % 12) + 12) % 12;
 const EPS = 1e-6;
@@ -94,6 +95,8 @@ const levelOf = (d?: DynamicsGoal): Level | null => (d && d.startsWith('even-') 
 
 /** Expected onset of a beat in ms (swung 8ths land at 2/3 of the beat). */
 export function expTimeMs(drill: Drill, beat: number, bpm: number): number {
+  // The prog timeline (meters per bar, a tempo map): the beat's place on the drill's own time map.
+  if (hasTimeline(drill)) return timelineMs(drill, beat, bpm);
   const beatMs = 60000 / bpm;
   if (drill.spec.swing) {
     const f = beat - Math.floor(beat);
@@ -118,7 +121,7 @@ function align(drill: Drill, bpm: number, played: PlayedNote[]): Align {
   const exp = drill.notes;
   const beatMs = 60000 / bpm;
   const T = exp.map((n) => expTimeMs(drill, n.beat, bpm));
-  const valid = played.map((_, j) => j).filter((j) => played[j].on >= -beatMs && played[j].on <= (drill.beats + 1) * beatMs);
+  const valid = played.map((_, j) => j).filter((j) => played[j].on >= -beatMs && played[j].on <= (hasTimeline(drill) ? expTimeMs(drill, drill.beats + 1, bpm) : (drill.beats + 1) * beatMs));
   const match: (number | null)[] = exp.map(() => null);
   const ok: boolean[] = exp.map(() => false);
   const used = new Set<number>();
@@ -231,7 +234,7 @@ export function freeStats(drill: Drill, bpm: number, played: PlayedNote[]): { n:
   const ns = played.filter((p) => inFreeBars(drill, bpm, p.on)).sort((a, b) => a.on - b.on);
   const pcsAt = (beat: number): number[] => fr.scale.find((x) => beat >= x.from - 1e-6 && beat < x.to - 1e-6)?.pcs ?? [];
   const inside = (p: PlayedNote) => {
-    const b = p.on / beatMs;
+    const b = hasTimeline(drill) ? timeMapOf(drill, bpm).beatAt(p.on) : p.on / beatMs;
     return pcsAt(b).includes(mod12(p.pitch)) || pcsAt(b + 0.5).includes(mod12(p.pitch));
   };
   let out = 0;

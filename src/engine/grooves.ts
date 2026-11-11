@@ -24,6 +24,8 @@ export interface Groove {
   hatAs?: 'hat' | 'hat-open' | 'ride' | 'shaker' | 'cowbell';
   snareAs?: 'snare' | 'clap';
   rimAs?: 'rim' | 'hat' | 'clap' | 'cowbell';
+  /** Odd meters: the beat groups of the bar in steps of the groove's beat (7/8 = 2+2+3 eighths, 5/4 = 3+2 quarters): the accents. */
+  groups?: number[];
 }
 
 export const STYLE_NAME: Record<GrooveStyle, { en: string; he: string }> = {
@@ -42,6 +44,35 @@ export const STYLE_NAME: Record<GrooveStyle, { en: string; he: string }> = {
 
 const G = (id: string, en: string, he: string, style: GrooveStyle, beats: number, den: 4 | 8, sub: 2 | 3 | 4, bpm: number, k: string, s: string, h: string, r?: string, as: Pick<Groove, 'hatAs' | 'snareAs' | 'rimAs'> = {}): Groove => ({ id, name: { en, he }, style, beats, den, sub, bpm, k, s, h, r, ...as });
 const RIDE = { hatAs: 'ride', rimAs: 'hat' } as const;
+const sumOf = (g: number[]) => g.reduce((a, b) => a + b, 0);
+/** Lanes of an x/8 groove from its groups: kick on the first group (and the middle one of 5+ groups), snare on the others' starts. */
+function oddLanes(groups: number[]): [string, string, string] {
+  const n = sumOf(groups);
+  const k = Array.from({ length: n }, () => '.');
+  const s = Array.from({ length: n }, () => '.');
+  let at = 0;
+  groups.forEach((g, i) => {
+    const second = groups.length >= 5 && i === Math.floor(groups.length / 2);
+    if (i === 0 || second) k[at] = 'x';
+    else s[at] = 'x';
+    // a pickup kick on the last eighth of a 3-group before a snare (makes the grouping heard)
+    if (g === 3 && i + 1 < groups.length && i > 0) k[at + 2] = 'x';
+    at += g;
+  });
+  return [k.join(''), s.join(''), 'x'.repeat(n)];
+}
+/** The odd-meter bank (PROG_ENGINE §1): id, names, groups (eighths), start tempo (♪). */
+const ODD: [string, string, string, number[], number][] = [
+  ['five-8', '5/8 (3+2)', '5/8 (3+2)', [3, 2], 200],
+  ['five-8-23', '5/8 (2+3)', '5/8 (2+3)', [2, 3], 200],
+  ['seven-8-322', '7/8 (3+2+2)', '7/8 (3+2+2)', [3, 2, 2], 220],
+  ['seven-8-232', '7/8 (2+3+2)', '7/8 (2+3+2)', [2, 3, 2], 220],
+  ['nine-8-333', '9/8 (3+3+3)', '9/8 (3+3+3)', [3, 3, 3], 240],
+  ['eleven-8', '11/8 (3+3+3+2)', '11/8 (3+3+3+2)', [3, 3, 3, 2], 240],
+  ['eleven-8-22322', '11/8 (2+2+3+2+2)', '11/8 (2+2+3+2+2)', [2, 2, 3, 2, 2], 240],
+  ['thirteen-8', '13/8 (3+3+3+2+2)', '13/8 (3+3+3+2+2)', [3, 3, 3, 2, 2], 240],
+  ['fifteen-8', '15/8 (7+8: 2+2+3+2+2+2+2)', '15/8 (7+8: 2+2+3+2+2+2+2)', [2, 2, 3, 2, 2, 2, 2], 240],
+];
 
 export const GROOVES: Groove[] = [
   // rock
@@ -99,10 +130,13 @@ export const GROOVES: Groove[] = [
   G('dnb', 'Drum & bass', 'דראם אנד בייס', 'electronic', 4, 4, 4, 172, 'x.........x.....', '....x.......x...', 'x.x.x.x.x.x.x.x.'),
   G('dembow', 'Dembow / reggaeton', 'דמבו / רגאטון', 'electronic', 4, 4, 4, 96, 'x...x...x...x...', '...x..x....x..x.', 'x.x.x.x.x.x.x.x.', undefined, { snareAs: 'clap' }),
   // odd meters
-  G('five-4', '5/4', '5/4', 'odd', 5, 4, 2, 120, 'x.....x...', '..x.....x.', 'xxxxxxxxxx'),
-  G('seven-8', '7/8 (2+2+3)', '7/8 (2+2+3)', 'odd', 7, 8, 2, 220, 'x...x..', '..x...x', 'xxxxxxx'),
+  { ...G('five-4', '5/4', '5/4', 'odd', 5, 4, 2, 120, 'x.....x...', '..x.....x.', 'xxxxxxxxxx'), groups: [3, 2] },
+  { ...G('seven-8', '7/8 (2+2+3)', '7/8 (2+2+3)', 'odd', 7, 8, 2, 220, 'x...x..', '..x...x', 'xxxxxxx'), groups: [2, 2, 3] },
   G('seven-4', '7/4', '7/4', 'odd', 7, 4, 2, 110, 'x...x...x.x...', '..x...x...x..x', 'xxxxxxxxxxxxxx'),
-  G('nine-8', '9/8 (2+2+2+3)', '9/8 (2+2+2+3)', 'odd', 9, 8, 2, 240, 'x.x.x.x..', '.........', 'xxxxxxxxx'),
+  { ...G('nine-8', '9/8 (2+2+2+3)', '9/8 (2+2+2+3)', 'odd', 9, 8, 2, 240, 'x.x.x.x..', '.........', 'xxxxxxxxx'), groups: [2, 2, 2, 3] },
+  // PROG_ENGINE (shared by the bass, guitar and drums prog levels and the metronome): one char per eighth, the kick on
+  // the first group, the snare on the later group starts (the backbeat placed by group), hats on every eighth.
+  ...ODD.map(([id, en, he, groups, bpm]) => ({ ...G(id, en, he, 'odd', sumOf(groups), 8, 2, bpm, ...oddLanes(groups)), groups })),
 ];
 
 /** Steps in one bar. For den 8 grooves with sub 2 the "beat" is the eighth itself (one char per eighth). */
@@ -139,6 +173,9 @@ export function grooveHits(g: Groove): Hit[] {
 
 /** Seconds per step at a tempo (the tempo counts the groove's beat; den-8 grooves with sub 2 count eighths). */
 export const stepSeconds = (g: Groove, bpm: number) => (g.den === 8 && g.sub === 2 ? 60 / bpm : 60 / bpm / g.sub);
+
+/** A groove's beat groups (its `groups`, else every beat its own group). */
+export const grooveGroups = (g: Groove): number[] => g.groups ?? Array.from({ length: g.beats }, () => 1);
 
 /** Grooves of a style (all when null), in bank order. */
 export const groovesOf = (style: GrooveStyle | null) => (style ? GROOVES.filter((g) => g.style === style) : GROOVES);
@@ -191,9 +228,20 @@ export const DEFAULT_METRO: MetroSettings = { bpm: 90, beats: 4, den: 4, accents
 export const clampBpm = (b: number) => Math.max(30, Math.min(260, Math.round(b)));
 
 /** Accent pattern for a meter: accent on 1, and on each group start of compound / odd meters. */
-export function defaultAccents(beats: number, den: 4 | 8): number[] {
+export function defaultAccents(beats: number, den: 4 | 8, groups?: number[]): number[] {
   const a = Array.from({ length: beats }, () => 1);
   if (beats) a[0] = 2;
+  // Explicit groups (2+2+3 …): an accent on each group start.
+  if (groups && groups.reduce((x, y) => x + y, 0) === beats) {
+    let at = 0;
+    for (const g of groups) {
+      a[at] = 2;
+      at += g;
+    }
+    return a;
+  }
+  if (den === 8 && (beats === 11 || beats === 13)) return defaultAccents(beats, den, beats === 11 ? [3, 3, 3, 2] : [3, 3, 3, 2, 2]);
+  if (den === 8 && beats === 15) return defaultAccents(beats, den, [2, 2, 3, 2, 2, 2, 2]);
   if (den === 8 && beats % 3 === 0) for (let i = 3; i < beats; i += 3) a[i] = 2;
   else if (den === 8 && beats === 7) a[4] = 2; // 2+2+3
   else if (den === 8 && beats === 5) a[3] = 2; // 3+2

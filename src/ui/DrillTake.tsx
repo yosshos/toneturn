@@ -16,8 +16,10 @@ import { midi } from '../speech/midi';
 import { BrowserPitchCapture } from '../speech/pitchCapture';
 import { listenLoop } from './Flight';
 import { tuningById } from '../engine/fretboard';
-import { drumHits } from '../engine/drills/bass';
-import { bandBass, bandHits } from '../engine/drills/bassBand';
+import { bandBass } from '../engine/drills/bassBand';
+import { drillBandHits, drillDrumHits, unisonLine } from '../engine/drills/bandTimeline';
+import { clickPlan, hasTimeline, staffLines, timeMapOf } from '../engine/drills/timeline';
+import { withProg } from '../engine/drills/progAnalyze';
 import { isDrumDrill } from '../engine/drills/events';
 import { analyzeDrumTake, drumLimbLine, type DrumTakeHit } from '../engine/drills/drumAnalyze';
 import { kitKind, VOICE_NOTE, type KitProfile } from '../engine/drumKit';
@@ -210,12 +212,15 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo }
   const per = meter * (meter >= 6 ? 1 : 2);
   const bq = (n: ExpNote) => n.beat * qk;
   const dq = (n: ExpNote) => n.dur * qk;
-  const lineOf = (n: ExpNote) => Math.floor(bq(n) / per + 1e-6);
+  // Mixed meters / a tempo map (prog timeline): lines of whole bars from the engine, bar lines and time signatures per bar.
+  const sl = hasTimeline(drill) ? staffLines(drill, 8) : null;
+  const lineAtQ = (q: number) => (sl ? Math.max(0, sl.findIndex((l) => q < l.to - 1e-6) < 0 ? sl.length - 1 : sl.findIndex((l) => q < l.to - 1e-6)) : Math.floor(q / per + 1e-6));
+  const lineOf = (n: ExpNote) => lineAtQ(bq(n));
   // A song shows all of itself (≤ 96 notes); a bass drill all of itself in a moving window (B2); others their first 8 bars.
   const shown = (ns: ExpNote[]) => firstOfChord(ns).filter((n) => drill.chart || bass || bq(n) < meter * 8);
   const nLines = Math.max(1, ...shown(rh).map((n) => lineOf(n) + 1));
   const firstBad = result ? shown(rh).find((n) => markFor(n, rh) && markFor(n, rh) !== 'ok') : undefined;
-  const win = useLineWindow(nLines, beat >= 0 ? beat * qk : -1, per, firstBad ? lineOf(firstBad) : 0);
+  const win = useLineWindow(nLines, beat >= 0 ? (sl ? lineAtQ(beat * qk) * per : beat * qk) : -1, per, firstBad ? lineOf(firstBad) : 0);
   const draw = (ns: typeof rh, clef: 'treble' | 'bass' | 'tenor', windowed: boolean) => {
     const all = shown(ns);
     const lines: (typeof all)[] = [];
@@ -237,10 +242,12 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo }
           g -= v;
         }
       };
-      const lineStart = li * per;
+      const lineStart = sl ? sl[li].from : li * per;
+      const lineEnd = sl ? sl[li].to : lineStart + per;
+      const barEnd = (q: number) => (sl ? (sl[li].bars.find((b) => q < b.from + b.len - 1e-6) ?? sl[li].bars[sl[li].bars.length - 1]).from + (sl[li].bars.find((b) => q < b.from + b.len - 1e-6) ?? sl[li].bars[sl[li].bars.length - 1]).len : Math.ceil(q / meter - 1e-6) * meter);
       if (bq(xs[0]) - lineStart > 0.49) pushRest(bq(xs[0]) - lineStart);
       xs.forEach((n, i) => {
-        const nextAt = xs[i + 1] ? bq(xs[i + 1]) : Math.min(lineStart + per, Math.ceil((bq(n) + dq(n)) / meter - 1e-6) * meter);
+        const nextAt = xs[i + 1] ? bq(xs[i + 1]) : Math.min(lineEnd, barEnd(bq(n) + dq(n) - 1e-6));
         const d = std(Math.min(Math.max(0.5, dq(n)), Math.max(0.5, nextAt - bq(n))));
         items.push({ n, dur: d });
         if (nextAt - (bq(n) + d) > 0.49) pushRest(nextAt - (bq(n) + d));
@@ -258,8 +265,9 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo }
           labels={labels ? items.map((x) => (x.n ? labels[idx(x.n)] : '')) : undefined}
           marks={marks ? items.map((x) => (x.n ? marks[idx(x.n)] : undefined)) : undefined}
           meter={meter}
-          timeSig={li === 0 || (windowed && li === win.from)}
-          sig={sig}
+          timeSig={li === 0 || (windowed && li === win.from) || !!sl?.[li].bars[0].sig}
+          sig={sl ? sl[li].bars[0].cur : sig}
+          bars={sl ? sl[li].bars.map((b) => ({ len: b.len, sig: b.sig })) : undefined}
         />
       );
     });
@@ -275,7 +283,7 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo }
       )}
       {drill.chart && bass && (
         <ol className="song-chart" aria-label="chords" dir="ltr">
-          {drill.chart.slice((win.from * per) / meter, ((win.from + 2) * per) / meter).map((c, i) => (
+          {(sl ? drill.chart.slice(sl.slice(0, win.from).reduce((a, l) => a + l.bars.length, 0), sl.slice(0, win.from + 2).reduce((a, l) => a + l.bars.length, 0)) : drill.chart.slice((win.from * per) / meter, ((win.from + 2) * per) / meter)).map((c, i) => (
             <li key={i}>{c}</li>
           ))}
         </ol>
@@ -342,42 +350,26 @@ export function VelocityCurve({ m, lang }: { m: TakeMetrics; lang: Lang }) {
   );
 }
 
-/** Is click i (0 = the first count-in beat) heard? The count-in always is; after it, the drill's click mode decides. */
-function clickHeard(drill: Pick<Drill, 'meter' | 'click' | 'gap' | 'groups'>, i: number): boolean {
-  const m = drill.meter || 4;
-  // Eighth-pulse meters with beat groups (9/8 = 2+2+2+3): the click on each group's first eighth only.
-  if (drill.groups && !groupStarts(drill.groups).includes(i % m)) return false;
-  if (i < m || !drill.click || drill.click === 'all') return true;
-  const beat = (i - m) % m;
-  const bar = Math.floor((i - m) / m);
-  // Drums gap click (DRUMS_CURRICULUM F4 L4–5): `on` bars with the click, `off` bars without, repeating.
-  if (drill.click === 'gap') return !drill.gap || bar % (drill.gap[0] + drill.gap[1]) < drill.gap[0];
-  if (drill.click === '24') return beat === 1 || beat === 3;
-  if (drill.click === 'one') return beat === 0;
-  if (drill.click === 'and') return false;
-  // 'fade': two bars every beat, two bars only on 1, then silence.
-  return bar < 2 || (bar < 4 && beat === 0);
-}
-
-/** The first eighth of each beat group (2+2+2+3 → 0, 2, 4, 6). */
-const groupStarts = (g: number[]): number[] => g.map((_, k) => g.slice(0, k).reduce((a, b) => a + b, 0));
-
 /** Play a drill once: count-in, metronome, record; resolves with the analysis. */
 /** The band part of a bass drill as audio events (B5 drums, B11 ear prompts), in seconds from the timeline's start. */
-function backingEvents(drill: Drill, beatS: number, drums: boolean): NoteEvent[] {
+function backingEvents(drill: Drill, beatS: number, drums: boolean, clock?: (beat: number) => number): NoteEvent[] {
   // piano.play schedules 60 ms ahead, playTimeline 120 ms: shift by the difference so both share one clock.
-  const at = (b: number) => 0.06 + (drill.meter + b) * beatS;
+  // Timeline drills (mixed meters, a tempo map): the click plan's clock; lengths in beats at the local tempo.
+  const at = (b: number) => 0.06 + (clock ? clock(b) : (drill.meter + b) * beatS);
+  const len = (b: number, l: number) => (clock ? clock(b + l) - clock(b) : l * beatS);
   const out: NoteEvent[] = [];
   if (drums && drill.drums) {
     const PERC = { k: 'kick', s: 'snare', h: 'hat', 'tom-hi': 'tom-hi', 'tom-lo': 'tom-lo', crash: 'crash' } as const;
-    for (const h of drumHits(drill.drums, drill.beats, drill.meter, drill.pulse)) out.push({ midi: 36, start: at(h.beat), duration: 0.2, velocity: h.d === 'h' ? 0.4 : h.d === 'crash' ? 0.7 : 0.85, perc: PERC[h.d] });
+    for (const h of drillDrumHits(drill)) out.push({ midi: 36, start: at(h.beat), duration: 0.2, velocity: h.d === 'h' ? 0.4 : h.d === 'crash' ? 0.7 : 0.85, perc: PERC[h.d] });
   }
-  // The harmony band (bassBand.ts): comping on the same clock, only where the drums may play (headphones / MIDI).
-  if (drums) for (const h of bandHits(drill)) for (const m of h.notes) out.push({ midi: m, start: at(h.beat), duration: h.len * beatS, velocity: h.vel, inst: 'piano' });
+  // The harmony band (bassBand.ts / bandTimeline.ts): comping on the same clock, only where the drums may play (headphones / MIDI).
+  if (drums) for (const h of drillBandHits(drill)) for (const m of h.notes) out.push({ midi: m, start: at(h.beat), duration: len(h.beat, h.len), velocity: h.vel, inst: 'piano' });
   // Drums course: the band's bass line (roots on the groove's kick, or walking in swing).
-  if (drums) for (const n of bandBass(drill)) out.push({ midi: n.midi, start: at(n.beat), duration: n.len * beatS, velocity: n.vel, inst: 'bass' });
+  if (drums) for (const n of bandBass(drill)) out.push({ midi: n.midi, start: at(n.beat), duration: len(n.beat, n.len), velocity: n.vel, inst: 'bass' });
+  // PROG_ENGINE: the band doubles the written line (a unison riff): bass on the bass, guitar / keys on the piano for now.
+  if (drums) for (const n of unisonLine(drill)) out.push({ midi: n.midi, start: at(n.beat), duration: len(n.beat, n.len), velocity: n.vel, inst: n.inst === 'bass' ? 'bass' : 'piano' });
   for (const n of drill.listen?.notes ?? [])
-    for (const m of n.midi) out.push(n.perc ? { midi: m, start: at(n.beat), duration: n.dur * beatS, velocity: n.vel ?? 0.45, perc: n.perc } : { midi: m, start: at(n.beat), duration: n.dur * beatS, velocity: n.inst === 'bass' ? 0.85 : 0.5, inst: n.inst === 'bass' ? ('bass' as const) : ('piano' as const) });
+    for (const m of n.midi) out.push(n.perc ? { midi: m, start: at(n.beat), duration: len(n.beat, n.dur), velocity: n.vel ?? 0.45, perc: n.perc } : { midi: m, start: at(n.beat), duration: len(n.beat, n.dur), velocity: n.inst === 'bass' ? 0.85 : 0.5, inst: n.inst === 'bass' ? ('bass' as const) : ('piano' as const) });
   return out;
 }
 
@@ -427,14 +419,17 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
     const abort = new AbortController();
     ac.current = abort;
     const beatS = 60 / bpm;
-    // With the drums playing, the click stops after the count-in (the drummer keeps time).
-    const clicks = Array.from({ length: drill.meter + Math.ceil(drill.beats) + 1 }, (_, i) => ({ t: i * beatS, accent: i % drill.meter === 0, silent: !clickHeard(drill, i) || (drums && i >= drill.meter) }));
-    // Click on the off-beats (bass time drills): a woodblock on every "and" after the count-in.
-    const wood = drill.click === 'and' && !drums ? Array.from({ length: Math.ceil(drill.beats) }, (_, k) => (drill.meter + k + 0.5) * beatS) : [];
-    const tl = { clicks, wood, responseAt: drill.meter * beatS, responseEnd: (drill.meter + drill.beats + 1) * beatS };
-    const backing = backingEvents(drill, beatS, drums);
+    // The click plan (timeline.ts): count-in, clicks (on the group starts in odd meters; following a tempo map), the
+    // off-beat woodblock; with the drums playing, the click stops after the count-in (the drummer keeps time).
+    const plan = clickPlan(drill, bpm, { drums });
+    const tl = { clicks: plan.clicks, wood: plan.wood, responseAt: plan.responseAt, responseEnd: plan.responseEnd };
+    const backing = backingEvents(drill, beatS, drums, hasTimeline(drill) ? plan.at : undefined);
     // B11: onsets inside the band's bars are not the answer (a speaker's sound on the mic).
-    const inBand = (ms: number) => (drill.listen?.windows ?? []).some(([a, b]) => ms >= a * beatS * 1000 - 40 && ms < b * beatS * 1000 + 120);
+    // Beat -> ms of the take (the timeline's map on prog drills; the old constant grid otherwise).
+    const bms = (b: number) => (hasTimeline(drill) ? timeMapOf(drill, bpm).msAt(b) : b * beatS * 1000);
+    // Every result passes the prog measures (unchanged for drills without a timeline, unison, form or goal.prog).
+    const done = (m: TakeMetrics, played: PlayedNote[]) => onDone(withProg(m, drill, bpm, played), played);
+    const inBand = (ms: number) => (drill.listen?.windows ?? []).some(([a, b]) => ms >= bms(a) - 40 && ms < bms(b) + 120);
     let zero = 0;
     const notes: PlayedNote[] = [];
     const open = new Map<number, PlayedNote>();
@@ -522,7 +517,7 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
     }
     setPhase('count');
     try {
-      if (backing.length) void piano.play(backing, (drill.meter + drill.beats + 1) * beatS + 0.5, abort.signal).catch(() => {});
+      if (backing.length) void piano.play(backing, plan.responseEnd + 0.5, abort.signal).catch(() => {});
       await piano.playTimeline(
         tl,
         abort.signal,
@@ -551,27 +546,27 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
     setPhase('ready');
     if (drum && acoustic && kit?.acoustic) {
       // Score-informed (only the drill's drums); ear drills: onsets inside the call's bars are the speaker, not the answer.
-      const inCall = (ms: number) => (drill.listen?.windows ?? []).some(([a, b]) => ms >= a * beatS * 1000 - 40 && ms < b * beatS * 1000 - 40);
+      const inCall = (ms: number) => (drill.listen?.windows ?? []).some(([a, b]) => ms >= bms(a) - 40 && ms < bms(b) - 40);
       const onsets = acousticOnsets(frames).filter((o) => !drill.listen || !inCall(o.t));
       const hits = acousticHits(onsets, kit.acoustic, drillAcousticVoices(drill, kit.acoustic));
       const played: PlayedNote[] = hits.map((h) => ({ pitch: h.voice ? VOICE_NOTE[h.voice] : VOICE_NOTE.snare, on: h.on, off: null, vel: h.vel }));
       const m = analyzeDrumTake(drill, bpm, hits, { kit, acoustic: { toms: !!kit.acoustic.tpl.tom } });
       if (m.drum?.missed.includes('unsure')) return setVoided(m.why);
       setVoided(null);
-      return onDone(m, played);
+      return done(m, played);
     }
     if (drum) {
       // Ear drills: a speaker's call heard by the mic is never the answer — onsets inside the call's bars are dropped.
       // The answer's first stroke falls right on the call's end, so (unlike a ringing bass note) no tail is added.
-      const inCall = (ms: number) => (drill.listen?.windows ?? []).some(([a, b]) => ms >= a * beatS * 1000 - 40 && ms < b * beatS * 1000 - 40);
+      const inCall = (ms: number) => (drill.listen?.windows ?? []).some(([a, b]) => ms >= bms(a) - 40 && ms < bms(b) - 40);
       const hits: DrumTakeHit[] = drumMidi ? drumHitsIn : detectOnsets(frames, { refractoryMs: 35, ratio: 1.8 }).filter((p) => !drill.listen || !inCall(p.on)).map((p) => ({ voice: null, on: p.on, vel: p.vel }));
       const played: PlayedNote[] = hits.map((h) => ({ pitch: h.voice ? VOICE_NOTE[h.voice] : VOICE_NOTE.snare, on: h.on, off: null, vel: h.vel }));
-      return onDone(analyzeDrumTake(drill, bpm, hits, { kit, mic: !drumMidi }), played);
+      return done(analyzeDrumTake(drill, bpm, hits, { kit, mic: !drumMidi }), played);
     }
     if (guitar) {
       const heard = drill.listen ? frames.filter((f) => !inBand(f.t)) : frames;
       const played = (heard.length ? detectOnsets(heard, onsetOptsFor(drill)) : notes).filter((p) => !drill.listen || !inBand(p.on));
-      return onDone(analyzeGuitarTake(drill, bpm, played, cal, heard), played);
+      return done(analyzeGuitarTake(drill, bpm, played, cal, heard), played);
     }
     // PIANO_AUDIT A2: the microphone is flagged so a loudness / release / pedal goal can't pass on notes alone.
     const pianoMicTake = !midi.devices.length;
@@ -579,7 +574,7 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
     const answer = (ps: PlayedNote[]) => (drill.listen ? ps.filter((p) => !inBand(p.on)) : ps);
     if (pianoChords) {
       const played = answer(scoreInformedNotes(drill, bpm, frames));
-      return onDone(analyzeTake(drill, bpm, played, cal, { mic: true }), played);
+      return done(analyzeTake(drill, bpm, played, cal, { mic: true }), played);
     }
     const heardNotes = answer(notes);
     const m = analyzeTake(drill, bpm, heardNotes, cal, { mic: pianoMicTake });
@@ -589,7 +584,7 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
       if (!pr.pass && m.verdict === 'clean') m.verdict = 'almost';
       if (!pr.pass || m.verdict === 'clean') m.why = pr.why;
     }
-    onDone(m, heardNotes);
+    done(m, heardNotes);
   };
   return (
     <div className="drill-take">

@@ -103,7 +103,7 @@ const MARK_COLOR = new Proxy(MARK_RG, { get: (o, k: string) => (typeof document 
 /** Symbols under marked notes so the result is never colour-only. */
 const MARK_SYM: Record<Exclude<NoteMark, undefined>, string> = { ok: '', timing: '~', wrong: '✕', missed: '○' };
 
-export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs, marks, rests, meter, timeSig, sig }: { notes: number[]; chord: boolean; keyPc: PitchClass | null; labels?: string[]; clef?: 'treble' | 'bass' | 'alto' | 'tenor'; durs?: number[]; marks?: NoteMark[]; /** Rests: true where the item is a rest of durs[i] (its note value is ignored). */ rests?: boolean[]; /** Beats per bar: draws bar lines between bars (with durs). */ meter?: number; /** Show the time signature (first line of a passage). */ timeSig?: boolean; /** The time signature text when it is not meter/4 (eighth-note meters: '7/8'). */ sig?: string }) {
+export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs, marks, rests, meter, timeSig, sig, bars }: { notes: number[]; chord: boolean; keyPc: PitchClass | null; labels?: string[]; clef?: 'treble' | 'bass' | 'alto' | 'tenor'; durs?: number[]; marks?: NoteMark[]; /** Rests: true where the item is a rest of durs[i] (its note value is ignored). */ rests?: boolean[]; /** Beats per bar: draws bar lines between bars (with durs). */ meter?: number; /** Show the time signature (first line of a passage). */ timeSig?: boolean; /** The time signature text when it is not meter/4 (eighth-note meters: '7/8'). */ sig?: string; /** Mixed meters (prog timeline): the line's bars in quarter notes; a bar with `sig` writes its new time signature after the bar line. Overrides `meter` for the bar lines. */ bars?: { len: number; sig?: string }[] }) {
   const { ref, failed } = useSvg(
     (VF, el) => {
       const n = chord ? 1 : notes.length;
@@ -136,11 +136,21 @@ export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs, 
       // Bar lines between bars (engraving, 0.52): after a note that completes a bar, unless it is the last one.
       const ticks: InstanceType<typeof VF.StaveNote | typeof VF.BarNote>[] = [];
       let acc = 0;
+      // Mixed meters: bar ends at the cumulative bar lengths, a new time signature after the bar line where it changes.
+      const ends = bars ? bars.map((_, k) => bars.slice(0, k + 1).reduce((a, b) => a + b.len, 0)) : null;
       sn.forEach((x, i) => {
         ticks.push(x);
-        if (chord || !durs || !meter) return;
+        if (chord || !durs || (!meter && !ends)) return;
         acc += durs[i] ?? 1;
-        if (i < sn.length - 1 && Math.abs(acc / meter - Math.round(acc / meter)) < 1e-6) ticks.push(new VF.BarNote());
+        if (i >= sn.length - 1) return;
+        if (ends) {
+          const k = ends.findIndex((e) => Math.abs(e - acc) < 1e-6);
+          if (k >= 0) {
+            ticks.push(new VF.BarNote());
+            const next = bars![k + 1];
+            if (next?.sig) ticks.push(new VF.TimeSigNote(next.sig) as unknown as InstanceType<typeof VF.BarNote>);
+          }
+        } else if (meter && Math.abs(acc / meter - Math.round(acc / meter)) < 1e-6) ticks.push(new VF.BarNote());
       });
       voice.addTickables(ticks);
       VF.Accidental.applyAccidentals([voice], keySpec(keyPc));
@@ -151,7 +161,7 @@ export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs, 
       voice.draw(ctx, stave);
       beams.forEach((bm) => bm.setContext(ctx).draw());
     },
-    [notes.join(','), chord, keySpec(keyPc), (labels ?? []).join(','), clef, (durs ?? []).join(','), (marks ?? []).join(','), sig],
+    [notes.join(','), chord, keySpec(keyPc), (labels ?? []).join(','), clef, (durs ?? []).join(','), (marks ?? []).join(','), sig, (bars ?? []).map((b) => `${b.len}${b.sig ?? ''}`).join(',')],
   );
   return (
     <div className="note-staff" role="img" aria-label={notes.map((m, i) => `${vfKey(m, keyPc)}${marks?.[i] ? ` ${marks[i]}` : ''}`).join(' ')}>
