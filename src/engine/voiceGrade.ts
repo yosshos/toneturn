@@ -4,12 +4,12 @@
 import type { SungFrame } from './sing';
 import { bandScore, finish, holdMetrics, inBandScore, M, reachScore, UNCLEAR, type MetricScore, type TakeGrade, type VocalItem } from './vocal';
 import { swingBand, swingRatioOf, timeFeel, voiceOnsets, type TimeFeel } from './voiceTime';
-import { gradeSongTake, type SongGrade, type SongPlan } from './voiceSongs';
+import { gradeSongTake, pitchChanges, type PhraseScore, type PlanNote, type SongGrade, type SongPlan } from './voiceSongs';
 import { chordAtBeat, parseChart, transposeChart } from './charts';
 import { improvReportBy, type ImprovReport } from './perform';
 import { hzToMidi } from './pitch';
 import { segmentNotes } from './memory';
-import { gradeMotif, gradeRubato, gradeTrade, tradeOpening, tradeTurns, type TradeTurn } from './voiceP2';
+import { gradeMotif, gradeRubato, gradeTrade, reentryOffset, tradeOpening, tradeTurns, type TradeTurn } from './voiceP2';
 import type { PNote } from './improvPhrasing';
 
 /** The level's own rule dominates: a take that misses it cannot pass on the other metrics. */
@@ -187,6 +187,56 @@ export function gradeRubatoSong(item: VocalItem, frames: SungFrame[], plan: Song
   let score = Math.min(song.score, base.score);
   if (r.follow < 0.8) score = Math.min(score, s.need - 0.01);
   return { grade: { ...base, score: r3(score) }, song, follow: r.follow };
+}
+
+/** A colla voce item's parts: the bar where the tempo starts, the free notes, the tempo notes (start s from that bar) and the last free note's written beats. */
+export function collaParts(plan: SongPlan, from: number, to: number, freeUntil: number): { split: number; free: PlanNote[]; tempo: { midi: number; start: number; dur: number }[]; lastBeats: number } {
+  const ph = plan.phrases[Math.max(1, Math.min(freeUntil, plan.phrases.length - 1))];
+  const split = Math.min(Math.max(ph.fromBar, from + 1), to + 1);
+  const free = plan.notes.filter((n) => n.bar >= from && n.bar < split);
+  const base = split * plan.meter * plan.beat;
+  const tempo = plan.notes.filter((n) => n.bar >= split && n.bar <= to).map((n) => ({ midi: n.midi, start: n.start - base, dur: n.dur }));
+  return { split, free, tempo, lastBeats: free.length ? free[free.length - 1].dur / plan.beat : 1 };
+}
+
+/**
+ * F14 L6 / L9 (P3), colla voce then a tempo: the free phrases graded without a clock (the follower's path, each note
+ * reached in tune); the band then counted one bar and came in on `rejoin` (take clock, s; null = the free part was
+ * never finished). The tempo phrases are graded as a band song from that downbeat, and the singer must be back on the
+ * bar: the onset nearest the written re-entry within one beat (a hard rule), scored by how close.
+ */
+export function gradeCollaSong(item: VocalItem, frames: SungFrame[], plan: SongPlan, from: number, to: number, rejoin: number | null): SongResult & { follow: number; reentry: number | null } {
+  const s = item.song!;
+  const { split, free, tempo } = collaParts(plan, from, to, s.freeUntil ?? 1);
+  const countAt = rejoin === null ? Infinity : rejoin - plan.meter * plan.beat;
+  const r = gradeRubato(frames.filter((f) => f.t < countAt), free.map((n) => n.midi), free.map((n) => n.phrase), s.tol ?? 50);
+  const freePh: PhraseScore[] = r.phrases.map((p) => ({ i: p.i, pitch: p.score, time: null, breath: 1, score: p.score, sung: p.reached, notes: p.notes }));
+  let tempoPh: PhraseScore[];
+  let feel: SongGrade['feel'] = null;
+  let reentry: number | null = null;
+  let tempoPitch: (number | null)[] = tempo.map(() => null);
+  if (rejoin !== null) {
+    const shifted = frames.filter((f) => f.t >= countAt).map((f) => ({ ...f, t: f.t - rejoin }));
+    const g = gradeSongTake(shifted, plan, { fromBar: split, toBar: to, tol: s.tol, rhythm: s.rhythm, need: s.need });
+    tempoPh = g.phrases;
+    feel = g.feel;
+    tempoPitch = g.notePitch;
+    const on = [...voiceOnsets(shifted), ...pitchChanges(shifted)].sort((a, b) => a - b);
+    reentry = tempo.length ? reentryOffset(on, tempo[0].start, plan.beat) : null;
+  } else tempoPh = plan.phrases.filter((ph) => ph.fromBar >= split && ph.fromBar <= to).map((ph) => ({ i: ph.i, pitch: 0, time: s.rhythm ? 0 : null, breath: 0, score: 0, sung: 0, notes: ph.notes.length }));
+  const phrases = [...freePh, ...tempoPh];
+  const mean = phrases.length ? phrases.reduce((a, p) => a + p.score, 0) / phrases.length : 0;
+  const r3 = (x: number) => Math.round(x * 1000) / 1000;
+  const weakest = phrases.length ? phrases.reduce((w, p) => (p.score < w.score ? p : w), phrases[0]).i : 0;
+  const notePitch = [...r.cents.map((c) => (c === null ? null : Math.abs(c) <= (s.tol ?? 50) ? 1 : 0)), ...tempoPitch];
+  const song: SongGrade = { phrases, score: r3(phrases.some((p) => p.score < s.need) ? Math.min(mean, s.need - 0.01) : mean), mean: r3(mean), weakest, feel, drift: null, chorusDb: null, notePitch };
+  if (r.follow === 0) return { grade: UNCLEAR, song, follow: 0, reentry };
+  const beatMs = plan.beat * 1000;
+  const back = reentry === null ? 0 : bandScore(reentry * 1000, [beatMs * 0.15, beatMs * 0.4, beatMs]);
+  const base = finish([M('phrases', mean * 100, '%', mean, 4), M('follow', r.follow * 100, '%', reachScore(r.follow, 0.9), 2), M('reentry', reentry === null ? beatMs * 2 : reentry * 1000, 'ms', back, 2.5)], {});
+  let score = Math.min(song.score, base.score);
+  if (r.follow < 0.8 || reentry === null || Math.abs(reentry) > plan.beat) score = Math.min(score, s.need - 0.01);
+  return { grade: { ...base, score: r3(score) }, song, follow: r.follow, reentry };
 }
 
 /**

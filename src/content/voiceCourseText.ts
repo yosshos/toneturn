@@ -200,3 +200,23 @@ export const TONE_NAMES: Record<string, Bi> = {
   '♭9': { en: 'the flat 9th', he: 'הנונה הקטנה' },
   '♯11': { en: 'the sharp 11th', he: 'האונדצימה המוגדלת' },
 };
+
+/** P3: the ear items (F10 L1 / L3 / L5, F13 L1) — one line each. */
+export const EAR_INSTR = {
+  echo: { en: 'Listen, then sing it back — same notes, same rhythm.', he: 'הקשיבו, ואז שירו בחזרה — אותם צלילים, אותו מקצב.' },
+  song: { en: 'Listen to the first phrase of “{song}”, then sing it back.', he: 'הקשיבו למשפט הראשון של ״{song}״, ואז שירו אותו בחזרה.' },
+  intervalUp: { en: 'Sing the note you hear, then a {iv} above it.', he: 'שירו את הצליל ששומעים, ואז {iv} מעליו.' },
+  intervalDown: { en: 'Sing the note you hear, then a {iv} below it.', he: 'שירו את הצליל ששומעים, ואז {iv} מתחתיו.' },
+  audiate: { en: 'Two bars of a pattern are played. Sing the third bar — the pattern goes on, one step further.', he: 'מתנגנות שתי תיבות של תבנית. שירו את התיבה השלישית — התבנית ממשיכה צעד אחד הלאה.' },
+} as const;
+
+/** P3: colla voce, then in time (F14 L6, L9). */
+export const COLLA_TEXT = {
+  instr: { en: 'Sing the opening freely — the band follows you. Then it counts one bar: come back in on the one, in time.', he: 'שירו את הפתיחה בחופשיות — הלהקה הולכת אחריכם. אחר כך היא סופרת תיבה אחת: היכנסו שוב על האחת, בזמן.' },
+  verse: { en: 'The verse is free: sing it in your own time, the band follows. Then a count-in, and the chorus in time.', he: 'הבית חופשי: שירו אותו בזמן שלכם, הלהקה הולכת אחריכם. אחר כך ספירה, והפזמון בזמן.' },
+  free: { en: 'Free time — the band follows you', he: 'זמן חופשי — הלהקה הולכת אחריכם' },
+  count: { en: 'The band counts you in…', he: 'הלהקה סופרת לכם…' },
+  tempo: { en: 'In time', he: 'בזמן' },
+  back: { en: 'Back on the bar: {ms} ms {dir}', he: 'חזרה לתיבה: {ms} מילישניות {dir}' },
+  missed: { en: 'Not back on the bar — come in on the one after the count-in', he: 'לא חזרתם לתיבה — היכנסו על האחת אחרי הספירה' },
+} as const;
