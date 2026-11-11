@@ -11,7 +11,7 @@ export interface Quest {
   target: number;
   /** Note-head colour of the quest's symbol. */
   color: string;
-  glyph: 'intervals' | 'sing' | 'keys' | 'guitar' | 'bass' | 'drums' | 'rhythm' | 'scales' | 'tempo' | 'sticks';
+  glyph: 'intervals' | 'sing' | 'keys' | 'guitar' | 'bass' | 'drums' | 'rhythm' | 'scales' | 'tempo' | 'sticks' | 'lick' | 'transcribe';
 }
 
 interface QuestDay {
@@ -64,17 +64,20 @@ const POOL: Record<string, Make> = {
   // Game tiers (GAMES_TIERS_PLAN §5.2): meet the goal of your level in a game; clear a level.
   tierPass2: (d) => ({ id: 'tierPass2', title: { en: "Meet a game level's goal twice", he: 'לעמוד פעמיים ביעד של רמה במשחק' }, now: (d.tierRuns ?? []).filter((r) => r.pass && sameDay(r.at, d.day)).length, target: 2, color: '#3AB8FF', glyph: 'scales' }),
   tierClear: (d) => ({ id: 'tierClear', title: { en: 'Clear a level in any game', he: 'לעבור רמה באחד המשחקים' }, now: (d.tierRuns ?? []).filter((r) => r.cleared && sameDay(r.at, d.day)).length, target: 1, color: '#FFD43B', glyph: 'scales' }),
+  // Licks & transcription (SPEC-LICKS-TRANSCRIPTION): measured takes only — clean lick takes, transcribed phrases.
+  lick3: (d) => ({ id: 'lick3', title: { en: '3 clean lick takes', he: '3 ביצועים נקיים של ליקים' }, now: d.events.filter((e) => sameDay(e.at, d.day) && e.id.startsWith('g:lick:') && e.correct).length, target: 3, color: '#A78BFA', glyph: 'lick' }),
+  tx2: (d) => ({ id: 'tx2', title: { en: 'Transcribe 2 phrases', he: 'לתמלל 2 משפטים' }, now: d.events.filter((e) => sameDay(e.at, d.day) && e.id.startsWith('g:tx:') && (e.score ?? 0) >= 0.7).length, target: 2, color: '#3AB8FF', glyph: 'transcribe' }),
   rhythm: (d) => ({ id: 'rhythm', title: d.course === 'drums' ? { en: 'Rhythm right 5 times', he: 'קצב נכון 5 פעמים' } : { en: '5 rhythm answers right', he: '5 תשובות קצב נכונות' }, now: d.events.filter((e) => sameDay(e.at, d.day) && e.set === undefined && (/rhythm|timing|tempo|meter/.test(e.skill) || (d.course === 'drums' && !!e.tags?.some((x) => /rhythm|timing/.test(x.skill)))) && (e.score ?? (e.correct ? 1 : 0)) >= 0.7).length, target: 5, color: '#FF5FA2', glyph: 'rhythm' }),
 };
 
 /** Which quests a course offers (first one rotates with the day). */
 const BY_COURSE: Record<CourseId, string[]> = {
   ear: ['run10', 'steps2', 'rhythm', 'min10', 'tierPass2'],
-  jazz: ['harmony5', 'steps2', 'run10', 'min10', 'tierClear'],
-  voice: ['sing3', 'steps2', 'min10', 'tierPass2'],
-  keys: ['tech3', 'steps2', 'min10'],
-  guitar: ['tech3', 'steps2', 'min10'],
-  bass: ['tech3', 'steps2', 'min10'],
+  jazz: ['harmony5', 'steps2', 'run10', 'min10', 'tierClear', 'lick3', 'tx2'],
+  voice: ['sing3', 'steps2', 'min10', 'tierPass2', 'tx2'],
+  keys: ['tech3', 'steps2', 'min10', 'lick3'],
+  guitar: ['tech3', 'steps2', 'min10', 'lick3'],
+  bass: ['tech3', 'steps2', 'min10', 'lick3'],
   drums: ['tech3', 'rhythm', 'steps2', 'min10'],
 };
 

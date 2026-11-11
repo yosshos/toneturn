@@ -16,6 +16,9 @@ import { startComputerKeys } from '../speech/computerKeys';
 import { TodayAside } from './Asides';
 import { ProgPuzzleScreen } from './ProgPuzzle';
 import { ImprovStudioScreen } from './ImprovStudio';
+import { LickTrainerScreen } from './LickTrainer';
+import { dueLicks } from '../engine/licks';
+import { TranscribeCoachScreen } from './TranscribeCoach';
 import { ExamsScreen, mockExamLesson } from './Exams';
 import type { ExamDef } from '../content/bagrut';
 import { AdminScreen, CoolDownSheet, PlansScreen } from './Plans';
@@ -141,7 +144,7 @@ import { setPreferredMic } from '../speech/mic';
 /** Screens that play the band (0.69: its sets load here, and only here on Lite / Standard). */
 const BAND_ROUTES = new Set<string>(['charts', 'improv', 'groove', 'metronome', 'mixer', 'slowdown', 'perform', 'highway', 'drills', 'workoutrun', 'land', 'groove-echo', 'odd-echo']);
 
-type Route = 'intake' | 'studio' | 'home' | 'path' | 'arcade' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong' | 'perform' | 'learned' | 'tuner' | 'metronome' | 'songs' | 'drills' | 'workout' | 'workoutrun' | 'peakhunter' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'flight' | 'pitchmemory' | 'nametune' | 'tuneup' | 'highway' | 'melodypuzzle' | 'charts' | 'slowdown' | 'pieces' | 'mixer' | 'insights' | 'groove' | 'welcome' | 'puzzle' | 'improv' | 'exams' | 'plans' | 'admin' | 'land' | 'groove-echo' | 'odd-echo';
+type Route = 'intake' | 'studio' | 'home' | 'path' | 'arcade' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong' | 'perform' | 'learned' | 'tuner' | 'metronome' | 'songs' | 'drills' | 'workout' | 'workoutrun' | 'peakhunter' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'flight' | 'pitchmemory' | 'nametune' | 'tuneup' | 'highway' | 'melodypuzzle' | 'charts' | 'slowdown' | 'pieces' | 'mixer' | 'insights' | 'groove' | 'welcome' | 'puzzle' | 'improv' | 'exams' | 'plans' | 'admin' | 'land' | 'groove-echo' | 'odd-echo' | 'licks' | 'transcribe';
 /** Invite links: #/online/CODE */
 const onlineCodeFromHash = () => (/^#\/?online\/(\w+)/.exec(location.hash)?.[1] ?? '');
 const PLAY_HASH = 'play';
@@ -153,7 +156,7 @@ const enterPlay = () => {
 };
 const routeFromHash = (): Route => {
   const h = location.hash.replace(/^#\/?/, '').replace(/^online\/.*$/, 'online').replace(/^settings\/.*$/, 'settings');
-  return (['path', 'arcade', 'settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong', 'perform', 'learned', 'studio', 'intake', 'tuner', 'metronome', 'songs', 'drills', 'workout', 'workoutrun', 'peakhunter', 'rush-chord', 'rush-note', 'rush-fretboard', 'rush-interval', 'rush-keysig', 'rush-progression', 'flight', 'pitchmemory', 'nametune', 'tuneup', 'highway', 'melodypuzzle', 'charts', 'slowdown', 'pieces', 'mixer', 'insights', 'groove', 'welcome', 'puzzle', 'improv', 'exams', 'plans', 'admin', 'land', 'groove-echo', 'odd-echo'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
+  return (['path', 'arcade', 'settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong', 'perform', 'learned', 'studio', 'intake', 'tuner', 'metronome', 'songs', 'drills', 'workout', 'workoutrun', 'peakhunter', 'rush-chord', 'rush-note', 'rush-fretboard', 'rush-interval', 'rush-keysig', 'rush-progression', 'flight', 'pitchmemory', 'nametune', 'tuneup', 'highway', 'melodypuzzle', 'charts', 'slowdown', 'pieces', 'mixer', 'insights', 'groove', 'welcome', 'puzzle', 'improv', 'exams', 'plans', 'admin', 'land', 'groove-echo', 'odd-echo', 'licks', 'transcribe'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
 };
 
 /** The level a generated modes lesson was made at (from its first question's pool size). */
@@ -950,6 +953,12 @@ export function App() {
     // A game inside the unit (0.38): its result is recorded as the step's stars when the game ends.
     if (step.kind === 'game' && step.game) {
       if (step.game === 'drills') drillFrom.current = 'path';
+      // Licks / transcription steps open on their level; the screen reports the step's stars when the player leaves.
+      if (step.game === 'licks' || step.game === 'transcribe') {
+        measuredStep.current = { id: step.id, level: step.level ?? 1 };
+        drillSessionXp.current = 0;
+        drillSession.current = { takes: 0, clean: 0 };
+      }
       return go(step.game as Route);
     }
     const how = mode === 'practice' ? 'step' : x.probe ? 'probe' : x.state === 'quick' ? 'quick' : 'step';
@@ -967,6 +976,23 @@ export function App() {
   };
   /** Technique drills opened from a path step or a workout block run today's items as a queue (spec AI §9). */
   const drillFrom = useRef<'path' | 'workout' | 'test' | 'chart' | 'assign' | null>(null);
+  /** A licks / transcription path step being played (SPEC-LICKS-TRANSCRIPTION), and the workout's lick-review block. */
+  const measuredStep = useRef<{ id: string; level: number } | null>(null);
+  const lickReview = useRef(false);
+  /** Leaving the licks / transcription screens: one result for the session (streak, XP per course), the path step's stars. */
+  const leaveMeasured = (kind: 'licks' | 'transcribe', stars: number | null) => {
+    const ms = measuredStep.current;
+    measuredStep.current = null;
+    lickReview.current = false;
+    void techResult(kind)?.then(setProgress);
+    if (ms && stars !== null && settings && stars > 0) {
+      pendingStep.current = null;
+      updateSettings({ pathFacts: recordStep(settings.pathFacts ?? {}, ms.id, stars, new Date().toISOString()) });
+      return go('path');
+    }
+    if (ms) return go('path');
+    go(workoutPending.current ? 'workoutrun' : 'arcade');
+  };
   /** Technique takes since the session opened (0.61): their XP, count and clean count go to the server as one result. */
   const drillSessionXp = useRef(0);
   const drillSession = useRef({ takes: 0, clean: 0 });
@@ -1139,7 +1165,7 @@ export function App() {
     // 0.61 (SPEC-COURSES): the workout belongs to the active course — its own areas, its goal, its warm-ups only.
     const course = courseOf(s.activeCourse);
     const own = COURSE_AREAS[course.id];
-    return suggestWorkout({ total: tmpl ? tmpl.reduce((a, b) => a + b.minutes, 0) : baseMinutes, goal: courseGoal(course.id, !!s.examPrep), priorities: (s.intake as Intake | null | undefined)?.priorities ?? null, leaveOut: [...new Set([...(s.pathLeaveOut ?? []).filter((d) => course.id === 'ear' || !own.includes(d)), ...INTAKE_AREAS.filter((d) => !own.includes(d))])], reviewsDue: new Set(dueReviews(progress.review, now0).map((r) => r.key)).size, singer: course.id === 'voice' && !s.noMic, view: pathView, template: tmpl, technique: s.drills?.inWorkout !== false && (course.id === 'keys' || course.id === 'guitar' || course.id === 'bass' || course.id === 'drums') });
+    return suggestWorkout({ total: tmpl ? tmpl.reduce((a, b) => a + b.minutes, 0) : baseMinutes, goal: courseGoal(course.id, !!s.examPrep), priorities: (s.intake as Intake | null | undefined)?.priorities ?? null, leaveOut: [...new Set([...(s.pathLeaveOut ?? []).filter((d) => course.id === 'ear' || !own.includes(d)), ...INTAKE_AREAS.filter((d) => !own.includes(d))])], reviewsDue: new Set(dueReviews(progress.review, now0).map((r) => r.key)).size, singer: course.id === 'voice' && !s.noMic, view: pathView, template: tmpl, technique: s.drills?.inWorkout !== false && (course.id === 'keys' || course.id === 'guitar' || course.id === 'bass' || course.id === 'drums'), licksDue: course.id === 'drums' || course.id === 'ear' ? 0 : dueLicks(s.lickBook?.review, now0).length });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathView, baseMinutes, tmplRaw, s.goal, s.examPrep, s.pathLeaveOut, s.pathHidden, s.mode, s.noSing, s.noMic, progress.review.length, today, progress.history.length]);
   const todayBlocks = s.workoutToday?.day === today ? s.workoutToday.blocks : suggestedWorkout;
@@ -1557,6 +1583,8 @@ export function App() {
             slowdown: () => go('slowdown'),
             groove: () => go('groove'),
             improv: () => go('improv'),
+            licks: () => gate('game:licks', () => go('licks')),
+            transcribe: () => gate('game:transcribe', () => go('transcribe')),
             puzzle: () => go('puzzle'),
             exams: () => go('exams'),
             pieces: () => go('pieces'),
@@ -1844,6 +1872,7 @@ export function App() {
             // Games and the vocal warm-up: the block counts as done when started (they run on their own screens).
             saveRun(addSession(wrun, b.minutes * 60000, Math.max(1, b.minutes), Math.max(1, b.minutes)));
             if (b.target.kind === 'game') {
+              if (b.target.game === 'licks') lickReview.current = true;
               if (b.target.game === 'drills') {
                 drillFrom.current = 'workout';
                 drillSessionXp.current = 0;
@@ -1898,7 +1927,46 @@ export function App() {
           }}
         />
       )}
-      {route === 'improv' && <ImprovStudioScreen settings={s} onBack={() => go('arcade')} onOpenChart={(c) => ((chartInit.current = c), go('charts'))} />}
+      {route === 'licks' && (
+        <LickTrainerScreen
+          lang={s.uiLang}
+          settings={s}
+          items={progress.drillItems ?? {}}
+          onSettings={updateSettings}
+          onTake={(st, evs, xp, m) => {
+            noteTake(xp, m?.verdict);
+            void store.recordDrill(st, evs, xp, m).then(setProgress);
+          }}
+          onUsed={(evs, xp) => {
+            drillSessionXp.current += xp;
+            void store.recordRatingEvents(evs).then(setProgress);
+          }}
+          startReview={lickReview.current}
+          pathLevel={measuredStep.current?.level}
+          onPathDone={(stars) => leaveMeasured('licks', stars)}
+          onBack={() => leaveMeasured('licks', null)}
+        />
+      )}
+      {route === 'transcribe' && (
+        <TranscribeCoachScreen
+          lang={s.uiLang}
+          settings={s}
+          items={progress.drillItems ?? {}}
+          onSettings={updateSettings}
+          onTake={(st, evs, xp, m) => {
+            noteTake(xp, m?.verdict);
+            void store.recordDrill(st, evs, xp, m).then(setProgress);
+          }}
+          onPhrase={(st, evs, xp, stars) => {
+            noteTake(xp, stars === 3 ? 'clean' : 'not');
+            void store.recordDrill(st, evs, xp, { verdict: stars === 3 ? 'clean' : 'not', hands: 'R', cv: null }).then(setProgress);
+          }}
+          pathLevel={measuredStep.current?.level}
+          onPathDone={(stars) => leaveMeasured('transcribe', stars)}
+          onBack={() => leaveMeasured('transcribe', null)}
+        />
+      )}
+      {route === 'improv' && <ImprovStudioScreen settings={s} onLickUsed={(evs, xp) => void store.recordRatingEvents(evs).then(setProgress).then(() => void xp)} onBack={() => go('arcade')} onOpenChart={(c) => ((chartInit.current = c), go('charts'))} />}
       {route === 'exams' && (
         <ExamsScreen
           lang={s.uiLang}

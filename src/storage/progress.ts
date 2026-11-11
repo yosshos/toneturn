@@ -312,6 +312,8 @@ export interface Settings {
   drillCal?: import('../engine/drills/types').DrillCalibration;
   /** The player's own drills (drill creator). */
   customDrills?: import('../engine/drills/types').CustomDrill[];
+  /** Licks (SPEC-LICKS-TRANSCRIPTION): my licks, own licks from transcriptions, the spaced review, "Use it" passes. */
+  lickBook?: import('../engine/licks').LickBook;
   /** Level test (technique section): the start level per family (spec AI §13). */
   drillStart?: Partial<Record<import('../engine/drills/types').FamilyId, number>>;
   /** Drums course (0.65): the e-kit's learned map, hi-hat pedal range, per-pad velocity, or practice-pad (mic) mode. */

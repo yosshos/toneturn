@@ -446,6 +446,33 @@ const FAMILY_TITLES: Record<BadgeFamily, [string, string][]> = {
 export const familyLevelCount = (f: string): number => FAMILY_TITLES[f as BadgeFamily]?.length ?? 7;
 const levelTone = (lv: number): RankTier => (lv >= 7 ? 'master' : RANK_TIERS[Math.min(4, Math.floor((lv - 1) / 1.25))]);
 
+// ---------------------------------------------------------------- licks & transcription (SPEC-LICKS-TRANSCRIPTION)
+/** Lick items with a clean take: lick id + instrument → the keys (pitch classes) played clean. */
+export function lickKeysClean(x: BadgeInput): Map<string, Set<number>> {
+  const m = new Map<string, Set<number>>();
+  for (const [id, bpm] of Object.entries(x.technique?.cleanItems ?? {})) {
+    if (!id.startsWith('lick:') || !(bpm > 0)) continue;
+    const [, lick, inst, key] = id.split(':');
+    const k = `${lick}:${inst}`;
+    if (!m.has(k)) m.set(k, new Set());
+    m.get(k)!.add(Number(key));
+  }
+  return m;
+}
+function lickBadges(): Badge[] {
+  const licks = (x: BadgeInput) => new Set([...lickKeysClean(x).keys()].map((k) => k.split(':')[0])).size;
+  const maxKeys = (x: BadgeInput) => Math.max(0, ...[...lickKeysClean(x).values()].map((s) => s.size));
+  const txLevel = (x: BadgeInput) => Math.max(0, ...Object.entries(x.technique?.cleanItems ?? {}).filter(([id, b]) => id.startsWith('tx:L') && b > 0).map(([id]) => Number(id.slice(4)) || 0));
+  const B = (id: string, tone: RankTier, en: string, he: string, den: string, dhe: string, group: 'licks' | 'transcribe', rule: (x: BadgeInput) => BadgeCheck): Badge => ({ id: `tech:${id}`, cat: 'technique', icon: group === 'licks' ? '🎷' : '🎼', group, tone, name: { en, he }, desc: { en: den, he: dhe }, rule });
+  return [
+    B('lick-first', 'bronze', 'First Words', 'מילים ראשונות', 'A clean take of a lick.', 'ביצוע נקי של ליק.', 'licks', (x) => count(licks(x), 1)),
+    B('lick-10', 'gold', 'Vocabulary', 'אוצר מילים', 'Clean takes of 10 different licks.', 'ביצועים נקיים של 10 ליקים שונים.', 'licks', (x) => count(licks(x), 10)),
+    B('lick-12keys', 'platinum', 'All Around the Cycle', 'סביב כל המעגל', 'One lick played clean in all 12 keys.', 'ליק אחד נקי בכל 12 הסולמות.', 'licks', (x) => count(maxKeys(x), 12)),
+    B('tx-first', 'bronze', 'Took It Down', 'רשמתי את זה', 'Play back a transcribed phrase clean.', 'לנגן בחזרה נקי משפט שתמללתם.', 'transcribe', (x) => count(txLevel(x) > 0 ? 1 : 0, 1)),
+    B('tx-bebop', 'diamond', 'Bebop Ears', 'אוזני ביבופ', 'Play back a 4-bar bebop phrase clean, by ear.', 'לנגן בחזרה נקי משפט ביבופ של 4 תיבות, בשמיעה.', 'transcribe', (x) => count(txLevel(x) >= 8 ? 1 : 0, 1)),
+  ];
+}
+
 // ---------------------------------------------------------------- guitar specials (spec AI-G §12), from technique.cleanItems
 
 /** A clean item parsed from its itemId ("g-scales:penta:9:R:m:ps2:inguitar" → family, kind, key, flags / options). */
@@ -760,6 +787,7 @@ const techniqueBadges: Badge[] = [
   ...bassBadges(),
   ...drumBadges(),
   ...voiceBadges(),
+  ...lickBadges(),
 ];
 
 // ======================================================================= specials
@@ -872,6 +900,8 @@ export function badgeCourse(b: Pick<Badge, 'id' | 'cat' | 'group'>): { course: B
       return JAZZ_SKILLS.includes(g as SkillId) ? { course: 'ear', alsoIn: ['jazz'] } : { course: 'ear' };
     }
     case 'technique': {
+      // Licks & transcription: the Jazz course's, shown in every course that plays or sings lines.
+      if (g === 'licks' || g === 'transcribe') return { course: 'jazz', alsoIn: ['keys', 'guitar', 'bass', 'voice'] };
       if (g.startsWith('v-') || g === 'voice-milestones' || b.id.startsWith('tech:voice:')) return { course: 'voice' };
       if (isBassGroup(g) || b.id.startsWith('tech:g-bass')) return { course: 'bass' };
       if (g.startsWith('d-') || b.id.startsWith('tech:drums:')) return { course: 'drums' };

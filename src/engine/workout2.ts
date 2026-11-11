@@ -56,6 +56,8 @@ export interface SuggestInput {
   template?: Block[] | null;
   /** Keys player with technique drills in the workout (spec AI): the game slot becomes a Technique block. */
   technique?: boolean;
+  /** Licks due for spaced review (SPEC-LICKS-TRANSCRIPTION): a 2-minute lick-review block, taken from the path block. */
+  licksDue?: number;
 }
 
 /** Open steps of the current unit (and the checkpoint), per area. */
@@ -99,6 +101,19 @@ export function validateTemplate(bs: Block[], ok: { leaveOut: DomainId[]; topics
 }
 
 export function suggestWorkout(inp: SuggestInput): Block[] {
+  const out = suggestBase(inp);
+  if (!inp.licksDue || inp.template?.length || total(out) < 10) return out;
+  // The lick review: 2 minutes from the path block (or the largest block), after the warm-up.
+  const from = out.find((b) => b.target.kind === 'path' && b.minutes >= 2 + LIMITS.minBlock) ?? [...out].sort((a, b) => b.minutes - a.minutes).find((b) => b.minutes >= 2 + LIMITS.minBlock);
+  if (!from) return out;
+  from.minutes -= 2;
+  const at = out.findIndex((b) => b.target.kind === 'path');
+  const block: Block = { id: uid(out, 'game'), target: { kind: 'game', game: 'licks' }, minutes: 2 };
+  out.splice(at < 0 ? out.length : at + 1, 0, block);
+  return out;
+}
+
+function suggestBase(inp: SuggestInput): Block[] {
   const T = Math.max(LIMITS.minTotal, Math.min(LIMITS.maxTotal, Math.round(inp.total)));
   if (inp.template?.length) return rescale(inp.template.map((b) => ({ ...b })), T);
   const out: Block[] = [];

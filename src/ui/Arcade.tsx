@@ -656,6 +656,9 @@ export interface PracticeHub {
   slowdown?: () => void;
   groove?: () => void;
   improv?: () => void;
+  /** Licks in 12 keys and the transcription coach (SPEC-LICKS-TRANSCRIPTION). */
+  licks?: () => void;
+  transcribe?: () => void;
   puzzle?: () => void;
   exams?: () => void;
   pieces?: () => void;
@@ -705,6 +708,19 @@ const HUB_PATHS: Record<string, React.ReactNode> = {
     <>
       <circle cx="12" cy="13" r="8" />
       <path d="M12 9v4l2.5 2M9.5 2.5h5" />
+    </>
+  ),
+  licks: (
+    <>
+      <path d="M4 17c3-6 5-6 8-2s5 4 8-3" />
+      <circle cx="12" cy="12" r="10" strokeDasharray="2 3" />
+    </>
+  ),
+  transcribe: (
+    <>
+      <path d="M6 9a5 5 0 0 1 10 0c0 3-3 3-3 6a2 2 0 0 1-4 0" />
+      <path d="M3 20h18" />
+      <circle cx="18" cy="17" r="1.6" />
     </>
   ),
   improv: (
@@ -785,6 +801,8 @@ const HUB_TX = {
   slowdown: { en: 'Slow down', he: 'האטה' },
   groove: { en: 'Groove', he: 'גרוב' },
   improv: { en: 'Improvise', he: 'אלתור' },
+  licks: { en: 'Licks', he: 'ליקים' },
+  transcribe: { en: 'Transcribe', he: 'תמלול' },
   puzzle: { en: 'Daily progression', he: 'מהלך היום' },
   exams: { en: 'Programs & exams', he: 'תכניות לימוד ומבחנים' },
   pieces: { en: 'My pieces', he: 'היצירות שלי' },
@@ -795,7 +813,7 @@ const HUB_TX = {
 /** The Practice page (SPEC-IA-2, owner 2026-11-09): four groups by what you do — play, train, study — and the tools. */
 export const PRACTICE_GROUPS: { id: 'play' | 'train' | 'study'; name: { en: string; he: string }; items: string[] }[] = [
   { id: 'play', name: { en: 'Play', he: 'לנגן' }, items: ['songs', 'pieces', 'charts'] },
-  { id: 'train', name: { en: 'Train', he: 'להתאמן' }, items: ['drills', 'improv', 'games'] },
+  { id: 'train', name: { en: 'Train', he: 'להתאמן' }, items: ['drills', 'improv', 'licks', 'transcribe', 'games'] },
   { id: 'study', name: { en: 'Study', he: 'ללמוד' }, items: ['lessons', 'exams', 'puzzle'] },
 ];
 /** An instrument course's own words on shared game cards (the shared text is the piano's: Hanon, Barry Harris, MIDI). */
@@ -829,7 +847,7 @@ const INSTRUMENT_TILE: Partial<Record<CourseId, GlyphKind>> = { drums: 'drums', 
 /** The weekly puzzle and the live quiz rooms are ear & theory things. */
 const COURSE_SOCIAL: CourseId[] = ['ear', 'jazz'];
 /** Practice tiles (0.63): a colour per row, and the game kinds each course shows as their own tiles. */
-const TILE_COLOR: Record<string, string> = { lessons: '#FF8A3D', puzzle: '#A78BFA', drills: '#FFD43B', songs: '#12C9B4', pieces: '#FF5FA2', charts: '#A78BFA', improv: '#6D28D9', exams: '#FF8A3D' };
+const TILE_COLOR: Record<string, string> = { lessons: '#FF8A3D', puzzle: '#A78BFA', drills: '#FFD43B', songs: '#12C9B4', pieces: '#FF5FA2', charts: '#A78BFA', improv: '#6D28D9', exams: '#FF8A3D', licks: '#A78BFA', transcribe: '#3AB8FF' };
 const COURSE_TILE_CATS: Partial<Record<CourseId, GameCat[]>> = { ear: ['ear', 'rhythm', 'memory', 'read'], jazz: ['ear'], voice: ['voice'], keys: ['instrument'], guitar: ['instrument'], bass: ['instrument'], drums: ['instrument', 'rhythm'] };
 const CAT_GLYPH: Record<GameCat, GlyphKind> = { ear: 'intervals', rhythm: 'rhythm', memory: 'memory', read: 'sight', voice: 'sing', instrument: 'keys', social: 'duel' };
 /** The games list opens on the course's own category. */
@@ -851,6 +869,8 @@ const ROW_TX: Record<string, { en: [string, string]; he: [string, string] }> = {
   charts: { en: ['Charts & lead sheets', 'Backing tracks, standards, import a lead sheet'], he: ['מהלכים ודפי אקורדים', 'ליווי, סטנדרטים, ייבוא דף אקורדים'] },
   drills: { en: ['Technique', 'Your instrument and your voice, level by level'], he: ['טכניקה', 'הכלי שלכם והקול שלכם, שלב אחר שלב'] },
   improv: { en: ['Improvise', 'Under rules, phrasing, trading fours'], he: ['אלתור', 'עם כללים, פרייזינג, חילופי ארבע'] },
+  licks: { en: ['Licks', 'Vocabulary in 12 keys, measured — then use it'], he: ['ליקים', 'אוצר מילים ב-12 סולמות, במדידה — ואז להשתמש'] },
+  transcribe: { en: ['Transcribe', 'Hear it, play it back, write it, 12 keys'], he: ['תמלול', 'לשמוע, לנגן בחזרה, לכתוב, 12 סולמות'] },
   games: { en: ['Games', 'Ear, rhythm and memory games'], he: ['משחקים', 'משחקי שמיעה, קצב וזיכרון'] },
   lessons: { en: ['Lessons', 'Short theory lessons by topic'], he: ['שיעורים', 'שיעורי תיאוריה קצרים לפי נושא'] },
   exams: { en: ['Programs & exams', 'Bagrut and conservatory entrance, section by section'], he: ['תכניות לימוד ומבחנים', 'בגרות ומבחני כניסה לקונסרבטוריון, חלק אחר חלק'] },
