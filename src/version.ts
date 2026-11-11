@@ -18,6 +18,24 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.69.0',
+    date: '2026-11-11',
+    en: [
+      'Jazz piano: Barry Harris harmony (borrowing, oblique motion, spreads, diminished passing chords), bebop lines with trading fours, and advanced jazz harmony',
+      'Ear & theory: an audit of every question, plus an advanced jazz ear (extensions, voicings, ii–V chains, reharmonisation, transcription) and prog rhythm (odd meters, polymeter, metric modulation)',
+      'Games have levels pp→ff inside each game and give XP; the daily challenge comes in three bands',
+      'Sound fits phones: Lite / Standard / Studio quality, and lower latency when playing MIDI',
+      'Fixes from playtesting: Continue workout and Next step work, Repeat replays the rhythm, answer time starts when you can answer, a steady device delay is taken out of tapping, quarters no longer count as held notes, Toni and the progress bar move again',
+    ],
+    he: [
+      'ג׳אז בפסנתר: ההרמוניה של ברי האריס (השאלה, תנועה אלכסונית, ספרדים, אקורדים מוקטנים עוברים), קווי ביבופ עם טריידינג, והרמוניית ג׳אז מתקדמת',
+      'שמיעה ותיאוריה: בדיקה של כל השאלות, ואוזן ג׳אז מתקדמת (הרחבות, וויסינגים, שרשראות ii–V, רה־הרמוניזציה, טרנסקריפציה) וקצב פרוג (משקלים אי־זוגיים, פולימטר, מודולציה מטרית)',
+      'במשחקים יש דרגות pp עד ff בתוך כל משחק והם נותנים XP; האתגר היומי בשלוש רמות',
+      'הצליל מתאים לטלפונים: איכות קלה / רגילה / סטודיו, ופחות השהיה בנגינה ב־MIDI',
+      'תיקונים מהבדיקה: "להמשיך באימון" ו"השלב הבא" עובדים, "שוב" משמיע את הקצב, זמן התשובה מתחיל כשאפשר לענות, השהיה קבועה של המכשיר מוצאת מההקשות, רבעים כבר לא נספרים כצלילים מוחזקים, וטוני ופס ההתקדמות זזים שוב',
+    ],
+  },
+  {
     version: '0.68.0',
     date: '2026-11-10',
     en: [
