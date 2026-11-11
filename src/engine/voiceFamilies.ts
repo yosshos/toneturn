@@ -413,3 +413,36 @@ export function voiceItemTags(level: number, item: Pick<VocalItem, 'kind' | 'sca
       return { skill: 'technique', tags: T3(['technique', 'control', 1]) };
   }
 }
+
+// ---------------------------------------------------------------- the placement probe (§8, about 2½ minutes)
+
+export interface ProbeScores {
+  hold: number;
+  echo: number;
+  time: number;
+  song: number;
+  /** Only sung when the earlier items passed. */
+  guide?: number;
+}
+/**
+ * Where each family starts after the probe: the levels before `start` are ✓ by test (they stay open to practise).
+ * Cautious (the path's ✓ rule): one or two levels per family at most, from a clear pass (≥ 0.85); jazz-experienced
+ * singers (the guide-tone line passed too) skip the first stage's opening levels.
+ */
+export function probeStarts(s: ProbeScores): Record<string, number> {
+  const out: Record<string, number> = {};
+  const ok = (x: number | undefined) => (x ?? 0) >= 0.85;
+  const jazz = ok(s.guide) && ok(s.echo) && ok(s.time) && ok(s.song);
+  if (ok(s.hold)) out['v-breath'] = jazz ? 3 : 2;
+  if (ok(s.echo)) {
+    out['v-pitch'] = jazz ? 4 : 3;
+    out['v-ear'] = 2;
+  }
+  if (ok(s.time)) out['v-time'] = jazz ? 4 : 3;
+  if (ok(s.song)) out['v-songs'] = jazz ? 4 : 2;
+  if (jazz) {
+    out['v-scat'] = 3;
+    out['v-range'] = 2;
+  }
+  return out;
+}

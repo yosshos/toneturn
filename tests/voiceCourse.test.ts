@@ -212,3 +212,25 @@ describe('timed kinds (voiceGrade)', () => {
     expect(gradeScat(gi, mk([...roots, ...roots]), 0).grade.score).toBeLessThan(0.3);
   });
 });
+
+import { probeStarts } from '../src/engine/voiceFamilies';
+import { withLadderFacts } from '../src/engine/ladderFacts';
+
+describe('the voice placement probe (§8)', () => {
+  it('a clear pass moves a family one or two levels on; a weak take moves nothing; jazz only after everything passed', () => {
+    expect(probeStarts({ hold: 0.5, echo: 0.6, time: 0.4, song: 0.5 })).toEqual({});
+    const pop = probeStarts({ hold: 0.9, echo: 0.9, time: 0.9, song: 0.9 });
+    expect(pop['v-songs']).toBe(2);
+    expect(pop['v-scat']).toBeUndefined();
+    const jazz = probeStarts({ hold: 0.9, echo: 0.9, time: 0.9, song: 0.9, guide: 0.9 });
+    expect(jazz['v-scat']).toBe(3);
+    expect(Math.max(...Object.values(jazz))).toBeLessThanOrEqual(4);
+  });
+  it('levels before the probed start are ✓ by test on the path (open to practise), never "done"', () => {
+    const f = withLadderFacts({}, { families: ['v-songs'], items: {}, order: 'fifths-up' as never, start: { 'v-songs': 3 } as never, vocalPassed: [], at: '2026-11-11T10:00:00Z' });
+    expect(f.tests?.['vocal:1301']).toBeDefined();
+    expect(f.tests?.['vocal:1302']).toBeDefined();
+    expect(f.tests?.['vocal:1303']).toBeUndefined();
+    expect(f.steps?.['vocal:1301']).toBeUndefined();
+  });
+});

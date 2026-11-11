@@ -58,6 +58,8 @@ export const VT = {
   landingLine: { en: 'Chord tones on the strong beats: {p}%', he: 'צלילי אקורד בפעמות החזקות: {p}%' },
   approachLine: { en: 'Approached by a half step: {p}%', he: 'גישה בחצי טון: {p}%' },
   chordsNow: { en: 'Chords', he: 'אקורדים' },
+  probe: { en: 'Find my voice level', he: 'מציאת הרמה בשירה' },
+  probeHint: { en: 'About 2½ minutes: your path then starts where you are.', he: 'כשתיים וחצי דקות: המסלול יתחיל איפה שאתם נמצאים.' },
 } as const;
 
 /** How each timed item is sung (the brief line). */

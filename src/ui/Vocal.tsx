@@ -60,6 +60,7 @@ import { familyOfRef, isNewLevel, NEW_LEVEL_NAMES, VOICE_FAMILIES, vocalLevelByR
 import { gradeMore, moreReference, simulateMore, MORE_KINDS } from '../engine/vocalMore';
 import { MORE_INSTR, METRIC_NAMES, TONE_NAMES, VT } from '../content/voiceCourseText';
 import { TimedSession } from './VoiceTimed';
+import { VoiceProbe } from './VoiceProbe';
 import { Glyph, DOMAIN_COLOR } from './Glyph';
 import { FAMILY_GLYPH } from './stepGlyphs';
 
@@ -302,7 +303,8 @@ type View =
   | { kind: 'home' }
   | { kind: 'range' }
   | { kind: 'session'; level: number | 'warmup'; items: VocalItem[] }
-  | { kind: 'timed'; level: number; items: VocalItem[] };
+  | { kind: 'timed'; level: number; items: VocalItem[] }
+  | { kind: 'probe' };
 
 /** The view that opens a level: timed levels (clicks / band) in the timed session, the rest in the vocal session. */
 const openLevel = (level: number, range: VoiceRange): View => {
@@ -343,6 +345,7 @@ export function VocalScreen({ t, settings, progress, onSettings, onProgress, onB
 
   if (view.kind === 'range')
     return <RangeCalibration t={t} settings={settings} onDone={(r) => (r && onSettings({ voiceRange: r }), setView({ kind: 'home' }))} />;
+  if (view.kind === 'probe') return <VoiceProbe settings={settings} range={range} onBack={() => setView({ kind: 'home' })} onDone={(starts) => (onSettings({ drillStart: { ...(settings.drillStart ?? {}), ...starts } as Settings['drillStart'] }), setView({ kind: 'home' }))} />;
   if (view.kind === 'timed') return <TimedSession t={t} settings={settings} range={range} level={view.level} items={view.items} onExit={() => setView({ kind: 'home' })} onProgress={onProgress} onSettings={onSettings} />;
   if (view.kind === 'session')
     return (
@@ -424,6 +427,10 @@ export function VocalScreen({ t, settings, progress, onSettings, onProgress, onB
         </button>
       )}
 
+      <button className="tool-card warmup-card" data-voice-probe="1" onClick={() => setView({ kind: 'probe' })}>
+        <b>{VT.probe[settings.uiLang === 'en' ? 'en' : 'he']}</b>
+        <small>{VT.probeHint[settings.uiLang === 'en' ? 'en' : 'he']}</small>
+      </button>
       <VoiceFamilies t={t} settings={settings} passed={v.passed} best={v.best} open={openFam} onOpen={(id) => {
         setOpenFam(id);
         try {

@@ -70,22 +70,7 @@ export function TimedSession({ t, settings, range, level, items, onExit, onProgr
   useEffect(() => () => (ctl.current?.abort(), piano.stopAll()), []);
 
   // The song plan in the singer's range (tempo of the item, or slower in a loop).
-  const plan: SongPlan | null = useMemo(() => {
-    if (item?.kind !== 'song' || !item.song) return null;
-    const s = voiceSong(item.song.id);
-    if (!s) return null;
-    const bpm = Math.round((item.song.bpm ?? s.bpm) * (loop?.scale ?? 1));
-    return songPlan(s, range, bpm);
-  }, [item, range, loop]);
-  const span = useMemo(() => {
-    if (!plan || !item.song) return null;
-    if (loop) {
-      const ph = plan.phrases[loop.phrase];
-      return { from: ph.fromBar, to: ph.toBar };
-    }
-    const [a, b] = item.song.phrases ?? [0, plan.phrases.length - 1];
-    return { from: plan.phrases[a].fromBar, to: plan.phrases[Math.min(b, plan.phrases.length - 1)].toBar };
-  }, [plan, item, loop]);
+  const { plan, span } = useMemo(() => (item ? songSpan(item, range, loop) : { plan: null, span: null }), [item, range, loop]);
   const tonicPc = useMemo(() => ((atRange(range, 0.35) % 12) + 12) % 12, [range]);
   const needsTiming = item?.kind === 'time' || (item?.kind === 'song' && (item.song?.rhythm || item.song?.feel || item.song?.interpret)) || item?.kind === 'scat';
 
@@ -100,121 +85,28 @@ export function TimedSession({ t, settings, range, level, items, onExit, onProgr
     setTake(null);
     setFrames([]);
     setNow(0);
-    await piano.unlock();
-    const lat = (settings.micLatencyMs ?? 70) / 1000;
-    // ---- what the app plays
-    let events: NoteEvent[] = [];
-    let lead = 0;
-    let length = 0;
-    let gatePitches: number[] = [];
-    let beat = 0.5;
-    if (item.kind === 'time' && item.time) {
-      const ts = item.time;
-      beat = 60 / ts.bpm;
-      lead = ts.meter * beat;
-      const note = atRange(range, 0.4);
-      for (let k = 0; k < ts.meter; k++) events.push({ midi: 0, start: k * beat, duration: 0.05, velocity: 0.8, perc: 'wood' });
-      for (let b = 0; b < ts.bars * ts.meter; b++) {
-        if (ts.silent && b >= ts.silent[0] && b < ts.silent[1]) continue;
-        if (ts.clickOn && !ts.clickOn.includes(b % ts.meter)) continue;
-        if (ts.call && b >= (ts.answerAt ?? 8)) continue;
-        events.push({ midi: 0, start: lead + b * beat, duration: 0.05, velocity: b % ts.meter === 0 ? 0.7 : 0.5, perc: b % ts.meter === 0 ? 'accent' : 'click' });
-      }
-      for (const x of ts.call ?? []) events.push({ midi: note, start: lead + x * beat, duration: beat * 0.4, velocity: 0.7 });
-      length = lead + ts.bars * ts.meter * beat + 0.6;
-    } else if (item.kind === 'song' && plan && span && item.song) {
-      const b = songBacking(plan, { fromBar: span.from, toBar: span.to, band: item.song.band, guide: guide && headphones });
-      events = b.events;
-      lead = b.lead;
-      length = b.length + 0.8;
-      beat = plan.beat;
-      gatePitches = [...new Set(events.filter((e) => !e.perc).map((e) => e.midi))];
-    } else if (item.kind === 'scat' && item.scat) {
-      const sc = item.scat;
-      beat = 60 / sc.bpm;
-      const p = parseChart(transposeChart(sc.chart, tonicPc), 4);
-      const bk = chartBacking(p, sc.style, sc.bpm, sc.loops ?? 1, 4, { countIn: true });
-      events = bk.events;
-      lead = bk.startBeat * beat;
-      length = bk.length + 0.8;
-      gatePitches = [...new Set(events.filter((e) => !e.perc).map((e) => e.midi))];
-    }
-    // ---- capture, on the clock of the first sung beat
-    const buf: SungFrame[] = [];
-    const gate = !headphones && gatePitches.length ? new BleedGate(gatePitches) : null;
-    let calibrated = false;
-    let zero = 0;
     setPhase('count');
-    let got: SungFrame[] = [];
-    const tick = setInterval(() => {
-      const s = (performance.now() - zero) / 1000;
-      setNow(s);
-      setBeatNow(Math.floor(s / beat));
-      if (s >= 0) setPhase((p) => (p === 'count' ? 'singing' : p));
-    }, 60);
-    if (SIMULATED) {
-      zero = performance.now() + 400;
-      got = simulate(item, plan, span, range, tonicPc);
-      await new Promise((r) => setTimeout(r, 1200));
-      setFrames(got);
-    } else {
-      let started: () => void = () => {};
-      const ready = new Promise<void>((r) => (started = r));
-      const cap = new BrowserPitchCapture().sing({
-        signal: c.signal,
-        maxMs: (length + 1) * 1000,
-        silenceMs: 600_000,
-        endSilenceMs: 600_000,
-        hopMs: 20,
-        record: true,
-        onCapturing: () => started(),
-        onFrame: (raw) => {
-          const tt = (performance.now() - zero) / 1000 - lat;
-          let f: SungFrame = { ...raw, t: tt };
-          if (gate) {
-            if (tt < 0) gate.calibrate(f);
-            else {
-              if (!calibrated) {
-                gate.finishCalibration();
-                calibrated = true;
-              }
-              f = gate.pass(f);
-            }
-          }
-          if (tt >= -0.2) buf.push(f);
-          if (buf.length % 4 === 0) setFrames(buf.slice());
-        },
-      });
-      await ready;
-      if (c.signal.aborted) return;
-      zero = piano.heardTime((piano.audioNow() ?? 0) + 0.06) + lead * 1000;
-      void piano.play(events, length, c.signal).catch(() => {});
-      const r = await cap;
-      if (r.kind === 'aborted' && !stopped.current) {
-        clearInterval(tick);
-        piano.stopAll();
-        setPhase('ready');
-        return;
-      }
-      got = buf;
-      if (r.kind === 'frames' && r.audio && settings.keepTakes && !loop) void keepTake({ item: item.id, week: weekId(new Date()), score: 0, at: new Date().toISOString(), blob: r.audio });
-    }
+    let tick: ReturnType<typeof setInterval> | undefined;
+    const res = await captureTimed({
+      item, plan, span, range, tonicPc, settings, headphones, guide, loop, signal: c.signal, stopped,
+      onFrames: setFrames,
+      onClock: (zero, beat) => {
+        tick = setInterval(() => {
+          const s = (performance.now() - zero) / 1000;
+          setNow(s);
+          setBeatNow(Math.floor(s / beat));
+          if (s >= 0) setPhase((p) => (p === 'count' ? 'singing' : p));
+        }, 60);
+      },
+    });
     clearInterval(tick);
-    piano.stopAll();
-    setFrames(got);
     setBeatNow(-1);
-    // ---- grade
-    let tk: Take;
-    if (item.kind === 'time') {
-      const res = gradeTime(item, voiceOnsets(got));
-      tk = { grade: res.grade, feel: res.feel, swing: res.swing };
-    } else if (item.kind === 'song' && plan && span) {
-      const res = gradeSong(item, got, plan, span.from, span.to);
-      tk = { grade: res.grade, song: res.song, feel: res.song.feel, loop: loop ?? undefined };
-    } else {
-      const res = gradeScat(item, got, tonicPc);
-      tk = { grade: res.grade, slots: res.slots };
+    if (!res) {
+      setPhase('ready');
+      return;
     }
+    const tk = res.take;
+    setFrames(res.frames);
     setTake(tk);
     setPhase('result');
     piano.cue(tk.grade.unclear ? 'wrong' : tk.grade.score >= lvDef.pass ? 'correct' : 'wrong');
@@ -226,7 +118,6 @@ export function TimedSession({ t, settings, range, level, items, onExit, onProgr
       if (!best.current[item.id] || best.current[item.id].score < tk.grade.score) best.current[item.id] = { score: tk.grade.score, take: vt };
     }
   };
-
   const finishLevel = async () => {
     const perItem = items.map((it) => ({ it, score: best.current[it.id]?.score ?? 0 }));
     const mean = perItem.reduce((a, x) => a + x.score, 0) / Math.max(1, perItem.length);
@@ -434,6 +325,143 @@ export function TimedSession({ t, settings, range, level, items, onExit, onProgr
   );
 }
 
+// ---------------------------------------------------------------- one timed take (the session and the probe)
+
+/** The song plan and the bars of a song item (a loop of one phrase, or the item's phrases). */
+export function songSpan(item: VocalItem, range: VoiceRange, loop: { phrase: number; scale: number } | null) {
+  if (item.kind !== 'song' || !item.song) return { plan: null, span: null };
+  const s = voiceSong(item.song.id);
+  if (!s) return { plan: null, span: null };
+  const plan = songPlan(s, range, Math.round((item.song.bpm ?? s.bpm) * (loop?.scale ?? 1)));
+  if (loop) {
+    const ph = plan.phrases[loop.phrase];
+    return { plan, span: { from: ph.fromBar, to: ph.toBar } };
+  }
+  const [a, b] = item.song.phrases ?? [0, plan.phrases.length - 1];
+  return { plan, span: { from: plan.phrases[a].fromBar, to: plan.phrases[Math.min(b, plan.phrases.length - 1)].toBar } };
+}
+
+/**
+ * Play what a timed item needs (clicks, the band, the key) and capture the voice on the clock of the first sung beat,
+ * the microphone delay removed; then grade it. Null when it was cancelled.
+ */
+export async function captureTimed(a: {
+  item: VocalItem;
+  plan: SongPlan | null;
+  span: { from: number; to: number } | null;
+  range: VoiceRange;
+  tonicPc: number;
+  settings: Settings;
+  headphones: boolean;
+  guide: boolean;
+  loop: { phrase: number; scale: number } | null;
+  signal: AbortSignal;
+  stopped: { current: boolean };
+  onFrames: (f: SungFrame[]) => void;
+  onClock: (zeroPerfMs: number, beatSec: number) => void;
+}): Promise<{ frames: SungFrame[]; take: Take } | null> {
+  const { item, plan, span, range, tonicPc, settings, headphones, signal } = a;
+  await piano.unlock();
+  const lat = (settings.micLatencyMs ?? 70) / 1000;
+  let events: NoteEvent[] = [];
+  let lead = 0;
+  let length = 0;
+  let gatePitches: number[] = [];
+  let beat = 0.5;
+  if (item.kind === 'time' && item.time) {
+    const ts = item.time;
+    beat = 60 / ts.bpm;
+    lead = ts.meter * beat;
+    const note = atRange(range, 0.4);
+    for (let k = 0; k < ts.meter; k++) events.push({ midi: 0, start: k * beat, duration: 0.05, velocity: 0.8, perc: 'wood' });
+    for (let b = 0; b < ts.bars * ts.meter; b++) {
+      if (ts.silent && b >= ts.silent[0] && b < ts.silent[1]) continue;
+      if (ts.clickOn && !ts.clickOn.includes(b % ts.meter)) continue;
+      events.push({ midi: 0, start: lead + b * beat, duration: 0.05, velocity: b % ts.meter === 0 ? 0.7 : 0.5, perc: b % ts.meter === 0 ? 'accent' : 'click' });
+    }
+    for (const x of ts.call ?? []) events.push({ midi: note, start: lead + x * beat, duration: beat * 0.4, velocity: 0.7 });
+    length = lead + ts.bars * ts.meter * beat + 0.6;
+  } else if (item.kind === 'song' && plan && span && item.song) {
+    const b = songBacking(plan, { fromBar: span.from, toBar: span.to, band: item.song.band, guide: a.guide && headphones });
+    events = b.events;
+    lead = b.lead;
+    length = b.length + 0.8;
+    beat = plan.beat;
+    gatePitches = [...new Set(events.filter((e) => !e.perc).map((e) => e.midi))];
+  } else if (item.kind === 'scat' && item.scat) {
+    const sc = item.scat;
+    beat = 60 / sc.bpm;
+    const p = parseChart(transposeChart(sc.chart, tonicPc), 4);
+    const bk = chartBacking(p, sc.style, sc.bpm, sc.loops ?? 1, 4, { countIn: true });
+    events = bk.events;
+    lead = bk.startBeat * beat;
+    length = bk.length + 0.8;
+    gatePitches = [...new Set(events.filter((e) => !e.perc).map((e) => e.midi))];
+  }
+  const buf: SungFrame[] = [];
+  const gate = !headphones && gatePitches.length ? new BleedGate(gatePitches) : null;
+  let calibrated = false;
+  let zero = 0;
+  let got: SungFrame[] = [];
+  if (SIMULATED) {
+    zero = performance.now() + 400;
+    a.onClock(zero, beat);
+    got = simulate(item, plan, span, range, tonicPc);
+    await new Promise((r) => setTimeout(r, 1200));
+  } else {
+    let started: () => void = () => {};
+    const ready = new Promise<void>((r) => (started = r));
+    const cap = new BrowserPitchCapture().sing({
+      signal,
+      maxMs: (length + 1) * 1000,
+      silenceMs: 600_000,
+      endSilenceMs: 600_000,
+      hopMs: 20,
+      record: true,
+      onCapturing: () => started(),
+      onFrame: (raw) => {
+        if (!zero) return; // the clock starts with the playback
+        const tt = (performance.now() - zero) / 1000 - lat;
+        let f: SungFrame = { ...raw, t: tt };
+        if (gate) {
+          if (tt < 0) gate.calibrate(f);
+          else {
+            if (!calibrated) {
+              gate.finishCalibration();
+              calibrated = true;
+            }
+            f = gate.pass(f);
+          }
+        }
+        if (tt >= -0.2) buf.push(f);
+        if (buf.length % 4 === 0) a.onFrames(buf.slice());
+      },
+    });
+    await ready;
+    if (signal.aborted) return null;
+    zero = piano.heardTime((piano.audioNow() ?? 0) + 0.06) + lead * 1000;
+    a.onClock(zero, beat);
+    void piano.play(events, length, signal).catch(() => {});
+    const r = await cap;
+    piano.stopAll();
+    if (r.kind === 'aborted' && !a.stopped.current) return null;
+    got = buf;
+    if (r.kind === 'frames' && r.audio && settings.keepTakes && !a.loop) void keepTake({ item: item.id, week: weekId(new Date()), score: 0, at: new Date().toISOString(), blob: r.audio });
+  }
+  piano.stopAll();
+  let take: Take;
+  if (item.kind === 'time') {
+    const res = gradeTime(item, voiceOnsets(got));
+    take = { grade: res.grade, feel: res.feel, swing: res.swing };
+  } else if (item.kind === 'song' && plan && span) {
+    const res = gradeSong(item, got, plan, span.from, span.to);
+    take = { grade: res.grade, song: res.song, feel: res.song.feel, loop: a.loop ?? undefined };
+  } else {
+    const res = gradeScat(item, got, tonicPc);
+    take = { grade: res.grade, slots: res.slots };
+  }
+  return { frames: got, take };
+}
 /** The bar(s) of a time item: one cell per eighth, the targets marked, the current beat lit. */
 function BeatStrip({ item, beatNow }: { item: VocalItem; beatNow: number }) {
   const ts = item.time!;

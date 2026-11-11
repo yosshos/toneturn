@@ -101,7 +101,12 @@ export function withLadderFacts(
   }
   for (const pr of VOCAL_PROGRAMS) {
     if (!opts.families.includes(pr.id)) continue;
-    for (const n of pr.refs) if (opts.vocalPassed.includes(n)) set(`vocal:${n}`, 3);
+    // The voice placement probe (VOICE_CURRICULUM §8) saves a start per family in the same drillStart map.
+    const start = (opts.start as Record<string, number | undefined>)[pr.id] ?? 1;
+    pr.refs.forEach((n, i) => {
+      if (i + 1 < start && !tests[`vocal:${n}`]) tests[`vocal:${n}`] = opts.at;
+      if (opts.vocalPassed.includes(n)) set(`vocal:${n}`, 3);
+    });
   }
   return { ...f, steps, tests };
 }
