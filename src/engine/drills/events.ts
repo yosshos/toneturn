@@ -90,6 +90,19 @@ function secondTag(drill: Drill): Tags[number] | null {
     return { skill: 'sequences', sub: 'sequences/melody', w: 0.5 };
   }
   // Piano harmony and reading families (PIANO_AUDIT I3): cadences, voicings, Barry Harris, sight-reading.
+  // GUITAR_DEEPENING §3: the guitarist's ear is the guitar course's ear share, by what the level asks to hear.
+  if (f === 'g-ear') {
+    const k = drill.spec.kind;
+    if (k === 'tonic' || k === 'key') return { skill: 'degrees', sub: 'degrees/find-tonic', w: 0.5 };
+    if (k === 'rhythm') return { skill: 'rhythm-dictation', sub: 'rhythm-dictation/dictate', w: 0.5 };
+    if (k === 'roots') return { skill: 'cadences', sub: 'cadences/progression', w: 0.5 };
+    if (k === 'quality') return { skill: 'chords', sub: 'chords/quality', w: 0.5 };
+    return { skill: 'dictation', sub: 'dictation/melodic', w: 0.5 };
+  }
+  // Jazz guitar, Barry Harris on the neck, prog / fusion (§4.2–4.3).
+  if (f === 'g-harris') return { skill: 'chords', sub: 'chords/barry', w: 0.3 };
+  if (f === 'g-jazz') return drill.listen ? { skill: 'cadences', sub: 'cadences/progression', w: 0.4 } : { skill: 'chords', sub: 'chords/voicing', w: 0.3 };
+  if (f === 'g-prog') return drill.tempoMap ? { skill: 'tempo', sub: 'tempo/compare', w: 0.3 } : drill.spec.kind === 'poly' ? { skill: 'timing', sub: 'timing/poly', w: 0.3 } : drill.pulse === 8 || drill.meters ? { skill: 'meter', sub: 'meter/odd', w: 0.3 } : { skill: 'timing', sub: 'timing/subdivide', w: 0.2 };
   if (f === 'cadences') return { skill: 'cadences', sub: 'cadences/cadence', w: 0.3 };
   if (f === 'voicings') return { skill: 'chords', sub: 'chords/voicing', w: 0.3 };
   if (f === 'harris') return { skill: 'chords', sub: 'chords/barry', w: 0.2 };

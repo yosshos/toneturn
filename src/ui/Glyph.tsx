@@ -575,6 +575,14 @@ export const GLYPHS: Record<string, ReactNode> = {
       <path d="M-7 14v9M7 14v9" strokeWidth={2} />
     </g>
   ),
+  /** GUITAR_DEEPENING: the guitarist's ear — an ear over three strings. */
+  guitarear: (
+    <g {...sw}>
+      <path d="M-9 -6 C-9 -20 11 -22 12 -8 C13 0 5 2 4 8" strokeWidth={2.8} />
+      <path d="M-3 -7 C-3 -13 6 -13 6 -7" strokeWidth={2.4} />
+      <path d="M-22 13H22M-22 18H22M-22 23H22" strokeWidth={1.8} />
+    </g>
+  ),
   /** Reading both clefs: two staves joined by a brace line. */
   clefs: (
     <>

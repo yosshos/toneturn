@@ -50,7 +50,7 @@ describe('guitar drills: catalogue', () => {
       expect(/^[gbd]-/.test(f.id)).toBe(true);
       expect(f.levels.length).toBeGreaterThan(0);
       // Bass-course families (b-*, BASS_CURRICULUM §5) run up to 12 levels.
-      expect(f.levels.length).toBeLessThanOrEqual(f.id.startsWith('b-') || f.id.startsWith('d-') ? 20 : 7);
+      expect(f.levels.length).toBeLessThanOrEqual(f.id.startsWith('b-') || f.id.startsWith('d-') ? 20 : 12);
       f.levels.forEach((l, i) => expect(l.level).toBe(i + 1));
     }
     expect(cat.find((f) => f.id === 'g-bass')?.instruments).toEqual(['bass']);
@@ -395,14 +395,16 @@ describe('guitar drills: plan', () => {
     expect(familyById('g-legato')?.levels.length).toBeGreaterThan(0);
   });
 
-  it('the guitar style filters families and levels', () => {
+  it('the old guitar style migrates to add-ons (GUITAR_DEEPENING §5): the core always, add-ons only when chosen', () => {
+    // flamenco → the flamenco add-on, on top of the core.
     const fl = shownFamilies({ emphasis: 'both', instrument: 'guitar', guitarStyle: 'flamenco' }).map((f) => f.id);
     expect(fl).toContain('g-flamenco');
     expect(fl).toContain('g-scales');
     expect(fl).not.toContain('g-jazz');
+    // rock / metal → core only: every core rhythm level (no genre filter on guitar any more), no add-on levels.
     const metal = shownFamilies({ emphasis: 'both', instrument: 'guitar', guitarStyle: 'metal' });
-    const rhythm = metal.find((f) => f.id === 'g-rhythm')!;
-    expect(rhythm.levels.map((l) => l.level)).toEqual([7]);
+    expect(metal.find((f) => f.id === 'g-rhythm')!.levels.map((l) => l.level)).toEqual([1, 2, 3, 4, 5, 7, 8, 9, 10]);
+    expect(metal.map((f) => f.id)).not.toContain('g-prog');
   });
 
   it("today's items for a new guitar player come from the starter families", () => {

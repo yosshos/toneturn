@@ -572,3 +572,42 @@ spectrum darker than the steel (centroid lower at the same pitch).
 5. Earlier in-repo research: `GUITAR_TECHNIQUE_RESEARCH.md` (ABRSM, LCM, RGT acoustic, tempo bands),
    `GUITAR_AUDIT.md`, `MUSIC_SOURCES_LEGAL.md` (chords-only charts are legal; recordings are not used).
 6. Barry Harris material as summarised in `src/engine/barry.ts` (workshop transcriptions, Josh Walsh, Jens Larsen).
+
+---
+
+## Implemented (2026-11-11)
+
+Owner decisions applied: the core path is everything when no add-on is ticked (fretting, picking, legato, chords,
+rhythm, scales, arpeggios, lead, reading, ear, improvising 1–4); flamenco, jazz, fingerstyle and prog are tick-box
+add-ons (prog is an add-on, not core); jazz is pre-ticked for a player who also takes the Jazz course; country is not
+core (picking 7 shows only with the old 'country' style as a flavour); the old single style migrates to add-ons.
+
+| § | What was built | Where |
+|---|---|---|
+| 2 | Every guitar level has `tempo: [start, target]`, `sub`, `grade` (0 = Debut … 9) and an RSL tag (grade ≤ 8). The §2.3 table for the 79 levels; per-item targets (`SpecTemplate.target`, preferred by `targetBpmOf`): ska 110 → 150 beside reggae 70 → 90, Freddie Green 100 → 180, clave 90 → 120, the four palos, octaves 80 → 140. Untimed items (ring checks, harmonics, vibrato, pinch harmonics) have `target: 0` = off the ladder. Denser items than the level's subdivision keep their lower generator start and climb the level's ratio. | `guitarMeta.ts` (`GUITAR_META`, `itemTempo`), `guitar.ts` `applyGuitarMeta`, `plan.ts` |
+| 5 | Core path + add-ons: `DrillSettings.guitarAddOns`, migrated by `guitarAddOnsOf` (jazz / latin → jazz, flamenco, classical / fingerstyle → fingerstyle, rock / metal / all → core; Jazz course → jazz). Add-on families (`g-jazz`, `g-harris`, `g-flamenco`, `g-fingerstyle`, `g-prog`) and add-on levels in core families (rhythm 6 → jazz, impro 5–6 → jazz, picking 8–9 and legato 8 → prog) are left out of the path and the hub unless ticked (`guitarLevelShown`, `ladderHiddenFor(…, ds)`). The path orders guitar levels by grade: `700 + 90·grade + 8·rank` (rank = teaching order inside a grade). Tick boxes: the first card of the guitar Technique hub (until saved), the Technique settings, and Settings (with the guitar course). | `plan.ts`, `ladderFacts.ts`, `path.ts` `guitarPathDifficulty`, `ui/GuitarAddOns.tsx`, `Drills.tsx`, `SettingsScreen.tsx`, `Path.tsx` |
+| 3 | `g-ear`, 10 levels as the §3 table: tonic, melodic recall 1 and 2 bars, rhythm recall on muted strings, riff recall (power chords), root finder I IV V vi and ii iii V7 ♭VII, chord quality (arpeggio, or strum it — level 8 option 3 uses the recognizer), find the key + pentatonic, transcribe a line. Calls seeded per key and option; the key is never named in L1 / L9. Every call window ends a beat before the answer (the take drops onsets up to 120 ms after a window — found while testing: an answer starting on the window's end lost its first note; the same layout in `b-ear` may lose it too). Rating: degrees / dictation / rhythm-dictation / cadences / chords (the ear share). | `guitarEar.ts` (own call builders: the bass agent was editing `bassEar.ts`, so the shared helper was not lifted) |
+| 4.1 | Core +20 (Batch C): scales 8–10, rhythm 8–10 (rock riffs, neo-soul, Mizrahi maqsum + Hijaz), lead 8–10 (bends in phrases, hybrid lead, pinch harmonics + oblique bends), picking 8–9 (prog), legato 7–8 (8 = prog), reading 6–8 (rhythm charts, two positions, lead sheets), arps 6–7, impro 5–6 (jazz). | `guitarCore2.ts` |
+| 4.2 | `g-jazz` 8–12: comping on standards (shells / drop-2, Charleston / four / anticipations, with the band), voice leading by ear and by hand (call + guide tones + drop-2 by step), chord melody (our melody on top), rhythm changes + tritone subs (shells / drop-3), solo-guitar texture. `g-harris` 1–6 on `barry.ts`: 6th-diminished scales, the scale of chords in drop-2, the dominant scale with the half-step rules, triads / "3 to 9" / pivots, half step below and enclosures into the 3rd, the brothers and minor 6ths from one diminished. | `guitarJazz.ts` |
+| 4.3 | `g-prog` 1–8 on the prog engine: 7/8 and 5/4 riffs, 9/8 and 11/8 + an odd-meter echo by ear, mixed meters with the band (road map, lost bars named), polyrhythm accents (`groupAccent`), metric modulation (`tempoMap`, `tempoRatio` 3 % ⚙), modes in riffs, fusion lines, unisons with the band's bass (`unison`). | `guitarProg.ts` |
+| 6 P1 | Closed-set recognizer: HPCP chroma with partial subtraction and harmonic credit, bass from the spectrum, centred-cosine templates + bass bonus, margin 0.04 / min score 0.6 (⚙), "play it again" when unsure. On synthetic strums: 333/336 named, 3 unsure, 0 wrong (clean); 0 wrong at 20 and 10 dB SNR. Wired into drills through `Drill.recognize` (`analyzeGuitarTake`: a wrong chord is "not", an unclear one "almost — play it again"); used by `g-ear` 8 "strum it". | `chordRecognize.ts`, `guitarAnalyze.ts` |
+| 7 | A probe step for every family (21 steps): core staircases / single takes, adaptive harder steps (F barre after A ↔ D, 16th funk after 8ths, E-shape major after box 1, vibrato after the bend, root finder after melodic recall), add-on steps only for ticked add-ons; `placeGuitar` gives each family its start. | `guitarProbes.ts`, `Drills.tsx` |
+| 8 | Modelled nylon (darker loop, soft attack, body resonances ≈ 100 / 205 / 410 Hz) and clean electric (bright loop, long sustain, neck-pickup comb, light drive); no samples. Voice by the add-ons (prog / jazz → electric, fingerstyle / flamenco → nylon, else steel) or a Settings choice. | `audio/pluck.ts` `guitarVoiceSamples`, `audio/piano.ts`, `App.tsx`, `SettingsScreen.tsx` |
+
+Also: glyphs `guitarear`, `sixdim` (unique on the guitar path), `oddmeter`; badge titles for every new level and badge
+art for the three new families; Technique hub topics (ear, styles); quick lessons for the ear, comping / chord melody,
+Barry Harris on the neck and odd meters / modulation, opened from the family page (English narration not recorded yet).
+
+**Totals:** 128 guitar levels (core path 84 — §5.2 counted 85 with country; with all four add-ons 127, 128 with the
+country flavour).
+
+**Tests:** `guitarDeepening.test.ts` (table, per-item targets, a steady human take clean at every item's target and a
+sloppy one never, ear windows and the speaker's call, the recognizer wiring, core path / add-ons / migration / grade
+order, probes, voice), `guitarCore2.test.ts`, `guitarProg.test.ts`, `chordRecognize.test.ts`, `pluck.test.ts`.
+Phone screens (390 × 844) of all 49 new levels' drill screens: no vertical or horizontal scroll.
+
+**Not done / only real playing can settle:** the recognizer is not yet wired into the `fret-chords` topics, song-play or
+Chord Rush (no strum input there), and there is no open-set "Chord finder" tool (P2); the guitar tab view draws constant
+bars on mixed-meter prog levels (notation is right); pinch harmonics use the `harmonic` technique (pitch detection
+uncalibrated); every ⚙ threshold, the §2.3 targets, the nylon / electric sounds and the ear windows on phone speakers
+need real takes; the shared ear helper with `bassEar.ts` was not lifted (parallel bass work).

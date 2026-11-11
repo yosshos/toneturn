@@ -10,6 +10,12 @@
 import type { Drill, DrillCalibration, ExpNote, PlayedNote, TakeMetrics, TakeRules, Verdict } from './types';
 import { analyzeTake, bassThresholds, expTimeMs, median, npsOf, tempoBand } from './analyze';
 import { meanChroma, ringCheck } from '../chroma';
+import { recognizeFromChroma, type ChordCandidate } from '../chordRecognize';
+
+const PC_SHARP = ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
+const Q_LABEL: Record<string, string> = { M: '', m: 'm', '7': '7', maj7: 'maj7', m7: 'm7', m7b5: 'm7♭5', dim7: '°7', sus2: 'sus2', sus4: 'sus4', '5': '5', '9': '9', add9: 'add9' };
+/** A candidate's chord symbol (C, Am7, G/B). */
+const chordLabel = (c: ChordCandidate): string => `${PC_SHARP[((c.root % 12) + 12) % 12]}${Q_LABEL[c.quality] ?? ''}${c.bass !== undefined && c.bass !== c.root ? `/${PC_SHARP[((c.bass % 12) + 12) % 12]}` : ''}`;
 import { barDrift, centsOff, doubleStopMatch, swingWalk, crossingPenalty, fillLandings, ghostGapDb, ioiDrift, kickLock, lengthClass, lengthMatch, loudSdDb, oddEvenAsym, overlapMs, pocketShare, releaseAccuracy, releaseTime, ringThrough, ruleCheck, shiftGap, WALK_VARIETY, slapClass, subBias, swingRatio, zoneShift } from './bassAnalyze';
 import { tuningById } from '../fretboard';
 import { drillDrumHits } from './bandTimeline';
@@ -483,6 +489,8 @@ export interface GuitarExtras {
   changesPerMin: number | null;
   /** Chord ring-check: chords judged, chords where every note rang, and how often each pitch class was missing. */
   ring: { chords: number; full: number; missing: Record<number, number> } | null;
+  /** Closed-set chord recognition (drill.recognize): chords named right / wrong / unclear (played again). */
+  recognized?: { ok: number; wrong: number; unsure: number; heard: (string | null)[] };
   selfCheck: T2[];
   /** Expected pitched notes heard only as an onset without a pitch: timing counted, pitch never credited (A2). */
   unclear: number;
@@ -714,6 +722,39 @@ export function analyzeGuitarTake(drill: Drill, bpm: number, played: PlayedNote[
   // Chord changes: a chord group whose pitch set differs from the previous chord group.
   const chordGs = gs.filter((g) => g.notes.length >= 2);
 
+  // GUITAR_DEEPENING §6 (before the ring-check, so a wrong chord is the line shown): the closed-set recognizer names each strummed chord among the drill's candidates (any voicing).
+  if (drill.recognize?.length && chordGs.length && frames.some((f) => f.chroma)) {
+    const rec = { ok: 0, wrong: 0, unsure: 0, heard: [] as (string | null)[] };
+    let firstWrong = '';
+    chordGs.slice(0, drill.recognize.length).forEach((g, k) => {
+      const spec = drill.recognize![k];
+      const on = onOf(drill.notes.indexOf(g.notes[0]));
+      const win = frames.filter((f) => f.chroma && f.t >= on + 60 && f.t <= on + 450 && f.rms > 0.01);
+      if (win.length < 3) {
+        rec.unsure++;
+        rec.heard.push(null);
+        return;
+      }
+      // The sounding bass: the lowest steady pitch in the window (YIN frames), for inversions.
+      const lows = win.filter((f) => f.hz && (f.conf ?? 1) >= 0.5 && f.hz >= 70 && f.hz <= 330).map((f) => Math.round(12 * Math.log2(f.hz! / 440) + 69));
+      const bass = lows.length >= 2 ? ((Math.min(...lows) % 12) + 12) % 12 : null;
+      const r = recognizeFromChroma(meanChroma(win.map((f) => f.chroma!)), bass, spec.candidates);
+      if (r.status !== 'ok' || !r.best) {
+        rec.unsure++;
+        rec.heard.push(null);
+      } else if (r.best.index === spec.answer) {
+        rec.ok++;
+        rec.heard.push(chordLabel(spec.candidates[r.best.index]));
+      } else {
+        rec.wrong++;
+        rec.heard.push(chordLabel(spec.candidates[r.best.index]));
+        if (!firstWrong) firstWrong = `${chordLabel(spec.candidates[r.best.index])} (${chordLabel(spec.candidates[spec.answer])})`;
+      }
+    });
+    extra.recognized = rec;
+    if (rec.wrong) factors.push({ verdict: 'not', en: `Another chord: heard ${firstWrong.replace(' (', ', not ').replace(')', '')}`, he: `אקורד אחר: נשמע ${firstWrong.replace(' (', ' ולא ').replace(')', '')}` });
+    else if (rec.unsure) factors.push({ verdict: 'almost', en: `${rec.unsure === 1 ? 'One chord' : `${rec.unsure} chords`} not clear enough to name — play it again, a clean tone, every string`, he: `${rec.unsure === 1 ? 'אקורד אחד לא ברור' : `${rec.unsure} אקורדים לא ברורים`} מספיק כדי לזהות — נגנו שוב, צליל נקי, כל המיתרים` });
+  }
   // Ring-check: in the first ~400 ms after each chord's onset, did every chord note sound?
   if (chordGs.length && frames.some((f) => f.chroma)) {
     const ring = { chords: 0, full: 0, missing: {} as Record<number, number> };
