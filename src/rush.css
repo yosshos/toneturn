@@ -489,3 +489,17 @@
     animation: none;
   }
 }
+.rush-levels.compact {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+.rush-levels.compact .rush-lvl {
+  justify-content: center;
+}
+.rush-lvl-name {
+  margin: 6px 0 0;
+  text-align: center;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}

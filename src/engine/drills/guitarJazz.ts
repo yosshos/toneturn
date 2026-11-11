@@ -162,7 +162,7 @@ function compChart(s: DrillSpec, tu: Tuning): Drill {
   }
   const vEn = voicing === 'drop2' ? 'drop-2, voice-led' : 'shells';
   const vHe = voicing === 'drop2' ? 'דרופ 2, הובלת קולות' : 'קונכיות';
-  const d = finish(s, tu, evs, { title: t(`${std.name}: the whole chart (${bars} bars), ${vEn}, ${rh.en} · ${NAMES[mod(key, 12)]}`, `${STD_NAME_HE[id] ?? std.name}: כל דף האקורדים (${bars} תיבות), ${vHe}, ${rh.he} · ${NAMES[mod(key, 12)]}`), bpm: guitarStdTempo(id)[0], evenness: false, keySig: 'C' });
+  const d = finish(s, tu, evs, { title: t(`${std.name}: the whole chart (${bars} bars), ${vEn}, ${rh.en}`, `${STD_NAME_HE[id] ?? std.name}: כל דף האקורדים (${bars} תיבות), ${vHe}, ${rh.he}`), bpm: guitarStdTempo(id)[0], evenness: false, keySig: 'C' });
   const band = rhythm === 'bossa' || std.style === 'bossa' ? 'bossa' : rhythm === 'shuffle' ? 'shuffle' : 'swing';
   return { ...d, chart: ch.syms, drums: { groove: band }, band: { style: band, bass: true } };
 }

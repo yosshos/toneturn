@@ -387,14 +387,16 @@ export function Rush({ lang, settings, mode, saved, onSave, onExit, onResult, be
           ) : (
           <fieldset className="rush-field">
             <legend>{tx(T.startAt, lang)}</legend>
-            <div className="rush-levels" role="radiogroup">
+            <div className={`rush-levels ${played ? 'compact' : ''}`} role="radiogroup">
               {shownLadder.map((r, i) => (
-                <button key={i} type="button" role="radio" aria-checked={startLevel === i + 1} className={`rush-lvl ${startLevel === i + 1 ? 'on' : ''}`} onClick={() => setStartLevel(i + 1)}>
+                <button key={i} type="button" role="radio" aria-checked={startLevel === i + 1} aria-label={played ? `${i + 1}. ${tx(r.name, lang)}` : undefined} className={`rush-lvl ${startLevel === i + 1 ? 'on' : ''}`} onClick={() => setStartLevel(i + 1)}>
                   <b>{i + 1}</b>
-                  <span>{tx(r.name, lang)}</span>
+                  {!played && <span>{tx(r.name, lang)}</span>}
                 </button>
               ))}
             </div>
+            {/* Played: five numbered chips, the chosen level's name under them (one screen). */}
+            {played && <p className="rush-lvl-name">{tx(shownLadder[Math.min(startLevel, shownLadder.length) - 1].name, lang)}</p>}
           </fieldset>
           )}
           {best ? (
