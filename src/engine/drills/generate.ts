@@ -4,7 +4,9 @@
 import { generateGuitar } from './guitar';
 import { generateDrums } from './drums';
 import { chartKind, type ChartMode, type ChartVoicing, type CompRhythm } from './chartDrills';
-import { chartDrillData } from './chartDrills';
+import { chartDrillData, roles } from './chartDrills';
+import { applyForm, type FormPlan, type FormSection } from './roadmap';
+import { parseChart } from '../charts';
 import type { Drill, DrillGoal, DrillSpec, DynamicsGoal, ExpNote, FamilyId, Hand, KeyOrder, Motion, ScaleType, Variant } from './types';
 
 type T2 = { en: string; he: string };
@@ -1619,6 +1621,10 @@ function genHarris(s: DrillSpec): Drill {
         : H(15, `ii–V–I in ${kn}: arpeggio up, the scale down by the rules`, `ii–V–I ב-${kn}: ארפג׳יו למעלה, הסולם למטה לפי החוקים`);
       return lineDrill(s, line, title([ttl], s), { chordTonesOnBeats: true }, SIG[mi ? mod(key + 3, 12) : key]);
     }
+    case 'h16-chains':
+    case 'h17-chromatic':
+    case 'h18-sixfive':
+      return harrisChromatic(s);
     case 'h9-sixdim':
     case 'h10-minor6dim': {
       const minor6 = s.kind === 'h10-minor6dim';
@@ -3351,6 +3357,161 @@ function ruleDown(start: number, ct: number[], scale: number[], beats: number, b
   return { line, next: p };
 }
 
+// ───────────────────────────── harris 16–18: chromatic lines (PIANO_JAZZ P2) ─────────────────────────────
+
+/** Dominants for h16: the family of dominants (half steps down) or round the cycle (4ths up), each a bar, then I6. */
+export const H16_ROOTS = [
+  [4, 3, 2, 1],
+  [4, 9, 2, 7],
+];
+/**
+ * Barry's conversions as lines (h18): the 6th chord a chord is played as, and the diminished between its tones — the
+ * 8-note scale alternates them, so stepping in 8ths puts the 6th chord's tones on the beats. Dm7 = F6, G7 = Dm6 (the
+ * minor 6th on its 5th), Dø = Fm6, G7♭9 = A♭°7 (its 3, 5, 7, ♭9) with the other diminished between, Cm6, C6.
+ */
+export function sixLinePair(r: number, q: string): { home: number[]; dim: number[] } {
+  const six = (x: number) => pcsOf([0, 4, 7, 9], x);
+  const min6 = (x: number) => pcsOf([0, 3, 7, 9], x);
+  const dimOn = (x: number) => pcsOf([11, 2, 5, 8], x);
+  if (q === 'm7') return { home: six(r + 3), dim: dimOn(r + 3) };
+  if (q === '7') return { home: min6(r + 7), dim: dimOn(r + 7) };
+  if (q === 'hd7') return { home: min6(r + 3), dim: dimOn(r + 3) };
+  if (q === '7b9') return { home: pcsOf([1, 4, 7, 10], r), dim: pcsOf([0, 3, 6, 9], r) };
+  if (q === 'm6') return { home: min6(r), dim: dimOn(r) };
+  return { home: six(r), dim: dimOn(r) };
+}
+export const H18_FORMS: [number, string][][] = [
+  [
+    [7, '7'],
+    [7, '7'],
+    [0, 'maj7'],
+    [0, 'maj7'],
+  ],
+  [
+    [2, 'm7'],
+    [7, '7'],
+    [0, 'maj7'],
+    [0, 'maj7'],
+  ],
+  [
+    [2, 'hd7'],
+    [7, '7b9'],
+    [0, 'm6'],
+    [0, 'm6'],
+  ],
+];
+
+/**
+ * Barry Harris chromatic lines (PIANO_JAZZ §5 P1). Own material, generated from the rules:
+ * - h16: the family of dominants as lines — each dominant a bar, the scale down by the half-step rules (chord tones on
+ *   the beats), and the last 8th of every bar a half step into a chord tone of the next chord (the approach);
+ * - h17: the chromatic scale with the rules — a chord tone on every beat and every half step between: the beat splits
+ *   into as many notes as the gap needs (2 = 8ths, 3 = triplets, 4 = 16ths); the LH plays it in the bass;
+ * - h18: "the sixth on the fifth" — each chord as its 6th chord, the line stepping through its 6th-diminished scale.
+ */
+function harrisChromatic(s: DrillSpec): Drill {
+  const key = mod(s.key, 12);
+  const kn = keyName(key);
+  const km = keyName(key, true);
+  const H = (n: number, en: string, he: string) => t(`Barry Harris H${n}: ${en}`, `בארי האריס H${n}: ${he}`);
+  const line: LineN[] = [];
+  if (s.kind === 'h16-chains') {
+    const o = opOf(s, 1);
+    const roots = H16_ROOTS[o].map((d) => mod(key + d, 12));
+    const doms = roots.map((r) => ({ ct: pcsOf(DOM_CT, r), sc: pcsOf(SCALE_INTERVALS.mixolydian, r) }));
+    const home = pcsOf([0, 4, 7, 9], key);
+    let p = nearestIn(doms[0].ct, 79, 74, 84);
+    doms.forEach((c, i) => {
+      const b0 = i * 4;
+      const r = ruleDown(p, c.ct, c.sc, 3, b0);
+      line.push(...r.line);
+      const q = r.next;
+      const nct = i + 1 < doms.length ? doms[i + 1].ct : home;
+      // Keep falling; from low in the range the next bar starts up again (a leap, then the approach).
+      const tgt = nearestIn(nct, q < 70 ? q + 10 : q - 2, 58, 84, q);
+      const appr = tgt + 1 === q ? tgt - 1 : tgt + 1;
+      line.push({ p: q, beat: b0 + 3, dur: 0.5, ct: true }, { p: appr, beat: b0 + 3.5, dur: 0.5, ct: false });
+      p = tgt;
+    });
+    line.push({ p, beat: doms.length * 4, dur: 2, ct: true });
+    const names = roots.map((r) => `${keyName(r)}7`).join(' ');
+    const ttl =
+      o === 0
+        ? H(16, `the family of dominants as lines: ${names} → ${kn}6, a half step into each chord`, `משפחת הדומיננטות כקווים: ${names} → ${kn}6, חצי טון לכל אקורד`)
+        : H(16, `dominants round the cycle as lines: ${names} → ${kn}6, a half step into each chord`, `דומיננטות במעגל הקוורטות כקווים: ${names} → ${kn}6, חצי טון לכל אקורד`);
+    return lineDrill(s, line, title([ttl], s), { chordTonesOnBeats: true }, SIG[key]);
+  }
+  if (s.kind === 'h17-chromatic') {
+    const o = opOf(s, 2);
+    const sp = [
+      { ct: DOM_CT, en: `${kn}7`, sig: SIG[mod(key + 5, 12)] },
+      { ct: [0, 4, 7, 9], en: `${kn}6`, sig: SIG[key] },
+      { ct: [0, 3, 7, 9], en: `${km}m6`, sig: SIG[mod(key + 3, 12)] },
+    ][o];
+    const ct = sp.ct.map((x) => mod(x + key, 12));
+    let p = pitchIn(key, 72);
+    const end = p - 24;
+    let beat = 0;
+    while (p > end) {
+      let q = p - 1;
+      while (!ct.includes(mod(q, 12))) q--;
+      const n = p - q;
+      for (let i = 0; i < n; i++) line.push({ p: p - i, beat: r6(beat + i / n), dur: r6(1 / n), ct: i === 0 });
+      p = q;
+      beat++;
+    }
+    line.push({ p, beat, dur: 1, ct: true });
+    const bass = s.hands === 'L';
+    return lineDrill(
+      s,
+      line,
+      title([H(17, `the chromatic scale with the rules — ${sp.en}${bass ? ' in the bass' : ''}: a chord tone on every beat (8ths, triplets, 16ths between)`, `הסולם הכרומטי לפי החוקים — ${sp.en}${bass ? ' בבס' : ''}: צליל אקורד על כל פעמה (שמיניות, טריולות, שש-עשריות ביניהן)`)], s),
+      { chordTonesOnBeats: true },
+      sp.sig,
+    );
+  }
+  // h18-sixfive
+  const o = opOf(s, 2);
+  const bars = H18_FORMS[o].map(([d, q]) => ({ r: mod(key + d, 12), q, ...sixLinePair(mod(key + d, 12), q) }));
+  let prev = 74;
+  let dir = -1;
+  bars.forEach((b, bi) => {
+    const scale = [...b.home, ...b.dim];
+    const last = bi === bars.length - 1;
+    let p = bi === 0 ? nearestIn(b.home, prev, 70, 79) : nearestIn(b.home, prev + dir, 58, 86, prev);
+    const n = last ? 5 : 8;
+    for (let i = 0; i < n; i++) {
+      if (i > 0) {
+        if (p + dir * 2 < 58 || p + dir * 2 > 86) dir = -dir;
+        do p += dir;
+        while (!scale.includes(mod(p, 12)));
+      }
+      const end = last && i === n - 1;
+      line.push({ p, beat: bi * 4 + i / 2, dur: end ? 2 : 0.5, ct: i % 2 === 0 });
+    }
+    prev = p;
+    dir = -dir;
+  });
+  const chord = (d: number, q: string) => `${keyName(key + d, q === 'm6' && d === 0)}${{ '7': '7', m7: 'm7', maj7: 'maj7', hd7: 'ø7', '7b9': '7♭9', m6: 'm6' }[q]}`;
+  const as = (d: number, q: string) => {
+    const r = mod(key + d, 12);
+    if (q === 'm7') return `${keyName(r + 3)}6`;
+    if (q === '7') return `${keyName(r + 7)}m6`;
+    if (q === 'hd7') return `${keyName(r + 3)}m6`;
+    if (q === '7b9') return `${keyName(r + 1)}°7`;
+    if (q === 'm6') return `${keyName(r, true)}m6`;
+    return `${keyName(r)}6`;
+  };
+  const seen = new Set<string>();
+  const pairs = H18_FORMS[o].filter(([d, q]) => !seen.has(`${d}${q}`) && seen.add(`${d}${q}`)).map(([d, q]) => `${chord(d, q)} = ${as(d, q)}`).join(', ');
+  const ttl = [
+    H(18, `the sixth on the fifth: ${pairs} — the 6th chord's tones on the beats, its diminished between`, `השישית על הקווינטה: ${pairs} — צלילי אקורד השישית על הפעמות, המוקטן ביניהם`),
+    H(18, `ii–V–I in ${kn} as 6th chords: ${pairs} — each chord's 6th-diminished scale`, `ii–V–I ב-${kn} כאקורדי שישית: ${pairs} — סולם השישית-מוקטן של כל אקורד`),
+    H(18, `minor ii–V–i in ${km} as 6th chords: ${pairs} — each chord's 6th-diminished scale`, `ii–V–i מינורי ב-${km} כאקורדי שישית: ${pairs} — סולם השישית-מוקטן של כל אקורד`),
+  ][o];
+  return lineDrill(s, line, title([ttl], s), { chordTonesOnBeats: true }, SIG[o === 2 ? mod(key + 3, 12) : key]);
+}
+
 // ───────────────────────────── k-sixdim: Barry Harris harmony ─────────────────────────────
 
 const DEG4 = [t('root', 'היסוד'), t('3rd', 'הטרצה'), t('5th', 'הקווינטה'), t('6th', 'הסקסטה')];
@@ -3557,34 +3718,59 @@ function genSixDim(s: DrillSpec): Drill {
       // A form the 6th-diminished way: each chord becomes its 6th chord (Barry's conversions), moving to the diminished
       // and back, the melody stepping up; the LH plays the root.
       const form = JAZZ_FORMS[op === 1 ? 2 : 3];
-      const evs: ChordEv[] = [];
-      let mel = 72;
-      form.bars.forEach((bar, bi) => {
-        const L = 4 / bar.length;
-        bar.forEach(([d, q], ci) => {
-          const r = mod(key + d, 12);
-          const pr = sixPair(r, q);
-          const b0 = bi * 4 + ci * L;
-          const slots: [number, number, number[]][] = L === 4 ? [[0, 2, pr.home], [2, 1, pr.dim], [3, 1, pr.home]] : [[0, 1, pr.home], [1, 1, pr.dim]];
-          const scale = [...new Set([...pr.home, ...pr.dim])];
-          mel = nearestIn(pr.home, mel - 1, 66, 77);
-          const lh = [pitchIn(r, 36)];
-          slots.forEach(([o, dur, pcs], i) => {
-            if (i > 0) {
-              do mel++;
-              while (!scale.includes(mod(mel, 12)) || !pcs.includes(mod(mel, 12)));
-            }
-            const rh = blockUnder(mel, pcs);
-            evs.push(i === 0 ? evOf(b0 + o, dur, rh, lh) : evOf(b0 + o, dur, rh, [], [r]));
-          });
-        });
-      });
+      const evs = sixFormEvs(form.bars, key, sixPair);
       const sp = { ...s, hands: 'RL' as const };
       const d = chordDrill(sp, evs, title([t(`${form.name.en} in ${keyName(key)}: every chord as its 6th chord and diminished`, `${form.name.he} ב-${keyName(key)}: כל אקורד כאקורד השישית שלו והמוקטן`)], sp), 60, {}, SIG[key]);
       return { ...holdLH(d), chart: formChart(form, key) };
     }
+    case 'sd-forms': {
+      // PIANO_JAZZ P1: more forms the 6th-diminished way — the minor blues, the bridge of rhythm changes, a ballad AABA
+      // — every chord converted, with the form's road map (a bar lost in the form is "not").
+      const f = PIANO_FORMS[(['minor-blues', 'rhythm-bridge', 'ballad'] as const)[Math.min(2, op)]];
+      const evs = sixFormEvs(formBars(f), key, sixPairForm);
+      const sp = { ...s, hands: 'RL' as const };
+      const kn = keyName(key, !!f.minor);
+      const d = chordDrill(sp, evs, title([t(`${f.name.en} in ${kn}: every chord as its 6th chord and diminished`, `${f.name.he} ב-${kn}: כל אקורד כאקורד השישית שלו והמוקטן`)], sp), 60, {}, SIG[f.minor ? mod(key + 3, 12) : key]);
+      return withPianoForm(holdLH(d), f, key);
+    }
   }
   throw new Error(`Unknown k-sixdim kind: ${s.kind}`);
+}
+
+/**
+ * A form the 6th-diminished way (k-sixdim 9, 10): each chord becomes its 6th chord (Barry's conversions) moving to the
+ * diminished and back, the melody stepping up; the LH plays the root (held by holdLH).
+ */
+function sixFormEvs(bars: [number, string][][], key: number, pair: (r: number, q: string) => { home: number[]; dim: number[] }): ChordEv[] {
+  const evs: ChordEv[] = [];
+  let mel = 72;
+  bars.forEach((bar, bi) => {
+    const L = 4 / bar.length;
+    bar.forEach(([d, q], ci) => {
+      const r = mod(key + d, 12);
+      const pr = pair(r, q);
+      const b0 = bi * 4 + ci * L;
+      const slots: [number, number, number[]][] = L === 4 ? [[0, 2, pr.home], [2, 1, pr.dim], [3, 1, pr.home]] : [[0, 1, pr.home], [1, 1, pr.dim]];
+      const scale = [...new Set([...pr.home, ...pr.dim])];
+      mel = nearestIn(pr.home, mel - 1, 66, 77);
+      const lh = [pitchIn(r, 36)];
+      slots.forEach(([o, dur, pcs], i) => {
+        if (i > 0) {
+          do mel++;
+          while (!scale.includes(mod(mel, 12)) || !pcs.includes(mod(mel, 12)));
+        }
+        const rh = blockUnder(mel, pcs);
+        evs.push(i === 0 ? evOf(b0 + o, dur, rh, lh) : evOf(b0 + o, dur, rh, [], [r]));
+      });
+    });
+  });
+  return evs;
+}
+/** sixPair for the new forms: a minor tonic as its m6 (Cm6 / B°7), V7♭9 and V7alt as G7 ↔ A♭°7 (as k-sixdim 8 minor), I6 as I. */
+function sixPairForm(r: number, q: string): { home: number[]; dim: number[] } {
+  if (q === 'm6') return { home: pcsOf([0, 3, 7, 9], r), dim: pcsOf([11, 2, 5, 8], r) };
+  if (q === '7b9' || q === 'alt') return { home: pcsOf([0, 4, 7, 10], r), dim: pcsOf([1, 4, 7, 10], r) };
+  return sixPair(r, q === '6' ? 'maj7' : q);
 }
 
 /** The LH of a chord drill holds its notes until its next note (a root a bar, a pedal). */
@@ -3747,7 +3933,77 @@ function genBebop(s: DrillSpec): Drill {
     return { ...d, chart: chartOf(form.bars, key) };
   }
   if (s.kind === 'bb-trade') return genTrade(sp);
+  if (s.kind === 'bb-form' || s.kind === 'bb-matrix') return genBebopForm(sp);
   throw new Error(`Unknown k-bebop kind: ${s.kind}`);
+}
+
+// ───────────────────────────── whole forms (PIANO_JAZZ P2): AABA, the bridge, minor blues, ballad, Coltrane ─────────────────────────────
+
+type FBars = [number, string][][];
+const B1 = (d: number, q: string): [number, string][] => [[d, q]];
+const B2 = (d: number, q: string, e: number, r: string): [number, string][] => [
+  [d, q],
+  [e, r],
+];
+/** Rhythm changes: A1 ends on a turnaround into A2, A2 ends home; the bridge is III7–VI7–II7–V7, two bars each. */
+const RC_A1: FBars = [B2(0, 'maj7', 9, '7'), B2(2, 'm7', 7, '7'), B2(0, 'maj7', 9, '7'), B2(2, 'm7', 7, '7'), B2(0, '7', 0, '7'), B2(5, 'maj7', 6, 'dim7'), B2(0, 'maj7', 7, '7'), B2(2, 'm7', 7, '7')];
+const RC_A2: FBars = [...RC_A1.slice(0, 7), B1(0, '6')];
+const RC_B: FBars = [B1(4, '7'), B1(4, '7'), B1(9, '7'), B1(9, '7'), B1(2, '7'), B1(2, '7'), B1(7, '7'), B1(7, '7')];
+/** Minor blues: i (m6) four bars, iv two, i two, ♭VI7, V7alt, i, iiø–V7alt; a tag bar home. */
+const MINOR_BLUES: FBars = [B1(0, 'm6'), B1(0, 'm6'), B1(0, 'm6'), B1(0, 'm6'), B1(5, 'm7'), B1(5, 'm7'), B1(0, 'm6'), B1(0, 'm6'), B1(8, '7'), B1(7, 'alt'), B1(0, 'm6'), B2(2, 'hd7', 7, 'alt')];
+/** A ballad AABA of our own (16 bars): I–vi–ii–V, iii–VI–ii–V; the bridge on IV and the minor iv. */
+const BALLAD_A: FBars = [B2(0, 'maj7', 9, 'm7'), B2(2, 'm7', 7, '7'), B2(4, 'm7', 9, '7'), B2(2, 'm7', 7, '7')];
+const BALLAD_B: FBars = [B1(5, 'maj7'), B2(5, 'm7', 10, '7'), B2(4, 'm7', 9, '7'), B2(2, 'm7', 7, '7')];
+/** A Coltrane matrix cell into tonic T: ii of T, then V–I in T + 8, T + 4 and T (keys a major 3rd apart). */
+const matrixCell = (T: number): FBars => [B2(T + 2, 'm7', T + 3, '7'), B2(T + 8, 'maj7', T + 11, '7'), B2(T + 4, 'maj7', T + 7, '7'), B1(T, 'maj7')];
+/** The cells falling by whole steps into the key (a Countdown-type form, our own). */
+export const MATRIX: FBars = [...matrixCell(4), ...matrixCell(2), ...matrixCell(0)];
+
+export interface PianoForm {
+  name: T2;
+  sections: { name: string; kind: FormSection['kind']; bars: FBars }[];
+  order: number[];
+  minor?: boolean;
+}
+/** Whole forms for k-bebop 9, k-bebop 10 and k-sixdim 10, with their road map (PROG_ENGINE §4: applyForm / analyzeForm). */
+export const PIANO_FORMS: Record<string, PianoForm> = {
+  'rhythm-aaba': { name: t('rhythm changes, the whole AABA form', 'ריתם צ׳יינג׳ס, כל צורת AABA'), sections: [{ name: 'A1', kind: 'head', bars: RC_A1 }, { name: 'A2', kind: 'head', bars: RC_A2 }, { name: 'B', kind: 'bridge', bars: RC_B }], order: [0, 1, 2, 1] },
+  'rhythm-bridge': { name: t('the bridge of rhythm changes (III7–VI7–II7–V7)', 'הגשר של ריתם צ׳יינג׳ס (III7–VI7–II7–V7)'), sections: [{ name: 'B', kind: 'bridge', bars: RC_B }, { name: 'Tag', kind: 'tag', bars: [B1(0, '6')] }], order: [0, 1] },
+  'minor-blues': { name: t('the minor blues', 'הבלוז המינורי'), sections: [{ name: 'Blues', kind: 'head', bars: MINOR_BLUES }, { name: 'Tag', kind: 'tag', bars: [B1(0, 'm6')] }], order: [0, 1], minor: true },
+  ballad: { name: t('a ballad form (AABA, 16 bars)', 'צורת בלדה (AABA, ‏16 תיבות)'), sections: [{ name: 'A', kind: 'head', bars: BALLAD_A }, { name: 'B', kind: 'bridge', bars: BALLAD_B }, { name: 'Tag', kind: 'tag', bars: [B1(0, '6')] }], order: [0, 0, 1, 0, 2] },
+  matrix: { name: t('the Coltrane matrix (a Countdown-type form)', 'מטריצת קולטריין (צורה בסגנון Countdown)'), sections: [{ name: 'A', kind: 'head', bars: MATRIX.slice(0, 4) }, { name: 'B', kind: 'head', bars: MATRIX.slice(4, 8) }, { name: 'C', kind: 'head', bars: MATRIX.slice(8) }], order: [0, 1, 2] },
+};
+/** The form's bars in play order. */
+export const formBars = (f: PianoForm): FBars => f.order.flatMap((i) => f.sections[i].bars);
+/** The form's road map in a key (chart per section bar). */
+function formPlanOf(f: PianoForm, key: number): FormPlan {
+  return { sections: f.sections.map((x) => ({ name: x.name, kind: x.kind, bars: x.bars.length, chart: chartOf(x.bars, key, f.minor) })), order: f.order };
+}
+/**
+ * Form goals on the piano: no bar lost, section starts within 40 ms, tempo drift ≤ 2 % (as the bass's J4). Swung 8th
+ * lines leave the drift out: the road map's section tempo compares played IOIs with straight 8ths, so swing itself
+ * would read as rushing and dragging (the timing SD and the outliers still judge the time).
+ */
+const PIANO_FORM_GOAL = { lost: 0, landMs: 40, drift: 0.02 };
+function withPianoForm(d: Drill, f: PianoForm, key: number): Drill {
+  const formed = applyForm(d, formPlanOf(f, key));
+  const goal = d.spec.swing ? { lost: 0, landMs: 40 } : PIANO_FORM_GOAL;
+  return { ...formed, beats: Math.max(d.beats, formed.beats), goal: { ...formed.goal, prog: { ...(formed.goal.prog ?? {}), form: goal } } };
+}
+
+/** k-bebop 9 (whole forms) and 10 (the Coltrane matrix): a bebop line over every bar of the form, measured against its road map. */
+function genBebopForm(s: DrillSpec): Drill {
+  const key = mod(s.key, 12);
+  const op = s.option ?? 0;
+  const id = s.kind === 'bb-matrix' ? 'matrix' : (['rhythm-aaba', 'rhythm-bridge', 'minor-blues'] as const)[Math.min(2, op)];
+  const f = PIANO_FORMS[id];
+  const chords = formChords(formBars(f), key);
+  const low = s.kind === 'bb-matrix' && op === 1;
+  const line = bebopLine(chords, `${s.kind}:${key}:${op}`, { lo: 58, hi: 82, start: low ? 62 : 74 });
+  const kn = keyName(key, !!f.minor);
+  const how = s.kind === 'bb-matrix' ? (low ? t(' (from below)', ' (מלמטה)') : t(' (from the top)', ' (מלמעלה)')) : t('', '');
+  const d = lineDrill(s, line, title([t(`Bebop line over ${f.name.en} in ${kn}${how.en}: chord tones on the beats, every bar of the form`, `קו ביבופ על ${f.name.he} ב-${kn}${how.he}: צלילי אקורד על הפעמות, כל תיבה בצורה`)], s), { chordTonesOnBeats: true }, SIG[f.minor ? mod(key + 3, 12) : key], 80);
+  return withPianoForm(d, f, key);
 }
 
 /**
@@ -4050,8 +4306,78 @@ function genReharm(s: DrillSpec): Drill {
       const sp: DrillSpec = { ...s, hands: 'RL', swing: true };
       return finish(sp, buf, title([t(`Solo piano in ${kn}, I–VI7–ii–V–iii–VI7–ii–V–I: ${nm.en}`, `פסנתר סולו ב-${kn}, I–VI7–ii–V–iii–VI7–ii–V–I: ${nm.he}`)], sp), { evenness: false, hands: true }, 80, 4, SIG[key]);
     }
+    case 'rh-pedal': {
+      // PIANO_JAZZ P2: upper structures over a pedal (LH root and 5th, held a bar). Op 0 lydian: the triads of the
+      // lydian mode over the root — II (9, ♯11, 13), V (5, 7, 9), vii (7, 9, ♯11), iii (3, 5, 7). Op 1 sus
+      // ("Maiden Voyage"-type colours): ♭VII (♭7, 9, 11), v (5, ♭7, 9), IV (11, 13, 1), ii (9, 11, 13) over the root,
+      // then the same a minor 3rd up.
+      const lyd = op !== 1;
+      const tri: [number, number, boolean][] = lyd
+        ? [[0, 7, true], [0, 2, true], [0, 11, false], [0, 2, true], [0, 4, false], [0, 2, true], [0, 7, true], [0, 2, true]]
+        : [[0, 10, true], [0, 7, false], [0, 5, true], [0, 2, false], [3, 10, true], [3, 7, false], [3, 5, true], [3, 2, false]];
+      const mode = lyd ? [0, 2, 4, 6, 7, 9, 11] : [0, 2, 5, 7, 9, 10];
+      const evs: ChordEv[] = [];
+      let prev: number[] | null = null;
+      tri.forEach(([ped, d, maj], i) => {
+        const root = mod(key + ped, 12);
+        const lp = pitchIn(root, 36);
+        const lh = [lp, lp + 7];
+        const pcs = pcsOf(maj ? [0, 4, 7] : [0, 3, 7], root + d);
+        const rh: number[] = prev ? voiceNear(pcs, prev, 60, 81) : voiceNear(pcs, null, 60, 81, undefined, 70);
+        prev = rh;
+        const more = pcsOf(mode, root);
+        evs.push(i % 2 === 0 ? evOf(i * 2, 2, rh, lh, more) : evOf(i * 2, 2, rh, [], [...more, root, root + 7]));
+      });
+      const sp: DrillSpec = { ...s, hands: 'RL' };
+      const ttl = lyd
+        ? t(`Upper structures over a ${kn} pedal, lydian: ${keyName(key + 7)}, ${keyName(key + 2)}, ${keyName(key + 11)}m, ${keyName(key + 4)}m over ${kn}`, `מבנים עליונים מעל פדל ${kn}, לידי: ${keyName(key + 7)}, ${keyName(key + 2)}, ${keyName(key + 11)}m, ${keyName(key + 4)}m מעל ${kn}`)
+        : t(`Upper structures over a pedal, sus: ${keyName(key + 10)}, ${keyName(key + 7)}m, ${keyName(key + 5)}, ${keyName(key + 2)}m over ${kn}, then a minor 3rd up over ${keyName(key + 3)}`, `מבנים עליונים מעל פדל, סאס:${keyName(key + 10)}, ${keyName(key + 7)}m, ${keyName(key + 5)}, ${keyName(key + 2)}m מעל ${kn}, ואז טרצה קטנה למעלה מעל ${keyName(key + 3)}`);
+      return holdLH(chordDrill(sp, evs, title([ttl], sp), 60, {}, SIG[lyd ? mod(key + 7, 12) : mod(key + 5, 12)]));
+    }
   }
   throw new Error(`Unknown k-reharm kind: ${s.kind}`);
+}
+
+/** accomp 18 (PIANO_JAZZ P2): the stride charts with a written RH melody — chart, LH stride. */
+export const STRIDE_MELODY: [string, ChartVoicing][] = [
+  ['lv:turnaround', 'stride-tenth'],
+  ['std:a-train', 'stride-octave'],
+  ['lv:blues', 'stride-single'],
+];
+/**
+ * Stride with a right-hand melody (accomp 18): the stride LH of the chart and a measured RH line above it — a guide
+ * tone (3rd or 7th) of the chord on beats 1 and 3, a half note each, each the nearer one to the last (voice leading),
+ * between F4 and G5. Before, accomp 16 left the RH free (not measured).
+ */
+function genStrideMelody(s: DrillSpec): Drill {
+  const [ref, voicing] = STRIDE_MELODY[opOf(s, STRIDE_MELODY.length - 1)];
+  const kind = chartKind(ref, voicing, 'whole', 'comp');
+  const d = chartDrillData(kind, s.key);
+  if (!d) throw new Error(`Unknown stride chart: ${ref}`);
+  const parsed = parseChart(d.text, d.meter);
+  const chordAt = (beat: number) => {
+    let cur = parsed.chords[0];
+    for (const c of parsed.chords) if (c.bar * d.meter + c.at <= beat + 1e-6) cur = c;
+    return cur;
+  };
+  let mel = 72;
+  const evs: ChordEv[] = d.evs.map((e) => ({ beat: e.beat, dur: e.dur, notes: [...e.notes], required: [...e.required], allowed: [...e.allowed] }));
+  for (const e of evs) {
+    if (mod(e.beat, 2) > 1e-6 || !e.notes.some((n) => n.hand === 'L')) continue;
+    const c = chordAt(e.beat);
+    const R = roles(c);
+    const guide = [mod(c.root + R.third, 12), mod(c.root + R.seventh, 12)];
+    mel = nearestIn(guide, mel, 65, 79, mel);
+    e.notes.push({ pitch: mel, hand: 'R', accent: true });
+    e.required = [...new Set([...e.required, mod(mel, 12)])];
+    e.allowed = [...new Set([...e.allowed, mod(mel, 12)])];
+  }
+  const sp: DrillSpec = { ...s, hands: 'RL', swing: s.swing ?? true };
+  const ttl = t(`${d.title.en} · RH melody: guide tones on 1 and 3`, `${d.title.he} · מנגינה ביד ימין: צלילים מנחים ב-1 וב-3`);
+  const drill = chordDrill(sp, evs, ttl, d.startBpm, {}, 'C', d.meter);
+  // The RH half notes sound through beats 1–2 and 3–4 (the LH stride keeps its quarters).
+  const notes = drill.notes.map((n) => (n.hand === 'R' ? { ...n, dur: 2 } : n));
+  return { ...drill, notes, chart: d.text.split(' | ') };
 }
 
 export function generate(spec: DrillSpec): Drill {
@@ -4172,6 +4498,8 @@ export function generate(spec: DrillSpec): Drill {
       return genPopLH(s);
     case 'walk-changes':
       return genWalkChanges(s);
+    case 'stride-melody':
+      return genStrideMelody(s);
   }
   if (s.kind.startsWith('h')) return genHarris(s);
   throw new Error(`Unknown drill kind: ${s.kind}`);
@@ -4783,6 +5111,10 @@ export function catalog(): FamilyDef[] {
         // PIANO_JAZZ: the half-step rules from any start, and ii–V–I lines by the rules.
         L('harris', 14, 'The half-step rules: chord tones on the beats from any start', 'חוקי חצי הטון: צלילי אקורד על הפעמות מכל התחלה', [...[0, 1, 2, 3].map((o) => h('h14-rules', { option: o, swing: true })), h('h14-rules', { hands: 'L', swing: true })], cyc4, [2.33, 4]),
         L('harris', 15, 'ii–V–I lines by the rules, major and minor', 'שורות ii–V–I לפי החוקים, מז׳ור ומינור', [h('h15-iivi', { swing: true }), h('h15-iivi', { option: 1, swing: true })], cyc4, [2.33, 4]),
+        // PIANO_JAZZ P2: Barry's chromatic lines — the family of dominants as lines, the chromatic scale with the rules, the sixth on the fifth.
+        L('harris', 16, 'The family of dominants as lines: a half step into each chord', 'משפחת הדומיננטות כקווים: חצי טון לכל אקורד', [h('h16-chains', { swing: true }), h('h16-chains', { option: 1, swing: true }), h('h16-chains', { hands: 'L', swing: true })], cyc4, [2.33, 4]),
+        L('harris', 17, 'The chromatic scale with the rules: a chord tone on every beat', 'הסולם הכרומטי לפי החוקים: צליל אקורד על כל פעמה', [...[0, 1, 2].map((o) => h('h17-chromatic', { option: o, perBeat: 3 })), h('h17-chromatic', { hands: 'L', perBeat: 3 })], cyc4, [2.33, 4]),
+        L('harris', 18, "The sixth on the fifth: lines through each chord's 6th-diminished scale", 'השישית על הקווינטה: קווים בסולם השישית-מוקטן של כל אקורד', [0, 1, 2].map((o) => h('h18-sixfive', { option: o, swing: true })), cyc4, [2.33, 4]),
       ],
     },
     {
@@ -4800,6 +5132,7 @@ export function catalog(): FamilyDef[] {
         JT('k-sixdim', 7, 'The dominant ♭9 from the diminished', 'הדומיננט ♭9 מתוך המוקטן', [sd('sd-dom')], cyc4, [60, 96]),
         JT('k-sixdim', 8, 'ii–V–I the 6th-diminished way, major and minor', 'ii–V–I בדרך השישית-מוקטן, מז׳ור ומינור', [sd('sd-iivi', { hands: 'RL' }), sd('sd-iivi', { option: 1, hands: 'RL' })], cyc4, [60, 100]),
         JT('k-sixdim', 9, "A standard's form in 6th chords and diminished", 'צורת סטנדרט באקורדי שישית ומוקטן', [sd('sd-form', { hands: 'RL' }), sd('sd-form', { option: 1, hands: 'RL' })], [0, 5, 10, 7, 3], [60, 92]),
+        JT('k-sixdim', 10, 'More forms: the minor blues, the bridge of rhythm changes, a ballad', 'עוד צורות: הבלוז המינורי, הגשר של ריתם צ׳יינג׳ס, בלדה', [0, 1, 2].map((o) => sd('sd-forms', { option: o, hands: 'RL' })), [0, 5, 10, 7, 3], [60, 92]),
       ],
     },
     {
@@ -4847,6 +5180,7 @@ export function catalog(): FamilyDef[] {
         JT('k-reharm', 5, 'Modal comping over a pedal', 'ליווי מודאלי מעל פדל', [rh('rh-modal'), rh('rh-modal', { option: 1 })], [2, 7, 0, 9, 4, 5], [70, 120]),
         JT('k-reharm', 6, 'Chains: ii–Vs by whole steps, the family of dominants', 'שרשראות: ii–V בטונים, משפחת הדומיננטות', [rh('rh-chains'), rh('rh-chains', { option: 1 })], [0, 5, 10, 3, 7, 2], [60, 104]),
         JT('k-reharm', 7, 'Solo piano: walking bass, 10ths, two-feel', 'פסנתר סולו: בס מהלך, דצימות, בשניים', [0, 1, 2].map((o) => rh('rh-solo', { option: o, swing: true })), [0, 5, 7, 10, 3], [80, 140]),
+        JT('k-reharm', 8, 'Upper structures over a pedal: lydian and sus', 'מבנים עליונים מעל פדל: לידי וסאס', [rh('rh-pedal'), rh('rh-pedal', { option: 1 })], [2, 7, 0, 5, 10, 3], [60, 100]),
       ],
     },
     {
@@ -4918,6 +5252,8 @@ export function catalog(): FamilyDef[] {
         JT('k-bebop', 6, 'Lines over standards, major and minor', 'קווים על סטנדרטים, מז׳ור ומינור', [bb('bb-standard'), bb('bb-standard', { option: 1 })], [0, 5, 10, 7], [90, 160]),
         JT('k-bebop', 7, 'Both hands: shells and a line', 'שתי ידיים: קונכיות וקו', [bb('bb-hands', { hands: 'RL' }), bb('bb-hands', { option: 1, hands: 'RL' })], cyc4, [70, 120]),
         JT('k-bebop', 8, 'Trading fours with the band', 'חילופי ארבע עם הלהקה', [0, 1, 2].map((o) => bb('bb-trade', { option: o })), [0, 5, 10, 7], [90, 140]),
+        JT('k-bebop', 9, 'Lines over whole forms: rhythm changes AABA, the bridge, the minor blues', 'קווים על צורות שלמות: כל ריתם צ׳יינג׳ס, הגשר, הבלוז המינורי', [0, 1, 2].map((o) => bb('bb-form', { option: o })), [10, 3, 8, 0, 5], [90, 170]),
+        JT('k-bebop', 10, 'The Coltrane matrix: lines through keys a major 3rd apart', 'מטריצת קולטריין: קווים בסולמות במרחק טרצה גדולה', [bb('bb-matrix'), bb('bb-matrix', { option: 1 })], [0, 5, 10, 3, 7, 2], [70, 140]),
       ],
     },
     {
@@ -4954,7 +5290,10 @@ export function catalog(): FamilyDef[] {
         L('accomp', 14, 'Stride through the blues and rhythm changes', 'סטרייד בבלוז ובריתם צ׳יינג׳ס', [st('lv:blues', 'stride-octave'), st('lv:rhythm-changes', 'stride-single'), st('std:rhythm-bridge', 'stride-tenth')], [0, 5]),
         L('accomp', 15, 'Stride on standards', 'סטרייד על סטנדרטים', [st('std:a-train', 'stride-tenth'), st('std:satin', 'stride-octave'), st('std:fly', 'stride-broken'), st('std:attya', 'stride-tenth')], [0]),
         L('accomp', 16, 'Stride with the right hand free', 'סטרייד עם יד ימין חופשית', [st('lv:blues', 'stride-tenth', 'improv'), st('std:a-train', 'stride-octave', 'improv'), st('lv:turnaround', 'stride-walk', 'improv')], [0]),
-        L('accomp', 17, 'Stride in all keys, up to tempo', 'סטרייד בכל הסולמות, עד הטמפו', [st('lv:two-five-one', 'stride-tenth'), st('lv:turnaround', 'stride-broken')], [0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5]),
+        // PIANO_AUDIT P2: stride standards want ♩ 140 and up — the level's own target tempo (was start × 1.25).
+        { ...L('accomp', 17, 'Stride in all keys, up to tempo', 'סטרייד בכל הסולמות, עד הטמפו', [st('lv:two-five-one', 'stride-tenth'), st('lv:turnaround', 'stride-broken')], [0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5]), tempo: [80, 140] as [number, number] },
+        // PIANO_JAZZ P2: stride with a written RH melody (guide tones on 1 and 3) — measured, where accomp 16 leaves the RH free.
+        L('accomp', 18, 'Stride with a right-hand melody', 'סטרייד עם מנגינה ביד ימין', [0, 1, 2].map((o) => m('stride-melody', { option: o, hands: 'RL', swing: true })), [0, 5, 7]),
       ],
     },
     {

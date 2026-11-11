@@ -211,3 +211,87 @@ symbols, Hebrew titles without English words, the A3 sweep).
 
 - **Transcription-style "learn a solo phrase by ear" on the keys:** the pianist's ear could call a bebop phrase over
   ii–V–I. This needs owner-licensed or our own phrases (our generator could supply them).
+
+## 6. Implemented (P2) — 2026-11-11
+
+The remaining piano items of §5 and `PIANO_AUDIT.md` §5, and path steps for the repertoire and the advanced games.
+Own material again: every line is generated from the rules below; the forms are chord charts we wrote.
+
+### Barry Harris chromatic lines (`harris` 16–18)
+
+| Level | Items | The rule (tested note for note in `tests/pianoJazz2.test.ts`) |
+|---|---|---|
+| 16 The family of dominants as lines | E7 E♭7 D7 D♭7 → C6 (half steps); E7 A7 D7 G7 → C6 (the cycle); the LH | Each dominant a bar. Beats 1–3: the scale down by the half-step rules (`ruleDown`: chord tones on the beats, the scale tone between, chromatic where none fits). Beat 4: a chord tone, then **a half step into a chord tone of the next chord** (the approach). When the line has fallen below B♭4, the approach note leaps up (≤ a 10th) and the next bar falls again. |
+| 17 The chromatic scale with the rules | C7, C6, Cm6 from the top root, two octaves down; C7 in the bass (LH) | Every half step, a chord tone on every beat: the beat splits into as many notes as the gap needs — 2 = 8ths, 3 = triplets, 4 = 16ths (C7: C B · B♭ A A♭ · G G♭ F · E E♭ D D♭ · C). |
+| 18 The sixth on the fifth | G7 = Dm6 (two bars) → C6; ii–V–I as F6 – Dm6 – C6; minor: Dø = Fm6, G7♭9 = A♭°7, Cm6 | Each chord as its 6th chord; the line steps through that chord's 6th-diminished scale in 8ths, so the 6th chord's tones fall on the beats and its diminished between. Into the next chord: the nearest tone of its 6th chord (within a major 3rd). G7♭9 uses A♭°7 (its 3, 5, 7, ♭9) with the other diminished between (the half-whole scale). |
+
+### Whole forms with a road map (`k-bebop` 9–10, `k-sixdim` 10)
+
+`PIANO_FORMS` (generate.ts) are forms with sections. Each drill gets the road map with `applyForm` and is measured
+with `analyzeForm` (through `withProg`): **a bar lost in the form is "not"**, and section starts must land within 40 ms.
+
+| Level | Forms |
+|---|---|
+| k-bebop 9 Lines over whole forms | rhythm changes AABA, 32 bars (A1 with its turnaround, A2 home, the bridge III7–VI7–II7–V7 two bars each); the bridge alone + a tag bar; the minor blues (i m6, iv, ♭VI7, V7alt, iiø–V7alt) + a tag bar. ♩ 90 → 170. |
+| k-bebop 10 The Coltrane matrix | three cells falling by whole steps: ii of T, then V–I in T + 8, T + 4 and T (keys a major 3rd apart; a Countdown-type form of our own); from the top / from below. ♩ 70 → 140. |
+| k-sixdim 10 More forms | the minor blues, the bridge of rhythm changes, a 16-bar ballad AABA (I–vi–ii–V, iii–VI–ii–V; the bridge on IV and iv), every chord as 6th chord ↔ diminished. The minor tonic is its m6 (Cm6 / B°7); V7♭9 and V7alt move G7 ↔ A♭°7. |
+
+**Swing and the drift rule.** The road map's section tempo compares played IOIs with straight 8ths, so a swung 8th
+line would read as rushing and dragging. Swung line drills check lost bars and landings, not drift; chord drills
+(k-sixdim 10) check drift too (≤ 2 %). The timing SD and the outliers judge the time as before.
+
+### More piano P2
+
+| Item | What was built |
+|---|---|
+| **Upper structures over a pedal** (`k-reharm` 8) | LH root + 5th held a bar. Lydian: G, D, Bm, Em over C (5-7-9, 9-♯11-13, 7-9-♯11, 3-5-7). Sus ("Maiden Voyage"-type): B♭, Gm, F, Dm over C, then the same a minor 3rd up. The mode's tones are allowed. |
+| **Stride with a right-hand melody** (`accomp` 18) | The stride charts (the turnaround in 10ths, A Train in octaves, the blues with a single bass) with a written RH: a guide tone (3rd or 7th) on beats 1 and 3, half notes, the nearer one each time (F4–G5). Measured note for note, where accomp 16 leaves the RH free. |
+| **A model line in trading fours** | After the result, "Show a model line" swaps the landings staff for the model line of your bars (`goal.free.model`); "Back to your landings" swaps back. One staff at a time, so the card still fits the phone. |
+| **accomp 17 up to tempo** (`PIANO_AUDIT` P2) | The level has its own target now, ♩ 140 (it was start × 1.25 ≈ ♩ 80). |
+
+### Path steps for content that had none (`src/engine/pathBonus.ts`)
+
+| Step | Where | How it passes |
+|---|---|---|
+| **Repertoire** `rep:<course>:<item>` (game `repertoire`; symbol: a lead sheet with a bookmark) | Every third unit, at its end: the first item not yet played whose tier fits the unit (tier 1 ≈ 820, 2 ≈ 980, 3 ≈ 1180, 4 ≈ 1380; ≤ the unit's difficulty + 100). One step per item, in its own course only. | Opens the item's page (its ways are the course's measured practice). The stars come from the item's result `rep-<course>-<item>`: ≥ 80 % = 3, ≥ 60 % = 2, ≥ 30 % = 1, played from the path or the repertoire page alike. Never ✓ by rating evidence. |
+| **Bonus game** `bonus:<course>:<game>` (the game's Arcade symbol; the Transcription Race gets a staff with a stopwatch and the Reharm Spotter a magnifier, so neither shares the coach's or the k-reharm family's symbol) | Every other unit, at its end, once the unit is as deep as the game (difficulty 1000–1100). Ear: Scale & Mode Rush, Transcription Race. Jazz: Voicing Spy, Name That Standard, Reharm Spotter. Keys: Barry Harris in Time, Polyrhythm Lock. Guitar and bass: Odd-Meter Riff Echo (each its own step). Drums: Polyrhythm Lock. | Opens the game at tier **mp** (`pendingStep.tier`); 3 stars when the run meets mp's rule, else ≤ 2 by accuracy (the existing `noteGameStep`). **Optional**: tagged "Bonus", never the current step, never holds a unit back, and counted in the unit's x / y only once done. |
+
+Everything else connects through the existing results: game runs → XP, ratings, the week's game board, quests;
+repertoire results → history, league XP, the course split, quests and badges. Both are path steps, so the workout's
+path block offers them too.
+
+### Tests
+
+- `tests/pianoJazz2.test.ts`: every new item in all 12 keys (range, hands apart); h16 chord tones on the beats, a step
+  inside each bar, a half step into each chord; h17 every half step, chord tones on the beats only, 2–4 notes a beat
+  (C7 note for note and in time); h18 the 6th chord on the beats, its diminished between; the forms' road maps (AABA =
+  A1 A2 B A2, 32 bars, a chart per bar); a bar skipped in the form is "not"; upper structures (♯11 in lydian, no 3rd
+  in sus, the pedal held); the stride melody (guide tones on 1 and 3); the sweep: steady takes clean at each level's
+  target tempo in its keys, sloppy ones (2 × SD) never.
+- `tests/pathBonus.test.ts`: all eight games, one course per step, tier mp, their own symbols; repertoire steps one
+  per item in their course, deeper by tier; stars from the item result; never ✓ by evidence; unit-end placement; on
+  the jazz path a bonus is never current and a unit completes without it; every course path holds only its own steps.
+- `tests/pianoJazz.test.ts`: level counts updated (k-sixdim 10, k-bebop 10, k-reharm 8, harris 18); its sweep now
+  covers the new k-* levels in all 12 keys.
+
+### Not built
+
+- **Fingerings** for the bebop lines, the Harris rules levels, black-key arpeggios and the jazz scales: help only,
+  left out as before (`PIANO_AUDIT` P2).
+- **The band under your bars in trading fours** (needs headphones or MIDI) and **calibration with real players** (P1):
+  they need the owner's takes.
+- **A "microphone only" setting** that hides the MIDI-only levels (`PIANO_AUDIT` P1, decision 3): waits for the
+  owner's decision.
+- **Learn a solo phrase by ear on the keys** (P3), the ear family's speaker-bleed test on a real piano, and the
+  `topicGroups.ts` emoji (shared with every course).
+
+### Decisions for the owner
+
+1. **Bonus games per course.** Riff Echo is a step on both the guitar and the bass path, Polyrhythm Lock on keys and
+   drums (each course its own step, measured on its instrument). The other five sit in one course each (ear: Scale
+   Rush, Transcription Race; jazz: Voicing Spy, Name That Standard, Reharm Spotter). Keep, or one course per game?
+2. **Repertoire steps.** They are normal steps (a unit waits for a result of ≥ 30 %); bonus games are optional.
+   Should repertoire steps be optional too?
+3. **Cadence.** A repertoire item every third unit, a bonus game every other unit. More, or fewer?
+4. **Swing drift.** Swung lines over forms are not checked for tempo drift (the road map measures straight 8ths).
+   Add a swing-aware drift later, or leave it to the timing SD?

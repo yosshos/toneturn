@@ -118,6 +118,18 @@ export function DrillScore({ drill, ds, result, beat = -1, lang = 'en' }: { dril
   if (drill.show === 'none' && !result) return <EarCard drill={drill} beat={beat} lang={lang} />;
   // Drums (0.65): a percussion staff (reading always), or lanes by the setting.
   if (isDrumDrill(drill)) return <DrumScore drill={drill} view={drill.show === 'staff' ? 'staff' : (ds.drumView ?? 'staff')} result={result} beat={beat} lang={lang} />;
+  // PIANO_JAZZ P2: trading fours — after the result, a model line for your bars on request (it replaces the landings
+  // staff, so the card still fits one screen).
+  const tradeModel = !isGuitarDrill(drill) && result ? drill.goal.free?.model : undefined;
+  if (tradeModel?.length)
+    return (
+      <>
+        {model ? <DrillStaff drill={{ ...drill, notes: tradeModel.map((n) => ({ pitch: n.pitch, beat: n.beat, dur: n.dur, hand: 'R' as const })) }} /> : <DrillStaff drill={drill} fingering={ds.showFingering} result={result} />}
+        <button className="link model-toggle" onClick={() => setModel(!model)} aria-pressed={model} data-model-line={model ? 'on' : 'off'}>
+          {model ? (lang === 'he' ? 'בחזרה לנחיתות שלכם' : 'Back to your landings') : lang === 'he' ? 'להציג קו לדוגמה' : 'Show a model line'}
+        </button>
+      </>
+    );
   if (!isGuitarDrill(drill)) return <DrillStaff drill={drill} fingering={ds.showFingering} result={result} />;
   if (drill.show === 'none' && !result) return <EarCard drill={drill} beat={beat} lang={lang} />;
   const view = drill.show === 'staff' ? 'staff' : (ds.guitarView ?? 'tab');

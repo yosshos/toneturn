@@ -17,6 +17,7 @@ import { stepTier, tierSpec } from './gameTiers';
 import { catalog } from './drills/generate';
 import { guitarCatalog } from './drills/guitar';
 import { VOICE_FAMILIES } from './voiceFamilies';
+import { bonusSteps, isUnitEndStep, repSteps, unitEndSteps } from './pathBonus';
 
 // ---------------------------------------------------------------- types
 
@@ -50,6 +51,10 @@ export interface PathStep {
   /** 0.61 (owner): a level of a measured ladder — a technique family level ('tech') or a vocal program level ('vocal').
    * family = drill family id / vocal program; ref = the drill level id ("scales-3") or the vocal level number ("103"). */
   ladder?: { family: string; level: number; ref: string; instrument?: 'piano' | 'guitar' | 'bass' | 'drums' };
+  /** PIANO_JAZZ P2 (pathBonus.ts): an optional bonus step (an advanced game) — never blocks its unit, never the current step. */
+  bonus?: boolean;
+  /** PIANO_JAZZ P2 (pathBonus.ts): a repertoire item (game 'repertoire'), passed by its measured result only. */
+  rep?: { course: CourseId; id: string };
   title: { en: string; he: string };
 }
 
@@ -281,6 +286,7 @@ export function stepCatalogue(): PathStep[] {
   }
   out.push(...ladderSteps());
   out.push(...measuredSteps());
+  out.push(...bonusSteps(), ...repSteps());
   out.sort((a, b) => a.difficulty - b.difficulty || a.id.localeCompare(b.id));
   CATALOGUE = out;
   CAT_KEY = key;
@@ -497,6 +503,8 @@ export function checkStep(s: PathStep, inp: PathInput, subs: Map<string, SubEvid
   if (s.kind === 'check' || s.kind === 'review') return { state: null };
   // Licks / transcription steps: only measured playing passes them (never rating evidence from elsewhere).
   if (s.game === 'licks' || s.game === 'transcribe') return { state: null };
+  // Bonus games and repertoire items (pathBonus.ts): only their own measured results pass them.
+  if (s.bonus || s.rep) return { state: null };
   if (inp.keep.includes(s.id)) return { state: null };
   const ev = subs.get(s.sub);
   const F = frontierOf(s.skill, inp) + subNudge(ev);
@@ -633,7 +641,7 @@ export function buildPath(inp: PathInput): PathView {
       .filter((s): s is PathStep => !!s)
       .map((s) => (f.checked.includes(s.id) && !isDone(s.id) ? { step: s, state: 'tested' as StepState } : stateOf(s)));
     steps.forEach((x) => placedIds.add(x.step.id));
-    const complete = steps.every((x) => x.state === 'done' || x.state === 'mastered' || x.state === 'tested');
+    const complete = steps.every((x) => x.step.bonus || x.state === 'done' || x.state === 'mastered' || x.state === 'tested');
     units.push(mkUnit(f.id, f.n, steps, complete ? 'past' : 'current'));
   }
   // Only the last unfinished frozen unit is current; earlier unfinished ones are past (superseded by a rebuild).
@@ -727,7 +735,7 @@ export function buildPath(inp: PathInput): PathView {
     const near = (s: PathStep, f: number) => Math.abs(s.difficulty - (f + 50)) - (inTheme(s.sub, theme) ? 120 : 0);
     const slots = L - 1 /* checkpoint */ - (inp.reviewDue >= 3 && n === units.length + 1 ? 1 : 0);
     const ladder = pickLadder(n, Math.ceil(slots / 2), scheduled);
-    const open = all.filter((s) => !taken.has(s.id) && !s.ladder);
+    const open = all.filter((s) => !taken.has(s.id) && !s.ladder && !isUnitEndStep(s));
     const live = [...new Set(open.map((s) => s.domain))];
     const shares = unitShares(weights, live, slots - ladder.length, n);
     const picked: { s: PathStep; probe?: boolean; isNew?: boolean }[] = ladder.map((s) => ({ s }));
@@ -796,6 +804,12 @@ export function buildPath(inp: PathInput): PathView {
     const lead = order[0]?.s.domain;
     const game = lead ? gameForArea(lead, n, { ...inp, noDrills: inp.noDrills || !!inp.ladderFamilies?.length }) : null;
     if (game && order.length >= 4) steps.push(stateOf(virtualStep(`game:${unitId}:${game}`, unitId, order.map((p) => p.s))!));
+    // PIANO_JAZZ P2: a repertoire item / an optional bonus game at the unit's end, where its depth fits the unit.
+    if (order.length >= 3)
+      for (const x of unitEndSteps(n, median(order.map((p) => p.s.difficulty)), all.filter((s) => isUnitEndStep(s) && !taken.has(s.id)))) {
+        taken.add(x.id);
+        steps.push(stateOf(x));
+      }
     // A checkpoint asks questions: it needs question steps (a unit of technique only is checked by its own playing).
     const questions = order.filter((p) => p.s.kind === 'topic' || p.s.kind === 'lesson');
     if (steps.length && questions.length >= 2) steps.push({ step: virtualStep(`check:${unitId}`, unitId, questions.map((p) => p.s))!, state: 'open' });
@@ -832,7 +846,7 @@ export function buildPath(inp: PathInput): PathView {
   for (const u of units) {
     if (u.status === 'past') continue;
     for (const x of u.steps) {
-      if (u.status === 'current' && !current && (x.state === 'open' || x.state === 'refresh')) {
+      if (u.status === 'current' && !current && !x.step.bonus && (x.state === 'open' || x.state === 'refresh')) {
         x.state = 'current';
         current = x;
       } else if (u.status === 'projected' && (x.state === 'open' || x.state === 'refresh')) x.state = 'locked';
