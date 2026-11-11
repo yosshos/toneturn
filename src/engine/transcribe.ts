@@ -27,7 +27,7 @@ export interface Phrase {
   chords: LickChord[] | null;
   swing: boolean;
   bpm: number;
-  source: 'generated' | 'public-domain' | 'lick';
+  source: 'generated' | 'public-domain' | 'lick' | 'own';
   title: T2;
 }
 
