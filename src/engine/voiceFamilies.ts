@@ -4,6 +4,7 @@
 // 1400 standards, 1500 scat, 1600 agility, 1700 harmony, 1800 inflections, 1900 sight). Pure data.
 
 import { BARRY_LEVELS, HARMONY_LEVELS, LADDER, MODE_LEVELS, ORNAMENT_LEVELS, SIGHT_LEVELS, type VocalItem, type VocalLevel } from './vocal';
+import { SONGBOOK, songNotes } from '../content/songbook';
 
 type Bi = { en: string; he: string };
 type Item = Omit<VocalItem, 'id' | 'level'>;
@@ -314,8 +315,10 @@ export const MY_SONG_LEVELS: VocalLevel[] = [lv(1308, 0.7, [{ kind: 'song', seco
 
 /** F14 L6 colla voce, L9 a full AABA (the last A interpreted), L10 a blues in call and response with falls. */
 export const STANDARD_MORE_LEVELS: VocalLevel[] = [
-  lv(1408, 0.7, [SONG('slow-harbor', { band: true, rhythm: false, need: 0.7, rubato: true }, 1500), SONG('corner-light', { band: true, rhythm: false, need: 0.7, rubato: true }, 1550)]),
-  lv(1409, 0.72, [SONG('lantern-street', { band: true, rhythm: true, need: 0.72 }, 1600), SONG('lantern-street', { band: true, rhythm: true, need: 0.72, interpretFrom: 3 }, 1650)]),
+  // P3: the first phrase colla voce (the band's groove stretched to the singer), then a count-in and back on the bar.
+  lv(1408, 0.7, [{ ...SONG('slow-harbor', { band: true, rhythm: true, need: 0.7, freeUntil: 1 }, 1500), seconds: 40 }, { ...SONG('corner-light', { band: true, rhythm: true, need: 0.7, freeUntil: 1 }, 1550), seconds: 30 }]),
+  // P3: the rubato verse (colla voce) → a count-in → the AABA chorus in time; then the last A interpreted.
+  lv(1409, 0.72, [{ ...SONG('lantern-street-verse', { band: true, rhythm: true, need: 0.72, freeUntil: 2 }, 1600), seconds: 85 }, SONG('lantern-street', { band: true, rhythm: true, need: 0.72, interpretFrom: 3 }, 1650)]),
   lv(1410, 0.7, [SONG('call-and-answer', { band: true, rhythm: true, need: 0.7, falls: true }, 1600), SONG('call-and-answer', { band: true, rhythm: true, need: 0.7, falls: true, bpm: 120 }, 1650)]),
 ];
 
@@ -330,8 +333,66 @@ export const SCAT_P2_LEVELS: VocalLevel[] = [
   lv(1510, 0.56, [P2SCAT({ mode: 'trade', chart: BLUES, style: 'swing', bpm: 140, turn: 2 }, 1600), P2SCAT({ mode: 'trade', chart: BLUES, style: 'swing', bpm: 160, turn: 4, loops: 2 }, 1700)]),
 ];
 
+// ---------------------------------------------------------------- P3: the ear and first-song topics as sung levels
+
+/** An echo: the app plays the line (its own rhythm), the singer sings it back. */
+const ECHO = (steps: number[], beats: number[], bpm: number, difficulty: number, at = 0.35, song?: string): Item => ({
+  kind: 'melody',
+  seconds: Math.round((beats.reduce((a, b) => a + b, 0) * 60) / bpm + 3),
+  reference: 'before',
+  at,
+  steps,
+  noteSecs: beats.map((b) => (b * 60) / bpm),
+  ear: { mode: 'echo', ...(song ? { song } : {}) },
+  difficulty,
+});
+/** An interval from a given note: only the first note is played; the singer sings it, then the named interval. */
+const IVL = (semis: number, at: number, difficulty: number): Item => ({ kind: 'leap', seconds: 5, reference: 'before', at, steps: [0, semis], ear: { mode: 'interval' }, difficulty });
+const MAJOR = [0, 2, 4, 5, 7, 9, 11];
+const deg = (i: number) => 12 * Math.floor(i / 7) + MAJOR[((i % 7) + 7) % 7];
+/** Audiation: a motif moves by step bar by bar; two bars are played, the third (never played) is sung. */
+const AUD = (motif: number[], start: number, dir: 1 | -1, bpm: number, difficulty: number): Item => {
+  const bar = (j: number) => motif.map((x) => deg(start + j * dir + x));
+  const sec = 60 / bpm;
+  const lead = [...bar(0), ...bar(1)];
+  return { kind: 'melody', seconds: Math.round(motif.length * sec + 3), reference: 'before', at: 0.4, steps: bar(2), noteSecs: motif.map(() => sec), ear: { mode: 'audiate', lead, leadSecs: lead.map(() => sec) }, difficulty };
+};
+/** F13 L1: the first phrase of a level-1 songbook song (public domain), repeated notes joined into one (the echo is pitch-graded). */
+function songEcho(id: string, difficulty: number): Item {
+  const s = SONGBOOK.find((x) => x.id === id)!;
+  const end = s.phrases[0] ?? s.melody.split('|').length;
+  const steps: number[] = [];
+  const beats: number[] = [];
+  let rest = true;
+  for (const n of songNotes(s)) {
+    if (n.bar >= end) break;
+    if (n.semi === null) {
+      rest = true;
+      continue;
+    }
+    if (!rest && steps.length && steps[steps.length - 1] === n.semi) beats[beats.length - 1] += n.beats;
+    else {
+      steps.push(n.semi);
+      beats.push(n.beats);
+    }
+    rest = false;
+  }
+  return ECHO(steps, beats, 96, difficulty, 0.3, id);
+}
+
+export const EAR_P3_LEVELS: VocalLevel[] = [
+  // F10 L1: echo short melodies, two bars with their rhythm, growing
+  lv(1203, 0.6, [ECHO([0, 2, 4, 2, 0], [1, 1, 1, 1, 2], 100, 1000), ECHO([0, 4, 7, 4, 5, 2, 0], [1, 1, 1, 0.5, 0.5, 1, 2], 100, 1050), ECHO([0, -1, 0, 2, 4, 2, 4, 7], [0.5, 0.5, 1, 1, 0.5, 0.5, 1, 2], 96, 1100), ECHO([7, 5, 4, 2, 4, 0, -3, 0], [1, 0.5, 0.5, 1, 1, 1, 1, 2], 96, 1150)]),
+  // F10 L3: intervals up and down from a given note (sing-intervals L1–4)
+  lv(1204, 0.6, [IVL(4, 0.3, 1000), IVL(7, 0.25, 1050), IVL(-3, 0.6, 1100), IVL(-5, 0.65, 1150), IVL(9, 0.2, 1200), IVL(-8, 0.7, 1250)]),
+  // F10 L5: audiation — hear two bars of a sequence, sing the third that is not played
+  lv(1205, 0.6, [AUD([0, 1, 2, 0], 0, 1, 88, 1350), AUD([0, 2, 1], 0, 1, 88, 1400), AUD([2, 1, 0], 4, -1, 88, 1400), AUD([0, 2, 4, 2], 4, -1, 84, 1450)]),
+];
+/** F13 L1: echo one phrase of a level-1 public-domain song. */
+export const SONG_ECHO_LEVELS: VocalLevel[] = [lv(1309, 0.6, [songEcho('jacques', 950), songEcho('mary', 1000), songEcho('yonatan', 1000), songEcho('london', 1050)])];
+
 /** Every new level of the families. */
-export const NEW_LEVELS: VocalLevel[] = [...MICRO_LEVELS, ...READ_LEVELS, ...MY_SONG_LEVELS, ...STANDARD_MORE_LEVELS, ...SCAT_P2_LEVELS, ...SIGHT_MORE_LEVELS, ...ARPEGGIO_LEVELS, ...SCAT_MORE_LEVELS, ...BREATH_LEVELS, ...PITCH_LEVELS, ...RANGE_LEVELS, ...DYN_LEVELS, ...VIB_LEVELS, ...TIME_LEVELS, ...EAR_LEVELS, ...SONG_LEVELS, ...STANDARD_LEVELS, ...SCAT_LEVELS, ...AGILITY_LEVELS, ...HARMONY_MORE_LEVELS, ...INFLECT_LEVELS];
+export const NEW_LEVELS: VocalLevel[] = [...EAR_P3_LEVELS, ...SONG_ECHO_LEVELS, ...MICRO_LEVELS, ...READ_LEVELS, ...MY_SONG_LEVELS, ...STANDARD_MORE_LEVELS, ...SCAT_P2_LEVELS, ...SIGHT_MORE_LEVELS, ...ARPEGGIO_LEVELS, ...SCAT_MORE_LEVELS, ...BREATH_LEVELS, ...PITCH_LEVELS, ...RANGE_LEVELS, ...DYN_LEVELS, ...VIB_LEVELS, ...TIME_LEVELS, ...EAR_LEVELS, ...SONG_LEVELS, ...STANDARD_LEVELS, ...SCAT_LEVELS, ...AGILITY_LEVELS, ...HARMONY_MORE_LEVELS, ...INFLECT_LEVELS];
 
 // ---------------------------------------------------------------- the families
 
@@ -342,6 +403,8 @@ export interface VoiceFamily {
   refs: number[];
   /** The stage the family's first levels belong to (VOICE_CURRICULUM §8). */
   stage: 'A' | 'B' | 'C' | 'D';
+  /** P3: levels put in front of the family after placement starts were saved — a saved start counts that many more. */
+  before?: number;
 }
 
 const nums = (base: number, levels: VocalLevel[]) => levels.map((_, i) => base + i + 1);
@@ -350,12 +413,14 @@ const nums = (base: number, levels: VocalLevel[]) => levels.map((_, i) => base +
 export const VOICE_FAMILIES: VoiceFamily[] = [
   // The on-ramp first (owner: "every great jazz singer can sing a simple song perfectly — start here"), with the breath.
   // P2 levels sit where they teach (my song before the performance take); old levels keep opening by number.
-  { id: 'v-songs', title: { en: 'Songs with the band', he: 'שירים עם להקה' }, refs: [...SONG_LEVELS.slice(0, -1).map((l) => l.level), 1308, ...SONG_LEVELS.slice(-1).map((l) => l.level)], stage: 'A' },
+  // P3: F13 L1 (echo one phrase of a simple song) opens the family.
+  { id: 'v-songs', title: { en: 'Songs with the band', he: 'שירים עם להקה' }, refs: [1309, ...SONG_LEVELS.slice(0, -1).map((l) => l.level), 1308, ...SONG_LEVELS.slice(-1).map((l) => l.level)], stage: 'A', before: 1 },
   { id: 'v-breath', title: { en: 'Breath & sustain', he: 'נשימה והחזקה' }, refs: [1, ...BREATH_LEVELS.map((l) => l.level)], stage: 'A' },
   { id: 'v-pitch', title: { en: 'Pitch & intonation', he: 'גובה ואינטונציה' }, refs: [2, 7, ...PITCH_LEVELS.map((l) => l.level), 704], stage: 'A' },
   { id: 'v-range', title: { en: 'Range & registers', he: 'מנעד ורגיסטרים' }, refs: [4, 6, ...RANGE_LEVELS.map((l) => l.level)], stage: 'A' },
   { id: 'v-time', title: { en: 'Time feel', he: 'תחושת זמן' }, refs: [9, ...TIME_LEVELS.map((l) => l.level)], stage: 'A' },
-  { id: 'v-ear', title: { en: "The singer's ear", he: 'האוזן של הזמר' }, refs: [8, ...EAR_LEVELS.map((l) => l.level)], stage: 'A' },
+  // P3: F10 L1 echo, L3 intervals and L5 audiation as sung levels, where the plan puts them (L2 = ladder 8).
+  { id: 'v-ear', title: { en: "The singer's ear", he: 'האוזן של הזמר' }, refs: [1203, 8, 1204, 1201, 1205, 1202], stage: 'A', before: 1 },
   { id: 'v-dyn', title: { en: 'Dynamics', he: 'דינמיקה' }, refs: [901, 5, ...DYN_LEVELS.slice(1).map((l) => l.level)], stage: 'B' },
   { id: 'v-scale', title: { en: 'Scales & modes', he: 'סולמות ומודוסים בשירה' }, refs: [...nums(100, MODE_LEVELS), ...ARPEGGIO_LEVELS.map((l) => l.level)], stage: 'B' },
   { id: 'v-sight', title: { en: 'Sight-singing', he: 'שירה מתווים' }, refs: [...nums(400, SIGHT_LEVELS), ...SIGHT_MORE_LEVELS.map((l) => l.level), ...READ_LEVELS.map((l) => l.level)], stage: 'B' },
@@ -367,6 +432,24 @@ export const VOICE_FAMILIES: VoiceFamily[] = [
   { id: 'v-scat', title: { en: 'Scat & improvisation', he: 'סקאט ואלתור' }, refs: [1501, 1507, 1508, 1502, 1503, 1504, 1509, 1505, 1506, 1510], stage: 'C' },
   { id: 'v-barry', title: { en: 'Barry Harris lines', he: 'קווים של בארי האריס' }, refs: nums(300, BARRY_LEVELS), stage: 'D' },
 ];
+
+/** The families' level order before P3 put new levels in (a level that was open then stays open). */
+const FORMER_REFS: Record<string, number[]> = { 'v-songs': [1301, 1302, 1303, 1304, 1305, 1306, 1308, 1307], 'v-ear': [8, 1201, 1202] };
+
+/**
+ * Whether a level of a family is open: the family's first, or the one before it (in the family, or by the old
+ * number) passed — or it was open in the family's order before new levels were put in front of it.
+ */
+export function voiceLevelUnlocked(f: Pick<VoiceFamily, 'id' | 'refs'>, n: number, passed: number[]): boolean {
+  const i = f.refs.indexOf(n);
+  if (i <= 0 || passed.includes(f.refs[i - 1]) || passed.includes(n - 1)) return true;
+  const old = FORMER_REFS[f.id];
+  const j = old ? old.indexOf(n) : -1;
+  return j === 0 || (j > 0 && passed.includes(old![j - 1]));
+}
+
+/** A saved placement start (drillStart) in the family's current order: levels put in front since then count too. */
+export const voiceStartNow = (familyId: string, start: number | undefined): number => (start === undefined || start <= 1 ? start ?? 1 : start + (VOICE_FAMILIES.find((f) => f.id === familyId)?.before ?? 0));
 
 /** Every vocal level by its number: the old programs and the new families. */
 const BY_REF = new Map<number, VocalLevel>();
@@ -457,6 +540,10 @@ export const NEW_LEVEL_NAMES: Record<number, Bi> = {
   1508: { en: 'Embellish the head', he: 'לקשט את הנושא' },
   1509: { en: 'Bebop accents', he: 'הדגשות ביבופ' },
   1510: { en: 'Trading twos and fours', he: 'חילופי שתיים וארבע' },
+  1203: { en: 'Sing it back', he: 'לשיר בחזרה' },
+  1204: { en: 'Intervals from a note', he: 'מרווחים מצליל נתון' },
+  1205: { en: 'The bar not played', he: 'התיבה שלא נוגנה' },
+  1309: { en: 'One phrase of a song', he: 'משפט אחד משיר' },
 };
 
 // ---------------------------------------------------------------- rating tags of the new families
@@ -465,8 +552,12 @@ type TagT = { skill: import('./lesson').SkillId; sub: string; w: number };
 const T3 = (...xs: [import('./lesson').SkillId, string, number][]): TagT[] => xs.map(([skill, sub, w]) => ({ skill, sub: `${skill}/${sub}`, w }));
 
 /** The skill and rating tags of a new family's item (feeds ratings, the skill map, leagues — "everything connects"). */
-export function voiceItemTags(level: number, item: Pick<VocalItem, 'kind' | 'scat' | 'time'>): { skill: import('./lesson').SkillId; tags: TagT[] } {
+export function voiceItemTags(level: number, item: Pick<VocalItem, 'kind' | 'scat' | 'time'> & Partial<Pick<VocalItem, 'ear'>>): { skill: import('./lesson').SkillId; tags: TagT[] } {
   const fam = familyOfRef(level)?.id;
+  // P3 ear items: intervals rate interval singing; echoes and audiation rate the inner ear (sequences).
+  if (item.ear?.mode === 'interval') return { skill: 'singing', tags: T3(['singing', 'intervals', 0.7], ['intervals', 'melodic', 0.3]) };
+  if (item.ear && fam === 'v-songs') return { skill: 'singing', tags: T3(['singing', 'songs', 0.5], ['singing', 'sequence', 0.3], ['sequences', 'inner', 0.2]) };
+  if (item.ear) return { skill: 'singing', tags: T3(['singing', 'sequence', 0.6], ['sequences', 'inner', 0.4]) };
   switch (fam) {
     case 'v-time':
       return { skill: 'technique', tags: T3(['technique', 'control', 0.4], ['timing', 'precision', 0.4], ['rhythm-dictation', 'feel', 0.2]) };
