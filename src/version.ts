@@ -18,6 +18,24 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.70.0',
+    date: '2026-11-11',
+    en: [
+      'Bass for jazz and prog: measured swing, Barry Harris, form and arrangement, Latin, odd meters, unisons with the band, polymeter, solos up to trading fours; choose your track (jazz / prog / both)',
+      'Guitar, 79 → 128 levels: exam-grade target tempos, a core path with add-ons (jazz, flamenco, fingerstyle, prog), a guitarist’s ear, jazz and Barry Harris, prog, a chord recognizer, nylon and electric sounds',
+      'Drums, 91 → 133 levels: songs in sections (verse, chorus, road maps, your own chart), prog meters and polyrhythms, reading played on the kit, three new games, jazz with brushes',
+      'Singing, about 100 levels in four stages: timing feel, songs with the band scored per phrase, pitch drift, standards, scat, a placement test',
+      'Rhythm questions no longer show a keyboard',
+    ],
+    he: [
+      'בס לג׳אז ולפרוג: סווינג נמדד, ברי האריס, צורה ועיבוד, לטיני, משקלים אי־זוגיים, יוניסונים עם הלהקה, פולימטר, סולואים עד טריידינג; בוחרים מסלול (ג׳אז / פרוג / שניהם)',
+      'גיטרה, 79 → 128 שלבים: טמפו יעד לפי דרגות בחינה, מסלול ליבה עם תוספות (ג׳אז, פלמנקו, פינגרסטייל, פרוג), שמיעה לגיטריסטים, ג׳אז וברי האריס, פרוג, מזהה אקורדים, צלילי ניילון וחשמלית',
+      'תופים, 91 → 133 שלבים: שירים לפי חלקים (בית, פזמון, מפות דרך, צ׳ארט משלך), משקלי פרוג ופולי־ריתמוס, קריאה שמנוגנת על המערכת, שלושה משחקים חדשים, ג׳אז עם מברשות',
+      'שירה, כ־100 שלבים בארבע תחנות: תחושת זמן, שירים עם להקה וציון לכל משפט, סטיית גובה, סטנדרטים, סקאט, מבחן מיקום',
+      'בשאלות קצב כבר לא מופיעה מקלדת',
+    ],
+  },
+  {
     version: '0.69.1',
     date: '2026-11-11',
     en: [
