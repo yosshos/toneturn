@@ -37,7 +37,7 @@ import type { Strings } from '../i18n/strings';
 import { gemsOf, localDay, namingFor, provisionalDays, ratingsOf, resultFromSession, type Progress, type Settings } from '../storage/progress';
 import { StreakCelebration } from './Streak';
 import type { StreakState } from '../engine/streak';
-import { overallHistory, peakOf, ratingChange, type RatingChange } from '../engine/rating';
+import { domainOf, overallHistory, peakOf, ratingChange, type RatingChange } from '../engine/rating';
 import { isTimed } from '../engine/scoring';
 import { learnPace, loadPace } from '../storage/pace';
 import { paceBand, paceTarget } from '../engine/fluency';
@@ -322,7 +322,9 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
   // Degree ↔ name questions: an unasked-for keyboard lets the player count to the answer — it waits for Hint (0.50.2).
   const keysAreHint = !answered && !q.aid && keyboardIsHint(q);
   const canHint = keysAreHint && !noHints(v.session.lesson.id);
-  const hideKeyboard = q.kind === 'rhythm-read' || q.kind === 'rhythm-dict' || keysAreHint || (q.kind === 'choice' && !!q.chart);
+  // 0.70 (owner): a rhythm / time question (rhythm memory, meter, tempo…) shows no keyboard — it means nothing there.
+  const timeQuestion = 'skill' in q && typeof q.skill === 'string' && domainOf(q.skill as never) === 'time';
+  const hideKeyboard = q.kind === 'rhythm-read' || q.kind === 'rhythm-dict' || timeQuestion || keysAreHint || (q.kind === 'choice' && !!q.chart);
   const orbLabel =
     q.kind === 'degree'
       ? target
