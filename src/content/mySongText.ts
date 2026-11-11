@@ -56,6 +56,13 @@ export const MS = {
   noBeat: t('no steady beat', 'אין פעמה יציבה'),
   mic: t('The microphone could not be opened.', 'לא הצלחנו לפתוח את המיקרופון.'),
   demo: t('Demo recording', 'הקלטת הדגמה'),
+  toWrite: t('Write it', 'לכתוב'),
+  writeHow: t('Write it as degrees of the key, in order.', 'כתבו אותו בדרגות של הסולם, לפי הסדר.'),
+  keyOf: t('Key: {k} major', 'סולם: {k} מז׳ור'),
+  check: t('Check', 'בדיקה'),
+  undo: t('Undo', 'ביטול'),
+  written: t('Written {ok}/{n}', 'נכתב {ok}/{n}'),
+  waltz: t('3/4', '3/4'),
 } satisfies Record<string, T2>;
 
 /** The Practice tile's subtitle per course. */

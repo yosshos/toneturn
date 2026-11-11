@@ -9,6 +9,7 @@ import { keepBeatQuestion } from './basics';
 import './topics'; // registers every topic generator
 import type { Drill, ExpNote } from './drills/types';
 import { families, levelDrills } from './drills/plan';
+import { generate } from './drills/generate';
 import type { LevelDef } from './drills/generate';
 import type { TasteDef, TasteDrillPick } from './courseStart';
 
@@ -95,6 +96,39 @@ export function melodyDrill(): Drill {
     chart: ['C', 'Am', 'C', 'C'],
     band: { style: 'pop' },
   };
+}
+
+/** Day 3 for a new pianist: the root of each bar of a 12-bar blues in C, left hand, a whole note a bar. */
+export function bluesRootsDrill(): Drill {
+  const roots = [48, 53, 48, 48, 53, 53, 48, 48, 55, 53, 48, 55];
+  const fingers: Record<number, number> = { 48: 5, 53: 2, 55: 1 };
+  const notes: ExpNote[] = roots.map((pitch, i) => ({ pitch, beat: i * 4, dur: 4, hand: 'L', finger: fingers[pitch] }));
+  return {
+    spec: { family: 'fingers', kind: 'real-blues-roots', key: 0, hands: 'L', tempo: 84 },
+    itemId: 'fingers:real-blues-roots:0:L',
+    title: { en: 'A blues chorus in C: the roots', he: 'סבב בלוז בדו: השורשים' },
+    notes,
+    beats: 48,
+    meter: 4,
+    keySig: 'C',
+    goal: { evenness: false, hands: false },
+    startBpm: 84,
+    chart: ['C7', 'F7', 'C7', 'C7', 'F7', 'F7', 'C7', 'C7', 'G7', 'F7', 'C7', 'G7'],
+  };
+}
+
+/** The day-3 moment's drills (REAL_MUSIC): `real:blues-roots`, `real:<chart kind>` (a chart drill in F), else levels. */
+export function realDrills(def: TasteDef, o: { drumPad?: boolean } = {}): Drill[] {
+  if (def.run.kind !== 'drills') throw new Error(`${def.id} is not a playing moment`);
+  const out: Drill[] = [];
+  const rest: TasteDrillPick[] = [];
+  for (const p of def.run.picks) {
+    if (p.level === 'real:blues-roots') out.push(withBand(bluesRootsDrill(), p.band));
+    else if (p.level.startsWith('real:chart~')) out.push(withBand(generate({ family: 'voicings', kind: p.level.slice(5), key: 5, hands: 'L', swing: true }), p.band));
+    else rest.push(p);
+  }
+  if (rest.length) out.push(...tasteDrills({ ...def, run: { kind: 'drills', picks: rest } }, o));
+  return out;
 }
 
 /** A playing taste as a queue of drills (a practice pad by microphone gets the single-surface time drills instead). */

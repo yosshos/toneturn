@@ -61,6 +61,8 @@ export interface BadgeInput {
   gameTiers?: GameTiers;
   /** Repertoire (SPEC-REPERTOIRE): standards learned per course (tiers 3–4) and advanced pieces learned (tier 4). */
   repertoire?: Partial<Record<CourseId, { standards: number; advanced: number }>>;
+  /** SPEC-COURSE-START: courses whose measured first win was recorded (Settings.courseStart, never for migrated players). */
+  firstWins?: CourseId[];
   /** Vocal levels passed (progress.vocal.passed): the voice course's family and milestone badges. */
   vocalPassed?: number[];
   technique?: {
@@ -841,7 +843,15 @@ const repBadges = (): Badge[] =>
     { ...sp(`rep:${c}:advanced`, '♪', 'diamond', `${COURSE_TIER_NAME[c].en}: advanced repertoire`, `${COURSE_TIER_NAME[c].he}: רפרטואר מתקדם`, 'Learn a piece from the Advanced tier.', 'ללמוד יצירה מהשלב המתקדם.', (x) => count(x.repertoire?.[c]?.advanced ?? 0, 1)), group: c },
   ]);
 
+// First session (SPEC-COURSE-START): per course, the measured first win of its taste lesson.
+const firstBadges = (): Badge[] =>
+  (Object.keys(COURSE_TIER_NAME) as CourseId[]).map((c) => ({
+    ...sp(`first:${c}`, '◆', 'bronze', `${COURSE_TIER_NAME[c].en}: first session`, `${COURSE_TIER_NAME[c].he}: שיעור ראשון`, 'Finish the first session of the course with a measured result.', 'לסיים את השיעור הראשון בקורס עם תוצאה מדודה.', (x) => count(x.firstWins?.includes(c) ? 1 : 0, 1)),
+    group: c,
+  }));
+
 const specialBadges: Badge[] = [
+  ...firstBadges(),
   ...tierBadges(),
   ...repBadges(),
   sp('hat-trick', '🎩', 'bronze', 'Hat Trick', 'שלושער', 'Practice 3 days in a row.', 'להתאמן 3 ימים ברצף.', (_x, d) => count(d.bestStreak, 3)),
@@ -908,6 +918,7 @@ export function badgeCourse(b: Pick<Badge, 'id' | 'cat' | 'group'>): { course: B
   switch (b.cat) {
     case 'special':
       // Per-course game-tier badges belong to their course.
+      if (b.id.startsWith('special:first:')) return { course: g as CourseId };
       if (b.id.startsWith('special:tierc:') || b.id.startsWith('special:rep:')) return { course: g as CourseId };
       return { course: 'general' };
     case 'season':

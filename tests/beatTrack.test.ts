@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { beatGrid, BEAT_CONFIDENT, fft } from '../src/engine/beatTrack';
+import { beatGrid, BEAT_CONFIDENT, fft, meterOf } from '../src/engine/beatTrack';
 
 const SR = 22050;
 /** Deterministic noise. */
@@ -116,5 +116,49 @@ describe('beat tracker (SPEC-MY-SONG §3)', () => {
     for (let t = 0.3; t < 19.5; t += 0.25 + 0.9 * Math.abs(rnd())) hit(x, t, 'snare', 0.6, rnd);
     const g = await beatGrid(x, SR);
     expect(g === null || g.confidence < BEAT_CONFIDENT).toBe(true);
+  });
+});
+
+/** A waltz: a kick on 1, a light snare on 2 and 3, a hat on every beat. `first` shifts which beat is 1. */
+function waltz(bpm: number, sec: number, offset = 0.37, first = 0): Float32Array {
+  const x = new Float32Array(Math.round(sec * SR));
+  const rnd = rng(5);
+  for (let i = 0; i < x.length; i++) x[i] = 0.01 * rnd();
+  const beat = 60 / bpm;
+  for (let k = 0; offset + k * beat < sec - 0.3; k++) {
+    const t = offset + k * beat;
+    if ((k + first) % 3 === 0) hit(x, t, 'kick', 0.8, rnd);
+    else hit(x, t, 'snare', 0.3, rnd);
+    hit(x, t, 'hat', 0.12, rnd);
+  }
+  return x;
+}
+
+describe('meter: 3/4 or 4 (SPEC-MY-SONG §6)', () => {
+  it('meterOf: a three-beat accent pattern is 3 with its downbeat; two- and four-beat patterns stay 4', () => {
+    const three = Array.from({ length: 30 }, (_, i) => ((i + 2) % 3 === 0 ? 2 : -1));
+    const m = meterOf(three);
+    expect(m.meter).toBe(3);
+    expect(m.downbeat).toBe(1);
+    expect(meterOf(Array.from({ length: 32 }, (_, i) => (i % 2 ? -1 : 1))).meter).toBe(4);
+    expect(meterOf(Array.from({ length: 32 }, (_, i) => (i % 4 ? -0.5 : 1.5))).meter).toBe(4);
+    expect(meterOf(Array.from({ length: 32 }, () => 0)).meter).toBe(4);
+    // Too few beats: no call.
+    expect(meterOf(three.slice(0, 12)).meter).toBe(4);
+  });
+
+  it('a waltz at 120 BPM is heard as 3/4, its downbeat on the kick', async () => {
+    const g = await beatGrid(waltz(120, 24, 0.37, 1), SR);
+    expect(g!.confidence).toBeGreaterThanOrEqual(BEAT_CONFIDENT);
+    expect(g!.meter).toBe(3);
+    // The kick is on the beats k with (k + 1) % 3 === 0: 0.37 + 2 × 0.5 = 1.37 s, then every 1.5 s.
+    const d = g!.beats[g!.downbeat!];
+    const phase = ((((d - 1.37) / 1.5) % 1) + 1) % 1;
+    expect(Math.min(phase, 1 - phase)).toBeLessThan(0.05);
+  });
+
+  it('4/4 recordings never come out as 3/4 (rock kick–snare, a click track)', async () => {
+    expect((await beatGrid(drums(140, 20, 'rock').x, SR))!.meter).toBeUndefined();
+    expect((await beatGrid(drums(100, 20, 'clicks').x, SR))!.meter).toBeUndefined();
   });
 });
