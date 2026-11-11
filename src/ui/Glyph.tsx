@@ -641,6 +641,26 @@ export const GLYPHS: Record<string, ReactNode> = {
       <circle cx={22} cy={17} r={3.4} fill={I} />
     </>
   ),
+  /** Licks: a short swung line over a chord, with the "12 keys" ring behind it. */
+  lick: (
+    <>
+      <circle cx={0} cy={0} r={24} fill="none" stroke={I} strokeWidth={2} strokeDasharray="3 5" />
+      {head(-14, 8, 4.8, 3.4)}
+      {head(-3, -2, 4.8, 3.4)}
+      {head(9, 4, 4.8, 3.4)}
+      <path d="M-10 7V-14M1 -3V-20M13 3V-16" {...sw} strokeWidth={2.4} />
+      <path d="M-10 -14L1 -20M1 -20L13 -16" stroke={I} strokeWidth={4.5} />
+    </>
+  ),
+  /** Transcription: an ear above a note being written down. */
+  transcribe: (
+    <>
+      <path d="M-18 -6 C-18 -22 4 -24 6 -10 C7 -2 -2 0 -2 8 C-2 14 -9 16 -12 12" {...sw} strokeWidth={2.8} />
+      <path d="M-26 18H26M-26 24H26" stroke={I} strokeWidth={1.6} />
+      {head(16, 14, 5, 3.6)}
+      <path d="M20.5 13V-6" {...sw} strokeWidth={2.4} />
+    </>
+  ),
   /** Jazz-piano harmony: one chord turning into another (a substitution). */
   reharm: (
     <>
