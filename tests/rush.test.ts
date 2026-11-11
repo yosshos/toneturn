@@ -11,6 +11,7 @@ import {
   isRushSaved,
   newRush,
   rushAnswer,
+  rushHears,
   rushItem,
   rushLadder,
   rushMaxLevel,
@@ -165,6 +166,22 @@ describe('rush: items', () => {
         else if (picture === 'keys') expect(it.q.diagram?.kind).toBe('keys');
         else expect(['neck', 'box']).toContain(it.q.diagram?.kind);
       }
+  });
+  it('Chord Rush: a keys or guitar picture sounds its chord, the staff stays reading only (playtest 0.68: silent keys)', () => {
+    for (const picture of ['keys', 'neck', 'staff'] as const)
+      for (let level = 1; level <= 7; level++) {
+        const it = rushItem({ mode: 'chord', seed: 5, startLevel: 1, picture }, level, level);
+        if (it.kind !== 'choice') throw new Error('choice expected');
+        if (picture === 'staff') expect(rushHears('chord', it), `staff L${level}`).toBe(false);
+        else {
+          expect(rushHears('chord', it), `${picture} L${level}`).toBe(true);
+          const notes = it.q.stimulus.flatMap((s) => (s.kind === 'chord' ? s.midis : []));
+          expect(notes.sort()).toEqual([...(it.q.diagram?.kind === 'keys' ? it.q.diagram.midis ?? [] : notes)].sort());
+          expect(notes.length).toBeGreaterThanOrEqual(3);
+        }
+      }
+    expect(rushHears('note', rushItem({ mode: 'note', seed: 5, startLevel: 1 }, 0, 1))).toBe(false);
+    expect(rushHears('interval', null)).toBe(true);
   });
 });
 
