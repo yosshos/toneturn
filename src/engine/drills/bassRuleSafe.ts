@@ -19,8 +19,9 @@ export function ruleSafe(make: (seed: number) => BN[], rules: NonNullable<BassGo
     const line = k ? make(k) : best;
     if (ok(line).good) return line;
   }
-  // The walker treats a 6th chord as a 7th (an F on Gm6): move each note the rules refuse to the nearest chord tone
-  // of its chord (never the same pitch as the note before).
+  // Safety net: the walker used to treat a 6th chord as a 7th (an F on Gm6; fixed in band.ts walkScale, 2026-11-12).
+  // If a line still breaks a rule, move each note the rules refuse to the nearest chord tone of its chord (never the
+  // same pitch as the note before).
   const total = rules.chart.reduce((a, c) => a + c.beats, 0);
   const chordAt = (beat: number) => {
     let t = ((beat % total) + total) % total;
