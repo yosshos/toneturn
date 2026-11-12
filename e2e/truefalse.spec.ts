@@ -31,28 +31,34 @@ test.describe('Truth or Bluff', () => {
     await expect(page.getByText(/Best: \d/)).toBeVisible();
   });
 
-  test('choose topics and level: only key signatures, hard; interval trios start with one interval', async ({ page }) => {
+  test('choose topics and level: only key signatures; interval trios start with one interval', async ({ page }) => {
     await page.goto('/#/truefalse');
     const chips = page.locator('.tf-topics .chip');
     // Keep only Key signatures (turn the others off).
     for (const id of ['notes', 'rhythm', 'intervals', 'chords', 'scales', 'circle', 'harmony', 'jazz']) await chips.and(page.locator(`[data-topic="${id}"]`)).click();
     await expect(page.locator('.tf-topics .chip.on')).toHaveCount(1);
-    await page.getByRole('radio', { name: 'Hard' }).click();
+    // GAMES_TIERS P2: the Easy / Medium / Hard radios became the six level tiers; a new player opens at pp.
+    const pp = page.locator('.tier-chip[data-tier="pp"]');
+    await pp.click();
+    await expect(pp).toHaveAttribute('aria-checked', 'true');
+    await expect(page.locator('.tier-chip[data-tier="f"]')).toBeDisabled();
     await page.getByRole('button', { name: /Play/ }).click();
     await expect(page.locator('.tf-statement')).toHaveAttribute('data-topic', 'keys');
     await expect(page.locator('.tf-text')).toContainText(/major|minor/);
     await page.locator('.tf-top .icon-btn').click();
-    // Interval trios, Easy: a single interval.
+    // Interval trios, first tier: a single interval.
     await chips.and(page.locator('[data-topic="trio"]')).click();
     await chips.and(page.locator('[data-topic="keys"]')).click();
-    await page.getByRole('radio', { name: 'Easy' }).click();
+    await page.locator('.tier-chip[data-tier="pp"]').click();
     await page.getByRole('button', { name: /Play/ }).click();
     await expect(page.locator('.tf-text')).toContainText(/ up to /);
   });
 
   test('in the Games menu', async ({ page }) => {
-    await page.goto('/#/games');
-    await page.locator('.games-tf').click();
+    // GAMES_TIERS P2: the Echo Games setup no longer carries a Truth or Bluff card (one screen); it is in the games list.
+    await page.goto('/#/arcade');
+    await openGames(page);
+    await page.locator('.game-card.truefalse').click();
     await expect(page.getByRole('heading', { name: 'Truth or Bluff', level: 1 })).toBeVisible();
   });
 
