@@ -16,12 +16,14 @@ import { framesFromSamples, melodyFromFrames, type MyMelody } from './voiceMySon
 import { downsample, yin } from './yin';
 import { segmentNotes } from './memory';
 import { phraseDifficulty, phraseStars, type Phrase, type PhraseResult } from './transcribe';
+import { analyseChords, chordCoverage, gradeChordsAlong, type ChordTrack, type SongKey } from './chordTrack';
 
 type T2 = { en: string; he: string };
 
 /** Bump when the analysis changes: stored songs are analysed again on open. */
-export const ANALYSIS_VERSION = 2;
+export const ANALYSIS_VERSION = 3;
 // v2: the beat grid may say 3/4 (meter, downbeat); its sections are then four bars of three from the downbeat.
+// v3: the chords (chordTrack.ts: confidence per segment) and the key, major or minor.
 /** Longest stretch analysed (s); the file itself is kept whole. */
 export const ANALYSE_MAX_SEC = 240;
 /** Line confidence needed to measure pitch against it. */
@@ -50,6 +52,10 @@ export interface SongAnalysis {
   melodyConf: number;
   bass: SongLine | null;
   sections: Section[];
+  /** v3: the chord track over the beat grid (confidence per segment); absent on older analyses. */
+  chords?: ChordTrack | null;
+  /** v3: the key, major or minor (from the chroma, the melody and the chords). */
+  key?: SongKey | null;
 }
 
 /** Mono mix of decoded channels. */
@@ -198,18 +204,21 @@ export async function analyseRecording(samples: Float32Array, sampleRate: number
   const analysedSec = Math.min(duration, maxSec);
   const prog = (a: number, b: number) => (p: number) => o.onProgress?.(a + (b - a) * p);
   const beats = await beatGrid(samples, sampleRate, { maxSec, onProgress: prog(0, 0.2) });
-  const frames = await framesFromSamples(samples, sampleRate, { maxSec, onProgress: prog(0.2, 0.75) });
+  const frames = await framesFromSamples(samples, sampleRate, { maxSec, onProgress: prog(0.2, 0.6) });
   const melody = melodyFromFrames(frames);
   const melodyConf = melody ? coverage(frames, melody.notes) : 0;
-  const bass = bassLine(await bassFrames(samples, sampleRate, { maxSec, onProgress: prog(0.75, 1) }));
-  return { v: ANALYSIS_VERSION, duration, analysedSec, beats, melody, melodyConf, bass, sections: sectionsOf(analysedSec, beats, melody) };
+  const okBeats = beats && beats.confidence >= BEAT_CONFIDENT ? beats : null;
+  const chords = await analyseChords(samples, sampleRate, okBeats?.beats ?? null, okBeats?.meter === 3 ? { meter: 3, downbeat: okBeats.downbeat ?? 0 } : null, melody?.notes ?? [], { maxSec, onProgress: prog(0.6, 0.8) });
+  const bass = bassLine(await bassFrames(samples, sampleRate, { maxSec, onProgress: prog(0.8, 1) }));
+  return { v: ANALYSIS_VERSION, duration, analysedSec, beats, melody, melodyConf, bass, sections: sectionsOf(analysedSec, beats, melody), chords, key: chords.key };
 }
 
 // ───────────────────────────── what each course measures ─────────────────────────────
 
 export interface MeasurePlan {
   timing: boolean;
-  pitch: 'melody' | 'bass' | null;
+  /** 'chords' (keys / guitar): the strums / chord tones against the recording's chords where they came out clearly. */
+  pitch: 'melody' | 'bass' | 'chords' | null;
   /** Ear / jazz: phrases to transcribe. */
   transcribe: boolean;
   /** Nothing can be measured: listen and loop only (never counted). */
@@ -220,6 +229,11 @@ export interface MeasurePlan {
 export const beatsOk = (a: SongAnalysis) => !!a.beats && a.beats.confidence >= BEAT_CONFIDENT;
 export const melodyOk = (a: SongAnalysis) => !!a.melody && a.melodyConf >= LINE_CONFIDENT;
 export const bassOk = (a: SongAnalysis) => !!a.bass && a.bass.confidence >= LINE_CONFIDENT;
+/** Share of the recording under confident chords needed to measure keys / guitar against the chords. */
+export const CHORDS_MIN_COVERAGE = 0.3;
+export const chordsOk = (a: SongAnalysis) => !!a.chords && a.chords.coverage >= CHORDS_MIN_COVERAGE;
+/** A section is measured against the chords when at least half of it lies under confident chords. */
+export const sectionChordsOk = (a: SongAnalysis, s: Section) => chordsOk(a) && chordCoverage(a.chords, s.start, s.end) >= 0.5;
 
 /** What a course can honestly measure on this recording, and the sentence that says so on screen. */
 export function measurePlan(a: SongAnalysis, course: CourseId): MeasurePlan {
@@ -230,9 +244,23 @@ export function measurePlan(a: SongAnalysis, course: CourseId): MeasurePlan {
       ? { timing: false, pitch: 'melody', transcribe: true, none: false, why: melodyOk(a) ? { en: 'Phrases of the melody, compared note by note.', he: 'משפטים מהמנגינה, בהשוואה צליל אחר צליל.' } : { en: 'The melody came out only in part: some notes may be missing or wrong.', he: 'המנגינה יצאה רק בחלקה: ייתכן שחסרים צלילים או שיש שגויים.' } }
       : { timing: false, pitch: null, transcribe: false, none: true, why: { en: 'No clear melody in this recording: listen and loop only — not measured.', he: 'אין מנגינה ברורה בהקלטה: רק להאזין ולחזור — בלי מדידה.' } };
   }
-  const pitch = course === 'drums' ? null : course === 'bass' ? (bassOk(a) ? 'bass' : null) : melodyOk(a) ? 'melody' : null;
+  const chordsCourse = course === 'keys' || course === 'guitar';
+  const pitch = course === 'drums' ? null : course === 'bass' ? (bassOk(a) ? 'bass' : null) : chordsCourse && chordsOk(a) ? 'chords' : melodyOk(a) ? 'melody' : null;
   if (b && pitch)
-    return { timing: true, pitch, transcribe: false, none: false, why: pitch === 'bass' ? { en: 'Measured: your timing against the beat, and the notes of the bass line.', he: 'נמדד: התזמון שלכם מול הפעמה, והצלילים של קו הבס.' } : { en: 'Measured: your timing against the beat, and the notes of the melody.', he: 'נמדד: התזמון שלכם מול הפעמה, והצלילים של המנגינה.' } };
+    return {
+      timing: true,
+      pitch,
+      transcribe: false,
+      none: false,
+      why:
+        pitch === 'chords'
+          ? course === 'guitar'
+            ? { en: 'Measured: your timing against the beat, and whether your strums match the song’s chords (where they came out clearly).', he: 'נמדד: התזמון שלכם מול הפעמה, והאם הפריטות תואמות את האקורדים של השיר (איפה שהם חולצו בבירור).' }
+            : { en: 'Measured: your timing against the beat, and chord tones on the beats (where the chords came out clearly).', he: 'נמדד: התזמון שלכם מול הפעמה, וצלילי אקורד על הפעמות (איפה שהאקורדים חולצו בבירור).' }
+          : pitch === 'bass'
+            ? { en: 'Measured: your timing against the beat, and the notes of the bass line.', he: 'נמדד: התזמון שלכם מול הפעמה, והצלילים של קו הבס.' }
+            : { en: 'Measured: your timing against the beat, and the notes of the melody.', he: 'נמדד: התזמון שלכם מול הפעמה, והצלילים של המנגינה.' },
+    };
   if (b)
     return {
       timing: true,
@@ -241,7 +269,7 @@ export function measurePlan(a: SongAnalysis, course: CourseId): MeasurePlan {
       none: false,
       why: course === 'drums' ? { en: 'Measured: your timing against the beat of the recording.', he: 'נמדד: התזמון שלכם מול הפעמה של ההקלטה.' } : course === 'bass' ? { en: 'Timing only: the bass line could not be taken out reliably, so notes are not checked.', he: 'רק תזמון: קו הבס לא חולץ באמינות, ולכן הצלילים לא נבדקים.' } : { en: 'Timing only: the melody could not be taken out reliably, so notes are not checked.', he: 'רק תזמון: המנגינה לא חולצה באמינות, ולכן הצלילים לא נבדקים.' },
     };
-  if (pitch) return { timing: false, pitch, transcribe: false, none: false, why: { en: 'No steady beat found: only the notes are measured, each near its place.', he: 'לא נמצאה פעמה יציבה: נמדדים רק הצלילים, כל אחד קרוב למקומו.' } };
+  if (pitch) return { timing: false, pitch, transcribe: false, none: false, why: pitch === 'chords' ? { en: 'No steady beat found: only whether you play the song’s chords is measured.', he: 'לא נמצאה פעמה יציבה: נמדד רק אם אתם מנגנים את האקורדים של השיר.' } : { en: 'No steady beat found: only the notes are measured, each near its place.', he: 'לא נמצאה פעמה יציבה: נמדדים רק הצלילים, כל אחד קרוב למקומו.' } };
   return { timing: false, pitch: null, transcribe: false, none: true, why: { en: 'No steady beat and no clear line: listen and loop only — not measured.', he: 'אין פעמה יציבה ואין קו ברור: רק להאזין ולחזור — בלי מדידה.' } };
 }
 
@@ -319,6 +347,8 @@ export interface PlayAlongTarget {
   beats: number[] | null;
   /** The line whose notes are checked, or null. */
   notes: LineNote[] | null;
+  /** Keys / guitar: the chord track to check the take against (instead of `notes`), confident segments only. */
+  chords?: ChordTrack | null;
 }
 export interface PlayAlongGrade {
   score: number;
@@ -345,7 +375,7 @@ const pcDist = (a: number, b: number) => Math.abs(((((a - b) % 12) + 18) % 12) -
  * to ±60 ms (an output delay the app cannot know); an offset beyond that is a real rush or drag. Pitch: each line note
  * is found when a heard note starts within 180 ms of real time of it with the same pitch class (any octave).
  */
-export function gradePlayAlong(t: PlayAlongTarget, heard: { onsets: number[]; notes: { midi: number; start: number }[] }): PlayAlongGrade {
+export function gradePlayAlong(t: PlayAlongTarget, heard: { onsets: number[]; notes: { midi: number; start: number }[]; frames?: { t: number; chroma?: number[] }[] }): PlayAlongGrade {
   const sp = Math.max(0.25, t.speed);
   const inWin = (x: number) => x >= t.start - 0.12 && x <= t.end + 0.12;
   const onsets = heard.onsets.filter(inWin);
@@ -383,7 +413,8 @@ export function gradePlayAlong(t: PlayAlongTarget, heard: { onsets: number[]; no
     offsetMs = Math.round((m / sp) * 1000);
   }
   let pitch: number | null = null;
-  if (targets.length >= 2) {
+  if (t.chords) pitch = gradeChordsAlong(t.chords, { onsets, notes, frames: heard.frames }, shift).fit;
+  else if (targets.length >= 2) {
     const used = new Set<number>();
     let found = 0;
     for (const n of targets) {
@@ -403,7 +434,9 @@ export function gradePlayAlong(t: PlayAlongTarget, heard: { onsets: number[]; no
         ? { en: `You sit about ${offsetMs} ms behind the beat.`, he: `אתם בערך ${offsetMs} מ״ש אחרי הפעמה.` }
         : { en: `You sit about ${-offsetMs} ms ahead of the beat.`, he: `אתם בערך ${-offsetMs} מ״ש לפני הפעמה.` }
       : pitch !== null && pitch < 0.7
-        ? { en: 'Many notes of the line were not heard or were other notes.', he: 'הרבה צלילים של הקו לא נשמעו או היו צלילים אחרים.' }
+        ? t.chords
+          ? { en: 'Many of your notes did not fit the song’s chords.', he: 'הרבה מהצלילים שלכם לא התאימו לאקורדים של השיר.' }
+          : { en: 'Many notes of the line were not heard or were other notes.', he: 'הרבה צלילים של הקו לא נשמעו או היו צלילים אחרים.' }
         : timing !== null && timing < 0.7
           ? { en: 'Your notes wander off the beat — try a slower speed.', he: 'הצלילים שלכם בורחים מהפעמה — נסו מהירות איטית יותר.' }
           : verdict === 'clean'
@@ -456,8 +489,17 @@ export function melodyKey(notes: LineNote[]): number {
   return best;
 }
 
+/**
+ * The key the degrees are named from: the analysis's key (major or minor, v3) when it is clear enough, else the
+ * melody's major-profile key. A minor song is named from its own tonic (A minor: C = ♭3), not its relative major.
+ */
+export function songKeyOf(a: Pick<SongAnalysis, 'key' | 'melody'>): { tonic: number; minor: boolean } {
+  if (a.key && a.key.conf >= 0.15) return { tonic: a.key.tonic, minor: a.key.minor };
+  return { tonic: melodyKey(a.melody?.notes ?? []), minor: false };
+}
+
 /** A phrase of the recording as a transcription phrase: beats on a quarter-beat grid at the song's tempo. */
-export function phraseOfMine(p: MyPhrase, key: number, bpm0: number | null, id: string): Phrase {
+export function phraseOfMine(p: MyPhrase, key: number, bpm0: number | null, id: string, minor = false): Phrase {
   let bpm = bpm0 && bpm0 > 0 ? bpm0 : 60;
   while (bpm > 160) bpm /= 2;
   while (bpm < 50) bpm *= 2;
@@ -472,7 +514,7 @@ export function phraseOfMine(p: MyPhrase, key: number, bpm0: number | null, id: 
     return { midi: Math.round(n.midi), beat: b, dur: Math.max(0.25, q(n.dur)) };
   });
   const level = Math.max(1, Math.min(8, Math.round(notes.length / 1.5) - 1));
-  return { id, level, key: ((key % 12) + 12) % 12, minor: false, notes, chords: null, swing: false, bpm, source: 'own', title: { en: 'My song', he: 'השיר שלי' } };
+  return { id, level, key: ((key % 12) + 12) % 12, minor, notes, chords: null, swing: false, bpm, source: 'own', title: { en: 'My song', he: 'השיר שלי' } };
 }
 
 // ───────────────────────────── the session → the rest of the app ─────────────────────────────

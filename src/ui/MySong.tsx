@@ -16,7 +16,8 @@ import { pitchCaptureFor } from './Flight';
 import { DrillTake } from './DrillTake';
 import { calOf, lickInstrumentOf, Stars } from './LickTrainer';
 import { MS } from '../content/mySongText';
-import { analyseRecording, ANALYSIS_VERSION, beatsOk, demoSong, gradePlayAlong, measurePlan, melodyKey, mixDown, phraseOfMine, phraseTake, sessionResult, takeOnsets, timeStretch, transcribePhrases, type PlayAlongGrade, type SongAnalysis, type TakeLog } from '../engine/mySong';
+import { analyseRecording, ANALYSIS_VERSION, beatsOk, demoSong, gradePlayAlong, measurePlan, melodyOk, mixDown, phraseOfMine, phraseTake, sectionChordsOk, sessionResult, songKeyOf, takeOnsets, timeStretch, transcribePhrases, type PlayAlongGrade, type SongAnalysis, type TakeLog } from '../engine/mySong';
+import { chordAt, chordName, CHORD_CONFIDENT, segPcs, type ChordTrack } from '../engine/chordTrack';
 import { acousticOnsets } from '../engine/drumAcoustic';
 import { segmentNotes } from '../engine/memory';
 import { bassPitchOpts } from '../engine/yin';
@@ -297,14 +298,16 @@ function playSamples(x: Float32Array, sr: number, signal: AbortSignal, loop = fa
 }
 
 /** Simulator: a take that plays the line (or the beat) a little late, as frames on the take's clock. */
-function simFrames(from: number, to: number, speed: number, beats: number[] | null, line: { midi: number; start: number }[] | null): SungFrame[] {
+function simFrames(from: number, to: number, speed: number, beats: number[] | null, line: { midi: number; start: number }[] | null, chords: ChordTrack | null = null): SungFrame[] {
   const hits = line?.length ? line.filter((n) => n.start >= from && n.start <= to).map((n) => ({ t: n.start, hz: 440 * 2 ** ((n.midi - 69) / 12) })) : (beats ?? []).filter((b) => b >= from && b <= to).map((t) => ({ t, hz: 220 }));
   const out: SungFrame[] = [];
   const end = (to - from) / speed;
   for (let t = 0; t < end; t += 0.02) {
     const song = from + t * speed + 0.015;
     const h = hits.find((x) => song >= x.t && song < x.t + 0.2 * speed);
-    out.push(h ? { t, hz: h.hz, confidence: 0.95, rms: 0.2 } : { t, hz: null, confidence: 0, rms: 0.001 });
+    const c = h && chords ? chordAt(chords, song) : null;
+    const chroma = c ? Array.from({ length: 12 }, (_, i) => (segPcs(c).includes(i) ? 1 : 0.05)) : undefined;
+    out.push(h ? { t, hz: h.hz, confidence: 0.95, rms: 0.2, ...(chroma ? { chroma } : {}) } : { t, hz: null, confidence: 0, rms: 0.001 });
   }
   return out;
 }
@@ -353,7 +356,12 @@ function PlayAlong({ lang, settings, course, o, session, onSession, onFinish, on
   const wave = useMemo(() => peaks(buffer, 90), [buffer]);
   const sr = buffer.sampleRate;
   const beats = plan.timing && analysis.beats ? analysis.beats.beats : null;
-  const line = plan.pitch === 'bass' ? (analysis.bass?.notes ?? null) : plan.pitch === 'melody' ? (analysis.melody?.notes ?? null) : null;
+  // Keys / guitar against the chords: only in a section that lies mostly under confident chords; elsewhere the melody
+  // (when it came out cleanly) or timing only — and the screen says which.
+  const secChords = plan.pitch === 'chords' && !!S && sectionChordsOk(analysis, S);
+  const chordTrack = secChords ? (analysis.chords ?? null) : null;
+  const line = plan.pitch === 'bass' ? (analysis.bass?.notes ?? null) : plan.pitch === 'melody' || (plan.pitch === 'chords' && !secChords && melodyOk(analysis)) ? (analysis.melody?.notes ?? null) : null;
+  const secSegs = S && analysis.chords ? analysis.chords.segs.filter((x) => x.end > S.start + 0.05 && x.start < S.end - 0.05) : [];
   const beatSec = analysis.beats ? 60 / analysis.beats.bpm : 0.6;
   const [phase, setPhase] = useState<'ready' | 'listen' | 'count' | 'play' | 'result'>('ready');
   const [t, setT] = useState(S?.start ?? 0);
@@ -421,7 +429,7 @@ function PlayAlong({ lang, settings, course, o, session, onSession, onFinish, on
     if (SIMULATED) {
       clock(performance.now());
       await new Promise((r) => setTimeout(r, 900));
-      frames = simFrames(from, to, speed, beats, line);
+      frames = simFrames(from, to, speed, beats, line, chordTrack);
     } else {
       const lat = inputLatency(settings, midiIn ? 'midi' : 'mic') / 1000;
       let zero = 0;
@@ -443,6 +451,7 @@ function PlayAlong({ lang, settings, course, o, session, onSession, onFinish, on
         },
         ...(course === 'drums' ? { bands: true } : {}),
         ...(course === 'bass' ? bassPitchOpts() : {}),
+        ...(chordTrack ? { chroma: true } : {}),
       });
       const first = await Promise.race([ready.then(() => 'ok' as const), cap.then(() => 'done' as const)]);
       if (first === 'done') {
@@ -469,7 +478,8 @@ function PlayAlong({ lang, settings, course, o, session, onSession, onFinish, on
     const drumOns = course === 'drums' && frames.some((f) => f.bands) ? acousticOnsets(frames.map((f) => ({ t: f.t * 1000, bands: f.bands }))).map((a) => a.t / 1000) : null;
     const onsets = (drumOns ?? takeOnsets(frames)).map(toSong);
     const notes = course === 'drums' ? [] : segmentNotes(frames, { minSec: 0.08 }).map((n) => ({ midi: n.midi, start: toSong(n.start) }));
-    const g = gradePlayAlong({ start: S.start, end: S.end, speed, beats, notes: line }, { onsets, notes });
+    const chromaFrames = chordTrack ? frames.filter((f) => f.chroma).map((f) => ({ t: toSong(f.t), chroma: f.chroma })) : undefined;
+    const g = gradePlayAlong({ start: S.start, end: S.end, speed, beats, notes: chordTrack ? null : line, chords: chordTrack }, { onsets, notes, frames: chromaFrames });
     setGrade(g);
     setT(S.end);
     setPhase('result');
@@ -493,8 +503,8 @@ function PlayAlong({ lang, settings, course, o, session, onSession, onFinish, on
   return (
     <main className="panel-screen ms-screen" data-my-song-practice={course} data-ms-phase={phase}>
       <Head title={o.song.name} onBack={onBack} lang={lang} />
-      <p className={`ms-plan ${plan.none ? 'none' : ''}`} data-ms-plan={plan.none ? 'none' : `${plan.timing ? 'timing' : ''}${plan.pitch ? `+${plan.pitch}` : ''}`}>
-        {L(plan.why)}
+      <p className={`ms-plan ${plan.none ? 'none' : ''}`} data-ms-plan={plan.none ? 'none' : `${plan.timing ? 'timing' : ''}${plan.pitch ? `+${plan.pitch}` : ''}`} data-ms-chords={plan.pitch === 'chords' ? (secChords ? 'measured' : 'unclear') : undefined}>
+        {plan.pitch === 'chords' && !secChords ? fill(L(MS.chordsUnclear), { what: line ? L(MS.melodyHere) : L(MS.timingOnly) }) : L(plan.why)}
         {analysis.beats && plan.timing && (
           <span dir="ltr" className="ms-bpm">
             {fill(L(MS.bpm), { bpm: Math.round(analysis.beats.bpm) })}
@@ -503,6 +513,18 @@ function PlayAlong({ lang, settings, course, o, session, onSession, onFinish, on
         )}
       </p>
       <LoopWave wave={wave} dur={analysis.duration} t={t} a={S.start} b={S.end} onSeek={(s) => go(sections.findIndex((x) => s >= x.start && s < x.end))} marks={sections.map((x) => x.start)} />
+      {plan.pitch === 'chords' && secSegs.length > 0 && (
+        <ol className="ms-chords" dir="ltr" aria-label={L(MS.chordsHere)} data-ms-chord-row="1">
+          {secSegs.map((x, k) => {
+            const sure = x.root !== null && x.conf >= CHORD_CONFIDENT;
+            return (
+              <li key={k} className={`${sure ? '' : 'unsure'} ${t >= x.start && t < x.end ? 'on' : ''}`} title={sure ? undefined : L(MS.chordUnsure)}>
+                {sure ? chordName(x) : '?'}
+              </li>
+            );
+          })}
+        </ol>
+      )}
       <div className="ms-nav" dir="ltr">
         <button className="icon-btn" onClick={() => go(sec - 1)} disabled={sec === 0 || busy} aria-label="‹">
           ‹
@@ -586,7 +608,8 @@ function TranscribeMine({ lang, settings, course, o, session, onSession, onFinis
   const { analysis, buffer } = o;
   const plan = useMemo(() => measurePlan(analysis, course), [analysis, course]);
   const phrases = useMemo(() => transcribePhrases(analysis.melody), [analysis]);
-  const key = useMemo(() => melodyKey(analysis.melody?.notes ?? []), [analysis]);
+  const songKey = useMemo(() => songKeyOf(analysis), [analysis]);
+  const key = songKey.tonic;
   const bpm = beatsOk(analysis) && analysis.beats ? analysis.beats.bpm : null;
   const i = Math.min(session.section, Math.max(0, phrases.length - 1));
   const P = phrases[i];
@@ -595,7 +618,7 @@ function TranscribeMine({ lang, settings, course, o, session, onSession, onFinis
   const wave = useMemo(() => peaks(buffer, 90), [buffer]);
   const sr = buffer.sampleRate;
   const inst = lickInstrumentOf(settings);
-  const phrase0 = useMemo(() => (P ? phraseOfMine(P, key, bpm, `ms-${o.song.id}-${i}`) : null), [P, key, bpm, o.song.id, i]);
+  const phrase0 = useMemo(() => (P ? phraseOfMine(P, key, bpm, `ms-${o.song.id}-${i}`, songKey.minor) : null), [P, key, bpm, o.song.id, i, songKey.minor]);
   const drill = useMemo(() => (phrase0 ? { ...lickDrill(lickFromPhrase(phrase0.id, phrase0.title, key, phrase0.notes, null), key, inst, { range: settings.voiceRange ?? null }), show: 'none' as const } : null), [phrase0, key, inst, settings.voiceRange]);
   const phrase = useMemo(() => (phrase0 && drill ? { ...phrase0, notes: drill.notes.map((n) => ({ midi: n.pitch, beat: n.beat, dur: n.dur })) } : null), [phrase0, drill]);
   const [step, setStep] = useState<'hear' | 'back' | 'result' | 'write'>('hear');
@@ -694,7 +717,7 @@ function TranscribeMine({ lang, settings, course, o, session, onSession, onFinis
       {step === 'write' && res && (
         <section className="ms-write" data-ms-write={grade ? 'graded' : written.length}>
           <p className="field-hint">
-            {L(MS.writeHow)} <span dir="ltr">{fill(L(MS.keyOf), { k: keyName(phrase.key, false) })}</span>
+            {L(MS.writeHow)} <span dir="ltr">{fill(L(phrase.minor ? MS.keyOfMinor : MS.keyOf), { k: keyName(phrase.key, phrase.minor) })}</span>
           </p>
           <ol className="tx-written" dir="ltr">
             {phrase.notes.map((n, k) => (

@@ -203,6 +203,11 @@ export class MidiInput {
     };
   }
 
+  /** Every key held now (My song: a MIDI keyboard's chords measured like a strum). */
+  heldNotes(): number[] {
+    return [...this.held.keys()];
+  }
+
   /** Highest-priority sounding note: the most recently pressed one still held. */
   current(): number | null {
     let best: number | null = null;
@@ -255,13 +260,20 @@ const midiHz = (m: number) => 440 * 2 ** ((m - 69) / 12);
  * PitchCapture from a MIDI keyboard: frames of the currently held key, same stop rules as the mic
  * (single note: ~0.6 s held then released, or 1.6 s; sequences: stop after `endSilenceMs` of no keys).
  */
+/** 12-bin chroma of held keys (1 on each held pitch class). */
+const chromaOfHeld = (held: number[]): number[] => {
+  const c = new Array<number>(12).fill(0);
+  for (const m of held) c[((m % 12) + 12) % 12] = 1;
+  return c;
+};
+
 export class MidiPitchCapture implements PitchCapture {
   constructor(
     private input: MidiInput = midi,
     private now: () => number = () => performance.now(),
   ) {}
 
-  sing({ signal, maxMs = 4500, silenceMs = 4000, endSilenceMs, hopMs, onCapturing, onFrame }: SingOptions): Promise<SingCaptureResult> {
+  sing({ signal, maxMs = 4500, silenceMs = 4000, endSilenceMs, hopMs, onCapturing, onFrame, chroma }: SingOptions): Promise<SingCaptureResult> {
     if (signal.aborted) return Promise.resolve({ kind: 'aborted' });
     onCapturing?.();
     const t0 = this.now();
@@ -280,6 +292,8 @@ export class MidiPitchCapture implements PitchCapture {
         const t = (this.now() - t0) / 1000;
         const n = this.input.current();
         const f: SungFrame = n === null ? { t, hz: null, confidence: 0, rms: 0.001 } : { t, hz: midiHz(n), confidence: 0.99, rms: 0.1 };
+        // asked for chroma (a chord check): the held keys' pitch classes
+        if (chroma && n !== null) f.chroma = chromaOfHeld(this.input.heldNotes?.() ?? [n]);
         frames.push(f);
         onFrame?.(f);
         if (n !== null) {
