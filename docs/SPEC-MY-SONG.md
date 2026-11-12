@@ -83,8 +83,8 @@ Bass plan item E6 (transcribe from your own recording) is covered (docs/research
 
 ## 6. Not built / limits
 
-- No chord extraction from the recording (only beat, melody, bass line); keys / guitar are checked against the melody,
-  not against chords or comping.
+- ~~No chord extraction~~ — built 2026-11-12 (§7). Comping *rhythm* is not compared (only whether what is played fits
+  the chord).
 - Meter: only 3/4 is told apart (below); everything else is assumed to be 4 for sections (no 6/8, 5/4, 7/8; a
   6/8 tracked on the dotted quarter reads as 2-beat groups and gets 4-beat sections).
 - Pitch on a full band mix is often unconfident — then timing only, and the screen says so.
@@ -114,3 +114,44 @@ Bass plan item E6 (transcribe from your own recording) is covered (docs/research
 - The degrees step and the 3/4 label have no e2e yet (unit-tested; Playwright not run on that pass).
 - E2E: e2e/mysong.spec.ts (keys / drums with a synthetic WAV and Chrome's fake microphone, the guitar tile, rename /
   delete, ear in the simulator) and voiceP2's 1308 test pass at 390 × 844 without scrolling.
+
+## 7. Chords and key (built 2026-11-12, analysis v3)
+
+`src/engine/chordTrack.ts`, called from `analyseRecording` (progress 0.6–0.8; `ANALYSIS_VERSION` 3, so stored songs are
+analysed again on open):
+
+- **Chroma**: Hann frames of a ~11 kHz copy (4096 points, hop 1024 ≈ 93 ms); 105 Hz (above the kick) to 1.8 kHz mapped
+  to pitch classes with their partials (`mixChroma`; the strum recognizer's partial removal would strip a minor
+  chord's 5th, which on a mix is often the bass's 3rd partial); the bass = the lowest clear peak in 55–260 Hz.
+- **Beat-synchronous**: one chroma per beat of the confident beat grid (frames whose window lies inside the beat, so
+  the next chord's attack does not leak in); half-second slots without a steady beat.
+- **Smoother**: Viterbi over 60 chords (12 roots × major, minor, 7, maj7, m7) + "no chord": emission = λ · centred cosine
+  with the chord's harmonic template (+0.1 when the bass is the root, −0.04 for a 7th), "no chord" a fixed 0.3 (certain
+  in silence); transitions favour staying, a change cheaper on a bar line when the meter is known (3/4).
+- **Confidence per segment**: the mean fit (0.45 → 0, 0.75 → 1) × the margin over the next-best *different* chord
+  (with / without its 7th does not count as different; 0.12 → 1). ≥ 0.5 = measured. `coverage` = the share of the
+  recording under confident chords.
+- **Key** (major or minor): Krumhansl–Kessler profiles against the energy-weighted mean chroma + the melody's notes,
+  +0.06 each for the key whose tonic chord opens, closes or lasts longest among the confident segments.
+
+**Measuring keys / guitar** (`measurePlan` → `pitch: 'chords'` when coverage ≥ 0.3): per section, when ≥ 50 % of it is
+under confident chords (`sectionChordsOk`), the take is captured with chroma (microphone: the long chroma analyser;
+MIDI: the held keys, `MidiInput.heldNotes`) and every onset under a confident chord is judged by what sounds just after
+it (`gradeChordsAlong`): with chroma, the chord's pitch classes carry ≥ 60 % and no strong outside class (a strum, both
+hands); with only a single heard note, it must be a chord tone. Onsets under an unclear chord are skipped, never
+counted against; fewer than 3 measured = notes not measured. Score = 0.4 timing + 0.6 chord fit, as with the melody.
+Elsewhere the section falls back to the melody (when confident) or timing only, and the plan line says so: "The chords
+are unclear in this section: timing only here." The section's chords are shown in one line above the section
+navigation (an unclear one is a dashed "?"; the sounding one outlined).
+
+**Degrees from the key incl. minor** (`songKeyOf`): the analysis's key when its margin is ≥ 0.15, else the melody's
+major key as before; `phraseOfMine(…, minor)` names the degrees from the minor tonic (A minor: C = ♭3), and the
+write-it step says "Key: A minor".
+
+Tests: `tests/chordTrack.test.ts` (synthetic audio: I–vi–IV–V, a minor i–iv–V7–i with melody → A minor, ii7–V7–Imaj7,
+no beat, noise never confident, relative keys decided by the chords, strums / single notes against the chords, the v3
+analysis feeding `measurePlan`, `songKeyOf`, `phraseOfMine` and `gradePlayAlong`).
+
+Not verified: real recordings (a full band mix, a live guitar strum by microphone against it), the analysis time of a
+long file on a phone (chroma adds ≈ 2 600 FFTs of 4096 for 240 s), and the PlayAlong screen with the chord line at
+390 × 844 (Playwright not run in this pass).

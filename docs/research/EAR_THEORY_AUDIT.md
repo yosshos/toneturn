@@ -94,8 +94,8 @@ All of it is played in a trio texture: upright bass, comped voicings, swung ride
 
 - **Duel / room question sets**: there is no jazz-harmony set. Set kinds are checked by a DB constraint (`toneturn_rooms_kind_check`), so adding one needs a migration. The UI and engine side would be a new `SetKind` drawing from jazz-changes 1–2 and extensions 6.
 - **Voice recordings** for the new English lesson lines (the owner renders these; `voiceFiles` "every static line is recorded" fails until then).
-- extensions 5–8 and voicings 4–5 use the existing extensions and voicings lessons. A dedicated "upper structures and rootless voicings" lesson could follow.
-- jazz-form does not play a whole 32-bar AABA. That full form stays in song-form 4 and 6 of the Ear course.
+- ~~A dedicated "upper structures and rootless voicings" lesson~~ — built 2026-11-12 (see §8).
+- ~~jazz-form does not play a whole 32-bar AABA~~ — built 2026-11-12: jazz-form 4 (see §8).
 - The basics' contour arrows ↗↘ are kept: they have a text-default presentation.
 - The Hebrew chord symbols in guide-line are shown in Latin letters, as on lead sheets.
 
@@ -104,3 +104,20 @@ All of it is played in a trio texture: upright bass, comped voicings, swung ride
 1. **Courses are disjoint.** Chord quality with extensions and voicing type went to the top of **Ear & theory**, deepening extensions and voicings. Progressions, reharmonization, guide-tone lines, transcription and jazz forms went to the **Jazz** course. Should some of them appear in both courses? (Ratings are shared, so a player who learned them in one course already gets the cautious ✓ in the other.)
 2. **A jazz duel set** needs a small DB migration (a new kind in the rooms and duels check). OK to add?
 3. **Bagrut jazz track**: should the mock exam also test tritone sub and backdoor (jazz-changes 2)? It is in the JAMD jazz mock now, not in the Bagrut one.
+
+## 8. Built after the audit (2026-11-12)
+
+- **upper-rootless** (Ear & theory, no pack; `topicsJazzEar.ts`), its own topic and quick lesson (`upper-rootless`,
+  `content/mini/jazzEar.ts`): 1 a rootless voicing over the root in the bass — maj9, m9, 13 or 7alt (1650); 2 a rootless
+  ii–V–I — does the ii start in A (♭3 at the bottom) or B (♭7 at the bottom)? The forms alternate A–B–A / B–A–B (1720);
+  3 upper structure II or ♭VI over the 3rd and ♭7 (1760); 4 which of five triads (II, ♭III, ♭V, ♭VI, VI) over the V of a
+  ii–V–I (1860). Mark `UST`, short name, coach hint, the Practice harmony group; tags chords/voicing (level 2 also
+  cadences/progression).
+- **jazz-form 4** (Jazz & improv): a whole 32-bar AABA — rhythm changes at 216 or an own ballad-style AABA at 200,
+  each A ending differently (turnaround, close on I into the bridge, the last A) with a top line of each chord's 3rd so
+  the A sections sound alike — and a bell at one bar: the second A begins (bar 9), the bridge begins (17), the last A
+  returns (25), or the middle of a section (5, 13, 21, 29). 1700. The jazz-form quick lesson has a new in-depth step
+  (bars 13–20: the end of the second A into the bridge).
+- Tests: `tests/earPianoP3.test.ts`; the audit's uniqueness / well-formedness tests cover the new levels.
+- Not verified: the 35-second AABA item on a phone screen (Playwright not run in this pass); the new lesson lines are
+  not in the recorded narration (`tests/voiceFiles` "every static line is recorded" lists them until rendered).
