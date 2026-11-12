@@ -504,11 +504,30 @@ is the half-time shuffle.
 
 ### Not built
 
-- Mambo, songo, Mozambique (teacher check). Rudiment Rush (it needs a two-zone sticking mode per module) and the
-  Groove-off duel (it needs the per-course drum level first). `drum-style` (optional).
-- The crash choke (F9 L7): aftertouch differs per module.
-- The splash vs the chick on the hi-hat pedal (F13 L5): only the pedal's timing is measured.
-- A per-player speed record shown on the level, beyond the ladder's best clean tempo.
+- Mambo, songo, Mozambique (teacher check). The crash choke (F9 L7): aftertouch differs per module.
+
+### Built 2026-11-12 (the small leftovers)
+
+- **The foot splash against the chick** (F13 L5, `d-feet` 5; `drills/drumSplash.ts`): told apart by the kit's own
+  splash note (Alesis 21, Yamaha DTX 83 / 85, `SPLASH_NOTES` per preset) or by the pedal's CC4 stream — a splash opens
+  the hats (openness ≥ 0.5 within 30–300 ms of the stroke), a chick keeps the pedal down. `goal.drum.splash` (share
+  0.8); below it a clean take is "almost" (within 0.2) or "not". A kit that sends neither is **not measured**: the take
+  is judged on timing only, the limb line says "Splash vs chick not measured (the kit sends no CC4)", and the level page
+  says MIDI only — a microphone can't hear the pedal's openness reliably (the level stays `mic: false`).
+- **A personal speed record on every drum level page** (`drumRecords.ts levelRecord`): the fastest clean take over the
+  level's variants (ItemState.cleanBpm, measured takes only), which variant holds it, the level's tempo and the day.
+  **Rudiment Rush best tempo**: the fastest round passed in a run (`detail.topBpm`), kept as `counts.rushBpm` (max,
+  merged like the other counters), shown on the game's setup and end screens ("a new personal record").
+- **`drum-style`** (optional topic, `topicsDrumStyle.ts`, drums course only): name the band's style by ear — 4 levels
+  (rock / swing / bossa / reggae → + shuffle, funk, samba, jazz waltz → + songo, half-time shuffle, Afro 6/8, 7/8 prog,
+  maqsum → look-alikes: swing / shuffle / half-time, bossa / samba / songo, 7/8 / 5/4 / 9/8 …). The drums play the
+  groove bank's pattern and the band engine plays with it (band.ts comping in the style, a walking bass in swing and the
+  waltz, else the root on every kick). Tags rhythm-dictation/feel + world; path mark "style".
+- **Badges and quests for the new games** (`gameBadges.ts`): Time Lock, Ghost Control, Rudiment Rush, Groove-off and the
+  8 advanced games (Voicing Spy, Scale & Mode Rush, Name That Standard, Reharm Spotter, Transcription Race, Barry Harris
+  in Time, Odd-Meter Riff Echo, Polyrhythm Lock) — three badges each (clear mp / f / ff; bronze / gold / diamond),
+  serious titles, a drawn glyph per game (BadgeArt `special:game:<game>`), shown in the game's home course and the
+  courses that list it. Quests: "Meet a drum game's goal" (drums) and "Meet an advanced game's goal" (ear, jazz, keys).
 
 ### Not verified (needs a real kit, §7)
 
@@ -518,6 +537,8 @@ is the half-time shuffle.
   first.
 - Double pedal and double bass need a real double pedal.
 - The takes were measured with synthetic hits only.
+- The splash window (openness ≥ 0.5 within 30–300 ms) and the per-brand splash notes: synthetic CC4 only, no real kit.
+- The drum-style items and the game badges / quests were not seen in a browser (no Playwright run this round).
 
 ## Implemented (P2, the rest)
 

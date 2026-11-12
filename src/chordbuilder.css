@@ -1,0 +1,163 @@
+/* Chord & cadence builder (guitar roadmap "Next"): one phone screen, the v2 language (tokens only). */
+.cb-screen {
+  gap: 10px;
+}
+.cb-pane {
+  display: grid;
+  gap: 8px;
+}
+.cb-mode {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.cb-q {
+  grid-template-columns: repeat(6, 1fr);
+}
+.cb-pick .chip,
+.cb-keys .chip {
+  padding: 5px 0;
+}
+.cb-taprow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.cb-name {
+  min-height: 74px;
+  border-radius: 16px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 2px;
+  padding: 8px 12px;
+  text-align: center;
+}
+.cb-name b {
+  font-family: var(--display);
+  font-size: 2rem;
+  line-height: 1.05;
+  color: var(--ink);
+}
+.cb-name span,
+.cb-name small,
+.cb-dim {
+  color: var(--ink-soft);
+  font-size: 0.86rem;
+}
+.cb-pane .keys-pad {
+  height: 84px;
+}
+.cb-pane .neck-wrap {
+  max-height: 190px;
+  overflow: hidden;
+}
+.cb-both {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.cb-both .keys-pad {
+  flex: 1;
+  height: 70px;
+}
+.cb-box {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+}
+.cb-box .chord-box {
+  width: 96px;
+  max-height: 112px;
+}
+.cb-box small {
+  font-size: 0.72rem;
+  color: var(--ink-soft);
+}
+.cb-hear {
+  min-width: 120px;
+}
+.cb-cads {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.cb-cads .chip {
+  padding: 6px 4px;
+  text-align: center;
+  justify-content: center;
+  font-size: 0.86rem;
+}
+.cb-roman {
+  margin: 0;
+  display: grid;
+  gap: 2px;
+  text-align: center;
+}
+.cb-roman b {
+  font-family: var(--display);
+  font-size: 1.15rem;
+  color: var(--ink);
+}
+.cb-roman small {
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+}
+.cb-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.cb-card {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 4px;
+  padding: 6px 4px;
+  border-radius: 14px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  min-width: 0;
+}
+.cb-card b {
+  font-family: var(--display);
+  font-size: 1.1rem;
+  color: var(--ink);
+}
+.cb-card .keys-pad {
+  height: 54px;
+}
+.cb-card .chord-box {
+  width: 86px;
+  max-height: 100px;
+}
+.cb-card small {
+  font-size: 0.72rem;
+  color: var(--ink-soft);
+}
+.cb-card.now {
+  border-color: var(--accent, var(--ink));
+  box-shadow: 0 0 0 2px var(--accent, var(--ink)) inset;
+}
+.cb-card.ok {
+  border-color: var(--ok);
+}
+.cb-card.late {
+  border-color: var(--line);
+  opacity: 0.8;
+}
+.cb-status {
+  margin: 0;
+  min-height: 2.4em;
+  text-align: center;
+  color: var(--ink-soft);
+  font-size: 0.86rem;
+}
+.cb-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}

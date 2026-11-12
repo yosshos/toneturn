@@ -14,6 +14,8 @@ import { TOPIC_GLYPH } from '../src/ui/stepGlyphs';
 import { families, levelDrills } from '../src/engine/drills/plan';
 import type { Drill, ItemState, TakeMetrics } from '../src/engine/drills/types';
 import type { GameTiers } from '../src/engine/gameTiers';
+import { buildChord, cadenceMotion, cadenceRunDetail, CADENCES, checkHeld, closeVoicings, voiceCadence } from '../src/engine/chordBuilder';
+import { identifyChord } from '../src/engine/chordFinder';
 
 describe('game badges', () => {
   it('three per game (mp, f, ff), drawn, no emoji, in the right course', () => {
@@ -137,5 +139,41 @@ describe('guitar trade model line', () => {
       expect(n.string).toBeGreaterThanOrEqual(1);
       expect(n.fret).toBeGreaterThanOrEqual(0);
     }
+  });
+});
+
+describe('chord & cadence builder', () => {
+  it('builds a chord in root position, names tapped notes in any inversion', () => {
+    expect(buildChord(0, 'maj7')).toEqual([48, 52, 55, 59]);
+    expect(buildChord(2, '9')).toEqual([50, 54, 57, 60, 64]);
+    expect(identifyChord([52, 55, 60])).toMatchObject({ root: 0, quality: 'M', bass: 4 });
+    expect(closeVoicings([0, 4, 7]).length).toBe(3);
+  });
+  it('every cadence in every key, major and minor: right chords, small moves, a guitar shape', () => {
+    for (const c of CADENCES)
+      for (let k = 0; k < 12; k++)
+        for (const minor of [false, true]) {
+          const cs = voiceCadence(c.id, k, minor);
+          expect(cs.length).toBe(c.chords[minor ? 'minor' : 'major'].length);
+          for (const x of cs) {
+            expect(x.upper.every((m) => m >= 55 && m <= 80)).toBe(true);
+            expect(x.bass).toBeGreaterThanOrEqual(36);
+            expect(x.bass).toBeLessThan(48);
+            expect(x.shape, `${c.id} ${k} ${x.symbol}`).not.toBeNull();
+          }
+          // Each move between chords stays small (no voice jumps an octave).
+          expect(cadenceMotion(cs) / Math.max(1, cs.length - 1)).toBeLessThanOrEqual(12);
+        }
+    expect(voiceCadence('two-five-one', 0).map((x) => x.symbol)).toEqual(['Dm7', 'G7', 'Cmaj7']);
+    expect(voiceCadence('backdoor', 0).map((x) => x.symbol)).toEqual(['Fm7', 'B♭7', 'Cmaj7']);
+    expect(voiceCadence('deceptive', 0, true).map((x) => x.symbol)).toEqual(['Fm', 'G7', 'A♭']);
+  });
+  it('a held chord: all tones, nothing else, the 5th of a 7th chord may be left out', () => {
+    expect(checkHeld([50, 53, 57, 60], { root: 2, quality: 'm7' }).ok).toBe(true);
+    expect(checkHeld([50, 53, 60], { root: 2, quality: 'm7' }).ok).toBe(true);
+    expect(checkHeld([50, 53, 57, 61], { root: 2, quality: 'm7' }).ok).toBe(false);
+    expect(checkHeld([48, 52], { root: 0, quality: 'M' }).ok).toBe(false);
+    const r = cadenceRunDetail([true, false, true], 'midi', 'two-five-one', 0, false);
+    expect(r.detail).toMatchObject({ right: 2, wrong: 1, tier: 'mf' });
   });
 });
