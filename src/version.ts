@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.76.2',
+    date: '2026-11-12',
+    en: ['The narrator really speaks on phones now: old silent copies saved on the device are cleared and fetched again'],
+    he: ['הקריין באמת מדבר בטלפונים: עותקים שקטים ישנים שנשמרו במכשיר נמחקים ונטענים מחדש'],
+  },
+  {
     version: '0.76.1',
     date: '2026-11-12',
     en: ['The narrator is back on phones: every recorded line re-encoded so it plays as speech, not a click'],

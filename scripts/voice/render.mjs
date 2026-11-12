@@ -26,6 +26,7 @@ const VOICE = 'af_heart';
 const MODEL = 'k82m-v1';
 // 48 kbps: lamejs at 32 kbps resamples 24 kHz to 22.05 kHz and writes SILENCE (every 0.66–0.74 file decoded to a
 // peak of 1e-5 — the owner heard only pops on the phone). 48 kbps keeps 24 kHz and the speech. Checked 2026-11-11.
+// Re-rendering existing lines keeps their file names: bump LINES in src/sw-template.js too, or phones keep old copies.
 const KBPS = 48;
 
 const OUT = path.resolve('public/voice/en');

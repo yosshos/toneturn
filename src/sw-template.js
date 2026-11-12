@@ -16,8 +16,10 @@ const SAMPLES = 'toneturn-samples-v1';
  */
 const VOICE = 'toneturn-voice-v1';
 const VOICE_FILES = __VOICE_FILES__;
-/** Pre-recorded narrator lines (public/voice/en/*.mp3), fetched one by one when spoken. */
-const LINES = 'toneturn-lines-v1';
+/** Pre-recorded narrator lines (public/voice/en/*.mp3), fetched one by one when spoken. File names are a hash of
+ *  the text, so a re-render keeps the names: bump this name whenever the audio itself is re-rendered, or phones keep
+ *  playing their old cached copies (0.76.2: v1 held the silent 32 kbps files; activate deletes old names). */
+const LINES = 'toneturn-lines-v2';
 const isVoiceFile =(p) => /\/assets\/(kokoroWorker-[^/]*\.js|ort-wasm[^/]*\.wasm)$/.test(p);
 
 self.addEventListener('install', (e) => {
