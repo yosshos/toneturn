@@ -2,7 +2,7 @@
 // accuracy × a time bonus. Phrases are generated from rules (own material).
 //   Level 1 (mp) diatonic major, quarters and eighths · 2 (mf) minor with one chromatic note · 3 (f) a bebop line with
 //   enclosures, swing 8ths · 4 (ff) a line over ii–V–I with altered tensions on the V, with the chords underneath.
-// Every note sits on the answer keyboard (C4–F5). Pure and seeded.
+// Every note sits on the answer keyboard (C4–F5). Pure and seeded. Since 0.75 rhythm is graded too (gradeRhythm).
 
 import type { NoteEvent, Stimulus } from './lesson';
 import { rng } from './topicKit';
@@ -192,6 +192,94 @@ export function timeBonus(ms: number, notes: number, replays: number): number {
 /** Points of a phrase: 100 × accuracy × (1 + bonus). A phrase with no right note scores nothing. */
 export const phrasePoints = (acc: number, bonus: number) => Math.round(100 * acc * (1 + (acc > 0 ? bonus : 0)));
 
+// ---------------------------------------------------------------- rhythm (0.75)
+// The entries' onsets are graded against the phrase's beats on the player's own pulse, like the transcription coach
+// (engine/transcribe.ts comparePhrase): a line start + beat × length is fitted to the onsets, the length kept within
+// 0.5–2× the phrase's beat — a steady player who writes slower (or faster) is not wrong. The fit is robust: every pair
+// of entries proposes a line, the one most onsets agree with wins and is refitted by least squares on them, so one
+// hesitation costs the notes it moved, not the whole phrase. Onsets arrive latency-corrected (per input).
+
+/** Beat positions of the phrase's notes (swung off-beat 8ths sit at 2/3 of the beat). */
+export function onsetBeats(p: Pick<Phrase, 'beats' | 'swing'>): number[] {
+  const out: number[] = [];
+  let t = 0;
+  for (const b of p.beats) {
+    const off = p.swing && Math.abs((t % 1) - 0.5) < 1e-6 ? 1 / 6 : 0;
+    out.push(t + off);
+    t += b;
+  }
+  return out;
+}
+
+export interface RhythmGrade {
+  /** Per target note: true = in time, false = off, null = no entry there. */
+  marks: (boolean | null)[];
+  /** Notes in time among the notes entered (0..1; 1 with fewer than 2 entries — nothing to compare). */
+  acc: number;
+  /** Played pulse relative to the phrase (1 = as given). */
+  tempo: number;
+}
+
+/** Tolerance in beats: an eighth (0.35) at level 1–2, a quarter of a beat (0.26) above. */
+export const beatTol = (level: number) => (level <= 2 ? 0.35 : 0.26);
+
+export function gradeRhythm(p: Pick<Phrase, 'beats' | 'swing'>, onsetsMs: number[], bpm: number, level: number): RhythmGrade {
+  const B = onsetBeats(p);
+  const n = Math.min(B.length, onsetsMs.length);
+  const marks: (boolean | null)[] = B.map(() => null);
+  if (n < 2) {
+    for (let k = 0; k < n; k++) marks[k] = true;
+    return { marks, acc: 1, tempo: 1 };
+  }
+  const beatMs = 60000 / bpm;
+  const tol = beatTol(level);
+  const lo = 0.5 * beatMs;
+  const hi = 2 * beatMs;
+  const errOf = (t0: number, len: number, k: number) => (onsetsMs[k] - t0) / len - B[k];
+  let best = { t0: onsetsMs[0], len: beatMs, inl: -1, sse: Infinity };
+  for (let a = 0; a < n; a++)
+    for (let b = a + 1; b < n; b++) {
+      const db = B[b] - B[a];
+      if (db < 1e-6) continue;
+      const len = Math.max(lo, Math.min(hi, (onsetsMs[b] - onsetsMs[a]) / db));
+      const t0 = onsetsMs[a] - B[a] * len;
+      let inl = 0;
+      let sse = 0;
+      for (let k = 0; k < n; k++) {
+        const e = errOf(t0, len, k);
+        if (Math.abs(e) <= tol) {
+          inl++;
+          sse += e * e;
+        }
+      }
+      if (inl > best.inl || (inl === best.inl && sse < best.sse)) best = { t0, len, inl, sse };
+    }
+  // least-squares refit on the agreeing onsets
+  const ks = Array.from({ length: n }, (_, k) => k).filter((k) => Math.abs(errOf(best.t0, best.len, k)) <= tol);
+  let { t0, len } = best;
+  if (ks.length >= 2) {
+    const mx = ks.reduce((s, k) => s + B[k], 0) / ks.length;
+    const my = ks.reduce((s, k) => s + onsetsMs[k], 0) / ks.length;
+    let sxx = 0;
+    let sxy = 0;
+    for (const k of ks) {
+      sxx += (B[k] - mx) ** 2;
+      sxy += (B[k] - mx) * (onsetsMs[k] - my);
+    }
+    if (sxx > 1e-9) len = Math.max(lo, Math.min(hi, sxy / sxx));
+    t0 = my - len * mx;
+  }
+  let ok = 0;
+  for (let k = 0; k < n; k++) {
+    marks[k] = Math.abs(errOf(t0, len, k)) <= tol;
+    if (marks[k]) ok++;
+  }
+  return { marks, acc: ok / n, tempo: Math.round((beatMs / len) * 100) / 100 };
+}
+
+/** A phrase's accuracy with rhythm: notes × (0.6 + 0.4 × rhythm), the weighting of the transcription coach. */
+export const withRhythm = (notes: number, rhythm: number) => notes * (0.6 + 0.4 * rhythm);
+
 export interface TranscribeSave {
   v: 1;
   game: 'transcribe';
@@ -200,25 +288,40 @@ export interface TranscribeSave {
   level: number;
   notes: number;
   bpm: number;
-  /** One per finished phrase. */
-  results: { acc: number; points: number }[];
+  /** One per finished phrase (`pitch` / `rhythm` since 0.75; `acc` is pitch × rhythm then). */
+  results: { acc: number; points: number; pitch?: number; rhythm?: number }[];
 }
 export const tierLevel = (t: DynName): number => (t === 'ff' ? 4 : t === 'f' ? 3 : t === 'mf' ? 2 : 1);
 
 export function newTranscribe(seed: number, tier: DynName, notes: number, bpm: number): TranscribeSave {
   return { v: 1, game: 'transcribe', seed: seed >>> 0, tier, level: tierLevel(tier), notes, bpm, results: [] };
 }
-export function submitPhrase(s: TranscribeSave, entered: number[], ms: number, replays: number): { save: TranscribeSave; acc: number; points: number; phrase: Phrase } {
+/**
+ * Grade a phrase. `onsetsMs` (one per entry, latency-corrected, any origin) turns on the rhythm grade; without it
+ * (older callers) only pitch and order count.
+ */
+export function submitPhrase(s: TranscribeSave, entered: number[], ms: number, replays: number, onsetsMs?: number[]): { save: TranscribeSave; acc: number; points: number; phrase: Phrase; pitch: number; rhythm: RhythmGrade | null } {
   const phrase = phraseAt(s.seed, s.results.length, s.level, s.notes);
-  const acc = noteAccuracy(phrase.midis, entered);
+  const pitch = noteAccuracy(phrase.midis, entered);
+  const rhythm = onsetsMs && onsetsMs.length === entered.length ? gradeRhythm(phrase, onsetsMs, s.bpm, s.level) : null;
+  const acc = rhythm ? withRhythm(pitch, rhythm.acc) : pitch;
   const points = phrasePoints(acc, timeBonus(ms, phrase.midis.length, replays));
-  return { save: { ...s, results: [...s.results, { acc, points }] }, acc, points, phrase };
+  const res = rhythm ? { acc, points, pitch, rhythm: rhythm.acc } : { acc, points };
+  return { save: { ...s, results: [...s.results, res] }, acc, points, phrase, pitch, rhythm };
 }
 export const runDone = (s: TranscribeSave) => s.results.length >= PHRASES;
 export const runScore = (s: TranscribeSave) => s.results.reduce((a, r) => a + r.points, 0);
-/** Mean note accuracy of the run, 0..100. */
+/** Mean phrase accuracy of the run (notes × rhythm), 0..100. */
 export const runAccuracy = (s: TranscribeSave) => (s.results.length ? Math.round((100 * s.results.reduce((a, r) => a + r.acc, 0)) / s.results.length) : 0);
-export const transcribeResult = (s: TranscribeSave) => ({ game: 'transcribe' as const, score: runScore(s), detail: { tier: s.tier, accuracy: runAccuracy(s), phrases: s.results.length } });
+/** Mean rhythm of the run, 0..100 (null when no phrase was timed). */
+export function runRhythm(s: TranscribeSave): number | null {
+  const xs = s.results.filter((r) => typeof r.rhythm === 'number');
+  return xs.length ? Math.round((100 * xs.reduce((a, r) => a + (r.rhythm ?? 0), 0)) / xs.length) : null;
+}
+export function transcribeResult(s: TranscribeSave) {
+  const rh = runRhythm(s);
+  return { game: 'transcribe' as const, score: runScore(s), detail: { tier: s.tier, accuracy: runAccuracy(s), phrases: s.results.length, ...(rh !== null ? { rhythm: rh } : {}) } };
+}
 
 export function isTranscribeSave(x: unknown): x is TranscribeSave {
   const s = x as TranscribeSave | null;

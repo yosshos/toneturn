@@ -389,4 +389,20 @@ export const P2_SONGS: VoiceSong[] = [
   },
 ];
 
-export const VOICE_SONGS: VoiceSong[] = [...POP_SONGS, ...JAZZ_HEADS, ...P2_SONGS];
+const LANTERN = P2_SONGS.find((s) => s.id === 'lantern-street')!;
+/**
+ * F14 L9 (P3): Lantern Street with its own 8-bar verse (written for The 7th Sense, 2026-11-11), sung colla voce before
+ * the AABA chorus in time. The verse ends on the dominant, so the count-in leads straight into the chorus.
+ */
+export const VERSE_SONGS: VoiceSong[] = [
+  {
+    ...LANTERN,
+    id: 'lantern-street-verse',
+    melody: "6 5 6 1' | 7h 5h | 4 3 2 4 | 5w | 1 3 5 6 | 4#h 6h | 4 6 5 4 | 2w | " + LANTERN.melody,
+    chart: 'Fmaj7 | Em7 | Dm7 | G7 | Am7 | D7 | Dm7 G7 | G7 | ' + LANTERN.chart,
+    phrases: [4, 8, 16, 24, 32],
+    form: { en: 'Verse (colla voce) + AABA chorus, 40 bars', he: 'בית (קולה ווצ׳ה) + פזמון AABA, 40 תיבות' },
+  },
+];
+
+export const VOICE_SONGS: VoiceSong[] = [...POP_SONGS, ...JAZZ_HEADS, ...P2_SONGS, ...VERSE_SONGS];

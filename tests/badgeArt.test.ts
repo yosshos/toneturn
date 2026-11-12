@@ -32,9 +32,10 @@ describe('glyph registry', () => {
     expect(fams.size).toBe(GUITAR_BADGE_FAMILIES.length);
   });
   it('level pips follow the family length', () => {
+    // g-impro has 7 levels since the guitar trade (g-impro 7).
     const b = BADGES.find((x) => x.id === 'tech:g-impro:2')!;
     const html = renderToStaticMarkup(h(BadgeArt, { badge: b, earned: true }));
-    expect([...html.matchAll(/cy="13.2"/g)].length).toBe(6);
+    expect([...html.matchAll(/cy="13.2"/g)].length).toBe(7);
   });
   it('unknown guitar families get the guitar glyph, and new families can register one', () => {
     const g = resolveGlyph({ id: 'tech:g-strum:1', cat: 'technique', group: 'g-strum' });

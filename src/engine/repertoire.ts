@@ -405,7 +405,7 @@ export function wayLabel(w: RepWay, course: CourseId): Bi {
     case 'vocal':
       return b('Sing with the band', 'לשיר עם הלהקה');
     case 'chartDrill':
-      return w.voicing.startsWith('stride') ? b('Stride left hand', 'יד שמאל בסטרייד') : w.voicing === 'quartal' ? b('Quartal voicings', 'וויסינג קוורטלי') : w.voicing === 'rootless' ? b('Rootless voicings, comping', 'וויסינג בלי יסוד, ליווי') : w.voicing === 'shell' ? b('Shell voicings', 'שלדים (שלושה צלילים)') : w.voicing === 'guide' ? b('Guide tones, comping', 'צלילים מנחים, ליווי') : b('Voicings', 'וויסינגים');
+      return w.voicing.startsWith('stride') ? b('Stride left hand', 'יד שמאל בסטרייד') : w.voicing === 'quartal' ? b('Quartal voicings', 'וויסינג קוורטלי') : w.voicing === 'rootless' ? b('Rootless voicings, comping', 'וויסינג בלי יסוד, ליווי') : w.voicing === 'shell' ? b('Shell voicings', 'קונכיות (שלושה צלילים)') : w.voicing === 'guide' ? b('Guide tones, comping', 'צלילים מנחים, ליווי') : b('Voicings', 'וויסינגים');
     case 'bassStd':
       return b('Walk the changes', 'ווקינג על המהלך');
     case 'guitarStd':

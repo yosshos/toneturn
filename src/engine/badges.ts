@@ -22,6 +22,7 @@ import { SUB_SKILLS, type SubStat } from './taxonomy';
 import { addDays, type Counts, type InputKind, type Peaks, type StatsDays, type StatsHours } from './stats';
 import type { CourseId } from './courses';
 import { tiersCleared, topCleared, type GameTiers } from './gameTiers';
+import { gameBadgeCourse, gameBadgeSeeds } from './gameBadges';
 import { VOICE_FAMILIES } from './voiceFamilies';
 import { COURSE_GAMES } from '../ui/courseRows';
 import { AREA_NAME, completedChallenges, RANK_AREAS, RANK_TIERS, TIER_NAME, tierStart, type RankArea, type Ranks, type RankTier } from './ranks';
@@ -61,6 +62,8 @@ export interface BadgeInput {
   gameTiers?: GameTiers;
   /** Repertoire (SPEC-REPERTOIRE): standards learned per course (tiers 3–4) and advanced pieces learned (tier 4). */
   repertoire?: Partial<Record<CourseId, { standards: number; advanced: number }>>;
+  /** SPEC-COURSE-START: courses whose measured first win was recorded (Settings.courseStart, never for migrated players). */
+  firstWins?: CourseId[];
   /** Vocal levels passed (progress.vocal.passed): the voice course's family and milestone badges. */
   vocalPassed?: number[];
   technique?: {
@@ -186,7 +189,7 @@ const AREA_TITLES: Record<RankArea, [string, string][]> = {
   instrument: [['Knob Twiddler', 'מסובב כפתורים'], ['Sound Explorer', 'חוקר סאונד'], ['Mix Navigator', 'נווט המיקס'], ['Studio Wizard', 'קוסם האולפן'], ['Golden Fader', 'פיידר של זהב'], ['Sound Sculptor', 'פַּסל הסאונד']],
   technique: [['Warm-Up Hands', 'ידיים מתחממות'], ['Steady Fingers', 'אצבעות יציבות'], ['Scale Runner', 'רץ הסולמות'], ['Velvet Touch', 'מגע של קטיפה'], ['Lightning Hands', 'ידיים של ברק'], ['Titan of Technique', 'טיטאן הטכניקה']],
 };
-const TIER_ICON: Record<RankTier, string> = { bronze: '🥉', silver: '🥈', gold: '🥇', platinum: '💠', diamond: '💎', master: '👑' };
+const TIER_ICON: Record<RankTier, string> = { bronze: 'trophy', silver: 'trophy', gold: 'trophy', platinum: 'star', diamond: 'star', master: 'trophy' };
 
 const areaBadges: Badge[] = RANK_AREAS.flatMap((a) =>
   RANK_TIERS.map((t, i) => {
@@ -276,7 +279,7 @@ const SKILL_TITLES: Record<SkillId, [string, string][]> = {
   instrument: [['First Notes', 'צלילים ראשונים'], ['Neck Navigator', 'נווט הצוואר'], ['Fluent Fingers', 'אצבעות שוטפות'], ['One With the Instrument', 'אחד עם הכלי']],
   timbre: [['Frequency Finder', 'מוצא תדרים'], ['EQ Explorer', 'חוקר EQ'], ['Mix Detective', 'בלש המיקס'], ['Studio Golden Ears', 'אוזני הזהב של האולפן']],
 };
-const SKILL_ICON: Partial<Record<DomainId, string>> = { pitch: '🎵', time: '🥁', memory: '🧠', voice: '🎤', reading: '📖', creative: '🎨', instrument: '🎸' };
+const SKILL_ICON: Partial<Record<DomainId, string>> = { pitch: 'contour', time: 'drums', memory: 'memory', voice: 'mic', reading: 'book', creative: 'improv', instrument: 'guitar' };
 const domainOfSkill = (k: SkillId) => DOMAINS.find((d) => d.skills.includes(k))!.id;
 
 const skillBadges: Badge[] = SKILLS.flatMap((k) =>
@@ -285,7 +288,7 @@ const skillBadges: Badge[] = SKILLS.flatMap((k) =>
     return {
       id: `skill:${k}:${lv.id}`,
       cat: 'skill' as const,
-      icon: SKILL_ICON[domainOfSkill(k)] ?? '🎵',
+      icon: SKILL_ICON[domainOfSkill(k)] ?? 'contour',
       group: k,
       tone: lv.tone,
       name: { en, he },
@@ -309,13 +312,13 @@ const skillBadges: Badge[] = SKILLS.flatMap((k) =>
 export const SUB_MASTERY = { ewma: 0.85, n: 20 };
 const SUB_HONOURS: [string, string, string][] = [
   // [icon, EN prefix, HE prefix]
-  ['🥋', 'Black Belt', 'חגורה שחורה'],
-  ['👑', 'Crown', 'כתר'],
-  ['⭐', 'Gold Star', 'כוכב זהב'],
-  ['🔏', 'Master Seal', 'חותם המאסטר'],
-  ['🏔️', 'Summit', 'פסגה'],
-  ['🎖️', 'Medal of Honor', 'עיטור כבוד'],
-  ['🗝️', 'Golden Key', 'מפתח הזהב'],
+  ['trophy', 'Black Belt', 'חגורה שחורה'],
+  ['trophy', 'Crown', 'כתר'],
+  ['star', 'Gold Star', 'כוכב זהב'],
+  ['trophy', 'Master Seal', 'חותם המאסטר'],
+  ['scales', 'Summit', 'פסגה'],
+  ['trophy', 'Medal of Honor', 'עיטור כבוד'],
+  ['theory', 'Golden Key', 'מפתח הזהב'],
 ];
 const subBadges: Badge[] = SUB_SKILLS.map((s, i) => {
   const [icon, en, he] = SUB_HONOURS[i % SUB_HONOURS.length];
@@ -377,73 +380,74 @@ export const FAMILY_NAME: Record<BadgeFamily, L> = {
   'g-harris': { en: 'Barry Harris on guitar', he: 'בארי האריס בגיטרה' },
   'g-prog': { en: 'Prog and fusion', he: 'פרוג ופיוז׳ן' },
 };
+// `icon` on every badge is a glyph kind of src/ui/Glyph.tsx (2026-11-12: no emoji left; the medal itself is BadgeArt).
 const FAMILY_ICON: Record<BadgeFamily, string> = {
-  scales: '🪜',
-  arpeggios: '🌊',
-  cadences: '🔚',
-  fingers: '🖐️',
-  control: '🪶',
-  advanced: '⚡',
-  harris: '🎩',
-  jazz: '🎷',
-  voicings: '🎨',
-  accomp: '🚂',
-  'k-sixdim': '°7',
-  'k-bebop': '♪',
-  'k-reharm': '♭9',
-  'g-fretting': '🕷️',
-  'g-picking': '🔻',
-  'g-legato': '〰️',
-  'g-scales': '🎸',
-  'g-arps': '🧗',
-  'g-chords': '🔲',
-  'g-rhythm': '↕️',
-  'g-lead': '🎯',
-  'g-fingerstyle': '🤌',
-  'g-flamenco': '💃',
-  'g-jazz': '🎷',
-  'g-reading': '📑',
-  'g-impro': '🗣️',
-  'g-bass': '🎚️',
-  // GUITAR_DEEPENING: text marks, no emoji (mature UI).
-  'g-ear': 'ear',
-  'g-harris': '6°',
-  'g-prog': '7/8',
+  scales: 'scales',
+  arpeggios: 'arp',
+  cadences: 'prog',
+  fingers: 'fingers1234',
+  control: 'hairpin',
+  advanced: 'octave',
+  harris: 'improv',
+  jazz: 'target',
+  voicings: 'voicing',
+  accomp: 'walk',
+  'k-sixdim': 'sixdim',
+  'k-bebop': 'bebop',
+  'k-reharm': 'reharm',
+  'g-fretting': 'fingers1234',
+  'g-picking': 'pick',
+  'g-legato': 'slur',
+  'g-scales': 'box',
+  'g-arps': 'arp',
+  'g-chords': 'chordbox',
+  'g-rhythm': 'strum',
+  'g-lead': 'bend',
+  'g-fingerstyle': 'pima',
+  'g-flamenco': 'fan',
+  'g-jazz': 'prog',
+  'g-reading': 'sight',
+  'g-impro': 'improv',
+  'g-bass': 'bass',
+  // Glyph kinds of src/ui/Glyph.tsx (the same symbols as FAMILY_GLYPH on the path) — no emoji, no text marks.
+  'g-ear': 'guitarear',
+  'g-harris': 'sixdim',
+  'g-prog': 'oddmeter',
 };
 // One title per catalogue level (piano 7; guitar as many as guitarCatalog has — tests check the counts).
 const FAMILY_TITLES: Record<BadgeFamily, [string, string][]> = {
-  scales: [['Five-Finger Scout', 'סייר חמש האצבעות'], ['One-Octave Walker', 'הולך האוקטבה'], ['Thumb-Under Tamer', 'מאלף האגודל'], ['Two-Octave Runner', 'רץ שתי אוקטבות'], ['Contrary-Motion Mirror', 'מראה בתנועה נגדית'], ['Four-Octave Express', 'אקספרס ארבע אוקטבות'], ['Scale Virtuoso', 'וירטואוז הסולמות']],
-  arpeggios: [['Chord Breaker', 'שובר אקורדים'], ['Triad Climber', 'מטפס המשולשים'], ['Inversion Hopper', 'קופץ ההיפוכים'], ['Arpeggio Acrobat', 'אקרובט ארפג׳ים'], ['Waterfall Maker', 'יוצר מפלים'], ['Harp Hands', 'ידיים של נבל'], ['Arpeggio Virtuoso', 'וירטואוז הארפג׳ים']],
-  cadences: [['First Cadence', 'קדנצה ראשונה'], ['I-IV-V Rider', 'רוכב I-IV-V'], ['Smooth Mover', 'מחליק בין אקורדים'], ['Voice-Leading Pro', 'מקצוען הובלת קולות'], ['Cadence Collector', 'אספן קדנצות'], ['All-Keys Closer', 'סוגר בכל הסולמות'], ['Cadence Virtuoso', 'וירטואוז הקדנצות']],
-  fingers: [['Wiggly Fingers', 'אצבעות מתעוררות'], ['Five-Finger Drummer', 'מתופף חמש אצבעות'], ['Hanon Hiker', 'מטייל בהאנון'], ['Trill Thriller', 'מותחן הטרילים'], ['Independent Fingers', 'אצבעות עצמאיות'], ['Finger Sprinter', 'ספרינטר אצבעות'], ['Finger Virtuoso', 'וירטואוז האצבעות']],
-  control: [['Soft Touch', 'מגע רך'], ['Even Keel', 'ידיים מאוזנות'], ['Staccato Sparrow', 'דרור הסטקטו'], ['Legato Swan', 'ברבור הלגאטו'], ['Dynamics Painter', 'צייר הדינמיקה'], ['Voicing Sculptor', 'פַּסל הקולות'], ['Touch Virtuoso', 'וירטואוז המגע']],
-  advanced: [['Octave Explorer', 'חוקר אוקטבות'], ['Double-Note Daredevil', 'נועז הצלילים הכפולים'], ['Leap Jumper', 'קופץ למרחקים'], ['Polyrhythm Juggler', 'להטוטן פולי־ריתם'], ['Octave Thunder', 'רעם האוקטבות'], ['Double-Third Dynamo', 'דינמו הטרצות הכפולות'], ['Grand Virtuoso', 'הווירטואוז הגדול']],
-  harris: [['Sixth-Diminished Rookie', 'טירון שש־מוקטן'], ['Scale-Rule Student', 'תלמיד חוקי הסולם'], ['Bebop Walker', 'הולך ביבופ'], ['Chord-Tone Lander', 'נוחת על צלילי אקורד'], ['Harris Disciple', 'תלמיד של בארי'], ['Bebop Professor', 'פרופסור לביבופ'], ["Barry's Heir", 'היורש של בארי']],
-  jazz: [['Shell Starter', 'מתחיל בשלדים'], ['Guide-Tone Guide', 'מורה דרך לצלילים מנחים'], ['Rootless Rambler', 'נווד בלי שורש'], ['ii-V-I Voyager', 'נוסע ii-V-I'], ['Lick Librarian', 'ספרן הליקים'], ['Changes Chaser', 'רודף המהלכים'], ['Jazz Virtuoso', 'וירטואוז הג׳אז']],
-  voicings: [['Left-Hand Lookout', 'תצפית יד שמאל'], ['Shape Holder', 'מחזיק צורות'], ['Smooth Changer', 'מחליף חלק'], ['Drop-2 Dropper', 'מפיל דרופ־2'], ['Voicing Weaver', 'אורג וויסינגים'], ['Color Palette', 'פלטת צבעים'], ['Voicing Virtuoso', 'וירטואוז הוויסינגים']],
+  scales: [['Five-Finger Position', 'מצב חמש אצבעות'], ['One-Octave Walker', 'הולך האוקטבה'], ['Thumb-Under Crossing', 'מעבר אגודל'], ['Two-Octave Runner', 'רץ שתי אוקטבות'], ['Contrary Motion', 'תנועה נגדית'], ['Four-Octave Scales', 'סולמות בארבע אוקטבות'], ['Scale Virtuoso', 'וירטואוז הסולמות']],
+  arpeggios: [['Broken Chords', 'אקורדים שבורים'], ['Triad Arpeggios', 'ארפג׳י משולשים'], ['Inversions', 'היפוכים'], ['Arpeggio Agility', 'זריזות בארפג׳ים'], ['Flowing Arpeggios', 'ארפג׳ים זורמים'], ['Arpeggios Across the Keyboard', 'ארפג׳ים לאורך המקלדת'], ['Arpeggio Virtuoso', 'וירטואוז הארפג׳ים']],
+  cadences: [['First Cadence', 'קדנצה ראשונה'], ['I-IV-V Cadences', 'קדנצות I-IV-V'], ['Smooth Chord Changes', 'מעברי אקורדים חלקים'], ['Voice-Leading Pro', 'מקצוען הובלת קולות'], ['Cadence Collector', 'אספן קדנצות'], ['All-Keys Closer', 'סוגר בכל הסולמות'], ['Cadence Virtuoso', 'וירטואוז הקדנצות']],
+  fingers: [['Finger Warm-up', 'חימום אצבעות'], ['Five-Finger Patterns', 'תבניות חמש אצבעות'], ['Hanon Exercises', 'תרגילי האנון'], ['Even Trills', 'טרילים אחידים'], ['Independent Fingers', 'אצבעות עצמאיות'], ['Finger Speed', 'מהירות אצבעות'], ['Finger Virtuoso', 'וירטואוז האצבעות']],
+  control: [['Soft Touch', 'מגע רך'], ['Even Hands', 'ידיים מאוזנות'], ['Clean Staccato', 'סטקטו נקי'], ['Connected Legato', 'לגאטו רציף'], ['Dynamic Range', 'טווח דינמי'], ['Voicing Balance', 'איזון הקולות'], ['Touch Virtuoso', 'וירטואוז המגע']],
+  advanced: [['Octaves', 'אוקטבות'], ['Double Notes', 'צלילים כפולים'], ['Wide Leaps', 'קפיצות רחבות'], ['Polyrhythm Control', 'שליטה בפולי־ריתם'], ['Octave Passages', 'מעברי אוקטבות'], ['Double Thirds', 'טרצות כפולות'], ['Grand Virtuoso', 'הווירטואוז הגדול']],
+  harris: [['Sixth-Diminished Scale', 'סולם שש־מוקטן'], ['Scale-Rule Student', 'תלמיד חוקי הסולם'], ['Bebop Walker', 'הולך ביבופ'], ['Chord-Tone Lander', 'נוחת על צלילי אקורד'], ['Harris Disciple', 'תלמיד של בארי'], ['Bebop Lines', 'קווי ביבופ'], ["Barry's Heir", 'היורש של בארי']],
+  jazz: [['Shell Starter', 'מתחיל בקונכיות'], ['Guide Tones', 'צלילים מנחים'], ['Rootless Voicings', 'וויסינגים בלי שורש'], ['ii-V-I in All Keys', 'ii-V-I בכל הסולמות'], ['Lick Vocabulary', 'אוצר ליקים'], ['Playing the Changes', 'נגינה על המהלכים'], ['Jazz Virtuoso', 'וירטואוז הג׳אז']],
+  voicings: [['Left-Hand Voicings', 'וויסינגים ביד שמאל'], ['Shape Holder', 'מחזיק צורות'], ['Smooth Changer', 'מחליף חלק'], ['Drop-2 Voicings', 'וויסינגים בדרופ־2'], ['Voice-Led Voicings', 'וויסינגים בהובלת קולות'], ['Color Palette', 'פלטת צבעים'], ['Voicing Virtuoso', 'וירטואוז הוויסינגים']],
   // PIANO_JAZZ: one title for each of the first seven levels.
-  'k-sixdim': [['Scale-of-Chords Climber', 'מטפס סולם האקורדים'], ['Borrower', 'שואל מהמוקטן'], ['Oblique Mover', 'נע באלכסון'], ['Spread Builder', 'בונה הפריסות'], ['Passing-Chord Weaver', 'אורג האקורדים העוברים'], ['Minor-Sixth Mover', 'מניע המינור שש'], ['Diminished Alchemist', 'אלכימאי המוקטן']],
-  'k-bebop': [['Changes Runner', 'רץ על המהלכים'], ['Minor-Key Hunter', 'צייד המינור'], ['Altered Explorer', 'חוקר האלטרד'], ['Blues Liner', 'מותח קווי בלוז'], ['Rhythm Racer', 'דוהר הריתם'], ['Standards Player', 'נגן הסטנדרטים'], ['Two-Handed Bopper', 'בופר בשתי ידיים']],
+  'k-sixdim': [['Scale-of-Chords Climber', 'מטפס סולם האקורדים'], ['Borrowed Diminished Notes', 'צלילים מושאלים מהמוקטן'], ['Oblique Mover', 'נע באלכסון'], ['Spread Builder', 'בונה הפריסות'], ['Passing-Chord Weaver', 'אורג האקורדים העוברים'], ['Minor-Sixth Mover', 'מניע המינור שש'], ['Diminished Mastery', 'שליטה במוקטן']],
+  'k-bebop': [['Changes Runner', 'רץ על המהלכים'], ['Minor-Key Hunter', 'צייד המינור'], ['Altered Explorer', 'חוקר האלטרד'], ['Blues Liner', 'מותח קווי בלוז'], ['Rhythm Changes', 'ריתם צ׳יינג׳ס'], ['Standards Player', 'נגן הסטנדרטים'], ['Two-Handed Bebop', 'ביבופ בשתי ידיים']],
   'k-reharm': [['Altered Colourist', 'צבעי האלטרד'], ['Minor-Cadence Maker', 'עושה הקדנצה המינורית'], ['Ballad Voicer', 'מעצב הבלדות'], ['Reharmoniser', 'מחדש ההרמוניה'], ['Modal Comper', 'המלווה המודאלי'], ['Solo Pianist', 'פסנתרן סולו'], ['Harmony Master', 'אמן ההרמוניה']],
-  accomp: [['Oom-Pah Starter', 'אום־פה מתחיל'], ['Alberti Apprentice', 'שוליית אלברטי'], ['Boogie Walker', 'הולך בוגי'], ['Walking-Bass Wanderer', 'נווד הבס המהלך'], ['Stride Strider', 'צועד הסטרייד'], ['One-Person Band', 'להקת איש אחד'], ['Groove Engine', 'מנוע הגרוב']],
-  'g-fretting': [['Fret Crawler', 'זוחל על הסריגים'], ['Finger Shuffler', 'מערבב אצבעות'], ['Wall Spider', 'עכביש על הקיר'], ['Neck Climber', 'מטפס הצוואר'], ['Permutation Machine', 'מכונת התמורות'], ['Rubber Hand', 'יד מגומי']],
-  'g-picking': [['Down-Up Rookie', 'טירון למטה־למעלה'], ['String Hopper', 'קופץ מיתרים'], ['Economy Class', 'מחלקת תיירים'], ['String Skipper', 'מדלג המיתרים'], ['Hummingbird', 'יונק הדבש'], ['Sweep Sorcerer', 'מכשף הסוויפ'], ['Chicken Picker', 'מנקר כמו תרנגול'], ['Sweep Architect', 'אדריכל הסוויפ'], ['Fusion Picker', 'פורט הפיוז׳ן']],
-  'g-legato': [['Little Hammer', 'פטיש קטן'], ['String Puller', 'מושך בחוטים'], ['Trill Seeker', 'מחפש טרילים'], ['Smooth Operator', 'זורם כמו מים'], ['Silk Fingers', 'אצבעות של משי'], ['Fretboard Tap Dancer', 'רקדן סטפס על הצוואר'], ['Shifting Legato', 'לגאטו נודד'], ['Eight-Finger Tapper', 'טאפינג בשמונה אצבעות']],
-  'g-scales': [['Box One Resident', 'דייר תיבה 1'], ['Box Hopper', 'קופץ בין תיבות'], ['Blue Note Finder', 'מוצא התו הכחול'], ['Position Player', 'נגן המצבים'], ['Cage Breaker', 'פורץ הכלוב'], ['Neck Sprinter', 'ספרינטר הצוואר'], ['Fretboard Cartographer', 'ממפה הצוואר'], ['Position Connector', 'מחבר המצבים'], ['Whole-Neck Runner', 'רץ לאורך הצוואר'], ['Interval Sequencer', 'רצפי מרווחים']],
-  'g-arps': [['Triad Picker', 'מלקט משולשים'], ['Shape Collector', 'אספן צורות'], ['String-Set Surfer', 'גולש קבוצות המיתרים'], ['Seventh Heaven', 'ברקיע השביעי'], ['Changes Weaver', 'אורג המהלכים'], ['Five-Shape Sevenths', 'ספטימות בחמש צורות'], ['Upper-Structure Player', 'נגן המבנה העליון']],
-  'g-chords': [['Campfire Strummer', 'גיטריסט של מדורות'], ['Minute Changer', 'מחליף בדקה'], ['Quick-Change Artist', 'אמן ההחלפה המהירה'], ['Power-Chord Rocker', 'רוקר הפאוור־קורד'], ['Barre Raiser', 'מרים הברה'], ['Barre Hopper', 'קופץ ברה'], ['Neck Conqueror', 'כובש הצוואר']],
-  'g-rhythm': [['Strum Starter', 'מתחיל לפרוט'], ['Old Faithful', 'הוותיק הנאמן'], ['Boom-Chick Cowboy', 'בוקר הבום־צ׳יק'], ['Offbeat Rasta', 'ראסטה של האופ־ביט'], ['Funk Machine', 'מכונת הפאנק'], ['Bossa Breeze', 'בריזה של בוסה'], ['Gallop Rider', 'רוכב הגאלופ'], ['Riff Builder', 'בונה הריפים'], ['Neo-Soul Hands', 'ידיים של ניאו-סול'], ['Maqsum Strummer', 'פורט המקסום']],
-  'g-lead': [['Slide Glider', 'גולש הסלייד'], ['Gentle Bender', 'מכופף עדין'], ['Full-Step Bender', 'מכופף טון שלם'], ['Rubber-Band Bender', 'מכופף הגומייה'], ['Vibrato Voice', 'ויברטו עם נשמה'], ['Double-Stop Duo', 'צמד הצלילים הכפולים'], ['Blues King', 'מלך הבלוז'], ['Phrase Bender', 'מכופף המשפטים'], ['Hybrid Soloist', 'סולן משולב'], ['Pinch and Steel', 'צביטה ופלדה']],
-  'g-fingerstyle': [['Thumb Drummer', 'אגודל מתופף'], ['Finger Harpist', 'נבלאי האצבעות'], ["Giuliani's Pupil", 'תלמיד של ג׳וליאני'], ['Travis Traveler', 'נוסע בטראוויס'], ['Classical Touch', 'מגע קלאסי'], ['Alhambra Dreamer', 'חולם באלהמברה']],
-  'g-flamenco': [['Fan Opener', 'פותח המניפה'], ['Rasgueado Storm', 'סערת ראסגאדו'], ['Machine-Gun Fingers', 'אצבעות מקלע'], ['Thumb of Fire', 'אגודל של אש'], ['Duende Keeper', 'שומר הדואנדה']],
-  'g-jazz': [['Shell Comper', 'מלווה בקונכיות'], ['Drop-2 Diver', 'צולל דרופ 2'], ['Drop-3 Explorer', 'חוקר דרופ 3'], ['Smooth Voice-Leader', 'מוביל קולות חלק'], ['Guide-Tone Tracker', 'גשש הצלילים המובילים'], ['Bass-Line Walker', 'מטייל קו הבס'], ['Chord-Melody Poet', 'משורר האקורד־מלודיה'], ['Standards Comper', 'מלווה הסטנדרטים'], ['Voice-Leading Ear', 'אוזן הובלת הקולות'], ['Chord-Melody Arranger', 'מעבד האקורד-מלודיה'], ['Rhythm-Changes Comper', 'מלווה הריתם צ׳יינג׳ס'], ['Solo Guitarist', 'גיטריסט סולו'], ['Whole-Chart Comper', 'מלווה של צורה שלמה']],
-  'g-reading': [['First-Position Reader', 'קורא במצב ראשון'], ['Six-String Reader', 'קורא שישה מיתרים'], ['Position Shifter', 'מחליף מצבים'], ['Seventh-Fret Scholar', 'מלומד הסריג השביעי'], ['Twelfth-Fret Navigator', 'נווט הסריג ה־12'], ['Chart Reader', 'קורא הצ׳ארטים'], ['Two-Position Reader', 'קורא בשני מצבים'], ['Lead-Sheet Reader', 'קורא דפי התווים']],
-  'g-impro': [['Root Finder', 'מוצא השורשים'], ['Third Eye', 'העין השלישית'], ['Chord-Tone Painter', 'צייר צלילי האקורד'], ['Blues Storyteller', 'מספר סיפורי בלוז'], ['Chord-Scale Player', 'נגן סולם-אקורד'], ['Motif Developer', 'מפתח המוטיבים']],
+  accomp: [['Bass and Chord', 'בס ואקורד'], ['Alberti Bass', 'בס אלברטי'], ['Boogie Bass', 'בס בוגי'], ['Walking Bass', 'בס מהלך'], ['Stride Piano', 'פסנתר סטרייד'], ['Full Accompaniment', 'ליווי מלא'], ['Groove Accompaniment', 'ליווי בגרוב']],
+  'g-fretting': [['Chromatic Fretting', 'פריטה כרומטית'], ['Finger Permutations', 'תמורות אצבעות'], ['Spider Exercise', 'תרגיל העכביש'], ['Chromatic Walk up the Neck', 'הליכה כרומטית לאורך הצוואר'], ['All 24 Permutations', 'כל 24 התמורות'], ['Stretches', 'מתיחות']],
+  'g-picking': [['Alternate Picking', 'פריטה מתחלפת'], ['String Crossing', 'מעבר מיתרים'], ['Economy Picking', 'פריטה חסכונית'], ['String Skipping', 'דילוג מיתרים'], ['Tremolo Picking', 'פריטת טרמולו'], ['Sweep Picking', 'פריטת סוויפ'], ['Hybrid Picking', 'פריטה היברידית'], ['Sweep Seventh Chords', 'סוויפ על אקורדי ספטים'], ['Fusion Picking', 'פריטת פיוז׳ן']],
+  'g-legato': [['Hammer-ons', 'האמר־און'], ['Pull-offs', 'פול־אוף'], ['Trills', 'טרילים'], ['Pentatonic Legato', 'לגאטו פנטטוני'], ['Three-Note-per-String Legato', 'לגאטו שלושה צלילים למיתר'], ['Two-Hand Tapping', 'טאפינג בשתי ידיים'], ['Shifting Legato', 'לגאטו נודד'], ['Tapped Sequences', 'רצפי טאפינג']],
+  'g-scales': [['Pentatonic Box 1', 'תיבה 1 בפנטטוני'], ['All Pentatonic Boxes', 'כל התיבות הפנטטוניות'], ['Blues Scale', 'סולם הבלוז'], ['Position Player', 'נגן המצבים'], ['CAGED Positions', 'מצבי CAGED'], ['Three Notes per String', 'שלושה צלילים למיתר'], ['Modes and Sequences', 'מודוסים ורצפים'], ['Position Connector', 'מחבר המצבים'], ['Across the Whole Neck', 'לאורך כל הצוואר'], ['Interval Sequencer', 'רצפי מרווחים']],
+  'g-arps': [['Triads, Root on 6 and 5', 'משולשים משורש 6 ו־5'], ['CAGED Triads', 'משולשים ב־CAGED'], ['Inversions on String Sets', 'היפוכים על קבוצות מיתרים'], ['Seventh Arpeggios', 'ארפג׳י ספטים'], ['Arpeggios Through ii–V–I', 'ארפג׳ים דרך ii–V–I'], ['Five-Shape Sevenths', 'ספטימות בחמש צורות'], ['Upper-Structure Player', 'נגן המבנה העליון']],
+  'g-chords': [['Open Chords', 'אקורדים פתוחים'], ['One-Minute Changes', 'החלפות בדקה'], ['Faster Changes', 'החלפות מהירות'], ['Power Chords', 'פאוור־קורדים'], ['Barre Chords', 'אקורדי ברה'], ['Barre Changes', 'החלפות ברה'], ['CAGED Chords', 'אקורדי CAGED']],
+  'g-rhythm': [['Basic Strumming', 'פריטה בסיסית'], ['Strumming Patterns', 'תבניות פריטה'], ['Shuffle and Boom-Chick', 'שאפל ובום־צ׳יק'], ['Reggae Off-beats', 'אופ־ביט של רגאיי'], ['Sixteenth-Note Funk', 'פאנק בשש־עשריות'], ['Bossa Nova', 'בוסה נובה'], ['Metal Gallop', 'גאלופ מטאל'], ['Rock Riffs', 'ריפים של רוק'], ['Neo-Soul Rhythm', 'ריתם ניאו־סול'], ['Maqsum Strum', 'פריטת מקסום']],
+  'g-lead': [['Slides and Harmonics', 'סליידים והרמוניות'], ['Half-Step Bends', 'בנדים בחצי טון'], ['Whole-Step Bends', 'בנדים בטון שלם'], ['Bend and Release', 'בנד ושחרור'], ['Controlled Vibrato', 'ויברטו מבוקר'], ['Double Stops', 'דאבל סטופים בטרצות וסקסטות'], ['Blues Box Bends', 'בנדים בתיבת הבלוז'], ['Bends in Phrases', 'בנדים במשפטים'], ['Hybrid Lead', 'סולו משולב'], ['Pinch Harmonics', 'הרמוניות צביטה']],
+  'g-fingerstyle': [['Thumb Bass', 'בס באגודל'], ['Arpeggio Patterns', 'תבניות ארפג׳יו'], ['Giuliani Patterns', 'תבניות ג׳וליאני'], ['Travis Picking', 'פריטת טראוויס'], ['Classical Touch', 'מגע קלאסי'], ['Tremolo p-a-m-i', 'טרמולו p-a-m-i']],
+  'g-flamenco': [['Four-Stroke Rasgueado', 'ראסגאדו בארבע מכות'], ['Triplet Rasgueado', 'ראסגאדו בטריולות'], ['Picado', 'פיקאדו'], ['Alzapúa', 'אלזאפואה'], ['Compás', 'קומפאס']],
+  'g-jazz': [['Shell Comper', 'מלווה בקונכיות'], ['Drop-2 Inversions', 'היפוכי דרופ 2'], ['Drop-3 ii–V–I', 'דרופ 3 ב־ii–V–I'], ['Smooth Voice-Leader', 'מוביל קולות חלק'], ['Guide-Tone Lines', 'קווי צלילים מנחים'], ['Walking Bass on Guitar', 'בס מהלך בגיטרה'], ['Harmonized Scale', 'סולם מהורמן'], ['Standards Comper', 'מלווה הסטנדרטים'], ['Voice-Leading Ear', 'אוזן הובלת הקולות'], ['Chord-Melody Arranger', 'מעבד האקורד-מלודיה'], ['Rhythm-Changes Comper', 'מלווה הריתם צ׳יינג׳ס'], ['Solo Guitarist', 'גיטריסט סולו'], ['Whole-Chart Comper', 'מלווה של צורה שלמה']],
+  'g-reading': [['First-Position Reader', 'קורא במצב ראשון'], ['Six-String Reader', 'קורא שישה מיתרים'], ['Position Shifter', 'מחליף מצבים'], ['Position VII', 'מצב VII'], ['Positions IX and XII', 'מצבים IX ו־XII'], ['Chart Reader', 'קורא הצ׳ארטים'], ['Two-Position Reader', 'קורא בשני מצבים'], ['Lead-Sheet Reader', 'קורא דפי התווים']],
+  'g-impro': [['Roots on Beat 1', 'יסודות על פעמה 1'], ['Thirds on Beat 1', 'טרצות על פעמה 1'], ['Chord-Tone Arpeggios', 'ארפג׳י צלילי אקורד'], ['Guide Tones Through the Form', 'צלילים מנחים לאורך הצורה'], ['Chord-Scale Player', 'נגן סולם-אקורד'], ['Motif Developer', 'מפתח המוטיבים'], ['Trading with the Band', 'חילופים עם הלהקה']],
   // GUITAR_DEEPENING (2026-11-11): one serious title per new level.
   'g-ear': [['Tonic Finder', 'מוצא הטוניקה'], ['One-Bar Echo', 'הד של תיבה'], ['Two-Bar Echo', 'הד של שתי תיבות'], ['Rhythm Reader', 'קורא המקצב'], ['Riff Catcher', 'תופס הריפים'], ['Root Hearer', 'שומע היסודות'], ['Harmonic Ear', 'אוזן הרמונית'], ['Quality Judge', 'מזהה הסוגים'], ['Key Finder', 'מוצא הסולם'], ['Transcriber', 'המתמלל']],
   'g-harris': [['Sixth-Diminished Guitarist', 'גיטריסט שש-מוקטן'], ['Scale-of-Chords Player', 'נגן סולם האקורדים'], ['Half-Step Ruler', 'שליט חצי הטון'], ['Three-to-Nine Player', 'נגן שלוש עד תשע'], ['Enclosure Player', 'נגן הכיתורים'], ["Barry's Guitarist", 'הגיטריסט של בארי']],
-  'g-prog': [['Odd-Meter Rider', 'רוכב המשקלים'], ['Grouping Shifter', 'מחליף הקבוצות'], ['Bar-Line Lander', 'נוחת על קו התיבה'], ['Polyrhythm Player', 'נגן הפוליריתמיקה'], ['Tempo Shifter', 'מחליף הטמפו'], ['Modal Riffer', 'ריפים מודאליים'], ['Fusion Liner', 'קווי פיוז׳ן'], ['Unison Locker', 'נועל היוניסון']],
-  'g-bass': [['Low-End Rookie', 'טירון הצד הנמוך'], ['Four-String Climber', 'מטפס ארבעה מיתרים'], ['Groove Anchor', 'עוגן הגרוב'], ['Chord Outliner', 'משרטט האקורדים'], ['Disco Bouncer', 'הקופצן של הדיסקו'], ['Walking Bassist', 'בסיסט מהלך']],
+  'g-prog': [['Odd-Meter Riffs', 'ריפים במשקל אי־זוגי'], ['Grouping Shifter', 'מחליף הקבוצות'], ['Bar-Line Lander', 'נוחת על קו התיבה'], ['Polyrhythm Player', 'נגן הפוליריתמיקה'], ['Tempo Shifter', 'מחליף הטמפו'], ['Modal Riffer', 'ריפים מודאליים'], ['Fusion Liner', 'קווי פיוז׳ן'], ['Unison Locker', 'נועל היוניסון']],
+  'g-bass': [['Bass Fretting', 'אצבוע בבס'], ['Bass Scales', 'סולמות בבס'], ['Groove Anchor', 'עוגן הגרוב'], ['Chord Outliner', 'משרטט האקורדים'], ['Octaves and Slap', 'אוקטבות וסלאפ'], ['Walking Bassist', 'בסיסט מהלך']],
 };
 /** Number of level badges of a family (piano 7; guitar = its guitarCatalog levels). */
 export const familyLevelCount = (f: string): number => FAMILY_TITLES[f as BadgeFamily]?.length ?? 7;
@@ -466,7 +470,7 @@ function lickBadges(): Badge[] {
   const licks = (x: BadgeInput) => new Set([...lickKeysClean(x).keys()].map((k) => k.split(':')[0])).size;
   const maxKeys = (x: BadgeInput) => Math.max(0, ...[...lickKeysClean(x).values()].map((s) => s.size));
   const txLevel = (x: BadgeInput) => Math.max(0, ...Object.entries(x.technique?.cleanItems ?? {}).filter(([id, b]) => id.startsWith('tx:L') && b > 0).map(([id]) => Number(id.slice(4)) || 0));
-  const B = (id: string, tone: RankTier, en: string, he: string, den: string, dhe: string, group: 'licks' | 'transcribe', rule: (x: BadgeInput) => BadgeCheck): Badge => ({ id: `tech:${id}`, cat: 'technique', icon: group === 'licks' ? '🎷' : '🎼', group, tone, name: { en, he }, desc: { en: den, he: dhe }, rule });
+  const B = (id: string, tone: RankTier, en: string, he: string, den: string, dhe: string, group: 'licks' | 'transcribe', rule: (x: BadgeInput) => BadgeCheck): Badge => ({ id: `tech:${id}`, cat: 'technique', icon: group === 'licks' ? 'lick' : 'transcribe', group, tone, name: { en, he }, desc: { en: den, he: dhe }, rule });
   return [
     B('lick-first', 'bronze', 'First Words', 'מילים ראשונות', 'A clean take of a lick.', 'ביצוע נקי של ליק.', 'licks', (x) => count(licks(x), 1)),
     B('lick-10', 'gold', 'Vocabulary', 'אוצר מילים', 'Clean takes of 10 different licks.', 'ביצועים נקיים של 10 ליקים שונים.', 'licks', (x) => count(licks(x), 10)),
@@ -531,21 +535,21 @@ function guitarSpecials(): Badge[] {
     rule,
   });
   return [
-    g('g-bend-tune', 'g-lead', '🎯', 'silver', "Bull's-Eye Bend", 'כיפוף בול', 'A clean bend that lands in tune (within 15 cents).', 'כיפוף נקי שנוחת בדיוק בגובה (בטווח 15 סנט).', (x) =>
+    g('g-bend-tune', 'g-lead', 'target', 'silver', 'Bend in Tune', 'בנד מדויק', 'A clean bend that lands in tune (within 15 cents).', 'כיפוף נקי שנוחת בדיוק בגובה (בטווח 15 סנט).', (x) =>
       count(cleanItemsOf(x, 'g-lead', ['bend', 'prebend']).length ? 1 : 0, 1),
     ),
-    g('g-vibrato', 'g-lead', '〰️', 'gold', 'Singing Strings', 'מיתרים שרים', 'Clean vibrato in the groove: narrow and wide.', 'ויברטו נקי בתוך הגרוב: צר וגם רחב.', (x) =>
+    g('g-vibrato', 'g-lead', 'slur', 'gold', 'Narrow and Wide Vibrato', 'ויברטו צר ורחב', 'Clean vibrato in the groove: narrow and wide.', 'ויברטו נקי בתוך הגרוב: צר וגם רחב.', (x) =>
       count(new Set(cleanItemsOf(x, 'g-lead', ['vibrato']).map((c) => c.op ?? 0)).size, 2),
     ),
-    g('g-five-boxes', 'g-scales', '📦', 'gold', 'Box Set', 'מארז התיבות', 'All 5 minor pentatonic boxes clean in one key.', 'כל 5 התיבות של הפנטטוני המינורי, נקי, באותו סולם.', (x) =>
+    g('g-five-boxes', 'g-scales', 'box', 'gold', 'Five Pentatonic Boxes', 'חמש התיבות הפנטטוניות', 'All 5 minor pentatonic boxes clean in one key.', 'כל 5 התיבות של הפנטטוני המינורי, נקי, באותו סולם.', (x) =>
       count(bestInOneKey(cleanItemsOf(x, 'g-scales', ['penta']).filter((c) => c.minor), (c) => c.ps), 5),
     ),
-    g('g-caged', 'g-scales', '🗝️', 'platinum', 'Out of the Cage', 'יוצא מהכלוב', 'The major scale in all 5 CAGED positions, clean in one key.', 'סולם מז׳ור בכל 5 מצבי CAGED, נקי, באותו סולם.', (x) =>
+    g('g-caged', 'g-scales', 'theory', 'platinum', 'Five CAGED Positions', 'חמשת מצבי CAGED', 'The major scale in all 5 CAGED positions, clean in one key.', 'סולם מז׳ור בכל 5 מצבי CAGED, נקי, באותו סולם.', (x) =>
       count(bestInOneKey(cleanItemsOf(x, 'g-scales', ['caged']), (c) => c.ps), 5),
     ),
-    g('g-changes-30', 'g-chords', '🔄', 'silver', 'Chord Juggler', 'להטוטן אקורדים', 'One-minute changes: 30 clean chord changes a minute.', 'החלפות בדקה: 30 החלפות אקורד נקיות בדקה.', (x) => count(Math.floor(changesPerMin(x)), 30)),
-    g('g-changes-60', 'g-chords', '⏱️', 'diamond', 'Chord Chameleon', 'זיקית האקורדים', 'One-minute changes: 60 clean chord changes a minute.', 'החלפות בדקה: 60 החלפות אקורד נקיות בדקה.', (x) => count(Math.floor(changesPerMin(x)), 60)),
-    g('g-barre', 'g-chords', '🧱', 'gold', 'Barre None', 'ברה בלי ברירה', 'Every barre chord (E and A shapes, major and minor) clean in 6 keys.', 'כל אקורדי הברה (צורות E ו־A, מז׳ור ומינור) נקיים ב־6 סולמות.', (x) => {
+    g('g-changes-30', 'g-chords', 'chordbox', 'silver', '30 Changes a Minute', '30 החלפות בדקה', 'One-minute changes: 30 clean chord changes a minute.', 'החלפות בדקה: 30 החלפות אקורד נקיות בדקה.', (x) => count(Math.floor(changesPerMin(x)), 30)),
+    g('g-changes-60', 'g-chords', 'tempo', 'diamond', '60 Changes a Minute', '60 החלפות בדקה', 'One-minute changes: 60 clean chord changes a minute.', 'החלפות בדקה: 60 החלפות אקורד נקיות בדקה.', (x) => count(Math.floor(changesPerMin(x)), 60)),
+    g('g-barre', 'g-chords', 'chordbox', 'gold', 'Barre Chords in Six Keys', 'אקורדי ברה בשישה סולמות', 'Every barre chord (E and A shapes, major and minor) clean in 6 keys.', 'כל אקורדי הברה (צורות E ו־A, מז׳ור ומינור) נקיים ב־6 סולמות.', (x) => {
       const per = new Map<number, Set<string>>();
       for (const c of cleanItemsOf(x, 'g-chords', ['barre-check'])) {
         if (!per.has(c.key)) per.set(c.key, new Set());
@@ -553,10 +557,10 @@ function guitarSpecials(): Badge[] {
       }
       return count([...per.values()].filter((s) => s.size >= 4).length, 6);
     }),
-    g('g-jukebox', 'g-rhythm', '📻', 'platinum', 'Human Jukebox', 'תיבת נגינה אנושית', `Every rhythm-guitar pattern clean, from down-up 8ths to the metal gallop (${RHYTHM_KINDS.length}).`, `כל תבניות הגיטרה הקצבית נקיות, משמיניות למטה־למעלה ועד גאלופ המטאל (${RHYTHM_KINDS.length}).`, (x) =>
+    g('g-jukebox', 'g-rhythm', 'strum', 'platinum', 'Every Rhythm Pattern', 'כל תבניות הריתם', `Every rhythm-guitar pattern clean, from down-up 8ths to the metal gallop (${RHYTHM_KINDS.length}).`, `כל תבניות הגיטרה הקצבית נקיות, משמיניות למטה־למעלה ועד גאלופ המטאל (${RHYTHM_KINDS.length}).`, (x) =>
       count(new Set(cleanItemsOf(x, 'g-rhythm', RHYTHM_KINDS).map((c) => c.kind)).size, RHYTHM_KINDS.length),
     ),
-    g('g-bassist', 'g-bass', '👖', 'gold', 'In the Pocket', 'בתוך הכיס', 'Every bass level clean in one key.', 'כל שלבי הבס נקיים באותו סולם.', (x) => count(bestInOneKey(cleanItemsOf(x, 'g-bass', BASS_KINDS), (c) => c.kind), BASS_KINDS.length)),
+    g('g-bassist', 'g-bass', 'bass', 'gold', 'Every Bass Level', 'כל שלבי הבס', 'Every bass level clean in one key.', 'כל שלבי הבס נקיים באותו סולם.', (x) => count(bestInOneKey(cleanItemsOf(x, 'g-bass', BASS_KINDS), (c) => c.kind), BASS_KINDS.length)),
   ];
 }
 
@@ -666,7 +670,7 @@ function voiceBadges(): Badge[] {
       out.push({
         id: `tech:voice:${f.id}:${k}`,
         cat: 'technique',
-        icon: '🎤',
+        icon: 'mic',
         group: f.id,
         tone: k === n ? 'platinum' : i === 0 ? 'bronze' : 'gold',
         name: { en: `${f.title.en}: ${what.en}`, he: `${f.title.he}: ${what.he}` },
@@ -682,7 +686,7 @@ function voiceBadges(): Badge[] {
     ['jazz-artist', { en: 'Jazz Artist', he: 'אמן ג׳אז' }, { en: 'Rhythm changes at tempo, chromatic approach in scat, and the Barry Harris lines.', he: 'ריתם צ׳יינג׳ס בטמפו, גישה כרומטית בסקאט, וקווי בארי האריס.' }, [1407, 1504, 307], 'master'],
   ];
   for (const [id, name, desc, refs, tone] of MILESTONES)
-    out.push({ id: `tech:voice:milestone:${id}`, cat: 'technique', icon: '🎤', group: 'voice-milestones', tone, name, desc, rule: (x: BadgeInput): BadgeCheck => count(refs.filter((r) => x.vocalPassed?.includes(r)).length, refs.length) });
+    out.push({ id: `tech:voice:milestone:${id}`, cat: 'technique', icon: 'mic', group: 'voice-milestones', tone, name, desc, rule: (x: BadgeInput): BadgeCheck => count(refs.filter((r) => x.vocalPassed?.includes(r)).length, refs.length) });
   return out;
 }
 
@@ -739,7 +743,7 @@ const techniqueBadges: Badge[] = [
   ...KEYS_FAMILIES.map((f) => ({
     id: `tech-keys:${f}`,
     cat: 'technique' as const,
-    icon: '🕛',
+    icon: 'keys',
     group: f,
     tone: 'platinum' as const,
     name: { en: `Around the Clock: ${FAMILY_NAME[f].en}`, he: `סביב השעון: ${FAMILY_NAME[f].he}` },
@@ -748,8 +752,8 @@ const techniqueBadges: Badge[] = [
   })),
   ...(
     [
-      ['even-3', '⚖️', 0.03, 'gold', 'Twin Engines', 'מנועים תאומים', 'Both hands even within 3% in a hands-together take.', 'שתי הידיים אחידות בטווח 3% בנגינה בשתי ידיים.'],
-      ['even-2', '⌚', 0.02, 'diamond', 'Swiss Watch', 'שעון שוויצרי', 'Both hands even within 2% — clockwork.', 'שתי הידיים אחידות בטווח 2% — כמו שעון.'],
+      ['even-3', 'keys', 0.03, 'gold', 'Twin Engines', 'מנועים תאומים', 'Both hands even within 3% in a hands-together take.', 'שתי הידיים אחידות בטווח 3% בנגינה בשתי ידיים.'],
+      ['even-2', 'tempo', 0.02, 'diamond', 'Swiss Watch', 'שעון שוויצרי', 'Both hands even within 2% — clockwork.', 'שתי הידיים אחידות בטווח 2% — כמו שעון.'],
     ] as const
   ).map(([id, icon, cv, tone, en, he, den, dhe]) => ({
     id: `tech:${id}`,
@@ -767,9 +771,9 @@ const techniqueBadges: Badge[] = [
   })),
   ...(
     [
-      ['clean-10', '✨', 10, 'bronze', 'Clean Start', 'התחלה נקייה'],
-      ['clean-100', '🧼', 100, 'gold', 'Century of Clean', 'מאה נקיים'],
-      ['clean-1000', '🏛️', 1000, 'master', 'Spotless Thousand', 'אלף ללא רבב'],
+      ['clean-10', 'star', 10, 'bronze', 'Clean Start', 'התחלה נקייה'],
+      ['clean-100', 'star', 100, 'gold', 'Century of Clean', 'מאה נקיים'],
+      ['clean-1000', 'trophy', 1000, 'master', 'Spotless Thousand', 'אלף ללא רבב'],
     ] as const
   ).map(([id, icon, n, tone, en, he]) => ({
     id: `tech:${id}`,
@@ -783,9 +787,9 @@ const techniqueBadges: Badge[] = [
   })),
   ...(
     [
-      ['tempo-1', '⏩', 1, 'bronze', 'Metronome Pusher', 'דוחף המטרונום', 'Set a personal tempo record.', 'לקבוע שיא טמפו אישי.'],
-      ['tempo-25', '🚀', 25, 'gold', 'Tempo Climber', 'מטפס הטמפו', '25 personal tempo records.', '25 שיאי טמפו אישיים.'],
-      ['tempo-100', '🏎️', 100, 'diamond', 'Speed Demon', 'שד המהירות', '100 personal tempo records.', '100 שיאי טמפו אישיים.'],
+      ['tempo-1', 'tempo', 1, 'bronze', 'First Tempo Record', 'שיא טמפו ראשון', 'Set a personal tempo record.', 'לקבוע שיא טמפו אישי.'],
+      ['tempo-25', 'tempo', 25, 'gold', '25 Tempo Records', '25 שיאי טמפו', '25 personal tempo records.', '25 שיאי טמפו אישיים.'],
+      ['tempo-100', 'tempo', 100, 'diamond', '100 Tempo Records', '100 שיאי טמפו', '100 personal tempo records.', '100 שיאי טמפו אישיים.'],
     ] as const
   ).map(([id, icon, n, tone, en, he, den, dhe]) => ({
     id: `tech:${id}`,
@@ -841,25 +845,37 @@ const repBadges = (): Badge[] =>
     { ...sp(`rep:${c}:advanced`, '♪', 'diamond', `${COURSE_TIER_NAME[c].en}: advanced repertoire`, `${COURSE_TIER_NAME[c].he}: רפרטואר מתקדם`, 'Learn a piece from the Advanced tier.', 'ללמוד יצירה מהשלב המתקדם.', (x) => count(x.repertoire?.[c]?.advanced ?? 0, 1)), group: c },
   ]);
 
+// First session (SPEC-COURSE-START): per course, the measured first win of its taste lesson.
+const firstBadges = (): Badge[] =>
+  (Object.keys(COURSE_TIER_NAME) as CourseId[]).map((c) => ({
+    ...sp(`first:${c}`, '◆', 'bronze', `${COURSE_TIER_NAME[c].en}: first session`, `${COURSE_TIER_NAME[c].he}: שיעור ראשון`, 'Finish the first session of the course with a measured result.', 'לסיים את השיעור הראשון בקורס עם תוצאה מדודה.', (x) => count(x.firstWins?.includes(c) ? 1 : 0, 1)),
+    group: c,
+  }));
+
+// Game badges (gameBadges.ts): mp, f and ff in each of the newer drum and advanced games.
+const gameBadges = (): Badge[] => gameBadgeSeeds().map((g) => ({ id: g.id, cat: 'special' as const, icon: g.icon, tone: g.tone, name: g.name, desc: g.desc, group: g.group, rule: (x: BadgeInput) => g.rule(x.gameTiers) }));
+
 const specialBadges: Badge[] = [
+  ...firstBadges(),
   ...tierBadges(),
+  ...gameBadges(),
   ...repBadges(),
-  sp('hat-trick', '🎩', 'bronze', 'Hat Trick', 'שלושער', 'Practice 3 days in a row.', 'להתאמן 3 ימים ברצף.', (_x, d) => count(d.bestStreak, 3)),
-  sp('fortnight', '🔥', 'silver', 'Fortnight Fever', 'קדחת השבועיים', 'Practice 14 days in a row.', 'להתאמן 14 ימים ברצף.', (_x, d) => count(d.bestStreak, 14)),
-  sp('half-century', '🎯', 'gold', 'Half-Century', 'חצי מאה', 'Practice 50 days in a row.', 'להתאמן 50 ימים ברצף.', (_x, d) => count(d.bestStreak, 50)),
-  sp('two-hundred', '🏆', 'diamond', 'The 200 Club', 'מועדון המאתיים', 'Practice 200 days in a row.', 'להתאמן 200 ימים ברצף.', (_x, d) => count(d.bestStreak, 200)),
-  sp('weekly-ritual', '🗓️', 'silver', 'Weekly Ritual', 'טקס שבועי', 'Finish the daily workout 7 days in a row.', 'לסיים את האימון היומי 7 ימים ברצף.', (_x, d) => count(d.workoutStreak, 7)),
-  sp('iron-routine', '🏋️', 'diamond', 'Iron Routine', 'שגרה מברזל', 'Finish the daily workout every day for a month (30 in a row).', 'לסיים את האימון היומי כל יום במשך חודש (30 ברצף).', (_x, d) => count(d.workoutStreak, 30)),
-  sp('seven-seas', '🧭', 'gold', 'Seven Seas', 'שבעת הימים', 'Practice all 7 areas within one week.', 'להתאמן בכל 7 התחומים בתוך שבוע אחד.', (_x, d) => count(d.bestWeekAreas, 7)),
-  sp('swiss-army-ears', '🧰', 'silver', 'Swiss Army Ears', 'אוזני אולר שוויצרי', 'Answer by voice, buttons, singing, playing and tapping.', 'לענות בקול, בכפתורים, בשירה, בנגינה ובהקשה.', (_x, d) => count(d.inputs, 5)),
-  sp('dawn-chorus', '🌅', 'bronze', 'Dawn Chorus', 'מקהלת השחר', '50 answers between 5 and 8 in the morning.', '50 תשובות בין 5 ל־8 בבוקר.', (_x, d) => count(d.dawn, 50)),
-  sp('midnight-jazz', '🦉', 'bronze', 'Midnight Jazz Club', 'מועדון הג׳אז של חצות', '50 answers between 11 at night and 4 in the morning.', '50 תשובות בין 11 בלילה ל־4 לפנות בוקר.', (_x, d) => count(d.night, 50)),
-  sp('weekend-warrior', '🛡️', 'silver', 'Weekend Warrior', 'לוחם סוף השבוע', '300 answers on weekends.', '300 תשובות בסופי שבוע.', (_x, d) => count(d.weekend, 300)),
-  sp('marathon', '🏃', 'gold', 'Marathon Session', 'מרתון', '300 answers in a single day.', '300 תשובות ביום אחד.', (_x, d) => count(d.bestDayItems, 300)),
-  sp('bullseye-day', '🎯', 'gold', 'Bullseye Day', 'יום בול', 'A day with at least 50 answers at 95% or better.', 'יום עם 50 תשובות לפחות ב־95% דיוק ומעלה.', (_x, d) => ({ done: d.bullseye, p: d.bullseye ? 1 : 0 })),
-  sp('grand-tour', '🗺️', 'silver', 'Grand Tour', 'המסע הגדול', 'Hold a rank in all 7 areas.', 'להחזיק דירוג בכל 7 התחומים.', (x) => count(rankedAreas(x, 0), 7)),
-  sp('renaissance', '🎭', 'platinum', 'Renaissance Musician', 'מוזיקאי רנסנס', 'Reach Gold in all 7 areas.', 'להגיע לזהב בכל 7 התחומים.', (x) => count(rankedAreas(x, tierStart('gold')), 7)),
-  sp('hall-of-fame', '🌟', 'master', 'Hall of Fame', 'היכל התהילה', 'Reach Master in any area.', 'להגיע למאסטר בתחום כלשהו.', (x) => count(RANK_AREAS.filter((a) => (x.ranks?.[a]?.best ?? -1) >= tierStart('master')).length, 1)),
+  sp('hat-trick', 'improv', 'bronze', 'Hat Trick', 'שלושער', 'Practice 3 days in a row.', 'להתאמן 3 ימים ברצף.', (_x, d) => count(d.bestStreak, 3)),
+  sp('fortnight', 'fire', 'silver', 'Fortnight Fever', 'קדחת השבועיים', 'Practice 14 days in a row.', 'להתאמן 14 ימים ברצף.', (_x, d) => count(d.bestStreak, 14)),
+  sp('half-century', 'target', 'gold', 'Half-Century', 'חצי מאה', 'Practice 50 days in a row.', 'להתאמן 50 ימים ברצף.', (_x, d) => count(d.bestStreak, 50)),
+  sp('two-hundred', 'trophy', 'diamond', 'The 200 Club', 'מועדון המאתיים', 'Practice 200 days in a row.', 'להתאמן 200 ימים ברצף.', (_x, d) => count(d.bestStreak, 200)),
+  sp('weekly-ritual', 'calendar', 'silver', 'Weekly Ritual', 'טקס שבועי', 'Finish the daily workout 7 days in a row.', 'לסיים את האימון היומי 7 ימים ברצף.', (_x, d) => count(d.workoutStreak, 7)),
+  sp('iron-routine', 'fire', 'diamond', 'Iron Routine', 'שגרה מברזל', 'Finish the daily workout every day for a month (30 in a row).', 'לסיים את האימון היומי כל יום במשך חודש (30 ברצף).', (_x, d) => count(d.workoutStreak, 30)),
+  sp('seven-seas', 'tune', 'gold', 'Seven Seas', 'שבעת הימים', 'Practice all 7 areas within one week.', 'להתאמן בכל 7 התחומים בתוך שבוע אחד.', (_x, d) => count(d.bestWeekAreas, 7)),
+  sp('swiss-army-ears', 'person', 'silver', 'Swiss Army Ears', 'אוזני אולר שוויצרי', 'Answer by voice, buttons, singing, playing and tapping.', 'לענות בקול, בכפתורים, בשירה, בנגינה ובהקשה.', (_x, d) => count(d.inputs, 5)),
+  sp('dawn-chorus', 'calendar', 'bronze', 'Dawn Chorus', 'מקהלת השחר', '50 answers between 5 and 8 in the morning.', '50 תשובות בין 5 ל־8 בבוקר.', (_x, d) => count(d.dawn, 50)),
+  sp('midnight-jazz', 'calendar', 'bronze', 'Midnight Jazz Club', 'מועדון הג׳אז של חצות', '50 answers between 11 at night and 4 in the morning.', '50 תשובות בין 11 בלילה ל־4 לפנות בוקר.', (_x, d) => count(d.night, 50)),
+  sp('weekend-warrior', 'calendar', 'silver', 'Weekend Warrior', 'לוחם סוף השבוע', '300 answers on weekends.', '300 תשובות בסופי שבוע.', (_x, d) => count(d.weekend, 300)),
+  sp('marathon', 'fire', 'gold', 'Marathon Session', 'מרתון', '300 answers in a single day.', '300 תשובות ביום אחד.', (_x, d) => count(d.bestDayItems, 300)),
+  sp('bullseye-day', 'target', 'gold', 'Bullseye Day', 'יום בול', 'A day with at least 50 answers at 95% or better.', 'יום עם 50 תשובות לפחות ב־95% דיוק ומעלה.', (_x, d) => ({ done: d.bullseye, p: d.bullseye ? 1 : 0 })),
+  sp('grand-tour', 'contour', 'silver', 'Grand Tour', 'המסע הגדול', 'Hold a rank in all 7 areas.', 'להחזיק דירוג בכל 7 התחומים.', (x) => count(rankedAreas(x, 0), 7)),
+  sp('renaissance', 'trophy', 'platinum', 'Renaissance Musician', 'מוזיקאי רנסנס', 'Reach Gold in all 7 areas.', 'להגיע לזהב בכל 7 התחומים.', (x) => count(rankedAreas(x, tierStart('gold')), 7)),
+  sp('hall-of-fame', 'star', 'master', 'Hall of Fame', 'היכל התהילה', 'Reach Master in any area.', 'להגיע למאסטר בתחום כלשהו.', (x) => count(RANK_AREAS.filter((a) => (x.ranks?.[a]?.best ?? -1) >= tierStart('master')).length, 1)),
 ];
 
 // ======================================================================= seasons (monthly area challenges)
@@ -874,13 +890,13 @@ const ss = (id: string, icon: string, tone: RankTier, en: string, he: string, de
   rule: (x) => rule(derived(x)),
 });
 const seasonBadges: Badge[] = [
-  ss('first', '🌱', 'bronze', 'First Season', 'עונה ראשונה', 'Complete a monthly area challenge.', 'להשלים אתגר תחום חודשי.', (d) => count(d.challenges.length, 1)),
-  ss('three', '🍂', 'silver', 'Three Seasons', 'שלוש עונות', 'Complete 3 monthly area challenges.', 'להשלים 3 אתגרי תחום חודשיים.', (d) => count(d.challenges.length, 3)),
-  ss('vivaldi', '🎻', 'gold', 'Vivaldi', 'ויוואלדי', 'Complete 4 monthly challenges — the Four Seasons.', 'להשלים 4 אתגרים חודשיים — ארבע העונות.', (d) => count(d.challenges.length, 4)),
-  ss('full-rotation', '🎡', 'platinum', 'Full Rotation', 'סבב מלא', 'Complete the challenge of every one of the 7 areas.', 'להשלים את האתגר של כל אחד מ־7 התחומים.', (d) => count(new Set(d.challenges.map((c) => c.area)).size, 7)),
-  ss('year', '📅', 'diamond', 'A Year of Music', 'שנה של מוזיקה', 'Complete 12 monthly challenges.', 'להשלים 12 אתגרים חודשיים.', (d) => count(d.challenges.length, 12)),
-  ss('gold-rush', '⛏️', 'gold', 'Gold Rush', 'הבהלה לזהב', 'Reach gold in a monthly challenge.', 'להגיע לזהב באתגר חודשי.', (d) => count(d.challenges.filter((c) => c.tier >= 3).length, 1)),
-  ss('golden-trio', '🏅', 'diamond', 'Golden Trio', 'שלישיית זהב', 'Reach gold in 3 monthly challenges.', 'להגיע לזהב ב־3 אתגרים חודשיים.', (d) => count(d.challenges.filter((c) => c.tier >= 3).length, 3)),
+  ss('first', 'calendar', 'bronze', 'First Season', 'עונה ראשונה', 'Complete a monthly area challenge.', 'להשלים אתגר תחום חודשי.', (d) => count(d.challenges.length, 1)),
+  ss('three', 'calendar', 'silver', 'Three Seasons', 'שלוש עונות', 'Complete 3 monthly area challenges.', 'להשלים 3 אתגרי תחום חודשיים.', (d) => count(d.challenges.length, 3)),
+  ss('vivaldi', 'calendar', 'gold', 'Vivaldi', 'ויוואלדי', 'Complete 4 monthly challenges — the Four Seasons.', 'להשלים 4 אתגרים חודשיים — ארבע העונות.', (d) => count(d.challenges.length, 4)),
+  ss('full-rotation', 'calendar', 'platinum', 'Full Rotation', 'סבב מלא', 'Complete the challenge of every one of the 7 areas.', 'להשלים את האתגר של כל אחד מ־7 התחומים.', (d) => count(new Set(d.challenges.map((c) => c.area)).size, 7)),
+  ss('year', 'calendar', 'diamond', 'A Year of Music', 'שנה של מוזיקה', 'Complete 12 monthly challenges.', 'להשלים 12 אתגרים חודשיים.', (d) => count(d.challenges.length, 12)),
+  ss('gold-rush', 'trophy', 'gold', 'Gold Rush', 'הבהלה לזהב', 'Reach gold in a monthly challenge.', 'להגיע לזהב באתגר חודשי.', (d) => count(d.challenges.filter((c) => c.tier >= 3).length, 1)),
+  ss('golden-trio', 'trophy', 'diamond', 'Golden Trio', 'שלישיית זהב', 'Reach gold in 3 monthly challenges.', 'להגיע לזהב ב־3 אתגרים חודשיים.', (d) => count(d.challenges.filter((c) => c.tier >= 3).length, 3)),
 ];
 
 // ======================================================================= catalogue + API
@@ -908,7 +924,9 @@ export function badgeCourse(b: Pick<Badge, 'id' | 'cat' | 'group'>): { course: B
   switch (b.cat) {
     case 'special':
       // Per-course game-tier badges belong to their course.
+      if (b.id.startsWith('special:first:')) return { course: g as CourseId };
       if (b.id.startsWith('special:tierc:') || b.id.startsWith('special:rep:')) return { course: g as CourseId };
+      if (b.id.startsWith('special:game:')) return gameBadgeCourse(b.id) ?? { course: 'general' };
       return { course: 'general' };
     case 'season':
       return { course: 'general' };

@@ -303,7 +303,7 @@ export const LESSONS: MiniLesson[] = [
       {
         say: { en: 'Put it all together and you get a mood: fast, loud and major sounds joyful; slow, soft and minor sounds sad.', he: 'מחברים הכל ומקבלים מצב רוח: מהיר, חזק ומז׳ורי נשמע שמח; איטי, שקט ומינורי נשמע עצוב.' },
         play: [notes([60, 64, 67, 72, 67, 64], 0.18, 0.9), rest(0.4), notes([57, 60, 64, 62, 60, 57], 0.55, 0.3)],
-        show: { text: { en: '😀 · 😢', he: '😀 · 😢' } },
+        show: { text: { en: 'joyful · sad', he: 'שמח · עצוב' } },
       },
       {
         say: { en: 'Your turn! Louder or softer, short or smooth, and how does it feel? There are no wrong feelings — but the clues are real.', he: 'תורכם! חזק או חלש, קצר או רציף, ואיך זה מרגיש? אין רגשות שגויים — אבל הרמזים אמיתיים.' },
@@ -455,7 +455,7 @@ export const LESSONS: MiniLesson[] = [
       },
       {
         say: { en: 'Your turn! Turn numbers into chords, continue a sequence, and say what was done to a motif or a rhythm.', he: 'תורכם! הפכו מספרים לאקורדים, המשיכו סקוונצה, ואמרו מה נעשה למוטיב או למקצב.' },
-        show: { text: { en: '🔀', he: '🔀' } },
+        show: { text: { en: 'numbers · sequence · motif', he: 'מספרים · סקוונצה · מוטיב' } },
       },
     ],
     more: [
@@ -589,7 +589,7 @@ export const LESSONS: MiniLesson[] = [
       {
         say: { en: 'Hi {name}! Even without chords, a tune has a home — the note where it feels finished. Listen, then hear the home note.', he: 'היי {name}! גם בלי אקורדים, למנגינה יש בית — הצליל שבו היא מרגישה גמורה. הקשיבו, ואז שמעו את צליל הבית.' },
         play: [notes([64, 62, 60, 62, 64, 67, 65, 62], 0.38), rest(0.6), notes([60], 1.2)],
-        show: { text: { en: '… 🏠', he: '… 🏠' } },
+        show: { text: { en: '… home', he: '… בית' } },
       },
       {
         say: { en: 'Two notes an octave apart sound like the same note, one high and one low — like a man and a child singing together.', he: 'שני צלילים במרחק אוקטבה נשמעים כמו אותו צליל, אחד גבוה ואחד נמוך — כמו גבר וילד ששרים יחד.' },
@@ -608,7 +608,7 @@ export const LESSONS: MiniLesson[] = [
       },
       {
         say: { en: 'Your turn! Find the home note of a tune, tell an octave from a near miss, and name the scale you hear.', he: 'תורכם! מצאו את צליל הבית של מנגינה, הבדילו בין אוקטבה לכמעט־אוקטבה, ותנו שם לסולם שאתם שומעים.' },
-        show: { text: { en: '🏠 · 8ve · ♪♪♪', he: '🏠 · 8ve · ♪♪♪' } },
+        show: { text: { en: 'home · 8ve · ♪♪♪', he: 'בית · 8ve · ♪♪♪' } },
       },
     ],
     more: [

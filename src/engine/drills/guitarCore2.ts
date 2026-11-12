@@ -51,7 +51,7 @@ export const CORE2_KINDS: Record<string, string[]> = {
   'g-legato': ['legato-shift', 'tap8'],
   'g-reading': ['chart-hits', 'two-pos', 'lead-sheet'],
   'g-arps': ['caged7', 'ext-arp', 'ust'],
-  'g-impro': ['chord-scale', 'motif'],
+  'g-impro': ['chord-scale', 'motif', 'trade'],
 };
 const OWN = new Set(Object.entries(CORE2_KINDS).flatMap(([f, ks]) => ks.map((k) => `${f}:${k}`)));
 
@@ -727,8 +727,130 @@ function genImpro2(s: DrillSpec, tu: Tuning): Drill {
       });
       return finish(s, tu, evs, { title: t(`Motif and displacement (${step === 1 ? 'a beat' : 'an 8th'} each bar): ${form.en} · ${NAMES[key]}`, `מוטיב והזזה (${step === 1 ? 'פעמה' : 'שמינית'} בכל תיבה): ${form.he} · ${NAMES[key]}`), bpm: 80, evenness: false, goal: { chordTonesOnBeats: true } });
     }
+    case 'trade':
+      return genGuitarTrade(s, tu);
   }
   throw new Error(`Unknown impro kind ${s.kind}`);
+}
+
+/** Chord symbol of a guitar form chord (intervals from the root). */
+function symOfInts(ints: number[]): string {
+  const has = (x: number) => ints.includes(x);
+  if (has(3) && has(6)) return 'm7♭5';
+  if (has(3)) return 'm7';
+  return has(11) ? 'maj7' : '7';
+}
+
+/** g-impro 7 options: 0 = 4s on ii–V–I, 1 = 4s on the blues, 2 = 2s on the blues. */
+export const GUITAR_TRADES = 3;
+
+/**
+ * Trading with the band on the guitar (the piano's k-bebop 8 `bb-trade`, the bass's b-impro 14 `trade4`): the band
+ * plays a phrase (a line over shells, on the app's piano), the guitarist answers with bars of their own, in turn,
+ * 16 bars. Option 0: 4s on ii–V–I; 1: 4s on the blues; 2: 2s on the blues. The player's bars are free (goal.free, as
+ * on the piano): a chord tone on beats 1 and 3 of every bar (any octave, within a quarter beat), the rest inside the
+ * chord's scale or a half step into it, at least two notes a bar. The band's phrase stops a beat before the player's
+ * bars, so the microphone never takes it for the answer; the band comps and the drums play under the player's bars
+ * only with headphones or MIDI (`band.rests` = the band's own bars, where its phrase already sounds).
+ */
+function genGuitarTrade(s: DrillSpec, tu: Tuning): Drill {
+  const key = mod(s.key, 12);
+  const op = (s.option ?? 0) % GUITAR_TRADES;
+  const form = IMPRO_FORMS[op === 0 ? 2 : 0];
+  const len = op === 2 ? 8 : 16; // beats per turn: 2 or 4 bars
+  const bars: [number, number[]][] = [];
+  while (bars.length < 16) bars.push(...form.bars);
+  bars.length = 16;
+  const LO = 52;
+  const HI = 76;
+  const C = 7;
+  const rnd = rng(`g-impro:trade:${key}:${op}`);
+  // A line of swung 8ths: a chord tone on beats 1 and 3 (the nearest, a step or more away), scale steps between.
+  const line: { beat: number; dur: number; p: number }[] = [];
+  let p = 62;
+  let dir = 1;
+  bars.forEach(([d, ints], bar) => {
+    const root = mod(key + d, 12);
+    const ct = ints.map((x) => mod(root + x, 12));
+    const sc = chordScale(ints).map((x) => mod(root + x, 12));
+    for (let k = 0; k < 8; k++) {
+      if (k % 4 === 0) {
+        const aim = p + dir * 2;
+        let best = -1;
+        for (let m = LO; m <= HI; m++) if (m !== p && ct.includes(mod(m, 12)) && (best < 0 || Math.abs(m - aim) < Math.abs(best - aim))) best = m;
+        p = best;
+      } else {
+        if (rnd() < 0.2) dir = -dir;
+        let x = p + dir;
+        while (!sc.includes(mod(x, 12))) x += dir;
+        if (x > HI || x < LO) {
+          dir = -dir;
+          x = p + dir;
+          while (!sc.includes(mod(x, 12))) x += dir;
+        }
+        p = x;
+      }
+      line.push({ beat: bar * 4 + k * 0.5, dur: 0.5, p });
+    }
+  });
+  const turns = Array.from({ length: 64 / len }, (_, i): [number, number] => [i * len, (i + 1) * len]);
+  const theirs = turns.filter((_, i) => i % 2 === 0);
+  const yours = turns.filter((_, i) => i % 2 === 1);
+  const mine = (b: number) => yours.some(([a, z]) => b >= a - 1e-6 && b < z - 1e-6);
+  const callEnd = (b: number) => (theirs.find(([a, z]) => b >= a - 1e-6 && b < z - 1e-6)?.[1] ?? b) - 1;
+  // The band's phrase (to a beat before your bars, an octave up) and its shells (root, 3rd, 7th from C3), on the piano.
+  const listen: NonNullable<Drill['listen']>['notes'] = line.filter((n) => !mine(n.beat) && n.beat < callEnd(n.beat) - 1e-6).map((n) => ({ beat: n.beat, dur: n.dur, midi: [n.p + 12], inst: 'piano' as const }));
+  bars.forEach(([d, ints], bar) => {
+    const b = bar * 4;
+    if (mine(b)) return;
+    const R = 48 + mod(key + d, 12);
+    listen.push({ beat: b, dur: Math.min(3.5, callEnd(b) - b), midi: [R, R + ints[1], R + ints[3]], inst: 'piano' });
+  });
+  // Your landings: beats 1 and 3 of each of your bars, any chord tone; the model's note is the written one.
+  const evs: Ev[] = [];
+  const landAt = new Map<number, number[]>();
+  bars.forEach(([d, ints], bar) => {
+    const root = mod(key + d, 12);
+    for (const b of [bar * 4, bar * 4 + 2]) {
+      if (!mine(b)) continue;
+      const m = line.find((n) => Math.abs(n.beat - b) < 1e-6)!;
+      evs.push({ beat: b, dur: 1, notes: [{ ...near(tu, m.p, C)!, ct: true, stroke: 'D' }] });
+      landAt.set(b, ints.map((x) => mod(root + x, 12)));
+    }
+  });
+  const scale = bars.map(([d, ints], bar) => {
+    const root = mod(key + d, 12);
+    return { from: bar * 4, to: bar * 4 + 4, pcs: [...new Set([...chordScale(ints), ...ints].map((x) => mod(root + x, 12)))] };
+  });
+  const two = op === 2;
+  const what = two ? t('Trading 2s with the band', 'חילופי שתיים עם הלהקה') : t('Trading 4s with the band', 'חילופי ארבע עם הלהקה');
+  const d = finish(s, tu, evs, {
+    title: t(`${what.en}: ${form.en} · ${NAMES[key]} — land a chord tone on 1 and 3`, `${what.he}: ${form.he} · ${NAMES[key]} — לנחות על צליל אקורד ב-1 וב-3`),
+    bpm: 100,
+    evenness: false,
+    keySig: 'C',
+    goal: { hands: false, free: { windows: yours, scale, minPerBar: 2, model: line.filter((n) => mine(n.beat)).map((n) => {
+          // Where the model's note sits on the neck (the "Show a model line" tab after the result).
+          const at = near(tu, n.p, C);
+          return { beat: n.beat, dur: n.dur, pitch: n.p, ...(at ? { string: at.s, fret: at.f } : {}) };
+        }) } },
+  });
+  return {
+    ...d,
+    notes: d.notes.map((n) => ({ ...n, land: landAt.get(n.beat) })),
+    beats: 64,
+    show: 'none',
+    chart: bars.map(([dg, ints]) => NAMES[mod(key + dg, 12)] + symOfInts(ints)),
+    band: { style: 'swing', bass: true, rests: theirs },
+    drums: { groove: 'swing' },
+    listen: {
+      notes: listen,
+      windows: theirs.map(([a, z]): [number, number] => [a, z - 1]),
+      ask: two
+        ? t('The band plays two bars, you answer two: a chord tone on beats 1 and 3, your own line between.', 'הלהקה מנגנת שתי תיבות ואתם עונים בשתיים: צליל אקורד בפעמות 1 ו-3, וקו משלכם ביניהן.')
+        : t('The band plays four bars, you answer four: a chord tone on beats 1 and 3, your own line between.', 'הלהקה מנגנת ארבע תיבות ואתם עונים בארבע: צליל אקורד בפעמות 1 ו-3, וקו משלכם ביניהן.'),
+    },
+  };
 }
 
 // ───────────────────────────── dispatch + catalogue ─────────────────────────────
@@ -827,6 +949,7 @@ export function core2Levels(): Partial<Record<FamilyId, GuitarLevelDef[]>> {
     'g-impro': [
       L('g-impro', 5, "Chord-scale lines through a standard's changes", 'קווי סולם-אקורד על ההרמוניה של סטנדרט', CORE2_STANDARDS.map((_, o) => I('chord-scale', { option: o, swing: true })), [0, 5, 7], [80, 110], 'swing 8ths', 7, { addOn: 'jazz' }),
       L('g-impro', 6, 'Motif and rhythmic displacement through the form', 'מוטיב והזזה קצבית לאורך הצורה', [0, 1, 2, 3, 4, 5].map((o) => I('motif', { option: o, swing: true })), BLUES_KEYS, [80, 110], 'swing 8ths', 8, { addOn: 'jazz' }),
+      L('g-impro', 7, 'Trading 4s and 2s with the band: your own line, a chord tone on 1 and 3', 'חילופי ארבע ושתיים עם הלהקה: קו משלכם, צליל אקורד ב-1 וב-3', Array.from({ length: GUITAR_TRADES }, (_, o) => I('trade', { option: o, swing: true })), [0, 5, 7, 10], [100, 160], 'swing 8ths', 8, { addOn: 'jazz' }),
     ],
   };
 }

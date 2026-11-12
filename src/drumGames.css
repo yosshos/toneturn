@@ -10,3 +10,19 @@
 .dg-result.bad .dg-line { color: var(--bad, #b42318); }
 .dg-big { font-size: 2.6rem; font-weight: 700; text-align: center; margin: 0; }
 .dg-actions { display: flex; gap: 8px; justify-content: center; }
+/* Rudiment Rush: the two-zone sticking choice on the setup card. */
+.dg-zones { display: flex; flex-direction: column; gap: 6px; }
+.dg-zones .seg { flex-wrap: wrap; }
+/* Groove-off (src/ui/GrooveOff.tsx): level line, the challenge code, per-limb marks. */
+.go-level { margin: 0; font-weight: 600; }
+.go-verdict { margin: 0; text-align: center; font-weight: 600; }
+.go-limbs { margin: 0; text-align: center; font-size: 0.9rem; color: var(--muted, #6b6577); }
+.go-enter { display: flex; flex-direction: column; gap: 4px; margin: 0; }
+.go-code { display: flex; flex-direction: column; gap: 4px; }
+.go-code-row { display: flex; gap: 8px; align-items: center; }
+.go-code-row input { flex: 1; min-width: 0; font-family: ui-monospace, monospace; text-transform: uppercase; }
+.go-code-row code { flex: 1; font-size: 1.05rem; letter-spacing: 0.04em; overflow-wrap: anywhere; }
+.go-screen .duel-friends, .go-screen .duel-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.go-screen .duel-friends li, .go-screen .duel-list li { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+/* d-latin 8–10 (mambo, songo, Mozambique): our own transcriptions awaiting a teacher's check. */
+.teacher-check { display: block; font-style: italic; opacity: 0.85; }

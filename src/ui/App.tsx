@@ -34,7 +34,7 @@ import { levelDrills } from '../engine/drills/plan';
 import { parseTopicRef, submitResult, type AssignItem } from '../cloud/teacher';
 import { DigestScreen } from './TeacherLoop';
 import { IMPROV_LEVELS } from '../engine/charts';
-import { PiecesScreen } from './Pieces';
+import { loadPieces, PiecesScreen, piecesDue } from './Pieces';
 import { SlowDownScreen } from './SlowDown';
 import { MySongScreen } from './MySong';
 import { ChartsScreen, type MyChart } from './Charts';
@@ -99,6 +99,7 @@ import { MenuSheet } from './Menu';
 import { DomainTiles, GAMES2, PlayScreen, TabBar, TAB_ROUTES, WhatsNewButton, type TabId } from './Arcade';
 import { Tuner } from './Tuner';
 import { ChordFinder } from './ChordFinder';
+import { ChordBuilder } from './ChordBuilder';
 import { Metronome } from './Metronome';
 import { Drills, drillSettingsOf } from './Drills';
 import { badgeInputOf, refreshRanksBadges } from '../engine/rankBadges';
@@ -127,6 +128,7 @@ import { NameTune } from './NameTune';
 import { TuneUp } from './TuneUp';
 import { Highway } from './Highway';
 import { DrumGame } from './DrumGame';
+import { GrooveOff } from './GrooveOff';
 import { MelodyPuzzle } from './MelodyPuzzle';
 import { PitchMemory } from './PitchMemory';
 import { PeakHunter } from './PeakHunter';
@@ -151,6 +153,9 @@ import { FriendsScreen } from './Friends';
 import { enablePush, reportGameBest, reportRating, reportStreakDays, setProfile, uploadAvatar } from '../cloud/social';
 import { courseHasProgress, firstWeekDay, levelOfReport, levelTested, markSetup, markTasteDone, markTasteOpened, markWinSeen, migrateCourseStart, offerDue, pickProbes, reportCourse, sessionsSince, setPersonalGoal, setupNeeded, snoozeOffer, stageOf, goalById, tasteFor, jazzWho, type CourseStartMap, type ProgressFacts, type SelfReport } from '../engine/courseStart';
 import { tasteDrills, tasteLesson } from '../engine/tasteLessons';
+import { realDrills } from '../engine/tasteLessons';
+import { firstWinCourses, markRealDone, markRealOpened, markRealSeen, realMusicCard, realMusicFor, skipReal } from '../engine/courseStart';
+import { RealMusicCard } from './CourseStart';
 import { CourseGoalLine, CourseSetup, CourseStartHero, CourseWelcome, FirstWeekCard, FirstWin, LevelOfferCard } from './CourseStart';
 import { isYoung } from '../engine/privacy';
 import { overallRating } from '../engine/rating';
@@ -164,9 +169,9 @@ import { STANDARD_CHANGES } from '../engine/standards';
 import { setPreferredMic } from '../speech/mic';
 
 /** Screens that play the band (0.69: its sets load here, and only here on Lite / Standard). */
-const BAND_ROUTES = new Set<string>(['charts', 'improv', 'groove', 'metronome', 'mixer', 'slowdown', 'perform', 'highway', 'drills', 'workoutrun', 'land', 'groove-echo', 'odd-echo', 'time-lock', 'ghost-control']);
+const BAND_ROUTES = new Set<string>(['charts', 'improv', 'groove', 'metronome', 'mixer', 'slowdown', 'perform', 'highway', 'drills', 'workoutrun', 'land', 'groove-echo', 'odd-echo', 'time-lock', 'ghost-control', 'rudiment-rush', 'groove-off']);
 
-type Route = 'intake' | 'studio' | 'home' | 'path' | 'arcade' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong' | 'perform' | 'learned' | 'tuner' | 'metronome' | 'songs' | 'repertoire' | 'drills' | 'workout' | 'workoutrun' | 'peakhunter' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'rush-voicing' | 'rush-scale' | 'rush-standard' | 'reharm' | 'transcribe' | 'bhtime' | 'riffecho' | 'polylock' | 'gameboard' | 'flight' | 'pitchmemory' | 'nametune' | 'tuneup' | 'highway' | 'melodypuzzle' | 'charts' | 'slowdown' | 'pieces' | 'mixer' | 'insights' | 'groove' | 'welcome' | 'coursestart' | 'puzzle' | 'improv' | 'exams' | 'plans' | 'admin' | 'land' | 'groove-echo' | 'odd-echo' | 'time-lock' | 'ghost-control' | 'licks' | 'transcribe-coach' | 'chordfinder' | 'mysong';
+type Route = 'intake' | 'studio' | 'home' | 'path' | 'arcade' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong' | 'perform' | 'learned' | 'tuner' | 'metronome' | 'songs' | 'repertoire' | 'drills' | 'workout' | 'workoutrun' | 'peakhunter' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'rush-voicing' | 'rush-scale' | 'rush-standard' | 'reharm' | 'transcribe' | 'bhtime' | 'riffecho' | 'polylock' | 'gameboard' | 'flight' | 'pitchmemory' | 'nametune' | 'tuneup' | 'highway' | 'melodypuzzle' | 'charts' | 'slowdown' | 'pieces' | 'mixer' | 'insights' | 'groove' | 'welcome' | 'coursestart' | 'puzzle' | 'improv' | 'exams' | 'plans' | 'admin' | 'land' | 'groove-echo' | 'odd-echo' | 'time-lock' | 'ghost-control' | 'rudiment-rush' | 'groove-off' | 'licks' | 'transcribe-coach' | 'chordfinder' | 'mysong' | 'chordbuilder';
 /** Invite links: #/online/CODE */
 const onlineCodeFromHash = () => (/^#\/?online\/(\w+)/.exec(location.hash)?.[1] ?? '');
 const PLAY_HASH = 'play';
@@ -178,7 +183,7 @@ const enterPlay = () => {
 };
 const routeFromHash = (): Route => {
   const h = location.hash.replace(/^#\/?/, '').replace(/^online\/.*$/, 'online').replace(/^settings\/.*$/, 'settings');
-  return (['path', 'arcade', 'settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong', 'perform', 'learned', 'studio', 'intake', 'tuner', 'metronome', 'songs', 'repertoire', 'drills', 'workout', 'workoutrun', 'peakhunter', 'rush-chord', 'rush-note', 'rush-fretboard', 'rush-interval', 'rush-keysig', 'rush-progression', 'rush-voicing', 'rush-scale', 'rush-standard', 'reharm', 'transcribe', 'bhtime', 'riffecho', 'polylock', 'gameboard', 'flight', 'pitchmemory', 'nametune', 'tuneup', 'highway', 'melodypuzzle', 'charts', 'slowdown', 'pieces', 'mixer', 'insights', 'groove', 'welcome', 'coursestart', 'puzzle', 'improv', 'exams', 'plans', 'admin', 'land', 'groove-echo', 'odd-echo', 'time-lock', 'ghost-control', 'licks', 'transcribe-coach', 'chordfinder', 'mysong'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
+  return (['path', 'arcade', 'settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong', 'perform', 'learned', 'studio', 'intake', 'tuner', 'metronome', 'songs', 'repertoire', 'drills', 'workout', 'workoutrun', 'peakhunter', 'rush-chord', 'rush-note', 'rush-fretboard', 'rush-interval', 'rush-keysig', 'rush-progression', 'rush-voicing', 'rush-scale', 'rush-standard', 'reharm', 'transcribe', 'bhtime', 'riffecho', 'polylock', 'gameboard', 'flight', 'pitchmemory', 'nametune', 'tuneup', 'highway', 'melodypuzzle', 'charts', 'slowdown', 'pieces', 'mixer', 'insights', 'groove', 'welcome', 'coursestart', 'puzzle', 'improv', 'exams', 'plans', 'admin', 'land', 'groove-echo', 'odd-echo', 'time-lock', 'ghost-control', 'rudiment-rush', 'groove-off', 'licks', 'transcribe-coach', 'chordfinder', 'mysong', 'chordbuilder'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
 };
 
 /** The level a generated modes lesson was made at (from its first question's pool size). */
@@ -619,7 +624,7 @@ export function App() {
   const toolFrom = useRef<Route>('home');
   const chartInit = useRef<MyChart | null>(null);
   const go = (r: Route) => {
-    if ((r === 'tuner' || r === 'metronome' || r === 'drone' || r === 'charts' || r === 'slowdown' || r === 'groove' || r === 'vocal' || r === 'learned' || r === 'chordfinder') && route !== r && route !== 'lesson' && route !== 'singalong' && route !== 'mixer') toolFrom.current = route === 'arcade' || route === 'path' || route === 'drills' || route === 'insights' || route === 'improv' || route === 'friends' || route === 'exams' ? route : 'home';
+    if ((r === 'tuner' || r === 'metronome' || r === 'drone' || r === 'charts' || r === 'slowdown' || r === 'groove' || r === 'vocal' || r === 'learned' || r === 'chordfinder' || r === 'chordbuilder') && route !== r && route !== 'lesson' && route !== 'singalong' && route !== 'mixer') toolFrom.current = route === 'arcade' || route === 'path' || route === 'drills' || route === 'insights' || route === 'improv' || route === 'friends' || route === 'exams' ? route : 'home';
     location.hash = r === 'lesson' || r === 'game' ? `/${PLAY_HASH}` : r === 'home' ? '' : `/${r}`;
     setRoute(r);
   };
@@ -962,7 +967,7 @@ export function App() {
   const [unlock, setUnlock] = useState<{ badges: Badge[]; rank?: RankChange } | null>(null);
   useEffect(() => {
     if (!settings || route === 'lesson') return;
-    const r = refreshRanksBadges(progress, new Date(), settings.uiLang === 'he' ? [5, 6] : undefined);
+    const r = refreshRanksBadges(progress, new Date(), settings.uiLang === 'he' ? [5, 6] : undefined, { firstWins: firstWinCourses(settings.courseStart) });
     if (!r) return;
     void store.saveProgress(r.next).then(() => setProgress(r.next));
     if (settings.cleanView || !settings.awardsInit) return;
@@ -975,7 +980,7 @@ export function App() {
     if (up || r.newly.length) setUnlock({ badges: r.newly, rank: up });
     if (up || r.newly.length) feedPost({ badges: r.newly, rank: up ?? null });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [progress.applied.length, progress.ratingEvents?.length, progress.drillItems, route]);
+  }, [progress.applied.length, progress.ratingEvents?.length, progress.drillItems, route, firstWinCourses(settings?.courseStart).join()]);
   useEffect(() => {
     if (!awardToast) return;
     const id = window.setTimeout(() => setAwardToast(null), 4500);
@@ -1288,7 +1293,53 @@ export function App() {
     drillFrom.current = 'taste';
     go('drills');
   };
+  /** Day 3 (SPEC-COURSE-START): the first "real music" moment — a full chorus with the band, measured; Toni on its card. */
+  const realRun = useRef<CourseId | null>(null);
+  const realVocal = useRef<{ course: CourseId; level: number; since: string } | null>(null);
+  const startReal = () => {
+    if (!settings) return;
+    const c = activeC;
+    const def = realMusicFor(c, cStart?.report);
+    updateCourseStart((m) => markRealOpened(m, c, new Date().toISOString()));
+    if (def.run.kind === 'vocal') {
+      realVocal.current = { course: c, level: def.run.level, since: new Date().toISOString() };
+      toolFrom.current = 'home';
+      setVocalWarmup(false);
+      setVocalLevel(def.run.level);
+      go('vocal');
+      return;
+    }
+    if (def.run.kind === 'lesson') {
+      // Saved after every answer under real:<course>: an abandoned one continues where it stopped.
+      openGenerated(tasteLesson(def, (Date.now() ^ (Math.random() * 1e9)) >>> 0), undefined, false, { key: `real:${c}`, title: def.title[s.uiLang] });
+      return;
+    }
+    realRun.current = c;
+    chartQueue.current = realDrills(def, { drumPad: drumMicOf(settings.drumKit) === 'pad' });
+    tasteTake.current = { acc: 0, bars: 0 };
+    drillSessionXp.current = 0;
+    drillSession.current = { takes: 0, clean: 0 };
+    drillFrom.current = 'taste';
+    go('drills');
+  };
+  const realDrillsDone = (c: CourseId, takes: number, clean: number) => {
+    const t0 = Math.max(takes, drillSession.current.takes);
+    const c0 = Math.max(clean, drillSession.current.clean);
+    const xp = drillSessionXp.current;
+    const x = tasteTake.current;
+    chartQueue.current = null;
+    const done = techResult('technique', t0, c0);
+    if (done) void done.then(setProgress);
+    // Only measured practice counts: left before its first take, the offer stays on Home ("Continue").
+    if (t0 > 0) updateCourseStart((m) => markRealDone(m, c, { kind: 'drills', takes: t0, clean: c0, ...(x.acc > 0 ? { acc: x.acc } : {}), bars: x.bars, xp }, new Date().toISOString()));
+    go('home');
+  };
   const tasteDrillsDone = (takes: number, clean: number) => {
+    const rc = realRun.current;
+    if (rc) {
+      realRun.current = null;
+      return realDrillsDone(rc, takes, clean);
+    }
     const c = activeC;
     const t0 = Math.max(takes, drillSession.current.takes);
     const c0 = Math.max(clean, drillSession.current.clean);
@@ -1433,14 +1484,25 @@ export function App() {
   const nudge = s.workoutNudge && s.workoutNudge.until >= today ? s.workoutNudge.delta : 0;
   const baseMinutes = Math.max(5, Math.min(60, ((s.intake as Intake | null | undefined)?.minutes ?? 10) + nudge));
   const tmplRaw = s.workoutTemplates?.[String(now0.getDay())] ?? s.workoutTemplates?.all ?? null;
+  // Learned pieces due for a review run (SPEC-PIECE §2.10): the pieces live in IndexedDB, so the count loads once a day
+  // and again after the pieces screen closes.
+  const [piecesDueN, setPiecesDueN] = useState(0);
+  useEffect(() => {
+    if (route === 'pieces') return;
+    let live = true;
+    void loadPieces().then((ps) => live && setPiecesDueN(piecesDue(ps, today).length)).catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [today, route === 'pieces']); // eslint-disable-line react-hooks/exhaustive-deps
   const suggestedWorkout = useMemo(() => {
     const tmpl = tmplRaw ? validateTemplate(tmplRaw, { leaveOut: s.pathLeaveOut ?? [], topics: new Set(Object.keys(TOPIC_GEN)), hidden: s.pathHidden ?? [], games: new Set(GAMES2.map((g) => g.id)) }) : null;
     // 0.61 (SPEC-COURSES): the workout belongs to the active course — its own areas, its goal, its warm-ups only.
     const course = courseOf(s.activeCourse);
     const own = COURSE_AREAS[course.id];
-    return suggestWorkout({ total: tmpl ? tmpl.reduce((a, b) => a + b.minutes, 0) : baseMinutes, goal: courseGoal(course.id, !!s.examPrep), priorities: (s.intake as Intake | null | undefined)?.priorities ?? null, leaveOut: [...new Set([...(s.pathLeaveOut ?? []).filter((d) => course.id === 'ear' || !own.includes(d)), ...INTAKE_AREAS.filter((d) => !own.includes(d))])], reviewsDue: new Set(dueReviews(progress.review, now0).map((r) => r.key)).size, singer: course.id === 'voice' && !s.noMic, view: pathView, template: tmpl, technique: s.drills?.inWorkout !== false && (course.id === 'keys' || course.id === 'guitar' || course.id === 'bass' || course.id === 'drums'), licksDue: course.id === 'drums' || course.id === 'ear' ? 0 : dueLicks(s.lickBook?.review, now0).length });
+    return suggestWorkout({ total: tmpl ? tmpl.reduce((a, b) => a + b.minutes, 0) : baseMinutes, goal: courseGoal(course.id, !!s.examPrep), priorities: (s.intake as Intake | null | undefined)?.priorities ?? null, leaveOut: [...new Set([...(s.pathLeaveOut ?? []).filter((d) => course.id === 'ear' || !own.includes(d)), ...INTAKE_AREAS.filter((d) => !own.includes(d))])], reviewsDue: new Set(dueReviews(progress.review, now0).map((r) => r.key)).size, singer: course.id === 'voice' && !s.noMic, view: pathView, template: tmpl, technique: s.drills?.inWorkout !== false && (course.id === 'keys' || course.id === 'guitar' || course.id === 'bass' || course.id === 'drums'), licksDue: course.id === 'drums' || course.id === 'ear' ? 0 : dueLicks(s.lickBook?.review, now0).length, piecesDue: course.id === 'ear' || course.id === 'jazz' ? 0 : piecesDueN });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathView, baseMinutes, tmplRaw, s.goal, s.examPrep, s.pathLeaveOut, s.pathHidden, s.mode, s.noSing, s.noMic, progress.review.length, today, progress.history.length]);
+  }, [pathView, baseMinutes, tmplRaw, s.goal, s.examPrep, s.pathLeaveOut, s.pathHidden, s.mode, s.noSing, s.noMic, progress.review.length, today, progress.history.length, piecesDueN]);
   const todayBlocks = s.workoutToday?.day === today ? s.workoutToday.blocks : suggestedWorkout;
   const [wrun, setWrun] = useState<WorkoutRun | null>(() => loadSlot<WorkoutRun>(`workout:${today}`)?.data ?? null);
   const wrunRef = useRef(wrun);
@@ -1629,8 +1691,11 @@ export function App() {
   const csSessions = sessionsSince(progress.history, activeC, cStart?.tasteDoneAt);
   const csOffer = offerDue(cStart, csSessions, levelTested(activeC, progress.history, Object.keys(s.drillStart ?? {})), localDay(new Date()));
   const csDay = firstWeekDay(cStart, csSessions);
+  const csReal = realMusicCard(cStart, csSessions, localDay(new Date()));
   const recapNext: { label?: string; open: (() => void) | null; secondary?: { label: string; open: () => void } } = slot?.key.startsWith('taste:')
     ? { label: s.uiLang === 'en' ? 'See your first result' : 'לתוצאה הראשונה', open: () => go('coursestart') }
+    : slot?.key.startsWith('real:')
+    ? { label: s.uiLang === 'en' ? 'See the result' : 'לתוצאה', open: () => go('home') }
     : origin.path
     ? { label: s.uiLang === 'en' ? 'Next step' : 'לשלב הבא', open: openNextStep, secondary: workoutAction ?? undefined }
     : workoutAction
@@ -1748,7 +1813,18 @@ export function App() {
           news={
             <>
               {csOffer && <LevelOfferCard lang={s.uiLang} onFind={findLevel} onLater={() => updateCourseStart((m) => snoozeOffer(m, activeC, localDay(new Date())))} />}
-              {csDay && cStage === 'done' && <FirstWeekCard lang={s.uiLang} day={csDay} picks={pickProbes(pathView.units)} onOpen={(x, unit) => openFromPath(x, unit, 'step')} />}
+              {csReal && cStage === 'done' && (
+                <RealMusicCard
+                  lang={s.uiLang}
+                  mode={csReal}
+                  def={realMusicFor(activeC, cStart?.report)}
+                  cs={cStart}
+                  onStart={startReal}
+                  onLater={() => updateCourseStart((m) => skipReal(m, activeC, csNow(), csSessions, localDay(new Date())))}
+                  onClose={() => updateCourseStart((m) => markRealSeen(m, activeC, csNow()))}
+                />
+              )}
+              {csDay && cStage === 'done' && csReal !== 'offer' && <FirstWeekCard lang={s.uiLang} day={csDay} picks={pickProbes(pathView.units)} onOpen={(x, unit) => openFromPath(x, unit, 'step')} />}
               {(progress.ratingEvents?.length ?? 0) > 0 && <NickPrompt lang={s.uiLang} s={s} onChange={updateSettings} />}
               {lastFreeze && settings?.seenFreezeDay !== lastFreeze && gems.streak.count > 0 && (
                 <FreezeToast t={t} count={gems.streak.count} onClose={() => updateSettings({ seenFreezeDay: lastFreeze })} />
@@ -1886,6 +1962,8 @@ export function App() {
             licks: () => gate('game:licks', () => go('licks')),
             // GUITAR_DEEPENING §6.3: the chord finder (guitar course), opened by its quick lesson the first time.
             ...(s.activeCourse === 'guitar' ? { chordfinder: () => gate('game:chordfinder', () => go('chordfinder')) } : {}),
+            // Chord & cadence builder (guitar roadmap): the keys and guitar courses' Tools.
+            ...(s.activeCourse === 'guitar' || s.activeCourse === 'keys' ? { chordbuilder: () => gate('game:chordbuilder', () => go('chordbuilder')) } : {}),
             transcribe: () => gate('game:transcribe', () => go('transcribe-coach')),
             puzzle: () => go('puzzle'),
             exams: () => go('exams'),
@@ -1952,6 +2030,9 @@ export function App() {
             const tc = slot?.key.startsWith('taste:') ? (slot.key.slice(6) as CourseId) : null;
             const r = p.history[p.history.length - 1];
             if (tc && r) updateCourseStart((m) => markTasteDone(m, tc, { kind: 'lesson', right: r.firstTry, total: r.total, xp: r.xp }, r.completedAt));
+            // Day 3's "real music" moment as questions: its measured result (kept once) for the card on Home.
+            const rc = slot?.key.startsWith('real:') ? (slot.key.slice(5) as CourseId) : null;
+            if (rc && r) updateCourseStart((m) => markRealDone(m, rc, { kind: 'lesson', right: r.firstTry, total: r.total, xp: r.xp }, r.completedAt));
             if (user) void runSync();
           }}
           onSettings={updateSettings}
@@ -1986,11 +2067,11 @@ export function App() {
               </button>
               <EarChordCard t={t} ratings={ratingsOf(progress)} bestLeague={s.bestLeague} />
               <DomainTiles t={t} progress={progress} onPractice={practiceSkill} lang={s.uiLang} onTechnique={() => go('drills')} onLearn={{ has: (k) => !!miniForSkill(k), open: (k) => openRefresher(miniForSkill(k)!, () => undefined) }} />
-              <ChallengeCard input={badgeInputOf(progress, new Date(), s.uiLang === 'he' ? [5, 6] : undefined)} lang={s.uiLang} />
+              <ChallengeCard input={badgeInputOf(progress, new Date(), s.uiLang === 'he' ? [5, 6] : undefined, { firstWins: firstWinCourses(s.courseStart) })} lang={s.uiLang} />
             </>
           }
           map={<SkillMap t={t} lang={s.uiLang} progress={progress} bestLeague={s.bestLeague} onBack={() => go('home')} onPractice={practiceSkill} onPlacement={openPlacement} />}
-          badges={<BadgesView lang={s.uiLang} input={badgeInputOf(progress, new Date(), s.uiLang === 'he' ? [5, 6] : undefined)} log={progress.badges} earnedOnly course={s.activeCourse ?? 'ear'} courses={s.courses ?? ['ear']} />}
+          badges={<BadgesView lang={s.uiLang} input={badgeInputOf(progress, new Date(), s.uiLang === 'he' ? [5, 6] : undefined, { firstWins: firstWinCourses(s.courseStart) })} log={progress.badges} earnedOnly course={s.activeCourse ?? 'ear'} courses={s.courses ?? ['ear']} />}
         />
       )}
       {consentThen && (
@@ -2280,7 +2361,7 @@ export function App() {
           }}
         />
       )}
-      {route === 'insights' && <InsightsScreen lang={s.uiLang} progress={progress} onBack={() => go('skills')} onTopic={(id, lv) => openTopic(id, lv)} onDrills={() => go('drills')} onPieces={() => go('pieces')} onGroove={() => go('groove')} />}
+      {route === 'insights' && <InsightsScreen lang={s.uiLang} progress={progress} onBack={() => go('skills')} onTopic={(id, lv) => openTopic(id, lv)} onDrills={() => go('drills')} onPieces={() => go('pieces')} onGroove={() => go('groove')} course={(s.activeCourse ?? 'ear') as CourseId} />}
       {route === 'groove' && (
         <GrooveTrainerScreen
           settings={s}
@@ -2401,6 +2482,10 @@ export function App() {
         />}
       {route === 'tuner' && <Tuner lang={s.uiLang} settings={s} onChange={updateSettings} onBack={() => go(toolFrom.current)} />}
       {route === 'chordfinder' && <ChordFinder lang={s.uiLang} settings={s} onBack={() => go(toolFrom.current)} />}
+      {route === 'chordbuilder' && (
+        // Chord & cadence builder: a cadence played through counts like a game (ratings, XP, path evidence).
+        <ChordBuilder lang={s.uiLang} settings={s} course={s.activeCourse === 'guitar' ? 'guitar' : 'keys'} onBack={() => go(toolFrom.current)} onResult={(r) => void store.recordGame2('cadence-builder', r.score, undefined, r.detail).then(setProgress)} />
+      )}
       {route === 'metronome' && <Metronome lang={s.uiLang} settings={s} onChange={updateSettings} onBack={() => go(toolFrom.current)} />}
       {unlock &&
         route !== 'lesson' &&
@@ -2547,7 +2632,7 @@ export function App() {
           onBack={() => go('arcade')}
         />
       )}
-      {(['land', 'groove-echo', 'odd-echo', 'time-lock', 'ghost-control'] as const).map((g) => {
+      {(['land', 'groove-echo', 'odd-echo', 'time-lock', 'ghost-control', 'rudiment-rush'] as const).map((g) => {
         // Drum games P1 (DRUMS_NICHE_PLAN §3): measured takes on the kit, tiers / XP / path like every game.
         if (route !== g) return null;
         return (
@@ -2564,9 +2649,25 @@ export function App() {
             }}
             best={progress.bests?.[g]}
             tier={tierFor(g)}
+            onKit={(drumKit) => updateSettings({ drumKit })}
+            bestBpm={g === 'rudiment-rush' ? progress.counts?.rushBpm : undefined}
           />
         );
       })}
+      {route === 'groove-off' && (
+        // Groove-off (DRUMS_NICHE_PLAN §3): the drum duel; its tier is the drum level from the ladder.
+        <GrooveOff
+          lang={s.uiLang}
+          settings={s}
+          items={progress.drillItems ?? {}}
+          signedIn={!!user}
+          onExit={() => go('arcade')}
+          onResult={(r) => {
+            void store.recordGame2('groove-off', r.score, undefined, r.detail).then(setProgress);
+            noteGameBest('groove-off', r.score, r.detail);
+          }}
+        />
+      )}
       {route === 'studio' && (
         <Suspense fallback={<main className="panel-screen"><p className="stage-msg">{t.avatarLoading}</p></main>}>
           <AvatarStudio t={t} settings={s} onBack={() => go('home')} onSave={(p) => { updateSettings({ avatars: p }); go('home'); }} />
@@ -2603,8 +2704,18 @@ export function App() {
                 toolFrom.current = 'coursestart';
               }
             }
+            // Day 3 sung: the whole song's first measured result is the moment's result.
+            const rv = realVocal.current;
+            if (rv) {
+              const r = [...p.history].reverse().find((x) => x.completedAt >= rv.since && x.lessonId.startsWith('vocal') && x.lessonId.endsWith(String(rv.level)));
+              if (r) {
+                realVocal.current = null;
+                updateCourseStart((m) => markRealDone(m, rv.course, { kind: 'lesson', right: r.firstTry, total: r.total, xp: r.xp }, r.completedAt));
+              }
+            }
           }}
           onBack={() => {
+            realVocal.current = null;
             tasteVocal.current = null;
             go(toolFrom.current);
           }}

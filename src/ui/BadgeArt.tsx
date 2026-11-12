@@ -785,11 +785,132 @@ export const GLYPHS: Record<string, Glyph> = {
     </>
   ),
   'special:fortnight': () => flame(),
+  // Game badges (engine/gameBadges.ts): one drawn glyph per game.
+  // Time Lock: a clock face with the bar lines of a silent bar.
+  'special:game:time-lock': () => (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      {p('M12 6.5V12l3.5 2.5')}
+      {p('M5 21.5h14', false)}
+    </>
+  ),
+  // Ghost Control: one accent and two small ghost notes in brackets.
+  'special:game:ghost-control': () => (
+    <>
+      {head(6, 16, 2.8)}
+      {p('M8.6 15.4V5 M5.5 4 L9 6.5')}
+      {p('M12.5 13.5 l-1 2 l1 2 M21.5 13.5 l1 2 l-1 2')}
+      {head(15, 16, 1.6)}
+      {head(19, 16, 1.6)}
+    </>
+  ),
+  // Rudiment Rush: two crossed sticks over R L R R.
+  'special:game:rudiment-rush': () => (
+    <>
+      {p('M4 3 L15 16 M20 3 L9 16')}
+      {dot(15.6, 16.7, 1.6)}
+      {dot(8.4, 16.7, 1.6)}
+      {p('M3 21h3 M8 21h3 M13 21h3 M18 21h3', false)}
+    </>
+  ),
+  // Groove-off: two hi-hat cymbals facing each other — the duel.
+  'special:game:groove-off': () => (
+    <>
+      {p('M2.5 9 L9.5 7 L9.5 11 Z', true)}
+      {p('M21.5 9 L14.5 7 L14.5 11 Z', true)}
+      {p('M6 10v10 M18 10v10 M3.5 20h5 M15.5 20h5')}
+      {p('M12 4v4 M12 12v2', false)}
+    </>
+  ),
+  // Voicing Spy: a magnifier over a stacked chord.
+  'special:game:rush-voicing': () => (
+    <>
+      <circle cx="10" cy="10" r="6.5" />
+      {p('M14.8 14.8 L21 21')}
+      {dot(10, 13, 1.5)}
+      {dot(10, 10, 1.5)}
+      {dot(10, 7, 1.5)}
+    </>
+  ),
+  // Scale & Mode Rush: a stair of notes with a timer tick.
+  'special:game:rush-scale': () => (
+    <>
+      {head(4.5, 19, 1.9)}
+      {head(9, 15, 1.9)}
+      {head(13.5, 11, 1.9)}
+      {head(18, 7, 1.9)}
+      {p('M16 2.5h5 M18.5 2.5v2', false)}
+    </>
+  ),
+  // Name That Standard: a lead sheet with a question bar.
+  'special:game:rush-standard': () => (
+    <>
+      {p('M3 8h18M3 16h18')}
+      {p('M3 5v14M21 5v14M12 5v14', false)}
+      {p('M6 13 L9 11 M15 10.5c0-1.6 3-1.6 3 0 0 1.2-1.5 1.3-1.5 2.6')}
+      {dot(16.5, 15, 0.9)}
+    </>
+  ),
+  // Reharm Spotter: one bar crossed to another — a substitution arrow.
+  'special:game:reharm': () => (
+    <>
+      {p('M3 6v12 M12 6v12 M21 6v12', false)}
+      {p('M5 15 Q12 4 19 15')}
+      {p('M16.5 14.5 L19 15 L19.5 12.3')}
+    </>
+  ),
+  // Transcription Race: a pencil over a stave line.
+  'special:game:transcribe': () => (
+    <>
+      {p('M3 19h18', false)}
+      {p('M6 16 L16.5 5.5 L19 8 L8.5 18.5 L5.5 19 Z')}
+      {p('M14.5 7.5 L17 10')}
+    </>
+  ),
+  // Barry Harris in Time: a diminished circle and a beat tick.
+  'special:game:bhtime': () => (
+    <>
+      <circle cx="10" cy="11" r="6" />
+      {p('M18 4v16', false)}
+      {p('M16 20h4')}
+      {dot(10, 11, 1.4)}
+    </>
+  ),
+  // Odd-Meter Riff Echo: 7 marks grouped 2+2+3 with an echo arc.
+  'special:game:riffecho': () => (
+    <>
+      {p('M3 15v4 M6 15v4 M10 15v4 M13 15v4 M17 15v4 M19.5 15v4 M22 15v4')}
+      {p('M5 10 Q12 3 19 10')}
+      {p('M8 11.5 Q12 7.5 16 11.5', false)}
+    </>
+  ),
+  // Polyrhythm Lock: 3 dots over 2 dots, joined by a lock bar.
+  'special:game:polylock': () => (
+    <>
+      {dot(4, 7, 1.6)}
+      {dot(12, 7, 1.6)}
+      {dot(20, 7, 1.6)}
+      {dot(4, 17, 1.6)}
+      {dot(16, 17, 1.6)}
+      {p('M4 3v18', false)}
+      {p('M2 12h20')}
+    </>
+  ),
   // Game tiers (GAMES_TIERS_PLAN): a crescendo hairpin over a bar line — getting louder, level by level.
   'special:tier': () => (
     <>
       {p('M3 12 L20 6 M3 12 L20 18')}
       {p('M21.5 4v16', false)}
+    </>
+  ),
+  // First session (SPEC-COURSE-START): the downbeat — a bar line, one note on beat 1 and its tick.
+  'special:first': () => (
+    <>
+      {p('M3 5v14')}
+      {p('M3 12h18', false)}
+      <ellipse cx="9.5" cy="15" rx="2.6" ry="2" fill={F} stroke="none" />
+      {p('M12 15V6')}
+      {p('M15 9.5l2.2 2.2L21 7')}
     </>
   ),
   // Repertoire (SPEC-REPERTOIRE): a lead sheet — two stave lines, bar lines and a chord slash.
@@ -953,6 +1074,9 @@ export function glyphKeyOf(b: Pick<Badge, 'id' | 'cat' | 'group'>): string {
       return 'keys';
     case 'tech':
       return b2 !== undefined ? `family:${a}` : `tech:${a}`;
+    case 'special':
+      // Game badges: one glyph per game, whatever the tier (special:game:<game>:<tier>).
+      return a === 'game' && b2 ? `special:game:${b2}` : b.id;
     default:
       return b.id;
   }
@@ -966,6 +1090,7 @@ export function resolveGlyph(b: Pick<Badge, 'id' | 'cat' | 'group'>): { key: str
   if (key.startsWith('family:b-')) return { key, glyph: GLYPHS['family:bass'], fallback: false };
   if (key.startsWith('special:tier')) return { key, glyph: GLYPHS['special:tier'], fallback: false };
   if (key.startsWith('special:rep:')) return { key, glyph: GLYPHS['special:rep'], fallback: false };
+  if (key.startsWith('special:first:')) return { key, glyph: GLYPHS['special:first'], fallback: false };
   return { key, glyph: FALLBACK, fallback: true };
 }
 

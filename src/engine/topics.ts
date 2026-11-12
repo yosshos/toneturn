@@ -27,6 +27,7 @@ import './topicsJazz';
 import './topicsProgGames';
 import './topicsGaps';
 import './topicsChartAnalysis';
+import './topicsDrumStyle'; // DRUMS_NICHE_PLAN: name the style by ear (drums course, optional)
 import './topicsJazzEar'; // EAR_THEORY_AUDIT: advanced jazz ear and prog rhythm
 import { applyDepth } from './topicsDepth';
 

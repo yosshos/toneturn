@@ -711,3 +711,44 @@ remain topics.
 `heardTime`, about ±20 ms), my-song extraction on real recordings (clean on synthetic audio; a band mix will give
 gaps), quarter-tone splitting of a real voice; Hebrew copy by a native reviewer; the two new lessons' English
 narration is not recorded (`tests/voiceFiles` fails on the new lines until then).
+
+
+## Implemented (P3)
+
+Third pass (2026-11-11): the items "built short of the plan" in P2. Only the microphone grades. Code:
+`src/engine/voiceP2.ts` (`rejoinAt`, `paceOf`, `stretchSegment`, `reentryOffset`, `synthColla`), `voiceGrade.ts`
+(`collaParts`, `gradeCollaSong`), `src/engine/voiceEar.ts` (what an ear item plays and shows), the families in
+`voiceFamilies.ts`, the take in `src/ui/VoiceTimed.tsx` and `Vocal.tsx`. Tests: `tests/voiceP3.test.ts` (12).
+
+| Level | Family · L | What is sung | Measured, pass rule |
+|---|---|---|---|
+| 1408 | F14 L6 colla voce (changed) | the first phrase free: the band follows note by note and its **groove stretches** — the ballad comp, bass and brushes between two melody notes are played at the singer's pace (the last two notes' time over their written beats, kept within ½×–2× the tempo, smoothed); the last free chord is held, the band **counts one bar** and the second phrase is in time | free notes reached in tune (follow ≥ 80 %), the tempo phrase as a band song (pitch + time), and **back on the bar**: the onset nearest the written re-entry, a hard rule within one beat (scored full ≤ 0.15 beat); every phrase ≥ 0.7 |
+| 1409 | F14 L9 full AABA (item 1 changed) | *Lantern Street* with its own new 8-bar **verse** (ours, ends on the dominant), sung colla voce, then the count-in and the 32-bar chorus swung at 132 | as 1408 per phrase (6 phrases), ≥ 0.72 each; item 2 (the last A interpreted) unchanged |
+| 1203 | F10 L1 echo | four own two-bar melodies, played with their rhythm, sung back | the melody grader (per-note pitch), 0.6 |
+| 1204 | F10 L3 intervals from a note | only the given note is played (and shown); sing it, then a named interval up or down (M3, P5, m3, P4, M6, m6) | as above, 0.6; a semitone-wrong interval fails |
+| 1205 | F10 L5 audiation | a motif moving by step: two bars played, the **third never played** is sung (nothing of it shown; the extra listen replays the first played note) | per-note pitch of the unplayed bar, 0.6 |
+| 1309 | F13 L1 one phrase of a song | the first phrase of four level-1 public-domain songs (Frère Jacques, Mary Had a Little Lamb, the German folk tune of "Yonatan", London Bridge), repeated notes joined | per-note pitch, 0.6 |
+
+**Placement and old progress.** No level was renumbered. `v-ear` is now 1203 → 8 → 1204 → 1201 → 1205 → 1202 (L1–L6
+as the plan), `v-songs` starts with 1309. A level that was open before stays open (`voiceLevelUnlocked`: the old order
+is kept as a second key — 1301 and 8 stay open from the start, 1201 still opens after 8). A placement start saved
+before (`drillStart` for `v-songs` / `v-ear`) now counts the one level put in front (`voiceStartNow`, `before: 1`), so
+the same old levels stay ✓ by test and the new first level is ✓ with them. The new levels feed the path (`vocal:<n>`
+steps), XP and the voice-take record, the family badges, the ratings (intervals → singing/intervals, echo and
+audiation → sequences/inner, the song echo → singing/songs) and the quick lessons by number base (ear → the drift +
+chord-tones lesson, 1309 → songs with the band).
+
+**Still not built**: Tier 1A standards (no period transcriptions here). A colla voce section in the middle of a song
+(free – tempo – free) is not offered; only free then tempo.
+
+**No memorizable items (follow-up)**: the echo (1203) and audiation (1205) melodies are generated fresh every session
+(`sessionEarItem` in `voiceEar.ts`, seeded, applied when the level opens), item ids unchanged. Echo: as many notes and
+the same rhythm as the fixed item, diatonic, no leap wider than its widest, its span plus at most a whole step, no note
+repeated straight after itself, ending on the tonic. Audiation: a motif of the same length from a pool, a start degree
+and a direction; the third bar is never played. The fixed melodies stay as the templates and test fixtures. Intervals
+(1204) and the song echoes (1309) keep their content (the interval is placed in the range; the songs are the task).
+
+**Unverified**: on a real phone — the stretched groove's feel (scheduling by `heardTime` when a note is recognised,
+about 60 ms after the sung onset plus the mic delay; a due event is played at once when it is up to 250 ms late), the
+count-in after the free part and the re-entry timing with a speaker (the bleed gate learns the pads and the tempo
+band's pitches); the Hebrew copy by a native reviewer. The new lines are not in the recorded narration.

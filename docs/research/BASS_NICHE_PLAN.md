@@ -327,6 +327,10 @@ Not built / not verified (P2):
   ladder's repair — owner's call.
 - **Patterns to check with a teacher**: the artificial-harmonic and tapping fingerings are self-check (§6); comping
   shells on the bass are root–7th only (no 3–7 shells).
+  *Update 2026-11-12: `b-ext` 9 "3–7 shells: root, 7th and 10th" (kind `shell37`, bassNiche2.ts): root on the E string,
+  7th on the D string, the 3rd an octave up on the G string, Charleston comping over ii–V–I (op 0) and the blues (op 1),
+  with the drums; all three notes must ring (the same chroma check, goal.bass.doubleStops 0.8; the result line says
+  "all three notes" for shells). Levels 1–8 keep their ids. Not verified on a real bass (three-note chroma on a bass).*
 - **Real takes**: synthetic MIDI takes only; harmonic pitch detection on a real bass (the 4th / 3rd fret partials are
   quiet), double-stop chroma and the fretless cents gate are untested on a real instrument.
 - The track is asked on the welcome card only (and in Drills); the scheduler's weighting is the track filter itself.

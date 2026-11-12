@@ -102,6 +102,7 @@ const LEVEL_BLURB: Record<PuzzleLevel, Text> = {
   6: { en: '6 notes, minor', he: '6 תווים, מינור' },
   7: { en: '7 notes, big leaps, major or minor', he: '7 תווים, קפיצות גדולות, מז׳ור או מינור' },
   8: { en: '8 notes, chromatic', he: '8 תווים, כרומטי' },
+  9: { en: '8 notes, jazz lines', he: '8 תווים, קווי ג׳אז' },
 };
 
 const fresh = (runSeed: number, level: PuzzleLevel, labels: 'degrees' | 'names'): PuzzleSaved => {
@@ -249,9 +250,9 @@ export function MelodyPuzzle({
       onResult({ game: 'melody-puzzle', score: st.score, detail: { puzzles: PUZZLES_PER_RUN, startLevel, topLevel: st.topLevel, labels: st.labels, ...(st.tier ? { tier: st.tier, max: PUZZLES_PER_RUN * 100 } : {}) } });
       return;
     }
-    const n0 = nextLevel(st.level, st.streak);
-    // A tier keeps the run inside its levels.
+    // A tier keeps the run inside its levels (ff climbs into the jazz lines, level 9).
     const cap = st.tier ? tierLevels(st.tier)[tierLevels(st.tier).length - 1] : MAX_PUZZLE_LEVEL;
+    const n0 = nextLevel(st.level, st.streak, cap);
     const nl = { ...n0, level: Math.min(n0.level, cap) as PuzzleLevel };
     const base: PuzzleSaved = { ...st, index, level: nl.level, streak: nl.streak, topLevel: Math.max(st.topLevel, nl.level) as PuzzleLevel, plays: 0, checks: 0, elapsedMs: 0, solved: false, revealed: false, wrong: null, placed: [] };
     const p = puzzleAt(base.level, puzzleSeed(base));

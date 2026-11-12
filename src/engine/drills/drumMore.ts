@@ -293,7 +293,7 @@ function fills(s: DrillSpec, lv: number): Drill {
   switch (lv) {
     case 6: {
       // Flam / accent fills into an anticipation: the crash + kick on the "&" of 4, then nothing on the next 1. A crash
-      // choke (aftertouch on most e-kits) is not measured.
+      // choke (aftertouch on most e-kits) is measured when the kit sends it.
       const hits: DH[] = [];
       const lands: number[] = [];
       for (let ph = 0; ph < 2; ph++) {
@@ -312,8 +312,9 @@ function fills(s: DrillSpec, lv: number): Drill {
         hits.push({ b: land, v: 'crash', h: 'R', d: 0.5 }, { b: land, v: 'kick', h: 'R', d: 0.5 });
       }
       const nm = [t('flams on the snare', 'פלאמים על הסנר'), t('accents down the toms', 'הדגשות במורד הטומים'), t('flams around the kit', 'פלאמים סביב המערכת')][op];
-      const goal: DrumGoal = { landing: { beats: lands, ms: 20 }, ...(op === 1 ? { accentPos: 0.85, accentVoices: ['tom1', 'tom2', 'tom3'] as DrumVoice[] } : { flam: 0.85 }) };
-      return finish(s, hits, { title: t(`Fill into the "&" of 4 · ${nm.en}`, `מעבר אל ה"וְ" של 4 · ${nm.he}`), bpm: 80, bars: 8, mic: false, goal });
+      // The choke (drumChoke.ts): each crash grabbed by the next 1 — measured only on a kit that sends chokes.
+      const goal: DrumGoal = { landing: { beats: lands, ms: 20 }, choke: { beats: lands, by: 0.5 }, ...(op === 1 ? { accentPos: 0.85, accentVoices: ['tom1', 'tom2', 'tom3'] as DrumVoice[] } : { flam: 0.85 }) };
+      return finish(s, hits, { title: t(`Fill into the "&" of 4 · ${nm.en}`, `מעבר אל ה"וְ" של 4 · ${nm.he}`), bpm: 80, bars: 8, tail: 1, mic: false, goal });
     }
     case 7: {
       // The fill length called: four phrases, each ending in a fill of 1, 2 or 4 beats (seeded) — read it, land on 1.
@@ -452,10 +453,10 @@ function feet(s: DrillSpec, lv: number): Drill {
       return finish(s, kickPairs(gb({ h: 'x.x.x.x.x.x.x.x.', s: BB, k }, 4, 8)), { title: t(`Kick doubles · variation ${op + 1}`, `כפולות בקיק · וריאציה ${op + 1}`), bpm: 60, bars: 8, mic: false, goal: { ratio: 0.8 } });
     }
     case 5: {
-      // The foot splash: the hi-hat pedal on the "&" under the ride. The kit sends the pedal as one note, so its timing is
-      // measured; a splash and a chick are not told apart yet.
+      // The foot splash: the hi-hat pedal on the "&" under the ride. Timing as always; splash against chick by the kit's
+      // splash note or the pedal's CC4 (drumSplash.ts) — 80 % of the pedal notes must ring open.
       const p = ['...x...x', '.x.x.x.x', '.......x'][op];
-      return finish(s, gb({ r: 'x.x.x.x.', s: '..x...x.', k: 'x...x...', p }, 2, 8), { title: t(`Foot splash on the "&" · ${[t('of 2 and 4', 'של 2 ו-4'), t('every "&"', 'כל "וְ"'), t('of 4', 'של 4')][op].en}`, `ספלאש ברגל על ה"וְ" · ${[t('of 2 and 4', 'של 2 ו-4'), t('every "&"', 'כל "וְ"'), t('of 4', 'של 4')][op].he}`), bpm: 80, bars: 8, mic: false });
+      return finish(s, gb({ r: 'x.x.x.x.', s: '..x...x.', k: 'x...x...', p }, 2, 8), { title: t(`Foot splash on the "&" · ${[t('of 2 and 4', 'של 2 ו-4'), t('every "&"', 'כל "וְ"'), t('of 4', 'של 4')][op].en}`, `ספלאש ברגל על ה"וְ" · ${[t('of 2 and 4', 'של 2 ו-4'), t('every "&"', 'כל "וְ"'), t('of 4', 'של 4')][op].he}`), bpm: 80, bars: 8, mic: false, goal: { splash: { share: 0.8 } } });
     }
     case 6: {
       // Double pedal: alternating 16ths (R L R L). One pad can't tell the feet apart — evenness and the odd / even balance

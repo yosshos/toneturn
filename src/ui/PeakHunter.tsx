@@ -8,6 +8,9 @@ import { renderFx } from '../audio/fx';
 import type { FxSpec } from '../engine/fx';
 import {
   answer,
+  amountShareOf,
+  AMOUNTS,
+  asksAmount,
   boostSpec,
   flatSpec,
   formatHz,
@@ -55,7 +58,9 @@ const TEXT = {
     title: 'Peak Hunter',
     blurb: 'A is the plain sound. B has one frequency band boosted — at the same loudness. Find the boost on the slider: the closer, the more points.',
     level: 'Level',
-    levels: { 1: 'Octave bands', 2: 'Third-octave bands', 3: 'Free · subtle · music' } as Record<PeakLevel, string>,
+    levels: { 1: 'Octave bands', 2: 'Third-octave bands', 3: 'Free · subtle · music', 4: 'Third octaves · amount · full mix' } as Record<PeakLevel, string>,
+    amount: 'How much?',
+    amountWrong: (db: number) => `amount was +${db} dB`,
     start: 'Start',
     cont: (n: number) => `Continue from round ${n}`,
     newGame: 'New game',
@@ -87,7 +92,9 @@ const TEXT = {
     title: 'צייד הפיקים',
     blurb: 'A הוא הצליל הנקי. ב-B פס תדרים אחד מוגבר — באותה עוצמה. מצאו את ההגברה על הסליידר: ככל שקרוב יותר, יותר נקודות.',
     level: 'שלב',
-    levels: { 1: 'פסי אוקטבה', 2: 'פסי שליש אוקטבה', 3: 'חופשי · עדין · מוזיקה' } as Record<PeakLevel, string>,
+    levels: { 1: 'פסי אוקטבה', 2: 'פסי שליש אוקטבה', 3: 'חופשי · עדין · מוזיקה', 4: 'שליש אוקטבה · כמות · מיקס מלא' } as Record<PeakLevel, string>,
+    amount: 'כמה?',
+    amountWrong: (db: number) => `הכמות הייתה ‎+${db} dB`,
     start: 'להתחיל',
     cont: (n: number) => `להמשיך מסיבוב ${n}`,
     newGame: 'משחק חדש',
@@ -138,6 +145,7 @@ export function PeakHunter({ lang, settings, saved, onSave, onExit, onResult, be
   };
   const [game, setGame] = useState<PeakSave | null>(null);
   const [guess, setGuess] = useState(1000);
+  const [amount, setAmount] = useState<number | null>(null);
   const [last, setLast] = useState<PeakAnswer | null>(null);
   const [playing, setPlaying] = useState<'a' | 'b' | null>(null);
   const [busy, setBusy] = useState(false);
@@ -204,8 +212,10 @@ export function PeakHunter({ lang, settings, saved, onSave, onExit, onResult, be
 
   const submit = () => {
     if (!game || phase !== 'guess') return;
+    if (asksAmount(game.level) && amount === null) return;
     stop();
-    const r = answer(game, rounds, guess);
+    const r = answer(game, rounds, guess, amount ?? undefined);
+    setAmount(null);
     setGame(r.save);
     setLast(r.result);
     setGuess(r.result.guess);
@@ -221,7 +231,8 @@ export function PeakHunter({ lang, settings, saved, onSave, onExit, onResult, be
       const mean = meanOctavesOf(game.answers);
       setFinal({ score, mean, answers: game.answers, record: isBest(score, best) });
       onSave(null);
-      onResult({ game: 'peakhunter', score, detail: { rounds: game.answers.length, meanOctaves: mean, level: game.level, ...(game.tier ? { tier: game.tier } : {}) } });
+      const amt = amountShareOf(game.answers);
+      onResult({ game: 'peakhunter', score, detail: { rounds: game.answers.length, meanOctaves: mean, level: game.level, ...(game.tier ? { tier: game.tier } : {}), ...(amt !== null ? { amount: amt } : {}) } });
       setPhase('over');
       return;
     }
@@ -400,9 +411,18 @@ export function PeakHunter({ lang, settings, saved, onSave, onExit, onResult, be
               </div>
             </div>
 
+            {phase === 'guess' && asksAmount(game.level) && (
+              <div className="seg g2-seg ph-amount" role="radiogroup" aria-label={tx.amount} dir="ltr">
+                {AMOUNTS.map((db) => (
+                  <button key={db} type="button" role="radio" aria-checked={amount === db} className={amount === db ? 'on' : ''} onClick={() => setAmount(db)} data-peak-amount={db}>
+                    +{db} dB
+                  </button>
+                ))}
+              </div>
+            )}
             {phase === 'guess' ? (
-              <button className="btn mega" data-peak-submit onClick={submit}>
-                {tx.submit}
+              <button className="btn mega" data-peak-submit onClick={submit} disabled={asksAmount(game.level) && amount === null}>
+                {asksAmount(game.level) && amount === null ? tx.amount : tx.submit}
               </button>
             ) : (
               last && (
@@ -412,6 +432,7 @@ export function PeakHunter({ lang, settings, saved, onSave, onExit, onResult, be
                   </p>
                   <p className="g2-dim">
                     <span dir="ltr">{formatHz(last.guess)}</span> → <span dir="ltr">{formatHz(round.freq)}</span> · {tx.off(last.octaves)}
+                    {last.amountOk === false && <> · {tx.amountWrong(round.gain)}</>}
                   </p>
                   <button className="btn mega" data-peak-next onClick={next} autoFocus>
                     {game.answers.length >= PEAK_ROUNDS ? tx.finish : tx.next}

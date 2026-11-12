@@ -504,11 +504,30 @@ is the half-time shuffle.
 
 ### Not built
 
-- Mambo, songo, Mozambique (teacher check). Rudiment Rush (it needs a two-zone sticking mode per module) and the
-  Groove-off duel (it needs the per-course drum level first). `drum-style` (optional).
-- The crash choke (F9 L7): aftertouch differs per module.
-- The splash vs the chick on the hi-hat pedal (F13 L5): only the pedal's timing is measured.
-- A per-player speed record shown on the level, beyond the ladder's best clean tempo.
+- Mambo, songo, Mozambique (teacher check). The crash choke (F9 L7): aftertouch differs per module.
+
+### Built 2026-11-12 (the small leftovers)
+
+- **The foot splash against the chick** (F13 L5, `d-feet` 5; `drills/drumSplash.ts`): told apart by the kit's own
+  splash note (Alesis 21, Yamaha DTX 83 / 85, `SPLASH_NOTES` per preset) or by the pedal's CC4 stream — a splash opens
+  the hats (openness ≥ 0.5 within 30–300 ms of the stroke), a chick keeps the pedal down. `goal.drum.splash` (share
+  0.8); below it a clean take is "almost" (within 0.2) or "not". A kit that sends neither is **not measured**: the take
+  is judged on timing only, the limb line says "Splash vs chick not measured (the kit sends no CC4)", and the level page
+  says MIDI only — a microphone can't hear the pedal's openness reliably (the level stays `mic: false`).
+- **A personal speed record on every drum level page** (`drumRecords.ts levelRecord`): the fastest clean take over the
+  level's variants (ItemState.cleanBpm, measured takes only), which variant holds it, the level's tempo and the day.
+  **Rudiment Rush best tempo**: the fastest round passed in a run (`detail.topBpm`), kept as `counts.rushBpm` (max,
+  merged like the other counters), shown on the game's setup and end screens ("a new personal record").
+- **`drum-style`** (optional topic, `topicsDrumStyle.ts`, drums course only): name the band's style by ear — 4 levels
+  (rock / swing / bossa / reggae → + shuffle, funk, samba, jazz waltz → + songo, half-time shuffle, Afro 6/8, 7/8 prog,
+  maqsum → look-alikes: swing / shuffle / half-time, bossa / samba / songo, 7/8 / 5/4 / 9/8 …). The drums play the
+  groove bank's pattern and the band engine plays with it (band.ts comping in the style, a walking bass in swing and the
+  waltz, else the root on every kick). Tags rhythm-dictation/feel + world; path mark "style".
+- **Badges and quests for the new games** (`gameBadges.ts`): Time Lock, Ghost Control, Rudiment Rush, Groove-off and the
+  8 advanced games (Voicing Spy, Scale & Mode Rush, Name That Standard, Reharm Spotter, Transcription Race, Barry Harris
+  in Time, Odd-Meter Riff Echo, Polyrhythm Lock) — three badges each (clear mp / f / ff; bronze / gold / diamond),
+  serious titles, a drawn glyph per game (BadgeArt `special:game:<game>`), shown in the game's home course and the
+  courses that list it. Quests: "Meet a drum game's goal" (drums) and "Meet an advanced game's goal" (ear, jazz, keys).
 
 ### Not verified (needs a real kit, §7)
 
@@ -518,3 +537,96 @@ is the half-time shuffle.
   first.
 - Double pedal and double bass need a real double pedal.
 - The takes were measured with synthetic hits only.
+- The splash window (openness ≥ 0.5 within 30–300 ms) and the per-brand splash notes: synthetic CC4 only, no real kit.
+- The drum-style items and the game badges / quests were not seen in a browser (no Playwright run this round).
+
+## Implemented (P2, the rest)
+
+The owner asked for the rest of the not-built list (2026-11-11). The drums course now has **20 families and 169
+levels**, two more games and an optional measure.
+
+### Mambo, songo, Mozambique (`d-latin` 8–10, `drills/drumLatin2.ts`)
+
+Our own transcriptions of the standard, widely taught kit patterns, three variants each, on the kit (not mic), with the
+Latin band:
+
+| Level | Pattern |
+|---|---|
+| 8 mambo | the mambo bell on the ride's bell over the son clave (cross-stick), 2-3 and 3-2 (the bell's two bars swapped); then the kick tumbao ("&" of 2 and 4) and the hi-hat foot on 2 and 4 |
+| 9 songo | after Changuito's kit adaptation: bell 8ths, the left hand's snare ghosts with accents on the "a" of 2 and 4, the kick on the "&" of 2 and on 4, the foot on 2 and 4; the bell on the hi-hat as the third variant |
+| 10 Mozambique | after the Steve Gadd / Pacheco kit pattern: the Mozambique bell, the left hand filling its gaps on the snare (linear hands), kick on 1 and 3, the foot on 2 and 4 |
+
+**Not teacher-checked.** The levels carry `needsTeacherCheck` and every item `drum.teacherCheck`; the level grid and
+the take's page say "Pattern not yet teacher-checked". Once a teacher confirms (or corrects) the strings in
+`drumLatin2.ts`, drop both flags. The groove-off pool leaves these levels out until then.
+
+### Rudiment Rush (`engine/rudimentRush.ts`)
+
+A rudiment (name, sticking, notation) per round; two clean bars; the tempo rises one step after every round passed;
+five rounds. Tiers pp → ff (`gameTiers.ts`): singles / doubles in 8ths (♩60 up) → 16ths and the paradiddle → the
+paradiddle family → triplet diddles, 5- and 6-stroke rolls → 7- and 9-stroke rolls, the triple paradiddle → mixed
+(♩90 up). XP and the 25 / 100 caps as every game; rating tags `instrument/drum-tech` 0.8 + `timing/steady` 0.2; a path
+game step in the drums course's instrument units; its symbol (`rudrush`); the game board through the usual best
+submit.
+
+**What is measurable (the two-zone mode, saved on the kit profile as `zones`):**
+
+| Setup | Zones offered | Sticking |
+|---|---|---|
+| MIDI (e-kit or pad controller) | R hi-hat / L snare; R floor tom / L snare; R snare head / L rim; one pad | graded: the surface the kit reports names the hand. Head / rim only when the kit sends the rim as its own note (GM 37) — the setup says so |
+| Acoustic kit by microphone | R hi-hat / L snare (toms when calibrated); one pad | graded: the mic tells a cymbal from a drum, not the head from the rim |
+| Practice pad by microphone | one pad | shown under the staff, a self-check, never graded |
+
+A round passes when the take is not "not yet" and, in two zones, ≥ 90 % ⚙ of the strokes land on the right hand's
+surface. Points: clean 100 / almost 70, × the round's tempo ÷ the tier's start tempo. Flams and drags stay out of the
+game: their grace note is the other hand, so in two zones it falls on the other surface, which the grace-note matching
+does not take.
+
+### The drum level and the Groove-off duel (`engine/grooveOff.ts`, `ui/GrooveOff.tsx`)
+
+- **The drum level (per course, from the ladder):** groove levels done by measured takes (≥ 3 stars) across rock, funk,
+  shuffle, Latin, jazz, Middle East and independence: 0 / 2 / 5 / 9 / 14 / 20 done = pp … ff. The screen shows the
+  tier, the count and how many to the next tier.
+- **The duel:** three rounds from the tier's groove pool (real ladder levels), at the level's start, middle and target
+  tempo; the seed carries the tier (`tierSeed`), so both players get the same grooves. A round scores clean 100 /
+  almost 60, + up to 30 for tight time (the worst limb's SD under 30 ms); the result shows a mark per limb and the
+  tempo reached. The winner: the higher total, then the higher tempo reached.
+- **Server and local:** with a signed-in friend it is an ordinary friend duel of kind `groove` (the answers carry the
+  round points; the server sums them). That needs `supabase/migrations/20261129000000_toneturn_groove_duels.sql`
+  (**not applied**): until then, creating one fails and the screen falls back to a **local challenge code**
+  (`GO1-<seed>-<points>`) to paste in a chat; the friend plays the code and gets a reply code. The Duels tab hides
+  groove duels.
+- XP / tiers through `recordGame2('groove-off')` (clear rule `social`), rating tags as the drum games, the game board.
+
+### Crash choke (`drills/drumChoke.ts`)
+
+`d-fills` 6 (the anticipations) now asks for each crash on the "&" of 4 to be grabbed by the next 1 (`goal.choke`,
+one beat of tail added so the last one can be heard). The kit's polyphonic pressure (0xA0) messages are collected
+during the take (a held edge's stream is one grab). A kit that sends none is **not measured** and never fails for it; on
+a kit that sends them, a missed choke keeps a clean take at "almost".
+
+### Tests
+
+- `tests/drumP2rest.test.ts`: the three levels (flags, notes in bars, the mambo bell / clave positions, linear
+  Mozambique hands, clean vs sloppy takes); Rudiment Rush (tiers and wiring, every rudiment, tempo per pass, seeding,
+  zones per setup, the surface → hand map, right vs swapped sticking in each zone, the pad self-check, points by tempo);
+  the drum level from ladder facts, the groove pool, same rounds per seed, scores, the winner, the code round-trip; the
+  choke (not measured / in the window / late, grab collapsing).
+- `e2e/drums.spec.ts`: the three levels with their note, Rudiment Rush (zones, first round), Groove-off (level, a bad
+  code, a local challenge's first round), all at 390 × 844 — **written, not run** (the machine was loaded).
+
+### Still not built
+
+- The splash vs the chick on the hi-hat pedal (F13 L5): only the pedal's timing is measured.
+- A per-player speed record shown on the level, beyond the ladder's best clean tempo (Rudiment Rush's top tempo goes
+  to the game board only).
+- `drum-style` (optional).
+
+### Not verified (needs a real kit / a teacher)
+
+- The three Latin patterns (a teacher's check — owner).
+- Rudiment Rush's 90 % sticking rule ⚙, and whether head / rim works on the owner's kit (it must send the rim note).
+- The choke window (60 ms after the crash to 80 ms after the next 1) and the pressure threshold (≥ 64) on a real kit;
+  which kits send 0xA0.
+- Groove-off's +30 timing bonus and the tier thresholds of the drum level ⚙.
+- The migration's dry run, then applying it (owner).

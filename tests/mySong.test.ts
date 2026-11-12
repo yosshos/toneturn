@@ -143,6 +143,30 @@ describe('My song: transcribing (ear / jazz)', () => {
   });
 });
 
+describe('My song: write it as degrees (ear / jazz) and 3/4 sections', () => {
+  const mel = { notes: [60, 62, 64, 65, 67, 69, 71, 72].map((m, i) => ({ midi: m, start: 1 + i * 0.5, dur: 0.4, phrase: 0 })), phrases: 1 };
+  it("the writing joins the take: the coach's stars and a 0.6 / 0.4 score", () => {
+    const ph = phraseOfMine(transcribePhrases(mel)[0], 0, 120, 'x');
+    const r = comparePhrase(ph, ph.notes.map((n) => ({ midi: n.midi, start: 2 + n.beat * 0.5, end: null })), ph.bpm);
+    const right = phraseTake(0, ph, r, 1, 'at', 's', { ok: ph.notes.length, total: ph.notes.length });
+    expect(right.stars).toBe(3);
+    expect(right.score).toBeCloseTo(0.6 * r.score + 0.4, 3);
+    const half = phraseTake(0, ph, r, 1, 'at', 's', { ok: 4, total: 8 });
+    expect(half.stars).toBe(2);
+    expect(half.score).toBeCloseTo(0.6 * r.score + 0.4 * 0.5, 3);
+    expect(half.events?.[0].score).toBe(half.score);
+  });
+
+  it('3/4: four bars of three from the downbeat (the beats before it join the first); 4/4 unchanged', () => {
+    const beats = Array.from({ length: 40 }, (_, i) => i * 0.5);
+    const waltz = sectionsOf(20, { bpm: 120, beats, confidence: 0.9, periodicity: 0.8, meter: 3, downbeat: 1 }, null);
+    expect(waltz[0]).toEqual({ start: 0, end: 6.5 }); // beats 1..13 (12 beats); beat 0 joins
+    expect(waltz[1].start).toBe(6.5);
+    const four = sectionsOf(20, { bpm: 120, beats, confidence: 0.9, periodicity: 0.8 }, null);
+    expect(four[0]).toEqual({ start: 0, end: 8 });
+  });
+});
+
 describe('My song: the session result', () => {
   it('XP capped, best take per section rated, clean takes counted', () => {
     const takes: TakeLog[] = [

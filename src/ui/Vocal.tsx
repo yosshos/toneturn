@@ -56,7 +56,8 @@ import { BrowserPitchCapture } from '../speech/pitchCapture';
 import { namingFor, type LessonResult, type Progress, type Settings, type VocalTake } from '../storage/progress';
 import { piano, SIMULATED, store } from './services';
 import { TIMED_KINDS } from '../engine/vocal';
-import { familyOfRef, isNewLevel, NEW_LEVEL_NAMES, VOICE_FAMILIES, vocalLevelByRef, voiceItemTags } from '../engine/voiceFamilies';
+import { familyOfRef, isNewLevel, NEW_LEVEL_NAMES, VOICE_FAMILIES, vocalLevelByRef, voiceItemTags, voiceLevelUnlocked } from '../engine/voiceFamilies';
+import { earInstruction, earReference, earReplayNote, earShown, sessionEarItem } from '../engine/voiceEar';
 import { gradeMore, moreReference, simulateMore, MORE_KINDS } from '../engine/vocalMore';
 import { MORE_INSTR, METRIC_NAMES, TONE_NAMES, VT } from '../content/voiceCourseText';
 import { restTakes, TimedSession } from './VoiceTimed';
@@ -246,6 +247,8 @@ function simulatedFrames(item: VocalItem, targets: number[], noteIdx: number): S
 
 /** The reference: what the app plays before (or under) the take. */
 function referenceEvents(item: VocalItem, targets: number[]): { events: NoteEvent[]; length: number } {
+  const ear = earReference(item, targets);
+  if (ear) return ear;
   const more = moreReference(item, targets);
   if (more) return more;
   if (item.kind === 'melody' || item.kind === 'leap' || item.kind === 'rhythmic' || item.kind === 'staccato') {
@@ -309,7 +312,9 @@ type View =
 
 /** The view that opens a level: timed levels (clicks / band) in the timed session, the rest in the vocal session. */
 const openLevel = (level: number, range: VoiceRange): View => {
-  const items = levelDef(level).items.filter((it) => itemFits(it, range));
+  // Echo and audiation items get a fresh melody every session (no memorizable items); ids stay.
+  const seed = Date.now() >>> 0;
+  const items = levelDef(level).items.map((it) => sessionEarItem(it, seed)).filter((it) => itemFits(it, range));
   return isTimedLevel(level) ? { kind: 'timed', level, items: levelDef(level).items } : { kind: 'session', level, items };
 };
 
@@ -531,7 +536,7 @@ function VoiceFamilies({ t, settings, passed, best, open, onOpen, onLevel, onRun
                       )}
                       {f.refs.map((n, i) => {
                         const ok = passed.includes(n);
-                        const unlocked = i === 0 || passed.includes(f.refs[i - 1]) || passed.includes(n - 1);
+                        const unlocked = i === 0 || voiceLevelUnlocked(f, n, passed);
                         const b = levelBest(n);
                         const harmony = (n > HARMONY_BASE && n < BARRY_BASE) || (n > 1700 && n < 1800);
                         return (
@@ -988,7 +993,9 @@ function VocalSession({
     return rs.length ? remarkText(rs, settings.uiLang, rs[0] === 'spot') : null;
   })();
   // Scales asked by name: only the tonic is shown until the take is graded (the notes are the task).
-  const hidden = item.kind === 'scale' && item.scale?.hear === 'tonic' && phase !== 'result';
+  // Ear items (P3): only the given note — none for audiation — until the take is graded.
+  const hidden = (item.kind === 'scale' && item.scale?.hear === 'tonic' && phase !== 'result') || (!!item.ear && phase !== 'result');
+  const visible = hidden ? (item.ear ? earShown(item, shownTargets) : shownTargets.slice(0, 1)) : shownTargets;
   const title = level === 'warmup' ? t.vocalWarmup : isNewLevel(level) ? levelName(level, t, settings.uiLang === 'en' ? 'en' : 'he') : level > ORNAMENT_BASE ? `${t.ornTitle} · ${t.ornLevelNames[level - ORNAMENT_BASE - 1]}` : level > SIGHT_BASE ? `${t.sightTitle} · ${t.sightLevelNames[level - SIGHT_BASE - 1]}` : level > BARRY_BASE ? `${t.barryTitle} · ${t.barryLevelNames[level - BARRY_BASE - 1]}` : level > HARMONY_BASE ? `${t.harmonyTitle} · ${t.harmonyLevelNames[level - HARMONY_BASE - 1]}` : level > MODES_BASE ? `${t.modesTitle} · ${t.modesLevelNames[level - MODES_BASE - 1]}` : `${fill(t.vocalLevel, { n: level })} · ${t.vocalLevelNames[level - 1]}`;
 
   if (phase === 'summary' && summary)
@@ -1021,7 +1028,9 @@ function VocalSession({
         {noteCount > 1 && ` · ${fill(t.vocalNoteOf, { i: noteIdx + 1, n: noteCount })}`}
       </p>
       {phase !== 'result' && <p className="vocal-instr">
-        {item.kind === 'scale' && item.scale
+        {item.ear
+          ? earInstruction(item, settings.uiLang === 'en' ? 'en' : 'he', (s) => t.intervalNames[String(s)] ?? '')
+          : item.kind === 'scale' && item.scale
           ? (() => {
               const tn = scaleTonic(item.scale, range);
               const lang = settings.uiLang;
@@ -1067,7 +1076,7 @@ function VocalSession({
         </div>
       ) : (
       <p className="vocal-targets" dir="ltr">
-        {(hidden ? shownTargets.slice(0, 1) : shownTargets).map((m) => (Math.abs(m - Math.round(m)) > 0.2 ? `${noteLabel(Math.ceil(m), settings)}¼↓` : noteLabel(m, settings))).join(' – ')}
+        {visible.map((m) => (Math.abs(m - Math.round(m)) > 0.2 ? `${noteLabel(Math.ceil(m), settings)}¼↓` : noteLabel(m, settings))).join(' – ')}
       </p>
       )}
       {phase !== 'result' && (item.kind === 'hold' || item.kind === 'straight' || item.kind.startsWith('vibrato') || item.kind === 'messa' || item.kind === 'range' || item.kind === 'dynamic' || item.kind === 'breath-hold' || item.kind === 'fine-tune' || item.kind === 'edge') && (
@@ -1082,7 +1091,7 @@ function VocalSession({
         </p>
       )}
       <div className={phase === 'result' ? 'trace-compact' : undefined}>
-      <PitchTrace frames={frames} targets={shownTargets} bands={hidden ? shownTargets.slice(0, 1) : undefined} seconds={item.seconds} label={`${(hidden ? shownTargets.slice(0, 1) : shownTargets).map((m) => noteLabel(m, settings)).join(' – ')}`} />
+      <PitchTrace frames={frames} targets={shownTargets} bands={hidden ? visible : undefined} seconds={item.seconds} label={`${visible.map((m) => noteLabel(m, settings)).join(' – ')}`} />
       </div>
       {item.reference === 'during' && (
         <label className="toggle-row">
@@ -1139,7 +1148,7 @@ function VocalSession({
           <button
             className="btn ghost"
             onClick={() => {
-              const start = shownTargets[0];
+              const start = earReplayNote(item, shownTargets);
               void piano.play([{ midi: start, start: 0, duration: 1.1, velocity: 0.7 }], 1.3, new AbortController().signal).catch(() => {});
               if (phase === 'singing' && captureT0.current !== null) {
                 const at = (performance.now() - captureT0.current) / 1000;

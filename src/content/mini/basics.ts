@@ -266,7 +266,7 @@ export const LESSONS: MiniLesson[] = [
       },
       {
         say: { en: 'Your turn! Listen, then hum or sing on "ooo". Gently — no straining. The screen shows you where you are.', he: 'תורכם! הקשיבו, ואז זמזמו או שירו "אוּ". בעדינות — בלי להתאמץ. המסך מראה לכם איפה אתם.' },
-        show: { text: { en: '🎤 ooo', he: '🎤 אוּ' } },
+        show: { text: { en: 'sing: ooo', he: 'שרים: אוּ' } },
       },
     ],
     more: [

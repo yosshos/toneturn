@@ -130,13 +130,42 @@ optional one-tap personal goal; (3) the daily goal + reminder prompt on the firs
   voice / jazz up to the taste and its "Continue"; a second course with setup skipped). Onboarding, drums, app, skills
   and intake e2e specs updated for the new first run.
 
+### Implemented (2026-11-11, second pass)
+- **Day 3: the first "real music" moment** (`REAL_MUSIC` in `courseStart.ts`, 7 courses × 3 reports; state
+  `courseStart[course].real`: opened, done + its measured result, result seen, declined). From the third session (the
+  taste + 1) until the sixth, Home shows a card with Toni: "Today: real music" — what you will play, **Start** (or
+  **Continue** once opened) / **Not now** (a snooze until the next session day, at most 3 times inside the window; owner 2026-11-12). It replaces the first-week card while it is offered.
+  Existing material only, with the band:
+  - keys — new: the roots of a 12-bar blues in C, left hand (`bluesRootsDrill`); a bit: guide tones through the F blues
+    (chart drill `tpl:blues-f~guide~whole`); well: shells in Charleston through the F blues (`tpl:blues-f~shell~charleston`);
+  - guitar — new: G C D G in quarter downstrokes (g-rhythm-1); a bit / well: the 12-bar 5–6 shuffle in A / E (g-rhythm-3);
+  - bass — new: R–R–5–5 quarters through a blues (b-walk-2); a bit: the blues-shuffle boogie chorus (b-styles-4); well:
+    the R–3–5–6 walk through a blues (b-walk-3);
+  - drums — new: verse to chorus on the cue (d-song-1); a bit: the full pop form with its fills (d-song-3); well: two
+    12-bar shuffle choruses (d-form-3); a practice pad by microphone gets the time drills, as in the taste;
+  - voice — new / a bit: a whole public-domain song with the band (vocal level 1303); well: our own song, verse and
+    chorus (1304);
+  - ear — follow a whole chorus: "a 12-bar blues stops — which bar?" and "which plan is the whole song?" (song-form 3 / 2),
+    well: AABA sections + major or minor blues (song-form 4, jazz-form 1); jazz — the same blues / AABA form questions
+    and, for "well", rhythm changes A or bridge + which blues (jazz-form 2 / 3).
+  Measured like any session (drill takes on the ladder, question results, the vocal level's result → XP, streak, league,
+  ratings). Its result card on Home: Toni, "Your first full chorus", the measured line (bars with the band · clean takes ·
+  notes right, or right first time), Again / Done. Never lose progress: question sessions save under `real:<course>`
+  and resume; a moment left before a measured take stays "Continue" on the card. Toni appears on the welcome, the first
+  win and this card only.
+- **"First session" badge** in the catalogue: `special:first:<course>` (one per course, bronze, specials, its course's
+  achievements; drawn glyph `special:first` — a bar line with one note on beat 1 and a tick). Earned by the measured
+  first win (`firstWinCourses(courseStart)`: a course with `win`, never a migrated one), passed into the badge input
+  from Settings (`badgeInputOf(…, { firstWins })`). The win screen's medal stays as the moment it is earned.
+- Tests: `tests/courseStartReal.test.ts` (offer timing, transitions, every moment builds with the band and a whole
+  chorus, the badge per course, its glyph, first wins).
+
 ### Not built / left for later
-- The day-3 "real music moment" (a full chorus with the band) and Toni on it.
+- E2E for the day-3 card (unit-tested only; Playwright was not run on this pass — the machine was loaded).
 - Jazz "A bit / Well" tastes are listening tastes (guide tones, comping, changes, forms); trading 2s needs an instrument
   and stays in the jazz piano path. A sung trading-twos item now exists in the voice course (scat level 1510,
   VOICE_CURRICULUM "Implemented (P2)"); it is not the jazz taste, because tastes run before a voice range is known and
   the jazz course is not voice-only (owner decision).
-- The "First session" mark is a screen medal, not a catalogue badge (the badge catalogue is shared with other work).
 - The echo-phrase prompt ("Listen, then sing it back.") is a new spoken line; it is not in public/voice yet.
 - Drums setup reuses the full kit wizard (no shorter form yet); playing tastes were verified up to the take screen in
   e2e (a full take needs a real instrument or the fake-MIDI harness of drums/keys specs).

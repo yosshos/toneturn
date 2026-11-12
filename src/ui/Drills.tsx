@@ -4,10 +4,11 @@
 import { SONGBOOK } from '../content/songbook';
 import { COMMON_CHORDS, keyName as songKeyName, songFit } from '../engine/songChords';
 import { recordTakeAnalysis } from '../storage/analysis';
+import { levelRecord } from '../engine/drumRecords';
 import { checkRules } from '../engine/improvRules';
 import { parseChart } from '../engine/charts';
 import { PART_NAME, songDrill } from '../engine/drills/songDrills';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { bassTuningOf, type Settings } from '../storage/progress';
 import type { RatingEvent } from '../engine/rating';
 import type { CustomDrill, Drill, DrillCalibration, DrillSettings, FamilyId, ItemState, PlayedNote, TakeMetrics } from '../engine/drills/types';
@@ -134,6 +135,30 @@ export function DrillScore({ drill, ds, result, beat = -1, lang = 'en' }: { dril
   if (!isGuitarDrill(drill)) return <DrillStaff drill={drill} fingering={ds.showFingering} result={result} />;
   if (drill.show === 'none' && !result) return <EarCard drill={drill} beat={beat} lang={lang} />;
   const view = drill.show === 'staff' ? 'staff' : (ds.guitarView ?? 'tab');
+  // The guitar trade (g-impro 7), like the piano's: after the result, a model line for your bars on request — in the
+  // player's view (tab and / or staff), in place of the landings, so the card still fits one screen.
+  const guitarModel = result ? drill.goal.free?.model : undefined;
+  if (guitarModel?.length) {
+    const md: Drill = { ...drill, notes: guitarModel.map((n) => ({ pitch: n.pitch, beat: n.beat, dur: n.dur, hand: 'R' as const, ...(n.string ? { string: n.string, fret: n.fret ?? 0 } : {}) })) };
+    return (
+      <>
+        {model ? (
+          <>
+            {view !== 'staff' && <DrillTab drill={md} />}
+            {view !== 'tab' && <DrillStaff drill={md} />}
+          </>
+        ) : (
+          <>
+            {view !== 'staff' && <DrillTab drill={drill} fingering={ds.showFingering} picking={!!ds.showPicking} result={result} />}
+            {view !== 'tab' && <DrillStaff drill={drill} result={result} />}
+          </>
+        )}
+        <button className="link model-toggle" onClick={() => setModel(!model)} aria-pressed={model} data-model-line={model ? 'on' : 'off'}>
+          {model ? (lang === 'he' ? 'בחזרה לנחיתות שלכם' : 'Back to your landings') : lang === 'he' ? 'להציג קו לדוגמה' : 'Show a model line'}
+        </button>
+      </>
+    );
+  }
   const chartOnly = drill.show === 'chart' && !model;
   const upTo = chartOnly ? (drill.freeFrom ?? 0) : undefined;
   const written = upTo === undefined || upTo > 0;
@@ -186,6 +211,9 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
   // B12 (0.64): the bass has its own tuning setting (Settings → bassTuning), apart from the guitar's.
   const bassTuning = bassTuningOf(settings);
   const runQueue = useMemo(() => (view.k === 'run' ? withBassTuning(view.queue, bassTuning) : []), [view, bassTuning]);
+  /** The item the run is on now (DrillRun reports it), for the header; reset with every new run. */
+  const [runIdx, setRunIdx] = useState<number | null>(null);
+  useEffect(() => setRunIdx(null), [view]);
   const head = (title: string, back: () => void) => (
     <header className="screen-head">
       <button className="icon-btn" onClick={back} aria-label="Back">
@@ -199,8 +227,9 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
   if (view.k === 'run')
     return (
       <main className="drills-screen" data-drills="run">
-        {head(view.queue[view.i]?.title[lang] ?? tx.title, () => (queue?.length ? onBack() : setView(view.from)))}
+        {head(runQueue[runIdx ?? view.i]?.title[lang] ?? view.queue[view.i]?.title[lang] ?? tx.title, () => (queue?.length ? onBack() : setView(view.from)))}
         <DrillRun
+          onIndex={setRunIdx}
           lang={lang}
           ds={ds}
           headphones={settings.headphones}
@@ -647,11 +676,37 @@ function LevelGrid({ lang, ds, level, items, onRun }: { lang: Lang; ds: DrillSet
   if (ds.instrument === 'drums') {
     // Drums: no keys — the level's variants (stickings, grooves, fills), one cell each, shaded by the tempo reached.
     const row = levelDrills(level, ds.keyOrder);
+    // The personal speed record (DRUMS_NICHE_PLAN): the level's fastest clean take, against its tempo.
+    const rec = levelRecord(row, items, itemTargetBpm);
     return (
       <div className="drill-opts">
         <button className="btn primary" onClick={() => onRun(row, 0)} data-level-start={level.id}>
           ▶ {lang === 'he' ? 'כל הווריאציות' : 'All variations'}
         </button>
+        <small className="field-hint drum-record" data-drum-record={rec?.bpm ?? 0}>
+          {rec ? (
+            <>
+              {lang === 'he' ? 'שיא אישי' : 'Personal record'} <bdi dir="ltr">♩{rec.bpm}</bdi>
+              {lang === 'he' ? ` · וריאציה ${rec.variant} · טמפו הרמה ` : ` · variation ${rec.variant} · level tempo `}
+              <bdi dir="ltr">♩{rec.target}</bdi>
+              {rec.day ? <> · <bdi dir="ltr">{rec.day}</bdi></> : null}
+            </>
+          ) : lang === 'he' ? (
+            'שיא אישי: עוד אין ביצוע נקי.'
+          ) : (
+            'Personal record: no clean take yet.'
+          )}
+        </small>
+        {row.some((d) => d.goal.drum?.splash) && (
+          <small className="field-hint" data-splash-note="1">
+            {lang === 'he' ? 'ספלאש מול צ׳יק נמדד ב-MIDI בלבד: לפי צליל הספלאש של הערכה או לפי פתיחת הפדל (CC4). ערכה שלא שולחת אף אחד מהם נמדדת רק על התזמון. במיקרופון זה לא נשמע באמינות.' : 'Splash vs chick is measured by MIDI only: the kit’s splash note or the pedal’s openness (CC4). A kit that sends neither is judged on timing only. A microphone can’t hear it reliably.'}
+          </small>
+        )}
+        {(level as { needsTeacherCheck?: boolean }).needsTeacherCheck && (
+          <small className="field-hint teacher-check" data-teacher-check="1">
+            {lang === 'he' ? 'התבנית עוד לא נבדקה בידי מורה.' : 'Pattern not yet teacher-checked.'}
+          </small>
+        )}
         <div className="heat drum-variants">
           {row.map((d, i) => {
             const st = items[d.itemId];
@@ -727,10 +782,12 @@ function LevelRefs({ level, lang }: { level: LevelDef; lang: Lang }) {
   );
 }
 
-function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphones, onHeadphones, kit }: { lang: Lang; ds: DrillSettings; cal: DrillCalibration; queue: Drill[]; start: number; items: Record<string, ItemState>; onTake: DrillsProps['onTake']; onEnd: (takes: number, clean: number) => void; headphones?: boolean; onHeadphones?: (h: boolean) => void; kit?: Settings['drumKit'] }) {
+function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphones, onHeadphones, kit, onIndex }: { onIndex?: (i: number) => void; lang: Lang; ds: DrillSettings; cal: DrillCalibration; queue: Drill[]; start: number; items: Record<string, ItemState>; onTake: DrillsProps['onTake']; onEnd: (takes: number, clean: number) => void; headphones?: boolean; onHeadphones?: (h: boolean) => void; kit?: Settings['drumKit'] }) {
   const [beat, setBeat] = useState(-1);
   const tx = T[lang];
   const [i, setI] = useState(start);
+  // The screen's header names the item being played (owner 2026-11-12: it kept the first item's title — "C major" over G).
+  useEffect(() => onIndex?.(i), [i]); // eslint-disable-line react-hooks/exhaustive-deps
   const drill = queue[i];
   const local = useRef<Record<string, ItemState>>({});
   const stateOf = (d: Drill) => local.current[d.itemId] ?? items[d.itemId] ?? newItem(d);

@@ -18,6 +18,26 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.75.0',
+    date: '2026-11-12',
+    en: [
+      'The narrator speaks again: the recorded lines were silent (only clicks on some phones); they are being re-recorded, and the rest are read until then',
+      'Rhythm exercises show a beating pulse, never a keyboard; the run screen names the key you are playing; no "Slower" button when you were ahead of the beat — it says so instead',
+      'Drums: mambo, songo and Mozambique (pending a teacher check), Rudiment Rush, Groove-off duels with friends, crash chokes',
+      'Voice: a free verse before the chorus, colla voce that comes back on the bar, four new sung levels, fresh echo melodies every session',
+      'Guitar trading 4s and 2s, strum the chord under a song, the band comps under your bars in piano trading fours',
+      'Games: rhythm in Transcription Race and every top-tier item; course start: the day-3 full chorus and a First session badge; My song: write it as degrees, 3/4 songs',
+    ],
+    he: [
+      'המספר מדבר שוב: ההקלטות היו שקטות (רק קליקים בחלק מהטלפונים); הן מוקלטות מחדש, ועד אז השאר מוקראות',
+      'בתרגילי קצב מופיע דופק פועם, אף פעם לא מקלדת; מסך התרגיל מציג את הסולם שמנגנים; אין כפתור "לאט יותר" כשהקדמתם את הפעמה — כתוב מה קרה',
+      'תופים: מאמבו, סונגו ומוזמביק (ממתינים לבדיקת מורה), מרוץ רודימנטים, דו־קרב גרוב עם חברים, חניקת מצילה',
+      'שירה: בית חופשי לפני הפזמון, קולה ווצ׳ה שחוזרת לתיבה, ארבעה שלבי שירה חדשים, מנגינות חיקוי חדשות בכל פעם',
+      'חילופי ארבע ושתיים בגיטרה, לפרוט את האקורד שמתחת לשיר, הלהקה מלווה מתחת לתיבות שלכם בחילופי ארבע בפסנתר',
+      'משחקים: קצב במרוץ התמלול וכל פריטי הדרגות העליונות; פתיחת קורס: סבב שלם ביום השלישי ותג "שיעור ראשון"; השיר שלי: כתיבה בדרגות, שירים ב־3/4',
+    ],
+  },
+  {
     version: '0.74.0',
     date: '2026-11-11',
     en: [
@@ -695,7 +715,7 @@ export const CHANGELOG: ChangeEntry[] = [
       'A rank in every area, from Bronze to Master, leaderboards per area among friends, and a monthly area challenge',
       'Hundreds of new badges with their own medals — and a celebration when you earn one',
       'Find my level is about three times shorter: it jumps ahead while you are right, and your path keeps adjusting after every session',
-      '💡 Refresh: unsure about a concept? Open its short lesson in the middle of an exercise and come back to the same question',
+      'Refresh: unsure about a concept? Open its short lesson in the middle of an exercise and come back to the same question',
       'Timing calibration for screen taps, MIDI keyboards and the microphone — never marked late when you were on time',
       'Every exercise fits a phone screen: the Repeat / Skip buttons are always in view',
     ],
@@ -706,7 +726,7 @@ export const CHANGELOG: ChangeEntry[] = [
       'דרגה בכל תחום, מארד ועד מאסטר, טבלאות לפי תחום בין חברים ואתגר חודשי',
       'מאות תגים חדשים עם מדליות משלהם — וחגיגה כשמקבלים אחד',
       'מציאת הרמה קצרה פי שלושה בערך: היא קופצת קדימה כל עוד אתם צודקים, והמסלול ממשיך להתכוונן אחרי כל אימון',
-      '💡 רענון: לא בטוחים במושג? פותחים את השיעור הקצר שלו באמצע תרגיל וחוזרים לאותה שאלה',
+      'רענון: לא בטוחים במושג? פותחים את השיעור הקצר שלו באמצע תרגיל וחוזרים לאותה שאלה',
       'כיול תזמון להקשות, למקלדות MIDI ולמיקרופון — לא תסומנו כמאחרים כשהייתם בזמן',
       'כל תרגיל נכנס במסך הטלפון: כפתורי חזרה ודילוג תמיד גלויים',
     ],
@@ -769,7 +789,7 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.36.0',
     date: '2026-11-07',
     en: [
-      'Speed now counts — fairly: every answer scores up to 70 for being right the first time and up to 30 for answering within your own speed goal; each replay costs 10. A bar under the question shows the goal running down, ⚡ marks an answer within it, and the recap shows your score out of 100, stars from it, and exactly what was missing for 100. The goal learns from your own answers and tightens about 5% a week at most; your skill rating is still about being right',
+      'Speed now counts — fairly: every answer scores up to 70 for being right the first time and up to 30 for answering within your own speed goal; each replay costs 10. A bar under the question shows the goal running down, a mark shows an answer within it, and the recap shows your score out of 100, stars from it, and exactly what was missing for 100. The goal learns from your own answers and tightens about 5% a week at most; your skill rating is still about being right',
       'Real instruments: a recorded grand piano is the default sound, and every rhythm exercise plays on a recorded snare and kick',
       'New in Beat Echo: Kick & Snare — hear a drum phrase and play it back on two pads (keys F and J)',
       'Before each option you hear a bell (1, 2 or 3 strikes) instead of a piano note, so it never sounds like part of the question',
@@ -778,7 +798,7 @@ export const CHANGELOG: ChangeEntry[] = [
       'Wrong answers no longer repeat the right answer twice',
     ],
     he: [
-      'המהירות נספרת עכשיו — בהגינות: כל תשובה שווה עד 70 על תשובה נכונה בניסיון ראשון ועד 30 על תשובה בתוך יעד המהירות האישי שלך; כל השמעה חוזרת מורידה 10. פס מתחת לשאלה מראה את היעד אוזל, ⚡ מסמן תשובה בתוך היעד, ובסיכום רואים ניקוד מתוך 100, כוכבים לפיו ובדיוק מה חסר ל-100. היעד לומד מהתשובות שלך ומתהדק לכל היותר בכ-5% בשבוע; דירוג המיומנות נשאר על נכונות',
+      'המהירות נספרת עכשיו — בהגינות: כל תשובה שווה עד 70 על תשובה נכונה בניסיון ראשון ועד 30 על תשובה בתוך יעד המהירות האישי שלך; כל השמעה חוזרת מורידה 10. פס מתחת לשאלה מראה את היעד אוזל, סימון מראה תשובה בתוך היעד, ובסיכום רואים ניקוד מתוך 100, כוכבים לפיו ובדיוק מה חסר ל-100. היעד לומד מהתשובות שלך ומתהדק לכל היותר בכ-5% בשבוע; דירוג המיומנות נשאר על נכונות',
       'כלים אמיתיים: פסנתר כנף מוקלט הוא צליל ברירת המחדל, וכל תרגילי הקצב מתנגנים על סנייר וקיק מוקלטים',
       'חדש בהד הקצב: קיק וסנייר — שומעים משפט תופים ומקישים אותו על שני לחצנים (במקלדת F ו-J)',
       'לפני כל אפשרות מצלצל פעמון (1, 2 או 3 מכות) במקום תו פסנתר, כך שזה לא נשמע כחלק מהשאלה',

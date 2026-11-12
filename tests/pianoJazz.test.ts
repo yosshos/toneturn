@@ -16,6 +16,8 @@ import { BADGES, badgeInCourse } from '../src/engine/badges';
 import { MINI_LESSONS } from '../src/content/minilessons';
 import { UNIT_LESSON } from '../src/content/units';
 import { humanTake, steadySd } from './pianoTake';
+import { drillBandHits } from '../src/engine/drills/bandTimeline';
+import { bandBass } from '../src/engine/drills/bassBand';
 
 const CAT = catalog();
 const NEW = ['k-sixdim', 'k-bebop', 'k-reharm'] as const;
@@ -98,6 +100,20 @@ describe('trading fours: landings in your bars', () => {
     expect(d.notes.every((n) => n.land && n.land.includes(pc(n.pitch)) && n.beat % 2 === 0 && (n.beat >= 16 && n.beat < 32 || n.beat >= 48))).toBe(true);
     expect(d.show).toBe('none');
     expect(d.chart).toHaveLength(16);
+  });
+  it('the band comps and the drums swing under your bars (MIDI / headphones); it rests in its own bars, where its phrase plays', () => {
+    expect(d.band).toEqual({ style: 'swing', bass: true, rests: [[0, 16], [32, 48]] });
+    expect(d.drums?.groove).toBe('swing');
+    const hits = drillBandHits(d);
+    const walk = bandBass(d);
+    expect(hits.length).toBeGreaterThan(0);
+    expect(walk.length).toBeGreaterThan(0);
+    const yours = (b: number) => (b >= 16 && b < 32) || (b >= 48 && b < 64);
+    expect(hits.every((h) => yours(h.beat))).toBe(true);
+    expect(walk.every((n) => yours(n.beat))).toBe(true);
+    // The verdict never depends on the band: the same take is judged the same without it.
+    const take = humanTake(d, bpm, 6, 3);
+    expect(analyzeTake(d, bpm, take).verdict).toBe(analyzeTake({ ...d, band: undefined, drums: undefined }, bpm, take).verdict);
   });
   it('your own line passes on any chord tone at the landings (any octave), not only the model notes', () => {
     const take = humanTake(d, bpm, 6, 3).map((p) => (d.notes.some((n) => Math.abs(p.on - n.beat * 500) < 60) ? { ...p, pitch: p.pitch + 12 } : p));

@@ -102,7 +102,7 @@ export const LESSONS: MiniLesson[] = [
         play: [notes([43, 55], 0.8)],
       },
       {
-        say: { en: 'Shells on the bass are the root and the seventh: the same shape for every chord, a fret apart between major seventh and dominant.', he: 'שלדים על הבס הם היסוד והספטימה: אותה צורה לכל אקורד, סריג אחד הבדל בין ספטימה גדולה לדומיננטית.' },
+        say: { en: 'Shells on the bass are the root and the seventh: the same shape for every chord, a fret apart between major seventh and dominant.', he: 'קונכיות על הבס הן היסוד והספטימה: אותה צורה לכל אקורד, סריג אחד הבדל בין ספטימה גדולה לדומיננטית.' },
         play: [chord([36, 47]), chord([36, 46])],
       },
       {

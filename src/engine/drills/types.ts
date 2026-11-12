@@ -315,6 +315,10 @@ export interface DrumDrillInfo {
   mic: boolean;
   /** Show the sticking under the staff (tom fills with sticking marks); shown only, never graded. */
   sticking?: boolean;
+  /** Our own transcription of a traditional pattern not yet checked by a teacher (mambo, songo, Mozambique): a note on the take. */
+  teacherCheck?: boolean;
+  /** An acoustic kit by microphone can measure this drill (games outside ACOUSTIC_LEVELS: drums told apart by sound). */
+  acousticOk?: boolean;
   /** Swung skip notes (written on the triplet) are drawn as straight 8ths under a "Swing" marking. */
   swing8?: boolean;
   /**
@@ -360,7 +364,7 @@ export interface DrillGoal {
    */
   /** The prog engine's measures (progAnalyze.ts `withProg`); each can only lower the verdict. */
   prog?: ProgGoal;
-  free?: { windows: [number, number][]; scale: { from: number; to: number; pcs: number[] }[]; minPerBar: number; model: { beat: number; dur: number; pitch: number }[] };
+  free?: { windows: [number, number][]; scale: { from: number; to: number; pcs: number[] }[]; minPerBar: number; model: { beat: number; dur: number; pitch: number; /** Guitar: where the model's note sits (tab). */ string?: number; fret?: number }[] };
 }
 
 /** Prog pass rules (PROG_ENGINE.md): metric modulation, unison lock, the road map. Absent fields are not checked. */
@@ -448,6 +452,16 @@ export interface DrumGoal {
   alt?: { voices: DrumVoice[]; vel: number; cv: number };
   /** Improvised zones (d-fills 9): beat ranges with nothing written, where at least `min` hits (any drums) must be played. */
   impro?: { zones: [number, number][]; min: number };
+  /**
+   * Crash chokes (drumChoke.ts): each crash at these beats grabbed before `by` beats pass. Measured only when the kit
+   * sends chokes (polyphonic aftertouch, 0xA0 — Roland and others); a kit that sends none is never failed for it.
+   */
+  choke?: { beats: number[]; by: number };
+  /**
+   * The foot splash, not a chick (drumSplash.ts, d-feet 5): the written pedal notes (`beats`, else every hi-hat pedal
+   * note) played as a splash on ≥ `share` of them. MIDI only; measured when the kit sends a splash note or CC4.
+   */
+  splash?: { beats?: number[]; share: number };
 }
 
 /** Bass-specific pass rules (BASS_CURRICULUM §4–§5). Absent = the default pitch + timing rule only. */
@@ -697,6 +711,10 @@ export interface DrumMetrics {
   alt?: { vel: number | null; cv: number | null };
   /** Improvised zones: hits played in each. */
   impro?: number[];
+  /** Crash chokes: grabbed in time / asked; measured false = the kit sent no choke at all. */
+  choke?: { ok: number; of: number; measured: boolean };
+  /** Foot splashes played as splashes / written; measured false = the kit sent no splash note and no CC4. */
+  splash?: { ok: number; of: number; measured: boolean };
 }
 
 /** Progress of one item (synced, small). */

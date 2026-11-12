@@ -1,7 +1,7 @@
 // Name That Tune (spec AE §8): hear the opening of a known song, pick the title among 4. Faster = more points.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { isTuneSave, makeRounds, MAX_SCORE, ROUNDS, roundPoints, songEvents, type TuneSave } from '../engine/nameTune';
+import { isTuneSave, makeRounds, MAX_SCORE, openingSlice, ROUNDS, roundPoints, songEvents, type TuneSave } from '../engine/nameTune';
 import { minorMutation, tuneById, tuneCatalogue } from '../engine/pdTunes';
 import { G2Head, type Game2Props } from './Flight';
 import { TierChips } from './TierChips';
@@ -84,7 +84,8 @@ export function NameTune({ lang, saved, onSave, onExit, onResult, best, tier: ti
     const full = params.minor ? minorMutation(tuneById(round.songId)!) : tuneById(round.songId)!;
     // A tier plays fewer notes of the opening (GAMES_TIERS_PLAN: 8 → 3).
     const n = Number(params.notes ?? 0);
-    const song = n > 0 ? { ...full, degrees: full.degrees.slice(0, n), beats: full.beats.slice(0, n), ...(full.semis ? { semis: full.semis.slice(0, n) } : {}) } : full;
+    // f (0.75): started mid-phrase — 1 to 3 notes in, the same for every replay of the round
+    const song = openingSlice(full, n, !!params.mid, round.tonic * 7 + round.songId.length);
     const { events, length } = songEvents(song, round.tonic);
     if (resetClock) t0.current = performance.now();
     try {

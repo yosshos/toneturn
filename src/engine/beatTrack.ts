@@ -19,6 +19,12 @@ export interface BeatGrid {
   confidence: number;
   /** The envelope's autocorrelation at the beat period over its energy (0..1). */
   periodicity: number;
+  /** Beats per bar when the accents clearly repeat every three beats (3/4); else absent = 4 is assumed. */
+  meter?: 3;
+  /** With meter 3: the index of the first downbeat in `beats` (0–2). */
+  downbeat?: number;
+  /** How clearly the accents repeat every three beats rather than two or four (0..1; ≥ METER_CONFIDENT = 3/4). */
+  meterConf?: number;
 }
 
 /** Beats at or above this confidence are used for timing. */
@@ -233,6 +239,88 @@ function alignment(env: Float32Array, beatFrames: number[]): number {
   return on / (off + 0.25 * (beatFrames.length - 1));
 }
 
+// ───────────────────────────── meter: 3/4 or (assumed) 4 ─────────────────────────────
+//
+// The beat tracker gives no downbeats. A waltz-like recording shows it in the accents: the bass / kick lands on beat 1
+// of every three beats. Each beat's accent is its low-band onset (one-pole low-pass at ~200 Hz, the energy just after
+// the beat over the energy just before) plus half its broadband onset; the accent sequence's autocorrelation at a lag
+// of 3 beats must clearly beat lags 2 and 4 (where 4/4's kick–snare alternation and bar accents show). Anything less
+// clear stays 4 — the sections were always four bars of four, so a wrong 3 would cost more than a missed one.
+
+/** Accent autocorrelation margin (lag 3 over lags 2 and 4) needed to call 3/4. */
+export const METER_CONFIDENT = 0.5;
+
+/** Mean-removed, unit-spread autocorrelation of a sequence at a lag (−1..1). */
+function acLag(a: number[], lag: number): number {
+  const n = a.length;
+  if (n <= lag + 2) return 0;
+  const m = a.reduce((x, y) => x + y, 0) / n;
+  let s0 = 0;
+  let s = 0;
+  for (let i = 0; i < n; i++) s0 += (a[i] - m) ** 2;
+  for (let i = 0; i + lag < n; i++) s += (a[i] - m) * (a[i + lag] - m);
+  return s0 > 1e-12 ? s / (n - lag) / (s0 / n) : 0;
+}
+
+/** 3/4 or 4 from per-beat accents (at least 18 beats; fewer = 4). Pure. */
+export function meterOf(accents: number[]): { meter: 3 | 4; downbeat: number; conf: number } {
+  if (accents.length < 18) return { meter: 4, downbeat: 0, conf: 0 };
+  const r2 = acLag(accents, 2);
+  const r3 = acLag(accents, 3);
+  const r4 = acLag(accents, 4);
+  const r6 = acLag(accents, 6);
+  // A margin of lag 3 over the 4/4 lags; lag 6 must agree (a true three-beat bar repeats at two bars too).
+  const margin = Math.min(r3 - Math.max(r2, r4), r6 - Math.max(r2, r4));
+  const conf = Math.round(Math.max(0, Math.min(1, margin / 0.8)) * 100) / 100;
+  if (r3 < 0.25 || conf < METER_CONFIDENT) return { meter: 4, downbeat: 0, conf };
+  // The downbeat: the phase with the strongest mean accent.
+  const sum = [0, 0, 0];
+  const cnt = [0, 0, 0];
+  accents.forEach((v, i) => {
+    sum[i % 3] += v;
+    cnt[i % 3]++;
+  });
+  const means = sum.map((v, k) => v / Math.max(1, cnt[k]));
+  return { meter: 3, downbeat: means.indexOf(Math.max(...means)), conf };
+}
+
+/** Per-beat accents: the low-band (≲ 200 Hz) onset just after each beat, plus half the broadband onset (z-scored). */
+export function beatAccents(x: Float32Array, sampleRate: number, beats: number[], env: Float32Array, fps: number, t0: number): number[] {
+  const a = 1 - Math.exp((-2 * Math.PI * 200) / sampleRate);
+  const lp = new Float32Array(x.length);
+  let y = 0;
+  for (let i = 0; i < x.length; i++) {
+    y += a * (x[i] - y);
+    lp[i] = y;
+  }
+  const w = Math.round(0.08 * sampleRate);
+  const rms = (from: number, to: number) => {
+    let s = 0;
+    const i0 = Math.max(0, from);
+    const i1 = Math.min(lp.length, to);
+    for (let i = i0; i < i1; i++) s += lp[i] * lp[i];
+    return Math.sqrt(s / Math.max(1, i1 - i0));
+  };
+  const low = beats.map((b) => {
+    const c = Math.round(b * sampleRate);
+    return Math.max(0, rms(c, c + w) - rms(c - w, c));
+  });
+  const flux = beats.map((b) => {
+    const f = Math.round((b - t0) * fps);
+    let m = 0;
+    for (let k = Math.max(0, f - 2); k <= Math.min(env.length - 1, f + 2); k++) m = Math.max(m, env[k]);
+    return m;
+  });
+  const z = (v: number[]) => {
+    const m = v.reduce((p, q) => p + q, 0) / Math.max(1, v.length);
+    const sd = Math.sqrt(v.reduce((p, q) => p + (q - m) ** 2, 0) / Math.max(1, v.length));
+    return v.map((q) => (sd > 1e-12 ? (q - m) / sd : 0));
+  };
+  const zl = z(low);
+  const zf = z(flux);
+  return zl.map((v, i) => v + 0.5 * zf[i]);
+}
+
 /** The beat grid of a recording (mono samples), or null when it is too short or silent. */
 export async function beatGrid(samples: Float32Array, sampleRate: number, o: { maxSec?: number; onProgress?: (p: number) => void } = {}): Promise<BeatGrid | null> {
   const maxSec = o.maxSec ?? 300;
@@ -254,5 +342,15 @@ export async function beatGrid(samples: Float32Array, sampleRate: number, o: { m
   const per = Math.max(0, Math.min(1, (tempo.periodicity - 0.1) / 0.3));
   const align = Math.max(0, Math.min(1, (alignment(env, frames) - 1.2) / 2.5));
   const confidence = Math.round(Math.max(0, Math.min(1, (0.7 * per + 0.3 * align) * (0.4 + 0.6 * regular))) * 100) / 100;
-  return { bpm: Math.round((60 / med) * 10) / 10, beats, confidence, periodicity: Math.round(tempo.periodicity * 100) / 100 };
+  const grid: BeatGrid = { bpm: Math.round((60 / med) * 10) / 10, beats, confidence, periodicity: Math.round(tempo.periodicity * 100) / 100 };
+  // 3/4 only on a confident beat with clear three-beat accents (meterOf); otherwise the grid says nothing (= 4).
+  if (confidence >= BEAT_CONFIDENT) {
+    const m = meterOf(beatAccents(x, sampleRate, beats, env, fps, t0));
+    grid.meterConf = m.conf;
+    if (m.meter === 3) {
+      grid.meter = 3;
+      grid.downbeat = m.downbeat;
+    }
+  }
+  return grid;
 }

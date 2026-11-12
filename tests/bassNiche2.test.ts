@@ -50,8 +50,8 @@ describe('BASS_NICHE_PLAN P2: wiring', () => {
     expect(levelsOf('b-ear').length).toBe(21);
     expect(levelsOf('b-up-walk').length).toBe(9);
     expect(levelsOf('b-std').length).toBe(5);
-    expect(levelsOf('b-ext').length).toBe(8);
-    expect(P2_LEVELS().length).toBe(27);
+    expect(levelsOf('b-ext').length).toBe(9);
+    expect(P2_LEVELS().length).toBe(28);
   });
 
   it('the standards ladder is on the jazz track; extended techniques on both', () => {
@@ -212,6 +212,20 @@ describe('BASS_NICHE_PLAN P2: what each new level measures', () => {
       const ids = new Set(d.notes.map((n) => n.chordId));
       expect(ids.size, id).toBeGreaterThan(7);
       expect(d.notes.every((n) => n.chordId !== undefined), id).toBe(true);
+    }
+    // b-ext 9: 3–7 shells — root, 7th and the 3rd an octave up, three strings at once, all three must ring.
+    for (const i of [0, 1]) {
+      const sh = first('b-ext-9', i);
+      expect(sh.goal.bass?.doubleStops).toBe(0.8);
+      const groups = new Map<number, number[]>();
+      for (const n of sh.notes) groups.set(n.chordId!, [...(groups.get(n.chordId!) ?? []), n.pitch]);
+      expect(groups.size).toBeGreaterThan(7);
+      for (const ps of groups.values()) {
+        expect(ps.length).toBe(3);
+        const [r, s7, t10] = [...ps].sort((a, b) => a - b);
+        expect([9, 10, 11]).toContain(s7 - r);
+        expect([15, 16]).toContain(t10 - r);
+      }
     }
     const tap = first('b-ext-4');
     expect(tap.notes.filter((n) => n.technique === 'tap').length).toBeGreaterThan(tap.notes.length / 2);

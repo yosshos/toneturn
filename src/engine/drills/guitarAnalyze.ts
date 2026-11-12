@@ -1047,7 +1047,7 @@ export function analyzeGuitarTake(drill: Drill, bpm: number, played: PlayedNote[
       });
       b.doubleStops = doubleStopMatch(frames, chords);
       if (b.doubleStops && b.doubleStops.share < bg.doubleStops)
-        factors.push({ verdict: b.doubleStops.share < bg.doubleStops - 0.2 ? 'not' : 'almost', en: `Both notes rang on ${Math.round(b.doubleStops.share * 100)}% of the double-stops (${Math.round(bg.doubleStops * 100)}% needed)`, he: `שני הצלילים צלצלו ב-${Math.round(b.doubleStops.share * 100)}% מהצלילים הכפולים (צריך ${Math.round(bg.doubleStops * 100)}%)` });
+        factors.push({ verdict: b.doubleStops.share < bg.doubleStops - 0.2 ? 'not' : 'almost', ...(chords.some((c) => c.pcs.length > 2) ? { en: `All three notes rang on ${Math.round(b.doubleStops.share * 100)}% of the shells (${Math.round(bg.doubleStops * 100)}% needed)`, he: `שלושת הצלילים צלצלו ב-${Math.round(b.doubleStops.share * 100)}% מהשלדים (צריך ${Math.round(bg.doubleStops * 100)}%)` } : { en: `Both notes rang on ${Math.round(b.doubleStops.share * 100)}% of the double-stops (${Math.round(bg.doubleStops * 100)}% needed)`, he: `שני הצלילים צלצלו ב-${Math.round(b.doubleStops.share * 100)}% מהצלילים הכפולים (צריך ${Math.round(bg.doubleStops * 100)}%)` }) });
     }
     // A9: note-length suite.
     if (bg.ringThrough !== undefined) {

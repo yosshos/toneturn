@@ -40,10 +40,14 @@ test.describe('technique drills', () => {
     await expect(page.locator('[data-drills="run"] .drill-tab svg').first()).toBeVisible();
     await page.locator('.screen-head .icon-btn').click();
     await page.locator('.screen-head .icon-btn').click();
-    await page.locator('[data-drills-settings]').click();
-    await page.getByRole('radio', { name: 'Blues' }).click();
-    await page.locator('.screen-head .icon-btn').click();
+    // GUITAR_DEEPENING §5: the genre filter became add-ons (the core is always on); Flamenco is off until picked.
     await expect(page.locator('[data-family="g-flamenco"]')).toHaveCount(0);
+    await page.locator('[data-drills-settings]').click();
+    const flamenco = page.getByRole('checkbox', { name: /^Flamenco/ });
+    await expect(flamenco).not.toBeChecked();
+    await flamenco.check();
+    await page.locator('.screen-head .icon-btn').click();
+    await expect(page.locator('[data-family="g-flamenco"]')).toBeVisible();
   });
 
   test('the Awards tab shows the earned badges', async ({ page }) => {

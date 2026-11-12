@@ -85,7 +85,8 @@ export function DuelsSection({ t, settings, friends, onPlaying, tier = 'pp' }: {
   /** The duel row whose quick messages / report menu is open. */
   const [openRow, setOpenRow] = useState<string | null>(null);
   const priv = effectivePrivacy(settings.privacy, settings.birthYear);
-  const load = useCallback(() => void myDuels().then(setRows), []);
+  // Groove-off duels (kind 'groove') live on the drums Groove-off screen, not here.
+  const load = useCallback(() => void myDuels().then((r) => setRows(r.filter((d) => (d.kind as string) !== 'groove'))), []);
   useEffect(load, [load]);
   const names: Record<string, string> = { mixed: t.setMixed, modes: t.skillNames.modes, 'wrong-notes': t.wrongNotesTitle, truefalse: t.trueFalse, chords: t.skillNames.chords, intervals: t.skillNames.intervals, degrees: t.skillNames.degrees, beat: t.skillNames['rhythm-dictation'], jazz: settings.uiLang === 'he' ? 'הרמוניית ג׳אז' : 'Jazz harmony' };
 
