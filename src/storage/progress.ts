@@ -19,7 +19,7 @@ export const compactTags = (tags: Tag[]): Tag[] | undefined => (tags.length ? ta
 import { SKILLS, type RatingEvent, type Ratings } from '../engine/rating';
 import { bumpCount, foldFromMemo, statsAfterEvents, statsAfterResult, trimIntoBase } from '../engine/stats';
 import { gameEvents } from '../engine/gameRating';
-import { afterRun, clearsRun, gameXp, gameXpLeft, isTier, tierDifficulty, tierKey, type DailyBand, type DynName, type GameTiers } from '../engine/gameTiers';
+import { afterRun, clearsRun, gameXp, gameXpLeft, isTier, tierDifficulty, tierKey, tierSpec, type DailyBand, type DynName, type GameTiers } from '../engine/gameTiers';
 import { medalFor, weekId, type Medal } from '../engine/adaptive';
 import type { Naming } from '../engine/pitch';
 import type { KV } from './kv';
@@ -700,7 +700,8 @@ export function applyGameRun(
   if (p.applied.includes(eventId)) return { progress: p, xp: 0, cleared: null, pass: false };
   const pass = run.pass ?? clearsRun(run.game, run.tier, run.score, run.detail);
   const at = now.toISOString();
-  const { state, newlyCleared } = afterRun(p.gameTiers?.[key], run.tier, pass, run.score, at);
+  const runPart = run.detail && typeof run.detail === 'object' && typeof (run.detail as { part?: unknown }).part === 'string' ? (run.detail as { part: string }).part : undefined;
+  const { state, newlyCleared } = afterRun(p.gameTiers?.[key], run.tier, pass, run.score, at, { part: runPart, needParts: tierSpec(run.game)?.tiers[run.tier]?.distinctParts });
   const day = localDay(now);
   const today = p.gameXpDays?.[day] ?? 0;
   const xp = Math.min(gameXp(run.game, run.tier, run.score, run.detail), gameXpLeft(today));
