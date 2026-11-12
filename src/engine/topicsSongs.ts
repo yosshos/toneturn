@@ -207,10 +207,11 @@ function songStrumItem(id: string, level: number, seed: number): ChoiceQuestion 
   const choiceStim: NonNullable<ChoiceQuestion['choiceStim']> = {};
   for (const c of choices) choiceStim[c] = [{ kind: 'events', events: [...context, ...tune, ...pad(deg(c).root, deg(c).quality, it.bar * s.meter, s.meter)], length }];
   const title = s.title;
+  // 2026-11-12: guitar strums it, bass plays its root, keys play it (MIDI) or tap — one wording for all three.
   const ask =
     level === 3
-      ? { en: `“${title.en}”: which chord comes next? Strum it.`, he: `„${title.he}”: איזה אקורד בא עכשיו? פרטו אותו.` }
-      : { en: `“${title.en}”: which chord is under this bar? Strum it.`, he: `„${title.he}”: איזה אקורד מתחת לתיבה הזו? פרטו אותו.` };
+      ? { en: `“${title.en}”: which chord comes next? Play it.`, he: `„${title.he}”: איזה אקורד בא עכשיו? נגנו אותו.` }
+      : { en: `“${title.en}”: which chord is under this bar? Play it.`, he: `„${title.he}”: איזה אקורד מתחת לתיבה הזו? נגנו אותו.` };
   return {
     id,
     kind: 'choice',
@@ -230,9 +231,10 @@ function songStrumItem(id: string, level: number, seed: number): ChoiceQuestion 
 }
 
 TOPIC_GEN['song-strum'] = {
-  title: { en: 'Strum the song’s chords', he: 'לפרוט את אקורדי השיר' },
+  title: { en: 'Play the song’s chords', he: 'לנגן את אקורדי השיר' },
   skill: 'instrument',
-  forPlays: ['guitar'],
+  // Guitar strums (StrumChoice); bass plays the root and keys the chord (ChordPlayChoice, 2026-11-12).
+  forPlays: ['guitar', 'bass', 'keys', 'piano'],
   levels: [
     { en: 'Under this bar: I or V', he: 'מתחת לתיבה: I או V' },
     { en: 'Under this bar: I, IV or V', he: 'מתחת לתיבה: I‏, IV או V' },

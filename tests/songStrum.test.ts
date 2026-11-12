@@ -78,12 +78,12 @@ describe('song chords, strummed', () => {
     expect(strumAmong(quiet, [{ root: 0, quality: 'M' }, { root: 7, quality: 'M' }]).verdict).toBe('again');
   });
 
-  it('a step of the guitar path only, with its own symbol and short name', () => {
+  it('a step of the guitar, bass and keys paths (2026-11-12), with its own symbol and short name', () => {
     const steps = stepCatalogue().filter((s) => s.topic === 'song-strum');
     expect(steps.map((s) => s.level)).toEqual([1, 2, 3]);
     for (const s of steps) {
-      expect(inCourse(s, 'guitar')).toBe(true);
-      for (const c of ['keys', 'bass', 'ear', 'jazz', 'voice', 'drums'] as const) expect(inCourse(s, c), c).toBe(false);
+      for (const c of ['guitar', 'bass', 'keys'] as const) expect(inCourse(s, c), c).toBe(true);
+      for (const c of ['ear', 'jazz', 'voice', 'drums'] as const) expect(inCourse(s, c), c).toBe(false);
       expect(s.choices).toBeGreaterThan(1);
     }
     expect(GLYPHS[TOPIC_GLYPH['song-strum']]).toBeDefined();

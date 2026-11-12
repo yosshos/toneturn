@@ -11,6 +11,8 @@ import { loadGroove, loadModel } from '../storage/analysis';
 import { loadConfusions, topConfusions, type ConfusionMap } from '../storage/confusion';
 import { loadPieces, type StoredPiece } from './Pieces';
 import { troubleBars } from '../engine/piece/coach';
+import { showsInsight } from '../engine/analysis/insightCards';
+import type { CourseId } from '../engine/courses';
 
 const TX = {
   en: {
@@ -31,8 +33,9 @@ const TX = {
 const KEYS_5THS = [0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5];
 const KEY_N = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
 
-export function InsightsScreen({ lang, progress, onBack, onTopic, onDrills, onPieces, onGroove }: { lang: 'en' | 'he'; progress: Progress; onBack: () => void; onTopic: (id: string, level: number) => void; onDrills: () => void; onPieces: () => void; onGroove?: () => void }) {
+export function InsightsScreen({ lang, progress, onBack, onTopic, onDrills, onPieces, onGroove, course = 'ear' }: { lang: 'en' | 'he'; progress: Progress; /** Only the active course's cards show (GUITAR_AUDIT P2). */ course?: CourseId; onBack: () => void; onTopic: (id: string, level: number) => void; onDrills: () => void; onPieces: () => void; onGroove?: () => void }) {
   const tx = TX[lang];
+  const on = (c: Parameters<typeof showsInsight>[0]) => showsInsight(c, course);
   const [model, setModel] = useState<PlayerModel | null>(null);
   const [groove, setGroove] = useState<GrooveModel | null>(null);
   const [conf, setConf] = useState<ConfusionMap | null>(null);
@@ -60,6 +63,7 @@ export function InsightsScreen({ lang, progress, onBack, onTopic, onDrills, onPi
         <h1>{tx.title}</h1>
       </header>
 
+      {on('ear-index') && (
       <section className="set-card in-ear" data-ear-index={ei?.r ?? ''}>
         <div className="in-head">
           <h2>{tx.ear}</h2>
@@ -71,7 +75,9 @@ export function InsightsScreen({ lang, progress, onBack, onTopic, onDrills, onPi
         {hist.length > 1 && <Spark pts={hist.map((p) => p.r)} />}
         <small className="field-hint">{tx.earHint}</small>
       </section>
+      )}
 
+      {on('technique') && (
       <section className="set-card" data-findings="1">
         <h2>{tx.tech}</h2>
         {fs.length ? (
@@ -92,10 +98,12 @@ export function InsightsScreen({ lang, progress, onBack, onTopic, onDrills, onPi
           <p className="field-hint">{tx.none}</p>
         )}
       </section>
+      )}
 
-      {model && <HandMap model={model} tx={tx} />}
-      {model && <KeyMap model={model} tx={tx} />}
+      {model && on('hand-map') && <HandMap model={model} tx={tx} />}
+      {model && on('key-map') && <KeyMap model={model} tx={tx} />}
 
+      {on('groove') && (
       <section className="set-card" data-groove="1">
         <h2>{tx.groove}</h2>
         <small className="field-hint">{tx.grooveHint}</small>
@@ -125,7 +133,9 @@ export function InsightsScreen({ lang, progress, onBack, onTopic, onDrills, onPi
           </button>
         )}
       </section>
+      )}
 
+      {on('confusions') && (
       <section className="set-card" data-confusions="1">
         <h2>{tx.conf}</h2>
         <small className="field-hint">{tx.confHint}</small>
@@ -151,8 +161,9 @@ export function InsightsScreen({ lang, progress, onBack, onTopic, onDrills, onPi
           <p className="field-hint">{tx.none}</p>
         )}
       </section>
+      )}
 
-      {troubled.length > 0 && (
+      {troubled.length > 0 && on('trouble-bars') && (
         <section className="set-card" data-trouble="1">
           <h2>{tx.trouble}</h2>
           <ul className="in-list">

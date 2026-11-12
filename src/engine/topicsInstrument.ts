@@ -227,10 +227,10 @@ function findNote(topic: string, t: Tuning, inst: Inst, mode: FindMode, range: [
     const roman = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'][a];
     const ask: Bi =
       mode === 'every' && !t.fretted
-        ? { en: `Tap every ${n.en} in first position.`, he: `הקישו על כל ${n.he} בפוזיציה הראשונה.` }
+        ? { en: `Tap every ${n.en} in first position.`, he: `הקישו על כל ${n.he} במצב הראשון.` }
         : mode === 'every'
         ? { en: `Tap every ${n.en} on the neck, frets ${a}–${b}.`, he: `הקישו על כל ${n.he} בצוואר, סריגים ${a}–${b}.` }
-        : { en: `Position ${roman}: find every ${n.en} between frets ${a} and ${b}.`, he: `פוזיציה ${roman}: מצאו כל ${n.he} בין סריג ${a} לסריג ${b}.` };
+        : { en: `Position ${roman}: find every ${n.en} between frets ${a} and ${b}.`, he: `מצב ${roman}: מצאו כל ${n.he} בין סריג ${a} לסריג ${b}.` };
     return placeQ({ ...base, ask, target: midisAt(t, pos), as: 'set', neck: { frets: [a, b] } });
   }
   const strs = mode === 'low2' ? [nStr, nStr - 1] : Array.from({ length: nStr }, (_, i) => i + 1);
@@ -254,7 +254,7 @@ TOPIC_GEN['fret-notes'] = {
     { en: 'Natural notes, all strings', he: 'תווים טבעיים, כל המיתרים' },
     { en: 'With sharps and flats', he: 'עם דיאזים ובמולים' },
     { en: 'Every place of one note (frets 0–12)', he: 'כל המקומות של צליל אחד (סריגים 0–12)' },
-    { en: 'The same note inside a position', he: 'אותו צליל בתוך פוזיציה' },
+    { en: 'The same note inside a position', he: 'אותו צליל בתוך מצב' },
   ],
   gen(seed, level, id) {
     const mode = (['low2', 'all', 'acc', 'every', 'position'] as const)[level - 1];
@@ -272,7 +272,7 @@ TOPIC_GEN['string-notes'] = {
     { en: 'Natural notes on the two lowest strings', he: 'תווים טבעיים על שני המיתרים הנמוכים' },
     { en: 'Natural notes, all strings', he: 'תווים טבעיים, כל המיתרים' },
     { en: 'With sharps and flats', he: 'עם דיאזים ובמולים' },
-    { en: 'Every place of one note (first position)', he: 'כל המקומות של צליל אחד (פוזיציה ראשונה)' },
+    { en: 'Every place of one note (first position)', he: 'כל המקומות של צליל אחד (מצב ראשון)' },
   ],
   gen(seed, level, id) {
     const inst = BOWED[(seed >>> 0) % 3];
@@ -369,12 +369,12 @@ TOPIC_GEN['fret-chords'] = {
   levelPlays: [['guitar'], ['guitar'], ['guitar'], ['guitar'], ['guitar'], [], []],
   levels: [
     { en: 'Open chords by diagram (C A G E D, minor)', he: 'אקורדים פתוחים לפי דיאגרמה (C A G E D, מינור)' },
-    { en: 'Build a triad on the top three strings', he: 'לבנות טריאדה על שלושת המיתרים העליונים' },
+    { en: 'Build a triad on the top three strings', he: 'לבנות משולש על שלושת המיתרים העליונים' },
     { en: 'CAGED: which shape?', he: 'CAGED: איזו צורה?' },
     { en: 'Seventh chords (drop 2 / drop 3)', he: 'אקורדי ספטים (דרופ 2 / דרופ 3)' },
-    { en: 'Triad inversions on a string set', he: 'היפוכי טריאדות על קבוצת מיתרים' },
-    { en: 'Bass: root, fifth, octave', he: 'בס: שורש, קווינטה, אוקטבה' },
-    { en: 'Bass: arpeggio shapes', he: 'בס: צורות ארפג׳ו' },
+    { en: 'Triad inversions on a string set', he: 'היפוכי משולשים על קבוצת מיתרים' },
+    { en: 'Bass: root, fifth, octave', he: 'בס: יסוד, קווינטה, אוקטבה' },
+    { en: 'Bass: arpeggio shapes', he: 'בס: צורות ארפג׳יו' },
   ],
   gen(seed, level, id) {
     const rnd = rng(seed);
@@ -453,7 +453,7 @@ TOPIC_GEN['fret-chords'] = {
         const name = sevName(target[0], kind);
         return placeQ({
           ...base, instrument: 'guitar',
-          ask: { en: `Build ${name.en} as a drop-${drop} voicing: root on string ${rootStr}, strings ${strs.join('–')}.`, he: `בנו ${name.he} בקול דרופ ${drop}: השורש על מיתר ${rootStr}, מיתרים ${strs.join('–')}.` },
+          ask: { en: `Build ${name.en} as a drop-${drop} voicing: root on string ${rootStr}, strings ${strs.join('–')}.`, he: `בנו ${name.he} בקול דרופ ${drop}: היסוד על מיתר ${rootStr}, מיתרים ${strs.join('–')}.` },
           target, as: 'set', neck: { strings: strs },
           stimulus: [chordStim(target, 1.6)],
         });
@@ -472,8 +472,8 @@ TOPIC_GEN['fret-chords'] = {
       const n = noteName(r);
       const ask: Bi =
         level === 6
-          ? { en: `Play ${n.en}, its fifth and its octave — root on string ${rootStr}.`, he: `נגנו ${n.he}, את הקווינטה ואת האוקטבה שלו — השורש על מיתר ${rootStr}.` }
-          : { en: `Play the ${n.en}${arp!.sym.en} arpeggio up from the root on string ${rootStr}.`, he: `נגנו ארפג׳ו של ${n.he} ${arp!.sym.he} למעלה, מהשורש על מיתר ${rootStr}.` };
+          ? { en: `Play ${n.en}, its fifth and its octave — root on string ${rootStr}.`, he: `נגנו ${n.he}, את הקווינטה ואת האוקטבה שלו — היסוד על מיתר ${rootStr}.` }
+          : { en: `Play the ${n.en}${arp!.sym.en} arpeggio up from the root on string ${rootStr}.`, he: `נגנו ארפג׳יו של ${n.he} ${arp!.sym.he} למעלה, מהיסוד על מיתר ${rootStr}.` };
       const minor = arp?.minor ?? false;
       return placeQ({ ...base, instrument: 'bass', ask, target, as: 'seq', neck: { frets: [0, 12] }, stimulus: [chordStim(triadOver(r + 12, mod12(r), minor), 1.4)] });
     }
@@ -490,9 +490,9 @@ TOPIC_GEN['fret-scales'] = {
   forPlays: ['guitar'],
   levelPlays: [['guitar'], ['guitar'], ['guitar'], ['guitar'], []],
   levels: [
-    { en: 'Major scale from a root on string 6', he: "סולם מז'ור משורש על מיתר 6" },
-    { en: 'Minor pentatonic, box 1', he: 'פנטטונית מינורית, בוקס 1' },
-    { en: 'Which pentatonic box (1–5)?', he: 'איזה בוקס פנטטוני (1–5)?' },
+    { en: 'Major scale from a root on string 6', he: "סולם מז'ור מהיסוד על מיתר 6" },
+    { en: 'Minor pentatonic, box 1', he: 'פנטטונית מינורית, תיבה 1' },
+    { en: 'Which pentatonic box (1–5)?', he: 'איזו תיבה פנטטונית (1–5)?' },
     { en: 'Three notes per string', he: 'שלושה צלילים למיתר' },
     { en: 'Bass: walking approach notes', he: 'בס: צלילי גישה בווקינג' },
   ],
@@ -513,7 +513,7 @@ TOPIC_GEN['fret-scales'] = {
       const target = midisAt(STD, ps);
       const fs = ps.map((p) => p.fret);
       const n = rootName(root, true);
-      return placeQ({ ...base, instrument: 'guitar', ask: { en: `Play ${n.en} minor pentatonic, box 1, from the lowest note to the highest.`, he: `נגנו ${n.he} פנטטונית מינורית, בוקס 1, מהצליל הנמוך ביותר עד הגבוה ביותר.` }, target, as: 'seq', neck: { frets: [Math.min(...fs), Math.max(...fs)], dots: [ps[0]] } });
+      return placeQ({ ...base, instrument: 'guitar', ask: { en: `Play ${n.en} minor pentatonic, box 1, from the lowest note to the highest.`, he: `נגנו ${n.he} פנטטונית מינורית, תיבה 1, מהצליל הנמוך ביותר עד הגבוה ביותר.` }, target, as: 'seq', neck: { frets: [Math.min(...fs), Math.max(...fs)], dots: [ps[0]] } });
     }
     if (level === 3) {
       const box = 1 + Math.floor(rnd() * 5);
@@ -524,11 +524,11 @@ TOPIC_GEN['fret-scales'] = {
       const names: Names = {};
       const choices = ['1', '2', '3', '4', '5'];
       const words = ['one', 'two', 'three', 'four', 'five'];
-      choices.forEach((c, i) => (names[c] = nm(`Box ${c}`, `בוקס ${c}`, `box ${words[i]}`)));
+      choices.forEach((c, i) => (names[c] = nm(`Box ${c}`, `תיבה ${c}`, `box ${words[i]}`)));
       const n = rootName(root, true);
       return choiceQ({
         id, topic: 'fret-scales', level, seed, skill: 'instrument', difficulty: diff,
-        ask: { en: `This is ${n.en} minor pentatonic. Which box is it?`, he: `זו ${n.he} פנטטונית מינורית. איזה בוקס זה?` },
+        ask: { en: `This is ${n.en} minor pentatonic. Which box is it?`, he: `זו ${n.he} פנטטונית מינורית. איזו תיבה זו?` },
         names, answer: String(box), choices,
         stimulus: [notesStim(midisAt(STD, ps), 0.2)],
         diagram: { kind: 'neck', instrument: 'guitar', dots: ps.map((p) => ({ ...p, ...(mod12(noteAt(STD, p.str, p.fret)) === root ? { root: true } : {}) })), baseFret: Math.max(1, lo), frets: 6 },
@@ -599,8 +599,8 @@ TOPIC_GEN['bass-shapes'] = {
   skill: 'instrument',
   forPlays: ['bass'],
   levels: [
-    { en: 'Root, fifth, octave', he: 'שורש, קווינטה, אוקטבה' },
-    { en: 'Arpeggio shapes', he: 'צורות ארפג׳ו' },
+    { en: 'Root, fifth, octave', he: 'יסוד, קווינטה, אוקטבה' },
+    { en: 'Arpeggio shapes', he: 'צורות ארפג׳יו' },
     { en: 'Walking approach notes', he: 'צלילי גישה בווקינג' },
   ],
   gen(seed, level, id) {
@@ -696,13 +696,13 @@ export function bassPentaBox(n: number, rootPc: number, t: Tuning = BASS): NeckP
 
 // 0.66: scale boxes on the bass (4-string EADG; the 3-notes-per-string patterns are a 6-string technique level, b-scale 11).
 TOPIC_GEN['bass-scales'] = {
-  title: { en: 'Scale boxes on the bass', he: 'בוקסים של סולמות בבס' },
+  title: { en: 'Scale boxes on the bass', he: 'תיבות של סולמות בבס' },
   skill: 'instrument',
   forPlays: ['bass'],
   levels: [
-    { en: 'Major scale from a root on the E or A string', he: "סולם מז'ור משורש על מיתר E או A" },
-    { en: 'Minor pentatonic, box 1 (for fills)', he: 'פנטטונית מינורית, בוקס 1 (למילויים)' },
-    { en: 'Which pentatonic box (1–5)?', he: 'איזה בוקס פנטטוני (1–5)?' },
+    { en: 'Major scale from a root on the E or A string', he: "סולם מז'ור מהיסוד על מיתר E או A" },
+    { en: 'Minor pentatonic, box 1 (for fills)', he: 'פנטטונית מינורית, תיבה 1 (למילויים)' },
+    { en: 'Which pentatonic box (1–5)?', he: 'איזו תיבה פנטטונית (1–5)?' },
   ],
   gen(seed, level, id) {
     const rnd = rng(seed);
@@ -722,7 +722,7 @@ TOPIC_GEN['bass-scales'] = {
       const ps = bassPentaBox(1, root);
       const fs = ps.map((p) => p.fret);
       const n = rootName(root, true);
-      return placeQ({ ...base, instrument: 'bass', ask: { en: `Play ${n.en} minor pentatonic, box 1, lowest note to highest.`, he: `נגנו ${n.he} פנטטונית מינורית, בוקס 1, מהצליל הנמוך לגבוה.` }, target: midisAt(BASS, ps), as: 'seq', neck: { frets: [Math.max(0, Math.min(...fs) - 1), Math.max(...fs) + 1], dots: [ps[0]] } });
+      return placeQ({ ...base, instrument: 'bass', ask: { en: `Play ${n.en} minor pentatonic, box 1, lowest note to highest.`, he: `נגנו ${n.he} פנטטונית מינורית, תיבה 1, מהצליל הנמוך לגבוה.` }, target: midisAt(BASS, ps), as: 'seq', neck: { frets: [Math.max(0, Math.min(...fs) - 1), Math.max(...fs) + 1], dots: [ps[0]] } });
     }
     const box = 1 + Math.floor(rnd() * 5);
     const ps = bassPentaBox(box, root);
@@ -730,11 +730,11 @@ TOPIC_GEN['bass-scales'] = {
     const names: Names = {};
     const choices = ['1', '2', '3', '4', '5'];
     const words = ['one', 'two', 'three', 'four', 'five'];
-    choices.forEach((c, i) => (names[c] = nm(`Box ${c}`, `בוקס ${c}`, `box ${words[i]}`)));
+    choices.forEach((c, i) => (names[c] = nm(`Box ${c}`, `תיבה ${c}`, `box ${words[i]}`)));
     const n = rootName(root, true);
     return choiceQ({
       id, topic: 'bass-scales', level, seed, skill: 'instrument', difficulty: diff,
-      ask: { en: `${n.en} minor pentatonic. Which box?`, he: `${n.he} פנטטונית מינורית. איזה בוקס?` },
+      ask: { en: `${n.en} minor pentatonic. Which box?`, he: `${n.he} פנטטונית מינורית. איזו תיבה?` },
       names, answer: String(box), choices,
       stimulus: [notesStim(midisAt(BASS, ps), 0.2)],
       diagram: { kind: 'neck', instrument: 'bass', dots: ps.map((p) => ({ ...p, ...(mod12(noteAt(BASS, p.str, p.fret)) === root ? { root: true } : {}) })), baseFret: Math.max(1, lo - 1), frets: 6 },

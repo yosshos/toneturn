@@ -59,7 +59,7 @@ export const AREA_NAME: Record<RankArea, L> = {
   instrument: { en: 'Instrument & sound', he: 'כלי וסאונד' },
   technique: { en: 'Technique', he: 'טכניקה' },
 };
-export const AREA_ICON: Record<RankArea, string> = { pitch: '🎵', time: '🥁', memory: '🧠', voice: '🎤', reading: '📖', creative: '🎨', instrument: '🎸', technique: '🎹' };
+export const AREA_ICON: Record<RankArea, string> = { pitch: 'contour', time: 'drums', memory: 'memory', voice: 'mic', reading: 'book', creative: 'improv', instrument: 'guitar', technique: 'keys' };
 
 /** Lowest area level of a division (division 15 = Master). */
 export const divFloor = (d: number) => (d >= MASTER_DIV ? MASTER_AT : DIV_BASE + DIV_STEP * Math.max(0, d));

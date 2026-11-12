@@ -134,7 +134,7 @@ optional one-tap personal goal; (3) the daily goal + reminder prompt on the firs
 - **Day 3: the first "real music" moment** (`REAL_MUSIC` in `courseStart.ts`, 7 courses × 3 reports; state
   `courseStart[course].real`: opened, done + its measured result, result seen, declined). From the third session (the
   taste + 1) until the sixth, Home shows a card with Toni: "Today: real music" — what you will play, **Start** (or
-  **Continue** once opened) / **Not now** (not offered again). It replaces the first-week card while it is offered.
+  **Continue** once opened) / **Not now** (a snooze until the next session day, at most 3 times inside the window; owner 2026-11-12). It replaces the first-week card while it is offered.
   Existing material only, with the band:
   - keys — new: the roots of a 12-bar blues in C, left hand (`bluesRootsDrill`); a bit: guide tones through the F blues
     (chart drill `tpl:blues-f~guide~whole`); well: shells in Charleston through the F blues (`tpl:blues-f~shell~charleston`);

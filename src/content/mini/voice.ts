@@ -530,7 +530,7 @@ export const LESSONS: MiniLesson[] = [
       {
         say: { en: 'Use headphones here: the app keeps playing while you sing, and the mic must hear only you. I check that your note is in tune and steady.', he: 'כאן צריך אוזניות: האפליקציה ממשיכה לנגן בזמן שאתם שרים, והמיקרופון צריך לשמוע רק אתכם. אני בודק שהצליל שלכם מדויק ויציב.' },
         play: [{ kind: 'chord', midis: [55, 59, 62], duration: 2.2 }],
-        show: { notes: [55, 59, 62], chord: true, text: { en: '🎧', he: '🎧' } },
+        show: { notes: [55, 59, 62], chord: true, text: { en: 'headphones', he: 'אוזניות' } },
       },
       {
         say: { en: 'Your turn: listen to the held note or the melody, then sing your part on "ah" — in tune, steady, and your own.', he: 'תורכם: הקשיבו לצליל המוחזק או למנגינה, ואז שירו את הקול שלכם על "אה" — מדויק, יציב, ושלכם.' },

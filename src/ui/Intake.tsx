@@ -722,7 +722,7 @@ function RangeStep({ t, settings, range, onRange, onNext }: { t: Strings; settin
           </p>
           <div className="range-controls">
             <button className="btn mega" onClick={stop} data-range-stop="1">
-              ⏹ {q.rangeStop}
+              <Icon k="stop" /> {q.rangeStop}
             </button>
             <button className="btn ghost" onClick={restart} data-range-restart="1">
               ↻ {q.rangeRestart}

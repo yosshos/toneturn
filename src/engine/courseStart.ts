@@ -404,7 +404,7 @@ export const TASTES: Record<CourseId, Record<SelfReport, TasteDef>> = {
       kind: 'drills',
       picks: [{ level: 'cadences-1', items: [0, 1, 2], band: { style: 'pop', chart: ['C F', 'G C'] } }],
     }),
-    well: T('keys', 'well', 'Shells on a blues in F', 'שלדים על בלוז בפה', 'Left-hand shell voicings through a 12-bar blues with the band.', 'קולות שלד ביד שמאל לאורך בלוז של 12 תיבות עם הלהקה.', {
+    well: T('keys', 'well', 'Shells on a blues in F', 'קונכיות על בלוז בפה', 'Left-hand shell voicings through a 12-bar blues with the band.', 'קולות שלד ביד שמאל לאורך בלוז של 12 תיבות עם הלהקה.', {
       kind: 'drills',
       picks: [{ level: 'voicings-6', match: ':5:', band: { style: 'swing', chart: ['F7', 'Bb7', 'F7', 'F7', 'Bb7', 'Bb7', 'F7', 'D7', 'Gm7', 'C7', 'F7', 'C7'], bass: true, drums: 'swing' } }],
     }),
@@ -515,8 +515,14 @@ export interface RealMusicState {
   win?: FirstWin;
   /** The result card was closed on Home. */
   seenAt?: string;
-  /** "Not now" on the offer: not offered again. */
+  /** The last "Not now" on the offer. */
   skippedAt?: string;
+  /** Sessions after the taste at the last "Not now": snoozed until a later session (owner 2026-11-12: a snooze). */
+  skipAt?: number;
+  /** The local day of the last "Not now": not offered again that day. */
+  skipDay?: string;
+  /** How many times "Not now" was tapped (gone after REAL_MAX_SNOOZES). */
+  skips?: number;
 }
 
 const putReal = (m: CourseStartMap | undefined, c: CourseId, patch: Partial<RealMusicState>): CourseStartMap => put(m, c, { real: { ...(m?.[c]?.real ?? {}), ...patch } });
@@ -530,18 +536,32 @@ export const REAL_UNTIL = 6;
  * The day-3 card on Home: 'offer' from the third session (not taken, not declined, never for a migrated player),
  * 'result' once done until its card is closed, else null.
  */
-export function realMusicCard(cs: CourseStartState | undefined, sessionsAfterTaste: number): 'offer' | 'result' | null {
+export function realMusicCard(cs: CourseStartState | undefined, sessionsAfterTaste: number, today?: string): 'offer' | 'result' | null {
   if (!cs || cs.legacy || !cs.winSeenAt) return null;
   const r = cs.real;
   if (r?.doneAt) return r.seenAt ? null : 'result';
-  if (r?.skippedAt) return null;
+  if (r?.skippedAt && realSnoozed(r, sessionsAfterTaste, today)) return null;
   return sessionsAfterTaste >= REAL_FROM && sessionsAfterTaste < REAL_UNTIL ? 'offer' : null;
+}
+/** "Not now" on the day-3 card comes back at most this many times inside its window (sessions 3–6). */
+export const REAL_MAX_SNOOZES = 3;
+/**
+ * A snoozed offer: hidden for the rest of the day and until the next session (a session finished after the snooze),
+ * gone for good after REAL_MAX_SNOOZES. A skip saved before snoozing existed (no `skipAt`) counts as one snooze taken
+ * in the session it was saved in, so it comes back next session.
+ */
+function realSnoozed(r: RealMusicState, sessions: number, today?: string): boolean {
+  if ((r.skips ?? 1) >= REAL_MAX_SNOOZES) return true;
+  if (today && r.skipDay && r.skipDay >= today) return true;
+  return r.skipAt === undefined ? false : sessions <= r.skipAt;
 }
 export const markRealOpened = (m: CourseStartMap | undefined, c: CourseId, now: string): CourseStartMap => (m?.[c]?.real?.at ? (m ?? {}) : putReal(m, c, { at: now }));
 /** The moment finished with a measured result: kept once (a replay never overwrites it). */
 export const markRealDone = (m: CourseStartMap | undefined, c: CourseId, win: FirstWin, now: string): CourseStartMap => (m?.[c]?.real?.doneAt ? (m ?? {}) : putReal(m, c, { doneAt: now, win, at: m?.[c]?.real?.at ?? now }));
 export const markRealSeen = (m: CourseStartMap | undefined, c: CourseId, now: string): CourseStartMap => (m?.[c]?.real?.seenAt ? (m ?? {}) : putReal(m, c, { seenAt: now }));
-export const skipReal = (m: CourseStartMap | undefined, c: CourseId, now: string): CourseStartMap => putReal(m, c, { skippedAt: now });
+/** "Not now" on the day-3 card: a snooze until the next session day (see realSnoozed), not a goodbye. */
+export const skipReal = (m: CourseStartMap | undefined, c: CourseId, now: string, sessionsAfterTaste?: number, today?: string): CourseStartMap =>
+  putReal(m, c, { skippedAt: now, skips: (m?.[c]?.real?.skips ?? 0) + 1, ...(sessionsAfterTaste !== undefined ? { skipAt: sessionsAfterTaste } : {}), ...(today ? { skipDay: today } : {}) });
 
 /** Courses with a measured first win (the "First session" badge; a migrated player never had one). */
 export const firstWinCourses = (m: CourseStartMap | undefined): CourseId[] => (Object.keys(m ?? {}) as CourseId[]).filter((c) => !m?.[c]?.legacy && !!m?.[c]?.win);

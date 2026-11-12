@@ -504,7 +504,7 @@ export const GLOSSARY: Term[] = [
   },
   {
     id: 'arpeggio',
-    label: { en: 'arpeggio', he: 'ארפג׳ו' },
+    label: { en: 'arpeggio', he: 'ארפג׳יו' },
     explain: { en: 'The notes of a chord played one after another instead of together.', he: 'צלילי האקורד מנוגנים אחד אחרי השני במקום ביחד.' },
     example: { en: 'C–E–G–C picked one string at a time, as in many guitar ballads.', he: 'C–E–G–C נפרטים מיתר אחרי מיתר, כמו בהרבה בלדות בגיטרה.' },
     play: [notes([48, 52, 55, 60, 64, 67, 72], 0.2), chord([48, 52, 55, 60, 64], 1)],

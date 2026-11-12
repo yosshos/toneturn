@@ -34,7 +34,7 @@ import { levelDrills } from '../engine/drills/plan';
 import { parseTopicRef, submitResult, type AssignItem } from '../cloud/teacher';
 import { DigestScreen } from './TeacherLoop';
 import { IMPROV_LEVELS } from '../engine/charts';
-import { PiecesScreen } from './Pieces';
+import { loadPieces, PiecesScreen, piecesDue } from './Pieces';
 import { SlowDownScreen } from './SlowDown';
 import { MySongScreen } from './MySong';
 import { ChartsScreen, type MyChart } from './Charts';
@@ -1414,14 +1414,25 @@ export function App() {
   const nudge = s.workoutNudge && s.workoutNudge.until >= today ? s.workoutNudge.delta : 0;
   const baseMinutes = Math.max(5, Math.min(60, ((s.intake as Intake | null | undefined)?.minutes ?? 10) + nudge));
   const tmplRaw = s.workoutTemplates?.[String(now0.getDay())] ?? s.workoutTemplates?.all ?? null;
+  // Learned pieces due for a review run (SPEC-PIECE §2.10): the pieces live in IndexedDB, so the count loads once a day
+  // and again after the pieces screen closes.
+  const [piecesDueN, setPiecesDueN] = useState(0);
+  useEffect(() => {
+    if (route === 'pieces') return;
+    let live = true;
+    void loadPieces().then((ps) => live && setPiecesDueN(piecesDue(ps, today).length)).catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [today, route === 'pieces']); // eslint-disable-line react-hooks/exhaustive-deps
   const suggestedWorkout = useMemo(() => {
     const tmpl = tmplRaw ? validateTemplate(tmplRaw, { leaveOut: s.pathLeaveOut ?? [], topics: new Set(Object.keys(TOPIC_GEN)), hidden: s.pathHidden ?? [], games: new Set(GAMES2.map((g) => g.id)) }) : null;
     // 0.61 (SPEC-COURSES): the workout belongs to the active course — its own areas, its goal, its warm-ups only.
     const course = courseOf(s.activeCourse);
     const own = COURSE_AREAS[course.id];
-    return suggestWorkout({ total: tmpl ? tmpl.reduce((a, b) => a + b.minutes, 0) : baseMinutes, goal: courseGoal(course.id, !!s.examPrep), priorities: (s.intake as Intake | null | undefined)?.priorities ?? null, leaveOut: [...new Set([...(s.pathLeaveOut ?? []).filter((d) => course.id === 'ear' || !own.includes(d)), ...INTAKE_AREAS.filter((d) => !own.includes(d))])], reviewsDue: new Set(dueReviews(progress.review, now0).map((r) => r.key)).size, singer: course.id === 'voice' && !s.noMic, view: pathView, template: tmpl, technique: s.drills?.inWorkout !== false && (course.id === 'keys' || course.id === 'guitar' || course.id === 'bass' || course.id === 'drums'), licksDue: course.id === 'drums' || course.id === 'ear' ? 0 : dueLicks(s.lickBook?.review, now0).length });
+    return suggestWorkout({ total: tmpl ? tmpl.reduce((a, b) => a + b.minutes, 0) : baseMinutes, goal: courseGoal(course.id, !!s.examPrep), priorities: (s.intake as Intake | null | undefined)?.priorities ?? null, leaveOut: [...new Set([...(s.pathLeaveOut ?? []).filter((d) => course.id === 'ear' || !own.includes(d)), ...INTAKE_AREAS.filter((d) => !own.includes(d))])], reviewsDue: new Set(dueReviews(progress.review, now0).map((r) => r.key)).size, singer: course.id === 'voice' && !s.noMic, view: pathView, template: tmpl, technique: s.drills?.inWorkout !== false && (course.id === 'keys' || course.id === 'guitar' || course.id === 'bass' || course.id === 'drums'), licksDue: course.id === 'drums' || course.id === 'ear' ? 0 : dueLicks(s.lickBook?.review, now0).length, piecesDue: course.id === 'ear' || course.id === 'jazz' ? 0 : piecesDueN });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathView, baseMinutes, tmplRaw, s.goal, s.examPrep, s.pathLeaveOut, s.pathHidden, s.mode, s.noSing, s.noMic, progress.review.length, today, progress.history.length]);
+  }, [pathView, baseMinutes, tmplRaw, s.goal, s.examPrep, s.pathLeaveOut, s.pathHidden, s.mode, s.noSing, s.noMic, progress.review.length, today, progress.history.length, piecesDueN]);
   const todayBlocks = s.workoutToday?.day === today ? s.workoutToday.blocks : suggestedWorkout;
   const [wrun, setWrun] = useState<WorkoutRun | null>(() => loadSlot<WorkoutRun>(`workout:${today}`)?.data ?? null);
   const wrunRef = useRef(wrun);
@@ -1610,7 +1621,7 @@ export function App() {
   const csSessions = sessionsSince(progress.history, activeC, cStart?.tasteDoneAt);
   const csOffer = offerDue(cStart, csSessions, levelTested(activeC, progress.history, Object.keys(s.drillStart ?? {})), localDay(new Date()));
   const csDay = firstWeekDay(cStart, csSessions);
-  const csReal = realMusicCard(cStart, csSessions);
+  const csReal = realMusicCard(cStart, csSessions, localDay(new Date()));
   const recapNext: { label?: string; open: (() => void) | null; secondary?: { label: string; open: () => void } } = slot?.key.startsWith('taste:')
     ? { label: s.uiLang === 'en' ? 'See your first result' : 'לתוצאה הראשונה', open: () => go('coursestart') }
     : slot?.key.startsWith('real:')
@@ -1739,7 +1750,7 @@ export function App() {
                   def={realMusicFor(activeC, cStart?.report)}
                   cs={cStart}
                   onStart={startReal}
-                  onLater={() => updateCourseStart((m) => skipReal(m, activeC, csNow()))}
+                  onLater={() => updateCourseStart((m) => skipReal(m, activeC, csNow(), csSessions, localDay(new Date())))}
                   onClose={() => updateCourseStart((m) => markRealSeen(m, activeC, csNow()))}
                 />
               )}
@@ -2264,7 +2275,7 @@ export function App() {
           }}
         />
       )}
-      {route === 'insights' && <InsightsScreen lang={s.uiLang} progress={progress} onBack={() => go('skills')} onTopic={(id, lv) => openTopic(id, lv)} onDrills={() => go('drills')} onPieces={() => go('pieces')} onGroove={() => go('groove')} />}
+      {route === 'insights' && <InsightsScreen lang={s.uiLang} progress={progress} onBack={() => go('skills')} onTopic={(id, lv) => openTopic(id, lv)} onDrills={() => go('drills')} onPieces={() => go('pieces')} onGroove={() => go('groove')} course={(s.activeCourse ?? 'ear') as CourseId} />}
       {route === 'groove' && (
         <GrooveTrainerScreen
           settings={s}

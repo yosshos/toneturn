@@ -52,6 +52,21 @@ export interface BassNote {
   ghost?: boolean;
 }
 
+/**
+ * The scale steps (semitones above the root) the walker passes through on a chord. A 6th chord (6, m6, 6/9, m6/9) has
+ * no 7th, so its scale loses the 7ths the mode would add (Gm6 walked Dorian used to play an F); a diminished 7th keeps
+ * its four tones plus the 9th and 11th of the whole-half scale (its ♭13 and major 7th are not the chord's; the
+ * diminished mode in MODE_STEPS is the half-whole, dominant one).
+ */
+export function walkScale(iv: number[]): number[] {
+  const m = iv.map((x) => ((x % 12) + 12) % 12);
+  const has = (x: number) => m.includes(x);
+  const steps = MODE_STEPS[autoScale(iv)];
+  if (has(3) && has(6) && has(9) && !has(10)) return [0, 2, 3, 5, 6, 9, 12];
+  if (has(9) && !has(10) && !has(11) && (has(3) || has(4))) return steps.filter((x) => x !== 10 && x !== 11);
+  return steps;
+}
+
 /** A walking bass line for `total` beats of the chart (one note a beat, a few skips). */
 export function walkingBass(p: ParsedChart, meter: number, total: number, seed: number): BassNote[] {
   const r = rng(seed);
@@ -65,7 +80,7 @@ export function walkingBass(p: ParsedChart, meter: number, total: number, seed: 
     const next = chordAtBeat(p, meter, b + 1) ?? c;
     const changes = next !== c || (b + 1) % (p.bars * meter) === 0;
     const tones = c.iv.map((x) => pc(c.root + x));
-    const scale = MODE_STEPS[autoScale(c.iv)].map((x) => pc(c.root + x));
+    const scale = walkScale(c.iv).map((x) => pc(c.root + x));
     let m: number;
     if (startHere) {
       const carry = out.length > 0 && chordAtBeat(p, meter, b - 1) === c;
@@ -76,7 +91,10 @@ export function walkingBass(p: ParsedChart, meter: number, total: number, seed: 
       const x = r();
       const cand = x < 0.5 ? [target - 1, target + 1] : x < 0.8 ? [target + 2, target - 2] : [target + 7, target - 5];
       const ok = cand.filter((q) => q >= LO && q <= HI && q !== prev);
-      m = ok.length ? ok.sort((a, b2) => Math.abs(a - prev) - Math.abs(b2 - prev))[r() < 0.75 ? 0 : ok.length - 1] : target + 1;
+      // At the edge of the range both picks can be ruled out; then any other approach (half step, step, fifth) that
+      // fits — `target + 1` alone got clamped back onto the target (the next root a beat early).
+      const any = [target - 1, target + 1, target + 2, target - 2, target + 7, target - 5].filter((q) => q >= LO && q <= HI && q !== prev);
+      m = ok.length ? ok.sort((a, b2) => Math.abs(a - prev) - Math.abs(b2 - prev))[r() < 0.75 ? 0 : ok.length - 1] : (any[0] ?? target + 1);
     } else {
       // head toward the next chord's root through chord tones (strong beats) or scale tones
       const target = nearest(pc(next.bass), prev);

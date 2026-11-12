@@ -69,6 +69,11 @@ export interface TierDef {
   params?: Record<string, number | string | boolean | number[]>;
   /** Clear rule target (right answers, chain length, gates …). */
   target?: number;
+  /**
+   * Tiers made of parts (Groove ff): the passing runs that clear the tier must come from at least this many different
+   * parts (the run's `detail.part`).
+   */
+  distinctParts?: number;
   /** Content the plan calls for that is not built yet (shown nowhere; listed in the plan's Implemented section). */
   todo?: string;
 }
@@ -320,7 +325,8 @@ export const GAME_TIERS: Record<string, GameTierSpec> = {
       mf: { label: L('4 bars at 60', '4 תיבות ב־60'), params: { bars: 4, bpm: 60 }, target: 85 },
       f: { label: L('8 bars', '8 תיבות'), params: { bars: 8, bpm: 90 }, target: 85 },
       // 0.75: four parts (grooveTier.ts GROOVE_FF_PARTS): 8 slow bars, 7/8 fade, lay back vs a pushing band, swing match
-      ff: { label: L('8 bars slow; 7/8, lay back, swing match', '8 תיבות לאט; 7/8, להישען, סווינג תואם'), params: { bars: 8, bpm: 60 }, target: 85 },
+      // 2026-11-12 (owner): ff clears only with passing runs in two different parts.
+      ff: { label: L('8 bars slow; 7/8, lay back, swing match — pass two different parts', '8 תיבות לאט; 7/8, להישען, סווינג תואם — לעבור בשני חלקים שונים'), params: { bars: 8, bpm: 60 }, target: 85, distinctParts: 2 },
       // 0.70: the level test (GrooveTrainer 'Level test' tab) scores accuracy 0..100; cleared at 85.
     },
   },
@@ -585,6 +591,8 @@ export interface GameTierState {
   best: Partial<Record<DynName, number>>;
   runs: number;
   at?: string;
+  /** Tiers made of parts (TierDef.distinctParts): the parts with a passing run, per tier. */
+  parts?: Partial<Record<DynName, string[]>>;
 }
 export type GameTiers = Record<string, GameTierState>;
 const EMPTY: GameTierState = { cleared: null, recent: {}, best: {}, runs: 0 };
@@ -594,20 +602,24 @@ export const tierKey = (game: string) => tierSpec(game)?.game ?? game;
 
 /**
  * Record a run at a tier. Returns the new state and the tier this run cleared (null if none): a tier is cleared when
- * 2 of its last 3 runs met the rule. A cleared tier never goes back.
+ * 2 of its last 3 runs met the rule — and, for a tier made of parts (`needParts`), when passing runs came from that
+ * many different parts. A cleared tier never goes back.
  */
-export function afterRun(s: GameTierState | undefined, tier: DynName, pass: boolean, score: number, at?: string): { state: GameTierState; newlyCleared: DynName | null } {
+export function afterRun(s: GameTierState | undefined, tier: DynName, pass: boolean, score: number, at?: string, opts: { part?: string; needParts?: number } = {}): { state: GameTierState; newlyCleared: DynName | null } {
   const cur = s ?? EMPTY;
   const recent = [...(cur.recent[tier] ?? []), pass ? 1 : 0].slice(-3) as (0 | 1)[];
   const passes = recent.reduce<number>((a, b) => a + b, 0);
   const already = cur.cleared !== null && tierIndex(cur.cleared) >= tierIndex(tier);
-  const clears = !already && passes >= 2;
+  const had = cur.parts?.[tier] ?? [];
+  const partsNow = pass && opts.part && !had.includes(opts.part) ? [...had, opts.part] : had;
+  const clears = !already && passes >= 2 && partsNow.length >= (opts.needParts ?? 0);
   const state: GameTierState = {
     cleared: clears ? tier : cur.cleared,
     recent: { ...cur.recent, [tier]: recent },
     best: { ...cur.best, [tier]: Math.max(cur.best[tier] ?? 0, score) },
     runs: cur.runs + 1,
     ...(at ? { at } : {}),
+    ...(partsNow.length || cur.parts ? { parts: { ...(cur.parts ?? {}), ...(partsNow.length ? { [tier]: partsNow } : {}) } } : {}),
   };
   return { state, newlyCleared: clears ? tier : null };
 }
@@ -626,7 +638,9 @@ export function mergeGameTiers(a: GameTiers | undefined, b: GameTiers | undefine
     const cleared = x.cleared && y.cleared ? (tierIndex(x.cleared) >= tierIndex(y.cleared) ? x.cleared : y.cleared) : (x.cleared ?? y.cleared);
     const best: GameTierState['best'] = { ...x.best };
     for (const [t, v] of Object.entries(y.best) as [DynName, number][]) best[t] = Math.max(best[t] ?? 0, v);
-    out[k] = { cleared, recent: x.runs >= y.runs ? x.recent : y.recent, best, runs: Math.max(x.runs, y.runs), at: (x.at ?? '') > (y.at ?? '') ? x.at : y.at };
+    const parts: GameTierState['parts'] = { ...(x.parts ?? {}) };
+    for (const [t, v] of Object.entries(y.parts ?? {}) as [DynName, string[]][]) parts[t] = [...new Set([...(parts[t] ?? []), ...v])];
+    out[k] = { cleared, recent: x.runs >= y.runs ? x.recent : y.recent, best, runs: Math.max(x.runs, y.runs), at: (x.at ?? '') > (y.at ?? '') ? x.at : y.at, ...(Object.keys(parts).length ? { parts } : {}) };
   }
   return out;
 }

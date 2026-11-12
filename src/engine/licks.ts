@@ -11,6 +11,7 @@ import { itemPass } from './drills/ladder';
 import { keyName } from './drills/generate';
 import { tuningById } from './fretboard';
 import type { RatingEvent } from './rating';
+import { fromLeitner, fsrsInit, fsrsReview, nextInterval, type FsrsCard } from './fsrs';
 
 export type LickInstrument = 'piano' | 'guitar' | 'bass' | 'voice';
 export type LickContext = 'major-251' | 'minor-251' | 'dominant' | 'altered' | 'blues' | 'barry' | 'enclosure' | 'guide';
@@ -393,16 +394,33 @@ export function lickEvents(l: Lick, inst: LickInstrument, m: TakeMetrics, bpm: n
 /** XP of a lick take (league effort, like a drill take): clean 5, almost 2, not yet 1. */
 export const lickXp = (m: TakeMetrics): number => (m.verdict === 'clean' ? 5 : m.verdict === 'almost' ? 2 : 1);
 
-// ───────────────────────────── spaced review (Leitner) ─────────────────────────────
+// ───────────────────────────── spaced review (FSRS, src/engine/fsrs.ts) ─────────────────────────────
 
-/** Review state of a known lick: box 0–6 and the day it is due. */
+/**
+ * Review state of a known lick: the day it is due and its FSRS memory (stability `s` in days, difficulty `d`). `box`
+ * is kept as a coarse step for sorting and for old data: a review saved before FSRS has only `box`, and its box
+ * interval becomes the stability on the next review (fsrs.fromLeitner), so no lick loses its place.
+ */
 export interface LickReview {
   box: number;
   due: string;
   last: string;
+  s?: number;
+  d?: number;
+  reps?: number;
+  lapses?: number;
 }
-/** Days until the next review per box (a pass moves up a box, a miss back to box 1). */
+/** The old Leitner intervals per box — now only the coarse `box` step and the migration of old reviews. */
 export const REVIEW_DAYS = [0, 1, 3, 7, 14, 30, 60];
+/** The longest gap between lick reviews (days). */
+const LICK_MAX_DAYS = 120;
+const boxOfDays = (days: number) => Math.max(1, REVIEW_DAYS.reduce((b, x, i) => (x <= days ? i : b), 1));
+/** A lick review as an FSRS card (an old box-only review migrates: its box interval becomes the stability). */
+export function lickCard(r: LickReview): FsrsCard {
+  if (typeof r.s === 'number' && typeof r.d === 'number') return { s: r.s, d: r.d, last: r.last, reps: r.reps ?? 0, lapses: r.lapses ?? 0 };
+  return fromLeitner(REVIEW_DAYS[Math.max(0, Math.min(REVIEW_DAYS.length - 1, r.box))] ?? 1, r.last, r.box);
+}
+const withCard = (c: FsrsCard, due: string, days: number): LickReview => ({ box: boxOfDays(days), due, last: c.last, s: Math.round(c.s * 1000) / 1000, d: Math.round(c.d * 1000) / 1000, reps: c.reps, lapses: c.lapses });
 
 const dayOf = (iso: string | Date) => {
   const d = typeof iso === 'string' ? new Date(iso) : iso;
@@ -414,13 +432,17 @@ const addDays = (iso: string | Date, n: number) => {
   return dayOf(d);
 };
 
-/** After a review take (a key picked by the app, at the lick's current goal tempo): pass → next box, miss → box 1. */
+/**
+ * After a review take (a key picked by the app, at the lick's current goal tempo): FSRS with a pass graded "good" and
+ * a miss "again" — a pass waits until recall is predicted to fall to 90 %, a miss comes back tomorrow.
+ */
 export function reviewAfter(prev: LickReview | undefined, pass: boolean, now: Date | string = new Date()): LickReview {
-  const box = pass ? Math.min(REVIEW_DAYS.length - 1, (prev?.box ?? 0) + 1) : 1;
-  return { box, due: addDays(now, REVIEW_DAYS[box]), last: typeof now === 'string' ? now : now.toISOString() };
+  const c = prev ? fsrsReview(lickCard(prev), pass ? 3 : 1, now) : fsrsInit(pass ? 3 : 1, now);
+  const days = pass ? nextInterval(c.s, undefined, LICK_MAX_DAYS) : 1;
+  return withCard({ ...c, last: typeof now === 'string' ? now : now.toISOString() }, addDays(now, days), days);
 }
-/** A lick joins the review when it becomes known (3 stars): first review tomorrow. */
-export const reviewStart = (now: Date | string = new Date()): LickReview => ({ box: 1, due: addDays(now, 1), last: typeof now === 'string' ? now : now.toISOString() });
+/** A lick joins the review when it becomes known (3 stars, a first "good"): first review tomorrow (a learning step). */
+export const reviewStart = (now: Date | string = new Date()): LickReview => withCard({ ...fsrsInit(3, now), last: typeof now === 'string' ? now : now.toISOString() }, addDays(now, 1), 1);
 
 /** Licks due for review today, most overdue first (lowest box breaks ties). */
 export function dueLicks(review: Record<string, LickReview> | undefined, now: Date | string = new Date()): string[] {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { bookAfterTake, chordAt, CONTEXTS, dueLicks, LICK_KEYS, lickBeats, lickChart, lickDrill, lickEvents, lickFromPhrase, lickGrid, lickItemId, lickPitches, lickProblems, LICK_Q, LICKS, lickStars, lickTempos, nextLickKey, parseLine, placeOnNeck, reviewAfter, reviewKey, reviewStart, windowOf } from '../src/engine/licks';
+import { bookAfterTake, chordAt, CONTEXTS, dueLicks, LICK_KEYS, lickBeats, lickChart, lickDrill, lickEvents, lickFromPhrase, lickGrid, lickItemId, lickPitches, lickProblems, LICK_Q, LICKS, lickStars, lickTempos, nextLickKey, parseLine, placeOnNeck, reviewAfter, reviewKey, reviewStart, windowOf, lickCard } from '../src/engine/licks';
 import { findLick, useItChart, useItPassed, qualityOfIntervals, type ImpNote } from '../src/engine/lickDetect';
 import { parseChart, parseChord } from '../src/engine/charts';
 import { analyzeTake } from '../src/engine/drills/analyze';
@@ -147,16 +147,25 @@ describe('grid, stars, next key', () => {
 });
 
 describe('spaced review', () => {
-  it('boxes climb on a pass, drop to 1 on a miss, due by day', () => {
+  it('FSRS: a pass waits longer each time, a miss comes back tomorrow, due by day', () => {
     const now = new Date('2026-11-11T10:00:00');
     const r0 = reviewStart(now);
     expect(r0).toMatchObject({ box: 1, due: '2026-11-12' });
     const r1 = reviewAfter(r0, true, new Date('2026-11-12T10:00:00'));
-    expect(r1).toMatchObject({ box: 2, due: '2026-11-15' });
+    expect(r1.due > '2026-11-14').toBe(true);
+    expect(r1.s!).toBeGreaterThan(r0.s!);
     const r2 = reviewAfter(r1, false, new Date('2026-11-15T10:00:00'));
-    expect(r2).toMatchObject({ box: 1, due: '2026-11-16' });
-    expect(dueLicks({ a: r1, b: r0, c: r2 }, new Date('2026-11-15T12:00:00'))).toEqual(['b', 'a']);
+    expect(r2).toMatchObject({ box: 1, due: '2026-11-16', lapses: 1 });
+    expect(r2.s!).toBeLessThan(r1.s!);
+    expect(dueLicks({ a: { ...r1, due: '2026-11-14' }, b: r0, c: r2 }, new Date('2026-11-15T12:00:00'))).toEqual(['b', 'a']);
     expect(dueLicks({ a: r1 }, new Date('2026-11-13T12:00:00'))).toEqual([]);
+  });
+  it('an old Leitner review migrates without losing its place (box interval → stability)', () => {
+    const old = { box: 4, due: '2026-11-25', last: '2026-11-11T10:00:00' };
+    expect(lickCard(old).s).toBe(14);
+    const r = reviewAfter(old, true, new Date('2026-11-25T10:00:00'));
+    expect(r.s!).toBeGreaterThan(14);
+    expect(r.due > '2026-12-09').toBe(true);
   });
   it('a lick that becomes known joins my licks and the review once', () => {
     const b1 = bookAfterTake(undefined, 'dom-bebop', true, null, new Date('2026-11-11T10:00:00'));
@@ -164,7 +173,7 @@ describe('spaced review', () => {
     expect(b1.review?.['dom-bebop'].box).toBe(1);
     const b2 = bookAfterTake(b1, 'dom-bebop', true, null);
     expect(b2.review?.['dom-bebop']).toEqual(b1.review?.['dom-bebop']);
-    expect(bookAfterTake(b2, 'dom-bebop', true, { pass: true }, new Date('2026-11-12T10:00:00')).review?.['dom-bebop'].box).toBe(2);
+    expect(bookAfterTake(b2, 'dom-bebop', true, { pass: true }, new Date('2026-11-12T10:00:00')).review?.['dom-bebop'].box).toBeGreaterThanOrEqual(2);
   });
   it('the review key varies and never repeats the last key', () => {
     const l = LICKS[3];

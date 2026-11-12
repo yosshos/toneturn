@@ -19,10 +19,11 @@ export const compactTags = (tags: Tag[]): Tag[] | undefined => (tags.length ? ta
 import { SKILLS, type RatingEvent, type Ratings } from '../engine/rating';
 import { bumpCount, foldFromMemo, statsAfterEvents, statsAfterResult, trimIntoBase } from '../engine/stats';
 import { gameEvents } from '../engine/gameRating';
-import { afterRun, clearsRun, gameXp, gameXpLeft, isTier, tierDifficulty, tierKey, type DailyBand, type DynName, type GameTiers } from '../engine/gameTiers';
+import { afterRun, clearsRun, gameXp, gameXpLeft, isTier, tierDifficulty, tierKey, tierSpec, type DailyBand, type DynName, type GameTiers } from '../engine/gameTiers';
 import { medalFor, weekId, type Medal } from '../engine/adaptive';
 import type { Naming } from '../engine/pitch';
 import type { KV } from './kv';
+import { fromLeitner, fsrsInit, fsrsReview, nextInterval, type FsrsCard } from '../engine/fsrs';
 
 export const PROGRESS_VERSION = 1;
 
@@ -472,18 +473,40 @@ export interface ReviewEntry {
   key: string;
   answer: Answer;
   addedAt: string;
-  /** 0 = just missed (due now). Absent on old data = 0. */
+  /** On-time correct recalls since the last miss (0 = just missed, due now). Absent on old data = 0. */
   box?: number;
   /** ISO time it is due again. Absent = addedAt. */
   due?: string;
+  /** FSRS memory (src/engine/fsrs.ts): stability (days), difficulty, last review. Absent on old (Leitner) entries. */
+  s?: number;
+  d?: number;
+  last?: string;
+  lapses?: number;
 }
+/** The old Leitner intervals: now only used to migrate a box-only entry (its box interval becomes the stability). */
 export const REVIEW_INTERVAL_DAYS = [0, 1, 3, 7, 16, 35];
+/** An item leaves the queue once its next FSRS gap would pass this many days (learned). */
+export const REVIEW_GRADUATE_DAYS = 35;
+/** A review entry as an FSRS card; a box-only entry migrates (its box interval becomes the stability). */
+export function reviewCard(e: ReviewEntry): FsrsCard {
+  if (typeof e.s === 'number' && typeof e.d === 'number') return { s: e.s, d: e.d, last: e.last ?? e.addedAt, reps: e.box ?? 0, lapses: e.lapses ?? 0 };
+  const box = Math.max(0, Math.min(REVIEW_INTERVAL_DAYS.length - 1, e.box ?? 0));
+  const iv = REVIEW_INTERVAL_DAYS[box];
+  const last = e.due ? new Date(new Date(e.due).getTime() - iv * 86400000).toISOString() : e.addedAt;
+  return fromLeitner(iv, last, box);
+}
+const cardFields = (c: FsrsCard) => ({ s: Math.round(c.s * 1000) / 1000, d: Math.round(c.d * 1000) / 1000, last: c.last, lapses: c.lapses });
 export const reviewDue = (e: ReviewEntry) => e.due ?? e.addedAt;
 export const dueReviews = (items: ReviewEntry[], now: Date) => items.filter((e) => new Date(reviewDue(e)).getTime() <= now.getTime());
 
-/** Spaced repetition: a first-try correct recall moves a tag up a box (or out of the queue after the last box). */
+/**
+ * Spaced repetition (FSRS since 2026-11-12): a first-try correct recall when due is graded "good" and waits until recall
+ * is predicted to fall to 90 %; once that gap passes REVIEW_GRADUATE_DAYS the tag leaves the queue. A miss is graded
+ * "again" (its memory lapses, it is due now).
+ */
 export function scheduleReview(items: ReviewEntry[], correctTags: Set<string>, missed: ReviewEntry[], at: string): ReviewEntry[] {
   const missedKeys = new Set(missed.map((m) => m.key));
+  const prevByKey = new Map(items.map((e) => [e.key, e]));
   const out: ReviewEntry[] = [];
   for (const e of items) {
     if (missedKeys.has(e.key)) continue; // replaced by the new miss below
@@ -496,11 +519,17 @@ export function scheduleReview(items: ReviewEntry[], correctTags: Set<string>, m
       out.push(e);
       continue;
     }
-    const box = (e.box ?? 0) + 1;
-    if (box >= REVIEW_INTERVAL_DAYS.length) continue; // learned
-    out.push({ ...e, box, due: new Date(new Date(at).getTime() + REVIEW_INTERVAL_DAYS[box] * 86400000).toISOString() });
+    const c = fsrsReview(reviewCard(e), 3, at);
+    const days = nextInterval(c.s, undefined, 3650);
+    if (days > REVIEW_GRADUATE_DAYS) continue; // learned
+    out.push({ ...e, box: (e.box ?? 0) + 1, due: new Date(new Date(at).getTime() + days * 86400000).toISOString(), ...cardFields(c) });
   }
-  return [...out, ...missed.map((m) => ({ ...m, box: 0, due: at }))].slice(-80);
+  const lapsed = missed.map((m) => {
+    const prev = prevByKey.get(m.key);
+    const c = prev ? fsrsReview(reviewCard(prev), 1, at) : fsrsInit(1, at);
+    return { ...m, box: 0, due: at, ...cardFields(c) };
+  });
+  return [...out, ...lapsed].slice(-80);
 }
 
 export function localDay(d: Date): string {
@@ -671,7 +700,8 @@ export function applyGameRun(
   if (p.applied.includes(eventId)) return { progress: p, xp: 0, cleared: null, pass: false };
   const pass = run.pass ?? clearsRun(run.game, run.tier, run.score, run.detail);
   const at = now.toISOString();
-  const { state, newlyCleared } = afterRun(p.gameTiers?.[key], run.tier, pass, run.score, at);
+  const runPart = run.detail && typeof run.detail === 'object' && typeof (run.detail as { part?: unknown }).part === 'string' ? (run.detail as { part: string }).part : undefined;
+  const { state, newlyCleared } = afterRun(p.gameTiers?.[key], run.tier, pass, run.score, at, { part: runPart, needParts: tierSpec(run.game)?.tiers[run.tier]?.distinctParts });
   const day = localDay(now);
   const today = p.gameXpDays?.[day] ?? 0;
   const xp = Math.min(gameXp(run.game, run.tier, run.score, run.detail), gameXpLeft(today));

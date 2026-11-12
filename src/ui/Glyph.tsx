@@ -949,6 +949,8 @@ const EMOJI: Record<string, GlyphKind> = {
 };
 export function glyphForEmoji(e: string | null | undefined): GlyphKind {
   if (!e) return 'contour';
+  // Data that already names a glyph kind (badges, topic groups since 2026-11-12) passes straight through.
+  if (GLYPHS[e]) return e;
   for (const ch of Array.from(e)) if (EMOJI[ch]) return EMOJI[ch];
   return EMOJI[e] ?? 'contour';
 }

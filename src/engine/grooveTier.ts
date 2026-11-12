@@ -16,8 +16,8 @@ export interface GrooveTierPlan {
 }
 
 // ---------------------------------------------------------------- ff parts (0.75)
-// ff has four parts (the slow 8-bar fade and three more); the player picks one per run (a run of any part counts for the tier, so clearing ff = two of
-// the last three runs at 85, in any parts):
+// ff has four parts (the slow 8-bar fade and three more); the player picks one per run. Clearing ff = two of the last
+// three runs at 85, with passing runs in two DIFFERENT parts (gameTiers distinctParts, owner 2026-11-12):
 //   slow    the fading click, 8 silent bars at 60 (the tier's own plan).
 //   odd     the fading click in 7/8 (2+2+3) on the 8th-note pulse — 2 bars in, 4 silent, 1 back.
 //   pocket  lay back 30 ms against a band that pushes (its hits sit 15 ms ahead of the grid) — 8 bars.
