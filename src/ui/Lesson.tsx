@@ -1,6 +1,7 @@
 import { TypedText } from './TypedText';
 import { useNarration } from './TalkToggle';
 import { DOMAIN_COLOR, Glyph } from './Glyph';
+import { isTimeOnly } from '../engine/timeOnly';
 import { answerFormat, pcToMidi, type AnswerFormat } from '../engine/answerFormat';
 import { Toni, type ToniState } from './Toni';
 import { Icon } from './icons';
@@ -37,7 +38,7 @@ import type { Strings } from '../i18n/strings';
 import { gemsOf, localDay, namingFor, provisionalDays, ratingsOf, resultFromSession, type Progress, type Settings } from '../storage/progress';
 import { StreakCelebration } from './Streak';
 import type { StreakState } from '../engine/streak';
-import { domainOf, overallHistory, peakOf, ratingChange, type RatingChange } from '../engine/rating';
+import { overallHistory, peakOf, ratingChange, type RatingChange } from '../engine/rating';
 import { isTimed } from '../engine/scoring';
 import { learnPace, loadPace } from '../storage/pace';
 import { paceBand, paceTarget } from '../engine/fluency';
@@ -323,11 +324,10 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
   // Rhythm exercises have no note views; for everything else keysGiveAway() keeps the answer hidden.
   // Degree ↔ name questions: an unasked-for keyboard lets the player count to the answer — it waits for Hint (0.50.2).
   const keysAreHint = !answered && !q.aid && keyboardIsHint(q);
-  const canHint = keysAreHint && !noHints(v.session.lesson.id);
+  const canHint = keysAreHint && !isTimeOnly(q) && !noHints(v.session.lesson.id);
   // 0.70 (owner): a rhythm / time question (rhythm memory, meter, tempo…) shows no keyboard — it means nothing there.
   // A question whose sound has no pitched notes (rhythms, markers, rests, percussion events) is about time, not keys.
-  const pitchless = (q.stimulus ?? []).length > 0 && (q.stimulus ?? []).every((el) => el.kind === 'rhythm' || el.kind === 'rest' || el.kind === 'marker' || (el.kind === 'events' && el.events.every((e) => !!e.perc)));
-  const timeQuestion = pitchless || ('skill' in q && typeof q.skill === 'string' && domainOf(q.skill as never) === 'time');
+  const timeQuestion = isTimeOnly(q);
   const hideKeyboard = q.kind === 'rhythm-read' || q.kind === 'rhythm-dict' || timeQuestion || keysAreHint || (q.kind === 'choice' && !!q.chart);
   const orbLabel =
     q.kind === 'degree'
@@ -412,7 +412,8 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
               />
             ))}
           </div>
-          <Keyboard />
+          {/* 2026-11-12 (owner): a rhythm lesson's intro shows no keyboard either. */}
+          {!lesson.questions.every(isTimeOnly) && <Keyboard />}
           <Caption text={v.caption} />
           <button className="btn ghost small" onClick={() => ctrl.skipIntro()}>
             {t.introSkip}
@@ -478,6 +479,12 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
             )}
             <Burst on={celebrate} />
           </div>
+          {timeQuestion && q.kind !== 'rhythm-read' && q.kind !== 'rhythm-dict' && (
+            // Owner 2026-11-12: a pure-rhythm question shows a pulse, not a keyboard; it beats while the passage plays.
+            <div className={`time-visual${v.listen ? ' playing' : ''}`} data-time-visual="1" aria-hidden="true">
+              <Glyph kind="pulse" size={44} />
+            </div>
+          )}
           {!hideKeyboard && !isPlace && <NoteViews q={q} views={noteViewsOf(settings)} answered={answered} keysLive={keysLive} leftHanded={settings.leftHanded} marks={answered ? seqMarks(q, v.feedback?.answer) : undefined} />}
           {isPlace && q.kind === 'place' && v.stage === 'question' && !paused && !v.error && (
             <PlaceSurfaceView key={`${v.index}-${answered ? 'r' : 'q'}-${placeRec?.attempts.length ?? 0}`} q={q} settings={settings} lang={lang} disabled={!awaiting || answered} result={answered ? (placeLast ?? '') : null} onSubmit={(a) => ctrl.answer(a)} />
@@ -1506,3 +1513,4 @@ function CtlIcon({ k }: { k: 'repeat' | 'skip' | 'learn' }) {
     </svg>
   );
 }
+
