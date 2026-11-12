@@ -373,7 +373,7 @@ function ladderSteps(): PathStep[] {
  */
 export const MEASURED_STEP_LEVELS: Record<'licks' | 'transcribe', Record<'jazz' | 'keys' | 'guitar' | 'bass' | 'voice', number[]>> = {
   licks: { jazz: [1, 2, 3, 4], keys: [1, 2, 3], guitar: [1, 2, 3], bass: [1, 2], voice: [1, 2] },
-  transcribe: { jazz: [4, 5, 6, 7, 8], keys: [2, 4, 6], guitar: [2, 4, 6], bass: [2, 4], voice: [1, 3, 5] },
+  transcribe: { jazz: [4, 5, 6, 7, 8], keys: [2, 4, 6, 9], guitar: [2, 4, 6], bass: [2, 4], voice: [1, 3, 5] },
 };
 function measuredSteps(): PathStep[] {
   const out: PathStep[] = [];

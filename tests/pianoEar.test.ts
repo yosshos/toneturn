@@ -23,8 +23,8 @@ const pc = (m: number) => ((m % 12) + 12) % 12;
 const inWin = (d: Drill, beat: number) => d.listen!.windows.some(([a, b]) => beat >= a - 1e-6 && beat < b - 1e-6);
 
 describe("the pianist's ear: content", () => {
-  it('has 8 levels and 15 items (kind × option), each with a call, hidden answers and calm tempo', () => {
-    expect(EAR.levels.length).toBe(8);
+  it('has 9 levels and 17 items (kind × option), each with a call, hidden answers and calm tempo', () => {
+    expect(EAR.levels.length).toBe(9);
     expect(new Set(EAR.levels.flatMap((l) => l.specs.map((s) => `${s.kind}:${s.option ?? 0}`))).size).toBe(KEYS_EAR_ITEMS);
     for (const d of ear()) {
       expect(d.show).toBe('none');

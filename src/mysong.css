@@ -216,3 +216,31 @@
     animation-timing-function: steps(1, end);
   }
 }
+
+/* My song v3: the section's chords (keys / guitar), one line — an unclear chord is a dimmed "?". */
+.ms-chords {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 6px;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: 0.88rem;
+  justify-content: center;
+}
+.ms-chords li {
+  padding: 2px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--line, var(--outline));
+  color: var(--ink);
+  background: var(--card);
+}
+.ms-chords li.unsure {
+  color: var(--ink-dim);
+  border-style: dashed;
+}
+.ms-chords li.on {
+  border-color: var(--accent, var(--mint));
+  font-weight: 600;
+}

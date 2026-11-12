@@ -20,6 +20,8 @@ export const TOPIC_MARK: Record<string, string> = {
   'set-classes': '[016]',
   'scale-types': 'pent',
   'modes-ear': 'dor',
+  // EAR_THEORY_AUDIT §6: upper structures and rootless voicings
+  'upper-rootless': 'UST',
   'degrees-ext': '♭3',
   maqam: 'maq',
   // harmony and progressions

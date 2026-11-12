@@ -96,6 +96,7 @@ function secondTag(drill: Drill): Tags[number] | null {
     const k = drill.spec.kind;
     if (k === 'intervals') return { skill: 'intervals', sub: drill.spec.option === 2 ? 'intervals/harmonic' : 'intervals/melodic', w: 0.5 };
     if (k === 'bass-line') return { skill: 'dictation', sub: 'dictation/bass', w: 0.5 };
+    if (k === 'two-part') return { skill: 'dictation', sub: 'dictation/two-part', w: 0.5 };
     if (k === 'chords') return { skill: 'cadences', sub: 'cadences/progression', w: 0.5 };
     if (k === 'harmonise') return { skill: 'cadences', sub: 'cadences/harmonize', w: 0.5 };
     if (k === 'transpose') return { skill: 'transpose', sub: 'transpose/pitch', w: 0.5 };

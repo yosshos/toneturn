@@ -249,6 +249,12 @@ These were checked and found fine:
 
 ### P3 (content)
 
+Built 2026-11-12: two-part playback (k-ear 9), the grand-staff two-hand reading item (key-read 6–7) and a solo phrase
+by ear (transcription level 9 on the keys path) — see §7. Still open: a 4-bar melody, minor keys, modulating
+progressions, play-by-ear of a known tune; key signatures in the single-staff key-read levels; Trinity-style exercises
+and ABRSM articulation scales as their own levels (not small: they need per-grade articulation targets and MIDI-only
+grading, see P1 "microphone players").
+
 - **Ear:** two-part playback (melody + bass), a 4-bar melody, minor keys, modulating progressions, play-by-ear of a
   known tune (would need owner-licensed material).
 - **Reading:** a grand-staff two-hand item (needs a grand-staff `given`); sight-reading with key signatures in
@@ -269,3 +275,24 @@ These were checked and found fine:
 4. **Pieces of the evenness rule.** A floor of 12 ms of IOI spread at fast tempos is about the threshold of hearing.
    Tighter (8 ms) makes Grade 8 a "conservatory" bar; looser (16 ms) is friendlier. Your call after trying it on your
    keyboard.
+
+## 7. Built after the audit (2026-11-12, P3 content)
+
+- **Two-part playback — k-ear 9** "Two parts: melody and bass" (`genKeysEar` kind `two-part`, hands RL): the key, then
+  two rounds of two bars in two voices, played back with both hands. Op 0: the bass in half notes on the roots of a
+  progression, the melody in quarters (the nearest chord tone on the beat, a scale step after it). Op 1: a walking bass
+  in quarters (root, then a step into the next root) under a melody holding a chord tone per chord. Every answer beat is
+  one event with both hands' notes where they attack; rated `dictation/two-part`. The family now has 9 levels and 17
+  items (`KEYS_EAR_ITEMS` 17: the "whole family" badge needs the two new items too).
+- **Grand-staff reading — key-read 6–7**: `given.grand` draws a braced grand staff (`GrandStaff`, NoteViews.tsx: notes
+  from middle C up in the treble, the rest in the bass; at most 150 px tall). 6: one note in each hand at once (C major,
+  F2–B3 and C4–G5, 1320); 7: both hands with a key signature (C, G, F, D, B♭) — a LH root with its 5th or octave and a
+  RH close triad of the key, any inversion (1420). Answered on the keys (tap or MIDI), graded note for note.
+- **A solo phrase by ear — transcription level 9** "A solo phrase over ii–V–I" (`transcribe.ts` `soloPhrase`, own
+  material from rules): the ii arpeggiated in four swung eighths, four eighths of the bebop dominant descending from the
+  V's chord tone nearest (chord tones on the beats), the I's nearest chord tone held. In the transcription coach (hear,
+  loop, slow to 50 %, play back — `comparePhrase` — write as degrees, 12 keys) and on the keys path as the measured step
+  `transcribe:keys:9` (`MEASURED_STEP_LEVELS`). The coach's level list is a little denser so nine cards fit.
+- Tests: `tests/earPianoP3.test.ts`, `tests/pianoEar.test.ts` (9 levels, 17 items).
+- Not verified: the grand staff and the nine-card list at 390 × 844 (Playwright not run in this pass); two-part takes
+  by microphone (the chroma path hears both hands as one onset, as hands-together does).

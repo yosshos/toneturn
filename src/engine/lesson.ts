@@ -264,7 +264,7 @@ export interface PlaceQuestion extends QBase {
   /** A topic may force the surface (fretboard topics: neck). */
   surface?: PlaceSurface;
   /** Drawn above the surface: given notes (a written note to find, the given voice of a two-part dictation). */
-  given?: { midis: number[]; clef?: 'treble' | 'bass' | 'alto' | 'tenor'; key?: PitchClass | null; chord?: boolean; durs?: number[] };
+  given?: { midis: number[]; clef?: 'treble' | 'bass' | 'alto' | 'tenor'; key?: PitchClass | null; chord?: boolean; durs?: number[]; /** PIANO_AUDIT P3: drawn on a grand staff — notes below middle C in the bass staff (left hand), the rest in the treble (right hand). */ grand?: boolean };
   /** Staff entry: key signature and clef. */
   staff?: { key: PitchClass | null; clef: 'treble' | 'bass' | 'alto' | 'tenor' };
   /** Neck entry: allowed strings (1 = highest), fret range, a required string, marked dots (a shape to complete). */

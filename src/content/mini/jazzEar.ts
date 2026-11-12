@@ -3,7 +3,7 @@
 // Every fact matches its generator (src/engine/topicsJazzEar.ts). See ../miniTypes.ts for the format.
 import type { Stimulus } from '../../engine/lesson';
 import type { MiniLesson } from '../miniTypes';
-import { groupStim, jazzProgStim, modeStim, phraseOver } from '../../engine/topicsJazzEar';
+import { aabaStim, groupStim, jazzProgStim, modeStim, phraseOver, rootless251Stim, rootlessStim, ustStim } from '../../engine/topicsJazzEar';
 
 const rest = (d = 0.5): Stimulus => ({ kind: 'rest', duration: d });
 const C = 0;
@@ -369,13 +369,79 @@ export const LESSONS: MiniLesson[] = [
         say: { en: 'Rhythm changes is 32 bars, AABA, named after a famous Gershwin song. Its A sections are I–vi–ii–V again and again; its bridge is a cycle of dominants, each held for two bars.', he: 'ריתם צ׳יינג׳ס הוא 32 תיבות, AABA, על שם שיר מפורסם של גרשווין. חלקי ה־A הם I–vi–ii–V שוב ושוב; הגשר הוא מעגל של דומיננטים, כל אחד שתי תיבות.' },
       },
       {
+        say: { en: 'A whole AABA chorus: eight bars of A, A again (it closes on I this time), the bridge goes somewhere new, then the last A brings you home. In the game a bell rings somewhere in the 32 bars — say which part starts there.', he: 'כורוס AABA שלם: שמונה תיבות A, שוב A (הפעם הוא נסגר על I), הגשר הולך למקום חדש, ואז ה־A האחרון מחזיר הביתה. במשחק פעמון מצלצל איפשהו ב־32 התיבות — אמרו איזה חלק מתחיל שם.' },
+        play: [aabaStim(C, 'ballad', 13, 20)],
+        show: { text: { en: 'A 1–8 · A 9–16 · B 17–24 · A 25–32', he: 'A 1–8 · A 9–16 · B 17–24 · A 25–32' } },
+      },
+      {
         say: { en: 'The common mistake is losing count of the bars. Feel each four-bar phrase as one breath, and listen for the IV chord in bar 5. To keep: count bars, follow the bass, and notice when the chord colours change.', he: 'הטעות הנפוצה היא לאבד את ספירת התיבות. הרגישו כל משפט של ארבע תיבות כנשימה אחת, והקשיבו לאקורד IV בתיבה 5. לזכור: ספרו תיבות, עקבו אחרי הבס, ושימו לב מתי צבעי האקורדים משתנים.' },
       },
     ],
   },
 ];
 
+// ------------------------------------------------------------------ upper structures and rootless voicings (§6)
+LESSONS.push({
+  id: 'upper-rootless',
+  area: 'ear',
+  emoji: '♯',
+  title: { en: 'Upper structures and rootless voicings', he: 'מבנים עליונים ווויסינגים בלי שורש' },
+  takeaway: {
+    en: 'A rootless voicing leaves the root to the bass: A has the 3rd at the bottom, B the 7th, and they alternate through a ii–V–I. An upper-structure triad is a major triad over the 3rd and ♭7 of a dominant: II and VI sound bright (9, 13), ♭VI, ♭III and ♭V dark (♭9, ♯9, ♭13).',
+    he: 'וויסינג בלי שורש משאיר את השורש לבס: ב־A הטרצה למטה, ב־B הספטימה, והם מתחלפים לאורך ii–V–I. מבנה עליון הוא משולש מז׳ורי מעל הטרצה וה־♭7 של דומיננט: II ו־VI נשמעים בהירים (9, 13), ‏♭VI, ‏♭III ו־♭V כהים (♭9, ♯9, ♭13).',
+  },
+  steps: [
+    {
+      say: { en: 'Pianists in a band leave the root to the bass player. The hands play the colour: the 3rd, the 7th and a tension or two.', he: 'פסנתרנים בלהקה משאירים את השורש לבסיסט. הידיים מנגנות את הצבע: הטרצה, הספטימה ומתח אחד או שניים.' },
+      play: [rootlessStim(2, [3, 7, 10, 14])],
+      show: { text: { en: 'Dm9: ♭3 5 ♭7 9 — no D in the hands', he: 'Dm9: ♭3 5 ♭7 9 — אין רה בידיים' } },
+    },
+    {
+      say: { en: 'The same four notes can stand two ways. A puts the 3rd at the bottom; B puts the 7th at the bottom. B sounds a little darker and lower.', he: 'אותם ארבעה צלילים יכולים לעמוד בשתי דרכים. ב־A הטרצה למטה; ב־B הספטימה למטה. B נשמע קצת כהה ונמוך יותר.' },
+      play: [rootlessStim(2, [3, 7, 10, 14]), rest(), rootlessStim(2, [10, 14, 15, 19])],
+      show: { text: { en: 'A: 3 5 7 9 · B: 7 9 3 5', he: 'A: 3 5 7 9 · B: 7 9 3 5' } },
+    },
+    {
+      say: { en: 'Through a ii–V–I the forms alternate — A, B, A or B, A, B — so each voice moves a step or stays. Listen for the lowest note of the first chord.', he: 'לאורך ii–V–I הצורות מתחלפות — A, ‏B, ‏A או B, ‏A, ‏B — כך שכל קול זז צעד או נשאר. הקשיבו לצליל הנמוך של האקורד הראשון.' },
+      play: [rootless251Stim(C, true), rest(0.2), rootless251Stim(C, false)],
+      show: { text: { en: 'Dm9 G13 Cmaj9', he: 'Dm9 G13 Cmaj9' } },
+    },
+    {
+      say: { en: 'An upper structure: keep the 3rd and ♭7 of a dominant in the left hand, and put a major triad on top. A triad a whole step up, II, gives 9, ♯11 and 13 — bright.', he: 'מבנה עליון: הטרצה וה־♭7 של דומיננט ביד שמאל, ומשולש מז׳ורי מעליהם. משולש טון שלם מעל, II, נותן 9, ‏♯11 ו־13 — בהיר.' },
+      play: [ustStim(7, 2)],
+      show: { text: { en: 'G7 + A triad = 9 ♯11 13', he: 'G7 + משולש לה = 9 ♯11 13' } },
+    },
+    {
+      say: { en: 'A triad a minor 6th up, ♭VI, gives ♭13, the root and ♯9 — dark, altered. These two are the most played. Your turn.', he: 'משולש סקסטה קטנה מעל, ♭VI, נותן ♭13, שורש ו־♯9 — כהה, אלטרד. השניים האלה הכי מנוגנים. תורכם.' },
+      play: [ustStim(7, 2), rest(), ustStim(7, 8)],
+      show: { text: { en: 'II bright · ♭VI dark', he: 'II בהיר · ♭VI כהה' } },
+    },
+  ],
+  more: [
+    {
+      say: { en: 'Two more rootless sounds on a dominant: the 13 (3, 13, ♭7, 9) and the altered (3, ♭7, ♯9, ♭13). The altered one wants to fall into the next chord.', he: 'עוד שני צלילים בלי שורש על דומיננט: ה־13 (3, ‏13, ‏♭7, ‏9) והאלטרד (3, ‏♭7, ‏♯9, ‏♭13). האלטרד רוצה ליפול אל האקורד הבא.' },
+      play: [rootlessStim(7, [4, 9, 10, 14]), rest(), rootlessStim(7, [4, 10, 15, 20])],
+    },
+    {
+      say: { en: 'Five upper structures cover most of what you will hear over a dominant: II and VI are bright; ♭III, ♭V and ♭VI hold the altered tensions.', he: 'חמישה מבנים עליונים מכסים את רוב מה שתשמעו מעל דומיננט: II ו־VI בהירים; ‏♭III, ‏♭V ו־♭VI מחזיקים את המתחים האלטרד.' },
+      play: [ustStim(7, 9), rest(), ustStim(7, 3), rest(), ustStim(7, 6)],
+      show: { text: { en: 'VI: 13 ♭9 3 · ♭III: ♯9 5 ♭7 · ♭V: ♯11 ♭7 ♭9', he: 'VI: 13 ♭9 3 · ♭III: ♯9 5 ♭7 · ♭V: ♯11 ♭7 ♭9' } },
+    },
+    {
+      say: { en: 'Where do you hear these? Behind a soloist, a pianist moves the upper structure while the left hand keeps the 3rd and 7th: II for a bright, lydian dominant colour, ♭VI or ♭III when the line goes altered into the next chord.', he: 'איפה שומעים אותם? מאחורי סולן, הפסנתרן מזיז את המבנה העליון בזמן שיד שמאל שומרת על הטרצה והספטימה: II לצבע בהיר, לידי דומיננטי, ‏♭VI או ♭III כשהקו נעשה אלטרד אל האקורד הבא.' },
+      play: [rootless251Stim(5, true)],
+    },
+    {
+      say: { en: 'Rootless voicings came from the pianists of the late 1950s, who wanted the bass player free and the chords light. With the root gone, the 9th and 13th fit under the hands, and A and B forms keep every chord in the middle of the keyboard.', he: 'הוויסינגים בלי שורש הגיעו מפסנתרני סוף שנות החמישים, שרצו שהבסיסט יהיה חופשי והאקורדים קלים. בלי השורש, ה־9 וה־13 נכנסים מתחת לידיים, וצורות A ו־B שומרות כל אקורד באמצע המקלדת.' },
+    },
+    {
+      say: { en: 'The common mistake is naming the triad by its top note. Hear the whole triad as one colour against the bass: bright or dark first, then which.', he: 'הטעות הנפוצה היא לקרוא למשולש לפי הצליל העליון שלו. שמעו את כל המשולש כצבע אחד מול הבס: קודם בהיר או כהה, ואז איזה.' },
+    },
+  ],
+});
+
 export const UNITS: Record<string, string> = {
+  'topic:upper-rootless': 'upper-rootless',
   'topic:modes-ear': 'modes-ear',
   'topic:prog-meter': 'prog-meter',
   'topic:jazz-changes': 'jazz-changes',

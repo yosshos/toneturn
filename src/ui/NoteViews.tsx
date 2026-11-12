@@ -172,6 +172,47 @@ export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs, 
   );
 }
 
+/**
+ * PIANO_AUDIT P3: a grand staff (treble over bass, braced) with one chord — the notes from middle C up in the treble
+ * staff (right hand), the rest in the bass staff (left hand). Compact: two staves in about the height of one and a half.
+ */
+export function GrandStaff({ notes, keyPc }: { notes: number[]; keyPc: PitchClass | null }) {
+  const rh = notes.filter((m) => m >= 60).sort((a, b) => a - b);
+  const lh = notes.filter((m) => m < 60).sort((a, b) => a - b);
+  const { ref, failed } = useSvg(
+    (VF, el) => {
+      const width = 200;
+      const renderer = new VF.Renderer(el, VF.Renderer.Backends.SVG);
+      renderer.resize(width, 176);
+      const ctx = renderer.getContext();
+      const top = new VF.Stave(18, 0, width - 24);
+      const bot = new VF.Stave(18, 76, width - 24);
+      top.addClef('treble').addKeySignature(keySpec(keyPc));
+      bot.addClef('bass').addKeySignature(keySpec(keyPc));
+      for (const st of [top, bot]) st.setDefaultLedgerLineStyle({ strokeStyle: '#1f1f24', lineWidth: 2.2 });
+      top.setContext(ctx).draw();
+      bot.setContext(ctx).draw();
+      new VF.StaveConnector(top, bot).setType(VF.StaveConnector.type.BRACE).setContext(ctx).draw();
+      new VF.StaveConnector(top, bot).setType(VF.StaveConnector.type.SINGLE_LEFT).setContext(ctx).draw();
+      const one = (ms: number[], clef: 'treble' | 'bass') => new VF.StaveNote({ keys: ms.length ? ms.map((m) => vfKey(m, keyPc)) : [clef === 'bass' ? 'd/3' : 'b/4'], duration: ms.length ? 'w' : 'wr', clef });
+      const vt = new VF.Voice({ num_beats: 4, beat_value: 4 }).setMode(VF.Voice.Mode.SOFT).addTickables([one(rh, 'treble')]);
+      const vb = new VF.Voice({ num_beats: 4, beat_value: 4 }).setMode(VF.Voice.Mode.SOFT).addTickables([one(lh, 'bass')]);
+      VF.Accidental.applyAccidentals([vt], keySpec(keyPc));
+      VF.Accidental.applyAccidentals([vb], keySpec(keyPc));
+      new VF.Formatter().joinVoices([vt]).joinVoices([vb]).format([vt, vb], width - 100);
+      vt.draw(ctx, top);
+      vb.draw(ctx, bot);
+    },
+    [notes.join(','), keySpec(keyPc)],
+  );
+  return (
+    <div className="note-staff grand-staff" role="img" aria-label={`${rh.map((m) => vfKey(m, keyPc)).join(' ')} / ${lh.map((m) => vfKey(m, keyPc)).join(' ')}`}>
+      <div ref={ref} />
+      {failed && <p className="staff-fallback">{rh.map((m) => vfKey(m, keyPc)).join(' ')} / {lh.map((m) => vfKey(m, keyPc)).join(' ')}</p>}
+    </div>
+  );
+}
+
 /** One line of tablature with given string/fret positions (drills): chords stack, a mark above (h p / b ~ PM X …), result colours. */
 export function TabLine({ cols, marks, strings = 6, bars, at }: { cols: { pos: { str: number; fret: number | 'x' }[]; dur: number; top?: string; bottom?: string }[]; marks?: NoteMark[]; strings?: number; /** Mixed meters: the line's bars (quarter notes) — a bar line at each bar's end, its time signature written where it changes. */ bars?: { len: number; sig?: string }[]; /** With `bars`: each column's start in quarter notes from the line's start. */ at?: number[] }) {
   const { ref, failed } = useSvg(

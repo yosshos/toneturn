@@ -7,9 +7,9 @@ import { swingBand, swingRatioOf, timeFeel, voiceOnsets, type TimeFeel } from '.
 import { gradeSongTake, pitchChanges, type PhraseScore, type PlanNote, type SongGrade, type SongPlan } from './voiceSongs';
 import { chordAtBeat, parseChart, transposeChart } from './charts';
 import { improvReportBy, type ImprovReport } from './perform';
-import { hzToMidi } from './pitch';
+import { hzToMidi, midiToHz } from './pitch';
 import { segmentNotes } from './memory';
-import { gradeMotif, gradeRubato, gradeTrade, reentryOffset, tradeOpening, tradeTurns, type TradeTurn } from './voiceP2';
+import { Follower, gradeMotif, gradeRubato, gradeTrade, reentryOffset, rejoinAt, synthRubato, tradeOpening, tradeTurns, type TradeTurn } from './voiceP2';
 import type { PNote } from './improvPhrasing';
 
 /** The level's own rule dominates: a take that misses it cannot pass on the other metrics. */
@@ -237,6 +237,149 @@ export function gradeCollaSong(item: VocalItem, frames: SungFrame[], plan: SongP
   let score = Math.min(song.score, base.score);
   if (r.follow < 0.8 || reentry === null || Math.abs(reentry) > plan.beat) score = Math.min(score, s.need - 0.01);
   return { grade: { ...base, score: r3(score) }, song, follow: r.follow, reentry };
+}
+
+/** One section of a colla voce song: free (the band follows) or in time (the band's groove), bars inclusive. */
+export interface CollaSection {
+  free: boolean;
+  fromBar: number;
+  toBar: number;
+  notes: PlanNote[];
+}
+
+/**
+ * The sections of a colla voce item: free until `freeUntil`, then in time; with `again`, free once more from that
+ * phrase and (with `until`) back in time at the end — free – tempo – free – tempo. Every section has at least one bar.
+ */
+export function collaSections(plan: SongPlan, from: number, to: number, freeUntil: number, again?: { from: number; until?: number }): CollaSection[] {
+  const barOf = (i: number) => plan.phrases[Math.max(0, Math.min(i, plan.phrases.length - 1))].fromBar;
+  const cuts = [from, Math.min(Math.max(barOf(Math.max(1, freeUntil)), from + 1), to + 1)];
+  if (again && again.from < plan.phrases.length) {
+    const b2 = Math.min(Math.max(barOf(again.from), cuts[1] + 1), to + 1);
+    cuts.push(b2);
+    if (again.until !== undefined && again.until < plan.phrases.length) cuts.push(Math.min(Math.max(barOf(again.until), b2 + 1), to + 1));
+  }
+  cuts.push(to + 1);
+  const out: CollaSection[] = [];
+  for (let k = 0; k + 1 < cuts.length; k++) {
+    const [a, b] = [cuts[k], cuts[k + 1] - 1];
+    if (b < a) continue;
+    out.push({ free: k % 2 === 0, fromBar: a, toBar: b, notes: plan.notes.filter((n) => n.bar >= a && n.bar <= b) });
+  }
+  return out;
+}
+
+/**
+ * Colla voce with a free section in the middle (free – tempo – free – tempo): every free section graded without a
+ * clock (the follower's path, each note reached in tune), every tempo section as a band song from its downbeat
+ * (`rejoins[k]`, take clock s, null = never reached), and **back on the bar at every return to tempo** — the onset
+ * nearest each written re-entry within one beat (a hard rule), scored by the worst of them.
+ */
+export function gradeCollaMulti(item: VocalItem, frames: SungFrame[], plan: SongPlan, from: number, to: number, rejoins: (number | null)[]): SongResult & { follow: number; reentry: number | null; reentries: (number | null)[] } {
+  const s = item.song!;
+  const secs = collaSections(plan, from, to, s.freeUntil ?? 1, s.freeAgain);
+  const bar = plan.meter * plan.beat;
+  const phrases: PhraseScore[] = [];
+  const notePitch: (number | null)[] = [];
+  const reentries: (number | null)[] = [];
+  let reached = 0;
+  let total = 0;
+  let firstFollow = 0;
+  let feel: SongGrade['feel'] = null;
+  let open = -Infinity; // frames from here belong to the current section
+  let broken = false; // a tempo section was never reached: what follows is not sung
+  let t = 0; // tempo sections seen
+  const zero = (sec: CollaSection) => {
+    for (const ph of plan.phrases.filter((p) => p.fromBar >= sec.fromBar && p.fromBar <= sec.toBar)) phrases.push({ i: ph.i, pitch: 0, time: sec.free || !s.rhythm ? null : 0, breath: 0, score: 0, sung: 0, notes: ph.notes.length });
+    notePitch.push(...sec.notes.map(() => null));
+  };
+  secs.forEach((sec, k) => {
+    if (sec.free) {
+      total += sec.notes.length;
+      if (broken) return zero(sec);
+      const next = secs[k + 1] ? rejoins[t] : undefined;
+      const end = next === undefined ? Infinity : next === null ? Infinity : next - bar;
+      const r = gradeRubato(frames.filter((f) => f.t >= open && f.t < end), sec.notes.map((n) => n.midi), sec.notes.map((n) => n.phrase), s.tol ?? 50);
+      if (k === 0) firstFollow = r.follow;
+      reached += Math.round(r.follow * sec.notes.length);
+      phrases.push(...r.phrases.map((p) => ({ i: p.i, pitch: p.score, time: null, breath: 1, score: p.score, sung: p.reached, notes: p.notes })));
+      notePitch.push(...r.cents.map((c) => (c === null ? null : Math.abs(c) <= (s.tol ?? 50) ? 1 : 0)));
+      return;
+    }
+    const r = rejoins[t++] ?? null;
+    if (broken || r === null) {
+      broken = true;
+      reentries.push(null);
+      return zero(sec);
+    }
+    const len = (sec.toBar - sec.fromBar + 1) * bar;
+    const shifted = frames.filter((f) => f.t >= r - bar && f.t < r + len).map((f) => ({ ...f, t: f.t - r }));
+    const g = gradeSongTake(shifted, plan, { fromBar: sec.fromBar, toBar: sec.toBar, tol: s.tol, rhythm: s.rhythm, need: s.need });
+    phrases.push(...g.phrases);
+    notePitch.push(...g.notePitch);
+    feel ??= g.feel;
+    const on = [...voiceOnsets(shifted), ...pitchChanges(shifted)].sort((a, b) => a - b);
+    reentries.push(sec.notes.length ? reentryOffset(on, sec.notes[0].start - sec.fromBar * bar, plan.beat) : null);
+    open = r + len - 0.25 * plan.beat;
+  });
+  const follow = total ? Math.round((reached / total) * 1000) / 1000 : 0;
+  const mean = phrases.length ? phrases.reduce((a, p) => a + p.score, 0) / phrases.length : 0;
+  const r3 = (x: number) => Math.round(x * 1000) / 1000;
+  const weakest = phrases.length ? phrases.reduce((w, p) => (p.score < w.score ? p : w), phrases[0]).i : 0;
+  const song: SongGrade = { phrases, score: r3(phrases.some((p) => p.score < s.need) ? Math.min(mean, s.need - 0.01) : mean), mean: r3(mean), weakest, feel, drift: null, chorusDb: null, notePitch };
+  // the worst return decides (a miss is the worst)
+  const worst = reentries.length && reentries.every((x) => x !== null) ? reentries.reduce((a, b) => (Math.abs(b!) > Math.abs(a!) ? b : a)) : null;
+  if (firstFollow === 0) return { grade: UNCLEAR, song, follow: 0, reentry: worst, reentries };
+  const beatMs = plan.beat * 1000;
+  const back = worst === null ? 0 : bandScore(worst * 1000, [beatMs * 0.15, beatMs * 0.4, beatMs]);
+  const base = finish([M('phrases', mean * 100, '%', mean, 4), M('follow', follow * 100, '%', reachScore(follow, 0.9), 2), M('reentry', worst === null ? beatMs * 2 : worst * 1000, 'ms', back, 2.5)], {});
+  let score = Math.min(song.score, base.score);
+  if (follow < 0.8 || worst === null || Math.abs(worst) > plan.beat) score = Math.min(score, s.need - 0.01);
+  return { grade: { ...base, score: r3(score) }, song, follow, reentry: worst, reentries };
+}
+
+/**
+ * The simulator and tests: a colla voce song with any sections — free notes sung rubato (`slow` × written), each
+ * rejoin found by the follower as live, tempo notes `late[k]` seconds off their downbeat; a free section after a tempo
+ * one starts `gap` seconds after the tempo section's end.
+ */
+export function synthCollaSections(secs: CollaSection[], plan: SongPlan, o: { slow?: number; late?: number[]; cents?: number; gap?: number } = {}): { frames: SungFrame[]; rejoins: number[] } {
+  const bar = plan.meter * plan.beat;
+  const out: SungFrame[] = [];
+  const rejoins: number[] = [];
+  let t = 0.5;
+  let tk = 0;
+  secs.forEach((sec, k) => {
+    if (sec.free) {
+      const a = synthRubato(sec.notes.map((n) => n.midi), sec.notes.map((n) => n.dur * (o.slow ?? 1.15)), { cents: o.cents, t0: t });
+      const fw = new Follower(sec.notes.map((n) => n.midi));
+      for (const f of a) fw.push(f);
+      const last = fw.matched.length ? fw.matched[fw.matched.length - 1].t : a.length ? a[a.length - 1].t : t;
+      const lastBeats = sec.notes.length ? sec.notes[sec.notes.length - 1].dur / plan.beat : 1;
+      if (secs[k + 1]) {
+        const { count, downbeat } = rejoinAt(last, lastBeats, plan.beat, plan.meter);
+        out.push(...a.filter((f) => f.t < count));
+        for (let x = Math.max(count, (out[out.length - 1]?.t ?? count) + 0.01); x < downbeat; x += 0.01) out.push({ t: x, hz: null, confidence: 0, rms: 0.002 });
+        rejoins.push(downbeat);
+        t = downbeat;
+      } else out.push(...a);
+      return;
+    }
+    const late = o.late?.[tk++] ?? 0;
+    const base = sec.fromBar * bar;
+    const len = (sec.toBar - sec.fromBar + 1) * bar;
+    for (let x = t; x < t + len; x += 0.01) {
+      const n = sec.notes.find((m) => x >= t + late + m.start - base && x < t + late + m.start - base + m.dur);
+      if (!n) {
+        out.push({ t: x, hz: null, confidence: 0, rms: 0.002 });
+        continue;
+      }
+      const dip = x - (t + late + n.start - base) < 0.03;
+      out.push({ t: x, hz: midiToHz(n.midi + (o.cents ?? 0) / 100), confidence: dip ? 0.5 : 0.95, rms: dip ? 0.01 : 0.12 });
+    }
+    t += len + (o.gap ?? 0.4);
+  });
+  return { frames: out, rejoins };
 }
 
 /**

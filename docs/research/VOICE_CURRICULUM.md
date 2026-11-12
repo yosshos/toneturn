@@ -738,8 +738,19 @@ steps), XP and the voice-take record, the family badges, the ratings (intervals 
 audiation → sequences/inner, the song echo → singing/songs) and the quick lessons by number base (ear → the drift +
 chord-tones lesson, 1309 → songs with the band).
 
-**Still not built**: Tier 1A standards (no period transcriptions here). A colla voce section in the middle of a song
-(free – tempo – free) is not offered; only free then tempo.
+**Still not built**: Tier 1A standards (no period transcriptions here).
+
+**Built 2026-11-12 — a free section in the middle of a song.** 1408 has a third item: *Lantern Street* (own 32-bar
+AABA, ♩ 132) sung **free – in time – free – in time**: the first A colla voce (the band follows, its groove stretched),
+a count-in bar, the second A in time, then the **bridge free again** — at the end of the tempo section the band holds the
+bridge's first chord and waits, and follows the singer note by note (a new `Follower`, the groove stretched to the new
+pace) — then a count-in bar and the last A in time. The re-entry check (the onset nearest the written downbeat, a hard
+rule within one beat, scored full ≤ 0.15 beat) runs **at each return to tempo**; the worst return decides. Code:
+`SongSpec.freeAgain { from, until? }` (vocal.ts), `collaSections`, `gradeCollaMulti`, `synthCollaSections`
+(voiceGrade.ts), the live branch in `VoiceTimed.tsx` (instruction `COLLA_TEXT.middle`). Tests: `tests/voiceColla3.test.ts`
+(the sections, a clean take passes, late at the second return only fails, out of tune fails, a much slower free bridge
+still passes). Not verified live on a phone (the hand-over from tempo to free: the held chord stops at the singer's
+first free note).
 
 **No memorizable items (follow-up)**: the echo (1203) and audiation (1205) melodies are generated fresh every session
 (`sessionEarItem` in `voiceEar.ts`, seeded, applied when the level opens), item ids unchanged. Echo: as many notes and

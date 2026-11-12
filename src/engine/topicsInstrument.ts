@@ -811,11 +811,37 @@ TOPIC_GEN['key-read'] = {
     { en: 'Ledger lines, both clefs', he: 'קווי עזר, בשני המפתחות' },
     { en: 'Sharps and flats', he: 'דיאזים ובמולים' },
     { en: 'Two notes at once', he: 'שני צלילים יחד' },
+    // PIANO_AUDIT P3: reading the grand staff, both hands at once.
+    { en: 'Grand staff: one note in each hand', he: 'חמשה כפולה: צליל בכל יד' },
+    { en: 'Grand staff: both hands, chords', he: 'חמשה כפולה: שתי ידיים, אקורדים' },
   ],
   gen(seed, level, id) {
     const rnd = rng(seed);
-    const base = { id, topic: 'key-read', level, seed, skill: 'instrument' as const, surface: 'keys' as const, instrument: 'keys' as const, match: 'exact' as const, difficulty: [850, 950, 1050, 1150, 1250][level - 1] };
+    const base = { id, topic: 'key-read', level, seed, skill: 'instrument' as const, surface: 'keys' as const, instrument: 'keys' as const, match: 'exact' as const, difficulty: [850, 950, 1050, 1150, 1250, 1320, 1420][level - 1] };
     const naturals = (lo: number, hi: number) => Array.from({ length: hi - lo + 1 }, (_, i) => lo + i).filter((m) => NATURAL.has(mod12(m)));
+    if (level >= 6) {
+      // The left hand on the bass staff (F2–B3), the right on the treble (C4–G5); a key signature from level 7.
+      const key = level === 7 ? pickR(rnd, [0, 7, 5, 2, 10]) : 0;
+      const sc = [0, 2, 4, 5, 7, 9, 11].map((x) => mod12(x + key));
+      const inKey = (lo: number, hi: number) => Array.from({ length: hi - lo + 1 }, (_, i) => lo + i).filter((m) => sc.includes(mod12(m)));
+      let lh: number[];
+      let rh: number[];
+      if (level === 6) {
+        lh = [pickR(rnd, naturals(41, 59))];
+        rh = [pickR(rnd, naturals(60, 79))];
+      } else {
+        // LH: a root and its 5th or octave; RH: a close triad of the key (any inversion), all inside the staves.
+        const root = pickR(rnd, inKey(41, 52));
+        lh = [root, root + pickR(rnd, [7, 12])].filter((m) => m <= 59);
+        const d = sc.indexOf(mod12(root));
+        const tri = [0, 2, 4].map((x) => sc[(d + x) % 7]);
+        const lo = pickR(rnd, inKey(60, 69).filter((m) => tri.includes(mod12(m))));
+        rh = [lo];
+        for (let m = lo + 1; rh.length < 3 && m <= 79; m++) if (tri.includes(mod12(m))) rh.push(m);
+      }
+      const keyPc = level === 7 ? pc(({ 0: 'C', 7: 'G', 5: 'F', 2: 'D', 10: 'Bb' } as Record<number, string>)[key]) : null;
+      return placeQ({ ...base, ask: { en: 'Play both hands together (grand staff).', he: 'נגנו את שתי הידיים יחד (חמשה כפולה).' }, target: [...lh, ...rh], as: 'set', given: { midis: [...lh, ...rh], key: keyPc, chord: true, grand: true } });
+    }
     // On the staff: treble C4–G5, bass F2–B3 (one ledger line at most at the edges).
     const RANGE = { treble: [60, 79], bass: [41, 59] } as const;
     const clef: 'treble' | 'bass' = level === 1 ? 'treble' : level === 2 ? 'bass' : rnd() < 0.5 ? 'treble' : 'bass';

@@ -3290,6 +3290,59 @@ function genKeysEar(s: DrillSpec): Drill {
       name = op === 1 ? t('Transpose a melody up a 4th', 'טרנספוזיציה של מנגינה קוורטה למעלה') : t('Transpose a melody up a 5th', 'טרנספוזיציה של מנגינה קווינטה למעלה');
       break;
     }
+    case 'two-part': {
+      // PIANO_AUDIT P3, two-part playback: the key, then two rounds of two bars in two voices — a melody (RH) over a
+      // bass (LH) — played back with both hands. Op 0: the bass in half notes on the roots, the melody in quarters (a
+      // chord tone on the beat, a step after it). Op 1: the bass walks in quarters (root, then a step into the next
+      // root), the melody holds a chord tone for each chord.
+      cadenceBar(0);
+      const mel = (md: number) => deg(md);
+      /** The chord tone of degree `d`'s triad nearest to melody degree `md` (inside 0–9). */
+      const nearTone = (d: number, md: number) => {
+        let best = md;
+        let dist = Infinity;
+        for (let x = Math.max(0, md - 3); x <= Math.min(9, md + 3); x++)
+          if ([0, 2, 4].includes(mod(x - d, 7)) && Math.abs(x - md) < dist) {
+            best = x;
+            dist = Math.abs(x - md);
+          }
+        return best;
+      };
+      for (let r = 0; r < 2; r++) {
+        const b0 = 4 + r * 16;
+        const prog = pick(EAR_PROGS);
+        const parts: { beat: number; dur: number; p: number; hand: Hand }[] = [];
+        let md = pick([2, 4, 7]);
+        prog.forEach((d, i) => {
+          md = nearTone(d, md);
+          if (op === 0) {
+            parts.push({ beat: i * 2, dur: 2, p: bassOf(d), hand: 'L' });
+            parts.push({ beat: i * 2, dur: 1, p: mel(md), hand: 'R' });
+            const next = i < 3 ? nearTone(prog[i + 1], md) : md;
+            const step = next > md ? 1 : next < md ? -1 : md >= 8 ? -1 : 1;
+            md = Math.max(0, Math.min(9, md + step));
+            parts.push({ beat: i * 2 + 1, dur: 1, p: mel(md), hand: 'R' });
+          } else {
+            parts.push({ beat: i * 2, dur: 1, p: bassOf(d), hand: 'L' });
+            const nd = i < 3 ? prog[i + 1] : 0;
+            const nb = bassOf(nd);
+            // a scale step next to the next root, on the side the bass comes from
+            const appr = pitchIn(deg(nd + (nb > bassOf(d) ? -1 : 1)), 40);
+            parts.push({ beat: i * 2 + 1, dur: 1, p: appr === nb ? pitchIn(deg(nd + 1), 40) : appr, hand: 'L' });
+            parts.push({ beat: i * 2, dur: 2, p: mel(md), hand: 'R' });
+          }
+        });
+        for (const x of parts) call(b0 + x.beat, x.dur * 0.9, [x.p]);
+        windows.push([b0, b0 + 8]);
+        for (let beat = 0; beat < 8; beat++) {
+          const on = parts.filter((x) => x.beat === beat);
+          if (on.length) evs.push({ beat: b0 + 8 + beat, dur: 1, notes: on.map((x) => ({ pitch: x.p, hand: x.hand })), required: on.map((x) => x.p), allowed: on.map((x) => x.p) });
+        }
+      }
+      ask = t('Hear a melody over a bass — play both back, the melody in the right hand, the bass in the left', 'שמעו מנגינה מעל בס — נגנו את שניהם בחזרה, המנגינה ביד ימין והבס ביד שמאל');
+      name = op === 1 ? t('Two parts: a walking bass', 'שני קולות: בס הולך') : t('Two parts: melody and bass', 'שני קולות: מנגינה ובס');
+      break;
+    }
     default:
       throw new Error(`Unknown k-ear kind ${s.kind}`);
   }
@@ -5321,6 +5374,8 @@ export function catalog(): FamilyDef[] {
         E(6, 'A progression by ear', 'מהלך אקורדים בשמיעה', [ke('chords'), ke('chords', 1)], [0, 7, 5, 2, 10]),
         E(7, 'Harmonise a melody with I, IV, V', 'הרמון מנגינה ב-I, IV, V', [{ ...ke('harmonise'), hands: 'RL' }], [0, 7, 5, 2, 10, 9]),
         E(8, 'Transpose a melody', 'טרנספוזיציה של מנגינה', [ke('transpose'), ke('transpose', 1)], [0, 7, 5, 2, 10, 3]),
+        // PIANO_AUDIT P3: two-part playback — a melody over a bass, both hands.
+        E(9, 'Two parts: melody and bass', 'שני קולות: מנגינה ובס', [{ ...ke('two-part'), hands: 'RL' }, { ...ke('two-part', 1), hands: 'RL' }], [0, 7, 5, 2, 10]),
       ],
     },
   ];

@@ -17,7 +17,7 @@ import type { NoteEvent } from '../engine/lesson';
 import { chartBacking, chordAtBeat, parseChart, transposeChart } from '../engine/charts';
 import { sheetNotes, songBacking, songPlan, voiceSong, type SongGrade, type SongPlan } from '../engine/voiceSongs';
 import { feelVerdict, swingBand, synthDahs, synthLine, voiceOnsets, type TimeFeel } from '../engine/voiceTime';
-import { collaParts, gradeCollaSong, gradeRubatoSong, gradeScat, gradeSong, gradeTime, MOTIF_ANSWER_AT, motifCell, phraseFalls, scatCentre, scatChart, scatTurns } from '../engine/voiceGrade';
+import { collaParts, collaSections, gradeCollaMulti, gradeCollaSong, synthCollaSections, gradeRubatoSong, gradeScat, gradeSong, gradeTime, MOTIF_ANSWER_AT, motifCell, phraseFalls, scatCentre, scatChart, scatTurns } from '../engine/voiceGrade';
 import { familyOfRef, NEW_LEVEL_NAMES, vocalLevelByRef, voiceItemTags } from '../engine/voiceFamilies';
 import { Follower, paceOf, rejoinAt, restAdvice, stretchSegment, sungLine, synthColla, synthRubato, synthTrade, tradeOpening, tradeReply, type RestTake } from '../engine/voiceP2';
 import type { PNote } from '../engine/improvPhrasing';
@@ -240,7 +240,7 @@ export function TimedSession({ t, settings, range, level, items, onExit, onProgr
     if (item.kind === 'scat') return L(SCAT_INSTR[item.scat!.mode]);
     const s = item.song!;
     if (s.mine) return L(SONG_INSTR.mine);
-    if (s.freeUntil !== undefined) return L(s.id.endsWith('-verse') ? COLLA_TEXT.verse : COLLA_TEXT.instr);
+    if (s.freeUntil !== undefined) return L(s.freeAgain ? COLLA_TEXT.middle : s.id.endsWith('-verse') ? COLLA_TEXT.verse : COLLA_TEXT.instr);
     if (s.rubato) return L(SONG_INSTR.rubato);
     if (s.read) return L(s.read === 'lead' ? SONG_INSTR.readLead : SONG_INSTR.readBand);
     if (s.embellish) return L(SONG_INSTR.embellish);
@@ -455,6 +455,8 @@ export async function captureTimed(a: {
   let beat = 0.5;
   /** P3 colla voce then in time: the downbeat where the band came back in (take clock, s). */
   let rejoin: number | null = null;
+  /** P3 follow-up, a free section in the middle: every downbeat where the band came back in. */
+  let collaRejoins: number[] | null = null;
   if (item.kind === 'time' && item.time) {
     const ts = item.time;
     beat = 60 / ts.bpm;
@@ -471,6 +473,91 @@ export async function captureTimed(a: {
   } else if (item.kind === 'song' && plan && span && item.song?.mine) {
     beat = plan.beat;
     length = Math.min(a.mine?.duration ?? 60, 75) + 0.6;
+  } else if (item.kind === 'song' && plan && span && item.song?.freeUntil !== undefined && item.song.freeAgain) {
+    // P3 follow-up, a free section in the middle (free – tempo – free – tempo): each free section as below — the band
+    // follows note by note, its groove stretched, the last free chord held — then a count-in bar and the tempo section;
+    // at the end of a tempo section the band holds the next free section's first chord and waits for the singer.
+    const m = plan.meter;
+    beat = plan.beat;
+    lead = 1.2;
+    const secs = collaSections(plan, span.from, span.to, item.song.freeUntil, item.song.freeAgain);
+    const barsText = (a0: number, b0: number) => {
+      const bs = plan.chartBars.slice(a0, b0 + 1);
+      if (bs[0] === '%' || !bs[0]) bs[0] = plan.chartBars.slice(0, a0 + 1).reverse().find((b) => b && b !== '%') ?? 'C';
+      return bs.join(' | ');
+    };
+    const sx = secs.map((sec) =>
+      sec.free
+        ? { groove: chartBacking(parseChart(barsText(sec.fromBar, sec.toBar), m), 'ballad', plan.bpm, 1, m, { countIn: false }).events.map((ev) => ({ beat: ev.start / plan.beat, ev: { ...ev, velocity: ev.velocity * 0.8 } })), fb: sec.notes.map((n) => n.start / plan.beat - sec.fromBar * m), lastBeats: sec.notes.length ? sec.notes[sec.notes.length - 1].dur / plan.beat : 1, len: 0, tb: null }
+        : { groove: [], fb: [], lastBeats: 1, len: (sec.toBar - sec.fromBar + 1) * m * plan.beat, tb: chartBacking(parseChart(barsText(sec.fromBar, sec.toBar), m), plan.song.style, plan.bpm, 1, m, { countIn: true }) },
+    );
+    events = [{ midi: secs[0].notes[0].midi, start: 0, duration: 0.9, velocity: 0.6 }, ...padAt(plan, span.from, 1.0, 2.4)];
+    length = secs.reduce((x, sec, k) => x + (sec.free ? sec.notes.reduce((y, n) => y + n.dur, 0) * 2 + 8 + (Math.max(1, sx[k].lastBeats) + m) * plan.beat : sx[k].len), 0) + 2;
+    gatePitches = [...new Set([...sx.flatMap((x) => [...x.groove.map((g) => g.ev), ...(x.tb?.events ?? [])])].filter((e) => !e.perc).map((e) => e.midi).concat(plan.chartBars.flatMap((_, b) => padAt(plan, b, 0, 1).map((e) => e.midi))))];
+    const rejoinsLive: number[] = [];
+    let cur = 0;
+    let fw = new Follower(secs[0].notes.map((n) => n.midi));
+    let spb = plan.beat;
+    let prev: { t: number; b: number } | null = null;
+    let seg: AbortController | null = null;
+    let openAt = -Infinity;
+    let doneAt = 0;
+    signal.addEventListener('abort', () => seg?.abort());
+    a.onCue?.('free');
+    live = (f) => {
+      const sec = secs[cur];
+      if (!sec) return;
+      const x = sx[cur];
+      if (!sec.free) {
+        // in time: wait for the section's end, then follow the next free section (or end the take)
+        const tEnd = rejoinsLive[rejoinsLive.length - 1] + x.len;
+        if (secs[cur + 1] && f.t >= tEnd - 0.25 * plan.beat) {
+          cur++;
+          fw = new Follower(secs[cur].notes.map((n) => n.midi));
+          prev = null;
+          spb = plan.beat;
+          openAt = tEnd - 0.25 * plan.beat;
+        } else if (!secs[cur + 1] && f.t > tEnd + 0.8) endTake();
+        return;
+      }
+      if (f.t < openAt) return;
+      const k = fw.push(f);
+      if (k !== null) {
+        const t = fw.matched[fw.matched.length - 1].t;
+        if (prev && x.fb[k] > prev.b) spb = paceOf(spb, t - prev.t, x.fb[k] - prev.b, plan.beat);
+        prev = { t, b: x.fb[k] };
+        const clockNow = (piano.heardTime((piano.audioNow() ?? 0) + 0.06) - zero) / 1000;
+        seg?.abort();
+        seg = new AbortController();
+        const last = k >= sec.notes.length - 1;
+        const raw = last ? padAt(plan, sec.notes[k].bar, 0, (Math.max(1, x.lastBeats) + m) * plan.beat + 0.4) : stretchSegment(x.groove, x.fb[k], x.fb[k + 1], spb, plan.beat, t - clockNow);
+        const evs = raw.filter((e) => e.start > -0.25).map((e) => (e.start < 0 ? { ...e, start: 0 } : e));
+        if (evs.length) void piano.play(evs, Math.max(...evs.map((e) => e.start + e.duration)) + 0.3, seg.signal).catch(() => {});
+        const next = secs[cur + 1];
+        if (last && next) {
+          const nx = sx[cur + 1];
+          const rj = rejoinAt(t, x.lastBeats, plan.beat, m);
+          rejoinsLive.push(rj.downbeat);
+          rejoin = rj.downbeat;
+          const after = secs[cur + 2];
+          const tEnd = rj.downbeat + nx.len;
+          // the tempo section, then (a free section follows) its first chord held until the singer comes in
+          void piano.play(nx.tb!.events.map((e) => ({ ...e, start: e.start + rj.count - clockNow })).filter((e) => e.start >= 0), rj.count - clockNow + nx.tb!.length + 0.5, signal).catch(() => {});
+          if (after) {
+            // the held chord is stopped by the singer's first free note (the next reach aborts `seg`); the fermata
+            // under this last free note keeps its own controller and ends by itself
+            seg = new AbortController();
+            void piano.play(padAt(plan, after.fromBar, tEnd - clockNow, 12), tEnd - clockNow + 12.2, seg.signal).catch(() => {});
+          }
+          setTimeout(() => !signal.aborted && a.onCue?.('count'), Math.max(0, (rj.count - clockNow) * 1000));
+          setTimeout(() => !signal.aborted && a.onCue?.('tempo'), Math.max(0, (rj.downbeat - clockNow) * 1000));
+          if (after) setTimeout(() => !signal.aborted && a.onCue?.('free'), Math.max(0, (tEnd - clockNow) * 1000));
+          cur++;
+        } else if (last) doneAt = f.t;
+      }
+      if (doneAt && f.t - doneAt > 1.4 + Math.max(1, x.lastBeats) * plan.beat) endTake();
+    };
+    collaRejoins = rejoinsLive;
   } else if (item.kind === 'song' && plan && span && item.song?.freeUntil !== undefined) {
     // P3, colla voce then in time: the band follows the singer through the free phrases — its groove stretched to the
     // singer's pace, note by note — holds the last free chord, counts one bar and comes back in, in the song's groove.
@@ -590,7 +677,11 @@ export async function captureTimed(a: {
   if (SIMULATED) {
     zero = performance.now() + 400;
     a.onClock(zero, beat);
-    if (item.kind === 'song' && plan && span && item.song?.freeUntil !== undefined) {
+    if (item.kind === 'song' && plan && span && item.song?.freeUntil !== undefined && item.song.freeAgain) {
+      const sc = synthCollaSections(collaSections(plan, span.from, span.to, item.song.freeUntil, item.song.freeAgain), plan);
+      got = sc.frames;
+      collaRejoins = sc.rejoins;
+    } else if (item.kind === 'song' && plan && span && item.song?.freeUntil !== undefined) {
       const sc = simulateColla(item, plan, span);
       got = sc.frames;
       rejoin = sc.rejoin;
@@ -660,6 +751,9 @@ export async function captureTimed(a: {
   if (item.kind === 'time') {
     const res = gradeTime(item, voiceOnsets(got));
     take = { grade: res.grade, feel: res.feel, swing: res.swing };
+  } else if (item.kind === 'song' && plan && span && item.song?.freeUntil !== undefined && item.song.freeAgain) {
+    const res = gradeCollaMulti(item, got, plan, span.from, span.to, collaRejoins ?? []);
+    take = { grade: res.grade, song: res.song, follow: res.follow, reentry: res.reentry, feel: res.song.feel };
   } else if (item.kind === 'song' && plan && span && item.song?.freeUntil !== undefined) {
     const res = gradeCollaSong(item, got, plan, span.from, span.to, rejoin);
     take = { grade: res.grade, song: res.song, follow: res.follow, reentry: res.reentry, feel: res.song.feel };
