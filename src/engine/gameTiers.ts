@@ -327,7 +327,7 @@ export const GAME_TIERS: Record<string, GameTierSpec> = {
       f: { label: L('8 bars', '8 תיבות'), params: { bars: 8, bpm: 90 }, target: 85 },
       // 0.75: parts (grooveTier.ts GROOVE_FF_PARTS): 8 slow bars, 7/8 fade, lay back vs a pushing band, swing match;
       // 0.76: + a tempo change to hold. 2026-11-12 (owner): ff clears only with passing runs in two different parts.
-      ff: { label: L('8 bars slow; 7/8, lay back, swing match, new tempo — pass two different parts', '8 תיבות לאט; 7/8, להישען, סווינג תואם, טמפו חדש — לעבור בשני חלקים שונים'), params: { bars: 8, bpm: 60 }, target: 85 },
+      ff: { label: L('8 bars slow; 7/8, lay back, swing match, new tempo — pass two different parts', '8 תיבות לאט; 7/8, להישען, סווינג תואם, טמפו חדש — לעבור בשני חלקים שונים'), params: { bars: 8, bpm: 60 }, target: 85, distinctParts: 2 },
       // 0.70: the level test (GrooveTrainer 'Level test' tab) scores accuracy 0..100; cleared at 85.
     },
   },
