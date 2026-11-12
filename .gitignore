@@ -15,3 +15,8 @@ scripts/voice/.inventory.log
 scripts/voice/.lines.json
 public/voice/en/manifest.part*.json
 public/voice/en/*.tmp
+
+# local Claude tools and permissions
+.claude/tools/
+.claude/settings.local.json
+.claude/worktrees/
