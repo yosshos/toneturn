@@ -37,7 +37,7 @@ function take(d: Drill, bpm: number, sd = 0, seed = 'x'): PlayedNote[] {
 
 describe('guitar core batch C: catalogue', () => {
   it('20 levels with the doc numbering, titles, tempo ranges, grades and add-ons', () => {
-    expect(LEVELS.length).toBe(20);
+    expect(LEVELS.length).toBe(21);
     const ids = LEVELS.map((l) => l.id);
     expect(ids).toEqual(expect.arrayContaining(['g-scales-8', 'g-scales-10', 'g-rhythm-10', 'g-lead-10', 'g-picking-9', 'g-legato-8', 'g-reading-8', 'g-arps-7', 'g-impro-6']));
     for (const l of LEVELS) {
@@ -49,7 +49,7 @@ describe('guitar core batch C: catalogue', () => {
       for (const s of l.specs) expect(CORE2_KINDS[s.family]).toContain(s.kind);
     }
     expect(LEVELS.filter((l) => l.addOn === 'prog').map((l) => l.id).sort()).toEqual(['g-legato-8', 'g-picking-8', 'g-picking-9']);
-    expect(LEVELS.filter((l) => l.addOn === 'jazz').map((l) => l.id).sort()).toEqual(['g-impro-5', 'g-impro-6']);
+    expect(LEVELS.filter((l) => l.addOn === 'jazz').map((l) => l.id).sort()).toEqual(['g-impro-5', 'g-impro-6', 'g-impro-7']);
   });
 
   it('every item × key generates valid, playable notes', () => {
@@ -134,4 +134,47 @@ describe('guitar core batch C: measured', () => {
       }
     expect(fails).toEqual([]);
   }, 60000);
+});
+
+describe('guitar trading 4s / 2s with the band (g-impro 7)', () => {
+  const tradeLv = LEVELS.find((l) => l.id === 'g-impro-7')!;
+  const pc = (p: number) => ((p % 12) + 12) % 12;
+  it('the band plays, you answer, in turn; its phrase stops a beat before yours; your notes are landings on 1 and 3', () => {
+    for (const k of tradeLv.keys as number[])
+      for (const s of tradeLv.specs) {
+        const d = gen({ ...s, key: k } as DrillSpec);
+        const len = s.option === 2 ? 8 : 16;
+        expect(d.beats).toBe(64);
+        expect(d.show).toBe('none');
+        expect(d.chart).toHaveLength(16);
+        expect(d.listen!.windows).toEqual(Array.from({ length: 32 / len }, (_, i) => [i * 2 * len, i * 2 * len + len - 1]));
+        expect(d.listen!.notes.every((n) => d.listen!.windows.some(([a, b]) => n.beat >= a && n.beat + n.dur <= b + 1e-6)), d.itemId).toBe(true);
+        expect(d.goal.free!.windows).toEqual(Array.from({ length: 32 / len }, (_, i) => [i * 2 * len + len, (i + 1) * 2 * len]));
+        expect(d.notes).toHaveLength(16);
+        expect(d.notes.every((n) => n.land && n.land.includes(pc(n.pitch)) && n.beat % 2 === 0 && n.fret! <= MAX_FRET), d.itemId).toBe(true);
+        // The band comps and the drums play only in your bars (headphones / MIDI): it rests in its own.
+        expect(d.band?.rests).toEqual(d.listen!.windows.map(([a, b]) => [a, b + 1]));
+        expect(d.drums?.groove).toBe('swing');
+      }
+  });
+  const d = gen({ ...tradeLv.specs[0], key: 0 } as DrillSpec);
+  const bpm = 120;
+  const ms = (b: number) => expTimeMs(d, b, bpm);
+  /** The model line of your bars, played as a guitarist would (8ths). */
+  const modelTake = (): PlayedNote[] => d.goal.free!.model.map((n) => ({ pitch: n.pitch, on: ms(n.beat), off: null, vel: 64 }));
+  const atLanding = (p: PlayedNote) => d.notes.some((n) => Math.abs(p.on - ms(n.beat)) < 5);
+  it('your own line passes: the model line, or any chord tone at the landings (another octave)', () => {
+    const m = analyzeGuitarTake(d, bpm, modelTake());
+    expect(m.verdict, m.why.en).toBe('clean');
+    const oct = modelTake().map((p) => (atLanding(p) ? { ...p, pitch: p.pitch + 12 } : p));
+    expect(analyzeGuitarTake(d, bpm, oct).verdict).toBe('clean');
+  });
+  it('a wrong landing, laying out, or a line outside the changes never passes', () => {
+    const base = modelTake();
+    const i16 = base.findIndex((p) => Math.abs(p.on - ms(16)) < 5);
+    expect(analyzeGuitarTake(d, bpm, base.map((p, i) => (i === i16 ? { ...p, pitch: p.pitch + 1 } : p))).verdict).not.toBe('clean');
+    expect(analyzeGuitarTake(d, bpm, base.filter((p) => p.on < ms(48) - 100)).verdict).not.toBe('clean');
+    const outside = base.map((p) => (atLanding(p) ? p : { ...p, pitch: p.pitch + 6 }));
+    expect(analyzeGuitarTake(d, bpm, outside).verdict).not.toBe('clean');
+  });
 });

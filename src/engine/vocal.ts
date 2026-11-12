@@ -624,6 +624,21 @@ export interface SongSpec {
   falls?: boolean;
   /** F13 L8: the singer's own recording (loaded on the device, its melody extracted). */
   mine?: boolean;
+  /**
+   * F14 L6 / L9 (P3): the phrases before this index are sung colla voce (the band follows the singer, its groove
+   * stretched to the singer's pace); then the band counts one bar and the rest is sung in time — the singer must be
+   * back on the bar (within one beat).
+   */
+  freeUntil?: number;
+}
+/** F10 L1 / L3 / L5 and F13 L1 (P3): ear items sung back — an echo, an interval from a given note, the bar not played. */
+export interface EarSpec {
+  mode: 'echo' | 'interval' | 'audiate';
+  /** Audiation: the bars played first (semitones from the same base as `steps`) and their lengths (s); `steps` is the bar never played. */
+  lead?: number[];
+  leadSecs?: number[];
+  /** F13 L1: the songbook song whose first phrase is echoed (its title on the screen). */
+  song?: string;
 }
 /** Scat (F15): improvised or chosen notes over the band, graded on pitch, rhythm and landing — never the syllables. */
 export interface ScatSpec {
@@ -687,6 +702,8 @@ export interface VocalItem {
   song?: SongSpec;
   scat?: ScatSpec;
   more?: MoreSpec;
+  /** P3: an ear item (echo, interval from a given note, audiation) — a melody / leap graded as usual, played differently. */
+  ear?: EarSpec;
   difficulty: number;
 }
 

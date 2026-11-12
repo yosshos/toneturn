@@ -152,3 +152,27 @@ describe('the line inventory', () => {
     expect(missing.map((l) => l.text)).toEqual([]);
   });
 });
+
+describe('shipped recordings are real speech (2026-11-11: 32 kbps files were silent)', () => {
+  // lamejs at 32 kbps resampled 24 kHz to 22.05 kHz and wrote silence; every shipped file must be a 24 kHz MPEG-2 frame.
+  it('every listed file starts with a 24 kHz MPEG frame of at least 40 kbps', () => {
+    const path = 'public/voice/en/manifest.json';
+    if (!existsSync(path)) return;
+    const m = JSON.parse(readFileSync(path, 'utf8')) as VoiceManifest;
+    const bad: string[] = [];
+    for (const id of Object.keys(m.files)) {
+      const f = `public/voice/en/${id}.mp3`;
+      if (!existsSync(f)) continue;
+      const b = readFileSync(f);
+      let i = 0;
+      if (b[0] === 0x49 && b[1] === 0x44 && b[2] === 0x33) i = 10 + ((b[6] << 21) | (b[7] << 14) | (b[8] << 7) | b[9]); // ID3
+      const mpeg2 = (b[i + 1] & 0x08) === 0;
+      const srIdx = (b[i + 2] >> 2) & 3;
+      const brIdx = b[i + 2] >> 4;
+      const sr = mpeg2 ? [22050, 24000, 16000][srIdx] : [44100, 48000, 32000][srIdx];
+      const kbps = (mpeg2 ? [0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160] : [0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320])[brIdx];
+      if (b[i] !== 0xff || sr !== 24000 || kbps < 40) bad.push(`${id} ${sr} Hz ${kbps} kbps`);
+    }
+    expect(bad.slice(0, 5), `${bad.length} bad files`).toEqual([]);
+  });
+});

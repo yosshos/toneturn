@@ -41,12 +41,14 @@ export const TOPIC_GLYPH: Record<string, GlyphKind> = {
   'key-read': 'clefs', 'key-shapes': 'keychord', 'key-scales': 'keyscale',
   // PIANO_JAZZ: Barry Harris shapes and jazz chords on the keys.
   'key-sixdim': 'keydim', 'key-jazz': 'keyjazz',
+  // GUITAR_DEEPENING: the song's chords, strummed (a melody line over a strummed chord).
+  'song-strum': 'songstrum',
 };
 /** Games sitting in a unit (they all used to be one puzzle piece). */
 export const GAME_STEP_GLYPH: Record<string, GlyphKind> = {
   'rush-interval': 'intervals', 'rush-chord': 'chords', 'rush-progression': 'prog', highway: 'rhythm', melodypuzzle: 'puzzle', nametune: 'name', flight: 'sing', 'rush-note': 'sight', 'rush-keysig': 'theory', 'rush-fretboard': 'fretboard', peakhunter: 'eq', drills: 'scales', licks: 'lick', transcribe: 'transcribe',
   // Drum games P1 (DRUMS_NICHE_PLAN §3).
-  land: 'landit', 'groove-echo': 'grooveecho', 'odd-echo': 'oddecho', 'time-lock': 'timelock', 'ghost-control': 'ghostctl',
+  land: 'landit', 'groove-echo': 'grooveecho', 'odd-echo': 'oddecho', 'time-lock': 'timelock', 'ghost-control': 'ghostctl', 'rudiment-rush': 'rudrush', 'groove-off': 'grooveoff',
   // PIANO_JAZZ P2: repertoire steps and the advanced games as bonus steps (their Arcade symbols).
   repertoire: 'repstep', 'rush-voicing': 'voicingspy', 'rush-scale': 'scalerush', 'rush-standard': 'standard', reharm: 'reharmspot', bhtime: 'bhtime', riffecho: 'riff', polylock: 'polylock',
 };

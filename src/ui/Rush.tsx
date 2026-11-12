@@ -20,6 +20,7 @@ import {
   rushLadder,
   rushResult,
   rushHears,
+  rushNoReplay,
   rushTick,
   RUSH_MS,
   START_LIVES,
@@ -347,7 +348,7 @@ export function Rush({ lang, settings, mode, saved, onSave, onExit, onResult, be
           }
           return;
         }
-        if (e.code === 'Space' && hears(mode, item)) {
+        if (e.code === 'Space' && hears(mode, item) && !rushNoReplay(item)) {
           e.preventDefault();
           void playStim(item.q.stimulus);
         }
@@ -604,7 +605,7 @@ function ChoicePrompt({ item, mode, lang, settings, onReplay }: { item: Extract<
         {/* chord-read guitar pictures are built in standard tuning */}
         {q.diagram && <DiagramView d={q.diagram} settings={mode === 'chord' ? { ...settings, tuning: 'standard' } : settings} />}
       </div>
-      {hears(mode, item) && (
+      {hears(mode, item) && !rushNoReplay(item) && (
         <button type="button" className="btn rush-replay" onClick={onReplay}>
           <span aria-hidden="true">▶</span> {T.play[lang]}
         </button>

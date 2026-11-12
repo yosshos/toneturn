@@ -12,6 +12,8 @@ import { midi } from '../speech/midi';
 import { DrillTake } from './DrillTake';
 import { DEFAULT_CAL, DrillScore, drillSettingsOf } from './Drills';
 import { TierChips } from './TierChips';
+import { kitKind, type KitProfile } from '../engine/drumKit';
+import { ZONE_NAME, zonesFor, zonesOf, type StickZones } from '../engine/rudimentRush';
 
 type Lang = 'he' | 'en';
 const TX = {
@@ -24,10 +26,19 @@ const TX = {
   streak: { en: 'streak', he: 'רצף' },
   best: { en: 'best', he: 'שיא' },
   passed: { en: 'rounds passed', he: 'סבבים שעברו' },
+  zones: { en: 'Sticking zones', he: 'אזורי סטיקינג' },
+  rimNote: { en: 'Your kit must send the rim as its own note.', he: 'המערכת צריכה לשלוח את השפה כתו נפרד.' },
   kit: { en: 'Played on the kit: an e-kit by MIDI, or a pad by microphone where the round allows it.', he: 'מנגנים על המערכת: תופים אלקטרוניים ב-MIDI, או פד במיקרופון כשהסבב מאפשר.' },
 };
 
-export function DrumGame({ game, lang, settings, onExit, onResult, best, tier: tierInfo }: { game: DrumGameId; lang: Lang; settings: Settings; saved?: unknown | null; onSave?: (s: unknown | null) => void; onExit: () => void; onResult: (r: { score: number; detail?: unknown }) => void; best?: number; tier?: TierInfo }) {
+const ZONE_SHORT: Record<StickZones, { en: string; he: string }> = {
+  'hat-snare': { en: 'Hat · snare', he: 'היי־האט · סנר' },
+  'tom-snare': { en: 'Tom · snare', he: 'טום · סנר' },
+  'head-rim': { en: 'Head · rim', he: 'עור · שפה' },
+  pad: { en: 'One pad', he: 'פד אחד' },
+};
+
+export function DrumGame({ game, lang, settings, onExit, onResult, best, tier: tierInfo, onKit }: { onKit?: (k: KitProfile) => void; game: DrumGameId; lang: Lang; settings: Settings; saved?: unknown | null; onSave?: (s: unknown | null) => void; onExit: () => void; onResult: (r: { score: number; detail?: unknown }) => void; best?: number; tier?: TierInfo }) {
   const tx = (o: { en: string; he: string }) => o[lang];
   const [tier, setTier] = useState<DynName>(() => (tierInfo ? startTier(tierInfo) : 'pp'));
   const [phase, setPhase] = useState<'setup' | 'play' | 'end'>('setup');
@@ -38,7 +49,11 @@ export function DrumGame({ game, lang, settings, onExit, onResult, best, tier: t
   const [beat, setBeat] = useState(-1);
   const [take, setTake] = useState(0);
   const [phones, setPhones] = useState<boolean | undefined>(settings.headphones);
-  const r = useMemo(() => drumRound(game, tier, round, seed), [game, tier, round, seed]);
+  // Rudiment Rush: the two-zone sticking mode this kit can measure, and the tempo rising with every round passed.
+  const kind = kitKind(settings.drumKit);
+  const [zones, setZones] = useState<StickZones>(() => zonesOf(settings.drumKit, kind));
+  const ups = scores.filter((x) => x.ok).length - (res?.s.ok ? 1 : 0);
+  const r = useMemo(() => drumRound(game, tier, round, seed, game === 'rudiment-rush' ? { ups, zones } : {}), [game, tier, round, seed, ups, zones]);
   const ds = useMemo(() => ({ ...drillSettingsOf(settings), instrument: 'drums' as const }), [settings]);
   const cal: DrillCalibration = { ...DEFAULT_CAL, ...(settings.drillCal ?? {}), latencyMs: inputLatency(settings, midi.devices.length ? 'midi' : 'mic') };
   const streak = (() => {
@@ -84,6 +99,32 @@ export function DrumGame({ game, lang, settings, onExit, onResult, best, tier: t
         <section className="set-card">
           <p className="field-hint">{tx(DRUM_GAME_BLURB[game])}</p>
           {tierInfo && <TierChips lang={lang} info={tierInfo} value={tier} onChange={setTier} game={game} />}
+          {game === 'rudiment-rush' && (
+            <div className="dg-zones" data-dg-zones={zones}>
+              <div className="seg small" role="radiogroup" aria-label={tx(TX.zones)}>
+                {zonesFor(kind, !!settings.drumKit?.acoustic?.tpl.tom).map((z) => (
+                  <button
+                    key={z}
+                    type="button"
+                    role="radio"
+                    aria-checked={zones === z}
+                    className={zones === z ? 'on' : ''}
+                    data-zone={z}
+                    onClick={() => {
+                      setZones(z);
+                      onKit?.({ ...(settings.drumKit ?? { preset: 'gm', map: {} }), zones: z });
+                    }}
+                  >
+                    {tx(ZONE_SHORT[z])}
+                  </button>
+                ))}
+              </div>
+              <p className="field-hint">
+                {tx(ZONE_NAME[zones])}
+                {zones === 'head-rim' ? ` ${tx(TX.rimNote)}` : ''}
+              </p>
+            </div>
+          )}
           <p className="field-hint">{tx(TX.kit)}</p>
           {best !== undefined && (
             <p className="field-hint">

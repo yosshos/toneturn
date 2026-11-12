@@ -38,7 +38,8 @@ export function techniqueOf(items: Record<string, ItemState> | undefined): Techn
   return { levels, takes: list.reduce((a, s) => a + s.takes, 0), keysClean, cleanItems };
 }
 
-export function badgeInputOf(p: Progress, now: Date, weekendDays?: number[]): BadgeInput {
+/** `extra`: facts kept outside Progress (e.g. the courses with a measured first win, from Settings.courseStart). */
+export function badgeInputOf(p: Progress, now: Date, weekendDays?: number[], extra: Partial<BadgeInput> = {}): BadgeInput {
   const tech = techniqueOf(p.drillItems);
   return {
     today: localDay(now),
@@ -55,16 +56,17 @@ export function badgeInputOf(p: Progress, now: Date, weekendDays?: number[]): Ba
     vocalPassed: p.vocal?.passed,
     weekendDays,
     technique: { levels: tech.levels, keysClean: tech.keysClean, cleanItems: tech.cleanItems, bestEvenCv: p.counts?.evenCv ?? null, cleanTakes: p.counts?.drillClean ?? 0, tempoRecords: p.counts?.tempoRecords ?? 0 },
+    ...extra,
   };
 }
 
 /** New ranks and badge log; null when nothing changed. */
-export function refreshRanksBadges(p: Progress, now: Date, weekendDays?: number[]): { next: Progress; rankChanges: RankChange[]; newly: Badge[] } | null {
+export function refreshRanksBadges(p: Progress, now: Date, weekendDays?: number[], extra: Partial<BadgeInput> = {}): { next: Progress; rankChanges: RankChange[]; newly: Badge[] } | null {
   const at = now.toISOString();
   const tech = techniqueOf(p.drillItems);
   const { ranks, changes } = updateRanks(p.ranks, ratingsOf(p), p.ratingEvents ?? [], at, tech.takes ? tech : null);
   const withRanks: Progress = { ...p, ranks };
-  const { log, newly } = earnBadges(p.badges, badgeInputOf(withRanks, now, weekendDays), at);
+  const { log, newly } = earnBadges(p.badges, badgeInputOf(withRanks, now, weekendDays, extra), at);
   const same = JSON.stringify(ranks) === JSON.stringify(p.ranks ?? {}) && !newly.length;
   if (same) return null;
   return { next: { ...withRanks, badges: log }, rankChanges: changes, newly };

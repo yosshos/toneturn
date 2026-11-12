@@ -80,7 +80,8 @@ export function DuelsSection({ t, settings, friends, onPlaying, tier = 'pp' }: {
   const [kind, setKind] = useState<DuelKind>(kinds.includes('mixed') ? 'mixed' : kinds[0]);
   const [play, setPlay] = useState<{ id: string; kind: DuelKind; seed: number; rounds: number } | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
-  const load = useCallback(() => void myDuels().then(setRows), []);
+  // Groove-off duels (kind 'groove') live on the drums Groove-off screen, not here.
+  const load = useCallback(() => void myDuels().then((r) => setRows(r.filter((d) => (d.kind as string) !== 'groove'))), []);
   useEffect(load, [load]);
   const names: Record<string, string> = { mixed: t.setMixed, modes: t.skillNames.modes, 'wrong-notes': t.wrongNotesTitle, truefalse: t.trueFalse, chords: t.skillNames.chords, intervals: t.skillNames.intervals, degrees: t.skillNames.degrees, beat: t.skillNames['rhythm-dictation'], jazz: settings.uiLang === 'he' ? 'הרמוניית ג׳אז' : 'Jazz harmony' };
 

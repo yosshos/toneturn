@@ -58,6 +58,8 @@ export interface CourseStartState {
   /** How many times "Not now" was tapped (the offer stops coming back after OFFER_MAX_SNOOZES). */
   offerSnoozes?: number;
   goal?: PersonalGoal;
+  /** Day 3: the first "real music" moment (a full chorus with the band). */
+  real?: RealMusicState;
 }
 export type CourseStartMap = Partial<Record<CourseId, CourseStartState>>;
 
@@ -483,17 +485,20 @@ export const TASTES: Record<CourseId, Record<SelfReport, TasteDef>> = {
 
 /** Who takes the jazz course's "I play well" taste: a singer sings it, a pianist or bassist plays it (owner 2026-11-11:
  * "a singer has to sing, as a player has to play"); anyone else hears it. */
-export type JazzWho = 'voice' | 'keys' | 'bass' | null;
-const JAZZ_WELL: Record<'voice' | 'keys' | 'bass', TasteDef> = {
+export type JazzWho = 'voice' | 'keys' | 'bass' | 'guitar' | null;
+const JAZZ_WELL: Record<'voice' | 'keys' | 'bass' | 'guitar', TasteDef> = {
   voice: T('jazz', 'well', 'Trade 2s with the band', 'חילופי שתיים עם הלהקה', 'Scat two bars, the band answers, over a swing blues.', 'סקאט של שתי תיבות, הלהקה עונה, על בלוז בסווינג.', { kind: 'vocal', level: 1510 }),
   keys: T('jazz', 'well', 'Trade 4s with the band', 'חילופי ארבע עם הלהקה', 'Play four bars of a line, the band answers.', 'לנגן ארבע תיבות של קו, והלהקה עונה.', { kind: 'drills', picks: [{ level: 'k-bebop-8', items: [0] }] }),
   bass: T('jazz', 'well', 'Trade 4s with the drums', 'חילופי ארבע עם התופים', 'Walk, then take four bars while the drums answer.', 'ווקינג, ואז ארבע תיבות שלכם והתופים עונים.', { kind: 'drills', picks: [{ level: 'b-impro-14', items: [0] }] }),
+  // A guitarist trades 4s on a ii–V–I (g-impro 7, option 0), judged by mic or MIDI like the guitar line drills.
+  guitar: T('jazz', 'well', 'Trade 4s with the band', 'חילופי ארבע עם הלהקה', 'Play four bars of your own line on the guitar, the band answers.', 'לנגן בגיטרה ארבע תיבות של קו משלכם, והלהקה עונה.', { kind: 'drills', picks: [{ level: 'g-impro-7', match: ':op0:' }] }),
 };
 /** The jazz taste's player, from the courses and what the player said they play (voice wins only without an instrument). */
 export function jazzWho(courses: string[], plays: string[], instrument?: string, midi?: boolean): JazzWho {
   const all = new Set([...courses, ...plays, ...(instrument ? [instrument] : []), ...(midi ? ['keys'] : [])]);
   if (all.has('keys') || all.has('piano')) return 'keys';
   if (all.has('bass')) return 'bass';
+  if (all.has('guitar')) return 'guitar';
   if (all.has('voice') && !all.has('guitar') && !all.has('drums')) return 'voice';
   return null;
 }
@@ -501,3 +506,98 @@ export const tasteFor = (c: CourseId, r: SelfReport | undefined, who: JazzWho = 
   c === 'jazz' && r === 'well' && who ? JAZZ_WELL[who] : TASTES[c][r ?? 'new'];
 /** The quick questionnaire's music level for a self-report (onboarding's first course). */
 export const levelOfReport = (r: SelfReport): 0 | 1 | 2 => (r === 'new' ? 0 : r === 'bit' ? 1 : 2);
+
+// ---------------------------------------------------------------- day 3: the first "real music" moment
+
+/**
+ * The first week's third session (SPEC-COURSE-START "First-week rhythm"): a full chorus with the band in the course —
+ * keys comp a blues chorus, guitar strums / comps a whole progression, bass walks a chorus, drums groove a whole form
+ * with its fills, voice sings a whole song with the band, ear / jazz follow a whole chorus and answer form questions.
+ * Existing drills, topics and vocal levels only, measured like any session. Kept under `courseStart[course].real`.
+ */
+export interface RealMusicState {
+  /** Opened (an abandoned one is offered again with "Continue"). */
+  at?: string;
+  /** Finished with a measured result (kept once). */
+  doneAt?: string;
+  win?: FirstWin;
+  /** The result card was closed on Home. */
+  seenAt?: string;
+  /** "Not now" on the offer: not offered again. */
+  skippedAt?: string;
+}
+
+const putReal = (m: CourseStartMap | undefined, c: CourseId, patch: Partial<RealMusicState>): CourseStartMap => put(m, c, { real: { ...(m?.[c]?.real ?? {}), ...patch } });
+
+/** Sessions after the taste from which the moment is offered (the taste is session 1, so 1 = the third session). */
+export const REAL_FROM = 1;
+/** …and until which it is still offered when not taken (a few sessions, then the path carries on alone). */
+export const REAL_UNTIL = 6;
+
+/**
+ * The day-3 card on Home: 'offer' from the third session (not taken, not declined, never for a migrated player),
+ * 'result' once done until its card is closed, else null.
+ */
+export function realMusicCard(cs: CourseStartState | undefined, sessionsAfterTaste: number): 'offer' | 'result' | null {
+  if (!cs || cs.legacy || !cs.winSeenAt) return null;
+  const r = cs.real;
+  if (r?.doneAt) return r.seenAt ? null : 'result';
+  if (r?.skippedAt) return null;
+  return sessionsAfterTaste >= REAL_FROM && sessionsAfterTaste < REAL_UNTIL ? 'offer' : null;
+}
+export const markRealOpened = (m: CourseStartMap | undefined, c: CourseId, now: string): CourseStartMap => (m?.[c]?.real?.at ? (m ?? {}) : putReal(m, c, { at: now }));
+/** The moment finished with a measured result: kept once (a replay never overwrites it). */
+export const markRealDone = (m: CourseStartMap | undefined, c: CourseId, win: FirstWin, now: string): CourseStartMap => (m?.[c]?.real?.doneAt ? (m ?? {}) : putReal(m, c, { doneAt: now, win, at: m?.[c]?.real?.at ?? now }));
+export const markRealSeen = (m: CourseStartMap | undefined, c: CourseId, now: string): CourseStartMap => (m?.[c]?.real?.seenAt ? (m ?? {}) : putReal(m, c, { seenAt: now }));
+export const skipReal = (m: CourseStartMap | undefined, c: CourseId, now: string): CourseStartMap => putReal(m, c, { skippedAt: now });
+
+/** Courses with a measured first win (the "First session" badge; a migrated player never had one). */
+export const firstWinCourses = (m: CourseStartMap | undefined): CourseId[] => (Object.keys(m ?? {}) as CourseId[]).filter((c) => !m?.[c]?.legacy && !!m?.[c]?.win);
+
+const R = (course: CourseId, report: SelfReport, en: string, he: string, ben: string, bhe: string, run: TasteRun): TasteDef => ({ id: `${course}-${report}-real`, course, report, title: { en, he }, blurb: { en: ben, he: bhe }, run });
+const BLUES_C = ['C7', 'F7', 'C7', 'C7', 'F7', 'F7', 'C7', 'C7', 'G7', 'F7', 'C7', 'G7'];
+const BLUES_E = ['E7', 'A7', 'E7', 'E7', 'A7', 'A7', 'E7', 'E7', 'B7', 'A7', 'E7', 'B7'];
+const SWING_BAND = { style: 'swing' as const, chart: BLUES_C, bass: true, drums: 'swing' };
+
+/**
+ * The day-3 moment per course × self-report: a whole chorus (or form) with the band, from existing levels, topics and
+ * vocal levels. Levels named `real:…` are built in tasteLessons.ts (the blues roots; a chart drill by its kind).
+ */
+export const REAL_MUSIC: Record<CourseId, Record<SelfReport, TasteDef>> = {
+  keys: {
+    new: R('keys', 'new', 'Roots of a blues chorus', 'השורשים של סבב בלוז', 'The left hand plays each bar’s root through all 12 bars, with the band.', 'יד שמאל מנגנת את השורש של כל תיבה לאורך כל 12 התיבות, עם הלהקה.', { kind: 'drills', picks: [{ level: 'real:blues-roots', band: SWING_BAND }] }),
+    bit: R('keys', 'bit', 'Comp a blues chorus', 'ללוות סבב בלוז', 'Guide tones, one voicing a chord, through a 12-bar blues in F with the band.', 'צלילים מנחים, קול אחד לכל אקורד, לאורך בלוז של 12 תיבות בפה עם הלהקה.', { kind: 'drills', picks: [{ level: 'real:chart~tpl:blues-f~guide~whole~comp', band: SWING_BAND }] }),
+    well: R('keys', 'well', 'Comp a blues chorus', 'ללוות סבב בלוז', 'Shells in a Charleston rhythm through a 12-bar blues in F with the band.', 'שלדים במקצב צ׳רלסטון לאורך בלוז של 12 תיבות בפה עם הלהקה.', { kind: 'drills', picks: [{ level: 'real:chart~tpl:blues-f~shell~charleston~comp', band: SWING_BAND }] }),
+  },
+  guitar: {
+    new: R('guitar', 'new', 'Strum a whole progression', 'לפרוט מהלך שלם', 'G C D G in quarter-note downstrokes, top to end, with the band.', 'סול דו רה סול ברבעים כלפי מטה, מההתחלה ועד הסוף, עם הלהקה.', { kind: 'drills', picks: [{ level: 'g-rhythm-1', items: [0], band: { style: 'pop', chart: ['G', 'C', 'D', 'G'], bass: true, drums: 'rock-8' } }] }),
+    bit: R('guitar', 'bit', 'A blues chorus', 'סבב בלוז', 'The 5–6 shuffle through all 12 bars of a blues in A, with the band.', 'שאפל 5–6 לאורך כל 12 התיבות של בלוז בלה, עם הלהקה.', { kind: 'drills', picks: [{ level: 'g-rhythm-3', items: [0], band: { style: 'shuffle', chart: ['A7', 'D7', 'A7', 'A7', 'D7', 'D7', 'A7', 'A7', 'E7', 'D7', 'A7', 'E7'], bass: true, drums: 'shuffle' } }] }),
+    well: R('guitar', 'well', 'A blues chorus', 'סבב בלוז', 'The shuffle through a whole 12-bar chorus in E, locked with the band.', 'השאפל לאורך סבב שלם של 12 תיבות במי, נעול עם הלהקה.', { kind: 'drills', picks: [{ level: 'g-rhythm-3', items: [2], band: { style: 'shuffle', chart: BLUES_E, bass: true, drums: 'shuffle' } }] }),
+  },
+  bass: {
+    new: R('bass', 'new', 'Walk a blues chorus', 'ללכת סבב בלוז', 'Roots and fifths in quarters through all 12 bars, with the band.', 'שורשים וקווינטות ברבעים לאורך כל 12 התיבות, עם הלהקה.', { kind: 'drills', picks: [{ level: 'b-walk-2', items: [0], band: { style: 'swing', chart: BLUES_E, drums: 'swing' } }] }),
+    bit: R('bass', 'bit', 'A shuffle chorus', 'סבב שאפל', 'Boogie shapes through a whole 12-bar blues, with the band.', 'צורות בוגי לאורך בלוז שלם של 12 תיבות, עם הלהקה.', { kind: 'drills', picks: [{ level: 'b-styles-4', items: [0] }] }),
+    well: R('bass', 'well', 'Walk a blues chorus', 'ללכת סבב בלוז', 'A walking line, R–3–5–6, through all 12 bars, with the band.', 'קו ווקינג, R–3–5–6, לאורך כל 12 התיבות, עם הלהקה.', { kind: 'drills', picks: [{ level: 'b-walk-3', items: [1], band: { style: 'swing', chart: BLUES_C, drums: 'swing' } }] }),
+  },
+  drums: {
+    new: R('drums', 'new', 'Verse to chorus', 'מבית לפזמון', 'Hold the verse groove, fill on the cue and lift into the chorus, with the band.', 'להחזיק את הגרוב של הבית, מילוי ברמז ולעלות לפזמון, עם הלהקה.', { kind: 'drills', picks: [{ level: 'd-song-1', items: [0] }] }),
+    bit: R('drums', 'bit', 'A whole song form', 'מבנה שיר שלם', 'Verse, chorus and bridge with the fills between them, with the band.', 'בית, פזמון וגשר עם המילויים ביניהם, עם הלהקה.', { kind: 'drills', picks: [{ level: 'd-song-3', items: [0] }] }),
+    well: R('drums', 'well', 'Two blues choruses', 'שני סבבי בלוז', 'A shuffle through two 12-bar choruses, marking the form, with the band.', 'שאפל לאורך שני סבבים של 12 תיבות, מסמנים את המבנה, עם הלהקה.', { kind: 'drills', picks: [{ level: 'd-form-3', items: [0] }] }),
+  },
+  voice: {
+    new: R('voice', 'new', 'A whole song with the band', 'שיר שלם עם הלהקה', 'A public-domain song from start to end, in your range, with the band.', 'שיר בנחלת הכלל מתחילתו ועד סופו, במנעד שלכם, עם הלהקה.', { kind: 'vocal', level: 1303 }),
+    bit: R('voice', 'bit', 'A whole song with the band', 'שיר שלם עם הלהקה', 'A public-domain song from start to end, in your range, with the band.', 'שיר בנחלת הכלל מתחילתו ועד סופו, במנעד שלכם, עם הלהקה.', { kind: 'vocal', level: 1303 }),
+    well: R('voice', 'well', 'Our own song with the band', 'שיר שלנו עם הלהקה', 'A whole song of ours, verse and chorus, with the band.', 'שיר שלם שלנו, בית ופזמון, עם הלהקה.', { kind: 'vocal', level: 1304 }),
+  },
+  ear: {
+    new: R('ear', 'new', 'Follow a whole chorus', 'לעקוב אחרי סבב שלם', 'A 12-bar blues plays: where did it stop? Then follow a whole song.', 'בלוז של 12 תיבות מתנגן: איפה הוא נעצר? ואז לעקוב אחרי שיר שלם.', { kind: 'lesson', items: [{ topic: 'song-form', level: 3, n: 3 }, { topic: 'song-form', level: 2, n: 1 }] }),
+    bit: R('ear', 'bit', 'Follow a whole chorus', 'לעקוב אחרי סבב שלם', 'Follow a blues bar by bar, then the plan of a whole song.', 'לעקוב אחרי בלוז תיבה אחר תיבה, ואז אחרי המבנה של שיר שלם.', { kind: 'lesson', items: [{ topic: 'song-form', level: 3, n: 2 }, { topic: 'song-form', level: 2, n: 2 }] }),
+    well: R('ear', 'well', 'Follow a whole chorus', 'לעקוב אחרי סבב שלם', 'Where are we in an AABA tune, and which blues is it?', 'איפה אנחנו בשיר AABA, ואיזה בלוז זה?', { kind: 'lesson', items: [{ topic: 'song-form', level: 4, n: 2 }, { topic: 'jazz-form', level: 1, n: 2 }] }),
+  },
+  jazz: {
+    new: R('jazz', 'new', 'Follow a blues chorus', 'לעקוב אחרי סבב בלוז', 'A swinging blues plays: where did it stop, and is it major or minor?', 'בלוז בסווינג מתנגן: איפה הוא נעצר, והאם הוא מז׳ורי או מינורי?', { kind: 'lesson', items: [{ topic: 'song-form', level: 3, n: 3 }, { topic: 'jazz-form', level: 1, n: 1 }] }),
+    bit: R('jazz', 'bit', 'Follow a whole chorus', 'לעקוב אחרי סבב שלם', 'Major or minor blues, then where you are in an AABA tune.', 'בלוז מז׳ורי או מינורי, ואז איפה אתם בשיר AABA.', { kind: 'lesson', items: [{ topic: 'jazz-form', level: 1, n: 2 }, { topic: 'song-form', level: 4, n: 2 }] }),
+    well: R('jazz', 'well', 'Follow the changes', 'לעקוב אחרי המהלכים', 'Rhythm changes: an A or the bridge? Then which blues: major, jazz or Bird.', 'ריתם צ׳יינג׳ס: A או הגשר? ואז איזה בלוז: מז׳ורי, ג׳אז או בירד.', { kind: 'lesson', items: [{ topic: 'jazz-form', level: 2, n: 2 }, { topic: 'jazz-form', level: 3, n: 2 }] }),
+  },
+};
+export const realMusicFor = (c: CourseId, r: SelfReport | undefined): TasteDef => REAL_MUSIC[c][r ?? 'new'];

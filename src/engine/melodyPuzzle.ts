@@ -4,8 +4,10 @@
 import { mulberry32, pick, shuffle, type NoteEvent } from './lesson';
 import { displayNote, majorCadence, pcValue, voiceChord, type Naming, type PitchClass } from './pitch';
 
-export type PuzzleLevel = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+export type PuzzleLevel = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+/** The highest level a free (untiered) run reaches; 9 (jazz lines, 0.75) is the ff tier's own. */
 export const MAX_PUZZLE_LEVEL: PuzzleLevel = 8;
+export const JAZZ_PUZZLE_LEVEL: PuzzleLevel = 9;
 
 export interface PuzzleTile {
   id: string;
@@ -40,6 +42,8 @@ interface LevelDef {
   top: number;
   chromatic: number;
   decoys: 1 | 2;
+  /** 0.75: bebop lines (enclosures, bebop-scale passing tones), half of them an octave lower. */
+  jazz?: boolean;
 }
 
 export const PUZZLE_LEVELS: Record<PuzzleLevel, LevelDef> = {
@@ -51,7 +55,25 @@ export const PUZZLE_LEVELS: Record<PuzzleLevel, LevelDef> = {
   6: { notes: 6, maxStep: 4, minor: true, top: 7, chromatic: 0, decoys: 2 },
   7: { notes: 7, maxStep: 7, minor: 'either', top: 7, chromatic: 0, decoys: 2 },
   8: { notes: 8, maxStep: 5, minor: false, top: 7, chromatic: 2, decoys: 2 },
+  9: { notes: 8, maxStep: 5, minor: false, top: 7, chromatic: 2, decoys: 2, jazz: true },
 };
+
+// 0.75 (Melody Puzzle ff): jazz lines as semitones above the tonic (0..12), own material from the bebop rules —
+// an enclosure (scale note above, half step below, or both chromatic) lands a chord tone, the major bebop scale
+// passes through ♭6, the dominant bebop through ♭7 and 7, a chromatic run falls from the 7th to the 5th.
+const ENC_5 = [[9, 6, 7], [6, 8, 7], [8, 6, 7]];
+const ENC_3 = [[5, 3, 4], [3, 5, 4]];
+const JAZZ_LINES: ((rnd: () => number) => number[])[] = [
+  (rnd) => [12, 11, 9, 8, 7, ...pick(rnd, ENC_3)], // major bebop down through ♭6, enclose the 3rd
+  (rnd) => [...pick(rnd, ENC_5), 5, 4, 2, 1, 0], // enclose the 5th, down to the root with a chromatic step
+  () => [0, 4, 7, 11, 10, 9, 8, 7], // arpeggio up, chromatic down from the 7th to the 5th
+  (rnd) => [4, 7, 9, 10, 12, 11, ...pick(rnd, [[9, 7], [8, 7]])], // dominant bebop (♭7 and 7) over the V
+  (rnd) => [2, 4, 5, 7, ...pick(rnd, ENC_3), 0], // up the scale, enclose the 3rd, home
+];
+/** A jazz line for level 9 (8 notes). */
+export function jazzLine(rnd: () => number): number[] {
+  return pick(rnd, JAZZ_LINES)(rnd);
+}
 
 const MAJOR = [0, 2, 4, 5, 7, 9, 11, 12];
 /** Minor ladder: natural minor with the raised 7th as leading note (harmonic). */
@@ -149,10 +171,11 @@ export function puzzleAt(level: PuzzleLevel, seed: number): Puzzle {
   const minor = def.minor === 'either' ? rnd() < 0.5 : def.minor;
   const key = toPc(pick(rnd, minor ? MINOR_KEYS : MAJOR_KEYS));
   const ladder = minor ? MINOR : MAJOR;
-  let answer = melody(rnd, def, ladder);
-  if (def.chromatic) answer = addChromatic(rnd, answer, def.chromatic, ladder);
+  let answer = def.jazz ? jazzLine(rnd) : melody(rnd, def, ladder);
+  if (def.chromatic && !def.jazz) answer = addChromatic(rnd, answer, def.chromatic, ladder);
   const tp = pcValue(key);
-  const tonicMidi = 60 + tp - (tp > 6 ? 12 : 0);
+  // jazz lines: half of them in the bass register (an octave lower)
+  const tonicMidi = 60 + tp - (tp > 6 ? 12 : 0) - (def.jazz && rnd() < 0.5 ? 12 : 0);
   const used = new Set(answer);
   // Decoys: never a pitch of the answer; near the melody's range, from what this level could use.
   const pool = [...new Set([...ladder, ...(def.chromatic ? CHROMATIC : [])])].filter((x) => !used.has(x) && x <= 12);
@@ -240,7 +263,7 @@ export function minorCadence(tonicPc: number): number[][] {
 
 /** A run: this many puzzles; two solved at the first check in a row move up a level. */
 export const PUZZLES_PER_RUN = 6;
-export function nextLevel(level: PuzzleLevel, streak: number): { level: PuzzleLevel; streak: number } {
-  if (streak >= 2 && level < MAX_PUZZLE_LEVEL) return { level: (level + 1) as PuzzleLevel, streak: 0 };
+export function nextLevel(level: PuzzleLevel, streak: number, max: PuzzleLevel = MAX_PUZZLE_LEVEL): { level: PuzzleLevel; streak: number } {
+  if (streak >= 2 && level < max) return { level: (level + 1) as PuzzleLevel, streak: 0 };
   return { level, streak };
 }

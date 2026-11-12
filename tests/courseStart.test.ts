@@ -265,14 +265,22 @@ describe('jazz "I play well": a singer sings it, a player plays it (owner 2026-1
     expect(jazzWho(['jazz', 'bass'], [])).toBe('bass');
     expect(jazzWho(['jazz'], [], undefined, true)).toBe('keys');
     expect(jazzWho(['jazz', 'ear'], [])).toBe(null);
+    expect(jazzWho(['jazz', 'guitar'], [])).toBe('guitar');
+    expect(jazzWho(['jazz'], ['voice', 'guitar'])).toBe('guitar');
+    expect(jazzWho(['jazz', 'guitar', 'bass'], [])).toBe('bass');
   });
   it('the singer gets the sung trading level; players get a playable trading drill; others keep the listening taste', () => {
     expect(tasteFor('jazz', 'well', 'voice').run).toEqual({ kind: 'vocal', level: 1510 });
-    for (const who of ['keys', 'bass'] as const) {
+    for (const who of ['keys', 'bass', 'guitar'] as const) {
       const def = tasteFor('jazz', 'well', who);
       expect(def.run.kind).toBe('drills');
       expect(tasteDrills(def).length, who).toBeGreaterThan(0);
     }
+    const [g] = tasteDrills(tasteFor('jazz', 'well', 'guitar'));
+    expect(g.spec.instrument).toBe('guitar');
+    expect(g.itemId).toContain('g-impro:trade:');
+    expect(g.itemId).toContain(':op0:');
+    expect(g.goal.free?.windows.length).toBe(2);
     expect(tasteFor('jazz', 'well', null).run.kind).toBe('lesson');
     expect(tasteFor('jazz', 'bit', 'voice').run.kind).toBe('lesson');
   });

@@ -3,7 +3,8 @@ import { expect, test, type Page } from '@playwright/test';
 // "My song" in every course (SPEC-MY-SONG): a recording of your own is added, analysed once and kept on the device
 // (IndexedDB), then practised with the course's measuring; every screen fits one phone (390 × 844).
 
-test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
+// Takes use Chromium's fake microphone; the suite denies the microphone unless a test grants it.
+test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, permissions: ['microphone'] });
 
 /** A 20 s song as a 16-bit WAV: a kick on every beat at 100 BPM and a sine melody, one note a beat. */
 function songWav(): Buffer {

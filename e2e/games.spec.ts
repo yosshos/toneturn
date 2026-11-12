@@ -95,7 +95,8 @@ test.describe('memory games', () => {
     await page.goto('/#/games');
     await page.getByRole('radio', { name: /Beat Echo/ }).click();
     await expect(page.getByRole('radio', { name: /Tapping/ })).toHaveAttribute('aria-checked', 'true');
-    await page.getByRole('radio', { name: /Fast/ }).click();
+    // GAMES_TIERS P2: the Slow / Medium / Fast tempo radios became the six level tiers; a new player opens at pp.
+    await expect(page.locator('.tier-chip[data-tier="pp"]')).toHaveAttribute('aria-checked', 'true');
     await page.getByRole('button', { name: /Play/ }).click();
     await expect(page.locator('.turn-banner')).toHaveText(/Listen/, { timeout: 30_000 });
     await expect(page.locator('.beat-grid .onset').first()).toBeVisible();
@@ -110,7 +111,8 @@ test.describe('memory games', () => {
   test('Beat Echo (kick & snare): tapping each hit on its drum passes a round', async ({ page }) => {
     await page.goto('/#/games');
     await page.getByRole('radio', { name: /Beat Echo/ }).click();
-    await page.getByRole('radio', { name: /Slow/ }).click();
+    // The first tier (pp) is Slow, 75 BPM.
+    await page.locator('.tier-chip[data-tier="pp"]').click();
     await page.getByRole('button', { name: /Play/ }).click();
     // Read the pattern from the beat grid shown during the demo.
     await expect(page.locator('.beat-grid .onset').first()).toBeVisible({ timeout: 30_000 });

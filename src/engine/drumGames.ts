@@ -8,11 +8,13 @@ import type { Drill, DrillSpec, DrumVoice, TakeMetrics } from './drills/types';
 import { bar, finish, rep, rnd, type DH, type Lanes } from './drills/drums';
 import { callOf } from './drills/drumEar';
 import { DYN_NAMES, tierIndex, type DynName } from './gameTiers';
+import { rushRound, scoreRush, type RushRound, type StickZones } from './rudimentRush';
 
 // DRUMS_NICHE_PLAN P2 (§3): Time Lock (the click drops out for longer and longer) and Ghost Control (three dynamic
 // bands on one surface) — both played on a pad by microphone too.
-export type DrumGameId = 'land' | 'groove-echo' | 'odd-echo' | 'time-lock' | 'ghost-control';
-export const DRUM_GAMES: DrumGameId[] = ['land', 'groove-echo', 'odd-echo', 'time-lock', 'ghost-control'];
+// Rudiment Rush (P2, rudimentRush.ts): the sticking graded in a two-zone mode.
+export type DrumGameId = 'land' | 'groove-echo' | 'odd-echo' | 'time-lock' | 'ghost-control' | 'rudiment-rush';
+export const DRUM_GAMES: DrumGameId[] = ['land', 'groove-echo', 'odd-echo', 'time-lock', 'ghost-control', 'rudiment-rush'];
 export const isDrumGame = (g: string): g is DrumGameId => (DRUM_GAMES as string[]).includes(g);
 /** Rounds in one run. */
 export const DRUM_GAME_ROUNDS = 5;
@@ -35,6 +37,8 @@ export interface DrumRound {
   odd?: { num: number; groups: number[] };
   /** Time Lock: the bars with the click and the silent bars that follow, and the allowed drift (ms). */
   lock?: { on: number; off: number; ms: number };
+  /** Rudiment Rush: the rudiment, the zone mode and the tempo of the round. */
+  rush?: RushRound;
 }
 
 const spec = (game: DrumGameId, tier: DynName, round: number, seed: number): DrillSpec => ({
@@ -280,7 +284,11 @@ export function ghostControlRound(tier: DynName, round: number, seed: number): D
   return { game: 'ghost-control', tier, round, drill: withTier(d, tier, true), bpm };
 }
 
-export function drumRound(game: DrumGameId, tier: DynName, round: number, seed: number): DrumRound {
+export function drumRound(game: DrumGameId, tier: DynName, round: number, seed: number, o: { ups?: number; zones?: StickZones } = {}): DrumRound {
+  if (game === 'rudiment-rush') {
+    const rush = rushRound(tier, round, seed, o.ups ?? 0, o.zones ?? 'pad');
+    return { game, tier, round, drill: rush.drill, bpm: rush.bpm, rush };
+  }
   return game === 'land' ? landRound(tier, round, seed) : game === 'groove-echo' ? grooveEchoRound(tier, round, seed) : game === 'time-lock' ? timeLockRound(tier, round, seed) : game === 'ghost-control' ? ghostControlRound(tier, round, seed) : oddEchoRound(tier, round, seed);
 }
 
@@ -320,6 +328,10 @@ export function fillTempo(r: DrumRound, m: TakeMetrics): number[] {
 }
 
 export function scoreRound(r: DrumRound, m: TakeMetrics): RoundScore {
+  if (r.game === 'rudiment-rush' && r.rush) {
+    const x = scoreRush(r.rush, m, r.tier);
+    return { ok: x.ok, points: x.points, line: x.line };
+  }
   if (r.game === 'land') {
     const ms = r.drill.goal.drum?.landing?.ms ?? 25;
     const lands = m.drum?.landing ?? [];
@@ -392,6 +404,7 @@ export const DRUM_GAME_NAME: Record<DrumGameId, Bi> = {
   'odd-echo': t('Odd-meter Echo', 'הד במשקל מוזר'),
   'time-lock': t('Time Lock', 'נעילת זמן'),
   'ghost-control': t('Ghost Control', 'שליטה ברפאים'),
+  'rudiment-rush': t('Rudiment Rush', 'מרוץ רודימנטים'),
 };
 export const DRUM_GAME_BLURB: Record<DrumGameId, Bi> = {
   land: t('A fill is called one bar ahead. Play it, land crash + kick on 1.', 'מעבר נקרא תיבה מראש. נגנו אותו, ונחתו בקראש + קיק על 1.'),
@@ -399,5 +412,6 @@ export const DRUM_GAME_BLURB: Record<DrumGameId, Bi> = {
   'odd-echo': t('One bar of 5/8, 7/8, 9/8 … — 2+2+3 or 3+2+2? Play it back with its accents.', 'תיבה של 5/8, 7/8, 9/8 … — 2+2+3 או 3+2+2? נגנו אותה בחזרה עם ההדגשות.'),
   'time-lock': t('The click drops out for 1, 2, 4, then 8 bars. Keep the time until it comes back.', 'הקליק נעלם ל-1, 2, 4 ואז 8 תיבות. שמרו על הזמן עד שהוא חוזר.'),
   'ghost-control': t('Accents, normal strokes and ghost notes on one drum: hit each in its band.', 'הדגשות, מכות רגילות ותווי רפאים על תוף אחד: כל מכה בעוצמה שלה.'),
+  'rudiment-rush': t('A rudiment, two clean bars. Every pass is faster. Each hand on its own surface grades the sticking.', 'רודימנט, שתי תיבות נקיות. כל מעבר מהיר יותר. כל יד על משטח משלה — והסטיקינג נמדד.'),
 };
 export { DYN_NAMES };

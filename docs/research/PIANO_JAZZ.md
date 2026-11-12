@@ -295,3 +295,18 @@ path block offers them too.
 3. **Cadence.** A repertoire item every third unit, a bonus game every other unit. More, or fewer?
 4. **Swing drift.** Swung lines over forms are not checked for tempo drift (the road map measures straight 8ths).
    Add a swing-aware drift later, or leave it to the timing SD?
+
+## The band under your bars in trading fours (2026-11-11)
+
+`k-bebop` 8 (`bb-trade`) now carries a swing band (`band: { style: 'swing', bass: true, rests }`, comping + a walking
+bass) and swing drums (`drums: { groove: 'swing' }`). The band's `rests` are its own bars (0–16, 32–48), where its
+phrase and shells (`listen`) already sound, so the comping and the bass play **under the player's bars only**; the
+drums swing through all 16 bars. Like every band in `DrillTake`, it sounds only with **MIDI or headphones / line-in**
+(the existing headphones gate asks once; the "Click on the speaker · I have headphones" switch changes it). **By
+microphone on a speaker** it stays silent there and the ready screen says why in one line (he + en, `data-trade-silent`):
+"The band lays out under your bars so the mic hears only you. With headphones or MIDI it comps for you." The verdict
+never depends on the band (`tests/pianoJazz.test.ts`: hits and bass only in your bars; the same take, the same verdict
+without the band). The guitar trade (`g-impro` 7, `GUITAR_DEEPENING.md`) works the same way.
+
+**Not verified:** the mix on a real device (band level under the player's MIDI piano, drums vs. the click handover after
+the count-in) — no browser / e2e run in this round.

@@ -10,6 +10,7 @@ import { hiddenBassLevels, pianoMicHiddenLevels, type DrumMic, LEVEL_DONE_STARS,
 import { itemPass } from './drills/ladder';
 import type { Drill, DrillSettings, FamilyId, ItemState } from './drills/types';
 import { stepStars, VOCAL_PROGRAMS, type PathFacts } from './path';
+import { voiceStartNow } from './voiceFamilies';
 
 let LEVELS: Map<string, LevelDef> | null = null;
 /** A technique level by its id ("scales-3", "g-bass-2"). */
@@ -105,7 +106,8 @@ export function withLadderFacts(
   for (const pr of VOCAL_PROGRAMS) {
     if (!opts.families.includes(pr.id)) continue;
     // The voice placement probe (VOICE_CURRICULUM §8) saves a start per family in the same drillStart map.
-    const start = (opts.start as Record<string, number | undefined>)[pr.id] ?? 1;
+    // P3: levels put in front of a family since the start was saved count too (voiceStartNow).
+    const start = voiceStartNow(pr.id, (opts.start as Record<string, number | undefined>)[pr.id]);
     pr.refs.forEach((n, i) => {
       if (i + 1 < start && !tests[`vocal:${n}`]) tests[`vocal:${n}`] = opts.at;
       if (opts.vocalPassed.includes(n)) set(`vocal:${n}`, 3);

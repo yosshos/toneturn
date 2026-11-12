@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isTranscribeSave, KEY_HI, KEY_LO, newTranscribe, noteAccuracy, phraseAt, phrasePoints, phraseStim, PHRASES, runAccuracy, runDone, submitPhrase, tierLevel, timeBonus, transcribeResult } from '../src/engine/transcribeRace';
+import { gradeRhythm, onsetBeats, runRhythm, withRhythm, isTranscribeSave, KEY_HI, KEY_LO, newTranscribe, noteAccuracy, phraseAt, phrasePoints, phraseStim, PHRASES, runAccuracy, runDone, submitPhrase, tierLevel, timeBonus, transcribeResult } from '../src/engine/transcribeRace';
 import { clearsRun, tierDef, tierInfo } from '../src/engine/gameTiers';
 
 const MAJOR = [0, 2, 4, 5, 7, 9, 11];
@@ -73,6 +73,43 @@ describe('Transcription Race', () => {
     expect(r.detail).toEqual({ tier: 'mf', accuracy: 40, phrases: 5 });
     expect(clearsRun('transcribe', 'mf', r.score, r.detail)).toBe(false);
     expect(clearsRun('transcribe', 'mf', 500, { accuracy: 90 })).toBe(true);
+  });
+  it('rhythm: onsets on the phrase beats at any steady tempo, one hesitation costs only its notes', () => {
+    const p = { beats: [1, 0.5, 0.5, 1, 1, 2], swing: false };
+    const B = onsetBeats(p);
+    expect(B).toEqual([0, 1, 1.5, 2, 3, 4]);
+    const at = (beatMs: number, t0 = 1234) => B.map((b) => t0 + b * beatMs);
+    expect(gradeRhythm(p, at(600), 100, 1).acc).toBe(1);
+    // 30 % slower and steady: still in time
+    const slow = gradeRhythm(p, at(600 * 1.3), 100, 1);
+    expect(slow.acc).toBe(1);
+    expect(slow.tempo).toBeCloseTo(0.77, 1);
+    // a different rhythm: off
+    expect(gradeRhythm(p, [0, 250, 1700, 1850, 3500, 3600], 100, 3).acc).toBeLessThan(0.7);
+    // one late note (half a beat) costs that note only
+    const late = at(600);
+    late[3] += 300;
+    const g = gradeRhythm(p, late, 100, 3);
+    expect(g.marks).toEqual([true, true, true, false, true, true]);
+    // swing: the off-beat 8th sits at 2/3 of the beat
+    expect(onsetBeats({ beats: [0.5, 0.5, 1], swing: true })[1]).toBeCloseTo(2 / 3);
+    // fewer than two entries: nothing to compare
+    expect(gradeRhythm(p, [5], 100, 1).acc).toBe(1);
+    expect(withRhythm(1, 0.5)).toBeCloseTo(0.8);
+  });
+  it('a timed run carries rhythm in the result and scores lower when the rhythm is off', () => {
+    let s = newTranscribe(21, 'mp', 5, 90);
+    for (let k = 0; k < PHRASES; k++) {
+      const p = phraseAt(s.seed, k, s.level, s.notes);
+      const B = onsetBeats(p);
+      const ons = k < 3 ? B.map((b) => b * 667) : B.map((_, i) => i * 1500 + (i % 2) * 900);
+      s = submitPhrase(s, p.midis, 4000, 0, ons).save;
+    }
+    const r = transcribeResult(s);
+    expect(runRhythm(s)).toBeGreaterThanOrEqual(60);
+    expect(runRhythm(s)).toBeLessThan(100);
+    expect(r.detail.rhythm).toBe(runRhythm(s));
+    expect(r.detail.accuracy).toBeLessThan(100);
   });
   it('tiers open at mp and set notes / tempo', () => {
     expect(tierInfo('transcribe', {}, undefined, 'ear').open).toBe('mp');

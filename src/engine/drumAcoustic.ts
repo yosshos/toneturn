@@ -396,7 +396,7 @@ export const ACOUSTIC_LEVELS = new Set([
 /** A drum drill's level id (`d-rock-2`). */
 export const drumLevelId = (d: Pick<Drill, 'spec'>): string => `${d.spec.family}-${Number(String(d.spec.kind).split(':')[0]) || 1}`;
 /** Can an acoustic kit play this drill by microphone (a grooves level from the list)? */
-export const acousticOk = (d: Pick<Drill, 'spec'>): boolean => ACOUSTIC_LEVELS.has(drumLevelId(d));
+export const acousticOk = (d: Pick<Drill, 'spec'> & { drum?: Drill['drum'] }): boolean => ACOUSTIC_LEVELS.has(drumLevelId(d)) || !!d.drum?.acousticOk;
 
 /** The levels a setup offers: MIDI all; a practice pad the single-surface ones; an acoustic kit those + ACOUSTIC_LEVELS. */
 export function kitLevels(fams: DrumFamilyDef[], drumMic: boolean | 'pad' | 'acoustic' | undefined): DrumFamilyDef[] {

@@ -24,7 +24,9 @@ const SRC = (arg('src', null) ?? 'mini,mini-name,intro,go,preview,memory,other')
 const [SHARD, SHARDS] = (arg('shard', '0/1')).split('/').map(Number);
 const VOICE = 'af_heart';
 const MODEL = 'k82m-v1';
-const KBPS = 32;
+// 48 kbps: lamejs at 32 kbps resamples 24 kHz to 22.05 kHz and writes SILENCE (every 0.66–0.74 file decoded to a
+// peak of 1e-5 — the owner heard only pops on the phone). 48 kbps keeps 24 kHz and the speech. Checked 2026-11-11.
+const KBPS = 48;
 
 const OUT = path.resolve('public/voice/en');
 const MANIFEST = path.join(OUT, 'manifest.json');

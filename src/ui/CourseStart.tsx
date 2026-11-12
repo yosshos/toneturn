@@ -627,3 +627,51 @@ export function CourseGoalLine({ course, lang, cs, facts, section }: { course: C
     </div>
   );
 }
+
+/**
+ * Day 3: the first "real music" moment (a full chorus with the band). The offer — Toni, what you will play, Start /
+ * Not now (Continue when it was opened and left) — and, once done, its measured result with Toni until closed.
+ */
+export function RealMusicCard({ lang, mode, def, cs, onStart, onLater, onClose }: { lang: Lang; mode: 'offer' | 'result'; def: TasteDef; cs?: CourseStartState; onStart: () => void; onLater: () => void; onClose: () => void }) {
+  const he = lang === 'he';
+  const real = cs?.real;
+  if (mode === 'result')
+    return (
+      <div className="cs-card cs-real" data-real-music="result">
+        <div className="cs-real-head">
+          <Toni state="wow" size={56} />
+          <span>
+            <b>{he ? 'הסבב המלא הראשון שלכם' : 'Your first full chorus'}</b>
+            <small data-real-line="1">{winLine({ win: real?.win }, lang)}</small>
+          </span>
+        </div>
+        <div className="row">
+          <button className="btn ghost small" onClick={onStart} data-real-again="1">
+            {he ? 'שוב' : 'Again'}
+          </button>
+          <button className="btn primary small" onClick={onClose} data-real-close="1">
+            {he ? 'יופי' : 'Done'}
+          </button>
+        </div>
+      </div>
+    );
+  return (
+    <div className="cs-card cs-real" data-real-music="offer">
+      <div className="cs-real-head">
+        <Toni state="draw" size={56} />
+        <span>
+          <b>{he ? 'היום: מוזיקה אמיתית' : 'Today: real music'}</b>
+          <small>{L(lang, def.blurb)}</small>
+        </span>
+      </div>
+      <div className="row">
+        <button className="btn primary small" onClick={onStart} data-real-start="1">
+          {`${real?.at ? (he ? 'להמשיך' : 'Continue') : he ? 'להתחיל' : 'Start'}: ${L(lang, def.title)}`}
+        </button>
+        <button className="btn ghost small" onClick={onLater} data-real-later="1">
+          {he ? 'לא עכשיו' : 'Not now'}
+        </button>
+      </div>
+    </div>
+  );
+}

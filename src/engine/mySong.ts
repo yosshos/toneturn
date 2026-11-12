@@ -15,12 +15,13 @@ import { beatGrid, BEAT_CONFIDENT, type BeatGrid } from './beatTrack';
 import { framesFromSamples, melodyFromFrames, type MyMelody } from './voiceMySong';
 import { downsample, yin } from './yin';
 import { segmentNotes } from './memory';
-import { phraseDifficulty, type Phrase, type PhraseResult } from './transcribe';
+import { phraseDifficulty, phraseStars, type Phrase, type PhraseResult } from './transcribe';
 
 type T2 = { en: string; he: string };
 
 /** Bump when the analysis changes: stored songs are analysed again on open. */
-export const ANALYSIS_VERSION = 1;
+export const ANALYSIS_VERSION = 2;
+// v2: the beat grid may say 3/4 (meter, downbeat); its sections are then four bars of three from the downbeat.
 /** Longest stretch analysed (s); the file itself is kept whole. */
 export const ANALYSE_MAX_SEC = 240;
 /** Line confidence needed to measure pitch against it. */
@@ -130,9 +131,32 @@ export function bassLine(frames: SungFrame[]): SongLine | null {
   return { notes, confidence: coverage(frames, notes, 0.03) };
 }
 
-/** Practice sections: four bars of the beat grid (eight above 150 BPM), else the melody's phrases joined to ≥ 6 s, else 12 s. */
+/** Beats per bar of the recording: 3 when the beat grid heard a clear 3/4, else 4 (assumed). */
+export const meterOfSong = (beats: BeatGrid | null | undefined): 3 | 4 => (beats?.meter === 3 ? 3 : 4);
+
+/** Four bars of 3/4 (eight above 150 BPM) from the downbeat; the beats before it join the first section. */
+function waltzSections(beats: BeatGrid): Section[] {
+  const out: Section[] = [];
+  const per = beats.bpm >= 150 ? 24 : 12;
+  const b = beats.beats;
+  const d = Math.max(0, Math.min(2, beats.downbeat ?? 0));
+  for (let i = d; i + 1 < b.length; i += per) out.push({ start: b[i], end: b[Math.min(b.length - 1, i + per)] });
+  if (out.length && d > 0) out[0].start = b[0];
+  const tail = (b.length - 1 - d) % per;
+  if (out.length > 1 && tail !== 0 && tail < per / 2) {
+    const last = out.pop()!;
+    out[out.length - 1].end = last.end;
+  }
+  return out;
+}
+
+/** Practice sections: four bars of the beat grid (eight above 150 BPM; bars of three in 3/4), else the melody's phrases joined to ≥ 6 s, else 12 s. */
 export function sectionsOf(duration: number, beats: BeatGrid | null, melody: MyMelody | null): Section[] {
   const out: Section[] = [];
+  if (beats && beats.confidence >= BEAT_CONFIDENT && beats.beats.length >= 8 && beats.meter === 3) {
+    const w = waltzSections(beats);
+    if (w.length) return w;
+  }
   if (beats && beats.confidence >= BEAT_CONFIDENT && beats.beats.length >= 8) {
     const per = beats.bpm >= 150 ? 32 : 16;
     const b = beats.beats;
@@ -494,11 +518,16 @@ export function sessionResult(course: CourseId, takes: TakeLog[], sessionId: str
   return { xp, total: counted.length, firstTry: counted.filter((t) => t.verdict === 'clean').length, items, score: Math.round(score * 1000) / 1000 };
 }
 
-/** A transcribed phrase's log entry (comparePhrase result → stars and the dictation event). */
-export function phraseTake(section: number, phrase: Phrase, r: PhraseResult, speed: number, at: string, sessionId: string): TakeLog {
-  const stars = r.verdict === 'clean' ? 3 : r.score >= 0.85 ? 2 : r.score >= 0.7 ? 1 : 0;
+/**
+ * A transcribed phrase's log entry (comparePhrase result → stars and the dictation event). With `written` (the
+ * degrees step, transcribe.ts gradeDegrees) the stars are the coach's (3 = played back clean and written right) and the
+ * score weighs the writing like the coach: 0.6 playback + 0.4 written.
+ */
+export function phraseTake(section: number, phrase: Phrase, r: PhraseResult, speed: number, at: string, sessionId: string, written?: { ok: number; total: number }): TakeLog {
+  const w = written && written.total > 0 ? written.ok / written.total : null;
+  const stars = written ? phraseStars(r, written) : r.verdict === 'clean' ? 3 : r.score >= 0.85 ? 2 : r.score >= 0.7 ? 1 : 0;
   const slow = speed < 1 ? 0.85 : 1;
-  const score = Math.round(Math.max(0, Math.min(1, r.score * slow)) * 1000) / 1000;
+  const score = Math.round(Math.max(0, Math.min(1, (w === null ? r.score : 0.6 * r.score + 0.4 * w) * slow)) * 1000) / 1000;
   return {
     section,
     score,
