@@ -1688,7 +1688,7 @@ export function App() {
           startHero={cStage !== 'done' ? <CourseStartHero course={activeC} lang={s.uiLang} stage={cStage} cs={cStart} who={tasteWho} onStart={continueCourseStart} onFindLevel={findLevel} /> : undefined}
           news={
             <>
-              {csOffer && <LevelOfferCard lang={s.uiLang} onFind={findLevel} onLater={() => updateCourseStart((m) => snoozeOffer(m, activeC, localDay(new Date())))} />}
+              {csOffer && <LevelOfferCard lang={s.uiLang} onFind={findLevel} onLater={() => updateCourseStart((m) => snoozeOffer(m, activeC, localDay(new Date()), csSessions))} />}
               {csDay && cStage === 'done' && <FirstWeekCard lang={s.uiLang} day={csDay} picks={pickProbes(pathView.units)} onOpen={(x, unit) => openFromPath(x, unit, 'step')} />}
               {(progress.ratingEvents?.length ?? 0) > 0 && <NickPrompt lang={s.uiLang} s={s} onChange={updateSettings} />}
               {lastFreeze && settings?.seenFreezeDay !== lastFreeze && gems.streak.count > 0 && (
@@ -1749,7 +1749,7 @@ export function App() {
           <CourseStartHero course={activeC} lang={s.uiLang} stage={cStage} cs={cStart} who={tasteWho} onStart={continueCourseStart} onFindLevel={findLevel} compact />
         ) : (
           <>
-            {csOffer && <LevelOfferCard lang={s.uiLang} onFind={findLevel} onLater={() => updateCourseStart((m) => snoozeOffer(m, activeC, localDay(new Date())))} />}
+            {csOffer && <LevelOfferCard lang={s.uiLang} onFind={findLevel} onLater={() => updateCourseStart((m) => snoozeOffer(m, activeC, localDay(new Date()), csSessions))} />}
             <CourseGoalLine course={activeC} lang={s.uiLang} cs={cStart} facts={s.pathFacts} section={pathView.units.find((u) => u.status === 'current')?.section} />
           </>
         )

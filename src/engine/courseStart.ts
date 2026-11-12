@@ -53,6 +53,10 @@ export interface CourseStartState {
   winSeenAt?: string;
   /** "Not now" on the level-test offer: hidden until this local day (inclusive). */
   offerSnoozeUntil?: string;
+  /** Sessions after the taste when "Not now" was tapped: hidden until a session after that one (the next session day). */
+  offerSnoozeAt?: number;
+  /** How many times "Not now" was tapped (the offer stops coming back after OFFER_MAX_SNOOZES). */
+  offerSnoozes?: number;
   goal?: PersonalGoal;
 }
 export type CourseStartMap = Partial<Record<CourseId, CourseStartState>>;
@@ -109,19 +113,21 @@ export const markTasteOpened = (m: CourseStartMap | undefined, c: CourseId, now:
 /** The taste finished: the first win is kept once (a replay never overwrites it). */
 export const markTasteDone = (m: CourseStartMap | undefined, c: CourseId, win: FirstWin, now: string): CourseStartMap => (m?.[c]?.tasteDoneAt ? (m ?? {}) : put(m, c, { tasteDoneAt: now, win, tasteAt: m?.[c]?.tasteAt ?? now }));
 export const markWinSeen = (m: CourseStartMap | undefined, c: CourseId, now: string): CourseStartMap => (m?.[c]?.winSeenAt ? (m ?? {}) : put(m, c, { winSeenAt: now }));
-export const snoozeOffer = (m: CourseStartMap | undefined, c: CourseId, today: string, days = 3): CourseStartMap => put(m, c, { offerSnoozeUntil: addDays(today, days) });
+/** "Not now" on the level-test offer comes back at most this many times (sessions 3–6 for most players). */
+export const OFFER_MAX_SNOOZES = 3;
+/**
+ * "Not now" on the level-test offer (owner 2026-11-12: a snooze, not a goodbye): hidden for the rest of today and until
+ * the next session day — a session finished after this one, on a later day. After OFFER_MAX_SNOOZES it stops coming back
+ * (Find my level stays in Settings).
+ */
+export const snoozeOffer = (m: CourseStartMap | undefined, c: CourseId, today: string, sessionsAfterTaste = 0): CourseStartMap =>
+  put(m, c, { offerSnoozeUntil: today, offerSnoozeAt: sessionsAfterTaste, offerSnoozes: (m?.[c]?.offerSnoozes ?? 0) + 1 });
 export const setPersonalGoal = (m: CourseStartMap | undefined, c: CourseId, g: PersonalGoal | null): CourseStartMap => {
   const cur = { ...(m?.[c] ?? {}) };
   if (g) cur.goal = g;
   else delete cur.goal;
   return { ...(m ?? {}), [c]: cur };
 };
-
-function addDays(day: string, n: number): string {
-  const d = new Date(`${day}T12:00:00`);
-  d.setDate(d.getDate() + n);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
 
 // ---------------------------------------------------------------- migration (existing players)
 
@@ -208,7 +214,9 @@ export function levelTested(c: CourseId, history: HistoryLite[], drillStartFamil
  */
 export function offerDue(cs: CourseStartState | undefined, sessionsAfterTaste: number, tested: boolean, today: string): boolean {
   if (!cs || cs.legacy || tested || !cs.tasteDoneAt || !cs.winSeenAt) return false;
+  if ((cs.offerSnoozes ?? 0) >= OFFER_MAX_SNOOZES) return false;
   if (cs.offerSnoozeUntil && cs.offerSnoozeUntil >= today) return false;
+  if (cs.offerSnoozeAt !== undefined && sessionsAfterTaste <= cs.offerSnoozeAt) return false;
   return cs.report === 'well' || sessionsAfterTaste >= 2;
 }
 

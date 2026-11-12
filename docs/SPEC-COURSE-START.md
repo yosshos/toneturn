@@ -119,7 +119,7 @@ optional one-tap personal goal; (3) the daily goal + reminder prompt on the firs
   under it (and, for the ear course before its welcome is answered, "Or start from lesson 1"). The Path shows a compact
   hero on top. Adding / switching to a never-played course opens its welcome card.
 - **Level-test offer** — card on Home and Path after the first session for "well", after session 3 for the rest; "Not
-  now" hides it for 3 days; gone once the course's test (placement / playing test / technique start levels) is taken.
+  now" snoozes it until the next session day (at most 3 times, sessions 3–6, owner 2026-11-12); gone once the course's test (placement / playing test / technique start levels) is taken.
   The old "Already playing?" technique card on the Path is kept only for migrated players.
 - **Sessions 2–3** — a first-week card on Home offers the current unit's probe steps (one per skill, at most two; else
   the current step), as normal path steps.

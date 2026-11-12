@@ -22,6 +22,7 @@ import {
   sessionsSince,
   setupNeeded,
   snoozeOffer,
+  OFFER_MAX_SNOOZES,
   stageOf,
   TASTES,
   type CourseStartMap,
@@ -143,10 +144,27 @@ describe('course start: timing', () => {
     expect(offerDue({ ...done, report: 'bit' }, 2, true, '2026-11-11')).toBe(false); // taken
     expect(offerDue({ legacy: true }, 9, false, '2026-11-11')).toBe(false);
     expect(offerDue({ report: 'well', tasteDoneAt: NOW }, 0, false, '2026-11-11')).toBe(false); // win not seen yet
-    const snoozed = snoozeOffer({ ear: { ...done, report: 'well' } }, 'ear', '2026-11-11');
-    expect(snoozed.ear?.offerSnoozeUntil).toBe('2026-11-14');
-    expect(offerDue(snoozed.ear, 0, false, '2026-11-13')).toBe(false);
-    expect(offerDue(snoozed.ear, 0, false, '2026-11-15')).toBe(true);
+    const snoozed = snoozeOffer({ ear: { ...done, report: 'well' } }, 'ear', '2026-11-11', 0);
+    // "Not now" snoozes until the next session day: hidden today, hidden later until another session is finished
+    expect(offerDue(snoozed.ear, 0, false, '2026-11-11')).toBe(false);
+    expect(offerDue(snoozed.ear, 0, false, '2026-11-15')).toBe(false);
+    expect(offerDue(snoozed.ear, 1, false, '2026-11-11')).toBe(false); // another session, but the same day
+    expect(offerDue(snoozed.ear, 1, false, '2026-11-12')).toBe(true);
+  });
+
+  it('"Not now" on the level-test offer snoozes up to 3 times across sessions 3–6, then stops', () => {
+    let m: CourseStartMap = { ear: { ...done } };
+    const days = ['2026-11-11', '2026-11-12', '2026-11-13', '2026-11-14'];
+    for (let i = 0; i < OFFER_MAX_SNOOZES; i++) {
+      expect(offerDue(m.ear, 2 + i, false, days[i]), `session ${3 + i}`).toBe(true);
+      m = snoozeOffer(m, 'ear', days[i], 2 + i);
+      expect(offerDue(m.ear, 2 + i, false, days[i])).toBe(false);
+    }
+    expect(m.ear?.offerSnoozes).toBe(3);
+    expect(offerDue(m.ear, 5, false, days[3])).toBe(false); // session 6: no fourth offer
+    // an old 3-day snooze (before 2026-11-12) is still respected
+    expect(offerDue({ ...done, offerSnoozeUntil: '2026-11-14' }, 2, false, '2026-11-13')).toBe(false);
+    expect(offerDue({ ...done, offerSnoozeUntil: '2026-11-14' }, 2, false, '2026-11-15')).toBe(true);
   });
 
   it('the course level test: placement or playing test results, or technique start levels of the course', () => {
