@@ -319,6 +319,8 @@ TOPIC_GEN['upper-rootless'] = {
       });
     }
     if (level === 3) {
+      // all twelve dominants (two answers each: enough different items)
+      const pc = Math.floor(rnd() * 12);
       const ans = rnd() < 0.5 ? 'II' : 'bVI';
       const st = (k: string) => [held(pc, ustVoicing(pc, UST5[k].at), 2.2)];
       return choiceQ({
