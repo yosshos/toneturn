@@ -18,6 +18,26 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.76.0',
+    date: '2026-11-12',
+    en: [
+      'Community: block and report a player, a friends' activity feed with one-tap cheers, quick messages in duels and rooms, challenge links, a weekly friend quest and a class board',
+      'At most one social notification a day, merged, never in quiet hours',
+      'Nine instrument games: Play It Back, Voicing Sprint, Chord Change Race, Walk the Changes, Roots by Ear, Harmony Hold, Sing the Interval Sprint, Kit Read Rush, Name That Groove',
+      'Chord & cadence builder; drum styles by ear; splash vs chick; speed records; 3–7 shells on bass; a model line after guitar trading',
+      'Upper structures and rootless voicings by ear, a whole 32-bar AABA; My song hears the chords; two-hand grand-staff reading; learn a solo phrase by ear',
+      'Serious badge titles and no emoji; smarter review spacing; finished pieces come back for review; more narrator lines',
+    ],
+    he: [
+      'קהילה: חסימה ודיווח על שחקן, פיד פעילות של חברים עם "בראבו" בלחיצה, הודעות קצרות בדו־קרבות ובחדרים, קישורי אתגר, משימה שבועית עם חבר ולוח כיתה',
+      'לכל היותר התראה חברתית אחת ביום, מאוחדת, אף פעם לא בשעות השקט',
+      'תשעה משחקי כלים: נגנו בחזרה, ספרינט קולות, מרוץ החלפות, ווקינג על המהלכים, שורשים בשמיעה, החזקת הרמוניה, ספרינט אינטרוולים בשירה, קריאת תופים מהירה, נחשו את הגרוב',
+      'בונה אקורדים וקדנצות; סגנונות תופים בשמיעה; ספלאש מול סגירה; שיאי מהירות; קונכיות 3–7 בבס; קו לדוגמה אחרי חילופים בגיטרה',
+      'אפר־סטרקצ׳רס וקולות בלי שורש בשמיעה, AABA שלם של 32 תיבות; השיר שלי מזהה אקורדים; קריאה בשתי ידיים מחמשה כפולה; ללמוד משפט סולו בשמיעה',
+      'שמות תגים רציניים ובלי אימוג׳י; חזרות בתזמון חכם; יצירות שסיימתם חוזרות לחזרה; עוד שורות של המספר',
+    ],
+  },
+  {
     version: '0.75.0',
     date: '2026-11-12',
     en: [
