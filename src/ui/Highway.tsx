@@ -134,6 +134,12 @@ const T = {
   click: { en: 'Click', he: 'קליק' },
   clickOn: { en: 'On', he: 'פועל' },
   kitSound: { en: 'Drum sound', he: 'צליל התופים' },
+  linkChecking: { en: 'Looking for your kit…', he: 'מחפשים את התופים…' },
+  linkUnsupported: { en: 'This browser cannot read MIDI (Safari / iPhone). Use Chrome or Edge on Android or a computer.', he: 'הדפדפן הזה לא קורא MIDI (ספארי / אייפון). השתמשו בכרום או אדג׳ באנדרואיד או במחשב.' },
+  linkDenied: { en: 'MIDI access was blocked. Allow MIDI for this site in the browser settings.', he: 'הגישה ל-MIDI נחסמה. אשרו MIDI לאתר בהגדרות הדפדפן.' },
+  linkNone: { en: 'No MIDI device found. Connect the kit (USB or Bluetooth MIDI), then hit a drum.', he: 'לא נמצא התקן MIDI. חברו את התופים (USB או MIDI בבלוטות׳), ואז הכו בתוף.' },
+  linkOk: { en: 'Connected:', he: 'מחובר:' },
+  linkHit: { en: 'Hit a drum to test', he: 'הכו בתוף לבדיקה' },
   fromKit: { en: 'Kit', he: 'תופים' },
   fromApp: { en: 'App', he: 'אפליקציה' },
   clickOff: { en: 'Off', he: 'כבוי' },
@@ -271,6 +277,37 @@ export function Highway({
       withTier({ mode: drumsCourse ? 'kit' : 'tap', level: 1, song: 1, bpm: 90, lanes: 3, keyPc: laneKeyPc(settings), ...(tierInfo ? { tempoPct: 60 } : {}) }, tierInfo ? startTier(tierInfo) : undefined),
   );
   const [clickOn, setClickOn] = useState(loadClick);
+  // Kit lanes: what the browser sees of the e-kit (setup line) and the last hit it sent (play line), so a silent kit
+  // shows why: no Web MIDI in this browser, no device, or notes the kit map doesn't name.
+  const [kitLink, setKitLink] = useState<{ state: 'checking' | 'unsupported' | 'none' | 'ok' | 'denied'; devices: string[] }>({ state: 'checking', devices: [] });
+  const lastHitRef = useRef<HTMLSpanElement | null>(null);
+  useEffect(() => {
+    if (opts.mode !== 'kit') return;
+    if (!midiInput.supported) {
+      setKitLink({ state: 'unsupported', devices: [] });
+      return;
+    }
+    let live = true;
+    const read = () => live && setKitLink({ state: midiInput.devices.length ? 'ok' : 'none', devices: [...midiInput.devices] });
+    midiInput.enable().then(read, () => live && setKitLink({ state: 'denied', devices: [] }));
+    const off = midiInput.onState(read);
+    // Any hit lights its pad and is named on the setup / play line, even outside a run.
+    const offHit = midiInput.onHit((h) => {
+      const lane = kitLaneOf(h.voice);
+      const pad = lane === null ? null : padEls.current[lane];
+      if (pad) {
+        pad.classList.remove('hit');
+        void pad.offsetWidth;
+        pad.classList.add('hit');
+      }
+      if (lastHitRef.current) lastHitRef.current.textContent = `MIDI ${h.note} → ${lane === null ? (lang === 'he' ? 'לא ממופה' : 'not mapped') : KIT_NAME[KIT_LANES[lane]][lang]}`;
+    });
+    return () => {
+      live = false;
+      off();
+      offHit();
+    };
+  }, [opts.mode, lang]);
   /** On-screen pads hit in this run (kit lanes): practice, not a measured take. */
   const padsRef = useRef(false);
   const noteEls = useRef<(HTMLDivElement | null)[]>([]);
@@ -559,6 +596,17 @@ export function Highway({
             </div>
             <p className="field-hint">{opts.mode === 'tap' ? tx(T.tapHint) : opts.mode === 'kit' ? tx(T.kitHint) : useMidi ? tx(T.midiHint) : tx(T.pitchHint)}</p>
             {opts.mode === 'tap' && !settings.tapLatencyMs && <p className="field-hint warn">{tx(T.calibrate)}</p>}
+            {opts.mode === 'kit' && (
+              <p className={`field-hint ${kitLink.state === 'ok' ? '' : kitLink.state === 'checking' ? '' : 'warn'}`} data-kit-link={kitLink.state}>
+                {kitLink.state === 'ok' ? (
+                  <>
+                    {tx(T.linkOk)} <bdi>{kitLink.devices.join(', ')}</bdi> · <span ref={lastHitRef}>{tx(T.linkHit)}</span>
+                  </>
+                ) : (
+                  tx(kitLink.state === 'checking' ? T.linkChecking : kitLink.state === 'unsupported' ? T.linkUnsupported : kitLink.state === 'denied' ? T.linkDenied : T.linkNone)
+                )}
+              </p>
+            )}
           </fieldset>
           {tierInfo ? (
             <TierChips lang={lang} info={tierInfo} value={opts.tier ?? startTier(tierInfo)} onChange={(t) => set({ tier: t })} game="highway" />
@@ -954,7 +1002,7 @@ export function Highway({
               {tx(T.tapHere)}
             </button>
           )}
-          <p className="hint">{opts.mode === 'tap' ? tx(T.tapHint) : opts.mode === 'kit' ? tx(T.kitPlay) : tx(T.pitchHint)}</p>
+          <p className="hint">{opts.mode === 'tap' ? tx(T.tapHint) : opts.mode === 'kit' ? (kitLink.state === 'ok' ? <span ref={lastHitRef}>{tx(T.kitPlay)}</span> : tx(kitLink.state === 'unsupported' ? T.linkUnsupported : kitLink.state === 'denied' ? T.linkDenied : T.linkNone)) : tx(T.pitchHint)}</p>
         </>
       )}
     </main>

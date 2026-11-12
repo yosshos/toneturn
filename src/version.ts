@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.77.1',
+    date: '2026-11-12',
+    en: ['Drum songs show whether the kit is connected, and each hit’s MIDI note and drum as you play, so a silent kit says why'],
+    he: ['שירי התופים מראים אם התופים מחוברים, ואת תו ה-MIDI והתוף של כל מכה, כך שאם אין קלט רואים למה'],
+  },
+  {
     version: '0.77.0',
     date: '2026-11-12',
     en: [
