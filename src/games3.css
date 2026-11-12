@@ -629,3 +629,8 @@
 .hw-setup .hw-two { display: flex; gap: 10px; }
 .hw-setup .hw-two > .seg-field { flex: 1 1 0; min-width: 0; }
 .hw-setup .hw-two .seg button { padding-inline: 6px; }
+.hw-setup .hw-two .seg { flex-wrap: nowrap; }
+.hw-setup .hw-two .seg button { white-space: nowrap; min-width: 0; flex: 1 1 0; }
+/* kit setup carries more rows (build-up layers, sound, click): tighter spacing keeps it one screen */
+.hw-setup .set-card { gap: 12px; padding-block: 12px; }
+.hw-setup { gap: 12px; }

@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.78.0',
+    date: '2026-11-12',
+    en: ['Drum songs in the first levels are built up layer by layer, in Practice too: kick alone, then + snare, then + hi-hat, then the whole song with fills and crash; 85% opens the next layer, and the level opens on the whole song'],
+    he: ['שירי התופים ברמות הראשונות נבנים שכבה אחרי שכבה, גם בתרגול: קודם רק קיק, אחר כך + סנר, אחר כך + היי־האט, ואז השיר המלא עם פילים ומצילה; 85% פותח את השכבה הבאה, והשלב נפתח על השיר המלא'],
+  },
+  {
     version: '0.77.1',
     date: '2026-11-12',
     en: ['Drum songs show whether the kit is connected, and each hit’s MIDI note and drum as you play, so a silent kit says why'],

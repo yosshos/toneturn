@@ -31,8 +31,9 @@ export interface HighwayOptions {
   tier?: import('./courseSocial').DynName;
   /** A tier's practice tempo: 60 / 80 % of its tempo (`bpm` already holds the result). Cleared only at 100. */
   tempoPct?: number;
-  /** Kit lanes, the first song of the first tier: kick and snare only (two drums before the hi-hat joins). */
-  kitEasy?: boolean;
+  /** Kit lanes, beginner levels (1–3): the song built up layer by layer — 1 kick, 2 + snare, 3 + hi-hat, 4 the whole
+   *  song (fills, crash). Absent = the whole song. See kitLayers(). */
+  kitLayer?: number;
 }
 
 export interface HighwayNote {
@@ -78,8 +79,13 @@ const DEGREE_SEMIS = [0, 2, 4, 5, 7, 9, 11];
 /** Lanes → scale degrees (1-based). */
 export const LANE_DEGREES: Record<3 | 4 | 5, number[]> = { 3: [1, 2, 3], 4: [1, 2, 3, 5], 5: [1, 2, 3, 4, 5] };
 
-export const songId = (o: Pick<HighwayOptions, 'mode' | 'level' | 'song' | 'lanes' | 'kitEasy'>) =>
-  `${o.mode === 'pitch' ? `p${o.lanes ?? 3}` : o.mode === 'kit' ? 'k' : 't'}-R${o.level}-${o.song}${o.mode === 'kit' && o.kitEasy ? 'e' : ''}`;
+export const songId = (o: Pick<HighwayOptions, 'mode' | 'level' | 'song' | 'lanes' | 'kitLayer'>) =>
+  `${o.mode === 'pitch' ? `p${o.lanes ?? 3}` : o.mode === 'kit' ? 'k' : 't'}-R${o.level}-${o.song}${o.mode === 'kit' && o.kitLayer && o.kitLayer < kitLayers(o.level) ? `-L${o.kitLayer}` : ''}`;
+
+/** Kit lanes: how many build-up layers a level's songs have (levels 1–3; level 1 has no fills, so 3), 0 = none. */
+export const kitLayers = (level: number): number => (level <= 1 ? 3 : level <= 3 ? 4 : 0);
+/** The kit lanes heard in a build-up layer: kick (2), + snare (1), + hi-hat (0); the last layer is everything. */
+const LAYER_LANES = [[2], [2, 1], [2, 1, 0]];
 
 const songSeed = (o: HighwayOptions) => (0x51a7 + o.level * 7919 + o.song * 104729 + (o.mode === 'pitch' ? 15485863 : o.mode === 'kit' ? 32452843 : 0)) >>> 0;
 
@@ -190,8 +196,9 @@ function kitSong(o: HighwayOptions): HighwaySong {
   for (let bar = 0; bar < bars; bar++) {
     const fill = bar % SECTION_BARS === SECTION_BARS - 1 && bar < bars - 1 && o.level >= 2;
     const crash = bar % SECTION_BARS === 0 && bar > 0 && o.level >= 2;
-    // the easiest song: kick on 1 and 3, snare on 2 and 4, nothing else
-    const bar1: [number, number][] = o.kitEasy ? [[2, 0], [1, 1], [2, 2], [1, 3]] : kitBar(o.level, rnd, fill, crash);
+    // Build-up layers (beginner levels): the same groove with fewer drums — no fills or crash until the whole song.
+    const layer = o.kitLayer && o.kitLayer < kitLayers(o.level) ? o.kitLayer : 0;
+    const bar1 = layer ? kitBar(o.level, rnd, false, false).filter(([lane]) => LAYER_LANES[layer - 1].includes(lane)) : kitBar(o.level, rnd, fill, crash);
     for (const [lane, b] of bar1) hits.push([lane, bar * 4 + b]);
   }
   hits.sort((a, b) => a[1] - b[1] || a[0] - b[0]);

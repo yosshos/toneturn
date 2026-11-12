@@ -12,6 +12,7 @@ import {
   KIT_LANES,
   KIT_MAX_LEVEL,
   kitLaneOf,
+  kitLayers,
   MIC_PITCH_LAG_MS,
   newRun,
   OnsetTracker,
@@ -48,8 +49,28 @@ function withTier(o: HighwayOptions, t: DynName | undefined): HighwayOptions {
   const lv = (o.mode === 'pitch' ? (p.pitch as number[]) : o.mode === 'kit' ? (p.kit as number[]) : d.levels) ?? [1];
   const level = lv[Math.max(0, Math.min(lv.length - 1, o.song - 1))] as RhythmLevel;
   const pct = o.tempoPct ?? 100;
-  const kitEasy = o.mode === 'kit' && o.song <= Number(p.kitEasy ?? 0);
-  return { ...o, tier: t, level, bpm: Math.round((Number(p.bpm ?? o.bpm) * pct) / 500) * 5, kitEasy, ...(o.mode === 'pitch' ? { lanes: Number(p.lanes ?? 3) as 3 | 4 | 5 } : {}) };
+  return { ...o, tier: t, level, bpm: Math.round((Number(p.bpm ?? o.bpm) * pct) / 500) * 5, ...(o.mode === 'pitch' ? { lanes: Number(p.lanes ?? 3) as 3 | 4 | 5 } : {}) };
+}
+
+/** Build-up layers passed per song (kit lanes, beginner levels): song id without its layer → highest layer passed. */
+const LAYERS_KEY = 'toneturn.highway.layers.v1';
+/** A layer counts as learned at this accuracy (any tempo): the next layer is offered. */
+const LAYER_PASS = 85;
+function loadLayers(): Record<string, number> {
+  try {
+    const x = JSON.parse(localStorage.getItem(LAYERS_KEY) ?? '{}');
+    return x && typeof x === 'object' ? x : {};
+  } catch {
+    return {};
+  }
+}
+const layerBase = (o: HighwayOptions) => songId({ ...o, kitLayer: undefined });
+/** Kit lanes: the layer to play — the one kept if it fits the level, else the first not yet passed. */
+function withLayer(o: HighwayOptions, keep: boolean): HighwayOptions {
+  const n = o.mode === 'kit' ? kitLayers(o.level) : 0;
+  if (!n) return o.kitLayer === undefined ? o : { ...o, kitLayer: undefined };
+  const next = Math.min(n, (loadLayers()[layerBase(o)] ?? 0) + 1);
+  return { ...o, kitLayer: keep && o.kitLayer && o.kitLayer <= n ? o.kitLayer : next };
 }
 
 type Lang = 'he' | 'en';
@@ -134,6 +155,13 @@ const T = {
   click: { en: 'Click', he: 'קליק' },
   clickOn: { en: 'On', he: 'פועל' },
   kitSound: { en: 'Drum sound', he: 'צליל התופים' },
+  buildUp: { en: 'Build it up', he: 'בונים את השיר' },
+  layer1: { en: 'Kick', he: 'קיק' },
+  layer2: { en: '+ Snare', he: '+ סנר' },
+  layer3: { en: '+ Hi-hat', he: '+ היי־האט' },
+  layerAll: { en: 'Whole song', he: 'השיר המלא' },
+  layerNext: { en: 'Next layer:', he: 'השכבה הבאה:' },
+  layerNote: { en: 'Practice: the level opens on the whole song at full tempo.', he: 'תרגול: השלב נפתח על השיר המלא בטמפו המלא.' },
   linkChecking: { en: 'Looking for your kit…', he: 'מחפשים את התופים…' },
   linkUnsupported: { en: 'This browser cannot read MIDI (Safari / iPhone). Use Chrome or Edge on Android or a computer.', he: 'הדפדפן הזה לא קורא MIDI (ספארי / אייפון). השתמשו בכרום או אדג׳ באנדרואיד או במחשב.' },
   linkDenied: { en: 'MIDI access was blocked. Allow MIDI for this site in the browser settings.', he: 'הגישה ל-MIDI נחסמה. אשרו MIDI לאתר בהגדרות הדפדפן.' },
@@ -274,7 +302,7 @@ export function Highway({
     // A run saved in another course may hold a mode this course doesn't offer (pitch in drums, kit elsewhere).
     () =>
       (resumable && MODES.includes(resumable.opts.mode) ? resumable.opts : resumable ? { ...resumable.opts, mode: MODES[0] } : null) ??
-      withTier({ mode: drumsCourse ? 'kit' : 'tap', level: 1, song: 1, bpm: 90, lanes: 3, keyPc: laneKeyPc(settings), ...(tierInfo ? { tempoPct: 60 } : {}) }, tierInfo ? startTier(tierInfo) : undefined),
+      withLayer(withTier({ mode: drumsCourse ? 'kit' : 'tap', level: 1, song: 1, bpm: 90, lanes: 3, keyPc: laneKeyPc(settings), ...(tierInfo ? { tempoPct: 60 } : {}) }, tierInfo ? startTier(tierInfo) : undefined), false),
   );
   const [clickOn, setClickOn] = useState(loadClick);
   // Kit lanes: what the browser sees of the e-kit (setup line) and the last hit it sent (play line), so a silent kit
@@ -371,6 +399,19 @@ export function Highway({
     const sum = summary(s, swept);
     // a practice tempo's score is not the song's best
     const best = (s.opts.tempoPct ?? 100) >= 100 ? saveBest(s.id, sum.accuracy) : false;
+    const layers = s.opts.mode === 'kit' ? kitLayers(s.opts.level) : 0;
+    if (layers && s.opts.kitLayer && sum.accuracy >= LAYER_PASS) {
+      const all = loadLayers();
+      const k = layerBase(s.opts);
+      if ((all[k] ?? 0) < s.opts.kitLayer) {
+        all[k] = s.opts.kitLayer;
+        try {
+          localStorage.setItem(LAYERS_KEY, JSON.stringify(all));
+        } catch {
+          /* not kept */
+        }
+      }
+    }
     setBests(loadBests());
     setResult({ sum, best });
     stopAudio();
@@ -379,7 +420,7 @@ export function Highway({
     onResult({
       game: 'highway',
       score: sum.accuracy,
-      detail: { songId: s.id, mode: s.opts.mode, level: s.opts.level, bpm: s.opts.bpm, lanes: s.opts.lanes, newBest: best, ...sum, ...(s.opts.tier ? { tier: s.opts.tier } : {}), ...(s.opts.tempoPct !== undefined ? { tempoPct: s.opts.tempoPct } : {}), ...(padsRef.current ? { input: 'touch' } : {}) },
+      detail: { songId: s.id, mode: s.opts.mode, level: s.opts.level, bpm: s.opts.bpm, lanes: s.opts.lanes, newBest: best, ...sum, ...(s.opts.tier ? { tier: s.opts.tier } : {}), ...(s.opts.tempoPct !== undefined ? { tempoPct: s.opts.tempoPct } : {}), ...(padsRef.current ? { input: 'touch' } : {}), ...(layers && s.opts.kitLayer ? { layer: s.opts.kitLayer, layers } : {}) },
     });
   }, [onResult, onSave]);
 
@@ -574,7 +615,8 @@ export function Highway({
         const n = { ...o, ...p };
         if (n.mode === 'pitch' && n.level > PITCH_MAX_LEVEL) n.level = PITCH_MAX_LEVEL;
         if (n.mode === 'kit' && n.level > KIT_MAX_LEVEL) n.level = KIT_MAX_LEVEL as RhythmLevel;
-        return n.tier ? withTier(n, n.tier) : n;
+        // another song / level / mode starts at that song's next layer; tempo or click changes keep the layer
+        return withLayer(n.tier ? withTier(n, n.tier) : n, p.kitLayer !== undefined || !('song' in p || 'tier' in p || 'mode' in p || 'level' in p));
       });
     return (
       <main className="panel-screen g3 hw-setup">
@@ -594,7 +636,8 @@ export function Highway({
                 </button>
               ))}
             </div>
-            <p className="field-hint">{opts.mode === 'tap' ? tx(T.tapHint) : opts.mode === 'kit' ? tx(T.kitHint) : useMidi ? tx(T.midiHint) : tx(T.pitchHint)}</p>
+            {/* kit lanes: the connection line below says what to do (one screen) */}
+            {opts.mode !== 'kit' && <p className="field-hint">{opts.mode === 'tap' ? tx(T.tapHint) : useMidi ? tx(T.midiHint) : tx(T.pitchHint)}</p>}
             {opts.mode === 'tap' && !settings.tapLatencyMs && <p className="field-hint warn">{tx(T.calibrate)}</p>}
             {opts.mode === 'kit' && (
               <p className={`field-hint ${kitLink.state === 'ok' ? '' : kitLink.state === 'checking' ? '' : 'warn'}`} data-kit-link={kitLink.state}>
@@ -640,6 +683,24 @@ export function Highway({
               })}
             </div>
           </fieldset>
+          {opts.mode === 'kit' && kitLayers(opts.level) > 0 && (
+            <fieldset className="seg-field" data-hw-layers>
+              <legend>{tx(T.buildUp)}</legend>
+              <div className="seg" role="radiogroup" aria-label={tx(T.buildUp)}>
+                {Array.from({ length: kitLayers(opts.level) }, (_, i) => i + 1).map((l) => {
+                  const n = kitLayers(opts.level);
+                  const passed = (loadLayers()[layerBase(opts)] ?? 0) >= l;
+                  const on = opts.kitLayer === l;
+                  return (
+                    <button key={l} type="button" role="radio" aria-checked={on} className={on ? 'on' : ''} onClick={() => set({ kitLayer: l })} data-layer={l}>
+                      {tx(l === n ? T.layerAll : l === 1 ? T.layer1 : l === 2 ? T.layer2 : T.layer3)}
+                      {passed && <small aria-label="passed"> ✓</small>}
+                    </button>
+                  );
+                })}
+              </div>
+            </fieldset>
+          )}
           {tierInfo && (
             <fieldset className="seg-field" data-hw-tempo-pct>
               <legend>{tx(T.tempo)}</legend>
@@ -660,7 +721,7 @@ export function Highway({
                   );
                 })}
               </div>
-              {(opts.tempoPct ?? 100) < 100 && <p className="field-hint">{tx(T.tempoNote)}</p>}
+              {(opts.tempoPct ?? 100) < 100 || (opts.kitLayer && opts.kitLayer < kitLayers(opts.level)) ? <p className="field-hint">{tx(T.layerNote)}</p> : null}
             </fieldset>
           )}
           <div className="hw-two">
@@ -824,14 +885,29 @@ export function Highway({
           </li>
         </ul>
         <div className="recap-actions">
-          <button className="btn primary mega" onClick={() => void start(0, newRun(song), song)}>
+          {song.opts.mode === 'kit' && song.opts.kitLayer && song.opts.kitLayer < kitLayers(song.opts.level) && r.accuracy >= LAYER_PASS && (
+            <button
+              className="btn primary mega"
+              data-next-layer="1"
+              onClick={() => {
+                const nl = song.opts.kitLayer! + 1;
+                const o = { ...song.opts, kitLayer: nl };
+                setOpts(o);
+                const s2 = highwaySong(o);
+                void start(0, newRun(s2), s2);
+              }}
+            >
+              {tx(T.layerNext)} {tx(song.opts.kitLayer + 1 === kitLayers(song.opts.level) ? T.layerAll : song.opts.kitLayer + 1 === 2 ? T.layer2 : T.layer3)}
+            </button>
+          )}
+          <button className={`btn ${song.opts.mode === 'kit' && song.opts.kitLayer && song.opts.kitLayer < kitLayers(song.opts.level) && r.accuracy >= LAYER_PASS ? '' : 'primary mega'}`} onClick={() => void start(0, newRun(song), song)}>
             {tx(T.again)}
           </button>
           {song.opts.song < SONGS_PER_LEVEL && (
             <button
               className="btn"
               onClick={() => {
-                const o = { ...song.opts, song: song.opts.song + 1 };
+                const o = withLayer(withTier({ ...song.opts, song: song.opts.song + 1, kitLayer: undefined }, song.opts.tier), false);
                 setOpts(o);
                 const s = highwaySong(o);
                 void start(0, newRun(s), s);

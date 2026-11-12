@@ -181,7 +181,7 @@ export const GAME_TIERS: Record<string, GameTierSpec> = {
     source: (c) => (c === 'drums' ? 'instrument/drum-tech' : 'rhythm-reading'),
     clear: 'timing',
     tiers: {
-      pp: { label: L('Quarters and halves', 'רבעים וחצאים'), levels: [1], params: { bpm: 70, pitch: [1], kit: [1], kitEasy: 1, lanes: 3 }, target: 90 },
+      pp: { label: L('Quarters and halves', 'רבעים וחצאים'), levels: [1], params: { bpm: 70, pitch: [1], kit: [1], lanes: 3 }, target: 90 },
       p: { label: L('Eighths', 'שמיניות'), levels: [2], params: { bpm: 85, pitch: [1], kit: [2], lanes: 3 }, target: 90 },
       mp: { label: L('Dotted notes, sixteenths', 'מנוקדים, שש־עשריות'), levels: [3, 4, 4], params: { bpm: 95, pitch: [2], kit: [3], lanes: 4 }, target: 90 },
       mf: { label: L('Syncopation', 'סינקופות'), levels: [5], params: { bpm: 105, pitch: [3], kit: [4], lanes: 4 }, target: 90 },
@@ -901,6 +901,8 @@ export function clearsRun(game: string, tier: DynName, score: number, detail: un
       if (d.input === 'touch' && (game === 'bhtime' || game === 'riffecho' || (game === 'highway' && d.mode === 'kit'))) return false;
       // a slower practice tempo (Highway 60 / 80 %) is practice; the tier is cleared at its own tempo
       if ((num(d, 'tempoPct') ?? 100) < 100) return false;
+      // a build-up layer (kick only, + snare, + hi-hat) is practice; the tier is cleared on the whole song
+      if (num(d, 'layer') !== undefined && (num(d, 'layer') ?? 0) < (num(d, 'layers') ?? 0)) return false;
       const acc = num(d, 'accuracy') ?? score;
       return acc >= (target || 90);
     }
