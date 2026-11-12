@@ -3,7 +3,8 @@ import { expect, test, type Page } from '@playwright/test';
 // GUITAR_DEEPENING P2: the chord finder (Tools), Chord Rush played (strum it), mixed-meter tab and a whole standard's
 // chart — each on one phone screen (390×844), no emoji. Seeded as a returning guitar player with the jazz and prog
 // add-ons. Chromium's fake microphone feeds the listening screens (nothing is named from its beep: never a guess).
-test.use({ viewport: { width: 390, height: 844 } });
+// Listening uses Chromium's fake microphone; the suite denies the microphone unless a test grants it.
+test.use({ viewport: { width: 390, height: 844 }, permissions: ['microphone'] });
 
 const seed = async (page: Page, lang: 'en' | 'he' = 'en') => {
   await page.goto('/manifest.webmanifest');
