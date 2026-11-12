@@ -21,7 +21,7 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.76.0',
     date: '2026-11-12',
     en: [
-      'Community: block and report a player, a friends' activity feed with one-tap cheers, quick messages in duels and rooms, challenge links, a weekly friend quest and a class board',
+      'Community: block and report a player, an activity feed from friends with one-tap cheers, quick messages in duels and rooms, challenge links, a weekly friend quest and a class board',
       'At most one social notification a day, merged, never in quiet hours',
       'Nine instrument games: Play It Back, Voicing Sprint, Chord Change Race, Walk the Changes, Roots by Ear, Harmony Hold, Sing the Interval Sprint, Kit Read Rush, Name That Groove',
       'Chord & cadence builder; drum styles by ear; splash vs chick; speed records; 3–7 shells on bass; a model line after guitar trading',
