@@ -7,7 +7,7 @@ import type { Drill, DrumVoice } from '../engine/drills/types';
 import { gradeGrid, type DrumWriteGrade } from '../engine/drills/drumEar';
 
 type Lang = 'he' | 'en';
-const ROW: Partial<Record<DrumVoice, { en: string; he: string }>> = { hihat: { en: 'HH', he: 'HH' }, snare: { en: 'SN', he: 'SN' }, kick: { en: 'BD', he: 'BD' } };
+const ROW: Partial<Record<DrumVoice, { en: string; he: string }>> = { hihat: { en: 'Hi-hat', he: 'היי־האט' }, snare: { en: 'Snare', he: 'סנר' }, kick: { en: 'Kick', he: 'קיק' } };
 
 export function DrumWrite({ drill, lang, onDone }: { drill: Drill; lang: Lang; onDone: (g: DrumWriteGrade) => void }) {
   const w = drill.drumWrite!;

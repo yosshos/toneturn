@@ -18,6 +18,24 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.77.0',
+    date: '2026-11-12',
+    en: [
+      'Drum songs: pick the tempo before you play (slow, medium or full); a first-time song starts slow, and the level opens at full tempo',
+      'Drum songs: a metronome click through the whole song, and a drum-sound choice (your kit or the app)',
+      'Drum lanes say Hi-hat, Snare, Kick, Tom, Crash with a picture of each drum, never SN or BD; the notes are drum heads',
+      'Notes swell and light up as they come, and the drum pad glows the moment to hit',
+      'The first drum song is easier: kick and snare only, before the hi-hat joins',
+    ],
+    he: [
+      'שירי תופים: בוחרים טמפו לפני שמנגנים (איטי, בינוני או מלא); שיר חדש מתחיל איטי, והשלב נפתח בטמפו המלא',
+      'שירי תופים: קליק מטרונום לאורך כל השיר, ובחירה מאיפה יבוא צליל התופים (מהתופים או מהאפליקציה)',
+      'מסלולי התופים כתובים היי־האט, סנר, קיק, טום, מצילה עם ציור של כל תוף, בלי SN או BD; התווים הם ראשי תופים',
+      'התווים גדלים ונדלקים כשהם מתקרבים, והפד של התוף זוהר ברגע שצריך להכות',
+      'שיר התופים הראשון קל יותר: רק קיק וסנר, לפני שההיי־האט מצטרף',
+    ],
+  },
+  {
     version: '0.76.2',
     date: '2026-11-12',
     en: ['The narrator really speaks on phones now: old silent copies saved on the device are cleared and fetched again'],

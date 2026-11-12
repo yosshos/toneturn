@@ -96,7 +96,7 @@ export function DrumScore({ drill, view, result, beat = -1, lang }: { drill: Dri
     <div className={`drum-score ${view}`} dir="ltr" data-drum-view={view} data-drum-lines={lines} data-drum-bars={bars}>
       {drill.form && <DrumRoadMap drill={drill} beat={beat} lang={lang} />}
       {shown.map((li) =>
-        view === 'staff' ? <StaffLine key={li} drill={drill} notes={notes} line={li} geo={geo[li]} marks={marks} beat={beat} sticking={!!drill.drum?.mic || !!drill.drum?.sticking || drill.notes.some((n) => n.grace)} /> : <LaneLine key={li} drill={drill} line={li} geo={geo[li]} marks={marks} beat={beat} />,
+        view === 'staff' ? <StaffLine key={li} drill={drill} notes={notes} line={li} geo={geo[li]} marks={marks} beat={beat} sticking={!!drill.drum?.mic || !!drill.drum?.sticking || drill.notes.some((n) => n.grace)} /> : <LaneLine key={li} drill={drill} line={li} geo={geo[li]} marks={marks} beat={beat} lang={lang} />,
       )}
       {pager}
       {view === 'lanes' && <p className="drum-key">{lang === 'he' ? 'עיגול גדול = הדגשה · עיגול חלול = רפאים · טבעת = היי־האט פתוח' : 'Big = accent · hollow = ghost · ring = open hat'}</p>}
@@ -368,26 +368,40 @@ function StaffLine({ drill, notes, line, geo, marks, beat, sticking }: { drill: 
 }
 
 const LANE_ORDER: DrumVoice[] = ['crash', 'ride', 'hihat', 'tom1', 'snare', 'tom2', 'tom3', 'kick', 'hhPedal'];
-const LANE_SHORT: Record<DrumVoice, string> = { crash: 'CR', ride: 'RD', hihat: 'HH', hhOpen: 'HH', tom1: 'T1', snare: 'SN', rim: 'SN', tom2: 'T2', tom3: 'FT', kick: 'BD', hhPedal: 'HF' };
+const LANE_NAME: Record<DrumVoice, { en: string; he: string }> = {
+  crash: { en: 'Crash', he: 'קראש' },
+  ride: { en: 'Ride', he: 'רייד' },
+  hihat: { en: 'Hi-hat', he: 'היי־האט' },
+  hhOpen: { en: 'Hi-hat', he: 'היי־האט' },
+  tom1: { en: 'Tom 1', he: 'טום 1' },
+  snare: { en: 'Snare', he: 'סנר' },
+  rim: { en: 'Snare', he: 'סנר' },
+  tom2: { en: 'Tom 2', he: 'טום 2' },
+  tom3: { en: 'Floor tom', he: 'טום רצפה' },
+  kick: { en: 'Kick', he: 'קיק' },
+  hhPedal: { en: 'Hat foot', he: 'פדל האט' },
+};
 const laneOf = (v: DrumVoice): DrumVoice => (v === 'hhOpen' ? 'hihat' : v === 'rim' ? 'snare' : v);
 
-function LaneLine({ drill, line, geo, marks, beat }: { drill: Drill; line: number; geo: LineGeo; marks: Map<string, NoteMark>; beat: number }) {
+function LaneLine({ drill, line, geo, marks, beat, lang }: { drill: Drill; line: number; geo: LineGeo; marks: Map<string, NoteMark>; beat: number; lang: Lang }) {
+  // Lane names are words, not abbreviations: a wider name column than the staff's.
+  const LX0 = 46;
   const lanes = LANE_ORDER.filter((v) => drill.notes.some((n) => n.voice && laneOf(n.voice) === v));
   const b0 = geo.from;
   const per = geo.to - geo.from;
   const ns = drill.notes.filter((n) => n.beat >= b0 - 1e-6 && n.beat < b0 + per - 1e-6 && n.voice);
   const H = 14;
   const h = lanes.length * H + 6;
-  const xOf = (b: number) => X0 + 6 + ((b - b0) / per) * (W - X0 - 16);
+  const xOf = (b: number) => LX0 + 6 + ((b - b0) / per) * (W - LX0 - 16);
   const cursor = beat >= b0 && beat < b0 + per ? xOf(beat) : null;
   const barStarts = new Set(geo.bars.map((b) => Math.round(b.from * 1e4)));
   return (
     <svg className="drum-lanes" viewBox={`0 0 ${W} ${h}`} role="img" aria-label="drum lanes" data-line={line}>
       {lanes.map((v, i) => (
         <g key={v}>
-          <rect x={X0} y={3 + i * H} width={W - X0 - 4} height={H - 2} rx={4} className={`dl-lane l-${classOf(v)}`} />
+          <rect x={LX0} y={3 + i * H} width={W - LX0 - 4} height={H - 2} rx={4} className={`dl-lane l-${classOf(v)}`} />
           <text x={4} y={3 + i * H + 10} className="dl-name">
-            {LANE_SHORT[v]}
+            {LANE_NAME[v][lang]}
           </text>
         </g>
       ))}

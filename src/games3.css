@@ -549,3 +549,83 @@
   margin: 6px 0 0;
   padding-inline-start: 18px;
 }
+
+/* ---------- Highway kit lanes: drum pads, drum pictures on the notes, approach cues (0.77) ---------- */
+.hw-lane-labels.kit {
+  height: 16%;
+  padding: 0 4px 4px;
+  gap: 4px;
+}
+.hw-lane-labels.kit .kit-pad {
+  height: 100%;
+  align-content: center;
+  gap: 1px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--g3-lane-0) 22%, rgb(0 0 0 / 0.35));
+  border: 1px solid color-mix(in srgb, var(--g3-lane-0) 55%, transparent);
+  color: #fff;
+  transition: background 0.08s, transform 0.08s, box-shadow 0.08s;
+}
+.hw-lane-labels.kit .kit-pad b {
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.hw-lane-labels.kit .kit-pad:nth-child(2) { --c: var(--g3-lane-1); }
+.hw-lane-labels.kit .kit-pad:nth-child(3) { --c: var(--g3-lane-2); }
+.hw-lane-labels.kit .kit-pad:nth-child(4) { --c: var(--g3-lane-3); }
+.hw-lane-labels.kit .kit-pad:nth-child(5) { --c: var(--g3-lane-4); }
+.hw-lane-labels.kit .kit-pad:nth-child(n + 2) {
+  background: color-mix(in srgb, var(--c) 22%, rgb(0 0 0 / 0.35));
+  border-color: color-mix(in srgb, var(--c) 55%, transparent);
+}
+.hw-lane-labels.kit .kit-pad .kit-icon { color: var(--c, var(--g3-lane-0)); }
+/* a note of this lane is on the line now */
+.hw-lane-labels.kit .kit-pad[data-due='1'] {
+  box-shadow: 0 0 0 2px var(--c, var(--g3-lane-0)), 0 0 18px color-mix(in srgb, var(--c, var(--g3-lane-0)) 70%, transparent);
+}
+.hw-lane-labels.kit .kit-pad.hit { animation: kit-pad-hit 0.16s ease-out; }
+@keyframes kit-pad-hit {
+  0% { transform: scale(0.92); background: color-mix(in srgb, var(--c, var(--g3-lane-0)) 60%, rgb(0 0 0 / 0.35)); }
+  100% { transform: scale(1); }
+}
+/* the drum's picture on its note */
+.hw-note[class*='kit-']::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 18px;
+  height: 18px;
+  background: rgb(0 0 0 / 0.55);
+  -webkit-mask: var(--kit-ic) center / contain no-repeat;
+  mask: var(--kit-ic) center / contain no-repeat;
+}
+.hw-note.kit-hihat { --kit-ic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round'%3E%3Cellipse cx='12' cy='7' rx='9' ry='2'/%3E%3Cellipse cx='12' cy='10' rx='9' ry='2'/%3E%3Cpath d='M12 12v10M8 22h8'/%3E%3C/svg%3E"); }
+.hw-note.kit-snare { --kit-ic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round'%3E%3Cellipse cx='12' cy='8' rx='9' ry='3'/%3E%3Cpath d='M3 8v7c0 1.7 4 3 9 3s9-1.3 9-3V8'/%3E%3C/svg%3E"); }
+.hw-note.kit-kick { --kit-ic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Ccircle cx='12' cy='12' r='3.5'/%3E%3C/svg%3E"); }
+.hw-note.kit-tom { --kit-ic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round'%3E%3Cellipse cx='12' cy='7' rx='7' ry='2.5'/%3E%3Cpath d='M5 7v8c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5V7'/%3E%3C/svg%3E"); }
+.hw-note.kit-cymbal { --kit-ic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round'%3E%3Cpath d='M2 10c3-2.5 17-2.5 20 0-3 1.6-17 1.6-20 0z'/%3E%3Cpath d='M12 11v11'/%3E%3C/svg%3E"); }
+/* kit notes are tall enough to carry the picture */
+.hw-note[class*='kit-'] { min-height: 24px; }
+/* approach: the last beat and a half the note swells; the last half beat it is bright and ringed */
+.hw-note { transition: transform 0.12s ease-out, filter 0.12s; }
+.hw-note[data-near='1'] { transform: translateY(50%) scale(1.12); filter: brightness(1.15); }
+.hw-note[data-near='2'] {
+  transform: translateY(50%) scale(1.28);
+  filter: brightness(1.3);
+  outline: 2px solid var(--ink);
+  outline-offset: 1px;
+}
+.hw-note.is-perfect[data-near],
+.hw-note.is-good[data-near] { transform: translateY(50%) scale(1.45); }
+.hw-note.is-miss[data-near] { transform: translateY(50%); outline: 0; filter: grayscale(1); }
+.hw-play.calm .hw-note[data-near] { transform: translateY(50%); }
+@media (prefers-reduced-motion: reduce) {
+  .hw-note[data-near] { transform: translateY(50%); }
+}
+/* drum sound + click share a row (the setup fits one phone screen) */
+.hw-setup .hw-two { display: flex; gap: 10px; }
+.hw-setup .hw-two > .seg-field { flex: 1 1 0; min-width: 0; }
+.hw-setup .hw-two .seg button { padding-inline: 6px; }

@@ -1516,6 +1516,30 @@
 :root[data-theme] .hw-note.lane-4 { background: var(--lilac); }
 :root[data-theme] .hw-note.is-perfect,
 :root[data-theme] .hw-note.is-good { transform: translateY(50%) rotate(-20deg) scale(1.3); }
+:root[data-theme] .hw-note { transition: transform 0.12s ease-out, filter 0.12s; }
+/* approach cues (0.77): the head swells over its last beat and a half, bright and ringed over the last half beat */
+:root[data-theme] .hw-note[data-near='1'] { transform: translateY(50%) rotate(-20deg) scale(1.15); filter: brightness(1.08); }
+:root[data-theme] .hw-note[data-near='2'] { transform: translateY(50%) rotate(-20deg) scale(1.35); box-shadow: 0 0 0 3px #fff, 0 0 16px 4px rgb(255 255 255 / 0.55); }
+:root[data-theme] .hw-note.is-miss[data-near] { transform: translateY(50%) rotate(-20deg); box-shadow: none; }
+/* kit lanes: a round drum pad carrying the drum's picture, no stem, no tilt */
+:root[data-theme] .hw-note[class*='kit-'] { width: 40px; height: 40px !important; left: calc((100% / var(--lanes, 1)) * (var(--i, 0) + 0.5) - 20px); transform: translateY(50%); }
+:root[data-theme] .hw-note[class*='kit-']::after { inset: 0; margin: auto; width: 22px; height: 22px; border-radius: 0; transform: none; background: var(--ink-c); -webkit-mask: var(--kit-ic) center / contain no-repeat; mask: var(--kit-ic) center / contain no-repeat; }
+:root[data-theme] .hw-note[class*='kit-'][data-near='1'] { transform: translateY(50%) scale(1.15); }
+:root[data-theme] .hw-note[class*='kit-'][data-near='2'] { transform: translateY(50%) scale(1.38); }
+:root[data-theme] .hw-note[class*='kit-'].is-perfect,
+:root[data-theme] .hw-note[class*='kit-'].is-good { transform: translateY(50%) scale(1.5); }
+:root[data-theme] .hw-note[class*='kit-'].is-miss[data-near] { transform: translateY(50%); }
+:root[data-theme] .hw-lane-labels.kit .kit-pad { --c: var(--lemon); }
+:root[data-theme] .hw-lane-labels.kit .kit-pad:nth-child(2) { --c: var(--teal); }
+:root[data-theme] .hw-lane-labels.kit .kit-pad:nth-child(3) { --c: var(--pink); }
+:root[data-theme] .hw-lane-labels.kit .kit-pad:nth-child(4) { --c: var(--sky); }
+:root[data-theme] .hw-lane-labels.kit .kit-pad:nth-child(5) { --c: var(--lilac); }
+:root[data-theme] .hw-lane-labels.kit .kit-pad { background: color-mix(in srgb, var(--c) 22%, rgb(0 0 0 / 0.35)); border-color: color-mix(in srgb, var(--c) 60%, transparent); }
+:root[data-theme] .hw-lane-labels.kit .kit-pad b { font-family: Rubik, sans-serif; font-weight: 600; font-size: 0.72rem; }
+@media (prefers-reduced-motion: reduce) {
+  :root[data-theme] .hw-note[data-near] { transform: translateY(50%) rotate(-20deg); }
+  :root[data-theme] .hw-note[class*='kit-'][data-near] { transform: translateY(50%); }
+}
 :root[data-theme] .hw-hitline { height: 10px; margin-bottom: -5px; background: linear-gradient(180deg, #fff 0 3px, transparent 3px 5px, #fff 5px 10px); box-shadow: none; }
 :root[data-theme] .hw-flash { font-family: 'Secular One', Rubik, sans-serif; text-shadow: 0 2px 0 var(--ink-c); }
 :root[data-theme] .hw-flash.perfect { color: var(--lemon); }

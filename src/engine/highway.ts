@@ -29,6 +29,10 @@ export interface HighwayOptions {
   bars?: number;
   /** Level tier of the run (GAMES_TIERS_PLAN): sets the level per song chip and the tempo. */
   tier?: import('./courseSocial').DynName;
+  /** A tier's practice tempo: 60 / 80 % of its tempo (`bpm` already holds the result). Cleared only at 100. */
+  tempoPct?: number;
+  /** Kit lanes, the first song of the first tier: kick and snare only (two drums before the hi-hat joins). */
+  kitEasy?: boolean;
 }
 
 export interface HighwayNote {
@@ -74,8 +78,8 @@ const DEGREE_SEMIS = [0, 2, 4, 5, 7, 9, 11];
 /** Lanes → scale degrees (1-based). */
 export const LANE_DEGREES: Record<3 | 4 | 5, number[]> = { 3: [1, 2, 3], 4: [1, 2, 3, 5], 5: [1, 2, 3, 4, 5] };
 
-export const songId = (o: Pick<HighwayOptions, 'mode' | 'level' | 'song' | 'lanes'>) =>
-  `${o.mode === 'pitch' ? `p${o.lanes ?? 3}` : o.mode === 'kit' ? 'k' : 't'}-R${o.level}-${o.song}`;
+export const songId = (o: Pick<HighwayOptions, 'mode' | 'level' | 'song' | 'lanes' | 'kitEasy'>) =>
+  `${o.mode === 'pitch' ? `p${o.lanes ?? 3}` : o.mode === 'kit' ? 'k' : 't'}-R${o.level}-${o.song}${o.mode === 'kit' && o.kitEasy ? 'e' : ''}`;
 
 const songSeed = (o: HighwayOptions) => (0x51a7 + o.level * 7919 + o.song * 104729 + (o.mode === 'pitch' ? 15485863 : o.mode === 'kit' ? 32452843 : 0)) >>> 0;
 
@@ -186,7 +190,9 @@ function kitSong(o: HighwayOptions): HighwaySong {
   for (let bar = 0; bar < bars; bar++) {
     const fill = bar % SECTION_BARS === SECTION_BARS - 1 && bar < bars - 1 && o.level >= 2;
     const crash = bar % SECTION_BARS === 0 && bar > 0 && o.level >= 2;
-    for (const [lane, b] of kitBar(o.level, rnd, fill, crash)) hits.push([lane, bar * 4 + b]);
+    // the easiest song: kick on 1 and 3, snare on 2 and 4, nothing else
+    const bar1: [number, number][] = o.kitEasy ? [[2, 0], [1, 1], [2, 2], [1, 3]] : kitBar(o.level, rnd, fill, crash);
+    for (const [lane, b] of bar1) hits.push([lane, bar * 4 + b]);
   }
   hits.sort((a, b) => a[1] - b[1] || a[0] - b[0]);
   const notes: HighwayNote[] = hits.map(([lane, beat], i) => {
@@ -479,7 +485,7 @@ export function summary(s: HighwaySong, run: HighwayRun): HighwaySummary {
 // ---------------------------------------------------------------- the backing loop
 
 export interface BackingTrack {
-  /** Count-in clicks then nothing (seconds from the timeline start). */
+  /** Count-in clicks, then the metronome through the song when asked (seconds from the timeline start). */
   clicks: { t: number; accent: boolean; soft?: boolean }[];
   /** Kick / snare hits (seconds from the timeline start). */
   kit: { t: number; d: 'k' | 's' }[];
@@ -496,7 +502,7 @@ export interface BackingTrack {
  * Bass: a I–IV–V–I loop, one chord per bar. `bass: false` (pitch lanes by microphone) leaves the bass out so
  * the pitch tracker does not hear it.
  */
-export function backingTrack(s: HighwaySong, fromSection = 0, opts: { bass?: boolean; drums?: boolean } = {}): BackingTrack {
+export function backingTrack(s: HighwaySong, fromSection = 0, opts: { bass?: boolean; drums?: boolean; click?: boolean } = {}): BackingTrack {
   const beat = s.beatMs / 1000;
   const m = meterOf(s.rhythm);
   const per = s.beatsPerBar;
@@ -524,6 +530,8 @@ export function backingTrack(s: HighwaySong, fromSection = 0, opts: { bass?: boo
       }
       if (opts.bass !== false) extras.push({ midi: 36 + ((keyPc + loop[b % 4]) % 12), start: t0, duration: per * beat * 0.9, velocity: 0.55 });
     }
+    // Metronome through the song (kit lanes: the player is the drummer and needs the pulse): a click on each group start.
+    if (opts.click) for (let b = firstBar; b < s.bars; b++) starts.forEach((e, i) => oddClicks.push({ t: responseAt + (b - firstBar) * per * beat + e * ei, accent: i === 0 }));
     return { clicks: oddClicks, kit, extras, responseAt, responseEnd: responseAt + (s.bars - firstBar) * per * beat + 0.4 };
   }
   for (let b = firstBar; b < s.bars; b++) {
@@ -548,6 +556,8 @@ export function backingTrack(s: HighwaySong, fromSection = 0, opts: { bass?: boo
       if (per >= 4) extras.push({ midi: root + 7, start: t0 + half * beat, duration: (per - half) * beat * 0.9, velocity: 0.45 });
     }
   }
+  // Metronome through the song (kit lanes: the player is the drummer and needs the pulse), accent on each bar's 1.
+  if (opts.click) for (let b = firstBar; b < s.bars; b++) for (let p = 0; p < pulsesPerBar; p++) clicks.push({ t: responseAt + (b - firstBar) * per * beat + p * pulse * beat, accent: p === 0 });
   const responseEnd = responseAt + (s.bars - firstBar) * per * beat + 0.4;
   return { clicks, kit, extras, responseAt, responseEnd };
 }

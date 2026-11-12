@@ -326,7 +326,7 @@
 }
 .dl-name {
   fill: var(--ink-soft);
-  font: 700 8px var(--font);
+  font: 700 7.5px var(--font);
 }
 .dl-bar {
   stroke: var(--ink);

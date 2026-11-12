@@ -2627,7 +2627,7 @@ export function App() {
         if (g === 'flight') return <Flight key={g} {...props} />;
         if (g === 'nametune') return <NameTune key={g} {...props} />;
         if (g === 'tuneup') return <TuneUp key={g} {...props} />;
-        if (g === 'highway') return <Highway key={g} {...props} />;
+        if (g === 'highway') return <Highway key={g} {...props} onKitSounds={(on) => s.drumKit && updateSettings({ drumKit: { ...s.drumKit, sounds: on } })} />;
         if (g === 'melodypuzzle') return <MelodyPuzzle key={g} {...props} />;
         if (g === 'peakhunter') return <PeakHunter key={g} {...props} />;
         if (g === 'reharm') return <ReharmSpot key={g} {...props} />;

@@ -489,7 +489,7 @@ button.heat-cell {
 .write-slots li.w-bad { border-color: #ff6b5c; }
 .write-answer { display: block; color: var(--ink-dim); }
 /* Drummer's ear (0.66): the dictation step grid and the style pick. */
-.drum-grid { display: grid; grid-template-columns: 26px repeat(var(--cells), minmax(0, 1fr)); gap: 3px; align-items: center; }
+.drum-grid { display: grid; grid-template-columns: 46px repeat(var(--cells), minmax(0, 1fr)); gap: 3px; align-items: center; }
 .dg-name { font-size: 0.7rem; font-weight: 700; color: var(--ink-dim); }
 .dg-count { font-size: 0.65rem; text-align: center; color: var(--ink-dim); }
 .dg-cell { height: 30px; min-width: 0; padding: 0; border: 2px solid var(--line-strong); border-radius: 6px; background: var(--card); }

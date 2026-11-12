@@ -47,14 +47,66 @@ function withTier(o: HighwayOptions, t: DynName | undefined): HighwayOptions {
   const p = d.params ?? {};
   const lv = (o.mode === 'pitch' ? (p.pitch as number[]) : o.mode === 'kit' ? (p.kit as number[]) : d.levels) ?? [1];
   const level = lv[Math.max(0, Math.min(lv.length - 1, o.song - 1))] as RhythmLevel;
-  return { ...o, tier: t, level, bpm: Number(p.bpm ?? o.bpm), ...(o.mode === 'pitch' ? { lanes: Number(p.lanes ?? 3) as 3 | 4 | 5 } : {}) };
+  const pct = o.tempoPct ?? 100;
+  const kitEasy = o.mode === 'kit' && o.song <= Number(p.kitEasy ?? 0);
+  return { ...o, tier: t, level, bpm: Math.round((Number(p.bpm ?? o.bpm) * pct) / 500) * 5, kitEasy, ...(o.mode === 'pitch' ? { lanes: Number(p.lanes ?? 3) as 3 | 4 | 5 } : {}) };
 }
 
 type Lang = 'he' | 'en';
 type Text = { en: string; he: string };
 
-/** Kit lane labels (short: the road is narrow on a phone). */
-const KIT_SHORT: Record<(typeof KIT_LANES)[number], Text> = { hihat: { en: 'HH', he: 'הייהט' }, snare: { en: 'SN', he: 'סנר' }, kick: { en: 'BD', he: 'קיק' }, tom: { en: 'TOM', he: 'טום' }, cymbal: { en: 'CYM', he: 'מצילה' } };
+/** Kit lane names: the drum's own name, never an abbreviation, under a picture of the drum. */
+const KIT_NAME: Record<(typeof KIT_LANES)[number], Text> = { hihat: { en: 'Hi-hat', he: 'היי־האט' }, snare: { en: 'Snare', he: 'סנר' }, kick: { en: 'Kick', he: 'קיק' }, tom: { en: 'Tom', he: 'טום' }, cymbal: { en: 'Crash', he: 'מצילה' } };
+/** The sound an on-screen pad makes. */
+const KIT_PERC = { hihat: 'hat', snare: 'snare', kick: 'kick', tom: 'tom-hi', cymbal: 'crash' } as const;
+const CLICK_KEY = 'toneturn.highway.click';
+const loadClick = () => {
+  try {
+    return localStorage.getItem(CLICK_KEY) !== '0';
+  } catch {
+    return true;
+  }
+};
+
+/** Line drawings of each drum (24-unit box, stroke = currentColor). */
+export function KitIcon({ lane }: { lane: (typeof KIT_LANES)[number] }) {
+  const p = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
+  return (
+    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" className="kit-icon">
+      {lane === 'hihat' && (
+        <g {...p}>
+          <ellipse cx="12" cy="7" rx="9" ry="2" />
+          <ellipse cx="12" cy="10" rx="9" ry="2" />
+          <path d="M12 12v10M8 22h8" />
+        </g>
+      )}
+      {lane === 'snare' && (
+        <g {...p}>
+          <ellipse cx="12" cy="8" rx="9" ry="3" />
+          <path d="M3 8v7c0 1.7 4 3 9 3s9-1.3 9-3V8M7 10.5v6M12 11v7M17 10.5v6" />
+        </g>
+      )}
+      {lane === 'kick' && (
+        <g {...p}>
+          <circle cx="12" cy="12" r="9" />
+          <circle cx="12" cy="12" r="3.5" />
+        </g>
+      )}
+      {lane === 'tom' && (
+        <g {...p}>
+          <ellipse cx="12" cy="7" rx="7" ry="2.5" />
+          <path d="M5 7v8c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5V7M12 17.5V22" />
+        </g>
+      )}
+      {lane === 'cymbal' && (
+        <g {...p}>
+          <path d="M2 10c3-2.5 17-2.5 20 0-3 1.6-17 1.6-20 0z" />
+          <path d="M12 8V6M12 11v11M8 22h8" />
+        </g>
+      )}
+    </svg>
+  );
+}
 
 export interface HighwaySaved {
   v: 1;
@@ -76,7 +128,17 @@ const T = {
   mode: { en: 'Play with', he: 'מנגנים עם' },
   tap: { en: 'Taps', he: 'הקשות' },
   kit: { en: 'Drum kit', he: 'מערכת תופים' },
-  kitHint: { en: 'Play the lanes on your e-kit: hi-hat, snare, kick, tom, cymbal.', he: 'נגנו את המסלולים על התופים: היי־האט, סנר, קיק, טום, מצילה.' },
+  kitHint: { en: 'Hit each drum as its note reaches the line, on your e-kit or on the pads below.', he: 'הכו בכל תוף כשהתו שלו מגיע לקו: על התופים האלקטרוניים או על הפדים שלמטה.' },
+  kitPlay: { en: 'Hit each drum as its note lands on the line.', he: 'הכו בכל תוף כשהתו שלו נוחת על הקו.' },
+  padsPractice: { en: 'Screen pads are practice: the level opens on an e-kit.', he: 'פדים במסך הם תרגול: השלב נפתח על תופים אלקטרוניים.' },
+  click: { en: 'Click', he: 'קליק' },
+  clickOn: { en: 'On', he: 'פועל' },
+  kitSound: { en: 'Drum sound', he: 'צליל התופים' },
+  fromKit: { en: 'Kit', he: 'תופים' },
+  fromApp: { en: 'App', he: 'אפליקציה' },
+  clickOff: { en: 'Off', he: 'כבוי' },
+  fullTempo: { en: 'Full', he: 'מלא' },
+  tempoNote: { en: 'The level opens at full tempo; slower is practice.', he: 'השלב נפתח בטמפו המלא; איטי יותר הוא תרגול.' },
   pitch: { en: 'My instrument', he: 'הכלי שלי' },
   level: { en: 'Rhythm level', he: 'רמת קצב' },
   song: { en: 'Song', he: 'שיר' },
@@ -182,7 +244,10 @@ export function Highway({
   onExit,
   onResult,
   tier: tierInfo,
+  onKitSounds,
 }: {
+  /** Kit lanes: turn the app's own drum sound for each e-kit hit on / off (the kit card's "play drum sounds"). */
+  onKitSounds?: (on: boolean) => void;
   lang: Lang;
   settings: Settings;
   saved: unknown | null;
@@ -203,8 +268,13 @@ export function Highway({
     // A run saved in another course may hold a mode this course doesn't offer (pitch in drums, kit elsewhere).
     () =>
       (resumable && MODES.includes(resumable.opts.mode) ? resumable.opts : resumable ? { ...resumable.opts, mode: MODES[0] } : null) ??
-      withTier({ mode: drumsCourse ? 'kit' : 'tap', level: 1, song: 1, bpm: 90, lanes: 3, keyPc: laneKeyPc(settings) }, tierInfo ? startTier(tierInfo) : undefined),
+      withTier({ mode: drumsCourse ? 'kit' : 'tap', level: 1, song: 1, bpm: 90, lanes: 3, keyPc: laneKeyPc(settings), ...(tierInfo ? { tempoPct: 60 } : {}) }, tierInfo ? startTier(tierInfo) : undefined),
   );
+  const [clickOn, setClickOn] = useState(loadClick);
+  /** On-screen pads hit in this run (kit lanes): practice, not a measured take. */
+  const padsRef = useRef(false);
+  const noteEls = useRef<(HTMLDivElement | null)[]>([]);
+  const padEls = useRef<(HTMLSpanElement | null)[]>([]);
   const song = useMemo(() => highwaySong(opts), [opts]);
   const [stage, setStage] = useState<Stage>('setup');
   const [run, setRun] = useState<HighwayRun>(() => newRun(song));
@@ -262,7 +332,8 @@ export function Highway({
     const swept = sweepMisses(s, runRef.current, s.lengthMs + 10_000, 0).run;
     setBoth(swept);
     const sum = summary(s, swept);
-    const best = saveBest(s.id, sum.accuracy);
+    // a practice tempo's score is not the song's best
+    const best = (s.opts.tempoPct ?? 100) >= 100 ? saveBest(s.id, sum.accuracy) : false;
     setBests(loadBests());
     setResult({ sum, best });
     stopAudio();
@@ -271,7 +342,7 @@ export function Highway({
     onResult({
       game: 'highway',
       score: sum.accuracy,
-      detail: { songId: s.id, mode: s.opts.mode, level: s.opts.level, bpm: s.opts.bpm, lanes: s.opts.lanes, newBest: best, ...sum, ...(s.opts.tier ? { tier: s.opts.tier } : {}) },
+      detail: { songId: s.id, mode: s.opts.mode, level: s.opts.level, bpm: s.opts.bpm, lanes: s.opts.lanes, newBest: best, ...sum, ...(s.opts.tier ? { tier: s.opts.tier } : {}), ...(s.opts.tempoPct !== undefined ? { tempoPct: s.opts.tempoPct } : {}), ...(padsRef.current ? { input: 'touch' } : {}) },
     });
   }, [onResult, onSave]);
 
@@ -296,6 +367,26 @@ export function Highway({
       const s = songRef.current;
       const songMs = performance.now() - originRef.current;
       if (stripRef.current) stripRef.current.style.transform = `translate3d(0, ${(songMs * px).toFixed(1)}px, 0)`;
+      // Approach cues: a note swells and brightens over its last beat, and its lane's pad lights as it lands.
+      if (s.opts.mode === 'kit' || s.laneMidis.length) {
+        const t = songMs;
+        const due = new Set<number>();
+        for (let i = 0; i < s.notes.length; i++) {
+          const n = s.notes[i];
+          const el = noteEls.current[i];
+          if (!el) continue;
+          const d = n.ms - t;
+          const near = d > s.beatMs * 1.5 || d < -200 ? '' : d > s.beatMs * 0.5 ? '1' : '2';
+          if ((el.dataset.near ?? '') !== near) el.dataset.near = near;
+          if (Math.abs(d) < 110) due.add(n.lane);
+          if (d > s.beatMs * 2) break;
+        }
+        padEls.current.forEach((el, i) => {
+          if (!el) return;
+          const v = due.has(i) ? '1' : '';
+          if ((el.dataset.due ?? '') !== v) el.dataset.due = v;
+        });
+      }
       if (playingRef.current) {
         const { run: r, missed } = sweepMisses(s, runRef.current, songMs, latency);
         if (missed.length) {
@@ -350,7 +441,10 @@ export function Highway({
     }
     const pitch = s.opts.mode === 'pitch';
     const kitMode = s.opts.mode === 'kit';
-    const bt = backingTrack(s, fromSection, { bass: !(pitch && !useMidi), drums: !kitMode });
+    if (fromSection === 0) padsRef.current = false;
+    // The metronome runs through the song (not into an open microphone, which would hear it).
+    const bt = backingTrack(s, fromSection, { bass: !(pitch && !useMidi), drums: !kitMode, click: clickOn && !(pitch && !useMidi) });
+    if (kitMode) piano.preloadKit();
     const offsetMs = sectionStartMs(s, fromSection);
     let unsub: (() => void) | null = null;
 
@@ -498,6 +592,69 @@ export function Highway({
               })}
             </div>
           </fieldset>
+          {tierInfo && (
+            <fieldset className="seg-field" data-hw-tempo-pct>
+              <legend>{tx(T.tempo)}</legend>
+              <div className="seg" role="radiogroup" aria-label={tx(T.tempo)}>
+                {(
+                  [
+                    [60, T.slow],
+                    [80, T.medium],
+                    [100, T.fullTempo],
+                  ] as const
+                ).map(([pc, l]) => {
+                  const full = Number(tierDef('highway', opts.tier ?? startTier(tierInfo))?.params?.bpm ?? opts.bpm);
+                  const on = (opts.tempoPct ?? 100) === pc;
+                  return (
+                    <button key={pc} type="button" role="radio" aria-checked={on} className={on ? 'on' : ''} onClick={() => set({ tempoPct: pc })}>
+                      {tx(l)} <small dir="ltr">{Math.round((full * pc) / 500) * 5}</small>
+                    </button>
+                  );
+                })}
+              </div>
+              {(opts.tempoPct ?? 100) < 100 && <p className="field-hint">{tx(T.tempoNote)}</p>}
+            </fieldset>
+          )}
+          <div className="hw-two">
+          {opts.mode === 'kit' && onKitSounds && settings.drumKit && !settings.drumKit.mic && (
+            <fieldset className="seg-field" data-hw-kit-sound>
+              <legend>{tx(T.kitSound)}</legend>
+              <div className="seg" role="radiogroup" aria-label={tx(T.kitSound)}>
+                {([false, true] as const).map((v) => (
+                  <button key={String(v)} type="button" role="radio" aria-checked={!!settings.drumKit?.sounds === v} className={!!settings.drumKit?.sounds === v ? 'on' : ''} onClick={() => onKitSounds(v)}>
+                    {tx(v ? T.fromApp : T.fromKit)}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+          )}
+          {opts.mode !== 'pitch' && (
+            <fieldset className="seg-field">
+              <legend>{tx(T.click)}</legend>
+              <div className="seg" role="radiogroup" aria-label={tx(T.click)}>
+                {([true, false] as const).map((v) => (
+                  <button
+                    key={String(v)}
+                    type="button"
+                    role="radio"
+                    aria-checked={clickOn === v}
+                    className={clickOn === v ? 'on' : ''}
+                    onClick={() => {
+                      setClickOn(v);
+                      try {
+                        localStorage.setItem(CLICK_KEY, v ? '1' : '0');
+                      } catch {
+                        /* not kept */
+                      }
+                    }}
+                  >
+                    {tx(v ? T.clickOn : T.clickOff)}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+          )}
+          </div>
           {!tierInfo && (
           <fieldset className="seg-field">
             <legend>{tx(T.tempo)}</legend>
@@ -701,6 +858,23 @@ export function Highway({
             dir="ltr"
             style={{ ['--lanes' as string]: lanes }}
             onPointerDown={(e) => {
+              if (opts.mode === 'kit') {
+                // The road's columns are the drums: a tap plays that drum and counts as its hit (practice).
+                e.preventDefault();
+                const r = e.currentTarget.getBoundingClientRect();
+                const lane = Math.max(0, Math.min(KIT_LANES.length - 1, Math.floor(((e.clientX - r.left) / r.width) * KIT_LANES.length)));
+                padsRef.current = true;
+                piano.liveDrum(KIT_PERC[KIT_LANES[lane]], 105);
+                const pad = padEls.current[lane];
+                if (pad) {
+                  pad.dataset.hit = String(Number(pad.dataset.hit ?? 0) + 1);
+                  pad.classList.remove('hit');
+                  void pad.offsetWidth;
+                  pad.classList.add('hit');
+                }
+                input(e.timeStamp, KIT_LANE_NOTE[KIT_LANES[lane]], settings.tapLatencyMs || 0);
+                return;
+              }
               if (opts.mode !== 'tap') return;
               e.preventDefault();
               input(e.timeStamp);
@@ -720,7 +894,10 @@ export function Highway({
                 return (
                   <div
                     key={i}
-                    className={`hw-note lane-${n.lane} ${g ? `is-${g}` : ''}`}
+                    ref={(el) => {
+                      noteEls.current[i] = el;
+                    }}
+                    className={`hw-note lane-${n.lane} ${s.opts.mode === 'kit' ? `kit-${KIT_LANES[n.lane]}` : ''} ${g ? `is-${g}` : ''}`}
                     style={{
                       bottom: `${n.ms * px}px`,
                       height: `${Math.max(14, Math.min(n.durMs * px, 90) * 0.35)}px`,
@@ -739,8 +916,17 @@ export function Highway({
             {s.opts.mode === 'kit' && (
               <div className="hw-lane-labels kit" data-kit-lanes="1">
                 {KIT_LANES.map((l, i) => (
-                  <span key={l} style={{ ['--i' as string]: i }}>
-                    <b>{KIT_SHORT[l][lang]}</b>
+                  <span
+                    key={l}
+                    className={`kit-pad kit-${l}`}
+                    style={{ ['--i' as string]: i }}
+                    ref={(el) => {
+                      padEls.current[i] = el;
+                    }}
+                    onAnimationEnd={(e) => e.currentTarget.classList.remove('hit')}
+                  >
+                    <KitIcon lane={l} />
+                    <b>{KIT_NAME[l][lang]}</b>
                   </span>
                 ))}
               </div>
@@ -768,7 +954,7 @@ export function Highway({
               {tx(T.tapHere)}
             </button>
           )}
-          <p className="hint">{opts.mode === 'tap' ? tx(T.tapHint) : opts.mode === 'kit' ? tx(T.kitHint) : tx(T.pitchHint)}</p>
+          <p className="hint">{opts.mode === 'tap' ? tx(T.tapHint) : opts.mode === 'kit' ? tx(T.kitPlay) : tx(T.pitchHint)}</p>
         </>
       )}
     </main>
