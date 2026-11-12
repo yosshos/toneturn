@@ -57,6 +57,8 @@ const GAMES: Record<string, { tags: (d: Record<string, unknown>) => Tag[]; diff:
   'ghost-control': { tags: () => T2(['instrument', 'drum-tech', 0.8], ['timing', 'steady', 0.2]), diff: () => 1000 },
   'groove-off': { tags: () => T2(['instrument', 'drum-tech', 0.7], ['timing', 'steady', 0.3]), diff: () => 1000 },
   'rudiment-rush': { tags: () => T2(['instrument', 'drum-tech', 0.8], ['timing', 'steady', 0.2]), diff: () => 1000 },
+  // The chord & cadence builder: a cadence played chord by chord (MIDI or the strum recognizer).
+  'cadence-builder': { tags: () => T2(['cadences', 'cadence', 0.6], ['instrument', 'shapes', 0.4]), diff: () => 1000 },
 };
 
 /** Normalised accuracy 0..1 of a finished game from what it reports. */

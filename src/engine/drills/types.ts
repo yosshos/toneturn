@@ -364,7 +364,7 @@ export interface DrillGoal {
    */
   /** The prog engine's measures (progAnalyze.ts `withProg`); each can only lower the verdict. */
   prog?: ProgGoal;
-  free?: { windows: [number, number][]; scale: { from: number; to: number; pcs: number[] }[]; minPerBar: number; model: { beat: number; dur: number; pitch: number }[] };
+  free?: { windows: [number, number][]; scale: { from: number; to: number; pcs: number[] }[]; minPerBar: number; model: { beat: number; dur: number; pitch: number; /** Guitar: where the model's note sits (tab). */ string?: number; fret?: number }[] };
 }
 
 /** Prog pass rules (PROG_ENGINE.md): metric modulation, unison lock, the road map. Absent fields are not checked. */
@@ -457,6 +457,11 @@ export interface DrumGoal {
    * sends chokes (polyphonic aftertouch, 0xA0 — Roland and others); a kit that sends none is never failed for it.
    */
   choke?: { beats: number[]; by: number };
+  /**
+   * The foot splash, not a chick (drumSplash.ts, d-feet 5): the written pedal notes (`beats`, else every hi-hat pedal
+   * note) played as a splash on ≥ `share` of them. MIDI only; measured when the kit sends a splash note or CC4.
+   */
+  splash?: { beats?: number[]; share: number };
 }
 
 /** Bass-specific pass rules (BASS_CURRICULUM §4–§5). Absent = the default pitch + timing rule only. */
@@ -708,6 +713,8 @@ export interface DrumMetrics {
   impro?: number[];
   /** Crash chokes: grabbed in time / asked; measured false = the kit sent no choke at all. */
   choke?: { ok: number; of: number; measured: boolean };
+  /** Foot splashes played as splashes / written; measured false = the kit sent no splash note and no CC4. */
+  splash?: { ok: number; of: number; measured: boolean };
 }
 
 /** Progress of one item (synced, small). */

@@ -51,6 +51,10 @@ export function bestRun(events: RatingEvent[], day: string): number {
 type Make = (d: QuestDay) => Quest;
 /** The skills the exams test most (the exam goal's boosts, engine/path.ts GOAL_BOOST.exam, plus reading). */
 const EXAM_SKILLS: string[] = ['theory', 'notes', 'sight', 'dictation', 'cadences', 'rhythm-dictation'];
+/** Games the drum-game quest counts (Time Lock, Ghost Control, Rudiment Rush, Groove-off). */
+export const DRUM_QUEST_GAMES = ['time-lock', 'ghost-control', 'rudiment-rush', 'groove-off'];
+/** The 8 advanced games (0.70). */
+export const ADV_QUEST_GAMES = ['rush-voicing', 'rush-scale', 'rush-standard', 'reharm', 'transcribe', 'bhtime', 'riffecho', 'polylock'];
 const POOL: Record<string, Make> = {
   run10: (d) => ({ id: 'run10', title: { en: '10 right answers in a row', he: '10 תשובות נכונות ברצף' }, now: bestRun(d.events, d.day), target: 10, color: '#3AB8FF', glyph: 'intervals' }),
   steps2: (d) => ({ id: 'steps2', title: { en: 'Finish 2 path steps', he: 'לסיים 2 צעדים במסלול' }, now: d.stepsToday, target: 2, color: '#FFD43B', glyph: 'scales' }),
@@ -71,18 +75,22 @@ const POOL: Record<string, Make> = {
   // Repertoire (SPEC-REPERTOIRE): a piece of the course's repertoire, and one from Blues & progressions.
   rep1: (d) => ({ id: 'rep1', title: { en: 'Practise a repertoire piece', he: 'להתאמן על יצירה מהרפרטואר' }, now: d.sessions.filter((s) => parseRepLesson(s)?.course === d.course).length, target: 1, color: '#12C9B4', glyph: 'scales' }),
   rep2: (d) => ({ id: 'rep2', title: { en: 'A piece from Blues & progressions', he: 'יצירה מבלוז ומהלכים' }, now: d.sessions.filter((s) => { const r = parseRepLesson(s); return !!r && r.course === d.course && repItem(r.course, r.id)?.tier === 2; }).length, target: 1, color: '#A78BFA', glyph: 'scales' }),
+  // Game badges (gameBadges.ts): the newer drum games and the advanced games get a quest of their own — meet the goal
+  // of your level once today (a measured run, gameTiers.clearsRun).
+  drumGame: (d) => ({ id: 'drumGame', title: { en: "Meet a drum game's goal", he: 'לעמוד ביעד של משחק תופים' }, now: (d.tierRuns ?? []).filter((r) => r.pass && sameDay(r.at, d.day) && DRUM_QUEST_GAMES.includes(r.game)).length, target: 1, color: '#FF5FA2', glyph: 'sticks' }),
+  advGame: (d) => ({ id: 'advGame', title: { en: "Meet an advanced game's goal", he: 'לעמוד ביעד של משחק מתקדם' }, now: (d.tierRuns ?? []).filter((r) => r.pass && sameDay(r.at, d.day) && ADV_QUEST_GAMES.includes(r.game)).length, target: 1, color: '#A78BFA', glyph: 'scales' }),
   rhythm: (d) => ({ id: 'rhythm', title: d.course === 'drums' ? { en: 'Rhythm right 5 times', he: 'קצב נכון 5 פעמים' } : { en: '5 rhythm answers right', he: '5 תשובות קצב נכונות' }, now: d.events.filter((e) => sameDay(e.at, d.day) && e.set === undefined && (/rhythm|timing|tempo|meter/.test(e.skill) || (d.course === 'drums' && !!e.tags?.some((x) => /rhythm|timing/.test(x.skill)))) && (e.score ?? (e.correct ? 1 : 0)) >= 0.7).length, target: 5, color: '#FF5FA2', glyph: 'rhythm' }),
 };
 
 /** Which quests a course offers (first one rotates with the day). */
 const BY_COURSE: Record<CourseId, string[]> = {
-  ear: ['run10', 'steps2', 'rhythm', 'min10', 'tierPass2', 'rep1'],
-  jazz: ['harmony5', 'steps2', 'run10', 'min10', 'tierClear', 'rep2', 'lick3', 'tx2'],
+  ear: ['run10', 'steps2', 'rhythm', 'min10', 'tierPass2', 'rep1', 'advGame'],
+  jazz: ['harmony5', 'steps2', 'run10', 'min10', 'tierClear', 'rep2', 'lick3', 'tx2', 'advGame'],
   voice: ['sing3', 'steps2', 'min10', 'tierPass2', 'rep1', 'tx2'],
-  keys: ['tech3', 'steps2', 'min10', 'rep1', 'rep2', 'lick3'],
+  keys: ['tech3', 'steps2', 'min10', 'rep1', 'rep2', 'lick3', 'advGame'],
   guitar: ['tech3', 'steps2', 'min10', 'rep1', 'rep2', 'lick3'],
   bass: ['tech3', 'steps2', 'min10', 'rep1', 'rep2', 'lick3'],
-  drums: ['tech3', 'rhythm', 'steps2', 'min10', 'rep1'],
+  drums: ['tech3', 'rhythm', 'steps2', 'min10', 'rep1', 'drumGame'],
 };
 
 /** The Ear course in exam-prep mode: the exam-topic quest every day, the other one rotates. */

@@ -677,6 +677,8 @@ export interface PracticeHub {
   licks?: () => void;
   /** Chord finder (guitar course, GUITAR_DEEPENING §6.3): strum → name, name → shapes. */
   chordfinder?: () => void;
+  /** Chord & cadence builder (keys and guitar courses). */
+  chordbuilder?: () => void;
   transcribe?: () => void;
   puzzle?: () => void;
   exams?: () => void;
@@ -802,6 +804,15 @@ const HUB_PATHS: Record<string, React.ReactNode> = {
       <circle cx="12" cy="10.5" r="1.6" fill="currentColor" />
     </>
   ),
+  chordbuilder: (
+    <>
+      <path d="M4 18h16M4 13h16" />
+      <circle cx="7" cy="13" r="1.8" fill="currentColor" />
+      <circle cx="12" cy="9" r="1.8" fill="currentColor" />
+      <circle cx="17" cy="5" r="1.8" fill="currentColor" />
+      <path d="M7 13v5M12 9v9M17 5v13" />
+    </>
+  ),
   mixer: (
     <>
       <path d="M6 4v16M12 4v16M18 4v16" />
@@ -850,6 +861,7 @@ const HUB_TX = {
   pieces: { en: 'My pieces', he: 'היצירות שלי' },
   mixer: { en: 'Mixer', he: 'מיקסר' },
   chordfinder: { en: 'Chord finder', he: 'מאתר אקורדים' },
+  chordbuilder: { en: 'Chord builder', he: 'בונה אקורדים' },
   games: { en: ['Games', 'By type, topic and level'], he: ['משחקים', 'לפי סוג, נושא ורמה'] },
 };
 
@@ -1083,7 +1095,7 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
           <section className="pt-tools" aria-label={HUB_TX.tools[lang]} data-hub-group="tools">
             <h2>{HUB_TX.tools[lang]}</h2>
             <div className="pt-tool-row">
-              {(['tuner', 'chordfinder', 'metronome', 'drone', 'groove', 'slowdown', 'mixer', 'log'] as const).filter((k) => hub[k] && !(course === 'drums' && (k === 'tuner' || k === 'drone'))).map((k) => (
+              {(['tuner', 'chordfinder', 'chordbuilder', 'metronome', 'drone', 'groove', 'slowdown', 'mixer', 'log'] as const).filter((k) => hub[k] && !(course === 'drums' && (k === 'tuner' || k === 'drone'))).map((k) => (
                 <button key={k} className="pt-tool" onClick={hub[k]} data-hub={k} aria-label={HUB_TX[k][lang]} title={HUB_TX[k][lang]}>
                   <HubIcon k={k} size={22} />
                   <small>{HUB_TX[k][lang]}</small>

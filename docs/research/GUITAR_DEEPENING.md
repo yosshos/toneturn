@@ -645,3 +645,23 @@ What the 2026-11-11 section left open, plus two repertoire / quest gaps.
 **Tests:** `guitarCore2.test.ts` (trade: windows, the band's phrase inside its bars and a beat short, landings on 1 and 3 that are chord tones, band rests; the model line passes, another octave passes, a wrong landing / laying out / a line outside the changes never passes; the existing sweep covers g-impro 7), `courseStart.test.ts` (guitar → the trade), `songStrum.test.ts` (bars per level, choices and names, the song's own chord, closed-set strums right / wrong / silence, a guitar-only path step with its own glyph).
 
 **Not verified / only real playing can settle:** no browser / e2e run in this round (the machine was loaded): the strum button on the song question and the trade's ready-screen line were not seen at 390 × 844 (both are one small row, as on the place questions); the song-chord strum on a real guitar (a V7 strummed for V, partial strums), the band's phrase and the speaker bleed on phone speakers; the guitar trade shows the landings as tab after the result (no "model line" toggle for guitar yet).
+*Update 2026-11-12: "Show a model line" after a guitar trade result, as on the piano (`Drills.tsx DrillScore`): the
+model line for your bars in your view (tab and / or staff; each model note carries its string and fret from
+`genGuitarTrade`), in place of the landings, and back.*
+
+## Chord & cadence builder (2026-11-12)
+
+A Tools page of the guitar and keys courses (`ui/ChordBuilder.tsx`, `engine/chordBuilder.ts`; sidebar Tools, Practice
+tools row, quick lesson `chord-builder` the first time).
+
+- **Chord**: pick a root and a quality (11: maj, m, 7, maj7, m7, m7♭5, °7, sus2, sus4, 9, add9), or tap notes — on the
+  keys (keys course) or the neck (guitar course, one fret per string) — and it names the chord in any inversion
+  (`identifyChord`), spells it, plays it, and shows it on both instruments (keys + the first guitar shape).
+- **Cadence**: a key (major / minor) and a cadence — authentic (IV–V7–I), plagal (I–IV–I), half (I–ii–V), deceptive
+  (ii–V7–vi), ii–V–I, backdoor (iv7–♭VII7–I). Voicings: the root in the bass, the upper voices in close position by the
+  smallest total move from the last chord; on the guitar the shape nearest the last one. Hear it, then **Play it**:
+  each chord measured by MIDI (every chord tone held and nothing else; a 7th chord may leave out its 5th) or by the
+  microphone (the strum recognizer, `judgeStrum`). A run counts like a game (`cadence-builder`: cadences/cadence +
+  instrument/shapes; right at the first try / not; XP; band p / mp / mf by cadence).
+- Not verified: no browser run (the machine was loaded) — the 390 × 844 fit of both panes is by layout estimate only;
+  piano chords by microphone through the guitar strum recognizer on a real piano.

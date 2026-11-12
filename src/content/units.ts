@@ -192,6 +192,8 @@ export const UNIT_LESSON: Record<string, string> = {
   'game:transcribe': 'transcribe-coach',
   // GUITAR_DEEPENING §6.3: the chord finder (guitar Tools).
   'game:chordfinder': 'g-chord-finder',
+  // The chord & cadence builder (keys and guitar Tools).
+  'game:chordbuilder': 'chord-builder',
   // SPEC-MY-SONG: practise over your own recording (play along; transcribe in ear / jazz).
   'game:mysong': 'my-song',
   'game:mysong-ear': 'my-song-ear',

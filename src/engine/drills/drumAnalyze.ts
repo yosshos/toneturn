@@ -18,6 +18,8 @@ export interface DrumTakeHit {
   hat?: HatState | null;
   /** Acoustic kit by microphone: the drum was not told apart with confidence (drumAcoustic.ts). */
   unsure?: boolean;
+  /** MIDI: the raw note (a kit's own splash note, drumSplash.ts). */
+  note?: number;
 }
 
 /** Above this share of matched notes heard only as "unsure", an acoustic take is not counted (neither pass nor fail). */
@@ -718,5 +720,7 @@ export function drumLimbLine(d: DrumMetrics, nWrong: number, lang: 'en' | 'he'):
       return lang === 'he' ? `${name} ${m > 0 ? 'מאחר' : 'ממהר'} ${ms(m)}` : `${name} ${ms(m)} ms ${m > 0 ? 'late' : 'early'}`;
     });
   if (nWrong) parts.push(lang === 'he' ? `${nWrong} על תוף אחר` : `${nWrong} wrong drum`);
+  // The foot splash (drumSplash.ts): measured, or said plainly that it was not.
+  if (d.splash) parts.push(d.splash.measured ? (lang === 'he' ? `ספלאש ${d.splash.ok}/${d.splash.of}` : `Splash ${d.splash.ok}/${d.splash.of}`) : lang === 'he' ? 'ספלאש מול צ׳יק לא נמדד (הערכה לא שולחת CC4)' : 'Splash vs chick not measured (the kit sends no CC4)');
   return parts.join(' · ');
 }

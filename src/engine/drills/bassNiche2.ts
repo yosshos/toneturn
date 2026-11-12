@@ -214,6 +214,16 @@ function dstop(tu: Tuning, rootPc: number, lo: number, hi: number, iv: number, b
   const p = tu.open[lo - 1] + f;
   return { b, d, p, s: lo, f, ct: true, with: [{ s: hi, f: f + iv - span }] };
 }
+/** A 3–7 shell on the bass: root (string lo), 7th (string mid), 3rd an octave up (string hi) — R-7-10. */
+export function shell37(tu: Tuning, rootPc: number, q: Q, lo: number, mid: number, hi: number, b: number, d: number): BN {
+  const sev = seventh(q);
+  const thd = third(q);
+  const sMid = tu.open[mid - 1] - tu.open[lo - 1];
+  const sHi = tu.open[hi - 1] - tu.open[lo - 1];
+  let f = mod(rootPc - tu.open[lo - 1], 12);
+  while (f < 2 || f + sev - sMid < 0 || f + 12 + thd - sHi < 0) f += 12;
+  return { b, d, p: tu.open[lo - 1] + f, s: lo, f, ct: true, with: [{ s: mid, f: f + sev - sMid }, { s: hi, f: f + 12 + thd - sHi }] };
+}
 const third = (q: Q) => (QI[q].includes(3) ? 3 : 4);
 const seventh = (q: Q) => (q === 'maj7' ? 11 : q === 'dim7' ? 9 : 10);
 
@@ -295,6 +305,18 @@ function genExt(s: DrillSpec, tu: Tuning): Drill {
         line.push(dstop(tu, r, E, D, seventh(c[1]), bar * 4, 1.5), dstop(tu, r, E, D, seventh(c[1]), bar * 4 + 1.5, 1.5));
       });
       return drillOf(s, tu, line, { ...(op % 2 ? tt('Comping shells: ii–V–I', 'ליווי בשלדים: ii–V–I') : tt('Comping shells: the blues', 'ליווי בשלדים: בלוז')), chart: chartOf(key, prog), evenness: false, open: false, bass: { doubleStops: 0.8 }, drums: { groove: 'swing' }, band: false });
+    }
+    case 'shell37': {
+      // 3–7 shells (b-ext 9): root on the E string, the 7th on the D string, the 3rd (a 10th) on the G string — the
+      // pianist's guide tones over the root, in the Charleston rhythm over ii–V–I (op 0) or the blues (op 1). All
+      // three notes must ring: the same chroma check as the root–7th shells.
+      const prog: Prog = op % 2 ? BLUES : [...PROGS.iivi, ...PROGS.iivi];
+      const line: BN[] = [];
+      prog.forEach((c, bar) => {
+        const r = key + c[0];
+        for (const [b, d] of [[0, 1.5], [1.5, 1.5]] as const) line.push(shell37(tu, r, c[1], E, D, G, bar * 4 + b, d));
+      });
+      return drillOf(s, tu, line, { ...(op % 2 ? tt('3–7 shells: the blues', 'שלדי 3–7: בלוז') : tt('3–7 shells: ii–V–I', 'שלדי 3–7: ii–V–I')), chart: chartOf(key, prog), evenness: false, open: false, bass: { doubleStops: 0.8 }, drums: { groove: 'swing' }, band: false });
     }
     case 'fretless': {
       // Fretless intonation (the fretless tuning): slide up a whole step into each guide tone, hold it, then a long
@@ -499,6 +521,8 @@ export function extFamily(L: LFn, fam: FamFn): GuitarFamilyDef {
     L('b-ext', 6, 'Double-stops: 10ths and shells', 'צלילים כפולים: דצימות ושלדים', [EX('dstop', { perBeat: 0.5 }), EX('dstop', { perBeat: 0.5, option: 1 })], K, [60, 100], 'halves'),
     L('b-ext', 7, 'Comping on the bass', 'ליווי אקורדים על הבס', [EX('comp'), EX('comp', { option: 1 })], [5, 10, 7, 0], [80, 120], 'Charleston'),
     L('b-ext', 8, 'Fretless intonation', 'אינטונציה בפרטלס', [EX('fretless', { perBeat: 0.5, tuning: 'bass-fretless' })], K, [60, 90], 'halves'),
+    // Additive (ids 1–8 unchanged): the full shell — root, 7th and 3rd — after the root–7th comping of level 7.
+    L('b-ext', 9, '3–7 shells: root, 7th and 10th', 'שלדי 3–7: יסוד, ספטימה ודצימה', [EX('shell37'), EX('shell37', { option: 1 })], [5, 10, 7, 0], [80, 120], 'Charleston'),
   ]);
 }
 

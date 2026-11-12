@@ -297,5 +297,61 @@ LESSONS.push({
   ],
 });
 
+// The chord & cadence builder (keys and guitar Tools): build a chord, voice a cadence, play it measured.
+LESSONS.push({
+  id: 'chord-builder',
+  area: 'harmony',
+  emoji: '',
+  title: { en: 'The chord and cadence builder', he: 'בונה האקורדים והקדנצות' },
+  takeaway: { en: 'Build any chord and see it on the keys and the neck; voice a cadence with the smallest moves, then play it chord by chord.', he: 'בונים כל אקורד ורואים אותו על הקלידים ועל הצוואר; קובעים וויסינג לקדנצה בתנועות הקטנות ביותר, ואז מנגנים אותה אקורד אחרי אקורד.' },
+  steps: [
+    {
+      say: { en: 'Hi {name}! Pick a root and a quality, and the builder spells the chord, plays it, and shows it on the piano keys and as a guitar shape.', he: 'היי {name}! בוחרים יסוד וסוג, והבונה מאיית את האקורד, מנגן אותו ומראה אותו על קלידי הפסנתר וכצורה בגיטרה.' },
+      play: [chord([48, 52, 55, 59], 1.4)],
+    },
+    {
+      say: { en: 'Or the other way round: tap notes on the keys or the neck, and it names the chord they make, in any inversion.', he: 'או להפך: מקישים תווים על הקלידים או על הצוואר, והוא נותן שם לאקורד שהם יוצרים, בכל היפוך.' },
+      play: [chord([52, 55, 60], 1.2)],
+      show: { text: { en: 'E G C = C/E', he: 'E G C = C/E' } },
+    },
+    {
+      say: { en: 'On the cadence page pick a key and a cadence: authentic, plagal, half, deceptive, two five one or the backdoor.', he: 'בדף הקדנצה בוחרים סולם וקדנצה: אותנטית, פלגלית, חצי קדנצה, מתעתעת, שתיים חמש אחת או הדלת האחורית.' },
+      play: [chord([50, 53, 57, 60], 1), chord([43, 53, 55, 59], 1), chord([48, 52, 55, 59], 1.4)],
+    },
+    {
+      say: { en: 'Each chord is voiced so the upper notes move as little as possible. Listen: the seventh of each chord slips down a half step.', he: 'כל אקורד מקבל וויסינג שבו הצלילים העליונים זזים כמה שפחות. הקשיבו: הספטימה של כל אקורד גולשת חצי טון למטה.' },
+      play: [chord([60, 65, 69], 1), chord([59, 65, 67], 1), chord([59, 64, 67], 1.4)],
+    },
+    {
+      say: { en: 'Then press Play and play it yourself. With a keyboard on MIDI, hold each chord; with the microphone, strum or play it once. Each chord right at the first try counts.', he: 'ואז לוחצים לנגן ומנגנים בעצמכם. עם מקלדת ב-MIDI מחזיקים כל אקורד; עם המיקרופון פורטים או מנגנים אותו פעם אחת. כל אקורד שנכון בניסיון הראשון נספר.' },
+      show: { text: { en: 'hold · strum · first try', he: 'להחזיק · לפרוט · ניסיון ראשון' } },
+    },
+  ],
+  more: [
+    {
+      say: { en: 'A cadence is the end of a phrase. Authentic goes from the dominant to the tonic, a full stop. Plagal goes from the fourth chord home, the amen at the end of a hymn.', he: 'קדנצה היא סוף של משפט. האותנטית הולכת מהדומיננטה לטוניקה, נקודה. הפלגלית הולכת מהאקורד הרביעי הביתה, ה"אמן" בסוף מזמור.' },
+      play: [chord([43, 55, 59, 62, 65], 1), chord([48, 55, 60, 64], 1.4)],
+    },
+    {
+      say: { en: 'A half cadence stops on the dominant, like a comma. The deceptive one sets up the tonic and lands on the sixth chord instead.', he: 'חצי קדנצה נעצרת על הדומיננטה, כמו פסיק. המתעתעת מכינה את הטוניקה ונוחתת במקום זה על האקורד השישי.' },
+      play: [chord([43, 55, 59, 62, 65], 1), chord([45, 57, 60, 64], 1.4)],
+    },
+    {
+      say: { en: 'The backdoor reaches home from the flat seventh: in C, F minor seven to B flat seven to C. It sounds softer than the dominant.', he: 'הדלת האחורית מגיעה הביתה מהשביעית המונמכת: בדו, פה מינור שבע לסי במול שבע לדו. היא נשמעת רכה יותר מהדומיננטה.' },
+      play: [chord([41, 56, 60, 63], 1), chord([46, 56, 58, 62], 1), chord([48, 55, 59, 64], 1.4)],
+    },
+    {
+      say: { en: 'Smooth voice leading means a common tone stays and the others move by step. The builder tries every inversion and keeps the one with the smallest total move.', he: 'הובלת קולות חלקה פירושה שצליל משותף נשאר והשאר זזים בצעד. הבונה מנסה כל היפוך ושומר את זה עם התנועה הכוללת הקטנה ביותר.' },
+    },
+    {
+      say: { en: 'On the guitar it picks the shape nearest the last one on the neck, so the hand stays in one place.', he: 'בגיטרה הוא בוחר את הצורה הקרובה ביותר לקודמת על הצוואר, כדי שהיד תישאר במקום אחד.' },
+    },
+    {
+      say: { en: 'How your playing is measured: on MIDI every chord tone must be held and nothing else; a seventh chord may leave out its fifth. On the microphone the chord recognizer listens to one strum.', he: 'איך הנגינה נמדדת: ב-MIDI צריך להחזיק כל צליל של האקורד ושום דבר אחר; בספטאקורד מותר לוותר על הקווינטה. במיקרופון מזהה האקורדים מקשיב לפריטה אחת.' },
+      show: { text: { en: 'all chord tones · nothing else', he: 'כל צלילי האקורד · ושום דבר אחר' } },
+    },
+  ],
+});
+
 /** The quick lesson behind each new guitar family (opened from its page in Technique). */
 export const FAMILY_LESSON: Record<string, string> = { 'g-ear': 'g-ear-echo', 'g-jazz': 'g-jazz-comp', 'g-harris': 'g-harris-neck', 'g-prog': 'g-prog-meter' };

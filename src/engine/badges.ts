@@ -22,6 +22,7 @@ import { SUB_SKILLS, type SubStat } from './taxonomy';
 import { addDays, type Counts, type InputKind, type Peaks, type StatsDays, type StatsHours } from './stats';
 import type { CourseId } from './courses';
 import { tiersCleared, topCleared, type GameTiers } from './gameTiers';
+import { gameBadgeCourse, gameBadgeSeeds } from './gameBadges';
 import { VOICE_FAMILIES } from './voiceFamilies';
 import { COURSE_GAMES } from '../ui/courseRows';
 import { AREA_NAME, completedChallenges, RANK_AREAS, RANK_TIERS, TIER_NAME, tierStart, type RankArea, type Ranks, type RankTier } from './ranks';
@@ -850,9 +851,13 @@ const firstBadges = (): Badge[] =>
     group: c,
   }));
 
+// Game badges (gameBadges.ts): mp, f and ff in each of the newer drum and advanced games.
+const gameBadges = (): Badge[] => gameBadgeSeeds().map((g) => ({ id: g.id, cat: 'special' as const, icon: g.icon, tone: g.tone, name: g.name, desc: g.desc, group: g.group, rule: (x: BadgeInput) => g.rule(x.gameTiers) }));
+
 const specialBadges: Badge[] = [
   ...firstBadges(),
   ...tierBadges(),
+  ...gameBadges(),
   ...repBadges(),
   sp('hat-trick', '🎩', 'bronze', 'Hat Trick', 'שלושער', 'Practice 3 days in a row.', 'להתאמן 3 ימים ברצף.', (_x, d) => count(d.bestStreak, 3)),
   sp('fortnight', '🔥', 'silver', 'Fortnight Fever', 'קדחת השבועיים', 'Practice 14 days in a row.', 'להתאמן 14 ימים ברצף.', (_x, d) => count(d.bestStreak, 14)),
@@ -920,6 +925,7 @@ export function badgeCourse(b: Pick<Badge, 'id' | 'cat' | 'group'>): { course: B
       // Per-course game-tier badges belong to their course.
       if (b.id.startsWith('special:first:')) return { course: g as CourseId };
       if (b.id.startsWith('special:tierc:') || b.id.startsWith('special:rep:')) return { course: g as CourseId };
+      if (b.id.startsWith('special:game:')) return gameBadgeCourse(b.id) ?? { course: 'general' };
       return { course: 'general' };
     case 'season':
       return { course: 'general' };

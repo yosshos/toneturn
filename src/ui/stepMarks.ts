@@ -5,6 +5,8 @@
 
 /** Topic → the text in its note head (≤ 5 characters, read left to right). */
 export const TOPIC_MARK: Record<string, string> = {
+  // Drums (DRUMS_NICHE_PLAN): name the band's style by ear.
+  'drum-style': 'style',
   // Ear & theory: pitch, intervals, chords
   'basics-highlow': 'Hi·Lo',
   'basics-samediff': '=?',
