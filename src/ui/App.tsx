@@ -2194,7 +2194,7 @@ export function App() {
           }}
         />
       )}
-      {route === 'insights' && <InsightsScreen lang={s.uiLang} progress={progress} onBack={() => go('skills')} onTopic={(id, lv) => openTopic(id, lv)} onDrills={() => go('drills')} onPieces={() => go('pieces')} onGroove={() => go('groove')} />}
+      {route === 'insights' && <InsightsScreen lang={s.uiLang} progress={progress} onBack={() => go('skills')} onTopic={(id, lv) => openTopic(id, lv)} onDrills={() => go('drills')} onPieces={() => go('pieces')} onGroove={() => go('groove')} course={(s.activeCourse ?? 'ear') as CourseId} />}
       {route === 'groove' && (
         <GrooveTrainerScreen
           settings={s}
