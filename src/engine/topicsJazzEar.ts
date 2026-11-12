@@ -240,6 +240,108 @@ deepen(
   },
 );
 
+// ================================================================ upper-rootless (Ear & theory, EAR_THEORY_AUDIT §6)
+// A topic of its own for the two pianist's sounds that voicings 4–5 only touch: rootless A / B voicings (which chord,
+// and how A and B alternate through a ii–V–I) and upper-structure triads over a dominant (the common pair, then all
+// five inside a ii–V–I). The bass always plays the root — as on the bandstand, where the pianist leaves it out.
+
+/** Rootless voicings above the root (the bass plays the root). */
+const RL: Record<'maj9' | 'm9' | 'thirteen' | 'alt', { up: number[]; n: ReturnType<typeof nm> }> = {
+  maj9: { up: [4, 7, 11, 14], n: nm('maj9 (3 5 7 9)', 'maj9 (3 5 7 9)', 'major nine') },
+  m9: { up: [3, 7, 10, 14], n: nm('m9 (♭3 5 ♭7 9)', 'm9 (♭3 5 ♭7 9)', 'minor nine') },
+  thirteen: { up: [4, 9, 10, 14], n: nm('13 (3 13 ♭7 9)', '13 (3 13 ♭7 9)', 'thirteen', 'dominant') },
+  alt: { up: [4, 10, 15, 20], n: nm('7alt (3 ♭7 ♯9 ♭13)', '7alt (3 ♭7 ♯9 ♭13)', 'altered', 'alt') },
+};
+/** Upper-structure triads over a dominant, the commonest five (the triad's root above the chord root). */
+export const UST5: Record<string, { at: number; n: ReturnType<typeof nm> }> = {
+  II: { at: 2, n: nm('II (9 ♯11 13)', 'II (9 ♯11 13)', 'two') },
+  bIII: { at: 3, n: nm('♭III (♯9 5 ♭7)', '♭III (♯9 5 ♭7)', 'flat three') },
+  bV: { at: 6, n: nm('♭V (♯11 ♭7 ♭9)', '♭V (♯11 ♭7 ♭9)', 'flat five') },
+  bVI: { at: 8, n: nm('♭VI (♭13 1 ♯9)', '♭VI (♭13 1 ♯9)', 'flat six') },
+  VI: { at: 9, n: nm('VI (13 ♭9 3)', 'VI (13 ♭9 3)', 'six') },
+};
+/** The 3rd and ♭7 in the left hand, the major triad `at` semitones above the root over them. */
+export function ustVoicing(pc: number, at: number): number[] {
+  const lo = upper(pc, [4, 10], 56);
+  const top = upper(mod12(pc + at), [0, 4, 7], 72).filter((m) => m > lo[lo.length - 1]);
+  return [...lo, ...top];
+}
+/**
+ * A ii–V–I in rootless voicings, the forms alternating so the hand barely moves: starting in A = ii (♭3 5 ♭7 9) →
+ * V (♭7 9 3 13) → I (3 5 7 9); starting in B = ii (♭7 9 ♭3 5) → V (3 13 ♭7 9) → I (7 9 3 5). Each chord is placed
+ * nearest the one before.
+ */
+export function rootless251(key: number, startA: boolean): number[][] {
+  const ii = mod12(key + 2);
+  const v = mod12(key + 7);
+  const forms: [number, number[]][] = startA
+    ? [[ii, [3, 7, 10, 14]], [v, [10, 14, 16, 21]], [key, [4, 7, 11, 14]]]
+    : [[ii, [10, 14, 15, 19]], [v, [4, 9, 10, 14]], [key, [11, 14, 16, 19]]];
+  const out = [upper(forms[0][0], forms[0][1], 62)];
+  for (const [pc, up] of forms.slice(1)) {
+    const prev = out[out.length - 1];
+    out.push(upper(pc, up, prev.reduce((a, b) => a + b, 0) / prev.length));
+  }
+  return out;
+}
+TOPIC_GEN['upper-rootless'] = {
+  title: { en: 'Upper structures and rootless voicings', he: 'מבנים עליונים ווויסינגים בלי שורש' },
+  skill: 'chords',
+  levels: [
+    { en: 'Rootless: which chord?', he: 'בלי שורש: איזה אקורד?' },
+    { en: 'A rootless ii–V–I: does the ii start in A or B?', he: 'ii–V–I בלי שורש: ה־ii מתחיל ב־A או ב־B?' },
+    { en: 'Upper structure: II or ♭VI?', he: 'מבנה עליון: II או ♭VI?' },
+    { en: 'The upper structure on the V of a ii–V–I', he: 'המבנה העליון על ה־V של ii–V–I' },
+  ],
+  gen(seed, level, id) {
+    const rnd = rng(seed);
+    const pc = pickR(rnd, [0, 2, 3, 5, 7, 8, 10]);
+    if (level === 1) {
+      const keys = Object.keys(RL) as (keyof typeof RL)[];
+      const ans = pickR(rnd, keys);
+      const names: Names = {};
+      for (const k of keys) names[k] = RL[k].n;
+      const v = (k: keyof typeof RL) => upper(pc, RL[k].up, 60);
+      return choiceQ({
+        id, topic: 'upper-rootless', level, seed, skill: 'chords', difficulty: 1650,
+        ask: { en: `Rootless, ${pcName(pc)} in the bass: which chord?`, he: `בלי שורש, ${pcNameHe(pc)} בבס: איזה אקורד?` },
+        names, answer: ans, choices: shuffleR(rnd, keys.slice()), stimulus: [held(pc, v(ans))], choiceStim: Object.fromEntries(keys.map((k) => [k, [held(pc, v(k))]])),
+      });
+    }
+    if (level === 2) {
+      const startA = rnd() < 0.5;
+      const play = (a: boolean) => [rootless251Stim(pc, a)];
+      const names: Names = { a: nm('A: the ii’s ♭3 at the bottom', 'A: ה־♭3 של ה־ii למטה', 'a'), b: nm('B: the ii’s ♭7 at the bottom', 'B: ה־♭7 של ה־ii למטה', 'b') };
+      return choiceQ({
+        id, topic: 'upper-rootless', level, seed, skill: 'chords', difficulty: 1720,
+        ask: { en: `ii–V–I in ${pcNameKey(pc, pc)}: the ii in A or B?`, he: `ii–V–I ב־${pcNameKey(pc, pc)}: ה־ii ב־A או ב־B?` },
+        names, answer: startA ? 'a' : 'b', choices: ['a', 'b'], stimulus: play(startA), choiceStim: { a: play(true), b: play(false) },
+      });
+    }
+    if (level === 3) {
+      const ans = rnd() < 0.5 ? 'II' : 'bVI';
+      const st = (k: string) => [held(pc, ustVoicing(pc, UST5[k].at), 2.2)];
+      return choiceQ({
+        id, topic: 'upper-rootless', level, seed, skill: 'chords', difficulty: 1760,
+        ask: { en: `${pcName(pc)}7: which triad on top?`, he: `${pcNameHe(pc)} 7: איזה משולש למעלה?` },
+        names: { II: UST5.II.n, bVI: UST5.bVI.n }, answer: ans, choices: ['II', 'bVI'], stimulus: st(ans), choiceStim: { II: st('II'), bVI: st('bVI') },
+      });
+    }
+    const keys = Object.keys(UST5);
+    const ans = pickR(rnd, keys);
+    const names: Names = {};
+    for (const k of keys) names[k] = UST5[k].n;
+    const v = mod12(pc + 7);
+    const st = (k: string) => [prog([J(pc + 2, 'm7', 4), J(v, 'dom7', 4), J(pc, 'maj9', 4)], 100, { hold: true, voicings: [upper(mod12(pc + 2), [3, 7, 10, 14], 62), ustVoicing(v, UST5[k].at), upper(pc, [4, 7, 11, 14], 64)] })];
+    return choiceQ({
+      id, topic: 'upper-rootless', level, seed, skill: 'chords', difficulty: 1860,
+      ask: { en: `ii–V–I in ${pcNameKey(pc, pc)}: which triad over the V?`, he: `ii–V–I ב־${pcNameKey(pc, pc)}: איזה משולש מעל ה־V?` },
+      names, answer: ans, choices: keys, stimulus: st(ans), choiceStim: Object.fromEntries(keys.map((k) => [k, st(k)])),
+    });
+  },
+};
+TOPIC_TAGS['upper-rootless'] = (l) => (l === 2 ? tg(['chords', 'voicing', 0.7], ['cadences', 'progression', 0.3]) : tg(['chords', 'voicing', 1]));
+
 // ================================================================ modes-ear (Ear & theory)
 
 const MODES: Record<string, { steps: number[]; n: ReturnType<typeof nm>; color: number }> = {
@@ -731,9 +833,11 @@ TOPIC_GEN['jazz-form'] = {
     { en: 'Major or minor blues?', he: 'בלוז מז׳ורי או מינורי?' },
     { en: 'Rhythm changes: an A or the bridge?', he: 'ריתם צ׳יינג׳ס: A או הגשר?' },
     { en: 'Which blues: major, jazz or Bird?', he: 'איזה בלוז: מז׳ורי, ג׳אז או בירד?' },
+    { en: 'A whole 32-bar AABA: where are we at the bell?', he: 'AABA שלם של 32 תיבות: איפה אנחנו בפעמון?' },
   ],
   gen(seed, level, id) {
     const rnd = rng(seed);
+    if (level === 4) return aabaItem(rnd, seed, id);
     const key = pickR(rnd, [0, 3, 5, 7, 10]);
     const pool = level === 1 ? ['major', 'minor'] : level === 2 ? ['rcA', 'rcB'] : ['major', 'jazz', 'bird'];
     const ans = pickR(rnd, pool);
@@ -750,6 +854,52 @@ TOPIC_GEN['jazz-form'] = {
 };
 TOPIC_TAGS['jazz-form'] = tg(['form', 'song', 0.7], ['cadences', 'progression', 0.3]);
 
+/**
+ * Two 32-bar AABA forms (bars as degree / quality / beats). Each A ends differently, as on the bandstand: the first
+ * turns around to the top, the second closes on I into the bridge, the last ends the chorus. The bridge moves away
+ * from home (rhythm changes: III7–VI7–II7–V7; the ballad form: to IV and back by a ii–V).
+ */
+type Bar = [number, JQId, number][];
+const RC_A1: Bar = [[0, 'maj7', 2], [9, 'dom7', 2], [2, 'm7', 2], [7, 'dom7', 2], [4, 'm7', 2], [9, 'dom7', 2], [2, 'm7', 2], [7, 'dom7', 2], [0, 'dom7', 4], [5, 'maj7', 2], [6, 'dim7', 2], [4, 'm7', 2], [9, 'dom7', 2], [2, 'm7', 2], [7, 'dom7', 2]];
+const RC_A2: Bar = [...RC_A1.slice(0, 11), [2, 'm7', 2], [7, 'dom7', 2], [0, 'maj7', 4]];
+const RC_B: Bar = [[4, 'dom7', 8], [9, 'dom7', 8], [2, 'dom7', 8], [7, 'dom7', 8]];
+const BAL_A1: Bar = [[0, 'maj7', 4], [9, 'm7', 4], [2, 'm7', 4], [7, 'dom7', 4], [4, 'm7', 2], [9, 'dom7', 2], [2, 'm7', 2], [7, 'dom7', 2], [0, 'maj7', 4], [2, 'm7', 2], [7, 'dom7', 2]];
+const BAL_A2: Bar = [...BAL_A1.slice(0, 8), [0, 'maj7', 8]];
+const BAL_B: Bar = [[7, 'm7', 2], [0, 'dom7', 2], [5, 'maj7', 4], [5, 'm7', 2], [10, 'dom7', 2], [0, 'maj7', 4], [4, 'm7b5', 2], [9, 'dom7', 2], [2, 'm7', 4], [2, 'm7', 2], [7, 'dom7', 2], [7, 'dom7', 4]];
+export const AABA_FORMS: Record<'rhythm' | 'ballad', { a1: Bar; a2: Bar; b: Bar; a3: Bar; bpm: number }> = {
+  rhythm: { a1: RC_A1, a2: RC_A2, b: RC_B, a3: RC_A2, bpm: 216 },
+  ballad: { a1: BAL_A1, a2: BAL_A2, b: BAL_B, a3: BAL_A2, bpm: 200 },
+};
+/** Where the bell rings (the bar it marks, 1-based) for each answer; "mid" is the middle of a section. */
+const AABA_AT: Record<'a2' | 'bridge' | 'lastA' | 'mid', number[]> = { a2: [9], bridge: [17], lastA: [25], mid: [5, 13, 21, 29] };
+function aabaItem(rnd: () => number, seed: number, id: string) {
+  const key = pickR(rnd, [0, 3, 5, 7, 10]);
+  const form = pickR(rnd, ['rhythm', 'ballad'] as const);
+  const F = AABA_FORMS[form];
+  const pool = ['a2', 'bridge', 'lastA', 'mid'] as const;
+  const ans = pickR(rnd, pool);
+  const bar = pickR(rnd, AABA_AT[ans]);
+  const chords = [...F.a1, ...F.a2, ...F.b, ...F.a3].map(([d, q, b]) => J(key + d, q, b));
+  const beat = 60 / F.bpm;
+  // a melody note on each chord: its 3rd, so the A sections sound alike and the bridge stands apart
+  const top = chords.map((c) => 67 + mod12(c.pc + JQ[c.q].up[0] - 67));
+  const ev = comp(chords, F.bpm, { top });
+  const at = (bar - 1) * 4 * beat;
+  ev.push({ midi: 96, start: at, duration: 0.3, velocity: 0.75, perc: 'bell' }, { midi: 96, start: at + 0.16, duration: 0.3, velocity: 0.6, perc: 'bell' });
+  const stim = eventsStim(ev, 32 * 4 * beat + 0.5);
+  const names: Names = {
+    a2: nm('The second A begins', 'מתחיל ה־A השני', 'second a'),
+    bridge: nm('The bridge begins', 'מתחיל הגשר', 'bridge', 'b'),
+    lastA: nm('The last A returns', 'חוזר ה־A האחרון', 'last a'),
+    mid: nm('The middle of a section', 'אמצע של חלק', 'middle'),
+  };
+  return choiceQ({
+    id, topic: 'jazz-form', level: 4, seed, skill: 'form', difficulty: 1700,
+    ask: { en: '32 bars, AABA: what happens at the bell?', he: '32 תיבות, AABA: מה קורה בפעמון?' },
+    names, answer: ans, choices: [...pool], stimulus: [stim],
+  });
+}
+
 // ================================================================ for the quick lessons (content/mini/jazzEar.ts)
 
 /** A progression in a key (degrees above the tonic) in the trio texture. */
@@ -760,3 +910,22 @@ export const modeStim = (tonic: number, mode: keyof typeof MODES, each = 0.3): S
 export const groupStim = (groups: number[], step = 0.165, bars = 2): Stimulus => eventsStim(groupsBeat(groups, step, bars), bars * groups.reduce((a, b) => a + b, 0) * step + 0.2);
 /** A phrase (semitones above the chord root) over a chord. */
 export const phraseOver = (pc: number, q: 'maj7' | 'm7' | 'dom7', semis: number[]): Stimulus => phraseStim(pc, q, semis);
+/** A rootless voicing over its root in the bass (offsets above the root). */
+export const rootlessStim = (pc: number, up: number[]): Stimulus => held(pc, upper(pc, up, 60));
+/** A ii–V–I in rootless voicings, the ii in A or B. */
+export const rootless251Stim = (key: number, startA: boolean): Stimulus => prog([J(key + 2, 'm9', 4), J(key + 7, 'thirteen', 4), J(key, 'maj9', 4)], 112, { voicings: rootless251(key, startA), hold: true });
+/** A dominant with an upper-structure triad (3rd and ♭7 below, the triad `at` semitones above the root on top). */
+export const ustStim = (pc: number, at: number): Stimulus => held(pc, ustVoicing(pc, at), 2.2);
+/** Bars `from`–`to` (1-based, inclusive) of a 32-bar AABA form in the trio texture (no bell). */
+export const aabaStim = (key: number, form: keyof typeof AABA_FORMS, from = 1, to = 32): Stimulus => {
+  const F = AABA_FORMS[form];
+  const out: JChord[] = [];
+  let beat = 0;
+  for (const [d, q, b] of [...F.a1, ...F.a2, ...F.b, ...F.a3]) {
+    const a = Math.max(beat, (from - 1) * 4);
+    const z = Math.min(beat + b, to * 4);
+    if (z > a) out.push(J(key + d, q, z - a));
+    beat += b;
+  }
+  return prog(out, F.bpm);
+};

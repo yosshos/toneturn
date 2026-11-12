@@ -630,6 +630,12 @@ export interface SongSpec {
    * back on the bar (within one beat).
    */
   freeUntil?: number;
+  /**
+   * With `freeUntil`: a free section in the middle of the song (free – tempo – free – tempo). The phrases from `from`
+   * up to `until` (exclusive; none = to the end) are colla voce again — the band holds the chord and follows — and at
+   * `until` it counts one bar back into tempo, with the same one-beat re-entry check as the first return.
+   */
+  freeAgain?: { from: number; until?: number };
 }
 /** F10 L1 / L3 / L5 and F13 L1 (P3): ear items sung back — an echo, an interval from a given note, the bar not played. */
 export interface EarSpec {

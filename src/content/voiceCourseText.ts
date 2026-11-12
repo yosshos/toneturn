@@ -213,6 +213,7 @@ export const EAR_INSTR = {
 /** P3: colla voce, then in time (F14 L6, L9). */
 export const COLLA_TEXT = {
   instr: { en: 'Sing the opening freely — the band follows you. Then it counts one bar: come back in on the one, in time.', he: 'שירו את הפתיחה בחופשיות — הלהקה הולכת אחריכם. אחר כך היא סופרת תיבה אחת: היכנסו שוב על האחת, בזמן.' },
+  middle: { en: 'Free, in time, free again, in time: the band follows you in the free parts, then counts one bar — come back in on the one each time.', he: 'חופשי, בזמן, שוב חופשי, בזמן: הלהקה הולכת אחריכם בחלקים החופשיים, ואז סופרת תיבה — היכנסו על האחת בכל פעם.' },
   verse: { en: 'The verse is free: sing it in your own time, the band follows. Then a count-in, and the chorus in time.', he: 'הבית חופשי: שירו אותו בזמן שלכם, הלהקה הולכת אחריכם. אחר כך ספירה, והפזמון בזמן.' },
   free: { en: 'Free time — the band follows you', he: 'זמן חופשי — הלהקה הולכת אחריכם' },
   count: { en: 'The band counts you in…', he: 'הלהקה סופרת לכם…' },

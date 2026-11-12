@@ -215,6 +215,7 @@ const TOPIC_CONTRAST: Record<string, { en: string; he: string }> = {
   'reharm-spot': { en: 'Follow the bass in both versions: where it moves differently is where the trick is.', he: 'עקבו אחרי הבס בשתי הגרסאות: איפה שהוא זז אחרת, שם הטריק.' },
   'guide-line': { en: 'Read the chords, then follow only the top note: does it hold or fall a half step?', he: 'קראו את האקורדים, ועקבו רק אחרי הצליל העליון: הוא נשאר או יורד חצי טון?' },
   'jazz-phrase': { en: 'Hum the bass, place the first note against it, then follow steps and leaps.', he: 'זמזמו את הבס, מקמו מולו את הצליל הראשון, ואז עקבו אחרי צעדים וקפיצות.' },
+  'upper-rootless': { en: 'Hear the top: bright tensions (9, 13) or dark ones (♭9, ♯9, ♭13)? Then which note sits at the bottom.', he: 'הקשיבו למעלה: מתחים בהירים (9, 13) או כהים (♭9, ♯9, ♭13)? ואז איזה צליל יושב למטה.' },
   'jazz-form': { en: 'How fast do the chords change, and are they minor or dominant?', he: 'כמה מהר האקורדים מתחלפים, והאם הם מינוריים או דומיננטיים?' },
 };
 

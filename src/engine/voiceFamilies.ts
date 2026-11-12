@@ -316,7 +316,8 @@ export const MY_SONG_LEVELS: VocalLevel[] = [lv(1308, 0.7, [{ kind: 'song', seco
 /** F14 L6 colla voce, L9 a full AABA (the last A interpreted), L10 a blues in call and response with falls. */
 export const STANDARD_MORE_LEVELS: VocalLevel[] = [
   // P3: the first phrase colla voce (the band's groove stretched to the singer), then a count-in and back on the bar.
-  lv(1408, 0.7, [{ ...SONG('slow-harbor', { band: true, rhythm: true, need: 0.7, freeUntil: 1 }, 1500), seconds: 40 }, { ...SONG('corner-light', { band: true, rhythm: true, need: 0.7, freeUntil: 1 }, 1550), seconds: 30 }]),
+  // Item 3 (P3 follow-up): a free section in the middle — A free, A in time, the bridge free, the last A in time.
+  lv(1408, 0.7, [{ ...SONG('slow-harbor', { band: true, rhythm: true, need: 0.7, freeUntil: 1 }, 1500), seconds: 40 }, { ...SONG('corner-light', { band: true, rhythm: true, need: 0.7, freeUntil: 1 }, 1550), seconds: 30 }, { ...SONG('lantern-street', { band: true, rhythm: true, need: 0.7, freeUntil: 1, freeAgain: { from: 2, until: 3 } }, 1600), seconds: 100 }]),
   // P3: the rubato verse (colla voce) → a count-in → the AABA chorus in time; then the last A interpreted.
   lv(1409, 0.72, [{ ...SONG('lantern-street-verse', { band: true, rhythm: true, need: 0.72, freeUntil: 2 }, 1600), seconds: 85 }, SONG('lantern-street', { band: true, rhythm: true, need: 0.72, interpretFrom: 3 }, 1650)]),
   lv(1410, 0.7, [SONG('call-and-answer', { band: true, rhythm: true, need: 0.7, falls: true }, 1600), SONG('call-and-answer', { band: true, rhythm: true, need: 0.7, falls: true, bpm: 120 }, 1650)]),

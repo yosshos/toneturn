@@ -691,7 +691,7 @@ function voiceBadges(): Badge[] {
 // ---------------------------------------------------------------- the pianist's ear (PIANO_AUDIT §3)
 // Its levels are call-and-response at one calm tempo, so a tempo band says nothing: the milestones count the
 // different items (kind × option, 14 in all) played back clean at least once — first steps, halfway, all of them.
-export const KEYS_EAR_ITEMS = 15;
+export const KEYS_EAR_ITEMS = 17;
 function keysEarBadges(): Badge[] {
   const tiers: [number, { en: string; he: string }, Badge['tone']][] = [
     [3, { en: 'first steps', he: 'צעדים ראשונים' }, 'bronze'],

@@ -11,7 +11,7 @@ import { langOf } from './Trends';
 import { lessonSections, placementPlanOf } from '../engine/placement';
 import { TalkToggle } from './TalkToggle';
 import { PlacementMeter } from './PlacementMeter';
-import { NoteStaff } from './NoteViews';
+import { GrandStaff, NoteStaff } from './NoteViews';
 import { PitchTrace } from './Vocal';
 import { reportPuzzle } from '../cloud/compete';
 import { fitLessonToRange, fitQuestions } from '../engine/voiceFit';
@@ -467,7 +467,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
                 <div className="choice-show place-given">
                   {q.text && <p className="choice-text">{q.text[lang]}</p>}
                   {q.given && q.given.midis.length > 0 && (q.surface !== 'staff' || q.given.midis.some((m) => !q.target.includes(m))) && (
-                    <NoteStaff notes={q.given.midis} chord={!!q.given.chord} keyPc={q.given.key ?? null} clef={q.given.clef ?? 'treble'} durs={q.given.durs} />
+                    q.given.grand ? <GrandStaff notes={q.given.midis} keyPc={q.given.key ?? null} /> : <NoteStaff notes={q.given.midis} chord={!!q.given.chord} keyPc={q.given.key ?? null} clef={q.given.clef ?? 'treble'} durs={q.given.durs} />
                   )}
                   {(!q.given || !q.given.midis.length) && !q.text && q.stimulus.length > 0 && <Orb v={v} label="♪ ?" />}
                 </div>

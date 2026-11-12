@@ -2328,3 +2328,10 @@ button.chip.on {
 .drill-refs { display: flex; flex-direction: column; gap: 6px; margin: 6px 0; }
 .drill-refs summary { cursor: pointer; color: var(--ink-dim); font-size: 0.85rem; }
 .drill-refs .dr-tune { font-size: 0.8rem; color: var(--ink-dim); margin: 6px 0 2px; }
+
+/* PIANO_AUDIT P3: the grand staff of a two-hand reading item stays about one and a half staves tall (one phone screen). */
+.place-given .grand-staff svg {
+  max-height: 150px;
+  width: auto;
+  margin-inline: auto;
+}

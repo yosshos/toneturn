@@ -142,6 +142,7 @@ const SHORT: Record<string, L2> = {
   'guide-line': { en: 'Guide line', he: 'קו מנחה' },
   'jazz-phrase': { en: 'Transcribe', he: 'תמלול' },
   'jazz-form': { en: 'Jazz forms', he: 'צורות ג׳אז' },
+  'upper-rootless': { en: 'Upper structures', he: 'מבנים עליונים' },
   // lessons
   'basics-shape': { en: 'Melody shape', he: 'צורת מנגינה' },
   'rhythm-shift': { en: 'Move the rhythm', he: 'הזזת קצב' },

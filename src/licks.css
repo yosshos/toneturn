@@ -63,3 +63,7 @@
 .tx-deg:active { background: var(--lemon); }
 .tx-score { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; }
 @media (max-height: 760px) { .lk-cell { height: 11px; } .tx-deg { padding: 7px 0; } }
+
+/* PIANO_AUDIT P3: nine transcription levels still fit one phone screen. */
+.tx-screen[data-transcribe="levels"] .lk-list { gap: 6px; }
+.tx-screen[data-transcribe="levels"] .lk-card { padding: 7px 12px; gap: 2px; }

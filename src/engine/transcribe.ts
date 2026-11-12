@@ -40,6 +40,8 @@ export const TX_LEVELS: { level: number; name: T2; notes: T2 }[] = [
   { level: 6, name: { en: 'Lines with approach notes', he: 'קווים עם צלילי גישה' }, notes: { en: '2 bars', he: '2 תיבות' } },
   { level: 7, name: { en: 'Blues phrases', he: 'משפטי בלוז' }, notes: { en: '2 bars', he: '2 תיבות' } },
   { level: 8, name: { en: 'Bebop phrases', he: 'משפטי ביבופ' }, notes: { en: '3–4 bars', he: '3–4 תיבות' } },
+  // PIANO_AUDIT P3: learn a solo phrase by ear (on the keys path) — a short ii–V–I line, generated from rules.
+  { level: 9, name: { en: 'A solo phrase over ii–V–I', he: 'משפט סולו על ii–V–I' }, notes: { en: '1½ bars, swing', he: 'תיבה וחצי, סווינג' } },
 ];
 
 function rng(seed: number) {
@@ -61,7 +63,7 @@ const deg = (i: number) => MAJ[mod(i, 7)] + 12 * Math.floor(i / 7);
 /** The phrase of a level for a seed (deterministic). Tonic pitch around C4. */
 export function phraseFor(level: number, seed: number): Phrase {
   const r = rng(seed * 7919 + level * 104729);
-  const lv = Math.max(1, Math.min(8, Math.round(level)));
+  const lv = Math.max(1, Math.min(9, Math.round(level)));
   const key = pick(r, [0, 2, 5, 7, 10, 3, 9]);
   const tonic = 60 + key - (key > 6 ? 12 : 0);
   const id = `tx${lv}-${seed}`;
@@ -128,6 +130,7 @@ export function phraseFor(level: number, seed: number): Phrase {
       title: s.title,
     };
   }
+  if (lv === 9) return soloPhrase(r, key, tonic, id);
   // Levels 5–8: jazz phrases from the app's own licks (over their chords), or chord-tone bars generated here.
   const lickLevel = (l: Lick) => (lv === 5 ? l.level <= 1 && l.notes.length <= 9 : lv === 6 ? (l.ctx === 'enclosure' || l.ctx === 'dominant' || l.ctx === 'major-251') && l.level <= 3 : lv === 7 ? l.ctx === 'blues' : l.level >= 3 && l.notes.length >= 12);
   if (lv === 5 && r() < 0.5) {
@@ -158,6 +161,28 @@ export function phraseFor(level: number, seed: number): Phrase {
     source: 'lick',
     title: l.name,
   };
+}
+/**
+ * Level 9: a solo phrase over a one-bar ii–V into I (own material, generated from rules): the ii arpeggiated in four
+ * swung eighths (from its root or its 3rd, up or down), the V as four eighths of the bebop dominant descending from the
+ * chord tone nearest — chord tones on the beats, the passing half step between them — and the I's chord tone nearest
+ * that, held. Semitones are above the key's tonic.
+ */
+function soloPhrase(r: () => number, key: number, tonic: number, id: string): Phrase {
+  const iiArp = pick(r, [[2, 5, 9, 12], [5, 9, 12, 16], [12, 9, 5, 2], [16, 12, 9, 5]]);
+  // the G bebop dominant descending (in C), over three octaves; even indices are the V7's chord tones
+  const BEBOP = [24, 12, 0].flatMap((o) => [7, 6, 5, 4, 2, 0, -1, -3].map((x) => x + o)).filter((x) => x <= 19 && x >= -5);
+  const last = iiArp[3];
+  const starts = BEBOP.map((x, i) => ({ x, i })).filter(({ x, i }) => i % 2 === 0 && i + 4 < BEBOP.length && x !== last && Math.abs(x - last) <= 3);
+  const s = starts.length ? pick(r, starts) : { x: BEBOP[0], i: 0 };
+  const v = BEBOP.slice(s.i, s.i + 4);
+  const after = BEBOP[s.i + 4];
+  // the I's chord tone nearest the step after the line (a 3rd, 5th, 7th or root)
+  const I = [-1, 0, 4, 7, 11, 12, 16, 19];
+  const target = I.filter((x) => x !== v[3]).reduce((a, b) => (Math.abs(b - after) < Math.abs(a - after) || (Math.abs(b - after) === Math.abs(a - after) && b > a) ? b : a));
+  const notes: PNote[] = [...iiArp, ...v].map((x, i) => ({ midi: tonic + x, beat: i * 0.5, dur: 0.5 }));
+  notes.push({ midi: tonic + target, beat: 4, dur: 2 });
+  return { id, level: 9, key, minor: false, notes, chords: [[2, 'm7', 2], [7, '7', 2], [0, 'maj7', 4]], swing: true, bpm: 112, source: 'generated', title: TX_LEVELS[8].name };
 }
 const LicksMinor = (l: Lick) => {
   const q = l.chords[l.chords.length - 1][1];
