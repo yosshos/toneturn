@@ -829,7 +829,11 @@ function genGuitarTrade(s: DrillSpec, tu: Tuning): Drill {
     bpm: 100,
     evenness: false,
     keySig: 'C',
-    goal: { hands: false, free: { windows: yours, scale, minPerBar: 2, model: line.filter((n) => mine(n.beat)).map((n) => ({ beat: n.beat, dur: n.dur, pitch: n.p })) } },
+    goal: { hands: false, free: { windows: yours, scale, minPerBar: 2, model: line.filter((n) => mine(n.beat)).map((n) => {
+          // Where the model's note sits on the neck (the "Show a model line" tab after the result).
+          const at = near(tu, n.p, C);
+          return { beat: n.beat, dur: n.dur, pitch: n.p, ...(at ? { string: at.s, fret: at.f } : {}) };
+        }) } },
   });
   return {
     ...d,

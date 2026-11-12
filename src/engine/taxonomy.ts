@@ -207,6 +207,8 @@ export const TOPIC_TAGS: Record<string, LevelTags> = {
   syncopation: tg(['rhythm-dictation', 'syncopation', 1]),
   polyrhythm: tg(['rhythm-dictation', 'poly', 1]),
   'swing-ratio': tg(['rhythm-dictation', 'feel', 1]),
+  // DRUMS_NICHE_PLAN: styles by ear — feel (swing, shuffle, funk) and world rhythms (bossa, samba, songo, maqsum).
+  'drum-style': (l) => (l >= 3 ? tg(['rhythm-dictation', 'world', 0.7], ['meter', 'odd', 0.3]) : tg(['rhythm-dictation', 'feel', 1])),
   'eastern-rhythm': tg(['rhythm-dictation', 'world', 1]),
   // memory & form
   'rhythm-memory': tg(['rhythm', 'memory', 1]),

@@ -12,7 +12,7 @@ export type NavId =
   | TabId
   | 'songs' | 'repertoire' | 'drills' | 'learned' | 'pieces' | 'charts' | 'improv' | 'puzzle' | 'exams' | 'gamelist'
   | 'insights' | 'achievements'
-  | 'tuner' | 'metronome' | 'drone' | 'groove' | 'slowdown' | 'mixer' | 'log' | 'chordfinder'
+  | 'tuner' | 'metronome' | 'drone' | 'groove' | 'slowdown' | 'mixer' | 'log' | 'chordfinder' | 'chordbuilder'
   | 'placement' | 'diagnostics' | 'settings';
 
 type L = { en: string; he: string };
@@ -114,13 +114,16 @@ const TOOLS: Section = {
 };
 
 /** The guitar course adds the chord finder (GUITAR_DEEPENING §6.3) after the tuner. */
-const TOOLS_GUITAR: Section = { ...TOOLS, children: [TOOLS.children![0], { id: 'chordfinder', label: { en: 'Chord finder', he: 'מאתר אקורדים' } }, ...TOOLS.children!.slice(1)] };
+const CHORD_BUILDER = { id: 'chordbuilder' as const, label: { en: 'Chord builder', he: 'בונה אקורדים' } };
+const TOOLS_GUITAR: Section = { ...TOOLS, children: [TOOLS.children![0], { id: 'chordfinder', label: { en: 'Chord finder', he: 'מאתר אקורדים' } }, CHORD_BUILDER, ...TOOLS.children!.slice(1)] };
+/** The keys course adds the chord & cadence builder after the tuner. */
+const TOOLS_KEYS: Section = { ...TOOLS, children: [TOOLS.children![0], CHORD_BUILDER, ...TOOLS.children!.slice(1)] };
 
 /** Which section a screen belongs to (for the highlight and the open section). */
 export function sectionOf(route: string): NavId | 'tools' | null {
   for (const s of [...SECTIONS, ...SHARED]) if (s.id === route || s.children?.some((c) => c.id === route)) return s.id;
   if (['games', 'songs', 'repertoire', 'pieces', 'charts', 'drills', 'improv', 'licks', 'transcribe', 'transcribe-coach', 'learned', 'exams', 'puzzle', 'vocal', 'singalong'].includes(route)) return 'arcade';
-  if (TOOLS.children!.some((c) => c.id === route) || route === 'chordfinder') return 'tools';
+  if (TOOLS.children!.some((c) => c.id === route) || route === 'chordfinder' || route === 'chordbuilder') return 'tools';
   if (route === 'settings' || route === 'diagnostics') return route;
   return null;
 }
@@ -242,7 +245,7 @@ export function Sidebar({ route, lang, onNav, badges, me, extra }: { route: stri
         <div className="sn-cap">{lang === 'he' ? 'של כולם' : 'Shared'}</div>
         {SHARED.map((s) => section(s, s.id))}
         <div className="sn-hr" />
-        {section(course.active === 'guitar' ? TOOLS_GUITAR : TOOLS, 'tools')}
+        {section(course.active === 'guitar' ? TOOLS_GUITAR : course.active === 'keys' ? TOOLS_KEYS : TOOLS, 'tools')}
         <div className="sn-hr" />
         <div className={`sn-sec ${lit === 'settings' ? 'on' : ''}`}>
           <div className="sn-row">

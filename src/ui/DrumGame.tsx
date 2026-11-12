@@ -14,6 +14,7 @@ import { DEFAULT_CAL, DrillScore, drillSettingsOf } from './Drills';
 import { TierChips } from './TierChips';
 import { kitKind, type KitProfile } from '../engine/drumKit';
 import { ZONE_NAME, zonesFor, zonesOf, type StickZones } from '../engine/rudimentRush';
+import { rushTopBpm } from '../engine/drumRecords';
 
 type Lang = 'he' | 'en';
 const TX = {
@@ -25,6 +26,8 @@ const TX = {
   done: { en: 'Done', he: 'סיום' },
   streak: { en: 'streak', he: 'רצף' },
   best: { en: 'best', he: 'שיא' },
+  bestTempo: { en: 'best tempo', he: 'טמפו שיא' },
+  newRecord: { en: 'a new personal record', he: 'שיא אישי חדש' },
   passed: { en: 'rounds passed', he: 'סבבים שעברו' },
   zones: { en: 'Sticking zones', he: 'אזורי סטיקינג' },
   rimNote: { en: 'Your kit must send the rim as its own note.', he: 'המערכת צריכה לשלוח את השפה כתו נפרד.' },
@@ -38,7 +41,7 @@ const ZONE_SHORT: Record<StickZones, { en: string; he: string }> = {
   pad: { en: 'One pad', he: 'פד אחד' },
 };
 
-export function DrumGame({ game, lang, settings, onExit, onResult, best, tier: tierInfo, onKit }: { onKit?: (k: KitProfile) => void; game: DrumGameId; lang: Lang; settings: Settings; saved?: unknown | null; onSave?: (s: unknown | null) => void; onExit: () => void; onResult: (r: { score: number; detail?: unknown }) => void; best?: number; tier?: TierInfo }) {
+export function DrumGame({ game, lang, settings, onExit, onResult, best, tier: tierInfo, onKit, bestBpm }: { onKit?: (k: KitProfile) => void; game: DrumGameId; lang: Lang; settings: Settings; saved?: unknown | null; onSave?: (s: unknown | null) => void; onExit: () => void; onResult: (r: { score: number; detail?: unknown }) => void; best?: number; tier?: TierInfo; /** Rudiment Rush: the best tempo of a passed round (counts.rushBpm). */ bestBpm?: number }) {
   const tx = (o: { en: string; he: string }) => o[lang];
   const [tier, setTier] = useState<DynName>(() => (tierInfo ? startTier(tierInfo) : 'pp'));
   const [phase, setPhase] = useState<'setup' | 'play' | 'end'>('setup');
@@ -61,9 +64,14 @@ export function DrumGame({ game, lang, settings, onExit, onResult, best, tier: t
     for (let i = scores.length - 1; i >= 0 && scores[i].ok; i--) n++;
     return n;
   })();
+  // Rudiment Rush: the tempo of every round played, for the run's best tempo (drumRecords.ts).
+  const [rushBpms, setRushBpms] = useState<{ ok: boolean; bpm: number }[]>([]);
+  // The record before this run (the prop updates once the run is stored).
+  const [bestBpmAtStart, setBestBpmAtStart] = useState(bestBpm);
   const finishRun = (all: RoundScore[]) => {
     const sum = runSummary(tier, all);
-    onResult({ score: sum.score, detail: sum.detail });
+    const topBpm = game === 'rudiment-rush' ? rushTopBpm(rushBpms) : 0;
+    onResult({ score: sum.score, detail: topBpm ? { ...sum.detail, topBpm } : sum.detail });
     setPhase('end');
   };
   const done = (m: TakeMetrics, _p: PlayedNote[]) => {
@@ -71,6 +79,7 @@ export function DrumGame({ game, lang, settings, onExit, onResult, best, tier: t
     const s = scoreRound(r, m);
     setRes({ m, s });
     setScores((xs) => [...xs, s]);
+    if (game === 'rudiment-rush') setRushBpms((xs) => [...xs, { ok: s.ok, bpm: r.bpm }]);
   };
   const next = () => {
     const all = scores;
@@ -83,6 +92,8 @@ export function DrumGame({ game, lang, settings, onExit, onResult, best, tier: t
     setSeed((Date.now() ^ (Math.random() * 1e9)) >>> 0);
     setRound(0);
     setScores([]);
+    setRushBpms([]);
+    setBestBpmAtStart(bestBpm);
     setRes(null);
     setPhase('setup');
   };
@@ -129,6 +140,12 @@ export function DrumGame({ game, lang, settings, onExit, onResult, best, tier: t
           {best !== undefined && (
             <p className="field-hint">
               {tx(TX.best)} <bdi dir="ltr">{best}</bdi>
+              {game === 'rudiment-rush' && bestBpm ? (
+                <>
+                  {' · '}
+                  {tx(TX.bestTempo)} <bdi dir="ltr" data-rush-best={bestBpm}>♩{bestBpm}</bdi>
+                </>
+              ) : null}
             </p>
           )}
           <button className="btn primary" onClick={() => setPhase('play')} data-dg-start="1">
@@ -154,6 +171,12 @@ export function DrumGame({ game, lang, settings, onExit, onResult, best, tier: t
           <p className="field-hint">
             {tx(TX.passed)} · <i className="dyn">{tier}</i> · <bdi dir="ltr">{sum.score}</bdi>
           </p>
+          {game === 'rudiment-rush' && rushTopBpm(rushBpms) > 0 && (
+            <p className="field-hint" data-rush-top={rushTopBpm(rushBpms)}>
+              {tx(TX.bestTempo)} <bdi dir="ltr">♩{rushTopBpm(rushBpms)}</bdi>
+              {rushTopBpm(rushBpms) > (bestBpmAtStart ?? 0) ? ` · ${tx(TX.newRecord)}` : ''}
+            </p>
+          )}
           <div className="dg-actions">
             <button className="btn primary" onClick={restart}>
               {tx(TX.again)}

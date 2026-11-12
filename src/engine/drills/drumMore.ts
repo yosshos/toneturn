@@ -453,10 +453,10 @@ function feet(s: DrillSpec, lv: number): Drill {
       return finish(s, kickPairs(gb({ h: 'x.x.x.x.x.x.x.x.', s: BB, k }, 4, 8)), { title: t(`Kick doubles · variation ${op + 1}`, `כפולות בקיק · וריאציה ${op + 1}`), bpm: 60, bars: 8, mic: false, goal: { ratio: 0.8 } });
     }
     case 5: {
-      // The foot splash: the hi-hat pedal on the "&" under the ride. The kit sends the pedal as one note, so its timing is
-      // measured; a splash and a chick are not told apart yet.
+      // The foot splash: the hi-hat pedal on the "&" under the ride. Timing as always; splash against chick by the kit's
+      // splash note or the pedal's CC4 (drumSplash.ts) — 80 % of the pedal notes must ring open.
       const p = ['...x...x', '.x.x.x.x', '.......x'][op];
-      return finish(s, gb({ r: 'x.x.x.x.', s: '..x...x.', k: 'x...x...', p }, 2, 8), { title: t(`Foot splash on the "&" · ${[t('of 2 and 4', 'של 2 ו-4'), t('every "&"', 'כל "וְ"'), t('of 4', 'של 4')][op].en}`, `ספלאש ברגל על ה"וְ" · ${[t('of 2 and 4', 'של 2 ו-4'), t('every "&"', 'כל "וְ"'), t('of 4', 'של 4')][op].he}`), bpm: 80, bars: 8, mic: false });
+      return finish(s, gb({ r: 'x.x.x.x.', s: '..x...x.', k: 'x...x...', p }, 2, 8), { title: t(`Foot splash on the "&" · ${[t('of 2 and 4', 'של 2 ו-4'), t('every "&"', 'כל "וְ"'), t('of 4', 'של 4')][op].en}`, `ספלאש ברגל על ה"וְ" · ${[t('of 2 and 4', 'של 2 ו-4'), t('every "&"', 'כל "וְ"'), t('of 4', 'של 4')][op].he}`), bpm: 80, bars: 8, mic: false, goal: { splash: { share: 0.8 } } });
     }
     case 6: {
       // Double pedal: alternating 16ths (R L R L). One pad can't tell the feet apart — evenness and the odd / even balance

@@ -18,6 +18,26 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.75.0',
+    date: '2026-11-12',
+    en: [
+      'The narrator speaks again: the recorded lines were silent (only clicks on some phones); they are being re-recorded, and the rest are read until then',
+      'Rhythm exercises show a beating pulse, never a keyboard; the run screen names the key you are playing; no "Slower" button when you were ahead of the beat — it says so instead',
+      'Drums: mambo, songo and Mozambique (pending a teacher check), Rudiment Rush, Groove-off duels with friends, crash chokes',
+      'Voice: a free verse before the chorus, colla voce that comes back on the bar, four new sung levels, fresh echo melodies every session',
+      'Guitar trading 4s and 2s, strum the chord under a song, the band comps under your bars in piano trading fours',
+      'Games: rhythm in Transcription Race and every top-tier item; course start: the day-3 full chorus and a First session badge; My song: write it as degrees, 3/4 songs',
+    ],
+    he: [
+      'המספר מדבר שוב: ההקלטות היו שקטות (רק קליקים בחלק מהטלפונים); הן מוקלטות מחדש, ועד אז השאר מוקראות',
+      'בתרגילי קצב מופיע דופק פועם, אף פעם לא מקלדת; מסך התרגיל מציג את הסולם שמנגנים; אין כפתור "לאט יותר" כשהקדמתם את הפעמה — כתוב מה קרה',
+      'תופים: מאמבו, סונגו ומוזמביק (ממתינים לבדיקת מורה), מרוץ רודימנטים, דו־קרב גרוב עם חברים, חניקת מצילה',
+      'שירה: בית חופשי לפני הפזמון, קולה ווצ׳ה שחוזרת לתיבה, ארבעה שלבי שירה חדשים, מנגינות חיקוי חדשות בכל פעם',
+      'חילופי ארבע ושתיים בגיטרה, לפרוט את האקורד שמתחת לשיר, הלהקה מלווה מתחת לתיבות שלכם בחילופי ארבע בפסנתר',
+      'משחקים: קצב במרוץ התמלול וכל פריטי הדרגות העליונות; פתיחת קורס: סבב שלם ביום השלישי ותג "שיעור ראשון"; השיר שלי: כתיבה בדרגות, שירים ב־3/4',
+    ],
+  },
+  {
     version: '0.74.0',
     date: '2026-11-11',
     en: [
