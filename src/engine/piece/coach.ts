@@ -87,6 +87,12 @@ export interface PlanState {
   fullRuns: string[];
   done: boolean;
   log: RepLog[];
+  /**
+   * Maintenance after the piece is done (SPEC-PIECE §2.10): the next spaced review run. `step` indexes MAINT_DAYS; a
+   * clean run moves it on, a run that breaks down brings the piece back tomorrow one step lower. Absent on a plan
+   * finished before maintenance existed — it is then due the day after its last full run.
+   */
+  maint?: { step: number; due: string; runs: number };
 }
 
 export type CoachEvent =
@@ -102,11 +108,13 @@ export type CoachEvent =
   | { k: 'burst'; chunk: string }
   | { k: 'rest' }
   | { k: 'fullRun' }
-  | { k: 'pieceDone' };
+  | { k: 'pieceDone' }
+  /** A maintenance run: clean → the next review in `days`; not clean → tomorrow. */
+  | { k: 'reviewRun'; clean: boolean; days: number };
 
 export interface Task {
   chunk: string;
-  kind: ChunkKind | 'loop' | 'burst' | 'warm' | 'trouble';
+  kind: ChunkKind | 'loop' | 'burst' | 'warm' | 'trouble' | 'review';
   from: number;
   to: number;
   tempo: number;
@@ -222,9 +230,44 @@ export function troubleBars(s: PlanState): number[] {
 }
 const share = (s: PlanState, c: Chunk) => c.tempo / s.target;
 
+// ---------------------------------------------------------------- maintenance (SPEC-PIECE §2.10)
+
+/** Days between review runs of a learned piece: 1, 3, 7, 14, then longer (the last gap repeats). */
+export const MAINT_DAYS = [1, 3, 7, 14, 30, 60, 90];
+const addDay = (day: string, n: number) => {
+  const [y, m, d] = day.split('-').map(Number);
+  if (!y || !m || !d) return day; // not a calendar day (tests use 'd1', 'd2' …)
+  const t = new Date(Date.UTC(y, m - 1, d + n));
+  return `${t.getUTCFullYear()}-${String(t.getUTCMonth() + 1).padStart(2, '0')}-${String(t.getUTCDate()).padStart(2, '0')}`;
+};
+/** The maintenance state of a done plan (a plan finished before maintenance existed starts at step 0). */
+export function maintOf(s: PlanState): { step: number; due: string; runs: number } | null {
+  if (!s.done) return null;
+  if (s.maint) return s.maint;
+  const lastRun = [...s.fullRuns].sort().pop() ?? s.day;
+  return { step: 0, due: addDay(lastRun, MAINT_DAYS[0]), runs: 0 };
+}
+/** A learned piece whose review run is due on `day`. */
+export const reviewDue = (s: PlanState, day: string): boolean => {
+  const m = maintOf(s);
+  return !!m && m.due <= day;
+};
+
 /** A new practice day: yesterday's open chunks first, a little slower (retrieval warm-up). */
 export function startDay(st: PlanState, day: string): PlanState {
-  if (st.day === day || st.done) return st;
+  if (st.day === day) return st;
+  if (st.done) {
+    // A learned piece: on a review day, its weakest bars first (weighted to weak bars), then one full run.
+    if (!reviewDue(st, day)) return st;
+    const s = clone(st);
+    s.day = day;
+    s.maint = maintOf(st)!;
+    s.troubleQueue = troubleBars(s).slice(0, 2);
+    s.warm = [];
+    s.loop = null;
+    s.burst = null;
+    return s;
+  }
   const s = clone(st);
   s.day = day;
   s.warm = s.chunks.filter((c) => c.status !== 'locked' && c.best > 0).sort((a, b) => a.from - b.from).map((c) => c.id).slice(0, 3);
@@ -237,7 +280,17 @@ export function startDay(st: PlanState, day: string): PlanState {
 
 /** What to play next. */
 export function nextTask(s: PlanState): Task | null {
-  if (s.done) return null;
+  if (s.done) {
+    if (!reviewDue(s, s.day)) return null;
+    if (s.troubleQueue?.length) {
+      const bar = s.troubleQueue[0];
+      const c = s.chunks.find((x) => x.kind !== 'join' && bar >= x.from && bar <= x.to) ?? s.chunks[0];
+      return { chunk: c.id, kind: 'trouble', from: Math.max(c.from, bar - (bar > c.from ? 1 : 0)), to: bar, tempo: Math.max(30, r(s.target * 0.85)) };
+    }
+    const end = lastBar(s);
+    const whole = s.chunks.find((x) => x.kind === 'join' && x.from === 0 && x.to === end) ?? s.chunks[0];
+    return { chunk: whole.id, kind: 'review', from: 0, to: end, tempo: s.target };
+  }
   if (s.warm.length) {
     const c = byId(s, s.warm[0]);
     return { chunk: c.id, kind: 'warm', from: c.from, to: c.to, tempo: Math.max(30, r(c.tempo * 0.95)) };
@@ -282,6 +335,15 @@ export function recordRep(st: PlanState, task: Task, res: RepResult, now: Date):
     t.clean = 0;
     if (!t.days.includes(s.day)) t.days = [...t.days, s.day].slice(-10);
   } else if (clean) for (let b = task.from; b <= task.to; b++) if (s.trouble[b]) s.trouble[b].clean++;
+  if (task.kind === 'review') {
+    const m = maintOf(s) ?? { step: 0, due: s.day, runs: 0 };
+    const step = clean ? Math.min(MAINT_DAYS.length - 1, m.step + 1) : Math.max(0, m.step - 1);
+    const days = clean ? MAINT_DAYS[step] : 1;
+    s.maint = { step, due: addDay(s.day, days), runs: m.runs + 1 };
+    s.troubleQueue = [];
+    ev.push({ k: 'reviewRun', clean, days });
+    return { state: s, events: ev };
+  }
   if (task.kind === 'trouble') {
     // two clean takes of the trouble bar retire it for today
     const bar = task.to;
@@ -367,6 +429,7 @@ export function recordRep(st: PlanState, task: Task, res: RepResult, now: Date):
     ev.push({ k: 'fullRun' });
     if (s.fullRuns.length >= 2) {
       s.done = true;
+      s.maint = { step: 0, due: addDay(s.day, MAINT_DAYS[0]), runs: 0 };
       ev.push({ k: 'pieceDone' });
       return { state: s, events: ev };
     }

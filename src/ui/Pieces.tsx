@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { recordTakeAnalysis } from '../storage/analysis';
 import { unzipMxl } from '../engine/leadsheet';
 import { parseMidi, parseMusicXml, type Piece } from '../engine/piece/score';
-import { barMastery, initPlan, nextTask, planProgress, recordRep, startDay, type CoachEvent, type PlanState, type Task } from '../engine/piece/coach';
+import { barMastery, initPlan, maintOf, nextTask, planProgress, recordRep, reviewDue, startDay, type CoachEvent, type PlanState, type Task } from '../engine/piece/coach';
 import { barLabel, chunkDrill, repFromTake } from '../engine/piece/toDrill';
 import type { TakeMetrics } from '../engine/drills/types';
 import { indexedKV, memoryKV, type KV } from '../storage/kv';
@@ -35,6 +35,8 @@ const kv: KV = (() => {
   }
 })();
 export const loadPieces = async () => (await kv.get<StoredPiece[]>('all')) ?? [];
+/** Learned pieces whose spaced review run is due on `day` (SPEC-PIECE §2.10; the workout adds a piece-review block). */
+export const piecesDue = (ps: StoredPiece[], day: string) => ps.filter((sp) => reviewDue(sp.plan, day));
 const savePieces = (ps: StoredPiece[]) => kv.set('all', ps);
 
 const TX = {
@@ -43,12 +45,14 @@ const TX = {
     setup: 'Set up', target: 'Target tempo', chunk: 'Bars per chunk', backward: 'Start from the end', start: 'Start practicing', back: 'Back', del: 'Delete', progress: 'learned',
     bars: 'bars', tempo: '♩ =', loop: 'Fix this bar', seam: 'The join', join: 'Put it together', warm: 'Warm-up', burst: 'One burst at full tempo', spot: 'The hard spot', chunk1: 'Next part', trouble: 'The bar that keeps tripping you',
     done: 'You can play the whole piece at the target tempo.', again: 'Again', minutes: 'min today',
+    review: 'Review run', reviewDue: 'Review due', nextReview: 'Next review',
   },
   he: {
     title: 'היצירות שלי', add: 'להוסיף יצירה', formats: 'MusicXML (‏.musicxml, ‏.xml, ‏.mxl) או MIDI (‏.mid). ממיוזסקור: קובץ ← ייצוא ← MusicXML.', none: 'עדיין אין יצירות.', bad: 'לא ניתן לקרוא את הקובץ:',
     setup: 'הגדרה', target: 'טמפו יעד', chunk: 'תיבות בכל קטע', backward: 'להתחיל מהסוף', start: 'להתחיל להתאמן', back: 'חזרה', del: 'מחיקה', progress: 'נלמד',
     bars: 'תיבות', tempo: '♩ =', loop: 'לתקן את התיבה הזו', seam: 'החיבור', join: 'לחבר הכול', warm: 'חימום', burst: 'פרץ אחד בטמפו המלא', spot: 'המקום הקשה', chunk1: 'החלק הבא', trouble: 'התיבה שחוזרת להכשיל',
     done: 'אתם מנגנים את כל היצירה בטמפו היעד.', again: 'שוב', minutes: 'דק׳ היום',
+    review: 'ניגון חזרה', reviewDue: 'חזרה היום', nextReview: 'החזרה הבאה',
   },
 };
 
@@ -59,11 +63,14 @@ export function coachLine(evs: CoachEvent[], lang: 'en' | 'he', p: Piece, plan: 
     const c = plan.chunks.find((x) => x.id === id);
     return c ? barLabel(p, c.from, c.to, lang) : '';
   };
-  const pick = ['pieceDone', 'fullRun', 'join', 'seam', 'newChunk', 'chunkDone', 'stepBack', 'slower', 'loopDone', 'stepUp', 'burst', 'rest', 'rotate'] as const;
+  const pick = ['reviewRun', 'pieceDone', 'fullRun', 'join', 'seam', 'newChunk', 'chunkDone', 'stepBack', 'slower', 'loopDone', 'stepUp', 'burst', 'rest', 'rotate'] as const;
   for (const k of pick) {
     const e = evs.find((x) => x.k === k);
     if (!e) continue;
     switch (e.k) {
+      case 'reviewRun':
+        if (!e.clean) return he ? 'הניגון נשבר — מחר עוד ניגון חזרה, והתיבות החלשות קודם.' : 'The run broke down — another review run tomorrow, weak bars first.';
+        return he ? `ניגון חזרה נקי. החזרה הבאה בעוד ${e.days} ימים.` : `A clean review run. Next review in ${e.days} days.`;
       case 'pieceDone': return he ? 'היצירה נלמדה! שני ניגונים נקיים בטמפו, בשני ימים שונים.' : 'Piece learned: two clean full runs at tempo, on two different days.';
       case 'fullRun': return he ? 'ניגון מלא ונקי בטמפו היעד. עוד אחד ביום אחר — וסיימתם.' : 'A clean full run at target tempo. One more on another day and it is yours.';
       case 'join': return he ? `עכשיו מחברים: ${range(e.chunk)} ברצף.` : `Now put it together: ${range(e.chunk)} in one go.`;
@@ -200,9 +207,15 @@ export function PiecesScreen({ settings, onBack, onMinutes }: { settings: Settin
                     <span style={{ width: `${Math.round(pr * 100)}%` }} />
                   </span>
                 </span>
-                <small dir="ltr">
-                  {Math.round(pr * 100)}% {tx.progress}
-                </small>
+                {reviewDue(sp.plan, localDay(new Date())) ? (
+                  <small className="pc-due" data-piece-due={sp.id}>
+                    {tx.reviewDue}
+                  </small>
+                ) : (
+                  <small dir="ltr">
+                    {Math.round(pr * 100)}% {tx.progress}
+                  </small>
+                )}
               </button>
             </li>
           );
@@ -270,7 +283,7 @@ function PiecePractice({ settings, sp, onSave, onBack, onMinutes }: { settings: 
     }
     setMarks(mk);
   };
-  const kindLabel = (t: Task) => (t.kind === 'trouble' ? tx.trouble : t.kind === 'loop' ? tx.loop : t.kind === 'seam' ? tx.seam : t.kind === 'join' ? tx.join : t.kind === 'warm' ? tx.warm : t.kind === 'burst' ? tx.burst : t.kind === 'spot' ? tx.spot : tx.chunk1);
+  const kindLabel = (t: Task) => (t.kind === 'review' ? tx.review : t.kind === 'trouble' ? tx.trouble : t.kind === 'loop' ? tx.loop : t.kind === 'seam' ? tx.seam : t.kind === 'join' ? tx.join : t.kind === 'warm' ? tx.warm : t.kind === 'burst' ? tx.burst : t.kind === 'spot' ? tx.spot : tx.chunk1);
   return (
     <main className="panel-screen pieces pc-practice" data-piece-practice={sp.id}>
       <header className="screen-head">
@@ -284,9 +297,15 @@ function PiecePractice({ settings, sp, onSave, onBack, onMinutes }: { settings: 
           <span key={i} className={task && i >= task.from && i <= task.to ? 'now' : ''} style={{ ['--m' as string]: x }} title={p.bars[i].number} />
         ))}
       </div>
-      {plan.done || !task || !drill ? (
+      {!task || !drill ? (
         <section className="set-card">
+          {line && <p className="pc-coach">{line}</p>}
           <p>{tx.done}</p>
+          {maintOf(plan) && (
+            <p className="field-hint" data-next-review={maintOf(plan)!.due}>
+              {tx.nextReview}: <span dir="ltr">{maintOf(plan)!.due}</span>
+            </p>
+          )}
         </section>
       ) : (
         <>

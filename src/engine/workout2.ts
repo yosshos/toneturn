@@ -58,6 +58,8 @@ export interface SuggestInput {
   technique?: boolean;
   /** Licks due for spaced review (SPEC-LICKS-TRANSCRIPTION): a 2-minute lick-review block, taken from the path block. */
   licksDue?: number;
+  /** Learned pieces due for a review run (SPEC-PIECE §2.10): a 3-minute piece-review block, taken from the path block. */
+  piecesDue?: number;
 }
 
 /** Open steps of the current unit (and the checkpoint), per area. */
@@ -101,7 +103,18 @@ export function validateTemplate(bs: Block[], ok: { leaveOut: DomainId[]; topics
 }
 
 export function suggestWorkout(inp: SuggestInput): Block[] {
-  const out = suggestBase(inp);
+  const out = withLicks(inp, suggestBase(inp));
+  if (!inp.piecesDue || inp.template?.length || total(out) < 10) return out;
+  // The piece review: a short block (weak bars, then one full run at tempo) from the path block or the largest block.
+  const from = out.find((b) => b.target.kind === 'path' && b.minutes >= 3 + LIMITS.minBlock) ?? [...out].sort((a, b) => b.minutes - a.minutes).find((b) => b.minutes >= 3 + LIMITS.minBlock);
+  if (!from) return out;
+  from.minutes -= 3;
+  const at = out.findIndex((b) => b.target.kind === 'path');
+  out.splice(at < 0 ? out.length : at + 1, 0, { id: uid(out, 'game'), target: { kind: 'game', game: 'pieces' }, minutes: 3 });
+  return out;
+}
+
+function withLicks(inp: SuggestInput, out: Block[]): Block[] {
   if (!inp.licksDue || inp.template?.length || total(out) < 10) return out;
   // The lick review: 2 minutes from the path block (or the largest block), after the warm-up.
   const from = out.find((b) => b.target.kind === 'path' && b.minutes >= 2 + LIMITS.minBlock) ?? [...out].sort((a, b) => b.minutes - a.minutes).find((b) => b.minutes >= 2 + LIMITS.minBlock);
