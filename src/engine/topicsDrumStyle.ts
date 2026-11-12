@@ -124,7 +124,8 @@ TOPIC_GEN['drum-style'] = {
     const answer = level >= 4 ? pick[Math.floor(rnd() * 3)] : pick[0];
     const choices = shuffleR(rnd, pick);
     const names = Object.fromEntries(choices.map((c) => [c, BY_ID[c].name]));
-    const sound = (c: string) => [styleSound(BY_ID[c], seed)];
+    // One sound per choice (the asked one reused as the stimulus).
+    const sounds: Record<string, Stimulus[]> = Object.fromEntries(choices.map((c) => [c, [styleSound(BY_ID[c], seed)]]));
     return choiceQ({
       id,
       topic: 'drum-style',
@@ -136,8 +137,8 @@ TOPIC_GEN['drum-style'] = {
       names,
       answer,
       choices,
-      stimulus: sound(answer),
-      choiceStim: Object.fromEntries(choices.map((c) => [c, sound(c)])),
+      stimulus: sounds[answer],
+      choiceStim: sounds,
     });
   },
 };
