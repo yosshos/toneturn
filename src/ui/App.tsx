@@ -2545,6 +2545,7 @@ export function App() {
             best={progress.bests?.[g]}
             tier={tierFor(g)}
             onKit={(drumKit) => updateSettings({ drumKit })}
+            bestBpm={g === 'rudiment-rush' ? progress.counts?.rushBpm : undefined}
           />
         );
       })}

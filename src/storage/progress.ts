@@ -785,6 +785,8 @@ export class ProgressStore {
     }
     if (game === 'highway' && d.fullCombo === true) counts = bumpCount(counts, 'highwayFC', 1);
     if (game === 'nametune') counts = bumpCount(counts, 'nameTuneBest', score, 'max');
+    // Rudiment Rush's best tempo (drumRecords.ts): the fastest round passed in the run.
+    if (game === 'rudiment-rush' && typeof d.topBpm === 'number' && d.topBpm > 0) counts = bumpCount(counts, 'rushBpm', d.topBpm, 'max');
     if (memory) {
       if (!(p.pitchMemory ?? []).some((x) => x.day === memory.day)) counts = bumpCount(counts, 'pitchMemoryDays', 1);
       counts = bumpCount(counts, 'pitchMemoryCents', Math.abs(memory.cents), 'min');

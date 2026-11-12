@@ -23,7 +23,8 @@ import { withProg } from '../engine/drills/progAnalyze';
 import { isDrumDrill } from '../engine/drills/events';
 import { analyzeDrumTake, drumLimbLine, type DrumTakeHit } from '../engine/drills/drumAnalyze';
 import { withChoke } from '../engine/drills/drumChoke';
-import { kitKind, VOICE_NOTE, type KitProfile } from '../engine/drumKit';
+import { withSplash, type CcSample } from '../engine/drills/drumSplash';
+import { kitKind, openness, VOICE_NOTE, type KitProfile } from '../engine/drumKit';
 import { acousticHits, acousticOk, acousticOnsets, drillAcousticVoices } from '../engine/drumAcoustic';
 import type { NoteEvent } from '../engine/lesson';
 
@@ -467,9 +468,17 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
     if (drumMidi) midi.setOptions({ drums: true, ...(kit ? { kit } : {}) });
     const offHit = drumMidi
       ? midi.onHit((h) => {
-          if (zero) drumHitsIn.push({ voice: h.voice, on: h.at - zero - cal.latencyMs, vel: h.vel, open: h.open, hat: h.hat });
+          if (zero) drumHitsIn.push({ voice: h.voice, on: h.at - zero - cal.latencyMs, vel: h.vel, open: h.open, hat: h.hat, note: h.note });
         })
       : null;
+    // The foot splash (drumSplash.ts): the pedal's CC4 openness over the take, when the kit sends it.
+    const cc4In: CcSample[] = [];
+    const offCc4 =
+      drumMidi && drill.goal.drum?.splash
+        ? midi.onCC((cc, value, at) => {
+            if (zero && cc === 4) cc4In.push({ at: at - zero - cal.latencyMs, open: openness(value, kit ?? undefined) });
+          })
+        : null;
     // Crash chokes (drumChoke.ts): the kit's pressure messages, when it sends them.
     const chokesIn: number[] = [];
     const offChoke =
@@ -562,6 +571,7 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
       offCC?.();
       offHit?.();
       offChoke?.();
+      offCc4?.();
       micStop?.abort();
       if (drumMidi) midi.setOptions(prevMode);
     }
@@ -588,7 +598,7 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
       const hits: DrumTakeHit[] = drumMidi ? drumHitsIn : detectOnsets(frames, { refractoryMs: 35, ratio: 1.8 }).filter((p) => !drill.listen || !inCall(p.on)).map((p) => ({ voice: null, on: p.on, vel: p.vel }));
       const played: PlayedNote[] = hits.map((h) => ({ pitch: h.voice ? VOICE_NOTE[h.voice] : VOICE_NOTE.snare, on: h.on, off: null, vel: h.vel }));
       const dm = analyzeDrumTake(drill, bpm, hits, { kit, mic: !drumMidi });
-      return done(drumMidi ? withChoke(dm, drill, bpm, chokesIn) : dm, played);
+      return done(drumMidi ? withSplash(withChoke(dm, drill, bpm, chokesIn), drill, bpm, hits.filter((h) => h.voice === 'hhPedal'), cc4In, kit) : dm, played);
     }
     if (guitar) {
       const heard = drill.listen ? frames.filter((f) => !inBand(f.t)) : frames;

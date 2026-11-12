@@ -72,7 +72,9 @@ export type CountKey =
   | 'steadySec'
   | 'drillClean'
   | 'tempoRecords'
-  | 'evenCv';
+  | 'evenCv'
+  /** Rudiment Rush: the fastest round passed (♩, max). */
+  | 'rushBpm';
 export type Counts = Partial<Record<CountKey, number>>;
 export const LOWER_BETTER: CountKey[] = ['tuneUpCents', 'pitchMemoryCents', 'pitchCents', 'evenCv'];
 
