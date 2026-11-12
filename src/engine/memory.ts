@@ -151,6 +151,9 @@ export function segmentNotes(
   return notes;
 }
 
+/** A played MIDI key → the pad of its pitch class in any octave (0.76 Echo MIDI input), else null (a wrong note). */
+export const padForMidi = (game: MelodyGame, midi: number): number | null => nearestPad(game, Math.round(midi), 1);
+
 /** Nearest pad (octave-insensitive) within `tolCents`, else null. */
 export function nearestPad(game: MelodyGame, midi: number, tolCents = 50): number | null {
   let best: number | null = null;

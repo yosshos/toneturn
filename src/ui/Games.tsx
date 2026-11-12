@@ -17,6 +17,7 @@ import { makeGameAdapters, piano, store } from './services';
 import { calibrationOffset } from '../engine/memory';
 import { TierChips } from './TierChips';
 import { startTier, tierDef, type DynName, type TierInfo } from '../engine/gameTiers';
+import { midi as midiInput } from '../speech/midi';
 
 export interface GameSetupValue {
   kind: GameKind;
@@ -39,6 +40,12 @@ export interface GameSetupValue {
 const NO_PADS_HINT = {
   en: 'No pads at this level: sing it back or play it on your instrument (microphone).',
   he: 'ברמה הזאת אין פדים: שירו בחזרה או נגנו על הכלי (מיקרופון).',
+};
+/** 0.76: Echo answered on a MIDI keyboard (each key → its degree, any octave). */
+const MIDI_TX = {
+  label: { en: 'MIDI', he: 'MIDI' },
+  hint: { en: 'Play it back on a MIDI keyboard, any octave.', he: 'נגנו בחזרה על מקלדת MIDI, בכל אוקטבה.' },
+  play: { en: 'Your turn — play it on the keyboard', he: 'תורכם — נגנו על המקלדת' },
 };
 
 export function GameSetup({
@@ -91,10 +98,10 @@ export function GameSetup({
     setInput(k === 'melody' ? 'pads' : 'tap');
     if (tiers) setTier(startTier(tiers(k)));
   };
-  const inputs: [GameInput, string][] = kind === 'melody' ? [['pads', t.inPads], ['sing', t.inSing]] : [['tap', t.inTap], ['knock', t.inKnock]];
-  // 0.75: Echo ff shows no pads — the answer comes from the voice or an instrument (the microphone) only.
+  const inputs: [GameInput, string][] = kind === 'melody' ? [['pads', t.inPads], ['sing', t.inSing], ['midi', MIDI_TX.label[settings.uiLang]]] : [['tap', t.inTap], ['knock', t.inKnock]];
+  // 0.75: Echo ff shows no pads — the answer comes from the voice or an instrument (the microphone) only; 0.76: or MIDI.
   const noPads = kind === 'melody' && !!tinfo && !!tierDef(kind, tier)?.params?.noPads;
-  const effInput: GameInput = noPads ? 'sing' : input;
+  const effInput: GameInput = noPads && input === 'pads' ? 'sing' : input;
 
   return (
     <main className={`panel-screen game-setup ${tinfo ? 'tiered' : ''}`}>
@@ -143,6 +150,7 @@ export function GameSetup({
           {input === 'knock' && <p className="field-hint">{t.knockHint}</p>}
           {kind === 'rhythm' && input === 'tap' && <Calibrate t={t} latency={settings.tapLatencyMs} onDone={(ms) => onSettings({ tapLatencyMs: ms })} />}
           {effInput === 'sing' && <p className="field-hint">{noPads ? NO_PADS_HINT[settings.uiLang] : t.singHint}</p>}
+          {effInput === 'midi' && <p className="field-hint">{MIDI_TX.hint[settings.uiLang]}</p>}
         </fieldset>
 
         {tinfo && <TierChips lang={settings.uiLang} info={tinfo} value={tier} onChange={setTier} game={kind} />}
@@ -363,6 +371,15 @@ export function GameScreen({
     return () => c.dispose();
   }, [c]);
 
+  // 0.76: MIDI answers for Echo (the keyboard's own sound is heard, the app plays nothing).
+  useEffect(() => {
+    if (v.kind !== 'melody' || v.input !== 'midi') return;
+    void midiInput.enable().catch(() => {});
+    return midiInput.onNote((note, on) => {
+      if (on) c.midiNote(note);
+    });
+  }, [c, v.kind, v.input]);
+
   // Keyboard: Space / Enter tap the beat; 1–4 tap pads.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -478,6 +495,13 @@ export function GameScreen({
                   </button>
                 ))}
               </div>
+              )}
+              {v.input === 'midi' && v.stage === 'respond' && (
+                <div className="listen mic-speech">
+                  <span className="listen-text">
+                    <b>{MIDI_TX.play[lang]}</b>
+                  </span>
+                </div>
               )}
               {v.input === 'sing' && v.stage === 'respond' && (
                 <div className="listen mic-speech">

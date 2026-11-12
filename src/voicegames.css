@@ -1,0 +1,100 @@
+/* Voice games (0.76): Harmony Hold (src/ui/HarmonyHold.tsx) and Sing the Interval Sprint (src/ui/SingInterval.tsx).
+   A chord strip, the ask, a cents needle. Fits 390 × 844. */
+.vg-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+.vg-chord {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 4px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--card-2);
+  min-inline-size: 0;
+}
+.vg-chord b {
+  font-family: var(--display);
+  font-size: 1.15rem;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+.vg-chord small {
+  color: var(--ink-dim);
+  font-size: 0.85rem;
+}
+.vg-chord.now {
+  border-color: var(--ink);
+  background: color-mix(in srgb, var(--mint) 18%, var(--card-2));
+}
+.vg-chord .vg-pts {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.vg-chord.ok .vg-pts {
+  color: var(--ok, #1d7f4e);
+}
+.vg-chord.bad .vg-pts {
+  color: var(--bad, #b3261e);
+}
+.vg-needle {
+  position: relative;
+  block-size: 34px;
+  border-radius: 8px;
+  background: var(--card-2);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+.vg-needle .vg-win {
+  position: absolute;
+  inset-block: 0;
+  background: color-mix(in srgb, var(--mint) 30%, transparent);
+}
+.vg-needle .vg-mid {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 50%;
+  inline-size: 2px;
+  background: var(--ink-dim);
+}
+.vg-needle .vg-dot {
+  position: absolute;
+  inset-block: 6px;
+  inline-size: 6px;
+  margin-inline-start: -3px;
+  border-radius: 3px;
+  background: var(--ink);
+  transition: left 80ms linear;
+}
+.vg-needle-labels {
+  display: flex;
+  justify-content: space-between;
+  color: var(--ink-dim);
+  font-size: 0.8rem;
+}
+.vg-ask {
+  text-align: center;
+  font-family: var(--display);
+  font-size: 1.9rem;
+  line-height: 1.15;
+  margin: 4px 0;
+}
+.vg-sub {
+  text-align: center;
+  color: var(--ink-dim);
+  margin: 0;
+}
+.vg-clock {
+  block-size: 4px;
+  border-radius: 2px;
+  background: var(--card-2);
+  overflow: hidden;
+}
+.vg-clock i {
+  display: block;
+  block-size: 100%;
+  background: var(--ink);
+}

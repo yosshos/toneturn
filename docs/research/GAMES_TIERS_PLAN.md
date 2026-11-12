@@ -524,3 +524,44 @@ cleared tiers, the advanced games as path steps. Fill & Land exists as the drums
 device: everything above was checked by `tsc` and unit tests only (no Playwright run, no listening test) — the
 screens that gained a row (Peak Hunter ff amount, Groove ff parts, Truth or Bluff ff clock, Beat Echo meter line)
 need the 390×844 fit check.
+
+### 0.76 — the instrument, voice and drum games; placement from tiers (2026-11-12, branch worktree-agent-a7b1ee60134a5cebd)
+
+Nine new games, each with six tiers (pp → ff, not advanced: they open at the player's tier like the first games), XP
+(25 a game, 100 a day), rating tags (`gameRating.ts`), a card (`Arcade.tsx` GAMES2), its own symbol (`Glyph.tsx`,
+`stepGlyphs.ts` GAME_STEP_GLYPH, `Arcade.tsx` GAME_GLYPH), the game board, a route (`App.tsx`, one new block). On-screen
+input is practice: `gameTiers.MEASURED_ONLY` (also bhtime / riffecho) never clears a tier with `input: 'touch'`.
+
+| Game (route) | Course | Measured by | Tiers pp → ff | Where |
+|---|---|---|---|---|
+| Play It Back (`playback`) | keys | MIDI or mic pitch onsets | one note in a key → 2–3 notes by step → 4-note tunes → the bass line of 4 chords → 5–6 notes with rhythm (count-in) → swung jazz lines with chromatic approach notes | `engine/instGames.ts` `playbackItem`, `gradeSequence` (order by pitch class, × rhythm 0.6 + 0.4 on f / ff); `ui/HearPlay.tsx` on `ui/TakeShell.tsx` |
+| Roots by Ear (`rootsear`) | bass | mic (bass register) or MIDI | I IV V → pop + ii vi → minor, ♭VI ♭VII → ii–V–I, V/V → secondary dominants, borrowed, blues → tritone subs, backdoor, chromatic ii–V chains | `rootsItem` (piano comping, no bass; the roots in order) |
+| Walk the Changes (`walkchanges`) | bass | mic onsets or MIDI, latency-corrected | blues root on 1 / fifth on 3 → blues chord tones on 1 and 3 → ii–V–I + an approach note on 4 → rhythm changes A (two chords a bar) → the bridge at 140 → Giant Steps bars 1–8 at 160 | `walkChart`, `walkTargets`, `keepsRule`, `gradeWalk` (per beat: in time, and the rule on rule beats); `ui/WalkChanges.tsx` (piano comping, click on 2 and 4 from mp, a model line under Listen) |
+| Chord Change Race (`changerace`) | guitar | mic strums: onset (loudness jump) + chroma, closed-set `judgeStrum` | open chords → + open sevenths → barre chords → sevenths in any key → ii–V–I jazz sevenths → jazz changes two beats a chord (9ths, passing °7) | `changeChords`, `slotOf`, `gradeChanges` (right and within ±130 ms = 1, right but off the beat 0.6 / 0.3, unclear 0.3); `ui/ChangeRace.tsx`, `ui/instCapture.ts` `listenStrumsTimed` |
+| Voicing Sprint (`voicingsprint`) | keys | MIDI (held keys judged when they settle); screen keys = practice | triads → named inversions → shells 1-3-7 / 1-7-3 → rootless A / B → drop 2 with a named top voice → upper-structure triads over a 3–♭7 shell | `voicingItem`, `judgeVoicing` (exact order low → high; rootless inside an octave, drop 2 wider), 60 s, a miss costs 2 s and shows / plays a spelling; `ui/VoicingSprint.tsx` |
+| Harmony Hold (`harmonyhold`) | voice | mic pitch, cents per chord (median of stable frames, octave-free) | hold one common tone → root / 3rd / 5th of triads → 3rds and 7ths → guide tones through ii–V–I → ii–V chains, minor ii–V → 9 ♯11 13 ♭9 over dominants; window 50 → 25 ¢ | `engine/harmonyHold.ts`, `ui/HarmonyHold.tsx` (the piano never plays the sung pitch class) |
+| Sing the Interval Sprint (`singinterval`) | voice | mic: 300 ms steady in the window = right, steady wrong pitch 600 ms or 6 s silence = wrong | the Interval Sprint tiers sung (up 3rds–octave → all 12 → both ways → 6ths / 7ths → 9ths / 10ths → "the ♭7 of G7"); 90 s | `engine/singInterval.ts`, `ui/SingInterval.tsx` (one capture for the run, targets inside the singer's range) |
+| Kit Read Rush (`kitread`) | drums | answer + time | rock beat → kick variations → fills → 16th hats → open hat, ghost notes → 7/8 and 5/8, flams / drags, jazz ride | `engine/kitRead.ts` (hear one bar, pick the written bar of 3; decoys differ in one place), `ui/KitRead.tsx` (own compact SVG kit staff), 90 s |
+| Name That Groove (`namegroove`) | drums | answer + time | rock / pop / half-time → + funk, shuffle, disco → + swing, bossa, samba → + reggae, Afro-Cuban 6/8, songo, maqsum → + second line, Purdie, drum'n'bass, train → 7/8, 5/8, 9/8, 5/4 with look-alike decoys | `engine/nameGroove.ts` (21 original patterns), `ui/NameGroove.tsx`, 10 rounds, faster = more |
+
+Inside existing games:
+
+| Part | Where |
+|---|---|
+| Fretboard ff = levels 6–9: + 8 drop-2 / drop-3 voicing tones (three grips, the asked degree on its string, one right place), 9 intervals across the G–B shift (a reference by string + fret, the interval's exact pitch on the other string; up and down) | `rush.ts` `dropToneTarget`, `shiftIntervalTarget`, `shiftPair`; bass falls back to chord tones (8) / its own pair (9); `tests/fretDrop.test.ts` |
+| Groove ff "tempo change to hold": two bars at 90, a metric modulation (the old dotted 8th = the new beat, 120), one bar of click, four silent bars at 120 | `grooveTier.ts` part `'tempo'`, `tempoChangePlan`, `matchTapsAt`, `tempoChangeScore`; `GrooveTrainer.tsx` chip "New tempo" |
+| Echo Chain MIDI input (pads / singing / MIDI; ff without pads accepts MIDI too) | `memory.ts` `padForMidi`, `memoryGame.ts` `midiNote`, `Games.tsx` |
+
+Placement skip from cleared tiers (`engine/tierPlacement.ts`, `App.tsx` `measuredPriors` / `openPlacement`): a tier
+cleared at mf or above starts that game's skill (when it is a placement section) at the top of the cleared band; at f
+or above, with the skill's rating established (n ≥ 8) inside or above that band, the section is left out. Instrument
+sub-skills (`instrument/<x>-tech`) are not placement sections, so the instrument games feed ratings / path only.
+
+Decisions: the instrument games start at pp (they teach the instrument, they are not jazz-only); measured input only
+clears (MIDI or microphone); Chord Change Race checks the chord's quality by chroma — the voicing shape (drop 2 / 3) is
+not provable by microphone, so f / ff ask for jazz sevenths, not a grip; Voicing Sprint needs MIDI for the voicing
+order (the microphone cannot tell a rootless B from an A); Name That Groove pp has three styles (the tier's label).
+Not verified: no Playwright run and no device / listening test — the new screens (and Echo's third input button, the
+fifth Groove ff chip) need the 390×844 fit check and a real microphone / MIDI test; the drum patterns (maqsum, Afro-Cuban
+6/8 …) and Harmony Hold voicings were written from knowledge and want a teacher's check. The new games are not path
+steps (`path.ts` unchanged).

@@ -1,0 +1,107 @@
+/* Kit Read Rush and Name That Groove (0.76, src/ui/KitRead.tsx, src/ui/NameGroove.tsx). Three written bars, or four
+   style buttons, plus the HUD fit one 390 × 844 screen. */
+.kr-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.kr-opt {
+  display: block;
+  inline-size: 100%;
+  padding: 4px 6px;
+  border-radius: 12px;
+  border: 2px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  cursor: pointer;
+}
+.kr-opt:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+.kr-opt.right {
+  border-color: var(--mint);
+  background: color-mix(in srgb, var(--mint) 14%, var(--card));
+}
+.kr-opt.wrong {
+  border-color: var(--red);
+  background: color-mix(in srgb, var(--red) 12%, var(--card));
+}
+.ks {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  max-block-size: 118px;
+}
+.ks-line {
+  stroke: var(--ink-dim);
+  stroke-width: 1;
+  fill: none;
+}
+.ks-x,
+.ks-stem,
+.ks-acc {
+  stroke: var(--ink);
+  stroke-width: 1.6;
+  fill: none;
+  stroke-linecap: round;
+}
+.ks-stem.thin {
+  stroke-width: 1;
+}
+.ks-beam {
+  stroke: var(--ink);
+  stroke-width: 3.4;
+  fill: none;
+}
+.ks-head,
+.ks-dotm {
+  fill: var(--ink);
+}
+.ks-ghost {
+  fill: var(--ink);
+  opacity: 0.55;
+}
+.ks-paren {
+  fill: var(--ink);
+  font-size: 13px;
+  letter-spacing: 4px;
+}
+.ks-open {
+  stroke: var(--ink);
+  stroke-width: 1.4;
+  fill: none;
+}
+.ks-sig {
+  fill: var(--ink);
+  font-family: var(--display);
+  font-size: 16px;
+  font-weight: 700;
+}
+.ks-trip {
+  fill: var(--ink);
+  font-size: 9px;
+}
+.ng-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.ng-opt {
+  min-block-size: 64px;
+  white-space: normal;
+  line-height: 1.2;
+}
+.ng-opt.right {
+  border-color: var(--mint);
+  background: color-mix(in srgb, var(--mint) 18%, var(--card));
+}
+.ng-opt.wrong {
+  border-color: var(--red);
+  background: color-mix(in srgb, var(--red) 14%, var(--card));
+}
+.kr-final {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.2rem;
+}

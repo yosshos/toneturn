@@ -68,6 +68,9 @@ export const FRET_LEVELS: { en: string; he: string }[] = [
   // 0.75 (Fretboard ff): chord tones of a named chord on one string; then tensions and approach notes
   { en: 'Chord tones: the 3rd of B♭7 on string 3', he: 'צלילי אקורד: הטרצה של B♭7 על מיתר 3' },
   { en: 'Tensions and approach notes', he: 'טנשנים וצלילי גישה' },
+  // 0.76 (Fretboard ff): a degree inside a named drop-2 / drop-3 grip; intervals across the G–B shift
+  { en: 'Drop-2 / drop-3 voicing tones', he: 'צלילים בוויסינג דרופ 2 / דרופ 3' },
+  { en: 'Intervals across the G–B shift', he: 'מרווחים מעבר ל־G–B' },
 ];
 
 const ladderCache = new Map<RushMode, Rung[]>();
@@ -245,7 +248,88 @@ export function chordToneTarget(seed: number, level: number, tuning: Tuning): Fr
   return { pc, strings: [str], frets: [0, 12], name: s(`${DEG_NAME[d].en} of ${r}${q.sym}`, `${DEG_NAME[d].he} של ${r}${q.sym}`) };
 }
 
+// Fretboard ff (0.76): drop voicings. Each grip lists [string, degree index] (0 = root, 1 = 3rd, 2 = 5th, 3 = 7th)
+// from the root string up; the frets come from the tuning, near the root's fret.
+const DROP_GRIPS: { en: string; he: string; rootStr: number; tones: [number, number][] }[] = [
+  { en: 'Drop 2', he: 'דרופ 2', rootStr: 5, tones: [[5, 0], [4, 2], [3, 3], [2, 1]] },
+  { en: 'Drop 2', he: 'דרופ 2', rootStr: 4, tones: [[4, 0], [3, 2], [2, 3], [1, 1]] },
+  { en: 'Drop 3', he: 'דרופ 3', rootStr: 6, tones: [[6, 0], [4, 3], [3, 1], [2, 2]] },
+];
+const DEG_KEYS = (q: (typeof CT_QUAL)[number]) => Object.keys(q.iv);
+/** Level 8: "Drop 2 B♭maj7, root on string 5: the 7th" — the degree on the string the grip puts it on, near the root. */
+export function dropToneTarget(seed: number, tuning: Tuning): FretTarget {
+  const rnd = rng(seed ^ 0x1b873593);
+  const grip = DROP_GRIPS[Math.floor(rnd() * DROP_GRIPS.length)];
+  const root = Math.floor(rnd() * 12);
+  const q = CT_QUAL[Math.floor(rnd() * CT_QUAL.length)];
+  // the root's fret on the root string, 1–12 (so the window has room)
+  const open = tuning.open[grip.rootStr - 1];
+  let rf = (((root - open) % 12) + 12) % 12;
+  if (rf === 0) rf = 12;
+  const pick = grip.tones.filter(([, d]) => d !== 0 || rnd() < 0.25);
+  const [str, di] = pick[Math.floor(rnd() * pick.length)];
+  const deg = DEG_KEYS(q)[di];
+  const pc = (root + q.iv[deg]) % 12;
+  // the grip's note: the place of the degree on that string nearest the root's fret; the window (±3 frets) holds it and no other place
+  let af = -1;
+  for (let f = 0; f <= 15; f++) if ((((noteAt(tuning, str, f) - pc) % 12) + 12) % 12 === 0 && (af < 0 || Math.abs(f - rf) < Math.abs(af - rf))) af = f;
+  const frets: [number, number] = [Math.max(0, af - 3), Math.min(15, af + 3)];
+  const r = FLAT_ROOT[root];
+  return { pc, strings: [str], frets, name: { en: `${grip.en} ${r}${q.sym}, root on string ${grip.rootStr}: the ${DEG_NAME[deg].en}`, he: `${grip.he} ${r}${q.sym}, שורש על מיתר ${grip.rootStr}: ${DEG_NAME[deg].he}` } };
+}
+
+const IV9: { semis: number; en: string; he: string }[] = [
+  { semis: 3, en: 'minor 3rd', he: 'טרצה קטנה' },
+  { semis: 4, en: 'major 3rd', he: 'טרצה גדולה' },
+  { semis: 5, en: 'perfect 4th', he: 'קוורטה זכה' },
+  { semis: 6, en: 'tritone', he: 'טריטון' },
+  { semis: 7, en: 'perfect 5th', he: 'קווינטה זכה' },
+  { semis: 8, en: 'minor 6th', he: 'סקסטה קטנה' },
+  { semis: 9, en: 'major 6th', he: 'סקסטה גדולה' },
+];
+/** The adjacent string pair whose open interval differs from the rest (G–B on a guitar), as [lower, higher] string numbers. */
+export function shiftPair(tuning: Tuning): [number, number] {
+  const o = tuning.open;
+  const diffs = o.slice(0, -1).map((m, i) => m - o[i + 1]); // diffs[i] = string i+1 minus string i+2
+  const count = new Map<number, number>();
+  diffs.forEach((d) => count.set(d, (count.get(d) ?? 0) + 1));
+  const odd = diffs.findIndex((d) => count.get(d) === 1 && diffs.length > 2);
+  const i = odd >= 0 ? odd : 0;
+  return [i + 2, i + 1];
+}
+/** Level 9: a reference note (string + fret), an interval up (or down) — the exact note on the other string of the pair. */
+export function shiftIntervalTarget(seed: number, tuning: Tuning): FretTarget {
+  const rnd = rng(seed ^ 0x27d4eb2f);
+  const [lo, hi] = shiftPair(tuning);
+  for (let t = 0; t < 80; t++) {
+    const iv = IV9[Math.floor(rnd() * IV9.length)];
+    const down = rnd() < 0.35;
+    const from = down ? hi : lo;
+    const to = down ? lo : hi;
+    const f = Math.floor(rnd() * 10);
+    const ref = noteAt(tuning, from, f);
+    const midi = down ? ref - iv.semis : ref + iv.semis;
+    const fret = midi - tuning.open[to - 1];
+    if (fret < 0 || fret > 15) continue;
+    const nm = noteName(((ref % 12) + 12) % 12, rnd() < 0.5);
+    return {
+      pc: ((midi % 12) + 12) % 12,
+      midi,
+      strings: [to],
+      frets: [0, 15],
+      name: {
+        en: `a ${iv.en} ${down ? 'below' : 'above'} ${nm.en} (string ${from}, fret ${f}), on string ${to}`,
+        he: `${iv.he} ${down ? 'מתחת ל' : 'מעל '}${nm.he} (מיתר ${from}, סריג ${f}), על מיתר ${to}`,
+      },
+    };
+  }
+  const midi = noteAt(tuning, lo, 5) + 4;
+  return { pc: midi % 12, midi, strings: [hi], frets: [0, 15], name: { en: `a major 3rd above string ${lo}, fret 5, on string ${hi}`, he: `טרצה גדולה מעל מיתר ${lo}, סריג 5, על מיתר ${hi}` } };
+}
+
 export function fretTarget(seed: number, level: number, tuning: Tuning): FretTarget {
+  if (level >= 9) return shiftIntervalTarget(seed, tuning);
+  if (level === 8) return tuning.instrument === 'guitar' && tuning.open.length >= 6 ? dropToneTarget(seed, tuning) : chordToneTarget(seed, 7, tuning);
   if (level >= 6) return chordToneTarget(seed, Math.min(7, level), tuning);
   const rnd = rng(seed);
   const n = tuning.open.length;

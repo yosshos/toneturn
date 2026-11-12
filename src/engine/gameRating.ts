@@ -57,6 +57,16 @@ const GAMES: Record<string, { tags: (d: Record<string, unknown>) => Tag[]; diff:
   'ghost-control': { tags: () => T2(['instrument', 'drum-tech', 0.8], ['timing', 'steady', 0.2]), diff: () => 1000 },
   'groove-off': { tags: () => T2(['instrument', 'drum-tech', 0.7], ['timing', 'steady', 0.3]), diff: () => 1000 },
   'rudiment-rush': { tags: () => T2(['instrument', 'drum-tech', 0.8], ['timing', 'steady', 0.2]), diff: () => 1000 },
+  // 0.76 instrument / voice / drum games (always tiered; `diff` is a fallback).
+  playback: { tags: () => T2(['dictation', 'play-back', 0.6], ['instrument', 'echo', 0.4]), diff: () => 1000 },
+  voicingsprint: { tags: () => T2(['chords', 'voicing', 0.5], ['instrument', 'piano-voicing', 0.5]), diff: () => 1100 },
+  changerace: { tags: () => T2(['instrument', 'guitar-tech', 0.7], ['timing', 'precision', 0.3]), diff: () => 1000 },
+  walkchanges: { tags: () => T2(['instrument', 'bass-tech', 0.6], ['improv', 'walking', 0.4]), diff: () => 1100 },
+  rootsear: { tags: () => T2(['cadences', 'roots', 0.6], ['instrument', 'bass-ear', 0.4]), diff: () => 1050 },
+  harmonyhold: { tags: () => T2(['singing', 'harmony', 0.7], ['chords', 'tones', 0.3]), diff: () => 1100 },
+  singinterval: { tags: () => T2(['singing', 'intervals', 0.6], ['intervals', 'sung', 0.4]), diff: () => 1050 },
+  kitread: { tags: () => T2(['rhythm-reading', 'drums', 0.7], ['rhythm', 'kit-ear', 0.3]), diff: () => 1050 },
+  namegroove: { tags: () => T2(['rhythm', 'style', 0.7], ['instrument', 'drum-ear', 0.3]), diff: () => 1050 },
 };
 
 /** Normalised accuracy 0..1 of a finished game from what it reports. */

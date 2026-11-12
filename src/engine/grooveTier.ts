@@ -22,8 +22,10 @@ export interface GrooveTierPlan {
 //   odd     the fading click in 7/8 (2+2+3) on the 8th-note pulse — 2 bars in, 4 silent, 1 back.
 //   pocket  lay back 30 ms against a band that pushes (its hits sit 15 ms ahead of the grid) — 8 bars.
 //   swing   hear two bars of swung 8ths at a hidden ratio, then tap 8ths at that feel for four bars, alone.
-export type GrooveFfPart = 'slow' | 'odd' | 'pocket' | 'swing';
-export const GROOVE_FF_PARTS: GrooveFfPart[] = ['slow', 'odd', 'pocket', 'swing'];
+//   tempo   (0.76) a tempo change to hold: two bars at 90, a metric modulation (the old dotted 8th becomes the new
+//           beat: 90 → 120), one bar of click at 120, four silent bars at the NEW tempo, one bar back.
+export type GrooveFfPart = 'slow' | 'odd' | 'pocket' | 'swing' | 'tempo';
+export const GROOVE_FF_PARTS: GrooveFfPart[] = ['slow', 'odd', 'pocket', 'swing', 'tempo'];
 export const ODD_PULSE_BPM = 168;
 export const POCKET_BPM = 96;
 /** The band pushes: its hits sit this far ahead of the grid (ms). */
@@ -103,4 +105,62 @@ export function swingPartScore(hidden: number, played: number | null): number {
   if (played === null) return 0;
   const d = Math.abs(played - hidden);
   return Math.round(100 * Math.max(0, Math.min(1, 1 - (d - 0.02) / 0.1)));
+}
+
+// ---------------------------------------------------------------- ff tempo change (0.76)
+
+export const TEMPO_OLD_BPM = 90;
+/** The metric modulation: the old dotted 8th (¾ of a beat) becomes the new beat — 90 → 120. */
+export const TEMPO_RATIO = 4 / 3;
+export const TEMPO_NEW_BPM = Math.round(TEMPO_OLD_BPM * TEMPO_RATIO);
+export const TEMPO_SILENT_BARS = 4;
+
+export interface TempoChangePlan {
+  oldBpm: number;
+  newBpm: number;
+  /** Every beat: its time in ms from the first beat, whether the click sounds, accent (beat 1 of a bar). */
+  beats: { ms: number; on: boolean; accent: boolean }[];
+  /** The fade plan at the new tempo that grades it (its 2 click bars = the last old bar + the new click bar). */
+  grade: GrooveTierPlan;
+}
+
+/** Bars: 2 at the old tempo (click), 1 at the new (click), TEMPO_SILENT_BARS silent at the new, 1 back at the new. */
+export function tempoChangePlan(oldBpm = TEMPO_OLD_BPM, ratio = TEMPO_RATIO, silent = TEMPO_SILENT_BARS): TempoChangePlan {
+  const oldMs = 60000 / oldBpm;
+  const newBpm = Math.round(oldBpm * ratio);
+  const newMs = 60000 / newBpm;
+  const beats: TempoChangePlan['beats'] = [];
+  for (let b = 0; b < 8; b++) beats.push({ ms: b * oldMs, on: true, accent: b % 4 === 0 });
+  const start = 8 * oldMs;
+  const bars = [true, ...Array<boolean>(silent).fill(false), true];
+  bars.forEach((on, bar) => {
+    for (let k = 0; k < 4; k++) beats.push({ ms: start + (bar * 4 + k) * newMs, on, accent: k === 0 });
+  });
+  return { oldBpm, newBpm, beats, grade: { bpm: newBpm, bars: silent, beatsPerBar: 4, plan: [true, true, ...Array<boolean>(silent).fill(false), true] } };
+}
+
+/** Offsets (ms) of the nearest unused tap to each beat time (within 40 % of the local beat), null = none. */
+export function matchTapsAt(taps: number[], t0: number, times: number[], window = 0.4): (number | null)[] {
+  const used = new Set<number>();
+  return times.map((tm, i) => {
+    const gap = (times[i + 1] ?? tm + (tm - (times[i - 1] ?? tm - 500))) - tm;
+    const at = t0 + tm;
+    let best = -1;
+    let bd = Infinity;
+    taps.forEach((t, j) => {
+      const d = t - at;
+      if (!used.has(j) && Math.abs(d) <= gap * window && Math.abs(d) < Math.abs(bd)) {
+        best = j;
+        bd = d;
+      }
+    });
+    if (best < 0) return null;
+    used.add(best);
+    return Math.round(bd);
+  });
+}
+
+/** Score a tempo-change run: the first old bar is left out; the rest is a fade at the new tempo. */
+export function tempoChangeScore(plan: TempoChangePlan, offs: (number | null)[]): GrooveTierScore {
+  return grooveTierScore(plan.grade, offs.slice(4), 60000 / plan.newBpm);
 }

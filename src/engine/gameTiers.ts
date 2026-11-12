@@ -167,7 +167,8 @@ export const GAME_TIERS: Record<string, GameTierSpec> = {
       mf: { label: L('Every note, every string', 'כל התווים, כל המיתרים'), rungs: r('fretboard', 3, 4) },
       f: { label: L('The exact pitch (octave)', 'הגובה המדויק (אוקטבה)'), rungs: r('fretboard', 4, 5) },
       // 0.75: chord tones of a named chord on one string, then tensions and approach notes (rush.ts chordToneTarget)
-      ff: { label: L('Chord tones on a string, tensions, approach notes', 'צלילי אקורד על מיתר, טנשנים, צלילי גישה'), rungs: r('fretboard', 5, 6, 7) },
+      // 0.76: + drop-2 / drop-3 voicing tones (guitar) and intervals across the G–B shift (rush.ts levels 8–9)
+      ff: { label: L('Chord tones, tensions, drop-2/3 tones, across the G–B shift', 'צלילי אקורד, טנשנים, צלילי דרופ 2/3, מעבר ה־G–B'), rungs: r('fretboard', 6, 7, 8, 9) },
     }),
   },
   highway: {
@@ -319,8 +320,9 @@ export const GAME_TIERS: Record<string, GameTierSpec> = {
       mp: { label: L('4 silent bars', '4 תיבות שקטות'), params: { bars: 4, bpm: 90 }, target: 85 },
       mf: { label: L('4 bars at 60', '4 תיבות ב־60'), params: { bars: 4, bpm: 60 }, target: 85 },
       f: { label: L('8 bars', '8 תיבות'), params: { bars: 8, bpm: 90 }, target: 85 },
-      // 0.75: four parts (grooveTier.ts GROOVE_FF_PARTS): 8 slow bars, 7/8 fade, lay back vs a pushing band, swing match
-      ff: { label: L('8 bars slow; 7/8, lay back, swing match', '8 תיבות לאט; 7/8, להישען, סווינג תואם'), params: { bars: 8, bpm: 60 }, target: 85 },
+      // 0.75: parts (grooveTier.ts GROOVE_FF_PARTS): 8 slow bars, 7/8 fade, lay back vs a pushing band, swing match;
+      // 0.76: + a tempo change to hold (a metric modulation, then silent bars at the new tempo)
+      ff: { label: L('8 bars slow; 7/8, lay back, swing match, new tempo', '8 תיבות לאט; 7/8, להישען, סווינג תואם, טמפו חדש'), params: { bars: 8, bpm: 60 }, target: 85 },
       // 0.70: the level test (GrooveTrainer 'Level test' tab) scores accuracy 0..100; cleared at 85.
     },
   },
@@ -547,6 +549,148 @@ GAME_TIERS.polylock = advanced({
   },
 });
 
+// ---------------------------------------------------------------- 0.76: instrument, voice and drum games
+// GAMES_TIERS_PLAN §3 / P3 "thin game shells": measured by MIDI or the microphone with the existing machinery. They
+// start at pp (not advanced). On-screen taps are practice (MEASURED_ONLY below): they never clear a tier.
+
+/** Play It Back (keys): hear a phrase, play it back (MIDI / mic). Accuracy rounds. */
+GAME_TIERS.playback = {
+  game: 'playback',
+  source: (c) => (c === 'keys' ? 'instrument/piano-tech' : 'dictation'),
+  clear: 'accuracy',
+  tiers: {
+    pp: { label: L('One note: hear it, find it', 'צליל אחד: שומעים ומוצאים'), levels: [1], params: { bpm: 80 }, target: 85 },
+    p: { label: L('Two or three notes by step', 'שניים–שלושה צלילים בצעדים'), levels: [2], params: { bpm: 80 }, target: 85 },
+    mp: { label: L('Four-note tunes, leaps inside the chord', 'מנגינות של ארבעה צלילים, קפיצות בתוך האקורד'), levels: [3], params: { bpm: 90 }, target: 85 },
+    mf: { label: L('The bass line of four chords', 'קו הבס של ארבעה אקורדים'), levels: [4], params: { bpm: 90 }, target: 85 },
+    f: { label: L('Five or six notes, with their rhythm', 'חמישה–שישה צלילים, עם המקצב'), levels: [5], params: { bpm: 100, rhythm: true }, target: 85 },
+    ff: { label: L('Jazz lines: chromatic approach notes, rhythm', 'קווי ג׳אז: צלילי גישה כרומטיים, מקצב'), levels: [6], params: { bpm: 110, rhythm: true }, target: 85 },
+  },
+};
+
+/** Voicing Sprint (keys): a chord symbol appears — play the voicing on MIDI. 60 s. */
+GAME_TIERS.voicingsprint = {
+  game: 'voicingsprint',
+  source: (c) => (c === 'keys' ? 'instrument/piano-tech' : 'chords'),
+  clear: 'rush',
+  tiers: {
+    pp: { label: L('Major and minor triads', 'משולשים מז׳וריים ומינוריים'), levels: [1], target: 12 },
+    p: { label: L('Triads in a named inversion (C/E)', 'משולשים בהיפוך נתון (C/E)'), levels: [2], target: 12 },
+    mp: { label: L('Shells: 1-3-7 and 1-7-3', 'שֶׁלים: 1-3-7 ו־1-7-3'), levels: [3], target: 10 },
+    mf: { label: L('Rootless A and B (3-5-7-9, 7-9-3-5)', 'בלי שורש A ו־B (3-5-7-9, 7-9-3-5)'), levels: [4], target: 10 },
+    f: { label: L('Drop 2 sevenths', 'ספטים בדרופ 2'), levels: [5], target: 8 },
+    ff: { label: L('Upper structures over a tritone shell', 'מבנים עליונים מעל שֶׁל טריטון'), levels: [6], target: 8 },
+  },
+};
+
+/** Chord Change Race (guitar): strum each chord of a progression on its downbeat (mic onsets + chroma). */
+GAME_TIERS.changerace = {
+  game: 'changerace',
+  source: () => 'instrument/guitar-tech',
+  clear: 'timing',
+  tiers: {
+    pp: { label: L('Open chords, a bar each', 'אקורדים פתוחים, תיבה לכל אחד'), levels: [1], params: { bpm: 70, beats: 4 }, target: 85 },
+    p: { label: L('Open chords and open sevenths', 'אקורדים פתוחים וספטים פתוחים'), levels: [2], params: { bpm: 80, beats: 4 }, target: 85 },
+    mp: { label: L('Barre chords, major and minor', 'אקורדי ברה, מז׳ור ומינור'), levels: [3], params: { bpm: 80, beats: 4 }, target: 85 },
+    mf: { label: L('Sevenths in any key (CAGED)', 'ספטים בכל סולם (CAGED)'), levels: [4], params: { bpm: 90, beats: 4 }, target: 85 },
+    f: { label: L('Jazz sevenths through ii–V–I (drop 2 / drop 3)', 'ספטים של ג׳אז ב־ii–V–I (דרופ 2 / דרופ 3)'), levels: [5], params: { bpm: 100, beats: 4 }, target: 85 },
+    ff: { label: L('Jazz changes, two beats a chord', 'מהלכי ג׳אז, שתי פעמות לאקורד'), levels: [6], params: { bpm: 110, beats: 2 }, target: 85 },
+  },
+};
+
+/** Walk the Changes (bass): quarter-note lines over a chart, chord tones on 1 and 3 (mic / MIDI). */
+GAME_TIERS.walkchanges = {
+  game: 'walkchanges',
+  source: () => 'instrument/bass-tech',
+  clear: 'timing',
+  tiers: {
+    pp: { label: L('Blues: root on 1, fifth on 3', 'בלוז: שורש ב־1, קווינטה ב־3'), levels: [1], params: { bpm: 80 }, target: 85 },
+    p: { label: L('Blues: chord tones on 1 and 3', 'בלוז: צלילי אקורד ב־1 וב־3'), levels: [2], params: { bpm: 90 }, target: 85 },
+    mp: { label: L('ii–V–I: chord tones, an approach note on 4', 'ii–V–I: צלילי אקורד, צליל גישה ב־4'), levels: [3], params: { bpm: 100 }, target: 85 },
+    mf: { label: L('Rhythm changes A: two chords a bar', 'ריתם צ׳יינג׳ס A: שני אקורדים בתיבה'), levels: [4], params: { bpm: 110 }, target: 85 },
+    f: { label: L('Rhythm changes bridge, faster', 'הגשר של ריתם צ׳יינג׳ס, מהר יותר'), levels: [5], params: { bpm: 140 }, target: 85 },
+    ff: { label: L('Giant Steps: key centres in thirds', 'ג׳איינט סטפס: מרכזים טונליים בטרצות'), levels: [6], params: { bpm: 160 }, target: 85 },
+  },
+};
+
+/** Roots by Ear (bass): hear a progression (no bass), play its roots (mic / MIDI). */
+GAME_TIERS.rootsear = {
+  game: 'rootsear',
+  source: () => 'cadences',
+  clear: 'accuracy',
+  tiers: {
+    pp: { label: L('I, IV, V', 'I, IV, V'), levels: [1], params: { bpm: 80 }, target: 85 },
+    p: { label: L('Pop progressions: + ii and vi', 'מהלכי פופ: + ii ו־vi'), levels: [2], params: { bpm: 85 }, target: 85 },
+    mp: { label: L('Minor keys, ♭VI and ♭VII', 'מינור, ♭VI ו־♭VII'), levels: [3], params: { bpm: 90 }, target: 85 },
+    mf: { label: L('ii–V–I and V/V, with sevenths', 'ii–V–I ו־V/V, עם ספטים'), levels: [4], params: { bpm: 95 }, target: 85 },
+    f: { label: L('Secondary dominants, borrowed chords, blues', 'דומיננטות משניות, אקורדים שאולים, בלוז'), levels: [5], params: { bpm: 100 }, target: 85 },
+    ff: { label: L('Tritone subs, backdoor, ii–V chains', 'תחליפי טריטון, דלת אחורית, שרשראות ii–V'), levels: [6], params: { bpm: 110 }, target: 85 },
+  },
+};
+
+/** Harmony Hold (voice): sing a named chord tone while the chord changes under it (cents, mic). */
+GAME_TIERS.harmonyhold = {
+  game: 'harmonyhold',
+  source: () => 'singing',
+  clear: 'accuracy',
+  tiers: {
+    pp: { label: L('Hold one note while the chord moves', 'מחזיקים צליל אחד והאקורד זז'), levels: [1], params: { cents: 50 }, target: 85 },
+    p: { label: L('The root, 3rd or 5th of each triad', 'השורש, הטרצה או הקווינטה של כל משולש'), levels: [2], params: { cents: 40 }, target: 85 },
+    mp: { label: L('3rds and 7ths of seventh chords', 'טרצות וספטימות של ספטאקורדים'), levels: [3], params: { cents: 35 }, target: 85 },
+    mf: { label: L('Guide tones through ii–V–I', 'צלילים מובילים ב־ii–V–I'), levels: [4], params: { cents: 30 }, target: 85 },
+    f: { label: L('Guide tones through ii–V chains, minor ii–V', 'צלילים מובילים בשרשראות ii–V, ii–V מינורי'), levels: [5], params: { cents: 25 }, target: 85 },
+    ff: { label: L('Upper extensions: 9, ♯11, 13, ♭9', 'הרחבות עליונות: 9, ♯11, 13, ♭9'), levels: [6], params: { cents: 25 }, target: 85 },
+  },
+};
+
+/** Sing the Interval Sprint (voice): a note sounds and an interval is named — sing the other note (mic). 90 s. */
+GAME_TIERS.singinterval = {
+  game: 'singinterval',
+  source: () => 'singing',
+  clear: 'rush',
+  tiers: {
+    pp: { label: L('Up: 3rds, 4th, 5th, octave', 'עולים: טרצות, קוורטה, קווינטה, אוקטבה'), levels: [1], params: { cents: 50 }, target: 8 },
+    p: { label: L('Up: all twelve', 'עולים: כל השנים־עשר'), levels: [2], params: { cents: 50 }, target: 9 },
+    mp: { label: L('Up and down', 'עולים ויורדים'), levels: [3], params: { cents: 40 }, target: 10 },
+    mf: { label: L('6ths and 7ths both ways, closer', 'סקסטות וספטימות לשני הכיוונים, מדויק יותר'), levels: [4], params: { cents: 35 }, target: 10 },
+    f: { label: L('Compound: 9ths and 10ths', 'מורכבים: נונות ודצימות'), levels: [5], params: { cents: 35 }, target: 10 },
+    ff: { label: L('Chord tones of a named chord (the ♭7 of G7)', 'צלילי אקורד בשם (ה־♭7 של G7)'), levels: [6], params: { cents: 30 }, target: 10 },
+  },
+};
+
+/** Kit Read Rush (drums): hear one bar, pick the written bar (Note Rush on drum notation). */
+GAME_TIERS.kitread = {
+  game: 'kitread',
+  source: () => 'rhythm-reading',
+  clear: 'rush',
+  tiers: {
+    pp: { label: L('Rock beat', 'ביט רוק'), levels: [1], target: 8 },
+    p: { label: L('Kick variations', 'וריאציות בבס־דראם'), levels: [2], target: 8 },
+    mp: { label: L('Fills', 'מילויים (פילים)'), levels: [3], target: 9 },
+    mf: { label: L('Sixteenth hi-hats', 'היי־הט בשש־עשריות'), levels: [4], target: 9 },
+    f: { label: L('Open hi-hat and ghost notes', 'היי־הט פתוח ותווי רפאים'), levels: [5], target: 10 },
+    ff: { label: L('Odd meters, flams and drags, ride patterns', 'משקלים אי־זוגיים, פלאמים ודראגים, דפוסי רייד'), levels: [6], target: 10 },
+  },
+};
+
+/** Name That Groove (drums): hear a groove, name its style — 10 rounds. */
+GAME_TIERS.namegroove = {
+  game: 'namegroove',
+  source: () => 'rhythm',
+  clear: 'accuracy',
+  tiers: {
+    pp: { label: L('Rock, pop, half-time', 'רוק, פופ, חצי־טמפו'), levels: [1], target: 80 },
+    p: { label: L('+ funk, shuffle, disco', '+ פאנק, שאפל, דיסקו'), levels: [2], target: 80 },
+    mp: { label: L('+ jazz swing, bossa nova, samba', '+ סווינג ג׳אז, בוסה נובה, סמבה'), levels: [3], target: 80 },
+    mf: { label: L('+ reggae, Afro-Cuban 6/8, songo, maqsum', '+ רגאיי, אפרו־קובני 6/8, סונגו, מקסום'), levels: [4], target: 80 },
+    f: { label: L('+ second line, Purdie shuffle, drum and bass, train beat', '+ סקנד ליין, שאפל פרדי, דראם אנד בייס, ביט רכבת'), levels: [5], target: 80 },
+    ff: { label: L('Odd meter and prog: 7/8, 5/4, 9/8, look-alike decoys', 'משקל אי־זוגי ופרוג: 7/8, 5/4, 9/8, מסיחים דומים'), levels: [6], target: 80 },
+  },
+};
+
+/** Games whose on-screen (touch) input is practice only: it never clears a tier. */
+export const MEASURED_ONLY = new Set(['bhtime', 'riffecho', 'playback', 'voicingsprint', 'changerace', 'walkchanges', 'rootsear', 'harmonyhold', 'singinterval']);
+
 // Social sets (duel, ghost, rooms, daily): the tier picks the items (engine/tournament.ts tournamentItem).
 const SOCIAL_LABEL: Record<DynName, Bi> = {
   pp: L('Triads, 3rds and 5ths, degrees 1 3 5', 'משולשים, טרצות וקווינטות, דרגות 1 3 5'),
@@ -727,6 +871,7 @@ export function clearsRun(game: string, tier: DynName, score: number, detail: un
   const def = spec.tiers[tier];
   const d = (detail && typeof detail === 'object' ? detail : {}) as Record<string, unknown>;
   const target = def.target ?? 0;
+  if (d.input === 'touch' && MEASURED_ONLY.has(spec.game)) return false;
   switch (spec.clear) {
     case 'rush': {
       const right = num(d, 'right') ?? 0;

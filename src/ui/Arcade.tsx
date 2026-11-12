@@ -617,7 +617,7 @@ export const GAME_CATS: { id: GameCat; icon: string; en: string; he: string }[] 
   { id: 'instrument', icon: '🎸', en: 'Instrument & sound', he: 'כלי וסאונד' },
   { id: 'social', icon: '⚔', en: 'Against others', he: 'מול אחרים' },
 ];
-export const GAMES2: { id: 'drills' | 'highway' | 'flight' | 'melodypuzzle' | 'nametune' | 'tuneup' | 'pitchmemory' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'peakhunter' | 'rush-voicing' | 'rush-scale' | 'rush-standard' | 'reharm' | 'transcribe' | 'bhtime' | 'riffecho' | 'polylock' | 'land' | 'groove-echo' | 'odd-echo' | 'time-lock' | 'ghost-control' | 'rudiment-rush' | 'groove-off'; icon: string; hue: string; cat: GameCat; en: [string, string]; he: [string, string] }[] = [
+export const GAMES2: { id: 'drills' | 'highway' | 'flight' | 'melodypuzzle' | 'nametune' | 'tuneup' | 'pitchmemory' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'peakhunter' | 'rush-voicing' | 'rush-scale' | 'rush-standard' | 'reharm' | 'transcribe' | 'bhtime' | 'riffecho' | 'polylock' | 'land' | 'groove-echo' | 'odd-echo' | 'time-lock' | 'ghost-control' | 'rudiment-rush' | 'groove-off' | 'playback' | 'voicingsprint' | 'changerace' | 'walkchanges' | 'rootsear' | 'harmonyhold' | 'singinterval' | 'kitread' | 'namegroove'; icon: string; hue: string; cat: GameCat; en: [string, string]; he: [string, string] }[] = [
   { id: 'rush-chord', icon: '🎹', hue: 'var(--hue-pitch)', cat: 'read', en: ['Chord Rush', 'Name chords on the neck, keys or staff — 60 seconds.'], he: ['מרוץ אקורדים', 'זהו אקורדים על הצוואר, הקלידים או החמשה — 60 שניות.'] },
   { id: 'rush-note', icon: '𝄞', hue: 'var(--hue-reading)', cat: 'read', en: ['Note Rush', 'Read notes off the staff as fast as you can.'], he: ['מרוץ תווים', 'קראו תווים מהחמשה הכי מהר שאפשר.'] },
   { id: 'rush-keysig', icon: '♯', hue: 'var(--hue-reading)', cat: 'read', en: ['Key Signature Rush', 'Sharps and flats → the key, fast.'], he: ['מרוץ סימני מפתח', 'דיאזים ובמולים → הסולם, מהר.'] },
@@ -650,6 +650,16 @@ export const GAMES2: { id: 'drills' | 'highway' | 'flight' | 'melodypuzzle' | 'n
   { id: 'ghost-control', icon: '', hue: 'var(--hue-time)', cat: 'instrument', en: ['Ghost Control', 'Accents, normal strokes and ghost notes — each in its band.'], he: ['שליטה ברפאים', 'הדגשות, מכות רגילות ותווי רפאים — כל אחת בעוצמה שלה.'] },
   { id: 'rudiment-rush', icon: '', hue: 'var(--hue-time)', cat: 'instrument', en: ['Rudiment Rush', 'Two clean bars of a rudiment — faster after every pass.'], he: ['מרוץ רודימנטים', 'שתי תיבות נקיות של רודימנט — מהר יותר אחרי כל מעבר.'] },
   { id: 'groove-off', icon: '', hue: 'var(--hue-time)', cat: 'social', en: ['Groove-off', 'The same three grooves for you and a friend — measured, at your own time.'], he: ['קרב גרובים', 'אותם שלושה גרובים לכם ולחבר — במדידה, כל אחד בזמנו.'] },
+  // 0.76: instrument, voice and drum games (GAMES_TIERS_PLAN §3), measured by MIDI or the microphone.
+  { id: 'playback', icon: '', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Play It Back', 'Hear a phrase, play it back on the keys.'], he: ['לנגן בחזרה', 'שומעים משפט ומנגנים אותו בחזרה על הקלידים.'] },
+  { id: 'voicingsprint', icon: '', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Voicing Sprint', 'A chord symbol appears — play the voicing. 60 seconds.'], he: ['ספרינט וויסינגים', 'מופיע סימן אקורד — מנגנים את הוויסינג. 60 שניות.'] },
+  { id: 'changerace', icon: '', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Chord Change Race', 'Strum each chord right on its beat.'], he: ['מרוץ החלפות אקורדים', 'פורטים כל אקורד בדיוק על הפעמה שלו.'] },
+  { id: 'walkchanges', icon: '', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Walk the Changes', 'Walk quarter notes over the chart — chord tones on 1 and 3.'], he: ['ללכת על המהלך', 'קו רבעים מעל המהלך — צלילי אקורד ב־1 וב־3.'] },
+  { id: 'rootsear', icon: '', hue: 'var(--hue-pitch)', cat: 'ear', en: ['Roots by Ear', 'Hear the chords, play their roots.'], he: ['שורשים מהאוזן', 'שומעים את האקורדים ומנגנים את השורשים.'] },
+  { id: 'harmonyhold', icon: '', hue: 'var(--hue-voice)', cat: 'voice', en: ['Harmony Hold', 'Sing a chord tone while the chords move.'], he: ['להחזיק הרמוניה', 'שרים צליל של האקורד בזמן שהאקורדים זזים.'] },
+  { id: 'singinterval', icon: '', hue: 'var(--hue-voice)', cat: 'voice', en: ['Sing the Interval Sprint', 'A note and an interval — sing the other note.'], he: ['ספרינט מרווחים בשירה', 'צליל ומרווח — שרים את הצליל השני.'] },
+  { id: 'kitread', icon: '', hue: 'var(--hue-reading)', cat: 'read', en: ['Kit Read Rush', 'Hear one bar, pick the written bar — fast.'], he: ['מרוץ קריאת תופים', 'שומעים תיבה ובוחרים את התיבה הכתובה — מהר.'] },
+  { id: 'namegroove', icon: '', hue: 'var(--hue-time)', cat: 'rhythm', en: ['Name That Groove', 'Hear a groove, name its style — 10 rounds.'], he: ['זהו את הגרוב', 'שומעים גרוב ומזהים את הסגנון — 10 סיבובים.'] },
 ];
 
 /** Practice tab hub (owner 2026-11-08): songs, technique and singing get their own place above the games, with the tools. */
@@ -933,6 +943,7 @@ const GAME_GLYPH: Record<string, GlyphKind> = {
   'rush-progression': 'prog', 'rush-fretboard': 'guitar', peakhunter: 'eq', highway: 'rhythm', flight: 'sing', melodypuzzle: 'puzzle', nametune: 'name', drills: 'scales', tuneup: 'tune', pitchmemory: 'memory', groove: 'groove',
   'rush-voicing': 'voicingspy', reharm: 'reharm', 'rush-standard': 'standard', 'rush-scale': 'scalerush', transcribe: 'transcribe', bhtime: 'bhtime', riffecho: 'riff', polylock: 'polylock',
   'rudiment-rush': 'rudrush', 'groove-off': 'grooveoff',
+  playback: 'playback', voicingsprint: 'vsprint', changerace: 'changerace', walkchanges: 'walkchanges', rootsear: 'rootsear', harmonyhold: 'harmonyhold', singinterval: 'singinterval', kitread: 'kitread', namegroove: 'namegroove',
 };
 const CAT_COLOR: Record<string, string> = { ear: DOMAIN_COLOR.ear, rhythm: DOMAIN_COLOR.rhythm, memory: DOMAIN_COLOR.harmony, read: DOMAIN_COLOR.theory, voice: DOMAIN_COLOR.voice, instrument: DOMAIN_COLOR.play, social: '#EDE6F7' };
 
