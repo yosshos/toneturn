@@ -7,7 +7,7 @@ import { recordTakeAnalysis } from '../storage/analysis';
 import { checkRules } from '../engine/improvRules';
 import { parseChart } from '../engine/charts';
 import { PART_NAME, songDrill } from '../engine/drills/songDrills';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { bassTuningOf, type Settings } from '../storage/progress';
 import type { RatingEvent } from '../engine/rating';
 import type { CustomDrill, Drill, DrillCalibration, DrillSettings, FamilyId, ItemState, PlayedNote, TakeMetrics } from '../engine/drills/types';
@@ -186,6 +186,9 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
   // B12 (0.64): the bass has its own tuning setting (Settings → bassTuning), apart from the guitar's.
   const bassTuning = bassTuningOf(settings);
   const runQueue = useMemo(() => (view.k === 'run' ? withBassTuning(view.queue, bassTuning) : []), [view, bassTuning]);
+  /** The item the run is on now (DrillRun reports it), for the header; reset with every new run. */
+  const [runIdx, setRunIdx] = useState<number | null>(null);
+  useEffect(() => setRunIdx(null), [view]);
   const head = (title: string, back: () => void) => (
     <header className="screen-head">
       <button className="icon-btn" onClick={back} aria-label="Back">
@@ -199,8 +202,9 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
   if (view.k === 'run')
     return (
       <main className="drills-screen" data-drills="run">
-        {head(view.queue[view.i]?.title[lang] ?? tx.title, () => (queue?.length ? onBack() : setView(view.from)))}
+        {head(runQueue[runIdx ?? view.i]?.title[lang] ?? view.queue[view.i]?.title[lang] ?? tx.title, () => (queue?.length ? onBack() : setView(view.from)))}
         <DrillRun
+          onIndex={setRunIdx}
           lang={lang}
           ds={ds}
           headphones={settings.headphones}
@@ -732,10 +736,12 @@ function LevelRefs({ level, lang }: { level: LevelDef; lang: Lang }) {
   );
 }
 
-function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphones, onHeadphones, kit }: { lang: Lang; ds: DrillSettings; cal: DrillCalibration; queue: Drill[]; start: number; items: Record<string, ItemState>; onTake: DrillsProps['onTake']; onEnd: (takes: number, clean: number) => void; headphones?: boolean; onHeadphones?: (h: boolean) => void; kit?: Settings['drumKit'] }) {
+function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphones, onHeadphones, kit, onIndex }: { onIndex?: (i: number) => void; lang: Lang; ds: DrillSettings; cal: DrillCalibration; queue: Drill[]; start: number; items: Record<string, ItemState>; onTake: DrillsProps['onTake']; onEnd: (takes: number, clean: number) => void; headphones?: boolean; onHeadphones?: (h: boolean) => void; kit?: Settings['drumKit'] }) {
   const [beat, setBeat] = useState(-1);
   const tx = T[lang];
   const [i, setI] = useState(start);
+  // The screen's header names the item being played (owner 2026-11-12: it kept the first item's title — "C major" over G).
+  useEffect(() => onIndex?.(i), [i]); // eslint-disable-line react-hooks/exhaustive-deps
   const drill = queue[i];
   const local = useRef<Record<string, ItemState>>({});
   const stateOf = (d: Drill) => local.current[d.itemId] ?? items[d.itemId] ?? newItem(d);

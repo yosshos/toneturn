@@ -709,6 +709,8 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
 /** The analysis shown after a take. */
 export function TakeResult({ m, lang, onAgain, onSlower, onNext }: { m: TakeMetrics; lang: Lang; onAgain: () => void; onSlower: () => void; onNext?: () => void }) {
   const tx = TX[lang];
+  /** Ahead of the click on average (played − expected < −30 ms): slowing down is not the fix, waiting for the beat is. */
+  const rushing = m.timingMean !== null && m.timingMean < -30;
   const pct = (x: number | null) => (x === null ? '—' : `${(x * 100).toFixed(1)}%`);
   const ms = (x: number | null) => (x === null ? '—' : `${Math.round(x)} ms`);
   const verdictText = m.verdict === 'clean' ? `✓ ${tx.clean}` : m.verdict === 'almost' ? tx.almost : tx.not;
@@ -760,13 +762,23 @@ export function TakeResult({ m, lang, onAgain, onSlower, onNext }: { m: TakeMetr
       </div>
       <EvennessStrip m={m} lang={lang} />
       <VelocityCurve m={m} lang={lang} />
+      {rushing && (
+        // Owner 2026-11-12: "Slower −10%" showed even when the player was clearly ahead of the click — say what happened.
+        <p className="field-hint" data-rushing="1">
+          {lang === 'he'
+            ? `הקדמתם את הפעמה בממוצע ב־${Math.round(-m.timingMean!)} מ״ש — אותו טמפו, לחכות לקליק.`
+            : `You were ahead of the beat by ${Math.round(-m.timingMean!)} ms on average — same tempo, wait for the click.`}
+        </p>
+      )}
       <div className="drill-actions">
         <button className="btn" onClick={onAgain}>
           ↻ {tx.again}
         </button>
-        <button className="btn ghost" onClick={onSlower}>
-          {tx.slower}
-        </button>
+        {m.verdict !== 'clean' && !rushing && (
+          <button className="btn ghost" onClick={onSlower}>
+            {tx.slower}
+          </button>
+        )}
         {onNext && (
           <button className="btn primary" onClick={onNext}>
             {tx.next} ▶
