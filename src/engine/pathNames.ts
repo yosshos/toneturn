@@ -72,7 +72,7 @@ const SHORT: Record<string, L2> = {
   'bass-notes': { en: 'Bass notes', he: 'תווים בבס' },
   'bass-shapes': { en: 'Bass shapes', he: 'צורות בבס' },
   'bass-intervals': { en: 'Bass intervals', he: 'מרווחים בבס' },
-  'bass-scales': { en: 'Bass boxes', he: 'בוקסים בבס' },
+  'bass-scales': { en: 'Bass boxes', he: 'תיבות בבס' },
   'key-notes': { en: 'Key notes', he: 'תווים בקלידים' },
   'key-read': { en: 'Both clefs', he: 'שני המפתחות' },
   'key-shapes': { en: 'Chord shapes', he: 'צורות אקורד' },

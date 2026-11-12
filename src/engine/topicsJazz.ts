@@ -360,7 +360,7 @@ TOPIC_GEN['guide-tones'] = {
     };
     return choiceQ({
       id, topic: 'guide-tones', level, seed, skill: 'sequences', difficulty: 1300 + 120 * level,
-      ask: minor ? { en: 'Minor ii–V–i in shells — which guide-tone line is on top?', he: 'ii–V–i מינורי בשלדים — איזה קו צלילים מנחים למעלה?' } : { en: 'ii–V–I in shells — which guide-tone line is on top?', he: 'ii–V–I בשלדים — איזה קו צלילים מנחים למעלה?' },
+      ask: minor ? { en: 'Minor ii–V–i in shells — which guide-tone line is on top?', he: 'ii–V–i מינורי בקונכיות — איזה קו צלילים מנחים למעלה?' } : { en: 'ii–V–I in shells — which guide-tone line is on top?', he: 'ii–V–I בקונכיות — איזה קו צלילים מנחים למעלה?' },
       names, answer: a ? 'a' : 'b', choices: ['a', 'b'], stimulus: voice(a), choiceStim: { a: voice(true), b: voice(false) },
     });
   },

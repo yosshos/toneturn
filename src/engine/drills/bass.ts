@@ -462,7 +462,7 @@ function genPluck(s: DrillSpec, tu: Tuning): Drill {
       });
       const { lo } = octaveShape(tu, key, 8);
       line.push({ b: 16, d: 1, p: noteAt(tu, lo.s, lo.f), s: lo.s, f: lo.f });
-      return drillOf(s, tu, alt(line), { en: op === 1 ? 'Skips: root, octave, ♭7' : 'Skips: root, octave, 5th', he: op === 1 ? 'דילוגים: שורש, אוקטבה, ♭7' : 'דילוגים: שורש, אוקטבה, קווינטה', chart: chartOf(key, prog), bass: { crossing: 10 } });
+      return drillOf(s, tu, alt(line), { en: op === 1 ? 'Skips: root, octave, ♭7' : 'Skips: root, octave, 5th', he: op === 1 ? 'דילוגים: יסוד, אוקטבה, ♭7' : 'דילוגים: יסוד, אוקטבה, קווינטה', chart: chartOf(key, prog), bass: { crossing: 10 } });
     }
     case 'ima': {
       // Three fingers in triplets: root – 5th – octave across three strings, each string its own finger (i m a).
@@ -494,7 +494,7 @@ function genPluck(s: DrillSpec, tu: Tuning): Drill {
       });
       const R = rootPlace(tu, key, 8, [n]);
       line.push({ b: 16, d: 1, p: noteAt(tu, R.s, R.f), s: R.s, f: R.f, st: 'p' });
-      return drillOf(s, tu, line, { en: 'Thumb and fingers: root, 5th, octave, 10th', he: 'אגודל ואצבעות: שורש, קווינטה, אוקטבה, דצימה', chart: chartOf(key, PROGS.pop), bass: { crossing: 10 } });
+      return drillOf(s, tu, line, { en: 'Thumb and fingers: root, 5th, octave, 10th', he: 'אגודל ואצבעות: יסוד, קווינטה, אוקטבה, דצימה', chart: chartOf(key, PROGS.pop), bass: { crossing: 10 } });
     }
   }
   throw new Error(`Unknown b-pluck kind ${s.kind}`);
@@ -1682,7 +1682,7 @@ function genPick(s: DrillSpec, tu: Tuning): Drill {
       });
       const { lo } = octaveShape(tu, key, 8);
       line.push(D({ b: 16, d: 1, p: noteAt(tu, lo.s, lo.f), s: lo.s, f: lo.f }));
-      return drillOf(s, tu, line, { en: 'Pick: economy strokes across an arpeggio', he: 'מפרט: מכות חסכוניות לאורך ארפג׳ו', chart: chartOf(key, PROGS.pop), bass: { crossing: 10 } });
+      return drillOf(s, tu, line, { en: 'Pick: economy strokes across an arpeggio', he: 'מפרט: מכות חסכוניות לאורך ארפג׳יו', chart: chartOf(key, PROGS.pop), bass: { crossing: 10 } });
     }
     case 'pinout': {
       // Two strings in 16ths, alternate picking: outside (down on the lower string) or inside (down on the higher one).
@@ -1699,7 +1699,7 @@ function genPick(s: DrillSpec, tu: Tuning): Drill {
       });
       const R = rootPlace(tu, key, 7, [tu.open.length, tu.open.length - 1]);
       line.push(D({ b: 16, d: 1, p: noteAt(tu, R.s, R.f), s: R.s, f: R.f }));
-      return drillOf(s, tu, line, { en: op === 1 ? 'Pick: inside picking, root and 5th in 16ths' : 'Pick: outside picking, root and 5th in 16ths', he: op === 1 ? 'מפרט: פריטה פנימית, שורש וקווינטה בשש-עשריות' : 'מפרט: פריטה חיצונית, שורש וקווינטה בשש-עשריות', chart: chartOf(key, prog), bass: { asym: { ms: 10, db: 3 }, crossing: 10 } });
+      return drillOf(s, tu, line, { en: op === 1 ? 'Pick: inside picking, root and 5th in 16ths' : 'Pick: outside picking, root and 5th in 16ths', he: op === 1 ? 'מפרט: פריטה פנימית, יסוד וקווינטה בשש-עשריות' : 'מפרט: פריטה חיצונית, יסוד וקווינטה בשש-עשריות', chart: chartOf(key, prog), bass: { asym: { ms: 10, db: 3 }, crossing: 10 } });
     }
   }
   throw new Error(`Unknown b-pick kind ${s.kind}`);
@@ -2305,7 +2305,7 @@ function genImproB(s: DrillSpec, tu: Tuning): Drill {
       const rules = targetRules(key, prog, (c, bar) => (bar % 4 === 0 && bar > 0 ? target(c) : ANYCT(c)));
       return drillOf(s, tu, alt(line), {
         en: `${third ? 'Fills that land on the 3rd' : 'Fills that land on the root'} (${style.en})`,
-        he: `${third ? 'מילויים שנוחתים על הטרצה' : 'מילויים שנוחתים על השורש'} (${style.he})`,
+        he: `${third ? 'מילויים שנוחתים על הטרצה' : 'מילויים שנוחתים על היסוד'} (${style.he})`,
         chart: chartOf(key, prog), show: 'chart', evenness: false, bass: { rules }, drums: { groove: op % 2 ? 'rock-8' : 'pop-1', fills: [3, 7] },
       });
     }
@@ -2378,7 +2378,7 @@ function genPosRead(s: DrillSpec, tu: Tuning): Drill {
       // One position (II, V, VII, IX), every string, eight bars.
       const P = [2, 5, 7, 9][op % 4];
       const set = windowScale(tu, key, ints, P, P + 3);
-      return drillOf(s, tu, close(melody(set, 8), 32), { en: `Position ${ROMAN[P]}`, he: `פוזיציה ${ROMAN[P]}`, evenness: false, keySig: sig, pos: P, open: false, stay: true, show: 'staff' });
+      return drillOf(s, tu, close(melody(set, 8), 32), { en: `Position ${ROMAN[P]}`, he: `מצב ${ROMAN[P]}`, evenness: false, keySig: sig, pos: P, open: false, stay: true, show: 'staff' });
     }
     case 'shift': {
       // Four bars in one position, a shift at the bar line, four bars in the next (II → V, V → VII, then back down).
@@ -2386,13 +2386,13 @@ function genPosRead(s: DrillSpec, tu: Tuning): Drill {
       const a = melody(windowScale(tu, key, ints, A, A + 3), 4);
       const setB = windowScale(tu, key, ints, B, B + 3);
       const b = melody(setB, 4, 16);
-      return drillOf(s, tu, close([...a, ...b], 32), { en: `Shift at the bar line: position ${ROMAN[A]} → ${ROMAN[B]}`, he: `מעבר בקו התיבה: פוזיציה ${ROMAN[A]} ← ${ROMAN[B]}`, evenness: false, keySig: sig, pos: A, open: false, show: 'staff' });
+      return drillOf(s, tu, close([...a, ...b], 32), { en: `Shift at the bar line: position ${ROMAN[A]} → ${ROMAN[B]}`, he: `מעבר בקו התיבה: מצב ${ROMAN[A]} ← ${ROMAN[B]}`, evenness: false, keySig: sig, pos: A, open: false, show: 'staff' });
     }
     case 'upper': {
       // Above the staff: positions IX–XII on the D and G strings (ledger lines above the bass clef).
       const P = [9, 12][op % 2];
       const set = windowScale(tu, key, ints, P, P + 3, [2, 1]);
-      return drillOf(s, tu, close(melody(set, 4), 16), { en: `Upper register: position ${ROMAN[P]}`, he: `האזור הגבוה: פוזיציה ${ROMAN[P]}`, evenness: false, keySig: sig, pos: P, open: false, stay: true, show: 'staff' });
+      return drillOf(s, tu, close(melody(set, 4), 16), { en: `Upper register: position ${ROMAN[P]}`, he: `האזור הגבוה: מצב ${ROMAN[P]}`, evenness: false, keySig: sig, pos: P, open: false, stay: true, show: 'staff' });
     }
   }
   throw new Error(`Unknown b-posread kind ${s.kind}`);
@@ -2638,13 +2638,13 @@ export function bassFamilies(): GuitarFamilyDef[] {
       L('b-read', 13, 'Session skills: improvise over a rock / pop chart', 'מיומנויות סשן: אלתור על צ׳ארט רוק / פופ', [RD('session', { perBeat: 1 }), RD('session', { perBeat: 1, option: 1 })], K6, [80, 110], Qn),
     ]),
     // 0.66: reading in positions on the electric bass — the low range, one position at a time, shifts, the upper register.
-    fam('b-posread', 'Reading in positions', 'קריאה בפוזיציות', [
+    fam('b-posread', 'Reading in positions', 'קריאה במצבים', [
       L('b-posread', 1, 'Low range: E to C below the staff', 'האזור הנמוך: מ־E עד C מתחת לחמשה', [RP('low')], [0, 7, 5, 4], [50, 80], 'quarters / 8ths'),
-      L('b-posread', 2, 'Position II', 'פוזיציה II', [RP('pos', { option: 0 })], [2, 9, 4, 7], [50, 80], 'quarters / 8ths'),
-      L('b-posread', 3, 'Position V', 'פוזיציה V', [RP('pos', { option: 1 })], [0, 5, 7, 10], [50, 80], 'quarters / 8ths'),
-      L('b-posread', 4, 'Position VII', 'פוזיציה VII', [RP('pos', { option: 2 }), RP('pos', { option: 2, minor: true })], [2, 9, 7, 11], [50, 80], 'quarters / 8ths'),
-      L('b-posread', 5, 'Shifting at the bar line', 'מעבר פוזיציה בקו התיבה', [0, 1, 2].map((o) => RP('shift', { option: o })), [0, 7, 2, 5], [50, 80], 'quarters / 8ths'),
-      L('b-posread', 6, 'Upper register: positions IX and XII', 'האזור הגבוה: פוזיציות IX ו־XII', [RP('upper', { option: 0 }), RP('upper', { option: 1 })], [0, 7, 5, 2], [50, 80], 'quarters / 8ths'),
+      L('b-posread', 2, 'Position II', 'מצב II', [RP('pos', { option: 0 })], [2, 9, 4, 7], [50, 80], 'quarters / 8ths'),
+      L('b-posread', 3, 'Position V', 'מצב V', [RP('pos', { option: 1 })], [0, 5, 7, 10], [50, 80], 'quarters / 8ths'),
+      L('b-posread', 4, 'Position VII', 'מצב VII', [RP('pos', { option: 2 }), RP('pos', { option: 2, minor: true })], [2, 9, 7, 11], [50, 80], 'quarters / 8ths'),
+      L('b-posread', 5, 'Shifting at the bar line', 'מעבר בין מצבים בקו התיבה', [0, 1, 2].map((o) => RP('shift', { option: o })), [0, 7, 2, 5], [50, 80], 'quarters / 8ths'),
+      L('b-posread', 6, 'Upper register: positions IX and XII', 'האזור הגבוה: מצבים IX ו־XII', [RP('upper', { option: 0 }), RP('upper', { option: 1 })], [0, 7, 5, 2], [50, 80], 'quarters / 8ths'),
     ]),
     fam('b-styles', 'Style vocabulary', 'אוצר מילים סגנוני', [
       L('b-styles', 1, 'Rock', 'רוק', [ST('style', { option: 0 })], K6, [90, 140], E8, ['rock', 'metal', 'pop']),
@@ -2699,7 +2699,7 @@ export function bassFamilies(): GuitarFamilyDef[] {
     ]),
     // 0.66: fills and short solos that land on chord tones — a ladder up to the walk family's two-chorus blues solo.
     fam('b-impro', 'Fills and target notes', 'מילויים וצלילי מטרה', [
-      L('b-impro', 1, 'Fills that land on the root', 'מילויים שנוחתים על השורש', [0, 1].map((o) => IM('fill-root', { option: o })), K6, [70, 110], E8),
+      L('b-impro', 1, 'Fills that land on the root', 'מילויים שנוחתים על היסוד', [0, 1].map((o) => IM('fill-root', { option: o })), K6, [70, 110], E8),
       L('b-impro', 2, 'Fills that land on the 3rd', 'מילויים שנוחתים על הטרצה', [0, 1].map((o) => IM('fill-third', { option: o })), K6, [70, 110], E8),
       L('b-impro', 3, 'Two-bar answers over a vamp', 'תשובות של שתי תיבות על וואמפ', [IM('answer')], K4, [80, 100], E8),
       L('b-impro', 4, 'Pentatonic solo: chord tones on the changes', 'סולו פנטטוני: צלילי אקורד בחילופים', [0, 1, 2].map((o) => IM('penta-solo', { option: o })), K6, [70, 110], E8),

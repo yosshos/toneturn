@@ -402,7 +402,7 @@ export const TASTES: Record<CourseId, Record<SelfReport, TasteDef>> = {
       kind: 'drills',
       picks: [{ level: 'cadences-1', items: [0, 1, 2], band: { style: 'pop', chart: ['C F', 'G C'] } }],
     }),
-    well: T('keys', 'well', 'Shells on a blues in F', 'שלדים על בלוז בפה', 'Left-hand shell voicings through a 12-bar blues with the band.', 'קולות שלד ביד שמאל לאורך בלוז של 12 תיבות עם הלהקה.', {
+    well: T('keys', 'well', 'Shells on a blues in F', 'קונכיות על בלוז בפה', 'Left-hand shell voicings through a 12-bar blues with the band.', 'קולות שלד ביד שמאל לאורך בלוז של 12 תיבות עם הלהקה.', {
       kind: 'drills',
       picks: [{ level: 'voicings-6', match: ':5:', band: { style: 'swing', chart: ['F7', 'Bb7', 'F7', 'F7', 'Bb7', 'Bb7', 'F7', 'D7', 'Gm7', 'C7', 'F7', 'C7'], bass: true, drums: 'swing' } }],
     }),
