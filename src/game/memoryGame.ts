@@ -21,6 +21,7 @@ import {
   rhythmTimeline,
   splitRhythm,
   sungToPads,
+  padForMidi,
   timingDifficulty,
   type MelodyGame,
   type MelodyGrade,
@@ -42,7 +43,7 @@ import {
 } from './adapters';
 
 export type GameKind = 'melody' | 'rhythm';
-export type GameInput = 'pads' | 'sing' | 'tap' | 'knock';
+export type GameInput = 'pads' | 'sing' | 'tap' | 'knock' | 'midi';
 
 export interface GameConfig {
   kind: GameKind;
@@ -277,6 +278,15 @@ export class MemoryGameController {
     if (entered[k] !== this.view.seq[k] || entered.length === this.view.seq.length) this.resolveWaiter('done');
   }
 
+  /** A MIDI key (melody, MIDI input): its pad in any octave, or a wrong entry when it is on no pad. */
+  midiNote(midi: number) {
+    if (this.view.stage !== 'respond' || this.cfg.input !== 'midi' || !this.view.melody) return;
+    const entered = [...this.view.entered, padForMidi(this.view.melody, midi)];
+    this.patch({ entered });
+    const k = entered.length - 1;
+    if (entered[k] !== this.view.seq[k] || entered.length === this.view.seq.length) this.resolveWaiter('done');
+  }
+
   /** Rhythm tap; `perfMs` is the event timestamp (performance.now clock). */
   tapBeat(perfMs: number, drum: Drum = 'k') {
     if (this.cfg.input !== 'tap') return;
@@ -387,7 +397,8 @@ export class MemoryGameController {
     throwIfAborted(signal);
     this.patch({ litPad: null });
 
-    if (this.cfg.input === 'pads') {
+    // 0.76: a MIDI keyboard answers like the pads (each key → its pad, any octave; a note off the pads is wrong)
+    if (this.cfg.input === 'pads' || this.cfg.input === 'midi') {
       this.patch({ stage: 'respond', entered: [] });
       await this.wait(signal);
       const grade = gradeMelody(seq, this.view.entered);

@@ -51,6 +51,8 @@ export const GAME_STEP_GLYPH: Record<string, GlyphKind> = {
   land: 'landit', 'groove-echo': 'grooveecho', 'odd-echo': 'oddecho', 'time-lock': 'timelock', 'ghost-control': 'ghostctl', 'rudiment-rush': 'rudrush', 'groove-off': 'grooveoff',
   // PIANO_JAZZ P2: repertoire steps and the advanced games as bonus steps (their Arcade symbols).
   repertoire: 'repstep', 'rush-voicing': 'voicingspy', 'rush-scale': 'scalerush', 'rush-standard': 'standard', reharm: 'reharmspot', bhtime: 'bhtime', riffecho: 'riff', polylock: 'polylock',
+  // 0.76: instrument, voice and drum games (their Arcade symbols).
+  playback: 'playback', voicingsprint: 'vsprint', changerace: 'changerace', walkchanges: 'walkchanges', rootsear: 'rootsear', harmonyhold: 'harmonyhold', singinterval: 'singinterval', kitread: 'kitread', namegroove: 'namegroove',
 };
 /**
  * A bonus step's symbol where its game id is shared with another step kind: the Transcription Race (route 'transcribe')

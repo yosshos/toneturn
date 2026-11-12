@@ -5,13 +5,13 @@ import { genTopic } from '../src/engine/topicKit';
 import { cellMidis, JAZZ_TENSIONS } from '../src/engine/topicsTopTiers';
 import { fretAnswers, fretTarget, ladderOf, rushItem, rushNoReplay } from '../src/engine/rush';
 import { tuningById } from '../src/engine/fretboard';
-import { groupStarts, meterPattern, rhythmTimeline } from '../src/engine/memory';
+import { groupStarts, melodyGame, meterPattern, padForMidi, PAD_SETS, rhythmTimeline } from '../src/engine/memory';
 import { JAZZ_PUZZLE_LEVEL, nextLevel, puzzleAt } from '../src/engine/melodyPuzzle';
 import { droneless, ensureGates, isCheckpoint, levelAt, makeCourse } from '../src/engine/flight';
 import { AMOUNTS, answer, amountShareOf, bandsOf, makeRounds as peakRounds, newSave, THIRD_BANDS } from '../src/engine/peakHunter';
 import { makeRounds as tuneRounds } from '../src/engine/tuneUp';
 import { dayInterval, twoNoteEntry } from '../src/engine/pitchMemory';
-import { accentsOf, grooveTierPlan, grooveTierScore, hiddenSwing, pocketPartScore, swingPartScore } from '../src/engine/grooveTier';
+import { accentsOf, GROOVE_FF_PARTS, grooveTierPlan, grooveTierScore, hiddenSwing, matchTapsAt, pocketPartScore, swingPartScore, tempoChangePlan, tempoChangeScore } from '../src/engine/grooveTier';
 import { openingSlice } from '../src/engine/nameTune';
 
 describe('no tier is left as todo', () => {
@@ -68,7 +68,7 @@ describe('Fretboard ff: chord tones on a string', () => {
         }
   });
   it('the ff tier climbs to them', () => {
-    expect(tierDef('rush-fretboard', 'ff')!.rungs!.map((r) => r.level)).toEqual([5, 6, 7]);
+    expect(tierDef('rush-fretboard', 'ff')!.rungs!.map((r) => r.level)).toEqual([6, 7, 8, 9]);
   });
 });
 
@@ -98,6 +98,21 @@ describe('Echo ff and Beat Echo f / ff', () => {
     expect(tl.clicks.slice(0, 6).map((c) => c.accent)).toEqual([true, false, false, true, false, false]);
     expect(tl.responseAt).toBeCloseTo((6 + 6 + 6) * b);
     expect([...Array(30).keys()].some((s) => meterPattern(s, 6, 100, 'triplet').onsets.some((o) => Math.abs((o % 1) - 1 / 3) < 1e-9))).toBe(true);
+  });
+});
+
+describe('Echo MIDI input (0.76)', () => {
+  it('a MIDI key maps to its pad in any octave; a note off the pads is wrong (null)', () => {
+    const g = melodyGame(7, [...PAD_SETS.full]);
+    g.pads.forEach((p, i) => {
+      expect(padForMidi(g, p.midi)).toBe(i);
+      expect(padForMidi(g, p.midi + 12)).toBe(i);
+      expect(padForMidi(g, p.midi - 24)).toBe(i);
+    });
+    const tonic = g.pads[0].midi;
+    expect(padForMidi(g, tonic + 1)).toBeNull(); // ♭2 is not a pad of the major scale
+    const c = melodyGame(7, [...PAD_SETS.chroma]);
+    for (let k = 0; k < 12; k++) expect(padForMidi(c, c.pads[0].midi + k)).not.toBeNull();
   });
 });
 
@@ -206,6 +221,28 @@ describe('Groove ff parts', () => {
     expect(swingPartScore(0.66, 0.67)).toBe(100);
     expect(swingPartScore(0.66, 0.54)).toBe(0);
     expect(swingPartScore(0.66, null)).toBe(0);
+  });
+});
+
+describe('Groove ff: a tempo change to hold (0.76)', () => {
+  it('two old bars, one new click bar, four silent, one back — at the new tempo', () => {
+    expect(GROOVE_FF_PARTS).toContain('tempo');
+    const tp = tempoChangePlan();
+    expect(tp.newBpm).toBe(120);
+    expect(tp.beats).toHaveLength(8 + 4 * 6);
+    expect(tp.beats.filter((b) => !b.on)).toHaveLength(16);
+    // the new beat is ¾ of the old one
+    expect(tp.beats[9].ms - tp.beats[8].ms).toBeCloseTo(500, 5);
+    expect(tp.beats[1].ms - tp.beats[0].ms).toBeCloseTo(666.67, 1);
+  });
+  it('taps at the new tempo score high; staying at the old tempo fails', () => {
+    const tp = tempoChangePlan();
+    const t0 = 1000;
+    const good = tp.beats.map((b, i) => t0 + b.ms + (i % 3) * 6 - 6);
+    expect(tempoChangeScore(tp, matchTapsAt(good, t0, tp.beats.map((b) => b.ms))).accuracy).toBeGreaterThan(85);
+    // kept the old tempo through the change
+    const old = Array.from({ length: 23 }, (_, i) => t0 + i * (60000 / tp.oldBpm));
+    expect(tempoChangeScore(tp, matchTapsAt(old, t0, tp.beats.map((b) => b.ms))).accuracy).toBeLessThan(60);
   });
 });
 

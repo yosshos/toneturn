@@ -938,6 +938,101 @@ Object.assign(GLYPHS, {
     </>
   ),
 });
+// 0.76 instrument / voice / drum games: Play It Back (three heads, an arrow down to two keys), Voicing Sprint (a
+// four-note stack with speed lines), Chord Change Race (two chord boxes and an arrow on a beat tick), Walk the Changes
+// (four quarter notes stepping up), Roots by Ear (a chord, its lowest head ringed), Harmony Hold (a held line over two
+// different chords), Sing the Interval Sprint (two heads, an up arrow, a sound arc), Kit Read Rush (x heads on a staff
+// with speed lines), Name That Groove (a hi-hat row under a big question mark).
+Object.assign(GLYPHS, {
+  playback: (
+    <>
+      {head(-18, -12, 4.6, 3.4)}
+      {head(-6, -16, 4.6, 3.4)}
+      {head(6, -10, 4.6, 3.4)}
+      <path d="M16 -14 Q24 -4 14 4 M10 0 l4 4 4 -3" {...sw} strokeWidth={2.4} strokeLinejoin="round" />
+      <g {...sw} strokeWidth={2.4} strokeLinejoin="round">
+        <path d="M-24 6 H24 V22 H-24 Z M-8 6 V22 M8 6 V22" />
+      </g>
+      <rect x={-12} y={6} width={7} height={9} fill={I} />
+      <rect x={4} y={6} width={7} height={9} fill={I} />
+    </>
+  ),
+  vsprint: (
+    <>
+      {head(8, 16, 5.2, 3.8)}
+      {head(8, 7, 5.2, 3.8)}
+      {head(8, -2, 5.2, 3.8)}
+      {head(8, -11, 5.2, 3.8)}
+      <path d="M14 16 V-20" stroke={I} strokeWidth={2.4} />
+      <path d="M-26 -8 H-10 M-28 2 H-12 M-26 12 H-10" {...sw} strokeWidth={2.4} />
+    </>
+  ),
+  changerace: (
+    <g {...sw} strokeWidth={2.2} strokeLinejoin="round">
+      <path d="M-26 -16 H-10 V4 H-26 Z M-26 -9 H-10 M-26 -2 H-10 M-21 -16 V4 M-15 -16 V4" />
+      <path d="M10 -16 H26 V4 H10 Z M10 -9 H26 M10 -2 H26 M15 -16 V4 M21 -16 V4" />
+      <path d="M-6 -6 H5 M1 -10 l4 4 -4 4" strokeWidth={2.6} />
+      <path d="M-26 18 H26 M-18 13 V23 M18 13 V23" strokeWidth={2.4} />
+    </g>
+  ),
+  walkchanges: (
+    <>
+      {head(-20, 14, 5, 3.6)}
+      {head(-7, 7, 5, 3.6)}
+      {head(6, 0, 5, 3.6)}
+      {head(19, -7, 5, 3.6)}
+      <path d="M-15 14 V-8 M-2 7 V-15 M11 0 V-22 M24 -7 V-26" stroke={I} strokeWidth={2.2} />
+      <path d="M-26 22 H26" {...sw} strokeWidth={2} />
+    </>
+  ),
+  rootsear: (
+    <>
+      {head(-6, -14, 5.2, 3.8)}
+      {head(-6, -4, 5.2, 3.8)}
+      {head(-6, 8, 5.6, 4.2)}
+      <circle cx={-6} cy={8} r={10} {...sw} strokeWidth={2.4} />
+      <path d="M12 -18 Q22 -6 12 6" {...sw} strokeWidth={2.4} />
+      <path d="M18 -22 Q32 -6 18 10" {...sw} strokeWidth={2} />
+    </>
+  ),
+  harmonyhold: (
+    <>
+      <path d="M-26 -18 H26" {...sw} strokeWidth={3.6} />
+      {head(-16, 16, 5, 3.6)}
+      {head(-16, 6, 5, 3.6)}
+      {head(-16, -4, 5, 3.6)}
+      {head(14, 12, 5, 3.6)}
+      {head(14, 2, 5, 3.6)}
+      {head(14, -8, 5, 3.6)}
+      <path d="M-4 4 H4" {...sw} strokeWidth={2.2} />
+    </>
+  ),
+  singinterval: (
+    <>
+      {head(-16, 14, 5.6, 4.2)}
+      {head(-16, -12, 5.6, 4.2)}
+      <path d="M-4 12 V-10 M-9 -5 L-4 -10 L1 -5" {...sw} strokeWidth={2.6} strokeLinejoin="round" />
+      <path d="M8 -10 Q16 0 8 10" {...sw} strokeWidth={2.4} />
+      <path d="M15 -16 Q27 0 15 16" {...sw} strokeWidth={2} />
+    </>
+  ),
+  kitread: (
+    <g {...sw} strokeWidth={1.8}>
+      <path d="M-14 -12 H26 M-14 -4 H26 M-14 4 H26 M-14 12 H26" />
+      <path d="M-6 -20 l6 6 M0 -20 l-6 6 M10 -20 l6 6 M16 -20 l-6 6" strokeWidth={2.6} />
+      <ellipse cx={4} cy={0} rx={5} ry={3.6} transform="rotate(-20 4 0)" fill={I} stroke="none" />
+      <ellipse cx={18} cy={16} rx={5} ry={3.6} transform="rotate(-20 18 16)" fill={I} stroke="none" />
+      <path d="M-28 -8 H-20 M-30 0 H-20 M-28 8 H-20" strokeWidth={2.4} />
+    </g>
+  ),
+  namegroove: (
+    <g {...sw} strokeWidth={2.6}>
+      <path d="M-8 -14 Q-8 -24 2 -24 Q12 -24 12 -16 Q12 -9 2 -6 V0" strokeLinejoin="round" />
+      <circle cx={2} cy={6} r={2} fill={I} stroke="none" />
+      <path d="M-24 14 l5 5 M-19 14 l-5 5 M-10 14 l5 5 M-5 14 l-5 5 M4 14 l5 5 M9 14 l-5 5 M18 14 l5 5 M23 14 l-5 5" strokeWidth={2.2} />
+    </g>
+  ),
+});
 export type GlyphKind = keyof typeof GLYPHS;
 
 /** Emoji left in content data → the closest symbol of our set (0.61: no emoji in the interface). */

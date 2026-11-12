@@ -104,6 +104,8 @@ import { Metronome } from './Metronome';
 import { Drills, drillSettingsOf } from './Drills';
 import { badgeInputOf, refreshRanksBadges } from '../engine/rankBadges';
 import { PLACEMENT_ORDER, ratingDrift, recalibration } from '../engine/placement';
+import { mergePriors, tierPlacement } from '../engine/tierPlacement';
+import { placementSkills } from '../engine/placement';
 import { foldFromMemo } from '../engine/stats';
 import { BadgesView, ChallengeCard } from './Badges';
 import type { RankChange } from '../engine/ranks';
@@ -137,6 +139,15 @@ import { ReharmSpot } from './ReharmSpot';
 import { TranscribeRace } from './TranscribeRace';
 import { BhInTime } from './BhInTime';
 import { RiffEcho } from './RiffEcho';
+// 0.76: instrument, voice and drum games (GAMES_TIERS_PLAN §3)
+import { PlayItBack, RootsByEar } from './HearPlay';
+import { VoicingSprint } from './VoicingSprint';
+import { ChordChangeRace } from './ChangeRace';
+import { WalkTheChanges } from './WalkChanges';
+import { HarmonyHold } from './HarmonyHold';
+import { SingInterval } from './SingInterval';
+import { KitRead } from './KitRead';
+import { NameGroove } from './NameGroove';
 import { PolyLock } from './PolyLock';
 import { GameBoard } from './GameBoard';
 import { GAME_TITLES } from '../engine/gameBoard';
@@ -166,7 +177,7 @@ import { setPreferredMic } from '../speech/mic';
 /** Screens that play the band (0.69: its sets load here, and only here on Lite / Standard). */
 const BAND_ROUTES = new Set<string>(['charts', 'improv', 'groove', 'metronome', 'mixer', 'slowdown', 'perform', 'highway', 'drills', 'workoutrun', 'land', 'groove-echo', 'odd-echo', 'time-lock', 'ghost-control', 'rudiment-rush', 'groove-off']);
 
-type Route = 'intake' | 'studio' | 'home' | 'path' | 'arcade' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong' | 'perform' | 'learned' | 'tuner' | 'metronome' | 'songs' | 'repertoire' | 'drills' | 'workout' | 'workoutrun' | 'peakhunter' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'rush-voicing' | 'rush-scale' | 'rush-standard' | 'reharm' | 'transcribe' | 'bhtime' | 'riffecho' | 'polylock' | 'gameboard' | 'flight' | 'pitchmemory' | 'nametune' | 'tuneup' | 'highway' | 'melodypuzzle' | 'charts' | 'slowdown' | 'pieces' | 'mixer' | 'insights' | 'groove' | 'welcome' | 'coursestart' | 'puzzle' | 'improv' | 'exams' | 'plans' | 'admin' | 'land' | 'groove-echo' | 'odd-echo' | 'time-lock' | 'ghost-control' | 'rudiment-rush' | 'groove-off' | 'licks' | 'transcribe-coach' | 'chordfinder' | 'mysong' | 'chordbuilder';
+type Route = 'intake' | 'studio' | 'home' | 'path' | 'arcade' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong' | 'perform' | 'learned' | 'tuner' | 'metronome' | 'songs' | 'repertoire' | 'drills' | 'workout' | 'workoutrun' | 'peakhunter' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'rush-voicing' | 'rush-scale' | 'rush-standard' | 'reharm' | 'transcribe' | 'bhtime' | 'riffecho' | 'polylock' | 'gameboard' | 'flight' | 'pitchmemory' | 'nametune' | 'tuneup' | 'highway' | 'melodypuzzle' | 'charts' | 'slowdown' | 'pieces' | 'mixer' | 'insights' | 'groove' | 'welcome' | 'coursestart' | 'puzzle' | 'improv' | 'exams' | 'plans' | 'admin' | 'land' | 'groove-echo' | 'odd-echo' | 'time-lock' | 'ghost-control' | 'rudiment-rush' | 'groove-off' | 'licks' | 'transcribe-coach' | 'chordfinder' | 'mysong' | 'chordbuilder' | 'playback' | 'voicingsprint' | 'changerace' | 'walkchanges' | 'rootsear' | 'harmonyhold' | 'singinterval' | 'kitread' | 'namegroove';
 /** Invite links: #/online/CODE */
 const onlineCodeFromHash = () => (/^#\/?online\/(\w+)/.exec(location.hash)?.[1] ?? '');
 const PLAY_HASH = 'play';
@@ -178,7 +189,7 @@ const enterPlay = () => {
 };
 const routeFromHash = (): Route => {
   const h = location.hash.replace(/^#\/?/, '').replace(/^online\/.*$/, 'online').replace(/^settings\/.*$/, 'settings');
-  return (['path', 'arcade', 'settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong', 'perform', 'learned', 'studio', 'intake', 'tuner', 'metronome', 'songs', 'repertoire', 'drills', 'workout', 'workoutrun', 'peakhunter', 'rush-chord', 'rush-note', 'rush-fretboard', 'rush-interval', 'rush-keysig', 'rush-progression', 'rush-voicing', 'rush-scale', 'rush-standard', 'reharm', 'transcribe', 'bhtime', 'riffecho', 'polylock', 'gameboard', 'flight', 'pitchmemory', 'nametune', 'tuneup', 'highway', 'melodypuzzle', 'charts', 'slowdown', 'pieces', 'mixer', 'insights', 'groove', 'welcome', 'coursestart', 'puzzle', 'improv', 'exams', 'plans', 'admin', 'land', 'groove-echo', 'odd-echo', 'time-lock', 'ghost-control', 'rudiment-rush', 'groove-off', 'licks', 'transcribe-coach', 'chordfinder', 'mysong', 'chordbuilder'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
+  return (['path', 'arcade', 'settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong', 'perform', 'learned', 'studio', 'intake', 'tuner', 'metronome', 'songs', 'repertoire', 'drills', 'workout', 'workoutrun', 'peakhunter', 'rush-chord', 'rush-note', 'rush-fretboard', 'rush-interval', 'rush-keysig', 'rush-progression', 'rush-voicing', 'rush-scale', 'rush-standard', 'reharm', 'transcribe', 'bhtime', 'riffecho', 'polylock', 'gameboard', 'flight', 'pitchmemory', 'nametune', 'tuneup', 'highway', 'melodypuzzle', 'charts', 'slowdown', 'pieces', 'mixer', 'insights', 'groove', 'welcome', 'coursestart', 'puzzle', 'improv', 'exams', 'plans', 'admin', 'land', 'groove-echo', 'odd-echo', 'time-lock', 'ghost-control', 'rudiment-rush', 'groove-off', 'licks', 'transcribe-coach', 'chordfinder', 'mysong', 'chordbuilder', 'playback', 'voicingsprint', 'changerace', 'walkchanges', 'rootsear', 'harmonyhold', 'singinterval', 'kitread', 'namegroove'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
 };
 
 /** The level a generated modes lesson was made at (from its first question's pool size). */
@@ -669,7 +680,11 @@ export function App() {
   };
   /** Find my level: every skill, or one domain (the voice domain always sings). */
   /** Placement 3.0: skills already measured start the search from their rating (fewer questions on a retake). */
-  const measuredPriors = (): Partial<Record<SkillId, number>> => Object.fromEntries(Object.entries(ratingsOf(progress)).filter(([k, r]) => !k.includes('/') && r && evidence(r) === 'measured').map(([k, r]) => [k, Math.round(r!.r)]));
+  const ratedPriors = (): Partial<Record<SkillId, number>> => Object.fromEntries(Object.entries(ratingsOf(progress)).filter(([k, r]) => !k.includes('/') && r && evidence(r) === 'measured').map(([k, r]) => [k, Math.round(r!.r)]));
+  // GAMES_TIERS_PLAN §5.2 (0.76): a game tier cleared at mf or above starts that skill's search higher; at f or above,
+  // with the skill's rating already established, its section is skipped.
+  const gameTierPlacement = () => tierPlacement(progress.gameTiers, s.activeCourse ?? 'ear', ratingsOf(progress));
+  const measuredPriors = (): Partial<Record<SkillId, number>> => mergePriors(gameTierPlacement().priors, ratedPriors());
   // A placement left half-way (back button, swipe back, reload) continues where it stopped (playtesting, 0.35.2).
   const resumePlacement = (v: SavedSession) => openGenerated(v.lesson, (st) => adaptPlacement(st, v.seed!), false, { key: PLACEMENT_KEY, title: t.findLevel, seed: v.seed, resume: v });
   const startPlacement = (seed: number, def: LessonDef) => openGenerated(def, (st) => adaptPlacement(st, seed), false, { key: PLACEMENT_KEY, title: t.findLevel, seed });
@@ -678,7 +693,9 @@ export function App() {
     const saved = fresh ? null : loadPlacement();
     if (saved && (saved.lesson.placementDomain ?? null) === d) return resumePlacement(saved);
     const seed = (Date.now() ^ (Math.random() * 1e9)) >>> 0;
-    startPlacement(seed, placementLesson(seed, { singing: s.mode === 'voice' || d === 'voice', domain: d, priorities: (s.intake as Intake | null | undefined)?.priorities, priors: measuredPriors() }));
+    const skip = gameTierPlacement().skip;
+    const only = skip.length ? placementSkills({ singing: s.mode === 'voice' || d === 'voice', domain: d }).filter((k) => !skip.includes(k)) : undefined;
+    startPlacement(seed, placementLesson(seed, { singing: s.mode === 'voice' || d === 'voice', domain: d, priorities: (s.intake as Intake | null | undefined)?.priorities, priors: measuredPriors(), ...(only?.length ? { only } : {}) }));
   };
   /** Catching up: only the sections this player has not been measured on yet. */
   const openCatchUpPlacement = (only: SkillId[]) => {
@@ -2533,6 +2550,35 @@ export function App() {
         if (g === 'riffecho') return <RiffEcho key={g} {...props} />;
         if (g === 'polylock') return <PolyLock key={g} {...props} />;
         return <PitchMemory key={g} {...props} log={progress.pitchMemory ?? []} onLog={(e) => void store.recordGame2('pitchmemory', Math.max(0, 100 - Math.abs(e.cents)), e).then(setProgress)} />;
+      })}
+      {(['playback', 'voicingsprint', 'changerace', 'walkchanges', 'rootsear', 'harmonyhold', 'singinterval', 'kitread', 'namegroove'] as const).map((g) => {
+        // 0.76 (GAMES_TIERS_PLAN §3): instrument, voice and drum games — tiers, XP, ratings, board like every game.
+        if (route !== g) return null;
+        const key = `game:${g}`;
+        const title = GAMES2.find((x) => x.id === g)![s.uiLang][0];
+        const props = {
+          lang: s.uiLang,
+          settings: s,
+          saved: loadSlot<unknown>(key)?.data ?? null,
+          onSave: (st: unknown | null) => (st ? saveSlot(key, { title, route: g, done: 0, total: 0, data: st }) : clearSlot(key)),
+          onExit: () => go('arcade'),
+          onResult: (r: { score: number; detail?: unknown }) => {
+            void store.recordGame2(g, r.score, undefined, (r.detail ?? {}) as Record<string, unknown>).then(setProgress);
+            noteGameBest(g, r.score, r.detail);
+            noteGameStep(g, r.score, r.detail);
+          },
+          best: progress.bests?.[g],
+          tier: tierFor(g),
+        };
+        if (g === 'playback') return <PlayItBack key={g} {...props} />;
+        if (g === 'rootsear') return <RootsByEar key={g} {...props} />;
+        if (g === 'voicingsprint') return <VoicingSprint key={g} {...props} />;
+        if (g === 'changerace') return <ChordChangeRace key={g} {...props} />;
+        if (g === 'walkchanges') return <WalkTheChanges key={g} {...props} />;
+        if (g === 'harmonyhold') return <HarmonyHold key={g} {...props} />;
+        if (g === 'singinterval') return <SingInterval key={g} {...props} />;
+        if (g === 'kitread') return <KitRead key={g} {...props} />;
+        return <NameGroove key={g} {...props} />;
       })}
       {route === 'gameboard' && (
         <GameBoard

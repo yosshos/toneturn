@@ -1,0 +1,171 @@
+/* 0.76 instrument games (src/ui/TakeShell.tsx, HearPlay, WalkChanges, ChangeRace, VoicingSprint). One screen at 390 × 844. */
+.inst-board {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.inst-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 14px;
+  margin: 0;
+  color: var(--ink-dim);
+  font-size: 0.9rem;
+}
+.inst-cells {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+.inst-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-inline-size: 0;
+  max-inline-size: 72px;
+  block-size: 52px;
+  border-radius: 8px;
+  background: var(--card-2);
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+.inst-cell b {
+  font-family: var(--display);
+  font-size: 1.05rem;
+  white-space: nowrap;
+}
+.inst-cell small {
+  color: var(--ink-dim);
+  font-size: 0.75rem;
+}
+.inst-cell.big {
+  max-inline-size: none;
+  block-size: 64px;
+}
+.inst-cell.big b {
+  font-size: 1.35rem;
+}
+.inst-cell.now {
+  outline: 2px solid var(--ink);
+}
+.inst-cell.hit {
+  background: color-mix(in srgb, var(--mint) 30%, var(--card-2));
+  border-color: var(--mint);
+}
+.inst-cell.pitch,
+.inst-cell.late,
+.inst-cell.unclear {
+  background: color-mix(in srgb, var(--gold) 22%, var(--card-2));
+  border-color: color-mix(in srgb, var(--gold) 70%, var(--ink));
+}
+.inst-cell.miss,
+.inst-cell.wrong {
+  background: color-mix(in srgb, var(--red) 22%, var(--card-2));
+  border-color: var(--red);
+}
+.inst-detail {
+  margin: 0;
+  text-align: center;
+}
+.inst-actions {
+  gap: 10px;
+}
+.inst-final {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.2rem;
+}
+.inst-tempo {
+  margin: 0;
+  text-align: center;
+}
+
+/* Walk the Changes: the chart as bars of chords, a cell per beat (rule beats outlined). */
+.walk-chart {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 4px;
+}
+.walk-chord {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-basis: calc(25% - 4px);
+  min-inline-size: 0;
+}
+.walk-chord b {
+  font-family: var(--display);
+  font-size: 1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.walk-beats {
+  display: flex;
+  gap: 2px;
+}
+.walk-beat {
+  flex: 1;
+  block-size: 22px;
+  border-radius: 4px;
+  background: var(--card-2);
+  border: 1px solid var(--line);
+}
+.walk-beat.rule {
+  border: 2px solid color-mix(in srgb, var(--ink) 55%, transparent);
+}
+.walk-beat.now {
+  outline: 2px solid var(--ink);
+}
+.walk-beat.hit {
+  background: var(--mint);
+}
+.walk-beat.note {
+  background: color-mix(in srgb, var(--gold) 60%, var(--card-2));
+}
+.walk-beat.miss {
+  background: color-mix(in srgb, var(--red) 55%, var(--card-2));
+}
+
+/* Voicing Sprint */
+.vs-clock {
+  block-size: 4px;
+  border-radius: 2px;
+  background: var(--card-2);
+  overflow: hidden;
+}
+.vs-clock i {
+  display: block;
+  block-size: 100%;
+  background: var(--ink-dim);
+}
+.vs-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 10px;
+  border-radius: 14px;
+  background: var(--card-2);
+  border: 2px solid transparent;
+}
+.vs-card.ok {
+  border-color: var(--mint);
+}
+.vs-card.bad {
+  border-color: var(--red);
+}
+.vs-symbol {
+  font-family: var(--display);
+  font-size: 2.6rem;
+  line-height: 1.1;
+}
+.vs-how {
+  color: var(--ink-dim);
+}
+.vsprint .keys-pad {
+  block-size: 130px;
+}
