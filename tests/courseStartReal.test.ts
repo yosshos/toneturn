@@ -35,8 +35,29 @@ describe('day 3: the first real-music moment (SPEC-COURSE-START)', () => {
     expect(realMusicCard(m.keys, 3)).toBeNull();
     // The rest of the start state is untouched.
     expect(m.keys?.win).toEqual(started.win);
-    const skipped = skipReal({ ear: started }, 'ear', 't5');
-    expect(realMusicCard(skipped.ear, 2)).toBeNull();
+    const skipped = skipReal({ ear: started }, 'ear', 't5', 2, '2026-11-12');
+    expect(realMusicCard(skipped.ear, 2, '2026-11-12')).toBeNull();
+  });
+
+  it('"Not now" on the day-3 card snoozes until the next session day, at most 3 times inside sessions 3–6', () => {
+    let m: CourseStartMap = { ear: started };
+    // session 3: offered, snoozed
+    expect(realMusicCard(m.ear, 1, '2026-11-12')).toBe('offer');
+    m = skipReal(m, 'ear', 't1', 1, '2026-11-12');
+    expect(realMusicCard(m.ear, 1, '2026-11-12')).toBeNull();
+    expect(realMusicCard(m.ear, 1, '2026-11-13')).toBeNull(); // no new session yet
+    expect(realMusicCard(m.ear, 2, '2026-11-12')).toBeNull(); // a new session, the same day
+    expect(realMusicCard(m.ear, 2, '2026-11-13')).toBe('offer'); // the next session day
+    m = skipReal(m, 'ear', 't2', 2, '2026-11-13');
+    expect(realMusicCard(m.ear, 3, '2026-11-14')).toBe('offer');
+    m = skipReal(m, 'ear', 't3', 3, '2026-11-14');
+    expect(m.ear?.real?.skips).toBe(3);
+    expect(realMusicCard(m.ear, 4, '2026-11-15')).toBeNull(); // three snoozes: gone
+    // the window still ends at session 6 for a player who never answered
+    expect(realMusicCard(started, 6, '2026-11-20')).toBeNull();
+    // a skip saved before snoozing existed comes back at the next session (it counts as one snooze)
+    const old: CourseStartState = { ...started, real: { skippedAt: '2026-11-10T10:00:00Z' } };
+    expect(realMusicCard(old, 2, '2026-11-12')).toBe('offer');
   });
 
   it('every course × report builds a measured session with the band (a whole chorus or form)', () => {

@@ -1620,7 +1620,7 @@ export function App() {
   const csSessions = sessionsSince(progress.history, activeC, cStart?.tasteDoneAt);
   const csOffer = offerDue(cStart, csSessions, levelTested(activeC, progress.history, Object.keys(s.drillStart ?? {})), localDay(new Date()));
   const csDay = firstWeekDay(cStart, csSessions);
-  const csReal = realMusicCard(cStart, csSessions);
+  const csReal = realMusicCard(cStart, csSessions, localDay(new Date()));
   const recapNext: { label?: string; open: (() => void) | null; secondary?: { label: string; open: () => void } } = slot?.key.startsWith('taste:')
     ? { label: s.uiLang === 'en' ? 'See your first result' : 'לתוצאה הראשונה', open: () => go('coursestart') }
     : slot?.key.startsWith('real:')
@@ -1749,7 +1749,7 @@ export function App() {
                   def={realMusicFor(activeC, cStart?.report)}
                   cs={cStart}
                   onStart={startReal}
-                  onLater={() => updateCourseStart((m) => skipReal(m, activeC, csNow()))}
+                  onLater={() => updateCourseStart((m) => skipReal(m, activeC, csNow(), csSessions, localDay(new Date())))}
                   onClose={() => updateCourseStart((m) => markRealSeen(m, activeC, csNow()))}
                 />
               )}
@@ -1813,7 +1813,7 @@ export function App() {
           <CourseStartHero course={activeC} lang={s.uiLang} stage={cStage} cs={cStart} who={tasteWho} onStart={continueCourseStart} onFindLevel={findLevel} compact />
         ) : (
           <>
-            {csOffer && <LevelOfferCard lang={s.uiLang} onFind={findLevel} onLater={() => updateCourseStart((m) => snoozeOffer(m, activeC, localDay(new Date()), csSessions))} />}
+            {csOffer && <LevelOfferCard lang={s.uiLang} onFind={findLevel} onLater={() => updateCourseStart((m) => snoozeOffer(m, activeC, localDay(new Date())))} />}
             <CourseGoalLine course={activeC} lang={s.uiLang} cs={cStart} facts={s.pathFacts} section={pathView.units.find((u) => u.status === 'current')?.section} />
           </>
         )
