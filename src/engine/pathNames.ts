@@ -114,7 +114,7 @@ const SHORT: Record<string, L2> = {
   'chord-read': { en: 'Read chords', he: 'קריאת אקורדים' },
   'song-sing': { en: 'Sing songs', he: 'לשיר שירים' },
   'song-play': { en: 'Play songs', he: 'לנגן שירים' },
-  'song-strum': { en: 'Strum songs', he: 'לפרוט שירים' },
+  'song-strum': { en: 'Song chords', he: 'אקורדי שירים' },
   'chromatic-added': { en: 'Added ½ step', he: 'חצי טון נוסף' },
   'bh-keys': { en: 'Barry Harris 1', he: 'בארי האריס 1' },
   'bh-tone': { en: 'Barry Harris 2', he: 'בארי האריס 2' },
