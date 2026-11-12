@@ -218,7 +218,7 @@ export function MiniLessonPlayer({ t, settings, lesson, name, onFinish, startDee
         </div>
         <div className="mini-controls">
           <button className="icon-btn" aria-label={t.miniBack} disabled={i === 0} onClick={() => jump(i - 1)}>
-            <span className="flip-rtl">⏮</span>
+            <Icon k="prev" className="flip-rtl" />
           </button>
           {phase === 'playing' ? (
             <button className="icon-btn big" aria-label={t.miniPause} onClick={() => (ctl.current?.abort(), setPhase('paused'))}>
@@ -237,7 +237,7 @@ export function MiniLessonPlayer({ t, settings, lesson, name, onFinish, startDee
             <span className="icon-btn ghost" aria-hidden="true" />
           )}
           <button className="icon-btn" aria-label={t.miniNext} disabled={i >= steps.length - 1} onClick={() => jump(i + 1)}>
-            <span className="flip-rtl">⏭</span>
+            <Icon k="next" className="flip-rtl" />
           </button>
         </div>
         {phase === 'done' && !heardAll && <p className="field-hint">{t.miniHearAll}</p>}

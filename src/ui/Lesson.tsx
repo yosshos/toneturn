@@ -782,7 +782,7 @@ function TopicStrip({ v, t }: { v: LessonView; t: Strings }) {
             const st = sp?.role === 'derived' ? 'derived' : skipped.includes(k) && i <= Math.max(ci, done - 1) ? 'skipped' : k === cur && v.stage !== 'complete' ? 'now' : sp?.done && (sp.asked > 0 || v.stage === 'complete') ? 'done' : 'left';
             return (
               <li key={k} className={`ts ${st}`} data-skill={k} title={st === 'derived' ? (langOf(t) === 'he' ? 'משוער מהתשובות בתחום' : 'estimated from your answers in this area') : undefined}>
-                {st === 'done' ? '✓ ' : st === 'skipped' ? '⏭ ' : st === 'derived' ? '≈ ' : ''}
+                {st === 'done' ? '✓ ' : st === 'skipped' ? <><Icon k="skip" size={12} />{' '}</> : st === 'derived' ? '≈ ' : ''}
                 {t.skillNames[k]}
                 {st === 'skipped' && <span className="sr-only"> · {t.skippedSection}</span>}
               </li>

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { TOPIC_GEN } from '../engine/topics';
 import { TOPIC_GROUPS } from '../engine/topicGroups';
+import { Glyph } from './Glyph';
 import type { Strings } from '../i18n/strings';
 import { ratingsOf, type Progress } from '../storage/progress';
 import { dueReviews, reviewDue } from '../storage/progress';
@@ -117,7 +118,7 @@ export function PathExtras({
         {TOPIC_GROUPS.map((g) => (
           <details key={g.id} className="topic-group">
             <summary>
-              {g.title[lang]}
+              <Glyph kind={g.icon || 'contour'} color="#A78BFA" size={22} /> {g.title[lang]}
             </summary>
             {g.topics
               .filter((id) => TOPIC_GEN[id])

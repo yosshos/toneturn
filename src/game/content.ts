@@ -871,7 +871,7 @@ export function choiceLabel(_q: Question, a: Answer, l: Lang, nm: Naming = 'lett
     return { big: String(a), small: small[a]?.[l] ?? '', tone };
   }
   const map: Record<string, ChoiceLabel & { he: string; heSmall: string }> = {
-    maj: { big: '☀', small: 'Major', he: '☀', heSmall: "מז׳ור", tone: 'gold' },
+    maj: { big: '☼', small: 'Major', he: '☼', heSmall: "מז׳ור", tone: 'gold' },
     min: { big: '☾', small: 'Minor', he: '☾', heSmall: 'מינור', tone: 'lilac' },
     resolved: { big: '⌂', small: 'Resolved', he: '⌂', heSmall: 'נפתר', tone: 'mint' },
     open: { big: '?', small: 'Open', he: '?', heSmall: 'פתוח', tone: 'coral' },

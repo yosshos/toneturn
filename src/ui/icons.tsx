@@ -18,6 +18,10 @@ export type IconKey =
   | 'cloud'
   | 'dice'
   | 'mute'
+  | 'prev'
+  | 'next'
+  | 'stop'
+  | 'skip'
   | 'bolt'
   | 'clock'
   | 'check'
@@ -95,6 +99,11 @@ const PATHS: Record<IconKey, ReactNode> = {
   ),
   check: <path d="M5 12.5l4.5 4.5L19 7.5" />,
   star: <path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z" />,
+  // 2026-11-12: media controls that used to be emoji (⏮ ⏭ ⏹).
+  prev: <path d="M6 5v14M18 6l-9 6 9 6z" />,
+  next: <path d="M18 5v14M6 6l9 6-9 6z" />,
+  stop: <rect x="6" y="6" width="12" height="12" rx="1.5" />,
+  skip: <path d="M5 6l7 6-7 6M13 6l7 6-7 6" />,
 };
 
 /** A line icon, sized in px, coloured by the text around it. Decorative: the words beside it carry the meaning. */

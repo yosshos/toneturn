@@ -1058,9 +1058,11 @@ export function shareAward(a: Achievement, lang: Lang) {
       ctx.beginPath();
       ctx.arc(w / 2, h / 2 - 110, 190, 0, Math.PI * 2);
       ctx.stroke();
-      ctx.font = '200px system-ui, "Segoe UI Emoji", "Apple Color Emoji", sans-serif';
+      // A tilted note head (the app's symbol language) instead of the award's emoji (2026-11-12: no emoji drawn).
       ctx.fillStyle = '#f4f1ff';
-      ctx.fillText(a.icon, w / 2, h / 2 - 40);
+      ctx.beginPath();
+      ctx.ellipse(w / 2, h / 2 - 110, 110, 78, -0.35, 0, Math.PI * 2);
+      ctx.fill();
       ctx.font = '700 64px Rubik, system-ui, sans-serif';
       ctx.direction = lang === 'he' ? 'rtl' : 'ltr';
       ctx.fillText(name, w / 2, h / 2 + 180);

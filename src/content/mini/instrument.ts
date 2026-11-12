@@ -36,7 +36,7 @@ export const LESSONS: MiniLesson[] = [
       },
       {
         say: { en: 'Your turn! Listen, sing it inside, and play it back. Mute the strings between notes so I hear each one clearly.', he: 'תורכם! הקשיבו, שירו בפנים, ונגנו בחזרה. השתיקו את המיתרים בין הצלילים כדי שאשמע כל צליל ברור.' },
-        show: { text: { en: '👂 → 🎵 → 🎸', he: '👂 ← 🎵 ← 🎸' } },
+        show: { text: { en: 'hear → sing → play', he: 'שומעים ← שרים ← מנגנים' } },
       },
     ],
     more: [
@@ -71,7 +71,7 @@ export const LESSONS: MiniLesson[] = [
       },
       {
         say: { en: 'How the app hears you: with a microphone, play one clear note at a time, let it ring, and mute the others — chords and buzzing strings confuse pitch detection. With a MIDI keyboard every note arrives exactly.', he: 'איך האפליקציה שומעת אתכם: עם מיקרופון, נגנו צליל אחד ברור בכל פעם, תנו לו לצלצל, והשתיקו את השאר — אקורדים ומיתרים מזמזמים מבלבלים את זיהוי הגובה. עם קלידי MIDI כל צליל מגיע בדיוק.' },
-        show: { text: { en: '🎤 one note · 🎹 MIDI', he: '🎤 צליל אחד · 🎹 MIDI' } },
+        show: { text: { en: 'mic: one note · MIDI', he: 'מיקרופון: צליל אחד · MIDI' } },
       },
       {
         say: { en: 'The common mistake is hunting note by note before the tune is in your head. Sing it first, even twice. To keep: home first, then contour, then the notes.', he: 'הטעות הנפוצה היא לחפש צליל אחרי צליל לפני שהמנגינה בראש. שירו אותה קודם, אפילו פעמיים. מה לזכור: קודם הבית, אחר כך הקו, ואז הצלילים.' },
@@ -384,7 +384,7 @@ export const LESSONS: MiniLesson[] = [
       },
       {
         say: { en: 'Your turn! Play the scales I ask for, from the lowest note up, and name the box you see.', he: 'תורכם! נגנו את הסולמות שאני מבקש, מהצליל הנמוך למעלה, וזהו את הבוקס שאתם רואים.' },
-        show: { text: { en: '🪜 low → high', he: '🪜 נמוך ← גבוה' } },
+        show: { text: { en: 'low → high', he: 'נמוך ← גבוה' } },
       },
     ],
     more: [
