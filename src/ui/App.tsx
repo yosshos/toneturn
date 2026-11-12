@@ -152,6 +152,11 @@ import { PolyLock } from './PolyLock';
 import { GameBoard } from './GameBoard';
 import { GAME_TITLES } from '../engine/gameBoard';
 import { COURSE_GAMES } from './courseRows';
+// The social round (SPEC-SOCIAL §8, 2026-11-12): milestone posts, challenge links.
+import { ChallengeSheet } from './Community';
+import { clearPendingChallenge, openChallenge, pendingChallenge, postMilestones, savePendingChallenge, type OpenedChallenge } from '../cloud/community';
+import { challengeFromHash, learnedStandards, type MilestoneEvents } from '../engine/socialRound';
+import { effectivePrivacy } from '../engine/privacy';
 import { loadSlot, saveSlot } from '../storage/resume';
 import { nodeTitle, PathView2, stepTitle, usePathView } from './Path';
 import { checkpointSession, recordStep, stepSession, stepStars, testOutPassed, testOutSession, type PathStep, type PathUnit, type UnitStep } from '../engine/path';
@@ -612,7 +617,9 @@ export function App() {
           const m = String((e as { message?: string })?.message ?? e);
           const he = st.uiLang === 'he';
           setProfileErr(
-            /taken/.test(m)
+            /not allowed/.test(m)
+              ? he ? 'הכינוי הוסר אחרי דיווחים — בחרו כינוי חדש בהגדרות.' : 'Your nickname was removed after reports — choose a new one in Settings.'
+              : /taken/.test(m)
               ? he ? 'הכינוי הזה כבר תפוס — בחרו אחר בהגדרות.' : 'That nickname is taken — pick another in Settings.'
               : /30 days/.test(m)
                 ? he ? 'אפשר לשנות כינוי פעם ב־30 יום.' : 'The nickname can change once every 30 days.'
@@ -920,6 +927,59 @@ export function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [progress.history.length, route]);
 
+  // ---- the social round (SPEC-SOCIAL §8): automatic milestone posts, challenge links ----
+  /** Post measured milestones (levels, standards, streaks; badges and ranks from the unlock effect) to friends. */
+  const feedPost = (ev: MilestoneEvents) => {
+    if (!user || !settings || !effectivePrivacy(settings.privacy, settings.birthYear).feed) return;
+    const levels = courseLevelsJson ? (JSON.parse(courseLevelsJson) as Record<string, string>) : {};
+    void postMilestones({ levels, standards: learnedStandards(progress.lessons), streak: gems.streak.count }, ev);
+  };
+  useEffect(() => {
+    if (progressReady && user) feedPost({});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [progressReady, user, courseLevelsJson, progress.history.length, gems.streak.count]);
+  /** A "beat my score" link being played: the game key, its tier, the score to beat and who sent it. */
+  const challengeRun = useRef<{ game: string; tier: DynName; score: number; from: string } | null>(null);
+  const [challenge, setChallenge] = useState<OpenedChallenge | 'missing' | 'signin' | null | undefined>(undefined);
+  useEffect(() => {
+    // "#/c/CODE": remember it (sign-in drops the hash), then clean the address bar.
+    const code = challengeFromHash(location.hash);
+    if (!code) return;
+    savePendingChallenge(code);
+    history.replaceState(null, '', `${location.pathname}${location.search}`);
+  }, []);
+  useEffect(() => {
+    const code = pendingChallenge();
+    if (!code || !cloudConfigured) return;
+    if (!user) {
+      // Give the saved session a moment to come back before asking to sign in.
+      const id = window.setTimeout(() => setChallenge('signin'), 2500);
+      return () => window.clearTimeout(id);
+    }
+    void openChallenge(code).then((r) => {
+      if (r !== 'missing') clearPendingChallenge();
+      setChallenge(r);
+    });
+  }, [user]);
+  const challengeGame = (key: string | null | undefined) => (key ? Object.values(COURSE_GAMES).flat().find((g) => tierKey(g) === key) : undefined);
+  const playChallenge = () => {
+    const ch = challenge;
+    setChallenge(undefined);
+    if (!ch || typeof ch !== 'object') return;
+    if (ch.kind === 'duel') {
+      try {
+        sessionStorage.setItem('toneturn.friendsTab', 'duels');
+      } catch {
+        /* fine */
+      }
+      return go('friends');
+    }
+    const route = challengeGame(ch.game);
+    if (!route || ch.game == null) return go('arcade');
+    challengeRun.current = { game: ch.game, tier: TIERS[Math.max(0, Math.min(TIERS.length - 1, ch.tier ?? 0))], score: ch.score ?? 0, from: ch.from };
+    go(route as Route);
+  };
+
   // ---- area ranks + badges (spec AG §9): refreshed after each save, the unlock overlay after the session ----
   const [unlock, setUnlock] = useState<{ badges: Badge[]; rank?: RankChange } | null>(null);
   useEffect(() => {
@@ -935,6 +995,7 @@ export function App() {
     }
     const up = r.rankChanges.filter((c) => c.newTier || c.kind === 'up').sort((a, b) => b.to - a.to)[0];
     if (up || r.newly.length) setUnlock({ badges: r.newly, rank: up });
+    if (up || r.newly.length) feedPost({ badges: r.newly, rank: up ?? null });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [progress.applied.length, progress.ratingEvents?.length, progress.drillItems, route, firstWinCourses(settings?.courseStart).join()]);
   useEffect(() => {
@@ -1358,12 +1419,21 @@ export function App() {
   const tierFor = (g: string): TierInfo => {
     const info = tierInfo(g, ratingsOf(progress), progress.gameTiers?.[tierKey(g)], s.activeCourse ?? 'ear', s.courses);
     const ps = pendingStep.current;
+    const chg = challengeRun.current;
+    if (chg && chg.game === tierKey(g) && !(ps && ps.kind === 'game' && ps.id.endsWith(`:${g}`))) return { ...info, forced: chg.tier };
     return ps && ps.kind === 'game' && ps.tier && ps.id.endsWith(`:${g}`) ? { ...info, forced: ps.tier } : info;
   };
   /** A tiered run's score goes to the week's game board (friends, per tier) when signed in. */
   const noteGameBest = (g: string, score: number, detail: unknown) => {
     const tier = (detail as { tier?: unknown } | null)?.tier;
     if (user && isTier(tier)) void submitGameBest(g, tier, score);
+    // A "beat my score" run: the result against the friend's score, once.
+    const chg = challengeRun.current;
+    if (chg && chg.game === tierKey(g)) {
+      challengeRun.current = null;
+      const he = s.uiLang === 'he';
+      setAwardToast(score > chg.score ? (he ? `עברתם את ${chg.from}: ${score} מול ${chg.score}` : `You beat ${chg.from}: ${score} vs ${chg.score}`) : he ? `${chg.from}: ${chg.score} · אתם: ${score}` : `${chg.from}: ${chg.score} · you: ${score}`);
+    }
   };
   /** P14: after the questionnaire or the level test, a current unit under half done is rebuilt. */
   const unfreezeIfEarly = (facts: Settings['pathFacts']): Settings['pathFacts'] => {
@@ -2210,6 +2280,22 @@ export function App() {
           {awardToast}
         </button>
       )}
+      {challenge !== undefined && (
+        <ChallengeSheet
+          lang={s.uiLang}
+          ch={challenge}
+          signedIn={!!user}
+          gameTitle={(() => {
+            const g = typeof challenge === 'object' && challenge ? challengeGame(challenge.game) : undefined;
+            return g ? (GAMES2.find((x) => x.id === g)?.[s.uiLang][0] ?? GAME_TITLES[g]?.[s.uiLang] ?? g) : undefined;
+          })()}
+          tierName={typeof challenge === 'object' && challenge && challenge.tier != null ? TIERS[challenge.tier] : undefined}
+          onPlay={playChallenge}
+          onFriends={() => (setChallenge(undefined), go('friends'))}
+          onSignIn={() => void signInWithGoogle()}
+          onClose={() => setChallenge(undefined)}
+        />
+      )}
       {route === 'workout' && (
         <WorkoutEditor
           t={t}
@@ -2588,6 +2674,7 @@ export function App() {
           titleOf={(g) => GAMES2.find((x) => x.id === g)?.[s.uiLang][0] ?? GAME_TITLES[g]?.[s.uiLang] ?? g}
           tierFor={tierFor}
           signedIn={!!user}
+          canShare={!!user && effectivePrivacy(s.privacy, s.birthYear).canShareOutside}
           onBack={() => go('arcade')}
         />
       )}

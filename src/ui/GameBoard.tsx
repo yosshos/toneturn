@@ -11,6 +11,7 @@ import { tierIndex, TIERS, type DynName, type TierInfo } from '../engine/gameTie
 import type { Progress } from '../storage/progress';
 import { G2Head } from './Flight';
 import { Glyph } from './Glyph';
+import { BeatMyScoreButton } from './Community';
 
 type Lang = 'he' | 'en';
 const TX = {
@@ -36,9 +37,11 @@ export interface GameBoardProps {
   tierFor: (game: string) => TierInfo;
   signedIn: boolean;
   onBack: () => void;
+  /** "Beat my score" links (signed in, not in young-player mode). */
+  canShare?: boolean;
 }
 
-export function GameBoard({ lang, progress, games, titleOf, tierFor, signedIn, onBack }: GameBoardProps) {
+export function GameBoard({ lang, progress, games, titleOf, tierFor, signedIn, onBack, canShare = false }: GameBoardProps) {
   const list = boardGames(games);
   const [game, setGame] = useState(list[0] ?? 'rush-chord');
   const tiers = boardTiers(game);
@@ -115,6 +118,7 @@ export function GameBoard({ lang, progress, games, titleOf, tierFor, signedIn, o
         ) : (
           <p className="g2-dim">{TX.empty[lang]}</p>
         )}
+        {signedIn && <BeatMyScoreButton lang={lang} game={game} tier={tierIndex(tier)} score={rows.find((r) => r.me)?.best ?? mine[tier] ?? 0} gameTitle={titleOf(game)} canShare={canShare} />}
         {!signedIn && (
           <p className="g2-dim gboard-mine" dir="ltr">
             {TIERS.filter((t) => mine[t])

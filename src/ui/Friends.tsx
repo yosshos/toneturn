@@ -14,6 +14,9 @@ import { socialInfo } from '../engine/gameTiers';
 import { courseOf, type CourseId } from '../engine/courses';
 import { courseLevel, friendsInCourse, type DynName } from '../engine/courseSocial';
 import { Glyph } from './Glyph';
+import { ActivityFeed, FriendQuest, PlayerSafety } from './Community';
+import { effectivePrivacy } from '../engine/privacy';
+import { postActivity } from '../cloud/community';
 
 export function FriendsScreen({ t, user: realUser, sync, onBack, settings, onBestTier, onLeagueSeen, progress, streak = 0, classes, profileErr }: { profileErr?: string | null; classes?: React.ReactNode; t: Strings; user: CloudUser | null; sync: SyncState; onBack: () => void; settings: Settings; onBestTier?: (tier: number) => void; onLeagueSeen?: (tier: number) => void; progress?: Progress; streak?: number }) {
   // Dev-only layout preview with made-up friends (?demoFriends): never in a production build.
@@ -65,7 +68,8 @@ export function FriendsScreen({ t, user: realUser, sync, onBack, settings, onBes
   const course = settings.activeCourse ?? 'ear';
   const cdef = courseOf(course);
   const [scope, setScope] = useState<'all' | 'course'>('all');
-  type Tab = 'friends' | 'league' | 'duels' | 'class';
+  type Tab = 'friends' | 'activity' | 'league' | 'duels' | 'class';
+  const priv = effectivePrivacy(settings.privacy, settings.birthYear);
   const [tab, setTab] = useState<Tab>(() => {
     try {
       return (sessionStorage.getItem('toneturn.friendsTab') as Tab | null) ?? 'friends';
@@ -95,6 +99,7 @@ export function FriendsScreen({ t, user: realUser, sync, onBack, settings, onBes
   };
   const TABS = [
     ['friends', t.friends],
+    ['activity', he ? 'פעילות' : 'Activity'],
     ['league', lang === 'he' ? 'ליגה' : 'League'],
     ['duels', lang === 'he' ? 'דו־קרבות' : 'Duels'],
     ...(classes ? ([['class', lang === 'he' ? 'כיתה' : 'Class']] as const) : []),
@@ -150,6 +155,7 @@ export function FriendsScreen({ t, user: realUser, sync, onBack, settings, onBes
                     <button className="btn small ghost" onClick={() => void respondFriend(r.user_id, false).then(load)}>
                       {t.decline}
                     </button>
+                    <PlayerSafety lang={lang} user={{ id: r.user_id, name: r.name }} onBlocked={() => void load()} />
                   </li>
                 ))}
               </ul>
@@ -218,6 +224,7 @@ export function FriendsScreen({ t, user: realUser, sync, onBack, settings, onBes
                             {sortBy === 'xp' && <RatingBadge r={r.rating} provisional={!!r.rating_provisional} t={t} size="sm" />}
                           </span>
                         </span>
+                        {r.relation === 'friend' && <PlayerSafety lang={lang} user={{ id: r.user_id, name: r.name }} onBlocked={() => void load()} />}
                         {r.relation === 'friend' && (
                           <button
                             className="icon-btn fr-remove"
@@ -280,6 +287,24 @@ export function FriendsScreen({ t, user: realUser, sync, onBack, settings, onBes
                     ))}
                   </ul>
                 )}
+              </section>
+            </>
+          )}
+          {tab === 'activity' && (
+            <>
+              {realUser && (
+                <FriendQuest
+                  lang={lang}
+                  friends={friends.map((r) => ({ id: r.user_id, name: r.name }))}
+                  onDone={(q) => {
+                    // A finished quest goes to friends' activity once (the server also ignores a repeat within 14 days).
+                    if (priv.feed) void postActivity('quest', { week: q.ends_at.slice(0, 10) });
+                  }}
+                />
+              )}
+              <section className="set-card fr-activity" data-fr-activity="1">
+                <h2>{he ? 'פעילות החברים' : "Friends' activity"}</h2>
+                {realUser ? <ActivityFeed lang={lang} young={priv.young} myId={realUser.id} onBlocked={() => void load()} /> : <p className="field-hint">{t.noFriends}</p>}
               </section>
             </>
           )}

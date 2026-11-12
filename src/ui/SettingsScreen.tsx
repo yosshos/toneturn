@@ -28,6 +28,8 @@ import { LiveLatencySetting, MidiIosNote, SoundQualitySetting } from './SoundQua
 import { ProfileCard } from './Profile';
 import type { Ratings } from '../engine/rating';
 import { DEFAULT_PRIVACY, effectivePrivacy, type Preset, type Privacy, type Who } from '../engine/privacy';
+import { BlockedList } from './Community';
+import { cloudConfigured } from '../cloud/cloud';
 
 interface Props {
   t: Strings;
@@ -1359,10 +1361,33 @@ function PrivacySettings({ lang, s, onChange }: { lang: 'en' | 'he'; s: Settings
           <input type="checkbox" checked={eff.dontDisturb} onChange={(e) => set({ dontDisturb: e.target.checked })} />
           <span>{he ? 'לא להפריע בזמן תרגול' : "Don't disturb while I practice"}</span>
         </label>
+        {!eff.young && (
+          <label className="toggle-row">
+            <input type="checkbox" checked={eff.feed} onChange={(e) => set({ feed: e.target.checked })} data-privacy-feed="1" />
+            <span>{he ? 'לשתף חברים בהישגים (רמות, דרגות, רצפים)' : 'Share my milestones with friends (levels, ranks, streaks)'}</span>
+          </label>
+        )}
+        <div className="field-row quiet-hours" data-quiet-hours="1">
+          <span>{he ? 'שעות שקט להתראות מחברים' : 'Quiet hours for friend notifications'}</span>
+          <span className="quiet-pick" dir="ltr">
+            <select value={eff.quietFrom} onChange={(e) => set({ quietFrom: Number(e.target.value) })} aria-label={he ? 'מ־' : 'From'}>
+              {Array.from({ length: 24 }, (_, h) => (
+                <option key={h} value={h}>{`${String(h).padStart(2, '0')}:00`}</option>
+              ))}
+            </select>
+            {' – '}
+            <select value={eff.quietTo} onChange={(e) => set({ quietTo: Number(e.target.value) })} aria-label={he ? 'עד' : 'Until'}>
+              {Array.from({ length: 24 }, (_, h) => (
+                <option key={h} value={h}>{`${String(h).padStart(2, '0')}:00`}</option>
+              ))}
+            </select>
+          </span>
+        </div>
+        <small className="field-hint">{he ? 'לכל היותר התראה חברתית אחת ביום, מאוחדת.' : 'At most one social notification a day, merged.'}</small>
       </details>
       <section className="set-card">
         <b className="set-sub">{he ? 'חסומים' : 'Blocked'}</b>
-        <p className="field-hint">{he ? 'אין חסומים. אפשר לחסום מכל פרופיל, וזה מסתיר אתכם זה מזה לגמרי.' : 'No one is blocked. You can block from any profile — it hides you from each other completely.'}</p>
+        <BlockedList lang={lang} signedIn={cloudConfigured} />
       </section>
     </>
   );
