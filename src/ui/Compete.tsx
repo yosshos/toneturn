@@ -13,6 +13,8 @@ import type { Settings } from '../storage/progress';
 import { TournamentPlay } from './Tournament';
 import { CourseXpLine } from './CourseLevels';
 import { courseSetKinds, type ResultLike } from '../engine/courseSocial';
+import { DuelLinkButton, PlayerSafety, QuickMessages } from './Community';
+import { effectivePrivacy } from '../engine/privacy';
 
 const fill = (s: string, v: Record<string, string | number>) => Object.entries(v).reduce((a, [k, x]) => a.replaceAll(`{${k}}`, String(x)), s);
 
@@ -80,6 +82,9 @@ export function DuelsSection({ t, settings, friends, onPlaying, tier = 'pp' }: {
   const [kind, setKind] = useState<DuelKind>(kinds.includes('mixed') ? 'mixed' : kinds[0]);
   const [play, setPlay] = useState<{ id: string; kind: DuelKind; seed: number; rounds: number } | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
+  /** The duel row whose quick messages / report menu is open. */
+  const [openRow, setOpenRow] = useState<string | null>(null);
+  const priv = effectivePrivacy(settings.privacy, settings.birthYear);
   const load = useCallback(() => void myDuels().then(setRows), []);
   useEffect(load, [load]);
   const names: Record<string, string> = { mixed: t.setMixed, modes: t.skillNames.modes, 'wrong-notes': t.wrongNotesTitle, truefalse: t.trueFalse, chords: t.skillNames.chords, intervals: t.skillNames.intervals, degrees: t.skillNames.degrees, beat: t.skillNames['rhythm-dictation'], jazz: settings.uiLang === 'he' ? 'הרמוניית ג׳אז' : 'Jazz harmony' };
@@ -140,6 +145,14 @@ export function DuelsSection({ t, settings, friends, onPlaying, tier = 'pp' }: {
           </ul>
         </>
       )}
+      <DuelLinkButton
+        lang={settings.uiLang}
+        canShare={priv.canShareOutside}
+        make={() => {
+          const seed = tierSeed((Math.random() * 2 ** 32) >>> 0, tier);
+          return { duelKind: kind, seed, keys: tournamentSet(kind, 3, seed).map((q) => String(q.answer)) };
+        }}
+      />
       {rows.length > 0 && (
         <ul className="duel-list">
           {rows.map((d) => (
@@ -147,6 +160,11 @@ export function DuelsSection({ t, settings, friends, onPlaying, tier = 'pp' }: {
               <span>
                 {d.iChallenged ? '→' : '←'} {d.other} · {names[d.kind]} · <i className="dyn">{seedTier(d.seed)}</i>
               </span>
+              {d.otherId && (
+                <button type="button" className="icon-btn cm-more" aria-expanded={openRow === d.id} aria-label={settings.uiLang === 'he' ? 'הודעות' : 'Messages'} onClick={() => setOpenRow(openRow === d.id ? null : d.id)} data-duel-more={d.id}>
+                  …
+                </button>
+              )}
               {d.myPoints === null ? (
                 <button
                   className="btn small primary"
@@ -161,6 +179,12 @@ export function DuelsSection({ t, settings, friends, onPlaying, tier = 'pp' }: {
                 <span dir="ltr">
                   {d.myPoints} : {d.theirPoints ?? '…'} {d.theirPoints !== null && (d.myPoints > d.theirPoints ? '✓' : d.myPoints < d.theirPoints ? '' : '=')}
                 </span>
+              )}
+              {openRow === d.id && d.otherId && (
+                <div className="duel-social" data-duel-social={d.id}>
+                  <QuickMessages lang={settings.uiLang} ctx="duel" id={d.id} stage={d.myPoints === null ? 'before' : 'after'} canMessage={priv.canMessage} compact />
+                  <PlayerSafety lang={settings.uiLang} user={{ id: d.otherId, name: d.other }} onBlocked={load} />
+                </div>
               )}
             </li>
           ))}

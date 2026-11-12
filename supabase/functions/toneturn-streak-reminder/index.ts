@@ -1,9 +1,12 @@
-// Supabase Edge Function: hourly streak reminders via Web Push, and one-off notifications from the push
-// queue (friend duels). A call with {"queue": true} only sends the queue (the duel trigger).
+// Supabase Edge Function: hourly streak reminders via Web Push, and the social push budget (migration
+// 20261130120000): nudges, cheers, friend requests, duels and quests go out as at most ONE merged push a day per
+// player, outside their quiet hours (planned by ../_shared/socialPush.ts). A call with {"queue": true} (the duel
+// trigger) only runs the queue / social part.
 // Secrets: VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT (mailto:...), CRON_SECRET.
 // SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are provided by the platform.
 import { createClient } from 'npm:@supabase/supabase-js@2.45.4';
 import webpush from 'npm:web-push@3.6.7';
+import { planSocialPush, type SocialItem } from '../_shared/socialPush.ts';
 
 const MILESTONES = [3, 7, 14, 30, 50, 100, 200, 365];
 
@@ -63,6 +66,42 @@ async function sendQueue(db: ReturnType<typeof createClient>) {
   return { sent };
 }
 
+/** The social budget: one merged push a day per player (claimed in toneturn_push_log before sending). */
+async function sendSocial(db: ReturnType<typeof createClient>) {
+  const { data: rows, error } = await db.rpc('toneturn_social_push_due');
+  if (error) return { error: error.message, sent: 0 };
+  let sent = 0;
+  const now = new Date();
+  for (const r of rows ?? []) {
+    const plan = planSocialPush({
+      items: (r.items ?? []) as SocialItem[],
+      now,
+      tz: r.tz ?? 'UTC',
+      lang: r.lang === 'he' ? 'he' : 'en',
+      quietFrom: r.quiet_from,
+      quietTo: r.quiet_to,
+      lastDay: r.last_day,
+    });
+    if (!plan.send) continue;
+    const { data: claimed } = await db.rpc('toneturn_social_push_claim', { p_user: r.user_id, p_day: plan.day, p_ids: plan.ids });
+    if (!claimed) continue;
+    for (const s of (r.subs ?? []) as { id: number; endpoint: string; p256dh: string; auth: string }[]) {
+      try {
+        await webpush.sendNotification(
+          { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
+          JSON.stringify({ title: plan.title, body: plan.body, tag: 'social', url: '/#friends' }),
+          { TTL: 60 * 60 * 12 },
+        );
+        sent++;
+      } catch (e) {
+        const code = (e as { statusCode?: number }).statusCode;
+        if (code === 404 || code === 410) await db.from('toneturn_push_subscriptions').delete().eq('id', s.id);
+      }
+    }
+  }
+  return { sent };
+}
+
 Deno.serve(async (req) => {
   if (req.headers.get('x-cron-secret') !== Deno.env.get('CRON_SECRET')) {
     return new Response('forbidden', { status: 403 });
@@ -72,7 +111,8 @@ Deno.serve(async (req) => {
 
   const body = await req.json().catch(() => ({}));
   const queue = await sendQueue(db);
-  if (body?.queue) return new Response(JSON.stringify({ queue }), { headers: { 'content-type': 'application/json' } });
+  const social = await sendSocial(db);
+  if (body?.queue) return new Response(JSON.stringify({ queue, social }), { headers: { 'content-type': 'application/json' } });
 
   const { data: due, error } = await db.rpc('toneturn_due_reminders');
   if (error) return new Response(JSON.stringify({ error: error.message }), { status: 500 });
@@ -98,5 +138,5 @@ Deno.serve(async (req) => {
       }
     }
   }
-  return new Response(JSON.stringify({ due: due?.length ?? 0, sent, removed, queue }), { headers: { 'content-type': 'application/json' } });
+  return new Response(JSON.stringify({ due: due?.length ?? 0, sent, removed, queue, social }), { headers: { 'content-type': 'application/json' } });
 });

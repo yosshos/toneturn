@@ -199,3 +199,61 @@ Friends tab dot. Nicknames, flags and pictures appear on every board and in ever
 (nickname, flag, icons, photo crop) + privacy presets → 3. block / report + auto actions → 4. duet streaks →
 5. nudges → 6. quick messages → 7. milestone posts + ↗ share → 8. challenge link → 9. friend quest → 10. teacher
 class features.
+
+---------------------------------------------------------------------------------------------------------------------
+
+## 9. Implemented — the social round (owner OK 2026-11-12)
+
+Server: `supabase/migrations/20261130120000_toneturn_social_round.sql` (NOT applied — dry run first) and the edge
+function `toneturn-streak-reminder` (redeploy after the migration; the budget planner is
+`supabase/functions/_shared/socialPush.ts`). Client: `src/cloud/community.ts`, `src/engine/socialRound.ts`,
+`src/ui/Community.tsx` (+ `src/community.css`). Every feature hides itself (or falls back) while the migration is
+missing. Tests: `tests/socialRound.test.ts`.
+
+**Block & report.** A "⋯" menu next to every other player — friend rows and requests, the activity feed, duel rows,
+room lobby players, each received quick message — opens one sheet: a reason (offensive nickname / picture / message,
+cheating, "seems younger than 13 / unsafe", other) with **"Also block" on by default**, or "Block only". Server
+(`toneturn_report_v2`): one open report per reporter and thing, 10 a day; automatic actions on distinct reporters with
+open reports — **3 → the nickname is reset** to `PlayerNNNNN` and the old one banned (the app asks the player to pick a
+new one), **2 (photo or "young") → the photo is held** (hidden for everyone, whatever the app sends, until reviewed),
+**2 on one quick message → it is hidden**. A block now also stops new duels, room joins (looks like "room not
+found") and friend requests, and my duels list drops blocked players (friends, duets, boards already did). Settings →
+Privacy → Blocked lists them with Unblock. **Admin** (Settings → Plans & pricing, admins only): open reports with
+reporter, count, the message text and the automatic action; **Uphold** keeps / applies the action, **Dismiss** undoes
+it (photo back, message shown, the old nickname free again). Not filtered: a blocked player can still appear as a name
+in the weekly league cohort (rows carry no id and allow no contact).
+
+**Push budget.** Nudges, cheers, friend requests, duel invites / results and quest invites go into
+`toneturn_push_queue`; the edge function sends **at most one social push a day per player** (claimed in
+`toneturn_push_log`), **merged** ("CodaFox42 and 2 friends nudged you · 3 friends cheered you"), after a 30-minute
+gathering window, **never in quiet hours** (Settings → Privacy → Advanced, default 22:00–08:00 local) and **never for
+cheers alone**. Each type respects its own notification switch. The practice reminder is separate and unchanged.
+
+**Friends' activity & cheers.** Community → **Activity**: friends' measured milestones, posted automatically —
+a new course level (pp … ff), a new rank tier, the big badges only (area / special / season, or gold and up), a
+learned standard ("first standard" marked), streak milestones (7 … 365) and a finished friend quest; at most three at
+once, each once, the first run on a device only remembers. One tap "Bravo" (no text), counted back. Setting "Share my
+milestones with friends" (on by default for 13+); **no feed, no posting, no cheering in young-player mode** (server too).
+
+**Quick messages** in duels (the "…" on a duel row) and rooms (lobby and final standings — never while answering):
+fixed phrases in he + en (Good luck, Nice one, Impressive, Close one, Oops, Good game, Rematch?, Thanks), one every
+3 s, 30 per game; what I see follows my "quick messages" setting (everyone / friends / off), never across a block;
+none for young players. Each received message can be reported.
+
+**Challenge links** (SPEC-0.48 G3). Game board → "Challenge a friend" shares `…/#/c/CODE` for that game, tier and my
+best; Duels → "Invite by link" shares a fixed set (kind, seed, answer key). The code is 8 opaque characters — nothing
+personal in the URL. Opening it (after sign-in; the code waits on the device through the OAuth round trip) shows who
+sent it (nickname only) and Play: the same game at the same tier with the score to beat (a toast compares the result),
+or the duel, created between the two players. The sender becomes a friend request (unless blocked, already friends or
+their requests are "no one"). Not for young players (no outside sharing). Links last 14 days, 50 opens.
+
+**Weekly friend quest.** Community → Activity: invite one friend a week to **60 measured minutes** or **150 clean
+(first-try) answers together**; both contributions on one bar. Minutes are the server's estimate (answered items / 3,
+like the app); practice-log entries never count. **Class board & goal** (Classes): members see this week's board
+(nickname or "Player" for anonymous players; minutes, clean answers, practice days) unless the teacher hides it (then
+only their own row); the teacher sets a class goal (minutes or clean answers) that carries over week to week.
+
+**Decisions taken here.** Cheers ride along in the daily push but never start one (review B). The opener of a link
+receives the friend request (so the person who tapped consents with one more tap). The quest reward is the finish
+line and a feed post — no gems or badge yet (gems are derived from progress, badges.ts is shared; follow-up).
+"Beat my score" fixes game + tier + score, not the exact items (single-player games pick their own seeds).

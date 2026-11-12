@@ -1,4 +1,6 @@
 import { Icon } from './icons';
+import { PlayerSafety, QuickMessages } from './Community';
+import { effectivePrivacy } from '../engine/privacy';
 import { RatingBadge } from './Rating';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { cloudConfigured, signInWithGoogle, type CloudUser } from '../cloud/cloud';
@@ -236,6 +238,8 @@ function Board({ t, standings, me, limit, lang }: { t: Strings; standings: RoomS
 }
 
 function RoomScreen({ t, settings, backend, roomId, onExit }: { t: Strings; settings: Settings; backend: RoomBackend; roomId: string; onExit: () => void }) {
+  // Quick messages (preset phrases) and report / block, outside the answering screens (SPEC-SOCIAL §8).
+  const canMessage = effectivePrivacy(settings.privacy, settings.birthYear).canMessage && !FAKE_ROOMS;
   const ref = useRef<RoomController | null>(null);
   ref.current ??= new RoomController(backend, roomId, { audio: piano, tts, clock: realClock });
   const c = ref.current;
@@ -301,9 +305,11 @@ function RoomScreen({ t, settings, backend, roomId, onExit }: { t: Strings; sett
               <li key={p.userId} className={p.userId === s.me ? 'me' : ''}>
                 {p.nickname} <RatingBadge r={p.rating} provisional={p.ratingProvisional} t={t} size="sm" />
                 {p.userId === s.host && <small className="host-tag">{s.hostScreen ? t.bigScreen : t.hostTag}</small>}
+                {p.userId !== s.me && !FAKE_ROOMS && <PlayerSafety lang={lang} user={{ id: p.userId, name: p.nickname }} />}
               </li>
             ))}
           </ul>
+          <QuickMessages lang={lang} ctx="room" id={s.id} stage="before" canMessage={canMessage} compact />
         </section>
         {v.isHost ? (
           <>
@@ -337,6 +343,7 @@ function RoomScreen({ t, settings, backend, roomId, onExit }: { t: Strings; sett
           )}
         </div>
         <Board t={t} standings={v.standings} me={s.me} lang={lang} />
+        <QuickMessages lang={lang} ctx="room" id={s.id} stage="after" canMessage={canMessage} compact />
         <div className="recap-actions">
           <button className="btn ghost" onClick={onExit}>
             {t.home}

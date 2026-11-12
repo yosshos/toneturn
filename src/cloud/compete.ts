@@ -61,6 +61,8 @@ export interface DuelRow {
   createdAt: string;
   iChallenged: boolean;
   other: string;
+  /** The other player's id (social round migration; absent on older servers). */
+  otherId?: string;
   myPoints: number | null;
   theirPoints: number | null;
 }
@@ -87,7 +89,7 @@ export async function myDuels(): Promise<DuelRow[]> {
   if (!sb) return [];
   const { data, error } = await sb.rpc('toneturn_duels_mine');
   if (error || !data) return [];
-  return (data as { id: string; kind: DuelKind; seed: number; rounds: number; created_at: string; i_challenged: boolean; other: string; my_points: number | null; their_points: number | null }[]).map((d) => ({
+  return (data as { id: string; kind: DuelKind; seed: number; rounds: number; created_at: string; i_challenged: boolean; other: string; other_id?: string; my_points: number | null; their_points: number | null }[]).map((d) => ({
     id: d.id,
     kind: d.kind,
     seed: Number(d.seed),
@@ -95,6 +97,7 @@ export async function myDuels(): Promise<DuelRow[]> {
     createdAt: d.created_at,
     iChallenged: d.i_challenged,
     other: d.other,
+    otherId: d.other_id,
     myPoints: d.my_points,
     theirPoints: d.their_points,
   }));

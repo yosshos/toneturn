@@ -15,7 +15,12 @@ export interface Privacy {
   nudges?: 'friends' | 'none';
   quickMessages?: Who;
   dontDisturb?: boolean;
-  notify?: { challenges?: boolean; requests?: boolean; nudges?: boolean; duets?: boolean };
+  notify?: { challenges?: boolean; requests?: boolean; nudges?: boolean; duets?: boolean; cheers?: boolean };
+  /** Post my measured milestones to friends' activity (default on; always off for young players). */
+  feed?: boolean;
+  /** Quiet hours for social pushes, local hours 0–23 (default 22 → 8; equal = none). */
+  quietFrom?: number;
+  quietTo?: number;
 }
 
 export interface Effective {
@@ -30,9 +35,15 @@ export interface Effective {
   young: boolean;
   canUploadPhoto: boolean;
   canShareOutside: boolean;
+  /** Quick messages in games and the friends' feed (posting, reading, cheering): never for young players. */
+  canMessage: boolean;
+  /** My milestones go to friends' activity. */
+  feed: boolean;
+  quietFrom: number;
+  quietTo: number;
 }
 
-const PRESETS: Record<Preset, Omit<Effective, 'young' | 'canUploadPhoto' | 'canShareOutside' | 'dontDisturb'>> = {
+const PRESETS: Record<Preset, Omit<Effective, 'young' | 'canUploadPhoto' | 'canShareOutside' | 'dontDisturb' | 'canMessage' | 'feed' | 'quietFrom' | 'quietTo'>> = {
   open: { photo: 'everyone', onBoards: 'nickname', friendRequests: 'everyone', challenges: 'everyone', nudges: 'friends', quickMessages: 'everyone' },
   friends: { photo: 'friends', onBoards: 'nickname', friendRequests: 'everyone', challenges: 'friends', nudges: 'friends', quickMessages: 'friends' },
   private: { photo: 'none', onBoards: 'anonymous', friendRequests: 'code', challenges: 'none', nudges: 'none', quickMessages: 'none' },
@@ -48,6 +59,7 @@ export const isYoung = (birthYear: number | null | undefined, eu = false, now = 
   return a !== null && a < (eu ? 16 : 13);
 };
 
+const hourOr = (h: number | undefined, d: number) => (typeof h === 'number' && Number.isInteger(h) && h >= 0 && h <= 23 ? h : d);
 const rank: Record<Who, number> = { none: 0, friends: 1, everyone: 2 };
 const atMost = (w: Who, cap: Who): Who => (rank[w] <= rank[cap] ? w : cap);
 
@@ -66,6 +78,10 @@ export function effectivePrivacy(p: Privacy | undefined, birthYear?: number | nu
     young,
     canUploadPhoto: !young,
     canShareOutside: !young,
+    canMessage: !young,
+    feed: !young && p?.feed !== false,
+    quietFrom: hourOr(p?.quietFrom, 22),
+    quietTo: hourOr(p?.quietTo, 8),
   };
   if (young) {
     // SPEC-SOCIAL §8: no photo, friends-only contact, requests by code only.

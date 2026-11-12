@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { ClassBoardCard } from './Community';
 import { classVocal, createClass, deleteClass, EXTRA_ASSIGNABLE, joinClass, leaveClass, myClasses, unassign, type MyClasses, type StudentVocal, type TeachingClass } from '../cloud/classes';
 import { cloudConfigured, signInWithGoogle, type CloudUser } from '../cloud/cloud';
 import { normaliseCode, ROOM_CODE_RE } from '../cloud/rooms';
@@ -100,6 +101,7 @@ export function ClassesScreen({ t, settings, user, onBack, onOpenLesson, onOpenI
                   ))}
                 </ul>
               )}
+              <ClassBoardCard lang={lang} classId={c.id} teacher={false} />
               <button className="btn ghost small" disabled={busy} onClick={() => act(() => leaveClass(c.id))}>
                 {t.leaveClass}
               </button>
@@ -148,6 +150,7 @@ function TeacherCard({ t, c, lang, busy, act, onError }: { t: Strings; c: Teachi
           {t.classCode}: <b dir="ltr" className="class-code">{c.code}</b>
         </small>
       </div>
+      <ClassBoardCard lang={lang} classId={c.id} teacher />
       <h3>
         {t.students} ({c.students.length})
       </h3>
