@@ -1732,7 +1732,8 @@ export function App() {
     go('settings');
   };
   const sideNav = (id: NavId) => {
-    if (id === 'placement') return openPlacement();
+    // Per course (owner 2026-11-13): an instrument course's level test is played, not a multiple-choice ear quiz.
+    if (id === 'placement') return findLevel();
     if (id === 'gamelist') {
       try {
         sessionStorage.setItem('toneturn.practice', 'games');
@@ -1876,7 +1877,7 @@ export function App() {
                   c={{ ...pending, ...(intakeDraft && pending.intake === null ? { intake: 'later' as const } : {}), ...(savedPlacement ? { unmeasured: [] } : {}) }}
                   draft={intakeDraft}
                   onIntake={() => go('intake')}
-                  onMeasure={() => openCatchUpPlacement(pending.unmeasured)}
+                  onMeasure={() => (instrumentCourse ? openTechTest() : openCatchUpPlacement(pending.unmeasured))}
                   onFindLevel={() => (instrumentCourse ? openTechTest() : s.activeCourse === 'voice' ? openPlacement('voice') : openPlacement())}
                   onHide={() => updateSettings({ catchUpHidden: catchUpKey })}
                 />
@@ -2139,7 +2140,7 @@ export function App() {
           onSettings={updateSettings}
           onNavigate={(r) => {
             setMenuOpen(false);
-            if (r === 'placement') openPlacement();
+            if (r === 'placement') findLevel();
             else if (r === 'truefalse') gate('game:truefalse', () => go('truefalse'));
             else go(r);
           }}
@@ -2269,7 +2270,7 @@ export function App() {
             <h2 id="recal-title">{recalOffer.kind === 'promote' ? (s.uiLang === 'en' ? 'You seem above this unit' : 'נראה שאתם מעל היחידה הזאת') : s.uiLang === 'en' ? `Your ${t.domainNames[recalOffer.area!]} level moved a lot` : `הרמה שלכם ב${t.domainNames[recalOffer.area!]} זזה הרבה`}</h2>
             <p>{recalOffer.kind === 'promote' ? (s.uiLang === 'en' ? 'Your last answers are well above what this unit expects. Take the short jump-ahead test and skip what you already know?' : 'התשובות האחרונות שלכם הרבה מעל מה שהיחידה מצפה לו. לעשות את מבחן הקפיצה הקצר ולדלג על מה שאתם כבר יודעים?') : s.uiLang === 'en' ? 'A quick re-test (about 8 questions) puts your path back where you are.' : 'מבחן קצר מחדש (כ־8 שאלות) מחזיר את המסלול למקום שבו אתם נמצאים.'}</p>
             <div className="row">
-              <button className="btn primary" onClick={() => { const o = recalOffer; setRecalOffer(null); if (o.kind === 'promote') { const u = pathView.units.find((x) => x.status === 'current'); if (u) openTestOut(u); } else openPlacement(o.area ?? null, true); }}>{recalOffer.kind === 'promote' ? (s.uiLang === 'en' ? 'Test out' : 'למבחן') : s.uiLang === 'en' ? 'Re-test' : 'למבחן קצר'}</button>
+              <button className="btn primary" onClick={() => { const o = recalOffer; setRecalOffer(null); if (o.kind === 'promote') { const u = pathView.units.find((x) => x.status === 'current'); if (u) openTestOut(u); } else if (instrumentCourse) openTechTest(); else openPlacement(o.area ?? null, true); }}>{recalOffer.kind === 'promote' ? (s.uiLang === 'en' ? 'Test out' : 'למבחן') : s.uiLang === 'en' ? 'Re-test' : 'למבחן קצר'}</button>
               <button className="btn ghost" onClick={() => snoozeRecal()}>{s.uiLang === 'en' ? 'Not now' : 'לא עכשיו'}</button>
             </div>
           </div>

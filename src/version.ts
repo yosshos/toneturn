@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.79.1',
+    date: '2026-11-13',
+    en: ['In the piano, guitar, bass and drum courses, "Find my level" from the menu (and the catch-up card) now opens the playing test on your instrument, not the multiple-choice ear quiz.'],
+    he: ['בקורסים של פסנתר, גיטרה, בס ותופים, "בדיקת רמה" מהתפריט (ומכרטיס ההשלמה) פותחת עכשיו את מבחן הנגינה על הכלי, ולא את שאלון האוזן האמריקאי.'],
+  },
+  {
     version: '0.79.0',
     date: '2026-11-13',
     en: ['Every timed take now says when: sung melodies get a count-in, a click (on/off) and the notes lighting up one by one; piano, guitar and bass drills, sight-singing, the guitar tab drill and rhythm reading show a moving highlight on the note that is due; Play It Back lights the due cell, Sing along keeps the click under the whole song, and the groove pad pulses on every click'],
