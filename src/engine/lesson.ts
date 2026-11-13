@@ -1465,7 +1465,23 @@ export function answerFromMidi(q: Question, m: number): Answer | null {
     const a: Answer = q.kind === 'degree' ? i + 1 : pcKey(scale[i]);
     return q.choices.includes(a) ? a : null;
   }
+  // 0.85 (owner: questions in the keys course that only the mouse could answer): a choice between spelled notes (theory —
+  // "augmented 2nd up from A") is answered by the key that sounds it; the choices never share a sound (no enharmonic decoys).
+  if (q.kind === 'choice') {
+    const pcs = q.choices.map((c) => spelledPcOf(c) ?? spelledPcOf(q.names[c]?.en ?? ''));
+    if (pcs.some((x) => x === null) || new Set(pcs).size !== pcs.length) return null;
+    const i = pcs.indexOf(pcOfMidi);
+    return i >= 0 ? q.choices[i] : null;
+  }
   return null;
+}
+const SPELL_PC: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+/** A spelled note name ("B♯", "Eb", "F##") → pitch class; null for anything else (chord names, intervals). */
+function spelledPcOf(t: string): number | null {
+  const m = /^([A-G])(♯♯|♭♭|♯|♭|##|bb|#|b|𝄪|𝄫)?$/.exec(t.trim());
+  if (!m) return null;
+  const acc = ({ '♯♯': 2, '##': 2, '𝄪': 2, '♯': 1, '#': 1, '♭♭': -2, bb: -2, '𝄫': -2, '♭': -1, b: -1 } as Record<string, number>)[m[2] ?? ''] ?? 0;
+  return (((SPELL_PC[m[1]] + acc) % 12) + 12) % 12;
 }
 
 // ---------------------------------------------------------------- Registry

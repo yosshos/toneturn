@@ -8,6 +8,7 @@ import { layoutPiece, VF_DUR, type LayoutBar, type LayoutEv } from '../engine/pi
 import { spellMidi } from '../engine/aids';
 import type { PitchClass } from '../engine/pitch';
 import type { NoteMark } from '../engine/noteMarks';
+import { headX } from './NoteViews';
 
 type VF = typeof import('vexflow/bravura');
 let vfPromise: Promise<VF> | null = null;
@@ -22,7 +23,7 @@ const MARK: Record<Exclude<NoteMark, undefined>, string> = { ok: '#1f8f67', timi
 
 export interface ScoreGeometry {
   /** Per bar: x (0..1 of the width) and y top / bottom (px in the rendered SVG coordinate space) of its system. */
-  bars: { x0: number; x1: number; y0: number; y1: number; sys: number }[];
+  bars: { x0: number; x1: number; y0: number; y1: number; sys: number; /** Notehead centres by onset (quarter beats in the bar, 0..1 of the width): the cursor glides between them. */ anchors?: { at: number; x: number }[] }[];
   width: number;
   height: number;
 }
@@ -88,8 +89,17 @@ export function ScoreView({
     for (let i = 0; i < bars.length; i++) {
       if (b < bars[i].beats || i === bars.length - 1) {
         const g = geo.bars[i];
-        const f = Math.max(0, Math.min(1, b / bars[i].beats));
-        return { left: (g.x0 + (g.x1 - g.x0) * f) * 100, top: (g.y0 / geo.height) * 100, h: ((g.y1 - g.y0) / geo.height) * 100, sys: g.sys };
+        // 0.85 (owner: the cursor sat off the notes): notes are not spaced by time, so the cursor runs from notehead to
+        // notehead, each stretch in its note's own time — not at one speed across the bar.
+        const an = [...(g.anchors?.length ? g.anchors : [{ at: 0, x: g.x0 }]), { at: bars[i].beats, x: g.x1 }];
+        let left = g.x0;
+        for (let k = 0; k < an.length - 1; k++) {
+          if (b >= an[k].at - 1e-6 || k === 0) {
+            const span = an[k + 1].at - an[k].at;
+            left = an[k].x + (an[k + 1].x - an[k].x) * (span > 1e-6 ? Math.max(0, Math.min(1, (b - an[k].at) / span)) : 0);
+          }
+        }
+        return { left: left * 100, top: (g.y0 / geo.height) * 100, h: ((g.y1 - g.y0) / geo.height) * 100, sys: g.sys };
       }
       b -= bars[i].beats;
     }
@@ -213,7 +223,12 @@ function drawScore(VF: VF, el: HTMLDivElement, piece: Piece, bars: LayoutBar[], 
         VF.Beam.generateBeams(bv.notes.filter((n) => !n.isRest())).forEach((bm) => bm.setContext(ctx).draw());
       }
       const noteX0 = top.getNoteStartX();
-      geo.bars.push({ x0: noteX0 / W, x1: (x + w) / W, y0: y, y1: y + (bot ? 200 : 100), sys: li });
+      const byAt = new Map<number, number>();
+      const put = (evs: LayoutEv[], ns: InstanceType<VF['StaveNote']>[]) => evs.forEach((e, j) => ns[j] && !byAt.has(e.at) && byAt.set(e.at, headX(ns[j]) / W));
+      put(b.hands.R, t.notes);
+      if (bv) put(b.hands.L, bv.notes);
+      const anchors = [...byAt.entries()].map(([at, xx]) => ({ at, x: xx })).sort((p, q) => p.at - q.at);
+      geo.bars.push({ x0: noteX0 / W, x1: (x + w) / W, y0: y, y1: y + (bot ? 200 : 100), sys: li, anchors });
       x += w;
     });
   }

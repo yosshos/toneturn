@@ -3,6 +3,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { barBeats, CELLS, meterOf, type CellId, type Rhythm } from '../engine/rhythm';
+import { glidePos, headX, nowX, Playhead } from './NoteViews';
 
 type VF = typeof import('vexflow/bravura');
 let vfPromise: Promise<VF> | null = null;
@@ -60,13 +61,13 @@ export function useRhythmNow(rhythm: Rhythm, bpm: number, startPerf: number | nu
       setNow(-1);
       return;
     }
-    const starts = rhythmNoteStarts(rhythm);
+    // Swung eighths sound on the triplet's last third (they are written straight): the line follows the sound.
+    const starts = rhythmNoteStarts(rhythm).map((x) => (rhythm.swing && Math.abs((x % 1) - 0.5) < 1e-6 ? x + 1 / 6 : x));
     const total = rhythm.cells.reduce((a, c) => a + CELLS[c].beats, 0);
     const id = window.setInterval(() => {
       const b = ((performance.now() - startPerf) / 1000) * (bpm / 60);
-      let k = -1;
-      if (b < total + 0.25) starts.forEach((x, i) => x <= b + 0.05 && (k = i));
-      setNow(k);
+      // Fractional: the playhead glides through each note in its own time (glidePos).
+      setNow(b < total + 0.25 ? glidePos(starts, total, b) : -1);
     }, 30);
     return () => window.clearInterval(id);
   }, [rhythm, bpm, startPerf, live]);
@@ -107,6 +108,7 @@ export function RhythmStaff({ rhythm, label, height = 96, compact = false, bare 
         const ctx = renderer.getContext();
         let x = 5;
         const drawn: InstanceType<VF['StaveNote']>[] = [];
+        let endX = 0;
         bars.forEach((bar, bi) => {
           const w = barW + (bi === 0 ? firstExtra : 0);
           const stave = new VF.Stave(x, compact ? -10 : 0, w);
@@ -140,12 +142,13 @@ export function RhythmStaff({ rhythm, label, height = 96, compact = false, bare 
             flush();
           }
           VF.Formatter.FormatAndDraw(ctx, stave, notes);
+          endX = stave.getNoteEndX();
           drawn.push(...notes);
           beams.forEach((b) => b.setContext(ctx).draw());
           tuplets.forEach((t) => t.setContext(ctx).draw());
           x += w;
         });
-        setXs(drawn.map((n) => (n.getAbsoluteX() + 6) / width));
+        setXs([...drawn.map((n) => headX(n) / width), endX / width]);
         const svg = el.querySelector('svg');
         if (svg) {
           svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
@@ -165,7 +168,7 @@ export function RhythmStaff({ rhythm, label, height = 96, compact = false, bare 
       {rhythm.swing && !bare && <span className="swing-mark">Swing ♫ = ♩♪³</span>}
       <div className="svg-wrap">
         <div ref={ref} />
-        {now >= 0 && xs[now] !== undefined && <span className="staff-now" style={{ left: `${xs[now] * 100}%` }} aria-hidden="true" />}
+        {nowX(xs, now) !== null && <Playhead x={nowX(xs, now)!} />}
       </div>
       {failed && <p className="staff-fallback">{label}</p>}
     </div>

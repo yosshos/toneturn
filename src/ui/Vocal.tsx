@@ -64,6 +64,7 @@ import { MORE_INSTR, METRIC_NAMES, TONE_NAMES, VT } from '../content/voiceCourse
 import { restTakes, TimedSession, type VoiceTestMode } from './VoiceTimed';
 import { restAdvice } from '../engine/voiceP2';
 import { VoiceLevelTest } from './VoiceLevelTest';
+import { LatencyCalibrate } from './LatencyCalibrate';
 import { Glyph, DOMAIN_COLOR } from './Glyph';
 import { FAMILY_GLYPH } from './stepGlyphs';
 
@@ -380,6 +381,10 @@ export function VocalScreen({ t, settings, progress, onSettings, onProgress, onB
   const [view, setView] = useState<View>(() => (startTest ? { kind: 'test' } : startLevel && vocalLevelByRef(startLevel) ? openLevel(startLevel, settings.voiceRange ?? DEFAULT_RANGE) : startWarmup ? { kind: 'session', level: 'warmup', items: warmupItems(v.passed).filter((it) => itemFits(it, settings.voiceRange ?? DEFAULT_RANGE)) } : { kind: 'home' }));
   const range = settings.voiceRange ?? DEFAULT_RANGE;
   const style: VibratoStyle = settings.vibratoStyle ?? 'pop';
+  // The level test sets up first (0.85): the voice range (so the items fit the voice) and the microphone delay (so the
+  // timed sections are graded fairly) — never a setup screen in the middle of the test.
+  const [testRangeSkip, setTestRangeSkip] = useState(false);
+  const [testLatSkip, setTestLatSkip] = useState(false);
   const [openFam, setOpenFam] = useState<string | null>(() => {
     try {
       return localStorage.getItem('toneturn.voiceFamily');
@@ -390,6 +395,24 @@ export function VocalScreen({ t, settings, progress, onSettings, onProgress, onB
 
   if (view.kind === 'range')
     return <RangeCalibration t={t} settings={settings} onDone={(r) => (r && onSettings({ voiceRange: r }), setView({ kind: 'home' }))} />;
+  if (view.kind === 'test' && !settings.voiceRange && !testRangeSkip && !SIMULATED)
+    return <RangeCalibration t={t} settings={settings} onDone={(r) => (r ? onSettings({ voiceRange: r }) : setTestRangeSkip(true))} />;
+  if (view.kind === 'test' && settings.micLatencyMs === undefined && !testLatSkip && !SIMULATED)
+    return (
+      <main className="panel-screen vocal vtimed">
+        <header className="screen-head">
+          <button className="icon-btn" onClick={() => setTestLatSkip(true)} aria-label={t.back}>
+            <span className="flip-rtl">←</span>
+          </button>
+          <h1>{VT.calTitle[settings.uiLang === 'en' ? 'en' : 'he']}</h1>
+        </header>
+        <p className="field-hint">{VT.calWhy[settings.uiLang === 'en' ? 'en' : 'he']}</p>
+        <LatencyCalibrate lang={settings.uiLang === 'en' ? 'en' : 'he'} values={{ micLatencyMs: settings.micLatencyMs }} sources={['mic']} initial="mic" onSave={(p) => onSettings(p)} />
+        <button className="btn ghost" onClick={() => setTestLatSkip(true)}>
+          {VT.calSkip[settings.uiLang === 'en' ? 'en' : 'he']}
+        </button>
+      </main>
+    );
   if (view.kind === 'test')
     return (
       <VoiceLevelTest
@@ -745,7 +768,7 @@ function VocalSession({
   // The now-cue of timed takes: the reference lights its notes, then a count-in and the click carry the take.
   const [pulseClock, setPulseClock] = useState<PulseClock | null>(null);
   const [clickOn, setClickOn] = useState(loadClick);
-  const pulseNow = usePulseNow(pulseClock).now;
+  const pulseNow = usePulseNow(pulseClock).glide;
   const [headphones, setHeadphones] = useState(() => {
     try {
       return localStorage.getItem('toneturn.headphones') === '1';
@@ -758,6 +781,14 @@ function VocalSession({
     if (test?.autoStart) void take();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  // A level-test take shows its score for a moment, then the test moves on by itself (like the playing tests).
+  useEffect(() => {
+    if (!test || phase !== 'result' || !grade || grade.unclear) return;
+    const pass = typeof level === 'number' ? levelDef(level).pass : 0.7;
+    const id = window.setTimeout(() => test.onTake(grade.score, pass), grade.score >= pass ? 1800 : 2800);
+    return () => window.clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, grade]);
   useEffect(() => {
     if ((i === 0 && noteIdx === 0) || test) return;
     saveSlot(slotKey, { title: typeof level === 'number' ? `${t.vocalTitle} · ${level}` : t.vocalWarmup, route: 'vocal', done: i, total: items.length, data: { ids: items.map((it) => it.id), i, noteIdx, best: best.current } });

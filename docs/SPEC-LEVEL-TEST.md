@@ -65,5 +65,5 @@ src/ui/VoiceLevelTest.tsx), on the same state machine as the playing tests: sect
 band, The singer's ear, Sight-singing, Scales, Agility; up to six real levels per section, spread over the family; one
 take per step in the real exercise screen (count-in, click, now-cue); clean = the level's pass mark, "almost" = within
 15 points (one more take, starting at once). The result is each family's start (drillStart, the level after the hardest
-clean one). The old 2½-minute probe is gone. The generic placement's voice domain (singing, technique, agility
+clean one). The old 2½-minute probe is gone. 0.85: range and microphone-delay setup before the first take, the mic asked for at Start, auto-advance after each graded take (1.8 s pass / 2.8 s miss), progress saved (toneturn.voiceTest.v1) and resumed. The generic placement's voice domain (singing, technique, agility
 ratings) stays for the Skill Map's "measure voice".

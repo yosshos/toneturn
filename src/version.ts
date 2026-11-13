@@ -18,6 +18,20 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.85.0',
+    date: '2026-11-13',
+    en: [
+      'The playhead on the staff sits on the notes: it glides through each note in the note’s own time (slowly through long notes, quickly through short ones) and stands on the notehead when the note is due — also triplets, dotted notes and swing, on wide screens and phones. A thin line instead of the wide column.',
+      'Voice level test: it sets up first (your range and the microphone delay), moves on by itself after each take, takes about 10 minutes, and continues where you left it.',
+      'With a MIDI keyboard: a theory question with note answers is answered by playing the note, and a rhythm to tap can be tapped on any key.',
+    ],
+    he: [
+      'הסמן על החמשה יושב על התווים: הוא גולש בכל תו לפי משך התו (לאט בתו ארוך, מהר בתו קצר) ועומד על ראש התו ברגע שהוא מגיע — גם בטריולות, בתווים עם נקודה ובסווינג, במסך רחב ובטלפון. קו דק במקום העמודה הרחבה.',
+      'מבחן הרמה בקול: מתכונן מראש (הטווח וההשהיה של המיקרופון), ממשיך לבד אחרי כל ביצוע, לוקח כ-10 דקות, וממשיך מאיפה שעצרתם.',
+      'עם מקלדת MIDI: שאלת תיאוריה שהתשובות בה הן תווים — עונים בנגינת התו, ומקצב להקשה אפשר להקיש על כל קליד.',
+    ],
+  },
+  {
     version: '0.84.0',
     date: '2026-11-13',
     en: [

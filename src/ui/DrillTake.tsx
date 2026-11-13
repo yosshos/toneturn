@@ -6,7 +6,7 @@ import { scoreInformedNotes } from '../engine/drills/pianoMic';
 import type { Drill, PlayedNote, TakeMetrics, DrillCalibration } from '../engine/drills/types';
 import { analyzeTake, micUnmeasurable, tempoBand, thresholds } from '../engine/drills/analyze';
 import type { ExpNote, NoteResult } from '../engine/drills/types';
-import { NoteStaff, TabLine, type NoteMark } from './NoteViews';
+import { glidePos, NoteStaff, TabLine, type NoteMark } from './NoteViews';
 import { markOf } from '../engine/noteMarks';
 import { analyzeGuitarTake, captureOptsFor, detectOnsets, onsetOptsFor, untimedPitch, type GFrame } from '../engine/drills/guitarAnalyze';
 import { isGuitarDrill } from '../engine/drills/events';
@@ -122,7 +122,7 @@ export function DrillTab({ drill, fingering = false, picking = false, result, be
         l.length ? (
           <TabLine
             key={from + i}
-            now={beat >= 0 && !result && lineOf(beat) === from + i ? l.reduce((best, c, j) => (c.at <= beat + 0.03 ? j : best), -1) : -1}
+            now={beat >= 0 && !result && lineOf(beat) === from + i ? glidePos(l.map((c) => c.at), sl?.[from + i] ? sl[from + i].to / k : (from + i + 1) * perLine, beat) : -1}
             cols={l.map(({ mark: _m, at: _a, ...c }) => c)}
             marks={result ? l.map((c) => c.mark) : undefined}
             strings={strings}
@@ -250,38 +250,35 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo }
       const labels = result ? xs.map((n) => playedLabel(n) || (fing && n.finger ? String(n.finger) : '')) : fing ? xs.map((n) => (n.finger ? String(n.finger) : '')) : undefined;
       const marks = result ? xs.map((n) => markFor(n, ns)) : undefined;
       // Written values; a gap before the next note (or to the bar line at the end) becomes rests of standard values.
-      type It = { n: ExpNote | null; dur: number };
+      // `at`: where the item really starts (quarter notes). The written value is rounded to a standard one (a triplet is
+      // drawn as an eighth), so the now-cue follows `at`, never a sum of written values (it drifted off the notes).
+      type It = { n: ExpNote | null; dur: number; at: number };
       const items: It[] = [];
       const std = (d: number) => [4, 3, 2, 1.5, 1, 0.5].find((v) => v <= d + 1e-6) ?? 0.5;
-      const pushRest = (gap: number) => {
+      const pushRest = (gap: number, from: number) => {
         let g = gap;
+        let at = from;
         while (g > 0.49) {
           const v = [4, 2, 1, 0.5].find((x) => x <= g + 1e-6)!;
-          items.push({ n: null, dur: v });
+          items.push({ n: null, dur: v, at });
           g -= v;
+          at += v;
         }
       };
       const lineStart = sl ? sl[li].from : li * per;
       const lineEnd = sl ? sl[li].to : lineStart + per;
       const barEnd = (q: number) => (sl ? (sl[li].bars.find((b) => q < b.from + b.len - 1e-6) ?? sl[li].bars[sl[li].bars.length - 1]).from + (sl[li].bars.find((b) => q < b.from + b.len - 1e-6) ?? sl[li].bars[sl[li].bars.length - 1]).len : Math.ceil(q / meter - 1e-6) * meter);
-      if (bq(xs[0]) - lineStart > 0.49) pushRest(bq(xs[0]) - lineStart);
+      if (bq(xs[0]) - lineStart > 0.49) pushRest(bq(xs[0]) - lineStart, lineStart);
       xs.forEach((n, i) => {
         const nextAt = xs[i + 1] ? bq(xs[i + 1]) : Math.min(lineEnd, barEnd(bq(n) + dq(n) - 1e-6));
         const d = std(Math.min(Math.max(0.5, dq(n)), Math.max(0.5, nextAt - bq(n))));
-        items.push({ n, dur: d });
-        if (nextAt - (bq(n) + d) > 0.49) pushRest(nextAt - (bq(n) + d));
+        items.push({ n, dur: d, at: bq(n) });
+        if (nextAt - (bq(n) + d) > 0.49) pushRest(nextAt - (bq(n) + d), bq(n) + d);
       });
       const idx = (n: ExpNote) => xs.indexOf(n);
       // The now-cue: the item (note or rest) the running take is on, in this line.
       const cur = beat >= 0 && !result ? beat * qk : -1;
-      let now = -1;
-      if (cur >= lineStart - 0.03 && cur < lineEnd - 0.03) {
-        let at = lineStart;
-        items.forEach((x, k) => {
-          if (at <= cur + 0.03) now = k;
-          at += x.dur;
-        });
-      }
+      const now = cur >= lineStart - 0.03 && cur < lineEnd - 0.03 ? glidePos(items.map((x) => x.at), lineEnd, cur) : -1;
       return (
         <NoteStaff
           now={now}
@@ -572,16 +569,17 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
       });
     }
     setPhase('count');
-    // The score's now-cue moves between the clicks too (quarter-beat steps), so eighths and sixteenths light in time.
+    // The score's now-cue glides between the clicks (owner 2026-11-13: it sat off the notes): a continuous beat from the
+    // last heard click and the beat's length, about 30 times a second; the staff turns it into a place on the line.
     let lastBeat: { i: number; t: number; dt: number } | null = null;
     let sent = -99;
     const smooth = onBeat
       ? window.setInterval(() => {
           if (!lastBeat || lastBeat.i < drill.meter) return;
-          const f = Math.min(0.75, Math.floor(((performance.now() - lastBeat.t) / lastBeat.dt) * 4) / 4);
+          const f = Math.min(0.999, (performance.now() - lastBeat.t) / lastBeat.dt);
           const b = lastBeat.i - drill.meter + f;
-          if (b !== sent) onBeat((sent = b));
-        }, 25)
+          if (Math.abs(b - sent) >= 0.01) onBeat((sent = b));
+        }, 33)
       : 0;
     try {
       if (backing.length) void piano.play(backing, plan.responseEnd + 0.5, abort.signal).catch(() => {});
@@ -591,7 +589,8 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
         (i) => {
           setBeat(i);
           const t = performance.now();
-          lastBeat = { i, t, dt: lastBeat && i === lastBeat.i + 1 ? Math.max(120, t - lastBeat.t) : (lastBeat?.dt ?? 60000 / Math.max(30, bpm)) };
+          const gap = tl.clicks[i + 1] ? (tl.clicks[i + 1].t - tl.clicks[i].t) * 1000 : 0;
+          lastBeat = { i, t, dt: gap > 60 ? gap : lastBeat && i === lastBeat.i + 1 ? Math.max(120, t - lastBeat.t) : (lastBeat?.dt ?? 60000 / Math.max(30, bpm)) };
           if (onBeat && i - drill.meter !== sent) onBeat((sent = i - drill.meter));
           if (i >= drill.meter) setPhase('play');
         },

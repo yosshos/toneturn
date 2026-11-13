@@ -2,6 +2,7 @@
 // a count-in, the click through the take, and the notes lighting up one by one on the grid.
 import { useEffect, useRef, useState } from 'react';
 import type { NoteEvent } from '../engine/lesson';
+import { glidePos } from '../engine/playhead';
 
 /** The grid of one timed response: when each note is due (s from the first beat) and the click spacing. */
 export interface Pulse {
@@ -56,12 +57,13 @@ export function dueIndex(onsets: number[], t: number, lastLen: number): number {
 }
 
 /** Live position on a running pulse: count-in beats left, the due note, and whether a beat just fell. */
-export function usePulseNow(clock: PulseClock | null): { countLeft: number; now: number; beatOn: boolean } {
-  const [s, setS] = useState({ countLeft: 0, now: -1, beatOn: false });
+/** `glide`: the fractional place for a staff playhead (glidePos, steps of 0.04 so the screen redraws ~20 times a note). */
+export function usePulseNow(clock: PulseClock | null): { countLeft: number; now: number; beatOn: boolean; glide: number } {
+  const [s, setS] = useState({ countLeft: 0, now: -1, beatOn: false, glide: -1 });
   const raf = useRef(0);
   useEffect(() => {
     if (!clock) {
-      setS({ countLeft: 0, now: -1, beatOn: false });
+      setS({ countLeft: 0, now: -1, beatOn: false, glide: -1 });
       return;
     }
     const { pulse: p, zero } = clock;
@@ -70,8 +72,10 @@ export function usePulseNow(clock: PulseClock | null): { countLeft: number; now:
       const t = (performance.now() - zero) / 1000;
       const countLeft = t < 0 ? Math.min(p.countIn, Math.ceil(-t / p.beat - 0.001)) : 0;
       const ph = (((t / p.beat) % 1) + 1) % 1;
-      const next = { countLeft, now: dueIndex(p.onsets, t, lastLen), beatOn: t > -p.countIn * p.beat && t < p.length + p.beat && ph < 0.18 };
-      setS((o) => (o.countLeft === next.countLeft && o.now === next.now && o.beatOn === next.beatOn ? o : next));
+      const now = dueIndex(p.onsets, t, lastLen);
+      const g = now < 0 ? -1 : glidePos(p.onsets, p.length, t);
+      const next = { countLeft, now, beatOn: t > -p.countIn * p.beat && t < p.length + p.beat && ph < 0.18, glide: g < 0 ? -1 : Math.floor(g / 0.04) * 0.04 };
+      setS((o) => (o.countLeft === next.countLeft && o.now === next.now && o.beatOn === next.beatOn && o.glide === next.glide ? o : next));
       if (t < p.length + 2 * p.beat) raf.current = requestAnimationFrame(loop);
     };
     raf.current = requestAnimationFrame(loop);

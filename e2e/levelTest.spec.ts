@@ -71,3 +71,20 @@ test('voice level test: sections of the voice course, each take in the real exer
   expect(new Set(seen).size).toBe(seen.length);
   expect(seen.length).toBeGreaterThanOrEqual(5);
 });
+
+// Never lose progress: the voice test left half-way continues at the same section.
+test('voice level test continues where it was left', async ({ page }) => {
+  await page.goto('/?sim=1#/vocal');
+  await page.locator('[data-voice-probe]').click();
+  await page.locator('[data-test-start]').click();
+  const probe = page.locator('[data-test-strand]');
+  await expect(probe).toHaveAttribute('data-test-strand', 'v-pitch');
+  await page.locator('.vlt-skip').click();
+  await page.locator('.vlt-skip').click();
+  const third = await probe.getAttribute('data-test-strand');
+  await page.reload();
+  await page.locator('[data-voice-probe]').click();
+  await expect(page.locator('[data-test-resume]')).toContainText('3');
+  await page.locator('[data-test-resume]').click();
+  await expect(probe).toHaveAttribute('data-test-strand', third!);
+});

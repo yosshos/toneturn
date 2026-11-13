@@ -2,7 +2,7 @@
 // During a question they show only an aid (key map / target / lookup) when one is on; after the answer
 // they show what sounded. Rhythm exercises do not use these views.
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { NoteView } from '../engine/aids';
 import { aidFor, contentNotes, guitarPosition, guitarPositions, spellMidi } from '../engine/aids';
 import type { Question } from '../engine/lesson';
@@ -96,14 +96,42 @@ function useSvg(draw: (VF: VF, el: HTMLDivElement) => void | number[], deps: unk
   return { ref, failed, xs };
 }
 
-/** The now-cue on a staff / tab line: a soft column behind the note that is due (index into the drawn notes). */
+export { glidePos, nowX };
 function NowColumn({ xs, now }: { xs: number[]; now?: number }) {
-  if (now === undefined || now < 0 || xs[now] === undefined) return null;
-  return <span className="staff-now" style={{ left: `${xs[now] * 100}%` }} aria-hidden="true" />;
+  const x = now === undefined ? null : nowX(xs, now);
+  return x === null ? null : <Playhead x={x} />;
 }
+/**
+ * The playhead at a share `x` of the drawn staff. Placed against the SVG's own box, not the wrapper: the staff is often
+ * narrower than its row (wide screens), and a share of the row put the line far from the notes (owner 2026-11-13).
+ */
+export function Playhead({ x }: { x: number }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    const wrap = el?.parentElement;
+    const svg = wrap?.querySelector('svg');
+    if (!el || !wrap || !svg) return;
+    const a = wrap.getBoundingClientRect();
+    const b = svg.getBoundingClientRect();
+    if (a.width > 0 && b.width > 0) el.style.left = `${b.left - a.left + x * b.width}px`;
+  });
+  return <span ref={ref} className="staff-now" style={{ left: `${x * 100}%` }} aria-hidden="true" />;
+}
+/** A drawn item's notehead centre (rests and tab numbers: the middle of the glyph). */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const headX = (x: any): number => {
+  try {
+    if (typeof x.getNoteHeadBeginX === 'function' && typeof x.getNoteHeadEndX === 'function') return (x.getNoteHeadBeginX() + x.getNoteHeadEndX()) / 2;
+  } catch {
+    /* not formatted */
+  }
+  return x.getAbsoluteX() + (typeof x.getWidth === 'function' ? x.getWidth() / 2 : 6);
+};
 
 /** Per-note result colours on the staff (after an answer / a take). */
 import type { NoteMark } from '../engine/noteMarks';
+import { glidePos, nowX } from '../engine/playhead';
 export type { NoteMark };
 const MARK_RG: Record<Exclude<NoteMark, undefined>, string> = { ok: '#1f8f67', timing: '#b8861b', wrong: '#d43c2c', missed: '#d43c2c' };
 /** Colour-blind friendly marks (Settings → Display): blue for right, orange for wrong (symbols stay). */
@@ -170,7 +198,7 @@ export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs, 
       voice.draw(ctx, stave);
       beams.forEach((bm) => bm.setContext(ctx).draw());
       if (!chord && ties) ties.forEach((t, i) => t && sn[i + 1] && new VF.StaveTie({ first_note: sn[i], last_note: sn[i + 1], first_indices: [0], last_indices: [0] }).setContext(ctx).draw());
-      return sn.map((x) => (x.getAbsoluteX() + 6) / width);
+      return [...sn.map((x) => headX(x) / width), stave.getNoteEndX() / width];
     },
     [notes.join(','), chord, keySpec(keyPc), (labels ?? []).join(','), clef, (durs ?? []).join(','), (marks ?? []).join(','), sig, (bars ?? []).map((b) => `${b.len}${b.sig ?? ''}`).join(','), (ties ?? []).join(',')],
   );
@@ -264,7 +292,7 @@ export function TabLine({ cols, marks, strings = 6, bars, at, now }: { /** The d
       } else voice.addTickables(tn);
       new VF.Formatter().joinVoices([voice]).format([voice], width - 60);
       voice.draw(ctx, stave);
-      return tn.map((x) => (x.getAbsoluteX() + 6) / width);
+      return [...tn.map((x) => headX(x) / width), stave.getNoteEndX() / width];
     },
     [JSON.stringify(cols), (marks ?? []).join(','), strings, JSON.stringify(bars ?? null), (at ?? []).join(',')],
   );

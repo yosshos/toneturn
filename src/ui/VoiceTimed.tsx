@@ -104,6 +104,12 @@ export function TimedSession({ t, settings, range, level, items, onExit, onProgr
     if (test?.autoStart && item && lvDef && (calDone || !needsTimingOf(item))) void run();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  useEffect(() => {
+    if (!test || phase !== 'result' || !take || take.grade.unclear || !lvDef) return;
+    const id = window.setTimeout(() => test.onTake(take.grade.score, lvDef.pass), take.grade.score >= lvDef.pass ? 1800 : 2800);
+    return () => window.clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, take]);
 
   // The song plan in the singer's range (tempo of the item, or slower in a loop).
   const { plan, span } = useMemo(() => (item?.song?.mine ? (mine ? { plan: mine.plan, span: { from: 0, to: mine.plan.bars - 1 } } : { plan: null, span: null }) : item ? songSpan(item, range, loop) : { plan: null, span: null }), [item, range, loop, mine]);

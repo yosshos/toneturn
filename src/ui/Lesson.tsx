@@ -213,6 +213,12 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
     if (!settings.midiInput && !settings.computerKeys) return;
     return midi.onNote((m, on) => {
       const view = ctrl.getView();
+      // 0.85: in a rhythm read a key taps the beat (as Space does) — any key, held notes release like the pad.
+      if (view.stage === 'question' && view.question.kind === 'rhythm-read' && !view.question.lanes) {
+        if (on) ctrl.tapBeat(performance.now());
+        else ctrl.tapRelease(performance.now());
+        return;
+      }
       if (!on || view.stage !== 'question' || view.phase !== 'listening') return;
       const a = answerFromMidi(view.question, m);
       if (a !== null) ctrl.answer(a);

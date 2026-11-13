@@ -527,7 +527,7 @@ function GuitarTabDrill({ t, settings, ctl, onProgress }: { t: Strings; settings
         ))}
       </div>
       <div className="sight-score">
-        <NotesView midis={targets} keyPc={pc(sightKeyName(item, targets[0]))} settings={{ ...settings, noteViews: views }} durs={item.durs} now={now.now} />
+        <NotesView midis={targets} keyPc={pc(sightKeyName(item, targets[0]))} settings={{ ...settings, noteViews: views }} durs={item.durs} now={now.glide} />
         <div className="pulse-wrap">
           <PulseNotes clock={clock} labels={null} count={targets.length} />
           <small className="field-hint">♩ = {item.bpm ?? 72}</small>
