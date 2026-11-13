@@ -95,6 +95,15 @@ export function TakeShell<I>({ cfg, lang, settings, saved, onSave, onExit, onRes
   const idx = run ? (phase === 'review' || phase === 'over' ? run.takes.length - 1 : run.takes.length) : 0;
   const item: I | null = run ? cfg.item(run, Math.max(0, idx)) : null;
 
+  // Owner 2026-11-13: "Play again" starts the first round at once (no second Start press).
+  const autoFirst = useRef(false);
+  useEffect(() => {
+    if (!autoFirst.current || phase !== 'ready') return;
+    autoFirst.current = false;
+    const id = window.setTimeout(() => cfg.hear ? void hear() : void take(), 60);
+    return () => window.clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, run]);
   const begin = (resume: boolean) => {
     stop();
     const d = tierDef(cfg.game, tier);
@@ -282,7 +291,7 @@ export function TakeShell<I>({ cfg, lang, settings, saved, onSave, onExit, onRes
             {run?.takes.map((x) => `${x}%`).join(' · ')}
           </p>
           <div className="g2-row">
-            <button className="btn primary" onClick={() => begin(false)}>
+            <button className="btn primary" onClick={() => ((autoFirst.current = true), begin(false))}>
               {tx(TX.playAgain, lang)}
             </button>
             <button className="btn ghost" onClick={back}>

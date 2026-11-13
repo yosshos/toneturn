@@ -107,6 +107,7 @@ export function LickRun({ lang, settings, l, inst, queue, items, onTake, onEnd, 
   const [bpm, setBpm] = useState(() => (drill ? stateOf(drill).goalBpm : 80));
   const [res, setRes] = useState<{ m: TakeMetrics; lad: LadderResult } | null>(null);
   const [take, setTake] = useState(0);
+  const [again, setAgain] = useState(false);
   const [beat, setBeat] = useState(-1);
   const count = useRef({ takes: 0, clean: 0 });
   const reviews = useRef<{ lick: string; pass: boolean }[]>([]);
@@ -118,6 +119,7 @@ export function LickRun({ lang, settings, l, inst, queue, items, onTake, onEnd, 
     if (j >= queue.length) return onEnd(count.current.takes, count.current.clean, reviews.current);
     setI(j);
     setBpm(stateOf(queue[j]).goalBpm);
+    setAgain(false);
     setTake((t) => t + 1);
   };
   const done = (m: TakeMetrics, _p: PlayedNote[]) => {
@@ -139,11 +141,11 @@ export function LickRun({ lang, settings, l, inst, queue, items, onTake, onEnd, 
       </p>
       <DrillScore drill={drill} ds={ds} result={res?.m} beat={res ? -1 : beat} lang={lang} />
       {res && <MarkLegend lang={lang} />}
-      {!res && <DrillTake key={`${drill.itemId}:${take}`} drill={drill} bpm={bpm} lang={lang} cal={cal} onDone={(m, p) => (setBeat(-1), done(m, p))} onBeat={setBeat} drumsOk={settings.headphones} />}
+      {!res && <DrillTake key={`${drill.itemId}:${take}`} autoStart={again} drill={drill} bpm={bpm} lang={lang} cal={cal} onDone={(m, p) => (setBeat(-1), done(m, p))} onBeat={setBeat} drumsOk={settings.headphones} />}
       {res && (
         <>
           {!review && <p className="drill-ladder">{res.lad.message[lang]}</p>}
-          <TakeResult m={res.m} lang={lang} onAgain={() => (setRes(null), setTake((t) => t + 1))} onSlower={() => (setRes(null), setBpm((b) => Math.max(40, Math.round(b * 0.9))), setTake((t) => t + 1))} onNext={() => go(i + 1)} />
+          <TakeResult m={res.m} lang={lang} onAgain={() => (setRes(null), setAgain(true), setTake((t) => t + 1))} onSlower={() => (setRes(null), setAgain(true), setBpm((b) => Math.max(40, Math.round(b * 0.9))), setTake((t) => t + 1))} onNext={() => go(i + 1)} />
         </>
       )}
     </div>

@@ -699,7 +699,7 @@ function TranscribeMine({ lang, settings, course, o, session, onSession, onFinis
         </button>
       </div>
       {step !== 'back' && step !== 'write' && <Speeds speed={speed} lang={lang} onSpeed={(s) => (stop(), onSession({ ...session, speed: s }))} />}
-      {step === 'back' && <DrillTake key={`${phrase.id}:${take}`} drill={drill} bpm={phrase.bpm} lang={lang} cal={calOf(settings)} drumsOk={settings.headphones} onDone={(_m, played) => done(played)} />}
+      {step === 'back' && <DrillTake key={`${phrase.id}:${take}`} autoStart drill={drill} bpm={phrase.bpm} lang={lang} cal={calOf(settings)} drumsOk={settings.headphones} onDone={(_m, played) => done(played)} />}
       {step === 'result' && res && (
         <section className={`ms-result v-${res.verdict}`} data-ms-verdict={res.verdict} aria-live="polite">
           <div className="ms-score">{Math.round(res.score * 100)}%</div>

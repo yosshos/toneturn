@@ -133,6 +133,7 @@ function PhraseCoach({ lang, settings, level, items, onSettings, onTake, onPhras
   const [revealed, setRevealed] = useState(false);
   const [play, setPlay] = useState<PhraseResult | null>(null);
   const [take, setTake] = useState(0);
+  const [againTake, setAgainTake] = useState(false);
   const [written, setWritten] = useState<number[]>([]);
   const [grade, setGrade] = useState<ReturnType<typeof gradeDegrees> | null>(null);
   const [saved, setSaved] = useState(false);
@@ -196,6 +197,7 @@ function PhraseCoach({ lang, settings, level, items, onSettings, onTake, onPhras
     setGrade(null);
     setRevealed(false);
     setSaved(false);
+    setAgainTake(false);
     setTake((t) => t + 1);
   };
   const marks: NoteMark[] | undefined = play ? play.notes.map((n) => (n.verdict === 'ok' ? 'ok' : n.verdict === 'missing' ? 'missed' : n.verdict === 'pitch' ? 'wrong' : 'timing')) : undefined;
@@ -278,6 +280,7 @@ function PhraseCoach({ lang, settings, level, items, onSettings, onTake, onPhras
           {!play && (
             <DrillTake
               key={`${phrase.id}:${take}`}
+              autoStart={againTake}
               drill={drill}
               bpm={bpm}
               lang={lang}
@@ -301,7 +304,7 @@ function PhraseCoach({ lang, settings, level, items, onSettings, onTake, onPhras
               </p>
               {play.octave !== 0 && <small className="field-hint">{tx.octave}</small>}
               <div className="drill-actions">
-                <button className="btn ghost" onClick={() => (setPlay(null), setTake((t) => t + 1))}>
+                <button className="btn ghost" onClick={() => (setPlay(null), setAgainTake(true), setTake((t) => t + 1))}>
                   {tx.again}
                 </button>
                 <button className="btn ghost" onClick={() => (setPlay(null), setStep(0))}>

@@ -420,7 +420,7 @@ function usePrep(drill: Drill): { left: number; skip: () => void } {
 }
 
 /** Play a drill once: count-in, metronome, record; resolves with the analysis. */
-export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDrums, kit }: { drill: Drill; bpm: number; lang: Lang; cal: DrillCalibration; onDone: (m: TakeMetrics, played: PlayedNote[]) => void; /** Beat index of the take (after the count-in; −1 when idle) — for a score cursor. */ onBeat?: (beat: number) => void; /** B5: headphones / line-in confirmed (undefined = never asked). An audio-routing choice only — it never passes anything. */ drumsOk?: boolean; onDrums?: (headphones: boolean) => void; /** Drums: the player's kit (map, velocity bands, practice-pad mode). */ kit?: KitProfile }) {
+export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDrums, kit, autoStart = false }: { /** Owner 2026-11-13: "Again" starts the take at once (count-in), no second Play press. */ autoStart?: boolean; drill: Drill; bpm: number; lang: Lang; cal: DrillCalibration; onDone: (m: TakeMetrics, played: PlayedNote[]) => void; /** Beat index of the take (after the count-in; −1 when idle) — for a score cursor. */ onBeat?: (beat: number) => void; /** B5: headphones / line-in confirmed (undefined = never asked). An audio-routing choice only — it never passes anything. */ drumsOk?: boolean; onDrums?: (headphones: boolean) => void; /** Drums: the player's kit (map, velocity bands, practice-pad mode). */ kit?: KitProfile }) {
   const tx = TX[lang];
   const [phase, setPhase] = useState<'ready' | 'count' | 'play'>('ready');
   const [beat, setBeat] = useState(-1);
@@ -443,6 +443,16 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
   // A kit-only drum drill without a kit is blocked: no headphones question for a band it can't play under.
   const askDrums = !!(drill.drums || drill.band) && !useMidi && !drumBlocked && drumsOk === undefined && !!onDrums;
   const prep = usePrep(drill);
+  const startRef = useRef<(() => Promise<void>) | null>(null);
+  const autoGo = autoStart && !drill.untimed && !askDrums && !drumBlocked && !pianoBlocked;
+  useEffect(() => {
+    if (!autoGo) return;
+    prep.skip();
+    const id = window.setTimeout(() => void startRef.current?.(), 0);
+    return () => window.clearTimeout(id);
+    // once, on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   if (drill.untimed) return <UntimedTake drill={drill} lang={lang} cal={cal} onDone={onDone} />;
   const start = async () => {
     await piano.unlock();
@@ -650,6 +660,7 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
     }
     done(m, heardNotes);
   };
+  startRef.current = start;
   return (
     <div className="drill-take">
       {!useMidi && !isGuitarDrill(drill) && !drum && <p className="field-hint">{tx.midiOff}</p>}

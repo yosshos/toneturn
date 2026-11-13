@@ -141,6 +141,15 @@ export function BhInTime({ lang, settings, saved, onSave, onExit, onResult, best
   const levelOf = (t: DynName): BhLevel => (tierDef('bhtime', t)?.levels?.[0] ?? 1) as BhLevel;
   const bpmOf = (t: DynName) => Number(tierDef('bhtime', t)?.params?.bpm ?? 90);
 
+  // Owner 2026-11-13: "Play again" starts the first round at once (no second Start press).
+  const autoFirst = useRef(false);
+  useEffect(() => {
+    if (!autoFirst.current || phase !== 'ready') return;
+    autoFirst.current = false;
+    const id = window.setTimeout(() => void playTake(), 60);
+    return () => window.clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, run]);
   const begin = (resume: boolean) => {
     stop();
     const r: BhSave =
@@ -347,7 +356,7 @@ export function BhInTime({ lang, settings, saved, onSave, onExit, onResult, best
           {final.record ? <p className="g2-best">{tx.newBest}</p> : best ? <p className="g2-dim">{tx.best}: {best}</p> : null}
           {run?.input === 'touch' && <p className="g2-dim">{tx.practice}</p>}
           <div className="g2-row">
-            <button className="btn primary" onClick={() => begin(false)}>
+            <button className="btn primary" onClick={() => ((autoFirst.current = true), begin(false))}>
               {tx.again}
             </button>
             <button className="btn ghost" onClick={back}>

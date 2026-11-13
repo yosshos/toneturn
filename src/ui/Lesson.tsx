@@ -54,6 +54,8 @@ import { makeAdapters, piano, SIMULATED, store } from './services';
 interface Props {
   /** The brief before a topic exercise (owner, 2026-11-07): short name, what it's about, what you'll do, a refresher, Play. */
   brief?: { kicker: string; title: string; about: string };
+  /** Again from the recap: the brief was read, start at once. */
+  briefSeen?: boolean;
   /** From the brief: take this topic off my path / keep a ✓ step on it. */
   onHideTopic?: () => void;
   onKeepStep?: () => void;
@@ -90,7 +92,7 @@ interface Props {
 
 const targetMidiOf = (q: Question) => (q.kind === 'degree' || q.kind === 'sing' || q.kind === 'note-name' ? q.targetMidi : q.kind === 'sing-seq' || q.kind === 'sing-run' ? q.midis[0] : 60);
 
-export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit, onAgain, onNext, onProgress, lessonDef, adapt, resume, onStep, onDone, nextLabel, secondary, ratings, playerName, onSettings, brief, onHideTopic, onKeepStep, recent }: Props) {
+export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit, onAgain, onNext, onProgress, lessonDef, adapt, resume, onStep, onDone, nextLabel, secondary, ratings, playerName, onSettings, brief, briefSeen, onHideTopic, onKeepStep, recent }: Props) {
   const [phones, setPhones] = useState(!!settings.headphones);
   const ctrlRef = useRef<LessonController | null>(null);
   const [change, setChange] = useState<{ change: RatingChange; peakBefore: number | null } | null>(null);
@@ -194,7 +196,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
   }, [ctrl, settings.inputLang, settings.outputLang, settings.naming]);
 
   useEffect(() => {
-    if (autoStart && !(brief && !resume)) void ctrl.start();
+    if (autoStart && !(brief && !resume && !briefSeen)) void ctrl.start();
     return () => ctrl.dispose();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ctrl, autoStart]);
@@ -387,7 +389,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
             {t.exit}
           </button>
         </section>
-      ) : v.stage === 'starting' && brief ? (
+      ) : v.stage === 'starting' && brief && !briefSeen ? (
         <ExerciseBrief brief={brief} lang={lang} how={howText(lesson.questions[0]?.kind, lang)} refresher={lesson.questions[0] ? refresherFor(lesson.questions[0], lesson.id) : null} onRefresher={openRefresher} onPlay={() => void ctrl.start()} voice={v.mode === 'voice'} onHide={onHideTopic} onKeep={onKeepStep} />
       ) : v.stage === 'starting' ? (
         <section className="paused-card">

@@ -116,6 +116,15 @@ export function PolyLock({ lang, settings, saved, onSave, onExit, onResult, best
     return () => unsub?.();
   }, [phase, tap]);
 
+  // Owner 2026-11-13: "Play again" starts the first round at once (no second Start press).
+  const autoFirst = useRef(false);
+  useEffect(() => {
+    if (!autoFirst.current || phase !== 'ready') return;
+    autoFirst.current = false;
+    const id = window.setTimeout(() => void playRound(), 60);
+    return () => window.clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, run]);
   const begin = (resume: boolean) => {
     stop();
     const r = resume && resumable ? resumable : newPolySave(levelOf(tier), tierInfo ? tier : undefined);
@@ -311,7 +320,7 @@ export function PolyLock({ lang, settings, saved, onSave, onExit, onResult, best
             {tx(TX.left, lang)} {Math.round(final.detail.hitsL * 100)}% · {tx(TX.right, lang)} {Math.round(final.detail.hitsR * 100)}% · {input}
           </p>
           <div className="g2-row">
-            <button className="btn primary" onClick={() => begin(false)}>
+            <button className="btn primary" onClick={() => ((autoFirst.current = true), begin(false))}>
               {tx(TX.again, lang)}
             </button>
             <button className="btn ghost" onClick={back}>

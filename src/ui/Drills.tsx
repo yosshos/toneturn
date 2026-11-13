@@ -20,6 +20,8 @@ import { customKeys, customToDrill } from '../engine/drills/custom';
 import { DrillCreator } from './DrillCreator';
 import { currentLevel, families as familiesOf, keyHeat, levelDone, levelStars, LEVEL_MAX_STARS, levelKeys, shownFamilies, specDrills, todayDrills, levelDrills, withBassTuning, itemTargetBpm } from '../engine/drills/plan';
 import { generate, KEYS_EAR_PROBE } from '../engine/drills/generate';
+import { advance, mergePlaces, pianoStrands, recordTake, startState, strandPlaces, testStart, type StrandState } from '../engine/drills/levelTest';
+import { micUnmeasurable } from '../engine/drills/analyze';
 import { GUITAR_PROBES, type GuitarFamilyDef, type GuitarLevelDef } from '../engine/drills/guitar';
 import { GUITAR_PROBE_STEPS, guitarProbesFor, placeGuitar, probeRuns, type GuitarProbe } from '../engine/drills/guitarProbes';
 import { guitarAddOnsOf } from '../engine/drills/guitarMeta';
@@ -67,7 +69,7 @@ const T = {
     allKeys: 'Run through all keys', keyDone: 'All keys done!', backToLevel: 'Back',
     instrument: 'Instrument', insts: { piano: 'Piano', guitar: 'Guitar', bass: 'Bass', drums: 'Drums' } as Record<string, string>, gStyle: 'Style', gView: 'Show', gViews: { tab: 'Tab', staff: 'Notation', both: 'Both' } as Record<string, string>, picking: 'Show picking (↓ ↑, p i m a) instead of fingers',
     gStyles: { all: 'All', rock: 'Rock', blues: 'Blues', metal: 'Metal', pop: 'Pop', funk: 'Funk', country: 'Country', jazz: 'Jazz', classical: 'Classical', fingerstyle: 'Fingerstyle', flamenco: 'Flamenco', reggae: 'Reggae', latin: 'Latin' } as Record<string, string>,
-    test: 'Find my technique level', testIntro: 'A few short takes: each clean one goes faster, until it stops being clean. This sets where every drill family starts and at what tempo.', testDone: 'Your technique level is set', skip: 'Skip', bestTempo: 'Clean up to',
+    test: 'Find my playing level', testIntro: 'Short takes, one per step: a clean take gets one faster try, a miss simply moves on to the next step. This sets where every drill family starts and at what tempo.', testDone: 'Your technique level is set', skip: 'Skip', bestTempo: 'Clean up to',
   },
   he: {
     title: 'טכניקה', today: 'היום', start: 'להתחיל', families: 'תרגילים', mine: 'התרגילים שלי', create: 'ליצור תרגיל', settings: 'הגדרות תרגילים', calib: 'כיול', level: 'רמה', keys: 'סולמות', done: 'הושלם',
@@ -82,7 +84,7 @@ const T = {
     allKeys: 'לעבור בכל הסולמות', keyDone: 'כל הסולמות הושלמו!', backToLevel: 'חזרה',
     instrument: 'כלי', insts: { piano: 'פסנתר', guitar: 'גיטרה', bass: 'בס', drums: 'תופים' } as Record<string, string>, gStyle: 'סגנון', gView: 'תצוגה', gViews: { tab: 'טאבים', staff: 'תווים', both: 'שניהם' } as Record<string, string>, picking: 'להציג פריטה (↓ ↑, p i m a) במקום אצבעות',
     gStyles: { all: 'הכול', rock: 'רוק', blues: 'בלוז', metal: 'מטאל', pop: 'פופ', funk: 'פאנק', country: 'קאנטרי', jazz: 'ג׳אז', classical: 'קלאסי', fingerstyle: 'פינגרסטייל', flamenco: 'פלמנקו', reggae: 'רגאיי', latin: 'לטיני' } as Record<string, string>,
-    test: 'למצוא את רמת הטכניקה שלי', testIntro: 'כמה נגינות קצרות: כל נגינה נקייה מהירה יותר, עד שהיא כבר לא נקייה. כך נקבע מאיפה כל משפחת תרגילים מתחילה ובאיזה טמפו.', testDone: 'רמת הטכניקה שלך נקבעה', skip: 'דילוג', bestTempo: 'נקי עד',
+    test: 'בדיקת רמה בנגינה', testIntro: 'נגינות קצרות, אחת לכל שלב: נגינה נקייה מקבלת עוד ניסיון אחד מהיר יותר, וטעות פשוט עוברת לשלב הבא. כך נקבע מאיפה כל משפחת תרגילים מתחילה ובאיזה טמפו.', testDone: 'רמת הטכניקה שלך נקבעה', skip: 'דילוג', bestTempo: 'נקי עד',
   },
 };
 
@@ -798,6 +800,8 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
   const session = useRef(Date.now().toString(36));
   const count = useRef({ takes: 0, clean: 0 });
   const [take, setTake] = useState(0);
+  /** The next take is a repeat (Again / Slower / the next tempo): it starts at once. */
+  const [again, setAgain] = useState(false);
   const [writing, setWriting] = useState<{ m: TakeMetrics; p: PlayedNote[] } | null>(null);
   if (!drill)
     return (
@@ -813,6 +817,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
     if (j >= queue.length) return onEnd(count.current.takes, count.current.clean);
     setI(j);
     setBpm(stateOf(queue[j]).goalBpm);
+    setAgain(false);
     setTake((t) => t + 1);
   };
   const done = (m: TakeMetrics, played: PlayedNote[]) => {
@@ -835,7 +840,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
       const j = lad.next.action === 'next-key' ? i + 1 : queue.findIndex((d, k) => k > i && d.spec.kind !== drill.spec.kind);
       window.setTimeout(() => go(j < 0 ? queue.length : j), 1400);
     } else if (lad.next.action === 'raise' && ds.continuous === 'raise-tempo') {
-      window.setTimeout(() => (setRes(null), setBpm(lad.next.bpm), setTake((t) => t + 1)), 1400);
+      window.setTimeout(() => (setRes(null), setBpm(lad.next.bpm), setAgain(true), setTake((t) => t + 1)), 1400);
     } else setBpm(lad.next.bpm);
   };
   const std = standardOfSpec(drill.spec);
@@ -849,7 +854,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
       {drill.form && <RoadMapStrip drill={drill} beat={res ? -1 : beat} bpm={bpm} lang={lang} />}
       <DrillScore drill={drill} ds={ds} result={res?.m} beat={res ? -1 : beat} lang={lang} />
       {res && <MarkLegend lang={lang} />}
-      {!res && !writing && <DrillTake key={`${drill.itemId}:${take}`} drill={drill} bpm={bpm} lang={lang} cal={cal} onDone={(m, p) => (setBeat(-1), drill.write || drill.drumWrite ? setWriting({ m, p }) : done(m, p))} onBeat={setBeat} drumsOk={headphones} onDrums={onHeadphones} kit={kit} />}
+      {!res && !writing && <DrillTake key={`${drill.itemId}:${take}`} autoStart={again} drill={drill} bpm={bpm} lang={lang} cal={cal} onDone={(m, p) => (setBeat(-1), drill.write || drill.drumWrite ? setWriting({ m, p }) : done(m, p))} onBeat={setBeat} drumsOk={headphones} onDrums={onHeadphones} kit={kit} />}
       {/* Ear L7: write the line after playing it; the written grade joins the take's verdict. */}
       {!res && writing && !drill.drumWrite && <TranscribeWrite drill={drill} lang={lang} onDone={(g) => (setWriting(null), done(withWritten(writing.m, g), writing.p))} />}
       {!res && writing && drill.drumWrite && <DrumWrite drill={drill} lang={lang} onDone={(g) => (setWriting(null), done(withDrumWrite(writing.m, g, drill), writing.p))} />}
@@ -864,8 +869,8 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
           <TakeResult
             m={res.m}
             lang={lang}
-            onAgain={() => (setRes(null), setTake((t) => t + 1))}
-            onSlower={() => (setRes(null), setBpm((b) => Math.max(30, Math.round(b * 0.9))), setTake((t) => t + 1))}
+            onAgain={() => (setRes(null), setAgain(true), setTake((t) => t + 1))}
+            onSlower={() => (setRes(null), setAgain(true), setBpm((b) => Math.max(30, Math.round(b * 0.9))), setTake((t) => t + 1))}
             onNext={() => go(i + 1)}
           />
         </>
@@ -1053,7 +1058,171 @@ function bassMeasure(slot: NonNullable<ReturnType<typeof probeSlot>>, drill: Dri
 }
 
 /** Technique section of Find my level (spec AI §13): a tempo staircase on a few probe drills → start level per family. */
-function TechLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, onOctave, onBassTuning, kit }: { lang: Lang; ds: DrillSettings; cal: DrillCalibration; items: Record<string, ItemState>; onTake: DrillsProps['onTake']; onDone: (start: Partial<Record<FamilyId, number>> | null) => void; midiOctave: number; onOctave: (o: number) => void; onBassTuning?: (t: string) => void; kit?: Settings['drumKit'] }) {
+type LevelTestProps = Parameters<typeof InstrumentLevelTest>[0];
+/** The playing level test: piano runs the section test (SPEC-LEVEL-TEST); the other instruments their probes. */
+function TechLevelTest(p: LevelTestProps) {
+  return (p.ds.instrument ?? 'piano') === 'piano' ? <PianoLevelTest {...p} /> : <InstrumentLevelTest {...p} />;
+}
+
+const PIANO_TEST_TX = {
+  en: {
+    intro: 'About 8 minutes, all on the keys: hands, chords, comping, reading and your ear. One take per step at its own tempo — a clean take jumps ahead, a miss just moves on. Nobody is expected to play everything.',
+    start: 'Start',
+    skip: 'Skip the test',
+    tooHard: 'Too hard — next',
+    section: 'Section',
+    clean: 'Clean — moving up',
+    almost: 'Almost — one more try',
+    not: 'Not yet — moving on',
+    done: 'Your level is set',
+    sumHead: 'Where you start',
+    next: 'Done',
+  },
+  he: {
+    intro: 'בערך 8 דקות, הכול על הקלידים: ידיים, אקורדים, ליווי, קריאה ואוזן. נגינה אחת לכל שלב, בטמפו שלו — נגינה נקייה מקפיצה קדימה, טעות פשוט ממשיכה הלאה. אף אחד לא אמור לנגן הכול.',
+    start: 'להתחיל',
+    skip: 'לדלג על המבחן',
+    tooHard: 'קשה מדי — הלאה',
+    section: 'חלק',
+    clean: 'נקי — עולים שלב',
+    almost: 'כמעט — עוד ניסיון אחד',
+    not: 'עוד לא — ממשיכים',
+    done: 'הרמה שלך נקבעה',
+    sumHead: 'מאיפה מתחילים',
+    next: 'סיום',
+  },
+};
+
+/** The piano level test: sections of real levels, adaptive, one take per step (docs/SPEC-LEVEL-TEST.md). */
+function PianoLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, onOctave }: LevelTestProps) {
+  const tx = PIANO_TEST_TX[lang];
+  const cat = useMemo(() => familiesOf('piano'), []);
+  // A step a microphone can't measure (loudness, release, pedal) is left out without MIDI — it could never pass.
+  const strands = useMemo(() => {
+    const byMic = !midi.devices.length;
+    return pianoStrands(ds.emphasis)
+      .map((x) => ({
+        ...x,
+        rungs: x.rungs
+          .map((r) => {
+            const lv = cat.flatMap((f) => f.levels).find((l) => l.id === r.level);
+            if (!lv) return null;
+            const key = Array.isArray(lv.keys) && !lv.keys.includes(r.key) ? lv.keys[0] : r.key;
+            const drill = generate({ ...lv.specs[0], key });
+            if (byMic && micUnmeasurable(drill).length) return null;
+            return { ...r, drill, title: lv.title };
+          })
+          .filter((x): x is NonNullable<typeof x> => !!x),
+      }))
+      .filter((x) => x.rungs.length > 0);
+  }, [cat, ds.emphasis]);
+  const [started, setStarted] = useState(false);
+  const [si, setSi] = useState(0);
+  const [st, setSt] = useState<StrandState>(() => startState(strands[0]?.rungs.length ?? 0));
+  const [last, setLast] = useState<TakeMetrics | null>(null);
+  const [take, setTake] = useState(0);
+  const [auto, setAuto] = useState(false);
+  const placed = useRef<Partial<Record<FamilyId, number>>[]>([]);
+  const [summary, setSummary] = useState<Partial<Record<FamilyId, number>> | null>(null);
+  const session = useRef(`t${Date.now().toString(36)}`);
+  const n = useRef(0);
+  const timer = useRef(0);
+  useEffect(() => () => window.clearTimeout(timer.current), []);
+  const strand = strands[si];
+  const rung = strand && st.at >= 0 ? strand.rungs[st.at] : null;
+  const finishStrand = (s: StrandState) => {
+    placed.current.push(strandPlaces(strand, s));
+    const k = si + 1;
+    if (k >= strands.length) return setSummary(testStart('piano', mergePlaces(...placed.current)));
+    setSi(k);
+    setSt(startState(strands[k].rungs.length));
+    setLast(null);
+    setAuto(false);
+    setTake((t) => t + 1);
+  };
+  const step = (v: 'clean' | 'almost' | 'not') => {
+    window.clearTimeout(timer.current);
+    const s = advance(recordTake(st, v), strand.rungs.length);
+    if (s.at < 0) return finishStrand(s);
+    // The same step again ("almost") starts at once; a new step shows its music first.
+    setAuto(s.at === st.at);
+    setSt(s);
+    setLast(null);
+    setTake((t) => t + 1);
+  };
+  const done = (m: TakeMetrics) => {
+    if (!rung) return;
+    const d = rung.drill;
+    const stt = items[d.itemId] ?? newItem(d);
+    const lad = applyTake(stt, m, d.startBpm, new Date().toISOString(), ds, { targetBpm: itemTargetBpm(d) });
+    onTake(lad.state, drillEvents(d, m, new Date().toISOString(), session.current, n.current++), drillXp(m), takeInfo(d, m));
+    setLast(m);
+    // Show the marks for a moment, then move on by itself (owner: a mistake should simply move the test on).
+    timer.current = window.setTimeout(() => step(m.verdict), m.verdict === 'clean' ? 1600 : 2600);
+  };
+  if (!started)
+    return (
+      <div className="drill-opts card" data-level-test="piano">
+        <p>{tx.intro}</p>
+        <ol className="lt-sections">
+          {strands.map((x) => (
+            <li key={x.id}>{x.title[lang]}</li>
+          ))}
+        </ol>
+        <div className="drill-actions">
+          <button className="btn primary" onClick={() => setStarted(true)} data-test-start="1">
+            ▶ {tx.start}
+          </button>
+          <button className="btn ghost" onClick={() => onDone(null)}>
+            {tx.skip}
+          </button>
+        </div>
+      </div>
+    );
+  if (summary)
+    return (
+      <div className="drill-opts card" data-level-test-done="1">
+        <h2>{tx.done}</h2>
+        <p className="field-hint">{tx.sumHead}</p>
+        <ul className="lt-summary">
+          {cat
+            .filter((f) => (summary[f.id] ?? 1) > 1)
+            .map((f) => (
+              <li key={f.id}>
+                {f.title[lang]} · <b dir="ltr">{summary[f.id]}</b>
+              </li>
+            ))}
+        </ul>
+        <button className="btn primary" onClick={() => onDone(summary)} data-test-finish="1">
+          {tx.next}
+        </button>
+      </div>
+    );
+  if (!rung) return null;
+  const verdictLine = last ? (last.verdict === 'clean' ? tx.clean : last.verdict === 'almost' && !st.retried.includes(st.at) ? tx.almost : tx.not) : null;
+  return (
+    <div className="drill-run" data-test-probe={rung.level} data-test-strand={strand.id}>
+      <p className="drill-goal">
+        {tx.section} {si + 1}/{strands.length} · <b>{strand.title[lang]}</b> · {rung.title[lang]} · {keyName(rung.drill.spec.key, !!rung.drill.spec.minor)} · <span dir="ltr">♩ {rung.drill.startBpm}</span>
+      </p>
+      {last && (
+        <p className={`drill-why lt-verdict v-${last.verdict}`} data-lt-verdict={last.verdict}>
+          {verdictLine} · {last.why[lang]}
+        </p>
+      )}
+      {last?.octaveShift !== undefined && <OctaveFix lang={lang} shift={last.octaveShift} current={midiOctave} onFix={onOctave} />}
+      <ProbeTake key={`${strand.id}:${take}`} drill={rung.drill} ds={ds} last={last} bpm={rung.drill.startBpm} lang={lang} cal={cal} autoStart={auto} onDone={(m) => done(m)} />
+      {!last && (
+        <button className="btn ghost" onClick={() => step('not')} data-test-too-hard="1">
+          {tx.tooHard}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function InstrumentLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, onOctave, onBassTuning, kit }: { lang: Lang; ds: DrillSettings; cal: DrillCalibration; items: Record<string, ItemState>; onTake: DrillsProps['onTake']; onDone: (start: Partial<Record<FamilyId, number>> | null) => void; midiOctave: number; onOctave: (o: number) => void; onBassTuning?: (t: string) => void; kit?: Settings['drumKit'] }) {
+  if ((ds.instrument ?? 'piano') === 'piano') return <PianoLevelTest lang={lang} ds={ds} cal={cal} items={items} onTake={onTake} onDone={onDone} midiOctave={midiOctave} onOctave={onOctave} />;
   const tx = T[lang];
   const inst = ds.instrument ?? 'piano';
   // Drums (DRUMS_CURRICULUM §5): the adaptive probe — single takes, a staircase for the hands; a failed easy step
@@ -1085,6 +1254,9 @@ function TechLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, onOct
   const [tries, setTries] = useState(0);
   const [take, setTake] = useState(0);
   const [last, setLast] = useState<TakeMetrics | null>(null);
+  const [again, setAgain] = useState(false);
+  const moveOn = useRef(0);
+  useEffect(() => () => window.clearTimeout(moveOn.current), []);
   const [started, setStarted] = useState(false);
   const session = useRef(`t${Date.now().toString(36)}`);
   const n = useRef(0);
@@ -1142,11 +1314,9 @@ function TechLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, onOct
     start['k-bebop'] = cap('k-bebop', probes.some((x) => x.id === 'k-bebop') ? lvl('k-bebop') : ha - 2);
     onDone(start);
   };
-  const failAt = useRef<number | null>(null);
-  const bisected = useRef(false);
   const nextProbe = (b: Record<string, number>) => {
-    failAt.current = null;
-    bisected.current = false;
+    window.clearTimeout(moveOn.current);
+    setAgain(false);
     // Drums: hands never clean → skip the doubles and the paradiddle (harder steps of the same families).
     let q = p + 1;
     // Groove reach (funk, shuffle) only after the basic groove was clean or almost.
@@ -1190,29 +1360,16 @@ function TechLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, onOct
     setLast(m);
     const t = tries + 1;
     setTries(t);
-    // Accelerating staircase (SPEC-PLACEMENT §7): +15 %, +30 %, +60 % while clean; one bisect take after the first
-    // miss; at most 4 takes per family. A first miss at the start tempo steps down once instead.
+    // SPEC-LEVEL-TEST (owner 2026-11-13: "it insisted on one scale"): at most two takes per step — a clean take earns
+    // one faster try (+30 %), "almost" one more try at the same tempo; a miss moves the test straight on.
     const clean = m.verdict === 'clean';
     const key = pr.slot ?? pr.id;
     const b = clean ? { ...best, [key]: Math.max(best[key] ?? 0, bpm) } : best;
     if (clean) setBest(b);
-    if (t >= 4 || pr.once) return nextProbe(b);
-    const hi = clean ? null : bpm;
-    if (clean && !failAt.current) {
-      setBpm(Math.round(bpm * [1.15, 1.3, 1.6][Math.min(2, t - 1)]));
-    } else if (!clean && !b[key]) {
-      if (bpm <= 44 || failAt.current) return nextProbe(b);
-      failAt.current = bpm;
-      setBpm(Math.max(40, Math.round(bpm * 0.75)));
-    } else {
-      // Bisect once between the best clean tempo and the first miss, then stop.
-      if (hi) failAt.current = hi;
-      const lo = b[key] ?? bpm;
-      if (bisected.current) return nextProbe(b);
-      bisected.current = true;
-      setBpm(Math.round((lo + (failAt.current ?? lo * 1.15)) / 2));
-    }
-    setTake((x) => x + 1);
+    if (t >= 2 || pr.once || m.verdict === 'not') return void (moveOn.current = window.setTimeout(() => nextProbe(b), 1800));
+    if (clean) setBpm(Math.round(bpm * 1.3));
+    setAgain(true);
+    moveOn.current = window.setTimeout(() => (setLast(null), setTake((x) => x + 1)), 1600);
   };
   return (
     <div className="drill-run" data-test-probe={pr.id}>
@@ -1227,7 +1384,7 @@ function TechLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, onOct
       </p>
       {last && <p className="drill-why">{last.why[lang]}</p>}
       {last?.octaveShift !== undefined && <OctaveFix lang={lang} shift={last.octaveShift} current={midiOctave} onFix={onOctave} />}
-      <ProbeTake key={`${pr.slot ?? pr.id}:${take}`} drill={pr.drill} ds={ds} last={last} bpm={bpm} lang={lang} cal={cal} kit={kit} onDone={done} />
+      <ProbeTake key={`${pr.slot ?? pr.id}:${take}`} drill={pr.drill} ds={ds} last={last} bpm={bpm} lang={lang} cal={cal} kit={kit} autoStart={again} onDone={done} />
       <button className="btn ghost" onClick={() => nextProbe(best)}>
         {tx.skip}
       </button>
@@ -1236,13 +1393,13 @@ function TechLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, onOct
 }
 
 /** A placement probe's score and take, with the score's now-cue following the take. */
-function ProbeTake({ drill, ds, last, bpm, lang, cal, kit, onDone }: { drill: Drill; ds: DrillSettings; last: TakeMetrics | null; bpm: number; lang: Lang; cal: DrillCalibration; kit?: Settings['drumKit']; onDone: (m: TakeMetrics, played: PlayedNote[]) => void }) {
+function ProbeTake({ drill, ds, last, bpm, lang, cal, kit, onDone, autoStart = false }: { autoStart?: boolean; drill: Drill; ds: DrillSettings; last: TakeMetrics | null; bpm: number; lang: Lang; cal: DrillCalibration; kit?: Settings['drumKit']; onDone: (m: TakeMetrics, played: PlayedNote[]) => void }) {
   const [beat, setBeat] = useState(-1);
   return (
     <>
       <DrillScore drill={drill} ds={ds} result={last} beat={last ? -1 : beat} lang={lang} />
       {last && <MarkLegend lang={lang} />}
-      <DrillTake drill={drill} bpm={bpm} lang={lang} cal={cal} kit={kit} onBeat={setBeat} onDone={(m, played) => (setBeat(-1), onDone(m, played))} />
+      {!last && <DrillTake drill={drill} bpm={bpm} lang={lang} cal={cal} kit={kit} autoStart={autoStart} onBeat={setBeat} onDone={(m, played) => (setBeat(-1), onDone(m, played))} />}
     </>
   );
 }

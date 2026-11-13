@@ -82,6 +82,15 @@ export function RiffEcho({ lang, settings, saved, onSave, onExit, onResult, best
   const riff: Riff | null = run ? riffAt(run, phase === 'review' ? run.takes.length - 1 : run.takes.length) : null;
   const grouping = paramsOf(run?.tier ?? tier).grouping;
 
+  // Owner 2026-11-13: "Play again" starts the first round at once (no second Start press).
+  const autoFirst = useRef(false);
+  useEffect(() => {
+    if (!autoFirst.current || phase !== 'ready') return;
+    autoFirst.current = false;
+    const id = window.setTimeout(() => void hear(), 60);
+    return () => window.clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, run]);
   const begin = (resume: boolean) => {
     stop();
     const p = paramsOf(tier);
@@ -382,7 +391,7 @@ export function RiffEcho({ lang, settings, saved, onSave, onExit, onResult, best
             {run?.takes.map((x) => `${x}%`).join(' · ')}
           </p>
           <div className="g2-row">
-            <button className="btn primary" onClick={() => begin(false)}>
+            <button className="btn primary" onClick={() => ((autoFirst.current = true), begin(false))}>
               {tx(TX.playAgain, lang)}
             </button>
             <button className="btn ghost" onClick={back}>

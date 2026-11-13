@@ -190,7 +190,7 @@ export function GrooveOff({ lang, settings, items, signedIn, onExit, onResult }:
         <div className="dg-score">
           <DrillScore drill={g.drill} ds={ds} result={res?.m} beat={res ? -1 : beat} lang={lang} />
         </div>
-        {!res && <DrillTake key={`${play.seed}:${round}`} drill={g.drill} bpm={g.bpm} lang={lang} cal={cal} onDone={done} onBeat={setBeat} drumsOk={phones} onDrums={setPhones} kit={settings.drumKit} />}
+        {!res && <DrillTake key={`${play.seed}:${round}`} autoStart={round > 0} drill={g.drill} bpm={g.bpm} lang={lang} cal={cal} onDone={done} onBeat={setBeat} drumsOk={phones} onDrums={setPhones} kit={settings.drumKit} />}
         {res && (
           <div className={`dg-result ${res.s.ok ? 'ok' : 'bad'}`} data-dg-ok={res.s.ok ? '1' : '0'}>
             <p className="dg-line">{tx(res.s.line)}</p>

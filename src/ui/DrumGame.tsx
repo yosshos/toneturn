@@ -212,7 +212,7 @@ export function DrumGame({ game, lang, settings, onExit, onResult, best, tier: t
       <div className="dg-score">
         <DrillScore drill={r.drill} ds={ds} result={res?.m} beat={res ? -1 : beat} lang={lang} />
       </div>
-      {!res && <DrillTake key={`${r.drill.itemId}:${take}`} drill={r.drill} bpm={r.bpm} lang={lang} cal={cal} onDone={done} onBeat={setBeat} drumsOk={phones} onDrums={setPhones} kit={settings.drumKit} />}
+      {!res && <DrillTake key={`${r.drill.itemId}:${take}`} autoStart={round > 0} drill={r.drill} bpm={r.bpm} lang={lang} cal={cal} onDone={done} onBeat={setBeat} drumsOk={phones} onDrums={setPhones} kit={settings.drumKit} />}
       {res && (
         <div className={`dg-result ${res.s.ok ? 'ok' : 'bad'}`} data-dg-ok={res.s.ok ? '1' : '0'}>
           <p className="dg-line">{tx(res.s.line)}</p>

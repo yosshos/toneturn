@@ -282,7 +282,7 @@ export function App() {
   /** The running lesson's save slot (every lesson keeps its place after each answer; playtesting, 0.35.2). */
   const [dropTick, setDropTick] = useState(0);
   type Brief = { kicker: string; title: string; about: string; topic?: string; keepStep?: string };
-  const [slot, setSlot] = useState<{ key: string; title: string; seed?: number; resume?: SavedSession; brief?: Brief } | null>(null);
+  const [slot, setSlot] = useState<{ key: string; title: string; seed?: number; resume?: SavedSession; brief?: Brief; briefSeen?: boolean } | null>(null);
   const [sync, setSync] = useState<SyncState>('idle');
   // MIDI keyboard input (Settings): singing tasks capture from the keyboard.
   useEffect(() => {
@@ -667,6 +667,8 @@ export function App() {
     openFrom.current.path = false;
   };
   /** Open a generated session in its save slot: an unfinished one in the same slot continues instead. */
+  /** Owner 2026-11-13: "Again" on a recap starts the exercise at once — the brief page was already read. */
+  const againing = useRef(false);
   const openGenerated = (def: LessonDef, adapt?: (s: SessionState) => Question[] | null, consented = false, extra: { key?: string; title?: string; seed?: number; resume?: SavedSession; brief?: Brief } = {}) => {
     if (!extra.resume && cooled()) return;
     if (!consented && s.mode === 'voice' && !s.voiceConsent) {
@@ -678,7 +680,8 @@ export function App() {
     const saved = extra.resume ?? (extra.seed === undefined ? loadSession(key) : null);
     noteOrigin();
     setGenerated({ def: saved ? saved.lesson : def, adapt });
-    setSlot({ key, title: extra.title ?? saved?.title ?? '', seed: extra.seed, resume: saved ?? undefined, brief: saved ? undefined : extra.brief });
+    setSlot({ key, title: extra.title ?? saved?.title ?? '', seed: extra.seed, resume: saved ?? undefined, brief: saved ? undefined : extra.brief, briefSeen: againing.current });
+    againing.current = false;
     setLessonId(def.id);
     setLessonKey((k) => k + 1);
     setAutoStart(true);
@@ -2019,8 +2022,9 @@ export function App() {
             }
             go('home');
           }}
-          onAgain={() => (generated?.def.id === 'placement' ? openPlacement(generated.def.placementDomain ?? null, true) : generated?.def.id === 'review' ? openReview() : generated?.def.id === 'modes' ? openModes(modesAgainLevel(generated.def)) : generated?.def.id === 'wrong-notes' ? openWrongNotes(wrongLevel) : generated ? againGenerated() : openLesson(lessonId))}
+          onAgain={() => ((againing.current = true), window.setTimeout(() => (againing.current = false), 0), generated?.def.id === 'placement' ? openPlacement(generated.def.placementDomain ?? null, true) : generated?.def.id === 'review' ? openReview() : generated?.def.id === 'modes' ? openModes(modesAgainLevel(generated.def)) : generated?.def.id === 'wrong-notes' ? openWrongNotes(wrongLevel) : generated ? againGenerated() : openLesson(lessonId))}
           brief={slot?.brief}
+          briefSeen={!!slot?.briefSeen}
           onHideTopic={slot?.brief?.topic ? () => {
             updateSettings({ pathHidden: [...new Set([...(s.pathHidden ?? []), slot.brief!.topic!])] });
             pendingStep.current = null;

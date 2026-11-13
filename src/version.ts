@@ -18,6 +18,20 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.80.0',
+    date: '2026-11-13',
+    en: [
+      'New piano level test, all on the keys: hands, chords, comping, reading, ear at the keys and (jazz) lines. One take per step in changing keys, at the step’s own tempo — a clean take jumps ahead, a miss moves straight on, "almost" gets one more try. About 8 minutes; every family gets its start level.',
+      'Guitar, bass and drum level tests no longer insist: at most two takes per step, a miss moves on.',
+      '"Again" starts right away everywhere: drills, licks, drum games, the transcribe coach, a lesson’s recap (no brief page again), and "Play again" in the games starts the first round.',
+    ],
+    he: [
+      'מבחן רמה חדש בפסנתר, הכול על הקלידים: ידיים, אקורדים, ליווי, קריאה, אוזן על הקלידים ו(בג׳אז) קווים. נגינה אחת לכל שלב, בסולמות שמתחלפים ובטמפו של השלב — נגינה נקייה מקפיצה קדימה, טעות עוברת מיד הלאה, ו"כמעט" מקבל עוד ניסיון אחד. בערך 8 דקות, וכל משפחת תרגילים מקבלת רמת פתיחה.',
+      'מבחני הרמה בגיטרה, בס ותופים כבר לא מתעקשים: עד שתי נגינות לכל שלב, וטעות ממשיכה הלאה.',
+      '"שוב" מתחיל מיד בכל מקום: תרגילים, ליקים, משחקי תופים, מאמן התמלול, סיכום של תרגיל (בלי דף הפתיחה שוב), ו"לשחק שוב" במשחקים מתחיל את הסיבוב הראשון.',
+    ],
+  },
+  {
     version: '0.79.1',
     date: '2026-11-13',
     en: ['In the piano, guitar, bass and drum courses, "Find my level" from the menu (and the catch-up card) now opens the playing test on your instrument, not the multiple-choice ear quiz.'],
