@@ -46,9 +46,20 @@ test should work." And earlier: the piano level test should be answered on the k
 Without MIDI, steps a microphone can't measure (loudness, release, pedal) are left out. In the piano course,
 "find my level" opens this test from every entry point (0.79.1).
 
-## Guitar, bass, drums (0.80: rules 2–3, 7 applied to the existing probes)
+## Guitar, bass, drums (0.81)
 
-Their probes are already one per family. The 4-take tempo staircase is replaced by: at most 2 takes per step, a clean
-take earns one try 30% faster, "almost" earns one retry, and a miss moves on at once. **Next:** turn their probes into
-section ladders like the piano's (content steps, not tempo), with guitar sections for chords, rhythm, lead, reading
-and ear; bass for groove, walking, reading and ear; drums for grooves, fills, reading and independence.
+The same engine and screen (`strandsFor`). Only steps that the player's setup shows are offered (guitar add-ons,
+the bass track and tuning, a practice pad or an acoustic kit by microphone). The old per-family probes with tempo
+staircases are gone.
+
+| Instrument | Sections |
+|---|---|
+| Guitar | Hands (fretting, pentatonic, 3 nps, CAGED, sweeps) · Chords (open → barre changes) · Rhythm playing (strums → funk 16ths, bossa) · Lead (slides, bends, vibrato, bend phrases) · Reading by position · Ear · Jazz comping (jazz add-on) |
+| Bass | Hands (plucking, fretting, 16th stamina) · Time and pocket (pulse → click drops out) · Chord tones (roots → 2-octave 7ths) · Walking bass (by the bass track) · Reading · Ear |
+| Drums | Hands (strokes, singles, doubles, switching) · Grooves (rock → 16th funk) · Fills · Reading · Independence · Ear |
+
+## Voice
+
+The voice placement (domain *voice* of SPEC-PLACEMENT) already follows these rules. It is sung, has sections for
+singing, technique and agility, and uses an accelerating search where a miss brackets the level. **Open:** it has no
+sung sight-singing section and no melody sung in time with the click.

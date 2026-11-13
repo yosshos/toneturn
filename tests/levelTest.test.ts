@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { advance, nextStep, pianoStrands, recordTake, startState, strandPlaces, testStart, type Verdict } from '../src/engine/drills/levelTest';
+import { advance, nextStep, pianoStrands, strandsFor, recordTake, startState, strandPlaces, testStart, type Verdict } from '../src/engine/drills/levelTest';
 import { families } from '../src/engine/drills/plan';
 import { generate } from '../src/engine/drills/generate';
 
@@ -27,6 +27,23 @@ describe('level test sections', () => {
             const f = cat.find((x) => x.id === fam);
             expect(f, fam).toBeTruthy();
             expect(v).toBeLessThanOrEqual(f!.levels.length);
+          }
+        }
+    });
+
+  for (const inst of ['guitar', 'bass', 'drums'] as const)
+    it(`every step of the ${inst} test is a real level that generates`, () => {
+      const cat = families(inst);
+      for (const st of strandsFor(inst, 'both'))
+        for (const r of st.rungs) {
+          const lv = cat.flatMap((f) => f.levels).find((l) => l.id === r.level);
+          expect(lv, r.level).toBeTruthy();
+          const d = generate({ ...lv!.specs[0], key: Array.isArray(lv!.keys) && !lv!.keys.includes(r.key) ? lv!.keys[0] : r.key });
+          expect(d, r.level).toBeTruthy();
+          for (const [fam, v] of Object.entries(r.places)) {
+            const f = cat.find((x) => x.id === fam);
+            expect(f, `${r.level} → ${fam}`).toBeTruthy();
+            expect(v, `${r.level} → ${fam}`).toBeLessThanOrEqual(f!.levels.length);
           }
         }
     });

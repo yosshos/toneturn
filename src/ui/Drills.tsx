@@ -19,23 +19,18 @@ import { applyTake, familyLevel, newItem, type LadderResult } from '../engine/dr
 import { customKeys, customToDrill } from '../engine/drills/custom';
 import { DrillCreator } from './DrillCreator';
 import { currentLevel, families as familiesOf, keyHeat, levelDone, levelStars, LEVEL_MAX_STARS, levelKeys, shownFamilies, specDrills, todayDrills, levelDrills, withBassTuning, itemTargetBpm } from '../engine/drills/plan';
-import { generate, KEYS_EAR_PROBE } from '../engine/drills/generate';
-import { advance, mergePlaces, pianoStrands, recordTake, startState, strandPlaces, testStart, type StrandState } from '../engine/drills/levelTest';
+import { generate } from '../engine/drills/generate';
+import { advance, mergePlaces, strandsFor, recordTake, startState, strandPlaces, testStart, type StrandState } from '../engine/drills/levelTest';
 import { micUnmeasurable } from '../engine/drills/analyze';
-import { GUITAR_PROBES, type GuitarFamilyDef, type GuitarLevelDef } from '../engine/drills/guitar';
-import { GUITAR_PROBE_STEPS, guitarProbesFor, placeGuitar, probeRuns, type GuitarProbe } from '../engine/drills/guitarProbes';
+import { type GuitarLevelDef } from '../engine/drills/guitar';
 import { guitarAddOnsOf } from '../engine/drills/guitarMeta';
 import { GuitarAddOnPicker } from './GuitarAddOns';
 import { FAMILY_LESSON } from '../content/mini/guitar';
 import { MINI_LESSONS } from '../content/minilessons';
 import { MiniLessonPlayer } from './MiniLesson';
 import { STRINGS } from '../i18n/strings';
-import { BASS_PROBES, placeBass, probeSlot, type BassProbeResult } from '../engine/drills/bassProbes';
-import { walkProbeReport } from '../engine/drills/bassAnalyze';
-import { expTimeMs } from '../engine/drills/analyze';
 import { isGuitarDrill } from '../engine/drills/events';
 import { drillEvents, drillXp } from '../engine/drills/events';
-import { bandOfBpm as tempoBandOf } from '../engine/drills/analyze';
 import { ChartView, DrillStaff, DrillTab, DrillTake, EarCard, MarkLegend, TakeResult } from './DrillTake';
 import { RoadMapStrip } from './RoadMap';
 import { TranscribeWrite } from './BassWrite';
@@ -47,8 +42,7 @@ import { inputLatency } from '../engine/latency';
 import { LatencyCalibrate } from './LatencyCalibrate';
 import { DrumSongCard } from './DrumSongCard';
 import { DrumScore, KitCard, KitSetup } from './DrumViews';
-import { drumMicOf, kitKind, type KitKind } from '../engine/drumKit';
-import { drumProbes, GROOVE_REACH, placeDrums, type DrumProbeResult, type DrumSlot } from '../engine/drills/drums';
+import { drumMicOf, type KitKind } from '../engine/drumKit';
 import { isDrumDrill } from '../engine/drills/events';
 import { standardIdOfSpec, standardOfSpec } from '../engine/drills/standardRef';
 import { ListenOriginal } from './ListenOriginal';
@@ -277,7 +271,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
           onTake={onTake}
           midiOctave={settings.midiOctave ?? 0}
           onOctave={(o) => onSettings({ midiOctave: o })}
-          onBassTuning={(t) => onSettings({ bassTuning: t })}
+          bassTuning={bassTuning}
           kit={settings.drumKit}
           onDone={(start) => {
             if (start) onSettings({ drillStart: { ...(settings.drillStart ?? {}), ...start } });
@@ -1030,43 +1024,15 @@ function Calibration({ lang, cal, onSave }: { lang: Lang; cal: DrillCalibration;
   );
 }
 
-/** B6: what a bass placement take measured, for the decision rules (bassProbes.ts). Only measured values — no self-report. */
-function bassMeasure(slot: NonNullable<ReturnType<typeof probeSlot>>, drill: Drill, m: TakeMetrics, played: PlayedNote[], bpm: number): BassProbeResult {
-  const g = (m as TakeMetrics & { guitar?: { bass?: { kick?: { lock: number } | null; asym?: { ms: number } | null } } }).guitar?.bass;
-  const out: BassProbeResult = { verdict: m.verdict };
-  if (slot === 'lowest') {
-    const ps = played.map((x) => x.pitch).filter((x) => x >= 18 && x <= 40).sort((a, b) => a - b);
-    if (ps.length) out.lowest = ps[Math.floor(ps.length / 2)];
-  }
-  if (slot === 'pocket' && g?.kick) out.lock = g.kick.lock;
-  if (slot === 'pluck' && g?.asym) out.asymMs = g.asym.ms;
-  if (slot === 'ear') out.acc = m.accuracy;
-  const rules = drill.goal.bass?.rules;
-  if (slot === 'walk' && rules) {
-    // The walking-rule report on what was played: one note per beat, the one nearest each beat. The chart's tones are
-    // intervals (N2): walkProbeReport reads them as they are.
-    const beats = rules.chart.reduce((a, c) => a + c.beats, 0);
-    const half = 30000 / bpm;
-    const line = Array.from({ length: beats }, (_, b) => {
-      const t = expTimeMs(drill, b, bpm);
-      const near = played.filter((x) => Math.abs(x.on - t) < half).sort((x, y) => Math.abs(x.on - t) - Math.abs(y.on - t))[0];
-      return near ? near.pitch : -100;
-    });
-    Object.assign(out, walkProbeReport(rules.chart, line));
-  }
-  return out;
-}
-
-/** Technique section of Find my level (spec AI §13): a tempo staircase on a few probe drills → start level per family. */
-type LevelTestProps = Parameters<typeof InstrumentLevelTest>[0];
+type LevelTestProps = { lang: Lang; ds: DrillSettings; cal: DrillCalibration; items: Record<string, ItemState>; onTake: DrillsProps['onTake']; onDone: (start: Partial<Record<FamilyId, number>> | null) => void; midiOctave: number; onOctave: (o: number) => void; onBassTuning?: (t: string) => void; kit?: Settings['drumKit'] };
 /** The playing level test: piano runs the section test (SPEC-LEVEL-TEST); the other instruments their probes. */
-function TechLevelTest(p: LevelTestProps) {
-  return (p.ds.instrument ?? 'piano') === 'piano' ? <PianoLevelTest {...p} /> : <InstrumentLevelTest {...p} />;
+function TechLevelTest(p: LevelTestProps & { bassTuning?: string }) {
+  return <SectionLevelTest {...p} />;
 }
 
 const PIANO_TEST_TX = {
   en: {
-    intro: 'About 8 minutes, all on the keys: hands, chords, comping, reading and your ear. One take per step at its own tempo — a clean take jumps ahead, a miss just moves on. Nobody is expected to play everything.',
+    intro: 'About 8 minutes, all on your instrument. One take per step at its own tempo — a clean take jumps ahead, a miss just moves on. Nobody is expected to play everything.',
     start: 'Start',
     skip: 'Skip the test',
     tooHard: 'Too hard — next',
@@ -1079,7 +1045,7 @@ const PIANO_TEST_TX = {
     next: 'Done',
   },
   he: {
-    intro: 'בערך 8 דקות, הכול על הקלידים: ידיים, אקורדים, ליווי, קריאה ואוזן. נגינה אחת לכל שלב, בטמפו שלו — נגינה נקייה מקפיצה קדימה, טעות פשוט ממשיכה הלאה. אף אחד לא אמור לנגן הכול.',
+    intro: 'בערך 8 דקות, הכול על הכלי. נגינה אחת לכל שלב, בטמפו שלו — נגינה נקייה מקפיצה קדימה, טעות פשוט ממשיכה הלאה. אף אחד לא אמור לנגן הכול.',
     start: 'להתחיל',
     skip: 'לדלג על המבחן',
     tooHard: 'קשה מדי — הלאה',
@@ -1093,29 +1059,34 @@ const PIANO_TEST_TX = {
   },
 };
 
-/** The piano level test: sections of real levels, adaptive, one take per step (docs/SPEC-LEVEL-TEST.md). */
-function PianoLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, onOctave }: LevelTestProps) {
+/** The playing level test: sections of real levels, adaptive, one take per step (docs/SPEC-LEVEL-TEST.md). */
+function SectionLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, onOctave, kit, bassTuning }: LevelTestProps & { bassTuning?: string }) {
   const tx = PIANO_TEST_TX[lang];
-  const cat = useMemo(() => familiesOf('piano'), []);
-  // A step a microphone can't measure (loudness, release, pedal) is left out without MIDI — it could never pass.
+  const inst = ds.instrument ?? 'piano';
+  const cat = useMemo(() => familiesOf(inst), [inst]);
+  // Only steps this player's setup shows (guitar add-ons, the bass track and tuning, a practice pad or acoustic kit),
+  // and on piano without MIDI only what a microphone can measure (loudness, release, pedal can never pass by mic).
   const strands = useMemo(() => {
     const byMic = !midi.devices.length;
-    return pianoStrands(ds.emphasis)
+    const drumMic = inst === 'drums' ? drumMicOf(kit) : undefined;
+    const shown = new Set(shownFamilies({ ...ds, bassTuning, drumMic }).flatMap((f) => f.levels.map((l) => l.id)));
+    return strandsFor(inst, ds.emphasis)
       .map((x) => ({
         ...x,
         rungs: x.rungs
           .map((r) => {
             const lv = cat.flatMap((f) => f.levels).find((l) => l.id === r.level);
-            if (!lv) return null;
+            if (!lv || !shown.has(lv.id)) return null;
             const key = Array.isArray(lv.keys) && !lv.keys.includes(r.key) ? lv.keys[0] : r.key;
-            const drill = generate({ ...lv.specs[0], key });
-            if (byMic && micUnmeasurable(drill).length) return null;
+            const drill = withBassTuning([generate({ ...lv.specs[0], key })], bassTuning)[0];
+            if (inst === 'piano' && byMic && micUnmeasurable(drill).length) return null;
             return { ...r, drill, title: lv.title };
           })
           .filter((x): x is NonNullable<typeof x> => !!x),
       }))
       .filter((x) => x.rungs.length > 0);
-  }, [cat, ds.emphasis]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cat, inst, ds.emphasis, bassTuning, kit]);
   const [started, setStarted] = useState(false);
   const [si, setSi] = useState(0);
   const [st, setSt] = useState<StrandState>(() => startState(strands[0]?.rungs.length ?? 0));
@@ -1133,7 +1104,7 @@ function PianoLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, onOc
   const finishStrand = (s: StrandState) => {
     placed.current.push(strandPlaces(strand, s));
     const k = si + 1;
-    if (k >= strands.length) return setSummary(testStart('piano', mergePlaces(...placed.current)));
+    if (k >= strands.length) return setSummary(testStart(inst, mergePlaces(...placed.current)));
     setSi(k);
     setSt(startState(strands[k].rungs.length));
     setLast(null);
@@ -1162,7 +1133,7 @@ function PianoLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, onOc
   };
   if (!started)
     return (
-      <div className="drill-opts card" data-level-test="piano">
+      <div className="drill-opts card" data-level-test={inst}>
         <p>{tx.intro}</p>
         <ol className="lt-sections">
           {strands.map((x) => (
@@ -1203,7 +1174,7 @@ function PianoLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, onOc
   return (
     <div className="drill-run" data-test-probe={rung.level} data-test-strand={strand.id}>
       <p className="drill-goal">
-        {tx.section} {si + 1}/{strands.length} · <b>{strand.title[lang]}</b> · {rung.title[lang]} · {keyName(rung.drill.spec.key, !!rung.drill.spec.minor)} · <span dir="ltr">♩ {rung.drill.startBpm}</span>
+        {tx.section} {si + 1}/{strands.length} · <b>{strand.title[lang]}</b> · {rung.title[lang]}{inst === 'drums' ? '' : ` · ${keyName(rung.drill.spec.key, !!rung.drill.spec.minor)}`} · <span dir="ltr">♩ {rung.drill.startBpm}</span>
       </p>
       {last && (
         <p className={`drill-why lt-verdict v-${last.verdict}`} data-lt-verdict={last.verdict}>
@@ -1211,183 +1182,12 @@ function PianoLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, onOc
         </p>
       )}
       {last?.octaveShift !== undefined && <OctaveFix lang={lang} shift={last.octaveShift} current={midiOctave} onFix={onOctave} />}
-      <ProbeTake key={`${strand.id}:${take}`} drill={rung.drill} ds={ds} last={last} bpm={rung.drill.startBpm} lang={lang} cal={cal} autoStart={auto} onDone={(m) => done(m)} />
+      <ProbeTake key={`${strand.id}:${take}`} drill={rung.drill} ds={ds} last={last} bpm={rung.drill.startBpm} lang={lang} cal={cal} kit={kit} autoStart={auto} onDone={(m) => done(m)} />
       {!last && (
         <button className="btn ghost" onClick={() => step('not')} data-test-too-hard="1">
           {tx.tooHard}
         </button>
       )}
-    </div>
-  );
-}
-
-function InstrumentLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, onOctave, onBassTuning, kit }: { lang: Lang; ds: DrillSettings; cal: DrillCalibration; items: Record<string, ItemState>; onTake: DrillsProps['onTake']; onDone: (start: Partial<Record<FamilyId, number>> | null) => void; midiOctave: number; onOctave: (o: number) => void; onBassTuning?: (t: string) => void; kit?: Settings['drumKit'] }) {
-  if ((ds.instrument ?? 'piano') === 'piano') return <PianoLevelTest lang={lang} ds={ds} cal={cal} items={items} onTake={onTake} onDone={onDone} midiOctave={midiOctave} onOctave={onOctave} />;
-  const tx = T[lang];
-  const inst = ds.instrument ?? 'piano';
-  // Drums (DRUMS_CURRICULUM §5): the adaptive probe — single takes, a staircase for the hands; a failed easy step
-  // skips the harder ones of its family. Mic mode (a practice pad) runs the single-surface steps.
-  const drumMic = inst === 'drums' && (!!kit?.mic || !midi.devices.length);
-  // An acoustic kit by microphone also runs the groove steps its microphone can measure.
-  const drumAcoustic = drumMic && kitKind(kit) === 'acoustic';
-  const drumRes = useRef<Partial<Record<DrumSlot, DrumProbeResult>>>({});
-  // Bass (B6, 0.64): measured tasks with the doc's decision rules (bassProbes.ts), some a single take.
-  const bassRes = useRef<Partial<Record<NonNullable<ReturnType<typeof probeSlot>>, BassProbeResult>>>({});
-  const probes = useMemo(() => {
-    if (inst === 'drums') return drumProbes(drumMic, drumAcoustic).map((p) => ({ id: p.slot as string, drill: generate(p.spec), seeds: [] as FamilyId[], once: p.mode === 'once', slot: null }));
-    if (inst === 'bass') return BASS_PROBES.map((p) => ({ id: p.family, drill: generate(p.spec), seeds: p.seeds ?? [], once: p.mode === 'once', slot: probeSlot(p) }));
-    // GUITAR_DEEPENING §7: a step for every guitar family, add-on steps for the chosen add-ons, harder steps adaptive.
-    if (inst === 'guitar') return guitarProbesFor(guitarAddOnsOf(ds)).map((p) => ({ id: p.id, drill: generate(p.spec), seeds: [] as FamilyId[], once: p.mode === 'once', slot: null }));
-    if (inst !== 'piano') return GUITAR_PROBES.filter((p) => (p.instruments as string[]).includes(inst)).map((p) => ({ id: p.family, drill: generate(p.spec), seeds: p.seeds ?? [], once: false, slot: null }));
-    // PIANO_JAZZ: a jazz player is also probed on a bebop line over ii–V–I (its tempo places the bebop lines).
-    const fams: FamilyId[] = ds.emphasis === 'jazz' ? ['scales', 'harris', 'k-bebop'] : ds.emphasis === 'classical' ? ['scales', 'fingers'] : ['scales', 'fingers', 'harris'];
-    const tempo = fams.map((id) => {
-      const f = shownFamilies({ emphasis: 'both' }).find((x) => x.id === id)!;
-      return { id: id as string, drill: specDrills(f.levels[0], 0, ds.keyOrder).find((d) => d.spec.key === 0) ?? specDrills(f.levels[0], 0, ds.keyOrder)[0], seeds: [] as FamilyId[], once: false, slot: null };
-    });
-    // PIANO_AUDIT I5: the pianist's ear is probed too — one take of three notes played back (ear L2); clean places it at L3.
-    return [...tempo, { id: 'k-ear', drill: generate(KEYS_EAR_PROBE), seeds: [] as FamilyId[], once: true, slot: null }];
-  }, [ds.emphasis, ds.keyOrder, inst, drumMic, drumAcoustic]);
-  const [p, setP] = useState(0);
-  const [bpm, setBpm] = useState(() => probes[0].drill.startBpm);
-  const [best, setBest] = useState<Record<string, number>>({});
-  const [tries, setTries] = useState(0);
-  const [take, setTake] = useState(0);
-  const [last, setLast] = useState<TakeMetrics | null>(null);
-  const [again, setAgain] = useState(false);
-  const moveOn = useRef(0);
-  useEffect(() => () => window.clearTimeout(moveOn.current), []);
-  const [started, setStarted] = useState(false);
-  const session = useRef(`t${Date.now().toString(36)}`);
-  const n = useRef(0);
-  const finish = (b: Record<string, number>) => {
-    const start: Partial<Record<FamilyId, number>> = {};
-    if (inst === 'drums') {
-      const r = { ...drumRes.current };
-      if (b.hands) r.hands = { ...(r.hands ?? { verdict: 'clean' }), best: b.hands };
-      return onDone(placeDrums(r, familiesOf('drums').map((f) => ({ id: f.id, levels: f.levels.length }))));
-    }
-    if (inst === 'bass') {
-      const fams = familiesOf('bass').map((f) => ({ id: f.id, levels: f.levels.length }));
-      const r = { ...bassRes.current };
-      for (const s of ['scale', 'pluck'] as const) if (r[s] || b[s]) r[s] = { ...(r[s] ?? {}), best: b[s] ?? 0 };
-      const placed = placeBass(r, fams);
-      if (placed.tuning && onBassTuning) onBassTuning(placed.tuning);
-      return onDone(placed.start);
-    }
-    if (inst === 'guitar') return onDone(placeGuitar(b, familiesOf('guitar').map((f) => ({ id: f.id, levels: f.levels.length, addOn: (f as GuitarFamilyDef).addOn })), guitarAddOnsOf(ds)));
-    if (inst !== 'piano') {
-      // Guitar / bass: each probed family from its staircase; the rest one below the mean of the probed ones.
-      const lv: Record<string, number> = {};
-      for (const pr of probes) lv[pr.id] = b[pr.id] ? Math.max(1, tempoBandOf(pr.drill, b[pr.id]) - 1) : 1;
-      const vals = Object.values(lv);
-      // Bass (BASS_CURRICULUM §6): a probe also places the families it seeds.
-      for (const pr of probes) for (const sd of pr.seeds) if (lv[sd] === undefined) lv[sd] = lv[pr.id];
-      const meanLv = vals.length ? vals.reduce((x, y) => x + y, 0) / vals.length : 1;
-      for (const fam of familiesOf(inst)) start[fam.id] = Math.max(1, Math.min(fam.levels.length, Math.round(lv[fam.id] ?? meanLv - 1)));
-      return onDone(start);
-    }
-    const lvl = (id: FamilyId) => {
-      const pr = probes.find((x) => x.id === id);
-      if (!pr || !b[id]) return 1;
-      return Math.max(1, tempoBandOf(pr.drill, b[id]) - 1);
-    };
-    const fams = shownFamilies({ emphasis: 'both' });
-    const cap = (id: FamilyId, v: number) => Math.max(1, Math.min(fams.find((f) => f.id === id)?.levels.length ?? 1, Math.round(v)));
-    const sc = lvl('scales');
-    const fi = probes.some((x) => x.id === 'fingers') ? lvl('fingers') : sc;
-    const ha = probes.some((x) => x.id === 'harris') ? lvl('harris') : Math.max(1, sc - 1);
-    start.scales = cap('scales', sc);
-    start.arpeggios = cap('arpeggios', sc - 1);
-    start.control = cap('control', sc - 1);
-    start.cadences = cap('cadences', sc - 1);
-    start.fingers = cap('fingers', fi);
-    start.advanced = cap('advanced', fi - 2);
-    start.harris = cap('harris', ha);
-    start.jazz = cap('jazz', ha - 1);
-    start.voicings = cap('voicings', ha - 1);
-    start.accomp = cap('accomp', ha - 1);
-    start['k-ear'] = cap('k-ear', b['k-ear'] ? 3 : 1);
-    // PIANO_JAZZ: the jazz-piano families from the Harris probe (and the bebop line, when a jazz player played it).
-    start['k-sixdim'] = cap('k-sixdim', ha - 3);
-    start['k-reharm'] = cap('k-reharm', ha - 3);
-    start['k-bebop'] = cap('k-bebop', probes.some((x) => x.id === 'k-bebop') ? lvl('k-bebop') : ha - 2);
-    onDone(start);
-  };
-  const nextProbe = (b: Record<string, number>) => {
-    window.clearTimeout(moveOn.current);
-    setAgain(false);
-    // Drums: hands never clean → skip the doubles and the paradiddle (harder steps of the same families).
-    let q = p + 1;
-    // Groove reach (funk, shuffle) only after the basic groove was clean or almost.
-    const skip = (id: string) => (!b.hands && (id === 'doubles' || id === 'diddle')) || (GROOVE_REACH.includes(id as DrumSlot) && (drumRes.current.groove?.verdict ?? 'not') === 'not');
-    while (inst === 'drums' && q < probes.length && skip(probes[q].id)) q++;
-    // Guitar (§7): a harder step only after its easier one was clean.
-    while (inst === 'guitar' && q < probes.length && !probeRuns(GUITAR_PROBE_STEPS.find((x) => x.id === probes[q].id) ?? { after: undefined } as GuitarProbe, b)) q++;
-    if (q >= probes.length) return finish(b);
-    setP(q);
-    setBpm(probes[q].drill.startBpm);
-    setTries(0);
-    setLast(null);
-    setTake((t) => t + 1);
-  };
-  if (!started)
-    return (
-      <div className="drill-opts card">
-        <p>{tx.testIntro}</p>
-        <div className="drill-actions">
-          <button className="btn primary" onClick={() => setStarted(true)} data-test-start="1">
-            ▶ {tx.start}
-          </button>
-          <button className="btn ghost" onClick={() => onDone(null)}>
-            {tx.skip}
-          </button>
-        </div>
-      </div>
-    );
-  const pr = probes[p];
-  const done = (m: TakeMetrics, played: PlayedNote[] = []) => {
-    if (inst === 'drums') {
-      const sds = (m.drum?.limbs ?? []).map((l) => l.sd).filter((x): x is number => x !== null);
-      const prev = drumRes.current[pr.id as DrumSlot];
-      // A staircase keeps its best verdict; single takes their one.
-      if (!prev || m.verdict === 'clean' || prev.verdict !== 'clean') drumRes.current[pr.id as DrumSlot] = { verdict: m.verdict, sd: sds.length ? Math.max(...sds) : null, kit: pr.id === 'read' && !drumMic };
-    }
-    if (inst === 'bass' && pr.slot) bassRes.current[pr.slot] = { ...(bassRes.current[pr.slot] ?? {}), ...bassMeasure(pr.slot, pr.drill, m, played, bpm) };
-    const st = items[pr.drill.itemId] ?? newItem(pr.drill);
-    const lad = applyTake(st, m, bpm, new Date().toISOString(), ds, { targetBpm: itemTargetBpm(pr.drill) });
-    onTake(lad.state, drillEvents(pr.drill, m, new Date().toISOString(), session.current, n.current++), drillXp(m), takeInfo(pr.drill, m));
-    setLast(m);
-    const t = tries + 1;
-    setTries(t);
-    // SPEC-LEVEL-TEST (owner 2026-11-13: "it insisted on one scale"): at most two takes per step — a clean take earns
-    // one faster try (+30 %), "almost" one more try at the same tempo; a miss moves the test straight on.
-    const clean = m.verdict === 'clean';
-    const key = pr.slot ?? pr.id;
-    const b = clean ? { ...best, [key]: Math.max(best[key] ?? 0, bpm) } : best;
-    if (clean) setBest(b);
-    if (t >= 2 || pr.once || m.verdict === 'not') return void (moveOn.current = window.setTimeout(() => nextProbe(b), 1800));
-    if (clean) setBpm(Math.round(bpm * 1.3));
-    setAgain(true);
-    moveOn.current = window.setTimeout(() => (setLast(null), setTake((x) => x + 1)), 1600);
-  };
-  return (
-    <div className="drill-run" data-test-probe={pr.id}>
-      <p className="drill-goal">
-        {p + 1} / {probes.length} · {pr.drill.title[lang]} · <span dir="ltr">♩ {bpm}</span>
-        {best[pr.slot ?? pr.id] ? (
-          <>
-            {' '}
-            · {tx.bestTempo} <span dir="ltr">♩ {best[pr.slot ?? pr.id]}</span>
-          </>
-        ) : null}
-      </p>
-      {last && <p className="drill-why">{last.why[lang]}</p>}
-      {last?.octaveShift !== undefined && <OctaveFix lang={lang} shift={last.octaveShift} current={midiOctave} onFix={onOctave} />}
-      <ProbeTake key={`${pr.slot ?? pr.id}:${take}`} drill={pr.drill} ds={ds} last={last} bpm={bpm} lang={lang} cal={cal} kit={kit} autoStart={again} onDone={done} />
-      <button className="btn ghost" onClick={() => nextProbe(best)}>
-        {tx.skip}
-      </button>
     </div>
   );
 }

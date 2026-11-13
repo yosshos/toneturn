@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.81.0',
+    date: '2026-11-13',
+    en: ['Guitar, bass and drums get the new level test in sections, like the piano: guitar — hands, chords, rhythm, lead, reading, ear (+ jazz comping); bass — hands, time and pocket, chord tones, walking, reading, ear; drums — hands, grooves, fills, reading, independence, ear. One take per step, a clean take jumps ahead, a miss moves on.'],
+    he: ['גיטרה, בס ותופים מקבלים את מבחן הרמה החדש בחלקים, כמו בפסנתר: גיטרה — ידיים, אקורדים, נגינה קצבית, סולו, קריאה, אוזן (+ ליווי ג׳אז); בס — ידיים, זמן וכיס, צלילי אקורד, ליווי הליכה, קריאה, אוזן; תופים — ידיים, גרוב, מילויים, קריאה, עצמאות גפיים, אוזן. נגינה אחת לכל שלב, נקי מקפיץ קדימה, טעות ממשיכה הלאה.'],
+  },
+  {
     version: '0.80.0',
     date: '2026-11-13',
     en: [

@@ -6,7 +6,7 @@ import type { DrillSettings, FamilyId } from './types';
 type T2 = { en: string; he: string };
 import { families } from './plan';
 
-export type StrandId = 'hands' | 'chords' | 'comp' | 'reading' | 'ear' | 'lines';
+export type StrandId = 'hands' | 'chords' | 'comp' | 'reading' | 'ear' | 'lines' | 'rhythm' | 'lead' | 'jazz' | 'time' | 'walk' | 'grooves' | 'fills' | 'indep';
 export type Verdict = 'clean' | 'almost' | 'not';
 
 /** One step of a section: a level of the catalogue, in a chosen key, and the start levels it proves when passed. */
@@ -30,7 +30,16 @@ export const STRAND_TITLE: Record<StrandId, T2> = {
   reading: { en: 'Reading', he: 'קריאה' },
   ear: { en: 'Ear at the keys', he: 'אוזן על הקלידים' },
   lines: { en: 'Jazz lines', he: 'קווי ג׳אז' },
+  rhythm: { en: 'Rhythm playing', he: 'נגינה קצבית' },
+  lead: { en: 'Lead', he: 'סולו' },
+  jazz: { en: 'Jazz comping', he: 'ליווי ג׳אז' },
+  time: { en: 'Time and pocket', he: 'זמן וכיס' },
+  walk: { en: 'Walking bass', he: 'ליווי הליכה' },
+  grooves: { en: 'Grooves', he: 'גרוב' },
+  fills: { en: 'Fills', he: 'מילויים' },
+  indep: { en: 'Independence', he: 'עצמאות גפיים' },
 };
+const EAR_T: T2 = { en: 'Ear', he: 'אוזן' };
 
 const r = (level: string, key: number, places: Rung['places']): Rung => ({ level, key, places });
 
@@ -96,6 +105,179 @@ export function pianoStrands(emphasis: DrillSettings['emphasis']): Strand[] {
   ];
   if (jazz) out.push({ id: 'lines', title: STRAND_TITLE.lines, rungs: LINES });
   return out;
+}
+
+// ------------------------------------------------------------------ guitar (0.81)
+const G_HANDS: Rung[] = [
+  r('g-fretting-1', 9, { 'g-fretting': 2, 'g-picking': 1, 'g-scales': 1 }),
+  r('g-scales-1', 9, { 'g-fretting': 2, 'g-picking': 2, 'g-scales': 2, 'g-arps': 1, 'g-legato': 1 }),
+  r('g-picking-3', 7, { 'g-fretting': 4, 'g-picking': 4, 'g-scales': 4, 'g-arps': 2, 'g-legato': 2 }),
+  r('g-scales-5', 2, { 'g-fretting': 5, 'g-picking': 5, 'g-scales': 6, 'g-arps': 4, 'g-legato': 3 }),
+  r('g-picking-6', 9, { 'g-fretting': 6, 'g-picking': 7, 'g-scales': 8, 'g-arps': 6, 'g-legato': 5 }),
+];
+const G_CHORDS: Rung[] = [
+  r('g-chords-1', 7, { 'g-chords': 2 }),
+  r('g-chords-3', 7, { 'g-chords': 4 }),
+  r('g-chords-5', 9, { 'g-chords': 6 }),
+  r('g-chords-6', 2, { 'g-chords': 7 }),
+];
+const G_RHYTHM: Rung[] = [
+  r('g-rhythm-1', 7, { 'g-rhythm': 2 }),
+  r('g-rhythm-2', 0, { 'g-rhythm': 3 }),
+  r('g-rhythm-3', 9, { 'g-rhythm': 4 }),
+  r('g-rhythm-5', 4, { 'g-rhythm': 6 }),
+  r('g-rhythm-6', 0, { 'g-rhythm': 7 }),
+];
+const G_LEAD: Rung[] = [
+  r('g-lead-1', 9, { 'g-lead': 2, 'g-impro': 1 }),
+  r('g-lead-3', 4, { 'g-lead': 4, 'g-impro': 1 }),
+  r('g-lead-5', 2, { 'g-lead': 6, 'g-impro': 2 }),
+  r('g-lead-8', 7, { 'g-lead': 9, 'g-impro': 3 }),
+];
+const G_READING: Rung[] = [
+  r('g-reading-1', 0, { 'g-reading': 2 }),
+  r('g-reading-2', 7, { 'g-reading': 3 }),
+  r('g-reading-4', 2, { 'g-reading': 5 }),
+  r('g-reading-6', 7, { 'g-reading': 7 }),
+];
+const G_EAR: Rung[] = [
+  r('g-ear-2', 9, { 'g-ear': 3 }),
+  r('g-ear-3', 4, { 'g-ear': 4 }),
+  r('g-ear-5', 7, { 'g-ear': 6 }),
+  r('g-ear-6', 2, { 'g-ear': 7 }),
+  r('g-ear-8', 0, { 'g-ear': 9 }),
+];
+const G_JAZZ: Rung[] = [
+  r('g-jazz-1', 0, { 'g-jazz': 2, 'g-harris': 1 }),
+  r('g-jazz-2', 5, { 'g-jazz': 3, 'g-harris': 2 }),
+  r('g-jazz-4', 10, { 'g-jazz': 5, 'g-harris': 3 }),
+  r('g-jazz-8', 3, { 'g-jazz': 9, 'g-harris': 5 }),
+];
+
+/** The guitar test: hands, chords, rhythm, lead, reading, ear; jazz comping only with the jazz add-on (shown levels). */
+export function guitarStrands(): Strand[] {
+  return [
+    { id: 'hands', title: STRAND_TITLE.hands, rungs: G_HANDS },
+    { id: 'chords', title: STRAND_TITLE.chords, rungs: G_CHORDS },
+    { id: 'rhythm', title: STRAND_TITLE.rhythm, rungs: G_RHYTHM },
+    { id: 'lead', title: STRAND_TITLE.lead, rungs: G_LEAD },
+    { id: 'reading', title: STRAND_TITLE.reading, rungs: G_READING },
+    { id: 'ear', title: EAR_T, rungs: G_EAR },
+    { id: 'jazz', title: STRAND_TITLE.jazz, rungs: G_JAZZ },
+  ];
+}
+
+// ------------------------------------------------------------------ bass (0.81)
+const B_HANDS: Rung[] = [
+  r('b-pluck-1', 4, { 'b-pluck': 2, 'b-fret': 1, 'b-scale': 1, 'b-length': 1 }),
+  r('b-fret-1', 4, { 'b-pluck': 2, 'b-fret': 2, 'b-scale': 1, 'b-length': 1 }),
+  r('b-pluck-3', 9, { 'b-pluck': 4, 'b-fret': 3, 'b-scale': 2, 'b-length': 2 }),
+  r('b-fret-5', 7, { 'b-pluck': 5, 'b-fret': 6, 'b-scale': 4, 'b-length': 3 }),
+  r('b-pluck-5', 2, { 'b-pluck': 7, 'b-fret': 7, 'b-scale': 6, 'b-length': 4 }),
+];
+const B_TIME: Rung[] = [
+  r('b-time-1', 4, { 'b-time': 2, 'b-pocket': 1 }),
+  r('b-pocket-1', 9, { 'b-time': 3, 'b-pocket': 2, 'b-styles': 1 }),
+  r('b-time-4', 7, { 'b-time': 5, 'b-pocket': 3, 'b-styles': 3 }),
+  r('b-pocket-4', 4, { 'b-time': 6, 'b-pocket': 5, 'b-styles': 5, 'b-ghost': 2 }),
+  r('b-time-7', 9, { 'b-time': 8, 'b-pocket': 7, 'b-styles': 7, 'b-ghost': 3 }),
+];
+const B_CHORDS: Rung[] = [
+  r('b-chord-1', 4, { 'b-chord': 2 }),
+  r('b-chord-3', 9, { 'b-chord': 4, 'b-scale': 2 }),
+  r('b-chord-6', 7, { 'b-chord': 7, 'b-scale': 3 }),
+  r('b-chord-8', 2, { 'b-chord': 9, 'b-scale': 5 }),
+  r('b-chord-11', 5, { 'b-chord': 12, 'b-scale': 7 }),
+];
+const B_WALK: Rung[] = [
+  r('b-walk-1', 5, { 'b-walk': 2, 'b-swing': 1 }),
+  r('b-walk-3', 10, { 'b-walk': 4, 'b-swing': 2 }),
+  r('b-walk-5', 3, { 'b-walk': 6, 'b-swing': 2, 'b-barry': 1 }),
+  r('b-walk-7', 7, { 'b-walk': 8, 'b-swing': 3, 'b-barry': 2 }),
+  r('b-walk-9', 0, { 'b-walk': 10, 'b-swing': 4, 'b-barry': 3 }),
+];
+const B_READING: Rung[] = [
+  r('b-read-2', 4, { 'b-read': 3, 'b-posread': 1 }),
+  r('b-read-3', 0, { 'b-read': 4, 'b-posread': 1 }),
+  r('b-read-6', 7, { 'b-read': 7, 'b-posread': 2 }),
+  r('b-read-8', 9, { 'b-read': 9, 'b-posread': 3 }),
+];
+const B_EAR: Rung[] = [
+  r('b-ear-2', 4, { 'b-ear': 3 }),
+  r('b-ear-3', 9, { 'b-ear': 4 }),
+  r('b-ear-5', 7, { 'b-ear': 6 }),
+  r('b-ear-6', 2, { 'b-ear': 7 }),
+  r('b-ear-9', 5, { 'b-ear': 10 }),
+];
+
+/** The bass test: hands, time and pocket, chord tones, walking (by the bass track), reading, ear. */
+export function bassStrands(): Strand[] {
+  return [
+    { id: 'hands', title: STRAND_TITLE.hands, rungs: B_HANDS },
+    { id: 'time', title: STRAND_TITLE.time, rungs: B_TIME },
+    { id: 'chords', title: STRAND_TITLE.chords, rungs: B_CHORDS },
+    { id: 'walk', title: STRAND_TITLE.walk, rungs: B_WALK },
+    { id: 'reading', title: STRAND_TITLE.reading, rungs: B_READING },
+    { id: 'ear', title: EAR_T, rungs: B_EAR },
+  ];
+}
+
+// ------------------------------------------------------------------ drums (0.81; drum items have no key)
+const D_HANDS: Rung[] = [
+  r('d-strokes-1', 0, { 'd-strokes': 2, 'd-rolls': 1, 'd-time': 1 }),
+  r('d-rolls-1', 0, { 'd-strokes': 2, 'd-rolls': 2, 'd-time': 2 }),
+  r('d-rolls-3', 0, { 'd-strokes': 4, 'd-rolls': 4, 'd-diddles': 2, 'd-time': 3 }),
+  r('d-rolls-4', 0, { 'd-strokes': 5, 'd-rolls': 5, 'd-diddles': 3, 'd-time': 4 }),
+  r('d-rolls-7', 0, { 'd-strokes': 6, 'd-rolls': 8, 'd-diddles': 5, 'd-time': 6 }),
+];
+const D_GROOVES: Rung[] = [
+  r('d-rock-1', 0, { 'd-rock': 2, 'd-feet': 1, 'd-time': 2 }),
+  r('d-rock-3', 0, { 'd-rock': 4, 'd-feet': 2, 'd-shuffle': 1 }),
+  r('d-rock-5', 0, { 'd-rock': 6, 'd-feet': 3, 'd-shuffle': 2, 'd-funk': 1 }),
+  r('d-funk-2', 0, { 'd-rock': 7, 'd-feet': 4, 'd-shuffle': 3, 'd-funk': 3 }),
+  r('d-funk-4', 0, { 'd-rock': 8, 'd-feet': 5, 'd-shuffle': 4, 'd-funk': 5, 'd-jazz': 1 }),
+];
+const D_FILLS: Rung[] = [
+  r('d-fills-1', 0, { 'd-fills': 2 }),
+  r('d-fills-2', 0, { 'd-fills': 3 }),
+  r('d-fills-3', 0, { 'd-fills': 4 }),
+  r('d-fills-5', 0, { 'd-fills': 6 }),
+];
+const D_READING: Rung[] = [
+  r('d-read-1', 0, { 'd-read': 2, 'd-notation': 1 }),
+  r('d-read-2', 0, { 'd-read': 3, 'd-notation': 2 }),
+  r('d-read-3', 0, { 'd-read': 4, 'd-notation': 3 }),
+  r('d-read-5', 0, { 'd-read': 6, 'd-notation': 4 }),
+  r('d-read-7', 0, { 'd-read': 8, 'd-notation': 5 }),
+];
+const D_INDEP: Rung[] = [
+  r('d-indep-1', 0, { 'd-indep': 2 }),
+  r('d-indep-2', 0, { 'd-indep': 3 }),
+  r('d-indep-3', 0, { 'd-indep': 4 }),
+  r('d-indep-5', 0, { 'd-indep': 6 }),
+];
+const D_EAR: Rung[] = [
+  r('d-ear-1', 0, { 'd-ear': 2 }),
+  r('d-ear-2', 0, { 'd-ear': 3 }),
+  r('d-ear-4', 0, { 'd-ear': 5 }),
+  r('d-ear-5', 0, { 'd-ear': 6 }),
+];
+
+/** The drums test: hands, grooves, fills, reading, independence, ear (by microphone only the steps it can measure). */
+export function drumStrands(): Strand[] {
+  return [
+    { id: 'hands', title: STRAND_TITLE.hands, rungs: D_HANDS },
+    { id: 'grooves', title: STRAND_TITLE.grooves, rungs: D_GROOVES },
+    { id: 'fills', title: STRAND_TITLE.fills, rungs: D_FILLS },
+    { id: 'reading', title: STRAND_TITLE.reading, rungs: D_READING },
+    { id: 'indep', title: STRAND_TITLE.indep, rungs: D_INDEP },
+    { id: 'ear', title: EAR_T, rungs: D_EAR },
+  ];
+}
+
+/** The sections of an instrument's test. */
+export function strandsFor(instrument: NonNullable<DrillSettings['instrument']>, emphasis: DrillSettings['emphasis']): Strand[] {
+  return instrument === 'guitar' ? guitarStrands() : instrument === 'bass' ? bassStrands() : instrument === 'drums' ? drumStrands() : pianoStrands(emphasis);
 }
 
 /** The search through one section. lo = the hardest clean step (−1: none), hi = the easiest missed one (n: none). */

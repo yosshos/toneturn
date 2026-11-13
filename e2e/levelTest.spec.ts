@@ -28,3 +28,25 @@ test('piano level test: sections, adaptive steps, a miss moves on', async ({ pag
   expect(new Set(seen)).toEqual(new Set(['chords', 'comp', 'reading', 'ear', 'lines']));
   expect(seen.length).toBeLessThanOrEqual(12);
 });
+
+for (const inst of ['guitar', 'bass'] as const)
+  test(`${inst} level test: sections of real levels, a miss moves on`, async ({ page }) => {
+    await page.goto('/?sim=1#/drills');
+    await page.locator(`[data-inst="${inst}"]`).click();
+    await page.locator('[data-drills-test]').click();
+    await expect(page.locator(`[data-level-test="${inst}"]`)).toBeVisible();
+    expect(await page.locator('.lt-sections li').count()).toBeGreaterThanOrEqual(5);
+    await page.locator('[data-test-start]').click();
+    const probe = page.locator('[data-test-probe]');
+    await expect(probe).toHaveAttribute('data-test-strand', 'hands');
+    await page.screenshot({ path: `test-results/level-test-${inst}.png` });
+    const seen: string[] = [];
+    for (let k = 0; k < 40; k++) {
+      if (await page.locator('[data-level-test-done]').isVisible()) break;
+      seen.push((await probe.getAttribute('data-test-strand')) ?? '');
+      await page.locator('[data-test-too-hard]').click();
+    }
+    await expect(page.locator('[data-level-test-done]')).toBeVisible();
+    expect(new Set(seen).size).toBeGreaterThanOrEqual(5);
+    expect(seen.length).toBeLessThanOrEqual(14);
+  });
