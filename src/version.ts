@@ -18,6 +18,22 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.83.0',
+    date: '2026-11-13',
+    en: [
+      'Find my level belongs to the course: in Ear & theory it measures pitch & harmony, rhythm & time, memory & structure and reading & theory only. Voice and instrument courses keep their own tests; Today’s button opens the course’s test.',
+      'B♯ and C (C♭ and B) are the same note: an answer that sounds the same counts, and spelling questions no longer offer the same sound as a decoy.',
+      'Sung questions always listen to the microphone, even with a MIDI keyboard connected (it used to wait for the keyboard).',
+      'Level test on a phone: the progress bar is a thin strip on top instead of a column covering the answers.',
+    ],
+    he: [
+      'בדיקת הרמה שייכת לקורס: בשמיעה ותיאוריה היא בודקת רק גובה צליל והרמוניה, קצב וזמן, זיכרון ומבנה, וקריאה ותיאוריה. בקורסי הקול והכלים יש מבחן משלהם; הכפתור ב־Today פותח את המבחן של הקורס.',
+      'סי דיאז ודו (דו במול וסי) הם אותו צליל: תשובה שנשמעת אותו דבר נחשבת, ושאלות כתיבה כבר לא מציעות את אותו צליל כמסיח.',
+      'שאלות שירה תמיד מקשיבות למיקרופון, גם כשמקלדת MIDI מחוברת (קודם הן חיכו למקלדת).',
+      'בדיקת רמה בטלפון: סרגל ההתקדמות הוא פס דק למעלה במקום עמודה שמסתירה את התשובות.',
+    ],
+  },
+  {
     version: '0.82.0',
     date: '2026-11-13',
     en: [

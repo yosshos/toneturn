@@ -79,7 +79,10 @@ test.describe('lesson', () => {
     await expect(page.locator('[data-find-level]')).toHaveCount(1);
     await page.locator('[data-find-level]').click();
     await expect(page.locator('.level-sheet [data-level-all]')).toBeVisible();
-    await expect(page.locator('.level-sheet [data-domain]')).toHaveCount(7);
+    // Owner 2026-11-13: the ear course's own test — its four areas only (no voice, instrument or creative).
+    await expect(page.locator('.level-sheet [data-domain]')).toHaveCount(4);
+    await expect(page.locator('.level-sheet [data-domain="voice"], .level-sheet [data-domain="instrument"]')).toHaveCount(0);
+    await expect(page.locator('.level-sheet [data-level-all]')).toContainText('The whole course');
   });
 
   test('Voice mode (simulator): hands-free after one Start', async ({ page }) => {

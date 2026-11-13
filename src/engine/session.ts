@@ -132,6 +132,28 @@ function itemXp(s: SessionState, q: Question, r: QuestionRecord, baseXp: number,
   return xp + Math.max(0, Math.round(SCORING.xp.maxSpeedBonus * credit) - (r.replays ?? 0));
 }
 
+const NOTE_PC: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+const spelledPc = (t: string): number | null => {
+  const m = /^([A-G])(♯♯|♭♭|♯|♭|##|bb|#|b)?$/.exec(t.trim());
+  if (!m) return null;
+  const acc = { '♯♯': 2, '##': 2, '♯': 1, '#': 1, '♭♭': -2, bb: -2, '♭': -1, b: -1 }[m[2] ?? ''] ?? 0;
+  return (((NOTE_PC[m[1]] + acc) % 12) + 12) % 12;
+};
+/**
+ * Owner 2026-11-13: B♯ and C (C♭ and B) are the same note — a spelled note, or a line of them, that sounds the
+ * same as the answer counts.
+ */
+export function sameSounds(a: unknown, b: unknown): boolean {
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
+  const xs = a.split(/\s*[–-]\s*/);
+  const ys = b.split(/\s*[–-]\s*/);
+  if (xs.length !== ys.length) return false;
+  return xs.every((x, i) => {
+    const p = spelledPc(x);
+    return p !== null && p === spelledPc(ys[i]);
+  });
+}
+
 /** Grade a musical answer for the current question. Idempotent per turn + question. */
 export function grade(
   s: SessionState,
@@ -147,7 +169,7 @@ export function grade(
   const rec = s.records[questionIndex];
   if (isResolved(rec)) return [s, { kind: 'stale' }];
   const q = s.lesson.questions[questionIndex];
-  const correct = answer === q.answer || (q.kind === 'place' && gradePlace(q, String(answer)).score === 1);
+  const correct = answer === q.answer || (q.kind === 'place' && gradePlace(q, String(answer)).score === 1) || sameSounds(answer, q.answer);
   const accuracy = ev.accuracy ?? (q.kind === 'place' ? gradePlace(q, String(answer)).score : correct ? 1 : 0);
   const attempts: Attempt[] = [
     ...rec.attempts,

@@ -221,9 +221,11 @@ export const PLACEMENT_ORDER: SkillId[] = [
 export const PLACEMENT_DERIVED: Partial<Record<SkillId, SkillId>> = { timing: 'rhythm-reading' };
 
 /** The sections of a placement: all skills, or one domain's; sung skills only with the microphone. */
-export function placementSkills(opts: { singing?: boolean; domain?: DomainId | null; priorities?: DomainId[] | null } = {}): SkillId[] {
+/** `areas`: only these areas — a course's own level test (owner: every course has its own Find my level). */
+export function placementSkills(opts: { singing?: boolean; domain?: DomainId | null; priorities?: DomainId[] | null; areas?: DomainId[] | null } = {}): SkillId[] {
   const dom = opts.domain ? DOMAINS.find((d) => d.id === opts.domain)!.skills : null;
-  const list = PLACEMENT_ORDER.filter((k) => (opts.singing || !SUNG_SKILLS.includes(k)) && (!dom || dom.includes(k) || (k === 'rhythm-reading' && dom.includes('timing'))));
+  const inAreas = (k: SkillId) => !opts.areas?.length || opts.areas.includes(k === 'rhythm-reading' ? 'time' : domainOf(k));
+  const list = PLACEMENT_ORDER.filter((k) => (opts.singing || !SUNG_SKILLS.includes(k)) && inAreas(k) && (!dom || dom.includes(k) || (k === 'rhythm-reading' && dom.includes('timing'))));
   const pr = opts.priorities;
   if (!pr?.length) return list;
   // The player's most important areas are measured first (stable within an area).
@@ -514,7 +516,7 @@ const makeItem = (skill: SkillId, level: number, seed: number, n: number): Quest
 
 export function placementLesson(
   seed: number,
-  opts: { singing?: boolean; domain?: DomainId | null; priorities?: DomainId[] | null; only?: SkillId[]; priors?: Partial<Record<SkillId, number>> } = {},
+  opts: { singing?: boolean; domain?: DomainId | null; priorities?: DomainId[] | null; areas?: DomainId[] | null; only?: SkillId[]; priors?: Partial<Record<SkillId, number>> } = {},
 ): LessonDef {
   // `only`: just these sections (catching up on skills measured since the player's last placement).
   const all = placementSkills(opts);

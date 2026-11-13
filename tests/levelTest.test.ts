@@ -88,3 +88,15 @@ describe('level test sections', () => {
     expect(nextStep({ at: 1, lo: 1, hi: 2, edge: null, takes: 2, retried: [], last: 'not' }, 5)).toBeNull();
   });
 });
+
+describe('a course measures its own areas', () => {
+  it('the ear course placement has no voice, instrument or creative sections', async () => {
+    const { placementSkills } = await import('../src/engine/placement');
+    const { COURSE_AREAS } = await import('../src/engine/courses');
+    const { domainOf } = await import('../src/engine/rating');
+    const ks = placementSkills({ singing: true, areas: COURSE_AREAS.ear });
+    expect(ks.length).toBeGreaterThan(5);
+    for (const k of ks) expect(['pitch', 'time', 'memory', 'reading']).toContain(k === 'rhythm-reading' ? 'time' : domainOf(k));
+    expect(placementSkills({ singing: true }).length).toBeGreaterThan(ks.length);
+  });
+});

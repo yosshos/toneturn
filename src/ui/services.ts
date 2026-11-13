@@ -1,6 +1,7 @@
 // Composition root: real browser adapters, or the labelled simulator (?sim=1).
 
 import { MidiPitchCapture } from '../speech/midi';
+import type { PitchCapture } from '../game/adapters';
 import { PianoEngine } from '../audio/piano';
 import { realClock, type Adapters } from '../game/adapters';
 import { FakeMic, ScriptedPitch, ScriptedTranscriber, type ScriptStep } from '../game/fakes';
@@ -56,12 +57,22 @@ export const setMidiEnabled = (on: boolean) => {
 };
 export const isMidiEnabled = () => midiEnabled;
 
-export function makeAdapters(expected: () => Answer, targetMidi: () => number, targetSeq: () => number[] | null = () => null, say: (() => string | null) | null = null): Adapters {
+/** MIDI for played answers; the microphone whenever the task is to sing (a MIDI keyboard can't sing — owner 2026-11-13). */
+class RoutedPitch implements PitchCapture {
+  constructor(private sung: () => boolean) {}
+  private mic = new BrowserPitchCapture();
+  private midi = new MidiPitchCapture();
+  sing(opts: Parameters<PitchCapture['sing']>[0]) {
+    return (midiEnabled && !this.sung() ? this.midi : this.mic).sing(opts);
+  }
+}
+
+export function makeAdapters(expected: () => Answer, targetMidi: () => number, targetSeq: () => number[] | null = () => null, say: (() => string | null) | null = null, sungNow: () => boolean = () => false): Adapters {
   if (SIMULATED) {
     const sim = new ScriptedTranscriber(SIM_SCRIPT(say), 1200);
     sim.expected = expected;
     // Sung: in tune, then 60 cents flat → retry, then in tune.
-    const pitch = new ScriptedPitch([8, -60, -12, 5, 5, 5], 1500);
+    const pitch = new ScriptedPitch([8, -80, -12, 5, 5, 5], 1500);
     pitch.target = targetMidi;
     pitch.targets = targetSeq;
     return { audio: piano, tts, stt: sim, mic: new FakeMic(), pitch, clock: realClock, simulated: true };
@@ -71,7 +82,7 @@ export function makeAdapters(expected: () => Answer, targetMidi: () => number, t
     tts,
     stt: new WebSpeechTranscriber(),
     mic: new BrowserMicAccess(),
-    pitch: midiEnabled ? new MidiPitchCapture() : new BrowserPitchCapture(),
+    pitch: new RoutedPitch(sungNow),
     knock: new BrowserKnockInput(),
     clock: realClock,
     simulated: false,

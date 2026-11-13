@@ -49,6 +49,10 @@ interface Props {
   onMode: (m: InputMode) => void;
   whatsNew: { unseen: boolean; onSeen: () => void };
   onPlacement: (domain?: DomainId | null) => void;
+  /** The active course's own level test (instrument courses: the playing test; voice: the sung one). */
+  onFindLevel: () => void;
+  /** The areas this course measures (one chip each); empty = the course has one test, opened at once. */
+  levelAreas: DomainId[];
   onMenu: () => void;
   /** Things to resume (placement, last session), the freeze toast, the catch-up card. */
   news: React.ReactNode;
@@ -96,7 +100,7 @@ export const TOTALS: Partial<Record<LessonId, number>> = { 'bflat-two-homes': 3,
  * one small Find my level button. Everything else moved to its own place (Path: topics and practice rooms; Play:
  * puzzles and challenges; Progress: areas and ranks; Settings: account). First run keeps the welcome hero.
  */
-export function Home({ t, settings, progress, streak, onStreak, onPractice, onButtonsInstead, onMode, whatsNew, onPlacement, onMenu, news, assigned, headerExtra, workout, aside, today, startHero, startLessonLink }: Props) {
+export function Home({ t, settings, progress, streak, onStreak, onPractice, onButtonsInstead, onMode, whatsNew, onPlacement, onFindLevel, levelAreas, onMenu, news, assigned, headerExtra, workout, aside, today, startHero, startLessonLink }: Props) {
   const [consentFor, setConsentFor] = useState<LessonId | null>(null);
   const [levelSheet, setLevelSheet] = useState(false);
   const lang = settings.uiLang;
@@ -144,13 +148,13 @@ export function Home({ t, settings, progress, streak, onStreak, onPractice, onBu
                 <button className="btn primary first-run-cta" onClick={() => start(next)}>
                   {t.intake.startBasics}
                 </button>
-                <button className="link start-from-one" onClick={() => onPlacement()}>
+                <button className="link start-from-one" onClick={() => onFindLevel()}>
                   {t.intake.findLevelInstead}
                 </button>
               </>
             ) : (
               <>
-                <button className="btn primary first-run-cta" onClick={() => onPlacement()}>
+                <button className="btn primary first-run-cta" onClick={() => onFindLevel()}>
                   {settings.mode === 'voice' && <MicIcon />}
                   {t.findLevel}
                 </button>
@@ -168,7 +172,7 @@ export function Home({ t, settings, progress, streak, onStreak, onPractice, onBu
           {assigned}
           {workout}
           {today}
-          <button className="find-level-btn" onClick={() => setLevelSheet(true)} data-find-level="1">
+          <button className="find-level-btn" onClick={() => (levelAreas.length > 1 ? setLevelSheet(true) : onFindLevel())} data-find-level="1">
             <CompassIcon /> {t.findLevel}
           </button>
         </>
@@ -184,15 +188,15 @@ export function Home({ t, settings, progress, streak, onStreak, onPractice, onBu
               data-level-all="1"
               onClick={() => {
                 setLevelSheet(false);
-                onPlacement();
+                onFindLevel();
               }}
             >
-              <span>{he ? 'הכול יחד' : 'Everything'}</span>
-              <small>{he ? 'כל התחומים · 20–30 דק׳' : 'All areas · 20–30 min'}</small>
+              <span>{he ? 'כל הקורס' : 'The whole course'}</span>
+              <small>{he ? `${levelAreas.length} תחומים · 15–20 דק׳` : `${levelAreas.length} areas · 15–20 min`}</small>
             </button>
             <p className="ls-or">{t.placementByDomain}</p>
             <div className="ls-areas" role="group" aria-label={t.placementByDomain}>
-              {DOMAINS.map((d) => (
+              {DOMAINS.filter((d) => levelAreas.includes(d.id)).map((d) => (
                 <button
                   key={d.id}
                   className="chip"

@@ -700,12 +700,16 @@ export function App() {
   const startPlacement = (seed: number, def: LessonDef) => openGenerated(def, (st) => adaptPlacement(st, seed), false, { key: PLACEMENT_KEY, title: t.findLevel, seed });
   const openPlacement = (domain?: DomainId | null, fresh = false) => {
     const d = typeof domain === 'string' ? domain : null;
+    // Owner 2026-11-13: "Find my level" belongs to the course — the ear course measures its own areas, not voice or
+    // instrument (the voice and instrument courses have their own tests).
+    const areas = d ? null : COURSE_AREAS[(s.activeCourse ?? 'ear') as CourseId] ?? null;
     const saved = fresh ? null : loadPlacement();
-    if (saved && (saved.lesson.placementDomain ?? null) === d) return resumePlacement(saved);
+    const savedFits = !areas || (saved?.lesson.placementSkills ?? []).every((k) => placementSkills({ singing: true, areas }).includes(k));
+    if (saved && (saved.lesson.placementDomain ?? null) === d && savedFits) return resumePlacement(saved);
     const seed = (Date.now() ^ (Math.random() * 1e9)) >>> 0;
     const skip = gameTierPlacement().skip;
-    const only = skip.length ? placementSkills({ singing: s.mode === 'voice' || d === 'voice', domain: d }).filter((k) => !skip.includes(k)) : undefined;
-    startPlacement(seed, placementLesson(seed, { singing: s.mode === 'voice' || d === 'voice', domain: d, priorities: (s.intake as Intake | null | undefined)?.priorities, priors: measuredPriors(), ...(only?.length ? { only } : {}) }));
+    const only = skip.length ? placementSkills({ singing: s.mode === 'voice' || d === 'voice', domain: d, areas }).filter((k) => !skip.includes(k)) : undefined;
+    startPlacement(seed, placementLesson(seed, { singing: s.mode === 'voice' || d === 'voice', domain: d, areas, priorities: (s.intake as Intake | null | undefined)?.priorities, priors: measuredPriors(), ...(only?.length ? { only } : {}) }));
   };
   /** Catching up: only the sections this player has not been measured on yet. */
   const openCatchUpPlacement = (only: SkillId[]) => {
@@ -1889,6 +1893,8 @@ export function App() {
           }
           whatsNew={{ unseen: news.length > 0, onSeen: () => updateSettings({ seenVersion: APP_VERSION }) }}
           onPlacement={openPlacement}
+          onFindLevel={findLevel}
+          levelAreas={instrumentCourse || s.activeCourse === 'voice' ? [] : COURSE_AREAS[(s.activeCourse ?? 'ear') as CourseId] ?? []}
           onMode={(mode) => updateSettings({ mode })}
           onPractice={(id, consented) => {
             if (consented) updateSettings({ voiceConsent: true });

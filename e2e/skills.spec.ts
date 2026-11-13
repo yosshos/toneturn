@@ -34,7 +34,7 @@ test.describe('placement, Skill Map, review, weekly puzzle', () => {
       }).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['data-start'], childList: true });
     });
     // The topic strip shows what is done, now and left.
-    await expect(page.locator('.topic-strip .ts')).toHaveCount(26); // 0.38: + dictation, instrument, timbre — every skill (transposition, meter, form, expression included) (rhythmic precision rides on rhythm reading), sung ones included (voice)
+    await expect(page.locator('.topic-strip .ts')).toHaveCount(18); // 2026-11-13: the ear course's own areas (pitch, time, memory, reading) — voice, instrument and creative have their own tests
     await expect(page.locator('.topic-strip .ts.done').first()).toBeVisible({ timeout: 120_000 });
     // The meter at the side follows the climb.
     await expect(page.locator('.placement-meter')).toBeVisible();

@@ -1677,6 +1677,14 @@
 .pm-skills span { width: 6px; height: 6px; border-radius: 50%; background: color-mix(in srgb, var(--ink) 18%, transparent); }
 .pm-skills span.done { background: var(--c); }
 .pm-skills span.now { background: var(--c); box-shadow: 0 0 6px var(--c); }
+/* Owner 2026-11-13: on a phone the side column covered answers and buttons — there it is a thin strip on top. */
+@media (max-width: 720px) {
+  .lesson.with-meter { padding-inline-end: 0; }
+  .placement-meter { position: static; transform: none; width: auto; max-width: 100%; margin: 2px auto 4px; grid-auto-flow: column; align-items: center; justify-content: center; gap: 8px; padding: 4px 10px; border-radius: 12px; box-shadow: none; }
+  .pm-track { flex-direction: row; gap: 3px; }
+  .pm-step { width: 16px; height: 7px; border-radius: 4px; }
+  .pm-skills { grid-auto-flow: column; margin-top: 0; }
+}
 .pm-line { margin: 4px auto 0; max-width: 520px; padding: 8px 14px; border-radius: 14px; text-align: center; font-weight: 700; background: var(--card); animation: pmLine .5s ease both; }
 .pm-line.up, .pm-line.up2 { background: linear-gradient(90deg, color-mix(in srgb, var(--gold) 28%, var(--card)), var(--card)); }
 .pm-line.up2 { animation: pmLine .5s ease both, pmWiggle .6s .5s ease; }

@@ -32,20 +32,15 @@ export function spellAbove(root: Sp, num: number, semis: number): Sp | null {
   if (a > 6) a -= 12;
   return Math.abs(a) <= 2 ? { l, a } : null;
 }
-/** Same pitch, the neighbouring letter (the enharmonic every student confuses). */
-function enharmonic(s: Sp, dir: 1 | -1): Sp | null {
-  const l = (s.l + dir + 7) % 7;
-  let a = (((spPc(s) - NAT[l]) % 12) + 12) % 12;
-  if (a > 6) a -= 12;
-  return Math.abs(a) <= 2 ? { l, a } : null;
-}
-const sameSp = (x: Sp, y: Sp) => x.l === y.l && x.a === y.a;
 
-/** Four spelled choices: the answer, its wrong-letter enharmonic, and a semitone off on the right letter. */
+/**
+ * Four spelled choices: the answer and three different pitches (a semitone off on the right letter, the neighbouring
+ * letters). Owner 2026-11-13: never the answer's enharmonic (B♯ next to C) — the same sound is not a wrong answer.
+ */
 function noteChoices(rnd: () => number, ans: Sp): Sp[] {
-  const cands = [enharmonic(ans, 1), enharmonic(ans, -1), { l: ans.l, a: ans.a + 1 }, { l: ans.l, a: ans.a - 1 }, { l: (ans.l + 1) % 7, a: ans.a }, { l: (ans.l + 6) % 7, a: ans.a }].filter((c): c is Sp => !!c && Math.abs(c.a) <= 2 && !sameSp(c, ans));
+  const cands = [{ l: ans.l, a: ans.a + 1 }, { l: ans.l, a: ans.a - 1 }, { l: (ans.l + 1) % 7, a: ans.a }, { l: (ans.l + 6) % 7, a: ans.a }, { l: (ans.l + 1) % 7, a: ans.a - 1 }, { l: (ans.l + 6) % 7, a: ans.a + 1 }, { l: (ans.l + 2) % 7, a: ans.a }].filter((c) => Math.abs(c.a) <= 2 && spPc(c) !== spPc(ans));
   const out: Sp[] = [ans];
-  for (const c of shuffleR(rnd, cands)) if (out.length < 4 && !out.some((o) => spEn(o) === spEn(c))) out.push(c);
+  for (const c of shuffleR(rnd, cands)) if (out.length < 4 && !out.some((o) => spPc(o) === spPc(c))) out.push(c);
   return shuffleR(rnd, out);
 }
 function spChoicesQ(ans: Sp, opts: Sp[]) {
@@ -196,13 +191,12 @@ TOPIC_GEN['chord-spelling'] = {
       kind = pickR(rnd, CHORD_LEVELS[level - 1]);
       ns = spellChord(root, kind);
     } while (!ns || ns.some((n) => Math.abs(n.a) > 1 + (level === 3 ? 1 : 0)));
-    // Decoys: one tone respelled enharmonically, one tone a semitone off, the third/seventh of another quality.
+    // Decoys: one tone a semitone off (never an enharmonic respelling — the same sounds are not a wrong answer).
     const decoys: Sp[][] = [];
-    const tryAdd = (d: Sp[] | null) => d && chordLine(d) !== chordLine(ns!) && !decoys.some((x) => chordLine(x) === chordLine(d)) && decoys.length < 3 && decoys.push(d);
-    for (let k = 1; k < ns.length && decoys.length < 3; k++) {
+    const pcs = (d: Sp[]) => d.map(spPc).join(',');
+    const tryAdd = (d: Sp[] | null) => d && pcs(d) !== pcs(ns!) && !decoys.some((x) => pcs(x) === pcs(d)) && decoys.length < 3 && decoys.push(d);
+    for (let k = 0; k < 4 * ns.length && decoys.length < 3; k++) {
       const i = 1 + ((k + Math.floor(rnd() * ns.length)) % (ns.length - 1));
-      const e = enharmonic(ns[i], rnd() < 0.5 ? 1 : -1);
-      if (e) tryAdd(ns.map((x, j) => (j === i ? e : x)));
       const off = { l: ns[i].l, a: ns[i].a + (rnd() < 0.5 ? 1 : -1) };
       if (Math.abs(off.a) <= 2) tryAdd(ns.map((x, j) => (j === i ? off : x)));
     }

@@ -91,6 +91,8 @@ interface Props {
   onSettings?: (p: Partial<Settings>) => void;
 }
 
+/** A task that measures the voice itself (singing in tune, technique, agility): always sung, into the microphone. */
+const sungSkill = (q: Question) => !(q.kind === 'sing-seq' && q.play) && (['singing', 'technique', 'agility'].includes(questionSkill(q)) || /^p:(singing|technique|agility):/.test(q.id));
 const targetMidiOf = (q: Question) => (q.kind === 'degree' || q.kind === 'sing' || q.kind === 'note-name' ? q.targetMidi : q.kind === 'sing-seq' || q.kind === 'sing-run' ? q.midis[0] : 60);
 
 export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit, onAgain, onNext, onProgress, lessonDef, adapt, resume, onStep, onDone, nextLabel, secondary, ratings, playerName, onSettings, brief, briefSeen, onHideTopic, onKeepStep, recent }: Props) {
@@ -116,6 +118,10 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
       () => {
         const q = c?.getView().question;
         return q ? answerWord(q, q.answer, 'en') : null;
+      },
+      () => {
+        const q = c?.getView().question;
+        return !!q && sungSkill(q);
       },
     );
     c = new LessonController(
@@ -310,7 +316,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
   const placeRec = isPlace ? v.session.records[v.index] : null;
   const placeLast = placeRec?.attempts.length ? String(placeRec.attempts[placeRec.attempts.length - 1].answer) : null;
   // "Play", not "Sing": the player's instrument, or a line the question asks to play back on an instrument (guitar course).
-  const playing = (!!settings.instrument && !['voice'].includes(settings.instrument)) || (q.kind === 'sing-seq' && !!q.play);
+  const playing = ((!!settings.instrument && !['voice'].includes(settings.instrument)) && !sungSkill(q)) || (q.kind === 'sing-seq' && !!q.play);
   const showKeypad = v.stage === 'question' && !paused && !v.error && isSeq && (v.mode === 'buttons' || v.needsListenTap);
   const showRecord = v.stage === 'question' && !paused && !v.error && isSing && (v.mode === 'buttons' || v.needsListenTap);
   const awaiting = v.phase === 'listening';
