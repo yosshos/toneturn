@@ -251,8 +251,8 @@ function simulatedFrames(item: VocalItem, targets: number[], noteIdx: number): S
  * and the notes lighting up in time (null = sung freely: holds, glides, harmony over the app's sound).
  */
 export function pulseOf(item: VocalItem, targets: number[]): Pulse | null {
-  if (targets.length < 2 || item.ear || item.reference === 'during') return null;
-  if (item.kind === 'melody' || item.kind === 'leap' || item.kind === 'rhythmic' || item.kind === 'staccato') {
+  if (targets.length < 2 || item.reference === 'during') return null;
+  if (!item.ear && (item.kind === 'melody' || item.kind === 'leap' || item.kind === 'rhythmic' || item.kind === 'staccato')) {
     const d = item.bpm ? 60 / item.bpm / (item.perBeat ?? 1) : 0.55;
     const beat = item.bpm ? 60 / item.bpm : d;
     return { beat, onsets: targets.map((_, i) => i * d), countIn: 4, length: targets.length * d };
@@ -267,8 +267,21 @@ export function pulseOf(item: VocalItem, targets: number[]): Pulse | null {
     const onsets = durs.map((_, i) => durs.slice(0, i).reduce((a, b) => a + b, 0) * beat);
     return { beat, onsets, countIn: 4, length: durs.reduce((a, b) => a + b, 0) * beat };
   }
-  return null;
+  // Owner 2026-11-13: every other phrase of several notes (by ear, terraced, accents, arcs, breath phrases, vibrato
+  // on chosen notes) is sung on the grid its reference was played on — one reference note per sung note.
+  if (FREE_KINDS.includes(item.kind)) return null;
+  const ref = referenceEvents(item, targets).events.filter((e) => !e.perc);
+  if (ref.length !== targets.length || ref.some((e, i) => i > 0 && e.start <= ref[i - 1].start)) return null;
+  const onsets = ref.map((e) => e.start - ref[0].start);
+  const iois = onsets.slice(1).map((o, i) => o - onsets[i]).sort((a, b) => a - b);
+  const step = iois[0];
+  const beat = step < 0.4 ? 2 * step : step;
+  const last = ref[ref.length - 1];
+  return { beat, onsets, countIn: 4, length: last.start - ref[0].start + last.duration };
 }
+
+/** Sung freely, never on a click: slides, sirens, ornaments, single held notes. */
+const FREE_KINDS: VocalItem['kind'][] = ['glide', 'siren', 'ornament', 'hold', 'straight', 'messa', 'dynamic', 'breath-hold', 'fine-tune', 'edge', 'harmony-hold', 'harmony-line', 'range', 'vibrato-register', 'micro', 'inflect'];
 
 /** The reference: what the app plays before (or under) the take. */
 function referenceEvents(item: VocalItem, targets: number[]): { events: NoteEvent[]; length: number } {

@@ -18,6 +18,18 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.82.0',
+    date: '2026-11-13',
+    en: [
+      'Singing in lessons: a sung melody or run gets a count-in, the click and the now-chip, and is graded on time too (half the grade, loosely). A sung note up to 60 cents off counts — you are told which way. After a second miss a sung item waits for Continue instead of rolling on.',
+      'Singing in Practice: more phrases are sung on the pulse (by ear, terraced, accents, arcs, breath phrases, vibrato on chosen notes). Up to the middle of the course a melody is graded mostly on the right notes and on time; intonation is shown and taught with gentler bands.',
+    ],
+    he: [
+      'שירה בשיעורים: מנגינה או ראן ששרים מקבלים ספירה, קליק וסימון "עכשיו", ונבדקים גם על זמן (חצי מהציון, בסלחנות). צליל ששרים עד 60 סנט ממנו נחשב — ונאמר לאיזה כיוון. אחרי טעות שנייה בשירה מחכים ל"המשך" במקום לעבור לבד.',
+      'שירה בתרגול: עוד משפטים נשירים על הפולס (מהשמיעה, מדרגות, הדגשות, קשתות, משפטי נשימה, ויברטו על צלילים נבחרים). עד אמצע הקורס מנגינה נבדקת בעיקר על הצלילים הנכונים ועל הזמן; הכיוון מוצג ונלמד בטווחים סלחניים יותר.',
+    ],
+  },
+  {
     version: '0.81.0',
     date: '2026-11-13',
     en: ['Guitar, bass and drums get the new level test in sections, like the piano: guitar — hands, chords, rhythm, lead, reading, ear (+ jazz comping); bass — hands, time and pocket, chord tones, walking, reading, ear; drums — hands, grooves, fills, reading, independence, ear. One take per step, a clean take jumps ahead, a miss moves on.'],

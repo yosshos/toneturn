@@ -14,6 +14,7 @@ import { TalkToggle } from './TalkToggle';
 import { PlacementMeter } from './PlacementMeter';
 import { GrandStaff, NoteStaff } from './NoteViews';
 import { PitchTrace } from './Vocal';
+import { PulseNotes } from './PulseNotes';
 import { reportPuzzle } from '../cloud/compete';
 import { fitLessonToRange, fitQuestions } from '../engine/voiceFit';
 import { keyboardIsHint, noHints, withAids } from '../engine/aids';
@@ -439,9 +440,13 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
               <Tuner v={v} />
             ) : q.kind === 'sing-seq' ? (
               // sight-singing (a written line): the degrees would give the answer away — shown only with the result
-              q.show && !v.feedback ? null : <SeqTargets degrees={q.degrees} notes={v.feedback?.seqNotes} />
+              <>
+                {v.singPulse && <PulseNotes clock={v.singPulse} count={q.midis.length} labels={null} />}
+                {q.show && !v.feedback ? null : <SeqTargets degrees={q.degrees} notes={v.feedback?.seqNotes} />}
+              </>
             ) : q.kind === 'sing-run' ? (
               <>
+                {v.singPulse && <PulseNotes clock={v.singPulse} count={q.midis.length} labels={null} />}
                 <RunTargets offsets={q.run.offsets} notes={v.feedback?.seqNotes} caption={v.caption} />
                 {v.feedback?.seqNotes && v.runFrames && v.runFrames.length > 0 && <PitchTrace frames={v.runFrames} targets={q.midis} seconds={q.midis.length / q.run.nps + 0.5} label={t.runTrace} />}
               </>

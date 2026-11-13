@@ -370,7 +370,7 @@ export interface MelodyMetrics {
 
 const fold = (c: number) => ((((c + 600) % 1200) + 1200) % 1200) - 600;
 
-export function melodyMetrics(frames: SungFrame[], targets: number[], beatSec?: number, onsets?: number[]): MelodyMetrics {
+export function melodyMetrics(frames: SungFrame[], targets: number[], beatSec?: number, onsets?: number[], hitCents = 50): MelodyMetrics {
   const segs = segmentNotes(frames);
   const empty: MelodyMetrics = { unclear: true, notes: targets.map((t) => ({ target: t, cents: null, settleMs: null, overshoot: 0, start: null })), hit: 0, intonation: 0, transitionMs: 0, overshoot: 0, legato: 0, timingMs: null };
   if (!segs.length) return empty;
@@ -413,7 +413,7 @@ export function melodyMetrics(frames: SungFrame[], targets: number[], beatSec?: 
     const overshoot = dir && early.length ? Math.max(0, Math.max(...early)) : 0;
     notes.push({ target: targets[i], cents: fold((seg.midi - targets[i]) * 100), settleMs: settle, overshoot, start: seg.start });
   }
-  const hits = notes.filter((n) => n.cents !== null && Math.abs(n.cents) <= 50);
+  const hits = notes.filter((n) => n.cents !== null && Math.abs(n.cents) <= hitCents);
   const later = notes.slice(1).filter((n) => n.settleMs !== null);
   let joins = 0;
   let smooth = 0;
@@ -1409,20 +1409,35 @@ export function gradeGlide(frames: SungFrame[], from: number, to: number): TakeG
   );
 }
 
+/**
+ * Owner 2026-11-13: "it stops me on an eighth of a tone — the most important part is timing". Up to the middle
+ * of the course a melody is graded on the right notes and on landing with the pulse; intonation and smooth joins
+ * are shown and taught, with gentler bands, and weigh less. Harder items keep the strict bands.
+ */
+export const LENIENT_BELOW = 1300;
+const LENIENT = { hitCents: 65, intonation: [15, 30, 50] as [number, number, number], transitionMs: [150, 300, 550] as [number, number, number], timingMs: [60, 120, 220] as [number, number, number] };
+
+/** The grid a melodic item is sung on (same as the take's pulse): seconds per note. */
+export function melodyGrid(item: VocalItem): number {
+  if (item.kind === 'scale') return 0.42;
+  return item.bpm ? 60 / item.bpm / (item.perBeat ?? 1) : 0.55;
+}
+
 export function gradeMelody(item: VocalItem, frames: SungFrame[], targets: number[]): TakeGrade {
-  const beatSec = item.bpm ? 60 / item.bpm / (item.perBeat ?? 1) : undefined;
-  const m = melodyMetrics(frames, targets, item.kind === 'rhythmic' || item.kind === 'staccato' ? beatSec : undefined);
+  const lenient = (item.difficulty ?? 1200) < LENIENT_BELOW;
+  // Every melody is sung on a pulse now (count-in, click, now-chip), so every melody is timed.
+  const m = melodyMetrics(frames, targets, item.ear ? (item.kind === 'rhythmic' || item.kind === 'staccato' ? melodyGrid(item) : undefined) : melodyGrid(item), undefined, lenient ? LENIENT.hitCents : 50);
   if (m.unclear) return { ...UNCLEAR, melody: m };
-  const out: MetricScore[] = [M('hit', m.hit * 100, '%', m.hit, 2.5), M('intonation', m.intonation, '¢', bandScore(m.intonation, BANDS.intonation), 1.5)];
+  const out: MetricScore[] = [M('hit', m.hit * 100, '%', m.hit, 2.5), M('intonation', m.intonation, '¢', bandScore(m.intonation, lenient ? LENIENT.intonation : BANDS.intonation), lenient ? 0.75 : 1.5)];
   if (item.kind === 'staccato') {
     const scoops = m.notes.filter((n) => n.settleMs !== null).map((n) => n.settleMs!);
-    out.push(M('scoop', mean(scoops), 'ms', bandScore(mean(scoops), [60, 120, 220]), 2));
+    out.push(M('scoop', mean(scoops), 'ms', bandScore(mean(scoops), lenient ? [90, 180, 320] : [60, 120, 220]), lenient ? 1 : 2));
   } else {
-    out.push(M('transition', m.transitionMs, 'ms', bandScore(m.transitionMs, BANDS.transitionMs), 1.5));
-    if (item.kind === 'leap') out.push(M('overshoot', m.overshoot, '¢', bandScore(m.overshoot, BANDS.overshoot), 1));
-    if (item.kind === 'melody' || item.kind === 'scale') out.push(M('legato', m.legato * 100, '%', m.legato, 1));
+    out.push(M('transition', m.transitionMs, 'ms', bandScore(m.transitionMs, lenient ? LENIENT.transitionMs : BANDS.transitionMs), lenient ? 0.75 : 1.5));
+    if (item.kind === 'leap') out.push(M('overshoot', m.overshoot, '¢', bandScore(m.overshoot, BANDS.overshoot), lenient ? 0.5 : 1));
+    if (item.kind === 'melody' || item.kind === 'scale') out.push(M('legato', m.legato * 100, '%', m.legato, lenient ? 0.5 : 1));
   }
-  if (m.timingMs !== null) out.push(M('timing', m.timingMs, 'ms', bandScore(m.timingMs, BANDS.timingMs), 2));
+  if (m.timingMs !== null) out.push(M('timing', m.timingMs, 'ms', bandScore(m.timingMs, lenient ? LENIENT.timingMs : BANDS.timingMs), lenient ? 2.5 : 2));
   const g = finish(out, { melody: m });
   // Wrong notes dominate: how well you sing the wrong scale should not earn a pass.
   return { ...g, score: Math.round(g.score * (0.4 + 0.6 * m.hit) * 1000) / 1000 };

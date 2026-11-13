@@ -28,6 +28,7 @@ import {
   type Stimulus,
 } from '../engine/lesson';
 import { evaluateSung, type SungResult } from '../engine/sing';
+import { SEQ_TOL_CENTS, SING_PASS_CENTS, seqPulse, seqTiming, type SeqPulse } from '../engine/singPulse';
 import { gradeSungSequence } from '../engine/memory';
 import { gradeReading,
   gradeHolds, readTimeline, countInPulses, meterOf, onsetBeats } from '../engine/rhythm';
@@ -115,6 +116,8 @@ export interface LessonView {
   readStartPerf: number | null;
   /** Live tuner reading while a singing capture is open. */
   singLive: SingLive | null;
+  /** A sung sequence's grid while it is sung: performance.now() of beat 1 (count-in before it). */
+  singPulse?: { pulse: SeqPulse; zero: number } | null;
   caption: string | null;
   /** The last sung run (for the pitch trace under the contour). */
   runFrames?: SungFrame[] | null;
@@ -224,6 +227,7 @@ export class LessonController {
       error: null,
       needsListenTap: false,
       singLive: null,
+      singPulse: null,
       beat: null,
       listen: null,
       readTaps: 0,
@@ -728,8 +732,10 @@ export class LessonController {
         await this.ad.clock.sleep(ev.remark ? 1400 : 700, signal);
         return true;
       }
-      await this.say(sung ? singFeedbackText(sung, l) : correctText(q, l, g.firstTry, this.cfg.naming), signal);
-      if (ev.remark) await this.say(ev.remark, signal);
+      // A close sung note counts: say that (not "try a bit lower").
+      const closeSung = !!sung && sung.status !== 'accurate' && !!ev.remark;
+      await this.say(closeSung ? ev.remark! : sung ? singFeedbackText(sung, l) : correctText(q, l, g.firstTry, this.cfg.naming), signal);
+      if (ev.remark && !closeSung) await this.say(ev.remark, signal);
       await this.ad.clock.sleep(500, signal);
       return true;
     }
@@ -777,6 +783,15 @@ export class LessonController {
     // Hear your answer next to the right one (when it can be played), else the teaching gesture.
     if (cmp) await this.playStim(cmp, signal);
     await this.ad.clock.sleep(400, signal);
+    if (q.kind === 'sing' || q.kind === 'sing-seq' || q.kind === 'sing-run') {
+      // Owner 2026-11-13: after a second miss a sung item rolled on into the next one by itself. Wait for Continue.
+      this.patch({ awaitNext: true });
+      for (;;) {
+        const w = await this.waitFor(signal);
+        if (w.kind === 'next') break;
+      }
+      this.patch({ awaitNext: false });
+    }
     return true;
   }
 
@@ -852,7 +867,12 @@ export class LessonController {
         continue;
       }
       this.emit('sung', sung);
-      if (await this.evaluate(sung.status, signal, sung, { timeMs: this.elapsed(voicedAt), modality: 'sing' })) return;
+      // Owner 2026-11-13: a few cents off must not stop the singer. Close counts (the direction is still said).
+      const off = Math.abs(sung.cents ?? 999);
+      const close = (sung.status === 'sharp' || sung.status === 'flat') && off <= SING_PASS_CENTS;
+      const high = sung.status === 'sharp';
+      const remark = close ? (l === 'en' ? `Counted — a little ${high ? 'high' : 'low'} (${off}¢)` : `נחשב — קצת ${high ? 'גבוה' : 'נמוך'} (${off} סנט)`) : undefined;
+      if (await this.evaluate(close ? 'accurate' : sung.status, signal, sung, { timeMs: this.elapsed(voicedAt), modality: 'sing', remark })) return;
     }
   }
 
@@ -878,17 +898,50 @@ export class LessonController {
         this.restartClockAtListen = false;
       }
       let voicedAt: number | null = null;
+      // Owner 2026-11-13 (timing cue always): a bar of count-in, the click, and the now-chip on the screen.
+      const pulse = q.kind === 'sing-seq' && q.play ? null : seqPulse(q);
+      const lead = pulse ? pulse.countIn * pulse.beat : 0;
+      const clicks = new AbortController();
+      signal.addEventListener('abort', () => clicks.abort(), { once: true });
+      let capT0 = 0;
+      let zeroPerf: number | null = null;
       const res = await this.ad.pitch.sing({
         signal,
-        ignoreFirstMs: 450,
-        maxMs: q.kind === 'sing-run' ? (q.midis.length / q.run.nps) * 1000 * 2 + 4000 : q.degrees.length * 1200 + 3500,
-        silenceMs: 4500,
+        ignoreFirstMs: pulse ? Math.max(450, lead * 1000 - 350) : 450,
+        maxMs: (q.kind === 'sing-run' ? (q.midis.length / q.run.nps) * 1000 * 2 + 4000 : q.degrees.length * 1200 + 3500) + lead * 1000,
+        silenceMs: 4500 + lead * 1000,
         endSilenceMs: q.kind === 'sing-run' ? 900 : 1100,
         hopMs: q.kind === 'sing-run' ? runHopMs(q.run.nps) : undefined,
         onCapturing: () => {
           if (this.s.turn !== turn) return;
-          this.ad.audio.cue('ready');
+          capT0 = this.now();
+          if (!pulse) this.ad.audio.cue('ready');
           this.patch({ mic: 'capturing' });
+          if (pulse) {
+            const beats = Math.ceil(pulse.length / pulse.beat) + 1;
+            const tl = {
+              clicks: [
+                ...Array.from({ length: pulse.countIn }, (_, k) => ({ t: k * pulse.beat, accent: k === 0, count: true })),
+                ...Array.from({ length: beats }, (_, b) => ({ t: lead + b * pulse.beat, accent: b % 4 === 0, soft: true })),
+              ],
+              wood: [],
+              responseAt: lead,
+              responseEnd: lead + beats * pulse.beat,
+            };
+            let n = 0;
+            void this.ad.audio
+              .playTimeline(
+                tl,
+                clicks.signal,
+                (i, accent) => this.patch({ beat: { i, accent, n: n++, count: i < pulse.countIn ? pulse.countIn - i : 0 } }),
+                (perf) => {
+                  zeroPerf = perf;
+                  this.patch({ singPulse: { pulse, zero: perf } });
+                },
+              )
+              .catch(() => {})
+              .finally(() => this.patch({ beat: null }));
+          }
         },
         onFrame: (f) => {
           if (this.s.turn !== turn) return;
@@ -898,9 +951,10 @@ export class LessonController {
           }
         },
       });
+      clicks.abort();
       throwIfAborted(signal);
       if (this.s.turn !== turn) return;
-      this.patch({ mic: 'off' });
+      this.patch({ mic: 'off', beat: null, singPulse: null });
       if (res.kind === 'aborted') throw new Cancelled();
       if (res.kind === 'error') {
         this.s = noteUnclear(this.s, turn);
@@ -908,7 +962,9 @@ export class LessonController {
         await this.waitFor(signal);
         continue;
       }
-      const g = res.kind !== 'frames' ? null : q.kind === 'sing-run' ? gradeRun(res.frames, q.midis, q.run.nps) : gradeSungSequence(res.frames, q.midis);
+      const g = res.kind !== 'frames' ? null : q.kind === 'sing-run' ? gradeRun(res.frames, q.midis, q.run.nps) : gradeSungSequence(res.frames, q.midis, SEQ_TOL_CENTS);
+      // Time against the grid (beat 1 in the frames' clock, the microphone's delay taken out).
+      const timing = pulse && zeroPerf !== null && res.kind === 'frames' && !this.ad.simulated ? seqTiming(res.frames, pulse, (zeroPerf - capT0 + (this.cfg.micLatencyMs ?? 0)) / 1000) : null;
       if (!g || g.unclear) {
         this.s = noteUnclear(this.s, turn);
         this.silentCount++;
@@ -928,8 +984,13 @@ export class LessonController {
         this.patch({ caption: summary || null, runFrames: res.kind === 'frames' ? res.frames : null });
       }
       const items = q.kind === 'sing-seq' && res.kind === 'frames' ? sungMelodyRemarks(res.frames, q.midis) : [];
-      const remark = items.length ? melodyRemarkText(items, l) : undefined;
-      if (await this.evaluate(g.pass ? 'accurate' : 'wrong', signal, undefined, { timeMs: this.elapsed(voicedAt), modality: 'sing', accuracy: g.accuracy, seqNotes: statuses, remark })) return;
+      // Timing is half the grade and must hold for a pass (loose window, at least half the notes).
+      const timeShare = timing ? timing.inTime / timing.total : null;
+      const timeLine = timing ? (l === 'en' ? `In time: ${timing.inTime}/${timing.total}` : `בזמן: ${timing.inTime}/${timing.total}`) : null;
+      const remark = [timeLine, items.length ? melodyRemarkText(items, l) : null].filter(Boolean).join(' · ') || undefined;
+      const pass = g.pass && (timeShare === null || timeShare >= 0.5);
+      const accuracy = timeShare === null ? g.accuracy : Math.round((0.5 * g.accuracy + 0.5 * timeShare) * 1000) / 1000;
+      if (await this.evaluate(pass ? 'accurate' : 'wrong', signal, undefined, { timeMs: this.elapsed(voicedAt), modality: 'sing', accuracy, seqNotes: statuses, remark, precision: timeShare ?? undefined })) return;
     }
   }
 

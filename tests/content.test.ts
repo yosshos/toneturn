@@ -179,7 +179,7 @@ describe('controller with new lesson kinds', () => {
   });
 
   it('singing: accurate, flat→retry→accurate, unclear does not cost an attempt', async () => {
-    const { c, tts, pitch } = run('sing-home-five', [], [5, -60, 10, { noise: true }, { silence: true }, 0]);
+    const { c, tts, pitch } = run('sing-home-five', [], [5, -80, 10, { noise: true }, { silence: true }, 0]);
     await c.start();
     await until(() => c.getView().stage === 'complete');
     const recs = c.getView().session.records;
@@ -209,8 +209,20 @@ describe('controller with new lesson kinds', () => {
   it('three wrong sung attempts reveal and play the target', async () => {
     const { c } = run('sing-home-five', [], [200, -200, 300, 0, 0]);
     await c.start();
-    await until(() => c.getView().stage === 'complete');
+    // A missed sung item waits for Continue (it used to roll on into the next one by itself).
+    await until(() => !!c.getView().awaitNext);
     expect(c.getView().session.records[0].outcome).toBe('revealed');
+    expect(c.getView().index).toBe(0);
+    c.next();
+    await until(() => c.getView().stage === 'complete');
+  });
+
+  it('a sung note a little off (within 60 cents) counts, and says so', async () => {
+    const { c, tts } = run('sing-home-five', [], [45, -55, 0]);
+    await c.start();
+    await until(() => c.getView().stage === 'complete');
+    expect(c.getView().session.records.map((r) => r.outcome)).toEqual(['correct', 'correct', 'correct']);
+    expect(tts.spoken.some((x) => /Counted — a little high/.test(x))).toBe(true);
   });
 
   it('prompts name the task', () => {
