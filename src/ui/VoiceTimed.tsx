@@ -3,7 +3,7 @@
 // is measured once (LatencyCalibrate) and removed from every onset. Only pitch, time and loudness are graded.
 
 import '../voicecourse.css';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Icon } from './icons';
 import { LatencyCalibrate } from './LatencyCalibrate';
 import { piano, SIMULATED, store } from './services';
@@ -65,7 +65,18 @@ export function restTakes(takes: VocalTake[]): RestTake[] {
   return takes.map((tk) => ({ at: tk.at, secs: vocalLevelByRef(tk.level)?.items.find((x) => x.id === tk.item)?.seconds ?? 6, ...(typeof tk.m?.stability === 'number' ? { stability: tk.m.stability } : {}) }));
 }
 
-export function TimedSession({ t, settings, range, level, items, onExit, onProgress, onSettings }: { t: Strings; settings: Settings; range: VoiceRange; level: number; items: VocalItem[]; onExit: () => void; onProgress: (p: Progress) => void; onSettings: (p: Partial<Settings>) => void }) {
+/** A level-test take (0.84): one item, graded once; "next" hands the score to the test instead of the level flow. */
+export interface VoiceTestMode {
+  title: string;
+  head: ReactNode;
+  onTake: (score: number, pass: number) => void;
+  /** "Almost": the same step again starts at once. */
+  autoStart?: boolean;
+}
+
+const needsTimingOf = (item: VocalItem) => item.kind === 'time' || (item.kind === 'song' && !!(item.song?.rhythm || item.song?.feel || item.song?.interpret)) || item.kind === 'scat';
+
+export function TimedSession({ t, settings, range, level, items, onExit, onProgress, onSettings, test }: { t: Strings; settings: Settings; range: VoiceRange; level: number; items: VocalItem[]; onExit: () => void; onProgress: (p: Progress) => void; onSettings: (p: Partial<Settings>) => void; test?: VoiceTestMode }) {
   const lang: Lang = settings.uiLang === 'en' ? 'en' : 'he';
   const L = (b: { en: string; he: string }) => b[lang];
   const [i, setI] = useState(0);
@@ -89,6 +100,10 @@ export function TimedSession({ t, settings, range, level, items, onExit, onProgr
   const item = items[i];
   const lvDef = vocalLevelByRef(level);
   useEffect(() => () => (ctl.current?.abort(), piano.stopAll()), []);
+  useEffect(() => {
+    if (test?.autoStart && item && lvDef && (calDone || !needsTimingOf(item))) void run();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // The song plan in the singer's range (tempo of the item, or slower in a loop).
   const { plan, span } = useMemo(() => (item?.song?.mine ? (mine ? { plan: mine.plan, span: { from: 0, to: mine.plan.bars - 1 } } : { plan: null, span: null }) : item ? songSpan(item, range, loop) : { plan: null, span: null }), [item, range, loop, mine]);
@@ -136,7 +151,7 @@ export function TimedSession({ t, settings, range, level, items, onExit, onProgr
     setPhase('result');
     piano.cue(tk.grade.unclear ? 'wrong' : tk.grade.score >= lvDef.pass ? 'correct' : 'wrong');
     // A loop is practice: only whole takes count for the level.
-    if (!tk.grade.unclear && !loop) {
+    if (!tk.grade.unclear && !loop && !test) {
       // SPEC-MY-SONG: the stored song keeps the singer's last score.
       if (item.song?.mine && mine?.id) void noteSongScore(mine.id, 'voice', tk.grade.score);
       const m: VocalTake['m'] = {};
@@ -266,10 +281,11 @@ export function TimedSession({ t, settings, range, level, items, onExit, onProgr
         <button className="icon-btn" onClick={() => (ctl.current?.abort(), piano.stopAll(), onExit())} aria-label={L(VT.back)}>
           <span className="flip-rtl">←</span>
         </button>
-        <h1>{title}</h1>
+        <h1>{test ? test.title : title}</h1>
       </header>
+      {test?.head}
       <p className="field-hint">
-        {family} · {fill(L(VT.itemOf), { i: i + 1, n: items.length })}
+        {family}{!test && ` · ${fill(L(VT.itemOf), { i: i + 1, n: items.length })}`}
         {songTitle && ` · ${songTitle}`}
         {loop && ` · ${fill(L(VT.phrase), { n: loop.phrase + 1 })} · ${Math.round(loop.scale * 100)}%`}
       </p>
@@ -358,7 +374,19 @@ export function TimedSession({ t, settings, range, level, items, onExit, onProgr
             ■ {L(VT.stop)}
           </button>
         )}
-        {phase === 'result' && take && (
+        {phase === 'result' && take && test && (
+          <>
+            {take.grade.unclear && (
+              <button className="btn ghost" onClick={() => void run()}>
+                ↻ {L(VT.retry)}
+              </button>
+            )}
+            <button className="btn mega" onClick={() => test.onTake(take.grade.unclear ? 0 : take.grade.score, lvDef.pass)}>
+              {L(VT.next)} <span className="flip-rtl">→</span>
+            </button>
+          </>
+        )}
+        {phase === 'result' && take && !test && (
           <>
             {/* Songs: loop the weakest phrase slower, then at full tempo, then the whole song again (piece-coach ladder). */}
             {take.song && !item.song?.recital && !item.song?.rubato && !item.song?.mine && item.song?.freeUntil === undefined && !loop && weak && weak.score < need && plan && plan.phrases.length > 1 && (

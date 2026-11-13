@@ -59,7 +59,7 @@ export const VT = {
   approachLine: { en: 'Approached by a half step: {p}%', he: 'גישה בחצי טון: {p}%' },
   chordsNow: { en: 'Chords', he: 'אקורדים' },
   probe: { en: 'Find my voice level', he: 'מציאת הרמה בשירה' },
-  probeHint: { en: 'About 2½ minutes: your path then starts where you are.', he: 'כשתיים וחצי דקות: המסלול יתחיל איפה שאתם נמצאים.' },
+  probeHint: { en: 'Short sections — in tune, time, a song, ear, reading, scales, agility. Your path then starts where you are.', he: 'חלקים קצרים — אינטונציה, זמן, שיר, אוזן, קריאה, סולמות, גמישות. המסלול יתחיל איפה שאתם נמצאים.' },
   // P2
   appTurn: { en: 'The band’s turn — listen', he: 'התור של הלהקה — הקשיבו' },
   motifListen: { en: 'Listen to the motif…', he: 'הקשיבו למוטיב…' },

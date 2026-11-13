@@ -60,6 +60,10 @@ staircases are gone.
 
 ## Voice
 
-The voice placement (domain *voice* of SPEC-PLACEMENT) already follows these rules. It is sung, has sections for
-singing, technique and agility, and uses an accelerating search where a miss brackets the level. **Open:** it has no
-sung sight-singing section and no melody sung in time with the click.
+Since 0.84 the voice course's Find my level is its own sectioned test (src/engine/voiceLevelTest.ts,
+src/ui/VoiceLevelTest.tsx), on the same state machine as the playing tests: sections Pitch, Time feel, Songs with the
+band, The singer's ear, Sight-singing, Scales, Agility; up to six real levels per section, spread over the family; one
+take per step in the real exercise screen (count-in, click, now-cue); clean = the level's pass mark, "almost" = within
+15 points (one more take, starting at once). The result is each family's start (drillStart, the level after the hardest
+clean one). The old 2½-minute probe is gone. The generic placement's voice domain (singing, technique, agility
+ratings) stays for the Skill Map's "measure voice".

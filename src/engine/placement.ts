@@ -222,6 +222,15 @@ export const PLACEMENT_DERIVED: Partial<Record<SkillId, SkillId>> = { timing: 'r
 
 /** The sections of a placement: all skills, or one domain's; sung skills only with the microphone. */
 /** `areas`: only these areas — a course's own level test (owner: every course has its own Find my level). */
+/** A saved level test, kept only when it belongs to the course with these areas ([] = the course has its own test). */
+export function placementOfCourse<T extends { lesson: { placementSkills?: SkillId[]; placementDomain?: DomainId | null } }>(saved: T | null, areas: DomainId[]): T | null {
+  if (!saved || !areas.length) return null;
+  const d = saved.lesson.placementDomain ?? null;
+  if (d) return areas.includes(d) ? saved : null;
+  const ok = placementSkills({ singing: true, areas });
+  return (saved.lesson.placementSkills ?? []).every((k) => ok.includes(k)) ? saved : null;
+}
+
 export function placementSkills(opts: { singing?: boolean; domain?: DomainId | null; priorities?: DomainId[] | null; areas?: DomainId[] | null } = {}): SkillId[] {
   const dom = opts.domain ? DOMAINS.find((d) => d.id === opts.domain)!.skills : null;
   const inAreas = (k: SkillId) => !opts.areas?.length || opts.areas.includes(k === 'rhythm-reading' ? 'time' : domainOf(k));

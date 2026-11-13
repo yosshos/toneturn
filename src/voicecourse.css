@@ -203,3 +203,13 @@
   justify-content: center;
   cursor: pointer;
 }
+
+/* The voice level test (0.84): a thin section strip, the section's name, the last take's verdict. */
+.vlt-head { display: grid; justify-items: center; gap: 4px; margin: 0 0 6px; }
+.vlt-steps { display: flex; gap: 6px; list-style: none; margin: 0; padding: 0; }
+.vlt-steps li { width: 18px; height: 6px; border-radius: 3px; background: var(--line, #8884); }
+.vlt-steps li.done { background: var(--accent, #7c5cff); opacity: 0.55; }
+.vlt-steps li.now { background: var(--accent, #7c5cff); }
+.vlt-head .field-hint, .vlt-head .lt-verdict { margin: 0; text-align: center; }
+.vlt-head .lt-verdict { font-weight: 600; }
+.vlt-skip { font-size: 0.85rem; }

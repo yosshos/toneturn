@@ -50,3 +50,24 @@ for (const inst of ['guitar', 'bass'] as const)
     expect(new Set(seen).size).toBeGreaterThanOrEqual(5);
     expect(seen.length).toBeLessThanOrEqual(14);
   });
+
+// 0.84: the voice course's test — the course's own families in sections; skipping moves through all of them.
+test('voice level test: sections of the voice course, each take in the real exercise screen', async ({ page }) => {
+  await page.goto('/?sim=1#/vocal');
+  await page.locator('[data-voice-probe]').click();
+  await expect(page.locator('[data-voice-test]')).toBeVisible();
+  expect(await page.locator('.lt-sections li').count()).toBeGreaterThanOrEqual(5);
+  await page.locator('[data-test-start]').click();
+  const probe = page.locator('[data-test-strand]');
+  await expect(probe).toHaveAttribute('data-test-strand', 'v-pitch');
+  await expect(page.locator('.pn-click').first()).toBeVisible(); // the click / now-cue of the real screen
+  const seen: string[] = [];
+  for (let k = 0; k < 10; k++) {
+    if (await page.locator('[data-level-test-done]').isVisible()) break;
+    seen.push((await probe.getAttribute('data-test-strand')) ?? '');
+    await page.locator('.vlt-skip').click();
+  }
+  await expect(page.locator('[data-level-test-done]')).toBeVisible();
+  expect(new Set(seen).size).toBe(seen.length);
+  expect(seen.length).toBeGreaterThanOrEqual(5);
+});

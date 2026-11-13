@@ -18,6 +18,20 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.84.0',
+    date: '2026-11-13',
+    en: [
+      'Voice course: Find my level is now its own test in sections — pitch, time, a song, the ear, sight-singing, scales and agility. One take per step, each in the real exercise (count-in, click, the now-cue); a good take moves you ahead, a miss moves the test on. Your voice path then starts where you are.',
+      'Notes on the keys: with a MIDI keyboard on, chord and note questions take the keys directly — no button; a whole chord, let go, answers by itself.',
+      'An unfinished level test from before no longer comes back in another course, and catching up asks only about the current course.',
+    ],
+    he: [
+      'קורס הקול: מציאת הרמה היא עכשיו מבחן משלו בחלקים — אינטונציה, זמן, שיר, אוזן, שירה מתווים, סולמות וגמישות. ביצוע אחד לכל שלב, כל אחד בתרגיל האמיתי (ספירה, קליק וסימון "עכשיו"); ביצוע טוב מקדם, החטאה מעבירה את המבחן הלאה. מסלול השירה מתחיל איפה שאתם נמצאים.',
+      'תווים על הקלידים: כשמקלדת MIDI מחוברת, שאלות אקורד ותווים מקבלות את הקלידים ישירות — בלי כפתור; אקורד שלם, כשמרפים, עונה לבד.',
+      'מבחן רמה ישן שלא הסתיים כבר לא חוזר בקורס אחר, וההשלמה שואלת רק על הקורס הנוכחי.',
+    ],
+  },
+  {
     version: '0.83.0',
     date: '2026-11-13',
     en: [

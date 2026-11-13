@@ -32,6 +32,7 @@ const T = {
   mute: { en: 'Mute between notes, no pedal.', he: 'השתיקו בין הצלילים, בלי פדל.' },
   done: { en: 'Done', he: 'סיימתי' },
   entered: { en: 'Your notes', he: 'התווים שלכם' },
+  midiLive: { en: 'Play it on your keyboard — or tap the keys.', he: 'נגנו על המקלדת — או הקישו על הקלידים.' },
   none: { en: 'No notes yet', he: 'עדיין אין תווים' },
   string: { en: 'string', he: 'מיתר' },
   fret: { en: 'fret', he: 'סריג' },
@@ -382,7 +383,7 @@ export function PlaceSurfaceView({ q, settings, lang, disabled, onSubmit, result
   const [dur, setDur] = useState<number>(1);
   const tuning = useMemo(() => neckTuning(q, settings), [q, settings]);
   const max = q.as === 'seq' ? q.target.length : Math.max(q.target.length, 12);
-  const add = (n: { midi: number; dur?: number; at?: { str: number; fret: number } }) => {
+  const add = (n: { midi: number; dur?: number; at?: { str: number; fret: number } }, played = false) => {
     if (disabled) return;
     setNotes((xs) => {
       // On the neck a set (chord / every place) toggles a dot off when tapped again.
@@ -401,12 +402,15 @@ export function PlaceSurfaceView({ q, settings, lang, disabled, onSubmit, result
       }
       return xs.length >= max ? xs : [...xs, n];
     });
-    sound([n.midi]);
+    if (!played) sound([n.midi]); // a played key already sounds on its own
   };
   // Spec AE §3.4: enter notes by playing — MIDI keys, or an acoustic instrument through the microphone.
   // In the guitar / bass course the instrument is the course's, whatever the profile says (0.66 guitar audit).
   const inst = courseInstrument(settings);
-  const canPlay = !disabled && q.as === 'seq' && (!!settings.midiInput || (!!inst && inst !== 'voice'));
+  // Owner 2026-11-13: a chord question on the keys could only be answered with the mouse. With MIDI on, the keys are
+  // always live (no button) for chords and lines alike; a full answer submits itself.
+  const midiLive = !disabled && !!settings.midiInput;
+  const canPlay = !disabled && q.as === 'seq' && !settings.midiInput && !!inst && inst !== 'voice';
   const [playing, setPlaying] = useState(false);
   const addRef = useRef(add);
   addRef.current = add;
@@ -416,8 +420,8 @@ export function PlaceSurfaceView({ q, settings, lang, disabled, onSubmit, result
     const w = m + writtenShift;
     if (surface === 'neck') {
       const p = positionsOf(tuning, w, q.neck?.frets?.[0] ?? 0, q.neck?.frets?.[1] ?? 12, q.neck?.onString ? [q.neck.onString] : q.neck?.strings)[0];
-      addRef.current(p ? { midi: w, at: p } : { midi: w });
-    } else addRef.current({ midi: w, dur: q.durs ? dur : undefined });
+      addRef.current(p ? { midi: w, at: p } : { midi: w }, true);
+    } else addRef.current({ midi: w, dur: q.durs ? dur : undefined }, true);
   };
   useEffect(() => {
     if (!playing) return;
@@ -453,6 +457,37 @@ export function PlaceSurfaceView({ q, settings, lang, disabled, onSubmit, result
   useEffect(() => {
     if (disabled) setPlaying(false);
   }, [disabled]);
+  const notesRef = useRef(notes);
+  notesRef.current = notes;
+  const submitRef = useRef<(ms: number[]) => void>(() => {});
+  submitRef.current = (ms) => onSubmit(placeKey(q, ms, q.durs ? notesRef.current.map((n) => n.dur ?? 1) : undefined));
+  useEffect(() => {
+    if (!midiLive) return;
+    const held = new Set<number>();
+    let timer = 0;
+    const off = midiIn.onNote((m, on) => {
+      const w = m + writtenShift;
+      if (on) {
+        held.add(m);
+        window.clearTimeout(timer);
+        // A set never toggles off from the keys (a re-struck chord tone stays in); a line takes every note.
+        if (q.as === 'set' && notesRef.current.some((n) => n.midi === w)) return;
+        placeFromPlayed(m);
+        if (q.as === 'seq' && notesRef.current.length + 1 >= q.target.length) {
+          const ms = [...notesRef.current.map((n) => n.midi), w];
+          timer = window.setTimeout(() => submitRef.current(ms), 350);
+        }
+      } else {
+        held.delete(m);
+        // A chord is answered when every key is let go and enough notes are in.
+        if (q.as === 'set' && !held.size && notesRef.current.length >= q.target.length) {
+          timer = window.setTimeout(() => submitRef.current(notesRef.current.map((n) => n.midi)), 250);
+        }
+      }
+    });
+    return () => (off(), window.clearTimeout(timer));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [midiLive, q]);
   // GUITAR_DEEPENING §6: a chord on the neck (a set of 3+ notes) can be answered by strumming it — the closed-set
   // recognizer decides whether the asked chord sounded (any voicing; an inversion question checks the bass too).
   const target = useMemo(() => (q.as === 'set' && q.target.length >= 3 ? identifyChord(q.target) : null), [q]);
@@ -579,6 +614,11 @@ export function PlaceSurfaceView({ q, settings, lang, disabled, onSubmit, result
             </small>
           )}
         </div>
+      )}
+      {midiLive && (
+        <small className="field-hint place-midi" role="status">
+          {T.midiLive[lang]}
+        </small>
       )}
       {canPlay && (
         <div className="place-play">

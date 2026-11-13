@@ -105,7 +105,7 @@ import { Drills, drillSettingsOf } from './Drills';
 import { badgeInputOf, refreshRanksBadges } from '../engine/rankBadges';
 import { PLACEMENT_ORDER, ratingDrift, recalibration } from '../engine/placement';
 import { mergePriors, tierPlacement } from '../engine/tierPlacement';
-import { placementSkills } from '../engine/placement';
+import { placementOfCourse, placementSkills } from '../engine/placement';
 import { foldFromMemo } from '../engine/stats';
 import { BadgesView, ChallengeCard } from './Badges';
 import type { RankChange } from '../engine/ranks';
@@ -706,6 +706,7 @@ export function App() {
     const saved = fresh ? null : loadPlacement();
     const savedFits = !areas || (saved?.lesson.placementSkills ?? []).every((k) => placementSkills({ singing: true, areas }).includes(k));
     if (saved && (saved.lesson.placementDomain ?? null) === d && savedFits) return resumePlacement(saved);
+    if (saved) clearPlacement(); // an old all-areas test never comes back in another course
     const seed = (Date.now() ^ (Math.random() * 1e9)) >>> 0;
     const skip = gameTierPlacement().skip;
     const only = skip.length ? placementSkills({ singing: s.mode === 'voice' || d === 'voice', domain: d, areas }).filter((k) => !skip.includes(k)) : undefined;
@@ -779,6 +780,10 @@ export function App() {
     else resumeRef.current.continueSession(v);
   }, [settingsReady]);
   const [vocalLevel, setVocalLevel] = useState<number | null>(null);
+  const [vocalTest, setVocalTest] = useState(false);
+  useEffect(() => {
+    if (route !== 'vocal') setVocalTest(false);
+  }, [route]);
   /** Class assignments: path lessons and generated practice (vocal levels, modes, wrong notes). */
   // The teacher loop (0.52): an assignment opened from the class list; its result is sent when it is finished.
   const activeAssign = useRef<{ a: AssignItem; t0: number; after: string | null } | null>(null);
@@ -1216,6 +1221,14 @@ export function App() {
     drillFrom.current = 'test';
     go('drills');
   };
+  // 0.84: the voice course's Find my level is its own sectioned test (VoiceLevelTest), like the playing tests.
+  const openVoiceTest = () => {
+    toolFrom.current = route;
+    setVocalWarmup(false);
+    setVocalLevel(null);
+    setVocalTest(true);
+    go('vocal');
+  };
   const drillQueue = useMemo(
     () => (route === 'drills' && (drillFrom.current === 'chart' || drillFrom.current === 'assign' || drillFrom.current === 'taste' || drillFrom.current === 'repertoire' || (drillFrom.current === 'path' && chartQueue.current)) ? chartQueue.current ?? undefined : route === 'drills' && (drillFrom.current === 'path' || drillFrom.current === 'workout') && settings && progress ? todayDrills({ ...drillSettingsOf(settings), bassTuning: bassTuningOf(settings), drumMic: drumMicOf(settings.drumKit) }, progress.drillItems ?? {}, settings.drillStart ?? {}, settings.customDrills ?? []).map((x) => x.drill) : undefined),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1286,7 +1299,7 @@ export function App() {
   /** The taste's takes (playing tastes): best note accuracy and bars played, for the measured first win. */
   const tasteTake = useRef({ acc: 0, bars: 0 });
   /** Find my level, per course: the playing test (instruments), the voice placement, the ear placement (ear / jazz). */
-  const findLevel = () => (instrumentCourse ? openTechTest() : s.activeCourse === 'voice' ? openPlacement('voice') : openPlacement());
+  const findLevel = () => (instrumentCourse ? openTechTest() : s.activeCourse === 'voice' ? openVoiceTest() : openPlacement());
   /** The jazz "I play well" taste: sung by a singer, played by a pianist or bassist (owner 2026-11-11). */
   const tasteWho = jazzWho(s.courses ?? [], s.intake?.plays ?? [], s.instrument, !!s.midiInput);
   /** A sung taste in progress (the vocal level's result is its first win). */
@@ -1687,8 +1700,11 @@ export function App() {
   // Existing players (not the first run): what they have not done yet of today's first-run flow.
   const automatedRun = (SIMULATED || params.has('unlock') || (typeof navigator !== 'undefined' && navigator.webdriver)) && !params.has('catchup');
   const started = progress.history.length > 0 || Object.values(progress.lessons).some((l) => (l?.completions ?? 0) > 0);
-  const pending = catchUp(s, progress);
-  const savedPlacement = route === 'home' ? loadPlacement() : null;
+  const courseAreas: DomainId[] = instrumentCourse ? [] : COURSE_AREAS[(s.activeCourse ?? 'ear') as CourseId] ?? [];
+  const pending = catchUp(s, progress, courseAreas);
+  // 0.84: the "continue your level test" card only for a test of this course — an old all-areas test (from before
+  // 0.83) came back from Home in the keys course.
+  const savedPlacement = route === 'home' ? placementOfCourse(loadPlacement(), courseAreas) : null;
   void dropTick;
   const lastThing = route === 'home' && !automatedRun ? latestAnything([PLACEMENT_KEY]) : null;
   // A questionnaire left half-way shows as partly filled, to continue any time (also before any lesson).
@@ -1885,7 +1901,7 @@ export function App() {
                   draft={intakeDraft}
                   onIntake={() => go('intake')}
                   onMeasure={() => (instrumentCourse ? openTechTest() : openCatchUpPlacement(pending.unmeasured))}
-                  onFindLevel={() => (instrumentCourse ? openTechTest() : s.activeCourse === 'voice' ? openPlacement('voice') : openPlacement())}
+                  onFindLevel={() => (instrumentCourse ? openTechTest() : s.activeCourse === 'voice' ? openVoiceTest() : openPlacement())}
                   onHide={() => updateSettings({ catchUpHidden: catchUpKey })}
                 />
               )}
@@ -1906,7 +1922,7 @@ export function App() {
           }}
         />
       )}
-      {route === 'path' && <PathView2 t={t} settings={s} progress={progress} view={pathView} onStep={openFromPath} onTestOut={openTestOut} onPlacement={() => (instrumentCourse ? openTechTest() : s.activeCourse === 'voice' ? openPlacement('voice') : openPlacement())} onTechTest={instrumentCourse && cStart?.legacy && !s.drillStart && !Object.keys(progress.drillItems ?? {}).length ? openTechTest : undefined} onSettings={updateSettings} top={
+      {route === 'path' && <PathView2 t={t} settings={s} progress={progress} view={pathView} onStep={openFromPath} onTestOut={openTestOut} onPlacement={() => (instrumentCourse ? openTechTest() : s.activeCourse === 'voice' ? openVoiceTest() : openPlacement())} onTechTest={instrumentCourse && cStart?.legacy && !s.drillStart && !Object.keys(progress.drillItems ?? {}).length ? openTechTest : undefined} onSettings={updateSettings} top={
         cStage !== 'done' ? (
           <CourseStartHero course={activeC} lang={s.uiLang} stage={cStage} cs={cStart} who={tasteWho} onStart={continueCourseStart} onFindLevel={findLevel} compact />
         ) : (
@@ -2261,7 +2277,7 @@ export function App() {
             if (then === 'placement') {
               // Chosen explicitly in the full questionnaire: the course's own level test (SPEC-COURSE-START, level test).
               go('home');
-              window.setTimeout(() => (['keys', 'guitar', 'bass', 'drums'].includes(c) ? openTechTest() : c === 'voice' ? openPlacement('voice') : openPlacement()), 0);
+              window.setTimeout(() => (['keys', 'guitar', 'bass', 'drums'].includes(c) ? openTechTest() : c === 'voice' ? openVoiceTest() : openPlacement()), 0);
             } else if (then === 'basics') {
               go('home');
               // A course not started yet starts with its welcome card and taste; a started one with the first lesson.
@@ -2742,8 +2758,9 @@ export function App() {
       {route === 'singalong' && <SingAlongScreen t={t} settings={s} onBack={() => go('vocal')} />}
       {route === 'vocal' && (
         <VocalScreen
-          key={vocalWarmup ? 'warmup' : `home-${vocalLevel ?? ''}`}
+          key={vocalTest ? 'test' : vocalWarmup ? 'warmup' : `home-${vocalLevel ?? ''}`}
           startLevel={vocalLevel}
+          startTest={vocalTest}
           t={t}
           settings={s}
           progress={progress}

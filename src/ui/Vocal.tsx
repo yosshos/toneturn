@@ -61,9 +61,9 @@ import { familyOfRef, isNewLevel, NEW_LEVEL_NAMES, VOICE_FAMILIES, vocalLevelByR
 import { earInstruction, earReference, earReplayNote, earShown, sessionEarItem } from '../engine/voiceEar';
 import { gradeMore, moreReference, simulateMore, MORE_KINDS } from '../engine/vocalMore';
 import { MORE_INSTR, METRIC_NAMES, TONE_NAMES, VT } from '../content/voiceCourseText';
-import { restTakes, TimedSession } from './VoiceTimed';
+import { restTakes, TimedSession, type VoiceTestMode } from './VoiceTimed';
 import { restAdvice } from '../engine/voiceP2';
-import { VoiceProbe } from './VoiceProbe';
+import { VoiceLevelTest } from './VoiceLevelTest';
 import { Glyph, DOMAIN_COLOR } from './Glyph';
 import { FAMILY_GLYPH } from './stepGlyphs';
 
@@ -345,7 +345,7 @@ type View =
   | { kind: 'range' }
   | { kind: 'session'; level: number | 'warmup'; items: VocalItem[] }
   | { kind: 'timed'; level: number; items: VocalItem[] }
-  | { kind: 'probe' };
+  | { kind: 'test' };
 
 /** The view that opens a level: timed levels (clicks / band) in the timed session, the rest in the vocal session. */
 const openLevel = (level: number, range: VoiceRange): View => {
@@ -367,15 +367,17 @@ interface Props {
   startWarmup?: boolean;
   /** Open this level directly (class assignment): 1–11, 101–108 modes, 201–205 harmony. */
   startLevel?: number | null;
+  /** Open the voice level test (the voice course's Find my level, 0.84). */
+  startTest?: boolean;
 }
 
-export function VocalScreen({ t, settings, progress, onSettings, onProgress, onBack, onRuns, onSingAlong, startWarmup, startLevel }: Props) {
+export function VocalScreen({ t, settings, progress, onSettings, onProgress, onBack, onRuns, onSingAlong, startWarmup, startLevel, startTest }: Props) {
   const gate = useMiniGate();
   const v = progress.vocal ?? { best: {}, passed: [], takes: [] };
   // The simulator (screenshots, e2e) can open any level directly: ?sim=1&vlevel=1101#/vocal.
   const simLevel = SIMULATED && typeof location !== 'undefined' ? Number(new URLSearchParams(location.search).get('vlevel')) || 0 : 0;
   if (simLevel && !startLevel) startLevel = simLevel;
-  const [view, setView] = useState<View>(() => (startLevel && vocalLevelByRef(startLevel) ? openLevel(startLevel, settings.voiceRange ?? DEFAULT_RANGE) : startWarmup ? { kind: 'session', level: 'warmup', items: warmupItems(v.passed).filter((it) => itemFits(it, settings.voiceRange ?? DEFAULT_RANGE)) } : { kind: 'home' }));
+  const [view, setView] = useState<View>(() => (startTest ? { kind: 'test' } : startLevel && vocalLevelByRef(startLevel) ? openLevel(startLevel, settings.voiceRange ?? DEFAULT_RANGE) : startWarmup ? { kind: 'session', level: 'warmup', items: warmupItems(v.passed).filter((it) => itemFits(it, settings.voiceRange ?? DEFAULT_RANGE)) } : { kind: 'home' }));
   const range = settings.voiceRange ?? DEFAULT_RANGE;
   const style: VibratoStyle = settings.vibratoStyle ?? 'pop';
   const [openFam, setOpenFam] = useState<string | null>(() => {
@@ -388,7 +390,22 @@ export function VocalScreen({ t, settings, progress, onSettings, onProgress, onB
 
   if (view.kind === 'range')
     return <RangeCalibration t={t} settings={settings} onDone={(r) => (r && onSettings({ voiceRange: r }), setView({ kind: 'home' }))} />;
-  if (view.kind === 'probe') return <VoiceProbe settings={settings} range={range} onBack={() => setView({ kind: 'home' })} onDone={(starts) => (onSettings({ drillStart: { ...(settings.drillStart ?? {}), ...starts } as Settings['drillStart'] }), setView({ kind: 'home' }))} />;
+  if (view.kind === 'test')
+    return (
+      <VoiceLevelTest
+        lang={settings.uiLang === 'en' ? 'en' : 'he'}
+        range={range}
+        onBack={() => (startTest ? onBack() : setView({ kind: 'home' }))}
+        onDone={(starts) => (onSettings({ drillStart: { ...(settings.drillStart ?? {}), ...starts } as Settings['drillStart'] }), startTest ? onBack() : setView({ kind: 'home' }))}
+        renderTake={(rung, test, key) =>
+          TIMED_KINDS.includes(rung.item.kind) ? (
+            <TimedSession key={key} t={t} settings={settings} range={range} level={rung.level} items={[rung.item]} onExit={() => setView({ kind: 'home' })} onProgress={onProgress} onSettings={onSettings} test={test} />
+          ) : (
+            <VocalSession key={key} t={t} settings={settings} range={range} style={style} level={rung.level} items={[sessionEarItem(rung.item, (Date.now() >>> 0) ^ rung.level)]} onExit={() => setView({ kind: 'home' })} onProgress={onProgress} test={test} />
+          )
+        }
+      />
+    );
   if (view.kind === 'timed') return <TimedSession t={t} settings={settings} range={range} level={view.level} items={view.items} onExit={() => setView({ kind: 'home' })} onProgress={onProgress} onSettings={onSettings} />;
   if (view.kind === 'session')
     return (
@@ -480,7 +497,7 @@ export function VocalScreen({ t, settings, progress, onSettings, onProgress, onB
         </button>
       )}
 
-      <button className="tool-card warmup-card" data-voice-probe="1" onClick={() => setView({ kind: 'probe' })}>
+      <button className="tool-card warmup-card" data-voice-probe="1" onClick={() => setView({ kind: 'test' })}>
         <b>{VT.probe[settings.uiLang === 'en' ? 'en' : 'he']}</b>
         <small>{VT.probeHint[settings.uiLang === 'en' ? 'en' : 'he']}</small>
       </button>
@@ -698,6 +715,7 @@ function VocalSession({
   items,
   onExit,
   onProgress,
+  test,
 }: {
   t: Strings;
   settings: Settings;
@@ -707,6 +725,7 @@ function VocalSession({
   items: VocalItem[];
   onExit: () => void;
   onProgress: (p: Progress) => void;
+  test?: VoiceTestMode;
 }) {
   // Left half-way, the level continues at the same exercise with the takes so far (playtesting, 0.35.3).
   const slotKey = `vocal:${level}`;
@@ -736,7 +755,11 @@ function VocalSession({
   });
   const best = useRef<Record<string, { score: number; take: VocalTake }>>(saved?.best ?? {});
   useEffect(() => {
-    if (i === 0 && noteIdx === 0) return;
+    if (test?.autoStart) void take();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    if ((i === 0 && noteIdx === 0) || test) return;
     saveSlot(slotKey, { title: typeof level === 'number' ? `${t.vocalTitle} · ${level}` : t.vocalWarmup, route: 'vocal', done: i, total: items.length, data: { ids: items.map((it) => it.id), i, noteIdx, best: best.current } });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [i, noteIdx]);
@@ -934,7 +957,7 @@ function VocalSession({
     const g = got ? (MORE_KINDS.includes(item.kind) ? gradeMore(item, got, range) : gradeTake(item, got, range, style, noteIdx)) : { unclear: true, score: 0, metrics: [], weakest: null };
     setGrade(g);
     if (audio) setAudioUrl(URL.createObjectURL(audio));
-    if (audio && settings.keepTakes && !g.unclear) void keepTake({ item: item.kind === 'range' || item.kind === 'vibrato-register' ? `${item.id}#${noteIdx}` : item.id, week: weekId(new Date()), score: g.score, at: new Date().toISOString(), blob: audio });
+    if (audio && settings.keepTakes && !g.unclear && !test) void keepTake({ item: item.kind === 'range' || item.kind === 'vibrato-register' ? `${item.id}#${noteIdx}` : item.id, week: weekId(new Date()), score: g.score, at: new Date().toISOString(), blob: audio });
     setPhase('result');
     piano.cue(g.unclear ? 'wrong' : g.score >= 0.6 ? 'correct' : 'wrong');
     if (!g.unclear) {
@@ -1087,11 +1110,12 @@ function VocalSession({
         <button className="icon-btn" onClick={() => (ctl.current?.abort(), piano.stopDrone(), onExit())} aria-label={t.back}>
           <span className="flip-rtl">←</span>
         </button>
-        <h1>{title}</h1>
+        <h1>{test ? test.title : title}</h1>
       </header>
+      {test?.head}
       <p className="field-hint">
-        {typeof level === 'number' && isNewLevel(level) && `${familyOfRef(level)?.title[settings.uiLang === 'en' ? 'en' : 'he'] ?? ''} · `}
-        {fill(t.vocalItemOf, { i: i + 1, n: items.length })}
+        {typeof level === 'number' && isNewLevel(level) && `${familyOfRef(level)?.title[settings.uiLang === 'en' ? 'en' : 'he'] ?? ''}${test ? '' : ' · '}`}
+        {!test && fill(t.vocalItemOf, { i: i + 1, n: items.length })}
         {noteCount > 1 && ` · ${fill(t.vocalNoteOf, { i: noteIdx + 1, n: noteCount })}`}
       </p>
       {phase !== 'result' && <p className="vocal-instr">
@@ -1254,7 +1278,19 @@ function VocalSession({
             ■ {phase === 'listening' ? `${t.vocalListen}…` : t.vocalStop}
           </button>
         )}
-        {phase === 'result' && (
+        {phase === 'result' && test && (
+          <>
+            {grade?.unclear && (
+              <button className="btn ghost" onClick={() => void take()}>
+                ↻ {t.vocalRetry}
+              </button>
+            )}
+            <button className="btn mega" onClick={() => test.onTake(!grade || grade.unclear ? 0 : grade.score, typeof level === 'number' ? levelDef(level).pass : 0.7)}>
+              {t.vocalNext} <span className="flip-rtl">→</span>
+            </button>
+          </>
+        )}
+        {phase === 'result' && !test && (
           <>
             <button className="btn ghost" onClick={() => void take()}>
               ↻ {t.vocalRetry}
