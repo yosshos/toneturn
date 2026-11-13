@@ -47,7 +47,7 @@ import { courseInstrument, noteViewsOf } from './noteViewPref';
 import { StrumChoice } from './StrumChoice';
 import { ChordPlayChoice } from './ChordPlayChoice';
 import { Recap } from './Recap';
-import { RhythmStaff } from './RhythmStaff';
+import { LiveRhythmStaff, RhythmStaff, useRhythmNow } from './RhythmStaff';
 import { buildPalette, CELLS, describe as describeRhythm, meterOf, onsetBeats, rhythmFromKey, rhythmKey, sameRhythm, totalBeats, type CellId, type Rhythm } from '../engine/rhythm';
 import { makeAdapters, piano, SIMULATED, store } from './services';
 
@@ -1304,6 +1304,8 @@ function SeqTargets({ degrees, notes }: { degrees: number[]; notes?: string[] })
 /** What to perform (notation or words), the metronome light and a big tap pad. */
 function ReadPrompt({ q, v, lang, onTap, onRelease, t, onLane }: { q: Extract<Question, { kind: 'rhythm-read' }>; v: LessonView; lang: 'he' | 'en'; onTap: (ms: number) => void; onRelease?: (ms: number) => void; t: Strings; onLane?: (ms: number, lane: number) => void }) {
   const names = describeRhythm(q.rhythm, 'names', lang);
+  // The now-cue: the written note that is due lights up as the take runs (all lanes share one timeline).
+  const nowMain = useRhythmNow(q.rhythm, q.bpm, v.readStartPerf, v.phase === 'listening' && !q.shown && !q.tempoGoal && !q.lanes);
   if (q.lanes && onLane) {
     // Several pads (drum kit lanes, two hands): one row per lane, written above its pad (spec AE).
     return (
@@ -1312,7 +1314,7 @@ function ReadPrompt({ q, v, lang, onTap, onRelease, t, onLane }: { q: Extract<Qu
         {q.lanes.map((ln, i) => (
           <div key={i} className="lane-row">
             <span className="lane-name">{ln.name[lang]}</span>
-            {q.show === 'notation' ? <RhythmStaff rhythm={ln.rhythm} label={describeRhythm(ln.rhythm, 'names', lang)} compact height={70} /> : <span className="read-words">{describeRhythm(ln.rhythm, 'names', lang)}</span>}
+            {q.show === 'notation' ? <LiveRhythmStaff rhythm={ln.rhythm} label={describeRhythm(ln.rhythm, 'names', lang)} compact height={70} bpm={q.bpm} startPerf={v.readStartPerf} live={v.phase === 'listening'} /> : <span className="read-words">{describeRhythm(ln.rhythm, 'names', lang)}</span>}
           </div>
         ))}
         <div className={`beat-light ${v.beat?.accent ? 'accent' : ''}`} key={v.beat?.n ?? -1} aria-hidden="true" />
@@ -1352,7 +1354,7 @@ function ReadPrompt({ q, v, lang, onTap, onRelease, t, onLane }: { q: Extract<Qu
   return (
     <div className="read-prompt" data-onsets={onsetBeats(q.rhythm).join(',')} data-bpm={q.bpm} data-start={v.readStartPerf ?? undefined}>
       {q.show === 'notation' ? (
-        <RhythmStaff rhythm={q.shown ?? q.rhythm} label={q.shown ? describeRhythm(q.shown, 'names', lang) : names} />
+        <RhythmStaff rhythm={q.shown ?? q.rhythm} label={q.shown ? describeRhythm(q.shown, 'names', lang) : names} now={nowMain} />
       ) : (
         <p className="read-words" dir="auto">
           {names}

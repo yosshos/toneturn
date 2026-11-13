@@ -25,7 +25,8 @@ export type IconKey =
   | 'bolt'
   | 'clock'
   | 'check'
-  | 'star';
+  | 'star'
+  | 'metronome';
 
 const PATHS: Record<IconKey, ReactNode> = {
   lock: (
@@ -91,6 +92,12 @@ const PATHS: Record<IconKey, ReactNode> = {
     </>
   ),
   bolt: <path d="M13 3 5 13.5h6L10 21l8-10.5h-6z" />,
+  metronome: (
+    <>
+      <path d="M9 3.5h6l3.5 17h-13z" />
+      <path d="M6.5 16.5h11M12 15.5l4.5-8" />
+    </>
+  ),
   clock: (
     <>
       <circle cx="12" cy="13" r="7.5" />

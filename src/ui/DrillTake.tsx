@@ -122,6 +122,7 @@ export function DrillTab({ drill, fingering = false, picking = false, result, be
         l.length ? (
           <TabLine
             key={from + i}
+            now={beat >= 0 && !result && lineOf(beat) === from + i ? l.reduce((best, c, j) => (c.at <= beat + 0.03 ? j : best), -1) : -1}
             cols={l.map(({ mark: _m, at: _a, ...c }) => c)}
             marks={result ? l.map((c) => c.mark) : undefined}
             strings={strings}
@@ -271,8 +272,19 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo }
         if (nextAt - (bq(n) + d) > 0.49) pushRest(nextAt - (bq(n) + d));
       });
       const idx = (n: ExpNote) => xs.indexOf(n);
+      // The now-cue: the item (note or rest) the running take is on, in this line.
+      const cur = beat >= 0 && !result ? beat * qk : -1;
+      let now = -1;
+      if (cur >= lineStart - 0.03 && cur < lineEnd - 0.03) {
+        let at = lineStart;
+        items.forEach((x, k) => {
+          if (at <= cur + 0.03) now = k;
+          at += x.dur;
+        });
+      }
       return (
         <NoteStaff
+          now={now}
           key={`${clef}${li}`}
           notes={items.map((x) => (x.n ? x.n.pitch + shift : 71))}
           rests={items.map((x) => !x.n)}
@@ -550,6 +562,17 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
       });
     }
     setPhase('count');
+    // The score's now-cue moves between the clicks too (quarter-beat steps), so eighths and sixteenths light in time.
+    let lastBeat: { i: number; t: number; dt: number } | null = null;
+    let sent = -99;
+    const smooth = onBeat
+      ? window.setInterval(() => {
+          if (!lastBeat || lastBeat.i < drill.meter) return;
+          const f = Math.min(0.75, Math.floor(((performance.now() - lastBeat.t) / lastBeat.dt) * 4) / 4);
+          const b = lastBeat.i - drill.meter + f;
+          if (b !== sent) onBeat((sent = b));
+        }, 25)
+      : 0;
     try {
       if (backing.length) void piano.play(backing, plan.responseEnd + 0.5, abort.signal).catch(() => {});
       await piano.playTimeline(
@@ -557,7 +580,9 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
         abort.signal,
         (i) => {
           setBeat(i);
-          onBeat?.(i - drill.meter);
+          const t = performance.now();
+          lastBeat = { i, t, dt: lastBeat && i === lastBeat.i + 1 ? Math.max(120, t - lastBeat.t) : (lastBeat?.dt ?? 60000 / Math.max(30, bpm)) };
+          if (onBeat && i - drill.meter !== sent) onBeat((sent = i - drill.meter));
           if (i >= drill.meter) setPhase('play');
         },
         (perf) => {
@@ -567,6 +592,7 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
     } catch {
       /* stopped */
     } finally {
+      window.clearInterval(smooth);
       offMidi();
       offCC?.();
       offHit?.();

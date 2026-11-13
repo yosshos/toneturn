@@ -30,7 +30,12 @@ export function GrooveTrainerScreen({ settings, onBack, tier: tierInfo, onResult
   const [msg, setMsg] = useState<string | null>(null);
   /** 0.66 (owner): the first bar is a count-in — a woodblock, counted down on the pad. */
   const [cd, setCd] = useState(0);
-  const onBeat = (i: number) => setCd(i < 4 ? 4 - i : 0);
+  // Every audible click also pulses the pad (the now-cue); silent bars stay dark on purpose — that is the drill.
+  const [beatGlow, setBeatGlow] = useState(0);
+  const onBeat = (i: number) => {
+    setCd(i < 4 ? 4 - i : 0);
+    setBeatGlow((g) => g + 1);
+  };
   const [best, setBest] = useState(0);
   const [target, setTarget] = useState(0);
   const [meter, setMeter] = useState<{ mean: number; share: number } | null>(null);
@@ -308,6 +313,7 @@ export function GrooveTrainerScreen({ settings, onBack, tier: tierInfo, onResult
         </div>
       )}
       <button className={`gt-pad ${flash ? 'hit' : ''}`} onPointerDown={tap} disabled={!running} aria-label={tx.tap} data-groove-pad="1">
+        {running && beatGlow > 0 && <span className="gt-beat" key={`b${beatGlow}`} aria-hidden="true" />}
         {cd ? (
           <span className="tap-countdown" key={`c${cd}`}>
             {cd}

@@ -15,6 +15,7 @@ import { midi } from '../speech/midi';
 import { BrowserPitchCapture } from '../speech/pitchCapture';
 import type { Progress, Settings } from '../storage/progress';
 import { NotesView } from './NotesView';
+import { loadClick, PulseNotes, pulseClicks, saveClick, usePulseNow, type Pulse, type PulseClock } from './PulseNotes';
 import { piano, SIMULATED, store } from './services';
 
 type Tab = 'backing' | 'improv' | 'clock' | 'midi' | 'guitar';
@@ -471,6 +472,9 @@ function GuitarTabDrill({ t, settings, ctl, onProgress }: { t: Strings; settings
   const [idx, setIdx] = useState(0);
   const [phase, setPhase] = useState<'idle' | 'count' | 'playing' | 'done'>('idle');
   const [grade, setGrade] = useState<TakeGrade | null>(null);
+  const [clock, setClock] = useState<PulseClock | null>(null);
+  const [clickOn, setClickOn] = useState(loadClick);
+  const now = usePulseNow(clock);
   const item = SIGHT_LEVELS[level - 1].items[idx % SIGHT_LEVELS[level - 1].items.length];
   const targets = itemTargets(item, GUITAR_RANGE);
   const views = [...new Set(['tab', ...(settings.noteViews ?? [])])] as NonNullable<Settings['noteViews']>;
@@ -483,19 +487,29 @@ function GuitarTabDrill({ t, settings, ctl, onProgress }: { t: Strings; settings
     setPhase('count');
     const beat = 60 / (item.bpm ?? 72);
     const tonic = targets[0] - (item.steps?.[0] ?? 0);
-    const clicks = [0, 1, 2, 3].map((k) => ({ midi: k === 0 ? 96 : 91, start: 1.4 + k * beat, duration: 0.05, velocity: 0.5 }));
-    await piano.play([{ midi: tonic, start: 0, duration: 1.2, velocity: 0.75 }, ...clicks], 1.4 + 4 * beat, c.signal).catch(() => {});
+    await piano.play([{ midi: tonic, start: 0, duration: 1.2, velocity: 0.75 }], 1.4, c.signal).catch(() => {});
     if (c.signal.aborted) return setPhase('idle');
+    // A bar of count-in, then the click under the take and the due note lit on the staff / tab.
+    const durs = item.durs ?? targets.map(() => 1);
+    const pulse: Pulse = { beat, onsets: durs.map((_, i) => durs.slice(0, i).reduce((a, b) => a + b, 0) * beat), countIn: 4, length: durs.reduce((a, b) => a + b, 0) * beat };
+    const lead = pulse.countIn * beat;
+    const clickCtl = new AbortController();
+    c.signal.addEventListener('abort', () => clickCtl.abort());
+    const pcl = pulseClicks(pulse, clickOn);
+    setClock({ pulse, zero: performance.now() + lead * 1000 });
+    void piano.play(pcl.events, pcl.length, clickCtl.signal).catch(() => {});
     setPhase('playing');
     let frames: SungFrame[] = [];
     if (SIMULATED) {
-      await new Promise((r) => setTimeout(r, 400));
-      frames = synthMelody(targets, 0.5, { noteSecs: (item.durs ?? []).map((d) => d * beat) });
+      await new Promise((r) => setTimeout(r, lead * 1000 + 400));
+      frames = synthMelody(targets, 0.5, { noteSecs: durs.map((d) => d * beat) });
     } else {
-      const total = (item.durs ?? []).reduce((a, b) => a + b, 0) * beat;
-      const r = await new BrowserPitchCapture().sing({ signal: c.signal, maxMs: (total + 3) * 1000, silenceMs: 5000, endSilenceMs: 1200, hopMs: 20 });
-      frames = r.kind === 'frames' ? r.frames : [];
+      const buf: SungFrame[] = [];
+      const r = await new BrowserPitchCapture().sing({ signal: c.signal, maxMs: (pulse.length + lead + 3) * 1000, silenceMs: 5000 + lead * 1000, endSilenceMs: 1200, hopMs: 20, onFrame: (f) => void (f.t >= lead - 0.4 && buf.push({ ...f, t: f.t - lead })) });
+      frames = r.kind === 'frames' ? buf : [];
     }
+    clickCtl.abort();
+    setClock(null);
     const g = gradeTake(item, frames, GUITAR_RANGE);
     setGrade(g);
     // Reading: playing from tab on the guitar.
@@ -513,11 +527,17 @@ function GuitarTabDrill({ t, settings, ctl, onProgress }: { t: Strings; settings
         ))}
       </div>
       <div className="sight-score">
-        <NotesView midis={targets} keyPc={pc(sightKeyName(item, targets[0]))} settings={{ ...settings, noteViews: views }} durs={item.durs} />
-        <small className="field-hint">♩ = {item.bpm ?? 72}</small>
+        <NotesView midis={targets} keyPc={pc(sightKeyName(item, targets[0]))} settings={{ ...settings, noteViews: views }} durs={item.durs} now={now.now} />
+        <div className="pulse-wrap">
+          <PulseNotes clock={clock} labels={null} count={targets.length} />
+          <small className="field-hint">♩ = {item.bpm ?? 72}</small>
+          <button className={`chip pn-click${clickOn ? ' on' : ''}`} aria-pressed={clickOn} onClick={() => (setClickOn(!clickOn), saveClick(!clickOn))}>
+            <Icon k="metronome" /> {settings.uiLang === 'en' ? 'Click' : 'קליק'}
+          </button>
+        </div>
       </div>
       <button className="btn mega" data-guitar="go" disabled={phase === 'count' || phase === 'playing'} onClick={() => void go()}>
-        {phase === 'count' ? t.sightCountIn : phase === 'playing' ? '…' : t.perfGuitarGo}
+        {phase === 'count' ? t.sightCountIn : phase === 'playing' ? (now.countLeft ? String(now.countLeft) : '…') : t.perfGuitarGo}
       </button>
       {grade && (
         <div className="take-card" aria-live="polite" data-guitar-score={Math.round(grade.score * 100)}>
@@ -585,7 +605,9 @@ function InnerClock({ t, ctl, onProgress }: { t: Strings; ctl: React.MutableRefO
     setPhase('running');
     const p = clockPlan(bpm, silentBars);
     const ev = clockEvents(p);
-    t0.current = performance.now();
+    // The first click is HEARD after the audio schedule lead (60 ms) and the output latency — taps count from then.
+    const an = piano.audioNow();
+    t0.current = an === null ? performance.now() : piano.heardTime(an + 0.06);
     const tick = setInterval(() => setBeatNow(Math.floor((performance.now() - t0.current) / 1000 / p.beat)), 50);
     if (SIMULATED) {
       // A slightly dragging player.

@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.79.0',
+    date: '2026-11-13',
+    en: ['Every timed take now says when: sung melodies get a count-in, a click (on/off) and the notes lighting up one by one; piano, guitar and bass drills, sight-singing, the guitar tab drill and rhythm reading show a moving highlight on the note that is due; Play It Back lights the due cell, Sing along keeps the click under the whole song, and the groove pad pulses on every click'],
+    he: ['כל תרגיל בזמן אומר עכשיו מתי: במנגינות שרות יש ספירה, קליק (אפשר לכבות) והצלילים נדלקים אחד־אחד; בתרגילי פסנתר, גיטרה ובס, בשירה מהדף, בתרגיל הטאבים ובקריאת קצב יש סימון שזז על הצליל שצריך עכשיו; ב״נגנו בחזרה״ התא התורן נדלק, ב״שירה עם השיר״ הקליק ממשיך כל השיר, ומשטח הגרוב פועם עם כל קליק'],
+  },
+  {
     version: '0.78.0',
     date: '2026-11-12',
     en: ['Drum songs in the first levels are built up layer by layer, in Practice too: kick alone, then + snare, then + hi-hat, then the whole song with fills and crash; 85% opens the next layer, and the level opens on the whole song'],

@@ -1,0 +1,165 @@
+/* PulseNotes — the shared "now" cue of timed responses (count-in, beat light, lit notes). */
+.pulse-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 2px 0 8px;
+  flex-wrap: wrap;
+}
+.pulse-notes {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  justify-content: center;
+}
+.pn-beat {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid var(--line, rgba(127, 127, 127, 0.4));
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 1rem;
+  color: var(--ink, inherit);
+  transition: background 0.06s, transform 0.06s;
+}
+.pn-beat.on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+  transform: scale(1.12);
+}
+.pn-beat.count {
+  width: 40px;
+  height: 40px;
+  font-size: 1.35rem;
+}
+.pn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  justify-content: center;
+  max-width: 300px;
+}
+.pn-chip {
+  min-width: 30px;
+  height: 30px;
+  padding: 0 6px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 0.95rem;
+  border: 2px solid var(--line, rgba(127, 127, 127, 0.35));
+  color: var(--ink, inherit);
+  background: transparent;
+  transition: background 0.08s, transform 0.08s, opacity 0.2s;
+}
+.pn-chip.dot {
+  min-width: 14px;
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  border-radius: 50%;
+}
+.pn-chip.next {
+  border-color: var(--accent);
+}
+.pn-chip.now {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+  transform: scale(1.14);
+}
+.pn-chip.done {
+  opacity: 0.45;
+}
+.pn-click {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1.5px solid var(--line, rgba(127, 127, 127, 0.4));
+  background: transparent;
+  color: var(--ink-dim, inherit);
+  cursor: pointer;
+}
+.pn-click.on {
+  border-color: var(--accent);
+  color: var(--ink, inherit);
+}
+@media (prefers-reduced-motion: reduce) {
+  .pn-chip,
+  .pn-beat {
+    transition: none;
+  }
+  .pn-chip.now,
+  .pn-beat.on {
+    transform: none;
+  }
+}
+
+/* The now-cue on a staff / tab line (drills, pieces): a soft column behind the due note. */
+.svg-wrap {
+  position: relative;
+}
+.staff-now {
+  position: absolute;
+  top: 6%;
+  bottom: 6%;
+  width: 26px;
+  margin-left: -13px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent) 34%, transparent);
+  box-shadow: 0 0 0 2px var(--accent);
+  pointer-events: none;
+  transition: left 0.06s linear;
+}
+@media (prefers-reduced-motion: reduce) {
+  .staff-now {
+    transition: none;
+  }
+}
+
+/* Groove trainer: a ring that pulses on every audible click (remounted per click). */
+.gt-pad {
+  position: relative;
+}
+.gt-beat {
+  position: absolute;
+  inset: -4px;
+  border-radius: inherit;
+  border: 3px solid var(--accent);
+  pointer-events: none;
+  animation: gt-beat 0.22s ease-out forwards;
+}
+@keyframes gt-beat {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.05);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gt-beat {
+    animation-duration: 0.12s;
+    transform: none;
+  }
+}
+
+.pulse-wrap.compact {
+  margin: 0;
+  gap: 8px;
+}
+.pulse-wrap.compact .pulse-notes {
+  min-height: 0;
+}

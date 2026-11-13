@@ -52,9 +52,23 @@ async function takeItem(c: TakeCtx<HearItem>): Promise<TakeOutcome | 'mic-error'
     for (let b = 0; b < Math.ceil(len) + 1; b++) clicks.push({ t: (4 + b) * beat, accent: false, count: false });
     let origin = performance.now() + 120 + 4 * beat * 1000;
     c.setPhase('play');
-    await piano.playTimeline({ clicks: clicks.map((k) => ({ ...k, soft: !k.count })), wood: [], responseAt: 4 * beat, responseEnd: (4 + len + 1.5) * beat }, signal, undefined, (perf) => {
-      origin = perf;
-    });
+    c.setCell(-1);
+    // The now-cue: the cell of the note that is due lights on the grid (nothing during the count-in).
+    const cue = window.setInterval(() => {
+      const b = (performance.now() - origin) / 1000 / beat;
+      let k = -1;
+      item.notes.forEach((n, i) => {
+        if (n.at <= b + 0.05) k = i;
+      });
+      c.setCell(k);
+    }, 30);
+    try {
+      await piano.playTimeline({ clicks: clicks.map((k) => ({ ...k, soft: !k.count })), wood: [], responseAt: 4 * beat, responseEnd: (4 + len + 1.5) * beat }, signal, undefined, (perf) => {
+        origin = perf;
+      });
+    } finally {
+      window.clearInterval(cue);
+    }
     played = heard.map((h) => ({ ms: h.perf - origin - h.lat, midi: h.midi })).filter((p) => p.ms > -300);
   } else {
     c.setPhase('play');

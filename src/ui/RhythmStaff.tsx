@@ -32,10 +32,51 @@ const CELL_NOTES: Record<CellId, { d: string; dot?: boolean; rest?: boolean }[]>
 };
 
 const beamable = (d: string) => d === '8' || d === '16';
+const RAW: Record<string, number> = { w: 4, h: 2, q: 1, '8': 0.5, '16': 0.25 };
 
-export function RhythmStaff({ rhythm, label, height = 96, compact = false, bare = false }: { rhythm: Rhythm; label: string; height?: number; compact?: boolean; bare?: boolean }) {
+/** Every drawn note's (and rest's) start, in beats from the rhythm's start — the order the staff draws them. */
+export function rhythmNoteStarts(rhythm: Rhythm): number[] {
+  const out: number[] = [];
+  let at = 0;
+  for (const c of rhythm.cells) {
+    const ns = CELL_NOTES[c];
+    const raws = ns.map((n) => RAW[n.d] * (n.dot ? 1.5 : 1));
+    const sum = raws.reduce((a, b) => a + b, 0);
+    let acc = 0;
+    raws.forEach((r) => {
+      out.push(at + (acc / sum) * CELLS[c].beats);
+      acc += r;
+    });
+    at += CELLS[c].beats;
+  }
+  return out;
+}
+
+/** The due note of a running read (index into rhythmNoteStarts, −1 before / none), from the response start. */
+export function useRhythmNow(rhythm: Rhythm, bpm: number, startPerf: number | null | undefined, live: boolean): number {
+  const [now, setNow] = useState(-1);
+  useEffect(() => {
+    if (!live || !startPerf) {
+      setNow(-1);
+      return;
+    }
+    const starts = rhythmNoteStarts(rhythm);
+    const total = rhythm.cells.reduce((a, c) => a + CELLS[c].beats, 0);
+    const id = window.setInterval(() => {
+      const b = ((performance.now() - startPerf) / 1000) * (bpm / 60);
+      let k = -1;
+      if (b < total + 0.25) starts.forEach((x, i) => x <= b + 0.05 && (k = i));
+      setNow(k);
+    }, 30);
+    return () => window.clearInterval(id);
+  }, [rhythm, bpm, startPerf, live]);
+  return now;
+}
+
+export function RhythmStaff({ rhythm, label, height = 96, compact = false, bare = false, now = -1 }: { rhythm: Rhythm; label: string; height?: number; compact?: boolean; bare?: boolean; /** The due note of a running read (−1 none): a now-cue column behind it. */ now?: number }) {
   const ref = useRef<HTMLDivElement>(null);
   const [failed, setFailed] = useState(false);
+  const [xs, setXs] = useState<number[]>([]);
   const meter = meterOf(rhythm);
   const key = `${meter}|${rhythm.swing ? 'sw' : ''}|${rhythm.cells.join('.')}`;
 
@@ -65,6 +106,7 @@ export function RhythmStaff({ rhythm, label, height = 96, compact = false, bare 
         renderer.resize(width, height);
         const ctx = renderer.getContext();
         let x = 5;
+        const drawn: InstanceType<VF['StaveNote']>[] = [];
         bars.forEach((bar, bi) => {
           const w = barW + (bi === 0 ? firstExtra : 0);
           const stave = new VF.Stave(x, compact ? -10 : 0, w);
@@ -98,10 +140,12 @@ export function RhythmStaff({ rhythm, label, height = 96, compact = false, bare 
             flush();
           }
           VF.Formatter.FormatAndDraw(ctx, stave, notes);
+          drawn.push(...notes);
           beams.forEach((b) => b.setContext(ctx).draw());
           tuplets.forEach((t) => t.setContext(ctx).draw());
           x += w;
         });
+        setXs(drawn.map((n) => (n.getAbsoluteX() + 6) / width));
         const svg = el.querySelector('svg');
         if (svg) {
           svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
@@ -119,8 +163,17 @@ export function RhythmStaff({ rhythm, label, height = 96, compact = false, bare 
   return (
     <div className={`rhythm-staff ${compact ? 'compact' : ''} ${bare ? 'bare' : ''}`} role="img" aria-label={label}>
       {rhythm.swing && !bare && <span className="swing-mark">Swing ♫ = ♩♪³</span>}
-      <div ref={ref} />
+      <div className="svg-wrap">
+        <div ref={ref} />
+        {now >= 0 && xs[now] !== undefined && <span className="staff-now" style={{ left: `${xs[now] * 100}%` }} aria-hidden="true" />}
+      </div>
       {failed && <p className="staff-fallback">{label}</p>}
     </div>
   );
+}
+
+/** A rhythm staff whose due note lights as a take runs (one per drum lane: each lane has its own rhythm). */
+export function LiveRhythmStaff({ bpm, startPerf, live, ...rest }: Omit<Parameters<typeof RhythmStaff>[0], 'now'> & { bpm: number; startPerf: number | null | undefined; live: boolean }) {
+  const now = useRhythmNow(rest.rhythm, bpm, startPerf, live);
+  return <RhythmStaff {...rest} now={now} />;
 }

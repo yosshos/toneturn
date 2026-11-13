@@ -132,7 +132,7 @@ export function DrillScore({ drill, ds, result, beat = -1, lang = 'en' }: { dril
         </button>
       </>
     );
-  if (!isGuitarDrill(drill)) return <DrillStaff drill={drill} fingering={ds.showFingering} result={result} />;
+  if (!isGuitarDrill(drill)) return <DrillStaff drill={drill} fingering={ds.showFingering} result={result} beat={beat} />;
   if (drill.show === 'none' && !result) return <EarCard drill={drill} beat={beat} lang={lang} />;
   const view = drill.show === 'staff' ? 'staff' : (ds.guitarView ?? 'tab');
   // The guitar trade (g-impro 7), like the piano's: after the result, a model line for your bars on request — in the
@@ -1227,13 +1227,23 @@ function TechLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, onOct
       </p>
       {last && <p className="drill-why">{last.why[lang]}</p>}
       {last?.octaveShift !== undefined && <OctaveFix lang={lang} shift={last.octaveShift} current={midiOctave} onFix={onOctave} />}
-      <DrillScore drill={pr.drill} ds={ds} result={last} />
-      {last && <MarkLegend lang={lang} />}
-      <DrillTake key={`${pr.slot ?? pr.id}:${take}`} drill={pr.drill} bpm={bpm} lang={lang} cal={cal} kit={kit} onDone={(m, played) => done(m, played)} />
+      <ProbeTake key={`${pr.slot ?? pr.id}:${take}`} drill={pr.drill} ds={ds} last={last} bpm={bpm} lang={lang} cal={cal} kit={kit} onDone={done} />
       <button className="btn ghost" onClick={() => nextProbe(best)}>
         {tx.skip}
       </button>
     </div>
+  );
+}
+
+/** A placement probe's score and take, with the score's now-cue following the take. */
+function ProbeTake({ drill, ds, last, bpm, lang, cal, kit, onDone }: { drill: Drill; ds: DrillSettings; last: TakeMetrics | null; bpm: number; lang: Lang; cal: DrillCalibration; kit?: Settings['drumKit']; onDone: (m: TakeMetrics, played: PlayedNote[]) => void }) {
+  const [beat, setBeat] = useState(-1);
+  return (
+    <>
+      <DrillScore drill={drill} ds={ds} result={last} beat={last ? -1 : beat} lang={lang} />
+      {last && <MarkLegend lang={lang} />}
+      <DrillTake drill={drill} bpm={bpm} lang={lang} cal={cal} kit={kit} onBeat={setBeat} onDone={(m, played) => (setBeat(-1), onDone(m, played))} />
+    </>
   );
 }
 

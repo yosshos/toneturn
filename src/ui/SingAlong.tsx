@@ -15,6 +15,8 @@ import { BrowserPitchCapture } from '../speech/pitchCapture';
 import type { Settings } from '../storage/progress';
 import { piano, SIMULATED } from './services';
 import { noteLabel } from './Vocal';
+import { loadClick, saveClick } from './PulseNotes';
+import { Icon } from './icons';
 
 const BPM = 84;
 /** Usual major-key spelling for a tonic pitch class. */
@@ -57,6 +59,8 @@ export function SingAlongScreen({ t, settings, onBack }: { t: Strings; settings:
   const [grade, setGrade] = useState<SingAlongGrade | null>(null);
   // Off by default: the guide plays the very notes being sung, so only with headphones can it stay out of the microphone.
   const [guide, setGuide] = useState(false);
+  // The click keeps the beat under the whole song (not only the count-in), so the roll's cursor is never the only cue.
+  const [clickOn, setClickOn] = useState(loadClick);
   const [remark, setRemark] = useState<string | null>(null);
   const ctl = useRef<AbortController | null>(null);
   useEffect(() => () => ctl.current?.abort(), []);
@@ -79,6 +83,10 @@ export function SingAlongScreen({ t, settings, onBack }: { t: Strings; settings:
     if (c.signal.aborted) return;
     setPhase('singing');
     const end = tl.notes[tl.notes.length - 1].start + tl.notes[tl.notes.length - 1].dur;
+    if (clickOn) {
+      const n = Math.ceil(end / beat) + 1;
+      void piano.play(Array.from({ length: n }, (_, k) => ({ midi: 0, start: k * beat, duration: 0.05, velocity: k % 4 === 0 ? 0.55 : 0.38, perc: (k % 4 === 0 ? 'accent' : 'click') as 'accent' | 'click' })), n * beat, c.signal).catch(() => {});
+    }
     if (guide) void piano.play(tl.notes.map((n) => ({ midi: n.midi, start: n.start, duration: n.dur * 0.92, velocity: 0.35 })), end + 0.2, c.signal).catch(() => {});
     const t0 = performance.now();
     const tick = setInterval(() => setNow((performance.now() - t0) / 1000), 50);
@@ -187,6 +195,9 @@ export function SingAlongScreen({ t, settings, onBack }: { t: Strings; settings:
           <small className="field-hint">{t.singAlongGuideHint}</small>
         </span>
       </label>
+      <button className={`chip pn-click${clickOn ? ' on' : ''}`} aria-pressed={clickOn} disabled={phase === 'count' || phase === 'singing'} onClick={() => (setClickOn(!clickOn), saveClick(!clickOn))}>
+        <Icon k="metronome" /> {lang === 'en' ? 'Click' : 'קליק'}
+      </button>
       <div className="vocal-actions">
         <button className="btn primary mega" disabled={phase === 'count' || phase === 'singing'} onClick={() => void run()}>
           {phase === 'done' ? t.vocalRetry : settings.instrument && settings.instrument !== 'voice' ? t.playNow : t.vocalSing}

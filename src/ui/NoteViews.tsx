@@ -63,9 +63,11 @@ const vfKey = (m: number, k: PitchClass | null) => {
   return `${s.letter.toLowerCase()}${s.acc === -1 ? 'b' : s.acc === 1 ? '#' : ''}/${s.octave}`;
 };
 
-function useSvg(draw: (VF: VF, el: HTMLDivElement) => void, deps: unknown[]) {
+function useSvg(draw: (VF: VF, el: HTMLDivElement) => void | number[], deps: unknown[]) {
   const ref = useRef<HTMLDivElement>(null);
   const [failed, setFailed] = useState(false);
+  /** Each drawn note's centre as a share of the width (for the now-cue overlay; no redraw while it moves). */
+  const [xs, setXs] = useState<number[]>([]);
   useEffect(() => {
     let cancelled = false;
     void loadVF()
@@ -73,7 +75,8 @@ function useSvg(draw: (VF: VF, el: HTMLDivElement) => void, deps: unknown[]) {
         const el = ref.current;
         if (cancelled || !el) return;
         el.innerHTML = '';
-        draw(VF, el);
+        const got = draw(VF, el);
+        setXs(got ?? []);
         const svg = el.querySelector('svg');
         if (svg) {
           const w = svg.getAttribute('width');
@@ -90,7 +93,13 @@ function useSvg(draw: (VF: VF, el: HTMLDivElement) => void, deps: unknown[]) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
-  return { ref, failed };
+  return { ref, failed, xs };
+}
+
+/** The now-cue on a staff / tab line: a soft column behind the note that is due (index into the drawn notes). */
+function NowColumn({ xs, now }: { xs: number[]; now?: number }) {
+  if (now === undefined || now < 0 || xs[now] === undefined) return null;
+  return <span className="staff-now" style={{ left: `${xs[now] * 100}%` }} aria-hidden="true" />;
 }
 
 /** Per-note result colours on the staff (after an answer / a take). */
@@ -103,8 +112,8 @@ const MARK_COLOR = new Proxy(MARK_RG, { get: (o, k: string) => (typeof document 
 /** Symbols under marked notes so the result is never colour-only. */
 const MARK_SYM: Record<Exclude<NoteMark, undefined>, string> = { ok: '', timing: '~', wrong: '✕', missed: '○' };
 
-export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs, marks, rests, meter, timeSig, sig, bars, ties }: { notes: number[]; chord: boolean; keyPc: PitchClass | null; labels?: string[]; clef?: 'treble' | 'bass' | 'alto' | 'tenor'; durs?: number[]; marks?: NoteMark[]; /** Rests: true where the item is a rest of durs[i] (its note value is ignored). */ rests?: boolean[]; /** Beats per bar: draws bar lines between bars (with durs). */ meter?: number; /** Show the time signature (first line of a passage). */ timeSig?: boolean; /** The time signature text when it is not meter/4 (eighth-note meters: '7/8'). */ sig?: string; /** Mixed meters (prog timeline): the line's bars in quarter notes; a bar with `sig` writes its new time signature after the bar line. Overrides `meter` for the bar lines. */ bars?: { len: number; sig?: string }[]; /** Ties: true where a note is tied to the next one (lead sheets). */ ties?: boolean[] }) {
-  const { ref, failed } = useSvg(
+export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs, marks, rests, meter, timeSig, sig, bars, ties, now }: { /** The due note (index into notes, −1 none): a now-cue column behind it. */ now?: number; notes: number[]; chord: boolean; keyPc: PitchClass | null; labels?: string[]; clef?: 'treble' | 'bass' | 'alto' | 'tenor'; durs?: number[]; marks?: NoteMark[]; /** Rests: true where the item is a rest of durs[i] (its note value is ignored). */ rests?: boolean[]; /** Beats per bar: draws bar lines between bars (with durs). */ meter?: number; /** Show the time signature (first line of a passage). */ timeSig?: boolean; /** The time signature text when it is not meter/4 (eighth-note meters: '7/8'). */ sig?: string; /** Mixed meters (prog timeline): the line's bars in quarter notes; a bar with `sig` writes its new time signature after the bar line. Overrides `meter` for the bar lines. */ bars?: { len: number; sig?: string }[]; /** Ties: true where a note is tied to the next one (lead sheets). */ ties?: boolean[] }) {
+  const { ref, failed, xs } = useSvg(
     (VF, el) => {
       const n = chord ? 1 : notes.length;
       const width = Math.max(220, 90 + n * 44);
@@ -161,12 +170,16 @@ export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs, 
       voice.draw(ctx, stave);
       beams.forEach((bm) => bm.setContext(ctx).draw());
       if (!chord && ties) ties.forEach((t, i) => t && sn[i + 1] && new VF.StaveTie({ first_note: sn[i], last_note: sn[i + 1], first_indices: [0], last_indices: [0] }).setContext(ctx).draw());
+      return sn.map((x) => (x.getAbsoluteX() + 6) / width);
     },
     [notes.join(','), chord, keySpec(keyPc), (labels ?? []).join(','), clef, (durs ?? []).join(','), (marks ?? []).join(','), sig, (bars ?? []).map((b) => `${b.len}${b.sig ?? ''}`).join(','), (ties ?? []).join(',')],
   );
   return (
     <div className="note-staff" role="img" aria-label={notes.map((m, i) => `${vfKey(m, keyPc)}${marks?.[i] ? ` ${marks[i]}` : ''}`).join(' ')}>
-      <div ref={ref} />
+      <div className="svg-wrap">
+        <div ref={ref} />
+        <NowColumn xs={xs} now={now} />
+      </div>
       {failed && <p className="staff-fallback">{notes.map((m) => vfKey(m, keyPc)).join(' ')}</p>}
     </div>
   );
@@ -214,8 +227,8 @@ export function GrandStaff({ notes, keyPc }: { notes: number[]; keyPc: PitchClas
 }
 
 /** One line of tablature with given string/fret positions (drills): chords stack, a mark above (h p / b ~ PM X …), result colours. */
-export function TabLine({ cols, marks, strings = 6, bars, at }: { cols: { pos: { str: number; fret: number | 'x' }[]; dur: number; top?: string; bottom?: string }[]; marks?: NoteMark[]; strings?: number; /** Mixed meters: the line's bars (quarter notes) — a bar line at each bar's end, its time signature written where it changes. */ bars?: { len: number; sig?: string }[]; /** With `bars`: each column's start in quarter notes from the line's start. */ at?: number[] }) {
-  const { ref, failed } = useSvg(
+export function TabLine({ cols, marks, strings = 6, bars, at, now }: { /** The due column (−1 none): a now-cue column behind it. */ now?: number; cols: { pos: { str: number; fret: number | 'x' }[]; dur: number; top?: string; bottom?: string }[]; marks?: NoteMark[]; strings?: number; /** Mixed meters: the line's bars (quarter notes) — a bar line at each bar's end, its time signature written where it changes. */ bars?: { len: number; sig?: string }[]; /** With `bars`: each column's start in quarter notes from the line's start. */ at?: number[] }) {
+  const { ref, failed, xs } = useSvg(
     (VF, el) => {
       const width = Math.max(220, 60 + cols.length * 40);
       const renderer = new VF.Renderer(el, VF.Renderer.Backends.SVG);
@@ -251,12 +264,16 @@ export function TabLine({ cols, marks, strings = 6, bars, at }: { cols: { pos: {
       } else voice.addTickables(tn);
       new VF.Formatter().joinVoices([voice]).format([voice], width - 60);
       voice.draw(ctx, stave);
+      return tn.map((x) => (x.getAbsoluteX() + 6) / width);
     },
     [JSON.stringify(cols), (marks ?? []).join(','), strings, JSON.stringify(bars ?? null), (at ?? []).join(',')],
   );
   return (
     <div className="guitar-tab" role="img" aria-label={cols.map((c, i) => c.pos.map((p) => `${p.str}/${p.fret}`).join('+') + (marks?.[i] ? ` ${marks[i]}` : '')).join(' ')}>
-      <div ref={ref} />
+      <div className="svg-wrap">
+        <div ref={ref} />
+        <NowColumn xs={xs} now={now} />
+      </div>
       {failed && <p className="staff-fallback">TAB</p>}
     </div>
   );

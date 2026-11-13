@@ -7,6 +7,7 @@ import type { SkillId } from '../engine/lesson';
 import { useMiniGate } from './MiniLesson';
 import { vocalUnit } from '../content/units';
 import { NotesView } from './NotesView';
+import { loadClick, PulseNotes, pulseClicks, saveClick, usePulseNow, type Pulse, type PulseClock } from './PulseNotes';
 import { remarksFor } from '../engine/feedback';
 import { sungMelodyRemarks } from '../engine/feedbackMelody';
 import { melodyRemarkText, remarkText } from '../game/content';
@@ -245,6 +246,30 @@ function simulatedFrames(item: VocalItem, targets: number[], noteIdx: number): S
   }
 }
 
+/**
+ * The grid a melodic take is sung on — the reference's own pace — so the take gets a count-in, a click
+ * and the notes lighting up in time (null = sung freely: holds, glides, harmony over the app's sound).
+ */
+export function pulseOf(item: VocalItem, targets: number[]): Pulse | null {
+  if (targets.length < 2 || item.ear || item.reference === 'during') return null;
+  if (item.kind === 'melody' || item.kind === 'leap' || item.kind === 'rhythmic' || item.kind === 'staccato') {
+    const d = item.bpm ? 60 / item.bpm / (item.perBeat ?? 1) : 0.55;
+    const beat = item.bpm ? 60 / item.bpm : d;
+    return { beat, onsets: targets.map((_, i) => i * d), countIn: 4, length: targets.length * d };
+  }
+  if (item.kind === 'scale') {
+    const d = 0.42;
+    return { beat: 2 * d, onsets: targets.map((_, i) => i * d), countIn: 4, length: targets.length * d };
+  }
+  if (item.kind === 'sight') {
+    const beat = 60 / (item.bpm ?? 72);
+    const durs = item.durs ?? targets.map(() => 1);
+    const onsets = durs.map((_, i) => durs.slice(0, i).reduce((a, b) => a + b, 0) * beat);
+    return { beat, onsets, countIn: 4, length: durs.reduce((a, b) => a + b, 0) * beat };
+  }
+  return null;
+}
+
 /** The reference: what the app plays before (or under) the take. */
 function referenceEvents(item: VocalItem, targets: number[]): { events: NoteEvent[]; length: number } {
   const ear = earReference(item, targets);
@@ -267,10 +292,9 @@ function referenceEvents(item: VocalItem, targets: number[]): { events: NoteEven
     return { events, length: at + 0.4 };
   }
   if (item.kind === 'sight') {
-    const beat = 60 / (item.bpm ?? 72);
+    // The key note only: the count-in and the click come from the take's pulse.
     const tonic = targets[0] - (item.steps?.[0] ?? 0);
-    const clicks = [0, 1, 2, 3].map((k) => ({ midi: k === 0 ? 96 : 91, start: 1.4 + k * beat, duration: 0.06, velocity: 0.5 }));
-    return { events: [{ midi: tonic, start: 0, duration: 1.2, velocity: 0.75 }, ...clicks], length: 1.4 + 4 * beat };
+    return { events: [{ midi: tonic, start: 0, duration: 1.2, velocity: 0.75 }], length: 1.4 };
   }
   if (item.kind === 'vibrato-notes') {
     const secs = item.noteSecs ?? targets.map(() => 0.6);
@@ -686,6 +710,10 @@ function VocalSession({
   const [onsetAt, setOnsetAt] = useState<number | null>(null);
   const [clock, setClock] = useState(0);
   const [summary, setSummary] = useState<{ score: number; passed: boolean } | null>(null);
+  // The now-cue of timed takes: the reference lights its notes, then a count-in and the click carry the take.
+  const [pulseClock, setPulseClock] = useState<PulseClock | null>(null);
+  const [clickOn, setClickOn] = useState(loadClick);
+  const pulseNow = usePulseNow(pulseClock).now;
   const [headphones, setHeadphones] = useState(() => {
     try {
       return localStorage.getItem('toneturn.headphones') === '1';
@@ -712,6 +740,9 @@ function VocalSession({
   const targets = useMemo(() => itemTargets(item, range), [item, range]);
   const noteCount = multiNote(item) ? targets.length : 1;
   const shownTargets = multiNote(item) ? [targets[noteIdx]] : targets;
+  const pulse = useMemo(() => (multiNote(item) ? null : pulseOf(item, targets)), [item, targets]);
+  /** The notes are the task (scale by name, by ear): the now-cue shows dots, the reference lights nothing. */
+  const hiddenTask = (item.kind === 'scale' && item.scale?.hear === 'tonic') || !!item.ear;
 
   useEffect(
     () => () => {
@@ -733,6 +764,7 @@ function VocalSession({
     setFrames([]);
     setOnsetAt(null);
     setAudioUrl(null);
+    setPulseClock(null);
     await piano.unlock();
     const ref = referenceEvents(item, shownTargets);
     setPhase('listening');
@@ -824,37 +856,58 @@ function VocalSession({
         await piano.play(clicks, 4 * beat, c.signal).catch(() => {});
         void piano.play(lineAccompaniment(acc, chordsAbs, beat), acc.length * beat + 0.3, c.signal).catch(() => {});
       } else if (item.reference === 'during') piano.startDrone([shownTargets[0]], 0.12);
-      else await piano.play(ref.events, ref.length, c.signal).catch(() => {});
+      else {
+        // The reference lights its own notes as they sound (same grid as the take).
+        if (pulse && !isSight(item) && !hiddenTask) setPulseClock({ pulse: { ...pulse, countIn: 0 }, zero: performance.now() + 30 });
+        await piano.play(ref.events, ref.length, c.signal).catch(() => {});
+        setPulseClock(null);
+      }
       if (c.signal.aborted) {
         piano.stopDrone();
+        setPulseClock(null);
         setPhase('ready');
         return;
       }
       setPhase('singing');
       startTicking();
-      captureT0.current = performance.now();
+      // Timed takes: a bar of count-in, then the click (if on) and the lit notes carry the singer through.
+      const lead = pulse ? pulse.countIn * pulse.beat : 0;
+      const clickCtl = new AbortController();
+      c.signal.addEventListener('abort', () => clickCtl.abort());
+      captureT0.current = performance.now() + lead * 1000;
+      if (pulse) {
+        const pc = pulseClicks(pulse, clickOn);
+        setPulseClock({ pulse, zero: captureT0.current });
+        void piano.play(pc.events, pc.length, clickCtl.signal).catch(() => {});
+      }
+      const keepShifted = (f: SungFrame) => {
+        if (f.t >= lead - 0.4) keep(lead ? { ...f, t: f.t - lead } : f);
+      };
       if (SIMULATED) {
         const sim = simulatedFrames(item, targets, noteIdx);
         for (const f of sim) keep(f);
-        await new Promise((r) => setTimeout(r, 300));
+        // The simulator runs through the count-in and the first notes too (the now-cue is part of the take).
+        await new Promise((r) => setTimeout(r, 300 + (pulse ? (lead + Math.min(pulse.length, 1.5)) * 1000 : 0)));
         got = sim;
       } else {
         const r = await new BrowserPitchCapture().sing({
           signal: c.signal,
-          maxMs: (item.seconds + 4) * 1000,
-          silenceMs: 6000,
+          maxMs: (item.seconds + 4 + lead) * 1000,
+          silenceMs: 6000 + lead * 1000,
           endSilenceMs: melodic ? (item.kind === 'staccato' ? 1200 : 900) : 700,
           hopMs: 20,
           record: true,
-          onFrame: keep,
+          onFrame: keepShifted,
         });
+        clickCtl.abort();
         if (r.kind === 'frames') {
-          got = r.frames;
+          got = lead ? buf : r.frames;
           audio = r.audio;
         } else if (r.kind === 'aborted') {
           if (!stopped.current) {
             clearInterval(tick);
             piano.stopDrone();
+            setPulseClock(null);
             return;
           }
           got = buf; // "Stop": grade what was sung so far
@@ -863,6 +916,7 @@ function VocalSession({
     }
     clearInterval(tick);
     piano.stopDrone();
+    setPulseClock(null);
     setFrames(got ?? []);
     const g = got ? (MORE_KINDS.includes(item.kind) ? gradeMore(item, got, range) : gradeTake(item, got, range, style, noteIdx)) : { unclear: true, score: 0, metrics: [], weakest: null };
     setGrade(g);
@@ -1071,13 +1125,27 @@ function VocalSession({
       {item.kind === 'vibrato-rate' && phase === 'singing' && <div className="vib-pulse" style={{ animationDuration: `${1 / (item.vibRate ?? 5.5)}s` }} aria-hidden="true" />}
       {isSight(item) ? (
         <div className="sight-score">
-          <NotesView midis={shownTargets} keyPc={pc(sightKeyName(item, shownTargets[0]))} settings={settings} durs={item.durs} clef={item.more?.clef ?? (range.low <= 45 ? 'bass' : undefined)} />
-          <small className="field-hint">♩ = {item.bpm ?? 72}</small>
+          <NotesView midis={shownTargets} keyPc={pc(sightKeyName(item, shownTargets[0]))} settings={settings} durs={item.durs} clef={item.more?.clef ?? (range.low <= 45 ? 'bass' : undefined)} now={pulseNow} />
+          <div className="pulse-wrap compact">
+            <PulseNotes clock={pulseClock} count={0} labels={null} beatOnly />
+            <small className="field-hint">♩ = {item.bpm ?? 72}</small>
+            <button className={`chip pn-click${clickOn ? ' on' : ''}`} aria-pressed={clickOn} onClick={() => (setClickOn(!clickOn), saveClick(!clickOn))}>
+            <Icon k="metronome" /> {settings.uiLang === 'en' ? 'Click' : 'קליק'}
+          </button>
+          </div>
         </div>
-      ) : (
+      ) : pulse && phase !== 'result' ? null : (
       <p className="vocal-targets" dir="ltr">
         {visible.map((m) => (Math.abs(m - Math.round(m)) > 0.2 ? `${noteLabel(Math.ceil(m), settings)}¼↓` : noteLabel(m, settings))).join(' – ')}
       </p>
+      )}
+      {pulse && phase !== 'result' && !isSight(item) && (
+        <div className="pulse-wrap">
+          <PulseNotes clock={pulseClock} count={targets.length} labels={hiddenTask ? null : isSight(item) ? null : targets.map((m) => noteLabel(m, settings))} />
+          <button className={`chip pn-click${clickOn ? ' on' : ''}`} aria-pressed={clickOn} onClick={() => (setClickOn(!clickOn), saveClick(!clickOn))}>
+            <Icon k="metronome" /> {settings.uiLang === 'en' ? 'Click' : 'קליק'}
+          </button>
+        </div>
       )}
       {phase !== 'result' && (item.kind === 'hold' || item.kind === 'straight' || item.kind.startsWith('vibrato') || item.kind === 'messa' || item.kind === 'range' || item.kind === 'dynamic' || item.kind === 'breath-hold' || item.kind === 'fine-tune' || item.kind === 'edge') && (
         <div className="hold-meter" aria-hidden="true">
