@@ -67,6 +67,13 @@ export interface UnitStep {
   step: PathStep;
   state: StepState;
   stars?: number;
+  /**
+   * SPEC-PATH-ROLE §8: the one star scale 0–5 (1–3 = opened, 4 = half the keys at the target / repeated clean,
+   * 5 = mastered). Technique steps: from the facts here, the live keys in pathMastery.decorateMastery.
+   */
+  mstars?: number;
+  /** A mastered step whose practice has gone stale (keyMastery recency): silver, "refresh" (never loses its ✓). */
+  fade?: boolean;
   /** Why a step is ✓ (P19), or why it's a quick check. */
   why?: { en: string; he: string };
   /** The first step of a skill never measured: a short probe (P6). */
@@ -96,6 +103,11 @@ export interface PathFacts {
   units?: { id: string; n: number; steps: string[]; checked: string[]; at: string }[];
   /** "✓ by test" events (jump-ahead). */
   tests?: Record<string, string>;
+  /** SPEC-PATH-ROLE §4: technique steps whose unit checkpoint's technique part passed ("checked in keys"), and when. */
+  keysChecked?: Record<string, string>;
+  /** SPEC-PATH-ROLE §8: units sealed as mastered (every step at 5★ and the checkpoint passed), and when — the bonus
+   *  XP, league points and badge are given once, when a unit is first sealed. */
+  sealed?: Record<string, string>;
 }
 
 export type Goal = 'general' | 'sing' | 'jazz' | 'read' | 'guitar' | 'producer' | 'exam' | 'maqam';
@@ -722,11 +734,13 @@ export function buildPath(inp: PathInput): PathView {
   const stateOf = (s: PathStep, extra?: Partial<UnitStep>): UnitStep => {
     const d = doneSteps[s.id];
     if (d && d.stars > 0) {
-      const mastered = s.ladder ? d.stars >= 5 : d.stars >= 3 && (d.times ?? 1) >= 2 && !!d.firstAt && new Date(d.at).getTime() - new Date(d.firstAt).getTime() >= 3 * DAY;
-      return { step: s, state: mastered ? 'mastered' : 'done', stars: d.stars, ...extra };
+      // SPEC-PATH-ROLE §8: one star scale; mastered = 5★ (technique: every key at the target tempo; ear / theory:
+      // repeated clean, spaced, accurate and at speed).
+      const ms = masteryStars(s, d, subs.get(s.sub), inp.speed?.[s.sub], doneSteps, inp.facts.tests);
+      return { step: s, state: ms >= 5 ? 'mastered' : 'done', stars: d.stars, mstars: ms, ...extra };
     }
     const v = verdict.get(s.id);
-    if (v?.state === 'tested') return { step: s, state: 'tested', why: v.why, ...extra };
+    if (v?.state === 'tested') return { step: s, state: 'tested', why: v.why, mstars: 0, ...extra };
     if (v?.state === 'refresh') return { step: s, state: 'refresh', why: v.why, ...extra };
     return { step: s, state: 'open', ...extra };
   };
@@ -745,7 +759,9 @@ export function buildPath(inp: PathInput): PathView {
       .filter((s): s is PathStep => !!s)
       .map((s) => (f.checked.includes(s.id) && !isDone(s.id) ? { step: s, state: 'tested' as StepState } : stateOf(s)));
     steps.forEach((x) => placedIds.add(x.step.id));
-    const complete = steps.every((x) => x.step.bonus || x.state === 'done' || x.state === 'mastered' || x.state === 'tested');
+    // SPEC-PATH-ROLE §4 / §6 Q2 (owner): the checkpoint is promotion, never a gate — a unit whose steps are done is past
+    // and the next unit opens; its checkpoint stays open (pendingChecks) and only the rank waits for it.
+    const complete = steps.every((x) => x.step.bonus || x.step.kind === 'check' || x.state === 'done' || x.state === 'mastered' || x.state === 'tested');
     units.push(mkUnit(f.id, f.n, steps, complete ? 'past' : 'current'));
   }
   // Only the last unfinished frozen unit is current; earlier unfinished ones are past (superseded by a rebuild).
@@ -942,7 +958,10 @@ export function buildPath(inp: PathInput): PathView {
       }
     // A checkpoint asks questions: it needs question steps (a unit of technique only is checked by its own playing).
     const questions = order.filter((p) => p.s.kind === 'topic' || p.s.kind === 'lesson');
-    if (steps.length && questions.length >= 2) steps.push({ step: virtualStep(`check:${unitId}`, unitId, questions.map((p) => p.s))!, state: 'open' });
+    // SPEC-PATH-ROLE §4: the checkpoint also has a technique part (the unit's technique levels in 4 random keys at the
+    // target tempo), so a unit of technique only gets one too.
+    const techs = order.filter((p) => p.s.kind === 'tech');
+    if (steps.length && (questions.length >= 2 || techs.length >= 1)) steps.push({ step: virtualStep(`check:${unitId}`, unitId, (questions.length >= 2 ? questions : techs).map((p) => p.s))!, state: 'open' });
     return steps;
   };
 
@@ -1084,6 +1103,62 @@ export function checkpointSources(unit: PathUnit): PathStep[] {
   return unit.steps.map((x) => x.step).filter((s) => s.kind === 'topic' || s.kind === 'lesson');
 }
 
+/** SPEC-PATH-ROLE §4: the checkpoint's question part (needs ≥ 2 question steps) and its technique part (the unit's levels). */
+export function checkpointParts(unit: PathUnit): { questions: PathStep[]; tech: PathStep[] } {
+  const qs = checkpointSources(unit);
+  return { questions: qs.length >= 2 ? qs : [], tech: unit.steps.map((x) => x.step).filter((s) => s.kind === 'tech' && !!s.ladder) };
+}
+
+// ---------------------------------------------------------------- opened vs mastered (SPEC-PATH-ROLE §8)
+
+/** Stars where a step counts as mastered (the top of the one scale). */
+export const MASTER_STARS = 5;
+
+/**
+ * A done step on the one star scale 0–5. Technique (and other ladder) levels keep their measured stars (keys at the
+ * target tempo; the live keys are read in pathMastery). Vocal levels: 3 when passed, 5 once the next level of the same
+ * family is passed too (or it is the family's last). Ear / theory / game steps: the session's 1–3, 4 = a second clean
+ * run (3★), 5 = spaced over ≥ 3 days, the sub-skill accurate (EWMA ≥ 0.85 once measured) and at speed.
+ */
+export function masteryStars(
+  s: PathStep,
+  d: { stars: number; at: string; times?: number; firstAt?: string } | undefined,
+  ev: { n: number; ewma: number } | undefined,
+  speed: number | undefined,
+  steps: PathFacts['steps'] = {},
+  tests: PathFacts['tests'] = {},
+): number {
+  if (!d || d.stars <= 0) return 0;
+  if (s.kind === 'vocal' && s.ladder) {
+    const pr = VOCAL_PROGRAMS.find((p) => p.id === s.ladder!.family);
+    const refs = pr?.refs ?? [];
+    const i = refs.indexOf(Number(s.ladder.ref));
+    const next = i >= 0 ? refs[i + 1] : undefined;
+    if (next === undefined) return MASTER_STARS;
+    return (steps?.[`vocal:${next}`]?.stars ?? 0) > 0 || !!tests?.[`vocal:${next}`] ? MASTER_STARS : 3;
+  }
+  if (s.ladder) return Math.min(MASTER_STARS, d.stars);
+  const base = Math.min(3, d.stars);
+  if (base < 3 || (d.times ?? 1) < 2) return base;
+  const spaced = !!d.firstAt && new Date(d.at).getTime() - new Date(d.firstAt).getTime() >= 3 * DAY;
+  const accurate = !ev || ev.n < 5 || ev.ewma >= 0.85;
+  const fast = speed === undefined || speed <= 1;
+  return spaced && accurate && fast ? MASTER_STARS : 4;
+}
+
+/** A unit's checkpoint that is still open although the unit's other steps are done (SPEC-PATH-ROLE §3, §4). */
+export function pendingChecks(view: PathView): { unit: PathUnit; step: UnitStep }[] {
+  const out: { unit: PathUnit; step: UnitStep }[] = [];
+  for (const u of view.units) {
+    if (u.status === 'projected') continue;
+    const chk = u.steps.find((x) => x.step.kind === 'check');
+    if (!chk || chk.state === 'done' || chk.state === 'mastered' || chk.state === 'tested') continue;
+    const rest = u.steps.filter((x) => x.step.kind !== 'check' && !x.step.bonus);
+    if (rest.every((x) => x.state === 'done' || x.state === 'mastered' || x.state === 'tested')) out.push({ unit: u, step: chk });
+  }
+  return out;
+}
+
 /** Stars of a finished step from its score (P10): ≥ 4/6 = 1 star; 2 at ≥ 5/6; 3 at 6/6. Checkpoint: ≥ 75 %. */
 export function stepStars(kind: StepKind, firstTry: number, total: number): number {
   const r = total ? firstTry / total : 0;
@@ -1117,7 +1192,7 @@ export function stepSession(s: PathStep, seed: number, mode: 'step' | 'probe' | 
 
 /** The checkpoint of a unit (P7): 8 mixed items from its steps, 2–3 per area. */
 export function checkpointSession(unit: PathUnit, seed: number): LessonDef {
-  const src = unit.steps.map((x) => x.step).filter((s) => s.kind === 'topic' || s.kind === 'lesson');
+  const src = checkpointParts(unit).questions;
   let a = seed >>> 0;
   const rnd = () => {
     a = (a + 0x6d2b79f5) >>> 0;
@@ -1178,14 +1253,21 @@ export function testOutPassed(steps: string[], items: { id: string; correct: boo
 }
 
 /** Topic-level marks from the path (SPEC-TODAY §4): ✓ when the path already counts the level, ▶ for the current step. */
-export function topicMarks(view: PathView): Map<string, 'done' | 'current'> {
-  const out = new Map<string, 'done' | 'current'>();
+export function topicMarks(view: PathView, levelsOf?: (topic: string) => number): Map<string, 'done' | 'current' | 'ahead'> {
+  const out = new Map<string, 'done' | 'current' | 'ahead'>();
+  // SPEC-PATH-ROLE §5: a level the path has not reached yet is "ahead of the path" — on a coming unit, or above the
+  // topic's highest level on the road (current / past units). Playing it counts once the path gets there.
+  const reached = new Map<string, number>();
   for (const u of view.units)
     for (const x of u.steps) {
       const { topic, level } = x.step;
       if (!topic || !level) continue;
       if (x.state === 'done' || x.state === 'mastered' || x.state === 'tested') out.set(`${topic}:${level}`, 'done');
+      else if (u.status === 'projected') out.set(`${topic}:${level}`, 'ahead');
+      if (u.status !== 'projected') reached.set(topic, Math.max(reached.get(topic) ?? 0, level));
     }
+  if (levelsOf)
+    for (const [topic, top] of reached) for (let l = top + 1; l <= levelsOf(topic); l++) if (!out.has(`${topic}:${l}`)) out.set(`${topic}:${l}`, 'ahead');
   const cur = view.current?.step;
   if (cur?.topic && cur.level) out.set(`${cur.topic}:${cur.level}`, 'current');
   return out;

@@ -199,13 +199,36 @@ export function levelStars(level: LevelDef, items: Record<string, ItemState>, or
   if (!ds.length) return 0;
   const ps = ds.map((d) => itemPass(items[d.itemId], d.startBpm, targetBpmOf(level, d)));
   const n = ps.filter((p) => p.target).length;
-  // 0.64 (owner): five stars. 5 = every key at the target tempo, 4 = half, 3 = three keys (the level counts as done —
-  // the next one opens — while the rest of the keys stay as work), 2 = a first key at target, 1 = three clean at start.
+  // 0.64 (owner): five stars. 5 = every key at the target tempo, 4 = half, 3 = three keys at target, 2 = a first key
+  // at target. SPEC-PATH-ROLE §8 (owner 2026-11-14): 1 = three KEYS clean at the base tempo (every item of the key) —
+  // the step is opened (✓ on the path); the stars above it are the depth the workout builds.
   if (n >= ds.length) return 5;
   if (n >= Math.ceil(ds.length / 2)) return 4;
   if (n >= Math.min(3, ds.length)) return 3;
   if (n >= 1) return 2;
-  return ps.filter((p) => p.start).length >= Math.min(3, ds.length) ? 1 : 0;
+  const kp = levelKeyProgress(level, items, order);
+  return kp.keys.filter((k) => k.start).length >= Math.min(3, kp.keys.length) ? 1 : 0;
+}
+
+/** Per key of a level: every item of the key clean at the base tempo (`start`) / passed at the target tempo (`target`). */
+export interface LevelKeyProgress {
+  keys: { key: number; start: boolean; target: boolean }[];
+  /** The level's target tempo (median over its items, ♩). */
+  targetBpm: number;
+  /** The level's base tempo (median start, ♩). */
+  baseBpm: number;
+}
+export function levelKeyProgress(level: LevelDef, items: Record<string, ItemState>, order: DrillSettings['keyOrder']): LevelKeyProgress {
+  const ds = levelDrills(level, order);
+  const by = new Map<number, { start: boolean; target: boolean }>();
+  for (const d of ds) {
+    const p = itemPass(items[d.itemId], d.startBpm, targetBpmOf(level, d));
+    const k = ((d.spec.key % 12) + 12) % 12;
+    const cur = by.get(k) ?? { start: true, target: true };
+    by.set(k, { start: cur.start && (p.start || p.target), target: cur.target && p.target });
+  }
+  const med = (xs: number[]) => (xs.length ? [...xs].sort((a, b) => a - b)[xs.length >> 1] : 0);
+  return { keys: [...by.entries()].map(([key, v]) => ({ key, ...v })), targetBpm: med(ds.map((d) => targetBpmOf(level, d))), baseBpm: med(ds.map((d) => d.startBpm)) };
 }
 
 /** The most stars a technique level shows. */

@@ -2375,3 +2375,204 @@ button.chip.on {
   .lesson .controls:has(.ctl-ai-hint) .refresh-concept .ctl-label { display: none; }
   :root .lesson .controls:has(.ctl-ai-hint) .refresh-concept.btn { padding-inline: 10px; }
 }
+
+/* ---------------------------------------------------------------- opened vs mastered (SPEC-PATH-ROLE §8) */
+:root {
+  --ring-gold: #a86a00;
+  --ring-silver: #8a94a3;
+  --ring-bed: color-mix(in srgb, var(--ink, #1a1530) 18%, transparent);
+}
+/* The ring follows the note head's own ellipse (a pseudo-element of the head, so it turns with it): a conic fill of
+   the stars (1–5 → 20–100 %), masked to a thin band. */
+.path2 .node-disc.has-ring::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  background: conic-gradient(var(--ring-c, var(--purple, #6d28d9)) calc(var(--p, 0) * 1%), var(--ring-bed) 0);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3.5px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3.5px));
+  pointer-events: none;
+}
+.path2 .node.mastered .node-disc.has-ring::before {
+  --ring-c: var(--ring-gold);
+  inset: -9px;
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4.5px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4.5px));
+}
+.path2 .node.faded .node-disc.has-ring::before {
+  --ring-c: var(--ring-silver);
+}/* Opened: the glyph on a light head, the ring shows it is unfinished; mastered keeps the filled head. */
+:root[data-theme] .path2 .road .node.done.opened .node-disc,
+:root:not([data-theme]) .path2 .road .node.done.opened .node-disc,
+:root[data-theme] .path2 .road .node.tested.opened .node-disc,
+:root:not([data-theme]) .path2 .road .node.tested.opened .node-disc {
+  background: var(--card);
+  color: var(--purple, #6d28d9);
+  opacity: 1;
+}
+:root[data-theme] .path2 .road .node.done.faded .node-disc,
+:root:not([data-theme]) .path2 .road .node.done.faded .node-disc,
+:root[data-theme] .path2 .road .node.mastered.faded .node-disc,
+:root:not([data-theme]) .path2 .road .node.mastered.faded .node-disc {
+  background: color-mix(in srgb, var(--ring-silver) 22%, var(--card));
+  color: var(--ink);
+  box-shadow: none;
+}
+.path2 .node.opened .check-medal {
+  width: 18px;
+  height: 18px;
+  background: var(--purple, #6d28d9);
+  color: #ffffff;
+  box-shadow: none;
+}
+.path2 .node.faded .refresh-medal {
+  width: 20px;
+  height: 20px;
+  background: var(--ring-silver);
+  color: #ffffff;
+}
+.path2 .node.faded .node-tag {
+  color: var(--ink);
+}
+.path2 .node .node-tag[data-promo] {
+  color: var(--ink);
+  font-weight: 700;
+}
+:root[data-theme] .path2 .road .node.mastered .mini-stars i.won {
+  background: var(--ring-gold);
+  border-color: var(--ring-gold);
+}
+:root[data-theme] .path2 .road .node.opened .mini-stars i.won {
+  background: var(--purple, #6d28d9);
+  border-color: var(--purple, #6d28d9);
+}
+
+/* The unit's mastery ring and seal (a completion axis of its own; it can be full). */
+.unit-banner .unit-ring {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid var(--ink-c, #160f2b);
+  color: var(--ink-c, #160f2b);
+}
+.unit-ring circle {
+  fill: none;
+  stroke-width: 4;
+}
+.unit-ring .ur-bed {
+  stroke: color-mix(in srgb, var(--ink-c, #160f2b) 15%, transparent);
+}
+.unit-ring .ur-fill {
+  stroke: var(--ink-c, #160f2b);
+  stroke-linecap: round;
+}
+.unit-ring.sealed {
+  background: var(--ring-gold);
+  color: #ffffff;
+}
+.unit-ring.sealed .ur-fill,
+.unit-ring.sealed .ur-bed {
+  stroke: #ffffff;
+}
+.unit-ring.sealed.faded {
+  background: var(--ring-silver);
+}
+
+/* The what's-missing sheet: compact, one Practice button. */
+.missing-sheet .ms-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.missing-sheet .ms-head h2 {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 1.15rem;
+  overflow-wrap: anywhere;
+}
+.missing-sheet .ms-stars {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 10px 0 4px;
+}
+.missing-sheet .ms-stars i {
+  width: 14px;
+  height: 10px;
+  border-radius: 50%;
+  transform: rotate(-20deg);
+  border: 1.5px solid var(--ink);
+  background: transparent;
+}
+.missing-sheet .ms-stars i.won {
+  background: var(--purple, #6d28d9);
+  border-color: var(--purple, #6d28d9);
+}
+.missing-sheet .ms-stars small {
+  margin-inline-start: 6px;
+  color: var(--ink);
+  opacity: 0.8;
+}
+.missing-sheet .ms-text {
+  margin: 6px 0;
+}
+.missing-sheet .ms-keys {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 4px;
+  margin: 8px 0;
+}
+.missing-sheet .ms-key {
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 4px 0;
+  border-radius: 8px;
+  border: 1.5px dashed color-mix(in srgb, var(--ink) 45%, transparent);
+  color: var(--ink);
+}
+.missing-sheet .ms-key.on {
+  border-style: solid;
+  border-color: var(--purple, #6d28d9);
+  background: var(--purple, #6d28d9);
+  color: #ffffff;
+}
+.missing-sheet .ms-checked {
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+
+/* Practice: a level the path has not reached yet. */
+.chip .ahead-mark {
+  margin-inline-start: 6px;
+  padding: 0 6px;
+  border-radius: 99px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border: 1px solid currentColor;
+  opacity: 0.75;
+}
+/* Settings: Path — guide me / I choose. */
+.path-mode .seg {
+  display: inline-flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+/* Workout: what the strengthen block leads to. */
+.wk-hero .wk-leads {
+  margin: 2px 0 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+/* The ring sits beside the unit's copy (the banner wraps only for the projected units' test-out button). */
+:root[data-theme] .path2 .unit-banner:has(.unit-ring) .unit-copy,
+.path2 .unit-banner:has(.unit-ring) .unit-copy {
+  flex: 1 1 0;
+}

@@ -876,6 +876,14 @@ export const GLYPHS: Record<string, Glyph> = {
     </>
   ),
   'special:fortnight': () => flame(),
+  // SPEC-PATH-ROLE §8: a unit mastered — a seal (a ring with a check), one glyph for every count.
+  'special:unit-mastered': () => (
+    <>
+      <circle cx="12" cy="11" r="8" />
+      {p('M8.3 11.2l2.6 2.6 4.9-5.2')}
+      {p('M8 18.2 L6.5 22 L9.5 21 L12 22.5 L14.5 21 L17.5 22 L16 18.2', false)}
+    </>
+  ),
   // Game badges (engine/gameBadges.ts): one drawn glyph per game.
   // Time Lock: a clock face with the bar lines of a silent bar.
   'special:game:time-lock': () => (
@@ -1182,6 +1190,7 @@ export function resolveGlyph(b: Pick<Badge, 'id' | 'cat' | 'group'>): { key: str
   if (key.startsWith('special:tier')) return { key, glyph: GLYPHS['special:tier'], fallback: false };
   if (key.startsWith('special:rep:')) return { key, glyph: GLYPHS['special:rep'], fallback: false };
   if (key.startsWith('special:first:')) return { key, glyph: GLYPHS['special:first'], fallback: false };
+  if (key.startsWith('special:units-mastered')) return { key, glyph: GLYPHS['special:unit-mastered'], fallback: false };
   return { key, glyph: FALLBACK, fallback: true };
 }
 

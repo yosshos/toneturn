@@ -75,19 +75,24 @@ describe('technique and vocal ladders in the course path (0.61, owner)', () => {
     const lv = techLevel('scales-1')!;
     const drills = levelDrills(lv, ds.keyOrder);
     // 0.64 (A4): one clean take at the start tempo per item = 1 star at most; 3 clean at the target on 2 days pass an item.
-    const startClean = (n: number): Record<string, ItemState> =>
-      Object.fromEntries(drills.slice(0, n).map((d) => [d.itemId, { itemId: d.itemId, family: 'scales', key: 0, hands: 'R', cleanBpm: d.startBpm, history: [], passLog: [{ at: '2026-11-08T10:00:00Z', bpm: d.startBpm }] } as unknown as ItemState]));
+    const startClean = (n: number, only: (d: Drill) => boolean = () => true): Record<string, ItemState> =>
+      Object.fromEntries(drills.filter(only).slice(0, n).map((d) => [d.itemId, { itemId: d.itemId, family: 'scales', key: 0, hands: 'R', cleanBpm: d.startBpm, history: [], passLog: [{ at: '2026-11-08T10:00:00Z', bpm: d.startBpm }] } as unknown as ItemState]));
     const passed = (n: number) => passedItems(drills.slice(0, n), (d) => targetBpmOf(lv, d));
     expect(techStars(lv, {}, ds.keyOrder)).toBe(0);
-    expect(techStars(lv, startClean(3), ds.keyOrder)).toBe(1);
+    // SPEC-PATH-ROLE §8: 1 star = three KEYS clean at the base tempo (every item of the key) — the step is opened.
+    const keys3 = [...new Set(drills.map((d) => d.spec.key))].slice(0, 3);
+    const startKeys = (ks: number[]) => startClean(drills.length, (d) => ks.includes(d.spec.key));
+    expect(techStars(lv, startKeys(keys3.slice(0, 2)), ds.keyOrder)).toBe(keys3.length <= 2 ? 1 : 0);
+    expect(techStars(lv, startKeys(keys3), ds.keyOrder)).toBe(1);
     expect(techStars(lv, startClean(drills.length), ds.keyOrder)).toBe(1);
     // Five stars (owner, 0.64): 2 = a first key at target, 3 = three keys (done), 4 = half, 5 = all.
     expect(techStars(lv, passed(1), ds.keyOrder)).toBe(drills.length <= 1 ? 5 : 2);
     expect(techStars(lv, passed(Math.min(3, drills.length)), ds.keyOrder)).toBeGreaterThanOrEqual(3);
     expect(techStars(lv, passed(Math.ceil(drills.length / 2)), ds.keyOrder)).toBeGreaterThanOrEqual(drills.length >= 6 ? 4 : 3);
     expect(techStars(lv, passed(drills.length), ds.keyOrder)).toBe(5);
-    // Below 3 stars is progress only: the step is not done (no facts) until three keys pass at the target.
-    expect(withLadderFacts({}, { families: ['scales'], items: startClean(drills.length), order: ds.keyOrder, start: {}, vocalPassed: [], at: '2026-11-09T10:00:00Z' }).steps?.['tech:scales-1']).toBeUndefined();
+    // SPEC-PATH-ROLE §2: the path step is opened at 1 star (three keys at the base tempo); below that, no facts.
+    expect(withLadderFacts({}, { families: ['scales'], items: startKeys(keys3.slice(0, 2)), order: ds.keyOrder, start: {}, vocalPassed: [], at: '2026-11-09T10:00:00Z' }).steps?.['tech:scales-1']).toBeUndefined();
+    expect(withLadderFacts({}, { families: ['scales'], items: startKeys(keys3), order: ds.keyOrder, start: {}, vocalPassed: [], at: '2026-11-09T10:00:00Z' }).steps?.['tech:scales-1']?.stars).toBe(1);
     const f = withLadderFacts({}, { families: ['scales'], items: passed(drills.length), order: ds.keyOrder, start: { scales: 3 }, vocalPassed: [], at: '2026-11-09T10:00:00Z' });
     expect(f.steps?.['tech:scales-1']?.stars).toBe(5);
     expect(f.tests?.['tech:scales-2']).toBeTruthy();

@@ -278,12 +278,17 @@ export function keyLineOf(keys: InstrumentKeys[], titleOf?: (f: FamilyId) => Bi)
 }
 
 /** What a coach would phrase (stage B): only measured items, no raw data. */
-export function profileDigest(p: Profile) {
+/**
+ * The digest for the AI coach. `extra.nearMastery` (SPEC-PATH-ROLE §8): the path units close to mastery and what each
+ * is missing (pathMastery.masteryLine) — the weekly summary names them.
+ */
+export function profileDigest(p: Profile, extra: { nearMastery?: string } = {}) {
   const row = (r: ProfileRow) => ({ id: r.id, area: r.source, finding: r.text.en, weeks: r.weeks || undefined, practise: r.note?.en });
   return {
     strengths: p.strengths.map(row),
     patterns: p.patterns.map(row),
     resolved: p.gone.map((g) => ({ id: g.id, area: g.source, finding: g.text.en, lastSeen: g.since })),
     ...(p.keyLine ? { weakKeys: p.keyLine } : {}),
+    ...(extra.nearMastery ? { nearMastery: extra.nearMastery } : {}),
   };
 }

@@ -10,7 +10,7 @@ import { NodeIcon } from './Home';
 import { runLevelFor, MODE_ID_LEVELS, WRONG_NOTE_LEVELS } from '../engine/lesson';
 import { modesLevelFor } from '../engine/recommend';
 
-const markText = (m: 'done' | 'current' | undefined) => (m === 'done' ? ' ✓' : m === 'current' ? ' ▶' : '');
+const markText = (m: 'done' | 'current' | 'ahead' | undefined) => (m === 'done' ? ' ✓' : m === 'current' ? ' ▶' : '');
 
 /**
  * Below the road on the Path tab (SPEC-TODAY §4): "Practice rooms" (the free-practice tools) and "All topics" (moved
@@ -52,7 +52,8 @@ export function PathExtras({
   onVocal: (warmup: boolean) => void;
 }) {
   const ratings = ratingsOf(progress);
-  const marks = topicMarks(view);
+  // SPEC-PATH-ROLE §5: levels the path has not reached yet carry a small "ahead of the path" mark.
+  const marks = topicMarks(view, (id) => TOPIC_GEN[id]?.levels.length ?? 0);
   const now = new Date();
   const reviewCount = new Set(dueReviews(progress.review, now).map((r) => r.key)).size;
   const nextDue = progress.review.length ? Math.min(...progress.review.map((r) => new Date(reviewDue(r)).getTime())) : null;
@@ -129,9 +130,10 @@ export function PathExtras({
                     {TOPIC_GEN[id].levels.map((lv, i) => {
                       const m = marks.get(`${id}:${i + 1}`);
                       return (
-                        <button key={i} className={`chip ${m === 'done' ? 'done' : m === 'current' ? 'on' : ''}`} data-topic={id} data-mark={m} onClick={() => onTopic(id, i + 1)}>
+                        <button key={i} className={`chip ${m === 'done' ? 'done' : m === 'current' ? 'on' : m === 'ahead' ? 'ahead' : ''}`} data-topic={id} data-mark={m} title={m === 'ahead' ? (he ? 'לפני המסלול' : 'Ahead of the path') : undefined} onClick={() => onTopic(id, i + 1)}>
                           {i + 1}. {lv[lang]}
                           {markText(m)}
+                          {m === 'ahead' && <small className="ahead-mark" aria-label={he ? 'לפני המסלול' : 'ahead of the path'}>{he ? 'מקדים' : 'ahead'}</small>}
                         </button>
                       );
                     })}

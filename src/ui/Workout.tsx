@@ -52,7 +52,9 @@ const W = {
     done: 'Done',
     presets: { suggested: 'Suggested', ear: 'Ear focus', rhythm: 'Rhythm focus', reading: 'Reading focus', voice: 'Voice focus', instrument: 'Instrument focus', quick5: 'Quick 5', mistakes: 'Fix my mistakes' } as Record<Preset, string>,
     ctx: { nomic: 'No mic', quiet: 'Quiet place', noinst: 'No instrument' },
-    kinds: { path: 'Path', warmup: 'Warm-up', vocal: 'Vocal warm-up', practice: 'My instrument', mistakes: 'Fix my mistakes' } as Record<string, string>,
+    // SPEC-PATH-ROLE §3: three blocks — New (the path), Strengthen (depth on what is opened), Review.
+    kinds: { path: 'New', warmup: 'Review', vocal: 'Vocal warm-up', practice: 'My instrument', mistakes: 'Fix my mistakes', strengthen: 'Strengthen' } as Record<string, string>,
+    blockSub: { path: 'Next steps of the path', warmup: 'Spaced review', strengthen: 'Opened steps, weakest keys first' } as Record<string, string>,
     practiceHint: 'Practice on your own instrument. The metronome helps; write what you worked on.',
     metronome: 'Metronome',
     note: 'What did you work on?',
@@ -98,7 +100,8 @@ const W = {
     done: 'סיום',
     presets: { suggested: 'מוצע', ear: 'דגש על שמיעה', rhythm: 'דגש על קצב', reading: 'דגש על קריאה', voice: 'דגש על קול', instrument: 'דגש על הכלי', quick5: 'חמש דקות מהירות', mistakes: 'לתקן טעויות' } as Record<Preset, string>,
     ctx: { nomic: 'בלי מיקרופון', quiet: 'מקום שקט', noinst: 'בלי כלי' },
-    kinds: { path: 'מסלול', warmup: 'חימום', vocal: 'חימום קולי', practice: 'הכלי שלי', mistakes: 'לתקן טעויות' } as Record<string, string>,
+    kinds: { path: 'חדש', warmup: 'חזרה', vocal: 'חימום קולי', practice: 'הכלי שלי', mistakes: 'לתקן טעויות', strengthen: 'חיזוק' } as Record<string, string>,
+    blockSub: { path: 'הצעדים הבאים במסלול', warmup: 'חזרה מרווחת', strengthen: 'צעדים שנפתחו, הסולמות החלשים קודם' } as Record<string, string>,
     practiceHint: 'נגנו על הכלי שלכם. המטרונום עוזר; כתבו על מה עבדתם.',
     metronome: 'מטרונום',
     note: 'על מה עבדתם?',
@@ -132,7 +135,7 @@ export function blockLabel(t: Strings, b: BlockTarget, lang: Lang): string {
       return tx.kinds[b.kind] ?? b.kind;
   }
 }
-const hueOf = (b: BlockTarget) => (b.kind === 'area' ? DOMAIN_HUE[b.area] : b.kind === 'path' ? 'var(--mint)' : b.kind === 'warmup' || b.kind === 'mistakes' ? 'var(--gold)' : b.kind === 'game' ? 'var(--hue-creative)' : b.kind === 'vocal' ? 'var(--hue-voice)' : b.kind === 'practice' ? 'var(--hue-instrument)' : 'var(--hue-pitch)');
+const hueOf = (b: BlockTarget) => (b.kind === 'area' ? DOMAIN_HUE[b.area] : b.kind === 'path' ? 'var(--mint)' : b.kind === 'strengthen' ? 'var(--hue-instrument)' : b.kind === 'warmup' || b.kind === 'mistakes' ? 'var(--gold)' : b.kind === 'game' ? 'var(--hue-creative)' : b.kind === 'vocal' ? 'var(--hue-voice)' : b.kind === 'practice' ? 'var(--hue-instrument)' : 'var(--hue-pitch)');
 
 /** The stacked bar of blocks. */
 function BlockBar({ blocks, run }: { blocks: Block[]; run?: WorkoutRun | null }) {
@@ -156,7 +159,9 @@ function BlockBar({ blocks, run }: { blocks: Block[]; run?: WorkoutRun | null })
  * next path step, a calm numbered list of blocks (one accent: the block you're on), Start with a small daily-goal ring.
  * The context switches (no mic / quiet / no instrument) live in the editor.
  */
-export function WorkoutCard({ t, lang, blocks, run, nextLine, edited, onStart, onEdit, onReset, goal }: {
+export function WorkoutCard({ t, lang, blocks, run, nextLine, edited, onStart, onEdit, onReset, goal, leadsTo }: {
+  /** SPEC-PATH-ROLE §8: what the strengthen block leads to. */
+  leadsTo?: string | null;
   goal?: { todayXp: number; goalXp: number }; t: Strings; lang: Lang; blocks: Block[]; run: WorkoutRun | null; view?: PathView; nextLine: string | null; edited: boolean; onStart: () => void; onEdit: () => void; onReset: () => void }) {
   const tx = W[lang];
   const active = (run && !run.finished && run.at > 0) || (run && Object.keys(run.used).length > 0 && !run.finished);
@@ -197,6 +202,11 @@ export function WorkoutCard({ t, lang, blocks, run, nextLine, edited, onStart, o
           {total(blocks)} {tx.min}
         </span>
       </p>
+      {leadsTo && blocks.some((b) => b.target.kind === 'strengthen') && (
+        <p className="wk-leads" dir="auto" data-leads-to="1">
+          {leadsTo}
+        </p>
+      )}
       <button className="btn mega wk-start" data-continue="1" onClick={onStart}>
         <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
           <path d="M7 4v16l13-8z" fill="currentColor" />
@@ -237,7 +247,10 @@ export function WorkoutEditor({
   addOptions,
   ctx,
   onCtx,
+  leadsTo,
 }: {
+  /** SPEC-PATH-ROLE §8: what the strengthen block leads to ("2 more steps and unit C is mastered"). */
+  leadsTo?: string | null;
   t: Strings;
   lang: Lang;
   blocks: Block[];
@@ -353,6 +366,11 @@ export function WorkoutEditor({
               <span className="wk-name">
                 <b>{blockLabel(t, b.target, lang)}</b>
                 {path !== null && <small dir="auto">{path > 0 ? fill(tx.pathSteps, { n: path }) : tx.free}</small>}
+                {path === null && tx.blockSub[b.target.kind] && (
+                  <small dir="auto" data-leads-to={b.target.kind === 'strengthen' && leadsTo ? '1' : undefined}>
+                    {b.target.kind === 'strengthen' && leadsTo ? leadsTo : tx.blockSub[b.target.kind]}
+                  </small>
+                )}
               </span>
               <span className="wk-min">
                 <button className="icon-btn" aria-label="−1" disabled={b.minutes <= LIMITS.minBlock} onClick={() => change(setMinutes(bs, b.id, b.minutes - 1))}>
@@ -449,7 +467,7 @@ export function WorkoutEditor({
             <h2>{tx.add}</h2>
             <h3 className="intake-sub">{tx.suggested}</h3>
             <div className="intake-chips">
-              {[...addOptions.suggested.slice(0, 6), { kind: 'path' } as BlockTarget, { kind: 'warmup' } as BlockTarget, { kind: 'practice' } as BlockTarget, { kind: 'mistakes' } as BlockTarget].map((x, i) => (
+              {[...addOptions.suggested.slice(0, 6), { kind: 'path' } as BlockTarget, { kind: 'strengthen' } as BlockTarget, { kind: 'warmup' } as BlockTarget, { kind: 'practice' } as BlockTarget, { kind: 'mistakes' } as BlockTarget].map((x, i) => (
                 <button key={i} className="chip" onClick={() => (change(add(bs, x, 3)), setAdding(false))}>
                   {blockLabel(t, x, lang)}
                 </button>

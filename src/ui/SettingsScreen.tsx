@@ -120,6 +120,26 @@ function MyPath({ t, s, onChange }: { t: Strings; s: Settings; onChange: (p: Par
           ))}
         </select>
       </label>
+      {/* SPEC-PATH-ROLE §6 Q3 (owner 2026-11-14): who picks what is new. */}
+      <div className="field-row path-mode" data-path-mode={s.pathMode ?? 'guide'}>
+        <span>{lang === 'he' ? 'מסלול' : 'Path'}</span>
+        <div className="seg" role="radiogroup" aria-label={lang === 'he' ? 'מסלול' : 'Path'}>
+          {(['guide', 'choose'] as const).map((m) => (
+            <button key={m} type="button" role="radio" aria-checked={(s.pathMode ?? 'guide') === m} className={`chip small ${(s.pathMode ?? 'guide') === m ? 'on' : ''}`} data-path-mode-opt={m} onClick={() => onChange({ pathMode: m })}>
+              {m === 'guide' ? (lang === 'he' ? 'הדריכו אותי' : 'Guide me') : lang === 'he' ? 'אני בוחר' : 'I choose'}
+            </button>
+          ))}
+        </div>
+      </div>
+      <p className="field-hint" dir="auto">
+        {(s.pathMode ?? 'guide') === 'guide'
+          ? lang === 'he'
+            ? 'האימון היומי כולל צעד חדש מהמסלול.'
+            : 'Your daily workout includes the next new step.'
+          : lang === 'he'
+            ? 'בלי בלוק חדש: חיזוק וחזרה. המסלול מתמלא ממה שאתם עושים.'
+            : 'No New block: strengthen and review. The path fills in from what you do.'}
+      </p>
       <label className="toggle-row" data-exam-prep-setting="1">
         <input type="checkbox" checked={!!s.examPrep} onChange={(e) => onChange({ examPrep: e.target.checked })} />
         <span>{lang === 'he' ? 'הכנה לבגרות (בקורס שמיעה ותיאוריה)' : 'Exam prep (in the Ear & theory course)'}</span>
