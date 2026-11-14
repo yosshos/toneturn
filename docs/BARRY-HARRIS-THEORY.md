@@ -74,6 +74,13 @@ So one dominant function touches **all three** diminished chords:
 
 Colour descriptions are the app's analysis and are marked **(verify)** for teacher review, especially Bm6's use and the choice between Fm6 and B♭7.
 
+**Harris's names (sourced, docs/research/BARRY-HARRIS-METHOD.md).**
+- **Dm6 over G7** (the m6 on the dominant's 5th) is **the important minor**.
+- **A♭m6 over G7** is **the tritone's minor**: the important minor of D♭7, the tritone sub. Harris calls it "the perfect altered scale" (Workshop Part 2).
+- **The four m6 chords** are the important minors of the four related dominants: Dm6 (G7), Fm6 (B♭7), A♭m6 (D♭7), Bm6 (E7).
+- **Choosing** between the important minor and the tritone's minor is a matter of taste (Kingstone).
+- **The "8 expressions" table** is the app's arrangement of these two Harris ideas, not a Harris list. Every row was checked note by note against sources.
+
 ## 5. The four 6th-diminished scales
 
 The chord tones on the beats (down from the root, or up), with the dim's tones between them:
@@ -85,13 +92,22 @@ The chord tones on the beats (down from the root, or up), with the dim's tones b
 | **Dominant 7th-dim** | C7 | C D E F G A♭ B♭ B | D°7 |
 | **Dominant 7♭5-dim** | C7♭5 | C D E F G♭ A♭ B♭ B | D°7 |
 
-**(verify)** the spellings of the last two against Harris sources: Kingstone's notes, the Harris workshop videos.
+Spellings confirmed against sources.
+- **Harris's name:** he calls these "Barry's four key scales" (Workshop Part 2).
+- **The 7th-dim scale** is confirmed by Parks: 1 2 3 4 5 ♭6 ♭7 7.
+- **The 7♭5-dim scale** follows from the construction. Since C7♭5 = G♭7♭5, one 7♭5-dim scale serves two roots ("you learn 6 and you know all 12", Harris 2003).
+- **The 6-dim scales are first a chording tool** ("you learn these kind of scales for chording", Harris 2003).
+- **For single lines** the default is the 7-note scale with the extra-note rules (§8).
 
 ## 6. Practice built on this (the app's ladder)
 
 1. **The families:** name the 4 brothers and the 4 m6s for any dominant, in theory and by ear, in all 12 keys.
 2. **The scales:** each of the four 6th-dim scales, up and down, 2 octaves, chord tones on the beats.
-3. **Harmonization in moving inversions:** the chord alternates with its dim, arpeggiated and block, then drop 2 and drop 3.
+3. **Harmonization in moving inversions:** the chord alternates with its dim, arpeggiated and block, then drop 2, drop 3 and drop 2&4.
+   - Drop 2 is the most useful (Friends of Barry).
+   - Drop 3 is for LH shells and contrary motion.
+   - Drop 2&4 is for 5ths.
+   - Avoid "spread" as a Harris term; Kingstone calls the contrary-motion form "expand and contract".
 4. **Borrowing (oblique motion):** one voice, then two, borrow from the dim, from another chord, or from the scale, and return.
 5. **The 8 expressions of one dominant:** over a G7 → C, play each of the 8 chords and its scale, resolve to C6, and hear the colour. Then mix per bar.
 6. **In context:** ii–V–I, the minor ii–V (Dø → Fm6; G7♭9 → A♭°7 / A♭m6), turnarounds, blues, then standards' changes.
@@ -102,4 +118,78 @@ Every step runs rubato first, then the tempo ladder, on piano and guitar (and ba
 ## 7. Terms the owner confirmed
 
 - **Pivot** = the pivot arpeggio: arpeggio notes moved an octave (Cmaj7 as C on top, then E G B below, climbing). The octave jump inside a descending scale line is "a scale line with a pivot". There is no "second pivot".
-- **Make it minor:** over the V, play the m6 on its 5th.
+- **Make it minor:** over the V, play the m6 on its 5th. Harris's own term is **the important minor**; "make it minor" is only the app's alias.
+- **The sixth on the fifth:** the **major** 6 on the 5th of a major chord. G6 over Cmaj7 gives 5, 7, 9, 6, and sounds better with the root in the bass. It is **not** the m6 on V's 5th.
+
+## 8. The half-step (extra-note) rules
+
+**General:** descend from at least the octave, starting on a downbeat.
+
+**Dominant:**
+- From 1, 3, 5 or ♭7, add one half step (1–♭7) or three (3–2, 2–1, 1–♭7).
+  - Parks allows the three from the root too; Goren allows them only from 3, 5 and 7.
+- From 2, 4 or 6, add none or two (2–1, 1–♭7).
+
+**Major** (6-chord tones 1 3 5 6):
+- From 3, 5 or 6, add one at 6–5, or three (6–5, 3–2, 2–1).
+- From 2 or 4, add none or two (2–1, 6–5).
+
+**Minor:**
+- As major, with ♭3.
+- From the root this gives the m6-dim scale.
+
+**Miscellaneous rule:**
+- Go up from a note, then come down by that note's rule.
+- If the extra note would fall on a beat, put it in the bottom octave.
+
+**Triplets:**
+- An eighth triplet follows its middle note's rule.
+- A sixteenth triplet follows its first note's rule.
+
+**Later wording:** Harris spoke of "extra note rules". The rule, an odd or even count, matters more than the note.
+
+## 9. Line devices
+
+**Arpeggios on a dominant:**
+- **The three important arpeggios** sit on 1, 5 and ♭7. For C7: C E G / G B♭ D / B♭ D F, each played 1-3-5-8.
+- **3-to-9** is E G B♭ D.
+- **3-to-♭9** is E G B♭ D♭. It is the dim on the 3rd, shared by all four related dominants.
+
+**Phrases:** the **5-4-3-2 phrases** (Workbook 1). See docs/research/BARRY-HARRIS-METHOD.md A2.9; the exact notes still need checking against the workbook.
+
+**Barry's chromatic scale:**
+- The scale degrees fall on the beats, with chromatic notes between them.
+- At an existing half step, skip to the note above and come back.
+- Ascending in C: C C♯ D D♯ E G F F♯ G G♯ A A♯ B D C.
+
+**Minor and dominant devices:**
+- **Seven down to the 3rd:** over Dø–G7, play B♭7 (the m7♭5's dominant, a major 3rd down) up and down, landing on B.
+- **ii is V:** over Dm7–G7, play G7.
+
+**Scale outline:** one scale per bar of a tune, up from the root.
+
+## 10. Moves
+
+- **First movement** (Harris 2003): m6 → °7 → 7, i.e. Dm6 → B°7 → G7 → C6.
+- **Next move:** raise two consecutive dim notes, return, then lower them (E♭6 → C°7 → A♭6).
+- **Major – minor – minor/6:** C6 – B°7 – C6/A – A♭°7 – C6/G – Am6/F♯. It leads to the half-diminished a tritone away.
+- **6th – 6th – 6th:** think F6 – Dm6 – C6 for ii–V–I, or use a single C6-dim scale over all of it.
+- **Dominants from a dim:** Harris's moves are all half steps. Put a bass a half step below any note of the diminished chord. A whole-step raise gives the same 7♭9 arithmetically, but it is not how Harris teaches it.
+- **The tools:**
+  - invert (drop 2);
+  - slide along the scale;
+  - borrow with one, two or three voices. A borrowed dominant root in a dim voicing gives a maj7 colour.
+- **Contrary motion:** from a unison, the outer voices step apart and the middle fills in, 6 and dim alternating.
+  - Echols's Elevator: floors are voicing types. Moving along a floor is parallel motion; moving between floors is contrary.
+
+## Sources
+
+- Rees, Workshop Video 1–2 (table of contents), and *Keyboard* 10/1998 and 11/1998.
+- The Harris 2003 Hague fragment, in Marijt 2014.
+- Kingstone, *Harmonic Method for Guitar*.
+- Parks, *Things I've Learned* (video 5) and Open Studio.
+- Echols, *Labyrinth of Limitations*.
+- Goren, *Barry Harris Companion*.
+- The Friends of Barry slides.
+
+Full list and exercise catalogue: `docs/research/BARRY-HARRIS-METHOD.md` (§0, Part E).
