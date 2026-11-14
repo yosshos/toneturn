@@ -44,6 +44,7 @@ export const SUB_PREREQ: Record<string, string[]> = {
   'degrees/chromatic': ['degrees/diatonic'],
   'chords/extension': ['chords/seventh'],
   'theory/voice-leading': ['theory/harmony'],
+  'chords/voice-leading': ['chords/quality'],
   'rhythm-dictation/poly': ['rhythm-dictation/dictate'],
   'pitch/fine': ['pitch/higher-lower'],
   // 0.38 (spec AE §4.8)

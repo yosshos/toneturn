@@ -79,12 +79,20 @@ export function generateGuitarMeter(s: DrillSpec, tu: Tuning): Drill {
     }
     case 'gm-cross': {
       // 5 or 7 even notes over each 4/4 bar (5:4, 7:4): the low root on the first, the box above it, the drums in 4.
-      // On the two lowest strings of any tuning (the bass too).
-      const n = op % 2 ? 7 : 5;
+      // Option 2 (AUDIT-CONTENT-THEORY §ד.3, the bass's b-time 13): 5 even notes over each 3/4 bar (5:3), the waltz in
+      // the drums. On the two lowest strings of any tuning (the bass too).
+      const three = op === 2;
+      const n = three ? 5 : op % 2 ? 7 : 5;
+      const per = three ? 3 : 4;
+      const bars = three ? 4 : 3;
       const line = [0, 2, 4, 5, 7, 9, 10].map((iv) => ({ s: iv < 5 ? lo : lo - 1, f: iv < 5 ? f + iv : f + iv - 5 }));
       const evs: Ev[] = [];
-      for (let bar = 0; bar < 3; bar++) for (let i = 0; i < n; i++) evs.push({ beat: bar * 4 + (i * 4) / n, dur: 4 / n, notes: [{ ...line[(bar + i) % n % line.length], ...(i === 0 ? { acc: true } : {}) }] });
-      evs.push({ beat: 12, dur: 2, notes: chord(f) });
+      for (let bar = 0; bar < bars; bar++) for (let i = 0; i < n; i++) evs.push({ beat: bar * per + (i * per) / n, dur: per / n, notes: [{ ...line[(bar + i) % n % line.length], ...(i === 0 ? { acc: true } : {}) }] });
+      evs.push({ beat: bars * per, dur: three ? 3 : 2, notes: chord(f) });
+      if (three) {
+        const d3 = finish(s, tu, evs, { title: tt('5 against 3: even notes over a 3/4 bar', '5 נגד 3: צלילים שווים על פני תיבת 3/4', key), bpm: 54, evenness: true, meter: 3 });
+        return { ...withBarPlan(d3, [['3/4', bars + 1]]), drums: { groove: 'waltz' } };
+      }
       const d = finish(s, tu, evs, { title: tt(`${n} against 4: even notes over the bar`, `${n} נגד 4: צלילים שווים על פני התיבה`, key), bpm: 50, evenness: true });
       return { ...d, drums: { groove: 'rock-8' } };
     }

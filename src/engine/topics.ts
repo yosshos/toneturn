@@ -34,6 +34,7 @@ import './topicsTheoryPlay'; // THEORY_PLAY (TP-1…TP-4): triad pairs, pentaton
 // HARRIS_2 + HARMONY_3 (docs/AUDIT-CONTENT-THEORY.md §ז.2): Barry Harris unit 2; functional harmony and the advanced areas.
 import './topicsHarris2';
 import './topicsHarmony3';
+import './topicsVoiceLeadEar'; // AUDIT-CONTENT-THEORY §ה.2: voice leading by ear (which voice moved, held notes, smooth or jumpy, drop 2)
 import { applyDepth } from './topicsDepth';
 
 // ================================================================ T. Barry Harris

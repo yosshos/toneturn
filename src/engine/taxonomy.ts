@@ -44,6 +44,8 @@ export const SUB_SKILLS: SubSkill[] = [
   S('chords', 'voicing', 'Voicings', 'וויסינגים'),
   S('chords', 'post-tonal', 'Post-tonal sets', 'סטים פוסט־טונליים'),
   S('chords', 'barry', 'Barry Harris harmony', 'הרמוניית בארי האריס'),
+  // AUDIT-CONTENT-THEORY §ה.2: voice leading heard (vl-ear), next to the written theory/voice-leading.
+  S('chords', 'voice-leading', 'Voice leading by ear', 'הובלת קולות בשמיעה'),
   S('cadences', 'cadence', 'Cadences', 'קדנצות'),
   S('cadences', 'progression', 'Progressions', 'מהלכי אקורדים'),
   S('cadences', 'modulation', 'Key changes', 'מעברי סולם'),

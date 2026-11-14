@@ -22,6 +22,7 @@ import { UNITS as FIRST_STEPS } from './mini/firstSteps';
 // HARRIS_2 + HARMONY_3 (AUDIT-CONTENT-THEORY §ז.2): topics and the keys / guitar levels that build on them.
 import { UNITS as HARRIS2 } from './mini/harris2';
 import { UNITS as HARMONY3 } from './mini/harmony3';
+import { UNITS as VL_EAR } from './mini/vlEar';
 
 export const UNIT_LESSON: Record<string, string> = {
   // 0.38 (spec AE): each area file maps its own topics.
@@ -48,6 +49,7 @@ export const UNIT_LESSON: Record<string, string> = {
   ...FIRST_STEPS,
   ...HARRIS2,
   ...HARMONY3,
+  ...VL_EAR,
   // Learning path
   'bflat-two-homes': 'bflat-two-homes',
   'degrees-135': 'degrees-135',
