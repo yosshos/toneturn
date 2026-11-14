@@ -57,6 +57,8 @@ export type CountKey =
   | 'units'
   | 'stepsByTest'
   | 'checkpoints3'
+  /** SPEC-PATH-ROLE §8: units sealed as mastered (every step at 5★, the checkpoint passed). */
+  | 'unitsMastered'
   | 'duelsWon'
   | 'friends'
   | 'gates'

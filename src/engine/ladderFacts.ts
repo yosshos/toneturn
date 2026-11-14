@@ -7,7 +7,7 @@ import { guitarCatalog, guitarLevelShown } from './drills/guitar';
 import { guitarAddOnsOf } from './drills/guitarMeta';
 import { drumFamilies } from './drills/drums';
 import { kitHiddenLevels } from './drumAcoustic';
-import { hiddenBassLevels, pianoMicHiddenLevels, type DrumMic, LEVEL_DONE_STARS, levelDrills, levelStars, shownFamilies, targetBpmOf } from './drills/plan';
+import { hiddenBassLevels, pianoMicHiddenLevels, type DrumMic, levelDrills, levelStars, shownFamilies, targetBpmOf } from './drills/plan';
 import { itemPass } from './drills/ladder';
 import type { Drill, DrillSettings, FamilyId, ItemState } from './drills/types';
 import { stepStars, VOCAL_PROGRAMS, type PathFacts } from './path';
@@ -71,8 +71,14 @@ export function techStars(level: LevelDef, items: Record<string, ItemState>, ord
   return levelStars(level, items, order);
 }
 
-/** A technique step is done on the path at this many stars (1 star only shows progress). */
-export const TECH_DONE_STARS = LEVEL_DONE_STARS;
+/**
+ * A technique step is OPENED (✓ on the path) at this many stars: three keys clean at the base tempo (SPEC-PATH-ROLE
+ * §2, §8, owner 2026-11-14). The path teaches what is new; stars 2–5 (keys at the target tempo) are the depth the
+ * workout's strengthen block builds. The Drills hub keeps its own level rule (plan.LEVEL_DONE_STARS).
+ */
+export const TECH_DONE_STARS = 1;
+/** Mastered: every key at the target tempo. */
+export const TECH_MASTER_STARS = 5;
 
 /**
  * N12: does a finished session credit its path step to the workout block (W2)? A technique step only when its level's
@@ -93,7 +99,7 @@ export function workoutCreditsStep(step: { id: string; kind: string }, firstTry:
  * N13 (grandfathered, 0.64): builds before 0.64 recorded technique steps (`steps['tech:*']`) from one session's
  * first-try share, some at 1 star. Those facts are KEPT — the path counts any stars > 0 as done, and a player keeps
  * what they were given — and this function only ever raises stars. New technique facts are created only here, from the
- * level rule (≥ 2 stars): App.notePathResult returns early for tech steps and the workout credits a tech step only
+ * level rule (≥ TECH_DONE_STARS, SPEC-PATH-ROLE: three keys clean at the base tempo): App.notePathResult returns early for tech steps and the workout credits a tech step only
  * through workoutCreditsStep. So no new 1-star technique fact can appear.
  */
 export function withLadderFacts(
@@ -113,7 +119,8 @@ export function withLadderFacts(
       const id = `tech:${lv.id}`;
       // Levels below the playing test's start are ✓ by test (they stay open to practise).
       if (lv.level < start && !tests[id]) tests[id] = opts.at;
-      // The path marks a step done at any stars > 0, so a technique step's facts exist only from 2 stars.
+      // SPEC-PATH-ROLE: a step is opened at 1 star (three keys clean at the base tempo). Facts only rise, so a ✓ given
+      // under the old rule (three keys at the target tempo) is never taken away.
       const st = techStars(lv, opts.items, opts.order);
       if (st >= TECH_DONE_STARS) set(id, st);
     }

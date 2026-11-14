@@ -880,8 +880,16 @@ const firstBadges = (): Badge[] =>
 // Game badges (gameBadges.ts): mp, f and ff in each of the newer drum and advanced games.
 const gameBadges = (): Badge[] => gameBadgeSeeds().map((g) => ({ id: g.id, cat: 'special' as const, icon: g.icon, tone: g.tone, name: g.name, desc: g.desc, group: g.group, rule: (x: BadgeInput) => g.rule(x.gameTiers) }));
 
+// SPEC-PATH-ROLE §8 (owner 2026-11-14): mastering a unit (every step at 5★ and its checkpoint passed).
+const unitMasteryBadges = (): Badge[] => [
+  sp('unit-mastered', 'trophy', 'silver', 'Unit Mastered', 'יחידה נשלטת', 'Master every step of a path unit and pass its checkpoint.', 'לשלוט בכל צעדי יחידה במסלול ולעבור את נקודת הביקורת שלה.', (x) => count(x.counts?.unitsMastered ?? 0, 1)),
+  sp('units-mastered-5', 'trophy', 'gold', 'Five Units Mastered', 'חמש יחידות נשלטות', 'Master five path units.', 'לשלוט בחמש יחידות במסלול.', (x) => count(x.counts?.unitsMastered ?? 0, 5)),
+  sp('units-mastered-20', 'trophy', 'diamond', 'Twenty Units Mastered', 'עשרים יחידות נשלטות', 'Master twenty path units.', 'לשלוט בעשרים יחידות במסלול.', (x) => count(x.counts?.unitsMastered ?? 0, 20)),
+];
+
 const specialBadges: Badge[] = [
   ...firstBadges(),
+  ...unitMasteryBadges(),
   ...tierBadges(),
   ...gameBadges(),
   ...repBadges(),

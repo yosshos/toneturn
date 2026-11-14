@@ -296,6 +296,9 @@ export interface Settings {
   examPrep?: boolean;
   /** The next step ids last shown (to tell the player when a rebuild changed them). */
   pathSeen?: string[];
+  /** SPEC-PATH-ROLE §6 Q3: "guide me" (default) — the workout has a New block from the path; "I choose" — no New
+   *  block (strengthen + review), the path fills in from what the player does. */
+  pathMode?: import('../engine/workout2').PathMode;
   // ---- stats (spec AG) ----
   /** Share my stats with friends (S9). */
   shareStats?: import('../engine/stats').ShareStats;

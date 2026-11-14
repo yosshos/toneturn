@@ -63,6 +63,15 @@ const TX = {
     histOne: 'Unit 1',
     histSub: '✓ {n} steps you already know',
     histUnit: 'Unit {n}',
+    mastered: 'mastered {m}/{n}',
+    sealed: 'Unit mastered',
+    sealRefresh: 'Mastered · needs a refresh',
+    promo: 'Rank up',
+    missingTitle: 'What’s missing',
+    practiceNow: 'Practice',
+    checked: 'Checked in keys at the checkpoint',
+    keysAt: 'Keys at ♩{b}',
+    opened: 'Opened',
   },
   he: {
     title: 'המסלול שלך',
@@ -99,6 +108,15 @@ const TX = {
     histOne: 'יחידה 1',
     histSub: '✓ {n} שלבים שאתם כבר יודעים',
     histUnit: 'יחידה {n}',
+    mastered: 'נשלטו {m}/{n}',
+    sealed: 'היחידה נשלטת',
+    sealRefresh: 'נשלטת · צריך רענון',
+    promo: 'קידום',
+    missingTitle: 'מה חסר',
+    practiceNow: 'לתרגל',
+    checked: 'נבדק בסולמות בנקודת הביקורת',
+    keysAt: 'סולמות ב־♩{b}',
+    opened: 'נפתח',
   },
 };
 const fill = (s: string, v: Record<string, string | number>) => Object.entries(v).reduce((a, [k, x]) => a.replaceAll(`{${k}}`, String(x)), s);
@@ -182,6 +200,23 @@ export function usePathView(s: Settings, p: Progress): PathView {
   );
 }
 
+/** SPEC-PATH-ROLE §8: the context for opened vs mastered (the live keys, the merged facts). */
+export function masteryCtxOf(s: Settings, p: Progress): MasteryCtx {
+  return { items: p.drillItems ?? {}, order: drillSettingsOf(s).keyOrder, now: Date.now(), facts: pathInputFrom(s, p).facts };
+}
+/** The path view with the one star scale and the silver refresh on every step (memoised with the view). */
+export function useMasteryView(view: PathView, s: Settings, p: Progress): { view: PathView; ctx: MasteryCtx } {
+  const day = new Date().toDateString();
+  return useMemo(
+    () => {
+      const ctx = masteryCtxOf(s, p);
+      return { view: decorateMastery(view, ctx), ctx };
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [view, p.drillItems, s.pathFacts, p.lessons, day],
+  );
+}
+
 export function stepTitle(step: PathStep, s: Settings, lang: Lang): string {
   const tx = TX[lang];
   if (step.kind === 'check') return tx.check;
@@ -222,6 +257,8 @@ import { BONUS_STEP_GLYPH, FAMILY_GLYPH, GAME_STEP_GLYPH, LESSON_GLYPH, TOPIC_GL
 import { drumMicOf } from '../engine/drumKit';
 import { KitNotice } from './DrumViews';
 import { withRepFacts } from '../engine/pathBonus';
+import { decorateMastery, missingFor, unitMastery, type MasteryCtx } from '../engine/pathMastery';
+import { KEY_LABEL } from '../engine/analysis/keyMastery';
 
 function StepIcon({ step }: { step: PathStep }) {
   const kind = step.ladder ? (FAMILY_GLYPH[step.ladder.family] ?? (step.kind === 'vocal' ? 'sing' : step.ladder.instrument === 'piano' ? 'keys' : step.ladder.instrument === 'drums' ? 'drums' : 'guitar')) : step.topic ? TOPIC_GLYPH[step.topic] : step.lesson ? LESSON_GLYPH[step.lesson] : step.kind === 'game' && step.game ? ((step.bonus ? BONUS_STEP_GLYPH[step.game] : undefined) ?? GAME_STEP_GLYPH[step.game]) : undefined;
@@ -239,8 +276,9 @@ export function PathView2({
   t: _t,
   settings,
   progress,
-  view,
+  view: view0,
   onStep,
+  onPracticeMissing,
   onTestOut,
   onPlacement,
   onSettings,
@@ -254,6 +292,8 @@ export function PathView2({
   progress: Progress;
   view: PathView;
   onStep: (x: UnitStep, unit: PathUnit, mode: 'step' | 'practice') => void;
+  /** SPEC-PATH-ROLE §8: the what's-missing sheet's Practice — a technique step's missing keys (all keys for a refresh). */
+  onPracticeMissing?: (x: UnitStep, unit: PathUnit, keys: number[]) => void;
   onTestOut: (unit: PathUnit) => void;
   onPlacement: () => void;
   onSettings: (p: Partial<Settings>) => void;
@@ -269,7 +309,8 @@ export function PathView2({
   const lang = settings.uiLang;
   const tx = TX[lang];
   const courseCtx = useCourse();
-  void progress;
+  // SPEC-PATH-ROLE §8: open / opened (a thin ring filling with the stars) / mastered (a full gold ring) / refresh (silver).
+  const { view, ctx: mctx } = useMasteryView(view0, settings, progress);
   const [sheet, setSheet] = useState<{ x: UnitStep; unit: PathUnit } | null>(null);
   const [away, setAway] = useState<0 | 1 | -1>(0);
   const curRef = useRef<HTMLLIElement | null>(null);
@@ -338,16 +379,24 @@ export function PathView2({
     const hue = DOMAIN_HUE[x.step.domain];
     const label = nodeTitle(x.step, settings, lang);
     const isCur = st === 'current';
+    const opened = st === 'done' || st === 'mastered' || st === 'tested';
+    const ms = x.mstars ?? 0;
+    // SPEC-PATH-ROLE §8: three node states — open (to do), opened (a thin ring filling with the stars), mastered (a full
+    // gold ring); a mastered step gone stale is silver with "refresh". Checkpoints and reviews keep their bar signs.
+    const look = !opened ? '' : x.fade ? 'faded' : ms >= 5 ? 'mastered' : 'opened';
+    const pendingCheck = x.step.kind === 'check' && (st === 'open' || st === 'current') && unit.status === 'past';
     const click = () => {
-      // Straight to the exercise's brief page (owner, 2026-11-07: no in-between sheet; hide / keep live on the brief).
+      // An open step goes straight to its brief page (owner, 2026-11-07). An opened step shows what is missing (§8).
       if (isCur || st === 'quick' || st === 'open' || st === 'refresh') onStep(x, unit, 'step');
+      else if (opened && x.step.kind !== 'check' && x.step.kind !== 'review') setSheet({ x, unit });
       else if (st !== 'locked') onStep(x, unit, 'practice');
     };
+    const ring = opened && x.step.kind !== 'check' && x.step.kind !== 'review';
     return (
-      <li key={x.step.id} ref={isCur ? curRef : undefined} className={`node ${st === 'mastered' ? 'done mastered' : st} kind-${x.step.kind} ${x.probe ? 'probe' : ''}`} data-step={x.step.id} data-slot={slot} style={{ ['--hue' as string]: hue }}>
-        <button className="node-btn" disabled={st === 'locked'} onClick={click} aria-label={`${label}${st === 'tested' ? ' ✓' : ''}`}>
+      <li key={x.step.id} ref={isCur ? curRef : undefined} className={`node ${st === 'mastered' ? 'done mastered' : st} ${look} kind-${x.step.kind} ${x.probe ? 'probe' : ''}`} data-step={x.step.id} data-slot={slot} data-node-state={opened ? look : st === 'locked' ? 'locked' : 'open'} data-mstars={opened ? ms : undefined} style={{ ['--hue' as string]: hue }}>
+        <button className="node-btn" disabled={st === 'locked'} onClick={click} aria-label={`${label}${opened ? ` ✓ ${ms}/5` : ''}${x.fade ? ` · ${tx.refresh}` : ''}`}>
           {/* 0.63 (design board PhonePath): a note head on the staff — the unit test is a final double barline with a fermata,
-              review is a repeat sign; done is a filled head with a check, the current one lemon with a ring. */}
+              review is a repeat sign; the current one lemon with a ring. */}
           {x.step.kind === 'check' ? (
             <span className="node-bar" aria-hidden="true">
               <svg viewBox="0 0 60 90" width="60" height="90">
@@ -367,26 +416,37 @@ export function PathView2({
               </svg>
             </span>
           ) : (
-            <span className="node-disc" aria-hidden="true">
+            <span className={`node-disc ${ring ? 'has-ring' : ''}`} aria-hidden="true" style={ring ? { ['--p' as string]: Math.max(4, Math.min(100, ms * 20)) } : undefined}>
               {st === 'locked' ? (
                 <span className="lock">
                   <Icon k="lock" />
                 </span>
-              ) : st === 'done' || st === 'mastered' || st === 'tested' ? (
+              ) : look === 'mastered' ? (
                 <svg className="node-check" viewBox="0 0 24 24" width="24" height="24">
                   <path d="M5 12.5l5 5 9-10" fill="none" stroke="#fff" strokeWidth="3.6" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               ) : (
                 <StepIcon step={x.step} />
               )}
+              {opened && look !== 'mastered' && (
+                <span className={x.fade ? 'refresh-medal' : 'check-medal'}>
+                  {x.fade ? (
+                    <Icon k="repeat" />
+                  ) : (
+                    <svg viewBox="0 0 24 24" width="12" height="12">
+                      <path d="M5 12.5l5 5 9-10" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
+                </span>
+              )}
               {st === 'refresh' && <span className="refresh-medal">↻</span>}
             </span>
           )}
           <span className="node-text">
-            {(st === 'done' || st === 'mastered') && (
-              <span className="mini-stars" aria-label={`${x.stars ?? 0} ${tx.stars}`}>
-                {(x.step.ladder && x.step.kind === 'tech' ? [0, 1, 2, 3, 4] : [0, 1, 2]).map((s) => (
-                  <i key={s} className={s < (x.stars ?? 0) ? 'won' : ''} />
+            {ring && (
+              <span className="mini-stars" aria-label={`${ms} ${tx.stars}`}>
+                {[0, 1, 2, 3, 4].map((s) => (
+                  <i key={s} className={s < ms ? 'won' : ''} />
                 ))}
               </span>
             )}
@@ -396,14 +456,14 @@ export function PathView2({
             {isCur && <small className="node-go">{lang === 'he' ? 'לגעת כדי להתחיל' : 'Tap to start'}</small>}
             {isCur && x.probe && <small className="node-tag">{tx.probe}</small>}
             {st === 'quick' && <small className="node-tag">{tx.quick}</small>}
+            {pendingCheck && <small className="node-tag" data-promo="1">{tx.promo}</small>}
             {x.step.bonus && st !== 'done' && st !== 'mastered' && <small className="node-tag" data-bonus="1">{tx.bonus}</small>}
-            {st === 'refresh' && <small className="node-tag">{tx.refresh}</small>}
+            {(st === 'refresh' || x.fade) && <small className="node-tag">{tx.refresh}</small>}
           </span>
         </button>
       </li>
     );
   };
-
   /** Every step of a unit, ✓ ones included, three to a staff (0.63, the design's systems). */
   const unitSteps = (u: PathUnit) => {
     const rows: UnitStep[][] = [];
@@ -514,6 +574,8 @@ export function PathView2({
           {shownUnits.map((u) => {
             const th = theme(u);
             const hue = DOMAIN_HUE[u.areas[0] ?? 'pitch'];
+            const um = unitMastery(u, mctx.facts);
+            const wasSealed = !um.sealed && !!mctx.facts.sealed?.[u.id];
             return [
               <li key={u.id} className={`unit-banner sticky ${u.status}`} style={{ ['--hue' as string]: hue }}>
                 <span className="unit-letter" aria-hidden="true">
@@ -521,7 +583,20 @@ export function PathView2({
                 </span>
                 <span className="unit-copy">
                   <small dir="auto">
-                    {fill(tx.unit, { n: u.no ?? u.n })} · <span dir="ltr">{fill(tx.around, { d: u.difficulty })}</span>
+                    {fill(tx.unit, { n: u.no ?? u.n })}
+                    {um.total > 0 && u.status !== 'projected' ? (
+                      <>
+                        {' · '}
+                        <span data-unit-mastered={um.mastered} data-unit-mtotal={um.total}>
+                          {fill(tx.mastered, { m: um.mastered, n: um.total })}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        {' · '}
+                        <span dir="ltr">{fill(tx.around, { d: u.difficulty })}</span>
+                      </>
+                    )}
                   </small>
                   <b>{th ? th.name[lang] : tx.section[u.section]}</b>
                   {/* 0.66 (owner): the unit shows its progress (steps done / steps) — the old row of area-colour dots read as
@@ -549,9 +624,15 @@ export function PathView2({
                   <button className="btn small ghost test-out" onClick={() => onTestOut(u)}>
                     {tx.testOut}
                   </button>
-                ) : u.status === 'past' ? (
-                  <span className="unit-icon" aria-hidden="true">
-                    ✓
+                ) : um.total > 0 ? (
+                  // SPEC-PATH-ROLE §8: the unit's mastery ring (a separate completion axis — it may be full); a seal once
+                  // every step is at 5★ and the checkpoint passed (silver while a step needs a refresh).
+                  <span className={`unit-ring ${um.sealed ? 'sealed' : wasSealed ? 'sealed faded' : ''}`} data-unit-sealed={um.sealed ? '1' : wasSealed ? 'faded' : undefined} role="img" aria-label={um.sealed ? tx.sealed : wasSealed ? tx.sealRefresh : fill(tx.mastered, { m: um.mastered, n: um.total })}>
+                    <svg viewBox="0 0 36 36" width="36" height="36" aria-hidden="true">
+                      <circle className="ur-bed" cx="18" cy="18" r="15" pathLength={100} />
+                      <circle className="ur-fill" cx="18" cy="18" r="15" pathLength={100} strokeDasharray={`${Math.round((100 * um.mastered) / um.total)} 100`} transform="rotate(-90 18 18)" />
+                      {(um.sealed || wasSealed) && <path d="M11 18.5l4.5 4.5 9.5-10" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />}
+                    </svg>
                   </span>
                 ) : null}
               </li>,
@@ -606,49 +687,74 @@ export function PathView2({
       )}
 
       {sheet && (
-        <div className="sheet-backdrop" onClick={() => setSheet(null)}>
-          <div className="sheet step-sheet" role="dialog" aria-modal="true" aria-labelledby="step-sheet-title" onClick={(e) => e.stopPropagation()}>
-            <h2 id="step-sheet-title">{stepTitle(sheet.x.step, settings, lang)}</h2>
-            {sheet.x.why && <p className="why">{sheet.x.why[lang]}</p>}
-            <div className="sheet-actions">
-              <button
-                className="btn primary"
-                onClick={() => {
-                  onStep(sheet.x, sheet.unit, sheet.x.state === 'quick' || sheet.x.state === 'refresh' ? 'step' : 'practice');
-                  setSheet(null);
-                }}
-              >
-                {sheet.x.state === 'quick' ? tx.quick : sheet.x.state === 'open' || sheet.x.state === 'refresh' ? tx.start : tx.practice}
-              </button>
-              {sheet.x.state === 'tested' && (
-                <button
-                  className="btn"
-                  onClick={() => {
-                    onSettings({ pathKeep: [...new Set([...(settings.pathKeep ?? []), sheet.x.step.id])] });
-                    setSheet(null);
-                  }}
-                >
-                  {tx.keep}
-                </button>
-              )}
-              {sheet.x.step.topic && (
-                <button
-                  className="btn ghost"
-                  onClick={() => {
-                    onSettings({ pathHidden: [...new Set([...(settings.pathHidden ?? []), sheet.x.step.topic!])] });
-                    setSheet(null);
-                  }}
-                >
-                  {tx.hide}
-                </button>
-              )}
-              <button className="btn ghost" onClick={() => setSheet(null)}>
-                {tx.close}
-              </button>
-            </div>
-          </div>
+        <MissingSheet
+          x={view.units.concat(view.history).flatMap((u) => u.steps).find((y) => y.step.id === sheet.x.step.id) ?? sheet.x}
+          unit={sheet.unit}
+          ctx={mctx}
+          lang={lang}
+          title={stepTitle(sheet.x.step, settings, lang)}
+          onClose={() => setSheet(null)}
+          onPractice={(x, keys) => {
+            setSheet(null);
+            if (x.step.kind === 'tech' && keys.length && onPracticeMissing) onPracticeMissing(x, sheet.unit, keys);
+            else onStep(x, sheet.unit, 'practice');
+          }}
+        />
+      )}    </main>
+  );
+}
+
+/**
+ * SPEC-PATH-ROLE §8: what an opened step is missing, in words — the stars, the keys at the target tempo (technique),
+ * and one Practice button that starts exactly that. Fits a 320×720 phone (a bottom sheet, no sideways scroll).
+ */
+function MissingSheet({ x, unit, ctx, lang, title, onClose, onPractice }: { x: UnitStep; unit: PathUnit; ctx: MasteryCtx; lang: Lang; title: string; onClose: () => void; onPractice: (x: UnitStep, keys: number[]) => void }) {
+  const tx = TX[lang];
+  const m = missingFor(x, ctx);
+  const ms = x.mstars ?? 0;
+  const levelKeys = [...(m.keysDone ?? []), ...(m.keys ?? [])];
+  const checked = !!ctx.facts.keysChecked?.[x.step.id];
+  const practiceKeys = m.kind === 'refresh' ? levelKeys : m.keys ?? [];
+  void unit;
+  return (
+    <div className="sheet-backdrop" onClick={onClose}>
+      <div className="sheet step-sheet missing-sheet" role="dialog" aria-modal="true" aria-labelledby="missing-title" data-missing-sheet={x.step.id} data-missing-kind={m.kind} onClick={(e) => e.stopPropagation()}>
+        <div className="ms-head">
+          <h2 id="missing-title" dir="auto">
+            <Iso text={title} />
+          </h2>
+          <button className="icon-btn" onClick={onClose} aria-label={tx.close}>
+            <span aria-hidden="true">✕</span>
+          </button>
         </div>
-      )}
-    </main>
+        <div className="ms-stars" role="img" aria-label={`${ms} / 5 ${tx.stars}`}>
+          {[0, 1, 2, 3, 4].map((s) => (
+            <i key={s} className={s < ms ? 'won' : ''} />
+          ))}
+          <small>{ms >= 5 && !x.fade ? (lang === 'he' ? 'נשלט' : 'Mastered') : x.fade ? tx.refresh : tx.opened}</small>
+        </div>
+        <p className="ms-text" dir="auto" data-missing-text>
+          <b>{m.text[lang]}</b>
+        </p>
+        {levelKeys.length > 1 && (
+          <div className="ms-keys" dir="ltr" aria-label={fill(tx.keysAt, { b: m.bpm ?? '' })}>
+            {levelKeys
+              .slice()
+              .sort((a, b) => a - b)
+              .map((k) => (
+                <span key={k} className={`ms-key ${(m.keysDone ?? []).includes(k) ? 'on' : ''}`} data-key={k} data-key-done={(m.keysDone ?? []).includes(k) ? '1' : '0'}>
+                  {KEY_LABEL[k]}
+                </span>
+              ))}
+          </div>
+        )}
+        {checked && <p className="ms-checked" dir="auto">{tx.checked}</p>}
+        <div className="sheet-actions">
+          <button className="btn primary" data-missing-practice="1" onClick={() => onPractice(x, practiceKeys)}>
+            {tx.practiceNow}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

@@ -1,7 +1,7 @@
 import { TodayCards } from './TodayCards';
 import { qualityOf } from '../audio/quality';
 import { courseLevels } from '../engine/courseSocial';
-import { techQueue, workoutCreditsStep } from '../engine/ladderFacts';
+import { techLevel, techQueue, workoutCreditsStep } from '../engine/ladderFacts';
 import { CourseContext } from './courseContext';
 import { CourseSheet } from './CourseSwitcher';
 import { COURSE_AREAS, courseGoal, courseOf, switchCourse, type CourseId } from '../engine/courses';
@@ -111,7 +111,7 @@ import { BadgesView, ChallengeCard } from './Badges';
 import type { RankChange } from '../engine/ranks';
 import type { Badge } from '../engine/badges';
 import { BadgeUnlock, RankUpUnlock } from './BadgeUnlock';
-import { familyById, skillDrillsInKey, todayDrills } from '../engine/drills/plan';
+import { familyById, itemTargetBpm, skillDrillsInKey, todayDrills } from '../engine/drills/plan';
 import { blockLabel, WorkoutCard, WorkoutEditor, WorkoutRunScreen } from './Workout';
 import { addSession, nextBlock, nextForBlock, runLeftMs, startRun, suggestWorkout, validateTemplate, type Block, type BlockTarget, type WorkoutRun } from '../engine/workout2';
 import { subPriorities } from '../engine/scheduler';
@@ -158,8 +158,9 @@ import { clearPendingChallenge, openChallenge, pendingChallenge, postMilestones,
 import { challengeFromHash, learnedStandards, type MilestoneEvents } from '../engine/socialRound';
 import { effectivePrivacy } from '../engine/privacy';
 import { loadSlot, saveSlot } from '../storage/resume';
-import { nodeTitle, PathView2, stepTitle, usePathView } from './Path';
-import { checkpointSession, recordStep, stepSession, stepStars, testOutPassed, testOutSession, type PathStep, type PathUnit, type UnitStep } from '../engine/path';
+import { nodeTitle, PathView2, stepTitle, useMasteryView, usePathView } from './Path';
+import { checkpointTech, checkTechStars, leadsTo, masteryLine, rankHold, strengthenDrills, strengthenStep, unitMastery, UNIT_MASTERY_XP } from '../engine/pathMastery';
+import { checkpointParts, checkpointSession, recordStep, stepSession, stepStars, testOutPassed, testOutSession, type PathStep, type PathUnit, type UnitStep } from '../engine/path';
 import { FriendsScreen } from './Friends';
 import { enablePush, reportGameBest, reportRating, reportStreakDays, setProfile, uploadAvatar } from '../cloud/social';
 import { courseHasProgress, firstWeekDay, levelOfReport, levelTested, markSetup, markTasteDone, markTasteOpened, markWinSeen, migrateCourseStart, offerDue, pickProbes, reportCourse, sessionsSince, setPersonalGoal, setupNeeded, snoozeOffer, stageOf, goalById, tasteFor, jazzWho, type CourseStartMap, type ProgressFacts, type SelfReport } from '../engine/courseStart';
@@ -996,7 +997,8 @@ export function App() {
   const [unlock, setUnlock] = useState<{ badges: Badge[]; rank?: RankChange } | null>(null);
   useEffect(() => {
     if (!settings || route === 'lesson') return;
-    const r = refreshRanksBadges(progress, new Date(), settings.uiLang === 'he' ? [5, 6] : undefined, { firstWins: firstWinCourses(settings.courseStart) });
+    // SPEC-PATH-ROLE §6 Q2: an area with an open checkpoint on the path waits for it before it moves up.
+    const r = refreshRanksBadges(progress, new Date(), settings.uiLang === 'he' ? [5, 6] : undefined, { firstWins: firstWinCourses(settings.courseStart) }, rankHold(pathView));
     if (!r) return;
     void store.saveProgress(r.next).then(() => setProgress(r.next));
     if (settings.cleanView || !settings.awardsInit) return;
@@ -1029,6 +1031,41 @@ export function App() {
     updateSettings({ pathFacts: { ...(settings.pathFacts ?? {}), units: [...units, { ...f, at: new Date().toISOString() }] } });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathView.freeze ? pathView.freeze.id + pathView.freeze.steps.join() : '']);
+  // SPEC-PATH-ROLE §8: opened vs mastered — the live keys and the silver refresh on every step.
+  const { view: mview, ctx: mctx } = useMasteryView(pathView, s, progress);
+  const unitName = (u: PathUnit) => String(u.no ?? u.n);
+  const leadsLine = leadsTo(mview, mctx.facts, unitName)?.[s.uiLang] ?? null;
+  // A unit sealed for the first time (every step at 5★, the checkpoint passed): bonus XP (it counts in the league),
+  // the badge counter, a short note. Once per unit (facts.sealed).
+  useEffect(() => {
+    if (!settings || !progressReady) return;
+    const facts = settings.pathFacts ?? {};
+    const newly = mview.units.filter((u) => u.status !== 'projected' && !facts.sealed?.[u.id] && unitMastery(u, mctx.facts).sealed);
+    if (!newly.length) return;
+    const at = new Date().toISOString();
+    updateSettings({ pathFacts: { ...facts, sealed: { ...(facts.sealed ?? {}), ...Object.fromEntries(newly.map((u) => [u.id, at])) } } });
+    void store
+      .recordCompletion({ lessonId: 'unit-mastered', lessonVersion: 1, sessionId: `unit-mastered-${newly.map((u) => u.id).join('-')}-${Date.now()}`, completedAt: at, firstTry: newly.length, total: newly.length, xp: UNIT_MASTERY_XP * newly.length, missed: [], items: [], ...(settings.activeCourse ? { course: settings.activeCourse } : {}) })
+      .then((p) => {
+        const np = { ...p, counts: bumpCount(p.counts, 'unitsMastered', newly.length) };
+        return store.saveProgress(np).then(() => setProgress(np));
+      });
+    setAwardToast(settings.uiLang === 'en' ? `Unit ${unitName(newly[0])} mastered · +${UNIT_MASTERY_XP * newly.length} XP` : `יחידה ${unitName(newly[0])} נשלטת · ‎+${UNIT_MASTERY_XP * newly.length} XP`);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mview, progressReady]);
+  /** SPEC-PATH-ROLE §4: a checkpoint's technique part (after its questions, or alone in a technique-only unit). */
+  const checkTech = useRef<{ id: string; drills: Drill[]; steps: string[]; t0: string; qStars: number | null; clean: Set<string> } | null>(null);
+  const [checkTechWaiting, setCheckTechWaiting] = useState(false);
+  const startCheckTech = () => {
+    const ct = checkTech.current;
+    if (!ct) return go('path');
+    setCheckTechWaiting(false);
+    chartQueue.current = ct.drills;
+    drillFrom.current = 'check';
+    drillSessionXp.current = 0;
+    drillSession.current = { takes: 0, clean: 0 };
+    go('drills');
+  };
   const lastSession = () => progress.history[progress.history.length - 1]?.sessionId ?? null;
   /** The brief before a topic exercise (owner, 2026-11-07); automated test runs skip it unless ?brief. */
   const briefFor = (topic: string, level: number, extra: Partial<Brief> = {}): Brief | undefined => {
@@ -1074,7 +1111,18 @@ export function App() {
       pendingStep.current = null;
       return openReview();
     }
-    if (step.kind === 'check') return openGenerated(checkpointSession(unit, seed), undefined, false, { key: `pathstep:${step.id}`, title });
+    if (step.kind === 'check') {
+      // SPEC-PATH-ROLE §4: the questions (when the unit has ≥ 2 question steps), then the technique part — the unit's
+      // technique levels in 4 random keys (2 in a short unit) at the target tempo.
+      const parts = checkpointParts(unit);
+      const tech = parts.tech.length && settings ? checkpointTech(unit, drillSettingsOf(settings).keyOrder, seed) : null;
+      checkTech.current = tech && tech.drills.length ? { id: step.id, drills: tech.drills, steps: Object.keys(tech.keys), t0: new Date().toISOString(), qStars: parts.questions.length ? null : 3, clean: new Set() } : null;
+      setCheckTechWaiting(false);
+      if (parts.questions.length) return openGenerated(checkpointSession(unit, seed), undefined, false, { key: `pathstep:${step.id}`, title });
+      pendingStep.current = null;
+      if (checkTech.current) return startCheckTech();
+      return go('path');
+    }
     // 0.61 (owner): a technique level runs its items not yet clean as a drill queue; a vocal level opens the Vocal screen on it.
     if (step.kind === 'tech' && step.ladder && settings && progress) {
       chartQueue.current = techQueue(step.ladder.ref, progress.drillItems ?? {}, drillSettingsOf(settings).keyOrder);
@@ -1117,6 +1165,27 @@ export function App() {
     pendingStep.current = null;
     practiceSkill(step.skill);
   };
+  /** SPEC-PATH-ROLE §8: the what's-missing sheet's Practice on a technique step — exactly its missing keys (all keys
+   *  for a refresh), weak keys first; the takes raise the step's stars like any take of the level. */
+  const practiceMissing = (x: UnitStep, unit: PathUnit, keys: number[]) => {
+    const lv = x.step.ladder ? techLevel(x.step.ladder.ref) : undefined;
+    if (!lv || !settings || !progress) return openFromPath(x, unit, 'practice');
+    const order = drillSettingsOf(settings).keyOrder;
+    const rank = (k: number) => keys.indexOf(((k % 12) + 12) % 12);
+    const q = levelDrills(lv, order)
+      .filter((d) => rank(d.spec.key) >= 0)
+      .sort((a, b) => rank(a.spec.key) - rank(b.spec.key));
+    if (!q.length) return openFromPath(x, unit, 'practice');
+    openFrom.current.path = true;
+    workoutPending.current = null;
+    pendingStep.current = { id: x.step.id, kind: 'tech', after: lastSession() };
+    lastStepId.current = x.step.id;
+    chartQueue.current = q.slice(0, 8);
+    drillFrom.current = 'path';
+    drillSessionXp.current = 0;
+    drillSession.current = { takes: 0, clean: 0 };
+    go('drills');
+  };
   const openTestOut = (unit: PathUnit) => {
     const seed = (Date.now() ^ (Math.random() * 1e9)) >>> 0;
     const { def, steps } = testOutSession(unit, seed);
@@ -1124,7 +1193,7 @@ export function App() {
     openGenerated(def, undefined, false, { key: `testout:${unit.id}`, title: s.uiLang === 'en' ? 'Test out' : 'מבחן מעבר' });
   };
   /** Technique drills opened from a path step or a workout block run today's items as a queue (spec AI §9). */
-  const drillFrom = useRef<'path' | 'workout' | 'test' | 'chart' | 'assign' | 'taste' | 'repertoire' | 'keys' | null>(null);
+  const drillFrom = useRef<'path' | 'workout' | 'test' | 'chart' | 'assign' | 'taste' | 'repertoire' | 'keys' | 'check' | null>(null);
   /** A licks / transcription path step being played (SPEC-LICKS-TRANSCRIPTION), and the workout's lick-review block. */
   const measuredStep = useRef<{ id: string; level: number } | null>(null);
   const lickReview = useRef(false);
@@ -1231,7 +1300,7 @@ export function App() {
     go('vocal');
   };
   const drillQueue = useMemo(
-    () => (route === 'drills' && (drillFrom.current === 'chart' || drillFrom.current === 'keys' || drillFrom.current === 'assign' || drillFrom.current === 'taste' || drillFrom.current === 'repertoire' || (drillFrom.current === 'path' && chartQueue.current)) ? chartQueue.current ?? undefined : route === 'drills' && (drillFrom.current === 'path' || drillFrom.current === 'workout') && settings && progress ? todayDrills({ ...drillSettingsOf(settings), bassTuning: bassTuningOf(settings), drumMic: drumMicOf(settings.drumKit) }, progress.drillItems ?? {}, settings.drillStart ?? {}, settings.customDrills ?? []).map((x) => x.drill) : undefined),
+    () => (route === 'drills' && (drillFrom.current === 'chart' || drillFrom.current === 'keys' || drillFrom.current === 'assign' || drillFrom.current === 'taste' || drillFrom.current === 'repertoire' || (drillFrom.current === 'path' && chartQueue.current) || drillFrom.current === 'check' || (drillFrom.current === 'workout' && chartQueue.current)) ? chartQueue.current ?? undefined : route === 'drills' && (drillFrom.current === 'path' || drillFrom.current === 'workout') && settings && progress ? todayDrills({ ...drillSettingsOf(settings), bassTuning: bassTuningOf(settings), drumMic: drumMicOf(settings.drumKit) }, progress.drillItems ?? {}, settings.drillStart ?? {}, settings.customDrills ?? []).map((x) => x.drill) : undefined),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [route],
   );
@@ -1239,7 +1308,31 @@ export function App() {
     const from = drillFrom.current;
     drillFrom.current = null;
     if (from === 'taste') return tasteDrillsDone(takes, clean);
-    if (from === 'repertoire') {
+    if (from === 'check') {
+      // SPEC-PATH-ROLE §4: the checkpoint's technique part — a drill counts when it had a clean take at the target
+      // tempo during the part. The checkpoint's stars = the lower of its two parts; the technique part marks the unit's
+      // levels "checked in keys". The takes themselves feed keyMastery and the technique rank like any take.
+      chartQueue.current = null;
+      const ct = checkTech.current;
+      checkTech.current = null;
+      setCheckTechWaiting(false);
+      let stars = 0;
+      if (ct && settings) {
+        const at = new Date().toISOString();
+        const tStars = checkTechStars(ct.drills.filter((d) => ct.clean.has(d.itemId)).length, ct.drills.length);
+        stars = Math.min(ct.qStars ?? 3, tStars);
+        let facts = recordStep(settings.pathFacts ?? {}, ct.id, stars, at);
+        if (tStars > 0) facts = { ...facts, keysChecked: { ...(facts.keysChecked ?? {}), ...Object.fromEntries(ct.steps.map((id) => [id, at])) } };
+        updateSettings({ pathFacts: facts });
+      }
+      // Path awards (spec AG §5): units finished, checkpoints at 3 stars — after the part's result is saved.
+      const award = (p: Progress): Progress => (stars > 0 ? { ...p, counts: stars === 3 ? bumpCount(bumpCount(p.counts, 'units', 1), 'checkpoints3', 1) : bumpCount(p.counts, 'units', 1) } : p);
+      const done = techResult('checkpoint-tech', takes, clean);
+      if (done) void done.then((p) => (stars > 0 ? store.saveProgress(award(p)).then(() => setProgress(award(p))) : setProgress(p)));
+      else if (stars > 0) void store.saveProgress(award(progress)).then(() => setProgress(award(progress)));
+      return go('path');
+    }
+    if (from === 'workout') chartQueue.current = null;    if (from === 'repertoire') {
       // A repertoire item practised as drills: one result for the item (score = clean takes / takes), with the course.
       chartQueue.current = null;
       const rp = repOpen.current;
@@ -1509,6 +1602,15 @@ export function App() {
     // derived by withLadderFacts) — never by one session's clean share.
     if (ps.kind === 'tech') return;
     const stars = stepStars(ps.kind, r.firstTry, r.total);
+    // SPEC-PATH-ROLE §4: the questions passed and the checkpoint has a technique part — it is recorded after that part.
+    if (ps.kind === 'check' && checkTech.current?.id === ps.id) {
+      if (stars > 0) {
+        checkTech.current.qStars = stars;
+        setCheckTechWaiting(true);
+        return;
+      }
+      checkTech.current = null;
+    }
     updateSettings({ pathFacts: recordStep(settings.pathFacts ?? {}, ps.id, stars, at) });
     if (ps.kind === 'check' && stars > 0) {
       // Path awards (spec AG §5): units finished, checkpoints at 3 stars.
@@ -1543,9 +1645,9 @@ export function App() {
     // 0.61 (SPEC-COURSES): the workout belongs to the active course — its own areas, its goal, its warm-ups only.
     const course = courseOf(s.activeCourse);
     const own = COURSE_AREAS[course.id];
-    return suggestWorkout({ total: tmpl ? tmpl.reduce((a, b) => a + b.minutes, 0) : baseMinutes, goal: courseGoal(course.id, !!s.examPrep), priorities: (s.intake as Intake | null | undefined)?.priorities ?? null, leaveOut: [...new Set([...(s.pathLeaveOut ?? []).filter((d) => course.id === 'ear' || !own.includes(d)), ...INTAKE_AREAS.filter((d) => !own.includes(d))])], reviewsDue: new Set(dueReviews(progress.review, now0).map((r) => r.key)).size, singer: course.id === 'voice' && !s.noMic, view: pathView, template: tmpl, technique: s.drills?.inWorkout !== false && (course.id === 'keys' || course.id === 'guitar' || course.id === 'bass' || course.id === 'drums'), licksDue: course.id === 'drums' || course.id === 'ear' ? 0 : dueLicks(s.lickBook?.review, now0).length, piecesDue: course.id === 'ear' || course.id === 'jazz' ? 0 : piecesDueN });
+    return suggestWorkout({ total: tmpl ? tmpl.reduce((a, b) => a + b.minutes, 0) : baseMinutes, goal: courseGoal(course.id, !!s.examPrep), priorities: (s.intake as Intake | null | undefined)?.priorities ?? null, leaveOut: [...new Set([...(s.pathLeaveOut ?? []).filter((d) => course.id === 'ear' || !own.includes(d)), ...INTAKE_AREAS.filter((d) => !own.includes(d))])], reviewsDue: new Set(dueReviews(progress.review, now0).map((r) => r.key)).size, singer: course.id === 'voice' && !s.noMic, view: pathView, template: tmpl, technique: s.drills?.inWorkout !== false && (course.id === 'keys' || course.id === 'guitar' || course.id === 'bass' || course.id === 'drums'), licksDue: course.id === 'drums' || course.id === 'ear' ? 0 : dueLicks(s.lickBook?.review, now0).length, piecesDue: course.id === 'ear' || course.id === 'jazz' ? 0 : piecesDueN, pathMode: s.pathMode ?? 'guide' });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathView, baseMinutes, tmplRaw, s.goal, s.examPrep, s.pathLeaveOut, s.pathHidden, s.mode, s.noSing, s.noMic, progress.review.length, today, progress.history.length, piecesDueN]);
+  }, [pathView, baseMinutes, tmplRaw, s.goal, s.examPrep, s.pathLeaveOut, s.pathHidden, s.mode, s.noSing, s.noMic, progress.review.length, today, progress.history.length, piecesDueN, s.pathMode]);
   const todayBlocks = s.workoutToday?.day === today ? s.workoutToday.blocks : suggestedWorkout;
   const [wrun, setWrun] = useState<WorkoutRun | null>(() => loadSlot<WorkoutRun>(`workout:${today}`)?.data ?? null);
   const wrunRef = useRef(wrun);
@@ -1604,6 +1706,14 @@ export function App() {
       if (dueReviews(progress.review, new Date()).length > 0 && canReview()) return { title: t.review, open: () => openReview() };
       return skillOpen(weakestSkill(ratings));
     }
+    // SPEC-PATH-ROLE §3: strengthen — an instrument course plays its opened technique levels (weak keys first, run from
+    // the workout screen); otherwise the weakest opened ear / theory step, whose stars a clean run raises.
+    if (tg.kind === 'strengthen') {
+      if (instrumentCourse) return { title: blockLabel(t, tg, s.uiLang), open: () => go('workoutrun') };
+      const st = strengthenStep(mview, mctx.facts);
+      if (st && stepOpens(st.x.step)) return { title: nodeTitle(st.x.step, s, s.uiLang), open: () => openPathStep(st.x, st.unit, 'practice') };
+      return skillOpen(weakestSkill(ratings));
+    }
     const nx = nextForBlock(b, pathView, new Set(r.steps));
     if (nx && 'step' in nx) {
       const unit = pathView.units.find((u) => u.id === nx.unitId);
@@ -1621,7 +1731,7 @@ export function App() {
   const runCurrent = (r: WorkoutRun) => {
     const nx = workoutNext(r);
     const tg = r.blocks[r.at]?.target;
-    if (!nx || !tg || tg.kind === 'game' || tg.kind === 'vocal' || tg.kind === 'practice') return go('workoutrun');
+    if (!nx || !tg || tg.kind === 'game' || tg.kind === 'vocal' || tg.kind === 'practice' || (tg.kind === 'strengthen' && instrumentCourse)) return go('workoutrun');
     workoutPending.current = { t0: Date.now() };
     openFrom.current.path = false;
     nx.open();
@@ -1742,6 +1852,8 @@ export function App() {
     ? { label: s.uiLang === 'en' ? 'See your first result' : 'לתוצאה הראשונה', open: () => go('coursestart') }
     : slot?.key.startsWith('real:')
     ? { label: s.uiLang === 'en' ? 'See the result' : 'לתוצאה', open: () => go('home') }
+    : checkTechWaiting && checkTech.current
+    ? { label: s.uiLang === 'en' ? 'Technique part' : 'חלק הנגינה', open: startCheckTech }
     : origin.path
     ? { label: s.uiLang === 'en' ? 'Next step' : 'לשלב הבא', open: openNextStep, secondary: workoutAction ?? undefined }
     : workoutAction
@@ -1835,6 +1947,7 @@ export function App() {
               onStart={() => (s.mode === 'voice' && !s.voiceConsent ? setConsentThen(() => () => startWorkout()) : startWorkout())}
               onEdit={() => go('workout')}
               onReset={() => updateSettings({ workoutToday: undefined })}
+              leadsTo={leadsLine}
             />
           }
           today={
@@ -1928,7 +2041,7 @@ export function App() {
           }}
         />
       )}
-      {route === 'path' && <PathView2 t={t} settings={s} progress={progress} view={pathView} onStep={openFromPath} onTestOut={openTestOut} onPlacement={() => (instrumentCourse ? openTechTest() : s.activeCourse === 'voice' ? openVoiceTest() : openPlacement())} onTechTest={instrumentCourse && cStart?.legacy && !s.drillStart && !Object.keys(progress.drillItems ?? {}).length ? openTechTest : undefined} onSettings={updateSettings} top={
+      {route === 'path' && <PathView2 t={t} settings={s} progress={progress} view={pathView} onStep={openFromPath} onPracticeMissing={practiceMissing} onTestOut={openTestOut} onPlacement={() => (instrumentCourse ? openTechTest() : s.activeCourse === 'voice' ? openVoiceTest() : openPlacement())} onTechTest={instrumentCourse && cStart?.legacy && !s.drillStart && !Object.keys(progress.drillItems ?? {}).length ? openTechTest : undefined} onSettings={updateSettings} top={
         cStage !== 'done' ? (
           <CourseStartHero course={activeC} lang={s.uiLang} stage={cStage} cs={cStart} who={tasteWho} onStart={continueCourseStart} onFindLevel={findLevel} compact />
         ) : (
@@ -2346,6 +2459,7 @@ export function App() {
           onClose={() => go('home')}
           ctx={wctx}
           onCtx={setWctx}
+          leadsTo={leadsLine}
           addOptions={{
             suggested: subPriorities({ ratings: ratingsOf(progress), subs: foldSubs(progress.ratingEvents ?? []), track: s.track ?? null, priorities: (s.intake as Intake | null | undefined)?.priorities ?? null, voice: s.mode === 'voice', now: new Date() })
               .slice(0, 12)
@@ -2364,6 +2478,16 @@ export function App() {
           onGo={() => {
             const b = wrun.blocks[wrun.at];
             // Any other block (this screen restored on a path / area / warm-up block): open it as Continue would.
+            // SPEC-PATH-ROLE §3: an instrument course's strengthen block — the opened levels' drills, weak keys first.
+            if (b.target.kind === 'strengthen' && instrumentCourse) {
+              saveRun(addSession(wrun, b.minutes * 60000, Math.max(1, b.minutes), Math.max(1, b.minutes)));
+              const q = strengthenDrills(mview, mctx);
+              chartQueue.current = q.length ? q : null;
+              drillFrom.current = 'workout';
+              drillSessionXp.current = 0;
+              drillSession.current = { takes: 0, clean: 0 };
+              return go('drills');
+            }
             if (b.target.kind !== 'game' && b.target.kind !== 'vocal') return runCurrent(wrun);
             // Games and the vocal warm-up: the block counts as done when started (they run on their own screens).
             saveRun(addSession(wrun, b.minutes * 60000, Math.max(1, b.minutes), Math.max(1, b.minutes)));
@@ -2411,7 +2535,7 @@ export function App() {
           }}
         />
       )}
-      {route === 'insights' && <InsightsScreen lang={s.uiLang} progress={progress} onBack={() => go('skills')} onTopic={(id, lv) => openTopic(id, lv)} onDrills={() => go('drills')} onDrillKey={(family, key) => {
+      {route === 'insights' && <InsightsScreen lang={s.uiLang} progress={progress} nearMastery={masteryLine(mview, mctx, unitName, (st) => nodeTitle(st, s, 'en')) || undefined} onBack={() => go('skills')} onTopic={(id, lv) => openTopic(id, lv)} onDrills={() => go('drills')} onDrillKey={(family, key) => {
             const f = familyById(family);
             const q = f ? skillDrillsInKey(f, progress.drillItems ?? {}, drillSettingsOf(s).keyOrder, key, s.drillStart?.[family]) : [];
             if (!q.length) return go('drills');
@@ -2559,6 +2683,13 @@ export function App() {
           items={progress.drillItems ?? {}}
           onTake={(st, evs, xp, m) => {
             noteTake(xp, m?.verdict);
+            const ct = checkTech.current;
+            if (drillFrom.current === 'check' && ct && m?.verdict === 'clean') {
+              // The checkpoint's technique part: a clean take at the level's target tempo during the part.
+              const d = ct.drills.find((x) => x.itemId === st.itemId);
+              const atT = (x: { at: string; bpm: number }) => x.at >= ct.t0 && !!d && x.bpm >= 0.95 * itemTargetBpm(d) - 1e-9;
+              if ((st.passLog ?? []).some(atT) || (st.history ?? []).some(atT)) ct.clean.add(st.itemId);
+            }
             if (drillFrom.current === 'taste') {
               // The taste's measured win: best note accuracy and the bars played with the band.
               const d = chartQueue.current?.find((x) => x.itemId === st.itemId) ?? chartQueue.current?.[0];
@@ -2574,6 +2705,7 @@ export function App() {
           onVoice={s.noSing ? undefined : () => (setVocalWarmup(false), go('vocal'))}
           queue={drillQueue}
           onQueueDone={drillQueueDone}
+          atTarget={drillFrom.current === 'check'}
           startTest={drillFrom.current === 'test'}
           onTestDone={() => {
             drillFrom.current = null;

@@ -193,6 +193,8 @@ export interface DrillsProps {
   queue?: Drill[];
   /** Called when a queued run (path / workout) ends. */
   onQueueDone?: (takes: number, clean: number) => void;
+  /** SPEC-PATH-ROLE §4: the queue is a checkpoint's technique part — every item starts at its level's target tempo. */
+  atTarget?: boolean;
   /** Open on the technique level test (after Find my level). */
   startTest?: boolean;
   onTestDone?: () => void;
@@ -208,7 +210,7 @@ export interface DrillsProps {
 
 type View = { k: 'test' } | { k: 'hub' } | { k: 'songs' } | { k: 'family'; f: FamilyDef } | { k: 'run'; queue: Drill[]; i: number; from: View } | { k: 'settings' } | { k: 'calib' } | { k: 'creator'; edit?: CustomDrill } | { k: 'kit'; then?: 'test'; start?: KitKind };
 
-export function Drills({ lang, settings, onSettings, items, onTake, onBack, queue, onQueueDone, startTest, onTestDone, songs, onSing, onVoice, onPieces }: DrillsProps) {
+export function Drills({ lang, settings, onSettings, items, onTake, onBack, queue, onQueueDone, startTest, onTestDone, songs, onSing, onVoice, onPieces, atTarget }: DrillsProps) {
   const tx = T[lang];
   const ds = drillSettingsOf(settings);
   const [view, setView] = useState<View>(startTest ? (ds.instrument === 'drums' && !settings.drumKit?.done ? { k: 'kit' } : { k: 'test' }) : queue?.length ? { k: 'run', queue, i: 0, from: { k: 'hub' } } : songs ? { k: 'songs' } : { k: 'hub' });
@@ -244,6 +246,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
           kit={settings.drumKit}
           start={view.i}
           items={items}
+          atTarget={atTarget}
           onTake={onTake}
           onEnd={(takes, clean) => (onQueueDone && queue?.length ? onQueueDone(takes, clean) : setView(view.from))}
         />
@@ -824,7 +827,7 @@ function LevelRefs({ level, lang }: { level: LevelDef; lang: Lang }) {
   );
 }
 
-function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphones, onHeadphones, kit, onIndex }: { onIndex?: (i: number) => void; lang: Lang; ds: DrillSettings; cal: DrillCalibration; queue: Drill[]; start: number; items: Record<string, ItemState>; onTake: DrillsProps['onTake']; onEnd: (takes: number, clean: number) => void; headphones?: boolean; onHeadphones?: (h: boolean) => void; kit?: Settings['drumKit'] }) {
+function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphones, onHeadphones, kit, onIndex, atTarget }: { atTarget?: boolean; onIndex?: (i: number) => void; lang: Lang; ds: DrillSettings; cal: DrillCalibration; queue: Drill[]; start: number; items: Record<string, ItemState>; onTake: DrillsProps['onTake']; onEnd: (takes: number, clean: number) => void; headphones?: boolean; onHeadphones?: (h: boolean) => void; kit?: Settings['drumKit'] }) {
   const [beat, setBeat] = useState(-1);
   const tx = T[lang];
   const [i, setI] = useState(start);
@@ -833,7 +836,9 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
   const drill = queue[i];
   const local = useRef<Record<string, ItemState>>({});
   const stateOf = (d: Drill) => local.current[d.itemId] ?? items[d.itemId] ?? newItem(d);
-  const [bpm, setBpm] = useState(() => (drill ? stateOf(drill).goalBpm : 60));
+  // A checkpoint's technique part plays every item at its level's target tempo (SPEC-PATH-ROLE §4).
+  const bpmOf = (d: Drill) => (atTarget ? itemTargetBpm(d) : stateOf(d).goalBpm);
+  const [bpm, setBpm] = useState(() => (drill ? bpmOf(drill) : 60));
   const [res, setRes] = useState<{ m: TakeMetrics; lad: LadderResult } | null>(null);
   // Left hand comps, right hand improvises (chart drills): the free right hand checked against each chord's scale.
   const [rh, setRh] = useState<{ ok: number; total: number } | null>(null);
@@ -861,7 +866,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
     setRes(null);
     if (j >= queue.length) return onEnd(count.current.takes, count.current.clean);
     setI(j);
-    setBpm(stateOf(queue[j]).goalBpm);
+    setBpm(bpmOf(queue[j]));
     setAgain(false);
     setTake((t) => t + 1);
   };
@@ -894,7 +899,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
   const micChords = !midi.devices.length && drill.notes.some((n, k) => drill.notes.some((o, j) => j !== k && Math.abs(o.beat - n.beat) < 1e-4));
   // A goal the microphone can't measure (loudness, pedal) waits for a MIDI keyboard in the timed take; automated runs
   // (e2e) keep the timed take unless ?rubato is in the address (the brief page's rule).
-  const noRubato = micChords || (!midi.devices.length && micUnmeasurable(drill).length > 0) || RUBATO_OFF;
+  const noRubato = micChords || (!midi.devices.length && micUnmeasurable(drill).length > 0) || RUBATO_OFF || !!atTarget;
   const stage: RubatoStage | null = noRubato ? null : oneFree && hasRubato(drill) ? 'free' : rubatoStage(stateOf(drill), drill);
   const takeDrill = stage === 'quarters' ? quartersDrill(drill) : drill;
   const stageDone = (m: TakeMetrics, st: RubatoStage) => {
