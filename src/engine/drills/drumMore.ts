@@ -196,7 +196,7 @@ function punk(s: DrillSpec): Drill {
   // Fast 8ths for about two minutes: the hat or ride in 8ths, or the "skank" beat (kick on the beat, snare between).
   const l: Lanes = [{ h: 'xxxxxxxx', s: '..x...x.', k: 'x...xx..' }, { r: 'xxxxxxxx', s: '..x...x.', k: 'x.x.x.x.' }, { h: 'xxxxxxxx', s: '.x.x.x.x', k: 'x.x.x.x.' }][op];
   const nm = [t('hi-hat 8ths', 'היי־האט בשמיניות'), t('ride 8ths, kick on every beat', 'רייד בשמיניות, קיק על כל פעמה'), t('the skank beat', 'קצב סקאנק')][op];
-  return finish(s, gb(l, 2, 80), { title: t(`Punk: fast 8ths for about 2 minutes · ${nm.en}`, `פאנק: שמיניות מהירות כ-2 דקות · ${nm.he}`), bpm: 150, bars: 80, mic: false, goal: { endure: { rise: 0.3, drift: 0.02 } }, ...drumBand('rock', 80) });
+  return finish(s, gb(l, 2, 80), { title: t(`Punk: fast 8ths for about 2 minutes · ${nm.en}`, `פאנק־רוק: שמיניות מהירות כ-2 דקות · ${nm.he}`), bpm: 150, bars: 80, mic: false, goal: { endure: { rise: 0.3, drift: 0.02 } }, ...drumBand('rock', 80) });
 }
 
 // ───────────────────────────── F6 funk 5–8 (F6 L6–9; L5 linear funk is d-prog 7) ─────────────────────────────

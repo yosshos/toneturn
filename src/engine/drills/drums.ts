@@ -984,7 +984,7 @@ export function drumFamilies(): DrumFamilyDef[] {
       L('d-rock', 6, 'Half-time, double-time, four on the floor', 'חצי זמן, זמן כפול, ארבע על הרצפה', 'feel', 3, [80, 130], '1/8', false),
       L('d-rock', 7, 'Pop with a 16th kick', 'פופ עם קיק בשש-עשריות', 'pop16', 3, [85, 110], '1/16', false),
       L('d-rock', 8, 'Groove + fill every 4th bar', 'גרוב + מעבר כל תיבה רביעית', 'fill', 3, [80, 120], 'mixed', false),
-      L('d-rock', 9, 'Punk: fast 8ths for 2 minutes', 'פאנק: שמיניות מהירות 2 דקות', 'punk', 3, [150, 180], '1/8', false),
+      L('d-rock', 9, 'Punk: fast 8ths for 2 minutes', 'פאנק־רוק: שמיניות מהירות 2 דקות', 'punk', 3, [150, 180], '1/8', false),
     ]),
     fam('d-fills', 'Fills & landing', 'מעברים ונחיתה', [
       L('d-fills', 1, 'One-beat fill, land on 1', 'מעבר של פעמה, נחיתה על 1', 'fill1', 3, [70, 110], '1/8', false),

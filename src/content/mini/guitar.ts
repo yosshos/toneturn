@@ -32,7 +32,7 @@ export const LESSONS: MiniLesson[] = [
         play: [notes([57, 64], 0.6)],
       },
       {
-        say: { en: 'For chords, listen to the lowest note: that is the root you play on strings six and five.', he: 'באקורדים מקשיבים לצליל הנמוך ביותר: זה היסוד שמנגנים על מיתרים שש וחמש.' },
+        say: { en: 'For chords, listen for the root — the note the chord is named after, not always the lowest one. Play it on strings six and five.', he: 'באקורדים מקשיבים ליסוד — הצליל שעל שמו האקורד, לא תמיד הנמוך ביותר. מנגנים אותו על מיתרים שש וחמש.' },
         play: [chord([45, 57, 60, 64], 1), chord([50, 57, 62, 65], 1)],
       },
       {
@@ -58,7 +58,7 @@ export const LESSONS: MiniLesson[] = [
         play: [chord([52, 57, 62], 0.2), rest(0.25), chord([52, 57, 62], 0.2), chord([52, 57, 62], 0.2)],
       },
       {
-        say: { en: 'For the root finder, hum the lowest voice of each chord. Chords come in inversions on purpose, so the top voice will not give it away.', he: 'במוצא היסודות מזמזמים את הקול הנמוך של כל אקורד. האקורדים מגיעים בהיפוכים בכוונה, כדי שהקול העליון לא יסגיר את התשובה.' },
+        say: { en: 'For the root finder, hum the note each chord rests on — its root, not its lowest voice. Chords come in inversions on purpose, so neither the top nor the bottom voice gives it away.', he: 'במוצא היסודות מזמזמים את הצליל שכל אקורד נח עליו — היסוד שלו, לא הקול הנמוך. האקורדים מגיעים בהיפוכים בכוונה, כך שלא הקול העליון ולא התחתון יסגירו את התשובה.' },
         play: [chord([52, 57, 60], 1), chord([53, 57, 62], 1)],
       },
       {
