@@ -6,13 +6,16 @@ test.describe('technique drills', () => {
   test.use({ viewport: { width: 375, height: 780 } });
 
   test('hub, family levels, a run, settings and the creator', async ({ page }) => {
-    await page.goto('/?sim=1#/drills');
+    await page.goto('/?sim=1&rubato=1#/drills');
     await expect(page.locator('[data-drills="hub"]')).toBeVisible();
     await expect(page.locator('.drill-today .drill-level')).toHaveCount(5);
     await page.locator('[data-family="scales"]').click();
     await expect(page.locator('[data-drills="family"]')).toBeVisible();
     await page.locator('[data-level-start="scales-1"]').click();
     await expect(page.locator('[data-drills="run"] .drill-staff svg').first()).toBeVisible();
+    // 0.88 rubato first: a new item opens in free time; "Skip to tempo" goes to the timed take.
+    await expect(page.locator('[data-rubato-stage="free"]')).toBeVisible();
+    await page.locator('[data-rubato-skip]').click();
     await expect(page.locator('[data-drill-play]')).toBeVisible();
     await page.locator('.screen-head .icon-btn').click();
     await page.locator('.screen-head .icon-btn').click();

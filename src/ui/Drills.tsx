@@ -5,6 +5,9 @@ import { SONGBOOK } from '../content/songbook';
 import { COMMON_CHORDS, keyName as songKeyName, songFit } from '../engine/songChords';
 import { recordTakeAnalysis } from '../storage/analysis';
 import { refreshProfile } from '../storage/profile';
+import { BACK_TO_RUBATO, hasRubato, QUARTERS_BPM, quartersDrill, RUBATO_CLEAN, rubatoStage, skipRubato, withStageTake, type RubatoStage } from '../engine/drills/rubato';
+import { RubatoTake } from './RubatoTake';
+const RUBATO_OFF = typeof navigator !== 'undefined' && navigator.webdriver && !new URLSearchParams(typeof location !== 'undefined' ? location.search : '').has('rubato');
 import { levelRecord } from '../engine/drumRecords';
 import { checkRules } from '../engine/improvRules';
 import { parseChart } from '../engine/charts';
@@ -798,6 +801,11 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
   /** The next take is a repeat (Again / Slower / the next tempo): it starts at once. */
   const [again, setAgain] = useState(false);
   const [writing, setWriting] = useState<{ m: TakeMetrics; p: PlayedNote[] } | null>(null);
+  // Rubato first (owner 2026-11-14): a new item is played in free time, then in quarters at ♩60, then at its tempo.
+  // A free-time / quarter take is measured but never moves the ladder or the level. `oneFree`: a single free take
+  // asked for after a badly missed timed take.
+  const [oneFree, setOneFree] = useState(false);
+  const [stageRes, setStageRes] = useState<{ m: TakeMetrics; stage: RubatoStage } | null>(null);
   if (!drill)
     return (
       <section className="drill-result v-clean">
@@ -840,17 +848,101 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
     } else setBpm(lad.next.bpm);
   };
   const std = standardOfSpec(drill.spec);
+  // Chords heard by a microphone can't be followed note by note: those items keep the timed take.
+  const micChords = !midi.devices.length && drill.notes.some((n, k) => drill.notes.some((o, j) => j !== k && Math.abs(o.beat - n.beat) < 1e-4));
+  // A goal the microphone can't measure (loudness, pedal) waits for a MIDI keyboard in the timed take; automated runs
+  // (e2e) keep the timed take unless ?rubato is in the address (the brief page's rule).
+  const noRubato = micChords || (!midi.devices.length && micUnmeasurable(drill).length > 0) || RUBATO_OFF;
+  const stage: RubatoStage | null = noRubato ? null : oneFree && hasRubato(drill) ? 'free' : rubatoStage(stateOf(drill), drill);
+  const takeDrill = stage === 'quarters' ? quartersDrill(drill) : drill;
+  const stageDone = (m: TakeMetrics, st: RubatoStage) => {
+    const before = stateOf(drill);
+    const next = oneFree ? before : withStageTake(before, st, m);
+    local.current[drill.itemId] = next;
+    count.current.takes++;
+    // Measured practice: it shows on the profile and earns a little XP, but no rating events (no tempo was measured).
+    if (st === 'quarters') void recordTakeAnalysis(takeDrill, m, QUARTERS_BPM).catch(() => {});
+    onTake(next, [], Math.max(1, Math.floor(drillXp(m) / 2)), takeInfo(drill, m));
+    setOneFree(false);
+    setStageRes({ m, stage: st });
+  };
+  const freeN = Math.min(RUBATO_CLEAN, (stateOf(drill).rubato?.free ?? 0) + 1);
+  const he = lang === 'he';
+  const stageTx = stage === 'free' ? (he ? `בלי קצב — הצלילים בלבד (${freeN}/${RUBATO_CLEAN})` : `Free time — the notes only (${freeN}/${RUBATO_CLEAN})`) : stage === 'quarters' ? (he ? 'ברבעים, ♩60 — צליל על כל פעמה' : 'In quarters, ♩60 — a note on every beat') : null;
+  if (stageRes) {
+    const nextStage = rubatoStage(stateOf(drill), drill);
+    const line =
+      stageRes.m.verdict !== 'clean'
+        ? he
+          ? 'בלי למהר — שוב.'
+          : 'No rush — again.'
+        : nextStage === null
+          ? he
+            ? `מוכנים לטמפו: ♩${stateOf(drill).goalBpm}.`
+            : `Ready for tempo: ♩${stateOf(drill).goalBpm}.`
+          : nextStage === 'quarters'
+            ? he
+              ? 'עכשיו בזמן: ברבעים, ♩60.'
+              : 'Now in time: quarters at ♩60.'
+            : he
+              ? 'עוד פעם אחת נקייה בלי קצב.'
+              : 'One more clean take in free time.';
+    return (
+      <div className="drill-run" data-drill={drill.itemId} data-rubato-result={stageRes.stage}>
+        <DrillScore drill={stageRes.stage === 'quarters' ? quartersDrill(drill) : drill} ds={ds} result={stageRes.m} beat={-1} lang={lang} />
+        <MarkLegend lang={lang} />
+        <p className="drill-ladder">{line}</p>
+        <TakeResult
+          m={stageRes.m}
+          free={stageRes.stage === 'free'}
+          lang={lang}
+          onAgain={() => (setStageRes(null), setAgain(stageRes.m.verdict === 'clean' || stageRes.stage !== 'free'), setTake((t) => t + 1))}
+          onSlower={() => (setStageRes(null), setTake((t) => t + 1))}
+          onNext={() => (setStageRes(null), go(i + 1))}
+        />
+      </div>
+    );
+  }
   return (
     <div className="drill-run" data-drill={drill.itemId}>
       <p className="drill-goal">
-        {i + 1} / {queue.length} · <span dir="ltr">{drill.pulse === 8 ? '♪' : '♩'} {bpm}</span>
+        {i + 1} / {queue.length}
+        {stage !== 'free' && (
+          <>
+            {' · '}
+            <span dir="ltr">
+              {drill.pulse === 8 && stage !== 'quarters' ? '♪' : '♩'} {stage === 'quarters' ? QUARTERS_BPM : bpm}
+            </span>
+          </>
+        )}
       </p>
       {std && <ListenOriginal id={std.ref.id} lang={lang} practiceKey={std.key} compact />}
       {/* BASS_NICHE_PLAN J4: a drill with a form shows its road map (sections, the bar being played, a cue a bar ahead). */}
       {drill.form && <RoadMapStrip drill={drill} beat={res ? -1 : beat} bpm={bpm} lang={lang} />}
-      <DrillScore drill={drill} ds={ds} result={res?.m} beat={res ? -1 : beat} lang={lang} />
+      {stageTx && !res && (
+        <p className="drill-stage" data-rubato-stage={stage}>
+          <b>{stageTx}</b>
+          {!oneFree && (
+            <button
+              className="link"
+              onClick={() => {
+                const next = skipRubato(stateOf(drill));
+                local.current[drill.itemId] = next;
+                onTake(next, [], 0);
+                setTake((t) => t + 1);
+              }}
+              data-rubato-skip="1"
+            >
+              {he ? 'לדלג לטמפו' : 'Skip to tempo'}
+            </button>
+          )}
+        </p>
+      )}
+      <DrillScore drill={takeDrill} ds={ds} result={res?.m} beat={res ? -1 : beat} lang={lang} />
       {res && <MarkLegend lang={lang} />}
-      {!res && !writing && <DrillTake key={`${drill.itemId}:${take}`} autoStart={again} drill={drill} bpm={bpm} lang={lang} cal={cal} onDone={(m, p) => (setBeat(-1), drill.write || drill.drumWrite ? setWriting({ m, p }) : done(m, p))} onBeat={setBeat} drumsOk={headphones} onDrums={onHeadphones} kit={kit} />}
+      {!res && !writing && stage === 'free' && <RubatoTake key={`${drill.itemId}:free:${take}`} autoStart={again} drill={drill} lang={lang} cal={cal} onDone={(m) => (setBeat(-1), stageDone(m, 'free'))} onBeat={setBeat} />}
+      {!res && !writing && stage === 'quarters' && <DrillTake key={`${drill.itemId}:q:${take}`} autoStart={again} drill={takeDrill} bpm={QUARTERS_BPM} lang={lang} cal={cal} onDone={(m) => (setBeat(-1), stageDone(m, 'quarters'))} onBeat={setBeat} drumsOk={headphones} onDrums={onHeadphones} kit={kit} />}
+      {!res && !writing && !stage && <DrillTake key={`${drill.itemId}:${take}`} autoStart={again} drill={drill} bpm={bpm} lang={lang} cal={cal} onDone={(m, p) => (setBeat(-1), drill.write || drill.drumWrite ? setWriting({ m, p }) : done(m, p))} onBeat={setBeat} drumsOk={headphones} onDrums={onHeadphones} kit={kit} />}
       {/* Ear L7: write the line after playing it; the written grade joins the take's verdict. */}
       {!res && writing && !drill.drumWrite && <TranscribeWrite drill={drill} lang={lang} onDone={(g) => (setWriting(null), done(withWritten(writing.m, g), writing.p))} />}
       {!res && writing && drill.drumWrite && <DrumWrite drill={drill} lang={lang} onDone={(g) => (setWriting(null), done(withDrumWrite(writing.m, g, drill), writing.p))} />}
@@ -868,6 +960,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
             onAgain={() => (setRes(null), setAgain(true), setTake((t) => t + 1))}
             onSlower={() => (setRes(null), setAgain(true), setBpm((b) => Math.max(30, Math.round(b * 0.9))), setTake((t) => t + 1))}
             onNext={() => go(i + 1)}
+            onFree={hasRubato(drill) && !noRubato && res.m.accuracy < BACK_TO_RUBATO ? () => (setRes(null), setOneFree(true), setAgain(false), setTake((t) => t + 1)) : undefined}
           />
         </>
       )}

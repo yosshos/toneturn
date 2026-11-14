@@ -45,7 +45,7 @@ test('lick trainer: review tab and my licks are empty for a new player; Practice
 test('transcription coach: levels, hear (speed, loop), play back — each on one screen', async ({ page }) => {
   await page.goto('/?sim=1&unlock=all#/transcribe-coach');
   await expect(page.locator('[data-transcribe="levels"]')).toBeVisible();
-  await expect(page.locator('[data-tx-open]')).toHaveCount(8);
+  await expect(page.locator('[data-tx-open]')).toHaveCount(9); // 9 levels since the solo-phrase-by-ear level
   await noEmoji(page);
   await page.locator('[data-tx-open="1"]').click();
   await expect(page.locator('[data-tx-step="0"]')).toBeVisible();

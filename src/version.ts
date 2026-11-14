@@ -18,6 +18,18 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.88.0',
+    date: '2026-11-14',
+    en: [
+      'Rubato first: a new technique item — scales too — starts in free time, with no count-in and no click: play the notes at your own pace while the marker waits for you; only the notes are graded. After two clean takes, once in quarter notes at ♩60, then the item’s own tempo and the tempo ladder. "Skip to tempo" for players who are ready.',
+      'A timed take with many wrong notes offers "Once in free time". Free-time takes earn a little XP but no stars — those still come only from measured tempo.',
+    ],
+    he: [
+      'רובטו קודם: פריט טכניקה חדש — גם סולמות — מתחיל בלי קצב, בלי ספירה ובלי קליק: מנגנים את הצלילים בקצב שלכם והסמן מחכה לכם; נבדקים רק הצלילים. אחרי שני ביצועים נקיים — פעם אחת ברבעים ב־♩60, ואז הטמפו של הפריט וסולם הטמפו. "לדלג לטמפו" למי שמוכן.',
+      'ביצוע בזמן עם הרבה צלילים שגויים מציע "פעם אחת בלי קצב". ביצועים בלי קצב נותנים מעט XP אבל לא כוכבים — אלה עדיין רק מטמפו מדוד.',
+    ],
+  },
+  {
     version: '0.87.1',
     date: '2026-11-14',
     en: [

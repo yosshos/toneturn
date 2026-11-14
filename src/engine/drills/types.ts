@@ -742,6 +742,8 @@ export interface ItemState {
   targetBpm?: number;
   /** Clean takes that count toward the level (at or above the goal, never after "Slower"): time and tempo, newest last. */
   passLog?: { at: string; bpm: number }[];
+  /** 0.88 rubato first (rubato.ts): clean free-time and quarter-note takes; absent on items played before. */
+  rubato?: { free: number; quarters: number; skipped?: boolean };
 }
 
 /** The player's own drill (spec AI §12 owner request): a pattern in scale degrees, run through every key. */

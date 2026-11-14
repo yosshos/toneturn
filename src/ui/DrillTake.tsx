@@ -753,7 +753,7 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
 }
 
 /** The analysis shown after a take. */
-export function TakeResult({ m, lang, onAgain, onSlower, onNext }: { m: TakeMetrics; lang: Lang; onAgain: () => void; onSlower: () => void; onNext?: () => void }) {
+export function TakeResult({ m, lang, onAgain, onSlower, onNext, onFree, free = false }: { m: TakeMetrics; lang: Lang; onAgain: () => void; onSlower: () => void; onNext?: () => void; /** A badly missed timed take: one take in free time (rubato.ts). */ onFree?: () => void; /** A free-time take: notes only, no timing numbers. */ free?: boolean }) {
   const tx = TX[lang];
   /** Ahead of the click on average (played − expected < −30 ms): slowing down is not the fix, waiting for the beat is. */
   const rushing = m.timingMean !== null && m.timingMean < -30;
@@ -776,12 +776,16 @@ export function TakeResult({ m, lang, onAgain, onSlower, onNext }: { m: TakeMetr
           {m.wrong ? ` · ${m.wrong} ${tx.wrong}` : ''}
           {m.missing ? ` · ${m.missing} ${tx.missing}` : ''}
         </span>
-        <span>
-          CV R <b>{pct(m.cvR)}</b> · L <b>{pct(m.cvL)}</b>
-        </span>
-        <span>
-          ± <b>{ms(m.timingSD)}</b>
-        </span>
+        {!free && (
+          <span>
+            CV R <b>{pct(m.cvR)}</b> · L <b>{pct(m.cvL)}</b>
+          </span>
+        )}
+        {!free && (
+          <span>
+            ± <b>{ms(m.timingSD)}</b>
+          </span>
+        )}
         {hands !== null && (
           <span>
             ⇆ <b>{ms(hands)}</b>
@@ -820,9 +824,14 @@ export function TakeResult({ m, lang, onAgain, onSlower, onNext }: { m: TakeMetr
         <button className="btn" onClick={onAgain}>
           ↻ {tx.again}
         </button>
-        {m.verdict !== 'clean' && !rushing && (
+        {m.verdict !== 'clean' && !rushing && !free && (
           <button className="btn ghost" onClick={onSlower}>
             {tx.slower}
+          </button>
+        )}
+        {onFree && !free && (
+          <button className="btn ghost" onClick={onFree} data-to-rubato="1">
+            {lang === 'he' ? 'פעם אחת בלי קצב' : 'Once in free time'}
           </button>
         )}
         {onNext && (

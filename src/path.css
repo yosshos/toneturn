@@ -2362,3 +2362,6 @@ button.chip.on {
 .in-weekly { display: grid; gap: 4px; justify-items: start; margin-top: 10px; }
 .hint-row { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
 .hint-row .hint-btn { display: inline-flex; align-items: center; gap: 4px; }
+.drill-stage { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin: 4px 0; }
+.drill-stage .link { font-size: 0.85rem; }
+.drill-take.rubato { display: grid; gap: 8px; justify-items: center; }
