@@ -50,8 +50,8 @@ describe('guitar drills: catalogue', () => {
       expect(/^[gbd]-/.test(f.id)).toBe(true);
       expect(f.levels.length).toBeGreaterThan(0);
       // Bass-course families (b-*, BASS_CURRICULUM §5) run up to 12 levels.
-      // BASS_NICHE_PLAN P2: the bass ear runs to 21 (E5).
-      expect(f.levels.length).toBeLessThanOrEqual(f.id.startsWith('b-') ? 21 : f.id.startsWith('d-') ? 20 : 13);
+      // BASS_NICHE_PLAN P2: the bass ear runs to 21 (E5); progressions by ear take it to 23.
+      expect(f.levels.length).toBeLessThanOrEqual(f.id.startsWith('b-') ? 23 : f.id.startsWith('d-') ? 20 : 13);
       f.levels.forEach((l, i) => expect(l.level).toBe(i + 1));
     }
     expect(cat.find((f) => f.id === 'g-bass')?.instruments).toEqual(['bass']);

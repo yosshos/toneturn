@@ -13,6 +13,8 @@ import { rng, mod } from './guitar';
 import { alt, chartOf, drillOf, fold, PROGS, QI, rootOf, spell, textOf, type BN, type Prog, type Q } from './bass';
 import { MODULATIONS, withBarPlan } from './timeline';
 import { barryLine } from '../barry';
+import { gridProgression, type DChord, type GChord } from '../progGrid';
+import { beatsOf, harmonyPlan, placeChords } from './progEar';
 type T2l = { en: string; he: string };
 
 /** EN / HE pair (local: bass.ts helpers can't run at module load). */
@@ -50,6 +52,8 @@ const ASK: Record<string, { en: string; he: string }> = {
   'riff-ear': tt('Hear a two-bar riff — play it back', 'שמעו ריף של שתי תיבות — נגנו אותו בחזרה'),
   'groups-ear': tt('Hear the groove’s accents — play a root on each group start', 'שמעו את ההדגשות של הגרוב — נגנו יסוד בתחילת כל קבוצה'),
   'mod-ear': tt('Hear the beat change — play quarters on the new beat', 'שמעו את הפעמה משתנה — נגנו רבעים בפעמה החדשה'),
+  'walk-ear': tt('The band walks the changes — then play the root of each chord, on its first beat', 'הלהקה מנגנת ווקינג על המהלך — ואז נגנו את היסוד של כל אקורד, בפעמה הראשונה שלו'),
+  'form-ear': tt('Hear a whole 32-bar chorus — then play its roots through the form', 'שמעו סבב שלם של 32 תיבות — ואז נגנו את היסודות שלו לאורך כל הצורה'),
 };
 
 /** Build a b-ear drill. */
@@ -297,6 +301,58 @@ export function generateBassEar(s: DrillSpec, tu: Tuning): Drill {
         bridge: tt('Hear a chorus, then play the bridge', 'לשמוע סבב, ואז לנגן את הגשר'),
       };
       return finishEar(s, tu, line, notes, windows, s.kind, NM[s.kind], chartOf(key, chart));
+    }
+    case 'walk-ear':
+    case 'form-ear': {
+      // Progressions by ear (progEar.ts / progGrid.ts): the band walks and comps, then the player plays the changes' bass
+      // line (the root of each chord on its first beat, again on 3 of a bar-long chord), graded chord by chord
+      // (harmonyGrade.ts, bass mode). walk-ear op 0: rhythm changes, the A section (two chords a bar); op 1: a minor
+      // blues. form-ear: a whole 32-bar AABA heard once, then played through.
+      const C = (deg: string, q: DChord['q'], beats = 4): DChord => ({ deg, q, x: 'none', beats });
+      let home = key;
+      let ds: DChord[];
+      let order: number[];
+      if (s.kind === 'form-ear') {
+        const p = gridProgression(8, rnd);
+        ds = p.chords.map((c) => ({ ...c, x: 'none' as const }));
+        order = p.order;
+      } else if (op === 1) {
+        // Minor blues, spelled from the relative major: i = 6, iv = 2, ♭VI = 4, V = 3, iiø = 7.
+        home = mod(key + 3, 12);
+        ds = [C('6', 'm7'), C('2', 'm7'), C('6', 'm7', 8), C('2', 'm7', 8), C('6', 'm7', 8), C('4', '7'), C('3', '7'), C('6', 'm7'), C('7', 'm7b5', 2), C('3', '7', 2)];
+        order = ds.map((_, i) => i);
+      } else {
+        ds = [C('1', 'maj7', 2), C('6', '7', 2), C('2', 'm7', 2), C('5', '7', 2), C('3', 'm7', 2), C('6', '7', 2), C('2', 'm7', 2), C('5', '7', 2), C('1', 'maj7', 2), C('1', '7', 2), C('4', 'maj7', 2), C('#4', 'dim7', 2), C('3', 'm7', 2), C('6', '7', 2), C('2', 'm7', 2), C('5', '7', 2)];
+        order = ds.map((_, i) => i);
+      }
+      const seq = order.map((i) => ds[i]);
+      const total = beatsOf(seq);
+      // The chart text, a bar at a time (two chords in a bar where they change on 3).
+      const placed = placeChords(home, seq, 0);
+      const plain = (c: GChord) => `${c.sym.replace(/(maj7|m7♭5|m7|°7|7|m6|m)(.*)$/, '$1')}`.replace('m7♭5', 'm7b5').replace('°7', 'dim7').replace(/♭/g, 'b').replace(/♯/g, '#');
+      const bars: string[] = [];
+      for (const { c, beat } of placed) {
+        const bar = Math.floor(beat / 4);
+        bars[bar] = bars[bar] ? `${bars[bar]} ${plain(c)}` : plain(c);
+        for (let k = 1; k < c.beats / 4; k++) bars[bar + k] = plain(c);
+      }
+      const p = parseChart(bars.join(' | '));
+      const seedTxt = `b-ear:${s.kind}:${key}:${op}`;
+      for (const h of comping(p, 4, total, 'swing', hashOf(`${seedTxt}:c`))) notes.push({ beat: h.beat, dur: h.len, midi: h.notes, inst: 'piano' });
+      for (const w of walkingBass(p, 4, total, hashOf(seedTxt)).filter((x) => !x.ghost && Number.isInteger(x.beat))) notes.push({ beat: w.beat, dur: 0.9, midi: [lowPlay(w.midi)], inst: 'bass' });
+      band(0, total);
+      const ans = placeChords(home, seq, total);
+      for (const { c, beat } of ans) {
+        line.push({ b: beat, d: Math.min(2, c.beats), p: rootOf(tu, c.root), ct: true });
+        if (c.beats >= 4) line.push({ b: beat + 2, d: Math.min(2, c.beats - 2), p: rootOf(tu, c.root), ct: true });
+      }
+      const NM2: Record<string, T2l> = {
+        walk0: tt('Rhythm changes by ear: play the roots', 'ריתם צ׳יינג׳ס בשמיעה: לנגן את היסודות'),
+        walk1: tt('A minor blues by ear: play the roots', 'בלוז מינורי בשמיעה: לנגן את היסודות'),
+        form: tt('A 32-bar AABA: hear it, play it through', 'שיר של 32 תיבות: לשמוע, לנגן עד הסוף'),
+      };
+      const d = finishEar(s, tu, line, notes, windows, s.kind === 'form-ear' ? 'form-ear' : 'walk-ear', s.kind === 'form-ear' ? NM2.form : op === 1 ? NM2.walk1 : NM2.walk0, ans.map((a) => a.c.sym));
+      return { ...d, harmony: harmonyPlan(ans, 'bass', true) };
     }
     case 'transcribe-long': {
       // E4: longer play-back. op 0: 4 bars of walking (and write it); op 1: 8 bars; op 2: a 2-bar bebop phrase in 8ths.

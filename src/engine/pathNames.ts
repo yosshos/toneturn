@@ -10,6 +10,7 @@ const SHORT: Record<string, L2> = {
   extensions: { en: 'Extensions', he: 'הרחבות' },
   voicings: { en: 'Voicings', he: 'וויסינגים' },
   progressions: { en: 'Progressions', he: 'מהלכים' },
+  'grid-dictation': { en: 'Chord grid', he: 'גריד אקורדים' },
   'fine-pitch': { en: 'Fine pitch', he: 'גובה עדין' },
   'in-tune': { en: 'In tune?', he: 'מכוון?' },
   'set-classes': { en: 'Trichords', he: 'טריכורדים' },

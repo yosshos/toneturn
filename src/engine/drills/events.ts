@@ -84,7 +84,7 @@ function secondTag(drill: Drill): Tags[number] | null {
   if (f === 'b-ear') {
     const k = drill.spec.kind;
     if (k === 'quality2' || k === 'quality3') return { skill: 'chords', sub: 'chords/extension', w: 0.5 };
-    if (k === 'motion' || k === 'secdom' || k === 'where' || k === 'dropin' || k === 'bridge') return { skill: 'cadences', sub: 'cadences/progression', w: 0.5 };
+    if (k === 'motion' || k === 'secdom' || k === 'where' || k === 'dropin' || k === 'bridge' || k === 'walk-ear' || k === 'form-ear') return { skill: 'cadences', sub: 'cadences/progression', w: 0.5 };
     if (k === 'transcribe-long') return { skill: 'dictation', sub: 'dictation/bass', w: 0.5 };
     if (k === 'riff-ear') return { skill: 'rhythm-dictation', sub: 'rhythm-dictation/dictate', w: 0.5 };
     // BASS_NICHE_PLAN E5: the grouping of an odd meter, the new beat after a modulation.
@@ -106,7 +106,7 @@ function secondTag(drill: Drill): Tags[number] | null {
     if (k === 'intervals') return { skill: 'intervals', sub: drill.spec.option === 2 ? 'intervals/harmonic' : 'intervals/melodic', w: 0.5 };
     if (k === 'bass-line') return { skill: 'dictation', sub: 'dictation/bass', w: 0.5 };
     if (k === 'two-part') return { skill: 'dictation', sub: 'dictation/two-part', w: 0.5 };
-    if (k === 'chords') return { skill: 'cadences', sub: 'cadences/progression', w: 0.5 };
+    if (k === 'chords' || k.startsWith('prog-')) return { skill: 'cadences', sub: 'cadences/progression', w: 0.5 };
     if (k === 'harmonise') return { skill: 'cadences', sub: 'cadences/harmonize', w: 0.5 };
     if (k === 'transpose') return { skill: 'transpose', sub: 'transpose/pitch', w: 0.5 };
     return { skill: 'sequences', sub: 'sequences/melody', w: 0.5 };
@@ -117,7 +117,7 @@ function secondTag(drill: Drill): Tags[number] | null {
     const k = drill.spec.kind;
     if (k === 'tonic' || k === 'key') return { skill: 'degrees', sub: 'degrees/find-tonic', w: 0.5 };
     if (k === 'rhythm') return { skill: 'rhythm-dictation', sub: 'rhythm-dictation/dictate', w: 0.5 };
-    if (k === 'roots') return { skill: 'cadences', sub: 'cadences/progression', w: 0.5 };
+    if (k === 'roots' || k.startsWith('prog-')) return { skill: 'cadences', sub: 'cadences/progression', w: 0.5 };
     if (k === 'quality') return { skill: 'chords', sub: 'chords/quality', w: 0.5 };
     return { skill: 'dictation', sub: 'dictation/melodic', w: 0.5 };
   }

@@ -34,6 +34,7 @@ import { gradeReading,
   gradeHolds, readTimeline, countInPulses, meterOf, onsetBeats } from '../engine/rhythm';
 import { applyClicks, gradeLanes, gradeTempo, tempoTimeline } from '../engine/clicks';
 import { accuracyFor, type Modality } from '../engine/scoring';
+import { gridFixStimulus, gridWhy } from '../engine/progGrid';
 import type { PaceProfile } from '../engine/fluency';
 import type { Naming } from '../engine/pitch';
 import {
@@ -749,14 +750,15 @@ export class LessonController {
     this.ad.audio.cue('wrong');
     if (g.kind === 'retry') {
       // Personal, about *this* wrong answer — without giving the right one away (spec X.4).
-      const coach = sung ? null : retryCoach(q, answer, l, this.s.turn, this.cfg.playerName ?? null);
+      // Grid dictation: the parts right so far in one line; the fix-it pass replays only the wrong bars (progGrid.ts).
+      const coach = q.kind === 'grid' ? null : sung ? null : retryCoach(q, answer, l, this.s.turn, this.cfg.playerName ?? null);
       this.patch({ feedback: { kind: 'retry', given: answer, sung, ...chips, ...(coach ? { coach } : {}) } });
-      const again = q.kind === 'sing' ? q.stimulus.slice(-1) : q.stimulus;
+      const again = q.kind === 'sing' ? q.stimulus.slice(-1) : q.kind === 'grid' ? gridFixStimulus(q, String(answer)) : q.stimulus;
       if (this.quiet) {
         // No speech; a short sound is heard again by itself, a long one waits for Repeat.
         if (ev.remark && !coach) this.patch({ feedback: { ...this.view.feedback!, coach: ev.remark } });
         await this.ad.clock.sleep(600, signal);
-        if (renderStimulus(again).length <= SHORT_STIM_S) {
+        if (q.kind === 'grid' || renderStimulus(again).length <= SHORT_STIM_S) {
           this.setSession(newTurn(this.s, 'playback'));
           await this.playStim(again, signal);
         }
@@ -769,7 +771,7 @@ export class LessonController {
       return false;
     }
     // What makes your answer and the right one different (spec X.4).
-    const why = sung ? null : revealCoach(q, answer, l);
+    const why = q.kind === 'grid' ? gridWhy(q, String(answer), l) : sung ? null : revealCoach(q, answer, l);
     this.patch({ feedback: { kind: 'reveal', answer: q.answer, given: answer, sung, ...chips, ...(why ? { coach: why } : {}) } });
     const cmp = compareStimulus(q, answer) ?? explainStimulus(q);
     if (this.quiet) {
@@ -1155,7 +1157,7 @@ export class LessonController {
       let ev: { timeMs: number | null; modality: Modality } = { timeMs: null, modality: 'buttons' };
 
       // R11: notes placed at an exact pitch (neck, staff) can't be spoken: those wait for the surface even in voice mode.
-      if (this.view.mode === 'buttons' || this.view.needsListenTap || (q.kind === 'place' && q.match === 'exact')) {
+      if (this.view.mode === 'buttons' || this.view.needsListenTap || (q.kind === 'place' && q.match === 'exact') || q.kind === 'grid') {
         this.setSession(newTurn(this.s, 'listening'), { mic: 'off' });
         const r = await this.waitFor(signal);
         if (r.kind === 'listen') {

@@ -179,6 +179,8 @@ export const TOPIC_TAGS: Record<string, LevelTags> = {
   harmonize: tg(['cadences', 'harmonize', 0.6], ['chords', 'quality', 0.2], ['improv', 'answer', 0.2]),
   'nct-ear': tg(['cadences', 'nct', 0.8], ['sequences', 'lines', 0.2]),
   'harmonic-dictation': tg(['cadences', 'dictation', 0.6], ['sequences', 'chords', 0.2], ['theory', 'harmony', 0.2]),
+  // Grid dictation (progGrid.ts): root motion, then quality, then bass / colour.
+  'grid-dictation': tg(['cadences', 'dictation', 0.6], ['chords', 'quality', 0.25], ['dictation', 'bass', 0.15]),
   'scale-types': tg(['modes', 'scales', 1]),
   maqam: tg(['modes', 'maqam', 1]),
   'chromatic-added': tg(['modes', 'scales', 1]),
@@ -260,7 +262,7 @@ export function questionTags(q: Question): Tag[] {
   const primary = questionSkill(q);
   let tags: Tag[] | null = null;
   // Topic-generated items of any kind (spec AE) carry their topic: its tags apply.
-  const topicRef = q.kind === 'place' ? { id: q.topic, level: q.level } : (q.kind === 'rhythm-read' || q.kind === 'sing-seq' || q.kind === 'sing' || q.kind === 'rhythm-dict') && q.topic ? q.topic : null;
+  const topicRef = q.kind === 'place' || q.kind === 'grid' ? { id: q.topic, level: q.level } : (q.kind === 'rhythm-read' || q.kind === 'sing-seq' || q.kind === 'sing' || q.kind === 'rhythm-dict') && q.topic ? q.topic : null;
   if (topicRef && TOPIC_TAGS[topicRef.id]) {
     const t = TOPIC_TAGS[topicRef.id];
     tags = typeof t === 'function' ? t(topicRef.level) : t;

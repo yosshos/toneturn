@@ -283,6 +283,39 @@ export interface PlaceQuestion extends QBase {
 }
 export type PlaceSurface = 'keys' | 'neck' | 'staff';
 
+/**
+ * Grid progression dictation (progGrid.ts): hear a progression, answer every bar as root + quality + bass / colour on
+ * chip rows. Graded per slot (root 0.5, quality 0.3, bass / colour 0.2) — partial credit; a wrong answer opens one fix-it
+ * pass that replays only the wrong bars. Deterministic from (topic, level, seed). Answer = gridKey of the slots.
+ */
+export interface GridQuestion extends QBase {
+  kind: 'grid';
+  topic: string;
+  level: number;
+  seed: number;
+  skill: SkillId;
+  ask: { en: string; he: string };
+  /** The major key's tonic (pitch class). */
+  tonic: number;
+  /** The chords to answer, each with its symbol spelled for the key and its length in beats. */
+  slots: import('./progGrid').GChord[];
+  /** The order the slots are played in (AABA: A A B A). */
+  order: number[];
+  /** Named groups of slots (A, B) for long forms. */
+  sections?: { label: string; from: number; to: number }[];
+  /** The chip rows: qualities, and the third row (empty = not asked). */
+  qualities: import('./progGrid').GQ[];
+  extras: import('./progGrid').GX[];
+  /** Root chip names by pitch class (spelled for the key). */
+  spell: string[];
+  bpm: number;
+  voicing: import('./progGrid').GridVoicing;
+  answer: string;
+  choices: [];
+}
+
+
+
 /** Canonical key of entered notes for a place question (order / octave rules applied). */
 export function placeKey(q: Pick<PlaceQuestion, 'as' | 'match' | 'durs'>, midis: number[], durs?: number[]): string {
   let xs = midis.map((m) => (q.match === 'pc' ? ((Math.round(m) % 12) + 12) % 12 : Math.round(m)));
@@ -512,6 +545,7 @@ export interface ProgressionQuestion extends QBase {
 
 export type Question =
   | PlaceQuestion
+  | GridQuestion
   | ModeIdQuestion
   | ChoiceQuestion
   | AbsNoteQuestion
@@ -584,6 +618,7 @@ export function questionSkill(q: Question): SkillId {
       return 'absolute';
     case 'choice':
     case 'place':
+    case 'grid':
       return q.skill;
     case 'name-seq':
       return q.given === 'sound' ? 'notes' : 'degrees';
@@ -1621,6 +1656,8 @@ export function explainStimulus(q: Question): Stimulus[] {
       return q.choiceStim?.[q.answer] ?? q.stimulus;
     case 'place':
       return q.as === 'set' ? [{ kind: 'chord', midis: q.target, duration: 1.4 }] : [{ kind: 'notes', midis: q.target, each: 0.5 }];
+    case 'grid':
+      return q.stimulus;
     case 'degree': {
       const s: Stimulus[] = [{ kind: 'note', midi: q.targetMidi, duration: 1.0 }];
       if (q.answer !== 1) s.push({ kind: 'resolve', fromMidi: q.targetMidi, toMidi: nearestTonicMidi(q.key, q.targetMidi) });
@@ -1780,6 +1817,9 @@ export function compareStimulus(q: Question, given: Answer): Stimulus[] | null {
       const st = (ms: number[]): Stimulus => (q.as === 'set' ? { kind: 'chord', midis: ms, duration: 1.3 } : { kind: 'notes', midis: ms, each: 0.45 });
       return [st(lift(mine)), { kind: 'rest', duration: 0.6 }, st(q.target)];
     }
+    case 'grid':
+      // The fix-it pass replays the wrong bars; the comparison is the grid itself.
+      return null;
     case 'sing':
     case 'sing-seq':
     case 'sing-run':
@@ -1913,6 +1953,7 @@ export function questionTag(q: Question): string {
     case 'choice':
       return `choice:${q.topic}:${q.level}:${q.seed}`;
     case 'place':
+    case 'grid':
       return `topic:${q.topic}:${q.level}:${q.seed}`;
     case 'slash':
       return `slash:${k(q.key)}:${k(q.bass)}`;

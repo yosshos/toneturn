@@ -37,6 +37,8 @@ export const TOPIC_MARK: Record<string, string> = {
   'chromatic-harmony': 'N6',
   'nct-ear': 'nct',
   'harmonic-dictation': 'RN',
+  // Progressions on the grid (progGrid.ts): a bar of chords.
+  'grid-dictation': '|ii|',
   'chorale-rn': 'SATB',
   'chord-memory': 'IV?',
   // time

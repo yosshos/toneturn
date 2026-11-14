@@ -20,6 +20,7 @@ import { bandBass } from '../engine/drills/bassBand';
 import { drillBandHits, drillDrumHits, unisonLine } from '../engine/drills/bandTimeline';
 import { clickPlan, hasTimeline, staffLines, timeMapOf } from '../engine/drills/timeline';
 import { withProg } from '../engine/drills/progAnalyze';
+import { withHarmony, type ChromaFrame } from '../engine/drills/harmonyGrade';
 import { isDrumDrill } from '../engine/drills/events';
 import { analyzeDrumTake, drumLimbLine, type DrumTakeHit } from '../engine/drills/drumAnalyze';
 import { withChoke } from '../engine/drills/drumChoke';
@@ -465,7 +466,9 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
     // Beat -> ms of the take (the timeline's map on prog drills; the old constant grid otherwise).
     const bms = (b: number) => (hasTimeline(drill) ? timeMapOf(drill, bpm).msAt(b) : b * beatS * 1000);
     // Every result passes the prog measures (unchanged for drills without a timeline, unison, form or goal.prog).
-    const done = (m: TakeMetrics, played: PlayedNote[]) => onDone(withProg(m, drill, bpm, played), played);
+    // Progressions by ear: the harmony report (root / colour / bass per chord) joins every result; guitar passes its chroma.
+    let harmonyFrames: ChromaFrame[] = [];
+    const done = (m: TakeMetrics, played: PlayedNote[]) => onDone(withHarmony(withProg(m, drill, bpm, played), drill, bpm, played, harmonyFrames), played);
     const inBand = (ms: number) => (drill.listen?.windows ?? []).some(([a, b]) => ms >= bms(a) - 40 && ms < bms(b) + 120);
     let zero = 0;
     const notes: PlayedNote[] = [];
@@ -638,6 +641,7 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
     if (guitar) {
       const heard = drill.listen ? frames.filter((f) => !inBand(f.t)) : frames;
       const played = (heard.length ? detectOnsets(heard, onsetOptsFor(drill)) : notes).filter((p) => !drill.listen || !inBand(p.on));
+      if (drill.harmony?.mode === 'chords' && heard.length) harmonyFrames = heard;
       return done(analyzeGuitarTake(drill, bpm, played, cal, heard), played);
     }
     // PIANO_AUDIT A2: the microphone is flagged so a loudness / release / pedal goal can't pass on notes alone.

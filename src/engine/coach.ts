@@ -234,6 +234,7 @@ const TOPIC_CONTRAST: Record<string, { en: string; he: string }> = {
   'function-ear': { en: 'At rest = tonic; leaning away, ready to move on = pre-dominant; pulling hard to home = dominant.', he: 'נח = טוניקה; נוטה הלאה ומוכן לזוז = סובדומיננטה; מושך חזק הביתה = דומיננטה.' },
   'modal-cadence': { en: 'Find the one note outside plain major or minor: ♭7, ♯4, a major IV in minor, ♭2.', he: 'חפשו את הצליל האחד שמחוץ למז׳ור או למינור הרגיל: ♭7, ♯4, IV מז׳ורי במינור, ♭2.' },
   'borrowed-ext': { en: 'Follow the bass: a half step above home is ♭II, a minor 3rd above ♭III, a major 3rd below ♭VI.', he: 'עקבו אחרי הבס: חצי טון מעל הבית ♭II, טרצה קטנה מעל ♭III, טרצה גדולה מתחת ♭VI.' },
+  'grid-dictation': { en: 'Roots first: follow the bass and write every root. Then the colour: minor or major 3rd, which 7th, then the top note.', he: 'קודם היסודות: עקבו אחרי הבס וכתבו כל יסוד. אחר כך הצבע: טרצה קטנה או גדולה, איזו ספטימה, ואז הצליל העליון.' },
   'jazz-dictation': { en: 'Bass first, then each chord’s quality: minor 7, dominant or major 7.', he: 'קודם הבס, ואז האיכות של כל אקורד: מינור 7, דומיננט או מז׳ור 7.' },
   planing: { en: 'Planing moves every voice the same way by the same step; voice leading keeps notes and moves by small steps.', he: 'בפליינינג כל הקולות זזים יחד באותו צעד; בהובלת קולות צלילים נשארים וזזים בצעדים קטנים.' },
   'form-ear': { en: 'Count bars from the first tonic; for phrases, compare each with the first one.', he: 'ספרו תיבות מהטוניקה הראשונה; במשפטים, השוו כל אחד לראשון.' },
@@ -252,7 +253,7 @@ export interface SessionInsight {
   pair?: { topic: string; a: string; b: string };
 }
 
-const SEQUENCE_KINDS = new Set<Question['kind']>(['degree-seq', 'name-seq', 'sing-seq', 'sing-run', 'rhythm-read', 'rhythm-dict', 'place']);
+const SEQUENCE_KINDS = new Set<Question['kind']>(['degree-seq', 'name-seq', 'sing-seq', 'sing-run', 'rhythm-read', 'rhythm-dict', 'place', 'grid']);
 
 /** The confusion that came up most, or praise. `misses`: [right answer, given] per wrong try. */
 const QUAL_EN: Record<string, string> = { maj: 'major', min: 'minor', dim: 'diminished', aug: 'augmented' };

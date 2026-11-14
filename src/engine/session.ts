@@ -2,6 +2,7 @@
 // so a late recognizer callback or a double click can never score twice.
 
 import { gradePlace, type Answer, type LessonDef, type Question } from './lesson';
+import { gradeGrid } from './progGrid';
 import { SCORING, xpFor, type ItemOutcome, type Modality } from './scoring';
 import { paceTarget, speedCredit, type PaceProfile } from './fluency';
 
@@ -173,7 +174,7 @@ export function grade(
   if (isResolved(rec)) return [s, { kind: 'stale' }];
   const q = s.lesson.questions[questionIndex];
   const correct = answer === q.answer || (q.kind === 'place' && gradePlace(q, String(answer)).score === 1) || sameSounds(answer, q.answer);
-  const accuracy = ev.accuracy ?? (q.kind === 'place' ? gradePlace(q, String(answer)).score : correct ? 1 : 0);
+  const accuracy = ev.accuracy ?? (q.kind === 'place' ? gradePlace(q, String(answer)).score : q.kind === 'grid' ? gradeGrid(q, String(answer)).score : correct ? 1 : 0);
   const attempts: Attempt[] = [
     ...rec.attempts,
     { answer, correct, via, accuracy, timeMs: ev.timeMs ?? null, modality: ev.modality ?? (via === 'voice' ? 'voice' : 'buttons'), precision: ev.precision },

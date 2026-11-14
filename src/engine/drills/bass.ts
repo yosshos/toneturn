@@ -8,6 +8,7 @@
 // (only inside functions), and guitar.ts only calls into this module from inside functions.
 
 import { ruleSafe } from './bassRuleSafe';
+import { all12 } from './keys12';
 import type { BassGoal, Drill, DrillGoal, DrillSpec, FamilyId, BassFamilyId } from './types';
 import type { SpecTemplate } from './generate';
 import { noteAt, type Tuning } from '../fretboard';
@@ -2588,29 +2589,32 @@ export function bassFamilies(): GuitarFamilyDef[] {
     ]),
     fam('b-ear', 'Bass ear', 'שמיעה לבסיסטים', [
       L('b-ear', 1, 'Higher or lower, in the bass register', 'גבוה או נמוך, באזור הבס', [EA('hilo'), EA('hilo', { option: 1 })], ANY, [60, 80], 'whole notes'),
-      L('b-ear', 2, 'Find the tonic on your bass', 'למצוא את הטוניקה על הבס', [EA('tonic')], K6, [70, 90], 'whole notes'),
-      L('b-ear', 3, 'Root finder: I, IV, V', 'מוצא היסודות: I, IV, V', [EA('roots')], K6, [70, 100], 'halves'),
-      L('b-ear', 4, 'Root finder: ii, iii, vi, V7', 'מוצא היסודות: ii, iii, vi, V7', [EA('roots', { option: 1 })], K6, [70, 100], 'halves'),
+      L('b-ear', 2, 'Find the tonic on your bass', 'למצוא את הטוניקה על הבס', [EA('tonic')], all12(K6), [70, 90], 'whole notes'),
+      L('b-ear', 3, 'Root finder: I, IV, V', 'מוצא היסודות: I, IV, V', [EA('roots')], all12(K6), [70, 100], 'halves'),
+      L('b-ear', 4, 'Root finder: ii, iii, vi, V7', 'מוצא היסודות: ii, iii, vi, V7', [EA('roots', { option: 1 })], all12(K6), [70, 100], 'halves'),
       L('b-ear', 5, 'Rhythm recall on the E string', 'זיכרון מקצב על מיתר E', [EA('rhythm', { option: 0 }), EA('rhythm', { option: 1 })], OPEN, [70, 100], E8),
-      L('b-ear', 6, 'Melodic recall: play it back', 'זיכרון מלודי: לנגן בחזרה', [EA('melodic')], K6, [60, 90], E8),
-      L('b-ear', 7, 'Transcribe a walking line', 'לתמלל קו ווקינג', [EA('transcribe', { perBeat: 1 }), EA('transcribe', { perBeat: 1, option: 1 })], K6, [70, 110], Qn),
-      L('b-ear', 8, 'Inversions and slash bass by ear', 'היפוכים ובס סלאש בשמיעה', [EA('slash', { perBeat: 0.5 }), EA('slash', { perBeat: 0.5, option: 1 })], K6, [60, 90], 'halves'),
+      L('b-ear', 6, 'Melodic recall: play it back', 'זיכרון מלודי: לנגן בחזרה', [EA('melodic')], all12(K6), [60, 90], E8),
+      L('b-ear', 7, 'Transcribe a walking line', 'לתמלל קו ווקינג', [EA('transcribe', { perBeat: 1 }), EA('transcribe', { perBeat: 1, option: 1 })], all12(K6), [70, 110], Qn),
+      L('b-ear', 8, 'Inversions and slash bass by ear', 'היפוכים ובס סלאש בשמיעה', [EA('slash', { perBeat: 0.5 }), EA('slash', { perBeat: 0.5, option: 1 })], all12(K6), [60, 90], 'halves'),
       // RSL ear tests Gr 6–8: chord quality, answered on the bass (its arpeggio), so it is measured.
-      L('b-ear', 9, 'Chord quality by ear: play its arpeggio', 'סוג האקורד בשמיעה: לנגן את הארפג׳יו שלו', [EA('quality', { perBeat: 1 }), EA('quality', { perBeat: 1, option: 1 })], K6, [60, 90], Qn),
+      L('b-ear', 9, 'Chord quality by ear: play its arpeggio', 'סוג האקורד בשמיעה: לנגן את הארפג׳יו שלו', [EA('quality', { perBeat: 1 }), EA('quality', { perBeat: 1, option: 1 })], all12(K6), [60, 90], Qn),
       // BASS_NICHE_PLAN E1–E4: wider qualities, harmonic motion, form ("where am I"), longer play-back.
-      L('b-ear', 10, 'Chord quality: 6ths, sus, minor-major', 'סוג האקורד: סקסטות, sus, מינור-מז׳ור', [EA('quality2', { perBeat: 1 })], K6, [60, 90], Qn),
-      L('b-ear', 11, 'Chord quality: altered dominants and ♯11', 'סוג האקורד: דומיננטות אלטרד ו־♯11', [EA('quality3', { perBeat: 1 })], K6, [60, 90], Qn),
-      L('b-ear', 12, 'Cadences by the bass: ii–V, backdoor, tritone sub', 'קדנצות לפי הבס: ii–V, דלת אחורית, תחליף טריטון', [EA('motion', { perBeat: 0.25 })], [0, 5, 7, 10, 3], [70, 100], 'whole notes'),
-      L('b-ear', 13, 'Secondary dominants and passing diminished', 'דומיננטות משניות ומוקטן עובר', [EA('secdom', { perBeat: 0.25 })], [0, 5, 7, 10, 3], [70, 100], 'whole notes'),
-      L('b-ear', 14, 'Where am I? Play the next section', 'איפה אני? לנגן את הקטע הבא', [EA('where', { perBeat: 0.5 }), EA('where', { perBeat: 0.5, option: 1 })], [5, 10, 0, 7], [80, 120], 'halves'),
-      L('b-ear', 15, 'The band drops in: find your place', 'הלהקה נכנסת באמצע: למצוא את המקום', [EA('dropin', { perBeat: 0.5 })], [5, 10, 0, 7], [80, 120], 'halves'),
-      L('b-ear', 16, 'Hear a chorus, play the bridge', 'לשמוע סבב, לנגן את הגשר', [EA('bridge', { perBeat: 0.5 })], [5, 10, 0, 7], [80, 120], 'halves'),
-      L('b-ear', 17, 'Play back 4 bars of walking', 'לנגן בחזרה 4 תיבות של ווקינג', [EA('transcribe-long', { perBeat: 1 })], K6, [80, 140], Qn),
-      L('b-ear', 18, 'Play back 8 bars, or a bebop phrase', 'לנגן בחזרה 8 תיבות, או משפט ביבופ', [EA('transcribe-long', { perBeat: 1, option: 1 }), EA('transcribe-long', { option: 2 })], K6, [80, 120], 'quarters / 8ths'),
+      L('b-ear', 10, 'Chord quality: 6ths, sus, minor-major', 'סוג האקורד: סקסטות, sus, מינור-מז׳ור', [EA('quality2', { perBeat: 1 })], all12(K6), [60, 90], Qn),
+      L('b-ear', 11, 'Chord quality: altered dominants and ♯11', 'סוג האקורד: דומיננטות אלטרד ו־♯11', [EA('quality3', { perBeat: 1 })], all12(K6), [60, 90], Qn),
+      L('b-ear', 12, 'Cadences by the bass: ii–V, backdoor, tritone sub', 'קדנצות לפי הבס: ii–V, דלת אחורית, תחליף טריטון', [EA('motion', { perBeat: 0.25 })], all12([0, 5, 7, 10, 3]), [70, 100], 'whole notes'),
+      L('b-ear', 13, 'Secondary dominants and passing diminished', 'דומיננטות משניות ומוקטן עובר', [EA('secdom', { perBeat: 0.25 })], all12([0, 5, 7, 10, 3]), [70, 100], 'whole notes'),
+      L('b-ear', 14, 'Where am I? Play the next section', 'איפה אני? לנגן את הקטע הבא', [EA('where', { perBeat: 0.5 }), EA('where', { perBeat: 0.5, option: 1 })], all12([5, 10, 0, 7]), [80, 120], 'halves'),
+      L('b-ear', 15, 'The band drops in: find your place', 'הלהקה נכנסת באמצע: למצוא את המקום', [EA('dropin', { perBeat: 0.5 })], all12([5, 10, 0, 7]), [80, 120], 'halves'),
+      L('b-ear', 16, 'Hear a chorus, play the bridge', 'לשמוע סבב, לנגן את הגשר', [EA('bridge', { perBeat: 0.5 })], all12([5, 10, 0, 7]), [80, 120], 'halves'),
+      L('b-ear', 17, 'Play back 4 bars of walking', 'לנגן בחזרה 4 תיבות של ווקינג', [EA('transcribe-long', { perBeat: 1 })], all12(K6), [80, 140], Qn),
+      L('b-ear', 18, 'Play back 8 bars, or a bebop phrase', 'לנגן בחזרה 8 תיבות, או משפט ביבופ', [EA('transcribe-long', { perBeat: 1, option: 1 }), EA('transcribe-long', { option: 2 })], all12(K6), [80, 120], 'quarters / 8ths'),
       L('b-ear', 19, 'Play back a 7/8 riff or a tumbao', 'לנגן בחזרה ריף ב־7/8 או טומבאו', [EA('riff-ear', { tempo: 160 }), EA('riff-ear', { option: 1 })], [4, 9, 2, 7], [70, 100], '8ths'),
       // BASS_NICHE_PLAN E5: meter by ear — the groove's grouping, the new beat after a metric modulation.
       L('b-ear', 20, 'Hear the grouping: roots on the group starts', 'לשמוע את החלוקה: יסודות בתחילת כל קבוצה', [EA('groups-ear'), EA('groups-ear', { option: 1 })], [4, 9, 2, 7], [160, 220], '8ths (♪ = beat)'),
       L('b-ear', 21, 'Hear a metric modulation: play the new beat', 'לשמוע מודולציה מטרית: לנגן את הפעמה החדשה', [EA('mod-ear', { perBeat: 1 }), EA('mod-ear', { perBeat: 1, option: 1 })], [4, 9, 2, 7], [70, 100], 'quarters'),
+      // Progressions by ear (progEar.ts), all 12 keys: walk the changes heard (rhythm changes, a minor blues), then a whole AABA.
+      L('b-ear', 22, 'Rhythm changes and a minor blues by ear', 'ריתם צ׳יינג׳ס ובלוז מינורי בשמיעה', [EA('walk-ear', { perBeat: 0.5 }), EA('walk-ear', { perBeat: 0.5, option: 1 })], all12([5, 10, 0, 7]), [80, 140], 'halves'),
+      L('b-ear', 23, 'A 32-bar AABA: hear it, play it through', 'שיר של 32 תיבות: לשמוע, לנגן עד הסוף', [EA('form-ear', { perBeat: 0.5 })], all12([5, 10, 0, 7]), [90, 160], 'halves'),
     ]),
     fam('b-scale', 'Scales and modes', 'סולמות ומודוסים', [
       L('b-scale', 1, 'Minor and major pentatonic', 'פנטטוני מינור ומז׳ור', [SC('scale', { option: 8 }), SC('scale', { option: 9 })], K6, [70, 110], E8),

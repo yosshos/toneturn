@@ -142,7 +142,7 @@ const ROOTS: TakeGameCfg<HearItem> = {
   className: 'rootsear',
   tx: {
     title: { en: 'Roots by Ear', he: 'שורשים מהאוזן' },
-    blurb: { en: 'A progression on the piano, no bass. Play its roots on the bass, one per chord, in order. Eight progressions, three lives.', he: 'מהלך בפסנתר, בלי בס. נגנו את השורשים שלו בבס, אחד לכל אקורד, לפי הסדר. שמונה מהלכים, שלושה חיים.' },
+    blurb: { en: 'A progression on the piano, no bass. Play its roots, low on your bass or guitar, one per chord, in order. Eight progressions, three lives.', he: 'מהלך בפסנתר, בלי בס. נגנו את השורשים שלו, נמוך בבס או בגיטרה, אחד לכל אקורד, לפי הסדר. שמונה מהלכים, שלושה חיים.' },
     unit: { en: 'Progression', he: 'מהלך' },
     play: { en: 'Play the roots', he: 'לנגן את השורשים' },
     playing: { en: 'Your turn — the roots, in order', he: 'תורכם — השורשים, לפי הסדר' },

@@ -271,7 +271,7 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
                   ? `${t.singNow} · ${q.run.offsets.length} × ${q.run.nps}/s`
                 : q.kind === 'note-name'
                   ? displayNote(q.target, nm, lang)
-                  : q.kind === 'name-seq' || q.kind === 'rhythm-read' || q.kind === 'rhythm-dict' || q.kind === 'degree-seq' || q.kind === 'place'
+                  : q.kind === 'name-seq' || q.kind === 'rhythm-read' || q.kind === 'rhythm-dict' || q.kind === 'degree-seq' || q.kind === 'place' || q.kind === 'grid'
                     ? answerShort(q, q.answer, lang, nm)
                 : typeof q.answer === 'number'
                   ? String(q.answer)

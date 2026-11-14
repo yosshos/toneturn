@@ -2,10 +2,10 @@
 
 import { surfaceVary } from './surface';
 import { drumVoice } from './drumVoice';
-import type { ChoiceQuestion, LessonDef, PlaceQuestion, RhythmDictQuestion, RhythmReadQuestion, SingQuestion, SingSeqQuestion, SkillId, Stimulus } from './lesson';
+import type { ChoiceQuestion, GridQuestion, LessonDef, PlaceQuestion, RhythmDictQuestion, RhythmReadQuestion, SingQuestion, SingSeqQuestion, SkillId, Stimulus } from './lesson';
 
 /** What a topic generator may produce (spec AE): a choice, notes to place, a rhythm to tap, a note or line to sing / play. */
-export type TopicItem = ChoiceQuestion | PlaceQuestion | RhythmReadQuestion | RhythmDictQuestion | SingQuestion | SingSeqQuestion;
+export type TopicItem = ChoiceQuestion | PlaceQuestion | GridQuestion | RhythmReadQuestion | RhythmDictQuestion | SingQuestion | SingSeqQuestion;
 
 export interface TopicDef {
   title: { en: string; he: string };

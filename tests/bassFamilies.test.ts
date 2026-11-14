@@ -64,7 +64,7 @@ describe('bass course families', () => {
                 if (n.technique !== 'harmonic') expect(n.pitch, where).toBe(tu.open[n.string! - 1] + n.fret!);
               }
             }
-  }, 120000);
+  }, 300000); // b-ear in all 12 keys (progressions by ear) doubled its items
 
   it('start tempo of a new item is the level start tempo', () => {
     const lv = BASS.find((f) => f.id === 'b-walk')!.levels[0];
