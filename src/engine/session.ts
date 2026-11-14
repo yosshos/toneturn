@@ -41,6 +41,8 @@ export interface QuestionRecord {
   unclear: number;
   /** Stimulus replays requested by the player. */
   replays?: number;
+  /** An AI hint was asked for before answering (SPEC-AI §9): a right answer then counts as "almost", not clean. */
+  hinted?: boolean;
 }
 
 export interface SessionState {
@@ -69,7 +71,8 @@ export interface AnswerEvidence {
 export function outcomeOf(r: QuestionRecord, timed: boolean): ItemOutcome {
   const k = r.attempts.findIndex((a) => a.correct);
   return {
-    correctOn: k >= 0 ? k + 1 : null,
+    // A hinted first-try answer scores like a second try (owner 2026-11-14: a hint makes it "almost").
+    correctOn: k >= 0 ? k + 1 + (r.hinted && k === 0 ? 1 : 0) : null,
     attempts: r.attempts.map((a) => ({
       correct: a.correct,
       accuracy: a.accuracy ?? (a.correct ? 1 : 0),
@@ -180,7 +183,7 @@ export function grade(
   // The turn advances on every grade so a duplicate delivery of the same answer is stale.
   const base: SessionState = { ...s, turn: s.turn + 1, phase: 'feedback' };
   if (correct) {
-    const firstTry = attempts.length === 1;
+    const firstTry = attempts.length === 1 && !rec.hinted;
     const resolved: QuestionRecord = { ...rec, attempts, outcome: firstTry ? 'correct' : 'correct-retry', xp: 0 };
     const xp = itemXp(s, q, resolved, xpPerCorrect, timed);
     const next = { ...resolved, xp };
@@ -204,6 +207,13 @@ export function noteUnclear(s: SessionState, turn: number): SessionState {
 }
 
 /** Count a stimulus replay requested by the player (lowers rating credit slightly, never XP). */
+/** The player asked for a hint on the current question (before it was resolved). */
+export function noteHint(s: SessionState): SessionState {
+  const rec = s.records[s.index];
+  if (!rec || isResolved(rec)) return s;
+  return { ...s, records: patchRecord(s, s.index, { ...rec, hinted: true }) };
+}
+
 export function noteReplay(s: SessionState): SessionState {
   const rec = s.records[s.index];
   if (!rec || isResolved(rec)) return s;

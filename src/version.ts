@@ -18,6 +18,22 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.87.0',
+    date: '2026-11-14',
+    en: [
+      'An AI teacher where you need it: "Explain more" after a wrong answer explains this question by ear, with a few follow-up questions; the exercise page can explain the whole topic in depth.',
+      '"Ask for a hint" before answering, in practice (never in a level test or an exam): it points you to what to listen for without giving the answer — and the question then counts as "almost".',
+      'After a session, a short note from the coach on what was measured; on Insights, a weekly summary from your player profile.',
+      'These need you to be signed in; everything else works exactly as before without them.',
+    ],
+    he: [
+      'מורה בינה מלאכותית איפה שצריך: "עוד הסבר" אחרי תשובה שגויה מסביר את השאלה הזו בשמיעה, עם כמה שאלות המשך; בדף התרגיל אפשר לקבל הסבר מעמיק על כל הנושא.',
+      '"רמז מהמורה" לפני שעונים, בתרגול (לא במבחן רמה ולא במבחן): מכוון למה להקשיב בלי לגלות את התשובה — והשאלה נחשבת אז "כמעט".',
+      'אחרי תרגול, הערה קצרה מהמאמן על מה שנמדד; במסך התובנות, סיכום שבועי מתוך פרופיל הנגן.',
+      'כל אלה דורשים התחברות; כל השאר עובד בדיוק כמו קודם גם בלעדיהם.',
+    ],
+  },
+  {
     version: '0.86.0',
     date: '2026-11-14',
     en: [

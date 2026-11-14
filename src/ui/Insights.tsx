@@ -14,7 +14,9 @@ import { troubleBars } from '../engine/piece/coach';
 import { showsInsight } from '../engine/analysis/insightCards';
 import type { CourseId } from '../engine/courses';
 import { refreshProfile } from '../storage/profile';
-import type { Profile, ProfileAction, ProfileSource } from '../engine/analysis/profile';
+import { profileDigest, type Profile, type ProfileAction, type ProfileSource } from '../engine/analysis/profile';
+import { weekKey } from '../engine/analysis/groove';
+import { aiErrorText, askAi, type AiError } from '../cloud/ai';
 
 const TX = {
   en: {
@@ -256,6 +258,7 @@ function ProfileCard({ profile, lang, tx, shows, act }: { profile: Profile; lang
               </ul>
             </>
           )}
+          {(patterns.length > 0 || strengths.length > 0) && <WeeklyCoach lang={lang} digest={profileDigest({ ...profile, strengths, patterns, gone })} />}
           {gone.length > 0 && (
             <>
               <h3 className="in-sub">{tx.gone}</h3>
@@ -273,6 +276,54 @@ function ProfileCard({ profile, lang, tx, shows, act }: { profile: Profile; lang
         </>
       )}
     </section>
+  );
+}
+
+/** The coach's weekly summary (SPEC-AI §2, Claude Opus): asked for on a tap, kept for the week on this device. */
+const WEEKLY_KEY = 'toneturn.aiWeekly.v1';
+function WeeklyCoach({ lang, digest }: { lang: 'en' | 'he'; digest: ReturnType<typeof profileDigest> }) {
+  const week = weekKey(new Date());
+  const [text, setText] = useState<string | null>(() => {
+    try {
+      const v = JSON.parse(localStorage.getItem(WEEKLY_KEY) ?? 'null') as { week: string; lang: string; text: string } | null;
+      return v && v.week === week && v.lang === lang ? v.text : null;
+    } catch {
+      return null;
+    }
+  });
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<AiError | null>(null);
+  const he = lang === 'he';
+  const ask = async () => {
+    setBusy(true);
+    setErr(null);
+    const r = await askAi('weekly', { lang, context: { week, ...digest } });
+    setBusy(false);
+    if ('error' in r) return setErr(r.error);
+    setText(r.text);
+    try {
+      localStorage.setItem(WEEKLY_KEY, JSON.stringify({ week, lang, text: r.text }));
+    } catch {
+      /* private mode */
+    }
+  };
+  if (text)
+    return (
+      <div className="ai-coach" data-ai-coach="weekly" dir="auto">
+        <small className="ai-coach-label">{he ? 'סיכום השבוע מהמאמן' : 'The coach’s week'}</small>
+        {text.split(/\n{2,}/).map((p, k) => (
+          <p key={k}>{p}</p>
+        ))}
+        <small className="field-hint">{he ? 'נכתב בעזרת בינה מלאכותית, מתוך מה שנמדד.' : 'Written with AI, from what was measured.'}</small>
+      </div>
+    );
+  return (
+    <div className="in-weekly">
+      <button className="btn ghost small" onClick={() => void ask()} disabled={busy} data-ai-weekly="1">
+        {busy ? (he ? 'כותב…' : 'Writing…') : he ? 'סיכום שבועי מהמאמן' : 'Weekly summary from the coach'}
+      </button>
+      {err && <small className="field-hint" data-ai-error={err}>{aiErrorText(err, lang)}</small>}
+    </div>
   );
 }
 

@@ -48,6 +48,7 @@ import { courseInstrument, noteViewsOf } from './noteViewPref';
 import { StrumChoice } from './StrumChoice';
 import { ChordPlayChoice } from './ChordPlayChoice';
 import { Recap } from './Recap';
+import { AiExplain } from './AiExplain';
 import { LiveRhythmStaff, RhythmStaff, useRhythmNow } from './RhythmStaff';
 import { buildPalette, CELLS, describe as describeRhythm, meterOf, onsetBeats, rhythmFromKey, rhythmKey, sameRhythm, totalBeats, type CellId, type Rhythm } from '../engine/rhythm';
 import { makeAdapters, piano, SIMULATED, store } from './services';
@@ -197,6 +198,8 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
   const ctrl = ctrlRef.current;
   const v = useSyncExternalStore(ctrl.subscribe, ctrl.getView);
   const openRefresher = useRefresher();
+  // The AI teacher (SPEC-AI §9): "Explain more" after a miss or on the brief, a hint before answering in practice.
+  const [ai, setAi] = useState<{ kind: 'explain' | 'hint'; context: Record<string, unknown>; resume: boolean } | null>(null);
 
   useEffect(() => {
     ctrl.updateSettings({ inputLang: settings.inputLang, outputLang: settings.outputLang, naming: namingFor(settings.naming, settings.outputLang) });
@@ -365,10 +368,53 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
   // The concept refresher: the mini-lesson behind this question (never inside the level test — it would measure the lesson).
   const refresher = lesson.id === 'placement' ? null : refresherFor(q, lessonId);
   const placementSkill = isStaircase ? (/^p:([a-z-]+):/.exec(q.id)?.[1] as SkillId | undefined) : undefined;
+  // Hints only in practice: never in a level test, nor in a mock exam.
+  const hintAllowed = !isStaircase && !noHints(lesson.id) && lesson.id !== 'placement' && !lesson.exam;
+  const label = (a: unknown) => {
+    if (a === undefined) return undefined;
+    const c = choiceLabel(q, a as never, lang, nm);
+    return [c.big, c.small].filter(Boolean).join(' ') || String(a);
+  };
+  const topicId = q.kind === 'choice' ? q.topic : lesson.id;
+  const aiCtx = (mode: 'miss' | 'hint' | 'topic'): Record<string, unknown> => ({
+    mode,
+    topic: brief?.title ?? (q.kind === 'choice' ? q.topic : lesson.id),
+    about: brief?.about,
+    ...(mode === 'topic'
+      ? {}
+      : {
+          question: askTemplate(q, lang, nm),
+          kind: q.kind,
+          options: ((q as { choices?: unknown[] }).choices ?? []).slice(0, 12).map(label),
+          answer: label(q.answer),
+          given: mode === 'miss' ? label(v.feedback?.given) : undefined,
+        }),
+  });
+  const jazz = /jazz|bebop|barry|bh-|ii-v|tritone/i.test(`${topicId} ${brief?.title ?? ''}`);
+  const openAi = (kind: 'explain' | 'hint', mode: 'miss' | 'hint' | 'topic') => {
+    const running = v.stage === 'question' && !paused;
+    if (kind === 'hint') ctrl.hinted();
+    if (running) ctrl.pause();
+    setAi({ kind, context: aiCtx(mode), resume: running });
+  };
+  const aiSheet = ai && (
+    <AiExplain
+      kind={ai.kind}
+      lang={lang}
+      naming={nm === 'solfege' ? 'solfege' : 'letter'}
+      context={ai.context}
+      jazz={jazz}
+      onClose={() => {
+        if (ai.resume) void ctrl.resume();
+        setAi(null);
+      }}
+    />
+  );
 
   return (
     <main className={`lesson stage-${v.stage} phase-${v.phase} kind-${q.kind} ${isStaircase ? 'with-meter' : ''} ${v.awaitNext ? 'await-next' : ''}`}>
       <InARow records={v.session.records} lang={lang} />
+      {aiSheet}
       {isStaircase && <PlacementMeter s={v.session} t={t} />}
       <header className="lesson-top">
         <button className="icon-btn" onClick={() => (paused ? onExit() : ctrl.pause())} aria-label={paused ? t.exit : t.pause}>
@@ -403,7 +449,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
           </button>
         </section>
       ) : v.stage === 'starting' && brief && !briefSeen ? (
-        <ExerciseBrief brief={brief} lang={lang} how={howText(lesson.questions[0]?.kind, lang)} refresher={lesson.questions[0] ? refresherFor(lesson.questions[0], lesson.id) : null} onRefresher={openRefresher} onPlay={() => void ctrl.start()} voice={v.mode === 'voice'} onHide={onHideTopic} onKeep={onKeepStep} />
+        <ExerciseBrief brief={brief} lang={lang} how={howText(lesson.questions[0]?.kind, lang)} refresher={lesson.questions[0] ? refresherFor(lesson.questions[0], lesson.id) : null} onRefresher={openRefresher} onPlay={() => void ctrl.start()} voice={v.mode === 'voice'} onHide={onHideTopic} onKeep={onKeepStep} onExplain={() => openAi('explain', 'topic')} />
       ) : v.stage === 'starting' ? (
         <section className="paused-card">
           <h2>{withNote(meta.title[lang], bb)}</h2>
@@ -509,10 +555,19 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
             <PlaceSurfaceView key={`${v.index}-${answered ? 'r' : 'q'}-${placeRec?.attempts.length ?? 0}`} q={q} settings={settings} lang={lang} disabled={!awaiting || answered} result={answered ? (placeLast ?? '') : null} onSubmit={(a) => ctrl.answer(a)} />
           )}
           {q.aid && !answered && <p className="aid-chip">{t.aidOn}</p>}
-          {canHint && (
-            <button className="btn ghost small hint-btn" onClick={() => ctrl.useHint()} data-hint="1">
-              {lang === 'he' ? 'רמז: להציג מקלדת' : 'Hint: show the keyboard'}
-            </button>
+          {(canHint || (hintAllowed && v.stage === 'question' && !answered && !v.awaitNext && v.session.records[v.index]?.outcome === 'pending')) && (
+            <div className="hint-row">
+              {canHint && (
+                <button className="btn ghost small hint-btn" onClick={() => ctrl.useHint()} data-hint="1">
+                  {lang === 'he' ? 'רמז: להציג מקלדת' : 'Hint: show the keyboard'}
+                </button>
+              )}
+              {hintAllowed && !answered && v.session.records[v.index]?.outcome === 'pending' && (
+                <button className="btn ghost small hint-btn" onClick={() => openAi('hint', 'hint')} data-ai-hint="1">
+                  <CtlIcon k="hint" /> {lang === 'he' ? 'רמז מהמורה' : 'Ask for a hint'}
+                </button>
+              )}
+            </div>
           )}
           {!phones && itemNeedsHeadphones(q) && (
             <div className="phones-card" role="alert">
@@ -534,7 +589,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
           <h1 className="ask">{withNote(askTemplate(q, lang, nm), target, keyName)}</h1>
           <PaceBar v={v} t={t} />
           <Listening v={v} t={t} hint={hintText(q, lang, v.mode === 'voice' && !v.needsListenTap)} />
-          <FeedbackBanner v={v} t={t} lang={lang} settings={settings} />
+          <FeedbackBanner v={v} t={t} lang={lang} settings={settings} onExplain={() => openAi('explain', 'miss')} />
           {v.awaitNext && v.canCompare && (
             <div className="fb-actions" data-await-next="1">
               <button className="btn ghost" onClick={() => ctrl.compareNow()} data-compare-now="1">
@@ -978,7 +1033,7 @@ function markOf(v: LessonView, c: unknown): string {
   return '';
 }
 
-function FeedbackBanner({ v, t, lang, settings }: { v: LessonView; t: Strings; lang: 'he' | 'en'; settings: Settings }) {
+function FeedbackBanner({ v, t, lang, settings, onExplain }: { v: LessonView; t: Strings; lang: 'he' | 'en'; settings: Settings; onExplain?: () => void }) {
   const f = v.feedback;
   const fk = f?.kind;
   // 0.61 (owner 2026-11-09): one line of feedback; on a wrong answer the detail opens from "Why?".
@@ -1066,6 +1121,11 @@ function FeedbackBanner({ v, t, lang, settings }: { v: LessonView; t: Strings; l
         )}
       </div>
       {(!bad || why) && <div className={`fb-detail ${bad ? 'open' : ''}`}>{detail}</div>}
+      {bad && onExplain && !performed && q.kind !== 'sing' && (
+        <button className="link ai-link" onClick={onExplain} data-ai-explain="1">
+          {lang === 'he' ? 'עוד הסבר' : 'Explain more'}
+        </button>
+      )}
     </div>
   );
 }
@@ -1469,7 +1529,7 @@ function howText(kind: string | undefined, lang: 'en' | 'he'): string {
 }
 
 /** The brief before a topic exercise: never starts playing on its own. */
-function ExerciseBrief({ brief, lang, how, refresher, onRefresher, onPlay, voice, onHide, onKeep }: { brief: { kicker: string; title: string; about: string }; lang: 'en' | 'he'; how: string; refresher: MiniLesson | null; onRefresher: ((l: MiniLesson, after: () => void) => void) | null; onPlay: () => void; voice: boolean; onHide?: () => void; onKeep?: () => void }) {
+function ExerciseBrief({ brief, lang, how, refresher, onRefresher, onPlay, voice, onHide, onKeep, onExplain }: { brief: { kicker: string; title: string; about: string }; lang: 'en' | 'he'; how: string; refresher: MiniLesson | null; onRefresher: ((l: MiniLesson, after: () => void) => void) | null; onPlay: () => void; voice: boolean; onHide?: () => void; onKeep?: () => void; onExplain?: () => void }) {
   const he = lang === 'he';
   const [kept, setKept] = useState(false);
   return (
@@ -1478,6 +1538,11 @@ function ExerciseBrief({ brief, lang, how, refresher, onRefresher, onPlay, voice
       <h1 className="ex-title">{brief.title}</h1>
       <p className="ex-about">{brief.about}</p>
       <p className="ex-how">{how}</p>
+      {onExplain && (
+        <button className="link ai-link ex-explain" onClick={onExplain} data-ai-explain="topic">
+          {he ? 'הסבר מעמיק על הנושא' : 'Explain this topic in depth'}
+        </button>
+      )}
       <div className="ex-actions">
         {refresher && onRefresher && (
           <button className="btn ghost ex-learn" onClick={() => onRefresher(refresher, () => undefined)} data-brief-learn="1">
@@ -1515,7 +1580,7 @@ function ExerciseBrief({ brief, lang, how, refresher, onRefresher, onPlay, voice
 }
 
 /** Line icons for the exercise's bottom controls (one style for all of them). */
-function CtlIcon({ k }: { k: 'repeat' | 'skip' | 'learn' }) {
+function CtlIcon({ k }: { k: 'repeat' | 'skip' | 'learn' | 'hint' }) {
   return (
     <svg className="ctl-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       {k === 'repeat' ? (
@@ -1525,6 +1590,11 @@ function CtlIcon({ k }: { k: 'repeat' | 'skip' | 'learn' }) {
         </>
       ) : k === 'skip' ? (
         <path d="M5 6l7 6-7 6M13 6l7 6-7 6" />
+      ) : k === 'hint' ? (
+        <>
+          <path d="M9 18h6M10 21h4" />
+          <path d="M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1.1 2.2h5c.1-1 .5-1.7 1.1-2.2A6 6 0 0 0 12 3z" />
+        </>
       ) : (
         <>
           <path d="M3 5.5c3-1.2 6-1.2 9 .8 3-2 6-2 9-.8v13c-3-1.2-6-1.2-9 .8-3-2-6-2-9-.8z" />

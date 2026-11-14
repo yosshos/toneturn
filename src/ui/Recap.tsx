@@ -1,7 +1,8 @@
 import { Toni } from './Toni';
 import { Icon } from './icons';
 import { sessionInsight } from '../engine/coach';
-import { pairWeeks } from '../engine/analysis/profile';
+import { pairWeeks, profileDigest } from '../engine/analysis/profile';
+import { AiCoachLine } from './AiExplain';
 import { loadProfileHistory, refreshProfile } from '../storage/profile';
 import { LevelStatsLine } from './LevelStats';
 import { RatingCard } from './Rating';
@@ -48,6 +49,15 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
   const s = view.session;
   const sm = summary(s);
   const [page, setPage] = useState(0);
+  // The coach's note (SPEC-AI §2): phrased from this session's numbers and the player profile — never a new grade.
+  const [digest, setDigest] = useState<ReturnType<typeof profileDigest> | null>(null);
+  useEffect(() => {
+    let live = true;
+    void refreshProfile().then((p) => live && setDigest(profileDigest(p)), () => live && setDigest({ strengths: [], patterns: [], resolved: [] }));
+    return () => {
+      live = false;
+    };
+  }, []);
   // 0.68.1 (owner: "the level bar doesn't fill, Toni doesn't move"): the cards sit side by side in a pager, so their
   // CSS animations used to run (and end) off screen or under the streak screen. A card's animations wait (paused)
   // until it is first shown; the count-ups start then too.
@@ -170,6 +180,24 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
               {ins.kind === 'flawless' && fl.score < 100 ? t.flawlessNotFast : ins.text}
             </p>
             {ins.pair && <PairStreak pair={ins.pair} lang={lang} />}
+            {answered.length >= 3 && (
+              <AiCoachLine
+                kind="card"
+                lang={lang}
+                naming={settings.naming === 'solfege' ? 'solfege' : 'letter'}
+                label={lang === 'he' ? 'המאמן' : 'Coach'}
+                context={
+                  digest && {
+                    session: meta.title.en,
+                    questions: answered.length,
+                    rightFirstTry: answered.filter((r) => r.attempts[0]?.correct && !r.hinted).length,
+                    score: fl.score,
+                    trickyPair: ins.pair ? `${ins.pair.a} vs ${ins.pair.b}` : undefined,
+                    profile: { strengths: digest.strengths.slice(0, 2), patterns: digest.patterns.slice(0, 3) },
+                  }
+                }
+              />
+            )}
           </>
         );
       })()}

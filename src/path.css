@@ -2342,3 +2342,23 @@ button.chip.on {
 .in-tag.recurring { border-color: var(--accent); color: var(--ink); }
 .in-gone s { color: var(--ink-dim); text-decoration-thickness: 1px; }
 .in-list li > .btn { flex-shrink: 0; white-space: nowrap; }
+/* AI teacher (SPEC-AI §9) */
+.ai-sheet { display: flex; flex-direction: column; gap: 10px; max-height: min(80vh, 640px); width: min(560px, 100%); }
+.ai-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.ai-head h2 { margin: 0; }
+.ai-body { overflow-y: auto; display: grid; gap: 10px; min-height: 60px; }
+.ai-turn p { margin: 0 0 6px; line-height: 1.55; }
+.ai-turn.user { justify-self: end; max-width: 85%; background: var(--card-2); border-radius: 12px; padding: 6px 10px; }
+.ai-turn.user p { margin: 0; }
+.ai-loading { color: var(--ink-dim); margin: 0; }
+.ai-error { margin: 0; color: var(--ink); }
+.ai-ask { display: flex; gap: 8px; }
+.ai-ask input { flex: 1; min-width: 0; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font: inherit; }
+.ai-note { color: var(--ink-dim); }
+.ai-coach { border-inline-start: 3px solid var(--accent); padding: 4px 10px; margin: 8px 0; text-align: start; }
+.ai-coach p { margin: 2px 0; line-height: 1.5; }
+.ai-coach-label { color: var(--ink-dim); font-weight: 700; letter-spacing: 0.02em; }
+.ai-link { display: inline-flex; align-items: center; gap: 4px; }
+.in-weekly { display: grid; gap: 4px; justify-items: start; margin-top: 10px; }
+.hint-row { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.hint-row .hint-btn { display: inline-flex; align-items: center; gap: 4px; }

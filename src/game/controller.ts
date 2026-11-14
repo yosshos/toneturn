@@ -44,7 +44,7 @@ import {
   isResolved,
   newTurn,
   noteUnclear,
-  noteReplay,
+  noteHint, noteReplay,
   skip as skipQuestion,
   summary,
   type InputMode,
@@ -472,6 +472,13 @@ export class LessonController {
       this.setSession(skipQuestion(this.s), { feedback: { kind: 'skipped', answer: currentQuestion(this.s).answer } });
     }
     this.restart((sig) => this.runAll(sig, { afterResolved: true, noBeat: already }));
+  }
+
+  /** An AI hint was opened for the current question: it then counts as "almost" when answered right (SPEC-AI §9). */
+  hinted() {
+    if (this.view.stage !== 'question' || isResolved(this.s.records[this.s.index])) return;
+    this.s = noteHint(this.s);
+    this.patch({});
   }
 
   /** Change lesson fields (not questions), e.g. Find my level's skipped sections; the adapt hook sees them. */

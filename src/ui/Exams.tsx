@@ -23,7 +23,7 @@ export function mockExamLesson(exam: ExamDef, seed = Date.now()): LessonDef {
     if (!T) continue;
     for (let i = 0; i < sec.items; i++) questions.push(genTopic(sec.topic, Math.floor(r() * 2 ** 31), Math.min(sec.level, T.levels.length), `${exam.id}-${sec.id}-${i + 1}`) as Question);
   }
-  return { id: 'topic', version: 1, skill: 'theory', scoring: { xpPerCorrect: 10, attemptLimit: 1 }, intro: [], questions } as LessonDef;
+  return { id: 'topic', version: 1, skill: 'theory', scoring: { xpPerCorrect: 10, attemptLimit: 1 }, intro: [], questions, exam: true } as LessonDef;
 }
 
 export function ExamsScreen({ lang, onBack, onPractise, onMock }: { lang: Lang; onBack: () => void; onPractise: (topic: string, level: number) => void; onMock: (exam: ExamDef) => void }) {
