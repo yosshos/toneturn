@@ -1089,6 +1089,7 @@ const REMARK_TEXT: Record<Remark, { en: string; he: string }> = {
   'scoop-up': { en: 'you slid up into the note', he: 'החלקתם אל הצליל מלמטה' },
   'scoop-down': { en: 'you came down into the note', he: 'החלקתם אל הצליל מלמעלה' },
   unsteady: { en: 'it was a bit unsteady', he: 'זה היה קצת לא יציב' },
+  'octave-off': { en: 'octave off', he: 'אוקטבה לא נכונה' },
 };
 const isOffset = (r: Remark) => /^(touch|bit|quite)-/.test(r);
 

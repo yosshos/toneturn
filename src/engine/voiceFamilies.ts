@@ -388,6 +388,10 @@ export const EAR_P3_LEVELS: VocalLevel[] = [
   lv(1204, 0.6, [IVL(4, 0.3, 1000), IVL(7, 0.25, 1050), IVL(-3, 0.6, 1100), IVL(-5, 0.65, 1150), IVL(9, 0.2, 1200), IVL(-8, 0.7, 1250)]),
   // F10 L5: audiation — hear two bars of a sequence, sing the third that is not played
   lv(1205, 0.6, [AUD([0, 1, 2, 0], 0, 1, 88, 1350), AUD([0, 2, 1], 0, 1, 88, 1400), AUD([2, 1, 0], 4, -1, 88, 1400), AUD([0, 2, 4, 2], 4, -1, 84, 1450)]),
+  // AUDIT-CONTENT-THEORY §ב.5: sung intervals beyond the sixth — sevenths and the octave, up and down
+  lv(1206, 0.6, [IVL(10, 0.2, 1300), IVL(12, 0.1, 1300), IVL(11, 0.15, 1350), IVL(-10, 0.8, 1350), IVL(-12, 0.9, 1400), IVL(-11, 0.85, 1450)]),
+  // …then the ninths (a minor-9th leap is the hardest); the octave down keeps the level open to a one-octave range
+  lv(1207, 0.58, [IVL(14, 0.05, 1400), IVL(-14, 0.95, 1450), IVL(13, 0.05, 1450), IVL(-13, 0.95, 1500), IVL(-12, 0.9, 1400)]),
 ];
 /** F13 L1: echo one phrase of a level-1 public-domain song. */
 export const SONG_ECHO_LEVELS: VocalLevel[] = [lv(1309, 0.6, [songEcho('jacques', 950), songEcho('mary', 1000), songEcho('yonatan', 1000), songEcho('london', 1050)])];
@@ -421,7 +425,8 @@ export const VOICE_FAMILIES: VoiceFamily[] = [
   { id: 'v-range', title: { en: 'Range & registers', he: 'מנעד ורגיסטרים' }, refs: [4, 6, ...RANGE_LEVELS.map((l) => l.level)], stage: 'A' },
   { id: 'v-time', title: { en: 'Time feel', he: 'תחושת זמן' }, refs: [9, ...TIME_LEVELS.map((l) => l.level)], stage: 'A' },
   // P3: F10 L1 echo, L3 intervals and L5 audiation as sung levels, where the plan puts them (L2 = ladder 8).
-  { id: 'v-ear', title: { en: "The singer's ear", he: 'האוזן של הזמר' }, refs: [1203, 8, 1204, 1201, 1205, 1202], stage: 'A', before: 1 },
+  // §ב.5: sevenths, the octave and ninths after the tensions (appended: saved placement starts keep their levels).
+  { id: 'v-ear', title: { en: "The singer's ear", he: 'האוזן של הזמר' }, refs: [1203, 8, 1204, 1201, 1205, 1202, 1206, 1207], stage: 'A', before: 1 },
   { id: 'v-dyn', title: { en: 'Dynamics', he: 'דינמיקה' }, refs: [901, 5, ...DYN_LEVELS.slice(1).map((l) => l.level)], stage: 'B' },
   { id: 'v-scale', title: { en: 'Scales & modes', he: 'סולמות ומודוסים בשירה' }, refs: [...nums(100, MODE_LEVELS), ...ARPEGGIO_LEVELS.map((l) => l.level)], stage: 'B' },
   { id: 'v-sight', title: { en: 'Sight-singing', he: 'שירה מתווים' }, refs: [...nums(400, SIGHT_LEVELS), ...SIGHT_MORE_LEVELS.map((l) => l.level), ...READ_LEVELS.map((l) => l.level)], stage: 'B' },
@@ -544,6 +549,8 @@ export const NEW_LEVEL_NAMES: Record<number, Bi> = {
   1203: { en: 'Sing it back', he: 'לשיר בחזרה' },
   1204: { en: 'Intervals from a note', he: 'מרווחים מצליל נתון' },
   1205: { en: 'The bar not played', he: 'התיבה שלא נוגנה' },
+  1206: { en: 'Sevenths and the octave', he: 'ספטימות ואוקטבה' },
+  1207: { en: 'Ninths', he: 'נונות' },
   1309: { en: 'One phrase of a song', he: 'משפט אחד משיר' },
 };
 

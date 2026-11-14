@@ -7,6 +7,7 @@ import { MODE_STEPS, type ModeId } from './modes';
 import { hzToMidi, midiToHz } from './pitch';
 import type { SungFrame } from './sing';
 import { segmentNotes } from './memory';
+import { itemOctave, octaveOffset } from './feedback';
 
 // ------------------------------------------------------------------ voice range (P.0)
 
@@ -355,6 +356,8 @@ export interface MelodyNote {
   settleMs: number | null;
   overshoot: number; // cents beyond the target in the direction of travel, first 200 ms
   start: number | null;
+  /** The right note name in the wrong octave (against the octave the rest of the item was sung in): not a hit. */
+  octave?: boolean;
 }
 
 export interface MelodyMetrics {
@@ -366,13 +369,14 @@ export interface MelodyMetrics {
   overshoot: number; // mean overshoot (cents)
   legato: number; // share of joins without a voice break (< 80 ms gap)
   timingMs: number | null; // mean |onset error| against an even grid (when a beat is given)
+  octaveOff: number; // notes sung in the wrong octave (never hits)
 }
 
 const fold = (c: number) => ((((c + 600) % 1200) + 1200) % 1200) - 600;
 
 export function melodyMetrics(frames: SungFrame[], targets: number[], beatSec?: number, onsets?: number[], hitCents = 50): MelodyMetrics {
   const segs = segmentNotes(frames);
-  const empty: MelodyMetrics = { unclear: true, notes: targets.map((t) => ({ target: t, cents: null, settleMs: null, overshoot: 0, start: null })), hit: 0, intonation: 0, transitionMs: 0, overshoot: 0, legato: 0, timingMs: null };
+  const empty: MelodyMetrics = { unclear: true, notes: targets.map((t) => ({ target: t, cents: null, settleMs: null, overshoot: 0, start: null })), hit: 0, intonation: 0, transitionMs: 0, overshoot: 0, legato: 0, timingMs: null, octaveOff: 0 };
   if (!segs.length) return empty;
   // In-order alignment: each target takes the next segment within ±150 ¢ (pitch-class), skipping extras.
   const notes: MelodyNote[] = [];
@@ -413,7 +417,16 @@ export function melodyMetrics(frames: SungFrame[], targets: number[], beatSec?: 
     const overshoot = dir && early.length ? Math.max(0, Math.max(...early)) : 0;
     notes.push({ target: targets[i], cents: fold((seg.midi - targets[i]) * 100), settleMs: settle, overshoot, start: seg.start });
   }
-  const hits = notes.filter((n) => n.cents !== null && Math.abs(n.cents) <= hitCents);
+  // Octave-aware: the whole item may sit an octave (or more) away from the written one — a low voice singing a
+  // treble line — but every note must keep that octave. A note that jumps an octave against the rest is wrong.
+  const shift = itemOctave(matched.map((m) => octaveOffset(m.seg.midi, targets[m.i])));
+  let octaveOff = 0;
+  for (const m of matched)
+    if (octaveOffset(m.seg.midi, targets[m.i]) !== shift) {
+      notes[m.i] = { ...notes[m.i], octave: true };
+      octaveOff++;
+    }
+  const hits = notes.filter((n) => n.cents !== null && !n.octave && Math.abs(n.cents) <= hitCents);
   const later = notes.slice(1).filter((n) => n.settleMs !== null);
   let joins = 0;
   let smooth = 0;
@@ -440,6 +453,7 @@ export function melodyMetrics(frames: SungFrame[], targets: number[], beatSec?: 
     overshoot: mean(notes.slice(1).filter((n) => n.cents !== null).map((n) => n.overshoot)),
     legato: joins ? smooth / joins : 0,
     timingMs,
+    octaveOff,
   };
 }
 

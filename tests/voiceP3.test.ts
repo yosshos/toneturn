@@ -19,7 +19,7 @@ const fam = (id: string) => VOICE_FAMILIES.find((f) => f.id === id)!;
 
 describe('P3 levels sit where the plan puts them, old progress kept', () => {
   it('F10 L1 / L3 / L5 around the old ear levels, F13 L1 opens the songs; every one a path step with a name', () => {
-    expect(fam('v-ear').refs).toEqual([1203, 8, 1204, 1201, 1205, 1202]);
+    expect(fam('v-ear').refs).toEqual([1203, 8, 1204, 1201, 1205, 1202, 1206, 1207]);
     expect(fam('v-songs').refs[0]).toBe(1309);
     expect(fam('v-songs').refs.slice(1, 3)).toEqual([1301, 1302]);
     const steps = new Set(stepCatalogue().filter((s) => s.kind === 'vocal').map((s) => s.ladder!.ref));

@@ -125,7 +125,9 @@ export function earInstruction(item: VocalItem, lang: Lang, ivName: (semis: numb
   const e = item.ear!;
   if (e.mode === 'interval') {
     const semis = (item.steps?.[1] ?? 0) - (item.steps?.[0] ?? 0);
-    return EAR_INSTR[semis >= 0 ? 'intervalUp' : 'intervalDown'][lang].replace('{iv}', ivName(Math.abs(semis)));
+    const name = ivName(Math.abs(semis));
+    // "an octave", "a minor ninth"
+    return EAR_INSTR[semis >= 0 ? 'intervalUp' : 'intervalDown'][lang].replace('a {iv}', /^[aeiou]/i.test(name) ? 'an {iv}' : 'a {iv}').replace('{iv}', name);
   }
   if (e.mode === 'audiate') return EAR_INSTR.audiate[lang];
   if (e.song) {

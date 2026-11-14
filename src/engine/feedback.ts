@@ -20,7 +20,25 @@ export type Remark =
   | 'end-sharp'
   | 'scoop-up'
   | 'scoop-down'
-  | 'unsteady';
+  | 'unsteady'
+  /** The right note name in the wrong octave (against the octave the rest of the item was sung in). */
+  | 'octave-off';
+
+/**
+ * The octave a whole sung item was placed in: each matched note's whole-octave offset from its target, the most
+ * common one (a tie goes to the earliest note). A singer may move the whole item by octaves (a low voice singing a
+ * treble line); a single note away from that octave is wrong ("octave off").
+ */
+export function itemOctave(offsets: number[]): number {
+  const count = new Map<number, number>();
+  for (const o of offsets) count.set(o, (count.get(o) ?? 0) + 1);
+  let best = offsets[0] ?? 0;
+  for (const o of offsets) if ((count.get(o) ?? 0) > (count.get(best) ?? 0)) best = o;
+  return best;
+}
+
+/** Whole octaves between a sung pitch and its target (the pitch already matched the note name). */
+export const octaveOffset = (sungMidi: number, targetMidi: number) => Math.round((sungMidi - targetMidi) / 12);
 
 const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
 
@@ -74,9 +92,11 @@ export function remarksFor(frames: Frame[], targetMidi: number): Remark[] {
 }
 
 /** Per-note remarks of a sung melody: the notes with something to say, worst first (at most two). */
-export function melodyRemarks(notes: { index: number; frames: Frame[]; target: number }[]): { index: number; remarks: Remark[] }[] {
-  return notes
+export function melodyRemarks(notes: { index: number; frames: Frame[]; target: number; octave?: boolean }[]): { index: number; remarks: Remark[] }[] {
+  const wrongOctave = notes.filter((n) => n.octave).map((n) => ({ index: n.index, remarks: ['octave-off'] as Remark[] }));
+  const rest = notes
+    .filter((n) => !n.octave)
     .map((n) => ({ index: n.index, remarks: remarksFor(n.frames, n.target) }))
-    .filter((n) => n.remarks.length && n.remarks[0] !== 'spot' && !n.remarks[0].startsWith('touch'))
-    .slice(0, 2);
+    .filter((n) => n.remarks.length && n.remarks[0] !== 'spot' && !n.remarks[0].startsWith('touch'));
+  return [...wrongOctave, ...rest].slice(0, 2);
 }

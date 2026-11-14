@@ -71,6 +71,18 @@ function evaluateSungCore(frames: SungFrame[], targetMidi: number, opts: SungOpt
   return { status, cents: Math.round(cents), detectedMidi: med, voicedSeconds };
 }
 
+/**
+ * A sung interval from a played note, judged for its octave (the pitch is checked octave-folded first). Only the
+ * second note is sung, so the singer's own octave cannot be told apart from an octave error in general: the sung
+ * note must lie on the asked side of the played note, at most one extra octave beyond it (a voice an octave above
+ * the reference). An octave sung as the played note again, or a fifth up sung as a fourth down, is "octave off".
+ */
+export function intervalOctaveOk(sungMidi: number, refMidi: number, semis: number): boolean {
+  const k = Math.round((sungMidi - refMidi - semis) / 12);
+  if (k === 0) return true;
+  return semis !== 0 && k === Math.sign(semis);
+}
+
 /** Synthetic frames for tests and the simulator: a steady tone `cents` away from target. */
 export function syntheticFrames(targetMidi: number, cents: number, seconds = 1.5, fps = 30, octave = 0): SungFrame[] {
   const hz = midiToHz(targetMidi + 12 * octave) * Math.pow(2, cents / 1200);

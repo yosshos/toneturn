@@ -5,6 +5,7 @@ import { majorScale, pc, pcValue, type PitchClass } from './pitch';
 import { mulberry32, placeInRange } from './lesson';
 import type { SungFrame } from './sing';
 import { hzToMidi } from './pitch';
+import { itemOctave, octaveOffset } from './feedback';
 
 // ======================================================================= melody
 
@@ -523,6 +524,8 @@ export interface SungSequenceGrade {
   notes: { status: NoteStatus }[];
   extra: number;
   unclear: boolean;
+  /** Notes sung with the right name in the wrong octave (against the item's octave). */
+  octaveOff?: number;
 }
 
 /**
@@ -533,9 +536,9 @@ export function gradeSungSequence(frames: SungFrame[], targetMidis: number[], to
   const segs = segmentNotes(frames);
   if (!segs.length) return { pass: false, accuracy: 0, notes: targetMidis.map(() => ({ status: 'missed' })), extra: 0, unclear: true };
   const ids = [...new Set(targetMidis.map((m) => ((m % 12) + 12) % 12))];
-  const given: (number | null)[] = [];
-  let lastEnd = -1;
-  for (const sg of segs) {
+  // Each segment: the nearest note name of the item (within the tolerance) and its octave against the nearest target
+  // of that name. The whole item may sit in another octave (the most common offset); a note off that octave is wrong.
+  const named = segs.map((sg) => {
     let best: number | null = null;
     let bestD = Infinity;
     for (const id of ids) {
@@ -545,17 +548,28 @@ export function gradeSungSequence(frames: SungFrame[], targetMidis: number[], to
         best = id;
       }
     }
-    const v = bestD <= tolCents ? best : null;
+    if (bestD > tolCents || best === null) return { sg, near: null as number | null, off: 0 };
+    const same = targetMidis.filter((m) => ((m % 12) + 12) % 12 === best);
+    const near = same.reduce((a, b) => (Math.abs(b - sg.midi) < Math.abs(a - sg.midi) ? b : a));
+    return { sg, near, off: octaveOffset(sg.midi, near) };
+  });
+  const shift = itemOctave(named.filter((n) => n.near !== null).map((n) => n.off));
+  // The written note each segment stands for, taken back from the item's octave (a note off that octave lands on a
+  // note that is not the one asked for).
+  const given: (number | null)[] = [];
+  let lastEnd = -1;
+  for (const n of named) {
+    const v = n.near === null ? null : n.near + 12 * (n.off - shift);
     // Merge a re-attack of the same note separated by a tiny gap.
-    if (given.length && given[given.length - 1] === v && v !== null && sg.start - lastEnd < 0.1) {
-      lastEnd = sg.end;
+    if (given.length && given[given.length - 1] === v && v !== null && n.sg.start - lastEnd < 0.1) {
+      lastEnd = n.sg.end;
       continue;
     }
     given.push(v);
-    lastEnd = sg.end;
+    lastEnd = n.sg.end;
   }
-  const target = targetMidis.map((m) => ((m % 12) + 12) % 12);
-  const g = gradeMelody(target, given);
+  const g = gradeMelody(targetMidis, given);
   const ok = g.notes.filter((n) => n.status === 'ok').length;
-  return { pass: g.pass, accuracy: ok / (target.length + g.extra), notes: g.notes.map((n) => ({ status: n.status })), extra: g.extra, unclear: false };
+  const octaveOff = g.notes.filter((n) => n.status === 'wrong' && n.given !== null && (((n.given - n.target) % 12) + 12) % 12 === 0).length;
+  return { pass: g.pass, accuracy: ok / (targetMidis.length + g.extra), notes: g.notes.map((n) => ({ status: n.status })), extra: g.extra, unclear: false, octaveOff };
 }
