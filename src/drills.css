@@ -589,3 +589,17 @@ button.km-cell:focus-visible { outline: 2px solid var(--ink); outline-offset: 1p
   .chart-bar b { font-size: 0.86rem; line-height: 1.2; }
   .chart-bar span { letter-spacing: 0; font-size: 0.7rem; white-space: nowrap; }
 }
+
+/* 0.91 (one screen): a drill's title is at most two lines on a phone — standards moved to other keys made long titles
+   ("Rhythm changes in F♯: the whole chart (32 bars), shells, four to the bar") wrap to four. The full title is the tooltip. */
+@media (max-width: 520px) {
+  .drills-screen[data-drills='run'] .screen-head h1 {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+    font-size: 1.15rem;
+    line-height: 1.2;
+  }
+}

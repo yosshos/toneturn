@@ -224,7 +224,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
       <button className="icon-btn" onClick={back} aria-label="Back">
         <span className="flip-rtl">‹</span>
       </button>
-      <h1>{title}</h1>
+      <h1 title={typeof title === 'string' ? title : undefined}>{title}</h1>
     </header>
   );
   const setDs = (p: Partial<DrillSettings>) => onSettings({ drills: { ...ds, ...p } });
