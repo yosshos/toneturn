@@ -136,7 +136,9 @@ describe('A3 piano analysis with human takes', () => {
   });
   it('a sloppy take (jitter = 2 × the band SD limit) is never clean; a drill of 3–5 chords (a timing SD from 3 onsets) at most once in 4 tries', () => {
     const bad: string[] = [];
-    for (const { lv, d } of ALL()) {
+    // Phrases by ear (k-phrase) are graded by the transcription comparer — the right notes, in time on the player's own
+    // pulse within a quarter of a beat — not by evenness: the jitter here is in time for them.
+    for (const { lv, d } of ALL().filter((x) => !x.d.phrase)) {
       const bpm = targetBpmOf(lv, d);
       const sd = 2 * thresholds(tempoBand(npsOf(d, bpm))).sd;
       const onsets = new Set(d.notes.map((n) => n.beat)).size;

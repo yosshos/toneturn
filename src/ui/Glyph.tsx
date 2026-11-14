@@ -952,6 +952,32 @@ Object.assign(GLYPHS, {
     </>
   ),
 });
+// Phrases by ear: an ear with a rising line of note heads coming out of it (keys); the same over strings (guitar) and
+// over the bass's two low strings (bass).
+const phr = (
+  <>
+    <path d="M-24 4 C-24 -12 -16 -20 -8 -20 C0 -20 4 -13 4 -7 C4 1 -4 3 -4 11" {...sw} strokeWidth={3} />
+    <path d="M-15 -6 C-15 -11 -9 -12 -8 -7" {...sw} strokeWidth={2.4} />
+    {head(8, 12, 4.4, 3.2)}
+    {head(15, 1, 4.4, 3.2)}
+    {head(22, -10, 4.4, 3.2)}
+  </>
+);
+Object.assign(GLYPHS, {
+  phrase: phr,
+  gphrase: (
+    <>
+      <path d="M-26 20 H26 M-26 25 H26" stroke={I} strokeWidth={1.3} />
+      {phr}
+    </>
+  ),
+  bphrase: (
+    <>
+      <path d="M-26 -24 H26 M-26 22 H26" stroke={I} strokeWidth={3} />
+      {phr}
+    </>
+  ),
+});
 // PIANO_JAZZ P2 path wiring: a repertoire step (a lead sheet with a bookmark), the Transcription Race as a bonus step
 // (a staff with a stopwatch — the transcription coach keeps its pencil) and the Reharm Spotter as a bonus step (a chord,
 // a magnifier on the changed one — the k-reharm family keeps its chord-to-chord arrow).

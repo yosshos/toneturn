@@ -615,6 +615,24 @@ export const GLYPHS: Record<string, Glyph> = {
       {p('M7.5 7l6.5 3.6 M7.5 17l6.5 -3.6', false)}
     </>
   ),
+  // Phrases by ear: an ear opening on the left, a rising line of note heads coming out of it.
+  'family:k-phrase': () => (
+    <>
+      {p('M3 15c0-5 2.5-8 5.5-8s4.5 2.5 4.5 5c0 3-3 3.5-3 6.5', false)}
+      {head(14, 15, 1.9)}
+      {head(17.5, 11, 1.9)}
+      {head(21, 7, 1.9)}
+    </>
+  ),
+  'family:g-phrase': () => (
+    <>
+      <path d="M2 19h20 M2 23h20" strokeWidth={0.8} />
+      {p('M3 13c0-5 2.5-8 5.5-8s4.5 2.5 4.5 5c0 3-3 3.5-3 6.5', false)}
+      {head(14, 13, 1.9)}
+      {head(17.5, 9, 1.9)}
+      {head(21, 5, 1.9)}
+    </>
+  ),
   // THEORY_PLAY: theory you play — two triads stacked a step apart (a triad pair).
   'family:k-theory': () => p('M3 20L9 9l6 11z M9 14l6-11 6 11z'),
   'family:k-reharm': () => (

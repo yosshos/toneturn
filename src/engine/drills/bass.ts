@@ -24,6 +24,7 @@ import { generateUpright } from './upright';
 import { generateBassNiche, IMPRO_NICHE, improNicheLevels, jazzFamilies, NICHE_EXAM, progFamilies } from './bassNiche';
 import { extFamily, fusionLevels, generateBassNiche2, IMPRO_FUSION, NICHE2_EXAM, PICK_NICHE, pickTopLevels, standardsFamily, uprightTopLevels, WALK_NICHE, waltzLevels } from './bassNiche2';
 import { bassVocabFamily, genBassVocab } from './vocabDrills'; // AUDIT-GAPS-2: bebop vocabulary
+import { bassPhraseFamily, genBassPhrase } from './phraseDrills'; // phrases by ear
 import type { LevelExamTag } from './types';
 // AUDIT-GAPS-2 #6/#11/#12: the line under each key change, turnarounds and the rhythm-changes bridge (keyMoveDrills.ts).
 import { bassKeyMoveFamily, generateBassKeyMove } from './keyMoveDrills';
@@ -2477,6 +2478,9 @@ export function generateBass(s: DrillSpec, tu: Tuning): Drill {
     // AUDIT-GAPS-2: bebop vocabulary and lines over forms (vocabDrills.ts).
     case 'b-bebop':
       return genBassVocab(s, tu);
+    // Phrases by ear (phraseDrills.ts).
+    case 'b-phrase':
+      return genBassPhrase(s, tu);
   }
   throw new Error(`Not a bass family: ${s.family}`);
 }
@@ -2743,6 +2747,8 @@ export function bassFamilies(): GuitarFamilyDef[] {
     bassKeyMoveFamily(),
     // AUDIT-GAPS-2 High #1, #10: enclosures, digital patterns, bebop lines over forms, Barry Harris lines (jazz track).
     bassVocabFamily(L, fam),
+    // Phrases by ear on the bass (jazz track): hear a phrase over its chords, play it back (phraseDrills.ts).
+    bassPhraseFamily(L, fam),
     fam('b-legato', 'Slides, legato, harmonics', 'החלקות, לגאטו והרמוניקים', [
       L('b-legato', 1, 'Slides into notes', 'החלקות אל הצלילים', [LG('slide')], K6, [70, 110], E8),
       L('b-legato', 2, 'Hammer-on and pull-off pairs', 'זוגות הקשה ומשיכה', [LG('hp')], K6, [60, 100], E8),

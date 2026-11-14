@@ -10,6 +10,8 @@ export const isGuitarDrill = (drill: Drill): boolean => drill.spec.family.starts
 
 /** Difficulty of a take: the tempo band (T1–T7) on the rating scale 600–1600, + a little for hands together. */
 export function drillDifficulty(drill: Drill, m: TakeMetrics): number {
+  // Phrases by ear: the level's rating (1200 … 1900), + up to 60 for the tempo above the level's start.
+  if (drill.phrase) return Math.round(1100 + drill.phrase.level * 100 + Math.max(0, Math.min(60, (m.bpm - drill.startBpm) * 1.5)));
   const band = tempoBand(m.nps);
   return Math.round(Math.min(1600, 640 + band * 120 + (drill.spec.hands === 'RL' ? 60 : 0)));
 }
@@ -40,6 +42,8 @@ function secondTag(drill: Drill): Tags[number] | null {
   // the drum-kit reading sub-skill; every drum take is also a timing take (it is all time).
   // AUDIT-GAPS-2: bebop vocabulary on every instrument — the time items feed timing by their click (2 & 4 / the "and"
   // → when the click moves, the gap → through the gaps), Harris lines the Barry sub, the rest improvising vocabulary.
+  // Phrases by ear: melodic dictation, answered on the instrument.
+  if (f === 'k-phrase' || f === 'g-phrase' || f === 'b-phrase') return { skill: 'dictation', sub: 'dictation/transcribe', w: 0.5 };
   if (f === 'k-vocab' || f === 'g-bebop' || f === 'b-bebop') {
     if (drill.click === '24' || drill.click === 'and') return { skill: 'timing', sub: 'timing/backbeat', w: 0.4 };
     if (drill.click === 'gap') return { skill: 'timing', sub: 'timing/gap', w: 0.4 };

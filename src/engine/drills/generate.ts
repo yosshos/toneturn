@@ -14,6 +14,7 @@ import { parseChart } from '../charts';
 import { genKeysRhythm, keysRhythmFamily } from './keysRhythm'; // AUDIT-CONTENT-THEORY R-1/R-2/R-5
 import { ARP_QUALITIES, ARP_SYM, mirrorArp, pivotArp, pivotEnclosureLine, scalePivotLine, straightArp, type ArpQuality } from '../pivotArp'; // BH-G: the pivot
 import { genKeysVocab, keysVocabFamily } from './vocabDrills'; // AUDIT-GAPS-2: bebop vocabulary
+import { genKeysPhrase, keysPhraseFamily } from './phraseDrills'; // phrases by ear
 // THEORY_PLAY: the k-theory family's music.
 import { LINE_CLICHE, RQ_SYM, RQ_TONES, pairLineUp, pentGroups, upFrom, pairById, pairName, pairTriads, pentById, pentName, pentNotes, ustById, type PairId, type PentId, type RQ, type Ust, type UstId } from '../theoryPlay';
 import type { Drill, DrillGoal, DrillSpec, DynamicsGoal, ExpNote, FamilyId, Hand, KeyOrder, Motion, ScaleType, Variant } from './types';
@@ -4871,6 +4872,7 @@ export function generate(spec: DrillSpec): Drill {
   if (s.family === 'k-theory') return genTheoryPlay(s);
   if (s.family === 'k-keys') return genKeyMovePiano(s);
   if (s.family === 'k-vocab') return genKeysVocab(s);
+  if (s.family === 'k-phrase') return genKeysPhrase(s);
   if (s.kind.startsWith('chart~')) return genChart(s);
   switch (s.kind) {
     case 'scale':
@@ -5851,5 +5853,7 @@ export function catalog(): FamilyDef[] {
     pianoKeyMoveFamily(),
     // AUDIT-GAPS-2 High #1–#3, #7, #8: bebop vocabulary — approach notes, enclosures, Harris lines, time (vocabDrills.ts).
     keysVocabFamily(),
+    // Phrases by ear (owner 2026-11-14): hear a phrase over its chords, play it back — chord tones to 8 bars over a form.
+    keysPhraseFamily(),
   ]);
 }

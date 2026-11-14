@@ -26,6 +26,8 @@ export type FamilyId =
   | 'k-theory'
   // AUDIT-GAPS-2 High #1–#3, #7, #8, #10: bebop vocabulary — approach notes, enclosures, Harris lines, time (vocabDrills.ts).
   | 'k-vocab'
+  // Phrases by ear (owner 2026-11-14): hear a phrase over its chords, play it back (phraseDrills.ts).
+  | 'k-phrase'
   // AUDIT-CONTENT-THEORY §ז.2: first steps at the piano — posture, finger numbers, C position, the thumb passing under.
   | 'k-first'
   // AUDIT-GAPS-2 #5/#6/#11/#12: key changes (common dim, pivot, ii–V, tritone, direct, pop) and turnarounds, performed.
@@ -53,6 +55,7 @@ export type FamilyId =
   | 'g-ear' // call and response, answered on the guitar
   | 'g-harris' // Barry Harris applied to guitar (barry.ts)
   | 'g-bebop' // AUDIT-GAPS-2: bebop vocabulary and lines over forms on the neck (vocabDrills.ts)
+  | 'g-phrase' // phrases by ear on the guitar (phraseDrills.ts)
   | 'g-theory' // THEORY_PLAY: theory you play on the neck (rootless, quartal, Giant Steps, UST, triad pairs, lines)
   | 'g-prog' // odd meters, polyrhythm, metric modulation, fusion lines, unisons (prog engine)
   | 'g-meter' // AUDIT-CONTENT-THEORY R-4/R-5: meter & cross-rhythm on the core path (subdivision → 7:4, odd meters, hemiola)
@@ -102,6 +105,8 @@ export type BassFamilyId =
   | 'b-ext'
   // AUDIT-GAPS-2: bebop vocabulary and lines over forms on the bass (jazz track, vocabDrills.ts).
   | 'b-bebop'
+  // Phrases by ear on the bass (phraseDrills.ts).
+  | 'b-phrase'
   // 0.64 (track B): the bass-ear family F15 and the upright / double-bass track (BASS_CURRICULUM §5, §5.1).
   | 'b-ear'
   | 'b-up-pos'
@@ -280,6 +285,12 @@ export interface Drill {
    * onsets inside `windows` (the band's bars) are ignored, so a speaker's sound is never taken for the answer.
    */
   listen?: { notes: { beat: number; dur: number; midi: number[]; inst?: 'bass' | 'piano'; perc?: import('../lesson').PercKind; vel?: number }[]; windows: [number, number][]; ask: { en: string; he: string } };
+  /**
+   * Phrases by ear (phraseDrills.ts): the answer (the drill's notes) starts at beat `at`, after the call; the take is
+   * graded note by note by the transcription coach's comparer (pitch and rhythm on the player's own pulse, partial
+   * credit). `level` is the ladder level (1–8). The call can be replayed, and slowed, before the take.
+   */
+  phrase?: { at: number; level: number };
   /**
    * Drums ear (d-ear): after the take, write what was heard — a step grid per voice (dictation), or pick the style's
    * name. Graded like the bass transcription (withWritten): it can only lower the take's verdict.
@@ -679,6 +690,8 @@ export interface TakeMetrics {
   prog?: import('./progAnalyze').ProgMetrics;
   /** Voice leading (voiceLeadAnalyze.ts): the voicing chosen at each chord and its grade. */
   vl?: import('./voiceLeadAnalyze').VLReport;
+  /** Phrases by ear (phraseGrade.ts): notes found, of those in time, the blended score (= accuracy) and the played tempo ÷ the call's. */
+  phrase?: { pitchAcc: number; rhythmAcc: number; score: number; tempo: number };
 }
 
 /** What a drum take measured (DRUMS_CURRICULUM §3.6). */

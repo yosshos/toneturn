@@ -88,6 +88,9 @@ const EAR: Rung[] = [
   r('k-ear-4', 5, { 'k-ear': 5 }),
   r('k-ear-5', 0, { 'k-ear': 6 }),
   r('k-ear-6', 7, { 'k-ear': 7 }),
+  // Phrases by ear: approach notes (~1300) and the ii–V–I line (~1600) are steps of their own.
+  r('k-phrase-2', 3, { 'k-ear': 7, 'k-phrase': 3 }),
+  r('k-phrase-5', 8, { 'k-ear': 9, 'k-phrase': 6 }),
 ];
 // AUDIT-GAPS-2: bebop vocabulary (k-vocab) is placed by the lines steps, and its enclosures are a step of their own.
 const LINES: Rung[] = [
@@ -154,6 +157,9 @@ const G_EAR: Rung[] = [
   r('g-ear-5', 7, { 'g-ear': 6 }),
   r('g-ear-6', 2, { 'g-ear': 7 }),
   r('g-ear-8', 0, { 'g-ear': 9 }),
+  // Phrases by ear on the neck (jazz add-on levels open only when shown).
+  r('g-phrase-2', 3, { 'g-ear': 9, 'g-phrase': 3 }),
+  r('g-phrase-5', 8, { 'g-ear': 10, 'g-phrase': 6 }),
 ];
 const G_JAZZ: Rung[] = [
   r('g-jazz-1', 0, { 'g-jazz': 2, 'g-harris': 1 }),
@@ -227,6 +233,9 @@ const B_EAR: Rung[] = [
   r('b-ear-5', 7, { 'b-ear': 6 }),
   r('b-ear-6', 2, { 'b-ear': 7 }),
   r('b-ear-9', 5, { 'b-ear': 10 }),
+  // Phrases by ear on the bass (jazz track).
+  r('b-phrase-2', 3, { 'b-ear': 10, 'b-phrase': 3 }),
+  r('b-phrase-5', 8, { 'b-ear': 12, 'b-phrase': 6 }),
 ];
 
 /** The bass test: hands, time and pocket, chord tones, walking (by the bass track), reading, ear. */
