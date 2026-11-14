@@ -122,12 +122,15 @@ const G_CHORDS: Rung[] = [
   r('g-chords-5', 9, { 'g-chords': 6 }),
   r('g-chords-6', 2, { 'g-chords': 7 }),
 ];
+// Meter & cross-rhythm (g-meter, AUDIT-CONTENT-THEORY R-4) sits in the rhythm section by grade: its odd-meter riffs
+// (grade 3) are a step of their own, and the strumming steps around it place it too.
 const G_RHYTHM: Rung[] = [
   r('g-rhythm-1', 7, { 'g-rhythm': 2 }),
-  r('g-rhythm-2', 0, { 'g-rhythm': 3 }),
-  r('g-rhythm-3', 9, { 'g-rhythm': 4 }),
-  r('g-rhythm-5', 4, { 'g-rhythm': 6 }),
-  r('g-rhythm-6', 0, { 'g-rhythm': 7 }),
+  r('g-rhythm-2', 0, { 'g-rhythm': 3, 'g-meter': 2 }),
+  r('g-rhythm-3', 9, { 'g-rhythm': 4, 'g-meter': 3 }),
+  r('g-meter-3', 4, { 'g-rhythm': 4, 'g-meter': 4 }),
+  r('g-rhythm-5', 4, { 'g-rhythm': 6, 'g-meter': 4 }),
+  r('g-rhythm-6', 0, { 'g-rhythm': 7, 'g-meter': 5 }),
 ];
 const G_LEAD: Rung[] = [
   r('g-lead-1', 9, { 'g-lead': 2, 'g-impro': 1 }),

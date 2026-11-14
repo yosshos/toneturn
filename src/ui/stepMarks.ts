@@ -136,6 +136,8 @@ export const TOPIC_MARK: Record<string, string> = {
   planing: 'par.',
   'form-ear': '16',
   'negative-harmony': 'neg',
+  // AUDIT-CONTENT-THEORY §ה.2: voice leading by ear.
+  'vl-ear': 'VL♪',
   // VOICE_CURRICULUM: the voice path's topics (each its own mark next to the 16 vocal families).
   'sing-intervals': 'P5↑',
   'song-sing': 'tune',

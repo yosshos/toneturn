@@ -233,6 +233,8 @@ const TOPIC_CONTRAST: Record<string, { en: string; he: string }> = {
   'jazz-dictation': { en: 'Bass first, then each chord’s quality: minor 7, dominant or major 7.', he: 'קודם הבס, ואז האיכות של כל אקורד: מינור 7, דומיננט או מז׳ור 7.' },
   planing: { en: 'Planing moves every voice the same way by the same step; voice leading keeps notes and moves by small steps.', he: 'בפליינינג כל הקולות זזים יחד באותו צעד; בהובלת קולות צלילים נשארים וזזים בצעדים קטנים.' },
   'form-ear': { en: 'Count bars from the first tonic; for phrases, compare each with the first one.', he: 'ספרו תיבות מהטוניקה הראשונה; במשפטים, השוו כל אחד לראשון.' },
+  // AUDIT-CONTENT-THEORY §ה.2
+  'vl-ear': { en: 'Follow one voice at a time: the top first, then the bass, then the middle. Held notes ring on; moving ones sound new.', he: 'עקבו אחרי קול אחד בכל פעם: קודם העליון, אחר כך הבס, ואז האמצע. צלילים שנשארים ממשיכים לצלצל; צלילים שזזים נשמעים חדשים.' },
   'negative-harmony': { en: 'Mirror around the axis between the 3rds of I: in C, G ↔ C, B ↔ A♭, D ↔ F, E ↔ E♭.', he: 'משקפים סביב הציר שבין הטרצות של I: ב־C, ‏G ↔ C, ‏B ↔ A♭, ‏D ↔ F, ‏E ↔ E♭.' },
 };
 

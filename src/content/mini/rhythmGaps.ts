@@ -141,4 +141,5 @@ export const UNITS: Record<string, string> = {
   'tech:g-meter-6': 'metric-tap',
   'tech:d-prog-11': 'cross-rhythm',
   'tech:b-time-11': 'hemiola-tap',
+  'tech:b-time-13': 'cross-rhythm',
 };

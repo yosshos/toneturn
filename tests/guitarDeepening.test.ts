@@ -277,7 +277,7 @@ describe('guitar deepening: placement probes for every family (§7)', () => {
   const fams = GUITAR.map((f) => ({ id: f.id, levels: f.levels.length, addOn: f.addOn }));
   it('a step for every core family; add-on steps only when chosen; every step generates', () => {
     const core = guitarProbesFor([]);
-    expect(new Set(core.map((p) => p.family))).toEqual(new Set(['g-fretting', 'g-picking', 'g-chords', 'g-rhythm', 'g-scales', 'g-legato', 'g-arps', 'g-lead', 'g-reading', 'g-ear', 'g-impro']));
+    expect(new Set(core.map((p) => p.family))).toEqual(new Set(['g-fretting', 'g-picking', 'g-chords', 'g-rhythm', 'g-scales', 'g-legato', 'g-arps', 'g-lead', 'g-reading', 'g-ear', 'g-impro', 'g-meter']));
     const all = guitarProbesFor(['jazz', 'flamenco', 'fingerstyle', 'prog']);
     expect(all.map((p) => p.family)).toEqual(expect.arrayContaining(['g-jazz', 'g-harris', 'g-prog', 'g-fingerstyle', 'g-flamenco']));
     for (const p of all) expect(generate(p.spec).notes.length, p.id).toBeGreaterThan(0);

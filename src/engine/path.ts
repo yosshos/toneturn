@@ -386,6 +386,13 @@ export const VOICE_LATER: Record<string, number> = {
 export const GUITAR_RANK: Record<string, number> = { 'g-fretting': 0, 'g-chords': 1, 'g-rhythm': 2, 'g-fingerstyle': 2, 'g-picking': 3, 'g-flamenco': 3, 'g-scales': 4, 'g-jazz': 4, 'g-ear': 5, 'g-prog': 5, 'g-legato': 6, 'g-harris': 6, 'g-theory': 6, 'g-lead': 7, 'g-arps': 8, 'g-reading': 9, 'g-impro': 10 };
 // AUDIT-CONTENT-THEORY R-4: meter & cross-rhythm with rhythm guitar.
 GUITAR_RANK['g-meter'] = 2;
+/**
+ * The order of a family's levels on the path: by path difficulty, then level number. AUDIT-CONTENT-THEORY §ב.3: guitar
+ * levels sit by grade, but the family's next level used to be the next number, so a later-added easier level (picking 4
+ * at grade 5 after picking 3 at grade 6, scales 8, arps 6, jazz 8 and 13, prog 6 …) waited behind a harder one. Level ids
+ * are unchanged (saved progress keys stay valid); other instruments' difficulties rise with the level, so nothing moves.
+ */
+export const ladderOrder = (a: PathStep, b: PathStep): number => a.difficulty - b.difficulty || a.ladder!.level - b.ladder!.level;
 /** A guitar level's path difficulty from its grade (0 = Debut … 9 = beyond grade 8): 700 + 90·grade + 8·rank (rank ≤ 10, so a grade always outranks the rank). */
 export const guitarPathDifficulty = (family: string, grade: number): number => 700 + 90 * grade + 8 * (GUITAR_RANK[family] ?? 5);
 /** Every level of every technique family and vocal program as a path step (0.61, owner: technique inside the course path). */
@@ -744,7 +751,7 @@ export function buildPath(inp: PathInput): PathView {
       const prev = `topic:${s.topic}:${(s.level ?? 1) - 1}`;
       if (byId.has(prev) && all.some((x) => x.id === prev) && !taken.has(prev) && !scheduled.has(prev)) return false;
     }
-    if (s.ladder && s.ladder.level > 1) {
+    if (s.ladder) {
       const prev = ladderPrev.get(s.id);
       // A previous level left out of this path (N10: low B on a 4-string) doesn't block the next one.
       if (prev && all.some((x) => x.id === prev) && !taken.has(prev) && !scheduled.has(prev)) return false;
@@ -768,13 +775,13 @@ export function buildPath(inp: PathInput): PathView {
     const byFam = new Map<string, PathStep[]>();
     for (const s of stepCatalogue()) if (s.ladder) byFam.set(s.ladder.family, [...(byFam.get(s.ladder.family) ?? []), s]);
     for (const xs of byFam.values()) {
-      xs.sort((a, b) => a.ladder!.level - b.ladder!.level);
+      xs.sort(ladderOrder);
       for (let i = 1; i < xs.length; i++) ladderPrev.set(xs[i].id, xs[i - 1].id);
     }
   }
   /** A family's next level not yet taken (or scheduled in the unit being built). */
   const nextLevel = (f: string, scheduled?: Set<string>): PathStep | undefined =>
-    all.filter((s) => s.ladder?.family === f && !taken.has(s.id) && !scheduled?.has(s.id)).sort((a, b) => a.ladder!.level - b.ladder!.level)[0];
+    all.filter((s) => s.ladder?.family === f && !taken.has(s.id) && !scheduled?.has(s.id)).sort(ladderOrder)[0];
   /**
    * Families by difficulty (AUDIT-CONTENT-THEORY §ב): the easiest next level first, ties by LADDER_RANK, then the
    * catalogue order. Before, families opened in catalogue order whatever their difficulty (sweep picking before the

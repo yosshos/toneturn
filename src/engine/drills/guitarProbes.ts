@@ -35,6 +35,8 @@ export const GUITAR_PROBE_STEPS: GuitarProbe[] = [
   { id: 'g-chords', family: 'g-chords', spec: G('g-chords', 'one-minute', 0, { option: 0, perBeat: 0.5 }), title: t('A ↔ D changes', 'החלפות A ↔ D'), instruments: ['guitar'], cut: [80, 100], levels: [1, 2, 3] },
   { id: 'g-chords-barre', family: 'g-chords', spec: G('g-chords', 'barre-check', 5, { position: 6 }), title: t('F barre: every string rings', 'ברה F: כל מיתר מצלצל'), instruments: ['guitar'], mode: 'once', after: 'g-chords', levels: [5] },
   { id: 'g-rhythm', family: 'g-rhythm', spec: G('g-rhythm', 'eighths', 7), title: t('Down-up 8ths', 'שמיניות למטה-למעלה'), instruments: ['guitar'], cut: [85, 105], levels: [1, 2, 3] },
+  // AUDIT-CONTENT-THEORY R-4: meter & cross-rhythm, after clean 8ths — the 3+3+2 hemiola over the drums.
+  { id: 'g-meter', family: 'g-meter', spec: G('g-meter', 'gm-hemi', 4, { option: 0, tempo: 80 }), title: t('3+3+2 over 4/4', '3+3+2 מעל 4/4'), instruments: ['guitar'], mode: 'once', after: 'g-rhythm', levels: [3] },
   { id: 'g-rhythm-funk', family: 'g-rhythm', spec: G('g-rhythm', 'funk16', 4, { tempo: 85 }), title: t('16th funk with muted ghosts', 'פאנק בשש-עשריות עם פריטות מושתקות'), instruments: ['guitar'], mode: 'once', after: 'g-rhythm', levels: [5] },
   { id: 'g-scales', family: 'g-scales', spec: G('g-scales', 'penta', 9, { position: 1, minor: true }), title: t('A minor pentatonic box 1', 'פנטטוני לה מינור תיבה 1'), instruments: ['guitar'], cut: [85, 100], levels: [1, 2, 3] },
   { id: 'g-scales-major', family: 'g-scales', spec: G('g-scales', 'caged', 7, { position: 0, tempo: 90 }), title: t('Major scale, E shape', 'סולם מז׳ור, צורת E'), instruments: ['guitar'], mode: 'once', after: 'g-scales', levels: [5] },

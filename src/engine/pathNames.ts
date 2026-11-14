@@ -164,6 +164,8 @@ const SHORT: Record<string, L2> = {
   planing: { en: 'Planing', he: 'פליינינג' },
   'form-ear': { en: 'Form by ear', he: 'צורה בשמיעה' },
   'negative-harmony': { en: 'Negative harmony', he: 'הרמוניה שלילית' },
+  // AUDIT-CONTENT-THEORY §ה.2
+  'vl-ear': { en: 'Hear the voices', he: 'שומעים קולות' },
   // lessons
   'basics-shape': { en: 'Melody shape', he: 'צורת מנגינה' },
   'rhythm-shift': { en: 'Move the rhythm', he: 'הזזת קצב' },
