@@ -116,7 +116,10 @@ describe('bass standards open the standards ladder (old one-chorus levels retire
       for (const w of it.ways)
         if (w.k === 'bassStd') {
           const d = repDrills(w, 'bass');
-          expect(d.length, `${it.id}`).toBe(1);
+          // The tune through all 12 keys, the lead-sheet key (offset 0) first.
+          expect(d.length, `${it.id}`).toBe(12);
+          expect(d[0].spec.key, `${it.id}`).toBe(0);
+          expect(new Set(d.map((x) => x.spec.key)).size, `${it.id}`).toBe(12);
           if (d[0].spec.family === 'b-std') n++;
         }
     expect(n).toBeGreaterThan(0);

@@ -13,6 +13,7 @@ import { STANDARD_CHANGES } from '../standards';
 import { autoScale } from '../improvRules';
 import { MODE_STEPS } from '../modes';
 import type { Hand } from './types';
+import { moved, nameInKey, refHome, transposeSymIn, type Home } from '../stdKey';
 
 export type ChartVoicing = 'shell' | 'guide' | 'rootless-a' | 'rootless-b' | 'rootless' | 'close4' | 'drop2' | 'drop3' | 'open' | 'two-hand' | 'quartal' | 'upper' | 'block' | 'stride-single' | 'stride-octave' | 'stride-tenth' | 'stride-broken' | 'stride-walk';
 export type CompRhythm = 'whole' | 'charleston' | 'reverse' | 'garland' | 'anticip' | 'four' | 'stride';
@@ -205,7 +206,10 @@ export function voice(c: ChartChordEv, v: ChartVoicing, prev: Voiced | null): Vo
     }
     case 'two-hand': {
       const lh = nearest([place(r, [T, S], 50), place(r, [S, T + 12], 50)], prev?.lh ?? null);
-      const rh = nearest(octaves(place(r, [N, X + 12, T + 12], 60), 60, 82), prev?.rh ?? null);
+      // The hands never share a key (in some keys the LH's 3rd lands on the RH's): such a placement is left out.
+      const cands = octaves(place(r, [N, X + 12, T + 12], 60), 60, 82);
+      const apart = cands.filter((v) => !v.some((m) => lh.includes(m)));
+      const rh = nearest(apart.length ? apart : cands.map((v) => v.map((m) => (lh.includes(m) ? m + 12 : m)).sort((a, b) => a - b)), prev?.rh ?? null);
       return { lh, rh };
     }
     case 'upper': {
@@ -246,6 +250,8 @@ export interface ChartDrillData {
   freeAbove?: number;
   /** The chart in the drill's key (for the right-hand check and the chart line). */
   text: string;
+  /** The key the drill is in (the chart's home moved by the drill's key offset). */
+  tonic: Home;
 }
 
 const HITS: Record<Exclude<CompRhythm, 'stride' | 'whole'>, number[]> = { charleston: [0, 1.5], reverse: [0.5, 2], garland: [1.5, 3.5], anticip: [0, 3.5], four: [0, 1, 2, 3] };
@@ -259,6 +265,7 @@ export function chartDrillData(kind: string, key: number): ChartDrillData | null
   const meter = 4;
   const parsed0 = parseChart(ref.text, meter);
   if (!parsed0.chords.length) return null;
+  const tonic = moved(refHome(k.ref, ref.text), key);
   const chords = parsed0.chords.map((c) => ({ ...c, root: mod(c.root + key), bass: mod(c.bass + key) }));
   const bars = parsed0.bars;
   const stride = k.voicing.startsWith('stride');
@@ -350,15 +357,17 @@ export function chartDrillData(kind: string, key: number): ChartDrillData | null
   }
   const text = chords
     .reduce<string[][]>((acc, c) => {
-      (acc[c.bar] ??= []).push(transposeSym(c.sym, key));
+      (acc[c.bar] ??= []).push(transposeSymIn(c.sym, key, tonic));
       return acc;
     }, [])
     .map((b) => (b ?? []).join(' '))
     .join(' | ');
   const vt = VOICING_NAME[k.voicing];
   const rt = stride ? RHYTHM_NAME.stride : RHYTHM_NAME[k.rhythm];
+  const nm = nameInKey(ref.title, tonic);
   return {
-    title: { en: `${ref.title.en} · ${vt.en} · ${rt.en}${k.mode === 'improv' ? ' · RH improvises' : ''}`, he: `${ref.title.he} · ${vt.he} · ${rt.he}${k.mode === 'improv' ? ' · יד ימין מאלתרת' : ''}` },
+    tonic,
+    title: { en: `${nm.en} · ${vt.en} · ${rt.en}${k.mode === 'improv' ? ' · RH improvises' : ''}`, he: `${nm.he} · ${vt.he} · ${rt.he}${k.mode === 'improv' ? ' · יד ימין מאלתרת' : ''}` },
     evs,
     meter,
     startBpm: Math.max(50, Math.round(ref.bpm * 0.55)),
@@ -366,11 +375,4 @@ export function chartDrillData(kind: string, key: number): ChartDrillData | null
     ...(k.mode === 'improv' ? { freeAbove: Math.max(60, ...evs.flatMap((e) => e.notes.map((n) => n.pitch + 1))) } : {}),
     text,
   };
-}
-
-const FLATS = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
-const LET: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
-function transposeSym(sym: string, n: number): string {
-  if (!n) return sym;
-  return sym.replace(/^([A-G])([#♯b♭]?)/, (_, l: string, a: string) => FLATS[mod(LET[l] + (a === '#' || a === '♯' ? 1 : a ? -1 : 0) + n)]).replace(/\/([A-G])([#♯b♭]?)$/, (_, l: string, a: string) => '/' + FLATS[mod(LET[l] + (a === '#' || a === '♯' ? 1 : a ? -1 : 0) + n)]);
 }

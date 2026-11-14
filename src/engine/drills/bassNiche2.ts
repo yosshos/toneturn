@@ -13,10 +13,11 @@ import type { Tuning } from '../fretboard';
 import type { GuitarFamilyDef, GuitarLevelDef, GuitarStyle } from './guitar';
 import { guitarItemId, mod, rng, SIG } from './guitar';
 import { alt, chartOf, chordName, drillOf, feelLine, fold, keyNameOf, overProg, endOn, rootOf, rulesFromText, spell, FEEL_T, STD_NAME_HE, BLUES, PROGS, QI, type BN, type Feel, type Prog, type Q } from './bass';
-import { chartLc, ctLine, generateBassNiche, guideOf, lcOf, pitchesIn, repeatLc, rulesFor, SC, transposeName, type LC } from './bassNiche';
+import { chartLc, ctLine, generateBassNiche, guideOf, lcOf, pitchesIn, repeatLc, rulesFor, SC, type LC } from './bassNiche';
 import { parseChart } from '../charts';
 import { hashOf, walkingBass } from '../band';
 import { STANDARD_CHANGES } from '../standards';
+import { moved, restateKey, transposeTextIn } from '../stdKey';
 import { ruleSafe } from './bassRuleSafe';
 
 type T2 = { en: string; he: string };
@@ -57,7 +58,8 @@ function genWaltz(s: DrillSpec, tu: Tuning): Drill {
   } else {
     // A chorus of the blues waltz (standards.ts, in F), moved to the level's key.
     const st = STANDARD_CHANGES.find((x) => x.id === 'blues-waltz')!;
-    bars = st.text.split('|').map((b) => b.trim().split(/\s+/).map((c) => transposeName(c, key - 5)).join(' '));
+    // Spelled for the key it lands in (A♯ in B, not B♭), shown with ♭ / ♯.
+    bars = transposeTextIn(st.text, key - 5, { key }).split('|').map((b) => b.trim().replace(/([A-G])b/g, '$1♭').replace(/([A-G])#/g, '$1♯'));
     name = tt('Blues waltz: a chorus walking in 3', 'בלוז ואלס: סבב ווקינג בשלוש');
   }
   const text = bars.map(ascii).join(' | ');
@@ -126,27 +128,34 @@ function genTier(s: DrillSpec, tu: Tuning, idx?: number): Drill {
   const std = STD_LADDER[(idx ?? s.option ?? 0) % STD_LADDER.length];
   const st = STANDARD_CHANGES.find((x) => x.id === std.id) ?? STANDARD_CHANGES[0];
   const walk = std.feel === 'walk';
-  const rules = rulesFromText(st.text, walk ? 'walk' : 'chordTones');
+  // The key is an offset from the lead sheet (0 = the tune's own key, the first take); the chart moves and is spelled for it.
+  const key = mod(s.key, 12);
+  const tonic = moved({ key: std.key, ...(std.minor ? { minor: true } : {}) }, key);
+  const text = transposeTextIn(st.text, key, tonic);
+  const sk = key ? `:${key}` : '';
+  const rules = rulesFromText(text, walk ? 'walk' : 'chordTones');
   // The same line as the walking family's chorus of this tune (its seed), unless that breaks the rules.
-  const line = ruleSafe((k) => feelLine(tu, st.text, std.feel, k ? `b-std:${st.id}:${k}` : `b-walk:std:${st.id}`), rules, 4);
-  const bars = st.text.split('|').map((x) => x.trim());
+  const line = ruleSafe((k) => feelLine(tu, text, std.feel, k ? `b-std:${st.id}${sk}:${k}` : `b-walk:std:${st.id}${sk}`), rules, 4);
+  const bars = text.split('|').map((x) => x.trim());
   const total = bars.length * 4;
-  line.push({ b: total, d: 2, p: rootOf(tu, std.key), ct: true });
+  line.push({ b: total, d: 2, p: rootOf(tu, tonic.key), ct: true });
   const part = st.part.en.startsWith('Whole form') ? '' : ` (${st.part.en})`;
   const partHe = part ? ` (${st.part.he})` : '';
   const feel = FEEL_T[std.feel];
   const sw = walk && bars.length >= 16 ? { swingWalk: { long: 0.85, drift: 0.02, chorusBeats: total / 2 } } : {};
-  return drillOf(s, tu, alt(line), {
-    en: `${st.name}${part}, ${feel.en}`,
-    he: `${STD_NAME_HE[st.name] ?? st.name}${partHe}, ${feel.he}`,
-    keyName: `${keyNameOf(std.key, !!std.minor)}${std.minor ? 'm' : ''}`,
-    keySig: SIG[std.minor ? mod(std.key + 3, 12) : std.key],
+  const nm = restateKey({ en: st.name, he: STD_NAME_HE[st.name] ?? st.name }, tonic);
+  const d = drillOf(s, tu, alt(line), {
+    en: `${nm.en}${part}, ${feel.en}`,
+    he: `${nm.he}${partHe}, ${feel.he}`,
+    keyName: `${keyNameOf(tonic.key, !!tonic.minor)}${tonic.minor ? 'm' : ''}`,
+    keySig: SIG[tonic.minor ? mod(tonic.key + 3, 12) : tonic.key],
     chart: bars,
     show: 'chart',
     evenness: walk,
     bass: { rules, ...sw },
     drums: { groove: std.feel === 'bossa' ? 'bossa' : std.feel === 'ballad' ? 'ballad-brush' : std.tier >= 4 && std.tier < 5 ? 'swing-fast' : 'swing' },
   });
+  return { ...d, tonic };
 }
 
 // ───────────────────────────── J7: b-up-walk 6–9 — the upright jazz top ─────────────────────────────
@@ -409,7 +418,9 @@ export function genImproFusion(s: DrillSpec, tu: Tuning): Drill {
       // Constant structure: one chord shape moved by non-functional steps — maj7♯11 chords (op 0) or the II triad
       // over its root (D/C …, op 1) — a bar each, twice.
       const roots = [0, 4, 9, 5];
-      const slash = (d: number): LC => ({ root: pc(key + d), ct: [0, 2, 6, 9], sc: SC.lyd, beats: 4, name: `${N(d + 2, key + d)}/${N(d)}` });
+      // In a sharp key every name takes sharps (A♯/G♯ in B, not B♭/G♯); elsewhere the triad is spelled from its bass.
+      const sharpHome = [7, 2, 9, 4, 11, 6].includes(key);
+      const slash = (d: number): LC => ({ root: pc(key + d), ct: [0, 2, 6, 9], sc: SC.lyd, beats: 4, name: `${N(d + 2, sharpHome ? key : key + d)}/${N(d)}` });
       const cs = repeatLc(roots.map((d) => (op % 2 ? slash(d) : lyd(d))), 2);
       return fin(cs, line16(cs, rnd, lo, hi), op % 2 ? tt('Constant structure: slash chords', 'מבנה קבוע: אקורדי סלאש') : tt('Constant structure: maj7♯11 chords', 'מבנה קבוע: אקורדי maj7♯11'));
     }

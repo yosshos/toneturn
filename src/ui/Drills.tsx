@@ -21,7 +21,7 @@ import type { CustomDrill, Drill, DrillCalibration, DrillSettings, FamilyId, Ite
 import { DEFAULT_DRILL_SETTINGS } from '../engine/drills/types';
 import { keyName } from '../engine/drills/generate';
 import type { FamilyDef, LevelDef } from '../engine/drills/generate';
-import { applyTake, familyLevel, newItem, type LadderResult } from '../engine/drills/ladder';
+import { applyTake, drillKeyOf, drillMinorOf, familyLevel, newItem, type LadderResult } from '../engine/drills/ladder';
 import { customKeys, customToDrill } from '../engine/drills/custom';
 import { DrillCreator } from './DrillCreator';
 import { currentLevel, families as familiesOf, levelDone, skillDrillsInKey, levelStars, LEVEL_MAX_STARS, levelKeys, shownFamilies, specDrills, todayDrills, levelDrills, withBassTuning, itemTargetBpm } from '../engine/drills/plan';
@@ -783,7 +783,7 @@ function LevelGrid({ lang, ds, level, items, onRun }: { lang: Lang; ds: DrillSet
                 const lvl = !st || st.cleanBpm <= 0 ? 0 : st.cleanBpm >= st.goalBpm * 0.95 ? 3 : st.cleanBpm >= st.goalBpm * 0.8 ? 2 : 1;
                 return (
                   <button key={d.itemId} className={`heat-cell l${lvl}`} onClick={() => onRun(row, i)} aria-label={`${d.title[lang]} ${st?.cleanBpm ? `♩${st.cleanBpm}` : ''}`}>
-                    {keyName(d.spec.key, !!d.spec.minor).replace('b', '♭').replace('#', '♯')}
+                    {keyName(drillKeyOf(d), drillMinorOf(d)).replace('b', '♭').replace('#', '♯')}
                   </button>
                 );
               })}
@@ -1314,7 +1314,7 @@ function SectionLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, on
   return (
     <div className="drill-run" data-test-probe={rung.level} data-test-strand={strand.id}>
       <p className="drill-goal">
-        {tx.section} {si + 1}/{strands.length} · <b>{strand.title[lang]}</b> · {rung.title[lang]}{inst === 'drums' ? '' : ` · ${keyName(rung.drill.spec.key, !!rung.drill.spec.minor)}`} · <span dir="ltr">♩ {rung.drill.startBpm}</span>
+        {tx.section} {si + 1}/{strands.length} · <b>{strand.title[lang]}</b> · {rung.title[lang]}{inst === 'drums' ? '' : ` · ${keyName(drillKeyOf(rung.drill), drillMinorOf(rung.drill))}`} · <span dir="ltr">♩ {rung.drill.startBpm}</span>
       </p>
       {last && (
         <p className={`drill-why lt-verdict v-${last.verdict}`} data-lt-verdict={last.verdict}>

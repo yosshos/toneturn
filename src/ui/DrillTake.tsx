@@ -160,7 +160,7 @@ export function ChartView({ drill, beat = -1, fromBeat = 0 }: { drill: Drill; be
             const idx = (start + ri) * 4 + i;
             return (
               <li key={idx} className={`chart-bar ${idx === cur ? 'now' : ''}`}>
-                <b>{c || '%'}</b>
+                <b>{c ? c.replace(/([A-G])b/g, '$1♭').replace(/([A-G])#/g, '$1♯') : '%'}</b>
                 <span aria-hidden>{'/ '.repeat(slashes).trim()}</span>
               </li>
             );

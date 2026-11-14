@@ -7,6 +7,7 @@
 
 import type { Drill, DrillSpec } from './types';
 import { noteAt, type Tuning } from '../fretboard';
+import { keyLabel, moved, nameInKey, noteNameIn, rootNameIn, standardHome, type Home } from '../stdKey';
 import { bassWalk, drop2Voicings, finish, mod, nearestVoicing, place, rng, t, upDown, NAMES, type Ev, type GN, type T2 } from './guitar';
 import { STANDARD_CHANGES } from '../standards';
 import { parseChart, type ChartChordEv } from '../charts';
@@ -50,16 +51,18 @@ function shellAt(tu: Tuning, root: number, third: number, seventh: number, near:
 }
 
 /** A standard's first `bars` bars, moved by `key` semitones (chords only). */
-function chartOf(id: string, key: number, bars = 8): { chords: ChartChordEv[]; name: string; syms: string[] } {
+function chartOf(id: string, key: number, bars = 8): { chords: ChartChordEv[]; name: string; syms: string[]; tonic: Home } {
   const std = STANDARD_CHANGES.find((x) => x.id === id) ?? STANDARD_CHANGES[0];
+  // Spelled for the key it is moved to (B♭ in flat keys, F♯ in sharp keys), the lead sheet as written.
+  const tonic = moved(standardHome(std.id), key);
   const p = parseChart(std.text);
   const chords = p.chords.filter((c) => c.bar < bars).map((c) => ({ ...c, root: mod(c.root + key, 12), bass: mod(c.bass + key, 12) }));
   const syms: string[] = [];
   for (let b = 0; b < bars; b++) {
     const inBar = chords.filter((c) => c.bar === b);
-    syms.push(inBar.map((c) => NAMES[c.root] + symOf(c)).join(' ') || '%');
+    syms.push(inBar.map((c) => (c.sym ? rootNameIn(c.sym, key, tonic) : noteNameIn(c.root, tonic)) + symOf(c)).join(' ') || '%');
   }
-  return { chords, name: std.name, syms };
+  return { chords, name: std.name, syms, tonic };
 }
 function symOf(c: Pick<ChartChordEv, 'iv'>): string {
   const g = guideOf(c);
@@ -164,9 +167,10 @@ function compChart(s: DrillSpec, tu: Tuning): Drill {
   }
   const vEn = voicing === 'drop2' ? 'drop-2, voice-led' : 'shells';
   const vHe = voicing === 'drop2' ? 'דרופ 2, הובלת קולות' : 'קונכיות';
-  const d = finish(s, tu, evs, { title: t(`${std.name}: the whole chart (${bars} bars), ${vEn}, ${rh.en}`, `${STD_NAME_HE[id] ?? std.name}: כל דף האקורדים (${bars} תיבות), ${vHe}, ${rh.he}`), bpm: guitarStdTempo(id)[0], evenness: false, keySig: 'C' });
+  const nm = nameInKey({ en: std.name, he: STD_NAME_HE[id] ?? std.name }, ch.tonic);
+  const d = finish(s, tu, evs, { title: t(`${nm.en}: the whole chart (${bars} bars), ${vEn}, ${rh.en}`, `${nm.he}: כל דף האקורדים (${bars} תיבות), ${vHe}, ${rh.he}`), bpm: guitarStdTempo(id)[0], evenness: false, keySig: 'C' });
   const band = rhythm === 'bossa' || std.style === 'bossa' ? 'bossa' : rhythm === 'shuffle' ? 'shuffle' : 'swing';
-  return { ...d, chart: ch.syms, drums: { groove: band }, band: { style: band, bass: true } };
+  return { ...d, tonic: ch.tonic, chart: ch.syms, drums: { groove: band }, band: { style: band, bass: true } };
 }
 
 /** Standards for the comping levels (ids in standards.ts; chords only). */
@@ -206,8 +210,8 @@ export function generateJazz2(s: DrillSpec, tu: Tuning): Drill | null {
         }
         if (!evs.some((e) => e.beat >= start - 1e-6 && e.beat < start + c.beats - 1e-6)) evs.push({ beat: start, dur: c.beats, notes: strum(v) });
       }
-      const d = finish(s, tu, evs, { title: t(`Comping ${ch.name} (8 bars): ${drop ? 'drop-2' : 'shells'}, ${rh.en} · ${NAMES[key]}`, `ליווי ${ch.name} (8 תיבות): ${drop ? 'דרופ 2' : 'קונכיות'}, ${rh.he} · ${NAMES[key]}`), bpm: 100, evenness: false, keySig: 'C' });
-      return { ...d, chart: ch.syms, drums: { groove: 'swing' }, band: { style: 'swing', bass: true } };
+      const d = finish(s, tu, evs, { title: t(`Comping ${ch.name} (8 bars): ${drop ? 'drop-2' : 'shells'}, ${rh.en} · ${keyLabel(ch.tonic)}`, `ליווי ${ch.name} (8 תיבות): ${drop ? 'דרופ 2' : 'קונכיות'}, ${rh.he} · ${keyLabel(ch.tonic)}`), bpm: 100, evenness: false, keySig: 'C' });
+      return { ...d, tonic: ch.tonic, chart: ch.syms, drums: { groove: 'swing' }, band: { style: 'swing', bass: true } };
     }
     case 'vl-ear': {
       // L9: hear a ii–V–I (in a key the title doesn't name), then play its guide tones (3–7–3, half notes) and comp it

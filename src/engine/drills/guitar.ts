@@ -11,6 +11,7 @@ import { SONGBOOK, songChords, songNotes } from '../../content/songbook';
 import { bassFamilies, generateBass } from './bass';
 import { BASS_PROBES } from './bassProbes';
 import { drumFamilies } from './drums';
+import { widenFamilies } from './keys12';
 import { ADDON_FAMILY, examOfGrade, GUITAR_META, guitarAddOnsOf, itemTempo } from './guitarMeta';
 import { core2Levels, generateCore2 } from './guitarCore2';
 import { generateGuitarProg, guitarProgFamily } from './guitarProg';
@@ -2640,7 +2641,8 @@ export function guitarCatalog(): GuitarFamilyDef[] {
     // The drums course v1 (DRUMS_CURRICULUM §4.3), in teaching order.
     ...drumFamilies(),
   ];
-  return list.map((f) => (f.instruments.includes('guitar') && !f.retired ? applyGuitarMeta(f) : f));
+  // The owner's rule: jazz / theory families (guitar and bass) in all 12 keys (keys12.ts), the listed keys first.
+  return widenFamilies(list.map((f) => (f.instruments.includes('guitar') && !f.retired ? applyGuitarMeta(f) : f)));
 }
 
 /** Distinct onsets per beat of a drill (notes per beat, chords counted once). */

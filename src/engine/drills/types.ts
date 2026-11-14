@@ -218,6 +218,11 @@ export interface DrillSpec {
 
 /** A generated drill: the notes to play and how it is judged. */
 export interface Drill {
+  /**
+   * A tune in any key (stdKey.ts): standards and charts take `spec.key` as an offset from the lead-sheet key (0 = the
+   * lead sheet, so old item ids stay). `tonic` is the key the drill is really in, for key mastery and key labels.
+   */
+  tonic?: { key: number; minor?: boolean };
   /** Sung, not played (licks on the voice course): the microphone hears a voice, graded with the voice's timing tolerance (VOICE_TIMING). */
   sung?: boolean;
   /** Songs (songDrills.ts): chord names per bar, shown above the staff as a chart. */
