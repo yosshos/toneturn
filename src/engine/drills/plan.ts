@@ -4,7 +4,7 @@
 import type { CustomDrill, Drill, DrillSettings, FamilyId, ItemState } from './types';
 import { catalog, generate, keysInOrder, type FamilyDef, type LevelDef } from './generate';
 import { customIncluded, customKeys, customToDrill } from './custom';
-import { itemPass, todaysItems, type TodayItem } from './ladder';
+import { drillKeyOf, itemPass, todaysItems, type TodayItem } from './ladder';
 import { micUnmeasurable, notesPerBeat } from './analyze';
 import { inBassTrack } from './bassNiche';
 import { FRETLESS_LEVELS } from './bassNiche2';
@@ -268,8 +268,8 @@ export const WEAK_KEY_MIN = 0.4;
 export function planWithFocus(items: Record<string, ItemState>, pool: Drill[], n = 5, now: number | string = Date.now(), focus = true): TodayItem[] {
   if (!focus) return todaysItems(items, pool, n, now);
   const sk = new Map<FamilyId, SkillKeys>(keyMastery(items, now).map((s) => [s.family, s]));
-  const rank = (d: Drill) => focusRank(sk.get(d.spec.family), d.spec.key);
-  const mastery = (d: Drill) => sk.get(d.spec.family)?.cells[((d.spec.key % 12) + 12) % 12].mastery ?? 0;
+  const rank = (d: Drill) => focusRank(sk.get(d.spec.family), drillKeyOf(d));
+  const mastery = (d: Drill) => sk.get(d.spec.family)?.cells[((drillKeyOf(d) % 12) + 12) % 12].mastery ?? 0;
   // Stable: within the same rank the pool's (key-order) order stays.
   const ordered = pool.map((d, i) => ({ d, i, r: rank(d) })).sort((a, b) => a.r - b.r || (a.r === 0 ? mastery(a.d) - mastery(b.d) : 0) || a.i - b.i).map((x) => x.d);
   const picked = todaysItems(items, ordered, n, now);
@@ -289,9 +289,9 @@ export function emphasizeWeakKeys(picked: TodayItem[], pool: Drill[], items: Rec
   const count = () => out.filter((p) => isF(p.drill)).length;
   // Top up: weak keys first (pool order = weakest first), a key not yet in the session first.
   if (count() < minF) {
-    const keysIn = () => new Set(out.map((p) => p.drill.spec.key));
+    const keysIn = () => new Set(out.map((p) => drillKeyOf(p.drill)));
     const extra = pool.filter((d) => isF(d) && !has(d));
-    extra.sort((a, b) => rank(a) - rank(b) || Number(keysIn().has(a.spec.key)) - Number(keysIn().has(b.spec.key)));
+    extra.sort((a, b) => rank(a) - rank(b) || Number(keysIn().has(drillKeyOf(a))) - Number(keysIn().has(drillKeyOf(b))));
     for (const d of extra) {
       if (count() >= minF) break;
       const item: TodayItem = { drill: d, role: known(d) ? 'weak' : 'new', state: known(d) };
@@ -328,8 +328,8 @@ export function emphasizeWeakKeys(picked: TodayItem[], pool: Drill[], items: Rec
   const res = out.slice(0, 1);
   const rest = out.slice(1);
   while (rest.length) {
-    const prev = res.length ? res[res.length - 1].drill.spec.key : -1;
-    const k = rest.findIndex((p) => p.drill.spec.key !== prev);
+    const prev = res.length ? drillKeyOf(res[res.length - 1].drill) : -1;
+    const k = rest.findIndex((p) => drillKeyOf(p.drill) !== prev);
     res.push(rest.splice(k >= 0 ? k : 0, 1)[0]);
   }
   return res;
@@ -363,7 +363,7 @@ export function skillDrillsInKey(fam: FamilyDef, items: Record<string, ItemState
   const at = fam.levels.indexOf(cur);
   const byDist = fam.levels.map((l, i) => ({ l, d: i <= at ? at - i : 100 + i - at })).sort((a, b) => a.d - b.d);
   for (const { l } of byDist) {
-    const ds = levelDrills(l, order).filter((d) => d.spec.key === key);
+    const ds = levelDrills(l, order).filter((d) => drillKeyOf(d) === key);
     if (ds.length) return ds;
   }
   return [];

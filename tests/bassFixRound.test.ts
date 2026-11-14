@@ -380,7 +380,9 @@ describe('B18 standards: 36 tunes for bass walking, each with its feel', () => {
   const std = ['b-walk-11', 'b-walk-13', 'b-walk-14', 'b-walk-18'].flatMap((id) => levelDrills(levelById(id), order)).filter((d) => d.spec.kind === 'standard');
   it('36 distinct tunes across walk L11, L13, L14 and L18', () => {
     expect(new Set(std.map((d) => d.spec.option)).size).toBe(36);
-    expect(new Set(std.map((d) => d.title.en.split(',')[0])).size).toBe(36);
+    // In the lead-sheet key (key offset 0) every tune has its own name; the same 36 then run through all 12 keys.
+    expect(new Set(std.filter((d) => d.spec.key === 0).map((d) => d.title.en.split(',')[0])).size).toBe(36);
+    expect(std.length).toBe(36 * 12);
   });
   it('each names its feel, plays the matching rule and is chart-only; the model line is clean', () => {
     for (const d of std) {

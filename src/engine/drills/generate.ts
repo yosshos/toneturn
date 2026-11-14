@@ -7,6 +7,7 @@ import { chartKind, type ChartMode, type ChartVoicing, type CompRhythm } from '.
 import { genVoiceLead, pianoVoiceLeadFamily } from './voiceLeadDrills';
 // AUDIT-GAPS-2 #5/#6/#12: key changes and turnarounds (keyMoveDrills.ts).
 import { genKeyMovePiano, pianoKeyMoveFamily } from './keyMoveDrills';
+import { widenFamilies } from './keys12';
 import { chartDrillData, roles } from './chartDrills';
 import { applyForm, type FormPlan, type FormSection } from './roadmap';
 import { parseChart } from '../charts';
@@ -739,7 +740,7 @@ function genChart(s: DrillSpec): Drill {
   const evs: ChordEv[] = d.evs.map((e) => ({ beat: e.beat, dur: e.dur, notes: e.notes, required: e.required, allowed: e.allowed }));
   const sp: DrillSpec = { ...s, hands: evs.some((e) => e.notes.some((n) => n.hand === 'R')) ? 'RL' : 'L', swing: s.swing ?? true };
   const drill = chordDrill(sp, evs, d.title, d.startBpm, {}, 'C', d.meter);
-  return { ...drill, chart: d.text.split(' | '), ...(d.freeAbove !== undefined ? { freeAbove: d.freeAbove } : {}) };
+  return { ...drill, tonic: d.tonic, chart: d.text.split(' | '), ...(d.freeAbove !== undefined ? { freeAbove: d.freeAbove } : {}) };
 }
 
 // ───────────────────────────── C: cadences ─────────────────────────────
@@ -1766,7 +1767,9 @@ function genVoicings(s: DrillSpec): Drill {
         [0, 4, 7],
       ].map((c) => {
         const pcs = c.map((p) => p + key);
-        const v: number[] = prev ? voiceNear(pcs, prev, 47, 64) : voiceNear(pcs, null, 47, 64, c[2] + key, 55);
+        // In some keys no voicing under E4 has the 5th on top (B♭: F would sit at F4): the nearest voicing instead.
+        const first = prev ? [] : voiceNear(pcs, null, 47, 64, c[2] + key, 55);
+        const v: number[] = prev ? voiceNear(pcs, prev, 47, 64) : first.length ? first : voiceNear(pcs, null, 47, 64, undefined, 55);
         prev = v;
         return { v, req: pcs, allow: pcs };
       });
@@ -4676,7 +4679,7 @@ function genStrideMelody(s: DrillSpec): Drill {
   const drill = chordDrill(sp, evs, ttl, d.startBpm, {}, 'C', d.meter);
   // The RH half notes sound through beats 1–2 and 3–4 (the LH stride keeps its quarters).
   const notes = drill.notes.map((n) => (n.hand === 'R' ? { ...n, dur: 2 } : n));
-  return { ...drill, notes, chart: d.text.split(' | ') };
+  return { ...drill, notes, tonic: d.tonic, chart: d.text.split(' | ') };
 }
 
 // ───────────────────────────── k-theory: theory you play (THEORY_PLAY, TP-1…TP-4) ─────────────────────────────
@@ -5116,7 +5119,8 @@ export function catalog(): FamilyDef[] {
   const cyc4 = FOURS.slice(FOURS.indexOf(0)).concat(FOURS.slice(0, FOURS.indexOf(0)));
   // AUDIT-CONTENT-THEORY §ז.2: the first steps, in C, in quarter notes, slow — each opens with its quick lesson.
   const fs = (kind: string, hands: SpecTemplate['hands'], o: Partial<SpecTemplate> = {}): SpecTemplate => ({ family: 'k-first', kind, hands, perBeat: 1, ...o });
-  return [
+  // The owner's rule: jazz / theory families in all 12 keys (keys12.ts), the listed keys first.
+  return widenFamilies([
     {
       id: 'k-first',
       title: t('First steps at the piano', 'צעדים ראשונים בפסנתר'),
@@ -5847,5 +5851,5 @@ export function catalog(): FamilyDef[] {
     pianoKeyMoveFamily(),
     // AUDIT-GAPS-2 High #1–#3, #7, #8: bebop vocabulary — approach notes, enclosures, Harris lines, time (vocabDrills.ts).
     keysVocabFamily(),
-  ];
+  ]);
 }

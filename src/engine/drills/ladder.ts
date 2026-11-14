@@ -54,12 +54,17 @@ export function ladderStep(bpm: number): number {
   return Math.max(2, Math.round(bpm * 0.04));
 }
 
+/** The key a drill is really in: a tune moved from its lead sheet names its tonic (spec.key is then the offset). */
+export const drillKeyOf = (d: Drill): number => (d.tonic ? d.tonic.key : d.spec.key);
+/** Minor for the key label: the tune's own mode, else the spec's. */
+export const drillMinorOf = (d: Drill): boolean => (d.tonic ? !!d.tonic.minor : !!d.spec.minor);
+
 /** A fresh item (goal = the drill's suggested start tempo). */
 export function newItem(drill: Drill): ItemState {
   return {
     itemId: drill.itemId,
     family: drill.spec.family,
-    key: drill.spec.key,
+    key: drillKeyOf(drill),
     hands: drill.spec.hands,
     cleanBpm: 0,
     goalBpm: drill.startBpm,

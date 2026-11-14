@@ -15,6 +15,7 @@ import { rng, mod, SIG } from './guitar';
 import { alt, chordName, drillOf, keyNameOf, lowest, refWalk, rootOf, spell, BLUES, PROGS, QI, type BN, type Prog, type Q } from './bass';
 import { parseChart } from '../charts';
 import { STANDARD_CHANGES } from '../standards';
+import { moved, transposeTextIn } from '../stdKey';
 import { barryLine, pivot, ruleFor } from '../barry';
 import { ARP_SYM, pivotArp, scalePivotLine, straightArp, type ArpQuality } from '../pivotArp'; // BH-G: the pivot
 import { MODULATIONS, parseMeter, planBars, withBarPlan } from './timeline';
@@ -328,7 +329,7 @@ function genSwing(s: DrillSpec, tu: Tuning): Drill {
     }
     case 'uptempo': {
       // Up-tempo walking (220 → 280): two choruses; op 1 the rhythm-changes A section twice.
-      const cs = op % 2 ? repeatLc(lcText(STANDARD_CHANGES.find((x) => x.id === 'rhythm-a')!.text).map((c) => transposeLc(c, key - 10)), 2) : blues(2);
+      const cs = op % 2 ? repeatLc(lcText(transposeTextIn(STANDARD_CHANGES.find((x) => x.id === 'rhythm-a')!.text, key - 10, { key })), 2) : blues(2);
       const total = cs.reduce((a, c) => a + c.beats, 0);
       const line = [...walkOf(tu, cs, `b-swing:up:${key}:${op}`), closeOn(tu, key, total)];
       return out(cs, line, op % 2 ? tt('Up-tempo walk: rhythm changes', 'ווקינג בטמפו מהיר: ריתם צ׳יינג׳ס') : tt('Up-tempo walk: the blues', 'ווקינג בטמפו מהיר: בלוז'), { long: 0.85, ride: [-20, 10], drift: 0.02, chorusBeats: total / 2 }, 'swing-fast');
@@ -717,7 +718,7 @@ function genBarry(s: DrillSpec, tu: Tuning): Drill {
     }
     case 'bebop': {
       // A chorus of bebop lines: ii–V–I (op 0) or the rhythm-changes A section (op 1), chord tones on every beat.
-      const cs = op % 2 ? lcText(STANDARD_CHANGES.find((x) => x.id === 'rhythm-a')!.text).map((c) => transposeLc(c, key - 10)) : repeatLc(lcOf(key, PROGS.iivi), 2);
+      const cs = op % 2 ? lcText(transposeTextIn(STANDARD_CHANGES.find((x) => x.id === 'rhythm-a')!.text, key - 10, { key })) : repeatLc(lcOf(key, PROGS.iivi), 2);
       const line = ctLine(cs, rnd, { per: 2, every: 1, lo, hi, guide: true });
       return drillOf(s, tu, alt(line), { ...(op % 2 ? tt('Bebop lines: rhythm changes', 'קווי ביבופ: ריתם צ׳יינג׳ס') : tt('Bebop lines: ii–V–I', 'קווי ביבופ: ii–V–I')), chart: chartLc(cs), show: 'chart', evenness: false, bass: { rules: rulesFor(cs, 'downbeatCt', { every: 1 }) }, drums: { groove: 'swing' } });
     }
@@ -790,16 +791,18 @@ export function genImproNiche(s: DrillSpec, tu: Tuning): Drill {
     }
     case 'rhythm-solo': {
       // A solo chorus on the rhythm-changes A section (two chords a bar), landing on a chord tone of each.
-      const cs = lcText(STANDARD_CHANGES.find((x) => x.id === 'rhythm-a')!.text).map((c) => transposeLc(c, key - 10));
+      const cs = lcText(transposeTextIn(STANDARD_CHANGES.find((x) => x.id === 'rhythm-a')!.text, key - 10, { key }));
       return fin(cs, solo(cs, { guide: false }), tt('Solo chorus: rhythm changes', 'סבב סולו: ריתם צ׳יינג׳ס'));
     }
     case 'std-solo': {
       // A solo chorus on a standard, in its own key: a chord tone on every change.
+      // The key is an offset from the lead sheet (0 = the tune's own key, the first take).
       const st = STD_SOLO[op % STD_SOLO.length];
       const ch = STANDARD_CHANGES.find((x) => x.id === st.id)!;
-      const cs = lcText(ch.text);
-      const kn = `${keyNameOf(st.key, !!st.minor)}${st.minor ? 'm' : ''}`;
-      return fin(cs, solo(cs, { guide: false }), tt(`Solo chorus: ${ch.name}`, `סבב סולו: ${ch.name}`), { keyName: kn, keySig: SIG[st.minor ? mod(st.key + 3, 12) : st.key] });
+      const tonic = moved({ key: st.key, ...(st.minor ? { minor: true } : {}) }, key);
+      const cs = lcText(transposeTextIn(ch.text, key, tonic));
+      const kn = `${keyNameOf(tonic.key, !!tonic.minor)}${tonic.minor ? 'm' : ''}`;
+      return { ...fin(cs, solo(cs, { guide: false }), tt(`Solo chorus: ${ch.name}`, `סבב סולו: ${ch.name}`), { keyName: kn, keySig: SIG[tonic.minor ? mod(tonic.key + 3, 12) : tonic.key] }), tonic };
     }
     case 'trade4': {
       // Trading 4s with the drums: 4 bars of solo, 4 bars of the drummer's solo (the band lays out), back in on the 1.
@@ -1027,9 +1030,11 @@ function genLatin(s: DrillSpec, tu: Tuning): Drill {
     }
     case 'latin-jazz': {
       // Latin jazz on a minor standard: free choice, the root of every new chord anticipated on the "and" before it.
+      // The key is an offset from the lead sheet (0 = the tune's own key, the first take).
       const id = op % 2 ? 'song-father' : 'blue-bossa';
       const st = STANDARD_CHANGES.find((x) => x.id === id)!;
-      const cs = lcText(st.text).map((c) => ({ ...c, land: [0] }));
+      const tonic = moved({ key: id === 'song-father' ? 5 : 0, minor: true }, key);
+      const cs = lcText(transposeTextIn(st.text, key, tonic)).map((c) => ({ ...c, land: [0] }));
       const line: BN[] = [];
       let at = 0;
       cs.forEach((c) => {
@@ -1042,8 +1047,8 @@ function genLatin(s: DrillSpec, tu: Tuning): Drill {
       });
       line.push({ b: at - 0.5, d: 1.5, p: rootOf(tu, cs[0].root), ct: true });
       for (let i = 0; i < line.length - 1; i++) line[i].d = Math.min(line[i].d, line[i + 1].b - line[i].b);
-      const home = id === 'song-father' ? 5 : 0;
-      return drillOf(s, tu, alt(line), { ...tt(`Latin jazz: ${st.name}, anticipate the changes`, `ג׳אז לטיני: ${st.name}, להקדים את החילופים`), keyName: `${keyNameOf(home, true)}m`, keySig: SIG[mod(home + 3, 12)], chart: chartLc(cs), show: 'chart', evenness: false, bass: { rules: rulesFor(cs, 'target', { anticipate: 0.5 }) }, drums: { groove: 'tumbao' }, band: 'latin' });
+      const home = tonic.key;
+      return { ...drillOf(s, tu, alt(line), { ...tt(`Latin jazz: ${st.name}, anticipate the changes`, `ג׳אז לטיני: ${st.name}, להקדים את החילופים`), keyName: `${keyNameOf(home, true)}m`, keySig: SIG[mod(home + 3, 12)], chart: chartLc(cs), show: 'chart', evenness: false, bass: { rules: rulesFor(cs, 'target', { anticipate: 0.5 }) }, drums: { groove: 'tumbao' }, band: 'latin' }), tonic };
     }
   }
   throw new Error(`Unknown b-latin kind ${s.kind}`);

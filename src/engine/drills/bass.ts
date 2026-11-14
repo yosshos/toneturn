@@ -18,6 +18,7 @@ import { bandStyleOf } from './bassBand';
 import { GROOVES } from '../grooves';
 import { constantBars, drumHitsOnBars } from './bandTimeline';
 import { STANDARD_CHANGES } from '../standards';
+import { moved, restateKey, transposeTextIn } from '../stdKey';
 import { generateBassEar } from './bassEar';
 import { generateUpright } from './upright';
 import { generateBassNiche, IMPRO_NICHE, improNicheLevels, jazzFamilies, NICHE_EXAM, progFamilies } from './bassNiche';
@@ -110,7 +111,7 @@ function placeLine(tu: Tuning, line: BN[], o: { pos?: number; open?: boolean; sp
     // Final bass check: a jump from an open string straight up the neck was free (E1 open → E2 at fret 12 on the same
     // string, → G♯2 at fret 11 on the A string); after an open string the hand is near the nut, so the octave / 10th
     // shape there (D string fret 2, G string fret 1) is what bassists play — and what they pop.
-    if (a.f === 0 && b.f >= 7 && dt <= 0.5 + 1e-9) c += a.s === b.s ? 1.5 : 1;
+    if (a.f === 0 && b.f >= 7 && dt <= 0.5 + 1e-9) c += a.s === b.s ? 4 : 1;
     return c;
   };
   const cands = line.map(candsOf);
@@ -1394,29 +1395,38 @@ export function genWalk(s: DrillSpec, tu: Tuning): Drill {
       return drillOf(s, tu, alt(line), { en: 'Rhythm changes: two chords a bar', he: 'ריתם צ׳יינג׳ס: שני אקורדים בתיבה', chart: bars.map((b) => b.map((c) => chordName(key, c)).join(' ')), goal: { chordTonesOnBeats: true }, drums: { groove: 'swing' } });
     }
     case 'standard': {
-      // One chorus of a standard's changes in the tune's own key and feel (B13 / B18), chart only, judged by the rules.
+      // One chorus of a standard's changes in the tune's feel (B13 / B18), chart only, judged by the rules. The key is an
+      // offset from the lead sheet (0 = the tune's own key, the first take); the chart is moved and spelled for its key.
       const std = BASS_STD[op % BASS_STD.length];
       const st = STANDARD_CHANGES.find((x) => x.id === std.id) ?? STANDARD_CHANGES[0];
+      const tonic = moved({ key: std.key, ...(std.minor ? { minor: true } : {}) }, key);
+      const text = transposeTextIn(st.text, key, tonic);
+      const sk = key ? `:${key}` : '';
+      const rules = rulesFromText(text, std.feel === 'walk' ? 'walk' : 'chordTones');
       // The walker can pick a note the chart's own rules refuse (a 7th on a 6th chord): keep the line rule-safe.
-      const line = ruleSafe((k) => feelLine(tu, st.text, std.feel, k ? `b-std:${st.id}:${k}` : `b-walk:std:${st.id}`), rulesFromText(st.text, std.feel === 'walk' ? 'walk' : 'chordTones'), 4);
-      const bars = st.text.split('|').map((x) => x.trim());
-      const home = rootOf(tu, std.key);
+      const line = ruleSafe((k) => feelLine(tu, text, std.feel, k ? `b-std:${st.id}${sk}:${k}` : `b-walk:std:${st.id}${sk}`), rules, 4);
+      const bars = text.split('|').map((x) => x.trim());
+      const home = rootOf(tu, tonic.key);
       line.push({ b: bars.length * 4, d: 2, p: home, ct: true });
       const part = st.part.en === 'Whole form' || st.part.en.startsWith('Whole form') ? '' : ` (${st.part.en})`;
       const partHe = part ? ` (${st.part.he})` : '';
       const feel = FEEL_T[std.feel];
-      const kn = `${keyNameOf(std.key, !!std.minor)}${std.minor ? 'm' : ''}`;
-      return drillOf(s, tu, alt(line), {
-        en: `${st.name}${part}, ${feel.en}`,
-        he: `${STD_NAME_HE[st.name] ?? st.name}${partHe}, ${feel.he}`,
-        keyName: kn,
-        keySig: SIG[std.minor ? mod(std.key + 3, 12) : std.key],
-        chart: bars,
-        show: 'chart',
-        evenness: std.feel === 'walk',
-        bass: { rules: rulesFromText(st.text, std.feel === 'walk' ? 'walk' : 'chordTones') },
-        drums: { groove: std.feel === 'bossa' ? 'bossa' : std.feel === 'ballad' ? 'ballad-brush' : 'swing' },
-      });
+      const kn = `${keyNameOf(tonic.key, !!tonic.minor)}${tonic.minor ? 'm' : ''}`;
+      const nm = restateKey({ en: st.name, he: STD_NAME_HE[st.name] ?? st.name }, tonic);
+      return {
+        ...drillOf(s, tu, alt(line), {
+          en: `${nm.en}${part}, ${feel.en}`,
+          he: `${nm.he}${partHe}, ${feel.he}`,
+          keyName: kn,
+          keySig: SIG[tonic.minor ? mod(tonic.key + 3, 12) : tonic.key],
+          chart: bars,
+          show: 'chart',
+          evenness: std.feel === 'walk',
+          bass: { rules },
+          drums: { groove: std.feel === 'bossa' ? 'bossa' : std.feel === 'ballad' ? 'ballad-brush' : 'swing' },
+        }),
+        tonic,
+      };
     }
     case 'probe-walk': {
       // Placement task 4 (BASS_CURRICULUM §6): four bars of Dm7 – G7 – Cmaj7 at 100, chart only.

@@ -580,3 +580,12 @@ button.km-cell:focus-visible { outline: 2px solid var(--ink); outline-offset: 1p
 .km-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; min-width: 0; }
 .km-row .in-text { min-width: 0; }
 .km-row > .btn { flex-shrink: 0; white-space: nowrap; }
+/* A tune in any key (0.89+): long names (B♭maj7, E♭m7♭5) stay whole and four bars fit a 320-wide phone, so a 32-bar
+   chart keeps to one screen. */
+.chart-bar { min-width: 0; overflow: hidden; }
+.chart-bar b { overflow-wrap: normal; word-break: keep-all; }
+@media (max-width: 400px) {
+  .chart-bar { padding: 4px 4px; min-height: 0; gap: 0; }
+  .chart-bar b { font-size: 0.86rem; line-height: 1.2; }
+  .chart-bar span { letter-spacing: 0; font-size: 0.7rem; white-space: nowrap; }
+}

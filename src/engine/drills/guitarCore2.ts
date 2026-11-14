@@ -7,6 +7,7 @@
 //
 // Pure and deterministic. guitar.ts imports this file: guitar.ts helpers are only called inside functions.
 
+import { keyLabel, moved, standardHome } from '../stdKey';
 import type { Drill, DrillSpec, FamilyId, LevelExamTag } from './types';
 import type { SpecTemplate } from './generate';
 import { noteAt, type Tuning } from '../fretboard';
@@ -704,7 +705,10 @@ function genImpro2(s: DrillSpec, tu: Tuning): Drill {
         }
         prev = m;
       }
-      return finish(s, tu, evs, { title: t(`Chord-scale lines over ${std.name} (first 8 bars), a chord tone on every change${key ? ` · +${key}` : ''}`, `קווי סולם-אקורד על ${std.name} (8 התיבות הראשונות), צליל אקורד בכל החלפה${key ? ` · +${key}` : ''}`), bpm: 80, evenness: false, goal: { chordTonesOnBeats: true }, keySig: 'C' });
+      // The key is an offset from the lead sheet (0 = as written): the title names the key it lands in.
+      const tonic = moved(standardHome(std.id), key);
+      const kl = keyLabel(tonic);
+      return { ...finish(s, tu, evs, { title: t(`Chord-scale lines over ${std.name} (first 8 bars), a chord tone on every change · ${kl}`, `קווי סולם-אקורד על ${std.name} (8 התיבות הראשונות), צליל אקורד בכל החלפה · ${kl}`), bpm: 80, evenness: false, goal: { chordTonesOnBeats: true }, keySig: 'C' }), tonic };
     }
     case 'motif': {
       // A 2-beat motif (3rd – 4th – 5th – 3rd of each chord) moved through the form, displaced by a beat (op odd: an 8th) each bar.
