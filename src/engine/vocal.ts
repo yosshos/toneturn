@@ -583,6 +583,8 @@ export interface TimeSpec {
   /** Call and response: the app's call (beats) is played first, the singer copies it `answerAt` beats later. */
   call?: number[];
   answerAt?: number;
+  /** What to sing, when the feel's own instruction is not enough (odd-meter scat syllables, 3 against 2). */
+  say?: { en: string; he: string };
 }
 /** Band songs (F13, F14, F2 unaccompanied): a song of src/content/voiceSongs.ts or the songbook, phrase by phrase. */
 export interface SongSpec {

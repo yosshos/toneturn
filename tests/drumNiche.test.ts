@@ -48,9 +48,9 @@ const played = (hits: DrumTakeHit[]): PlayedNote[] => hits.map((h) => ({ pitch: 
 const judge = (d: Drill, bpm: number, hits: DrumTakeHit[]): TakeMetrics => withProg(analyzeDrumTake(d, bpm, hits), d, bpm, played(hits));
 
 describe('the new families: catalogue, symbols, path, badges', () => {
-  it('d-song 8, d-prog 10, d-count / d-notation / d-form 5, d-read to 10 — every item generates with notes inside the take', () => {
+  it('d-song 8, d-prog 11, d-count / d-notation / d-form 5, d-read to 10 — every item generates with notes inside the take', () => {
     const n = (id: string) => FAMS.find((f) => f.id === id)!.levels.length;
-    expect([n('d-song'), n('d-prog'), n('d-count'), n('d-notation'), n('d-form'), n('d-read')]).toEqual([8, 10, 5, 5, 5, 11]);
+    expect([n('d-song'), n('d-prog'), n('d-count'), n('d-notation'), n('d-form'), n('d-read')]).toEqual([8, 11, 5, 5, 5, 11]);
     for (const lv of levels())
       for (const d of levelDrills(lv, 'fifths-up')) {
         expect(d.notes.length, d.itemId).toBeGreaterThan(3);

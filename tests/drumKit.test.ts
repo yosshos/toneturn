@@ -165,7 +165,7 @@ describe('the drums course and its path', () => {
   });
   it('drum levels are path steps of the drums course only, each a "tech:" step rated as drum technique', () => {
     const tech = stepCatalogue().filter((s) => s.ladder?.instrument === 'drums');
-    expect(tech.length).toBe(169);
+    expect(tech.length).toBe(170); // + d-prog 11 (AUDIT-CONTENT-THEORY R-1/R-5)
     for (const s of tech) {
       expect(s.id.startsWith('tech:d-')).toBe(true);
       expect(s.sub).toBe('instrument/drum-tech');

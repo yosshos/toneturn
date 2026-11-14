@@ -2534,6 +2534,10 @@ export function bassFamilies(): GuitarFamilyDef[] {
       L('b-time', 8, 'Syncopation and anticipations', 'סינקופות והקדמות', [TM('synco')], K6, [70, 110], E8),
       L('b-time', 9, '16th syncopation', 'סינקופות בשש-עשריות', [TM('synco16', { perBeat: 4 }), TM('synco16', { perBeat: 4, option: 1 })], ANY, [60, 95], S16),
       L('b-time', 10, 'Odd meters: 5/4, 7/4, 7/8', 'משקלים אי-זוגיים: 5/4, 7/4, 7/8', [TM('odd', { option: 0 }), TM('odd', { option: 1 }), TM('odd', { option: 2, tempo: 140 })], K4, [70, 120], E8),
+      // AUDIT-CONTENT-THEORY R-1/R-5: cross-rhythm on both tracks (the prog track keeps b-poly / b-odd): the hemiola,
+      // displacement, then 5 and 7 over the bar (guitarMeter.ts 'gm-' kinds, the root on the lowest string).
+      L('b-time', 11, 'Hemiola: 3+3+2 over 4/4, big twos over 3/4', 'המיולה: 3+3+2 מעל 4/4, שתיים גדולות מעל 3/4', [TM('gm-hemi', { option: 0 }), TM('gm-hemi', { option: 1, tempo: 84 })], K4, [72, 120], '8ths'),
+      L('b-time', 12, 'Displacement, then 5 and 7 over the bar', 'הזזה, ואז 5 ו-7 על פני התיבה', [TM('gm-displace', { option: 0, tempo: 70 }), TM('gm-displace', { option: 1, tempo: 70 }), TM('gm-cross', { option: 0, tempo: 44 }), TM('gm-cross', { option: 1, tempo: 40 })], K4, [40, 90], '8ths / over the bar'),
     ]),
     fam('b-fret', 'Fretting hand', 'יד לוחצת', [
       L('b-fret', 1, 'One finger per fret, chromatic', 'אצבע לכל סריג, כרומטי', [FR('spider', { option: 0 })], [9, 7, 5], [60, 100], E8),

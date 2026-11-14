@@ -36,7 +36,12 @@ export type CellId =
   | 'eee'
   | 'dqr'
   // R8 quarter triplet
-  | 'qtrip';
+  | 'qtrip'
+  // Cross-rhythms over a whole bar (rhythm gaps R-1, poly-tap 5–7): 5 in the time of 4, 5 in 3, 7 in 4. Tap items only:
+  // never in the R1–R8 pools, the distractors or the build palette (`cross` marks them).
+  | 'q5'
+  | 'q5in3'
+  | 'q7';
 
 export interface CellDef {
   id: CellId;
@@ -48,9 +53,16 @@ export interface CellDef {
   compound?: boolean;
   /** Drawn as a triplet. */
   tuplet?: boolean;
+  /** A cross-rhythm tuplet over the whole cell: [notes, in the time of] (5:4, 5:3, 7:4). Ticks may be fractional. */
+  cross?: [number, number];
 }
 
 const ev = (...xs: [number, number, boolean?][]) => xs.map(([start, dur, rest]) => ({ start, dur, ...(rest ? { rest: true } : {}) }));
+/** `n` even notes over `beats` quarter beats (fractional ticks: 48 / 5 = 9.6). */
+function crossCell(id: CellId, n: number, beats: number): CellDef {
+  const d = (beats * TPQ) / n;
+  return { id, beats, events: Array.from({ length: n }, (_, k) => ({ start: k * d, dur: d })), level: 8, cross: [n, beats] };
+}
 
 export const CELLS: Record<CellId, CellDef> = {
   q: { id: 'q', beats: 1, events: ev([0, 12]), level: 1 },
@@ -72,6 +84,9 @@ export const CELLS: Record<CellId, CellDef> = {
   eee: { id: 'eee', beats: 1.5, events: ev([0, 6], [6, 6], [12, 6]), level: 7, compound: true },
   dqr: { id: 'dqr', beats: 1.5, events: ev([0, 18, true]), level: 7, compound: true },
   qtrip: { id: 'qtrip', beats: 2, events: ev([0, 8], [8, 8], [16, 8]), level: 8, tuplet: true },
+  q5: crossCell('q5', 5, 4),
+  q5in3: crossCell('q5in3', 5, 3),
+  q7: crossCell('q7', 7, 4),
 };
 
 export interface RhythmEvent {
@@ -197,7 +212,7 @@ export function distractors(r: Rhythm, level: RhythmLevel, count: number, seed: 
   const out: Rhythm[] = [];
   const seen = new Set([sig]);
   const sameLen = (c: CellId) =>
-    (Object.keys(CELLS) as CellId[]).filter((x) => Math.abs(CELLS[x].beats - CELLS[c].beats) < 1e-9 && CELLS[x].level <= level && x !== c && cellFits(x, m));
+    (Object.keys(CELLS) as CellId[]).filter((x) => Math.abs(CELLS[x].beats - CELLS[c].beats) < 1e-9 && CELLS[x].level <= level && x !== c && !CELLS[x].cross && cellFits(x, m));
   for (let tries = 0; tries < 400 && out.length < count; tries++) {
     const i = Math.floor(rnd() * r.cells.length);
     const alts = sameLen(r.cells[i]);
@@ -345,6 +360,9 @@ const NAMES: Record<CellId, { en: string; he: string }> = {
   eee: { en: 'three eighths', he: 'שלוש שמיניות' },
   dqr: { en: 'dotted quarter rest', he: 'הפסקת רבע מנוקד' },
   qtrip: { en: 'quarter-note triplet', he: 'טריולת רבעים' },
+  q5: { en: 'five in the time of four', he: 'חמש בזמן של ארבע' },
+  q5in3: { en: 'five in the time of three', he: 'חמש בזמן של שלוש' },
+  q7: { en: 'seven in the time of four', he: 'שבע בזמן של ארבע' },
 };
 const SYLLABLES: Record<CellId, { en: string; he: string }> = {
   q: { en: 'ta', he: 'טָה' },
@@ -366,6 +384,9 @@ const SYLLABLES: Record<CellId, { en: string; he: string }> = {
   eee: { en: 'ti-ti-ti', he: 'טִי-טִי-טִי' },
   dqr: { en: 'sh-sh', he: 'שְׁ-שְׁ' },
   qtrip: { en: 'ta-ta-ta', he: 'טָה-טָה-טָה' },
+  q5: { en: 'ta-ta-ta-ta-ta', he: 'טָה-טָה-טָה-טָה-טָה' },
+  q5in3: { en: 'ta-ta-ta-ta-ta', he: 'טָה-טָה-טָה-טָה-טָה' },
+  q7: { en: 'ta-ta-ta-ta-ta-ta-ta', he: 'טָה-טָה-טָה-טָה-טָה-טָה-טָה' },
 };
 
 export function describe(r: Rhythm, words: RhythmWords, lang: 'he' | 'en'): string {

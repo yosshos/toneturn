@@ -11,6 +11,8 @@ import { renderStimulus } from '../src/engine/lesson';
 const EXEMPT = new Set(['time-signatures', 'voice-leading', 'tempo', 'bh-keys',
   // 0.38: motor drills (repetition is the training; there is no answer to remember) …
   'click-subdivide', 'click-backbeat', 'gap-click', 'tempo-memory', 'poly-tap', 'drum-read', 'sight-tap',
+  // AUDIT-CONTENT-THEORY R-1/R-5: metric modulation and the hemiola, tapped (motor drills too).
+  'metric-tap', 'hemiola-tap',
   // … finite instrument geography (7 white keys, 12 frets a string) and fixed reference bands by design.
   'fret-notes', 'string-notes', 'fret-chords', 'fret-scales', 'key-notes', 'tone-hz', 'bass-notes', 'bass-shapes', 'bass-intervals', 'bass-scales',
   // PIANO_AUDIT §3: the piano's own geography (a note on a staff, a chord or a scale from a key).

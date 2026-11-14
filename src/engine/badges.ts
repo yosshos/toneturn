@@ -343,8 +343,8 @@ const subBadges: Badge[] = SUB_SKILLS.map((s, i) => {
 // Bass-course families (b-*) get milestone + exam badges (bassBadges below), not one title per level.
 // The pianist's ear (k-ear) gets milestones by items played back clean (keysEarBadges), not tempo-band titles.
 export type BadgeFamily = Exclude<FamilyId, 'custom' | BassFamilyId | DrumFamilyId | 'k-ear' | 'licks' | 'transcribe'>;
-export const PIANO_BADGE_FAMILIES: BadgeFamily[] = ['scales', 'arpeggios', 'cadences', 'fingers', 'control', 'advanced', 'harris', 'jazz', 'voicings', 'accomp', 'k-sixdim', 'k-bebop', 'k-reharm'];
-export const GUITAR_BADGE_FAMILIES: BadgeFamily[] = ['g-fretting', 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-lead', 'g-fingerstyle', 'g-flamenco', 'g-jazz', 'g-reading', 'g-impro', 'g-bass', 'g-ear', 'g-harris', 'g-prog'];
+export const PIANO_BADGE_FAMILIES: BadgeFamily[] = ['scales', 'arpeggios', 'cadences', 'fingers', 'control', 'advanced', 'harris', 'jazz', 'voicings', 'accomp', 'k-sixdim', 'k-bebop', 'k-reharm', 'k-rhythm'];
+export const GUITAR_BADGE_FAMILIES: BadgeFamily[] = ['g-fretting', 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-lead', 'g-fingerstyle', 'g-flamenco', 'g-jazz', 'g-reading', 'g-impro', 'g-bass', 'g-ear', 'g-harris', 'g-prog', 'g-meter'];
 export const BADGE_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES, ...GUITAR_BADGE_FAMILIES];
 /** Families whose levels together cover all 12 keys: one "Around the Clock" badge each (guitar list checked against guitarCatalog in tests). */
 export const KEYS_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES, 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-fingerstyle', 'g-jazz', 'g-reading', 'g-bass', 'g-ear', 'g-harris'];
@@ -379,6 +379,9 @@ export const FAMILY_NAME: Record<BadgeFamily, L> = {
   'g-ear': { en: "The guitarist's ear", he: 'השמיעה של הגיטריסט' },
   'g-harris': { en: 'Barry Harris on guitar', he: 'בארי האריס בגיטרה' },
   'g-prog': { en: 'Prog and fusion', he: 'פרוג ופיוז׳ן' },
+  // AUDIT-CONTENT-THEORY R-1/R-2/R-4: rhythm & meter families.
+  'k-rhythm': { en: 'Rhythm & meter', he: 'קצב ומשקל' },
+  'g-meter': { en: 'Meter & cross-rhythm', he: 'משקל ופולי-ריתמוס' },
 };
 // `icon` on every badge is a glyph kind of src/ui/Glyph.tsx (2026-11-12: no emoji left; the medal itself is BadgeArt).
 const FAMILY_ICON: Record<BadgeFamily, string> = {
@@ -413,6 +416,8 @@ const FAMILY_ICON: Record<BadgeFamily, string> = {
   'g-ear': 'guitarear',
   'g-harris': 'sixdim',
   'g-prog': 'oddmeter',
+  'k-rhythm': 'polylock',
+  'g-meter': 'polymeter',
 };
 // One title per catalogue level (piano 7; guitar as many as guitarCatalog has — tests check the counts).
 const FAMILY_TITLES: Record<BadgeFamily, [string, string][]> = {
@@ -448,6 +453,9 @@ const FAMILY_TITLES: Record<BadgeFamily, [string, string][]> = {
   'g-harris': [['Sixth-Diminished Guitarist', 'גיטריסט שש-מוקטן'], ['Scale-of-Chords Player', 'נגן סולם האקורדים'], ['Half-Step Ruler', 'שליט חצי הטון'], ['Three-to-Nine Player', 'נגן שלוש עד תשע'], ['Enclosure Player', 'נגן הכיתורים'], ["Barry's Guitarist", 'הגיטריסט של בארי']],
   'g-prog': [['Odd-Meter Riffs', 'ריפים במשקל אי־זוגי'], ['Grouping Shifter', 'מחליף הקבוצות'], ['Bar-Line Lander', 'נוחת על קו התיבה'], ['Polyrhythm Player', 'נגן הפוליריתמיקה'], ['Tempo Shifter', 'מחליף הטמפו'], ['Modal Riffer', 'ריפים מודאליים'], ['Fusion Liner', 'קווי פיוז׳ן'], ['Unison Locker', 'נועל היוניסון']],
   'g-bass': [['Bass Fretting', 'אצבוע בבס'], ['Bass Scales', 'סולמות בבס'], ['Groove Anchor', 'עוגן הגרוב'], ['Chord Outliner', 'משרטט האקורדים'], ['Octaves and Slap', 'אוקטבות וסלאפ'], ['Walking Bassist', 'בסיסט מהלך']],
+  // AUDIT-CONTENT-THEORY R-1/R-2/R-4: one title per level (keys 7, guitar 6).
+  'k-rhythm': [['Hands in Time', 'ידיים בזמן'], ['Three Against Two', 'שלוש נגד שתיים'], ['Hemiola Feel', 'תחושת המיולה'], ['Odd-Meter Vamp', 'וואמפ במשקל אי־זוגי'], ['Displaced Figure', 'הדמות המוזזת'], ['Five Against Four', 'חמש נגד ארבע'], ['New Beat', 'הפעמה החדשה']],
+  'g-meter': [['Strumming in Time', 'פריטה בזמן'], ['Across the Bar Line', 'מעבר לקו התיבה'], ['Odd-Meter Riffer', 'ריפר במשקל אי־זוגי'], ['Shifted Riff', 'הריף המוזז'], ['Cross-Rhythm Player', 'נגן הפולי־ריתמוס'], ['Tempo Pivot', 'ציר הטמפו']],
 };
 /** Number of level badges of a family (piano 7; guitar = its guitarCatalog levels). */
 export const familyLevelCount = (f: string): number => FAMILY_TITLES[f as BadgeFamily]?.length ?? 7;

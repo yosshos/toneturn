@@ -116,6 +116,15 @@ function secondTag(drill: Drill): Tags[number] | null {
   if (f === 'g-harris') return { skill: 'chords', sub: 'chords/barry', w: 0.3 };
   if (f === 'g-jazz') return drill.listen ? { skill: 'cadences', sub: 'cadences/progression', w: 0.4 } : { skill: 'chords', sub: 'chords/voicing', w: 0.3 };
   if (f === 'g-prog') return drill.tempoMap ? { skill: 'tempo', sub: 'tempo/compare', w: 0.3 } : drill.spec.kind === 'poly' ? { skill: 'timing', sub: 'timing/poly', w: 0.3 } : drill.pulse === 8 || drill.meters ? { skill: 'meter', sub: 'meter/odd', w: 0.3 } : { skill: 'timing', sub: 'timing/subdivide', w: 0.2 };
+  // AUDIT-CONTENT-THEORY R-1/R-2/R-4/R-5: rhythm & meter on the keys and the guitar's core path.
+  if (f === 'k-rhythm' || f === 'g-meter') {
+    const k = drill.spec.kind;
+    if (drill.tempoMap) return { skill: 'tempo', sub: 'tempo/compare', w: 0.3 };
+    if (/hemi/.test(k)) return { skill: 'meter', sub: 'meter/hemiola', w: 0.3 };
+    if (/poly|cross/.test(k)) return { skill: 'timing', sub: 'timing/poly', w: 0.3 };
+    if (drill.pulse === 8 || /odd/.test(k)) return { skill: 'meter', sub: 'meter/odd', w: 0.3 };
+    return { skill: 'timing', sub: 'timing/subdivide', w: 0.3 };
+  }
   if (f === 'cadences') return { skill: 'cadences', sub: 'cadences/cadence', w: 0.3 };
   if (f === 'voicings') return { skill: 'chords', sub: 'chords/voicing', w: 0.3 };
   if (f === 'harris') return { skill: 'chords', sub: 'chords/barry', w: 0.2 };

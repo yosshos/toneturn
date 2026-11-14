@@ -30,6 +30,10 @@ const CELL_NOTES: Record<CellId, { d: string; dot?: boolean; rest?: boolean }[]>
   eee: [{ d: '8' }, { d: '8' }, { d: '8' }],
   dqr: [{ d: 'q', rest: true, dot: true }],
   qtrip: [{ d: 'q' }, { d: 'q' }, { d: 'q' }],
+  // Cross-rhythms over the bar (rhythm gaps R-1): quarters under a 5:4 / 5:3 / 7:4 bracket.
+  q5: Array.from({ length: 5 }, () => ({ d: 'q' })),
+  q5in3: Array.from({ length: 5 }, () => ({ d: 'q' })),
+  q7: Array.from({ length: 7 }, () => ({ d: 'q' })),
 };
 
 const beamable = (d: string) => d === '8' || d === '16';
@@ -101,7 +105,7 @@ export function RhythmStaff({ rhythm, label, height = 96, compact = false, bare 
           beats += CELLS[c].beats;
         }
         const firstExtra = bare ? 0 : compact ? 30 : 70;
-        const barW = bare ? 40 + 22 * rhythm.cells.reduce((n, c) => n + CELL_NOTES[c].length, 0) : (compact ? 150 : 190) + (rhythm.cells.some((c) => c === 'ssss' || c === 'es' || c === 'se') ? 50 : 0);
+        const barW = bare ? 40 + 22 * rhythm.cells.reduce((n, c) => n + CELL_NOTES[c].length, 0) : (compact ? 150 : 190) + (rhythm.cells.some((c) => c === 'ssss' || c === 'es' || c === 'se') ? 50 : 0) + (rhythm.cells.some((c) => CELLS[c].cross) ? 40 : 0);
         const width = firstExtra + barW * bars.length + 10;
         const renderer = new VF.Renderer(el, VF.Renderer.Backends.SVG);
         renderer.resize(width, height);
@@ -129,6 +133,8 @@ export function RhythmStaff({ rhythm, label, height = 96, compact = false, bare 
             });
             notes.push(...cellNotes);
             if (CELLS[c].tuplet) tuplets.push(new VF.Tuplet(cellNotes, { num_notes: 3, notes_occupied: 2, ratioed: false }));
+            const cross = CELLS[c].cross;
+            if (cross) tuplets.push(new VF.Tuplet(cellNotes, { num_notes: cross[0], notes_occupied: cross[1], ratioed: true }));
             // Beam consecutive eighths / sixteenths inside the cell.
             let run: InstanceType<VF['StaveNote']>[] = [];
             const flush = () => {

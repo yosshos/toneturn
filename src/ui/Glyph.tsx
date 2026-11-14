@@ -896,6 +896,8 @@ Object.assign(GLYPHS, {
   ),
   dsform: mark('D.S.'),
 });
+// AUDIT-CONTENT-THEORY R-1/R-2/R-4: rhythm & meter on the keys (5:4), meter & cross-rhythm on the guitar (3:2).
+Object.assign(GLYPHS, { krhythm: mark('5:4'), gmeter: mark('3:2') });
 // PIANO_JAZZ P2 path wiring: a repertoire step (a lead sheet with a bookmark), the Transcription Race as a bonus step
 // (a staff with a stopwatch — the transcription coach keeps its pencil) and the Reharm Spotter as a bonus step (a chord,
 // a magnifier on the changed one — the k-reharm family keeps its chord-to-chord arrow).

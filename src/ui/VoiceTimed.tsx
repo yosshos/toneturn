@@ -257,7 +257,7 @@ export function TimedSession({ t, settings, range, level, items, onExit, onProgr
     );
 
   const instr = (() => {
-    if (item.kind === 'time') return L(TIME_INSTR[item.time!.feel]);
+    if (item.kind === 'time') return L(item.time!.say ?? TIME_INSTR[item.time!.feel]);
     if (item.kind === 'scat') return L(SCAT_INSTR[item.scat!.mode]);
     const s = item.song!;
     if (s.mine) return L(SONG_INSTR.mine);

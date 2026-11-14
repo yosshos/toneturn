@@ -325,6 +325,8 @@ const KEYS_JAZZ_LATER: Record<string, number> = { 'k-sixdim': 9, 'k-bebop': 6, '
  * ear, Alberti / cadences one step later) and the jazz and advanced families start after a few scale levels.
  */
 export const KEYS_LATER: Record<string, number> = { scales: 0, fingers: 0, 'k-ear': 0, arpeggios: 1, cadences: 1, control: 1, accomp: 2, voicings: 3, harris: 4, jazz: 4, advanced: 6, ...KEYS_JAZZ_LATER };
+// AUDIT-CONTENT-THEORY R-1/R-2/R-5: rhythm & meter on the keys starts after the first scale levels.
+KEYS_LATER['k-rhythm'] = 3;
 /**
  * VOICE_CURRICULUM §8: every vocal program's level 1 sat at diff(0) = 700 — Barry Harris L1, harmony L1 and modes L1
  * next to "hold a note" L1. Now the families start by stage (A Song Singer → D Jazz Artist): breath, pitch and songs
@@ -337,6 +339,8 @@ export const VOICE_LATER: Record<string, number> = {
 };
 /** Guitar families' teaching rank inside a grade (GUITAR_DEEPENING §5): the hands and chords first, the ear and improvising after. */
 export const GUITAR_RANK: Record<string, number> = { 'g-fretting': 0, 'g-chords': 1, 'g-rhythm': 2, 'g-fingerstyle': 2, 'g-picking': 3, 'g-flamenco': 3, 'g-scales': 4, 'g-jazz': 4, 'g-ear': 5, 'g-prog': 5, 'g-legato': 6, 'g-harris': 6, 'g-lead': 7, 'g-arps': 8, 'g-reading': 9, 'g-impro': 10 };
+// AUDIT-CONTENT-THEORY R-4: meter & cross-rhythm with rhythm guitar.
+GUITAR_RANK['g-meter'] = 2;
 /** A guitar level's path difficulty from its grade (0 = Debut … 9 = beyond grade 8): 700 + 90·grade + 8·rank (rank ≤ 10, so a grade always outranks the rank). */
 export const guitarPathDifficulty = (family: string, grade: number): number => 700 + 90 * grade + 8 * (GUITAR_RANK[family] ?? 5);
 /** Every level of every technique family and vocal program as a path step (0.61, owner: technique inside the course path). */

@@ -53,6 +53,16 @@ export function applyClicks(clicks: { t: number; accent: boolean }[], pattern: C
   const bars = Math.ceil(body.length / per);
   const randomOn = pattern.kind === 'random-gaps' ? gapBars(pattern.seed, bars) : null;
   const out: { t: number; accent: boolean }[] = [];
+  if (pattern.kind === 'modulate') {
+    // The old pulse up to the pivot, then the new pulse (its own accents) to the end of the passage.
+    const t0 = body.length ? body[0].t : 0;
+    body.forEach((c, j) => {
+      if (j < pattern.atBeat - 1e-9) out.push({ t: c.t, accent: c.accent });
+    });
+    const every = Math.max(0.1, pattern.every);
+    for (let k = 0; pattern.atBeat + k * every < body.length - 1e-9; k++) out.push({ t: t0 + (pattern.atBeat + k * every) * pulse, accent: k % 4 === 0 });
+    return [...head, ...out];
+  }
   body.forEach((c, j) => {
     const bar = Math.floor(j / per);
     const beat = j % per;
@@ -80,6 +90,8 @@ export function applyClicks(clicks: { t: number; accent: boolean }[], pattern: C
       }
       case 'random-gaps':
         if (randomOn![bar]) out.push({ t: c.t, accent: c.accent });
+        break;
+      default:
         break;
     }
   });
