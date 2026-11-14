@@ -318,7 +318,9 @@ const DRUM_LATER: Record<string, number> = { 'd-funk': 3, 'd-shuffle': 3, 'd-mid
  * Harris lines' block chords, bebop lines after guide tones and the first Harris lines, jazz-piano harmony after the
  * rootless voicings. (With the jazz emphasis the classical families are hidden, so they arrive sooner on that path.)
  */
-const KEYS_JAZZ_LATER: Record<string, number> = { 'k-sixdim': 9, 'k-bebop': 6, 'k-reharm': 6 };
+const KEYS_JAZZ_LATER: Record<string, number> = { 'k-sixdim': 9, 'k-bebop': 6, 'k-reharm': 6,
+  // Voice leading (AUDIT-CONTENT-THEORY §ה.2, TP-6 at 900–1600): level 1 after the first chord levels (~910), drop 2 ~1260.
+  'k-vl': 3 };
 /**
  * PIANO_AUDIT I2: every piano family's level 1 sat at the same difficulty as scales L1 — octaves (advanced L1), Barry
  * Harris lines and rootless voicings came in the first unit. Now the basics lead (scales, five-finger, the pianist's

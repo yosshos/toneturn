@@ -18,6 +18,9 @@ export type FamilyId =
   | 'k-sixdim'
   | 'k-bebop'
   | 'k-reharm'
+  // Voice leading as a performed skill (AUDIT-CONTENT-THEORY §ה.2, VL-1…VL-8): piano and guitar.
+  | 'k-vl'
+  | 'g-vl'
   | 'custom' // the player's own drills
   // Licks & transcription (docs/SPEC-LICKS-TRANSCRIPTION.md): lick items per key / instrument, transcribed phrases.
   | 'licks'
@@ -365,6 +368,8 @@ export interface DrillGoal {
   /** The prog engine's measures (progAnalyze.ts `withProg`); each can only lower the verdict. */
   prog?: ProgGoal;
   free?: { windows: [number, number][]; scale: { from: number; to: number; pcs: number[] }[]; minPerBar: number; model: { beat: number; dur: number; pitch: number; /** Guitar: where the model's note sits (tab). */ string?: number; fret?: number }[] };
+  /** Voice leading (k-vl / g-vl, voiceLead.ts): the learner chooses each voicing from chord symbols; graded by type + smallest motion. */
+  vl?: import('./voiceLead').VLGoal;
 }
 
 /** Prog pass rules (PROG_ENGINE.md): metric modulation, unison lock, the road map. Absent fields are not checked. */
@@ -599,7 +604,7 @@ export interface NoteResult {
 /** Everything measured in one take (spec AI §6). Missing metrics are null (not applicable to the drill). */
 export interface TakeMetrics {
   /** Piano by microphone (PIANO_AUDIT A2): what the goal needs that the mic can't measure — the take doesn't count. */
-  unmeasured?: ('dynamics' | 'articulation' | 'pedal')[];
+  unmeasured?: ('dynamics' | 'articulation' | 'pedal' | 'voicing')[];
   bpm: number;
   nps: number;
   accuracy: number;
@@ -650,6 +655,8 @@ export interface TakeMetrics {
   drum?: DrumMetrics;
   /** The prog engine (progAnalyze.ts): tempo-ratio checks, unison lock, the road-map report. */
   prog?: import('./progAnalyze').ProgMetrics;
+  /** Voice leading (voiceLeadAnalyze.ts): the voicing chosen at each chord and its grade. */
+  vl?: import('./voiceLeadAnalyze').VLReport;
 }
 
 /** What a drum take measured (DRUMS_CURRICULUM §3.6). */

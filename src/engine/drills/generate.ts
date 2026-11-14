@@ -4,6 +4,7 @@
 import { generateGuitar } from './guitar';
 import { generateDrums } from './drums';
 import { chartKind, type ChartMode, type ChartVoicing, type CompRhythm } from './chartDrills';
+import { genVoiceLead, pianoVoiceLeadFamily } from './voiceLeadDrills';
 import { chartDrillData, roles } from './chartDrills';
 import { applyForm, type FormPlan, type FormSection } from './roadmap';
 import { parseChart } from '../charts';
@@ -4453,6 +4454,8 @@ export function generate(spec: DrillSpec): Drill {
   if (s.family === 'k-sixdim') return genSixDim(s);
   if (s.family === 'k-bebop') return genBebop(s);
   if (s.family === 'k-reharm') return genReharm(s);
+  // Voice leading as a performed skill (AUDIT-CONTENT-THEORY §ה.2): voiceLeadDrills.ts.
+  if (s.family === 'k-vl') return genVoiceLead(s);
   if (s.kind.startsWith('chart~')) return genChart(s);
   switch (s.kind) {
     case 'scale':
@@ -5378,5 +5381,7 @@ export function catalog(): FamilyDef[] {
         E(9, 'Two parts: melody and bass', 'שני קולות: מנגינה ובס', [{ ...ke('two-part'), hands: 'RL' }, { ...ke('two-part', 1), hands: 'RL' }], [0, 7, 5, 2, 10]),
       ],
     },
+    // Voice leading as a performed skill (AUDIT-CONTENT-THEORY §ה.2, VL-1…VL-7): voiceLeadDrills.ts.
+    pianoVoiceLeadFamily(),
   ];
 }

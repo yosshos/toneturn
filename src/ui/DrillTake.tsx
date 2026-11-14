@@ -676,7 +676,7 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
       )}
       {pianoBlocked && (
         <p className="kit-warn" data-piano-needs-midi="1">
-          {lang === 'he' ? 'התרגיל הזה צריך מקלדת MIDI: המיקרופון לא מודד עוצמה, שחרור קלידים או פדל.' : 'This one needs a MIDI keyboard: the microphone can’t measure loudness, key release or the pedal.'}
+          {drill.goal.vl ? (lang === 'he' ? 'התרגיל הזה צריך מקלדת MIDI: המיקרופון לא שומע איזה קול בחרתם.' : 'This one needs a MIDI keyboard: the microphone can’t hear which voicing you chose.') : lang === 'he' ? 'התרגיל הזה צריך מקלדת MIDI: המיקרופון לא מודד עוצמה, שחרור קלידים או פדל.' : 'This one needs a MIDI keyboard: the microphone can’t measure loudness, key release or the pedal.'}
         </p>
       )}
       <div className={`drill-beat ${phase}`} aria-live="polite" dir="ltr">
