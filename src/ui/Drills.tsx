@@ -4,6 +4,7 @@
 import { SONGBOOK } from '../content/songbook';
 import { COMMON_CHORDS, keyName as songKeyName, songFit } from '../engine/songChords';
 import { recordTakeAnalysis } from '../storage/analysis';
+import { refreshProfile } from '../storage/profile';
 import { levelRecord } from '../engine/drumRecords';
 import { checkRules } from '../engine/improvRules';
 import { parseChart } from '../engine/charts';
@@ -815,7 +816,8 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
     setTake((t) => t + 1);
   };
   const done = (m: TakeMetrics, played: PlayedNote[]) => {
-    void recordTakeAnalysis(drill, m, bpm);
+    // The take also moves the player profile's timeline (SPEC-AI §8).
+    void recordTakeAnalysis(drill, m, bpm).then(() => refreshProfile()).catch(() => {});
     if (drill.freeAbove !== undefined && drill.chart?.length) {
       const free = played.filter((p) => p.pitch >= drill.freeAbove!).map((p) => ({ start: p.on / 1000, end: (p.off ?? p.on + 200) / 1000, midi: p.pitch }));
       const r = checkRules(free, parseChart(drill.chart.join(' | '), drill.meter), drill.meter, bpm, { note: 'scale', interval: null, rhythm: null });

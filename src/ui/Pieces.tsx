@@ -3,6 +3,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { recordTakeAnalysis } from '../storage/analysis';
+import { refreshProfile } from '../storage/profile';
 import { unzipMxl } from '../engine/leadsheet';
 import { parseMidi, parseMusicXml, type Piece } from '../engine/piece/score';
 import { barMastery, initPlan, maintOf, nextTask, planProgress, recordRep, reviewDue, startDay, type CoachEvent, type PlanState, type Task } from '../engine/piece/coach';
@@ -262,7 +263,7 @@ function PiecePractice({ settings, sp, onSave, onBack, onMinutes }: { settings: 
   };
   const onTake = (m: TakeMetrics) => {
     if (!task) return;
-    if (drill) void recordTakeAnalysis(drill, m, task.tempo);
+    if (drill) void recordTakeAnalysis(drill, m, task.tempo).then(() => refreshProfile()).catch(() => {});
     const res = repFromTake(p, task.from, m);
     const r = recordRep(plan, task, res, new Date());
     if (r.state.log[r.state.log.length - 1]?.clean) clean.current++;

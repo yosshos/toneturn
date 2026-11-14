@@ -13,6 +13,8 @@ import { loadPieces, type StoredPiece } from './Pieces';
 import { troubleBars } from '../engine/piece/coach';
 import { showsInsight } from '../engine/analysis/insightCards';
 import type { CourseId } from '../engine/courses';
+import { refreshProfile } from '../storage/profile';
+import type { Profile, ProfileAction, ProfileSource } from '../engine/analysis/profile';
 
 const TX = {
   en: {
@@ -20,6 +22,7 @@ const TX = {
     tech: 'Technique', hands: 'Hand map', handsHint: 'Each finger’s loudness against the hand’s average', keys: 'Key map', keysHint: 'Misses by key (darker = weaker)',
     groove: 'Groove fingerprint', grooveHint: 'Where your notes land against the beat (− early, + late), and how wide they spread',
     conf: 'Confusion map', confHint: 'The pairs you mix up most', boss: 'Practice this pair', trouble: 'Trouble bars', practise: 'Practice', none: 'Not enough data yet — keep practicing and this fills in.',
+    profile: 'Your player profile', profileHint: 'From everything measured so far — a pattern shows only after it repeats.', strengths: 'Strengths', patterns: 'Recurring patterns', gone: 'Gone since you practised', isNew: 'new', weeksN: '{n} weeks running', building: 'Your profile builds as you practise: a few measured sessions and the first patterns appear.', clear: 'No recurring pattern right now.',
     early: 'early', late: 'late', back: 'Back', sub: { beat: 'Beats', '8': 'Eighths', '16': 'Sixteenths', trip: 'Triplets' } as Record<string, string>, bars: 'bars', weeks: 'Your timing by week', train: 'Train your groove',
   },
   he: {
@@ -27,6 +30,7 @@ const TX = {
     tech: 'טכניקה', hands: 'מפת ידיים', handsHint: 'עוצמת כל אצבע ביחס לממוצע של היד', keys: 'מפת סולמות', keysHint: 'החטאות לפי סולם (כהה = חלש)',
     groove: 'טביעת הגרוב', grooveHint: 'איפה הצלילים שלכם נוחתים ביחס לפעמה (− מוקדם, + מאוחר), וכמה הם מתפזרים',
     conf: 'מפת בלבולים', confHint: 'הזוגות שאתם מבלבלים הכי הרבה', boss: 'לתרגל את הזוג', trouble: 'תיבות בעייתיות', practise: 'לתרגל', none: 'עוד אין מספיק נתונים — המשיכו להתאמן וזה יתמלא.',
+    profile: 'פרופיל הנגן שלכם', profileHint: 'מכל מה שנמדד עד עכשיו — דפוס מופיע רק אחרי שהוא חוזר.', strengths: 'חוזקות', patterns: 'דפוסים חוזרים', gone: 'נעלמו מאז שתרגלתם', isNew: 'חדש', weeksN: '{n} שבועות ברצף', building: 'הפרופיל נבנה תוך כדי תרגול: עוד כמה תרגולים מדודים והדפוסים הראשונים יופיעו.', clear: 'אין כרגע דפוס חוזר.',
     early: 'מוקדם', late: 'מאוחר', back: 'חזרה', sub: { beat: 'פעמות', '8': 'שמיניות', '16': 'שש־עשריות', trip: 'טריולות' } as Record<string, string>, bars: 'תיבות', weeks: 'התזמון שלכם לפי שבוע', train: 'לאמן את הגרוב',
   },
 };
@@ -40,6 +44,7 @@ export function InsightsScreen({ lang, progress, onBack, onTopic, onDrills, onPi
   const [groove, setGroove] = useState<GrooveModel | null>(null);
   const [conf, setConf] = useState<ConfusionMap | null>(null);
   const [pieces, setPieces] = useState<StoredPiece[]>([]);
+  const [profile, setProfile] = useState<Profile | null>(null);
   useEffect(() => {
     void loadModel().then(setModel);
     void loadGroove().then(setGroove);
@@ -48,7 +53,13 @@ export function InsightsScreen({ lang, progress, onBack, onTopic, onDrills, onPi
   }, []);
   const ratings = ratingsOf(progress);
   const ei = earIndex(ratings);
-  const hist = earIndexHistory(progress.ratingEvents ?? []).slice(-30);
+  const fullHist = earIndexHistory(progress.ratingEvents ?? []);
+  const hist = fullHist.slice(-30);
+  useEffect(() => {
+    void refreshProfile(fullHist).then(setProfile, () => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const act = (a?: ProfileAction) => (!a ? undefined : a.kind === 'topic' ? () => onTopic(a.id, a.level) : a.kind === 'groove' ? onGroove : onDrills);
   const fs = model ? findings(model) : [];
   const gf = groove ? grooveFindings(groove) : [];
   const cps = conf ? topConfusions(conf) : [];
@@ -62,6 +73,8 @@ export function InsightsScreen({ lang, progress, onBack, onTopic, onDrills, onPi
         </button>
         <h1>{tx.title}</h1>
       </header>
+
+      {profile && <ProfileCard profile={profile} lang={lang} tx={tx} shows={(src) => on(SOURCE_CARD[src])} act={act} />}
 
       {on('ear-index') && (
       <section className="set-card in-ear" data-ear-index={ei?.r ?? ''}>
@@ -184,6 +197,82 @@ export function InsightsScreen({ lang, progress, onBack, onTopic, onDrills, onPi
         </section>
       )}
     </main>
+  );
+}
+
+const SOURCE_CARD: Record<ProfileSource, Parameters<typeof showsInsight>[0]> = { technique: 'technique', groove: 'groove', confusions: 'confusions', ear: 'ear-index' };
+
+/** The player profile (SPEC-AI §8): strengths, recurring patterns with their week streak, and patterns that went away. */
+function ProfileCard({ profile, lang, tx, shows, act }: { profile: Profile; lang: 'en' | 'he'; tx: (typeof TX)['en']; shows: (s: ProfileSource) => boolean; act: (a?: ProfileAction) => (() => void) | undefined }) {
+  const strengths = profile.strengths.filter((r) => shows(r.source)).slice(0, 2);
+  const patterns = profile.patterns.filter((r) => shows(r.source)).slice(0, 3);
+  const gone = profile.gone.filter((r) => shows(r.source)).slice(0, 2);
+  const empty = !strengths.length && !patterns.length && !gone.length;
+  return (
+    <section className="set-card in-profile" data-profile={profile.ready ? 'ready' : 'building'}>
+      <h2>{tx.profile}</h2>
+      <small className="field-hint">{tx.profileHint}</small>
+      {empty ? (
+        <p className="field-hint">{profile.ready ? tx.clear : tx.building}</p>
+      ) : (
+        <>
+          {strengths.length > 0 && (
+            <>
+              <h3 className="in-sub">{tx.strengths}</h3>
+              <ul className="in-list">
+                {strengths.map((r) => (
+                  <li key={r.id} data-profile-strength={r.id}>
+                    <span className="in-text">
+                      <b>{r.text[lang]}</b>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+          {patterns.length > 0 && (
+            <>
+              <h3 className="in-sub">{tx.patterns}</h3>
+              <ul className="in-list">
+                {patterns.map((r) => {
+                  const go = act(r.action);
+                  return (
+                    <li key={r.id} data-profile-pattern={r.id} data-weeks={r.weeks}>
+                      <span className="in-text">
+                        <b>{r.text[lang]}</b>
+                        <small>
+                          <span className={`in-tag ${r.status}`}>{r.status === 'recurring' ? tx.weeksN.replace('{n}', String(r.weeks)) : tx.isNew}</span>
+                          {r.note ? ` · ${r.note[lang]}` : ''}
+                        </small>
+                      </span>
+                      {go && (
+                        <button className="btn ghost small" onClick={go}>
+                          {tx.practise}
+                        </button>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
+          )}
+          {gone.length > 0 && (
+            <>
+              <h3 className="in-sub">{tx.gone}</h3>
+              <ul className="in-list">
+                {gone.map((g) => (
+                  <li key={g.id} className="in-gone" data-profile-gone={g.id}>
+                    <span className="in-text">
+                      <s>{g.text[lang]}</s>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </>
+      )}
+    </section>
   );
 }
 

@@ -1,6 +1,8 @@
 import { Toni } from './Toni';
 import { Icon } from './icons';
 import { sessionInsight } from '../engine/coach';
+import { pairWeeks } from '../engine/analysis/profile';
+import { loadProfileHistory, refreshProfile } from '../storage/profile';
 import { LevelStatsLine } from './LevelStats';
 import { RatingCard } from './Rating';
 import type { RatingChange } from '../engine/rating';
@@ -163,9 +165,12 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
         const answered = s.records.filter((r) => r.attempts.length > 0);
         const ins = sessionInsight(s.lesson.questions, misses, answered.filter((r) => r.attempts[0]?.correct).length, answered.length, lang, playerName ?? null);
         return (
-          <p className={`coach-insight ${ins.kind}`} data-insight={ins.kind}>
-            {ins.kind === 'flawless' && fl.score < 100 ? t.flawlessNotFast : ins.text}
-          </p>
+          <>
+            <p className={`coach-insight ${ins.kind}`} data-insight={ins.kind}>
+              {ins.kind === 'flawless' && fl.score < 100 ? t.flawlessNotFast : ins.text}
+            </p>
+            {ins.pair && <PairStreak pair={ins.pair} lang={lang} />}
+          </>
         );
       })()}
       <div className={`fluency-score s${stars}`} data-score={fl.score} aria-label={`${t.sectionScore}: ${fl.score}`}>
@@ -363,5 +368,23 @@ function LevelBar({ t, before, after }: { t: Strings; before: number; after: num
         <span style={{ width: `${Math.round(b.pct * 100)}%`, ['--from' as string]: up ? '0%' : `${Math.round(a.pct * 100)}%` }} />
       </span>
     </section>
+  );
+}
+
+/** After the session (SPEC-AI §8): when today's tricky pair has shown on the profile for weeks, say so — a pattern, not a slip. */
+function PairStreak({ pair, lang }: { pair: { topic: string; a: string; b: string }; lang: 'en' | 'he' }) {
+  const [weeks, setWeeks] = useState(0);
+  useEffect(() => {
+    let live = true;
+    void refreshProfile().then(() => loadProfileHistory()).then((h) => live && setWeeks(pairWeeks(h, pair.topic, pair.a, pair.b)), () => {});
+    return () => {
+      live = false;
+    };
+  }, [pair.topic, pair.a, pair.b]);
+  if (weeks < 2) return null;
+  return (
+    <p className="field-hint coach-streak" data-pair-weeks={weeks}>
+      {lang === 'en' ? `This pair has come back ${weeks} weeks running — it's on your profile in Insights.` : `הזוג הזה חוזר כבר ${weeks} שבועות ברצף — הוא מופיע בפרופיל שלכם בתובנות.`}
+    </p>
   );
 }

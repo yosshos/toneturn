@@ -223,11 +223,17 @@ const TOPIC_CONTRAST: Record<string, { en: string; he: string }> = {
 export interface SessionInsight {
   kind: 'flawless' | 'pair' | 'encourage';
   text: string;
+  /** For a pair: its topic and the two answers in English (the confusion map's keys), to find it on the profile timeline. */
+  pair?: { topic: string; a: string; b: string };
 }
 
 const SEQUENCE_KINDS = new Set<Question['kind']>(['degree-seq', 'name-seq', 'sing-seq', 'sing-run', 'rhythm-read', 'rhythm-dict', 'place']);
 
 /** The confusion that came up most, or praise. `misses`: [right answer, given] per wrong try. */
+const QUAL_EN: Record<string, string> = { maj: 'major', min: 'minor', dim: 'diminished', aug: 'augmented' };
+/** An answer's English label as the confusion map keeps it (storage/confusion answerLabel). */
+const name2en = (q: Question, v: Answer): string => (q.kind === 'choice' ? (q.names[String(v)]?.en ?? String(v)) : q.kind === 'quality' ? (QUAL_EN[String(v)] ?? String(v)) : String(v));
+
 export function sessionInsight(qs: Question[], misses: { q: number; given: Answer }[], firstTry: number, total: number, l: Lang, name: string | null): SessionInsight {
   if (total > 0 && firstTry === total)
     return { kind: 'flawless', text: withName(l === 'en' ? 'Flawless{n}! Every answer right the first time.' : 'מושלם{n}! כל התשובות נכונות בניסיון הראשון.', name, l) };
@@ -254,7 +260,8 @@ export function sessionInsight(qs: Question[], misses: { q: number; given: Answe
     };
     const head = l === 'en' ? `Your tricky pair today: ${cut(top.q.answer)} vs ${cut(top.given)} (${top.n} times).` : `הזוג המבלבל שלכם היום: ${cut(top.q.answer)} מול ${cut(top.given)} (${top.n} פעמים).`;
     const why = head.split(/\s+/).length <= 14 ? revealCoach(top.q, top.given, l) : null;
-    return { kind: 'pair', text: why ? `${head} ${why}` : head };
+    const topic = top.q.kind === 'choice' ? top.q.topic : top.q.kind;
+    return { kind: 'pair', text: why ? `${head} ${why}` : head, pair: { topic, a: name2en(top.q, top.q.answer), b: name2en(top.q, top.given) } };
   }
   const pct = total ? firstTry / total : 0;
   const en = pct >= 0.8 ? 'Strong session{n} — your ear is sharp today.' : pct >= 0.5 ? 'Good work{n}. Every miss you hear back makes the next one easier.' : 'Tough one{n} — that is exactly how ears grow. Try it again tomorrow and watch it click.';

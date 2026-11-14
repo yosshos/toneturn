@@ -2336,3 +2336,9 @@ button.chip.on {
   width: auto;
   margin-inline: auto;
 }
+/* The player profile (SPEC-AI §8) */
+.in-sub { margin: 10px 0 0; font-size: 0.85rem; font-weight: 700; color: var(--ink-dim); letter-spacing: 0.02em; }
+.in-tag { display: inline-block; padding: 0 6px; border-radius: 6px; border: 1px solid var(--line); font-size: 0.75rem; font-weight: 600; }
+.in-tag.recurring { border-color: var(--accent); color: var(--ink); }
+.in-gone s { color: var(--ink-dim); text-decoration-thickness: 1px; }
+.in-list li > .btn { flex-shrink: 0; white-space: nowrap; }

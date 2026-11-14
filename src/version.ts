@@ -18,6 +18,18 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.86.0',
+    date: '2026-11-14',
+    en: [
+      'Your player profile, at the top of Insights: your strengths, the patterns that keep coming back (with how many weeks in a row) and the ones that went away while you kept practising — drawn from everything measured: technique, timing, the pairs you mix up, the Ear Index. A pattern shows only after it repeats, and each one opens the exercise that trains it.',
+      'After a lesson: when today’s tricky pair has come back for weeks, the summary says so.',
+    ],
+    he: [
+      'פרופיל הנגן שלכם, בראש מסך התובנות: החוזקות, הדפוסים שחוזרים (וכמה שבועות ברצף) ואלה שנעלמו בזמן שהמשכתם להתאמן — מכל מה שנמדד: טכניקה, תזמון, הזוגות שמתבלבלים ביניהם ומדד האוזן. דפוס מופיע רק אחרי שהוא חוזר, וכל אחד פותח את התרגיל שמאמן אותו.',
+      'אחרי שיעור: כשהזוג המבלבל של היום חוזר כבר כמה שבועות, הסיכום אומר את זה.',
+    ],
+  },
+  {
     version: '0.85.0',
     date: '2026-11-13',
     en: [
