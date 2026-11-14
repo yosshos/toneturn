@@ -662,7 +662,8 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
   startRef.current = start;
   return (
     <div className="drill-take">
-      {!useMidi && !isGuitarDrill(drill) && !drum && <p className="field-hint">{tx.midiOff}</p>}
+      {/* 0.91 (one screen): when the take is blocked without MIDI, the warning below says it — no second MIDI line. */}
+      {!useMidi && !isGuitarDrill(drill) && !drum && !pianoBlocked && <p className="field-hint">{tx.midiOff}</p>}
       {drumBlocked && (
         <p className="kit-warn" data-drum-needs-kit="1">
           {acKit
