@@ -157,6 +157,8 @@ const SHORT: Record<string, L2> = {
   'bh-three-dim': { en: 'Three diminished', he: 'שלושה דימינישים' },
   'bh-dim-roles': { en: 'Diminished roles', he: 'תפקידי הדימיניש' },
   'bh-m6-bass': { en: 'm6 = 9', he: 'm6 = 9' },
+  // BH-G: the pivot (Barry Harris's pivot arpeggio)
+  'bh-pivot-arp': { en: 'The pivot', he: 'הפיבוט' },
   'function-ear': { en: 'T · PD · D', he: 'T · PD · D' },
   'modal-cadence': { en: 'Modal cadences', he: 'קדנצות מודאליות' },
   'borrowed-ext': { en: 'Borrowed colours', he: 'צבעים שאולים' },

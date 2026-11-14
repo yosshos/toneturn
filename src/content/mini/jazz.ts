@@ -5,6 +5,8 @@ import type { MiniLesson } from '../miniTypes';
 import type { NoteEvent, Stimulus } from '../../engine/lesson';
 import { PROGRESSIONS } from '../../engine/jazz';
 import { backingTrack, type ChartId } from '../../engine/perform';
+// BH-G: the pivot (the pivot arpeggio) comes just before the scale line with a pivot.
+import { PIVOT_LESSON } from './harrisPivot';
 
 const C = { letter: 'C' as const, acc: 0 as const };
 const chord = (midis: number[], duration = 1.2, arpeggio?: boolean): Stimulus => ({ kind: 'chord', midis, duration, ...(arpeggio ? { arpeggio } : {}) });
@@ -960,13 +962,17 @@ export const LESSONS: MiniLesson[] = [
     ],
   },
 
-  // ------------------------------------------------------------------ Barry Harris: pivot
+  // ------------------------------------------------------------------ Barry Harris: the pivot (BH-G)
+  PIVOT_LESSON,
+
+  // ------------------------------------------------------------------ Barry Harris: scale line with a pivot
+  // (id kept for saved progress; owner 2026-11-14: "pivot" is the pivot arpeggio — this is a scale exercise with one inside)
   {
     id: 'bh-pivot',
     area: 'jazz',
     emoji: '↩️',
-    title: { en: 'Barry Harris: the pivot', he: 'בארי האריס: הפיבוט' },
-    takeaway: { en: 'A pivot jumps the rest of a falling line up an octave, so it keeps going down without running out of room.', he: 'פיבוט מקפיץ את שארית הקו היורד אוקטבה למעלה, כך שהוא ממשיך לרדת בלי להיגמר לו המקום.' },
+    title: { en: 'Barry Harris: scale line with a pivot', he: 'בארי האריס: קו סולם עם פיבוט' },
+    takeaway: { en: 'A scale exercise with a pivot inside: partway down, the rest of the line moves up an octave — same notes, same order, a new contour — so it keeps falling without running out of room.', he: 'תרגיל סולם עם פיבוט בתוכו: באמצע הירידה, שארית הקו זזה אוקטבה למעלה — אותם צלילים, אותו סדר, קו מתאר חדש — כך שהוא ממשיך לרדת בלי להיגמר לו המקום.' },
     steps: [
       {
         say: { en: 'Hey {name}! Scale lines love to run downhill — and sooner or later they hit the bottom of your instrument, or your voice.', he: 'היי {name}! קווי סולם אוהבים לרוץ במורד — ובשלב מסוים הם מגיעים לתחתית של הכלי, או של הקול.' },
@@ -974,7 +980,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: FROM_1, key: 'C' },
       },
       {
-        say: { en: 'Barry Harris’s answer is the pivot: at any moment, jump the rest of the line up an octave and keep falling. Same notes, more room.', he: 'התשובה של בארי האריס היא הפיבוט: בכל רגע, מקפיצים את שארית הקו אוקטבה למעלה וממשיכים לרדת. אותם צלילים, יותר מקום.' },
+        say: { en: 'Barry Harris’s answer is a pivot inside the line: at any moment, move the rest of it up an octave and keep falling. Same notes, more room.', he: 'התשובה של בארי האריס היא פיבוט בתוך הקו: בכל רגע, מזיזים את שארית הקו אוקטבה למעלה וממשיכים לרדת. אותם צלילים, יותר מקום.' },
         play: [line([72, 71, 70, 69, 79, 77, 76, 74, 72], 112)],
         show: { notes: [72, 71, 70, 69, 79, 77, 76, 74, 72], key: 'C', text: { en: 'C B B♭ A ↑ G F E D C', he: 'C B B♭ A ↑ G F E D C' } },
       },
@@ -1001,7 +1007,7 @@ export const LESSONS: MiniLesson[] = [
     ],
     more: [
       {
-        say: { en: 'A pivot is a change of octave in the middle of a line. The notes and the rhythm stay the same; from the pivot on, the line simply continues an octave higher — or lower.', he: 'פיבוט הוא החלפת אוקטבה באמצע קו. הצלילים והקצב נשארים אותו דבר; מנקודת הפיבוט, הקו פשוט ממשיך אוקטבה למעלה — או למטה.' },
+        say: { en: 'In a scale line the pivot is a change of octave in the middle. The notes and the rhythm stay the same; from the pivot on, the line simply continues an octave higher — or lower.', he: 'בקו סולם הפיבוט הוא החלפת אוקטבה באמצע. הצלילים והקצב נשארים אותו דבר; מנקודת הפיבוט, הקו פשוט ממשיך אוקטבה למעלה — או למטה.' },
         play: [line([72, 71, 70, 69, 67, 77, 76, 74, 72], 112)],
         show: { notes: [72, 71, 70, 69, 67, 77, 76, 74, 72], key: 'C', text: { en: 'C B B♭ A G ↑ F E D C', he: 'C B B♭ A G ↑ F E D C' } },
       },
@@ -1040,7 +1046,10 @@ export const LESSONS: MiniLesson[] = [
         say: { en: 'In real music, octave displacement runs all through bebop: a line seems to break off and reappear an octave away, which keeps long phrases fresh and inside the instrument’s best range.', he: 'במוזיקה אמיתית, הזזת אוקטבה נמצאת לאורך כל הביבופ: קו נשמע כאילו נשבר ומופיע שוב אוקטבה משם, וזה שומר על משפטים ארוכים רעננים ובתוך המנעד הטוב של הכלי.' },
       },
       {
-        say: { en: 'To keep: a pivot moves the rest of a line an octave — same notes, same rhythm. You hear it as a sudden leap of a 7th.', he: 'לזכור: פיבוט מזיז את שארית הקו אוקטבה — אותם צלילים, אותו קצב. שומעים אותו כקפיצה פתאומית של ספטימה.' },
+        say: { en: 'The same idea on an arpeggio is the lesson before this one: the root on top, a drop to the 3rd, the climb.', he: 'אותו רעיון על ארפג׳ הוא השיעור הקודם: היסוד למעלה, ירידה לטרצה, עלייה.' },
+      },
+      {
+        say: { en: 'To keep: in a scale line, the pivot moves the rest of the line an octave — same notes, same rhythm. You hear it as a sudden leap of a 7th.', he: 'לזכור: בקו סולם, הפיבוט מזיז את שארית הקו אוקטבה — אותם צלילים, אותו קצב. שומעים אותו כקפיצה פתאומית של ספטימה.' },
       },
     ],
   },

@@ -2581,6 +2581,10 @@ export function guitarCatalog(): GuitarFamilyDef[] {
       LT('g-harris', 6, 'The brothers and the minor 6ths from one diminished chord', 'האחים ומינור 6 מאקורד מוקטן אחד', [H('brothers', { option: 0, swing: true }), H('brothers', { option: 1, swing: true })], CYC4, [100, 180], 'swing 8ths', 9),
       // HARRIS_2 (AUDIT-CONTENT-THEORY §ז.2 BH-F): the 6th-diminished scale of chords on the remaining string sets.
       LT('g-harris', 7, 'The scale of chords on every string set: 6-5-4-3, then minor on 6-5-4-3 and 5-4-3-2', 'סולם האקורדים על כל קבוצת מיתרים: 6-5-4-3, ואז מינור על 6-5-4-3 ו-5-4-3-2', range(3).map((o) => H('sixdim-sets', { option: o })), CYC4, [60, 120], 'quarters', 8),
+      // BH-G (AUDIT-CONTENT-THEORY §ז.2): the pivot on string sets, then inside a scale line and with enclosures (all 12 keys).
+      LT('g-harris', 8, 'The pivot on string sets: maj7, m7, 7, then ii–V–I', 'הפיבוט על קבוצות מיתרים: maj7, ‏m7, ‏7, ואז ii–V–I', range(4).map((o) => H('pivot-arp', { option: o })), CYC4, [60, 120], '8ths', 8),
+      LT('g-harris', 9, 'Descending scale with a pivot inside: 6 and 7', 'סולם יורד עם פיבוט בתוכו: 6 ו־7', range(2).map((o) => H('scale-pivot', { option: o })), CYC4, [60, 120], '8ths', 8),
+      LT('g-harris', 10, 'Pivot and enclosure down the bebop scale', 'פיבוט וכיתור במורד סולם הביבופ', range(2).map((o) => H('pivot-encl', { option: o })), CYC4, [60, 120], '8ths', 8),
     ]),
     fam('g-reading', 'Reading by position', 'קריאה לפי מצבים', 'classical', ['all'], [
       L('g-reading', 1, 'Position I, strings 1–3', 'מצב I, מיתרים 1–3', [RD('position', { position: 1, option: 1 })], [0]),

@@ -226,6 +226,8 @@ const TOPIC_CONTRAST: Record<string, { en: string; he: string }> = {
   // HARRIS_2 + HARMONY_3 (AUDIT-CONTENT-THEORY §ז.2)
   'bh-three-dim': { en: 'The scale’s diminished shares no note with the 6 chord: it sits on the 7th degree (C6 → B°7). The m6 grows from the diminished on its own root.', he: 'לדימיניש של הסולם אין צליל משותף עם אקורד ה־6: הוא יושב על הדרגה השביעית (C6 → B°7). ה־m6 נוצר מהדימיניש שעל היסוד שלו.' },
   'bh-dim-roles': { en: 'Bass by half steps into a new chord = passing; bass holds and the chord comes back = auxiliary; it stands for V and goes home = dominant.', he: 'בס בחצאי טונים אל אקורד חדש = עובר; בס נשאר והאקורד חוזר = עזר; במקום V והביתה = דומיננטי.' },
+  // BH-G: the pivot
+  'bh-pivot-arp': { en: 'A pivot leaps down from the top note, then climbs. A minor 6th down means a major 3rd, a major 6th a minor 3rd.', he: 'פיבוט קופץ למטה מהצליל העליון, ואז עולה. סקסטה קטנה למטה פירושה טרצה גדולה, סקסטה גדולה פירושה טרצה קטנה.' },
   'bh-m6-bass': { en: 'The bass names it: on the root an m6, a minor 3rd below a m7♭5, a 5th below a 9 chord.', he: 'הבס קובע: על היסוד m6, טרצה קטנה מתחת m7♭5, קווינטה מתחת אקורד 9.' },
   'function-ear': { en: 'At rest = tonic; leaning away, ready to move on = pre-dominant; pulling hard to home = dominant.', he: 'נח = טוניקה; נוטה הלאה ומוכן לזוז = סובדומיננטה; מושך חזק הביתה = דומיננטה.' },
   'modal-cadence': { en: 'Find the one note outside plain major or minor: ♭7, ♯4, a major IV in minor, ♭2.', he: 'חפשו את הצליל האחד שמחוץ למז׳ור או למינור הרגיל: ♭7, ♯4, IV מז׳ורי במינור, ♭2.' },

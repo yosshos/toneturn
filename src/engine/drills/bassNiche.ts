@@ -16,6 +16,7 @@ import { alt, chordName, drillOf, keyNameOf, lowest, refWalk, rootOf, spell, BLU
 import { parseChart } from '../charts';
 import { STANDARD_CHANGES } from '../standards';
 import { barryLine, pivot, ruleFor } from '../barry';
+import { ARP_SYM, pivotArp, scalePivotLine, straightArp, type ArpQuality } from '../pivotArp'; // BH-G: the pivot
 import { MODULATIONS, parseMeter, planBars, withBarPlan } from './timeline';
 import { applyForm, type FormPlan, type FormSection } from './roadmap';
 import type { BassFamilyId } from './types';
@@ -638,6 +639,27 @@ function genBarry(s: DrillSpec, tu: Tuning): Drill {
       const line = [...ctWalk(tu, cs), closeOn(tu, key, 32)];
       return drillOf(s, tu, alt(line), { ...(op % 2 ? tt('Passing diminished: IV – ♯IV° – I/5', 'מוקטן עובר: IV – ♯IV° – I/5') : tt('Passing diminished: I – ♯I° – ii', 'מוקטן עובר: I – ♯I° – ii')), chart: text.split('|').map((x) => x.trim()), show: 'chart', bass: { rules: rulesFor(cs, 'walk') }, drums: { groove: 'swing' } });
     }
+    case 'pivot-arp': {
+      // BH-G (AUDIT-CONTENT-THEORY §ז.2): the pivot — the root on top, a drop to the 3rd, the climb — then the arpeggio
+      // straight down to the root. Op 0–3: maj7, m7, 7, m7♭5. Every 8th a chord tone; all 12 keys.
+      const q = (['maj7', 'm7', '7', 'm7b5'] as ArpQuality[])[Math.min(3, Math.max(0, op))];
+      const r = 31 + pc(key - 31);
+      const up = pivotArp(r, q);
+      const ps = [...up, up[0], ...straightArp(r, q).slice(1).reverse(), r];
+      const line: BN[] = ps.map((p, i) => ({ b: i / 2, d: i === ps.length - 1 ? 2 : 0.5, p, ct: true }));
+      const sym = `${spell(key, key)}${ARP_SYM[q]}`;
+      return drillOf(s, tu, alt(line), { ...tt(`${sym} pivot: the root on top, drop to the 3rd, climb — then down`, `פיבוט ${sym}: היסוד למעלה, ירידה לטרצה, עלייה — ואז למטה`), chart: [sym, '%'], evenness: true });
+    }
+    case 'scale-pivot': {
+      // BH-G: descending scale plus pivot (op 0 the 6 chord, op 1 the 7 chord): the scale down by the half-step rules, a
+      // pivot on the chord tone it lands on, the scale on down (pivotArp.ts scalePivotLine). All 12 keys.
+      const q = op === 1 ? '7' : '6';
+      const top = 47 + pc(key - 47);
+      const ln = [...scalePivotLine(top, q, 2).line, ...scalePivotLine(top, q, 3).line.map((n) => ({ ...n, beat: n.beat + 8 }))];
+      const line: BN[] = ln.map((n) => ({ b: n.beat, d: n.dur, p: n.p, ct: n.ct }));
+      const sym = `${spell(key, key)}${q}`;
+      return drillOf(s, tu, alt(line), { ...tt(`${sym}: the scale down by the rules with a pivot inside`, `${sym}: הסולם למטה לפי החוקים עם פיבוט בתוכו`), chart: [sym, '%', '%', '%'], evenness: true });
+    }
     case 'halfstep':
     case 'pivot': {
       // The dominant scale descending with Barry's extra half steps: chord tones on every downbeat (8ths), resolving to
@@ -1062,6 +1084,8 @@ export function jazzFamilies(L: LFn, fam: FamFn): GuitarFamilyDef[] {
   const LA = spOf('b-latin');
   const Qn = 'quarters';
   const K = [5, 10, 7, 0, 3];
+  // All twelve keys round the cycle of 4ths (the BH-G levels: every key, never just C).
+  const ALL12 = [0, 5, 10, 3, 8, 1, 6, 11, 4, 9, 2, 7];
   return [
     fam('b-swing', 'Swing time', 'זמן סווינג', [
       L('b-swing', 1, 'Long quarters', 'רבעים ארוכים', [SW('long', { perBeat: 1 })], K, [100, 160], Qn),
@@ -1079,6 +1103,10 @@ export function jazzFamilies(L: LFn, fam: FamFn): GuitarFamilyDef[] {
       L('b-barry', 4, 'The rule in a walk: 1 and 3', 'החוק בווקינג: 1 ו-3', [BH('walk13', { perBeat: 1 }), BH('walk13', { perBeat: 1, option: 1 })], [0, 5, 7, 10, 3], [110, 180], Qn),
       L('b-barry', 5, 'Pivots: break the line', 'פיבוט: לשבור את הקו', [BH('pivot', { swing: true })], [0, 5, 7, 10, 3], [100, 160], 'swung 8ths'),
       L('b-barry', 6, 'A chorus of bebop lines', 'סבב של קווי ביבופ', [BH('bebop', { swing: true }), BH('bebop', { swing: true, option: 1 })], [0, 5, 10, 3], [120, 200], 'swung 8ths'),
+      // BH-G (AUDIT-CONTENT-THEORY §ז.2): the pivot arpeggio, then a descending scale with a pivot inside — all 12 keys,
+      // straight 8ths (new technique items start in free time: rubato.ts).
+      L('b-barry', 7, 'The pivot: maj7, m7, 7, m7♭5', 'הפיבוט: maj7, ‏m7, ‏7, ‏m7♭5', [0, 1, 2, 3].map((o) => BH('pivot-arp', { option: o })), ALL12, [60, 120], '8ths'),
+      L('b-barry', 8, 'Descending scale with a pivot inside: 6 and 7', 'סולם יורד עם פיבוט בתוכו: 6 ו־7', [BH('scale-pivot'), BH('scale-pivot', { option: 1 })], ALL12, [60, 120], '8ths'),
     ]),
     fam('b-jform', 'Form and arrangement', 'צורה ועיבוד', [
       L('b-jform', 1, 'Two-feel with skips and pushes', 'בשתיים עם קפיצות ודחיפות', [JF('skips', { perBeat: 0.5 })], [5, 10, 7], [100, 160], 'halves'),
