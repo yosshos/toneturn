@@ -113,9 +113,21 @@ export function retryCoach(q: Question, given: Answer, l: Lang, seed: number, na
       if (!n) return null;
       return l === 'en' ? `${o} not ${n.en}. Listen for what sets it apart.` : `${o} זה לא ${n.he}. הקשיבו למה שמייחד אותו.`;
     }
+    case 'place':
+      return q.topic === 'jazz-phrase' ? phraseRetry(String(q.answer), String(given), o, l) : null;
     default:
       return null;
   }
+}
+
+/** Phrases by ear (jazz-phrase 6–7): where the transcription went off — sing up to that note, then find it. */
+export function phraseRetry(answer: string, given: string, o: string, l: Lang): string | null {
+  const want = answer.split('.');
+  const got = given.split('.');
+  const k = want.findIndex((x, i) => got[i] !== x);
+  if (k < 0) return null;
+  if (k === 0) return l === 'en' ? `${o} start with the first note: sing it against the chord, then find it.` : `${o} התחילו מהצליל הראשון: שירו אותו מול האקורד, ואז מצאו אותו.`;
+  return l === 'en' ? `${o} the first ${k} ${k === 1 ? 'note is' : 'notes are'} right. Sing the phrase up to note ${k + 1}, then find it.` : `${o} ${k === 1 ? 'הצליל הראשון נכון' : `${k} הצלילים הראשונים נכונים`}. שירו את המשפט עד צליל ${k + 1}, ואז מצאו אותו.`;
 }
 
 // ---------------------------------------------------------------- after the reveal: the difference

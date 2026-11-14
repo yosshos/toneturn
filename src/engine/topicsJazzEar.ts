@@ -18,7 +18,8 @@
 //   · jazz-form       — major or minor blues, rhythm changes A or bridge, which blues
 // Pure, seeded generators like every topic; tags here; path pack in path.ts (PACK_TOPICS).
 
-import type { ChoiceQuestion, NoteEvent, Stimulus } from './lesson';
+import type { ChoiceQuestion, NoteEvent, PlaceQuestion, Stimulus } from './lesson';
+import { placeKey } from './lesson';
 import { TOPIC_GEN, rng, pickR, shuffleR, choiceQ, eventsStim, nm, pcName, pcNameHe, pcNameKey } from './topicKit';
 import { TOPIC_TAGS, tg, type Tag } from './taxonomy';
 import './topicsHarmony'; // extensions, voicings (deepened below)
@@ -730,10 +731,15 @@ TOPIC_GEN['jazz-phrase'] = {
     { en: 'Bebop lines (the passing half step)', he: 'קווי ביבופ (חצי הטון המעביר)' },
     // AUDIT-GAPS-2 #1: the ear twin of the enclosure drills (k-vocab, g-bebop, b-bebop).
     { en: 'Which enclosure?', he: 'איזה כיתור?' },
+    // Phrases by ear (owner 2026-11-14): levels 3–4 as transcriptions — enter (or play) every note, partial credit.
+    // The multiple-choice levels stay as the easier step before them.
+    { en: 'Transcribe an enclosure', he: 'לתמלל כיתור' },
+    { en: 'Transcribe a bebop line', he: 'לתמלל קו ביבופ' },
   ],
   gen(seed, level, id) {
     const rnd = rng(seed);
     if (level === 5) return enclosureQ(rnd, seed, id);
+    if (level === 6 || level === 7) return transcribePhraseQ(rnd, seed, id, level);
     const pc = pickR(rnd, [0, 2, 3, 5, 7, 8, 10]);
     const q: 'maj7' | 'm7' | 'dom7' = level === 1 ? pickR(rnd, ['maj7', 'm7', 'dom7'] as const) : 'dom7';
     let right: number[];
@@ -849,7 +855,53 @@ function enclosureQ(rnd: () => number, seed: number, id: string): ChoiceQuestion
     names, answer: `e${opts.indexOf(right)}`, choices: opts.map((_, k) => `e${k}`), stimulus: [phraseStim(pc, 'dom7', right.semis)], choiceStim,
   });
 }
-TOPIC_TAGS['jazz-phrase'] = (l) => (l === 5 ? tg(['dictation', 'transcribe', 0.6], ['sequences', 'lines', 0.4]) : l === 1 ? tg(['dictation', 'melodic', 0.6], ['chords', 'seventh', 0.4]) : tg(['dictation', 'melodic', 0.6], ['sequences', 'lines', 0.4]));
+/**
+ * jazz-phrase 6–7 (phrases by ear): the enclosure and the bebop line of levels 3–4 as a transcription — hear the phrase
+ * over the chord, enter every note on the keys, the staff or the neck (or play it), the first note given. Graded note
+ * for note in order, any octave (enharmonics are the same key), partial credit (gradePlace).
+ */
+export function transcribePhraseQ(rnd: () => number, seed: number, id: string, level: 6 | 7): PlaceQuestion {
+  const pc = pickR(rnd, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
+  let semis: number[];
+  if (level === 6) {
+    // Two lead-in notes, then an enclosure of any type into the 3rd, 5th or root of the dominant.
+    const target = pickR(rnd, [4, 7, 12]);
+    const above = SCALE.dom7.map((x) => x + 12 * Math.floor(target / 12)).concat(SCALE.dom7.map((x) => x + 12 * (Math.floor(target / 12) + 1))).find((x) => x > target)!;
+    const type = pickR(rnd, ENCLOSURE_TYPES);
+    const enc = type.lead(target, above);
+    const lead = pickR(rnd, [[0, 2], [7, 5], [10, 9]].filter((l) => l[1] !== enc[0] && mod12(l[1]) !== mod12(enc[0])));
+    semis = [...lead, ...enc, target];
+  } else {
+    // The bebop dominant down from a chord tone on the beat: the passing half step keeps the chord tones on the beats.
+    const BEBOP = [12, 11, 10, 9, 7, 5, 4, 2, 0, -1, -2, -3, -5, -7, -8, -10];
+    const from = pickR(rnd, [12, 7, 4]);
+    semis = BEBOP.slice(BEBOP.indexOf(from), BEBOP.indexOf(from) + 8);
+  }
+  const base = 60 + mod12(pc - 60) + (mod12(pc) > 5 ? -12 : 0);
+  const target = semis.map((s) => base + 12 + s);
+  const sym = `${pcName(pc)}7`;
+  const q: PlaceQuestion = {
+    id,
+    kind: 'place',
+    topic: 'jazz-phrase',
+    level,
+    seed,
+    skill: 'dictation',
+    difficulty: level === 6 ? 1660 : 1760,
+    ask: { en: `Over ${sym}: write the phrase, note by note.`, he: `מעל ${sym}: כתבו את המשפט, צליל אחר צליל.` },
+    target,
+    as: 'seq',
+    match: 'pc',
+    given: { midis: [target[0]], key: null },
+    text: { en: `${target.length} notes · the first is given`, he: `${target.length} צלילים · הראשון נתון` },
+    stimulus: [phraseStim(pc, 'dom7', semis)],
+    choices: [],
+    answer: '',
+  };
+  q.answer = placeKey(q, q.target);
+  return q;
+}
+TOPIC_TAGS['jazz-phrase'] = (l) => (l === 5 || l >= 6 ?tg(['dictation', 'transcribe', 0.6], ['sequences', 'lines', 0.4]) : l === 1 ? tg(['dictation', 'melodic', 0.6], ['chords', 'seventh', 0.4]) : tg(['dictation', 'melodic', 0.6], ['sequences', 'lines', 0.4]));
 
 // ================================================================ jazz-form (Jazz & improv)
 

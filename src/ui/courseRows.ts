@@ -8,8 +8,8 @@ export const COURSE_GAMES: Record<CourseId, string[]> = {
   jazz: ['rush-chord', 'rush-progression', 'rush-interval', 'truefalse', 'nametune', 'duel', 'daily', 'rush-standard', 'rush-voicing', 'reharm', 'bhtime', 'transcribe', 'rush-scale'],
   voice: ['flight', 'pitchmemory', 'melody', 'nametune', 'rush-interval', 'rush-scale', 'singinterval', 'harmonyhold'],
   keys: ['drills', 'rush-note', 'rush-chord', 'rush-keysig', 'highway', 'melodypuzzle', 'rhythm', 'bhtime', 'rush-voicing', 'transcribe', 'riffecho', 'polylock', 'playback', 'voicingsprint'],
-  guitar: ['drills', 'rush-fretboard', 'tuneup', 'rush-chord', 'highway', 'rush-note', 'rhythm', 'rush-voicing', 'riffecho', 'changerace'],
-  bass: ['drills', 'rush-fretboard', 'tuneup', 'highway', 'rush-note', 'rhythm', 'riffecho', 'walkchanges', 'rootsear'],
+  guitar: ['drills', 'rush-fretboard', 'tuneup', 'rush-chord', 'highway', 'rush-note', 'rhythm', 'rush-voicing', 'riffecho', 'changerace', 'playback'],
+  bass: ['drills', 'rush-fretboard', 'tuneup', 'highway', 'rush-note', 'rhythm', 'riffecho', 'walkchanges', 'rootsear', 'playback'],
   // 0.65: technique on the kit, Highway with drum lanes, beat echo, the groove trainer.
   // DRUMS_NICHE_PLAN §3 (P1): Land It, Groove Echo, Odd-meter Echo — measured takes on the kit.
   drums: ['drills', 'highway', 'rhythm', 'groove', 'land', 'groove-echo', 'odd-echo', 'polylock', 'time-lock', 'ghost-control', 'rudiment-rush', 'groove-off', 'kitread', 'namegroove'],

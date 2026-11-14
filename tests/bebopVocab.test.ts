@@ -347,7 +347,7 @@ describe('wiring', () => {
   });
   it('the ear: jazz-phrase 5 asks which enclosure, four distinct options, the coach names what to listen for', () => {
     const T = TOPIC_GEN['jazz-phrase'];
-    expect(T.levels).toHaveLength(5);
+    expect(T.levels).toHaveLength(7); // + levels 6–7, the transcriptions (phrases by ear)
     for (let seed = 1; seed <= 40; seed++) {
       const q = T.gen(seed, 5, `x${seed}`) as Extract<ReturnType<typeof T.gen>, { kind: 'choice' }>;
       expect(q.kind).toBe('choice');

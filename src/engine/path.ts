@@ -320,7 +320,9 @@ const BASS_NICHE_LATER: Record<string, number> = { 'b-swing': 9, 'b-barry': 12, 
   // AUDIT-GAPS-2: key changes and turnarounds from ~1330 (after the walking cycle and the first Barry Harris levels).
   'b-keys': 9,
   // AUDIT-GAPS-2: bebop vocabulary on the bass from ~1120 (enclosures) to ~1540 (Barry Harris lines).
-  'b-bebop': 6 };
+  'b-bebop': 6,
+  // Phrases by ear: one level every 100 points, ~1200 (chord tones) to ~1900 (8 bars over a form); see LADDER_SPREAD.
+  'b-phrase': 50 / 7 };
 /**
  * AUDIT-CONTENT-THEORY §ב.4 ("roots & pocket first"): the bass core opened in catalogue order, so muting came at unit
  * 13, locking with the kick at 17 and walking at 32. Now time, the plucking hand, roots and the kick lock lead, muting
@@ -375,7 +377,9 @@ const KEYS_JAZZ_LATER: Record<string, number> = { 'k-sixdim': 9, 'k-bebop': 6, '
   // AUDIT-GAPS-2: key changes and turnarounds from ~1330 (LADDER_SPREAD keeps the 12 levels inside ~1330–1640).
   'k-keys': 9,
   // AUDIT-GAPS-2: bebop vocabulary from the swing on-ramp (~980) to the click that moves (~1610).
-  'k-vocab': 4 };
+  'k-vocab': 4,
+  // Phrases by ear: ~1200 (one bar of chord tones) to ~1900 (8 bars over a form), a level every 100 (LADDER_SPREAD).
+  'k-phrase': 50 / 7 };
 /**
  * PIANO_AUDIT I2: every piano family's level 1 sat at the same difficulty as scales L1 — octaves (advanced L1), Barry
  * Harris lines and rootless voicings came in the first unit. Now the basics lead (scales, five-finger, the pianist's
@@ -410,9 +414,13 @@ GUITAR_RANK['g-keys'] = 6;
  * Path steps per level for families whose levels sit closer than one step apart (default 1 = 70 points a level).
  * AUDIT-GAPS-2: the key-change families have twelve short levels inside ~1330–1640 (piano and bass; guitar is by grade).
  */
-export const LADDER_SPREAD: Record<string, number> = { 'k-keys': 0.4, 'b-keys': 0.4 };
+export const LADDER_SPREAD: Record<string, number> = { 'k-keys': 0.4, 'b-keys': 0.4,
+  // Phrases by ear: 100 points a level (700 + 70 × (50/7 + 10/7 × i) = 1200 + 100 i).
+  'k-phrase': 10 / 7, 'b-phrase': 10 / 7 };
 // AUDIT-GAPS-2: bebop vocabulary and lines on the neck, with the lead and Harris families.
 GUITAR_RANK['g-bebop'] = 7;
+// Phrases by ear on the neck: with the guitarist's ear (grades 6–9).
+GUITAR_RANK['g-phrase'] = 5;
 /**
  * The order of a family's levels on the path: by path difficulty, then level number. AUDIT-CONTENT-THEORY §ב.3: guitar
  * levels sit by grade, but the family's next level used to be the next number, so a later-added easier level (picking 4
@@ -456,7 +464,8 @@ function ladderSteps(): PathStep[] {
  */
 export const MEASURED_STEP_LEVELS: Record<'licks' | 'transcribe', Record<'jazz' | 'keys' | 'guitar' | 'bass' | 'voice', number[]>> = {
   licks: { jazz: [1, 2, 3, 4], keys: [1, 2, 3], guitar: [1, 2, 3], bass: [1, 2], voice: [1, 2] },
-  transcribe: { jazz: [4, 5, 6, 7, 8], keys: [2, 4, 6, 9], guitar: [2, 4, 6], bass: [2, 4], voice: [1, 3, 5] },
+  // Guitar and bass reach the solo phrase over ii–V–I (L9), as the keys do (owner 2026-11-14).
+  transcribe: { jazz: [4, 5, 6, 7, 8], keys: [2, 4, 6, 9], guitar: [2, 4, 6, 8, 9], bass: [2, 4, 6, 8, 9], voice: [1, 3, 5] },
 };
 function measuredSteps(): PathStep[] {
   const out: PathStep[] = [];

@@ -19,7 +19,7 @@ import { DEFAULT_CAL, DrillScore, drillSettingsOf } from './Drills';
 import { Glyph } from './Glyph';
 import { chartBacking, parseChart } from '../engine/charts';
 import {
-  bookAfterTake, CONTEXTS, contextOf, dueLicks, LICK_KEYS, LICK_KNOWN_STARS, lickById, lickDrill, lickEvents, lickGrid, LICKS, lickStars, lickTempos, lickTarget, lickXp, nextLickKey, reviewKey,
+  bookAfterTake, byEarXp, CONTEXTS, contextOf, dueLicks, LICK_KEYS, LICK_KNOWN_STARS, lickById, lickDrill, lickEvents, lickGrid, LICKS, lickSound, lickStars, lickTempos, lickTarget, lickXp, nextLickKey, reviewKey,
   type Lick, type LickBook, type LickContext, type LickInstrument,
 } from '../engine/licks';
 import { findLick, useItChart, useItPassed, type ImpNote } from '../engine/lickDetect';
@@ -35,6 +35,7 @@ const TX = {
     useHow: (n: string) => `Improvise over the band. Use "${n}" at least twice — in any key the band is in, over the right chords.`,
     found: 'Found', exact: 'the lick', shape: 'its shape', wrongChord: 'over another chord', passed: 'Used it — it is yours.', notYet: 'Not twice over the right chords yet.',
     reviewDone: 'Review done', reviewNext: 'Next', keysOnScreen: 'No MIDI keyboard: play here', of: 'of', voice: 'Sing it: pitch and time are measured.',
+    byEar: 'By ear', earAsk: 'Notes hidden: hear it, then play it back.', slower: 'Slower', reveal: 'Show the notes (less credit)', earLess: 'notes shown: less credit',
     insts: { piano: 'Piano', guitar: 'Guitar', bass: 'Bass', voice: 'Voice' } as Record<LickInstrument, string>,
   },
   he: {
@@ -44,6 +45,7 @@ const TX = {
     useHow: (n: string) => `אלתרו מעל הלהקה. השתמשו ב"${n}" לפחות פעמיים — בסולם שבו הלהקה נמצאת, מעל האקורדים הנכונים.`,
     found: 'נמצא', exact: 'הליק', shape: 'הצורה שלו', wrongChord: 'מעל אקורד אחר', passed: 'השתמשתם בו — הוא שלכם.', notYet: 'עוד לא פעמיים מעל האקורדים הנכונים.',
     reviewDone: 'החזרה הושלמה', reviewNext: 'הבא', keysOnScreen: 'אין מקלדת MIDI: נגנו כאן', of: 'מתוך', voice: 'שירו אותו: הגובה והזמן נמדדים.',
+    byEar: 'בשמיעה', earAsk: 'התווים מוסתרים: שמעו, ואז נגנו בחזרה.', slower: 'לאט יותר', reveal: 'להציג את התווים (פחות ניקוד)', earLess: 'התווים הוצגו: פחות ניקוד',
     insts: { piano: 'פסנתר', guitar: 'גיטרה', bass: 'בס', voice: 'קול' } as Record<LickInstrument, string>,
   },
 };
@@ -97,7 +99,7 @@ export function LickGrid({ l, inst, items, lang }: { l: Lick; inst: LickInstrume
  * A measured run of lick drills (also the transcription coach's "12 keys"): the drill's notes and chart, the take, the
  * result with ✓ / ✗ marks, and the tempo ladder climbing toward the lick's target. Review mode = one take per drill.
  */
-export function LickRun({ lang, settings, l, inst, queue, items, onTake, onEnd, review, sub = 'vocab' }: { lang: Lang; settings: Settings; l: (d: Drill) => Lick; inst: LickInstrument; queue: Drill[]; items: Record<string, ItemState>; onTake: TakeFn; onEnd: (takes: number, clean: number, reviews: { lick: string; pass: boolean }[]) => void; review?: boolean; sub?: 'vocab' | 'transcribe' }) {
+export function LickRun({ lang, settings, l, inst, queue, items, onTake, onEnd, review, sub = 'vocab', byEar = false }: { lang: Lang; settings: Settings; l: (d: Drill) => Lick; inst: LickInstrument; queue: Drill[]; items: Record<string, ItemState>; onTake: TakeFn; onEnd: (takes: number, clean: number, reviews: { lick: string; pass: boolean }[]) => void; review?: boolean; sub?: 'vocab' | 'transcribe'; /** By ear (owner 2026-11-14): the notes hidden until the first take; revealing them early gives less credit. */ byEar?: boolean }) {
   const ds = drillSettingsOf(settings);
   const cal = calOf(settings);
   const [i, setI] = useState(0);
@@ -112,8 +114,12 @@ export function LickRun({ lang, settings, l, inst, queue, items, onTake, onEnd, 
   const count = useRef({ takes: 0, clean: 0 });
   const reviews = useRef<{ lick: string; pass: boolean }[]>([]);
   const session = useRef(Date.now().toString(36));
+  // By ear: per key, whether a take was made (the notes show after it) and whether the notes were revealed before it.
+  const [ear, setEar] = useState<Record<string, { taken?: boolean; revealed?: boolean }>>({});
   if (!drill) return null;
   const lick = l(drill);
+  const earNow = ear[drill.itemId] ?? {};
+  const hidden = byEar && !earNow.taken && !earNow.revealed && !res;
   const go = (j: number) => {
     setRes(null);
     if (j >= queue.length) return onEnd(count.current.takes, count.current.clean, reviews.current);
@@ -129,17 +135,20 @@ export function LickRun({ lang, settings, l, inst, queue, items, onTake, onEnd, 
     const n = count.current.takes++;
     if (m.verdict === 'clean') count.current.clean++;
     if (review) reviews.current.push({ lick: lick.id, pass: m.verdict === 'clean' });
-    onTake(lad.state, lickEvents(lick, inst, m, bpm, new Date().toISOString(), session.current, n, sub), lickXp(m), { verdict: m.verdict, hands: 'R', cv: null });
+    const by = byEar ? { byEar: true, revealed: !!earNow.revealed } : undefined;
+    onTake(lad.state, lickEvents(lick, inst, m, bpm, new Date().toISOString(), session.current, n, sub, by), by ? byEarXp(m, by) : lickXp(m), { verdict: m.verdict, hands: 'R', cv: null });
+    if (byEar) setEar((x) => ({ ...x, [drill.itemId]: { ...earNow, taken: true } }));
     setRes({ m, lad });
     setBpm(lad.next.bpm);
   };
   return (
-    <div className="drill-run lk-run" data-drill={drill.itemId} data-lick-run={review ? 'review' : 'practice'}>
+    <div className="drill-run lk-run" data-drill={drill.itemId} data-lick-run={review ? 'review' : byEar ? 'ear' : 'practice'}>
       <p className="drill-goal">
         {i + 1} / {queue.length} · <span dir="ltr">♩ {bpm}</span>
         {inst === 'voice' && <small className="lk-voice-hint"> · {TX[lang].voice}</small>}
+        {byEar && earNow.revealed && !earNow.taken && <small className="lk-voice-hint"> · {TX[lang].earLess}</small>}
       </p>
-      <DrillScore drill={drill} ds={ds} result={res?.m} beat={res ? -1 : beat} lang={lang} />
+      {hidden ? <EarLick drill={drill} bpm={bpm} lang={lang} onReveal={() => setEar((x) => ({ ...x, [drill.itemId]: { ...earNow, revealed: true } }))} /> : <DrillScore drill={drill} ds={ds} result={res?.m} beat={res ? -1 : beat} lang={lang} />}
       {res && <MarkLegend lang={lang} />}
       {!res && <DrillTake key={`${drill.itemId}:${take}`} autoStart={again} drill={drill} bpm={bpm} lang={lang} cal={cal} onDone={(m, p) => (setBeat(-1), done(m, p))} onBeat={setBeat} drumsOk={settings.headphones} />}
       {res && (
@@ -148,6 +157,48 @@ export function LickRun({ lang, settings, l, inst, queue, items, onTake, onEnd, 
           <TakeResult m={res.m} lang={lang} onAgain={() => (setRes(null), setAgain(true), setTake((t) => t + 1))} onSlower={() => (setRes(null), setAgain(true), setBpm((b) => Math.max(40, Math.round(b * 0.9))), setTake((t) => t + 1))} onNext={() => go(i + 1)} />
         </>
       )}
+    </div>
+  );
+}
+
+/** By ear: the notes hidden — hear the lick (and slowed), then play it; the notes can be shown, for less credit. */
+function EarLick({ drill, bpm, lang, onReveal }: { drill: Drill; bpm: number; lang: Lang; onReveal: () => void }) {
+  const tx = TX[lang];
+  const [playing, setPlaying] = useState<null | 1 | 0.65>(null);
+  const ctl = useRef<AbortController | null>(null);
+  useEffect(() => () => ctl.current?.abort(), []);
+  const hear = async (rate: 1 | 0.65) => {
+    ctl.current?.abort();
+    if (playing === rate) return setPlaying(null);
+    const c = new AbortController();
+    ctl.current = c;
+    setPlaying(rate);
+    try {
+      await piano.unlock();
+      const s = lickSound(drill, bpm, rate);
+      await piano.play(s.events, s.length, c.signal);
+    } catch {
+      /* stopped */
+    }
+    if (ctl.current === c) setPlaying(null);
+  };
+  return (
+    <div className="ear-card lk-ear" data-lick-ear="hidden">
+      <p className="ear-ask">{tx.earAsk}</p>
+      <p className="lk-ear-chart" dir="ltr">
+        {(drill.chart ?? []).join(' | ')}
+      </p>
+      <div className="ear-replay">
+        <button className={`btn small ${playing === 1 ? 'primary' : 'ghost'}`} onClick={() => void hear(1)} data-lick-hear="1">
+          {tx.listen}
+        </button>
+        <button className={`btn small ${playing === 0.65 ? 'primary' : 'ghost'}`} onClick={() => void hear(0.65)} data-lick-hear="slow">
+          {tx.slower}
+        </button>
+      </div>
+      <button className="link lk-reveal" onClick={onReveal} data-lick-reveal="1">
+        {tx.reveal}
+      </button>
     </div>
   );
 }
@@ -288,7 +339,7 @@ export function UseIt({ lang, settings, lick, inst, onResult }: { lang: Lang; se
   );
 }
 
-type View = { k: 'lib' } | { k: 'lick'; id: string } | { k: 'run'; id: string; queue: Drill[]; review?: boolean } | { k: 'useit'; id: string } | { k: 'reviewRun'; queue: Drill[]; ids: string[] };
+type View = { k: 'lib' } | { k: 'lick'; id: string } | { k: 'run'; id: string; queue: Drill[]; review?: boolean; byEar?: boolean } | { k: 'useit'; id: string } | { k: 'reviewRun'; queue: Drill[]; ids: string[] };
 
 export interface LickTrainerProps {
   lang: Lang;
@@ -364,6 +415,7 @@ export function LickTrainerScreen({ lang, settings, items, onSettings, onTake, o
           items={itemsNow}
           onTake={take}
           review={view.k === 'reviewRun' || view.review}
+          byEar={view.k === 'run' && !!view.byEar}
           onEnd={(_t, _c, reviews) => {
             if (view.k === 'run') {
               finishLick(view.id, reviews);
@@ -413,6 +465,9 @@ export function LickTrainerScreen({ lang, settings, items, onSettings, onTake, o
         <div className="drill-actions lk-actions">
           <button className="btn primary" onClick={() => setView({ k: 'run', id: l.id, queue: runFor(l) })} data-lick-practise="1">
             {tx.practise} · {keyName(key)}
+          </button>
+          <button className="btn" onClick={() => setView({ k: 'run', id: l.id, queue: runFor(l), byEar: true })} data-lick-byear="1">
+            {tx.byEar}
           </button>
           <button className="btn" disabled={stars < LICK_KNOWN_STARS} onClick={() => setView({ k: 'useit', id: l.id })} data-lick-useit="1" title={stars < LICK_KNOWN_STARS ? tx.locked : undefined}>
             {tx.useIt}

@@ -382,14 +382,43 @@ export function nextLickKey(l: Lick, inst: LickInstrument, items: Record<string,
 }
 
 /** Rated events of a lick take: improvisation vocabulary first, the instrument (or the voice) second. */
-export function lickEvents(l: Lick, inst: LickInstrument, m: TakeMetrics, bpm: number, at: string, sessionId: string, index: number, sub: 'vocab' | 'transcribe' = 'vocab'): RatingEvent[] {
+export function lickEvents(l: Lick, inst: LickInstrument, m: TakeMetrics, bpm: number, at: string, sessionId: string, index: number, sub: 'vocab' | 'transcribe' = 'vocab', ear?: ByEar): RatingEvent[] {
   const second: NonNullable<RatingEvent['tags']>[number] =
     inst === 'voice' ? { skill: 'singing', sub: 'singing/sequence', w: 0.4 } : { skill: 'instrument', sub: `instrument/${inst}-tech`, w: 0.4 };
   const t = lickTempos(l);
   const tempoShare = Math.max(0, Math.min(1, (bpm - t[0]) / Math.max(1, t[3] - t[0])));
-  const difficulty = Math.round(Math.min(1700, 860 + l.level * 110 + tempoShare * 160 + (l.notes.length > 12 ? 40 : 0)));
-  const primary = sub === 'transcribe' ? { skill: 'dictation' as const, sub: 'dictation/transcribe', w: 0.6 } : { skill: 'improv' as const, sub: 'improv/vocab', w: 0.6 };
-  return [{ id: `g:lick:${sessionId}:${index}`, skill: primary.skill, difficulty, correct: m.verdict === 'clean', score: Math.round(Math.max(0, Math.min(1, m.accuracy * (m.verdict === 'clean' ? 1 : m.verdict === 'almost' ? 0.85 : 0.6))) * 1000) / 1000, tags: [primary, second], at }];
+  // By ear, notes unseen: harder than reading it (+80).
+  const blind = ear?.byEar && !ear.revealed;
+  const difficulty = Math.round(Math.min(1780, 860 + l.level * 110 + tempoShare * 160 + (l.notes.length > 12 ? 40 : 0) + (blind ? 80 : 0)));
+  const primary = sub === 'transcribe' || ear?.byEar ? { skill: 'dictation' as const, sub: 'dictation/transcribe', w: 0.6 } : { skill: 'improv' as const, sub: 'improv/vocab', w: 0.6 };
+  const raw = Math.max(0, Math.min(1, m.accuracy * (m.verdict === 'clean' ? 1 : m.verdict === 'almost' ? 0.85 : 0.6)));
+  const score = raw * byEarCredit(ear);
+  return [{ id: `g:lick:${sessionId}:${index}`, skill: primary.skill, difficulty, correct: m.verdict === 'clean' && !(ear?.byEar && ear.revealed), score: Math.round(score * 1000) / 1000, tags: [primary, second], at }];
+}
+
+// ───────────────────────────── by ear (owner 2026-11-14) ─────────────────────────────
+
+/**
+ * The lick by ear: the notes stay hidden until the first take; the player hears the lick (and slowed), then plays it.
+ * Revealing the notes before the first take gives less credit: the take is scored × BY_EAR_REVEAL and is never "correct"
+ * as a dictation (it was read, not heard). After the first take the notes show, like any lick.
+ */
+export interface ByEar {
+  byEar: boolean;
+  /** The notes were shown before the first take. */
+  revealed: boolean;
+}
+export const BY_EAR_REVEAL = 0.6;
+/** The credit factor of a by-ear take: 1 by ear, BY_EAR_REVEAL when the notes were revealed early (1 outside by-ear mode). */
+export const byEarCredit = (ear?: ByEar): number => (ear?.byEar && ear.revealed ? BY_EAR_REVEAL : 1);
+/** XP of a by-ear take: the lick's, + 2 when it was played clean by ear alone. */
+export const byEarXp = (m: TakeMetrics, ear?: ByEar): number => lickXp(m) + (ear?.byEar && !ear.revealed && m.verdict === 'clean' ? 2 : 0);
+/** The lick's sound for "Hear it" (seconds from 0.05): its notes, swung where the lick swings, at `bpm` × `rate`. */
+export function lickSound(d: Drill, bpm: number, rate = 1): { events: { midi: number; start: number; duration: number; velocity: number; inst?: 'bass' }[]; length: number } {
+  const beatS = 60 / Math.max(20, bpm * rate);
+  const sw = (b: number) => (d.spec.swing && Math.abs(b - Math.floor(b) - 0.5) < 1e-6 ? Math.floor(b) + 2 / 3 : b);
+  const events = d.notes.map((n) => ({ midi: n.pitch, start: 0.05 + sw(n.beat) * beatS, duration: Math.max(0.12, n.dur * beatS * 0.92), velocity: 0.75, ...(d.spec.instrument === 'bass' ? { inst: 'bass' as const } : {}) }));
+  return { events, length: 0.05 + d.beats * beatS + 0.4 };
 }
 /** XP of a lick take (league effort, like a drill take): clean 5, almost 2, not yet 1. */
 export const lickXp = (m: TakeMetrics): number => (m.verdict === 'clean' ? 5 : m.verdict === 'almost' ? 2 : 1);

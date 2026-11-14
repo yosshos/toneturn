@@ -558,10 +558,10 @@ GAME_TIERS.polylock = advanced({
 // GAMES_TIERS_PLAN §3 / P3 "thin game shells": measured by MIDI or the microphone with the existing machinery. They
 // start at pp (not advanced). On-screen taps are practice (MEASURED_ONLY below): they never clear a tier.
 
-/** Play It Back (keys): hear a phrase, play it back (MIDI / mic). Accuracy rounds. */
+/** Play It Back (keys, guitar, bass — owner 2026-11-14): hear a phrase, play it back (MIDI / mic). Accuracy rounds. ff climbs past the jazz line: enclosures, the bebop scale, altered tensions (levels 7–9, instGames playbackLevelAt). */
 GAME_TIERS.playback = {
   game: 'playback',
-  source: (c) => (c === 'keys' ? 'instrument/piano-tech' : 'dictation'),
+  source: (c) => (c === 'keys' ? 'instrument/piano-tech' : c === 'guitar' ? 'instrument/guitar-tech' : c === 'bass' ? 'instrument/bass-tech' : 'dictation'),
   clear: 'accuracy',
   tiers: {
     pp: { label: L('One note: hear it, find it', 'צליל אחד: שומעים ומוצאים'), levels: [1], params: { bpm: 80 }, target: 85 },
@@ -569,7 +569,7 @@ GAME_TIERS.playback = {
     mp: { label: L('Four-note tunes, leaps inside the chord', 'מנגינות של ארבעה צלילים, קפיצות בתוך האקורד'), levels: [3], params: { bpm: 90 }, target: 85 },
     mf: { label: L('The bass line of four chords', 'קו הבס של ארבעה אקורדים'), levels: [4], params: { bpm: 90 }, target: 85 },
     f: { label: L('Five or six notes, with their rhythm', 'חמישה–שישה צלילים, עם המקצב'), levels: [5], params: { bpm: 100, rhythm: true }, target: 85 },
-    ff: { label: L('Jazz lines: chromatic approach notes, rhythm', 'קווי ג׳אז: צלילי גישה כרומטיים, מקצב'), levels: [6], params: { bpm: 110, rhythm: true }, target: 85 },
+    ff: { label: L('Jazz lines, then enclosures, the bebop scale, altered tensions', 'קווי ג׳אז, ואז כיתורים, סולם הביבופ, מתחים אלטרד'), levels: [6, 7, 8, 9], params: { bpm: 110, rhythm: true }, target: 85 },
   },
 };
 

@@ -45,6 +45,8 @@ export const BASS_TRACK: Partial<Record<BassFamilyId, 'jazz' | 'prog'>> = {
   'b-keys': 'jazz',
   // AUDIT-GAPS-2: bebop vocabulary on the bass.
   'b-bebop': 'jazz',
+  // Phrases by ear on the bass (jazz track).
+  'b-phrase': 'jazz',
 };
 /** Is a bass family shown for the player's track (absent / 'both' = every family)? */
 export const inBassTrack = (family: string, track?: 'jazz' | 'prog' | 'both'): boolean => !track || track === 'both' || !BASS_TRACK[family as BassFamilyId] || BASS_TRACK[family as BassFamilyId] === track;

@@ -9,6 +9,7 @@ import type { NoteEvent } from './lesson';
 import { QUALITY_INTS, type ChordQuality } from './chordRecognize';
 import { chordSymbol } from './chordFinder';
 import { rng } from './topicKit';
+import { earPhrase, phraseComp } from './phraseEar';
 
 const pc12 = (n: number): number => ((Math.round(n) % 12) + 12) % 12;
 const pick = <T,>(rnd: () => number, xs: readonly T[]): T => xs[Math.floor(rnd() * xs.length)];
@@ -77,14 +78,53 @@ export interface HearItem {
   rhythm: boolean;
   /** Swung 8ths (ff). */
   swing?: boolean;
+  /** The instrument it is played back on (owner 2026-11-14: keys, guitar, bass); the phrase sounds on it (the bass on the bass). */
+  inst?: PlaybackInst;
+  /** Play It Back 7–9: the comp under the phrase (beats from the phrase's start), so the harmony is heard. */
+  backing?: { at: number; len: number; midi: number[] }[];
+}
+
+export type PlaybackInst = 'keys' | 'guitar' | 'bass';
+/** Play It Back runs to level 9 (past ff: enclosures, the bebop scale, altered tensions); the other take games to 6. */
+export const PLAYBACK_MAX = 9;
+const clampPb = (lv: number) => Math.max(1, Math.min(PLAYBACK_MAX, Math.round(lv) || 1));
+/** All 12 keys for Play It Back (owner 2026-11-14). */
+const PB_KEYS = [0, 5, 10, 3, 8, 1, 6, 11, 4, 9, 2, 7];
+/** The phrase kinds (phraseEar.ts) of levels 7–9 and their variants. */
+const PB_TOP: Record<number, { kind: string; ops: number }> = { 7: { kind: 'ph-encl', ops: 5 }, 8: { kind: 'ph-bebop', ops: 3 }, 9: { kind: 'ph-alt', ops: 3 } };
+/** Registers of levels 7–9 per instrument (the phrase-by-ear ladder's). */
+const PB_REG: Record<PlaybackInst, [number, number]> = { keys: [55, 88], guitar: [47, 80], bass: [28, 60] };
+
+/**
+ * Play It Back phrase of a level on an instrument: 1 one note … 6 a jazz line with approach notes and rhythm; past ff,
+ * 7 an enclosure (every type), 8 the bebop scale's passing half step, 9 a ii–V–I line with an altered tension — over a
+ * comp. Every level in all 12 keys; on the bass two octaves down (its register), on the bass sound.
+ */
+export function playbackItem(seed: number, level: number, inst: PlaybackInst = 'keys'): HearItem {
+  const lv = clampPb(level);
+  if (lv >= 7) {
+    const rnd = rng(seed ^ 0x5f3759df);
+    const top = PB_TOP[lv];
+    const key = pick(rnd, PB_KEYS);
+    const op = Math.floor(rnd() * top.ops);
+    const [lo, hi] = PB_REG[inst];
+    const p = earPhrase(top.kind, key, op, lo, hi, `playback:${lv}:${seed}`);
+    const backing = phraseComp(p, Infinity, inst === 'bass' ? 48 : 36).map((c) => ({ at: c.beat, len: c.dur, midi: inst === 'bass' ? c.shell : [c.root, ...c.shell] }));
+    const notes = p.notes.map((n) => ({ midi: n.p, at: n.beat, len: n.dur }));
+    return { game: 'playback', level: lv, key, cue: [], notes, rhythm: true, swing: true, inst, backing };
+  }
+  const it = basePlayback(seed, lv);
+  if (inst !== 'bass') return { ...it, inst };
+  // The bass: two octaves down (the bass line of level 4 is already in its register).
+  const down = (m: number) => (m >= 52 ? m - 24 : m);
+  return { ...it, inst, notes: it.notes.map((n) => ({ ...n, midi: down(n.midi) })) };
 }
 
 const MAJOR = [0, 2, 4, 5, 7, 9, 11, 12, 14, 16];
-/** Play It Back phrase of a level (1 one note … 6 a jazz line with approach notes and rhythm). */
-export function playbackItem(seed: number, level: number): HearItem {
+function basePlayback(seed: number, level: number): HearItem {
   const rnd = rng(seed ^ 0x2545f491);
   const lv = clampLv(level);
-  const key = pick(rnd, KEYS.slice(0, 6));
+  const key = pick(rnd, PB_KEYS);
   const tonic = 60 + (key > 6 ? key - 12 : key);
   const cue = compVoicing({ root: key, quality: 'M' }, tonic - 12);
   const deg = (d: number) => tonic + (d >= 0 ? MAJOR[d] : MAJOR[d + 7] - 12);
@@ -181,9 +221,11 @@ export function hearEvents(it: HearItem, bpm: number, t0 = 0, bass = false): { e
     });
     return { events: ev, end: t + it.chords.reduce((a, c) => a + c.beats * beat, 0) };
   }
+  // Play It Back 7–9: the comp under the phrase.
+  for (const b of it.backing ?? []) for (const m of b.midi) ev.push({ midi: m, start: t + swungBeat(b.at, !!it.swing) * beat, duration: Math.max(0.15, b.len * beat), velocity: 0.36 });
   for (const n of it.notes) {
     const start = t + swungBeat(n.at, !!it.swing) * beat;
-    ev.push({ midi: n.midi, start, duration: Math.max(0.15, n.len * beat * 0.9), velocity: 0.7 });
+    ev.push({ midi: n.midi, start, duration: Math.max(0.15, n.len * beat * 0.9), velocity: 0.7, ...(it.inst === 'bass' ? { inst: 'bass' as const } : {}) });
   }
   const last = it.notes[it.notes.length - 1];
   return { events: ev, end: t + (last ? (last.at + last.len) * beat : 0) };
@@ -518,13 +560,18 @@ export interface TakeSave {
   takes: number[];
   lives: number;
 }
-export const newTakeSave = (game: TakeGame, seed: number, level: number, bpm: number, tier?: DynName): TakeSave => ({ v: 1, game, seed: seed >>> 0, level: clampLv(level), bpm, ...(tier ? { tier } : {}), takes: [], lives: TAKE_LIVES });
+export const newTakeSave = (game: TakeGame, seed: number, level: number, bpm: number, tier?: DynName): TakeSave => ({ v: 1, game, seed: seed >>> 0, level: game === 'playback' ? clampPb(level) : clampLv(level), bpm, ...(tier ? { tier } : {}), takes: [], lives: TAKE_LIVES });
 export function isTakeSave(x: unknown, game: TakeGame): x is TakeSave {
   const s = x as TakeSave | null;
   return !!s && s.v === 1 && s.game === game && typeof s.seed === 'number' && Array.isArray(s.takes) && s.lives > 0 && s.takes.length < TAKES_PER_RUN[game];
 }
 /** The seed of take i (each take its own item). */
 export const takeSeed = (s: TakeSave, i = s.takes.length) => (s.seed + Math.imul(i + 1, 0x9e3779b1)) >>> 0;
+/**
+ * Play It Back's level of take i: past ff the run climbs — from level 6 (jazz lines) through 7 (enclosures) and 8 (the
+ * bebop scale) to 9 (altered tensions) over its six phrases. Below ff the tier's level.
+ */
+export const playbackLevelAt = (s: Pick<TakeSave, 'level'>, i: number): number => (s.level >= 6 ? Math.min(PLAYBACK_MAX, 6 + Math.floor((Math.max(0, i) * 4) / TAKES_PER_RUN.playback)) : s.level);
 export function addTakeScore(s: TakeSave, score: number): TakeSave {
   return { ...s, takes: [...s.takes, Math.round(score)], lives: score < TAKE_PASS ? s.lives - 1 : s.lives };
 }

@@ -12,6 +12,7 @@ import { analyzeGuitarTake, captureOptsFor, detectOnsets, onsetOptsFor, untimedP
 import { isGuitarDrill } from '../engine/drills/events';
 import { analyzePedal, pedalDown, type PedalEvent } from '../engine/drills/pedal';
 import { piano } from './services';
+import { callSound, REPLAY_SLOW } from '../engine/drills/phraseDrills';
 import { midi } from '../speech/midi';
 import { BrowserPitchCapture } from '../speech/pitchCapture';
 import { listenLoop } from './Flight';
@@ -172,18 +173,54 @@ export function ChartView({ drill, beat = -1, fromBeat = 0 }: { drill: Drill; be
 }
 
 /** B11: an ear drill before its result — what to do, and which bars the band plays and which are yours. */
-export function EarCard({ drill, beat = -1, lang }: { drill: Drill; beat?: number; lang: Lang }) {
+export function EarCard({ drill, beat = -1, lang, bpm }: { drill: Drill; beat?: number; lang: Lang; bpm?: number }) {
   const meter = drill.meter || 4;
   const bars = Math.ceil(drill.beats / meter - 1e-6);
   const cur = beat >= 0 ? Math.floor(beat / meter + 1e-6) : -1;
   const band = (bar: number) => (drill.listen?.windows ?? []).some(([a, b]) => bar * meter >= a - 1e-6 && bar * meter < b - 1e-6);
+  const dense = !!drill.phrase && bars > 8;
+  // Phrases by ear: hear the call again, or slowed, before the take (never during it).
+  const [playing, setPlaying] = useState<null | 'call' | 'slow'>(null);
+  const stopRef = useRef<AbortController | null>(null);
+  useEffect(() => () => stopRef.current?.abort(), []);
+  const replay = async (rate: number, which: 'call' | 'slow') => {
+    stopRef.current?.abort();
+    if (playing === which) return setPlaying(null);
+    const ac = new AbortController();
+    stopRef.current = ac;
+    setPlaying(which);
+    try {
+      await piano.unlock();
+      const s = callSound(drill, bpm ?? drill.startBpm, rate);
+      await piano.play(s.events, s.length, ac.signal);
+    } catch {
+      /* stopped */
+    }
+    if (stopRef.current === ac) setPlaying(null);
+  };
   return (
     <div className="ear-card" data-ear-card="1">
       <p className="ear-ask">{drill.listen?.ask[lang]}</p>
-      <ol className="ear-bars" dir="ltr">
+      {drill.phrase && beat < 0 && (
+        <div className="ear-replay" data-phrase-replay="1">
+          <button className={`btn small ${playing === 'call' ? 'primary' : 'ghost'}`} onClick={() => void replay(1, 'call')} data-replay="call">
+            {lang === 'he' ? 'לשמוע שוב' : 'Hear again'}
+          </button>
+          <button className={`btn small ${playing === 'slow' ? 'primary' : 'ghost'}`} onClick={() => void replay(REPLAY_SLOW, 'slow')} data-replay="slow">
+            {lang === 'he' ? 'לאט יותר' : 'Slower'}
+          </button>
+        </div>
+      )}
+      {/* Long phrases (8 bars of a form: 16 bars in all): one line per bar — the chord only, Listen / You by colour. */}
+      {dense && (
+        <p className="ear-legend">
+          <span className="band">{lang === 'he' ? 'הקשבה' : 'Listen'}</span> <span className="you">{lang === 'he' ? 'אתם' : 'You'}</span>
+        </p>
+      )}
+      <ol className={`ear-bars ${dense ? 'dense' : ''}`} dir="ltr">
         {Array.from({ length: bars }, (_, i) => (
-          <li key={i} className={`${band(i) ? 'band' : 'you'} ${i === cur ? 'now' : ''}`}>
-            {band(i) ? (lang === 'he' ? 'הקשבה' : 'Listen') : lang === 'he' ? 'אתם' : 'You'}
+          <li key={i} className={`${band(i) ? 'band' : 'you'} ${i === cur ? 'now' : ''}`} aria-label={band(i) ? (lang === 'he' ? 'הקשבה' : 'Listen') : lang === 'he' ? 'אתם' : 'You'}>
+            {!dense && (band(i) ? (lang === 'he' ? 'הקשבה' : 'Listen') : lang === 'he' ? 'אתם' : 'You')}
             {/* PIANO_JAZZ trading fours: the bar's chords under the label. */}
             {drill.chart?.[i] && <small className="ear-chord">{drill.chart[i]}</small>}
           </li>

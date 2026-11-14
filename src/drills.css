@@ -482,6 +482,15 @@ button.heat-cell {
 .ear-bars li.now { background: var(--now); color: var(--ink); }
 /* PIANO_JAZZ trading fours: the bar's chords, small, under Listen / You. */
 .ear-bars li .ear-chord { display: block; font-size: 0.7rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
+/* Phrases by ear: replay the call (as written, slower) before the take. */
+.ear-replay { display: flex; gap: 8px; flex-wrap: wrap; }
+.ear-replay .btn { flex: 1 1 0; min-width: 0; }
+.ear-bars.dense li { flex: 1 0 calc(25% - 4px); padding: 3px 2px; }
+.ear-bars.dense li .ear-chord { font-size: 0.72rem; }
+.ear-legend { display: flex; gap: 6px; margin: 0; font-size: 0.75rem; }
+.ear-legend span { padding: 1px 8px; border: 2px solid var(--outline); border-radius: 6px; }
+.ear-legend .band { background: var(--bg-2); color: var(--ink-dim); }
+.ear-legend .you { background: var(--card); color: var(--ink); }
 .drums-gate { display: grid; gap: 8px; }
 .drill-prep { display: grid; gap: 8px; justify-items: center; }
 .write-slots li { flex: 1 0 68px; font-size: 0.75rem; }

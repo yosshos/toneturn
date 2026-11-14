@@ -55,6 +55,8 @@ function rng(seed: number) {
   };
 }
 const pick = <T>(r: () => number, xs: readonly T[]): T => xs[Math.floor(r() * xs.length)];
+/** The keys a phrase is given in: all 12, around the circle of fourths. */
+export const TX_KEYS = [0, 5, 10, 3, 8, 1, 6, 11, 4, 9, 2, 7];
 const mod = (n: number, m = 12) => ((n % m) + m) % m;
 const MAJ = [0, 2, 4, 5, 7, 9, 11];
 /** Diatonic degree index (0 = tonic, may be negative / above 6) → semitones. */
@@ -64,7 +66,8 @@ const deg = (i: number) => MAJ[mod(i, 7)] + 12 * Math.floor(i / 7);
 export function phraseFor(level: number, seed: number): Phrase {
   const r = rng(seed * 7919 + level * 104729);
   const lv = Math.max(1, Math.min(9, Math.round(level)));
-  const key = pick(r, [0, 2, 5, 7, 10, 3, 9]);
+  // All 12 keys (owner 2026-11-14): a phrase is learnt in every key, the weak ones too.
+  const key = pick(r, TX_KEYS);
   const tonic = 60 + key - (key > 6 ? 12 : 0);
   const id = `tx${lv}-${seed}`;
   const gen = (notes: PNote[], extra: Partial<Phrase> = {}): Phrase => ({ id, level: lv, key, minor: false, notes, chords: null, swing: false, bpm: 84, source: 'generated', title: TX_LEVELS[lv - 1].name, ...extra });
