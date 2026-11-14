@@ -29,6 +29,8 @@ import { bassPhraseFamily, genBassPhrase } from './phraseDrills'; // phrases by 
 import type { LevelExamTag } from './types';
 // AUDIT-GAPS-2 #6/#11/#12: the line under each key change, turnarounds and the rhythm-changes bridge (keyMoveDrills.ts).
 import { bassKeyMoveFamily, generateBassKeyMove } from './keyMoveDrills';
+// AUDIT-DEPTH-3 C3/C4: a head on the bass — roots, two-feel, walking, approaches, walking the reharm (headDrills.ts).
+import { bassTuneFamily, generateBassHead } from './headDrills';
 
 export const tt = (en: string, he: string): T2 => ({ en, he });
 
@@ -2482,6 +2484,8 @@ export function generateBass(s: DrillSpec, tu: Tuning): Drill {
     // Phrases by ear (phraseDrills.ts).
     case 'b-phrase':
       return genBassPhrase(s, tu);
+    case 'b-tune':
+      return generateBassHead(s, tu);
   }
   throw new Error(`Not a bass family: ${s.family}`);
 }
@@ -2753,6 +2757,8 @@ export function bassFamilies(): GuitarFamilyDef[] {
     bassVocabFamily(L, fam),
     // Phrases by ear on the bass (jazz track): hear a phrase over its chords, play it back (phraseDrills.ts).
     bassPhraseFamily(L, fam),
+    // AUDIT-DEPTH-3 C3/C4: a head walked step by step, then its reharms (jazz track).
+    bassTuneFamily(),
     fam('b-legato', 'Slides, legato, harmonics', 'החלקות, לגאטו והרמוניקים', [
       L('b-legato', 1, 'Slides into notes', 'החלקות אל הצלילים', [LG('slide')], K6, [70, 110], E8),
       L('b-legato', 2, 'Hammer-on and pull-off pairs', 'זוגות הקשה ומשיכה', [LG('hp')], K6, [60, 100], E8),

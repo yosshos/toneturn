@@ -627,3 +627,18 @@ button.km-cell:focus-visible { outline: 2px solid var(--ink); outline-offset: 1p
   .drills-screen[data-drills='run'] .tab-pager { position: relative; z-index: 1; min-height: 40px; }
   .drills-screen[data-drills='run'] .tab-pager .icon-btn { width: 40px; height: 40px; }
 }
+
+/* AUDIT-DEPTH-3 C3: the reharm studio on the tune families' page — four bars a page, a device per bar. */
+.rh-studio { display: grid; gap: 8px; padding: 10px; border: 1px solid var(--line, rgba(255, 255, 255, 0.14)); border-radius: 12px; margin: 8px 0; }
+.rh-top { display: flex; gap: 6px; align-items: center; }
+.rh-top select { flex: 1; min-width: 0; }
+.rh-bars { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.rh-bars li { display: grid; grid-template-columns: 22px 1fr; gap: 2px 8px; align-items: center; padding: 6px 8px; border-radius: 8px; background: rgba(127, 127, 127, 0.08); }
+.rh-bars li.changed { outline: 1px solid var(--mint, #5cffb0); }
+.rh-n { font-size: 0.75rem; opacity: 0.7; }
+.rh-chords { font-size: 0.95rem; overflow-wrap: anywhere; }
+.rh-devs { grid-column: 2; display: flex; flex-wrap: wrap; gap: 4px; }
+.rh-devs .chip { font-size: 0.78rem; padding: 2px 8px; }
+.rh-devs .chip.on { background: var(--mint, #5cffb0); color: #111; }
+.rh-check { margin: 0; font-size: 0.85rem; }
+.rh-go { display: flex; gap: 8px; flex-wrap: wrap; }

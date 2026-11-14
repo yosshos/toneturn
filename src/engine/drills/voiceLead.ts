@@ -48,6 +48,11 @@ export interface VLGoal {
   sevenToThree?: boolean;
   /** Spell with flats (else sharps). */
   flats?: boolean;
+  /**
+   * The melody is an extra voice ABOVE the voicing, not one of its voices (heads: shells under a melody). Each chord's
+   * `melody` must be the top note played; the voicing of the type sits below it (graded and led without it).
+   */
+  over?: boolean;
 }
 
 interface QualDef {
@@ -151,8 +156,8 @@ export const measuredOf = (v: number[], type: VLType): number[] => (type === 'sp
 
 const cache = new Map<string, number[][]>();
 /** Every voicing of a chord that satisfies the goal's type, register, melody and string sets (full voicings; spread with its bass). */
-export function candidates(c: VLChord, g: Pick<VLGoal, 'type' | 'lo' | 'hi' | 'strings' | 'tuning'>): number[][] {
-  const key = `${c.root}|${c.q}|${c.melody ?? ''}|${g.type}|${g.lo}|${g.hi}|${JSON.stringify(g.strings ?? null)}|${g.tuning ?? ''}`;
+export function candidates(c: VLChord, g: Pick<VLGoal, 'type' | 'lo' | 'hi' | 'strings' | 'tuning' | 'over'>): number[][] {
+  const key = `${c.root}|${c.q}|${c.melody ?? ''}|${g.type}|${g.lo}|${g.hi}|${JSON.stringify(g.strings ?? null)}|${g.tuning ?? ''}|${g.over ? 'o' : ''}`;
   const hit = cache.get(key);
   if (hit) return hit;
   const Q = QUAL[c.q];
@@ -180,7 +185,8 @@ export function candidates(c: VLChord, g: Pick<VLGoal, 'type' | 'lo' | 'hi' | 's
         for (const up of closeShapes(set.map((i) => c.root + i), Math.max(g.lo, low + 1), g.hi)) out.push([b, low, ...up]);
     }
   }
-  if (c.melody !== undefined) out = out.filter((v) => Math.max(...v) === c.melody);
+  // Over a melody (heads): the voicing sits below the melody note; else the melody is its top voice.
+  if (c.melody !== undefined) out = out.filter((v) => (g.over ? Math.max(...v) < c.melody! : Math.max(...v) === c.melody));
   if (g.strings) out = out.filter((v) => fitsGoalStrings(v, g));
   cache.set(key, out);
   return out;
@@ -200,10 +206,17 @@ export interface VLClass {
 }
 
 /** Is a played set of pitches a right voicing of the chord for the goal (and which voices are measured)? */
-export function classify(played: number[], c: VLChord, g: Pick<VLGoal, 'type' | 'bass' | 'strings' | 'tuning'>): VLClass {
-  const ps = [...new Set(played)].sort((a, b) => a - b);
+export function classify(played: number[], c: VLChord, g: Pick<VLGoal, 'type' | 'bass' | 'strings' | 'tuning' | 'over'>): VLClass {
+  let ps = [...new Set(played)].sort((a, b) => a - b);
   const res = (kind: VLKind, voices: number[], bass: number | null, wrongPcs: number[] = [], missingPcs: number[] = []): VLClass => ({ ok: kind === 'ok', kind, voices, bass, wrongPcs, missingPcs });
   if (!ps.length) return res('empty', [], null);
+  // Over a melody: the top note must be the melody; the voicing below it is classified as usual.
+  const over = !!g.over && c.melody !== undefined;
+  if (over) {
+    if (ps[ps.length - 1] !== c.melody) return res('melody', ps.slice(0, -1), null);
+    ps = ps.slice(0, -1);
+    if (!ps.length) return res('empty', [], null);
+  }
   const Q = QUAL[c.q];
   const hasBass = !!g.bass || g.type === 'spread';
   const bass = hasBass ? ps[0] : null;
@@ -246,7 +259,7 @@ export function classify(played: number[], c: VLChord, g: Pick<VLGoal, 'type' | 
       (g.type === 'drop2' ? isDrop2(rest) : g.type === 'drop3' ? isDrop3(rest) : isClose(rest));
     if (!shapeOk) return res('type', rest, bass);
   }
-  if (c.melody !== undefined && rest[rest.length - 1] !== c.melody) return res('melody', rest, bass);
+  if (!over && c.melody !== undefined && rest[rest.length - 1] !== c.melody) return res('melody', rest, bass);
   if (g.strings && !fitsGoalStrings(rest, g)) return res('strings', rest, bass);
   return res('ok', rest, bass);
 }

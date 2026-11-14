@@ -33,6 +33,12 @@ export type FamilyId =
   // AUDIT-GAPS-2 #5/#6/#11/#12: key changes (common dim, pivot, ii–V, tritone, direct, pop) and turnarounds, performed.
   | 'k-keys'
   | 'g-keys'
+  // AUDIT-DEPTH-3 #2–#4, C1/C3/C4: heads — harmonise a melody (piano), chord-melody (guitar), comp a head step by step
+  // and reharmonise it (piano, guitar; b-tune on the bass).
+  | 'k-harm'
+  | 'g-cmel'
+  | 'k-tune'
+  | 'g-tune'
   | 'custom' // the player's own drills
   // Licks & transcription (docs/SPEC-LICKS-TRANSCRIPTION.md): lick items per key / instrument, transcribed phrases.
   | 'licks'
@@ -116,7 +122,9 @@ export type BassFamilyId =
   | 'b-up-walk'
   | 'b-up-read'
   // AUDIT-GAPS-2 #6/#11/#12: the line under each key change, the turnarounds and the rhythm-changes bridge.
-  | 'b-keys';
+  | 'b-keys'
+  // AUDIT-DEPTH-3 C3/C4: a head on the bass — roots, two-feel, walking, approaches, walking the reharm.
+  | 'b-tune';
 
 export type Dyn = 'pp' | 'p' | 'mp' | 'mf' | 'f' | 'ff';
 export type Articulation = 'legato' | 'staccato' | 'portato';
@@ -242,6 +250,8 @@ export interface Drill {
   sung?: boolean;
   /** Songs (songDrills.ts): chord names per bar, shown above the staff as a chart. */
   chart?: string[];
+  /** A long item (a whole head): the staff and the chart show two lines at a time, with a pager (one phone screen). */
+  paged?: boolean;
   /** Chart drills, improv mode (owner 2026-11-08): notes at or above this pitch are the free right hand — not graded. */
   freeAbove?: number;
   spec: DrillSpec;

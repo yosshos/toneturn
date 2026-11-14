@@ -17,6 +17,8 @@ import { genKeysVocab, keysVocabFamily } from './vocabDrills'; // AUDIT-GAPS-2: 
 import { genKeysPhrase, keysPhraseFamily } from './phraseDrills'; // phrases by ear
 import { A_SECTION, beatsOf, callNotes, harmonyPlan, KEYS_STYLE, placeChords, progEarChords, PROG_EAR_NAME, type ProgEarKind } from './progEar'; // progressions by ear
 import { colourPcs, keyName as progKeyName, voiceChords } from '../progGrid';
+// AUDIT-DEPTH-3 #2–#4, C1/C3/C4: heads — harmonise a melody, comp a head, reharmonise it (headDrills.ts).
+import { genHeadPiano, pianoHarmFamily, pianoTuneFamily } from './headDrills';
 // THEORY_PLAY: the k-theory family's music.
 import { LINE_CLICHE, RQ_SYM, RQ_TONES, pairLineUp, pentGroups, upFrom, pairById, pairName, pairTriads, pentById, pentName, pentNotes, ustById, type PairId, type PentId, type RQ, type Ust, type UstId } from '../theoryPlay';
 import type { Drill, DrillGoal, DrillSpec, DynamicsGoal, ExpNote, FamilyId, Hand, KeyOrder, Motion, ScaleType, Variant } from './types';
@@ -4912,6 +4914,7 @@ export function generate(spec: DrillSpec): Drill {
   if (s.family === 'k-keys') return genKeyMovePiano(s);
   if (s.family === 'k-vocab') return genKeysVocab(s);
   if (s.family === 'k-phrase') return genKeysPhrase(s);
+  if (s.family === 'k-harm' || s.family === 'k-tune') return genHeadPiano(s);
   if (s.kind.startsWith('chart~')) return genChart(s);
   switch (s.kind) {
     case 'scale':
@@ -5904,5 +5907,9 @@ export function catalog(): FamilyDef[] {
     keysVocabFamily(),
     // Phrases by ear (owner 2026-11-14): hear a phrase over its chords, play it back — chord tones to 8 bars over a form.
     keysPhraseFamily(),
+    // AUDIT-DEPTH-3 C1: harmonise a melody (shells, four-way close, drop 2, drop 3; pluggable styles) — headDrills.ts.
+    pianoHarmFamily(),
+    // AUDIT-DEPTH-3 C4 + C3/#2: a head comped step by step, then reharmonised and comped (headDrills.ts).
+    pianoTuneFamily(),
   ]);
 }

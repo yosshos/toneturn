@@ -24,6 +24,8 @@ import { generateGuitarVL, guitarVoiceLeadFamily } from './voiceLeadDrills';
 import { generateGuitarKeyMove, guitarKeyMoveFamily } from './keyMoveDrills';
 import { genGuitarVocab, guitarVocabFamily } from './vocabDrills'; // AUDIT-GAPS-2: bebop vocabulary
 import { genGuitarPhrase, guitarPhraseFamily } from './phraseDrills'; // phrases by ear
+// AUDIT-DEPTH-3 #4, C3/C4: chord-melody and a head comped on the neck (headDrills.ts).
+import { generateGuitarHead, guitarChordMelodyFamily, guitarTuneFamily } from './headDrills';
 
 export type GuitarStyle = NonNullable<DrillSettings['guitarStyle']>;
 export type GuitarTechnique = NonNullable<ExpNote['technique']>;
@@ -2377,6 +2379,9 @@ export function generateGuitar(spec: DrillSpec): Drill {
       return generateGuitarVL(s, tu);
     case 'g-keys':
       return generateGuitarKeyMove(s, tu);
+    case 'g-cmel':
+    case 'g-tune':
+      return generateGuitarHead(s, tu);
     case 'g-fretting':
       return genFretting(s, tu);
     case 'g-picking':
@@ -2640,6 +2645,9 @@ export function guitarCatalog(): GuitarFamilyDef[] {
     guitarVocabFamily(LT, fam),
     // Phrases by ear on the neck (the jazz add-on): hear a phrase over its chords, play it back (phraseDrills.ts).
     guitarPhraseFamily(LT, fam),
+    // AUDIT-DEPTH-3 #4: chord-melody on the heads; C4/C3: a head comped on the neck, then reharmonised (jazz add-on).
+    guitarChordMelodyFamily(),
+    guitarTuneFamily(),
     // The 0.4x starter bass family: superseded by the b-* course families below (BASS_CURRICULUM §10.1). Kept, retired,
     // so old item ids, badges and frozen path units (tech:g-bass-*) stay valid.
     {

@@ -60,6 +60,8 @@ const CHORDS_JAZZ: Rung[] = [
   r('voicings-9', 2, { cadences: 5, voicings: 10, 'k-sixdim': 4, 'k-reharm': 3, 'k-vl': 7, 'k-theory': 1, 'k-keys': 4 }),
   // AUDIT-GAPS-2: key changes — one diminished, four keys, voice-led (the top step: it proves the voice leading too).
   r('k-keys-7', 9, { cadences: 5, voicings: 10, 'k-sixdim': 5, 'k-reharm': 3, 'k-vl': 7, 'k-theory': 1, 'k-keys': 8 }),
+  // AUDIT-DEPTH-3: a phrase of a head in drop 2 with the melody on top (proves harmonising and drop-2 comping of a head).
+  r('k-harm-4', 4, { cadences: 5, voicings: 10, 'k-sixdim': 5, 'k-reharm': 3, 'k-vl': 7, 'k-theory': 1, 'k-keys': 8, 'k-harm': 5, 'k-tune': 5 }),
 ];
 const CHORDS_CLASSICAL: Rung[] = [
   r('cadences-1', 7, { cadences: 2 }),
@@ -171,6 +173,8 @@ const G_JAZZ: Rung[] = [
   r('g-bebop-7', 2, { 'g-jazz': 9, 'g-harris': 6, 'g-theory': 2, 'g-keys': 4, 'g-bebop': 8 }),
   // AUDIT-GAPS-2: key changes in drop 2 (one diminished, four keys).
   r('g-keys-7', 2, { 'g-jazz': 9, 'g-harris': 6, 'g-theory': 2, 'g-keys': 8, 'g-bebop': 8 }),
+  // AUDIT-DEPTH-3: chord-melody, drop 2 under a head's melody.
+  r('g-cmel-4', 7, { 'g-jazz': 9, 'g-harris': 6, 'g-theory': 2, 'g-keys': 8, 'g-bebop': 8, 'g-cmel': 5, 'g-tune': 5 }),
 ];
 
 /**
@@ -220,7 +224,7 @@ const B_WALK: Rung[] = [
   // AUDIT-GAPS-2: bebop lines on the bass (rhythm changes, the bridge).
   r('b-bebop-6', 5, { 'b-walk': 10, 'b-swing': 4, 'b-barry': 4, 'b-keys': 4, 'b-bebop': 7 }),
   // AUDIT-GAPS-2: the line through a key change (one diminished, four keys).
-  r('b-keys-7', 5, { 'b-walk': 10, 'b-swing': 4, 'b-barry': 4, 'b-keys': 8, 'b-bebop': 7 }),
+  r('b-keys-7', 5, { 'b-walk': 10, 'b-swing': 4, 'b-barry': 4, 'b-keys': 8, 'b-bebop': 7, 'b-tune': 3 }),
 ];
 const B_READING: Rung[] = [
   r('b-read-2', 4, { 'b-read': 3, 'b-posread': 1 }),

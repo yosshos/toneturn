@@ -344,11 +344,11 @@ const subBadges: Badge[] = SUB_SKILLS.map((s, i) => {
 // The pianist's ear (k-ear) gets milestones by items played back clean (keysEarBadges), not tempo-band titles.
 // The first steps at the piano (k-first) are three short beginner levels: no family badges.
 export type BadgeFamily = Exclude<FamilyId, 'custom' | BassFamilyId | DrumFamilyId | 'k-ear' | 'k-first' | 'licks' | 'transcribe'>;
-export const PIANO_BADGE_FAMILIES: BadgeFamily[] = ['scales', 'arpeggios', 'cadences', 'fingers', 'control', 'advanced', 'harris', 'jazz', 'voicings', 'accomp', 'k-sixdim', 'k-bebop', 'k-reharm', 'k-rhythm', 'k-vl', 'k-theory', 'k-keys', 'k-vocab', 'k-phrase'];
-export const GUITAR_BADGE_FAMILIES: BadgeFamily[] = ['g-fretting', 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-lead', 'g-fingerstyle', 'g-flamenco', 'g-jazz', 'g-reading', 'g-impro', 'g-bass', 'g-ear', 'g-harris', 'g-prog', 'g-meter', 'g-vl', 'g-theory', 'g-keys', 'g-bebop', 'g-phrase'];
+export const PIANO_BADGE_FAMILIES: BadgeFamily[] = ['scales', 'arpeggios', 'cadences', 'fingers', 'control', 'advanced', 'harris', 'jazz', 'voicings', 'accomp', 'k-sixdim', 'k-bebop', 'k-reharm', 'k-rhythm', 'k-vl', 'k-theory', 'k-keys', 'k-vocab', 'k-phrase', 'k-harm', 'k-tune'];
+export const GUITAR_BADGE_FAMILIES: BadgeFamily[] = ['g-fretting', 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-lead', 'g-fingerstyle', 'g-flamenco', 'g-jazz', 'g-reading', 'g-impro', 'g-bass', 'g-ear', 'g-harris', 'g-prog', 'g-meter', 'g-vl', 'g-theory', 'g-keys', 'g-bebop', 'g-phrase', 'g-cmel', 'g-tune'];
 export const BADGE_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES, ...GUITAR_BADGE_FAMILIES];
 /** Families whose levels together cover all 12 keys: one "Around the Clock" badge each (guitar list checked against guitarCatalog in tests). */
-export const KEYS_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES, 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-fingerstyle', 'g-jazz', 'g-impro', 'g-reading', 'g-bass', 'g-ear', 'g-harris', 'g-vl', 'g-theory', 'g-keys', 'g-bebop', 'g-phrase'];
+export const KEYS_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES, 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-fingerstyle', 'g-jazz', 'g-impro', 'g-reading', 'g-bass', 'g-ear', 'g-harris', 'g-vl', 'g-theory', 'g-keys', 'g-bebop', 'g-phrase', 'g-cmel', 'g-tune'];
 export const FAMILY_NAME: Record<BadgeFamily, L> = {
   scales: { en: 'Scales', he: 'סולמות' },
   arpeggios: { en: 'Arpeggios', he: 'ארפג׳ים' },
@@ -395,6 +395,11 @@ export const FAMILY_NAME: Record<BadgeFamily, L> = {
   // AUDIT-GAPS-2: key changes and turnarounds.
   'k-keys': { en: 'Key changes', he: 'מעברי סולם' },
   'g-keys': { en: 'Key changes on the neck', he: 'מעברי סולם על הצוואר' },
+  // AUDIT-DEPTH-3: heads — harmonise a melody, chord-melody, comp a head and reharmonise it.
+  'k-harm': { en: 'Harmonise a melody', he: 'הרמון מנגינה' },
+  'k-tune': { en: 'Tunes: comp the head', he: 'שירים: ליווי השיר' },
+  'g-cmel': { en: 'Chord-melody', he: 'אקורד-מלודיה' },
+  'g-tune': { en: 'Tunes on the neck', he: 'שירים על הצוואר' },
 };
 // `icon` on every badge is a glyph kind of src/ui/Glyph.tsx (2026-11-12: no emoji left; the medal itself is BadgeArt).
 const FAMILY_ICON: Record<BadgeFamily, string> = {
@@ -441,6 +446,10 @@ const FAMILY_ICON: Record<BadgeFamily, string> = {
   'g-vl': 'voicelead',
   'k-keys': 'keymove',
   'g-keys': 'gkeymove',
+  'k-harm': 'harmmel',
+  'k-tune': 'tunecomp',
+  'g-cmel': 'chordmel',
+  'g-tune': 'gtunecomp',
 };
 // One title per catalogue level (piano 7; guitar as many as guitarCatalog has — tests check the counts).
 const FAMILY_TITLES: Record<BadgeFamily, [string, string][]> = {
@@ -495,6 +504,11 @@ const FAMILY_TITLES: Record<BadgeFamily, [string, string][]> = {
   // AUDIT-GAPS-2: key changes and turnarounds — piano 7 titles, guitar one per level.
   'k-keys': [['Turnaround Player', 'מנגן הטרנאראונדים'], ['Bridge Crosser', 'חוצה הגשר'], ['Key Jumper', 'קופץ הסולמות'], ['Pivot Finder', 'מוצא הציר'], ['Through the Diminished', 'דרך הדימיניש'], ['Four Doors', 'ארבע דלתות'], ['Master of Keys', 'אמן הסולמות']],
   'g-keys': [['Turnaround Comper', 'מלווה הטרנאראונדים'], ['Ladybird Player', 'נגן הלידיבירד'], ['Bridge on the Neck', 'הגשר על הצוואר'], ['Lift Up a Step', 'הרמה בצעד'], ['Two-Five Mover', 'מעביר ה־ii–V'], ['Pivot on the Strings', 'ציר על המיתרים'], ['One Diminished, Four Keys', 'דימיניש אחד, ארבעה סולמות'], ['Diminished Door', 'דלת הדימיניש'], ['Every Key by Diminished', 'כל סולם דרך דימיניש'], ['Seven-Flat-Nine', 'שבע במול תשע'], ['Tritone Mover', 'מעביר הטריטון'], ['Key-to-Key Liner', 'קווים מסולם לסולם']],
+  // AUDIT-DEPTH-3: heads — piano 7 titles, guitar one per level.
+  'k-harm': [['Melody Reader', 'קורא המנגינה'], ['Shells Under a Tune', 'שלדים מתחת לשיר'], ['Four-Way Close', 'ארבעה קולות צמודים'], ['Drop-2 Harmoniser', 'מהרמן בדרופ 2'], ['Drop-3 Harmoniser', 'מהרמן בדרופ 3'], ['Phrase by Phrase', 'משפט אחר משפט'], ['Melody Harmoniser', 'מהרמן המנגינות']],
+  'k-tune': [['Roots of the Tune', 'יסודות השיר'], ['Guide-Tone Comper', 'מלווה בצלילים מנחים'], ['Shells Through a Tune', 'שלדים לאורך שיר'], ['Rootless Comper', 'מלווה בלי יסוד'], ['Melody and Comp', 'מנגינה וליווי'], ['Head Reharmoniser', 'מהרמן השירים'], ['Coltrane Reharm', 'הרמון קולטריין']],
+  'g-cmel': [['Melody in Position', 'מנגינה בפוזיציה'], ['Bass and Melody', 'בס ומנגינה'], ['Two Voices', 'שני קולות'], ['Drop 2 Under the Tune', 'דרופ 2 מתחת לשיר'], ['Passing Diminished', 'דימיניש עובר'], ['Chord-Melody Chorus', 'פזמון אקורד-מלודיה']],
+  'g-tune': [['Roots on the Neck', 'יסודות על הצוואר'], ['Guide Tones on the Neck', 'צלילים מנחים על הצוואר'], ['Shells on the Neck', 'שלדים על הצוואר'], ['Rootless on the Neck', 'בלי יסוד על הצוואר'], ['Drop 2 Through a Tune', 'דרופ 2 לאורך שיר'], ['Melody and Comp on the Neck', 'מנגינה וליווי על הצוואר'], ['Tritone Reharm', 'הרמון טריטון'], ['Backdoor Reharm', 'הרמון דלת אחורית'], ['Coltrane on the Neck', 'קולטריין על הצוואר']],
 };
 /** Number of level badges of a family (piano 7; guitar = its guitarCatalog levels). */
 export const familyLevelCount = (f: string): number => FAMILY_TITLES[f as BadgeFamily]?.length ?? 7;

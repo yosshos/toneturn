@@ -709,6 +709,26 @@ export const GLYPHS: Record<string, Glyph> = {
       {p('M4 13c1-7 11-9 15-5 M15.5 6.2l3.6 2 1.2-3.8 M2 21h20', false)}
     </>
   ),
+  // AUDIT-DEPTH-3: heads — the melody note on top of a stacked chord; a lead sheet's bars with comping slashes.
+  'family:k-harm': () => (
+    <>
+      {head(9, 19, 2.4)}
+      {head(9, 14, 2.4)}
+      {head(9, 9, 2.4)}
+      {head(9, 3, 2.8)}
+      {p('M11.5 3V0 M2 3H5 M14 3h8', false)}
+    </>
+  ),
+  'family:k-tune': () => p('M3 5v14 M12 5v14 M21 5v14 M6 16l2.5-7 M9 16l2.5-7 M15 16l2.5-7 M18 16l2.5-7', false),
+  'family:g-cmel': () => (
+    <>
+      {head(9, 16, 2.4)}
+      {head(9, 11, 2.4)}
+      {head(9, 5, 2.8)}
+      {p('M12 5V1 M2 5H5 M14 5h8 M2 22h20', false)}
+    </>
+  ),
+  'family:g-tune': () => p('M3 4v12 M12 4v12 M21 4v12 M6 13l2.5-7 M9 13l2.5-7 M15 13l2.5-7 M18 13l2.5-7 M2 20h20 M2 22.5h20', false),
   'family:k-ear': () => p('M8 9c0-4 2.5-6 5-6s5 2 5 5.5c0 3-2.5 3.6-3 6 M11 9c0-1.6 1-2.6 2.2-2.6s2.2 1 2.2 2.4 M3 15h18v6H3z M9 15v6 M15 15v6'),
   // Drums (DRUMS_AUDIT I2): a snare drum and two sticks.
   'family:drums': () => p('M4 11c0 1.7 3.6 3 8 3s8-1.3 8-3-3.6-3-8-3-8 1.3-8 3z M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6 M8 13.7v6 M12 14v6.2 M16 13.7v6 M5 3l6.5 6.5 M19 3l-6.5 6.5'),
