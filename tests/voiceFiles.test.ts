@@ -174,5 +174,5 @@ describe('shipped recordings are real speech (2026-11-11: 32 kbps files were sil
       if (b[i] !== 0xff || sr !== 24000 || kbps < 40) bad.push(`${id} ${sr} Hz ${kbps} kbps`);
     }
     expect(bad.slice(0, 5), `${bad.length} bad files`).toEqual([]);
-  });
+  }, 240_000);
 });

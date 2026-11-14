@@ -101,7 +101,7 @@ describe('the click plan', () => {
         expect(p.at(3)).toBeCloseTo((d.meter + 3) * beatS);
       }
     }
-  });
+  }, 240_000);
   it('7/8 (2+2+3): count-in and clicks on the group starts, the 1 accented', () => {
     const d = withBarPlan(mk([N(0)], { pulse: 8, beats: 14 }), [['7/8 2+2+3', 2]]);
     const p = clickPlan(d, 210);

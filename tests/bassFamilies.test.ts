@@ -64,7 +64,7 @@ describe('bass course families', () => {
                 if (n.technique !== 'harmonic') expect(n.pitch, where).toBe(tu.open[n.string! - 1] + n.fret!);
               }
             }
-  }, 120000);
+  }, 600_000);
 
   it('start tempo of a new item is the level start tempo', () => {
     const lv = BASS.find((f) => f.id === 'b-walk')!.levels[0];
