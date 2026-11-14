@@ -318,7 +318,9 @@ const BASS_NICHE_LATER: Record<string, number> = { 'b-swing': 9, 'b-barry': 12, 
   // families built on them moved with them — position reading too, below.)
   'b-std': 13, 'b-ext': 9,
   // AUDIT-GAPS-2: key changes and turnarounds from ~1330 (after the walking cycle and the first Barry Harris levels).
-  'b-keys': 9 };
+  'b-keys': 9,
+  // AUDIT-GAPS-2: bebop vocabulary on the bass from ~1120 (enclosures) to ~1540 (Barry Harris lines).
+  'b-bebop': 6 };
 /**
  * AUDIT-CONTENT-THEORY §ב.4 ("roots & pocket first"): the bass core opened in catalogue order, so muting came at unit
  * 13, locking with the kick at 17 and walking at 32. Now time, the plucking hand, roots and the kick lock lead, muting
@@ -371,7 +373,9 @@ const KEYS_JAZZ_LATER: Record<string, number> = { 'k-sixdim': 9, 'k-bebop': 6, '
   // THEORY_PLAY: theory you play from ~1400 (after the rootless voicings, UST and the first reharm levels).
   'k-theory': 10,
   // AUDIT-GAPS-2: key changes and turnarounds from ~1330 (LADDER_SPREAD keeps the 12 levels inside ~1330–1640).
-  'k-keys': 9 };
+  'k-keys': 9,
+  // AUDIT-GAPS-2: bebop vocabulary from the swing on-ramp (~980) to the click that moves (~1610).
+  'k-vocab': 4 };
 /**
  * PIANO_AUDIT I2: every piano family's level 1 sat at the same difficulty as scales L1 — octaves (advanced L1), Barry
  * Harris lines and rootless voicings came in the first unit. Now the basics lead (scales, five-finger, the pianist's
@@ -407,6 +411,8 @@ GUITAR_RANK['g-keys'] = 6;
  * AUDIT-GAPS-2: the key-change families have twelve short levels inside ~1330–1640 (piano and bass; guitar is by grade).
  */
 export const LADDER_SPREAD: Record<string, number> = { 'k-keys': 0.4, 'b-keys': 0.4 };
+// AUDIT-GAPS-2: bebop vocabulary and lines on the neck, with the lead and Harris families.
+GUITAR_RANK['g-bebop'] = 7;
 /**
  * The order of a family's levels on the path: by path difficulty, then level number. AUDIT-CONTENT-THEORY §ב.3: guitar
  * levels sit by grade, but the family's next level used to be the next number, so a later-added easier level (picking 4

@@ -21,6 +21,7 @@ import { GUITAR_PROBE_STEPS } from './guitarProbes';
 import { generateGuitarVL, guitarVoiceLeadFamily } from './voiceLeadDrills';
 // AUDIT-GAPS-2 #5/#6/#12: key changes and turnarounds on the neck (keyMoveDrills.ts).
 import { generateGuitarKeyMove, guitarKeyMoveFamily } from './keyMoveDrills';
+import { genGuitarVocab, guitarVocabFamily } from './vocabDrills'; // AUDIT-GAPS-2: bebop vocabulary
 
 export type GuitarStyle = NonNullable<DrillSettings['guitarStyle']>;
 export type GuitarTechnique = NonNullable<ExpNote['technique']>;
@@ -2361,6 +2362,8 @@ export function generateGuitar(spec: DrillSpec): Drill {
       return generateHarris(s, tu);
     case 'g-theory':
       return generateTheoryGuitar(s, tu);
+    case 'g-bebop':
+      return genGuitarVocab(s, tu);
     case 'g-prog':
       return generateGuitarProg(s, tu);
     case 'g-meter':
@@ -2624,6 +2627,8 @@ export function guitarCatalog(): GuitarFamilyDef[] {
     guitarVoiceLeadFamily(),
     // AUDIT-GAPS-2 #5/#6/#12: key changes and turnarounds, drop 2 on string sets (jazz add-on, keyMoveDrills.ts).
     guitarKeyMoveFamily(),
+    // AUDIT-GAPS-2 High #1, #2, #3, #7, #8, #10: bebop vocabulary and lines over forms on the neck (the jazz add-on).
+    guitarVocabFamily(LT, fam),
     // The 0.4x starter bass family: superseded by the b-* course families below (BASS_CURRICULUM §10.1). Kept, retired,
     // so old item ids, badges and frozen path units (tech:g-bass-*) stay valid.
     {

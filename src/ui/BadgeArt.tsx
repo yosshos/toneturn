@@ -565,6 +565,15 @@ export const GLYPHS: Record<string, Glyph> = {
       {p('M3 21l5-11 5 11z M11 14l5-11 5 11z')}
     </>
   ),
+  // AUDIT-GAPS-2: bebop on the neck — strings, a target enclosed from above and below.
+  'family:g-bebop': () => (
+    <>
+      <path d="M2 6h20 M2 12h20 M2 18h20" strokeWidth={0.8} />
+      {head(5, 6, 2)}
+      {head(5, 18, 2)}
+      {head(17, 12, 2.6)}
+    </>
+  ),
   'family:g-prog': () => (
     <>
       {p('M2 20h20 M2 4v16 M22 4v16')}
@@ -595,6 +604,15 @@ export const GLYPHS: Record<string, Glyph> = {
       {head(14, 15, 2)}
       {p('M5.8 8.4V3 M10.8 11.4V5 M15.8 14.4V7 M5.8 3l10 4', false)}
       {dot(20, 20, 1.8)}
+    </>
+  ),
+  // AUDIT-GAPS-2: bebop vocabulary — a target note enclosed by a note above and a note below.
+  'family:k-vocab': () => (
+    <>
+      {head(5, 6, 2)}
+      {head(5, 18, 2)}
+      {head(17, 12, 2.6)}
+      {p('M7.5 7l6.5 3.6 M7.5 17l6.5 -3.6', false)}
     </>
   ),
   // THEORY_PLAY: theory you play — two triads stacked a step apart (a triad pair).

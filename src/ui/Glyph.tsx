@@ -927,6 +927,31 @@ Object.assign(GLYPHS, {
     </g>
   ),
 });
+// AUDIT-GAPS-2: bebop vocabulary — a target note head enclosed by a note above and a note below (keys); the same over
+// strings (guitar) and over the bass's two low strings (bass).
+const encl = (
+  <>
+    {head(-16, -13, 4.6, 3.3)}
+    {head(-16, 13, 4.6, 3.3)}
+    {head(12, 0, 7, 5)}
+    <path d="M-10 -10 L4 -3 M-10 10 L4 3" {...sw} strokeWidth={2.4} />
+  </>
+);
+Object.assign(GLYPHS, {
+  enclose: encl,
+  genclose: (
+    <>
+      <path d="M-26 -16 H26 M-26 -5 H26 M-26 6 H26 M-26 17 H26" stroke={I} strokeWidth={1.3} />
+      {encl}
+    </>
+  ),
+  benclose: (
+    <>
+      <path d="M-26 -20 H26 M-26 20 H26" stroke={I} strokeWidth={3} />
+      {encl}
+    </>
+  ),
+});
 // PIANO_JAZZ P2 path wiring: a repertoire step (a lead sheet with a bookmark), the Transcription Race as a bonus step
 // (a staff with a stopwatch — the transcription coach keeps its pencil) and the Reharm Spotter as a bonus step (a chord,
 // a magnifier on the changed one — the k-reharm family keeps its chord-to-chord arrow).

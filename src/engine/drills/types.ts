@@ -24,6 +24,8 @@ export type FamilyId =
   | 'g-vl'
   // THEORY_PLAY (TP-1…TP-4): theory you play — pentatonic and triad-pair lines, upper structures, line clichés, reharm.
   | 'k-theory'
+  // AUDIT-GAPS-2 High #1–#3, #7, #8, #10: bebop vocabulary — approach notes, enclosures, Harris lines, time (vocabDrills.ts).
+  | 'k-vocab'
   // AUDIT-CONTENT-THEORY §ז.2: first steps at the piano — posture, finger numbers, C position, the thumb passing under.
   | 'k-first'
   // AUDIT-GAPS-2 #5/#6/#11/#12: key changes (common dim, pivot, ii–V, tritone, direct, pop) and turnarounds, performed.
@@ -50,6 +52,7 @@ export type FamilyId =
   // GUITAR_DEEPENING (2026-11-11): the guitarist's ear, Barry Harris on the neck, prog / fusion.
   | 'g-ear' // call and response, answered on the guitar
   | 'g-harris' // Barry Harris applied to guitar (barry.ts)
+  | 'g-bebop' // AUDIT-GAPS-2: bebop vocabulary and lines over forms on the neck (vocabDrills.ts)
   | 'g-theory' // THEORY_PLAY: theory you play on the neck (rootless, quartal, Giant Steps, UST, triad pairs, lines)
   | 'g-prog' // odd meters, polyrhythm, metric modulation, fusion lines, unisons (prog engine)
   | 'g-meter' // AUDIT-CONTENT-THEORY R-4/R-5: meter & cross-rhythm on the core path (subdivision → 7:4, odd meters, hemiola)
@@ -97,6 +100,8 @@ export type BassFamilyId =
   // BASS_NICHE_PLAN P2: the graded standards ladder (jazz track) and extended techniques (both tracks).
   | 'b-std'
   | 'b-ext'
+  // AUDIT-GAPS-2: bebop vocabulary and lines over forms on the bass (jazz track, vocabDrills.ts).
+  | 'b-bebop'
   // 0.64 (track B): the bass-ear family F15 and the upright / double-bass track (BASS_CURRICULUM §5, §5.1).
   | 'b-ear'
   | 'b-up-pos'

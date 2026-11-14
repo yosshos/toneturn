@@ -728,9 +728,12 @@ TOPIC_GEN['jazz-phrase'] = {
     { en: 'Lines over a dominant', he: 'קווים מעל דומיננט' },
     { en: 'Enclosures', he: 'הקפות (אנקלוז׳ר)' },
     { en: 'Bebop lines (the passing half step)', he: 'קווי ביבופ (חצי הטון המעביר)' },
+    // AUDIT-GAPS-2 #1: the ear twin of the enclosure drills (k-vocab, g-bebop, b-bebop).
+    { en: 'Which enclosure?', he: 'איזה כיתור?' },
   ],
   gen(seed, level, id) {
     const rnd = rng(seed);
+    if (level === 5) return enclosureQ(rnd, seed, id);
     const pc = pickR(rnd, [0, 2, 3, 5, 7, 8, 10]);
     const q: 'maj7' | 'm7' | 'dom7' = level === 1 ? pickR(rnd, ['maj7', 'm7', 'dom7'] as const) : 'dom7';
     let right: number[];
@@ -809,7 +812,44 @@ TOPIC_GEN['jazz-phrase'] = {
     });
   },
 };
-TOPIC_TAGS['jazz-phrase'] = (l) => (l === 1 ? tg(['dictation', 'melodic', 0.6], ['chords', 'seventh', 0.4]) : tg(['dictation', 'melodic', 0.6], ['sequences', 'lines', 0.4]));
+/**
+ * jazz-phrase 5 (AUDIT-GAPS-2 #1): which enclosure leads into the target (3rd, 5th or root of a dominant)? The six
+ * types of the enclosure drills (src/engine/bebopVocab.ts); two types that give the same notes on this target (a half
+ * step above that is also the scale step above) are never both offered.
+ */
+export const ENCLOSURE_TYPES: { id: string; n: ReturnType<typeof nm>; lead: (T: number, above: number) => number[] }[] = [
+  { id: 'ab', n: nm('Half step above, then below', 'חצי טון מעל, ואז מתחת'), lead: (T) => [T + 1, T - 1] },
+  { id: 'ba', n: nm('Half step below, then above', 'חצי טון מתחת, ואז מעל'), lead: (T) => [T - 1, T + 1] },
+  { id: 'step', n: nm('Scale step above, half step below', 'צעד בסולם מעל, חצי טון מתחת'), lead: (T, above) => [above, T - 1] },
+  { id: 'dbl-above', n: nm('Two half steps from above', 'שני חצאי טונים מלמעלה'), lead: (T) => [T + 2, T + 1] },
+  { id: 'dbl-below', n: nm('Two half steps from below', 'שני חצאי טונים מלמטה'), lead: (T) => [T - 2, T - 1] },
+  { id: 'bebop', n: nm('Bebop enclosure (4 notes)', 'כיתור ביבופ (4 צלילים)'), lead: (T) => [T + 2, T + 1, T - 1] },
+];
+function enclosureQ(rnd: () => number, seed: number, id: string): ChoiceQuestion {
+  const pc = pickR(rnd, [0, 2, 3, 5, 7, 8, 10]);
+  const target = pickR(rnd, [4, 7, 12]);
+  const above = SCALE.dom7.map((x) => x + 12 * Math.floor(target / 12)).concat(SCALE.dom7.map((x) => x + 12 * (Math.floor(target / 12) + 1))).find((x) => x > target)!;
+  const lead0 = [0, 2];
+  const types = ENCLOSURE_TYPES.map((x) => ({ ...x, semis: [...lead0, ...x.lead(target, above), target] }));
+  // One type per distinct note sequence.
+  const uniq = types.filter((x, i) => types.findIndex((y) => y.semis.join() === x.semis.join()) === i);
+  const right = pickR(rnd, uniq);
+  const others = shuffleR(rnd, uniq.filter((x) => x !== right)).slice(0, 3);
+  const opts = shuffleR(rnd, [right, ...others]);
+  const names: Names = {};
+  const choiceStim: Record<string, Stimulus[]> = {};
+  opts.forEach((o, k) => {
+    names[`e${k}`] = o.n;
+    choiceStim[`e${k}`] = [phraseStim(pc, 'dom7', o.semis)];
+  });
+  const chordSym = `${pcName(pc)}7`;
+  return choiceQ({
+    id, topic: 'jazz-phrase', level: 5, seed, skill: 'dictation', difficulty: 1540,
+    ask: { en: `Over ${chordSym}: which enclosure?`, he: `מעל ${chordSym}: איזה כיתור?` },
+    names, answer: `e${opts.indexOf(right)}`, choices: opts.map((_, k) => `e${k}`), stimulus: [phraseStim(pc, 'dom7', right.semis)], choiceStim,
+  });
+}
+TOPIC_TAGS['jazz-phrase'] = (l) => (l === 5 ? tg(['dictation', 'transcribe', 0.6], ['sequences', 'lines', 0.4]) : l === 1 ? tg(['dictation', 'melodic', 0.6], ['chords', 'seventh', 0.4]) : tg(['dictation', 'melodic', 0.6], ['sequences', 'lines', 0.4]));
 
 // ================================================================ jazz-form (Jazz & improv)
 
