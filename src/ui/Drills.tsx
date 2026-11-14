@@ -36,6 +36,8 @@ import { STRINGS } from '../i18n/strings';
 import { isGuitarDrill } from '../engine/drills/events';
 import { drillEvents, drillXp } from '../engine/drills/events';
 import { ChartView, DrillStaff, DrillTab, DrillTake, EarCard, MarkLegend, TakeResult } from './DrillTake';
+// Voice leading (AUDIT-CONTENT-THEORY §ה.2): the chord symbols + first voicing, the voices as lanes, the stage lessons.
+import { VoiceLeadLessons, VoiceLeadScore } from './VoiceLeadScore';
 import { RoadMapStrip } from './RoadMap';
 import { TranscribeWrite } from './BassWrite';
 import { DrumWrite } from './DrumWrite';
@@ -93,7 +95,7 @@ const takeInfo = (d: Drill, m: TakeMetrics) => {
 export const DEFAULT_CAL: DrillCalibration = { latencyMs: 0, velMin: 20, velMax: 120 };
 /** The drill calibration with the input's calibrated delay (MIDI when a keyboard is connected, else the microphone). */
 const calOf = (s: Settings): DrillCalibration => ({ ...DEFAULT_CAL, ...(s.drillCal ?? {}), latencyMs: inputLatency(s, midi.devices.length ? 'midi' : 'mic') });
-const FAM_HUE: Partial<Record<FamilyId, string>> = { scales: 'var(--mint)', arpeggios: '#7c8cff', cadences: '#c38cff', fingers: 'var(--gold)', control: '#ff8a5c', advanced: '#ff6b9a', harris: '#5cd6ff', jazz: '#5cffb0', voicings: '#ffd15c', accomp: '#b0ff5c', 'k-ear': '#8fb8ff', 'k-sixdim': '#5cc2ff', 'k-bebop': '#4fe0a0', 'k-reharm': '#ffc04d', custom: '#e0e0ff' };
+const FAM_HUE: Partial<Record<FamilyId, string>> = { scales: 'var(--mint)', arpeggios: '#7c8cff', cadences: '#c38cff', fingers: 'var(--gold)', control: '#ff8a5c', advanced: '#ff6b9a', harris: '#5cd6ff', jazz: '#5cffb0', voicings: '#ffd15c', accomp: '#b0ff5c', 'k-ear': '#8fb8ff', 'k-sixdim': '#5cc2ff', 'k-bebop': '#4fe0a0', 'k-reharm': '#ffc04d', 'k-vl': '#9fd0ff', custom: '#e0e0ff' };
 const HANDS_TX: Record<Lang, Record<string, string>> = { en: { R: 'RH', L: 'LH', RL: 'HT' }, he: { R: 'ימין', L: 'שמאל', RL: 'ביחד' } };
 
 /** Drill settings with the instrument defaulting to the player's (guitar / bass players get guitar drills). */
@@ -132,6 +134,7 @@ export function DrillScore({ drill, ds, result, beat = -1, lang = 'en' }: { dril
         </button>
       </>
     );
+  if (!isGuitarDrill(drill) && drill.goal.vl) return <VoiceLeadScore drill={drill} result={result} beat={beat} lang={lang} />;
   if (!isGuitarDrill(drill)) return <DrillStaff drill={drill} fingering={ds.showFingering} result={result} beat={beat} />;
   if (drill.show === 'none' && !result) return <EarCard drill={drill} beat={beat} lang={lang} />;
   const view = drill.show === 'staff' ? 'staff' : (ds.guitarView ?? 'tab');
@@ -348,6 +351,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
       <main className="drills-screen" data-drills="family">
         {head(view.f.title[lang], () => setView({ k: 'hub' }))}
         <FamilyLesson family={view.f.id} settings={settings} />
+        <VoiceLeadLessons family={view.f.id} settings={settings} />
         <FamilyView lang={lang} ds={ds} f={view.f} items={items} start={settings.drillStart?.[view.f.id]} onRun={(q, i) => setView({ k: 'run', queue: q, i, from: view })} />
       </main>
     );
@@ -396,6 +400,7 @@ const TOPIC_OF: Record<string, Exclude<DrillTopic, 'all' | 'songs' | 'mine'>> = 
   'k-ear': 'ear',
   // GUITAR_DEEPENING: the guitarist's ear has the ear topic; Barry Harris and prog / fusion are styles.
   'g-ear': 'ear', 'g-harris': 'styles', 'g-prog': 'styles',
+  'k-vl': 'chords', 'g-vl': 'chords',
   'b-up-pos': 'upright', 'b-up-arco': 'upright', 'b-up-scales': 'upright', 'b-up-pizz': 'upright', 'b-up-walk': 'upright', 'b-up-read': 'upright',
 };
 const TOPIC_NAME: Record<DrillTopic, { en: string; he: string }> = {

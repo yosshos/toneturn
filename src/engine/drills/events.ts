@@ -131,6 +131,8 @@ function secondTag(drill: Drill): Tags[number] | null {
   // PIANO_JAZZ: Barry Harris harmony, jazz-piano harmony (voicings; reharmonising rates progressions), bebop lines
   // (playing along; trading fours is call and response).
   if (f === 'k-sixdim') return { skill: 'chords', sub: 'chords/barry', w: 0.3 };
+  // Voice leading as a performed skill (AUDIT-CONTENT-THEORY §ה.2): the theory share is voice leading.
+  if (f === 'k-vl' || f === 'g-vl') return { skill: 'theory', sub: 'theory/voice-leading', w: 0.3 };
   if (f === 'k-reharm') {
     const k = drill.spec.kind;
     if (k === 'rh-reharm') return { skill: 'cadences', sub: 'cadences/progression', w: 0.3 };

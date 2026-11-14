@@ -343,11 +343,11 @@ const subBadges: Badge[] = SUB_SKILLS.map((s, i) => {
 // Bass-course families (b-*) get milestone + exam badges (bassBadges below), not one title per level.
 // The pianist's ear (k-ear) gets milestones by items played back clean (keysEarBadges), not tempo-band titles.
 export type BadgeFamily = Exclude<FamilyId, 'custom' | BassFamilyId | DrumFamilyId | 'k-ear' | 'licks' | 'transcribe'>;
-export const PIANO_BADGE_FAMILIES: BadgeFamily[] = ['scales', 'arpeggios', 'cadences', 'fingers', 'control', 'advanced', 'harris', 'jazz', 'voicings', 'accomp', 'k-sixdim', 'k-bebop', 'k-reharm', 'k-rhythm'];
-export const GUITAR_BADGE_FAMILIES: BadgeFamily[] = ['g-fretting', 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-lead', 'g-fingerstyle', 'g-flamenco', 'g-jazz', 'g-reading', 'g-impro', 'g-bass', 'g-ear', 'g-harris', 'g-prog', 'g-meter'];
+export const PIANO_BADGE_FAMILIES: BadgeFamily[] = ['scales', 'arpeggios', 'cadences', 'fingers', 'control', 'advanced', 'harris', 'jazz', 'voicings', 'accomp', 'k-sixdim', 'k-bebop', 'k-reharm', 'k-rhythm', 'k-vl'];
+export const GUITAR_BADGE_FAMILIES: BadgeFamily[] = ['g-fretting', 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-lead', 'g-fingerstyle', 'g-flamenco', 'g-jazz', 'g-reading', 'g-impro', 'g-bass', 'g-ear', 'g-harris', 'g-prog', 'g-meter', 'g-vl'];
 export const BADGE_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES, ...GUITAR_BADGE_FAMILIES];
 /** Families whose levels together cover all 12 keys: one "Around the Clock" badge each (guitar list checked against guitarCatalog in tests). */
-export const KEYS_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES, 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-fingerstyle', 'g-jazz', 'g-reading', 'g-bass', 'g-ear', 'g-harris'];
+export const KEYS_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES, 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-fingerstyle', 'g-jazz', 'g-reading', 'g-bass', 'g-ear', 'g-harris', 'g-vl'];
 export const FAMILY_NAME: Record<BadgeFamily, L> = {
   scales: { en: 'Scales', he: 'סולמות' },
   arpeggios: { en: 'Arpeggios', he: 'ארפג׳ים' },
@@ -382,6 +382,9 @@ export const FAMILY_NAME: Record<BadgeFamily, L> = {
   // AUDIT-CONTENT-THEORY R-1/R-2/R-4: rhythm & meter families.
   'k-rhythm': { en: 'Rhythm & meter', he: 'קצב ומשקל' },
   'g-meter': { en: 'Meter & cross-rhythm', he: 'משקל ופולי-ריתמוס' },
+  // Voice leading as a performed skill (AUDIT-CONTENT-THEORY §ה.2).
+  'k-vl': { en: 'Voice leading', he: 'הובלת קולות' },
+  'g-vl': { en: 'Voice leading on the neck', he: 'הובלת קולות על הצוואר' },
 };
 // `icon` on every badge is a glyph kind of src/ui/Glyph.tsx (2026-11-12: no emoji left; the medal itself is BadgeArt).
 const FAMILY_ICON: Record<BadgeFamily, string> = {
@@ -418,6 +421,8 @@ const FAMILY_ICON: Record<BadgeFamily, string> = {
   'g-prog': 'oddmeter',
   'k-rhythm': 'polylock',
   'g-meter': 'polymeter',
+  'k-vl': 'voicelead',
+  'g-vl': 'voicelead',
 };
 // One title per catalogue level (piano 7; guitar as many as guitarCatalog has — tests check the counts).
 const FAMILY_TITLES: Record<BadgeFamily, [string, string][]> = {
@@ -456,6 +461,9 @@ const FAMILY_TITLES: Record<BadgeFamily, [string, string][]> = {
   // AUDIT-CONTENT-THEORY R-1/R-2/R-4: one title per level (keys 7, guitar 6).
   'k-rhythm': [['Hands in Time', 'ידיים בזמן'], ['Three Against Two', 'שלוש נגד שתיים'], ['Hemiola Feel', 'תחושת המיולה'], ['Odd-Meter Vamp', 'וואמפ במשקל אי־זוגי'], ['Displaced Figure', 'הדמות המוזזת'], ['Five Against Four', 'חמש נגד ארבע'], ['New Beat', 'הפעמה החדשה']],
   'g-meter': [['Strumming in Time', 'פריטה בזמן'], ['Across the Bar Line', 'מעבר לקו התיבה'], ['Odd-Meter Riffer', 'ריפר במשקל אי־זוגי'], ['Shifted Riff', 'הריף המוזז'], ['Cross-Rhythm Player', 'נגן הפולי־ריתמוס'], ['Tempo Pivot', 'ציר הטמפו']],
+  // Voice leading (AUDIT-CONTENT-THEORY §ה.2): piano 7 titles, guitar one per level.
+  'k-vl': [['Nearest Inversion', 'ההיפוך הקרוב'], ['Smooth Over the Bass', 'חלק מעל הבס'], ['Seven to Three', 'משבע לשלוש'], ['Close-Position Mover', 'נע במצב צמוד'], ['Around the Cycle', 'סביב המעגל'], ['Drop-2 Leader', 'מוביל דרופ 2'], ['Voice-Leading Master', 'אמן הובלת הקולות']],
+  'g-vl': [['String-Set Triads', 'משולשים על סטי מיתרים'], ['Drop 2 by Step', 'דרופ 2 בצעדים'], ['Drop 3 by Step', 'דרופ 3 בצעדים']],
 };
 /** Number of level badges of a family (piano 7; guitar = its guitarCatalog levels). */
 export const familyLevelCount = (f: string): number => FAMILY_TITLES[f as BadgeFamily]?.length ?? 7;

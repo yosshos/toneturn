@@ -606,7 +606,10 @@ export function analyzeGuitarTake(drill: Drill, bpm: number, played: PlayedNote[
   const hasLoudness = new Set(played.map((p) => p.vel)).size > 1;
   // Free-choice lines (A5): the rules decide which pitches are right; the shared analysis then judges the timing.
   const ruled = applyRules(drill, bpm, norm.played);
-  const base = ruled ? ruled.judged : drill;
+  // Voice leading (g-vl): the chosen voicing is graded from MIDI notes only; by microphone the written model path is
+  // judged like any chord drill (ring check), since a strum's octaves and strings can't be told apart.
+  const base0 = ruled ? ruled.judged : drill;
+  const base = mic && base0.goal.vl ? { ...base0, goal: { ...base0.goal, vl: undefined } } : base0;
   // The same holds for a dynamics shape (bass 16ths with a crescendo): pitch and timing are still judged.
   const judged: Drill = hasLoudness ? base : { ...base, goal: base.goal.dynamics ? { ...base.goal, dynamics: undefined } : base.goal, notes: base.notes.map((n) => (n.accent ? { ...n, accent: undefined } : n)) };
   // Bass timing limits (A7): mic SD ≤ 28 / CV ≤ .06 at every tempo; MIDI never stricter than SD 20 / CV .06.

@@ -681,6 +681,18 @@ export const GLYPHS: Record<string, ReactNode> = {
       <path d="M20.5 13V-6" {...sw} strokeWidth={2.4} />
     </>
   ),
+  /** Voice leading (AUDIT-CONTENT-THEORY §ה.2): three voices stepping from one chord to the next, one held. */
+  voicelead: (
+    <>
+      {head(-16, 14, 5, 3.6)}
+      {head(-16, 2, 5, 3.6)}
+      {head(-16, -10, 5, 3.6)}
+      {head(16, 10, 5, 3.6)}
+      {head(16, 2, 5, 3.6)}
+      {head(16, -14, 5, 3.6)}
+      <path d="M-9 13 L9 10.5 M-9 2 H9 M-9 -11 L9 -13.5" {...sw} strokeWidth={2.2} />
+    </>
+  ),
   /** Jazz-piano harmony: one chord turning into another (a substitution). */
   reharm: (
     <>

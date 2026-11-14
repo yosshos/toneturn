@@ -6,6 +6,7 @@
 import { notesPerBeat } from './analyze';
 import { isDrumDrill } from './events';
 import type { Drill, ItemState, NoteResult, PlayedNote, TakeMetrics } from './types';
+import { analyzeVoiceLeadTake } from './voiceLeadAnalyze';
 
 /** Clean free-time takes before the item moves into time. */
 export const RUBATO_CLEAN = 2;
@@ -102,6 +103,8 @@ export function playedGroups(played: PlayedNote[]): number[][] {
  * it shares), so a wrong note, a skipped note or a restart costs only itself. Timing is not judged at all.
  */
 export function analyzeFree(drill: Drill, played: PlayedNote[]): TakeMetrics {
+  // Voice leading: any good voicing counts, not the written one — its own grader, each voicing when ready.
+  if (drill.goal.vl) return analyzeVoiceLeadTake(drill, drill.startBpm, played, { rubato: true });
   const E = expectedGroups(drill);
   const P = playedGroups(played);
   const n = E.length;
@@ -203,6 +206,11 @@ export function analyzeFree(drill: Drill, played: PlayedNote[]): TakeMetrics {
  */
 export function freeProgress(drill: Drill, played: PlayedNote[]): number {
   const E = expectedGroups(drill);
+  // Voice leading: the player's own voicings — one played onset per chord.
+  if (drill.goal.vl) {
+    const n = playedGroups(played).length;
+    return n >= E.length ? drill.beats : (E[n]?.beat ?? drill.beats);
+  }
   let gi = 0;
   let need = new Set(E[0]?.idx.map((k) => drill.notes[k].pitch) ?? []);
   for (const p of [...played].sort((a, b) => a.on - b.on)) {

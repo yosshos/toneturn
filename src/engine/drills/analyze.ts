@@ -4,6 +4,7 @@
 import type { Drill, DrillCalibration, DynamicsGoal, ExpNote, Hand, NoteResult, PlayedNote, TakeMetrics, Verdict } from './types';
 import { vlDistance } from './generate';
 import { hasTimeline, timeMapOf, timelineMs } from './timeline';
+import { analyzeVoiceLeadTake } from './voiceLeadAnalyze';
 
 const mod12 = (n: number): number => ((n % 12) + 12) % 12;
 const EPS = 1e-6;
@@ -316,8 +317,10 @@ export const IOI_FLOOR_MS = { midi: 12, mic: 25 } as const;
 export const VOICE_TIMING = { sd: 40, hesitation: 1.8 } as const;
 
 /** What a microphone can't measure on a piano drill: loudness (dynamics, accents, voicing, balance), key release (articulation) and the pedal. */
-export function micUnmeasurable(drill: Pick<Drill, 'goal' | 'notes'>): ('dynamics' | 'articulation' | 'pedal')[] {
-  const out: ('dynamics' | 'articulation' | 'pedal')[] = [];
+export function micUnmeasurable(drill: Pick<Drill, 'goal' | 'notes'> & { spec?: Drill['spec'] }): ('dynamics' | 'articulation' | 'pedal' | 'voicing')[] {
+  const out: ('dynamics' | 'articulation' | 'pedal' | 'voicing')[] = [];
+  // Voice leading on the piano: the microphone hears the chord, not which voicing (octave, inversion) was chosen.
+  if (drill.goal.vl && !drill.goal.vl.strings && drill.spec?.instrument !== 'guitar') out.push('voicing');
   if (drill.goal.dynamics || drill.notes.some((n) => n.accent)) out.push('dynamics');
   if (drill.goal.articulation) out.push('articulation');
   if (drill.goal.pedal) out.push('pedal');
@@ -329,7 +332,10 @@ export function micUnmeasurable(drill: Pick<Drill, 'goal' | 'notes'>): ('dynamic
  * tempo-band CV / SD limits (bass, A7). `opts.mic`: the piano was heard by the microphone (no velocity, no key
  * release): looser timing limits, and a drill whose goal needs MIDI never passes (only measured practice counts).
  */
-export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], cal?: DrillCalibration, opts: { thresholds?: { cv: number; sd: number }; mic?: boolean; voice?: boolean } = {}): TakeMetrics {
+export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], cal?: DrillCalibration, opts: { thresholds?: { cv: number; sd: number }; mic?: boolean; voice?: boolean; /** Untimed take: notes only (voice leading: each voicing when ready). */ rubato?: boolean } = {}): TakeMetrics {
+  // Voice leading (k-vl / g-vl): the voicing chosen at each chord, graded by type + smallest motion (voiceLeadAnalyze.ts).
+  // By microphone the piano can't tell which voicing was played: the take is not measured (below, like loudness goals).
+  if (drill.goal.vl && !opts.mic) return analyzeVoiceLeadTake(drill, bpm, played0, { rubato: opts.rubato });
   // Improv mode: the right hand above the split plays freely and is checked elsewhere (against the chord-scales).
   const played = drill.freeAbove !== undefined ? played0.filter((p) => p.pitch < drill.freeAbove!) : played0;
   const exp = drill.notes;
@@ -736,8 +742,8 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
   if (unmeasured.length)
     F.push({
       sev: 999,
-      en: `Needs a MIDI keyboard: the microphone can't measure ${unmeasured.map((x) => ({ dynamics: 'loudness', articulation: 'key release', pedal: 'the pedal' })[x]).join(' or ')}`,
-      he: `צריך מקלדת MIDI: המיקרופון לא מודד ${unmeasured.map((x) => ({ dynamics: 'עוצמה', articulation: 'שחרור קלידים', pedal: 'פדל' })[x]).join(' או ')}`,
+      en: `Needs a MIDI keyboard: the microphone can't measure ${unmeasured.map((x) => ({ dynamics: 'loudness', articulation: 'key release', pedal: 'the pedal', voicing: 'which voicing you chose' })[x]).join(' or ')}`,
+      he: `צריך מקלדת MIDI: המיקרופון לא מודד ${unmeasured.map((x) => ({ dynamics: 'עוצמה', articulation: 'שחרור קלידים', pedal: 'פדל', voicing: 'איזה קול בחרתם' })[x]).join(' או ')}`,
     });
 
   // Barry Harris lines are judged by the goal (chord tones on the beats), so small line changes are allowed.

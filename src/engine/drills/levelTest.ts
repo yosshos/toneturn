@@ -53,16 +53,17 @@ const HANDS: Rung[] = [
 ];
 const CHORDS_JAZZ: Rung[] = [
   r('cadences-1', 7, { cadences: 2, voicings: 1 }),
-  r('voicings-2', 5, { cadences: 2, voicings: 3 }),
-  r('voicings-3', 10, { cadences: 3, voicings: 4, 'k-sixdim': 1 }),
-  r('voicings-4', 3, { cadences: 4, voicings: 5, 'k-sixdim': 2, 'k-reharm': 1 }),
-  r('voicings-9', 2, { cadences: 5, voicings: 10, 'k-sixdim': 4, 'k-reharm': 3 }),
+  // Voice leading (k-vl, AUDIT-CONTENT-THEORY §ה.2) starts from what the chord steps prove.
+  r('voicings-2', 5, { cadences: 2, voicings: 3, 'k-vl': 2 }),
+  r('voicings-3', 10, { cadences: 3, voicings: 4, 'k-sixdim': 1, 'k-vl': 3 }),
+  r('voicings-4', 3, { cadences: 4, voicings: 5, 'k-sixdim': 2, 'k-reharm': 1, 'k-vl': 4 }),
+  r('voicings-9', 2, { cadences: 5, voicings: 10, 'k-sixdim': 4, 'k-reharm': 3, 'k-vl': 7 }),
 ];
 const CHORDS_CLASSICAL: Rung[] = [
   r('cadences-1', 7, { cadences: 2 }),
-  r('cadences-2', 2, { cadences: 3 }),
-  r('cadences-4', 5, { cadences: 5 }),
-  r('cadences-5', 9, { cadences: 6 }),
+  r('cadences-2', 2, { cadences: 3, 'k-vl': 2 }),
+  r('cadences-4', 5, { cadences: 5, 'k-vl': 3 }),
+  r('cadences-5', 9, { cadences: 6, 'k-vl': 4 }),
 ];
 const COMP_JAZZ: Rung[] = [
   r('accomp-1', 0, { accomp: 2 }),
