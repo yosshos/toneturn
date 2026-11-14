@@ -344,10 +344,10 @@ const subBadges: Badge[] = SUB_SKILLS.map((s, i) => {
 // The pianist's ear (k-ear) gets milestones by items played back clean (keysEarBadges), not tempo-band titles.
 export type BadgeFamily = Exclude<FamilyId, 'custom' | BassFamilyId | DrumFamilyId | 'k-ear' | 'licks' | 'transcribe'>;
 export const PIANO_BADGE_FAMILIES: BadgeFamily[] = ['scales', 'arpeggios', 'cadences', 'fingers', 'control', 'advanced', 'harris', 'jazz', 'voicings', 'accomp', 'k-sixdim', 'k-bebop', 'k-reharm', 'k-theory'];
-export const GUITAR_BADGE_FAMILIES: BadgeFamily[] = ['g-fretting', 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-lead', 'g-fingerstyle', 'g-flamenco', 'g-jazz', 'g-reading', 'g-impro', 'g-bass', 'g-ear', 'g-harris', 'g-prog'];
+export const GUITAR_BADGE_FAMILIES: BadgeFamily[] = ['g-fretting', 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-lead', 'g-fingerstyle', 'g-flamenco', 'g-jazz', 'g-reading', 'g-impro', 'g-bass', 'g-ear', 'g-harris', 'g-prog', 'g-theory'];
 export const BADGE_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES, ...GUITAR_BADGE_FAMILIES];
 /** Families whose levels together cover all 12 keys: one "Around the Clock" badge each (guitar list checked against guitarCatalog in tests). */
-export const KEYS_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES, 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-fingerstyle', 'g-jazz', 'g-reading', 'g-bass', 'g-ear', 'g-harris'];
+export const KEYS_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES, 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-fingerstyle', 'g-jazz', 'g-reading', 'g-bass', 'g-ear', 'g-harris', 'g-theory'];
 export const FAMILY_NAME: Record<BadgeFamily, L> = {
   scales: { en: 'Scales', he: 'סולמות' },
   arpeggios: { en: 'Arpeggios', he: 'ארפג׳ים' },
@@ -379,6 +379,7 @@ export const FAMILY_NAME: Record<BadgeFamily, L> = {
   'g-bass': { en: 'Bass guitar', he: 'גיטרה בס' },
   'g-ear': { en: "The guitarist's ear", he: 'השמיעה של הגיטריסט' },
   'g-harris': { en: 'Barry Harris on guitar', he: 'בארי האריס בגיטרה' },
+  'g-theory': { en: 'Theory you play on guitar', he: 'תאוריה בביצוע בגיטרה' },
   'g-prog': { en: 'Prog and fusion', he: 'פרוג ופיוז׳ן' },
 };
 // `icon` on every badge is a glyph kind of src/ui/Glyph.tsx (2026-11-12: no emoji left; the medal itself is BadgeArt).
@@ -414,6 +415,7 @@ const FAMILY_ICON: Record<BadgeFamily, string> = {
   // Glyph kinds of src/ui/Glyph.tsx (the same symbols as FAMILY_GLYPH on the path) — no emoji, no text marks.
   'g-ear': 'guitarear',
   'g-harris': 'sixdim',
+  'g-theory': 'gtpair',
   'g-prog': 'oddmeter',
 };
 // One title per catalogue level (piano 7; guitar as many as guitarCatalog has — tests check the counts).
@@ -449,6 +451,8 @@ const FAMILY_TITLES: Record<BadgeFamily, [string, string][]> = {
   'g-impro': [['Roots on Beat 1', 'יסודות על פעמה 1'], ['Thirds on Beat 1', 'טרצות על פעמה 1'], ['Chord-Tone Arpeggios', 'ארפג׳י צלילי אקורד'], ['Guide Tones Through the Form', 'צלילים מנחים לאורך הצורה'], ['Chord-Scale Player', 'נגן סולם-אקורד'], ['Motif Developer', 'מפתח המוטיבים'], ['Trading with the Band', 'חילופים עם הלהקה']],
   // GUITAR_DEEPENING (2026-11-11): one serious title per new level.
   'g-ear': [['Tonic Finder', 'מוצא הטוניקה'], ['One-Bar Echo', 'הד של תיבה'], ['Two-Bar Echo', 'הד של שתי תיבות'], ['Rhythm Reader', 'קורא המקצב'], ['Riff Catcher', 'תופס הריפים'], ['Root Hearer', 'שומע היסודות'], ['Harmonic Ear', 'אוזן הרמונית'], ['Quality Judge', 'מזהה הסוגים'], ['Key Finder', 'מוצא הסולם'], ['Transcriber', 'המתמלל']],
+  // THEORY_PLAY: one title per level.
+  'g-theory': [['Rootless Guitarist', 'גיטריסט בלי יסוד'], ['Quartal Comper', 'מלווה קוורטלי'], ['Giant Stepper', 'צועד הצעדים הגדולים'], ['Upper-Structure Guitarist', 'גיטריסט המבנים העליונים'], ['Triad-Pair Guitarist', 'גיטריסט זוגות המשולשים'], ['Superimposer', 'מלביש הצבעים'], ['Line-Cliché Guitarist', 'גיטריסט הליין קלישה']],
   'g-harris': [['Sixth-Diminished Guitarist', 'גיטריסט שש-מוקטן'], ['Scale-of-Chords Player', 'נגן סולם האקורדים'], ['Half-Step Ruler', 'שליט חצי הטון'], ['Three-to-Nine Player', 'נגן שלוש עד תשע'], ['Enclosure Player', 'נגן הכיתורים'], ["Barry's Guitarist", 'הגיטריסט של בארי']],
   'g-prog': [['Odd-Meter Riffs', 'ריפים במשקל אי־זוגי'], ['Grouping Shifter', 'מחליף הקבוצות'], ['Bar-Line Lander', 'נוחת על קו התיבה'], ['Polyrhythm Player', 'נגן הפוליריתמיקה'], ['Tempo Shifter', 'מחליף הטמפו'], ['Modal Riffer', 'ריפים מודאליים'], ['Fusion Liner', 'קווי פיוז׳ן'], ['Unison Locker', 'נועל היוניסון']],
   'g-bass': [['Bass Fretting', 'אצבוע בבס'], ['Bass Scales', 'סולמות בבס'], ['Groove Anchor', 'עוגן הגרוב'], ['Chord Outliner', 'משרטט האקורדים'], ['Octaves and Slap', 'אוקטבות וסלאפ'], ['Walking Bassist', 'בסיסט מהלך']],

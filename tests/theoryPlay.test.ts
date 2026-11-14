@@ -19,6 +19,11 @@ import { BADGES, badgeInCourse } from '../src/engine/badges';
 import { MINI_LESSONS } from '../src/content/minilessons';
 import { UNIT_LESSON } from '../src/content/units';
 import { humanTake, steadySd } from './pianoTake';
+import { guitarCatalog, rng as grng } from '../src/engine/drills/guitar';
+import { analyzeGuitarTake } from '../src/engine/drills/guitarAnalyze';
+import { expTimeMs, IOI_FLOOR_MS } from '../src/engine/drills/analyze';
+import type { Drill, PlayedNote } from '../src/engine/drills/types';
+import { GIANT_STEPS, ROOTLESS, SO_WHAT } from '../src/engine/theoryPlay';
 
 const pc = (m: number) => mod12(m);
 const TOPICS = ['triad-pairs', 'pent-super', 'polychords', 'reharm-own'];
@@ -289,4 +294,100 @@ describe('wiring', () => {
     expect(tags('tp-ust', 'RL')).toContain('chords/extension');
     expect(tags('tp-cliche', 'RL')).toContain('cadences/reharm');
   });
+});
+
+// ---------------------------------------------------------------- the guitar block (g-theory)
+
+const GT = () => guitarCatalog().find((f) => f.id === 'g-theory')!;
+function gtake(d: Drill, bpm: number, sd = 0, seed = 'x'): PlayedNote[] {
+  const r = grng(`${d.itemId}:${seed}`);
+  const gauss = () => Math.max(-2.5, Math.min(2.5, Math.sqrt(-2 * Math.log(Math.max(1e-9, r()))) * Math.cos(2 * Math.PI * r())));
+  const seen = new Set<string>();
+  const out: PlayedNote[] = [];
+  for (const n of d.notes) {
+    const k = `${n.pitch}@${n.beat}`;
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push({ pitch: n.pitch, on: expTimeMs(d, n.beat, bpm) + gauss() * sd, off: null, vel: 64 });
+  }
+  return out.sort((a, b) => a.on - b.on);
+}
+const chordsOf = (d: Drill) => [...new Set(d.notes.map((n) => n.chordId).filter((x) => x !== undefined))].map((id) => d.notes.filter((n) => n.chordId === id));
+
+describe('g-theory: theory you play on guitar', () => {
+  it('7 levels at grades 7–9, the jazz add-on, a lesson on its first step, its own symbol', () => {
+    expect(GT().levels).toHaveLength(7);
+    for (const lv of GT().levels) expect(lv.grade! >= 7 && lv.grade! <= 9, lv.id).toBe(true);
+    expect(MINI_LESSONS[UNIT_LESSON['tech:g-theory']]).toBeDefined();
+    expect(GLYPHS[FAMILY_GLYPH['g-theory']]).toBeDefined();
+    expect(stepCatalogue().find((s) => s.id === 'tech:g-theory-1')!.difficulty).toBeGreaterThan(1400);
+  });
+  it('every item generates in every key on the neck (frets 0–17, one note a string per chord)', () => {
+    for (const lv of GT().levels)
+      for (const sp of lv.specs)
+        for (let key = 0; key < 12; key++) {
+          const d = generate({ ...sp, key });
+          expect(d.notes.every((n) => n.fret! >= 0 && n.fret! <= 17 && n.string! >= 1 && n.string! <= 6), d.itemId).toBe(true);
+          for (const c of chordsOf(d)) expect(new Set(c.map((n) => n.string)).size, d.itemId).toBe(c.length);
+        }
+  });
+  it('rootless: every chord is the rootless set (no root) on strings 5–2 or 4–1; So What is P4 P4 P4 M3; Giant Steps has its changes', () => {
+    for (let key = 0; key < 12; key++)
+      for (const op of [0, 2]) {
+        const d = generate({ family: 'g-theory', kind: 'tp-rootless', key, hands: 'R', option: op, swing: true, instrument: 'guitar' });
+        const want = ([[2, ROOTLESS.m7.a], [7, ROOTLESS['7'].b], [0, ROOTLESS.maj7.a]] as [number, number[]][]).map(([r, iv]) => new Set(iv.map((x) => mod12(key + r + x))));
+        chordsOf(d).forEach((c, i) => {
+          expect(new Set(c.map((n) => pc(n.pitch))), `${key} ${op} ${i}`).toEqual(want[Math.floor(i / 2) % 3]);
+          expect(c.map((n) => n.string).sort(), `${key} ${op}`).toEqual(op === 2 ? [1, 2, 3, 4] : [2, 3, 4, 5]);
+        });
+      }
+    const sw = generate({ family: 'g-theory', kind: 'tp-quartal', key: 2, hands: 'R', option: 0, instrument: 'guitar' });
+    const first = chordsOf(sw)[0].map((n) => n.pitch).sort((a, b) => a - b);
+    expect(first.map((m) => m - first[0])).toEqual(SO_WHAT);
+    expect(pc(first[0])).toBe(2);
+    const gs = generate({ family: 'g-theory', kind: 'tp-giant', key: 0, hands: 'R', option: 0, instrument: 'guitar' });
+    expect(gs.chart).toEqual(['Bmaj7 D7', 'Gmaj7 B♭7', 'E♭maj7', 'Am7 D7', 'Gmaj7 B♭7', 'E♭maj7 F♯7', 'Bmaj7', 'Fm7 B♭7']);
+    expect(GIANT_STEPS.reduce((a, [, , b]) => a + b, 0)).toBe(32);
+  });
+  it('triad pairs on strings 3–1 are exactly the named triads; lines are the pentatonic', () => {
+    for (let key = 0; key < 12; key++) {
+      for (const [o, id] of (['dorian', 'lydian', 'altered', 'lydian-dom', 'mixolydian'] as const).entries()) {
+        const d = generate({ family: 'g-theory', kind: 'tp-pairs', key, hands: 'R', option: o, instrument: 'guitar' });
+        const [a, b] = pairTriads(TRIAD_PAIRS.find((x) => x.id === id)!, key);
+        for (const c of chordsOf(d).slice(1)) {
+          const s = new Set(c.map((n) => pc(n.pitch)));
+          expect([a, b].some((t) => t.every((x) => s.has(x)) && s.size === 3), `${id} ${key}`).toBe(true);
+          expect(c.every((n) => n.string! <= 3)).toBe(true);
+        }
+      }
+      for (const [o, id] of (['inside-maj', 'lydian', 'dorian', 'altered'] as const).entries()) {
+        const d = generate({ family: 'g-theory', kind: 'tp-lines', key, hands: 'R', option: o, swing: true, instrument: 'guitar' });
+        const want = pentNotes(PENTS.find((x) => x.id === id)!, key);
+        expect(d.notes.filter((n) => n.chordId === undefined).every((n) => want.includes(pc(n.pitch))), `${id} ${key}`).toBe(true);
+      }
+    }
+  });
+  it('a steady take is clean at the target tempo; a sloppy one (3 × the tier SD) or a wrong note / chord is not', () => {
+    const fails: string[] = [];
+    for (const lv of GT().levels)
+      for (const sp of lv.specs)
+        for (const key of (Array.isArray(lv.keys) ? lv.keys : [0]).slice(0, 2)) {
+          const d = generate({ ...sp, key });
+          const bpm = targetBpmOf(lv, d);
+          const nps = npsOf(d, bpm);
+          const ioi = 1000 / nps;
+          const cv = Math.max(thresholds(tempoBand(nps)).cv, IOI_FLOOR_MS.midi / ioi);
+          const jit = Math.min(8, (0.45 * cv * ioi) / Math.SQRT2);
+          const good = analyzeGuitarTake(d, bpm, gtake(d, bpm, jit, 'good'));
+          if (good.verdict !== 'clean') fails.push(`${lv.id} ${d.itemId} @${bpm}: ${good.why.en}`);
+          const bad = analyzeGuitarTake(d, bpm, gtake(d, bpm, 3 * thresholds(tempoBand(nps)).sd, 'bad'));
+          if (bad.verdict === 'clean') fails.push(`${lv.id} ${d.itemId} sloppy take clean`);
+          // A wrong note in a line, a wrong chord (every string a half step off) in a chord drill.
+          const g = gtake(d, bpm, jit, 'good');
+          const mid = g[Math.floor(g.length / 2)].on;
+          const wrong = g.map((p) => (Math.abs(p.on - mid) < 30 ? { ...p, pitch: p.pitch + 1 } : p));
+          if (analyzeGuitarTake(d, bpm, wrong).verdict === 'clean') fails.push(`${lv.id} ${d.itemId} wrong note clean`);
+        }
+    expect(fails).toEqual([]);
+  }, 120_000);
 });

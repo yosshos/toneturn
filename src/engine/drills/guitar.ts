@@ -15,7 +15,7 @@ import { ADDON_FAMILY, examOfGrade, GUITAR_META, guitarAddOnsOf, itemTempo } fro
 import { core2Levels, generateCore2 } from './guitarCore2';
 import { generateGuitarProg, guitarProgFamily } from './guitarProg';
 import { generateGuitarEar } from './guitarEar';
-import { generateHarris, generateJazz2, GUITAR_STD, guitarStdOption, guitarStdTempo } from './guitarJazz';
+import { generateHarris, generateJazz2, generateTheoryGuitar, GUITAR_STD, guitarStdOption, guitarStdTempo } from './guitarJazz';
 import { GUITAR_PROBE_STEPS } from './guitarProbes';
 
 export type GuitarStyle = NonNullable<DrillSettings['guitarStyle']>;
@@ -2353,6 +2353,8 @@ export function generateGuitar(spec: DrillSpec): Drill {
       return generateGuitarEar(s, tu);
     case 'g-harris':
       return generateHarris(s, tu);
+    case 'g-theory':
+      return generateTheoryGuitar(s, tu);
     case 'g-prog':
       return generateGuitarProg(s, tu);
     case 'g-fretting':
@@ -2444,6 +2446,7 @@ export function guitarCatalog(): GuitarFamilyDef[] {
   });
   const GE = sp('g-ear');
   const H = sp('g-harris');
+  const TG = sp('g-theory');
   const list: GuitarFamilyDef[] = [
     fam('g-fretting', 'Fretting hand', 'יד לוחצת', 'classical', ['all'], [
       L('g-fretting', 1, 'Chromatic 1-2-3-4, fret 5 → 1', 'כרומטי 1-2-3-4, סריג 5 ← 1', [F('spider', { option: 0 })], POS_5_TO_1),
@@ -2547,6 +2550,17 @@ export function guitarCatalog(): GuitarFamilyDef[] {
         const [a, b] = guitarStdTempo(x.id);
         return J('comp-chart', { option: guitarStdOption(x.id)!, swing: x.rhythm !== 'bossa', tempo: a, target: b });
       }), [0], [80, 140], 'swing quarters', 7),
+    ]),
+    // THEORY_PLAY (TP-1…TP-5): theory you play on the neck — rootless on two string sets, So What, Giant Steps, upper
+    // structures, triad pairs, pentatonic / triad-pair lines, line clichés (the jazz add-on).
+    fam('g-theory', 'Theory you play', 'תאוריה בביצוע', 'jazz', ['jazz'], [
+      LT('g-theory', 1, 'Rootless voicings on strings 5–2 and 4–1: ii–V–I, major and minor', 'קולות בלי יסוד על מיתרים 5–2 ו־4–1: ii–V–I, מז׳ור ומינור', range(4).map((o) => TG('tp-rootless', { option: o, swing: true })), CYC4, [70, 120], 'halves', 8),
+      LT('g-theory', 2, 'Quartal voicings: So What and 4ths up the dorian scale', 'קולות קוורטליים: So What וקוורטות בסולם הדורי', [TG('tp-quartal', { option: 0, swing: true }), TG('tp-quartal', { option: 1 })], [2, 9, 4, 7, 0, 5], [80, 140], 'halves', 8),
+      LT('g-theory', 3, 'Giant Steps, bars 1–8: shells and drop-2', 'Giant Steps, תיבות 1–8: קונכיות ודרופ 2', [TG('tp-giant', { option: 0, swing: true }), TG('tp-giant', { option: 1, swing: true })], [0, 5, 10], [60, 140], 'halves', 9),
+      LT('g-theory', 4, 'Upper structures: guide tones, then the triad on strings 3–1', 'מבנים עליונים: צלילים מנחים, ואז המשולש על מיתרים 3–1', range(3).map((o) => TG('tp-ust', { option: o, swing: true })), CYC4, [70, 120], 'Charleston', 8),
+      LT('g-theory', 5, 'Triad pairs in inversions on strings 3–1', 'זוגות משולשים בהיפוכים על מיתרים 3–1', range(5).map((o) => TG('tp-pairs', { option: o })), CYC4, [60, 110], 'quarters', 8),
+      LT('g-theory', 6, 'Pentatonic superimposition and triad-pair lines over a vamp', 'פנטטוני מוסט וקווי זוגות משולשים מעל וואמפ', range(6).map((o) => TG('tp-lines', { option: o, swing: true })), CYC4, [70, 140], 'swing 8ths', 9),
+      LT('g-theory', 7, 'Line clichés, minor and major', 'ליין קלישה, מינור ומז׳ור', [TG('tp-cliche', { option: 0 }), TG('tp-cliche', { option: 1 })], CYC4, [60, 100], 'halves', 7),
     ]),
     // Barry Harris on the neck (GUITAR_DEEPENING §4.2, barry.ts): the jazz add-on.
     fam('g-harris', 'Barry Harris on guitar', 'בארי האריס בגיטרה', 'jazz', ['jazz'], [

@@ -98,7 +98,7 @@ TOPIC_GEN['triad-pairs'] = {
       return choiceQ({
         ...base,
         ask: { en: `${nameOf(root)}${p.chord}: which pair?`, he: `${nameOf(root)}${p.chord}: איזה זוג?` },
-        names, answer: ans, choices, stimulus: [],
+        names, answer: ans, choices, stimulus: [lineOver(root, CHORD_IVS[p.chord], [])],
         choiceStim: Object.fromEntries(choices.map((c) => [c, [lineOver(root, CHORD_IVS[p.chord], pairLine(pairById(c), root))]])),
       });
     }
@@ -153,7 +153,7 @@ TOPIC_GEN['pent-super'] = {
       return choiceQ({
         ...base,
         ask: { en: `${nameOf(root)}${p.chord}, ${p.colour.en.split(':')[0]}: which pentatonic?`, he: `${nameOf(root)}${p.chord}, ${p.colour.he.split(':')[0]}: איזה פנטטוני?` },
-        names, answer: p.id, choices, stimulus: [],
+        names, answer: p.id, choices, stimulus: [lineOver(root, CHORD_IVS[p.chord], [])],
         choiceStim: Object.fromEntries(choices.map((c) => [c, [lineOver(root, CHORD_IVS[p.chord], pentLine(PENTS.find((x) => x.id === c)!, root), 0.26)]])),
       });
     }
@@ -240,7 +240,7 @@ TOPIC_GEN.polychords = {
     return choiceQ({ ...base, ask: { en: `${triName(u, root)} over ${nameOf(root)}${qSym(u.q)}: which chord?`, he: `${triName(u, root)} מעל ${nameOf(root)}${qSym(u.q)}: איזה אקורד?` }, names, answer: u.id, choices, stimulus: [ustStim(u, root)], choiceStim: Object.fromEntries(choices.map((c) => [c, [ustStim(USTS.find((x) => x.id === c)!, root)]])) });
   },
 };
-TOPIC_TAGS.polychords = (l) => (l <= 2 ? tg(['chords', 'inversion', 0.4], ['chords', 'voicing', 0.6]) : tg(['chords', 'extension', 0.6], ['chords', 'voicing', 0.4]));
+TOPIC_TAGS.polychords = (l) => (l <= 2 ? tg(['chords', 'inversion', 0.6], ['theory', 'harmony', 0.4]) : tg(['chords', 'extension', 0.7], ['theory', 'harmony', 0.3]));
 
 // ================================================================ reharm-own (TP-4)
 
@@ -313,7 +313,7 @@ TOPIC_GEN['reharm-own'] = {
       return choiceQ({
         id, topic: 'reharm-own', level, seed, skill: 'cadences', difficulty,
         ask: { en: `Melody ${nameOf(k + mel)}, ${nameOf(k + 7)}7 → ${nameOf(k)}maj7: which sub holds it?`, he: `מנגינה ${melHe(k + mel)}, ${nameOf(k + 7)}7 → ${nameOf(k)}maj7: איזה תחליף מחזיק אותה?` },
-        names, answer: ans, choices, stimulus: [],
+        names, answer: ans, choices, stimulus: [chordWithMelody(RQ_TONES['7'].map((i) => k + 7 + i), k + mel)],
         choiceStim: Object.fromEntries(cands.map((x) => [x.key, [chordWithMelody(RQ_TONES[x.c.q].map((i) => k + x.c.d + i), k + mel)]])),
       });
     }

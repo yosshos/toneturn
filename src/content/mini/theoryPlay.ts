@@ -39,10 +39,13 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'D + Em / Cmaj7♯11', he: 'D + Em / Cmaj7♯11' } },
       },
       {
-        say: { en: 'Your turn: name the pair, then hear its colour over the chord.', he: 'תורכם: מצאו את הזוג, ואז שמעו את הצבע שלו מעל האקורד.' },
+        say: { en: 'Your turn: name the pair for each chord, then hear its colour over the chord and tell dorian, lydian and altered apart.', he: 'תורכם: מצאו את הזוג לכל אקורד, ואז שמעו את הצבע שלו מעל האקורד והבדילו בין דורי, לידי ואלטרד.' },
       },
     ],
     more: [
+      {
+        say: { en: 'Where do you hear this? Saxophone and piano players of the 1970s and after, over modal vamps and altered dominants, use pairs to sound open and modern while staying exactly on the chord.', he: 'איפה שומעים את זה? נגני סקסופון ופסנתר משנות השבעים והלאה, מעל וואמפים מודאליים ודומיננטים אלטרד, משתמשים בזוגות כדי להישמע פתוח ומודרני ועדיין בדיוק על האקורד.' },
+      },
       {
         say: { en: 'Why pairs? Two small shapes, each easy under the hand, give a wide modern sound with no scale running.', he: 'למה זוגות? שתי צורות קטנות, כל אחת נוחה ליד, נותנות צליל מודרני ורחב בלי לרוץ בסולם.' },
       },
@@ -56,6 +59,9 @@ export const LESSONS: MiniLesson[] = [
       },
       {
         say: { en: 'Play them in inversions: A, then B, then A from its 3rd, B from its 3rd, and so on. The line climbs without a leap.', he: 'מנגנים אותם בהיפוכים: A, אחר כך B, אחר כך A מהטרצה, B מהטרצה, וכן הלאה. הקו מטפס בלי קפיצה.' },
+      },
+      {
+        say: { en: 'A common mistake is to run the six notes as a scale. Keep them as two triads: three notes, then three, and let the line jump between the shapes. That jump is the sound.', he: 'טעות נפוצה היא לרוץ על שישת הצלילים כמו על סולם. שמרו אותם כשני משולשים: שלושה צלילים, ואז שלושה, ותנו לקו לקפוץ בין הצורות. הקפיצה הזו היא הצליל.' },
       },
       {
         say: { en: 'To keep: find the one tone the six leave out. It tells you the scale.', he: 'מה לזכור: מצאו את הצליל האחד ששישה הצלילים משמיטים. הוא מגלה את הסולם.' },
@@ -89,7 +95,7 @@ export const LESSONS: MiniLesson[] = [
         play: [chord([48, 63, 67, 70], 1), notes([62, 65, 67, 69, 72])],
       },
       {
-        say: { en: 'Your turn: pick the pentatonic for a colour, then hear which one is playing.', he: 'תורכם: בחרו פנטטוני לצבע, ואז שמעו איזה מתנגן.' },
+        say: { en: 'Your turn: pick the pentatonic for a colour, read its degrees over the chord, then hear which one is playing.', he: 'תורכם: בחרו פנטטוני לצבע, קראו את הדרגות שלו מעל האקורד, ואז שמעו איזה מתנגן.' },
       },
     ],
     more: [
@@ -97,10 +103,21 @@ export const LESSONS: MiniLesson[] = [
         say: { en: 'Name each note against the chord root, not the pentatonic’s. That is how you know what you are adding.', he: 'קוראים לכל צליל מול יסוד האקורד, לא מול יסוד הפנטטוני. כך יודעים מה מוסיפים.' },
       },
       {
+        say: { en: 'Listen to the same chord with two pentatonics: G major is calm and inside, D major lifts with the sharp 11. Same shape, a 5th apart.', he: 'הקשיבו לאותו אקורד עם שני פנטטוניים: סול מז׳ור רגוע ופנימי, רה מז׳ור מתרומם עם ה־♯11. אותה צורה, קווינטה ביניהם.' },
+        play: [chord([48, 64, 67, 71], 1), notes([67, 69, 71, 74, 76], 0.24), rest(), chord([48, 64, 67, 71], 1), notes([62, 64, 66, 69, 71], 0.24)],
+      },
+      {
         say: { en: 'A common slip: D minor pentatonic over C major 7. It holds F, the 11th, which clashes with the 3rd. Keep it for C minor 7.', he: 'טעות נפוצה: רה מינור פנטטוני מעל Cmaj7. יש בו פה, ה־11, שמתנגש בטרצה. שמרו אותו ל־Cm7.' },
       },
       {
         say: { en: 'Play it in groups of four: 1-2-3-4, 2-3-4-5, up the neck or the keyboard. The groups cross the beat and sound like a line, not a scale.', he: 'מנגנים בקבוצות של ארבעה: 1-2-3-4, ‏2-3-4-5, במעלה הצוואר או המקלדת. הקבוצות חוצות את הפעמה ונשמעות כמו קו, לא כמו סולם.' },
+      },
+      {
+        say: { en: 'Over the altered dominant the same trick works a half step above the root: E flat minor pentatonic over C7 gives every altered tension and resolves well to F.', he: 'מעל הדומיננט האלטרד אותו טריק עובד חצי טון מעל היסוד: מי במול מינור פנטטוני מעל C7 נותן את כל המתחים האלטרד ונפתר יפה לפה.' },
+        play: [chord([48, 64, 70, 75], 1), notes([75, 73, 70, 68, 66], 0.24), chord([41, 57, 64, 69], 1.2)],
+      },
+      {
+        say: { en: 'Practise it slowly over a vamp first, then over a ii–V–I: a different pentatonic on each chord, chosen for the colour you want to hear, not for the key of the tune.', he: 'תרגלו קודם לאט מעל וואמפ, ואז מעל ii–V–I: פנטטוני אחר על כל אקורד, שנבחר לפי הצבע שאתם רוצים לשמוע, לא לפי הסולם של השיר.' },
       },
       {
         say: { en: 'To keep: same five-note shape, new root, new colour.', he: 'מה לזכור: אותה צורה של חמישה צלילים, יסוד חדש, צבע חדש.' },
@@ -155,6 +172,12 @@ export const LESSONS: MiniLesson[] = [
         play: [chord([36, 52, 59, 62, 67, 71], 1.4), rest(), chord([36, 51, 58, 65, 69, 72], 1.4)],
       },
       {
+        say: { en: 'Pianists voice these with the left hand on 3rd and 7th and the right hand on the triad, so the colour sits on top and the function stays clear underneath.', he: 'פסנתרנים מנגנים אותם עם יד שמאל על הטרצה והספטימה ויד ימין על המשולש, כך שהצבע יושב למעלה והתפקיד נשאר ברור מתחת.' },
+      },
+      {
+        say: { en: 'By ear, start from the bass: if it doubles a note of the triad you hear an inversion; if it sits under it, a new chord.', he: 'בשמיעה, התחילו מהבס: אם הוא מכפיל צליל של המשולש, זה היפוך; אם הוא יושב מתחתיו, זה אקורד חדש.' },
+      },
+      {
         say: { en: 'To keep: read the triad against the bass. Its notes are the chord’s colours.', he: 'מה לזכור: קראו את המשולש מול הבס. הצלילים שלו הם הצבעים של האקורד.' },
         show: { text: { en: 'in = inv · +2 = lydian · −2 = sus', he: 'בפנים = היפוך · ‎+2 = לידי · ‎−2 = sus' } },
       },
@@ -201,6 +224,13 @@ export const LESSONS: MiniLesson[] = [
         say: { en: 'An added ii–V splits a bar of V into ii and V: C, then D minor 7 G7, then C. The ii must hold the melody too.', he: 'ii–V נוסף מחלק תיבה של V ל־ii ול־V: דו, אחר כך Dm7 G7, ואז דו. גם ה־ii צריך להחזיק את המנגינה.' },
       },
       {
+        say: { en: 'The backdoor sounds softer than the tritone sub: F minor 7 to B flat 7 to C borrows from C minor and lands warmly. Hear it under the melody note G.', he: 'הדלת האחורית נשמעת רכה יותר מתחליף הטריטון: Fm7 ל־B♭7 לדו שואל מדו מינור ונוחת בחום. שמעו אותה מתחת לצליל המנגינה סול.' },
+        play: [chord([41, 56, 60, 63, 67], 0.9), chord([34, 56, 62, 65, 67], 0.9), chord([36, 59, 64, 67], 1.2)],
+      },
+      {
+        say: { en: 'A good habit: write the melody note above each bar, list the chords that do the bar’s job, and cross out every one that clashes with the note. What is left is your palette.', he: 'הרגל טוב: כתבו את צליל המנגינה מעל כל תיבה, רשמו את האקורדים שעושים את העבודה של התיבה, ומחקו כל אחד שמתנגש בצליל. מה שנשאר הוא הפלטה שלכם.' },
+      },
+      {
         say: { en: 'To keep: first the job, then the melody. Both, or it is not a reharm.', he: 'מה לזכור: קודם התפקיד, אחר כך המנגינה. שניהם, אחרת זה לא ריהרמון.' },
       },
     ],
@@ -221,8 +251,37 @@ export const LESSONS: MiniLesson[] = [
         play: [chord([52, 59, 62, 66, 69])],
       },
       {
-        say: { en: 'Then triad pairs in inversions, line clichés, and a melody you reharmonise. Each starts slow, without a click, until the notes sit.', he: 'אחר כך זוגות משולשים בהיפוכים, ליין קלישה, ומנגינה שאתם מרהרמנים. כל אחד מתחיל לאט, בלי קליק, עד שהצלילים יושבים.' },
+        say: { en: 'Then triad pairs in inversions: A, B, A from its 3rd, B from its 3rd. Six notes, two easy shapes.', he: 'אחר כך זוגות משולשים בהיפוכים: A, ‏B, ‏A מהטרצה, ‏B מהטרצה. שישה צלילים, שתי צורות קלות.' },
         play: [pairStimOf('altered', 0)],
+      },
+      {
+        say: { en: 'Then a line cliché over a held minor chord, and a melody you reharmonise with a passing diminished and a tritone sub.', he: 'אחר כך ליין קלישה מעל אקורד מינור מוחזק, ומנגינה שאתם מרהרמנים עם דימיניש עובר ותחליף טריטון.' },
+        play: [chord([48, 60, 63, 67], 0.7), chord([48, 59, 63, 67], 0.7), chord([48, 58, 63, 67], 0.7), chord([48, 57, 63, 67], 0.7)],
+      },
+      {
+        say: { en: 'Each level starts slow, without a click, until the notes sit. Then the click comes in and the tempo climbs to the target.', he: 'כל שלב מתחיל לאט, בלי קליק, עד שהצלילים יושבים. אחר כך נכנס הקליק והטמפו עולה עד היעד.' },
+      },
+    ],
+    more: [
+      {
+        say: { en: 'The lines are written out and checked note for note. Play them as written first; later, over the same vamp, make your own lines from the same notes.', he: 'הקווים כתובים ונבדקים צליל אחר צליל. נגנו אותם קודם כמו שכתוב; אחר כך, מעל אותו וואמפ, בנו קווים משלכם מאותם צלילים.' },
+      },
+      {
+        say: { en: 'Chords are checked by their notes in any octave and any order. A voicing that holds the right pitch classes passes, so you may spread it over both hands as you like.', he: 'אקורדים נבדקים לפי הצלילים שלהם בכל אוקטבה ובכל סדר. וויסינג שמחזיק את הצלילים הנכונים עובר, אז אפשר לפרוש אותו על שתי הידיים איך שנוח.' },
+      },
+      {
+        say: { en: 'The V changes colour halfway: A over G7 for a lydian dominant, then E flat over G7, altered, into C. Hear the pull grow.', he: 'ה־V מחליף צבע באמצע: A מעל G7 ללידי דומיננטי, ואז E♭ מעל G7, אלטרד, אל דו. שמעו איך המשיכה גדלה.' },
+        play: [chord([43, 59, 65, 69, 73, 76], 0.9), chord([43, 59, 65, 70, 75, 79], 0.9), chord([48, 64, 71, 74, 79], 1.2)],
+      },
+      {
+        say: { en: 'Last, ii–V–I in lines: a minor pentatonic over the ii, the altered pair over the V, the lydian pentatonic over the I.', he: 'ולסיום, ii–V–I בקווים: מינור פנטטוני מעל ה־ii, הזוג האלטרד מעל ה־V, הפנטטוני הלידי מעל ה־I.' },
+        play: [notes([64, 67, 69, 71, 61, 65, 68, 63, 66, 70, 74, 76], 0.2)],
+      },
+      {
+        say: { en: 'Keep the left hand relaxed and low in the upper structures; the right hand carries the colour and should sing a little louder than the shell.', he: 'השאירו את יד שמאל רפויה ונמוכה במבנים העליונים; יד ימין נושאת את הצבע וצריכה לשיר קצת חזק יותר מהקונכייה.' },
+      },
+      {
+        say: { en: 'To keep: hear it, name it, then play it. The ear lessons and these drills are the same colours from two sides.', he: 'מה לזכור: לשמוע, לתת שם, ואז לנגן. שיעורי האוזן והתרגילים האלה הם אותם צבעים משני צדדים.' },
       },
     ],
   },
@@ -249,6 +308,31 @@ export const LESSONS: MiniLesson[] = [
         say: { en: 'Giant Steps: keys a major 3rd apart, B, G and E flat, each reached by its own V7. Shells keep the hand still.', he: 'Giant Steps: סולמות במרחק טרצה גדולה, סי, סול ומי במול, וכל אחד מגיעים אליו דרך ה־V7 שלו. קונכיות שומרות את היד במקום.' },
         play: [chord([47, 58, 63], 0.7), chord([50, 60, 66], 0.7), chord([43, 54, 59], 0.7), chord([46, 56, 62], 0.7), chord([39, 50, 55], 1.2)],
       },
+      {
+        say: { en: 'Then upper structures on the top strings, triad pairs in inversions, pentatonic lines and line clichés. Each starts slow, without a click.', he: 'אחר כך מבנים עליונים על המיתרים העליונים, זוגות משולשים בהיפוכים, קווים פנטטוניים וליין קלישה. כל אחד מתחיל לאט, בלי קליק.' },
+      },
+    ],
+    more: [
+      {
+        say: { en: 'Rootless on guitar means drop-2 shapes of 3, 5, 7, 9: four strings, no root, the 9th on top or inside. The bass player gives the root.', he: 'בלי יסוד בגיטרה זה צורות דרופ 2 של 3, 5, 7, 9: ארבעה מיתרים, בלי יסוד, ה־9 למעלה או בפנים. הבסיסט נותן את היסוד.' },
+        play: [chord([53, 60, 64, 69], 1.2)],
+      },
+      {
+        say: { en: 'In So What the same grip moves a whole step: on E and on D, both inside D dorian. Keep the hand shape and slide.', he: 'ב־So What אותה אחיזה זזה בטון: על מי ועל רה, שתיהן בתוך רה דורי. שומרים על צורת היד ומחליקים.' },
+        play: [chord([52, 57, 62, 67, 71], 0.9), chord([50, 55, 60, 65, 69], 1.2)],
+      },
+      {
+        say: { en: 'Giant Steps moves fast between three keys. Learn it slowly with shells, root, 3rd and 7th, then with drop-2 on the top four strings.', he: 'Giant Steps זז מהר בין שלושה סולמות. לומדים אותו לאט בקונכיות, יסוד, טרצה וספטימה, ואז בדרופ 2 על ארבעת המיתרים העליונים.' },
+      },
+      {
+        say: { en: 'Upper structures on guitar: play the 3rd and 7th first, then the triad on strings 3 to 1. Two hits, one chord.', he: 'מבנים עליונים בגיטרה: קודם טרצה וספטימה, ואז המשולש על מיתרים 3 עד 1. שתי מכות, אקורד אחד.' },
+      },
+      {
+        say: { en: 'A line cliché sits well on guitar: the root rings on a low string while one finger walks the moving voice down a string by half steps, the other notes held.', he: 'ליין קלישה יושב טוב על הגיטרה: היסוד מצלצל על מיתר נמוך בזמן שאצבע אחת מורידה את הקול הנע לאורך מיתר בחצאי טונים, והשאר מוחזקים.' },
+      },
+      {
+        say: { en: 'To keep: fewer notes, chosen well. The root belongs to the bass; your notes are the 3rd, the 7th and the colours.', he: 'מה לזכור: פחות צלילים, נבחרים היטב. היסוד שייך לבס; הצלילים שלכם הם הטרצה, הספטימה והצבעים.' },
+      },
     ],
   },
 ];
@@ -259,5 +343,5 @@ export const UNITS: Record<string, string> = {
   'topic:polychords': 'polychords',
   'topic:reharm-own': 'reharm-own',
   'tech:k-theory': 'k-theory',
-  'tech:g-jazz-14': 'guitar-tp',
+  'tech:g-theory': 'guitar-tp',
 };

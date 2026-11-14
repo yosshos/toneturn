@@ -11,7 +11,7 @@ export const FAMILY_GLYPH: Record<string, GlyphKind> = {
   // PIANO_JAZZ: the jazz-piano families.
   'k-sixdim': 'sixdim', 'k-bebop': 'bebop', 'k-reharm': 'reharm',
   // THEORY_PLAY: theory you play (two stacked triads).
-  'k-theory': 'tpair',
+  'k-theory': 'tpair', 'g-theory': 'gtpair',
   // GUITAR_DEEPENING: the guitarist's ear, Barry Harris on the neck, prog / fusion.
   'g-ear': 'guitarear', 'g-harris': 'sixdim', 'g-prog': 'oddmeter',
   'g-fretting': 'fingers1234', 'g-picking': 'pick', 'g-legato': 'slur', 'g-scales': 'box', 'g-arps': 'arp', 'g-chords': 'chordbox', 'g-rhythm': 'strum', 'g-lead': 'bend', 'g-fingerstyle': 'pima', 'g-flamenco': 'fan', 'g-jazz': 'prog', 'g-reading': 'sight', 'g-impro': 'improv', 'g-bass': 'bass',

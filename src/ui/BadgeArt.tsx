@@ -558,6 +558,13 @@ export const GLYPHS: Record<string, Glyph> = {
       {p('M17 8.9v-2.4', false)}
     </>
   ),
+  // THEORY_PLAY: theory you play on the neck — strings and a triad pair.
+  'family:g-theory': () => (
+    <>
+      <path d="M2 6h20 M2 12h20 M2 18h20" strokeWidth={0.8} />
+      {p('M3 21l5-11 5 11z M11 14l5-11 5 11z')}
+    </>
+  ),
   'family:g-prog': () => (
     <>
       {p('M2 20h20 M2 4v16 M22 4v16')}

@@ -248,6 +248,49 @@ export const LINE_CLICHE: Record<'minor' | 'major', { line: number[]; syms: stri
   major: { line: [7, 8, 9, 10], syms: ['', '+', '6', '7'] },
 };
 
+// ───────────────────────────── lines (keys and guitar)
+
+/** Pitch classes as a line from `from` up (each the next one above the last). */
+export function upFrom(pcs: number[], from: number): number[] {
+  const out: number[] = [];
+  let p = from - 1;
+  for (const pc of pcs) {
+    p++;
+    while (mod12(p) !== mod12(pc)) p++;
+    out.push(p);
+  }
+  return out;
+}
+/** Pentatonic in 4-note groups (1-2-3-4, 2-3-4-5 …) up `groups` groups from the note nearest `start`, then the top held. */
+export function pentGroups(pcs: number[], start: number, groups: number): number[] {
+  const asc: number[] = [];
+  let p = start;
+  while (!pcs.includes(mod12(p))) p++;
+  for (let i = 0; i < groups + 4; i++) {
+    asc.push(p);
+    p++;
+    while (!pcs.includes(mod12(p))) p++;
+  }
+  const out: number[] = [];
+  for (let g = 0; g < groups; g++) out.push(...asc.slice(g, g + 4));
+  out.push(asc[groups + 3]);
+  return out;
+}
+/** A triad pair as a line in 8ths: A, B, A's next inversion, B's next inversion … up `n` triads from `start`. */
+export function pairLineUp(a: number[], b: number[], start: number, n: number): number[] {
+  const out: number[] = [];
+  let floor = start;
+  for (let i = 0; i < n; i++) {
+    const tri = i % 2 === 0 ? a : b;
+    const inv = Math.floor(i / 2) % 3;
+    const ord = [...tri.slice(inv), ...tri.slice(0, inv)];
+    const notes = upFrom(ord, floor);
+    out.push(...notes);
+    floor = notes[0] + 1;
+  }
+  return out;
+}
+
 // ───────────────────────────── TP-5 guitar: rootless, quartal, Coltrane ─────────────────────────────
 
 /** Rootless 4-note voicings (A form 3-5-7-9 / B form 7-9-3-5) by quality, as intervals above the root, low → high. */

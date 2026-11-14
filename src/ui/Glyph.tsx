@@ -904,6 +904,14 @@ Object.assign(GLYPHS, {
       <path d="M-8 4 L8 -24 L24 4 Z" />
     </g>
   ),
+  /** The same on the neck (g-theory): two triads over three strings. */
+  gtpair: (
+    <g {...sw} strokeWidth={2.4} strokeLinejoin="round">
+      <path d="M-26 22 H26 M-26 10 H26 M-26 -2 H26" strokeWidth={1.4} />
+      <path d="M-20 22 L-10 -2 L0 22 Z" />
+      <path d="M0 10 L10 -20 L20 10 Z" />
+    </g>
+  ),
 });
 // PIANO_JAZZ P2 path wiring: a repertoire step (a lead sheet with a bookmark), the Transcription Race as a bonus step
 // (a staff with a stopwatch — the transcription coach keeps its pencil) and the Reharm Spotter as a bonus step (a chord,

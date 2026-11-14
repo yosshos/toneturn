@@ -392,7 +392,7 @@ const TOPIC_OF: Record<string, Exclude<DrillTopic, 'all' | 'songs' | 'mine'>> = 
   // PIANO_AUDIT §3: the pianist's ear has its own topic; piano sight-reading sits under reading.
   'k-ear': 'ear',
   // GUITAR_DEEPENING: the guitarist's ear has the ear topic; Barry Harris and prog / fusion are styles.
-  'g-ear': 'ear', 'g-harris': 'styles', 'g-prog': 'styles',
+  'g-ear': 'ear', 'g-harris': 'styles', 'g-theory': 'styles', 'g-prog': 'styles',
   'b-up-pos': 'upright', 'b-up-arco': 'upright', 'b-up-scales': 'upright', 'b-up-pizz': 'upright', 'b-up-walk': 'upright', 'b-up-read': 'upright',
 };
 const TOPIC_NAME: Record<DrillTopic, { en: string; he: string }> = {

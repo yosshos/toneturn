@@ -11,6 +11,8 @@ import { bassWalk, drop2Voicings, finish, mod, nearestVoicing, place, rng, t, up
 import { STANDARD_CHANGES } from '../standards';
 import { parseChart, type ChartChordEv } from '../charts';
 import { barryLine, DIM7, moveDim, pivot, ruleFor } from '../barry';
+// THEORY_PLAY (TP-1…TP-5): the music of the g-theory family.
+import { GIANT_STEPS, LINE_CLICHE, ROOTLESS, SO_WHAT, pairById, pairLineUp, pairName, pairTriads, pentById, pentGroups, pentName, pentNotes, triadOf, ustById, type PairId, type UstId } from '../theoryPlay';
 
 type P = { s: number; f: number };
 const strum = (ps: P[]): GN[] => ps.map((x) => ({ ...x, tech: 'strum-down' as const, stroke: 'D' as const }));
@@ -513,3 +515,272 @@ export function generateHarris(s: DrillSpec, tu: Tuning): Drill {
   }
   return finish(s, tu, evs, { title, bpm, evenness: true, ...(goal ? { goal } : {}) });
 }
+
+// ───────────────────────────── g-theory: theory you play on the neck (THEORY_PLAY, TP-1…TP-5) ─────────────────────────────
+
+/**
+ * The best grip for pitches (low → high), one string each, strings in order (low pitch on the lower string), frets
+ * 0–15, the fretted notes within `span` frets; nearest to fret `near`. Tries the pitches an octave up or down too.
+ */
+export function fitStrings(tu: Tuning, pitches: number[], near: number, strings: number[] = [6, 5, 4, 3, 2, 1], span = 4): P[] | null {
+  const ps = pitches.slice().sort((a, b) => a - b);
+  let best: P[] | null = null;
+  let cost = Infinity;
+  for (const shift of [0, 12, -12, 24]) {
+    const want = ps.map((m) => m + shift);
+    const strs = strings.filter((x) => x <= tu.open.length).sort((a, b) => b - a);
+    const rec = (i: number, from: number, acc: P[]) => {
+      if (i === want.length) {
+        const fr = acc.map((x) => x.f).filter((f) => f > 0);
+        if (fr.length && Math.max(...fr) - Math.min(...fr) > span) return;
+        const c = Math.abs((fr.length ? Math.min(...fr) : 0) - near) + (shift === 0 ? 0 : 0.5);
+        if (c < cost) {
+          cost = c;
+          best = acc.slice();
+        }
+        return;
+      }
+      for (let k = from; k < strs.length; k++) {
+        const f = want[i] - tu.open[strs[k] - 1];
+        if (f < 0 || f > 15) continue;
+        rec(i + 1, k + 1, [...acc, { s: strs[k], f }]);
+      }
+    };
+    rec(0, 0, []);
+  }
+  return best;
+}
+/** Voicings of pitch classes on a fixed string set, one note per string, rising, span ≤ 4, frets 0–15. */
+function setVoicings(tu: Tuning, pcs: number[], strings: number[]): P[][] {
+  const want = new Set(pcs.map((x) => mod(x, 12)));
+  const out: P[][] = [];
+  const rec = (i: number, acc: P[]) => {
+    if (i === strings.length) {
+      const ms = acc.map((p) => noteAt(tu, p.s, p.f));
+      if (!ms.every((m, k) => k === 0 || m > ms[k - 1])) return;
+      if (new Set(ms.map((m) => mod(m, 12))).size !== want.size) return;
+      const fr = acc.map((p) => p.f).filter((f) => f > 0);
+      if (fr.length && Math.max(...fr) - Math.min(...fr) > 4) return;
+      out.push(acc.slice());
+      return;
+    }
+    for (let f = 0; f <= 15; f++) if (want.has(mod(noteAt(tu, strings[i], f), 12))) rec(i + 1, [...acc, { s: strings[i], f }]);
+  };
+  rec(0, []);
+  return out;
+}
+/** Voice-led pick: the candidate whose top note is nearest `top` (then nearest the hand position). */
+function ledPick(tu: Tuning, cands: P[][], top: number, near: number): P[] {
+  return cands.reduce((a, b) => {
+    const ca = Math.abs(topOf(tu, a) - top) + 0.3 * Math.abs(lowFretOf(a) - near);
+    const cb = Math.abs(topOf(tu, b) - top) + 0.3 * Math.abs(lowFretOf(b) - near);
+    return cb < ca ? b : a;
+  });
+}
+const swingVamp = (key: number, sym: string, bars: number) => Array.from({ length: bars }, () => NAMES[mod(key, 12)] + sym);
+
+export function generateTheoryGuitar(s: DrillSpec, tu: Tuning): Drill {
+  const key = mod(s.key, 12);
+  const op = s.option ?? 0;
+  const evs: Ev[] = [];
+  const K = NAMES[key];
+  switch (s.kind) {
+    case 'tp-rootless': {
+      // Rootless 4-note voicings through ii–V–I (drop-2 shapes of 3-5-7-9 / 7-9-3-13), voice-led, on strings 5–2 (op 0–1)
+      // or 4–1 (op 2–3); op odd: the minor ii–V–i (ø: ♭3 ♭5 ♭7 9; V7: 3 ♭7 ♭9 ♭13; i: ♭3 5 6 9).
+      const set2 = op >= 2 ? [4, 3, 2, 1] : [5, 4, 3, 2];
+      const minor = op % 2 === 1;
+      const prog: [number, number[], string][] = minor
+        ? [[2, ROOTLESS_MINOR.hd, 'm7♭5'], [7, ROOTLESS_MINOR.v, '7♭9'], [0, ROOTLESS_MINOR.i, 'm6']]
+        : [[2, ROOTLESS.m7.a, 'm9'], [7, ROOTLESS['7'].b, '13'], [0, ROOTLESS.maj7.a, 'maj9']];
+      let top = -1;
+      let near = 5;
+      const syms: string[] = [];
+      for (let rep = 0; rep < 2; rep++)
+        prog.forEach(([d, iv, sy], i) => {
+          const r = mod(key + d, 12);
+          const cands = drop2Voicings(tu, iv.map((x) => r + x), set2, 15);
+          const v = top < 0 ? nearestVoicing(cands, near) : ledPick(tu, cands, top, near);
+          top = topOf(tu, v);
+          near = lowFretOf(v);
+          const start = rep * 16 + i * 4;
+          const len = i === 2 ? 8 : 4;
+          evs.push({ beat: start, dur: 2, notes: strum(v) }, { beat: start + 2, dur: len - 2, notes: strum(v) });
+          if (rep === 0) syms.push(NAMES[r] + sy);
+        });
+      const sk = `${Math.min(...set2)}–${Math.max(...set2)}`;
+      const d = finish(s, tu, evs, { title: t(`Rootless voicings, ${minor ? 'minor ii–V–i' : 'ii–V–I'} on strings ${sk} · ${K}`, `קולות בלי יסוד, ${minor ? 'ii–V–i מינורי' : 'ii–V–I'} על מיתרים ${sk} · ${K}`), bpm: 70, evenness: false, keySig: 'C' });
+      return { ...d, chart: [syms[0], syms[1], syms[2], syms[2], syms[0], syms[1], syms[2], syms[2]], band: { style: 'swing', bass: true }, drums: { groove: 'swing' } };
+    }
+    case 'tp-quartal': {
+      // So What: P4 P4 P4 M3 from the root on string 5 (frets f f f f+1 f), on i and on the 2nd degree (both dorian),
+      // two bars each (op 0); op 1: three-note 4ths on strings 4-3-2 up and down the dorian scale.
+      if (op !== 1) {
+        const at = (r: number): P[] => {
+          const f = mod(r - tu.open[4], 12) || 12;
+          const ff = f > 12 ? f - 12 : f;
+          return SO_WHAT.map((x, i) => {
+            const m = noteAt(tu, 5, ff) + x;
+            const st = 5 - i;
+            return { s: st, f: m - tu.open[st - 1] };
+          });
+        };
+        const a = at(key);
+        const b = at(key + 2);
+        [a, a, b, b, a, a, b, a].forEach((v, i) => evs.push({ beat: i * 4, dur: 1.5, notes: strum(v) }, { beat: i * 4 + 1.5, dur: 2.5, notes: strum(v) }));
+        const d = finish(s, tu, evs, { title: t(`So What voicings: ${K}m (on ${K}) and on ${NAMES[mod(key + 2, 12)]}, ${K} dorian`, `קולות So What: ${K}m (על ${K}) ועל ${NAMES[mod(key + 2, 12)]}, ${K} דורי`), bpm: 80, evenness: false, keySig: 'C' });
+        return { ...d, chart: swingVamp(key, 'm7', 8), band: { style: 'swing', bass: true }, drums: { groove: 'swing' } };
+      }
+      const dor = [0, 2, 3, 5, 7, 9, 10];
+      const base = 50 + mod(key - 50, 12);
+      const deg = (k: number) => base + 12 * Math.floor(k / 7) + dor[mod(k, 7)];
+      let near = Math.max(1, mod(key - 50, 12));
+      [0, 1, 2, 3, 4, 3, 2, 1].forEach((k, i) => {
+        const ms = [k, k + 3, k + 6].map(deg);
+        const v = fitStrings(tu, ms, near, [4, 3, 2], 4) ?? fitStrings(tu, ms, near, [5, 4, 3, 2, 1], 5)!;
+        near = lowFretOf(v);
+        evs.push({ beat: i * 2, dur: 2, notes: strum(v) });
+      });
+      const d = finish(s, tu, evs, { title: t(`Quartal voicings up the ${K} dorian scale (4ths on strings 4–2)`, `קולות קוורטליים במעלה הסולם הדורי של ${K} (קוורטות על מיתרים 4–2)`), bpm: 80, evenness: false, keySig: 'C' });
+      return { ...d, chart: swingVamp(key, 'm7', 4), band: { style: 'swing', bass: true }, drums: { groove: 'swing' } };
+    }
+    case 'tp-giant': {
+      // Giant Steps, the first 8 bars (chord symbols only), moved by `key`: shells (op 0) or drop-2 on strings 4–1,
+      // voice-led (op 1); two hits on a two-beat chord, Charleston on a whole bar.
+      let near = 5;
+      let top = -1;
+      let beat = 0;
+      const bars: string[] = [];
+      let barSyms: string[] = [];
+      for (const [r0, q, len] of GIANT_STEPS) {
+        const r = mod(r0 + key, 12);
+        const iv = q === 'maj7' ? [0, 4, 7, 11] : q === 'm7' ? [0, 3, 7, 10] : [0, 4, 7, 10];
+        let v: P[];
+        if (op === 1) {
+          const cands = drop2Voicings(tu, iv.map((x) => r + x), [4, 3, 2, 1], 15);
+          v = top < 0 ? nearestVoicing(cands, near) : ledPick(tu, cands, top, near);
+          top = topOf(tu, v);
+        } else v = shellAt(tu, r, iv[1], iv[3], near);
+        near = lowFretOf(v);
+        const hits: [number, number][] = len === 2 ? [[0, 1], [1, 1]] : [[0, 1.5], [1.5, 2.5]];
+        for (const [b, l] of hits) evs.push({ beat: beat + b, dur: l, notes: strum(v) });
+        barSyms.push(NAMES[r] + (q === '7' ? '7' : q));
+        beat += len;
+        if (beat % 4 === 0) {
+          bars.push(barSyms.join(' '));
+          barSyms = [];
+        }
+      }
+      const d = finish(s, tu, evs, { title: t(`Giant Steps, bars 1–8: ${op === 1 ? 'drop-2 on strings 4–1, voice-led' : 'shells'}${key ? ` · moved to ${NAMES[mod(11 + key, 12)]}` : ''}`, `Giant Steps, תיבות 1–8: ${op === 1 ? 'דרופ 2 על מיתרים 4–1, הובלת קולות' : 'קונכיות'}${key ? ` · ב־${NAMES[mod(11 + key, 12)]}` : ''}`), bpm: 60, evenness: false, keySig: 'C' });
+      return { ...d, chart: bars, band: { style: 'swing', bass: true }, drums: { groove: 'swing' } };
+    }
+    case 'tp-ust': {
+      // Upper structures: the 3rd and 7th on beat 1 (strings 5–4 or 4–3), the triad on strings 3–1 on the "and" of 2.
+      // Op 0: V7 natural → altered → I (II triad, ♭VI triad, V triad over Imaj7); op 1 over a maj7 vamp (V, II, vii);
+      // op 2 over a m7 vamp (IV, ♭VII).
+      const plan: [number, 'maj7' | '7' | 'm7', UstId][] =
+        op === 1 ? [[0, 'maj7', 'v-maj'], [0, 'maj7', 'ii-maj'], [0, 'maj7', 'vii-maj'], [0, 'maj7', 'ii-maj']]
+          : op === 2 ? [[0, 'm7', 'iv-min'], [0, 'm7', 'bvii-min'], [0, 'm7', 'iv-min'], [0, 'm7', 'bvii-min']]
+            : [[7, '7', 'ii-dom'], [7, '7', 'bvi-dom'], [0, 'maj7', 'v-maj'], [0, 'maj7', 'ii-maj']];
+      const g3: Record<string, [number, number]> = { maj7: [4, 11], '7': [4, 10], m7: [3, 10] };
+      let near = 5;
+      let top = -1;
+      const syms: string[] = [];
+      plan.forEach(([d, q, id], bar) => {
+        const r = mod(key + d, 12);
+        const [a, b] = g3[q];
+        const lo = 48 + mod(r + a - 48, 12);
+        const gt = [lo, lo + mod(b - a, 12)];
+        const gv = fitStrings(tu, gt, near, [5, 4, 3], 4) ?? fitStrings(tu, gt, near, [6, 5, 4], 4)!;
+        const u = ustById(id);
+        const tri = triadOf(r + u.t, u.minor);
+        const cands = setVoicings(tu, tri, [3, 2, 1]);
+        const tv = top < 0 ? nearestVoicing(cands, lowFretOf(gv)) : ledPick(tu, cands, top, lowFretOf(gv));
+        top = topOf(tu, tv);
+        near = lowFretOf(gv);
+        evs.push({ beat: bar * 4, dur: 1.5, notes: strum(gv) }, { beat: bar * 4 + 1.5, dur: 2.5, notes: strum(tv) });
+        syms.push(NAMES[r] + (q === '7' ? '7' : q));
+      });
+      const what = op === 1 ? `over ${K}maj7` : op === 2 ? `over ${K}m7` : `${NAMES[mod(key + 7, 12)]}7 natural → altered → ${K}maj7`;
+      const whatHe = op === 1 ? `מעל ${K}maj7` : op === 2 ? `מעל ${K}m7` : `${NAMES[mod(key + 7, 12)]}7 טבעי → אלטרד → ${K}maj7`;
+      const d = finish(s, tu, evs, { title: t(`Upper structures: 3rd and 7th, then the triad on strings 3–1, ${what}`, `מבנים עליונים: טרצה וספטימה, ואז המשולש על מיתרים 3–1, ${whatHe}`), bpm: 70, evenness: false, keySig: 'C' });
+      return { ...d, chart: syms, band: { style: 'swing', bass: true }, drums: { groove: 'swing' } };
+    }
+    case 'tp-pairs': {
+      // A triad pair in inversions on strings 3–1: A, B, A, B … each the next voicing up, then back down (quarters).
+      const p = pairById(TP_GUITAR_PAIRS[Math.min(TP_GUITAR_PAIRS.length - 1, op)]);
+      const [a, b] = pairTriads(p, key);
+      const up: P[][] = [];
+      let top = 0;
+      for (let i = 0; i < 6; i++) {
+        const cands = setVoicings(tu, i % 2 === 0 ? a : b, [3, 2, 1]).filter((v) => topOf(tu, v) > top);
+        if (!cands.length) break;
+        const v = cands.reduce((x, y) => (topOf(tu, y) < topOf(tu, x) ? y : x));
+        up.push(v);
+        top = topOf(tu, v);
+      }
+      const seq = [...up, ...up.slice(0, -1).reverse()];
+      // First the chord itself (a shell: root, 3rd, 7th) for a bar, so the pair is heard against its root.
+      const g3: Record<string, [number, number]> = { maj7: [4, 11], '7': [4, 10], m7: [3, 10] };
+      const [t3, t7] = g3[p.q];
+      const sh = shellAt(tu, key, t3, t7, lowFretOf(up[0]));
+      evs.push({ beat: 0, dur: 4, notes: strum(sh) });
+      seq.forEach((v, i) => evs.push({ beat: 4 + i, dur: i === seq.length - 1 ? 2 : 1, notes: strum(v) }));
+      const nm = pairName(p, key, (x) => NAMES[mod(x, 12)]);
+      const d = finish(s, tu, evs, { title: t(`Triad pair ${nm} over ${K}${p.chord} (${p.colour.en}), inversions on strings 3–1`, `זוג משולשים ${nm} מעל ${K}${p.chord} (${p.colour.he}), היפוכים על מיתרים 3–1`), bpm: 60, evenness: false, keySig: 'C' });
+      return { ...d, chart: swingVamp(key, p.chord.replace('♯', '#'), Math.ceil(d.beats / 4)) };
+    }
+    case 'tp-lines': {
+      // Lines over a vamp in one position, swung 8ths: op 0–3 a pentatonic in 4-note groups (inside, lydian, dorian,
+      // altered), op 4–5 a triad-pair line (altered, dorian).
+      let ms: number[];
+      let name: { en: string; he: string };
+      let chord: string;
+      if (op <= 3) {
+        const p = pentById((['inside-maj', 'lydian', 'dorian', 'altered'] as const)[op]);
+        ms = pentGroups(pentNotes(p, key), 45 + mod(key - 45, 12), 5);
+        name = t(`${pentName(p, key, (x) => NAMES[mod(x, 12)])} over ${K}${p.chord}: ${p.colour.en}`, `${pentName(p, key, (x) => NAMES[mod(x, 12)], true)} מעל ${K}${p.chord}: ${p.colour.he}`);
+        chord = p.chord;
+      } else {
+        const p = pairById(op === 4 ? 'altered' : 'dorian');
+        const [a, b] = pairTriads(p, key);
+        ms = pairLineUp(a, b, 45 + mod(key + p.a[0] - 45, 12), 6);
+        name = t(`Triad-pair line ${pairName(p, key, (x) => NAMES[mod(x, 12)])} over ${K}${p.chord}`, `קו זוג משולשים ${pairName(p, key, (x) => NAMES[mod(x, 12)])} מעל ${K}${p.chord}`);
+        chord = p.chord;
+      }
+      // One hand position from the lowest note (on string 6 or 5).
+      const lo = Math.min(...ms);
+      const center = Math.max(1, Math.min(10, lo - 40 <= 7 ? lo - 41 : lo - 46));
+      // The chord first (a shell for a bar, so the colour is heard against its root), then the line.
+      const q = chord === 'maj7' ? [4, 11] : chord === 'm7' ? [3, 10] : [4, 10];
+      const evl: Ev[] = [{ beat: 0, dur: 4, notes: strum(shellAt(tu, key, q[0], q[1], center)) }, ...swing8(inPosition(tu, ms, center), 4)];
+      const d = finish(s, tu, evl, { title: name, bpm: 80, evenness: true, keySig: 'C' });
+      return { ...d, chart: swingVamp(key, chord.replace('♯', '#'), Math.ceil(d.beats / 4)), band: { style: 'swing', bass: true }, drums: { groove: 'swing' } };
+    }
+    case 'tp-cliche': {
+      // The minor line cliché (i – i(maj7) – i7 – i6, op 0) or the major one (I – I+ – I6 – I7, op 1): the root low,
+      // the moving voice and two held notes above it, a bar each, twice.
+      const minor = op !== 1;
+      const lc = LINE_CLICHE[minor ? 'minor' : 'major'];
+      const root = 40 + mod(key - 40, 12);
+      let near = Math.max(1, root - 40);
+      for (let rep = 0; rep < 2; rep++)
+        lc.line.forEach((x, i) => {
+          const lineP = minor ? root + 12 + (x === 0 ? 0 : x - 12) : root + x;
+          const [x1, x2] = minor ? [3, 7] : [0, 4];
+          const n1 = lineP + 1 + mod(key + x1 - lineP - 1, 12);
+          const n2 = n1 + 1 + mod(key + x2 - n1 - 1, 12);
+          const v = fitStrings(tu, [root, lineP, n1, n2], near, [6, 5, 4, 3, 2, 1], 4) ?? fitStrings(tu, [root, lineP, n1, n2], near, [6, 5, 4, 3, 2, 1], 5)!;
+          near = lowFretOf(v);
+          evs.push({ beat: (rep * 4 + i) * 4, dur: 2, notes: strum(v) }, { beat: (rep * 4 + i) * 4 + 2, dur: 2, notes: strum(v) });
+        });
+      const syms = lc.syms.map((x) => K + x);
+      const d = finish(s, tu, evs, { title: t(`The ${minor ? 'minor' : 'major'} line cliché: ${syms.join(' – ')}`, `ליין קלישה ${minor ? 'במינור' : 'במז׳ור'}: ${syms.join(' – ')}`), bpm: 60, evenness: false, keySig: 'C' });
+      return { ...d, chart: [...syms, ...syms] };
+    }
+  }
+  throw new Error(`Unknown g-theory kind ${s.kind}`);
+}
+const TP_GUITAR_PAIRS: PairId[] = ['dorian', 'lydian', 'altered', 'lydian-dom', 'mixolydian'];
+/** Rootless minor ii–V–i (intervals above each root): ø ♭3 ♭5 ♭7 9 · V7 3 ♭7 ♭9 ♭13 · i ♭3 5 6 9. */
+const ROOTLESS_MINOR = { hd: [3, 6, 10, 14], v: [4, 10, 13, 20], i: [3, 7, 9, 14] };

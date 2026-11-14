@@ -41,6 +41,7 @@ export type FamilyId =
   // GUITAR_DEEPENING (2026-11-11): the guitarist's ear, Barry Harris on the neck, prog / fusion.
   | 'g-ear' // call and response, answered on the guitar
   | 'g-harris' // Barry Harris applied to guitar (barry.ts)
+  | 'g-theory' // THEORY_PLAY: theory you play on the neck (rootless, quartal, Giant Steps, UST, triad pairs, lines)
   | 'g-prog' // odd meters, polyrhythm, metric modulation, fusion lines, unisons (prog engine)
   | 'g-bass' // bass guitar subset (the 0.4x starter family; kept so old progress ids stay valid)
   // Bass course (docs/research/BASS_CURRICULUM.md §5, F1–F14): instrument bass, pitches SOUNDING MIDI.

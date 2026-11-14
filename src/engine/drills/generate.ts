@@ -8,7 +8,7 @@ import { chartDrillData, roles } from './chartDrills';
 import { applyForm, type FormPlan, type FormSection } from './roadmap';
 import { parseChart } from '../charts';
 // THEORY_PLAY: the k-theory family's music.
-import { LINE_CLICHE, RQ_SYM, RQ_TONES, pairById, pairName, pairTriads, pentById, pentName, pentNotes, ustById, type PairId, type PentId, type RQ, type Ust, type UstId } from '../theoryPlay';
+import { LINE_CLICHE, RQ_SYM, RQ_TONES, pairLineUp, pentGroups, upFrom, pairById, pairName, pairTriads, pentById, pentName, pentNotes, ustById, type PairId, type PentId, type RQ, type Ust, type UstId } from '../theoryPlay';
 import type { Drill, DrillGoal, DrillSpec, DynamicsGoal, ExpNote, FamilyId, Hand, KeyOrder, Motion, ScaleType, Variant } from './types';
 
 type T2 = { en: string; he: string };
@@ -4460,47 +4460,6 @@ const vamp = (key: number, symb: string, bars: number): string[] => Array.from({
 function overVamp(d: Drill, chart: string[]): Drill {
   return { ...d, chart, band: { style: 'swing', bass: true }, drums: { groove: 'swing' } };
 }
-/** Pitch classes as a line from `from` up (each the next one above the last). */
-function upFrom(pcs: number[], from: number): number[] {
-  const out: number[] = [];
-  let p = from - 1;
-  for (const pc of pcs) {
-    p++;
-    while (mod(p, 12) !== mod(pc, 12)) p++;
-    out.push(p);
-  }
-  return out;
-}
-/** Pentatonic in 4-note groups (1-2-3-4, 2-3-4-5 …) up `groups` groups from the note nearest `start`, then the top held. */
-export function pentGroups(pcs: number[], start: number, groups: number): number[] {
-  const asc: number[] = [];
-  let p = start;
-  while (!pcs.includes(mod(p, 12))) p++;
-  for (let i = 0; i < groups + 4; i++) {
-    asc.push(p);
-    p++;
-    while (!pcs.includes(mod(p, 12))) p++;
-  }
-  const out: number[] = [];
-  for (let g = 0; g < groups; g++) out.push(...asc.slice(g, g + 4));
-  out.push(asc[groups + 3]);
-  return out;
-}
-/** A triad pair as a line in 8ths: A, B, A's next inversion, B's next inversion … up `n` triads from `start`. */
-export function pairLineUp(a: number[], b: number[], start: number, n: number): number[] {
-  const out: number[] = [];
-  let floor = start;
-  for (let i = 0; i < n; i++) {
-    const tri = i % 2 === 0 ? a : b;
-    const inv = Math.floor(i / 2) % 3;
-    const ord = [...tri.slice(inv), ...tri.slice(0, inv)];
-    const notes = upFrom(ord, floor);
-    out.push(...notes);
-    floor = notes[0] + 1;
-  }
-  return out;
-}
-
 const TP_PENT_OPS: PentId[] = ['inside-maj', 'lydian', 'dorian', 'altered'];
 const TP_PAIR_OPS: PairId[] = ['dorian', 'lydian', 'altered', 'lydian-dom', 'mixolydian'];
 
