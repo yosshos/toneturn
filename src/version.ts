@@ -18,6 +18,18 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.90.0',
+    date: '2026-11-14',
+    en: [
+      'The pivot (Barry Harris): the root on top, then drop to the next chord tone below and climb — Cmaj7 as C, then E G B. A lesson, an ear topic and drills on keys, guitar and bass in all 12 keys, on every chord type, from any chord tone, through ii–V–I, and combined with a scale line and with an enclosure. The old pivot lesson is now “Scale line with a pivot”.',
+      'Every key counts: for each skill on keys, guitar and bass the app now tracks which of the 12 keys you control and which are weak. Today, the workout and the path put weak keys first (a setting turns it off), each family shows a 12-key map — tap a key to practise it — and Insights has a Keys card. The AI teacher names your weak keys and builds the week around them.',
+    ],
+    he: [
+      'הפיבוט (בארי האריס): השורש למעלה, ואז יורדים לצליל האקורד הבא מתחת ועולים — Cmaj7 כ־C ואז E G B. שיעור, נושא שמיעה ותרגילים בקלידים, בגיטרה ובבס בכל 12 הסולמות, על כל סוגי האקורדים, מכל צליל באקורד, דרך ii–V–I, ובשילוב עם קו סולם ועם enclosure. שיעור הפיבוט הישן נקרא עכשיו "קו סולם עם פיבוט".',
+      'כל סולם נספר: לכל סקיל בקלידים, בגיטרה ובבס האפליקציה עוקבת באילו מ־12 הסולמות אתם שולטים ואילו חלשים. היום, האימון והמסלול מקדימים סולמות חלשים (אפשר לכבות בהגדרות), בכל משפחה יש מפת 12 סולמות — נגיעה בסולם מתרגלת אותו — ובתובנות יש כרטיס סולמות. המורה (AI) מציין את הסולמות החלשים ובונה סביבם את השבוע.',
+    ],
+  },
+  {
     version: '0.89.0',
     date: '2026-11-14',
     en: [

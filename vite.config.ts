@@ -58,7 +58,9 @@ export default defineConfig(({ mode }) => ({
     __APP_COMMIT__: JSON.stringify(commit),
     __APP_BUILT__: JSON.stringify(buildTime),
   },
-  server: { port: 5173 },
+  // Agents' worktrees live under .claude/ — the dev server must not watch them (each edit there reloaded every open page).
+  server: { port: 5173, watch: { ignored: ['**/.claude/**', '**/test-results/**', '**/playwright-report/**'] } },
+  optimizeDeps: { entries: ['index.html'] },
   // The Kokoro worker is an ES module worker (it imports onnxruntime-web).
   worker: { format: 'es' },
   test: {
