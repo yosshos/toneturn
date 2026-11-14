@@ -10,6 +10,8 @@ export const FAMILY_GLYPH: Record<string, GlyphKind> = {
   scales: 'scales', arpeggios: 'arp', cadences: 'prog', fingers: 'fingers1234', control: 'hairpin', advanced: 'octave', harris: 'improv', voicings: 'voicing', jazz: 'target', accomp: 'walk', 'k-ear': 'keysear',
   // PIANO_JAZZ: the jazz-piano families.
   'k-sixdim': 'sixdim', 'k-bebop': 'bebop', 'k-reharm': 'reharm',
+  // THEORY_PLAY: theory you play (two stacked triads).
+  'k-theory': 'tpair', 'g-theory': 'gtpair',
   // GUITAR_DEEPENING: the guitarist's ear, Barry Harris on the neck, prog / fusion.
   'g-ear': 'guitarear', 'g-harris': 'sixdim', 'g-prog': 'oddmeter',
   // Voice leading (AUDIT-CONTENT-THEORY §ה.2): piano and guitar, one symbol (voices stepping chord to chord).

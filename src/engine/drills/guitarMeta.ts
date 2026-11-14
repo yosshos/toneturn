@@ -117,7 +117,7 @@ export const GUITAR_META: Record<string, GuitarLevelMeta> = {
 };
 
 /** Families that are an add-on as a whole (§5.2). Everything else is core. */
-export const ADDON_FAMILY: Record<string, GuitarAddOn> = { 'g-jazz': 'jazz', 'g-harris': 'jazz', 'g-flamenco': 'flamenco', 'g-fingerstyle': 'fingerstyle', 'g-prog': 'prog' };
+export const ADDON_FAMILY: Record<string, GuitarAddOn> = { 'g-jazz': 'jazz', 'g-harris': 'jazz', 'g-theory': 'jazz', 'g-flamenco': 'flamenco', 'g-fingerstyle': 'fingerstyle', 'g-prog': 'prog' };
 export const GUITAR_ADDONS: GuitarAddOn[] = ['jazz', 'flamenco', 'fingerstyle', 'prog'];
 export const ADDON_NAME: Record<GuitarAddOn, { en: string; he: string }> = {
   jazz: { en: 'Jazz', he: 'ג׳אז' },

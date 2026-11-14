@@ -910,6 +910,23 @@ Object.assign(GLYPHS, {
 });
 // AUDIT-CONTENT-THEORY R-1/R-2/R-4: rhythm & meter on the keys (5:4), meter & cross-rhythm on the guitar (3:2).
 Object.assign(GLYPHS, { krhythm: mark('5:4'), gmeter: mark('3:2') });
+// THEORY_PLAY: theory you play (k-theory) — two triads stacked, a whole step apart (a triad pair).
+Object.assign(GLYPHS, {
+  tpair: (
+    <g {...sw} strokeWidth={2.6} strokeLinejoin="round">
+      <path d="M-22 18 L-6 -10 L10 18 Z" />
+      <path d="M-8 4 L8 -24 L24 4 Z" />
+    </g>
+  ),
+  /** The same on the neck (g-theory): two triads over three strings. */
+  gtpair: (
+    <g {...sw} strokeWidth={2.4} strokeLinejoin="round">
+      <path d="M-26 22 H26 M-26 10 H26 M-26 -2 H26" strokeWidth={1.4} />
+      <path d="M-20 22 L-10 -2 L0 22 Z" />
+      <path d="M0 10 L10 -20 L20 10 Z" />
+    </g>
+  ),
+});
 // PIANO_JAZZ P2 path wiring: a repertoire step (a lead sheet with a bookmark), the Transcription Race as a bonus step
 // (a staff with a stopwatch — the transcription coach keeps its pencil) and the Reharm Spotter as a bonus step (a chord,
 // a magnifier on the changed one — the k-reharm family keeps its chord-to-chord arrow).

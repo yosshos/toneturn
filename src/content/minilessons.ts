@@ -31,9 +31,12 @@ import { LESSONS as GUITAR } from './mini/guitar';
 import { LESSONS as MY_SONG } from './mini/mySong';
 import { LESSONS as RHYTHM_GAPS } from './mini/rhythmGaps'; // AUDIT-CONTENT-THEORY R-1…R-5
 
-export const MINI_LESSONS: Record<string, MiniLesson> = Object.fromEntries([...EXAMPLE, ...PATH, ...RHYTHM, ...JAZZ, ...THEORY_EAR, ...VOICE, ...SKILLS, ...MEMORY_LESSONS, ...BASICS, ...AD, ...INSTRUMENT, ...WRITTEN, ...HARMONY2, ...PITCH2, ...TIME2, ...SOUND, ...CHORDREAD, ...PROG_GAMES, ...JAZZ_EAR, ...PIANO_JAZZ, ...LICKS, ...BASS_NICHE, ...DRUMS, ...DRUMS_MORE, ...VOICE_COURSE, ...GUITAR, ...BASS_NICHE2, ...MY_SONG, ...RHYTHM_GAPS, ...VOICE_LEAD].map((l) => [l.id, l]));
+export const MINI_LESSONS: Record<string, MiniLesson> = Object.fromEntries([...EXAMPLE, ...PATH, ...RHYTHM, ...JAZZ, ...THEORY_EAR, ...VOICE, ...SKILLS, ...MEMORY_LESSONS, ...BASICS, ...AD, ...INSTRUMENT, ...WRITTEN, ...HARMONY2, ...PITCH2, ...TIME2, ...SOUND, ...CHORDREAD, ...PROG_GAMES, ...JAZZ_EAR, ...PIANO_JAZZ, ...LICKS, ...BASS_NICHE, ...DRUMS, ...DRUMS_MORE, ...VOICE_COURSE, ...GUITAR, ...BASS_NICHE2, ...MY_SONG, ...RHYTHM_GAPS, ...VOICE_LEAD, ...THEORY_PLAY].map((l) => [l.id, l]));
 // Voice leading as a performed skill (AUDIT-CONTENT-THEORY §ה.2): one lesson per stage of k-vl / g-vl.
 import { LESSONS as VOICE_LEAD } from './mini/voiceLead';
+
+// THEORY_PLAY (TP-1…TP-5): theory you play.
+import { LESSONS as THEORY_PLAY } from './mini/theoryPlay';
 
 
 /** The mini-lesson that opens a unit, if there is one. */

@@ -22,6 +22,8 @@ export type FamilyId =
   // Voice leading as a performed skill (AUDIT-CONTENT-THEORY §ה.2, VL-1…VL-8): piano and guitar.
   | 'k-vl'
   | 'g-vl'
+  // THEORY_PLAY (TP-1…TP-4): theory you play — pentatonic and triad-pair lines, upper structures, line clichés, reharm.
+  | 'k-theory'
   | 'custom' // the player's own drills
   // Licks & transcription (docs/SPEC-LICKS-TRANSCRIPTION.md): lick items per key / instrument, transcribed phrases.
   | 'licks'
@@ -43,6 +45,7 @@ export type FamilyId =
   // GUITAR_DEEPENING (2026-11-11): the guitarist's ear, Barry Harris on the neck, prog / fusion.
   | 'g-ear' // call and response, answered on the guitar
   | 'g-harris' // Barry Harris applied to guitar (barry.ts)
+  | 'g-theory' // THEORY_PLAY: theory you play on the neck (rootless, quartal, Giant Steps, UST, triad pairs, lines)
   | 'g-prog' // odd meters, polyrhythm, metric modulation, fusion lines, unisons (prog engine)
   | 'g-meter' // AUDIT-CONTENT-THEORY R-4/R-5: meter & cross-rhythm on the core path (subdivision → 7:4, odd meters, hemiola)
   | 'g-bass' // bass guitar subset (the 0.4x starter family; kept so old progress ids stay valid)

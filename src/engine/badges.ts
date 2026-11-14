@@ -343,11 +343,11 @@ const subBadges: Badge[] = SUB_SKILLS.map((s, i) => {
 // Bass-course families (b-*) get milestone + exam badges (bassBadges below), not one title per level.
 // The pianist's ear (k-ear) gets milestones by items played back clean (keysEarBadges), not tempo-band titles.
 export type BadgeFamily = Exclude<FamilyId, 'custom' | BassFamilyId | DrumFamilyId | 'k-ear' | 'licks' | 'transcribe'>;
-export const PIANO_BADGE_FAMILIES: BadgeFamily[] = ['scales', 'arpeggios', 'cadences', 'fingers', 'control', 'advanced', 'harris', 'jazz', 'voicings', 'accomp', 'k-sixdim', 'k-bebop', 'k-reharm', 'k-rhythm', 'k-vl'];
-export const GUITAR_BADGE_FAMILIES: BadgeFamily[] = ['g-fretting', 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-lead', 'g-fingerstyle', 'g-flamenco', 'g-jazz', 'g-reading', 'g-impro', 'g-bass', 'g-ear', 'g-harris', 'g-prog', 'g-meter', 'g-vl'];
+export const PIANO_BADGE_FAMILIES: BadgeFamily[] = ['scales', 'arpeggios', 'cadences', 'fingers', 'control', 'advanced', 'harris', 'jazz', 'voicings', 'accomp', 'k-sixdim', 'k-bebop', 'k-reharm', 'k-rhythm', 'k-vl', 'k-theory'];
+export const GUITAR_BADGE_FAMILIES: BadgeFamily[] = ['g-fretting', 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-lead', 'g-fingerstyle', 'g-flamenco', 'g-jazz', 'g-reading', 'g-impro', 'g-bass', 'g-ear', 'g-harris', 'g-prog', 'g-meter', 'g-vl', 'g-theory'];
 export const BADGE_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES, ...GUITAR_BADGE_FAMILIES];
 /** Families whose levels together cover all 12 keys: one "Around the Clock" badge each (guitar list checked against guitarCatalog in tests). */
-export const KEYS_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES, 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-fingerstyle', 'g-jazz', 'g-reading', 'g-bass', 'g-ear', 'g-harris', 'g-vl'];
+export const KEYS_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES, 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-fingerstyle', 'g-jazz', 'g-reading', 'g-bass', 'g-ear', 'g-harris', 'g-vl', 'g-theory'];
 export const FAMILY_NAME: Record<BadgeFamily, L> = {
   scales: { en: 'Scales', he: 'סולמות' },
   arpeggios: { en: 'Arpeggios', he: 'ארפג׳ים' },
@@ -362,6 +362,7 @@ export const FAMILY_NAME: Record<BadgeFamily, L> = {
   'k-sixdim': { en: 'Barry Harris harmony', he: 'ההרמוניה של בארי האריס' },
   'k-bebop': { en: 'Bebop lines', he: 'קווי ביבופ' },
   'k-reharm': { en: 'Jazz piano harmony', he: 'הרמוניה של פסנתר ג׳אז' },
+  'k-theory': { en: 'Theory you play', he: 'תאוריה בביצוע' },
   'g-fretting': { en: 'Fretting hand', he: 'היד הלוחצת' },
   'g-picking': { en: 'Picking', he: 'פריטה' },
   'g-legato': { en: 'Legato', he: 'לגאטו' },
@@ -378,6 +379,7 @@ export const FAMILY_NAME: Record<BadgeFamily, L> = {
   'g-bass': { en: 'Bass guitar', he: 'גיטרה בס' },
   'g-ear': { en: "The guitarist's ear", he: 'השמיעה של הגיטריסט' },
   'g-harris': { en: 'Barry Harris on guitar', he: 'בארי האריס בגיטרה' },
+  'g-theory': { en: 'Theory you play on guitar', he: 'תאוריה בביצוע בגיטרה' },
   'g-prog': { en: 'Prog and fusion', he: 'פרוג ופיוז׳ן' },
   // AUDIT-CONTENT-THEORY R-1/R-2/R-4: rhythm & meter families.
   'k-rhythm': { en: 'Rhythm & meter', he: 'קצב ומשקל' },
@@ -401,6 +403,7 @@ const FAMILY_ICON: Record<BadgeFamily, string> = {
   'k-sixdim': 'sixdim',
   'k-bebop': 'bebop',
   'k-reharm': 'reharm',
+  'k-theory': 'tpair',
   'g-fretting': 'fingers1234',
   'g-picking': 'pick',
   'g-legato': 'slur',
@@ -418,6 +421,7 @@ const FAMILY_ICON: Record<BadgeFamily, string> = {
   // Glyph kinds of src/ui/Glyph.tsx (the same symbols as FAMILY_GLYPH on the path) — no emoji, no text marks.
   'g-ear': 'guitarear',
   'g-harris': 'sixdim',
+  'g-theory': 'gtpair',
   'g-prog': 'oddmeter',
   'k-rhythm': 'polylock',
   'g-meter': 'polymeter',
@@ -439,6 +443,8 @@ const FAMILY_TITLES: Record<BadgeFamily, [string, string][]> = {
   'k-sixdim': [['Scale-of-Chords Climber', 'מטפס סולם האקורדים'], ['Borrowed Diminished Notes', 'צלילים מושאלים מהמוקטן'], ['Oblique Mover', 'נע באלכסון'], ['Spread Builder', 'בונה הפריסות'], ['Passing-Chord Weaver', 'אורג האקורדים העוברים'], ['Minor-Sixth Mover', 'מניע המינור שש'], ['Diminished Mastery', 'שליטה במוקטן']],
   'k-bebop': [['Changes Runner', 'רץ על המהלכים'], ['Minor-Key Hunter', 'צייד המינור'], ['Altered Explorer', 'חוקר האלטרד'], ['Blues Liner', 'מותח קווי בלוז'], ['Rhythm Changes', 'ריתם צ׳יינג׳ס'], ['Standards Player', 'נגן הסטנדרטים'], ['Two-Handed Bebop', 'ביבופ בשתי ידיים']],
   'k-reharm': [['Altered Colourist', 'צבעי האלטרד'], ['Minor-Cadence Maker', 'עושה הקדנצה המינורית'], ['Ballad Voicer', 'מעצב הבלדות'], ['Reharmoniser', 'מחדש ההרמוניה'], ['Modal Comper', 'המלווה המודאלי'], ['Solo Pianist', 'פסנתרן סולו'], ['Harmony Master', 'אמן ההרמוניה']],
+  // THEORY_PLAY: one title for each of the seven levels.
+  'k-theory': [['Pentatonic Painter', 'צייר הפנטטוני'], ['Upper-Structure Builder', 'בונה המבנים העליונים'], ['Dominant Colourist', 'צבעי הדומיננט'], ['Triad-Pair Player', 'נגן זוגות המשולשים'], ['Line-Cliché Reharmoniser', 'מחדש בליין קלישה'], ['Hexatonic Liner', 'קווי ההקסטוניק'], ['Colours Through ii–V–I', 'צבעים לאורך ii–V–I']],
   accomp: [['Bass and Chord', 'בס ואקורד'], ['Alberti Bass', 'בס אלברטי'], ['Boogie Bass', 'בס בוגי'], ['Walking Bass', 'בס מהלך'], ['Stride Piano', 'פסנתר סטרייד'], ['Full Accompaniment', 'ליווי מלא'], ['Groove Accompaniment', 'ליווי בגרוב']],
   'g-fretting': [['Chromatic Fretting', 'פריטה כרומטית'], ['Finger Permutations', 'תמורות אצבעות'], ['Spider Exercise', 'תרגיל העכביש'], ['Chromatic Walk up the Neck', 'הליכה כרומטית לאורך הצוואר'], ['All 24 Permutations', 'כל 24 התמורות'], ['Stretches', 'מתיחות']],
   'g-picking': [['Alternate Picking', 'פריטה מתחלפת'], ['String Crossing', 'מעבר מיתרים'], ['Economy Picking', 'פריטה חסכונית'], ['String Skipping', 'דילוג מיתרים'], ['Tremolo Picking', 'פריטת טרמולו'], ['Sweep Picking', 'פריטת סוויפ'], ['Hybrid Picking', 'פריטה היברידית'], ['Sweep Seventh Chords', 'סוויפ על אקורדי ספטים'], ['Fusion Picking', 'פריטת פיוז׳ן']],
@@ -455,6 +461,8 @@ const FAMILY_TITLES: Record<BadgeFamily, [string, string][]> = {
   'g-impro': [['Roots on Beat 1', 'יסודות על פעמה 1'], ['Thirds on Beat 1', 'טרצות על פעמה 1'], ['Chord-Tone Arpeggios', 'ארפג׳י צלילי אקורד'], ['Guide Tones Through the Form', 'צלילים מנחים לאורך הצורה'], ['Chord-Scale Player', 'נגן סולם-אקורד'], ['Motif Developer', 'מפתח המוטיבים'], ['Trading with the Band', 'חילופים עם הלהקה']],
   // GUITAR_DEEPENING (2026-11-11): one serious title per new level.
   'g-ear': [['Tonic Finder', 'מוצא הטוניקה'], ['One-Bar Echo', 'הד של תיבה'], ['Two-Bar Echo', 'הד של שתי תיבות'], ['Rhythm Reader', 'קורא המקצב'], ['Riff Catcher', 'תופס הריפים'], ['Root Hearer', 'שומע היסודות'], ['Harmonic Ear', 'אוזן הרמונית'], ['Quality Judge', 'מזהה הסוגים'], ['Key Finder', 'מוצא הסולם'], ['Transcriber', 'המתמלל']],
+  // THEORY_PLAY: one title per level.
+  'g-theory': [['Rootless Guitarist', 'גיטריסט בלי יסוד'], ['Quartal Comper', 'מלווה קוורטלי'], ['Giant Stepper', 'צועד הצעדים הגדולים'], ['Upper-Structure Guitarist', 'גיטריסט המבנים העליונים'], ['Triad-Pair Guitarist', 'גיטריסט זוגות המשולשים'], ['Superimposer', 'מלביש הצבעים'], ['Line-Cliché Guitarist', 'גיטריסט הליין קלישה']],
   'g-harris': [['Sixth-Diminished Guitarist', 'גיטריסט שש-מוקטן'], ['Scale-of-Chords Player', 'נגן סולם האקורדים'], ['Half-Step Ruler', 'שליט חצי הטון'], ['Three-to-Nine Player', 'נגן שלוש עד תשע'], ['Enclosure Player', 'נגן הכיתורים'], ["Barry's Guitarist", 'הגיטריסט של בארי']],
   'g-prog': [['Odd-Meter Riffs', 'ריפים במשקל אי־זוגי'], ['Grouping Shifter', 'מחליף הקבוצות'], ['Bar-Line Lander', 'נוחת על קו התיבה'], ['Polyrhythm Player', 'נגן הפוליריתמיקה'], ['Tempo Shifter', 'מחליף הטמפו'], ['Modal Riffer', 'ריפים מודאליים'], ['Fusion Liner', 'קווי פיוז׳ן'], ['Unison Locker', 'נועל היוניסון']],
   'g-bass': [['Bass Fretting', 'אצבוע בבס'], ['Bass Scales', 'סולמות בבס'], ['Groove Anchor', 'עוגן הגרוב'], ['Chord Outliner', 'משרטט האקורדים'], ['Octaves and Slap', 'אוקטבות וסלאפ'], ['Walking Bassist', 'בסיסט מהלך']],

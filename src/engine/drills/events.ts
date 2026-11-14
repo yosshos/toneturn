@@ -114,6 +114,8 @@ function secondTag(drill: Drill): Tags[number] | null {
   }
   // Jazz guitar, Barry Harris on the neck, prog / fusion (§4.2–4.3).
   if (f === 'g-harris') return { skill: 'chords', sub: 'chords/barry', w: 0.3 };
+  // THEORY_PLAY: lines rate improvising vocabulary, the rest voicings.
+  if (f === 'g-theory') return drill.spec.kind === 'tp-lines' ? { skill: 'improv', sub: 'improv/vocab', w: 0.3 } : drill.spec.kind === 'tp-cliche' ? { skill: 'cadences', sub: 'cadences/reharm', w: 0.3 } : { skill: 'chords', sub: 'chords/voicing', w: 0.3 };
   if (f === 'g-jazz') return drill.listen ? { skill: 'cadences', sub: 'cadences/progression', w: 0.4 } : { skill: 'chords', sub: 'chords/voicing', w: 0.3 };
   if (f === 'g-prog') return drill.tempoMap ? { skill: 'tempo', sub: 'tempo/compare', w: 0.3 } : drill.spec.kind === 'poly' ? { skill: 'timing', sub: 'timing/poly', w: 0.3 } : drill.pulse === 8 || drill.meters ? { skill: 'meter', sub: 'meter/odd', w: 0.3 } : { skill: 'timing', sub: 'timing/subdivide', w: 0.2 };
   // AUDIT-CONTENT-THEORY R-1/R-2/R-4/R-5: rhythm & meter on the keys and the guitar's core path.
@@ -138,6 +140,13 @@ function secondTag(drill: Drill): Tags[number] | null {
     if (k === 'rh-reharm') return { skill: 'cadences', sub: 'cadences/progression', w: 0.3 };
     if (k === 'rh-altered' || k === 'rh-minor') return { skill: 'chords', sub: 'chords/extension', w: 0.3 };
     return { skill: 'chords', sub: 'chords/voicing', w: 0.3 };
+  }
+  // THEORY_PLAY: lines rate improvising vocabulary, upper structures extensions, clichés and reharm progressions.
+  if (f === 'k-theory') {
+    const k = drill.spec.kind;
+    if (k === 'tp-pent' || k === 'tp-pairline' || k === 'tp-iivi') return { skill: 'improv', sub: 'improv/vocab', w: 0.3 };
+    if (k === 'tp-cliche') return { skill: 'cadences', sub: 'cadences/reharm', w: 0.3 };
+    return { skill: 'chords', sub: 'chords/extension', w: 0.3 };
   }
   if (f === 'k-bebop') return { skill: 'improv', sub: drill.spec.kind === 'bb-trade' ? 'improv/answer' : 'improv/play', w: 0.3 };
   if (f === 'control' && drill.spec.kind === 'reading') return { skill: 'sight', sub: 'sight/read', w: 0.4 };

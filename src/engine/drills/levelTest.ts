@@ -57,7 +57,7 @@ const CHORDS_JAZZ: Rung[] = [
   r('voicings-2', 5, { cadences: 2, voicings: 3, 'k-vl': 2 }),
   r('voicings-3', 10, { cadences: 3, voicings: 4, 'k-sixdim': 1, 'k-vl': 3 }),
   r('voicings-4', 3, { cadences: 4, voicings: 5, 'k-sixdim': 2, 'k-reharm': 1, 'k-vl': 4 }),
-  r('voicings-9', 2, { cadences: 5, voicings: 10, 'k-sixdim': 4, 'k-reharm': 3, 'k-vl': 7 }),
+  r('voicings-9', 2, { cadences: 5, voicings: 10, 'k-sixdim': 4, 'k-reharm': 3, 'k-vl': 7, 'k-theory': 1 }),
 ];
 const CHORDS_CLASSICAL: Rung[] = [
   r('cadences-1', 7, { cadences: 2 }),
@@ -91,7 +91,7 @@ const LINES: Rung[] = [
   r('harris-1', 0, { harris: 2, jazz: 1 }),
   r('harris-7', 5, { harris: 8, jazz: 2 }),
   r('k-bebop-1', 10, { harris: 10, jazz: 4, 'k-bebop': 2 }),
-  r('k-bebop-4', 0, { harris: 12, jazz: 6, 'k-bebop': 5 }),
+  r('k-bebop-4', 0, { harris: 12, jazz: 6, 'k-bebop': 5, 'k-theory': 2 }),
 ];
 
 /** The piano test by emphasis: hands, chords, comping, reading, ear (all), and jazz lines (jazz / both). */
@@ -152,7 +152,7 @@ const G_JAZZ: Rung[] = [
   r('g-jazz-1', 0, { 'g-jazz': 2, 'g-harris': 1 }),
   r('g-jazz-2', 5, { 'g-jazz': 3, 'g-harris': 2 }),
   r('g-jazz-4', 10, { 'g-jazz': 5, 'g-harris': 3 }),
-  r('g-jazz-8', 3, { 'g-jazz': 9, 'g-harris': 5 }),
+  r('g-jazz-8', 3, { 'g-jazz': 9, 'g-harris': 5, 'g-theory': 1 }),
 ];
 
 /** The guitar test: hands, chords, rhythm, lead, reading, ear; jazz comping only with the jazz add-on (shown levels). */

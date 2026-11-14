@@ -213,6 +213,8 @@ const PACK_TOPICS: Record<string, Pack> = {
   'bh-scale': 'jazz', 'bh-tone': 'jazz', 'bh-convert': 'jazz', 'bh-convert-2': 'jazz', 'bh-keys': 'jazz', 'bh-six-over': 'jazz', 'bh-lines': 'jazz', 'bh-pivot': 'jazz', 'bh-brothers': 'jazz', 'bh-family': 'jazz', 'bh-block': 'jazz', comping: 'jazz', turnarounds: 'jazz', 'guide-tones': 'jazz', 'chromatic-added': 'jazz', 'chord-scale': 'jazz', 'swing-ratio': 'jazz',
   // EAR_THEORY_AUDIT: the advanced jazz ear (the Jazz & improv course).
   'jazz-changes': 'jazz', 'reharm-spot': 'jazz', 'guide-line': 'jazz', 'jazz-phrase': 'jazz', 'jazz-form': 'jazz',
+  // THEORY_PLAY (TP-1…TP-4): theory you play, on the Jazz & improv path.
+  'triad-pairs': 'jazz', 'pent-super': 'jazz', polychords: 'jazz', 'reharm-own': 'jazz',
   maqam: 'maqam', 'eastern-rhythm': 'maqam',
   'set-classes': 'post-tonal', counterpoint: 'post-tonal',
   'eq-ear': 'production', 'space-ear': 'production', 'pan-ear': 'production', 'dyn-ear': 'production', 'filter-ear': 'production', 'tone-hz': 'production', 'width-ear': 'production',
@@ -320,7 +322,9 @@ const DRUM_LATER: Record<string, number> = { 'd-funk': 3, 'd-shuffle': 3, 'd-mid
  */
 const KEYS_JAZZ_LATER: Record<string, number> = { 'k-sixdim': 9, 'k-bebop': 6, 'k-reharm': 6,
   // Voice leading (AUDIT-CONTENT-THEORY §ה.2, TP-6 at 900–1600): level 1 after the first chord levels (~910), drop 2 ~1260.
-  'k-vl': 3 };
+  'k-vl': 3,
+  // THEORY_PLAY: theory you play from ~1400 (after the rootless voicings, UST and the first reharm levels).
+  'k-theory': 10 };
 /**
  * PIANO_AUDIT I2: every piano family's level 1 sat at the same difficulty as scales L1 — octaves (advanced L1), Barry
  * Harris lines and rootless voicings came in the first unit. Now the basics lead (scales, five-finger, the pianist's
@@ -340,7 +344,7 @@ export const VOICE_LATER: Record<string, number> = {
   'v-ladder': 0, 'v-modes': 2, 'v-ornament': 4,
 };
 /** Guitar families' teaching rank inside a grade (GUITAR_DEEPENING §5): the hands and chords first, the ear and improvising after. */
-export const GUITAR_RANK: Record<string, number> = { 'g-fretting': 0, 'g-chords': 1, 'g-rhythm': 2, 'g-fingerstyle': 2, 'g-picking': 3, 'g-flamenco': 3, 'g-scales': 4, 'g-jazz': 4, 'g-ear': 5, 'g-prog': 5, 'g-legato': 6, 'g-harris': 6, 'g-lead': 7, 'g-arps': 8, 'g-reading': 9, 'g-impro': 10 };
+export const GUITAR_RANK: Record<string, number> = { 'g-fretting': 0, 'g-chords': 1, 'g-rhythm': 2, 'g-fingerstyle': 2, 'g-picking': 3, 'g-flamenco': 3, 'g-scales': 4, 'g-jazz': 4, 'g-ear': 5, 'g-prog': 5, 'g-legato': 6, 'g-harris': 6, 'g-theory': 6, 'g-lead': 7, 'g-arps': 8, 'g-reading': 9, 'g-impro': 10 };
 // AUDIT-CONTENT-THEORY R-4: meter & cross-rhythm with rhythm guitar.
 GUITAR_RANK['g-meter'] = 2;
 /** A guitar level's path difficulty from its grade (0 = Debut … 9 = beyond grade 8): 700 + 90·grade + 8·rank (rank ≤ 10, so a grade always outranks the rank). */
