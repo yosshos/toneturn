@@ -22,6 +22,8 @@ export const FAMILY_GLYPH: Record<string, GlyphKind> = {
   'k-vl': 'voicelead', 'g-vl': 'voicelead',
   // AUDIT-GAPS-2: key changes and turnarounds (a note carried to a new key; over strings on the guitar and the bass).
   'k-keys': 'keymove', 'g-keys': 'gkeymove', 'b-keys': 'bkeymove',
+  // AUDIT-DEPTH-3: improvising under rule cards (a free line out of a card) and jazz in context (the four brothers).
+  'k-solo': 'solo', 'g-solo': 'gsolo', 'b-solo': 'bsolo', 'k-ctx': 'brothers', 'g-ctx': 'gbrothers', 'b-ctx': 'bbrothers',
   'g-fretting': 'fingers1234', 'g-picking': 'pick', 'g-legato': 'slur', 'g-scales': 'box', 'g-arps': 'arp', 'g-chords': 'chordbox', 'g-rhythm': 'strum', 'g-lead': 'bend', 'g-fingerstyle': 'pima', 'g-flamenco': 'fan', 'g-jazz': 'prog', 'g-reading': 'sight', 'g-impro': 'improv', 'g-bass': 'bass',
   // Bass (final check): 21 families, 21 symbols — the electric and the upright track share one path on an upright.
   'b-posread': 'position', 'b-impro': 'target',

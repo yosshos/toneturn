@@ -2,7 +2,7 @@
 // the four rule families as pickers, the challenge library (ready rule sets with the idea behind each, by level),
 // a random challenge, and the lead-sheet import that brings any tune's chords in.
 import { useEffect, useRef, useState } from 'react';
-import { CHALLENGES, CHALLENGE_GROUPS, INTERVAL_RULES, NOTE_RULES, RHYTHM_RULES, RULE_NAME, SHAPE_RULES, challengeOf, randomChallenge, type Challenge, type RuleSet } from '../engine/improvRules';
+import { CHALLENGES, CHALLENGE_GROUPS, EXTRA_RULES, INTERVAL_RULES, NOTE_RULES, RHYTHM_RULES, RULE_NAME, SHAPE_RULES, VOCAB_RULES, activeRules, challengeOf, randomChallenge, type Challenge, type RuleSet } from '../engine/improvRules';
 import { readLeadSheet, type LeadSheet } from '../engine/leadsheet';
 import { Icon } from './icons';
 import { STANDARD_CHANGES } from '../engine/standards';
@@ -10,8 +10,8 @@ import { IMPROV_LEVELS } from '../engine/charts';
 
 type Lang = 'en' | 'he';
 const T = {
-  en: { rules: 'Rules', notes: 'Notes', intervals: 'Intervals', rhythm: 'Rhythm', shape: 'Phrases', free: 'free', library: 'Challenges', random: 'Random challenge', close: 'Close', custom: 'Your own mix', level: 'Level' },
-  he: { rules: 'כללים', notes: 'צלילים', intervals: 'מרווחים', rhythm: 'קצב', shape: 'משפטים', free: 'חופשי', library: 'אתגרים', random: 'אתגר אקראי', close: 'סגירה', custom: 'שילוב משלכם', level: 'רמה' },
+  en: { rules: 'Rules', notes: 'Notes', intervals: 'Intervals', rhythm: 'Rhythm', shape: 'Phrases', vocab: 'Vocabulary', extra: 'Touch',  free: 'free', library: 'Challenges', random: 'Random challenge', close: 'Close', custom: 'Your own mix', level: 'Level' },
+  he: { rules: 'כללים', notes: 'צלילים', intervals: 'מרווחים', rhythm: 'קצב', shape: 'משפטים', vocab: 'אוצר מילים', extra: 'מגע',  free: 'חופשי', library: 'אתגרים', random: 'אתגר אקראי', close: 'סגירה', custom: 'שילוב משלכם', level: 'רמה' },
 };
 
 const dots = (n: number) => (
@@ -27,7 +27,7 @@ export function RulesPanel({ lang, rules, onRules, disabled, best }: { lang: Lan
   const t = T[lang];
   const [lib, setLib] = useState(false);
   const ch = challengeOf(rules);
-  const active = [rules.note, rules.interval, rules.rhythm, rules.shape ?? null].filter((x): x is NonNullable<typeof x> => !!x);
+  const active = activeRules(rules);
   const pick = <K extends keyof RuleSet>(k: K, list: readonly string[], label: string) => (
     <label className="ir-pick">
       <span>{label}</span>
@@ -60,6 +60,8 @@ export function RulesPanel({ lang, rules, onRules, disabled, best }: { lang: Lan
         {pick('interval', INTERVAL_RULES, t.intervals)}
         {pick('rhythm', RHYTHM_RULES, t.rhythm)}
         {pick('shape', SHAPE_RULES, t.shape)}
+        {pick('vocab', VOCAB_RULES, t.vocab)}
+        {pick('extra', EXTRA_RULES, t.extra)}
       </div>
       {active.length > 0 && (
         <ul className="ir-how">

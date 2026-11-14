@@ -43,7 +43,10 @@ function perfect(
       vel,
     });
   });
-  return out;
+  // Improvised parts judged by rule cards (AUDIT-DEPTH-3): the model line is the perfect answer there.
+  for (const m of d.goal.improv ? (d.goal.improv.model ?? d.goal.free?.model ?? []) : [])
+    if (!seen.has(`${m.pitch}@${m.beat}`)) (seen.add(`${m.pitch}@${m.beat}`), out.push({ pitch: m.pitch, on: expTimeMs(d, m.beat, bpm), off: expTimeMs(d, m.beat + m.dur * 0.9, bpm), vel: 70 }));
+  return out.sort((a, b) => a.on - b.on);
 }
 
 const spec = (o: Partial<DrillSpec>): DrillSpec => ({

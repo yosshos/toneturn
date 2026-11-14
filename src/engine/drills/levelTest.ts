@@ -96,6 +96,9 @@ const LINES: Rung[] = [
   r('k-vocab-5', 8, { harris: 8, jazz: 2, 'k-vocab': 6 }),
   r('k-bebop-1', 10, { harris: 10, jazz: 4, 'k-bebop': 2, 'k-vocab': 6 }),
   r('k-bebop-4', 0, { harris: 12, jazz: 6, 'k-bebop': 5, 'k-theory': 2, 'k-vocab': 8 }),
+  // AUDIT-DEPTH-3: a brother for the V (jazz in context), then improvising with enclosures under the rule cards.
+  r('k-ctx-2', 5, { harris: 14, jazz: 6, 'k-bebop': 5, 'k-theory': 2, 'k-vocab': 8, 'k-ctx': 3 }),
+  r('k-solo-4', 10, { harris: 15, jazz: 7, 'k-bebop': 6, 'k-theory': 3, 'k-vocab': 9, 'k-ctx': 4, 'k-solo': 5 }),
 ];
 
 /** The piano test by emphasis: hands, chords, comping, reading, ear (all), and jazz lines (jazz / both). */
@@ -164,6 +167,9 @@ const G_JAZZ: Rung[] = [
   r('g-bebop-7', 2, { 'g-jazz': 9, 'g-harris': 6, 'g-theory': 2, 'g-keys': 4, 'g-bebop': 8 }),
   // AUDIT-GAPS-2: key changes in drop 2 (one diminished, four keys).
   r('g-keys-7', 2, { 'g-jazz': 9, 'g-harris': 6, 'g-theory': 2, 'g-keys': 8, 'g-bebop': 8 }),
+  // AUDIT-DEPTH-3: a brother for the V on the neck, then improvising by the rules.
+  r('g-ctx-1', 7, { 'g-jazz': 9, 'g-harris': 6, 'g-theory': 2, 'g-keys': 8, 'g-bebop': 8, 'g-ctx': 2 }),
+  r('g-solo-3', 0, { 'g-jazz': 10, 'g-harris': 7, 'g-theory': 3, 'g-keys': 9, 'g-bebop': 9, 'g-ctx': 3, 'g-solo': 4 }),
 ];
 
 /**
@@ -214,6 +220,9 @@ const B_WALK: Rung[] = [
   r('b-bebop-6', 5, { 'b-walk': 10, 'b-swing': 4, 'b-barry': 4, 'b-keys': 4, 'b-bebop': 7 }),
   // AUDIT-GAPS-2: the line through a key change (one diminished, four keys).
   r('b-keys-7', 5, { 'b-walk': 10, 'b-swing': 4, 'b-barry': 4, 'b-keys': 8, 'b-bebop': 7 }),
+  // AUDIT-DEPTH-3: walking through the brothers, then a solo that implies the roots.
+  r('b-ctx-1', 7, { 'b-walk': 11, 'b-swing': 4, 'b-barry': 4, 'b-keys': 8, 'b-bebop': 7, 'b-ctx': 2 }),
+  r('b-solo-1', 0, { 'b-walk': 12, 'b-swing': 5, 'b-barry': 5, 'b-keys': 9, 'b-bebop': 7, 'b-ctx': 3, 'b-solo': 2 }),
 ];
 const B_READING: Rung[] = [
   r('b-read-2', 4, { 'b-read': 3, 'b-posread': 1 }),

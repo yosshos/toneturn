@@ -5,6 +5,8 @@ import type { Drill, DrillCalibration, DynamicsGoal, ExpNote, Hand, NoteResult, 
 import { vlDistance } from './generate';
 import { hasTimeline, timeMapOf, timelineMs } from './timeline';
 import { analyzeVoiceLeadTake } from './voiceLeadAnalyze';
+import { RULE_NAME, ruleCheck } from '../improvRules';
+import { RULE_CARDS, cardKept, type CNote } from '../ruleCards';
 
 const mod12 = (n: number): number => ((n % 12) + 12) % 12;
 const EPS = 1e-6;
@@ -255,6 +257,51 @@ export function freeStats(drill: Drill, bpm: number, played: PlayedNote[]): { n:
     if (cnt < fr.minPerBar * bars) thinBars += Math.ceil((fr.minPerBar * bars - cnt) / fr.minPerBar);
   }
   return { n: ns.length, out, thinBars };
+}
+
+/**
+ * AUDIT-DEPTH-3 C5: the improvised notes of a take — at or above `drill.freeAbove` (LH comps, RH improvises), else
+ * inside the free bars — as rule-card notes: beats on the drill's time map, swung 8ths straightened (2/3 → 1/2).
+ */
+export function improvNotes(drill: Drill, bpm: number, played0: PlayedNote[]): CNote[] {
+  const beatMs = 60000 / bpm;
+  const ns = drill.freeAbove !== undefined ? played0.filter((p) => p.pitch >= drill.freeAbove!) : drill.goal.free ? played0.filter((p) => inFreeBars(drill, bpm, p.on)) : played0;
+  const map = hasTimeline(drill) ? timeMapOf(drill, bpm) : null;
+  const beatOf = (ms: number) => {
+    const b = map ? map.beatAt(ms) : ms / beatMs;
+    if (!drill.spec.swing) return b;
+    const f = b - Math.floor(b);
+    return Math.floor(b) + (f <= 2 / 3 ? f * 0.75 : 0.5 + (f - 2 / 3) * 1.5);
+  };
+  return ns
+    .map((p) => {
+      const beat = beatOf(p.on);
+      const end = p.off !== null && p.off > p.on ? beatOf(p.off) : beat + 0.45;
+      return { beat, dur: Math.max(0.05, end - beat), midi: p.pitch, ...(p.vel !== undefined && p.vel !== 64 ? { vel: p.vel } : {}) };
+    })
+    .sort((a, b) => a.beat - b.beat);
+}
+
+/** AUDIT-DEPTH-3 C5: every rule card of an improvised take (goal.improv). Cards the input can't measure (total 0) are left out. */
+export function improvChecks(drill: Drill, bpm: number, played0: PlayedNote[]): NonNullable<TakeMetrics['improv']> {
+  const g = drill.goal.improv;
+  if (!g) return [];
+  const notes = improvNotes(drill, bpm, played0);
+  const ctx = { notes, spans: g.spans, meter: drill.meter || 4, bpm, opt: { ...(g.licks?.length ? { lickIds: g.licks } : {}), ...(drill.freeAbove !== undefined ? { split: drill.freeAbove } : {}) } };
+  const out: NonNullable<TakeMetrics['improv']> = [];
+  for (const card of g.cards) {
+    const c = ruleCheck(card, ctx);
+    if (c.total === 0) {
+      // A card that needs what this input can't give (velocity, the string, a melody) is not judged; any other card
+      // with nothing to judge (no notes, no device played) is broken.
+      if (RULE_CARDS[card]?.needs && notes.length) continue;
+      out.push({ card, ok: 0, total: 1, pass: false });
+      continue;
+    }
+    const pass = RULE_CARDS[card] ? cardKept(card, c) : c.ok / c.total >= 0.8 - 1e-9;
+    out.push({ card, ok: c.ok, total: c.total, pass });
+  }
+  return out;
 }
 
 // ───────────────────────────── per-hand onset series ─────────────────────────────
@@ -729,6 +776,19 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
         he: `צלילים מחוץ לאקורדים (${pct(fs.out / fs.n)}% מהקו שלכם)`,
       });
   }
+  // AUDIT-DEPTH-3 C5: the improvised notes kept the rule cards (each broken card is a factor, worse the further off).
+  const improv = improvChecks(drill, bpm, played0);
+  for (const c of improv) {
+    if (c.pass) continue;
+    const need = RULE_CARDS[c.card]?.pass ?? 0.8;
+    const share = c.total ? c.ok / c.total : 0;
+    const nm = (RULE_NAME as Record<string, { en: string; he: string }>)[c.card] ?? { en: c.card, he: c.card };
+    F.push({
+      sev: 1.2 + Math.max(0, need - share) * 6,
+      en: `Rule broken: ${nm.en} (${c.ok}/${c.total})`,
+      he: `כלל לא נשמר: ${nm.he} (${c.ok}/${c.total})`,
+    });
+  }
   if (hesitations > 0)
     F.push({
       sev: hesitations === 1 ? 1.4 : 2,
@@ -833,5 +893,6 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
     why,
     ...(octaveShift !== undefined ? { octaveShift } : {}),
     ...(unmeasured.length ? { unmeasured } : {}),
+    ...(drill.goal.improv ? { improv } : {}),
   };
 }

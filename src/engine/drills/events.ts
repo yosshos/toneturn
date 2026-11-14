@@ -47,6 +47,10 @@ function secondTag(drill: Drill): Tags[number] | null {
     if (k === 'v-3b9' || k === 'v-trip' || k === 'v-minor') return { skill: 'chords', sub: 'chords/barry', w: 0.3 };
     return { skill: 'improv', sub: 'improv/vocab', w: 0.3 };
   }
+  // AUDIT-DEPTH-3: improvising under rule cards feeds improvising (the written chorus the vocabulary); jazz in context
+  // feeds the Barry sub through the brothers, improvising vocabulary otherwise.
+  if (f === 'k-solo' || f === 'g-solo' || f === 'b-solo') return { skill: 'improv', sub: drill.spec.kind === 'sl-chorus' ? 'improv/vocab' : 'improv/play', w: 0.4 };
+  if (f === 'k-ctx' || f === 'g-ctx' || f === 'b-ctx') return drill.spec.kind.startsWith('cx-bro') ? { skill: 'chords', sub: 'chords/barry', w: 0.3 } : { skill: 'improv', sub: 'improv/vocab', w: 0.3 };
   if (f === 'd-time') return { skill: 'timing', sub: drill.click === '24' || drill.click === 'and' ? 'timing/backbeat' : drill.click === 'gap' || drill.click === 'one' ? 'timing/gap' : 'timing/subdivide', w: 0.4 };
   // Independence lines to read (DRUMS_AUDIT N1) feed kit reading; every other groove family the steady beat.
   if (f === 'd-indep' && drill.show === 'staff') return { skill: 'rhythm-reading', sub: 'rhythm-reading/drums', w: 0.3 };

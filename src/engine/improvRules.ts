@@ -9,32 +9,53 @@
 import { MODE_STEPS, type ModeId } from './modes';
 import type { ParsedChart } from './charts';
 import { chordAtBeat } from './charts';
+import { RULE_CARDS, notesOfSeconds, spansOfChart, type CardCheck, type CardCtx } from './ruleCards';
+
+// AUDIT-DEPTH-3 C5 (owner 2026-11-14): the rule cards (ruleCards.ts) join the library — the drilled vocabulary in a
+// fifth slot (vocab), touch and instrument rules in a sixth (extra), and new note / interval / rhythm / shape rules in
+// their families. A card id in any slot is checked by its analyzer; the 51 rules below keep their own checks.
 
 export type NoteRule =
   | 'scale' | 'chord-tones' | 'guide-beats' | 'target-3' | 'three-notes'
   | 'one-note' | 'two-notes' | 'five-notes' | 'triad' | 'guide-tones' | 'upper' | 'no-roots' | 'pentatonic' | 'blues-scale'
-  | 'target-7' | 'target-tension' | 'enclose' | 'connect';
-export type IntervalRule = 'steps' | 'thirds' | 'no-repeats' | 'chromatic' | 'leaps' | 'fourths' | 'sixths' | 'small' | 'recover' | 'zigzag';
+  | 'target-7' | 'target-tension' | 'enclose' | 'connect'
+  // rule cards (ruleCards.ts)
+  | 'tensions' | 'three-on-one' | 'flat9' | 'side-slip' | 'tritone-sub' | 'bebop-scale' | 'pent-5th-up' | 'mm-alt';
+export type IntervalRule = 'steps' | 'thirds' | 'no-repeats' | 'chromatic' | 'leaps' | 'fourths' | 'sixths' | 'small' | 'recover' | 'zigzag' | 'wide';
 export type RhythmRule =
   | 'eighths' | 'triplets' | 'quarters' | 'sixteenths' | 'space'
-  | 'half-notes' | 'offbeats' | 'no-one' | 'start-and' | 'dotted' | 'quarter-triplets' | 'one-on' | 'same-rhythm';
-export type ShapeRule = 'octave' | 'fifth' | 'short-phrases' | 'long-lines' | 'rise' | 'fall' | 'arch' | 'motif' | 'end-chord-tone' | 'peak-once';
-export type AnyRule = NoteRule | IntervalRule | RhythmRule | ShapeRule;
+  | 'half-notes' | 'offbeats' | 'no-one' | 'start-and' | 'dotted' | 'quarter-triplets' | 'one-on' | 'same-rhythm'
+  | 'start-two' | 'bars-2' | 'rest-bar' | 'double-bar' | 'displace' | 'behind' | 'ahead' | 'sparse' | 'call-response';
+export type ShapeRule = 'octave' | 'fifth' | 'short-phrases' | 'long-lines' | 'rise' | 'fall' | 'arch' | 'motif' | 'end-chord-tone' | 'peak-once'
+  | 'motif-dev' | 'repeat-vary' | 'end-guide' | 'chrom-up' | 'full-range' | 'fall-chord';
+/** The drilled vocabulary (rule cards). */
+export type VocabRule = 'harris' | 'pivot' | 'enc-ab' | 'enc-ba' | 'enc-step' | 'enc-bebop' | 'enc-delayed' | 'approach' | 'triad-pair' | 'pent-super' | 'use-lick' | 'guide-target' | 'quote-head' | 'target-ct' | 'inside' | 'active';
+/** Touch (MIDI velocity) and instrument rules (rule cards). */
+export type ExtraRule = 'ghost' | 'accent-off' | 'one-string' | 'double-stops' | 'octaves' | 'imply-roots' | 'lh-shells';
+export type AnyRule = NoteRule | IntervalRule | RhythmRule | ShapeRule | VocabRule | ExtraRule;
 export interface RuleSet {
   note: NoteRule | null;
   interval: IntervalRule | null;
   rhythm: RhythmRule | null;
   /** Phrase shape (added 2026-11-09; absent on older charts = free). */
   shape?: ShapeRule | null;
+  /** The drilled vocabulary (AUDIT-DEPTH-3 C5; absent = free). */
+  vocab?: VocabRule | null;
+  /** Touch or instrument (absent = free). */
+  extra?: ExtraRule | null;
 }
 
-export const NOTE_RULES: NoteRule[] = ['one-note', 'two-notes', 'three-notes', 'five-notes', 'scale', 'pentatonic', 'blues-scale', 'triad', 'chord-tones', 'guide-tones', 'upper', 'no-roots', 'guide-beats', 'target-3', 'target-7', 'target-tension', 'enclose', 'connect'];
-export const INTERVAL_RULES: IntervalRule[] = ['steps', 'chromatic', 'thirds', 'fourths', 'sixths', 'leaps', 'small', 'recover', 'zigzag', 'no-repeats'];
-export const RHYTHM_RULES: RhythmRule[] = ['quarters', 'half-notes', 'eighths', 'triplets', 'quarter-triplets', 'dotted', 'sixteenths', 'offbeats', 'start-and', 'no-one', 'same-rhythm', 'one-on', 'space'];
-export const SHAPE_RULES: ShapeRule[] = ['fifth', 'octave', 'short-phrases', 'long-lines', 'rise', 'fall', 'arch', 'motif', 'end-chord-tone', 'peak-once'];
+export const NOTE_RULES: NoteRule[] = ['one-note', 'two-notes', 'three-notes', 'five-notes', 'scale', 'pentatonic', 'blues-scale', 'triad', 'chord-tones', 'guide-tones', 'upper', 'no-roots', 'guide-beats', 'target-3', 'target-7', 'target-tension', 'enclose', 'connect', 'three-on-one', 'flat9', 'tensions', 'bebop-scale', 'pent-5th-up', 'mm-alt', 'tritone-sub', 'side-slip'];
+export const INTERVAL_RULES: IntervalRule[] = ['steps', 'chromatic', 'thirds', 'fourths', 'sixths', 'leaps', 'wide', 'small', 'recover', 'zigzag', 'no-repeats'];
+export const RHYTHM_RULES: RhythmRule[] = ['quarters', 'half-notes', 'eighths', 'triplets', 'quarter-triplets', 'dotted', 'sixteenths', 'offbeats', 'start-and', 'start-two', 'no-one', 'same-rhythm', 'one-on', 'space', 'sparse', 'bars-2', 'rest-bar', 'call-response', 'displace', 'double-bar', 'behind', 'ahead'];
+export const SHAPE_RULES: ShapeRule[] = ['fifth', 'octave', 'full-range', 'short-phrases', 'long-lines', 'rise', 'fall', 'fall-chord', 'arch', 'motif', 'motif-dev', 'repeat-vary', 'end-chord-tone', 'end-guide', 'chrom-up', 'peak-once'];
+export const VOCAB_RULES: VocabRule[] = ['inside', 'active', 'target-ct', 'guide-target', 'approach', 'harris', 'enc-ab', 'enc-ba', 'enc-step', 'enc-bebop', 'enc-delayed', 'pivot', 'triad-pair', 'pent-super', 'use-lick', 'quote-head'];
+export const EXTRA_RULES: ExtraRule[] = ['ghost', 'accent-off', 'imply-roots', 'lh-shells', 'one-string', 'double-stops', 'octaves'];
+/** Rule ids checked by a rule card (ruleCards.ts) rather than by checkRules' own code. */
+export const isCardRule = (r: string): boolean => r in RULE_CARDS;
 
 type Bi = { en: string; he: string };
-export const RULE_NAME: Record<AnyRule, Bi & { how: Bi }> = {
+const OLD_RULE_NAME: Record<string, Bi & { how: Bi }> = {
   // ---- notes
   scale: { en: 'Stay in the scale', he: 'להישאר בסולם', how: { en: 'Only notes of each bar’s scale.', he: 'רק צלילים מהסולם של כל תיבה.' } },
   'chord-tones': { en: 'Chord tones only', he: 'רק צלילי אקורד', how: { en: 'Only 1, 3, 5, 7 of the chord you are on — arpeggios.', he: 'רק 1, 3, 5, 7 של האקורד הנוכחי — ארפג׳יו.' } },
@@ -92,20 +113,48 @@ export const RULE_NAME: Record<AnyRule, Bi & { how: Bi }> = {
   'peak-once': { en: 'One high point', he: 'שיא אחד', how: { en: 'Save the highest note for one moment in the chorus — play it once.', he: 'לשמור את הצליל הגבוה ביותר לרגע אחד בסבב — לנגן אותו פעם אחת.' } },
 };
 
-/** Which family a rule belongs to. */
-export const familyOf = (r: AnyRule): 'note' | 'interval' | 'rhythm' | 'shape' =>
-  (NOTE_RULES as string[]).includes(r) ? 'note' : (INTERVAL_RULES as string[]).includes(r) ? 'interval' : (RHYTHM_RULES as string[]).includes(r) ? 'rhythm' : 'shape';
+/** Names and how-tos of every rule: the 51 above and the rule cards. */
+// A proxy, not a spread: ruleCards.ts sits in an import cycle (licks → drills → band → here), so the cards may not
+// exist yet while this module loads; their names are looked up on first use.
+export const RULE_NAME = new Proxy(OLD_RULE_NAME, {
+  get: (t, k) => {
+    if (typeof k !== 'string') return undefined;
+    if (!(k in t) && RULE_CARDS[k]) t[k] = { en: RULE_CARDS[k].name.en, he: RULE_CARDS[k].name.he, how: RULE_CARDS[k].how };
+    return t[k];
+  },
+}) as Record<AnyRule, Bi & { how: Bi }>;
+
+/** Which family (slot) a rule belongs to. */
+export const familyOf = (r: AnyRule): 'note' | 'interval' | 'rhythm' | 'shape' | 'vocab' | 'extra' =>
+  (NOTE_RULES as string[]).includes(r)
+    ? 'note'
+    : (INTERVAL_RULES as string[]).includes(r)
+      ? 'interval'
+      : (RHYTHM_RULES as string[]).includes(r)
+        ? 'rhythm'
+        : (SHAPE_RULES as string[]).includes(r)
+          ? 'shape'
+          : (VOCAB_RULES as string[]).includes(r)
+            ? 'vocab'
+            : 'extra';
 
 export interface Challenge {
   id: string;
-  group: 'first' | 'notes' | 'lines' | 'rhythm' | 'shape' | 'masters';
+  group: 'first' | 'notes' | 'lines' | 'rhythm' | 'shape' | 'vocab' | 'masters';
   /** 1 easy … 5 hard. */
   level: number;
   title: Bi;
   idea: Bi;
   rules: RuleSet;
 }
-const R = (note: NoteRule | null, interval: IntervalRule | null, rhythm: RhythmRule | null, shape: ShapeRule | null = null): RuleSet => ({ note, interval, rhythm, shape });
+const R = (note: NoteRule | null, interval: IntervalRule | null, rhythm: RhythmRule | null, shape: ShapeRule | null = null, vocab: VocabRule | null = null, extra: ExtraRule | null = null): RuleSet => ({
+  note,
+  interval,
+  rhythm,
+  shape,
+  ...(vocab ? { vocab } : {}),
+  ...(extra ? { extra } : {}),
+});
 
 export const CHALLENGE_GROUPS: Record<Challenge['group'], Bi> = {
   first: { en: 'First steps', he: 'צעדים ראשונים' },
@@ -113,6 +162,7 @@ export const CHALLENGE_GROUPS: Record<Challenge['group'], Bi> = {
   lines: { en: 'Lines and intervals', he: 'קווים ומרווחים' },
   rhythm: { en: 'Rhythm and time', he: 'קצב וזמן' },
   shape: { en: 'Phrases and form', he: 'משפטים וצורה' },
+  vocab: { en: 'Vocabulary', he: 'אוצר מילים' },
   masters: { en: 'Combined — the hard ones', he: 'משולבים — הקשים' },
 };
 
@@ -174,6 +224,44 @@ export const CHALLENGES: Challenge[] = [
   { id: 'modern-test', group: 'masters', level: 5, title: { en: 'Modern colors', he: 'צבעים מודרניים' }, idea: { en: 'Land on tensions, move in leaps, start phrases off the beat.', he: 'לנחות על טנשנים, לזוז בקפיצות, להתחיל משפטים בין הפעמות.' }, rules: R('target-tension', 'leaps', 'start-and') },
   { id: 'guide-river', group: 'masters', level: 5, title: { en: 'Connected eighths', he: 'שמיניות מחוברות' }, idea: { en: 'Eighths through the changes, connecting every chord by step, long lines.', he: 'שמיניות לאורך המהלך, מחברים כל אקורד בצעד, קווים ארוכים.' }, rules: R('connect', 'small', 'eighths', 'long-lines') },
   { id: 'arpeggio-architect', group: 'masters', level: 5, title: { en: 'Arpeggio architect', he: 'אדריכל ארפג׳יו' }, idea: { en: '3 to 9 arpeggios in thirds, in triplets, every phrase an arch.', he: 'ארפג׳יו מ־3 עד 9 בטרצות, בטריולות, כל משפט קשת.' }, rules: R('upper', 'thirds', 'triplets', 'arch') },
+  // AUDIT-DEPTH-3 C5 (owner 2026-11-14): the drilled vocabulary and the wider library, 2–3 rules each.
+  { id: 'guide-landing', group: 'vocab', level: 2, title: { en: 'Guide-tone landings', he: 'נחיתות על צלילים מנחים' }, idea: { en: 'A 3rd or 7th on every change, the rest inside the changes.', he: 'טרצה או ספטימה בכל החלפה, וכל השאר בתוך המהלך.' }, rules: R(null, null, 'eighths', null, 'guide-target') },
+  { id: 'approach-changes', group: 'vocab', level: 2, title: { en: 'Approach every chord', he: 'גישה לכל אקורד' }, idea: { en: 'Slide into each new chord from a half step, and end phrases on a chord tone.', he: 'להחליק לכל אקורד חדש מחצי טון, ולסיים משפטים על צליל אקורד.' }, rules: R(null, null, null, 'end-chord-tone', 'approach') },
+  { id: 'harris-river', group: 'vocab', level: 4, title: { en: 'Barry’s eighth-note line', he: 'קו השמיניות של בארי' }, idea: { en: 'Harris rules in continuous eighths, every phrase ending on a guide tone.', he: 'חוקי האריס בשמיניות רצופות, כל משפט מסתיים על צליל מנחה.' }, rules: R(null, null, 'eighths', 'end-guide', 'harris') },
+  { id: 'pivot-entry', group: 'vocab', level: 4, title: { en: 'Pivot from the "and"', he: 'פיבוט מה"וְ"' }, idea: { en: 'Enter off the beat and drop a pivot into every four bars.', he: 'להיכנס בין הפעמות ולשתול פיבוט בכל ארבע תיבות.' }, rules: R(null, null, 'start-and', null, 'pivot') },
+  { id: 'step-enclose-3', group: 'vocab', level: 3, title: { en: 'Enclose the 3rd', he: 'לכתר את הטרצה' }, idea: { en: 'Scale step above, half step below — and the 3rd on beat 1 of each chord.', he: 'צעד סולם מעל, חצי טון מתחת — והטרצה בפעמה 1 של כל אקורד.' }, rules: R('three-on-one', null, null, null, 'enc-step') },
+  { id: 'enclose-ab', group: 'vocab', level: 3, title: { en: 'Above and below', he: 'מעל ומתחת' }, idea: { en: 'The chromatic enclosure from above, in a line of eighths.', he: 'הכיתור הכרומטי מלמעלה, בקו של שמיניות.' }, rules: R(null, null, 'eighths', null, 'enc-ab') },
+  { id: 'enclose-ba', group: 'vocab', level: 3, title: { en: 'Below and above', he: 'מתחת ומעל' }, idea: { en: 'The chromatic enclosure from below; resolve every phrase.', he: 'הכיתור הכרומטי מלמטה; לפתור כל משפט.' }, rules: R(null, null, null, 'end-chord-tone', 'enc-ba') },
+  { id: 'bebop-enclosure', group: 'vocab', level: 4, title: { en: 'The bebop enclosure', he: 'כיתור הביבופ' }, idea: { en: 'Four notes around the target, over continuous eighths.', he: 'ארבעה צלילים סביב המטרה, מעל שמיניות רצופות.' }, rules: R(null, null, 'eighths', null, 'enc-bebop') },
+  { id: 'delayed', group: 'vocab', level: 5, title: { en: 'Delay the resolution', he: 'להשהות את הפתרון' }, idea: { en: 'Circle the target before you land; end phrases on a guide tone.', he: 'להקיף את המטרה לפני הנחיתה; לסיים משפטים על צליל מנחה.' }, rules: R(null, null, null, 'end-guide', 'enc-delayed') },
+  { id: 'pairs-space', group: 'vocab', level: 4, title: { en: 'Triad pairs with space', he: 'זוגות משולשים עם אוויר' }, idea: { en: 'Two triads per chord, never more than four notes a bar.', he: 'שני משולשים לכל אקורד, לא יותר מארבעה צלילים בתיבה.' }, rules: R(null, null, 'sparse', null, 'triad-pair') },
+  { id: 'pent-colours', group: 'vocab', level: 4, title: { en: 'Pentatonic colours', he: 'צבעים פנטטוניים' }, idea: { en: 'A superimposed pentatonic on every chord, wide leaps.', he: 'פנטטוני מונח על כל אקורד, בקפיצות רחבות.' }, rules: R(null, 'leaps', null, null, 'pent-super') },
+  { id: 'lick-in', group: 'vocab', level: 3, title: { en: 'Work a lick in', he: 'לשלב ליק' }, idea: { en: 'Fit one of your licks over its chord, inside the changes otherwise.', he: 'לשלב ליק שלכם מעל האקורד שלו, ובשאר הזמן בתוך המהלך.' }, rules: R('scale', null, null, null, 'use-lick') },
+  { id: 'side-slip-in', group: 'masters', level: 5, title: { en: 'Out and back in', he: 'החוצה ובחזרה' }, idea: { en: 'Slip a half step outside, then resolve to a chord tone at the end of each phrase.', he: 'לגלוש חצי טון החוצה, ואז לפתור לצליל אקורד בסוף כל משפט.' }, rules: R('side-slip', null, null, 'end-chord-tone') },
+  { id: 'dialogue', group: 'shape', level: 4, title: { en: 'Dialogue with a motif', he: 'דיאלוג עם מוטיב' }, idea: { en: 'Answer each phrase in its rhythm, and keep transforming your opening motif.', he: 'לענות לכל משפט בקצב שלו, ולהמשיך לשנות את מוטיב הפתיחה.' }, rules: R(null, null, 'call-response', 'motif-dev') },
+  { id: 'repeat-vary-2', group: 'shape', level: 3, title: { en: 'Repeat and vary', he: 'לחזור ולגוון' }, idea: { en: 'Two-bar phrases; each one starts like the last and goes somewhere new.', he: 'משפטים של שתי תיבות; כל אחד מתחיל כמו הקודם והולך למקום חדש.' }, rules: R(null, null, 'bars-2', 'repeat-vary') },
+  { id: 'breathe-bar', group: 'rhythm', level: 2, title: { en: 'A bar to breathe', he: 'תיבה לנשום' }, idea: { en: 'Rest a full bar between phrases; start each one on beat 2.', he: 'לשתוק תיבה שלמה בין משפטים; להתחיל כל אחד בפעמה 2.' }, rules: R('scale', null, 'rest-bar') },
+  { id: 'beat-two', group: 'rhythm', level: 2, title: { en: 'Enter on 2', he: 'להיכנס על 2' }, idea: { en: 'Every phrase starts on beat 2 and ends on a guide tone.', he: 'כל משפט מתחיל בפעמה 2 ומסתיים על צליל מנחה.' }, rules: R(null, null, 'start-two', 'end-guide') },
+  { id: 'shift-motif', group: 'rhythm', level: 4, title: { en: 'Shift the motif', he: 'להזיז את המוטיב' }, idea: { en: 'Repeat your opening a beat later each time, inside the scale.', he: 'לחזור על הפתיחה פעמה מאוחר יותר בכל פעם, בתוך הסולם.' }, rules: R('scale', null, 'displace') },
+  { id: 'double-up', group: 'rhythm', level: 5, title: { en: 'Double up', he: 'להכפיל' }, idea: { en: 'One bar of 16ths in every four, by step, inside the scale.', he: 'תיבה של שש־עשריות בכל ארבע, בצעדים, בתוך הסולם.' }, rules: R('scale', 'steps', 'double-bar') },
+  { id: 'lay-back', group: 'rhythm', level: 4, title: { en: 'Lay back', he: 'להישען אחורה' }, idea: { en: 'Quarter notes on chord tones, each a little behind the beat.', he: 'רבעים על צלילי אקורד, כל אחד קצת מאחורי הפעמה.' }, rules: R('chord-tones', null, 'behind') },
+  { id: 'third-on-one', group: 'notes', level: 2, title: { en: 'The 3rd on the one', he: 'הטרצה על האחת' }, idea: { en: 'Land on each chord’s 3rd on its first beat, in eighths.', he: 'לנחות על הטרצה של כל אקורד בפעמה הראשונה שלו, בשמיניות.' }, rules: R('three-on-one', null, 'eighths') },
+  { id: 'flat-nine', group: 'notes', level: 3, title: { en: 'Find the ♭9', he: 'למצוא את ה־♭9' }, idea: { en: 'The ♭9 on every dominant, every phrase falling.', he: 'ה־♭9 על כל דומיננט, כל משפט יורד.' }, rules: R('flat9', null, null, 'fall') },
+  { id: 'upper-only', group: 'notes', level: 4, title: { en: 'Only the colours', he: 'רק הצבעים' }, idea: { en: '9, 11 and 13 only, long notes.', he: 'רק 9, 11 ו־13, בצלילים ארוכים.' }, rules: R('tensions', null, 'half-notes') },
+  { id: 'bebop-scale-line', group: 'notes', level: 3, title: { en: 'The bebop scale', he: 'סולם הביבופ' }, idea: { en: 'The bebop scale with chord tones on the beats, continuous eighths.', he: 'סולם הביבופ עם צלילי אקורד על הפעמות, בשמיניות רצופות.' }, rules: R('bebop-scale', null, 'eighths') },
+  { id: 'minor-pent-up', group: 'notes', level: 3, title: { en: 'Pentatonic a 5th up', he: 'פנטטוני קווינטה מעל' }, idea: { en: 'Over minor chords, the minor pentatonic on the 5th; leaps.', he: 'מעל אקורדים מינוריים, הפנטטוני המינורי על הקווינטה; בקפיצות.' }, rules: R('pent-5th-up', 'leaps', null) },
+  { id: 'altered-colours', group: 'notes', level: 4, title: { en: 'Altered dominants', he: 'דומיננטים אלטרד' }, idea: { en: 'The altered scale on every dominant; resolve to a guide tone.', he: 'הסולם האלטרד על כל דומיננט; לפתור לצליל מנחה.' }, rules: R('mm-alt', null, null, 'end-guide') },
+  { id: 'tritone-over', group: 'masters', level: 5, title: { en: 'The tritone sub on top', he: 'תחליף הטריטון מלמעלה' }, idea: { en: 'Play the sub over every dominant, in eighths, ending on chord tones.', he: 'לנגן את התחליף מעל כל דומיננט, בשמיניות, ולסיים על צלילי אקורד.' }, rules: R('tritone-sub', null, 'eighths', 'end-chord-tone') },
+  { id: 'wide-open', group: 'lines', level: 4, title: { en: 'Wide open', he: 'פתוח לרווחה' }, idea: { en: 'Fourths and wider, over two octaves.', he: 'קוורטות ומעלה, על פני שתי אוקטבות.' }, rules: R('scale', 'wide', null, 'full-range') },
+  { id: 'chromatic-climb', group: 'lines', level: 3, title: { en: 'Climb into it', he: 'לטפס אליו' }, idea: { en: 'Every phrase climbs three half steps into a chord tone on the beat.', he: 'כל משפט מטפס שלושה חצאי טונים אל צליל אקורד על הפעמה.' }, rules: R(null, null, 'eighths', 'chrom-up') },
+  { id: 'falling-lines', group: 'lines', level: 2, title: { en: 'Fall through the changes', he: 'ליפול דרך המהלך' }, idea: { en: 'A falling line on every chord, inside the scale.', he: 'קו יורד על כל אקורד, בתוך הסולם.' }, rules: R('scale', null, null, 'fall-chord') },
+  { id: 'ghost-accent', group: 'masters', level: 4, title: { en: 'Touch', he: 'מגע' }, idea: { en: 'Eighths with a ghosted note in every bar (MIDI).', he: 'שמיניות עם צליל רפאים בכל תיבה (MIDI).' }, rules: R(null, null, 'eighths', null, null, 'ghost') },
+  { id: 'off-accents', group: 'rhythm', level: 3, title: { en: 'Accent the "ands"', he: 'להדגיש את ה"וְ"' }, idea: { en: 'Continuous eighths, the off-beats louder (MIDI).', he: 'שמיניות רצופות, האוף־ביט חזק יותר (MIDI).' }, rules: R('scale', null, 'eighths', null, null, 'accent-off') },
+  { id: 'bass-roots-solo', group: 'masters', level: 3, title: { en: 'Bass solo over the roots', he: 'סולו בס מעל השורשים' }, idea: { en: 'Bass: solo in eighths, still placing every root on its chord’s first beat.', he: 'בס: סולו בשמיניות, ועדיין לשים כל שורש בפעמה הראשונה של האקורד.' }, rules: R(null, null, 'eighths', null, null, 'imply-roots') },
+  { id: 'shells-and-line', group: 'masters', level: 4, title: { en: 'Shells and a line', he: 'שלדים וקו' }, idea: { en: 'Piano: left-hand shells on every chord, the right hand lands guide tones.', he: 'פסנתר: שלדים ביד שמאל בכל אקורד, יד ימין נוחתת על צלילים מנחים.' }, rules: R(null, null, null, null, 'guide-target', 'lh-shells') },
+  { id: 'one-string-solo', group: 'lines', level: 3, title: { en: 'One string', he: 'מיתר אחד' }, idea: { en: 'Guitar: a melody on one string, inside the scale (MIDI guitar).', he: 'גיטרה: מנגינה על מיתר אחד, בתוך הסולם (גיטרת MIDI).' }, rules: R('scale', null, null, null, null, 'one-string') },
+  { id: 'octave-line', group: 'lines', level: 3, title: { en: 'Octave melody', he: 'מנגינה באוקטבות' }, idea: { en: 'Guitar: quarter notes in octaves, Wes-style.', he: 'גיטרה: רבעים באוקטבות, בסגנון ווס.' }, rules: R(null, null, 'quarters', null, null, 'octaves') },
+  { id: 'double-stop-line', group: 'lines', level: 3, title: { en: 'Double stops', he: 'דאבל סטופים' }, idea: { en: 'Guitar: two notes at a time, chord tones on the change.', he: 'גיטרה: שני צלילים בבת אחת, צלילי אקורד בהחלפה.' }, rules: R(null, null, null, null, 'target-ct', 'double-stops') },
 ];
 
 /** A random challenge, optionally up to a level. */
@@ -184,7 +272,17 @@ export function randomChallenge(maxLevel = 5, rnd: () => number = Math.random): 
 
 /** The challenge a rule set is (null when it is a custom mix). */
 export const challengeOf = (r: RuleSet): Challenge | null =>
-  CHALLENGES.find((c) => c.rules.note === r.note && c.rules.interval === r.interval && c.rules.rhythm === r.rhythm && (c.rules.shape ?? null) === (r.shape ?? null)) ?? null;
+  CHALLENGES.find(
+    (c) =>
+      c.rules.note === r.note &&
+      c.rules.interval === r.interval &&
+      c.rules.rhythm === r.rhythm &&
+      (c.rules.shape ?? null) === (r.shape ?? null) &&
+      (c.rules.vocab ?? null) === (r.vocab ?? null) &&
+      (c.rules.extra ?? null) === (r.extra ?? null),
+  ) ?? null;
+/** The active rules of a set, in slot order. */
+export const activeRules = (r: RuleSet): AnyRule[] => [r.note, r.interval, r.rhythm, r.shape ?? null, r.vocab ?? null, r.extra ?? null].filter((x): x is AnyRule => !!x);
 
 /** Scales a bar can be set to (chord-scale theory + blues / pentatonics). */
 export const BAR_SCALES: ModeId[] = ['ionian', 'dorian', 'phrygian', 'lydian', 'mixolydian', 'aeolian', 'locrian', 'melodic-minor', 'lydian-dominant', 'altered', 'diminished', 'whole-tone', 'harmonic-minor', 'phrygian-dominant', 'bebop-dominant', 'major-pentatonic', 'minor-pentatonic', 'blues'];
@@ -212,6 +310,8 @@ export interface PlayedNote {
   start: number;
   end: number;
   midi: number;
+  /** MIDI velocity when known (the touch cards). */
+  vel?: number;
 }
 
 export interface RuleCheck {
@@ -285,9 +385,20 @@ export function checkRules(played: PlayedNote[], chart: ParsedChart, meter: numb
     const r = relOf(n);
     return !!r && [r.t.root, r.t.third, r.t.fifth, r.t.seventh].includes(r.rel);
   };
+  // Rule cards (ruleCards.ts): the take in beats over the chart's chords repeated through the take.
+  let cardCtx: CardCtx | null = null;
+  const addCard = (rule: AnyRule) => {
+    cardCtx ??= { notes: notesOfSeconds(notes, bpm), spans: spansOfChart(chart, meter, nBars), meter, bpm };
+    const r: CardCheck = RULE_CARDS[rule].check(cardCtx);
+    const c = add(rule);
+    c.ok = r.ok;
+    c.total = r.total;
+    for (const b of r.miss ?? []) bars[Math.max(0, Math.min(nBars - 1, Math.floor(b / meter + 1e-6)))].breaks++;
+  };
+  for (const r of [rules.note, rules.interval, rules.rhythm, rules.shape ?? null, rules.vocab ?? null, rules.extra ?? null]) if (r && isCardRule(r)) addCard(r);
 
   // ---- notes
-  if (rules.note) {
+  if (rules.note && !isCardRule(rules.note)) {
     const c = add(rules.note);
     const limit = { 'one-note': 1, 'two-notes': 2, 'three-notes': 3, 'five-notes': 5 }[rules.note as string];
     if (limit) {
@@ -362,7 +473,7 @@ export function checkRules(played: PlayedNote[], chart: ParsedChart, meter: numb
   }
 
   // ---- intervals
-  if (rules.interval) {
+  if (rules.interval && !isCardRule(rules.interval)) {
     const c = add(rules.interval);
     let prevMove = 0;
     for (let i = 1; i < notes.length; i++) {
@@ -410,7 +521,7 @@ export function checkRules(played: PlayedNote[], chart: ParsedChart, meter: numb
   }
 
   // ---- rhythm
-  if (rules.rhythm) {
+  if (rules.rhythm && !isCardRule(rules.rhythm)) {
     const c = add(rules.rhythm);
     const r = rules.rhythm;
     const barIdx = (t: number) => Math.floor(beatOf(t) / meter + 1e-6);
@@ -471,7 +582,7 @@ export function checkRules(played: PlayedNote[], chart: ParsedChart, meter: numb
   }
 
   // ---- shape
-  if (rules.shape) {
+  if (rules.shape && !isCardRule(rules.shape)) {
     const c = add(rules.shape);
     const s = rules.shape;
     const m = (n: PlayedNote) => Math.round(n.midi);
@@ -515,4 +626,27 @@ export function checkRules(played: PlayedNote[], chart: ParsedChart, meter: numb
   const active = checks.filter((c) => c.total > 0);
   const score = notes.length < 4 || !active.length ? 0 : Math.round((active.reduce((a, c) => a + c.ok / c.total, 0) / active.length) * 1000) / 1000;
   return { notes: notes.length, checks, bars, score };
+}
+
+/**
+ * Check ANY rule id — a rule card or one of the 51 library rules — on a card context (beats + chord spans). The old
+ * rules run through checkRules on a chart rebuilt from the spans.
+ */
+export function ruleCheck(id: string, ctx: CardCtx): CardCheck {
+  if (isCardRule(id)) return RULE_CARDS[id].check(ctx);
+  const fam = familyOf(id as AnyRule);
+  if (fam === 'vocab' || fam === 'extra') return { ok: 0, total: 0 };
+  const meter = ctx.meter;
+  const end = Math.max(meter, ...ctx.spans.map((s) => s.at + s.beats), ...ctx.notes.map((n) => n.beat + n.dur));
+  const bars = Math.max(1, Math.ceil(end / meter - 1e-6));
+  const chart: ParsedChart = {
+    chords: ctx.spans.map((s) => ({ root: s.root, iv: s.iv, bass: s.root, sym: '', beats: s.beats, bar: Math.floor(s.at / meter + 1e-6), at: s.at - Math.floor(s.at / meter + 1e-6) * meter })),
+    bars,
+    errors: [],
+  };
+  const sec = 60 / ctx.bpm;
+  const played: PlayedNote[] = ctx.notes.map((n) => ({ start: n.beat * sec, end: (n.beat + n.dur) * sec, midi: n.midi, ...(n.vel !== undefined ? { vel: n.vel } : {}) }));
+  const rs: RuleSet = { note: null, interval: null, rhythm: null, shape: null, [fam]: id };
+  const c = checkRules(played, chart, meter, ctx.bpm, rs, {}, bars).checks[0];
+  return c ? { ok: c.ok, total: c.total } : { ok: 0, total: 0 };
 }

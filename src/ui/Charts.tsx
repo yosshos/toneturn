@@ -365,12 +365,16 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
       await new Promise((r) => setTimeout(r, 300));
     } else if (useMidi) {
       const open = new Map<number, number>();
+      const vel = new Map<number, number>();
       const t0perf = start + t0 * 1000;
-      const off = midi.onNote((m, on, at) => {
+      const off = midi.onNote((m, on, at, v) => {
         const t = (at - t0perf) / 1000;
-        if (on) open.set(m, t);
-        else if (open.has(m)) {
-          midiNotes.push({ midi: m, start: open.get(m)!, end: t });
+        if (on) {
+          open.set(m, t);
+          vel.set(m, v);
+        } else if (open.has(m)) {
+          // the velocity rides along for the touch rules (ghost notes, accents)
+          midiNotes.push({ midi: m, start: open.get(m)!, end: t, ...(vel.has(m) ? { vel: vel.get(m) } : {}) });
           open.delete(m);
         }
       });
@@ -425,7 +429,7 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
     const judged = sung.filter((n) => n.start >= meter * beatS - 0.05);
     const rep = improvReportBy(useMidi ? framesFromNotes(midiNotes.filter((n) => n.start >= 0)) : shifted, pcsAt, bpm);
     setReport(rep);
-    const anyRule = !!(rules.note || rules.interval || rules.rhythm || rules.shape);
+    const anyRule = !!(rules.note || rules.interval || rules.rhythm || rules.shape || rules.vocab || rules.extra);
     const rr = anyRule ? checkRules(judged, parsed, meter, bpm, rules, scales, parsed.bars * loops) : null;
     setRulesRep(rr);
     const score = rr && rr.notes >= 4 ? rr.score : rep.score;

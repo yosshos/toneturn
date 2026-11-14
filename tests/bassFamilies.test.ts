@@ -8,7 +8,7 @@ import { analyzeGuitarTake, type GFrame } from '../src/engine/drills/guitarAnaly
 import { expTimeMs } from '../src/engine/drills/analyze';
 import type { Drill, PlayedNote } from '../src/engine/drills/types';
 
-const ORDER = ['b-pluck', 'b-time', 'b-fret', 'b-chord', 'b-ear', 'b-scale', 'b-length', 'b-pocket', 'b-read', 'b-posread', 'b-styles', 'b-ghost', 'b-walk', 'b-impro', 'b-swing', 'b-barry', 'b-jform', 'b-latin', 'b-std', 'b-keys', 'b-bebop', 'b-legato', 'b-ext', 'b-pick', 'b-odd', 'b-prog', 'b-poly', 'b-slap', 'b-up-pos', 'b-up-arco', 'b-up-scales', 'b-up-pizz', 'b-up-walk', 'b-up-read'];
+const ORDER = ['b-pluck', 'b-time', 'b-fret', 'b-chord', 'b-ear', 'b-scale', 'b-length', 'b-pocket', 'b-read', 'b-posread', 'b-styles', 'b-ghost', 'b-walk', 'b-impro', 'b-swing', 'b-barry', 'b-jform', 'b-latin', 'b-std', 'b-keys', 'b-bebop', 'b-ctx', 'b-solo', 'b-legato', 'b-ext', 'b-pick', 'b-odd', 'b-prog', 'b-poly', 'b-slap', 'b-up-pos', 'b-up-arco', 'b-up-scales', 'b-up-pizz', 'b-up-walk', 'b-up-read'];
 const BASS = guitarCatalog().filter((f) => f.id.startsWith('b-'));
 const TUNE_IDS = ['bass', 'bass5', 'bass6', 'bass-dropd'];
 
@@ -48,7 +48,8 @@ describe('bass course families', () => {
               const d = generate({ ...sp, key, tuning: tid });
               const tu = tuningById(tid);
               const where = `${l.id} ${sp.kind}#${sp.option ?? 0} key ${key} ${tid}`;
-              expect(d.notes.length, where).toBeGreaterThan(3);
+              // Improvised bars (AUDIT-DEPTH-3 rule-card items) write only the landing on the last chord.
+              expect(d.notes.length, where).toBeGreaterThan(d.goal.improv && d.goal.free ? 0 : 3);
               expect(d.spec.instrument, where).toBe('bass');
               expect(Number.isFinite(d.beats) && d.beats > 0, where).toBe(true);
               for (const n of d.notes) {
