@@ -896,6 +896,15 @@ Object.assign(GLYPHS, {
   ),
   dsform: mark('D.S.'),
 });
+// THEORY_PLAY: theory you play (k-theory) — two triads stacked, a whole step apart (a triad pair).
+Object.assign(GLYPHS, {
+  tpair: (
+    <g {...sw} strokeWidth={2.6} strokeLinejoin="round">
+      <path d="M-22 18 L-6 -10 L10 18 Z" />
+      <path d="M-8 4 L8 -24 L24 4 Z" />
+    </g>
+  ),
+});
 // PIANO_JAZZ P2 path wiring: a repertoire step (a lead sheet with a bookmark), the Transcription Race as a bonus step
 // (a staff with a stopwatch — the transcription coach keeps its pencil) and the Reharm Spotter as a bonus step (a chord,
 // a magnifier on the changed one — the k-reharm family keeps its chord-to-chord arrow).

@@ -18,6 +18,8 @@ export type FamilyId =
   | 'k-sixdim'
   | 'k-bebop'
   | 'k-reharm'
+  // THEORY_PLAY (TP-1…TP-4): theory you play — pentatonic and triad-pair lines, upper structures, line clichés, reharm.
+  | 'k-theory'
   | 'custom' // the player's own drills
   // Licks & transcription (docs/SPEC-LICKS-TRANSCRIPTION.md): lick items per key / instrument, transcribed phrases.
   | 'licks'

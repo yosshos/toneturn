@@ -90,7 +90,7 @@ const takeInfo = (d: Drill, m: TakeMetrics) => {
 export const DEFAULT_CAL: DrillCalibration = { latencyMs: 0, velMin: 20, velMax: 120 };
 /** The drill calibration with the input's calibrated delay (MIDI when a keyboard is connected, else the microphone). */
 const calOf = (s: Settings): DrillCalibration => ({ ...DEFAULT_CAL, ...(s.drillCal ?? {}), latencyMs: inputLatency(s, midi.devices.length ? 'midi' : 'mic') });
-const FAM_HUE: Partial<Record<FamilyId, string>> = { scales: 'var(--mint)', arpeggios: '#7c8cff', cadences: '#c38cff', fingers: 'var(--gold)', control: '#ff8a5c', advanced: '#ff6b9a', harris: '#5cd6ff', jazz: '#5cffb0', voicings: '#ffd15c', accomp: '#b0ff5c', 'k-ear': '#8fb8ff', 'k-sixdim': '#5cc2ff', 'k-bebop': '#4fe0a0', 'k-reharm': '#ffc04d', custom: '#e0e0ff' };
+const FAM_HUE: Partial<Record<FamilyId, string>> = { scales: 'var(--mint)', arpeggios: '#7c8cff', cadences: '#c38cff', fingers: 'var(--gold)', control: '#ff8a5c', advanced: '#ff6b9a', harris: '#5cd6ff', jazz: '#5cffb0', voicings: '#ffd15c', accomp: '#b0ff5c', 'k-ear': '#8fb8ff', 'k-sixdim': '#5cc2ff', 'k-bebop': '#4fe0a0', 'k-reharm': '#ffc04d', 'k-theory': '#c9a0ff', custom: '#e0e0ff' };
 const HANDS_TX: Record<Lang, Record<string, string>> = { en: { R: 'RH', L: 'LH', RL: 'HT' }, he: { R: 'ימין', L: 'שמאל', RL: 'ביחד' } };
 
 /** Drill settings with the instrument defaulting to the player's (guitar / bass players get guitar drills). */
@@ -376,7 +376,7 @@ const TOPIC_OF: Record<string, Exclude<DrillTopic, 'all' | 'songs' | 'mine'>> = 
   scales: 'scales', arpeggios: 'scales', 'g-scales': 'scales', 'g-arps': 'scales', 'g-reading': 'scales', 'g-bass': 'scales',
   cadences: 'chords', voicings: 'chords', accomp: 'chords', 'g-chords': 'chords', 'g-rhythm': 'chords',
   fingers: 'hands', control: 'hands', advanced: 'hands', 'g-fretting': 'hands', 'g-picking': 'hands', 'g-legato': 'hands', 'g-fingerstyle': 'hands',
-  harris: 'styles', jazz: 'styles', 'k-sixdim': 'styles', 'k-bebop': 'styles', 'k-reharm': 'styles', 'g-lead': 'styles', 'g-flamenco': 'styles', 'g-jazz': 'styles', 'g-impro': 'styles',
+  harris: 'styles', jazz: 'styles', 'k-sixdim': 'styles', 'k-bebop': 'styles', 'k-reharm': 'styles', 'k-theory': 'styles', 'g-lead': 'styles', 'g-flamenco': 'styles', 'g-jazz': 'styles', 'g-impro': 'styles',
   // Bass course (unlisted b-* families fall under hands: pluck, fret, length, legato, pick, slap). B17 (0.64): time and
   // pocket are their own topic, reading has one, the bass ear one, and the upright track is grouped on its own.
   'b-scale': 'scales', 'b-read': 'reading', 'b-posread': 'reading', 'b-impro': 'styles', 'b-swing': 'time', 'b-odd': 'time', 'b-poly': 'time', 'b-prog': 'styles', 'b-barry': 'styles', 'b-jform': 'styles', 'b-latin': 'styles', 'b-std': 'chords', 'b-chord': 'chords', 'b-walk': 'chords', 'b-time': 'time', 'b-pocket': 'time', 'b-ghost': 'styles', 'b-styles': 'styles', 'b-ear': 'ear',

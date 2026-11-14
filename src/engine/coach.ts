@@ -218,6 +218,11 @@ const TOPIC_CONTRAST: Record<string, { en: string; he: string }> = {
   'jazz-phrase': { en: 'Hum the bass, place the first note against it, then follow steps and leaps.', he: 'זמזמו את הבס, מקמו מולו את הצליל הראשון, ואז עקבו אחרי צעדים וקפיצות.' },
   'upper-rootless': { en: 'Hear the top: bright tensions (9, 13) or dark ones (♭9, ♯9, ♭13)? Then which note sits at the bottom.', he: 'הקשיבו למעלה: מתחים בהירים (9, 13) או כהים (♭9, ♯9, ♭13)? ואז איזה צליל יושב למטה.' },
   'jazz-form': { en: 'How fast do the chords change, and are they minor or dominant?', he: 'כמה מהר האקורדים מתחלפים, והאם הם מינוריים או דומיננטיים?' },
+  // THEORY_PLAY (TP-1…TP-4)
+  'triad-pairs': { en: 'Find the one scale tone the six notes leave out: no 3rd is altered, no root is lydian, no 9th is dorian.', he: 'מצאו את צליל הסולם היחיד ששישת הצלילים משמיטים: בלי טרצה זה אלטרד, בלי יסוד זה לידי, בלי 9 זה דורי.' },
+  'pent-super': { en: 'Name each note against the chord root: a ♯11 is lydian, ♭9 / ♯9 / ♭13 are altered.', he: 'תנו שם לכל צליל מול יסוד האקורד: ♯11 זה לידי, ‏♭9 / ♯9 / ♭13 זה אלטרד.' },
+  polychords: { en: 'Is the bass in the triad (inversion), a step under it (lydian) or a step above it (sus)?', he: 'הבס בתוך המשולש (היפוך), טון מתחתיו (לידי) או טון מעליו (sus)?' },
+  'reharm-own': { en: 'The new chord must lead where the old one led, and the melody note must be its chord tone or tension.', he: 'האקורד החדש צריך להוביל לאן שהישן הוביל, וצליל המנגינה צריך להיות צליל אקורד או מתח שלו.' },
 };
 
 export interface SessionInsight {

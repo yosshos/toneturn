@@ -213,6 +213,8 @@ const PACK_TOPICS: Record<string, Pack> = {
   'bh-scale': 'jazz', 'bh-tone': 'jazz', 'bh-convert': 'jazz', 'bh-convert-2': 'jazz', 'bh-keys': 'jazz', 'bh-six-over': 'jazz', 'bh-lines': 'jazz', 'bh-pivot': 'jazz', 'bh-brothers': 'jazz', 'bh-family': 'jazz', 'bh-block': 'jazz', comping: 'jazz', turnarounds: 'jazz', 'guide-tones': 'jazz', 'chromatic-added': 'jazz', 'chord-scale': 'jazz', 'swing-ratio': 'jazz',
   // EAR_THEORY_AUDIT: the advanced jazz ear (the Jazz & improv course).
   'jazz-changes': 'jazz', 'reharm-spot': 'jazz', 'guide-line': 'jazz', 'jazz-phrase': 'jazz', 'jazz-form': 'jazz',
+  // THEORY_PLAY (TP-1…TP-4): theory you play, on the Jazz & improv path.
+  'triad-pairs': 'jazz', 'pent-super': 'jazz', polychords: 'jazz', 'reharm-own': 'jazz',
   maqam: 'maqam', 'eastern-rhythm': 'maqam',
   'set-classes': 'post-tonal', counterpoint: 'post-tonal',
   'eq-ear': 'production', 'space-ear': 'production', 'pan-ear': 'production', 'dyn-ear': 'production', 'filter-ear': 'production', 'tone-hz': 'production', 'width-ear': 'production',
@@ -318,7 +320,9 @@ const DRUM_LATER: Record<string, number> = { 'd-funk': 3, 'd-shuffle': 3, 'd-mid
  * Harris lines' block chords, bebop lines after guide tones and the first Harris lines, jazz-piano harmony after the
  * rootless voicings. (With the jazz emphasis the classical families are hidden, so they arrive sooner on that path.)
  */
-const KEYS_JAZZ_LATER: Record<string, number> = { 'k-sixdim': 9, 'k-bebop': 6, 'k-reharm': 6 };
+const KEYS_JAZZ_LATER: Record<string, number> = { 'k-sixdim': 9, 'k-bebop': 6, 'k-reharm': 6,
+  // THEORY_PLAY: theory you play from ~1400 (after the rootless voicings, UST and the first reharm levels).
+  'k-theory': 10 };
 /**
  * PIANO_AUDIT I2: every piano family's level 1 sat at the same difficulty as scales L1 — octaves (advanced L1), Barry
  * Harris lines and rootless voicings came in the first unit. Now the basics lead (scales, five-finger, the pianist's

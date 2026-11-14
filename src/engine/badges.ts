@@ -343,7 +343,7 @@ const subBadges: Badge[] = SUB_SKILLS.map((s, i) => {
 // Bass-course families (b-*) get milestone + exam badges (bassBadges below), not one title per level.
 // The pianist's ear (k-ear) gets milestones by items played back clean (keysEarBadges), not tempo-band titles.
 export type BadgeFamily = Exclude<FamilyId, 'custom' | BassFamilyId | DrumFamilyId | 'k-ear' | 'licks' | 'transcribe'>;
-export const PIANO_BADGE_FAMILIES: BadgeFamily[] = ['scales', 'arpeggios', 'cadences', 'fingers', 'control', 'advanced', 'harris', 'jazz', 'voicings', 'accomp', 'k-sixdim', 'k-bebop', 'k-reharm'];
+export const PIANO_BADGE_FAMILIES: BadgeFamily[] = ['scales', 'arpeggios', 'cadences', 'fingers', 'control', 'advanced', 'harris', 'jazz', 'voicings', 'accomp', 'k-sixdim', 'k-bebop', 'k-reharm', 'k-theory'];
 export const GUITAR_BADGE_FAMILIES: BadgeFamily[] = ['g-fretting', 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-lead', 'g-fingerstyle', 'g-flamenco', 'g-jazz', 'g-reading', 'g-impro', 'g-bass', 'g-ear', 'g-harris', 'g-prog'];
 export const BADGE_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES, ...GUITAR_BADGE_FAMILIES];
 /** Families whose levels together cover all 12 keys: one "Around the Clock" badge each (guitar list checked against guitarCatalog in tests). */
@@ -362,6 +362,7 @@ export const FAMILY_NAME: Record<BadgeFamily, L> = {
   'k-sixdim': { en: 'Barry Harris harmony', he: 'ההרמוניה של בארי האריס' },
   'k-bebop': { en: 'Bebop lines', he: 'קווי ביבופ' },
   'k-reharm': { en: 'Jazz piano harmony', he: 'הרמוניה של פסנתר ג׳אז' },
+  'k-theory': { en: 'Theory you play', he: 'תאוריה בביצוע' },
   'g-fretting': { en: 'Fretting hand', he: 'היד הלוחצת' },
   'g-picking': { en: 'Picking', he: 'פריטה' },
   'g-legato': { en: 'Legato', he: 'לגאטו' },
@@ -395,6 +396,7 @@ const FAMILY_ICON: Record<BadgeFamily, string> = {
   'k-sixdim': 'sixdim',
   'k-bebop': 'bebop',
   'k-reharm': 'reharm',
+  'k-theory': 'tpair',
   'g-fretting': 'fingers1234',
   'g-picking': 'pick',
   'g-legato': 'slur',
@@ -429,6 +431,8 @@ const FAMILY_TITLES: Record<BadgeFamily, [string, string][]> = {
   'k-sixdim': [['Scale-of-Chords Climber', 'מטפס סולם האקורדים'], ['Borrowed Diminished Notes', 'צלילים מושאלים מהמוקטן'], ['Oblique Mover', 'נע באלכסון'], ['Spread Builder', 'בונה הפריסות'], ['Passing-Chord Weaver', 'אורג האקורדים העוברים'], ['Minor-Sixth Mover', 'מניע המינור שש'], ['Diminished Mastery', 'שליטה במוקטן']],
   'k-bebop': [['Changes Runner', 'רץ על המהלכים'], ['Minor-Key Hunter', 'צייד המינור'], ['Altered Explorer', 'חוקר האלטרד'], ['Blues Liner', 'מותח קווי בלוז'], ['Rhythm Changes', 'ריתם צ׳יינג׳ס'], ['Standards Player', 'נגן הסטנדרטים'], ['Two-Handed Bebop', 'ביבופ בשתי ידיים']],
   'k-reharm': [['Altered Colourist', 'צבעי האלטרד'], ['Minor-Cadence Maker', 'עושה הקדנצה המינורית'], ['Ballad Voicer', 'מעצב הבלדות'], ['Reharmoniser', 'מחדש ההרמוניה'], ['Modal Comper', 'המלווה המודאלי'], ['Solo Pianist', 'פסנתרן סולו'], ['Harmony Master', 'אמן ההרמוניה']],
+  // THEORY_PLAY: one title for each of the seven levels.
+  'k-theory': [['Pentatonic Painter', 'צייר הפנטטוני'], ['Upper-Structure Builder', 'בונה המבנים העליונים'], ['Dominant Colourist', 'צבעי הדומיננט'], ['Triad-Pair Player', 'נגן זוגות המשולשים'], ['Line-Cliché Reharmoniser', 'מחדש בליין קלישה'], ['Hexatonic Liner', 'קווי ההקסטוניק'], ['Colours Through ii–V–I', 'צבעים לאורך ii–V–I']],
   accomp: [['Bass and Chord', 'בס ואקורד'], ['Alberti Bass', 'בס אלברטי'], ['Boogie Bass', 'בס בוגי'], ['Walking Bass', 'בס מהלך'], ['Stride Piano', 'פסנתר סטרייד'], ['Full Accompaniment', 'ליווי מלא'], ['Groove Accompaniment', 'ליווי בגרוב']],
   'g-fretting': [['Chromatic Fretting', 'פריטה כרומטית'], ['Finger Permutations', 'תמורות אצבעות'], ['Spider Exercise', 'תרגיל העכביש'], ['Chromatic Walk up the Neck', 'הליכה כרומטית לאורך הצוואר'], ['All 24 Permutations', 'כל 24 התמורות'], ['Stretches', 'מתיחות']],
   'g-picking': [['Alternate Picking', 'פריטה מתחלפת'], ['String Crossing', 'מעבר מיתרים'], ['Economy Picking', 'פריטה חסכונית'], ['String Skipping', 'דילוג מיתרים'], ['Tremolo Picking', 'פריטת טרמולו'], ['Sweep Picking', 'פריטת סוויפ'], ['Hybrid Picking', 'פריטה היברידית'], ['Sweep Seventh Chords', 'סוויפ על אקורדי ספטים'], ['Fusion Picking', 'פריטת פיוז׳ן']],

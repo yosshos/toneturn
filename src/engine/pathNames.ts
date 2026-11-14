@@ -139,6 +139,11 @@ const SHORT: Record<string, L2> = {
   'prog-meter': { en: 'Odd grooves', he: 'גרוב מורכב' },
   'jazz-changes': { en: 'The changes', he: 'המהלך' },
   'reharm-spot': { en: 'Reharm', he: 'רה־הרמון' },
+  // THEORY_PLAY (TP-1…TP-4)
+  'triad-pairs': { en: 'Triad pairs', he: 'זוגות משולשים' },
+  'pent-super': { en: 'Pentatonic over', he: 'פנטטוני מוסט' },
+  polychords: { en: 'Polychords', he: 'פוליאקורדים' },
+  'reharm-own': { en: 'Your reharm', he: 'הריהרמון שלכם' },
   'guide-line': { en: 'Guide line', he: 'קו מנחה' },
   'jazz-phrase': { en: 'Transcribe', he: 'תמלול' },
   'jazz-form': { en: 'Jazz forms', he: 'צורות ג׳אז' },

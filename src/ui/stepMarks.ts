@@ -117,6 +117,11 @@ export const TOPIC_MARK: Record<string, string> = {
   'guide-line': '7–3',
   'jazz-phrase': 'lick',
   'jazz-form': '12',
+  // THEORY_PLAY (TP-1…TP-4)
+  'triad-pairs': '△△',
+  'pent-super': '5/7',
+  polychords: 'D/C',
+  'reharm-own': 'sub',
   // VOICE_CURRICULUM: the voice path's topics (each its own mark next to the 16 vocal families).
   'sing-intervals': 'P5↑',
   'song-sing': 'tune',

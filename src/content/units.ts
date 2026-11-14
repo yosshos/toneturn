@@ -15,6 +15,8 @@ import { UNITS as BASS_NICHE } from './mini/bassNiche';
 import { UNITS as BASS_NICHE2 } from './mini/bassNiche2';
 import { UNITS as DRUMS } from './mini/drums';
 import { UNITS as DRUMS_MORE } from './mini/drumsMore';
+// THEORY_PLAY (TP-1…TP-5): the four topics, the keys family and the guitar block.
+import { UNITS as THEORY_PLAY } from './mini/theoryPlay';
 
 export const UNIT_LESSON: Record<string, string> = {
   // 0.38 (spec AE): each area file maps its own topics.
@@ -34,6 +36,7 @@ export const UNIT_LESSON: Record<string, string> = {
   ...DRUMS,
   // DRUMS_NICHE_PLAN P2: a few drum levels open with their own quick lesson ("tech:<level id>").
   ...DRUMS_MORE,
+  ...THEORY_PLAY,
   // Learning path
   'bflat-two-homes': 'bflat-two-homes',
   'degrees-135': 'degrees-135',

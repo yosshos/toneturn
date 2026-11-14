@@ -29,6 +29,7 @@ import './topicsGaps';
 import './topicsChartAnalysis';
 import './topicsDrumStyle'; // DRUMS_NICHE_PLAN: name the style by ear (drums course, optional)
 import './topicsJazzEar'; // EAR_THEORY_AUDIT: advanced jazz ear and prog rhythm
+import './topicsTheoryPlay'; // THEORY_PLAY (TP-1…TP-4): triad pairs, pentatonic superimposition, polychords, reharm it yourself
 import { applyDepth } from './topicsDepth';
 
 // ================================================================ T. Barry Harris

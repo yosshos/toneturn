@@ -7,6 +7,8 @@ import { chartKind, type ChartMode, type ChartVoicing, type CompRhythm } from '.
 import { chartDrillData, roles } from './chartDrills';
 import { applyForm, type FormPlan, type FormSection } from './roadmap';
 import { parseChart } from '../charts';
+// THEORY_PLAY: the k-theory family's music.
+import { LINE_CLICHE, RQ_SYM, RQ_TONES, pairById, pairName, pairTriads, pentById, pentName, pentNotes, ustById, type PairId, type PentId, type RQ, type Ust, type UstId } from '../theoryPlay';
 import type { Drill, DrillGoal, DrillSpec, DynamicsGoal, ExpNote, FamilyId, Hand, KeyOrder, Motion, ScaleType, Variant } from './types';
 
 type T2 = { en: string; he: string };
@@ -4445,6 +4447,222 @@ function genStrideMelody(s: DrillSpec): Drill {
   return { ...drill, notes, chart: d.text.split(' | ') };
 }
 
+// ───────────────────────────── k-theory: theory you play (THEORY_PLAY, TP-1…TP-4) ─────────────────────────────
+// Pentatonic superimposition and triad-pair lines over a vamp (the band comps the chart), upper structures over maj7,
+// m7 and 7 in two hands, natural vs altered colours on the V, the triad pairs in inversions, line clichés and a
+// reharmonised melody. The music comes from ../theoryPlay.ts; lines are written out (graded note for note), chords
+// graded by pitch classes (any voicing of the written notes passes).
+
+const TP_SYM: Record<string, string> = { maj7: 'maj7', m7: 'm7', '7': '7', '7alt': '7alt', '7♯11': '7#11', 'maj7♯11': 'maj7#11', 'maj7♯5': 'maj7#5' };
+/** A vamp chart of `bars` bars on one chord symbol. */
+const vamp = (key: number, symb: string, bars: number): string[] => Array.from({ length: bars }, () => keyName(key) + (TP_SYM[symb] ?? symb));
+/** Lines over a vamp: written, swung 8ths, the band comping the chart. */
+function overVamp(d: Drill, chart: string[]): Drill {
+  return { ...d, chart, band: { style: 'swing', bass: true }, drums: { groove: 'swing' } };
+}
+/** Pitch classes as a line from `from` up (each the next one above the last). */
+function upFrom(pcs: number[], from: number): number[] {
+  const out: number[] = [];
+  let p = from - 1;
+  for (const pc of pcs) {
+    p++;
+    while (mod(p, 12) !== mod(pc, 12)) p++;
+    out.push(p);
+  }
+  return out;
+}
+/** Pentatonic in 4-note groups (1-2-3-4, 2-3-4-5 …) up `groups` groups from the note nearest `start`, then the top held. */
+export function pentGroups(pcs: number[], start: number, groups: number): number[] {
+  const asc: number[] = [];
+  let p = start;
+  while (!pcs.includes(mod(p, 12))) p++;
+  for (let i = 0; i < groups + 4; i++) {
+    asc.push(p);
+    p++;
+    while (!pcs.includes(mod(p, 12))) p++;
+  }
+  const out: number[] = [];
+  for (let g = 0; g < groups; g++) out.push(...asc.slice(g, g + 4));
+  out.push(asc[groups + 3]);
+  return out;
+}
+/** A triad pair as a line in 8ths: A, B, A's next inversion, B's next inversion … up `n` triads from `start`. */
+export function pairLineUp(a: number[], b: number[], start: number, n: number): number[] {
+  const out: number[] = [];
+  let floor = start;
+  for (let i = 0; i < n; i++) {
+    const tri = i % 2 === 0 ? a : b;
+    const inv = Math.floor(i / 2) % 3;
+    const ord = [...tri.slice(inv), ...tri.slice(0, inv)];
+    const notes = upFrom(ord, floor);
+    out.push(...notes);
+    floor = notes[0] + 1;
+  }
+  return out;
+}
+
+const TP_PENT_OPS: PentId[] = ['inside-maj', 'lydian', 'dorian', 'altered'];
+const TP_PAIR_OPS: PairId[] = ['dorian', 'lydian', 'altered', 'lydian-dom', 'mixolydian'];
+
+function genTheoryPlay(s: DrillSpec): Drill {
+  const key = mod(s.key, 12);
+  const kn = keyName(key);
+  const op = s.option ?? 0;
+  const sw: DrillSpec = { ...s, swing: true };
+  switch (s.kind) {
+    case 'tp-pent': {
+      // A pentatonic over a one-chord vamp, in 4-note groups up two octaves (8ths), the top note held.
+      const p = pentById(TP_PENT_OPS[Math.min(TP_PENT_OPS.length - 1, op)]);
+      const pcs = pentNotes(p, key);
+      const ms = pentGroups(pcs, pitchIn(key, 57), 7);
+      const line = eighths(ms.slice(0, -1)).concat([{ p: ms[ms.length - 1], beat: (ms.length - 1) / 2, dur: 2, ct: undefined }]);
+      const pn = pentName(p, key, (x) => keyName(x));
+      const pnHe = pentName(p, key, (x) => keyName(x), true);
+      const ttl = title([t(`${pn} over ${kn}${p.chord}: ${p.colour.en}`, `${pnHe} מעל ${kn}${p.chord}: ${p.colour.he}`)], sw);
+      return overVamp(lineDrill(sw, line, ttl, {}, SIG[key], 80), vamp(key, p.chord, Math.ceil(line[line.length - 1].beat / 4 + 0.5)));
+    }
+    case 'tp-ust': {
+      // Upper structures in two hands (LH 3rd and 7th, voice-led; RH a triad): op 0 over a maj7 vamp (V, II, vii, II),
+      // op 1 over a m7 vamp (IV, ♭VII), op 2 through ii–V–I with natural colours (IV / II / II), op 3 altered (♭VII / ♭VI / V).
+      const tri = (u: Ust) => [u.t, u.t + (u.minor ? 3 : 4), u.t + 7];
+      const U = (id: UstId) => ustById(id);
+      const guide: Record<'maj7' | '7' | 'm7', number[]> = { maj7: [4, 11], '7': [4, 10], m7: [3, 10] };
+      const mk = (d: number, u: Ust, beats: number): HCh => ({ r: mod(key + d, 12), lh: guide[u.q], rh: tri(u), beats, more: [0, 7] });
+      let chords: HCh[];
+      let nm: T2;
+      let chart: string[];
+      if (op === 0) {
+        chords = (['v-maj', 'ii-maj', 'vii-maj', 'ii-maj'] as UstId[]).map((id) => mk(0, U(id), 4));
+        const four = `${keyName(key + 7)}, ${keyName(key + 2)}, ${keyName(key + 11)}m, ${keyName(key + 2)}`;
+        nm = t(`over ${kn}maj7: ${four} (maj9, maj13♯11, maj9♯11)`, `מעל ${kn}maj7: ${four} (maj9, maj13♯11, maj9♯11)`);
+        chart = vamp(key, 'maj7', 4);
+      } else if (op === 1) {
+        chords = (['iv-min', 'bvii-min', 'iv-min', 'bvii-min'] as UstId[]).map((id) => mk(0, U(id), 4));
+        nm = t(`over ${kn}m7: ${keyName(key + 5)} and ${keyName(key + 10)} (m13, m11)`, `מעל ${kn}m7: ${keyName(key + 5)} ו־${keyName(key + 10)} (m13, m11)`);
+        chart = vamp(key, 'm7', 4);
+      } else {
+        const alt = op === 3;
+        const ii = mk(2, U(alt ? 'bvii-min' : 'iv-min'), 4);
+        const v = mk(7, U(alt ? 'bvi-dom' : 'ii-dom'), 4);
+        const I = mk(0, U(alt ? 'v-maj' : 'ii-maj'), 8);
+        chords = [ii, v, I];
+        nm = alt
+          ? t(`ii–V–I in ${kn}: ${keyName(key + 0)} over ${keyName(key + 2)}m7, ${keyName(key + 3)} over ${keyName(key + 7)}7 (♯9 ♭13), ${keyName(key + 7)} over ${kn}maj7`, `ii–V–I ב־${kn}: ${keyName(key)} מעל ${keyName(key + 2)}m7, ${keyName(key + 3)} מעל ${keyName(key + 7)}7 (♯9 ♭13), ${keyName(key + 7)} מעל ${kn}maj7`)
+          : t(`ii–V–I in ${kn}: ${keyName(key + 7)} over ${keyName(key + 2)}m7, ${keyName(key + 9)} over ${keyName(key + 7)}7 (13♯11), ${keyName(key + 2)} over ${kn}maj7 (♯11)`, `ii–V–I ב־${kn}: ${keyName(key + 7)} מעל ${keyName(key + 2)}m7, ${keyName(key + 9)} מעל ${keyName(key + 7)}7 (13♯11), ${keyName(key + 2)} מעל ${kn}maj7 (♯11)`);
+        chart = [`${keyName(key + 2)}m7`, `${keyName(key + 7)}7`, `${kn}maj7`, `${kn}maj7`];
+      }
+      const d = twoHand(s, chords, t(`Upper structures ${nm.en}`, `מבנים עליונים ${nm.he}`), SIG[key], { lh: [50, 62], rh: [63, 84], rhAim: 72 });
+      return { ...d, chart };
+    }
+    case 'tp-domcol': {
+      // The V's colour changes halfway: natural or lydian dominant, then altered, resolving to I. LH 3rd and 7th.
+      const pairs: [UstId, UstId, string, string][] = [
+        ['ii-dom', 'bvi-dom', '13♯11 → 7♯9♭13', 'לידי דומיננטי → אלטרד'],
+        ['vm-dom', 'bv-dom', '9 → 7♭9♯11', 'טבעי → ♭9♯11'],
+        ['vi-dom', 'biii-dom', '13♭9 → 7♯9', '13♭9 → 7♯9'],
+      ];
+      const [a, b, en, he] = pairs[Math.min(2, op)];
+      const tri = (u: Ust) => [u.t, u.t + (u.minor ? 3 : 4), u.t + 7];
+      const ii: HCh = { r: mod(key + 2, 12), lh: [3, 10], rh: [7, 14, 17], beats: 4, more: MORE_Q.m7 };
+      const v1: HCh = { r: mod(key + 7, 12), lh: [4, 10], rh: tri(ustById(a)), beats: 2, more: [0, 7] };
+      const v2: HCh = { r: mod(key + 7, 12), lh: [4, 10], rh: tri(ustById(b)), beats: 2, more: [0] };
+      const I: HCh = { r: key, lh: [4, 11], rh: [7, 11, 14], beats: 4, more: MORE_Q.maj7 };
+      const d = twoHand(s, [ii, v1, v2, I, ii, v1, v2, I], t(`The V's colour in ${kn}: ${keyName(key + 7)}${en}`, `הצבע של ה־V ב־${kn}: ${keyName(key + 7)} ${he} (${en})`), SIG[key], { lh: [50, 62], rh: [63, 84], rhAim: 72 });
+      return { ...d, chart: [`${keyName(key + 2)}m7`, `${keyName(key + 7)}7`, `${kn}maj7`, `${keyName(key + 2)}m7`, `${keyName(key + 7)}7`, `${kn}maj7`] };
+    }
+    case 'tp-pairs': {
+      // A triad pair in inversions, quarter-note chords: A, B, A 1st inv, B 1st inv, A 2nd inv, B 2nd inv, A, B an
+      // octave up — then back down.
+      const p = pairById(TP_PAIR_OPS[Math.min(TP_PAIR_OPS.length - 1, op)]);
+      const [a, b] = pairTriads(p, key);
+      const evs: ChordEv[] = [];
+      const up: number[][] = [];
+      let floor = pitchIn(key + p.a[0], 57);
+      for (let i = 0; i < 8; i++) {
+        const tri = i % 2 === 0 ? a : b;
+        const inv = Math.floor(i / 2) % 3;
+        const v = upFrom([...tri.slice(inv), ...tri.slice(0, inv)], floor);
+        up.push(v);
+        if (i % 2 === 1) floor = up[i - 1][0] + 1;
+      }
+      const seq = [...up, ...up.slice(0, -1).reverse()];
+      seq.forEach((v, i) => evs.push(evOf(i, i === seq.length - 1 ? 2 : 1, v)));
+      const nm = pairName(p, key, (x) => keyName(x));
+      const sp: DrillSpec = { ...s, hands: 'R' };
+      const d = chordDrill(sp, evs, title([t(`Triad pair ${nm} over ${kn}${p.chord} (${p.colour.en}): inversions up and down`, `זוג משולשים ${nm} מעל ${kn}${p.chord} (${p.colour.he}): היפוכים למעלה ולמטה`)], sp), 60, {}, SIG[key]);
+      return { ...d, chart: vamp(key, p.chord, Math.ceil(d.beats / 4)) };
+    }
+    case 'tp-cliche': {
+      // Op 0: the minor line cliché (i – i(maj7) – i7 – i6, the line falling under ♭3 and 5); op 1: the major one
+      // (I – I+ – I6 – I7, the 5th rising). Op 2: a melody reharmonised (I – ♯I°7 – ii7 – ♭II7 – I, the melody on top);
+      // op 3: the backdoor under the melody (I – iv7 – ♭VII7 – I). LH the root (op 0–1) or the chord's root.
+      const evs: ChordEv[] = [];
+      let chart: string[];
+      let nm: T2;
+      if (op <= 1) {
+        const minor = op === 0;
+        const lc = LINE_CLICHE[minor ? 'minor' : 'major'];
+        const base = pitchIn(key, minor ? 57 : 50);
+        const lh = [pitchIn(key, 36)];
+        for (let rep = 0; rep < 2; rep++)
+          lc.line.forEach((x, i) => {
+            const lineP = minor ? base + 12 - (12 - x) % 12 : base + x;
+            // Above the moving line: ♭3 and 5 (minor) or root and 3rd (major), held.
+            const [x1, x2] = minor ? [3, 7] : [0, 4];
+            const n1 = pitchIn(key + x1, lineP + 1);
+            const rh = [lineP, n1, pitchIn(key + x2, n1 + 1)];
+            evs.push(evOf((rep * 4 + i) * 4, 4, rh, i === 0 ? lh : [], [key]));
+          });
+        chart = [...lc.syms, ...lc.syms].map((x) => kn + x);
+        nm = minor ? t(`The minor line cliché in ${kn}m: ${chart.slice(0, 4).join(' – ')}`, `הליין קלישה במינור ב־${kn}m: ${chart.slice(0, 4).join(' – ')}`) : t(`The major line cliché in ${kn}: ${chart.slice(0, 4).join(' – ')}`, `הליין קלישה במז׳ור ב־${kn}: ${chart.slice(0, 4).join(' – ')}`);
+        const sp: DrillSpec = { ...s, hands: 'RL' };
+        return { ...holdLH(chordDrill(sp, evs, title([nm], sp), 60, {}, SIG[minor ? mod(key + 3, 12) : key])), chart };
+      }
+      const prog: [number, RQ, number][] =
+        op === 2
+          ? [[0, 'maj7', 4], [1, 'dim7', 4], [2, 'm7', 5], [1, '7', 5], [0, 'maj7', 4]]
+          : [[0, 'maj7', 7], [5, 'm7', 8], [10, '7', 8], [0, 'maj7', 7]];
+      prog.forEach(([d, q, mel], i) => {
+        const r = mod(key + d, 12);
+        const pcs = RQ_TONES[q].map((x) => mod(r + x, 12));
+        const top = pitchIn(key + mel, 67);
+        const rh = blockUnder(top, [...new Set([...pcs, mod(top, 12)])], 4);
+        evs.push(evOf(i * 4, 4, rh, [pitchIn(r, 36)]));
+      });
+      chart = prog.map(([d, q]) => keyName(key + d) + RQ_SYM[q].replace('°7', 'dim7'));
+      nm = op === 2 ? t(`A melody reharmonised in ${kn}: passing ${keyName(key + 1)}°7, tritone sub ${keyName(key + 1)}7, the melody on top`, `מנגינה בהרמוניה מחודשת ב־${kn}: ${keyName(key + 1)}°7 עובר, תחליף טריטון ${keyName(key + 1)}7, המנגינה למעלה`) : t(`The backdoor under a melody in ${kn}: ${keyName(key + 5)}m7 – ${keyName(key + 10)}7 – ${kn}maj7`, `הדלת האחורית מתחת למנגינה ב־${kn}: ${keyName(key + 5)}m7 – ${keyName(key + 10)}7 – ${kn}maj7`);
+      const sp: DrillSpec = { ...s, hands: 'RL' };
+      return { ...chordDrill(sp, evs, title([nm], sp), 60, {}, SIG[key]), chart };
+    }
+    case 'tp-pairline': {
+      // A triad pair as a line over a vamp: A, B, A 1st inv, B 1st inv … in 8ths (3-note groups across the beat), 4 bars.
+      const p = pairById(TP_PAIR_OPS[Math.min(TP_PAIR_OPS.length - 1, op)]);
+      const [a, b] = pairTriads(p, key);
+      const ms = pairLineUp(a, b, pitchIn(key + p.a[0], 55), 8);
+      const line = eighths(ms.slice(0, -1)).concat([{ p: ms[ms.length - 1], beat: (ms.length - 1) / 2, dur: 2, ct: undefined }]);
+      const nm = pairName(p, key, (x) => keyName(x));
+      const ttl = title([t(`Triad-pair line ${nm} over ${kn}${p.chord} (${p.colour.en})`, `קו זוג משולשים ${nm} מעל ${kn}${p.chord} (${p.colour.he})`)], sw);
+      return overVamp(lineDrill(sw, line, ttl, {}, SIG[key], 80), vamp(key, p.chord, Math.ceil(line[line.length - 1].beat / 4 + 0.5)));
+    }
+    case 'tp-iivi': {
+      // ii–V–I in lines: the dorian pentatonic over ii (a minor pentatonic a step up), the altered triad pair over V
+      // (♭V + ♭VI major), the lydian pentatonic over I (major pentatonic a step up), 8ths, the last note held.
+      const iiR = mod(key + 2, 12);
+      const vR = mod(key + 7, 12);
+      const bar1 = pentGroups(pentNotes(pentById('dorian'), iiR), pitchIn(iiR + 2, 62), 2).slice(0, 8);
+      const [a, b] = pairTriads(pairById('altered'), vR);
+      const bar2 = pairLineUp(a, b, bar1[bar1.length - 1] - 2, 3).slice(0, 8);
+      const bar3 = pentGroups(pentNotes(pentById('lydian'), key), bar2[bar2.length - 1] - 3, 2).slice(0, 8);
+      const last = nearestIn([mod(key + 4, 12)], bar3[bar3.length - 1], 60, 86);
+      const ms = [...bar1, ...bar2, ...bar3];
+      const line = eighths(ms).map((n) => ({ ...n, dur: 0.5 })).concat([{ p: last, beat: 12, dur: 4, ct: undefined }]);
+      const ttl = title([t(`ii–V–I in ${kn}: ${keyName(iiR + 2)} minor pentatonic, the ${keyName(vR + 6)} + ${keyName(vR + 8)} pair, ${keyName(key + 2)} major pentatonic`, `ii–V–I ב־${kn}: ${keyName(iiR + 2)} מינור פנטטוני, הזוג ${keyName(vR + 6)} + ${keyName(vR + 8)}, ‏${keyName(key + 2)} מז׳ור פנטטוני`)], sw);
+      return overVamp(lineDrill(sw, line, ttl, {}, SIG[key], 80), [`${keyName(iiR)}m7`, `${keyName(vR)}7alt`, `${kn}maj7#11`, `${kn}maj7#11`]);
+    }
+  }
+  throw new Error(`Unknown k-theory kind: ${s.kind}`);
+}
+
 export function generate(spec: DrillSpec): Drill {
   if (spec.family.startsWith('d-')) return generateDrums(spec);
   if (spec.family.startsWith('g-') || spec.family.startsWith('b-')) return generateGuitar(spec);
@@ -4453,6 +4671,7 @@ export function generate(spec: DrillSpec): Drill {
   if (s.family === 'k-sixdim') return genSixDim(s);
   if (s.family === 'k-bebop') return genBebop(s);
   if (s.family === 'k-reharm') return genReharm(s);
+  if (s.family === 'k-theory') return genTheoryPlay(s);
   if (s.kind.startsWith('chart~')) return genChart(s);
   switch (s.kind) {
     case 'scale':
@@ -4624,6 +4843,7 @@ export function catalog(): FamilyDef[] {
   const sd = (kind: string, o: Partial<SpecTemplate> = {}): SpecTemplate => ({ family: 'k-sixdim', kind, hands: 'R', ...o });
   const bb = (kind: string, o: Partial<SpecTemplate> = {}): SpecTemplate => ({ family: 'k-bebop', kind, hands: 'R', swing: true, ...o });
   const rh = (kind: string, o: Partial<SpecTemplate> = {}): SpecTemplate => ({ family: 'k-reharm', kind, hands: 'RL', ...o });
+  const tp = (kind: string, o: Partial<SpecTemplate> = {}): SpecTemplate => ({ family: 'k-theory', kind, hands: 'R', ...o });
   const SN = EXAM_NPS.scales;
   const AN = EXAM_NPS.arpeggios;
   const sc = (o: Partial<SpecTemplate>): SpecTemplate => ({
@@ -5246,6 +5466,22 @@ export function catalog(): FamilyDef[] {
         JT('k-reharm', 6, 'Chains: ii–Vs by whole steps, the family of dominants', 'שרשראות: ii–V בטונים, משפחת הדומיננטות', [rh('rh-chains'), rh('rh-chains', { option: 1 })], [0, 5, 10, 3, 7, 2], [60, 104]),
         JT('k-reharm', 7, 'Solo piano: walking bass, 10ths, two-feel', 'פסנתר סולו: בס מהלך, דצימות, בשניים', [0, 1, 2].map((o) => rh('rh-solo', { option: o, swing: true })), [0, 5, 7, 10, 3], [80, 140]),
         JT('k-reharm', 8, 'Upper structures over a pedal: lydian and sus', 'מבנים עליונים מעל פדל: לידי וסאס', [rh('rh-pedal'), rh('rh-pedal', { option: 1 })], [2, 7, 0, 5, 10, 3], [60, 100]),
+      ],
+    },
+    {
+      // THEORY_PLAY (TP-1…TP-4): theory you play — pentatonic and triad-pair lines over a vamp, upper structures over
+      // maj7, m7 and 7, natural vs altered on the V, triad pairs in inversions, line clichés and a reharmonised melody.
+      id: 'k-theory',
+      title: t('Theory you play', 'תאוריה בביצוע'),
+      style: 'jazz',
+      levels: [
+        JT('k-theory', 1, 'Pentatonic superimposition over a vamp', 'פנטטוני מוסט מעל וואמפ', [0, 1, 2, 3].map((o) => tp('tp-pent', { option: o, swing: true })), cyc4, [70, 140]),
+        JT('k-theory', 2, 'Upper structures over maj7, m7 and ii–V–I', 'מבנים עליונים מעל maj7, ‏m7 ו־ii–V–I', [0, 1, 2, 3].map((o) => tp('tp-ust', { option: o, hands: 'RL' })), cyc4, [60, 100]),
+        JT('k-theory', 3, "The V's colour: natural, lydian dominant, altered", 'הצבע של ה־V: טבעי, לידי דומיננטי, אלטרד', [0, 1, 2].map((o) => tp('tp-domcol', { option: o, hands: 'RL' })), cyc4, [60, 100]),
+        JT('k-theory', 4, 'Triad pairs in inversions', 'זוגות משולשים בהיפוכים', [0, 1, 2, 3, 4].map((o) => tp('tp-pairs', { option: o })), cyc4, [60, 120]),
+        JT('k-theory', 5, 'Line clichés and a melody reharmonised', 'ליין קלישה ומנגינה בהרמוניה מחודשת', [0, 1, 2, 3].map((o) => tp('tp-cliche', { option: o, hands: 'RL' })), cyc4, [50, 90]),
+        JT('k-theory', 6, 'Triad-pair lines over a vamp', 'קווי זוגות משולשים מעל וואמפ', [0, 1, 2, 3, 4].map((o) => tp('tp-pairline', { option: o, swing: true })), cyc4, [70, 140]),
+        JT('k-theory', 7, 'Colours through ii–V–I: pentatonics and the altered pair', 'צבעים לאורך ii–V–I: פנטטוניים והזוג האלטרד', [tp('tp-iivi', { swing: true })], cyc4, [70, 140]),
       ],
     },
     {
