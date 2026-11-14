@@ -38,6 +38,15 @@ function secondTag(drill: Drill): Tags[number] | null {
   const f = drill.spec.family;
   // Drums (DRUMS_CURRICULUM §4): time drills feed timing by their click, grooves and fills the steady beat, reading
   // the drum-kit reading sub-skill; every drum take is also a timing take (it is all time).
+  // AUDIT-GAPS-2: bebop vocabulary on every instrument — the time items feed timing by their click (2 & 4 / the "and"
+  // → when the click moves, the gap → through the gaps), Harris lines the Barry sub, the rest improvising vocabulary.
+  if (f === 'k-vocab' || f === 'g-bebop' || f === 'b-bebop') {
+    if (drill.click === '24' || drill.click === 'and') return { skill: 'timing', sub: 'timing/backbeat', w: 0.4 };
+    if (drill.click === 'gap') return { skill: 'timing', sub: 'timing/gap', w: 0.4 };
+    const k = drill.spec.kind;
+    if (k === 'v-3b9' || k === 'v-trip' || k === 'v-minor') return { skill: 'chords', sub: 'chords/barry', w: 0.3 };
+    return { skill: 'improv', sub: 'improv/vocab', w: 0.3 };
+  }
   if (f === 'd-time') return { skill: 'timing', sub: drill.click === '24' || drill.click === 'and' ? 'timing/backbeat' : drill.click === 'gap' || drill.click === 'one' ? 'timing/gap' : 'timing/subdivide', w: 0.4 };
   // Independence lines to read (DRUMS_AUDIT N1) feed kit reading; every other groove family the steady beat.
   if (f === 'd-indep' && drill.show === 'staff') return { skill: 'rhythm-reading', sub: 'rhythm-reading/drums', w: 0.3 };

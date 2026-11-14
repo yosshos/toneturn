@@ -9,6 +9,7 @@ import { chartDrillData, roles } from './chartDrills';
 import { applyForm, type FormPlan, type FormSection } from './roadmap';
 import { parseChart } from '../charts';
 import { genKeysRhythm, keysRhythmFamily } from './keysRhythm'; // AUDIT-CONTENT-THEORY R-1/R-2/R-5
+import { genKeysVocab, keysVocabFamily } from './vocabDrills'; // AUDIT-GAPS-2: bebop vocabulary
 // THEORY_PLAY: the k-theory family's music.
 import { LINE_CLICHE, RQ_SYM, RQ_TONES, pairLineUp, pentGroups, upFrom, pairById, pairName, pairTriads, pentById, pentName, pentNotes, ustById, type PairId, type PentId, type RQ, type Ust, type UstId } from '../theoryPlay';
 import type { Drill, DrillGoal, DrillSpec, DynamicsGoal, ExpNote, FamilyId, Hand, KeyOrder, Motion, ScaleType, Variant } from './types';
@@ -3963,7 +3964,7 @@ const lineChord = (c: LChord) => ({ ct: pcsOf(LINE_Q[c.q].ct, c.r), sc: pcsOf(LI
  * scale tone between (a chromatic one where none fits) — a chromatic approach into each new chord's guide tone (3rd
  * or 7th), an occasional triplet turn on a chord's first beat, and the last chord's guide tone held for two beats.
  */
-function bebopLine(chords: LChord[], seed: string, o: { lo: number; hi: number; start: number; triplets?: boolean }): LineN[] {
+export function bebopLine(chords: LChord[], seed: string, o: { lo: number; hi: number; start: number; triplets?: boolean }): LineN[] {
   const rnd = rng(seed);
   const out: LineN[] = [];
   let beat = 0;
@@ -4767,6 +4768,7 @@ export function generate(spec: DrillSpec): Drill {
   // Voice leading as a performed skill (AUDIT-CONTENT-THEORY §ה.2): voiceLeadDrills.ts.
   if (s.family === 'k-vl') return genVoiceLead(s);
   if (s.family === 'k-theory') return genTheoryPlay(s);
+  if (s.family === 'k-vocab') return genKeysVocab(s);
   if (s.kind.startsWith('chart~')) return genChart(s);
   switch (s.kind) {
     case 'scale':
@@ -5733,5 +5735,7 @@ export function catalog(): FamilyDef[] {
     keysRhythmFamily(),
     // Voice leading as a performed skill (AUDIT-CONTENT-THEORY §ה.2, VL-1…VL-7): voiceLeadDrills.ts.
     pianoVoiceLeadFamily(),
+    // AUDIT-GAPS-2 High #1–#3, #7, #8: bebop vocabulary — approach notes, enclosures, Harris lines, time (vocabDrills.ts).
+    keysVocabFamily(),
   ];
 }

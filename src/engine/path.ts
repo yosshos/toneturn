@@ -314,7 +314,9 @@ const BASS_NICHE_LATER: Record<string, number> = { 'b-swing': 9, 'b-barry': 12, 
   // P2: the standards ladder after walk 11 (the first standards), extended techniques after legato 5 (harmonics).
   // (AUDIT-CONTENT-THEORY §ב.4: walking and styles now start two steps in, legato four and reading two, so the
   // families built on them moved with them — position reading too, below.)
-  'b-std': 13, 'b-ext': 9 };
+  'b-std': 13, 'b-ext': 9,
+  // AUDIT-GAPS-2: bebop vocabulary on the bass from ~1120 (enclosures) to ~1540 (Barry Harris lines).
+  'b-bebop': 6 };
 /**
  * AUDIT-CONTENT-THEORY §ב.4 ("roots & pocket first"): the bass core opened in catalogue order, so muting came at unit
  * 13, locking with the kick at 17 and walking at 32. Now time, the plucking hand, roots and the kick lock lead, muting
@@ -363,7 +365,9 @@ const KEYS_JAZZ_LATER: Record<string, number> = { 'k-sixdim': 9, 'k-bebop': 6, '
   // Voice leading (AUDIT-CONTENT-THEORY §ה.2, TP-6 at 900–1600): level 1 after the first chord levels (~910), drop 2 ~1260.
   'k-vl': 3,
   // THEORY_PLAY: theory you play from ~1400 (after the rootless voicings, UST and the first reharm levels).
-  'k-theory': 10 };
+  'k-theory': 10,
+  // AUDIT-GAPS-2: bebop vocabulary from the swing on-ramp (~980) to the click that moves (~1610).
+  'k-vocab': 4 };
 /**
  * PIANO_AUDIT I2: every piano family's level 1 sat at the same difficulty as scales L1 — octaves (advanced L1), Barry
  * Harris lines and rootless voicings came in the first unit. Now the basics lead (scales, five-finger, the pianist's
@@ -386,6 +390,8 @@ export const VOICE_LATER: Record<string, number> = {
 export const GUITAR_RANK: Record<string, number> = { 'g-fretting': 0, 'g-chords': 1, 'g-rhythm': 2, 'g-fingerstyle': 2, 'g-picking': 3, 'g-flamenco': 3, 'g-scales': 4, 'g-jazz': 4, 'g-ear': 5, 'g-prog': 5, 'g-legato': 6, 'g-harris': 6, 'g-theory': 6, 'g-lead': 7, 'g-arps': 8, 'g-reading': 9, 'g-impro': 10 };
 // AUDIT-CONTENT-THEORY R-4: meter & cross-rhythm with rhythm guitar.
 GUITAR_RANK['g-meter'] = 2;
+// AUDIT-GAPS-2: bebop vocabulary and lines on the neck, with the lead and Harris families.
+GUITAR_RANK['g-bebop'] = 7;
 /**
  * The order of a family's levels on the path: by path difficulty, then level number. AUDIT-CONTENT-THEORY §ב.3: guitar
  * levels sit by grade, but the family's next level used to be the next number, so a later-added easier level (picking 4

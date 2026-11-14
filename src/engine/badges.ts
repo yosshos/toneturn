@@ -344,11 +344,11 @@ const subBadges: Badge[] = SUB_SKILLS.map((s, i) => {
 // The pianist's ear (k-ear) gets milestones by items played back clean (keysEarBadges), not tempo-band titles.
 // The first steps at the piano (k-first) are three short beginner levels: no family badges.
 export type BadgeFamily = Exclude<FamilyId, 'custom' | BassFamilyId | DrumFamilyId | 'k-ear' | 'k-first' | 'licks' | 'transcribe'>;
-export const PIANO_BADGE_FAMILIES: BadgeFamily[] = ['scales', 'arpeggios', 'cadences', 'fingers', 'control', 'advanced', 'harris', 'jazz', 'voicings', 'accomp', 'k-sixdim', 'k-bebop', 'k-reharm', 'k-rhythm', 'k-vl', 'k-theory'];
-export const GUITAR_BADGE_FAMILIES: BadgeFamily[] = ['g-fretting', 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-lead', 'g-fingerstyle', 'g-flamenco', 'g-jazz', 'g-reading', 'g-impro', 'g-bass', 'g-ear', 'g-harris', 'g-prog', 'g-meter', 'g-vl', 'g-theory'];
+export const PIANO_BADGE_FAMILIES: BadgeFamily[] = ['scales', 'arpeggios', 'cadences', 'fingers', 'control', 'advanced', 'harris', 'jazz', 'voicings', 'accomp', 'k-sixdim', 'k-bebop', 'k-reharm', 'k-rhythm', 'k-vl', 'k-theory', 'k-vocab'];
+export const GUITAR_BADGE_FAMILIES: BadgeFamily[] = ['g-fretting', 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-lead', 'g-fingerstyle', 'g-flamenco', 'g-jazz', 'g-reading', 'g-impro', 'g-bass', 'g-ear', 'g-harris', 'g-prog', 'g-meter', 'g-vl', 'g-theory', 'g-bebop'];
 export const BADGE_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES, ...GUITAR_BADGE_FAMILIES];
 /** Families whose levels together cover all 12 keys: one "Around the Clock" badge each (guitar list checked against guitarCatalog in tests). */
-export const KEYS_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES, 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-fingerstyle', 'g-jazz', 'g-reading', 'g-bass', 'g-ear', 'g-harris', 'g-vl', 'g-theory'];
+export const KEYS_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES, 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-fingerstyle', 'g-jazz', 'g-reading', 'g-bass', 'g-ear', 'g-harris', 'g-vl', 'g-theory', 'g-bebop'];
 export const FAMILY_NAME: Record<BadgeFamily, L> = {
   scales: { en: 'Scales', he: 'סולמות' },
   arpeggios: { en: 'Arpeggios', he: 'ארפג׳ים' },
@@ -364,6 +364,7 @@ export const FAMILY_NAME: Record<BadgeFamily, L> = {
   'k-bebop': { en: 'Bebop lines', he: 'קווי ביבופ' },
   'k-reharm': { en: 'Jazz piano harmony', he: 'הרמוניה של פסנתר ג׳אז' },
   'k-theory': { en: 'Theory you play', he: 'תאוריה בביצוע' },
+  'k-vocab': { en: 'Bebop vocabulary', he: 'שפת הביבופ' },
   'g-fretting': { en: 'Fretting hand', he: 'היד הלוחצת' },
   'g-picking': { en: 'Picking', he: 'פריטה' },
   'g-legato': { en: 'Legato', he: 'לגאטו' },
@@ -381,6 +382,7 @@ export const FAMILY_NAME: Record<BadgeFamily, L> = {
   'g-ear': { en: "The guitarist's ear", he: 'השמיעה של הגיטריסט' },
   'g-harris': { en: 'Barry Harris on guitar', he: 'בארי האריס בגיטרה' },
   'g-theory': { en: 'Theory you play on guitar', he: 'תאוריה בביצוע בגיטרה' },
+  'g-bebop': { en: 'Bebop on guitar', he: 'ביבופ בגיטרה' },
   'g-prog': { en: 'Prog and fusion', he: 'פרוג ופיוז׳ן' },
   // AUDIT-CONTENT-THEORY R-1/R-2/R-4: rhythm & meter families.
   'k-rhythm': { en: 'Rhythm & meter', he: 'קצב ומשקל' },
@@ -405,6 +407,7 @@ const FAMILY_ICON: Record<BadgeFamily, string> = {
   'k-bebop': 'bebop',
   'k-reharm': 'reharm',
   'k-theory': 'tpair',
+  'k-vocab': 'enclose',
   'g-fretting': 'fingers1234',
   'g-picking': 'pick',
   'g-legato': 'slur',
@@ -423,6 +426,7 @@ const FAMILY_ICON: Record<BadgeFamily, string> = {
   'g-ear': 'guitarear',
   'g-harris': 'sixdim',
   'g-theory': 'gtpair',
+  'g-bebop': 'genclose',
   'g-prog': 'oddmeter',
   'k-rhythm': 'polylock',
   'g-meter': 'polymeter',
@@ -472,6 +476,9 @@ const FAMILY_TITLES: Record<BadgeFamily, [string, string][]> = {
   'g-meter': [['Strumming in Time', 'פריטה בזמן'], ['Across the Bar Line', 'מעבר לקו התיבה'], ['Odd-Meter Riffer', 'ריפר במשקל אי־זוגי'], ['Shifted Riff', 'הריף המוזז'], ['Cross-Rhythm Player', 'נגן הפולי־ריתמוס'], ['Tempo Pivot', 'ציר הטמפו']],
   // Voice leading (AUDIT-CONTENT-THEORY §ה.2): piano 7 titles, guitar one per level.
   'k-vl': [['Nearest Inversion', 'ההיפוך הקרוב'], ['Smooth Over the Bass', 'חלק מעל הבס'], ['Seven to Three', 'משבע לשלוש'], ['Close-Position Mover', 'נע במצב צמוד'], ['Around the Cycle', 'סביב המעגל'], ['Drop-2 Leader', 'מוביל דרופ 2'], ['Voice-Leading Master', 'אמן הובלת הקולות']],
+  // AUDIT-GAPS-2: bebop vocabulary — keys 7 titles, guitar one per level.
+  'k-vocab': [['Swinging on 2 and 4', 'מסווינג על 2 ו-4'], ['Approach Player', 'נגן צלילי הגישה'], ['Double Chromatic', 'כרומטי כפול'], ['Encloser', 'אמן הכיתור'], ['Bebop Encloser', 'כיתור ביבופ'], ['Every Chord Tone', 'כל צליל אקורד'], ['Bebop Vocabulary', 'שפת הביבופ']],
+  'g-bebop': [['Swing Guitarist', 'גיטריסט הסווינג'], ['Approach-Note Guitarist', 'גיטריסט צלילי הגישה'], ['Guitar Encloser', 'הכיתור בגיטרה'], ['Bebop Enclosure on the Neck', 'כיתור ביבופ על הצוואר'], ['Every Chord Tone on the Neck', 'כל צליל אקורד על הצוואר'], ['Digital-Pattern Guitarist', 'גיטריסט התבניות הדיגיטליות'], ['Minor and Altered Liner', 'קווי מינור ואלטרד'], ['Blues and Turnaround Liner', 'קווי בלוז וטרנאראונד'], ['Rhythm-Changes Guitarist', 'גיטריסט ריתם צ׳יינג׳ס'], ['Triplet-Rule Guitarist', 'גיטריסט חוקי הטריולה'], ['Make-It-Minor Guitarist', 'גיטריסט ההמרה למינור'], ['Guitarist on 2 and 4', 'גיטריסט על 2 ו-4']],
   'g-vl': [['String-Set Triads', 'משולשים על סטי מיתרים'], ['Drop 2 by Step', 'דרופ 2 בצעדים'], ['Drop 3 by Step', 'דרופ 3 בצעדים']],
 };
 /** Number of level badges of a family (piano 7; guitar = its guitarCatalog levels). */

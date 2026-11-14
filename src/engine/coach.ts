@@ -170,7 +170,7 @@ function choiceContrast(q: Extract<Question, { kind: 'choice' }>, given: string,
     const d = modeDifference(q.answer as ModeId, given as ModeId)[0];
     if (d) return l === 'en' ? `${a.en} and ${g.en} part ways at the ${ordinal(d.degree, l)} note — in ${a.en} it is ${d.aHigher ? 'higher' : 'lower'}.` : `${a.he} ו${g.he} נפרדים בצליל ${ordinal(d.degree, l)} — ב${a.he} הוא ${d.aHigher ? 'גבוה' : 'נמוך'} יותר.`;
   }
-  const hint = TOPIC_CONTRAST[q.topic];
+  const hint = TOPIC_CONTRAST[`${q.topic}:${q.level}`] ?? TOPIC_CONTRAST[q.topic];
   const tip = hint ? hint[l] : l === 'en' ? 'Your answer plays first, then the right one — listen for what changes.' : 'התשובה שלכם מתנגנת קודם, ואז הנכונה — הקשיבו למה שמשתנה.';
   // The reveal already names the right answer (and the screen shows it): say only what is new.
   return l === 'en' ? `Not ${g.en}. ${tip}` : `לא ${g.he}. ${tip}`;
@@ -215,6 +215,8 @@ const TOPIC_CONTRAST: Record<string, { en: string; he: string }> = {
   'jazz-changes': { en: 'Bass first: fourths up is a ii–V, a half step down a tritone sub, a whole step up the backdoor.', he: 'קודם הבס: קוורטות למעלה זה ii–V, חצי טון למטה תחליף טריטון, טון שלם למעלה דלת אחורית.' },
   'reharm-spot': { en: 'Follow the bass in both versions: where it moves differently is where the trick is.', he: 'עקבו אחרי הבס בשתי הגרסאות: איפה שהוא זז אחרת, שם הטריק.' },
   'guide-line': { en: 'Read the chords, then follow only the top note: does it hold or fall a half step?', he: 'קראו את האקורדים, ועקבו רק אחרי הצליל העליון: הוא נשאר או יורד חצי טון?' },
+  // AUDIT-GAPS-2 #1: jazz-phrase 5, which enclosure.
+  'jazz-phrase:5': { en: 'Count the notes before the target, then hear where the last one sits: below the target or above it.', he: 'ספרו את הצלילים שלפני צליל המטרה, ואז שמעו איפה יושב האחרון: מתחת למטרה או מעליה.' },
   'jazz-phrase': { en: 'Hum the bass, place the first note against it, then follow steps and leaps.', he: 'זמזמו את הבס, מקמו מולו את הצליל הראשון, ואז עקבו אחרי צעדים וקפיצות.' },
   'upper-rootless': { en: 'Hear the top: bright tensions (9, 13) or dark ones (♭9, ♯9, ♭13)? Then which note sits at the bottom.', he: 'הקשיבו למעלה: מתחים בהירים (9, 13) או כהים (♭9, ♯9, ♭13)? ואז איזה צליל יושב למטה.' },
   'jazz-form': { en: 'How fast do the chords change, and are they minor or dominant?', he: 'כמה מהר האקורדים מתחלפים, והאם הם מינוריים או דומיננטיים?' },

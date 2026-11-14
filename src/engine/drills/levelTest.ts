@@ -87,11 +87,13 @@ const EAR: Rung[] = [
   r('k-ear-5', 0, { 'k-ear': 6 }),
   r('k-ear-6', 7, { 'k-ear': 7 }),
 ];
+// AUDIT-GAPS-2: bebop vocabulary (k-vocab) is placed by the lines steps, and its enclosures are a step of their own.
 const LINES: Rung[] = [
-  r('harris-1', 0, { harris: 2, jazz: 1 }),
-  r('harris-7', 5, { harris: 8, jazz: 2 }),
-  r('k-bebop-1', 10, { harris: 10, jazz: 4, 'k-bebop': 2 }),
-  r('k-bebop-4', 0, { harris: 12, jazz: 6, 'k-bebop': 5, 'k-theory': 2 }),
+  r('harris-1', 0, { harris: 2, jazz: 1, 'k-vocab': 2 }),
+  r('harris-7', 5, { harris: 8, jazz: 2, 'k-vocab': 4 }),
+  r('k-vocab-5', 8, { harris: 8, jazz: 2, 'k-vocab': 6 }),
+  r('k-bebop-1', 10, { harris: 10, jazz: 4, 'k-bebop': 2, 'k-vocab': 6 }),
+  r('k-bebop-4', 0, { harris: 12, jazz: 6, 'k-bebop': 5, 'k-theory': 2, 'k-vocab': 8 }),
 ];
 
 /** The piano test by emphasis: hands, chords, comping, reading, ear (all), and jazz lines (jazz / both). */
@@ -153,9 +155,11 @@ const G_EAR: Rung[] = [
 ];
 const G_JAZZ: Rung[] = [
   r('g-jazz-1', 0, { 'g-jazz': 2, 'g-harris': 1 }),
-  r('g-jazz-2', 5, { 'g-jazz': 3, 'g-harris': 2 }),
-  r('g-jazz-4', 10, { 'g-jazz': 5, 'g-harris': 3 }),
-  r('g-jazz-8', 3, { 'g-jazz': 9, 'g-harris': 5, 'g-theory': 1 }),
+  r('g-jazz-2', 5, { 'g-jazz': 3, 'g-harris': 2, 'g-bebop': 2 }),
+  r('g-jazz-4', 10, { 'g-jazz': 5, 'g-harris': 3, 'g-bebop': 3 }),
+  r('g-jazz-8', 3, { 'g-jazz': 9, 'g-harris': 5, 'g-theory': 1, 'g-bebop': 5 }),
+  // AUDIT-GAPS-2: bebop lines on the neck (grade 7).
+  r('g-bebop-7', 2, { 'g-jazz': 9, 'g-harris': 6, 'g-theory': 2, 'g-bebop': 8 }),
 ];
 
 /**
@@ -201,7 +205,9 @@ const B_WALK: Rung[] = [
   r('b-walk-3', 10, { 'b-walk': 4, 'b-swing': 2 }),
   r('b-walk-5', 3, { 'b-walk': 6, 'b-swing': 2, 'b-barry': 1 }),
   r('b-walk-7', 7, { 'b-walk': 8, 'b-swing': 3, 'b-barry': 2 }),
-  r('b-walk-9', 0, { 'b-walk': 10, 'b-swing': 4, 'b-barry': 3 }),
+  r('b-walk-9', 0, { 'b-walk': 10, 'b-swing': 4, 'b-barry': 3, 'b-bebop': 2 }),
+  // AUDIT-GAPS-2: bebop lines on the bass (rhythm changes, the bridge).
+  r('b-bebop-6', 5, { 'b-walk': 10, 'b-swing': 4, 'b-barry': 4, 'b-bebop': 7 }),
 ];
 const B_READING: Rung[] = [
   r('b-read-2', 4, { 'b-read': 3, 'b-posread': 1 }),

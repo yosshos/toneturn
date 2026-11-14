@@ -22,6 +22,7 @@ import { generateBassEar } from './bassEar';
 import { generateUpright } from './upright';
 import { generateBassNiche, IMPRO_NICHE, improNicheLevels, jazzFamilies, NICHE_EXAM, progFamilies } from './bassNiche';
 import { extFamily, fusionLevels, generateBassNiche2, IMPRO_FUSION, NICHE2_EXAM, PICK_NICHE, pickTopLevels, standardsFamily, uprightTopLevels, WALK_NICHE, waltzLevels } from './bassNiche2';
+import { bassVocabFamily, genBassVocab } from './vocabDrills'; // AUDIT-GAPS-2: bebop vocabulary
 import type { LevelExamTag } from './types';
 
 export const tt = (en: string, he: string): T2 => ({ en, he });
@@ -2459,6 +2460,9 @@ export function generateBass(s: DrillSpec, tu: Tuning): Drill {
     case 'b-std':
     case 'b-ext':
       return generateBassNiche2(s, tu);
+    // AUDIT-GAPS-2: bebop vocabulary and lines over forms (vocabDrills.ts).
+    case 'b-bebop':
+      return genBassVocab(s, tu);
   }
   throw new Error(`Not a bass family: ${s.family}`);
 }
@@ -2721,6 +2725,8 @@ export function bassFamilies(): GuitarFamilyDef[] {
     ...jazzFamilies(L, fam),
     // BASS_NICHE_PLAN J6: the graded standards ladder (jazz track).
     standardsFamily(L, fam),
+    // AUDIT-GAPS-2 High #1, #10: enclosures, digital patterns, bebop lines over forms, Barry Harris lines (jazz track).
+    bassVocabFamily(L, fam),
     fam('b-legato', 'Slides, legato, harmonics', 'החלקות, לגאטו והרמוניקים', [
       L('b-legato', 1, 'Slides into notes', 'החלקות אל הצלילים', [LG('slide')], K6, [70, 110], E8),
       L('b-legato', 2, 'Hammer-on and pull-off pairs', 'זוגות הקשה ומשיכה', [LG('hp')], K6, [60, 100], E8),
