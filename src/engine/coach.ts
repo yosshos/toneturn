@@ -234,6 +234,9 @@ const TOPIC_CONTRAST: Record<string, { en: string; he: string }> = {
   planing: { en: 'Planing moves every voice the same way by the same step; voice leading keeps notes and moves by small steps.', he: 'בפליינינג כל הקולות זזים יחד באותו צעד; בהובלת קולות צלילים נשארים וזזים בצעדים קטנים.' },
   'form-ear': { en: 'Count bars from the first tonic; for phrases, compare each with the first one.', he: 'ספרו תיבות מהטוניקה הראשונה; במשפטים, השוו כל אחד לראשון.' },
   // AUDIT-CONTENT-THEORY §ה.2
+  // AUDIT-GAPS-2 #5/#19: how the key changed, and where to.
+  'modulation-means': { en: 'Find the chord where the old key stops: one both keys share is a pivot; a °7 that slides into a dominant is the common diminished; a ii–V or a ♭II7 aims at the new I; nothing at all is direct.', he: 'מצאו את האקורד שבו הסולם הישן נגמר: אקורד ששני הסולמות חולקים הוא ציר; °7 שמחליק לדומיננט הוא הדימיניש המשותף; ii–V או ♭II7 מכוונים אל ה־I החדש; בלי הכנה בכלל זה ישיר.' },
+  'key-centres': { en: 'Sing the first tonic and keep it. When the next I arrives, sing up or down to it and count the half steps.', he: 'שירו את הטוניקה הראשונה ושמרו אותה. כשה־I הבא מגיע, שירו אליו למעלה או למטה וספרו חצאי טונים.' },
   'vl-ear': { en: 'Follow one voice at a time: the top first, then the bass, then the middle. Held notes ring on; moving ones sound new.', he: 'עקבו אחרי קול אחד בכל פעם: קודם העליון, אחר כך הבס, ואז האמצע. צלילים שנשארים ממשיכים לצלצל; צלילים שזזים נשמעים חדשים.' },
   'negative-harmony': { en: 'Mirror around the axis between the 3rds of I: in C, G ↔ C, B ↔ A♭, D ↔ F, E ↔ E♭.', he: 'משקפים סביב הציר שבין הטרצות של I: ב־C, ‏G ↔ C, ‏B ↔ A♭, ‏D ↔ F, ‏E ↔ E♭.' },
 };

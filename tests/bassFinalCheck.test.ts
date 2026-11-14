@@ -163,12 +163,13 @@ describe('chord names spelled for the key (final check)', () => {
     expect(keyNameOf(1, true)).toBe('C♯');
     expect(keyNameOf(1)).toBe('D♭');
   });
+  // b-keys (AUDIT-GAPS-2): key changes leave the key and spell each chord in its own key (B♭7 = ♭II7 in A) — tests/keyMoves.test.ts.
   it('no bass drill in a sharp key shows a flat chord name', () => {
     for (const f of families('bass').filter((x) => x.id.startsWith('b-')))
       for (const l of f.levels)
         for (const d of levelDrills(l, 'fifths-up')) {
           const key = d.spec.key % 12;
-          if (d.spec.minor || ![7, 2, 9, 4, 11].includes(key) || !d.chart || d.spec.family === 'b-walk' || d.spec.family === 'b-up-walk' || /^[A-G][♯♭]?m(?!aj)/.test(d.chart.find((c) => c) ?? '')) continue;
+          if (d.spec.minor || ![7, 2, 9, 4, 11].includes(key) || !d.chart || d.spec.family === 'b-walk' || d.spec.family === 'b-up-walk' || d.spec.family === 'b-keys' || /^[A-G][♯♭]?m(?!aj)/.test(d.chart.find((c) => c) ?? '')) continue;
           for (const c of d.chart) expect(c.includes('♭') && !c.includes('7♭') && !c.includes('♭5') && !c.includes('♭9'), `${l.id} ${d.title.en}: ${d.chart.join(' ')}`).toBe(false);
         }
   });

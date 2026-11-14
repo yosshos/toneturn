@@ -18,6 +18,8 @@ export const FAMILY_GLYPH: Record<string, GlyphKind> = {
   'g-ear': 'guitarear', 'g-harris': 'sixdim', 'g-prog': 'oddmeter',
   // Voice leading (AUDIT-CONTENT-THEORY §ה.2): piano and guitar, one symbol (voices stepping chord to chord).
   'k-vl': 'voicelead', 'g-vl': 'voicelead',
+  // AUDIT-GAPS-2: key changes and turnarounds (a note carried to a new key; over strings on the guitar and the bass).
+  'k-keys': 'keymove', 'g-keys': 'gkeymove', 'b-keys': 'bkeymove',
   'g-fretting': 'fingers1234', 'g-picking': 'pick', 'g-legato': 'slur', 'g-scales': 'box', 'g-arps': 'arp', 'g-chords': 'chordbox', 'g-rhythm': 'strum', 'g-lead': 'bend', 'g-fingerstyle': 'pima', 'g-flamenco': 'fan', 'g-jazz': 'prog', 'g-reading': 'sight', 'g-impro': 'improv', 'g-bass': 'bass',
   // Bass (final check): 21 families, 21 symbols — the electric and the upright track share one path on an upright.
   'b-posread': 'position', 'b-impro': 'target',

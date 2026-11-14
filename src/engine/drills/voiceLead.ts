@@ -11,7 +11,8 @@ import { tuningById } from '../fretboard';
 
 const mod12 = (n: number): number => ((n % 12) + 12) % 12;
 
-export type VLQuality = 'M' | 'm' | 'dim' | 'maj7' | '7' | 'm7' | 'm7b5' | 'dim7' | '6' | 'm6' | '7b9';
+// '7b9r' (key-to-key moves, AUDIT-GAPS-2 #6): a diminished 7th with one note raised a whole step — root, ♭9, 3, 5.
+export type VLQuality = 'M' | 'm' | 'dim' | 'maj7' | '7' | 'm7' | 'm7b5' | 'dim7' | '6' | 'm6' | '7b9' | '7b9r';
 /** What the voicing must be: a close triad, a close 4-note chord, drop 2, drop 3, the 3rd + 7th, or a two-hand spread (LH 1–7, RH 3–5–9). */
 export type VLType = 'triad' | 'close' | 'drop2' | 'drop3' | 'guide' | 'spread';
 
@@ -21,6 +22,8 @@ export interface VLChord {
   q: VLQuality;
   /** A written melody note (MIDI) the voicing must carry on top (VL-7: harmonise a melody). */
   melody?: number;
+  /** The chord symbol as spelled in its own key (key-to-key moves: E7 → A6 after C6, B♭7 in E♭); default from root + flats. */
+  name?: string;
 }
 
 /** The voice-leading goal of a drill (DrillGoal.vl). */
@@ -68,6 +71,7 @@ export const QUAL: Record<VLQuality, QualDef> = {
   '6': { ints: [0, 4, 7, 9], third: 4, seventh: 9, label: '6', spread: { low: 9, upper: [[4, 7, 2]] } },
   m6: { ints: [0, 3, 7, 9], third: 3, seventh: 9, label: 'm6', spread: { low: 9, upper: [[3, 7, 2]] } },
   '7b9': { ints: [0, 4, 7, 10], third: 4, seventh: 10, label: '7♭9', spread: { low: 10, upper: [[4, 8, 1], [4, 9, 1]] } },
+  '7b9r': { ints: [0, 4, 7, 1], third: 4, seventh: null, label: '7♭9' },
 };
 
 // ───────────────────────────── names ─────────────────────────────
@@ -80,7 +84,7 @@ const FLAT_HE = ['דו', 'רה♭', 'רה', 'מי♭', 'מי', 'פה', 'סול�
 export const flatsFor = (key: number, minor = false): boolean => ![7, 2, 9, 4, 11].includes(mod12(minor ? key + 3 : key));
 export const pcName = (pc: number, flats = true, lang: 'en' | 'he' = 'en'): string => (lang === 'he' ? (flats ? FLAT_HE : SHARP_HE) : flats ? FLAT_EN : SHARP_EN)[mod12(pc)];
 /** Chord symbol (letters in both languages, as Israeli musicians write them). */
-export const chordSymbol = (c: VLChord, flats = true): string => pcName(c.root, flats) + QUAL[c.q].label;
+export const chordSymbol = (c: VLChord, flats = true): string => c.name ?? pcName(c.root, flats) + QUAL[c.q].label;
 
 // ───────────────────────────── shapes ─────────────────────────────
 
@@ -204,7 +208,9 @@ export function classify(played: number[], c: VLChord, g: Pick<VLGoal, 'type' | 
   const hasBass = !!g.bass || g.type === 'spread';
   const bass = hasBass ? ps[0] : null;
   const rest = hasBass ? ps.slice(1) : ps;
-  if (bass !== null && mod12(bass) !== mod12(c.root)) return res('bass', rest, bass);
+  // A diminished 7th is symmetrical: any of its notes may be the bass (B°7 = D°7 = F°7 = A♭°7).
+  const dimBassOk = c.q === 'dim7' && bass !== null && Q.ints.some((i) => mod12(c.root + i) === mod12(bass));
+  if (bass !== null && mod12(bass) !== mod12(c.root) && !dimBassOk) return res('bass', rest, bass);
   let allowed: number[];
   let required: number[];
   if (g.type === 'spread') {

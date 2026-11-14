@@ -314,7 +314,9 @@ const BASS_NICHE_LATER: Record<string, number> = { 'b-swing': 9, 'b-barry': 12, 
   // P2: the standards ladder after walk 11 (the first standards), extended techniques after legato 5 (harmonics).
   // (AUDIT-CONTENT-THEORY §ב.4: walking and styles now start two steps in, legato four and reading two, so the
   // families built on them moved with them — position reading too, below.)
-  'b-std': 13, 'b-ext': 9 };
+  'b-std': 13, 'b-ext': 9,
+  // AUDIT-GAPS-2: key changes and turnarounds from ~1330 (after the walking cycle and the first Barry Harris levels).
+  'b-keys': 9 };
 /**
  * AUDIT-CONTENT-THEORY §ב.4 ("roots & pocket first"): the bass core opened in catalogue order, so muting came at unit
  * 13, locking with the kick at 17 and walking at 32. Now time, the plucking hand, roots and the kick lock lead, muting
@@ -363,7 +365,9 @@ const KEYS_JAZZ_LATER: Record<string, number> = { 'k-sixdim': 9, 'k-bebop': 6, '
   // Voice leading (AUDIT-CONTENT-THEORY §ה.2, TP-6 at 900–1600): level 1 after the first chord levels (~910), drop 2 ~1260.
   'k-vl': 3,
   // THEORY_PLAY: theory you play from ~1400 (after the rootless voicings, UST and the first reharm levels).
-  'k-theory': 10 };
+  'k-theory': 10,
+  // AUDIT-GAPS-2: key changes and turnarounds from ~1330 (LADDER_SPREAD keeps the 12 levels inside ~1330–1640).
+  'k-keys': 9 };
 /**
  * PIANO_AUDIT I2: every piano family's level 1 sat at the same difficulty as scales L1 — octaves (advanced L1), Barry
  * Harris lines and rootless voicings came in the first unit. Now the basics lead (scales, five-finger, the pianist's
@@ -386,6 +390,13 @@ export const VOICE_LATER: Record<string, number> = {
 export const GUITAR_RANK: Record<string, number> = { 'g-fretting': 0, 'g-chords': 1, 'g-rhythm': 2, 'g-fingerstyle': 2, 'g-picking': 3, 'g-flamenco': 3, 'g-scales': 4, 'g-jazz': 4, 'g-ear': 5, 'g-prog': 5, 'g-legato': 6, 'g-harris': 6, 'g-theory': 6, 'g-lead': 7, 'g-arps': 8, 'g-reading': 9, 'g-impro': 10 };
 // AUDIT-CONTENT-THEORY R-4: meter & cross-rhythm with rhythm guitar.
 GUITAR_RANK['g-meter'] = 2;
+// AUDIT-GAPS-2: key changes and turnarounds with the Barry Harris and theory families.
+GUITAR_RANK['g-keys'] = 6;
+/**
+ * Path steps per level for families whose levels sit closer than one step apart (default 1 = 70 points a level).
+ * AUDIT-GAPS-2: the key-change families have twelve short levels inside ~1330–1640 (piano and bass; guitar is by grade).
+ */
+export const LADDER_SPREAD: Record<string, number> = { 'k-keys': 0.4, 'b-keys': 0.4 };
 /**
  * The order of a family's levels on the path: by path difficulty, then level number. AUDIT-CONTENT-THEORY §ב.3: guitar
  * levels sit by grade, but the family's next level used to be the next number, so a later-added easier level (picking 4
@@ -401,7 +412,7 @@ function ladderSteps(): PathStep[] {
   const diff = (i: number) => 700 + i * 70;
   for (const f of catalog())
     f.levels.forEach((lv, i) =>
-      out.push({ id: `tech:${lv.id}`, kind: 'tech', ladder: { family: f.id, level: lv.level, ref: lv.id, instrument: 'piano' }, skill: 'instrument', sub: 'instrument/piano-tech', domain: 'instrument', difficulty: diff(i + (KEYS_LATER[f.id] ?? 0)), choices: 0, forPlays: ['keys', 'piano'], title: { en: `${f.title.en} · ${lv.title.en}`, he: `${f.title.he} · ${lv.title.he}` } }),
+      out.push({ id: `tech:${lv.id}`, kind: 'tech', ladder: { family: f.id, level: lv.level, ref: lv.id, instrument: 'piano' }, skill: 'instrument', sub: 'instrument/piano-tech', domain: 'instrument', difficulty: diff(i * (LADDER_SPREAD[f.id] ?? 1) + (KEYS_LATER[f.id] ?? 0)), choices: 0, forPlays: ['keys', 'piano'], title: { en: `${f.title.en} · ${lv.title.en}`, he: `${f.title.he} · ${lv.title.he}` } }),
     );
   for (const f of guitarCatalog()) {
     // Drums (0.65): the drum families are path steps of the drums course (forPlays 'drums' → inCourse).
@@ -410,7 +421,7 @@ function ladderSteps(): PathStep[] {
     const from = DRUM_LATER[f.id] ?? 0;
     // GUITAR_DEEPENING §5 (owner 2026-11-11): guitar levels sit by their RSL-equivalent grade, families interleaved
     // inside a grade by teaching rank (sweep picking at grade 8 after 3nps scales at 7; 3nps picking with 3nps scales).
-    const gDiff = (lv: { grade?: number }, i: number) => (inst === 'guitar' && lv.grade !== undefined ? guitarPathDifficulty(f.id, lv.grade) : diff(i + from));
+    const gDiff = (lv: { grade?: number }, i: number) => (inst === 'guitar' && lv.grade !== undefined ? guitarPathDifficulty(f.id, lv.grade) : diff(i * (LADDER_SPREAD[f.id] ?? 1) + from));
     f.levels.forEach((lv, i) =>
       out.push({ id: `tech:${lv.id}`, kind: 'tech', ladder: { family: f.id, level: lv.level, ref: lv.id, instrument: inst }, skill: 'instrument', sub: `instrument/${inst === 'drums' ? 'drum' : inst}-tech`, domain: 'instrument', difficulty: gDiff(lv as { grade?: number }, i), choices: 0, forPlays: [...f.instruments], title: { en: `${f.title.en} · ${lv.title.en}`, he: `${f.title.he} · ${lv.title.he}` } }),
     );

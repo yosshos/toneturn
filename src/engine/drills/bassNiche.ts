@@ -39,6 +39,8 @@ export const BASS_TRACK: Partial<Record<BassFamilyId, 'jazz' | 'prog'>> = {
   'b-poly': 'prog',
   // P2: the standards ladder is jazz; extended techniques (b-ext) stay on both tracks (fusion is both).
   'b-std': 'jazz',
+  // AUDIT-GAPS-2: key changes and turnarounds.
+  'b-keys': 'jazz',
 };
 /** Is a bass family shown for the player's track (absent / 'both' = every family)? */
 export const inBassTrack = (family: string, track?: 'jazz' | 'prog' | 'both'): boolean => !track || track === 'both' || !BASS_TRACK[family as BassFamilyId] || BASS_TRACK[family as BassFamilyId] === track;

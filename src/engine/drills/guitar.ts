@@ -19,6 +19,8 @@ import { generateGuitarEar } from './guitarEar';
 import { generateHarris, generateJazz2, generateTheoryGuitar, GUITAR_STD, guitarStdOption, guitarStdTempo } from './guitarJazz';
 import { GUITAR_PROBE_STEPS } from './guitarProbes';
 import { generateGuitarVL, guitarVoiceLeadFamily } from './voiceLeadDrills';
+// AUDIT-GAPS-2 #5/#6/#12: key changes and turnarounds on the neck (keyMoveDrills.ts).
+import { generateGuitarKeyMove, guitarKeyMoveFamily } from './keyMoveDrills';
 
 export type GuitarStyle = NonNullable<DrillSettings['guitarStyle']>;
 export type GuitarTechnique = NonNullable<ExpNote['technique']>;
@@ -2366,6 +2368,8 @@ export function generateGuitar(spec: DrillSpec): Drill {
     // Voice leading on the neck (AUDIT-CONTENT-THEORY §ה.2, VL-8): voiceLeadDrills.ts.
     case 'g-vl':
       return generateGuitarVL(s, tu);
+    case 'g-keys':
+      return generateGuitarKeyMove(s, tu);
     case 'g-fretting':
       return genFretting(s, tu);
     case 'g-picking':
@@ -2614,6 +2618,8 @@ export function guitarCatalog(): GuitarFamilyDef[] {
     guitarMeterFamily(),
     // Voice leading on the neck (AUDIT-CONTENT-THEORY §ה.2, VL-8): string sets, drop 2 / drop 3 (voiceLeadDrills.ts).
     guitarVoiceLeadFamily(),
+    // AUDIT-GAPS-2 #5/#6/#12: key changes and turnarounds, drop 2 on string sets (jazz add-on, keyMoveDrills.ts).
+    guitarKeyMoveFamily(),
     // The 0.4x starter bass family: superseded by the b-* course families below (BASS_CURRICULUM §10.1). Kept, retired,
     // so old item ids, badges and frozen path units (tech:g-bass-*) stay valid.
     {

@@ -775,6 +775,10 @@ export const LESSONS: MiniLesson[] = [
         say: { en: 'Practice: from B°7, resolve to each of the four keys and name it. Then repeat from C°7 (keys D♭, E, G, B♭) and C♯°7 (D, F, A♭, B).', he: 'תרגול: מ־B°7, היפתרו לכל אחד מארבעת הסולמות ותנו לו שם. אחר כך חזרו מ־C°7 (סולמות D♭, E, G, B♭) ומ־C♯°7 (D, F, A♭, B).' },
       },
       {
+        say: { en: 'Play it: the Key changes levels run this move in all twelve keys on piano, guitar and bass. I6, the diminished, the new V7, the new I6, then the other two diminished chords and the 7♭9.', he: 'לנגן את זה: שלבי מעברי הסולם מריצים את המהלך הזה בכל שנים־עשר הסולמות בפסנתר, בגיטרה ובבס. I6, הדימיניש, ה־V7 החדש, ה־I6 החדש, ואחר כך שני הדימינישים האחרים וה־7♭9.' },
+        show: { text: { en: 'I6 → °7 → V7 → I6', he: 'I6 → °7 → V7 → I6' } },
+      },
+      {
         say: { en: 'To keep: each note of a diminished chord is a leading tone. Four notes, four doors — four keys a minor third apart.', he: 'לזכור: כל צליל בדימיניש הוא צליל מוביל. ארבעה צלילים, ארבע דלתות — ארבעה סולמות במרחק טרצה קטנה.' },
       },
     ],

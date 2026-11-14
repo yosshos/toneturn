@@ -26,6 +26,9 @@ export type FamilyId =
   | 'k-theory'
   // AUDIT-CONTENT-THEORY §ז.2: first steps at the piano — posture, finger numbers, C position, the thumb passing under.
   | 'k-first'
+  // AUDIT-GAPS-2 #5/#6/#11/#12: key changes (common dim, pivot, ii–V, tritone, direct, pop) and turnarounds, performed.
+  | 'k-keys'
+  | 'g-keys'
   | 'custom' // the player's own drills
   // Licks & transcription (docs/SPEC-LICKS-TRANSCRIPTION.md): lick items per key / instrument, transcribed phrases.
   | 'licks'
@@ -101,7 +104,9 @@ export type BassFamilyId =
   | 'b-up-scales'
   | 'b-up-pizz'
   | 'b-up-walk'
-  | 'b-up-read';
+  | 'b-up-read'
+  // AUDIT-GAPS-2 #6/#11/#12: the line under each key change, the turnarounds and the rhythm-changes bridge.
+  | 'b-keys';
 
 export type Dyn = 'pp' | 'p' | 'mp' | 'mf' | 'f' | 'ff';
 export type Articulation = 'legato' | 'staccato' | 'portato';
