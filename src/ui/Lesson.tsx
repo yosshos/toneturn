@@ -555,18 +555,11 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
             <PlaceSurfaceView key={`${v.index}-${answered ? 'r' : 'q'}-${placeRec?.attempts.length ?? 0}`} q={q} settings={settings} lang={lang} disabled={!awaiting || answered} result={answered ? (placeLast ?? '') : null} onSubmit={(a) => ctrl.answer(a)} />
           )}
           {q.aid && !answered && <p className="aid-chip">{t.aidOn}</p>}
-          {(canHint || (hintAllowed && v.stage === 'question' && !answered && !v.awaitNext && v.session.records[v.index]?.outcome === 'pending')) && (
+          {canHint && (
             <div className="hint-row">
-              {canHint && (
-                <button className="btn ghost small hint-btn" onClick={() => ctrl.useHint()} data-hint="1">
-                  {lang === 'he' ? 'רמז: להציג מקלדת' : 'Hint: show the keyboard'}
-                </button>
-              )}
-              {hintAllowed && !answered && v.session.records[v.index]?.outcome === 'pending' && (
-                <button className="btn ghost small hint-btn" onClick={() => openAi('hint', 'hint')} data-ai-hint="1">
-                  <CtlIcon k="hint" /> {lang === 'he' ? 'רמז מהמורה' : 'Ask for a hint'}
-                </button>
-              )}
+              <button className="btn ghost small hint-btn" onClick={() => ctrl.useHint()} data-hint="1">
+                {lang === 'he' ? 'רמז: להציג מקלדת' : 'Hint: show the keyboard'}
+              </button>
             </div>
           )}
           {!phones && itemNeedsHeadphones(q) && (
@@ -672,16 +665,23 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
             <button className="btn small ctl-btn" onClick={() => ctrl.skip()}>
               <CtlIcon k="skip" /> {t.skip}
             </button>
+            {/* 0.89 (one screen): the teacher's hint sits in the bottom bar, not in a row of its own. */}
+            {hintAllowed && !answered && !v.awaitNext && v.session.records[v.index]?.outcome === 'pending' && (
+              <button className="btn small ctl-btn ctl-ai-hint" onClick={() => openAi('hint', 'hint')} data-ai-hint="1" aria-label={lang === 'he' ? 'רמז מהמורה' : 'Hint from the teacher'}>
+                <CtlIcon k="hint" /> <span className="ctl-label">{lang === 'he' ? 'רמז' : 'Hint'}</span>
+              </button>
+            )}
             {refresher && openRefresher && (
               <button
                 className="btn small ctl-btn refresh-concept"
                 data-refresh={refresher.id}
+                aria-label={lang === 'en' ? 'Refresh the idea' : 'רענון הנושא'}
                 onClick={() => {
                   ctrl.pause();
                   openRefresher(refresher, () => void ctrl.resume());
                 }}
               >
-                <CtlIcon k="learn" /> {lang === 'en' ? 'Refresh' : 'רענון'}
+                <CtlIcon k="learn" /> <span className="ctl-label">{lang === 'en' ? 'Refresh' : 'רענון'}</span>
               </button>
             )}
             {isStaircase && placementSkill && (

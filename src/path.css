@@ -2365,3 +2365,13 @@ button.chip.on {
 .drill-stage { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin: 4px 0; }
 .drill-stage .link { font-size: 0.85rem; }
 .drill-take.rubato { display: grid; gap: 8px; justify-items: center; }
+/* 0.89: the teacher's hint joins the bottom bar — on phones it is the icon alone, so the row stays one line. */
+@media (max-width: 420px) {
+  :root .lesson .controls .ctl-ai-hint.btn { padding-inline: 10px; }
+  .lesson .controls .ctl-ai-hint .ctl-label { display: none; }
+}
+/* With four buttons on a narrow phone, Refresh is its icon too (Repeat and Skip keep their words). */
+@media (max-width: 380px) {
+  .lesson .controls:has(.ctl-ai-hint) .refresh-concept .ctl-label { display: none; }
+  :root .lesson .controls:has(.ctl-ai-hint) .refresh-concept.btn { padding-inline: 10px; }
+}

@@ -122,7 +122,7 @@ for (const lang of ['en', 'he'] as const) {
   });
 
   test(`practice topics: no sideways scrolling (${lang})`, async ({ page }) => {
-    test.setTimeout(900_000);
+    test.setTimeout(1_800_000); // ~150 topics (0.89)
     await setup(page);
     const { bad, check } = recorder(page);
     await page.goto(base + '#/path'); // 0.41: topics live on the Path tab (All topics)
