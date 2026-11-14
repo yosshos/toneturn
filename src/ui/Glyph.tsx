@@ -1114,6 +1114,46 @@ Object.assign(GLYPHS, {
     </>
   ),
 });
+// AUDIT-DEPTH-3: heads — a melody note on top of a stacked chord (harmonise; over strings: chord-melody), and a lead
+// sheet's bars with comping slashes (comp a head; over strings on the guitar, a thick string on the bass).
+const harmStack = (
+  <>
+    {head(-4, 14, 6, 4.4)}
+    {head(-4, 5, 6, 4.4)}
+    {head(-4, -4, 6, 4.4)}
+    {head(-4, -15, 7, 5)}
+    <path d="M3 -15 V-34" {...sw} strokeWidth={2.6} />
+    <path d="M-26 -15 H-12 M5 -15 H26" {...sw} strokeWidth={1.8} strokeDasharray="3 3" />
+  </>
+);
+const leadSheet = (
+  <>
+    <path d="M-24 -16 V10 M0 -16 V10 M24 -16 V10" {...sw} strokeWidth={2.4} />
+    <path d="M-18 6 L-12 -10 M-10 6 L-4 -10 M6 6 L12 -10 M14 6 L20 -10" {...sw} strokeWidth={3} strokeLinecap="round" />
+  </>
+);
+Object.assign(GLYPHS, {
+  harmmel: harmStack,
+  chordmel: (
+    <>
+      {harmStack}
+      <path d="M-26 22 H26 M-26 26 H26" stroke={I} strokeWidth={1.4} />
+    </>
+  ),
+  tunecomp: leadSheet,
+  gtunecomp: (
+    <>
+      {leadSheet}
+      <path d="M-26 18 H26 M-26 23 H26" stroke={I} strokeWidth={1.4} />
+    </>
+  ),
+  btunecomp: (
+    <>
+      {leadSheet}
+      <path d="M-26 20 H26" stroke={I} strokeWidth={3.2} />
+    </>
+  ),
+});
 export type GlyphKind = keyof typeof GLYPHS;
 
 /** Emoji left in content data → the closest symbol of our set (0.61: no emoji in the interface). */

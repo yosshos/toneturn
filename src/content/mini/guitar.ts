@@ -356,4 +356,6 @@ LESSONS.push({
 /** The quick lesson behind each new guitar family (opened from its page in Technique). */
 export const FAMILY_LESSON: Record<string, string> = { 'g-ear': 'g-ear-echo', 'g-jazz': 'g-jazz-comp', 'g-harris': 'g-harris-neck', 'g-prog': 'g-prog-meter',
   // AUDIT-GAPS-2: the key-change families open with 'Moving between keys' (content/mini/keyMoves.ts).
-  'k-keys': 'key-moves', 'g-keys': 'key-moves', 'b-keys': 'key-moves' };
+  'k-keys': 'key-moves', 'g-keys': 'key-moves', 'b-keys': 'key-moves',
+  // AUDIT-DEPTH-3: heads (content/mini/heads.ts).
+  'k-harm': 'harmonize-melody', 'g-cmel': 'chord-melody', 'k-tune': 'reharm-tune', 'g-tune': 'reharm-tune', 'b-tune': 'reharm-tune' };

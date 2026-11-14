@@ -213,6 +213,8 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo }
     return WORSE.find((w) => ms.includes(w));
   };
   const lh = drill.notes.filter((n) => n.hand === 'L');
+  // A long item (a whole head, AUDIT-DEPTH-3): two lines at a time with a pager, like the bass (one phone screen).
+  const paged = bass || !!drill.paged;
   const k = keyName(drill.keySig);
   const firstOfChord = (ns: typeof rh) => ns.filter((n, i) => n.chordId === undefined || ns.findIndex((m) => m.chordId === n.chordId) === i);
   /** Under a marked note (0.52): what was really played — the note name for a wrong pitch, ms early / late off time. */
@@ -237,7 +239,7 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo }
   const lineOf = (n: ExpNote) => lineAtQ(bq(n));
   // A song shows all of itself (≤ 96 notes); a bass drill all of itself in a moving window (B2); others their first 8 bars.
   const shown = (ns: ExpNote[]) => firstOfChord(ns).filter((n) => drill.chart || bass || bq(n) < meter * 8);
-  const nLines = Math.max(1, ...shown(rh).map((n) => lineOf(n) + 1));
+  const nLines = Math.max(1, ...shown(paged ? [...rh, ...lh] : rh).map((n) => lineOf(n) + 1));
   const firstBad = result ? shown(rh).find((n) => markFor(n, rh) && markFor(n, rh) !== 'ok') : undefined;
   const win = useLineWindow(nLines, beat >= 0 ? (sl ? lineAtQ(beat * qk) * per : beat * qk) : -1, per, firstBad ? lineOf(firstBad) : 0);
   const draw = (ns: typeof rh, clef: 'treble' | 'bass' | 'tenor', windowed: boolean) => {
@@ -301,23 +303,23 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo }
   };
   return (
     <div className="drill-staff" data-clef={rhClef}>
-      {drill.chart && !bass && (
+      {drill.chart && !paged && (
         <ol className="song-chart" aria-label="chords" dir="ltr">
           {drill.chart.map((c, i) => (
             <li key={i}>{c}</li>
           ))}
         </ol>
       )}
-      {drill.chart && bass && (
+      {drill.chart && paged && (
         <ol className="song-chart" aria-label="chords" dir="ltr">
           {(sl ? drill.chart.slice(sl.slice(0, win.from).reduce((a, l) => a + l.bars.length, 0), sl.slice(0, win.from + 2).reduce((a, l) => a + l.bars.length, 0)) : drill.chart.slice((win.from * per) / meter, ((win.from + 2) * per) / meter)).map((c, i) => (
             <li key={i}>{c}</li>
           ))}
         </ol>
       )}
-      {draw(rh, rhClef, bass)}
-      {draw(lh, 'bass', false)}
-      {bass && win.pager}
+      {draw(rh, rhClef, paged)}
+      {draw(lh, 'bass', paged)}
+      {paged && win.pager}
     </div>
   );
 }

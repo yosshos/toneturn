@@ -332,7 +332,9 @@ const BASS_NICHE_LATER: Record<string, number> = { 'b-swing': 9, 'b-barry': 12, 
   // AUDIT-GAPS-2: key changes and turnarounds from ~1330 (after the walking cycle and the first Barry Harris levels).
   'b-keys': 9,
   // AUDIT-GAPS-2: bebop vocabulary on the bass from ~1120 (enclosures) to ~1540 (Barry Harris lines).
-  'b-bebop': 6 };
+  'b-bebop': 6,
+  // AUDIT-DEPTH-3 C3/C4: a head on the bass from ~1330 (roots) to ~1710 (walking the Coltrane reharm).
+  'b-tune': 9 };
 /**
  * AUDIT-CONTENT-THEORY §ב.4 ("roots & pocket first"): the bass core opened in catalogue order, so muting came at unit
  * 13, locking with the kick at 17 and walking at 32. Now time, the plucking hand, roots and the kick lock lead, muting
@@ -387,7 +389,10 @@ const KEYS_JAZZ_LATER: Record<string, number> = { 'k-sixdim': 9, 'k-bebop': 6, '
   // AUDIT-GAPS-2: key changes and turnarounds from ~1330 (LADDER_SPREAD keeps the 12 levels inside ~1330–1640).
   'k-keys': 9,
   // AUDIT-GAPS-2: bebop vocabulary from the swing on-ramp (~980) to the click that moves (~1610).
-  'k-vocab': 4 };
+  'k-vocab': 4,
+  // AUDIT-DEPTH-3: harmonise a melody ~1330 → 1750; comp a head ~1330 → 1780 (LADDER_SPREAD).
+  'k-harm': 9,
+  'k-tune': 9 };
 /**
  * PIANO_AUDIT I2: every piano family's level 1 sat at the same difficulty as scales L1 — octaves (advanced L1), Barry
  * Harris lines and rootless voicings came in the first unit. Now the basics lead (scales, five-finger, the pianist's
@@ -422,9 +427,12 @@ GUITAR_RANK['g-keys'] = 6;
  * Path steps per level for families whose levels sit closer than one step apart (default 1 = 70 points a level).
  * AUDIT-GAPS-2: the key-change families have twelve short levels inside ~1330–1640 (piano and bass; guitar is by grade).
  */
-export const LADDER_SPREAD: Record<string, number> = { 'k-keys': 0.4, 'b-keys': 0.4 };
+export const LADDER_SPREAD: Record<string, number> = { 'k-keys': 0.4, 'b-keys': 0.4, 'k-tune': 0.8, 'b-tune': 0.9 };
 // AUDIT-GAPS-2: bebop vocabulary and lines on the neck, with the lead and Harris families.
 GUITAR_RANK['g-bebop'] = 7;
+// AUDIT-DEPTH-3: a head comped on the neck with the theory families; chord-melody with the lead families.
+GUITAR_RANK['g-tune'] = 6;
+GUITAR_RANK['g-cmel'] = 7;
 /**
  * The order of a family's levels on the path: by path difficulty, then level number. AUDIT-CONTENT-THEORY §ב.3: guitar
  * levels sit by grade, but the family's next level used to be the next number, so a later-added easier level (picking 4

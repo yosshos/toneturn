@@ -36,6 +36,7 @@ import './topicsHarris2';
 import './topicsHarmony3';
 // BH-G: the pivot — Barry Harris's pivot arpeggio (AUDIT-CONTENT-THEORY §ז.2).
 import './topicsPivotArp';
+import './topicsHeads'; // AUDIT-DEPTH-3 C1/C3: a melody note against the chord; which reharm device
 import './topicsKeyMoves'; // AUDIT-GAPS-2 #5/#19: modulation by ear — how (pivot, common dim, ii–V, tritone, direct), where to, a tune's key centres
 import './topicsVoiceLeadEar'; // AUDIT-CONTENT-THEORY §ה.2: voice leading by ear (which voice moved, held notes, smooth or jumpy, drop 2)
 import { applyDepth } from './topicsDepth';

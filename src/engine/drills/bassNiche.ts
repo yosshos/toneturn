@@ -43,6 +43,8 @@ export const BASS_TRACK: Partial<Record<BassFamilyId, 'jazz' | 'prog'>> = {
   'b-std': 'jazz',
   // AUDIT-GAPS-2: key changes and turnarounds.
   'b-keys': 'jazz',
+  // AUDIT-DEPTH-3 C3/C4: heads on the bass.
+  'b-tune': 'jazz',
   // AUDIT-GAPS-2: bebop vocabulary on the bass.
   'b-bebop': 'jazz',
 };

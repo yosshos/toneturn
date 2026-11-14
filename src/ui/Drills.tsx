@@ -40,6 +40,7 @@ import { drillEvents, drillXp } from '../engine/drills/events';
 import { ChartView, DrillStaff, DrillTab, DrillTake, EarCard, MarkLegend, TakeResult } from './DrillTake';
 // Voice leading (AUDIT-CONTENT-THEORY §ה.2): the chord symbols + first voicing, the voices as lanes, the stage lessons.
 import { VoiceLeadLessons, VoiceLeadScore } from './VoiceLeadScore';
+import { ReharmStudio } from './ReharmStudio'; // AUDIT-DEPTH-3 C3: your own reharm of a head
 import { RoadMapStrip } from './RoadMap';
 import { TranscribeWrite } from './BassWrite';
 import { DrumWrite } from './DrumWrite';
@@ -97,7 +98,7 @@ const takeInfo = (d: Drill, m: TakeMetrics) => {
 export const DEFAULT_CAL: DrillCalibration = { latencyMs: 0, velMin: 20, velMax: 120 };
 /** The drill calibration with the input's calibrated delay (MIDI when a keyboard is connected, else the microphone). */
 const calOf = (s: Settings): DrillCalibration => ({ ...DEFAULT_CAL, ...(s.drillCal ?? {}), latencyMs: inputLatency(s, midi.devices.length ? 'midi' : 'mic') });
-const FAM_HUE: Partial<Record<FamilyId, string>> = { scales: 'var(--mint)', arpeggios: '#7c8cff', cadences: '#c38cff', fingers: 'var(--gold)', control: '#ff8a5c', advanced: '#ff6b9a', harris: '#5cd6ff', jazz: '#5cffb0', voicings: '#ffd15c', accomp: '#b0ff5c', 'k-ear': '#8fb8ff', 'k-sixdim': '#5cc2ff', 'k-bebop': '#4fe0a0', 'k-reharm': '#ffc04d', 'k-theory': '#c9a0ff', 'k-vocab': '#6fd3c0', custom: '#e0e0ff', 'k-vl': '#9fd0ff', 'k-keys': '#7fd6c8' };
+const FAM_HUE: Partial<Record<FamilyId, string>> = { scales: 'var(--mint)', arpeggios: '#7c8cff', cadences: '#c38cff', fingers: 'var(--gold)', control: '#ff8a5c', advanced: '#ff6b9a', harris: '#5cd6ff', jazz: '#5cffb0', voicings: '#ffd15c', accomp: '#b0ff5c', 'k-ear': '#8fb8ff', 'k-sixdim': '#5cc2ff', 'k-bebop': '#4fe0a0', 'k-reharm': '#ffc04d', 'k-theory': '#c9a0ff', 'k-vocab': '#6fd3c0', custom: '#e0e0ff', 'k-vl': '#9fd0ff', 'k-keys': '#7fd6c8', 'k-harm': '#a8c8ff', 'k-tune': '#ffb08a' };
 const HANDS_TX: Record<Lang, Record<string, string>> = { en: { R: 'RH', L: 'LH', RL: 'HT' }, he: { R: 'ימין', L: 'שמאל', RL: 'ביחד' } };
 
 /** Drill settings with the instrument defaulting to the player's (guitar / bass players get guitar drills). */
@@ -357,6 +358,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
         {head(view.f.title[lang], () => setView({ k: 'hub' }))}
         <FamilyLesson family={view.f.id} settings={settings} />
         <VoiceLeadLessons family={view.f.id} settings={settings} />
+        <ReharmStudio family={view.f.id} lang={lang} onRun={(q) => setView({ k: 'run', queue: q, i: 0, from: view })} />
         <FamilyView lang={lang} ds={ds} f={view.f} items={items} start={settings.drillStart?.[view.f.id]} onRun={(q, i) => setView({ k: 'run', queue: q, i, from: view })} />
       </main>
     );
@@ -410,6 +412,8 @@ const TOPIC_OF: Record<string, Exclude<DrillTopic, 'all' | 'songs' | 'mine'>> = 
   'k-vl': 'chords', 'g-vl': 'chords',
   // AUDIT-GAPS-2: key changes and turnarounds (harmony you play).
   'k-keys': 'chords', 'g-keys': 'chords', 'b-keys': 'chords',
+  // AUDIT-DEPTH-3: heads — harmonising and chord-melody are harmony you play; comping a head is a style.
+  'k-harm': 'chords', 'g-cmel': 'chords', 'k-tune': 'styles', 'g-tune': 'styles', 'b-tune': 'styles',
   'b-up-pos': 'upright', 'b-up-arco': 'upright', 'b-up-scales': 'upright', 'b-up-pizz': 'upright', 'b-up-walk': 'upright', 'b-up-read': 'upright',
 };
 const TOPIC_NAME: Record<DrillTopic, { en: string; he: string }> = {

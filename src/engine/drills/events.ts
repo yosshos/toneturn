@@ -145,6 +145,10 @@ function secondTag(drill: Drill): Tags[number] | null {
   // Voice leading as a performed skill (AUDIT-CONTENT-THEORY §ה.2): the theory share is voice leading.
   if (f === 'k-vl' || f === 'g-vl') return { skill: 'theory', sub: 'theory/voice-leading', w: 0.3 };
   // AUDIT-GAPS-2: key changes rate the modulation sub-skill; turnarounds and the bridge rate progressions.
+  // AUDIT-DEPTH-3: heads — harmonising and chord-melody rate voice leading; comping a head rates progressions (a
+  // reharm: reharmonisation).
+  if (f === 'k-harm' || f === 'g-cmel') return { skill: 'theory', sub: 'theory/voice-leading', w: 0.3 };
+  if (f === 'k-tune' || f === 'g-tune' || f === 'b-tune') return { skill: 'cadences', sub: 'cadences/progression', w: 0.3 };
   if (f === 'k-keys' || f === 'g-keys' || f === 'b-keys')
     return drill.spec.kind === 'km-turn' || drill.spec.kind === 'km-bridge' ? { skill: 'cadences', sub: 'cadences/progression', w: 0.3 } : { skill: 'cadences', sub: 'cadences/modulation', w: 0.3 };
   if (f === 'k-reharm') {

@@ -31,7 +31,7 @@ import { LESSONS as GUITAR } from './mini/guitar';
 import { LESSONS as MY_SONG } from './mini/mySong';
 import { LESSONS as RHYTHM_GAPS } from './mini/rhythmGaps'; // AUDIT-CONTENT-THEORY R-1…R-5
 
-export const MINI_LESSONS: Record<string, MiniLesson> = Object.fromEntries([...EXAMPLE, ...PATH, ...RHYTHM, ...JAZZ, ...THEORY_EAR, ...VOICE, ...SKILLS, ...MEMORY_LESSONS, ...BASICS, ...AD, ...INSTRUMENT, ...WRITTEN, ...HARMONY2, ...PITCH2, ...TIME2, ...SOUND, ...CHORDREAD, ...PROG_GAMES, ...JAZZ_EAR, ...PIANO_JAZZ, ...LICKS, ...BASS_NICHE, ...DRUMS, ...DRUMS_MORE, ...VOICE_COURSE, ...GUITAR, ...BASS_NICHE2, ...MY_SONG, ...RHYTHM_GAPS, ...VOICE_LEAD, ...THEORY_PLAY, ...FIRST_STEPS, ...HARRIS2, ...HARMONY3, ...VL_EAR, ...KEY_MOVES, ...BEBOP_VOCAB].map((l) => [l.id, l]));
+export const MINI_LESSONS: Record<string, MiniLesson> = Object.fromEntries([...EXAMPLE, ...PATH, ...RHYTHM, ...JAZZ, ...THEORY_EAR, ...VOICE, ...SKILLS, ...MEMORY_LESSONS, ...BASICS, ...AD, ...INSTRUMENT, ...WRITTEN, ...HARMONY2, ...PITCH2, ...TIME2, ...SOUND, ...CHORDREAD, ...PROG_GAMES, ...JAZZ_EAR, ...PIANO_JAZZ, ...LICKS, ...BASS_NICHE, ...DRUMS, ...DRUMS_MORE, ...VOICE_COURSE, ...GUITAR, ...BASS_NICHE2, ...MY_SONG, ...RHYTHM_GAPS, ...VOICE_LEAD, ...THEORY_PLAY, ...FIRST_STEPS, ...HARRIS2, ...HARMONY3, ...VL_EAR, ...KEY_MOVES, ...BEBOP_VOCAB, ...HEADS_LESSONS].map((l) => [l.id, l]));
 // Voice leading as a performed skill (AUDIT-CONTENT-THEORY §ה.2): one lesson per stage of k-vl / g-vl.
 import { LESSONS as VOICE_LEAD } from './mini/voiceLead';
 
@@ -48,6 +48,8 @@ import { LESSONS as VL_EAR } from './mini/vlEar';
 import { LESSONS as KEY_MOVES } from './mini/keyMoves';
 // AUDIT-GAPS-2: bebop vocabulary (k-vocab, g-bebop, b-bebop).
 import { LESSONS as BEBOP_VOCAB } from './mini/bebopVocab';
+// AUDIT-DEPTH-3: heads — harmonising a melody, chord-melody, reharmonising a tune.
+import { LESSONS as HEADS_LESSONS } from './mini/heads';
 
 
 /** The mini-lesson that opens a unit, if there is one. */

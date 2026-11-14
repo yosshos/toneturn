@@ -27,6 +27,7 @@ import { UNITS as VL_EAR } from './mini/vlEar';
 import { UNITS as KEY_MOVES } from './mini/keyMoves';
 // AUDIT-GAPS-2: bebop vocabulary (k-vocab, g-bebop, b-bebop).
 import { UNITS as BEBOP_VOCAB } from './mini/bebopVocab';
+import { UNITS as HEADS_UNITS } from './mini/heads'; // AUDIT-DEPTH-3: heads
 
 export const UNIT_LESSON: Record<string, string> = {
   // 0.38 (spec AE): each area file maps its own topics.
@@ -57,6 +58,7 @@ export const UNIT_LESSON: Record<string, string> = {
   ...VL_EAR,
   ...KEY_MOVES,
   ...BEBOP_VOCAB,
+  ...HEADS_UNITS,
   // Learning path
   'bflat-two-homes': 'bflat-two-homes',
   'degrees-135': 'degrees-135',

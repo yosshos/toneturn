@@ -27,6 +27,8 @@ import { bassVocabFamily, genBassVocab } from './vocabDrills'; // AUDIT-GAPS-2: 
 import type { LevelExamTag } from './types';
 // AUDIT-GAPS-2 #6/#11/#12: the line under each key change, turnarounds and the rhythm-changes bridge (keyMoveDrills.ts).
 import { bassKeyMoveFamily, generateBassKeyMove } from './keyMoveDrills';
+// AUDIT-DEPTH-3 C3/C4: a head on the bass — roots, two-feel, walking, approaches, walking the reharm (headDrills.ts).
+import { bassTuneFamily, generateBassHead } from './headDrills';
 
 export const tt = (en: string, he: string): T2 => ({ en, he });
 
@@ -2477,6 +2479,8 @@ export function generateBass(s: DrillSpec, tu: Tuning): Drill {
     // AUDIT-GAPS-2: bebop vocabulary and lines over forms (vocabDrills.ts).
     case 'b-bebop':
       return genBassVocab(s, tu);
+    case 'b-tune':
+      return generateBassHead(s, tu);
   }
   throw new Error(`Not a bass family: ${s.family}`);
 }
@@ -2743,6 +2747,8 @@ export function bassFamilies(): GuitarFamilyDef[] {
     bassKeyMoveFamily(),
     // AUDIT-GAPS-2 High #1, #10: enclosures, digital patterns, bebop lines over forms, Barry Harris lines (jazz track).
     bassVocabFamily(L, fam),
+    // AUDIT-DEPTH-3 C3/C4: a head walked step by step, then its reharms (jazz track).
+    bassTuneFamily(),
     fam('b-legato', 'Slides, legato, harmonics', 'החלקות, לגאטו והרמוניקים', [
       L('b-legato', 1, 'Slides into notes', 'החלקות אל הצלילים', [LG('slide')], K6, [70, 110], E8),
       L('b-legato', 2, 'Hammer-on and pull-off pairs', 'זוגות הקשה ומשיכה', [LG('hp')], K6, [60, 100], E8),
