@@ -1181,6 +1181,39 @@ function species2Errors(cf: number[], down: number[], weak: number[]): Set<strin
   return e;
 }
 
+/** A note of a third / fifth species bar: midi and length in quarters (a bar = 4). */
+export type FlNote = { p: number; d: number };
+/**
+ * Third and fifth species faults (HARMONY_3 H-6) of a line above a cantus (one cantus note a bar, then `fin`): the
+ * downbeat must be consonant; a weak note may clash only when stepped into and out of — a quarter as a passing or
+ * neighbour note, a half only as a passing note (same direction); no parallel 5ths / 8ves from downbeat to downbeat;
+ * no melodic tritone, 7th or leap beyond the octave. A note at or below the cantus counts as a clash.
+ */
+export function floridErrors(cf: number[], bars: FlNote[][], fin: number): Set<string> {
+  const e = new Set<string>();
+  const flat: (FlNote & { bar: number; k: number })[] = [];
+  bars.forEach((b, i) => b.forEach((n, k) => flat.push({ ...n, bar: i, k })));
+  flat.push({ p: fin, d: 4, bar: bars.length, k: 0 });
+  const step = (x: number) => x !== 0 && Math.abs(x) <= 2;
+  flat.forEach((n, j) => {
+    const diss = !consonant(n.p - cf[n.bar]);
+    if (n.k === 0) {
+      if (diss) e.add('diss-down');
+      return;
+    }
+    if (!diss) return;
+    const a = n.p - flat[j - 1].p;
+    const b = flat[j + 1].p - n.p;
+    if (!(step(a) && step(b) && (n.d < 2 || sgn(a) === sgn(b)))) e.add('diss-weak');
+  });
+  for (let i = 1; i <= bars.length; i++) if (parallel(bars[i - 1][0].p, cf[i - 1], i < bars.length ? bars[i][0].p : fin, cf[i])) e.add('par');
+  for (let j = 1; j < flat.length; j++) {
+    const lp = Math.abs(flat[j].p - flat[j - 1].p);
+    if (lp === 6 || lp === 10 || lp === 11 || lp > 12) e.add('leap');
+  }
+  return e;
+}
+
 TOPIC_GEN['counterpoint'] = {
   title: { en: 'Species counterpoint', he: 'קונטרפונקט לפי סוגים' },
   skill: 'theory',
@@ -1188,6 +1221,9 @@ TOPIC_GEN['counterpoint'] = {
     { en: 'First species: note against note', he: 'סוג ראשון: תו מול תו' },
     { en: 'Second species: two against one', he: 'סוג שני: שניים מול אחד' },
     { en: 'Fourth species: suspensions', he: 'סוג רביעי: השהיות' },
+    // HARMONY_3 (AUDIT-CONTENT-THEORY §ז.2 H-6): the species the audit found missing.
+    { en: 'Third species: four against one', he: 'סוג שלישי: ארבעה מול אחד' },
+    { en: 'Fifth species: florid', he: 'סוג חמישי: קונטרפונקט מקושט' },
   ],
   gen(seed, level, id) {
     const rnd = rng(seed);
@@ -1224,6 +1260,74 @@ TOPIC_GEN['counterpoint'] = {
       cf.forEach((c, i) => evs.push(N(c, i * 2 * b, 2 * b * 0.95, 0.5)));
       line.forEach((x, i) => evs.push(N(x, (i + 1) * b, (i === line.length - 1 ? 2 : 1) * b * 0.95, 0.62)));
       return choiceQ({ id, topic: 'counterpoint', level, seed, skill: 'theory', difficulty: 1550, ask: { en: `Fourth species in ${kn.en} (‿ = tied over the bar). What is wrong?`, he: `סוג רביעי ב${kn.he} (‿ = מוארך מעבר לקו התיבה). מה לא בסדר?` }, text: { en: `Cantus: ${nameLine(cf, 'en')}\nCounterpoint: ${bars('en')}`, he: `קנטוס פירמוס: ${nameLine(cf, 'he')}\nקונטרפונקט: ${bars('he')}` }, show: { midis: line, key: pcOf(t) }, names, answer: err, choices: ['up', 'unprep', 'none'], stimulus: [ev(evs, cf.length * 2 * b + 0.3)] });
+    }
+    if (level === 4 || level === 5) {
+      // HARMONY_3 H-6: third species (four quarters a bar) and fifth species (halves and quarters mixed; the tied
+      // suspension stays in level 3). A clean line is built bar by bar, then one note may be changed to one fault.
+      const fl = tries(() => {
+        // Short cantus (five notes): four bars of quarters still fit one phone screen with the staff and the names.
+        const cfI = pickR(rnd, [[0, 2, 3, 1, 0], [0, 3, 2, 1, 0], [0, 4, 3, 1, 0], [0, 2, 4, 1, 0], [0, 1, 3, 1, 0]]);
+        const cpI = counterVoice(rnd, cfI, false, T, { lo: 2, hi: 11, maxLeap: 4, first: [4, 7], last: [7], contrary: false, noRepeat: true });
+        if (!cpI) return null;
+        const cf = cfI.map(m);
+        const bars: FlNote[][] = [];
+        for (let i = 0; i < cpI.length - 1; i++) {
+          const pat = level === 4 ? [1, 1, 1, 1] : pickR(rnd, [[2, 2], [2, 1, 1], [1, 1, 1, 1]]);
+          const opts: number[][] = [];
+          const rec = (acc: number[]) => {
+            if (acc.length === pat.length - 1) return void opts.push(acc.slice());
+            const prev = acc.length ? acc[acc.length - 1] : cpI[i];
+            for (const d of [-2, -1, 1, 2]) {
+              acc.push(prev + d);
+              rec(acc);
+              acc.pop();
+            }
+          };
+          rec([]);
+          const mk = (xs: number[]) => [cpI[i], ...xs].map((x, k) => ({ p: m(x), d: pat[k] }));
+          const good = shuffleR(rnd, opts).find((xs) => floridErrors(cf.slice(0, i + 2), [...bars, mk(xs)], m(cpI[i + 1])).size === 0);
+          if (!good) return null;
+          bars.push(mk(good));
+        }
+        return { cf, bars, fin: m(cpI[cpI.length - 1]) };
+      }, 120)!;
+      const errs = ['diss-down', 'diss-weak', 'par'];
+      let err = pickR(rnd, [...errs, 'none']);
+      let bars = fl.bars;
+      if (err !== 'none') {
+        const cands: FlNote[][][] = [];
+        for (let i = 1; i < bars.length; i++)
+          bars[i].forEach((_, k) => {
+            for (let x = 1; x <= 13; x++) {
+              const b2 = bars.map((b) => b.map((n) => ({ ...n })));
+              b2[i][k].p = m(x);
+              if (b2[i][k].p <= fl.cf[i]) continue;
+              const es = floridErrors(fl.cf, b2, fl.fin);
+              if (es.size === 1 && es.has(err)) cands.push(b2);
+            }
+          });
+        if (cands.length) bars = pickR(rnd, cands);
+        else err = 'none';
+      }
+      const half = level === 5;
+      const barsText = (lang: 'en' | 'he') => [...bars.map((b) => b.map((n) => `${nameLine([n.p], lang)}${half && n.d === 2 ? '–' : ''}`).join(' ')), nameLine([fl.fin], lang)].join(' | ');
+      const names: Names = {
+        'diss-down': nm('A dissonance on the downbeat', 'דיסוננס בפעמה הראשונה', 'downbeat'),
+        'diss-weak': nm('A dissonance not by step', 'דיסוננס שלא בצעדים', 'not by step'),
+        par: nm('Parallel fifths or octaves', 'קווינטות או אוקטבות מקבילות', 'parallels'),
+        none: NONE,
+      };
+      const q = 0.3;
+      const evs: NoteEvent[] = [];
+      fl.cf.forEach((c, i) => evs.push(N(c, i * 4 * q, 4 * q * 0.95, 0.5)));
+      let at = 0;
+      for (const b of bars) for (const n of b) {
+        evs.push(N(n.p, at * q, n.d * q * 0.95, 0.62));
+        at += n.d;
+      }
+      evs.push(N(fl.fin, at * q, 4 * q * 0.95, 0.62));
+      const nm5 = level === 4 ? { en: 'Third species', he: 'סוג שלישי' } : { en: 'Fifth species (– = half note)', he: 'סוג חמישי (– = חצי)' };
+      return choiceQ({ id, topic: 'counterpoint', level, seed, skill: 'theory', difficulty: level === 4 ? 1600 : 1650, ask: { en: `${nm5.en} in ${kn.en}. What is wrong?`, he: `${nm5.he} ב${kn.he}. מה לא בסדר?` }, text: { en: `Counterpoint: ${barsText('en')}\nCantus: ${nameLine(fl.cf, 'en')}`, he: `קונטרפונקט: ${barsText('he')}\nקנטוס פירמוס: ${nameLine(fl.cf, 'he')}` }, names, answer: err, choices: [...errs, 'none'], stimulus: [ev(evs, (at + 4) * q + 0.3)] });
     }
     const r = tries(() => {
       const cfI = pickR(rnd, CFS);

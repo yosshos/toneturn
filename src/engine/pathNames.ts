@@ -153,6 +153,17 @@ const SHORT: Record<string, L2> = {
   'jazz-phrase': { en: 'Transcribe', he: 'תמלול' },
   'jazz-form': { en: 'Jazz forms', he: 'צורות ג׳אז' },
   'upper-rootless': { en: 'Upper structures', he: 'מבנים עליונים' },
+  // HARRIS_2 + HARMONY_3 (AUDIT-CONTENT-THEORY §ז.2)
+  'bh-three-dim': { en: 'Three diminished', he: 'שלושה דימינישים' },
+  'bh-dim-roles': { en: 'Diminished roles', he: 'תפקידי הדימיניש' },
+  'bh-m6-bass': { en: 'm6 = 9', he: 'm6 = 9' },
+  'function-ear': { en: 'T · PD · D', he: 'T · PD · D' },
+  'modal-cadence': { en: 'Modal cadences', he: 'קדנצות מודאליות' },
+  'borrowed-ext': { en: 'Borrowed colours', he: 'צבעים שאולים' },
+  'jazz-dictation': { en: 'Jazz dictation', he: 'הכתבת ג׳אז' },
+  planing: { en: 'Planing', he: 'פליינינג' },
+  'form-ear': { en: 'Form by ear', he: 'צורה בשמיעה' },
+  'negative-harmony': { en: 'Negative harmony', he: 'הרמוניה שלילית' },
   // lessons
   'basics-shape': { en: 'Melody shape', he: 'צורת מנגינה' },
   'rhythm-shift': { en: 'Move the rhythm', he: 'הזזת קצב' },

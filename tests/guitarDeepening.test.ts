@@ -36,11 +36,11 @@ function take(d: Drill, bpm: number, sd = 0, seed = 'x'): PlayedNote[] {
 }
 
 describe('guitar deepening: catalogue', () => {
-  // + meter 6 (R-4) + voice leading 3 (g-vl) + theory you play 7 (g-theory).
-  it('146 guitar levels: 79 + ear 10 + jazz 6 + Barry Harris 6 + prog 8 + core 21 + meter 6 + voice leading 3 + theory you play 7', () => {
-    expect(LEVELS.length).toBe(146);
+  // + meter 6 (R-4) + voice leading 3 (g-vl) + theory you play 7 (g-theory) + Barry Harris 7 (HARRIS_2).
+  it('147 guitar levels: 79 + ear 10 + jazz 6 + Barry Harris 7 + prog 8 + core 21 + meter 6 + voice leading 3 + theory you play 7', () => {
+    expect(LEVELS.length).toBe(147);
     const n = (id: string) => GUITAR.find((f) => f.id === id)!.levels.length;
-    expect([n('g-ear'), n('g-jazz'), n('g-harris'), n('g-prog')]).toEqual([10, 13, 6, 8]);
+    expect([n('g-ear'), n('g-jazz'), n('g-harris'), n('g-prog')]).toEqual([10, 13, 7, 8]);
     for (const { lv } of LEVELS) expect(lv.title.en.length > 0 && /[֐-׿]/.test(lv.title.he), lv.id).toBe(true);
   });
 
@@ -228,14 +228,14 @@ describe('guitar deepening: the core path and add-ons (§5, owner 2026-11-11)', 
     expect(refs.length).toBe(pathOf(ds({ guitarAddOns: ['jazz'] })).length);
   });
 
-  it('each add-on adds its families and levels; all four give the full 146 minus country', () => {
+  it('each add-on adds its families and levels; all four give the full 147 minus country', () => {
     const jazz = pathOf(ds({ guitarAddOns: ['jazz'] })).map((s) => s.ladder!.ref);
     expect(jazz).toEqual(expect.arrayContaining(['g-jazz-12', 'g-harris-6', 'g-impro-6', 'g-rhythm-6']));
     expect(jazz.some((r) => r.startsWith('g-prog'))).toBe(false);
     const prog = pathOf(ds({ guitarAddOns: ['prog'] })).map((s) => s.ladder!.ref);
     expect(prog).toEqual(expect.arrayContaining(['g-prog-1', 'g-prog-8', 'g-picking-9', 'g-legato-8']));
-    expect(pathOf(ds({ guitarAddOns: ['jazz', 'flamenco', 'fingerstyle', 'prog'] })).length).toBe(145); // + g-meter 6 + g-vl 3 + g-theory 7
-    expect(pathOf(ds({ guitarAddOns: ['jazz', 'flamenco', 'fingerstyle', 'prog'], guitarStyle: 'country' })).length).toBe(146);
+    expect(pathOf(ds({ guitarAddOns: ['jazz', 'flamenco', 'fingerstyle', 'prog'] })).length).toBe(146); // + g-meter 6 + g-vl 3 + g-theory 7 + g-harris 7
+    expect(pathOf(ds({ guitarAddOns: ['jazz', 'flamenco', 'fingerstyle', 'prog'], guitarStyle: 'country' })).length).toBe(147);
     // The Technique hub shows the same.
     expect(shownFamilies(ds({ guitarAddOns: [] })).map((f) => f.id)).not.toContain('g-jazz');
     expect(shownFamilies(ds({ guitarAddOns: ['fingerstyle'] })).map((f) => f.id)).toContain('g-fingerstyle');

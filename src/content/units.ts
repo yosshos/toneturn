@@ -19,6 +19,9 @@ import { UNITS as RHYTHM_GAPS } from './mini/rhythmGaps'; // AUDIT-CONTENT-THEOR
 // THEORY_PLAY (TP-1…TP-5): the four topics, the keys family and the guitar block.
 import { UNITS as THEORY_PLAY } from './mini/theoryPlay';
 import { UNITS as FIRST_STEPS } from './mini/firstSteps';
+// HARRIS_2 + HARMONY_3 (AUDIT-CONTENT-THEORY §ז.2): topics and the keys / guitar levels that build on them.
+import { UNITS as HARRIS2 } from './mini/harris2';
+import { UNITS as HARMONY3 } from './mini/harmony3';
 
 export const UNIT_LESSON: Record<string, string> = {
   // 0.38 (spec AE): each area file maps its own topics.
@@ -43,6 +46,8 @@ export const UNIT_LESSON: Record<string, string> = {
   ...THEORY_PLAY,
   // AUDIT-CONTENT-THEORY §ז.2: the first steps of each instrument course and the voice ("tech:<level id>", "vocal:<level>").
   ...FIRST_STEPS,
+  ...HARRIS2,
+  ...HARMONY3,
   // Learning path
   'bflat-two-homes': 'bflat-two-homes',
   'degrees-135': 'degrees-135',

@@ -215,6 +215,8 @@ const PACK_TOPICS: Record<string, Pack> = {
   'jazz-changes': 'jazz', 'reharm-spot': 'jazz', 'guide-line': 'jazz', 'jazz-phrase': 'jazz', 'jazz-form': 'jazz',
   // THEORY_PLAY (TP-1…TP-4): theory you play, on the Jazz & improv path.
   'triad-pairs': 'jazz', 'pent-super': 'jazz', polychords: 'jazz', 'reharm-own': 'jazz',
+  // HARRIS_2 + HARMONY_3 (AUDIT-CONTENT-THEORY §ז.2): Barry Harris unit 2, jazz dictation and planing.
+  'bh-three-dim': 'jazz', 'bh-dim-roles': 'jazz', 'bh-m6-bass': 'jazz', 'jazz-dictation': 'jazz', planing: 'jazz',
   maqam: 'maqam', 'eastern-rhythm': 'maqam',
   'set-classes': 'post-tonal', counterpoint: 'post-tonal',
   'eq-ear': 'production', 'space-ear': 'production', 'pan-ear': 'production', 'dyn-ear': 'production', 'filter-ear': 'production', 'tone-hz': 'production', 'width-ear': 'production',
