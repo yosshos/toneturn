@@ -485,7 +485,7 @@ export const VOICE_FAMILIES: VoiceFamily[] = [
   { id: 'v-range', title: { en: 'Range & registers', he: 'מנעד ורגיסטרים' }, refs: [4, 6, ...RANGE_LEVELS.map((l) => l.level)], stage: 'A' },
   // AUDIT-CONTENT-THEORY §ב.5: the family opened on its hardest level (old ladder 9, 16ths at ♩66–80); it now sits after
   // the swing and on-top / laid-back levels, and the family opens on the click.
-  { id: 'v-time', title: { en: 'Time feel', he: 'תחושת זמן' }, refs: [1101, 1102, 1103, 1104, 1105, 9, 1106, 1107], stage: 'A' },
+  { id: 'v-time', title: { en: 'Time feel', he: 'תחושת זמן' }, refs: [1101, 1102, 1103, 1104, 1105, 9, 1106, 1107, 1108, 1109, 1110, 1111, 1112, 1113], stage: 'A' },
   // P3: F10 L1 echo, L3 intervals and L5 audiation as sung levels, where the plan puts them (L2 = ladder 8).
   { id: 'v-ear', title: { en: "The singer's ear", he: 'האוזן של הזמר' }, refs: [1203, 8, 1204, 1201, 1205, 1202], stage: 'A', before: 1 },
   { id: 'v-dyn', title: { en: 'Dynamics', he: 'דינמיקה' }, refs: [901, 5, ...DYN_LEVELS.slice(1).map((l) => l.level)], stage: 'B' },
