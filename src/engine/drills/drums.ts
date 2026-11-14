@@ -1124,6 +1124,8 @@ export function drumFamilies(): DrumFamilyDef[] {
       L('d-prog', 8, 'Displaced grooves', 'גרובים מוזזים', 'displace', 3, [80, 110], '1/16', false),
       L('d-prog', 9, 'Quintuplets, sextuplets, six-stroke rolls', 'חמישיות, שישיות, גלגול שש מכות', 'tuplets', 3, [60, 90], 'mixed', false),
       L('d-prog', 10, 'A prog song in changing meters', 'שיר פרוג במשקלים מתחלפים', 'song', 3, [180, 240], '1/8', false),
+      // AUDIT-CONTENT-THEORY R-1/R-5: 5:4, 7:4 and 5:3 over the bar, and the hemiola (drumCross.ts).
+      L('d-prog', 11, 'Cross-rhythms over the bar: 5:4, 7:4, 5:3, hemiola', 'פולי-ריתמוס על פני התיבה: 5:4, 7:4, 5:3, המיולה', 'cross', 4, [50, 80], 'mixed', false),
     ]),
     fam('d-count', 'Counting and meter', 'ספירה ומשקל', [
       L('d-count', 1, 'Simple and compound meters', 'משקלים פשוטים ומורכבים', 'compound', 3, [160, 220], '1/8', true),

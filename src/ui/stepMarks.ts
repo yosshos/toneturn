@@ -50,6 +50,9 @@ export const TOPIC_MARK: Record<string, string> = {
   'tempo-react': 'acc.',
   'poly-tap': '2:1',
   polyrhythm: '3:2',
+  // AUDIT-CONTENT-THEORY R-1, R-5: metric modulation and the hemiola, tapped.
+  'metric-tap': '♩→♩.',
+  'hemiola-tap': '3×2',
   syncopation: '&',
   'rhythm-errors': '♩?',
   'rhythm-build': '♩♫',

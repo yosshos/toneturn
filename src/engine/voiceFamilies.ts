@@ -28,6 +28,42 @@ const TIME = (bpm: number, bars: number, hits: number[], feel: NonNullable<Vocal
 const rep = (pattern: number[], bars: number) => Array.from({ length: bars }, (_, b) => pattern.map((x) => b * 4 + x)).flat();
 const swung = (beats: number) => Array.from({ length: beats }, (_, k) => [k, k + 2 / 3]).flat();
 
+/** A time item in any meter (`meter` beats a bar; 7/8 counts eighths as beats). */
+function TIMEM(bpm: number, meter: number, bars: number, hits: number[], difficulty: number, extra: Partial<NonNullable<VocalItem['time']>> = {}): Item {
+  return { kind: 'time', seconds: ((bars + 1) * meter * 60) / bpm, reference: 'before', at: 0.4, time: { bpm, meter, bars, hits, feel: 'on', ...extra }, difficulty };
+}
+/** Every beat of `bars` bars of `meter`. */
+const allBeats = (meter: number, bars: number) => Array.from({ length: meter * bars }, (_, k) => k);
+/** The group starts of each bar (beats), e.g. 7/8 2+2+3 → 0, 2, 4. */
+export const groupStarts = (groups: number[], bars: number): number[] => {
+  const m = groups.reduce((a, b) => a + b, 0);
+  const one = groups.map((_, i) => groups.slice(0, i).reduce((a, b) => a + b, 0));
+  return Array.from({ length: bars }, (_, b) => one.map((x) => b * m + x)).flat();
+};
+/** Sung 3 against 2: three even notes over each two beats. */
+export const threeOverTwo = (beats: number): number[] => Array.from({ length: (beats / 2) * 3 }, (_, k) => (k * 2) / 3);
+const SAY = {
+  trip: { en: 'Sing "doo-ba-da" on every click: three even notes a beat.', he: 'שירו "דו-בה-דה" על כל קליק: שלושה צלילים שווים בפעמה.' },
+  three2: { en: 'Three even "dah"s across every two clicks — 3 against 2.', he: 'שלושה "דה" שווים על פני כל שני קליקים — 3 נגד 2.' },
+  hemi: { en: '3/4: "dah" on every beat for two bars, then every second beat across the bar line.', he: '3/4: "דה" על כל פעמה שתי תיבות, ואז כל פעמה שנייה מעבר לקו התיבה.' },
+  five32: { en: '5/4 as 3+2: scat "doo-ba-da doo-ba" on every beat. A click starts each group.', he: '5/4 כ-3+2: שירו "דו-בה-דה דו-בה" על כל פעמה. קליק פותח כל קבוצה.' },
+  five23: { en: '5/4 as 2+3: scat "doo-ba doo-ba-da" on every beat. A click starts each group.', he: '5/4 כ-2+3: שירו "דו-בה דו-בה-דה" על כל פעמה. קליק פותח כל קבוצה.' },
+  seven223: { en: '7/8 as 2+2+3: scat "doo-ba doo-ba doo-ba-da" on every eighth.', he: '7/8 כ-2+2+3: שירו "דו-בה דו-בה דו-בה-דה" על כל שמינית.' },
+  seven322: { en: '7/8 as 3+2+2: scat "doo-ba-da doo-ba doo-ba" on every eighth.', he: '7/8 כ-3+2+2: שירו "דו-בה-דה דו-בה דו-בה" על כל שמינית.' },
+  starts: { en: 'Sing "dah" only on the first note of each group. The click marks only beat 1.', he: 'שירו "דה" רק בתחילת כל קבוצה. הקליק מסמן רק את 1.' },
+};
+function meterLevels(): VocalLevel[] {
+  const trip = (bars: number) => Array.from({ length: bars * 12 }, (_, k) => k / 3);
+  return [
+    lv(1108, 0.58, [TIMEM(60, 4, 2, trip(2), 1350, { say: SAY.trip }), TIMEM(72, 4, 2, trip(2), 1400, { say: SAY.trip })]),
+    lv(1109, 0.56, [TIMEM(60, 4, 2, threeOverTwo(8), 1400, { say: SAY.three2 }), TIMEM(72, 4, 2, threeOverTwo(8), 1450, { say: SAY.three2 })]),
+    lv(1110, 0.56, [TIMEM(96, 3, 4, [0, 1, 2, 3, 4, 5, 6, 8, 10], 1450, { say: SAY.hemi }), TIMEM(112, 3, 4, [0, 1, 2, 3, 4, 5, 6, 8, 10], 1500, { say: SAY.hemi })]),
+    lv(1111, 0.56, [TIMEM(132, 5, 2, allBeats(5, 2), 1500, { say: SAY.five32, clickOn: [0, 3] }), TIMEM(132, 5, 2, allBeats(5, 2), 1550, { say: SAY.five23, clickOn: [0, 2] })]),
+    lv(1112, 0.56, [TIMEM(176, 7, 2, allBeats(7, 2), 1550, { say: SAY.seven223, clickOn: [0, 2, 4] }), TIMEM(176, 7, 2, allBeats(7, 2), 1600, { say: SAY.seven322, clickOn: [0, 3, 5] })]),
+    lv(1113, 0.56, [TIMEM(200, 7, 4, groupStarts([2, 2, 3], 4), 1600, { say: SAY.starts, clickOn: [0] }), TIMEM(150, 5, 4, groupStarts([3, 2], 4), 1600, { say: SAY.starts, clickOn: [0] })]),
+  ];
+}
+
 export const TIME_LEVELS: VocalLevel[] = [
   // L2: "dah" on the click, then on 2 and 4 only (the jazz backbeat)
   lv(1101, 0.6, [TIME(80, 4, rep([0, 1, 2, 3], 4), 'on', 1050), TIME(90, 4, rep([1, 3], 4), 'on', 1100, { clickOn: [1, 3] }), TIME(100, 4, rep([0, 1, 2, 3], 4), 'on', 1150)]),
@@ -43,7 +79,11 @@ export const TIME_LEVELS: VocalLevel[] = [
   lv(1106, 0.56, [TIME(88, 2, [], 'back', 1400, { written: [0, 1, 2, 3, 4], target: 4 }), TIME(96, 2, [], 'back', 1450, { written: [0, 0.5, 1, 2, 3, 4], target: 4 })]),
   // L8: the inner clock — 4 bars with the click, 4 silent, the next downbeat with the click again
   lv(1107, 0.56, [TIME(84, 9, Array.from({ length: 36 }, (_, k) => k), 'clock', 1450, { silent: [16, 32] }), TIME(100, 9, Array.from({ length: 36 }, (_, k) => k), 'clock', 1500, { silent: [16, 32] })]),
+  // AUDIT-CONTENT-THEORY R-3/R-5 (the voice course had no meter or cross-rhythm): triplets, sung 3:2, the hemiola,
+  // 5/4 and 7/8 scatted in their groups, then only the group starts. Each says what to sing (TimeSpec.say).
+  ...meterLevels(),
 ];
+
 
 // ---------------------------------------------------------------- F13 songs with the band (1300)
 
@@ -501,6 +541,13 @@ export const NEW_LEVEL_NAMES: Record<number, Bi> = {
   1105: { en: 'On top, then laid back', he: 'על הפעמה, ואז מאחוריה' },
   1106: { en: 'Back-phrasing', he: 'פרייזינג מאוחר' },
   1107: { en: 'The inner clock', he: 'השעון הפנימי' },
+  // AUDIT-CONTENT-THEORY R-3/R-5: meter and cross-rhythm, sung.
+  1108: { en: 'Triplets on the click', he: 'טריולות על הקליק' },
+  1109: { en: '3 against 2, sung', he: '3 נגד 2 בשירה' },
+  1110: { en: 'The hemiola, sung', he: 'ההמיולה בשירה' },
+  1111: { en: '5/4 in groups', he: '5/4 בקבוצות' },
+  1112: { en: '7/8 in groups', he: '7/8 בקבוצות' },
+  1113: { en: 'Only the group starts', he: 'רק תחילות הקבוצות' },
   1301: { en: 'One phrase with the band', he: 'משפט אחד עם הלהקה' },
   1302: { en: 'Two phrases, in time', he: 'שני משפטים, בזמן' },
   1303: { en: 'A whole song', he: 'שיר שלם' },

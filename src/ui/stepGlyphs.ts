@@ -29,6 +29,8 @@ export const FAMILY_GLYPH: Record<string, GlyphKind> = {
   // VOICE_CURRICULUM: the 15 families + Barry Harris, one symbol each on the voice path.
   'v-breath': 'breath', 'v-pitch': 'tune', 'v-songs': 'mic', 'v-range': 'octave', 'v-time': 'pulse', 'v-ear': 'echo', 'v-dyn': 'hairpin', 'v-scale': 'scales',
   'v-vib': 'sing', 'v-agility': 'bebop', 'v-inflect': 'contour', 'v-standards': 'prog', 'v-scat': 'improv',
+  // AUDIT-CONTENT-THEORY R-1/R-2/R-4: rhythm & meter on the keys, meter & cross-rhythm on the guitar.
+  'k-rhythm': 'krhythm', 'g-meter': 'gmeter',
 };
 /** Instrument topics (they all used to share one chord icon). */
 export const TOPIC_GLYPH: Record<string, GlyphKind> = {

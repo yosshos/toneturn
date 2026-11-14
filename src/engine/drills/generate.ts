@@ -7,6 +7,7 @@ import { chartKind, type ChartMode, type ChartVoicing, type CompRhythm } from '.
 import { chartDrillData, roles } from './chartDrills';
 import { applyForm, type FormPlan, type FormSection } from './roadmap';
 import { parseChart } from '../charts';
+import { genKeysRhythm, keysRhythmFamily } from './keysRhythm'; // AUDIT-CONTENT-THEORY R-1/R-2/R-5
 import type { Drill, DrillGoal, DrillSpec, DynamicsGoal, ExpNote, FamilyId, Hand, KeyOrder, Motion, ScaleType, Variant } from './types';
 
 type T2 = { en: string; he: string };
@@ -4453,6 +4454,7 @@ export function generate(spec: DrillSpec): Drill {
   if (s.family === 'k-sixdim') return genSixDim(s);
   if (s.family === 'k-bebop') return genBebop(s);
   if (s.family === 'k-reharm') return genReharm(s);
+  if (s.family === 'k-rhythm') return genKeysRhythm(s);
   if (s.kind.startsWith('chart~')) return genChart(s);
   switch (s.kind) {
     case 'scale':
@@ -5378,5 +5380,7 @@ export function catalog(): FamilyDef[] {
         E(9, 'Two parts: melody and bass', 'שני קולות: מנגינה ובס', [{ ...ke('two-part'), hands: 'RL' }, { ...ke('two-part', 1), hands: 'RL' }], [0, 7, 5, 2, 10]),
       ],
     },
+    // AUDIT-CONTENT-THEORY R-1/R-2/R-5: rhythm & meter on the keys, for either emphasis (keysRhythm.ts).
+    keysRhythmFamily(),
   ];
 }

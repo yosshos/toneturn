@@ -240,7 +240,10 @@ export type ClickPattern =
   | { kind: 'offbeat' }
   | { kind: 'every2' }
   | { kind: 'gaps'; on: number; off: number }
-  | { kind: 'random-gaps'; seed: number };
+  | { kind: 'random-gaps'; seed: number }
+  // Rhythm gaps R-1 (metric modulation, tapped): from passage beat `atBeat` on, the click moves to the new pulse — one
+  // click every `every` old beats (2/3 = the triplet quarter becomes the beat), an accent on every 4th new beat.
+  | { kind: 'modulate'; atBeat: number; every: number };
 
 /**
  * Enter notes on an instrument picture or the staff (spec AE §3.3): the neck, the keys or the staff — or play them

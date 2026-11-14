@@ -97,6 +97,9 @@ const SHORT: Record<string, L2> = {
   'gap-click': { en: 'Gap click', he: 'קליק חסר' },
   'tempo-memory': { en: 'Tempo memory', he: 'זיכרון טמפו' },
   'poly-tap': { en: 'Two hands', he: 'שתי ידיים' },
+  // AUDIT-CONTENT-THEORY R-1, R-5: metric modulation and the hemiola, tapped.
+  'metric-tap': { en: 'New beat', he: 'פעמה חדשה' },
+  'hemiola-tap': { en: 'Hemiola', he: 'המיולה' },
   'drum-read': { en: 'Drum reading', he: 'קריאת תופים' },
   'rhythm-errors': { en: 'Rhythm slips', he: 'טעויות קצב' },
   'tempo-react': { en: 'Reaction', he: 'תגובה' },

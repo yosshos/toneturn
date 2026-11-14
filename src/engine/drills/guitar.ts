@@ -14,6 +14,7 @@ import { drumFamilies } from './drums';
 import { ADDON_FAMILY, examOfGrade, GUITAR_META, guitarAddOnsOf, itemTempo } from './guitarMeta';
 import { core2Levels, generateCore2 } from './guitarCore2';
 import { generateGuitarProg, guitarProgFamily } from './guitarProg';
+import { generateGuitarMeter, guitarMeterFamily } from './guitarMeter'; // AUDIT-CONTENT-THEORY R-4/R-5
 import { generateGuitarEar } from './guitarEar';
 import { generateHarris, generateJazz2, GUITAR_STD, guitarStdOption, guitarStdTempo } from './guitarJazz';
 import { GUITAR_PROBE_STEPS } from './guitarProbes';
@@ -2348,6 +2349,8 @@ export function generateGuitar(spec: DrillSpec): Drill {
   // GUITAR_DEEPENING §4.1 (Batch C): the new core kinds live in guitarCore2.ts.
   const more = generateCore2(s, tu);
   if (more) return more;
+  // AUDIT-CONTENT-THEORY R-1/R-5: the g-meter kinds (hemiola, displacement, 5:4 / 7:4) also serve the bass's b-time 11–12.
+  if (s.kind.startsWith('gm-')) return generateGuitarMeter(s, tu);
   switch (s.family) {
     case 'g-ear':
       return generateGuitarEar(s, tu);
@@ -2355,6 +2358,8 @@ export function generateGuitar(spec: DrillSpec): Drill {
       return generateHarris(s, tu);
     case 'g-prog':
       return generateGuitarProg(s, tu);
+    case 'g-meter':
+      return generateGuitarMeter(s, tu);
     case 'g-fretting':
       return genFretting(s, tu);
     case 'g-picking':
@@ -2585,6 +2590,8 @@ export function guitarCatalog(): GuitarFamilyDef[] {
     ]),
     // Prog / fusion (GUITAR_DEEPENING §4.3, the prog engine): the prog add-on.
     guitarProgFamily(),
+    // AUDIT-CONTENT-THEORY R-4/R-5: meter and cross-rhythm on the core path (guitarMeter.ts).
+    guitarMeterFamily(),
     // The 0.4x starter bass family: superseded by the b-* course families below (BASS_CURRICULUM §10.1). Kept, retired,
     // so old item ids, badges and frozen path units (tech:g-bass-*) stay valid.
     {

@@ -18,6 +18,7 @@ export type FamilyId =
   | 'k-sixdim'
   | 'k-bebop'
   | 'k-reharm'
+  | 'k-rhythm' // AUDIT-CONTENT-THEORY R-1/R-2/R-5: subdivision → cross-rhythm, odd meters, displacement, hemiola, metric modulation
   | 'custom' // the player's own drills
   // Licks & transcription (docs/SPEC-LICKS-TRANSCRIPTION.md): lick items per key / instrument, transcribed phrases.
   | 'licks'
@@ -40,6 +41,7 @@ export type FamilyId =
   | 'g-ear' // call and response, answered on the guitar
   | 'g-harris' // Barry Harris applied to guitar (barry.ts)
   | 'g-prog' // odd meters, polyrhythm, metric modulation, fusion lines, unisons (prog engine)
+  | 'g-meter' // AUDIT-CONTENT-THEORY R-4/R-5: meter & cross-rhythm on the core path (subdivision → 7:4, odd meters, hemiola)
   | 'g-bass' // bass guitar subset (the 0.4x starter family; kept so old progress ids stay valid)
   // Bass course (docs/research/BASS_CURRICULUM.md §5, F1–F14): instrument bass, pitches SOUNDING MIDI.
   | BassFamilyId

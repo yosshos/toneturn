@@ -14,6 +14,7 @@ import type { Drill, DrillSpec, DrumGoal, DrumVoice } from './types';
 import { MODULATIONS, withBarPlan } from './timeline';
 import { bar, finish, levelOfKind, rep, type DH, type Lanes } from './drums';
 import { buildSong, type SongSection } from './drumSong';
+import { genDrumCross } from './drumCross'; // AUDIT-CONTENT-THEORY R-1/R-5: level 11
 
 const t = (en: string, he: string) => ({ en, he });
 type T2 = { en: string; he: string };
@@ -220,6 +221,8 @@ export function generateProg(s: DrillSpec): Drill {
       const hits = [...bar(g, 2, 0), ...bar(g, 2, 4, { to: 2 }), ...six(6), { b: 8, v: 'crash' as DrumVoice, h: 'R' as const, d: 1 }, { b: 8, v: 'kick' as DrumVoice, h: 'R' as const, d: 1 }, ...bar(g, 2, 8, { from: 0.5 }), ...bar(g, 2, 12, { to: 2 }), ...six(14), { b: 16, v: 'crash' as DrumVoice, h: 'R' as const, d: 1 }, { b: 16, v: 'kick' as DrumVoice, h: 'R' as const, d: 1 }];
       return finish(s, hits, { title: t('Six-stroke roll fills (sextuplets), land on 1', 'מעברי גלגול שש מכות (שישיות), נחיתה על 1'), bpm: 60, bars: 4, tail: 1, mic: false, goal: { landing: { beats: [8, 16], ms: 25 } } });
     }
+    case 11:
+      return genDrumCross(s);
     default: {
       // The prog song: a 7/8 riff with the band in unison, a 4/4 chorus, a metric-modulated bridge (the dotted 8th
       // becomes the new beat), the riff again at the first tempo, the ending.
