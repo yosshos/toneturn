@@ -18,6 +18,8 @@ export type FamilyId =
   | 'k-sixdim'
   | 'k-bebop'
   | 'k-reharm'
+  // AUDIT-CONTENT-THEORY §ז.2: first steps at the piano — posture, finger numbers, C position, the thumb passing under.
+  | 'k-first'
   | 'custom' // the player's own drills
   // Licks & transcription (docs/SPEC-LICKS-TRANSCRIPTION.md): lick items per key / instrument, transcribed phrases.
   | 'licks'

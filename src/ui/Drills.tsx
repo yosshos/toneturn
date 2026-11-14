@@ -391,6 +391,8 @@ const TOPIC_OF: Record<string, Exclude<DrillTopic, 'all' | 'songs' | 'mine'>> = 
   'd-song': 'grooves', 'd-prog': 'styles', 'd-count': 'time', 'd-notation': 'reading', 'd-form': 'reading',
   // PIANO_AUDIT §3: the pianist's ear has its own topic; piano sight-reading sits under reading.
   'k-ear': 'ear',
+  // AUDIT-CONTENT-THEORY §ז.2: the first steps at the piano are hand technique.
+  'k-first': 'hands',
   // GUITAR_DEEPENING: the guitarist's ear has the ear topic; Barry Harris and prog / fusion are styles.
   'g-ear': 'ear', 'g-harris': 'styles', 'g-prog': 'styles',
   'b-up-pos': 'upright', 'b-up-arco': 'upright', 'b-up-scales': 'upright', 'b-up-pizz': 'upright', 'b-up-walk': 'upright', 'b-up-read': 'upright',

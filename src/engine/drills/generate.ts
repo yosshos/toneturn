@@ -4698,7 +4698,19 @@ export function catalog(): FamilyDef[] {
   });
   const FOURS = [10, 3, 8, 1, 6, 11, 4, 9, 2, 7, 0, 5].reverse(); // C F B♭ … up the cycle of 4ths
   const cyc4 = FOURS.slice(FOURS.indexOf(0)).concat(FOURS.slice(0, FOURS.indexOf(0)));
+  // AUDIT-CONTENT-THEORY §ז.2: the first steps, in C, in quarter notes, slow — each opens with its quick lesson.
+  const fs = (kind: string, hands: SpecTemplate['hands'], o: Partial<SpecTemplate> = {}): SpecTemplate => ({ family: 'k-first', kind, hands, perBeat: 1, ...o });
   return [
+    {
+      id: 'k-first',
+      title: t('First steps at the piano', 'צעדים ראשונים בפסנתר'),
+      style: 'both',
+      levels: [
+        JT('k-first', 1, 'Posture and finger numbers: five fingers in C', 'ישיבה ומספרי אצבעות: חמש אצבעות בדו', [fs('five', 'R'), fs('five', 'L')], [0], [50, 72]),
+        JT('k-first', 2, 'C position, hands together', 'עמדת דו, ידיים יחד', [fs('five', 'RL'), fs('five', 'RL', { option: 1 })], [0], [50, 72]),
+        JT('k-first', 3, 'The thumb passes under', 'האגודל עובר מתחת', [fs('thumb-under', 'R'), fs('thumb-under', 'L')], [0], [48, 66]),
+      ],
+    },
     {
       id: 'scales',
       title: t('Scales', 'סולמות'),

@@ -392,8 +392,32 @@ export const EAR_P3_LEVELS: VocalLevel[] = [
 /** F13 L1: echo one phrase of a level-1 public-domain song. */
 export const SONG_ECHO_LEVELS: VocalLevel[] = [lv(1309, 0.6, [songEcho('jacques', 950), songEcho('mary', 1000), songEcho('yonatan', 1000), songEcho('london', 1050)])];
 
+/**
+ * AUDIT-CONTENT-THEORY §ז.2, the first steps (2100): posture with a note held over a sounding drone, the same note
+ * through a lip trill or a straw (semi-occluded, measured like any hold), then sliding onto the drone from either side —
+ * the help for a singer who cannot yet match a pitch. Low in the range, short, every item with the reference sounding.
+ */
+export const FIRST_LEVELS: VocalLevel[] = [
+  lv(2101, 0.55, [
+    { kind: 'hold', seconds: 2, reference: 'during', at: 0.3, difficulty: 700 },
+    { kind: 'hold', seconds: 3, reference: 'during', at: 0.35, difficulty: 720 },
+    { kind: 'hold', seconds: 3, reference: 'during', at: 0.4, difficulty: 740 },
+  ]),
+  lv(2102, 0.55, [
+    { kind: 'hold', seconds: 3, reference: 'during', at: 0.3, difficulty: 740 },
+    { kind: 'hold', seconds: 4, reference: 'during', at: 0.4, difficulty: 760 },
+    { kind: 'hold', seconds: 4, reference: 'during', at: 0.35, difficulty: 780 },
+  ]),
+  lv(2103, 0.55, [
+    { kind: 'glide', seconds: 3, reference: 'before', at: 0.3, steps: [0, 2], difficulty: 800 },
+    { kind: 'glide', seconds: 3, reference: 'before', at: 0.45, steps: [0, -2], difficulty: 820 },
+    { kind: 'glide', seconds: 3, reference: 'before', at: 0.3, steps: [0, 4], difficulty: 850 },
+    { kind: 'glide', seconds: 3, reference: 'before', at: 0.5, steps: [0, -4], difficulty: 870 },
+  ]),
+];
+
 /** Every new level of the families. */
-export const NEW_LEVELS: VocalLevel[] = [...EAR_P3_LEVELS, ...SONG_ECHO_LEVELS, ...MICRO_LEVELS, ...READ_LEVELS, ...MY_SONG_LEVELS, ...STANDARD_MORE_LEVELS, ...SCAT_P2_LEVELS, ...SIGHT_MORE_LEVELS, ...ARPEGGIO_LEVELS, ...SCAT_MORE_LEVELS, ...BREATH_LEVELS, ...PITCH_LEVELS, ...RANGE_LEVELS, ...DYN_LEVELS, ...VIB_LEVELS, ...TIME_LEVELS, ...EAR_LEVELS, ...SONG_LEVELS, ...STANDARD_LEVELS, ...SCAT_LEVELS, ...AGILITY_LEVELS, ...HARMONY_MORE_LEVELS, ...INFLECT_LEVELS];
+export const NEW_LEVELS: VocalLevel[] = [...FIRST_LEVELS, ...EAR_P3_LEVELS, ...SONG_ECHO_LEVELS, ...MICRO_LEVELS, ...READ_LEVELS, ...MY_SONG_LEVELS, ...STANDARD_MORE_LEVELS, ...SCAT_P2_LEVELS, ...SIGHT_MORE_LEVELS, ...ARPEGGIO_LEVELS, ...SCAT_MORE_LEVELS, ...BREATH_LEVELS, ...PITCH_LEVELS, ...RANGE_LEVELS, ...DYN_LEVELS, ...VIB_LEVELS, ...TIME_LEVELS, ...EAR_LEVELS, ...SONG_LEVELS, ...STANDARD_LEVELS, ...SCAT_LEVELS, ...AGILITY_LEVELS, ...HARMONY_MORE_LEVELS, ...INFLECT_LEVELS];
 
 // ---------------------------------------------------------------- the families
 
@@ -419,7 +443,9 @@ export const VOICE_FAMILIES: VoiceFamily[] = [
   { id: 'v-breath', title: { en: 'Breath & sustain', he: 'נשימה והחזקה' }, refs: [1, ...BREATH_LEVELS.map((l) => l.level)], stage: 'A' },
   { id: 'v-pitch', title: { en: 'Pitch & intonation', he: 'גובה ואינטונציה' }, refs: [2, 7, ...PITCH_LEVELS.map((l) => l.level), 704], stage: 'A' },
   { id: 'v-range', title: { en: 'Range & registers', he: 'מנעד ורגיסטרים' }, refs: [4, 6, ...RANGE_LEVELS.map((l) => l.level)], stage: 'A' },
-  { id: 'v-time', title: { en: 'Time feel', he: 'תחושת זמן' }, refs: [9, ...TIME_LEVELS.map((l) => l.level)], stage: 'A' },
+  // AUDIT-CONTENT-THEORY §ב.5: the family opened on its hardest level (old ladder 9, 16ths at ♩66–80); it now sits after
+  // the swing and on-top / laid-back levels, and the family opens on the click.
+  { id: 'v-time', title: { en: 'Time feel', he: 'תחושת זמן' }, refs: [1101, 1102, 1103, 1104, 1105, 9, 1106, 1107], stage: 'A' },
   // P3: F10 L1 echo, L3 intervals and L5 audiation as sung levels, where the plan puts them (L2 = ladder 8).
   { id: 'v-ear', title: { en: "The singer's ear", he: 'האוזן של הזמר' }, refs: [1203, 8, 1204, 1201, 1205, 1202], stage: 'A', before: 1 },
   { id: 'v-dyn', title: { en: 'Dynamics', he: 'דינמיקה' }, refs: [901, 5, ...DYN_LEVELS.slice(1).map((l) => l.level)], stage: 'B' },
@@ -431,11 +457,14 @@ export const VOICE_FAMILIES: VoiceFamily[] = [
   { id: 'v-inflect', title: { en: 'Ornaments & inflections', he: 'קישוטים וגוונים' }, refs: [...nums(500, ORNAMENT_LEVELS), ...INFLECT_LEVELS.map((l) => l.level)], stage: 'C' },
   { id: 'v-standards', title: { en: 'Standards & ballads', he: 'סטנדרטים ובלדות' }, refs: [1401, 1402, 1403, 1404, 1405, 1408, 1406, 1407, 1409, 1410], stage: 'C' },
   { id: 'v-scat', title: { en: 'Scat & improvisation', he: 'סקאט ואלתור' }, refs: [1501, 1507, 1508, 1502, 1503, 1504, 1509, 1505, 1506, 1510], stage: 'C' },
+  // AUDIT-CONTENT-THEORY §ז.2: the first steps open the voice path (VOICE_LATER puts them first; listed here so Barry
+  // Harris stays last in the list).
+  { id: 'v-first', title: { en: 'First steps', he: 'צעדים ראשונים' }, refs: FIRST_LEVELS.map((l) => l.level), stage: 'A' },
   { id: 'v-barry', title: { en: 'Barry Harris lines', he: 'קווים של בארי האריס' }, refs: nums(300, BARRY_LEVELS), stage: 'D' },
 ];
 
 /** The families' level order before P3 put new levels in (a level that was open then stays open). */
-const FORMER_REFS: Record<string, number[]> = { 'v-songs': [1301, 1302, 1303, 1304, 1305, 1306, 1308, 1307], 'v-ear': [8, 1201, 1202] };
+const FORMER_REFS: Record<string, number[]> = { 'v-songs': [1301, 1302, 1303, 1304, 1305, 1306, 1308, 1307], 'v-ear': [8, 1201, 1202], 'v-time': [9, 1101, 1102, 1103, 1104, 1105, 1106, 1107] };
 
 /**
  * Whether a level of a family is open: the family's first, or the one before it (in the family, or by the old
@@ -495,6 +524,9 @@ export const NEW_LEVEL_NAMES: Record<number, Bi> = {
   1801: { en: 'Scoops and falls', he: 'החלקות פנימה ונפילות' },
   1802: { en: 'Blue-note bends and ghost notes', he: 'כיפופי בלוז וצלילי רפאים' },
   1101: { en: 'On the click', he: 'על הקליק' },
+  2101: { en: 'Stand tall, hold with the drone', he: 'עומדים זקוף, מחזיקים עם הצליל' },
+  2102: { en: 'Lip trill or straw: hold the note', he: 'רטט שפתיים או קשית: מחזיקים צליל' },
+  2103: { en: 'Slide onto the note', he: 'מחליקים אל הצליל' },
   1102: { en: 'Rests & pickups', he: 'הפסקות וכניסות' },
   1103: { en: 'Anticipations', he: 'הקדמות' },
   1104: { en: 'Swing eighths', he: 'שמיניות בסווינג' },
@@ -614,6 +646,8 @@ export function probeStarts(s: ProbeScores): Record<string, number> {
   const ok = (x: number | undefined) => (x ?? 0) >= 0.85;
   const jazz = ok(s.guide) && ok(s.echo) && ok(s.time) && ok(s.song);
   if (ok(s.hold)) out['v-breath'] = jazz ? 3 : 2;
+  // A clear hold and echo: the first steps (posture, SOVT, sliding onto a note) are ✓.
+  if (ok(s.hold) && ok(s.echo)) out['v-first'] = 4;
   if (ok(s.echo)) {
     out['v-pitch'] = jazz ? 4 : 3;
     out['v-ear'] = 2;

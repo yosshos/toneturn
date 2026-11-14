@@ -10,6 +10,8 @@ export const FAMILY_GLYPH: Record<string, GlyphKind> = {
   scales: 'scales', arpeggios: 'arp', cadences: 'prog', fingers: 'fingers1234', control: 'hairpin', advanced: 'octave', harris: 'improv', voicings: 'voicing', jazz: 'target', accomp: 'walk', 'k-ear': 'keysear',
   // PIANO_JAZZ: the jazz-piano families.
   'k-sixdim': 'sixdim', 'k-bebop': 'bebop', 'k-reharm': 'reharm',
+  // AUDIT-CONTENT-THEORY §ז.2: the first steps — sitting at the piano; matching a held note (the drone) for the voice.
+  'k-first': 'person', 'v-first': 'drone',
   // GUITAR_DEEPENING: the guitarist's ear, Barry Harris on the neck, prog / fusion.
   'g-ear': 'guitarear', 'g-harris': 'sixdim', 'g-prog': 'oddmeter',
   'g-fretting': 'fingers1234', 'g-picking': 'pick', 'g-legato': 'slur', 'g-scales': 'box', 'g-arps': 'arp', 'g-chords': 'chordbox', 'g-rhythm': 'strum', 'g-lead': 'bend', 'g-fingerstyle': 'pima', 'g-flamenco': 'fan', 'g-jazz': 'prog', 'g-reading': 'sight', 'g-impro': 'improv', 'g-bass': 'bass',

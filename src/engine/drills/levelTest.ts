@@ -154,12 +154,15 @@ const G_JAZZ: Rung[] = [
   r('g-jazz-8', 3, { 'g-jazz': 9, 'g-harris': 5 }),
 ];
 
-/** The guitar test: hands, chords, rhythm, lead, reading, ear; jazz comping only with the jazz add-on (shown levels). */
+/**
+ * The guitar test: chords, rhythm, hands, lead, reading, ear; jazz comping only with the jazz add-on (shown levels).
+ * AUDIT-CONTENT-THEORY §ב.3: in the course path's order — the first chord and strumming before the picking hand.
+ */
 export function guitarStrands(): Strand[] {
   return [
-    { id: 'hands', title: STRAND_TITLE.hands, rungs: G_HANDS },
     { id: 'chords', title: STRAND_TITLE.chords, rungs: G_CHORDS },
     { id: 'rhythm', title: STRAND_TITLE.rhythm, rungs: G_RHYTHM },
+    { id: 'hands', title: STRAND_TITLE.hands, rungs: G_HANDS },
     { id: 'lead', title: STRAND_TITLE.lead, rungs: G_LEAD },
     { id: 'reading', title: STRAND_TITLE.reading, rungs: G_READING },
     { id: 'ear', title: EAR_T, rungs: G_EAR },
@@ -263,11 +266,14 @@ const D_EAR: Rung[] = [
   r('d-ear-5', 0, { 'd-ear': 6 }),
 ];
 
-/** The drums test: hands, grooves, fills, reading, independence, ear (by microphone only the steps it can measure). */
+/**
+ * The drums test: grooves, hands, fills, reading, independence, ear (by microphone only the steps it can measure).
+ * AUDIT-CONTENT-THEORY §ב.6: in the course path's order — the rock beat before the rudiments.
+ */
 export function drumStrands(): Strand[] {
   return [
-    { id: 'hands', title: STRAND_TITLE.hands, rungs: D_HANDS },
     { id: 'grooves', title: STRAND_TITLE.grooves, rungs: D_GROOVES },
+    { id: 'hands', title: STRAND_TITLE.hands, rungs: D_HANDS },
     { id: 'fills', title: STRAND_TITLE.fills, rungs: D_FILLS },
     { id: 'reading', title: STRAND_TITLE.reading, rungs: D_READING },
     { id: 'indep', title: STRAND_TITLE.indep, rungs: D_INDEP },

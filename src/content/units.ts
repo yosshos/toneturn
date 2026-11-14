@@ -15,6 +15,7 @@ import { UNITS as BASS_NICHE } from './mini/bassNiche';
 import { UNITS as BASS_NICHE2 } from './mini/bassNiche2';
 import { UNITS as DRUMS } from './mini/drums';
 import { UNITS as DRUMS_MORE } from './mini/drumsMore';
+import { UNITS as FIRST_STEPS } from './mini/firstSteps';
 
 export const UNIT_LESSON: Record<string, string> = {
   // 0.38 (spec AE): each area file maps its own topics.
@@ -34,6 +35,8 @@ export const UNIT_LESSON: Record<string, string> = {
   ...DRUMS,
   // DRUMS_NICHE_PLAN P2: a few drum levels open with their own quick lesson ("tech:<level id>").
   ...DRUMS_MORE,
+  // AUDIT-CONTENT-THEORY §ז.2: the first steps of each instrument course and the voice ("tech:<level id>", "vocal:<level>").
+  ...FIRST_STEPS,
   // Learning path
   'bflat-two-homes': 'bflat-two-homes',
   'degrees-135': 'degrees-135',

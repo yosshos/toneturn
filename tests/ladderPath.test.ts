@@ -62,9 +62,13 @@ describe('technique and vocal ladders in the course path (0.61, owner)', () => {
     expect(u.steps.filter((x) => x.step.kind !== 'check').length).toBeLessThanOrEqual(9);
   });
 
-  it('the voice course path carries vocal program levels', () => {
-    const u = buildPath(inputFor('voice')).units.find((x) => x.status === 'current')!;
-    expect(u.steps.some((x) => x.step.kind === 'vocal' && x.step.ladder!.ref === '1')).toBe(true);
+  // AUDIT-CONTENT-THEORY §ז.2: the voice path now opens with the first steps (posture over a drone, SOVT, sliding onto
+  // the note); the old level 1 (hold with the reference) follows within the first units.
+  it('the voice course path carries vocal program levels, the first steps first', () => {
+    const v = buildPath(inputFor('voice'));
+    const u = v.units.find((x) => x.status === 'current')!;
+    expect(u.steps.find((x) => x.step.kind === 'vocal')!.step.ladder!.ref).toBe('2101');
+    expect(v.units.slice(0, 3).some((x) => x.steps.some((y) => y.step.kind === 'vocal' && y.step.ladder!.ref === '1'))).toBe(true);
   });
 
   it('only measured takes pass a level: stars from takes at the start / target tempo; ✓ by the playing test below its start', () => {

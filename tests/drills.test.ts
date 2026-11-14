@@ -197,8 +197,9 @@ describe('drills: generate', () => {
     }
     for (const motion of ['contrary', 'third', 'sixth'] as const) expect(scaleSpecs.some((sp) => sp.motion === motion && sp.scale === 'chromatic'), `chromatic ${motion}`).toBe(true);
     for (const oct of [1, 2, 3, 4]) expect(scaleSpecs.some((sp) => sp.octaves === oct), `${oct} octaves`).toBe(true);
-    // No family is thin: every piano family has at least 7 levels.
-    for (const fam of catalog()) expect(fam.levels.length, fam.id).toBeGreaterThanOrEqual(7);
+    // No family is thin: every piano family has at least 7 levels (the three first steps at the piano excepted —
+    // AUDIT-CONTENT-THEORY §ז.2: posture and finger numbers, C position, the thumb passing under).
+    for (const fam of catalog().filter((f) => f.id !== 'k-first')) expect(fam.levels.length, fam.id).toBeGreaterThanOrEqual(7);
   });
 
   it('coverage additions: exact shapes', () => {

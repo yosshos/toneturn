@@ -207,8 +207,10 @@ describe('guitar deepening: the core path and add-ons (§5, owner 2026-11-11)', 
   };
   const ADDON_LEVELS = ['g-rhythm-6', 'g-impro-5', 'g-impro-6', 'g-picking-8', 'g-picking-9', 'g-legato-8'];
 
-  it('no style chosen → the core only: no add-on family or level, no country level', () => {
-    const steps = pathOf(ds());
+  // AUDIT-CONTENT-THEORY §ב.3: with NO choice made the path now carries the jazz add-on (the app's positioning); the core
+  // alone is what a player gets who ticks no add-on.
+  it('no add-on ticked → the core only: no add-on family or level, no country level', () => {
+    const steps = pathOf(ds({ guitarAddOns: [] }));
     const fams = new Set(steps.map((s) => s.ladder!.family));
     for (const f of ['g-jazz', 'g-harris', 'g-prog', 'g-flamenco', 'g-fingerstyle']) expect(fams.has(f), f).toBe(false);
     for (const f of ['g-fretting', 'g-picking', 'g-chords', 'g-rhythm', 'g-scales', 'g-lead', 'g-reading', 'g-ear', 'g-legato', 'g-arps', 'g-impro']) expect(fams.has(f), f).toBe(true);
@@ -216,6 +218,13 @@ describe('guitar deepening: the core path and add-ons (§5, owner 2026-11-11)', 
     for (const id of [...ADDON_LEVELS, 'g-picking-7']) expect(refs, id).not.toContain(id);
     // §5.2 counted 85 with country in the core; the owner left country out (picking 7).
     expect(steps.length).toBe(84);
+  });
+
+  it('no choice made yet → the core plus the jazz add-on (jazz comping, Barry Harris on the neck) at their grades', () => {
+    const refs = pathOf(ds()).map((s) => s.ladder!.ref);
+    expect(refs).toEqual(expect.arrayContaining(['g-jazz-1', 'g-harris-1', 'g-chords-1']));
+    expect(refs.some((r) => r.startsWith('g-prog') || r.startsWith('g-flamenco'))).toBe(false);
+    expect(refs.length).toBe(pathOf(ds({ guitarAddOns: ['jazz'] })).length);
   });
 
   it('each add-on adds its families and levels; all four give the full 129 minus country', () => {

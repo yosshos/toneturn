@@ -112,8 +112,9 @@ describe('the voice families (VOICE_CURRICULUM §5, §9)', () => {
     expect(new Set(all).size).toBe(all.length);
     for (const n of all) expect(vocalLevelByRef(n), `level ${n}`).toBeDefined();
   });
-  it('15 families + Barry Harris, each with its own symbol on the voice path; every step of the path has one', () => {
-    expect(VOICE_FAMILIES.length).toBe(16);
+  // + the first steps (AUDIT-CONTENT-THEORY §ז.2).
+  it('15 families + Barry Harris + the first steps, each with its own symbol on the voice path; every step of the path has one', () => {
+    expect(VOICE_FAMILIES.length).toBe(17);
     const glyphs = VOICE_FAMILIES.map((f) => FAMILY_GLYPH[f.id]);
     for (const g of glyphs) expect(GLYPHS[g], g).toBeDefined();
     const steps = stepCatalogue().filter((s) => inCourse(s, 'voice'));
