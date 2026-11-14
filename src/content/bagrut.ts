@@ -246,7 +246,7 @@ export const EXAMS: ExamDef[] = [
       s('r-chord-read', 'Read the chord symbol', 'קריאת סימול אקורדים', 'chord-read', 6, 6, 4),
       s('r-modes', 'Modes by ear', 'מודוסים בשמיעה', 'modes-ear', 3, 4, 4),
       s('r-reharm', 'Spot the reharmonization', 'זיהוי רה־הרמוניזציה', 'reharm-spot', 2, 3, 5),
-      s('r-meter', 'Odd-time grooves', 'גרוב במשקלים מורכבים', 'prog-meter', 1, 4, 3),
+      s('r-meter', 'Odd-time grooves', 'גרוב במשקלים אי־זוגיים', 'prog-meter', 1, 4, 3),
     ],
     source: 'https://www.rimonschool.co.il/en/?p=175',
   },

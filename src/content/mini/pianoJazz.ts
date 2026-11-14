@@ -21,13 +21,13 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [60, 64, 67, 69] },
       },
       {
-        say: { en: 'And the diminished chord on the 7th: B, D, F, A flat. It holds every note the 6th chord does not.', he: 'ואקורד מוקטן על הדרגה השביעית: סי, רה, פה, לה במול. יש בו כל צליל שאין באקורד השישית.' },
+        say: { en: 'And the diminished chord on the 7th: B, D, F, A flat. It shares no note with the 6th chord.', he: 'ואקורד מוקטן על הדרגה השביעית: סי, רה, פה, לה במול. אין לו אף צליל משותף עם אקורד השישית.' },
         play: [chord([59, 62, 65, 68])],
         show: { notes: [59, 62, 65, 68] },
       },
       {
         say: { en: 'Put them together and you get an 8-note scale. Under each melody note goes the chord that holds it: 6th, diminished, 6th, diminished.', he: 'מחברים אותם ומקבלים סולם של 8 צלילים. מתחת לכל צליל מנגינה בא האקורד שמכיל אותו: שישית, מוקטן, שישית, מוקטן.' },
-        play: [chord([60, 64, 67, 72], 0.6), chord([62, 65, 68, 71], 0.6), chord([64, 67, 69, 72], 0.6), chord([65, 68, 71, 74], 0.6), chord([67, 69, 72, 76], 1)],
+        play: [chord([60, 64, 67, 69], 0.6), chord([62, 65, 68, 71], 0.6), chord([64, 67, 69, 72], 0.6), chord([65, 68, 71, 74], 0.6), chord([67, 69, 72, 76], 1)],
       },
       {
         say: { en: 'The diminished wants to go home: it is the sound of motion, the 6th chord the sound of rest. Play the scale of chords slowly and listen to it breathe in and out.', he: 'המוקטן רוצה לחזור הביתה: הוא הצליל של התנועה, ואקורד השישית הצליל של המנוחה. נגנו את סולם האקורדים לאט והקשיבו איך הוא נושם פנימה והחוצה.' },
@@ -44,7 +44,7 @@ export const LESSONS: MiniLesson[] = [
         play: [chord([60, 64, 67, 69], 0.8), chord([60, 64, 68, 69], 0.8), chord([60, 64, 67, 69])],
       },
       {
-        say: { en: 'Lower one note of a diminished chord a half step and you get a dominant 7th. Raise one a whole step and you get a 7 flat 9 on that note.', he: 'מורידים צליל אחד של אקורד מוקטן בחצי טון ומקבלים ספטאקורד דומיננטי. מרימים אחד בטון שלם ומקבלים 7♭9 על הצליל הזה.' },
+        say: { en: 'Lower one note of a diminished chord a half step and you get a dominant 7th. Raise one a whole step and you get a dominant with a flat 9 on that note (its 7th drops out).', he: 'מורידים צליל אחד של אקורד מוקטן בחצי טון ומקבלים ספטאקורד דומיננטי. מרימים אחד בטון שלם ומקבלים דומיננט עם ♭9 על הצליל הזה (בלי הספטימה).' },
         play: [chord([59, 62, 65, 68], 0.8), chord([59, 62, 67, 68], 0.8), chord([60, 64, 67, 69])],
       },
       {
@@ -74,7 +74,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [53, 57, 60, 64] },
       },
       {
-        say: { en: 'Move to G13 and only two notes move: F, A, B, E. Then C major 9: E, G, B, D. The hand barely travels.', he: 'עוברים ל-G13 ורק שני צלילים זזים: פה, לה, סי, מי. ואז דו מז׳ור 9: מי, סול, סי, רה. היד כמעט לא זזה.' },
+        say: { en: 'Move to G13 and only one note moves: F, A, B, E. Then C major 9: E, G, B, D. The hand barely travels.', he: 'עוברים ל-G13 ורק צליל אחד זז: פה, לה, סי, מי. ואז דו מז׳ור 9: מי, סול, סי, רה. היד כמעט לא זזה.' },
         play: [chord([53, 57, 60, 64], 0.9), chord([53, 57, 59, 64], 0.9), chord([52, 55, 59, 62])],
       },
       {
@@ -83,7 +83,7 @@ export const LESSONS: MiniLesson[] = [
       },
       {
         say: { en: 'Why drop the root? It frees a finger for the colours, the 9th and the 13th, and it keeps the left hand out of the bass player’s way.', he: 'למה לוותר על היסוד? זה משחרר אצבע לצבעים, הנונה והשלוש-עשרה, ומשאיר את יד שמאל מחוץ לדרכו של הבסיסט.' },
-        play: [chord([41, 57, 60, 64], 0.9), rest(0.1), chord([53, 57, 60, 64])],
+        play: [chord([38, 53, 57, 60, 64], 0.9), rest(0.1), chord([53, 57, 60, 64])],
       },
       {
         say: { en: 'Your turn: build each shape up from the note I give.', he: 'תורכם: בנו כל צורה למעלה מהצליל שאני נותן.' },

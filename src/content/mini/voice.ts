@@ -966,7 +966,7 @@ export const LESSONS: MiniLesson[] = [
       {
         say: { en: 'Keys: the order of sharps is F, C, G, D, A, E, B, and each new sharp key is a fifth higher: G has one, D two, A three. Flats run the other way, B, E, A, D, G, C, F: F has one, B flat two.', he: 'סולמות: סדר הדיאזים הוא F, C, G, D, A, E, B, וכל סולם דיאזים חדש גבוה בקווינטה: ל־G יש אחד, ל־D שניים, ל־A שלושה. הבמולים בכיוון ההפוך, B, E, A, D, G, C, F: ל־F יש אחד, ל־B♭ שניים.' },
         play: [notes([55, 62, 69], 0.6)],
-        show: { notes: [55, 62, 69], text: { en: 'G 1♯ → D 2♯ → A 3♯', he: 'G 1♯ ← D 2♯ ← A 3♯' } },
+        show: { notes: [55, 62, 69], text: { en: 'G 1♯ → D 2♯ → A 3♯', he: 'G 1♯ → D 2♯ → A 3♯' } },
       },
       {
         say: { en: 'Intervals: count the letters for the number, then the half steps for the quality. C to E is a third with four half steps, so major; C to E flat has three, so minor. A bluff often keeps the number and swaps the quality.', he: 'מרווחים: סופרים אותיות בשביל המספר, וחצאי טון בשביל הסוג. C עד E זו טרצה עם ארבעה חצאי טון, אז גדולה; C עד E♭ — שלושה, אז קטנה. בלוף משאיר לעיתים קרובות את המספר ומחליף את הסוג.' },

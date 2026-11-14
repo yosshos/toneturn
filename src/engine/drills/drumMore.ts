@@ -472,7 +472,7 @@ function feet(s: DrillSpec, lv: number): Drill {
     default: {
       // Triplets and gallops with both feet: 8th triplets, then the gallop (8th + two 16ths, or two 16ths + 8th).
       if (op === 0) return finish(s, feetRL(gb({ h: 'x..x..x..x..', s: '...x.....x..', k: 'x'.repeat(12) }, 3, 8)), { title: t('Double bass in triplets', 'דאבל בס בטריולות'), bpm: 100, bars: 8, mic: false, goal: { alt: ALT } });
-      const k = op === 1 ? 'x.xxx.xxx.xxx.xx' : 'xx.xxx.xxx.xxx.x';
+      const k = op === 1 ? 'x.xxx.xxx.xxx.xx' : 'xxx.xxx.xxx.xxx.';
       return finish(s, feetRL(gb({ h: 'x.x.x.x.x.x.x.x.', s: BB, k }, 4, 8)), { title: t(`The gallop · ${op === 1 ? '8th + two 16ths' : 'two 16ths + 8th'}`, `הגאלופ · ${op === 1 ? 'שמינית + שתי שש-עשריות' : 'שתי שש-עשריות + שמינית'}`), bpm: 100, bars: 8, mic: false, goal: { alt: ALT } });
     }
   }

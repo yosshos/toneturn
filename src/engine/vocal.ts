@@ -911,7 +911,7 @@ export const HARMONY_LEVELS: VocalLevel[] = [
   // Melody 1-2-3-2-1 / harmony a third above: 3-4-5-4-3 (major key, base = the tonic).
   L(4, 0.58, [H('harmony-line', { melody: [0, 2, 4, 2, 0], steps: [4, 5, 7, 5, 4], bpm: 72, perBeat: 1 }, 1300), H('harmony-line', { melody: [0, 4, 7, 4, 0], steps: [4, 7, 11, 7, 4], bpm: 72, perBeat: 1 }, 1350)]),
   // A sixth below / a third below.
-  L(5, 0.56, [H('harmony-line', { melody: [7, 9, 11, 12, 11, 9, 7], steps: [-2, 0, 2, 4, 2, 0, -2], bpm: 76, perBeat: 1 }, 1400), H('harmony-line', { melody: [4, 5, 7, 9, 7, 5, 4], steps: [0, 2, 4, 5, 4, 2, 0], bpm: 80, perBeat: 1 }, 1400)]),
+  L(5, 0.56, [H('harmony-line', { melody: [7, 9, 11, 12, 11, 9, 7], steps: [-1, 0, 2, 4, 2, 0, -1], bpm: 76, perBeat: 1 }, 1400), H('harmony-line', { melody: [4, 5, 7, 9, 7, 5, 4], steps: [0, 2, 4, 5, 4, 2, 0], bpm: 80, perBeat: 1 }, 1400)]),
 ].map((lv) => ({ ...lv, items: lv.items.map((it) => ({ ...it, id: it.id.replace(/^v/, 'h') })) }));
 
 /** What the app plays during a harmony item (MIDI), in the same octave placement as the sung notes. */

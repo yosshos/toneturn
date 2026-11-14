@@ -806,10 +806,10 @@ function textureItem(seed: number, level: number, id: string): ChoiceQuestion {
 // ======================================================================= DEEPENED: cadence-types L4–5
 
 const CADS: Record<string, { r: string[]; en: string; he: string; say: string[] }> = {
-  authentic: { r: ['I', 'IV', 'V7', 'I'], en: 'Authentic (V → I)', he: 'אותנטית (V ← I)', say: ['authentic', 'perfect'] },
-  plagal: { r: ['I', 'V', 'IV', 'I'], en: 'Plagal (IV → I, "Amen")', he: 'פלגלית (IV ← I, "אמן")', say: ['plagal', 'amen'] },
+  authentic: { r: ['I', 'IV', 'V7', 'I'], en: 'Authentic (V → I)', he: 'אותנטית (V → I)', say: ['authentic', 'perfect'] },
+  plagal: { r: ['I', 'V', 'IV', 'I'], en: 'Plagal (IV → I, "Amen")', he: 'פלגלית (IV → I, "אמן")', say: ['plagal', 'amen'] },
   half: { r: ['I', 'IV', 'ii', 'V'], en: 'Half (ends on V)', he: 'חצי קדנצה (נגמרת על V)', say: ['half'] },
-  deceptive: { r: ['I', 'IV', 'V7', 'vi'], en: 'Deceptive (V → vi)', he: 'מטעה (V ← vi)', say: ['deceptive', 'interrupted'] },
+  deceptive: { r: ['I', 'IV', 'V7', 'vi'], en: 'Deceptive (V → vi)', he: 'מטעה (V → vi)', say: ['deceptive', 'interrupted'] },
 };
 /** A phrase with a tune on top and a broken-chord accompaniment (spec AE §10.3: cadences in texture). */
 function inTexture(romans: string[], tonic: number): Stimulus {
@@ -838,12 +838,12 @@ function inTexture(romans: string[], tonic: number): Stimulus {
   return ev(out, voiced.length * 4 * beat + 0.4);
 }
 const CAD_PAIRS: Record<string, { pair: [string, string]; en: string; he: string; say: string[] }> = {
-  'V-I': { pair: ['V7', 'I'], en: 'V → I', he: 'V ← I', say: ['five one'] },
-  'IV-I': { pair: ['IV', 'I'], en: 'IV → I', he: 'IV ← I', say: ['four one'] },
-  'ii-V': { pair: ['ii', 'V'], en: 'ii → V', he: 'ii ← V', say: ['two five'] },
-  'IV-V': { pair: ['IV', 'V'], en: 'IV → V', he: 'IV ← V', say: ['four five'] },
-  'I-V': { pair: ['I', 'V'], en: 'I → V', he: 'I ← V', say: ['one five'] },
-  'V-vi': { pair: ['V7', 'vi'], en: 'V → vi', he: 'V ← vi', say: ['five six'] },
+  'V-I': { pair: ['V7', 'I'], en: 'V → I', he: 'V → I', say: ['five one'] },
+  'IV-I': { pair: ['IV', 'I'], en: 'IV → I', he: 'IV → I', say: ['four one'] },
+  'ii-V': { pair: ['ii', 'V'], en: 'ii → V', he: 'ii → V', say: ['two five'] },
+  'IV-V': { pair: ['IV', 'V'], en: 'IV → V', he: 'IV → V', say: ['four five'] },
+  'I-V': { pair: ['I', 'V'], en: 'I → V', he: 'I → V', say: ['one five'] },
+  'V-vi': { pair: ['V7', 'vi'], en: 'V → vi', he: 'V → vi', say: ['five six'] },
 };
 function cadenceDeep(seed: number, level: number, id: string): ChoiceQuestion {
   const rnd = rng(seed);

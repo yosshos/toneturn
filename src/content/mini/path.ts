@@ -53,7 +53,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [70], key: 'Eb', text: { en: 'E♭ major: B♭ = 5', he: 'מי במול מז׳ור: סי במול = 5' } },
       },
       {
-        say: { en: 'Why 5? Count up the E-flat major scale: E-flat, F, G, A-flat, B-flat. Five steps from home.', he: 'למה 5? סופרים למעלה בסולם מי במול מז׳ור: מי במול, פה, סול, לה במול, סי במול. חמישה צעדים מהבית.' },
+        say: { en: 'Why 5? Count up the E-flat major scale: E-flat, F, G, A-flat, B-flat. The fifth note from home.', he: 'למה 5? סופרים למעלה בסולם מי במול מז׳ור: מי במול, פה, סול, לה במול, סי במול. הצליל החמישי מהבית.' },
         play: [notes([63, 65, 67, 68, 70], 0.55)],
         show: { notes: [63, 65, 67, 68, 70], key: 'Eb', text: { en: 'E♭ F G A♭ B♭ = 1 2 3 4 5', he: '1 2 3 4 5' } },
       },
@@ -287,7 +287,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [60], text: { en: 'mmm…', he: 'מממ…' } },
       },
       {
-        say: { en: 'Five is five steps up the scale: do, re, mi, fa, sol. Climb there and stop.', he: 'חמש זה חמישה צעדים למעלה בסולם: דו, רה, מי, פה, סול. מטפסים לשם ועוצרים.' },
+        say: { en: 'Five is the fifth note of the scale: do, re, mi, fa, sol. Climb there and stop.', he: 'חמש זה הצליל החמישי בסולם: דו, רה, מי, פה, סול. מטפסים לשם ועוצרים.' },
         play: [notes([60, 62, 64, 65, 67], 0.5), note(67, 1.2)],
         show: { notes: [60, 62, 64, 65, 67], key: 'C', text: { en: 'do re mi fa SOL', he: 'דו רה מי פה סול' } },
       },

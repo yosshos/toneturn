@@ -299,7 +299,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'A♭ + F♯ → G + G', he: 'לה♭ + פה♯ → סול + סול' } },
       },
       {
-        say: { en: 'Borrowed chords come from the parallel minor while you stay in major: iv (F A♭ C), ♭VI (A♭ C E♭), ♭VII (B♭ D F). The A♭ is the giveaway — a darker 6th inside a bright key.', he: 'אקורדים שאולים מגיעים מהמינור המקביל בזמן שנשארים במז׳ור: iv (פה לה♭ דו), ♭VI (לה♭ דו מי♭), ♭VII (סי♭ רה פה). הלה במול מסגיר אותם — 6 כהה בתוך סולם בהיר.' },
+        say: { en: 'Borrowed chords come from the parallel minor while you stay in major: iv (F A♭ C), ♭VI (A♭ C E♭), ♭VII (B♭ D F). The A♭ is the giveaway — a darker 6th inside a bright key.', he: 'אקורדים שאולים מגיעים מהמינור שעל אותה טוניקה (בדו מז׳ור: מדו מינור) בזמן שנשארים במז׳ור: iv (פה לה♭ דו), ♭VI (לה♭ דו מי♭), ♭VII (סי♭ רה פה). הלה במול מסגיר אותם — 6 כהה בתוך סולם בהיר.' },
         play: [chords([ch(0), ch(8), ch(10), ch(0)], 0.9)],
         show: { text: { en: 'I – ♭VI – ♭VII – I', he: 'I – ♭VI – ♭VII – I' } },
       },

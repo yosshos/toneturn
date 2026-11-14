@@ -253,7 +253,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [61, 60], key: 'C', text: { en: '♭2 → 1', he: '♭2 → 1' } },
       },
       {
-        say: { en: 'Where they come from: ♭3, ♭6 and ♭7 are borrowed from the parallel minor. ♯4 often comes from a chord that leads to V — in C, D7 with its F sharp, then G, then home.', he: 'מאיפה הן באות: ♭3, ♭6 ו־♭7 מושאלות מהמינור המקביל. ♯4 מגיע לעיתים קרובות מאקורד שמוביל אל V — בדו, D7 עם הפה דיאז שלו, אחר כך סול, ואז הבית.' },
+        say: { en: 'Where they come from: ♭3, ♭6 and ♭7 are borrowed from the parallel minor. ♯4 often comes from a chord that leads to V — in C, D7 with its F sharp, then G, then home.', he: 'מאיפה הן באות: ♭3, ♭6 ו־♭7 מושאלות מהמינור שעל אותה טוניקה. ♯4 מגיע לעיתים קרובות מאקורד שמוביל אל V — בדו, D7 עם הפה דיאז שלו, אחר כך סול, ואז הבית.' },
         play: [{ kind: 'chord', midis: [48, 64, 67, 72], duration: 0.8 }, { kind: 'chord', midis: [50, 66, 69, 72], duration: 0.8 }, { kind: 'chord', midis: [43, 67, 71, 74], duration: 0.8 }, { kind: 'chord', midis: [48, 64, 67, 72], duration: 1.2 }],
         show: { text: { en: 'C · D7 · G · C', he: 'C · D7 · G · C' } },
       },

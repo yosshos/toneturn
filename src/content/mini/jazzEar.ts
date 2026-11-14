@@ -174,13 +174,13 @@ export const LESSONS: MiniLesson[] = [
       {
         say: { en: 'Standards chain ii–Vs into new keys. After a ii–V–I, the next ii–V can lead to IV, to the relative minor, a whole step down, or up a minor third.', he: 'סטנדרטים משרשרים ii–V אל סולמות חדשים. אחרי ii–V–I, ה־ii–V הבא יכול להוביל ל־IV, למינור המקביל, טון שלם למטה או טרצה קטנה למעלה.' },
         play: [jazzProgStim(C, [[2, 'm9', 2], [7, 'nine', 2], [0, 'maj9', 4], [0, 'm9', 2], [5, 'nine', 2], [10, 'maj9', 4]])],
-        show: { text: { en: 'C → B♭ (a whole step down)', he: 'C ← B♭ (טון שלם למטה)' } },
+        show: { text: { en: 'C → B♭ (a whole step down)', he: 'C → B♭ (טון שלם למטה)' } },
       },
       {
         say: { en: 'To hear where it goes, keep the first home in your ear and compare the new one with it.', he: 'כדי לשמוע לאן זה הולך, החזיקו את הבית הראשון באוזן והשוו אליו את הבית החדש.' },
       },
       {
-        say: { en: 'Modal interchange borrows from the parallel minor: iv m6, ♭VImaj7, ♭VII7, ♭IIImaj7, iiø7. Each darkens the major key for a moment.', he: 'שאילה מודלית לוקחת מהמינור המקביל: iv m6, ‏♭VImaj7, ‏♭VII7, ‏♭IIImaj7, ‏iiø7. כל אחד מכהה את המז׳ור לרגע.' },
+        say: { en: 'Modal interchange borrows from the parallel minor: iv m6, ♭VImaj7, ♭VII7, ♭IIImaj7, iiø7. Each darkens the major key for a moment.', he: 'שאילה מודלית לוקחת מהמינור שעל אותה טוניקה: iv m6, ‏♭VImaj7, ‏♭VII7, ‏♭IIImaj7, ‏iiø7. כל אחד מכהה את המז׳ור לרגע.' },
         play: [jazzProgStim(C, [[0, 'maj9', 4], [5, 'm6', 4], [0, 'maj9', 4]])],
         show: { text: { en: 'Cmaj9 Fm6 Cmaj9', he: 'Cmaj9 Fm6 Cmaj9' } },
       },

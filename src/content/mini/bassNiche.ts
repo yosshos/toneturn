@@ -81,7 +81,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'G F E D C B A G', he: 'G F E D C B A G' } },
       },
       {
-        say: { en: 'The fix is one extra half step, between the root and the flat seven. Now G, F, E and D sit on the beats.', he: 'התיקון הוא חצי טון אחד נוסף, בין היסוד לספטימה הקטנה. עכשיו G, F, E ו-D יושבים על הפעמות.' },
+        say: { en: 'The fix is one extra half step, between the root and the flat seven. Now G, F, D and B sit on the beats.', he: 'התיקון הוא חצי טון אחד נוסף, בין היסוד לספטימה הקטנה. עכשיו G, F, D ו-B יושבים על הפעמות.' },
         play: [notes([43, 42, 41, 40, 38, 36, 35, 33, 31], 0.33)],
         show: { text: { en: 'G F♯ F E D C B A G', he: 'G F♯ F E D C B A G' } },
       },

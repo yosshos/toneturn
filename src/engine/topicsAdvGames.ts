@@ -268,7 +268,7 @@ const CHAINS: Record<string, { ch: Ch[]; n: ReturnType<typeof nm> }>[] = [
     down: { ch: [[0, 'maj7', 2], [3, 'dom7', 2], [8, 'maj7', 2], [11, 'dom7', 2], [4, 'maj7', 2], [7, 'dom7', 2], [0, 'maj7', 4]], n: nm('Centres down in major 3rds (I–♭VI–III)', 'מרכזים יורדים בטרצות גדולות (I–♭VI–III)', 'down major thirds', 'giant steps') },
     up: { ch: [[0, 'maj7', 2], [11, 'dom7', 2], [4, 'maj7', 2], [3, 'dom7', 2], [8, 'maj7', 2], [7, 'dom7', 2], [0, 'maj7', 4]], n: nm('Centres up in major 3rds (I–III–♭VI)', 'מרכזים עולים בטרצות גדולות (I–III–♭VI)', 'up major thirds', 'countdown') },
     min3: { ch: [[0, 'maj7', 2], [4, 'dom7', 2], [9, 'maj7', 2], [1, 'dom7', 2], [6, 'maj7', 2], [7, 'dom7', 2], [0, 'maj7', 4]], n: nm('Centres down in minor 3rds (I–VI–♯IV)', 'מרכזים יורדים בטרצות קטנות (I–VI–♯IV)', 'minor thirds') },
-    whole: { ch: [[0, 'maj7', 2], [3, 'dom7', 2], [10, 'maj7', 2], [1, 'dom7', 2], [8, 'maj7', 2], [7, 'dom7', 2], [0, 'maj7', 4]], n: nm('Centres down in whole steps (I–♭VII–♭VI)', 'מרכזים יורדים בטונים (I–♭VII–♭VI)', 'whole steps') },
+    whole: { ch: [[0, 'maj7', 2], [5, 'dom7', 2], [10, 'maj7', 2], [3, 'dom7', 2], [8, 'maj7', 2], [7, 'dom7', 2], [0, 'maj7', 4]], n: nm('Centres down in whole steps (I–♭VII–♭VI)', 'מרכזים יורדים בטונים (I–♭VII–♭VI)', 'whole steps') },
   },
 ];
 TOPIC_GEN['jazz-chains'] = {

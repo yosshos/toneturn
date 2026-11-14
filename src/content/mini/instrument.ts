@@ -675,7 +675,7 @@ LESSONS.push(
       {
         say: { en: 'The tenth is a bassist’s favourite: from the E string to the G string, the same fret gives a minor tenth and one fret up a major tenth.', he: 'הדצימה אהובה על בסיסטים: ממיתר E למיתר G, אותו סריג נותן דצימה קטנה וסריג אחד קדימה דצימה גדולה.' },
         play: [notes([31, 47], 0.7)],
-        show: { text: { en: 'G → B: major 10th', he: 'G ← B: דצימה גדולה' } },
+        show: { text: { en: 'G → B: major 10th', he: 'G → B: דצימה גדולה' } },
       },
       {
         say: { en: 'On a guitar the G and B strings break the pattern and every shape shifts there. On the bass nothing breaks it: there is no shift to remember.', he: 'בגיטרה המיתרים G ו־B שוברים את הדפוס וכל צורה זזה שם. בבס שום דבר לא שובר אותו: אין הזזה לזכור.' },

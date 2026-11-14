@@ -18,6 +18,16 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.87.1',
+    date: '2026-11-14',
+    en: [
+      'Theory check: arrows between chords read the right way in Hebrew (V → I), "parallel minor" is no longer called relative, and several jazz and Barry Harris demos play exactly the voicings they describe; small fixes in voice, drums and the Coltrane-cycle game.',
+    ],
+    he: [
+      'בדיקת תיאוריה: החצים בין אקורדים מוצגים נכון בעברית (V → I), "מינור מקביל" לא נקרא יותר "מינור יחסי", וכמה הדגמות ג׳אז ובארי האריס מנגנות בדיוק את הוויסינגים שהן מתארות; תיקונים קטנים בקול, בתופים ובמשחק מחזורי קולטריין.',
+    ],
+  },
+  {
     version: '0.87.0',
     date: '2026-11-14',
     en: [

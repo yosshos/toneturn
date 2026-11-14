@@ -129,7 +129,7 @@ export const SWAPS: { base: string[]; at: number; sub: string; level: number; wh
   { base: ['I', 'vi', 'IV', 'V'], at: 1, sub: 'iii', level: 1, what: nm('vi → iii', 'vi → iii', 'three for six') },
   { base: ['I', 'IV', 'V', 'I'], at: 3, sub: 'vi', level: 1, what: nm('I → vi (deceptive)', 'I → vi (הטעיה)', 'deceptive') },
   { base: ['ii7', 'V7', 'Imaj7', 'Imaj7'], at: 1, sub: 'bII7', level: 2, what: nm('V7 → ♭II7 (tritone sub)', 'V7 → ♭II7 (תחליף טריטון)', 'tritone sub') },
-  { base: ['Imaj7', 'vi7', 'ii7', 'V7'], at: 1, sub: 'V/vi', level: 2, what: nm('vi7 → VI7 (secondary dominant)', 'vi7 → VI7 (דומיננטה משנית)', 'secondary dominant') },
+  { base: ['Imaj7', 'vi7', 'ii7', 'V7'], at: 1, sub: 'V/vi', level: 2, what: nm('vi7 → III (V/vi, secondary dominant)', 'vi7 → III (V/vi, דומיננטה משנית)', 'secondary dominant') },
   // EAR_THEORY_AUDIT: level 2 always changed chord 2 (both swaps at index 1) — now every position occurs.
   { base: ['Imaj7', 'vi7', 'ii7', 'V7'], at: 3, sub: 'bII7', level: 2, what: nm('V7 → ♭II7 (tritone sub)', 'V7 → ♭II7 (תחליף טריטון)', 'tritone sub') },
   { base: ['Imaj7', 'vi7', 'ii7', 'V7'], at: 0, sub: 'iii7', level: 2, what: nm('Imaj7 → iii7', 'Imaj7 → iii7', 'three for one') },

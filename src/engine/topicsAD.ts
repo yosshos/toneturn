@@ -102,10 +102,10 @@ TOPIC_GEN['find-tonic'] = {
 };
 
 const CAD_TYPES: Record<string, { r: string[]; en: string; he: string; say: string[] }> = {
-  authentic: { r: ['I', 'IV', 'V7', 'I'], en: 'Authentic (V → I)', he: 'אותנטית (V ← I)', say: ['authentic', 'perfect'] },
-  plagal: { r: ['I', 'V', 'IV', 'I'], en: 'Plagal (IV → I, "Amen")', he: 'פלגלית (IV ← I, "אמן")', say: ['plagal', 'amen'] },
+  authentic: { r: ['I', 'IV', 'V7', 'I'], en: 'Authentic (V → I)', he: 'אותנטית (V → I)', say: ['authentic', 'perfect'] },
+  plagal: { r: ['I', 'V', 'IV', 'I'], en: 'Plagal (IV → I, "Amen")', he: 'פלגלית (IV → I, "אמן")', say: ['plagal', 'amen'] },
   half: { r: ['I', 'IV', 'ii', 'V'], en: 'Half (ends on V)', he: 'חצי קדנצה (נגמרת על V)', say: ['half'] },
-  deceptive: { r: ['I', 'IV', 'V7', 'vi'], en: 'Deceptive (V → vi)', he: 'מטעה (V ← vi)', say: ['deceptive', 'interrupted'] },
+  deceptive: { r: ['I', 'IV', 'V7', 'vi'], en: 'Deceptive (V → vi)', he: 'מטעה (V → vi)', say: ['deceptive', 'interrupted'] },
 };
 TOPIC_GEN['cadence-types'] = {
   title: { en: 'Four kinds of cadence', he: 'ארבעה סוגי קדנצות' },

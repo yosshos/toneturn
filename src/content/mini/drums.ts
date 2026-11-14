@@ -5,13 +5,13 @@ import type { NoteEvent, Stimulus } from '../../engine/lesson';
 import type { MiniLesson } from '../miniTypes';
 
 const ev = (events: NoteEvent[], length: number): Stimulus => ({ kind: 'events', events, length });
-type Hit = [number, 'kick' | 'snare' | 'hat' | 'crash' | 'tom-hi' | 'tom-lo' | 'ride', number?];
+type Hit = [number, 'kick' | 'snare' | 'hat' | 'hat-open' | 'crash' | 'tom-hi' | 'tom-lo' | 'ride', number?];
 /** Kit events from [beat, drum, velocity] at `bpm` (beats = quarters, or eighths with `eighths`). */
 function kit(bpm: number, beats: number, hits: Hit[]): Stimulus {
   const b = 60 / bpm;
-  const MIDI = { kick: 36, snare: 38, hat: 42, crash: 49, 'tom-hi': 48, 'tom-lo': 43, ride: 51 } as const;
+  const MIDI = { kick: 36, snare: 38, hat: 42, 'hat-open': 46, crash: 49, 'tom-hi': 48, 'tom-lo': 43, ride: 51 } as const;
   return ev(
-    hits.map(([t, d, v]) => ({ midi: MIDI[d], start: t * b, duration: d === 'crash' ? 0.6 : 0.08, velocity: v ?? (d === 'hat' || d === 'ride' ? 0.45 : 0.8), perc: d })),
+    hits.map(([t, d, v]) => ({ midi: MIDI[d], start: t * b, duration: d === 'crash' ? 0.6 : d === 'hat-open' ? 0.45 : 0.08, velocity: v ?? (d === 'hat' || d === 'ride' ? 0.45 : 0.8), perc: d })),
     beats * b + 0.4,
   );
 }
@@ -117,7 +117,7 @@ export const LESSONS: MiniLesson[] = [
     more: [
       { say: { en: 'Stems up are the hands, stems down the feet. Reading one direction at a time — hands first, then feet — makes a busy bar simple.', he: 'צוואר למעלה הוא הידיים, צוואר למטה הרגליים. קריאה של כיוון אחד בכל פעם — קודם ידיים, אחר כך רגליים — הופכת תיבה עמוסה לפשוטה.' } },
       { say: { en: 'Tuplets carry their number in a bracket: 3 for triplets, 5 for quintuplets, 6 for sextuplets — that many notes evenly in the space of the beat.', he: 'טריולות ודומיהן נושאות את המספר שלהן בסוגר: 3 לטריולה, 5 לחמישייה, 6 לשישייה — כך וכך תווים שווים בתוך הפעמה.' }, play: [kit(60, 3, [...every(0, 1, 1 / 3, 'snare'), ...every(1, 2, 0.2, 'snare'), ...every(2, 3, 1 / 6, 'snare')])] },
-      { say: { en: 'Open and closed hi-hat: an x alone is closed and short; with a small circle above it the hat is open and rings until the next closed note or the foot.', he: 'היי־האט פתוח וסגור: x לבד הוא סגור וקצר; עם עיגול קטן מעליו ההיי־האט פתוח ומצלצל עד התו הסגור הבא או עד הרגל.' }, play: [kit(90, 4, [...every(0, 4, 0.5, 'hat'), [1.5, 'crash', 0.35], [3.5, 'crash', 0.35], [0, 'kick'], [1, 'snare'], [2, 'kick'], [3, 'snare']])] },
+      { say: { en: 'Open and closed hi-hat: an x alone is closed and short; with a small circle above it the hat is open and rings until the next closed note or the foot.', he: 'היי־האט פתוח וסגור: x לבד הוא סגור וקצר; עם עיגול קטן מעליו ההיי־האט פתוח ומצלצל עד התו הסגור הבא או עד הרגל.' }, play: [kit(90, 4, [...every(0, 4, 0.5, 'hat'), [1.5, 'hat-open', 0.5], [3.5, 'hat-open', 0.5], [0, 'kick'], [1, 'snare'], [2, 'kick'], [3, 'snare']])] },
       { say: { en: 'Rolls are written as tremolo slashes too: three slashes on a long note ask for a closed, buzzed roll, as smooth as you can make it, from the start of the note to its end.', he: 'גם גלגולים נכתבים בקווי טרמולו: שלושה קווים על תו ארוך מבקשים גלגול סגור ומזמזם, חלק ככל האפשר, מתחילת התו ועד סופו.' } },
       { say: { en: 'The common mistake is to read the floor tom as the kick: both are low round heads. The kick is in the lowest space, the floor tom one step higher.', he: 'הטעות הנפוצה היא לקרוא את טום הרצפה כקיק: שניהם ראשים עגולים נמוכים. הקיק ברווח התחתון, טום הרצפה מדרגה אחת מעליו.' } },
       { say: { en: 'To keep: position tells the drum, the notehead tells drum or cymbal, stems tell hands or feet, the marks tell how. Read one voice at a time, then stack them.', he: 'מה לזכור: המיקום אומר איזה תוף, ראש התו אומר תוף או מצילה, הצוואר אומר ידיים או רגליים, והסימנים אומרים איך. קוראים קול אחד בכל פעם, ואז מניחים אותם זה על זה.' } },
@@ -133,7 +133,7 @@ export const LESSONS: MiniLesson[] = [
       { say: { en: 'Hi {name}! Forms have standard shapes. The blues is 12 bars; a jazz standard is often AABA, four sections of 8 bars. Mark each new section with a crash on its 1.', he: 'היי {name}! לצורות יש מבנים קבועים. הבלוז הוא 12 תיבות; סטנדרט ג׳אז הוא הרבה פעמים AABA, ארבעה קטעים של 8 תיבות. מסמנים כל קטע חדש בקראש על ה-1 שלו.' }, play: [kit(220, 33, [...every(0, 32, 1, 'ride'), ...[0, 8, 16, 24, 32].flatMap((b): Hit[] => [[b, 'crash'], [b, 'kick']])])], show: { text: { en: 'A 8 · A 8 · B 8 · A 8', he: 'A 8 · A 8 · B 8 · A 8' } } },
       { say: { en: 'Charts save space with signs. Repeat bars send you back; a first ending is played the first time only, the second ending the second time.', he: 'תרשימים חוסכים מקום בעזרת סימנים. סימני חזרה שולחים אחורה; סיומת ראשונה מנוגנת רק בפעם הראשונה, והשנייה בפעם השנייה.' }, play: [kit(200, 25, [...every(0, 24, 1, 'hat'), ...[0, 8, 16, 24].flatMap((b): Hit[] => [[b, 'crash'], [b, 'kick']]), [6, 'snare'], [7, 'snare'], [22, 'snare'], [23, 'snare']])], show: { text: { en: '‖: A :‖ 1. — 2.', he: '‖: A :‖ 1. — 2.' } } },
       { say: { en: 'D.S. al Coda means: go back to the sign, play until "To Coda", then jump to the coda. In these steps the road map shows only the signs — you follow them yourself.', he: 'D.S. al Coda פירושו: חוזרים לסימן, מנגנים עד "To Coda", ואז קופצים לקודה. בצעדים האלה מפת הדרך מראה רק את הסימנים — אתם עוקבים אחריהם בעצמכם.' }, show: { text: { en: '𝄋 … To Coda ⊕ … D.S. al Coda → ⊕', he: '𝄋 … To Coda ⊕ … D.S. al Coda ← ⊕' } } },
-      { say: { en: 'The blues: twelve bars, the chord changing in bars 5, 9 and 10. A small fill in bar 12 sends the band back to the top.', he: 'הבלוז: שתים־עשרה תיבות, והאקורד מתחלף בתיבות 5, 9 ו-10. מעבר קטן בתיבה 12 שולח את הלהקה חזרה להתחלה.' }, play: [kit(240, 49, [...every(0, 48, 1, 'ride'), ...[0, 16, 32, 36].map((b): Hit => [b, 'kick']), [46, 'snare'], [46.5, 'snare'], [47, 'tom-lo'], [48, 'crash'], [48, 'kick']])] },
+      { say: { en: 'The blues: twelve bars, the chord changing in bars 5, 7, 9, 10 and 11. A small fill in bar 12 sends the band back to the top.', he: 'הבלוז: שתים־עשרה תיבות, והאקורד מתחלף בתיבות 5, 7, 9, 10 ו-11. מעבר קטן בתיבה 12 שולח את הלהקה חזרה להתחלה.' }, play: [kit(240, 49, [...every(0, 48, 1, 'ride'), ...[0, 16, 32, 36].map((b): Hit => [b, 'kick']), [46, 'snare'], [46.5, 'snare'], [47, 'tom-lo'], [48, 'crash'], [48, 'kick']])] },
       { say: { en: 'In the exercises the chart shows the sections and their lengths. You keep time, count the bars, and land a crash with the kick on every section start.', he: 'בתרגילים התרשים מראה את הקטעים ואת האורכים שלהם. אתם שומרים על הזמן, סופרים תיבות, ונוחתים בקראש עם הקיק על כל פתיחת קטע.' } },
     ],
     more: [

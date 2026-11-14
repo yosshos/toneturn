@@ -357,12 +357,12 @@ export const LESSONS: MiniLesson[] = [
       {
         say: { en: 'Hi {name}! A cadence is how a phrase ends — like punctuation. Five to one is a full stop. Four to one is a gentle "Amen".', he: 'היי {name}! קדנצה היא הדרך שבה משפט נגמר — כמו סימן פיסוק. חמש לאחת זו נקודה. ארבע לאחת זה "אמן" עדין.' },
         play: [phrase([I, IV, V, I]), rest(0.4), phrase([I, V, IV, I])],
-        show: { text: { en: 'V → I · IV → I', he: 'V ← I · IV ← I' } },
+        show: { text: { en: 'V → I · IV → I', he: 'V → I · IV → I' } },
       },
       {
         say: { en: 'Some phrases stop on five — a question mark. And a deceptive cadence sets up home, then surprises you with a sad chord instead.', he: 'יש משפטים שנעצרים על חמש — סימן שאלה. וקדנצה מטעה מכינה את הבית, ואז מפתיעה באקורד עצוב במקום.' },
         play: [phrase([I, IV, [50, 62, 65], V]), rest(0.4), phrase([I, IV, V, vi])],
-        show: { text: { en: '… V ? · V → vi !', he: '… V ? · V ← vi !' } },
+        show: { text: { en: '… V ? · V → vi !', he: '… V ? · V → vi !' } },
       },
       {
         say: { en: 'Sometimes the music changes home altogether. That is a key change, or modulation — the ground shifts under your feet.', he: 'לפעמים המוזיקה מחליפה בית לגמרי. זה מעבר סולם, או מודולציה — הקרקע זזה מתחת לרגליים.' },
@@ -436,7 +436,7 @@ export const LESSONS: MiniLesson[] = [
       {
         say: { en: 'Hi {name}! Many musicians think of chords as numbers: one, four, five. In C that is C, F and G. In G it is G, C and D.', he: 'היי {name}! הרבה מוזיקאים חושבים על אקורדים כמספרים: אחת, ארבע, חמש. בדו זה דו, פה וסול. בסול זה סול, דו ורה.' },
         play: [phrase([I, IV, V, I])],
-        show: { text: { en: 'I IV V → C F G', he: 'I IV V ← C F G' } },
+        show: { text: { en: 'I IV V → C F G', he: 'I IV V → C F G' } },
       },
       {
         say: { en: 'A sequence repeats a little motif one step higher, and then higher again. Your ear expects the next step before it comes.', he: 'סקוונצה חוזרת על מוטיב קטן צעד אחד למעלה, ושוב למעלה. האוזן מצפה לצעד הבא עוד לפני שהוא מגיע.' },

@@ -61,7 +61,7 @@ export const LESSONS: MiniLesson[] = [
     ],
     more: [
       { say: { en: 'Why these habits? Chords whose roots fall a fifth share notes and resolve tension step by step. That is the backbone of tonal music.', he: 'למה ההרגלים האלה? אקורדים שהשורשים שלהם יורדים בקווינטה חולקים צלילים ופותרים מתח צעד אחר צעד. זה עמוד השדרה של המוזיקה הטונאלית.' }, play: prog([vi, ii, V, I]) },
-      { say: { en: 'Borrowed chords bring color from the parallel minor. ♭VI and ♭VII lead home with a heroic, film-music sound.', he: 'אקורדים שאולים מביאים צבע מהמינור המקביל. ♭VI ו־♭VII מובילים הביתה בצליל הרואי, של מוזיקת סרטים.' }, play: prog([I, bVI, bVII, I]) },
+      { say: { en: 'Borrowed chords bring color from the parallel minor. ♭VI and ♭VII lead home with a heroic, film-music sound.', he: 'אקורדים שאולים מביאים צבע מהמינור שעל אותה טוניקה. ♭VI ו־♭VII מובילים הביתה בצליל הרואי, של מוזיקת סרטים.' }, play: prog([I, bVI, bVII, I]) },
       { say: { en: 'The minor four, iv, is the bittersweet one: IV turns minor just before home.', he: 'הרביעית המינורית, iv, היא הדו־ערכית: IV הופך למינור רגע לפני הבית.' }, play: prog([I, IV, iv, I]) },
       { say: { en: 'A secondary dominant points to another chord: a major chord on 3 pulls toward vi as if vi were home for a moment.', he: 'דומיננטה משנית מצביעה על אקורד אחר: אקורד מז׳ורי על 3 מושך ל־vi כאילו vi היה הבית לרגע.' }, play: prog([I, [40, 59, 64, 68], vi]) },
       { say: { en: 'A common mistake is to guess by the melody alone. Follow the bass: it usually tells you the next root.', he: 'טעות נפוצה היא לנחש לפי המנגינה בלבד. עקבו אחרי הבס: לרוב הוא מגלה את השורש הבא.' } },

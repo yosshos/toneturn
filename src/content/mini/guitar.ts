@@ -147,7 +147,7 @@ export const LESSONS: MiniLesson[] = [
       },
       {
         say: { en: 'On the guitar we play it in position, swung, and harmonise each note with a drop-2 6th or diminished chord.', he: 'בגיטרה מנגנים את זה במצב, בסווינג, ומהרמנים כל צליל באקורד דרופ 2 של שישית או מוקטן.' },
-        play: [chord([55, 60, 64, 69], 0.8), chord([56, 59, 65, 71], 0.8), chord([60, 64, 69, 72], 1.2)],
+        play: [chord([55, 60, 64, 69], 0.8), chord([56, 62, 65, 71], 0.8), chord([57, 64, 67, 72], 1.2)],
       },
       {
         say: { en: 'Your turn: the scale in two positions, swung, slowly. Feel the chord tones fall on the beats, then speed up.', he: 'תורכם: הסולם בשני מצבים, בסווינג, לאט. מרגישים את צלילי האקורד נופלים על הפעמות, ואז מאיצים.' },
@@ -169,7 +169,7 @@ export const LESSONS: MiniLesson[] = [
       },
       {
         say: { en: 'Pivot: when the line runs out of neck, jump the next note an octave and keep going in the same direction of the scale.', he: 'פיבוט: כשהקו נגמר על הצוואר, מקפיצים את הצליל הבא אוקטבה וממשיכים באותו כיוון בסולם.' },
-        play: [notes([67, 65, 64, 76, 74, 72], 0.3)],
+        play: [notes([67, 65, 64, 74, 72, 71], 0.3)],
       },
       {
         say: { en: 'On the guitar, learn each idea in one position first, then in a second one. The drills check the notes and that chord tones land on the beats.', he: 'בגיטרה לומדים כל רעיון קודם במצב אחד ואז בשני. התרגילים בודקים את הצלילים ושצלילי האקורד נוחתים על הפעמות.' },

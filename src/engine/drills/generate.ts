@@ -3267,7 +3267,7 @@ function genKeysEar(s: DrillSpec): Drill {
       });
       windows.push([0, 16]);
       ask = t('Hear a melody — play a chord under each note: I, IV or V', 'שמעו מנגינה — נגנו אקורד מתחת לכל צליל: I, IV או V');
-      name = t('Harmonise a melody with I, IV, V', 'הרמון מנגינה ב-I, IV, V');
+      name = t('Harmonise a melody with I, IV, V', 'הרמוניזציה למנגינה ב-I, IV, V');
       break;
     }
     case 'transpose': {
@@ -5372,7 +5372,7 @@ export function catalog(): FamilyDef[] {
         E(4, 'A two-bar melody', 'מנגינה של שתי תיבות', [ke('echo-melody'), ke('echo-melody', 1)], [0, 7, 5, 2, 10]),
         E(5, 'The bass line of four chords', 'קו הבס של ארבעה אקורדים', [{ ...ke('bass-line'), hands: 'L' }, { ...ke('bass-line', 1), hands: 'L' }], [0, 7, 5, 2, 9]),
         E(6, 'A progression by ear', 'מהלך אקורדים בשמיעה', [ke('chords'), ke('chords', 1)], [0, 7, 5, 2, 10]),
-        E(7, 'Harmonise a melody with I, IV, V', 'הרמון מנגינה ב-I, IV, V', [{ ...ke('harmonise'), hands: 'RL' }], [0, 7, 5, 2, 10, 9]),
+        E(7, 'Harmonise a melody with I, IV, V', 'הרמוניזציה למנגינה ב-I, IV, V', [{ ...ke('harmonise'), hands: 'RL' }], [0, 7, 5, 2, 10, 9]),
         E(8, 'Transpose a melody', 'טרנספוזיציה של מנגינה', [ke('transpose'), ke('transpose', 1)], [0, 7, 5, 2, 10, 3]),
         // PIANO_AUDIT P3: two-part playback — a melody over a bass, both hands.
         E(9, 'Two parts: melody and bass', 'שני קולות: מנגינה ובס', [{ ...ke('two-part'), hands: 'RL' }, { ...ke('two-part', 1), hands: 'RL' }], [0, 7, 5, 2, 10]),

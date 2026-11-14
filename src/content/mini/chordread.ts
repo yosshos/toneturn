@@ -93,7 +93,7 @@ export const LESSONS: MiniLesson[] = [
       {
         say: { en: 'In real music, inversions make smooth bass lines, like C, G/B, Am stepping down. To keep: bass first, then rebuild in thirds to find the root, then read the third and the fifth.', he: 'במוזיקה אמיתית, היפוכים יוצרים קווי בס חלקים, כמו C, G/B, Am שיורדים בצעדים. לזכור: קודם הבס, אחר כך בונים מחדש בטרצות כדי למצוא את השורש, ואז קוראים את הטרצה והקווינטה.' },
         play: [chord([48, 55, 64], 1), chord([47, 55, 62], 1), chord([45, 52, 60], 1.3)],
-        show: { notes: [48, 47, 45], text: { en: 'C → G/B → Am', he: 'C ← G/B ← Am' } },
+        show: { notes: [48, 47, 45], text: { en: 'C → G/B → Am', he: 'C → G/B → Am' } },
       },
     ],
   },

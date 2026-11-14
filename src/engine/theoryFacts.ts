@@ -275,7 +275,7 @@ const GEN: Record<Exclude<FactTopic, 'trio' | 'trio-ear'>, (lv: FactLevel, r: Rn
     const wrong = sameSize(inv).filter((x) => x[3] !== inv[3]);
     const truth = coin(r) || !wrong.length;
     const said = truth ? inv : pick(r, wrong);
-    return fact('intervals', 3, 'theory', truth, { en: `Inverted, ${a_(i[0])} becomes ${a_(said[0])}`, he: `${i[1]} בהיפוך הופכת ל${said[1]}` }, { en: `Sizes add to 9, qualities swap (major↔minor): ${i[0]} → ${inv[0]}`, he: `הגדלים מסתכמים ל־9, האיכויות מתחלפות (גדולה↔קטנה): ${i[1]} ← ${inv[1]}` });
+    return fact('intervals', 3, 'theory', truth, { en: `Inverted, ${a_(i[0])} becomes ${a_(said[0])}`, he: `${i[1]} בהיפוך הופכת ל${said[1]}` }, { en: `Sizes add to 9; major↔minor, augmented↔diminished, perfect stays perfect: ${i[0]} → ${inv[0]}`, he: `הגדלים מסתכמים ל־9; גדולה↔קטנה, מוגדלת↔מוקטנת, זכה נשארת זכה: ${i[1]} ← ${inv[1]}` });
   },
 
   chords(lv, r) {
@@ -381,7 +381,7 @@ const GEN: Record<Exclude<FactTopic, 'trio' | 'trio-ear'>, (lv: FactLevel, r: Rn
         { en: `The relative major of ${rm} minor is ${k} major`, he: `המז׳ור המקביל של ${rm} מינור הוא ${k} מז׳ור` });
     }
     return fromRows('circle', 3, 'theory', r, [
-      [`C minor is the parallel minor of C major`, `C מינור הוא המינור המקביל־באותו־שורש (parallel) של C מז׳ור`, true, 'Parallel = same tonic; relative = same key signature', 'parallel = אותה טוניקה; relative (מקביל) = אותם סימני היתק'],
+      [`C minor is the parallel minor of C major`, `C מינור הוא המינור שעל אותה טוניקה (parallel) של C מז׳ור`, true, 'Parallel = same tonic; relative = same key signature', 'parallel = אותה טוניקה; relative (מקביל) = אותם סימני היתק'],
       [`The relative major of E minor is B major`, `המז׳ור המקביל של E מינור הוא B מז׳ור`, false, 'E minor ↔ G major (one sharp)', 'E מינור ↔ G מז׳ור (דיאז אחד)'],
       [`F♯ major and G♭ major sound the same`, `F♯ מז׳ור ו־G♭ מז׳ור נשמעים אותו דבר`, true, 'Enharmonic keys: 6 sharps = 6 flats', 'סולמות אנהרמוניים: 6 דיאזים = 6 במולים'],
       [`Going around the circle of fifths visits all twelve keys`, `סיבוב במעגל הקווינטות עובר בכל שנים־עשר הסולמות`, true, '12 fifths up return to the start', '12 קווינטות למעלה חוזרות להתחלה'],
@@ -425,10 +425,10 @@ const GEN: Record<Exclude<FactTopic, 'trio' | 'trio-ear'>, (lv: FactLevel, r: Rn
       ['The leading tone is the 7th degree', 'הצליל המוביל הוא הדרגה השביעית', true, 'In major, 7 leads up a half step to 8', 'במז׳ור, 7 מוביל בחצי טון אל 8'],
       ['The subdominant is the 5th degree', 'הסובדומיננטה היא הדרגה החמישית', false, 'Subdominant = 4; dominant = 5', 'סובדומיננטה = 4; דומיננטה = 5'],
       ['In minor, V is usually a major chord (from harmonic minor)', 'במינור, V הוא בדרך כלל אקורד מז׳ור (מהמינור ההרמוני)', true, 'The raised 7th makes V major — a real dominant', '7 המוגבהת הופכת את V למז׳ור — דומיננט אמיתי'],
-      ['A plagal cadence is IV → I', 'קדנצה פלגלית היא IV ← I', true, 'IV → I, the "Amen" cadence', 'IV ← I, קדנצת "אמן"'],
-      ['A deceptive cadence is V → I', 'קדנצה מטעה היא V ← I', false, 'Deceptive = V → vi; V → I is authentic', 'מטעה = V ← vi; V ← I היא אותנטית'],
+      ['A plagal cadence is IV → I', 'קדנצה פלגלית היא IV → I', true, 'IV → I, the "Amen" cadence', 'IV → I, קדנצת "אמן"'],
+      ['A deceptive cadence is V → I', 'קדנצה מטעה היא V → I', false, 'Deceptive = V → vi; V → I is authentic', 'מטעה = V → vi; V → I היא אותנטית'],
       ['A half cadence ends on V', 'חצי קדנצה נגמרת על V', true, 'It stops on the dominant — open', 'היא עוצרת על הדומיננטה — פתוחה'],
-      ['In a V7 chord, the 7th usually resolves up', 'באקורד V7, הספטימה נפתרת בדרך כלל למעלה', false, 'The 7th resolves down a step (e.g. F → E in G7 → C)', 'הספטימה נפתרת צעד למטה (למשל F ← E ב־G7 ← C)'],
+      ['In a V7 chord, the 7th usually resolves up', 'באקורד V7, הספטימה נפתרת בדרך כלל למעלה', false, 'The 7th resolves down a step (e.g. F → E in G7 → C)', 'הספטימה נפתרת צעד למטה (למשל F → E ב־G7 → C)'],
     ]);
   },
 

@@ -60,7 +60,7 @@ export const LESSONS: MiniLesson[] = [
       },
       {
         say: { en: 'sus4 swaps the 3 for a 4, so the chord hangs in the air; 7sus4 adds the 7. add9 keeps the 3 and adds a 9, no seventh. And 7alt piles ♯9 and ♭13 onto a dominant.', he: 'ב־sus4 ה־4 מחליף את ה־3, והאקורד נשאר תלוי באוויר; 7sus4 מוסיף את ה־7. ‏add9 שומר על ה־3 ומוסיף 9, בלי ספטימה. ו־7alt מעמיס ♯9 ו־♭13 על הדומיננט.' },
-        play: [ch([43, 60, 62, 67], 1.1), ch([43, 60, 65, 69], 1.1), ch([43, 59, 62, 69], 1.1), ch([43, 59, 65, 70, 75], 1.4)],
+        play: [ch([43, 60, 62, 67], 1.1), ch([43, 60, 62, 65], 1.1), ch([43, 59, 62, 69], 1.1), ch([43, 59, 65, 70, 75], 1.4)],
         show: { notes: [43, 60, 62, 67], chord: true, key: 'C', text: { en: 'sus4 · 7sus4 · add9 · 7alt', he: 'sus4 · 7sus4 · add9 · 7alt' } },
       },
       {
@@ -167,7 +167,7 @@ export const LESSONS: MiniLesson[] = [
       {
         say: { en: 'To hear the inversion, ignore the top and sing the lowest note, then ask which chord tone it is. Root position sounds grounded. Second inversion sounds restless: here C/G leans into G7, then resolves to C.', he: 'כדי לשמוע את ההיפוך, התעלמו מהצליל העליון ושירו את הנמוך ביותר, ואז שאלו איזה צליל באקורד הוא. מצב יסודי נשמע יציב. היפוך שני נשמע חסר מנוחה: כאן C/G נשען על G7 ואז נפתר ל־C.' },
         play: [ch([43, 60, 64, 67], 1), ch([43, 59, 62, 65], 1), ch([36, 55, 64, 72], 1.5)],
-        show: { notes: [43, 60, 64, 67], chord: true, key: 'C', text: { en: 'C/G → G7 → C', he: 'C/G ← G7 ← C' } },
+        show: { notes: [43, 60, 64, 67], chord: true, key: 'C', text: { en: 'C/G → G7 → C', he: 'C/G → G7 → C' } },
       },
       {
         say: { en: 'Good voicings move as little as possible. Keep the shared notes, and move the others by step. C, F, G7, C: each upper voice moves a step or stays put.', he: 'וויסינג טוב זז כמה שפחות. שומרים על הצלילים המשותפים ומזיזים את האחרים בצעד. C, ‏F, ‏G7, ‏C: כל קול עליון זז צעד או נשאר במקום.' },
