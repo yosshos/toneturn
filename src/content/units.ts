@@ -24,6 +24,7 @@ import { UNITS as HARRIS2 } from './mini/harris2';
 import { UNITS as HARMONY3 } from './mini/harmony3';
 import { UNITS as HARRIS_PIVOT } from './mini/harrisPivot'; // BH-G
 import { UNITS as VL_EAR } from './mini/vlEar';
+import { UNITS as KEY_MOVES } from './mini/keyMoves';
 
 export const UNIT_LESSON: Record<string, string> = {
   // 0.38 (spec AE): each area file maps its own topics.
@@ -52,6 +53,7 @@ export const UNIT_LESSON: Record<string, string> = {
   ...HARMONY3,
   ...HARRIS_PIVOT,
   ...VL_EAR,
+  ...KEY_MOVES,
   // Learning path
   'bflat-two-homes': 'bflat-two-homes',
   'degrees-135': 'degrees-135',

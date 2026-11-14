@@ -658,6 +658,21 @@ export const GLYPHS: Record<string, Glyph> = {
       {p('M8 18l8-1.5 M8 12h8 M8 6l8-1.5 M2 22h20', false)}
     </>
   ),
+  // AUDIT-GAPS-2: key changes — a note carried along an arc to a new key (guitar: over a string).
+  'family:k-keys': () => (
+    <>
+      {head(5, 18, 2.4)}
+      {head(19, 12, 2.4)}
+      {p('M4 15c1-7 11-9 15-5 M15.5 8.2l3.6 2 1.2-3.8', false)}
+    </>
+  ),
+  'family:g-keys': () => (
+    <>
+      {head(5, 16, 2.4)}
+      {head(19, 10, 2.4)}
+      {p('M4 13c1-7 11-9 15-5 M15.5 6.2l3.6 2 1.2-3.8 M2 21h20', false)}
+    </>
+  ),
   'family:k-ear': () => p('M8 9c0-4 2.5-6 5-6s5 2 5 5.5c0 3-2.5 3.6-3 6 M11 9c0-1.6 1-2.6 2.2-2.6s2.2 1 2.2 2.4 M3 15h18v6H3z M9 15v6 M15 15v6'),
   // Drums (DRUMS_AUDIT I2): a snare drum and two sticks.
   'family:drums': () => p('M4 11c0 1.7 3.6 3 8 3s8-1.3 8-3-3.6-3-8-3-8 1.3-8 3z M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6 M8 13.7v6 M12 14v6.2 M16 13.7v6 M5 3l6.5 6.5 M19 3l-6.5 6.5'),

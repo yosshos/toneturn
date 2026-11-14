@@ -140,6 +140,9 @@ export const TOPIC_MARK: Record<string, string> = {
   'negative-harmony': 'neg',
   // AUDIT-CONTENT-THEORY §ה.2: voice leading by ear.
   'vl-ear': 'VL♪',
+  // AUDIT-GAPS-2 #5/#19: how the key changed (the diminished door), and a tune's key centres.
+  'modulation-means': '°7→',
+  'key-centres': 'I→I→I',
   // VOICE_CURRICULUM: the voice path's topics (each its own mark next to the 16 vocal families).
   'sing-intervals': 'P5↑',
   'song-sing': 'tune',

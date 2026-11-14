@@ -1064,6 +1064,31 @@ Object.assign(GLYPHS, {
     </g>
   ),
 });
+// AUDIT-GAPS-2: key changes — one note head carried to another key along an arc (piano), over strings (guitar), over
+// the bass's thick strings (bass).
+const keyArc = (
+  <>
+    {head(-15, 13, 6, 4.4)}
+    {head(15, 5, 6, 4.4)}
+    <path d="M-16 3 C-13 -17 11 -20 15 -5" {...sw} strokeWidth={2.6} />
+    <path d="M9 -10 L15 -4 L20 -11" {...sw} strokeWidth={2.6} strokeLinejoin="round" />
+  </>
+);
+Object.assign(GLYPHS, {
+  keymove: keyArc,
+  gkeymove: (
+    <>
+      {keyArc}
+      <path d="M-26 20 H26 M-26 24 H26" stroke={I} strokeWidth={1.4} />
+    </>
+  ),
+  bkeymove: (
+    <>
+      {keyArc}
+      <path d="M-26 21 H26" stroke={I} strokeWidth={3.2} />
+    </>
+  ),
+});
 export type GlyphKind = keyof typeof GLYPHS;
 
 /** Emoji left in content data → the closest symbol of our set (0.61: no emoji in the interface). */

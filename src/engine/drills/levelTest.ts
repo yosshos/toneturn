@@ -57,7 +57,9 @@ const CHORDS_JAZZ: Rung[] = [
   r('voicings-2', 5, { cadences: 2, voicings: 3, 'k-vl': 2 }),
   r('voicings-3', 10, { cadences: 3, voicings: 4, 'k-sixdim': 1, 'k-vl': 3 }),
   r('voicings-4', 3, { cadences: 4, voicings: 5, 'k-sixdim': 2, 'k-reharm': 1, 'k-vl': 4 }),
-  r('voicings-9', 2, { cadences: 5, voicings: 10, 'k-sixdim': 4, 'k-reharm': 3, 'k-vl': 7, 'k-theory': 1 }),
+  r('voicings-9', 2, { cadences: 5, voicings: 10, 'k-sixdim': 4, 'k-reharm': 3, 'k-vl': 7, 'k-theory': 1, 'k-keys': 4 }),
+  // AUDIT-GAPS-2: key changes — one diminished, four keys, voice-led (the top step: it proves the voice leading too).
+  r('k-keys-7', 9, { cadences: 5, voicings: 10, 'k-sixdim': 5, 'k-reharm': 3, 'k-vl': 7, 'k-theory': 1, 'k-keys': 8 }),
 ];
 const CHORDS_CLASSICAL: Rung[] = [
   r('cadences-1', 7, { cadences: 2 }),
@@ -155,7 +157,9 @@ const G_JAZZ: Rung[] = [
   r('g-jazz-1', 0, { 'g-jazz': 2, 'g-harris': 1 }),
   r('g-jazz-2', 5, { 'g-jazz': 3, 'g-harris': 2 }),
   r('g-jazz-4', 10, { 'g-jazz': 5, 'g-harris': 3 }),
-  r('g-jazz-8', 3, { 'g-jazz': 9, 'g-harris': 5, 'g-theory': 1 }),
+  r('g-jazz-8', 3, { 'g-jazz': 9, 'g-harris': 5, 'g-theory': 1, 'g-keys': 2 }),
+  // AUDIT-GAPS-2: key changes in drop 2 (one diminished, four keys).
+  r('g-keys-7', 2, { 'g-jazz': 9, 'g-harris': 5, 'g-theory': 1, 'g-keys': 8 }),
 ];
 
 /**
@@ -201,7 +205,9 @@ const B_WALK: Rung[] = [
   r('b-walk-3', 10, { 'b-walk': 4, 'b-swing': 2 }),
   r('b-walk-5', 3, { 'b-walk': 6, 'b-swing': 2, 'b-barry': 1 }),
   r('b-walk-7', 7, { 'b-walk': 8, 'b-swing': 3, 'b-barry': 2 }),
-  r('b-walk-9', 0, { 'b-walk': 10, 'b-swing': 4, 'b-barry': 3 }),
+  r('b-walk-9', 0, { 'b-walk': 10, 'b-swing': 4, 'b-barry': 3, 'b-keys': 2 }),
+  // AUDIT-GAPS-2: the line through a key change (one diminished, four keys).
+  r('b-keys-7', 5, { 'b-walk': 10, 'b-swing': 4, 'b-barry': 3, 'b-keys': 8 }),
 ];
 const B_READING: Rung[] = [
   r('b-read-2', 4, { 'b-read': 3, 'b-posread': 1 }),

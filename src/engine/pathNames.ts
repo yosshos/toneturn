@@ -168,6 +168,9 @@ const SHORT: Record<string, L2> = {
   'negative-harmony': { en: 'Negative harmony', he: 'הרמוניה שלילית' },
   // AUDIT-CONTENT-THEORY §ה.2
   'vl-ear': { en: 'Hear the voices', he: 'שומעים קולות' },
+  // AUDIT-GAPS-2 #5/#19
+  'modulation-means': { en: 'How it modulates', he: 'איך עוברים סולם' },
+  'key-centres': { en: 'Key centres', he: 'מרכזים טונליים' },
   // lessons
   'basics-shape': { en: 'Melody shape', he: 'צורת מנגינה' },
   'rhythm-shift': { en: 'Move the rhythm', he: 'הזזת קצב' },
