@@ -27,7 +27,7 @@ import {
   type SingRunQuestion,
   type Stimulus,
 } from '../engine/lesson';
-import { evaluateSung, type SungResult } from '../engine/sing';
+import { intervalOctaveOk, evaluateSung, type SungResult } from '../engine/sing';
 import { SEQ_TOL_CENTS, SING_PASS_CENTS, seqPulse, seqTiming, type SeqPulse } from '../engine/singPulse';
 import { gradeSungSequence } from '../engine/memory';
 import { gradeReading,
@@ -871,6 +871,13 @@ export class LessonController {
           this.setSession(newTurn(this.s, 'playback'));
           await this.playStim(q.stimulus.slice(-1), signal);
         }
+        continue;
+      }
+      // An interval from a played note: the right note name in the wrong octave is wrong ("octave off").
+      if (q.promptBy === 'interval' && q.interval && sung.detectedMidi !== null && !intervalOctaveOk(sung.detectedMidi, q.targetMidi - q.interval.semis, q.interval.semis)) {
+        const wrong = { ...sung, status: 'wrong' as const, remarks: ['octave-off' as const] };
+        this.emit('sung', wrong);
+        if (await this.evaluate('wrong', signal, wrong, { timeMs: this.elapsed(voicedAt), modality: 'sing', remark: l === 'en' ? 'Octave off' : 'אוקטבה לא נכונה' })) return;
         continue;
       }
       this.emit('sung', sung);
