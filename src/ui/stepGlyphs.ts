@@ -12,6 +12,8 @@ export const FAMILY_GLYPH: Record<string, GlyphKind> = {
   'k-sixdim': 'sixdim', 'k-bebop': 'bebop', 'k-reharm': 'reharm',
   // THEORY_PLAY: theory you play (two stacked triads).
   'k-theory': 'tpair', 'g-theory': 'gtpair',
+  // AUDIT-CONTENT-THEORY §ז.2: the first steps — sitting at the piano; matching a held note (the drone) for the voice.
+  'k-first': 'person', 'v-first': 'drone',
   // GUITAR_DEEPENING: the guitarist's ear, Barry Harris on the neck, prog / fusion.
   'g-ear': 'guitarear', 'g-harris': 'sixdim', 'g-prog': 'oddmeter',
   // Voice leading (AUDIT-CONTENT-THEORY §ה.2): piano and guitar, one symbol (voices stepping chord to chord).

@@ -264,7 +264,8 @@ export const LESSONS: MiniLesson[] = [
       },
       {
         say: { en: 'The augmented sixth: two notes spread apart and move outward to the same note, in the bass and on top. It pours into V.', he: 'הסקסטה המוגדלת: שני צלילים שמתרחקים זה מזה אל אותו צליל, בבס ולמעלה. היא נשפכת אל ה־V.' },
-        play: [chord([C - 16, C, C + 3, C + 6], 1.2), chord([C - 17, C - 1, C + 2, C + 7], 1.5)],
+        // AUDIT-CONTENT-THEORY #10: the French sixth (A♭ C D F♯) — the German one (with E♭) goes to V in parallel fifths.
+        play: [chord([C - 16, C, C + 2, C + 6], 1.2), chord([C - 17, C - 1, C + 2, C + 7], 1.5)],
       },
       {
         say: { en: 'Borrowed chords come from the minor key while you stay in major. The minor four gives a sweet, sad touch on the way home.', he: 'אקורדים שאולים מגיעים מהמינור בזמן שנשארים במז׳ור. הרביעית המינורית נותנת נגיעה מתוקה ועצובה בדרך הביתה.' },

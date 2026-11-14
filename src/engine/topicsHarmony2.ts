@@ -430,7 +430,8 @@ function chromLevel(level: number, rnd: () => number): { minor: boolean; opts: R
       };
     case 3: {
       // R6: the +6 has ♭6 in the bass falling to 5; V/V is in root position; both resolve to V, then I.
-      const aug6 = rnd() < 0.5 ? v(8, 0, 3, 6) : v(8, 0, 2, 6); // German or French
+      // AUDIT-CONTENT-THEORY #10: the French sixth only — a German sixth straight to V makes parallel fifths (A♭–E♭ → G–D).
+      const aug6 = v(8, 0, 2, 6);
       return {
         minor: false,
         ask: { en: 'Which chord leads into V: an augmented sixth, or V/V?', he: 'איזה אקורד מוביל ל־V: סקסטה מוגדלת, או V/V?' },
@@ -807,7 +808,8 @@ function textureItem(seed: number, level: number, id: string): ChoiceQuestion {
 
 const CADS: Record<string, { r: string[]; en: string; he: string; say: string[] }> = {
   authentic: { r: ['I', 'IV', 'V7', 'I'], en: 'Authentic (V → I)', he: 'אותנטית (V → I)', say: ['authentic', 'perfect'] },
-  plagal: { r: ['I', 'V', 'IV', 'I'], en: 'Plagal (IV → I, "Amen")', he: 'פלגלית (IV → I, "אמן")', say: ['plagal', 'amen'] },
+  // AUDIT-CONTENT-THEORY #12: no V → IV retrogression before the plagal close.
+  plagal: { r: ['I', 'vi', 'IV', 'I'], en: 'Plagal (IV → I, "Amen")', he: 'פלגלית (IV → I, "אמן")', say: ['plagal', 'amen'] },
   half: { r: ['I', 'IV', 'ii', 'V'], en: 'Half (ends on V)', he: 'חצי קדנצה (נגמרת על V)', say: ['half'] },
   deceptive: { r: ['I', 'IV', 'V7', 'vi'], en: 'Deceptive (V → vi)', he: 'מטעה (V → vi)', say: ['deceptive', 'interrupted'] },
 };

@@ -877,7 +877,7 @@ export const LESSONS: MiniLesson[] = [
     area: 'jazz',
     emoji: '〰️',
     title: { en: 'Barry Harris: half steps in dominant lines', he: 'בארי האריס: חצאי טונים בקווי דומיננט' },
-    takeaway: { en: 'Down the dominant scale, add half steps so chord tones land on the beat: one between 1 and ♭7; from 3, 5, 7 up to three; from 2, 4, 6 two.', he: 'בירידה בסולם הדומיננט מוסיפים חצאי טונים כדי שצלילי האקורד ינחתו על הפעמה: אחד בין 1 ל־♭7; מ־3, 5, 7 עד שלושה; מ־2, 4, 6 שניים.' },
+    takeaway: { en: 'Down the dominant scale, add half steps so chord tones land on the beat: one between 1 and ♭7; from 3, 5, 7 up to three; from 2, 4, 6 none, or two.', he: 'בירידה בסולם הדומיננט מוסיפים חצאי טונים כדי שצלילי האקורד ינחתו על הפעמה: אחד בין 1 ל־♭7; מ־3, 5, 7 עד שלושה; מ־2, 4, 6 אפס, או שניים.' },
     steps: [
       {
         say: { en: 'Hey {name}! Bebop lines sound smooth because the chord tones land on the beats. Barry Harris had clear rules for it, on the dominant scale.', he: 'היי {name}! קווי ביבופ נשמעים חלק כי צלילי האקורד נוחתים על הפעמות. לבארי האריס היו כללים ברורים לזה, על סולם הדומיננט.' },
@@ -905,7 +905,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: FROM_3_THREE, key: 'C', text: { en: '3–2 · 2–1 · 1–♭7', he: '3–2 · 2–1 · 1–♭7' } },
       },
       {
-        say: { en: 'Start on 2, 4 or 6 — notes outside the chord — and the rule is two: between 2 and 1, and between 1 and ♭7.', he: 'מתחילים על 2, 4 או 6 — צלילים מחוץ לאקורד — והכלל הוא שניים: בין 2 ל־1, ובין 1 ל־♭7.' },
+        say: { en: 'Start on 2, 4 or 6 — notes outside the chord — and you add none, or two: between 2 and 1, and between 1 and ♭7.', he: 'מתחילים על 2, 4 או 6 — צלילים מחוץ לאקורד — ומוסיפים אפס, או שניים: בין 2 ל־1, ובין 1 ל־♭7.' },
         play: [chord(C7, 0.8), rest(0.2), line(FROM_2_TWO)],
         show: { notes: FROM_2_TWO, key: 'C', text: { en: '2–1 · 1–♭7', he: '2–1 · 1–♭7' } },
       },
@@ -1749,7 +1749,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'E F G F E D C', he: 'מי פה סול פה מי רה דו' } },
       },
       {
-        say: { en: 'The common mistake: putting the 6 chord under a diminished note. D over C6 clashes; D gets B°7. Wrong, then right:', he: 'הטעות הנפוצה: לשים אקורד 6 מתחת לצליל של הדימיניש. רה מעל C6 מתנגש; רה מקבל B°7. לא נכון, ואז נכון:' },
+        say: { en: 'The common mistake: putting the 6 chord under a diminished note. D belongs to the diminished, B°7, not to C6 — so D gets B°7. Wrong, then right:', he: 'הטעות הנפוצה: לשים אקורד 6 מתחת לצליל של הדימיניש. רה שייך לדימיניש, B°7, ולא ל־C6 — ולכן רה מקבל B°7. לא נכון, ואז נכון:' },
         play: [chord([57, 64, 67, 74], 1.3), rest(0.3), chord(BLK[1], 1.4)],
         show: { text: { en: 'D on C6 ✗ · D on B°7 ✓', he: 'רה על C6 ✗ · רה על B°7 ✓' } },
       },

@@ -24,6 +24,8 @@ export type FamilyId =
   | 'g-vl'
   // THEORY_PLAY (TP-1…TP-4): theory you play — pentatonic and triad-pair lines, upper structures, line clichés, reharm.
   | 'k-theory'
+  // AUDIT-CONTENT-THEORY §ז.2: first steps at the piano — posture, finger numbers, C position, the thumb passing under.
+  | 'k-first'
   | 'custom' // the player's own drills
   // Licks & transcription (docs/SPEC-LICKS-TRANSCRIPTION.md): lick items per key / instrument, transcribed phrases.
   | 'licks'

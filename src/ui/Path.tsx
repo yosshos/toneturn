@@ -3,7 +3,7 @@
 // "back to my step" button (§10.1). Reduced motion: no glide, no stagger, no bounce.
 
 import { GLYPHS } from './Glyph';
-import { ladderFamiliesFor, ladderHiddenFor, withLadderFacts } from '../engine/ladderFacts';
+import { ladderFamiliesFor, ladderHiddenFor, pathGuitarAddOns, withLadderFacts } from '../engine/ladderFacts';
 import { drillSettingsOf } from './Drills';
 import { Iso } from './Iso';
 import { courseInput } from '../engine/courses';
@@ -159,7 +159,9 @@ export function pathInputFrom(s: Settings, p: Progress, now = new Date()): PathI
   // 0.67: the Ear course in exam-prep mode weighs the path by what the exams test (the old Exams course).
   const inp = courseInput(base, course, !!s.examPrep);
   // 0.61 (owner): an instrument / voice course teaches its technique ladders as path steps, passed only by measured takes.
-  const ds = drillSettingsOf(s);
+  // AUDIT-CONTENT-THEORY §ב.3: until the player picks guitar add-ons, the path carries the jazz add-on (pathGuitarAddOns).
+  const ds0 = drillSettingsOf(s);
+  const ds = { ...ds0, guitarAddOns: s.drills?.guitarAddOns ?? pathGuitarAddOns({ ...ds0, guitarAddOns: undefined }) };
   const families = s.drills?.inPath === false ? [] : ladderFamiliesFor(course, ds, s.bassTuning, drumMicOf(s.drumKit));
   if (!families.length) return inp;
   return {

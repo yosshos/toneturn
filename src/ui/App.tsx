@@ -1089,7 +1089,8 @@ export function App() {
       toolFrom.current = 'path';
       setVocalWarmup(false);
       setVocalLevel(Number(step.ladder.ref));
-      return go('vocal');
+      // A vocal level with its own quick lesson ("vocal:<level>", the first steps) opens with it the first time.
+      return gate(`vocal:${step.ladder.ref}`, () => go('vocal'));
     }
     // A game inside the unit (0.38): its result is recorded as the step's stars when the game ends.
     if (step.kind === 'game' && step.game) {

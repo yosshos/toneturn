@@ -59,8 +59,14 @@ export const COURSE_AREAS: Record<CourseId, DomainId[]> = {
 
 const INSTR: Record<string, CourseId> = { keys: 'keys', piano: 'keys', guitar: 'guitar', bass: 'bass', drums: 'drums' };
 
+/** The keyboard map 1–3 (key-notes): offered to every player and in the Ear course too (AUDIT-CONTENT-THEORY §ב.1). */
+export const isKeysForAll = (s: Partial<Pick<PathStep, 'topic' | 'level'>>): boolean => s.topic === 'key-notes' && (s.level ?? 9) <= 3;
+
 /** Does this path step belong to the course? Courses are (almost) disjoint, so progress never shows twice. */
-export function inCourse(s: Pick<PathStep, 'domain' | 'sung' | 'forPlays' | 'pack'>, c: CourseId): boolean {
+export function inCourse(s: Pick<PathStep, 'domain' | 'sung' | 'forPlays' | 'pack'> & Partial<Pick<PathStep, 'topic' | 'level'>>, c: CourseId): boolean {
+  // AUDIT-CONTENT-THEORY §ב.1: note names on the keyboard (key-notes 1–3) are the theory picture every beginner needs,
+  // so they belong to the Ear course too (the one shared exception).
+  if (c === 'ear' && isKeysForAll(s)) return true;
   const voiceish = !!s.sung || s.domain === 'voice';
   const instr = s.forPlays?.map((p) => INSTR[p]).filter(Boolean) as CourseId[] | undefined;
   const jazzish = s.pack === 'jazz' || s.domain === 'creative';

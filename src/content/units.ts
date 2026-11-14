@@ -18,6 +18,7 @@ import { UNITS as DRUMS_MORE } from './mini/drumsMore';
 import { UNITS as RHYTHM_GAPS } from './mini/rhythmGaps'; // AUDIT-CONTENT-THEORY R-1…R-5
 // THEORY_PLAY (TP-1…TP-5): the four topics, the keys family and the guitar block.
 import { UNITS as THEORY_PLAY } from './mini/theoryPlay';
+import { UNITS as FIRST_STEPS } from './mini/firstSteps';
 
 export const UNIT_LESSON: Record<string, string> = {
   // 0.38 (spec AE): each area file maps its own topics.
@@ -40,6 +41,8 @@ export const UNIT_LESSON: Record<string, string> = {
   // AUDIT-CONTENT-THEORY R-1…R-5: cross-rhythm, metric modulation, hemiola, odd groupings.
   ...RHYTHM_GAPS,
   ...THEORY_PLAY,
+  // AUDIT-CONTENT-THEORY §ז.2: the first steps of each instrument course and the voice ("tech:<level id>", "vocal:<level>").
+  ...FIRST_STEPS,
   // Learning path
   'bflat-two-homes': 'bflat-two-homes',
   'degrees-135': 'degrees-135',

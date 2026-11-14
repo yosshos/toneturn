@@ -38,7 +38,8 @@ for (const inst of ['guitar', 'bass'] as const)
     expect(await page.locator('.lt-sections li').count()).toBeGreaterThanOrEqual(5);
     await page.locator('[data-test-start]').click();
     const probe = page.locator('[data-test-probe]');
-    await expect(probe).toHaveAttribute('data-test-strand', 'hands');
+    // AUDIT-CONTENT-THEORY §ב.3: the guitar test follows the course path — chords first; bass opens with the hands.
+    await expect(probe).toHaveAttribute('data-test-strand', inst === 'guitar' ? 'chords' : 'hands');
     await page.screenshot({ path: `test-results/level-test-${inst}.png` });
     const seen: string[] = [];
     for (let k = 0; k < 40; k++) {

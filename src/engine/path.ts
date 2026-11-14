@@ -12,7 +12,7 @@ import { BASICS_ORDER, LESSON_AREA, PREREQ } from './intake';
 import { LESSON_ORDER, makeLesson, type LessonDef, type LessonId, type Question, type SkillId } from './lesson';
 import { TOPIC_GEN, genTopic, topicLesson } from './topicKit';
 import type { Track } from './intake';
-import { inCourse, type CourseId } from './courses';
+import { inCourse, isKeysForAll, type CourseId } from './courses';
 import { stepTier, tierSpec } from './gameTiers';
 import { catalog } from './drills/generate';
 import { guitarCatalog } from './drills/guitar';
@@ -308,13 +308,50 @@ export const VOCAL_PROGRAMS: { id: string; refs: number[]; title: { en: string; 
  * on): swing time after walk 7, Barry Harris after walk 9 and impro 6, form after walk 11, Latin from styles 9; odd
  * meters after time 10, riffs and unisons after odd 2, polymeter after odd 4.
  */
-const BASS_NICHE_LATER: Record<string, number> = { 'b-swing': 7, 'b-barry': 10, 'b-jform': 11, 'b-latin': 9, 'b-odd': 10, 'b-prog': 12, 'b-poly': 14,
+const BASS_NICHE_LATER: Record<string, number> = { 'b-swing': 9, 'b-barry': 12, 'b-jform': 13, 'b-latin': 11, 'b-odd': 10, 'b-prog': 12, 'b-poly': 14,
   // P2: the standards ladder after walk 11 (the first standards), extended techniques after legato 5 (harmonics).
-  'b-std': 11, 'b-ext': 5 };
-const DRUM_LATER: Record<string, number> = { 'd-funk': 3, 'd-shuffle': 3, 'd-mideast': 3, 'd-indep': 2, 'd-feet': 2, 'd-ear': 1, 'd-jazz': 4, 'd-latin': 4, 'b-posread': 2, 'b-impro': 4,
+  // (AUDIT-CONTENT-THEORY §ב.4: walking and styles now start two steps in, legato four and reading two, so the
+  // families built on them moved with them — position reading too, below.)
+  'b-std': 13, 'b-ext': 9 };
+/**
+ * AUDIT-CONTENT-THEORY §ב.4 ("roots & pocket first"): the bass core opened in catalogue order, so muting came at unit
+ * 13, locking with the kick at 17 and walking at 32. Now time, the plucking hand, roots and the kick lock lead, muting
+ * and the fretting hand one step later, walking (two-feel first) two steps in.
+ */
+const BASS_CORE_LATER: Record<string, number> = { 'b-time': 0, 'b-pluck': 0, 'b-chord': 0, 'b-pocket': 0, 'b-length': 1, 'b-fret': 1, 'b-ear': 1, 'b-walk': 2, 'b-scale': 2, 'b-read': 2, 'b-styles': 2, 'b-ghost': 3, 'b-pick': 3, 'b-legato': 4, 'b-slap': 6 };
+/**
+ * AUDIT-CONTENT-THEORY §ב.6: counting and a basic rock beat before rudiments — time and rock lead, single strokes one
+ * step later, rolls, fills and snare reading two in, paradiddles (16ths at ♩100) four in.
+ */
+const DRUM_CORE_LATER: Record<string, number> = { 'd-time': 0, 'd-rock': 0, 'd-strokes': 1, 'd-rolls': 2, 'd-fills': 2, 'd-read': 2, 'd-diddles': 4 };
+const DRUM_LATER: Record<string, number> = { 'd-funk': 3, 'd-shuffle': 3, 'd-mideast': 3, 'd-indep': 2, 'd-feet': 2, 'd-ear': 1, 'd-jazz': 4, 'd-latin': 4, 'b-posread': 4, 'b-impro': 4,
   // DRUMS_NICHE_PLAN P1: the drum key and counting early, songs once grooves and fills are in, prog after funk, shuffle,
   // independence and the Middle-Eastern odd meters (plan §5: DRUM_LATER['d-prog'] = 6).
-  'd-notation': 1, 'd-count': 2, 'd-form': 3, 'd-song': 4, 'd-prog': 6, ...BASS_NICHE_LATER };
+  'd-notation': 1, 'd-count': 2, 'd-form': 3, 'd-song': 4, 'd-prog': 6, ...BASS_NICHE_LATER, ...BASS_CORE_LATER, ...DRUM_CORE_LATER };
+/**
+ * Ties between families' next levels on the path (same difficulty): the lower rank first, then catalogue order.
+ * AUDIT-CONTENT-THEORY §ב: the first steps first; drums count before the groove; bass time before the hands.
+ */
+export const LADDER_RANK: Record<string, number> = {
+  'k-first': -1, 'v-first': -1,
+  'd-time': 0, 'd-rock': 1, 'd-strokes': 2, 'd-notation': 3,
+  'b-time': 0, 'b-pluck': 1, 'b-chord': 2, 'b-pocket': 3, 'b-length': 4, 'b-fret': 5, 'b-walk': 6,
+};
+/** The first-steps families (AUDIT-CONTENT-THEORY §ז.2): their levels count ✓ for a player who already plays past them. */
+export const FIRST_STEP_FAMILIES = ['k-first', 'v-first'];
+/** Levels that wait for another family's level on the path: one-octave scales after the thumb passes under. */
+export const LADDER_AFTER: Record<string, string> = { 'tech:scales-1': 'tech:k-first-3' };
+/** An unstarted family this far (two ladder steps) below everything started opens at once: a gap the old order left. */
+const GAP_STEPS = 140;
+/**
+ * Steps that wait for another step (when both are on the player's path). AUDIT-CONTENT-THEORY §ב.1: reading notes on
+ * the staff is taught before the steps that read from it — staff dictation, reading chords off the staff, spelling scales.
+ */
+export const STEP_PREREQ: Record<string, string[]> = {
+  'topic:staff-dictation:1': ['topic:note-reading:1'],
+  'topic:chord-read:2': ['topic:note-reading:1'],
+  'topic:scale-spelling:1': ['topic:note-reading:1'],
+};
 /**
  * PIANO_JAZZ: the jazz-piano families come after the lines and voicings they build on — Barry Harris harmony after the
  * Harris lines' block chords, bebop lines after guide tones and the first Harris lines, jazz-piano harmony after the
@@ -330,7 +367,7 @@ const KEYS_JAZZ_LATER: Record<string, number> = { 'k-sixdim': 9, 'k-bebop': 6, '
  * Harris lines and rootless voicings came in the first unit. Now the basics lead (scales, five-finger, the pianist's
  * ear, Alberti / cadences one step later) and the jazz and advanced families start after a few scale levels.
  */
-export const KEYS_LATER: Record<string, number> = { scales: 0, fingers: 0, 'k-ear': 0, arpeggios: 1, cadences: 1, control: 1, accomp: 2, voicings: 3, harris: 4, jazz: 4, advanced: 6, ...KEYS_JAZZ_LATER };
+export const KEYS_LATER: Record<string, number> = { 'k-first': -2, scales: 0, fingers: 0, 'k-ear': 0, arpeggios: 1, cadences: 1, control: 1, accomp: 2, voicings: 3, harris: 4, jazz: 4, advanced: 6, ...KEYS_JAZZ_LATER };
 // AUDIT-CONTENT-THEORY R-1/R-2/R-5: rhythm & meter on the keys starts after the first scale levels.
 KEYS_LATER['k-rhythm'] = 3;
 /**
@@ -339,7 +376,7 @@ KEYS_LATER['k-rhythm'] = 3;
  * first, Barry Harris after the scat and standards families have begun. The old program ids keep a place too.
  */
 export const VOICE_LATER: Record<string, number> = {
-  'v-breath': 0, 'v-pitch': 0, 'v-songs': 0, 'v-range': 1, 'v-time': 1, 'v-ear': 1, 'v-dyn': 2, 'v-scale': 2, 'v-sight': 2,
+  'v-first': -2, 'v-breath': 0, 'v-pitch': 0, 'v-songs': 0, 'v-range': 1, 'v-time': 1, 'v-ear': 1, 'v-dyn': 2, 'v-scale': 2, 'v-sight': 2,
   'v-vib': 3, 'v-agility': 3, 'v-harmony': 3, 'v-inflect': 4, 'v-standards': 4, 'v-scat': 5, 'v-barry': 6,
   'v-ladder': 0, 'v-modes': 2, 'v-ornament': 4,
 };
@@ -415,8 +452,9 @@ export function eligible(s: PathStep, inp: Pick<PathInput, 'leaveOut' | 'packs' 
   if (s.topic && inp.hidden?.includes(s.topic)) return false;
   if (s.pack && !inp.packs.includes(s.pack)) return false;
   if (s.forPlays && !s.forPlays.some((p) => inp.plays.includes(p))) {
-    // The keyboard map 1–3 is the theory picture: offered to students and pros too (spec AE §4.1).
-    const keysForAll = s.topic === 'key-notes' && (s.level ?? 9) <= 3 && (inp.track === 'student' || inp.track === 'pro');
+    // The keyboard map 1–3 is the theory picture: offered to everyone (spec AE §4.1; AUDIT-CONTENT-THEORY §ב.1 — note
+    // names on the keys for every beginner, not only students and pros).
+    const keysForAll = isKeysForAll(s);
     if (!keysForAll) return false;
   }
   if ((IMPORTANCE[inp.track]?.[s.skill] ?? 0.5) <= 0) return false;
@@ -509,9 +547,27 @@ export interface CheckVerdict {
   why?: { en: string; he: string };
 }
 
+/** Beyond the beginner section: a ladder level this hard, done or ✓ by test, means the first steps are behind the player. */
+const PAST_FIRST_STEPS = 840;
+let LADDER_BY_ID: Map<string, PathStep> | null = null;
+/** Has the player done (or tested out of) a ladder level of the same instrument / the voice past the first steps? */
+export function playsPastFirstSteps(s: PathStep, facts: PathFacts): boolean {
+  if (!LADDER_BY_ID) LADDER_BY_ID = new Map(ladderSteps().map((x) => [x.id, x] as const));
+  const ids = [...Object.entries(facts.steps ?? {}).filter(([, v]) => v.stars > 0).map(([k]) => k), ...Object.keys(facts.tests ?? {})];
+  return ids.some((id) => {
+    const o = LADDER_BY_ID!.get(id);
+    return !!o && o.kind === s.kind && o.ladder!.instrument === s.ladder!.instrument && !FIRST_STEP_FAMILIES.includes(o.ladder!.family) && o.difficulty >= PAST_FIRST_STEPS;
+  });
+}
+
 export function checkStep(s: PathStep, inp: PathInput, subs: Map<string, SubEvidence>): CheckVerdict {
   // Ladder steps are passed only by measured playing / singing (owner, 0.61) — never by rating evidence.
-  if (s.ladder) return inp.facts.tests?.[s.id] ? { state: 'tested', why: { en: '✓ from your playing test', he: '✓ ממבחן הנגינה' } } : { state: null };
+  if (s.ladder) {
+    if (inp.facts.tests?.[s.id]) return { state: 'tested', why: { en: '✓ from your playing test', he: '✓ ממבחן הנגינה' } };
+    // The first steps (posture, holding, the first notes) are ✓ once the player has played past them on the same instrument.
+    if (FIRST_STEP_FAMILIES.includes(s.ladder.family) && playsPastFirstSteps(s, inp.facts)) return { state: 'tested', why: { en: '✓ you already play past the first steps', he: '✓ אתם כבר מנגנים מעבר לצעדים הראשונים' } };
+    return { state: null };
+  }
   if (s.kind === 'check' || s.kind === 'review') return { state: null };
   // Licks / transcription steps: only measured playing passes them (never rating evidence from elsewhere).
   if (s.game === 'licks' || s.game === 'transcribe') return { state: null };
@@ -695,6 +751,7 @@ export function buildPath(inp: PathInput): PathView {
       const pid = `lesson:${p}`;
       if (all.some((x) => x.id === pid) && !taken.has(pid) && !scheduled.has(pid)) return false;
     }
+    for (const pid of STEP_PREREQ[s.id] ?? []) if (all.some((x) => x.id === pid) && !taken.has(pid) && !scheduled.has(pid)) return false;
     for (const p of SUB_PREREQ[s.sub] ?? []) {
       const area = domainOf(p.split('/')[0] as SkillId);
       if (inp.leaveOut.includes(area)) continue; // P15
@@ -713,26 +770,51 @@ export function buildPath(inp: PathInput): PathView {
       for (let i = 1; i < xs.length; i++) ladderPrev.set(xs[i].id, xs[i - 1].id);
     }
   }
-  /** Families open now: those already started, then the next ones in teaching order — one more for every family two levels in. */
+  /** A family's next level not yet taken (or scheduled in the unit being built). */
+  const nextLevel = (f: string, scheduled?: Set<string>): PathStep | undefined =>
+    all.filter((s) => s.ladder?.family === f && !taken.has(s.id) && !scheduled?.has(s.id)).sort((a, b) => a.ladder!.level - b.ladder!.level)[0];
+  /**
+   * Families by difficulty (AUDIT-CONTENT-THEORY §ב): the easiest next level first, ties by LADDER_RANK, then the
+   * catalogue order. Before, families opened in catalogue order whatever their difficulty (sweep picking before the
+   * first chord, paradiddles before a rock beat).
+   */
+  const byDifficulty = (fs: string[], scheduled?: Set<string>): string[] => {
+    const fams = inp.ladderFamilies ?? [];
+    const key = (f: string) => ({ f, d: nextLevel(f, scheduled)?.difficulty ?? Infinity, r: LADDER_RANK[f] ?? 50, i: fams.indexOf(f) });
+    return fs.map(key).sort((a, b) => a.d - b.d || a.r - b.r || a.i - b.i).map((x) => x.f);
+  };
+  /**
+   * Families open now: those already started, then the easiest unstarted ones — one more for every family two levels in.
+   * An unstarted family easier than everything started opens too (it fills a gap the old catalogue order left behind).
+   */
   const openFamilies = (): string[] => {
     const fams = inp.ladderFamilies ?? [];
     const levelsTaken = (f: string) => all.filter((s) => s.ladder?.family === f && taken.has(s.id)).length;
     const started = fams.filter((f) => levelsTaken(f) > 0);
     const deep = fams.filter((f) => levelsTaken(f) >= 2).length;
     const k = Math.min(fams.length, Math.max(2, started.length, 2 + deep));
-    return [...new Set([...started, ...fams.slice(0, k)])];
+    // A family whose next level waits for another family's level (LADDER_AFTER) is not opened yet.
+    const ready = (f: string) => {
+      const nx = nextLevel(f);
+      const after = nx && LADDER_AFTER[nx.id];
+      return !!nx && !(after && all.some((x) => x.id === after) && !taken.has(after));
+    };
+    const fresh = byDifficulty(fams.filter((f) => !started.includes(f) && ready(f)));
+    const easiestStarted = Math.min(...started.map((f) => nextLevel(f)?.difficulty ?? Infinity));
+    const gap = started.length ? fresh.filter((f) => (nextLevel(f)?.difficulty ?? Infinity) <= easiestStarted - GAP_STEPS) : [];
+    return [...new Set([...started, ...fresh.slice(0, Math.max(0, k - started.length)), ...gap])];
   };
-  /** One step per family, rotating which families come first; at most about half the unit (owner's daily mix). */
-  const pickLadder = (n: number, room: number, scheduled: Set<string>): PathStep[] => {
-    const fams = openFamilies();
+  /** One step per family, the easiest next levels first; at most about half the unit (owner's daily mix). */
+  const pickLadder = (room: number, scheduled: Set<string>): PathStep[] => {
+    const fams = byDifficulty(openFamilies(), scheduled);
     if (!fams.length || room <= 0) return [];
     const out: PathStep[] = [];
-    for (let k = 0; k < fams.length && out.length < room; k++) {
-      const f = fams[(n - 1 + k) % fams.length];
-      const next = all.filter((s) => s.ladder?.family === f && !taken.has(s.id) && !scheduled.has(s.id)).sort((a, b) => a.ladder!.level - b.ladder!.level)[0];
+    const waiting = (id: string | undefined) => !!id && all.some((x) => x.id === id) && !taken.has(id) && !scheduled.has(id);
+    for (const f of fams) {
+      if (out.length >= room) break;
+      const next = nextLevel(f, scheduled);
       if (!next) continue;
-      const prev = ladderPrev.get(next.id);
-      if (prev && all.some((x) => x.id === prev) && !taken.has(prev) && !scheduled.has(prev)) continue;
+      if (waiting(ladderPrev.get(next.id)) || waiting(LADDER_AFTER[next.id])) continue;
       out.push(next);
       scheduled.add(next.id);
     }
@@ -746,7 +828,7 @@ export function buildPath(inp: PathInput): PathView {
     unitTheme.set(n, theme.id);
     const near = (s: PathStep, f: number) => Math.abs(s.difficulty - (f + 50)) - (inTheme(s.sub, theme) ? 120 : 0);
     const slots = L - 1 /* checkpoint */ - (inp.reviewDue >= 3 && n === units.length + 1 ? 1 : 0);
-    const ladder = pickLadder(n, Math.ceil(slots / 2), scheduled);
+    const ladder = pickLadder(Math.ceil(slots / 2), scheduled);
     const open = all.filter((s) => !taken.has(s.id) && !s.ladder && !isUnitEndStep(s));
     const live = [...new Set(open.map((s) => s.domain))];
     const shares = unitShares(weights, live, slots - ladder.length, n);

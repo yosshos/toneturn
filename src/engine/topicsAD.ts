@@ -103,7 +103,8 @@ TOPIC_GEN['find-tonic'] = {
 
 const CAD_TYPES: Record<string, { r: string[]; en: string; he: string; say: string[] }> = {
   authentic: { r: ['I', 'IV', 'V7', 'I'], en: 'Authentic (V → I)', he: 'אותנטית (V → I)', say: ['authentic', 'perfect'] },
-  plagal: { r: ['I', 'V', 'IV', 'I'], en: 'Plagal (IV → I, "Amen")', he: 'פלגלית (IV → I, "אמן")', say: ['plagal', 'amen'] },
+  // AUDIT-CONTENT-THEORY #12: no V → IV retrogression before the plagal close.
+  plagal: { r: ['I', 'vi', 'IV', 'I'], en: 'Plagal (IV → I, "Amen")', he: 'פלגלית (IV → I, "אמן")', say: ['plagal', 'amen'] },
   half: { r: ['I', 'IV', 'ii', 'V'], en: 'Half (ends on V)', he: 'חצי קדנצה (נגמרת על V)', say: ['half'] },
   deceptive: { r: ['I', 'IV', 'V7', 'vi'], en: 'Deceptive (V → vi)', he: 'מטעה (V → vi)', say: ['deceptive', 'interrupted'] },
 };
@@ -301,14 +302,25 @@ TOPIC_GEN['nct-ear'] = {
     const answer = pickR(rnd, pool);
     const c = pickR(rnd, [60, 62, 65]);
     const beat = 0.55;
+    // AUDIT-CONTENT-THEORY #11: every example starts with two beats of IV, so a suspension is prepared — its 4th is a
+    // chord tone of IV, tied over into I, then falls to the 3rd (heard from the first beat it was an appoggiatura).
+    // The other kinds hold the common tone (the root of I, the 5th of IV) over the same lead-in, so length is no clue.
+    const lead = 2 * beat;
     const play = (k: string) => {
-      const out: NoteEvent[] = [...block([c - 12, c + 4 - 12, c + 7 - 12], 0, beat * 4, 0.38)];
-      let t = 0;
-      for (const [o, b] of NCT[k].mel(c)) {
-        out.push(N(c + 12 + o - 12, t, b * beat * 0.95, 0.78));
-        t += b * beat;
+      const out: NoteEvent[] = [...block([c + 5 - 24, c - 12, c + 9 - 12], 0, lead, 0.36), ...block([c - 12, c + 4 - 12, c + 7 - 12], lead, beat * 4, 0.38)];
+      const mel = NCT[k].mel(c);
+      if (k === 'suspension') {
+        out.push(N(c + mel[0][0], 0, lead + mel[0][1] * beat * 0.95, 0.78));
+        out.push(N(c + mel[1][0], lead + mel[0][1] * beat, mel[1][1] * beat * 0.95, 0.78));
+      } else {
+        out.push(N(c, 0, lead * 0.95, 0.7));
+        let t = lead;
+        for (const [o, b] of mel) {
+          out.push(N(c + o, t, b * beat * 0.95, 0.78));
+          t += b * beat;
+        }
       }
-      return ev(out, beat * 4 + 0.3);
+      return ev(out, lead + beat * 4 + 0.3);
     };
     const names: Names = {};
     const choiceStim: Record<string, Stimulus[]> = {};

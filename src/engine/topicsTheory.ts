@@ -460,7 +460,8 @@ TOPIC_GEN['note-reading'] = {
       choiceStim[spEn(o)] = [{ kind: 'note', midi: near, duration: 0.9 }];
     }
     return choiceQ({
-      id, topic: 'note-reading', level, seed, skill: 'notes', difficulty: 1000 + 120 * level,
+      // AUDIT-CONTENT-THEORY §ב.1: the treble clef sits before the steps that read from the staff (dictation, chords, spelling).
+      id, topic: 'note-reading', level, seed, skill: 'notes', difficulty: level === 1 ? 950 : 1000 + 120 * level,
       ask: { en: 'Which note is this?', he: 'איזה תו זה?' },
       names, answer: spEn(ans), choices: opts.map(spEn), stimulus: [], choiceStim,
       show: { midis: [m], clef: r.clef, key: null },

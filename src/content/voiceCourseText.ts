@@ -114,7 +114,7 @@ export const SONG_INSTR = {
   readBand: { en: 'Read the melody and sing it with the band — it is never played to you.', he: 'קראו את המנגינה ושירו אותה עם הלהקה — היא לא מתנגנת לכם.' },
   readLead: { en: 'A lead sheet: read the melody under the chords, swing the eighths, hold the tied notes.', he: 'דף אקורדים: קראו את המנגינה מתחת לאקורדים, נגנו את השמיניות בסווינג, והחזיקו את הצלילים הקשורים.' },
   embellish: { en: 'Embellish the head: keep its long notes, add neighbours and approaches around them.', he: 'קשטו את הנושא: שמרו על הצלילים הארוכים, והוסיפו סביבם שכנים וגישות.' },
-  bop: { en: 'Swing the eighths and accent the off-beats: "doo-BAH".', he: 'שירו את השמיניות בסווינג והדגישו את הפעמות החלשות: "דו־בה".' },
+  bop: { en: 'Swing the eighths and accent the off-beats: "doo-BAH".', he: 'שירו את השמיניות בסווינג והדגישו את השמיניות החלשות (האוף־ביט): "דו־בה".' },
   rubato: { en: 'Colla voce: sing freely, in your own time. The band changes chords when you reach each bar.', he: 'קולה ווצ׳ה: שירו בחופשיות, בזמן שלכם. הלהקה מחליפה אקורד כשאתם מגיעים לכל תיבה.' },
   interpretLast: { en: 'Sing the first three sections as written, then make the last A yours — keep its long notes.', he: 'שירו את שלושת החלקים הראשונים כפי שנכתבו, ואז עשו את ה־A האחרון שלכם — שמרו על הצלילים הארוכים.' },
   falls: { en: 'Sing each call, let its last note fall off, and leave the answer to the band.', he: 'שירו כל קריאה, תנו לצליל האחרון שלה ליפול, והשאירו את התשובה ללהקה.' },
@@ -161,7 +161,7 @@ export const METRIC_NAMES: Record<string, Bi> = {
   follow: { en: 'Band followed', he: 'הלהקה עקבה' },
   falls: { en: 'Falls', he: 'נפילות' },
   motif: { en: 'An idea returns', he: 'רעיון שחוזר' },
-  lift: { en: 'Off-beat accent', he: 'הדגשה בפעמה החלשה' },
+  lift: { en: 'Off-beat accent', he: 'הדגשה באוף־ביט' },
 };
 
 /** How each further held / phrase item is sung ({s} = seconds). */

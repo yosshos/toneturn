@@ -230,11 +230,11 @@ export const LESSONS: MiniLesson[] = [
     area: 'voice',
     emoji: '🎤',
     title: { en: 'Talking with the band: motifs, trading, colla voce', he: 'לדבר עם הלהקה: מוטיבים, חילופים, קולה ווצ׳ה' },
-    takeaway: { en: 'Develop a motif, embellish a head, accent the off-beats, trade twos and fours — and lead the band when it follows you.', he: 'מפתחים מוטיב, מקשטים נושא, מדגישים את הפעמות החלשות, מחליפים שתיים וארבע — ומובילים את הלהקה כשהיא הולכת אחריכם.' },
+    takeaway: { en: 'Develop a motif, embellish a head, accent the off-beats, trade twos and fours — and lead the band when it follows you.', he: 'מפתחים מוטיב, מקשטים נושא, מדגישים את השמיניות החלשות, מחליפים שתיים וארבע — ומובילים את הלהקה כשהיא הולכת אחריכם.' },
     steps: [
       { say: { en: 'A motif is a small idea of three notes. Repeat it, move it up a step, or start it later — the listener follows the story.', he: 'מוטיב הוא רעיון קטן של שלושה צלילים. חזרו עליו, הזיזו אותו צעד למעלה, או התחילו אותו מאוחר יותר — המאזין עוקב אחרי הסיפור.' }, play: [seq([[60, 0.5], [62, 0.5], [64, 1], [-1, 0.5], [62, 0.5], [64, 0.5], [65, 1]])] },
       { say: { en: 'Embellishing a head keeps its long notes and adds neighbours around them. The melody stays recognisable.', he: 'לקשט נושא זה לשמור על הצלילים הארוכים ולהוסיף סביבם שכנים. המנגינה נשארת מזוהה.' }, play: [seq([[64, 1.2], [-1, 0.2], [64, 0.4], [66, 0.2], [64, 0.6]])] },
-      { say: { en: 'Bebop syllables put the weight on the off-beat: doo-BAH, doo-BAH. The microphone hears that accent as loudness.', he: 'הברות ביבופ שמות את המשקל על הפעמה החלשה: דו־בה, דו־בה. המיקרופון שומע את ההדגשה הזאת כעוצמה.' }, play: [seq([[62, 0.33, 0.5], [64, 0.17, 0.85], [65, 0.33, 0.5], [67, 0.17, 0.85]])] },
+      { say: { en: 'Bebop syllables put the weight on the off-beat: doo-BAH, doo-BAH. The microphone hears that accent as loudness.', he: 'הברות ביבופ שמות את המשקל על השמינית החלשה, האוף־ביט: דו־בה, דו־בה. המיקרופון שומע את ההדגשה הזאת כעוצמה.' }, play: [seq([[62, 0.33, 0.5], [64, 0.17, 0.85], [65, 0.33, 0.5], [67, 0.17, 0.85]])] },
       { say: { en: 'Trading: the band plays two or four bars, you answer in yours. Its next answer picks up your idea — pick up its idea too.', he: 'חילופים: הלהקה מנגנת שתיים או ארבע תיבות, ואתם עונים בתיבות שלכם. התשובה הבאה שלה לוקחת את הרעיון שלכם — קחו גם אתם את הרעיון שלה.' } },
       { say: { en: 'Colla voce means "with the voice": you sing freely and the band changes chords when you reach each bar.', he: 'קולה ווצ׳ה פירושו "עם הקול": אתם שרים בחופשיות והלהקה מחליפה אקורד כשאתם מגיעים לכל תיבה.' }, play: [chord([48, 52, 55, 59], 2.2)] },
       { say: { en: 'In a blues call and response, sing the call, let its last note fall, and leave space for the band to answer.', he: 'בבלוז של קריאה ותשובה, שירו את הקריאה, תנו לצליל האחרון ליפול, והשאירו מקום ללהקה לענות.' }, play: [seq([[67, 0.5], [63, 0.5], [64, 0.5], [67, 0.9], [66, 0.1], [64, 0.1], [61, 0.2]])] },
@@ -246,7 +246,7 @@ export const LESSONS: MiniLesson[] = [
       { say: { en: 'In colla voce, take your time but keep each phrase in tune: only the notes you reach in tune count.', he: 'בקולה ווצ׳ה, קחו את הזמן אבל שמרו על כל משפט מדויק: נחשבים רק הצלילים שמגיעים אליהם מדויק.' }, play: [seq([[64, 1.2], [62, 0.6], [61, 1.4]])] },
       { say: { en: 'Your own song: open a recording of yourself, with the voice clear. The app finds its melody and scores you against it, phrase by phrase.', he: 'השיר שלכם: פתחו הקלטה של עצמכם, עם קול ברור. האפליקציה מוצאת את המנגינה שלה ונותנת ציון מולה, משפט אחרי משפט.' } },
       { say: { en: "A common mistake is to start a new idea in every turn. Keep one idea and change it a little — that is a conversation.", he: "טעות נפוצה היא להתחיל רעיון חדש בכל תור. שמרו על רעיון אחד ושנו אותו קצת — זאת שיחה." } },
-      { say: { en: "To recap: develop one motif, keep the long notes when you embellish, accent the off-beats, use every turn, and let the band follow you in a ballad.", he: "לסיכום: מפתחים מוטיב אחד, שומרים על הצלילים הארוכים כשמקשטים, מדגישים את הפעמות החלשות, משתמשים בכל תור, ונותנים ללהקה ללכת אחריכם בבלדה." } },
+      { say: { en: "To recap: develop one motif, keep the long notes when you embellish, accent the off-beats, use every turn, and let the band follow you in a ballad.", he: "לסיכום: מפתחים מוטיב אחד, שומרים על הצלילים הארוכים כשמקשטים, מדגישים את השמיניות החלשות, משתמשים בכל תור, ונותנים ללהקה ללכת אחריכם בבלדה." } },
     ],
   },
 ];

@@ -31,8 +31,13 @@ describe('courses (SPEC-COURSES)', () => {
       expect(n, c).toBeGreaterThan(0);
     }
   });
+  // The one shared exception (AUDIT-CONTENT-THEORY §ב.1): the keyboard map key-notes 1–3 is in Piano and in Ear.
   it('a step never sits in two courses (instrument steps may serve several instruments)', () => {
     for (const s of all) {
+      if (s.topic === 'key-notes' && (s.level ?? 9) <= 3) {
+        expect(inCourse(s, 'ear') && inCourse(s, 'keys'), s.id).toBe(true);
+        continue;
+      }
       const instr = (['keys', 'guitar', 'bass'] as CourseId[]).some((c) => inCourse(s, c));
       const owners = (['ear', 'voice', 'jazz'] as CourseId[]).filter((c) => inCourse(s, c)).length + (instr ? 1 : 0);
       expect(owners, s.id).toBeLessThanOrEqual(1);

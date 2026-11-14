@@ -4,6 +4,7 @@
 import type { CourseId } from './courses';
 import { catalog, type LevelDef } from './drills/generate';
 import { guitarCatalog, guitarLevelShown } from './drills/guitar';
+import { guitarAddOnsOf } from './drills/guitarMeta';
 import { drumFamilies } from './drills/drums';
 import { kitHiddenLevels } from './drumAcoustic';
 import { hiddenBassLevels, pianoMicHiddenLevels, type DrumMic, LEVEL_DONE_STARS, levelDrills, levelStars, shownFamilies, targetBpmOf } from './drills/plan';
@@ -22,6 +23,17 @@ export function techLevel(id: string): LevelDef | undefined {
   return LEVELS.get(id);
 }
 
+/**
+ * The guitar add-ons the course path uses: the player's choice once made; before that, the jazz add-on (jazz comping
+ * and Barry Harris on the neck) joins the default path at its grade (AUDIT-CONTENT-THEORY §ב.3, the app's positioning).
+ * The Drills page and the guitar voice still read the plain setting.
+ */
+export function pathGuitarAddOns(ds: Pick<DrillSettings, 'guitarAddOns' | 'guitarStyle'>): NonNullable<DrillSettings['guitarAddOns']> {
+  if (ds.guitarAddOns) return ds.guitarAddOns;
+  const a = guitarAddOnsOf(ds);
+  return a.includes('jazz') ? a : ['jazz', ...a];
+}
+
 /** The families / programs a course's path teaches, in teaching order. Other courses: none. */
 export function ladderFamiliesFor(course: CourseId, ds: DrillSettings, bassTuning?: string, drumMic?: DrumMic): string[] {
   if (course === 'voice') return VOCAL_PROGRAMS.map((p) => p.id);
@@ -29,7 +41,7 @@ export function ladderFamiliesFor(course: CourseId, ds: DrillSettings, bassTunin
   if (!instrument) return [];
   // The upright track only for an upright / fretless bass (BASS_AUDIT B16); its families otherwise stay in Drills.
   const upright = bassTuning === 'upright' || bassTuning === 'bass-fretless';
-  return shownFamilies({ emphasis: ds.emphasis, instrument, guitarStyle: ds.guitarStyle, guitarAddOns: ds.guitarAddOns, drumMic, bassTrack: ds.bassTrack })
+  return shownFamilies({ emphasis: ds.emphasis, instrument, guitarStyle: ds.guitarStyle, guitarAddOns: pathGuitarAddOns(ds), drumMic, bassTrack: ds.bassTrack })
     .filter((f) => upright || !(f as { upright?: boolean }).upright)
     .map((f) => f.id);
 }
@@ -42,7 +54,10 @@ export function ladderHiddenFor(course: CourseId, bassTuning?: string, drumMic?:
   if (course === 'drums') return kitHiddenLevels(drumFamilies(), drumMic);
   // Guitar (GUITAR_DEEPENING §5): add-on levels inside core families (bossa / Freddie Green, prog picking, chord-scale
   // impro) and country levels, unless chosen. Whole add-on families are already left out by ladderFamiliesFor.
-  if (course === 'guitar') return guitarCatalog().filter((f) => f.instruments.includes('guitar') && !f.retired).flatMap((f) => f.levels.filter((l) => !guitarLevelShown(f, l, ds ?? {})).map((l) => l.id));
+  if (course === 'guitar') {
+    const shown = { guitarStyle: ds?.guitarStyle, guitarAddOns: pathGuitarAddOns(ds ?? {}) };
+    return guitarCatalog().filter((f) => f.instruments.includes('guitar') && !f.retired).flatMap((f) => f.levels.filter((l) => !guitarLevelShown(f, l, shown)).map((l) => l.id));
+  }
   if (course === 'keys') return pianoMicOnly ? pianoMicHiddenLevels() : [];
   return course === 'bass' ? hiddenBassLevels(bassTuning) : [];
 }
