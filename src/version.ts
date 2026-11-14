@@ -18,6 +18,28 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.89.0',
+    date: '2026-11-14',
+    en: [
+      'Rhythm: polyrhythm taps 5:4, 5:3 and 7:4, metric modulation, hemiola, and new rhythm levels for keys, guitar (odd meters), drums, bass and singing.',
+      'Voice leading: new keys and guitar drills that grade how each voice moves — common tones held, smallest steps, drop 2 and spread voicings — with a score that shows every voice’s line.',
+      'Theory you play: triad pairs (C altered = F♯ + G♯ triads), pentatonic superimposition, polychords and their function, and reharmonizing a tune yourself.',
+      'Barry Harris, part 2: the three diminished collections, passing, auxiliary and dominant diminished, chords that move to chords, and m6 = m7♭5 = 9 over the bass. Harmony and ear: function by ear, modal cadences, borrowed extensions, form, negative harmony, jazz dictation and planing.',
+      'The path is now ordered by difficulty, with gentler first steps for beginners; jazz and Barry Harris are part of the default guitar path.',
+      'Singing: a note sung an octave away from the rest of the line is no longer counted right (moving the whole line by an octave is fine), and new sung intervals past the sixth — sevenths, the octave and ninths.',
+      'New ear topic “Hear the voices”: which voice moved, how many notes stayed, smooth or jumpy ii–V–I, close or drop 2. Bass gets 5 against 3; guitar odd meters join the level test, and guitar levels open in order of difficulty. The teacher’s hint now sits in the bottom bar.',
+    ],
+    he: [
+      'קצב: הקשות פולי־ריתמיות 5:4, 5:3 ו־7:4, מודולציה מטרית, המיולה, ושלבי קצב חדשים בקלידים, בגיטרה (משקלים אי־זוגיים), בתופים, בבס ובשירה.',
+      'הובלת קולות: תרגילים חדשים בקלידים ובגיטרה שבודקים איך כל קול זז — צלילים משותפים נשארים, צעדים קטנים, drop 2 ו־spread — עם תווים שמראים את הקו של כל קול.',
+      'תיאוריה שמנגנים: זוגות משולשים (C אלטרד = משולשי F♯ ו־G♯), הנחת פנטטוניות, פוליאקורדים והתפקיד שלהם, ורה־הרמוניזציה של שיר בעצמכם.',
+      'בארי האריס, חלק 2: שלושת אוספי הדים, דים מעבר, עזר ודומיננטי, אקורדים שזזים לאקורדים, ו־m6 = m7♭5 = 9 מעל הבס. הרמוניה ושמיעה: תפקיד בשמיעה, קדנצות מודליות, הרחבות שאולות, מבנה, הרמוניה שלילית, הכתבה ג׳אזית ו־planing.',
+      'המסלול מסודר עכשיו לפי קושי, עם צעדים ראשונים עדינים למתחילים; ג׳אז ובארי האריס חלק מהמסלול הרגיל בגיטרה.',
+      'שירה: צליל שמושר באוקטבה אחרת משאר הקו כבר לא נחשב נכון (להזיז את כל הקו באוקטבה זה בסדר), ומרווחים שרים חדשים מעבר לסקסטה — ספטימות, אוקטבה ונונות.',
+      'נושא שמיעה חדש "לשמוע את הקולות": איזה קול זז, כמה צלילים נשארו, ii–V–I חלק או קופצני, צפוף או drop 2. בבס נוסף 5 נגד 3; משקלים אי־זוגיים בגיטרה נכנסו לבדיקת הרמה, ושלבי הגיטרה נפתחים לפי קושי. הרמז מהמורה עבר לשורה התחתונה.',
+    ],
+  },
+  {
     version: '0.88.0',
     date: '2026-11-14',
     en: [
