@@ -7,6 +7,7 @@ Research doc. It is read-only for the app; the canonical reference stays `docs/B
 - **Part C:** corrections and additions for `docs/BARRY-HARRIS-THEORY.md`.
 - **Part D:** build order for the missing and shallow items.
 - **Part E:** the exercise catalogue, with game potential.
+- **Part F:** Echols & Parks, complete exercise catalogue (2026-11-15).
 
 All examples are in C. Note spellings were checked step by step. **(derived)** marks a line I built from a stated rule, and **(verify)** marks a point no source settles.
 
@@ -911,3 +912,604 @@ Format per exercise:
 - E18 and E19 (dim-move speed and ear duels);
 - E30 (6 or ° harmony puzzle);
 - E34 (hit-the-ands rhythm game).
+
+---
+
+# PART F — Echols & Parks: complete exercise catalogue (2026-11-15)
+
+This part lists every exercise, routine and concept drill that **Thomas Echols** and **Chris Parks** have published, as far as public sources go. Each one is checked against the app (state at commit `132b9567`).
+
+**Status keys:**
+- **IN-APP:** the app has it, with the id.
+- **PARTLY:** the app has something close; the entry says what differs.
+- **NOT:** the app does not have it.
+- **(title)** marks an entry known only from a video or PDF title, so its procedure is inferred. **(verify)** marks a point no public source settles.
+- **(derived)** marks a C example built from a stated rule and checked step by step.
+
+## F0. Sources for this part, and what could not be read
+
+| Key | Source | What it gave |
+|---|---|---|
+| **[LoL-YT]** | Echols's YouTube channel *The Labyrinth of Limitations*, the full upload list read 2026-11-15: <https://www.youtube.com/@TheLabyrinthofLimitations/videos> (248 videos, including shorts) | Every long-form title: Episodes 0.1–17, *Little Labyrinth* 1–80, *Garden of Forking Paths* 1–3, Foundations videos, and the 2024–26 lessons. Descriptions for Episodes 0.1–17. |
+| **[LoL-PDF]** | Store pages for each episode PDF: <https://www.thomasechols.com/scores> and `/scores/legacy-series` | Page counts and contents per episode (e.g. ep.10: "35 voicings"; ep.17: "the four pivoting scenarios") |
+| **[LoL-F]** | Foundations I–IV product pages: `/scores/p/foundations-1`, `-2`, `foundations-iii-what-can-i-do-with-x-pitch`, `foundations-4-where-can-i-summon-y-mimetic-unit` | Structure: Theory / Practice, "seven core skills", "level 1 daily routine", "7 Essential Movements", "Archetypes and Outlines" |
+| **[LoL-man]** | The app manual, v1.0 (2021), read in full: <https://static1.squarespace.com/static/59a4e365b8a79befa9f5b358/t/600fc64417ea2b0497ac93a7/1611646532637/Instructions.pdf> | The tesseract (16 chords), the substitution choice on every V (the "tritone's minor" named), arpeggio and skip modes, the on chord |
+| **[LoL-P]** | Patreon: <https://www.patreon.com/cw/labyrinthoflimitations> | Only the structure: Foundations Project, weekly Foundations Classes with archives, office hours, beta web apps, Discord |
+| **[EL]** | Already in §0. A student's transcription of the contrary-motion elevator, read in full: <https://www.jazzguitar.be/forum/theory/82974-barry-harris-contrary-motion-elevators.html> | Construction, the floors, worked Autumn Leaves pickup, the interval rule, Kingstone's "resolve Cm6 to E" |
+| **[TILF]** | Parks's YouTube channel *Things I've Learned From Barry Harris*: <https://www.youtube.com/@thingsivelearnedfrombarryh2616> | Titles for EP 1–10, 12, 14–15, 17–18, 20, 22–26, 28–34, 37–39, 42, 44–50, 52, 57–60, 62–65, 69, 71, 75 and 77–171 (≈125 of 171). Video descriptions carry no lesson text. |
+| **[OS-WoS]** | Parks, Open Studio *Barry Harris' World of Soloing*: <https://www.openstudiojazz.com/courses/barry-harris-world-of-soloing/> | 8 lesson titles |
+| **[OS-SoC]** | Parks, Open Studio *Barry Harris' Scales of Chords*: <https://www.openstudiojazz.com/scales-of-chords> | 11 module titles |
+| **[SK]** | Parks's Skool community: <https://www.skool.com/chris-parks-tilf-barry-harris/about> | Format only: 4 mini lessons and 4 Zoom classes a month, office hours. No curriculum list. |
+| **[OS-E]** | Open Studio Pro instructors page: <https://www.openstudiojazz.com/pro-instructors/> | Echols is listed for a live **ear-training** class. No public Open Studio *Barry Harris* course by Echols was found. |
+
+**Could not be read:**
+- **Video content.** Transcripts and captions could not be fetched, so for videos only the titles and descriptions were used.
+- **Parks's episodes.** Parks's video descriptions are empty. His EP 11, 13, 16, 19, 21, 27, 35–36, 40–41, 43, 51, 53–56, 61, 66–68, 70, 72–74 and 76 were not found.
+- **Paywalled material.** Echols's PDFs, the Foundations books and the Patreon posts are paywalled, as are Parks's Open Studio videos and worksheets. The Galliano notes (a transcription of Parks and Echols) still return 404.
+- **Older forum material.** jazzguitar.be pages beyond what Parts A–E already quote were mostly 403 to the fetcher.
+
+## F1. Echols's frameworks, as precisely as the sources allow
+
+### F1.1 The scale of chords, "on" and "off"
+- Echols works with Harris's **four scales of chords** [LoL-YT ep.10 description]: minor 6th dim, major 6th dim, dominant 7th dim and dominant 7th ♭5 dim.
+- In each scale, the 6 (or 7, or 7♭5) chord is the **"on" chord** and its diminished is the **"off" chord** [LoL-man]. In C:
+
+| Scale | On chord | Off chord (B°7) | Scale |
+|---|---|---|---|
+| C6-dim | C E G A | B D F A♭ | C D E F G A♭ A B |
+| Cm6-dim | C E♭ G A | B D F A♭ | C D E♭ F G A♭ A B |
+| C7-dim | C E G B♭ | B D F A♭ | C D E F G A♭ B♭ B |
+| C7♭5-dim | C E G♭ B♭ | B D F A♭ | C D E F G♭ A♭ B♭ B |
+
+- Notes of the scale alternate on and off, so each scale step changes chord.
+
+### F1.2 The Elevator (Elevator Sequence) [EL; LoL-YT ep.4, ep.6, ep.16, LL 3–5, LL 68; app v1.1 "The Elevator for Contrary Motion"]
+
+**Construction.**
+1. Start from a unison on any scale degree.
+2. Move the top voice up the scale and the bottom voice down the scale, one scale step each.
+3. Fill the middle with some, all or none of the notes of the same chord (on or off).
+4. Each successive shape is a **floor**: unison → 3rds → triads → 6ths → octaves → drop 2 → drop 3 → drop 2&4 → double octave.
+
+**Why it stays in tune with the scale.** Top and bottom move by the same number of steps in an 8-note scale. They are therefore always both on or both off, and the 6/dim alternation is kept.
+
+**C6-dim, from C (derived from the stated construction; spellings checked):**
+
+| Floor | Bottom → top | Chord |
+|---|---|---|
+| 1 unison | C4 | on |
+| 2 third | B3 D4 | off |
+| 3 triad | A3 C4 E4 | on |
+| 4 sixth | G♯3 (B3) F4 | off |
+| 5 octave | G3 (C4 E4) G4 | on |
+| 6 drop 2 | F3 B3 D4 G♯4 | off |
+| 7 drop 3 | E3 C4 G4 A4 | on |
+| 8 drop 2&4 | D3 G♯3 F4 B4 | off |
+| 9 double octave | C3 (…) C5 | on |
+
+**Use.**
+- Moving **along a floor** is parallel motion.
+- Moving **between floors** (taking the elevator) is contrary motion.
+- Mixing the two gives any bass contour.
+- Oblique motion needs **borrowing**, from a different floor or room [EL].
+
+**Interval rule [EL].** Only 3rds, 5ths, 6ths, 8ths, 10ths, 11ths, 13ths and 16ths occur between the outer voices. 2nds, 4ths, 7ths and 9ths would mix the on and off chords. *Note:* G♯–F and D–B are spelled as a diminished 7th and a major 6th; as notes they are a 6th.
+
+**Two elevators** [LoL-YT ep.6]: relative motion on the whole-tone scale with two elevators. The detail is paywalled **(verify)**.
+
+**Endings** [EL, Kingstone's reply]: an elevator that ends on Cm6 can go on as:
+- B7alt → E (the tritone's minor);
+- F7 → B♭;
+- Am7♭5 → D7.
+
+### F1.3 The 16 chords around one diminished (the tesseract) [LoL-man; LoL-YT ep.0.2 "ii–V in the Tesseract", Garden of Forking Paths 1]
+
+**Echols's text (manual):** the tesseract shows "the various pathways that we can follow to gradually transpose a diminished chord down by one semitone". Its 16 vertices are:
+- 4 dom7;
+- 4 major 6;
+- 4 minor 6;
+- 2 dom7♭5;
+- 2 diminished.
+
+Each edge moves one note by one semitone.
+
+**In C: C°7 (C E♭ G♭ A) down to B°7 (B D F A♭)**, derived and checked note by note:
+
+| Notes lowered from C°7 | Result |
+|---|---|
+| one | B7 (B E♭ G♭ A), D7 (C D F♯ A), F7 (C E♭ F A), A♭7 (C E♭ G♭ A♭) |
+| two adjacent | D6 (B D G♭ A → D F♯ A B), F6 (C D F A), A♭6 (C E♭ F A♭), B6 (B E♭ G♭ A♭) |
+| two opposite | F7♭5 = B7♭5 (B E♭ F A), D7♭5 = A♭7♭5 (C D G♭ A♭) |
+| three | Dm6 (B D F A), Fm6 (C D F A♭), A♭m6 (B E♭ F A♭), Bm6 (B D G♭ A♭) |
+| none / all four | C°7, B°7 |
+
+**Link to the app.** The 4 m6 and 4 dom7 here are the "8 expressions over G7" of BARRY-HARRIS-THEORY §4, plus the family on B°/D°. Echols's tesseract is the same set seen as voice-leading paths.
+
+### F1.4 The substitution menu over V [LoL-man; LoL-YT ep.2, "Substitutions — The Diminished is the Center", "The Tritone Sub Is Easier Than You Think"]
+
+**What is sourced.**
+- The app "chooses among several different possible substitutions any time it sees a V chord", and shows the choice. The one named in the manual is **"the tritone's minor"**.
+- The descriptors "are all explained in Episodes 1–10".
+- Ep.2's PDF has a **C minor 6 diminished catalogue**. The description says to transpose it for **E♭m6 and F♯m6**, the m6 chords a minor 3rd apart. All of these share the B° = D° = F° = A♭° off chord, which is what "the diminished is the center" means.
+
+**The menu, derived from F1.3 and BARRY-HARRIS-THEORY §4.** It is not a published list **(verify the exact labels with the app)**. For G7, every chord adjacent to the B°/C° pair:
+- itself, G7;
+- the family: B♭7, D♭7, E7;
+- the important minor, Dm6;
+- the other m6s: Fm6, A♭m6 (the tritone's minor), Bm6;
+- the off chord, the dim.
+
+Labels the owner could check in the app: "tritone's minor", and probably "important minor", "family"/"brother", "dim".
+
+### F1.5 Pivoting: "the four pivoting scenarios" [LoL-PDF ep.17; LoL-YT ep.17]
+
+**Sourced.** Lines that pivot while making polyphonic movement with the Elevator Sequence. The 6-page PDF gives practice examples for "the four pivoting scenarios".
+
+**Not public: what the four scenarios are.** A reading consistent with ep.16 and the single-line pivot of A2.6 is **(verify)**:
+1. on → on;
+2. on → off;
+3. off → on;
+4. off → off.
+
+Each is a pivot taken while the outer voices move in parallel or contrary motion. The owner should confirm.
+
+### F1.6 Voicing catalogues for the four scales [LoL-PDF ep.1, 2, 8, 9, 10; Shorts]
+- **Ep.1:** a catalogue of voicings for the major 6-dim, in E♭ (7 pp).
+- **Ep.2:** the C minor 6 dim (15 pp).
+- **Ep.8:** a "thorough list" of dom7♭5-dim voicings, a chord chart for each unique shape.
+- **Ep.9:** octatonic voicings (7 pp). Echols: the octatonic is symmetric, so it has the fewest unique voicings, and it is perhaps "the best scale for someone to begin" with.
+- **Ep.10:** **35 voicings** of the dominant 7th dim (10 pp).
+- **Shorts:** the voicing **types** are taught as *thirds, triads, shell chords, octave chords, drop 2, drop 3*. These are the Elevator floors used as voicing families.
+
+### F1.7 Other distinctive Echols terms
+- **Scale of Scales** [LL 16, 21, 62] and **meta-scales** [LL 69] **(title)**. Moving through several scales of chords for colour.
+- **Transformations** [LL 14 major key, LL 40 minor key via the "CAGED" sequence, LL 77] **(title)**.
+- **The Ugliest Duckling** [LL 34, LL 49 "Family Roles (the Ugliest Duckling and Barry Harris's Minor 6 Diminished Scale)"] **(title)**. A family member's role in the m6-dim scale **(verify)**.
+- **Subset/Superset** [LL 6] **(title)**.
+- **Foundations** [LoL-F]:
+  - *Polyphony*: the four scales of chords, plus "seven core skills to practise daily" and a level-1 routine.
+  - *Monophony*: a "full catalog of Barry Harris's methods for building bebop lines", with seven core skills and a level-1 routine.
+  - *What Can I Do With [x] Pitch?*: real-time choices from a given pitch.
+  - *Where Can I Summon [Y] Mimetic Unit?*: the **7 Essential Movements**, each with **Archetypes** and **Outlines** at two levels, each from a standard; 132 pp.
+  - Vol. 4 is "the fourth of a 7-part series".
+  - The names of the 7 skills and the 7 movements are not public.
+- **"Linguistic muscle memory"** [LoL-F]: his name for the goal of the daily routines.
+- **Levels:** "5 Levels of the Diminished Scale", "5 Levels of a Turnaround", "4 Steps to Improvise Chord Melodies in Any Key" [LoL-YT 2024–26] **(title)**.
+
+## F2. Parks's frameworks
+
+### F2.1 The half-step rules, Parks's variants
+The rules are described in A2.2–A2.4; [P5] is the outline of his video 5. Parks's specific variants:
+- **Three half steps also from the root** [P5] (A2.2). The app excludes degree 1 (B1 #3).
+- **Major-scale rules** (EP 25), **harmonic minor rules** (EP 29), and **rules on the I Got Rhythm bridge** (EP 50), the rules applied through a chain of dominants.
+- **"Limitless" half-step rules** (EP 118) and "Do You Know Your Half Step Rules?" (EP 133) **(title)**. These are probably the later "extra note" view (A2.4) **(verify)**.
+- **"What can I do from the 2nd? / from the 3rd?"** (EP 113–114): the options from a non-chord tone and from a chord tone.
+- **"Half Step Below is Beautiful"** (EP 134). Echols answered it in LL 67 and LL 80.
+- **Triplet rules** (EP 24, EP 107; WoS L5; [P5]): an 8th triplet follows its middle note, a 16th triplet its first note.
+
+### F2.2 Scale outlines, Parks's method [TILF EP 1, 2, 8, 9, 14, 18, 23, 100, 101, 104, 169; SG]
+- **Procedure.** For each chord of a tune, play its scale (dominant or major) from the root up to the 7th and back, one scale per bar, in time, through the whole form. m7 becomes its dominant ("ii is V"), m7♭5 the dominant a major 3rd down, and the related dim is used where the form calls for it (blues bar 6) [SG; A2.5].
+- **Order Parks teaches:**
+  - Blues (EP 1, revisited EP 100);
+  - I Got Rhythm (EP 2, EP 101);
+  - Cherokee (EP 8);
+  - Donna Lee (EP 9);
+  - How High the Moon (EP 14);
+  - Night in Tunisia (EP 18);
+  - All the Things You Are (EP 23);
+  - Giant Steps (EP 104).
+- "The 3 scales you need to know for Barry's scale outlines" (EP 169) is probably major, dominant and minor/m6 **(verify)**.
+- **Study-group practice** [SG]: up to 200 bpm in all keys and positions, with and without slurs from upbeats to downbeats.
+
+### F2.3 Warm-ups and fingerings
+- **The dominant scale eight ways on F7** (WoS L2: "8 ways you must know F7"). The PDF of [P5] is the same material: up and down from each chord tone and from each degree **(verify the exact eight)**.
+- **The three important arpeggios** (WoS L3; EP 52 "A Very Important Arpeggio"; EP 137). On C7: C E G C, G B♭ D G, B♭ D F B♭ [P5] (A2.1).
+- **"Barry's Greatest Exercise for Learning Fingerings"** (EP 171) **(title; content unknown)**.
+- **"Puzzle pieces"** (EP 157 "The Most Important Puzzle Piece", EP 166 "What Is a Puzzle Piece?") **(title)**. Probably his name for short line units to combine **(verify)**.
+- **"What is Short? / What is Long?"** (EP 141–142) **(title)**. Kingstone also has a "long–short" practice form (A10) **(verify)**.
+
+## F3. Master table
+
+Instruments: P = piano, G = guitar, B = bass, V = voice. "E" rows are Echols, "P" rows Parks.
+
+| # | Exercise (the teacher's name) | Source | Instr. | App |
+|---|---|---|---|---|
+| E01 | Relative Motion in the scale of chords (parallel / contrary / oblique; independent soprano and bass) | LoL ep.1 (E♭6-dim) | G P | PARTLY: k-sixdim-1 (parallel inversions), k-sixdim-3 (oblique); no contrary |
+| E02 | Substitution: the chords sharing one diminished replace each other; C/E♭/F♯ m6-dim catalogue; Autumn Leaves annotated | LoL ep.2.1–2.2; "The Diminished is the Center" | G P | PARTLY: bh-six-over, bh-convert(-2), harris-13; no "choose the sub" drill on a tune |
+| E03 | Borrowing From the Neighbors (three ways to practise) | LoL ep.3; "Borrowing for Chord Melodies"; LL 47 | G P | PARTLY: k-sixdim-2/6 (one voice only) |
+| E04 | Taking the Elevator to borrow 3 notes | LoL ep.4 | G P | NOT |
+| E05 | Barry Harris's chromatic scale on the 6-dim scales, with relative motion; in two voices; building movement | LoL ep.5; LL 8, 25, 44 | G P B | NOT (h17 is a different exercise, B1 #18) |
+| E06 | On Symmetry: whole-tone relative motion with two elevators; whole-tone movement over Body and Soul | LoL ep.6; LL 10, 53 | G P | NOT (bh-three-dim gives the theory only) |
+| E07 | The Dominant 7 ♭5 Diminished Scale: scale, examples, the voicing list | LoL ep.8 | G P | NOT |
+| E08 | The Octatonic Scale: voicings, movement | LoL ep.9; "5 Levels of the Diminished Scale" | G P | PARTLY: bh-three-dim (theory), k-sixdim-7 (♭9); no octatonic voicing movement |
+| E09 | The Dominant 7th Diminished Scale: 35 voicings | LoL ep.10 | G P | NOT |
+| E10 | The Extended Family: three ways to play the 7♭5-dim scale over every dominant | LoL ep.14 | G P B | NOT |
+| E11 | The Elevator Sequence (Little Elevator, Finding More Floors, Moving Beyond the Octave) | LoL ep.16; LL 3, 4, 5, 68; app 1.1 | G P | NOT |
+| E12 | Pivoting Through the Looking Glass: the four pivoting scenarios | LoL ep.17 | G P | NOT (the single-line pivot is IN-APP: harris-19–24) |
+| E13 | Thirds (practising 3rds; 3rds over a tune) | LL 1, 26; Short; "How to Practice 3rds Over Alone Together" | G P | NOT |
+| E14 | 6ths into 3rds | LL 2 | G P | NOT |
+| E15 | Triads; Thirds into Triads | Short; LL 27 | G P | PARTLY: harris-3 (diatonic triads, not 6-dim floors) |
+| E16 | Shell Chords; Triads to Shell Chords; more ways of using shells; borrowing on shells in the octatonic | Short; LL 22, 28, 39, 41, 58 | G P | NOT (voicings-3 has generic ii–V shells) |
+| E17 | Octave Chords; Shell Chords to Octave Chords | Short; LL 29 | G P | NOT |
+| E18 | Drop 2 Chords | Short | G P | IN-APP: harris-9, g-harris-2/7 |
+| E19 | Drop 3 Chords | Short | G P | IN-APP: harris-9 opt 2 (P); PARTLY (G: no 6-dim drop 3 on string sets) |
+| E20 | Arpeggiating the scale of chords (the on chord rises while the dim falls); skipping through the scale | LoL-man ("a" and "s" keys) | G P | NOT |
+| E21 | Moving Directly to the "Off" Chord | LL 38 | G P | NOT |
+| E22 | Middle Voice Movement; Seeing the Inner Movement; Movement | LL 15, 20, 57 | G P | PARTLY: k-sixdim-12 |
+| E23 | Scale of Scales; Connections in the Scale of Scales; Playing Through the Scale of Scales for Color; Meta-scales | LL 16, 21, 62, 69 | G P | NOT |
+| E24 | Family Connections; Half Steps in the Family; Chromatic Movement Through the Family; Learning Family | LL 13, 18, 64, 75 | G P B | PARTLY: harris-8, harris-16, bh-family, bh-brothers |
+| E25 | The Ugliest Duckling; Family Roles in the minor 6-dim scale | LL 34, 49 | G P | NOT **(verify content)** |
+| E26 | Major Key Transformations; Minor Key Transformations with the CAGED sequence; Transformations for Freedom | LL 14, 40, 77 | G P | NOT |
+| E27 | Subset / Superset | LL 6 | G P | NOT **(verify)** |
+| E28 | Major I–vi–ii–V in scales of chords | LL 7 | G P | PARTLY: k-sixdim-8 (ii–V–I only) |
+| E29 | Connecting Scales to Chords (Autumn Leaves) | LL 11, 32 | G P | PARTLY: harris-9/10 + k-sixdim-9 |
+| E30 | Modulation With Movement | LL 37 | G P | NOT |
+| E31 | Diminished practice tips; 5 Levels of the Diminished Scale | LL 36; Short | G P | PARTLY: k-sixdim-5/7/11 |
+| E32 | Moving from I to IV | LL 24 | G P | NOT |
+| E33 | Looking at the Flat 3 Diminished | 2024 video | G P | IN-APP: bh-dim-roles (♭III°7) |
+| E34 | The Movement to the Mediant | 2024 video | G P | NOT |
+| E35 | Using Barry's scales to move through maj7 chords; Lydian sounds | LL 46, 23 | G P | PARTLY: harris-18 (but see B1 #39; the real "sixth on the fifth" is NOT) |
+| E36 | Half Steps Below are the Way to Go / are Beautiful | LL 67, 80 | G P B | PARTLY: harris-6 |
+| E37 | Let's Work on Our Rhythm Together (with Barry Harris's exercise) | LL 72 | all | NOT |
+| E38 | Practising the tritone sub with the ABCs; The Tritone Sub Is Easier Than You Think | LL 60; 2025 video | G P B | PARTLY: voicings-10 (tritone sub), harris-1–6 (ABCs); not combined |
+| E39 | Long lines over Stella by Starlight | LL 61 | G P | PARTLY: harris-15 |
+| E40 | Making Complex Songs More Simple | LL 78 | all | NOT |
+| E41 | Improvised chord melody: 4 Steps in Any Key; 5 Essential Techniques; How to Improvise Chord Melody Arrangements; "Pretty Chord Melodies" | LL 66; 2024–26 videos | G P | NOT (AUDIT-DEPTH C1) |
+| E42 | 5 Levels of a Turnaround | 2024 video | G P | NOT |
+| E43 | Jazz Roulette: practise the scales of chords by chance | 2024 video | G P | NOT (ready-made game format) |
+| E44 | Counterpoint in a Baroque style; a Bach fugue through the scales of chords; a ground bass | LL 42, 48, 52; "Stealing by Starlight" | G P | NOT |
+| E45 | "Cowboy chords" inside the scales of chords | LL 45 | G | NOT |
+| E46 | ii–V in the Tesseract; the 16 chords | ep.0.2; GoFP 1 | G P | PARTLY: harris-13, bh-convert, bh-three-dim |
+| E47 | Polyphony: seven core skills + level-1 routine | Foundations I | G P | NOT **(names paywalled)** |
+| E48 | Monophony: the catalogue of line methods + seven core skills | Foundations II | G P B | PARTLY (most single-line methods are in harris-*) **(list paywalled)** |
+| E49 | What Can I Do With [x] Pitch? (every chord and voicing that holds a given melody note) | Foundations III | G P | NOT |
+| E50 | The 7 Essential Movements: Archetypes and Outlines | Foundations IV; "Foundations 4 (The Study of Movement)" | G P | NOT |
+| E51 | Practising Polyphony; Polyphonic Possibilities | LL 51, 54 | G P | PARTLY |
+| E52 | Tune studies (Stella, Ponce Var. 13, Christmas Time Is Here, I'll Be Home for Christmas, Blue in Green, My Romance, ATTYA, Embraceable You, Body and Soul, Night in Tunisia, Autumn Leaves, Fly Me to the Moon, Round Midnight, Ipanema bridge, Polka Dots, Lady Bird turnback, Moon River, I'll Be Seeing You, Alone Together, That Secret Place) | ep.7, 11, 12, 13, 15; LL 9, 23, 26–31, 39, 53, 55, 61, 63, 65, 69, 71, 73; others | G P | PARTLY: k-sixdim-9/10 comp forms (fewer tunes; no polyphonic improvisation) |
+| E53 | "Use this one trick for all the color" | 2024 video | G P | unknown **(verify)** |
+| E54 | A Move from Barry Harris's Class; Looking at a Beautiful Idea from Barry | LL 17, 74 | G P | unknown **(verify)** |
+| P01 | Scale outlines: Blues, I Got Rhythm, Cherokee, Donna Lee, How High the Moon, Night in Tunisia, ATTYA, Giant Steps; "the 3 scales you need" | TILF EP 1, 2, 8, 9, 14, 18, 23, 100, 101, 104, 169 | all | NOT (B1 #14) |
+| P02 | 5-4-3-2; 5-4-3-2 in minor | TILF EP 3, 37 | all | NOT |
+| P03 | Barry's (beautiful) chromatic scale | TILF EP 4, 80, 96, 120; WoS L6 | all | NOT (h17 is different) |
+| P04 | The ABCs ("and other things") | TILF EP 4 | all | PARTLY: harris-1, 3, 4, 6 (no 3rds with a half step) |
+| P05 | Half-step rules, dominant (incl. three from the root) | TILF EP 5, 83, 118, 133; WoS L4; P5 | all | IN-APP: harris-2, harris-14, bh-lines, g-harris-3, b-barry-3 (root option missing) |
+| P06 | Major-scale half-step rules | TILF EP 25 | all | PARTLY: harris-1, harris-14 opt 2 |
+| P07 | Half-step rules for harmonic minor | TILF EP 29 | all | NOT |
+| P08 | Half-step rules on the I Got Rhythm bridge | TILF EP 50 | all | PARTLY: harris-16 |
+| P09 | What can I do from the 2nd? / from the 3rd? | TILF EP 113, 114 | all | PARTLY: harris-14 (starts), not as a choice drill |
+| P10 | Half Step Below is Beautiful | TILF EP 134 | all | PARTLY: harris-6 |
+| P11 | Triplets (practising triplets; Barry's beautiful triplets) | TILF EP 24, 107; WoS L5 | all | PARTLY: k-vocab-8, g-bebop-10, b-bebop-7 (v-trip) |
+| P12 | Barry's four scales of chords | TILF EP 6; SoC 2–5 | G P | PARTLY: major and minor 6-dim in app; 7-dim, 7♭5-dim NOT |
+| P13 | G6 and C6 diminished scale of chords | TILF EP 15 | G P | IN-APP: harris-9, k-sixdim-1, g-harris-2 |
+| P14 | Minor 6th diminished (chord ideas; lines in E, G, C m6-dim; where to use it) | TILF EP 12, 28, 39, 45, 92, 98 (with Echols), 123, 168; SoC 3, 8 | G P (B lines) | PARTLY: harris-10, k-sixdim-6 (harmony); m6-dim **lines** NOT |
+| P15 | Borrowing notes; Barry's beautiful borrowing; concept of borrowing | TILF EP 17, 145; SoC 9 | G P | PARTLY: k-sixdim-2/6 |
+| P16 | Playing with the family of dominants; on ATTYA; "Don't think altered, think family" | TILF EP 10, 59, 112; SoC 10; WoS overview | all | PARTLY: harris-8, harris-16, bh-family |
+| P17 | The dominant 8 ways on F7; soloing on dominants; "We don't know D7" | WoS L2; TILF EP 22, 97 | all | PARTLY: harris-2, harris-11 |
+| P18 | Three (very) important arpeggios; a very important arpeggio | WoS L3; TILF EP 52, 137 | all | NOT (B1 #12) |
+| P19 | First 4 bars of the blues; middle of a blues, bars 5–8; the most famous blues turnaround | TILF EP 7, 160, 58, 49 | all | NOT |
+| P20 | First 4 bars of I Got Rhythm | TILF EP 20 | all | NOT |
+| P21 | Chords in the major scale idea | TILF EP 26 | all | PARTLY: harris-3, harris-4 |
+| P22 | Comping with 6th diminished; blues comping with all 4 scales of chords; "No More Comping 4's"; comping a 12-bar blues with only maj6 and m6 | TILF EP 30, 71, 167, 170 | G P | PARTLY: k-sixdim-9/10 (no 7-dim / 7♭5-dim, no "only 6 chords" constraint) |
+| P23 | Charlie Parker ideas #1–3; a Parker phrase; Bud Powell phrases | TILF EP 31–33, 125, 115, 144, 162 | all | PARTLY: licks / k-vocab (not as Harris "phrase → exercise", E33) |
+| P24 | Movement: major to relative minor | TILF EP 34 | G P | NOT |
+| P25 | Lines on minor ii–V; must-know minor 2-5s; "A Minor 7♭5 is Beautiful" | TILF EP 38, 159, 86 | all | PARTLY: harris-15 opt 1 ("seven down to the 3rd" NOT) |
+| P26 | Pivots: on I Got Rhythm; blues with chromatic scale + pivot; m6-dim pivots; pivots with a twist; more pivots | TILF EP 42, 48, 105, 110, 161 | all | IN-APP: harris-19–24, g-harris-8–10, b-barry-7/8, bh-pivot(-arp); PARTLY for the m6-dim pivot and the "twist" |
+| P27 | Whole tone scale | TILF EP 44 | all | NOT (bh-three-dim theory only) |
+| P28 | Infinite ways to play 1-6-2-5 with the scale of chords (major, minor); scales of chords on a 2-5 | TILF EP 46, 47, 79 | G P | PARTLY: k-sixdim-8 |
+| P29 | Don't think 2-5, just think 5 | TILF EP 57 | all | IN-APP: harris-7 opt 1 |
+| P30 | How to create lines from scales: major lines, lines from 5 to 1, minor lines | TILF EP 60, 63, 64, 65 | all | PARTLY: harris-11, harris-15 |
+| P31 | Autumn Leaves with the 4 scales of chords; practical applications | TILF EP 69; WoS L7 | G P | PARTLY: k-sixdim-9 (Autumn Leaves form; 6-dim only) |
+| P32 | Transcribing with a purpose | TILF EP 75 | all | NOT |
+| P33 | Tritone | TILF EP 77 | all | PARTLY: voicings-10 |
+| P34 | 6-note scale idea; a new "bebop" scale | TILF EP 78, 99 | all | NOT **(verify)** |
+| P35 | Don't think C9; a minor 7 is beautiful; minor arpeggio ideas (the conversions) | TILF EP 81, 82, 84 | all | PARTLY: bh-convert, bh-m6-bass, k-sixdim-13 |
+| P36 | Minor blues; a new way to play a minor blues | TILF EP 85, 139 | G P | PARTLY: k-sixdim-10 |
+| P37 | Feeling the "and" (Donna Lee); Barry's beautiful rhythm exercise | TILF EP 87, 94 | all | NOT (B3 #54) |
+| P38 | 4 minor (Just Friends) | TILF EP 88 | all | NOT **(verify)** |
+| P39 | Don't alter your dominant | TILF EP 90 | all | PARTLY: bh-six-over (names missing) |
+| P40 | Diminished explained / creation theory | TILF EP 93; SoC 1 | all | IN-APP: bh-three-dim, bh-convert |
+| P41 | A beautiful movement we never play; Barry's most beautiful move | TILF EP 102, 146 | G P | unknown **(verify)** |
+| P42 | The Barry Harris scale no one plays / we never talk about | TILF EP 127, 148 | all | NOT **(verify: probably 7-dim or 7♭5-dim)** |
+| P43 | Drop 2s are more than you think; drop 2 with a pretty twist; maj6 / m6 / 7 / 7♭5 dim in drop 2; drop 3 | TILF EP 111, 136; SoC 2–6 | G P | PARTLY: 6-dim drop 2/3 IN-APP; 7-dim and 7♭5-dim drop 2 NOT |
+| P44 | Triad: chord or arpeggio?; we don't know triads; chord vs arpeggio | TILF EP 129, 147, 152 | all | PARTLY: harris-3 |
+| P45 | Chord melodies | TILF EP 138 | G P | NOT |
+| P46 | Reasons to practise major 6th chords | TILF EP 140 | G P | IN-APP: harris-9, k-sixdim-1 |
+| P47 | What is short? / What is long? | TILF EP 141, 142 | all | NOT **(verify)** |
+| P48 | Don't play chord tones on the beat | TILF EP 143 | all | NOT **(verify: a deliberate counter-rule, see F4)** |
+| P49 | Puzzle pieces | TILF EP 157, 166 | all | NOT **(verify)** |
+| P50 | 6 must-know 2-5s | TILF EP 158 | all | PARTLY: harris-15 |
+| P51 | Surround or enclosures? | TILF EP 165 | all | PARTLY: harris-6 opt 1, harris-24 |
+| P52 | First step to improvising (that no one teaches except Barry); Barry's secret to soloing / playing through changes | TILF EP 117, 153, 156, 163 | all | unknown **(verify)** |
+| P53 | First step to understanding the scales of chords | TILF EP 164 | G P | IN-APP: k-sixdim-1, harris-9 |
+| P54 | Barry's greatest exercise for learning fingerings | TILF EP 171 | G (all) | NOT **(verify)** |
+| P55 | First movement using drop 2 | SoC 11 | G P | NOT (B2 #29) |
+| P56 | Applications of maj 6 dim / min 6 dim | SoC 7, 8 | G P | PARTLY: k-sixdim-8–10 |
+| P57 | Sonny Rollins idea; "another beautiful idea" | TILF EP 149, 150 | all | unknown |
+| P58 | Practising with a friend; let's practise together (practice formats) | TILF EP 116, 131; LL 76 (Parks with Echols) | all | — (format) |
+
+**Count:** 112 entries: E01–E54 (Echols, 54) and P01–P58 (Parks, 58).
+
+| Status | Count |
+|---|---|
+| IN-APP | 10 (E18, E19 for piano, E33, P05, P13, P26, P29, P40, P46, P53) |
+| PARTLY | 45 |
+| NOT | 51 |
+| unknown | 5 (E53, E54, P41, P52, P57) |
+| format | 1 (P58, a practice format rather than an exercise) |
+
+Several NOT entries are known only by title.
+
+## F4. Details per exercise
+
+Entries already fully described in Parts A and E point there. C examples are **(derived)** unless a source gives them.
+
+### Echols
+
+**E01 Relative Motion** [LoL ep.1; LoL-PDF ep.1]
+- **Procedure.** In one scale of chords (the video uses E♭6-dim), write an independent soprano line and an independent bass line, then fill the middle voices by the smoothest voice leading. Parallel motion = the same voicing type moving along the scale; contrary = the elevator (F1.2); oblique = a held voice, with borrowing.
+- **C example.** Soprano C D E F G, bass C B A G♯ G (contrary: unison → 3rd → triad → 6th → octave, as in F1.2).
+- **Progression.** Two voices → three → four; then all four scales.
+- **App:** PARTLY. k-sixdim-1 is parallel, k-sixdim-3 oblique. Build contrary as E11.
+
+**E02 Substitution** [LoL ep.2; "Substitutions — The Diminished is the Center"]
+- **Procedure.** Learn the C m6-dim scale of chords. Then, over a chord, play any scale of chords whose off chord is the same dim: Cm6, E♭m6, F♯m6 and Am6 all use B°.
+- **C example.** Over F7 (the off chord of Cm6-dim is B° = D° = F° = A♭°), Cm6 = F9 sound. Over B7alt, Cm6 is the tritone's minor.
+- **Progression.** Autumn Leaves annotated score.
+- **App:** PARTLY. bh-six-over teaches the conversions. Missing: a drill where the player picks among the substitutes on each V of a tune.
+
+**E03 Borrowing From the Neighbors** [LoL ep.3]
+- **Procedure.** Inside a 6-dim scale, one or more voices of a voicing take the neighbouring chord's note (on → off or off → on), then resolve. Three ways to practise; the names are paywalled.
+- **C example.** C6 drop 2 (G C E A): lift A to B (borrowed from B°) and back.
+- **App:** PARTLY. k-sixdim-2/6 move one voice. Two and three voices are NOT (B2 #37).
+
+**E04 Taking the Elevator to borrow** [LoL ep.4]
+- "Borrowing 3 notes can be quite perplexing, but the Elevator gives us a fast and easy way to do it."
+- **Inferred mechanism (verify).** Keep the soprano and take the other three voices from the next floor's shape, so three voices borrow at once. The oblique examples in [EL] show it:
+  - drop 2 → drop 3 → triad over a held F in B♭;
+  - in C: G C E A → G E (borrowed) …
+- **App:** NOT.
+
+**E05 Barry's chromatic scale on the scales of chords** [LoL ep.5; LL 8, 25, 44]
+- **Rule.** The chromatic scale as Harris uses it (A2.7): scale degrees on the beats, chromatic notes between, a skip back at existing half steps. Echols: "can be applied to any diatonic scale or the major and minor 6th diminished scales (in combination with various relative motions)".
+- **C6-dim.** Every step is a whole or a half step. Fill C–D (C♯), D–E (D♯), F–G (F♯), A–B (A♯). E–F, G–G♯, G♯–A and B–C are half steps and take the skip-back. The exact note choice follows ep.5 **(verify)**.
+- **Two voices** (LL 8): the chromatic scale in 3rds or 6ths along a floor.
+- **App:** NOT (see B1 #18).
+
+**E06 On Symmetry** [LoL ep.6; LL 10, 53]
+- **Procedure.** The whole-tone scale (C D E F♯ G♯ A♯) as a scale of chords. Relative motion with **two elevators**, then applied to standards (Body and Soul).
+- **App:** NOT.
+
+**E07 / E09 / E10 The dominant scales of chords** [LoL ep.8, 10, 14]
+- **The scales.** C7-dim: C D E F G A♭ B♭ B. C7♭5-dim: C D E F G♭ A♭ B♭ B (A4).
+- **Procedure.**
+  - Harmonise each scale in all voicing types (35 voicings for the 7-dim);
+  - apply relative motion (E01) and the elevator;
+  - apply to standards.
+- **Ep.14:** "There are 3 ways to play [the 7♭5-dim] scale over every dominant 7th chord." Which three is not public. A candidate set **(verify)**:
+  - over G7: G7♭5-dim (= D♭7♭5-dim, same notes);
+  - B♭7♭5-dim (= E7♭5-dim);
+  - and one more family pair.
+- **App:** NOT (B2 #31).
+
+**E08 The Octatonic Scale** [LoL ep.9]
+- **Procedure.** C°7 + D♭°7 = C D♭ E♭ E F♯ G A B♭, harmonised; few unique voicings because of the symmetry. Echols suggests it as a possible first scale.
+- **App:** PARTLY. bh-three-dim names it; no voicing movement.
+
+**E11 The Elevator Sequence** [LoL ep.16; LL 3–5, 68]
+- **Procedure.** F1.2: from a unison on each degree, climb the floors to the double octave and back, in all scales of chords. Then mix floors and elevator moves.
+- **C example.** The F1.2 table.
+- **Progression:**
+  - "Little Elevator" (3 floors);
+  - "Finding More Floors";
+  - "Moving Beyond the Octave" (floors 6–9);
+  - then the minor 6-dim (iReal charts exist for both, [EL]);
+  - then 7-dim and 7♭5-dim.
+- Echols calls it "one of the most fundamentally important things for guitarists to practice with the scales of chords".
+- **App:** NOT. This is the single most important Echols item to build.
+
+**E12 The four pivoting scenarios** [LoL ep.17]
+- F1.5. Lines that pivot (drop an octave mid-line, A2.6) while the elevator voices move.
+- **App:** NOT. The single-line pivot is IN-APP.
+
+**E13 Thirds** [LL 1, 26; Short; Alone Together]
+- **Procedure.** Floor 2 of the elevator: each scale note with the next lower tone of **its own** chord.
+- **C6-dim, top voice up:** C/A, D/B, E/C, F/D, G/E, G♯/F, A/G (a major 2nd), B/G♯.
+- **Progression.** Over a tune (Night in Tunisia, Alone Together).
+- **App:** NOT. The app's ABCs have no 3rds (B1 #10).
+
+**E14 6ths into 3rds** [LL 2]
+- **Procedure.** Invert the 3rds floor by moving the lower note up an octave, giving 6ths: C/A → A/C (A3–C4 becomes C4–A4). Alternate the two.
+- **App:** NOT.
+
+**E15–E17 Triads, shell chords, octave chords** [Shorts; LL 22, 27–29, 39, 41, 58]
+- **Floors 3 to 5** of the elevator as voicing families.
+- **C examples:**
+  - triad = 3 voices within a 5th: A C E (on), B D F (off);
+  - shell = bass + 6th/7th or bass + 10th (Echols's term **(verify)**; Harris shells in A5);
+  - octave chord = an octave with one inner note: G (C) G.
+- **Progression:** thirds → triads → shells → octaves, over Night in Tunisia and Body and Soul.
+- **App:** NOT.
+
+**E20 Arpeggiating the scale of chords** [LoL-man]
+- **Procedure.** Arpeggiate each chord of the scale of chords in turn, going up the scale. "As you ascend the scale … the diminished chords are descending, while the 'on' chord is ascending."
+- **C example.** C6 (C E G A) → B° from D (D F A♭ B) → C6 from E → B° from F …
+- **Skip mode:** move through the scale by skips.
+- **App:** NOT. A quick build.
+
+**E21 Moving directly to the off chord** [LL 38] **(title)**
+- Go from the on chord straight to its dim, in any voicing.
+- **App:** NOT.
+
+**E23 Scale of Scales / meta-scales** [LL 16, 21, 62, 69] **(title)**
+- **Inferred (verify).** Moving through several scales of chords in series for colour, e.g. over Round Midnight.
+- **App:** NOT.
+
+**E24 / E25 Family** [LL 13, 18, 34, 49, 64, 75]
+- Family connections, chromatic movement through the family, "Half Steps in the Family" (a reply to Parks), and "the Ugliest Duckling".
+- **App:** PARTLY. E25 content unknown.
+
+**E26 Transformations** [LL 14, 40, 77] **(title)**
+- **Inferred (verify).** One shape transformed through major and minor keys; the minor version uses a "CAGED" sequence of positions.
+- **App:** NOT.
+
+**E37 Rhythm with Barry's exercise** [LL 72]. Also Parks EP 94; see P37.
+
+**E40 Making complex songs simple** [LL 78] **(title)**
+- **Inferred.** Reduce a tune to its movements, as in Foundations IV.
+- **App:** NOT.
+
+**E41 Improvised chord melody** [LL 66; 2024–26 videos]
+- **Procedure.** Melody note on top; the 6 chord when the melody is a chord tone, the dim between; borrowing and contrary motion on long notes. Four steps in any key **(step names verify)**.
+- **App:** NOT (AUDIT-DEPTH C1).
+
+**E42 Five levels of a turnaround** [2024] **(title)**
+- I–VI–ii–V in five levels of scale-of-chords treatment.
+- **App:** NOT.
+
+**E43 Jazz Roulette** [2024]
+- A chance-based game: a random chord or voicing type is drawn and the player must play it in the scale of chords.
+- **App:** NOT. Fits the app's game layer.
+
+**E44 Baroque counterpoint** [LL 42, 48, 52]
+- **Procedure.** Take a Bach fugue subject or a ground bass and move it through the scales of chords.
+- **App:** NOT. Niche; keep for later.
+
+**E46 The tesseract** [ep.0.2; GoFP 1]
+- F1.3, and the ii–V as a path through it: Dm6 → B°7 → G7 is one edge pair, Harris's first movement.
+- **App:** PARTLY.
+
+**E47–E50 Foundations**
+- The names of the seven core skills (polyphony and monophony) and of the seven Essential Movements are not public. See F5.
+
+**E49 What can I do with [x] pitch?**
+- **Inferred (verify).** For a held melody pitch, list every chord and voicing in the four scales that contains it.
+- **C example (derived).** For a melody E:
+  - C6 (C E G A), the on chord of C6-dim;
+  - C7 (C E G B♭), the on chord of C7-dim;
+  - C7♭5 (C E G♭ B♭);
+  - D♭°7 = E°7 (E G B♭ D♭), the off chord of D6-dim (and of D♭, E, G, B♭ scales);
+  - E's own A6-dim, Am6-dim, etc.
+  
+  Each sits in several voicing types.
+- Strong game potential: "how many homes for this note?".
+- **App:** NOT.
+
+### Parks
+
+**P01 Scale outlines** [TILF; SG]
+- Procedure in F2.2.
+- **C blues** [SG, A2.5]:
+  - bar 1 C7 (up C–B♭, back);
+  - bar 2 F7;
+  - bars 3–4 C7;
+  - bar 5 F7;
+  - bar 6 F♯° (the related dim);
+  - bars 7–8 up C7, down C7, ending on C♯ → A7;
+  - bars 9–10 D7 (for Dm7), G7;
+  - bars 11–12 C7, A7, D7, G7.
+- **App:** NOT. Build first (Part D #2).
+
+**P02 5-4-3-2** (A2.9, E12). Parks EP 37 adds the minor versions. **App:** NOT.
+
+**P03 Barry's chromatic scale** (A2.7, E13). Four Parks episodes plus WoS L6. **App:** NOT.
+
+**P07 Harmonic minor half-step rules** [EP 29] **(title)**
+- **Inferred.** A harmonic minor (A B C D E F G♯) descending with one added note so that chord tones land on the beats. Following the minor pattern (A2.3), the added note is G between A and G♯ **(verify)**.
+- **App:** NOT.
+
+**P09 From the 2nd / from the 3rd** [EP 113–114]
+- From a non-chord tone (2): add 0 or 2 half steps; from a chord tone (3): add 1 or 3.
+- **C7 from D:** D C B♭ A G F E … or D D♭ C B B♭ … (A2.2).
+- **App:** PARTLY.
+
+**P12 / P43 / P55 The Open Studio *Scales of Chords* course** [OS-SoC]
+- Creation theory → maj6, min6, dom7 and dom7♭5 dim in drop 2 → drop 3 → applications → borrowing → family → first movement in drop 2.
+- **App:** major/minor 6-dim drop 2/3 IN-APP. The two dominant scales and the first movement in drop 2 are NOT.
+
+**P17 The dominant eight ways** [WoS L2] — **(verify the eight)**.
+- A likely set from [P5]: the F7 scale down from F, A, C and E♭ with one or three half steps, then up and down.
+- **App:** PARTLY (harris-2, harris-11).
+
+**P18 Three important arpeggios** (A2.1, E5).
+- On C7: C E G C, G B♭ D G, B♭ D F B♭; then as 1-3-5-8 shapes down the line.
+- **App:** NOT.
+
+**P19 First 4 bars of the blues; bars 5–8; the most famous turnaround** [EP 7, 160, 58, 49] **(title)**
+- **Inferred.** Lines for each section of the C blues built from the scale outline + rules (bars 1–4: C7 | F7 | C7 | C7 or Gm–C7, "ii is V"; bars 5–8: F7 | F♯° | C7/G | A7); the turnaround I–VI–ii–V.
+- **App:** NOT as a sectioned blues drill (harris-15 gives ii–V–I only).
+
+**P22 Comping** [EP 30, 71, 167, 170]
+- Blues comping with all four scales of chords; "no more comping 4's" (rhythm: not four-to-the-bar); a 12-bar blues comped only with major 6 and minor 6 chords (C7 → Gm6, F7 → Cm6 …, the important minor) **(derived example)**.
+- **App:** PARTLY. k-sixdim-9/10 comp forms with 6-dim but no "only m6/6" constraint and no 7-dim.
+
+**P24 Movement: major to relative minor** [EP 34] **(title)**
+- **Inferred.** Probably the Harris "major – minor – minor/6" family (C6 → B° → C6/A = Am7 …, A4) **(verify)**.
+- **App:** NOT.
+
+**P25 Minor ii–V lines** [EP 38, 159, 86]
+- Includes the m7♭5 thought as the dominant a major 3rd down ("seven down to the 3rd", A3).
+- **App:** PARTLY.
+
+**P26 Pivots** (A2.6). Parks adds the m6-dim pivot (EP 105) and "a twist" (EP 110, **verify**). **App:** IN-APP / PARTLY.
+
+**P28 Infinite ways 1-6-2-5** [EP 46–47, 79]
+- I–VI–ii–V comped by moving through the scale of chords, with many voicing paths.
+- **App:** PARTLY. k-sixdim-8 is ii–V–I only.
+
+**P37 Rhythm** [EP 87 "Feeling the And (Donna Lee)", EP 94 "Barry's Beautiful Rhythm Exercise"; Echols LL 72]
+- Harris's upbeat feel (A6). The exercise itself is not public **(verify)**. It is likely the R1 ch.4 upbeat patterns (2+/4+, 1+/4+).
+- **App:** NOT.
+
+**P42 The scale no one plays** [EP 127, 148] **(title)**. Probably the dominant 7th dim or the 7♭5-dim **(verify)**. **App:** NOT.
+
+**P48 "Don't play chord tones on the beat"** [EP 143] **(title)**
+- It sounds like the opposite of the rules. It is possibly about starting phrases on upbeats or non-chord-tone starts (from 2, 4, 6) **(verify)**.
+- **App:** NOT.
+
+**P49 Puzzle pieces** [EP 157, 166] **(title)**. Small line units ("pieces") to be fitted to chords **(verify)**. **App:** NOT.
+
+**P54 Greatest exercise for fingerings** [EP 171] **(title)**. **App:** NOT.
+
+## F5. What the owner, as a paying student, could look up or share
+
+Names, outlines and C examples are enough; no copying of whole PDFs is needed.
+
+**Echols (Open Studio, Patreon, store):**
+1. **Episode 16 PDF, *The Elevator Sequence*:** the floor list as Echols writes it, the inner-voice choices for floors 4–9, and the minor 6-dim version. Needed to finish E11.
+2. **Episode 17 PDF:** the names and one example of **the four pivoting scenarios** (F1.5).
+3. **Episode 3 PDF:** the names of **the three ways of practising borrowing**.
+4. **Episode 14 PDF:** **the three ways to play the 7♭5-dim scale over a dominant**.
+5. **Episodes 8 and 10 PDFs:** just the **list of voicing shapes** (the 35 for the 7-dim): intervals, bottom to top.
+6. **The Labyrinth app:** a screenshot or list of **every substitution label it shows over a V chord** (F1.4).
+7. **Foundations I and II:** the names of the **seven core skills** in each, and the **level-1 daily routine** (one page each).
+8. **Foundations IV:** the names of **the 7 Essential Movements**, with one Archetype and one Outline per movement (C example).
+9. **Foundations III:** the procedure of the "[x] pitch" exercise.
+10. **Little Labyrinth 6, 16, 21, 34, 49, 62, 69, 77:** one sentence each on what "Subset/Superset", "Scale of Scales", "meta-scales", "Ugliest Duckling" and "Transformations" mean.
+11. **Little Labyrinth 72 and Parks EP 94:** the notated rhythm exercise.
+12. **Echols's Open Studio sessions** (the owner studies with him there): the list of session titles, and any Barry Harris workshop handouts. No public Open Studio Harris course by Echols was found, only an ear-training class.
+
+**Parks (Open Studio, Skool, YouTube):**
+1. ***World of Soloing* worksheets:** L2 "8 ways you must know F7" (the eight forms) and L5 triplets.
+2. ***Scales of Chords* worksheets:** modules 4–6 (dom7-dim, dom7♭5-dim, drop 3) and module 11 (first movement in drop 2): the voicing lists.
+3. **YouTube titles of EP 11, 13, 16, 19, 21, 27, 35–36, 40–41, 43, 51, 53–56, 61, 66–68, 70, 72–74, 76:** titles only; the channel's own search did not surface them.
+4. **One line each on EP 49, 52, 78, 88, 99, 102, 110, 127, 141–143, 146, 148, 157, 166, 171:** what is the exercise? These titles hide the content: "6 note scale", "new bebop scale", "scale no one plays", "short/long", "puzzle piece", "greatest fingering exercise".
+5. **Skool classroom:** the list of mini-lesson titles, to date.
+
+## F6. Build first
+
+These are ordered by value to an Echols- and Parks-centred method, and by how fully the public sources specify them. They overlap with Part D where noted.
+
+1. **The Elevator Sequence** (E11 + E01): C6-dim then Cm6-dim, floors 1–9, parallel along a floor and contrary between floors; P G. It is fully specified by [EL] and F1.2. It covers Part D #3.
+2. **Scale outlines of tunes** (P01): blues, rhythm changes, then Cherokee, Donna Lee, How High the Moon, Night in Tunisia, ATTYA, Giant Steps; all instruments. Part D #2.
+3. **Barry's chromatic scale** (P03 + E05): single line, then in two voices on the 6-dim scales. Part D #1; fix harris-17's name at the same time.
+4. **The dominant scales of chords** (E07, E09, P12, P43): the 7-dim and 7♭5-dim, harmonised in drop 2/3, then over V7 → I. Part D #4.
+5. **Thirds → triads → shells → octave chords** (E13–E17): Echols's voicing-family ladder in each scale of chords; P G.
+6. **5-4-3-2** (P02), major, dominant, minor. Part D #5.
+7. **Three important arpeggios + the dominant eight ways** (P18, P17). Part D #8.
+8. **Substitution on V** (E02 + F1.4): over each V of a tune, choose itself, family, important minor or tritone's minor. The ear version is "which substitute?". It makes BARRY-HARRIS-THEORY §4 playable.
+9. **Borrowing 2–3 voices via the elevator** (E03, E04). Part D #11.
+10. **Arpeggiating the scale of chords** (E20) and the **tesseract explorer** (E46/F1.3): quick builds that make the 16 chords visible.
+
+**Next:** harmonic-minor rules (P07); the sectioned blues (P19); m6-dim lines and pivots (P14, P26); comping a blues with only 6 and m6 chords (P22); Jazz Roulette (E43) as a game; improvised chord melody (E41).
+
+All 12 keys, P/G/B mirrors, and rubato before tempo apply to every item above (owner rules).
