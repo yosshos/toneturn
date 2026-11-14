@@ -34,6 +34,8 @@ import './topicsTheoryPlay'; // THEORY_PLAY (TP-1…TP-4): triad pairs, pentaton
 // HARRIS_2 + HARMONY_3 (docs/AUDIT-CONTENT-THEORY.md §ז.2): Barry Harris unit 2; functional harmony and the advanced areas.
 import './topicsHarris2';
 import './topicsHarmony3';
+// BH-G: the pivot — Barry Harris's pivot arpeggio (AUDIT-CONTENT-THEORY §ז.2).
+import './topicsPivotArp';
 import './topicsVoiceLeadEar'; // AUDIT-CONTENT-THEORY §ה.2: voice leading by ear (which voice moved, held notes, smooth or jumpy, drop 2)
 import { applyDepth } from './topicsDepth';
 
@@ -389,7 +391,7 @@ TOPIC_GEN['bh-lines'] = {
 };
 
 TOPIC_GEN['bh-pivot'] = {
-  title: { en: 'Barry Harris: where did the line pivot?', he: 'בארי האריס: איפה הקו הסתובב?' },
+  title: { en: 'Barry Harris: scale line with a pivot', he: 'בארי האריס: קו סולם עם פיבוט' },
   skill: 'sequences',
   levels: [{ en: 'An octave jump in a scale run', he: 'קפיצת אוקטבה בריצת סולם' }],
   gen(seed, level, id) {

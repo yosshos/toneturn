@@ -11,6 +11,7 @@ import { bassWalk, drop2Voicings, finish, mod, nearestVoicing, place, rng, t, up
 import { STANDARD_CHANGES } from '../standards';
 import { parseChart, type ChartChordEv } from '../charts';
 import { barryLine, DIM7, moveDim, pivot, ruleFor } from '../barry';
+import { ARP_SYM, pivotArp, pivotEnclosureLine, scalePivotLine, type ArpQuality, type LineNote } from '../pivotArp'; // BH-G: the pivot
 // THEORY_PLAY (TP-1…TP-5): the music of the g-theory family.
 import { GIANT_STEPS, LINE_CLICHE, ROOTLESS, SO_WHAT, pairById, pairLineUp, pairName, pairTriads, pentById, pentGroups, pentName, pentNotes, triadOf, ustById, type PairId, type UstId } from '../theoryPlay';
 
@@ -515,10 +516,91 @@ export function generateHarris(s: DrillSpec, tu: Tuning): Drill {
       bpm = 100;
       break;
     }
+    case 'pivot-arp': {
+      // L8 (BH-G, AUDIT-CONTENT-THEORY §ז.2): the pivot on string sets — the root on top, a drop to the 3rd, the climb
+      // 3-5-7 one string each, the top root on the climb's highest string. Op 0–2: maj7, m7, 7 on strings 4-3-2 then
+      // 3-2-1; op 3: ii–V–I, each chord's pivot on the set nearest the last one. All 12 keys (CYC4).
+      const QS: ArpQuality[] = ['maj7', 'm7', '7'];
+      const SETS = [[4, 3, 2], [3, 2, 1]];
+      const at = (b: number, ps: P[], last: boolean) =>
+        ps.forEach((p, i) => evs.push({ beat: b + i * 0.5, dur: last && i === ps.length - 1 ? 2 : 0.5, notes: [{ ...p, stroke: i % 2 === 0 ? ('D' as const) : ('U' as const), ct: true }] }));
+      if (op <= 2) {
+        const q = QS[op];
+        let near = 5;
+        SETS.forEach((set, i) => {
+          const ps = pivotArpOnSet(tu, mod(key, 12), q, set, near);
+          at(i * 4, [...ps, ps[0]], true);
+          near = Math.min(...ps.map((p) => p.f));
+        });
+        title = t(`${NAMES[key]}${ARP_SYM[q]} pivot: root on top, drop to the 3rd, climb — strings 4-3-2, then 3-2-1`, `פיבוט ${NAMES[key]}${ARP_SYM[q]}: יסוד למעלה, ירידה לטרצה, עלייה — מיתרים 4-3-2, ואז 3-2-1`);
+      } else {
+        const chords: [number, ArpQuality][] = [[2, 'm7'], [7, '7'], [0, 'maj7']];
+        let near = 5;
+        chords.forEach(([d, q], i) => {
+          const cands = SETS.map((set) => pivotArpOnSet(tu, mod(key + d, 12), q, set, near));
+          const ps = cands.reduce((a, b) => (Math.abs(Math.min(...b.map((p) => p.f)) - near) < Math.abs(Math.min(...a.map((p) => p.f)) - near) ? b : a));
+          at(i * 2, i === 2 ? [...ps, ps[0]] : ps, i === 2);
+          near = Math.min(...ps.map((p) => p.f));
+        });
+        title = t(`ii–V–I pivots, each chord on the nearest string set · ${NAMES[key]}`, `פיבוטים ב־ii–V–I, כל אקורד על קבוצת המיתרים הקרובה · ${NAMES[key]}`);
+      }
+      goal = { chordTonesOnBeats: true };
+      bpm = 70;
+      break;
+    }
+    case 'scale-pivot':
+    case 'pivot-encl': {
+      // L9: descending scale plus pivot (op 0 the 6 chord, op 1 the 7 chord) — the scale down by the rules, a pivot on
+      // the chord tone it lands on, the scale on down. L10: pivot plus enclosure down the major bebop scale (the Harry
+      // Likas / Harris warm-up; op 0 from the root, op 1 from the 5th). The same lines as the keys (pivotArp.ts), in one
+      // hand position. All 12 keys (CYC4).
+      let ln: LineNote[];
+      if (s.kind === 'scale-pivot') {
+        const q = op === 1 ? '7' : '6';
+        const top = 60 + mod(key, 12);
+        ln = [...scalePivotLine(top, q, 2).line, ...scalePivotLine(top, q, 3).line.map((n) => ({ ...n, beat: n.beat + 8 }))];
+        title = t(`${NAMES[key]}${q}: the scale down by the rules with a pivot inside`, `${NAMES[key]}${q}: הסולם למטה לפי החוקים עם פיבוט בתוכו`);
+      } else {
+        const from = op === 1 ? 2 : 0;
+        ln = pivotEnclosureLine(key, from, 55);
+        title = t(`Pivot and enclosure down the ${NAMES[key]} bebop scale${from ? ', from the 5th' : ''}`, `פיבוט וכיתור במורד סולם הביבופ של ${NAMES[key]}${from ? ', מהקווינטה' : ''}`);
+      }
+      const ms = ln.map((n) => n.p);
+      const lo = Math.min(...ms);
+      const center = Math.max(1, Math.min(10, mod(lo - 40, 12) + (lo - 40 >= 12 ? 12 : 0)));
+      const ps = inPosition(tu, ms, center);
+      evs = ln.map((n, i) => ({ beat: n.beat, dur: n.dur, notes: [{ ...ps[i], stroke: i % 2 === 0 ? ('D' as const) : ('U' as const), ct: n.ct }] }));
+      goal = { chordTonesOnBeats: true };
+      bpm = 70;
+      break;
+    }
     default:
       throw new Error(`Unknown g-harris kind ${s.kind}`);
   }
   return finish(s, tu, evs, { title, bpm, evenness: true, ...(goal ? { goal } : {}) });
+}
+
+/**
+ * The pivot on three adjacent strings (low → high): the 3rd, 5th and 7th one string each, the top root on
+ * the highest string; frets 0–15, the fretted notes within 4 frets, nearest fret `near`. Returns [top, 3, 5, 7].
+ */
+export function pivotArpOnSet(tu: Tuning, rootPc: number, q: ArpQuality, set: number[], near: number): P[] {
+  let best: P[] = [];
+  let cost = Infinity;
+  for (let root = 36 + mod(rootPc - 36, 12); root <= 72; root += 12) {
+    const [top, ...climb] = pivotArp(root, q);
+    const ps: P[] = climb.map((m, i) => ({ s: set[i], f: m - tu.open[set[i] - 1] }));
+    ps.unshift({ s: set[2], f: top - tu.open[set[2] - 1] });
+    if (ps.some((p) => p.f < 0 || p.f > 15)) continue;
+    const fr = ps.map((p) => p.f).filter((f) => f > 0);
+    if (fr.length && Math.max(...fr) - Math.min(...fr) > 4) continue;
+    const c = Math.abs((fr.length ? Math.min(...fr) : 0) - near);
+    if (c < cost) {
+      cost = c;
+      best = ps;
+    }
+  }
+  return best;
 }
 
 // ───────────────────────────── g-theory: theory you play on the neck (THEORY_PLAY, TP-1…TP-5) ─────────────────────────────

@@ -217,6 +217,8 @@ const PACK_TOPICS: Record<string, Pack> = {
   'triad-pairs': 'jazz', 'pent-super': 'jazz', polychords: 'jazz', 'reharm-own': 'jazz',
   // HARRIS_2 + HARMONY_3 (AUDIT-CONTENT-THEORY §ז.2): Barry Harris unit 2, jazz dictation and planing.
   'bh-three-dim': 'jazz', 'bh-dim-roles': 'jazz', 'bh-m6-bass': 'jazz', 'jazz-dictation': 'jazz', planing: 'jazz',
+  // BH-G: the pivot (Barry Harris's pivot arpeggio).
+  'bh-pivot-arp': 'jazz',
   maqam: 'maqam', 'eastern-rhythm': 'maqam',
   'set-classes': 'post-tonal', counterpoint: 'post-tonal',
   'eq-ear': 'production', 'space-ear': 'production', 'pan-ear': 'production', 'dyn-ear': 'production', 'filter-ear': 'production', 'tone-hz': 'production', 'width-ear': 'production',
@@ -353,6 +355,8 @@ export const STEP_PREREQ: Record<string, string[]> = {
   'topic:staff-dictation:1': ['topic:note-reading:1'],
   'topic:chord-read:2': ['topic:note-reading:1'],
   'topic:scale-spelling:1': ['topic:note-reading:1'],
+  // BH-G (owner 2026-11-14): the pivot itself is taught first, then the scale line with a pivot inside it.
+  'topic:bh-pivot:1': ['topic:bh-pivot-arp:1'],
 };
 /**
  * PIANO_JAZZ: the jazz-piano families come after the lines and voicings they build on — Barry Harris harmony after the
@@ -369,6 +373,12 @@ const KEYS_JAZZ_LATER: Record<string, number> = { 'k-sixdim': 9, 'k-bebop': 6, '
  * Harris lines and rootless voicings came in the first unit. Now the basics lead (scales, five-finger, the pianist's
  * ear, Alberti / cadences one step later) and the jazz and advanced families start after a few scale levels.
  */
+/**
+ * Piano levels placed by their own difficulty instead of their index in the family (ladderOrder sorts by difficulty, so
+ * a later-added easier level opens before the harder ones after it). BH-G: the pivot sits at ~1450–1650,
+ * between the Harris lines' block chords (harris 7) and the brothers (harris 8).
+ */
+export const KEYS_LEVEL_DIFF: Record<string, number> = { 'harris-19': 1440, 'harris-20': 1480, 'harris-21': 1520, 'harris-22': 1560, 'harris-23': 1600, 'harris-24': 1650 };
 export const KEYS_LATER: Record<string, number> = { 'k-first': -2, scales: 0, fingers: 0, 'k-ear': 0, arpeggios: 1, cadences: 1, control: 1, accomp: 2, voicings: 3, harris: 4, jazz: 4, advanced: 6, ...KEYS_JAZZ_LATER };
 // AUDIT-CONTENT-THEORY R-1/R-2/R-5: rhythm & meter on the keys starts after the first scale levels.
 KEYS_LATER['k-rhythm'] = 3;
@@ -401,7 +411,7 @@ function ladderSteps(): PathStep[] {
   const diff = (i: number) => 700 + i * 70;
   for (const f of catalog())
     f.levels.forEach((lv, i) =>
-      out.push({ id: `tech:${lv.id}`, kind: 'tech', ladder: { family: f.id, level: lv.level, ref: lv.id, instrument: 'piano' }, skill: 'instrument', sub: 'instrument/piano-tech', domain: 'instrument', difficulty: diff(i + (KEYS_LATER[f.id] ?? 0)), choices: 0, forPlays: ['keys', 'piano'], title: { en: `${f.title.en} · ${lv.title.en}`, he: `${f.title.he} · ${lv.title.he}` } }),
+      out.push({ id: `tech:${lv.id}`, kind: 'tech', ladder: { family: f.id, level: lv.level, ref: lv.id, instrument: 'piano' }, skill: 'instrument', sub: 'instrument/piano-tech', domain: 'instrument', difficulty: KEYS_LEVEL_DIFF[lv.id] ?? diff(i + (KEYS_LATER[f.id] ?? 0)), choices: 0, forPlays: ['keys', 'piano'], title: { en: `${f.title.en} · ${lv.title.en}`, he: `${f.title.he} · ${lv.title.he}` } }),
     );
   for (const f of guitarCatalog()) {
     // Drums (0.65): the drum families are path steps of the drums course (forPlays 'drums' → inCourse).

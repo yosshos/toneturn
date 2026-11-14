@@ -129,6 +129,8 @@ export const TOPIC_MARK: Record<string, string> = {
   'bh-three-dim': '3°7',
   'bh-dim-roles': '♯I°',
   'bh-m6-bass': 'm6=9',
+  // BH-G: the pivot (the root on top, a drop, the climb)
+  'bh-pivot-arp': '1↓357',
   'function-ear': 'T·D',
   'modal-cadence': '♭VII',
   'borrowed-ext': '♭VI',

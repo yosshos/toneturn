@@ -9,6 +9,7 @@ import { chartDrillData, roles } from './chartDrills';
 import { applyForm, type FormPlan, type FormSection } from './roadmap';
 import { parseChart } from '../charts';
 import { genKeysRhythm, keysRhythmFamily } from './keysRhythm'; // AUDIT-CONTENT-THEORY R-1/R-2/R-5
+import { ARP_QUALITIES, ARP_SYM, mirrorArp, pivotArp, pivotEnclosureLine, scalePivotLine, straightArp, type ArpQuality } from '../pivotArp'; // BH-G: the pivot
 // THEORY_PLAY: the k-theory family's music.
 import { LINE_CLICHE, RQ_SYM, RQ_TONES, pairLineUp, pentGroups, upFrom, pairById, pairName, pairTriads, pentById, pentName, pentNotes, ustById, type PairId, type PentId, type RQ, type Ust, type UstId } from '../theoryPlay';
 import type { Drill, DrillGoal, DrillSpec, DynamicsGoal, ExpNote, FamilyId, Hand, KeyOrder, Motion, ScaleType, Variant } from './types';
@@ -1629,6 +1630,12 @@ function genHarris(s: DrillSpec): Drill {
     case 'h17-chromatic':
     case 'h18-sixfive':
       return harrisChromatic(s);
+    case 'h19-pivot':
+    case 'h20-pivotrot':
+    case 'h21-pivotiivi':
+    case 'h22-scalepivot':
+    case 'h23-pivotencl':
+      return harrisPivot(s);
     case 'h9-sixdim':
     case 'h10-minor6dim': {
       const minor6 = s.kind === 'h10-minor6dim';
@@ -3569,6 +3576,95 @@ function harrisChromatic(s: DrillSpec): Drill {
   return lineDrill(s, line, title([ttl], s), { chordTonesOnBeats: true }, SIG[o === 2 ? mod(key + 3, 12) : key]);
 }
 
+// ───────────────────────────── harris 19–24: the pivot (BH-G) ─────────────────────────────
+
+/** Key signature for a chord quality on `r` (the key it most often lives in). */
+const ARP_SIG: Record<ArpQuality, number> = { maj7: 0, '6': 0, m7: 10, '7': 5, m7b5: 1, dim7: 1, m6: 3 };
+/**
+ * BH-G (AUDIT-CONTENT-THEORY §ז.2): the pivot — Barry Harris's pivot arpeggio (owner-confirmed 2026-11-14: an arpeggio
+ * with some notes moved an octave, same order, new contour; canonical: the root on top, a drop to the 3rd, the climb —
+ * Cmaj7 = C5 E4 G4 B4). Chord tones on the beats throughout; every item runs through all 12 keys (cyc4).
+ * - h19 (options 0–5 = maj7, m7, 7, m7♭5, 6, °7): the pivot, then the arpeggio straight down to the root;
+ * - h20 (options 0–2 = maj7, m7, 7): each chord tone in turn on top, climbing; option 3: the mirror on m7;
+ * - h21: through ii–V–I (option 1 minor): each chord's pivot on beats 1–2, then the scale down by the half-step rules;
+ * - h22: descending scale plus pivot (option 0 = the 6 chord over the major scale, 1 = the 7 chord over its descending
+ *   scale): the scale down by the rules, a pivot on the chord tone it lands on, the scale on down (scalePivotLine);
+ * - h23: pivot plus enclosure, the Harry Likas / Harris warm-up down the major bebop scale (option 0 from the root, 1
+ *   from the 5th; pivotEnclosureLine).
+ */
+function harrisPivot(s: DrillSpec): Drill {
+  const key = mod(s.key, 12);
+  const kn = keyName(key);
+  const H = (n: number, en: string, he: string) => t(`Barry Harris H${n}: ${en}`, `בארי האריס H${n}: ${he}`);
+  const line: LineN[] = [];
+  const push = (ps: number[], b0: number, last = false) => ps.forEach((p, i) => line.push({ p, beat: r6(b0 + i / 2), dur: last && i === ps.length - 1 ? 2 : 0.5, ct: true }));
+  if (s.kind === 'h19-pivot') {
+    const q = ARP_QUALITIES[opOf(s, 5)];
+    const root = pitchIn(key, 55);
+    const up = pivotArp(root, q);
+    push([...up, up[0], ...straightArp(root, q).slice(1).reverse(), root], 0, true);
+    const nm = `${kn}${ARP_SYM[q]}`;
+    return lineDrill(s, line, title([H(19, `${nm} pivot: the root on top, drop to the 3rd, climb — then down`, `פיבוט ${nm}: היסוד למעלה, ירידה לטרצה, עלייה — ואז למטה`)], s), { chordTonesOnBeats: true }, SIG[mod(key + ARP_SIG[q], 12)]);
+  }
+  if (s.kind === 'h20-pivotrot') {
+    const o = opOf(s, 3);
+    const mirror = o === 3;
+    const q: ArpQuality = (['maj7', 'm7', '7', 'm7'] as ArpQuality[])[o];
+    const root = pitchIn(key, mirror ? 52 : 48);
+    for (let r = 0; r < 4; r++) push(mirror ? mirrorArp(root, q, r) : pivotArp(root, q, r), r * 2);
+    const last = mirror ? root + 12 : root + 24;
+    line.push({ p: last, beat: 8, dur: 2, ct: true });
+    const nm = `${kn}${ARP_SYM[q]}`;
+    const ttl = mirror
+      ? H(20, `${nm} pivot, the mirror: a chord tone at the bottom, leap up, fall — from each chord tone`, `פיבוט ${nm} במראה: צליל אקורד למטה, קפיצה למעלה, ירידה — מכל צליל אקורד`)
+      : H(20, `${nm} pivot from each chord tone: root, 3rd, 5th, 7th on top`, `פיבוט ${nm} מכל צליל אקורד: יסוד, טרצה, קווינטה, ספטימה למעלה`);
+    return lineDrill(s, line, title([ttl], s), { chordTonesOnBeats: true }, SIG[mod(key + ARP_SIG[q], 12)]);
+  }
+  if (s.kind === 'h22-scalepivot') {
+    const dom = s.option === 1;
+    const q = dom ? '7' : '6';
+    const top = pitchIn(key, 67);
+    const ln = [...scalePivotLine(top, q, 2).line, ...scalePivotLine(top, q, 3).line.map((n) => ({ ...n, beat: n.beat + 8 }))];
+    const nm = `${kn}${q}`;
+    return lineDrill(s, ln, title([H(22, `${nm}: the scale down by the rules with a pivot inside, on beat 3, then on beat 4`, `${nm}: הסולם למטה לפי החוקים עם פיבוט בתוכו, בפעמה 3 ואז בפעמה 4`)], s), { chordTonesOnBeats: true }, SIG[mod(key + (dom ? 5 : 0), 12)]);
+  }
+  if (s.kind === 'h23-pivotencl') {
+    const from = s.option === 1 ? 2 : 0;
+    const ln = pivotEnclosureLine(key, from, 64);
+    return lineDrill(s, ln, title([H(23, `pivot and enclosure down the ${kn} bebop scale${from ? ', from the 5th' : ''}: chord tones on the beats`, `פיבוט וכיתור במורד סולם הביבופ של ${kn}${from ? ', מהקווינטה' : ''}: צלילי אקורד על הפעמות`)], s), { chordTonesOnBeats: true }, SIG[key]);
+  }
+  // h21-pivotiivi
+  const mi = s.option === 1;
+  const maj = SCALE_INTERVALS.major;
+  const segs: { r: number; q: ArpQuality; down: number[]; sc: number[]; beats: number }[] = mi
+    ? [
+        { r: 2, q: 'm7b5', down: [2, 5, 8, 0], sc: [5, 7, 8, 10, 0, 2, 4], beats: 4 },
+        { r: 7, q: '7', down: [7, 11, 2, 5, 8], sc: [7, 8, 10, 11, 1, 2, 4, 5], beats: 4 },
+        { r: 0, q: 'm6', down: [0, 3, 7, 9], sc: [0, 2, 3, 5, 7, 9, 11], beats: 4 },
+      ]
+    : [
+        { r: 2, q: 'm7', down: [2, 5, 9, 0], sc: maj, beats: 4 },
+        { r: 7, q: '7', down: [7, 11, 2, 5], sc: SCALE_INTERVALS.mixolydian.map((x) => x + 7), beats: 4 },
+        { r: 0, q: 'maj7', down: [0, 4, 7, 9], sc: maj, beats: 4 },
+      ];
+  let next = 70;
+  segs.forEach((g, i) => {
+    const pc = mod(key + g.r, 12);
+    // the top root nearest the last note, inside G4…F♯5
+    const top = nearestIn([pc], next + 1, 67, 78);
+    const up = pivotArp(top - 12, g.q);
+    push(up, i * 4);
+    const r = ruleDown(top, g.down.map((x) => mod(x + key, 12)), g.sc.map((x) => mod(x + key, 12)), 2, i * 4 + 2);
+    line.push(...r.line);
+    next = r.next;
+  });
+  line.push({ p: next, beat: 12, dur: 2, ct: true });
+  const ttl = mi
+    ? H(21, `minor ii–V–i in ${keyName(key, true)}: a pivot on each chord, then the scale down by the rules`, `ii–V–i מינורי ב-${keyName(key, true)}: פיבוט על כל אקורד, ואז הסולם למטה לפי החוקים`)
+    : H(21, `ii–V–I in ${kn}: a pivot on each chord, then the scale down by the rules`, `ii–V–I ב-${kn}: פיבוט על כל אקורד, ואז הסולם למטה לפי החוקים`);
+  return lineDrill(s, line, title([ttl], s), { chordTonesOnBeats: true }, SIG[mi ? mod(key + 3, 12) : key]);
+}
+
 // ───────────────────────────── k-sixdim: Barry Harris harmony ─────────────────────────────
 
 const DEG4 = [t('root', 'היסוד'), t('3rd', 'הטרצה'), t('5th', 'הקווינטה'), t('6th', 'הסקסטה')];
@@ -5507,6 +5603,15 @@ export function catalog(): FamilyDef[] {
         L('harris', 16, 'The family of dominants as lines: a half step into each chord', 'משפחת הדומיננטות כקווים: חצי טון לכל אקורד', [h('h16-chains', { swing: true }), h('h16-chains', { option: 1, swing: true }), h('h16-chains', { hands: 'L', swing: true })], cyc4, [2.33, 4]),
         L('harris', 17, 'The chromatic scale with the rules: a chord tone on every beat', 'הסולם הכרומטי לפי החוקים: צליל אקורד על כל פעמה', [...[0, 1, 2].map((o) => h('h17-chromatic', { option: o, perBeat: 3 })), h('h17-chromatic', { hands: 'L', perBeat: 3 })], cyc4, [2.33, 4]),
         L('harris', 18, "The sixth on the fifth: lines through each chord's 6th-diminished scale", 'השישית על הקווינטה: קווים בסולם השישית-מוקטן של כל אקורד', [0, 1, 2].map((o) => h('h18-sixfive', { option: o, swing: true })), cyc4, [2.33, 4]),
+        // BH-G (AUDIT-CONTENT-THEORY §ז.2): the pivot — the root on top, drop to the next chord tone, climb; then inside a
+        // scale line and with enclosures. New technique items: rubato first, then quarters, then the tempo ladder
+        // (rubato.ts); all 12 keys (cyc4). Path ~1450–1650 (path.ts KEYS_LEVEL_DIFF).
+        L('harris', 19, 'The pivot: maj7, m7, 7, m7♭5', 'הפיבוט: maj7, ‏m7, ‏7, ‏m7♭5', [0, 1, 2, 3].map((o) => h('h19-pivot', { option: o })), cyc4, [2.33, 3.33]),
+        L('harris', 20, 'The pivot: 6 and diminished 7th', 'הפיבוט: 6 ודימיניש', [4, 5].map((o) => h('h19-pivot', { option: o })), cyc4, [2.33, 3.33]),
+        L('harris', 21, 'The pivot from every chord tone, and the mirror', 'הפיבוט מכל צליל אקורד, ובמראה', [0, 1, 2, 3].map((o) => h('h20-pivotrot', { option: o })), cyc4, [2.33, 3.73]),
+        L('harris', 22, 'The pivot through ii–V–I, the scale down by the rules', 'הפיבוט דרך ii–V–I, הסולם למטה לפי החוקים', [h('h21-pivotiivi'), h('h21-pivotiivi', { option: 1 })], cyc4, [2.33, 4]),
+        L('harris', 23, 'Descending scale with a pivot inside: 6 and 7', 'סולם יורד עם פיבוט בתוכו: 6 ו־7', [h('h22-scalepivot'), h('h22-scalepivot', { option: 1 })], cyc4, [2.33, 4]),
+        L('harris', 24, 'Pivot and enclosure down the bebop scale', 'פיבוט וכיתור במורד סולם הביבופ', [h('h23-pivotencl'), h('h23-pivotencl', { option: 1 })], cyc4, [2.33, 4]),
       ],
     },
     {
