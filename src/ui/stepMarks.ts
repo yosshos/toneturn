@@ -117,6 +117,17 @@ export const TOPIC_MARK: Record<string, string> = {
   'guide-line': '7–3',
   'jazz-phrase': 'lick',
   'jazz-form': '12',
+  // HARRIS_2 + HARMONY_3 (AUDIT-CONTENT-THEORY §ז.2): Barry Harris unit 2, functional harmony, the advanced areas.
+  'bh-three-dim': '3°7',
+  'bh-dim-roles': '♯I°',
+  'bh-m6-bass': 'm6=9',
+  'function-ear': 'T·D',
+  'modal-cadence': '♭VII',
+  'borrowed-ext': '♭VI',
+  'jazz-dictation': 'G13',
+  planing: 'par.',
+  'form-ear': '16',
+  'negative-harmony': 'neg',
   // VOICE_CURRICULUM: the voice path's topics (each its own mark next to the 16 vocal families).
   'sing-intervals': 'P5↑',
   'song-sing': 'tune',

@@ -3786,6 +3786,94 @@ function genSixDim(s: DrillSpec): Drill {
       const d = chordDrill(sp, evs, title([t(`${f.name.en} in ${kn}: every chord as its 6th chord and diminished`, `${f.name.he} ב-${kn}: כל אקורד כאקורד השישית שלו והמוקטן`)], sp), 60, {}, SIG[f.minor ? mod(key + 3, 12) : key]);
       return withPianoForm(holdLH(d), f, key);
     }
+    // ── HARRIS_2 (AUDIT-CONTENT-THEORY §ז.2 BH-C, BH-D, BH-E) ──
+    case 'sd-aux': {
+      // The auxiliary (common-tone) diminished: X6 – X°7 – X6 over the root. The root and the 6th are common tones,
+      // written held through the bar (struck again they count as wrong notes); the 3rd and the 5th dip a half step.
+      // Op 0: on I from each close position; op 1: on I and IV, then ii7 – V7 – I6.
+      const six = [0, 4, 7, 9];
+      const evs: ChordEv[] = [];
+      const holds: { pitch: number; beat: number; dur: number }[] = [];
+      let beat = 0;
+      let prev: number[] | null = null;
+      const aux = (root: number, rh: number[]) => {
+        const lp = pitchIn(root, 36);
+        const held = rh.filter((p) => [0, 9].includes(mod(p - root, 12)));
+        const moving = rh.filter((p) => !held.includes(p));
+        evs.push(evOf(beat, 2, rh, [lp]));
+        evs.push(evOf(beat + 2, 1, moving.map((p) => p - 1)));
+        evs.push(evOf(beat + 3, 1, moving));
+        for (const p of [...held, lp]) holds.push({ pitch: p, beat, dur: 4 });
+        beat += 4;
+        prev = rh;
+      };
+      if (op !== 1) {
+        for (let o = 0; o < 4; o++) {
+          const start = pitchIn(key + six[o], 60);
+          const order = [...six.slice(o), ...six.slice(0, o)];
+          const rh: number[] = [start];
+          for (const x of order.slice(1)) {
+            let p = rh[rh.length - 1] + 1;
+            while (mod(p - key - x, 12) !== 0) p++;
+            rh.push(p);
+          }
+          aux(key, rh);
+        }
+        evs.push(evOf(beat, 4, voiceNear(pcsOf(six, key), prev, 57, 79), [pitchIn(key, 36)]));
+      } else {
+        aux(key, voiceNear(pcsOf(six, key), null, 60, 76, undefined, 70));
+        aux(mod(key + 5, 12), voiceNear(pcsOf(six, key + 5), prev, 57, 79));
+        const ii = voiceNear(pcsOf([0, 3, 7, 10], key + 2), prev, 57, 79);
+        evs.push(evOf(beat, 2, ii, [pitchIn(key + 2, 36)]));
+        const v = voiceNear(pcsOf([0, 4, 7, 10], key + 7), ii, 57, 79);
+        evs.push(evOf(beat + 2, 2, v, [pitchIn(key + 7, 36)]));
+        evs.push(evOf(beat + 4, 4, voiceNear(pcsOf(six, key), v, 57, 79), [pitchIn(key, 36)]));
+      }
+      const sp = { ...s, hands: 'RL' as const };
+      const ttl = op === 1
+        ? t(`The auxiliary diminished on I and IV, then ii–V–I: ${keyName(key)}6 – ${keyName(key)}°7 – ${keyName(key)}6, ${keyName(key + 5)}6 – ${keyName(key + 5)}°7 – ${keyName(key + 5)}6, root and 6th held`, `הדימיניש העזר על I ועל IV, ואז ii–V–I: ${keyName(key)}6 – ${keyName(key)}°7 – ${keyName(key)}6, ${keyName(key + 5)}6 – ${keyName(key + 5)}°7 – ${keyName(key + 5)}6, היסוד והסקסטה מוחזקים`)
+        : t(`The auxiliary diminished: ${keyName(key)}6 – ${keyName(key)}°7 – ${keyName(key)}6 from each position, root and 6th held`, `הדימיניש העזר: ${keyName(key)}6 – ${keyName(key)}°7 – ${keyName(key)}6 מכל מצב, היסוד והסקסטה מוחזקים`);
+      return holdNotes(chordDrill(sp, evs, title([ttl], sp), 60, {}, SIG[key]), holds);
+    }
+    case 'sd-move': {
+      // "Chords move to chords": from each position of the 6th chord, all four voices step up to the scale's diminished
+      // and back, then down to it and back (parallel motion inside the 6th-diminished scale). The LH doubles the lowest
+      // voice an octave down, so the bass moves too.
+      const evs: ChordEv[] = [];
+      const nb = (p: number, dir: 1 | -1) => {
+        let q = p + dir;
+        while (!dim.includes(mod(q, 12))) q += dir;
+        return q;
+      };
+      let beat = 0;
+      for (let o = 0; o < 4; o++) {
+        const v = blockUnder(degPitch(baseFor(2 * o, 64), six, 2 * o), home);
+        const up = v.map((p) => nb(p, 1));
+        const down = v.map((p) => nb(p, -1));
+        for (const c of [v, up, v, down]) {
+          evs.push(evOf(beat, 1, c, [c[0] - 12]));
+          beat += 1;
+        }
+      }
+      const last = blockUnder(degPitch(baseFor(0, 64), six, 8), home);
+      evs.push(evOf(beat, 2, last, [last[0] - 12]));
+      const sp = { ...s, hands: 'RL' as const };
+      return chordDrill(sp, evs, title([N('chords move to chords — each position steps to the diminished above and below, the bass too', 'אקורדים זזים לאקורדים — כל מצב צועד אל הדימיניש שמעל ושמתחת, גם הבס')], sp), 60, {}, sig);
+    }
+    case 'sd-m6keys': {
+      // One minor 6th, three basses: Xm6 over X, then over the 6th (= m7♭5 a minor 3rd below) and the 4th (= the 9 chord
+      // without its root a 5th below), resolving to the 6th chord a 4th above that 9 chord. Op 1: from the ♭3 up.
+      const m6 = pcsOf([0, 3, 7, 9], key);
+      const rh = op === 1 ? voiceNear(m6, null, 60, 75, undefined, 66) : voiceNear(m6, null, 62, 77, undefined, 70);
+      const basses = [0, 9, 5];
+      const evs: ChordEv[] = basses.map((b, i) => evOf(i * 2, 2, rh, [pitchIn(key + b, 36)]));
+      const res = voiceNear(pcsOf([0, 4, 7, 9], key + 10), rh, 57, 79);
+      evs.push(evOf(6, 4, res, [pitchIn(key + 10, 36)]));
+      const sp = { ...s, hands: 'RL' as const };
+      const k = keyName(key);
+      const ttl = t(`One shape, three basses: ${k}m6 = ${keyName(key + 9)}m7♭5 = ${keyName(key + 5)}9 without its root, then ${keyName(key + 10)}6`, `צורה אחת, שלושה בסים: ${k}m6 = ${keyName(key + 9)}m7♭5 = ${keyName(key + 5)}9 בלי היסוד, ואז ${keyName(key + 10)}6`);
+      return chordDrill(sp, evs, title([ttl], sp), 60, {}, SIG[mod(key + 10, 12)]);
+    }
   }
   throw new Error(`Unknown k-sixdim kind: ${s.kind}`);
 }
@@ -3824,6 +3912,14 @@ function sixPairForm(r: number, q: string): { home: number[]; dim: number[] } {
   if (q === 'm6') return { home: pcsOf([0, 3, 7, 9], r), dim: pcsOf([11, 2, 5, 8], r) };
   if (q === '7b9' || q === 'alt') return { home: pcsOf([0, 4, 7, 10], r), dim: pcsOf([1, 4, 7, 10], r) };
   return sixPair(r, q === '6' ? 'maj7' : q);
+}
+
+/** HARRIS_2: common tones written held over the next chords — each lengthens the note of that pitch struck at that beat. */
+function holdNotes(d: Drill, holds: { pitch: number; beat: number; dur: number }[]): Drill {
+  return { ...d, notes: d.notes.map((n) => {
+    const h = holds.find((x) => x.pitch === n.pitch && Math.abs(x.beat - n.beat) < 1e-6);
+    return h ? { ...n, dur: h.dur } : n;
+  }) };
 }
 
 /** The LH of a chord drill holds its notes until its next note (a root a bar, a pedal). */
@@ -4398,6 +4494,41 @@ function genReharm(s: DrillSpec): Drill {
         ? t(`Upper structures over a ${kn} pedal, lydian: ${keyName(key + 7)}, ${keyName(key + 2)}, ${keyName(key + 11)}m, ${keyName(key + 4)}m over ${kn}`, `מבנים עליונים מעל פדל ${kn}, לידי: ${keyName(key + 7)}, ${keyName(key + 2)}, ${keyName(key + 11)}m, ${keyName(key + 4)}m מעל ${kn}`)
         : t(`Upper structures over a pedal, sus: ${keyName(key + 10)}, ${keyName(key + 7)}m, ${keyName(key + 5)}, ${keyName(key + 2)}m over ${kn}, then a minor 3rd up over ${keyName(key + 3)}`, `מבנים עליונים מעל פדל, סאס:${keyName(key + 10)}, ${keyName(key + 7)}m, ${keyName(key + 5)}, ${keyName(key + 2)}m מעל ${kn}, ואז טרצה קטנה למעלה מעל ${keyName(key + 3)}`);
       return holdLH(chordDrill(sp, evs, title([ttl], sp), 60, {}, SIG[lyd ? mod(key + 7, 12) : mod(key + 5, 12)]));
+    }
+    // ── HARMONY_3 (AUDIT-CONTENT-THEORY §ז.2 H-3, H-5): borrowed chords in comping, planing ──
+    case 'rh-borrowed': {
+      // Borrowed jazz colours (LH root–7th, RH rootless): op 0 ♭VImaj7–♭VII7–I and the backdoor ivm7–♭VII7–I; op 1 Tadd
+      // Dameron's ending Imaj7 – ♭IIImaj7 ♭VImaj7 – ♭IImaj7 – Imaj7.
+      const progs: [number, string, number][][] = [
+        [[0, 'maj7', 4], [8, 'maj7', 2], [10, '7', 2], [0, 'maj7', 4], [5, 'm7', 2], [10, '7', 2], [0, 'maj7', 4]],
+        [[0, 'maj7', 4], [3, 'maj7', 2], [8, 'maj7', 2], [1, 'maj7', 4], [0, 'maj7', 4]],
+      ];
+      const o = op === 1 ? 1 : 0;
+      const chords: HCh[] = progs[o].map(([d, q, b]) => ({ r: R(d), lh: LH_Q[q], rh: RH_Q[q], beats: b, exact: true, more: MORE_Q[q] }));
+      const nm = o === 1
+        ? t(`Tadd Dameron's ending in ${kn}: ${kn}maj7 – ${keyName(key + 3)}maj7 ${keyName(key + 8)}maj7 – ${keyName(key + 1)}maj7 – ${kn}maj7`, `הסיום של טאד דמרון ב-${kn}: ${kn}maj7 – ${keyName(key + 3)}maj7 ${keyName(key + 8)}maj7 – ${keyName(key + 1)}maj7 – ${kn}maj7`)
+        : t(`Borrowed colours in ${kn}: ♭VImaj7–♭VII7–I (${keyName(key + 8)}maj7 ${keyName(key + 10)}7), then the backdoor ivm7–♭VII7–I (${keyName(key + 5)}m7 ${keyName(key + 10)}7)`, `צבעים שאולים ב-${kn}: ♭VImaj7–♭VII7–I (${keyName(key + 8)}maj7 ${keyName(key + 10)}7), ואז הדלת האחורית ivm7–♭VII7–I (${keyName(key + 5)}m7 ${keyName(key + 10)}7)`);
+      return twoHand(s, chords, nm, SIG[key], { lh: [36, 59], rh: [60, 81], rhAim: 70 });
+    }
+    case 'rh-planing': {
+      // Planing: one exact shape moved in parallel, the LH on the root. Op 0: the So What voicing (three 4ths and a
+      // major 3rd) on the 2nd and 1st degrees of a dorian key, then the same a half step up. Op 1: constant structure —
+      // a rootless maj9 (3 5 7 9) on roots a minor 3rd apart.
+      const so = op !== 1;
+      const iv = so ? [0, 5, 10, 15, 19] : [4, 7, 11, 14];
+      const roots = so ? [2, 0, 2, 0, 3, 1, 3, 1, 2, 0] : [0, 3, 6, 9, 0];
+      const evs: ChordEv[] = roots.map((d, i) => {
+        const r = mod(key + d, 12);
+        const base = so ? pitchIn(r, 50) : pitchIn(r, 48);
+        const rh = iv.map((x) => base + x);
+        const lh = [pitchIn(r, 36)];
+        return evOf(i * 2, i === roots.length - 1 ? 4 : 2, rh, lh);
+      });
+      const sp: DrillSpec = { ...s, hands: 'RL' };
+      const ttl = so
+        ? t(`Planing the So What voicing in ${kn} dorian: on ${keyName(key + 2)} and ${kn}, then a half step up`, `פליינינג של קול So What ב-${kn} דורי: על ${keyName(key + 2)} ועל ${kn}, ואז חצי טון למעלה`)
+        : t(`Constant structure: a rootless maj9 on ${kn}, ${keyName(key + 3)}, ${keyName(key + 6)}, ${keyName(key + 9)}`, `מבנה קבוע: maj9 בלי יסוד על ${kn}, ${keyName(key + 3)}, ${keyName(key + 6)}, ${keyName(key + 9)}`);
+      return chordDrill(sp, evs, title([ttl], sp), 60, {}, SIG[so ? mod(key + 10, 12) : key]);
     }
   }
   throw new Error(`Unknown k-reharm kind: ${s.kind}`);
@@ -5198,6 +5329,11 @@ export function catalog(): FamilyDef[] {
         JT('k-sixdim', 8, 'ii–V–I the 6th-diminished way, major and minor', 'ii–V–I בדרך השישית-מוקטן, מז׳ור ומינור', [sd('sd-iivi', { hands: 'RL' }), sd('sd-iivi', { option: 1, hands: 'RL' })], cyc4, [60, 100]),
         JT('k-sixdim', 9, "A standard's form in 6th chords and diminished", 'צורת סטנדרט באקורדי שישית ומוקטן', [sd('sd-form', { hands: 'RL' }), sd('sd-form', { option: 1, hands: 'RL' })], [0, 5, 10, 7, 3], [60, 92]),
         JT('k-sixdim', 10, 'More forms: the minor blues, the bridge of rhythm changes, a ballad', 'עוד צורות: הבלוז המינורי, הגשר של ריתם צ׳יינג׳ס, בלדה', [0, 1, 2].map((o) => sd('sd-forms', { option: o, hands: 'RL' })), [0, 5, 10, 7, 3], [60, 92]),
+        // HARRIS_2 (AUDIT-CONTENT-THEORY §ז.2): the auxiliary diminished with its common tones held (BH-C), chords move to
+        // chords (BH-D), one minor 6th over three basses in all twelve keys (BH-E).
+        JT('k-sixdim', 11, 'The auxiliary diminished: common tones held', 'הדימיניש העזר: הצלילים המשותפים מוחזקים', [sd('sd-aux', { hands: 'RL' }), sd('sd-aux', { option: 1, hands: 'RL' })], cyc4, [50, 84]),
+        JT('k-sixdim', 12, 'Chords move to chords: to the diminished and back, the bass too', 'אקורדים זזים לאקורדים: אל הדימיניש וחזרה, גם הבס', [sd('sd-move', { hands: 'RL' }), sd('sd-move', { minor: true, hands: 'RL' })], cyc4, [60, 100]),
+        JT('k-sixdim', 13, 'One minor 6th, three basses: m6 = m7♭5 = 9, in all twelve keys', 'מינור 6 אחד, שלושה בסים: m6 = m7♭5 = 9, בכל שנים־עשר הסולמות', [sd('sd-m6keys', { hands: 'RL' }), sd('sd-m6keys', { option: 1, hands: 'RL' })], cyc4, [60, 100]),
       ],
     },
     {
@@ -5246,6 +5382,9 @@ export function catalog(): FamilyDef[] {
         JT('k-reharm', 6, 'Chains: ii–Vs by whole steps, the family of dominants', 'שרשראות: ii–V בטונים, משפחת הדומיננטות', [rh('rh-chains'), rh('rh-chains', { option: 1 })], [0, 5, 10, 3, 7, 2], [60, 104]),
         JT('k-reharm', 7, 'Solo piano: walking bass, 10ths, two-feel', 'פסנתר סולו: בס מהלך, דצימות, בשניים', [0, 1, 2].map((o) => rh('rh-solo', { option: o, swing: true })), [0, 5, 7, 10, 3], [80, 140]),
         JT('k-reharm', 8, 'Upper structures over a pedal: lydian and sus', 'מבנים עליונים מעל פדל: לידי וסאס', [rh('rh-pedal'), rh('rh-pedal', { option: 1 })], [2, 7, 0, 5, 10, 3], [60, 100]),
+        // HARMONY_3 (AUDIT-CONTENT-THEORY §ז.2): borrowed chords in comping (H-3), planing and constant structure (H-5).
+        JT('k-reharm', 9, 'Borrowed colours: ♭VImaj7–♭VII7, the backdoor, Tadd Dameron’s ending', 'צבעים שאולים: ♭VI–♭VII7, הדלת האחורית, הסיום של טאד דמרון', [rh('rh-borrowed'), rh('rh-borrowed', { option: 1 })], [0, 5, 10, 3, 7, 2], [60, 100]),
+        JT('k-reharm', 10, 'Planing: the So What voicing and constant structure', 'פליינינג: קול So What ומבנה קבוע', [rh('rh-planing'), rh('rh-planing', { option: 1 })], [2, 7, 0, 9, 4, 5], [60, 100]),
       ],
     },
     {

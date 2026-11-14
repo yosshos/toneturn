@@ -213,6 +213,8 @@ const PACK_TOPICS: Record<string, Pack> = {
   'bh-scale': 'jazz', 'bh-tone': 'jazz', 'bh-convert': 'jazz', 'bh-convert-2': 'jazz', 'bh-keys': 'jazz', 'bh-six-over': 'jazz', 'bh-lines': 'jazz', 'bh-pivot': 'jazz', 'bh-brothers': 'jazz', 'bh-family': 'jazz', 'bh-block': 'jazz', comping: 'jazz', turnarounds: 'jazz', 'guide-tones': 'jazz', 'chromatic-added': 'jazz', 'chord-scale': 'jazz', 'swing-ratio': 'jazz',
   // EAR_THEORY_AUDIT: the advanced jazz ear (the Jazz & improv course).
   'jazz-changes': 'jazz', 'reharm-spot': 'jazz', 'guide-line': 'jazz', 'jazz-phrase': 'jazz', 'jazz-form': 'jazz',
+  // HARRIS_2 + HARMONY_3 (AUDIT-CONTENT-THEORY §ז.2): Barry Harris unit 2, jazz dictation and planing.
+  'bh-three-dim': 'jazz', 'bh-dim-roles': 'jazz', 'bh-m6-bass': 'jazz', 'jazz-dictation': 'jazz', planing: 'jazz',
   maqam: 'maqam', 'eastern-rhythm': 'maqam',
   'set-classes': 'post-tonal', counterpoint: 'post-tonal',
   'eq-ear': 'production', 'space-ear': 'production', 'pan-ear': 'production', 'dyn-ear': 'production', 'filter-ear': 'production', 'tone-hz': 'production', 'width-ear': 'production',

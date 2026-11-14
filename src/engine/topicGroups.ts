@@ -18,5 +18,8 @@ export const TOPIC_GROUPS: { id: string; icon: string; title: { en: string; he: 
   { id: 'world', icon: 'darbuka', title: { en: 'Maqamat and Middle-Eastern rhythms', he: 'מקאמים ומקצבים מזרחיים' }, topics: ['maqam', 'eastern-rhythm'] },
   { id: 'barry', icon: 'sixdim', title: { en: 'Barry Harris', he: 'בארי האריס' }, topics: ['bh-scale', 'bh-tone', 'bh-convert', 'bh-convert-2', 'bh-keys', 'bh-six-over', 'bh-lines', 'bh-pivot', 'bh-brothers', 'bh-family', 'bh-block', 'chromatic-added'] },
   { id: 'progressions', icon: 'prog', title: { en: 'Progressions: home, next, changed, figure it out', he: 'מהלכים: הבית, הבא, מה השתנה, לפענח לבד' }, topics: ['where-home', 'next-chord', 'reharm-swap', 'figure-out', 'progressions', 'chart-analysis'] },
+  // HARRIS_2 + HARMONY_3 (AUDIT-CONTENT-THEORY §ז.2): Barry Harris unit 2, functional and modal harmony, form, jazz dictation.
+  { id: 'barry-2', icon: 'sixdim', title: { en: 'Barry Harris 2: from the diminished to everything', he: 'בארי האריס 2: מהדימיניש לכל דבר' }, topics: ['bh-three-dim', 'bh-dim-roles', 'bh-m6-bass'] },
+  { id: 'harmony-3', icon: 'prog', title: { en: 'Harmony: function, modes, borrowing, form', he: 'הרמוניה: פונקציה, מודוסים, שאילה, צורה' }, topics: ['function-ear', 'modal-cadence', 'borrowed-ext', 'form-ear', 'negative-harmony', 'jazz-dictation', 'planing'] },
   { id: 'jazz', icon: 'bebop', title: { en: 'Jazz ear: turnarounds, comping, guide tones', he: 'אוזן לג׳אז: טרנאראונדים, קומפינג, צלילים מנחים' }, topics: ['jazz-changes', 'reharm-spot', 'turnarounds', 'guide-tones', 'guide-line', 'jazz-phrase', 'jazz-form', 'comping', 'swing-ratio', 'extensions', 'voicings', 'chord-scale'] },
 ];

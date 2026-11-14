@@ -374,11 +374,16 @@ export function generateHarris(s: DrillSpec, tu: Tuning): Drill {
       bpm = 80;
       break;
     }
-    case 'sixdim-chords': {
+    case 'sixdim-chords':
+    case 'sixdim-sets': {
       // L2: the scale of chords — every scale note on top, voiced as the 6 chord (chord tones) or the diminished 7th
       // (the notes between) in drop-2, on strings 4-3-2-1 (op 0) or 5-4-3-2 (op 1). Op 2: the minor 6th-diminished.
-      const strs = op === 1 ? [5, 4, 3, 2] : [4, 3, 2, 1];
-      const minor = op === 2;
+      // HARRIS_2 BH-F, L7 ('sixdim-sets'): the string sets L2 leaves out — major on 6-5-4-3 (op 0), minor on 6-5-4-3
+      // (op 1) and on 5-4-3-2 (op 2) — so both scales sit on all three sets of four adjacent strings.
+      const SETS: [number[], boolean][] = [[[6, 5, 4, 3], false], [[6, 5, 4, 3], true], [[5, 4, 3, 2], true]];
+      const set = s.kind === 'sixdim-sets' ? SETS[Math.min(2, Math.max(0, op))] : null;
+      const strs = set ? set[0] : op === 1 ? [5, 4, 3, 2] : [4, 3, 2, 1];
+      const minor = set ? set[1] : op === 2;
       const six = (minor ? [0, 3, 7, 9] : [0, 4, 7, 9]).map((x) => key + x);
       const dim = DIM7(key + 11);
       const sc = minor ? MIN_SIX_DIM : SIX_DIM;

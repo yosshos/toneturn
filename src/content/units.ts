@@ -15,6 +15,9 @@ import { UNITS as BASS_NICHE } from './mini/bassNiche';
 import { UNITS as BASS_NICHE2 } from './mini/bassNiche2';
 import { UNITS as DRUMS } from './mini/drums';
 import { UNITS as DRUMS_MORE } from './mini/drumsMore';
+// HARRIS_2 + HARMONY_3 (AUDIT-CONTENT-THEORY §ז.2): topics and the keys / guitar levels that build on them.
+import { UNITS as HARRIS2 } from './mini/harris2';
+import { UNITS as HARMONY3 } from './mini/harmony3';
 
 export const UNIT_LESSON: Record<string, string> = {
   // 0.38 (spec AE): each area file maps its own topics.
@@ -34,6 +37,8 @@ export const UNIT_LESSON: Record<string, string> = {
   ...DRUMS,
   // DRUMS_NICHE_PLAN P2: a few drum levels open with their own quick lesson ("tech:<level id>").
   ...DRUMS_MORE,
+  ...HARRIS2,
+  ...HARMONY3,
   // Learning path
   'bflat-two-homes': 'bflat-two-homes',
   'degrees-135': 'degrees-135',

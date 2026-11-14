@@ -218,6 +218,17 @@ const TOPIC_CONTRAST: Record<string, { en: string; he: string }> = {
   'jazz-phrase': { en: 'Hum the bass, place the first note against it, then follow steps and leaps.', he: 'זמזמו את הבס, מקמו מולו את הצליל הראשון, ואז עקבו אחרי צעדים וקפיצות.' },
   'upper-rootless': { en: 'Hear the top: bright tensions (9, 13) or dark ones (♭9, ♯9, ♭13)? Then which note sits at the bottom.', he: 'הקשיבו למעלה: מתחים בהירים (9, 13) או כהים (♭9, ♯9, ♭13)? ואז איזה צליל יושב למטה.' },
   'jazz-form': { en: 'How fast do the chords change, and are they minor or dominant?', he: 'כמה מהר האקורדים מתחלפים, והאם הם מינוריים או דומיננטיים?' },
+  // HARRIS_2 + HARMONY_3 (AUDIT-CONTENT-THEORY §ז.2)
+  'bh-three-dim': { en: 'The scale’s diminished shares no note with the 6 chord: it sits on the 7th degree (C6 → B°7). The m6 grows from the diminished on its own root.', he: 'לדימיניש של הסולם אין צליל משותף עם אקורד ה־6: הוא יושב על הדרגה השביעית (C6 → B°7). ה־m6 נוצר מהדימיניש שעל היסוד שלו.' },
+  'bh-dim-roles': { en: 'Bass by half steps into a new chord = passing; bass holds and the chord comes back = auxiliary; it stands for V and goes home = dominant.', he: 'בס בחצאי טונים אל אקורד חדש = עובר; בס נשאר והאקורד חוזר = עזר; במקום V והביתה = דומיננטי.' },
+  'bh-m6-bass': { en: 'The bass names it: on the root an m6, a minor 3rd below a m7♭5, a 5th below a 9 chord.', he: 'הבס קובע: על היסוד m6, טרצה קטנה מתחת m7♭5, קווינטה מתחת אקורד 9.' },
+  'function-ear': { en: 'At rest = tonic; leaning away, ready to move on = pre-dominant; pulling hard to home = dominant.', he: 'נח = טוניקה; נוטה הלאה ומוכן לזוז = סובדומיננטה; מושך חזק הביתה = דומיננטה.' },
+  'modal-cadence': { en: 'Find the one note outside plain major or minor: ♭7, ♯4, a major IV in minor, ♭2.', he: 'חפשו את הצליל האחד שמחוץ למז׳ור או למינור הרגיל: ♭7, ♯4, IV מז׳ורי במינור, ♭2.' },
+  'borrowed-ext': { en: 'Follow the bass: a half step above home is ♭II, a minor 3rd above ♭III, a major 3rd below ♭VI.', he: 'עקבו אחרי הבס: חצי טון מעל הבית ♭II, טרצה קטנה מעל ♭III, טרצה גדולה מתחת ♭VI.' },
+  'jazz-dictation': { en: 'Bass first, then each chord’s quality: minor 7, dominant or major 7.', he: 'קודם הבס, ואז האיכות של כל אקורד: מינור 7, דומיננט או מז׳ור 7.' },
+  planing: { en: 'Planing moves every voice the same way by the same step; voice leading keeps notes and moves by small steps.', he: 'בפליינינג כל הקולות זזים יחד באותו צעד; בהובלת קולות צלילים נשארים וזזים בצעדים קטנים.' },
+  'form-ear': { en: 'Count bars from the first tonic; for phrases, compare each with the first one.', he: 'ספרו תיבות מהטוניקה הראשונה; במשפטים, השוו כל אחד לראשון.' },
+  'negative-harmony': { en: 'Mirror around the axis between the 3rds of I: in C, G ↔ C, B ↔ A♭, D ↔ F, E ↔ E♭.', he: 'משקפים סביב הציר שבין הטרצות של I: ב־C, ‏G ↔ C, ‏B ↔ A♭, ‏D ↔ F, ‏E ↔ E♭.' },
 };
 
 export interface SessionInsight {

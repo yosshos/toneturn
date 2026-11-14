@@ -29,6 +29,9 @@ import './topicsGaps';
 import './topicsChartAnalysis';
 import './topicsDrumStyle'; // DRUMS_NICHE_PLAN: name the style by ear (drums course, optional)
 import './topicsJazzEar'; // EAR_THEORY_AUDIT: advanced jazz ear and prog rhythm
+// HARRIS_2 + HARMONY_3 (docs/AUDIT-CONTENT-THEORY.md §ז.2): Barry Harris unit 2; functional harmony and the advanced areas.
+import './topicsHarris2';
+import './topicsHarmony3';
 import { applyDepth } from './topicsDepth';
 
 // ================================================================ T. Barry Harris
