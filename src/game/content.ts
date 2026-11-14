@@ -14,6 +14,7 @@ import { MODE_NAMES, MODE_STEPS, type ModeId } from '../engine/modes';
 import { parseMode, parseNamedChoice, parseTrueFalse } from '../engine/parser';
 import { TOPIC_GEN } from '../engine/topics';
 import { describeRun } from '../engine/runs';
+import { cellSym, parseGrid } from '../engine/progGrid';
 import { narration, vary, type Lang } from './narration';
 import { describe as describeRhythm, describeShort, parseRhythmWords, rhythmFromKey, rhythmKey, sameRhythm, type CellId } from '../engine/rhythm';
 
@@ -415,6 +416,8 @@ export function answerShort(q: Question, a: Answer, l: Lang, nm: Naming = 'lette
       return typeof a === 'string' ? describeShort(rhythmFromKey(a, q.rhythm.bars), l) : String(a);
     case 'place':
       return capItems(placeNames(q, String(a), nm, l));
+    case 'grid':
+      return capItems(parseGrid(String(a), q.slots.length).map((c) => cellSym(c, q.spell)));
   }
   return capWords(answerWord(q, a, l, nm));
 }
@@ -478,6 +481,7 @@ export function roundPrompt(q: Question, l: Lang, nm: Naming, n: number): string
   switch (q.kind) {
     case 'choice':
     case 'place':
+    case 'grid':
       return `${l === 'en' ? 'Round' : 'סיבוב'} ${n}. ${q.ask[l]}`;
     case 'abs-note':
       return l === 'en' ? `Round ${n}. No reference. Which note is this?` : `סיבוב ${n}. בלי צליל ייחוס. איזה צליל זה?`;
@@ -622,6 +626,9 @@ function parseAnswerRaw(q: Question, alternatives: string[], inputNaming: Naming
         .map((p) => pcValue(p));
       return { ...r, value: placeKey(q, pcs) };
     }
+    case 'grid':
+      // Built on the screen (chip rows), never spoken.
+      return { kind: 'unrecognized', heard: alternatives[0] ?? '' };
     case 'abs-note': {
       const r = parseAlternatives(alternatives, (t) => parseNoteName(t, inputNaming));
       if (r.kind === 'answer') return { ...r, value: `${r.value.letter}${r.value.acc}` };
@@ -719,6 +726,8 @@ function revealCore(q: Question, l: Lang, nm: Naming): string {
       return l === 'en' ? `It was ${q.names[q.answer]?.en ?? q.answer}.` : `זה היה ${q.names[q.answer]?.he ?? q.answer}.`;
     case 'place':
       return l === 'en' ? 'Here are the right notes — yours, then these.' : 'אלה התווים הנכונים — שלכם, ואז אלה.';
+    case 'grid':
+      return l === 'en' ? 'The right chords are on the grid.' : 'האקורדים הנכונים על הגריד.';
     case 'abs-note':
       return l === 'en' ? `It was ${spokenNote(q.target, nm, l)}. Your note, then this one.` : `זה היה ${spokenNote(q.target, nm, l)}. הצליל שלכם, ואז הזה.`;
     case 'slash':
@@ -840,6 +849,8 @@ export interface ChoiceLabel {
 }
 
 export function choiceLabel(_q: Question, a: Answer, l: Lang, nm: Naming = 'letter'): ChoiceLabel {
+  // Grid dictation: the grid shows the chords; a label is only a short summary.
+  if (_q.kind === 'grid') return { big: '', small: answerShort(_q, a, l, nm), tone: 'mint' };
   if (_q.kind === 'choice' && typeof a === 'string') return { big: '', small: _q.names[a]?.[l] ?? a, tone: (['mint', 'gold', 'lilac', 'coral'] as ChoiceLabel['tone'][])[_q.choices.indexOf(a) % 4] };
   if (_q.kind === 'slash' && typeof a === 'string') {
     const b = pcFromKey(a);
@@ -909,6 +920,7 @@ export function askTemplate(q: Question, l: Lang, nm: Naming = 'letter'): string
   switch (q.kind) {
     case 'choice':
     case 'place':
+    case 'grid':
       return q.ask[l];
     case 'abs-note':
       return l === 'en' ? 'Which note is this? (no reference)' : 'איזה צליל זה? (בלי ייחוס)';
@@ -992,6 +1004,7 @@ export function questionBadge(q: Question, l: Lang, nm: Naming): { key?: PitchCl
   switch (q.kind) {
     case 'choice':
     case 'place':
+    case 'grid':
       return { text: TOPIC_GEN[q.topic]?.title[l] ?? q.topic };
     case 'abs-note':
       return { text: l === 'en' ? 'Absolute pitch' : 'שמיעה מוחלטת' };
@@ -1045,7 +1058,7 @@ export function giveText(q: Question, a: Answer, l: Lang, nm: Naming = 'letter')
     };
     return m[String(a)]?.[l] ?? String(a);
   }
-  if (q.kind === 'degree-seq' || q.kind === 'name-seq' || q.kind === 'place') return answerShort(q, a, l, nm);
+  if (q.kind === 'degree-seq' || q.kind === 'name-seq' || q.kind === 'place' || q.kind === 'grid') return answerShort(q, a, l, nm);
   if (typeof a === 'number') return String(a);
   const lb = choiceLabel(q, a, l, nm);
   return capWords(lb.small || lb.big);

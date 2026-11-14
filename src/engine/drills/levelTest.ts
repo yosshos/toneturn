@@ -109,7 +109,8 @@ export function pianoStrands(emphasis: DrillSettings['emphasis']): Strand[] {
     { id: 'chords', title: STRAND_TITLE.chords, rungs: jazz ? CHORDS_JAZZ : CHORDS_CLASSICAL },
     { id: 'comp', title: STRAND_TITLE.comp, rungs: jazz ? COMP_JAZZ : COMP_CLASSICAL },
     { id: 'reading', title: STRAND_TITLE.reading, rungs: READING },
-    { id: 'ear', title: STRAND_TITLE.ear, rungs: EAR },
+    // Progressions by ear (k-ear 10+): the jazz ear's top step — a ii–V–I played back as shells.
+    { id: 'ear', title: STRAND_TITLE.ear, rungs: jazz ? [...EAR, r('k-ear-10', 2, { 'k-ear': 11 })] : EAR },
   ];
   if (jazz) out.push({ id: 'lines', title: STRAND_TITLE.lines, rungs: LINES });
   return out;

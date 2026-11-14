@@ -29,6 +29,7 @@ import { UNITS as KEY_MOVES } from './mini/keyMoves';
 import { UNITS as BEBOP_VOCAB } from './mini/bebopVocab';
 // Phrases by ear (k-phrase, g-phrase, b-phrase).
 import { UNITS as PHRASES_BY_EAR } from './mini/phrasesByEar';
+import { UNITS as PROG_GRID } from './mini/progGrid'; // progressions by ear
 
 export const UNIT_LESSON: Record<string, string> = {
   // 0.38 (spec AE): each area file maps its own topics.
@@ -60,6 +61,7 @@ export const UNIT_LESSON: Record<string, string> = {
   ...KEY_MOVES,
   ...BEBOP_VOCAB,
   ...PHRASES_BY_EAR,
+  ...PROG_GRID,
   // Learning path
   'bflat-two-homes': 'bflat-two-homes',
   'degrees-135': 'degrees-135',

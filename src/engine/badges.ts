@@ -474,7 +474,7 @@ const FAMILY_TITLES: Record<BadgeFamily, [string, string][]> = {
   'g-reading': [['First-Position Reader', 'קורא במצב ראשון'], ['Six-String Reader', 'קורא שישה מיתרים'], ['Position Shifter', 'מחליף מצבים'], ['Position VII', 'מצב VII'], ['Positions IX and XII', 'מצבים IX ו־XII'], ['Chart Reader', 'קורא הצ׳ארטים'], ['Two-Position Reader', 'קורא בשני מצבים'], ['Lead-Sheet Reader', 'קורא דפי התווים']],
   'g-impro': [['Roots on Beat 1', 'יסודות על פעמה 1'], ['Thirds on Beat 1', 'טרצות על פעמה 1'], ['Chord-Tone Arpeggios', 'ארפג׳י צלילי אקורד'], ['Guide Tones Through the Form', 'צלילים מנחים לאורך הצורה'], ['Chord-Scale Player', 'נגן סולם-אקורד'], ['Motif Developer', 'מפתח המוטיבים'], ['Trading with the Band', 'חילופים עם הלהקה']],
   // GUITAR_DEEPENING (2026-11-11): one serious title per new level.
-  'g-ear': [['Tonic Finder', 'מוצא הטוניקה'], ['One-Bar Echo', 'הד של תיבה'], ['Two-Bar Echo', 'הד של שתי תיבות'], ['Rhythm Reader', 'קורא המקצב'], ['Riff Catcher', 'תופס הריפים'], ['Root Hearer', 'שומע היסודות'], ['Harmonic Ear', 'אוזן הרמונית'], ['Quality Judge', 'מזהה הסוגים'], ['Key Finder', 'מוצא הסולם'], ['Transcriber', 'המתמלל']],
+  'g-ear': [['Tonic Finder', 'מוצא הטוניקה'], ['One-Bar Echo', 'הד של תיבה'], ['Two-Bar Echo', 'הד של שתי תיבות'], ['Rhythm Reader', 'קורא המקצב'], ['Riff Catcher', 'תופס הריפים'], ['Root Hearer', 'שומע היסודות'], ['Harmonic Ear', 'אוזן הרמונית'], ['Quality Judge', 'מזהה הסוגים'], ['Key Finder', 'מוצא הסולם'], ['Transcriber', 'המתמלל'], ['Changes Hearer', 'שומע המהלכים'], ['Substitution Spotter', 'מזהה התחליפים'], ['Altered Comper', 'מלווה האלטרד']],
   // THEORY_PLAY: one title per level.
   'g-theory': [['Rootless Guitarist', 'גיטריסט בלי יסוד'], ['Quartal Comper', 'מלווה קוורטלי'], ['Giant Stepper', 'צועד הצעדים הגדולים'], ['Upper-Structure Guitarist', 'גיטריסט המבנים העליונים'], ['Triad-Pair Guitarist', 'גיטריסט זוגות המשולשים'], ['Superimposer', 'מלביש הצבעים'], ['Line-Cliché Guitarist', 'גיטריסט הליין קלישה']],
   'g-harris': [['Sixth-Diminished Guitarist', 'גיטריסט שש-מוקטן'], ['Scale-of-Chords Player', 'נגן סולם האקורדים'], ['Half-Step Ruler', 'שליט חצי הטון'], ['Three-to-Nine Player', 'נגן שלוש עד תשע'], ['Enclosure Player', 'נגן הכיתורים'], ["Barry's Guitarist", 'הגיטריסט של בארי'], ['String-Set Voicer', 'מעצב קבוצות המיתרים'], ['Pivot Player', 'נגן הפיבוט'], ['Scale-and-Pivot Liner', 'קווי סולם ופיבוט'], ['Pivot-and-Enclosure Player', 'נגן הפיבוט והכיתור']],
@@ -740,7 +740,7 @@ function voiceBadges(): Badge[] {
 // ---------------------------------------------------------------- the pianist's ear (PIANO_AUDIT §3)
 // Its levels are call-and-response at one calm tempo, so a tempo band says nothing: the milestones count the
 // different items (kind × option, 14 in all) played back clean at least once — first steps, halfway, all of them.
-export const KEYS_EAR_ITEMS = 17;
+export const KEYS_EAR_ITEMS = 28;
 function keysEarBadges(): Badge[] {
   const tiers: [number, { en: string; he: string }, Badge['tone']][] = [
     [3, { en: 'first steps', he: 'צעדים ראשונים' }, 'bronze'],

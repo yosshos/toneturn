@@ -330,6 +330,8 @@ export interface Drill {
    * a wrong chord is "not", an unclear one asks to play it again. Without chroma it is not measured.
    */
   recognize?: { candidates: { root: number; quality: import('../chordRecognize').ChordQuality; bass?: number }[]; answer: number }[];
+  /** Progressions by ear (harmonyGrade.ts): the answer's chords, graded per chord for root, colour and bass (partial credit). */
+  harmony?: import('./harmonyGrade').HarmonyPlan;
 }
 
 /** A unison part: the band's bass / guitar / keys play `line` (or the drill's own notes moved by `transpose`). */
@@ -692,6 +694,8 @@ export interface TakeMetrics {
   vl?: import('./voiceLeadAnalyze').VLReport;
   /** Phrases by ear (phraseGrade.ts): notes found, of those in time, the blended score (= accuracy) and the played tempo ÷ the call's. */
   phrase?: { pitchAcc: number; rhythmAcc: number; score: number; tempo: number };
+  /** Progressions by ear (harmonyGrade.ts): per chord root / colour / bass, partial credit, the one-line verdict. */
+  harmony?: import('./harmonyGrade').HarmonyReport;
 }
 
 /** What a drum take measured (DRUMS_CURRICULUM §3.6). */
