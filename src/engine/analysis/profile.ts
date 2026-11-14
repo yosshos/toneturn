@@ -9,11 +9,13 @@
 import { findings, type PlayerModel } from './model';
 import { grooveFindings, weekKey, type GrooveModel } from './groove';
 import type { Confusion } from '../../storage/confusion';
+import type { FamilyId, ItemState } from '../drills/types';
+import { instrumentName, KEY_LABEL, MIN_TAKES, weakKeysLine, type InstrumentKeys } from './keyMastery';
 
 type Bi = { en: string; he: string };
 
-export type ProfileSource = 'technique' | 'groove' | 'confusions' | 'ear';
-export type ProfileAction = { kind: 'topic'; id: string; level: number } | { kind: 'drills' } | { kind: 'groove' };
+export type ProfileSource = 'technique' | 'groove' | 'confusions' | 'ear' | 'keys';
+export type ProfileAction = { kind: 'topic'; id: string; level: number } | { kind: 'drills'; family?: FamilyId; key?: number } | { kind: 'groove' };
 
 export interface ProfileItem {
   /** Stable across weeks (the timeline is keyed by it). */
@@ -33,6 +35,10 @@ export interface ProfileCounters {
   taps: number;
   /** Wrong answers ever logged in the confusion map. */
   misses: number;
+  /** Key mastery: clean takes so far per weak-key id (`k:family:pc`), for "gone" (kept in a snapshot for its own items only). */
+  keyClean?: Record<string, number>;
+  /** The weak-key ids right now, all of them (never stored): a key still weak is never "gone". */
+  weakKeys?: string[];
 }
 
 export interface ProfileSnap extends ProfileCounters {
@@ -64,6 +70,8 @@ export interface Profile {
   gone: GoneRow[];
   /** Enough measured practice to say anything at all. */
   ready: boolean;
+  /** Key mastery: the short weak-keys line for the coach ('' / absent when nothing is weak). */
+  keyLine?: string;
 }
 
 /** A finding needs at least this confidence to be called a pattern (the models already demand enough notes). */
@@ -72,11 +80,15 @@ export const MIN_CONFIDENCE = 0.4;
 export const PAIR_MIN = 4;
 export const PAIR_RECENT_DAYS = 21;
 /** "Gone" needs this much practice of the same kind after it was last seen. */
-const GONE_AFTER: Record<Exclude<ProfileSource, 'ear'>, { key: keyof ProfileCounters; n: number }> = {
+const GONE_AFTER: Record<Exclude<ProfileSource, 'ear' | 'keys'>, { key: 'takes' | 'taps' | 'misses'; n: number }> = {
   technique: { key: 'takes', n: 15 },
   groove: { key: 'taps', n: 150 },
   confusions: { key: 'misses', n: 15 },
 };
+/** A weak key is gone after this many clean takes in that key since it was last seen (and it is no longer weak). */
+export const KEY_GONE_CLEAN = 5;
+/** Weak keys shown per instrument (the rest still count for "gone"). */
+const KEYS_PER_INSTRUMENT = 3;
 const KEEP_WEEKS = 26;
 const DAY = 86400000;
 
@@ -93,11 +105,57 @@ export interface ProfileInput {
   /** Ear Index by day (earIndexHistory). */
   ear: { day: string; r: number }[];
   now: Date;
+  /** Key mastery (already computed from the drill items, keyMastery.instrumentKeys). */
+  keys?: InstrumentKeys[];
+  /** Skill names for the key rows. */
+  titleOf?: (f: FamilyId) => Bi;
+}
+
+/** Clean takes of an item (the tempo history keeps one per day; the pass log every counted take). */
+const cleanOf = (s: ItemState) => Math.max(s.passLog?.length ?? 0, s.history?.length ?? 0);
+
+/** Key-mastery counters for the profile: clean takes per skill + key, and every weak-key id now. */
+export function keyCounters(items: Record<string, ItemState> | ItemState[], keys: InstrumentKeys[]): Pick<ProfileCounters, 'keyClean' | 'weakKeys'> {
+  const keyClean: Record<string, number> = {};
+  for (const s of Array.isArray(items) ? items : Object.values(items)) {
+    if (s.takes <= 0) continue;
+    const id = `k:${s.family}:${((s.key % 12) + 12) % 12}`;
+    keyClean[id] = (keyClean[id] ?? 0) + cleanOf(s);
+  }
+  const weakKeys = keys.flatMap((i) => i.skills.flatMap((sk) => sk.weak.map((k) => `k:${sk.family}:${k}`)));
+  return { keyClean, weakKeys };
+}
+
+/** The weak-key rows: per instrument the weakest keys of its skills (weakest first, a few per instrument). */
+function keyItems(keys: InstrumentKeys[], titleOf: (f: FamilyId) => Bi): ProfileItem[] {
+  const out: ProfileItem[] = [];
+  for (const i of keys) {
+    const rows = i.skills
+      .flatMap((sk) => sk.weak.map((k) => ({ sk, k, c: sk.cells[k] })))
+      .sort((a, b) => a.c.mastery - b.c.mastery)
+      .slice(0, KEYS_PER_INSTRUMENT);
+    const inst = instrumentName(i.instrument);
+    for (const { sk, k, c } of rows) {
+      const t = titleOf(sk.family);
+      const bpm = c.goalBpm ? ` ♩${c.goalBpm}` : '';
+      out.push({
+        id: `k:${sk.family}:${k}`,
+        source: 'keys',
+        tone: 'pattern',
+        text: { en: `${t.en} in ${KEY_LABEL[k]} lags behind (${inst.en})`, he: `${t.he} ב־${KEY_LABEL[k]} נשאר מאחור (${inst.he})` },
+        note: { en: `A few slow, clean takes in ${KEY_LABEL[k]}${bpm}`, he: `כמה נגינות איטיות ונקיות ב־${KEY_LABEL[k]}${bpm}` },
+        confidence: Math.min(1, c.takes / (MIN_TAKES * 3)),
+        action: { kind: 'drills', family: sk.family, key: k },
+      });
+    }
+  }
+  return out;
 }
 
 /** Everything the measures say right now, as profile items. */
-export function profileItems({ model, groove, pairs, ear, now }: ProfileInput): ProfileItem[] {
+export function profileItems({ model, groove, pairs, ear, now, keys, titleOf }: ProfileInput): ProfileItem[] {
   const out: ProfileItem[] = [];
+  if (keys?.length) out.push(...keyItems(keys, titleOf ?? ((f) => ({ en: f, he: f }))));
   if (model)
     for (const f of findings(model)) {
       if (f.confidence < MIN_CONFIDENCE) continue;
@@ -151,7 +209,10 @@ export function profileItems({ model, groove, pairs, ear, now }: ProfileInput): 
 /** This week's snapshot written in (replacing an earlier one of the same week); the oldest weeks drop off. */
 export function withSnapshot(h: ProfileHistory, items: ProfileItem[], c: ProfileCounters, now: Date): ProfileHistory {
   const week = weekKey(now);
-  const snap: ProfileSnap = { week, ...c, items: Object.fromEntries(items.filter((i) => i.tone === 'pattern').map((i) => [i.id, i.text])) };
+  const pats: Record<string, Bi> = Object.fromEntries(items.filter((i) => i.tone === 'pattern').map((i) => [i.id, i.text]));
+  // The key counters only for this week's own key rows (the rest is not needed later); the weak list is never stored.
+  const kc = c.keyClean ? Object.fromEntries(Object.entries(c.keyClean).filter(([id]) => pats[id])) : {};
+  const snap: ProfileSnap = { week, takes: c.takes, taps: c.taps, misses: c.misses, ...(Object.keys(kc).length ? { keyClean: kc } : {}), items: pats };
   const snaps = [...h.snaps.filter((s) => s.week !== week), snap].sort((a, b) => a.week.localeCompare(b.week)).slice(-KEEP_WEEKS);
   return { v: 1, snaps };
 }
@@ -187,7 +248,12 @@ export function buildProfile(items: ProfileItem[], h: ProfileHistory, c: Profile
     for (const [id, text] of Object.entries(s.items)) {
       if (now.has(id) || seen.has(id) || (latest && latest.items[id])) continue;
       seen.add(id);
-      const source = (id[0] === 't' ? 'technique' : id[0] === 'g' ? 'groove' : 'confusions') as Exclude<ProfileSource, 'ear'>;
+      if (id[0] === 'k') {
+        // A weak key: gone once it is no longer weak and has had enough clean takes in that key since.
+        if (!c.weakKeys?.includes(id) && (c.keyClean?.[id] ?? 0) - (s.keyClean?.[id] ?? 0) >= KEY_GONE_CLEAN) gone.push({ id, source: 'keys', text, since: s.week });
+        continue;
+      }
+      const source = (id[0] === 't' ? 'technique' : id[0] === 'g' ? 'groove' : 'confusions') as Exclude<ProfileSource, 'ear' | 'keys'>;
       const need = GONE_AFTER[source];
       if (c[need.key] - s[need.key] >= need.n) gone.push({ id, source, text, since: s.week });
     }
@@ -206,6 +272,11 @@ export function pairWeeks(h: ProfileHistory, topic: string, a: string, b: string
   return streak(h, `c:${topic}|${x}|${y}`);
 }
 
+/** The weak-keys line for the digest (keyMastery.weakKeysLine with the skills' English names). */
+export function keyLineOf(keys: InstrumentKeys[], titleOf?: (f: FamilyId) => Bi): string {
+  return weakKeysLine(keys, titleOf ? (f) => titleOf(f).en : undefined);
+}
+
 /** What a coach would phrase (stage B): only measured items, no raw data. */
 export function profileDigest(p: Profile) {
   const row = (r: ProfileRow) => ({ id: r.id, area: r.source, finding: r.text.en, weeks: r.weeks || undefined, practise: r.note?.en });
@@ -213,5 +284,6 @@ export function profileDigest(p: Profile) {
     strengths: p.strengths.map(row),
     patterns: p.patterns.map(row),
     resolved: p.gone.map((g) => ({ id: g.id, area: g.source, finding: g.text.en, lastSeen: g.since })),
+    ...(p.keyLine ? { weakKeys: p.keyLine } : {}),
   };
 }

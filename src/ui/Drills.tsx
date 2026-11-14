@@ -5,6 +5,8 @@ import { SONGBOOK } from '../content/songbook';
 import { COMMON_CHORDS, keyName as songKeyName, songFit } from '../engine/songChords';
 import { recordTakeAnalysis } from '../storage/analysis';
 import { refreshProfile } from '../storage/profile';
+import { keyList, skillKeysOf, type KeyCell } from '../engine/analysis/keyMastery';
+import { KeyMap12 } from './KeyMap12';
 import { BACK_TO_RUBATO, hasRubato, QUARTERS_BPM, quartersDrill, RUBATO_CLEAN, rubatoStage, skipRubato, withStageTake, type RubatoStage } from '../engine/drills/rubato';
 import { RubatoTake } from './RubatoTake';
 const RUBATO_OFF = typeof navigator !== 'undefined' && navigator.webdriver && !new URLSearchParams(typeof location !== 'undefined' ? location.search : '').has('rubato');
@@ -22,7 +24,7 @@ import type { FamilyDef, LevelDef } from '../engine/drills/generate';
 import { applyTake, familyLevel, newItem, type LadderResult } from '../engine/drills/ladder';
 import { customKeys, customToDrill } from '../engine/drills/custom';
 import { DrillCreator } from './DrillCreator';
-import { currentLevel, families as familiesOf, keyHeat, levelDone, levelStars, LEVEL_MAX_STARS, levelKeys, shownFamilies, specDrills, todayDrills, levelDrills, withBassTuning, itemTargetBpm } from '../engine/drills/plan';
+import { currentLevel, families as familiesOf, levelDone, skillDrillsInKey, levelStars, LEVEL_MAX_STARS, levelKeys, shownFamilies, specDrills, todayDrills, levelDrills, withBassTuning, itemTargetBpm } from '../engine/drills/plan';
 import { generate } from '../engine/drills/generate';
 import { advance, mergePlaces, strandsFor, recordTake, startState, strandPlaces, testStart, type StrandState } from '../engine/drills/levelTest';
 import { micUnmeasurable } from '../engine/drills/analyze';
@@ -451,7 +453,6 @@ function Hub({ lang, ds, settings, items, head, onFamily, onRun, onSettings, onC
   // Drums: no songbook or drill creator (melody / chords) — the course's own families only.
   const topics: DrillTopic[] = drums ? ['all', ...famTopics] : ['all', ...famTopics, 'songs', 'mine'];
   const topic: DrillTopic = topics.includes(topicRaw) ? topicRaw : 'all';
-  const piano = (ds.instrument ?? 'piano') === 'piano';
   const famCard = (f: FamilyDef) => {
     const lv = familyLevel(items, f.id);
     // Drums: no keys and no tempo bands — the level worked on of the family's levels, and a pip per level done.
@@ -470,7 +471,7 @@ function Hub({ lang, ds, settings, items, head, onFamily, onRun, onSettings, onC
               <i key={l.id} className={levelDone(l, items, ds.keyOrder) ? 'on' : l.id === cur.id ? 'now' : ''} />
             ))}
           </span>
-          {piano && lv > 0 && <HeatRow heat={keyHeat(f.id, items)} />}
+          {!drums && lv > 0 && <HeatRow cells={skillKeysOf(f.id, items)?.cells} />}
         </button>
       );
     }
@@ -595,13 +596,46 @@ function Hub({ lang, ds, settings, items, head, onFamily, onRun, onSettings, onC
   );
 }
 
-/** 12 small cells, one per key (C … B), shaded by the clean tempo reached; never colour-only (a number inside). */
-export function HeatRow({ heat }: { heat: number[] }) {
+/** The family card's key strip (key mastery): 12 thin cells in fifths order, a marker under weak keys. Piano, guitar and bass. */
+export function HeatRow({ cells }: { cells?: KeyCell[] | null }) {
+  return <KeyMap12 cells={cells} lang="en" label="" compact />;
+}
+
+/** A skill's 12-key map (key mastery): tap a key to practise the skill in it; weak keys named under the map. */
+function SkillKeyMap({ lang, ds, f, items, start, onRun }: { lang: Lang; ds: DrillSettings; f: FamilyDef; items: Record<string, ItemState>; start?: number; onRun: (q: Drill[], i: number) => void }) {
+  const sk = useMemo(() => skillKeysOf(f.id, items), [f.id, items]);
+  const avail = useMemo(() => new Set(f.levels.flatMap((l) => levelKeys(l, ds.keyOrder))), [f, ds.keyOrder]);
+  if (avail.size < 2) return null;
+  const he = lang === 'he';
+  const weak = sk?.weak ?? [];
+  const line = weak.length ? (
+    <>
+      {he ? 'חלשים: ' : 'Weak: '}
+      <bdi dir="ltr">{keyList(weak.slice(0, 4))}</bdi>
+    </>
+  ) : sk?.tried ? (
+    he ? 'אין סולם חלש כרגע' : 'No weak key right now'
+  ) : he ? (
+    'עוד לא נמדד'
+  ) : (
+    'Not measured yet'
+  );
   return (
-    <div className="heat-row" style={{ ['--cols' as string]: 12, gridTemplateColumns: 'repeat(12, 1fr)' }} dir="ltr" aria-hidden>
-      {heat.map((h, k) => (
-        <span key={k} className={`heat-cell l${h}`} style={{ height: 10, fontSize: 0 }} />
-      ))}
+    <div className="km-block" data-key-map-skill={f.id}>
+      <div className="km-head">
+        <b>{he ? 'סולמות' : 'Keys'}</b>
+        <small>{line}</small>
+      </div>
+      <KeyMap12
+        cells={sk?.cells}
+        lang={lang}
+        label={he ? `${f.title.he}: סולמות` : `${f.title.en}: keys`}
+        has={(k) => avail.has(k)}
+        onKey={(k) => {
+          const q = skillDrillsInKey(f, items, ds.keyOrder, k, start);
+          if (q.length) onRun(q, 0);
+        }}
+      />
     </div>
   );
 }
@@ -628,6 +662,7 @@ function FamilyView({ lang, ds, f, items, start, onRun }: { lang: Lang; ds: Dril
   const [open, setOpen] = useState<string>(cur.id);
   return (
     <div className="drill-levels">
+      {ds.instrument !== 'drums' && <SkillKeyMap lang={lang} ds={ds} f={f} items={items} start={start} onRun={onRun} />}
       {f.levels.map((l) => {
         const done = levelDone(l, items, ds.keyOrder);
         const stars = levelStars(l, items, ds.keyOrder);
@@ -734,7 +769,7 @@ function LevelGrid({ lang, ds, level, items, onRun }: { lang: Lang; ds: DrillSet
         ▶ {tx.allKeys}
       </button>
       <LevelRefs level={level} lang={lang} />
-      <div className="heat">
+      <div className="heat" dir="ltr">
         {level.specs.map((s, si) => {
           const row = specDrills(level, si, ds.keyOrder);
           // Guitar / bass rows are variants, not hands: a caption names each one (the key cells follow).
@@ -832,7 +867,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
   };
   const done = (m: TakeMetrics, played: PlayedNote[]) => {
     // The take also moves the player profile's timeline (SPEC-AI §8).
-    void recordTakeAnalysis(drill, m, bpm).then(() => refreshProfile()).catch(() => {});
+    void recordTakeAnalysis(drill, m, bpm).then(() => refreshProfile(undefined, undefined, { ...items, ...local.current })).catch(() => {});
     if (drill.freeAbove !== undefined && drill.chart?.length) {
       const free = played.filter((p) => p.pitch >= drill.freeAbove!).map((p) => ({ start: p.on / 1000, end: (p.off ?? p.on + 200) / 1000, midi: p.pitch }));
       const r = checkRules(free, parseChart(drill.chart.join(' | '), drill.meter), drill.meter, bpm, { note: 'scale', interval: null, rhythm: null });
@@ -1080,6 +1115,9 @@ function DrillSettingsView({ lang, ds, onChange, onCalib }: { lang: Lang; ds: Dr
       )}
       {toggle('inPath', tx.inPath)}
       {toggle('inWorkout', tx.inWorkout)}
+      <label className="row" data-focus-weak-keys="1">
+        <input type="checkbox" checked={ds.focusWeakKeys !== false} onChange={(e) => onChange({ focusWeakKeys: e.target.checked })} /> {lang === 'he' ? 'דגש על סולמות חלשים' : 'Focus on weak keys'}
+      </label>
       <button className="btn ghost" onClick={onCalib}>
         {tx.calib}
       </button>

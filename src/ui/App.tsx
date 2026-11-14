@@ -111,7 +111,7 @@ import { BadgesView, ChallengeCard } from './Badges';
 import type { RankChange } from '../engine/ranks';
 import type { Badge } from '../engine/badges';
 import { BadgeUnlock, RankUpUnlock } from './BadgeUnlock';
-import { todayDrills } from '../engine/drills/plan';
+import { familyById, skillDrillsInKey, todayDrills } from '../engine/drills/plan';
 import { blockLabel, WorkoutCard, WorkoutEditor, WorkoutRunScreen } from './Workout';
 import { addSession, nextBlock, nextForBlock, runLeftMs, startRun, suggestWorkout, validateTemplate, type Block, type BlockTarget, type WorkoutRun } from '../engine/workout2';
 import { subPriorities } from '../engine/scheduler';
@@ -1124,7 +1124,7 @@ export function App() {
     openGenerated(def, undefined, false, { key: `testout:${unit.id}`, title: s.uiLang === 'en' ? 'Test out' : 'מבחן מעבר' });
   };
   /** Technique drills opened from a path step or a workout block run today's items as a queue (spec AI §9). */
-  const drillFrom = useRef<'path' | 'workout' | 'test' | 'chart' | 'assign' | 'taste' | 'repertoire' | null>(null);
+  const drillFrom = useRef<'path' | 'workout' | 'test' | 'chart' | 'assign' | 'taste' | 'repertoire' | 'keys' | null>(null);
   /** A licks / transcription path step being played (SPEC-LICKS-TRANSCRIPTION), and the workout's lick-review block. */
   const measuredStep = useRef<{ id: string; level: number } | null>(null);
   const lickReview = useRef(false);
@@ -1231,7 +1231,7 @@ export function App() {
     go('vocal');
   };
   const drillQueue = useMemo(
-    () => (route === 'drills' && (drillFrom.current === 'chart' || drillFrom.current === 'assign' || drillFrom.current === 'taste' || drillFrom.current === 'repertoire' || (drillFrom.current === 'path' && chartQueue.current)) ? chartQueue.current ?? undefined : route === 'drills' && (drillFrom.current === 'path' || drillFrom.current === 'workout') && settings && progress ? todayDrills({ ...drillSettingsOf(settings), bassTuning: bassTuningOf(settings), drumMic: drumMicOf(settings.drumKit) }, progress.drillItems ?? {}, settings.drillStart ?? {}, settings.customDrills ?? []).map((x) => x.drill) : undefined),
+    () => (route === 'drills' && (drillFrom.current === 'chart' || drillFrom.current === 'keys' || drillFrom.current === 'assign' || drillFrom.current === 'taste' || drillFrom.current === 'repertoire' || (drillFrom.current === 'path' && chartQueue.current)) ? chartQueue.current ?? undefined : route === 'drills' && (drillFrom.current === 'path' || drillFrom.current === 'workout') && settings && progress ? todayDrills({ ...drillSettingsOf(settings), bassTuning: bassTuningOf(settings), drumMic: drumMicOf(settings.drumKit) }, progress.drillItems ?? {}, settings.drillStart ?? {}, settings.customDrills ?? []).map((x) => x.drill) : undefined),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [route],
   );
@@ -1280,6 +1280,11 @@ export function App() {
       chartQueue.current = null;
       if (takes > 0) submitAssign(clean / takes, { takes, clean });
       return go('friends');
+    }
+    if (from === 'keys') {
+      // Key mastery: a skill in one key, started from Insights — the technique result is recorded above; back to Insights.
+      chartQueue.current = null;
+      return go('insights');
     }
     if (from === 'chart') {
       chartQueue.current = null;
@@ -2406,7 +2411,14 @@ export function App() {
           }}
         />
       )}
-      {route === 'insights' && <InsightsScreen lang={s.uiLang} progress={progress} onBack={() => go('skills')} onTopic={(id, lv) => openTopic(id, lv)} onDrills={() => go('drills')} onPieces={() => go('pieces')} onGroove={() => go('groove')} course={(s.activeCourse ?? 'ear') as CourseId} />}
+      {route === 'insights' && <InsightsScreen lang={s.uiLang} progress={progress} onBack={() => go('skills')} onTopic={(id, lv) => openTopic(id, lv)} onDrills={() => go('drills')} onDrillKey={(family, key) => {
+            const f = familyById(family);
+            const q = f ? skillDrillsInKey(f, progress.drillItems ?? {}, drillSettingsOf(s).keyOrder, key, s.drillStart?.[family]) : [];
+            if (!q.length) return go('drills');
+            chartQueue.current = q;
+            drillFrom.current = 'keys';
+            go('drills');
+          }} onPieces={() => go('pieces')} onGroove={() => go('groove')} course={(s.activeCourse ?? 'ear') as CourseId} />}
       {route === 'groove' && (
         <GrooveTrainerScreen
           settings={s}

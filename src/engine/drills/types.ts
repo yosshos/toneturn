@@ -823,6 +823,8 @@ export interface DrillSettings {
   emphasis: 'both' | 'classical' | 'jazz';
   inPath: boolean;
   inWorkout: boolean;
+  /** Key mastery (owner 2026-11-14): Today / the workout lean on weak and untried keys (absent = on). */
+  focusWeakKeys?: boolean;
   /** Instrument of the Drills hub (default piano). */
   instrument?: 'piano' | 'guitar' | 'bass' | 'drums';
   /** Drums: notation (percussion staff) or lanes (default notation). */

@@ -43,9 +43,9 @@ function systemPrompt(kind: Kind, lang: 'he' | 'en', naming: string): string {
     'Stay on music. If asked about anything else, say briefly that you only help with music and the exercise at hand.',
   ];
   const by: Record<Kind, string> = {
-    card: 'Write a short note after a practice session: at most two sentences, about 30 words. Name one concrete thing from the data (a strength or a pattern) and one concrete next step. Plain text only.',
+    card: 'Write a short note after a practice session: at most two sentences, about 30 words. Name one concrete thing from the data (a strength or a pattern) and one concrete next step. When the data has "weakKeys" and this session was technique, the next step may be those keys: name the skill, up to three keys and the tempo given (e.g. "next time: ii–V lines in E♭ and A♭ at ♩80"). Plain text only.',
     weekly:
-      'Write the week\'s summary from the player profile: 4–7 short sentences. Start with what improved or what is solid, then the one or two recurring patterns that matter most and how they may connect, then a concrete plan for the coming week that uses the "practise" suggestions given. Plain text, short paragraphs, no headings.',
+      'Write the week\'s summary from the player profile: 4–7 short sentences. Start with what improved or what is solid, then the one or two recurring patterns that matter most and how they may connect, then a concrete plan for the coming week that uses the "practise" suggestions given. When the data has "weakKeys" (the weakest keys per instrument, measured in the drills), name those keys and make part of the plan key-focused: one skill, its two or three weakest keys, the tempo given, e.g. "this week: ii–V lines in E♭, A♭, D♭ at ♩80, slow and clean first". Use only the keys, skills and tempos in the data. Plain text, short paragraphs, no headings.',
     explain:
       'Explain the topic or the question the player asks about, at their level: start from what they hear, then the theory, then one way to recognise it next time. 80–180 words. When they answered wrong, explain what distinguishes their answer from the right one, by sound. Plain text, short paragraphs; a simple list is fine. Be accurate: if unsure, say so rather than guess.',
     hint:

@@ -12,6 +12,7 @@ import { guitarCatalog, guitarLevelShown, guitarStyleMatch, type GuitarFamilyDef
 import { tuningById } from '../fretboard';
 import type { DrumFamilyDef } from './drums';
 import { kitLevels } from '../drumAcoustic';
+import { focusRank, keyMastery, type SkillKeys } from '../analysis/keyMastery';
 
 type Instrument = NonNullable<DrillSettings['instrument']>;
 const CAT = catalog();
@@ -250,7 +251,88 @@ export function candidates(settings: DrillSettings & { bassTuning?: string; drum
 
 /** Today's technique items (spec AI §9) for the hub, the workout block and the path's drill steps. */
 export function todayDrills(settings: DrillSettings & { bassTuning?: string; drumMic?: DrumMic }, items: Record<string, ItemState>, start: Partial<Record<FamilyId, number>> = {}, customs: CustomDrill[] = [], n = 5, now: number | string = Date.now()): TodayItem[] {
-  return todaysItems(items, candidates(settings, items, start, customs), n, now);
+  return planWithFocus(items, candidates(settings, items, start, customs), n, now, settings.focusWeakKeys !== false);
+}
+
+/** At most this share of a session's slots goes to weak / untried keys, so no key is starved (owner 2026-11-14). */
+export const WEAK_KEY_CAP = 0.6;
+/** And at least this share, when there are weak keys to work on. */
+export const WEAK_KEY_MIN = 0.4;
+
+/**
+ * Today's items with the weak-key emphasis (key mastery): the candidates in weak keys first, then untried keys of a
+ * skill already known, then the rest in the player's key order; after the ladder's pick, between WEAK_KEY_MIN and
+ * WEAK_KEY_CAP of the slots go to those keys, the others rotate through the remaining keys (longest unplayed first).
+ * A skill with nothing measured keeps the key order. `focus` false = the plain ladder pick.
+ */
+export function planWithFocus(items: Record<string, ItemState>, pool: Drill[], n = 5, now: number | string = Date.now(), focus = true): TodayItem[] {
+  if (!focus) return todaysItems(items, pool, n, now);
+  const sk = new Map<FamilyId, SkillKeys>(keyMastery(items, now).map((s) => [s.family, s]));
+  const rank = (d: Drill) => focusRank(sk.get(d.spec.family), d.spec.key);
+  const mastery = (d: Drill) => sk.get(d.spec.family)?.cells[((d.spec.key % 12) + 12) % 12].mastery ?? 0;
+  // Stable: within the same rank the pool's (key-order) order stays.
+  const ordered = pool.map((d, i) => ({ d, i, r: rank(d) })).sort((a, b) => a.r - b.r || (a.r === 0 ? mastery(a.d) - mastery(b.d) : 0) || a.i - b.i).map((x) => x.d);
+  const picked = todaysItems(items, ordered, n, now);
+  return emphasizeWeakKeys(picked, ordered, items, n, rank);
+}
+
+const lastOf = (items: Record<string, ItemState>, d: Drill) => items[d.itemId]?.last ?? '';
+
+/** The share rule on a ladder pick: top up weak / untried keys to WEAK_KEY_MIN, cut them to WEAK_KEY_CAP. */
+export function emphasizeWeakKeys(picked: TodayItem[], pool: Drill[], items: Record<string, ItemState>, n: number, rank: (d: Drill) => 0 | 1 | 2): TodayItem[] {
+  const out = picked.slice();
+  const isF = (d: Drill) => rank(d) < 2;
+  const has = (d: Drill) => out.some((p) => p.drill.itemId === d.itemId);
+  const known = (d: Drill) => (items[d.itemId] && items[d.itemId].takes > 0 ? items[d.itemId] : undefined);
+  const maxF = Math.max(1, Math.floor(n * WEAK_KEY_CAP));
+  const minF = Math.min(maxF, Math.ceil(n * WEAK_KEY_MIN));
+  const count = () => out.filter((p) => isF(p.drill)).length;
+  // Top up: weak keys first (pool order = weakest first), a key not yet in the session first.
+  if (count() < minF) {
+    const keysIn = () => new Set(out.map((p) => p.drill.spec.key));
+    const extra = pool.filter((d) => isF(d) && !has(d));
+    extra.sort((a, b) => rank(a) - rank(b) || Number(keysIn().has(a.spec.key)) - Number(keysIn().has(b.spec.key)));
+    for (const d of extra) {
+      if (count() >= minF) break;
+      const item: TodayItem = { drill: d, role: known(d) ? 'weak' : 'new', state: known(d) };
+      if (out.length < n) {
+        out.push(item);
+        continue;
+      }
+      // Replace the last slot that is not a focus key and not the warm-up.
+      let j = -1;
+      for (let i = out.length - 1; i >= 1; i--)
+        if (!isF(out[i].drill)) {
+          j = i;
+          break;
+        }
+      if (j < 0) break;
+      out[j] = item;
+    }
+  }
+  // Cap: the least urgent focus items (untried before weak, from the end) give way to the other keys, longest unplayed first.
+  if (count() > maxF) {
+    const others = pool.filter((d) => !isF(d) && !has(d)).sort((a, b) => lastOf(items, a).localeCompare(lastOf(items, b)));
+    while (count() > maxF && others.length) {
+      let j = -1;
+      for (const r of [1, 0] as const) {
+        for (let i = out.length - 1; i >= 0 && j < 0; i--) if (rank(out[i].drill) === r) j = i;
+        if (j >= 0) break;
+      }
+      if (j < 0) break;
+      const d = others.shift()!;
+      out[j] = { drill: d, role: known(d) ? 'maintenance' : 'new', state: known(d) };
+    }
+  }
+  // Keys interleaved after the first item (as the ladder does).
+  const res = out.slice(0, 1);
+  const rest = out.slice(1);
+  while (rest.length) {
+    const prev = res.length ? res[res.length - 1].drill.spec.key : -1;
+    const k = rest.findIndex((p) => p.drill.spec.key !== prev);
+    res.push(rest.splice(k >= 0 ? k : 0, 1)[0]);
+  }
+  return res;
 }
 
 /** Best tempo band reached per key for a family (heat map): 0 = not played. */
@@ -271,4 +353,18 @@ export function keyHeat(family: FamilyId, items: Record<string, ItemState>): num
 export function withBassTuning(drills: Drill[], tuning: string | undefined): Drill[] {
   if (!tuning || tuning === 'bass' || !tuningById(tuning) || tuningById(tuning).instrument !== 'bass' || tuningById(tuning).id !== tuning) return drills;
   return drills.map((d) => (d.spec.family.startsWith('b-') && !d.spec.tuning ? gen({ ...d.spec, tuning }) : d));
+}
+/**
+ * A skill in one key (the key map's tap): the current level's drills in that key; when that level has no such key
+ * (levels with listed keys), the nearest level below, then above, that has it. [] when no level of the family has it.
+ */
+export function skillDrillsInKey(fam: FamilyDef, items: Record<string, ItemState>, order: DrillSettings['keyOrder'], key: number, start?: number): Drill[] {
+  const cur = currentLevel(fam, items, order, start);
+  const at = fam.levels.indexOf(cur);
+  const byDist = fam.levels.map((l, i) => ({ l, d: i <= at ? at - i : 100 + i - at })).sort((a, b) => a.d - b.d);
+  for (const { l } of byDist) {
+    const ds = levelDrills(l, order).filter((d) => d.spec.key === key);
+    if (ds.length) return ds;
+  }
+  return [];
 }

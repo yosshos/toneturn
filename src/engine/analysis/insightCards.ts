@@ -2,13 +2,15 @@
 // cards and used to show in the guitar course too). Each card shows only in the courses whose domains it measures.
 import type { CourseId } from '../courses';
 
-export type InsightCard = 'ear-index' | 'technique' | 'hand-map' | 'key-map' | 'groove' | 'confusions' | 'trouble-bars';
+export type InsightCard = 'ear-index' | 'technique' | 'keys' | 'hand-map' | 'key-map' | 'groove' | 'confusions' | 'trouble-bars';
 
 const CARDS: Record<InsightCard, readonly CourseId[]> = {
   // Built from the ear ratings (intervals, chords, progressions …).
   'ear-index': ['ear', 'jazz'],
   // Technique findings and the key map come from measured drills on an instrument.
   technique: ['keys', 'guitar', 'bass', 'drums'],
+  // Key mastery (owner 2026-11-14): every technique / jazz skill in all 12 keys, on piano, guitar and bass.
+  keys: ['keys', 'guitar', 'bass', 'jazz'],
   // Per-finger loudness of both hands: a keyboard measure.
   'hand-map': ['keys'],
   'key-map': ['keys', 'guitar', 'bass'],

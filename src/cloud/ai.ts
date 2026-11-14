@@ -24,9 +24,13 @@ const memo = new Map<string, AiResult>();
 
 function scripted(kind: AiKind, r: AiRequest): AiResult {
   const he = r.lang === 'he';
+  // Key mastery: the scripted coach names the weak keys too (from the digest's line when there is one).
+  const wk = typeof r.context.weakKeys === 'string' && r.context.weakKeys ? r.context.weakKeys : '';
+  const keysEn = wk ? ` Weak keys: ${wk}.` : ' This week: ii–V lines in E♭, A♭ and D♭ at ♩80, slow and clean first.';
+  const keysHe = wk ? ` סולמות חלשים: ${wk}.` : ' השבוע: שורות II–V ב־E♭, A♭ ו־D♭ ב־♩80, קודם לאט ונקי.';
   const t: Record<AiKind, string> = {
-    card: he ? 'הזיהוי של מז׳ור ומינור יציב. בפעם הבאה: להקשיב לצליל האמצעי לפני שעונים.' : 'Major and minor are steady now. Next time: listen to the middle note before you answer.',
-    weekly: he ? 'השבוע הזמן שלכם התייצב. הבלבול בין סקסטה לספטימה עדיין חוזר — שווה לתרגל את שתיהן זו לצד זו.' : 'Your time steadied this week. The sixth/seventh mix-up still recurs — practise the two side by side.',
+    card: he ? 'הזיהוי של מז׳ור ומינור יציב. בפעם הבאה: שורות II–V ב־E♭ וב־A♭ ב־♩80.' : 'Major and minor are steady now. Next time: ii–V lines in E♭ and A♭ at ♩80.',
+    weekly: he ? `השבוע הזמן שלכם התייצב. הבלבול בין סקסטה לספטימה עדיין חוזר — שווה לתרגל את שתיהן זו לצד זו.${keysHe}` : `Your time steadied this week. The sixth/seventh mix-up still recurs — practise the two side by side.${keysEn}`,
     explain: he ? 'הסבר לדוגמה (מצב סימולציה).' : 'A sample explanation (simulation mode).',
     hint: he ? 'הקשיבו לכיוון: האם הצליל השני עולה או יורד?' : 'Listen to the direction: does the second note go up or down?',
   };

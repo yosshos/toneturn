@@ -17,6 +17,10 @@ import { refreshProfile } from '../storage/profile';
 import { profileDigest, type Profile, type ProfileAction, type ProfileSource } from '../engine/analysis/profile';
 import { weekKey } from '../engine/analysis/groove';
 import { aiErrorText, askAi, type AiError } from '../cloud/ai';
+import { instrumentKeys, instrumentName, keyList, type InstrumentKeys } from '../engine/analysis/keyMastery';
+import type { FamilyId } from '../engine/drills/types';
+import { skillTitle } from '../storage/profile';
+import { KeyMap12 } from './KeyMap12';
 
 const TX = {
   en: {
@@ -39,7 +43,7 @@ const TX = {
 const KEYS_5THS = [0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5];
 const KEY_N = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
 
-export function InsightsScreen({ lang, progress, onBack, onTopic, onDrills, onPieces, onGroove, course = 'ear' }: { lang: 'en' | 'he'; progress: Progress; /** Only the active course's cards show (GUITAR_AUDIT P2). */ course?: CourseId; onBack: () => void; onTopic: (id: string, level: number) => void; onDrills: () => void; onPieces: () => void; onGroove?: () => void }) {
+export function InsightsScreen({ lang, progress, onBack, onTopic, onDrills, onDrillKey, onPieces, onGroove, course = 'ear' }: { lang: 'en' | 'he'; progress: Progress; /** Only the active course's cards show (GUITAR_AUDIT P2). */ course?: CourseId; onBack: () => void; onTopic: (id: string, level: number) => void; onDrills: () => void; /** Key mastery: start a skill in one key. */ onDrillKey?: (family: FamilyId, key: number) => void; onPieces: () => void; onGroove?: () => void }) {
   const tx = TX[lang];
   const on = (c: Parameters<typeof showsInsight>[0]) => showsInsight(c, course);
   const [model, setModel] = useState<PlayerModel | null>(null);
@@ -58,10 +62,12 @@ export function InsightsScreen({ lang, progress, onBack, onTopic, onDrills, onPi
   const fullHist = earIndexHistory(progress.ratingEvents ?? []);
   const hist = fullHist.slice(-30);
   useEffect(() => {
-    void refreshProfile(fullHist).then(setProfile, () => {});
+    void refreshProfile(fullHist, new Date(), progress.drillItems ?? {}).then(setProfile, () => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  const act = (a?: ProfileAction) => (!a ? undefined : a.kind === 'topic' ? () => onTopic(a.id, a.level) : a.kind === 'groove' ? onGroove : onDrills);
+  const act = (a?: ProfileAction) =>
+    !a ? undefined : a.kind === 'topic' ? () => onTopic(a.id, a.level) : a.kind === 'groove' ? onGroove : a.family && a.key !== undefined && onDrillKey ? () => onDrillKey(a.family!, a.key!) : onDrills;
+  const keys = instrumentKeys(progress.drillItems ?? {});
   const fs = model ? findings(model) : [];
   const gf = groove ? grooveFindings(groove) : [];
   const cps = conf ? topConfusions(conf) : [];
@@ -114,6 +120,8 @@ export function InsightsScreen({ lang, progress, onBack, onTopic, onDrills, onPi
         )}
       </section>
       )}
+
+      {on('keys') && keys.length > 0 && <KeysCard keys={keys} lang={lang} onDrillKey={onDrillKey} onDrills={onDrills} />}
 
       {model && on('hand-map') && <HandMap model={model} tx={tx} />}
       {model && on('key-map') && <KeyMap model={model} tx={tx} />}
@@ -202,7 +210,65 @@ export function InsightsScreen({ lang, progress, onBack, onTopic, onDrills, onPi
   );
 }
 
-const SOURCE_CARD: Record<ProfileSource, Parameters<typeof showsInsight>[0]> = { technique: 'technique', groove: 'groove', confusions: 'confusions', ear: 'ear-index' };
+const SOURCE_CARD: Record<ProfileSource, Parameters<typeof showsInsight>[0]> = { technique: 'technique', groove: 'groove', confusions: 'confusions', ear: 'ear-index', keys: 'keys' };
+
+/**
+ * Key mastery (owner 2026-11-14): per instrument the 12 keys across its skills, the weakest keys and one suggestion —
+ * the skill with most weak keys, in those keys, at its goal tempo. Tapping Practise starts that skill in its weakest key.
+ */
+function KeysCard({ keys, lang, onDrillKey, onDrills }: { keys: InstrumentKeys[]; lang: 'en' | 'he'; onDrillKey?: (family: FamilyId, key: number) => void; onDrills: () => void }) {
+  const he = lang === 'he';
+  return (
+    <section className="set-card" data-keys-card="1">
+      <h2>{he ? 'סולמות' : 'Keys'}</h2>
+      <small className="field-hint">{he ? 'כל מיומנות בכל 12 הסולמות. סימון מתחת = סולם חלש, מסגרת מקווקוות = עוד לא נוגן מספיק.' : 'Every skill in all 12 keys. A mark below = weak key, dashed = not played enough yet.'}</small>
+      {keys.map((i) => {
+        const inst0 = instrumentName(i.instrument)[lang];
+        const inst = he ? inst0 : inst0[0].toUpperCase() + inst0.slice(1);
+        const top = i.skills[0];
+        const ks = top ? top.weak.slice(0, 3) : [];
+        const bpms = ks.map((k) => top!.cells[k].goalBpm).filter((x) => x > 0);
+        const bpm = bpms.length ? Math.round(bpms.reduce((a, b) => a + b, 0) / bpms.length) : 0;
+        const title = top ? skillTitle(top.family)[lang] : '';
+        const tip = top ? (
+          <>
+            {he ? `הבא: ${title} ב־` : `Next: ${title} in `}
+            <bdi dir="ltr">{keyList(ks)}</bdi>
+            {bpm ? (
+              <>
+                {' · '}
+                <bdi dir="ltr">♩{bpm}</bdi>
+              </>
+            ) : null}
+          </>
+        ) : he ? (
+          'אין סולם חלש כרגע. ממשיכים לסובב את כל ה־12.'
+        ) : (
+          'No weak key right now. Keep rotating all 12.'
+        );
+        return (
+          <div key={i.instrument} className="km-inst" data-keys-inst={i.instrument} data-weak-keys={i.weakest.join(',')}>
+            <div className="km-head">
+              <b>{inst}</b>
+              <small>{i.weakest.length ? (he ? 'החלשים: ' : 'Weakest: ') : ''}<bdi dir="ltr">{i.weakest.length ? keyList(i.weakest) : ''}</bdi></small>
+            </div>
+            <KeyMap12 cells={i.cells} lang={lang} label={he ? `סולמות ב${inst}` : `Keys on ${inst}`} />
+            <div className="km-row">
+              <span className="in-text">
+                <small>{tip}</small>
+              </span>
+              {top && (
+                <button className="btn ghost small" onClick={() => (onDrillKey ? onDrillKey(top.family, ks[0]) : onDrills())} data-keys-practise={`${top.family}:${ks[0]}`}>
+                  {he ? 'לתרגל' : 'Practice'}
+                </button>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </section>
+  );
+}
 
 /** The player profile (SPEC-AI §8): strengths, recurring patterns with their week streak, and patterns that went away. */
 function ProfileCard({ profile, lang, tx, shows, act }: { profile: Profile; lang: 'en' | 'he'; tx: (typeof TX)['en']; shows: (s: ProfileSource) => boolean; act: (a?: ProfileAction) => (() => void) | undefined }) {
