@@ -31,7 +31,7 @@ import { intervalOctaveOk, evaluateSung, type SungResult } from '../engine/sing'
 import { SEQ_TOL_CENTS, SING_PASS_CENTS, seqPulse, seqTiming, type SeqPulse } from '../engine/singPulse';
 import { gradeSungSequence } from '../engine/memory';
 import { gradeReading,
-  gradeHolds, readTimeline, countInPulses, meterOf, onsetBeats } from '../engine/rhythm';
+  gradeHolds, readTimeline, echoTimeline, countInPulses, meterOf, onsetBeats } from '../engine/rhythm';
 import { applyClicks, gradeLanes, gradeTempo, tempoTimeline } from '../engine/clicks';
 import { accuracyFor, type Modality } from '../engine/scoring';
 import { gridFixStimulus, gridWhy } from '../engine/progGrid';
@@ -1053,10 +1053,14 @@ export class LessonController {
       }
       let n = 0;
       const countN = q.tempoGoal ? 0 : countInPulses(meterOf(q.rhythm));
+      // Rhythm echo (AUDIT-6): the rhythm sounds first, then the count-in — the countdown starts there.
+      const echo = q.byEar && !q.tempoGoal && !q.lanes ? echoTimeline(q.rhythm, q.bpm) : null;
+      const countAt = echo ? echo.countFrom : 0;
       this.readOpen = true;
       try {
         await this.ad.audio.playTimeline(
           (() => {
+            if (echo) return echo;
             // Spec AE: tempo from memory (no reference), or clicks in a pattern (backbeat, gaps …).
             if (q.tempoGoal) return tempoTimeline(q.tempoGoal);
             const tl = readTimeline(q.rhythm, q.bpm, q.silentAfterBars);
@@ -1067,7 +1071,7 @@ export class LessonController {
             return { ...tl, clicks: mark(applyClicks(tl.clicks, q.clicks, per, per)) };
           })(),
           signal,
-          (i, accent) => this.patch({ beat: { i, accent, n: n++, count: i < countN ? countN - i : 0 } }),
+          (i, accent) => this.patch({ beat: { i, accent, n: n++, count: i >= countAt && i < countAt + countN ? countAt + countN - i : 0 } }),
           (perf) => {
             this.readStart = perf;
             this.patch({ readStartPerf: perf });

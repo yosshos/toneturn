@@ -22,6 +22,7 @@ import { VOICE_FAMILIES } from './voiceFamilies';
 import { B_LEVEL_DIFF, HL_LEVEL_DIFF } from './drills/harrisLineDrills';
 import { COLOR_LEVEL_DIFF } from './drills/colorDrills';
 import { SP_LEVEL_DIFF } from './drills/soloPianoDrills';
+import { FIRST_RANK, FIRST_STEPS_DIFF, NEW_FIRST_FAMILIES } from './drills/firstStepsDiff'; // AUDIT-6 Stage B
 import { bonusSteps, isUnitEndStep, repSteps, unitEndSteps } from './pathBonus';
 
 // ---------------------------------------------------------------- types
@@ -372,12 +373,12 @@ const DRUM_LATER: Record<string, number> = { 'd-funk': 3, 'd-shuffle': 3, 'd-mid
  * AUDIT-CONTENT-THEORY §ב: the first steps first; drums count before the groove; bass time before the hands.
  */
 export const LADDER_RANK: Record<string, number> = {
-  'k-first': -1, 'v-first': -1,
+  'k-first': -1, 'v-first': -1, ...FIRST_RANK,
   'd-time': 0, 'd-rock': 1, 'd-strokes': 2, 'd-notation': 3,
   'b-time': 0, 'b-pluck': 1, 'b-chord': 2, 'b-pocket': 3, 'b-length': 4, 'b-fret': 5, 'b-walk': 6,
 };
 /** The first-steps families (AUDIT-CONTENT-THEORY §ז.2): their levels count ✓ for a player who already plays past them. */
-export const FIRST_STEP_FAMILIES = ['k-first', 'v-first'];
+export const FIRST_STEP_FAMILIES = ['k-first', 'v-first', ...NEW_FIRST_FAMILIES];
 /** Levels that wait for another family's level on the path: one-octave scales after the thumb passes under. */
 export const LADDER_AFTER: Record<string, string> = { 'tech:scales-1': 'tech:k-first-3' };
 /** An unstarted family this far (two ladder steps) below everything started opens at once: a gap the old order left. */
@@ -461,6 +462,8 @@ export const KEYS_LEVEL_DIFF: Record<string, number> = {
   ...SP_LEVEL_DIFF,
   // Siskind's shared hands as k-harm 8 (heads.ts hm-shared): after drop 3 (1750), inside the heads' 1300–1800 band.
   'k-harm-8': 1780,
+  // AUDIT-6 Stage B: the first steps (keys, guitar, bass, drums), riffs by grade, graded sight-reading (firstStepsDiff.ts).
+  ...FIRST_STEPS_DIFF,
 };
 /**
  * AUDIT-DEPTH-3 §0: the top of the path scale. A family whose levels would run past it by index (accomp, voicings,
@@ -541,7 +544,7 @@ function ladderSteps(): PathStep[] {
     const from = DRUM_LATER[f.id] ?? 0;
     // GUITAR_DEEPENING §5 (owner 2026-11-11): guitar levels sit by their RSL-equivalent grade, families interleaved
     // inside a grade by teaching rank (sweep picking at grade 8 after 3nps scales at 7; 3nps picking with 3nps scales).
-    const gDiff = (lv: { grade?: number; id?: string }, i: number) => (inst === 'guitar' && lv.grade !== undefined ? guitarPathDifficulty(f.id, lv.grade) : (KEYS_LEVEL_DIFF[lv.id ?? ''] ?? Math.min(PATH_CAP, Math.round(diff(i * spreadOf(f.id, f.levels.length, from) + from)))));
+    const gDiff = (lv: { grade?: number; id?: string }, i: number) => (inst === 'guitar' && lv.grade !== undefined && FIRST_STEPS_DIFF[lv.id ?? ''] === undefined ? guitarPathDifficulty(f.id, lv.grade) : (KEYS_LEVEL_DIFF[lv.id ?? ''] ?? Math.min(PATH_CAP, Math.round(diff(i * spreadOf(f.id, f.levels.length, from) + from)))));
     f.levels.forEach((lv, i) =>
       out.push({ id: `tech:${lv.id}`, kind: 'tech', ladder: { family: f.id, level: lv.level, ref: lv.id, instrument: inst }, skill: 'instrument', sub: `instrument/${inst === 'drums' ? 'drum' : inst}-tech`, domain: 'instrument', difficulty: gDiff(lv as { grade?: number; id?: string }, i), choices: 0, forPlays: [...f.instruments], title: { en: `${f.title.en} · ${lv.title.en}`, he: `${f.title.he} · ${lv.title.he}` } }),
     );

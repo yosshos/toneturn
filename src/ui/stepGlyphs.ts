@@ -56,6 +56,8 @@ export const FAMILY_GLYPH: Record<string, GlyphKind> = {
   // Solo jazz piano (Siskind): a bass note under a two-note shell; three mangos over two hands; a comping hit on the
   // "and"; phrases with rests between them.
   'k-lh': 'lhshell', 'k-tex': 'mango', 'k-comp': 'compvoc', 'k-impro': 'phrasing',
+  // AUDIT-6 Stage B: the first steps on guitar, bass and drums, graded sight-reading, riffs by grade.
+  'g-first': 'gfirst', 'b-first': 'bfirst', 'd-first': 'dfirst', 'k-read': 'kread', 'g-riff': 'griff',
 };
 /** Instrument topics (they all used to share one chord icon). */
 export const TOPIC_GLYPH: Record<string, GlyphKind> = {

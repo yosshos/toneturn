@@ -18,6 +18,8 @@ import { generateTech, techLevels } from './guitarTech'; // AUDIT-SCALES §4: gu
 import { genHarmGuitar, guitarHarmLevels, guitarSixFiveLevels, PART_D_KINDS } from './harmLadder'; // AUDIT-SCALES: the harmonization ladder on the neck
 import { generateGuitarProg, guitarProgFamily } from './guitarProg';
 import { generateGuitarMeter, guitarMeterFamily } from './guitarMeter'; // AUDIT-CONTENT-THEORY R-4/R-5
+import { generateGuitarFirst, guitarFirstFamily, guitarRiffFamily } from './guitarFirst'; // AUDIT-6 Stage B: the guitar's first steps, riffs by grade
+import { bassFirstFamily, generateBassFirst } from './bassFirst'; // AUDIT-6 Stage B: the bass's first steps
 import { generateGuitarEar } from './guitarEar';
 import { generateHarris, generateJazz2, generateTheoryGuitar, GUITAR_STD, guitarStdOption, guitarStdTempo } from './guitarJazz';
 import { genGuitarHarrisLine, guitarHarrisLineFamily } from './harrisLineDrills'; // Barry Harris lines
@@ -2394,6 +2396,12 @@ export function generateGuitar(spec: DrillSpec): Drill {
       return generateGuitarProg(s, tu);
     case 'g-meter':
       return generateGuitarMeter(s, tu);
+    // AUDIT-6 Stage B: the first steps on the guitar and on the bass, a riff per grade.
+    case 'g-first':
+    case 'g-riff':
+      return generateGuitarFirst(s, tu);
+    case 'b-first':
+      return generateBassFirst(s, tu);
     // Voice leading on the neck (AUDIT-CONTENT-THEORY §ה.2, VL-8): voiceLeadDrills.ts.
     case 'g-vl':
       return generateGuitarVL(s, tu);
@@ -2493,6 +2501,9 @@ export function guitarCatalog(): GuitarFamilyDef[] {
   const H = sp('g-harris');
   const TG = sp('g-theory');
   const list: GuitarFamilyDef[] = [
+    // AUDIT-6 Stage B (guitarFirst.ts): the first steps (grade 0) and one original riff per grade (1–5).
+    guitarFirstFamily(),
+    guitarRiffFamily(),
     fam('g-fretting', 'Fretting hand', 'יד לוחצת', 'classical', ['all'], [
       L('g-fretting', 1, 'Chromatic 1-2-3-4, fret 5 → 1', 'כרומטי 1-2-3-4, סריג 5 ← 1', [F('spider', { option: 0 })], POS_5_TO_1),
       L('g-fretting', 2, 'Finger permutations (1243, 1324, 1342 …)', 'תמורות אצבעות (1243, 1324, 1342 …)', range(5, 1).map((o) => F('spider', { option: o })), [9]),
@@ -2704,7 +2715,8 @@ export function guitarCatalog(): GuitarFamilyDef[] {
     ),
       retired: true,
     },
-    // The bass course (BASS_CURRICULUM §5), in teaching order.
+    // The bass course (BASS_CURRICULUM §5), in teaching order; AUDIT-6 Stage B: its first steps lead (bassFirst.ts).
+    bassFirstFamily(),
     ...bassFamilies(),
     // The drums course v1 (DRUMS_CURRICULUM §4.3), in teaching order.
     ...drumFamilies(),

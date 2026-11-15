@@ -342,13 +342,14 @@ const subBadges: Badge[] = SUB_SKILLS.map((s, i) => {
 
 // Bass-course families (b-*) get milestone + exam badges (bassBadges below), not one title per level.
 // The pianist's ear (k-ear) gets milestones by items played back clean (keysEarBadges), not tempo-band titles.
-// The first steps at the piano (k-first) are three short beginner levels: no family badges.
-export type BadgeFamily = Exclude<FamilyId, 'custom' | BassFamilyId | DrumFamilyId | 'k-ear' | 'k-first' | 'licks' | 'transcribe'>;
-export const PIANO_BADGE_FAMILIES: BadgeFamily[] = ['scales', 'arpeggios', 'cadences', 'fingers', 'control', 'advanced', 'harris', 'jazz', 'voicings', 'accomp', 'k-sixdim', 'k-bebop', 'k-reharm', 'k-rhythm', 'k-vl', 'k-theory', 'k-keys', 'k-vocab', 'k-phrase', 'k-solo', 'k-harm', 'k-tune', 'k-ctx', 'k-indep', 'k-sharm', 'k-harrisline', 'k-ctone', 'k-lh', 'k-mediant', 'k-tex', 'k-organ', 'k-comp', 'k-impro'];
-export const GUITAR_BADGE_FAMILIES: BadgeFamily[] = ['g-fretting', 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-lead', 'g-fingerstyle', 'g-flamenco', 'g-jazz', 'g-reading', 'g-impro', 'g-bass', 'g-ear', 'g-harris', 'g-prog', 'g-meter', 'g-vl', 'g-theory', 'g-keys', 'g-bebop', 'g-phrase', 'g-solo', 'g-cmel', 'g-tune', 'g-ctx', 'g-harm', 'g-harrisline', 'g-ctone', 'g-color'];
+// AUDIT-6 Stage B: the first steps at the piano grew to 11 levels and have their titles now (k-first), like the
+// guitar's (g-first); bass and drum first steps get the bass / drum milestones with their own names (bassBadges, drumBadges).
+export type BadgeFamily = Exclude<FamilyId, 'custom' | BassFamilyId | DrumFamilyId | 'k-ear' | 'licks' | 'transcribe'>;
+export const PIANO_BADGE_FAMILIES: BadgeFamily[] = ['scales', 'arpeggios', 'cadences', 'fingers', 'control', 'advanced', 'harris', 'jazz', 'voicings', 'accomp', 'k-sixdim', 'k-bebop', 'k-reharm', 'k-rhythm', 'k-vl', 'k-theory', 'k-keys', 'k-vocab', 'k-phrase', 'k-solo', 'k-harm', 'k-tune', 'k-ctx', 'k-indep', 'k-sharm', 'k-harrisline', 'k-ctone', 'k-lh', 'k-mediant', 'k-tex', 'k-organ', 'k-comp', 'k-impro', 'k-first', 'k-read'];
+export const GUITAR_BADGE_FAMILIES: BadgeFamily[] = ['g-fretting', 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-lead', 'g-fingerstyle', 'g-flamenco', 'g-jazz', 'g-reading', 'g-impro', 'g-bass', 'g-ear', 'g-harris', 'g-prog', 'g-meter', 'g-vl', 'g-theory', 'g-keys', 'g-bebop', 'g-phrase', 'g-solo', 'g-cmel', 'g-tune', 'g-ctx', 'g-harm', 'g-harrisline', 'g-ctone', 'g-color', 'g-first', 'g-riff'];
 export const BADGE_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES, ...GUITAR_BADGE_FAMILIES];
 /** Families whose levels together cover all 12 keys: one "Around the Clock" badge each (guitar list checked against guitarCatalog in tests). */
-export const KEYS_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES, 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-fingerstyle', 'g-jazz', 'g-impro', 'g-reading', 'g-bass', 'g-ear', 'g-harris', 'g-vl', 'g-theory', 'g-keys', 'g-bebop', 'g-phrase', 'g-solo', 'g-cmel', 'g-tune', 'g-ctx', 'g-harm', 'g-lead', 'g-harrisline', 'g-ctone', 'g-color'];
+export const KEYS_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES, 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-fingerstyle', 'g-jazz', 'g-impro', 'g-reading', 'g-bass', 'g-ear', 'g-harris', 'g-vl', 'g-theory', 'g-keys', 'g-bebop', 'g-phrase', 'g-solo', 'g-cmel', 'g-tune', 'g-ctx', 'g-harm', 'g-lead', 'g-harrisline', 'g-ctone', 'g-color', 'g-riff'];
 export const FAMILY_NAME: Record<BadgeFamily, L> = {
   scales: { en: 'Scales', he: 'סולמות' },
   arpeggios: { en: 'Arpeggios', he: 'ארפג׳ים' },
@@ -419,6 +420,11 @@ export const FAMILY_NAME: Record<BadgeFamily, L> = {
   'k-impro': { en: 'Improv habits', he: 'הרגלי אלתור' },
   'g-cmel': { en: 'Chord-melody', he: 'אקורד-מלודיה' },
   'g-tune': { en: 'Tunes on the neck', he: 'שירים על הצוואר' },
+  // AUDIT-6 Stage B: the first steps, graded sight-reading, riffs by grade.
+  'k-first': { en: 'First steps at the piano', he: 'צעדים ראשונים בפסנתר' },
+  'k-read': { en: 'Sight-reading at the piano', he: 'קריאה מהדף בפסנתר' },
+  'g-first': { en: 'First steps on guitar', he: 'צעדים ראשונים בגיטרה' },
+  'g-riff': { en: 'Riffs by grade', he: 'ריפים לפי כיתה' },
 };
 // `icon` on every badge is a glyph kind of src/ui/Glyph.tsx (2026-11-12: no emoji left; the medal itself is BadgeArt).
 const FAMILY_ICON: Record<BadgeFamily, string> = {
@@ -488,6 +494,10 @@ const FAMILY_ICON: Record<BadgeFamily, string> = {
   'k-impro': 'phrasing',
   'g-cmel': 'chordmel',
   'g-tune': 'gtunecomp',
+  'k-first': 'person',
+  'k-read': 'kread',
+  'g-first': 'gfirst',
+  'g-riff': 'griff',
 };
 // One title per catalogue level (piano 7; guitar as many as guitarCatalog has — tests check the counts).
 const FAMILY_TITLES: Record<BadgeFamily, [string, string][]> = {
@@ -570,6 +580,11 @@ const FAMILY_TITLES: Record<BadgeFamily, [string, string][]> = {
   'k-tune': [['Roots of the Tune', 'יסודות השיר'], ['Guide-Tone Comper', 'מלווה בצלילים מנחים'], ['Shells Through a Tune', 'שלדים לאורך שיר'], ['Rootless Comper', 'מלווה בלי יסוד'], ['Melody and Comp', 'מנגינה וליווי'], ['Head Reharmoniser', 'מהרמן השירים'], ['Coltrane Reharm', 'הרמון קולטריין']],
   'g-cmel': [['Melody in Position', 'מנגינה בפוזיציה'], ['Bass and Melody', 'בס ומנגינה'], ['Two Voices', 'שני קולות'], ['Drop 2 Under the Tune', 'דרופ 2 מתחת לשיר'], ['Passing Diminished', 'דימיניש עובר'], ['Chord-Melody Chorus', 'פזמון אקורד-מלודיה']],
   'g-tune': [['Roots on the Neck', 'יסודות על הצוואר'], ['Guide Tones on the Neck', 'צלילים מנחים על הצוואר'], ['Shells on the Neck', 'שלדים על הצוואר'], ['Rootless on the Neck', 'בלי יסוד על הצוואר'], ['Drop 2 Through a Tune', 'דרופ 2 לאורך שיר'], ['Melody and Comp on the Neck', 'מנגינה וליווי על הצוואר'], ['Tritone Reharm', 'הרמון טריטון'], ['Backdoor Reharm', 'הרמון דלת אחורית'], ['Coltrane on the Neck', 'קולטריין על הצוואר']],
+  // AUDIT-6 Stage B: one title per level — k-first (11), k-read (10), g-first (8), g-riff (5).
+  'k-first': [['Seated at the Keys', 'ליד הקלידים'], ['C Position', 'עמדת דו'], ['Thumb Under', 'האגודל מתחת'], ['Black-Key Groups', 'קבוצות השחורים'], ['Three Positions', 'שלוש עמדות'], ['Two Hands Together', 'שתי ידיים יחד'], ['Treble Clef Reader', 'קורא מפתח סול'], ['Bass Clef Reader', 'קורא מפתח פה'], ['First Piece', 'יצירה ראשונה'], ['Chord-Symbol Reader', 'קורא סימני אקורדים'], ['Pop Accompanist', 'מלווה פופ']],
+  'k-read': [['Five-Finger Reader', 'קורא חמש אצבעות'], ['Rests and Eighths', 'הפסקות ושמיניות'], ['Shifting Hand', 'יד נודדת'], ['Held Below', 'מוחזק מתחת'], ['Moving Bass Reader', 'קורא בס נע'], ['Sharps and Flats at Sight', 'דיאזים ובמולים מהדף'], ['Minor at Sight', 'מינור מהדף'], ['Chords Below the Tune', 'אקורדים מתחת למנגינה'], ['Double-Note Reader', 'קורא צלילים כפולים'], ['Quick Study', 'לימוד מהיר']],
+  'g-first': [['In Tune', 'מכוון'], ['Pick in Hand', 'מפרט ביד'], ['Open Strings in Time', 'מיתרים פתוחים בזמן'], ['First Notes', 'צלילים ראשונים'], ['First Chord Change', 'החלפת אקורדים ראשונה'], ['Steady Strummer', 'פורט יציב'], ['TAB Reader', 'קורא טאבים'], ['Rhythm Reader', 'קורא מקצבים']],
+  'g-riff': [['First Riff', 'ריף ראשון'], ['Palm-Mute Riffer', 'ריפר מושתק'], ['Power Riffer', 'ריפר פאוור'], ['Slur Riffer', 'ריפר לגאטו'], ['Pedal-Point Riffer', 'ריפר צליל עוגב']],
 };
 /** Number of level badges of a family (piano 7; guitar = its guitarCatalog levels). */
 export const familyLevelCount = (f: string): number => FAMILY_TITLES[f as BadgeFamily]?.length ?? 7;
@@ -688,6 +703,11 @@ function guitarSpecials(): Badge[] {
 
 
 // ---------------------------------------------------------------- bass course (0.64, BASS_AUDIT B14)
+/** AUDIT-6 Stage B: the bass and drum first steps' milestones by name ("First steps on bass: first steps" read twice). */
+const FIRST_NAMES: Record<string, L[]> = {
+  'b-first': [{ en: 'Strap On', he: 'הרצועה על הכתף' }, { en: 'Roots Found', he: 'היסודות נמצאו' }, { en: 'Ready for the Band', he: 'מוכנים ללהקה' }],
+  'd-first': [{ en: 'Sticks in Hand', he: 'מקלות ביד' }, { en: 'Counting Out Loud', he: 'סופרים בקול' }, { en: 'Ready for the Kit', he: 'מוכנים למערכת' }],
+};
 // Family milestones for every b-* family (first steps, halfway, the whole family) and exam badges from the levels'
 // exam / bagrut tags. Ids live under `tech:g-bass:…` so they share the drawn bass glyph.
 function bassBadges(): Badge[] {
@@ -698,13 +718,14 @@ function bassBadges(): Badge[] {
     const tiers = Array.from(new Set([Math.min(3, n), Math.ceil(n / 2), n])).sort((a, b) => a - b);
     tiers.forEach((lv, i) => {
       const what = lv === n ? { en: 'the whole family', he: 'כל המשפחה' } : i === 0 ? { en: 'first steps', he: 'צעדים ראשונים' } : { en: 'halfway', he: 'חצי הדרך' };
+      const own = FIRST_NAMES[f.id]?.[i];
       out.push({
         id: `tech:g-bass:${f.id}:${lv}`,
         cat: 'technique',
         icon: '𝄢',
         group: f.id,
         tone: lv === n ? 'platinum' : i === 0 ? 'bronze' : 'gold',
-        name: { en: `${f.title.en}: ${what.en}`, he: `${f.title.he}: ${what.he}` },
+        name: own ?? { en: `${f.title.en}: ${what.en}`, he: `${f.title.he}: ${what.he}` },
         desc: { en: `${f.title.en}: reach level ${lv} of ${n}.`, he: `${f.title.he}: להגיע לשלב ${lv} מתוך ${n}.` },
         rule: (x: BadgeInput): BadgeCheck => count(x.technique?.levels?.[f.id] ?? 0, lv),
       });
@@ -764,13 +785,14 @@ function drumBadges(): Badge[] {
     const tiers = Array.from(new Set([Math.min(3, n), Math.ceil(n / 2), n])).sort((a, b) => a - b);
     tiers.forEach((lv, i) => {
       const what = lv === n ? { en: 'the whole family', he: 'כל המשפחה' } : i === 0 ? { en: 'first steps', he: 'צעדים ראשונים' } : { en: 'halfway', he: 'חצי הדרך' };
+      const own = FIRST_NAMES[f.id]?.[i];
       out.push({
         id: `tech:drums:${f.id}:${lv}`,
         cat: 'technique',
         icon: '♩',
         group: f.id,
         tone: lv === n ? 'platinum' : i === 0 ? 'bronze' : 'gold',
-        name: { en: `${f.title.en}: ${what.en}`, he: `${f.title.he}: ${what.he}` },
+        name: own ?? { en: `${f.title.en}: ${what.en}`, he: `${f.title.he}: ${what.he}` },
         desc: { en: `${f.title.en}: reach level ${lv} of ${n}.`, he: `${f.title.he}: להגיע לשלב ${lv} מתוך ${n}.` },
         rule: (x: BadgeInput): BadgeCheck => count(x.technique?.levels?.[f.id] ?? 0, lv),
       });

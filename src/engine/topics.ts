@@ -48,6 +48,8 @@ import './topicsGrid'; // Progressions by ear on the grid (progGrid.ts): root + 
 // HARMONY-REHARM: colour harmony by ear — one note many chords, mediants, pedal, approach chords, counter-line, modern
 // colours, functional vs colour; and borrowed-ext 4–8, planing 4, reharm-spot 5 (imported after the topics it extends).
 import './topicsReharmColor';
+// AUDIT-6 Stage B: the Ear course's beginnings — rhythm echo, descending intervals early, root / 3rd / 5th, which note changed.
+import './topicsEarStart';
 import { applyDepth } from './topicsDepth';
 
 // ================================================================ T. Barry Harris

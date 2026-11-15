@@ -1446,8 +1446,13 @@ function ReadPrompt({ q, v, lang, onTap, onRelease, t, onLane }: { q: Extract<Qu
     );
   }
   return (
-    <div className="read-prompt" data-onsets={onsetBeats(q.rhythm).join(',')} data-bpm={q.bpm} data-start={v.readStartPerf ?? undefined}>
-      {q.show === 'notation' ? (
+    <div className="read-prompt" data-onsets={onsetBeats(q.rhythm).join(',')} data-bpm={q.bpm} data-start={v.readStartPerf ?? undefined} data-by-ear={q.byEar ? '1' : undefined}>
+      {/* Rhythm echo (AUDIT-6): nothing to read — the rhythm is heard first; the notation shows only with the result. */}
+      {q.byEar && !v.feedback ? (
+        <p className="read-words read-echo" dir="auto">
+          {v.readStartPerf ? (lang === 'he' ? 'עכשיו אתם: הקישו את מה ששמעתם' : 'Your turn: tap what you heard') : lang === 'he' ? 'הקשיבו לקצב — אחרי הספירה, הקישו אותו בחזרה' : 'Listen — after the count-in, tap it back'}
+        </p>
+      ) : q.show === 'notation' ? (
         <RhythmStaff rhythm={q.shown ?? q.rhythm} label={q.shown ? describeRhythm(q.shown, 'names', lang) : names} now={nowMain} />
       ) : (
         <p className="read-words" dir="auto">

@@ -192,6 +192,11 @@ const SHORT: Record<string, L2> = {
   'lh-tex-ear': { en: 'Left hand by ear', he: 'יד שמאל בשמיעה' },
   'solo-tex-ear': { en: 'Solo textures', he: 'מרקמי סולו' },
   'comp-rhythm-ear': { en: 'Comping rhythms', he: 'מקצבי ליווי' },
+  // AUDIT-6 Stage B: the Ear course's beginnings
+  'rhythm-echo': { en: 'Rhythm echo', he: 'הד קצבי' },
+  'intervals-down': { en: 'Intervals down', he: 'מרווחים יורדים' },
+  'chord-member': { en: 'Root, 3rd, 5th', he: 'יסוד, טרצה, קווינטה' },
+  'melody-change': { en: 'What changed?', he: 'מה השתנה?' },
   // lessons
   'basics-shape': { en: 'Melody shape', he: 'צורת מנגינה' },
   'rhythm-shift': { en: 'Move the rhythm', he: 'הזזת קצב' },

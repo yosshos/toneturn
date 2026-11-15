@@ -45,6 +45,8 @@ const r = (level: string, key: number, places: Rung['places']): Rung => ({ level
 
 // Keys move from step to step (owner: "it only tested me in C").
 const HANDS: Rung[] = [
+  // AUDIT-6 Stage B: the first steps' hands together in a position (k-first 6) before the first scale.
+  r('k-first-6', 7, { 'k-first': 7 }),
   r('scales-1', 7, { scales: 2, fingers: 1, arpeggios: 1, control: 1 }),
   // AUDIT-SCALES: the harmonization ladder (k-sharm) and hand independence (k-indep) are placed by the hands steps; the
   // 3-against-2 step is their own.
@@ -95,7 +97,16 @@ const COMP_CLASSICAL: Rung[] = [
 ];
 // Sight-reading below the playing level is normal (placement auditions read about two grades lower); the takes feed the
 // reading skill, and a clean read opens the reading levels of Control.
-const READING: Rung[] = [r('control-11', 0, {}), r('control-12', 7, {})];
+// AUDIT-6 Stage B: graded sight-reading (k-read, ~800–1400) is the reading section — five fingers, position shifts,
+// both hands over a moving bass, sharps and flats, left-hand chords, the quick study.
+const READING: Rung[] = [
+  r('k-read-1', 0, { 'k-read': 2 }),
+  r('k-read-3', 7, { 'k-read': 4 }),
+  r('k-read-5', 5, { 'k-read': 6 }),
+  r('k-read-6', 2, { 'k-read': 7 }),
+  r('k-read-8', 10, { 'k-read': 9 }),
+  r('k-read-10', 7, { 'k-read': 11 }),
+];
 const EAR: Rung[] = [
   r('k-ear-1', 0, { 'k-ear': 2 }),
   r('k-ear-2', 7, { 'k-ear': 3 }),
@@ -144,6 +155,8 @@ const G_HANDS: Rung[] = [
   r('g-picking-6', 9, { 'g-fretting': 6, 'g-picking': 7, 'g-scales': 8, 'g-arps': 6, 'g-legato': 5, 'g-harm': 5 }),
 ];
 const G_CHORDS: Rung[] = [
+  // AUDIT-6 Stage B: the first chord change (g-first 5) before the open-chord check.
+  r('g-first-5', 0, { 'g-first': 6 }),
   r('g-chords-1', 7, { 'g-chords': 2 }),
   r('g-chords-3', 7, { 'g-chords': 4 }),
   r('g-chords-5', 9, { 'g-chords': 6 }),
@@ -154,8 +167,11 @@ const G_CHORDS: Rung[] = [
 const G_RHYTHM: Rung[] = [
   r('g-rhythm-1', 7, { 'g-rhythm': 2 }),
   r('g-rhythm-2', 0, { 'g-rhythm': 3, 'g-meter': 2 }),
-  r('g-rhythm-3', 9, { 'g-rhythm': 4, 'g-meter': 3 }),
-  r('g-meter-3', 4, { 'g-rhythm': 4, 'g-meter': 4 }),
+  // AUDIT-6 Stage B: riffs by grade (g-riff) sit in the rhythm section — the grade 2 and grade 4 riffs are steps.
+  r('g-riff-2', 9, { 'g-rhythm': 3, 'g-meter': 2, 'g-riff': 3 }),
+  r('g-rhythm-3', 9, { 'g-rhythm': 4, 'g-meter': 3, 'g-riff': 3 }),
+  r('g-meter-3', 4, { 'g-rhythm': 4, 'g-meter': 4, 'g-riff': 4 }),
+  r('g-riff-4', 2, { 'g-rhythm': 4, 'g-meter': 4, 'g-riff': 5 }),
   r('g-rhythm-5', 4, { 'g-rhythm': 6, 'g-meter': 4 }),
   r('g-rhythm-6', 0, { 'g-rhythm': 7, 'g-meter': 5 }),
 ];
@@ -166,6 +182,8 @@ const G_LEAD: Rung[] = [
   r('g-lead-8', 7, { 'g-lead': 9, 'g-impro': 3 }),
 ];
 const G_READING: Rung[] = [
+  // AUDIT-6 Stage B: TAB and rhythm reading (g-first 7–8) before reading notation in position.
+  r('g-first-7', 0, { 'g-first': 8 }),
   r('g-reading-1', 0, { 'g-reading': 2 }),
   r('g-reading-2', 7, { 'g-reading': 3 }),
   r('g-reading-4', 2, { 'g-reading': 5 }),
@@ -217,6 +235,8 @@ export function guitarStrands(): Strand[] {
 
 // ------------------------------------------------------------------ bass (0.81)
 const B_HANDS: Rung[] = [
+  // AUDIT-6 Stage B: i–m alternation (b-first 3) before the plucking hand's rest strokes.
+  r('b-first-3', 0, { 'b-first': 4 }),
   r('b-pluck-1', 4, { 'b-pluck': 2, 'b-fret': 1, 'b-scale': 1, 'b-length': 1 }),
   r('b-fret-1', 4, { 'b-pluck': 2, 'b-fret': 2, 'b-scale': 1, 'b-length': 1 }),
   r('b-pluck-3', 9, { 'b-pluck': 4, 'b-fret': 3, 'b-scale': 2, 'b-length': 2 }),
@@ -231,6 +251,8 @@ const B_TIME: Rung[] = [
   r('b-time-7', 9, { 'b-time': 8, 'b-pocket': 7, 'b-styles': 7, 'b-ghost': 3 }),
 ];
 const B_CHORDS: Rung[] = [
+  // AUDIT-6 Stage B: roots on the E and A strings (b-first 5).
+  r('b-first-5', 9, { 'b-first': 6 }),
   r('b-chord-1', 4, { 'b-chord': 2 }),
   r('b-chord-3', 9, { 'b-chord': 4, 'b-scale': 2 }),
   r('b-chord-6', 7, { 'b-chord': 7, 'b-scale': 3 }),
@@ -254,6 +276,8 @@ const B_WALK: Rung[] = [
   r('b-solo-1', 0, { 'b-walk': 12, 'b-swing': 5, 'b-barry': 5, 'b-keys': 9, 'b-bebop': 7, 'b-tune': 4, 'b-ctx': 3, 'b-solo': 2 }),
 ];
 const B_READING: Rung[] = [
+  // AUDIT-6 Stage B: bass TAB (b-first 7) before the bass clef.
+  r('b-first-7', 0, { 'b-first': 8 }),
   r('b-read-2', 4, { 'b-read': 3, 'b-posread': 1 }),
   r('b-read-3', 0, { 'b-read': 4, 'b-posread': 1 }),
   r('b-read-6', 7, { 'b-read': 7, 'b-posread': 2 }),
@@ -284,8 +308,11 @@ export function bassStrands(): Strand[] {
 
 // ------------------------------------------------------------------ drums (0.81; drum items have no key)
 const D_HANDS: Rung[] = [
+  // AUDIT-6 Stage B: the rebound (d-first 2) first; the 8th-note paradiddle (d-first 6) between singles and doubles.
+  r('d-first-2', 0, { 'd-first': 3 }),
   r('d-strokes-1', 0, { 'd-strokes': 2, 'd-rolls': 1, 'd-time': 1 }),
   r('d-rolls-1', 0, { 'd-strokes': 2, 'd-rolls': 2, 'd-time': 2 }),
+  r('d-first-6', 0, { 'd-strokes': 2, 'd-rolls': 2, 'd-time': 2, 'd-first': 7 }),
   r('d-rolls-3', 0, { 'd-strokes': 4, 'd-rolls': 4, 'd-diddles': 2, 'd-time': 3 }),
   r('d-rolls-4', 0, { 'd-strokes': 5, 'd-rolls': 5, 'd-diddles': 3, 'd-time': 4 }),
   r('d-rolls-7', 0, { 'd-strokes': 6, 'd-rolls': 8, 'd-diddles': 5, 'd-time': 6 }),
@@ -305,6 +332,8 @@ const D_FILLS: Rung[] = [
 ];
 const D_READING: Rung[] = [
   r('d-read-1', 0, { 'd-read': 2, 'd-notation': 1 }),
+  // AUDIT-6 Stage B: snare reading in 2/4, 3/4 and 6/8 (d-first 7).
+  r('d-first-7', 0, { 'd-read': 2, 'd-notation': 1, 'd-first': 8 }),
   r('d-read-2', 0, { 'd-read': 3, 'd-notation': 2 }),
   r('d-read-3', 0, { 'd-read': 4, 'd-notation': 3 }),
   r('d-read-5', 0, { 'd-read': 6, 'd-notation': 4 }),

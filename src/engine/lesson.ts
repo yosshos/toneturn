@@ -227,6 +227,8 @@ export interface RhythmReadQuestion extends QBase {
   tempoGoal?: { bpm: number; beats: number; withClicks?: number };
   /** Several pads (drum kit lanes, two hands): each lane has its own rhythm; taps carry the lane index. */
   lanes?: { rhythm: Rhythm; name: { en: string; he: string }; perc?: 'kick' | 'snare' | 'hat' | 'clave' }[];
+  /** Rhythm echo (AUDIT-6): the rhythm is played first and stays hidden until the result — tapped back by ear (rhythm.echoTimeline). */
+  byEar?: boolean;
   /** Topic generator item (rebuilt from its tag). */
   topic?: { id: string; level: number; seed: number };
   answer: 'accurate';
