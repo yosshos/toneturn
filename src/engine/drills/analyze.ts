@@ -5,6 +5,7 @@ import type { Drill, DrillCalibration, DynamicsGoal, ExpNote, Hand, NoteResult, 
 import { vlDistance } from './generate';
 import { hasTimeline, timeMapOf, timelineMs } from './timeline';
 import { analyzeVoiceLeadTake } from './voiceLeadAnalyze';
+import { analyzeHeldChoiceTake } from './ctFreeAnalyze';
 import { analyzePhraseTake } from './phraseGrade';
 import { RULE_NAME, ruleCheck } from '../improvRules';
 import { RULE_CARDS, cardKept, type CNote } from '../ruleCards';
@@ -372,6 +373,8 @@ export function micUnmeasurable(drill: Pick<Drill, 'goal' | 'notes'> & { spec?: 
   const out: ('dynamics' | 'articulation' | 'pedal' | 'voicing')[] = [];
   // Voice leading on the piano: the microphone hears the chord, not which voicing (octave, inversion) was chosen.
   if (drill.goal.vl && !drill.goal.vl.strings && drill.spec?.instrument !== 'guitar') out.push('voicing');
+  // One note, many chords (your own chords): which voicing was played needs MIDI too.
+  if (drill.goal.ct) out.push('voicing');
   if (drill.goal.dynamics || drill.notes.some((n) => n.accent)) out.push('dynamics');
   if (drill.goal.articulation || drill.goal.handArt) out.push('articulation');
   if (drill.goal.pedal) out.push('pedal');
@@ -387,6 +390,8 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
   // Voice leading (k-vl / g-vl): the voicing chosen at each chord, graded by type + smallest motion (voiceLeadAnalyze.ts).
   // By microphone the piano can't tell which voicing was played: the take is not measured (below, like loudness goals).
   if (drill.goal.vl && !opts.mic) return analyzeVoiceLeadTake(drill, bpm, played0, { rubato: opts.rubato });
+  // One note, many chords — the player's own chords under the held note (ctFreeAnalyze.ts).
+  if (drill.goal.ct && !opts.mic) return analyzeHeldChoiceTake(drill, bpm, played0, { rubato: opts.rubato });
   // Phrases by ear (phraseDrills.ts): note by note with the transcription coach's comparer, partial credit.
   if (drill.phrase) return analyzePhraseTake(drill, bpm, played0);
   // Improv mode: the right hand above the split plays freely and is checked elsewhere (against the chord-scales).

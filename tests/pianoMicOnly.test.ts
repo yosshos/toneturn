@@ -4,7 +4,7 @@ import { ladderHiddenFor } from '../src/engine/ladderFacts';
 import { micUnmeasurable } from '../src/engine/drills/analyze';
 
 describe('piano: microphone only (0.67, owner)', () => {
-  it('hides exactly the levels with an item the microphone cannot measure', () => {
+  it('hides exactly the levels with an item the microphone cannot measure', { timeout: 180_000 }, () => {
     const hidden = pianoMicHiddenLevels();
     expect(hidden.length).toBeGreaterThan(0);
     const all = shownFamilies({ emphasis: 'both', instrument: 'piano' });

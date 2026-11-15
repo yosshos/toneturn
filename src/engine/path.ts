@@ -20,6 +20,7 @@ import { catalog } from './drills/generate';
 import { guitarCatalog } from './drills/guitar';
 import { VOICE_FAMILIES } from './voiceFamilies';
 import { B_LEVEL_DIFF, HL_LEVEL_DIFF } from './drills/harrisLineDrills';
+import { COLOR_LEVEL_DIFF } from './drills/colorDrills';
 import { bonusSteps, isUnitEndStep, repSteps, unitEndSteps } from './pathBonus';
 
 // ---------------------------------------------------------------- types
@@ -238,6 +239,8 @@ const PACK_TOPICS: Record<string, Pack> = {
   'bh-borrow': 'jazz', 'bh-sixfive': 'jazz', 'bh-moves': 'jazz', 'bh-tesseract': 'jazz',
   // Barry Harris lines by ear (BARRY-HARRIS-METHOD Part D).
   'bh-line-ear': 'jazz',
+  // HARMONY-REHARM: colour harmony by ear (one note many chords, mediants, pedal, approach, counter-line, modern colours).
+  'ct-degree': 'jazz', mediants: 'jazz', 'pedal-ear': 'jazz', 'approach-chord': 'jazz', 'counter-line': 'jazz', 'modern-color': 'jazz', 'func-color': 'jazz', 'modal-mix': 'jazz',
   maqam: 'maqam', 'eastern-rhythm': 'maqam',
   'set-classes': 'post-tonal', counterpoint: 'post-tonal',
   'eq-ear': 'production', 'space-ear': 'production', 'pan-ear': 'production', 'dyn-ear': 'production', 'filter-ear': 'production', 'tone-hz': 'production', 'width-ear': 'production',
@@ -442,6 +445,12 @@ export const KEYS_LEVEL_DIFF: Record<string, number> = {
   ...K_HARM_DIFF,
   // Barry Harris lines (BARRY-HARRIS-METHOD Part D): each level at its own rating, ~1100–1750, keys and bass.
   ...HL_LEVEL_DIFF, ...B_LEVEL_DIFF,
+  // HARMONY-REHARM (colorDrills.ts): one note many chords, mediants, organ, k-reharm 11–22 and b-counter, ~1050–1800.
+  ...COLOR_LEVEL_DIFF,
+  // k-reharm 1–10 keep their places (700 + 70 × (6 + i)); the family is placed level by level now (11–22 interleave).
+  ...Object.fromEntries(Array.from({ length: 10 }, (_, i) => [`k-reharm-${i + 1}`, 700 + 70 * (6 + i)])),
+  // The borrowed-chord reharm of a head (k-tune 10): before the Coltrane level, under the cap.
+  'k-tune-10': 1700,
 };
 /**
  * AUDIT-DEPTH-3 §0: the top of the path scale. A family whose levels would run past it by index (accomp, voicings,
@@ -449,7 +458,7 @@ export const KEYS_LEVEL_DIFF: Record<string, number> = {
  */
 export const PATH_CAP = 1900;
 /** Families whose level order on the path is not their number order (placed by grade, or by KEYS_LEVEL_DIFF). */
-export const NON_MONOTONE_FAMILIES = ['harris', 'scales', 'k-sharm', 'k-harrisline', 'b-harrisline', 'g-harrisline'];
+export const NON_MONOTONE_FAMILIES = ['harris', 'scales', 'k-sharm', 'k-harrisline', 'b-harrisline', 'g-harrisline', 'k-reharm', 'k-tune'];
 /** Path steps per level for a family of `n` levels starting `later` steps in: LADDER_SPREAD, squeezed under PATH_CAP. */
 export function spreadOf(family: string, n: number, later: number): number {
   const base = LADDER_SPREAD[family] ?? 1;
@@ -495,6 +504,9 @@ GUITAR_RANK['g-ctx'] = 6;
 GUITAR_RANK['g-solo'] = 1,
 // Barry Harris lines on the neck: with the Harris family (grades 6–9).
 GUITAR_RANK['g-harrisline'] = 6;
+// HARMONY-REHARM: one note many chords and colour harmony on the neck, with the theory families.
+GUITAR_RANK['g-ctone'] = 6;
+GUITAR_RANK['g-color'] = 6;
 /**
  * The order of a family's levels on the path: by path difficulty, then level number. AUDIT-CONTENT-THEORY §ב.3: guitar
  * levels sit by grade, but the family's next level used to be the next number, so a later-added easier level (picking 4

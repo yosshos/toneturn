@@ -1005,6 +1005,76 @@ Object.assign(GLYPHS, {
     </>
   ),
 });
+// HARMONY-REHARM (colorDrills.ts): one note, many chords — a held note on top (a tie across) over three different
+// chords; chromatic mediants — two triads a 3rd apart joined at the common tone; organ comping — three drawbars over a
+// walking line; the same on the neck (strings above) and the bass (its low string).
+const ctg = (
+  <>
+    <path d="M-22 -18 H22" stroke={I} strokeWidth={2.4} />
+    {head(-18, -22, 4.6, 3.3)}
+    {head(0, -22, 4.6, 3.3)}
+    {head(18, -22, 4.6, 3.3)}
+    {head(-18, 2, 4.4, 3.1)}
+    {head(-18, 12, 4.4, 3.1)}
+    {head(0, -4, 4.4, 3.1)}
+    {head(0, 8, 4.4, 3.1)}
+    {head(18, 6, 4.4, 3.1)}
+    {head(18, 18, 4.4, 3.1)}
+  </>
+);
+Object.assign(GLYPHS, {
+  ctone: ctg,
+  gctone: (
+    <>
+      <path d="M-26 -27 H26 M-26 -23 H26" stroke={I} strokeWidth={1.2} />
+      <g transform="translate(0 4)">{ctg}</g>
+    </>
+  ),
+  mediant: (
+    <>
+      {head(-14, 14, 5, 3.6)}
+      {head(-14, 4, 5, 3.6)}
+      {head(-14, -6, 5, 3.6)}
+      {head(14, 4, 5, 3.6)}
+      {head(14, -6, 5, 3.6)}
+      {head(14, -16, 5, 3.6)}
+      <path d="M-8 -6 H8 M-8 4 H8" {...sw} strokeWidth={2} strokeDasharray="3 3" />
+    </>
+  ),
+  gcolor: (
+    <>
+      <path d="M-26 -26 H26 M-26 -21 H26" stroke={I} strokeWidth={1.2} />
+      {head(-14, 16, 5, 3.6)}
+      {head(-14, 6, 5, 3.6)}
+      {head(-14, -4, 5, 3.6)}
+      {head(14, 6, 5, 3.6)}
+      {head(14, -4, 5, 3.6)}
+      {head(14, -14, 5, 3.6)}
+      <path d="M-8 -4 H8 M-8 6 H8" {...sw} strokeWidth={2} strokeDasharray="3 3" />
+    </>
+  ),
+  organ: (
+    <>
+      <path d="M-16 -24 V-2 M-4 -24 V-10 M8 -24 V-6" {...sw} strokeWidth={4} />
+      <rect x="-20" y="-4" width="8" height="5" rx="1.5" fill={I} />
+      <rect x="-8" y="-12" width="8" height="5" rx="1.5" fill={I} />
+      <rect x="4" y="-8" width="8" height="5" rx="1.5" fill={I} />
+      <path d="M-22 22 L-8 14 L6 18 L20 10" {...sw} strokeWidth={2.4} />
+    </>
+  ),
+  bcounter: (
+    <>
+      <path d="M-26 -26 H26" stroke={I} strokeWidth={3} />
+      {head(-18, -14, 4.6, 3.3)}
+      {head(18, -14, 4.6, 3.3)}
+      <path d="M-13 -14 H13" stroke={I} strokeWidth={2} />
+      {head(-18, 4, 4.6, 3.3)}
+      {head(-6, 8, 4.6, 3.3)}
+      {head(6, 12, 4.6, 3.3)}
+      {head(18, 16, 4.6, 3.3)}
+    </>
+  ),
+});
 // PIANO_JAZZ P2 path wiring: a repertoire step (a lead sheet with a bookmark), the Transcription Race as a bonus step
 // (a staff with a stopwatch — the transcription coach keeps its pencil) and the Reharm Spotter as a bonus step (a chord,
 // a magnifier on the changed one — the k-reharm family keeps its chord-to-chord arrow).

@@ -36,6 +36,8 @@ export const BASS_TRACK: Partial<Record<BassFamilyId, 'jazz' | 'prog'>> = {
   'b-barry': 'jazz',
   // Barry Harris lines (BARRY-HARRIS-METHOD Part D, harrisLineDrills.ts).
   'b-harrisline': 'jazz',
+  // HARMONY-REHARM: the bass reharmonizes (colorDrills.ts).
+  'b-counter': 'jazz',
   'b-jform': 'jazz',
   'b-latin': 'jazz',
   'b-odd': 'prog',

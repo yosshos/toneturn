@@ -30,7 +30,7 @@ describe('PIANO_JAZZ content', () => {
   it('three new families (9 + 8 + 7 levels) and two more Harris line levels, each item generating in every key', () => {
     expect(CAT.find((f) => f.id === 'k-sixdim')!.levels).toHaveLength(13); // HARRIS_2: + 11–13
     expect(CAT.find((f) => f.id === 'k-bebop')!.levels).toHaveLength(10);
-    expect(CAT.find((f) => f.id === 'k-reharm')!.levels).toHaveLength(10); // HARMONY_3: + 9–10
+    expect(CAT.find((f) => f.id === 'k-reharm')!.levels).toHaveLength(22); // HARMONY_3: + 9–10; HARMONY-REHARM: + 11–22
     expect(CAT.find((f) => f.id === 'harris')!.levels).toHaveLength(26); // BH-G: + 19–24; AUDIT-SCALES: + 25–26
     for (const lv of jazzLevels())
       for (const sp of lv.specs)

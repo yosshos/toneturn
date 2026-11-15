@@ -475,6 +475,13 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
   // PIANO_AUDIT A2: a piano drill whose goal is loudness, release or the pedal needs MIDI (the mic would pass it on notes alone).
   const pianoBlocked = !drum && !isGuitarDrill(drill) && !useMidi && micUnmeasurable(drill).length > 0;
   useEffect(() => () => ac.current?.abort(), []);
+  // HARMONY-REHARM §6: an item with its own sound (k-organ: the tonewheel organ) plays on it, then the player's sound comes back.
+  useEffect(() => {
+    if (!drill.sound) return;
+    const before = piano.soundId;
+    void piano.setSound(drill.sound);
+    return () => void piano.setSound(before);
+  }, [drill.sound]);
   // B5: drums under the take only when the mic can't hear them (headphones, line-in, or a MIDI bass); else the click.
   const drums = !!(drill.drums || drill.band) && (useMidi || drumsOk === true);
   // A kit-only drum drill without a kit is blocked: no headphones question for a band it can't play under.

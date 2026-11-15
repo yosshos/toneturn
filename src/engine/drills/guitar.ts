@@ -21,6 +21,7 @@ import { generateGuitarMeter, guitarMeterFamily } from './guitarMeter'; // AUDIT
 import { generateGuitarEar } from './guitarEar';
 import { generateHarris, generateJazz2, generateTheoryGuitar, GUITAR_STD, guitarStdOption, guitarStdTempo } from './guitarJazz';
 import { genGuitarHarrisLine, guitarHarrisLineFamily } from './harrisLineDrills'; // Barry Harris lines
+import { genGuitarColor, guitarColorFamily, guitarCtoneFamily } from './colorDrills'; // HARMONY-REHARM
 import { GUITAR_PROBE_STEPS } from './guitarProbes';
 import { generateGuitarVL, guitarVoiceLeadFamily } from './voiceLeadDrills';
 // AUDIT-GAPS-2 #5/#6/#12: key changes and turnarounds on the neck (keyMoveDrills.ts).
@@ -2375,6 +2376,10 @@ export function generateGuitar(spec: DrillSpec): Drill {
     // Barry Harris lines (BARRY-HARRIS-METHOD Part D, harrisLineDrills.ts).
     case 'g-harrisline':
       return genGuitarHarrisLine(s, tu);
+    // HARMONY-REHARM (colorDrills.ts): one note, many chords; colour harmony on the neck.
+    case 'g-ctone':
+    case 'g-color':
+      return genGuitarColor(s, tu);
     case 'g-theory':
       return generateTheoryGuitar(s, tu);
     case 'g-bebop':
@@ -2625,6 +2630,10 @@ export function guitarCatalog(): GuitarFamilyDef[] {
     // Barry Harris lines (BARRY-HARRIS-METHOD Part D): the chromatic scale, outlines, 5-4-3-2, the important arpeggios,
     // seven down, the rules, upbeats, compose a line — all 12 keys (harrisLineDrills.ts).
     guitarHarrisLineFamily(LT, fam),
+    // HARMONY-REHARM (docs/HARMONY-REHARM.md): one note, many chords; mediants, modal interchange, planing, side-slip,
+    // the sus reharm on the neck — all 12 keys (colorDrills.ts).
+    guitarCtoneFamily(LT, fam),
+    guitarColorFamily(LT, fam),
     fam('g-reading', 'Reading by position', 'קריאה לפי מצבים', 'classical', ['all'], [
       L('g-reading', 1, 'Position I, strings 1–3', 'מצב I, מיתרים 1–3', [RD('position', { position: 1, option: 1 })], [0]),
       L('g-reading', 2, 'Position I, all strings', 'מצב I, כל המיתרים', [RD('position', { position: 1 })], [0, 7, 5]),

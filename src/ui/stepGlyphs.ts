@@ -18,6 +18,8 @@ export const FAMILY_GLYPH: Record<string, GlyphKind> = {
   'k-phrase': 'phrase', 'g-phrase': 'gphrase', 'b-phrase': 'bphrase',
   // Barry Harris lines: a falling line, chord tones on the beat ticks (keys, neck, bass).
   'k-harrisline': 'bhline', 'g-harrisline': 'gbhline', 'b-harrisline': 'bbhline',
+  // HARMONY-REHARM: one note many chords, mediants, organ, colour harmony on the neck, the bass reharmonizes.
+  'k-ctone': 'ctone', 'g-ctone': 'gctone', 'k-mediant': 'mediant', 'g-color': 'gcolor', 'k-organ': 'organ', 'b-counter': 'bcounter',
   // AUDIT-CONTENT-THEORY §ז.2: the first steps — sitting at the piano; matching a held note (the drone) for the voice.
   'k-first': 'person', 'v-first': 'drone',
   // GUITAR_DEEPENING: the guitarist's ear, Barry Harris on the neck, prog / fusion.

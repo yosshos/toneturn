@@ -163,8 +163,12 @@ function secondTag(drill: Drill): Tags[number] | null {
   if (f === 'k-tune' || f === 'g-tune' || f === 'b-tune') return { skill: 'cadences', sub: 'cadences/progression', w: 0.3 };
   if (f === 'k-keys' || f === 'g-keys' || f === 'b-keys')
     return drill.spec.kind === 'km-turn' || drill.spec.kind === 'km-bridge' ? { skill: 'cadences', sub: 'cadences/progression', w: 0.3 } : { skill: 'cadences', sub: 'cadences/modulation', w: 0.3 };
+  // HARMONY-REHARM (colorDrills.ts): colour reharm rates reharmonisation; organ comping rates voicings.
+  if (f === 'k-ctone' || f === 'g-ctone' || f === 'k-mediant' || f === 'g-color' || f === 'b-counter') return { skill: 'cadences', sub: 'cadences/reharm', w: 0.3 };
+  if (f === 'k-organ') return { skill: 'chords', sub: 'chords/voicing', w: 0.3 };
   if (f === 'k-reharm') {
     const k = drill.spec.kind;
+    if (k.startsWith('rh-') && ['rh-mi', 'rh-pedalpt', 'rh-planemel', 'rh-approach', 'rh-slip', 'rh-sus', 'rh-modern', 'rh-maj7s5'].includes(k)) return { skill: 'cadences', sub: 'cadences/reharm', w: 0.3 };
     if (k === 'rh-reharm') return { skill: 'cadences', sub: 'cadences/progression', w: 0.3 };
     if (k === 'rh-altered' || k === 'rh-minor') return { skill: 'chords', sub: 'chords/extension', w: 0.3 };
     return { skill: 'chords', sub: 'chords/voicing', w: 0.3 };

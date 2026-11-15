@@ -18,6 +18,7 @@ import { genHarmPiano, pianoScaleHarmFamily } from './harmLadder'; // AUDIT-SCAL
 import { genIndep, indepFamily } from './indepDrills'; // AUDIT-SCALES §3: hand independence
 import { genKeysPhrase, keysPhraseFamily } from './phraseDrills'; // phrases by ear
 import { genHarrisLine, harrisLineFamily } from './harrisLineDrills'; // Barry Harris lines (BARRY-HARRIS-METHOD Part D)
+import { COLOR_RH_KINDS, colorReharmLevels, ctoneFamily, genColor, mediantFamily, organFamily } from './colorDrills'; // HARMONY-REHARM
 import { A_SECTION, beatsOf, callNotes, harmonyPlan, KEYS_STYLE, placeChords, progEarChords, PROG_EAR_NAME, type ProgEarKind } from './progEar'; // progressions by ear
 import { colourPcs, keyName as progKeyName, voiceChords } from '../progGrid';
 // AUDIT-DEPTH-3 #2–#4, C1/C3/C4: heads — harmonise a melody, comp a head, reharmonise it (headDrills.ts).
@@ -5064,6 +5065,8 @@ export function generate(spec: DrillSpec): Drill {
   if (s.family === 'k-ear') return genKeysEar(s);
   if (s.family === 'k-sixdim') return genSixDim(s);
   if (s.family === 'k-bebop') return genBebop(s);
+  // HARMONY-REHARM (colorDrills.ts): one note, many chords; mediants; organ; k-reharm 11–22.
+  if (s.family === 'k-ctone' || s.family === 'k-mediant' || s.family === 'k-organ' || (s.family === 'k-reharm' && COLOR_RH_KINDS.has(s.kind))) return genColor(s);
   if (s.family === 'k-reharm') return genReharm(s);
   if (s.family === 'k-rhythm') return genKeysRhythm(s);
   // Voice leading as a performed skill (AUDIT-CONTENT-THEORY §ה.2): voiceLeadDrills.ts.
@@ -5970,8 +5973,12 @@ export function catalog(): FamilyDef[] {
         JT('k-reharm', 7, 'Solo piano: walking bass, 10ths, two-feel', 'פסנתר סולו: בס מהלך, דצימות, בשניים', [0, 1, 2].map((o) => rh('rh-solo', { option: o, swing: true })), [0, 5, 7, 10, 3], [80, 140]),
         JT('k-reharm', 8, 'Upper structures over a pedal: lydian and sus', 'מבנים עליונים מעל פדל: לידי וסאס', [rh('rh-pedal'), rh('rh-pedal', { option: 1 })], [2, 7, 0, 5, 10, 3], [60, 100]),
         // HARMONY_3 (AUDIT-CONTENT-THEORY §ז.2): borrowed chords in comping (H-3), planing and constant structure (H-5).
-        JT('k-reharm', 9, 'Borrowed colours: ♭VImaj7–♭VII7, the backdoor, Tadd Dameron’s ending', 'צבעים שאולים: ♭VI–♭VII7, הדלת האחורית, הסיום של טאד דמרון', [rh('rh-borrowed'), rh('rh-borrowed', { option: 1 })], [0, 5, 10, 3, 7, 2], [60, 100]),
-        JT('k-reharm', 10, 'Planing: the So What voicing and constant structure', 'פליינינג: קול So What ומבנה קבוע', [rh('rh-planing'), rh('rh-planing', { option: 1 })], [2, 7, 0, 9, 4, 5], [60, 100]),
+        // HARMONY-REHARM: 9 and 10 in all 12 keys from C (they listed 6).
+        JT('k-reharm', 9, 'Borrowed colours: ♭VImaj7–♭VII7, the backdoor, Tadd Dameron’s ending', 'צבעים שאולים: ♭VI–♭VII7, הדלת האחורית, הסיום של טאד דמרון', [rh('rh-borrowed'), rh('rh-borrowed', { option: 1 })], cyc4, [60, 100]),
+        JT('k-reharm', 10, 'Planing: the So What voicing and constant structure', 'פליינינג: קול So What ומבנה קבוע', [rh('rh-planing'), rh('rh-planing', { option: 1 })], cyc4, [60, 100]),
+        // HARMONY-REHARM (docs/research/REHARM-AND-COLOR.md C.3–C.9): modal interchange complete, pedal point, planing
+        // under a melody, half-step approach chords, side-slip, the sus reharm, non-functional sequences, maj7♯5.
+        ...colorReharmLevels(),
       ],
     },
     {
@@ -6152,6 +6159,10 @@ export function catalog(): FamilyDef[] {
     // Barry Harris lines (docs/research/BARRY-HARRIS-METHOD.md Part D): the chromatic scale, scale outlines, 5-4-3-2,
     // the important arpeggios, seven down to the 3rd, the triplet and miscellaneous rules, upbeats, compose a line.
     harrisLineFamily(),
+    // HARMONY-REHARM (docs/HARMONY-REHARM.md): one note, many chords; chromatic mediants; organ comping (Goldings).
+    ctoneFamily(),
+    mediantFamily(),
+    organFamily(),
   ]);
 }
 

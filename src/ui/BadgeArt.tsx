@@ -723,6 +723,61 @@ export const GLYPHS: Record<string, Glyph> = {
       {head(18, 19, 2)}
     </>
   ),
+  // HARMONY-REHARM: a held note tied over three chords; two triads a 3rd apart sharing a note; drawbars over a walk.
+  'family:k-ctone': () => (
+    <>
+      {p('M3 5h18', false)}
+      {head(5, 4, 1.8)}
+      {head(12, 4, 1.8)}
+      {head(19, 4, 1.8)}
+      {head(5, 13, 1.7)}
+      {head(5, 18, 1.7)}
+      {head(12, 11, 1.7)}
+      {head(12, 16, 1.7)}
+      {head(19, 15, 1.7)}
+      {head(19, 20, 1.7)}
+    </>
+  ),
+  'family:g-ctone': () => (
+    <>
+      <path d="M2 2h20 M2 4.5h20" strokeWidth={0.8} />
+      {head(5, 8, 1.8)}
+      {head(12, 8, 1.8)}
+      {head(19, 8, 1.8)}
+      {p('M3 9.5h18', false)}
+      {head(5, 15, 1.7)}
+      {head(12, 13, 1.7)}
+      {head(19, 18, 1.7)}
+    </>
+  ),
+  'family:k-mediant': () => (
+    <>
+      {head(6, 19, 2)}
+      {head(6, 14, 2)}
+      {head(6, 9, 2)}
+      {head(18, 14, 2)}
+      {head(18, 9, 2)}
+      {head(18, 4, 2)}
+      {p('M9 9h6 M9 14h6', false)}
+    </>
+  ),
+  'family:g-color': () => (
+    <>
+      <path d="M2 2h20 M2 4.5h20" strokeWidth={0.8} />
+      {head(6, 20, 1.9)}
+      {head(6, 15, 1.9)}
+      {head(18, 15, 1.9)}
+      {head(18, 10, 1.9)}
+      {p('M9 15h6', false)}
+    </>
+  ),
+  'family:k-organ': () => (
+    <>
+      {p('M6 3v9 M11 3v5 M16 3v7', false)}
+      {p('M4.5 12h3v2h-3z M9.5 8h3v2h-3z M14.5 10h3v2h-3z', true)}
+      {p('M3 21l6-3 5 2 7-4', false)}
+    </>
+  ),
   // THEORY_PLAY: theory you play — two triads stacked a step apart (a triad pair).
   'family:k-theory':() => p('M3 20L9 9l6 11z M9 14l6-11 6 11z'),
   'family:k-reharm': () => (

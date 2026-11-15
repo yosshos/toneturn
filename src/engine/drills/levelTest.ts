@@ -61,6 +61,8 @@ const CHORDS_JAZZ: Rung[] = [
   r('voicings-3', 10, { cadences: 3, voicings: 4, 'k-sixdim': 1, 'k-vl': 3 }),
   r('voicings-4', 3, { cadences: 4, voicings: 5, 'k-sixdim': 2, 'k-reharm': 1, 'k-vl': 4 }),
   r('voicings-9', 2, { cadences: 5, voicings: 10, 'k-sixdim': 4, 'k-reharm': 3, 'k-vl': 7, 'k-theory': 1, 'k-keys': 4 }),
+  // HARMONY-REHARM: drop 2 under a held note (one note, many chords) places the common-tone and mediant ladders.
+  r('k-ctone-3', 7, { cadences: 5, voicings: 10, 'k-sixdim': 4, 'k-reharm': 3, 'k-vl': 7, 'k-theory': 1, 'k-keys': 4, 'k-ctone': 4, 'k-mediant': 2 }),
   // AUDIT-GAPS-2: key changes — one diminished, four keys, voice-led (the top step: it proves the voice leading too).
   r('k-keys-7', 9, { cadences: 5, voicings: 10, 'k-sixdim': 5, 'k-reharm': 3, 'k-vl': 7, 'k-theory': 1, 'k-keys': 8 }),
   // AUDIT-DEPTH-3: a phrase of a head in drop 2 with the melody on top (proves harmonising and drop-2 comping of a head).
@@ -75,6 +77,8 @@ const CHORDS_CLASSICAL: Rung[] = [
 const COMP_JAZZ: Rung[] = [
   r('accomp-1', 0, { accomp: 2 }),
   r('voicings-6', 5, { accomp: 3, voicings: 7 }),
+  // HARMONY-REHARM: organ comping — the walking LH under a held pad.
+  r('k-organ-1', 3, { accomp: 3, voicings: 7, 'k-organ': 2 }),
   r('voicings-11', 10, { accomp: 4, voicings: 12 }),
   r('accomp-3', 7, { accomp: 5 }),
   r('voicings-14', 7, { accomp: 9, voicings: 15 }),
@@ -177,6 +181,8 @@ const G_JAZZ: Rung[] = [
   r('g-jazz-2', 5, { 'g-jazz': 3, 'g-harris': 2, 'g-bebop': 2 }),
   r('g-jazz-4', 10, { 'g-jazz': 5, 'g-harris': 3, 'g-bebop': 3 }),
   r('g-jazz-8', 3, { 'g-jazz': 9, 'g-harris': 5, 'g-theory': 1, 'g-keys': 2, 'g-bebop': 5 }),
+  // HARMONY-REHARM: drop 2 under a held note on the neck places the common-tone and colour-harmony families.
+  r('g-ctone-2', 4, { 'g-jazz': 9, 'g-harris': 5, 'g-theory': 1, 'g-keys': 2, 'g-bebop': 5, 'g-ctone': 3, 'g-color': 5 }),
   // AUDIT-GAPS-2: bebop lines on the neck (grade 7).
   r('g-bebop-7', 2, { 'g-jazz': 9, 'g-harris': 6, 'g-theory': 2, 'g-keys': 4, 'g-bebop': 8, 'g-harrisline': 5 }),
   // AUDIT-GAPS-2: key changes in drop 2 (one diminished, four keys).
@@ -231,6 +237,8 @@ const B_WALK: Rung[] = [
   r('b-walk-3', 10, { 'b-walk': 4, 'b-swing': 2 }),
   r('b-walk-5', 3, { 'b-walk': 6, 'b-swing': 2, 'b-barry': 1 }),
   r('b-walk-7', 7, { 'b-walk': 8, 'b-swing': 3, 'b-barry': 2 }),
+  // HARMONY-REHARM: the counter-line — the bass reharmonizes under a held note.
+  r('b-counter-7', 3, { 'b-walk': 8, 'b-swing': 3, 'b-barry': 2, 'b-counter': 8 }),
   r('b-walk-9', 0, { 'b-walk': 10, 'b-swing': 4, 'b-barry': 3, 'b-keys': 2, 'b-bebop': 2 }),
   // AUDIT-GAPS-2: bebop lines on the bass (rhythm changes, the bridge).
   r('b-bebop-6', 5, { 'b-walk': 10, 'b-swing': 4, 'b-barry': 4, 'b-keys': 4, 'b-bebop': 7, 'b-harrisline': 5 }),

@@ -169,7 +169,7 @@ describe('chord names spelled for the key (final check)', () => {
       for (const l of f.levels)
         for (const d of levelDrills(l, 'fifths-up')) {
           const key = d.spec.key % 12;
-          if (d.spec.minor || ![7, 2, 9, 4, 11].includes(key) || !d.chart || d.spec.family === 'b-walk' || d.spec.family === 'b-up-walk' || d.spec.family === 'b-keys' || /^[A-G][♯♭]?m(?!aj)/.test(d.chart.find((c) => c) ?? '')) continue;
+          if (d.spec.minor || ![7, 2, 9, 4, 11].includes(key) || !d.chart || d.spec.family === 'b-walk' || d.spec.family === 'b-up-walk' || d.spec.family === 'b-keys' || /* HARMONY-REHARM: borrowed chords and mediants are spelled by function (♭VI in G = E♭) */ d.spec.family === 'b-counter' || /^[A-G][♯♭]?m(?!aj)/.test(d.chart.find((c) => c) ?? '')) continue;
           for (const c of d.chart) expect(c.includes('♭') && !c.includes('7♭') && !c.includes('♭5') && !c.includes('♭9'), `${l.id} ${d.title.en}: ${d.chart.join(' ')}`).toBe(false);
         }
   });

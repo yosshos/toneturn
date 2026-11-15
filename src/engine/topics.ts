@@ -44,6 +44,9 @@ import './topicsHarrisLines';
 import './topicsKeyMoves'; // AUDIT-GAPS-2 #5/#19: modulation by ear — how (pivot, common dim, ii–V, tritone, direct), where to, a tune's key centres
 import './topicsVoiceLeadEar'; // AUDIT-CONTENT-THEORY §ה.2: voice leading by ear (which voice moved, held notes, smooth or jumpy, drop 2)
 import './topicsGrid'; // Progressions by ear on the grid (progGrid.ts): root + quality + bass / colour per bar, partial credit, 1100–1850
+// HARMONY-REHARM: colour harmony by ear — one note many chords, mediants, pedal, approach chords, counter-line, modern
+// colours, functional vs colour; and borrowed-ext 4–8, planing 4, reharm-spot 5 (imported after the topics it extends).
+import './topicsReharmColor';
 import { applyDepth } from './topicsDepth';
 
 // ================================================================ T. Barry Harris

@@ -29,6 +29,7 @@ import { bassPhraseFamily, genBassPhrase } from './phraseDrills'; // phrases by 
 import { bassSoloFamily, genBassSolo } from './soloDrills'; // AUDIT-DEPTH-3 C5–C7
 import { bassCtxFamily, genBassCtx } from './ctxDrills'; // AUDIT-DEPTH-3 #5, #6
 import { bassHarrisLineFamily, genBassHarrisLine } from './harrisLineDrills'; // Barry Harris lines (Part D)
+import { bassCounterFamily, genBassCounter } from './colorDrills'; // HARMONY-REHARM: the bass reharmonizes
 import type { LevelExamTag } from './types';
 // AUDIT-GAPS-2 #6/#11/#12: the line under each key change, turnarounds and the rhythm-changes bridge (keyMoveDrills.ts).
 import { bassKeyMoveFamily, generateBassKeyMove } from './keyMoveDrills';
@@ -2497,6 +2498,9 @@ export function generateBass(s: DrillSpec, tu: Tuning): Drill {
     // Barry Harris lines (harrisLineDrills.ts).
     case 'b-harrisline':
       return genBassHarrisLine(s, tu);
+    // HARMONY-REHARM: pedals, borrowed and mediant roots, the counter-line (colorDrills.ts).
+    case 'b-counter':
+      return genBassCounter(s, tu);
   }
   throw new Error(`Not a bass family: ${s.family}`);
 }
@@ -2775,6 +2779,8 @@ export function bassFamilies(): GuitarFamilyDef[] {
     bassSoloFamily(L, fam),
     // Barry Harris lines on the bass (jazz track, BARRY-HARRIS-METHOD Part D): harrisLineDrills.ts.
     bassHarrisLineFamily(L, fam),
+    // HARMONY-REHARM: the bass reharmonizes (jazz track) — pedals, borrowed and mediant roots, the counter-line.
+    bassCounterFamily(L, fam),
     fam('b-legato', 'Slides, legato, harmonics', 'החלקות, לגאטו והרמוניקים', [
       L('b-legato', 1, 'Slides into notes', 'החלקות אל הצלילים', [LG('slide')], K6, [70, 110], E8),
       L('b-legato', 2, 'Hammer-on and pull-off pairs', 'זוגות הקשה ומשיכה', [LG('hp')], K6, [60, 100], E8),

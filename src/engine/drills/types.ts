@@ -30,6 +30,10 @@ export type FamilyId =
   | 'k-phrase'
   // Barry Harris lines (BARRY-HARRIS-METHOD Part D): chromatic scale, outlines, 5-4-3-2, rules, upbeats (harrisLineDrills.ts).
   | 'k-harrisline'
+  // HARMONY-REHARM (colorDrills.ts): one note, many chords; chromatic mediants; organ comping in the Goldings style.
+  | 'k-ctone'
+  | 'k-mediant'
+  | 'k-organ'
   // AUDIT-CONTENT-THEORY §ז.2: first steps at the piano — posture, finger numbers, C position, the thumb passing under.
   | 'k-first'
   // AUDIT-GAPS-2 #5/#6/#11/#12: key changes (common dim, pivot, ii–V, tritone, direct, pop) and turnarounds, performed.
@@ -76,6 +80,8 @@ export type FamilyId =
   | 'g-bebop' // AUDIT-GAPS-2: bebop vocabulary and lines over forms on the neck (vocabDrills.ts)
   | 'g-phrase' // phrases by ear on the guitar (phraseDrills.ts)
   | 'g-harrisline' // Barry Harris lines on the neck (BARRY-HARRIS-METHOD Part D, harrisLineDrills.ts)
+  | 'g-ctone' // HARMONY-REHARM §2: one note, many chords on the neck (colorDrills.ts)
+  | 'g-color' // HARMONY-REHARM §3–5: mediants, modal interchange, planing, side-slip, sus on the neck (colorDrills.ts)
   | 'g-theory' // THEORY_PLAY: theory you play on the neck (rootless, quartal, Giant Steps, UST, triad pairs, lines)
   | 'g-prog' // odd meters, polyrhythm, metric modulation, fusion lines, unisons (prog engine)
   | 'g-meter' // AUDIT-CONTENT-THEORY R-4/R-5: meter & cross-rhythm on the core path (subdivision → 7:4, odd meters, hemiola)
@@ -129,6 +135,8 @@ export type BassFamilyId =
   | 'b-phrase'
   // Barry Harris lines on the bass (BARRY-HARRIS-METHOD Part D, harrisLineDrills.ts).
   | 'b-harrisline'
+  // HARMONY-REHARM: the bass reharmonizes — pedals, roots of borrowed chords and mediants, the counter-line (colorDrills.ts).
+  | 'b-counter'
   // 0.64 (track B): the bass-ear family F15 and the upright / double-bass track (BASS_CURRICULUM §5, §5.1).
   | 'b-ear'
   | 'b-up-pos'
@@ -268,6 +276,8 @@ export interface DrillSpec {
 
 /** A generated drill: the notes to play and how it is judged. */
 export interface Drill {
+  /** HARMONY-REHARM §6 (k-organ): the instrument sound the item is played and demonstrated on ('tonewheel'); default the player's. */
+  sound?: string;
   /**
    * A tune in any key (stdKey.ts): standards and charts take `spec.key` as an offset from the lead-sheet key (0 = the
    * lead sheet, so old item ids stay). `tonic` is the key the drill is really in, for key mastery and key labels.
@@ -446,6 +456,12 @@ export interface DrillGoal {
   free?: { windows: [number, number][]; scale: { from: number; to: number; pcs: number[] }[]; minPerBar: number; model: { beat: number; dur: number; pitch: number; /** Guitar: where the model's note sits (tab). */ string?: number; fret?: number }[] };
   /** Voice leading (k-vl / g-vl, voiceLead.ts): the learner chooses each voicing from chord symbols; graded by type + smallest motion. */
   vl?: import('./voiceLead').VLGoal;
+  /**
+   * One note, many chords — the player's own choice (k-ctone, ctFreeAnalyze.ts): `count` chords, each with the held
+   * pitch on top, a chord that can carry it (commonTone.holdsNote), none repeated, the inner voices moving at most
+   * `tol` semitones a voice on average from the chord before. `at` = the beat of each chord (timed takes).
+   */
+  ct?: { held: number; count: number; at: number[]; tol: number };
   /**
    * AUDIT-DEPTH-3 C5: improvisation graded by rule cards (ruleCards.ts). The improvised notes are those at or above
    * `drill.freeAbove` (piano: the LH comps, the RH improvises), else those inside `free.windows`. `spans` = the chords
