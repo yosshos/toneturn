@@ -26,7 +26,9 @@ export type IconKey =
   | 'clock'
   | 'check'
   | 'star'
-  | 'metronome';
+  | 'metronome'
+  | 'wave'
+  | 'play';
 
 const PATHS: Record<IconKey, ReactNode> = {
   lock: (
@@ -111,6 +113,9 @@ const PATHS: Record<IconKey, ReactNode> = {
   next: <path d="M18 5v14M6 6l9 6-9 6z" />,
   stop: <rect x="6" y="6" width="12" height="12" rx="1.5" />,
   skip: <path d="M5 6l7 6-7 6M13 6l7 6-7 6" />,
+  // 2026-11-15: the vibrato mark (was the 〰 text glyph) and play for the take review.
+  wave: <path d="M2 12c1.7-4 3.3-4 5 0s3.3 4 5 0 3.3-4 5 0 3.3 4 5 0" />,
+  play: <path d="M7 5l12 7-12 7z" />,
 };
 
 /** A line icon, sized in px, coloured by the text around it. Decorative: the words beside it carry the meaning. */
