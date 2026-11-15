@@ -187,8 +187,56 @@ export function centreLine(pts: { t: number; m: number | null }[], win = 0.3): {
     if (p.m === null) {
       if (run.length) flush();
       out.push({ t: p.t, m: null });
-    } else run.push({ t: p.t, m: p.m });
+    } else {
+      // a new note (a jump of more than ~half a semitone) starts its own centre line
+      if (run.length && Math.abs(p.m - run[run.length - 1].m) > 0.6) {
+        flush();
+        out.push({ t: p.t, m: null });
+      }
+      run.push({ t: p.t, m: p.m });
+    }
   }
   if (run.length) flush();
   return out;
+}
+
+/** What a vibrato exercise asks for (the chip's ghost wave and its in-band check). */
+export interface VibratoGoal {
+  rate: [number, number];
+  extent: [number, number];
+}
+
+/** The chip's wave (§4.6): cycles across a 1 s box = rate, amplitude = extent on the meter's scale (±50 ¢ fills it). */
+export function vibratoWave(rate: number, extent: number, w: number, h: number, unsteady = false, steps = 48): string {
+  const mid = h / 2;
+  const amp = Math.min(1, extent / 50) * (mid - 2);
+  let d = '';
+  for (let k = 0; k <= steps; k++) {
+    const x = (k / steps) * w;
+    const ph = 2 * Math.PI * rate * (k / steps);
+    // unsteady: an uneven amplitude (deterministic, so the drawing does not shimmer)
+    const a = unsteady ? amp * (0.55 + 0.45 * Math.abs(Math.sin(2.3 * ph + 1.1))) : amp;
+    d += `${k ? 'L' : 'M'}${x.toFixed(1)} ${(mid - a * Math.sin(ph)).toFixed(1)}`;
+  }
+  return d;
+}
+
+/** Is a live reading inside the goal? Returns the off parameter's side, or null when both are in band. */
+export function vibratoOff(v: LiveVibrato, g: VibratoGoal): { rate: -1 | 0 | 1; extent: -1 | 0 | 1 } {
+  const side = (x: number, [lo, hi]: [number, number]) => (x < lo ? -1 : x > hi ? 1 : 0) as -1 | 0 | 1;
+  return { rate: side(v.rate, g.rate), extent: side(v.extent, g.extent) };
+}
+
+/**
+ * Cents the needle and chip read: the vibrato centre when a vibrato is running (the mean over the last ~2 cycles),
+ * else the newest point. Intonation is judged at the centre, so a healthy vibrato never reads as out of tune.
+ */
+export function readCents(track: TrackPoint[], fallback: number | null): number | null {
+  if (fallback === null || track.length < 10) return fallback;
+  const v = liveVibrato(track, 0.9);
+  if (v.state !== 'vibrato' && v.state !== 'unsteady') return fallback;
+  const end = track[track.length - 1].t;
+  const span = Math.max(0.3, 2 / (v.rate || 5.5));
+  const w = track.filter((p) => p.t >= end - span);
+  return w.length ? w.reduce((a, p) => a + p.c, 0) / w.length : fallback;
 }

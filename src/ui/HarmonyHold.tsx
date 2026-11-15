@@ -2,6 +2,7 @@
 // chords move. The piano never plays the sung tone. Graded by the microphone (pitch class, cents). Five takes a run.
 // The engine is src/engine/harmonyHold.ts. The strip and the needle are physical (left = first / flat) in both languages.
 
+import { ZoneMeter } from './SingLane';
 import '../advgames.css';
 import '../voicegames.css';
 import { useEffect, useRef, useState } from 'react';
@@ -49,20 +50,14 @@ const paramsOf = (t: DynName) => {
 };
 const midiOf = (hz: number) => 69 + 12 * Math.log2(hz / 440);
 
-/** A live cents needle: ±150 ¢ across, the tier's window shaded. */
+/** The live accuracy meter of the voice games: the shared zone meter (♭ / ♯, a note-head needle), the cents below. */
 export function CentsNeedle({ cents, win, lang }: { cents: number | null; win: number; lang: Lang }) {
-  const x = (c: number) => 50 + (Math.max(-150, Math.min(150, c)) / 150) * 50;
+  void lang;
   return (
-    <div>
-      <div className="vg-needle" dir="ltr" aria-hidden="true">
-        <span className="vg-win" style={{ left: `${x(-win)}%`, width: `${x(win) - x(-win)}%` }} />
-        <span className="vg-mid" />
-        {cents !== null && <span className="vg-dot" style={{ left: `${x(cents)}%` }} />}
-      </div>
+    <div className="cents-needle">
+      <ZoneMeter cents={cents} tol={win} />
       <div className="vg-needle-labels" dir="ltr">
-        <span>{lang === 'he' ? 'נמוך' : 'flat'}</span>
-        <span dir="ltr">{cents === null ? '–' : `${cents > 0 ? '+' : ''}${cents} ¢`}</span>
-        <span>{lang === 'he' ? 'גבוה' : 'sharp'}</span>
+        <span dir="ltr">{cents === null ? '–' : `${cents > 0 ? '+' : cents < 0 ? '−' : ''}${Math.abs(cents)} ¢`}</span>
       </div>
     </div>
   );

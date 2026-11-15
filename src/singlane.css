@@ -62,10 +62,115 @@
   stroke: var(--outline);
   stroke-width: 2.5;
 }
-.sl-outline.golden {
+.sl-outline.sel {
+  stroke-width: 3.5;
+}
+/* money notes: a second, thin ink outline 2 px outside the first */
+.sl-outline-2 {
+  fill: none;
+  stroke: var(--outline);
+  stroke-width: 1;
+}
+/* the review: the vibrato centre through the curve, per-note chips, tap columns, the playhead */
+.sl-centre {
+  fill: none;
+  stroke: var(--ink);
   stroke-width: 1.2;
-  outline: none;
-  filter: none;
+  stroke-dasharray: 4 3;
+  opacity: 0.75;
+}
+.sl-chip rect {
+  fill: var(--card);
+  stroke: var(--outline);
+  stroke-width: 1.5;
+}
+.sl-chip text {
+  font: 800 10px var(--font);
+  fill: var(--ink);
+}
+.sl-chip.in rect {
+  fill: var(--teal);
+}
+.sl-chip.in text {
+  fill: var(--ink-c, #1e1033);
+}
+.sl-chip.sharp rect {
+  stroke: var(--tangerine);
+  stroke-width: 2;
+}
+.sl-chip.flat rect {
+  stroke: var(--purple);
+  stroke-width: 2;
+}
+.sl-chip.miss rect,
+.sl-chip.oct rect {
+  stroke-dasharray: 3 2;
+}
+.sl-hit {
+  fill: transparent;
+  cursor: pointer;
+}
+.note-detail {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin: 4px 0;
+  padding: 6px 10px;
+  border: 2px solid var(--outline);
+  border-radius: 14px;
+  background: var(--card);
+  font-size: 0.82rem;
+}
+.note-detail .nd-name {
+  font-family: var(--display);
+  font-size: 1.3rem;
+}
+.note-detail .nd-name sub {
+  font-size: 0.55em;
+  vertical-align: baseline;
+}
+.note-detail .cents-chip {
+  margin: 0;
+  min-width: 56px;
+  height: 28px;
+}
+.note-detail .nd-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  color: var(--ink-soft);
+}
+.note-detail .nd-miss {
+  font-weight: 800;
+}
+.note-detail {
+  position: relative;
+  padding-inline-end: 38px;
+}
+.note-detail .nd-close {
+  position: absolute;
+  top: 5px;
+  inset-inline-end: 5px;
+  width: 28px;
+  height: 28px;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  font-size: 1rem;
+}
+@media (max-height: 900px) {
+  .panel-screen.vocal .vocal-actions .btn.ghost {
+    flex: 1 1 auto;
+    min-height: 44px;
+    padding: 4px 10px;
+    font-size: 0.9rem;
+  }
+}
+.take-card .listen-btn {
+  margin-top: 6px;
+  min-height: 36px;
+  padding: 4px 14px;
 }
 .sl-fill.in {
   fill: var(--teal);
@@ -622,4 +727,209 @@
     margin: 4px 0;
     padding: 8px 12px;
   }
+}
+
+/* ---------------------------------------------------------------- songs: the corner note chip, the phrase strip */
+.lane-note {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  padding: 1px 8px;
+  border: 2px solid var(--outline);
+  border-radius: 10px;
+  background: var(--card);
+  font-family: var(--display);
+  font-size: 1.05rem;
+  line-height: 1.3;
+  color: var(--ink);
+  pointer-events: none;
+}
+.lane-note sub {
+  font-size: 0.6em;
+  vertical-align: baseline;
+}
+.lane-note .acc {
+  font-family: var(--music);
+}
+.phrase-strip {
+  list-style: none;
+  display: flex;
+  gap: 4px;
+  margin: 4px 0 0;
+  padding: 0;
+}
+.phrase-strip .ps {
+  flex-basis: 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 26px;
+  padding: 0 4px;
+  border: 2px solid var(--outline);
+  border-radius: 8px;
+  background: var(--card);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--ink);
+  overflow: hidden;
+  white-space: nowrap;
+}
+.phrase-strip .ps span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.phrase-strip .ps.now {
+  box-shadow: inset 0 -4px 0 var(--lemon);
+}
+.phrase-strip .ps.good {
+  background: var(--teal);
+  color: var(--ink-c, #1e1033);
+}
+.phrase-strip .ps.fair {
+  background-color: var(--card);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Cpath d='M-1 1l2-2M0 6l6-6M5 7l2-2' stroke='%2312C9B4' stroke-width='1.6'/%3E%3C/svg%3E");
+}
+.phrase-strip .ps.weak {
+  border-style: dashed;
+}
+
+/* ---------------------------------------------------------------- the vibrato chip */
+.sm-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sm-row .sustain-bars {
+  flex: 1;
+  min-width: 0;
+}
+.sm-fill {
+  flex: 1;
+}
+.vib-chip {
+  flex: none;
+  display: grid;
+  justify-items: center;
+  width: 96px;
+  padding: 2px 4px 1px;
+  border: 2.5px solid var(--outline);
+  border-radius: 10px;
+  background: var(--card);
+  color: var(--ink);
+  transition: background-color 0.15s ease-out;
+}
+.vib-chip svg {
+  display: block;
+}
+.vib-chip small {
+  font-size: 0.66rem;
+  font-weight: 700;
+  line-height: 1.15;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.vib-chip .vc-note {
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+.vib-chip .hi {
+  color: var(--tangerine);
+}
+.vib-chip .lo {
+  color: var(--purple);
+}
+:root[data-theme='dark'] .vib-chip .lo {
+  color: var(--lilac);
+}
+.vc-wave {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+.vc-ghost {
+  fill: none;
+  stroke: var(--purple);
+  stroke-width: 1.2;
+  stroke-dasharray: 3 2;
+  opacity: 0.7;
+}
+.vib-chip.in {
+  background: var(--teal);
+}
+.vib-chip.in small,
+.vib-chip.in .vc-wave {
+  color: var(--ink-c, #1e1033);
+  stroke: var(--ink-c, #1e1033);
+}
+.vib-chip.unsteady .vc-wave {
+  stroke-dasharray: 5 2;
+}
+/* the cue changed: the outline flashes lemon for 300 ms (now) */
+.vib-chip.flash {
+  animation: vc-flash 0.3s steps(1, end);
+}
+@keyframes vc-flash {
+  0% {
+    border-color: var(--lemon);
+    box-shadow: 0 0 0 2px var(--outline);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vib-chip.flash {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------- polish: blind takes, stamps, the final barline */
+.sing-lane.blind.is-live .sl-block,
+.sing-lane.blind.is-live .sl-zone,
+.sing-lane.blind.is-live .sl-fill {
+  fill: transparent;
+}
+.sing-lane.blind.is-live .sl-outline {
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+}
+.sl-outline.stamp {
+  animation: sl-stamp 0.2s steps(1, end);
+}
+@keyframes sl-stamp {
+  0% {
+    stroke-width: 3.5;
+  }
+}
+.sl-mark {
+  font: 900 11px var(--font);
+  fill: var(--ink);
+  opacity: 0;
+}
+.sl-mark.on {
+  opacity: 1;
+}
+.sl-final .thin {
+  stroke: var(--outline);
+  stroke-width: 1.5;
+}
+.sl-final .thick {
+  stroke: var(--outline);
+  stroke-width: 4;
+}
+.sl-final .fermata {
+  font: 30px var(--music);
+  fill: var(--ink);
+}
+.cents-needle .vg-needle-labels {
+  justify-content: center;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sl-outline.stamp {
+    animation: none;
+  }
+}
+:root[data-motion='reduced'] .sl-outline.stamp,
+:root[data-motion='reduced'] .vib-chip.flash {
+  animation: none;
 }

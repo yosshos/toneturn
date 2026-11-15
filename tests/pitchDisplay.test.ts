@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { DisplaySmoother, NoteNamer, octaveFold, smoothTrack, zoneState, ZONE_LOOK, chipCents } from '../src/engine/pitchDisplay';
 import { centsTrack, synthHold, synthMelody } from '../src/engine/vocal';
 import { midiToHz } from '../src/engine/pitch';
-import { bestStretch, liveVibrato, sliceSteadiness, steadyLevel, zoneTolerance } from '../src/engine/vocalLive';
+import { bestStretch, centreLine, liveVibrato, moneyNotes, noteDetail, readCents, sliceSteadiness, steadyLevel, vibratoOff, vibratoWave, zoneTolerance } from '../src/engine/vocalLive';
 import type { SungFrame } from '../src/engine/sing';
 import { VoiceCheckState, levelOf } from '../src/engine/voiceCheck';
 
@@ -170,5 +170,63 @@ describe('voice check', () => {
     expect(b.hint(4.95)).toBe(true);
     expect(levelOf(0.00001)).toBe(0);
     expect(levelOf(1)).toBe(1);
+  });
+});
+
+describe('melody review helpers', () => {
+  it('money notes: long notes first, else the single top note; never more than two', () => {
+    expect(moneyNotes([60, 62, 64, 62, 60], [0.5, 0.5, 0.5, 0.5, 0.5])).toEqual([2]);
+    expect(moneyNotes([60, 64, 62, 64], [0.5, 0.5, 0.5, 0.5])).toEqual([]);
+    expect(moneyNotes([60, 62, 64, 60], [0.5, 0.5, 0.5, 1.5])).toEqual([3]);
+    expect(moneyNotes([60, 67, 64, 62, 60], [0.5, 1.2, 0.5, 1.2, 1.5]).length).toBeLessThanOrEqual(2);
+    expect(moneyNotes([60, 62], [1, 1])).toEqual([]);
+  });
+  it('the vibrato centre line runs through the wave and breaks with the line', () => {
+    const pts = synthHold(62, { seconds: 2, vibRate: 5.6, vibExtent: 40 }).map((f) => ({ t: f.t, m: f.hz ? 69 + 12 * Math.log2(f.hz / 440) : null }));
+    const cl = centreLine(pts);
+    expect(cl[0].m).toBeNull();
+    const mid = cl.filter((p) => p.m !== null && p.t > 0.8 && p.t < 1.6).map((p) => Math.abs(p.m! - 62) * 100);
+    expect(Math.max(...mid)).toBeLessThan(12);
+  });
+  it('a note detail reads stability and vibrato over the note', () => {
+    const tr = centsTrack(synthHold(62, { seconds: 2, vibRate: 5.6, vibExtent: 35 }), 62);
+    const d = noteDetail({ target: 62, cents: 2, settleMs: 40, overshoot: 0, start: 0.3 }, tr, 2, 20);
+    expect(d.vibrato?.state).toBe('vibrato');
+    expect(d.wobble).not.toBeNull();
+    expect(d.wobble!).toBeLessThanOrEqual(12);
+    expect(noteDetail({ target: 62, cents: null, settleMs: null, overshoot: 0, start: null }, tr, 1, null).wobble).toBeNull();
+  });
+});
+
+describe('vibrato chip', () => {
+  it('draws rate as cycles per box and width as height (±50 ¢ fills it)', () => {
+    const pts = (d: string) => d.slice(1).split('L').map((q) => q.split(' ').map(Number));
+    const ys = (d: string) => pts(d).map((p) => p[1]);
+    const crossings = (d: string) => {
+      const sg = ys(d).map((v) => Math.sign(Math.round((v - 13) * 10))).filter((v) => v !== 0);
+      let n = 0;
+      for (let k = 1; k < sg.length; k++) if (sg[k] !== sg[k - 1]) n++;
+      return n + 1;
+    };
+    const w6 = vibratoWave(6, 40, 84, 26, false, 240);
+    expect(Math.round(crossings(w6) / 2)).toBe(6);
+    const amp = (d: string) => (Math.max(...ys(d)) - Math.min(...ys(d))) / 2;
+    expect(amp(vibratoWave(6, 50, 84, 26))).toBeCloseTo(11, 0);
+    expect(amp(vibratoWave(6, 25, 84, 26))).toBeCloseTo(5.5, 0);
+    expect(amp(vibratoWave(6, 200, 84, 26))).toBeCloseTo(11, 0);
+    expect(ys(vibratoWave(5, 40, 84, 26, true)).length).toBe(49);
+  });
+  it('flags the parameter outside the goal', () => {
+    const g = { rate: [4.5, 7] as [number, number], extent: [20, 50] as [number, number] };
+    expect(vibratoOff({ state: 'vibrato', rate: 5.6, extent: 30 }, g)).toEqual({ rate: 0, extent: 0 });
+    expect(vibratoOff({ state: 'vibrato', rate: 7.6, extent: 15 }, g)).toEqual({ rate: 1, extent: -1 });
+  });
+  it('the needle reads the vibrato centre, not the wave', () => {
+    const tr = centsTrack(synthHold(62, { seconds: 2.5, cents: 8, vibRate: 5.6, vibExtent: 45 }), 62);
+    const last = tr[tr.length - 1].c;
+    const c = readCents(tr, last)!;
+    expect(Math.abs(c - 8)).toBeLessThan(10);
+    const straight = centsTrack(synthHold(62, { seconds: 2, cents: 12 }), 62);
+    expect(readCents(straight, 12)).toBe(12);
   });
 });
