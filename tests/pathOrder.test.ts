@@ -32,9 +32,13 @@ function walk(c: CourseId, n: number, facts0: PathFacts = {}): string[][] {
 const unitOf = (units: string[][], id: string) => units.findIndex((u) => u.includes(id));
 
 describe('instrument paths open families by difficulty (AUDIT-CONTENT-THEORY §ב)', () => {
-  it('guitar: the first chord and strumming in the first unit, the picking hand after', () => {
-    const u = walk('guitar', 3);
-    expect(u[0]).toEqual(expect.arrayContaining(['tech:g-chords-1', 'tech:g-rhythm-1']));
+  it('guitar: the first steps lead, then the first chord and strumming, the picking hand after', () => {
+    const u = walk('guitar', 5);
+    // AUDIT-6 Stage B: the measured first steps (tuning, holding, open strings) open the guitar path.
+    expect(u[0]).toEqual(expect.arrayContaining(['tech:g-first-1']));
+    expect(unitOf(u, 'tech:g-first-2')).toBe(1);
+    expect(unitOf(u, 'tech:g-chords-1')).toBeGreaterThanOrEqual(0);
+    expect(unitOf(u, 'tech:g-chords-1')).toBeLessThanOrEqual(2);
     expect(unitOf(u, 'tech:g-picking-1')).toBeGreaterThan(0);
     // Jazz comping is on the default path (no add-on chosen yet), at its grade.
     expect(stepCatalogue().filter((s) => s.ladder && s.ladder.family === 'g-jazz').length).toBeGreaterThan(0);
@@ -43,7 +47,10 @@ describe('instrument paths open families by difficulty (AUDIT-CONTENT-THEORY §�
 
   it('drums: time and the rock beat first, single strokes next, paradiddles well after', () => {
     const u = walk('drums', 6);
-    expect(u[0]).toEqual(expect.arrayContaining(['tech:d-time-1', 'tech:d-rock-1']));
+    // AUDIT-6 Stage B: grip and rebound (d-first) first; time with the click and the rock beat in the first units.
+    expect(u[0]).toEqual(expect.arrayContaining(['tech:d-first-1']));
+    expect(unitOf(u, 'tech:d-time-1')).toBeLessThanOrEqual(1);
+    expect(unitOf(u, 'tech:d-rock-1')).toBeLessThanOrEqual(2);
     const strokes = unitOf(u, 'tech:d-strokes-1');
     expect(strokes).toBeGreaterThan(0);
     expect(strokes).toBeLessThanOrEqual(3);
@@ -52,12 +59,15 @@ describe('instrument paths open families by difficulty (AUDIT-CONTENT-THEORY §�
   });
 
   it('bass: time and plucking first, the kick lock and roots by unit 3, muting by 5, walking by 8', () => {
-    const u = walk('bass', 8);
-    expect(u[0]).toEqual(expect.arrayContaining(['tech:b-time-1', 'tech:b-pluck-1']));
-    expect(unitOf(u, 'tech:b-pocket-1')).toBeLessThanOrEqual(2);
-    expect(unitOf(u, 'tech:b-length-1')).toBeLessThanOrEqual(4);
+    const u = walk('bass', 10);
+    // AUDIT-6 Stage B: holding and tuning (b-first) first; time and plucking right after.
+    expect(u[0]).toEqual(expect.arrayContaining(['tech:b-first-1']));
+    expect(unitOf(u, 'tech:b-time-1')).toBeLessThanOrEqual(3);
+    expect(unitOf(u, 'tech:b-pluck-1')).toBeLessThanOrEqual(3);
+    expect(unitOf(u, 'tech:b-pocket-1')).toBeLessThanOrEqual(4); // + the bass first steps (AUDIT-6 Stage B)
+    expect(unitOf(u, 'tech:b-length-1')).toBeLessThanOrEqual(6);
     expect(unitOf(u, 'tech:b-walk-1')).toBeGreaterThanOrEqual(0);
-    expect(unitOf(u, 'tech:b-walk-1')).toBeLessThanOrEqual(7);
+    expect(unitOf(u, 'tech:b-walk-1')).toBeLessThanOrEqual(9);
   });
 
   it('keys: the first steps lead, and one-octave scales wait for the thumb passing under', () => {
@@ -128,7 +138,7 @@ describe('the beginner ear (AUDIT-CONTENT-THEORY §ז.1 item 6)', () => {
 
 describe('first steps and labels', () => {
   it('every first step opens with its quick lesson', () => {
-    for (const unit of ['tech:k-first-1', 'tech:k-first-3', 'tech:g-chords-1', 'tech:g-rhythm-1', 'tech:d-time-1', 'tech:d-rock-1', 'vocal:2101']) expect(lessonForUnit(unit), unit).not.toBeNull();
+    for (const unit of ['tech:k-first-1', 'tech:k-first-3', 'tech:g-first-1', 'tech:g-first-6', 'tech:d-first-1', 'tech:d-first-5', 'tech:b-first-1', 'vocal:2101']) expect(lessonForUnit(unit), unit).not.toBeNull();
   });
 
   it('Barry Harris 1…9 are numbered in the order the path opens them (#34)', () => {

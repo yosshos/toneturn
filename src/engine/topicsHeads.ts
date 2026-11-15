@@ -113,7 +113,7 @@ TOPIC_GEN['melody-fit'] = {
       const choices = shuffleR(rnd, [dev, ...shuffleR(rnd, DEVS.filter((d) => d !== dev)).slice(0, 3)]);
       const names: Names = Object.fromEntries(choices.map((d) => [d, nm(DEVICE_NAME[d].en, DEVICE_NAME[d].he)]));
       return choiceQ({
-        id, topic: 'melody-fit', level, seed, skill: 'cadences', difficulty: 1560,
+        id, topic: 'melody-fit', level, seed, skill: 'cadences', difficulty: 1480,
         ask: { en: 'Four bars as written, then reharmonised. Which device changed them?', he: 'ארבע תיבות כפי שנכתבו, ואז בהרמון חדש. איזו תחבולה שינתה אותן?' },
         names, answer: dev, choices, stimulus: [...stimulus, phraseStim(r.text, hi.notes, b0)],
       });

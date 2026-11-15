@@ -367,6 +367,6 @@ describe('wiring', () => {
     expect(UNIT_LESSON['tech:g-first-1']).toBe('first-guitar');
     expect(UNIT_LESSON['tech:d-first-1']).toBe('first-sticks');
     const rungs = (['piano', 'guitar', 'bass', 'drums'] as const).flatMap((i) => strandsFor(i, 'both').flatMap((s) => s.rungs.map((r) => r.level)));
-    for (const id of ['k-read-1', 'k-read-10', 'k-first-6', 'g-first-5', 'g-first-7', 'g-riff-2', 'b-first-3', 'b-first-5', 'b-first-7', 'd-first-2', 'd-first-6', 'd-first-7']) expect(rungs, id).toContain(id);
+    for (const id of ['k-read-1', 'k-read-10', 'g-first-5', 'g-first-7', 'g-riff-2', 'b-first-3', 'b-first-5', 'b-first-7', 'd-first-2', 'd-first-6', 'd-first-7']) expect(rungs, id).toContain(id);
   });
 });

@@ -210,6 +210,15 @@ export const EAR_INSTR = {
   audiate: { en: 'Two bars of a pattern are played. Sing the third bar — the pattern goes on, one step further.', he: 'מתנגנות שתי תיבות של תבנית. שירו את התיבה השלישית — התבנית ממשיכה צעד אחד הלאה.' },
 } as const;
 
+/** AUDIT-5 V-11: agility items (v-agility 1603–1611), one line each; {pct} = share of full tempo. */
+export const RUN_INSTR: Record<'run' | 'penta' | 'blues' | 'turn' | 'melisma', { en: string; he: string }> = {
+  run: { en: 'A run at {pct}%: listen, then sing it back on “ah”, every note clean.', he: 'ראן ב־{pct}%: הקשיבו, ואז שירו אותו בחזרה על ״אה״, כל צליל נקי.' },
+  penta: { en: 'A pentatonic run at {pct}%: listen, then sing it back on “ah”.', he: 'ראן פנטטוני ב־{pct}%: הקשיבו, ואז שירו אותו בחזרה על ״אה״.' },
+  blues: { en: 'A blues run at {pct}%: listen, then sing it back, the ♭5 in tune.', he: 'ראן בלוז ב־{pct}%: הקשיבו, ואז שירו אותו בחזרה, עם ♭5 מדויק.' },
+  turn: { en: 'A turn at {pct}%: the note above, the note, the note below, the note. Sing it back.', he: 'טרן ב־{pct}%: הצליל מעל, הצליל, הצליל מתחת, הצליל. שירו אותו בחזרה.' },
+  melisma: { en: 'A melisma at {pct}%: every note on one “ah”, no breaks. Sing it back.', he: 'מליסמה ב־{pct}%: כל הצלילים על ״אה״ אחד, בלי הפסקות. שירו אותה בחזרה.' },
+};
+
 /** P3: colla voce, then in time (F14 L6, L9). */
 export const COLLA_TEXT = {
   instr: { en: 'Sing the opening freely — the band follows you. Then it counts one bar: come back in on the one, in time.', he: 'שירו את הפתיחה בחופשיות — הלהקה הולכת אחריכם. אחר כך היא סופרת תיבה אחת: היכנסו שוב על האחת, בזמן.' },

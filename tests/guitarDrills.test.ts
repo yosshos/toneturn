@@ -279,7 +279,7 @@ describe('guitar drills: analysis', () => {
       else expect(m.accuracy, d.itemId).toBe(1);
       if (d.goal.chordTonesOnBeats && !d.goal.bass?.rules) expect(m.chordToneOnBeats, d.itemId).toBe(1); // rule-judged lines (A5) supersede it
     }
-  }, 60000);
+  }, 180_000); // AUDIT-6 Stage B: + the guitar and bass first steps, riffs in 12 keys
 
   it('a strum heard as separate string onsets (and noise without pitch) counts as one clean chord', () => {
     const d = generate({ family: 'g-chords', kind: 'one-minute', key: 0, hands: 'R', option: 0, perBeat: 0.25 });
@@ -394,7 +394,7 @@ describe('guitar drills: plan', () => {
     expect(g.length).toBeGreaterThan(10);
     expect(g.every((f) => f.id.startsWith('g-') && f.id !== 'g-bass')).toBe(true);
     // Bass: the 14 course families; the old g-bass starter is retired (kept for old ids, not shown).
-    expect(shownFamilies({ emphasis: 'both', instrument: 'bass' }).map((f) => f.id)).toEqual(['b-pluck', 'b-time', 'b-fret', 'b-chord', 'b-ear', 'b-scale', 'b-length', 'b-pocket', 'b-read', 'b-posread', 'b-styles', 'b-ghost', 'b-walk', 'b-impro', 'b-swing', 'b-barry', 'b-jform', 'b-latin', 'b-std', 'b-keys', 'b-bebop', 'b-phrase', 'b-tune', 'b-ctx', 'b-solo', 'b-harrisline', 'b-counter', 'b-legato', 'b-ext', 'b-pick', 'b-odd', 'b-prog', 'b-poly', 'b-slap', 'b-up-pos', 'b-up-arco', 'b-up-scales', 'b-up-pizz', 'b-up-walk', 'b-up-read']);
+    expect(shownFamilies({ emphasis: 'both', instrument: 'bass' }).map((f) => f.id)).toEqual(['b-first', 'b-pluck', 'b-time', 'b-fret', 'b-chord', 'b-ear', 'b-scale', 'b-length', 'b-pocket', 'b-read', 'b-posread', 'b-styles', 'b-ghost', 'b-walk', 'b-impro', 'b-swing', 'b-barry', 'b-jform', 'b-latin', 'b-std', 'b-keys', 'b-bebop', 'b-phrase', 'b-tune', 'b-ctx', 'b-solo', 'b-harrisline', 'b-counter', 'b-legato', 'b-ext', 'b-pick', 'b-odd', 'b-prog', 'b-poly', 'b-slap', 'b-up-pos', 'b-up-arco', 'b-up-scales', 'b-up-pizz', 'b-up-walk', 'b-up-read']);
     expect(familyById('g-legato')?.levels.length).toBeGreaterThan(0);
   });
 

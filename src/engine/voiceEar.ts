@@ -3,7 +3,7 @@
 // the result. They are graded by the melody grader (each note's pitch, from the microphone), like the other melodies.
 
 import type { NoteEvent } from './lesson';
-import type { VocalItem } from './vocal';
+import { sessionSightItem, type VocalItem } from './vocal';
 import { SONGBOOK } from '../content/songbook';
 import { EAR_INSTR } from '../content/voiceCourseText';
 
@@ -108,9 +108,11 @@ export function genAudiation(motifLen: number, r: () => number): { lead: number[
 
 /**
  * The session's copy of an ear item (owner rule: no memorizable items): echoes (F10 L1) and audiation (F10 L5) get a
- * fresh seeded melody in the same difficulty band; the id, the rhythm and the tempo stay. Other items are unchanged.
+ * fresh seeded melody in the same difficulty band; the id, the rhythm and the tempo stay. Sight-singing items get a
+ * fresh written melody of their level (`sessionSightItem`). Other items are unchanged.
  */
 export function sessionEarItem(item: VocalItem, seed: number): VocalItem {
+  if (item.kind === 'sight') return sessionSightItem(item, seed);
   const e = item.ear;
   if (!e || !item.steps || e.song || e.mode === 'interval') return item;
   const r = mulberry(seed ^ [...item.id].reduce((h, c) => (Math.imul(h, 31) + c.charCodeAt(0)) | 0, 7));

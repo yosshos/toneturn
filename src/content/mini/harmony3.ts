@@ -24,8 +24,8 @@ export const LESSONS: MiniLesson[] = [
     emoji: 'T',
     title: { en: 'Tonic, pre-dominant, dominant', he: 'טוניקה, סובדומיננטה, דומיננטה' },
     takeaway: {
-      en: 'Tonic is at rest (I, vi; in minor i, ♭VI), pre-dominant moves away (IV, ii; iv, ii°), dominant pulls home (V, vii°; V and vii°7 with the raised 7th). iii sits between tonic and dominant.',
-      he: 'טוניקה נחה (I, ‏vi; במינור i, ‏♭VI), סובדומיננטה מתרחקת (IV, ‏ii; ‏iv, ‏ii°), דומיננטה מושכת הביתה (V, ‏vii°; ‏V ו־vii°7 עם הדרגה השביעית המוגבהת). iii נמצא בין טוניקה לדומיננטה.',
+      en: 'Tonic is at rest (I; in minor i), pre-dominant moves away (IV, ii; iv, ii°), dominant pulls home (V, vii°; V and vii°7 with the raised 7th). vi (minor: VI) stands in for the tonic after V, and leads to the pre-dominant before IV or ii. iii sits between tonic and dominant.',
+      he: 'טוניקה נחה (I; במינור i), סובדומיננטה מתרחקת (IV, ‏ii; ‏iv, ‏ii°), דומיננטה מושכת הביתה (V, ‏vii°; ‏V ו־vii°7 עם הדרגה השביעית המוגבהת). vi (במינור VI) מחליף את הטוניקה אחרי V, ומוביל לסובדומיננטה לפני IV או ii. iii נמצא בין טוניקה לדומיננטה.',
     },
     steps: [
       {
@@ -34,18 +34,23 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'T → PD → D → T', he: 'T → PD → D → T' } },
       },
       {
-        say: { en: 'In major, I and vi are tonic: they share two notes. IV and ii are pre-dominant: both hold the 4th degree. V and vii° are dominant: both hold the leading note.', he: 'במז׳ור, I ו־vi הם טוניקה: יש להם שני צלילים משותפים. IV ו־ii הם סובדומיננטה: בשניהם הדרגה הרביעית. V ו־vii° הם דומיננטה: בשניהם הצליל המוביל.' },
-        play: [T(I, ch('vi', 9, [9, 0, 4])), rest(), T(IV, ch('ii', 2, [2, 5, 9])), rest(), T(V, ch('vii°6', 2, [11, 2, 5]))],
-        show: { text: { en: 'T: I vi · PD: IV ii · D: V vii°', he: 'T: I vi · PD: IV ii · D: V vii°' } },
+        say: { en: 'In major, I is tonic. IV and ii are pre-dominant: both hold the 4th degree. V and vii° are dominant: both hold the leading note.', he: 'במז׳ור, I הוא טוניקה. IV ו־ii הם סובדומיננטה: בשניהם הדרגה הרביעית. V ו־vii° הם דומיננטה: בשניהם הצליל המוביל.' },
+        play: [T(I), rest(), T(IV, ch('ii', 2, [2, 5, 9])), rest(), T(V, ch('vii°6', 2, [11, 2, 5]))],
+        show: { text: { en: 'T: I · PD: IV ii · D: V vii°', he: 'T: I · PD: IV ii · D: V vii°' } },
       },
       {
-        say: { en: 'Minor works the same way: i and ♭VI tonic, iv and ii° pre-dominant, V and vii°7 dominant, with the raised 7th.', he: 'מינור עובד אותו דבר: i ו־♭VI טוניקה, ‏iv ו־ii° סובדומיננטה, ‏V ו־vii°7 דומיננטה, עם הדרגה השביעית המוגבהת.' },
+        say: { en: 'Minor works the same way: i tonic, iv and ii° pre-dominant, V and vii°7 dominant, with the raised 7th.', he: 'מינור עובד אותו דבר: i טוניקה, ‏iv ו־ii° סובדומיננטה, ‏V ו־vii°7 דומיננטה, עם הדרגה השביעית המוגבהת.' },
         play: [T(i, ch('iv', 5, [5, 8, 0]), ch('V7', 7, [7, 11, 2, 5]), i)],
         show: { text: { en: 'i · iv · V7 · i', he: 'i · iv · V7 · i' } },
       },
       {
         say: { en: 'iii sits between: two notes with I, two with V. Before vi it sounds like a step away from home, after I like a softer tonic. So we don’t ask for it.', he: 'iii נמצא באמצע: שני צלילים עם I, שניים עם V. לפני vi הוא נשמע כצעד הרחק מהבית, אחרי I כמו טוניקה רכה. לכן לא שואלים עליו.' },
         show: { text: { en: 'iii = T or D?', he: 'iii = T או D?' } },
+      },
+      {
+        say: { en: 'vi does two jobs. After V it stands in for the tonic: the deceptive cadence. Before IV or ii it moves on toward the pre-dominant. VI in minor does the same.', he: 'ל־vi יש שני תפקידים. אחרי V הוא מחליף את הטוניקה: הקדנצה המטעה. לפני IV או ii הוא ממשיך לכיוון הסובדומיננטה. VI במינור עושה אותו דבר.' },
+        play: [T(V, ch('vi', 9, [9, 0, 4])), rest(), T(I, ch('vi', 9, [9, 0, 4]), ch('ii', 2, [2, 5, 9]), V, I)],
+        show: { text: { en: 'V → vi = T · vi → ii = PD', he: 'V → vi = T · vi → ii = PD' } },
       },
       {
         say: { en: 'Your turn: hear the key, then one chord. At rest, leaning away, or pulling home?', he: 'תורכם: שומעים את הסולם, ואז אקורד אחד. נח, נוטה החוצה, או מושך הביתה?' },
@@ -67,11 +72,11 @@ export const LESSONS: MiniLesson[] = [
         say: { en: 'In minor the leading note must be raised: the natural minor v has no pull. That is why minor keys borrow V and vii°7 from harmonic minor.', he: 'במינור צריך להגביה את הצליל המוביל: ה־v של המינור הטבעי לא מושך. לכן סולמות מינוריים שואלים את V ואת vii°7 מהמינור ההרמוני.' },
       },
       {
-        say: { en: 'Functions also come in longer chains. T, PD, D, T is the basic phrase; a pre-dominant can be stretched — IV then ii — and a tonic can be coloured, I then vi, before the dominant arrives.', he: 'פונקציות באות גם בשרשראות ארוכות. T, ‏PD, ‏D, ‏T הוא המשפט הבסיסי; אפשר למתוח סובדומיננטה — IV ואז ii — ולצבוע טוניקה, I ואז vi, לפני שהדומיננטה מגיעה.' },
+        say: { en: 'Functions also come in longer chains. T, PD, D, T is the basic phrase; a pre-dominant can be stretched, IV then ii, and the tonic can step down through vi on the way to it.', he: 'פונקציות באות גם בשרשראות ארוכות. T, ‏PD, ‏D, ‏T הוא המשפט הבסיסי; אפשר למתוח סובדומיננטה, IV ואז ii, והטוניקה יכולה לרדת דרך vi בדרך אליה.' },
         play: [T(I, ch('vi', 9, [9, 0, 4]), IV, ch('ii', 2, [2, 5, 9]), V, I)],
       },
       {
-        say: { en: 'Recap: listen for rest, for leaning away, for pull. The bass helps: 1 and 6 rest, 4 and 2 lean, 5 and 7 pull.', he: 'לסיכום: מקשיבים למנוחה, לנטייה החוצה, למשיכה. הבס עוזר: 1 ו־6 נחים, 4 ו־2 נוטים, 5 ו־7 מושכים.' },
+        say: { en: 'Recap: listen for rest, for leaning away, for pull. The bass helps: 1 rests, 4 and 2 lean, 5 and 7 pull, and 6 depends on what comes next.', he: 'לסיכום: מקשיבים למנוחה, לנטייה החוצה, למשיכה. הבס עוזר: 1 נח, 4 ו־2 נוטים, 5 ו־7 מושכים, ו־6 תלוי במה שבא אחריו.' },
       },
     ],
   },

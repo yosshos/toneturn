@@ -45,8 +45,6 @@ const r = (level: string, key: number, places: Rung['places']): Rung => ({ level
 
 // Keys move from step to step (owner: "it only tested me in C").
 const HANDS: Rung[] = [
-  // AUDIT-6 Stage B: the first steps' hands together in a position (k-first 6) before the first scale.
-  r('k-first-6', 7, { 'k-first': 7 }),
   r('scales-1', 7, { scales: 2, fingers: 1, arpeggios: 1, control: 1 }),
   // AUDIT-SCALES: the harmonization ladder (k-sharm) and hand independence (k-indep) are placed by the hands steps; the
   // 3-against-2 step is their own.
@@ -105,7 +103,7 @@ const READING: Rung[] = [
   r('k-read-5', 5, { 'k-read': 6 }),
   r('k-read-6', 2, { 'k-read': 7 }),
   r('k-read-8', 10, { 'k-read': 9 }),
-  r('k-read-10', 7, { 'k-read': 11 }),
+  r('k-read-10', 7, { 'k-read': 10 }),
 ];
 const EAR: Rung[] = [
   r('k-ear-1', 0, { 'k-ear': 2 }),

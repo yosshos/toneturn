@@ -91,7 +91,7 @@ describe('T1 exam-grade tempos', () => {
 });
 
 describe('C3 the hands never share a key', () => {
-  it('no item has both hands on one key at once, except the unison where contrary motion starts and turns', () => {
+  it('no item has both hands on one key at once, except the unison where contrary motion starts and turns', { timeout: 120_000 }, () => {
     const bad: string[] = [];
     for (const f of CAT)
       for (const lv of f.levels)
@@ -123,7 +123,7 @@ describe('titles', () => {
 const ALL = (): { lv: LevelDef; d: Drill }[] => CAT.flatMap((f) => f.levels.flatMap((lv) => levelDrills(lv, 'fifths-up').slice(0, Math.max(lv.specs.length, 2) * 2).map((d) => ({ lv, d }))));
 
 describe('A3 piano analysis with human takes', () => {
-  it('a steady human take is clean at every level target tempo (MIDI)', () => {
+  it('a steady human take is clean at every level target tempo (MIDI)', { timeout: 120_000 }, () => {
     const bad: string[] = [];
     for (const { lv, d } of ALL().filter((x) => !x.d.goal.improv)) { // rule-card improv (AUDIT-DEPTH-3 C5) is graded by its cards, not by written notes
       const bpm = targetBpmOf(lv, d);

@@ -693,7 +693,7 @@ TOPIC_GEN['guide-line'] = {
     const ansKey = `g${order.indexOf(0)}`;
     const symbols = chords.map(([d, q]) => sym(key + d, q, key)).join('  ');
     return choiceQ({
-      id, topic: 'guide-line', level, seed, skill: 'sequences', difficulty: [1450, 1560, 1680][level - 1],
+      id, topic: 'guide-line', level, seed, skill: 'sequences', difficulty: [1100, 1300, 1500][level - 1],
       ask: { en: 'Which guide-tone line is on top?', he: 'איזה קו צלילים מנחים למעלה?' }, text: { en: symbols, he: symbols },
       names, answer: ansKey, choices: order.map((_, k) => `g${k}`), stimulus: play(right), choiceStim,
     });
@@ -947,6 +947,63 @@ TOPIC_GEN['jazz-form'] = {
   },
 };
 TOPIC_TAGS['jazz-form'] = tg(['form', 'song', 0.7], ['cadences', 'progression', 0.3]);
+
+/**
+ * AUDIT-6 J-W2 / build #3: the blues on-ramp of the Jazz beginner band (it had none below `jazz-form` at 1350). A swung
+ * 12-bar blues with the ride, slow; a bell marks one bar. 1 where the form is (the IV at bar 5, the V at bar 9, the top
+ * of the next chorus); 2 which chord sounds at the bell (I7, IV7 or V7 — the roots the bass plays); 3 the basic blues
+ * or the jazz blues with its ii–Vs.
+ */
+const BLUES_BARS = FORMS.major.ch.map(([d]) => d); // I IV I I | IV IV I I | V IV I V (degrees of the 12 bars)
+const BLUES_BELL: Record<'iv' | 'v' | 'top', number> = { iv: 5, v: 9, top: 13 };
+function bluesWithBell(key: number, bars: [number, JQId, number][], bell: number, bpm: number): Stimulus {
+  const beat = 60 / bpm;
+  const chords = bars.map(([d, q, b]) => J(key + d, q, b));
+  const ev = comp(chords, bpm);
+  const at = (bell - 1) * 4 * beat;
+  ev.push({ midi: 96, start: at, duration: 0.3, velocity: 0.75, perc: 'bell' }, { midi: 96, start: at + 0.16, duration: 0.3, velocity: 0.6, perc: 'bell' });
+  return eventsStim(ev, chords.reduce((a, c) => a + c.beats, 0) * beat + 0.5);
+}
+TOPIC_GEN['blues-ear'] = {
+  title: { en: 'The blues by ear', he: 'הבלוז בשמיעה' },
+  skill: 'form',
+  levels: [
+    { en: 'Where are we in the 12 bars?', he: 'איפה אנחנו ב־12 התיבות?' },
+    { en: 'At the bell: I7, IV7 or V7?', he: 'בפעמון: I7, IV7 או V7?' },
+    { en: 'A basic blues or a jazz blues?', he: 'בלוז בסיסי או בלוז ג׳אז?' },
+  ],
+  gen(seed, level, id) {
+    const rnd = rng(seed);
+    const key = pickR(rnd, [0, 5, 7, 10, 3]);
+    const bpm = level === 3 ? 150 : 126;
+    const base = { id, topic: 'blues-ear', level, seed, skill: 'form' as const };
+    if (level === 1) {
+      const pool = ['iv', 'v', 'top'] as const;
+      const ans = pickR(rnd, pool);
+      // the 12 bars, then bar 1 of the next chorus so the top can ring
+      const bars = [...FORMS.major.ch, FORMS.major.ch[0]];
+      const names: Names = {
+        iv: nm('Bar 5: the IV chord arrives', 'תיבה 5: מגיע אקורד IV', 'five', 'four chord'),
+        v: nm('Bar 9: the V chord', 'תיבה 9: אקורד V', 'nine', 'five chord'),
+        top: nm('The top: a new chorus', 'ההתחלה: כורוס חדש', 'top', 'new chorus'),
+      };
+      return choiceQ({ ...base, difficulty: 820, ask: { en: 'A 12-bar blues: where does the bell ring?', he: 'בלוז של 12 תיבות: איפה מצלצל הפעמון?' }, names, answer: ans, choices: [...pool], stimulus: [bluesWithBell(key, bars, BLUES_BELL[ans], bpm)] });
+    }
+    if (level === 2) {
+      const ans = pickR(rnd, ['I', 'IV', 'V']);
+      const deg = { I: 0, IV: 5, V: 7 }[ans]!;
+      const bars = BLUES_BARS.map((_, i) => i + 1).filter((b) => BLUES_BARS[b - 1] === deg);
+      const bell = pickR(rnd, bars);
+      const names: Names = { I: nm('I7 (home)', 'I7 (בית)', 'one', 'home'), IV: nm('IV7', 'IV7', 'four'), V: nm('V7', 'V7', 'five') };
+      return choiceQ({ ...base, difficulty: 880, ask: { en: 'Follow the bass: which chord is at the bell?', he: 'עקבו אחרי הבס: איזה אקורד בפעמון?' }, names, answer: ans, choices: ['I', 'IV', 'V'], stimulus: [bluesWithBell(key, FORMS.major.ch, bell, bpm)] });
+    }
+    const pool = ['major', 'jazz'];
+    const ans = pickR(rnd, pool);
+    const names: Names = { major: nm('A basic blues: I7, IV7, V7', 'בלוז בסיסי: I7, IV7, V7', 'basic'), jazz: FORMS.jazz.n };
+    return choiceQ({ ...base, difficulty: 960, ask: { en: 'Which blues?', he: 'איזה בלוז?' }, names, answer: ans, choices: shuffleR(rnd, pool.slice()), stimulus: [prog(FORMS[ans].ch.map(([d, q, b]) => J(key + d, q, b)), bpm)] });
+  },
+};
+TOPIC_TAGS['blues-ear'] = tg(['form', 'song', 0.6], ['cadences', 'progression', 0.4]);
 
 /**
  * Two 32-bar AABA forms (bars as degree / quality / beats). Each A ends differently, as on the bandstand: the first

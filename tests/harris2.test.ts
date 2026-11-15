@@ -124,9 +124,21 @@ describe('one minor 6th, three basses (BH-E)', () => {
 });
 
 describe('harmony and ear (H-1…H-8)', () => {
-  it('functions: I vi / i ♭VI tonic, IV ii / iv ii° pre-dominant, V vii° dominant; iii never asked', () => {
-    expect(FUNCTIONS.filter((f) => f.fn === 'T').map((f) => f.rn)).toEqual(['I', 'vi', 'i', '♭VI']);
+  it('functions: I / i tonic, IV ii / iv ii° pre-dominant, V vii° dominant; vi / VI only with context; iii never asked', () => {
+    expect(FUNCTIONS.filter((f) => f.fn === 'T' && !f.ctx).map((f) => f.rn)).toEqual(['I', 'i']);
     expect(FUNCTIONS.some((f) => f.rn === 'iii')).toBe(false);
+    // Minor is written VI (as roman-numerals writes it), never ♭VI.
+    expect(FUNCTIONS.some((f) => f.rn.includes('♭'))).toBe(false);
+    // vi / VI: tonic stand-in after V (deceptive), pre-dominant motion before IV / ii (iv / ii°); never asked bare.
+    for (const f of FUNCTIONS.filter((x) => x.rn === 'vi' || x.rn === 'VI')) {
+      expect(f.ctx).toBeDefined();
+      expect(f.fn).toBe(f.ctx!.rel === 'after' ? 'T' : 'PD');
+      if (f.ctx!.rel === 'after') expect(f.ctx!.rn).toBe('V');
+    }
+    for (let s = 1; s <= 200; s++) {
+      const q = asChoice(TOPIC_GEN['function-ear'].gen(s, 1, 'f'));
+      if (/\((vi|VI)\)|= (vi|VI)$/.test(q.ask.en + (q.text?.en ?? ''))) expect(q.ask.en).toContain('→');
+    }
   });
   it('every vamp fits its own mode and no other mode offered with it', () => {
     for (const pool of [VAMPS, VAMPS7])

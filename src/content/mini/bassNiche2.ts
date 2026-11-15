@@ -28,7 +28,7 @@ export const LESSONS: MiniLesson[] = [
         play: [notes([38, 41, 43, 47, 36, 40, 43, 45], 0.4)],
       },
       {
-        say: { en: 'Tier four is bebop up-tempo, two hundred and more. Tier five is Coltrane changes, where the key moves every two beats.', he: 'דרגה ארבע היא ביבופ בטמפו מהיר, מאתיים ומעלה. דרגה חמש היא קולטריין צ׳יינג׳ס, שבהם הסולם זז כל שתי פעמות.' },
+        say: { en: 'Tier four is bebop up-tempo, two hundred and more. Tier five is Coltrane changes: in Giant Steps the key moves every two beats to a bar, then every two bars.', he: 'דרגה ארבע היא ביבופ בטמפו מהיר, מאתיים ומעלה. דרגה חמש היא קולטריין צ׳יינג׳ס: ב־Giant Steps הסולם זז בהתחלה כל שתי פעמות עד תיבה, ואחר כך כל שתי תיבות.' },
         show: { text: { en: 'B – G – E♭', he: 'B – G – E♭' } },
       },
       {

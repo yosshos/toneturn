@@ -127,6 +127,29 @@ export const LESSONS: MiniLesson[] = [
       { say: { en: "To recap: calibrate once, articulate clearly, aim for an even average, and trust the inner clock when the click goes quiet.", he: "לסיכום: מכיילים פעם אחת, מבטאים בבירור, מכוונים לממוצע אחיד, וסומכים על השעון הפנימי כשהקליק שותק." } },
     ],
   },
+  // ------------------------------------------------------------------ F6 agility: runs, turns, melisma (AUDIT-5 V-11)
+  {
+    id: 'voice-agility',
+    area: 'voice',
+    emoji: '🎤',
+    title: { en: 'Runs, turns and melisma', he: 'ראנים, טרנים ומליסמה' },
+    takeaway: { en: 'Hear the run, sing it back on one vowel: slow and clean first, then 80, 100 and 120% of full tempo. Each note is checked for pitch and for its start.', he: 'שומעים את הראן ושרים אותו בחזרה על תנועה אחת: קודם לאט ונקי, ואז 80, 100 ו־120% מהטמפו המלא. כל צליל נבדק לגובה ולהתחלה שלו.' },
+    steps: [
+      { say: { en: 'A run is a fast line on one vowel. Start with five notes, up and down, at sixty percent of full tempo.', he: 'ראן הוא קו מהיר על תנועה אחת. מתחילים בחמישה צלילים, למעלה ולמטה, בשישים אחוז מהטמפו המלא.' }, play: [seq([[60, 0.31], [62, 0.31], [64, 0.31], [65, 0.31], [67, 0.8]])], show: { text: { en: '1 2 3 4 5 · 60%', he: '1 2 3 4 5 · 60%' } } },
+      { say: { en: 'Speed comes from accuracy. Pass it clean, then the same run returns at eighty, a hundred and a hundred and twenty percent.', he: 'מהירות באה מדיוק. עוברים את זה נקי, ואז אותו ראן חוזר בשמונים, במאה ובמאה ועשרים אחוז.' }, play: [seq([[60, 0.19], [62, 0.19], [64, 0.19], [65, 0.19], [67, 0.19], [65, 0.19], [64, 0.19], [62, 0.19], [60, 0.6]])], show: { text: { en: '60 → 80 → 100 → 120%', he: '60 → 80 → 100 → 120%' } } },
+      { say: { en: 'Then the shapes singers use: pentatonic and blues runs, and turns: the note above, the note, the note below, the note.', he: 'אחר כך הצורות שזמרים משתמשים בהן: ראנים פנטטוניים ובלוז, וטרנים: הצליל מעל, הצליל, הצליל מתחת, הצליל.' }, play: [seq([[72, 0.19], [70, 0.19], [67, 0.19], [66, 0.19], [65, 0.19], [63, 0.19], [60, 0.6], [-1, 0.3], [62, 0.19], [60, 0.19], [59, 0.19], [60, 0.6]])], show: { text: { en: 'blues · turn', he: 'בלוז · טרן' } } },
+      { say: { en: 'Last, a melisma: many notes on one syllable, as in Handel. Keep the vowel open and the air moving; no breaks between notes.', he: 'בסוף, מליסמה: הרבה צלילים על הברה אחת, כמו אצל הנדל. שומרים על תנועה פתוחה ועל זרימת אוויר; בלי הפסקות בין הצלילים.' }, play: [seq([[60, 0.19], [62, 0.19], [64, 0.19], [65, 0.19], [62, 0.19], [64, 0.19], [65, 0.19], [67, 0.19], [64, 0.19], [65, 0.19], [67, 0.19], [69, 0.19], [67, 0.6]])] },
+      { say: { en: 'Your turn: listen to the run, count in with the click, and sing it back. Four notes to each click.', he: 'תורכם: הקשיבו לראן, היכנסו עם הקליק, ושירו אותו בחזרה. ארבעה צלילים על כל קליק.' } },
+    ],
+    more: [
+      { say: { en: 'Sing runs lightly. Pushing more air makes them heavy and slow; a small, bright sound moves faster. Keep the jaw loose and let the vowel stay the same from the first note to the last.', he: 'שרים ראנים בקלילות. יותר אוויר בכוח עושה אותם כבדים ואיטיים; צליל קטן ובהיר זז מהר יותר. שומרים על לסת רפויה, והתנועה נשארת אותה תנועה מהצליל הראשון עד האחרון.' } },
+      { say: { en: 'Practise with the tempo ladder. At sixty percent every note should be clear and in tune. Move up only when it is; a run that smears at full speed was not clean when slow.', he: 'מתרגלים עם סולם הטמפו. בשישים אחוז כל צליל צריך להיות ברור ומדויק. עולים רק כשזה כך; ראן שמתמרח במהירות מלאה לא היה נקי גם לאט.' }, play: [seq([[60, 0.31], [62, 0.31], [64, 0.31], [65, 0.31], [67, 0.31], [65, 0.31], [64, 0.31], [62, 0.31], [60, 0.7]])] },
+      { say: { en: 'Pentatonic runs leave out the half steps, so they fall quickly and safely: the sound of soul and R and B. The blues run adds the flat five, a note to place on purpose, not to slide through.', he: 'ראנים פנטטוניים מוותרים על חצאי הטונים, ולכן הם נופלים מהר ובבטחה: הצליל של סול ו־R&B. ראן הבלוז מוסיף את ה־5 המונמכת, צליל שממקמים בכוונה, לא מחליקים דרכו.' }, play: [seq([[72, 0.19], [70, 0.19], [67, 0.19], [65, 0.19], [63, 0.19], [60, 0.6]])] },
+      { say: { en: 'A turn circles one note: the step above, the note, the step below, the note. In a gospel run it decorates the start; in Baroque music it ornaments a long note.', he: 'טרן מקיף צליל אחד: הצעד מעל, הצליל, הצעד מתחת, הצליל. בראן של גוספל הוא מקשט את ההתחלה; במוזיקה בארוקית הוא מקשט צליל ארוך.' }, play: [seq([[62, 0.19], [60, 0.19], [59, 0.19], [60, 0.6]])] },
+      { say: { en: 'Tone colour and the vowel are not graded. What is graded: the right notes, each starting with the click, and smooth joins between them. The first levels are lenient on tuning; timing counts most.', he: 'גוון הצליל והתנועה לא נבדקים. מה שנבדק: הצלילים הנכונים, כל אחד מתחיל עם הקליק, וחיבורים חלקים ביניהם. השלבים הראשונים מקלים בכיוון; הזמן נחשב הכי הרבה.' } },
+      { say: { en: 'To recap: one vowel, a light sound, clean at sixty percent before speed. Then the bebop lines at the top of this family put the same agility on swung eighths.', he: 'לסיכום: תנועה אחת, צליל קל, נקי בשישים אחוז לפני המהירות. ואז קווי הביבופ בראש המשפחה הזאת מעבירים את אותה גמישות לשמיניות בסווינג.' } },
+    ],
+  },
   // ------------------------------------------------------------------ F13 songs with the band
   {
     id: 'voice-band',

@@ -59,8 +59,8 @@ function genDrumFirst(s: DrillSpec): Drill {
   const op = s.option ?? 0;
   switch (levelOfKind(s.kind)) {
     case 1: {
-      const st = op === 1 ? 'L' : 'R';
-      const nm = op === 1 ? t('left hand', 'יד שמאל') : t('right hand', 'יד ימין');
+      const st = op === 2 ? 'RRRRLLLL' : op === 1 ? 'L' : 'R';
+      const nm = [t('right hand', 'יד ימין'), t('left hand', 'יד שמאל'), t('a bar each hand', 'תיבה לכל יד')][op % 3];
       return finish(s, line(st, 16, 1), { title: t(`Grip: even quarters, low and relaxed · ${nm.en}`, `אחיזה: רבעים שווים, נמוך ורפוי · ${nm.he}`), bpm: 60, bars: 4, mic: true, goal: { velCv: 0.15 } });
     }
     case 2: {
@@ -71,16 +71,16 @@ function genDrumFirst(s: DrillSpec): Drill {
     }
     case 3: {
       const st = op === 1 ? 'LR' : 'RL';
-      const hits = [...line(st, 4, 1, 0), ...line(st, 8, 0.5, 4), ...line(st, 4, 1, 8), ...line(st, 8, 0.5, 12)];
-      const nm = op === 1 ? t('lead left', 'מובילים בשמאל') : t('lead right', 'מובילים בימין');
+      const hits = op === 2 ? [...line(st, 8, 0.5, 0), ...line(st, 4, 1, 4), ...line(st, 8, 0.5, 8), ...line(st, 4, 1, 12)] : [...line(st, 4, 1, 0), ...line(st, 8, 0.5, 4), ...line(st, 4, 1, 8), ...line(st, 8, 0.5, 12)];
+      const nm = [t('lead right', 'מובילים בימין'), t('lead left', 'מובילים בשמאל'), t('8ths first', 'קודם שמיניות')][op % 3];
       return finish(s, hits, { title: t(`Single strokes: quarters, then 8ths · ${nm.en}`, `מכות בודדות: רבעים, ואז שמיניות · ${nm.he}`), bpm: 60, bars: 4, mic: true, goal: { velCv: 0.2 } });
     }
     case 4: {
       // Counting out loud: "1 2 3 4", "1 & 2 &", "1 e & a 2 e & a", then 8ths again — the beat accented.
       const st = op === 1 ? 'LR' : 'RL';
       const acc = (per: number) => (i: number) => (i % per === 0 ? { acc: true } : {});
-      const hits = [...line(st, 4, 1, 0, acc(1)), ...line(st, 8, 0.5, 4, acc(2)), ...line(st, 16, 0.25, 8, acc(4)), ...line(st, 8, 0.5, 12, acc(2))];
-      const nm = op === 1 ? t('lead left', 'מובילים בשמאל') : t('lead right', 'מובילים בימין');
+      const hits = op === 2 ? [...line(st, 16, 0.25, 0, acc(4)), ...line(st, 8, 0.5, 4, acc(2)), ...line(st, 4, 1, 8, acc(1)), ...line(st, 8, 0.5, 12, acc(2))] : [...line(st, 4, 1, 0, acc(1)), ...line(st, 8, 0.5, 4, acc(2)), ...line(st, 16, 0.25, 8, acc(4)), ...line(st, 8, 0.5, 12, acc(2))];
+      const nm = [t('lead right', 'מובילים בימין'), t('lead left', 'מובילים בשמאל'), t('16ths first', 'קודם שש־עשריות')][op % 3];
       return finish(s, hits, { title: t(`Counting 1 e & a: quarters, 8ths, 16ths · ${nm.en}`, `לספור 1 e & a: רבעים, שמיניות, שש־עשריות · ${nm.he}`), bpm: 60, bars: 4, mic: true, goal: { velCv: 0.25 } });
     }
     case 5: {
@@ -145,10 +145,10 @@ export function drumFirstFamily(): DrumFamilyDef {
     genres: ['all'],
     instruments: ['drums'],
     levels: [
-      L(1, 'Grip: even strokes, one hand', 'אחיזה: מכות שוות, יד אחת', 'grip', 2, [60, 80], '1/4', true),
+      L(1, 'Grip: even strokes, one hand', 'אחיזה: מכות שוות, יד אחת', 'grip', 3, [60, 80], '1/4', true),
       L(2, 'Rebound: full strokes', 'ריבאונד: מכות מלאות', 'rebound', 3, [60, 90], '1/4', true),
-      L(3, 'Single strokes in quarters and 8ths', 'מכות בודדות ברבעים ובשמיניות', 'singles', 2, [60, 100], '1/8', true),
-      L(4, 'Counting 1 e & a', 'לספור 1 e & a', 'count', 2, [60, 80], '1/16', true),
+      L(3, 'Single strokes in quarters and 8ths', 'מכות בודדות ברבעים ובשמיניות', 'singles', 3, [60, 100], '1/8', true),
+      L(4, 'Counting 1 e & a', 'לספור 1 e & a', 'count', 3, [60, 80], '1/16', true),
       L(5, 'A basic rock beat', 'קצב רוק בסיסי', 'rock', 3, [70, 100], '1/8', false),
       L(6, 'The 8th-note paradiddle', 'פאראדידל בשמיניות', 'para8', 3, [50, 70], '1/8', true),
       // 6/8 variants count 8ths (♩ range [60, 90] × 2): their own start, the same climb (plan.targetBpmOf, pulse 8).

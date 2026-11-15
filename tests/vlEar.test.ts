@@ -7,6 +7,7 @@ import { drop2, heldCount, rootPositionVoicings, smoothVoicings, totalMotion, tr
 import { isDrop2 } from '../src/engine/drills/voiceLead';
 import { courseInput } from '../src/engine/courses';
 import { eligible, KEYS_LEVEL_DIFF, ladderOrder, stepCatalogue, type PathInput, type PathStep } from '../src/engine/path';
+import { LEVEL_PLACEMENT } from '../src/engine/levelPlacement';
 import { MINI_LESSONS } from '../src/content/minilessons';
 import { UNIT_LESSON } from '../src/content/units';
 import { refresherFor } from '../src/content/refresher';
@@ -188,7 +189,8 @@ describe('guitar levels follow their grade on the path (§ב.3)', () => {
     expect(at('g-jazz', 'g-jazz-13')).toBeLessThan(at('g-jazz', 'g-jazz-10'));
   });
   it('other instruments keep their level order (except piano levels placed by KEYS_LEVEL_DIFF, e.g. BH-G harris 19–22)', () => {
-    const cat = stepCatalogue().filter((s) => s.ladder && s.ladder.instrument !== 'guitar' && KEYS_LEVEL_DIFF[s.ladder.ref] === undefined);
+    // (AUDIT-6: and levels placed at their grade by levelPlacement.ts; vocal families follow their teaching order.)
+    const cat = stepCatalogue().filter((s) => s.ladder && s.ladder.instrument !== 'guitar' && KEYS_LEVEL_DIFF[s.ladder.ref] === undefined && LEVEL_PLACEMENT[s.ladder.ref] === undefined && LEVEL_PLACEMENT[`vocal:${s.ladder.ref}`] === undefined);
     const byFam = new Map<string, PathStep[]>();
     for (const s of cat) byFam.set(s.ladder!.family, [...(byFam.get(s.ladder!.family) ?? []), s]);
     for (const [f, xs] of byFam) {

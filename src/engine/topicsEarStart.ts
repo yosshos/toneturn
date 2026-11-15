@@ -36,7 +36,7 @@ export const ECHO_LADDER: { rlevel: RhythmLevel; bars: number; meters: Meter[]; 
 
 TOPIC_GEN['rhythm-echo'] = {
   title: { en: 'Rhythm echo: hear it, tap it back', he: 'הד קצבי: שומעים ומקישים בחזרה' },
-  skill: 'rhythm',
+  skill: 'rhythm-dictation',
   levels: ECHO_LADDER.map((x) => ({ en: x.en, he: x.he })),
   gen(seed, level, id): RhythmReadQuestion {
     const L = ECHO_LADDER[Math.min(ECHO_LADDER.length, Math.max(1, level)) - 1];
@@ -56,12 +56,12 @@ TOPIC_GEN['rhythm-echo'] = {
       stimulus: [],
       difficulty: L.difficulty,
       prompt: { en: 'Hear the rhythm, then tap it back', he: 'שמעו את הקצב, ואז הקישו אותו בחזרה' },
-      skillAs: 'rhythm',
+      skillAs: 'rhythm-dictation',
       topic: { id: 'rhythm-echo', level, seed },
     };
   },
 };
-TOPIC_TAGS['rhythm-echo'] = tg(['rhythm', 'memory', 0.6], ['rhythm-dictation', 'dictate', 0.4]);
+TOPIC_TAGS['rhythm-echo'] = tg(['rhythm-dictation', 'dictate', 0.6], ['rhythm', 'memory', 0.4]);
 
 // ---------------------------------------------------------------- intervals-down
 
@@ -225,4 +225,4 @@ TOPIC_GEN['melody-change'] = {
     };
   },
 };
-TOPIC_TAGS['melody-change'] = tg(['sequences', 'same-diff', 0.5], ['sequences', 'melody', 0.5]);
+TOPIC_TAGS['melody-change'] = tg(['sequences', 'melody', 1]);

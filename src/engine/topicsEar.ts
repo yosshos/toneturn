@@ -52,7 +52,7 @@ TOPIC_GEN['in-tune'] = {
       const answer = pickR(rnd, ['in', 'sharp', 'flat']);
       const play = (k: string): Stimulus[] => [chordStim([m, m + iv + (k === 'sharp' ? c : k === 'flat' ? -c : 0) / 100], 2.4)];
       return choiceQ({
-        id, topic: 'in-tune', level, seed, skill: 'pitch', difficulty: level === 4 ? 1750 : 1950,
+        id, topic: 'in-tune', level, seed, skill: 'pitch', difficulty: level === 4 ? 1750 : 1880,
         ask: { en: `The top note: in tune, sharp or flat? (${c}¢)`, he: `הצליל העליון: מכוון, גבוה או נמוך? (${c}¢)` },
         names: { in: nm('In tune', 'מכוון', 'tuned', 'מכוון'), sharp: nm('Sharp', 'גבוה', 'too high', 'high', 'גבוה מדי'), flat: nm('Flat', 'נמוך', 'too low', 'low', 'נמוך מדי') },
         answer, choices: ['in', 'sharp', 'flat'], stimulus: play(answer), choiceStim: { in: play('in'), sharp: play('sharp'), flat: play('flat') },
@@ -160,7 +160,7 @@ TOPIC_GEN['two-voice'] = {
     if (new Set(all.map(label)).size < all.length) return TOPIC_GEN['two-voice'].gen(seed + 1, level, id);
     const stimulus: Stimulus[] = lower.map((x, i) => chordStim([key + MAJ[x], key + 12 + MAJ[upper[i]]], 0.6));
     return choiceQ({
-      id, topic: 'two-voice', level, seed, skill: 'form', difficulty: 1450 + 100 * level,
+      id, topic: 'two-voice', level, seed, skill: 'form', difficulty: level === 2 ? 1480 : 1650,
       ask: level === 3 ? { en: 'Which line did the lower voice sing? (scale degrees)', he: 'איזה קו שר הקול התחתון? (דרגות)' } : { en: 'Which line did the upper voice sing? (scale degrees)', he: 'איזה קו שר הקול העליון? (דרגות)' },
       names, answer: 'l0', choices: shuffleR(rnd, keys), stimulus, choiceStim,
     });
@@ -463,7 +463,7 @@ TOPIC_GEN['swing-ratio'] = {
       names[k] = SWING[k][1];
       choiceStim[k] = [swing(SWING[k][0], beat, 4)];
     }
-    return choiceQ({ id, topic: 'swing-ratio', level, seed, skill: 'rhythm-dictation', difficulty: 1150 + 250 * level, ask: { en: 'How are the eighth notes played?', he: 'איך מנוגנות השמיניות?' }, names, answer, choices: pool, stimulus: [swing(SWING[answer][0], beat, 8)], choiceStim });
+    return choiceQ({ id, topic: 'swing-ratio', level, seed, skill: 'rhythm-dictation', difficulty: [800, 1000][level - 1] ?? 1000, ask: { en: 'How are the eighth notes played?', he: 'איך מנוגנות השמיניות?' }, names, answer, choices: pool, stimulus: [swing(SWING[answer][0], beat, 8)], choiceStim });
   },
 };
 
@@ -568,7 +568,7 @@ TOPIC_GEN['displacement'] = {
     const names: ChoiceQuestion['names'] = {};
     for (const k of pool) names[k] = nm(DISP_SHIFTS[k][1].en, DISP_SHIFTS[k][1].he);
     return choiceQ({
-      id, topic: 'displacement', level, seed, skill: 'transpose', difficulty: fine ? 1560 : 1180,
+      id, topic: 'displacement', level, seed, skill: 'transpose', difficulty: fine ? 1450 : 1180,
       ask: { en: `${p.en} — then moved. How far did it move?`, he: `${p.he} — ואז מוסט. כמה הוא זז?` },
       names, answer, choices: pool, stimulus: [dispSound(p.on, 2), rest(0.5), dispSound(shifted, 2)],
     });

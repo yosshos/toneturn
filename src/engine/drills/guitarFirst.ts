@@ -239,7 +239,8 @@ export const RIFF_KEYS = all12([4, 9, 7, 2, 0, 5]);
 export function guitarFirstFamily(): GuitarFamilyDef {
   const fam: FamilyId = 'g-first';
   const P = (kind: string, o: Partial<SpecTemplate> = {}): SpecTemplate => ({ family: fam, kind, hands: 'R', instrument: 'guitar', ...o });
-  const L = (level: number, en: string, he: string, specs: SpecTemplate[], tempo: [number, number], sub: string): GuitarLevelDef => ({ id: `${fam}-${level}`, level, title: t(en, he), specs: specs.map((x) => ({ ...x, tempo: tempo[0] })), keys: [0], tempo, sub, grade: 0 });
+  // Grade 0 (RSL Debut); reading TAB and rhythm at tempo are grade 1 (they sit after the grade-1 chord and strum levels).
+  const L = (level: number, en: string, he: string, specs: SpecTemplate[], tempo: [number, number], sub: string): GuitarLevelDef => ({ id: `${fam}-${level}`, level, title: t(en, he), specs: specs.map((x) => ({ ...x, tempo: tempo[0] })), keys: [0], tempo, sub, grade: level >= 7 ? 1 : 0 });
   return {
     id: fam,
     title: t('First steps on guitar', 'צעדים ראשונים בגיטרה'),

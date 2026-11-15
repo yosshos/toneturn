@@ -233,6 +233,7 @@ const TOPIC_CONTRAST: Record<string, { en: string; he: string }> = {
   'jazz-phrase:5': { en: 'Count the notes before the target, then hear where the last one sits: below the target or above it.', he: 'ספרו את הצלילים שלפני צליל המטרה, ואז שמעו איפה יושב האחרון: מתחת למטרה או מעליה.' },
   'jazz-phrase': { en: 'Hum the bass, place the first note against it, then follow steps and leaps.', he: 'זמזמו את הבס, מקמו מולו את הצליל הראשון, ואז עקבו אחרי צעדים וקפיצות.' },
   'upper-rootless': { en: 'Hear the top: bright tensions (9, 13) or dark ones (♭9, ♯9, ♭13)? Then which note sits at the bottom.', he: 'הקשיבו למעלה: מתחים בהירים (9, 13) או כהים (♭9, ♯9, ♭13)? ואז איזה צליל יושב למטה.' },
+  'blues-ear': { en: 'Count the bars in fours: the IV comes at bar 5, the V at bar 9, home at bar 11. Follow the bass to hear which root you are on.', he: 'ספרו את התיבות בארבעיות: ה־IV מגיע בתיבה 5, ה־V בתיבה 9, הביתה בתיבה 11. עקבו אחרי הבס כדי לשמוע על איזה יסוד אתם.' },
   'jazz-form': { en: 'How fast do the chords change, and are they minor or dominant?', he: 'כמה מהר האקורדים מתחלפים, והאם הם מינוריים או דומיננטיים?' },
   // THEORY_PLAY (TP-1…TP-4)
   'triad-pairs': { en: 'Find the one scale tone the six notes leave out: no 3rd is altered, no root is lydian, no 9th is dorian.', he: 'מצאו את צליל הסולם היחיד ששישת הצלילים משמיטים: בלי טרצה זה אלטרד, בלי יסוד זה לידי, בלי 9 זה דורי.' },
