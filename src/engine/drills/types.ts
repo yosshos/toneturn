@@ -39,6 +39,13 @@ export type FamilyId =
   | 'g-cmel'
   | 'k-tune'
   | 'g-tune'
+  // AUDIT-DEPTH-3 C5–C7: improvising with the drilled vocabulary under rule cards, the written solo chorus, the
+  // comp-and-solo duo (soloDrills.ts); #5/#6: jazz in context — the brothers, backdoor, triad pairs and pentatonics
+  // over forms, the Coltrane sub, intros and endings, ballad comping (ctxDrills.ts).
+  | 'k-solo'
+  | 'k-ctx'
+  | 'g-solo'
+  | 'g-ctx'
   | 'custom' // the player's own drills
   // Licks & transcription (docs/SPEC-LICKS-TRANSCRIPTION.md): lick items per key / instrument, transcribed phrases.
   | 'licks'
@@ -124,7 +131,10 @@ export type BassFamilyId =
   // AUDIT-GAPS-2 #6/#11/#12: the line under each key change, the turnarounds and the rhythm-changes bridge.
   | 'b-keys'
   // AUDIT-DEPTH-3 C3/C4: a head on the bass — roots, two-feel, walking, approaches, walking the reharm.
-  | 'b-tune';
+  | 'b-tune'
+  // AUDIT-DEPTH-3: improvising with the vocabulary under rule cards (b-solo) and jazz in context (b-ctx) on the bass.
+  | 'b-solo'
+  | 'b-ctx';
 
 export type Dyn = 'pp' | 'p' | 'mp' | 'mf' | 'f' | 'ff';
 export type Articulation = 'legato' | 'staccato' | 'portato';
@@ -415,6 +425,12 @@ export interface DrillGoal {
   free?: { windows: [number, number][]; scale: { from: number; to: number; pcs: number[] }[]; minPerBar: number; model: { beat: number; dur: number; pitch: number; /** Guitar: where the model's note sits (tab). */ string?: number; fret?: number }[] };
   /** Voice leading (k-vl / g-vl, voiceLead.ts): the learner chooses each voicing from chord symbols; graded by type + smallest motion. */
   vl?: import('./voiceLead').VLGoal;
+  /**
+   * AUDIT-DEPTH-3 C5: improvisation graded by rule cards (ruleCards.ts). The improvised notes are those at or above
+   * `drill.freeAbove` (piano: the LH comps, the RH improvises), else those inside `free.windows`. `spans` = the chords
+   * in drill beats (root pitch class, intervals above it); each card must reach its pass share.
+   */
+  improv?: { cards: string[]; spans: { at: number; beats: number; root: number; iv: number[] }[]; /** Mastered lick ids for the use-a-lick card (empty = the whole library). */ licks?: string[]; /** A line that keeps the cards (the improvised part only; tests and the result's model). */ model?: { beat: number; dur: number; pitch: number }[] };
 }
 
 /** Prog pass rules (PROG_ENGINE.md): metric modulation, unison lock, the road map. Absent fields are not checked. */
@@ -648,6 +664,8 @@ export interface NoteResult {
 
 /** Everything measured in one take (spec AI §6). Missing metrics are null (not applicable to the drill). */
 export interface TakeMetrics {
+  /** AUDIT-DEPTH-3 C5: the rule cards of an improvised take (goal.improv): notes that kept each card / notes judged. */
+  improv?: { card: string; ok: number; total: number; pass: boolean }[];
   /** Piano by microphone (PIANO_AUDIT A2): what the goal needs that the mic can't measure — the take doesn't count. */
   unmeasured?: ('dynamics' | 'articulation' | 'pedal' | 'voicing')[];
   bpm: number;

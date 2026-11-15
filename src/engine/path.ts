@@ -336,7 +336,9 @@ const BASS_NICHE_LATER: Record<string, number> = { 'b-swing': 9, 'b-barry': 12, 
   // Phrases by ear: one level every 100 points, ~1200 (chord tones) to ~1900 (8 bars over a form); see LADDER_SPREAD.
   'b-phrase': 50 / 7,
   // AUDIT-DEPTH-3 C3/C4: a head on the bass from ~1330 (roots) to ~1710 (walking the Coltrane reharm).
-  'b-tune': 9 };
+  'b-tune': 9,
+  // AUDIT-DEPTH-3: improvising under rule cards and jazz in context on the bass.
+  'b-solo': 8, 'b-ctx': 9 };
 /**
  * AUDIT-CONTENT-THEORY §ב.4 ("roots & pocket first"): the bass core opened in catalogue order, so muting came at unit
  * 13, locking with the kick at 17 and walking at 32. Now time, the plucking hand, roots and the kick lock lead, muting
@@ -396,7 +398,10 @@ const KEYS_JAZZ_LATER: Record<string, number> = { 'k-sixdim': 9, 'k-bebop': 6, '
   'k-phrase': 50 / 7,
   // AUDIT-DEPTH-3: harmonise a melody ~1330 → 1750; comp a head ~1330 → 1780 (LADDER_SPREAD).
   'k-harm': 9,
-  'k-tune': 9 };
+  'k-tune': 9,
+  // AUDIT-DEPTH-3: improvising under rule cards from ~1190 (guide tones) to the duo and the written chorus (~1880);
+  // jazz in context (brothers, backdoor, superimposition, Coltrane sub, intros / endings, ballads) ~1330–1880.
+  'k-solo': 7, 'k-ctx': 9 };
 /**
  * PIANO_AUDIT I2: every piano family's level 1 sat at the same difficulty as scales L1 — octaves (advanced L1), Barry
  * Harris lines and rootless voicings came in the first unit. Now the basics lead (scales, five-finger, the pianist's
@@ -407,7 +412,29 @@ const KEYS_JAZZ_LATER: Record<string, number> = { 'k-sixdim': 9, 'k-bebop': 6, '
  * a later-added easier level opens before the harder ones after it). BH-G: the pivot sits at ~1450–1650,
  * between the Harris lines' block chords (harris 7) and the brothers (harris 8).
  */
-export const KEYS_LEVEL_DIFF: Record<string, number> = { 'harris-19': 1440, 'harris-20': 1480, 'harris-21': 1520, 'harris-22': 1560, 'harris-23': 1600, 'harris-24': 1650 };
+export const KEYS_LEVEL_DIFF: Record<string, number> = {
+  // AUDIT-DEPTH-3 §0: the Harris levels sat at 980–2170 by index, and the half-step rules (h14) and ii–V–I by the rules
+  // (h15) came after the pivot levels that use them. Now the whole family sits inside 980–1760 with the rules first.
+  'harris-1': 980, 'harris-2': 1020, 'harris-3': 1060, 'harris-4': 1100, 'harris-5': 1140, 'harris-6': 1180, 'harris-7': 1220,
+  'harris-8': 1240, 'harris-9': 1260, 'harris-10': 1280, 'harris-11': 1320, 'harris-12': 1340, 'harris-13': 1360,
+  'harris-14': 1390, 'harris-15': 1420,
+  'harris-19': 1440, 'harris-20': 1480, 'harris-21': 1520, 'harris-22': 1560, 'harris-23': 1600, 'harris-24': 1650,
+  'harris-16': 1680, 'harris-17': 1720, 'harris-18': 1760,
+};
+/**
+ * AUDIT-DEPTH-3 §0: the top of the path scale. A family whose levels would run past it by index (accomp, voicings,
+ * k-sixdim, the long bass families) is squeezed: its levels keep their order and spread evenly up to the cap.
+ */
+export const PATH_CAP = 1900;
+/** Families whose level order on the path is not their number order (placed by grade, or by KEYS_LEVEL_DIFF). */
+export const NON_MONOTONE_FAMILIES = ['harris'];
+/** Path steps per level for a family of `n` levels starting `later` steps in: LADDER_SPREAD, squeezed under PATH_CAP. */
+export function spreadOf(family: string, n: number, later: number): number {
+  const base = LADDER_SPREAD[family] ?? 1;
+  if (n <= 1) return base;
+  const room = (PATH_CAP - 700) / 70 - later;
+  return Math.max(0.2, Math.min(base, room / (n - 1)));
+}
 export const KEYS_LATER: Record<string, number> = { 'k-first': -2, scales: 0, fingers: 0, 'k-ear': 0, arpeggios: 1, cadences: 1, control: 1, accomp: 2, voicings: 3, harris: 4, jazz: 4, advanced: 6, ...KEYS_JAZZ_LATER };
 // AUDIT-CONTENT-THEORY R-1/R-2/R-5: rhythm & meter on the keys starts after the first scale levels.
 KEYS_LATER['k-rhythm'] = 3;
@@ -441,6 +468,9 @@ GUITAR_RANK['g-phrase'] = 5;
 // AUDIT-DEPTH-3: a head comped on the neck with the theory families; chord-melody with the lead families.
 GUITAR_RANK['g-tune'] = 6;
 GUITAR_RANK['g-cmel'] = 7;
+// AUDIT-DEPTH-3: jazz in context with the Harris and theory families; improvising under rule cards with improvisation.
+GUITAR_RANK['g-ctx'] = 6;
+GUITAR_RANK['g-solo'] = 10;
 /**
  * The order of a family's levels on the path: by path difficulty, then level number. AUDIT-CONTENT-THEORY §ב.3: guitar
  * levels sit by grade, but the family's next level used to be the next number, so a later-added easier level (picking 4
@@ -456,7 +486,7 @@ function ladderSteps(): PathStep[] {
   const diff = (i: number) => 700 + i * 70;
   for (const f of catalog())
     f.levels.forEach((lv, i) =>
-      out.push({ id: `tech:${lv.id}`, kind: 'tech', ladder: { family: f.id, level: lv.level, ref: lv.id, instrument: 'piano' }, skill: 'instrument', sub: 'instrument/piano-tech', domain: 'instrument', difficulty: KEYS_LEVEL_DIFF[lv.id] ?? diff(i * (LADDER_SPREAD[f.id] ?? 1) + (KEYS_LATER[f.id] ?? 0)), choices: 0, forPlays: ['keys', 'piano'], title: { en: `${f.title.en} · ${lv.title.en}`, he: `${f.title.he} · ${lv.title.he}` } }),
+      out.push({ id: `tech:${lv.id}`, kind: 'tech', ladder: { family: f.id, level: lv.level, ref: lv.id, instrument: 'piano' }, skill: 'instrument', sub: 'instrument/piano-tech', domain: 'instrument', difficulty: Math.min(PATH_CAP, KEYS_LEVEL_DIFF[lv.id] ?? Math.round(diff(i * spreadOf(f.id, f.levels.length, KEYS_LATER[f.id] ?? 0) + (KEYS_LATER[f.id] ?? 0)))), choices: 0, forPlays: ['keys', 'piano'], title: { en: `${f.title.en} · ${lv.title.en}`, he: `${f.title.he} · ${lv.title.he}` } }),
     );
   for (const f of guitarCatalog()) {
     // Drums (0.65): the drum families are path steps of the drums course (forPlays 'drums' → inCourse).
@@ -465,7 +495,7 @@ function ladderSteps(): PathStep[] {
     const from = DRUM_LATER[f.id] ?? 0;
     // GUITAR_DEEPENING §5 (owner 2026-11-11): guitar levels sit by their RSL-equivalent grade, families interleaved
     // inside a grade by teaching rank (sweep picking at grade 8 after 3nps scales at 7; 3nps picking with 3nps scales).
-    const gDiff = (lv: { grade?: number }, i: number) => (inst === 'guitar' && lv.grade !== undefined ? guitarPathDifficulty(f.id, lv.grade) : diff(i * (LADDER_SPREAD[f.id] ?? 1) + from));
+    const gDiff = (lv: { grade?: number }, i: number) => (inst === 'guitar' && lv.grade !== undefined ? guitarPathDifficulty(f.id, lv.grade) : Math.min(PATH_CAP, Math.round(diff(i * spreadOf(f.id, f.levels.length, from) + from))));
     f.levels.forEach((lv, i) =>
       out.push({ id: `tech:${lv.id}`, kind: 'tech', ladder: { family: f.id, level: lv.level, ref: lv.id, instrument: inst }, skill: 'instrument', sub: `instrument/${inst === 'drums' ? 'drum' : inst}-tech`, domain: 'instrument', difficulty: gDiff(lv as { grade?: number }, i), choices: 0, forPlays: [...f.instruments], title: { en: `${f.title.en} · ${lv.title.en}`, he: `${f.title.he} · ${lv.title.he}` } }),
     );

@@ -11,8 +11,8 @@ import { BACK_TO_RUBATO, hasRubato, QUARTERS_BPM, quartersDrill, RUBATO_CLEAN, r
 import { RubatoTake } from './RubatoTake';
 const RUBATO_OFF = typeof navigator !== 'undefined' && navigator.webdriver && !new URLSearchParams(typeof location !== 'undefined' ? location.search : '').has('rubato');
 import { levelRecord } from '../engine/drumRecords';
-import { checkRules } from '../engine/improvRules';
-import { parseChart } from '../engine/charts';
+import { RULE_NAME } from '../engine/improvRules';
+import { SoloChorusEditor } from './SoloChorus';
 import { PART_NAME, songDrill } from '../engine/drills/songDrills';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { bassTuningOf, type Settings } from '../storage/progress';
@@ -98,7 +98,7 @@ const takeInfo = (d: Drill, m: TakeMetrics) => {
 export const DEFAULT_CAL: DrillCalibration = { latencyMs: 0, velMin: 20, velMax: 120 };
 /** The drill calibration with the input's calibrated delay (MIDI when a keyboard is connected, else the microphone). */
 const calOf = (s: Settings): DrillCalibration => ({ ...DEFAULT_CAL, ...(s.drillCal ?? {}), latencyMs: inputLatency(s, midi.devices.length ? 'midi' : 'mic') });
-const FAM_HUE: Partial<Record<FamilyId, string>> = { scales: 'var(--mint)', arpeggios: '#7c8cff', cadences: '#c38cff', fingers: 'var(--gold)', control: '#ff8a5c', advanced: '#ff6b9a', harris: '#5cd6ff', jazz: '#5cffb0', voicings: '#ffd15c', accomp: '#b0ff5c', 'k-ear': '#8fb8ff', 'k-sixdim': '#5cc2ff', 'k-bebop': '#4fe0a0', 'k-reharm': '#ffc04d', 'k-theory': '#c9a0ff', 'k-vocab': '#6fd3c0', 'k-phrase': '#8fd0ff', custom: '#e0e0ff', 'k-vl': '#9fd0ff', 'k-keys': '#7fd6c8', 'k-harm': '#a8c8ff', 'k-tune': '#ffb08a' };
+const FAM_HUE: Partial<Record<FamilyId, string>> = { scales: 'var(--mint)', arpeggios: '#7c8cff', cadences: '#c38cff', fingers: 'var(--gold)', control: '#ff8a5c', advanced: '#ff6b9a', harris: '#5cd6ff', jazz: '#5cffb0', voicings: '#ffd15c', accomp: '#b0ff5c', 'k-ear': '#8fb8ff', 'k-sixdim': '#5cc2ff', 'k-bebop': '#4fe0a0', 'k-reharm': '#ffc04d', 'k-theory': '#c9a0ff', 'k-vocab': '#6fd3c0', 'k-phrase': '#8fd0ff', custom: '#e0e0ff', 'k-vl': '#9fd0ff', 'k-keys': '#7fd6c8', 'k-harm': '#a8c8ff', 'k-tune': '#ffb08a', 'k-solo': '#8fe3a8', 'k-ctx': '#7cc4ff' };
 const HANDS_TX: Record<Lang, Record<string, string>> = { en: { R: 'RH', L: 'LH', RL: 'HT' }, he: { R: 'ימין', L: 'שמאל', RL: 'ביחד' } };
 
 /** Drill settings with the instrument defaulting to the player's (guitar / bass players get guitar drills). */
@@ -390,7 +390,7 @@ const TOPIC_OF: Record<string, Exclude<DrillTopic, 'all' | 'songs' | 'mine'>> = 
   scales: 'scales', arpeggios: 'scales', 'g-scales': 'scales', 'g-arps': 'scales', 'g-reading': 'scales', 'g-bass': 'scales',
   cadences: 'chords', voicings: 'chords', accomp: 'chords', 'g-chords': 'chords', 'g-rhythm': 'chords',
   fingers: 'hands', control: 'hands', advanced: 'hands', 'g-fretting': 'hands', 'g-picking': 'hands', 'g-legato': 'hands', 'g-fingerstyle': 'hands',
-  harris: 'styles', jazz: 'styles', 'k-sixdim': 'styles', 'k-bebop': 'styles', 'k-reharm': 'styles', 'k-theory': 'styles', 'k-vocab': 'styles', 'g-lead': 'styles', 'g-flamenco': 'styles', 'g-jazz': 'styles', 'g-impro': 'styles',
+  harris: 'styles', jazz: 'styles', 'k-sixdim': 'styles', 'k-bebop': 'styles', 'k-reharm': 'styles', 'k-theory': 'styles', 'k-vocab': 'styles', 'k-solo': 'styles', 'k-ctx': 'styles', 'g-lead': 'styles', 'g-flamenco': 'styles', 'g-jazz': 'styles', 'g-impro': 'styles',
   // Bass course (unlisted b-* families fall under hands: pluck, fret, length, legato, pick, slap). B17 (0.64): time and
   // pocket are their own topic, reading has one, the bass ear one, and the upright track is grouped on its own.
   'b-scale': 'scales', 'b-read': 'reading', 'b-posread': 'reading', 'b-impro': 'styles', 'b-swing': 'time', 'b-odd': 'time', 'b-poly': 'time', 'b-prog': 'styles', 'b-barry': 'styles', 'b-bebop': 'styles', 'b-jform': 'styles', 'b-latin': 'styles', 'b-std': 'chords', 'b-chord': 'chords', 'b-walk': 'chords', 'b-time': 'time', 'b-pocket': 'time', 'b-ghost': 'styles', 'b-styles': 'styles', 'b-ear': 'ear',
@@ -410,7 +410,7 @@ const TOPIC_OF: Record<string, Exclude<DrillTopic, 'all' | 'songs' | 'mine'>> = 
   // AUDIT-CONTENT-THEORY §ז.2: the first steps at the piano are hand technique.
   'k-first': 'hands',
   // GUITAR_DEEPENING: the guitarist's ear has the ear topic; Barry Harris and prog / fusion are styles.
-  'g-ear': 'ear', 'g-harris': 'styles', 'g-theory': 'styles', 'g-bebop': 'styles', 'g-prog': 'styles',
+  'g-ear': 'ear', 'g-harris': 'styles', 'g-theory': 'styles', 'g-bebop': 'styles', 'g-solo': 'styles', 'g-ctx': 'styles', 'b-solo': 'styles', 'b-ctx': 'styles', 'g-prog': 'styles',
   'k-vl': 'chords', 'g-vl': 'chords',
   // AUDIT-GAPS-2: key changes and turnarounds (harmony you play).
   'k-keys': 'chords', 'g-keys': 'chords', 'b-keys': 'chords',
@@ -841,15 +841,16 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
   const [i, setI] = useState(start);
   // The screen's header names the item being played (owner 2026-11-12: it kept the first item's title — "C major" over G).
   useEffect(() => onIndex?.(i), [i]); // eslint-disable-line react-hooks/exhaustive-deps
-  const drill = queue[i];
+  // AUDIT-DEPTH-3 C6: a solo chorus rewritten in the editor replaces its item in the queue (same item id).
+  const [edited, setEdited] = useState<Record<number, Drill>>({});
+  const [chorusEd, setChorusEd] = useState(false);
+  const drill = edited[i] ?? queue[i];
   const local = useRef<Record<string, ItemState>>({});
   const stateOf = (d: Drill) => local.current[d.itemId] ?? items[d.itemId] ?? newItem(d);
   // A checkpoint's technique part plays every item at its level's target tempo (SPEC-PATH-ROLE §4).
   const bpmOf = (d: Drill) => (atTarget ? itemTargetBpm(d) : stateOf(d).goalBpm);
   const [bpm, setBpm] = useState(() => (drill ? bpmOf(drill) : 60));
   const [res, setRes] = useState<{ m: TakeMetrics; lad: LadderResult } | null>(null);
-  // Left hand comps, right hand improvises (chart drills): the free right hand checked against each chord's scale.
-  const [rh, setRh] = useState<{ ok: number; total: number } | null>(null);
   const session = useRef(Date.now().toString(36));
   const count = useRef({ takes: 0, clean: 0 });
   const [take, setTake] = useState(0);
@@ -878,14 +879,9 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
     setAgain(false);
     setTake((t) => t + 1);
   };
-  const done = (m: TakeMetrics, played: PlayedNote[]) => {
+  const done = (m: TakeMetrics, _played: PlayedNote[]) => {
     // The take also moves the player profile's timeline (SPEC-AI §8).
     void recordTakeAnalysis(drill, m, bpm).then(() => refreshProfile(undefined, undefined, { ...items, ...local.current })).catch(() => {});
-    if (drill.freeAbove !== undefined && drill.chart?.length) {
-      const free = played.filter((p) => p.pitch >= drill.freeAbove!).map((p) => ({ start: p.on / 1000, end: (p.off ?? p.on + 200) / 1000, midi: p.pitch }));
-      const r = checkRules(free, parseChart(drill.chart.join(' | '), drill.meter), drill.meter, bpm, { note: 'scale', interval: null, rhythm: null });
-      setRh(r.checks[0] && r.checks[0].total ? { ok: r.checks[0].ok, total: r.checks[0].total } : null);
-    } else setRh(null);
     // BASS_AUDIT A4: a take counts toward the level only at the item's goal / the level's target tempo, never a "Slower" one.
     const st0 = stateOf(drill);
     const lad = applyTake(st0, m, bpm, new Date().toISOString(), ds, { targetBpm: itemTargetBpm(drill), slower: bpm < (st0.goalBpm ?? 0) * 0.99 });
@@ -994,6 +990,29 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
         </p>
       )}
       <DrillScore drill={takeDrill} ds={ds} result={res?.m} beat={res ? -1 : beat} lang={lang} bpm={bpm} />
+      {drill.spec.kind === 'sl-chorus' && !res && (
+        <p className="drill-stage">
+          <button className="btn small ghost" onClick={() => setChorusEd(true)} data-chorus-open="1">
+            {he ? 'לכתוב את הכורוס' : 'Write your chorus'}
+          </button>
+        </p>
+      )}
+      {chorusEd && (
+        <SoloChorusEditor
+          lang={lang}
+          inst={drill.spec.instrument === 'guitar' || drill.spec.instrument === 'bass' ? drill.spec.instrument : 'piano'}
+          form={drill.spec.option ?? 0}
+          keyPc={drill.spec.key}
+          onClose={(saved) => {
+            setChorusEd(false);
+            if (saved) {
+              setEdited((e) => ({ ...e, [i]: generate(drill.spec) }));
+              setTake((t) => t + 1);
+            }
+          }}
+        />
+      )}
+      <DrillScore drill={takeDrill} ds={ds} result={res?.m} beat={res ? -1 : beat} lang={lang} />
       {res && <MarkLegend lang={lang} />}
       {!res && !writing && stage === 'free' && <RubatoTake key={`${drill.itemId}:free:${take}`} autoStart={again} drill={drill} lang={lang} cal={cal} onDone={(m) => (setBeat(-1), stageDone(m, 'free'))} onBeat={setBeat} />}
       {!res && !writing && stage === 'quarters' && <DrillTake key={`${drill.itemId}:q:${take}`} autoStart={again} drill={takeDrill} bpm={QUARTERS_BPM} lang={lang} cal={cal} onDone={(m) => (setBeat(-1), stageDone(m, 'quarters'))} onBeat={setBeat} drumsOk={headphones} onDrums={onHeadphones} kit={kit} />}
@@ -1004,9 +1023,15 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
       {res && (
         <>
           <p className="drill-ladder">{res.lad.message[lang]}</p>
-          {rh && (
-            <p className="drill-rh" data-rh-scale={rh.ok}>
-              {lang === 'he' ? 'יד ימין בתוך הסולם של כל אקורד' : 'Right hand inside each chord’s scale'}: <b dir="ltr">{rh.ok}/{rh.total}</b>
+          {/* AUDIT-DEPTH-3 C5: the rule cards of an improvised take, one compact line. */}
+          {res.m.improv && res.m.improv.length > 0 && (
+            <p className="drill-rh" data-improv-cards={res.m.improv.filter((c) => c.pass).length}>
+              {res.m.improv.map((c, k) => (
+                <span key={c.card} className={c.pass ? 'ok' : 'miss'} data-card={c.card} data-card-pass={c.pass ? '1' : '0'}>
+                  {k > 0 ? ' · ' : ''}
+                  {(RULE_NAME as Record<string, { en: string; he: string }>)[c.card]?.[lang] ?? c.card} <b dir="ltr">{c.ok}/{c.total}</b>
+                </span>
+              ))}
             </p>
           )}
           <TakeResult

@@ -287,4 +287,30 @@ deepen('bh-brothers', [{ en: 'Find the stranger', he: 'מי לא שייך' }], (
     stimulus: played.flatMap((o, j) => (j ? [{ kind: 'rest' as const, duration: 0.3 }, chordStim(dom(r1 + o), 1.2)] : [chordStim(dom(r1 + o), 1.2)])),
   });
 });
+
+// bh-brothers 4 (AUDIT-DEPTH-3 #5; docs/BARRY-HARRIS-THEORY.md §2): a ii–V–I where the V was replaced by one of its
+// brothers — V7, ♭VII7 (the backdoor), ♭II7 (the tritone sub), III7 (the ♭9 relative). All four share the V's 7♭9
+// rootless chord (one diminished) and resolve to the same I. Hear the bass: which brother?
+deepen('bh-brothers', [{ en: 'Which brother replaced the V?', he: 'איזה אח החליף את ה־V?' }], (seed, level, id) => {
+  const rnd = rng(seed);
+  const k = 48 + Math.floor(rnd() * 6);
+  const BRO: Record<string, number> = { v: 7, bvii: 10, bii: 1, iii: 4 };
+  const ch = (root: number, ints: number[]) => [36 + ((((root - 36) % 12) + 12) % 12), ...fit(ints.slice(1).map((x) => root + x + 12), 55, 79)];
+  const prog = (b: string): Stimulus[] => [chordStim(ch(k + 2, [0, 3, 7, 10]), 1.1), { kind: 'rest', duration: 0.15 }, chordStim(ch(k + BRO[b], [0, 4, 7, 10]), 1.1), { kind: 'rest', duration: 0.15 }, chordStim(ch(k, [0, 4, 7, 11]), 1.6)];
+  const keys = ['v', 'bvii', 'bii', 'iii'];
+  const answer = pickR(rnd, keys);
+  const choiceStim: Record<string, Stimulus[]> = {};
+  for (const b of keys) choiceStim[b] = prog(b);
+  return choiceQ({
+    id, topic: 'bh-brothers', level, seed, skill: 'chords', difficulty: 1750,
+    ask: { en: 'ii, a dominant, I: which brother stood in for the V?', he: 'ii, דומיננט, I: איזה אח עמד במקום ה־V?' },
+    names: {
+      v: nm('V7 itself', 'V7 עצמו', 'five', 'V'),
+      bvii: nm('♭VII7, the backdoor', '♭VII7, הדלת האחורית', 'backdoor', 'flat seven'),
+      bii: nm('♭II7, the tritone sub', '♭II7, תחליף הטריטון', 'tritone', 'flat two'),
+      iii: nm('III7, the ♭9 relative', 'III7, קרוב ה־♭9', 'three', 'major three'),
+    },
+    answer, choices: keys, stimulus: prog(answer), choiceStim,
+  });
+});
 }

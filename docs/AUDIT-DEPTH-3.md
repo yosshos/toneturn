@@ -211,3 +211,14 @@ Then:
 - #6, #7, #8.
 
 Low: guitar walking, ballads, line-cliché ear.
+
+---
+
+## 5. Built (2026-11-14)
+
+- §0 path order: Harris placed by an explicit map (the rules h14/h15 before the pivots h19–24); every other piano and bass family squeezed under 1880 (`path.ts` `spreadOf`, `PATH_CAP`). Test: `tests/depth3.test.ts`.
+- C5: 48 rule cards (`ruleCards.ts`) in the improv studio and as graded path steps: `k-solo` / `g-solo` / `b-solo` (`soloDrills.ts`), cards checked in `analyze.ts` (`goal.improv`). voicings-17 and accomp-16 grade the right hand by cards.
+- C6: the solo-chorus builder (`soloChorus.ts`, `SoloChorus.tsx`) and the chorus levels.
+- C7: the comp-and-solo duo on piano, guitar and bass.
+- #5, #6: `k-ctx` / `g-ctx` / `b-ctx` (`ctxDrills.ts`): the brothers (BARRY-HARRIS-THEORY §2) as lines, comping, all four, in a turnaround and a blues, on the bass; backdoor; triad pairs and pentatonics over forms; the Coltrane sub; intros, endings, ballad comping; ear bh-brothers 4.
+- Open: C1–C4, C8, #1–#4, the PD melodies (§3); `quote-head` waits for a melody source.

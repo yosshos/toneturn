@@ -39,7 +39,9 @@ function perfect(d: Drill, bpm: number): PlayedNote[] {
     // A dead (ghost) note sounds without a pitch, as the microphone reports it (UNPITCHED = -1).
     out.push({ pitch: n.technique === 'dead' ? -1 : n.pitch, on, off: null, vel: 64 });
   }
-  return out;
+  // Free bars judged by rule cards (AUDIT-DEPTH-3 improv items): the model line is the perfect answer there.
+  if (d.goal.improv) for (const m of d.goal.improv.model ?? d.goal.free?.model ?? []) if (!seen.has(`${m.pitch}@${m.beat}`)) (seen.add(`${m.pitch}@${m.beat}`), out.push({ pitch: m.pitch, on: expTimeMs(d, m.beat, bpm), off: expTimeMs(d, m.beat + m.dur * 0.9, bpm), vel: 64 }));
+  return out.sort((a, b) => a.on - b.on);
 }
 
 describe('guitar drills: catalogue', () => {
@@ -392,7 +394,7 @@ describe('guitar drills: plan', () => {
     expect(g.length).toBeGreaterThan(10);
     expect(g.every((f) => f.id.startsWith('g-') && f.id !== 'g-bass')).toBe(true);
     // Bass: the 14 course families; the old g-bass starter is retired (kept for old ids, not shown).
-    expect(shownFamilies({ emphasis: 'both', instrument: 'bass' }).map((f) => f.id)).toEqual(['b-pluck', 'b-time', 'b-fret', 'b-chord', 'b-ear', 'b-scale', 'b-length', 'b-pocket', 'b-read', 'b-posread', 'b-styles', 'b-ghost', 'b-walk', 'b-impro', 'b-swing', 'b-barry', 'b-jform', 'b-latin', 'b-std', 'b-keys', 'b-bebop', 'b-phrase', 'b-tune', 'b-legato', 'b-ext', 'b-pick', 'b-odd', 'b-prog', 'b-poly', 'b-slap', 'b-up-pos', 'b-up-arco', 'b-up-scales', 'b-up-pizz', 'b-up-walk', 'b-up-read']);
+    expect(shownFamilies({ emphasis: 'both', instrument: 'bass' }).map((f) => f.id)).toEqual(['b-pluck', 'b-time', 'b-fret', 'b-chord', 'b-ear', 'b-scale', 'b-length', 'b-pocket', 'b-read', 'b-posread', 'b-styles', 'b-ghost', 'b-walk', 'b-impro', 'b-swing', 'b-barry', 'b-jform', 'b-latin', 'b-std', 'b-keys', 'b-bebop', 'b-phrase', 'b-tune', 'b-ctx', 'b-solo', 'b-legato', 'b-ext', 'b-pick', 'b-odd', 'b-prog', 'b-poly', 'b-slap', 'b-up-pos', 'b-up-arco', 'b-up-scales', 'b-up-pizz', 'b-up-walk', 'b-up-read']);
     expect(familyById('g-legato')?.levels.length).toBeGreaterThan(0);
   });
 

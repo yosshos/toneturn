@@ -31,6 +31,9 @@ import { UNITS as BEBOP_VOCAB } from './mini/bebopVocab';
 import { UNITS as PHRASES_BY_EAR } from './mini/phrasesByEar';
 import { UNITS as PROG_GRID } from './mini/progGrid'; // progressions by ear
 import { UNITS as HEADS_UNITS } from './mini/heads'; // AUDIT-DEPTH-3: heads
+// AUDIT-DEPTH-3: improvising under rule cards and jazz in context.
+import { UNITS as SOLO_RULES } from './mini/soloRules';
+import { UNITS as JAZZ_CONTEXT } from './mini/jazzContext';
 
 export const UNIT_LESSON: Record<string, string> = {
   // 0.38 (spec AE): each area file maps its own topics.
@@ -64,6 +67,8 @@ export const UNIT_LESSON: Record<string, string> = {
   ...PHRASES_BY_EAR,
   ...PROG_GRID,
   ...HEADS_UNITS,
+  ...SOLO_RULES,
+  ...JAZZ_CONTEXT,
   // Learning path
   'bflat-two-homes': 'bflat-two-homes',
   'degrees-135': 'degrees-135',
