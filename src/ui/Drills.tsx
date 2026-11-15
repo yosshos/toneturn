@@ -40,6 +40,7 @@ import { drillEvents, drillXp } from '../engine/drills/events';
 import { ChartView, DrillStaff, DrillTab, DrillTake, EarCard, MarkLegend, TakeResult } from './DrillTake';
 // Voice leading (AUDIT-CONTENT-THEORY §ה.2): the chord symbols + first voicing, the voices as lanes, the stage lessons.
 import { VoiceLeadLessons, VoiceLeadScore } from './VoiceLeadScore';
+import { ReharmStudio } from './ReharmStudio'; // AUDIT-DEPTH-3 C3: your own reharm of a head
 import { RoadMapStrip } from './RoadMap';
 import { TranscribeWrite } from './BassWrite';
 import { DrumWrite } from './DrumWrite';
@@ -97,7 +98,7 @@ const takeInfo = (d: Drill, m: TakeMetrics) => {
 export const DEFAULT_CAL: DrillCalibration = { latencyMs: 0, velMin: 20, velMax: 120 };
 /** The drill calibration with the input's calibrated delay (MIDI when a keyboard is connected, else the microphone). */
 const calOf = (s: Settings): DrillCalibration => ({ ...DEFAULT_CAL, ...(s.drillCal ?? {}), latencyMs: inputLatency(s, midi.devices.length ? 'midi' : 'mic') });
-const FAM_HUE: Partial<Record<FamilyId, string>> = { scales: 'var(--mint)', arpeggios: '#7c8cff', cadences: '#c38cff', fingers: 'var(--gold)', control: '#ff8a5c', advanced: '#ff6b9a', harris: '#5cd6ff', jazz: '#5cffb0', voicings: '#ffd15c', accomp: '#b0ff5c', 'k-ear': '#8fb8ff', 'k-sixdim': '#5cc2ff', 'k-bebop': '#4fe0a0', 'k-reharm': '#ffc04d', 'k-theory': '#c9a0ff', 'k-vocab': '#6fd3c0', custom: '#e0e0ff', 'k-vl': '#9fd0ff', 'k-keys': '#7fd6c8', 'k-indep': '#ffb35c', 'k-sharm': '#8fe08a' };
+const FAM_HUE: Partial<Record<FamilyId, string>> = { scales: 'var(--mint)', arpeggios: '#7c8cff', cadences: '#c38cff', fingers: 'var(--gold)', control: '#ff8a5c', advanced: '#ff6b9a', harris: '#5cd6ff', jazz: '#5cffb0', voicings: '#ffd15c', accomp: '#b0ff5c', 'k-ear': '#8fb8ff', 'k-sixdim': '#5cc2ff', 'k-bebop': '#4fe0a0', 'k-reharm': '#ffc04d', 'k-theory': '#c9a0ff', 'k-vocab': '#6fd3c0', 'k-phrase': '#8fd0ff', custom: '#e0e0ff', 'k-vl': '#9fd0ff', 'k-keys': '#7fd6c8', 'k-harm': '#a8c8ff', 'k-tune': '#ffb08a', 'k-indep': '#ffb35c', 'k-sharm': '#8fe08a' };
 const HANDS_TX: Record<Lang, Record<string, string>> = { en: { R: 'RH', L: 'LH', RL: 'HT' }, he: { R: 'ימין', L: 'שמאל', RL: 'ביחד' } };
 
 /** Drill settings with the instrument defaulting to the player's (guitar / bass players get guitar drills). */
@@ -117,11 +118,11 @@ export function drillSettingsOf(s: Pick<Settings, 'drills' | 'instrument'> & { a
  * drills force notation (B10); free-choice drills show only the chord chart, with an opt-in model line (B3); ear drills
  * show what to do until the result (B11). `beat` = the running take's beat, for the moving window (B2).
  */
-export function DrillScore({ drill, ds, result, beat = -1, lang = 'en' }: { drill: Drill; ds: DrillSettings; result?: TakeMetrics | null; beat?: number; lang?: Lang }) {
+export function DrillScore({ drill, ds, result, beat = -1, lang = 'en', bpm }: { drill: Drill; ds: DrillSettings; result?: TakeMetrics | null; beat?: number; lang?: Lang; /** The take's tempo (phrases by ear: the call's replay). */ bpm?: number }) {
   const [model, setModel] = useState(false);
   // Ear drills (bass B11, the drummer's ear): what to do and which bars are yours, until the result.
   // The pianist's ear (PIANO_AUDIT §3) too: the answer stays hidden until the result.
-  if (drill.show === 'none' && !result) return <EarCard drill={drill} beat={beat} lang={lang} />;
+  if (drill.show === 'none' && !result) return <EarCard drill={drill} beat={beat} lang={lang} bpm={bpm} />;
   // Drums (0.65): a percussion staff (reading always), or lanes by the setting.
   if (isDrumDrill(drill)) return <DrumScore drill={drill} view={drill.show === 'staff' ? 'staff' : (ds.drumView ?? 'staff')} result={result} beat={beat} lang={lang} />;
   // PIANO_JAZZ P2: trading fours — after the result, a model line for your bars on request (it replaces the landings
@@ -138,7 +139,7 @@ export function DrillScore({ drill, ds, result, beat = -1, lang = 'en' }: { dril
     );
   if (!isGuitarDrill(drill) && drill.goal.vl) return <VoiceLeadScore drill={drill} result={result} beat={beat} lang={lang} />;
   if (!isGuitarDrill(drill)) return <DrillStaff drill={drill} fingering={ds.showFingering} result={result} beat={beat} />;
-  if (drill.show === 'none' && !result) return <EarCard drill={drill} beat={beat} lang={lang} />;
+  if (drill.show === 'none' && !result) return <EarCard drill={drill} beat={beat} lang={lang} bpm={bpm} />;
   const view = drill.show === 'staff' ? 'staff' : (ds.guitarView ?? 'tab');
   // The guitar trade (g-impro 7), like the piano's: after the result, a model line for your bars on request — in the
   // player's view (tab and / or staff), in place of the landings, so the card still fits one screen.
@@ -193,6 +194,8 @@ export interface DrillsProps {
   queue?: Drill[];
   /** Called when a queued run (path / workout) ends. */
   onQueueDone?: (takes: number, clean: number) => void;
+  /** SPEC-PATH-ROLE §4: the queue is a checkpoint's technique part — every item starts at its level's target tempo. */
+  atTarget?: boolean;
   /** Open on the technique level test (after Find my level). */
   startTest?: boolean;
   onTestDone?: () => void;
@@ -208,7 +211,7 @@ export interface DrillsProps {
 
 type View = { k: 'test' } | { k: 'hub' } | { k: 'songs' } | { k: 'family'; f: FamilyDef } | { k: 'run'; queue: Drill[]; i: number; from: View } | { k: 'settings' } | { k: 'calib' } | { k: 'creator'; edit?: CustomDrill } | { k: 'kit'; then?: 'test'; start?: KitKind };
 
-export function Drills({ lang, settings, onSettings, items, onTake, onBack, queue, onQueueDone, startTest, onTestDone, songs, onSing, onVoice, onPieces }: DrillsProps) {
+export function Drills({ lang, settings, onSettings, items, onTake, onBack, queue, onQueueDone, startTest, onTestDone, songs, onSing, onVoice, onPieces, atTarget }: DrillsProps) {
   const tx = T[lang];
   const ds = drillSettingsOf(settings);
   const [view, setView] = useState<View>(startTest ? (ds.instrument === 'drums' && !settings.drumKit?.done ? { k: 'kit' } : { k: 'test' }) : queue?.length ? { k: 'run', queue, i: 0, from: { k: 'hub' } } : songs ? { k: 'songs' } : { k: 'hub' });
@@ -224,7 +227,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
       <button className="icon-btn" onClick={back} aria-label="Back">
         <span className="flip-rtl">‹</span>
       </button>
-      <h1>{title}</h1>
+      <h1 title={typeof title === 'string' ? title : undefined}>{title}</h1>
     </header>
   );
   const setDs = (p: Partial<DrillSettings>) => onSettings({ drills: { ...ds, ...p } });
@@ -244,6 +247,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
           kit={settings.drumKit}
           start={view.i}
           items={items}
+          atTarget={atTarget}
           onTake={onTake}
           onEnd={(takes, clean) => (onQueueDone && queue?.length ? onQueueDone(takes, clean) : setView(view.from))}
         />
@@ -354,6 +358,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
         {head(view.f.title[lang], () => setView({ k: 'hub' }))}
         <FamilyLesson family={view.f.id} settings={settings} />
         <VoiceLeadLessons family={view.f.id} settings={settings} />
+        <ReharmStudio family={view.f.id} lang={lang} onRun={(q) => setView({ k: 'run', queue: q, i: 0, from: view })} />
         <FamilyView lang={lang} ds={ds} f={view.f} items={items} start={settings.drillStart?.[view.f.id]} onRun={(q, i) => setView({ k: 'run', queue: q, i, from: view })} />
       </main>
     );
@@ -402,6 +407,8 @@ const TOPIC_OF: Record<string, Exclude<DrillTopic, 'all' | 'songs' | 'mine'>> = 
   'd-song': 'grooves', 'd-prog': 'styles', 'd-count': 'time', 'd-notation': 'reading', 'd-form': 'reading',
   // PIANO_AUDIT §3: the pianist's ear has its own topic; piano sight-reading sits under reading.
   'k-ear': 'ear',
+  // Phrases by ear: the ear topic on every instrument.
+  'k-phrase': 'ear', 'g-phrase': 'ear', 'b-phrase': 'ear',
   // AUDIT-CONTENT-THEORY §ז.2: the first steps at the piano are hand technique.
   'k-first': 'hands',
   // GUITAR_DEEPENING: the guitarist's ear has the ear topic; Barry Harris and prog / fusion are styles.
@@ -409,6 +416,8 @@ const TOPIC_OF: Record<string, Exclude<DrillTopic, 'all' | 'songs' | 'mine'>> = 
   'k-vl': 'chords', 'g-vl': 'chords',
   // AUDIT-GAPS-2: key changes and turnarounds (harmony you play).
   'k-keys': 'chords', 'g-keys': 'chords', 'b-keys': 'chords',
+  // AUDIT-DEPTH-3: heads — harmonising and chord-melody are harmony you play; comping a head is a style.
+  'k-harm': 'chords', 'g-cmel': 'chords', 'k-tune': 'styles', 'g-tune': 'styles', 'b-tune': 'styles',
   'b-up-pos': 'upright', 'b-up-arco': 'upright', 'b-up-scales': 'upright', 'b-up-pizz': 'upright', 'b-up-walk': 'upright', 'b-up-read': 'upright',
 };
 const TOPIC_NAME: Record<DrillTopic, { en: string; he: string }> = {
@@ -828,7 +837,7 @@ function LevelRefs({ level, lang }: { level: LevelDef; lang: Lang }) {
   );
 }
 
-function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphones, onHeadphones, kit, onIndex }: { onIndex?: (i: number) => void; lang: Lang; ds: DrillSettings; cal: DrillCalibration; queue: Drill[]; start: number; items: Record<string, ItemState>; onTake: DrillsProps['onTake']; onEnd: (takes: number, clean: number) => void; headphones?: boolean; onHeadphones?: (h: boolean) => void; kit?: Settings['drumKit'] }) {
+function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphones, onHeadphones, kit, onIndex, atTarget }: { atTarget?: boolean; onIndex?: (i: number) => void; lang: Lang; ds: DrillSettings; cal: DrillCalibration; queue: Drill[]; start: number; items: Record<string, ItemState>; onTake: DrillsProps['onTake']; onEnd: (takes: number, clean: number) => void; headphones?: boolean; onHeadphones?: (h: boolean) => void; kit?: Settings['drumKit'] }) {
   const [beat, setBeat] = useState(-1);
   const tx = T[lang];
   const [i, setI] = useState(start);
@@ -837,7 +846,9 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
   const drill = queue[i];
   const local = useRef<Record<string, ItemState>>({});
   const stateOf = (d: Drill) => local.current[d.itemId] ?? items[d.itemId] ?? newItem(d);
-  const [bpm, setBpm] = useState(() => (drill ? stateOf(drill).goalBpm : 60));
+  // A checkpoint's technique part plays every item at its level's target tempo (SPEC-PATH-ROLE §4).
+  const bpmOf = (d: Drill) => (atTarget ? itemTargetBpm(d) : stateOf(d).goalBpm);
+  const [bpm, setBpm] = useState(() => (drill ? bpmOf(drill) : 60));
   const [res, setRes] = useState<{ m: TakeMetrics; lad: LadderResult } | null>(null);
   // Left hand comps, right hand improvises (chart drills): the free right hand checked against each chord's scale.
   const [rh, setRh] = useState<{ ok: number; total: number } | null>(null);
@@ -865,7 +876,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
     setRes(null);
     if (j >= queue.length) return onEnd(count.current.takes, count.current.clean);
     setI(j);
-    setBpm(stateOf(queue[j]).goalBpm);
+    setBpm(bpmOf(queue[j]));
     setAgain(false);
     setTake((t) => t + 1);
   };
@@ -898,7 +909,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
   const micChords = !midi.devices.length && drill.notes.some((n, k) => drill.notes.some((o, j) => j !== k && Math.abs(o.beat - n.beat) < 1e-4));
   // A goal the microphone can't measure (loudness, pedal) waits for a MIDI keyboard in the timed take; automated runs
   // (e2e) keep the timed take unless ?rubato is in the address (the brief page's rule).
-  const noRubato = micChords || (!midi.devices.length && micUnmeasurable(drill).length > 0) || RUBATO_OFF;
+  const noRubato = micChords || (!midi.devices.length && micUnmeasurable(drill).length > 0) || RUBATO_OFF || !!atTarget;
   const stage: RubatoStage | null = noRubato ? null : oneFree && hasRubato(drill) ? 'free' : rubatoStage(stateOf(drill), drill);
   const takeDrill = stage === 'quarters' ? quartersDrill(drill) : drill;
   const stageDone = (m: TakeMetrics, st: RubatoStage) => {
@@ -984,7 +995,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
           )}
         </p>
       )}
-      <DrillScore drill={takeDrill} ds={ds} result={res?.m} beat={res ? -1 : beat} lang={lang} />
+      <DrillScore drill={takeDrill} ds={ds} result={res?.m} beat={res ? -1 : beat} lang={lang} bpm={bpm} />
       {res && <MarkLegend lang={lang} />}
       {!res && !writing && stage === 'free' && <RubatoTake key={`${drill.itemId}:free:${take}`} autoStart={again} drill={drill} lang={lang} cal={cal} onDone={(m) => (setBeat(-1), stageDone(m, 'free'))} onBeat={setBeat} />}
       {!res && !writing && stage === 'quarters' && <DrillTake key={`${drill.itemId}:q:${take}`} autoStart={again} drill={takeDrill} bpm={QUARTERS_BPM} lang={lang} cal={cal} onDone={(m) => (setBeat(-1), stageDone(m, 'quarters'))} onBeat={setBeat} drumsOk={headphones} onDrums={onHeadphones} kit={kit} />}

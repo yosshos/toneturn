@@ -20,6 +20,7 @@ import { barDrift, centsOff, doubleStopMatch, swingWalk, crossingPenalty, fillLa
 import { tuningById } from '../fretboard';
 import { drillDrumHits } from './bandTimeline';
 import { bassPitchOpts } from '../yin';
+import { analyzePhraseTake } from './phraseGrade';
 
 /** One analysis frame from the microphone (times in ms relative to beat 0, latency removed). */
 export interface GFrame {
@@ -1150,5 +1151,7 @@ export function analyzeGuitarTake(drill: Drill, bpm: number, played: PlayedNote[
       verdict = f.verdict;
       why = { en: f.en, he: f.he };
     }
+  // Phrases by ear (phraseDrills.ts): the transcription coach's note-by-note comparison decides (partial credit).
+  if (drill.phrase) return { ...analyzePhraseTake(drill, bpm, norm.played), guitar: extra };
   return { ...m, verdict, why, guitar: extra };
 }

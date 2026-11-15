@@ -482,6 +482,15 @@ button.heat-cell {
 .ear-bars li.now { background: var(--now); color: var(--ink); }
 /* PIANO_JAZZ trading fours: the bar's chords, small, under Listen / You. */
 .ear-bars li .ear-chord { display: block; font-size: 0.7rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
+/* Phrases by ear: replay the call (as written, slower) before the take. */
+.ear-replay { display: flex; gap: 8px; flex-wrap: wrap; }
+.ear-replay .btn { flex: 1 1 0; min-width: 0; }
+.ear-bars.dense li { flex: 1 0 calc(25% - 4px); padding: 3px 2px; }
+.ear-bars.dense li .ear-chord { font-size: 0.72rem; }
+.ear-legend { display: flex; gap: 6px; margin: 0; font-size: 0.75rem; }
+.ear-legend span { padding: 1px 8px; border: 2px solid var(--outline); border-radius: 6px; }
+.ear-legend .band { background: var(--bg-2); color: var(--ink-dim); }
+.ear-legend .you { background: var(--card); color: var(--ink); }
 .drums-gate { display: grid; gap: 8px; }
 .drill-prep { display: grid; gap: 8px; justify-items: center; }
 .write-slots li { flex: 1 0 68px; font-size: 0.75rem; }
@@ -589,3 +598,47 @@ button.km-cell:focus-visible { outline: 2px solid var(--ink); outline-offset: 1p
   .chart-bar b { font-size: 0.86rem; line-height: 1.2; }
   .chart-bar span { letter-spacing: 0; font-size: 0.7rem; white-space: nowrap; }
 }
+
+/* 0.91 (one screen): a drill's title is at most two lines on a phone — standards moved to other keys made long titles
+   ("Rhythm changes in F♯: the whole chart (32 bars), shells, four to the bar") wrap to four. The full title is the tooltip. */
+@media (max-width: 520px) {
+  .drills-screen[data-drills='run'] .screen-head h1 {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+    font-size: 1.15rem;
+    line-height: 1.2;
+  }
+}
+/* 0.91 (one screen at 320×720): the headphones gate and the pre-take notes take less height on short phones. */
+@media (max-width: 520px) and (max-height: 760px) {
+  .drills-screen[data-drills='run'] .drums-gate .field-hint,
+  .drills-screen[data-drills='run'] .kit-warn,
+  .drills-screen[data-drills='run'] > .field-hint { font-size: 0.8rem; line-height: 1.3; margin-block: 2px; }
+  .drills-screen[data-drills='run'] .drums-gate .drill-actions { gap: 6px; }
+  .drills-screen[data-drills='run'] .drums-gate .btn { min-height: 40px; padding-block: 6px; }
+}
+/* 0.91 (one screen at 320×720): tab lines keep their size but lose the empty band; the pager sits in its own row. */
+@media (max-height: 900px) {
+  .drills-screen[data-drills='run'] .drill-tab .guitar-tab svg,
+  .drills-screen[data-drills='test'] .drill-tab .guitar-tab svg { max-height: clamp(64px, 13vh, 140px); width: 100%; }
+  .drills-screen[data-drills='run'] .tab-pager { position: relative; z-index: 1; min-height: 40px; }
+  .drills-screen[data-drills='run'] .tab-pager .icon-btn { width: 40px; height: 40px; }
+}
+
+/* AUDIT-DEPTH-3 C3: the reharm studio on the tune families' page — four bars a page, a device per bar. */
+.rh-studio { display: grid; gap: 8px; padding: 10px; border: 1px solid var(--line, rgba(255, 255, 255, 0.14)); border-radius: 12px; margin: 8px 0; }
+.rh-top { display: flex; gap: 6px; align-items: center; }
+.rh-top select { flex: 1; min-width: 0; }
+.rh-bars { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.rh-bars li { display: grid; grid-template-columns: 22px 1fr; gap: 2px 8px; align-items: center; padding: 6px 8px; border-radius: 8px; background: rgba(127, 127, 127, 0.08); }
+.rh-bars li.changed { outline: 1px solid var(--mint, #5cffb0); }
+.rh-n { font-size: 0.75rem; opacity: 0.7; }
+.rh-chords { font-size: 0.95rem; overflow-wrap: anywhere; }
+.rh-devs { grid-column: 2; display: flex; flex-wrap: wrap; gap: 4px; }
+.rh-devs .chip { font-size: 0.78rem; padding: 2px 8px; }
+.rh-devs .chip.on { background: var(--mint, #5cffb0); color: #111; }
+.rh-check { margin: 0; font-size: 0.85rem; }
+.rh-go { display: flex; gap: 8px; flex-wrap: wrap; }

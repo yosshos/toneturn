@@ -25,6 +25,9 @@ import { generateGuitarVL, guitarVoiceLeadFamily } from './voiceLeadDrills';
 // AUDIT-GAPS-2 #5/#6/#12: key changes and turnarounds on the neck (keyMoveDrills.ts).
 import { generateGuitarKeyMove, guitarKeyMoveFamily } from './keyMoveDrills';
 import { genGuitarVocab, guitarVocabFamily } from './vocabDrills'; // AUDIT-GAPS-2: bebop vocabulary
+import { genGuitarPhrase, guitarPhraseFamily } from './phraseDrills'; // phrases by ear
+// AUDIT-DEPTH-3 #4, C3/C4: chord-melody and a head comped on the neck (headDrills.ts).
+import { generateGuitarHead, guitarChordMelodyFamily, guitarTuneFamily } from './headDrills';
 
 export type GuitarStyle = NonNullable<DrillSettings['guitarStyle']>;
 export type GuitarTechnique = NonNullable<ExpNote['technique']>;
@@ -2370,6 +2373,8 @@ export function generateGuitar(spec: DrillSpec): Drill {
       return generateTheoryGuitar(s, tu);
     case 'g-bebop':
       return genGuitarVocab(s, tu);
+    case 'g-phrase':
+      return genGuitarPhrase(s, tu);
     case 'g-prog':
       return generateGuitarProg(s, tu);
     case 'g-meter':
@@ -2379,6 +2384,9 @@ export function generateGuitar(spec: DrillSpec): Drill {
       return generateGuitarVL(s, tu);
     case 'g-keys':
       return generateGuitarKeyMove(s, tu);
+    case 'g-cmel':
+    case 'g-tune':
+      return generateGuitarHead(s, tu);
     case 'g-fretting':
       return genFretting(s, tu);
     case 'g-picking':
@@ -2623,6 +2631,11 @@ export function guitarCatalog(): GuitarFamilyDef[] {
       LT('g-ear', 8, 'Chord quality by ear', 'סוג האקורד בשמיעה', [GE('quality', { option: 0 }), GE('quality', { option: 1 }), GE('quality', { option: 2 })], GKEYS_MAJOR.slice(0, 8), [60, 90], 'quarters', 6),
       LT('g-ear', 9, 'Find the key, then its pentatonic', 'למצוא את הסולם, ואז את הפנטטוני שלו', [GE('key', { option: 0 }), GE('key', { option: 1 })], GKEYS_MAJOR, [70, 90], '8ths', 5),
       LT('g-ear', 10, 'Transcribe a line', 'תמלול קו', [GE('transcribe', { option: 0 }), GE('transcribe', { option: 1 })], BLUES_KEYS, [70, 100], '8ths', 9),
+      // Progressions by ear (progEar.ts), all 12 keys: strummed back as shells, drop 2 or drop 3; graded per chord by the
+      // chroma (harmonyGrade.ts). The jazz add-on (ii–V–I voicings); three levels keep the family within 13.
+      { ...LT('g-ear', 11, 'ii–V–I by ear: shells, then drop 2', 'ii–V–I בשמיעה: קונכיות, ואז דרופ 2', [GE('prog-iivi', { option: 0, position: 0 }), GE('prog-iivi', { option: 1, position: 0 }), GE('prog-iivi', { option: 0, position: 1 }), GE('prog-iivi', { option: 1, position: 1 })], GKEYS_MAJOR, [60, 90], 'chords', 9), addOn: 'jazz' as const },
+      { ...LT('g-ear', 12, 'Eight bars by ear: secondaries (drop 3), tritone subs and the backdoor (drop 2)', 'שמונה תיבות בשמיעה: משניות (דרופ 3), תחליפי טריטון ודלת אחורית (דרופ 2)', [GE('prog-secinv', { position: 2 }), GE('prog-subs', { position: 1 })], GKEYS_MAJOR, [60, 90], 'chords', 9), addOn: 'jazz' as const },
+      { ...LT('g-ear', 13, 'Altered dominants (drop 2) and a 12-bar jazz blues, comped', 'דומיננטות אלטרד (דרופ 2) ובלוז ג׳אז של 12 תיבות, בקומפינג', [GE('prog-altered', { option: 0, position: 1 }), GE('prog-altered', { option: 1, position: 1 }), GE('prog-blues', { option: 0, position: 0 }), GE('prog-blues', { option: 1, position: 0 })], GKEYS_MAJOR, [70, 110], 'chords', 9), addOn: 'jazz' as const },
     ]),
     fam('g-impro', 'Improvising: target notes', 'אלתור: צלילי מטרה', 'jazz', ['blues', 'rock', 'jazz', 'all'], [
       L('g-impro', 1, 'Roots on beat 1: blues, minor blues, ii–V–I, a standard', 'יסודות על 1: בלוז, בלוז מינורי, ii–V–I, סטנדרט', [I('targets-root'), I('targets-root', { option: 1 }), I('targets-root', { option: 2 }), I('targets-root', { option: 3 })], BLUES_KEYS),
@@ -2640,6 +2653,11 @@ export function guitarCatalog(): GuitarFamilyDef[] {
     guitarKeyMoveFamily(),
     // AUDIT-GAPS-2 High #1, #2, #3, #7, #8, #10: bebop vocabulary and lines over forms on the neck (the jazz add-on).
     guitarVocabFamily(LT, fam),
+    // Phrases by ear on the neck (the jazz add-on): hear a phrase over its chords, play it back (phraseDrills.ts).
+    guitarPhraseFamily(LT, fam),
+    // AUDIT-DEPTH-3 #4: chord-melody on the heads; C4/C3: a head comped on the neck, then reharmonised (jazz add-on).
+    guitarChordMelodyFamily(),
+    guitarTuneFamily(),
     // The 0.4x starter bass family: superseded by the b-* course families below (BASS_CURRICULUM §10.1). Kept, retired,
     // so old item ids, badges and frozen path units (tech:g-bass-*) stay valid.
     {

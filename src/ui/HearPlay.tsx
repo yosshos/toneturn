@@ -2,7 +2,8 @@
 // (bass — a progression comped without bass, play its roots). Measured by MIDI or the microphone's pitch onsets; the
 // notes are graded in order by pitch class, and on the rhythm tiers by their place in the bar after a count-in.
 
-import { gradeSequence, hearEvents, playbackItem, rootsItem, chordName, takeSeed, type HearItem, type Played, type TakeSave } from '../engine/instGames';
+import { useMemo } from 'react';
+import { gradeSequence, hearEvents, playbackItem, playbackLevelAt, rootsItem, chordName, takeSeed, type HearItem, type PlaybackInst, type Played, type TakeSave } from '../engine/instGames';
 import type { GameScreenProps } from './gameProps';
 import { listenNotes, type Heard } from './instCapture';
 import { midiName } from './Instrument';
@@ -33,7 +34,7 @@ async function hearItem(c: { item: HearItem; save: TakeSave; signal: AbortSignal
 async function takeItem(c: TakeCtx<HearItem>): Promise<TakeOutcome | 'mic-error' | null> {
   const { item, save, signal, settings, lang } = c;
   const heard: Heard[] = [];
-  const bass = item.game === 'rootsear';
+  const bass = item.game === 'rootsear' || item.inst === 'bass';
   try {
     await piano.unlock();
   } catch {
@@ -107,7 +108,7 @@ function HearBoard({ item, phase, outcome, cell, lang }: { item: HearItem; save:
         </span>
         {item.rhythm && <span>♩ {item.swing ? (lang === 'he' ? 'סווינג' : 'swing') : lang === 'he' ? 'במקצב' : 'in rhythm'}</span>}
       </p>
-      <div className="inst-cells" dir="ltr">
+      <div className={`inst-cells ${cells.length > 8 ? 'many' : ''}`} dir="ltr">
         {cells.map((x, i) => (
           <span key={i} className={`inst-cell ${phase === 'play' && i === cell ? 'now' : ''} ${reveal ? (outcome?.marks?.[i] ?? '') : ''}`}>
             <b>{x.top}</b>
@@ -119,30 +120,39 @@ function HearBoard({ item, phase, outcome, cell, lang }: { item: HearItem; save:
   );
 }
 
-const PLAYBACK: TakeGameCfg<HearItem> = {
-  game: 'playback',
-  className: 'playback',
-  tx: {
-    title: { en: 'Play It Back', he: 'לנגן בחזרה' },
-    blurb: { en: 'The key sounds, then a phrase. Play it back on your keyboard (MIDI) or piano (microphone). From f, after a count-in and in its rhythm. Six phrases, three lives.', he: 'הסולם נשמע, ואחריו משפט. נגנו אותו בחזרה על הקלידים (MIDI) או על הפסנתר (מיקרופון). מ־f — אחרי ספירה ובמקצב שלו. שישה משפטים, שלושה חיים.' },
-    unit: { en: 'Phrase', he: 'משפט' },
-    play: { en: 'Play it back', he: 'לנגן בחזרה' },
-    playing: { en: 'Your turn — play it', he: 'תורכם — נגנו' },
-  },
-  inputs: ['midi', 'mic'],
-  defaultInput: () => 'midi',
-  item: (s, i) => playbackItem(takeSeed(s, i), s.level),
-  hear: (c) => hearItem(c),
-  take: takeItem,
-  board: (p) => <HearBoard {...p} />,
+/** Play It Back on the course's instrument (owner 2026-11-14): keys, guitar or bass. */
+const playbackInstOf = (course: string | undefined): PlaybackInst => (course === 'guitar' ? 'guitar' : course === 'bass' ? 'bass' : 'keys');
+const PB_ON: Record<PlaybackInst, { en: string; he: string }> = {
+  keys: { en: 'on your keyboard (MIDI) or piano (microphone)', he: 'על הקלידים (MIDI) או על הפסנתר (מיקרופון)' },
+  guitar: { en: 'on your guitar (microphone or MIDI)', he: 'על הגיטרה (מיקרופון או MIDI)' },
+  bass: { en: 'on your bass (microphone or MIDI)', he: 'על הבס (מיקרופון או MIDI)' },
 };
+function playbackCfg(inst: PlaybackInst): TakeGameCfg<HearItem> {
+  return {
+    game: 'playback',
+    className: 'playback',
+    tx: {
+      title: { en: 'Play It Back', he: 'לנגן בחזרה' },
+      blurb: { en: `The key sounds, then a phrase. Play it back ${PB_ON[inst].en}. From f, after a count-in and in its rhythm; ff climbs to bebop lines. Six phrases, three lives.`, he: `הסולם נשמע, ואחריו משפט. נגנו אותו בחזרה ${PB_ON[inst].he}. מ־f — אחרי ספירה ובמקצב שלו; ב־ff עד קווי ביבופ. שישה משפטים, שלושה חיים.` },
+      unit: { en: 'Phrase', he: 'משפט' },
+      play: { en: 'Play it back', he: 'לנגן בחזרה' },
+      playing: { en: 'Your turn — play it', he: 'תורכם — נגנו' },
+    },
+    inputs: inst === 'keys' ? ['midi', 'mic'] : ['mic', 'midi'],
+    defaultInput: () => (inst === 'keys' ? 'midi' : 'mic'),
+    item: (s, i) => playbackItem(takeSeed(s, i), playbackLevelAt(s, i), inst),
+    hear: (c) => hearItem(c),
+    take: takeItem,
+    board: (p) => <HearBoard {...p} />,
+  };
+}
 
 const ROOTS: TakeGameCfg<HearItem> = {
   game: 'rootsear',
   className: 'rootsear',
   tx: {
     title: { en: 'Roots by Ear', he: 'שורשים מהאוזן' },
-    blurb: { en: 'A progression on the piano, no bass. Play its roots on the bass, one per chord, in order. Eight progressions, three lives.', he: 'מהלך בפסנתר, בלי בס. נגנו את השורשים שלו בבס, אחד לכל אקורד, לפי הסדר. שמונה מהלכים, שלושה חיים.' },
+    blurb: { en: 'A progression on the piano, no bass. Play its roots, low on your bass or guitar, one per chord, in order. Eight progressions, three lives.', he: 'מהלך בפסנתר, בלי בס. נגנו את השורשים שלו, נמוך בבס או בגיטרה, אחד לכל אקורד, לפי הסדר. שמונה מהלכים, שלושה חיים.' },
     unit: { en: 'Progression', he: 'מהלך' },
     play: { en: 'Play the roots', he: 'לנגן את השורשים' },
     playing: { en: 'Your turn — the roots, in order', he: 'תורכם — השורשים, לפי הסדר' },
@@ -155,5 +165,9 @@ const ROOTS: TakeGameCfg<HearItem> = {
   board: (p) => <HearBoard {...p} />,
 };
 
-export const PlayItBack = (p: GameScreenProps) => <TakeShell cfg={PLAYBACK} {...p} />;
+export function PlayItBack(p: GameScreenProps) {
+  const inst = playbackInstOf(p.settings.activeCourse);
+  const cfg = useMemo(() => playbackCfg(inst), [inst]);
+  return <TakeShell cfg={cfg} {...p} />;
+}
 export const RootsByEar = (p: GameScreenProps) => <TakeShell cfg={ROOTS} {...p} />;

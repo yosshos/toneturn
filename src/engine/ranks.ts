@@ -239,12 +239,15 @@ export function stepRank(p: RankState | undefined, target: number | null, now: s
  * Update every area's rank after ratings changed (call after a session / drill set, and on app open).
  * `events` = the rating events kept in progress (placement sets are discounted from the evidence).
  */
-export function updateRanks(prev: Ranks | undefined, ratings: Ratings, events: RatingEvent[], now: string, technique?: TechniqueInput | null): { ranks: Ranks; changes: RankChange[] } {
+export function updateRanks(prev: Ranks | undefined, ratings: Ratings, events: RatingEvent[], now: string, technique?: TechniqueInput | null, hold: RankArea[] = []): { ranks: Ranks; changes: RankChange[] } {
   const out: Ranks = {};
   const changes: RankChange[] = [];
   for (const a of RANK_AREAS) {
     const p = prev?.[a];
-    const target = a === 'technique' ? (technique === undefined ? null : techniqueTarget(technique)) : areaTarget(ratings, events, a);
+    const t0 = a === 'technique' ? (technique === undefined ? null : techniqueTarget(technique)) : areaTarget(ratings, events, a);
+    // SPEC-PATH-ROLE §6 Q2: the checkpoint is promotion — an area with an open checkpoint on the path keeps its
+    // division until the checkpoint is passed (never a gate for the path itself; never a demotion).
+    const target = hold.includes(a) && p && t0 !== null ? Math.min(t0, p.div) : t0;
     const n = stepRank(p, target, now);
     if (!n) continue;
     out[a] = n;

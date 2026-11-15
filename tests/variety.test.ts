@@ -42,7 +42,7 @@ describe('item variety', () => {
       });
     }
     expect(thin).toEqual([]);
-  });
+  }, 120_000); // + the grid dictation (8 levels)
 
   it('variation keeps the answer and every option consistent (same shift for the question and the options)', () => {
     const q = asChoice(genTopic('polyrhythm', 12345, 1, 'x'));

@@ -3,9 +3,8 @@
 // The path is WHAT to learn, the workout is HOW MUCH TODAY (§9): blocks serve path steps first. Pure.
 
 import type { DomainId } from './rating';
-import { DOMAINS } from './rating';
 import type { SkillId } from './lesson';
-import { GOAL_WEIGHTS, type Goal, type PathStep, type PathView, type UnitStep } from './path';
+import { pendingChecks, type Goal, type PathStep, type PathView, type UnitStep } from './path';
 
 export type BlockTarget =
   | { kind: 'path' }
@@ -18,7 +17,10 @@ export type BlockTarget =
   /** Off-app practice on the player's own instrument: a timer, the metronome, a note (W12). */
   | { kind: 'practice' }
   /** Reviews + the weakest sub-skills only ("Fix my mistakes", W14). */
-  | { kind: 'mistakes' };
+  | { kind: 'mistakes' }
+  /** SPEC-PATH-ROLE §3: depth on what is already opened — technique weak keys first and the tempo ladder
+   *  (planWithFocus), the weakest opened ear / theory steps. */
+  | { kind: 'strengthen' };
 
 export interface Block {
   id: string;
@@ -31,7 +33,6 @@ export const LIMITS = { minTotal: 5, maxTotal: 60, minBlock: 2, maxBlock: 30, ma
 /** Minutes a path step takes, a checkpoint (§9.2). */
 export const STEP_MIN = 1.5;
 export const CHECK_MIN = 2;
-const AREAS: DomainId[] = DOMAINS.map((d) => d.id);
 
 export const total = (bs: Block[]) => bs.reduce((a, b) => a + b.minutes, 0);
 const clampM = (m: number) => Math.max(LIMITS.minBlock, Math.min(LIMITS.maxBlock, Math.round(m)));
@@ -60,7 +61,16 @@ export interface SuggestInput {
   licksDue?: number;
   /** Learned pieces due for a review run (SPEC-PIECE §2.10): a 3-minute piece-review block, taken from the path block. */
   piecesDue?: number;
+  /** SPEC-PATH-ROLE §6 Q3: "guide me" (default) or "I choose" — no New block; strengthen + review only. */
+  pathMode?: PathMode;
+  /** Opened items the strengthen block can draw from; default: the opened steps in the view (0 = a new player). */
+  opened?: number;
 }
+
+export type PathMode = 'guide' | 'choose';
+
+/** SPEC-PATH-ROLE §3: default shares of the total (rounded to whole blocks; the player can still edit everything). */
+export const SHARES = { new: 0.22, strengthen: 0.48, review: 0.3 };
 
 /** Open steps of the current unit (and the checkpoint), per area. */
 export function unitRemaining(view: PathView): { byArea: Map<DomainId, number>; check: boolean; unitN: number | null; steps: number; done: number } {
@@ -81,13 +91,34 @@ export function unitRemaining(view: PathView): { byArea: Map<DomainId, number>; 
   return { byArea, check, unitN: unit.no ?? unit.n, steps: unit.steps.length, done };
 }
 
-/** W4: exact shapes for the common totals (path minutes, area minutes in weight order, warm-up, game). */
-const SHAPES: Record<number, { warm: number; path: number; areas: number[]; game: number }> = {
-  5: { warm: 0, path: 3, areas: [2], game: 0 },
-  10: { warm: 2, path: 4, areas: [2, 2], game: 0 },
-  15: { warm: 2, path: 5, areas: [3, 2], game: 3 },
-  20: { warm: 2, path: 6, areas: [4, 3, 2], game: 3 },
-};
+/** Opened steps in a view (✓ done or tested, on the road or in the history; not checkpoints or reviews). */
+export function openedCount(view: PathView): number {
+  const done = (x: UnitStep) => (x.state === 'done' || x.state === 'mastered' || x.state === 'tested') && x.step.kind !== 'check' && x.step.kind !== 'review';
+  return [...view.history, ...view.units.filter((u) => u.status !== 'projected')].reduce((a, u) => a + u.steps.filter(done).length, 0);
+}
+
+/**
+ * Whole-minute shares (≥ LIMITS.minBlock each) of T for the three blocks, largest remainder. A block whose share is 0
+ * is left out; when T can't hold them all, review goes first, then new.
+ */
+export function splitShares(T: number, sh: { new: number; strengthen: number; review: number }): { new: number; strengthen: number; review: number } {
+  let keys = (['new', 'strengthen', 'review'] as const).filter((k) => sh[k] > 0);
+  for (const drop of ['review', 'new'] as const) if (keys.length * LIMITS.minBlock > T && keys.length > 1 && keys.includes(drop)) keys = keys.filter((k) => k !== drop);
+  const sum = keys.reduce((a, k) => a + sh[k], 0) || 1;
+  const out = { new: 0, strengthen: 0, review: 0 };
+  const raw = keys.map((k) => ({ k, q: (sh[k] / sum) * T }));
+  for (const r of raw) out[r.k] = Math.max(LIMITS.minBlock, Math.floor(r.q));
+  let diff = T - keys.reduce((a, k) => a + out[k], 0);
+  const byRem = [...raw].sort((a, b) => b.q - Math.floor(b.q) - (a.q - Math.floor(a.q)));
+  for (let i = 0; diff > 0; i = (i + 1) % byRem.length, diff--) out[byRem[i].k]++;
+  for (let guard = 0; diff < 0 && guard < 100; guard++) {
+    const k = [...keys].sort((a, b) => out[b] - out[a])[0];
+    if (out[k] <= LIMITS.minBlock) break;
+    out[k]--;
+    diff++;
+  }
+  return out;
+}
 
 /** W6: drop or replace blocks whose target no longer exists for this player. */
 export function validateTemplate(bs: Block[], ok: { leaveOut: DomainId[]; topics: Set<string>; hidden: string[]; games: Set<string> }): Block[] {
@@ -105,22 +136,27 @@ export function validateTemplate(bs: Block[], ok: { leaveOut: DomainId[]; topics
 export function suggestWorkout(inp: SuggestInput): Block[] {
   const out = withLicks(inp, suggestBase(inp));
   if (!inp.piecesDue || inp.template?.length || total(out) < 10) return out;
-  // The piece review: a short block (weak bars, then one full run at tempo) from the path block or the largest block.
-  const from = out.find((b) => b.target.kind === 'path' && b.minutes >= 3 + LIMITS.minBlock) ?? [...out].sort((a, b) => b.minutes - a.minutes).find((b) => b.minutes >= 3 + LIMITS.minBlock);
+  // The piece review (part of the review share, SPEC-PATH-ROLE §3): a short block (weak bars, then one full run at
+  // tempo) from the review block, else the largest block; placed after the review.
+  const from = reviewSource(out, 3);
   if (!from) return out;
   from.minutes -= 3;
-  const at = out.findIndex((b) => b.target.kind === 'path');
+  const at = out.findIndex((b) => b.target.kind === 'warmup');
   out.splice(at < 0 ? out.length : at + 1, 0, { id: uid(out, 'game'), target: { kind: 'game', game: 'pieces' }, minutes: 3 });
   return out;
 }
 
+/** The block a review add-on (licks, pieces) takes its minutes from: the review block, else the largest one. */
+const reviewSource = (out: Block[], m: number): Block | undefined =>
+  out.find((b) => b.target.kind === 'warmup' && b.minutes >= m + LIMITS.minBlock) ?? [...out].sort((a, b) => b.minutes - a.minutes).find((b) => b.minutes >= m + LIMITS.minBlock);
+
 function withLicks(inp: SuggestInput, out: Block[]): Block[] {
   if (!inp.licksDue || inp.template?.length || total(out) < 10) return out;
-  // The lick review: 2 minutes from the path block (or the largest block), after the warm-up.
-  const from = out.find((b) => b.target.kind === 'path' && b.minutes >= 2 + LIMITS.minBlock) ?? [...out].sort((a, b) => b.minutes - a.minutes).find((b) => b.minutes >= 2 + LIMITS.minBlock);
+  // The lick review (review share): 2 minutes from the review block (or the largest block), after the review.
+  const from = reviewSource(out, 2);
   if (!from) return out;
   from.minutes -= 2;
-  const at = out.findIndex((b) => b.target.kind === 'path');
+  const at = out.findIndex((b) => b.target.kind === 'warmup');
   const block: Block = { id: uid(out, 'game'), target: { kind: 'game', game: 'licks' }, minutes: 2 };
   out.splice(at < 0 ? out.length : at + 1, 0, block);
   return out;
@@ -128,79 +164,42 @@ function withLicks(inp: SuggestInput, out: Block[]): Block[] {
 
 function suggestBase(inp: SuggestInput): Block[] {
   const T = Math.max(LIMITS.minTotal, Math.min(LIMITS.maxTotal, Math.round(inp.total)));
+  // Migration (SPEC-PATH-ROLE §7.1): a saved template the player made stays exactly theirs (rescaled to the total);
+  // only generated suggestions use the new shares.
   if (inp.template?.length) return rescale(inp.template.map((b) => ({ ...b })), T);
   const out: Block[] = [];
-  const push = (target: BlockTarget, minutes: number) => out.push({ id: uid(out, target.kind), target, minutes });
-  const shape = SHAPES[T];
-  if (shape) {
-    // Areas: the current unit's open areas first (§9.2), then the player's top areas by weight.
-    const rem0 = unitRemaining(inp.view);
-    const gw0 = GOAL_WEIGHTS[inp.goal] ?? GOAL_WEIGHTS.general;
-    const w0 = (a: DomainId) => (gw0[AREAS.indexOf(a)] ?? 1) * (inp.priorities ? Math.max(1, 5 - Math.max(0, inp.priorities.indexOf(a))) : 2);
-    const cand = [...new Set([...[...rem0.byArea.keys()].sort((x, y) => w0(y) - w0(x)), ...AREAS.slice().sort((x, y) => w0(y) - w0(x))])].filter((a) => !inp.leaveOut.includes(a) && w0(a) > 0);
-    if (inp.singer && T >= 15) push({ kind: 'vocal' }, 2);
-    // 0.61 (owner): an instrument course warms up on its own technique (today's measured drills), and its path —
-    // about half technique levels — does the rest; no second drills block.
-    const warmT: BlockTarget = inp.technique ? { kind: 'game', game: 'drills' } : { kind: 'warmup' };
-    if (shape.warm && (inp.reviewsDue > 0 || T >= 10 || inp.technique)) push(warmT, shape.warm);
-    const warmed = out.some((b) => b.target.kind === 'warmup' || (b.target.kind === 'game' && b.target.game === 'drills'));
-    push({ kind: 'path' }, shape.path + (shape.warm && !warmed ? shape.warm : 0) + (inp.technique ? shape.game : 0));
-    shape.areas.forEach((m, i) => cand[i] && push({ kind: 'area', area: cand[i] }, m));
-    if (shape.game && !inp.technique) push({ kind: 'game', game: 'highway' }, shape.game);
-    const diff = T - total(out);
-    if (diff !== 0) {
-      const p = out.find((b) => b.target.kind === 'path')!;
-      p.minutes = Math.max(LIMITS.minBlock, p.minutes + diff);
+  const push = (target: BlockTarget, minutes: number) => {
+    // A long block is split at LIMITS.maxBlock (a 60-minute "I choose" workout has two strengthen blocks).
+    for (let left = minutes; left > 0; ) {
+      const m = left > LIMITS.maxBlock ? Math.min(LIMITS.maxBlock, left - LIMITS.minBlock) : left;
+      out.push({ id: uid(out, target.kind), target, minutes: m });
+      left -= m;
     }
-    return out;
-  }
-  if (inp.singer && T >= 10) push({ kind: 'vocal' }, 3);
-  if (inp.technique) push({ kind: 'game', game: 'drills' }, 2);
-  else if (inp.reviewsDue > 0 || T >= 10) push({ kind: 'warmup' }, 2);
-  const rem = unitRemaining(inp.view);
-  // §9.2: minutes for the current unit, area by area (each step ≈ 1.5 min, the checkpoint ≈ 2).
-  const fixed = total(out);
-  const game = T >= 15 && !inp.technique ? 3 : 0;
-  let left = T - fixed - game;
-  const gw = GOAL_WEIGHTS[inp.goal] ?? GOAL_WEIGHTS.general;
-  const weight = (a: DomainId) => {
-    const g = gw[AREAS.indexOf(a)] ?? 1;
-    const r = inp.priorities ? Math.max(1, 5 - Math.max(0, inp.priorities.indexOf(a))) : 2;
-    return g * r;
   };
-  const areas = [...rem.byArea.entries()].filter(([a]) => !inp.leaveOut.includes(a)).sort((x, y) => weight(y[0]) - weight(x[0]) || x[0].localeCompare(y[0]));
-  if (rem.check && !areas.length) {
-    push({ kind: 'path' }, Math.min(left, Math.max(CHECK_MIN, 3)));
-    left -= Math.min(left, Math.max(CHECK_MIN, 3));
+  // SPEC-PATH-ROLE §3: new (the path) ~22 %, strengthen (opened items: weak keys, the tempo ladder, weak ear
+  // sub-skills) ~48 %, review (spaced reviews, licks / pieces, a game) ~30 %. A new player with nothing opened: the
+  // path takes the strengthen share too. "I choose" (§6 Q3): no New block — strengthen + review.
+  const choose = inp.pathMode === 'choose';
+  const opened = inp.opened ?? openedCount(inp.view);
+  const sh = choose ? { new: 0, strengthen: SHARES.new + SHARES.strengthen, review: SHARES.review } : opened === 0 ? { new: SHARES.new + SHARES.strengthen, strengthen: 0, review: SHARES.review } : { ...SHARES };
+  const m = splitShares(T, sh);
+  let game = 0;
+  if (m.review) {
+    let r = m.review;
+    if (inp.singer && T >= 15 && r >= 2 * LIMITS.minBlock) {
+      push({ kind: 'vocal' }, 2);
+      r -= 2;
+    }
+    game = !inp.technique && T >= 15 && r >= 3 + LIMITS.minBlock ? 3 : 0;
+    // Review opens the workout: the spaced reviews due (or the weakest skill) as the warm-up.
+    push({ kind: 'warmup' }, r - game);
   }
-  for (const [a, n] of areas.slice(0, 4)) {
-    if (left < 2) break;
-    const want = Math.max(2, Math.round(n * STEP_MIN));
-    const m = Math.min(left, want);
-    push({ kind: 'area', area: a }, m);
-    left -= m;
-  }
-  if (rem.check && areas.length && left >= CHECK_MIN) {
-    push({ kind: 'path' }, CHECK_MIN);
-    left -= CHECK_MIN;
-  }
-  // The remainder: more of the top areas by weight (free practice once their path steps are done).
-  const top = AREAS.filter((a) => !inp.leaveOut.includes(a)).sort((x, y) => weight(y) - weight(x));
-  for (let i = 0; left >= 2 && i < top.length && out.length < LIMITS.maxBlocks - (game ? 1 : 0); i++) {
-    const ex = out.find((b) => b.target.kind === 'area' && b.target.area === top[i]);
-    const m = Math.min(left, Math.max(2, Math.round(left / 2)));
-    if (ex) ex.minutes = clampM(ex.minutes + m);
-    else push({ kind: 'area', area: top[i] }, m);
-    left -= m;
-  }
-  if (left > 0 && out.length) {
-    const last = [...out].reverse().find((b) => b.target.kind === 'area') ?? out[out.length - 1];
-    last.minutes = clampM(last.minutes + left);
-  }
+  // New: the path's next steps (lesson + first pass); a waiting checkpoint first (nextForBlock).
+  if (m.new) push({ kind: 'path' }, m.new);
+  if (m.strengthen) push({ kind: 'strengthen' }, m.strengthen);
   if (game) push({ kind: 'game', game: 'highway' }, game);
   return out;
 }
-
 // ---------------------------------------------------------------- editing (§4)
 
 /** W5: can the blocks take this total? (locked minutes must fit, every unlocked block keeps ≥ 2). */
@@ -325,7 +324,13 @@ export function nextForBlock(b: Block, view: PathView, done: Set<string>): { ste
     if (t.kind === 'topic') return s.topic === t.topic;
     return false;
   };
-  if (b.target.kind === 'warmup' || b.target.kind === 'game' || b.target.kind === 'vocal' || b.target.kind === 'practice' || b.target.kind === 'mistakes') return { free: b.target };
+  if (b.target.kind === 'warmup' || b.target.kind === 'game' || b.target.kind === 'vocal' || b.target.kind === 'practice' || b.target.kind === 'mistakes' || b.target.kind === 'strengthen') return { free: b.target };
+  // SPEC-PATH-ROLE §3: a unit waiting for its checkpoint — the checkpoint takes the New block (the most recent first).
+  if (b.target.kind === 'path') {
+    const pend = pendingChecks(view).filter((p) => !done.has(p.step.step.id));
+    const last = pend[pend.length - 1];
+    if (last) return { step: last.step, unitId: last.unit.id };
+  }
   for (const u of [cur, next]) {
     if (!u) continue;
     // Inside the current unit any order; the checkpoint only when the rest is done (Path block).

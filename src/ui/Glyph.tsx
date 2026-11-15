@@ -952,6 +952,32 @@ Object.assign(GLYPHS, {
     </>
   ),
 });
+// Phrases by ear: an ear with a rising line of note heads coming out of it (keys); the same over strings (guitar) and
+// over the bass's two low strings (bass).
+const phr = (
+  <>
+    <path d="M-24 4 C-24 -12 -16 -20 -8 -20 C0 -20 4 -13 4 -7 C4 1 -4 3 -4 11" {...sw} strokeWidth={3} />
+    <path d="M-15 -6 C-15 -11 -9 -12 -8 -7" {...sw} strokeWidth={2.4} />
+    {head(8, 12, 4.4, 3.2)}
+    {head(15, 1, 4.4, 3.2)}
+    {head(22, -10, 4.4, 3.2)}
+  </>
+);
+Object.assign(GLYPHS, {
+  phrase: phr,
+  gphrase: (
+    <>
+      <path d="M-26 20 H26 M-26 25 H26" stroke={I} strokeWidth={1.3} />
+      {phr}
+    </>
+  ),
+  bphrase: (
+    <>
+      <path d="M-26 -24 H26 M-26 22 H26" stroke={I} strokeWidth={3} />
+      {phr}
+    </>
+  ),
+});
 // PIANO_JAZZ P2 path wiring: a repertoire step (a lead sheet with a bookmark), the Transcription Race as a bonus step
 // (a staff with a stopwatch — the transcription coach keeps its pencil) and the Reharm Spotter as a bonus step (a chord,
 // a magnifier on the changed one — the k-reharm family keeps its chord-to-chord arrow).
@@ -1153,6 +1179,46 @@ Object.assign(GLYPHS, {
       <circle cx={14} cy={-5} r={3.6} fill={I} />
       <circle cx={10} cy={-15} r={3.6} fill={I} />
       <path d="M-6 -20 L4 -24" {...sw} strokeWidth={2.4} />
+    </>
+  ),
+});
+// AUDIT-DEPTH-3: heads — a melody note on top of a stacked chord (harmonise; over strings: chord-melody), and a lead
+// sheet's bars with comping slashes (comp a head; over strings on the guitar, a thick string on the bass).
+const harmStack = (
+  <>
+    {head(-4, 14, 6, 4.4)}
+    {head(-4, 5, 6, 4.4)}
+    {head(-4, -4, 6, 4.4)}
+    {head(-4, -15, 7, 5)}
+    <path d="M3 -15 V-34" {...sw} strokeWidth={2.6} />
+    <path d="M-26 -15 H-12 M5 -15 H26" {...sw} strokeWidth={1.8} strokeDasharray="3 3" />
+  </>
+);
+const leadSheet = (
+  <>
+    <path d="M-24 -16 V10 M0 -16 V10 M24 -16 V10" {...sw} strokeWidth={2.4} />
+    <path d="M-18 6 L-12 -10 M-10 6 L-4 -10 M6 6 L12 -10 M14 6 L20 -10" {...sw} strokeWidth={3} strokeLinecap="round" />
+  </>
+);
+Object.assign(GLYPHS, {
+  harmmel: harmStack,
+  chordmel: (
+    <>
+      {harmStack}
+      <path d="M-26 22 H26 M-26 26 H26" stroke={I} strokeWidth={1.4} />
+    </>
+  ),
+  tunecomp: leadSheet,
+  gtunecomp: (
+    <>
+      {leadSheet}
+      <path d="M-26 18 H26 M-26 23 H26" stroke={I} strokeWidth={1.4} />
+    </>
+  ),
+  btunecomp: (
+    <>
+      {leadSheet}
+      <path d="M-26 20 H26" stroke={I} strokeWidth={3.2} />
     </>
   ),
 });

@@ -43,7 +43,7 @@ const TX = {
 const KEYS_5THS = [0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5];
 const KEY_N = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
 
-export function InsightsScreen({ lang, progress, onBack, onTopic, onDrills, onDrillKey, onPieces, onGroove, course = 'ear' }: { lang: 'en' | 'he'; progress: Progress; /** Only the active course's cards show (GUITAR_AUDIT P2). */ course?: CourseId; onBack: () => void; onTopic: (id: string, level: number) => void; onDrills: () => void; /** Key mastery: start a skill in one key. */ onDrillKey?: (family: FamilyId, key: number) => void; onPieces: () => void; onGroove?: () => void }) {
+export function InsightsScreen({ lang, progress, onBack, onTopic, onDrills, onDrillKey, onPieces, onGroove, course = 'ear', nearMastery }: { lang: 'en' | 'he'; progress: Progress; /** SPEC-PATH-ROLE §8: path units close to mastery, for the weekly summary. */ nearMastery?: string; /** Only the active course's cards show (GUITAR_AUDIT P2). */ course?: CourseId; onBack: () => void; onTopic: (id: string, level: number) => void; onDrills: () => void; /** Key mastery: start a skill in one key. */ onDrillKey?: (family: FamilyId, key: number) => void; onPieces: () => void; onGroove?: () => void }) {
   const tx = TX[lang];
   const on = (c: Parameters<typeof showsInsight>[0]) => showsInsight(c, course);
   const [model, setModel] = useState<PlayerModel | null>(null);
@@ -82,7 +82,7 @@ export function InsightsScreen({ lang, progress, onBack, onTopic, onDrills, onDr
         <h1>{tx.title}</h1>
       </header>
 
-      {profile && <ProfileCard profile={profile} lang={lang} tx={tx} shows={(src) => on(SOURCE_CARD[src])} act={act} />}
+      {profile && <ProfileCard profile={profile} lang={lang} tx={tx} shows={(src) => on(SOURCE_CARD[src])} act={act} nearMastery={nearMastery} />}
 
       {on('ear-index') && (
       <section className="set-card in-ear" data-ear-index={ei?.r ?? ''}>
@@ -271,7 +271,7 @@ function KeysCard({ keys, lang, onDrillKey, onDrills }: { keys: InstrumentKeys[]
 }
 
 /** The player profile (SPEC-AI §8): strengths, recurring patterns with their week streak, and patterns that went away. */
-function ProfileCard({ profile, lang, tx, shows, act }: { profile: Profile; lang: 'en' | 'he'; tx: (typeof TX)['en']; shows: (s: ProfileSource) => boolean; act: (a?: ProfileAction) => (() => void) | undefined }) {
+function ProfileCard({ profile, lang, tx, shows, act, nearMastery }: { nearMastery?: string; profile: Profile; lang: 'en' | 'he'; tx: (typeof TX)['en']; shows: (s: ProfileSource) => boolean; act: (a?: ProfileAction) => (() => void) | undefined }) {
   const strengths = profile.strengths.filter((r) => shows(r.source)).slice(0, 2);
   const patterns = profile.patterns.filter((r) => shows(r.source)).slice(0, 3);
   const gone = profile.gone.filter((r) => shows(r.source)).slice(0, 2);
@@ -324,7 +324,7 @@ function ProfileCard({ profile, lang, tx, shows, act }: { profile: Profile; lang
               </ul>
             </>
           )}
-          {(patterns.length > 0 || strengths.length > 0) && <WeeklyCoach lang={lang} digest={profileDigest({ ...profile, strengths, patterns, gone })} />}
+          {(patterns.length > 0 || strengths.length > 0) && <WeeklyCoach lang={lang} digest={profileDigest({ ...profile, strengths, patterns, gone }, { nearMastery })} />}
           {gone.length > 0 && (
             <>
               <h3 className="in-sub">{tx.gone}</h3>

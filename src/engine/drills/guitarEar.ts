@@ -10,7 +10,9 @@
 import type { Drill, DrillSpec } from './types';
 import type { PercKind } from '../lesson';
 import type { Tuning } from '../fretboard';
-import { chordShape, finish, mod, place, rng, strumNotes, NAMES, type Ev, type GN, type Q } from './guitar';
+import { chordShape, drop2Voicings, finish, mod, place, rng, strumNotes, NAMES, type Ev, type GN, type Q } from './guitar';
+import { A_SECTION, beatsOf, callNotes, harmonyPlan, placeChords, progEarChords, PROG_EAR_NAME, type ProgEarKind } from './progEar';
+import { GQ_IV, GX_IV, keyName as progKeyName, type GChord } from '../progGrid';
 import type { ChordQuality } from '../chordRecognize';
 /** EN / HE pair (local: guitar.ts helpers can't run at module load). */
 const t = (en: string, he: string) => ({ en, he });
@@ -57,8 +59,92 @@ function at(tu: Tuning, pitch: number, low = false): { s: number; f: number } {
   return place(tu, pitch, strs, 0, 12) ?? place(tu, pitch, [6, 5, 4, 3, 2, 1], 0, 17)!;
 }
 
+/** The four pitch classes of a 4-note guitar voicing: the colour replaces the root (9ths) or the 5th (13, ♯11, ♭13). */
+function fourOf(c: GChord): number[] {
+  const iv = GQ_IV[c.q];
+  const seventh = iv[3] ?? (c.q === 'm' ? 10 : c.q === 'dim' ? 9 : 11);
+  let ivs = [0, iv[1], iv[2], seventh];
+  const col = GX_IV[c.x] ?? [];
+  if (c.x === 'alt') ivs = [iv[1], seventh, 13, 20];
+  else if (col.length) {
+    const t2 = col[0] % 12;
+    ivs = [1, 2, 3].includes(t2) ? [t2, iv[1], iv[2], seventh] : [0, iv[1], t2, seventh];
+  }
+  return ivs.map((i) => mod(c.root + i, 12));
+}
+/** A shell (root + 3rd + 7th) on strings 6-4-3 or 5-4-3, its root fret nearest `near`. */
+function shellOn(tu: Tuning, c: GChord, near: number): { s: number; f: number }[] {
+  const iv = GQ_IV[c.q];
+  const third = iv[1];
+  const seventh = iv[3] ?? iv[2];
+  const opts: { s: number; f: number }[][] = [];
+  for (const rs of [6, 5]) {
+    for (let f = 1; f <= 12; f++) {
+      const R = noteAt(tu, rs, f);
+      if (mod(R - c.root, 12) !== 0) continue;
+      const hi = rs === 6 ? [R + seventh, R + 12 + third] : [R + third, R + seventh];
+      const ns = hi.map((m, k) => ({ s: [4, 3][k], f: m - tu.open[[4, 3][k] - 1] }));
+      if (ns.some((x) => x.f < 0 || x.f > 15)) continue;
+      const fr = [f, ...ns.map((x) => x.f)].filter((x) => x > 0);
+      if (Math.max(...fr) - Math.min(...fr) > 4) continue;
+      opts.push([{ s: rs, f }, ...ns]);
+    }
+  }
+  return opts.length ? opts.reduce((a, b) => (Math.abs(b[0].f - near) < Math.abs(a[0].f - near) ? b : a)) : [at(tu, 40 + mod(c.root - 40, 12))];
+}
+/** A drop-2 (strings 4-3-2-1) or drop-3 (strings 6-4-3-2) voicing, voice-led from the last one's top note. */
+function dropOn(tu: Tuning, c: GChord, strings: number[], near: number, top: number): { s: number; f: number }[] {
+  const cands = drop2Voicings(tu, fourOf(c), strings, 13);
+  if (!cands.length) return shellOn(tu, c, near);
+  const topOf = (v: { s: number; f: number }[]) => Math.max(...v.map((p) => noteAt(tu, p.s, p.f)));
+  const low = (v: { s: number; f: number }[]) => Math.min(...v.map((p) => p.f));
+  const cost = (v: { s: number; f: number }[]) => (top < 0 ? 0 : Math.abs(topOf(v) - top)) + 0.4 * Math.abs(low(v) - near);
+  return cands.reduce((a, b) => (cost(b) < cost(a) ? b : a));
+}
+/**
+ * Progressions by ear on the guitar (g-ear 11–16, progEar.ts): the band plays a progression, the player strums it back
+ * — shells (position 0), drop 2 (1) or drop 3 (2); long chords comped on 1 and 3. Graded per chord by the chroma
+ * (harmonyGrade.ts: root motion and colour; any voicing of the right notes).
+ */
+function generateGuitarProgEar(s: DrillSpec, tu: Tuning): Drill {
+  const key = mod(s.key, 12);
+  const op = s.option ?? 0;
+  const voicing = s.position ?? 0;
+  const kind = s.kind.slice(5) as ProgEarKind;
+  const rnd = rng(`g-ear:${s.kind}:${key}:${op}:${voicing}`);
+  const ds = progEarChords(kind, op, rnd);
+  const heard = kind === 'bridge' ? [...A_SECTION, ...ds] : ds;
+  const callLen = beatsOf(heard);
+  const call = callNotes(placeChords(key, heard, 0), kind === 'iivi' || kind === 'secinv' ? 'shell' : 'rootless');
+  const ans = placeChords(key, ds, callLen);
+  const evs: Ev[] = [];
+  let near = 5;
+  let top = -1;
+  for (const { c, beat } of ans) {
+    const v = voicing === 1 ? dropOn(tu, c, [4, 3, 2, 1], near, top) : voicing === 2 ? dropOn(tu, c, [6, 4, 3, 2], near, top) : shellOn(tu, c, near);
+    near = Math.min(...v.map((p) => p.f)) || near;
+    top = Math.max(...v.map((p) => noteAt(tu, p.s, p.f)));
+    const strum = (): GN[] => v.map((p) => ({ ...p, tech: 'strum-down' as const, stroke: 'D' as const }));
+    // Comped: on 1, and again on 3 when the chord lasts a bar or more.
+    const hits = c.beats >= 4 ? [0, 2] : [0];
+    for (const h of hits) evs.push({ beat: beat + h, dur: Math.min(2, c.beats - h), notes: strum() });
+  }
+  const nm = PROG_EAR_NAME[kind][Math.min(op, PROG_EAR_NAME[kind].length - 1)];
+  const vEn = ['shells', 'drop 2', 'drop 3'][voicing] ?? 'shells';
+  const vHe = ['קונכיות', 'דרופ 2', 'דרופ 3'][voicing] ?? 'קונכיות';
+  const d = finish(s, tu, evs, { title: t(`${nm.en}, ${vEn} · ${progKeyName(key)}`, `${nm.he}, ${vHe} · ${progKeyName(key, true)}`), bpm: 72, evenness: false, keySig: 'C' });
+  const ask =
+    kind === 'bridge'
+      ? t('Hear the A, then the bridge — strum the bridge back', 'שמעו את ה־A ואז את הגשר — פרטו את הגשר בחזרה')
+      : t(`Hear the progression — strum it back (${vEn})`, `שמעו את המהלך — פרטו אותו בחזרה (${vHe})`);
+  // The call ends a beat before the answer (the take drops onsets just after a window: a ringing speaker).
+  const notes = call.filter((n) => n.beat < callLen - 1).map((n) => ({ ...n, dur: Math.min(n.dur, callLen - 1 - n.beat) }));
+  return { ...d, show: 'none', chart: ans.map((a) => a.c.sym), harmony: harmonyPlan(ans, 'chords', false), listen: { notes, windows: [[0, callLen - 1]], ask } };
+}
+
 /** Build a g-ear drill. */
 export function generateGuitarEar(s: DrillSpec, tu: Tuning): Drill {
+  if (s.kind.startsWith('prog-')) return generateGuitarProgEar(s, tu);
   const key = mod(s.key, 12);
   const op = s.option ?? 0;
   const rnd = rng(`g-ear:${s.kind}:${key}:${op}`);

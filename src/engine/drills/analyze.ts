@@ -5,6 +5,7 @@ import type { Drill, DrillCalibration, DynamicsGoal, ExpNote, Hand, NoteResult, 
 import { vlDistance } from './generate';
 import { hasTimeline, timeMapOf, timelineMs } from './timeline';
 import { analyzeVoiceLeadTake } from './voiceLeadAnalyze';
+import { analyzePhraseTake } from './phraseGrade';
 
 const mod12 = (n: number): number => ((n % 12) + 12) % 12;
 /** Borrowing feedback: the voices of a 4-note chord, top to bottom. */
@@ -339,6 +340,8 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
   // Voice leading (k-vl / g-vl): the voicing chosen at each chord, graded by type + smallest motion (voiceLeadAnalyze.ts).
   // By microphone the piano can't tell which voicing was played: the take is not measured (below, like loudness goals).
   if (drill.goal.vl && !opts.mic) return analyzeVoiceLeadTake(drill, bpm, played0, { rubato: opts.rubato });
+  // Phrases by ear (phraseDrills.ts): note by note with the transcription coach's comparer, partial credit.
+  if (drill.phrase) return analyzePhraseTake(drill, bpm, played0);
   // Improv mode: the right hand above the split plays freely and is checked elsewhere (against the chord-scales).
   const played = drill.freeAbove !== undefined ? played0.filter((p) => p.pitch < drill.freeAbove!) : played0;
   const exp = drill.notes;

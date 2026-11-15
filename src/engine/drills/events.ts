@@ -10,6 +10,8 @@ export const isGuitarDrill = (drill: Drill): boolean => drill.spec.family.starts
 
 /** Difficulty of a take: the tempo band (T1–T7) on the rating scale 600–1600, + a little for hands together. */
 export function drillDifficulty(drill: Drill, m: TakeMetrics): number {
+  // Phrases by ear: the level's rating (1200 … 1900), + up to 60 for the tempo above the level's start.
+  if (drill.phrase) return Math.round(1100 + drill.phrase.level * 100 + Math.max(0, Math.min(60, (m.bpm - drill.startBpm) * 1.5)));
   const band = tempoBand(m.nps);
   return Math.round(Math.min(1600, 640 + band * 120 + (drill.spec.hands === 'RL' ? 60 : 0)));
 }
@@ -40,6 +42,8 @@ function secondTag(drill: Drill): Tags[number] | null {
   // the drum-kit reading sub-skill; every drum take is also a timing take (it is all time).
   // AUDIT-GAPS-2: bebop vocabulary on every instrument — the time items feed timing by their click (2 & 4 / the "and"
   // → when the click moves, the gap → through the gaps), Harris lines the Barry sub, the rest improvising vocabulary.
+  // Phrases by ear: melodic dictation, answered on the instrument.
+  if (f === 'k-phrase' || f === 'g-phrase' || f === 'b-phrase') return { skill: 'dictation', sub: 'dictation/transcribe', w: 0.5 };
   if (f === 'k-vocab' || f === 'g-bebop' || f === 'b-bebop') {
     if (drill.click === '24' || drill.click === 'and') return { skill: 'timing', sub: 'timing/backbeat', w: 0.4 };
     if (drill.click === 'gap') return { skill: 'timing', sub: 'timing/gap', w: 0.4 };
@@ -84,7 +88,7 @@ function secondTag(drill: Drill): Tags[number] | null {
   if (f === 'b-ear') {
     const k = drill.spec.kind;
     if (k === 'quality2' || k === 'quality3') return { skill: 'chords', sub: 'chords/extension', w: 0.5 };
-    if (k === 'motion' || k === 'secdom' || k === 'where' || k === 'dropin' || k === 'bridge') return { skill: 'cadences', sub: 'cadences/progression', w: 0.5 };
+    if (k === 'motion' || k === 'secdom' || k === 'where' || k === 'dropin' || k === 'bridge' || k === 'walk-ear' || k === 'form-ear') return { skill: 'cadences', sub: 'cadences/progression', w: 0.5 };
     if (k === 'transcribe-long') return { skill: 'dictation', sub: 'dictation/bass', w: 0.5 };
     if (k === 'riff-ear') return { skill: 'rhythm-dictation', sub: 'rhythm-dictation/dictate', w: 0.5 };
     // BASS_NICHE_PLAN E5: the grouping of an odd meter, the new beat after a modulation.
@@ -106,7 +110,7 @@ function secondTag(drill: Drill): Tags[number] | null {
     if (k === 'intervals') return { skill: 'intervals', sub: drill.spec.option === 2 ? 'intervals/harmonic' : 'intervals/melodic', w: 0.5 };
     if (k === 'bass-line') return { skill: 'dictation', sub: 'dictation/bass', w: 0.5 };
     if (k === 'two-part') return { skill: 'dictation', sub: 'dictation/two-part', w: 0.5 };
-    if (k === 'chords') return { skill: 'cadences', sub: 'cadences/progression', w: 0.5 };
+    if (k === 'chords' || k.startsWith('prog-')) return { skill: 'cadences', sub: 'cadences/progression', w: 0.5 };
     if (k === 'harmonise') return { skill: 'cadences', sub: 'cadences/harmonize', w: 0.5 };
     if (k === 'transpose') return { skill: 'transpose', sub: 'transpose/pitch', w: 0.5 };
     return { skill: 'sequences', sub: 'sequences/melody', w: 0.5 };
@@ -117,7 +121,7 @@ function secondTag(drill: Drill): Tags[number] | null {
     const k = drill.spec.kind;
     if (k === 'tonic' || k === 'key') return { skill: 'degrees', sub: 'degrees/find-tonic', w: 0.5 };
     if (k === 'rhythm') return { skill: 'rhythm-dictation', sub: 'rhythm-dictation/dictate', w: 0.5 };
-    if (k === 'roots') return { skill: 'cadences', sub: 'cadences/progression', w: 0.5 };
+    if (k === 'roots' || k.startsWith('prog-')) return { skill: 'cadences', sub: 'cadences/progression', w: 0.5 };
     if (k === 'quality') return { skill: 'chords', sub: 'chords/quality', w: 0.5 };
     return { skill: 'dictation', sub: 'dictation/melodic', w: 0.5 };
   }
@@ -145,6 +149,10 @@ function secondTag(drill: Drill): Tags[number] | null {
   // Voice leading as a performed skill (AUDIT-CONTENT-THEORY §ה.2): the theory share is voice leading.
   if (f === 'k-vl' || f === 'g-vl') return { skill: 'theory', sub: 'theory/voice-leading', w: 0.3 };
   // AUDIT-GAPS-2: key changes rate the modulation sub-skill; turnarounds and the bridge rate progressions.
+  // AUDIT-DEPTH-3: heads — harmonising and chord-melody rate voice leading; comping a head rates progressions (a
+  // reharm: reharmonisation).
+  if (f === 'k-harm' || f === 'g-cmel') return { skill: 'theory', sub: 'theory/voice-leading', w: 0.3 };
+  if (f === 'k-tune' || f === 'g-tune' || f === 'b-tune') return { skill: 'cadences', sub: 'cadences/progression', w: 0.3 };
   if (f === 'k-keys' || f === 'g-keys' || f === 'b-keys')
     return drill.spec.kind === 'km-turn' || drill.spec.kind === 'km-bridge' ? { skill: 'cadences', sub: 'cadences/progression', w: 0.3 } : { skill: 'cadences', sub: 'cadences/modulation', w: 0.3 };
   if (f === 'k-reharm') {

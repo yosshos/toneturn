@@ -26,6 +26,8 @@ import { refresherFor } from '../content/refresher';
 import { useRefresher } from './MiniLesson';
 import type { MiniLesson } from '../content/miniTypes';
 import { DiagramView, PlaceSurfaceView } from './Instrument';
+import { GridDictation } from './GridDictation';
+import { gridLine } from '../engine/progGrid';
 import { itemNeedsHeadphones } from '../engine/fx';
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { answerFromMidi, INTERVAL_SEMITONES, makeLesson, pcFromKey, questionSkill, type IntervalName, type IntroCard, type SkillId, type LessonDef, type LessonId, type Question } from '../engine/lesson';
@@ -320,9 +322,10 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
   const isSeq = q.kind === 'degree-seq' || q.kind === 'name-seq';
   const isRead = q.kind === 'rhythm-read';
   const isPlace = q.kind === 'place';
-  const showButtons = v.stage === 'question' && !paused && !v.error && !isSing && !isSeq && !isRead && !isPlace && (v.mode === 'buttons' || v.needsListenTap);
+  const isGrid = q.kind === 'grid';
+  const showButtons = v.stage === 'question' && !paused && !v.error && !isSing && !isSeq && !isRead && !isPlace && !isGrid && (v.mode === 'buttons' || v.needsListenTap);
   // Place questions (spec AE §3.3): the surface is the answer pad; after the answer it shows yours and the right notes.
-  const placeRec = isPlace ? v.session.records[v.index] : null;
+  const placeRec = isPlace || isGrid ? v.session.records[v.index] : null;
   const placeLast = placeRec?.attempts.length ? String(placeRec.attempts[placeRec.attempts.length - 1].answer) : null;
   // "Play", not "Sing": the player's instrument, or a line the question asks to play back on an instrument (guitar course).
   const playing = ((!!settings.instrument && !['voice'].includes(settings.instrument)) && !sungSkill(q)) || (q.kind === 'sing-seq' && !!q.play);
@@ -346,7 +349,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
   // 0.70 (owner): a rhythm / time question (rhythm memory, meter, tempo…) shows no keyboard — it means nothing there.
   // A question whose sound has no pitched notes (rhythms, markers, rests, percussion events) is about time, not keys.
   const timeQuestion = isTimeOnly(q);
-  const hideKeyboard = q.kind === 'rhythm-read' || q.kind === 'rhythm-dict' || timeQuestion || keysAreHint || (q.kind === 'choice' && !!q.chart);
+  const hideKeyboard = q.kind === 'grid' || q.kind === 'rhythm-read' || q.kind === 'rhythm-dict' || timeQuestion || keysAreHint || (q.kind === 'choice' && !!q.chart);
   const orbLabel =
     q.kind === 'degree'
       ? target
@@ -530,6 +533,17 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
                   {q.show && <NoteStaff notes={q.show.midis} chord={!!q.show.chord} keyPc={q.show.key ?? null} clef={q.show.clef ?? 'treble'} />}
                   {q.diagram && <DiagramView d={q.diagram} settings={settings} />}
                 </div>
+              ) : q.kind === 'grid' ? (
+                // Grid dictation: the slots and chip rows are the answer pad; the fix-it pass keeps the right slots.
+                <GridDictation
+                  key={`${v.index}-${answered ? 'r' : 'q'}-${placeRec?.attempts.length ?? 0}`}
+                  q={q}
+                  lang={lang}
+                  disabled={!awaiting || answered || v.stage !== 'question' || paused}
+                  first={!answered && placeRec?.attempts.length ? String(placeRec.attempts[0].answer) : null}
+                  result={answered ? (placeLast ?? '') : null}
+                  onSubmit={(a) => ctrl.answer(a)}
+                />
               ) : q.kind === 'place' ? (
                 <div className="choice-show place-given">
                   {q.text && <p className="choice-text">{q.text[lang]}</p>}
@@ -580,8 +594,8 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
             </div>
           )}
           <h1 className="ask">{withNote(askTemplate(q, lang, nm), target, keyName)}</h1>
-          <PaceBar v={v} t={t} />
-          <Listening v={v} t={t} hint={hintText(q, lang, v.mode === 'voice' && !v.needsListenTap)} />
+          {!isGrid && <PaceBar v={v} t={t} />}
+          {!isGrid && <Listening v={v} t={t} hint={hintText(q, lang, v.mode === 'voice' && !v.needsListenTap)} />}
           <FeedbackBanner v={v} t={t} lang={lang} settings={settings} onExplain={() => openAi('explain', 'miss')} />
           {v.awaitNext && v.canCompare && (
             <div className="fb-actions" data-await-next="1">
@@ -1068,10 +1082,11 @@ function FeedbackBanner({ v, t, lang, settings, onExplain }: { v: LessonView; t:
       text = f.sung ? sungText : performed ? t.correct : `${t.correct} ${ansText}`;
       break;
     case 'retry':
-      text = f.sung ? sungText : t.notQuite;
+      // Grid dictation: one line — the parts right so far (the fix-it pass opens on the grid).
+      text = f.sung ? sungText : q.kind === 'grid' && f.given !== undefined ? gridLine(q, String(f.given), lang) : t.notQuite;
       break;
     case 'reveal':
-      text = q.kind === 'sing' ? t.listenToTarget : performed ? (q.kind === 'rhythm-read' ? (lang === 'he' ? 'לא בדיוק בזמן' : 'Not quite in time') : t.notQuite) : `${t.revealed}: ${ansText}`;
+      text = q.kind === 'grid' && f.given !== undefined ? gridLine(q, String(f.given), lang) : q.kind === 'sing' ? t.listenToTarget : performed ? (q.kind === 'rhythm-read' ? (lang === 'he' ? 'לא בדיוק בזמן' : 'Not quite in time') : t.notQuite) : `${t.revealed}: ${ansText}`;
       break;
     case 'skipped':
       text = t.skipped;

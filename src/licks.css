@@ -31,6 +31,9 @@
 .lk-col.passed small { color: var(--ink); font-weight: 700; }
 .lk-actions { flex-wrap: wrap; }
 .lk-voice-hint { color: var(--ink-dim); }
+/* Licks by ear: the chart over the hidden notes, the reveal link (less credit). */
+.lk-ear-chart { margin: 0; color: var(--ink-dim); font-size: 0.85rem; font-weight: 600; overflow-wrap: anywhere; }
+.lk-reveal { justify-self: start; font-size: 0.85rem; }
 .lk-chart { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
 .lk-chart li { border: 1px solid var(--line-strong); border-radius: 8px; padding: 4px 2px; text-align: center; font-size: 0.78rem; font-weight: 600; background: var(--card); }
 .lk-chart li.now { background: var(--lemon); border-color: var(--outline); }

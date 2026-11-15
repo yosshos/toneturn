@@ -28,6 +28,10 @@ import { UNITS as VL_EAR } from './mini/vlEar';
 import { UNITS as KEY_MOVES } from './mini/keyMoves';
 // AUDIT-GAPS-2: bebop vocabulary (k-vocab, g-bebop, b-bebop).
 import { UNITS as BEBOP_VOCAB } from './mini/bebopVocab';
+// Phrases by ear (k-phrase, g-phrase, b-phrase).
+import { UNITS as PHRASES_BY_EAR } from './mini/phrasesByEar';
+import { UNITS as PROG_GRID } from './mini/progGrid'; // progressions by ear
+import { UNITS as HEADS_UNITS } from './mini/heads'; // AUDIT-DEPTH-3: heads
 
 export const UNIT_LESSON: Record<string, string> = {
   // 0.38 (spec AE): each area file maps its own topics.
@@ -59,6 +63,9 @@ export const UNIT_LESSON: Record<string, string> = {
   ...VL_EAR,
   ...KEY_MOVES,
   ...BEBOP_VOCAB,
+  ...PHRASES_BY_EAR,
+  ...PROG_GRID,
+  ...HEADS_UNITS,
   // Learning path
   'bflat-two-homes': 'bflat-two-homes',
   'degrees-135': 'degrees-135',

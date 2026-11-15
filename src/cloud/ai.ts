@@ -28,9 +28,11 @@ function scripted(kind: AiKind, r: AiRequest): AiResult {
   const wk = typeof r.context.weakKeys === 'string' && r.context.weakKeys ? r.context.weakKeys : '';
   const keysEn = wk ? ` Weak keys: ${wk}.` : ' This week: ii–V lines in E♭, A♭ and D♭ at ♩80, slow and clean first.';
   const keysHe = wk ? ` סולמות חלשים: ${wk}.` : ' השבוע: שורות II–V ב־E♭, A♭ ו־D♭ ב־♩80, קודם לאט ונקי.';
+  // SPEC-PATH-ROLE §8: the weekly summary names the unit closest to mastery (from the digest's line).
+  const nm = typeof r.context.nearMastery === 'string' && r.context.nearMastery ? r.context.nearMastery.split(' | ')[0] : '';
   const t: Record<AiKind, string> = {
     card: he ? 'הזיהוי של מז׳ור ומינור יציב. בפעם הבאה: שורות II–V ב־E♭ וב־A♭ ב־♩80.' : 'Major and minor are steady now. Next time: ii–V lines in E♭ and A♭ at ♩80.',
-    weekly: he ? `השבוע הזמן שלכם התייצב. הבלבול בין סקסטה לספטימה עדיין חוזר — שווה לתרגל את שתיהן זו לצד זו.${keysHe}` : `Your time steadied this week. The sixth/seventh mix-up still recurs — practise the two side by side.${keysEn}`,
+    weekly: he ? `השבוע הזמן שלכם התייצב. הבלבול בין סקסטה לספטימה עדיין חוזר — שווה לתרגל את שתיהן זו לצד זו.${keysHe}${nm ? ` קרוב לשליטה: ${nm}.` : ''}` : `Your time steadied this week. The sixth/seventh mix-up still recurs — practise the two side by side.${keysEn}${nm ? ` Close to mastery: ${nm}.` : ''}`,
     explain: he ? 'הסבר לדוגמה (מצב סימולציה).' : 'A sample explanation (simulation mode).',
     hint: he ? 'הקשיבו לכיוון: האם הצליל השני עולה או יורד?' : 'Listen to the direction: does the second note go up or down?',
   };

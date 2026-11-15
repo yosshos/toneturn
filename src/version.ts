@@ -18,6 +18,24 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.91.0',
+    date: '2026-11-14',
+    en: [
+      'The path teaches what’s new; today’s workout builds depth. A step is opened at 3 keys, 4★ at half the keys at tempo, mastered (gold) at all 12. Each step shows what’s missing, mastered units get a seal, and a step left alone for a month asks for a refresh. The checkpoint plays 4 random keys and only holds back your rank, never the path. “Path: guide me / I choose” in Settings.',
+      'Every standard in all 12 keys, and every jazz and theory level on keys, guitar and bass too.',
+      'Key changes: turnarounds, the rhythm-changes bridge, a pivot chord, ii–V of the new key, the common diminished (all three), the tritone sub, and 6-dim lines from key to key — plus “how did it modulate?” by ear.',
+      'Bebop vocabulary: approach notes and every kind of enclosure, the click on 2 and 4 and a silent bar, Barry Harris’s important minor, 3 to ♭9 and the triplet rules, and bebop lines on guitar and bass.',
+      'By ear: chord progressions you write bar by bar — root, quality, bass — with partial credit and a fix-it pass, up to a whole AABA; progressions and phrases played back on keys, guitar and bass; Play It Back on guitar and bass; a by-ear mode for licks.',
+    ],
+    he: [
+      'המסלול מלמד את החדש, והאימון היומי בונה עומק. צעד נפתח ב־3 סולמות, 4★ בחצי מהסולמות בטמפו, ונשלט (זהב) בכל 12. כל צעד מראה מה חסר, יחידה שנשלטה מקבלת חותם, וצעד שלא תורגל חודש מבקש רענון. מבחן הביניים מנגן 4 סולמות אקראיים ומעכב רק את הדרגה, לא את המסלול. "מסלול: הדריכו אותי / אני בוחר" בהגדרות.',
+      'כל סטנדרט בכל 12 הסולמות, וכל שלבי הג׳אז והתיאוריה בקלידים, בגיטרה ובבס.',
+      'מעברי סולם: turnarounds, ה־bridge של rhythm changes, אקורד ציר, ii–V לסולם החדש, הדימיניש המשותף (כל השלושה), תחליף טריטון וקווי 6־dim מסולם לסולם — ובשמיעה: "איך עברנו סולם?".',
+      'שפת הביבופ: צלילי גישה וכל סוגי ה־enclosure, מטרונום על 2 ו־4 ותיבה שקטה, המינור החשוב של בארי האריס, 3 עד ♭9 וכללי הטריולות, וקווי ביבופ בגיטרה ובבס.',
+      'בשמיעה: התקדמויות אקורדים שכותבים תיבה אחרי תיבה — שורש, איכות, בס — עם ניקוד חלקי וסבב תיקון, עד AABA שלם; נגינה חוזרת של התקדמויות ופרייזים בקלידים, בגיטרה ובבס; Play It Back בגיטרה ובבס; מצב "בשמיעה" לליקים.',
+    ],
+  },
+  {
     version: '0.90.0',
     date: '2026-11-14',
     en: [

@@ -14,8 +14,13 @@ import { parseChart } from '../charts';
 import { genKeysRhythm, keysRhythmFamily } from './keysRhythm'; // AUDIT-CONTENT-THEORY R-1/R-2/R-5
 import { ARP_QUALITIES, ARP_SYM, mirrorArp, pivotArp, pivotEnclosureLine, scalePivotLine, straightArp, type ArpQuality } from '../pivotArp'; // BH-G: the pivot
 import { genKeysVocab, keysVocabFamily } from './vocabDrills'; // AUDIT-GAPS-2: bebop vocabulary
-import { genHarmPiano, pianoHarmFamily } from './harmLadder'; // AUDIT-SCALES: harmonization ladder, borrowing
+import { genHarmPiano, pianoScaleHarmFamily } from './harmLadder'; // AUDIT-SCALES: harmonization ladder, borrowing
 import { genIndep, indepFamily } from './indepDrills'; // AUDIT-SCALES §3: hand independence
+import { genKeysPhrase, keysPhraseFamily } from './phraseDrills'; // phrases by ear
+import { A_SECTION, beatsOf, callNotes, harmonyPlan, KEYS_STYLE, placeChords, progEarChords, PROG_EAR_NAME, type ProgEarKind } from './progEar'; // progressions by ear
+import { colourPcs, keyName as progKeyName, voiceChords } from '../progGrid';
+// AUDIT-DEPTH-3 #2–#4, C1/C3/C4: heads — harmonise a melody, comp a head, reharmonise it (headDrills.ts).
+import { genHeadPiano, pianoHarmFamily, pianoTuneFamily } from './headDrills';
 // THEORY_PLAY: the k-theory family's music.
 import { LINE_CLICHE, RQ_SYM, RQ_TONES, pairLineUp, pentGroups, upFrom, pairById, pairName, pairTriads, pentById, pentName, pentNotes, ustById, type PairId, type PentId, type RQ, type Ust, type UstId } from '../theoryPlay';
 import type { Drill, DrillGoal, DrillSpec, DynamicsGoal, ExpNote, FamilyId, Hand, KeyOrder, Motion, ScaleType, Variant } from './types';
@@ -3258,7 +3263,44 @@ export const KEYS_EAR_TEMPO: [number, number] = [72, 88];
 /** The placement probe for the pianist's ear: three notes by step, played back (ear L2), in C. */
 export const KEYS_EAR_PROBE: DrillSpec = { family: 'k-ear', kind: 'echo-motif', key: 0, hands: 'R', tempo: 72 };
 
+/**
+ * Progressions by ear on the keys (k-ear 10–16, progEar.ts): the band plays a progression (shells, rootless, an AABA's A
+ * then its bridge), then the player plays it back — the bass in the left hand, the voicing in the right (any voicing of
+ * the right notes passes the chord sets). Graded per chord for root, colour and bass (harmonyGrade.ts).
+ */
+function genKeysProgEar(s: DrillSpec): Drill {
+  const key = mod(s.key, 12);
+  const op = s.option ?? 0;
+  const kind = s.kind.slice(5) as ProgEarKind;
+  const rnd = rng(`k-ear:${s.kind}:${key}:${op}`);
+  const ds = progEarChords(kind, op, rnd);
+  const style = KEYS_STYLE[kind];
+  const heard = kind === 'bridge' ? [...A_SECTION, ...ds] : ds;
+  const callLen = beatsOf(heard);
+  const callPlaced = placeChords(key, heard, 0);
+  const notes: NonNullable<Drill['listen']>['notes'] = callNotes(callPlaced, style);
+  // The answer: the progression (the bridge only) again, right after the call.
+  const ans = placeChords(key, ds, callLen);
+  const vs = voiceChords(ans.map((a) => a.c), style);
+  const evs: ChordEv[] = ans.map(({ c, beat }, i) => {
+    // The left hand plays the bass an octave up from the band's, always below the right hand (the hands never share a key).
+    let bass = vs[i].bass + 12;
+    while (bass >= Math.min(...vs[i].upper)) bass -= 12;
+    const required = [bass, ...colourPcs(c)];
+    const allowed = [...required, c.root, c.root + 7, ...vs[i].upper];
+    return { beat, dur: c.beats, notes: [{ pitch: bass, hand: 'L' as Hand }, ...vs[i].upper.map((p) => ({ pitch: p, hand: 'R' as Hand }))], required, allowed };
+  });
+  const nm = PROG_EAR_NAME[kind][Math.min(op, PROG_EAR_NAME[kind].length - 1)];
+  const ask = kind === 'bridge'
+    ? t('Hear the A, then the bridge — play the bridge back: bass in the left hand, the chord in the right', 'שמעו את ה־A ואז את הגשר — נגנו את הגשר בחזרה: בס ביד שמאל, האקורד ביד ימין')
+    : t('Hear the progression — play it back: bass in the left hand, the chord in the right', 'שמעו את המהלך — נגנו אותו בחזרה: בס ביד שמאל, האקורד ביד ימין');
+  const ttl = { en: `${nm.en} · ${progKeyName(key)}`, he: `${nm.he} · ${progKeyName(key, true)}` };
+  const d = chordDrill({ ...s, key, hands: 'RL' }, evs, ttl, KEYS_EAR_TEMPO[0], {}, SIG[key]);
+  return { ...d, show: 'none', chart: ans.map((a) => a.c.sym), harmony: harmonyPlan(ans, 'chords', true), listen: { notes, windows: [[0, callLen]], ask } };
+}
+
 function genKeysEar(s: DrillSpec): Drill {
+  if (s.kind.startsWith('prog-')) return genKeysProgEar(s);
   const key = mod(s.key, 12);
   const op = s.option ?? 0;
   const rnd = rng(`k-ear:${s.kind}:${key}:${op}`);
@@ -5012,6 +5054,8 @@ export function generate(spec: DrillSpec): Drill {
   // AUDIT-SCALES: the harmonization ladder + Barry Harris borrowing, hand independence.
   if (s.family === 'k-sharm') return genHarmPiano(s);
   if (s.family === 'k-indep') return genIndep(s);
+  if (s.family === 'k-phrase') return genKeysPhrase(s);
+  if (s.family === 'k-harm' || s.family === 'k-tune') return genHeadPiano(s);
   if (s.kind.startsWith('chart~')) return genChart(s);
   switch (s.kind) {
     case 'scale':
@@ -5178,6 +5222,8 @@ export function catalog(): FamilyDef[] {
   // The pianist's ear: one tempo range for every level.
   const E = (level: number, en: string, he: string, specs: SpecTemplate[], keys: number[]): LevelDef => ({ id: `k-ear-${level}`, level, title: t(en, he), specs: specs.map((x) => ({ ...x, tempo: KEYS_EAR_TEMPO[0] })), keys, tempo: KEYS_EAR_TEMPO });
   const ke = (kind: string, option?: number): SpecTemplate => ({ family: 'k-ear', kind, hands: 'R', ...(option !== undefined ? { option } : {}) });
+  // Progressions by ear: every key, up the cycle of 4ths from C.
+  const ALL12 = [0, 5, 10, 3, 8, 1, 6, 11, 4, 9, 2, 7];
   // PIANO_JAZZ: jazz-piano levels with a start → target tempo (♩) for every item (chords and swung 8ths alike).
   const JT = (fam: FamilyId, level: number, en: string, he: string, specs: SpecTemplate[], keys: LevelDef['keys'], tempo: [number, number]): LevelDef => ({ id: `${fam}-${level}`, level, title: t(en, he), specs: specs.map((x) => ({ ...x, tempo: tempo[0] })), keys, tempo });
   const sd = (kind: string, o: Partial<SpecTemplate> = {}): SpecTemplate => ({ family: 'k-sixdim', kind, hands: 'R', ...o });
@@ -6048,6 +6094,14 @@ export function catalog(): FamilyDef[] {
         E(8, 'Transpose a melody', 'טרנספוזיציה של מנגינה', [ke('transpose'), ke('transpose', 1)], [0, 7, 5, 2, 10, 3]),
         // PIANO_AUDIT P3: two-part playback — a melody over a bass, both hands.
         E(9, 'Two parts: melody and bass', 'שני קולות: מנגינה ובס', [{ ...ke('two-part'), hands: 'RL' }, { ...ke('two-part', 1), hands: 'RL' }], [0, 7, 5, 2, 10]),
+        // Progressions by ear (progEar.ts), all 12 keys: played back with the bass in the LH, graded per chord.
+        E(10, 'ii–V–I by ear, as shells', 'ii–V–I בשמיעה, בקונכיות', [{ ...ke('prog-iivi'), hands: 'RL' }, { ...ke('prog-iivi', 1), hands: 'RL' }], ALL12),
+        E(11, 'ii–V–I by ear, rootless A / B', 'ii–V–I בשמיעה, בלי יסוד A / B', [{ ...ke('prog-rootless'), hands: 'RL' }, { ...ke('prog-rootless', 1), hands: 'RL' }], ALL12),
+        E(12, 'Eight bars: secondaries and inversions', 'שמונה תיבות: משניות והיפוכים', [{ ...ke('prog-secinv'), hands: 'RL' }], ALL12),
+        E(13, 'Tritone subs and the backdoor by ear', 'תחליפי טריטון ודלת אחורית בשמיעה', [{ ...ke('prog-subs'), hands: 'RL' }], ALL12),
+        E(14, 'Altered dominants and upper structures', 'דומיננטות אלטרד ומבנים עליונים', [{ ...ke('prog-altered'), hands: 'RL' }, { ...ke('prog-altered', 1), hands: 'RL' }], ALL12),
+        E(15, 'A 12-bar jazz blues by ear', 'בלוז ג׳אז של 12 תיבות בשמיעה', [{ ...ke('prog-blues'), hands: 'RL' }, { ...ke('prog-blues', 1), hands: 'RL' }], ALL12),
+        E(16, 'An AABA bridge by ear', 'הגשר של שיר בצורת 32 תיבות, בשמיעה', [{ ...ke('prog-bridge'), hands: 'RL' }], ALL12),
       ],
     },
     // AUDIT-CONTENT-THEORY R-1/R-2/R-5: rhythm & meter on the keys, for either emphasis (keysRhythm.ts).
@@ -6060,6 +6114,12 @@ export function catalog(): FamilyDef[] {
     keysVocabFamily(),
     // AUDIT-SCALES (owner 2026-11-14): hand independence (Philipp style) and the scale-harmonization ladder with borrowing.
     indepFamily(),
+    pianoScaleHarmFamily(),
+    // Phrases by ear (owner 2026-11-14): hear a phrase over its chords, play it back — chord tones to 8 bars over a form.
+    keysPhraseFamily(),
+    // AUDIT-DEPTH-3 C1: harmonise a melody (shells, four-way close, drop 2, drop 3; pluggable styles) — headDrills.ts.
     pianoHarmFamily(),
+    // AUDIT-DEPTH-3 C4 + C3/#2: a head comped step by step, then reharmonised and comped (headDrills.ts).
+    pianoTuneFamily(),
   ]);
 }

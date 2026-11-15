@@ -8,7 +8,7 @@ import { analyzeGuitarTake, type GFrame } from '../src/engine/drills/guitarAnaly
 import { expTimeMs } from '../src/engine/drills/analyze';
 import type { Drill, PlayedNote } from '../src/engine/drills/types';
 
-const ORDER = ['b-pluck', 'b-time', 'b-fret', 'b-chord', 'b-ear', 'b-scale', 'b-length', 'b-pocket', 'b-read', 'b-posread', 'b-styles', 'b-ghost', 'b-walk', 'b-impro', 'b-swing', 'b-barry', 'b-jform', 'b-latin', 'b-std', 'b-keys', 'b-bebop', 'b-legato', 'b-ext', 'b-pick', 'b-odd', 'b-prog', 'b-poly', 'b-slap', 'b-up-pos', 'b-up-arco', 'b-up-scales', 'b-up-pizz', 'b-up-walk', 'b-up-read'];
+const ORDER = ['b-pluck', 'b-time', 'b-fret', 'b-chord', 'b-ear', 'b-scale', 'b-length', 'b-pocket', 'b-read', 'b-posread', 'b-styles', 'b-ghost', 'b-walk', 'b-impro', 'b-swing', 'b-barry', 'b-jform', 'b-latin', 'b-std', 'b-keys', 'b-bebop', 'b-phrase', 'b-tune', 'b-legato', 'b-ext', 'b-pick', 'b-odd', 'b-prog', 'b-poly', 'b-slap', 'b-up-pos', 'b-up-arco', 'b-up-scales', 'b-up-pizz', 'b-up-walk', 'b-up-read'];
 const BASS = guitarCatalog().filter((f) => f.id.startsWith('b-'));
 const TUNE_IDS = ['bass', 'bass5', 'bass6', 'bass-dropd'];
 
@@ -64,7 +64,7 @@ describe('bass course families', () => {
                 if (n.technique !== 'harmonic') expect(n.pitch, where).toBe(tu.open[n.string! - 1] + n.fret!);
               }
             }
-  }, 120000);
+  }, 600_000);
 
   it('start tempo of a new item is the level start tempo', () => {
     const lv = BASS.find((f) => f.id === 'b-walk')!.levels[0];

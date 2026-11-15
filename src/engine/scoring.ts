@@ -2,6 +2,7 @@
 // (skill rating, XP, tournament points). All weights live in SCORING; records are stored raw.
 
 import { gradePlace, type Answer, type Question } from './lesson';
+import { gradeGrid, gridCredit } from './progGrid';
 import { gradeMelody } from './memory';
 import type { SungResult } from './sing';
 
@@ -35,7 +36,7 @@ export interface AttemptEvidence {
 }
 
 /** Items with a small closed answer set get a guessing correction on retries. */
-export const isCategorical = (q: Question) => q.kind !== 'sing' && q.kind !== 'degree-seq' && q.kind !== 'sing-seq' && q.kind !== 'sing-run' && q.kind !== 'name-seq';
+export const isCategorical = (q: Question) => q.kind !== 'grid' && q.kind !== 'sing' && q.kind !== 'degree-seq' && q.kind !== 'sing-seq' && q.kind !== 'sing-run' && q.kind !== 'name-seq';
 
 // ---------------------------------------------------------------- accuracy a ∈ [0, 1]
 
@@ -50,6 +51,7 @@ export function pitchAccuracy(cents: number | null): number {
 /** Accuracy of a given answer to a question (categorical = 0/1; graded items partial). */
 export function accuracyFor(q: Question, answer: Answer, sung?: SungResult): number {
   if (q.kind === 'place') return gradePlace(q, String(answer)).score;
+  if (q.kind === 'grid') return gradeGrid(q, String(answer)).score;
   if (q.kind === 'sing') {
     if (!sung || sung.status === 'wrong' || sung.status === 'unclear') return 0;
     return pitchAccuracy(sung.cents);
@@ -115,8 +117,15 @@ export interface ItemOutcome {
   timed: boolean;
 }
 
-/** Best partial accuracy among attempts and the attempt it came from (for revealed graded items). */
-function best(o: ItemOutcome): { a: number; k: number } {
+/**
+ * Best partial accuracy among attempts and the attempt it came from (for revealed graded items). Grid dictation: the
+ * first try plus half of what the fix-it pass recovers, credited as a first try (progGrid.gridCredit).
+ */
+function best(o: ItemOutcome, q?: Question): { a: number; k: number } {
+  if (q?.kind === 'grid' && o.attempts.length) {
+    const later = o.attempts.slice(1).map((x) => x.accuracy);
+    return { a: gridCredit(o.attempts[0].accuracy, later.length ? Math.max(...later) : null), k: 1 };
+  }
   if (o.correctOn !== null) return { a: o.attempts[o.correctOn - 1]?.accuracy ?? 1, k: o.correctOn };
   let a = 0;
   let k = o.attempts.length || 1;
@@ -140,7 +149,7 @@ function timeTerm(q: Question, o: ItemOutcome, k: number): number {
 export function ratingScore(q: Question, o: ItemOutcome): number {
   if (!o.attempts.length) return 0;
   const cat = isCategorical(q);
-  const { a, k } = best(o);
+  const { a, k } = best(o, q);
   if (o.correctOn === null && cat) return 0;
   const g = attemptCredit(k, cat, q.choices.length);
   const time = SCORING.rating.timeBase + SCORING.rating.timeWeight * timeTerm(q, o, k);
@@ -154,7 +163,7 @@ export function ratingScore(q: Question, o: ItemOutcome): number {
 export function xpFor(q: Question, o: ItemOutcome, baseXp: number): number {
   if (baseXp <= 0) return 0;
   const cat = isCategorical(q);
-  const { a, k } = best(o);
+  const { a, k } = best(o, q);
   const g = o.correctOn === null && cat ? 0 : attemptCredit(k, cat, q.choices.length);
   let xp = Math.max(SCORING.xp.min, Math.round(baseXp * a * g * (q.aid ? 0.8 : 1)));
   if (o.timed && a >= SCORING.xp.bonusMinAccuracy && g > 0) {

@@ -136,7 +136,10 @@ export function mergeFacts(keep: PathFacts | undefined, other: PathFacts | undef
   }
   const tests = { ...(other.tests ?? {}), ...(keep.tests ?? {}) };
   const units = keep.units?.length ? keep.units : other.units;
-  return { ...(Object.keys(steps).length ? { steps } : {}), ...(units?.length ? { units } : {}), ...(Object.keys(tests).length ? { tests } : {}) };
+  // SPEC-PATH-ROLE: technique checked in keys at a checkpoint, and sealed units, are kept from both.
+  const keysChecked = { ...(other.keysChecked ?? {}), ...(keep.keysChecked ?? {}) };
+  const sealed = { ...(other.sealed ?? {}), ...(keep.sealed ?? {}) };
+  return { ...(Object.keys(steps).length ? { steps } : {}), ...(units?.length ? { units } : {}), ...(Object.keys(tests).length ? { tests } : {}), ...(Object.keys(keysChecked).length ? { keysChecked } : {}), ...(Object.keys(sealed).length ? { sealed } : {}) };
 }
 
 /** Settings fields that move when the active course changes. */

@@ -113,9 +113,21 @@ export function retryCoach(q: Question, given: Answer, l: Lang, seed: number, na
       if (!n) return null;
       return l === 'en' ? `${o} not ${n.en}. Listen for what sets it apart.` : `${o} זה לא ${n.he}. הקשיבו למה שמייחד אותו.`;
     }
+    case 'place':
+      return q.topic === 'jazz-phrase' ? phraseRetry(String(q.answer), String(given), o, l) : null;
     default:
       return null;
   }
+}
+
+/** Phrases by ear (jazz-phrase 6–7): where the transcription went off — sing up to that note, then find it. */
+export function phraseRetry(answer: string, given: string, o: string, l: Lang): string | null {
+  const want = answer.split('.');
+  const got = given.split('.');
+  const k = want.findIndex((x, i) => got[i] !== x);
+  if (k < 0) return null;
+  if (k === 0) return l === 'en' ? `${o} start with the first note: sing it against the chord, then find it.` : `${o} התחילו מהצליל הראשון: שירו אותו מול האקורד, ואז מצאו אותו.`;
+  return l === 'en' ? `${o} the first ${k} ${k === 1 ? 'note is' : 'notes are'} right. Sing the phrase up to note ${k + 1}, then find it.` : `${o} ${k === 1 ? 'הצליל הראשון נכון' : `${k} הצלילים הראשונים נכונים`}. שירו את המשפט עד צליל ${k + 1}, ואז מצאו אותו.`;
 }
 
 // ---------------------------------------------------------------- after the reveal: the difference
@@ -239,11 +251,15 @@ const TOPIC_CONTRAST: Record<string, { en: string; he: string }> = {
   'function-ear': { en: 'At rest = tonic; leaning away, ready to move on = pre-dominant; pulling hard to home = dominant.', he: 'נח = טוניקה; נוטה הלאה ומוכן לזוז = סובדומיננטה; מושך חזק הביתה = דומיננטה.' },
   'modal-cadence': { en: 'Find the one note outside plain major or minor: ♭7, ♯4, a major IV in minor, ♭2.', he: 'חפשו את הצליל האחד שמחוץ למז׳ור או למינור הרגיל: ♭7, ♯4, IV מז׳ורי במינור, ♭2.' },
   'borrowed-ext': { en: 'Follow the bass: a half step above home is ♭II, a minor 3rd above ♭III, a major 3rd below ♭VI.', he: 'עקבו אחרי הבס: חצי טון מעל הבית ♭II, טרצה קטנה מעל ♭III, טרצה גדולה מתחת ♭VI.' },
+  'grid-dictation': { en: 'Roots first: follow the bass and write every root. Then the colour: minor or major 3rd, which 7th, then the top note.', he: 'קודם היסודות: עקבו אחרי הבס וכתבו כל יסוד. אחר כך הצבע: טרצה קטנה או גדולה, איזו ספטימה, ואז הצליל העליון.' },
   'jazz-dictation': { en: 'Bass first, then each chord’s quality: minor 7, dominant or major 7.', he: 'קודם הבס, ואז האיכות של כל אקורד: מינור 7, דומיננט או מז׳ור 7.' },
   planing: { en: 'Planing moves every voice the same way by the same step; voice leading keeps notes and moves by small steps.', he: 'בפליינינג כל הקולות זזים יחד באותו צעד; בהובלת קולות צלילים נשארים וזזים בצעדים קטנים.' },
   'form-ear': { en: 'Count bars from the first tonic; for phrases, compare each with the first one.', he: 'ספרו תיבות מהטוניקה הראשונה; במשפטים, השוו כל אחד לראשון.' },
   // AUDIT-CONTENT-THEORY §ה.2
   // AUDIT-GAPS-2 #5/#19: how the key changed, and where to.
+  // AUDIT-DEPTH-3 C1/C3: melody against the chords (level 1: the note's role; level 2: which reharm device).
+  'melody-fit:1': { en: 'Sing the chord’s root, then count up to the melody note: 1 3 5 7 sit, 9 11 13 colour, a half step above a chord tone rubs.', he: 'שירו את יסוד האקורד, וספרו עד צליל המנגינה: 1 3 5 7 יושבים, 9 11 13 צובעים, חצי טון מעל צליל אקורד משפשף.' },
+  'melody-fit': { en: 'Follow the bass in both versions: a half step down is a tritone sub, a new chord before the V an extra ii–V, ♭VII7 the backdoor, a chromatic step up a passing dim, a falling inner line a cliché.', he: 'עקבו אחרי הבס בשתי הגרסאות: חצי טון למטה זה תחליף טריטון, אקורד חדש לפני ה־V זה ii–V נוסף, ♭VII7 זו הדלת האחורית, צעד כרומטי למעלה זה דימיניש עובר, קול פנימי יורד זו קלישאה.' },
   'modulation-means': { en: 'Find the chord where the old key stops: one both keys share is a pivot; a °7 that slides into a dominant is the common diminished; a ii–V or a ♭II7 aims at the new I; nothing at all is direct.', he: 'מצאו את האקורד שבו הסולם הישן נגמר: אקורד ששני הסולמות חולקים הוא ציר; °7 שמחליק לדומיננט הוא הדימיניש המשותף; ii–V או ♭II7 מכוונים אל ה־I החדש; בלי הכנה בכלל זה ישיר.' },
   'key-centres': { en: 'Sing the first tonic and keep it. When the next I arrives, sing up or down to it and count the half steps.', he: 'שירו את הטוניקה הראשונה ושמרו אותה. כשה־I הבא מגיע, שירו אליו למעלה או למטה וספרו חצאי טונים.' },
   'vl-ear': { en: 'Follow one voice at a time: the top first, then the bass, then the middle. Held notes ring on; moving ones sound new.', he: 'עקבו אחרי קול אחד בכל פעם: קודם העליון, אחר כך הבס, ואז האמצע. צלילים שנשארים ממשיכים לצלצל; צלילים שזזים נשמעים חדשים.' },
@@ -257,7 +273,7 @@ export interface SessionInsight {
   pair?: { topic: string; a: string; b: string };
 }
 
-const SEQUENCE_KINDS = new Set<Question['kind']>(['degree-seq', 'name-seq', 'sing-seq', 'sing-run', 'rhythm-read', 'rhythm-dict', 'place']);
+const SEQUENCE_KINDS = new Set<Question['kind']>(['degree-seq', 'name-seq', 'sing-seq', 'sing-run', 'rhythm-read', 'rhythm-dict', 'place', 'grid']);
 
 /** The confusion that came up most, or praise. `misses`: [right answer, given] per wrong try. */
 const QUAL_EN: Record<string, string> = { maj: 'major', min: 'minor', dim: 'diminished', aug: 'augmented' };

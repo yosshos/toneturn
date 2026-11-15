@@ -34,7 +34,7 @@ const P2_LEVELS = (): LevelDef[] => [
   ...levelsOf('b-ext'),
   ...levelsOf('b-impro').filter((l) => l.level >= 15),
   ...levelsOf('b-pick').filter((l) => l.level >= 9),
-  ...levelsOf('b-ear').filter((l) => l.level >= 20),
+  ...levelsOf('b-ear').filter((l) => l.level >= 20 && l.level <= 21), // (22–23: progressions by ear, tests/progGrid.test.ts)
 ];
 const verdict = (d: Drill, bpm: number, take: PlayedNote[]): TakeMetrics => withProg(analyzeGuitarTake(d, bpm, take), d, bpm, take);
 const first = (id: string, i = 0) => levelDrills(lv(id), 'fifths-up')[i];
@@ -47,7 +47,7 @@ describe('BASS_NICHE_PLAN P2: wiring', () => {
     expect(levelsOf('b-walk').length).toBe(20);
     expect(levelsOf('b-impro').length).toBe(18);
     expect(levelsOf('b-pick').length).toBe(10);
-    expect(levelsOf('b-ear').length).toBe(21);
+    expect(levelsOf('b-ear').length).toBe(23); // + 22–23: progressions by ear
     expect(levelsOf('b-up-walk').length).toBe(9);
     expect(levelsOf('b-std').length).toBe(5);
     expect(levelsOf('b-ext').length).toBe(9);

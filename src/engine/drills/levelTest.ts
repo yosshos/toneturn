@@ -63,6 +63,8 @@ const CHORDS_JAZZ: Rung[] = [
   r('voicings-9', 2, { cadences: 5, voicings: 10, 'k-sixdim': 4, 'k-reharm': 3, 'k-vl': 7, 'k-theory': 1, 'k-keys': 4 }),
   // AUDIT-GAPS-2: key changes — one diminished, four keys, voice-led (the top step: it proves the voice leading too).
   r('k-keys-7', 9, { cadences: 5, voicings: 10, 'k-sixdim': 5, 'k-reharm': 3, 'k-vl': 7, 'k-theory': 1, 'k-keys': 8 }),
+  // AUDIT-DEPTH-3: a phrase of a head in drop 2 with the melody on top (proves harmonising and drop-2 comping of a head).
+  r('k-harm-4', 4, { cadences: 5, voicings: 10, 'k-sixdim': 5, 'k-reharm': 3, 'k-vl': 7, 'k-theory': 1, 'k-keys': 8, 'k-harm': 5, 'k-tune': 5 }),
 ];
 const CHORDS_CLASSICAL: Rung[] = [
   r('cadences-1', 7, { cadences: 2 }),
@@ -91,6 +93,9 @@ const EAR: Rung[] = [
   r('k-ear-4', 5, { 'k-ear': 5 }),
   r('k-ear-5', 0, { 'k-ear': 6 }),
   r('k-ear-6', 7, { 'k-ear': 7 }),
+  // Phrases by ear: approach notes (~1300) and the ii–V–I line (~1600) are steps of their own.
+  r('k-phrase-2', 3, { 'k-ear': 7, 'k-phrase': 3 }),
+  r('k-phrase-5', 8, { 'k-ear': 9, 'k-phrase': 6 }),
 ];
 // AUDIT-GAPS-2: bebop vocabulary (k-vocab) is placed by the lines steps, and its enclosures are a step of their own.
 const LINES: Rung[] = [
@@ -109,7 +114,8 @@ export function pianoStrands(emphasis: DrillSettings['emphasis']): Strand[] {
     { id: 'chords', title: STRAND_TITLE.chords, rungs: jazz ? CHORDS_JAZZ : CHORDS_CLASSICAL },
     { id: 'comp', title: STRAND_TITLE.comp, rungs: jazz ? COMP_JAZZ : COMP_CLASSICAL },
     { id: 'reading', title: STRAND_TITLE.reading, rungs: READING },
-    { id: 'ear', title: STRAND_TITLE.ear, rungs: EAR },
+    // Progressions by ear (k-ear 10+): the jazz ear's top step — a ii–V–I played back as shells.
+    { id: 'ear', title: STRAND_TITLE.ear, rungs: jazz ? [...EAR, r('k-ear-10', 2, { 'k-ear': 11 })] : EAR },
   ];
   if (jazz) out.push({ id: 'lines', title: STRAND_TITLE.lines, rungs: LINES });
   return out;
@@ -157,6 +163,9 @@ const G_EAR: Rung[] = [
   r('g-ear-5', 7, { 'g-ear': 6 }),
   r('g-ear-6', 2, { 'g-ear': 7 }),
   r('g-ear-8', 0, { 'g-ear': 9 }),
+  // Phrases by ear on the neck (jazz add-on levels open only when shown).
+  r('g-phrase-2', 3, { 'g-ear': 9, 'g-phrase': 3 }),
+  r('g-phrase-5', 8, { 'g-ear': 10, 'g-phrase': 6 }),
 ];
 const G_JAZZ: Rung[] = [
   r('g-jazz-1', 0, { 'g-jazz': 2, 'g-harris': 1 }),
@@ -167,6 +176,8 @@ const G_JAZZ: Rung[] = [
   r('g-bebop-7', 2, { 'g-jazz': 9, 'g-harris': 6, 'g-theory': 2, 'g-keys': 4, 'g-bebop': 8 }),
   // AUDIT-GAPS-2: key changes in drop 2 (one diminished, four keys).
   r('g-keys-7', 2, { 'g-jazz': 9, 'g-harris': 6, 'g-theory': 2, 'g-keys': 8, 'g-bebop': 8 }),
+  // AUDIT-DEPTH-3: chord-melody, drop 2 under a head's melody.
+  r('g-cmel-4', 7, { 'g-jazz': 9, 'g-harris': 6, 'g-theory': 2, 'g-keys': 8, 'g-bebop': 8, 'g-cmel': 5, 'g-tune': 5 }),
 ];
 
 /**
@@ -216,7 +227,7 @@ const B_WALK: Rung[] = [
   // AUDIT-GAPS-2: bebop lines on the bass (rhythm changes, the bridge).
   r('b-bebop-6', 5, { 'b-walk': 10, 'b-swing': 4, 'b-barry': 4, 'b-keys': 4, 'b-bebop': 7 }),
   // AUDIT-GAPS-2: the line through a key change (one diminished, four keys).
-  r('b-keys-7', 5, { 'b-walk': 10, 'b-swing': 4, 'b-barry': 4, 'b-keys': 8, 'b-bebop': 7 }),
+  r('b-keys-7', 5, { 'b-walk': 10, 'b-swing': 4, 'b-barry': 4, 'b-keys': 8, 'b-bebop': 7, 'b-tune': 3 }),
 ];
 const B_READING: Rung[] = [
   r('b-read-2', 4, { 'b-read': 3, 'b-posread': 1 }),
@@ -230,6 +241,9 @@ const B_EAR: Rung[] = [
   r('b-ear-5', 7, { 'b-ear': 6 }),
   r('b-ear-6', 2, { 'b-ear': 7 }),
   r('b-ear-9', 5, { 'b-ear': 10 }),
+  // Phrases by ear on the bass (jazz track).
+  r('b-phrase-2', 3, { 'b-ear': 10, 'b-phrase': 3 }),
+  r('b-phrase-5', 8, { 'b-ear': 12, 'b-phrase': 6 }),
 ];
 
 /** The bass test: hands, time and pocket, chord tones, walking (by the bass track), reading, ear. */

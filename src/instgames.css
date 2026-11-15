@@ -32,6 +32,10 @@
   border: 1px solid var(--line);
   color: var(--ink);
 }
+/* Play It Back 7–9: long phrases wrap, six cells a row. */
+.inst-cells.many { flex-wrap: wrap; gap: 4px; }
+.inst-cells.many .inst-cell { flex: 0 0 calc((100% - 20px) / 6); block-size: 38px; }
+.inst-cells.many .inst-cell b { font-size: 0.85rem; }
 .inst-cell b {
   font-family: var(--display);
   font-size: 1.05rem;

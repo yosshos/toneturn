@@ -1,0 +1,221 @@
+/* Grid progression dictation (GridDictation.tsx): one phone screen, no vertical scroll (320×720). */
+.lesson.kind-grid .hero-slot {
+  display: block;
+  width: 100%;
+}
+.lesson.kind-grid .ask {
+  font-size: 1rem;
+  margin: 2px 0;
+}
+.lesson.kind-grid .key-badge {
+  margin-bottom: 2px;
+}
+.grid-dictation {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  max-width: 460px;
+  margin: 0 auto;
+}
+.gd-tools {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.gd-tools .btn.small {
+  min-height: 30px;
+  padding: 2px 10px;
+  font-size: 0.8rem;
+}
+.gd-tools .btn.on {
+  border-color: var(--mint);
+  color: var(--mint);
+}
+.gd-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+}
+.gd-grid.cols-6 {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+.gd-cell {
+  position: relative;
+  min-width: 0;
+  min-height: 38px;
+  padding: 2px 3px 2px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font: inherit;
+  cursor: pointer;
+}
+.gd-grid.cols-6 .gd-cell {
+  min-height: 34px;
+}
+.gd-cell.cur {
+  border-color: var(--mint);
+  box-shadow: 0 0 0 1px var(--mint) inset;
+}
+.gd-cell.locked,
+.gd-cell.right {
+  border-color: color-mix(in srgb, var(--mint) 55%, transparent);
+}
+.gd-cell.wrong,
+.gd-cell.fix {
+  border-color: color-mix(in srgb, var(--coral) 70%, transparent);
+}
+.gd-n {
+  position: absolute;
+  top: 1px;
+  left: 4px;
+  font-size: 0.55rem;
+  color: var(--ink-dim);
+  line-height: 1;
+}
+.gd-beats {
+  margin-left: 2px;
+}
+.gd-sec {
+  position: absolute;
+  top: 1px;
+  right: 4px;
+  font-size: 0.6rem;
+  font-style: normal;
+  font-weight: 800;
+  color: var(--gold);
+  line-height: 1;
+}
+.gd-sym {
+  display: flex;
+  align-items: baseline;
+  white-space: nowrap;
+  overflow: hidden;
+  max-width: 100%;
+  font-size: 0.82rem;
+  line-height: 1.1;
+  margin-top: 6px;
+}
+.gd-grid.cols-6 .gd-sym {
+  font-size: 0.7rem;
+}
+.gd-p {
+  font-weight: 700;
+}
+.gd-p + .gd-p {
+  font-weight: 600;
+  font-size: 0.92em;
+}
+.gd-p.ok {
+  color: var(--mint);
+}
+.gd-p.bad {
+  color: var(--coral);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.gd-want {
+  font-size: 0.62rem;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  max-width: 100%;
+  line-height: 1.1;
+}
+.gd-pad {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.gd-pad.off {
+  opacity: 0.55;
+}
+.gd-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: center;
+}
+.gd-row.roots .gd-chip {
+  flex: 0 0 calc((100% - 20px) / 6);
+}
+.gd-row.quals .gd-chip,
+.gd-row.extras .gd-chip {
+  flex: 1 0 calc((100% - 28px) / 8);
+  min-width: 40px;
+}
+.gd-chip {
+  min-height: 32px;
+  padding: 0 4px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--card-2);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.gd-chip.on {
+  background: var(--mint);
+  border-color: var(--mint);
+  color: #10122a;
+}
+.gd-chip:disabled {
+  cursor: default;
+}
+.gd-check {
+  min-height: 38px;
+}
+@media (max-height: 700px) {
+  .gd-chip {
+    min-height: 28px;
+  }
+  .gd-cell {
+    min-height: 32px;
+  }
+}
+/* One screen: the grid is its own answer pad, so the generic hint line, the pace bar and the answer chips stay out. */
+.lesson.kind-grid .stage .hint,
+.lesson.kind-grid .pace-bar,
+.lesson.kind-grid .answer-chips {
+  display: none;
+}
+.lesson.kind-grid .gd-cell {
+  min-height: 32px;
+}
+.lesson.kind-grid .gd-grid.cols-6 .gd-cell {
+  min-height: 30px;
+}
+.lesson.kind-grid .gd-chip {
+  min-height: 29px;
+}
+.lesson.kind-grid .gd-check {
+  min-height: 34px;
+}
+.lesson.kind-grid .grid-dictation {
+  gap: 5px;
+}
+/* One line of feedback on the grid (the marks on the slots say the rest). */
+.lesson.kind-grid .feedback {
+  min-height: 0;
+  padding: 4px 10px;
+}
+.lesson.kind-grid .feedback b {
+  font-size: 0.95rem;
+}
+.lesson.kind-grid .feedback .fb-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}

@@ -344,11 +344,11 @@ const subBadges: Badge[] = SUB_SKILLS.map((s, i) => {
 // The pianist's ear (k-ear) gets milestones by items played back clean (keysEarBadges), not tempo-band titles.
 // The first steps at the piano (k-first) are three short beginner levels: no family badges.
 export type BadgeFamily = Exclude<FamilyId, 'custom' | BassFamilyId | DrumFamilyId | 'k-ear' | 'k-first' | 'licks' | 'transcribe'>;
-export const PIANO_BADGE_FAMILIES: BadgeFamily[] = ['scales', 'arpeggios', 'cadences', 'fingers', 'control', 'advanced', 'harris', 'jazz', 'voicings', 'accomp', 'k-sixdim', 'k-bebop', 'k-reharm', 'k-rhythm', 'k-vl', 'k-theory', 'k-keys', 'k-vocab', 'k-indep', 'k-sharm'];
-export const GUITAR_BADGE_FAMILIES: BadgeFamily[] = ['g-fretting', 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-lead', 'g-fingerstyle', 'g-flamenco', 'g-jazz', 'g-reading', 'g-impro', 'g-bass', 'g-ear', 'g-harris', 'g-prog', 'g-meter', 'g-vl', 'g-theory', 'g-keys', 'g-bebop', 'g-harm'];
+export const PIANO_BADGE_FAMILIES: BadgeFamily[] = ['scales', 'arpeggios', 'cadences', 'fingers', 'control', 'advanced', 'harris', 'jazz', 'voicings', 'accomp', 'k-sixdim', 'k-bebop', 'k-reharm', 'k-rhythm', 'k-vl', 'k-theory', 'k-keys', 'k-vocab', 'k-phrase', 'k-harm', 'k-tune', 'k-indep', 'k-sharm'];
+export const GUITAR_BADGE_FAMILIES: BadgeFamily[] = ['g-fretting', 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-lead', 'g-fingerstyle', 'g-flamenco', 'g-jazz', 'g-reading', 'g-impro', 'g-bass', 'g-ear', 'g-harris', 'g-prog', 'g-meter', 'g-vl', 'g-theory', 'g-keys', 'g-bebop', 'g-phrase', 'g-cmel', 'g-tune', 'g-harm'];
 export const BADGE_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES, ...GUITAR_BADGE_FAMILIES];
 /** Families whose levels together cover all 12 keys: one "Around the Clock" badge each (guitar list checked against guitarCatalog in tests). */
-export const KEYS_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES, 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-fingerstyle', 'g-jazz', 'g-impro', 'g-reading', 'g-bass', 'g-ear', 'g-harris', 'g-vl', 'g-theory', 'g-keys', 'g-bebop', 'g-harm', 'g-lead'];
+export const KEYS_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES, 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-fingerstyle', 'g-jazz', 'g-impro', 'g-reading', 'g-bass', 'g-ear', 'g-harris', 'g-vl', 'g-theory', 'g-keys', 'g-bebop', 'g-phrase', 'g-cmel', 'g-tune', 'g-harm', 'g-lead'];
 export const FAMILY_NAME: Record<BadgeFamily, L> = {
   scales: { en: 'Scales', he: 'סולמות' },
   arpeggios: { en: 'Arpeggios', he: 'ארפג׳ים' },
@@ -368,6 +368,7 @@ export const FAMILY_NAME: Record<BadgeFamily, L> = {
   'k-indep': { en: 'Hand independence', he: 'עצמאות הידיים' },
   'k-sharm': { en: 'Scale harmonization', he: 'הרמוניזציה של סולמות' },
   'g-harm': { en: 'Scale harmonization on the neck', he: 'הרמוניזציה של סולמות על הצוואר' },
+  'k-phrase': { en: 'Phrases by ear', he: 'משפטים בשמיעה' },
   'g-fretting': { en: 'Fretting hand', he: 'היד הלוחצת' },
   'g-picking': { en: 'Picking', he: 'פריטה' },
   'g-legato': { en: 'Legato', he: 'לגאטו' },
@@ -386,6 +387,7 @@ export const FAMILY_NAME: Record<BadgeFamily, L> = {
   'g-harris': { en: 'Barry Harris on guitar', he: 'בארי האריס בגיטרה' },
   'g-theory': { en: 'Theory you play on guitar', he: 'תאוריה בביצוע בגיטרה' },
   'g-bebop': { en: 'Bebop on guitar', he: 'ביבופ בגיטרה' },
+  'g-phrase': { en: 'Phrases by ear on guitar', he: 'משפטים בשמיעה בגיטרה' },
   'g-prog': { en: 'Prog and fusion', he: 'פרוג ופיוז׳ן' },
   // AUDIT-CONTENT-THEORY R-1/R-2/R-4: rhythm & meter families.
   'k-rhythm': { en: 'Rhythm & meter', he: 'קצב ומשקל' },
@@ -396,6 +398,11 @@ export const FAMILY_NAME: Record<BadgeFamily, L> = {
   // AUDIT-GAPS-2: key changes and turnarounds.
   'k-keys': { en: 'Key changes', he: 'מעברי סולם' },
   'g-keys': { en: 'Key changes on the neck', he: 'מעברי סולם על הצוואר' },
+  // AUDIT-DEPTH-3: heads — harmonise a melody, chord-melody, comp a head and reharmonise it.
+  'k-harm': { en: 'Harmonise a melody', he: 'הרמון מנגינה' },
+  'k-tune': { en: 'Tunes: comp the head', he: 'שירים: ליווי השיר' },
+  'g-cmel': { en: 'Chord-melody', he: 'אקורד-מלודיה' },
+  'g-tune': { en: 'Tunes on the neck', he: 'שירים על הצוואר' },
 };
 // `icon` on every badge is a glyph kind of src/ui/Glyph.tsx (2026-11-12: no emoji left; the medal itself is BadgeArt).
 const FAMILY_ICON: Record<BadgeFamily, string> = {
@@ -417,6 +424,7 @@ const FAMILY_ICON: Record<BadgeFamily, string> = {
   'k-indep': 'indep',
   'k-sharm': 'harmlad',
   'g-harm': 'gharmlad',
+  'k-phrase': 'phrase',
   'g-fretting': 'fingers1234',
   'g-picking': 'pick',
   'g-legato': 'slur',
@@ -436,6 +444,7 @@ const FAMILY_ICON: Record<BadgeFamily, string> = {
   'g-harris': 'sixdim',
   'g-theory': 'gtpair',
   'g-bebop': 'genclose',
+  'g-phrase': 'gphrase',
   'g-prog': 'oddmeter',
   'k-rhythm': 'polylock',
   'g-meter': 'polymeter',
@@ -443,6 +452,10 @@ const FAMILY_ICON: Record<BadgeFamily, string> = {
   'g-vl': 'voicelead',
   'k-keys': 'keymove',
   'g-keys': 'gkeymove',
+  'k-harm': 'harmmel',
+  'k-tune': 'tunecomp',
+  'g-cmel': 'chordmel',
+  'g-tune': 'gtunecomp',
 };
 // One title per catalogue level (piano 7; guitar as many as guitarCatalog has — tests check the counts).
 const FAMILY_TITLES: Record<BadgeFamily, [string, string][]> = {
@@ -476,7 +489,7 @@ const FAMILY_TITLES: Record<BadgeFamily, [string, string][]> = {
   'g-reading': [['First-Position Reader', 'קורא במצב ראשון'], ['Six-String Reader', 'קורא שישה מיתרים'], ['Position Shifter', 'מחליף מצבים'], ['Position VII', 'מצב VII'], ['Positions IX and XII', 'מצבים IX ו־XII'], ['Chart Reader', 'קורא הצ׳ארטים'], ['Two-Position Reader', 'קורא בשני מצבים'], ['Lead-Sheet Reader', 'קורא דפי התווים']],
   'g-impro': [['Roots on Beat 1', 'יסודות על פעמה 1'], ['Thirds on Beat 1', 'טרצות על פעמה 1'], ['Chord-Tone Arpeggios', 'ארפג׳י צלילי אקורד'], ['Guide Tones Through the Form', 'צלילים מנחים לאורך הצורה'], ['Chord-Scale Player', 'נגן סולם-אקורד'], ['Motif Developer', 'מפתח המוטיבים'], ['Trading with the Band', 'חילופים עם הלהקה']],
   // GUITAR_DEEPENING (2026-11-11): one serious title per new level.
-  'g-ear': [['Tonic Finder', 'מוצא הטוניקה'], ['One-Bar Echo', 'הד של תיבה'], ['Two-Bar Echo', 'הד של שתי תיבות'], ['Rhythm Reader', 'קורא המקצב'], ['Riff Catcher', 'תופס הריפים'], ['Root Hearer', 'שומע היסודות'], ['Harmonic Ear', 'אוזן הרמונית'], ['Quality Judge', 'מזהה הסוגים'], ['Key Finder', 'מוצא הסולם'], ['Transcriber', 'המתמלל']],
+  'g-ear': [['Tonic Finder', 'מוצא הטוניקה'], ['One-Bar Echo', 'הד של תיבה'], ['Two-Bar Echo', 'הד של שתי תיבות'], ['Rhythm Reader', 'קורא המקצב'], ['Riff Catcher', 'תופס הריפים'], ['Root Hearer', 'שומע היסודות'], ['Harmonic Ear', 'אוזן הרמונית'], ['Quality Judge', 'מזהה הסוגים'], ['Key Finder', 'מוצא הסולם'], ['Transcriber', 'המתמלל'], ['Changes Hearer', 'שומע המהלכים'], ['Substitution Spotter', 'מזהה התחליפים'], ['Altered Comper', 'מלווה האלטרד']],
   // THEORY_PLAY: one title per level.
   'g-theory': [['Rootless Guitarist', 'גיטריסט בלי יסוד'], ['Quartal Comper', 'מלווה קוורטלי'], ['Giant Stepper', 'צועד הצעדים הגדולים'], ['Upper-Structure Guitarist', 'גיטריסט המבנים העליונים'], ['Triad-Pair Guitarist', 'גיטריסט זוגות המשולשים'], ['Superimposer', 'מלביש הצבעים'], ['Line-Cliché Guitarist', 'גיטריסט הליין קלישה']],
   'g-harris': [['Sixth-Diminished Guitarist', 'גיטריסט שש-מוקטן'], ['Scale-of-Chords Player', 'נגן סולם האקורדים'], ['Half-Step Ruler', 'שליט חצי הטון'], ['Three-to-Nine Player', 'נגן שלוש עד תשע'], ['Enclosure Player', 'נגן הכיתורים'], ["Barry's Guitarist", 'הגיטריסט של בארי'], ['String-Set Voicer', 'מעצב קבוצות המיתרים'], ['Pivot Player', 'נגן הפיבוט'], ['Scale-and-Pivot Liner', 'קווי סולם ופיבוט'], ['Pivot-and-Enclosure Player', 'נגן הפיבוט והכיתור'], ['Eight Expressions on the Neck', 'שמונה ביטויים על הצוואר'], ['Expressions in Lines', 'ביטויים בקווים'], ['Family Comper', 'מלווה המשפחה']],
@@ -493,11 +506,19 @@ const FAMILY_TITLES: Record<BadgeFamily, [string, string][]> = {
   'k-indep': [['Held Notes', 'צלילים מוחזקים'], ['Quiet Weak Fingers', 'אצבעות חלשות שקטות'], ['Two Voices, One Hand', 'שני קולות, יד אחת'], ['Ostinato Player', 'נגן האוסטינטו'], ['Three Against Two', 'שלוש נגד שתיים'], ['Legato and Staccato', 'לגאטו וסטקטו'], ['Balanced Hands', 'איזון בין הידיים'], ['Independent Hands', 'ידיים עצמאיות']],
   'k-sharm': [['Every Mode', 'כל מודוס'], ['Every Minor', 'כל מינור'], ['Broken Thirds', 'טרצות שבורות'], ['Thirds in Minor', 'טרצות במינור'], ['Thirds Together', 'טרצות יחד'], ['Double Thirds in Minor', 'טרצות כפולות במינור'], ['Triad Climber', 'מטפס המשולשים'], ['Minor Triads', 'משולשים במינור'], ['Block Triads', 'משולשים בבלוק'], ['Root and Triad', 'יסוד ומשולש'], ['Seventh Climber', 'מטפס הספטימות'], ['Chord and Diminished', 'אקורד ודימיניש'], ['Block Sevenths', 'ספטימות בבלוק'], ['Moving Inversions', 'היפוכים נעים'], ['Drop-2 Climber', 'מטפס דרופ 2'], ['Drop 2 in Minor', 'דרופ 2 במינור'], ['Drop-3 Climber', 'מטפס דרופ 3'], ['Drop 3 in Minor', 'דרופ 3 במינור'], ['One Voice Borrows', 'קול אחד שואל'], ['Borrowing in Every Scale', 'השאלה בכל סולם'], ['Two Voices Borrow', 'שני קולות שואלים'], ['Borrowing Far', 'השאלה רחוקה'], ['Walking Borrower', 'שואל בהליכה'], ['Drop-2 Borrower', 'שואל בדרופ 2'], ['Drop-3 Borrower', 'שואל בדרופ 3'], ['Eight Expressions', 'שמונה ביטויים'], ['The Brothers’ Scales', 'הסולמות של האחים'], ['The Minor Sixths’ Scales', 'הסולמות של המינור 6'], ['Mixing the Colours', 'ערבוב הצבעים'], ['Substitution Comping', 'ליווי בתחליפים'], ['Borrowing the Substitutes', 'השאלה בתחליפים'], ['Minor Sixth Cadence', 'קדנצת מינור 6'], ['The Elevator', 'המעלית'], ['Dominant Scales of Chords', 'סולמות אקורדים של הדומיננט'], ['Drop 2&4', 'דרופ 2 ו־4'], ['The Sixth on the Fifth', 'השישית על הקווינטה'], ['Harris Moves', 'המהלכים של האריס'], ['Three-Voice Borrower', 'שואל בשלושה קולות'], ['The Family Over a Shell', 'המשפחה מעל שלד'], ['The Minor Elevator', 'המעלית במינור'], ['The Voicing Ladder', 'סולם הקולות'], ['A Substitute on Every V', 'תחליף על כל V']],
   'g-harm': [['Every Scale in Position', 'כל סולם במצב'], ['Thirds on the Neck', 'טרצות על הצוואר'], ['Double Stops in Thirds', 'צלילים כפולים בטרצות'], ['Triads in Position', 'משולשים במצב'], ['Triads on String Sets', 'משולשים על קבוצות מיתרים'], ['Sevenths in Position', 'ספטימות במצב'], ['Drop 2 on Top Strings', 'דרופ 2 במיתרים העליונים'], ['Drop 2 Everywhere', 'דרופ 2 בכל מקום'], ['Drop-3 Guitarist', 'גיטריסט דרופ 3'], ['Borrowing on the Neck', 'השאלה על הצוואר'], ['Borrowing from Afar', 'השאלה ממרחק'], ['Borrowing Through the Changes', 'השאלה לאורך המהלך'], ['Borrowing on Every Set', 'השאלה על כל קבוצה']],
+  // Phrases by ear: keys 7 titles, guitar one per level.
+  'k-phrase': [['Chord-Tone Echo', 'הד צלילי האקורד'], ['Approach by Ear', 'גישה בשמיעה'], ['Enclosure by Ear', 'כיתור בשמיעה'], ['Bebop-Scale Ear', 'אוזן סולם הביבופ'], ['ii–V–I by Ear', 'ii–V–I בשמיעה'], ['Altered by Ear', 'אלטרד בשמיעה'], ['Solo Phrases by Ear', 'משפטי סולו בשמיעה']],
+  'g-phrase': [['Chord-Tone Echo on the Neck', 'הד צלילי האקורד על הצוואר'], ['Approach by Ear on the Neck', 'גישה בשמיעה על הצוואר'], ['Enclosure by Ear on the Neck', 'כיתור בשמיעה על הצוואר'], ['Bebop-Scale Ear on the Neck', 'אוזן סולם הביבופ על הצוואר'], ['ii–V–I by Ear on the Neck', 'ii–V–I בשמיעה על הצוואר'], ['Altered by Ear on the Neck', 'אלטרד בשמיעה על הצוואר'], ['Solo Phrase by Ear on the Neck', 'משפט סולו בשמיעה על הצוואר'], ['A Chorus by Ear on the Neck', 'סבב בשמיעה על הצוואר']],
   'g-bebop': [['Swing Guitarist', 'גיטריסט הסווינג'], ['Approach-Note Guitarist', 'גיטריסט צלילי הגישה'], ['Guitar Encloser', 'הכיתור בגיטרה'], ['Bebop Enclosure on the Neck', 'כיתור ביבופ על הצוואר'], ['Every Chord Tone on the Neck', 'כל צליל אקורד על הצוואר'], ['Digital-Pattern Guitarist', 'גיטריסט התבניות הדיגיטליות'], ['Minor and Altered Liner', 'קווי מינור ואלטרד'], ['Blues and Turnaround Liner', 'קווי בלוז וטרנאראונד'], ['Rhythm-Changes Guitarist', 'גיטריסט ריתם צ׳יינג׳ס'], ['Triplet-Rule Guitarist', 'גיטריסט חוקי הטריולה'], ['Make-It-Minor Guitarist', 'גיטריסט ההמרה למינור'], ['Guitarist on 2 and 4', 'גיטריסט על 2 ו-4']],
   'g-vl': [['String-Set Triads', 'משולשים על סטי מיתרים'], ['Drop 2 by Step', 'דרופ 2 בצעדים'], ['Drop 3 by Step', 'דרופ 3 בצעדים']],
   // AUDIT-GAPS-2: key changes and turnarounds — piano 7 titles, guitar one per level.
   'k-keys': [['Turnaround Player', 'מנגן הטרנאראונדים'], ['Bridge Crosser', 'חוצה הגשר'], ['Key Jumper', 'קופץ הסולמות'], ['Pivot Finder', 'מוצא הציר'], ['Through the Diminished', 'דרך הדימיניש'], ['Four Doors', 'ארבע דלתות'], ['Master of Keys', 'אמן הסולמות']],
   'g-keys': [['Turnaround Comper', 'מלווה הטרנאראונדים'], ['Ladybird Player', 'נגן הלידיבירד'], ['Bridge on the Neck', 'הגשר על הצוואר'], ['Lift Up a Step', 'הרמה בצעד'], ['Two-Five Mover', 'מעביר ה־ii–V'], ['Pivot on the Strings', 'ציר על המיתרים'], ['One Diminished, Four Keys', 'דימיניש אחד, ארבעה סולמות'], ['Diminished Door', 'דלת הדימיניש'], ['Every Key by Diminished', 'כל סולם דרך דימיניש'], ['Seven-Flat-Nine', 'שבע במול תשע'], ['Tritone Mover', 'מעביר הטריטון'], ['Key-to-Key Liner', 'קווים מסולם לסולם']],
+  // AUDIT-DEPTH-3: heads — piano 7 titles, guitar one per level.
+  'k-harm': [['Melody Reader', 'קורא המנגינה'], ['Shells Under a Tune', 'שלדים מתחת לשיר'], ['Four-Way Close', 'ארבעה קולות צמודים'], ['Drop-2 Harmoniser', 'מהרמן בדרופ 2'], ['Drop-3 Harmoniser', 'מהרמן בדרופ 3'], ['Phrase by Phrase', 'משפט אחר משפט'], ['Melody Harmoniser', 'מהרמן המנגינות']],
+  'k-tune': [['Roots of the Tune', 'יסודות השיר'], ['Guide-Tone Comper', 'מלווה בצלילים מנחים'], ['Shells Through a Tune', 'שלדים לאורך שיר'], ['Rootless Comper', 'מלווה בלי יסוד'], ['Melody and Comp', 'מנגינה וליווי'], ['Head Reharmoniser', 'מהרמן השירים'], ['Coltrane Reharm', 'הרמון קולטריין']],
+  'g-cmel': [['Melody in Position', 'מנגינה בפוזיציה'], ['Bass and Melody', 'בס ומנגינה'], ['Two Voices', 'שני קולות'], ['Drop 2 Under the Tune', 'דרופ 2 מתחת לשיר'], ['Passing Diminished', 'דימיניש עובר'], ['Chord-Melody Chorus', 'פזמון אקורד-מלודיה']],
+  'g-tune': [['Roots on the Neck', 'יסודות על הצוואר'], ['Guide Tones on the Neck', 'צלילים מנחים על הצוואר'], ['Shells on the Neck', 'שלדים על הצוואר'], ['Rootless on the Neck', 'בלי יסוד על הצוואר'], ['Drop 2 Through a Tune', 'דרופ 2 לאורך שיר'], ['Melody and Comp on the Neck', 'מנגינה וליווי על הצוואר'], ['Tritone Reharm', 'הרמון טריטון'], ['Backdoor Reharm', 'הרמון דלת אחורית'], ['Coltrane on the Neck', 'קולטריין על הצוואר']],
 };
 /** Number of level badges of a family (piano 7; guitar = its guitarCatalog levels). */
 export const familyLevelCount = (f: string): number => FAMILY_TITLES[f as BadgeFamily]?.length ?? 7;
@@ -743,7 +764,7 @@ function voiceBadges(): Badge[] {
 // ---------------------------------------------------------------- the pianist's ear (PIANO_AUDIT §3)
 // Its levels are call-and-response at one calm tempo, so a tempo band says nothing: the milestones count the
 // different items (kind × option, 14 in all) played back clean at least once — first steps, halfway, all of them.
-export const KEYS_EAR_ITEMS = 17;
+export const KEYS_EAR_ITEMS = 28;
 function keysEarBadges(): Badge[] {
   const tiers: [number, { en: string; he: string }, Badge['tone']][] = [
     [3, { en: 'first steps', he: 'צעדים ראשונים' }, 'bronze'],
@@ -905,8 +926,16 @@ const firstBadges = (): Badge[] =>
 // Game badges (gameBadges.ts): mp, f and ff in each of the newer drum and advanced games.
 const gameBadges = (): Badge[] => gameBadgeSeeds().map((g) => ({ id: g.id, cat: 'special' as const, icon: g.icon, tone: g.tone, name: g.name, desc: g.desc, group: g.group, rule: (x: BadgeInput) => g.rule(x.gameTiers) }));
 
+// SPEC-PATH-ROLE §8 (owner 2026-11-14): mastering a unit (every step at 5★ and its checkpoint passed).
+const unitMasteryBadges = (): Badge[] => [
+  sp('unit-mastered', 'trophy', 'silver', 'Unit Mastered', 'יחידה נשלטת', 'Master every step of a path unit and pass its checkpoint.', 'לשלוט בכל צעדי יחידה במסלול ולעבור את נקודת הביקורת שלה.', (x) => count(x.counts?.unitsMastered ?? 0, 1)),
+  sp('units-mastered-5', 'trophy', 'gold', 'Five Units Mastered', 'חמש יחידות נשלטות', 'Master five path units.', 'לשלוט בחמש יחידות במסלול.', (x) => count(x.counts?.unitsMastered ?? 0, 5)),
+  sp('units-mastered-20', 'trophy', 'diamond', 'Twenty Units Mastered', 'עשרים יחידות נשלטות', 'Master twenty path units.', 'לשלוט בעשרים יחידות במסלול.', (x) => count(x.counts?.unitsMastered ?? 0, 20)),
+];
+
 const specialBadges: Badge[] = [
   ...firstBadges(),
+  ...unitMasteryBadges(),
   ...tierBadges(),
   ...gameBadges(),
   ...repBadges(),

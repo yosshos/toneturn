@@ -10,6 +10,7 @@ const SHORT: Record<string, L2> = {
   extensions: { en: 'Extensions', he: 'הרחבות' },
   voicings: { en: 'Voicings', he: 'וויסינגים' },
   progressions: { en: 'Progressions', he: 'מהלכים' },
+  'grid-dictation': { en: 'Chord grid', he: 'גריד אקורדים' },
   'fine-pitch': { en: 'Fine pitch', he: 'גובה עדין' },
   'in-tune': { en: 'In tune?', he: 'מכוון?' },
   'set-classes': { en: 'Trichords', he: 'טריכורדים' },
@@ -175,6 +176,8 @@ const SHORT: Record<string, L2> = {
   // AUDIT-GAPS-2 #5/#19
   'modulation-means': { en: 'How it modulates', he: 'איך עוברים סולם' },
   'key-centres': { en: 'Key centres', he: 'מרכזים טונליים' },
+  // AUDIT-DEPTH-3 C1/C3
+  'melody-fit': { en: 'Melody vs chords', he: 'מנגינה מול אקורדים' },
   // lessons
   'basics-shape': { en: 'Melody shape', he: 'צורת מנגינה' },
   'rhythm-shift': { en: 'Move the rhythm', he: 'הזזת קצב' },

@@ -650,6 +650,24 @@ export const GLYPHS: Record<string, Glyph> = {
       {dot(16, 6, 1.6)}
     </>
   ),
+  // Phrases by ear: an ear opening on the left, a rising line of note heads coming out of it.
+  'family:k-phrase': () => (
+    <>
+      {p('M3 15c0-5 2.5-8 5.5-8s4.5 2.5 4.5 5c0 3-3 3.5-3 6.5', false)}
+      {head(14, 15, 1.9)}
+      {head(17.5, 11, 1.9)}
+      {head(21, 7, 1.9)}
+    </>
+  ),
+  'family:g-phrase': () => (
+    <>
+      <path d="M2 19h20 M2 23h20" strokeWidth={0.8} />
+      {p('M3 13c0-5 2.5-8 5.5-8s4.5 2.5 4.5 5c0 3-3 3.5-3 6.5', false)}
+      {head(14, 13, 1.9)}
+      {head(17.5, 9, 1.9)}
+      {head(21, 5, 1.9)}
+    </>
+  ),
   // THEORY_PLAY: theory you play — two triads stacked a step apart (a triad pair).
   'family:k-theory': () => p('M3 20L9 9l6 11z M9 14l6-11 6 11z'),
   'family:k-reharm': () => (
@@ -726,6 +744,26 @@ export const GLYPHS: Record<string, Glyph> = {
       {p('M4 13c1-7 11-9 15-5 M15.5 6.2l3.6 2 1.2-3.8 M2 21h20', false)}
     </>
   ),
+  // AUDIT-DEPTH-3: heads — the melody note on top of a stacked chord; a lead sheet's bars with comping slashes.
+  'family:k-harm': () => (
+    <>
+      {head(9, 19, 2.4)}
+      {head(9, 14, 2.4)}
+      {head(9, 9, 2.4)}
+      {head(9, 3, 2.8)}
+      {p('M11.5 3V0 M2 3H5 M14 3h8', false)}
+    </>
+  ),
+  'family:k-tune': () => p('M3 5v14 M12 5v14 M21 5v14 M6 16l2.5-7 M9 16l2.5-7 M15 16l2.5-7 M18 16l2.5-7', false),
+  'family:g-cmel': () => (
+    <>
+      {head(9, 16, 2.4)}
+      {head(9, 11, 2.4)}
+      {head(9, 5, 2.8)}
+      {p('M12 5V1 M2 5H5 M14 5h8 M2 22h20', false)}
+    </>
+  ),
+  'family:g-tune': () => p('M3 4v12 M12 4v12 M21 4v12 M6 13l2.5-7 M9 13l2.5-7 M15 13l2.5-7 M18 13l2.5-7 M2 20h20 M2 22.5h20', false),
   'family:k-ear': () => p('M8 9c0-4 2.5-6 5-6s5 2 5 5.5c0 3-2.5 3.6-3 6 M11 9c0-1.6 1-2.6 2.2-2.6s2.2 1 2.2 2.4 M3 15h18v6H3z M9 15v6 M15 15v6'),
   // Drums (DRUMS_AUDIT I2): a snare drum and two sticks.
   'family:drums': () => p('M4 11c0 1.7 3.6 3 8 3s8-1.3 8-3-3.6-3-8-3-8 1.3-8 3z M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6 M8 13.7v6 M12 14v6.2 M16 13.7v6 M5 3l6.5 6.5 M19 3l-6.5 6.5'),
@@ -911,6 +949,14 @@ export const GLYPHS: Record<string, Glyph> = {
     </>
   ),
   'special:fortnight': () => flame(),
+  // SPEC-PATH-ROLE §8: a unit mastered — a seal (a ring with a check), one glyph for every count.
+  'special:unit-mastered': () => (
+    <>
+      <circle cx="12" cy="11" r="8" />
+      {p('M8.3 11.2l2.6 2.6 4.9-5.2')}
+      {p('M8 18.2 L6.5 22 L9.5 21 L12 22.5 L14.5 21 L17.5 22 L16 18.2', false)}
+    </>
+  ),
   // Game badges (engine/gameBadges.ts): one drawn glyph per game.
   // Time Lock: a clock face with the bar lines of a silent bar.
   'special:game:time-lock': () => (
@@ -1217,6 +1263,7 @@ export function resolveGlyph(b: Pick<Badge, 'id' | 'cat' | 'group'>): { key: str
   if (key.startsWith('special:tier')) return { key, glyph: GLYPHS['special:tier'], fallback: false };
   if (key.startsWith('special:rep:')) return { key, glyph: GLYPHS['special:rep'], fallback: false };
   if (key.startsWith('special:first:')) return { key, glyph: GLYPHS['special:first'], fallback: false };
+  if (key.startsWith('special:units-mastered')) return { key, glyph: GLYPHS['special:unit-mastered'], fallback: false };
   return { key, glyph: FALLBACK, fallback: true };
 }
 

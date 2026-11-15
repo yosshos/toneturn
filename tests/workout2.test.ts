@@ -16,11 +16,12 @@ describe("today's workout (spec AH)", () => {
       expect(bs.every((b) => b.minutes >= LIMITS.minBlock), `min ${t}`).toBe(true);
       expect(bs.some((b) => b.target.kind === 'path'), `path ${t}`).toBe(true);
     }
+    // SPEC-PATH-ROLE §3: a new player (nothing opened) — review, then the path with the strengthen share too.
     const ten = sugg(10);
-    expect(ten.map((b) => b.target.kind)).toEqual(['warmup', 'path', 'area', 'area']);
-    expect(sugg(15).at(-1)!.target.kind).toBe('game');
+    expect(ten.map((b) => b.target.kind)).toEqual(['warmup', 'path']);
+    expect(sugg(20).at(-1)!.target.kind).toBe('game');
   });
-  it('left-out areas are never suggested', () => {
+  it('left-out areas are never suggested (no area blocks are generated)', () => {
     const bs = sugg(20, { leaveOut: ['time', 'pitch'] });
     expect(bs.some((b) => b.target.kind === 'area' && (b.target.area === 'time' || b.target.area === 'pitch'))).toBe(false);
   });
@@ -38,9 +39,10 @@ describe("today's workout (spec AH)", () => {
   });
   it('edits: minutes, move, remove (never the last), add', () => {
     let bs = sugg(10);
+    const m0 = bs[0].minutes;
     bs = setMinutes(bs, bs[0].id, 5);
     expect(bs[0].minutes).toBe(5);
-    expect(total(bs)).toBe(13);
+    expect(total(bs)).toBe(10 - m0 + 5);
     const first = bs[0].id;
     bs = move(bs, first, 1);
     expect(bs[1].id).toBe(first);

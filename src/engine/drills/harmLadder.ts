@@ -634,7 +634,7 @@ function genBorrowGuitar(s: DrillSpec, tu: Tuning, key: number): Drill {
 /** Path difficulty of the piano levels (path.ts KEYS_LEVEL_DIFF): lines and 3rds ~900–1100, triads and 7ths 1100–1350, drops and borrowing 1350–1650. */
 export const K_HARM_DIFF: Record<string, number> = Object.fromEntries([900, 940, 980, 1010, 1050, 1090, 1110, 1140, 1170, 1200, 1230, 1260, 1300, 1340, 1380, 1450, 1520, 1600, 1360, 1400, 1440, 1480, 1540, 1600, 1650, 1560, 1580, 1600, 1620, 1640, 1670, 1700, 1450, 1500, 1620, 1460, 1500, 1520, 1680, 1480, 1420, 1690].map((d, i) => [`k-sharm-${i + 1}`, d]));
 
-export function pianoHarmFamily(): FamilyDef {
+export function pianoScaleHarmFamily(): FamilyDef {
   const levels: LevelDef[] = [];
   const LV = (en: string, he: string, specs: SpecTemplate[], tempo: [number, number], diff: number) => {
     const level = levels.length + 1;

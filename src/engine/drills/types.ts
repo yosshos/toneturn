@@ -26,6 +26,8 @@ export type FamilyId =
   | 'k-theory'
   // AUDIT-GAPS-2 High #1–#3, #7, #8, #10: bebop vocabulary — approach notes, enclosures, Harris lines, time (vocabDrills.ts).
   | 'k-vocab'
+  // Phrases by ear (owner 2026-11-14): hear a phrase over its chords, play it back (phraseDrills.ts).
+  | 'k-phrase'
   // AUDIT-CONTENT-THEORY §ז.2: first steps at the piano — posture, finger numbers, C position, the thumb passing under.
   | 'k-first'
   // AUDIT-GAPS-2 #5/#6/#11/#12: key changes (common dim, pivot, ii–V, tritone, direct, pop) and turnarounds, performed.
@@ -35,6 +37,12 @@ export type FamilyId =
   | 'k-indep'
   | 'k-sharm'
   | 'g-harm'
+  // AUDIT-DEPTH-3 #2–#4, C1/C3/C4: heads — harmonise a melody (piano), chord-melody (guitar), comp a head step by step
+  // and reharmonise it (piano, guitar; b-tune on the bass).
+  | 'k-harm'
+  | 'g-cmel'
+  | 'k-tune'
+  | 'g-tune'
   | 'custom' // the player's own drills
   // Licks & transcription (docs/SPEC-LICKS-TRANSCRIPTION.md): lick items per key / instrument, transcribed phrases.
   | 'licks'
@@ -57,6 +65,7 @@ export type FamilyId =
   | 'g-ear' // call and response, answered on the guitar
   | 'g-harris' // Barry Harris applied to guitar (barry.ts)
   | 'g-bebop' // AUDIT-GAPS-2: bebop vocabulary and lines over forms on the neck (vocabDrills.ts)
+  | 'g-phrase' // phrases by ear on the guitar (phraseDrills.ts)
   | 'g-theory' // THEORY_PLAY: theory you play on the neck (rootless, quartal, Giant Steps, UST, triad pairs, lines)
   | 'g-prog' // odd meters, polyrhythm, metric modulation, fusion lines, unisons (prog engine)
   | 'g-meter' // AUDIT-CONTENT-THEORY R-4/R-5: meter & cross-rhythm on the core path (subdivision → 7:4, odd meters, hemiola)
@@ -106,6 +115,8 @@ export type BassFamilyId =
   | 'b-ext'
   // AUDIT-GAPS-2: bebop vocabulary and lines over forms on the bass (jazz track, vocabDrills.ts).
   | 'b-bebop'
+  // Phrases by ear on the bass (phraseDrills.ts).
+  | 'b-phrase'
   // 0.64 (track B): the bass-ear family F15 and the upright / double-bass track (BASS_CURRICULUM §5, §5.1).
   | 'b-ear'
   | 'b-up-pos'
@@ -115,7 +126,9 @@ export type BassFamilyId =
   | 'b-up-walk'
   | 'b-up-read'
   // AUDIT-GAPS-2 #6/#11/#12: the line under each key change, the turnarounds and the rhythm-changes bridge.
-  | 'b-keys';
+  | 'b-keys'
+  // AUDIT-DEPTH-3 C3/C4: a head on the bass — roots, two-feel, walking, approaches, walking the reharm.
+  | 'b-tune';
 
 export type Dyn = 'pp' | 'p' | 'mp' | 'mf' | 'f' | 'ff';
 export type Articulation = 'legato' | 'staccato' | 'portato';
@@ -249,6 +262,8 @@ export interface Drill {
   sung?: boolean;
   /** Songs (songDrills.ts): chord names per bar, shown above the staff as a chart. */
   chart?: string[];
+  /** A long item (a whole head): the staff and the chart show two lines at a time, with a pager (one phone screen). */
+  paged?: boolean;
   /** Chart drills, improv mode (owner 2026-11-08): notes at or above this pitch are the free right hand — not graded. */
   freeAbove?: number;
   spec: DrillSpec;
@@ -293,6 +308,12 @@ export interface Drill {
    */
   listen?: { notes: { beat: number; dur: number; midi: number[]; inst?: 'bass' | 'piano'; perc?: import('../lesson').PercKind; vel?: number }[]; windows: [number, number][]; ask: { en: string; he: string } };
   /**
+   * Phrases by ear (phraseDrills.ts): the answer (the drill's notes) starts at beat `at`, after the call; the take is
+   * graded note by note by the transcription coach's comparer (pitch and rhythm on the player's own pulse, partial
+   * credit). `level` is the ladder level (1–8). The call can be replayed, and slowed, before the take.
+   */
+  phrase?: { at: number; level: number };
+  /**
    * Drums ear (d-ear): after the take, write what was heard — a step grid per voice (dictation), or pick the style's
    * name. Graded like the bass transcription (withWritten): it can only lower the take's verdict.
    */
@@ -331,6 +352,8 @@ export interface Drill {
    * a wrong chord is "not", an unclear one asks to play it again. Without chroma it is not measured.
    */
   recognize?: { candidates: { root: number; quality: import('../chordRecognize').ChordQuality; bass?: number }[]; answer: number }[];
+  /** Progressions by ear (harmonyGrade.ts): the answer's chords, graded per chord for root, colour and bass (partial credit). */
+  harmony?: import('./harmonyGrade').HarmonyPlan;
 }
 
 /** A unison part: the band's bass / guitar / keys play `line` (or the drill's own notes moved by `transpose`). */
@@ -695,6 +718,10 @@ export interface TakeMetrics {
   prog?: import('./progAnalyze').ProgMetrics;
   /** Voice leading (voiceLeadAnalyze.ts): the voicing chosen at each chord and its grade. */
   vl?: import('./voiceLeadAnalyze').VLReport;
+  /** Phrases by ear (phraseGrade.ts): notes found, of those in time, the blended score (= accuracy) and the played tempo ÷ the call's. */
+  phrase?: { pitchAcc: number; rhythmAcc: number; score: number; tempo: number };
+  /** Progressions by ear (harmonyGrade.ts): per chord root / colour / bass, partial credit, the one-line verdict. */
+  harmony?: import('./harmonyGrade').HarmonyReport;
 }
 
 /** What a drum take measured (DRUMS_CURRICULUM §3.6). */

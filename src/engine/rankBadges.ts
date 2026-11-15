@@ -3,7 +3,7 @@
 import type { Progress } from '../storage/progress';
 import { practiceDays, ratingsOf } from '../storage/progress';
 import { foldSubs } from './taxonomy';
-import { updateRanks, type RankChange, type TechniqueInput } from './ranks';
+import { updateRanks, type RankArea, type RankChange, type TechniqueInput } from './ranks';
 import { earnBadges, type Badge, type BadgeInput } from './badges';
 import { familyLevel } from './drills/ladder';
 import type { FamilyId, ItemState } from './drills/types';
@@ -61,10 +61,11 @@ export function badgeInputOf(p: Progress, now: Date, weekendDays?: number[], ext
 }
 
 /** New ranks and badge log; null when nothing changed. */
-export function refreshRanksBadges(p: Progress, now: Date, weekendDays?: number[], extra: Partial<BadgeInput> = {}): { next: Progress; rankChanges: RankChange[]; newly: Badge[] } | null {
+export function refreshRanksBadges(p: Progress, now: Date, weekendDays?: number[], extra: Partial<BadgeInput> = {}, hold: RankArea[] = []): { next: Progress; rankChanges: RankChange[]; newly: Badge[] } | null {
   const at = now.toISOString();
   const tech = techniqueOf(p.drillItems);
-  const { ranks, changes } = updateRanks(p.ranks, ratingsOf(p), p.ratingEvents ?? [], at, tech.takes ? tech : null);
+  // SPEC-PATH-ROLE §6 Q2: areas with an open checkpoint on the path wait for it before they move up.
+  const { ranks, changes } = updateRanks(p.ranks, ratingsOf(p), p.ratingEvents ?? [], at, tech.takes ? tech : null, hold);
   const withRanks: Progress = { ...p, ranks };
   const { log, newly } = earnBadges(p.badges, badgeInputOf(withRanks, now, weekendDays, extra), at);
   const same = JSON.stringify(ranks) === JSON.stringify(p.ranks ?? {}) && !newly.length;
