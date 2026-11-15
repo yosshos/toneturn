@@ -1,6 +1,7 @@
 // Drum games P1 (DRUMS_NICHE_PLAN §3): Land It, Groove Echo and Odd-meter Echo in one shell. Setup (tier chips), five
 // rounds — each a measured take on the kit through DrillTake (same analysis as the technique drills) — a one-line
 // verdict per round, a streak, and the run's result for the game tiers, XP and the path. Fits one phone screen.
+import { IsoMix } from './Iso';
 import '../drumGames.css';
 import { useMemo, useState } from 'react';
 import type { DrillCalibration, PlayedNote, TakeMetrics } from '../engine/drills/types';
@@ -31,6 +32,9 @@ const TX = {
   passed: { en: 'rounds passed', he: 'סבבים שעברו' },
   zones: { en: 'Sticking zones', he: 'אזורי סטיקינג' },
   rimNote: { en: 'Your kit must send the rim as its own note.', he: 'המערכת צריכה לשלוח את השפה כתו נפרד.' },
+  meter: { en: 'Meter', he: 'משקל' },
+  evenMeter: { en: 'Grooves', he: 'גרובים' },
+  oddMeter: { en: 'Odd meters', he: 'משקלים מוזרים' },
   kit: { en: 'Played on the kit: an e-kit by MIDI, or a pad by microphone where the round allows it.', he: 'מנגנים על המערכת: תופים אלקטרוניים ב-MIDI, או פד במיקרופון כשהסבב מאפשר.' },
 };
 
@@ -41,7 +45,7 @@ const ZONE_SHORT: Record<StickZones, { en: string; he: string }> = {
   pad: { en: 'One pad', he: 'פד אחד' },
 };
 
-export function DrumGame({ game, lang, settings, onExit, onResult, best, tier: tierInfo, onKit, bestBpm }: { onKit?: (k: KitProfile) => void; game: DrumGameId; lang: Lang; settings: Settings; saved?: unknown | null; onSave?: (s: unknown | null) => void; onExit: () => void; onResult: (r: { score: number; detail?: unknown }) => void; best?: number; tier?: TierInfo; /** Rudiment Rush: the best tempo of a passed round (counts.rushBpm). */ bestBpm?: number }) {
+export function DrumGame({ game, lang, settings, onExit, onResult, best, tier: tierInfo, onKit, bestBpm, echoMode }: { /** Groove Echo's modes (AUDIT-GAMES §10: Odd-meter Echo merged in as a mode). */ echoMode?: { odd: boolean; onChange: (odd: boolean) => void }; onKit?: (k: KitProfile) => void; game: DrumGameId; lang: Lang; settings: Settings; saved?: unknown | null; onSave?: (s: unknown | null) => void; onExit: () => void; onResult: (r: { score: number; detail?: unknown }) => void; best?: number; tier?: TierInfo; /** Rudiment Rush: the best tempo of a passed round (counts.rushBpm). */ bestBpm?: number }) {
   const tx = (o: { en: string; he: string }) => o[lang];
   const [tier, setTier] = useState<DynName>(() => (tierInfo ? startTier(tierInfo) : 'pp'));
   const [phase, setPhase] = useState<'setup' | 'play' | 'end'>('setup');
@@ -56,7 +60,7 @@ export function DrumGame({ game, lang, settings, onExit, onResult, best, tier: t
   const kind = kitKind(settings.drumKit);
   const [zones, setZones] = useState<StickZones>(() => zonesOf(settings.drumKit, kind));
   const ups = scores.filter((x) => x.ok).length - (res?.s.ok ? 1 : 0);
-  const r = useMemo(() => drumRound(game, tier, round, seed, game === 'rudiment-rush' ? { ups, zones } : {}), [game, tier, round, seed, ups, zones]);
+  const r = useMemo(() => drumRound(game, tier, round, seed, game === 'rudiment-rush' ? { ups, zones, midi: kind === 'midi' } : {}), [game, tier, round, seed, ups, zones, kind]);
   const ds = useMemo(() => ({ ...drillSettingsOf(settings), instrument: 'drums' as const }), [settings]);
   const cal: DrillCalibration = { ...DEFAULT_CAL, ...(settings.drillCal ?? {}), latencyMs: inputLatency(settings, midi.devices.length ? 'midi' : 'mic') };
   const streak = (() => {
@@ -105,9 +109,18 @@ export function DrumGame({ game, lang, settings, onExit, onResult, best, tier: t
           <button className="icon-btn" onClick={onExit} aria-label={tx(TX.back)}>
             <span className="flip-rtl">←</span>
           </button>
-          <h1>{tx(DRUM_GAME_NAME[game])}</h1>
+          <h1>{tx(DRUM_GAME_NAME[echoMode ? 'groove-echo' : game])}</h1>
         </header>
         <section className="set-card">
+          {echoMode && (
+            <div className="seg small" role="radiogroup" aria-label={tx(TX.meter)} data-echo-mode={echoMode.odd ? 'odd' : 'even'}>
+              {([false, true] as const).map((odd) => (
+                <button key={String(odd)} type="button" role="radio" aria-checked={echoMode.odd === odd} className={echoMode.odd === odd ? 'on' : ''} onClick={() => echoMode.onChange(odd)} data-echo-odd={odd ? 1 : 0}>
+                  {tx(odd ? TX.oddMeter : TX.evenMeter)}
+                </button>
+              ))}
+            </div>
+          )}
           <p className="field-hint">{tx(DRUM_GAME_BLURB[game])}</p>
           {tierInfo && <TierChips lang={lang} info={tierInfo} value={tier} onChange={setTier} game={game} />}
           {game === 'rudiment-rush' && (
@@ -136,7 +149,9 @@ export function DrumGame({ game, lang, settings, onExit, onResult, best, tier: t
               </p>
             </div>
           )}
-          <p className="field-hint">{tx(TX.kit)}</p>
+          <p className="field-hint">
+            <IsoMix text={tx(TX.kit)} />
+          </p>
           {best !== undefined && (
             <p className="field-hint">
               {tx(TX.best)} <bdi dir="ltr">{best}</bdi>
@@ -148,7 +163,7 @@ export function DrumGame({ game, lang, settings, onExit, onResult, best, tier: t
               ) : null}
             </p>
           )}
-          <button className="btn primary" onClick={() => setPhase('play')} data-dg-start="1">
+          <button className="btn primary mega" onClick={() => setPhase('play')} data-dg-start="1">
             {tx(TX.start)}
           </button>
         </section>

@@ -161,6 +161,7 @@ const WALK: TakeGameCfg<WalkChart> = {
   hear: (c) => hear(c),
   take,
   board: (p) => <WalkBoard {...p} />,
+  keyOf: (c) => ({ key: c.key, inst: 'bass' }),
 };
 
 export const WalkTheChanges = (p: GameScreenProps) => <TakeShell cfg={WALK} {...p} />;

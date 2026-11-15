@@ -8,8 +8,8 @@ test.describe('Truth or Bluff', () => {
     await openGames(page);
     await page.getByRole('button', { name: /Truth or Bluff/ }).first().click();
     await expect(page.getByText('No best score yet at this level.')).toBeVisible();
-    // Default topics: all the theory (no sound); level Easy.
-    await expect(page.locator('.tf-topics .chip.on')).toHaveCount(9);
+    // Default topics: all the theory (no sound); level Easy. AUDIT-GAMES fix #4: the topics sit in a sheet.
+    await expect(page.locator('[data-setup-more="tf-topics"]')).toContainText('9/');
     await page.getByRole('button', { name: /Play/ }).click();
     await expect(page.locator('.tf-statement .tf-text')).not.toBeEmpty();
     await page.screenshot({ path: 'test-results/truefalse.png' });
@@ -34,9 +34,11 @@ test.describe('Truth or Bluff', () => {
   test('choose topics and level: only key signatures; interval trios start with one interval', async ({ page }) => {
     await page.goto('/#/truefalse');
     const chips = page.locator('.tf-topics .chip');
+    await page.locator('[data-setup-more="tf-topics"]').click();
     // Keep only Key signatures (turn the others off).
     for (const id of ['notes', 'rhythm', 'intervals', 'chords', 'scales', 'circle', 'harmony', 'jazz']) await chips.and(page.locator(`[data-topic="${id}"]`)).click();
     await expect(page.locator('.tf-topics .chip.on')).toHaveCount(1);
+    await page.locator('[data-setup-done]').click();
     // GAMES_TIERS P2: the Easy / Medium / Hard radios became the six level tiers; a new player opens at pp.
     const pp = page.locator('.tier-chip[data-tier="pp"]');
     await pp.click();
@@ -47,8 +49,10 @@ test.describe('Truth or Bluff', () => {
     await expect(page.locator('.tf-text')).toContainText(/major|minor/);
     await page.locator('.tf-top .icon-btn').click();
     // Interval trios, first tier: a single interval.
+    await page.locator('[data-setup-more="tf-topics"]').click();
     await chips.and(page.locator('[data-topic="trio"]')).click();
     await chips.and(page.locator('[data-topic="keys"]')).click();
+    await page.locator('[data-setup-done]').click();
     await page.locator('.tier-chip[data-tier="pp"]').click();
     await page.getByRole('button', { name: /Play/ }).click();
     await expect(page.locator('.tf-text')).toContainText(/ up to /);

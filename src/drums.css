@@ -146,7 +146,7 @@
   padding: 8px 12px;
   border: 2px solid var(--outline);
   border-radius: 14px;
-  background: color-mix(in srgb, var(--lemon) 35%, var(--card));
+  background: color-mix(in srgb, var(--lilac) 22%, var(--card)); /* v2: lilac notice with ink text - never pale yellow */
   font-size: 0.85rem;
   color: var(--ink);
 }
@@ -483,3 +483,10 @@
   color: var(--ink);
   white-space: nowrap;
 }
+
+/* Games fix (AUDIT-GAMES #10): Time Lock's silent bars (hatched, "click off") and Land It's landing 1 (lemon now-cue). */
+.dn-silent-bg { fill: color-mix(in srgb, var(--lilac) 18%, transparent); stroke: none; }
+.dn-silent-hatch { stroke: var(--ink-dim, #5b4a86); stroke-width: 1; opacity: 0.35; }
+.dn-silent-label { font: 700 8px Rubik, sans-serif; fill: var(--ink); }
+.dn-landing-bg { fill: var(--lemon, #ffd43b); stroke: var(--ink-c, #1e1033); stroke-width: 1.5; }
+.dn-landing-label { font: 700 8px Rubik, sans-serif; fill: var(--ink); }

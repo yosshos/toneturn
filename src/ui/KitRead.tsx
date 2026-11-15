@@ -10,6 +10,7 @@ import { startTier, tierAllowed, tierDef, type DynName } from '../engine/gameTie
 import type { GameScreenProps } from './gameProps';
 import { G2Head, prefersCalm } from './Flight';
 import { TierChips } from './TierChips';
+import { RushResultCard } from './GameResult';
 import { piano } from './services';
 
 type Lang = 'he' | 'en';
@@ -33,6 +34,7 @@ const TX = {
   playAgain: { en: 'Play again', he: 'לשחק שוב' },
   best: { en: 'Best', he: 'שיא' },
   bar: { en: 'Bar', he: 'תיבה' },
+  level: { en: 'Level', he: 'רמה' },
 };
 const tx = (b: { en: string; he: string }, l: Lang) => b[l];
 const levelOf = (t: DynName) => Number(tierDef('kitread', t)?.levels?.[0] ?? 1);
@@ -314,30 +316,28 @@ export function KitRead({ lang, settings, saved, onSave, onExit, onResult, best,
               </button>
             ))}
           </div>
-          <button className="btn" onClick={() => void listen(run)} disabled={listening || !!fb}>
+          <button className="btn kr-again" onClick={() => void listen(run)} disabled={listening || !!fb}>
             {tx(TX.again, lang)}
           </button>
         </>
       )}
 
       {phase === 'over' && final && (
-        <section className="g2-card" aria-live="polite">
-          <h2>{tx(TX.over, lang)}</h2>
-          <p className="kr-final">
-            <span>{tx(TX.right, lang)}</span> <b dir="ltr">{final.detail.right}</b>
-          </p>
-          <p className="g2-dim">
-            {tx(TX.accuracy, lang)} <span dir="ltr">{final.detail.accuracy}%</span> · {tx(TX.score, lang)} <span dir="ltr">{final.score}</span>
-          </p>
-          <div className="g2-row">
-            <button className="btn primary" onClick={() => begin(false)}>
-              {tx(TX.playAgain, lang)}
-            </button>
-            <button className="btn ghost" onClick={back}>
-              {tx(TX.back, lang)}
-            </button>
-          </div>
-        </section>
+        <RushResultCard
+          lang={lang}
+          heading={tx(TX.over, lang)}
+          score={final.score}
+          best={best}
+          newBest={final.score > 0 && final.score > (best ?? 0)}
+          right={final.detail.right}
+          wrong={final.detail.wrong}
+          stats={[
+            { label: tx(TX.accuracy, lang), value: <span dir="ltr">{final.detail.accuracy}%</span> },
+            { label: tx(TX.level, lang), value: final.detail.tier ? <i className="dyn">{final.detail.tier}</i> : final.detail.level },
+          ]}
+          onAgain={() => begin(false)}
+          onBack={back}
+        />
       )}
     </main>
   );

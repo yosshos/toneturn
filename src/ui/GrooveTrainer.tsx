@@ -11,6 +11,7 @@ import type { Settings } from '../storage/progress';
 import { midi } from '../speech/midi';
 import { piano } from './services';
 import { TierChips } from './TierChips';
+import { InputCheck } from './InputCheck';
 import { startTier, tierAllowed, type DynName, type TierInfo } from '../engine/gameTiers';
 import { accentsOf, BAND_PUSH_MS, GROOVE_FF_PARTS, grooveTierPlan, grooveTierScore, hiddenSwing, POCKET_BARS, POCKET_BPM, pocketPartScore, SWING_BPM, swingPartScore, matchTapsAt, tempoChangePlan, tempoChangeScore, type GrooveFfPart } from '../engine/grooveTier';
 
@@ -257,6 +258,7 @@ export function GrooveTrainerScreen({ settings, onBack, tier: tierInfo, onResult
       </div>
       <p className="field-hint">{mode === 'fade' ? tx.fadeHow : mode === 'pocket' ? tx.pocketHow : mode === 'level' ? (tier === 'ff' && part !== 'slow' ? (part === 'odd' ? tx.oddHow : part === 'pocket' ? tx.layHow : part === 'tempo' ? tx.tempoHow : tx.swingMatchHow) : tx.levelHow) : tx.swingHow}</p>
       {mode === 'level' && tierInfo && <TierChips lang={lang} info={tierInfo} value={tier} onChange={(x) => !running && setTier(x)} game="groove" />}
+      {!running && <InputCheck mode="drum-midi" lang={lang} />}
       {mode === 'level' && tier === 'ff' && (
           <div className="chips gt-target" role="radiogroup" aria-label={tx.ffParts} data-groove-parts>
             {GROOVE_FF_PARTS.map((x) => (

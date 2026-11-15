@@ -2,6 +2,7 @@
 // (fingers, hands, keys, scales, leaps, tempo), the hand map and the key map, the groove fingerprint, the confusion map
 // with "boss fights", and the trouble bars of the pieces. Every finding links to the exercise that trains it.
 
+import { withGameKeys } from '../engine/gameKeys';
 import { useEffect, useState } from 'react';
 import { findings, type PlayerModel } from '../engine/analysis/model';
 import { grooveFindings, type GrooveModel } from '../engine/analysis/groove';
@@ -62,12 +63,12 @@ export function InsightsScreen({ lang, progress, onBack, onTopic, onDrills, onDr
   const fullHist = earIndexHistory(progress.ratingEvents ?? []);
   const hist = fullHist.slice(-30);
   useEffect(() => {
-    void refreshProfile(fullHist, new Date(), progress.drillItems ?? {}).then(setProfile, () => {});
+    void refreshProfile(fullHist, new Date(), withGameKeys(progress.drillItems, progress.gameKeys)).then(setProfile, () => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const act = (a?: ProfileAction) =>
     !a ? undefined : a.kind === 'topic' ? () => onTopic(a.id, a.level) : a.kind === 'groove' ? onGroove : a.family && a.key !== undefined && onDrillKey ? () => onDrillKey(a.family!, a.key!) : onDrills;
-  const keys = instrumentKeys(progress.drillItems ?? {});
+  const keys = instrumentKeys(withGameKeys(progress.drillItems, progress.gameKeys));
   const fs = model ? findings(model) : [];
   const gf = groove ? grooveFindings(groove) : [];
   const cps = conf ? topConfusions(conf) : [];

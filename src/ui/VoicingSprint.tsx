@@ -3,6 +3,7 @@
 // are judged once the chord settles (250 ms after the last key, with as many notes as the voicing needs). On-screen
 // keys are practice (they never clear a tier).
 
+import { IsoMix } from './Iso';
 import '../advgames.css';
 import '../instgames.css';
 import { useEffect, useRef, useState } from 'react';
@@ -13,6 +14,8 @@ import type { GameScreenProps } from './gameProps';
 import { G2Head, prefersCalm } from './Flight';
 import { KeysPad } from './Instrument';
 import { TierChips } from './TierChips';
+import { InputCheck } from './InputCheck';
+import { RushResultCard } from './GameResult';
 import { piano } from './services';
 
 type Lang = 'he' | 'en';
@@ -39,6 +42,7 @@ const TX = {
   over: { en: 'Results', he: 'תוצאות' },
   playAgain: { en: 'Play again', he: 'לשחק שוב' },
   best: { en: 'Best', he: 'שיא' },
+  level: { en: 'Level', he: 'רמה' },
   waiting: { en: 'Play the voicing', he: 'נגנו את הוויסינג' },
 };
 const tx = (b: Bi, l: Lang) => b[l];
@@ -59,12 +63,16 @@ export function VoicingSprint({ lang, settings, saved, onSave, onExit, onResult,
   const heldRef = useRef(new Set<number>());
   const timer = useRef<number | null>(null);
   const busy = useRef(false);
+  const keyLog = useRef<{ key: number; acc: number }[]>([]);
 
   const finish = (r: VoicingRun) => {
     onSave(null);
     const res = voicingResult(r, input);
     setFinal(res);
-    onResult(res);
+    // Key mastery (AUDIT-GAMES §1): each voicing answered on a MIDI keyboard counts in its chord's root.
+    const keyed = input === 'midi' ? keyLog.current : [];
+    keyLog.current = [];
+    onResult(keyed.length ? { ...res, detail: { ...res.detail, keyInst: 'piano', keyTakes: keyed } } : res);
     setPhase('over');
   };
 
@@ -93,6 +101,7 @@ export function VoicingSprint({ lang, settings, saved, onSave, onExit, onResult,
     if (!r || busy.current) return;
     busy.current = true;
     const it = voicingAt(r);
+    keyLog.current.push({ key: it.chord.root, acc: ok ? 100 : 0 });
     setFb({ ok, show: ok ? [] : voicingExample(it) });
     if (!ok) void piano.play(voicingExample(it).map((m) => ({ midi: m, start: 0, duration: 0.9, velocity: 0.5 })), 1.1, new AbortController().signal).catch(() => {});
     const n = voicingAnswer(r, ok);
@@ -175,19 +184,22 @@ export function VoicingSprint({ lang, settings, saved, onSave, onExit, onResult,
 
       {phase === 'setup' && (
         <section className="g2-card">
-          <p>{tx(TX.blurb, lang)}</p>
+          <p>
+            <IsoMix text={tx(TX.blurb, lang)} />
+          </p>
           <fieldset className="seg-field">
             <legend>{tx(TX.input, lang)}</legend>
             <div className="seg g2-seg" role="radiogroup" aria-label={tx(TX.input, lang)}>
               {(['midi', 'touch'] as const).map((k) => (
                 <button key={k} type="button" role="radio" aria-checked={input === k} className={input === k ? 'on' : ''} onClick={() => setInput(k)}>
-                  {tx(k === 'midi' ? TX.midiIn : TX.touch, lang)}
+                  <IsoMix text={tx(k === 'midi' ? TX.midiIn : TX.touch, lang)} />
                 </button>
               ))}
             </div>
           </fieldset>
           {input === 'touch' && <p className="g2-dim">{tx(TX.touchNote, lang)}</p>}
           {tierInfo && <TierChips lang={lang} info={tierInfo} value={tier} onChange={setTier} game="voicingsprint" />}
+          {input === 'midi' && <InputCheck mode="midi" lang={lang} />}
           {!!best && (
             <p className="g2-best">
               {tx(TX.best, lang)}: <b dir="ltr">{best}</b>
@@ -253,23 +265,19 @@ export function VoicingSprint({ lang, settings, saved, onSave, onExit, onResult,
       )}
 
       {phase === 'over' && final && (
-        <section className="g2-card" aria-live="polite">
-          <h2>{tx(TX.over, lang)}</h2>
-          <p className="inst-final">
-            <span>{tx(TX.right, lang)}</span> <b dir="ltr">{final.detail.right}</b>
-          </p>
-          <p className="g2-dim" dir="ltr">
-            {final.detail.right} / {final.detail.right + final.detail.wrong}
-          </p>
-          <div className="g2-row">
-            <button className="btn primary" onClick={() => begin(false)}>
-              {tx(TX.playAgain, lang)}
-            </button>
-            <button className="btn ghost" onClick={back}>
-              {tx(TX.back, lang)}
-            </button>
-          </div>
-        </section>
+        <RushResultCard
+          lang={lang}
+          heading={tx(TX.over, lang)}
+          score={final.score}
+          best={best}
+          newBest={final.score > 0 && final.score > (best ?? 0)}
+          right={final.detail.right}
+          wrong={final.detail.wrong}
+          stats={[{ label: tx(TX.level, lang), value: final.detail.tier ? <i className="dyn">{final.detail.tier}</i> : final.detail.level }]}
+          note={final.detail.input === 'touch' ? tx(TX.touchNote, lang) : undefined}
+          onAgain={() => begin(false)}
+          onBack={back}
+        />
       )}
     </main>
   );

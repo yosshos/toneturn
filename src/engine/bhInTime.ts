@@ -27,6 +27,8 @@ export interface BhTake {
   level: BhLevel;
   bpm: number;
   seed: number;
+  /** The tonic (pitch class) the chart is built on (key mastery). */
+  key: number;
   bars: BhBar[];
 }
 
@@ -148,7 +150,7 @@ export function makeTake(level: BhLevel, bpm: number, seed: number): BhTake {
       if (ap >= LOW && ap <= HIGH) bars[b].line[7] = ap;
     }
   }
-  return { level, bpm, seed, bars };
+  return { level, bpm, seed, key, bars };
 }
 
 // ---------------------------------------------------------------- timing

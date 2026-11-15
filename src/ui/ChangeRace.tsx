@@ -2,7 +2,7 @@
 // changes two beats a chord. The microphone hears each strum (a loudness jump, chroma frames after it): the closed-set
 // recognizer (chordFinder.judgeStrum) says whether it was the chord, the onset says how close to the beat it came.
 
-import { changeChords, chordName, compVoicing, gradeChanges, slotOf, takeSeed, type Chord, type StrumHit, type TakeSave } from '../engine/instGames';
+import { changeChords, changeKeyOf, chordName, compVoicing, gradeChanges, slotOf, takeSeed, type Chord, type StrumHit, type TakeSave } from '../engine/instGames';
 import { judgeStrum, type StrumFrame } from '../engine/chordFinder';
 import type { NoteEvent } from '../engine/lesson';
 import type { GameScreenProps } from './gameProps';
@@ -142,6 +142,10 @@ const RACE: TakeGameCfg<Chord[]> = {
   hear: (c) => hear(c),
   take,
   board: (p) => <ChangeBoard {...p} />,
+  keyOf: (_c, _s, save, i) => {
+    const key = changeKeyOf(takeSeed(save, i), save.level);
+    return key === null ? null : { key, inst: 'guitar' };
+  },
 };
 
 export const ChordChangeRace = (p: GameScreenProps) => <TakeShell cfg={RACE} {...p} />;

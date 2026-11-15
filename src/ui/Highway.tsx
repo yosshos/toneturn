@@ -40,6 +40,8 @@ import { BrowserPitchCapture } from '../speech/pitchCapture';
 import { piano } from './services';
 import { TierChips } from './TierChips';
 import { InputCheck, InputWatchdog } from './InputCheck';
+import { SetupSheet } from './SetupSheet';
+import { IsoMix } from './Iso';
 import { voiceOf } from '../engine/drumKit';
 import { startTier, tierDef, type DynName, type TierInfo } from '../engine/gameTiers';
 
@@ -642,12 +644,12 @@ export function Highway({
               ))}
             </div>
             {/* kit lanes: the connection line below says what to do (one screen) */}
-            {opts.mode !== 'kit' && <p className="field-hint">{opts.mode === 'tap' ? tx(T.tapHint) : useMidi ? tx(T.midiHint) : tx(T.pitchHint)}</p>}
+            {opts.mode !== 'kit' && <p className="field-hint">{opts.mode === 'tap' ? <IsoMix text={tx(T.tapHint)} /> : useMidi ? tx(T.midiHint) : tx(T.pitchHint)}</p>}
             {opts.mode === 'tap' && !settings.tapLatencyMs && <p className="field-hint warn">{tx(T.calibrate)}</p>}
             {/* A connected kit: the input check strip is the connection line (device, a light on every hit, the pad hit). */}
             {opts.mode === 'kit' && kitLink.state !== 'ok' && (
               <p className={`field-hint ${kitLink.state === 'checking' ? '' : 'warn'}`} data-kit-link={kitLink.state}>
-                {tx(kitLink.state === 'checking' ? T.linkChecking : kitLink.state === 'unsupported' ? T.linkUnsupported : kitLink.state === 'denied' ? T.linkDenied : T.linkNone)}
+                <IsoMix text={tx(kitLink.state === 'checking' ? T.linkChecking : kitLink.state === 'unsupported' ? T.linkUnsupported : kitLink.state === 'denied' ? T.linkDenied : T.linkNone)} />
               </p>
             )}
             {opts.mode === 'kit' && kitLink.state === 'ok' && (
@@ -714,6 +716,8 @@ export function Highway({
               </div>
             </fieldset>
           )}
+          {/* AUDIT-GAMES fix #4: tempo and click open in a sheet, so the English setup fits one phone screen. */}
+          <SetupSheet lang={lang} id="highway" label={`${tx(T.tempo)} · ${tx(T.click)}`} summary={<bdi dir="ltr">{opts.tempoPct ?? 100}%</bdi>}>
           {tierInfo && (
             <fieldset className="seg-field" data-hw-tempo-pct>
               <legend>{tx(T.tempo)}</legend>
@@ -777,6 +781,7 @@ export function Highway({
             </fieldset>
           )}
           </div>
+          </SetupSheet>
           {!tierInfo && (
           <fieldset className="seg-field">
             <legend>{tx(T.tempo)}</legend>
@@ -867,7 +872,8 @@ export function Highway({
         <p className="eyebrow">
           {tx(T.title)} · <bdi dir="ltr">R{song.opts.level}</bdi> · {tx(T.song)} <bdi dir="ltr">{song.opts.song}</bdi>
         </p>
-        <h1>{r.fullCombo ? tx(T.fullCombo) : result.best ? tx(T.newBest) : tx(T.accuracy)}</h1>
+        {/* The big number carries the "Accuracy" label; the heading only says something when there is news. */}
+        {(r.fullCombo || result.best) && <h1>{r.fullCombo ? tx(T.fullCombo) : tx(T.newBest)}</h1>}
         <p className="big-score">
           <small>{tx(T.accuracy)}</small>
           <b dir="ltr">{r.accuracy}%</b>
@@ -1047,7 +1053,8 @@ export function Highway({
             </div>
             <div className="hw-hitline" />
             {flash && (
-              <div key={flash.n} className={`hw-flash ${flash.cls}`} aria-live="assertive">
+              // The grade shows as a mark on the note itself (.is-perfect / .is-good / .is-miss); the word is for screen readers only.
+              <div key={flash.n} className={`hw-flash sr-only ${flash.cls}`} aria-live="assertive">
                 {flash.text}
               </div>
             )}
@@ -1092,7 +1099,7 @@ export function Highway({
               {tx(T.tapHere)}
             </button>
           )}
-          <p className="hint">{opts.mode === 'tap' ? tx(T.tapHint) : opts.mode === 'kit' ? (kitLink.state === 'ok' ? <span ref={lastHitRef}>{tx(T.kitPlay)}</span> : tx(kitLink.state === 'unsupported' ? T.linkUnsupported : kitLink.state === 'denied' ? T.linkDenied : T.linkNone)) : tx(T.pitchHint)}</p>
+          <p className="hint">{opts.mode === 'tap' ? <IsoMix text={tx(T.tapHint)} /> : opts.mode === 'kit' ? (kitLink.state === 'ok' ? <span ref={lastHitRef}>{tx(T.kitPlay)}</span> : <IsoMix text={tx(kitLink.state === 'unsupported' ? T.linkUnsupported : kitLink.state === 'denied' ? T.linkDenied : T.linkNone)} />) : tx(T.pitchHint)}</p>
         </>
       )}
     </main>

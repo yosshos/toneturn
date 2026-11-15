@@ -133,6 +133,8 @@ test.describe('placement, Skill Map, review, weekly puzzle', () => {
   test('Beat Echo setup offers tap-latency calibration', async ({ page }) => {
     await page.goto('/#/games');
     await page.getByRole('radio', { name: /Beat Echo/ }).click();
+    // AUDIT-GAMES fix #4: calibration sits in the setup's "More" sheet (one screen at 320×720).
+    await page.locator('[data-setup-more="echo"]').click();
     await expect(page.getByRole('button', { name: /Calibrate tap timing/ })).toBeVisible();
     await expect(page.locator('.calibrate')).toContainText('Tap delay: 0 ms');
   });

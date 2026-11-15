@@ -3,6 +3,7 @@
 // a take under 70 % costs one. The engine is src/engine/riffEcho.ts. The bar strip is physical (left = first) in both
 // languages.
 
+import { IsoMix } from './Iso';
 import '../riffecho.css';
 import { useEffect, useRef, useState } from 'react';
 import { addTake, barEighths, gradeTake, isRiffSave, newRiffSave, riffAt, riffClicks, riffEvents, riffInstrument, riffOver, riffResult, RIFF_LIVES, RIFF_PASS, RIFFS_PER_RUN, type PlayedNote, type Riff, type RiffSave, type TakeGrade } from '../engine/riffEcho';
@@ -261,7 +262,7 @@ export function RiffEcho({ lang, settings, saved, onSave, onExit, onResult, best
             <div className="seg g2-seg" role="radiogroup" aria-label={tx(TX.input, lang)}>
               {(['mic', 'midi'] as const).map((k) => (
                 <button key={k} type="button" role="radio" aria-checked={input === k} className={input === k ? 'on' : ''} onClick={() => setInput(k)}>
-                  {tx(k === 'mic' ? TX.mic : TX.midiIn, lang)}
+                  <IsoMix text={tx(k === 'mic' ? TX.mic : TX.midiIn, lang)} />
                 </button>
               ))}
             </div>

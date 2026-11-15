@@ -1,0 +1,25 @@
+/* Today's pitch-memory card (AUDIT-GAMES §9): a flat bar trend, ink on paper — no gradient, no glow. */
+.tc-pm {
+  text-align: start;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  width: 100%;
+}
+.tc-pm .pm-trend {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 28px;
+}
+.tc-pm .pm-trend i {
+  flex: 1;
+  min-width: 0;
+  background: var(--purple, #6d28d9);
+  border-radius: 2px;
+}
+.tc-pm .pm-trend i.none {
+  height: 3px;
+  background: var(--lilac, #a78bfa);
+  opacity: 0.6;
+}

@@ -27,7 +27,8 @@ export interface Match {
   turnNo: number;
 }
 
-export const PLAYER_COLORS = ['#4BE3B5', '#FFC94D', '#A98BFF', '#FF6A4D'];
+/** v2 domain colours (no mint, no yellow — lemon is only for "now"): teal, pink, lilac, purple. */
+export const PLAYER_COLORS = ['#12C9B4', '#FF5FA2', '#A78BFA', '#6D28D9'];
 
 export function newMatch(names: string[], startLength: number): Match {
   if (names.length < 1 || names.length > 4) throw new Error('1–4 players');

@@ -96,7 +96,8 @@ for (const lang of ['en', 'he'] as const) {
     await openScales(page, lang);
     const strip = page.locator('[data-input-check="midi"]');
     await expect(strip).toBeVisible();
-    await expect(strip.locator('.ic-dev')).toHaveText('Test Keys');
+    await expect(strip.locator('.ic-dev bdi')).toHaveText('Test Keys');
+    await expect(strip.locator('.ic-dev-label')).toHaveText(lang === 'he' ? 'מקלדת:' : 'Keys:');
     await expect(strip).toHaveAttribute('data-ic-state', 'listening');
     await expect(strip).toHaveAttribute('data-ic-notes', '0');
     await note(page, 60, 100);

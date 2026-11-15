@@ -167,21 +167,34 @@
 }
 .hw-note.is-perfect,
 .hw-note.is-good {
-  opacity: 0;
-  transition: opacity 0.18s, transform 0.18s;
+  transition: transform 0.18s;
   transform: translateY(50%) scale(1.25);
 }
 .hw-note.is-miss {
-  opacity: 0.25;
-  filter: grayscale(1);
+  opacity: 0.55;
 }
+/* Per-note marks (games fix): the grade sits on the note itself — ✓ perfect, ~ good, ✕ miss — instead of a text flash. */
+.hw-note::before {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font: 900 1rem/1 Rubik, sans-serif;
+  color: var(--ink-c, #1e1033);
+  pointer-events: none;
+}
+.hw-note.is-perfect::before { content: '✓'; }
+.hw-note.is-good::before { content: '~'; }
+.hw-note.is-miss::before { content: '✕'; }
 .hw-hitline {
   position: absolute;
   inset-inline: 0;
   bottom: 16%;
-  height: 4px;
-  margin-bottom: -2px;
-  background: var(--ok);
+  height: 8px;
+  margin-bottom: -4px;
+  background: var(--lemon, #ffd43b);
+  border-block: 2.5px solid var(--ink-c, #1e1033);
+  box-sizing: border-box;
   box-shadow: none;
   pointer-events: none;
 }
@@ -644,3 +657,6 @@
   .hw-setup .field-hint { margin-block: 2px 0; }
   .hw-setup .btn.mega { min-height: 46px; }
 }
+
+/* Games fix: the Highway setup's tap-delay note is ink, not mustard. */
+:root[data-theme] .g3 .field-hint.warn { color: var(--ink); }

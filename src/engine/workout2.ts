@@ -5,6 +5,7 @@
 import type { DomainId } from './rating';
 import type { SkillId } from './lesson';
 import { pendingChecks, type Goal, type PathStep, type PathView, type UnitStep } from './path';
+import type { CourseId } from './courses';
 
 export type BlockTarget =
   | { kind: 'path' }
@@ -65,6 +66,30 @@ export interface SuggestInput {
   pathMode?: PathMode;
   /** Opened items the strengthen block can draw from; default: the opened steps in the view (0 = a new player). */
   opened?: number;
+  /** AUDIT-GAMES §1: the active course and the local day ('YYYY-MM-DD') pick the day's game (WORKOUT_GAMES). */
+  course?: CourseId;
+  day?: string;
+}
+
+/**
+ * AUDIT-GAMES §1 ("everything connects"): the workout's game block rotates by day through the course's measured,
+ * tiered games — it was always Rhythm Highway.
+ */
+export const WORKOUT_GAMES: Record<CourseId, string[]> = {
+  ear: ['highway', 'rush-interval', 'rush-chord', 'melodypuzzle', 'rush-progression', 'rush-note'],
+  jazz: ['rush-chord', 'rush-progression', 'rush-interval', 'rush-voicing'],
+  voice: ['flight', 'singinterval', 'rush-interval'],
+  keys: ['highway', 'rush-note', 'playback', 'rush-chord'],
+  guitar: ['highway', 'rush-fretboard', 'changerace', 'rootsear'],
+  bass: ['highway', 'rush-fretboard', 'walkchanges', 'rootsear'],
+  drums: ['highway', 'groove-echo', 'kitread', 'time-lock'],
+};
+/** The day's game for a course (deterministic per local day; Highway without a course). */
+export function workoutGame(course?: CourseId, day?: string): string {
+  const xs = course ? WORKOUT_GAMES[course] : null;
+  if (!xs?.length) return 'highway';
+  const d = day ? Math.floor(Date.parse(`${day}T12:00:00Z`) / 86400000) : 0;
+  return xs[((Number.isFinite(d) ? d : 0) % xs.length + xs.length) % xs.length];
 }
 
 export type PathMode = 'guide' | 'choose';
@@ -197,7 +222,7 @@ function suggestBase(inp: SuggestInput): Block[] {
   // New: the path's next steps (lesson + first pass); a waiting checkpoint first (nextForBlock).
   if (m.new) push({ kind: 'path' }, m.new);
   if (m.strengthen) push({ kind: 'strengthen' }, m.strengthen);
-  if (game) push({ kind: 'game', game: 'highway' }, game);
+  if (game) push({ kind: 'game', game: workoutGame(inp.course, inp.day) }, game);
   return out;
 }
 // ---------------------------------------------------------------- editing (§4)

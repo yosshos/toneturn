@@ -2,6 +2,7 @@
 // Honest by design: the player only ever hears A and B — no sweep tone, no audition of the slider.
 // The slider runs low → high, left → right in both languages; only the chrome mirrors in Hebrew.
 
+import { IsoMix } from './Iso';
 import { Icon } from './icons';
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react';
 import { renderFx } from '../audio/fx';
@@ -90,7 +91,7 @@ const TEXT = {
   },
   he: {
     title: 'צייד הפיקים',
-    blurb: 'A הוא הצליל הנקי. ב-B פס תדרים אחד מוגבר — באותה עוצמה. מצאו את ההגברה על הסליידר: ככל שקרוב יותר, יותר נקודות.',
+    blurb: 'A הוא הצליל הנקי. בצליל B פס תדרים אחד מוגבר — באותה עוצמה. מצאו את ההגברה על הסליידר: ככל שקרוב יותר, יותר נקודות.',
     level: 'שלב',
     levels: { 1: 'פסי אוקטבה', 2: 'פסי שליש אוקטבה', 3: 'חופשי · עדין · מוזיקה', 4: 'שליש אוקטבה · כמות · מיקס מלא' } as Record<PeakLevel, string>,
     amount: 'כמה?',
@@ -113,7 +114,7 @@ const TEXT = {
     off: (o: number) => (o < 0.01 ? 'בול!' : `במרחק ${o.toFixed(2)} אוקטבות`),
     pts: 'נק׳',
     phones: 'ההגברה הזאת נמוכה — כדאי אוזניות; רמקול של טלפון לא מנגן אותה.',
-    listen: 'אפשר להקשיב ל-A ול-B כמה שרוצים.',
+    listen: 'אפשר להקשיב לצלילים A ו־ B כמה שרוצים.',
     over: 'תוצאות',
     mean: 'החטאה ממוצעת',
     oct: 'אוק׳',
@@ -287,7 +288,9 @@ export function PeakHunter({ lang, settings, saved, onSave, onExit, onResult, be
 
       {phase === 'setup' && (
         <section className="g2-card">
-          <p>{tx.blurb}</p>
+          <p>
+            <IsoMix text={tx.blurb} />
+          </p>
           {tierInfo ? (
             <TierChips lang={lang} info={tierInfo} value={tier} onChange={setTier} game="peakhunter" />
           ) : (
@@ -352,12 +355,14 @@ export function PeakHunter({ lang, settings, saved, onSave, onExit, onResult, be
                   <span className="ph-ab-icon" aria-hidden>
                     {playing === w ? '■' : '▶'}
                   </span>
-                  <span>{w === 'a' ? tx.a : tx.b}</span>
+                  <span>
+                    <IsoMix text={w === 'a' ? tx.a : tx.b} />
+                  </span>
                 </button>
               ))}
             </div>
             <p className="g2-dim" aria-live="polite">
-              {busy ? tx.loading : tx.listen}
+              {busy ? tx.loading : <IsoMix text={tx.listen} />}
             </p>
             {phones && (
               <p className="ph-phones" role="note">

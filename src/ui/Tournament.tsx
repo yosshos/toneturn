@@ -1,12 +1,14 @@
 import { Icon } from './icons';
+import { IsoMix } from './Iso';
 import { LevelStatsLine } from './LevelStats';
 import { RatingBadge } from './Rating';
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { dailyBoardBand, submitDailyBand, type DailyBoard } from '../cloud/daily';
 import { BAND_NAMES, bandOfTier, bandsOpen, bandTiers, socialInfo, startTier, tierSeed, type DailyBand, type DynName, type TierInfo } from '../engine/gameTiers';
 import { TierChips } from './TierChips';
+import { SetupSheet } from './SetupSheet';
 import type { CloudUser } from '../cloud/cloud';
-import { dailySet, shareText, tournamentSet, type SetKind } from '../engine/tournament';
+import { dailySet, duelOutcome, shareText, tournamentSet, type DuelOutcome, type SetKind } from '../engine/tournament';
 import { firstKind, forCourse } from '../engine/courseSocial';
 import type { CourseId } from '../engine/courses';
 import type { Question } from '../engine/lesson';
@@ -126,7 +128,7 @@ export function DailyScreen({
           <div className="seg" role="radiogroup" aria-label={settings.uiLang === 'he' ? 'עוצמה' : 'Band'} data-daily-bands="1">
             {open.map((b) => (
               <button key={b} type="button" role="radio" aria-checked={band === b} className={band === b ? 'on' : ''} onClick={() => setBand(b)} data-band={b}>
-                {BAND_NAMES[b][settings.uiLang]}
+                <IsoMix text={BAND_NAMES[b][settings.uiLang]} />
               </button>
             ))}
           </div>
@@ -256,6 +258,9 @@ export function DuelSetup({ t, onBack, onStart, course = 'ear', tier: tierInfo, 
             </label>
           ))}
         </div>
+        {tierInfo && <TierChips lang={lang} info={tierInfo} value={tier} onChange={setTier} game="duel" />}
+        {/* AUDIT-GAMES fix #4: the question set and rounds open in a sheet — the setup fits one phone screen. */}
+        <SetupSheet lang={lang} id="duel" label={t.questionsOn} summary={`${kinds.find(([v]) => v === kind)?.[1] ?? ''} · ${rounds}`}>
         <fieldset className="seg-field">
           <legend>{t.questionsOn}</legend>
           <div className="seg" role="radiogroup" aria-label={t.questionsOn}>
@@ -266,7 +271,6 @@ export function DuelSetup({ t, onBack, onStart, course = 'ear', tier: tierInfo, 
             ))}
           </div>
         </fieldset>
-        {tierInfo && <TierChips lang={lang} info={tierInfo} value={tier} onChange={setTier} game="duel" />}
         <fieldset className="seg-field">
           <legend>{t.roundsLabel}</legend>
           <div className="seg" role="radiogroup" aria-label={t.roundsLabel}>
@@ -277,6 +281,7 @@ export function DuelSetup({ t, onBack, onStart, course = 'ear', tier: tierInfo, 
             ))}
           </div>
         </fieldset>
+        </SetupSheet>
       </section>
       <button
         className="btn primary mega"
@@ -297,11 +302,11 @@ export function DuelSetup({ t, onBack, onStart, course = 'ear', tier: tierInfo, 
 }
 
 // A duel on one device is not saved: leaving a game against someone means losing it (product owner).
-export function DuelScreen({ t, settings, names, kind, rounds, onExit, onRematch, tier = 'pp' }: { t: Strings; settings: Settings; names: string[]; kind: SetKind; rounds: number; onExit: () => void; onRematch: () => void; tier?: DynName }) {
+export function DuelScreen({ t, settings, names, kind, rounds, onExit, onRematch, onResult, tier = 'pp' }: { t: Strings; settings: Settings; names: string[]; kind: SetKind; rounds: number; onExit: () => void; onRematch: () => void; onResult?: (r: DuelOutcome) => void; tier?: DynName }) {
   // The tier rides in the seed (engine/gameTiers.ts): both players get that tier's items.
   const seed = useMemo(() => tierSeed((Date.now() ^ (Math.random() * 1e9)) >>> 0, tier), [tier]);
   const items = useMemo(() => tournamentSet(kind, rounds, seed), [kind, rounds, seed]);
-  return <TournamentPlay t={t} settings={settings} items={items} players={names} onExit={onExit} onRematch={onRematch} />;
+  return <TournamentPlay t={t} settings={settings} items={items} players={names} onExit={onExit} onRematch={onRematch} onOver={(v) => onResult?.(duelOutcome(v, kind, tier, seed))} />;
 }
 
 // ======================================================================= Ghost race
@@ -376,6 +381,8 @@ export function GhostScreen({ t, settings, progress, onBack, onProgress }: { t: 
       </header>
       <p className="field-hint">{t.ghostHint}</p>
       <section className="set-card">
+        <TierChips lang={settings.uiLang} info={tierInfo} value={tier} onChange={setTier} game="ghost" />
+        <SetupSheet lang={settings.uiLang} id="ghost" label={t.questionsOn} summary={`${kinds.find(([v]) => v === kind)?.[1] ?? ''} · ${rounds}`}>
         <fieldset className="seg-field">
           <legend>{t.questionsOn}</legend>
           <div className="seg" role="radiogroup" aria-label={t.questionsOn}>
@@ -396,7 +403,7 @@ export function GhostScreen({ t, settings, progress, onBack, onProgress }: { t: 
             ))}
           </div>
         </fieldset>
-        <TierChips lang={settings.uiLang} info={tierInfo} value={tier} onChange={setTier} game="ghost" />
+        </SetupSheet>
         <p className="ghost-best" dir="auto">
           {ghost ? `${t.ghostBest}: ${ghost.points.toLocaleString(settings.uiLang)} ${t.points}` : t.ghostNone}
         </p>
@@ -643,7 +650,7 @@ export function TimeBar({ endsAt }: { endsAt: number | null }) {
   }, [endsAt]);
   const left = endsAt === null ? 0 : Math.max(0, Math.min(1, (endsAt - performance.now()) / 10_000));
   return (
-    <div className="time-bar" aria-hidden="true">
+    <div className={`time-bar${left <= 0.3 ? ' low' : ''}`} aria-hidden="true">
       <span style={{ width: `${left * 100}%` }} />
     </div>
   );

@@ -58,8 +58,10 @@ export function barGroups(meter: string, rnd?: () => number): number[] {
 }
 export const barEighths = (b: RiffBar) => b.groups.reduce((a, x) => a + x, 0);
 
-/** Root and scale of each instrument's register (bass E2–A2, guitar / keys around A3–C4). */
-const REGISTER: Record<RiffInstrument, number[]> = { bass: [40, 41, 43, 45], guitar: [52, 55, 57], keys: [57, 60, 62] };
+/** Root of each instrument's register, all 12 roots (AUDIT-GAMES §8; it had 3–4): bass E2–D♯3, guitar D3–C♯4, keys G3–F♯4. */
+const span12 = (from: number) => Array.from({ length: 12 }, (_, i) => from + i);
+export const RIFF_ROOTS: Record<RiffInstrument, number[]> = { bass: span12(40), guitar: span12(50), keys: span12(55) };
+const REGISTER = RIFF_ROOTS;
 const SCALES = [
   [0, 3, 5, 7, 10, 12], // minor pentatonic
   [0, 2, 3, 5, 7, 9, 10, 12], // dorian

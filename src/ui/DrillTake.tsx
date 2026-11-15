@@ -783,16 +783,16 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
         <p className="kit-warn" data-drum-needs-kit="1">
           {acKit
             ? lang === 'he'
-              ? 'התרגיל הזה צריך תופים אלקטרוניים (MIDI): במערכת אקוסטית המיקרופון לא מודד אותו.'
+              ? <>התרגיל הזה צריך תופים אלקטרוניים (<bdi>MIDI</bdi>): במערכת אקוסטית המיקרופון לא מודד אותו.</>
               : 'This one needs an e-kit (MIDI): on an acoustic kit the microphone can’t measure it.'
             : lang === 'he'
-              ? 'התרגיל הזה צריך תופים אלקטרוניים (MIDI): המיקרופון שומע משטח אחד בלבד.'
+              ? <>התרגיל הזה צריך תופים אלקטרוניים (<bdi>MIDI</bdi>): המיקרופון שומע משטח אחד בלבד.</>
               : 'This one needs an e-kit (MIDI): the microphone hears one surface only.'}
         </p>
       )}
       {pianoBlocked && (
         <p className="kit-warn" data-piano-needs-midi="1">
-          {drill.goal.vl ? (lang === 'he' ? 'התרגיל הזה צריך מקלדת MIDI: המיקרופון לא שומע איזה קול בחרתם.' : 'This one needs a MIDI keyboard: the microphone can’t hear which voicing you chose.') : lang === 'he' ? 'התרגיל הזה צריך מקלדת MIDI: המיקרופון לא מודד עוצמה, שחרור קלידים או פדל.' : 'This one needs a MIDI keyboard: the microphone can’t measure loudness, key release or the pedal.'}
+          {drill.goal.vl ? (lang === 'he' ? <>התרגיל הזה צריך מקלדת <bdi>MIDI</bdi>: המיקרופון לא שומע איזה קול בחרתם.</> : 'This one needs a MIDI keyboard: the microphone can’t hear which voicing you chose.') : lang === 'he' ? <>התרגיל הזה צריך מקלדת <bdi>MIDI</bdi>: המיקרופון לא מודד עוצמה, שחרור קלידים או פדל.</> : 'This one needs a MIDI keyboard: the microphone can’t measure loudness, key release or the pedal.'}
         </p>
       )}
       <div className={`drill-beat ${phase}`} aria-live="polite" dir="ltr">

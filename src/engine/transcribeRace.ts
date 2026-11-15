@@ -76,7 +76,8 @@ export function phraseAt(seed: number, i: number, level: number, notes: number):
   const lv = Math.max(1, Math.min(4, Math.round(level)));
   const n = Math.max(3, Math.min(10, Math.round(notes)));
   const rnd = rng((Math.imul(seed | 0, 0x9e3779b1) ^ Math.imul(i + 1, 0x85ebca6b) ^ (lv << 3)) >>> 0);
-  const key = [0, 2, 3, 5, 7, 9, 10][Math.floor(rnd() * 7)];
+  // All 12 keys (games fix: was 7 — C D E♭ F G A B♭).
+  const key = Math.floor(rnd() * 12);
   if (lv === 1) {
     const sc = scaleIn(key, MAJOR);
     return { key, minor: false, midis: walk(rnd, sc, n), beats: rhythm(rnd, n, false), swing: false };

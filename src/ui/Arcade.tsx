@@ -608,14 +608,14 @@ export function useRoad(ref: React.RefObject<HTMLOListElement | null>, key: stri
 
 /** The 0.38 games (spec AE §8): route, icon, hue and names. */
 export type GameCat = 'ear' | 'rhythm' | 'memory' | 'read' | 'voice' | 'instrument' | 'social';
-export const GAME_CATS: { id: GameCat; icon: string; en: string; he: string }[] = [
-  { id: 'ear', icon: '👂', en: 'Ear & harmony', he: 'שמיעה והרמוניה' },
-  { id: 'rhythm', icon: '🥁', en: 'Rhythm', he: 'קצב' },
-  { id: 'memory', icon: '🧠', en: 'Memory', he: 'זיכרון' },
-  { id: 'read', icon: '📖', en: 'Reading & theory', he: 'קריאה ותיאוריה' },
-  { id: 'voice', icon: '🎤', en: 'Voice', he: 'קול' },
-  { id: 'instrument', icon: '🎸', en: 'Instrument & sound', he: 'כלי וסאונד' },
-  { id: 'social', icon: '⚔', en: 'Against others', he: 'מול אחרים' },
+export const GAME_CATS: { id: GameCat; en: string; he: string }[] = [
+  { id: 'ear', en: 'Ear & harmony', he: 'שמיעה והרמוניה' },
+  { id: 'rhythm', en: 'Rhythm', he: 'קצב' },
+  { id: 'memory', en: 'Memory', he: 'זיכרון' },
+  { id: 'read', en: 'Reading & theory', he: 'קריאה ותיאוריה' },
+  { id: 'voice', en: 'Voice', he: 'קול' },
+  { id: 'instrument', en: 'Instrument & sound', he: 'כלי וסאונד' },
+  { id: 'social', en: 'Against others', he: 'מול אחרים' },
 ];
 export const GAMES2: { id: 'drills' | 'highway' | 'flight' | 'melodypuzzle' | 'nametune' | 'tuneup' | 'pitchmemory' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'peakhunter' | 'rush-voicing' | 'rush-scale' | 'rush-standard' | 'reharm' | 'transcribe' | 'bhtime' | 'riffecho' | 'polylock' | 'land' | 'groove-echo' | 'odd-echo' | 'time-lock' | 'ghost-control' | 'rudiment-rush' | 'groove-off' | 'playback' | 'voicingsprint' | 'changerace' | 'walkchanges' | 'rootsear' | 'harmonyhold' | 'singinterval' | 'kitread' | 'namegroove'; icon: string; hue: string; cat: GameCat; en: [string, string]; he: [string, string] }[] = [
   { id: 'rush-chord', icon: '🎹', hue: 'var(--hue-pitch)', cat: 'read', en: ['Chord Rush', 'Name chords on the neck, keys or staff — 60 seconds.'], he: ['מרוץ אקורדים', 'זהו אקורדים על הצוואר, הקלידים או החמשה — 60 שניות.'] },
@@ -634,7 +634,7 @@ export const GAMES2: { id: 'drills' | 'highway' | 'flight' | 'melodypuzzle' | 'n
   { id: 'pitchmemory', icon: '🎯', hue: 'var(--hue-creative)', cat: 'ear', en: ['Pitch Memory', 'Once a day: your note, from memory.'], he: ['זיכרון צליל', 'פעם ביום: הצליל שלכם, מהזיכרון.'] },
   // 0.70: advanced games for jazz and complex music (open at mp).
   { id: 'rush-voicing', icon: '', hue: 'var(--hue-pitch)', cat: 'ear', en: ['Voicing Spy', 'Hear a chord, name its voicing: close, drop 2, rootless, quartal.'], he: ['מרגל הוויסינגים', 'שומעים אקורד, מזהים את הוויסינג: צפוף, דרופ 2, בלי שורש, קוורטלי.'] },
-  { id: 'reharm', icon: '', hue: 'var(--hue-pitch)', cat: 'ear', en: ['Reharm Spotter', 'Original, then reharmonised: find the bar, name the substitution.'], he: ['גלאי הרה־הרמוניזציה', 'המקור ואז ההרמוניה החדשה: מוצאים את התיבה, נותנים שם לתחליף.'] },
+  { id: 'reharm', icon: '', hue: 'var(--hue-pitch)', cat: 'ear', en: ['Reharm Spotter', 'Original, then reharmonised: find the bar, name the substitution.'], he: ['גלאי ההרמוניה', 'המקור ואז ההרמוניה החדשה: מוצאים את התיבה, נותנים שם לתחליף.'] },
   { id: 'rush-standard', icon: '', hue: 'var(--hue-pitch)', cat: 'memory', en: ['Name That Standard', 'Hear the changes, name the tune — 10 rounds.'], he: ['זהו את הסטנדרט', 'שומעים את המהלך, מזהים את השיר — 10 סיבובים.'] },
   { id: 'rush-scale', icon: '', hue: 'var(--hue-pitch)', cat: 'ear', en: ['Scale & Mode Rush', 'Hear a scale or mode, name it — 60 seconds.'], he: ['מרוץ סולמות ומודוסים', 'שומעים סולם או מודוס, נותנים שם — 60 שניות.'] },
   { id: 'transcribe', icon: '', hue: 'var(--hue-memory)', cat: 'memory', en: ['Transcription Race', 'Hear a phrase, write it on the keys — fast and right.'], he: ['מרוץ התמלול', 'שומעים משפט, כותבים אותו על הקלידים — מהר ונכון.'] },
@@ -954,7 +954,7 @@ const GAME_GLYPH: Record<string, GlyphKind> = {
   melody: 'echo', rhythm: 'rhythm', truefalse: 'theory', ghost: 'ghost', duel: 'duel', daily: 'calendar', 'rush-chord': 'chords', 'rush-note': 'sight', 'rush-keysig': 'theory', 'rush-interval': 'intervals',
   'rush-progression': 'prog', 'rush-fretboard': 'guitar', peakhunter: 'eq', highway: 'rhythm', flight: 'sing', melodypuzzle: 'puzzle', nametune: 'name', drills: 'scales', tuneup: 'tune', pitchmemory: 'memory', groove: 'groove',
   'rush-voicing': 'voicingspy', reharm: 'reharm', 'rush-standard': 'standard', 'rush-scale': 'scalerush', transcribe: 'transcribe', bhtime: 'bhtime', riffecho: 'riff', polylock: 'polylock',
-  'rudiment-rush': 'rudrush', 'groove-off': 'grooveoff',
+  'rudiment-rush': 'rudrush', 'groove-off': 'grooveoff', land: 'landit', 'groove-echo': 'grooveecho', 'odd-echo': 'oddecho', 'time-lock': 'timelock', 'ghost-control': 'ghostctl',
   playback: 'playback', voicingsprint: 'vsprint', changerace: 'changerace', walkchanges: 'walkchanges', rootsear: 'rootsear', harmonyhold: 'harmonyhold', singinterval: 'singinterval', kitread: 'kitread', namegroove: 'namegroove',
 };
 const CAT_COLOR: Record<string, string> = { ear: DOMAIN_COLOR.ear, rhythm: DOMAIN_COLOR.rhythm, memory: DOMAIN_COLOR.harmony, read: DOMAIN_COLOR.theory, voice: DOMAIN_COLOR.voice, instrument: DOMAIN_COLOR.play, social: '#EDE6F7' };

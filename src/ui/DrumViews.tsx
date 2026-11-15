@@ -111,7 +111,7 @@ export function DrumScore({ drill, view, result, beat = -1, lang }: { drill: Dri
     <div className={`drum-score ${view}`} dir="ltr" data-drum-view={view} data-drum-lines={lines} data-drum-bars={bars}>
       {drill.form && <DrumRoadMap drill={drill} beat={beat} lang={lang} />}
       {shown.map((li) =>
-        view === 'staff' ? <StaffLine key={li} drill={drill} notes={notes} line={li} geo={geo[li]} marks={marks} beat={beat} sticking={!!drill.drum?.mic || !!drill.drum?.sticking || drill.notes.some((n) => n.grace)} /> : <LaneLine key={li} drill={drill} line={li} geo={geo[li]} marks={marks} beat={beat} lang={lang} />,
+        view === 'staff' ? <StaffLine key={li} lang={lang} drill={drill} notes={notes} line={li} geo={geo[li]} marks={marks} beat={beat} sticking={!!drill.drum?.mic || !!drill.drum?.sticking || drill.notes.some((n) => n.grace)} /> : <LaneLine key={li} drill={drill} line={li} geo={geo[li]} marks={marks} beat={beat} lang={lang} />,
       )}
       {pager}
       {view === 'lanes' && <p className="drum-key">{lang === 'he' ? 'עיגול גדול = הדגשה · עיגול חלול = רפאים · טבעת = היי־האט פתוח' : 'Big = accent · hollow = ghost · ring = open hat'}</p>}
@@ -182,7 +182,10 @@ const W = 340;
 const X0 = 30;
 const yOf = (step: number) => 60 - step * 4;
 
-function StaffLine({ drill, notes, line, geo, marks, beat, sticking }: { drill: Drill; notes: ShownNote[]; line: number; geo: LineGeo; marks: Map<string, NoteMark>; beat: number; sticking: boolean }) {
+/** Gap-click drills (Time Lock, the gap-click drills): is this bar one of the silent ones (no click)? */
+export const silentBar = (drill: Drill, bar: number): boolean => drill.click === 'gap' && !!drill.gap && bar % (drill.gap[0] + drill.gap[1]) >= drill.gap[0];
+
+function StaffLine({ drill, notes, line, geo, marks, beat, sticking, lang }: { drill: Drill; notes: ShownNote[]; line: number; geo: LineGeo; marks: Map<string, NoteMark>; beat: number; sticking: boolean; lang: Lang }) {
   const b0 = geo.from;
   const per = geo.to - geo.from;
   const repeat = new Set(drill.drum?.repeatBars ?? []);
@@ -327,6 +330,35 @@ function StaffLine({ drill, notes, line, geo, marks, beat, sticking }: { drill: 
               {groupSizes(b).length > 1 && groupSizes(b).some((g, _i, xs) => g !== xs[0]) ? ` (${groupSizes(b).join('+')})` : ''}
             </text>
           ))}
+      {/* Time Lock (games fix): the silent bars are hatched and labelled — the gap is the game, so it must be seen. */}
+      {geo.bars
+        .filter((b) => silentBar(drill, b.index))
+        .map((b) => {
+          const xa = xBar(b.from) + 2;
+          const xb = xBar(b.from + b.len) - 2;
+          return (
+            <g key={`sil${b.index}`} className="dn-silent" data-silent-bar={b.index}>
+              <rect x={xa} y={24} width={Math.max(0, xb - xa)} height={40} rx={3} className="dn-silent-bg" />
+              {Array.from({ length: Math.max(1, Math.floor((xb - xa) / 9)) }, (_, k) => (
+                <line key={k} x1={xa + 4 + k * 9} x2={xa + 4 + k * 9 + 10} y1={64} y2={24} className="dn-silent-hatch" />
+              ))}
+              <text x={(xa + xb) / 2} y={20} className="dn-silent-label" textAnchor="middle">
+                {lang === 'he' ? 'בלי קליק' : 'click off'}
+              </text>
+            </g>
+          );
+        })}
+      {/* Land It (games fix): the downbeat you land on carries the lemon now-cue. */}
+      {(drill.goal?.drum?.landing?.beats ?? [])
+        .filter((lb) => lb >= b0 - 1e-6 && lb < b0 + per - 1e-6)
+        .map((lb) => (
+          <g key={`land${lb}`} className="dn-landing" data-landing-beat={lb}>
+            <rect x={xOf(lb) - 8} y={12} width={16} height={64} rx={8} className="dn-landing-bg" />
+            <text x={xOf(lb)} y={9} className="dn-landing-label" textAnchor="middle">
+              1
+            </text>
+          </g>
+        ))}
       {geo.bars.map((b) => (
         <line key={`bar${b.index}`} x1={xBar(b.from + b.len)} x2={xBar(b.from + b.len)} y1={28} y2={60} className="dn-bar" />
       ))}

@@ -31,11 +31,11 @@ export function boardRows(remote: { name: string; best: number; me: boolean }[] 
   });
 }
 
-/** The games a board can show for a course list: tiered games only (social sets and the groove tool have no score board). */
+/** The games a board can show for a course list: tiered games only (the daily / ghost / online sets and the groove tool have no score board; the duel has one since AUDIT-GAMES §9). */
 export function boardGames(games: string[]): string[] {
   const out: string[] = [];
   for (const g of games) {
-    if (!tierSpec(g) || g === 'duel' || g === 'daily' || g === 'ghost' || g === 'online' || g === 'drills') continue;
+    if (!tierSpec(g) || g === 'daily' || g === 'ghost' || g === 'online' || g === 'drills') continue;
     const k = tierKey(g);
     if (!out.includes(k)) out.push(k);
   }
@@ -56,6 +56,7 @@ export const GAME_TITLES: Record<string, { en: string; he: string }> = {
   melody: { en: 'Echo Chain', he: 'שרשרת הד' },
   rhythm: { en: 'Beat Echo', he: 'הד קצב' },
   truefalse: { en: 'Truth or Bluff', he: 'אמת או בלוף' },
+  duel: { en: 'Duel on this device', he: 'דו־קרב על המכשיר' },
   groove: { en: 'Groove trainer', he: 'מאמן הגרוב' },
   land: { en: 'Land It', he: 'נחיתה' },
   'groove-echo': { en: 'Groove Echo', he: 'הד גרוב' },

@@ -16,6 +16,8 @@ import { namingFor, type Progress, type Settings } from '../storage/progress';
 import { piano, store } from './services';
 import { TrioArt } from './TrioArt';
 import { TierChips } from './TierChips';
+import { SetupSheet } from './SetupSheet';
+import { IsoMix } from './Iso';
 import { startTier, tierDef, tierDifficulty, type DynName, type TierInfo } from '../engine/gameTiers';
 import { PLAYER_COLORS } from '../engine/match';
 
@@ -72,7 +74,7 @@ function Statement({ fact, n, nm, lang }: { fact: Fact; n: number; nm: Naming; l
       <small className="tf-topic">
         <Glyph kind={glyphForEmoji(topic.emoji)} color="#FF8A3D" size={30} /> {topic.title[lang]}
       </small>
-      <p className="tf-text">{fact.text[lang]}</p>
+      <p className="tf-text">{lang === 'he' ? <IsoMix text={fact.text.he} /> : fact.text.en}</p>
     </div>
   );
 }
@@ -82,36 +84,45 @@ function Why({ fact, t, lang }: { fact: Fact; t: Strings; lang: 'he' | 'en' }) {
   if (fact.trio) return <p className="tf-why" dir="ltr">{fact.truth ? t.tfWasTrue : `${t.tfWasFalse}: ${fact.trio.trio.intervalLeft} · ${fact.trio.trio.intervalRight}`}</p>;
   return (
     <p className="tf-why">
-      <b>{fact.truth ? t.tfWasTrue : t.tfWasBluff}</b> — {fact.why[lang]}
+      <b>{fact.truth ? t.tfWasTrue : t.tfWasBluff}</b> — {lang === 'he' ? <IsoMix text={fact.why.he} /> : fact.why.en}
     </p>
   );
 }
 
 /** Topics (several) and a level: used by the game and by online rooms. */
-export function FactPicker({ t, lang, topics, onTopics, level, onLevel, levelSlot }: { t: Strings; lang: 'he' | 'en'; topics: FactTopic[]; onTopics: (x: FactTopic[]) => void; level: FactLevel; onLevel: (l: FactLevel) => void; /** Level tiers replace the easy / medium / hard selector (GAMES_TIERS_PLAN). */ levelSlot?: React.ReactNode }) {
+export function FactPicker({ t, lang, topics, onTopics, level, onLevel, levelSlot, compact }: { t: Strings; lang: 'he' | 'en'; topics: FactTopic[]; onTopics: (x: FactTopic[]) => void; level: FactLevel; onLevel: (l: FactLevel) => void; /** Level tiers replace the easy / medium / hard selector (GAMES_TIERS_PLAN). */ levelSlot?: React.ReactNode; /** AUDIT-GAMES fix #4: the 12 topic chips open from one "Topics (n)" chip, so the setup fits one phone screen. */ compact?: boolean }) {
   const toggle = (id: FactTopic) => {
     const nx = topics.includes(id) ? topics.filter((x) => x !== id) : [...topics, id];
     if (nx.length) onTopics(nx);
   };
   const allSilent = SILENT_TOPICS.filter((x) => x !== 'trio');
+  const topicField = (
+    <fieldset className="seg-field">
+      <legend>
+        {t.tfTopics}{' '}
+        <button type="button" className="link small" onClick={() => onTopics(allSilent)}>
+          {t.tfAllTheory}
+        </button>
+      </legend>
+      <div className="tf-topics" role="group" aria-label={t.tfTopics}>
+        {FACT_TOPICS.map((x) => (
+          <button key={x.id} type="button" className={`chip ${topics.includes(x.id) ? 'on' : ''}`} aria-pressed={topics.includes(x.id)} data-topic={x.id} onClick={() => toggle(x.id)}>
+            {x.title[lang]}
+            {x.sound && <small> · {t.tfSound}</small>}
+          </button>
+        ))}
+      </div>
+    </fieldset>
+  );
   return (
     <>
-      <fieldset className="seg-field">
-        <legend>
-          {t.tfTopics}{' '}
-          <button type="button" className="link small" onClick={() => onTopics(allSilent)}>
-            {t.tfAllTheory}
-          </button>
-        </legend>
-        <div className="tf-topics" role="group" aria-label={t.tfTopics}>
-          {FACT_TOPICS.map((x) => (
-            <button key={x.id} type="button" className={`chip ${topics.includes(x.id) ? 'on' : ''}`} aria-pressed={topics.includes(x.id)} data-topic={x.id} onClick={() => toggle(x.id)}>
-              {x.title[lang]}
-              {x.sound && <small> · {t.tfSound}</small>}
-            </button>
-          ))}
-        </div>
-      </fieldset>
+      {compact ? (
+        <SetupSheet lang={lang} id="tf-topics" label={t.tfTopics} summary={`${topics.length}/${FACT_TOPICS.length}`}>
+          {topicField}
+        </SetupSheet>
+      ) : (
+        topicField
+      )}
       {levelSlot ?? (
       <fieldset className="seg-field">
         <legend>{t.tfLevelLabel}</legend>
@@ -185,7 +196,7 @@ export function TrueFalseScreen({
       </header>
       <p className="field-hint">{t.tfHint}</p>
       <section className="set-card">
-        <FactPicker t={t} lang={lang} topics={topics} onTopics={setTopics} level={level} onLevel={setLevel} levelSlot={tierInfo && mode === 'solo' ? <TierChips lang={lang} info={tierInfo} value={tier} onChange={setTier} game="truefalse" /> : undefined} />
+        <FactPicker t={t} lang={lang} topics={topics} onTopics={setTopics} level={level} onLevel={setLevel} compact levelSlot={tierInfo && mode === 'solo' ? <TierChips lang={lang} info={tierInfo} value={tier} onChange={setTier} game="truefalse" /> : undefined} />
         <fieldset className="seg-field">
           <legend>{t.players}</legend>
           <div className="seg" role="radiogroup" aria-label={t.players}>
@@ -355,7 +366,7 @@ function SoloRun({ t, settings, topics, level, tier, perMs, best, bestKey, resum
           {Math.ceil(left / 1000)}s
         </span>
       </div>
-      <div className="time-bar" aria-hidden="true">
+      <div className={`time-bar${left <= 10_000 ? ' low' : ''}`} aria-hidden="true">
         <span style={{ width: `${Math.min(100, (left / TF_RUN_MS) * 100)}%` }} />
       </div>
       {perMs && stLeft !== null && (

@@ -54,7 +54,9 @@ export const ROOT_PROGS: Step[][][] = [
   [[ii7, bII7, Imaj7, Imaj7], [iv7, bVII7, Imaj7, Imaj7], [iii7, bIII7, ii7, bII7, Imaj7], [Imaj7, bIIImaj7, ii7, bII7], [iii7, VI7, ii7, V7, Imaj7], [bIIIm7, [8, '7'], ii7, bII7, Imaj7]],
 ];
 
-const KEYS = [0, 5, 7, 2, 10, 3, 9, 4, 8];
+/** AUDIT-GAMES §8 (all 12 keys): the shared key pool — it had 9 keys (no D♭, F♯ or B). */
+export const INST_KEYS = [0, 5, 7, 2, 10, 3, 9, 4, 8, 1, 6, 11];
+const KEYS = INST_KEYS;
 
 // ---------------------------------------------------------------- Play It Back / Roots by Ear (hear, then play)
 
@@ -342,7 +344,7 @@ export function walkChart(seed: number, level: number): WalkChart {
   const lv = clampLv(level);
   const bar = (s: Step, key: number, beats = 4): Chord => ({ root: pc12(key + s[0]), quality: s[1], beats });
   if (lv <= 2) {
-    const key = pick(rnd, [5, 10, 7, 0]);
+    const key = pick(rnd, KEYS);
     const seg = pick(rnd, BLUES_SEGS);
     return { level: lv, key, name: { en: 'Blues', he: 'בלוז' }, chords: seg.map((s) => bar(s, key)) };
   }
@@ -352,12 +354,12 @@ export function walkChart(seed: number, level: number): WalkChart {
     return { level: lv, key, name: { en: 'ii–V–I', he: 'ii–V–I' }, chords: form.map((s) => bar(s, key)) };
   }
   if (lv === 4) {
-    const key = 10;
+    const key = pick(rnd, KEYS);
     const a = pick(rnd, [[Imaj7, VI7, ii7, V7, iii7, VI7, ii7, V7], [Imaj7, VI7, ii7, V7, I7, IV7, Imaj7, V7]]);
     return { level: lv, key, name: { en: 'Rhythm changes, A', he: 'ריתם צ׳יינג׳ס, A' }, chords: a.map((s) => bar(s, key, 2)) };
   }
   if (lv === 5) {
-    const key = 10;
+    const key = pick(rnd, KEYS);
     // the bridge: III7 VI7 II7 V7, two bars each
     return { level: lv, key, name: { en: 'Rhythm changes, bridge', he: 'ריתם צ׳יינג׳ס, גשר' }, chords: [III7, VI7, II7, V7].flatMap((s) => [bar(s, key), bar(s, key)]) };
   }
@@ -485,6 +487,12 @@ export function changeChords(seed: number, level: number, beats = 4): Chord[] {
   const key = pick(rnd, KEYS);
   const prog: Step[] = lv === 4 ? pick(rnd, [[Imaj7, vi7, ii7, V7], [Imaj7, IV7, iii7, VI7], [ii7, V7, Imaj7, IV7]]) : lv === 5 ? pick(rnd, [[ii7, V7, Imaj7, VI7], [iiø, V7, i7, iv7], [iii7, VI7, ii7, V7]]) : pick(rnd, [[Imaj7, VI7, ii7, [7, '9']], [iii7, [3, 'dim7'], ii7, V7], [ii7, [7, '9'], Imaj7, [2, 'dim7']]]);
   return prog.map(([s, q]) => ({ root: pc12(key + s), quality: q, beats }));
+}
+
+/** The key of a Chord Change Race item (levels 4+ are a progression in a key; 1–3 are open / any chords: null). */
+export function changeKeyOf(seed: number, level: number): number | null {
+  if (clampLv(level) < 4) return null;
+  return pick(rng(seed ^ 0x27d4eb2f), KEYS);
 }
 
 export interface StrumHit {

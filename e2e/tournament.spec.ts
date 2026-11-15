@@ -18,7 +18,10 @@ test.describe('tournament', () => {
     await page.getByRole('button', { name: /Duel on this device/ }).click();
     await page.getByRole('textbox', { name: 'Player 1' }).fill('Dana');
     await page.getByRole('textbox', { name: 'Player 2' }).fill('Omer');
+    // AUDIT-GAMES fix #4: the question set and rounds sit in the setup's sheet.
+    await page.locator('[data-setup-more="duel"]').click();
     await page.getByRole('radio', { name: '5', exact: true }).click();
+    await page.locator('[data-setup-done]').click();
     await page.getByRole('button', { name: /Play/ }).click();
 
     await expect(page.locator('.duel-half.p0.flip')).toBeVisible();

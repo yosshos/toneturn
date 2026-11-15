@@ -41,6 +41,16 @@ export const GLYPHS: Record<string, ReactNode> = {
       <circle cx={0} cy={12} r={3.5} fill={I} />
     </>
   ),
+  /** Tune-up (AUDIT-GAMES §1, its path step): a tuning peg on a string, with the turn arrow. */
+  tuneup: (
+    <>
+      <path d="M-24 14H24" stroke={I} strokeWidth={2.4} />
+      <path d="M-4 14V-2" {...sw} />
+      <rect x={-12} y={-18} width={16} height={16} rx={4} fill="#FFFFFF" stroke={I} strokeWidth={3} />
+      <path d="M10 -16 A14 14 0 0 1 12 4" {...sw} />
+      <path d="M7 1 L12 5 L16 0" {...sw} />
+    </>
+  ),
   sight: (
     <>
       <path d="M-26 -8H26M-26 0H26M-26 8H26" stroke={I} strokeWidth={1.8} />

@@ -9,8 +9,11 @@
 //   * an acoustic kit by microphone: 'hat-snare' only — the microphone tells a cymbal from a drum (drumAcoustic.ts),
 //     not the head from the rim, and the toms only when calibrated;
 //   * a practice pad by microphone: 'pad' — one surface; the sticking is shown and is a self-check, never graded.
-// Flams and drags stay out: their grace note is the OTHER hand, so in two zones it lands on the other surface, which the
-// grace-note matching (same drum, ≤ 50 ms) does not take.
+// Flams and drags (games fix, mf–ff): their grace note is the OTHER hand, so in two zones it would land on the other
+// surface, which the grace-note matching (same drum, ≤ 50 ms) does not take. A flam / drag round is therefore played on
+// ONE surface (the snare) with MIDI: the grace notes are measured (goal.drum.flam, as in the d-diddles flam drills) and
+// the sticking is shown as a self-check. Without MIDI (a pad or an acoustic kit by microphone, which cannot split a grace
+// note from its stroke) the flam rudiments are left out of the pool.
 // Pure. The round is a measured drum take (a Drill through DrillTake → analyzeDrumTake); scoring reads its TakeMetrics.
 
 import type { Drill, DrillSpec, DrumVoice, NoteResult, TakeMetrics } from './drills/types';
@@ -50,12 +53,31 @@ export function zonesOf(kit: KitProfile | undefined | null, kind: 'midi' | 'acou
   return saved && ok.includes(saved) ? saved : ok[0];
 }
 
-/** A rudiment: its sticking on a grid (r / l a stroke, R / L an accented stroke, . a rest), `sub` steps a beat. */
+/**
+ * A rudiment: its sticking on a grid (r / l a stroke, R / L an accented stroke, . a rest), `sub` steps a beat. An `f`
+ * before a stroke makes it a flam (one grace note by the other hand), a `d` a drag (two grace notes); neither takes a step.
+ */
 export interface Rudiment {
   id: string;
   name: Bi;
   pattern: string;
   sub: 2 | 3 | 4;
+}
+/** A rudiment with flams or drags (played on one surface, MIDI only). */
+export const isGraced = (rd: Rudiment): boolean => /[fd]/.test(rd.pattern);
+/** The pattern as grid steps: the stroke character (or '.') and its grace notes. */
+function steps(pattern: string): { c: string; grace?: 1 | 2 }[] {
+  const out: { c: string; grace?: 1 | 2 }[] = [];
+  let g: 1 | 2 | undefined;
+  for (const ch of pattern) {
+    if (ch === 'f') g = 1;
+    else if (ch === 'd') g = 2;
+    else {
+      out.push(g && ch !== '.' ? { c: ch, grace: g } : { c: ch });
+      g = undefined;
+    }
+  }
+  return out;
 }
 const RUD: Record<string, Rudiment> = {
   singles8: { id: 'singles8', name: t('Single strokes, 8ths', 'מכות בודדות, שמיניות'), pattern: 'rl', sub: 2 },
@@ -74,6 +96,14 @@ const RUD: Record<string, Rudiment> = {
   seven: { id: 'seven', name: t('Seven-stroke roll', 'גלגול של 7 מכות'), pattern: 'llrrllR.', sub: 4 },
   nine: { id: 'nine', name: t('Nine-stroke roll', 'גלגול של 9 מכות'), pattern: 'rrllrrllR.......', sub: 4 },
   triplePara: { id: 'triplePara', name: t('Triple paradiddle', 'פאראדידל משולש'), pattern: 'RlrlrlrrLrlrlrll', sub: 4 },
+  // Flams and drags (PAS 20–31; the d-diddles drills L5–9 have them too): one surface, MIDI.
+  flams: { id: 'flams', name: t('Alternating flams · lR rL', 'פלאמים לסירוגין · lR rL'), pattern: 'frfl', sub: 2 },
+  flamTap: { id: 'flamTap', name: t('Flam tap · lR R rL L', 'פלאם טאפ · lR R rL L'), pattern: 'fRrfLl', sub: 4 },
+  flamAccent: { id: 'flamAccent', name: t('Flam accent (triplets)', 'פלאם אקסנט (טריולות)'), pattern: 'fRlrfLrl', sub: 3 },
+  flamPara: { id: 'flamPara', name: t('Flam paradiddle', 'פלאם פאראדידל'), pattern: 'fRlrrfLrll', sub: 4 },
+  drags: { id: 'drags', name: t('Drags · llR rrL', 'דראגים · llR rrL'), pattern: 'dR.dL.', sub: 2 },
+  dragTap: { id: 'dragTap', name: t('Single drag tap · llR L rrL R', 'דראג טאפ בודד · llR L rrL R'), pattern: 'dRldLr', sub: 2 },
+  ratamacue: { id: 'ratamacue', name: t('Single ratamacue · llR L R L', 'רטמקיו בודד · llR L R L'), pattern: 'drlrLdlrlR', sub: 4 },
 };
 export const RUDIMENTS: Rudiment[] = Object.values(RUD);
 
@@ -82,28 +112,30 @@ export const RUSH_TIERS: Record<DynName, { pool: string[]; bpm: number; step: nu
   pp: { pool: ['singles8', 'doubles8'], bpm: 60, step: 6 },
   p: { pool: ['singles16', 'doubles16', 'para'], bpm: 66, step: 6 },
   mp: { pool: ['paraAcc', 'inverted', 'reverse', 'doublePara'], bpm: 70, step: 5 },
-  mf: { pool: ['paraDiddle', 'triple', 'five', 'six'], bpm: 72, step: 5 },
-  f: { pool: ['seven', 'nine', 'triplePara', 'doublePara'], bpm: 80, step: 5 },
-  ff: { pool: ['paraAcc', 'inverted', 'doublePara', 'paraDiddle', 'six', 'seven', 'triplePara'], bpm: 90, step: 6 },
+  mf: { pool: ['paraDiddle', 'triple', 'five', 'six', 'flams', 'flamTap', 'drags'], bpm: 72, step: 5 },
+  f: { pool: ['seven', 'nine', 'triplePara', 'doublePara', 'flamAccent', 'dragTap', 'flamTap'], bpm: 80, step: 5 },
+  ff: { pool: ['paraAcc', 'inverted', 'doublePara', 'paraDiddle', 'six', 'seven', 'triplePara', 'flamPara', 'ratamacue', 'flamAccent'], bpm: 90, step: 6 },
 };
 /** Sticking right needed to pass a round in a two-zone mode. */
 export const STICK_PASS = 0.9;
 
-/** The two bars of a rudiment as hits, each hand on its zone's surface. */
+/** The two bars of a rudiment as hits, each hand on its zone's surface (flams and drags: all on the snare). */
 export function rudimentHits(rd: Rudiment, zones: StickZones, bars = 2): DH[] {
-  const steps = bars * 4 * rd.sub;
+  const st = steps(rd.pattern);
+  const graced = isGraced(rd);
+  const n = bars * 4 * rd.sub;
   const step = 1 / rd.sub;
   const out: DH[] = [];
-  for (let i = 0; i < steps; i++) {
-    const c = rd.pattern[i % rd.pattern.length];
+  for (let i = 0; i < n; i++) {
+    const { c, grace } = st[i % st.length];
     if (c === '.') continue;
     const h = c.toUpperCase() as 'R' | 'L';
     // Written length: to the next stroke (a roll's accented release is longer), at most to the beat's end.
     let nx = i + 1;
-    while (nx < steps && rd.pattern[nx % rd.pattern.length] === '.') nx++;
+    while (nx < n && st[nx % st.length].c === '.') nx++;
     const b = i * step;
     const end = Math.min(nx * step, Math.floor(b + 1e-9) + 1);
-    out.push({ b, v: ZONE_VOICE[zones][h], h, d: Math.round((end - b) * 1e6) / 1e6, ...(c === 'R' || c === 'L' ? { acc: true } : {}) });
+    out.push({ b, v: graced ? 'snare' : ZONE_VOICE[zones][h], h, d: Math.round((end - b) * 1e6) / 1e6, ...(c === 'R' || c === 'L' ? { acc: true } : {}), ...(grace ? { grace } : {}) });
   }
   return out;
 }
@@ -119,21 +151,27 @@ export interface RushRound {
  * One round: the rudiment is seeded per round (no repeat of the previous round's when the pool allows), its tempo is
  * the tier's start + one step per round passed so far (`ups`).
  */
-export function rushRound(tier: DynName, round: number, seed: number, ups: number, zones: StickZones): RushRound {
+export function rushRound(tier: DynName, round: number, seed: number, ups: number, zones0: StickZones, midiKit = true): RushRound {
   const T = RUSH_TIERS[tier];
+  // Flams and drags need MIDI (a microphone can't split a grace note from its stroke): a pad is always a microphone.
+  const graceOk = midiKit && zones0 !== 'pad';
+  const pool = graceOk ? T.pool : T.pool.filter((id) => !isGraced(RUD[id]));
   const pick = (k: number) => {
     const r = rnd(`rush:${tier}:${k}:${seed}`);
-    return T.pool[Math.floor(r() * T.pool.length)];
+    return pool[Math.floor(r() * pool.length)];
   };
   let id = pick(0);
   for (let k = 1; k <= round; k++) {
     const prev = id;
     id = pick(k);
-    if (T.pool.length > 1 && id === prev) id = T.pool[(T.pool.indexOf(id) + 1) % T.pool.length];
+    if (pool.length > 1 && id === prev) id = pool[(pool.indexOf(id) + 1) % pool.length];
   }
   const rd = RUD[id];
   const bpm = T.bpm + T.step * Math.max(0, ups);
-  const pad = zones === 'pad';
+  const graced = isGraced(rd);
+  // A flam / drag round is on one surface: its sticking is a self-check, its grace notes are measured (MIDI).
+  const zones: StickZones = graced ? 'pad' : zones0;
+  const pad = zones0 === 'pad';
   const spec: DrillSpec = { family: 'd-diddles', kind: `game:rudiment-rush:${tier}:${round}:${seed >>> 0}`, key: 0, hands: 'RL', instrument: 'drums' };
   const d = finish(spec, rudimentHits(rd, zones), {
     title: t(`Rudiment Rush · ${rd.name.en}`, `מרוץ רודימנטים · ${rd.name.he}`),
@@ -141,7 +179,7 @@ export function rushRound(tier: DynName, round: number, seed: number, ups: numbe
     bars: 2,
     mic: pad,
     show: 'staff',
-    ...(rd.pattern.match(/[RL]/) ? { goal: { accentPos: 0.85 } } : {}),
+    ...(graced ? { goal: { flam: 0.9, ...(rd.pattern.match(/[RL]/) ? { accentPos: 0.85 } : {}) } } : rd.pattern.match(/[RL]/) ? { goal: { accentPos: 0.85 } } : {}),
   });
   const ti = tierIndex(tier);
   const drill: Drill = { ...d, drum: { tier: ti <= 1 ? 1 : ti <= 3 ? 2 : 3, mic: pad, sticking: true, ...(zones === 'hat-snare' ? { acousticOk: true } : {}) } };

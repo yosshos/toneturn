@@ -118,6 +118,7 @@
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  font-size: 11.5px;
 }
 .ic-vel {
   display: inline-block;
@@ -203,7 +204,18 @@
   }
 }
 .midi .ic-line {
-  flex: none;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+/* the hint may take two lines (never cut mid-sentence at 320 px): it shrinks the row's other parts, not itself */
+.ic-line .ic-hint {
+  white-space: normal;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+.ic-dev-label {
+  color: var(--ink-dim, #5b4a86);
+  font-weight: 600;
 }
 
 @media (prefers-reduced-motion: reduce) {

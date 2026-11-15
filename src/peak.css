@@ -78,39 +78,41 @@
 .ph-range::-webkit-slider-runnable-track {
   block-size: 8px;
   border-radius: 999px;
-  background: linear-gradient(90deg, var(--hue-pitch, #7c8cff), var(--mint, #5cf2b5), var(--gold, #ffc94d));
-  opacity: 0.85;
+  background: var(--paper, #fbf7ff); /* v2: flat track with the ink outline */
+  border: 2px solid var(--ink-c, #1e1033);
+  box-sizing: border-box;
 }
 .ph-range::-moz-range-track {
   block-size: 8px;
   border-radius: 999px;
-  background: linear-gradient(90deg, var(--hue-pitch, #7c8cff), var(--mint, #5cf2b5), var(--gold, #ffc94d));
-  opacity: 0.85;
+  background: var(--paper, #fbf7ff); /* v2: flat track with the ink outline */
+  border: 2px solid var(--ink-c, #1e1033);
+  box-sizing: border-box;
 }
 .ph-range::-webkit-slider-thumb {
   -webkit-appearance: none;
   inline-size: var(--thumb);
   block-size: var(--thumb);
-  margin-block-start: calc((8px - var(--thumb)) / 2);
+  margin-block-start: calc((8px - var(--thumb)) / 2 - 2px);
   border-radius: 50%;
-  background: var(--ink, #f4f1ff);
-  border: 3px solid var(--bg-2, #16182e);
-  box-shadow: 0 0 0 2px var(--mint, #5cf2b5);
+  background: var(--purple, #6d28d9);
+  border: 2.5px solid var(--ink-c, #1e1033);
+  box-shadow: 2px 2px 0 var(--ink-c, #1e1033);
 }
 .ph-range::-moz-range-thumb {
   inline-size: var(--thumb);
   block-size: var(--thumb);
   box-sizing: border-box;
   border-radius: 50%;
-  background: var(--ink, #f4f1ff);
-  border: 3px solid var(--bg-2, #16182e);
-  box-shadow: 0 0 0 2px var(--mint, #5cf2b5);
+  background: var(--purple, #6d28d9);
+  border: 2.5px solid var(--ink-c, #1e1033);
+  box-shadow: 2px 2px 0 var(--ink-c, #1e1033);
 }
 .ph-range:disabled::-webkit-slider-thumb {
-  box-shadow: 0 0 0 2px var(--ink-dim, #a9a6c9);
+  background: var(--lilac, #a78bfa);
 }
 .ph-range:disabled::-moz-range-thumb {
-  box-shadow: 0 0 0 2px var(--ink-dim, #a9a6c9);
+  background: var(--lilac, #a78bfa);
 }
 
 .ph-mark,
@@ -248,5 +250,42 @@
 @media (prefers-reduced-motion: reduce) {
   .ph-pop {
     animation: none !important;
+  }
+}
+
+/* AUDIT-GAMES fix #5 / palette: the A/B labels never break inside a word ("boos ted" at 320 px), the axis labels
+   thin out on a narrow phone (no "100200"), lemon never as text on paper. */
+.ph-ab-btn {
+  white-space: nowrap;
+  hyphens: none;
+  word-break: keep-all;
+  min-inline-size: 0;
+  padding-inline: 8px;
+}
+.ph-ab-btn.on {
+  border-color: var(--purple, #6d28d9);
+  box-shadow: 0 0 0 2px var(--purple, #6d28d9) inset;
+}
+.ph-b.on {
+  border-color: var(--outline, #1e1033);
+  box-shadow: 0 0 0 2px var(--outline, #1e1033) inset;
+}
+.ph-phones,
+.ph-truth .ph-mark-label {
+  color: var(--ink);
+}
+.ph-truth {
+  background: var(--purple, #6d28d9);
+}
+@media (max-width: 420px) {
+  .ph-ab-btn {
+    font-size: 0.9rem;
+    gap: 5px;
+  }
+  /* 100 · 500 · 2k · 10k on a phone (every other label) */
+  .ph-ticks > span:nth-child(2),
+  .ph-ticks > span:nth-child(4),
+  .ph-ticks > span:nth-child(6) {
+    visibility: hidden;
   }
 }

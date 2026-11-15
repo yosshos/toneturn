@@ -8,6 +8,7 @@ import type { AccessError } from '../game/adapters';
 import { namingFor } from '../storage/progress';
 import { G2Head, MicProblem, pitchCaptureFor, type Game2Props } from './Flight';
 import { TierChips } from './TierChips';
+import { InputCheck } from './InputCheck';
 import { startTier, tierIndex, type DynName } from '../engine/gameTiers';
 import { SIMULATED } from './services';
 
@@ -32,7 +33,7 @@ const TEXT = {
     mean: 'Average error',
     noData: 'Your first day — the trend starts here.',
     back: 'Back',
-    days: 'days',
+    days: (n: number) => (n === 1 ? '1 day' : `${n} days`),
     twoNotes: (iv: string) => `Two notes today: your note, then ${iv} — both from memory.`,
     thenIv: (iv: string, n: string) => `Now ${iv}: ${n}. Sing or play it and hold it.`,
     first: 'First note',
@@ -55,7 +56,7 @@ const TEXT = {
     mean: 'סטייה ממוצעת',
     noData: 'היום הראשון — המגמה מתחילה כאן.',
     back: 'חזרה',
-    days: 'ימים',
+    days: (n: number) => (n === 1 ? 'יום אחד' : n === 2 ? 'יומיים' : `${n} ימים`),
     twoNotes: (iv: string) => `היום שני צלילים: הצליל שלכם, ואז ${iv} — שניהם מהזיכרון.`,
     thenIv: (iv: string, n: string) => `עכשיו ${iv}: ${n}. שירו או נגנו והחזיקו.`,
     first: 'צליל ראשון',
@@ -169,6 +170,7 @@ export function PitchMemory({
         <section className="g2-card">
           <p>{tx.blurb}</p>
           {tierInfo && first === null && <TierChips lang={lang} info={tierInfo} value={tier} onChange={setTier} game="pitchmemory" />}
+          {first === null && phase !== 'listening' && <InputCheck mode="mic" lang={lang} />}
           {two && first === null && <p className="g2-dim">{tx.twoNotes(iv[lang])}</p>}
           {appNote === null && (
           <fieldset className="seg-field">
@@ -209,15 +211,19 @@ export function PitchMemory({
         </section>
       )}
 
+      {/* AUDIT-GAMES fix #4: the 30-day trend shows once today's note is taken (the Today card carries it before), so
+          the take fits one phone screen. */}
+      {(done || phase === 'error') && (
       <section className="g2-card">
         <h2 className="g2-h">{tx.trend}</h2>
         {fullLog.length ? <TrendChart points={points} /> : <p className="g2-dim">{tx.noData}</p>}
         {mean !== null && (
           <p className="g2-dim">
-            {tx.mean}: <b dir="ltr">{mean}¢</b> · <span dir="ltr">{points.filter((p) => p.cents !== null).length}</span> {tx.days}
+            {tx.mean}: <b dir="ltr">{mean}¢</b> · <span>{tx.days(points.filter((p) => p.cents !== null).length)}</span>
           </p>
         )}
       </section>
+      )}
     </main>
   );
 }

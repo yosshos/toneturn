@@ -180,6 +180,20 @@
   opacity: 0.45;
   box-shadow: none;
 }
+/* Games fix (AUDIT-GAMES #1, readable contrast): a disabled lemon main button is never pale yellow with white/grey text —
+   it turns lilac-tinted with ink at 60 % and keeps the ink outline. */
+:root[data-theme] :is(.btn.mega, .btn.primary):disabled {
+  opacity: 1;
+  background: color-mix(in srgb, var(--lilac) 22%, var(--paper));
+  color: color-mix(in srgb, var(--ink-c) 60%, transparent) !important;
+  border-color: color-mix(in srgb, var(--ink-c) 60%, transparent);
+  box-shadow: none;
+}
+:root[data-theme='dark'] :is(.btn.mega, .btn.primary):disabled {
+  background: color-mix(in srgb, var(--lilac) 22%, var(--card));
+  color: color-mix(in srgb, #fff 60%, transparent) !important;
+  border-color: color-mix(in srgb, #fff 45%, transparent);
+}
 :root[data-theme] .icon-btn {
   border: var(--stroke) solid var(--outline);
   border-radius: 13px;
@@ -1516,10 +1530,18 @@
 :root[data-theme] .hw-note.lane-4 { background: var(--lilac); }
 :root[data-theme] .hw-note.is-perfect,
 :root[data-theme] .hw-note.is-good { transform: translateY(50%) rotate(-20deg) scale(1.3); }
+:root[data-theme] .hw-note.is-perfect { background: var(--teal); }
+:root[data-theme] .hw-note.is-good { background: var(--lilac); }
+:root[data-theme] .hw-note.is-miss { background: var(--pink); opacity: 0.7; }
+:root[data-theme] .hw-note.is-perfect::before,
+:root[data-theme] .hw-note.is-good::before,
+:root[data-theme] .hw-note.is-miss::before { transform: rotate(20deg); }
+:root[data-theme] .hw-note[class*='kit-']:is(.is-perfect, .is-good, .is-miss)::after { opacity: 0; }
+:root[data-theme] .hw-note[class*='kit-']::before { transform: none; }
 :root[data-theme] .hw-note { transition: transform 0.12s ease-out, filter 0.12s; }
 /* approach cues (0.77): the head swells over its last beat and a half, bright and ringed over the last half beat */
 :root[data-theme] .hw-note[data-near='1'] { transform: translateY(50%) rotate(-20deg) scale(1.15); filter: brightness(1.08); }
-:root[data-theme] .hw-note[data-near='2'] { transform: translateY(50%) rotate(-20deg) scale(1.35); box-shadow: 0 0 0 3px #fff, 0 0 16px 4px rgb(255 255 255 / 0.55); }
+:root[data-theme] .hw-note[data-near='2'] { transform: translateY(50%) rotate(-20deg) scale(1.35); box-shadow: 0 0 0 3px #fff; }
 :root[data-theme] .hw-note.is-miss[data-near] { transform: translateY(50%) rotate(-20deg); box-shadow: none; }
 /* kit lanes: a round drum pad carrying the drum's picture, no stem, no tilt */
 :root[data-theme] .hw-note[class*='kit-'] { width: 40px; height: 40px !important; left: calc((100% / var(--lanes, 1)) * (var(--i, 0) + 0.5) - 20px); transform: translateY(50%); }
@@ -1540,7 +1562,7 @@
   :root[data-theme] .hw-note[data-near] { transform: translateY(50%) rotate(-20deg); }
   :root[data-theme] .hw-note[class*='kit-'][data-near] { transform: translateY(50%); }
 }
-:root[data-theme] .hw-hitline { height: 10px; margin-bottom: -5px; background: linear-gradient(180deg, #fff 0 3px, transparent 3px 5px, #fff 5px 10px); box-shadow: none; }
+:root[data-theme] .hw-hitline { height: 10px; margin-bottom: -5px; background: var(--lemon); border-block: 2.5px solid var(--ink-c); box-sizing: border-box; box-shadow: none; } /* games fix: a lemon hit line with an ink edge, no halo */
 :root[data-theme] .hw-flash { font-family: 'Secular One', Rubik, sans-serif; text-shadow: 0 2px 0 var(--ink-c); }
 :root[data-theme] .hw-flash.perfect { color: var(--lemon); }
 :root[data-theme] .hw-flash.good { color: var(--teal); }
@@ -1862,6 +1884,8 @@
 :root[data-theme] .btn.primary.mega,
 :root[data-theme] .btn.mega:is(:hover, :focus-visible) { color: var(--ink-c); }
 :root[data-theme] .btn.mega svg { color: var(--ink-c); fill: currentColor; }
+/* Games fix (AUDIT-GAMES #3): Truth or Bluff's selected topics are ink on lilac — lemon stays the "now" colour. */
+:root[data-theme] .tf-topics .chip.on { background: var(--lilac); color: var(--ink-c); border-color: var(--ink-c); }
 /* "New", "Hot", "New this week": a lemon chip with ink text, never yellow text on white. */
 :root[data-theme] :is(.new-chip, .hot-chip, .play-card .new-chip, .game-card .new-chip) { background: var(--lemon); color: var(--ink-c); border: 2px solid var(--ink-c); border-radius: 999px; padding: 1px 9px; font-weight: 800; text-shadow: none; }
 :root[data-theme] .play-hero small { color: var(--purple); font-weight: 800; }
@@ -1886,9 +1910,6 @@
   .arrow,
   .behind-tag,
   .best-chip,
-  .big-score,
-  .big-score b,
-  .chain-count b,
   .chip-mini.xp,
   .chip.xp b,
   .choice-text,
@@ -1896,8 +1917,6 @@
   .cmp-table td.lead,
   .continue-kicker,
   .crown,
-  .daily-date,
-  .daily-stats span,
   .diag-next b,
   .diag-stats b,
   .drill-level .n,
@@ -1908,11 +1927,6 @@
   .feedback.unclear b,
   .field-hint.warn,
   .friend-code,
-  .g2-best,
-  .g2-big.ok,
-  .g2-hud-mini,
-  .ghost-me b,
-  .half-score,
   .heat-table tr.behind td:first-child,
   .host-tag,
   .intro-deg b,
@@ -1940,20 +1954,11 @@
   .recap-row.correct .recap-pts,
   .room-code,
   .rs.ok,
-  .rush-best,
-  .rush-burst,
-  .rush-combo em,
-  .rush-final b,
-  .rush-lvl b,
-  .rush-newbest,
-  .rush-target b,
   .sc-count,
   .spoken-ex,
   .star.won,
   .swing-mark,
-  .t-countdown,
   .tagline,
-  .tf-score,
   .tool-icon,
   .vib-notes span.vib,
   .vocal-cue.vib,
@@ -1964,6 +1969,9 @@
   .hot-chip,
   .play-hero small
 ) { color: var(--gold-ink); }
+/* Games fix (AUDIT-GAMES #12): game numbers and headers are ink or purple, never mustard. */
+:root[data-theme='light'] :is(.big-score, .big-score b, .chain-count b, .daily-stats span, .g2-best, .g2-big.ok, .ghost-me b, .half-score, .rush-best, .rush-burst, .rush-combo em, .rush-lvl b, .rush-newbest, .rush-target b, .tf-score, .t-countdown) { color: var(--purple); }
+:root[data-theme='light'] :is(.daily-date, .g2-hud-mini, .rush-final b) { color: var(--ink); }
 
 :root[data-theme='light'] .good { color: var(--mint-deep); }
 

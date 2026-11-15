@@ -1,5 +1,6 @@
 // Reharm Spotter (0.70, GAMES_TIERS_PLAN §4): the progression, then reharmonised. Tap the bar that changed, then name
 // the substitution. Three lives; the bar and the name both have to be right. Engine: src/engine/reharmSpot.ts.
+import { IsoMix } from './Iso';
 import '../advgames.css';
 import '../reharm.css';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -58,7 +59,7 @@ const TX = {
     level: 'Level',
   },
   he: {
-    title: 'גלאי הרה־הרמוניזציה',
+    title: 'גלאי ההרמוניה',
     back: 'חזרה',
     blurb: 'שומעים מהלך, ואז את אותו מהלך ברה־הרמוניזציה. מוצאים את התיבה שהשתנתה ונותנים שם לתחליף.',
     rules: 'שלושה חיים. תיק נחשב כשגם התיבה וגם השם נכונים. תשובה מהירה מקבלת יותר.',
@@ -311,7 +312,7 @@ export function ReharmSpot({ lang, settings, saved, onSave, onExit, onResult, be
           const cls = done ? (o === shown.kind ? 'ok' : o === reveal?.name ? 'bad' : '') : '';
           return (
             <button key={o} type="button" className={`btn ${cls}`} disabled={done || bar === null} onClick={() => choose(o)} data-rh-name={o}>
-              {SUB_NAMES[o][lang]}
+              <IsoMix text={SUB_NAMES[o][lang]} />
             </button>
           );
         })}

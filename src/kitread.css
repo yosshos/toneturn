@@ -105,3 +105,11 @@
   justify-content: space-between;
   font-size: 1.2rem;
 }
+
+/* Games fix (readable contrast): the disabled "Listen again" stays readable — ink at 60 % on a lilac tint, not grey on paper. */
+:root[data-theme] .btn.kr-again:disabled {
+  opacity: 1;
+  background: color-mix(in srgb, var(--lilac, #a78bfa) 14%, var(--paper, #fbf7ff));
+  color: color-mix(in srgb, var(--ink-c, #1e1033) 62%, transparent);
+  border-color: color-mix(in srgb, var(--ink-c, #1e1033) 55%, transparent);
+}

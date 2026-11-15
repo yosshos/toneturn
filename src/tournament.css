@@ -52,16 +52,22 @@
 }
 .time-bar {
   width: 100%;
-  height: 8px;
+  height: 10px;
   border-radius: 999px;
-  background: var(--line);
+  background: var(--paper, #fbf7ff);
+  border: 2px solid var(--ink-c, #1e1033);
+  box-sizing: border-box;
   overflow: hidden;
 }
+/* v2: a flat purple bar; lemon (the "now" colour) only when time is nearly out (.low). */
 .time-bar span {
   display: block;
   height: 100%;
-  background: linear-gradient(90deg, var(--mint), var(--gold));
+  background: var(--purple, #6d28d9);
   border-radius: inherit;
+}
+.time-bar.low span {
+  background: var(--lemon, #ffd43b);
 }
 [dir='rtl'] .time-bar span {
   margin-inline-start: auto;
@@ -73,8 +79,9 @@
   align-content: center;
   padding: 12px;
   border-radius: 24px;
-  border: 3px solid var(--pc, var(--lilac));
-  background: color-mix(in srgb, var(--pc, var(--lilac)) 12%, transparent);
+  border: 2.5px solid var(--ink-c, #1e1033);
+  box-shadow: inset 0 6px 0 var(--pc, var(--lilac));
+  background: color-mix(in srgb, var(--pc, var(--lilac)) 14%, var(--paper, #fbf7ff));
 }
 .tournament.single .duel-half {
   border: 0;
@@ -97,6 +104,7 @@
   height: 14px;
   border-radius: 50%;
   background: var(--pc, var(--lilac));
+  border: 2px solid var(--ink-c, #1e1033);
 }
 .half-score {
   margin-inline-start: auto;
@@ -157,7 +165,7 @@
   gap: 12px;
 }
 .game-card.duel {
-  background: linear-gradient(160deg, #1f4a5a, #2b1a4a);
+  background: var(--card);
 }
 .duel-icon {
   font-size: 2rem;
@@ -202,7 +210,7 @@
   letter-spacing: 1px;
 }
 .game-card.online {
-  background: linear-gradient(160deg, #23516b, #2b1a4a);
+  background: var(--card);
 }
 .online .set-card {
   display: grid;
@@ -312,7 +320,7 @@
 }
 .podium .s1 {
   min-height: 150px;
-  background: linear-gradient(180deg, rgba(255, 201, 77, 0.35), var(--card-2));
+  background: var(--card-2);
 }
 .podium .s2 {
   min-height: 115px;
@@ -323,7 +331,7 @@
 
 /* ---------------------------------------------------------------- ghost race */
 .game-card.ghost {
-  background: linear-gradient(160deg, #4a4a6b, #2b1a4a);
+  background: var(--card);
 }
 .ghost-bar {
   display: flex;
@@ -356,7 +364,7 @@
 
 /* ---------------------------------------------------------------- True or false? (spec O) */
 .game-card.truefalse {
-  background: linear-gradient(160deg, #2d5a3c, #2b1a4a);
+  background: var(--card);
 }
 .tf-play {
   min-height: 100dvh;
@@ -411,7 +419,7 @@
   font-size: 2.6rem;
 }
 .tf-play.flash-ok .tf-art {
-  filter: drop-shadow(0 0 18px rgba(75, 227, 181, 0.6));
+  filter: none; /* v2: no glow */
 }
 .tf-play.flash-no {
   animation: tf-shake 0.35s ease-in-out;
@@ -428,7 +436,7 @@
   max-width: 300px;
 }
 .duel-half.won {
-  box-shadow: 0 0 0 4px var(--gold);
+  box-shadow: inset 0 6px 0 var(--pc, var(--lilac)), 4px 4px 0 var(--ink-c, #1e1033);
 }
 @media (prefers-reduced-motion: reduce) {
   .tf-play.flash-no {

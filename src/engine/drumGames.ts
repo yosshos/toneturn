@@ -284,9 +284,9 @@ export function ghostControlRound(tier: DynName, round: number, seed: number): D
   return { game: 'ghost-control', tier, round, drill: withTier(d, tier, true), bpm };
 }
 
-export function drumRound(game: DrumGameId, tier: DynName, round: number, seed: number, o: { ups?: number; zones?: StickZones } = {}): DrumRound {
+export function drumRound(game: DrumGameId, tier: DynName, round: number, seed: number, o: { ups?: number; zones?: StickZones; /** Rudiment Rush: the kit is MIDI (flams and drags can be measured). */ midi?: boolean } = {}): DrumRound {
   if (game === 'rudiment-rush') {
-    const rush = rushRound(tier, round, seed, o.ups ?? 0, o.zones ?? 'pad');
+    const rush = rushRound(tier, round, seed, o.ups ?? 0, o.zones ?? 'pad', o.midi ?? true);
     return { game, tier, round, drill: rush.drill, bpm: rush.bpm, rush };
   }
   return game === 'land' ? landRound(tier, round, seed) : game === 'groove-echo' ? grooveEchoRound(tier, round, seed) : game === 'time-lock' ? timeLockRound(tier, round, seed) : game === 'ghost-control' ? ghostControlRound(tier, round, seed) : oddEchoRound(tier, round, seed);

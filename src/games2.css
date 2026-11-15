@@ -20,7 +20,7 @@
   overflow-wrap: anywhere;
 }
 .g2-hud-mini {
-  color: var(--gold);
+  color: var(--ink);
   font-weight: 800;
   white-space: nowrap;
 }
@@ -56,7 +56,7 @@
   font-weight: 700;
 }
 .g2-best {
-  color: var(--gold);
+  color: var(--accent, #6d28d9);
   font-weight: 700;
 }
 .g2-row {
@@ -88,10 +88,10 @@
   color: var(--ink-dim);
 }
 .g2-big.good {
-  color: var(--mint);
+  color: var(--mint-deep, #0b7a6d);
 }
 .g2-big.ok {
-  color: var(--gold);
+  color: var(--accent, #6d28d9);
 }
 .g2-big.off {
   color: var(--red);
@@ -155,7 +155,6 @@
   text-align: center;
   font-weight: 800;
   color: var(--ink);
-  text-shadow: 0 2px 6px #000;
   padding-inline: 12px;
 }
 .g2-overlay.soft {
@@ -331,14 +330,19 @@
   stroke-width: 2;
 }
 .g2-peg-key {
-  fill: var(--gold);
+  /* v2: lilac with the ink outline — lemon is only for "now" (was a lemon pill on white). */
+  fill: var(--lilac, #a78bfa);
+  stroke: var(--ink-c, #1e1033);
+  stroke-width: 2.5;
 }
 .g2-peg-dot {
-  fill: var(--bg);
+  fill: var(--paper, #fbf7ff);
+  stroke: var(--ink-c, #1e1033);
+  stroke-width: 2;
 }
 .g2-slider {
   inline-size: 100%;
-  accent-color: var(--mint);
+  accent-color: var(--purple, #6d28d9);
 }
 
 /* ---------- motion ---------- */
@@ -368,6 +372,15 @@
 @media (max-width: 380px) {
   .g2-notes {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  /* AUDIT-GAMES fix #4: Pitch Memory keeps six notes a row (two rows), so the take fits 320×720. */
+  .g2-memory .g2-notes {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 4px;
+  }
+  .g2-memory .g2-notes button {
+    padding: 0;
+    font-size: 0.95rem;
   }
   .g2-big {
     font-size: 2.1rem;

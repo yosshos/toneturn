@@ -267,7 +267,7 @@
   color: var(--ink);
 }
 :root[data-theme='light'] .lesson-top {
-  background: linear-gradient(var(--bg) 70%, transparent);
+  background: var(--bg); /* v2: flat, no gradient */
 }
 :root[data-theme='light'] .lesson .stage .controls {
   background: linear-gradient(to bottom, transparent, var(--bg) 28%);

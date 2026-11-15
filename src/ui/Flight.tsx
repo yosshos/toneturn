@@ -32,6 +32,7 @@ import type { AccessError, PitchCapture } from '../game/adapters';
 import { MidiPitchCapture } from '../speech/midi';
 import { startTier, tierDef, type DynName, type TierInfo } from '../engine/gameTiers';
 import { TierChips } from './TierChips';
+import { InputCheck } from './InputCheck';
 import { BrowserPitchCapture } from '../speech/pitchCapture';
 import type { Settings } from '../storage/progress';
 import { piano, SIMULATED } from './services';
@@ -645,6 +646,7 @@ export function Flight({ lang, settings, saved, onSave, onExit, onResult, best, 
             <span>{tx.touchMode}</span>
           </label>
           <p className="g2-dim">{level === 4 ? tx.noDrone : touch ? tx.hintTouch : settings.midiInput ? tx.hintMidi : tx.hintVoice}</p>
+          {!touch && <InputCheck key={input} mode={input === 'midi' ? 'midi' : 'mic'} lang={lang} />}
           {!!best && (
             <p className="g2-best">
               {tx.best}: <b dir="ltr">{best}</b>

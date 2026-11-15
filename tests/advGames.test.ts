@@ -216,7 +216,7 @@ describe('game board', () => {
   });
   it('only tiered games; advanced games from mp', () => {
     const g = boardGames(COURSE_GAMES.ear);
-    expect(g).not.toContain('duel');
+    expect(g).toContain('duel'); // AUDIT-GAMES §9: the duel records and has a board
     expect(g).not.toContain('daily');
     expect(g).toContain('rush-voicing');
     expect(boardTiers('reharm')).toEqual(['mp', 'mf', 'f', 'ff']);

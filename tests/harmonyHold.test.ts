@@ -94,3 +94,11 @@ describe('harmony hold: the run', () => {
     expect(tierDef('harmonyhold', 'ff')?.levels).toEqual([6]);
   });
 });
+
+describe('harmony hold: all 12 keys (games fix)', () => {
+  it('level 1 takes start on every one of the 12 tonics', () => {
+    const roots = new Set<number>();
+    for (let s = 0; s < 400; s++) roots.add(makeHoldTake(s * 131 + 7, 1).chords[0].root);
+    expect(roots.size).toBe(12);
+  });
+});

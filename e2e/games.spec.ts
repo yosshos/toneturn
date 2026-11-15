@@ -74,9 +74,12 @@ test.describe('memory games', () => {
 
   test('Echo Chain, two players on one device: named turns and a winner', async ({ page }) => {
     await page.goto('/#/games');
+    // AUDIT-GAMES fix #4: players sit in the setup's "More" sheet.
+    await page.locator('[data-setup-more="echo"]').click();
     await page.getByRole('radio', { name: '2', exact: true }).click();
     await page.getByLabel('Player 1').fill('Dana');
     await page.getByLabel('Player 2').fill('Omer');
+    await page.locator('[data-setup-done]').click();
     await page.getByRole('button', { name: /Play/ }).click();
     await watchPads(page);
     await expect(page.locator('.player-chips li')).toHaveCount(2);
