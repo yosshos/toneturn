@@ -11,6 +11,8 @@ import { CHALLENGES } from '../engine/improvRules';
 import { InsightsScreen } from './Insights';
 import { Sidebar, type NavId } from './Sidebar';
 import { Onboarding, onboardingIntake, Splash } from './Onboarding';
+import { ACTIVE_PARTNER, allowedCourses, courseAllowed, defaultCourse, type DepthLink } from '../partner';
+import { DepthCard, DepthScreen } from '../partner/Depth';
 import { CommandPalette, type PaletteHit } from './CommandPalette';
 import { startComputerKeys } from '../speech/computerKeys';
 import { TodayAside } from './Asides';
@@ -26,7 +28,7 @@ import { coolDown, loadPricing, myPlan, type MyPlan, type Pricing } from '../clo
 import { GrooveTrainerScreen } from './GrooveTrainer';
 import { earIndex } from '../engine/rating';
 import { MixerScreen } from './Mixer';
-import type { Drill } from '../engine/drills/types';
+import type { Drill, FamilyId } from '../engine/drills/types';
 import { catalog, generate } from '../engine/drills/generate';
 import { drumMicOf, VOICE_PERC } from '../engine/drumKit';
 import { guitarCatalog } from '../engine/drills/guitar';
@@ -184,7 +186,7 @@ import { setPreferredMic } from '../speech/mic';
 /** Screens that play the band (0.69: its sets load here, and only here on Lite / Standard). */
 const BAND_ROUTES = new Set<string>(['charts', 'improv', 'groove', 'metronome', 'mixer', 'slowdown', 'perform', 'highway', 'drills', 'workoutrun', 'land', 'groove-echo', 'odd-echo', 'time-lock', 'ghost-control', 'rudiment-rush', 'groove-off']);
 
-type Route = 'intake' | 'studio' | 'home' | 'path' | 'arcade' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong' | 'perform' | 'learned' | 'tuner' | 'metronome' | 'songs' | 'repertoire' | 'drills' | 'workout' | 'workoutrun' | 'peakhunter' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'rush-voicing' | 'rush-scale' | 'rush-standard' | 'reharm' | 'transcribe' | 'bhtime' | 'riffecho' | 'polylock' | 'gameboard' | 'flight' | 'pitchmemory' | 'nametune' | 'tuneup' | 'highway' | 'melodypuzzle' | 'charts' | 'slowdown' | 'pieces' | 'mixer' | 'insights' | 'groove' | 'welcome' | 'coursestart' | 'puzzle' | 'improv' | 'exams' | 'plans' | 'admin' | 'land' | 'groove-echo' | 'odd-echo' | 'time-lock' | 'ghost-control' | 'rudiment-rush' | 'groove-off' | 'licks' | 'transcribe-coach' | 'chordfinder' | 'mysong' | 'chordbuilder' | 'playback' | 'voicingsprint' | 'changerace' | 'walkchanges' | 'rootsear' | 'harmonyhold' | 'singinterval' | 'kitread' | 'namegroove';
+type Route = 'intake' | 'studio' | 'home' | 'path' | 'arcade' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong' | 'perform' | 'learned' | 'tuner' | 'metronome' | 'songs' | 'repertoire' | 'drills' | 'workout' | 'workoutrun' | 'peakhunter' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'rush-voicing' | 'rush-scale' | 'rush-standard' | 'reharm' | 'transcribe' | 'bhtime' | 'riffecho' | 'polylock' | 'gameboard' | 'flight' | 'pitchmemory' | 'nametune' | 'tuneup' | 'highway' | 'melodypuzzle' | 'charts' | 'slowdown' | 'pieces' | 'mixer' | 'insights' | 'groove' | 'welcome' | 'coursestart' | 'puzzle' | 'improv' | 'exams' | 'plans' | 'admin' | 'land' | 'groove-echo' | 'odd-echo' | 'time-lock' | 'ghost-control' | 'rudiment-rush' | 'groove-off' | 'licks' | 'transcribe-coach' | 'chordfinder' | 'mysong' | 'chordbuilder' | 'playback' | 'voicingsprint' | 'changerace' | 'walkchanges' | 'rootsear' | 'harmonyhold' | 'singinterval' | 'kitread' | 'namegroove' | 'depth';
 /** Invite links: #/online/CODE */
 const onlineCodeFromHash = () => (/^#\/?online\/(\w+)/.exec(location.hash)?.[1] ?? '');
 const PLAY_HASH = 'play';
@@ -196,7 +198,7 @@ const enterPlay = () => {
 };
 const routeFromHash = (): Route => {
   const h = location.hash.replace(/^#\/?/, '').replace(/^online\/.*$/, 'online').replace(/^settings\/.*$/, 'settings');
-  return (['path', 'arcade', 'settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong', 'perform', 'learned', 'studio', 'intake', 'tuner', 'metronome', 'songs', 'repertoire', 'drills', 'workout', 'workoutrun', 'peakhunter', 'rush-chord', 'rush-note', 'rush-fretboard', 'rush-interval', 'rush-keysig', 'rush-progression', 'rush-voicing', 'rush-scale', 'rush-standard', 'reharm', 'transcribe', 'bhtime', 'riffecho', 'polylock', 'gameboard', 'flight', 'pitchmemory', 'nametune', 'tuneup', 'highway', 'melodypuzzle', 'charts', 'slowdown', 'pieces', 'mixer', 'insights', 'groove', 'welcome', 'coursestart', 'puzzle', 'improv', 'exams', 'plans', 'admin', 'land', 'groove-echo', 'odd-echo', 'time-lock', 'ghost-control', 'rudiment-rush', 'groove-off', 'licks', 'transcribe-coach', 'chordfinder', 'mysong', 'chordbuilder', 'playback', 'voicingsprint', 'changerace', 'walkchanges', 'rootsear', 'harmonyhold', 'singinterval', 'kitread', 'namegroove'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
+  return (['path', 'arcade', 'settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong', 'perform', 'learned', 'studio', 'intake', 'tuner', 'metronome', 'songs', 'repertoire', 'drills', 'workout', 'workoutrun', 'peakhunter', 'rush-chord', 'rush-note', 'rush-fretboard', 'rush-interval', 'rush-keysig', 'rush-progression', 'rush-voicing', 'rush-scale', 'rush-standard', 'reharm', 'transcribe', 'bhtime', 'riffecho', 'polylock', 'gameboard', 'flight', 'pitchmemory', 'nametune', 'tuneup', 'highway', 'melodypuzzle', 'charts', 'slowdown', 'pieces', 'mixer', 'insights', 'groove', 'welcome', 'coursestart', 'puzzle', 'improv', 'exams', 'plans', 'admin', 'land', 'groove-echo', 'odd-echo', 'time-lock', 'ghost-control', 'rudiment-rush', 'groove-off', 'licks', 'transcribe-coach', 'chordfinder', 'mysong', 'chordbuilder', 'playback', 'voicingsprint', 'changerace', 'walkchanges', 'rootsear', 'harmonyhold', 'singinterval', 'kitread', 'namegroove', 'depth'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
 };
 
 /** The level a generated modes lesson was made at (from its first question's pool size). */
@@ -466,10 +468,19 @@ export function App() {
   // Courses (0.61, SPEC-COURSES): one active course; the chrome reads it from CourseContext.
   const [courseSheet, setCourseSheet] = useState(false);
   const courseCtx = useMemo(
-    () => ({ active: s.activeCourse ?? 'ear', mine: s.courses?.length ? s.courses : ['ear' as CourseId], open: () => setCourseSheet(true), examPrep: !!s.examPrep, setExamPrep: (on: boolean) => updateSettings({ examPrep: on }) }),
+    () => ({ active: courseAllowed(s.activeCourse ?? 'ear') ? s.activeCourse ?? 'ear' : defaultCourse(), mine: allowedCourses(s.courses?.length ? s.courses : ['ear' as CourseId]), open: () => setCourseSheet(true), examPrep: !!s.examPrep, setExamPrep: (on: boolean) => updateSettings({ examPrep: on }) }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [s.activeCourse, s.courses, s.examPrep],
   );
+  // A partner build offers only its courses (src/partner): a stored course outside them moves to the build's first.
+  useEffect(() => {
+    if (!ACTIVE_PARTNER || !settings) return;
+    const mine = settings.courses?.length ? settings.courses : ['ear' as CourseId];
+    const active = settings.activeCourse ?? 'ear';
+    if (courseAllowed(active) && mine.every((c) => courseAllowed(c))) return;
+    updateSettings({ courses: allowedCourses(mine), activeCourse: courseAllowed(active) ? active : allowedCourses(mine)[0] });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [!!settings, settings?.activeCourse, settings?.courses]);
 
   useEffect(() => {
     document.documentElement.dataset.theme = themeId;
@@ -1194,7 +1205,7 @@ export function App() {
     openGenerated(def, undefined, false, { key: `testout:${unit.id}`, title: s.uiLang === 'en' ? 'Test out' : 'מבחן מעבר' });
   };
   /** Technique drills opened from a path step or a workout block run today's items as a queue (spec AI §9). */
-  const drillFrom = useRef<'path' | 'workout' | 'test' | 'chart' | 'assign' | 'taste' | 'repertoire' | 'keys' | 'check' | null>(null);
+  const drillFrom = useRef<'path' | 'workout' | 'test' | 'chart' | 'assign' | 'taste' | 'repertoire' | 'keys' | 'check' | 'depth' | null>(null);
   /** A licks / transcription path step being played (SPEC-LICKS-TRANSCRIPTION), and the workout's lick-review block. */
   const measuredStep = useRef<{ id: string; level: number } | null>(null);
   const lickReview = useRef(false);
@@ -1300,8 +1311,17 @@ export function App() {
     setVocalTest(true);
     go('vocal');
   };
+  /** The depth page (src/partner): a family opens its first level's drills; a topic opens its lesson. Back returns there. */
+  const openDepthLink = (l: DepthLink) => {
+    if (l.kind === 'topic') return openTopic(l.id, l.level ?? 1);
+    const lv = familyById(l.id as FamilyId)?.levels[(l.level ?? 1) - 1];
+    if (!lv || !settings) return;
+    chartQueue.current = levelDrills(lv, drillSettingsOf(settings).keyOrder);
+    drillFrom.current = 'depth';
+    go('drills');
+  };
   const drillQueue = useMemo(
-    () => (route === 'drills' && (drillFrom.current === 'chart' || drillFrom.current === 'keys' || drillFrom.current === 'assign' || drillFrom.current === 'taste' || drillFrom.current === 'repertoire' || (drillFrom.current === 'path' && chartQueue.current) || drillFrom.current === 'check' || (drillFrom.current === 'workout' && chartQueue.current)) ? chartQueue.current ?? undefined : route === 'drills' && (drillFrom.current === 'path' || drillFrom.current === 'workout') && settings && progress ? todayDrills({ ...drillSettingsOf(settings), bassTuning: bassTuningOf(settings), drumMic: drumMicOf(settings.drumKit) }, progress.drillItems ?? {}, settings.drillStart ?? {}, settings.customDrills ?? []).map((x) => x.drill) : undefined),
+    () => (route === 'drills' && (drillFrom.current === 'chart' || drillFrom.current === 'keys' || drillFrom.current === 'depth' || drillFrom.current === 'assign' || drillFrom.current === 'taste' || drillFrom.current === 'repertoire' || (drillFrom.current === 'path' && chartQueue.current) || drillFrom.current === 'check' || (drillFrom.current === 'workout' && chartQueue.current)) ? chartQueue.current ?? undefined : route === 'drills' && (drillFrom.current === 'path' || drillFrom.current === 'workout') && settings && progress ? todayDrills({ ...drillSettingsOf(settings), bassTuning: bassTuningOf(settings), drumMic: drumMicOf(settings.drumKit) }, progress.drillItems ?? {}, settings.drillStart ?? {}, settings.customDrills ?? []).map((x) => x.drill) : undefined),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [route],
   );
@@ -1374,6 +1394,10 @@ export function App() {
       chartQueue.current = null;
       if (takes > 0) submitAssign(clean / takes, { takes, clean });
       return go('friends');
+    }
+    if (from === 'depth') {
+      chartQueue.current = null;
+      return go('depth');
     }
     if (from === 'keys') {
       // Key mastery: a skill in one key, started from Insights — the technique result is recorded above; back to Insights.
@@ -1973,6 +1997,7 @@ export function App() {
           startHero={cStage !== 'done' ? <CourseStartHero course={activeC} lang={s.uiLang} stage={cStage} cs={cStart} who={tasteWho} onStart={continueCourseStart} onFindLevel={findLevel} /> : undefined}
           news={
             <>
+              <DepthCard lang={s.uiLang} onOpen={() => go('depth')} />
               {csOffer && <LevelOfferCard lang={s.uiLang} onFind={findLevel} onLater={() => updateCourseStart((m) => snoozeOffer(m, activeC, localDay(new Date())))} />}
               {csReal && cStage === 'done' && (
                 <RealMusicCard
@@ -2203,8 +2228,9 @@ export function App() {
         />
       )}
       {route === 'settings' && (
-        <SettingsScreen t={t} settings={s} ratings={ratingsOf(progress)} onChange={updateSettings} onBack={() => go('home')} onPlans={() => go('plans')} onAdmin={plan?.admin ? () => go('admin') : undefined} onIntake={() => go('intake')} onMixer={openMixer} account={<AccountCard t={t} user={user} sync={sync} />} />
+        <SettingsScreen t={t} settings={s} ratings={ratingsOf(progress)} onChange={updateSettings} onBack={() => go('home')} onPlans={() => go('plans')} onAdmin={plan?.admin ? () => go('admin') : undefined} onIntake={() => go('intake')} onDepth={() => go('depth')} onMixer={openMixer} account={<AccountCard t={t} user={user} sync={sync} />} />
       )}
+      {route === 'depth' && <DepthScreen lang={s.uiLang} onBack={() => go(ACTIVE_PARTNER ? 'home' : 'settings')} onOpen={openDepthLink} />}
       {route === 'diagnostics' && <Diagnostics t={t} settings={s} onBack={() => go('home')} />}
       {route === 'friends' && <FriendsScreen profileErr={profileErr} settings={s} t={t} user={user} sync={sync} progress={progress} streak={gems.streak.count} onBack={() => go('home')} onBestTier={(b) => b > (s.bestLeague ?? 0) && updateSettings({ bestLeague: b })} onLeagueSeen={(leagueSeen) => updateSettings({ leagueSeen })} classes={<ClassesScreen t={t} settings={s} user={user} onBack={() => go('friends')} onOpenLesson={(id) => openAssignment(id)} onOpenItem={openAssignItem} embedded />} />}
       {route === 'skills' && (

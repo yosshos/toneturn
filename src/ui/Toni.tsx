@@ -1,6 +1,9 @@
 // Toni, the eighth-note mascot (0.61, SPEC-REDESIGN). The flag is his hand and his mood meter; the face is built
 // from parts (5 eyes, 4 brows, 7 mouths). Each state has its own motion in v2.css (.toni.s-*), and reduced motion
 // keeps only the pose. Pure SVG, no images.
+// Partner builds may swap the mascot set (src/partner: a neutral "your teacher here" frame per state).
+import { ACTIVE_PARTNER } from '../partner';
+import { TeacherFrame } from '../partner/TeacherFrame';
 
 export type ToniState = 'idle' | 'listen' | 'think' | 'hint' | 'correct' | 'streak' | 'wrong' | 'close' | 'wow' | 'sleepy' | 'draw' | 'bye';
 type Eyes = 'open' | 'happy' | 'wide' | 'half' | 'closed';
@@ -93,6 +96,7 @@ function MouthPart({ kind }: { kind: Mouth }) {
 
 /** Toni in a given state. `size` is the box in CSS px; the drawing keeps room around it for hops and spins. */
 export function Toni({ state = 'idle', size = 120, label }: { state?: ToniState; size?: number; label?: string }) {
+  if (ACTIVE_PARTNER?.mascot === 'teacher-frame') return <TeacherFrame state={state} size={size} label={label} />;
   const p = POSE[state];
   return (
     <span className={`toni s-${state}`} style={{ width: size, height: size }} role={label ? 'img' : undefined} aria-label={label} aria-hidden={label ? undefined : true}>

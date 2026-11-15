@@ -20,3 +20,4 @@ public/voice/en/*.tmp
 .claude/tools/
 .claude/settings.local.json
 .claude/worktrees/
+dist-openstudio
