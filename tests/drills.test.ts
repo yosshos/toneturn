@@ -163,7 +163,7 @@ describe('drills: generate', () => {
           expect(m.accuracy).toBe(1);
           if (d.goal.chordTonesOnBeats) expect(m.chordToneOnBeats).toBe(1);
         }
-  }, 60000);
+  }, 180_000); // AUDIT-6 Stage B: + k-first 4–11 and graded sight-reading
 
   it('coverage guard: every audited sub-topic keeps its drill kinds (docs/research/DRILLS_COVERAGE_AUDIT.md)', () => {
     const kinds = new Map<string, Set<string>>();

@@ -25,6 +25,8 @@ const FIXED: Record<string, string> = {
   'k-first-1': 'first steps: five fingers in C',
   'k-first-2': 'first steps: C position, hands together',
   'k-first-3': 'first steps: the thumb passes under, in C',
+  // AUDIT-6 Stage B: the black-key groups are the same in every key (one item set, C only).
+  'k-first-4': 'first steps: the black-key groups',
 };
 
 const GCAT = guitarCatalog();
@@ -36,7 +38,7 @@ const pcOf = (k: number) => ((k % 12) + 12) % 12;
 
 describe('every jazz / theory level runs in all 12 keys (piano, guitar, bass)', () => {
   for (const inst of ['piano', 'guitar', 'bass'] as const)
-    it(`${inst}: all 12 keys, real transpositions, playable ranges`, () => {
+    it(`${inst}: all 12 keys, real transpositions, playable ranges`, { timeout: 120_000 }, () => {
       const ls = levels(inst);
       expect(ls.length).toBeGreaterThan(inst === 'piano' ? 80 : 30);
       for (const { l } of ls) {

@@ -141,7 +141,8 @@ export function DrillScore({ drill, ds, result, beat = -1, lang = 'en', bpm }: {
   if (!isGuitarDrill(drill) && drill.goal.vl) return <VoiceLeadScore drill={drill} result={result} beat={beat} lang={lang} />;
   if (!isGuitarDrill(drill)) return <DrillStaff drill={drill} fingering={ds.showFingering} result={result} beat={beat} />;
   if (drill.show === 'none' && !result) return <EarCard drill={drill} beat={beat} lang={lang} bpm={bpm} />;
-  const view = drill.show === 'staff' ? 'staff' : (ds.guitarView ?? 'tab');
+  // AUDIT-6 TAB reading: show 'tab' draws TAB only, whatever the player's view.
+  const view = drill.show === 'staff' ? 'staff' : drill.show === 'tab' ? 'tab' : (ds.guitarView ?? 'tab');
   // The guitar trade (g-impro 7), like the piano's: after the result, a model line for your bars on request — in the
   // player's view (tab and / or staff), in place of the landings, so the card still fits one screen.
   const guitarModel = result ? drill.goal.free?.model : undefined;
@@ -412,6 +413,8 @@ const TOPIC_OF: Record<string, Exclude<DrillTopic, 'all' | 'songs' | 'mine'>> = 
   'k-phrase': 'ear', 'g-phrase': 'ear', 'b-phrase': 'ear',
   // AUDIT-CONTENT-THEORY §ז.2: the first steps at the piano are hand technique.
   'k-first': 'hands',
+  // AUDIT-6 Stage B: graded sight-reading under reading; the guitar, bass and drum first steps with the hands; riffs as styles.
+  'k-read': 'reading', 'g-first': 'hands', 'b-first': 'hands', 'd-first': 'hands', 'g-riff': 'styles',
   // GUITAR_DEEPENING: the guitarist's ear has the ear topic; Barry Harris and prog / fusion are styles.
   'g-ear': 'ear', 'g-harris': 'styles', 'g-theory': 'styles', 'g-bebop': 'styles', 'g-solo': 'styles', 'g-ctx': 'styles', 'b-solo': 'styles', 'b-ctx': 'styles', 'g-prog': 'styles',
   'k-vl': 'chords', 'g-vl': 'chords',

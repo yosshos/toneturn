@@ -31,7 +31,7 @@ describe('exercise taxonomy (spec AD)', () => {
     expect(new Set(all).size).toBe(all.length);
     expect(new Set(all)).toEqual(new Set(SKILLS));
   });
-  it('every topic is tagged, every tag vector is well formed, every sub-skill is reachable', () => {
+  it('every topic is tagged, every tag vector is well formed, every sub-skill is reachable', { timeout: 120_000 }, () => {
     const reached = new Set<string>(EVENT_SOURCED);
     for (const [topic, T] of Object.entries(TOPIC_GEN).filter(([, t]) => !t.gameOnly)) {
       expect(TOPIC_TAGS[topic], topic).toBeTruthy();
