@@ -6,7 +6,7 @@ import { mkdirSync } from 'node:fs';
 // screen; Hebrew screens have no Latin outside <bdi> / dir=ltr; a full round reaches the shared result card.
 // SHOTS=1 saves the screens to docs/new-games-shots/.
 
-test.use({ viewport: { width: 320, height: 720 }, hasTouch: true });
+test.use({ viewport: { width: 320, height: 720 }, hasTouch: true, permissions: ['microphone'] });
 
 const SHOTS = !!process.env.SHOTS;
 const SHOT_DIR = 'docs/new-games-shots';
