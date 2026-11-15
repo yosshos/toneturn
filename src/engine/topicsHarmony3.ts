@@ -60,23 +60,33 @@ const FN_NAMES: Names = {
   PD: nm('Pre-dominant (PD)', 'סובדומיננטה (PD)', 'pre dominant', 'subdominant'),
   D: nm('Dominant (D)', 'דומיננטה (D)', 'dominant'),
 };
-/** Roman numerals and their function (iii is left out: it shares two notes with I and two with V — the lesson says why). */
-export const FUNCTIONS: { rn: string; fn: Fn; minor: boolean; deg: number; q: string }[] = [
+/**
+ * Roman numerals and their function (iii is left out: it shares two notes with I and two with V — the lesson says why).
+ * vi (minor: VI) does two jobs (Kostka–Payne, Aldwell–Schachter): after V it stands in for the tonic (the deceptive
+ * cadence); before IV / ii (iv / ii°) it moves toward the pre-dominant. It is only asked with that context named.
+ * Minor keys are written as their own numerals: VI, not ♭VI (as in roman-numerals).
+ */
+export interface FnEntry { rn: string; fn: Fn; minor: boolean; deg: number; q: string; ctx?: { rel: 'after' | 'before'; rn: string; deg: number; q: string } }
+export const FUNCTIONS: FnEntry[] = [
   { rn: 'I', fn: 'T', minor: false, deg: 0, q: '' },
-  { rn: 'vi', fn: 'T', minor: false, deg: 9, q: 'm' },
+  { rn: 'vi', fn: 'T', minor: false, deg: 9, q: 'm', ctx: { rel: 'after', rn: 'V', deg: 7, q: '' } },
+  { rn: 'vi', fn: 'PD', minor: false, deg: 9, q: 'm', ctx: { rel: 'before', rn: 'ii', deg: 2, q: 'm' } },
+  { rn: 'vi', fn: 'PD', minor: false, deg: 9, q: 'm', ctx: { rel: 'before', rn: 'IV', deg: 5, q: '' } },
   { rn: 'IV', fn: 'PD', minor: false, deg: 5, q: '' },
   { rn: 'ii', fn: 'PD', minor: false, deg: 2, q: 'm' },
   { rn: 'V', fn: 'D', minor: false, deg: 7, q: '' },
   { rn: 'vii°', fn: 'D', minor: false, deg: 11, q: '°' },
   { rn: 'i', fn: 'T', minor: true, deg: 0, q: 'm' },
-  { rn: '♭VI', fn: 'T', minor: true, deg: 8, q: '' },
+  { rn: 'VI', fn: 'T', minor: true, deg: 8, q: '', ctx: { rel: 'after', rn: 'V', deg: 7, q: '' } },
+  { rn: 'VI', fn: 'PD', minor: true, deg: 8, q: '', ctx: { rel: 'before', rn: 'iv', deg: 5, q: 'm' } },
+  { rn: 'VI', fn: 'PD', minor: true, deg: 8, q: '', ctx: { rel: 'before', rn: 'ii°', deg: 2, q: '°' } },
   { rn: 'iv', fn: 'PD', minor: true, deg: 5, q: 'm' },
   { rn: 'ii°', fn: 'PD', minor: true, deg: 2, q: '°' },
   { rn: 'V', fn: 'D', minor: true, deg: 7, q: '' },
   { rn: 'vii°7', fn: 'D', minor: true, deg: 11, q: '°7' },
 ];
 const MAJ_CH: Record<string, { c: BhChord; fn: Fn }> = {
-  vi: { c: ch('vi', 9, [9, 0, 4]), fn: 'T' },
+  // vi and VI are left out by ear: heard alone after the key, they could be either job (see FUNCTIONS).
   I6: { c: ch('I6', 4, [0, 4, 7]), fn: 'T' },
   IV: { c: ch('IV', 5, [5, 9, 0]), fn: 'PD' },
   ii: { c: ch('ii', 2, [2, 5, 9]), fn: 'PD' },
@@ -86,7 +96,6 @@ const MAJ_CH: Record<string, { c: BhChord; fn: Fn }> = {
   vii6: { c: ch('vii°6', 2, [11, 2, 5]), fn: 'D' },
 };
 const MIN_CH: Record<string, { c: BhChord; fn: Fn }> = {
-  VI: { c: ch('VI', 8, [8, 0, 3]), fn: 'T' },
   i6: { c: ch('i6', 3, [0, 3, 7]), fn: 'T' },
   iv: { c: ch('iv', 5, [5, 8, 0]), fn: 'PD' },
   ii6: { c: ch('ii°6', 5, [2, 5, 8]), fn: 'PD' },
@@ -113,10 +122,16 @@ TOPIC_GEN['function-ear'] = {
       const k = Math.floor(rnd() * 12);
       const kn = `${ROOT[k]}${f.minor ? 'm' : ''}`;
       const c = `${ROOT[mod12(k + f.deg)]}${f.q}`;
+      const x = f.ctx;
+      const c2 = x ? `${ROOT[mod12(k + x.deg)]}${x.q}` : '';
+      const seq = x ? (x.rel === 'after' ? `${c2} → ${c}` : `${c} → ${c2}`) : c;
+      const rns = x ? (x.rel === 'after' ? `${x.rn} → ${f.rn}` : `${f.rn} → ${x.rn}`) : f.rn;
       return choiceQ({
-        id, topic: 'function-ear', level, seed, skill: 'theory', difficulty: 1000,
-        ask: { en: `In ${kn}, what does ${c} (${f.rn}) do?`, he: `ב־${kn}, מה התפקיד של ${c} (${f.rn})?` },
-        text: { en: `${kn}: ${c} = ${f.rn}`, he: `${kn}: ${c} = ${f.rn}` },
+        id, topic: 'function-ear', level, seed, skill: 'theory', difficulty: x ? 1100 : 1000,
+        ask: x
+          ? { en: `In ${kn}: ${seq}. What does ${c} do here?`, he: `ב־${kn}: ${seq}. מה התפקיד של ${c} כאן?` }
+          : { en: `In ${kn}, what does ${c} (${f.rn}) do?`, he: `ב־${kn}, מה התפקיד של ${c} (${f.rn})?` },
+        text: { en: `${kn}: ${seq} = ${rns}`, he: `${kn}: ${seq} = ${rns}` },
         names: FN_NAMES, answer: f.fn, choices, stimulus: [],
       });
     }

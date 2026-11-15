@@ -218,9 +218,22 @@ TOPIC_GEN['chord-spelling'] = {
 // ---------------------------------------------------------------- roman numerals
 
 const MAJ_STEPS = [0, 2, 4, 5, 7, 9, 11];
-const HMIN_STEPS = [0, 2, 3, 5, 7, 8, 11];
 const RN_MAJ = ['I', 'ii', 'iii', 'IV', 'V', 'vi', 'vii°'];
-const RN_MIN = ['i', 'ii°', 'III+', 'iv', 'V', 'VI', 'vii°'];
+/**
+ * Minor-key triads as common-practice texts teach them (Kostka–Payne ch. 4, "variable 6 and 7"): III, VI and VII
+ * from natural minor; V and vii° from harmonic minor (the leading tone). III+ is rare and left out.
+ * Each: the numeral, its scale degree (0 = i), and its notes in semitones above the tonic.
+ */
+export const RN_MINOR: { rn: string; deg: number; tones: number[] }[] = [
+  { rn: 'i', deg: 0, tones: [0, 3, 7] },
+  { rn: 'ii°', deg: 1, tones: [2, 5, 8] },
+  { rn: 'III', deg: 2, tones: [3, 7, 10] },
+  { rn: 'iv', deg: 3, tones: [5, 8, 12] },
+  { rn: 'V', deg: 4, tones: [7, 11, 14] },
+  { rn: 'VI', deg: 5, tones: [8, 12, 15] },
+  { rn: 'VII', deg: 6, tones: [10, 14, 17] },
+  { rn: 'vii°', deg: 6, tones: [11, 14, 17] },
+];
 const RN_SAY = ['one', 'two', 'three', 'four', 'five', 'six', 'seven'];
 const RN_SEC = ['V/ii', 'V/iii', 'V/IV', 'V/V', 'V/vi'];
 const RN_SEC_DEG = [1, 2, 3, 4, 5];
@@ -230,7 +243,7 @@ TOPIC_GEN['roman-numerals'] = {
   skill: 'theory',
   levels: [
     { en: 'Major keys', he: 'סולמות מז׳וריים' },
-    { en: 'Minor keys (harmonic)', he: 'סולמות מינוריים (הרמוני)' },
+    { en: 'Minor keys', he: 'סולמות מינוריים' },
     { en: 'Secondary dominants', he: 'דומיננטות משניות' },
   ],
   gen(seed, level, id) {
@@ -242,13 +255,19 @@ TOPIC_GEN['roman-numerals'] = {
     let midis: number[];
     let answer: string;
     let pool: string[];
-    if (level <= 2) {
-      const steps = minor ? HMIN_STEPS : MAJ_STEPS;
+    if (minor) {
+      const c = pickR(rnd, RN_MINOR);
+      midis = c.tones.map((s) => t + s);
+      answer = c.rn;
+      // VII and vii° share two notes: when one is the answer, the other is always a choice.
+      const twin = c.rn === 'VII' ? ['vii°'] : c.rn === 'vii°' ? ['VII'] : [];
+      const rest = shuffleR(rnd, RN_MINOR.map((x) => x.rn).filter((x) => x !== answer && !twin.includes(x)));
+      pool = shuffleR(rnd, [answer, ...twin, ...rest].slice(0, 4));
+    } else if (level === 1) {
       const deg = Math.floor(rnd() * 7);
-      midis = [0, 2, 4].map((j) => t + steps[(deg + j) % 7] + (deg + j >= 7 ? 12 : 0));
-      const rn = minor ? RN_MIN : RN_MAJ;
-      answer = rn[deg];
-      pool = shuffleR(rnd, [answer, ...shuffleR(rnd, rn.filter((x) => x !== answer)).slice(0, 3)]);
+      midis = [0, 2, 4].map((j) => t + MAJ_STEPS[(deg + j) % 7] + (deg + j >= 7 ? 12 : 0));
+      answer = RN_MAJ[deg];
+      pool = shuffleR(rnd, [answer, ...shuffleR(rnd, RN_MAJ.filter((x) => x !== answer)).slice(0, 3)]);
     } else {
       const j = Math.floor(rnd() * RN_SEC.length);
       const targetRoot = t + MAJ_STEPS[RN_SEC_DEG[j]];
@@ -259,14 +278,22 @@ TOPIC_GEN['roman-numerals'] = {
     }
     const names: ChoiceQuestion['names'] = {};
     for (const p of pool) {
-      const i = [...RN_MAJ, ...RN_MIN].indexOf(p) % 7;
+      const i = minor ? RN_MINOR.find((x) => x.rn === p)!.deg : RN_MAJ.indexOf(p);
       names[p] = p.includes('/') ? nm(p, p, `five of ${RN_SAY[RN_MAJ.indexOf(p.split('/')[1])]}`, `secondary dominant of ${RN_SAY[RN_MAJ.indexOf(p.split('/')[1])]}`) : p === 'V7' ? nm('V7', 'V7', 'five seven', 'dominant seven') : nm(p, p, RN_SAY[i]);
     }
+    // The key first: I–IV–V7–I in major, i–iv–V7–i in minor.
+    const minorCadence: Stimulus[] = [
+      chordStim([t - 12, t, t + 3, t + 7], 0.7),
+      chordStim([t - 7, t, t + 5, t + 8], 0.7),
+      chordStim([t - 5, t - 1, t + 2, t + 5], 0.7),
+      chordStim([t - 12, t, t + 3, t + 7], 1.1),
+      { kind: 'rest', duration: 0.4 },
+    ];
     return choiceQ({
       id, topic: 'roman-numerals', level, seed, skill: 'theory', difficulty: 1200 + 170 * level,
       ask: { en: `In ${keyName(ton, minor).en}: which chord is this?`, he: `ב${keyName(ton, minor).he}: איזה אקורד זה?` },
       names, answer, choices: pool,
-      stimulus: minor ? [chordStim(midis, 1.6)] : [{ kind: 'cadence', key: pcOf(k.tonic) } as Stimulus, chordStim(midis, 1.6)],
+      stimulus: minor ? [...minorCadence, chordStim(midis, 1.6)] : [{ kind: 'cadence', key: pcOf(k.tonic) } as Stimulus, chordStim(midis, 1.6)],
       show: { midis, chord: true, key: pcOf(k.tonic) },
     });
   },

@@ -8,7 +8,7 @@ import { clockEvents, clockPlan, clockReport, type ClockReport } from '../engine
 import { backingPitches, backingTrack, chartBeats, CHARTS, checkVoicing, chordAt, chordSymbol, CIRCLE_KEYS, hasGuideTones, improvReport, QUALITY, scaleEvenness, synthImprov, type ChartId, type ImprovReport, type Quality, type VoicingKind } from '../engine/perform';
 import { BleedGate } from '../engine/bleed';
 import type { SungFrame } from '../engine/sing';
-import { gradeTake, itemTargets, sightKeyName, SIGHT_LEVELS, synthMelody, type TakeGrade } from '../engine/vocal';
+import { gradeTake, itemTargets, sessionSightItem, sightKeyName, SIGHT_LEVELS, synthMelody, type TakeGrade } from '../engine/vocal';
 import { pc } from '../engine/pitch';
 import type { Strings } from '../i18n/strings';
 import { midi } from '../speech/midi';
@@ -293,6 +293,7 @@ function MidiDrills({ t, settings, onProgress }: { t: Strings; settings: Setting
   const [drill, setDrill] = useState<Drill>('voicing');
   const [vk, setVk] = useState<VoicingKind>('any');
   const [seed, setSeed] = useState(1);
+  const [session] = useState(() => Date.now() >>> 0);
   const [msg, setMsg] = useState<string | null>(null);
   const [notesOn, setNotesOn] = useState<{ m: number; at: number }[]>([]);
   const [built, setBuilt] = useState<number[]>([]);
@@ -305,10 +306,10 @@ function MidiDrills({ t, settings, onProgress }: { t: Strings; settings: Setting
     const scaleRoot = SCALE_ROOTS[seed % SCALE_ROOTS.length];
     // Sight-reading on the keys (spec V.1 / Z.5): a written melody from the sight-singing levels.
     const lvl = SIGHT_LEVELS[seed % 3];
-    const item = lvl.items[seed % lvl.items.length];
+    const item = sessionSightItem(lvl.items[seed % lvl.items.length], Math.imul(seed, 7919) ^ session);
     const readNotes = itemTargets(item, { low: 52, high: 72 });
     return { root: r, q: Q_ROT[seed % 4], melody: Array.from({ length: 5 }, (_, i) => [60, 62, 64, 65, 67, 69, 71, 72][(seed * (i + 3) * 5) % 8]), scaleRoot, scale: majorUpDown(scaleRoot), read: { item, notes: readNotes } };
-  }, [seed]);
+  }, [seed, session]);
   const ivChord = (k: number, step: number): { root: number; q: Quality } => {
     const key = CIRCLE_KEYS[k % 12];
     return step === 0 ? { root: (key + 2) % 12, q: 'm7' } : step === 1 ? { root: (key + 7) % 12, q: 'dom7' } : { root: key, q: 'maj7' };
@@ -475,7 +476,9 @@ function GuitarTabDrill({ t, settings, ctl, onProgress }: { t: Strings; settings
   const [clock, setClock] = useState<PulseClock | null>(null);
   const [clickOn, setClickOn] = useState(loadClick);
   const now = usePulseNow(clock);
-  const item = SIGHT_LEVELS[level - 1].items[idx % SIGHT_LEVELS[level - 1].items.length];
+  const [session] = useState(() => Date.now() >>> 0);
+  // A fresh written melody per item (no memorizable items).
+  const item = sessionSightItem(SIGHT_LEVELS[level - 1].items[idx % SIGHT_LEVELS[level - 1].items.length], session + idx);
   const targets = itemTargets(item, GUITAR_RANGE);
   const views = [...new Set(['tab', ...(settings.noteViews ?? [])])] as NonNullable<Settings['noteViews']>;
   const go = async () => {
