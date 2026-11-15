@@ -97,3 +97,40 @@
 :root[data-theme] .hw-flash.miss, :root[data-theme] .hw-flash.wrong { background: var(--pink); }
 :root[data-theme] .hw-flash.early { background: var(--tangerine); }
 :root[data-theme] .hw-flash.late { background: var(--lilac); }
+
+/* ---------------------------------------------------------------- the review after a take (TakeReview, slice 2) */
+.take-review { display: grid; gap: 8px; padding: 10px 12px 8px; }
+.take-review .tr-verdict { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; margin: 0; font-family: var(--display); font-size: 1.15rem; line-height: 1.2; color: var(--ink); }
+.take-review .tr-verdict b { font-weight: 400; font-size: 1.25rem; }
+.take-review .tr-sep { color: var(--ink-dim); }
+.tr-medal { display: inline-block; width: 18px; height: 13px; border-radius: 50%; transform: rotate(-20deg); border: 2px solid var(--ink-c); background: var(--card); flex: none; }
+.tr-medal.v-clean { background: var(--teal); }
+.tr-medal.v-almost { background: var(--lilac); }
+.tr-medal.v-not { background: var(--card); border-style: dashed; }
+.take-review .tr-why-line { margin: 0; font-size: 0.85rem; line-height: 1.3; color: var(--ink-soft); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
+.tr-chips { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 6px; }
+.tr-chips li { display: grid; justify-items: center; align-content: center; gap: 1px; min-width: 0; min-height: 56px; padding: 4px 4px 3px; border: 2px solid var(--outline); border-radius: 12px; background: var(--card); }
+.tr-chips small { font-size: 0.72rem; color: var(--ink-soft); line-height: 1.1; }
+.tr-chips b { font-family: var(--display); font-weight: 400; font-size: 1.05rem; line-height: 1.1; color: var(--ink); white-space: nowrap; }
+.tr-chips .tr-unit { font-family: var(--font); font-size: 0.7rem; color: var(--ink-soft); }
+.tr-meter { width: 64px; height: 14px; }
+.tr-meter .tr-axis { stroke: var(--line-strong); stroke-width: 1.5; }
+.tr-meter .tr-win { fill: var(--card-2); stroke: var(--ink-c); stroke-width: 1.2; }
+.tr-meter .tr-needle { fill: var(--teal); stroke: var(--ink-c); stroke-width: 1.2; }
+.tr-meter .tr-needle.early { fill: var(--tangerine); }
+.tr-meter .tr-needle.late { fill: var(--purple); }
+.tr-even { width: 34px; height: 14px; }
+.tr-even rect { fill: var(--card-2); stroke: var(--ink-c); stroke-width: 0.9; }
+.tr-even rect.on { fill: var(--purple); }
+.tr-suggest { margin: 0; display: flex; justify-content: center; font-size: 0.85rem; color: var(--ink); }
+.tr-tip { padding: 3px 10px; border: 2px dashed var(--outline); border-radius: 10px; }
+.tr-actions { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 6px; }
+.tr-actions .btn { min-width: 0; min-height: 44px; padding-inline: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tr-why { justify-self: center; font-size: 0.85rem; min-height: 28px; }
+.tr-sheet { max-height: 78dvh; overflow-y: auto; display: grid; gap: 8px; padding: 14px 16px calc(14px + env(safe-area-inset-bottom)); }
+.tr-sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.tr-sheet-head h2 { margin: 0; font-size: 1.15rem; }
+.tr-detail { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; font-size: 0.85rem; }
+.sr-summary { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.take-review .drill-rh { margin: 0; font-size: 0.82rem; }
+.tempo-iso { unicode-bidi: isolate; white-space: nowrap; }

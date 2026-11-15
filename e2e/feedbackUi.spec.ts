@@ -193,3 +193,37 @@ test('Hebrew drill screen with MIDI: the staff has note heads, the device has a 
   expect(await latinLeft(page)).toEqual([]);
   await shot(page, 'keys-midi-ready-he');
 });
+
+for (const lang of ['en', 'he'] as const)
+  for (const [plays, family, level] of RUNS)
+    test(`the review fits one screen with Next visible (${plays}, ${lang})`, async ({ page }) => {
+      await page.addInitScript(() => ((window as unknown as { __fakeTake?: string }).__fakeTake = 'mixed'));
+      await seed(page, lang, plays);
+      await openLevel(page, lang, family, level);
+      await fakeTakeRun(page, 'mixed');
+      await expect(page.locator('[data-review]')).toBeVisible();
+      const o = await overflow(page);
+      expect(o.tall, 'review taller than the screen').toBeLessThanOrEqual(2);
+      expect(o.wide).toBeLessThanOrEqual(1);
+      const next = await page.locator('.take-review [data-next]').boundingBox();
+      expect(next).not.toBeNull();
+      expect(next!.y + next!.height).toBeLessThanOrEqual(720);
+      // no jargon
+      await expect(page.locator('.take-review')).not.toContainText(/CV R|vel SD/);
+      if (lang === 'he') expect(await latinLeft(page)).toEqual([]);
+      await shot(page, `${plays}-review-${lang}`);
+      await page.locator('[data-why]').click();
+      await expect(page.locator('[data-why-sheet]')).toBeVisible();
+      await shot(page, `${plays}-why-${lang}`);
+    });
+
+test('a weak take is soft: the total and one suggestion, no chips', async ({ page }) => {
+  await page.addInitScript(() => ((window as unknown as { __fakeTake?: string }).__fakeTake = 'weak'));
+  await seed(page, 'en', 'keys');
+  await openLevel(page, 'en', 'scales', 'scales-1');
+  await fakeTakeRun(page, 'weak');
+  await expect(page.locator('[data-review][data-soft="1"]')).toBeVisible();
+  await expect(page.locator('.tr-chips')).toHaveCount(0);
+  await expect(page.locator('.tr-suggest')).toBeVisible();
+  await shot(page, 'keys-review-weak-en');
+});

@@ -14,7 +14,7 @@ export const fakeTakeOn = (): Pattern | null => (import.meta.env.DEV && typeof w
 export function fakeTake(drill: Drill, bpm: number, cal: DrillCalibration, pattern: Pattern): { m: TakeMetrics; played: PlayedNote[] } {
   const off = (i: number): { skip?: boolean; dPitch?: number; dt?: number } => {
     if (pattern === 'clean') return { dt: ((i * 7) % 5) - 2 };
-    if (pattern === 'weak') return i % 4 === 0 ? { dt: 10 } : i % 4 === 1 ? { dPitch: 2 } : { skip: true };
+    if (pattern === 'weak') return i % 5 === 0 ? { dt: 10 } : i % 5 === 1 ? { dPitch: 2 } : { skip: true };
     if (i % 9 === 5) return { skip: true };
     if (i % 7 === 3) return { dPitch: 2 };
     if (i % 5 === 1) return { dt: -95 };

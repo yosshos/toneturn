@@ -163,6 +163,8 @@ test.describe('drums course', () => {
       }).observe(box, { childList: true });
     });
     await expect(page.locator('.drill-result')).toBeVisible({ timeout: 40_000 });
+    // COURSE-FEEDBACK-UI S2: the per-limb line sits behind "Why?" in the review
+    await page.locator('[data-why]').click();
     await expect(page.locator('[data-drum-limbs]')).toContainText('Snare');
   });
 

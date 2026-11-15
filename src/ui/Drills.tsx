@@ -38,7 +38,8 @@ import { MiniLessonPlayer } from './MiniLesson';
 import { STRINGS } from '../i18n/strings';
 import { isGuitarDrill } from '../engine/drills/events';
 import { drillEvents, drillXp } from '../engine/drills/events';
-import { ChartView, DrillStaff, DrillTab, DrillTake, EarCard, MarkLegend, TakeResult } from './DrillTake';
+import { ChartView, DrillStaff, DrillTab, DrillTake, EarCard, MarkLegend } from './DrillTake';
+import { TakeReview } from './TakeReview'; // COURSE-FEEDBACK-UI slice 2: the one-screen review
 // Voice leading (AUDIT-CONTENT-THEORY §ה.2): the chord symbols + first voicing, the voices as lanes, the stage lessons.
 import { VoiceLeadLessons, VoiceLeadScore } from './VoiceLeadScore';
 import { ReharmStudio } from './ReharmStudio'; // AUDIT-DEPTH-3 C3: your own reharm of a head
@@ -954,11 +955,10 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
     return (
       <div className="drill-run" data-drill={drill.itemId} data-rubato-result={stageRes.stage}>
         <DrillScore drill={stageRes.stage === 'quarters' ? quartersDrill(drill) : drill} ds={ds} result={stageRes.m} beat={-1} lang={lang} />
-        <MarkLegend lang={lang} />
-        <p className="drill-ladder">{line}</p>
-        <TakeResult
+        <TakeReview
           m={stageRes.m}
           free={stageRes.stage === 'free'}
+          next={line}
           lang={lang}
           onAgain={() => (setStageRes(null), setAgain(stageRes.m.verdict === 'clean' || stageRes.stage !== 'free'), setTake((t) => t + 1))}
           onSlower={() => (setStageRes(null), setTake((t) => t + 1))}
@@ -1025,7 +1025,6 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
           }}
         />
       )}
-      {res && <MarkLegend lang={lang} />}
       {!res && !writing && stage === 'free' && <RubatoTake key={`${drill.itemId}:free:${take}`} autoStart={again} drill={drill} lang={lang} cal={cal} onDone={(m) => (setBeat(-1), stageDone(m, 'free'))} onBeat={setBeat} />}
       {!res && !writing && stage === 'quarters' && <DrillTake key={`${drill.itemId}:q:${take}`} autoStart={again} drill={takeDrill} bpm={QUARTERS_BPM} lang={lang} cal={cal} onDone={(m) => (setBeat(-1), stageDone(m, 'quarters'))} onBeat={setBeat} drumsOk={headphones} onDrums={onHeadphones} kit={kit} />}
       {!res && !writing && !stage && <DrillTake key={`${drill.itemId}:${take}`} autoStart={again} drill={drill} bpm={bpm} lang={lang} cal={cal} onDone={(m, p) => (setBeat(-1), drill.write || drill.drumWrite ? setWriting({ m, p }) : done(m, p))} onBeat={setBeat} drumsOk={headphones} onDrums={onHeadphones} kit={kit} />}
@@ -1034,7 +1033,15 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
       {!res && writing && drill.drumWrite && <DrumWrite drill={drill} lang={lang} onDone={(g) => (setWriting(null), done(withDrumWrite(writing.m, g, drill), writing.p))} />}
       {res && (
         <>
-          <p className="drill-ladder">{res.lad.message[lang]}</p>
+          <TakeReview
+            m={res.m}
+            lang={lang}
+            next={res.lad.message[lang]}
+            onAgain={() => (setRes(null), setAgain(true), setTake((t) => t + 1))}
+            onSlower={() => (setRes(null), setAgain(true), setBpm((b) => Math.max(30, Math.round(b * 0.9))), setTake((t) => t + 1))}
+            onNext={() => go(i + 1)}
+            onFree={hasRubato(drill) && !noRubato && res.m.accuracy < BACK_TO_RUBATO ? () => (setRes(null), setOneFree(true), setAgain(false), setTake((t) => t + 1)) : undefined}
+          >
           {/* AUDIT-DEPTH-3 C5: the rule cards of an improvised take, one compact line. */}
           {res.m.improv && res.m.improv.length > 0 && (
             <p className="drill-rh" data-improv-cards={res.m.improv.filter((c) => c.pass).length}>
@@ -1061,14 +1068,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
               {(res.m.phraseOrg.band === 'monotonous' || res.m.phraseOrg.band === 'random') && <small> — {res.m.phraseOrg.tip[lang]}</small>}
             </p>
           )}
-          <TakeResult
-            m={res.m}
-            lang={lang}
-            onAgain={() => (setRes(null), setAgain(true), setTake((t) => t + 1))}
-            onSlower={() => (setRes(null), setAgain(true), setBpm((b) => Math.max(30, Math.round(b * 0.9))), setTake((t) => t + 1))}
-            onNext={() => go(i + 1)}
-            onFree={hasRubato(drill) && !noRubato && res.m.accuracy < BACK_TO_RUBATO ? () => (setRes(null), setOneFree(true), setAgain(false), setTake((t) => t + 1)) : undefined}
-          />
+          </TakeReview>
         </>
       )}
     </div>

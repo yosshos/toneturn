@@ -29,7 +29,8 @@ test('rubato: a new item in free time, graded on the notes only', async ({ page 
   await page.locator('[data-rubato-done]').click();
   const res = page.locator('[data-rubato-result="free"]');
   await expect(res).toBeVisible();
-  await expect(res.locator('.drill-stats')).not.toContainText('CV');
+  await expect(res.locator('.take-review')).not.toContainText('CV');
+  await expect(res.locator('[data-chip="time"]')).toHaveCount(0);
   await res.getByRole('button', { name: /Again/ }).click();
   await expect(page.locator('[data-rubato-stage="free"]')).toBeVisible();
 });
