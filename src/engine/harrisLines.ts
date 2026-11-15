@@ -7,8 +7,9 @@
 // Sources (keys from docs/research/BARRY-HARRIS-METHOD.md §0):
 // - Barry's chromatic scale: Larsen [JL], Otto [MO], Parks / Open Studio [PO], Echols ep.5 [E] — scale degrees on the
 //   beats, chromatic notes between, and at an existing half step a skip to the scale note above, then back.
-//   The DESCENDING form mirrors it (the skip goes to the scale note below and comes back up), which is Otto's
-//   "approach the half-step degrees from below" — the exact notes are not shown in the sources: (verify).
+//   The DESCENDING form mirrors it (the skip goes to the scale note below and comes back up). Every form (major up and
+//   down, dominant, minor 6-dim) confirmed by the owner 2026-11-15: "the scale's own notes are always on the beat,
+//   chromatics between — and that holds".
 // - The extra-note rules: Parks, *Things I've Learned* video 5 [P5]; Goren, *Barry Harris Companion* [BC]; the Rees
 //   workbook as quoted [HS, MR]. The miscellaneous rule: [MR] (Rees workbook p.10c) and [P5 5:45]. Triplets: [P5 8:19,
 //   10:00] and [TR].
@@ -17,7 +18,9 @@
 //   the workbook). The minor versions are derived here (lower the 3rd): (verify).
 // - The three important arpeggios: [P5; OBT]. The ♭7-major pivot: [JL; P5]. Seven down to the 3rd: [TC; HS; H03].
 //   3-to-♭9 over the family: [JL; R1; R3]. Upbeats and "feel 6 in 4": Workbook 1 ch.4 / 2 [R1; R2]. Compose a line over
-//   a move: [SG] (from Harris and Rees workshops). Major arpeggios chromatically down and the ABCs in 3rds: [OBT joe2758].
+//   a move: [SG] (from Harris and Rees workshops; not pursued — the rule-based improv covers it). The ABCs: the owner
+//   2026-11-15 (note by note, then 3rds, then 3rds with a half step below). Major arpeggios chromatically down:
+//   [OBT joe2758] only — hidden (no second source).
 
 export interface LineNote {
   p: number;
@@ -516,28 +519,37 @@ export function chromaticArpsDown(root: number, n: number, inv: 0 | 1 | 2): Line
   return line;
 }
 /**
- * The ABCs in 3rds [R1; OBT joe2758]: 'plain' = the major scale in 3rds up and down (C E D F E G …); 'half' = each third
- * with a half step below its first note, as triplets (as transcribed from the 7th: B C E | C♯ D F | D♯ E G …).
+ * The ABCs: Barry's order for getting to know a scale (owner 2026-11-15) — note by note, then in 3rds, then each 3rd with
+ * a half step below its first note. 'notes' = the major scale up and down, 8ths; 'plain' = in 3rds up and down
+ * (C E D F E G …); 'half-up' = triplets B C E | C♯ D F | D♯ E G | E F A | F♯ G B | G♯ A C | A♯ B D | B C E, then the
+ * top root; 'half-down' = from the top B C A | A♯ B G | G♯ A F | F♯ G E | E F D | D♯ E C | C♯ D B, then the root.
+ * The half step is always chromatic: below F it is E, below C it is B.
  */
-export function abcThirds(root: number, shape: 'plain' | 'half'): LineNote[] {
+export function abcThirds(root: number, shape: 'notes' | 'plain' | 'half-up' | 'half-down'): LineNote[] {
   const sc = RULE_SCALE.maj;
   const at = (d: number) => root + sc[mod12(((d % 7) + 7) % 7)] + 12 * Math.floor(d / 7);
   const ct = pcsAbove(root, [0, 4, 7, 11]);
+  const eighths = (all: number[]): LineNote[] => all.map((p, i) => ({ p, beat: r6(i / 2), dur: i === all.length - 1 ? 2 : 0.5, ct: i % 2 === 0 && ct.includes(mod12(p)) }));
+  if (shape === 'notes') {
+    const up = Array.from({ length: 8 }, (_, d) => at(d));
+    return eighths([...up, ...up.slice(0, 7).reverse()]);
+  }
   if (shape === 'plain') {
     // up: C E D F E G F A G B A C B D; down from the top: E C D B C A B G A F G E F D E C; the root held
     const up: number[] = [];
     for (let d = 0; d < 7; d++) up.push(at(d), at(d + 2));
     const down: number[] = [];
     for (let d = 9; d >= 2; d--) down.push(at(d), at(d - 2));
-    const all = [...up, ...down];
-    return all.map((p, i) => ({ p, beat: r6(i / 2), dur: i === all.length - 1 ? 2 : 0.5, ct: i % 2 === 0 && ct.includes(mod12(p)) }));
+    return eighths([...up, ...down]);
   }
   const line: LineNote[] = [];
-  for (let d = 0; d < 8; d++) {
-    const lo = at(d);
-    [lo - 1, lo, at(d + 2)].forEach((p, i) => line.push({ p, beat: r6(d + i / 3), dur: r6(1 / 3), ct: false }));
-  }
-  line.push({ p: at(7), beat: 8, dur: 2, ct: true });
+  const degs = shape === 'half-up' ? [0, 1, 2, 3, 4, 5, 6, 7] : [7, 6, 5, 4, 3, 2, 1];
+  degs.forEach((d, k) => {
+    const first = at(d);
+    const third = shape === 'half-up' ? at(d + 2) : at(d - 2);
+    [first - 1, first, third].forEach((p, i) => line.push({ p, beat: r6(k + i / 3), dur: r6(1 / 3), ct: false }));
+  });
+  line.push({ p: shape === 'half-up' ? at(7) : at(0), beat: degs.length, dur: 2, ct: true });
   return line;
 }
 
@@ -620,11 +632,15 @@ export function moveModel(key: number, chords: [number, '6' | '7' | 'm7', number
  * Tune outlines in Parks's order [TILF EP 1, 2, 8, 9, 14, 18, 23, 104; F2.2]: blues, rhythm changes, Cherokee, Donna Lee
  * (= the Indiana changes), How High the Moon, Night in Tunisia, All the Things You Are, Giant Steps. CHORD CHARTS ONLY
  * (no melody), relative to the tune's key, typed from the standard changes — the Cherokee, How High the Moon and Night
- * in Tunisia charts are (verify) against a fake book. Each is the tune's opening (8 or 16 bars).
+ * in Tunisia charts were checked (2026-11-15) against the jazzadvice.com / iReal Pro charts and an independent lead sheet
+ * (NIU jazz camp, How High the Moon): Cherokee's A section with each chord's real length (B♭maj7 two bars, Fm7, B♭7,
+ * E♭maj7 two bars, A♭7 two bars, B♭maj7 two bars, C7 two bars, Cm7, F7, B♭maj7 two bars: the A2 ending); How High the
+ * Moon's first 16 bars, with the minor ii–V into Gm7 in bars 10–12 (iReal: Aø7 D7♭9 | Gm7 | Aø7 D7♭9); A Night in
+ * Tunisia's A section. Each is the tune's opening (8 or 16 bars).
  */
 export const TUNE_CHARTS: Record<'cherokee' | 'hhtm' | 'tunisia' | 'attya' | 'giant', { name: { en: string; he: string }; key: number; minor?: boolean; text: string }> = {
-  cherokee: { name: { en: 'Cherokee', he: 'צ׳רוקי' }, key: 10, text: 'Bbmaj7 | Fm7 Bb7 | Ebmaj7 | Ab7 | Bbmaj7 | C7 | Cm7 | F7' },
-  hhtm: { name: { en: 'How High the Moon', he: 'האו היי דה מון' }, key: 7, text: 'Gmaj7 | Gmaj7 | Gm7 | C7 | Fmaj7 | Fmaj7 | Fm7 | Bb7 | Ebmaj7 | Am7b5 D7 | Gmaj7 | Am7 D7 | Bm7 | E7 | Am7 | D7' },
+  cherokee: { name: { en: 'Cherokee', he: 'צ׳רוקי' }, key: 10, text: 'Bbmaj7 | Bbmaj7 | Fm7 | Bb7 | Ebmaj7 | Ebmaj7 | Ab7 | Ab7 | Bbmaj7 | Bbmaj7 | C7 | C7 | Cm7 | F7 | Bbmaj7 | Bbmaj7' },
+  hhtm: { name: { en: 'How High the Moon', he: 'האו היי דה מון' }, key: 7, text: 'Gmaj7 | Gmaj7 | Gm7 | C7 | Fmaj7 | Fmaj7 | Fm7 | Bb7 | Ebmaj7 | Am7b5 D7 | Gm7 | Am7b5 D7 | Gmaj7 | Am7 D7 | Bm7 E7 | Am7 D7' },
   tunisia: { name: { en: 'A Night in Tunisia', he: 'לילה בתוניסיה' }, key: 2, minor: true, text: 'Eb7 | Dm6 | Eb7 | Dm6 | Eb7 | Dm6 | Em7b5 A7 | Dm6' },
   attya: { name: { en: 'All the Things You Are', he: 'אול דה ת׳ינגס יו אר' }, key: 8, text: 'Fm7 | Bbm7 | Eb7 | Abmaj7 | Dbmaj7 | G7 | Cmaj7 | Cmaj7' },
   giant: { name: { en: 'Giant Steps', he: 'ג׳איינט סטפס' }, key: 11, text: 'Bmaj7 D7 | Gmaj7 Bb7 | Ebmaj7 | Am7 D7 | Gmaj7 Bb7 | Ebmaj7 F#7 | Bmaj7 | Fm7 Bb7' },
@@ -673,47 +689,50 @@ export function outlineFromChart(text: string, key: number): OutlineChord[] {
   return out;
 }
 
+/** The second voice's interval, in scale steps below the line (3rds = 2, 6ths = 5, 10ths = 9, octaves = 7…). */
+export const TWO_VOICE_STEPS = { '2nds': 1, '3rds': 2, '4ths': 3, '5ths': 4, '6ths': 5, '7ths': 6, octaves: 7, '10ths': 9 } as const;
+export type TwoVoiceIv = keyof typeof TWO_VOICE_STEPS;
 /**
- * Barry's chromatic scale in two voices (Echols LL 8 [F E05]): the 6-dim scale's chromatic scale with a second voice in
- * 3rds (the scale note two steps below in the 8-note scale) or 6ths (two steps above, an octave down) — along one floor,
- * so 6-chord notes pair with 6-chord notes and dim notes with dim notes; a chromatic note slides in parallel into the
- * next pair. Returns [upper, lower] pairs on the line's grid. The voicing is the app's reading of "along a floor":
- * (verify).
+ * Barry's chromatic scale in two voices (owner 2026-11-15: "usually thirds, sixths or tenths, but you can go through all
+ * intervals"): the confirmed chromatic scale (major or dominant, up and down an octave) on top, and under every scale
+ * degree a second voice the given number of scale steps below it (a diatonic 3rd, 6th, 10th…). A chromatic note moves
+ * both voices together: the pair a half step from the next pair, in parallel (C/A, C♯/A♯, D/B). A skip note (the G of
+ * E G F) is a scale degree and takes its own interval. Returns [upper, lower] pairs on the line's grid.
  */
-export function chromaticTwoVoices(root: number, kind: 'sixdim' | 'm6dim', dir: 'up' | 'down', interval: '3rds' | '6ths'): { pairs: [number, number][]; line: LineNote[] } {
-  const line = chromaticScale(root, kind, dir).line;
+export function chromaticTwoVoices(root: number, kind: 'maj' | 'dom', interval: TwoVoiceIv): { pairs: [number, number][]; line: LineNote[] } {
+  const line = chromaticUpDown(root, kind);
   const sc = CHROM_SCALE[kind];
   const inSc = (p: number) => sc.includes(mod12(p - root));
-  const steps = (p: number, n: number) => {
+  const n = TWO_VOICE_STEPS[interval];
+  const below = (p: number) => {
     let q = p;
-    const d = n > 0 ? 1 : -1;
-    for (let k = 0; k < Math.abs(n); k++) {
-      do q += d;
+    for (let k = 0; k < n; k++) {
+      do q--;
       while (!inSc(q));
     }
     return q;
   };
-  const voiceOf = (p: number) => (interval === '3rds' ? steps(p, -2) : steps(p, 2) - 12);
-  const pairs: [number, number][] = line.map((n, i) => {
-    if (inSc(n.p)) return [n.p, voiceOf(n.p)];
+  const pairs: [number, number][] = line.map((x, i) => {
+    if (inSc(x.p)) return [x.p, below(x.p)];
     const next = line[i + 1] ?? line[i - 1];
-    return [n.p, n.p - (next.p - voiceOf(next.p))];
+    return [x.p, x.p - (next.p - below(next.p))];
   });
   return { pairs, line };
 }
 
 /**
- * Parks's warm-up "the dominant scale eight ways" on F7 (WoS L2; the [P5] PDF), as the app reads it: up an octave from
- * each degree 1–7, then down by that degree's extra-note rule; the eighth way down from the octave with three half steps
- * (Parks's root option). The exact eight are (verify).
+ * The dominant rules from every degree (Barry's half-step rules, docs/BARRY-HARRIS-THEORY.md §8; owner 2026-11-15:
+ * "how many chromatic notes may be added depending on the degree you start from"): [start degree in semitones, count].
+ * From 1, 3, 5 or ♭7 one half step (1–♭7); from 3, 5 or ♭7 also three (3–2, 2–1, 1–♭7); from 2, 4 or 6 none, or two
+ * (2–1, 1–♭7). Three from the root is left out: two sources allow it only from 3, 5 and 7 (an octave from the root has
+ * no room for the third one).
  */
-export function eightWays(root: number, way: number): LineNote[] {
-  const sc = RULE_SCALE.dom;
-  const ct = pcsAbove(root, RULE_CT.dom);
-  if (way >= 7) return eighthsOf(ruleLine(root, 'dom', root + 12, 3), ct);
-  const up: number[] = [];
-  for (let k = 0; k < 7; k++) up.push(root + sc[(way + k) % 7] + 12 * Math.floor((way + k) / 7));
-  const top = root + sc[way] + 12;
-  const down = ruleLine(root, 'dom', top, defaultCount('dom', sc[way]));
-  return eighthsOf([...up, ...down], ct);
-}
+export const DOM_RULE_WAYS: [number, 0 | 1 | 2 | 3][] = [
+  [0, 1],
+  [10, 1], [10, 3],
+  [9, 0], [9, 2],
+  [7, 1], [7, 3],
+  [5, 0], [5, 2],
+  [4, 1], [4, 3],
+  [2, 0], [2, 2],
+];

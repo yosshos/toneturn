@@ -23,82 +23,98 @@
 export interface Claim {
   /** Stable id, named in docs/THEORY-QUESTIONS.md. */
   id: string;
-  /** What we have and why it is not certain (one line, for the docs and the tests). */
+  /** What we have and why it is not certain — or, once switched on, what confirmed it (one line, docs and tests). */
   why: string;
   /** The content it hides. */
   hides: string[];
+  /** Hidden for good: the owner does not want it pursued (or it duplicates other content). */
+  notPursued?: true;
+  /** Hidden for lack of verified knowledge: no consistent sources found (re-researched 2026-11-15). */
+  unsourced?: true;
 }
 
 export const UNVERIFIED_CLAIMS: Claim[] = [
   // ───────────── Barry Harris lines (src/engine/harrisLines.ts, drills/harrisLineDrills.ts) ─────────────
   {
     id: 'bh-chromatic',
-    why: "Barry's chromatic scale: the ascending notes are derived from the rule in secondary sources (Otto, Larsen); the descending form is the app's mirror (no source prints it).",
+    why: "Barry's chromatic scale (major up and down, dominant, minor 6-dim): owner-confirmed 2026-11-15 — the scale's own notes always on the beat, chromatics between.",
     hides: ['item:hl-chrom', 'topic:bh-line-ear:1', 'topic:bh-line-ear:2', 'vocal:308', 'lesson:bh-chromatic'],
   },
   {
     id: 'bh-chromatic-two-voices',
-    why: "The chromatic scale in two voices (3rds / 6ths 'along one floor'): only the title of Echols's Labyrinth lesson 8 is known.",
+    why: 'The chromatic scale in two voices: owner 2026-11-15 — usually 3rds, 6ths or 10ths, but any interval; rebuilt on the confirmed major / dominant chromatic scale.',
     hides: ['item:hl-chrom2', 'card:bh-chrom2'],
   },
   {
     id: 'bh-5432',
     why: 'The 5-4-3-2 phrases (dominant and major): every note comes from one workshop attendee\'s forum notes; the workbook itself was not seen. Rhythms are the app\'s.',
     hides: ['item:hl-5432:0', 'item:hl-5432:1', 'item:hl-5432:2', 'item:hl-5432:3', 'item:hl-5432:4', 'item:hl-5432:5', 'item:hl-5432:6', 'item:hl-5432:7', 'item:hl-lick-outline', 'vocal:309', 'game:call5432', 'card:bh-5432'],
+    notPursued: true,
   },
   {
     id: 'bh-5432-minor',
     why: 'The 5-4-3-2 phrases in minor: derived by the app (not in any source we have), and not even consistent with the comment ("dominant shapes with ♭3").',
     hides: ['item:hl-5432:8', 'item:hl-5432:9', 'item:hl-5432:10', 'item:hl-5432:11', 'game:call5432'],
+    notPursued: true,
   },
   {
     id: 'bh-5432-lick',
     why: 'The combined 5-4-3-2 lick (G B C F D E♭ E G B♭ D B♭ B C): the same attendee\'s notes, cut off where his line goes on.',
     hides: ['item:hl-lick', 'item:hl-lick-outline', 'card:bh-lick'],
+    notPursued: true,
   },
   {
     id: 'bh-seven-down',
-    why: 'Seven down to the 3rd: from blogs and forums (Cleary, a forum thread), no Harris video or workbook page.',
+    why: 'Seven down to the 3rd: owner-confirmed 2026-11-15 (a known lick Chris Parks teaches); also Cleary and the jazzguitar.be study-group notes.',
     hides: ['item:hl-sevendown', 'topic:bh-line-ear:5', 'vocal:310', 'card:bh-sevendown'],
   },
   {
     id: 'bh-3-to-b9',
-    why: '3 to ♭9 over the family as a Harris line device: one secondary source (Larsen).',
+    why: '3 to ♭9 (B D F A♭ over G7) as a Harris line device like 3 to 9: one secondary source (Larsen); forums say "on the third of every dominant, the diminished" but never as a named line arpeggio.',
     hides: ['item:hl-3b9', 'card:bh-3b9'],
   },
   {
     id: 'bh-b7-major-pivot',
-    why: 'The ♭7-major pivot over the dominant (B♭maj7 over C7): one secondary source (Larsen).',
+    why: 'The ♭7-major pivot over the dominant (B♭maj7 over C7): owner-confirmed 2026-11-15 — one of the important arpeggios (with those on the root and the 5th).',
     hides: ['item:hl-imp-scale:3', 'item:hl-imp-scale:4'],
   },
   {
     id: 'parks-eight-ways',
-    why: "Parks's warm-up 'the dominant eight ways': the episode title is known, the eight ways are the app's reading.",
+    why: "The dominant rules from every degree (the old 'eight ways'): owner 2026-11-15 — Barry's rules for descending from each degree; per-degree rule in the eddierich handout, Bill Graham's Bebop Improv 101 and Parks's half-step handout.",
     hides: ['item:hl-eight', 'card:parks-eight'],
   },
   {
     id: 'bh-abcs-arps-down',
-    why: 'The ABCs (3rds a half step below) and major arpeggios chromatically down as Harris exercises: one forum report.',
-    hides: ['item:hl-abc', 'item:hl-arps-down'],
+    why: "The ABCs: owner 2026-11-15 — Barry's order, note by note, then 3rds, then 3rds with a half step below the first note (up and down); also the jazzguitar.be study-group notes.",
+    hides: ['item:hl-abc'],
+  },
+  {
+    id: 'bh-arps-down',
+    why: 'Major arpeggios chromatically down as a Harris exercise: one forum report only, not confirmed by the owner; no second source found (2026-11-15).',
+    hides: ['item:hl-arps-down'],
+    unsourced: true,
   },
   {
     id: 'bh-feel6',
-    why: "'Feel 6 in 4': only a workshop-video chapter title; the exercise (dotted quarters, cells of three) is the app's.",
+    why: "'Feel 6 in 4': only a workshop-video chapter title; the exercise (dotted quarters, cells of three) is the app's. Owner unsure, not important.",
     hides: ['item:hl-feel6', 'card:bh-feel6'],
+    notPursued: true,
   },
   {
     id: 'bh-compose',
-    why: "'Write a line once, play it in every tune with the same move' as Harris/Rees practice: one forum report.",
+    why: "'Write a line once, play it in every tune': owner 2026-11-15 — that is the rule-based improv the app already has (improvCoach, ruleCards); this duplicate stays out.",
     hides: ['item:hl-compose', 'card:bh-compose'],
+    notPursued: true,
   },
   {
     id: 'bh-outline-blues',
-    why: 'The scale outline of the blues: the bar-by-bar scales follow one forum post.',
+    why: 'The scale outline of the blues: the bar-by-bar scales follow one forum post. Owner: does not matter.',
     hides: ['item:hl-outline:0'],
+    notPursued: true,
   },
   {
     id: 'tune-charts',
-    why: 'Cherokee, How High the Moon and Night in Tunisia chord charts were typed from memory, not checked against a fake book.',
+    why: 'Cherokee, How High the Moon and Night in Tunisia: checked 2026-11-15 against the jazzadvice.com / iReal Pro charts and the NIU lead sheet; Cherokee now in its real bar lengths, How High the Moon with the minor ii–V into Gm7.',
     hides: ['item:hl-outline:2', 'item:hl-outline:4', 'item:hl-outline:5'],
   },
   // ───────────── Echols: the Elevator and the voicing ladder (elevator.ts, drills/harmLadder.ts) ─────────────
@@ -106,63 +122,110 @@ export const UNVERIFIED_CLAIMS: Claim[] = [
   // game, cm-expand and the levels now start every floor there). What still rests on inference:
   {
     id: 'echols-elevator-melody',
-    why: "The elevator under a melody (a melody up the scale, a floor higher each note, then along the drop 2 floor): the app's realisation of a forum student's Autumn Leaves remark; the floors start off the tonic.",
+    why: "The elevator under a melody: the app's realisation of a forum student's Autumn Leaves remark; the floors start off the tonic. Owner does not know; no other source found — omitted for lack of verified knowledge.",
     hides: ['item:cm-elevator'],
+    unsourced: true,
   },
   {
     id: 'echols-elevator-borrow',
-    why: 'Borrowing through the Elevator: the mechanism is inferred (Echols E04 is paywalled).',
+    why: 'Borrowing through the Elevator: the mechanism is inferred (Echols E04 is paywalled). Owner does not know; no other source found — omitted for lack of verified knowledge.',
     hides: ['item:el-borrow'],
+    unsourced: true,
   },
   {
     id: 'echols-voicing-ladder',
-    why: "Echols's voicing ladder (thirds, triads, shells, octave chords): only short-video titles; the 'shell' and 'octave chord' shapes are behind a paywall.",
-    hides: ['item:vl-ladder'],
+    why: 'The shells on the 6-dim scale: owner 2026-11-15 — upper shell C-G-A, lower shell C-E-A, drop 3 and drop 2 without the left hand.',
+    hides: ['item:vl-ladder:2', 'item:vl-ladder:6', 'item:vl-ladder:8', 'item:vl-ladder:9'],
   },
-  // ───────────── Siskind: solo piano (soloPiano.ts, drills/soloPianoDrills.ts) ─────────────
+  {
+    id: 'echols-octave-chord',
+    why: "Echols's 'octave chord' (vl-ladder 3 and 7): not answered; forums only (melody doubled an octave below, chord tones between).",
+    hides: ['item:vl-ladder:3', 'item:vl-ladder:7'],
+  },
+  {
+    id: 'echols-ladder-thirds-triads',
+    why: "The ladder's 'thirds' and 'triads' (vl-ladder 0, 1, 4, 5): not asked or answered; two scale steps of the 6-dim scale is a 2nd at the 6th (G A).",
+    hides: ['item:vl-ladder:0', 'item:vl-ladder:1', 'item:vl-ladder:4', 'item:vl-ladder:5'],
+  },
+  // ───────────── Comping rhythms and solo piano (soloPiano.ts, drills/soloPianoDrills.ts, compCaller.ts) ─────────────
+  {
+    id: 'comp-standard-rhythms',
+    why: 'The Charleston on 3 (3, &4; jazzguitar.be, the Galbraith "Shiny" lesson) and call and response with it; with the Charleston and reverse Charleston (Pianowithjonny, Learn Jazz Standards), Red Garland and the anticipation — standard pedagogy.',
+    hides: ['item:cp-beat3', 'item:tx-call', 'topic:comp-rhythm-ear:1', 'topic:comp-rhythm-ear:3'],
+  },
+  {
+    id: 'shell-comp-standard',
+    why: 'LH shell comping: reverse Charleston (&1, 3), Red Garland (&2 and &4, the &4 sounding the next chord; Jazz-Library, Cleary) and the lead-in (Siskind: a chord on &3 or 4 into the next bar), each under a bass on 1.',
+    hides: ['item:lh-scomp:1', 'item:lh-scomp:2', 'item:lh-scomp:4'],
+  },
+  {
+    id: 'walking-tenths',
+    why: 'Walking 10ths (I → IV → I and the diminished walk-up): a standard stride device (Grove, Siskind\'s "7 Secrets of Stride").',
+    hides: ['item:lh-walk10:0', 'item:lh-walk10:1'],
+  },
   {
     id: 'siskind-lh-variants',
-    why: "Left-hand forms the doc inferred from names (7th-first bass-plus, the 9th on Type B, the Evans syncopation): 'the doc's reading — verify'.",
+    why: "Left-hand forms inferred from names (7th-first bass-plus, the 9th on Type B, the Evans syncopation). Re-researched 2026-11-15: nothing found; and in Levine the 9th is on top (under the thumb) in Type A, not B — omitted for lack of verified knowledge.",
     hides: ['item:lh-bpalt:1', 'item:lh-shB:1', 'item:lh-strong:1'],
+    unsourced: true,
   },
   {
     id: 'siskind-tenths',
-    why: 'Walking 10ths and a whole head in 10ths: named in his video chapter lists only; the procedure is inferred.',
-    hides: ['item:lh-walk10', 'item:lh-head10', 'lesson:sp-stride'],
+    why: 'The 9th under the thumb in walking 10ths, and a whole head in 10ths on 1 and 3: Siskind names them (chapter list) but the placements are ours — omitted for lack of verified knowledge.',
+    hides: ['item:lh-walk10:2', 'item:lh-head10', 'lesson:sp-stride'],
+    unsourced: true,
   },
   {
     id: 'siskind-stride-variations',
-    why: 'The stride variations (Peace Piece, reversed, skip a beat, 3+3+2, anticipations, chord early, 3 against 4, the break): named only; every placement is the app\'s.',
+    why: "The stride variations: Siskind's chapter list confirms the names (Peace Piece low-high-high-low, 3+3+2, anticipations, chord early, 3 against 4, the break) but not the placements; 'reversed stride' not found — omitted for lack of verified knowledge.",
     hides: ['item:lh-var1', 'item:lh-332', 'item:lh-var2', 'item:lh-34', 'item:lh-break', 'topic:lh-tex-ear:2', 'topic:lh-tex-ear:3', 'lesson:sp-stride'],
+    unsourced: true,
   },
   {
     id: 'siskind-shell-comping',
-    why: 'Shell comping rhythms (reverse, Red Garland, push-off, lead-in) and the shuttle: the doc\'s reading of names.',
-    hides: ['item:lh-scomp:1', 'item:lh-scomp:2', 'item:lh-scomp:3', 'item:lh-scomp:4', 'item:lh-shuttle', 'lesson:sp-stride'],
+    why: "The LH push-off (Siskind: 'repeat a chord on a downbeat and the offbeat after', placement ours) and the shuttle (name only): omitted for lack of verified knowledge.",
+    hides: ['item:lh-scomp:3', 'item:lh-shuttle', 'lesson:sp-stride'],
+    unsourced: true,
   },
   {
     id: 'siskind-comp-rhythms',
-    why: 'Comping vocabulary: the Beat-3 Charleston, the Basie rhythm, the push-off and the accent placement are named only; the figures are ours.',
-    hides: ['item:cp-beat3', 'item:cp-basie', 'item:cp-pushoff', 'item:cp-accent', 'item:tx-call', 'topic:comp-rhythm-ear', 'card:sp-comp-rhythms'],
+    why: 'The Basie rhythm (2 and 4), the push-off (2, 4, &4) and accent comping (&2 and 4): placements found in no source (re-researched 2026-11-15) — omitted for lack of verified knowledge. Comp Caller leaves them out too.',
+    hides: ['item:cp-basie', 'item:cp-pushoff', 'item:cp-accent', 'topic:comp-rhythm-ear:2', 'card:sp-comp-rhythms'],
+    unsourced: true,
   },
   {
     id: 'siskind-textures',
-    why: 'Drop-2 sidesteps and the inner-voice movement (one of his five, our choice): marked verify in soloPiano.ts.',
+    why: "Drop-2 sidesteps (half step above, an 8th early) and 'five inner-voice movements': the Deep Dive video has a sidesteps chapter but no five movements; placements ours — omitted for lack of verified knowledge.",
     hides: ['item:tx-drop2', 'item:tx-inner'],
+    unsourced: true,
   },
   // ───────────── Our own transcriptions (drums) ─────────────
   {
     id: 'latin-kit-patterns',
-    why: 'Mambo bell over the clave, songo and Mozambique (d-latin 8–10): our own transcriptions, not yet checked by a Latin percussion teacher.',
+    why: 'Mambo, songo, Mozambique (d-latin 8–10): son clave and the tumbao kick (&2 and 4) confirmed; the bells, the songo / Mozambique snare and kick and the hi-hat foot not (sources are notation images or books) — omitted for lack of verified knowledge.',
     hides: ['level:d-latin-8', 'level:d-latin-9', 'level:d-latin-10'],
+    unsourced: true,
   },
 ];
 
 /**
  * The owner's switch: claim ids (or single content ids) confirmed since. Put an id here once it is verified, e.g.
  * 'bh-5432' after checking Workbook 1. The content comes back everywhere at once.
+ * 2026-11-15: the owner's answers to docs/THEORY-QUESTIONS.md and the re-research (see the doc).
  */
-export const SWITCHED_ON: ReadonlySet<string> = new Set<string>([]);
+export const SWITCHED_ON: ReadonlySet<string> = new Set<string>([
+  'bh-chromatic',
+  'bh-chromatic-two-voices',
+  'bh-seven-down',
+  'bh-b7-major-pivot',
+  'parks-eight-ways',
+  'bh-abcs-arps-down',
+  'tune-charts',
+  'echols-voicing-ladder',
+  'comp-standard-rhythms',
+  'shell-comp-standard',
+  'walking-tenths',
+]);
 
 let HIDDEN: Map<string, string[]> | null = null;
 /** content id → the claims (not yet switched on) that hide it. */

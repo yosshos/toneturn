@@ -36,7 +36,8 @@ import {
   TUNE_CHARTS,
   outlineFromChart,
   chromaticTwoVoices,
-  eightWays,
+  DOM_RULE_WAYS,
+  type TwoVoiceIv,
   phrase5432,
   ruleDrillLine,
   scaleOutline,
@@ -99,6 +100,15 @@ export const MISC_OPTS: [RuleKind, number, number][] = [
   ['dom', 4, 5],
   ['maj', 4, 3],
 ];
+/** The chromatic scale in two voices: [scale, interval]. 3rds, 6ths, 10ths first (major, then dominant); then the rest. */
+export const CHROM2_OPTS: ['maj' | 'dom', TwoVoiceIv][] = [
+  ['maj', '3rds'], ['maj', '6ths'], ['maj', '10ths'], ['dom', '3rds'], ['dom', '6ths'], ['dom', '10ths'],
+  ['maj', '4ths'], ['maj', '5ths'], ['maj', '2nds'], ['maj', '7ths'], ['maj', 'octaves'],
+];
+const IV_T: Record<TwoVoiceIv, T2> = {
+  '2nds': t('2nds', 'סקונדות'), '3rds': t('3rds', 'טרצות'), '4ths': t('4ths', 'קוורטות'), '5ths': t('5ths', 'קווינטות'),
+  '6ths': t('6ths', 'סקסטות'), '7ths': t('7ths', 'ספטימות'), octaves: t('octaves', 'אוקטבות'), '10ths': t('10ths', 'דצימות'),
+};
 const PH_Q: PhraseQ[] = ['dom', 'maj', 'min'];
 const PH_N: PhraseN[] = [5, 4, 3, 2];
 /** The scale outlines in Parks's order (F2.2): blues, rhythm changes, Cherokee, Donna Lee (Indiana), How High the Moon, Night in Tunisia, All the Things You Are, Giant Steps. */
@@ -116,6 +126,8 @@ interface LineItem {
   ctGoal: boolean;
   /** Two voices: [upper, lower] per note of `line` (the upper is the line). */
   pairs?: [number, number][];
+  /** The hand of the lower voice on the piano (10ths take the left hand). */
+  lowerHand?: 'R' | 'L';
 }
 
 const chordSym = (key: number, d: number, q: string): string => `${nm(key + d)}${q === 'maj' ? '6' : q}`;
@@ -198,30 +210,33 @@ export function lineItem(kind: string, op: number, key: number, lo: number, hi: 
       };
     }
     case 'hl-chrom2': {
-      // Barry's chromatic scale in two voices (Echols LL 8): the 6-dim scale's chromatic scale in 3rds or 6ths along one
-      // floor (verify). Op 0: major 6-dim in 3rds; 1: in 6ths; 2: minor 6-dim in 3rds; 3: major 6-dim down in 3rds.
-      const kind = op === 2 ? 'm6dim' : 'sixdim';
-      const { pairs, line } = chromaticTwoVoices(root(12) + 3, kind, op === 3 ? 'down' : 'up', op === 1 ? '6ths' : '3rds');
-      const sym = kind === 'm6dim' ? `${keyName(k, true)}m6` : `${kn}6`;
-      const iv = op === 1 ? t('6ths', 'סקסטות') : t('3rds', 'טרצות');
+      // Barry's chromatic scale in two voices (owner 2026-11-15): the chromatic scale up and down with a second voice a
+      // 3rd, 6th or 10th below (ops 0–5: major, then dominant), then the other intervals (ops 6–10, major). 7ths, octaves
+      // and 10ths: the lower voice in the left hand.
+      const [ck, iv] = CHROM2_OPTS[Math.min(CHROM2_OPTS.length - 1, op)];
+      const { pairs, line } = chromaticTwoVoices(root(12) + (iv === '10ths' ? 12 : 0), ck, iv);
+      const sym = ck === 'dom' ? `${kn}7` : `${kn}6`;
+      const ivT = IV_T[iv];
       return {
         line: fit(line, lo, hi),
         pairs,
-        title: t(`Barry's chromatic scale in two voices · ${sym}: ${iv.en} along one floor`, `הסולם הכרומטי של בארי בשני קולות · ${sym}: ${iv.he} באותה קומה`),
+        lowerHand: iv === '10ths' || iv === 'octaves' || iv === '7ths' ? 'L' : 'R',
+        title: t(`Barry's chromatic scale in two voices · ${sym}: a second voice in ${ivT.en} below`, `הסולם הכרומטי של בארי בשני קולות · ${sym}: קול שני ב${ivT.he} מתחת`),
         chart: [sym, '%', '%', '%'],
-        sigOf: kind === 'm6dim' ? 3 : 0,
+        sigOf: ck === 'dom' ? 5 : 0,
         ctGoal: true,
       };
     }
     case 'hl-eight': {
-      // Parks's warm-up: the dominant scale eight ways (verify the exact eight).
-      const way = Math.min(7, op);
-      const r = root(19);
-      const from = ['1', '2', '3', '4', '5', '6', '♭7'][way];
+      // The dominant rules from every degree (Barry's half-step rules, §8): down the dominant scale from each degree on
+      // the beat, with the half steps that degree allows (DOM_RULE_WAYS), each line twice. The kind id is the old
+      // "eight ways" item's (kept for saved progress).
+      const [deg, count] = DOM_RULE_WAYS[Math.min(DOM_RULE_WAYS.length - 1, op)];
+      const r = root(deg + 12);
       return {
-        line: fit(eightWays(r, way), lo, hi),
-        title: way === 7 ? t(`The dominant eight ways · ${kn}7: down from the octave, three extra half steps`, `הדומיננט בשמונה דרכים · ${kn}7: למטה מהאוקטבה, שלושה חצאי טון נוספים`) : t(`The dominant eight ways · ${kn}7: up from ${from}, down by its rule`, `הדומיננט בשמונה דרכים · ${kn}7: למעלה מ־${from}, למטה לפי החוק שלו`),
-        chart: [`${kn}7`, '%', '%', '%'],
+        line: fit(ruleDrillLine(r, 'dom', deg + 12, count), lo, hi),
+        title: t(`The dominant rule from ${DEG_NAME[deg]} · ${kn}7: ${COUNT_T[count].en}`, `חוק הדומיננט מ־${DEG_NAME[deg]} · ${kn}7: ${COUNT_T[count].he}`),
+        chart: [`${kn}7`, '%', `${kn}7`, '%'],
         sigOf: 5,
         ctGoal: false,
       };
@@ -449,14 +464,22 @@ export function lineItem(kind: string, op: number, key: number, lo: number, hi: 
       };
     }
     case 'hl-abc': {
-      const half = op === 1;
+      // The ABCs, Barry's order for knowing a scale (owner 2026-11-15): note by note, in 3rds, then 3rds with a half
+      // step below the first note of each, up and down.
+      const shape = (['notes', 'plain', 'half-up', 'half-down'] as const)[Math.min(3, op)];
       const r = root(16);
+      const ttl = {
+        notes: t(`The ABCs · ${kn}: the scale note by note, up and down`, `האלף־בית · ${kn}: הסולם צליל אחר צליל, למעלה ולמטה`),
+        plain: t(`The ABCs · ${kn}: the scale in 3rds, up and down`, `האלף־בית · ${kn}: הסולם בטרצות, למעלה ולמטה`),
+        'half-up': t(`The ABCs · ${kn}: 3rds up, a half step below the first note of each`, `האלף־בית · ${kn}: טרצות עולות, חצי טון מתחת לצליל הראשון של כל אחת`),
+        'half-down': t(`The ABCs · ${kn}: 3rds down, a half step below the first note of each`, `האלף־בית · ${kn}: טרצות יורדות, חצי טון מתחת לצליל הראשון של כל אחת`),
+      }[shape];
       return {
-        line: fit(abcThirds(r, half ? 'half' : 'plain'), lo, hi),
-        title: half ? t(`The ABCs · ${kn}: 3rds, a half step below each`, `האלף־בית · ${kn}: טרצות, חצי טון מתחת לכל אחת`) : t(`The ABCs · ${kn}: the scale in 3rds, up and down`, `האלף־בית · ${kn}: הסולם בטרצות, למעלה ולמטה`),
+        line: fit(abcThirds(r, shape), lo, hi),
+        title: ttl,
         chart: [`${kn}maj7`, '%', '%', '%'],
         sigOf: 0,
-        ctGoal: !half,
+        ctGoal: false,
       };
     }
   }
@@ -484,8 +507,9 @@ export function genHarrisLine(s0: DrillSpec): Drill {
     // two voices in the right hand: the chromatic line on top, the second voice under it (fit moved the line by octaves)
     const dv = it.line[0].p - it.pairs[0][0];
     const buf = new Buf();
-    it.line.forEach((n, i) => buf.add(n.beat, n.dur, it.pairs![i].map((p) => ({ pitch: p + dv, hand: 'R' as const, chordTone: n.ct }))));
-    const d2 = pianoFinish(s, buf, pianoTitle([it.title], s), { evenness: true, hands: false, chordTonesOnBeats: true }, LINE_TEMPO[0], 4, SIG[mod12(key + it.sigOf)]);
+    it.line.forEach((n, i) => buf.add(n.beat, n.dur, it.pairs![i].map((p, v) => ({ pitch: p + dv, hand: v === 1 ? (it.lowerHand ?? 'R') : ('R' as const), chordTone: n.ct }))));
+    const s2: DrillSpec = it.lowerHand === 'L' ? { ...s, hands: 'RL' } : s;
+    const d2 = pianoFinish(s2, buf, pianoTitle([it.title], s2), { evenness: true, hands: false, chordTonesOnBeats: true }, LINE_TEMPO[0], 4, SIG[mod12(key + it.sigOf)]);
     return { ...d2, ...(it.chart ? { chart: it.chart } : {}) };
   }
   const d = lineDrill(s, it.line, pianoTitle([it.title], s), it.ctGoal ? { chordTonesOnBeats: true } : {}, SIG[mod12(key + it.sigOf)], LINE_TEMPO[0]);
@@ -580,8 +604,8 @@ function pianoCompose(s: DrillSpec, op: number): Drill {
 type Row = { kind: string; ops: number[]; rating: number; en: string; he: string; tempo?: [number, number]; extra?: Partial<SpecTemplate>[] };
 export const HL_ROWS: Row[] = [
   { kind: 'hl-arps-down', ops: [0, 1, 2], rating: 1100, en: 'Major arpeggios chromatically down', he: 'ארפג׳ים מז׳וריים בירידה כרומטית' },
-  { kind: 'hl-abc', ops: [0, 1], rating: 1180, en: 'The ABCs: 3rds, a half step below', he: 'האלף־בית: טרצות, חצי טון מתחת' },
-  { kind: 'hl-eight', ops: [0, 1, 2, 3, 4, 5, 6, 7], rating: 1230, en: 'The dominant eight ways', he: 'הדומיננט בשמונה דרכים' },
+  { kind: 'hl-abc', ops: [0, 1, 2, 3], rating: 1180, en: 'The ABCs: note by note, in 3rds, a half step below each 3rd', he: 'האלף־בית: צליל אחר צליל, בטרצות, חצי טון מתחת לכל טרצה' },
+  { kind: 'hl-eight', ops: [0, 1, 3, 5, 7, 9, 11], rating: 1230, en: 'The dominant rule from every degree: one, or none', he: 'חוק הדומיננט מכל דרגה: אחד, או אף אחד' },
   { kind: 'hl-imp-arps', ops: [0, 1, 2], rating: 1250, en: 'The three important arpeggios', he: 'שלושת הארפג׳ים החשובים' },
   { kind: 'hl-outline', ops: [0], rating: 1260, en: 'Scale outline: the blues', he: 'מתאר סולמות: הבלוז' },
   { kind: 'hl-chrom', ops: [0], rating: 1300, en: "Barry's chromatic scale: major", he: 'הסולם הכרומטי של בארי: מז׳ור', extra: [{ hands: 'L' }] },
@@ -597,7 +621,7 @@ export const HL_ROWS: Row[] = [
   { kind: 'hl-rules', ops: [9, 10, 11, 12, 13, 14], rating: 1410, en: 'The minor rule from every degree', he: 'חוק המינור מכל דרגה' },
   { kind: 'hl-5432', ops: [0, 1, 2, 3], rating: 1420, en: 'The 5-4-3-2 phrases: dominant', he: 'משפטי 5-4-3-2: דומיננט' },
   { kind: 'hl-outline', ops: [4, 5], rating: 1440, en: 'Scale outline: How High the Moon, Night in Tunisia', he: 'מתאר סולמות: האו היי דה מון, לילה בתוניסיה' },
-  { kind: 'hl-chrom2', ops: [0, 1, 2, 3], rating: 1445, en: "Barry's chromatic scale in two voices", he: 'הסולם הכרומטי של בארי בשני קולות' },
+  { kind: 'hl-chrom2', ops: [0, 1, 2, 3, 4, 5], rating: 1445, en: "Barry's chromatic scale in two voices: 3rds, 6ths, 10ths", he: 'הסולם הכרומטי של בארי בשני קולות: טרצות, סקסטות, דצימות' },
   { kind: 'hl-3b9', ops: [0, 1], rating: 1450, en: '3 to ♭9 over the family', he: '3 עד ♭9 על המשפחה' },
   { kind: 'hl-sevendown', ops: [0, 1, 2], rating: 1460, en: 'Seven down to the 3rd', he: 'שבע למטה לטרצה' },
   { kind: 'hl-5432', ops: [4, 5, 6, 7], rating: 1470, en: 'The 5-4-3-2 phrases: major', he: 'משפטי 5-4-3-2: מז׳ור' },
@@ -611,11 +635,14 @@ export const HL_ROWS: Row[] = [
   { kind: 'hl-outline', ops: [6, 7], rating: 1580, en: 'Scale outline: All the Things You Are, Giant Steps', he: 'מתאר סולמות: אול דה ת׳ינגס יו אר, ג׳איינט סטפס' },
   { kind: 'hl-compose', ops: [1], rating: 1600, en: 'Compose a line: ii–V–I', he: 'לחבר קו: ii–V–I', tempo: [80, 140] },
   { kind: 'hl-compose', ops: [2], rating: 1750, en: 'Your line in a tune: rhythm changes', he: 'הקו שלכם בתוך שיר: ריתם צ׳יינג׳ס', tempo: [90, 160] },
+  // added 2026-11-15 (at the end, so every level above keeps its id)
+  { kind: 'hl-eight', ops: [2, 4, 6, 8, 10, 12], rating: 1330, en: 'The dominant rule from every degree: three, or two', he: 'חוק הדומיננט מכל דרגה: שלושה, או שניים' },
+  { kind: 'hl-chrom2', ops: [6, 7, 8, 9, 10], rating: 1560, en: "Barry's chromatic scale in two voices: every interval", he: 'הסולם הכרומטי של בארי בשני קולות: כל המרווחים' },
 ];
 /** Path difficulty of each k-harrisline level (path.ts KEYS_LEVEL_DIFF). */
 export const HL_LEVEL_DIFF: Record<string, number> = Object.fromEntries(HL_ROWS.map((r, i) => [`k-harrisline-${i + 1}`, r.rating]));
 
-/** The keys family: 32 levels, ~1100 (arpeggios chromatically down) to ~1750 (your line in a tune). */
+/** The keys family: 34 levels, ~1100 (arpeggios chromatically down) to ~1750 (your line in a tune). */
 export function harrisLineFamily(): FamilyDef {
   return {
     id: HL_FAMILY,
@@ -721,14 +748,14 @@ type GFamFn = (id: FamilyId, en: string, he: string, style: 'classical' | 'jazz'
 const G_ROWS: { en: string; he: string; items: [string, number][]; tempo: [number, number]; sub: string; grade: number }[] = [
   { en: "Barry's chromatic scale: major, dominant, minor 6th-diminished", he: 'הסולם הכרומטי של בארי: מז׳ור, דומיננט, מינור שישית־מוקטן', items: [['hl-chrom', 0], ['hl-chrom', 1], ['hl-chrom', 2]], tempo: LINE_TEMPO, sub: '8ths', grade: 7 },
   { ...pick(isVerified('item:hl-outline:0'), ['Scale outlines: Indiana, the blues, rhythm changes', 'מתארי סולמות: Indiana, הבלוז, ריתם צ׳יינג׳ס'], ['Scale outlines: Indiana, rhythm changes', 'מתארי סולמות: Indiana, ריתם צ׳יינג׳ס']), items: [0, 1, 2, 3, 4, 5].map((o): [string, number] => ['hl-outline', o]), tempo: LINE_TEMPO, sub: '8ths', grade: 7 },
-  { ...pick(isVerified('item:hl-eight') && isVerified('item:hl-imp-scale:3'), ['The dominant eight ways, the three important arpeggios, the ♭7-major pivot', 'הדומיננט בשמונה דרכים, שלושת הארפג׳ים החשובים, הפיבוט של המז׳ור על ♭7'], ['The three important arpeggios', 'שלושת הארפג׳ים החשובים']), items: [['hl-eight', 0], ['hl-eight', 2], ['hl-imp-arps', 0], ['hl-imp-arps', 1], ['hl-imp-scale', 0], ['hl-imp-scale', 3]], tempo: LINE_TEMPO, sub: '8ths', grade: 7 },
+  { ...pick(isVerified('item:hl-eight') && isVerified('item:hl-imp-scale:3'), ['The dominant rule from every degree, the three important arpeggios, the ♭7-major pivot', 'חוק הדומיננט מכל דרגה, שלושת הארפג׳ים החשובים, הפיבוט של המז׳ור על ♭7'], ['The three important arpeggios', 'שלושת הארפג׳ים החשובים']), items: [['hl-eight', 0], ['hl-eight', 2], ['hl-imp-arps', 0], ['hl-imp-arps', 1], ['hl-imp-scale', 0], ['hl-imp-scale', 3]], tempo: LINE_TEMPO, sub: '8ths', grade: 7 },
   { en: 'The major and minor rules from every degree', he: 'חוקי המז׳ור והמינור מכל דרגה', items: [['hl-rules', 1], ['hl-rules', 4], ['hl-rules', 7], ['hl-rules', 9], ['hl-rules', 13]], tempo: LINE_TEMPO, sub: '8ths', grade: 7 },
   { en: 'The 5-4-3-2 phrases and the lick', he: 'משפטי 5-4-3-2 והליק', items: [['hl-5432', 0], ['hl-5432', 1], ['hl-5432', 2], ['hl-5432', 3], ['hl-lick', 0], ['hl-lick-outline', 0]], tempo: LINE_TEMPO, sub: '8ths', grade: 8 },
   { en: 'Seven down to the 3rd; 3 to ♭9 over the family', he: 'שבע למטה לטרצה; 3 עד ♭9 על המשפחה', items: [['hl-sevendown', 0], ['hl-sevendown', 1], ['hl-3b9', 0], ['hl-3b9', 1]], tempo: LINE_TEMPO, sub: '8ths', grade: 8 },
   { en: 'The triplet rules and the miscellaneous rule', he: 'חוקי הטריולה והחוק השונה', items: [['hl-triplet', 0], ['hl-triplet', 1], ['hl-triplet', 3], ['hl-misc', 0], ['hl-misc', 3]], tempo: LINE_TEMPO, sub: '8ths and triplets', grade: 8 },
   { ...pick(isVerified('item:hl-feel6'), ['Upbeat comping and feel 6 in 4', 'ליווי על הקצב החלש ולהרגיש 6 בתוך 4'], ['Upbeat comping', 'ליווי על הקצב החלש']), items: [['hl-upbeat', 0], ['hl-upbeat', 1], ['hl-feel6', 0], ['hl-feel6', 1]], tempo: [90, 160], sub: 'upbeats', grade: 7 },
   { en: 'Compose a line over a move, then in a tune', he: 'לחבר קו מעל מהלך, ואז בתוך שיר', items: [['hl-compose', 0], ['hl-compose', 1], ['hl-compose', 2]], tempo: [80, 140], sub: 'free 8ths', grade: 9 },
-  { en: 'Major arpeggios chromatically down; the ABCs in 3rds', he: 'ארפג׳ים מז׳וריים בירידה כרומטית; האלף־בית בטרצות', items: [['hl-arps-down', 0], ['hl-arps-down', 1], ['hl-abc', 0], ['hl-abc', 1]], tempo: LINE_TEMPO, sub: '8ths', grade: 6 },
+  { ...pick(isVerified('item:hl-arps-down'), ['Major arpeggios chromatically down; the ABCs in 3rds', 'ארפג׳ים מז׳וריים בירידה כרומטית; האלף־בית בטרצות'], ['The ABCs: note by note, then in 3rds', 'האלף־בית: צליל אחר צליל, ואז בטרצות']), items: [['hl-arps-down', 0], ['hl-arps-down', 1], ['hl-abc', 0], ['hl-abc', 1], ['hl-abc', 2], ['hl-abc', 3]], tempo: LINE_TEMPO, sub: '8ths', grade: 6 },
 ];
 /** The guitar family (the jazz add-on): grades 6 to 9. */
 export function guitarHarrisLineFamily(LT: LTFn, fam: GFamFn): GuitarFamilyDef {
@@ -804,14 +831,14 @@ type BFamFn = (id: BassFamilyId, en: string, he: string, levels: GuitarLevelDef[
 const B_ROWS: { en: string; he: string; items: [string, number][]; tempo: [number, number]; sub: string }[] = [
   { en: "Barry's chromatic scale: major, dominant, minor 6th-diminished", he: 'הסולם הכרומטי של בארי: מז׳ור, דומיננט, מינור שישית־מוקטן', items: [['hl-chrom', 0], ['hl-chrom', 1], ['hl-chrom', 2]], tempo: LINE_TEMPO, sub: '8ths' },
   { ...pick(isVerified('item:hl-outline:0') && isVerified('item:hl-outline:2'), ['Scale outlines: the blues, rhythm changes, Cherokee, Donna Lee', 'מתארי סולמות: הבלוז, ריתם צ׳יינג׳ס, צ׳רוקי, דונה לי'], ['Scale outlines: rhythm changes, Donna Lee', 'מתארי סולמות: ריתם צ׳יינג׳ס, דונה לי']), items: [0, 1, 2, 3].map((o): [string, number] => ['hl-outline', o]), tempo: LINE_TEMPO, sub: '8ths' },
-  { ...pick(isVerified('item:hl-eight'), ['The dominant eight ways, the three important arpeggios, into the scale', 'הדומיננט בשמונה דרכים, שלושת הארפג׳ים החשובים, אל הסולם'], ['The three important arpeggios, into the scale', 'שלושת הארפג׳ים החשובים, אל הסולם']), items: [['hl-eight', 0], ['hl-eight', 4], ['hl-imp-arps', 0], ['hl-imp-arps', 1], ['hl-imp-scale', 0], ['hl-imp-scale', 1], ['hl-imp-scale', 2]], tempo: LINE_TEMPO, sub: '8ths' },
+  { ...pick(isVerified('item:hl-eight'), ['The dominant rule from every degree, the three important arpeggios, into the scale', 'חוק הדומיננט מכל דרגה, שלושת הארפג׳ים החשובים, אל הסולם'], ['The three important arpeggios, into the scale', 'שלושת הארפג׳ים החשובים, אל הסולם']), items: [['hl-eight', 0], ['hl-eight', 4], ['hl-imp-arps', 0], ['hl-imp-arps', 1], ['hl-imp-scale', 0], ['hl-imp-scale', 1], ['hl-imp-scale', 2]], tempo: LINE_TEMPO, sub: '8ths' },
   { en: 'The major and minor rules from every degree', he: 'חוקי המז׳ור והמינור מכל דרגה', items: [['hl-rules', 0], ['hl-rules', 4], ['hl-rules', 8], ['hl-rules', 9], ['hl-rules', 14]], tempo: LINE_TEMPO, sub: '8ths' },
   { en: 'The 5-4-3-2 phrases and the lick', he: 'משפטי 5-4-3-2 והליק', items: [['hl-5432', 0], ['hl-5432', 1], ['hl-5432', 2], ['hl-5432', 3], ['hl-lick', 0]], tempo: LINE_TEMPO, sub: '8ths' },
   { en: 'Seven down to the 3rd; 3 to ♭9 over the family', he: 'שבע למטה לטרצה; 3 עד ♭9 על המשפחה', items: [['hl-sevendown', 0], ['hl-sevendown', 1], ['hl-3b9', 0]], tempo: LINE_TEMPO, sub: '8ths' },
   { en: 'The triplet rules and the miscellaneous rule', he: 'חוקי הטריולה והחוק השונה', items: [['hl-triplet', 0], ['hl-triplet', 3], ['hl-misc', 0]], tempo: LINE_TEMPO, sub: '8ths and triplets' },
   { ...pick(isVerified('item:hl-feel6'), ['Walking with ties on the upbeats; feel 6 in 4', 'ווקינג עם קשתות על הקצב החלש; להרגיש 6 בתוך 4'], ['Walking with ties on the upbeats', 'ווקינג עם קשתות על הקצב החלש']), items: [['hl-walkties', 0], ['hl-walkties', 1], ['hl-feel6', 0]], tempo: [100, 180], sub: 'quarters and ties' },
   { en: 'Compose a line over a move, then in a tune', he: 'לחבר קו מעל מהלך, ואז בתוך שיר', items: [['hl-compose', 0], ['hl-compose', 1], ['hl-compose', 2]], tempo: [80, 140], sub: 'free 8ths' },
-  { en: 'Major arpeggios chromatically down; the ABCs in 3rds', he: 'ארפג׳ים מז׳וריים בירידה כרומטית; האלף־בית בטרצות', items: [['hl-arps-down', 0], ['hl-arps-down', 2], ['hl-abc', 0]], tempo: LINE_TEMPO, sub: '8ths' },
+  { ...pick(isVerified('item:hl-arps-down'), ['Major arpeggios chromatically down; the ABCs in 3rds', 'ארפג׳ים מז׳וריים בירידה כרומטית; האלף־בית בטרצות'], ['The ABCs: note by note, then in 3rds', 'האלף־בית: צליל אחר צליל, ואז בטרצות']), items: [['hl-arps-down', 0], ['hl-arps-down', 2], ['hl-abc', 0], ['hl-abc', 1], ['hl-abc', 2]], tempo: LINE_TEMPO, sub: '8ths' },
 ];
 /** Path difficulty of the bass rows (b-harrisline 1–10), in row order. */
 export const B_HL_RATING = [1330, 1300, 1280, 1380, 1450, 1460, 1520, 1380, 1650, 1150];

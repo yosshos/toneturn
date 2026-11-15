@@ -545,7 +545,7 @@ function genTex(s: DrillSpec): Drill {
       break;
     }
     case 'tx-call': {
-      // [B3C; JPF B1 U8] the melody's phrase, then the LH answers in its gaps with the Beat-3 Charleston (3 and the "and"
+      // [B3C; JPF B1 U8] the melody's phrase, then the LH answers in its gaps with the Charleston on 3 (3 and the "and"
       // of 4): the bass on 1 under every bar, the shell answering where the melody holds or rests after beat 2.
       melody();
       let prev: number[] | null = null;
@@ -829,7 +829,7 @@ function genTex(s: DrillSpec): Drill {
 // ───────────────────────────── k-comp: the comping vocabulary ─────────────────────────────
 
 export const COMP_TITLE: Record<string, T2> = {
-  'cp-beat3': t('Beat-3 Charleston', 'צ׳רלסטון מפעמה 3'),
+  'cp-beat3': t('Charleston on 3', 'צ׳רלסטון על 3'),
   'cp-leadin': t('Lead-ins', 'כניסות מקדימות'),
   'cp-basie': t('Count Basie rhythm', 'הקצב של קאונט בייסי'),
   'cp-pushoff': t('Push-offs', 'פוש־אוף'),

@@ -693,7 +693,13 @@ export function pianoScaleHarmFamily(): FamilyDef {
   LV('Borrowing with three voices; the dominant root borrowed into the diminished', 'השאלה בשלושה קולות; יסוד הדומיננט מושאל אל הדימיניש', [{ family: 'k-sharm' as FamilyId, kind: 'bw-three', hands: 'R' as const, option: 3 }, { family: 'k-sharm' as FamilyId, kind: 'bw-three', hands: 'R' as const, option: 10 }, { family: 'k-sharm' as FamilyId, kind: 'bw-root', hands: 'R' as const, option: 0 }, { family: 'k-sharm' as FamilyId, kind: 'bw-root', hands: 'R' as const, option: 20 }], [40, 72], 1520);
   LV("The four related dominants over a shell; the tritone's minor resolving", 'ארבע הדומיננטות הקרובות מעל שלד; המינור של הטריטון נפתר', [pd('shell4', 0), pd('tm-res', 0)], [40, 72], 1680);
   LV(isVerified('item:el-borrow') ? 'The elevator in minor 6th-diminished; borrowing through the elevator' : 'The elevator in minor 6th-diminished, from the tonic', isVerified('item:el-borrow') ? 'המעלית במינור שישית־מוקטן; השאלה דרך המעלית' : 'המעלית במינור שישית־מוקטן, מהטוניקה', [pd('cm-expand', 8), pd('cm-elevator', 1), pd('el-borrow', 0), pd('el-borrow', 1)], [40, 72], 1480);
-  LV('The voicing ladder: thirds, triads, shells, octave chords on the 6th-diminished scales', 'סולם הקולות: טרצות, משולשים, שלדים, אקורדי אוקטבה על סולמות השישית־מוקטן', [0, 1, 2, 3, 6, 7].map((x) => pd('vl-ladder', x)), [40, 80], 1420);
+  LV(
+    isVerified('item:vl-ladder:0') ? 'The voicing ladder: thirds, triads, shells, octave chords on the 6th-diminished scales' : 'The shells on the 6th-diminished scales: upper (drop 3) and lower (drop 2) without the left hand',
+    isVerified('item:vl-ladder:0') ? 'סולם הקולות: טרצות, משולשים, שלדים, אקורדי אוקטבה על סולמות השישית־מוקטן' : 'השלדים על סולמות השישית־מוקטן: עליון (דרופ 3) ותחתון (דרופ 2) בלי יד שמאל',
+    [0, 1, 2, 8, 3, 6, 9, 7].map((x) => pd('vl-ladder', x)),
+    [40, 80],
+    1420,
+  );
   LV('A substitute on each V of a tune: itself, the family, the important minor, the tritone’s minor', 'תחליף על כל V של שיר: עצמו, המשפחה, המינור החשוב, המינור של הטריטון', [pd('sub-tune', 0), pd('sub-tune', 1)], [50, 100], 1690);
   return { id: 'k-sharm', title: t('Scale harmonization and borrowing', 'הרמוניזציה של סולמות והשאלה'), style: 'both', levels };
 }
@@ -1195,20 +1201,25 @@ export function partDEvents(key: number, kind: string, option: number): { evs: D
     return { evs: chain([...seq, ...seq.map((c) => ({ ...c }))]), title: t(`${MAJ_N[k]}6 – ${MAJ_N[mod(k + 11, 12)]}°7 – ${MAJ_N[k]}6/${MAJ_N[mod(k + 9, 12)]} – … – ${MIN_N[mod(k + 9, 12)]}m6/${MIN_N[mod(k + 6, 12)]}: ${NAMED_T.mmm.en}`, `${MAJ_N[k]}6 – ${MAJ_N[mod(k + 11, 12)]}°7 – ${MAJ_N[k]}6/${MAJ_N[mod(k + 9, 12)]} – … – ${MIN_N[mod(k + 9, 12)]}m6/${MIN_N[mod(k + 6, 12)]}: ${NAMED_T.mmm.he}`), sig: 0 };
   }
   if (kind === 'vl-ladder') {
-    // Echols's voicing ladder (F1.6): thirds → triads → shells → octave chords up and down the 6th-dim scale of chords;
-    // option 0–3 = the type, +4 = minor. verify: Echols's "shell" and "octave chord" shapes are paywalled; here a shell
-    // is the melody over the chord tone a 6th below plus the next chord tone, an octave chord the melody doubled below
-    // with two chord tones between.
-    const sc = H_SCALES[o >= 4 ? 10 : 9];
-    const type = o % 4;
-    const d = (x: number) => deg(pitchIn(k, 64), sc.ints, x);
+    // Echols's voicing ladder (F1.6) up and down the 6th-dim scale of chords. Options: 0 thirds, 1 triads, 2 the upper
+    // shell, 3 octave chords; +4 = minor; 8 / 9 = the lower shell (major / minor).
+    // The shells (owner 2026-11-15): the upper shell is C-G-A, the lower shell C-E-A (and so on up the scale) — drop 3
+    // and drop 2 without the left hand: of the close chord C E G A, drop 3 leaves C G A in the right hand, drop 2 leaves
+    // C E A. So the upper shell is the close chord's 1st, 3rd and 4th notes, the lower shell its 1st, 2nd and 4th, and
+    // the shells start with the bottom note on the tonic. Thirds, triads and octave chords are still unconfirmed
+    // (hidden, verifiedContent.ts): a "third" here is two scale steps, which is a 2nd at the 6th (G A).
+    const sc = H_SCALES[o === 9 || (o >= 4 && o < 8) ? 10 : 9];
+    const type = o >= 8 ? 4 : o % 4;
+    const shell = type === 2 || type === 4;
+    const d = (x: number) => deg(pitchIn(k, shell ? 55 : 64), sc.ints, x);
     const ks = [...Array.from({ length: 9 }, (_, i) => i), ...Array.from({ length: 8 }, (_, i) => 7 - i)];
-    const shape = [[-2, 0], [-4, -2, 0], [-6, -2, 0], [-8, -4, -2, 0]][type];
+    // shells: [bottom, middle, top] = degrees x, x + 4 (or + 2), x + 6 — the bottom note walks the scale from the tonic
+    const shape = [[-2, 0], [-4, -2, 0], [0, 4, 6], [-8, -4, -2, 0], [0, 2, 6]][type];
     const evs: DEv[] = ks.map((x, b) => {
       const ps = shape.map((y) => d(x + y));
       return { beat: b, dur: b === ks.length - 1 ? 2 : 1, ps, ...(ps.length >= 3 ? { pcs: [...new Set(ps.map((p) => mod(p, 12)))].sort((p, q) => p - q) } : {}) };
     });
-    const tt = [t('thirds', 'טרצות'), t('triads', 'משולשים'), t('shells', 'שלדים'), t('octave chords', 'אקורדי אוקטבה')][type];
+    const tt = [t('thirds', 'טרצות'), t('triads', 'משולשים'), t('the upper shell (drop 3 without the left hand)', 'השלד העליון (דרופ 3 בלי יד שמאל)'), t('octave chords', 'אקורדי אוקטבה'), t('the lower shell (drop 2 without the left hand)', 'השלד התחתון (דרופ 2 בלי יד שמאל)')][type];
     return { evs, title: t(`${kName(k, sc)}${sc.chordSym} voicing ladder: ${tt.en}, up and down the scale of chords`, `סולם הקולות של ${kName(k, sc)}${sc.chordSym}: ${tt.he}, לאורך סולם האקורדים`), sig: sc.sig };
   }
   if (kind === 'sub-tune') {
