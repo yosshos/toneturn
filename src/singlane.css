@@ -1,0 +1,625 @@
+/* The live singing view (docs/research/VOICE-FEEDBACK-UI.md §4, v2 language): ink outlines, flat fills, a hard
+   offset shadow; teal = in the zone, hatched teal = close, tangerine ▲ sharp, purple ▼ flat, lemon only for now. */
+
+/* ---------------------------------------------------------------- the pitch lane */
+.sing-lane {
+  position: relative;
+  margin: 6px 0;
+  height: clamp(120px, 21vh, 230px);
+  border: var(--stroke, 2.5px) solid var(--outline);
+  border-radius: 16px;
+  background: var(--card);
+  box-shadow: var(--shadow-s);
+  overflow: hidden;
+  direction: ltr;
+}
+.sing-lane.compact {
+  height: clamp(90px, 15vh, 150px);
+}
+.sing-lane svg {
+  display: block;
+  position: absolute;
+  inset: 0;
+}
+.sl-row {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+.sl-row.c {
+  stroke: var(--line-strong);
+}
+.sl-beat {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+.sl-gutter {
+  fill: var(--card-2);
+}
+.sl-range {
+  fill: var(--teal);
+}
+.sl-name {
+  font: 600 9.5px var(--font);
+  fill: var(--ink-dim);
+}
+.sl-name.tg {
+  fill: var(--ink);
+  font-weight: 800;
+}
+.sl-tickmark {
+  stroke: var(--ink-dim);
+  stroke-width: 1;
+}
+/* target blocks: paper with a lilac tint, an inner zone stripe, ink outline over the fill */
+.sl-block {
+  fill: color-mix(in srgb, var(--lilac) 22%, var(--card));
+}
+.sl-zone {
+  fill: color-mix(in srgb, var(--lilac) 42%, var(--card));
+}
+.sl-outline {
+  fill: none;
+  stroke: var(--outline);
+  stroke-width: 2.5;
+}
+.sl-outline.golden {
+  stroke-width: 1.2;
+  outline: none;
+  filter: none;
+}
+.sl-fill.in {
+  fill: var(--teal);
+}
+.sl-fill.close {
+  fill: url(#sl-hatch);
+}
+.sl-hatch-bg {
+  fill: var(--card);
+}
+.sl-hatch-ink {
+  fill: var(--teal);
+}
+.sl-now-strip {
+  fill: var(--lemon);
+  stroke: var(--outline);
+  stroke-width: 1;
+}
+.sl-tick {
+  fill: var(--card);
+  stroke: var(--outline);
+  stroke-width: 1.5;
+}
+.sl-tick.on {
+  fill: var(--lemon);
+}
+/* the trail: ink (paper in dark mode via --ink), short tinted stretches above / below the zone */
+.sl-trail {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.sl-trail.up {
+  stroke: var(--tangerine);
+  stroke-width: 3;
+}
+.sl-trail.down {
+  stroke: var(--purple);
+  stroke-width: 3;
+}
+:root[data-theme='dark'] .sl-trail.down {
+  stroke: var(--lilac);
+}
+.sl-now .core {
+  stroke: var(--lemon);
+  stroke-width: 3;
+}
+.sl-now .edge {
+  stroke: var(--outline);
+  stroke-width: 5;
+}
+.sl-head ellipse {
+  fill: var(--ink);
+  stroke: var(--card);
+  stroke-width: 1.5;
+}
+.sl-tag {
+  font: 800 9px var(--font);
+  fill: var(--ink);
+}
+.sl-edge path {
+  fill: var(--ink);
+}
+.sl-edge text {
+  font: 800 11px var(--font);
+  fill: var(--ink);
+}
+
+/* ---------------------------------------------------------------- the readout row: note hero + cents chip */
+.sing-readout {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  margin: 2px 0;
+}
+.sr-note {
+  min-width: 2.6em;
+  font-family: var(--display);
+  font-size: 40px;
+  line-height: 1;
+  color: var(--ink);
+}
+.sr-note.silent {
+  color: var(--ink-dim);
+}
+.sr-note sub,
+.sr-target sub {
+  font-size: 0.45em;
+  vertical-align: baseline;
+  position: relative;
+  bottom: -0.05em;
+  margin-inline-start: 1px;
+}
+.sing-readout .acc,
+.zone-meter .zm-g {
+  font-family: var(--music);
+}
+.sr-target {
+  color: var(--ink-dim);
+  font-weight: 700;
+  font-size: 1rem;
+}
+.cents-chip {
+  margin-inline-start: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 76px;
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 18px;
+  border: 2.5px solid var(--outline);
+  background: var(--card);
+  color: var(--ink);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  transition: background-color 0.15s ease-out, border-color 0.15s ease-out;
+}
+.cents-chip small {
+  font-size: 0.75em;
+  margin-inline-start: 1px;
+}
+.cents-chip.idle {
+  border-style: dashed;
+  border-color: var(--line-strong);
+}
+.cents-chip.in {
+  background: var(--teal);
+}
+.cents-chip.in .nh {
+  fill: var(--ink-c, #1e1033);
+}
+.cents-chip.in .ck {
+  fill: none;
+  stroke: var(--ink-c, #1e1033);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.cents-chip.sharp {
+  border-color: var(--tangerine);
+  box-shadow: inset 0 0 0 1.5px var(--tangerine);
+}
+.cents-chip.flat {
+  border-color: var(--purple);
+  box-shadow: inset 0 0 0 1.5px var(--purple);
+}
+.cents-chip .mk {
+  font-size: 0.7em;
+}
+.cents-chip.sharp .mk {
+  color: var(--tangerine);
+}
+.cents-chip.flat .mk {
+  color: var(--purple);
+}
+:root[data-theme='dark'] .cents-chip.flat {
+  border-color: var(--lilac);
+  box-shadow: inset 0 0 0 1.5px var(--lilac);
+}
+:root[data-theme='dark'] .cents-chip.flat .mk {
+  color: var(--lilac);
+}
+
+/* ---------------------------------------------------------------- the zone meter */
+.sing-meters {
+  display: grid;
+  gap: 6px;
+  margin: 4px 0;
+}
+.zone-meter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  direction: ltr;
+}
+.zm-g {
+  width: 16px;
+  text-align: center;
+  font-size: 18px;
+  color: var(--ink-dim);
+}
+.zone-meter.flat .flat-g {
+  color: var(--purple);
+}
+.zone-meter.sharp .sharp-g {
+  color: var(--tangerine);
+}
+.zm-track {
+  position: relative;
+  flex: 1;
+  height: 28px;
+  border: 2.5px solid var(--outline);
+  border-radius: 14px;
+  background: var(--card);
+  overflow: visible;
+}
+.zm-tint {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  display: none;
+  border-radius: 12px;
+}
+.zone-meter.sharp .zm-tint {
+  display: block;
+  left: 50%;
+  background: color-mix(in srgb, var(--tangerine) 22%, var(--card));
+  border-radius: 0 12px 12px 0;
+}
+.zone-meter.flat .zm-tint {
+  display: block;
+  left: 0;
+  background: color-mix(in srgb, var(--purple) 16%, var(--card));
+  border-radius: 12px 0 0 12px;
+}
+.zm-t50 {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  width: 0;
+  border-inline-start: 1.5px solid var(--line-strong);
+}
+.zm-zone {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  border: 2px solid var(--outline);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--teal) 22%, var(--card));
+  transition: background-color 0.15s ease-out;
+}
+.zone-meter.in .zm-zone {
+  background: var(--teal);
+}
+.zm-mid {
+  position: absolute;
+  left: 50%;
+  top: 6px;
+  bottom: 6px;
+  border-left: 1.5px solid var(--outline);
+}
+.zm-needle {
+  position: absolute;
+  top: 50%;
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  transition: left 0.12s ease-out;
+}
+.zm-needle svg {
+  display: block;
+}
+.zm-needle ellipse {
+  fill: var(--ink);
+  stroke: var(--card);
+  stroke-width: 1.5;
+}
+
+/* ---------------------------------------------------------------- steadiness bars (the only part that mirrors in RTL) */
+.sustain-bars {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+}
+.sb-bars {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 30px;
+  min-width: 0;
+}
+.sb {
+  flex: 1 1 0;
+  min-width: 2px;
+  height: 3px;
+  border-radius: 2px 2px 1px 1px;
+  background: var(--line-strong);
+  box-sizing: border-box;
+}
+.sb.l4 {
+  height: 100%;
+  background: var(--teal);
+  border: 1.5px solid var(--outline);
+}
+.sb.l3 {
+  height: 75%;
+  background: var(--teal);
+  border: 1.5px solid var(--outline);
+}
+.sb.l2 {
+  height: 50%;
+  background-color: var(--card);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Cpath d='M-1 1l2-2M0 6l6-6M5 7l2-2' stroke='%2312C9B4' stroke-width='2.2'/%3E%3C/svg%3E");
+  border: 1.5px solid var(--outline);
+}
+.sb.l1 {
+  height: 25%;
+  background: var(--card);
+  border: 1.5px solid var(--outline);
+}
+.sb.now {
+  box-shadow: inset 0 3px 0 var(--lemon);
+}
+.sb.now.l0 {
+  height: 6px;
+  background: var(--lemon);
+}
+.sb-label {
+  flex: none;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------------------------------------------------------- the take card: one line + "Why?" */
+.take-card .take-score {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  margin-bottom: 4px;
+}
+.take-card .take-score b {
+  font-family: var(--display);
+  font-size: 1.35rem;
+}
+.take-stamp {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 2.5px solid var(--outline);
+  background: var(--teal);
+  color: var(--ink-c, #1e1033);
+  font-weight: 800;
+  font-size: 0.85rem;
+  transform: rotate(-3deg);
+}
+.take-card .why-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 15px;
+  border: 2px solid var(--outline);
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 800;
+  font-size: 0.85rem;
+  cursor: pointer;
+  margin-inline-start: auto;
+}
+.take-card .metric-bars {
+  margin-top: 6px;
+}
+.take-card .metric-bar > span {
+  background: var(--teal);
+}
+.take-card .fair .metric-bar > span {
+  background: var(--lilac);
+}
+.take-card .weak .metric-bar > span {
+  background: var(--tangerine);
+}
+
+/* readable-contrast: note names on paper are ink, never lemon */
+:root[data-theme] .panel-screen.vocal p.vocal-targets.vocal-targets.vocal-targets {
+  color: var(--ink);
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 1.15rem;
+  margin: 0 0 2px;
+}
+:root .panel-screen.vocal .vib-notes span.vib,
+:root[data-theme] .panel-screen.vocal .vib-notes span.vib {
+  background: color-mix(in srgb, var(--teal) 25%, var(--card));
+  color: var(--ink);
+  border: 2px solid var(--outline);
+}
+.vib-notes span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.panel-screen.vocal .big-score {
+  color: var(--purple);
+  font-family: var(--display);
+}
+:root[data-theme='dark'] .panel-screen.vocal .big-score {
+  color: var(--lilac);
+}
+
+/* the range calibration still draws the old trace: v2 colours (no mint, no lemon line, ink outline on card) */
+.pitch-trace {
+  background: var(--card);
+  border: var(--stroke, 2.5px) solid var(--outline);
+}
+.trace-band {
+  fill: color-mix(in srgb, var(--lilac) 30%, var(--card));
+}
+.trace-target {
+  stroke: var(--purple);
+}
+.trace-line {
+  stroke: var(--ink);
+  stroke-width: 2.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zm-needle,
+  .cents-chip,
+  .zm-zone {
+    transition: none;
+  }
+}
+:root[data-motion='reduced'] .zm-needle {
+  transition: none;
+}
+
+/* ---------------------------------------------------------------- the mic check (ready) and the no-voice banner */
+.voice-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+  padding: 0 10px;
+  margin: 6px 0 0;
+  border: 2px solid var(--outline);
+  border-radius: 14px;
+  background: var(--card);
+}
+.voice-check.got {
+  border-color: var(--outline);
+  box-shadow: inset 4px 0 0 var(--teal);
+}
+:root[dir='rtl'] .voice-check.got {
+  box-shadow: inset -4px 0 0 var(--teal);
+}
+.vc-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 22px;
+  flex: none;
+}
+.vc-bars span {
+  width: 5px;
+  height: 100%;
+  border: 1.5px solid var(--outline);
+  border-radius: 1px;
+  background: var(--card);
+}
+.vc-bars span:nth-child(-n + 3) {
+  height: 45%;
+}
+.vc-bars span:nth-child(n + 4):nth-child(-n + 7) {
+  height: 72%;
+}
+.vc-bars span.on {
+  background: var(--teal);
+}
+.vc-bars span.now {
+  background: var(--lemon);
+}
+.vc-note {
+  min-width: 2.4em;
+  font-family: var(--display);
+  font-size: 1.3rem;
+  line-height: 1;
+  color: var(--ink);
+}
+.vc-note sub {
+  font-size: 0.55em;
+  vertical-align: baseline;
+}
+.vc-note .acc {
+  font-family: var(--music);
+}
+.vc-msg {
+  flex: 1;
+  min-width: 0;
+  line-height: 1.15;
+  color: var(--ink);
+}
+.vc-msg small {
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+}
+.vc-msg .vc-hint {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 0.74rem;
+}
+.sing-lane-wrap {
+  position: relative;
+}
+.no-voice {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 12px;
+  border: 2px solid var(--outline);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--ink);
+  font-weight: 800;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  box-shadow: var(--shadow-s);
+  pointer-events: none;
+}
+
+/* one phone screen (exercise-fits-one-screen): tighter chrome around the lane */
+@media (max-height: 900px) {
+  .panel-screen.vocal .screen-head h1 {
+    font-size: clamp(1.05rem, 2.8vh, 1.5rem);
+  }
+  .panel-screen.vocal .field-hint {
+    margin: 0;
+  }
+  .panel-screen.vocal .vocal-instr {
+    font-size: 0.95rem;
+    margin: 2px 0 4px;
+  }
+  .panel-screen.vocal .toggle-row {
+    font-size: 0.8rem;
+    margin: 2px 0;
+  }
+  .panel-screen.vocal .vocal-actions {
+    margin-top: 6px;
+  }
+  .panel-screen.vocal .vocal-actions .btn.mega {
+    min-height: clamp(48px, 7.5vh, 72px);
+    padding-block: 6px;
+  }
+  .panel-screen.vocal .take-card {
+    margin: 4px 0;
+    padding: 8px 12px;
+  }
+}
